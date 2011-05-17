@@ -493,9 +493,9 @@ void ProcessPage_OnViewSelectColumns(void)
 
     if (DialogBoxW(hInst, MAKEINTRESOURCEW(IDD_COLUMNS_DIALOG), hMainWnd, ColumnsDialogWndProc) == IDOK)
     {
-        for (i=Header_GetItemCount(hProcessPageHeaderCtrl)-1; i>=0; i--)
+        for (i=SendMessageW(hProcessPageHeaderCtrl, HDM_GETITEMCOUNT, 0, 0)-1; i>=0; i--)
         {
-            ListView_DeleteColumn(hProcessPageListCtrl, i);
+            SendMessageW(hProcessPageListCtrl, LVM_DELETECOLUMN, 0, i);
         }
 
         for (i=0; i<25; i++)

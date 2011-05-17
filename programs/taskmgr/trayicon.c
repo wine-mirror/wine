@@ -64,8 +64,8 @@ static HICON TrayIcon_GetProcessorUsageIcon(void)
     /*
      * Load the bitmaps
      */
-    hBitmap = LoadBitmap(hInst, MAKEINTRESOURCE(IDB_TRAYICON));
-    hBitmapMask = LoadBitmap(hInst, MAKEINTRESOURCE(IDB_TRAYMASK));
+    hBitmap = LoadBitmapW(hInst, MAKEINTRESOURCEW(IDB_TRAYICON));
+    hBitmapMask = LoadBitmapW(hInst, MAKEINTRESOURCEW(IDB_TRAYMASK));
     if (!hBitmap || !hBitmapMask)
         goto done;
 
