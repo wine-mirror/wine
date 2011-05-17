@@ -58,7 +58,7 @@ TASKMANAGER_SETTINGS TaskManagerSettings;
 void FillSolidRect(HDC hDC, LPCRECT lpRect, COLORREF clr)
 {
     SetBkColor(hDC, clr);
-    ExtTextOut(hDC, 0, 0, ETO_OPAQUE, lpRect, NULL, 0, NULL);
+    ExtTextOutW(hDC, 0, 0, ETO_OPAQUE, lpRect, NULL, 0, NULL);
 }
 
 static void FillSolidRect2(HDC hDC, int x, int y, int cx, int cy, COLORREF clr)
@@ -70,7 +70,7 @@ static void FillSolidRect2(HDC hDC, int x, int y, int cx, int cy, COLORREF clr)
     rect.top = y;
     rect.right = x + cx;
     rect.bottom = y + cy;
-    ExtTextOut(hDC, 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
+    ExtTextOutW(hDC, 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
 }
 
 static void Draw3dRect(HDC hDC, int x, int y, int cx, int cy, COLORREF clrTopLeft, COLORREF clrBottomRight)
@@ -89,7 +89,7 @@ void Font_DrawText(HDC hDC, LPWSTR lpwszText, int x, int y)
     int        i;
 
     hFontDC = CreateCompatibleDC(hDC);
-    hFontBitmap = LoadBitmap(hInst, MAKEINTRESOURCE(IDB_FONT));
+    hFontBitmap = LoadBitmapW(hInst, MAKEINTRESOURCEW(IDB_FONT));
     hOldBitmap = SelectObject(hFontDC, hFontBitmap);
 
     for (i = 0; lpwszText[i]; i++) {
@@ -130,11 +130,11 @@ static BOOL OnCreate(HWND hWnd)
     LoadStringW(hInst, IDS_PROCESSES, wszProcesses, sizeof(wszProcesses)/sizeof(WCHAR));
     LoadStringW(hInst, IDS_PERFORMANCE, wszPerformance, sizeof(wszPerformance)/sizeof(WCHAR));
 
-    SendMessageW(hMainWnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIcon(hInst, MAKEINTRESOURCE(IDI_TASKMANAGER)));
+    SendMessageW(hMainWnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIconW(hInst, MAKEINTRESOURCEW(IDI_TASKMANAGER)));
     SendMessageW(hMainWnd, WM_SETICON, ICON_SMALL,
-                 (LPARAM)LoadImage(hInst, MAKEINTRESOURCE(IDI_TASKMANAGER), IMAGE_ICON,
-                                   GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
-                                   LR_SHARED));
+                 (LPARAM)LoadImageW(hInst, MAKEINTRESOURCEW(IDI_TASKMANAGER), IMAGE_ICON,
+                                    GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
+                                    LR_SHARED));
 
     /* Initialize the Windows Common Controls DLL */
     InitCommonControls();
@@ -269,10 +269,10 @@ static BOOL OnCreate(HWND hWnd)
         CheckMenuRadioItem(hCPUHistoryMenu, ID_VIEW_CPUHISTORY_ONEGRAPHALL, ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU, ID_VIEW_CPUHISTORY_ONEGRAPHALL, MF_BYCOMMAND);
 
     nActivePage = TaskManagerSettings.ActiveTabPage;
-    TabCtrl_SetCurFocus/*Sel*/(hTabWnd, 0);
-    TabCtrl_SetCurFocus/*Sel*/(hTabWnd, 1);
-    TabCtrl_SetCurFocus/*Sel*/(hTabWnd, 2);
-    TabCtrl_SetCurFocus/*Sel*/(hTabWnd, nActivePage);
+    SendMessageW(hTabWnd, TCM_SETCURFOCUS, 0, 0);
+    SendMessageW(hTabWnd, TCM_SETCURFOCUS, 1, 0);
+    SendMessageW(hTabWnd, TCM_SETCURFOCUS, 2, 0);
+    SendMessageW(hTabWnd, TCM_SETCURFOCUS, nActivePage, 0);
 
     if (TaskManagerSettings.UpdateSpeed == 1)
         SetTimer(hWnd, 1, 1000, NULL);
@@ -504,8 +504,8 @@ static void TaskManager_OnRestoreMainWindow(void)
 {
   BOOL OnTop;
 
-  OnTop = ((GetWindowLong(hMainWnd, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0);
-  
+  OnTop = (GetWindowLongW(hMainWnd, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0;
+
   OpenIcon(hMainWnd);
   SetForegroundWindow(hMainWnd);
   SetWindowPos(hMainWnd, (OnTop ? HWND_TOPMOST : HWND_TOP), 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW);
@@ -541,7 +541,7 @@ static void TaskManager_OnExitMenuLoop(HWND hWnd)
     nParts[1] = 210;
     nParts[2] = rc.right;
     SendMessageW(hStatusWnd, SB_SETPARTS, 3, (LPARAM)nParts);
-    SendMessageW(hStatusWnd, SB_SETTEXT, 0, 0);
+    SendMessageW(hStatusWnd, SB_SETTEXTW, 0, 0);
     wsprintfW(text, wszCPU_Usage, PerfDataGetProcessorUsage());
     SendMessageW(hStatusWnd, SB_SETTEXTW, 1, (LPARAM)text);
     wsprintfW(text, wszProcesses, PerfDataGetProcessCount());
@@ -654,7 +654,7 @@ static void TaskManager_OnTabWndSelChange(void)
     hMenu = GetMenu(hMainWnd);
     hViewMenu = GetSubMenu(hMenu, 2);
     hOptionsMenu = GetSubMenu(hMenu, 1);
-    TaskManagerSettings.ActiveTabPage = TabCtrl_GetCurSel(hTabWnd);
+    TaskManagerSettings.ActiveTabPage = SendMessageW(hTabWnd, TCM_GETCURSEL, 0, 0);
     for (i = GetMenuItemCount(hViewMenu) - 1; i > 2; i--) {
         hSubMenu = GetSubMenu(hViewMenu, i);
         if (hSubMenu)
@@ -843,7 +843,7 @@ TaskManagerWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
             ProcessPage_OnViewSelectColumns();
             break;
         case ID_VIEW_REFRESH:
-            PostMessage(hDlg, WM_TIMER, 0, 0);
+            PostMessageW(hDlg, WM_TIMER, 0, 0);
             break;
         case ID_WINDOWS_TILEHORIZONTALLY:
             ApplicationPage_OnWindowsTileHorizontally();
@@ -928,7 +928,7 @@ TaskManagerWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
             
             GetCursorPos(&pt);
             
-            OnTop = ((GetWindowLong(hMainWnd, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0);
+            OnTop = (GetWindowLongW(hMainWnd, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0;
             
             hMenu = LoadMenuW(hInst, MAKEINTRESOURCEW(IDR_TRAY_POPUP));
             hPopupMenu = GetSubMenu(hMenu, 0);
@@ -1030,8 +1030,8 @@ TaskManagerWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
             TaskManagerSettings.Maximized = TRUE;
         else
             TaskManagerSettings.Maximized = FALSE;
-        return DefWindowProc(hDlg, message, wParam, lParam);
-        
+        return DefWindowProcW(hDlg, message, wParam, lParam);
+
     case WM_TIMER:
         /* Refresh the performance data */
         PerfDataRefresh();
@@ -1078,8 +1078,10 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
     /* Get a token for this process.  */
     if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken)) {
+        static const WCHAR SeDebugPrivilegeW[] = {'S','e','D','e','b','u','g','P','r','i','v','i','l','e','g','e',0};
+
         /* Get the LUID for the debug privilege.  */
-        LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &tkp.Privileges[0].Luid); 
+        LookupPrivilegeValueW(NULL, SeDebugPrivilegeW, &tkp.Privileges[0].Luid);
 
         tkp.PrivilegeCount = 1;  /* one privilege to set */
         tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED; 
