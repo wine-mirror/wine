@@ -2123,8 +2123,6 @@ static UINT load_all_media( MSIPACKAGE *package )
     MSIQUERY *view;
     UINT r;
 
-    if (!list_empty( &package->cabinet_streams )) return ERROR_SUCCESS;
-
     r = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (r != ERROR_SUCCESS) return ERROR_SUCCESS;
 
