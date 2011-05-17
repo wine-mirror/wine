@@ -65,7 +65,7 @@ typedef struct IRichEditOleImpl {
 } IRichEditOleImpl;
 
 struct ITextSelectionImpl {
-    const ITextSelectionVtbl *lpVtbl;
+    ITextSelection ITextSelection_iface;
     LONG ref;
 
     IRichEditOleImpl *reOle;
@@ -134,7 +134,7 @@ IRichEditOle_fnRelease(IRichEditOle *me)
     {
         TRACE ("Destroying %p\n", This);
         This->txtSel->reOle = NULL;
-        ITextSelection_Release((ITextSelection *) This->txtSel);
+        ITextSelection_Release(&This->txtSel->ITextSelection_iface);
         IOleClientSite_Release((IOleClientSite *) This->clientSite);
         heap_free(This);
     }
@@ -522,7 +522,7 @@ ITextDocument_fnGetSelection(ITextDocument* me, ITextSelection** ppSel)
 {
     IRichEditOleImpl *This = impl_from_ITextDocument(me);
     TRACE("(%p)\n", me);
-    *ppSel = (ITextSelection *) This->txtSel;
+    *ppSel = &This->txtSel->ITextSelection_iface;
     ITextSelection_AddRef(*ppSel);
     return S_OK;
 }
@@ -697,6 +697,11 @@ static const ITextDocumentVtbl tdvt = {
     ITextDocument_fnRangeFromPoint
 };
 
+static inline ITextSelectionImpl *impl_from_ITextSelection(ITextSelection *iface)
+{
+    return CONTAINING_RECORD(iface, ITextSelectionImpl, ITextSelection_iface);
+}
+
 static HRESULT WINAPI ITextSelection_fnQueryInterface(
     ITextSelection *me,
     REFIID riid,
@@ -716,28 +721,24 @@ static HRESULT WINAPI ITextSelection_fnQueryInterface(
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI ITextSelection_fnAddRef(
-    ITextSelection *me)
+static ULONG WINAPI ITextSelection_fnAddRef(ITextSelection *me)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     return InterlockedIncrement(&This->ref);
 }
 
-static ULONG WINAPI ITextSelection_fnRelease(
-    ITextSelection *me)
+static ULONG WINAPI ITextSelection_fnRelease(ITextSelection *me)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     ULONG ref = InterlockedDecrement(&This->ref);
     if (ref == 0)
         heap_free(This);
     return ref;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetTypeInfoCount(
-    ITextSelection *me,
-    UINT *pctinfo)
+static HRESULT WINAPI ITextSelection_fnGetTypeInfoCount(ITextSelection *me, UINT *pctinfo)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -745,13 +746,10 @@ static HRESULT WINAPI ITextSelection_fnGetTypeInfoCount(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetTypeInfo(
-    ITextSelection *me,
-    UINT iTInfo,
-    LCID lcid,
+static HRESULT WINAPI ITextSelection_fnGetTypeInfo(ITextSelection *me, UINT iTInfo, LCID lcid,
     ITypeInfo **ppTInfo)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -759,15 +757,10 @@ static HRESULT WINAPI ITextSelection_fnGetTypeInfo(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetIDsOfNames(
-    ITextSelection *me,
-    REFIID riid,
-    LPOLESTR *rgszNames,
-    UINT cNames,
-    LCID lcid,
-    DISPID *rgDispId)
+static HRESULT WINAPI ITextSelection_fnGetIDsOfNames(ITextSelection *me, REFIID riid,
+    LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -791,11 +784,9 @@ static HRESULT WINAPI ITextSelection_fnInvoke(
 }
 
 /*** ITextRange methods ***/
-static HRESULT WINAPI ITextSelection_fnGetText(
-    ITextSelection *me,
-    BSTR *pbstr)
+static HRESULT WINAPI ITextSelection_fnGetText(ITextSelection *me, BSTR *pbstr)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -803,11 +794,9 @@ static HRESULT WINAPI ITextSelection_fnGetText(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnSetText(
-    ITextSelection *me,
-    BSTR bstr)
+static HRESULT WINAPI ITextSelection_fnSetText(ITextSelection *me, BSTR bstr)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -815,11 +804,9 @@ static HRESULT WINAPI ITextSelection_fnSetText(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetChar(
-    ITextSelection *me,
-    LONG *pch)
+static HRESULT WINAPI ITextSelection_fnGetChar(ITextSelection *me, LONG *pch)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -827,11 +814,9 @@ static HRESULT WINAPI ITextSelection_fnGetChar(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnSetChar(
-    ITextSelection *me,
-    LONG ch)
+static HRESULT WINAPI ITextSelection_fnSetChar(ITextSelection *me, LONG ch)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -839,11 +824,9 @@ static HRESULT WINAPI ITextSelection_fnSetChar(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetDuplicate(
-    ITextSelection *me,
-    ITextRange **ppRange)
+static HRESULT WINAPI ITextSelection_fnGetDuplicate(ITextSelection *me, ITextRange **ppRange)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -851,11 +834,9 @@ static HRESULT WINAPI ITextSelection_fnGetDuplicate(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetFormattedText(
-    ITextSelection *me,
-    ITextRange **ppRange)
+static HRESULT WINAPI ITextSelection_fnGetFormattedText(ITextSelection *me, ITextRange **ppRange)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -863,11 +844,9 @@ static HRESULT WINAPI ITextSelection_fnGetFormattedText(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnSetFormattedText(
-    ITextSelection *me,
-    ITextRange *pRange)
+static HRESULT WINAPI ITextSelection_fnSetFormattedText(ITextSelection *me, ITextRange *pRange)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -875,11 +854,9 @@ static HRESULT WINAPI ITextSelection_fnSetFormattedText(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetStart(
-    ITextSelection *me,
-    LONG *pcpFirst)
+static HRESULT WINAPI ITextSelection_fnGetStart(ITextSelection *me, LONG *pcpFirst)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -887,11 +864,9 @@ static HRESULT WINAPI ITextSelection_fnGetStart(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnSetStart(
-    ITextSelection *me,
-    LONG cpFirst)
+static HRESULT WINAPI ITextSelection_fnSetStart(ITextSelection *me, LONG cpFirst)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -899,11 +874,9 @@ static HRESULT WINAPI ITextSelection_fnSetStart(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetEnd(
-    ITextSelection *me,
-    LONG *pcpLim)
+static HRESULT WINAPI ITextSelection_fnGetEnd(ITextSelection *me, LONG *pcpLim)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -911,11 +884,9 @@ static HRESULT WINAPI ITextSelection_fnGetEnd(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnSetEnd(
-    ITextSelection *me,
-    LONG cpLim)
+static HRESULT WINAPI ITextSelection_fnSetEnd(ITextSelection *me, LONG cpLim)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -923,11 +894,9 @@ static HRESULT WINAPI ITextSelection_fnSetEnd(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetFont(
-    ITextSelection *me,
-    ITextFont **pFont)
+static HRESULT WINAPI ITextSelection_fnGetFont(ITextSelection *me, ITextFont **pFont)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -935,11 +904,9 @@ static HRESULT WINAPI ITextSelection_fnGetFont(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnSetFont(
-    ITextSelection *me,
-    ITextFont *pFont)
+static HRESULT WINAPI ITextSelection_fnSetFont(ITextSelection *me, ITextFont *pFont)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -947,11 +914,9 @@ static HRESULT WINAPI ITextSelection_fnSetFont(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetPara(
-    ITextSelection *me,
-    ITextPara **ppPara)
+static HRESULT WINAPI ITextSelection_fnGetPara(ITextSelection *me, ITextPara **ppPara)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -959,11 +924,9 @@ static HRESULT WINAPI ITextSelection_fnGetPara(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnSetPara(
-    ITextSelection *me,
-    ITextPara *pPara)
+static HRESULT WINAPI ITextSelection_fnSetPara(ITextSelection *me, ITextPara *pPara)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -971,11 +934,9 @@ static HRESULT WINAPI ITextSelection_fnSetPara(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetStoryLength(
-    ITextSelection *me,
-    LONG *pcch)
+static HRESULT WINAPI ITextSelection_fnGetStoryLength(ITextSelection *me, LONG *pcch)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -983,11 +944,9 @@ static HRESULT WINAPI ITextSelection_fnGetStoryLength(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetStoryType(
-    ITextSelection *me,
-    LONG *pValue)
+static HRESULT WINAPI ITextSelection_fnGetStoryType(ITextSelection *me, LONG *pValue)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -995,11 +954,9 @@ static HRESULT WINAPI ITextSelection_fnGetStoryType(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnCollapse(
-    ITextSelection *me,
-    LONG bStart)
+static HRESULT WINAPI ITextSelection_fnCollapse(ITextSelection *me, LONG bStart)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1007,12 +964,9 @@ static HRESULT WINAPI ITextSelection_fnCollapse(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnExpand(
-    ITextSelection *me,
-    LONG Unit,
-    LONG *pDelta)
+static HRESULT WINAPI ITextSelection_fnExpand(ITextSelection *me, LONG Unit, LONG *pDelta)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1020,12 +974,9 @@ static HRESULT WINAPI ITextSelection_fnExpand(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetIndex(
-    ITextSelection *me,
-    LONG Unit,
-    LONG *pIndex)
+static HRESULT WINAPI ITextSelection_fnGetIndex(ITextSelection *me, LONG Unit, LONG *pIndex)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1033,13 +984,10 @@ static HRESULT WINAPI ITextSelection_fnGetIndex(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnSetIndex(
-    ITextSelection *me,
-    LONG Unit,
-    LONG Index,
+static HRESULT WINAPI ITextSelection_fnSetIndex(ITextSelection *me, LONG Unit, LONG Index,
     LONG Extend)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1047,12 +995,9 @@ static HRESULT WINAPI ITextSelection_fnSetIndex(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnSetRange(
-    ITextSelection *me,
-    LONG cpActive,
-    LONG cpOther)
+static HRESULT WINAPI ITextSelection_fnSetRange(ITextSelection *me, LONG cpActive, LONG cpOther)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1060,12 +1005,9 @@ static HRESULT WINAPI ITextSelection_fnSetRange(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnInRange(
-    ITextSelection *me,
-    ITextRange *pRange,
-    LONG *pb)
+static HRESULT WINAPI ITextSelection_fnInRange(ITextSelection *me, ITextRange *pRange, LONG *pb)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1073,12 +1015,9 @@ static HRESULT WINAPI ITextSelection_fnInRange(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnInStory(
-    ITextSelection *me,
-    ITextRange *pRange,
-    LONG *pb)
+static HRESULT WINAPI ITextSelection_fnInStory(ITextSelection *me, ITextRange *pRange, LONG *pb)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1086,12 +1025,9 @@ static HRESULT WINAPI ITextSelection_fnInStory(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnIsEqual(
-    ITextSelection *me,
-    ITextRange *pRange,
-    LONG *pb)
+static HRESULT WINAPI ITextSelection_fnIsEqual(ITextSelection *me, ITextRange *pRange, LONG *pb)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1099,10 +1035,9 @@ static HRESULT WINAPI ITextSelection_fnIsEqual(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnSelect(
-    ITextSelection *me)
+static HRESULT WINAPI ITextSelection_fnSelect(ITextSelection *me)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1110,13 +1045,10 @@ static HRESULT WINAPI ITextSelection_fnSelect(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnStartOf(
-    ITextSelection *me,
-    LONG Unit,
-    LONG Extend,
+static HRESULT WINAPI ITextSelection_fnStartOf(ITextSelection *me, LONG Unit, LONG Extend,
     LONG *pDelta)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1124,13 +1056,10 @@ static HRESULT WINAPI ITextSelection_fnStartOf(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnEndOf(
-    ITextSelection *me,
-    LONG Unit,
-    LONG Extend,
+static HRESULT WINAPI ITextSelection_fnEndOf(ITextSelection *me, LONG Unit, LONG Extend,
     LONG *pDelta)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1138,13 +1067,20 @@ static HRESULT WINAPI ITextSelection_fnEndOf(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnMove(
-    ITextSelection *me,
-    LONG Unit,
-    LONG Count,
+static HRESULT WINAPI ITextSelection_fnMove(ITextSelection *me, LONG Unit, LONG Count, LONG *pDelta)
+{
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    if (!This->reOle)
+        return CO_E_RELEASED;
+
+    FIXME("not implemented\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ITextSelection_fnMoveStart(ITextSelection *me, LONG Unit, LONG Count,
     LONG *pDelta)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1152,13 +1088,10 @@ static HRESULT WINAPI ITextSelection_fnMove(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnMoveStart(
-    ITextSelection *me,
-    LONG Unit,
-    LONG Count,
+static HRESULT WINAPI ITextSelection_fnMoveEnd(ITextSelection *me, LONG Unit, LONG Count,
     LONG *pDelta)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1166,13 +1099,10 @@ static HRESULT WINAPI ITextSelection_fnMoveStart(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnMoveEnd(
-    ITextSelection *me,
-    LONG Unit,
-    LONG Count,
+static HRESULT WINAPI ITextSelection_fnMoveWhile(ITextSelection *me, VARIANT *Cset, LONG Count,
     LONG *pDelta)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1180,13 +1110,10 @@ static HRESULT WINAPI ITextSelection_fnMoveEnd(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnMoveWhile(
-    ITextSelection *me,
-    VARIANT *Cset,
-    LONG Count,
+static HRESULT WINAPI ITextSelection_fnMoveStartWhile(ITextSelection *me, VARIANT *Cset, LONG Count,
     LONG *pDelta)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1194,13 +1121,10 @@ static HRESULT WINAPI ITextSelection_fnMoveWhile(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnMoveStartWhile(
-    ITextSelection *me,
-    VARIANT *Cset,
-    LONG Count,
+static HRESULT WINAPI ITextSelection_fnMoveEndWhile(ITextSelection *me, VARIANT *Cset, LONG Count,
     LONG *pDelta)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1208,13 +1132,10 @@ static HRESULT WINAPI ITextSelection_fnMoveStartWhile(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnMoveEndWhile(
-    ITextSelection *me,
-    VARIANT *Cset,
-    LONG Count,
+static HRESULT WINAPI ITextSelection_fnMoveUntil(ITextSelection *me, VARIANT *Cset, LONG Count,
     LONG *pDelta)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1222,13 +1143,10 @@ static HRESULT WINAPI ITextSelection_fnMoveEndWhile(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnMoveUntil(
-    ITextSelection *me,
-    VARIANT *Cset,
-    LONG Count,
+static HRESULT WINAPI ITextSelection_fnMoveStartUntil(ITextSelection *me, VARIANT *Cset, LONG Count,
     LONG *pDelta)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1236,13 +1154,10 @@ static HRESULT WINAPI ITextSelection_fnMoveUntil(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnMoveStartUntil(
-    ITextSelection *me,
-    VARIANT *Cset,
-    LONG Count,
+static HRESULT WINAPI ITextSelection_fnMoveEndUntil(ITextSelection *me, VARIANT *Cset, LONG Count,
     LONG *pDelta)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1250,28 +1165,10 @@ static HRESULT WINAPI ITextSelection_fnMoveStartUntil(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnMoveEndUntil(
-    ITextSelection *me,
-    VARIANT *Cset,
-    LONG Count,
-    LONG *pDelta)
-{
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
-    if (!This->reOle)
-        return CO_E_RELEASED;
-
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI ITextSelection_fnFindText(
-    ITextSelection *me,
-    BSTR bstr,
-    LONG cch,
-    LONG Flags,
+static HRESULT WINAPI ITextSelection_fnFindText(ITextSelection *me, BSTR bstr, LONG cch, LONG Flags,
     LONG *pLength)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1279,14 +1176,10 @@ static HRESULT WINAPI ITextSelection_fnFindText(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnFindTextStart(
-    ITextSelection *me,
-    BSTR bstr,
-    LONG cch,
-    LONG Flags,
-    LONG *pLength)
+static HRESULT WINAPI ITextSelection_fnFindTextStart(ITextSelection *me, BSTR bstr, LONG cch,
+    LONG Flags, LONG *pLength)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1294,14 +1187,10 @@ static HRESULT WINAPI ITextSelection_fnFindTextStart(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnFindTextEnd(
-    ITextSelection *me,
-    BSTR bstr,
-    LONG cch,
-    LONG Flags,
-    LONG *pLength)
+static HRESULT WINAPI ITextSelection_fnFindTextEnd(ITextSelection *me, BSTR bstr, LONG cch,
+    LONG Flags, LONG *pLength)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1309,13 +1198,10 @@ static HRESULT WINAPI ITextSelection_fnFindTextEnd(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnDelete(
-    ITextSelection *me,
-    LONG Unit,
-    LONG Count,
+static HRESULT WINAPI ITextSelection_fnDelete(ITextSelection *me, LONG Unit, LONG Count,
     LONG *pDelta)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1323,11 +1209,9 @@ static HRESULT WINAPI ITextSelection_fnDelete(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnCut(
-    ITextSelection *me,
-    VARIANT *pVar)
+static HRESULT WINAPI ITextSelection_fnCut(ITextSelection *me, VARIANT *pVar)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1335,11 +1219,9 @@ static HRESULT WINAPI ITextSelection_fnCut(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnCopy(
-    ITextSelection *me,
-    VARIANT *pVar)
+static HRESULT WINAPI ITextSelection_fnCopy(ITextSelection *me, VARIANT *pVar)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1347,12 +1229,9 @@ static HRESULT WINAPI ITextSelection_fnCopy(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnPaste(
-    ITextSelection *me,
-    VARIANT *pVar,
-    LONG Format)
+static HRESULT WINAPI ITextSelection_fnPaste(ITextSelection *me, VARIANT *pVar, LONG Format)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1360,13 +1239,10 @@ static HRESULT WINAPI ITextSelection_fnPaste(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnCanPaste(
-    ITextSelection *me,
-    VARIANT *pVar,
-    LONG Format,
+static HRESULT WINAPI ITextSelection_fnCanPaste(ITextSelection *me, VARIANT *pVar, LONG Format,
     LONG *pb)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1374,11 +1250,9 @@ static HRESULT WINAPI ITextSelection_fnCanPaste(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnCanEdit(
-    ITextSelection *me,
-    LONG *pb)
+static HRESULT WINAPI ITextSelection_fnCanEdit(ITextSelection *me, LONG *pb)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1386,11 +1260,9 @@ static HRESULT WINAPI ITextSelection_fnCanEdit(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnChangeCase(
-    ITextSelection *me,
-    LONG Type)
+static HRESULT WINAPI ITextSelection_fnChangeCase(ITextSelection *me, LONG Type)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1398,13 +1270,9 @@ static HRESULT WINAPI ITextSelection_fnChangeCase(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetPoint(
-    ITextSelection *me,
-    LONG Type,
-    LONG *cx,
-    LONG *cy)
+static HRESULT WINAPI ITextSelection_fnGetPoint(ITextSelection *me, LONG Type, LONG *cx, LONG *cy)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1412,14 +1280,10 @@ static HRESULT WINAPI ITextSelection_fnGetPoint(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnSetPoint(
-    ITextSelection *me,
-    LONG x,
-    LONG y,
-    LONG Type,
+static HRESULT WINAPI ITextSelection_fnSetPoint(ITextSelection *me, LONG x, LONG y, LONG Type,
     LONG Extend)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1427,11 +1291,9 @@ static HRESULT WINAPI ITextSelection_fnSetPoint(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnScrollIntoView(
-    ITextSelection *me,
-    LONG Value)
+static HRESULT WINAPI ITextSelection_fnScrollIntoView(ITextSelection *me, LONG Value)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1439,11 +1301,9 @@ static HRESULT WINAPI ITextSelection_fnScrollIntoView(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetEmbeddedObject(
-    ITextSelection *me,
-    IUnknown **ppv)
+static HRESULT WINAPI ITextSelection_fnGetEmbeddedObject(ITextSelection *me, IUnknown **ppv)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1452,11 +1312,9 @@ static HRESULT WINAPI ITextSelection_fnGetEmbeddedObject(
 }
 
 /*** ITextSelection methods ***/
-static HRESULT WINAPI ITextSelection_fnGetFlags(
-    ITextSelection *me,
-    LONG *pFlags)
+static HRESULT WINAPI ITextSelection_fnGetFlags(ITextSelection *me, LONG *pFlags)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1464,11 +1322,9 @@ static HRESULT WINAPI ITextSelection_fnGetFlags(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnSetFlags(
-    ITextSelection *me,
-    LONG Flags)
+static HRESULT WINAPI ITextSelection_fnSetFlags(ITextSelection *me, LONG Flags)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1476,11 +1332,9 @@ static HRESULT WINAPI ITextSelection_fnSetFlags(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetType(
-    ITextSelection *me,
-    LONG *pType)
+static HRESULT WINAPI ITextSelection_fnGetType(ITextSelection *me, LONG *pType)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1488,14 +1342,54 @@ static HRESULT WINAPI ITextSelection_fnGetType(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnMoveLeft(
-    ITextSelection *me,
-    LONG Unit,
-    LONG Count,
-    LONG Extend,
+static HRESULT WINAPI ITextSelection_fnMoveLeft(ITextSelection *me, LONG Unit, LONG Count,
+    LONG Extend, LONG *pDelta)
+{
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    if (!This->reOle)
+        return CO_E_RELEASED;
+
+    FIXME("not implemented\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ITextSelection_fnMoveRight(ITextSelection *me, LONG Unit, LONG Count,
+    LONG Extend, LONG *pDelta)
+{
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    if (!This->reOle)
+        return CO_E_RELEASED;
+
+    FIXME("not implemented\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ITextSelection_fnMoveUp(ITextSelection *me, LONG Unit, LONG Count,
+    LONG Extend, LONG *pDelta)
+{
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    if (!This->reOle)
+        return CO_E_RELEASED;
+
+    FIXME("not implemented\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ITextSelection_fnMoveDown(ITextSelection *me, LONG Unit, LONG Count,
+    LONG Extend, LONG *pDelta)
+{
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    if (!This->reOle)
+        return CO_E_RELEASED;
+
+    FIXME("not implemented\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ITextSelection_fnHomeKey(ITextSelection *me, LONG Unit, LONG Extend,
     LONG *pDelta)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1503,14 +1397,10 @@ static HRESULT WINAPI ITextSelection_fnMoveLeft(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnMoveRight(
-    ITextSelection *me,
-    LONG Unit,
-    LONG Count,
-    LONG Extend,
+static HRESULT WINAPI ITextSelection_fnEndKey(ITextSelection *me, LONG Unit, LONG Extend,
     LONG *pDelta)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1518,69 +1408,9 @@ static HRESULT WINAPI ITextSelection_fnMoveRight(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnMoveUp(
-    ITextSelection *me,
-    LONG Unit,
-    LONG Count,
-    LONG Extend,
-    LONG *pDelta)
+static HRESULT WINAPI ITextSelection_fnTypeText(ITextSelection *me, BSTR bstr)
 {
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
-    if (!This->reOle)
-        return CO_E_RELEASED;
-
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI ITextSelection_fnMoveDown(
-    ITextSelection *me,
-    LONG Unit,
-    LONG Count,
-    LONG Extend,
-    LONG *pDelta)
-{
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
-    if (!This->reOle)
-        return CO_E_RELEASED;
-
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI ITextSelection_fnHomeKey(
-    ITextSelection *me,
-    LONG Unit,
-    LONG Extend,
-    LONG *pDelta)
-{
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
-    if (!This->reOle)
-        return CO_E_RELEASED;
-
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI ITextSelection_fnEndKey(
-    ITextSelection *me,
-    LONG Unit,
-    LONG Extend,
-    LONG *pDelta)
-{
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
-    if (!This->reOle)
-        return CO_E_RELEASED;
-
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI ITextSelection_fnTypeText(
-    ITextSelection *me,
-    BSTR bstr)
-{
-    ITextSelectionImpl *This = (ITextSelectionImpl *) me;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
@@ -1666,7 +1496,7 @@ CreateTextSelection(IRichEditOleImpl *reOle)
     if (!txtSel)
         return NULL;
 
-    txtSel->lpVtbl = &tsvt;
+    txtSel->ITextSelection_iface.lpVtbl = &tsvt;
     txtSel->ref = 1;
     txtSel->reOle = reOle;
     return txtSel;
@@ -1693,7 +1523,7 @@ LRESULT CreateIRichEditOle(ME_TextEditor *editor, LPVOID *ppObj)
     reo->clientSite = CreateOleClientSite(reo);
     if (!reo->txtSel)
     {
-        ITextSelection_Release((ITextSelection *) reo->txtSel);
+        ITextSelection_Release(&reo->txtSel->ITextSelection_iface);
         heap_free(reo);
         return 0;
     }
