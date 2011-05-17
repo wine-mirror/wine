@@ -817,7 +817,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetPassDesc(ID3DXBaseEffect *iface, D3
 
     FIXME("Pixel shader and vertex shader are not supported, yet.\n");
     desc->pVertexShaderFunction = NULL;
-    desc->pVertexShaderFunction = NULL;
+    desc->pPixelShaderFunction = NULL;
 
     return D3D_OK;
 }
