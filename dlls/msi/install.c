@@ -549,17 +549,23 @@ static void set_target_path( MSIPACKAGE *package, MSIFOLDER *folder, const WCHAR
 {
     FolderList *fl;
     MSIFOLDER *child;
+    WCHAR *target_path;
 
-    msi_free( folder->ResolvedTarget );
-    folder->ResolvedTarget = strdupW( path );
-    msi_clean_path( folder->ResolvedTarget );
-    msi_set_property( package->db, folder->Directory, folder->ResolvedTarget );
-
-    LIST_FOR_EACH_ENTRY( fl, &folder->children, FolderList, entry )
+    if (!(target_path = strdupW( path ))) return;
+    msi_clean_path( target_path );
+    if (strcmpW( target_path, folder->ResolvedTarget ))
     {
-        child = fl->folder;
-        msi_resolve_target_folder( package, child->Directory, FALSE );
+        msi_free( folder->ResolvedTarget );
+        folder->ResolvedTarget = target_path;
+        msi_set_property( package->db, folder->Directory, folder->ResolvedTarget );
+
+        LIST_FOR_EACH_ENTRY( fl, &folder->children, FolderList, entry )
+        {
+            child = fl->folder;
+            msi_resolve_target_folder( package, child->Directory, FALSE );
+        }
     }
+    else msi_free( target_path );
 }
 
 UINT MSI_SetTargetPathW( MSIPACKAGE *package, LPCWSTR szFolder, LPCWSTR szFolderPath )
