@@ -439,7 +439,7 @@ Graph_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         
         hdc = BeginPaint(hWnd, &ps);
 
-        WindowId = GetWindowLongPtr(hWnd, GWLP_ID);
+        WindowId = GetWindowLongPtrW(hWnd, GWLP_ID);
 
         switch (WindowId)
         {
@@ -459,9 +459,9 @@ Graph_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         return 0;
         
     }
-    
+
     /*
      * We pass on all non-handled messages
      */
-    return CallWindowProc((WNDPROC)OldGraphWndProc, hWnd, message, wParam, lParam);
+    return CallWindowProcW(OldGraphWndProc, hWnd, message, wParam, lParam);
 }
