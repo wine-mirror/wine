@@ -36,7 +36,7 @@
 static void DoSetPriority(DWORD priority)
 {
     LVITEMW          lvitem;
-    ULONG            Index;
+    ULONG            Index, Count;
     DWORD            dwProcessId;
     HANDLE           hProcess;
     WCHAR            wstrErrorText[256];
@@ -49,7 +49,8 @@ static void DoSetPriority(DWORD priority)
     LoadStringW(hInst, IDS_WARNING_TITLE, wszWarnTitle, sizeof(wszWarnTitle)/sizeof(WCHAR));
     LoadStringW(hInst, IDS_PRIORITY_UNABLE2CHANGE, wszUnable2Change, sizeof(wszUnable2Change)/sizeof(WCHAR));
 
-    for (Index=0; Index<(ULONG)ListView_GetItemCount(hProcessPageListCtrl); Index++)
+    Count = SendMessageW(hProcessPageListCtrl, LVM_GETITEMCOUNT, 0, 0);
+    for (Index=0; Index<Count; Index++)
     {
         lvitem.mask = LVIF_STATE;
         lvitem.stateMask = LVIS_SELECTED;
@@ -62,9 +63,9 @@ static void DoSetPriority(DWORD priority)
             break;
     }
 
+    Count = SendMessageW(hProcessPageListCtrl, LVM_GETSELECTEDCOUNT, 0, 0);
     dwProcessId = PerfDataGetProcessId(Index);
-
-    if ((ListView_GetSelectedCount(hProcessPageListCtrl) != 1) || (dwProcessId == 0))
+    if ((Count != 1) || (dwProcessId == 0))
         return;
 
     if (MessageBoxW(hMainWnd, wszWarnMsg, wszWarnTitle, MB_YESNO|MB_ICONWARNING) != IDYES)
