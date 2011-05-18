@@ -167,11 +167,12 @@ unsigned char * WINAPI BSTR_UserUnmarshal(ULONG *pFlags, unsigned char *Buffer, 
     if(header->len != header->len2)
         FIXME("len %08x != len2 %08x\n", header->len, header->len2);
 
-    SysFreeString(*pstr);
-    *pstr = NULL;
-
-    if(header->byte_len != 0xffffffff)
-        *pstr = SysAllocStringByteLen((char*)(header + 1), header->byte_len);
+    if (header->byte_len == 0xffffffff)
+    {
+        SysFreeString(*pstr);
+        *pstr = NULL;
+    }
+    else SysReAllocStringLen( pstr, (OLECHAR *)(header + 1), header->len );
 
     if (*pstr) TRACE("string=%s\n", debugstr_w(*pstr));
     return Buffer + sizeof(*header) + sizeof(OLECHAR) * header->len;
