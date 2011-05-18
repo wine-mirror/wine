@@ -6469,8 +6469,8 @@ msgstr "打印预览(&W)..."
 msgid "&Close"
 msgstr "关闭(&C)"
 
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:56 oleview.rc:58
+#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 #, fuzzy
 msgid "&View"
 msgstr ""
@@ -8729,7 +8729,8 @@ msgid "&View TypeLib..."
 msgstr "查看 &TypeLib..."
 
 #: oleview.rc:32
-msgid "&System Configuration..."
+#, fuzzy
+msgid "&System Configuration"
 msgstr "系统设置(&S)..."
 
 #: oleview.rc:33
@@ -8783,10 +8784,6 @@ msgstr "复制 C&LSID 到剪贴板"
 #: oleview.rc:54
 msgid "Copy &HTML object Tag to clipboard"
 msgstr "复制 &HTML 对象标记到剪贴板"
-
-#: oleview.rc:56
-msgid "&View..."
-msgstr "视图(&V)..."
 
 #: oleview.rc:60
 msgid "&Expert mode"

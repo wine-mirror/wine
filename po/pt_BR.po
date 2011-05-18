@@ -6487,8 +6487,8 @@ msgstr ""
 msgid "&Close"
 msgstr "&Fechar"
 
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:56 oleview.rc:58
+#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 #, fuzzy
 msgid "&View"
 msgstr ""
@@ -9077,7 +9077,8 @@ msgid "&View TypeLib..."
 msgstr "&Ver TypeLib..."
 
 #: oleview.rc:32
-msgid "&System Configuration..."
+#, fuzzy
+msgid "&System Configuration"
 msgstr "&Configuração do sistema..."
 
 #: oleview.rc:33
@@ -9131,10 +9132,6 @@ msgstr "Copiar C&LSID para a Área de Transferência"
 #: oleview.rc:54
 msgid "Copy &HTML object Tag to clipboard"
 msgstr "Copiar tag &HTML para a Área de Transferência"
-
-#: oleview.rc:56
-msgid "&View..."
-msgstr "&Ver..."
 
 #: oleview.rc:60
 msgid "&Expert mode"

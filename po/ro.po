@@ -6756,8 +6756,8 @@ msgstr "Pre&vizualizare imprimare..."
 msgid "&Close"
 msgstr "În&chide"
 
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:56 oleview.rc:58
+#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 msgid "&View"
 msgstr "&Vizualizare"
 
@@ -9368,7 +9368,8 @@ msgid "&View TypeLib..."
 msgstr "&Afișare TypeLib..."
 
 #: oleview.rc:32
-msgid "&System Configuration..."
+#, fuzzy
+msgid "&System Configuration"
 msgstr "&Configurare sistem..."
 
 #: oleview.rc:33
@@ -9422,10 +9423,6 @@ msgstr "Copiază C&LSID în clipboard"
 #: oleview.rc:54
 msgid "Copy &HTML object Tag to clipboard"
 msgstr "Copiază marcajul &HTML al obiectului în clipboard"
-
-#: oleview.rc:56
-msgid "&View..."
-msgstr "&Afișare..."
 
 #: oleview.rc:60
 msgid "&Expert mode"

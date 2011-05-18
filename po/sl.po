@@ -6287,8 +6287,8 @@ msgstr "&Predogled tiskanja ..."
 msgid "&Close"
 msgstr "&Zapri"
 
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:56 oleview.rc:58
+#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 msgid "&View"
 msgstr "&Pogled"
 
@@ -8802,7 +8802,8 @@ msgid "&View TypeLib..."
 msgstr "&Pogled TypeLib ..."
 
 #: oleview.rc:32
-msgid "&System Configuration..."
+#, fuzzy
+msgid "&System Configuration"
 msgstr "&Sistemske nastavitve ..."
 
 #: oleview.rc:33
@@ -8856,10 +8857,6 @@ msgstr "Kopiraj C&LSID na odložišče"
 #: oleview.rc:54
 msgid "Copy &HTML object Tag to clipboard"
 msgstr "Kopiraj oznako predmetov &HTML na tipkovnico"
-
-#: oleview.rc:56
-msgid "&View..."
-msgstr "&Pogled ..."
 
 #: oleview.rc:60
 msgid "&Expert mode"

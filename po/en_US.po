@@ -6254,8 +6254,8 @@ msgstr "Print previe&w"
 msgid "&Close"
 msgstr "&Close"
 
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:56 oleview.rc:58
+#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 msgid "&View"
 msgstr "&View"
 
@@ -8751,8 +8751,8 @@ msgid "&View TypeLib..."
 msgstr "&View TypeLib..."
 
 #: oleview.rc:32
-msgid "&System Configuration..."
-msgstr "&System Configuration..."
+msgid "&System Configuration"
+msgstr "&System Configuration"
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
@@ -8805,10 +8805,6 @@ msgstr "Copy C&LSID to clipboard"
 #: oleview.rc:54
 msgid "Copy &HTML object Tag to clipboard"
 msgstr "Copy &HTML object Tag to clipboard"
-
-#: oleview.rc:56
-msgid "&View..."
-msgstr "&View..."
 
 #: oleview.rc:60
 msgid "&Expert mode"

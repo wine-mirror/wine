@@ -6258,8 +6258,8 @@ msgstr "Пред&варительный просмотр..."
 msgid "&Close"
 msgstr "&Закрыть"
 
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:56 oleview.rc:58
+#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 msgid "&View"
 msgstr "&Вид"
 
@@ -8768,7 +8768,8 @@ msgid "&View TypeLib..."
 msgstr "&Просмотр TypeLib..."
 
 #: oleview.rc:32
-msgid "&System Configuration..."
+#, fuzzy
+msgid "&System Configuration"
 msgstr "&Конфигурация системы..."
 
 #: oleview.rc:33
@@ -8822,10 +8823,6 @@ msgstr "Копировать C&LSID в буфер"
 #: oleview.rc:54
 msgid "Copy &HTML object Tag to clipboard"
 msgstr "Копировать &HTML object Tag в буфер"
-
-#: oleview.rc:56
-msgid "&View..."
-msgstr "&Вид..."
 
 #: oleview.rc:60
 msgid "&Expert mode"

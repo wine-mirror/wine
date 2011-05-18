@@ -6625,8 +6625,8 @@ msgstr "&Vista previa de impresión..."
 msgid "&Close"
 msgstr ""
 
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:56 oleview.rc:58
+#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 msgid "&View"
 msgstr "&Ver"
 
@@ -9198,7 +9198,7 @@ msgstr ""
 
 #: oleview.rc:32
 #, fuzzy
-msgid "&System Configuration..."
+msgid "&System Configuration"
 msgstr "&Confirmación..."
 
 #: oleview.rc:33
@@ -9255,11 +9255,6 @@ msgstr ""
 #: oleview.rc:54
 msgid "Copy &HTML object Tag to clipboard"
 msgstr ""
-
-#: oleview.rc:56
-#, fuzzy
-msgid "&View..."
-msgstr "&Nuevo..."
 
 #: oleview.rc:60
 #, fuzzy

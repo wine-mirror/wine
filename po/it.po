@@ -6541,8 +6541,8 @@ msgstr ""
 msgid "&Close"
 msgstr "&Chiudi"
 
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:56 oleview.rc:58
+#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 msgid "&View"
 msgstr "&Visualizza"
 
@@ -9123,7 +9123,8 @@ msgid "&View TypeLib..."
 msgstr "&Mostra TypeLib..."
 
 #: oleview.rc:32
-msgid "&System Configuration..."
+#, fuzzy
+msgid "&System Configuration"
 msgstr "Configurazione di &sistema..."
 
 #: oleview.rc:33
@@ -9177,10 +9178,6 @@ msgstr "Copia C&LSID negli appunti"
 #: oleview.rc:54
 msgid "Copy &HTML object Tag to clipboard"
 msgstr "Copia categoria oggetto &HTML negli appunti"
-
-#: oleview.rc:56
-msgid "&View..."
-msgstr "&Mostra..."
 
 #: oleview.rc:60
 msgid "&Expert mode"

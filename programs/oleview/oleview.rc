@@ -29,7 +29,7 @@ IDM_MENU MENU
         MENUITEM "&Bind to file...",    IDM_BIND
         MENUITEM "&View TypeLib...",    IDM_TYPELIB
         MENUITEM SEPARATOR
-        MENUITEM "&System Configuration...",    IDM_SYSCONF
+        MENUITEM "&System Configuration",       IDM_SYSCONF
         MENUITEM "&Run the Registry Editor",    IDM_REGEDIT
         MENUITEM SEPARATOR
         MENUITEM "E&xit",    IDM_EXIT
@@ -53,7 +53,7 @@ IDM_MENU MENU
         MENUITEM "Copy C&LSID to clipboard",    IDM_COPYCLSID, GRAYED
         MENUITEM "Copy &HTML object Tag to clipboard", IDM_HTMLTAG, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "&View...",    IDM_VIEW, GRAYED
+        MENUITEM "&View",       IDM_VIEW, GRAYED
     }
     POPUP "&View"
     {

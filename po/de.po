@@ -6415,8 +6415,8 @@ msgstr ""
 "#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
 "&Schliessen"
 
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+#: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:56 oleview.rc:58
+#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 msgid "&View"
 msgstr "&Ansicht"
 
@@ -9008,7 +9008,8 @@ msgid "&View TypeLib..."
 msgstr "&TypeLib anzeigen..."
 
 #: oleview.rc:32
-msgid "&System Configuration..."
+#, fuzzy
+msgid "&System Configuration"
 msgstr "&Systemkonfiguration..."
 
 #: oleview.rc:33
@@ -9062,10 +9063,6 @@ msgstr "C&LSID in Zwischenablage kopieren"
 #: oleview.rc:54
 msgid "Copy &HTML object Tag to clipboard"
 msgstr "&HTML-object-Tag in Zwischenablage kopieren"
-
-#: oleview.rc:56
-msgid "&View..."
-msgstr "&Anzeigen..."
 
 #: oleview.rc:60
 msgid "&Expert mode"
