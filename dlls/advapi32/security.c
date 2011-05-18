@@ -5495,6 +5495,30 @@ DWORD WINAPI GetNamedSecurityInfoW( LPWSTR name, SE_OBJECT_TYPE type,
 }
 
 /******************************************************************************
+ * GetNamedSecurityInfoExW [ADVAPI32.@]
+ */
+DWORD WINAPI GetNamedSecurityInfoExW( LPCWSTR object, SE_OBJECT_TYPE type,
+    SECURITY_INFORMATION info, LPCWSTR provider, LPCWSTR property,
+    PACTRL_ACCESSW* access_list, PACTRL_AUDITW* audit_list, LPWSTR* owner, LPWSTR* group )
+{
+    FIXME("(%s, %d, %d, %s, %s, %p, %p, %p, %p) stub\n", debugstr_w(object), type, info,
+        debugstr_w(provider), debugstr_w(property), access_list, audit_list, owner, group);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * GetNamedSecurityInfoExA [ADVAPI32.@]
+ */
+DWORD WINAPI GetNamedSecurityInfoExA( LPCSTR object, SE_OBJECT_TYPE type,
+    SECURITY_INFORMATION info, LPCSTR provider, LPCSTR property,
+    PACTRL_ACCESSA* access_list, PACTRL_AUDITA* audit_list, LPSTR* owner, LPSTR* group )
+{
+    FIXME("(%s, %d, %d, %s, %s, %p, %p, %p, %p) stub\n", debugstr_a(object), type, info,
+        debugstr_a(provider), debugstr_a(property), access_list, audit_list, owner, group);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
  * DecryptFileW [ADVAPI32.@]
  */
 BOOL WINAPI DecryptFileW(LPCWSTR lpFileName, DWORD dwReserved)

@@ -260,8 +260,8 @@
 # @ stub GetMultipleTrusteeOperationW
 # @ stub GetMultipleTrusteeW
 @ stdcall GetNamedSecurityInfoA (str long long ptr ptr ptr ptr ptr)
-# @ stub GetNamedSecurityInfoExA
-# @ stub GetNamedSecurityInfoExW
+@ stdcall GetNamedSecurityInfoExA(str long long str str ptr ptr ptr ptr)
+@ stdcall GetNamedSecurityInfoExW(wstr long long wstr wstr ptr ptr ptr ptr)
 @ stdcall GetNamedSecurityInfoW (wstr long long ptr ptr ptr ptr ptr)
 @ stdcall GetNumberOfEventLogRecords (long ptr)
 @ stdcall GetOldestEventLogRecord (long ptr)
