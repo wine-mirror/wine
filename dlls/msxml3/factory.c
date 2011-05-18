@@ -54,17 +54,22 @@ typedef HRESULT (*DOMFactoryCreateInstanceFunc)(const GUID *clsid, IUnknown *pUn
  */
 typedef struct
 {
-    const struct IClassFactoryVtbl *lpVtbl;
+    IClassFactory IClassFactory_iface;
     ClassFactoryCreateInstanceFunc pCreateInstance;
 } ClassFactory;
 
 typedef struct
 {
-    const struct IClassFactoryVtbl *lpVtbl;
+    IClassFactory IClassFactory_iface;
     LONG ref;
     DOMFactoryCreateInstanceFunc pCreateInstance;
     GUID clsid;
 } DOMFactory;
+
+static inline ClassFactory *ClassFactory_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, ClassFactory, IClassFactory_iface);
+}
 
 static HRESULT WINAPI ClassFactory_QueryInterface(
     IClassFactory *iface,
@@ -100,7 +105,7 @@ static HRESULT WINAPI ClassFactory_CreateInstance(
     REFIID riid,
     void **ppobj )
 {
-    ClassFactory *This = (ClassFactory*)iface;
+    ClassFactory *This = ClassFactory_from_IClassFactory(iface);
     IUnknown *punk;
     HRESULT r;
 
@@ -128,9 +133,14 @@ static HRESULT WINAPI ClassFactory_LockServer(
     return S_OK;
 }
 
+static inline DOMFactory *DOMFactory_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, DOMFactory, IClassFactory_iface);
+}
+
 static ULONG WINAPI DOMClassFactory_AddRef(IClassFactory *iface )
 {
-    DOMFactory *This = (DOMFactory*)iface;
+    DOMFactory *This = DOMFactory_from_IClassFactory(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
     TRACE("(%p) ref = %u\n", This, ref);
     return ref;
@@ -138,7 +148,7 @@ static ULONG WINAPI DOMClassFactory_AddRef(IClassFactory *iface )
 
 static ULONG WINAPI DOMClassFactory_Release(IClassFactory *iface )
 {
-    DOMFactory *This = (DOMFactory*)iface;
+    DOMFactory *This = DOMFactory_from_IClassFactory(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
     TRACE("(%p) ref = %u\n", This, ref);
     if(!ref) {
@@ -153,7 +163,7 @@ static HRESULT WINAPI DOMClassFactory_CreateInstance(
     REFIID riid,
     void **ppobj )
 {
-    DOMFactory *This = (DOMFactory*)iface;
+    DOMFactory *This = DOMFactory_from_IClassFactory(iface);
     IUnknown *punk;
     HRESULT r;
 
@@ -196,12 +206,12 @@ static HRESULT DOMClassFactory_Create(const GUID *clsid, REFIID riid, void **ppv
     DOMFactory *ret = heap_alloc(sizeof(DOMFactory));
     HRESULT hres;
 
-    ret->lpVtbl = &DOMClassFactoryVtbl;
+    ret->IClassFactory_iface.lpVtbl = &DOMClassFactoryVtbl;
     ret->ref = 0;
     ret->clsid = *clsid;
     ret->pCreateInstance = fnCreateInstance;
 
-    hres = IClassFactory_QueryInterface((IClassFactory*)ret, riid, ppv);
+    hres = IClassFactory_QueryInterface(&ret->IClassFactory_iface, riid, ppv);
     if(FAILED(hres)) {
         heap_free(ret);
         *ppv = NULL;
@@ -209,11 +219,11 @@ static HRESULT DOMClassFactory_Create(const GUID *clsid, REFIID riid, void **ppv
     return hres;
 }
 
-static ClassFactory xmldoccf = { &ClassFactoryVtbl, XMLDocument_create };
-static ClassFactory saxreadcf = { &ClassFactoryVtbl, SAXXMLReader_create };
-static ClassFactory httpreqcf = { &ClassFactoryVtbl, XMLHTTPRequest_create };
-static ClassFactory xsltemplatecf = { &ClassFactoryVtbl, XSLTemplate_create };
-static ClassFactory mxwritercf = { &ClassFactoryVtbl, MXWriter_create };
+static ClassFactory xmldoccf = { { &ClassFactoryVtbl }, XMLDocument_create };
+static ClassFactory saxreadcf = { { &ClassFactoryVtbl }, SAXXMLReader_create };
+static ClassFactory httpreqcf = { { &ClassFactoryVtbl }, XMLHTTPRequest_create };
+static ClassFactory xsltemplatecf = { { &ClassFactoryVtbl }, XSLTemplate_create };
+static ClassFactory mxwritercf = { { &ClassFactoryVtbl }, MXWriter_create };
 
 /******************************************************************
  *		DllGetClassObject (MSXML3.@)
@@ -243,7 +253,7 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
     }
     else if( IsEqualCLSID( rclsid, &CLSID_XMLDocument ) )
     {
-        cf = (IClassFactory*) &xmldoccf.lpVtbl;
+        cf = &xmldoccf.IClassFactory_iface;
     }
     else if( IsEqualCLSID( rclsid, &CLSID_DOMFreeThreadedDocument )   ||   /* Version indep. v 2.x */
              IsEqualCLSID( rclsid, &CLSID_FreeThreadedDOMDocument )   ||
@@ -259,7 +269,7 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
              IsEqualCLSID( rclsid, &CLSID_SAXXMLReader40 ) ||
              IsEqualCLSID( rclsid, &CLSID_SAXXMLReader60 ))
     {
-        cf = (IClassFactory*) &saxreadcf.lpVtbl;
+        cf = &saxreadcf.IClassFactory_iface;
     }
     else if( IsEqualCLSID( rclsid, &CLSID_XMLHTTPRequest ) ||
              IsEqualCLSID( rclsid, &CLSID_XMLHTTP26 ) ||
@@ -267,7 +277,7 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
              IsEqualCLSID( rclsid, &CLSID_XMLHTTP40 ) ||
              IsEqualCLSID( rclsid, &CLSID_XMLHTTP60 ))
     {
-        cf = (IClassFactory*) &httpreqcf.lpVtbl;
+        cf = &httpreqcf.IClassFactory_iface;
     }
     else if( IsEqualCLSID( rclsid, &CLSID_XSLTemplate )   ||
              IsEqualCLSID( rclsid, &CLSID_XSLTemplate26 ) ||
@@ -275,14 +285,14 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
              IsEqualCLSID( rclsid, &CLSID_XSLTemplate40 ) ||
              IsEqualCLSID( rclsid, &CLSID_XSLTemplate60 ))
     {
-        cf = (IClassFactory*) &xsltemplatecf.lpVtbl;
+        cf = &xsltemplatecf.IClassFactory_iface;
     }
     else if( IsEqualCLSID( rclsid, &CLSID_MXXMLWriter )   ||
              IsEqualCLSID( rclsid, &CLSID_MXXMLWriter30 ) ||
              IsEqualCLSID( rclsid, &CLSID_MXXMLWriter40 ) ||
              IsEqualCLSID( rclsid, &CLSID_MXXMLWriter60 ) )
     {
-        cf = (IClassFactory*) &mxwritercf.lpVtbl;
+        cf = &mxwritercf.IClassFactory_iface;
     }
 
     if ( !cf )
