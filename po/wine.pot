@@ -8584,7 +8584,7 @@ msgid "&Copy...\tF8"
 msgstr ""
 
 #: progman.rc:35
-msgid "&Attributes...\tAlt+Enter"
+msgid "&Properties\tAlt+Enter"
 msgstr ""
 
 #: progman.rc:37
@@ -8592,7 +8592,7 @@ msgid "&Execute..."
 msgstr ""
 
 #: progman.rc:39
-msgid "E&xit Windows..."
+msgid "E&xit Windows"
 msgstr ""
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44

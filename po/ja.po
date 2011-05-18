@@ -9039,15 +9039,17 @@ msgid "&Copy...\tF8"
 msgstr "コピー(&C)...\tF8"
 
 #: progman.rc:35
-msgid "&Attributes...\tAlt+Enter"
-msgstr "属性(&A)...\tAlt+Enter"
+#, fuzzy
+msgid "&Properties\tAlt+Enter"
+msgstr "プロパティ(&I)\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
 msgstr "実行(&E)..."
 
 #: progman.rc:39
-msgid "E&xit Windows..."
+#, fuzzy
+msgid "E&xit Windows"
 msgstr "Windowsの終了(&X)..."
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44

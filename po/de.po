@@ -9302,7 +9302,8 @@ msgid "&Copy...\tF8"
 msgstr "&Kopieren...\tF8"
 
 #: progman.rc:35
-msgid "&Attributes...\tAlt+Enter"
+#, fuzzy
+msgid "&Properties\tAlt+Enter"
 msgstr "&Eigenschaften...\tAlt+Eingabetaste"
 
 #: progman.rc:37
@@ -9310,7 +9311,8 @@ msgid "&Execute..."
 msgstr "&Ausführen..."
 
 #: progman.rc:39
-msgid "E&xit Windows..."
+#, fuzzy
+msgid "E&xit Windows"
 msgstr "&Programm-Manager beenden..."
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44

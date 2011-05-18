@@ -32,11 +32,11 @@ MAIN_MENU MENU
    MENUITEM "&Move...\tF7",             PM_MOVE,      GRAYED
    MENUITEM "&Copy...\tF8",             PM_COPY,      GRAYED
    MENUITEM "&Delete\tDel",             PM_DELETE
-   MENUITEM "&Attributes...\tAlt+Enter",       PM_ATTRIBUTES
+   MENUITEM "&Properties\tAlt+Enter",   PM_ATTRIBUTES
    MENUITEM SEPARATOR
    MENUITEM "&Execute...",          PM_EXECUTE
    MENUITEM SEPARATOR
-   MENUITEM "E&xit Windows...",             PM_EXIT
+   MENUITEM "E&xit Windows",            PM_EXIT
  }
  POPUP "&Options" {
    MENUITEM "&Arrange automatically",  PM_AUTO_ARRANGE

@@ -9088,15 +9088,17 @@ msgid "&Copy...\tF8"
 msgstr "&Kopiraj ...\tF8"
 
 #: progman.rc:35
-msgid "&Attributes...\tAlt+Enter"
-msgstr "&Atributi ...\tAlt+Enter"
+#, fuzzy
+msgid "&Properties\tAlt+Enter"
+msgstr "&Lastnosti ...\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
 msgstr "Izv&edi ..."
 
 #: progman.rc:39
-msgid "E&xit Windows..."
+#, fuzzy
+msgid "E&xit Windows"
 msgstr "&Končaj Windows ..."
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44

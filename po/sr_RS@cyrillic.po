@@ -9040,16 +9040,18 @@ msgid "&Copy...\tF8"
 msgstr "&Умножи"
 
 #: progman.rc:35
-msgid "&Attributes...\tAlt+Enter"
-msgstr ""
+#, fuzzy
+msgid "&Properties\tAlt+Enter"
+msgstr "Својства"
 
 #: progman.rc:37
 msgid "&Execute..."
 msgstr ""
 
 #: progman.rc:39
-msgid "E&xit Windows..."
-msgstr ""
+#, fuzzy
+msgid "E&xit Windows"
+msgstr "&Прозор"
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 #, fuzzy

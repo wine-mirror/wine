@@ -8890,16 +8890,18 @@ msgid "&Copy...\tF8"
 msgstr ""
 
 #: progman.rc:35
-msgid "&Attributes...\tAlt+Enter"
-msgstr ""
+#, fuzzy
+msgid "&Properties\tAlt+Enter"
+msgstr "Ecoj"
 
 #: progman.rc:37
 msgid "&Execute..."
 msgstr ""
 
 #: progman.rc:39
-msgid "E&xit Windows..."
-msgstr ""
+#, fuzzy
+msgid "E&xit Windows"
+msgstr "&Aløustigu la fenestron"
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
