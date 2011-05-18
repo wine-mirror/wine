@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-05-03 21:49+0300\n"
+"PO-Revision-Date: 2011-05-19 22:50+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -6843,13 +6843,12 @@ msgid "&About Wine"
 msgstr "Apie &Wine"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl-F4"
-msgstr "&Užverti\tAlt-F4"
+msgstr "&Užverti\tVald-F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl-F6"
-msgstr ""
+msgstr "Ki&tas\tVald-F6"
 
 #: user32.rc:68 regedit.rc:176 winefile.rc:100
 msgid "Error"
@@ -8387,7 +8386,7 @@ msgstr ""
 
 #: cmd.rc:283
 msgid "Volume label (11 characters, ENTER for none)?"
-msgstr "Tomo vardas (11 simbolių, ENTER - bevardis)?"
+msgstr "Tomo vardas (11 simbolių, ĮVESTI – bevardis)?"
 
 #: cmd.rc:284
 msgid "PATH not found\n"
@@ -8774,9 +8773,8 @@ msgid "&View TypeLib..."
 msgstr "&Peržiūrėti TypeLib..."
 
 #: oleview.rc:32
-#, fuzzy
 msgid "&System Configuration"
-msgstr "&Sistemos konfigūracija..."
+msgstr "&Sistemos konfigūracija"
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
@@ -9049,7 +9047,7 @@ msgstr "&Nauja..."
 
 #: progman.rc:31
 msgid "O&pen\tEnter"
-msgstr "&Atverti\tEnter"
+msgstr "&Atverti\tĮvesti"
 
 #: progman.rc:32 winefile.rc:27
 msgid "&Move...\tF7"
@@ -9060,18 +9058,16 @@ msgid "&Copy...\tF8"
 msgstr "&Kopijuoti...\tF8"
 
 #: progman.rc:35
-#, fuzzy
 msgid "&Properties\tAlt+Enter"
-msgstr "Savy&bės\tAlt+Enter"
+msgstr "Savy&bės\tAlt+Įvesti"
 
 #: progman.rc:37
 msgid "&Execute..."
 msgstr "&Vykdyti..."
 
 #: progman.rc:39
-#, fuzzy
 msgid "E&xit Windows"
-msgstr "Iš&eiti..."
+msgstr "Iš&eiti"
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
@@ -10779,7 +10775,7 @@ msgstr "(nenustatytas)"
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
-msgstr "&Atverti\tEnter"
+msgstr "&Atverti\tĮvesti"
 
 #: winefile.rc:30
 msgid "Re&name..."
@@ -10787,7 +10783,7 @@ msgstr "Per&vadinti..."
 
 #: winefile.rc:31
 msgid "Propert&ies\tAlt+Enter"
-msgstr "Savy&bės\tAlt+Enter"
+msgstr "Savy&bės\tAlt+Įvesti"
 
 #: winefile.rc:33
 msgid "&Run..."
@@ -11339,7 +11335,7 @@ msgstr "Neteisingas parametras „%s“ - pagalba: xcopy /?\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
-msgstr "Spauskite <enter> kopijavimui pradėti\n"
+msgstr "Spauskite <įvesti> kopijavimui pradėti\n"
 
 #: xcopy.rc:30
 msgid "%d file(s) would be copied\n"
