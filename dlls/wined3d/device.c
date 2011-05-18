@@ -1212,7 +1212,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
 
     /* Setup the implicit swapchain. This also initializes a context. */
     TRACE("Creating implicit swapchain\n");
-    hr = IWineD3DDeviceParent_CreateSwapChain(device->device_parent,
+    hr = device->device_parent->ops->create_swapchain(device->device_parent,
             present_parameters, &swapchain);
     if (FAILED(hr))
     {
@@ -1356,7 +1356,7 @@ HRESULT CDECL wined3d_device_init_gdi(struct wined3d_device *device,
 
     /* Setup the implicit swapchain */
     TRACE("Creating implicit swapchain\n");
-    hr = IWineD3DDeviceParent_CreateSwapChain(device->device_parent,
+    hr = device->device_parent->ops->create_swapchain(device->device_parent,
             present_parameters, &swapchain);
     if (FAILED(hr))
     {
@@ -5694,7 +5694,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
         TRACE("Creating the depth stencil buffer\n");
 
-        hrc = IWineD3DDeviceParent_CreateDepthStencilSurface(device->device_parent,
+        hrc = device->device_parent->ops->create_depth_stencil(device->device_parent,
                 present_parameters->BackBufferWidth,
                 present_parameters->BackBufferHeight,
                 present_parameters->AutoDepthStencilFormat,
@@ -6103,7 +6103,7 @@ HRESULT CDECL wined3d_device_get_surface_from_dc(struct wined3d_device *device,
 
 HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
         UINT adapter_idx, WINED3DDEVTYPE device_type, HWND focus_window, DWORD flags,
-        IWineD3DDeviceParent *device_parent)
+        struct wined3d_device_parent *device_parent)
 {
     struct wined3d_adapter *adapter = &wined3d->adapters[adapter_idx];
     const struct fragment_pipeline *fragment_pipeline;

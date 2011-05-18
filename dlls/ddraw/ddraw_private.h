@@ -78,7 +78,7 @@ struct IDirectDrawImpl
     IDirect3D3 IDirect3D3_iface;
     IDirect3D2 IDirect3D2_iface;
     IDirect3D IDirect3D_iface;
-    const IWineD3DDeviceParentVtbl *device_parent_vtbl;
+    struct wined3d_device_parent device_parent;
 
     /* See comment in IDirectDraw::AddRef */
     LONG                    ref7, ref4, ref2, ref3, ref1, numIfaces;

@@ -58,3 +58,13 @@ interface IWineDXGIDevice : IDXGIDevice
         [out] struct wined3d_swapchain **wined3d_swapchain
     );
 }
+
+[
+    object,
+    local,
+    uuid(f2b918f3-603f-430a-9ccd-55872b6e85df)
+]
+interface IWineDXGIDeviceParent : IUnknown
+{
+    struct wined3d_device_parent *get_wined3d_device_parent();
+}

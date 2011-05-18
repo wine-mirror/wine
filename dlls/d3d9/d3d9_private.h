@@ -163,7 +163,7 @@ void filter_caps(D3DCAPS9* pCaps) DECLSPEC_HIDDEN;
 typedef struct IDirect3DDevice9Impl
 {
     IDirect3DDevice9Ex IDirect3DDevice9Ex_iface;
-    const IWineD3DDeviceParentVtbl *device_parent_vtbl;
+    struct wined3d_device_parent device_parent;
     LONG ref;
     struct wined3d_device *wined3d_device;
     /* Avoids recursion with nested ReleaseRef to 0 */

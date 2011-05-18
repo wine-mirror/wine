@@ -45,10 +45,10 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_inner_QueryInterface(IUnknown *ifa
         return S_OK;
     }
 
-    if (IsEqualGUID(riid, &IID_IWineD3DDeviceParent))
+    if (IsEqualGUID(riid, &IID_IWineDXGIDeviceParent))
     {
-        IUnknown_AddRef((IUnknown *)&This->device_parent_vtbl);
-        *object = &This->device_parent_vtbl;
+        IWineDXGIDeviceParent_AddRef(&This->IWineDXGIDeviceParent_iface);
+        *object = &This->IWineDXGIDeviceParent_iface;
         return S_OK;
     }
 
@@ -1285,56 +1285,77 @@ static const struct wined3d_parent_ops d3d10_subresource_parent_ops =
     d3d10_subresource_destroyed,
 };
 
-/* IWineD3DDeviceParent IUnknown methods */
+/* IWineDXGIDeviceParent IUnknown methods */
 
-static inline struct d3d10_device *device_from_device_parent(IWineD3DDeviceParent *iface)
+static inline struct d3d10_device *device_from_dxgi_device_parent(IWineDXGIDeviceParent *iface)
 {
-    return (struct d3d10_device *)((char*)iface - FIELD_OFFSET(struct d3d10_device, device_parent_vtbl));
+    return CONTAINING_RECORD(iface, struct d3d10_device, IWineDXGIDeviceParent_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE device_parent_QueryInterface(IWineD3DDeviceParent *iface, REFIID riid, void **object)
+static HRESULT STDMETHODCALLTYPE dxgi_device_parent_QueryInterface(IWineDXGIDeviceParent *iface,
+        REFIID riid, void **object)
 {
-    struct d3d10_device *This = device_from_device_parent(iface);
-    return d3d10_device_QueryInterface((ID3D10Device *)This, riid, object);
+    struct d3d10_device *device = device_from_dxgi_device_parent(iface);
+    return d3d10_device_QueryInterface((ID3D10Device *)device, riid, object);
 }
 
-static ULONG STDMETHODCALLTYPE device_parent_AddRef(IWineD3DDeviceParent *iface)
+static ULONG STDMETHODCALLTYPE dxgi_device_parent_AddRef(IWineDXGIDeviceParent *iface)
 {
-    struct d3d10_device *This = device_from_device_parent(iface);
-    return d3d10_device_AddRef((ID3D10Device *)This);
+    struct d3d10_device *device = device_from_dxgi_device_parent(iface);
+    return d3d10_device_AddRef((ID3D10Device *)device);
 }
 
-static ULONG STDMETHODCALLTYPE device_parent_Release(IWineD3DDeviceParent *iface)
+static ULONG STDMETHODCALLTYPE dxgi_device_parent_Release(IWineDXGIDeviceParent *iface)
 {
-    struct d3d10_device *This = device_from_device_parent(iface);
-    return d3d10_device_Release((ID3D10Device *)This);
+    struct d3d10_device *device = device_from_dxgi_device_parent(iface);
+    return d3d10_device_Release((ID3D10Device *)device);
 }
 
-/* IWineD3DDeviceParent methods */
-
-static void STDMETHODCALLTYPE device_parent_WineD3DDeviceCreated(IWineD3DDeviceParent *iface,
-        struct wined3d_device *device)
+static struct wined3d_device_parent * STDMETHODCALLTYPE dxgi_device_parent_get_wined3d_device_parent(
+        IWineDXGIDeviceParent *iface)
 {
-    struct d3d10_device *This = device_from_device_parent(iface);
-
-    TRACE("iface %p, device %p\n", iface, device);
-
-    wined3d_device_incref(device);
-    This->wined3d_device = device;
+    struct d3d10_device *device = device_from_dxgi_device_parent(iface);
+    return &device->device_parent;
 }
 
-static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParent *iface,
+static const struct IWineDXGIDeviceParentVtbl d3d10_dxgi_device_parent_vtbl =
+{
+    /* IUnknown methods */
+    dxgi_device_parent_QueryInterface,
+    dxgi_device_parent_AddRef,
+    dxgi_device_parent_Release,
+    /* IWineDXGIDeviceParent methods */
+    dxgi_device_parent_get_wined3d_device_parent,
+};
+
+static inline struct d3d10_device *device_from_wined3d_device_parent(struct wined3d_device_parent *device_parent)
+{
+    return CONTAINING_RECORD(device_parent, struct d3d10_device, device_parent);
+}
+
+static void CDECL device_parent_wined3d_device_created(struct wined3d_device_parent *device_parent,
+        struct wined3d_device *wined3d_device)
+{
+    struct d3d10_device *device = device_from_wined3d_device_parent(device_parent);
+
+    TRACE("device_parent %p, wined3d_device %p.\n", device_parent, wined3d_device);
+
+    wined3d_device_incref(wined3d_device);
+    device->wined3d_device = wined3d_device;
+}
+
+static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
         WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, struct wined3d_surface **surface)
 {
-    struct d3d10_device *This = device_from_device_parent(iface);
+    struct d3d10_device *device = device_from_wined3d_device_parent(device_parent);
     struct d3d10_texture2d *texture;
     D3D10_TEXTURE2D_DESC desc;
     HRESULT hr;
 
-    FIXME("iface %p, container_parent %p, width %u, height %u, format %#x, usage %#x,\n"
+    FIXME("device_parent %p, container_parent %p, width %u, height %u, format %#x, usage %#x,\n"
             "\tpool %#x, level %u, face %u, surface %p partial stub!\n",
-            iface, container_parent, width, height, format, usage, pool, level, face, surface);
+            device_parent, container_parent, width, height, format, usage, pool, level, face, surface);
 
     FIXME("Implement DXGI<->wined3d usage conversion\n");
 
@@ -1350,7 +1371,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
     desc.CPUAccessFlags = 0;
     desc.MiscFlags = 0;
 
-    hr = d3d10_device_CreateTexture2D((ID3D10Device *)This, &desc, NULL, (ID3D10Texture2D **)&texture);
+    hr = d3d10_device_CreateTexture2D((ID3D10Device *)device, &desc, NULL, (ID3D10Texture2D **)&texture);
     if (FAILED(hr))
     {
         ERR("CreateTexture2D failed, returning %#x\n", hr);
@@ -1364,19 +1385,20 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDeviceParent *iface,
+static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format,
         WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, BOOL lockable,
         struct wined3d_surface **surface)
 {
-    struct d3d10_device *This = device_from_device_parent(iface);
+    struct d3d10_device *device = device_from_wined3d_device_parent(device_parent);
     struct d3d10_texture2d *texture;
     D3D10_TEXTURE2D_DESC desc;
     HRESULT hr;
 
-    FIXME("iface %p, container_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
+    FIXME("device_parent %p, container_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
             "\tmultisample_quality %u, lockable %u, surface %p partial stub!\n",
-            iface, container_parent, width, height, format, multisample_type, multisample_quality, lockable, surface);
+            device_parent, container_parent, width, height, format, multisample_type,
+            multisample_quality, lockable, surface);
 
     FIXME("Implement DXGI<->wined3d usage conversion\n");
 
@@ -1392,7 +1414,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
     desc.CPUAccessFlags = 0;
     desc.MiscFlags = 0;
 
-    hr = d3d10_device_CreateTexture2D((ID3D10Device *)This, &desc, NULL, (ID3D10Texture2D **)&texture);
+    hr = d3d10_device_CreateTexture2D((ID3D10Device *)device, &desc, NULL, (ID3D10Texture2D **)&texture);
     if (FAILED(hr))
     {
         ERR("CreateTexture2D failed, returning %#x\n", hr);
@@ -1406,18 +1428,18 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3DDeviceParent *iface,
+static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_parent *device_parent,
         UINT width, UINT height, enum wined3d_format_id format, WINED3DMULTISAMPLE_TYPE multisample_type,
         DWORD multisample_quality, BOOL discard, struct wined3d_surface **surface)
 {
-    struct d3d10_device *This = device_from_device_parent(iface);
+    struct d3d10_device *device = device_from_wined3d_device_parent(device_parent);
     struct d3d10_texture2d *texture;
     D3D10_TEXTURE2D_DESC desc;
     HRESULT hr;
 
-    FIXME("iface %p, width %u, height %u, format %#x, multisample_type %#x,\n"
+    FIXME("device_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
             "\tmultisample_quality %u, discard %u, surface %p partial stub!\n",
-            iface, width, height, format, multisample_type, multisample_quality, discard, surface);
+            device_parent, width, height, format, multisample_type, multisample_quality, discard, surface);
 
     FIXME("Implement DXGI<->wined3d usage conversion\n");
 
@@ -1433,7 +1455,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
     desc.CPUAccessFlags = 0;
     desc.MiscFlags = 0;
 
-    hr = d3d10_device_CreateTexture2D((ID3D10Device *)This, &desc, NULL, (ID3D10Texture2D **)&texture);
+    hr = d3d10_device_CreateTexture2D((ID3D10Device *)device, &desc, NULL, (ID3D10Texture2D **)&texture);
     if (FAILED(hr))
     {
         ERR("CreateTexture2D failed, returning %#x\n", hr);
@@ -1447,16 +1469,18 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent *iface,
+static HRESULT CDECL device_parent_create_volume(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, UINT depth, enum wined3d_format_id format,
         WINED3DPOOL pool, DWORD usage, struct wined3d_volume **volume)
 {
     HRESULT hr;
 
-    TRACE("iface %p, container_parent %p, width %u, height %u, depth %u, format %#x, pool %#x, usage %#x, volume %p.\n",
-            iface, container_parent, width, height, depth, format, pool, usage, volume);
+    TRACE("device_parent %p, container_parent %p, width %u, height %u, depth %u, "
+            "format %#x, pool %#x, usage %#x, volume %p.\n",
+            device_parent, container_parent, width, height, depth,
+            format, pool, usage, volume);
 
-    hr = wined3d_volume_create(device_from_device_parent(iface)->wined3d_device,
+    hr = wined3d_volume_create(device_from_wined3d_device_parent(device_parent)->wined3d_device,
             width, height, depth, usage, format, pool, NULL, &d3d10_subresource_parent_ops, volume);
     if (FAILED(hr))
     {
@@ -1467,15 +1491,16 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDeviceParent *iface,
+static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent *device_parent,
         WINED3DPRESENT_PARAMETERS *present_parameters, struct wined3d_swapchain **swapchain)
 {
+    struct d3d10_device *device = device_from_wined3d_device_parent(device_parent);
     IWineDXGIDevice *wine_device;
     HRESULT hr;
 
-    TRACE("iface %p, present_parameters %p, swapchain %p\n", iface, present_parameters, swapchain);
+    TRACE("device_parent %p, present_parameters %p, swapchain %p\n", device_parent, present_parameters, swapchain);
 
-    hr = IWineD3DDeviceParent_QueryInterface(iface, &IID_IWineDXGIDevice, (void **)&wine_device);
+    hr = d3d10_device_QueryInterface((ID3D10Device *)device, &IID_IWineDXGIDevice, (void **)&wine_device);
     if (FAILED(hr))
     {
         ERR("Device should implement IWineDXGIDevice\n");
@@ -1493,26 +1518,22 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
     return S_OK;
 }
 
-static const struct IWineD3DDeviceParentVtbl d3d10_wined3d_device_parent_vtbl =
+static const struct wined3d_device_parent_ops d3d10_wined3d_device_parent_ops =
 {
-    /* IUnknown methods */
-    device_parent_QueryInterface,
-    device_parent_AddRef,
-    device_parent_Release,
-    /* IWineD3DDeviceParent methods */
-    device_parent_WineD3DDeviceCreated,
-    device_parent_CreateSurface,
-    device_parent_CreateRenderTarget,
-    device_parent_CreateDepthStencilSurface,
-    device_parent_CreateVolume,
-    device_parent_CreateSwapChain,
+    device_parent_wined3d_device_created,
+    device_parent_create_surface,
+    device_parent_create_rendertarget,
+    device_parent_create_depth_stencil,
+    device_parent_create_volume,
+    device_parent_create_swapchain,
 };
 
 void d3d10_device_init(struct d3d10_device *device, void *outer_unknown)
 {
     device->vtbl = &d3d10_device_vtbl;
     device->inner_unknown_vtbl = &d3d10_device_inner_unknown_vtbl;
-    device->device_parent_vtbl = &d3d10_wined3d_device_parent_vtbl;
+    device->IWineDXGIDeviceParent_iface.lpVtbl = &d3d10_dxgi_device_parent_vtbl;
+    device->device_parent.ops = &d3d10_wined3d_device_parent_ops;
     device->refcount = 1;
     device->outer_unknown = outer_unknown;
 }

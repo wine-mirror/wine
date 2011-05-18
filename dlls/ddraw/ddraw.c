@@ -221,11 +221,6 @@ static HRESULT WINAPI ddraw7_QueryInterface(IDirectDraw7 *iface, REFIID refiid, 
             TRACE(" returning Direct3D7 interface at %p.\n", *obj);
         }
     }
-    else if (IsEqualGUID(refiid, &IID_IWineD3DDeviceParent))
-    {
-        *obj = &This->device_parent_vtbl;
-    }
-
     /* Unknown interface */
     else
     {
@@ -5624,51 +5619,29 @@ struct wined3d_vertex_declaration *ddraw_find_decl(IDirectDrawImpl *This, DWORD 
     return pDecl;
 }
 
-/* IWineD3DDeviceParent IUnknown methods */
-
-static inline struct IDirectDrawImpl *ddraw_from_device_parent(IWineD3DDeviceParent *iface)
+static inline struct IDirectDrawImpl *ddraw_from_device_parent(struct wined3d_device_parent *device_parent)
 {
-    return (struct IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(struct IDirectDrawImpl, device_parent_vtbl));
+    return CONTAINING_RECORD(device_parent, struct IDirectDrawImpl, device_parent);
 }
 
-static HRESULT STDMETHODCALLTYPE device_parent_QueryInterface(IWineD3DDeviceParent *iface, REFIID riid, void **object)
-{
-    struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
-    return ddraw7_QueryInterface(&This->IDirectDraw7_iface, riid, object);
-}
-
-static ULONG STDMETHODCALLTYPE device_parent_AddRef(IWineD3DDeviceParent *iface)
-{
-    struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
-    return ddraw7_AddRef(&This->IDirectDraw7_iface);
-}
-
-static ULONG STDMETHODCALLTYPE device_parent_Release(IWineD3DDeviceParent *iface)
-{
-    struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
-    return ddraw7_Release(&This->IDirectDraw7_iface);
-}
-
-/* IWineD3DDeviceParent methods */
-
-static void STDMETHODCALLTYPE device_parent_WineD3DDeviceCreated(IWineD3DDeviceParent *iface,
+static void CDECL device_parent_wined3d_device_created(struct wined3d_device_parent *device_parent,
         struct wined3d_device *device)
 {
-    TRACE("iface %p, device %p\n", iface, device);
+    TRACE("device_parent %p, device %p.\n", device_parent, device);
 }
 
-static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParent *iface,
+static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
         WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, struct wined3d_surface **surface)
 {
-    struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
+    struct IDirectDrawImpl *ddraw = ddraw_from_device_parent(device_parent);
     IDirectDrawSurfaceImpl *surf = NULL;
     UINT i = 0;
-    DDSCAPS2 searchcaps = This->tex_root->surface_desc.ddsCaps;
+    DDSCAPS2 searchcaps = ddraw->tex_root->surface_desc.ddsCaps;
 
-    TRACE("iface %p, container_parent %p, width %u, height %u, format %#x, usage %#x,\n"
-            "\tpool %#x, level %u, face %u, surface %p\n",
-            iface, container_parent, width, height, format, usage, pool, level, face, surface);
+    TRACE("device_parent %p, container_parent %p, width %u, height %u, format %#x, usage %#x,\n"
+            "\tpool %#x, level %u, face %u, surface %p.\n",
+            device_parent, container_parent, width, height, format, usage, pool, level, face, surface);
 
     searchcaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_ALLFACES;
     switch(face)
@@ -5679,7 +5652,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
             {
                 searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEX;
             }
-            surf = This->tex_root; break;
+            surf = ddraw->tex_root; break;
         case WINED3DCUBEMAP_FACE_NEGATIVE_X:
             TRACE("Asked for negative x\n");
             searchcaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEX; break;
@@ -5701,7 +5674,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
     if (!surf)
     {
         IDirectDrawSurface7 *attached;
-        IDirectDrawSurface7_GetAttachedSurface((IDirectDrawSurface7 *)This->tex_root, &searchcaps, &attached);
+        IDirectDrawSurface7_GetAttachedSurface((IDirectDrawSurface7 *)ddraw->tex_root, &searchcaps, &attached);
         surf = (IDirectDrawSurfaceImpl *)attached;
         IDirectDrawSurface7_Release(attached);
     }
@@ -5748,18 +5721,19 @@ static HRESULT WINAPI findRenderTarget(IDirectDrawSurface7 *surface, DDSURFACEDE
     return DDENUMRET_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDeviceParent *iface,
+static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format,
         WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, BOOL lockable,
         struct wined3d_surface **surface)
 {
-    struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
-    IDirectDrawSurfaceImpl *d3d_surface = This->d3d_target;
+    struct IDirectDrawImpl *ddraw = ddraw_from_device_parent(device_parent);
+    IDirectDrawSurfaceImpl *d3d_surface = ddraw->d3d_target;
     IDirectDrawSurfaceImpl *target = NULL;
 
-    TRACE("iface %p, container_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
-            "\tmultisample_quality %u, lockable %u, surface %p\n",
-            iface, container_parent, width, height, format, multisample_type, multisample_quality, lockable, surface);
+    TRACE("device_parent %p, container_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
+            "\tmultisample_quality %u, lockable %u, surface %p.\n",
+            device_parent, container_parent, width, height, format, multisample_type,
+            multisample_quality, lockable, surface);
 
     if (d3d_surface->isRenderTarget)
     {
@@ -5772,8 +5746,8 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
 
     if (!target)
     {
-        target = This->d3d_target;
-        ERR(" (%p) : No DirectDrawSurface found to create the back buffer. Using the front buffer as back buffer. Uncertain consequences\n", This);
+        target = ddraw->d3d_target;
+        ERR(" (%p) : No DirectDrawSurface found to create the back buffer. Using the front buffer as back buffer. Uncertain consequences\n", ddraw);
     }
 
     /* TODO: Return failure if the dimensions do not match, but this shouldn't happen */
@@ -5787,18 +5761,18 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
     return D3D_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3DDeviceParent *iface,
+static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_parent *device_parent,
         UINT width, UINT height, enum wined3d_format_id format, WINED3DMULTISAMPLE_TYPE multisample_type,
         DWORD multisample_quality, BOOL discard, struct wined3d_surface **surface)
 {
-    struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
+    struct IDirectDrawImpl *ddraw = ddraw_from_device_parent(device_parent);
     IDirectDrawSurfaceImpl *ddraw_surface;
     DDSURFACEDESC2 ddsd;
     HRESULT hr;
 
-    TRACE("iface %p, width %u, height %u, format %#x, multisample_type %#x,\n"
-            "\tmultisample_quality %u, discard %u, surface %p\n",
-            iface, width, height, format, multisample_type, multisample_quality, discard, surface);
+    TRACE("device_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
+            "\tmultisample_quality %u, discard %u, surface %p.\n",
+            device_parent, width, height, format, multisample_type, multisample_quality, discard, surface);
 
     *surface = NULL;
 
@@ -5819,13 +5793,13 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
         ddsd.dwFlags ^= DDSD_PIXELFORMAT;
     }
 
-    This->depthstencil = TRUE;
-    hr = IDirectDraw7_CreateSurface(&This->IDirectDraw7_iface, &ddsd,
+    ddraw->depthstencil = TRUE;
+    hr = IDirectDraw7_CreateSurface(&ddraw->IDirectDraw7_iface, &ddsd,
             (IDirectDrawSurface7 **)&ddraw_surface, NULL);
-    This->depthstencil = FALSE;
-    if(FAILED(hr))
+    ddraw->depthstencil = FALSE;
+    if (FAILED(hr))
     {
-        ERR(" (%p) Creating a DepthStencil Surface failed, result = %x\n", This, hr);
+        WARN("Failed to create depth/stencil surface, hr %#x.\n", hr);
         return hr;
     }
 
@@ -5836,38 +5810,40 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
     return D3D_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent *iface,
+static HRESULT CDECL device_parent_create_volume(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, UINT depth, enum wined3d_format_id format,
         WINED3DPOOL pool, DWORD usage, struct wined3d_volume **volume)
 {
-    TRACE("iface %p, container_parent %p, width %u, height %u, depth %u, format %#x, pool %#x, usage %#x, volume %p\n",
-                iface, container_parent, width, height, depth, format, pool, usage, volume);
+    TRACE("device_parent %p, container_parent %p, width %u, height %u, depth %u, "
+            "format %#x, pool %#x, usage %#x, volume %p.\n",
+            device_parent, container_parent, width, height, depth,
+            format, pool, usage, volume);
 
     ERR("Not implemented!\n");
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDeviceParent *iface,
+static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent *device_parent,
         WINED3DPRESENT_PARAMETERS *present_parameters, struct wined3d_swapchain **swapchain)
 {
-    struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
+    struct IDirectDrawImpl *ddraw = ddraw_from_device_parent(device_parent);
     IDirectDrawSurfaceImpl *iterator;
     HRESULT hr;
 
-    TRACE("iface %p, present_parameters %p, swapchain %p\n", iface, present_parameters, swapchain);
+    TRACE("device_parent %p, present_parameters %p, swapchain %p.\n", device_parent, present_parameters, swapchain);
 
-    hr = wined3d_swapchain_create(This->wined3d_device, present_parameters,
-            This->ImplType, NULL, &ddraw_null_wined3d_parent_ops, swapchain);
+    hr = wined3d_swapchain_create(ddraw->wined3d_device, present_parameters,
+            ddraw->ImplType, NULL, &ddraw_null_wined3d_parent_ops, swapchain);
     if (FAILED(hr))
     {
-        FIXME("(%p) CreateSwapChain failed, returning %#x\n", iface, hr);
+        WARN("Failed to create swapchain, hr %#x.\n", hr);
         *swapchain = NULL;
         return hr;
     }
 
-    This->d3d_target->wined3d_swapchain = *swapchain;
-    iterator = This->d3d_target->complex_array[0];
+    ddraw->d3d_target->wined3d_swapchain = *swapchain;
+    iterator = ddraw->d3d_target->complex_array[0];
     while (iterator)
     {
         iterator->wined3d_swapchain = *swapchain;
@@ -5877,19 +5853,14 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
     return hr;
 }
 
-static const IWineD3DDeviceParentVtbl ddraw_wined3d_device_parent_vtbl =
+static const struct wined3d_device_parent_ops ddraw_wined3d_device_parent_ops =
 {
-    /* IUnknown methods */
-    device_parent_QueryInterface,
-    device_parent_AddRef,
-    device_parent_Release,
-    /* IWineD3DDeviceParent methods */
-    device_parent_WineD3DDeviceCreated,
-    device_parent_CreateSurface,
-    device_parent_CreateRenderTarget,
-    device_parent_CreateDepthStencilSurface,
-    device_parent_CreateVolume,
-    device_parent_CreateSwapChain,
+    device_parent_wined3d_device_created,
+    device_parent_create_surface,
+    device_parent_create_rendertarget,
+    device_parent_create_depth_stencil,
+    device_parent_create_volume,
+    device_parent_create_swapchain,
 };
 
 HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type)
@@ -5906,7 +5877,7 @@ HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type)
     ddraw->IDirect3D2_iface.lpVtbl = &d3d2_vtbl;
     ddraw->IDirect3D3_iface.lpVtbl = &d3d3_vtbl;
     ddraw->IDirect3D7_iface.lpVtbl = &d3d7_vtbl;
-    ddraw->device_parent_vtbl = &ddraw_wined3d_device_parent_vtbl;
+    ddraw->device_parent.ops = &ddraw_wined3d_device_parent_ops;
     ddraw->numIfaces = 1;
     ddraw->ref7 = 1;
 
@@ -5928,8 +5899,8 @@ HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type)
         return E_OUTOFMEMORY;
     }
 
-    hr = wined3d_device_create(ddraw->wineD3D, WINED3DADAPTER_DEFAULT, device_type, NULL, 0,
-            (IWineD3DDeviceParent *)&ddraw->device_parent_vtbl, &ddraw->wined3d_device);
+    hr = wined3d_device_create(ddraw->wineD3D, WINED3DADAPTER_DEFAULT, device_type,
+            NULL, 0, &ddraw->device_parent, &ddraw->wined3d_device);
     if (FAILED(hr))
     {
         WARN("Failed to create a wined3d device, hr %#x.\n", hr);

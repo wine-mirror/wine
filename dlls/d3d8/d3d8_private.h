@@ -175,7 +175,7 @@ struct IDirect3DDevice8Impl
 {
     /* IUnknown fields */
     IDirect3DDevice8        IDirect3DDevice8_iface;
-    IWineD3DDeviceParent    IWineD3DDeviceParent_iface;
+    struct wined3d_device_parent device_parent;
     LONG                    ref;
     struct wined3d_device *wined3d_device;
     struct                  d3d8_handle_table handle_table;

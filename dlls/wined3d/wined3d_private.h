@@ -1645,7 +1645,7 @@ struct wined3d_device
     LONG ref;
 
     /* WineD3D Information  */
-    IWineD3DDeviceParent   *device_parent;
+    struct wined3d_device_parent *device_parent;
     struct wined3d *wined3d;
     struct wined3d_adapter *adapter;
 
@@ -1774,7 +1774,7 @@ void device_context_remove(struct wined3d_device *device, struct wined3d_context
 void device_get_draw_rect(struct wined3d_device *device, RECT *rect) DECLSPEC_HIDDEN;
 HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
         UINT adapter_idx, WINED3DDEVTYPE device_type, HWND focus_window, DWORD flags,
-        IWineD3DDeviceParent *device_parent) DECLSPEC_HIDDEN;
+        struct wined3d_device_parent *device_parent) DECLSPEC_HIDDEN;
 void device_preload_textures(struct wined3d_device *device) DECLSPEC_HIDDEN;
 LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL unicode,
         UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc) DECLSPEC_HIDDEN;

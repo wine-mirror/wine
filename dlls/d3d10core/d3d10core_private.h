@@ -71,10 +71,11 @@ struct d3d10_device
 {
     const struct ID3D10DeviceVtbl *vtbl;
     const struct IUnknownVtbl *inner_unknown_vtbl;
-    const struct IWineD3DDeviceParentVtbl *device_parent_vtbl;
+    IWineDXGIDeviceParent IWineDXGIDeviceParent_iface;
     IUnknown *outer_unknown;
     LONG refcount;
 
+    struct wined3d_device_parent device_parent;
     struct wined3d_device *wined3d_device;
 };
 

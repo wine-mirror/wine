@@ -4850,7 +4850,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
 }
 
 HRESULT CDECL wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx, WINED3DDEVTYPE device_type,
-        HWND focus_window, DWORD flags, IWineD3DDeviceParent *device_parent, struct wined3d_device **device)
+        HWND focus_window, DWORD flags, struct wined3d_device_parent *device_parent, struct wined3d_device **device)
 {
     struct wined3d_device *object;
     HRESULT hr;
@@ -4881,7 +4881,7 @@ HRESULT CDECL wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx, W
     TRACE("Created device %p.\n", object);
     *device = object;
 
-    IWineD3DDeviceParent_WineD3DDeviceCreated(device_parent, *device);
+    device_parent->ops->wined3d_device_created(device_parent, *device);
 
     return WINED3D_OK;
 }

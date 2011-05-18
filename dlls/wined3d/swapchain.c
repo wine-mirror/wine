@@ -898,7 +898,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTY
     }
 
     TRACE("Creating front buffer.\n");
-    hr = IWineD3DDeviceParent_CreateRenderTarget(device->device_parent, parent,
+    hr = device->device_parent->ops->create_rendertarget(device->device_parent, parent,
             swapchain->presentParms.BackBufferWidth, swapchain->presentParms.BackBufferHeight,
             swapchain->presentParms.BackBufferFormat, swapchain->presentParms.MultiSampleType,
             swapchain->presentParms.MultiSampleQuality, TRUE /* Lockable */,
@@ -1009,7 +1009,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTY
         for (i = 0; i < swapchain->presentParms.BackBufferCount; ++i)
         {
             TRACE("Creating back buffer %u.\n", i);
-            hr = IWineD3DDeviceParent_CreateRenderTarget(device->device_parent, parent,
+            hr = device->device_parent->ops->create_rendertarget(device->device_parent, parent,
                     swapchain->presentParms.BackBufferWidth, swapchain->presentParms.BackBufferHeight,
                     swapchain->presentParms.BackBufferFormat, swapchain->presentParms.MultiSampleType,
                     swapchain->presentParms.MultiSampleQuality, TRUE /* Lockable */,
@@ -1030,7 +1030,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTY
         TRACE("Creating depth/stencil buffer.\n");
         if (!device->auto_depth_stencil)
         {
-            hr = IWineD3DDeviceParent_CreateDepthStencilSurface(device->device_parent,
+            hr = device->device_parent->ops->create_depth_stencil(device->device_parent,
                     swapchain->presentParms.BackBufferWidth, swapchain->presentParms.BackBufferHeight,
                     swapchain->presentParms.AutoDepthStencilFormat, swapchain->presentParms.MultiSampleType,
                     swapchain->presentParms.MultiSampleQuality, FALSE /* FIXME: Discard */,

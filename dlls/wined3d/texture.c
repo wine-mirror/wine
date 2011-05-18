@@ -895,7 +895,7 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_lengt
             UINT idx = j * texture->level_count + i;
             struct wined3d_surface *surface;
 
-            hr = IWineD3DDeviceParent_CreateSurface(device->device_parent, parent, tmp_w, tmp_w,
+            hr = device->device_parent->ops->create_surface(device->device_parent, parent, tmp_w, tmp_w,
                     format_id, usage, pool, i /* Level */, j, &surface);
             if (FAILED(hr))
             {
@@ -1051,7 +1051,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT he
         struct wined3d_surface *surface;
 
         /* Use the callback to create the texture surface. */
-        hr = IWineD3DDeviceParent_CreateSurface(device->device_parent, parent, tmp_w, tmp_h,
+        hr = device->device_parent->ops->create_surface(device->device_parent, parent, tmp_w, tmp_h,
                 format->id, usage, pool, i, 0, &surface);
         if (FAILED(hr))
         {
@@ -1259,7 +1259,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, UINT width, U
         struct wined3d_volume *volume;
 
         /* Create the volume. */
-        hr = IWineD3DDeviceParent_CreateVolume(device->device_parent, parent,
+        hr = device->device_parent->ops->create_volume(device->device_parent, parent,
                 tmp_w, tmp_h, tmp_d, format_id, pool, usage, &volume);
         if (FAILED(hr))
         {
