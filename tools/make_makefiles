@@ -163,7 +163,6 @@ my %private_idl_headers = (
     "vmrender.idl" => 1,
     "xmldom.idl" => 1,
     "xmldso.idl" => 1,
-    "wine/wined3d.idl" => 1,
     "wine/winedxgi.idl" => 1,
 );
 

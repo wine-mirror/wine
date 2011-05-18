@@ -1,5 +1,4 @@
 PRIVATE_IDL_H_SRCS = \
-	wine/wined3d.idl \
 	wine/winedxgi.idl
 
 PUBLIC_IDL_H_SRCS = \

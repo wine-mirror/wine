@@ -240,7 +240,6 @@ include/wia_xp.h
 include/wincodec.h
 include/wine/itss.h
 include/wine/svcctl.h
-include/wine/wined3d.h
 include/wine/winedxgi.h
 include/winsxs.h
 include/wtypes.h

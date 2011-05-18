@@ -23,71 +23,47 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-import "unknwn.idl";
+#ifndef __WINE_WINED3D_H
+#define __WINE_WINED3D_H
 
-cpp_quote("#if 0")
-typedef HANDLE HMONITOR;
+#define WINED3D_OK                                              S_OK
 
-typedef struct _RGNDATAHEADER
-{
-    DWORD dwSize;
-    DWORD iType;
-    DWORD nCount;
-    DWORD nRgnSize;
-    RECT rcBound;
-} RGNDATAHEADER;
+#define _FACWINED3D                                             0x876
+#define MAKE_WINED3DSTATUS(code)                                MAKE_HRESULT(0, _FACWINED3D, code)
+#define WINED3DOK_NOAUTOGEN                                     MAKE_WINED3DSTATUS(2159)
 
-typedef struct _RGNDATA
-{
-    RGNDATAHEADER rdh;
-    char Buffer[1];
-} RGNDATA;
-
-typedef struct _LUID
-{
-    DWORD LowPart;
-    LONG HighPart;
-} LUID, *PLUID;
-cpp_quote("#endif")
-
-cpp_quote("#define WINED3D_OK                                  S_OK")
-
-const UINT _FACWINED3D = 0x876;
-cpp_quote("#define MAKE_WINED3DSTATUS(code)                    MAKE_HRESULT(0, _FACWINED3D, code)")
-cpp_quote("#define WINED3DOK_NOAUTOGEN                         MAKE_WINED3DSTATUS(2159)")
-
-cpp_quote("#define MAKE_WINED3DHRESULT(code)                   MAKE_HRESULT(1, _FACWINED3D, code)")
-cpp_quote("#define WINED3DERR_WRONGTEXTUREFORMAT               MAKE_WINED3DHRESULT(2072)")
-cpp_quote("#define WINED3DERR_UNSUPPORTEDCOLOROPERATION        MAKE_WINED3DHRESULT(2073)")
-cpp_quote("#define WINED3DERR_UNSUPPORTEDCOLORARG              MAKE_WINED3DHRESULT(2074)")
-cpp_quote("#define WINED3DERR_UNSUPPORTEDALPHAOPERATION        MAKE_WINED3DHRESULT(2075)")
-cpp_quote("#define WINED3DERR_UNSUPPORTEDALPHAARG              MAKE_WINED3DHRESULT(2076)")
-cpp_quote("#define WINED3DERR_TOOMANYOPERATIONS                MAKE_WINED3DHRESULT(2077)")
-cpp_quote("#define WINED3DERR_CONFLICTINGTEXTUREFILTER         MAKE_WINED3DHRESULT(2078)")
-cpp_quote("#define WINED3DERR_UNSUPPORTEDFACTORVALUE           MAKE_WINED3DHRESULT(2079)")
-cpp_quote("#define WINED3DERR_CONFLICTINGRENDERSTATE           MAKE_WINED3DHRESULT(2081)")
-cpp_quote("#define WINED3DERR_UNSUPPORTEDTEXTUREFILTER         MAKE_WINED3DHRESULT(2082)")
-cpp_quote("#define WINED3DERR_CONFLICTINGTEXTUREPALETTE        MAKE_WINED3DHRESULT(2086)")
-cpp_quote("#define WINED3DERR_DRIVERINTERNALERROR              MAKE_WINED3DHRESULT(2087)")
-cpp_quote("#define WINED3DERR_NOTFOUND                         MAKE_WINED3DHRESULT(2150)")
-cpp_quote("#define WINED3DERR_MOREDATA                         MAKE_WINED3DHRESULT(2151)")
-cpp_quote("#define WINED3DERR_DEVICELOST                       MAKE_WINED3DHRESULT(2152)")
-cpp_quote("#define WINED3DERR_DEVICENOTRESET                   MAKE_WINED3DHRESULT(2153)")
-cpp_quote("#define WINED3DERR_NOTAVAILABLE                     MAKE_WINED3DHRESULT(2154)")
-cpp_quote("#define WINED3DERR_OUTOFVIDEOMEMORY                 MAKE_WINED3DHRESULT(380)")
-cpp_quote("#define WINED3DERR_INVALIDDEVICE                    MAKE_WINED3DHRESULT(2155)")
-cpp_quote("#define WINED3DERR_INVALIDCALL                      MAKE_WINED3DHRESULT(2156)")
-cpp_quote("#define WINED3DERR_DRIVERINVALIDCALL                MAKE_WINED3DHRESULT(2157)")
-cpp_quote("#define WINED3DERR_WASSTILLDRAWING                  MAKE_WINED3DHRESULT(540)")
-cpp_quote("#define WINEDDERR_NOTAOVERLAYSURFACE                MAKE_WINED3DHRESULT(580)")
-cpp_quote("#define WINEDDERR_NOTLOCKED                         MAKE_WINED3DHRESULT(584)")
-cpp_quote("#define WINEDDERR_NODC                              MAKE_WINED3DHRESULT(586)")
-cpp_quote("#define WINEDDERR_DCALREADYCREATED                  MAKE_WINED3DHRESULT(620)")
-cpp_quote("#define WINEDDERR_NOTFLIPPABLE                      MAKE_WINED3DHRESULT(582)")
-cpp_quote("#define WINEDDERR_SURFACEBUSY                       MAKE_WINED3DHRESULT(430)")
-cpp_quote("#define WINEDDERR_INVALIDRECT                       MAKE_WINED3DHRESULT(150)")
-cpp_quote("#define WINEDDERR_NOCLIPLIST                        MAKE_WINED3DHRESULT(205)")
-cpp_quote("#define WINEDDERR_OVERLAYNOTVISIBLE                 MAKE_WINED3DHRESULT(577)")
+#define MAKE_WINED3DHRESULT(code)                               MAKE_HRESULT(1, _FACWINED3D, code)
+#define WINED3DERR_WRONGTEXTUREFORMAT                           MAKE_WINED3DHRESULT(2072)
+#define WINED3DERR_UNSUPPORTEDCOLOROPERATION                    MAKE_WINED3DHRESULT(2073)
+#define WINED3DERR_UNSUPPORTEDCOLORARG                          MAKE_WINED3DHRESULT(2074)
+#define WINED3DERR_UNSUPPORTEDALPHAOPERATION                    MAKE_WINED3DHRESULT(2075)
+#define WINED3DERR_UNSUPPORTEDALPHAARG                          MAKE_WINED3DHRESULT(2076)
+#define WINED3DERR_TOOMANYOPERATIONS                            MAKE_WINED3DHRESULT(2077)
+#define WINED3DERR_CONFLICTINGTEXTUREFILTER                     MAKE_WINED3DHRESULT(2078)
+#define WINED3DERR_UNSUPPORTEDFACTORVALUE                       MAKE_WINED3DHRESULT(2079)
+#define WINED3DERR_CONFLICTINGRENDERSTATE                       MAKE_WINED3DHRESULT(2081)
+#define WINED3DERR_UNSUPPORTEDTEXTUREFILTER                     MAKE_WINED3DHRESULT(2082)
+#define WINED3DERR_CONFLICTINGTEXTUREPALETTE                    MAKE_WINED3DHRESULT(2086)
+#define WINED3DERR_DRIVERINTERNALERROR                          MAKE_WINED3DHRESULT(2087)
+#define WINED3DERR_NOTFOUND                                     MAKE_WINED3DHRESULT(2150)
+#define WINED3DERR_MOREDATA                                     MAKE_WINED3DHRESULT(2151)
+#define WINED3DERR_DEVICELOST                                   MAKE_WINED3DHRESULT(2152)
+#define WINED3DERR_DEVICENOTRESET                               MAKE_WINED3DHRESULT(2153)
+#define WINED3DERR_NOTAVAILABLE                                 MAKE_WINED3DHRESULT(2154)
+#define WINED3DERR_OUTOFVIDEOMEMORY                             MAKE_WINED3DHRESULT(380)
+#define WINED3DERR_INVALIDDEVICE                                MAKE_WINED3DHRESULT(2155)
+#define WINED3DERR_INVALIDCALL                                  MAKE_WINED3DHRESULT(2156)
+#define WINED3DERR_DRIVERINVALIDCALL                            MAKE_WINED3DHRESULT(2157)
+#define WINED3DERR_WASSTILLDRAWING                              MAKE_WINED3DHRESULT(540)
+#define WINEDDERR_NOTAOVERLAYSURFACE                            MAKE_WINED3DHRESULT(580)
+#define WINEDDERR_NOTLOCKED                                     MAKE_WINED3DHRESULT(584)
+#define WINEDDERR_NODC                                          MAKE_WINED3DHRESULT(586)
+#define WINEDDERR_DCALREADYCREATED                              MAKE_WINED3DHRESULT(620)
+#define WINEDDERR_NOTFLIPPABLE                                  MAKE_WINED3DHRESULT(582)
+#define WINEDDERR_SURFACEBUSY                                   MAKE_WINED3DHRESULT(430)
+#define WINEDDERR_INVALIDRECT                                   MAKE_WINED3DHRESULT(150)
+#define WINEDDERR_NOCLIPLIST                                    MAKE_WINED3DHRESULT(205)
+#define WINEDDERR_OVERLAYNOTVISIBLE                             MAKE_WINED3DHRESULT(577)
 
 typedef DWORD WINED3DCOLOR;
 
@@ -136,8 +112,8 @@ typedef enum _WINED3DDEGREETYPE
 } WINED3DDEGREETYPE;
 
 #define WINEMAKEFOURCC(ch0, ch1, ch2, ch3) \
-        ((unsigned long)(unsigned char)(ch0) | ((unsigned long)(unsigned char)(ch1) << 8) | \
-        ((unsigned long)(unsigned char)(ch2) << 16) | ((unsigned long)(unsigned char)(ch3) << 24))
+        ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
+        ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
 
 enum wined3d_format_id
 {
@@ -410,7 +386,7 @@ typedef enum _WINED3DRENDERSTATETYPE
     WINED3DRS_BLENDOPALPHA                  = 209,
     WINED3DRS_FORCE_DWORD                   = 0x7fffffff
 } WINED3DRENDERSTATETYPE;
-const UINT WINEHIGHEST_RENDER_STATE         = WINED3DRS_BLENDOPALPHA;
+#define WINEHIGHEST_RENDER_STATE                                WINED3DRS_BLENDOPALPHA
 
 typedef enum _WINED3DBLEND
 {
@@ -568,7 +544,7 @@ typedef enum _WINED3DSAMPLERSTATETYPE
     WINED3DSAMP_DMAPOFFSET                  = 13,
     WINED3DSAMP_FORCE_DWORD                 = 0x7fffffff,
 } WINED3DSAMPLERSTATETYPE;
-const UINT WINED3D_HIGHEST_SAMPLER_STATE    = WINED3DSAMP_DMAPOFFSET;
+#define WINED3D_HIGHEST_SAMPLER_STATE                           WINED3DSAMP_DMAPOFFSET
 
 typedef enum _WINED3DMULTISAMPLE_TYPE
 {
@@ -614,7 +590,7 @@ typedef enum _WINED3DTEXTURESTAGESTATETYPE
     WINED3DTSS_CONSTANT                     = 17,
     WINED3DTSS_FORCE_DWORD                  = 0x7fffffff
 } WINED3DTEXTURESTAGESTATETYPE;
-const UINT WINED3D_HIGHEST_TEXTURE_STATE    = WINED3DTSS_CONSTANT;
+#define WINED3D_HIGHEST_TEXTURE_STATE                           WINED3DTSS_CONSTANT
 
 typedef enum _WINED3DTEXTURETRANSFORMFLAGS
 {
@@ -686,7 +662,8 @@ typedef enum _WINED3DTRANSFORMSTATETYPE
     WINED3DTS_WORLD3                        = 259,
     WINED3DTS_FORCE_DWORD                   = 0x7fffffff
 } WINED3DTRANSFORMSTATETYPE;
-cpp_quote("#define WINED3DTS_WORLDMATRIX(index) (WINED3DTRANSFORMSTATETYPE)(index + 256)")
+
+#define WINED3DTS_WORLDMATRIX(index)                            (WINED3DTRANSFORMSTATETYPE)(index + 256)
 
 typedef enum _WINED3DBASISTYPE
 {
@@ -730,7 +707,7 @@ typedef enum _WINED3DRESOURCETYPE
     WINED3DRTYPE_BUFFER                     = 6,
     WINED3DRTYPE_FORCE_DWORD                = 0x7fffffff
 } WINED3DRESOURCETYPE;
-const UINT WINED3DRTYPECOUNT                = WINED3DRTYPE_BUFFER + 1;
+#define WINED3DRTYPECOUNT                                       WINED3DRTYPE_BUFFER
 
 typedef enum _WINED3DPOOL
 {
@@ -759,9 +736,9 @@ typedef enum _WINED3DQUERYTYPE
     WINED3DQUERYTYPE_CACHEUTILIZATION       = 18
 } WINED3DQUERYTYPE;
 
-const UINT WINED3DISSUE_BEGIN               = (1 << 1);
-const UINT WINED3DISSUE_END                 = (1 << 0);
-const UINT WINED3DGETDATA_FLUSH             = (1 << 0);
+#define WINED3DISSUE_BEGIN                                      (1 << 1)
+#define WINED3DISSUE_END                                        (1 << 0)
+#define WINED3DGETDATA_FLUSH                                    (1 << 0)
 
 typedef enum _WINED3DSTATEBLOCKTYPE
 {
@@ -822,720 +799,720 @@ enum wined3d_sysval_semantic
     WINED3D_SV_TARGET7 = 7,
 };
 
-const UINT WINED3DCOLORWRITEENABLE_RED                          = (1<<0);
-const UINT WINED3DCOLORWRITEENABLE_GREEN                        = (1<<1);
-const UINT WINED3DCOLORWRITEENABLE_BLUE                         = (1<<2);
-const UINT WINED3DCOLORWRITEENABLE_ALPHA                        = (1<<3);
+#define WINED3DCOLORWRITEENABLE_RED                             (1 << 0)
+#define WINED3DCOLORWRITEENABLE_GREEN                           (1 << 1)
+#define WINED3DCOLORWRITEENABLE_BLUE                            (1 << 2)
+#define WINED3DCOLORWRITEENABLE_ALPHA                           (1 << 3)
 
-const UINT WINED3DADAPTER_DEFAULT                               = 0;
-const UINT WINED3DENUM_NO_WHQL_LEVEL                            = 2;
-const UINT WINED3DPRESENT_BACK_BUFFER_MAX                       = 3;
+#define WINED3DADAPTER_DEFAULT                                  0
+#define WINED3DENUM_NO_WHQL_LEVEL                               2
+#define WINED3DPRESENT_BACK_BUFFER_MAX                          3
 
-const UINT WINED3DTSS_TCI_PASSTHRU                              = 0x00000;
-const UINT WINED3DTSS_TCI_CAMERASPACENORMAL                     = 0x10000;
-const UINT WINED3DTSS_TCI_CAMERASPACEPOSITION                   = 0x20000;
-const UINT WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR           = 0x30000;
-const UINT WINED3DTSS_TCI_SPHEREMAP                             = 0x40000;
+#define WINED3DTSS_TCI_PASSTHRU                                 0x00000
+#define WINED3DTSS_TCI_CAMERASPACENORMAL                        0x10000
+#define WINED3DTSS_TCI_CAMERASPACEPOSITION                      0x20000
+#define WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR              0x30000
+#define WINED3DTSS_TCI_SPHEREMAP                                0x40000
 
-const UINT WINED3DTA_SELECTMASK                                 = 0x0000000f;
-const UINT WINED3DTA_DIFFUSE                                    = 0x00000000;
-const UINT WINED3DTA_CURRENT                                    = 0x00000001;
-const UINT WINED3DTA_TEXTURE                                    = 0x00000002;
-const UINT WINED3DTA_TFACTOR                                    = 0x00000003;
-const UINT WINED3DTA_SPECULAR                                   = 0x00000004;
-const UINT WINED3DTA_TEMP                                       = 0x00000005;
-const UINT WINED3DTA_CONSTANT                                   = 0x00000006;
-const UINT WINED3DTA_COMPLEMENT                                 = 0x00000010;
-const UINT WINED3DTA_ALPHAREPLICATE                             = 0x00000020;
+#define WINED3DTA_SELECTMASK                                    0x0000000f
+#define WINED3DTA_DIFFUSE                                       0x00000000
+#define WINED3DTA_CURRENT                                       0x00000001
+#define WINED3DTA_TEXTURE                                       0x00000002
+#define WINED3DTA_TFACTOR                                       0x00000003
+#define WINED3DTA_SPECULAR                                      0x00000004
+#define WINED3DTA_TEMP                                          0x00000005
+#define WINED3DTA_CONSTANT                                      0x00000006
+#define WINED3DTA_COMPLEMENT                                    0x00000010
+#define WINED3DTA_ALPHAREPLICATE                                0x00000020
 
-const UINT WINED3DPRESENTFLAG_LOCKABLE_BACKBUFFER               = 0x00000001;
-const UINT WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL              = 0x00000002;
-const UINT WINED3DPRESENTFLAG_DEVICECLIP                        = 0x00000004;
-const UINT WINED3DPRESENTFLAG_VIDEO                             = 0x00000010;
-const UINT WINED3DPRESENTFLAG_NOAUTOROTATE                      = 0x00000020;
-const UINT WINED3DPRESENTFLAG_UNPRUNEDMODE                      = 0x00000040;
+#define WINED3DPRESENTFLAG_LOCKABLE_BACKBUFFER                  0x00000001
+#define WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL                 0x00000002
+#define WINED3DPRESENTFLAG_DEVICECLIP                           0x00000004
+#define WINED3DPRESENTFLAG_VIDEO                                0x00000010
+#define WINED3DPRESENTFLAG_NOAUTOROTATE                         0x00000020
+#define WINED3DPRESENTFLAG_UNPRUNEDMODE                         0x00000040
 
-const UINT WINED3DDP_MAXTEXCOORD                                = 8;
+#define WINED3DDP_MAXTEXCOORD                                   8
 
-const UINT WINED3DUSAGE_RENDERTARGET                            = 0x00000001;
-const UINT WINED3DUSAGE_DEPTHSTENCIL                            = 0x00000002;
-const UINT WINED3DUSAGE_WRITEONLY                               = 0x00000008;
-const UINT WINED3DUSAGE_SOFTWAREPROCESSING                      = 0x00000010;
-const UINT WINED3DUSAGE_DONOTCLIP                               = 0x00000020;
-const UINT WINED3DUSAGE_POINTS                                  = 0x00000040;
-const UINT WINED3DUSAGE_RTPATCHES                               = 0x00000080;
-const UINT WINED3DUSAGE_NPATCHES                                = 0x00000100;
-const UINT WINED3DUSAGE_DYNAMIC                                 = 0x00000200;
-const UINT WINED3DUSAGE_AUTOGENMIPMAP                           = 0x00000400;
-const UINT WINED3DUSAGE_DMAP                                    = 0x00004000;
-const UINT WINED3DUSAGE_MASK                                    = 0x00004fff;
-const UINT WINED3DUSAGE_STATICDECL                              = 0x40000000;
-const UINT WINED3DUSAGE_OVERLAY                                 = 0x80000000;
+#define WINED3DUSAGE_RENDERTARGET                               0x00000001
+#define WINED3DUSAGE_DEPTHSTENCIL                               0x00000002
+#define WINED3DUSAGE_WRITEONLY                                  0x00000008
+#define WINED3DUSAGE_SOFTWAREPROCESSING                         0x00000010
+#define WINED3DUSAGE_DONOTCLIP                                  0x00000020
+#define WINED3DUSAGE_POINTS                                     0x00000040
+#define WINED3DUSAGE_RTPATCHES                                  0x00000080
+#define WINED3DUSAGE_NPATCHES                                   0x00000100
+#define WINED3DUSAGE_DYNAMIC                                    0x00000200
+#define WINED3DUSAGE_AUTOGENMIPMAP                              0x00000400
+#define WINED3DUSAGE_DMAP                                       0x00004000
+#define WINED3DUSAGE_MASK                                       0x00004fff
+#define WINED3DUSAGE_STATICDECL                                 0x40000000
+#define WINED3DUSAGE_OVERLAY                                    0x80000000
 
-const UINT WINED3DUSAGE_QUERY_LEGACYBUMPMAP                     = 0x00008000;
-const UINT WINED3DUSAGE_QUERY_FILTER                            = 0x00020000;
-const UINT WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING          = 0x00080000;
-const UINT WINED3DUSAGE_QUERY_SRGBREAD                          = 0x00010000;
-const UINT WINED3DUSAGE_QUERY_SRGBWRITE                         = 0x00040000;
-const UINT WINED3DUSAGE_QUERY_VERTEXTEXTURE                     = 0x00100000;
-const UINT WINED3DUSAGE_QUERY_WRAPANDMIP                        = 0x00200000;
-const UINT WINED3DUSAGE_QUERY_MASK                              = 0x003f8000;
+#define WINED3DUSAGE_QUERY_LEGACYBUMPMAP                        0x00008000
+#define WINED3DUSAGE_QUERY_FILTER                               0x00020000
+#define WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING             0x00080000
+#define WINED3DUSAGE_QUERY_SRGBREAD                             0x00010000
+#define WINED3DUSAGE_QUERY_SRGBWRITE                            0x00040000
+#define WINED3DUSAGE_QUERY_VERTEXTEXTURE                        0x00100000
+#define WINED3DUSAGE_QUERY_WRAPANDMIP                           0x00200000
+#define WINED3DUSAGE_QUERY_MASK                                 0x003f8000
 
-const UINT WINED3DLOCK_READONLY                                 = 0x0010;
-const UINT WINED3DLOCK_NOSYSLOCK                                = 0x0800;
-const UINT WINED3DLOCK_NOOVERWRITE                              = 0x1000;
-const UINT WINED3DLOCK_DISCARD                                  = 0x2000;
-const UINT WINED3DLOCK_DONOTWAIT                                = 0x4000;
-const UINT WINED3DLOCK_NO_DIRTY_UPDATE                          = 0x8000;
+#define WINED3DLOCK_READONLY                                    0x0010
+#define WINED3DLOCK_NOSYSLOCK                                   0x0800
+#define WINED3DLOCK_NOOVERWRITE                                 0x1000
+#define WINED3DLOCK_DISCARD                                     0x2000
+#define WINED3DLOCK_DONOTWAIT                                   0x4000
+#define WINED3DLOCK_NO_DIRTY_UPDATE                             0x8000
 
-const UINT WINED3DPRESENT_RATE_DEFAULT                          = 0x000000000;
+#define WINED3DPRESENT_RATE_DEFAULT                             0x00000000
 
-const UINT WINED3DPRESENT_INTERVAL_DEFAULT                      = 0x00000000;
-const UINT WINED3DPRESENT_INTERVAL_ONE                          = 0x00000001;
-const UINT WINED3DPRESENT_INTERVAL_TWO                          = 0x00000002;
-const UINT WINED3DPRESENT_INTERVAL_THREE                        = 0x00000004;
-const UINT WINED3DPRESENT_INTERVAL_FOUR                         = 0x00000008;
-const UINT WINED3DPRESENT_INTERVAL_IMMEDIATE                    = 0x80000000;
+#define WINED3DPRESENT_INTERVAL_DEFAULT                         0x00000000
+#define WINED3DPRESENT_INTERVAL_ONE                             0x00000001
+#define WINED3DPRESENT_INTERVAL_TWO                             0x00000002
+#define WINED3DPRESENT_INTERVAL_THREE                           0x00000004
+#define WINED3DPRESENT_INTERVAL_FOUR                            0x00000008
+#define WINED3DPRESENT_INTERVAL_IMMEDIATE                       0x80000000
 
-const UINT WINED3DMAXUSERCLIPPLANES                             = 32;
-const UINT WINED3DCLIPPLANE0                                    = (1 << 0);
-const UINT WINED3DCLIPPLANE1                                    = (1 << 1);
-const UINT WINED3DCLIPPLANE2                                    = (1 << 2);
-const UINT WINED3DCLIPPLANE3                                    = (1 << 3);
-const UINT WINED3DCLIPPLANE4                                    = (1 << 4);
-const UINT WINED3DCLIPPLANE5                                    = (1 << 5);
+#define WINED3DMAXUSERCLIPPLANES                                32
+#define WINED3DCLIPPLANE0                                       (1 << 0)
+#define WINED3DCLIPPLANE1                                       (1 << 1)
+#define WINED3DCLIPPLANE2                                       (1 << 2)
+#define WINED3DCLIPPLANE3                                       (1 << 3)
+#define WINED3DCLIPPLANE4                                       (1 << 4)
+#define WINED3DCLIPPLANE5                                       (1 << 5)
 
 /* FVF (Flexible Vertex Format) codes */
-const UINT WINED3DFVF_RESERVED0                                 = 0x0001;
-const UINT WINED3DFVF_POSITION_MASK                             = 0x400e;
-const UINT WINED3DFVF_XYZ                                       = 0x0002;
-const UINT WINED3DFVF_XYZRHW                                    = 0x0004;
-const UINT WINED3DFVF_XYZB1                                     = 0x0006;
-const UINT WINED3DFVF_XYZB2                                     = 0x0008;
-const UINT WINED3DFVF_XYZB3                                     = 0x000a;
-const UINT WINED3DFVF_XYZB4                                     = 0x000c;
-const UINT WINED3DFVF_XYZB5                                     = 0x000e;
-const UINT WINED3DFVF_XYZW                                      = 0x4002;
-const UINT WINED3DFVF_NORMAL                                    = 0x0010;
-const UINT WINED3DFVF_PSIZE                                     = 0x0020;
-const UINT WINED3DFVF_DIFFUSE                                   = 0x0040;
-const UINT WINED3DFVF_SPECULAR                                  = 0x0080;
-const UINT WINED3DFVF_TEXCOUNT_MASK                             = 0x0f00;
-const UINT WINED3DFVF_TEXCOUNT_SHIFT                            = 8;
-const UINT WINED3DFVF_TEX0                                      = 0x0000;
-const UINT WINED3DFVF_TEX1                                      = 0x0100;
-const UINT WINED3DFVF_TEX2                                      = 0x0200;
-const UINT WINED3DFVF_TEX3                                      = 0x0300;
-const UINT WINED3DFVF_TEX4                                      = 0x0400;
-const UINT WINED3DFVF_TEX5                                      = 0x0500;
-const UINT WINED3DFVF_TEX6                                      = 0x0600;
-const UINT WINED3DFVF_TEX7                                      = 0x0700;
-const UINT WINED3DFVF_TEX8                                      = 0x0800;
-const UINT WINED3DFVF_LASTBETA_UBYTE4                           = 0x1000;
-const UINT WINED3DFVF_LASTBETA_D3DCOLOR                         = 0x8000;
-const UINT WINED3DFVF_RESERVED2                                 = 0x6000;
+#define WINED3DFVF_RESERVED0                                    0x0001
+#define WINED3DFVF_POSITION_MASK                                0x400e
+#define WINED3DFVF_XYZ                                          0x0002
+#define WINED3DFVF_XYZRHW                                       0x0004
+#define WINED3DFVF_XYZB1                                        0x0006
+#define WINED3DFVF_XYZB2                                        0x0008
+#define WINED3DFVF_XYZB3                                        0x000a
+#define WINED3DFVF_XYZB4                                        0x000c
+#define WINED3DFVF_XYZB5                                        0x000e
+#define WINED3DFVF_XYZW                                         0x4002
+#define WINED3DFVF_NORMAL                                       0x0010
+#define WINED3DFVF_PSIZE                                        0x0020
+#define WINED3DFVF_DIFFUSE                                      0x0040
+#define WINED3DFVF_SPECULAR                                     0x0080
+#define WINED3DFVF_TEXCOUNT_MASK                                0x0f00
+#define WINED3DFVF_TEXCOUNT_SHIFT                               8
+#define WINED3DFVF_TEX0                                         0x0000
+#define WINED3DFVF_TEX1                                         0x0100
+#define WINED3DFVF_TEX2                                         0x0200
+#define WINED3DFVF_TEX3                                         0x0300
+#define WINED3DFVF_TEX4                                         0x0400
+#define WINED3DFVF_TEX5                                         0x0500
+#define WINED3DFVF_TEX6                                         0x0600
+#define WINED3DFVF_TEX7                                         0x0700
+#define WINED3DFVF_TEX8                                         0x0800
+#define WINED3DFVF_LASTBETA_UBYTE4                              0x1000
+#define WINED3DFVF_LASTBETA_D3DCOLOR                            0x8000
+#define WINED3DFVF_RESERVED2                                    0x6000
 
-const UINT WINED3DFVF_TEXTUREFORMAT1                            = 3;
-const UINT WINED3DFVF_TEXTUREFORMAT2                            = 0;
-const UINT WINED3DFVF_TEXTUREFORMAT3                            = 1;
-const UINT WINED3DFVF_TEXTUREFORMAT4                            = 2;
-cpp_quote("#define WINED3DFVF_TEXCOORDSIZE1(CoordIndex) (WINED3DFVF_TEXTUREFORMAT1 << (CoordIndex*2 + 16))")
-cpp_quote("#define WINED3DFVF_TEXCOORDSIZE2(CoordIndex) (WINED3DFVF_TEXTUREFORMAT2)")
-cpp_quote("#define WINED3DFVF_TEXCOORDSIZE3(CoordIndex) (WINED3DFVF_TEXTUREFORMAT3 << (CoordIndex*2 + 16))")
-cpp_quote("#define WINED3DFVF_TEXCOORDSIZE4(CoordIndex) (WINED3DFVF_TEXTUREFORMAT4 << (CoordIndex*2 + 16))")
+#define WINED3DFVF_TEXTUREFORMAT1                               3
+#define WINED3DFVF_TEXTUREFORMAT2                               0
+#define WINED3DFVF_TEXTUREFORMAT3                               1
+#define WINED3DFVF_TEXTUREFORMAT4                               2
+#define WINED3DFVF_TEXCOORDSIZE1(idx)                           (WINED3DFVF_TEXTUREFORMAT1 << (idx * 2 + 16))
+#define WINED3DFVF_TEXCOORDSIZE2(idx)                           (WINED3DFVF_TEXTUREFORMAT2 << (idx * 2 + 16))
+#define WINED3DFVF_TEXCOORDSIZE3(idx)                           (WINED3DFVF_TEXTUREFORMAT3 << (idx * 2 + 16))
+#define WINED3DFVF_TEXCOORDSIZE4(idx)                           (WINED3DFVF_TEXTUREFORMAT4 << (idx * 2 + 16))
 
 /* Clear flags */
-const UINT WINED3DCLEAR_TARGET                                  = 0x00000001;
-const UINT WINED3DCLEAR_ZBUFFER                                 = 0x00000002;
-const UINT WINED3DCLEAR_STENCIL                                 = 0x00000004;
+#define WINED3DCLEAR_TARGET                                     0x00000001
+#define WINED3DCLEAR_ZBUFFER                                    0x00000002
+#define WINED3DCLEAR_STENCIL                                    0x00000004
 
 /* Stream source flags */
-const UINT WINED3DSTREAMSOURCE_INDEXEDDATA                      = (1 << 30);
-const UINT WINED3DSTREAMSOURCE_INSTANCEDATA                     = (2 << 30);
+#define WINED3DSTREAMSOURCE_INDEXEDDATA                         (1 << 30)
+#define WINED3DSTREAMSOURCE_INSTANCEDATA                        (2 << 30)
 
 /* SetPrivateData flags */
-const UINT WINED3DSPD_IUNKNOWN                                  = 0x00000001;
+#define WINED3DSPD_IUNKNOWN                                     0x00000001
 
 /* IWineD3D::CreateDevice behaviour flags */
-const UINT WINED3DCREATE_FPU_PRESERVE                           = 0x00000002;
-const UINT WINED3DCREATE_PUREDEVICE                             = 0x00000010;
-const UINT WINED3DCREATE_SOFTWARE_VERTEXPROCESSING              = 0x00000020;
-const UINT WINED3DCREATE_HARDWARE_VERTEXPROCESSING              = 0x00000040;
-const UINT WINED3DCREATE_MIXED_VERTEXPROCESSING                 = 0x00000080;
-const UINT WINED3DCREATE_DISABLE_DRIVER_MANAGEMENT              = 0x00000100;
-const UINT WINED3DCREATE_ADAPTERGROUP_DEVICE                    = 0x00000200;
+#define WINED3DCREATE_FPU_PRESERVE                              0x00000002
+#define WINED3DCREATE_PUREDEVICE                                0x00000010
+#define WINED3DCREATE_SOFTWARE_VERTEXPROCESSING                 0x00000020
+#define WINED3DCREATE_HARDWARE_VERTEXPROCESSING                 0x00000040
+#define WINED3DCREATE_MIXED_VERTEXPROCESSING                    0x00000080
+#define WINED3DCREATE_DISABLE_DRIVER_MANAGEMENT                 0x00000100
+#define WINED3DCREATE_ADAPTERGROUP_DEVICE                       0x00000200
 
 /* VTF defines */
-const UINT WINED3DDMAPSAMPLER                                   = 0x100;
-const UINT WINED3DVERTEXTEXTURESAMPLER0                         = (WINED3DDMAPSAMPLER + 1);
-const UINT WINED3DVERTEXTEXTURESAMPLER1                         = (WINED3DDMAPSAMPLER + 2);
-const UINT WINED3DVERTEXTEXTURESAMPLER2                         = (WINED3DDMAPSAMPLER + 3);
-const UINT WINED3DVERTEXTEXTURESAMPLER3                         = (WINED3DDMAPSAMPLER + 4);
+#define WINED3DDMAPSAMPLER                                      0x100
+#define WINED3DVERTEXTEXTURESAMPLER0                            (WINED3DDMAPSAMPLER + 1)
+#define WINED3DVERTEXTEXTURESAMPLER1                            (WINED3DDMAPSAMPLER + 2)
+#define WINED3DVERTEXTEXTURESAMPLER2                            (WINED3DDMAPSAMPLER + 3)
+#define WINED3DVERTEXTEXTURESAMPLER3                            (WINED3DDMAPSAMPLER + 4)
 
-const UINT WINED3DCAPS3_ALPHA_FULLSCREEN_FLIP_OR_DISCARD        = 0x00000020;
-const UINT WINED3DCAPS3_LINEAR_TO_SRGB_PRESENTATION             = 0x00000080;
-const UINT WINED3DCAPS3_COPY_TO_VIDMEM                          = 0x00000100;
-const UINT WINED3DCAPS3_COPY_TO_SYSTEMMEM                       = 0x00000200;
-const UINT WINED3DCAPS3_RESERVED                                = 0x8000001f;
+#define WINED3DCAPS3_ALPHA_FULLSCREEN_FLIP_OR_DISCARD           0x00000020
+#define WINED3DCAPS3_LINEAR_TO_SRGB_PRESENTATION                0x00000080
+#define WINED3DCAPS3_COPY_TO_VIDMEM                             0x00000100
+#define WINED3DCAPS3_COPY_TO_SYSTEMMEM                          0x00000200
+#define WINED3DCAPS3_RESERVED                                   0x8000001f
 
-const UINT WINED3DDEVCAPS2_STREAMOFFSET                         = 0x00000001;
-const UINT WINED3DDEVCAPS2_DMAPNPATCH                           = 0x00000002;
-const UINT WINED3DDEVCAPS2_ADAPTIVETESSRTPATCH                  = 0x00000004;
-const UINT WINED3DDEVCAPS2_ADAPTIVETESSNPATCH                   = 0x00000008;
-const UINT WINED3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES        = 0x00000010;
-const UINT WINED3DDEVCAPS2_PRESAMPLEDDMAPNPATCH                 = 0x00000020;
-const UINT WINED3DDEVCAPS2_VERTEXELEMENTSCANSHARESTREAMOFFSET   = 0x00000040;
+#define WINED3DDEVCAPS2_STREAMOFFSET                            0x00000001
+#define WINED3DDEVCAPS2_DMAPNPATCH                              0x00000002
+#define WINED3DDEVCAPS2_ADAPTIVETESSRTPATCH                     0x00000004
+#define WINED3DDEVCAPS2_ADAPTIVETESSNPATCH                      0x00000008
+#define WINED3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES           0x00000010
+#define WINED3DDEVCAPS2_PRESAMPLEDDMAPNPATCH                    0x00000020
+#define WINED3DDEVCAPS2_VERTEXELEMENTSCANSHARESTREAMOFFSET      0x00000040
 
-const UINT WINED3DDTCAPS_UBYTE4                                 = 0x00000001;
-const UINT WINED3DDTCAPS_UBYTE4N                                = 0x00000002;
-const UINT WINED3DDTCAPS_SHORT2N                                = 0x00000004;
-const UINT WINED3DDTCAPS_SHORT4N                                = 0x00000008;
-const UINT WINED3DDTCAPS_USHORT2N                               = 0x00000010;
-const UINT WINED3DDTCAPS_USHORT4N                               = 0x00000020;
-const UINT WINED3DDTCAPS_UDEC3                                  = 0x00000040;
-const UINT WINED3DDTCAPS_DEC3N                                  = 0x00000080;
-const UINT WINED3DDTCAPS_FLOAT16_2                              = 0x00000100;
-const UINT WINED3DDTCAPS_FLOAT16_4                              = 0x00000200;
+#define WINED3DDTCAPS_UBYTE4                                    0x00000001
+#define WINED3DDTCAPS_UBYTE4N                                   0x00000002
+#define WINED3DDTCAPS_SHORT2N                                   0x00000004
+#define WINED3DDTCAPS_SHORT4N                                   0x00000008
+#define WINED3DDTCAPS_USHORT2N                                  0x00000010
+#define WINED3DDTCAPS_USHORT4N                                  0x00000020
+#define WINED3DDTCAPS_UDEC3                                     0x00000040
+#define WINED3DDTCAPS_DEC3N                                     0x00000080
+#define WINED3DDTCAPS_FLOAT16_2                                 0x00000100
+#define WINED3DDTCAPS_FLOAT16_4                                 0x00000200
 
-const UINT WINED3DFVFCAPS_TEXCOORDCOUNTMASK                     = 0x0000ffff;
-const UINT WINED3DFVFCAPS_DONOTSTRIPELEMENTS                    = 0x00080000;
-const UINT WINED3DFVFCAPS_PSIZE                                 = 0x00100000;
+#define WINED3DFVFCAPS_TEXCOORDCOUNTMASK                        0x0000ffff
+#define WINED3DFVFCAPS_DONOTSTRIPELEMENTS                       0x00080000
+#define WINED3DFVFCAPS_PSIZE                                    0x00100000
 
-const UINT WINED3DLINECAPS_TEXTURE                              = 0x00000001;
-const UINT WINED3DLINECAPS_ZTEST                                = 0x00000002;
-const UINT WINED3DLINECAPS_BLEND                                = 0x00000004;
-const UINT WINED3DLINECAPS_ALPHACMP                             = 0x00000008;
-const UINT WINED3DLINECAPS_FOG                                  = 0x00000010;
-const UINT WINED3DLINECAPS_ANTIALIAS                            = 0x00000020;
+#define WINED3DLINECAPS_TEXTURE                                 0x00000001
+#define WINED3DLINECAPS_ZTEST                                   0x00000002
+#define WINED3DLINECAPS_BLEND                                   0x00000004
+#define WINED3DLINECAPS_ALPHACMP                                0x00000008
+#define WINED3DLINECAPS_FOG                                     0x00000010
+#define WINED3DLINECAPS_ANTIALIAS                               0x00000020
 
-const UINT WINED3DMAX30SHADERINSTRUCTIONS                       = 32768;
-const UINT WINED3DMIN30SHADERINSTRUCTIONS                       = 512;
+#define WINED3DMAX30SHADERINSTRUCTIONS                          32768
+#define WINED3DMIN30SHADERINSTRUCTIONS                          512
 
-const UINT WINED3DPBLENDCAPS_ZERO                               = 0x00000001;
-const UINT WINED3DPBLENDCAPS_ONE                                = 0x00000002;
-const UINT WINED3DPBLENDCAPS_SRCCOLOR                           = 0x00000004;
-const UINT WINED3DPBLENDCAPS_INVSRCCOLOR                        = 0x00000008;
-const UINT WINED3DPBLENDCAPS_SRCALPHA                           = 0x00000010;
-const UINT WINED3DPBLENDCAPS_INVSRCALPHA                        = 0x00000020;
-const UINT WINED3DPBLENDCAPS_DESTALPHA                          = 0x00000040;
-const UINT WINED3DPBLENDCAPS_INVDESTALPHA                       = 0x00000080;
-const UINT WINED3DPBLENDCAPS_DESTCOLOR                          = 0x00000100;
-const UINT WINED3DPBLENDCAPS_INVDESTCOLOR                       = 0x00000200;
-const UINT WINED3DPBLENDCAPS_SRCALPHASAT                        = 0x00000400;
-const UINT WINED3DPBLENDCAPS_BOTHSRCALPHA                       = 0x00000800;
-const UINT WINED3DPBLENDCAPS_BOTHINVSRCALPHA                    = 0x00001000;
-const UINT WINED3DPBLENDCAPS_BLENDFACTOR                        = 0x00002000;
+#define WINED3DPBLENDCAPS_ZERO                                  0x00000001
+#define WINED3DPBLENDCAPS_ONE                                   0x00000002
+#define WINED3DPBLENDCAPS_SRCCOLOR                              0x00000004
+#define WINED3DPBLENDCAPS_INVSRCCOLOR                           0x00000008
+#define WINED3DPBLENDCAPS_SRCALPHA                              0x00000010
+#define WINED3DPBLENDCAPS_INVSRCALPHA                           0x00000020
+#define WINED3DPBLENDCAPS_DESTALPHA                             0x00000040
+#define WINED3DPBLENDCAPS_INVDESTALPHA                          0x00000080
+#define WINED3DPBLENDCAPS_DESTCOLOR                             0x00000100
+#define WINED3DPBLENDCAPS_INVDESTCOLOR                          0x00000200
+#define WINED3DPBLENDCAPS_SRCALPHASAT                           0x00000400
+#define WINED3DPBLENDCAPS_BOTHSRCALPHA                          0x00000800
+#define WINED3DPBLENDCAPS_BOTHINVSRCALPHA                       0x00001000
+#define WINED3DPBLENDCAPS_BLENDFACTOR                           0x00002000
 
-const UINT WINED3DPCMPCAPS_NEVER                                = 0x00000001;
-const UINT WINED3DPCMPCAPS_LESS                                 = 0x00000002;
-const UINT WINED3DPCMPCAPS_EQUAL                                = 0x00000004;
-const UINT WINED3DPCMPCAPS_LESSEQUAL                            = 0x00000008;
-const UINT WINED3DPCMPCAPS_GREATER                              = 0x00000010;
-const UINT WINED3DPCMPCAPS_NOTEQUAL                             = 0x00000020;
-const UINT WINED3DPCMPCAPS_GREATEREQUAL                         = 0x00000040;
-const UINT WINED3DPCMPCAPS_ALWAYS                               = 0x00000080;
+#define WINED3DPCMPCAPS_NEVER                                   0x00000001
+#define WINED3DPCMPCAPS_LESS                                    0x00000002
+#define WINED3DPCMPCAPS_EQUAL                                   0x00000004
+#define WINED3DPCMPCAPS_LESSEQUAL                               0x00000008
+#define WINED3DPCMPCAPS_GREATER                                 0x00000010
+#define WINED3DPCMPCAPS_NOTEQUAL                                0x00000020
+#define WINED3DPCMPCAPS_GREATEREQUAL                            0x00000040
+#define WINED3DPCMPCAPS_ALWAYS                                  0x00000080
 
-const UINT WINED3DPMISCCAPS_MASKZ                               = 0x00000002;
-const UINT WINED3DPMISCCAPS_LINEPATTERNREP                      = 0x00000004;
-const UINT WINED3DPMISCCAPS_CULLNONE                            = 0x00000010;
-const UINT WINED3DPMISCCAPS_CULLCW                              = 0x00000020;
-const UINT WINED3DPMISCCAPS_CULLCCW                             = 0x00000040;
-const UINT WINED3DPMISCCAPS_COLORWRITEENABLE                    = 0x00000080;
-const UINT WINED3DPMISCCAPS_CLIPPLANESCALEDPOINTS               = 0x00000100;
-const UINT WINED3DPMISCCAPS_CLIPTLVERTS                         = 0x00000200;
-const UINT WINED3DPMISCCAPS_TSSARGTEMP                          = 0x00000400;
-const UINT WINED3DPMISCCAPS_BLENDOP                             = 0x00000800;
-const UINT WINED3DPMISCCAPS_NULLREFERENCE                       = 0x00001000;
-const UINT WINED3DPMISCCAPS_INDEPENDENTWRITEMASKS               = 0x00004000;
-const UINT WINED3DPMISCCAPS_PERSTAGECONSTANT                    = 0x00008000;
-const UINT WINED3DPMISCCAPS_FOGANDSPECULARALPHA                 = 0x00010000;
-const UINT WINED3DPMISCCAPS_SEPARATEALPHABLEND                  = 0x00020000;
-const UINT WINED3DPMISCCAPS_MRTINDEPENDENTBITDEPTHS             = 0x00040000;
-const UINT WINED3DPMISCCAPS_MRTPOSTPIXELSHADERBLENDING          = 0x00080000;
-const UINT WINED3DPMISCCAPS_FOGVERTEXCLAMPED                    = 0x00100000;
+#define WINED3DPMISCCAPS_MASKZ                                  0x00000002
+#define WINED3DPMISCCAPS_LINEPATTERNREP                         0x00000004
+#define WINED3DPMISCCAPS_CULLNONE                               0x00000010
+#define WINED3DPMISCCAPS_CULLCW                                 0x00000020
+#define WINED3DPMISCCAPS_CULLCCW                                0x00000040
+#define WINED3DPMISCCAPS_COLORWRITEENABLE                       0x00000080
+#define WINED3DPMISCCAPS_CLIPPLANESCALEDPOINTS                  0x00000100
+#define WINED3DPMISCCAPS_CLIPTLVERTS                            0x00000200
+#define WINED3DPMISCCAPS_TSSARGTEMP                             0x00000400
+#define WINED3DPMISCCAPS_BLENDOP                                0x00000800
+#define WINED3DPMISCCAPS_NULLREFERENCE                          0x00001000
+#define WINED3DPMISCCAPS_INDEPENDENTWRITEMASKS                  0x00004000
+#define WINED3DPMISCCAPS_PERSTAGECONSTANT                       0x00008000
+#define WINED3DPMISCCAPS_FOGANDSPECULARALPHA                    0x00010000
+#define WINED3DPMISCCAPS_SEPARATEALPHABLEND                     0x00020000
+#define WINED3DPMISCCAPS_MRTINDEPENDENTBITDEPTHS                0x00040000
+#define WINED3DPMISCCAPS_MRTPOSTPIXELSHADERBLENDING             0x00080000
+#define WINED3DPMISCCAPS_FOGVERTEXCLAMPED                       0x00100000
 
-const UINT WINED3DPS20_MAX_DYNAMICFLOWCONTROLDEPTH              = 24;
-const UINT WINED3DPS20_MIN_DYNAMICFLOWCONTROLDEPTH              = 0;
-const UINT WINED3DPS20_MAX_NUMTEMPS                             = 32;
-const UINT WINED3DPS20_MIN_NUMTEMPS                             = 12;
-const UINT WINED3DPS20_MAX_STATICFLOWCONTROLDEPTH               = 4;
-const UINT WINED3DPS20_MIN_STATICFLOWCONTROLDEPTH               = 0;
-const UINT WINED3DPS20_MAX_NUMINSTRUCTIONSLOTS                  = 512;
-const UINT WINED3DPS20_MIN_NUMINSTRUCTIONSLOTS                  = 96;
+#define WINED3DPS20_MAX_DYNAMICFLOWCONTROLDEPTH                 24
+#define WINED3DPS20_MIN_DYNAMICFLOWCONTROLDEPTH                 0
+#define WINED3DPS20_MAX_NUMTEMPS                                32
+#define WINED3DPS20_MIN_NUMTEMPS                                12
+#define WINED3DPS20_MAX_STATICFLOWCONTROLDEPTH                  4
+#define WINED3DPS20_MIN_STATICFLOWCONTROLDEPTH                  0
+#define WINED3DPS20_MAX_NUMINSTRUCTIONSLOTS                     512
+#define WINED3DPS20_MIN_NUMINSTRUCTIONSLOTS                     96
 
-const UINT WINED3DPS20CAPS_ARBITRARYSWIZZLE                     = 0x00000001;
-const UINT WINED3DPS20CAPS_GRADIENTINSTRUCTIONS                 = 0x00000002;
-const UINT WINED3DPS20CAPS_PREDICATION                          = 0x00000004;
-const UINT WINED3DPS20CAPS_NODEPENDENTREADLIMIT                 = 0x00000008;
-const UINT WINED3DPS20CAPS_NOTEXINSTRUCTIONLIMIT                = 0x00000010;
+#define WINED3DPS20CAPS_ARBITRARYSWIZZLE                        0x00000001
+#define WINED3DPS20CAPS_GRADIENTINSTRUCTIONS                    0x00000002
+#define WINED3DPS20CAPS_PREDICATION                             0x00000004
+#define WINED3DPS20CAPS_NODEPENDENTREADLIMIT                    0x00000008
+#define WINED3DPS20CAPS_NOTEXINSTRUCTIONLIMIT                   0x00000010
 
-const UINT WINED3DPTADDRESSCAPS_WRAP                            = 0x00000001;
-const UINT WINED3DPTADDRESSCAPS_MIRROR                          = 0x00000002;
-const UINT WINED3DPTADDRESSCAPS_CLAMP                           = 0x00000004;
-const UINT WINED3DPTADDRESSCAPS_BORDER                          = 0x00000008;
-const UINT WINED3DPTADDRESSCAPS_INDEPENDENTUV                   = 0x00000010;
-const UINT WINED3DPTADDRESSCAPS_MIRRORONCE                      = 0x00000020;
+#define WINED3DPTADDRESSCAPS_WRAP                               0x00000001
+#define WINED3DPTADDRESSCAPS_MIRROR                             0x00000002
+#define WINED3DPTADDRESSCAPS_CLAMP                              0x00000004
+#define WINED3DPTADDRESSCAPS_BORDER                             0x00000008
+#define WINED3DPTADDRESSCAPS_INDEPENDENTUV                      0x00000010
+#define WINED3DPTADDRESSCAPS_MIRRORONCE                         0x00000020
 
-const UINT WINED3DSTENCILCAPS_KEEP                              = 0x00000001;
-const UINT WINED3DSTENCILCAPS_ZERO                              = 0x00000002;
-const UINT WINED3DSTENCILCAPS_REPLACE                           = 0x00000004;
-const UINT WINED3DSTENCILCAPS_INCRSAT                           = 0x00000008;
-const UINT WINED3DSTENCILCAPS_DECRSAT                           = 0x00000010;
-const UINT WINED3DSTENCILCAPS_INVERT                            = 0x00000020;
-const UINT WINED3DSTENCILCAPS_INCR                              = 0x00000040;
-const UINT WINED3DSTENCILCAPS_DECR                              = 0x00000080;
-const UINT WINED3DSTENCILCAPS_TWOSIDED                          = 0x00000100;
+#define WINED3DSTENCILCAPS_KEEP                                 0x00000001
+#define WINED3DSTENCILCAPS_ZERO                                 0x00000002
+#define WINED3DSTENCILCAPS_REPLACE                              0x00000004
+#define WINED3DSTENCILCAPS_INCRSAT                              0x00000008
+#define WINED3DSTENCILCAPS_DECRSAT                              0x00000010
+#define WINED3DSTENCILCAPS_INVERT                               0x00000020
+#define WINED3DSTENCILCAPS_INCR                                 0x00000040
+#define WINED3DSTENCILCAPS_DECR                                 0x00000080
+#define WINED3DSTENCILCAPS_TWOSIDED                             0x00000100
 
-const UINT WINED3DTEXOPCAPS_DISABLE                             = 0x00000001;
-const UINT WINED3DTEXOPCAPS_SELECTARG1                          = 0x00000002;
-const UINT WINED3DTEXOPCAPS_SELECTARG2                          = 0x00000004;
-const UINT WINED3DTEXOPCAPS_MODULATE                            = 0x00000008;
-const UINT WINED3DTEXOPCAPS_MODULATE2X                          = 0x00000010;
-const UINT WINED3DTEXOPCAPS_MODULATE4X                          = 0x00000020;
-const UINT WINED3DTEXOPCAPS_ADD                                 = 0x00000040;
-const UINT WINED3DTEXOPCAPS_ADDSIGNED                           = 0x00000080;
-const UINT WINED3DTEXOPCAPS_ADDSIGNED2X                         = 0x00000100;
-const UINT WINED3DTEXOPCAPS_SUBTRACT                            = 0x00000200;
-const UINT WINED3DTEXOPCAPS_ADDSMOOTH                           = 0x00000400;
-const UINT WINED3DTEXOPCAPS_BLENDDIFFUSEALPHA                   = 0x00000800;
-const UINT WINED3DTEXOPCAPS_BLENDTEXTUREALPHA                   = 0x00001000;
-const UINT WINED3DTEXOPCAPS_BLENDFACTORALPHA                    = 0x00002000;
-const UINT WINED3DTEXOPCAPS_BLENDTEXTUREALPHAPM                 = 0x00004000;
-const UINT WINED3DTEXOPCAPS_BLENDCURRENTALPHA                   = 0x00008000;
-const UINT WINED3DTEXOPCAPS_PREMODULATE                         = 0x00010000;
-const UINT WINED3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR              = 0x00020000;
-const UINT WINED3DTEXOPCAPS_MODULATECOLOR_ADDALPHA              = 0x00040000;
-const UINT WINED3DTEXOPCAPS_MODULATEINVALPHA_ADDCOLOR           = 0x00080000;
-const UINT WINED3DTEXOPCAPS_MODULATEINVCOLOR_ADDALPHA           = 0x00100000;
-const UINT WINED3DTEXOPCAPS_BUMPENVMAP                          = 0x00200000;
-const UINT WINED3DTEXOPCAPS_BUMPENVMAPLUMINANCE                 = 0x00400000;
-const UINT WINED3DTEXOPCAPS_DOTPRODUCT3                         = 0x00800000;
-const UINT WINED3DTEXOPCAPS_MULTIPLYADD                         = 0x01000000;
-const UINT WINED3DTEXOPCAPS_LERP                                = 0x02000000;
+#define WINED3DTEXOPCAPS_DISABLE                                0x00000001
+#define WINED3DTEXOPCAPS_SELECTARG1                             0x00000002
+#define WINED3DTEXOPCAPS_SELECTARG2                             0x00000004
+#define WINED3DTEXOPCAPS_MODULATE                               0x00000008
+#define WINED3DTEXOPCAPS_MODULATE2X                             0x00000010
+#define WINED3DTEXOPCAPS_MODULATE4X                             0x00000020
+#define WINED3DTEXOPCAPS_ADD                                    0x00000040
+#define WINED3DTEXOPCAPS_ADDSIGNED                              0x00000080
+#define WINED3DTEXOPCAPS_ADDSIGNED2X                            0x00000100
+#define WINED3DTEXOPCAPS_SUBTRACT                               0x00000200
+#define WINED3DTEXOPCAPS_ADDSMOOTH                              0x00000400
+#define WINED3DTEXOPCAPS_BLENDDIFFUSEALPHA                      0x00000800
+#define WINED3DTEXOPCAPS_BLENDTEXTUREALPHA                      0x00001000
+#define WINED3DTEXOPCAPS_BLENDFACTORALPHA                       0x00002000
+#define WINED3DTEXOPCAPS_BLENDTEXTUREALPHAPM                    0x00004000
+#define WINED3DTEXOPCAPS_BLENDCURRENTALPHA                      0x00008000
+#define WINED3DTEXOPCAPS_PREMODULATE                            0x00010000
+#define WINED3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR                 0x00020000
+#define WINED3DTEXOPCAPS_MODULATECOLOR_ADDALPHA                 0x00040000
+#define WINED3DTEXOPCAPS_MODULATEINVALPHA_ADDCOLOR              0x00080000
+#define WINED3DTEXOPCAPS_MODULATEINVCOLOR_ADDALPHA              0x00100000
+#define WINED3DTEXOPCAPS_BUMPENVMAP                             0x00200000
+#define WINED3DTEXOPCAPS_BUMPENVMAPLUMINANCE                    0x00400000
+#define WINED3DTEXOPCAPS_DOTPRODUCT3                            0x00800000
+#define WINED3DTEXOPCAPS_MULTIPLYADD                            0x01000000
+#define WINED3DTEXOPCAPS_LERP                                   0x02000000
 
-const UINT WINED3DVS20_MAX_DYNAMICFLOWCONTROLDEPTH              = 24;
-const UINT WINED3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH              = 0;
-const UINT WINED3DVS20_MAX_NUMTEMPS                             = 32;
-const UINT WINED3DVS20_MIN_NUMTEMPS                             = 12;
-const UINT WINED3DVS20_MAX_STATICFLOWCONTROLDEPTH               = 4;
-const UINT WINED3DVS20_MIN_STATICFLOWCONTROLDEPTH               = 1;
+#define WINED3DVS20_MAX_DYNAMICFLOWCONTROLDEPTH                 24
+#define WINED3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH                 0
+#define WINED3DVS20_MAX_NUMTEMPS                                32
+#define WINED3DVS20_MIN_NUMTEMPS                                12
+#define WINED3DVS20_MAX_STATICFLOWCONTROLDEPTH                  4
+#define WINED3DVS20_MIN_STATICFLOWCONTROLDEPTH                  1
 
-const UINT WINED3DVS20CAPS_PREDICATION                          = 0x00000001;
+#define WINED3DVS20CAPS_PREDICATION                             0x00000001
 
-const UINT WINED3DCAPS2_NO2DDURING3DSCENE                       = 0x00000002;
-const UINT WINED3DCAPS2_FULLSCREENGAMMA                         = 0x00020000;
-const UINT WINED3DCAPS2_CANRENDERWINDOWED                       = 0x00080000;
-const UINT WINED3DCAPS2_CANCALIBRATEGAMMA                       = 0x00100000;
-const UINT WINED3DCAPS2_RESERVED                                = 0x02000000;
-const UINT WINED3DCAPS2_CANMANAGERESOURCE                       = 0x10000000;
-const UINT WINED3DCAPS2_DYNAMICTEXTURES                         = 0x20000000;
-const UINT WINED3DCAPS2_CANAUTOGENMIPMAP                        = 0x40000000;
+#define WINED3DCAPS2_NO2DDURING3DSCENE                          0x00000002
+#define WINED3DCAPS2_FULLSCREENGAMMA                            0x00020000
+#define WINED3DCAPS2_CANRENDERWINDOWED                          0x00080000
+#define WINED3DCAPS2_CANCALIBRATEGAMMA                          0x00100000
+#define WINED3DCAPS2_RESERVED                                   0x02000000
+#define WINED3DCAPS2_CANMANAGERESOURCE                          0x10000000
+#define WINED3DCAPS2_DYNAMICTEXTURES                            0x20000000
+#define WINED3DCAPS2_CANAUTOGENMIPMAP                           0x40000000
 
-const UINT WINED3DPRASTERCAPS_DITHER                            = 0x00000001;
-const UINT WINED3DPRASTERCAPS_ROP2                              = 0x00000002;
-const UINT WINED3DPRASTERCAPS_XOR                               = 0x00000004;
-const UINT WINED3DPRASTERCAPS_PAT                               = 0x00000008;
-const UINT WINED3DPRASTERCAPS_ZTEST                             = 0x00000010;
-const UINT WINED3DPRASTERCAPS_SUBPIXEL                          = 0x00000020;
-const UINT WINED3DPRASTERCAPS_SUBPIXELX                         = 0x00000040;
-const UINT WINED3DPRASTERCAPS_FOGVERTEX                         = 0x00000080;
-const UINT WINED3DPRASTERCAPS_FOGTABLE                          = 0x00000100;
-const UINT WINED3DPRASTERCAPS_STIPPLE                           = 0x00000200;
-const UINT WINED3DPRASTERCAPS_ANTIALIASSORTDEPENDENT            = 0x00000400;
-const UINT WINED3DPRASTERCAPS_ANTIALIASSORTINDEPENDENT          = 0x00000800;
-const UINT WINED3DPRASTERCAPS_ANTIALIASEDGES                    = 0x00001000;
-const UINT WINED3DPRASTERCAPS_MIPMAPLODBIAS                     = 0x00002000;
-const UINT WINED3DPRASTERCAPS_ZBIAS                             = 0x00004000;
-const UINT WINED3DPRASTERCAPS_ZBUFFERLESSHSR                    = 0x00008000;
-const UINT WINED3DPRASTERCAPS_FOGRANGE                          = 0x00010000;
-const UINT WINED3DPRASTERCAPS_ANISOTROPY                        = 0x00020000;
-const UINT WINED3DPRASTERCAPS_WBUFFER                           = 0x00040000;
-const UINT WINED3DPRASTERCAPS_TRANSLUCENTSORTINDEPENDENT        = 0x00080000;
-const UINT WINED3DPRASTERCAPS_WFOG                              = 0x00100000;
-const UINT WINED3DPRASTERCAPS_ZFOG                              = 0x00200000;
-const UINT WINED3DPRASTERCAPS_COLORPERSPECTIVE                  = 0x00400000;
-const UINT WINED3DPRASTERCAPS_SCISSORTEST                       = 0x01000000;
-const UINT WINED3DPRASTERCAPS_SLOPESCALEDEPTHBIAS               = 0x02000000;
-const UINT WINED3DPRASTERCAPS_DEPTHBIAS                         = 0x04000000;
-const UINT WINED3DPRASTERCAPS_MULTISAMPLE_TOGGLE                = 0x08000000;
+#define WINED3DPRASTERCAPS_DITHER                               0x00000001
+#define WINED3DPRASTERCAPS_ROP2                                 0x00000002
+#define WINED3DPRASTERCAPS_XOR                                  0x00000004
+#define WINED3DPRASTERCAPS_PAT                                  0x00000008
+#define WINED3DPRASTERCAPS_ZTEST                                0x00000010
+#define WINED3DPRASTERCAPS_SUBPIXEL                             0x00000020
+#define WINED3DPRASTERCAPS_SUBPIXELX                            0x00000040
+#define WINED3DPRASTERCAPS_FOGVERTEX                            0x00000080
+#define WINED3DPRASTERCAPS_FOGTABLE                             0x00000100
+#define WINED3DPRASTERCAPS_STIPPLE                              0x00000200
+#define WINED3DPRASTERCAPS_ANTIALIASSORTDEPENDENT               0x00000400
+#define WINED3DPRASTERCAPS_ANTIALIASSORTINDEPENDENT             0x00000800
+#define WINED3DPRASTERCAPS_ANTIALIASEDGES                       0x00001000
+#define WINED3DPRASTERCAPS_MIPMAPLODBIAS                        0x00002000
+#define WINED3DPRASTERCAPS_ZBIAS                                0x00004000
+#define WINED3DPRASTERCAPS_ZBUFFERLESSHSR                       0x00008000
+#define WINED3DPRASTERCAPS_FOGRANGE                             0x00010000
+#define WINED3DPRASTERCAPS_ANISOTROPY                           0x00020000
+#define WINED3DPRASTERCAPS_WBUFFER                              0x00040000
+#define WINED3DPRASTERCAPS_TRANSLUCENTSORTINDEPENDENT           0x00080000
+#define WINED3DPRASTERCAPS_WFOG                                 0x00100000
+#define WINED3DPRASTERCAPS_ZFOG                                 0x00200000
+#define WINED3DPRASTERCAPS_COLORPERSPECTIVE                     0x00400000
+#define WINED3DPRASTERCAPS_SCISSORTEST                          0x01000000
+#define WINED3DPRASTERCAPS_SLOPESCALEDEPTHBIAS                  0x02000000
+#define WINED3DPRASTERCAPS_DEPTHBIAS                            0x04000000
+#define WINED3DPRASTERCAPS_MULTISAMPLE_TOGGLE                   0x08000000
 
-const UINT WINED3DPSHADECAPS_COLORFLATMONO                      = 0x00000001;
-const UINT WINED3DPSHADECAPS_COLORFLATRGB                       = 0x00000002;
-const UINT WINED3DPSHADECAPS_COLORGOURAUDMONO                   = 0x00000004;
-const UINT WINED3DPSHADECAPS_COLORGOURAUDRGB                    = 0x00000008;
-const UINT WINED3DPSHADECAPS_COLORPHONGMONO                     = 0x00000010;
-const UINT WINED3DPSHADECAPS_COLORPHONGRGB                      = 0x00000020;
-const UINT WINED3DPSHADECAPS_SPECULARFLATMONO                   = 0x00000040;
-const UINT WINED3DPSHADECAPS_SPECULARFLATRGB                    = 0x00000080;
-const UINT WINED3DPSHADECAPS_SPECULARGOURAUDMONO                = 0x00000100;
-const UINT WINED3DPSHADECAPS_SPECULARGOURAUDRGB                 = 0x00000200;
-const UINT WINED3DPSHADECAPS_SPECULARPHONGMONO                  = 0x00000400;
-const UINT WINED3DPSHADECAPS_SPECULARPHONGRGB                   = 0x00000800;
-const UINT WINED3DPSHADECAPS_ALPHAFLATBLEND                     = 0x00001000;
-const UINT WINED3DPSHADECAPS_ALPHAFLATSTIPPLED                  = 0x00002000;
-const UINT WINED3DPSHADECAPS_ALPHAGOURAUDBLEND                  = 0x00004000;
-const UINT WINED3DPSHADECAPS_ALPHAGOURAUDSTIPPLED               = 0x00008000;
-const UINT WINED3DPSHADECAPS_ALPHAPHONGBLEND                    = 0x00010000;
-const UINT WINED3DPSHADECAPS_ALPHAPHONGSTIPPLED                 = 0x00020000;
-const UINT WINED3DPSHADECAPS_FOGFLAT                            = 0x00040000;
-const UINT WINED3DPSHADECAPS_FOGGOURAUD                         = 0x00080000;
-const UINT WINED3DPSHADECAPS_FOGPHONG                           = 0x00100000;
+#define WINED3DPSHADECAPS_COLORFLATMONO                         0x00000001
+#define WINED3DPSHADECAPS_COLORFLATRGB                          0x00000002
+#define WINED3DPSHADECAPS_COLORGOURAUDMONO                      0x00000004
+#define WINED3DPSHADECAPS_COLORGOURAUDRGB                       0x00000008
+#define WINED3DPSHADECAPS_COLORPHONGMONO                        0x00000010
+#define WINED3DPSHADECAPS_COLORPHONGRGB                         0x00000020
+#define WINED3DPSHADECAPS_SPECULARFLATMONO                      0x00000040
+#define WINED3DPSHADECAPS_SPECULARFLATRGB                       0x00000080
+#define WINED3DPSHADECAPS_SPECULARGOURAUDMONO                   0x00000100
+#define WINED3DPSHADECAPS_SPECULARGOURAUDRGB                    0x00000200
+#define WINED3DPSHADECAPS_SPECULARPHONGMONO                     0x00000400
+#define WINED3DPSHADECAPS_SPECULARPHONGRGB                      0x00000800
+#define WINED3DPSHADECAPS_ALPHAFLATBLEND                        0x00001000
+#define WINED3DPSHADECAPS_ALPHAFLATSTIPPLED                     0x00002000
+#define WINED3DPSHADECAPS_ALPHAGOURAUDBLEND                     0x00004000
+#define WINED3DPSHADECAPS_ALPHAGOURAUDSTIPPLED                  0x00008000
+#define WINED3DPSHADECAPS_ALPHAPHONGBLEND                       0x00010000
+#define WINED3DPSHADECAPS_ALPHAPHONGSTIPPLED                    0x00020000
+#define WINED3DPSHADECAPS_FOGFLAT                               0x00040000
+#define WINED3DPSHADECAPS_FOGGOURAUD                            0x00080000
+#define WINED3DPSHADECAPS_FOGPHONG                              0x00100000
 
-const UINT WINED3DPTEXTURECAPS_PERSPECTIVE                      = 0x00000001;
-const UINT WINED3DPTEXTURECAPS_POW2                             = 0x00000002;
-const UINT WINED3DPTEXTURECAPS_ALPHA                            = 0x00000004;
-const UINT WINED3DPTEXTURECAPS_TRANSPARENCY                     = 0x00000008;
-const UINT WINED3DPTEXTURECAPS_BORDER                           = 0x00000010;
-const UINT WINED3DPTEXTURECAPS_SQUAREONLY                       = 0x00000020;
-const UINT WINED3DPTEXTURECAPS_TEXREPEATNOTSCALEDBYSIZE         = 0x00000040;
-const UINT WINED3DPTEXTURECAPS_ALPHAPALETTE                     = 0x00000080;
-const UINT WINED3DPTEXTURECAPS_NONPOW2CONDITIONAL               = 0x00000100;
-const UINT WINED3DPTEXTURECAPS_PROJECTED                        = 0x00000400;
-const UINT WINED3DPTEXTURECAPS_CUBEMAP                          = 0x00000800;
-const UINT WINED3DPTEXTURECAPS_COLORKEYBLEND                    = 0x00001000;
-const UINT WINED3DPTEXTURECAPS_VOLUMEMAP                        = 0x00002000;
-const UINT WINED3DPTEXTURECAPS_MIPMAP                           = 0x00004000;
-const UINT WINED3DPTEXTURECAPS_MIPVOLUMEMAP                     = 0x00008000;
-const UINT WINED3DPTEXTURECAPS_MIPCUBEMAP                       = 0x00010000;
-const UINT WINED3DPTEXTURECAPS_CUBEMAP_POW2                     = 0x00020000;
-const UINT WINED3DPTEXTURECAPS_VOLUMEMAP_POW2                   = 0x00040000;
-const UINT WINED3DPTEXTURECAPS_NOPROJECTEDBUMPENV               = 0x00200000;
+#define WINED3DPTEXTURECAPS_PERSPECTIVE                         0x00000001
+#define WINED3DPTEXTURECAPS_POW2                                0x00000002
+#define WINED3DPTEXTURECAPS_ALPHA                               0x00000004
+#define WINED3DPTEXTURECAPS_TRANSPARENCY                        0x00000008
+#define WINED3DPTEXTURECAPS_BORDER                              0x00000010
+#define WINED3DPTEXTURECAPS_SQUAREONLY                          0x00000020
+#define WINED3DPTEXTURECAPS_TEXREPEATNOTSCALEDBYSIZE            0x00000040
+#define WINED3DPTEXTURECAPS_ALPHAPALETTE                        0x00000080
+#define WINED3DPTEXTURECAPS_NONPOW2CONDITIONAL                  0x00000100
+#define WINED3DPTEXTURECAPS_PROJECTED                           0x00000400
+#define WINED3DPTEXTURECAPS_CUBEMAP                             0x00000800
+#define WINED3DPTEXTURECAPS_COLORKEYBLEND                       0x00001000
+#define WINED3DPTEXTURECAPS_VOLUMEMAP                           0x00002000
+#define WINED3DPTEXTURECAPS_MIPMAP                              0x00004000
+#define WINED3DPTEXTURECAPS_MIPVOLUMEMAP                        0x00008000
+#define WINED3DPTEXTURECAPS_MIPCUBEMAP                          0x00010000
+#define WINED3DPTEXTURECAPS_CUBEMAP_POW2                        0x00020000
+#define WINED3DPTEXTURECAPS_VOLUMEMAP_POW2                      0x00040000
+#define WINED3DPTEXTURECAPS_NOPROJECTEDBUMPENV                  0x00200000
 
-const UINT WINED3DPTFILTERCAPS_NEAREST                          = 0x00000001;
-const UINT WINED3DPTFILTERCAPS_LINEAR                           = 0x00000002;
-const UINT WINED3DPTFILTERCAPS_MIPNEAREST                       = 0x00000004;
-const UINT WINED3DPTFILTERCAPS_MIPLINEAR                        = 0x00000008;
-const UINT WINED3DPTFILTERCAPS_LINEARMIPNEAREST                 = 0x00000010;
-const UINT WINED3DPTFILTERCAPS_LINEARMIPLINEAR                  = 0x00000020;
-const UINT WINED3DPTFILTERCAPS_MINFPOINT                        = 0x00000100;
-const UINT WINED3DPTFILTERCAPS_MINFLINEAR                       = 0x00000200;
-const UINT WINED3DPTFILTERCAPS_MINFANISOTROPIC                  = 0x00000400;
-const UINT WINED3DPTFILTERCAPS_MIPFPOINT                        = 0x00010000;
-const UINT WINED3DPTFILTERCAPS_MIPFLINEAR                       = 0x00020000;
-const UINT WINED3DPTFILTERCAPS_MAGFPOINT                        = 0x01000000;
-const UINT WINED3DPTFILTERCAPS_MAGFLINEAR                       = 0x02000000;
-const UINT WINED3DPTFILTERCAPS_MAGFANISOTROPIC                  = 0x04000000;
-const UINT WINED3DPTFILTERCAPS_MAGFPYRAMIDALQUAD                = 0x08000000;
-const UINT WINED3DPTFILTERCAPS_MAGFGAUSSIANQUAD                 = 0x10000000;
+#define WINED3DPTFILTERCAPS_NEAREST                             0x00000001
+#define WINED3DPTFILTERCAPS_LINEAR                              0x00000002
+#define WINED3DPTFILTERCAPS_MIPNEAREST                          0x00000004
+#define WINED3DPTFILTERCAPS_MIPLINEAR                           0x00000008
+#define WINED3DPTFILTERCAPS_LINEARMIPNEAREST                    0x00000010
+#define WINED3DPTFILTERCAPS_LINEARMIPLINEAR                     0x00000020
+#define WINED3DPTFILTERCAPS_MINFPOINT                           0x00000100
+#define WINED3DPTFILTERCAPS_MINFLINEAR                          0x00000200
+#define WINED3DPTFILTERCAPS_MINFANISOTROPIC                     0x00000400
+#define WINED3DPTFILTERCAPS_MIPFPOINT                           0x00010000
+#define WINED3DPTFILTERCAPS_MIPFLINEAR                          0x00020000
+#define WINED3DPTFILTERCAPS_MAGFPOINT                           0x01000000
+#define WINED3DPTFILTERCAPS_MAGFLINEAR                          0x02000000
+#define WINED3DPTFILTERCAPS_MAGFANISOTROPIC                     0x04000000
+#define WINED3DPTFILTERCAPS_MAGFPYRAMIDALQUAD                   0x08000000
+#define WINED3DPTFILTERCAPS_MAGFGAUSSIANQUAD                    0x10000000
 
-const UINT WINED3DVTXPCAPS_TEXGEN                               = 0x00000001;
-const UINT WINED3DVTXPCAPS_MATERIALSOURCE7                      = 0x00000002;
-const UINT WINED3DVTXPCAPS_VERTEXFOG                            = 0x00000004;
-const UINT WINED3DVTXPCAPS_DIRECTIONALLIGHTS                    = 0x00000008;
-const UINT WINED3DVTXPCAPS_POSITIONALLIGHTS                     = 0x00000010;
-const UINT WINED3DVTXPCAPS_LOCALVIEWER                          = 0x00000020;
-const UINT WINED3DVTXPCAPS_TWEENING                             = 0x00000040;
-const UINT WINED3DVTXPCAPS_TEXGEN_SPHEREMAP                     = 0x00000100;
-const UINT WINED3DVTXPCAPS_NO_TEXGEN_NONLOCALVIEWER             = 0x00000200;
+#define WINED3DVTXPCAPS_TEXGEN                                  0x00000001
+#define WINED3DVTXPCAPS_MATERIALSOURCE7                         0x00000002
+#define WINED3DVTXPCAPS_VERTEXFOG                               0x00000004
+#define WINED3DVTXPCAPS_DIRECTIONALLIGHTS                       0x00000008
+#define WINED3DVTXPCAPS_POSITIONALLIGHTS                        0x00000010
+#define WINED3DVTXPCAPS_LOCALVIEWER                             0x00000020
+#define WINED3DVTXPCAPS_TWEENING                                0x00000040
+#define WINED3DVTXPCAPS_TEXGEN_SPHEREMAP                        0x00000100
+#define WINED3DVTXPCAPS_NO_TEXGEN_NONLOCALVIEWER                0x00000200
 
-const UINT WINED3DCURSORCAPS_COLOR                              = 0x00000001;
-const UINT WINED3DCURSORCAPS_LOWRES                             = 0x00000002;
+#define WINED3DCURSORCAPS_COLOR                                 0x00000001
+#define WINED3DCURSORCAPS_LOWRES                                0x00000002
 
-const UINT WINED3DDEVCAPS_FLOATTLVERTEX                         = 0x00000001;
-const UINT WINED3DDEVCAPS_SORTINCREASINGZ                       = 0x00000002;
-const UINT WINED3DDEVCAPS_SORTDECREASINGZ                       = 0X00000004;
-const UINT WINED3DDEVCAPS_SORTEXACT                             = 0x00000008;
-const UINT WINED3DDEVCAPS_EXECUTESYSTEMMEMORY                   = 0x00000010;
-const UINT WINED3DDEVCAPS_EXECUTEVIDEOMEMORY                    = 0x00000020;
-const UINT WINED3DDEVCAPS_TLVERTEXSYSTEMMEMORY                  = 0x00000040;
-const UINT WINED3DDEVCAPS_TLVERTEXVIDEOMEMORY                   = 0x00000080;
-const UINT WINED3DDEVCAPS_TEXTURESYSTEMMEMORY                   = 0x00000100;
-const UINT WINED3DDEVCAPS_TEXTUREVIDEOMEMORY                    = 0x00000200;
-const UINT WINED3DDEVCAPS_DRAWPRIMTLVERTEX                      = 0x00000400;
-const UINT WINED3DDEVCAPS_CANRENDERAFTERFLIP                    = 0x00000800;
-const UINT WINED3DDEVCAPS_TEXTURENONLOCALVIDMEM                 = 0x00001000;
-const UINT WINED3DDEVCAPS_DRAWPRIMITIVES2                       = 0x00002000;
-const UINT WINED3DDEVCAPS_SEPARATETEXTUREMEMORIES               = 0x00004000;
-const UINT WINED3DDEVCAPS_DRAWPRIMITIVES2EX                     = 0x00008000;
-const UINT WINED3DDEVCAPS_HWTRANSFORMANDLIGHT                   = 0x00010000;
-const UINT WINED3DDEVCAPS_CANBLTSYSTONONLOCAL                   = 0x00020000;
-const UINT WINED3DDEVCAPS_HWRASTERIZATION                       = 0x00080000;
-const UINT WINED3DDEVCAPS_PUREDEVICE                            = 0x00100000;
-const UINT WINED3DDEVCAPS_QUINTICRTPATCHES                      = 0x00200000;
-const UINT WINED3DDEVCAPS_RTPATCHES                             = 0x00400000;
-const UINT WINED3DDEVCAPS_RTPATCHHANDLEZERO                     = 0x00800000;
-const UINT WINED3DDEVCAPS_NPATCHES                              = 0x01000000;
+#define WINED3DDEVCAPS_FLOATTLVERTEX                            0x00000001
+#define WINED3DDEVCAPS_SORTINCREASINGZ                          0x00000002
+#define WINED3DDEVCAPS_SORTDECREASINGZ                          0X00000004
+#define WINED3DDEVCAPS_SORTEXACT                                0x00000008
+#define WINED3DDEVCAPS_EXECUTESYSTEMMEMORY                      0x00000010
+#define WINED3DDEVCAPS_EXECUTEVIDEOMEMORY                       0x00000020
+#define WINED3DDEVCAPS_TLVERTEXSYSTEMMEMORY                     0x00000040
+#define WINED3DDEVCAPS_TLVERTEXVIDEOMEMORY                      0x00000080
+#define WINED3DDEVCAPS_TEXTURESYSTEMMEMORY                      0x00000100
+#define WINED3DDEVCAPS_TEXTUREVIDEOMEMORY                       0x00000200
+#define WINED3DDEVCAPS_DRAWPRIMTLVERTEX                         0x00000400
+#define WINED3DDEVCAPS_CANRENDERAFTERFLIP                       0x00000800
+#define WINED3DDEVCAPS_TEXTURENONLOCALVIDMEM                    0x00001000
+#define WINED3DDEVCAPS_DRAWPRIMITIVES2                          0x00002000
+#define WINED3DDEVCAPS_SEPARATETEXTUREMEMORIES                  0x00004000
+#define WINED3DDEVCAPS_DRAWPRIMITIVES2EX                        0x00008000
+#define WINED3DDEVCAPS_HWTRANSFORMANDLIGHT                      0x00010000
+#define WINED3DDEVCAPS_CANBLTSYSTONONLOCAL                      0x00020000
+#define WINED3DDEVCAPS_HWRASTERIZATION                          0x00080000
+#define WINED3DDEVCAPS_PUREDEVICE                               0x00100000
+#define WINED3DDEVCAPS_QUINTICRTPATCHES                         0x00200000
+#define WINED3DDEVCAPS_RTPATCHES                                0x00400000
+#define WINED3DDEVCAPS_RTPATCHHANDLEZERO                        0x00800000
+#define WINED3DDEVCAPS_NPATCHES                                 0x01000000
 
 /* dwDDFX */
 /* arithmetic stretching along y axis */
-const UINT WINEDDBLTFX_ARITHSTRETCHY                            = 0x00000001;
+#define WINEDDBLTFX_ARITHSTRETCHY                               0x00000001
 /* mirror on y axis */
-const UINT WINEDDBLTFX_MIRRORLEFTRIGHT                          = 0x00000002;
+#define WINEDDBLTFX_MIRRORLEFTRIGHT                             0x00000002
 /* mirror on x axis */
-const UINT WINEDDBLTFX_MIRRORUPDOWN                             = 0x00000004;
+#define WINEDDBLTFX_MIRRORUPDOWN                                0x00000004
 /* do not tear */
-const UINT WINEDDBLTFX_NOTEARING                                = 0x00000008;
+#define WINEDDBLTFX_NOTEARING                                   0x00000008
 /* 180 degrees clockwise rotation */
-const UINT WINEDDBLTFX_ROTATE180                                = 0x00000010;
+#define WINEDDBLTFX_ROTATE180                                   0x00000010
 /* 270 degrees clockwise rotation */
-const UINT WINEDDBLTFX_ROTATE270                                = 0x00000020;
+#define WINEDDBLTFX_ROTATE270                                   0x00000020
 /* 90 degrees clockwise rotation */
-const UINT WINEDDBLTFX_ROTATE90                                 = 0x00000040;
+#define WINEDDBLTFX_ROTATE90                                    0x00000040
 /* dwZBufferLow and dwZBufferHigh specify limits to the copied Z values */
-const UINT WINEDDBLTFX_ZBUFFERRANGE                             = 0x00000080;
+#define WINEDDBLTFX_ZBUFFERRANGE                                0x00000080
 /* add dwZBufferBaseDest to every source z value before compare */
-const UINT WINEDDBLTFX_ZBUFFERBASEDEST                          = 0x00000100;
+#define WINEDDBLTFX_ZBUFFERBASEDEST                             0x00000100
 
 /* dwFlags for Blt* */
-const UINT WINEDDBLT_ALPHADEST                                  = 0x00000001;
-const UINT WINEDDBLT_ALPHADESTCONSTOVERRIDE                     = 0x00000002;
-const UINT WINEDDBLT_ALPHADESTNEG                               = 0x00000004;
-const UINT WINEDDBLT_ALPHADESTSURFACEOVERRIDE                   = 0x00000008;
-const UINT WINEDDBLT_ALPHAEDGEBLEND                             = 0x00000010;
-const UINT WINEDDBLT_ALPHASRC                                   = 0x00000020;
-const UINT WINEDDBLT_ALPHASRCCONSTOVERRIDE                      = 0x00000040;
-const UINT WINEDDBLT_ALPHASRCNEG                                = 0x00000080;
-const UINT WINEDDBLT_ALPHASRCSURFACEOVERRIDE                    = 0x00000100;
-const UINT WINEDDBLT_ASYNC                                      = 0x00000200;
-const UINT WINEDDBLT_COLORFILL                                  = 0x00000400;
-const UINT WINEDDBLT_DDFX                                       = 0x00000800;
-const UINT WINEDDBLT_DDROPS                                     = 0x00001000;
-const UINT WINEDDBLT_KEYDEST                                    = 0x00002000;
-const UINT WINEDDBLT_KEYDESTOVERRIDE                            = 0x00004000;
-const UINT WINEDDBLT_KEYSRC                                     = 0x00008000;
-const UINT WINEDDBLT_KEYSRCOVERRIDE                             = 0x00010000;
-const UINT WINEDDBLT_ROP                                        = 0x00020000;
-const UINT WINEDDBLT_ROTATIONANGLE                              = 0x00040000;
-const UINT WINEDDBLT_ZBUFFER                                    = 0x00080000;
-const UINT WINEDDBLT_ZBUFFERDESTCONSTOVERRIDE                   = 0x00100000;
-const UINT WINEDDBLT_ZBUFFERDESTOVERRIDE                        = 0x00200000;
-const UINT WINEDDBLT_ZBUFFERSRCCONSTOVERRIDE                    = 0x00400000;
-const UINT WINEDDBLT_ZBUFFERSRCOVERRIDE                         = 0x00800000;
-const UINT WINEDDBLT_WAIT                                       = 0x01000000;
-const UINT WINEDDBLT_DEPTHFILL                                  = 0x02000000;
-const UINT WINEDDBLT_DONOTWAIT                                  = 0x08000000;
+#define WINEDDBLT_ALPHADEST                                     0x00000001
+#define WINEDDBLT_ALPHADESTCONSTOVERRIDE                        0x00000002
+#define WINEDDBLT_ALPHADESTNEG                                  0x00000004
+#define WINEDDBLT_ALPHADESTSURFACEOVERRIDE                      0x00000008
+#define WINEDDBLT_ALPHAEDGEBLEND                                0x00000010
+#define WINEDDBLT_ALPHASRC                                      0x00000020
+#define WINEDDBLT_ALPHASRCCONSTOVERRIDE                         0x00000040
+#define WINEDDBLT_ALPHASRCNEG                                   0x00000080
+#define WINEDDBLT_ALPHASRCSURFACEOVERRIDE                       0x00000100
+#define WINEDDBLT_ASYNC                                         0x00000200
+#define WINEDDBLT_COLORFILL                                     0x00000400
+#define WINEDDBLT_DDFX                                          0x00000800
+#define WINEDDBLT_DDROPS                                        0x00001000
+#define WINEDDBLT_KEYDEST                                       0x00002000
+#define WINEDDBLT_KEYDESTOVERRIDE                               0x00004000
+#define WINEDDBLT_KEYSRC                                        0x00008000
+#define WINEDDBLT_KEYSRCOVERRIDE                                0x00010000
+#define WINEDDBLT_ROP                                           0x00020000
+#define WINEDDBLT_ROTATIONANGLE                                 0x00040000
+#define WINEDDBLT_ZBUFFER                                       0x00080000
+#define WINEDDBLT_ZBUFFERDESTCONSTOVERRIDE                      0x00100000
+#define WINEDDBLT_ZBUFFERDESTOVERRIDE                           0x00200000
+#define WINEDDBLT_ZBUFFERSRCCONSTOVERRIDE                       0x00400000
+#define WINEDDBLT_ZBUFFERSRCOVERRIDE                            0x00800000
+#define WINEDDBLT_WAIT                                          0x01000000
+#define WINEDDBLT_DEPTHFILL                                     0x02000000
+#define WINEDDBLT_DONOTWAIT                                     0x08000000
 
 /* dwTrans for BltFast */
-const UINT WINEDDBLTFAST_NOCOLORKEY                             = 0x00000000;
-const UINT WINEDDBLTFAST_SRCCOLORKEY                            = 0x00000001;
-const UINT WINEDDBLTFAST_DESTCOLORKEY                           = 0x00000002;
-const UINT WINEDDBLTFAST_WAIT                                   = 0x00000010;
-const UINT WINEDDBLTFAST_DONOTWAIT                              = 0x00000020;
+#define WINEDDBLTFAST_NOCOLORKEY                                0x00000000
+#define WINEDDBLTFAST_SRCCOLORKEY                               0x00000001
+#define WINEDDBLTFAST_DESTCOLORKEY                              0x00000002
+#define WINEDDBLTFAST_WAIT                                      0x00000010
+#define WINEDDBLTFAST_DONOTWAIT                                 0x00000020
 
 /* DDSURFACEDESC.dwFlags */
-const UINT WINEDDSD_CAPS                                        = 0x00000001;
-const UINT WINEDDSD_HEIGHT                                      = 0x00000002;
-const UINT WINEDDSD_WIDTH                                       = 0x00000004;
-const UINT WINEDDSD_PITCH                                       = 0x00000008;
-const UINT WINEDDSD_BACKBUFFERCOUNT                             = 0x00000020;
-const UINT WINEDDSD_ZBUFFERBITDEPTH                             = 0x00000040;
-const UINT WINEDDSD_ALPHABITDEPTH                               = 0x00000080;
-const UINT WINEDDSD_LPSURFACE                                   = 0x00000800;
-const UINT WINEDDSD_PIXELFORMAT                                 = 0x00001000;
-const UINT WINEDDSD_CKDESTOVERLAY                               = 0x00002000;
-const UINT WINEDDSD_CKDESTBLT                                   = 0x00004000;
-const UINT WINEDDSD_CKSRCOVERLAY                                = 0x00008000;
-const UINT WINEDDSD_CKSRCBLT                                    = 0x00010000;
-const UINT WINEDDSD_MIPMAPCOUNT                                 = 0x00020000;
-const UINT WINEDDSD_REFRESHRATE                                 = 0x00040000;
-const UINT WINEDDSD_LINEARSIZE                                  = 0x00080000;
-const UINT WINEDDSD_TEXTURESTAGE                                = 0x00100000;
-const UINT WINEDDSD_FVF                                         = 0x00200000;
-const UINT WINEDDSD_SRCVBHANDLE                                 = 0x00400000;
-const UINT WINEDDSD_ALL                                         = 0x007ff9ee;
+#define WINEDDSD_CAPS                                           0x00000001
+#define WINEDDSD_HEIGHT                                         0x00000002
+#define WINEDDSD_WIDTH                                          0x00000004
+#define WINEDDSD_PITCH                                          0x00000008
+#define WINEDDSD_BACKBUFFERCOUNT                                0x00000020
+#define WINEDDSD_ZBUFFERBITDEPTH                                0x00000040
+#define WINEDDSD_ALPHABITDEPTH                                  0x00000080
+#define WINEDDSD_LPSURFACE                                      0x00000800
+#define WINEDDSD_PIXELFORMAT                                    0x00001000
+#define WINEDDSD_CKDESTOVERLAY                                  0x00002000
+#define WINEDDSD_CKDESTBLT                                      0x00004000
+#define WINEDDSD_CKSRCOVERLAY                                   0x00008000
+#define WINEDDSD_CKSRCBLT                                       0x00010000
+#define WINEDDSD_MIPMAPCOUNT                                    0x00020000
+#define WINEDDSD_REFRESHRATE                                    0x00040000
+#define WINEDDSD_LINEARSIZE                                     0x00080000
+#define WINEDDSD_TEXTURESTAGE                                   0x00100000
+#define WINEDDSD_FVF                                            0x00200000
+#define WINEDDSD_SRCVBHANDLE                                    0x00400000
+#define WINEDDSD_ALL                                            0x007ff9ee
 
 /* Set/Get Colour Key Flags */
-const UINT WINEDDCKEY_COLORSPACE                                = 0x00000001; /* Struct is single colour space */
-const UINT WINEDDCKEY_DESTBLT                                   = 0x00000002; /* To be used as dest for blt */
-const UINT WINEDDCKEY_DESTOVERLAY                               = 0x00000004; /* To be used as dest for CK overlays */
-const UINT WINEDDCKEY_SRCBLT                                    = 0x00000008; /* To be used as src for blt */
-const UINT WINEDDCKEY_SRCOVERLAY                                = 0x00000010; /* To be used as src for CK overlays */
+#define WINEDDCKEY_COLORSPACE                                   0x00000001 /* Struct is single colour space */
+#define WINEDDCKEY_DESTBLT                                      0x00000002 /* To be used as dest for blt */
+#define WINEDDCKEY_DESTOVERLAY                                  0x00000004 /* To be used as dest for CK overlays */
+#define WINEDDCKEY_SRCBLT                                       0x00000008 /* To be used as src for blt */
+#define WINEDDCKEY_SRCOVERLAY                                   0x00000010 /* To be used as src for CK overlays */
 
 /* dwFlags for GetBltStatus */
-const UINT WINEDDGBS_CANBLT                                     = 0x00000001;
-const UINT WINEDDGBS_ISBLTDONE                                  = 0x00000002;
+#define WINEDDGBS_CANBLT                                        0x00000001
+#define WINEDDGBS_ISBLTDONE                                     0x00000002
 
 /* dwFlags for GetFlipStatus */
-const UINT WINEDDGFS_CANFLIP                                    = 0x00000001;
-const UINT WINEDDGFS_ISFLIPDONE                                 = 0x00000002;
+#define WINEDDGFS_CANFLIP                                       0x00000001
+#define WINEDDGFS_ISFLIPDONE                                    0x00000002
 
 /* dwFlags for Flip */
-const UINT WINEDDFLIP_WAIT                                      = 0x00000001;
-const UINT WINEDDFLIP_EVEN                                      = 0x00000002; /* only valid for overlay */
-const UINT WINEDDFLIP_ODD                                       = 0x00000004; /* only valid for overlay */
-const UINT WINEDDFLIP_NOVSYNC                                   = 0x00000008;
-const UINT WINEDDFLIP_STEREO                                    = 0x00000010;
-const UINT WINEDDFLIP_DONOTWAIT                                 = 0x00000020;
-const UINT WINEDDFLIP_INTERVAL2                                 = 0x02000000;
-const UINT WINEDDFLIP_INTERVAL3                                 = 0x03000000;
-const UINT WINEDDFLIP_INTERVAL4                                 = 0x04000000;
+#define WINEDDFLIP_WAIT                                         0x00000001
+#define WINEDDFLIP_EVEN                                         0x00000002 /* only valid for overlay */
+#define WINEDDFLIP_ODD                                          0x00000004 /* only valid for overlay */
+#define WINEDDFLIP_NOVSYNC                                      0x00000008
+#define WINEDDFLIP_STEREO                                       0x00000010
+#define WINEDDFLIP_DONOTWAIT                                    0x00000020
+#define WINEDDFLIP_INTERVAL2                                    0x02000000
+#define WINEDDFLIP_INTERVAL3                                    0x03000000
+#define WINEDDFLIP_INTERVAL4                                    0x04000000
 
-const UINT WINEDDOVER_ALPHADEST                                 = 0x00000001;
-const UINT WINEDDOVER_ALPHADESTCONSTOVERRIDE                    = 0x00000002;
-const UINT WINEDDOVER_ALPHADESTNEG                              = 0x00000004;
-const UINT WINEDDOVER_ALPHADESTSURFACEOVERRIDE                  = 0x00000008;
-const UINT WINEDDOVER_ALPHAEDGEBLEND                            = 0x00000010;
-const UINT WINEDDOVER_ALPHASRC                                  = 0x00000020;
-const UINT WINEDDOVER_ALPHASRCCONSTOVERRIDE                     = 0x00000040;
-const UINT WINEDDOVER_ALPHASRCNEG                               = 0x00000080;
-const UINT WINEDDOVER_ALPHASRCSURFACEOVERRIDE                   = 0x00000100;
-const UINT WINEDDOVER_HIDE                                      = 0x00000200;
-const UINT WINEDDOVER_KEYDEST                                   = 0x00000400;
-const UINT WINEDDOVER_KEYDESTOVERRIDE                           = 0x00000800;
-const UINT WINEDDOVER_KEYSRC                                    = 0x00001000;
-const UINT WINEDDOVER_KEYSRCOVERRIDE                            = 0x00002000;
-const UINT WINEDDOVER_SHOW                                      = 0x00004000;
-const UINT WINEDDOVER_ADDDIRTYRECT                              = 0x00008000;
-const UINT WINEDDOVER_REFRESHDIRTYRECTS                         = 0x00010000;
-const UINT WINEDDOVER_REFRESHALL                                = 0x00020000;
-const UINT WINEDDOVER_DDFX                                      = 0x00080000;
-const UINT WINEDDOVER_AUTOFLIP                                  = 0x00100000;
-const UINT WINEDDOVER_BOB                                       = 0x00200000;
-const UINT WINEDDOVER_OVERRIDEBOBWEAVE                          = 0x00400000;
-const UINT WINEDDOVER_INTERLEAVED                               = 0x00800000;
+#define WINEDDOVER_ALPHADEST                                    0x00000001
+#define WINEDDOVER_ALPHADESTCONSTOVERRIDE                       0x00000002
+#define WINEDDOVER_ALPHADESTNEG                                 0x00000004
+#define WINEDDOVER_ALPHADESTSURFACEOVERRIDE                     0x00000008
+#define WINEDDOVER_ALPHAEDGEBLEND                               0x00000010
+#define WINEDDOVER_ALPHASRC                                     0x00000020
+#define WINEDDOVER_ALPHASRCCONSTOVERRIDE                        0x00000040
+#define WINEDDOVER_ALPHASRCNEG                                  0x00000080
+#define WINEDDOVER_ALPHASRCSURFACEOVERRIDE                      0x00000100
+#define WINEDDOVER_HIDE                                         0x00000200
+#define WINEDDOVER_KEYDEST                                      0x00000400
+#define WINEDDOVER_KEYDESTOVERRIDE                              0x00000800
+#define WINEDDOVER_KEYSRC                                       0x00001000
+#define WINEDDOVER_KEYSRCOVERRIDE                               0x00002000
+#define WINEDDOVER_SHOW                                         0x00004000
+#define WINEDDOVER_ADDDIRTYRECT                                 0x00008000
+#define WINEDDOVER_REFRESHDIRTYRECTS                            0x00010000
+#define WINEDDOVER_REFRESHALL                                   0x00020000
+#define WINEDDOVER_DDFX                                         0x00080000
+#define WINEDDOVER_AUTOFLIP                                     0x00100000
+#define WINEDDOVER_BOB                                          0x00200000
+#define WINEDDOVER_OVERRIDEBOBWEAVE                             0x00400000
+#define WINEDDOVER_INTERLEAVED                                  0x00800000
 
 /* DirectDraw Caps */
-const UINT WINEDDSCAPS_RESERVED1                                = 0x00000001;
-const UINT WINEDDSCAPS_ALPHA                                    = 0x00000002;
-const UINT WINEDDSCAPS_BACKBUFFER                               = 0x00000004;
-const UINT WINEDDSCAPS_COMPLEX                                  = 0x00000008;
-const UINT WINEDDSCAPS_FLIP                                     = 0x00000010;
-const UINT WINEDDSCAPS_FRONTBUFFER                              = 0x00000020;
-const UINT WINEDDSCAPS_OFFSCREENPLAIN                           = 0x00000040;
-const UINT WINEDDSCAPS_OVERLAY                                  = 0x00000080;
-const UINT WINEDDSCAPS_PALETTE                                  = 0x00000100;
-const UINT WINEDDSCAPS_PRIMARYSURFACE                           = 0x00000200;
-const UINT WINEDDSCAPS_PRIMARYSURFACELEFT                       = 0x00000400;
-const UINT WINEDDSCAPS_SYSTEMMEMORY                             = 0x00000800;
-const UINT WINEDDSCAPS_TEXTURE                                  = 0x00001000;
-const UINT WINEDDSCAPS_3DDEVICE                                 = 0x00002000;
-const UINT WINEDDSCAPS_VIDEOMEMORY                              = 0x00004000;
-const UINT WINEDDSCAPS_VISIBLE                                  = 0x00008000;
-const UINT WINEDDSCAPS_WRITEONLY                                = 0x00010000;
-const UINT WINEDDSCAPS_ZBUFFER                                  = 0x00020000;
-const UINT WINEDDSCAPS_OWNDC                                    = 0x00040000;
-const UINT WINEDDSCAPS_LIVEVIDEO                                = 0x00080000;
-const UINT WINEDDSCAPS_HWCODEC                                  = 0x00100000;
-const UINT WINEDDSCAPS_MODEX                                    = 0x00200000;
-const UINT WINEDDSCAPS_MIPMAP                                   = 0x00400000;
-const UINT WINEDDSCAPS_RESERVED2                                = 0x00800000;
-const UINT WINEDDSCAPS_ALLOCONLOAD                              = 0x04000000;
-const UINT WINEDDSCAPS_VIDEOPORT                                = 0x08000000;
-const UINT WINEDDSCAPS_LOCALVIDMEM                              = 0x10000000;
-const UINT WINEDDSCAPS_NONLOCALVIDMEM                           = 0x20000000;
-const UINT WINEDDSCAPS_STANDARDVGAMODE                          = 0x40000000;
-const UINT WINEDDSCAPS_OPTIMIZED                                = 0x80000000;
+#define WINEDDSCAPS_RESERVED1                                   0x00000001
+#define WINEDDSCAPS_ALPHA                                       0x00000002
+#define WINEDDSCAPS_BACKBUFFER                                  0x00000004
+#define WINEDDSCAPS_COMPLEX                                     0x00000008
+#define WINEDDSCAPS_FLIP                                        0x00000010
+#define WINEDDSCAPS_FRONTBUFFER                                 0x00000020
+#define WINEDDSCAPS_OFFSCREENPLAIN                              0x00000040
+#define WINEDDSCAPS_OVERLAY                                     0x00000080
+#define WINEDDSCAPS_PALETTE                                     0x00000100
+#define WINEDDSCAPS_PRIMARYSURFACE                              0x00000200
+#define WINEDDSCAPS_PRIMARYSURFACELEFT                          0x00000400
+#define WINEDDSCAPS_SYSTEMMEMORY                                0x00000800
+#define WINEDDSCAPS_TEXTURE                                     0x00001000
+#define WINEDDSCAPS_3DDEVICE                                    0x00002000
+#define WINEDDSCAPS_VIDEOMEMORY                                 0x00004000
+#define WINEDDSCAPS_VISIBLE                                     0x00008000
+#define WINEDDSCAPS_WRITEONLY                                   0x00010000
+#define WINEDDSCAPS_ZBUFFER                                     0x00020000
+#define WINEDDSCAPS_OWNDC                                       0x00040000
+#define WINEDDSCAPS_LIVEVIDEO                                   0x00080000
+#define WINEDDSCAPS_HWCODEC                                     0x00100000
+#define WINEDDSCAPS_MODEX                                       0x00200000
+#define WINEDDSCAPS_MIPMAP                                      0x00400000
+#define WINEDDSCAPS_RESERVED2                                   0x00800000
+#define WINEDDSCAPS_ALLOCONLOAD                                 0x04000000
+#define WINEDDSCAPS_VIDEOPORT                                   0x08000000
+#define WINEDDSCAPS_LOCALVIDMEM                                 0x10000000
+#define WINEDDSCAPS_NONLOCALVIDMEM                              0x20000000
+#define WINEDDSCAPS_STANDARDVGAMODE                             0x40000000
+#define WINEDDSCAPS_OPTIMIZED                                   0x80000000
 
-const UINT WINEDDCKEYCAPS_DESTBLT                               = 0x00000001;
-const UINT WINEDDCKEYCAPS_DESTBLTCLRSPACE                       = 0x00000002;
-const UINT WINEDDCKEYCAPS_DESTBLTCLRSPACEYUV                    = 0x00000004;
-const UINT WINEDDCKEYCAPS_DESTBLTYUV                            = 0x00000008;
-const UINT WINEDDCKEYCAPS_DESTOVERLAY                           = 0x00000010;
-const UINT WINEDDCKEYCAPS_DESTOVERLAYCLRSPACE                   = 0x00000020;
-const UINT WINEDDCKEYCAPS_DESTOVERLAYCLRSPACEYUV                = 0x00000040;
-const UINT WINEDDCKEYCAPS_DESTOVERLAYONEACTIVE                  = 0x00000080;
-const UINT WINEDDCKEYCAPS_DESTOVERLAYYUV                        = 0x00000100;
-const UINT WINEDDCKEYCAPS_SRCBLT                                = 0x00000200;
-const UINT WINEDDCKEYCAPS_SRCBLTCLRSPACE                        = 0x00000400;
-const UINT WINEDDCKEYCAPS_SRCBLTCLRSPACEYUV                     = 0x00000800;
-const UINT WINEDDCKEYCAPS_SRCBLTYUV                             = 0x00001000;
-const UINT WINEDDCKEYCAPS_SRCOVERLAY                            = 0x00002000;
-const UINT WINEDDCKEYCAPS_SRCOVERLAYCLRSPACE                    = 0x00004000;
-const UINT WINEDDCKEYCAPS_SRCOVERLAYCLRSPACEYUV                 = 0x00008000;
-const UINT WINEDDCKEYCAPS_SRCOVERLAYONEACTIVE                   = 0x00010000;
-const UINT WINEDDCKEYCAPS_SRCOVERLAYYUV                         = 0x00020000;
-const UINT WINEDDCKEYCAPS_NOCOSTOVERLAY                         = 0x00040000;
+#define WINEDDCKEYCAPS_DESTBLT                                  0x00000001
+#define WINEDDCKEYCAPS_DESTBLTCLRSPACE                          0x00000002
+#define WINEDDCKEYCAPS_DESTBLTCLRSPACEYUV                       0x00000004
+#define WINEDDCKEYCAPS_DESTBLTYUV                               0x00000008
+#define WINEDDCKEYCAPS_DESTOVERLAY                              0x00000010
+#define WINEDDCKEYCAPS_DESTOVERLAYCLRSPACE                      0x00000020
+#define WINEDDCKEYCAPS_DESTOVERLAYCLRSPACEYUV                   0x00000040
+#define WINEDDCKEYCAPS_DESTOVERLAYONEACTIVE                     0x00000080
+#define WINEDDCKEYCAPS_DESTOVERLAYYUV                           0x00000100
+#define WINEDDCKEYCAPS_SRCBLT                                   0x00000200
+#define WINEDDCKEYCAPS_SRCBLTCLRSPACE                           0x00000400
+#define WINEDDCKEYCAPS_SRCBLTCLRSPACEYUV                        0x00000800
+#define WINEDDCKEYCAPS_SRCBLTYUV                                0x00001000
+#define WINEDDCKEYCAPS_SRCOVERLAY                               0x00002000
+#define WINEDDCKEYCAPS_SRCOVERLAYCLRSPACE                       0x00004000
+#define WINEDDCKEYCAPS_SRCOVERLAYCLRSPACEYUV                    0x00008000
+#define WINEDDCKEYCAPS_SRCOVERLAYONEACTIVE                      0x00010000
+#define WINEDDCKEYCAPS_SRCOVERLAYYUV                            0x00020000
+#define WINEDDCKEYCAPS_NOCOSTOVERLAY                            0x00040000
 
-const UINT WINEDDFXCAPS_BLTALPHA                                = 0x00000001;
-const UINT WINEDDFXCAPS_OVERLAYALPHA                            = 0x00000004;
-const UINT WINEDDFXCAPS_BLTARITHSTRETCHYN                       = 0x00000010;
-const UINT WINEDDFXCAPS_BLTARITHSTRETCHY                        = 0x00000020;
-const UINT WINEDDFXCAPS_BLTMIRRORLEFTRIGHT                      = 0x00000040;
-const UINT WINEDDFXCAPS_BLTMIRRORUPDOWN                         = 0x00000080;
-const UINT WINEDDFXCAPS_BLTROTATION                             = 0x00000100;
-const UINT WINEDDFXCAPS_BLTROTATION90                           = 0x00000200;
-const UINT WINEDDFXCAPS_BLTSHRINKX                              = 0x00000400;
-const UINT WINEDDFXCAPS_BLTSHRINKXN                             = 0x00000800;
-const UINT WINEDDFXCAPS_BLTSHRINKY                              = 0x00001000;
-const UINT WINEDDFXCAPS_BLTSHRINKYN                             = 0x00002000;
-const UINT WINEDDFXCAPS_BLTSTRETCHX                             = 0x00004000;
-const UINT WINEDDFXCAPS_BLTSTRETCHXN                            = 0x00008000;
-const UINT WINEDDFXCAPS_BLTSTRETCHY                             = 0x00010000;
-const UINT WINEDDFXCAPS_BLTSTRETCHYN                            = 0x00020000;
-const UINT WINEDDFXCAPS_OVERLAYARITHSTRETCHY                    = 0x00040000;
-const UINT WINEDDFXCAPS_OVERLAYARITHSTRETCHYN                   = 0x00000008;
-const UINT WINEDDFXCAPS_OVERLAYSHRINKX                          = 0x00080000;
-const UINT WINEDDFXCAPS_OVERLAYSHRINKXN                         = 0x00100000;
-const UINT WINEDDFXCAPS_OVERLAYSHRINKY                          = 0x00200000;
-const UINT WINEDDFXCAPS_OVERLAYSHRINKYN                         = 0x00400000;
-const UINT WINEDDFXCAPS_OVERLAYSTRETCHX                         = 0x00800000;
-const UINT WINEDDFXCAPS_OVERLAYSTRETCHXN                        = 0x01000000;
-const UINT WINEDDFXCAPS_OVERLAYSTRETCHY                         = 0x02000000;
-const UINT WINEDDFXCAPS_OVERLAYSTRETCHYN                        = 0x04000000;
-const UINT WINEDDFXCAPS_OVERLAYMIRRORLEFTRIGHT                  = 0x08000000;
-const UINT WINEDDFXCAPS_OVERLAYMIRRORUPDOWN                     = 0x10000000;
+#define WINEDDFXCAPS_BLTALPHA                                   0x00000001
+#define WINEDDFXCAPS_OVERLAYALPHA                               0x00000004
+#define WINEDDFXCAPS_BLTARITHSTRETCHYN                          0x00000010
+#define WINEDDFXCAPS_BLTARITHSTRETCHY                           0x00000020
+#define WINEDDFXCAPS_BLTMIRRORLEFTRIGHT                         0x00000040
+#define WINEDDFXCAPS_BLTMIRRORUPDOWN                            0x00000080
+#define WINEDDFXCAPS_BLTROTATION                                0x00000100
+#define WINEDDFXCAPS_BLTROTATION90                              0x00000200
+#define WINEDDFXCAPS_BLTSHRINKX                                 0x00000400
+#define WINEDDFXCAPS_BLTSHRINKXN                                0x00000800
+#define WINEDDFXCAPS_BLTSHRINKY                                 0x00001000
+#define WINEDDFXCAPS_BLTSHRINKYN                                0x00002000
+#define WINEDDFXCAPS_BLTSTRETCHX                                0x00004000
+#define WINEDDFXCAPS_BLTSTRETCHXN                               0x00008000
+#define WINEDDFXCAPS_BLTSTRETCHY                                0x00010000
+#define WINEDDFXCAPS_BLTSTRETCHYN                               0x00020000
+#define WINEDDFXCAPS_OVERLAYARITHSTRETCHY                       0x00040000
+#define WINEDDFXCAPS_OVERLAYARITHSTRETCHYN                      0x00000008
+#define WINEDDFXCAPS_OVERLAYSHRINKX                             0x00080000
+#define WINEDDFXCAPS_OVERLAYSHRINKXN                            0x00100000
+#define WINEDDFXCAPS_OVERLAYSHRINKY                             0x00200000
+#define WINEDDFXCAPS_OVERLAYSHRINKYN                            0x00400000
+#define WINEDDFXCAPS_OVERLAYSTRETCHX                            0x00800000
+#define WINEDDFXCAPS_OVERLAYSTRETCHXN                           0x01000000
+#define WINEDDFXCAPS_OVERLAYSTRETCHY                            0x02000000
+#define WINEDDFXCAPS_OVERLAYSTRETCHYN                           0x04000000
+#define WINEDDFXCAPS_OVERLAYMIRRORLEFTRIGHT                     0x08000000
+#define WINEDDFXCAPS_OVERLAYMIRRORUPDOWN                        0x10000000
 
-const UINT WINEDDCAPS_3D                                        = 0x00000001;
-const UINT WINEDDCAPS_ALIGNBOUNDARYDEST                         = 0x00000002;
-const UINT WINEDDCAPS_ALIGNSIZEDEST                             = 0x00000004;
-const UINT WINEDDCAPS_ALIGNBOUNDARYSRC                          = 0x00000008;
-const UINT WINEDDCAPS_ALIGNSIZESRC                              = 0x00000010;
-const UINT WINEDDCAPS_ALIGNSTRIDE                               = 0x00000020;
-const UINT WINEDDCAPS_BLT                                       = 0x00000040;
-const UINT WINEDDCAPS_BLTQUEUE                                  = 0x00000080;
-const UINT WINEDDCAPS_BLTFOURCC                                 = 0x00000100;
-const UINT WINEDDCAPS_BLTSTRETCH                                = 0x00000200;
-const UINT WINEDDCAPS_GDI                                       = 0x00000400;
-const UINT WINEDDCAPS_OVERLAY                                   = 0x00000800;
-const UINT WINEDDCAPS_OVERLAYCANTCLIP                           = 0x00001000;
-const UINT WINEDDCAPS_OVERLAYFOURCC                             = 0x00002000;
-const UINT WINEDDCAPS_OVERLAYSTRETCH                            = 0x00004000;
-const UINT WINEDDCAPS_PALETTE                                   = 0x00008000;
-const UINT WINEDDCAPS_PALETTEVSYNC                              = 0x00010000;
-const UINT WINEDDCAPS_READSCANLINE                              = 0x00020000;
-const UINT WINEDDCAPS_STEREOVIEW                                = 0x00040000;
-const UINT WINEDDCAPS_VBI                                       = 0x00080000;
-const UINT WINEDDCAPS_ZBLTS                                     = 0x00100000;
-const UINT WINEDDCAPS_ZOVERLAYS                                 = 0x00200000;
-const UINT WINEDDCAPS_COLORKEY                                  = 0x00400000;
-const UINT WINEDDCAPS_ALPHA                                     = 0x00800000;
-const UINT WINEDDCAPS_COLORKEYHWASSIST                          = 0x01000000;
-const UINT WINEDDCAPS_NOHARDWARE                                = 0x02000000;
-const UINT WINEDDCAPS_BLTCOLORFILL                              = 0x04000000;
-const UINT WINEDDCAPS_BANKSWITCHED                              = 0x08000000;
-const UINT WINEDDCAPS_BLTDEPTHFILL                              = 0x10000000;
-const UINT WINEDDCAPS_CANCLIP                                   = 0x20000000;
-const UINT WINEDDCAPS_CANCLIPSTRETCHED                          = 0x40000000;
-const UINT WINEDDCAPS_CANBLTSYSMEM                              = 0x80000000;
+#define WINEDDCAPS_3D                                           0x00000001
+#define WINEDDCAPS_ALIGNBOUNDARYDEST                            0x00000002
+#define WINEDDCAPS_ALIGNSIZEDEST                                0x00000004
+#define WINEDDCAPS_ALIGNBOUNDARYSRC                             0x00000008
+#define WINEDDCAPS_ALIGNSIZESRC                                 0x00000010
+#define WINEDDCAPS_ALIGNSTRIDE                                  0x00000020
+#define WINEDDCAPS_BLT                                          0x00000040
+#define WINEDDCAPS_BLTQUEUE                                     0x00000080
+#define WINEDDCAPS_BLTFOURCC                                    0x00000100
+#define WINEDDCAPS_BLTSTRETCH                                   0x00000200
+#define WINEDDCAPS_GDI                                          0x00000400
+#define WINEDDCAPS_OVERLAY                                      0x00000800
+#define WINEDDCAPS_OVERLAYCANTCLIP                              0x00001000
+#define WINEDDCAPS_OVERLAYFOURCC                                0x00002000
+#define WINEDDCAPS_OVERLAYSTRETCH                               0x00004000
+#define WINEDDCAPS_PALETTE                                      0x00008000
+#define WINEDDCAPS_PALETTEVSYNC                                 0x00010000
+#define WINEDDCAPS_READSCANLINE                                 0x00020000
+#define WINEDDCAPS_STEREOVIEW                                   0x00040000
+#define WINEDDCAPS_VBI                                          0x00080000
+#define WINEDDCAPS_ZBLTS                                        0x00100000
+#define WINEDDCAPS_ZOVERLAYS                                    0x00200000
+#define WINEDDCAPS_COLORKEY                                     0x00400000
+#define WINEDDCAPS_ALPHA                                        0x00800000
+#define WINEDDCAPS_COLORKEYHWASSIST                             0x01000000
+#define WINEDDCAPS_NOHARDWARE                                   0x02000000
+#define WINEDDCAPS_BLTCOLORFILL                                 0x04000000
+#define WINEDDCAPS_BANKSWITCHED                                 0x08000000
+#define WINEDDCAPS_BLTDEPTHFILL                                 0x10000000
+#define WINEDDCAPS_CANCLIP                                      0x20000000
+#define WINEDDCAPS_CANCLIPSTRETCHED                             0x40000000
+#define WINEDDCAPS_CANBLTSYSMEM                                 0x80000000
 
-const UINT WINEDDCAPS2_CERTIFIED                                = 0x00000001;
-const UINT WINEDDCAPS2_NO2DDURING3DSCENE                        = 0x00000002;
-const UINT WINEDDCAPS2_VIDEOPORT                                = 0x00000004;
-const UINT WINEDDCAPS2_AUTOFLIPOVERLAY                          = 0x00000008;
-const UINT WINEDDCAPS2_CANBOBINTERLEAVED                        = 0x00000010;
-const UINT WINEDDCAPS2_CANBOBNONINTERLEAVED                     = 0x00000020;
-const UINT WINEDDCAPS2_COLORCONTROLOVERLAY                      = 0x00000040;
-const UINT WINEDDCAPS2_COLORCONTROLPRIMARY                      = 0x00000080;
-const UINT WINEDDCAPS2_CANDROPZ16BIT                            = 0x00000100;
-const UINT WINEDDCAPS2_NONLOCALVIDMEM                           = 0x00000200;
-const UINT WINEDDCAPS2_NONLOCALVIDMEMCAPS                       = 0x00000400;
-const UINT WINEDDCAPS2_NOPAGELOCKREQUIRED                       = 0x00000800;
-const UINT WINEDDCAPS2_WIDESURFACES                             = 0x00001000;
-const UINT WINEDDCAPS2_CANFLIPODDEVEN                           = 0x00002000;
-const UINT WINEDDCAPS2_CANBOBHARDWARE                           = 0x00004000;
-const UINT WINEDDCAPS2_COPYFOURCC                               = 0x00008000;
-const UINT WINEDDCAPS2_PRIMARYGAMMA                             = 0x00020000;
-const UINT WINEDDCAPS2_CANRENDERWINDOWED                        = 0x00080000;
-const UINT WINEDDCAPS2_CANCALIBRATEGAMMA                        = 0x00100000;
-const UINT WINEDDCAPS2_FLIPINTERVAL                             = 0x00200000;
-const UINT WINEDDCAPS2_FLIPNOVSYNC                              = 0x00400000;
-const UINT WINEDDCAPS2_CANMANAGETEXTURE                         = 0x00800000;
-const UINT WINEDDCAPS2_TEXMANINNONLOCALVIDMEM                   = 0x01000000;
-const UINT WINEDDCAPS2_STEREO                                   = 0x02000000;
-const UINT WINEDDCAPS2_SYSTONONLOCAL_AS_SYSTOLOCAL              = 0x04000000;
+#define WINEDDCAPS2_CERTIFIED                                   0x00000001
+#define WINEDDCAPS2_NO2DDURING3DSCENE                           0x00000002
+#define WINEDDCAPS2_VIDEOPORT                                   0x00000004
+#define WINEDDCAPS2_AUTOFLIPOVERLAY                             0x00000008
+#define WINEDDCAPS2_CANBOBINTERLEAVED                           0x00000010
+#define WINEDDCAPS2_CANBOBNONINTERLEAVED                        0x00000020
+#define WINEDDCAPS2_COLORCONTROLOVERLAY                         0x00000040
+#define WINEDDCAPS2_COLORCONTROLPRIMARY                         0x00000080
+#define WINEDDCAPS2_CANDROPZ16BIT                               0x00000100
+#define WINEDDCAPS2_NONLOCALVIDMEM                              0x00000200
+#define WINEDDCAPS2_NONLOCALVIDMEMCAPS                          0x00000400
+#define WINEDDCAPS2_NOPAGELOCKREQUIRED                          0x00000800
+#define WINEDDCAPS2_WIDESURFACES                                0x00001000
+#define WINEDDCAPS2_CANFLIPODDEVEN                              0x00002000
+#define WINEDDCAPS2_CANBOBHARDWARE                              0x00004000
+#define WINEDDCAPS2_COPYFOURCC                                  0x00008000
+#define WINEDDCAPS2_PRIMARYGAMMA                                0x00020000
+#define WINEDDCAPS2_CANRENDERWINDOWED                           0x00080000
+#define WINEDDCAPS2_CANCALIBRATEGAMMA                           0x00100000
+#define WINEDDCAPS2_FLIPINTERVAL                                0x00200000
+#define WINEDDCAPS2_FLIPNOVSYNC                                 0x00400000
+#define WINEDDCAPS2_CANMANAGETEXTURE                            0x00800000
+#define WINEDDCAPS2_TEXMANINNONLOCALVIDMEM                      0x01000000
+#define WINEDDCAPS2_STEREO                                      0x02000000
+#define WINEDDCAPS2_SYSTONONLOCAL_AS_SYSTOLOCAL                 0x04000000
 
 /* DDCAPS.d */
-const UINT WINEDDPCAPS_4BIT                                     = 0x00000001;
-const UINT WINEDDPCAPS_8BITENTRIES                              = 0x00000002;
-const UINT WINEDDPCAPS_8BIT                                     = 0x00000004;
-const UINT WINEDDPCAPS_INITIALIZE                               = 0x00000008;
-const UINT WINEDDPCAPS_PRIMARYSURFACE                           = 0x00000010;
-const UINT WINEDDPCAPS_PRIMARYSURFACELEFT                       = 0x00000020;
-const UINT WINEDDPCAPS_ALLOW256                                 = 0x00000040;
-const UINT WINEDDPCAPS_VSYNC                                    = 0x00000080;
-const UINT WINEDDPCAPS_1BIT                                     = 0x00000100;
-const UINT WINEDDPCAPS_2BIT                                     = 0x00000200;
-const UINT WINEDDPCAPS_ALPHA                                    = 0x00000400;
+#define WINEDDPCAPS_4BIT                                        0x00000001
+#define WINEDDPCAPS_8BITENTRIES                                 0x00000002
+#define WINEDDPCAPS_8BIT                                        0x00000004
+#define WINEDDPCAPS_INITIALIZE                                  0x00000008
+#define WINEDDPCAPS_PRIMARYSURFACE                              0x00000010
+#define WINEDDPCAPS_PRIMARYSURFACELEFT                          0x00000020
+#define WINEDDPCAPS_ALLOW256                                    0x00000040
+#define WINEDDPCAPS_VSYNC                                       0x00000080
+#define WINEDDPCAPS_1BIT                                        0x00000100
+#define WINEDDPCAPS_2BIT                                        0x00000200
+#define WINEDDPCAPS_ALPHA                                       0x00000400
 
 typedef struct _WINED3DDISPLAYMODE
 {
@@ -2566,3 +2543,5 @@ DWORD __cdecl wined3d_volume_set_priority(struct wined3d_volume *volume, DWORD n
 HRESULT __cdecl wined3d_volume_set_private_data(struct wined3d_volume *volume,
         REFGUID guid, const void *data, DWORD data_size, DWORD flags);
 HRESULT __cdecl wined3d_volume_unmap(struct wined3d_volume *volume);
+
+#endif /* __WINE_WINED3D_H */
