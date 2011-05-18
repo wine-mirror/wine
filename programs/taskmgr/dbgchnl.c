@@ -81,26 +81,27 @@ BOOL AreDebugChannelsSupported(void)
 
 static DWORD    get_selected_pid(void)
 {
-    LVITEM      lvitem;
-    ULONG       Index;
+    LVITEMW     lvitem;
+    ULONG       Index, Count;
     DWORD       dwProcessId;
 
-    for (Index = 0; Index < (ULONG)ListView_GetItemCount(hProcessPageListCtrl); Index++)
+    Count = SendMessageW(hProcessPageListCtrl, LVM_GETITEMCOUNT, 0, 0);
+    for (Index = 0; Index < Count; Index++)
     {
         lvitem.mask = LVIF_STATE;
         lvitem.stateMask = LVIS_SELECTED;
         lvitem.iItem = Index;
         lvitem.iSubItem = 0;
 
-        SendMessage(hProcessPageListCtrl, LVM_GETITEM, 0, (LPARAM) &lvitem);
+        SendMessageW(hProcessPageListCtrl, LVM_GETITEMW, 0, (LPARAM) &lvitem);
 
         if (lvitem.state & LVIS_SELECTED)
             break;
     }
 
+    Count = SendMessageW(hProcessPageListCtrl, LVM_GETSELECTEDCOUNT, 0, 0);
     dwProcessId = PerfDataGetProcessId(Index);
-
-    if ((ListView_GetSelectedCount(hProcessPageListCtrl) != 1) || (dwProcessId == 0))
+    if ((Count != 1) || (dwProcessId == 0))
         return 0;
     return dwProcessId;
 }
@@ -108,17 +109,19 @@ static DWORD    get_selected_pid(void)
 static int     list_channel_CB(HANDLE hProcess, void* addr, struct __wine_debug_channel* channel, void* user)
 {
     int         j;
-    WCHAR       val[2];
-    LVITEMA     lvitem;
+    WCHAR       nameW[sizeof(channel->name)], val[2];
+    LVITEMW     lvitem;
     int         index;
     HWND        hChannelLV = user;
 
+    MultiByteToWideChar(CP_ACP, 0, channel->name, sizeof(channel->name), nameW, sizeof(nameW)/sizeof(WCHAR));
+
     lvitem.mask = LVIF_TEXT;
-    lvitem.pszText = channel->name;
+    lvitem.pszText = nameW;
     lvitem.iItem = 0;
     lvitem.iSubItem = 0;
 
-    index = ListView_InsertItem(hChannelLV, &lvitem);
+    index = ListView_InsertItemW(hChannelLV, &lvitem);
     if (index == -1) return 0;
 
     val[1] = '\0';
@@ -209,13 +212,13 @@ static void DebugChannels_FillList(HWND hChannelLV)
 {
     HANDLE      hProcess;
 
-    SendMessage(hChannelLV, LVM_DELETEALLITEMS, 0, 0);
+    SendMessageW(hChannelLV, LVM_DELETEALLITEMS, 0, 0);
 
     hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_READ, FALSE, get_selected_pid());
     if (!hProcess) return; /* FIXME messagebox */
-    SendMessage(hChannelLV, WM_SETREDRAW, FALSE, 0);
+    SendMessageW(hChannelLV, WM_SETREDRAW, FALSE, 0);
     enum_channel(hProcess, list_channel_CB, (void*)hChannelLV);
-    SendMessage(hChannelLV, WM_SETREDRAW, TRUE, 0);
+    SendMessageW(hChannelLV, WM_SETREDRAW, TRUE, 0);
     CloseHandle(hProcess);
 }
 
@@ -287,7 +290,7 @@ static void DebugChannels_OnNotify(HWND hDlg, LPARAM lParam)
             if (!hProcess) return; /* FIXME message box */
             lhti.pt = nmia->ptAction;
             hChannelLV = GetDlgItem(hDlg, IDC_DEBUG_CHANNELS_LIST);
-            SendMessage(hChannelLV, LVM_SUBITEMHITTEST, 0, (LPARAM)&lhti);
+            SendMessageW(hChannelLV, LVM_SUBITEMHITTEST, 0, (LPARAM)&lhti);
             if (nmia->iSubItem >= 1 && nmia->iSubItem <= 4)
             {
                 WCHAR           val[2];
