@@ -1876,7 +1876,6 @@ enum WINED3DSRGB
     SRGB_ANY                                = 0,    /* Uses the cached value(e.g. external calls) */
     SRGB_RGB                                = 1,    /* Loads the rgb texture */
     SRGB_SRGB                               = 2,    /* Loads the srgb texture */
-    SRGB_BOTH                               = 3,    /* Loads both textures */
 };
 
 struct gl_texture

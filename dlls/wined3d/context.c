@@ -2341,14 +2341,8 @@ static void context_setup_target(struct wined3d_device *device,
         {
             /* Read the back buffer of the old drawable into the destination texture. */
             if (context->current_rt->texture_name_srgb)
-            {
-                surface_internal_preload(context->current_rt, SRGB_BOTH);
-            }
-            else
-            {
-                surface_internal_preload(context->current_rt, SRGB_RGB);
-            }
-
+                surface_internal_preload(context->current_rt, SRGB_SRGB);
+            surface_internal_preload(context->current_rt, SRGB_RGB);
             surface_modify_location(context->current_rt, SFLAG_INDRAWABLE, FALSE);
         }
     }

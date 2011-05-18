@@ -683,9 +683,6 @@ static void texture2d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
             srgb_mode = FALSE;
             break;
 
-        case SRGB_BOTH:
-            texture2d_preload(texture, SRGB_RGB);
-            /* Fallthrough */
         case SRGB_SRGB:
             srgb_mode = TRUE;
             break;
