@@ -442,7 +442,7 @@ static void test_StreamOnStreamRange(void)
 
     /* Seek */
     hr = IWICStream_Seek(pSubStream, LargeNull, STREAM_SEEK_END, &uNewPos);
-    ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 20, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, uBytesWritten);
+    ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 20, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 20);
     ok(hr == S_OK, "Seek returned with %#x, expected %#x\n", hr, S_OK);
 
     hr = IWICStream_Seek(pSubStream, LargeNull, STREAM_SEEK_SET, &uNewPos);
@@ -712,7 +712,7 @@ static void test_StreamOnStreamRange(void)
 
     hr = IWICStream_Seek(pSubStream, LargeNull, STREAM_SEEK_END, &uNewPos);
     ok(hr == S_OK, "Seek returned with %#x, expected %#x\n", hr, S_OK);
-    ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 16, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, uBytesWritten);
+    ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 16, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 16);
 
     IWICStream_Seek(pSubStream, LargeNull, STREAM_SEEK_SET, NULL);
     hr = IWICStream_Read(pSubStream, Memory, 48, &uBytesRead);
