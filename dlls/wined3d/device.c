@@ -1279,8 +1279,6 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     /* Initialize the current view state */
     device->view_ident = 1;
     device->contexts[0]->last_was_rhw = 0;
-    glGetIntegerv(GL_MAX_LIGHTS, &device->maxConcurrentLights);
-    checkGLcall("glGetIntegerv(GL_MAX_LIGHTS, &device->maxConcurrentLights)");
 
     switch (wined3d_settings.offscreen_rendering_mode)
     {
@@ -2129,9 +2127,10 @@ HRESULT CDECL wined3d_device_set_light_enable(struct wined3d_device *device, UIN
         }
         else
         {
-            int i;
+            unsigned int i;
+            const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
             /* Find a free GL light. */
-            for (i = 0; i < device->maxConcurrentLights; ++i)
+            for (i = 0; i < gl_info->limits.lights; ++i)
             {
                 if (!device->updateStateBlock->state.lights[i])
                 {

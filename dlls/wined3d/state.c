@@ -3859,7 +3859,7 @@ static void transform_view(DWORD state, struct wined3d_stateblock *stateblock, s
     checkGLcall("glLoadMatrixf(...)");
 
     /* Reset lights. TODO: Call light apply func */
-    for (k = 0; k < stateblock->device->maxConcurrentLights; ++k)
+    for (k = 0; k < gl_info->limits.lights; ++k)
     {
         light = stateblock->state.lights[k];
         if(!light) continue;

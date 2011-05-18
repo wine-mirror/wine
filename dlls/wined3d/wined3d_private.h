@@ -1654,7 +1654,6 @@ struct wined3d_device
     LONG                    exStyle;
 
     /* X and GL Information */
-    GLint                   maxConcurrentLights;
     GLenum                  offscreenBuffer;
 
     /* Selected capabilities */
