@@ -55,8 +55,8 @@ typedef struct ITextSelectionImpl ITextSelectionImpl;
 typedef struct IOleClientSiteImpl IOleClientSiteImpl;
 
 typedef struct IRichEditOleImpl {
-    const IRichEditOleVtbl *lpRichEditOleVtbl;
-    const ITextDocumentVtbl *lpTextDocumentVtbl;
+    IRichEditOle IRichEditOle_iface;
+    ITextDocument ITextDocument_iface;
     LONG ref;
 
     ME_TextEditor *editor;
@@ -80,12 +80,12 @@ struct IOleClientSiteImpl {
 
 static inline IRichEditOleImpl *impl_from_IRichEditOle(IRichEditOle *iface)
 {
-    return (IRichEditOleImpl *)((BYTE*)iface - FIELD_OFFSET(IRichEditOleImpl, lpRichEditOleVtbl));
+    return CONTAINING_RECORD(iface, IRichEditOleImpl, IRichEditOle_iface);
 }
 
 static inline IRichEditOleImpl *impl_from_ITextDocument(ITextDocument *iface)
 {
-    return (IRichEditOleImpl *)((BYTE*)iface - FIELD_OFFSET(IRichEditOleImpl, lpTextDocumentVtbl));
+    return CONTAINING_RECORD(iface, IRichEditOleImpl, ITextDocument_iface);
 }
 
 static HRESULT WINAPI
@@ -98,9 +98,9 @@ IRichEditOle_fnQueryInterface(IRichEditOle *me, REFIID riid, LPVOID *ppvObj)
     *ppvObj = NULL;
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IRichEditOle))
-        *ppvObj = &This->lpRichEditOleVtbl;
+        *ppvObj = &This->IRichEditOle_iface;
     else if (IsEqualGUID(riid, &IID_ITextDocument))
-        *ppvObj = &This->lpTextDocumentVtbl;
+        *ppvObj = &This->ITextDocument_iface;
     if (*ppvObj)
     {
         IRichEditOle_AddRef(me);
@@ -452,22 +452,21 @@ ITextDocument_fnQueryInterface(ITextDocument* me, REFIID riid,
     void** ppvObject)
 {
     IRichEditOleImpl *This = impl_from_ITextDocument(me);
-    return IRichEditOle_fnQueryInterface((IRichEditOle*)&This->lpRichEditOleVtbl,
-            riid, ppvObject);
+    return IRichEditOle_fnQueryInterface(&This->IRichEditOle_iface, riid, ppvObject);
 }
 
 static ULONG WINAPI
 ITextDocument_fnAddRef(ITextDocument* me)
 {
     IRichEditOleImpl *This = impl_from_ITextDocument(me);
-    return IRichEditOle_fnAddRef((IRichEditOle*)&This->lpRichEditOleVtbl);
+    return IRichEditOle_fnAddRef(&This->IRichEditOle_iface);
 }
 
 static ULONG WINAPI
 ITextDocument_fnRelease(ITextDocument* me)
 {
     IRichEditOleImpl *This = impl_from_ITextDocument(me);
-    return IRichEditOle_fnRelease((IRichEditOle*)&This->lpRichEditOleVtbl);
+    return IRichEditOle_fnRelease(&This->IRichEditOle_iface);
 }
 
 static HRESULT WINAPI
@@ -1508,8 +1507,8 @@ LRESULT CreateIRichEditOle(ME_TextEditor *editor, LPVOID *ppObj)
     if (!reo)
         return 0;
 
-    reo->lpRichEditOleVtbl = &revt;
-    reo->lpTextDocumentVtbl = &tdvt;
+    reo->IRichEditOle_iface.lpVtbl = &revt;
+    reo->ITextDocument_iface.lpVtbl = &tdvt;
     reo->ref = 1;
     reo->editor = editor;
     reo->txtSel = CreateTextSelection(reo);
