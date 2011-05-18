@@ -1180,6 +1180,9 @@ static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
     install_mode = MSI_RecordGetInteger(row, 5);
 
     comp = msi_get_loaded_component(package, component);
+    if (!comp)
+        return ERROR_SUCCESS;
+
     if (!comp->Enabled)
     {
         TRACE("component is disabled\n");
