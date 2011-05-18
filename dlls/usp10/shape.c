@@ -253,18 +253,18 @@ static const char* contextual_features[] =
 
 static OPENTYPE_FEATURE_RECORD standard_features[] =
 {
-    { 0x6167696c /*liga*/, 1},
-    { 0x67696c63 /*clig*/, 1},
+    { MS_MAKE_TAG('l','i','g','a'), 1},
+    { MS_MAKE_TAG('c','l','i','g'), 1},
 };
 
 static OPENTYPE_FEATURE_RECORD arabic_features[] =
 {
-    { 0x67696c72 /*rlig*/, 1},
-    { 0x746c6163 /*calt*/, 1},
-    { 0x6167696c /*liga*/, 1},
-    { 0x67696c64 /*dlig*/, 1},
-    { 0x68777363 /*cswh*/, 1},
-    { 0x7465736d /*mset*/, 1},
+    { MS_MAKE_TAG('r','l','i','g'), 1},
+    { MS_MAKE_TAG('c','a','l','t'), 1},
+    { MS_MAKE_TAG('l','i','g','a'), 1},
+    { MS_MAKE_TAG('d','l','i','g'), 1},
+    { MS_MAKE_TAG('c','s','w','h'), 1},
+    { MS_MAKE_TAG('m','s','e','t'), 1},
 };
 
 static const char* required_arabic_features[] =
@@ -278,15 +278,15 @@ static const char* required_arabic_features[] =
 
 static OPENTYPE_FEATURE_RECORD hebrew_features[] =
 {
-    { 0x67696c64 /*dlig*/, 1},
+    { MS_MAKE_TAG('d','l','i','g'), 1},
 };
 
 static OPENTYPE_FEATURE_RECORD syriac_features[] =
 {
-    { 0x67696c72 /*rlig*/, 1},
-    { 0x746c6163 /*calt*/, 1},
-    { 0x6167696c /*liga*/, 1},
-    { 0x67696c64 /*dlig*/, 1},
+    { MS_MAKE_TAG('r','l','i','g'), 1},
+    { MS_MAKE_TAG('c','a','l','t'), 1},
+    { MS_MAKE_TAG('l','i','g','a'), 1},
+    { MS_MAKE_TAG('d','l','i','g'), 1},
 };
 
 static const char* required_syriac_features[] =
@@ -304,25 +304,25 @@ static const char* required_syriac_features[] =
 static OPENTYPE_FEATURE_RECORD sinhala_features[] =
 {
     /* Base forms */
-    { 0x6e686b61 /*akhn*/, 1},
-    { 0x66687072 /*rphf*/, 1},
-    { 0x75746176 /*vatu*/, 1},
-    { 0x66747370 /*pstf*/, 1},
+    { MS_MAKE_TAG('a','k','h','n'), 1},
+    { MS_MAKE_TAG('r','p','h','f'), 1},
+    { MS_MAKE_TAG('v','a','t','u'), 1},
+    { MS_MAKE_TAG('p','s','t','f'), 1},
     /* Presentation forms */
-    { 0x73776c62 /*blws*/, 1},
-    { 0x73766261 /*abvs*/, 1},
-    { 0x73747370 /*psts*/, 1},
+    { MS_MAKE_TAG('b','l','w','s'), 1},
+    { MS_MAKE_TAG('a','b','v','s'), 1},
+    { MS_MAKE_TAG('p','s','t','s'), 1},
 };
 
 static OPENTYPE_FEATURE_RECORD tibetan_features[] =
 {
-    { 0x73766261 /*abvs*/, 1},
-    { 0x73776c62 /*blws*/, 1},
+    { MS_MAKE_TAG('a','b','v','s'), 1},
+    { MS_MAKE_TAG('b','l','w','s'), 1},
 };
 
 static OPENTYPE_FEATURE_RECORD thai_features[] =
 {
-    { 0x706d6363 /*ccmp*/, 1},
+    { MS_MAKE_TAG('c','c','m','p'), 1},
 };
 
 static const char* required_lao_features[] =
