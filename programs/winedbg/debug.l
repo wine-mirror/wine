@@ -78,10 +78,19 @@ static int read_input(const char* pfx, char* buf, int size)
         lexeme_flush();
         len = input_fetch_entire_line(pfx, &tmp);
         if (len < 0) return 0;  /* eof */
+
+        /* remove carriage return in newline */
+        if (len >= 2 && tmp[len - 2] == '\r')
+        {
+            tmp[len - 2] = '\n';
+            tmp[len - 1] = '\0';
+            len--;
+        }
+
         /* FIXME: should have a pair of buffers, and switch between the two, instead of
          * reallocating a new one for each line
          */
-        if (last_line && (len == 0 || (len == 1 && tmp[0] == '\n') || (len == 2 && tmp[0] == '\r' && tmp[1] == '\n')))
+        if (last_line && (len == 0 || (len == 1 && tmp[0] == '\n')))
         {
             HeapFree(GetProcessHeap(), 0, tmp);
         }
