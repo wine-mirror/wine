@@ -664,6 +664,21 @@ static HRESULT texture2d_bind(struct wined3d_texture *texture,
     return hr;
 }
 
+static BOOL texture_srgb_mode(struct wined3d_texture *texture, enum WINED3DSRGB srgb)
+{
+    switch (srgb)
+    {
+        case SRGB_RGB:
+            return FALSE;
+
+        case SRGB_SRGB:
+            return TRUE;
+
+        default:
+            return texture->flags & WINED3D_TEXTURE_IS_SRGB;
+    }
+}
+
 /* Do not call while under the GL lock. */
 static void texture2d_preload(struct wined3d_texture *texture, enum WINED3DSRGB srgb)
 {
@@ -677,21 +692,7 @@ static void texture2d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
 
     TRACE("texture %p, srgb %#x.\n", texture, srgb);
 
-    switch (srgb)
-    {
-        case SRGB_RGB:
-            srgb_mode = FALSE;
-            break;
-
-        case SRGB_SRGB:
-            srgb_mode = TRUE;
-            break;
-
-        default:
-            srgb_mode = texture->flags & WINED3D_TEXTURE_IS_SRGB;
-            break;
-    }
-
+    srgb_mode = texture_srgb_mode(texture, srgb);
     gl_tex = wined3d_texture_get_gl_texture(texture, gl_info, srgb_mode);
 
     if (!device->isInDraw)
@@ -1095,7 +1096,7 @@ static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
     else if (texture->bind_count > 0)
     {
         BOOL texture_srgb = texture->flags & WINED3D_TEXTURE_IS_SRGB;
-        BOOL sampler_srgb = device->stateBlock->state.sampler_states[texture->sampler][WINED3DSAMP_SRGBTEXTURE];
+        BOOL sampler_srgb = texture_srgb_mode(texture, srgb);
         srgb_was_toggled = !texture_srgb != !sampler_srgb;
 
         if (srgb_was_toggled)
