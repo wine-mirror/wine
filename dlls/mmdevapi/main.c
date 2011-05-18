@@ -72,7 +72,7 @@ static BOOL load_driver(const WCHAR *name)
     }
 
 #define LDFC(n) do { drvs.p##n = (void*)GetProcAddress(drvs.module, #n);\
-        if(!drvs.p##n) { FreeLibrary(drvs.module); return FALSE; } } while(0);
+        if(!drvs.p##n) { FreeLibrary(drvs.module); return FALSE; } } while(0)
     LDFC(GetEndpointIDs);
     LDFC(GetAudioEndpoint);
 #undef LDFC
