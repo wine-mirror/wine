@@ -97,7 +97,7 @@ static void state_lighting(DWORD state, struct wined3d_stateblock *stateblock, s
 static void state_zenable(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     /* No z test without depth stencil buffers */
-    if (!stateblock->device->depth_stencil)
+    if (!stateblock->device->fb.depth_stencil)
     {
         TRACE("No Z buffer - disabling depth test\n");
         glDisable(GL_DEPTH_TEST); /* This also disables z writing in gl */
@@ -284,7 +284,7 @@ static GLenum gl_blend_factor(WINED3DBLEND factor, const struct wined3d_format *
 
 static void state_blend(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    struct wined3d_surface *target = stateblock->device->render_targets[0];
+    struct wined3d_surface *target = stateblock->device->fb.render_targets[0];
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLenum srcBlend, dstBlend;
     WINED3DBLEND d3d_blend;
@@ -794,7 +794,7 @@ static void state_stencil(DWORD state, struct wined3d_stateblock *stateblock, st
     GLint stencilPass_ccw = GL_KEEP;
 
     /* No stencil test without a stencil buffer. */
-    if (!stateblock->device->depth_stencil)
+    if (!stateblock->device->fb.depth_stencil)
     {
         glDisable(GL_STENCIL_TEST);
         checkGLcall("glDisable GL_STENCIL_TEST");
@@ -877,7 +877,7 @@ static void state_stencil(DWORD state, struct wined3d_stateblock *stateblock, st
 
 static void state_stencilwrite2s(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    DWORD mask = stateblock->device->depth_stencil ? stateblock->state.render_states[WINED3DRS_STENCILWRITEMASK] : 0;
+    DWORD mask = stateblock->device->fb.depth_stencil ? stateblock->state.render_states[WINED3DRS_STENCILWRITEMASK] : 0;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     GL_EXTCALL(glActiveStencilFaceEXT(GL_BACK));
@@ -891,7 +891,7 @@ static void state_stencilwrite2s(DWORD state, struct wined3d_stateblock *statebl
 
 static void state_stencilwrite(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    DWORD mask = stateblock->device->depth_stencil ? stateblock->state.render_states[WINED3DRS_STENCILWRITEMASK] : 0;
+    DWORD mask = stateblock->device->fb.depth_stencil ? stateblock->state.render_states[WINED3DRS_STENCILWRITEMASK] : 0;
 
     glStencilMask(mask);
     checkGLcall("glStencilMask");
@@ -1688,7 +1688,7 @@ static void state_depthbias(DWORD state, struct wined3d_stateblock *stateblock, 
     if (stateblock->state.render_states[WINED3DRS_SLOPESCALEDEPTHBIAS]
             || stateblock->state.render_states[WINED3DRS_DEPTHBIAS])
     {
-        struct wined3d_surface *depth = stateblock->device->depth_stencil;
+        struct wined3d_surface *depth = stateblock->device->fb.depth_stencil;
         float scale;
 
         union
@@ -4654,7 +4654,7 @@ static void vertexdeclaration(DWORD state_id, struct wined3d_stateblock *statebl
 
 static void viewport_miscpart(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    struct wined3d_surface *target = stateblock->device->render_targets[0];
+    struct wined3d_surface *target = stateblock->device->fb.render_targets[0];
     UINT width, height;
     WINED3DVIEWPORT vp = stateblock->state.viewport;
 
@@ -4810,7 +4810,7 @@ static void light(DWORD state, struct wined3d_stateblock *stateblock, struct win
 
 static void scissorrect(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    struct wined3d_surface *target = stateblock->device->render_targets[0];
+    struct wined3d_surface *target = stateblock->device->fb.render_targets[0];
     RECT *pRect = &stateblock->state.scissor_rect;
     UINT height;
     UINT width;

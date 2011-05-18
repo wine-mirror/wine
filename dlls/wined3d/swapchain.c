@@ -406,6 +406,7 @@ static void swapchain_blit(struct wined3d_swapchain *swapchain,
 static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT *src_rect_in,
         const RECT *dst_rect_in, const RGNDATA *dirty_region, DWORD flags)
 {
+    const struct wined3d_fb_state *fb = &swapchain->device->fb;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     RECT src_rect, dst_rect;
@@ -615,15 +616,15 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
             surface_modify_location(swapchain->back_buffers[0], SFLAG_INDRAWABLE, TRUE);
     }
 
-    if (swapchain->device->depth_stencil)
+    if (fb->depth_stencil)
     {
         if (swapchain->presentParms.Flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
-                || swapchain->device->depth_stencil->flags & SFLAG_DISCARD)
+                || fb->depth_stencil->flags & SFLAG_DISCARD)
         {
-            surface_modify_ds_location(swapchain->device->depth_stencil, SFLAG_DS_DISCARDED,
-                    swapchain->device->depth_stencil->resource.width,
-                    swapchain->device->depth_stencil->resource.height);
-            if (swapchain->device->depth_stencil == swapchain->device->onscreen_depth_stencil)
+            surface_modify_ds_location(fb->depth_stencil, SFLAG_DS_DISCARDED,
+                    fb->depth_stencil->resource.width,
+                    fb->depth_stencil->resource.height);
+            if (fb->depth_stencil == swapchain->device->onscreen_depth_stencil)
             {
                 wined3d_surface_decref(swapchain->device->onscreen_depth_stencil);
                 swapchain->device->onscreen_depth_stencil = NULL;

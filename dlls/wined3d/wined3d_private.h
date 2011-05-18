@@ -1640,6 +1640,12 @@ void wined3d_unregister_window(HWND window) DECLSPEC_HIDDEN;
 /* Multithreaded flag. Removed from the public header to signal that IWineD3D::CreateDevice ignores it */
 #define WINED3DCREATE_MULTITHREADED 0x00000004
 
+struct wined3d_fb_state
+{
+    struct wined3d_surface **render_targets;
+    struct wined3d_surface *depth_stencil;
+};
+
 struct wined3d_device
 {
     LONG ref;
@@ -1710,10 +1716,9 @@ struct wined3d_device
     unsigned int            highest_dirty_ps_const, highest_dirty_vs_const;
 
     /* Render Target Support */
-    struct wined3d_surface **render_targets;
-    struct wined3d_surface *auto_depth_stencil;
+    struct wined3d_fb_state fb;
     struct wined3d_surface *onscreen_depth_stencil;
-    struct wined3d_surface *depth_stencil;
+    struct wined3d_surface *auto_depth_stencil;
 
     /* palettes texture management */
     PALETTEENTRY **palettes;

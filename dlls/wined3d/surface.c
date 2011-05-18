@@ -861,7 +861,8 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
             pass_rect = NULL;
 
         if (!(wined3d_settings.rendertargetlock_mode == RTL_DISABLE
-                && ((surface->container.type == WINED3D_CONTAINER_SWAPCHAIN) || surface == device->render_targets[0])))
+                && ((surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
+                || surface == device->fb.render_targets[0])))
             surface_load_location(surface, SFLAG_INSYSMEM, pass_rect);
     }
 
@@ -952,7 +953,7 @@ static void surface_unmap(struct wined3d_surface *surface)
     }
 
     if (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
-            || (device->render_targets && surface == device->render_targets[0]))
+            || (device->fb.render_targets && surface == device->fb.render_targets[0]))
     {
         if (wined3d_settings.rendertargetlock_mode == RTL_DISABLE)
         {
@@ -1404,7 +1405,7 @@ static HRESULT surface_bltfast(struct wined3d_surface *dst_surface, DWORD dst_x,
         return WINEDDERR_SURFACEBUSY;
     }
 
-    if (device->inScene && (dst_surface == device->depth_stencil || src_surface == device->depth_stencil))
+    if (device->inScene && (dst_surface == device->fb.depth_stencil || src_surface == device->fb.depth_stencil))
     {
         WARN("Attempt to access the depth / stencil surface while in a scene.\n");
         return WINED3DERR_INVALIDCALL;
@@ -1987,9 +1988,9 @@ void surface_bind(struct wined3d_surface *surface, const struct wined3d_gl_info 
 /* This function checks if the primary render target uses the 8bit paletted format. */
 static BOOL primary_render_target_is_p8(struct wined3d_device *device)
 {
-    if (device->render_targets && device->render_targets[0])
+    if (device->fb.render_targets && device->fb.render_targets[0])
     {
-        struct wined3d_surface *render_target = device->render_targets[0];
+        struct wined3d_surface *render_target = device->fb.render_targets[0];
         if ((render_target->resource.usage & WINED3DUSAGE_RENDERTARGET)
                 && (render_target->resource.format->id == WINED3DFMT_P8_UINT))
             return TRUE;
@@ -4159,7 +4160,7 @@ HRESULT d3dfmt_get_conv(struct wined3d_surface *surface, BOOL need_alpha_ck,
              * in which the main render target uses p8. Some games like GTA Vice City use P8 for texturing which
              * conflicts with this.
              */
-            if (!((blit_supported && device->render_targets && surface == device->render_targets[0]))
+            if (!((blit_supported && device->fb.render_targets && surface == device->fb.render_targets[0]))
                     || colorkey_active || !use_texturing)
             {
                 format->glFormat = GL_RGBA;
@@ -5245,8 +5246,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
 
     /* Early sort out of cases where no render target is used */
     if (!dstSwapchain && !srcSwapchain
-            && src_surface != device->render_targets[0]
-            && dst_surface != device->render_targets[0])
+            && src_surface != device->fb.render_targets[0]
+            && dst_surface != device->fb.render_targets[0])
     {
         TRACE("No surface is render target, not using hardware blit.\n");
         return WINED3DERR_INVALIDCALL;
@@ -5370,16 +5371,16 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
     else if (dstSwapchain)
     {
         /* Handled with regular texture -> swapchain blit */
-        if (src_surface == device->render_targets[0])
+        if (src_surface == device->fb.render_targets[0])
             TRACE("Blit from active render target to a swapchain\n");
     }
-    else if (srcSwapchain && dst_surface == device->render_targets[0])
+    else if (srcSwapchain && dst_surface == device->fb.render_targets[0])
     {
         FIXME("Implement blit from a swapchain to the active render target\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    if ((srcSwapchain || src_surface == device->render_targets[0]) && !dstSwapchain)
+    if ((srcSwapchain || src_surface == device->fb.render_targets[0]) && !dstSwapchain)
     {
         /* Blit from render target to texture */
         BOOL stretchx;

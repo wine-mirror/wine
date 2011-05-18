@@ -918,10 +918,10 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         struct wined3d_shader_buffer *buffer, struct wined3d_shader *shader,
         const struct wined3d_shader_reg_maps *reg_maps, struct shader_glsl_ctx_priv *ctx_priv)
 {
-    struct wined3d_device *device = shader->device;
-    const struct wined3d_state *state = &device->stateBlock->state;
+    const struct wined3d_state *state = &shader->device->stateBlock->state;
     const struct ps_compile_args *ps_args = ctx_priv->cur_ps_args;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_fb_state *fb = &shader->device->fb;
     unsigned int i, extra_constants_needed = 0;
     const local_constant *lconst;
     DWORD map;
@@ -1050,7 +1050,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                  */
                 FIXME("Cannot find a free uniform for vpos correction params\n");
                 shader_addline(buffer, "const vec4 ycorrection = vec4(%f, %f, 0.0, 0.0);\n",
-                        context->render_offscreen ? 0.0f : device->render_targets[0]->resource.height,
+                        context->render_offscreen ? 0.0f : fb->render_targets[0]->resource.height,
                         context->render_offscreen ? 1.0f : -1.0f);
             }
             shader_addline(buffer, "vec4 vpos;\n");

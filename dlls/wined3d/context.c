@@ -2224,10 +2224,11 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
 BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_device *device)
 {
     const struct StateEntry *state_table = device->StateTable;
+    const struct wined3d_fb_state *fb = &device->fb;
     unsigned int i;
 
     if (!context_validate_rt_config(context->gl_info->limits.buffers,
-            device->render_targets, device->depth_stencil))
+            fb->render_targets, fb->depth_stencil))
         return FALSE;
 
     /* Preload resources before FBO setup. Texture preload in particular may
@@ -2240,7 +2241,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        context_validate_onscreen_formats(device, context, device->depth_stencil);
+        context_validate_onscreen_formats(device, context, fb->depth_stencil);
 
         if (!context->render_offscreen)
         {
@@ -2251,8 +2252,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
         else
         {
             ENTER_GL();
-            context_apply_fbo_state(context, GL_FRAMEBUFFER, device->render_targets,
-                    device->depth_stencil, SFLAG_INTEXTURE);
+            context_apply_fbo_state(context, GL_FRAMEBUFFER, fb->render_targets, fb->depth_stencil, SFLAG_INTEXTURE);
             glReadBuffer(GL_NONE);
             checkGLcall("glReadBuffer");
             LEAVE_GL();
@@ -2261,7 +2261,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
 
     if (context->draw_buffer_dirty)
     {
-        context_apply_draw_buffers(context, context->gl_info->limits.buffers, device->render_targets);
+        context_apply_draw_buffers(context, context->gl_info->limits.buffers, fb->render_targets);
         context->draw_buffer_dirty = FALSE;
     }
 

@@ -571,7 +571,7 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
         /* Invalidate the back buffer memory so LockRect will read it the next time */
         for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
         {
-            struct wined3d_surface *target = device->render_targets[i];
+            struct wined3d_surface *target = device->fb.render_targets[i];
             if (target)
             {
                 surface_load_location(target, SFLAG_INDRAWABLE, NULL);
@@ -583,7 +583,7 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
     /* Signals other modules that a drawing is in progress and the stateblock finalized */
     device->isInDraw = TRUE;
 
-    context = context_acquire(device, device->render_targets[0]);
+    context = context_acquire(device, device->fb.render_targets[0]);
     if (!context->valid)
     {
         context_release(context);
@@ -598,7 +598,7 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
         return;
     }
 
-    if (device->depth_stencil)
+    if (device->fb.depth_stencil)
     {
         /* Note that this depends on the context_acquire() call above to set
          * context->render_offscreen properly. We don't currently take the
@@ -608,7 +608,7 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
         DWORD location = context->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
         if (state->render_states[WINED3DRS_ZWRITEENABLE] || state->render_states[WINED3DRS_ZENABLE])
         {
-            struct wined3d_surface *ds = device->depth_stencil;
+            struct wined3d_surface *ds = device->fb.depth_stencil;
             RECT current_rect, draw_rect, r;
 
             if (location == SFLAG_DS_ONSCREEN && ds != device->onscreen_depth_stencil)
