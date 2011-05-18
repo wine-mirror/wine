@@ -345,8 +345,8 @@ static int MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
         return 0;
     case MCI_INFO:
         {
-            MCI_INFO_PARMSA *mci_infoA = (MCI_INFO_PARMSA *)*dwParam2;
-            MCI_INFO_PARMSW *mci_infoW;
+            MCI_DGV_INFO_PARMSA *mci_infoA = (MCI_DGV_INFO_PARMSA *)*dwParam2;
+            MCI_DGV_INFO_PARMSW *mci_infoW;
             DWORD_PTR *ptr;
 
             ptr = HeapAlloc(GetProcessHeap(), 0, sizeof(*mci_infoW) + sizeof(DWORD_PTR));
@@ -354,7 +354,7 @@ static int MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
 
             *ptr++ = *dwParam2; /* save the previous pointer */
             *dwParam2 = (DWORD_PTR)ptr;
-            mci_infoW = (MCI_INFO_PARMSW *)ptr;
+            mci_infoW = (MCI_DGV_INFO_PARMSW *)ptr;
 
             if (dwParam1 & MCI_NOTIFY)
                 mci_infoW->dwCallback = mci_infoA->dwCallback;
@@ -362,6 +362,8 @@ static int MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
             /* Size is measured in numbers of characters. */
             mci_infoW->dwRetSize = mci_infoA->dwRetSize;
             mci_infoW->lpstrReturn = HeapAlloc(GetProcessHeap(), 0, mci_infoW->dwRetSize * sizeof(WCHAR));
+            if (dwParam1 & MCI_DGV_INFO_ITEM)
+                mci_infoW->dwItem = mci_infoA->dwItem;
             return 1;
         }
     case MCI_SAVE:
