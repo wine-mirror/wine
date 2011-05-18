@@ -1341,6 +1341,12 @@ static void test_expandnotify(void)
        the only way is to reset with all children removed */
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "collapse after expand notifications", FALSE);
 
+    /* try to toggle child that doesn't have children itself */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ret = SendMessageA(hTree, TVM_EXPAND, TVE_TOGGLE, (LPARAM)hChild);
+    expect(FALSE, ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "toggle node without children", TRUE);
+
     DestroyWindow(hTree);
 
     /* test TVM_GETITEMRECT inside TVN_ITEMEXPANDED notification */
@@ -1350,6 +1356,7 @@ static void test_expandnotify(void)
     ret = TreeView_Select(hTree, hChild, TVGN_CARET);
     g_get_rect_in_expand = FALSE;
     ok(ret, "got %d\n", ret);
+
     DestroyWindow(hTree);
 }
 
@@ -1602,6 +1609,44 @@ static void test_TVS_CHECKBOXES(void)
     DestroyWindow(hTree);
 }
 
+static void test_TVM_GETNEXTITEM(void)
+{
+    HTREEITEM item;
+    HWND hTree;
+
+    hTree = create_treeview_control(0);
+    fill_tree(hTree);
+
+    item = (HTREEITEM)SendMessageA(hTree, TVM_GETNEXTITEM, TVGN_ROOT, 0);
+    ok(item == hRoot, "got %p, expected %p\n", item, hRoot);
+
+    item = (HTREEITEM)SendMessageA(hTree, TVM_GETNEXTITEM, TVGN_ROOT, (LPARAM)TVI_ROOT);
+    ok(item == hRoot, "got %p, expected %p\n", item, hRoot);
+
+    item = (HTREEITEM)SendMessageA(hTree, TVM_GETNEXTITEM, TVGN_ROOT, (LPARAM)hRoot);
+    ok(item == hRoot, "got %p, expected %p\n", item, hRoot);
+
+    item = (HTREEITEM)SendMessageA(hTree, TVM_GETNEXTITEM, TVGN_ROOT, (LPARAM)hChild);
+    ok(item == hRoot, "got %p, expected %p\n", item, hRoot);
+
+    item = (HTREEITEM)SendMessageA(hTree, TVM_GETNEXTITEM, TVGN_CHILD, 0);
+    ok(item == hRoot, "got %p, expected %p\n", item, hRoot);
+
+    item = (HTREEITEM)SendMessageA(hTree, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hRoot);
+    ok(item == hChild, "got %p, expected %p\n", item, hChild);
+
+    item = (HTREEITEM)SendMessageA(hTree, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)TVI_ROOT);
+    ok(item == hRoot, "got %p, expected %p\n", item, hRoot);
+
+    item = (HTREEITEM)SendMessageA(hTree, TVM_GETNEXTITEM, TVGN_PARENT, 0);
+    ok(item == NULL, "got %p\n", item);
+
+    item = (HTREEITEM)SendMessageA(hTree, TVM_GETNEXTITEM, TVGN_PARENT, (LPARAM)hChild);
+    ok(item == hRoot, "got %p, expected %p\n", item, hRoot);
+
+    DestroyWindow(hTree);
+}
+
 START_TEST(treeview)
 {
     HMODULE hComctl32;
@@ -1672,6 +1717,7 @@ START_TEST(treeview)
     test_delete_items();
     test_htreeitem_layout();
     test_TVS_CHECKBOXES();
+    test_TVM_GETNEXTITEM();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
