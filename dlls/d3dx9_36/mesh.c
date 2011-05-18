@@ -646,10 +646,27 @@ static HRESULT WINAPI ID3DXMeshImpl_Optimize(ID3DXMesh *iface, DWORD flags, CONS
                                              DWORD *face_remap, LPD3DXBUFFER *vertex_remap, LPD3DXMESH *opt_mesh)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    HRESULT hr;
+    D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE] = { D3DDECL_END() };
+    ID3DXMesh *optimized_mesh;
 
-    FIXME("(%p)->(%u,%p,%p,%p,%p,%p): stub\n", This, flags, adjacency_in, adjacency_out, face_remap, vertex_remap, opt_mesh);
+    TRACE("(%p)->(%x,%p,%p,%p,%p,%p)\n", This, flags, adjacency_in, adjacency_out, face_remap, vertex_remap, opt_mesh);
 
-    return E_NOTIMPL;
+    if (!opt_mesh)
+        return D3DERR_INVALIDCALL;
+
+    hr = iface->lpVtbl->GetDeclaration(iface, declaration);
+    if (FAILED(hr)) return hr;
+
+    hr = iface->lpVtbl->CloneMesh(iface, This->options, declaration, This->device, &optimized_mesh);
+    if (FAILED(hr)) return hr;
+
+    hr = optimized_mesh->lpVtbl->OptimizeInplace(optimized_mesh, flags, adjacency_in, adjacency_out, face_remap, vertex_remap);
+    if (SUCCEEDED(hr))
+        *opt_mesh = optimized_mesh;
+    else
+        IUnknown_Release(optimized_mesh);
+    return hr;
 }
 
 /* Creates a vertex_remap that removes unused vertices.
