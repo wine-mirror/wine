@@ -462,42 +462,39 @@ static HANDLE dbg_parser_output;
 
 int      input_fetch_entire_line(const char* pfx, char** line)
 {
+    char*       buffer;
     char        ch;
     DWORD	nread;
     size_t      len, alloc;
-    
+
     /* as of today, console handles can be file handles... so better use file APIs rather than
      * console's
      */
     WriteFile(dbg_parser_output, pfx, strlen(pfx), &nread, NULL);
 
-    if (*line)
-    {
-        alloc = HeapSize(GetProcessHeap(), 0, *line);
-        assert(alloc);
-    }
-    else
-    {
-        *line = HeapAlloc(GetProcessHeap(), 0, alloc = 16);
-        assert(*line);
-    }
+    buffer = HeapAlloc(GetProcessHeap(), 0, alloc = 16);
+    assert(buffer != NULL);
 
     len = 0;
     do
     {
         if (!ReadFile(dbg_parser_input, &ch, 1, &nread, NULL) || nread == 0)
+        {
+            HeapFree(GetProcessHeap(), 0, buffer);
             return -1;
+        }
 
         if (len + 2 > alloc)
         {
             while (len + 2 > alloc) alloc *= 2;
-            *line = dbg_heap_realloc(*line, alloc);
+            buffer = dbg_heap_realloc(buffer, alloc);
         }
-        (*line)[len++] = ch;
+        buffer[len++] = ch;
     }
     while (ch != '\n');
-    (*line)[len] = '\0';
+    buffer[len] = '\0';
 
+    *line = buffer;
     return len;
 }
 
