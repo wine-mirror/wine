@@ -376,7 +376,7 @@ static BOOL TERM_BuildKeyDB(void)
 
     for (i = 0; i < sizeof(TERM_dbkey_init) / sizeof(TERM_dbkey_init[0]); i++)
     {
-        if (!TERM_AddKeyDescr(tigetstr(TERM_dbkey_init[i].string_normal), &TERM_dbkey_init[i].descr))
+        if (!TERM_AddKeyDescr(tigetstr((char *)TERM_dbkey_init[i].string_normal), &TERM_dbkey_init[i].descr))
             return FALSE;
         if (TERM_dbkey_init[i].string_xterm)
         {
@@ -421,7 +421,7 @@ BOOL TERM_Init(void)
     TERM_init_done = TRUE;
     TERM_BuildKeyDB();
     /* set application key mode */
-    putp(tigetstr("smkx"));
+    putp(tigetstr((char *)"smkx"));
     return TRUE;
 }
 
@@ -430,7 +430,7 @@ BOOL TERM_Exit(void)
     if (TERM_init_done)
     {
         /* put back the cursor key mode */
-        putp(tigetstr("rmkx"));
+        putp(tigetstr((char *)"rmkx"));
     }
     return TRUE;
 }
