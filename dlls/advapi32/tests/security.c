@@ -2782,7 +2782,7 @@ static void test_SetEntriesInAclW(void)
     }
     else
     {
-        ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
+        ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_NAME;
         ExplicitAccess.Trustee.ptstrName = (LPWSTR)wszEveryone;
         res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
         ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
@@ -2798,7 +2798,7 @@ static void test_SetEntriesInAclW(void)
             broken(NewAcl != NULL), /* NT4 */
             "returned acl wasn't NULL: %p\n", NewAcl);
 
-        ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
+        ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_NAME;
         ExplicitAccess.Trustee.MultipleTrusteeOperation = TRUSTEE_IS_IMPERSONATE;
         res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
         ok(res == ERROR_INVALID_PARAMETER ||
@@ -2816,7 +2816,7 @@ static void test_SetEntriesInAclW(void)
         LocalFree(NewAcl);
     }
 
-    ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
+    ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_NAME;
     ExplicitAccess.Trustee.ptstrName = (LPWSTR)wszCurrentUser;
     res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
     ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
@@ -2913,7 +2913,7 @@ static void test_SetEntriesInAclA(void)
     }
     else
     {
-        ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
+        ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_NAME;
         ExplicitAccess.Trustee.ptstrName = (LPSTR)szEveryone;
         res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
         ok(res == ERROR_SUCCESS, "SetEntriesInAclA failed: %u\n", res);
@@ -2929,7 +2929,7 @@ static void test_SetEntriesInAclA(void)
             broken(NewAcl != NULL), /* NT4 */
             "returned acl wasn't NULL: %p\n", NewAcl);
 
-        ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
+        ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_NAME;
         ExplicitAccess.Trustee.MultipleTrusteeOperation = TRUSTEE_IS_IMPERSONATE;
         res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
         ok(res == ERROR_INVALID_PARAMETER ||
@@ -2947,7 +2947,7 @@ static void test_SetEntriesInAclA(void)
         LocalFree(NewAcl);
     }
 
-    ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
+    ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_NAME;
     ExplicitAccess.Trustee.ptstrName = (LPSTR)szCurrentUser;
     res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
     ok(res == ERROR_SUCCESS, "SetEntriesInAclA failed: %u\n", res);
