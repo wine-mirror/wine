@@ -78,7 +78,9 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     const WCHAR *ptr;
 
     /* Index the order the buttons need to appear to an ID* constant */
-    static const int buttonOrder[10] = { 6, 7, 1, 3, 4, 2, 5, 10, 11, 9 };
+    static const int buttonOrder[10] = { IDYES, IDNO, IDOK, IDABORT, IDRETRY,
+                                         IDCANCEL, IDIGNORE, IDTRYAGAIN,
+                                         IDCONTINUE, IDHELP };
 
     nclm.cbSize = sizeof(nclm);
     SystemParametersInfoW (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
