@@ -495,7 +495,7 @@ static LRESULT create_namespacetree(HWND hWnd, CREATESTRUCTW *crs)
         ERR("Failed to get the System Image List.\n");
     }
 
-    INameSpaceTreeControl_AddRef((INameSpaceTreeControl*)This);
+    INameSpaceTreeControl2_AddRef(&This->INameSpaceTreeControl2_iface);
 
     /* Subclass the treeview to get the keybord events. */
     This->tv_oldwndproc = (WNDPROC)SetWindowLongPtrW(This->hwnd_tv, GWLP_WNDPROC,
@@ -528,10 +528,10 @@ static LRESULT destroy_namespacetree(NSTC2Impl *This)
         RemovePropA(This->hwnd_tv, "PROP_THIS");
     }
 
-    INameSpaceTreeControl_RemoveAllRoots((INameSpaceTreeControl*)This);
+    INameSpaceTreeControl2_RemoveAllRoots(&This->INameSpaceTreeControl2_iface);
 
     /* This reference was added in create_namespacetree */
-    INameSpaceTreeControl_Release((INameSpaceTreeControl*)This);
+    INameSpaceTreeControl2_Release(&This->INameSpaceTreeControl2_iface);
     return TRUE;
 }
 
@@ -1597,8 +1597,8 @@ HRESULT NamespaceTreeControl_Constructor(IUnknown *pUnkOuter, REFIID riid, void 
 
     list_init(&nstc->roots);
 
-    ret = INameSpaceTreeControl_QueryInterface((INameSpaceTreeControl*)nstc, riid, ppv);
-    INameSpaceTreeControl_Release((INameSpaceTreeControl*)nstc);
+    ret = INameSpaceTreeControl2_QueryInterface(&nstc->INameSpaceTreeControl2_iface, riid, ppv);
+    INameSpaceTreeControl2_Release(&nstc->INameSpaceTreeControl2_iface);
 
     TRACE("--(%p)\n", ppv);
     return ret;
