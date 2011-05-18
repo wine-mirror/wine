@@ -6840,7 +6840,7 @@ msgstr "Di&mension"
 
 #: user32.rc:30 user32.rc:43
 msgid "Mi&nimize"
-msgstr "Réduct&ion"
+msgstr "Rédu&ire"
 
 #: user32.rc:31 user32.rc:44 taskmgr.rc:83 taskmgr.rc:99 taskmgr.rc:126
 msgid "Ma&ximize"
@@ -6855,13 +6855,12 @@ msgid "&About Wine"
 msgstr "À &propos de Wine"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl-F4"
-msgstr "&Fermer\tAlt-F4"
+msgstr "&Fermer\tCtrl-F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl-F6"
-msgstr ""
+msgstr "Sui&vant\tCtrl-F6"
 
 #: user32.rc:68 regedit.rc:176 winefile.rc:100
 msgid "Error"
