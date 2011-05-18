@@ -2806,6 +2806,7 @@ static void getwinmetafilebits(UINT mode, int scale, RECT *rc)
     METAHEADER *mh = NULL;
     METARECORD *rec;
     INT horz_res, vert_res, horz_size, vert_size;
+    INT curve_caps, line_caps, poly_caps;
 
     display_dc = GetDC(NULL);
     ok(display_dc != NULL, "display_dc is NULL\n");
@@ -2817,6 +2818,16 @@ static void getwinmetafilebits(UINT mode, int scale, RECT *rc)
 
     emf_dc = CreateEnhMetaFileA(display_dc, NULL, rc, NULL);
     ok(emf_dc != NULL, "emf_dc is NULL\n");
+
+    curve_caps = GetDeviceCaps(emf_dc, CURVECAPS);
+    ok(curve_caps == 511, "expect 511 got %d\n", curve_caps);
+
+    line_caps = GetDeviceCaps(emf_dc, LINECAPS);
+    ok(line_caps == 254, "expect 254 got %d\n", line_caps);
+
+    poly_caps = GetDeviceCaps(emf_dc, POLYGONALCAPS);
+    ok(poly_caps == 255, "expect 511 got %d\n", poly_caps);
+
     for(i = 0; i < 3000; i++) /* This is enough to take emf_size > 0xffff */
         Rectangle(emf_dc, 0, 0, 1000, 20);
     emf = CloseEnhMetaFile(emf_dc);
