@@ -39,6 +39,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 
+#include "initguid.h"
+
+DEFINE_GUID(IID__AppDomain, 0x05f696dc,0x2b29,0x3663,0xad,0x8b,0xc4,0x38,0x9c,0xf2,0xa7,0x13);
+
 struct RuntimeHost
 {
     const struct ICorRuntimeHostVtbl *lpVtbl;
@@ -140,6 +144,65 @@ static void RuntimeHost_DeleteDomain(RuntimeHost *This, MonoDomain *domain)
     }
 
     LeaveCriticalSection(&This->lock);
+}
+
+static HRESULT RuntimeHost_GetIUnknownForDomain(RuntimeHost *This, MonoDomain *domain, IUnknown **punk)
+{
+    HRESULT hr;
+    void *args[0];
+    MonoAssembly *assembly;
+    MonoImage *image;
+    MonoClass *klass;
+    MonoMethod *method;
+    MonoObject *appdomain_object;
+    IUnknown *unk;
+
+    assembly = This->mono->mono_domain_assembly_open(domain, "mscorlib");
+    if (!assembly)
+    {
+        ERR("Cannot load mscorlib\n");
+        return E_FAIL;
+    }
+
+    image = This->mono->mono_assembly_get_image(assembly);
+    if (!image)
+    {
+        ERR("Couldn't get assembly image\n");
+        return E_FAIL;
+    }
+
+    klass = This->mono->mono_class_from_name(image, "System", "AppDomain");
+    if (!klass)
+    {
+        ERR("Couldn't get class from image\n");
+        return E_FAIL;
+    }
+
+    method = This->mono->mono_class_get_method_from_name(klass, "get_CurrentDomain", 0);
+    if (!method)
+    {
+        ERR("Couldn't get method from class\n");
+        return E_FAIL;
+    }
+
+    args[0] = NULL;
+    appdomain_object = This->mono->mono_runtime_invoke(method, NULL, args, NULL);
+    if (!appdomain_object)
+    {
+        ERR("Couldn't get result pointer\n");
+        return E_FAIL;
+    }
+
+    hr = RuntimeHost_GetIUnknownForObject(This, appdomain_object, &unk);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IUnknown_QueryInterface(unk, &IID__AppDomain, (void**)punk);
+
+        IUnknown_Release(unk);
+    }
+
+    return hr;
 }
 
 static inline RuntimeHost *impl_from_ICLRRuntimeHost( ICLRRuntimeHost *iface )
@@ -277,8 +340,20 @@ static HRESULT WINAPI corruntimehost_GetDefaultDomain(
     ICorRuntimeHost* iface,
     IUnknown **pAppDomain)
 {
-    FIXME("stub %p\n", iface);
-    return E_NOTIMPL;
+    RuntimeHost *This = impl_from_ICorRuntimeHost( iface );
+    HRESULT hr;
+    MonoDomain *domain;
+
+    TRACE("(%p)\n", iface);
+
+    hr = RuntimeHost_GetDefaultDomain(This, &domain);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = RuntimeHost_GetIUnknownForDomain(This, domain, pAppDomain);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI corruntimehost_EnumDomains(
