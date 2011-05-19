@@ -1140,7 +1140,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
         {
           get_TOKEN(buf);
           TRACE("%s = %s\n", pt->members[i].name, (char*)buf->value);
-          if (!check_buffer(buf, 4))
+          if (!check_buffer(buf, sizeof(LPSTR)))
             return FALSE;
           if (pt->members[i].type == TOKEN_LPSTR)
           {
@@ -1153,7 +1153,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
             strcpy((char*)buf->cur_pstrings, (char*)buf->value);
             *(((LPCSTR*)(buf->cur_pos_data + buf->pdata))) = (char*)buf->cur_pstrings;
             buf->cur_pstrings += len;
-            buf->cur_pos_data += 4;
+            buf->cur_pos_data += sizeof(LPSTR);
           }
           else
           {
