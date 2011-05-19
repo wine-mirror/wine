@@ -143,8 +143,8 @@ static void compare_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mes
             ok(vertex_buffer_description.Type == D3DRTYPE_VERTEXBUFFER, "Test %s, result %x, expected %x (D3DRTYPE_VERTEXBUFFER)\n",
                name, vertex_buffer_description.Type, D3DRTYPE_VERTEXBUFFER);
             ok(vertex_buffer_description.Usage == 0, "Test %s, result %x, expected %x\n", name, vertex_buffer_description.Usage, 0);
-            ok(vertex_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, result %x, expected %x (D3DPOOL_DEFAULT)\n",
-               name, vertex_buffer_description.Pool, D3DPOOL_DEFAULT);
+            ok(vertex_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, result %x, expected %x (D3DPOOL_MANAGED)\n",
+               name, vertex_buffer_description.Pool, D3DPOOL_MANAGED);
             ok(vertex_buffer_description.FVF == mesh->fvf, "Test %s, result %x, expected %x\n",
                name, vertex_buffer_description.FVF, mesh->fvf);
             if (mesh->fvf == 0)
@@ -212,8 +212,8 @@ static void compare_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mes
             ok(index_buffer_description.Type == D3DRTYPE_INDEXBUFFER, "Test %s, result %x, expected %x (D3DRTYPE_INDEXBUFFER)\n",
                name, index_buffer_description.Type, D3DRTYPE_INDEXBUFFER);
             todo_wine ok(index_buffer_description.Usage == 0, "Test %s, result %x, expected %x\n", name, index_buffer_description.Usage, 0);
-            ok(index_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, result %x, expected %x (D3DPOOL_DEFAULT)\n",
-               name, index_buffer_description.Pool, D3DPOOL_DEFAULT);
+            ok(index_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, result %x, expected %x (D3DPOOL_MANAGED)\n",
+               name, index_buffer_description.Pool, D3DPOOL_MANAGED);
             expected = number_of_faces * sizeof(WORD) * 3;
             ok(index_buffer_description.Size == expected, "Test %s, result %x, expected %x\n",
                name, index_buffer_description.Size, expected);
@@ -2596,8 +2596,8 @@ static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, str
         ok(vertex_buffer_description.Type == D3DRTYPE_VERTEXBUFFER, "Test %s, result %x, expected %x (D3DRTYPE_VERTEXBUFFER)\n",
            name, vertex_buffer_description.Type, D3DRTYPE_VERTEXBUFFER);
         ok(vertex_buffer_description.Usage == 0, "Test %s, result %x, expected %x\n", name, vertex_buffer_description.Usage, 0);
-        ok(vertex_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, result %x, expected %x (D3DPOOL_DEFAULT)\n",
-           name, vertex_buffer_description.Pool, D3DPOOL_DEFAULT);
+        ok(vertex_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, result %x, expected %x (D3DPOOL_MANAGED)\n",
+           name, vertex_buffer_description.Pool, D3DPOOL_MANAGED);
         ok(vertex_buffer_description.FVF == mesh->fvf, "Test %s, result %x, expected %x\n",
            name, vertex_buffer_description.FVF, mesh->fvf);
         if (mesh->fvf == 0)
@@ -2634,8 +2634,8 @@ static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, str
         ok(index_buffer_description.Type == D3DRTYPE_INDEXBUFFER, "Test %s, result %x, expected %x (D3DRTYPE_INDEXBUFFER)\n",
            name, index_buffer_description.Type, D3DRTYPE_INDEXBUFFER);
         todo_wine ok(index_buffer_description.Usage == 0, "Test %s, result %x, expected %x\n", name, index_buffer_description.Usage, 0);
-        ok(index_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, result %x, expected %x (D3DPOOL_DEFAULT)\n",
-           name, index_buffer_description.Pool, D3DPOOL_DEFAULT);
+        ok(index_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, result %x, expected %x (D3DPOOL_MANAGED)\n",
+           name, index_buffer_description.Pool, D3DPOOL_MANAGED);
         expected = number_of_faces * sizeof(WORD) * 3;
         ok(index_buffer_description.Size == expected, "Test %s, result %x, expected %x\n",
            name, index_buffer_description.Size, expected);
