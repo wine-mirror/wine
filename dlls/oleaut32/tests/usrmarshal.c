@@ -36,10 +36,6 @@
 # define V_U2(A)  (*(A))
 #endif
 
-#define LPSAFEARRAY_UNMARSHAL_WORKS 1
-#define BSTR_UNMARSHAL_WORKS 1
-#define VARIANT_UNMARSHAL_WORKS 1
-
 static inline SF_TYPE get_union_type(SAFEARRAY *psa)
 {
     VARTYPE vt;
@@ -228,7 +224,7 @@ static void test_marshal_LPSAFEARRAY(void)
     MIDL_STUB_MESSAGE stub_msg;
     USER_MARSHAL_CB umcb;
     HRESULT hr;
-    VARTYPE vt;
+    VARTYPE vt, vt2;
     OLECHAR *values[10];
     int expected_bstr_size;
     int i;
@@ -260,19 +256,15 @@ static void test_marshal_LPSAFEARRAY(void)
 
     check_safearray(buffer, lpsa);
 
-    if (LPSAFEARRAY_UNMARSHAL_WORKS)
-    {
-        VARTYPE vt, vt2;
-        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-        LPSAFEARRAY_UserUnmarshal(&umcb.Flags, buffer, &lpsa2);
-        ok(lpsa2 != NULL, "LPSAFEARRAY didn't unmarshal\n");
-        SafeArrayGetVartype(lpsa, &vt);
-        SafeArrayGetVartype(lpsa2, &vt2);
-        ok(vt == vt2, "vts differ %x %x\n", vt, vt2);
-        ok(lpsa2->cLocks == 0, "got lock count %u, expected 0\n", lpsa2->cLocks);
-        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
-        LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
-    }
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
+    LPSAFEARRAY_UserUnmarshal(&umcb.Flags, buffer, &lpsa2);
+    ok(lpsa2 != NULL, "LPSAFEARRAY didn't unmarshal\n");
+    SafeArrayGetVartype(lpsa, &vt);
+    SafeArrayGetVartype(lpsa2, &vt2);
+    ok(vt == vt2, "vts differ %x %x\n", vt, vt2);
+    ok(lpsa2->cLocks == 0, "got lock count %u, expected 0\n", lpsa2->cLocks);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
+    LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
     HeapFree(GetProcessHeap(), 0, buffer);
     lpsa->cLocks = 0;
     hr = SafeArrayDestroy(lpsa);
@@ -307,19 +299,15 @@ static void test_marshal_LPSAFEARRAY(void)
 
     check_safearray(buffer, lpsa);
 
-    if (LPSAFEARRAY_UNMARSHAL_WORKS)
-    {
-        VARTYPE vt, vt2;
-        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-        LPSAFEARRAY_UserUnmarshal(&umcb.Flags, buffer, &lpsa2);
-        ok(lpsa2 != NULL, "LPSAFEARRAY didn't unmarshal\n");
-        SafeArrayGetVartype(lpsa, &vt);
-        SafeArrayGetVartype(lpsa2, &vt2);
-        ok(vt == vt2, "vts differ %x %x\n", vt, vt2);
-        ok(lpsa2->cLocks == 0, "got lock count %u, expected 0\n", lpsa2->cLocks);
-        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
-        LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
-    }
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
+    LPSAFEARRAY_UserUnmarshal(&umcb.Flags, buffer, &lpsa2);
+    ok(lpsa2 != NULL, "LPSAFEARRAY didn't unmarshal\n");
+    SafeArrayGetVartype(lpsa, &vt);
+    SafeArrayGetVartype(lpsa2, &vt2);
+    ok(vt == vt2, "vts differ %x %x\n", vt, vt2);
+    ok(lpsa2->cLocks == 0, "got lock count %u, expected 0\n", lpsa2->cLocks);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
+    LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
     HeapFree(GetProcessHeap(), 0, buffer);
     lpsa->cLocks = 0;
     hr = SafeArrayDestroy(lpsa);
@@ -338,14 +326,11 @@ static void test_marshal_LPSAFEARRAY(void)
     ok(next - buffer == expected, "Marshaled %u bytes, expected %u\n", (ULONG) (next - buffer), expected);
     check_safearray(buffer, lpsa);
 
-    if (LPSAFEARRAY_UNMARSHAL_WORKS)
-    {
-        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-        LPSAFEARRAY_UserUnmarshal(&umcb.Flags, buffer, &lpsa2);
-        ok(lpsa2 == NULL, "NULL LPSAFEARRAY didn't unmarshal\n");
-        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
-        LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
-    }
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
+    LPSAFEARRAY_UserUnmarshal(&umcb.Flags, buffer, &lpsa2);
+    ok(lpsa2 == NULL, "NULL LPSAFEARRAY didn't unmarshal\n");
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
+    LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
     HeapFree(GetProcessHeap(), 0, buffer);
 
     sab[0].lLbound = 5;
@@ -453,14 +438,11 @@ static void test_marshal_LPSAFEARRAY(void)
     check_safearray(buffer, lpsa);
 
     lpsa2 = NULL;
-    if (LPSAFEARRAY_UNMARSHAL_WORKS)
-    {
-        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-        next = LPSAFEARRAY_UserUnmarshal(&umcb.Flags, buffer, &lpsa2);
-        todo_wine
-        ok(next - buffer == expected, "Marshaled %u bytes, expected %u\n", (ULONG) (next - buffer), expected);
-        ok(lpsa2 != NULL, "LPSAFEARRAY didn't unmarshal, result %p\n", next);
-    }
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
+    next = LPSAFEARRAY_UserUnmarshal(&umcb.Flags, buffer, &lpsa2);
+    todo_wine
+    ok(next - buffer == expected, "Marshaled %u bytes, expected %u\n", (ULONG) (next - buffer), expected);
+    ok(lpsa2 != NULL, "LPSAFEARRAY didn't unmarshal, result %p\n", next);
 
     for (i = 0; i < sizeof(values) / sizeof(values[0]); i++)
     {
@@ -481,11 +463,8 @@ static void test_marshal_LPSAFEARRAY(void)
         SysFreeString(values[i]);
     }
 
-    if (LPSAFEARRAY_UNMARSHAL_WORKS)
-    {
-        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
-        LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
-    }
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
+    LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
 
     HeapFree(GetProcessHeap(), 0, buffer);
     hr = SafeArrayDestroy(lpsa);
@@ -577,17 +556,14 @@ static void test_marshal_BSTR(void)
     ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
     check_bstr(buffer, b);
 
-    if (BSTR_UNMARSHAL_WORKS)
-    {
-        b2 = NULL;
-        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-        next = BSTR_UserUnmarshal(&umcb.Flags, buffer, &b2);
-        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
-        ok(b2 != NULL, "BSTR didn't unmarshal\n");
-        ok(!memcmp(b, b2, (len + 1) * 2), "strings differ\n");
-        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
-        BSTR_UserFree(&umcb.Flags, &b2);
-    }
+    b2 = NULL;
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
+    next = BSTR_UserUnmarshal(&umcb.Flags, buffer, &b2);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    ok(b2 != NULL, "BSTR didn't unmarshal\n");
+    ok(!memcmp(b, b2, (len + 1) * 2), "strings differ\n");
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
+    BSTR_UserFree(&umcb.Flags, &b2);
 
     HeapFree(GetProcessHeap(), 0, buffer);
     SysFreeString(b);
@@ -603,16 +579,13 @@ static void test_marshal_BSTR(void)
     ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
 
     check_bstr(buffer, b);
-    if (BSTR_UNMARSHAL_WORKS)
-    {
-        b2 = NULL;
-        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-        next = BSTR_UserUnmarshal(&umcb.Flags, buffer, &b2);
-        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
-        ok(b2 == NULL, "NULL BSTR didn't unmarshal\n");
-        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
-        BSTR_UserFree(&umcb.Flags, &b2);
-    }
+    b2 = NULL;
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
+    next = BSTR_UserUnmarshal(&umcb.Flags, buffer, &b2);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    ok(b2 == NULL, "NULL BSTR didn't unmarshal\n");
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
+    BSTR_UserFree(&umcb.Flags, &b2);
     HeapFree(GetProcessHeap(), 0, buffer);
 
     b = SysAllocStringByteLen("abc", 3);
@@ -634,17 +607,14 @@ static void test_marshal_BSTR(void)
     check_bstr(buffer, b);
     ok(buffer[15] == 'd', "buffer[15] %02x\n", buffer[15]);
 
-    if (BSTR_UNMARSHAL_WORKS)
-    {
-        b2 = NULL;
-        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-        next = BSTR_UserUnmarshal(&umcb.Flags, buffer, &b2);
-        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
-        ok(b2 != NULL, "BSTR didn't unmarshal\n");
-        ok(!memcmp(b, b2, len), "strings differ\n");
-        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
-        BSTR_UserFree(&umcb.Flags, &b2);
-    }
+    b2 = NULL;
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
+    next = BSTR_UserUnmarshal(&umcb.Flags, buffer, &b2);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    ok(b2 != NULL, "BSTR didn't unmarshal\n");
+    ok(!memcmp(b, b2, len), "strings differ\n");
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
+    BSTR_UserFree(&umcb.Flags, &b2);
     HeapFree(GetProcessHeap(), 0, buffer);
     SysFreeString(b);
 
@@ -664,18 +634,15 @@ static void test_marshal_BSTR(void)
     ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
     check_bstr(buffer, b);
 
-    if (BSTR_UNMARSHAL_WORKS)
-    {
-        b2 = NULL;
-        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-        next = BSTR_UserUnmarshal(&umcb.Flags, buffer, &b2);
-        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
-        ok(b2 != NULL, "NULL LPSAFEARRAY didn't unmarshal\n");
-        len = SysStringByteLen(b2);
-        ok(len == 0, "byte len %d\n", len);
-        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
-        BSTR_UserFree(&umcb.Flags, &b2);
-    }
+    b2 = NULL;
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
+    next = BSTR_UserUnmarshal(&umcb.Flags, buffer, &b2);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    ok(b2 != NULL, "NULL LPSAFEARRAY didn't unmarshal\n");
+    len = SysStringByteLen(b2);
+    ok(len == 0, "byte len %d\n", len);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
+    BSTR_UserFree(&umcb.Flags, &b2);
     HeapFree(GetProcessHeap(), 0, buffer);
     SysFreeString(b);
 }
@@ -760,7 +727,7 @@ static void *alloc_aligned(SIZE_T size, void **buf)
 
 static void test_marshal_VARIANT(void)
 {
-    VARIANT v, v2;
+    VARIANT v, v2, v3;
     MIDL_STUB_MESSAGE stubMsg = { 0 };
     RPC_MESSAGE rpcMsg = { 0 };
     USER_MARSHAL_CB umcb = { 0 };
@@ -769,6 +736,7 @@ static void test_marshal_VARIANT(void)
     ULONG ul;
     short s;
     double d;
+    void *mem;
     DWORD *wirev;
     BSTR b;
     WCHAR str[] = {'m','a','r','s','h','a','l',' ','t','e','s','t',0};
@@ -778,6 +746,8 @@ static void test_marshal_VARIANT(void)
     HeapUnknown *heap_unknown;
     DWORD expected;
     HRESULT hr;
+    LONG bound, bound2;
+    VARTYPE vt, vt2;
 
     stubMsg.RpcMsg = &rpcMsg;
 
@@ -815,17 +785,14 @@ static void test_marshal_VARIANT(void)
     check_variant_header(wirev, &v, stubMsg.BufferLength);
     wirev += 5;
     ok(*(char*)wirev == V_I1(&v), "wv[5] %08x\n", *wirev);
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        VariantInit(&v2);
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
-        ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
-        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(V_I1(&v) == V_I1(&v2), "got i1 %x expect %x\n", V_I1(&v), V_I1(&v2));
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    ok(V_I1(&v) == V_I1(&v2), "got i1 %x expect %x\n", V_I1(&v), V_I1(&v2));
 
-        VARIANT_UserFree(&umcb.Flags, &v2);
-    }
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** I2 ***/
@@ -845,17 +812,14 @@ static void test_marshal_VARIANT(void)
     check_variant_header(wirev, &v, stubMsg.BufferLength);
     wirev += 5;
     ok(*(short*)wirev == V_I2(&v), "wv[5] %08x\n", *wirev);
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        VariantInit(&v2);
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
-        ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
-        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(V_I2(&v) == V_I2(&v2), "got i2 %x expect %x\n", V_I2(&v), V_I2(&v2));
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    ok(V_I2(&v) == V_I2(&v2), "got i2 %x expect %x\n", V_I2(&v), V_I2(&v2));
 
-        VARIANT_UserFree(&umcb.Flags, &v2);
-    }
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** I2 BYREF ***/
@@ -878,21 +842,17 @@ static void test_marshal_VARIANT(void)
     ok(*wirev == 0x4, "wv[5] %08x\n", *wirev);
     wirev++;
     ok(*(short*)wirev == s, "wv[6] %08x\n", *wirev);
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        void *mem;
-        VariantInit(&v2);
-        V_VT(&v2) = VT_I2 | VT_BYREF;
-        V_BYREF(&v2) = mem = CoTaskMemAlloc(sizeof(V_I2(&v2)));
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
-        ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
-        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(V_BYREF(&v2) == mem, "didn't reuse existing memory\n");
-        ok(*V_I2REF(&v) == *V_I2REF(&v2), "got i2 ref %x expect ui4 ref %x\n", *V_I2REF(&v), *V_I2REF(&v2));
+    VariantInit(&v2);
+    V_VT(&v2) = VT_I2 | VT_BYREF;
+    V_BYREF(&v2) = mem = CoTaskMemAlloc(sizeof(V_I2(&v2)));
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    ok(V_BYREF(&v2) == mem, "didn't reuse existing memory\n");
+    ok(*V_I2REF(&v) == *V_I2REF(&v2), "got i2 ref %x expect ui4 ref %x\n", *V_I2REF(&v), *V_I2REF(&v2));
 
-        VARIANT_UserFree(&umcb.Flags, &v2);
-    }
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** I4 ***/
@@ -913,17 +873,14 @@ static void test_marshal_VARIANT(void)
     wirev += 5;
     ok(*wirev == V_I4(&v), "wv[5] %08x\n", *wirev);
 
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        VariantInit(&v2);
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
-        ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
-        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(V_I4(&v) == V_I4(&v2), "got i4 %x expect %x\n", V_I4(&v), V_I4(&v2));
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    ok(V_I4(&v) == V_I4(&v2), "got i4 %x expect %x\n", V_I4(&v), V_I4(&v2));
 
-        VARIANT_UserFree(&umcb.Flags, &v2);
-    }
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** UI4 ***/
@@ -943,17 +900,14 @@ static void test_marshal_VARIANT(void)
     check_variant_header(wirev, &v, stubMsg.BufferLength);
     wirev += 5;
     ok(*wirev == 0x1234, "wv[5] %08x\n", *wirev);
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        VariantInit(&v2);
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
-        ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
-        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(V_UI4(&v) == V_UI4(&v2), "got ui4 %x expect %x\n", V_UI4(&v), V_UI4(&v2));
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    ok(V_UI4(&v) == V_UI4(&v2), "got ui4 %x expect %x\n", V_UI4(&v), V_UI4(&v2));
 
-        VARIANT_UserFree(&umcb.Flags, &v2);
-    }
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** UI4 BYREF ***/
@@ -977,17 +931,14 @@ static void test_marshal_VARIANT(void)
     wirev++;
     ok(*wirev == ul, "wv[6] %08x\n", *wirev);
 
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        VariantInit(&v2);
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
-        ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
-        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(*V_UI4REF(&v) == *V_UI4REF(&v2), "got ui4 ref %x expect ui4 ref %x\n", *V_UI4REF(&v), *V_UI4REF(&v2));
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    ok(*V_UI4REF(&v) == *V_UI4REF(&v2), "got ui4 ref %x expect ui4 ref %x\n", *V_UI4REF(&v), *V_UI4REF(&v2));
 
-        VARIANT_UserFree(&umcb.Flags, &v2);
-    }
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** R4 ***/
@@ -1007,17 +958,14 @@ static void test_marshal_VARIANT(void)
     check_variant_header(wirev, &v, stubMsg.BufferLength);
     wirev += 5;
     ok(*(float*)wirev == V_R4(&v), "wv[5] %08x\n", *wirev);
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        VariantInit(&v2);
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
-        ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
-        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(V_R4(&v) == V_R4(&v2), "got r4 %f expect %f\n", V_R4(&v), V_R4(&v2));
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    ok(V_R4(&v) == V_R4(&v2), "got r4 %f expect %f\n", V_R4(&v), V_R4(&v2));
 
-        VARIANT_UserFree(&umcb.Flags, &v2);
-    }
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** R8 ***/
@@ -1040,17 +988,14 @@ static void test_marshal_VARIANT(void)
     ok(*wirev == 0xcccccccc, "wv[5] %08x\n", *wirev); /* pad */
     wirev++;
     ok(*(double*)wirev == V_R8(&v), "wv[6] %08x, wv[7] %08x\n", *wirev, *(wirev+1));
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        VariantInit(&v2);
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
-        ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
-        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(V_R8(&v) == V_R8(&v2), "got r8 %f expect %f\n", V_R8(&v), V_R8(&v2));
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    ok(V_R8(&v) == V_R8(&v2), "got r8 %f expect %f\n", V_R8(&v), V_R8(&v2));
 
-        VARIANT_UserFree(&umcb.Flags, &v2);
-    }
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** R8 BYREF ***/
@@ -1073,17 +1018,14 @@ static void test_marshal_VARIANT(void)
     ok(*wirev == 8, "wv[5] %08x\n", *wirev);
     wirev++;
     ok(*(double*)wirev == d, "wv[6] %08x wv[7] %08x\n", *wirev, *(wirev+1));
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        VariantInit(&v2);
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
-        ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
-        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(*V_R8REF(&v) == *V_R8REF(&v2), "got r8 ref %f expect %f\n", *V_R8REF(&v), *V_R8REF(&v2));
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    ok(*V_R8REF(&v) == *V_R8REF(&v2), "got r8 ref %f expect %f\n", *V_R8REF(&v), *V_R8REF(&v2));
 
-        VARIANT_UserFree(&umcb.Flags, &v2);
-    }
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** VARIANT_BOOL ***/
@@ -1103,17 +1045,14 @@ static void test_marshal_VARIANT(void)
     check_variant_header(wirev, &v, stubMsg.BufferLength);
     wirev += 5;
     ok(*(short*)wirev == V_BOOL(&v), "wv[5] %04x\n", *(WORD*)wirev);
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        VariantInit(&v2);
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
-        ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
-        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(V_BOOL(&v) == V_BOOL(&v2), "got bool %x expect %x\n", V_BOOL(&v), V_BOOL(&v2));
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    ok(V_BOOL(&v) == V_BOOL(&v2), "got bool %x expect %x\n", V_BOOL(&v), V_BOOL(&v2));
 
-        VARIANT_UserFree(&umcb.Flags, &v2);
-    }
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** DECIMAL ***/
@@ -1141,17 +1080,14 @@ static void test_marshal_VARIANT(void)
     dec2.wReserved = VT_DECIMAL;
     ok(!memcmp(wirev, &dec2, sizeof(dec2)), "wirev[6] %08x wirev[7] %08x wirev[8] %08x wirev[9] %08x\n",
        *wirev, *(wirev + 1), *(wirev + 2), *(wirev + 3));
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        VariantInit(&v2);
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
-        ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
-        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(!memcmp(&V_DECIMAL(&v), & V_DECIMAL(&v2), sizeof(DECIMAL)), "decimals differ\n");
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    ok(!memcmp(&V_DECIMAL(&v), & V_DECIMAL(&v2), sizeof(DECIMAL)), "decimals differ\n");
 
-        VARIANT_UserFree(&umcb.Flags, &v2);
-    }
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** DECIMAL BYREF ***/
@@ -1173,24 +1109,21 @@ static void test_marshal_VARIANT(void)
     ok(*wirev == 16, "wv[5] %08x\n", *wirev);
     wirev++;
     ok(!memcmp(wirev, &dec, sizeof(dec)), "wirev[6] %08x wirev[7] %08x wirev[8] %08x wirev[9] %08x\n", *wirev, *(wirev + 1), *(wirev + 2), *(wirev + 3));
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        VariantInit(&v2);
-        /* check_variant_header tests wReserved[123], so initialize to unique values.
-         * (Could probably also do this by setting the variant to a known DECIMAL.)
-         */
-        V_U2(&v2).wReserved1 = 0x0123;
-        V_U2(&v2).wReserved2 = 0x4567;
-        V_U2(&v2).wReserved3 = 0x89ab;
+    VariantInit(&v2);
+    /* check_variant_header tests wReserved[123], so initialize to unique values.
+     * (Could probably also do this by setting the variant to a known DECIMAL.)
+     */
+    V_U2(&v2).wReserved1 = 0x0123;
+    V_U2(&v2).wReserved2 = 0x4567;
+    V_U2(&v2).wReserved3 = 0x89ab;
 
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
-        ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
-        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(!memcmp(V_DECIMALREF(&v), V_DECIMALREF(&v2), sizeof(DECIMAL)), "decimals differ\n");
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    ok(!memcmp(V_DECIMALREF(&v), V_DECIMALREF(&v2), sizeof(DECIMAL)), "decimals differ\n");
 
-        VARIANT_UserFree(&umcb.Flags, &v2);
-    }
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** EMPTY ***/
@@ -1207,16 +1140,13 @@ static void test_marshal_VARIANT(void)
     wirev = (DWORD*)buffer;
 
     check_variant_header(wirev, &v, stubMsg.BufferLength);
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        VariantInit(&v2);
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
-        ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
-        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
 
-        VARIANT_UserFree(&umcb.Flags, &v2);
-    }
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** NULL ***/
@@ -1233,16 +1163,13 @@ static void test_marshal_VARIANT(void)
     wirev = (DWORD*)buffer;
 
     check_variant_header(wirev, &v, stubMsg.BufferLength);
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        VariantInit(&v2);
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
-        ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
-        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
 
-        VARIANT_UserFree(&umcb.Flags, &v2);
-    }
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** BSTR ***/
@@ -1264,18 +1191,15 @@ static void test_marshal_VARIANT(void)
     ok(*wirev, "wv[5] %08x\n", *wirev); /* win2k: this is b. winxp: this is (char*)b + 1 */
     wirev++;
     check_bstr(wirev, V_BSTR(&v));
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        VariantInit(&v2);
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
-        ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
-        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(SysStringByteLen(V_BSTR(&v)) == SysStringByteLen(V_BSTR(&v2)), "bstr string lens differ\n");
-        ok(!memcmp(V_BSTR(&v), V_BSTR(&v2), SysStringByteLen(V_BSTR(&v))), "bstrs differ\n");
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    ok(SysStringByteLen(V_BSTR(&v)) == SysStringByteLen(V_BSTR(&v2)), "bstr string lens differ\n");
+    ok(!memcmp(V_BSTR(&v), V_BSTR(&v2), SysStringByteLen(V_BSTR(&v))), "bstrs differ\n");
 
-        VARIANT_UserFree(&umcb.Flags, &v2);
-    }
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** BSTR BYREF ***/
@@ -1298,18 +1222,15 @@ static void test_marshal_VARIANT(void)
     ok(*wirev, "wv[6] %08x\n", *wirev); /* win2k: this is b. winxp: this is (char*)b + 1 */
     wirev++;
     check_bstr(wirev, b);
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        VariantInit(&v2);
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
-        ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
-        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(SysStringByteLen(*V_BSTRREF(&v)) == SysStringByteLen(*V_BSTRREF(&v2)), "bstr string lens differ\n");
-        ok(!memcmp(*V_BSTRREF(&v), *V_BSTRREF(&v2), SysStringByteLen(*V_BSTRREF(&v))), "bstrs differ\n");
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    ok(SysStringByteLen(*V_BSTRREF(&v)) == SysStringByteLen(*V_BSTRREF(&v2)), "bstr string lens differ\n");
+    ok(!memcmp(*V_BSTRREF(&v), *V_BSTRREF(&v2), SysStringByteLen(*V_BSTRREF(&v))), "bstrs differ\n");
 
-        VARIANT_UserFree(&umcb.Flags, &v2);
-    }
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
     SysFreeString(b);
 
@@ -1340,27 +1261,22 @@ static void test_marshal_VARIANT(void)
     ok(*wirev, "wv[5] %08x\n", *wirev); /* win2k: this is lpsa. winxp: this is (char*)lpsa + 1 */
     wirev++;
     check_safearray(wirev, lpsa);
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        LONG bound, bound2;
-        VARTYPE vt, vt2;
-        VariantInit(&v2);
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
-        ok(next == buffer + expected, "got %p expect %p\n", next, buffer + expected);
-        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(SafeArrayGetDim(V_ARRAY(&v)) == SafeArrayGetDim(V_ARRAY(&v)), "array dims differ\n");  
-        SafeArrayGetLBound(V_ARRAY(&v), 1, &bound);
-        SafeArrayGetLBound(V_ARRAY(&v2), 1, &bound2);
-        ok(bound == bound2, "array lbounds differ\n");
-        SafeArrayGetUBound(V_ARRAY(&v), 1, &bound);
-        SafeArrayGetUBound(V_ARRAY(&v2), 1, &bound2);
-        ok(bound == bound2, "array ubounds differ\n");
-        SafeArrayGetVartype(V_ARRAY(&v), &vt);
-        SafeArrayGetVartype(V_ARRAY(&v2), &vt2);
-        ok(vt == vt2, "array vts differ %x %x\n", vt, vt2);
-        VARIANT_UserFree(&umcb.Flags, &v2);
-    }
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + expected, "got %p expect %p\n", next, buffer + expected);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    ok(SafeArrayGetDim(V_ARRAY(&v)) == SafeArrayGetDim(V_ARRAY(&v)), "array dims differ\n");  
+    SafeArrayGetLBound(V_ARRAY(&v), 1, &bound);
+    SafeArrayGetLBound(V_ARRAY(&v2), 1, &bound2);
+    ok(bound == bound2, "array lbounds differ\n");
+    SafeArrayGetUBound(V_ARRAY(&v), 1, &bound);
+    SafeArrayGetUBound(V_ARRAY(&v2), 1, &bound2);
+    ok(bound == bound2, "array ubounds differ\n");
+    SafeArrayGetVartype(V_ARRAY(&v), &vt);
+    SafeArrayGetVartype(V_ARRAY(&v2), &vt2);
+    ok(vt == vt2, "array vts differ %x %x\n", vt, vt2);
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** ARRAY BYREF ***/
@@ -1385,27 +1301,22 @@ static void test_marshal_VARIANT(void)
     ok(*wirev, "wv[6] %08x\n", *wirev); /* win2k: this is lpsa. winxp: this is (char*)lpsa + 1 */
     wirev++;
     check_safearray(wirev, lpsa);
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        LONG bound, bound2;
-        VARTYPE vt, vt2;
-        VariantInit(&v2);
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
-        ok(next == buffer + expected, "got %p expect %p\n", next, buffer + expected);
-        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
-        ok(SafeArrayGetDim(*V_ARRAYREF(&v)) == SafeArrayGetDim(*V_ARRAYREF(&v)), "array dims differ\n");  
-        SafeArrayGetLBound(*V_ARRAYREF(&v), 1, &bound);
-        SafeArrayGetLBound(*V_ARRAYREF(&v2), 1, &bound2);
-        ok(bound == bound2, "array lbounds differ\n");
-        SafeArrayGetUBound(*V_ARRAYREF(&v), 1, &bound);
-        SafeArrayGetUBound(*V_ARRAYREF(&v2), 1, &bound2);
-        ok(bound == bound2, "array ubounds differ\n");
-        SafeArrayGetVartype(*V_ARRAYREF(&v), &vt);
-        SafeArrayGetVartype(*V_ARRAYREF(&v2), &vt2);
-        ok(vt == vt2, "array vts differ %x %x\n", vt, vt2);
-        VARIANT_UserFree(&umcb.Flags, &v2);
-    }
+    VariantInit(&v2);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+    ok(next == buffer + expected, "got %p expect %p\n", next, buffer + expected);
+    ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+    ok(SafeArrayGetDim(*V_ARRAYREF(&v)) == SafeArrayGetDim(*V_ARRAYREF(&v)), "array dims differ\n");  
+    SafeArrayGetLBound(*V_ARRAYREF(&v), 1, &bound);
+    SafeArrayGetLBound(*V_ARRAYREF(&v2), 1, &bound2);
+    ok(bound == bound2, "array lbounds differ\n");
+    SafeArrayGetUBound(*V_ARRAYREF(&v), 1, &bound);
+    SafeArrayGetUBound(*V_ARRAYREF(&v2), 1, &bound2);
+    ok(bound == bound2, "array ubounds differ\n");
+    SafeArrayGetVartype(*V_ARRAYREF(&v), &vt);
+    SafeArrayGetVartype(*V_ARRAYREF(&v2), &vt2);
+    ok(vt == vt2, "array vts differ %x %x\n", vt, vt2);
+    VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
     hr = SafeArrayDestroy(lpsa);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1440,19 +1351,15 @@ static void test_marshal_VARIANT(void)
     ok(*wirev == 0xcccccccc, "wv[13] %08x\n", *wirev); /* pad for VT_R8 */
     wirev++;
     ok(*(double*)wirev == V_R8(&v2), "wv[6] %08x wv[7] %08x\n", *wirev, *(wirev+1));
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        VARIANT v3;
-        VariantInit(&v3);
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v3);
-        ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
-        ok(V_VT(&v) == V_VT(&v3), "got vt %d expect %d\n", V_VT(&v), V_VT(&v3));
-        ok(V_VT(V_VARIANTREF(&v)) == V_VT(V_VARIANTREF(&v3)), "vts differ %x %x\n",
-           V_VT(V_VARIANTREF(&v)), V_VT(V_VARIANTREF(&v3))); 
-        ok(V_R8(V_VARIANTREF(&v)) == V_R8(V_VARIANTREF(&v3)), "r8s differ\n"); 
-        VARIANT_UserFree(&umcb.Flags, &v3);
-    }
+    VariantInit(&v3);
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v3);
+    ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(V_VT(&v) == V_VT(&v3), "got vt %d expect %d\n", V_VT(&v), V_VT(&v3));
+    ok(V_VT(V_VARIANTREF(&v)) == V_VT(V_VARIANTREF(&v3)), "vts differ %x %x\n",
+       V_VT(V_VARIANTREF(&v)), V_VT(V_VARIANTREF(&v3))); 
+    ok(V_R8(V_VARIANTREF(&v)) == V_R8(V_VARIANTREF(&v3)), "r8s differ\n"); 
+    VARIANT_UserFree(&umcb.Flags, &v3);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** UNKNOWN ***/
@@ -1486,21 +1393,17 @@ static void test_marshal_VARIANT(void)
     wirev++;
     todo_wine
     ok(*wirev == 0x574f454d, "wv[8] %08x\n", *wirev);
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        VARIANT v3;
-        VariantInit(&v3);
-        V_VT(&v3) = VT_UNKNOWN;
-        V_UNKNOWN(&v3) = &heap_unknown->IUnknown_iface;
-        IUnknown_AddRef(V_UNKNOWN(&v3));
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v3);
-        ok(V_VT(&v) == V_VT(&v3), "got vt %d expect %d\n", V_VT(&v), V_VT(&v3));
-        ok(V_UNKNOWN(&v) == V_UNKNOWN(&v3), "got %p expect %p\n", V_UNKNOWN(&v), V_UNKNOWN(&v3));
-        VARIANT_UserFree(&umcb.Flags, &v3);
-        ok(heap_unknown->refs == 1, "%d refcounts of IUnknown leaked\n", heap_unknown->refs - 1);
-        IUnknown_Release(&heap_unknown->IUnknown_iface);
-    }
+    VariantInit(&v3);
+    V_VT(&v3) = VT_UNKNOWN;
+    V_UNKNOWN(&v3) = &heap_unknown->IUnknown_iface;
+    IUnknown_AddRef(V_UNKNOWN(&v3));
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v3);
+    ok(V_VT(&v) == V_VT(&v3), "got vt %d expect %d\n", V_VT(&v), V_VT(&v3));
+    ok(V_UNKNOWN(&v) == V_UNKNOWN(&v3), "got %p expect %p\n", V_UNKNOWN(&v), V_UNKNOWN(&v3));
+    VARIANT_UserFree(&umcb.Flags, &v3);
+    ok(heap_unknown->refs == 1, "%d refcounts of IUnknown leaked\n", heap_unknown->refs - 1);
+    IUnknown_Release(&heap_unknown->IUnknown_iface);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** NULL UNKNOWN ***/
@@ -1560,21 +1463,18 @@ static void test_marshal_VARIANT(void)
     wirev++;
     todo_wine
     ok(*wirev == 0x574f454d, "wv[9] %08x\n", *wirev);
-    if (VARIANT_UNMARSHAL_WORKS)
-    {
-        VARIANT v3;
-        VariantInit(&v3);
-        V_VT(&v3) = VT_UNKNOWN;
-        V_UNKNOWN(&v3) = &heap_unknown->IUnknown_iface;
-        IUnknown_AddRef(V_UNKNOWN(&v3));
-        stubMsg.Buffer = buffer;
-        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v3);
-        ok(V_VT(&v) == V_VT(&v3), "got vt %d expect %d\n", V_VT(&v), V_VT(&v3));
-        ok(*V_UNKNOWNREF(&v) == *V_UNKNOWNREF(&v3), "got %p expect %p\n", *V_UNKNOWNREF(&v), *V_UNKNOWNREF(&v3));
-        VARIANT_UserFree(&umcb.Flags, &v3);
-        ok(heap_unknown->refs == 1, "%d refcounts of IUnknown leaked\n", heap_unknown->refs - 1);
-        IUnknown_Release(&heap_unknown->IUnknown_iface);
-    }
+
+    VariantInit(&v3);
+    V_VT(&v3) = VT_UNKNOWN;
+    V_UNKNOWN(&v3) = &heap_unknown->IUnknown_iface;
+    IUnknown_AddRef(V_UNKNOWN(&v3));
+    stubMsg.Buffer = buffer;
+    next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v3);
+    ok(V_VT(&v) == V_VT(&v3), "got vt %d expect %d\n", V_VT(&v), V_VT(&v3));
+    ok(*V_UNKNOWNREF(&v) == *V_UNKNOWNREF(&v3), "got %p expect %p\n", *V_UNKNOWNREF(&v), *V_UNKNOWNREF(&v3));
+    VARIANT_UserFree(&umcb.Flags, &v3);
+    ok(heap_unknown->refs == 1, "%d refcounts of IUnknown leaked\n", heap_unknown->refs - 1);
+    IUnknown_Release(&heap_unknown->IUnknown_iface);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 }
 
