@@ -3563,7 +3563,13 @@ static int puts_clbk_file_w(void *file, int len, const MSVCRT_wchar_t *str)
  */
 int CDECL MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, __ms_va_list valist)
 {
-    return pf_printf_a(puts_clbk_file_a, file, format, NULL, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
+    int ret;
+
+    MSVCRT__lock_file(file);
+    ret = pf_printf_a(puts_clbk_file_a, file, format, NULL, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
+    MSVCRT__unlock_file(file);
+
+    return ret;
 }
 
 /*********************************************************************
@@ -3571,12 +3577,18 @@ int CDECL MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, __ms_va_list va
  */
 int CDECL MSVCRT_vfprintf_s(MSVCRT_FILE* file, const char *format, __ms_va_list valist)
 {
+    int ret;
+
     if(!MSVCRT_CHECK_PMT(file != NULL)) {
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return -1;
     }
 
-    return pf_printf_a(puts_clbk_file_a, file, format, NULL, FALSE, TRUE, arg_clbk_valist, NULL, &valist);
+    MSVCRT__lock_file(file);
+    ret = pf_printf_a(puts_clbk_file_a, file, format, NULL, FALSE, TRUE, arg_clbk_valist, NULL, &valist);
+    MSVCRT__unlock_file(file);
+
+    return ret;
 }
 
 /*********************************************************************
@@ -3584,7 +3596,13 @@ int CDECL MSVCRT_vfprintf_s(MSVCRT_FILE* file, const char *format, __ms_va_list 
  */
 int CDECL MSVCRT_vfwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __ms_va_list valist)
 {
-    return pf_printf_w(puts_clbk_file_w, file, format, NULL, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
+    int ret;
+
+    MSVCRT__lock_file(file);
+    ret = pf_printf_w(puts_clbk_file_w, file, format, NULL, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
+    MSVCRT__unlock_file(file);
+
+    return ret;
 }
 
 /*********************************************************************
@@ -3592,12 +3610,18 @@ int CDECL MSVCRT_vfwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __ms
  */
 int CDECL MSVCRT_vfwprintf_s(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __ms_va_list valist)
 {
+    int ret;
+
     if(!MSVCRT_CHECK_PMT( file != NULL)) {
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return -1;
     }
 
-    return pf_printf_w(puts_clbk_file_w, file, format, NULL, FALSE, TRUE, arg_clbk_valist, NULL, &valist);
+    MSVCRT__lock_file(file);
+    ret = pf_printf_w(puts_clbk_file_w, file, format, NULL, FALSE, TRUE, arg_clbk_valist, NULL, &valist);
+    MSVCRT__unlock_file(file);
+
+    return ret;
 }
 
 /*********************************************************************
