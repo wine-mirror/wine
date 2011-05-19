@@ -690,7 +690,7 @@ static INT GSUB_apply_ChainContextSubst(const GSUB_LookupList* lookup, const GSU
             for (k = 0; k < GET_BE_WORD(ccsf3_3->LookaheadGlyphCount); k++)
             {
                 offset = GET_BE_WORD(ccsf3_3->Coverage[k]);
-                if (GSUB_is_glyph_covered((const BYTE*)ccsf3_1+offset, glyphs[glyph_index + (dirLookahead * (indexGlyphs + k+1))]) == -1)
+                if (GSUB_is_glyph_covered((const BYTE*)ccsf3_1+offset, glyphs[glyph_index + (dirLookahead * (indexGlyphs + k))]) == -1)
                     break;
             }
             if (k != GET_BE_WORD(ccsf3_3->LookaheadGlyphCount))
