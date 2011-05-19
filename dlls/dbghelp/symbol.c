@@ -2087,3 +2087,27 @@ BOOL WINAPI SymGetLineFromNameW64(HANDLE hProcess, PCWSTR ModuleName, PCWSTR Fil
                 dwLineNumber, plDisplacement, Line);
     return FALSE;
 }
+
+/******************************************************************
+ *		SymFromIndex (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymFromIndex(HANDLE hProcess, ULONG64 BaseOfDll, DWORD index, PSYMBOL_INFO symbol)
+{
+    FIXME("hProcess = %p, BaseOfDll = %s, index = %d, symbol = %p\n",
+          hProcess, wine_dbgstr_longlong(BaseOfDll), index, symbol);
+
+    return FALSE;
+}
+
+/******************************************************************
+ *		SymFromIndexW (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymFromIndexW(HANDLE hProcess, ULONG64 BaseOfDll, DWORD index, PSYMBOL_INFOW symbol)
+{
+    FIXME("hProcess = %p, BaseOfDll = %s, index = %d, symbol = %p\n",
+          hProcess, wine_dbgstr_longlong(BaseOfDll), index, symbol);
+
+    return FALSE;
+}

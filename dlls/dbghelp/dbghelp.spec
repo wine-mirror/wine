@@ -72,8 +72,8 @@
 @ stdcall SymFindFileInPathW(long wstr wstr ptr long long long ptr ptr ptr)
 @ stdcall SymFromAddr(ptr int64 ptr ptr)
 @ stdcall SymFromAddrW(ptr int64 ptr ptr)
-@ stub SymFromIndex
-@ stub SymFromIndexW
+@ stdcall SymFromIndex(long int64 long ptr)
+@ stdcall SymFromIndexW(long int64 long ptr)
 @ stdcall SymFromName(long str ptr)
 @ stub SymFromNameW
 @ stub SymFromToken
