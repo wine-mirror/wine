@@ -48,6 +48,8 @@
 #ifdef CONSOLE
 #define _GETC_(file) (consumed++, _getch())
 #define _UNGETC_(nch, file) do { _ungetch(nch); consumed--; } while(0)
+#define _LOCK_FILE_(file) MSVCRT__lock_file(MSVCRT_stdin)
+#define _UNLOCK_FILE_(file) MSVCRT__unlock_file(MSVCRT_stdin)
 #ifdef WIDE_SCANF
 #ifdef SECURE
 #define _FUNCTION_ static int MSVCRT_vcwscanf_s_l(const char *format, MSVCRT__locale_t locale, __ms_va_list ap)
@@ -68,6 +70,8 @@
 #ifdef STRING_LEN
 #define _GETC_(file) (consumed==length ? '\0' : (consumed++, *file++))
 #define _UNGETC_(nch, file) do { file--; consumed--; } while(0)
+#define _LOCK_FILE_(file) do {} while(0)
+#define _UNLOCK_FILE_(file) do {} while(0)
 #ifdef WIDE_SCANF
 #ifdef SECURE
 #define _FUNCTION_ static int MSVCRT_vsnwscanf_s_l(const MSVCRT_wchar_t *file, MSVCRT_size_t length, const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, __ms_va_list ap)
@@ -84,6 +88,8 @@
 #else /* STRING_LEN */
 #define _GETC_(file) (consumed++, *file++)
 #define _UNGETC_(nch, file) do { file--; consumed--; } while(0)
+#define _LOCK_FILE_(file) do {} while(0)
+#define _UNLOCK_FILE_(file) do {} while(0)
 #ifdef WIDE_SCANF
 #ifdef SECURE
 #define _FUNCTION_ static int MSVCRT_vswscanf_s_l(const MSVCRT_wchar_t *file, const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, __ms_va_list ap)
@@ -102,6 +108,8 @@
 #ifdef WIDE_SCANF
 #define _GETC_(file) (consumed++, MSVCRT_fgetwc(file))
 #define _UNGETC_(nch, file) do { MSVCRT_ungetwc(nch, file); consumed--; } while(0)
+#define _LOCK_FILE_(file) MSVCRT__lock_file(file)
+#define _UNLOCK_FILE_(file) MSVCRT__unlock_file(file)
 #ifdef SECURE
 #define _FUNCTION_ static int MSVCRT_vfwscanf_s_l(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, __ms_va_list ap)
 #else  /* SECURE */
@@ -110,6 +118,8 @@
 #else /* WIDE_SCANF */
 #define _GETC_(file) (consumed++, MSVCRT_fgetc(file))
 #define _UNGETC_(nch, file) do { MSVCRT_ungetc(nch, file); consumed--; } while(0)
+#define _LOCK_FILE_(file) MSVCRT__lock_file(file)
+#define _UNLOCK_FILE_(file) MSVCRT__unlock_file(file)
 #ifdef SECURE
 #define _FUNCTION_ static int MSVCRT_vfscanf_s_l(MSVCRT_FILE* file, const char *format, MSVCRT__locale_t locale, __ms_va_list ap)
 #else  /* SECURE */
@@ -134,8 +144,13 @@ _FUNCTION_ {
 #endif /* STRING */
 #endif /* CONSOLE */
 #endif /* WIDE_SCANF */
+    _LOCK_FILE_(file);
+
     nch = _GETC_(file);
-    if (nch == _EOF_) return _EOF_RET;
+    if (nch == _EOF_) {
+        _UNLOCK_FILE_(file);
+        return _EOF_RET;
+    }
 
     if(!locale)
         locale = get_locale();
@@ -400,6 +415,7 @@ _FUNCTION_ {
                             *sptr++ = _CHAR2SUPPORTED_(nch);
                             if(size>1) size--;
                             else {
+                                _UNLOCK_FILE_(file);
                                 *sptr_beg = 0;
                                 return rd;
                             }
@@ -429,6 +445,7 @@ _FUNCTION_ {
                             *sptr++ = _WIDE2SUPPORTED_(nch);
                             if(size>1) size--;
                             else {
+                                _UNLOCK_FILE_(file);
                                 *sptr_beg = 0;
                                 return rd;
                             }
@@ -474,6 +491,7 @@ _FUNCTION_ {
                             *str++ = _CHAR2SUPPORTED_(nch);
                             if(size) size--;
                             else {
+                                _UNLOCK_FILE_(file);
                                 *pstr = 0;
                                 return rd;
                             }
@@ -499,6 +517,7 @@ _FUNCTION_ {
                             *str++ = _WIDE2SUPPORTED_(nch);
                             if(size) size--;
                             else {
+                                _UNLOCK_FILE_(file);
                                 *pstr = 0;
                                 return rd;
                             }
@@ -586,6 +605,7 @@ _FUNCTION_ {
                         if (width>0) width--;
                         if(size>1) size--;
                         else {
+                            _UNLOCK_FILE_(file);
                             *str = 0;
                             return rd;
                         }
@@ -628,7 +648,9 @@ _FUNCTION_ {
     if (nch!=_EOF_) {
 	_UNGETC_(nch, file);
     }
+
     TRACE("returning %d\n", rd);
+    _UNLOCK_FILE_(file);
     return rd;
 }
 
@@ -642,5 +664,7 @@ _FUNCTION_ {
 #undef _CHAR2DIGIT_
 #undef _GETC_
 #undef _UNGETC_
+#undef _LOCK_FILE_
+#undef _UNLOCK_FILE_
 #undef _FUNCTION_
 #undef _BITMAPSIZE_

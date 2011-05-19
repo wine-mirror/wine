@@ -784,6 +784,8 @@ int __cdecl      MSVCRT_iswspace(MSVCRT_wint_t);
 int __cdecl      MSVCRT_iswdigit(MSVCRT_wint_t);
 int __cdecl      MSVCRT_isleadbyte(int);
 
+void __cdecl     MSVCRT__lock_file(MSVCRT_FILE*);
+void __cdecl     MSVCRT__unlock_file(MSVCRT_FILE*);
 int __cdecl      MSVCRT_fgetc(MSVCRT_FILE*);
 int __cdecl      MSVCRT_ungetc(int,MSVCRT_FILE*);
 MSVCRT_wint_t __cdecl MSVCRT_fgetwc(MSVCRT_FILE*);
