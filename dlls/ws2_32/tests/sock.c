@@ -22,6 +22,7 @@
 
 #include <ntstatus.h>
 #define WIN32_NO_STATUS
+#include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
 #include <mswsock.h>

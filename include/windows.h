@@ -63,7 +63,7 @@
 /* #include <winperf.h> */
 
 #ifndef WINE_NOWINSOCK
-#include <winsock2.h>
+#include <winsock.h>
 #endif /* WINE_NOWINSOCK */
 
 #ifndef NOCRYPT
