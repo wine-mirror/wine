@@ -516,6 +516,9 @@ static INT GSUB_apply_SingleSubst(const GSUB_LookupTable *look, WORD *glyphs, IN
             TRACE("  Coverage index %i\n",index);
             if (index != -1)
             {
+                if (glyphs[glyph_index] == GET_BE_WORD(ssf2->Substitute[index]))
+                    return GSUB_E_NOGLYPH;
+
                 TRACE("    Glyph is 0x%x ->",glyphs[glyph_index]);
                 glyphs[glyph_index] = GET_BE_WORD(ssf2->Substitute[index]);
                 TRACE("0x%x\n",glyphs[glyph_index]);
@@ -548,6 +551,8 @@ static INT GSUB_apply_AlternateSubst(const GSUB_LookupTable *look, WORD *glyphs,
             offset =  GET_BE_WORD(asf1->AlternateSet[index]);
             as = (const GSUB_AlternateSet*)((const BYTE*)asf1+offset);
             FIXME("%i alternates, picking index 0\n",GET_BE_WORD(as->GlyphCount));
+            if (glyphs[glyph_index] == GET_BE_WORD(as->Alternate[0]))
+                return GSUB_E_NOGLYPH;
 
             TRACE("  Glyph 0x%x ->",glyphs[glyph_index]);
             glyphs[glyph_index] = GET_BE_WORD(as->Alternate[0]);
@@ -759,6 +764,13 @@ static INT GSUB_apply_feature(const GSUB_Header * header, const GSUB_Feature* fe
     }
     if (out_index == GSUB_E_NOGLYPH)
         TRACE("lookups found no glyphs\n");
+    else
+    {
+        int out2;
+        out2 = GSUB_apply_feature(header, feature, glyphs, glyph_index, write_dir, glyph_count);
+        if (out2!=GSUB_E_NOGLYPH)
+            out_index = out2;
+    }
     return out_index;
 }
 
