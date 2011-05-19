@@ -134,7 +134,7 @@
 @ stub D3DXFloat32To16Array(ptr ptr long)
 @ stub D3DXFrameAppendChild(ptr ptr)
 @ stub D3DXFrameCalculateBoundingSphere(ptr ptr ptr)
-@ stub D3DXFrameDestroy(ptr ptr)
+@ stdcall D3DXFrameDestroy(ptr ptr)
 @ stub D3DXFrameFind(ptr ptr)
 @ stub D3DXFrameNumNamedMatrices(ptr)
 @ stub D3DXFrameRegisterNamedMatrices(ptr ptr)

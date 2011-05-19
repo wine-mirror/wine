@@ -1808,6 +1808,49 @@ HRESULT WINAPI D3DXCreateMeshFVF(DWORD numfaces, DWORD numvertices, DWORD option
     return D3DXCreateMesh(numfaces, numvertices, options, declaration, device, mesh);
 }
 
+
+HRESULT WINAPI D3DXFrameDestroy(LPD3DXFRAME frame, LPD3DXALLOCATEHIERARCHY alloc_hier)
+{
+    HRESULT hr;
+    BOOL last = FALSE;
+
+    TRACE("(%p, %p)\n", frame, alloc_hier);
+
+    if (!frame || !alloc_hier)
+        return D3DERR_INVALIDCALL;
+
+    while (!last) {
+        D3DXMESHCONTAINER *container;
+        D3DXFRAME *current_frame;
+
+        if (frame->pFrameSibling) {
+            current_frame = frame->pFrameSibling;
+            frame->pFrameSibling = current_frame->pFrameSibling;
+            current_frame->pFrameSibling = NULL;
+        } else if (frame) {
+            current_frame = frame;
+            last = TRUE;
+        }
+
+        if (current_frame->pFrameFirstChild) {
+            hr = D3DXFrameDestroy(current_frame->pFrameFirstChild, alloc_hier);
+            if (FAILED(hr)) return hr;
+            current_frame->pFrameFirstChild = NULL;
+        }
+
+        container = current_frame->pMeshContainer;
+        while (container) {
+            D3DXMESHCONTAINER *next_container = container->pNextMeshContainer;
+            hr = alloc_hier->lpVtbl->DestroyMeshContainer(alloc_hier, container);
+            if (FAILED(hr)) return hr;
+            container = next_container;
+        }
+        hr = alloc_hier->lpVtbl->DestroyFrame(alloc_hier, current_frame);
+        if (FAILED(hr)) return hr;
+    }
+    return D3D_OK;
+}
+
 HRESULT WINAPI D3DXCreateBox(LPDIRECT3DDEVICE9 device, FLOAT width, FLOAT height,
                              FLOAT depth, LPD3DXMESH* mesh, LPD3DXBUFFER* adjacency)
 {
