@@ -3144,8 +3144,9 @@ static BOOL canonicalize_path_opaque(const parse_data *data, Uri *uri, DWORD fla
 
     uri->path_len = uri->canon_len - uri->path_start;
 
-    TRACE("(%p %p %x %d): Canonicalized opaque URI path %s len=%d\n", data, uri, flags, computeOnly,
-        debugstr_wn(uri->canon_uri+uri->path_start, uri->path_len), uri->path_len);
+    if(!computeOnly)
+        TRACE("(%p %p %x %d): Canonicalized opaque URI path %s len=%d\n", data, uri, flags, computeOnly,
+            debugstr_wn(uri->canon_uri+uri->path_start, uri->path_len), uri->path_len);
     return TRUE;
 }
 
