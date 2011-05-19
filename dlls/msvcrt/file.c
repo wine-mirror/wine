@@ -41,6 +41,7 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "msvcrt.h"
+#include "mtdll.h"
 
 #include "wine/unicode.h"
 
@@ -90,13 +91,17 @@ ioinfo * MSVCRT___pioinfo[MSVCRT_MAX_FILES/MSVCRT_FD_BLOCK_SIZE] = { 0 };
  */
 ioinfo MSVCRT___badioinfo = { INVALID_HANDLE_VALUE, WX_TEXT };
 
-MSVCRT_FILE MSVCRT__iob[3] = { { 0 } };
-
 static int MSVCRT_fdstart = 3; /* first unallocated fd */
 static int MSVCRT_fdend = 3; /* highest allocated fd */
 
-static MSVCRT_FILE* MSVCRT_fstreams[2048];
-static int   MSVCRT_stream_idx;
+typedef struct {
+    MSVCRT_FILE file;
+    CRITICAL_SECTION crit;
+} file_crit;
+
+MSVCRT_FILE MSVCRT__iob[_IOB_ENTRIES] = { { 0 } };
+static file_crit* MSVCRT_fstream[MSVCRT_MAX_FILES/MSVCRT_FD_BLOCK_SIZE];
+static int MSVCRT_max_streams = 512, MSVCRT_stream_idx;
 
 /* INTERNAL: process umask */
 static int MSVCRT_umask = 0;
@@ -177,6 +182,32 @@ static inline ioinfo* msvcrt_get_ioinfo(int fd)
         return &MSVCRT___badioinfo;
 
     return ret + (fd%MSVCRT_FD_BLOCK_SIZE);
+}
+
+static inline MSVCRT_FILE* msvcrt_get_file(int i)
+{
+    file_crit *ret;
+
+    if(i >= MSVCRT_max_streams)
+        return NULL;
+
+    if(i < _IOB_ENTRIES)
+        return &MSVCRT__iob[i];
+
+    ret = MSVCRT_fstream[i/MSVCRT_FD_BLOCK_SIZE];
+    if(!ret) {
+        MSVCRT_fstream[i/MSVCRT_FD_BLOCK_SIZE] = MSVCRT_calloc(MSVCRT_FD_BLOCK_SIZE, sizeof(file_crit));
+        if(!MSVCRT_fstream[i/MSVCRT_FD_BLOCK_SIZE]) {
+            ERR("out of memory");
+            *MSVCRT__errno() = MSVCRT_ENOMEM;
+            return NULL;
+        }
+
+        ret = MSVCRT_fstream[i/MSVCRT_FD_BLOCK_SIZE] + (i%MSVCRT_FD_BLOCK_SIZE);
+    } else
+        ret += i%MSVCRT_FD_BLOCK_SIZE;
+
+    return &ret->file;
 }
 
 static inline BOOL msvcrt_is_valid_fd(int fd)
@@ -316,20 +347,21 @@ static int msvcrt_alloc_fd(HANDLE hand, int flag)
 static MSVCRT_FILE* msvcrt_alloc_fp(void)
 {
   unsigned int i;
+  MSVCRT_FILE *file;
 
-  for (i = 3; i < sizeof(MSVCRT_fstreams) / sizeof(MSVCRT_fstreams[0]); i++)
+  for (i = 3; i < MSVCRT_max_streams; i++)
   {
-    if (!MSVCRT_fstreams[i] || MSVCRT_fstreams[i]->_flag == 0)
+    file = msvcrt_get_file(i);
+    if (!file)
+      return NULL;
+
+    if (file->_flag == 0)
     {
-      if (!MSVCRT_fstreams[i])
-      {
-        if (!(MSVCRT_fstreams[i] = MSVCRT_calloc(sizeof(MSVCRT_FILE),1)))
-          return NULL;
-        if (i == MSVCRT_stream_idx) MSVCRT_stream_idx++;
-      }
-      return MSVCRT_fstreams[i];
+      if (i == MSVCRT_stream_idx) MSVCRT_stream_idx++;
+      return file;
     }
   }
+
   return NULL;
 }
 
@@ -471,7 +503,6 @@ void msvcrt_init_io(void)
   for (i = 0; i < 3; i++)
   {
     /* FILE structs for stdin/out/err are static and never deleted */
-    MSVCRT_fstreams[i] = &MSVCRT__iob[i];
     MSVCRT__iob[i]._file = i;
     MSVCRT__iob[i]._tmpfname = NULL;
     MSVCRT__iob[i]._flag = (i == 0) ? MSVCRT__IOREAD : MSVCRT__IOWRT;
@@ -715,22 +746,20 @@ int CDECL MSVCRT_fflush(MSVCRT_FILE* file);
 int CDECL _flushall(void)
 {
   int i, num_flushed = 0;
+  MSVCRT_FILE *file;
 
   LOCK_FILES();
-  for (i = 3; i < MSVCRT_stream_idx; i++)
-    if (MSVCRT_fstreams[i] && MSVCRT_fstreams[i]->_flag)
+  for (i = 3; i < MSVCRT_stream_idx; i++) {
+    file = msvcrt_get_file(i);
+
+    if (file->_flag)
     {
-#if 0
-      /* FIXME: flush, do not commit */
-      if (_commit(i) == -1)
-	if (MSVCRT_fstreams[i])
-	  MSVCRT_fstreams[i]->_flag |= MSVCRT__IOERR;
-#endif
-      if(MSVCRT_fstreams[i]->_flag & MSVCRT__IOWRT) {
-	MSVCRT_fflush(MSVCRT_fstreams[i]);
+      if(file->_flag & MSVCRT__IOWRT) {
+	MSVCRT_fflush(file);
         num_flushed++;
       }
     }
+  }
   UNLOCK_FILES();
 
   TRACE(":flushed (%d) handles\n",num_flushed);
@@ -913,12 +942,15 @@ int CDECL _eof(int fd)
 int CDECL MSVCRT__fcloseall(void)
 {
   int num_closed = 0, i;
+  MSVCRT_FILE *file;
 
   LOCK_FILES();
-  for (i = 3; i < MSVCRT_stream_idx; i++)
-    if (MSVCRT_fstreams[i] && MSVCRT_fstreams[i]->_flag &&
-        !MSVCRT_fclose(MSVCRT_fstreams[i]))
+  for (i = 3; i < MSVCRT_stream_idx; i++) {
+    file = msvcrt_get_file(i);
+
+    if (file->_flag && !MSVCRT_fclose(file))
       num_closed++;
+  }
   UNLOCK_FILES();
 
   TRACE(":closed (%d) handles\n",num_closed);
@@ -941,6 +973,9 @@ void msvcrt_free_io(void)
 
     for(i=0; i<sizeof(MSVCRT___pioinfo)/sizeof(MSVCRT___pioinfo[0]); i++)
         MSVCRT_free(MSVCRT___pioinfo[i]);
+
+    for(i=0; i<sizeof(MSVCRT_fstream)/sizeof(MSVCRT_fstream[0]); i++)
+        MSVCRT_free(MSVCRT_fstream[i]);
 
     MSVCRT_file_cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&MSVCRT_file_cs);
@@ -1927,14 +1962,18 @@ int CDECL _open_osfhandle(MSVCRT_intptr_t handle, int oflags)
 int CDECL _rmtmp(void)
 {
   int num_removed = 0, i;
+  MSVCRT_FILE *file;
 
   LOCK_FILES();
-  for (i = 3; i < MSVCRT_stream_idx; i++)
-    if (MSVCRT_fstreams[i] && MSVCRT_fstreams[i]->_tmpfname)
+  for (i = 3; i < MSVCRT_stream_idx; i++) {
+    file = msvcrt_get_file(i);
+
+    if (file->_tmpfname)
     {
-      MSVCRT_fclose(MSVCRT_fstreams[i]);
+      MSVCRT_fclose(file);
       num_removed++;
     }
+  }
   UNLOCK_FILES();
 
   if (num_removed)
@@ -2516,6 +2555,13 @@ int CDECL MSVCRT_fclose(MSVCRT_FILE* file)
   r=MSVCRT__close(file->_file);
 
   file->_flag = 0;
+
+  if(file == msvcrt_get_file(MSVCRT_stream_idx-1)) {
+    while(MSVCRT_stream_idx>3 && !file->_flag) {
+      MSVCRT_stream_idx--;
+      file = msvcrt_get_file(MSVCRT_stream_idx-1);
+    }
+  }
 
   return ((r == -1) || (flag & MSVCRT__IOERR) ? MSVCRT_EOF : 0);
 }
