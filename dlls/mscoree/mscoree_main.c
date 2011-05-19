@@ -373,7 +373,7 @@ HRESULT WINAPI CorBindToRuntimeEx(LPWSTR szVersion, LPWSTR szBuildFlavor, DWORD 
 
     *ppv = NULL;
 
-    ret = get_runtime_info(NULL, szVersion, NULL, nflags, 0, TRUE, &info);
+    ret = get_runtime_info(NULL, szVersion, NULL, nflags, RUNTIME_INFO_UPGRADE_VERSION, TRUE, &info);
 
     if (SUCCEEDED(ret))
     {
