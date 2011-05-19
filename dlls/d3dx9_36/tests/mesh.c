@@ -2785,7 +2785,7 @@ static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, str
             D3DXVec3Subtract(&v2, vtx3, vtx2);
             D3DXVec3Cross(&normal, &v1, &v2);
             D3DXVec3Normalize(&normal, &normal);
-            ok(compare_vec3(normal, forward),
+            ok(!D3DXVec3Length(&normal) || compare_vec3(normal, forward),
                "Test %s, glyph %d, face %d normal, result (%g, %g, %g), expected (%g, %g, %g)\n", name, i, face_idx1,
                normal.x, normal.y, normal.z, forward.x, forward.y, forward.z);
         }
