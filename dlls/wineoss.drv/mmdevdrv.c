@@ -53,6 +53,13 @@
 #include "audiopolicy.h"
 #include "audioclient.h"
 
+
+/* Some implementations of OSS, such as FreeBSD older than 9.0, lack
+   SNDCTL_DSP_HALT which is just a synonym for the older SNDCTL_DSP_RESET. */
+#ifndef SNDCTL_DSP_HALT
+#define SNDCTL_DSP_HALT SNDCTL_DSP_RESET
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(oss);
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
