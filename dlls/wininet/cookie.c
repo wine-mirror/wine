@@ -260,7 +260,7 @@ static void COOKIE_deleteDomain(cookie_domain *deadDomain)
     HeapFree(GetProcessHeap(), 0, deadDomain);
 }
 
-static BOOL get_cookie(const WCHAR *host, const WCHAR *path, WCHAR *cookie_data, DWORD *size)
+BOOL get_cookie(const WCHAR *host, const WCHAR *path, WCHAR *cookie_data, DWORD *size)
 {
     unsigned cnt = 0, len, domain_count = 0, cookie_count = 0;
     cookie_domain *domain;

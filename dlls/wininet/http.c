@@ -3957,32 +3957,30 @@ static DWORD HTTP_SecureProxyConnect(http_request_t *request)
 
 static void HTTP_InsertCookies(http_request_t *request)
 {
-    static const WCHAR szUrlForm[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
-    LPWSTR lpszCookies, lpszUrl = NULL;
-    DWORD nCookieSize, size;
-    LPHTTPHEADERW Host = HTTP_GetHeader(request, hostW);
+    DWORD cookie_size, size, cnt = 0;
+    HTTPHEADERW *host;
+    WCHAR *cookies;
 
-    size = (strlenW(Host->lpszValue) + strlenW(szUrlForm) + strlenW(request->path)) * sizeof(WCHAR);
-    if (!(lpszUrl = heap_alloc(size))) return;
-    sprintfW( lpszUrl, szUrlForm, Host->lpszValue, request->path);
+    static const WCHAR cookieW[] = {'C','o','o','k','i','e',':',' ',0};
 
-    if (InternetGetCookieW(lpszUrl, NULL, NULL, &nCookieSize))
-    {
-        int cnt = 0;
-        static const WCHAR szCookie[] = {'C','o','o','k','i','e',':',' ',0};
+    host = HTTP_GetHeader(request, hostW);
+    if(!host)
+        return;
 
-        size = sizeof(szCookie) + nCookieSize * sizeof(WCHAR) + sizeof(szCrLf);
-        if ((lpszCookies = heap_alloc(size)))
-        {
-            cnt += sprintfW(lpszCookies, szCookie);
-            InternetGetCookieW(lpszUrl, NULL, lpszCookies + cnt, &nCookieSize);
-            strcatW(lpszCookies, szCrLf);
+    if(!get_cookie(host->lpszValue, request->path, NULL, &cookie_size))
+        return;
 
-            HTTP_HttpAddRequestHeadersW(request, lpszCookies, strlenW(lpszCookies), HTTP_ADDREQ_FLAG_REPLACE);
-            HeapFree(GetProcessHeap(), 0, lpszCookies);
-        }
-    }
-    HeapFree(GetProcessHeap(), 0, lpszUrl);
+    size = sizeof(cookieW) + cookie_size * sizeof(WCHAR) + sizeof(szCrLf);
+    if(!(cookies = heap_alloc(size)))
+        return;
+
+    cnt += sprintfW(cookies, cookieW);
+    get_cookie(host->lpszValue, request->path, cookies+cnt, &cookie_size);
+    strcatW(cookies, szCrLf);
+
+    HTTP_HttpAddRequestHeadersW(request, cookies, strlenW(cookies), HTTP_ADDREQ_FLAG_REPLACE);
+
+    heap_free(cookies);
 }
 
 static WORD HTTP_ParseDay(LPCWSTR day)

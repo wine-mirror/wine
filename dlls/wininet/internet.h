@@ -497,6 +497,8 @@ DWORD HTTP_Connect(appinfo_t*,LPCWSTR,
 BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
 	struct sockaddr *psa, socklen_t *sa_len) DECLSPEC_HIDDEN;
 
+BOOL get_cookie(const WCHAR*,const WCHAR*,WCHAR*,DWORD*) DECLSPEC_HIDDEN;
+
 void INTERNET_SetLastError(DWORD dwError) DECLSPEC_HIDDEN;
 DWORD INTERNET_GetLastError(void) DECLSPEC_HIDDEN;
 DWORD INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest) DECLSPEC_HIDDEN;
