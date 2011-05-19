@@ -3766,20 +3766,19 @@ int CDECL MSVCRT_wprintf_s(const MSVCRT_wchar_t *format, ...)
  */
 int CDECL _getmaxstdio(void)
 {
-    FIXME("stub, always returns 512\n");
-    return 512;
+    return MSVCRT_max_streams;
 }
 
 /*********************************************************************
- *		_setmaxstdio_ (MSVCRT.@)
+ *		_setmaxstdio (MSVCRT.@)
  */
 int CDECL _setmaxstdio(int newmax)
 {
-    int res;
-    if( newmax > 2048)
-      res = -1;
-    else
-      res = newmax;
-    FIXME("stub: setting new maximum for number of simultaneously open files not implemented,returning %d\n",res);
-    return res;
+    TRACE("%d\n", newmax);
+
+    if(newmax<_IOB_ENTRIES || newmax>MSVCRT_MAX_FILES || newmax<MSVCRT_stream_idx)
+        return -1;
+
+    MSVCRT_max_streams = newmax;
+    return MSVCRT_max_streams;
 }
