@@ -68,14 +68,27 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* FIXME: this should be allocated dynamically */
 #define MSVCRT_MAX_FILES 2048
+#define MSVCRT_FD_BLOCK_SIZE 64
 
+/* ioinfo structure size is different in msvcrXX.dll's */
 typedef struct {
     HANDLE              handle;
     unsigned char       wxflag;
-    DWORD               unkn[7]; /* critical section and init flag */       
+    char                unk1;
+    BOOL                crit_init;
+    CRITICAL_SECTION    crit;
 } ioinfo;
 
-static ioinfo MSVCRT_fdesc[MSVCRT_MAX_FILES];
+/*********************************************************************
+ *		__pioinfo (MSVCRT.@)
+ * array of pointers to ioinfo arrays [64]
+ */
+ioinfo * MSVCRT___pioinfo[MSVCRT_MAX_FILES/MSVCRT_FD_BLOCK_SIZE] = { 0 };
+
+/*********************************************************************
+ *		__badioinfo (MSVCRT.@)
+ */
+ioinfo MSVCRT___badioinfo = { INVALID_HANDLE_VALUE, WX_TEXT };
 
 MSVCRT_FILE MSVCRT__iob[3] = { { 0 } };
 
@@ -104,7 +117,7 @@ static const ULONGLONG WCBAT = TOUL('b') << 32 | TOUL('a') << 16 | TOUL('t');
 static const ULONGLONG WCCMD = TOUL('c') << 32 | TOUL('m') << 16 | TOUL('d');
 static const ULONGLONG WCCOM = TOUL('c') << 32 | TOUL('o') << 16 | TOUL('m');
 
-/* This critical section protects the tables MSVCRT_fdesc and MSVCRT_fstreams,
+/* This critical section protects the tables MSVCRT___pioinfo and MSVCRT_fstreams,
  * and their related indexes, MSVCRT_fdstart, MSVCRT_fdend,
  * and MSVCRT_stream_idx, from race conditions.
  * It doesn't protect against race conditions manipulating the underlying files
@@ -155,9 +168,20 @@ static void time_to_filetime( MSVCRT___time64_t time, FILETIME *ft )
     ft->dwLowDateTime = ticks;
 }
 
+static inline ioinfo* msvcrt_get_ioinfo(int fd)
+{
+    ioinfo *ret = NULL;
+    if(fd < MSVCRT_MAX_FILES)
+        ret = MSVCRT___pioinfo[fd/MSVCRT_FD_BLOCK_SIZE];
+    if(!ret)
+        return &MSVCRT___badioinfo;
+
+    return ret + (fd%MSVCRT_FD_BLOCK_SIZE);
+}
+
 static inline BOOL msvcrt_is_valid_fd(int fd)
 {
-  return fd >= 0 && fd < MSVCRT_fdend && (MSVCRT_fdesc[fd].wxflag & WX_OPEN);
+    return fd >= 0 && fd < MSVCRT_fdend && (msvcrt_get_ioinfo(fd)->wxflag & WX_OPEN);
 }
 
 /* INTERNAL: Get the HANDLE for a fd
@@ -175,19 +199,25 @@ static HANDLE msvcrt_fdtoh(int fd)
     *MSVCRT__errno() = MSVCRT_EBADF;
     return INVALID_HANDLE_VALUE;
   }
-  if (MSVCRT_fdesc[fd].handle == INVALID_HANDLE_VALUE) FIXME("wtf\n");
-  return MSVCRT_fdesc[fd].handle;
+  if (msvcrt_get_ioinfo(fd)->handle == INVALID_HANDLE_VALUE)
+      FIXME("returning INVALID_HANDLE_VALUE for %d\n", fd);
+  return msvcrt_get_ioinfo(fd)->handle;
 }
 
 /* INTERNAL: free a file entry fd */
 static void msvcrt_free_fd(int fd)
 {
   HANDLE old_handle;
+  ioinfo *fdinfo;
 
   LOCK_FILES();
-  old_handle = MSVCRT_fdesc[fd].handle;
-  MSVCRT_fdesc[fd].handle = INVALID_HANDLE_VALUE;
-  MSVCRT_fdesc[fd].wxflag = 0;
+  fdinfo = msvcrt_get_ioinfo(fd);
+  old_handle = fdinfo->handle;
+  if(fdinfo != &MSVCRT___badioinfo)
+  {
+    fdinfo->handle = INVALID_HANDLE_VALUE;
+    fdinfo->wxflag = 0;
+  }
   TRACE(":fd (%d) freed\n",fd);
   if (fd < 3) /* don't use 0,1,2 for user files */
   {
@@ -218,21 +248,41 @@ static void msvcrt_free_fd(int fd)
 /* caller must hold the files lock */
 static int msvcrt_alloc_fd_from(HANDLE hand, int flag, int fd)
 {
+  ioinfo *fdinfo;
+
   if (fd >= MSVCRT_MAX_FILES)
   {
     WARN(":files exhausted!\n");
     *MSVCRT__errno() = MSVCRT_ENFILE;
     return -1;
   }
-  MSVCRT_fdesc[fd].handle = hand;
-  MSVCRT_fdesc[fd].wxflag = WX_OPEN | (flag & (WX_DONTINHERIT | WX_APPEND | WX_TEXT));
+
+  fdinfo = msvcrt_get_ioinfo(fd);
+  if(fdinfo == &MSVCRT___badioinfo) {
+    int i;
+
+    MSVCRT___pioinfo[fd/MSVCRT_FD_BLOCK_SIZE] = MSVCRT_calloc(MSVCRT_FD_BLOCK_SIZE, sizeof(ioinfo));
+    if(!MSVCRT___pioinfo[fd/MSVCRT_FD_BLOCK_SIZE]) {
+      WARN(":out of memory!\n");
+      *MSVCRT__errno() = MSVCRT_ENOMEM;
+      return -1;
+    }
+
+    for(i=0; i<MSVCRT_FD_BLOCK_SIZE; i++)
+      MSVCRT___pioinfo[fd/MSVCRT_FD_BLOCK_SIZE][i].handle = INVALID_HANDLE_VALUE;
+
+    fdinfo = msvcrt_get_ioinfo(fd);
+  }
+
+  fdinfo->handle = hand;
+  fdinfo->wxflag = WX_OPEN | (flag & (WX_DONTINHERIT | WX_APPEND | WX_TEXT));
 
   /* locate next free slot */
   if (fd == MSVCRT_fdstart && fd == MSVCRT_fdend)
     MSVCRT_fdstart = MSVCRT_fdend + 1;
   else
     while (MSVCRT_fdstart < MSVCRT_fdend &&
-     MSVCRT_fdesc[MSVCRT_fdstart].handle != INVALID_HANDLE_VALUE)
+      msvcrt_get_ioinfo(MSVCRT_fdstart)->handle != INVALID_HANDLE_VALUE)
       MSVCRT_fdstart++;
   /* update last fd in use */
   if (fd >= MSVCRT_fdend)
@@ -313,6 +363,7 @@ unsigned msvcrt_create_io_inherit_block(WORD *size, BYTE **block)
   int         fd;
   char*       wxflag_ptr;
   HANDLE*     handle_ptr;
+  ioinfo*     fdinfo;
 
   *size = sizeof(unsigned) + (sizeof(char) + sizeof(HANDLE)) * MSVCRT_fdend;
   *block = MSVCRT_calloc(*size, 1);
@@ -328,10 +379,11 @@ unsigned msvcrt_create_io_inherit_block(WORD *size, BYTE **block)
   for (fd = 0; fd < MSVCRT_fdend; fd++)
   {
     /* to be inherited, we need it to be open, and that DONTINHERIT isn't set */
-    if ((MSVCRT_fdesc[fd].wxflag & (WX_OPEN | WX_DONTINHERIT)) == WX_OPEN)
+    fdinfo = msvcrt_get_ioinfo(fd);
+    if ((fdinfo->wxflag & (WX_OPEN | WX_DONTINHERIT)) == WX_OPEN)
     {
-      *wxflag_ptr = MSVCRT_fdesc[fd].wxflag;
-      *handle_ptr = MSVCRT_fdesc[fd].handle;
+      *wxflag_ptr = fdinfo->wxflag;
+      *handle_ptr = fdinfo->handle;
     }
     else
     {
@@ -350,6 +402,7 @@ void msvcrt_init_io(void)
 {
   STARTUPINFOA  si;
   int           i;
+  ioinfo        *fdinfo;
 
   InitializeCriticalSection(&MSVCRT_file_cs);
   MSVCRT_file_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": MSVCRT_file_cs");
@@ -365,53 +418,54 @@ void msvcrt_init_io(void)
     handle_ptr = (HANDLE*)(wxflag_ptr + count);
 
     count = min(count, (si.cbReserved2 - sizeof(unsigned)) / (sizeof(HANDLE) + 1));
-    count = min(count, sizeof(MSVCRT_fdesc) / sizeof(MSVCRT_fdesc[0]));
+    count = min(count, MSVCRT_MAX_FILES);
     for (i = 0; i < count; i++)
     {
       if ((*wxflag_ptr & WX_OPEN) && *handle_ptr != INVALID_HANDLE_VALUE)
-      {
-        MSVCRT_fdesc[i].wxflag  = *wxflag_ptr;
-        MSVCRT_fdesc[i].handle = *handle_ptr;
-      }
-      else
-      {
-        MSVCRT_fdesc[i].wxflag  = 0;
-        MSVCRT_fdesc[i].handle = INVALID_HANDLE_VALUE;
-      }
+        msvcrt_alloc_fd_from(*handle_ptr, *wxflag_ptr, i);
+
       wxflag_ptr++; handle_ptr++;
     }
     MSVCRT_fdend = max( 3, count );
     for (MSVCRT_fdstart = 3; MSVCRT_fdstart < MSVCRT_fdend; MSVCRT_fdstart++)
-        if (MSVCRT_fdesc[MSVCRT_fdstart].handle == INVALID_HANDLE_VALUE) break;
+        if (msvcrt_get_ioinfo(MSVCRT_fdstart)->handle == INVALID_HANDLE_VALUE) break;
   }
 
-  if (!(MSVCRT_fdesc[0].wxflag & WX_OPEN) || MSVCRT_fdesc[0].handle == INVALID_HANDLE_VALUE)
+  if(!MSVCRT___pioinfo[0])
+      msvcrt_alloc_fd_from(INVALID_HANDLE_VALUE, 0, 3);
+
+  fdinfo = msvcrt_get_ioinfo(0);
+  if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE)
   {
       HANDLE std = GetStdHandle(STD_INPUT_HANDLE);
       if (std != INVALID_HANDLE_VALUE && DuplicateHandle(GetCurrentProcess(), std,
-                                                         GetCurrentProcess(), &MSVCRT_fdesc[0].handle,
+                                                         GetCurrentProcess(), &fdinfo->handle,
                                                          0, TRUE, DUPLICATE_SAME_ACCESS))
-          MSVCRT_fdesc[0].wxflag = WX_OPEN | WX_TEXT;
+          fdinfo->wxflag = WX_OPEN | WX_TEXT;
   }
-  if (!(MSVCRT_fdesc[1].wxflag & WX_OPEN) || MSVCRT_fdesc[1].handle == INVALID_HANDLE_VALUE)
+
+  fdinfo = msvcrt_get_ioinfo(1);
+  if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE)
   {
       HANDLE std = GetStdHandle(STD_OUTPUT_HANDLE);
       if (std != INVALID_HANDLE_VALUE && DuplicateHandle(GetCurrentProcess(), std,
-                                                         GetCurrentProcess(), &MSVCRT_fdesc[1].handle,
+                                                         GetCurrentProcess(), &fdinfo->handle,
                                                          0, TRUE, DUPLICATE_SAME_ACCESS))
-          MSVCRT_fdesc[1].wxflag = WX_OPEN | WX_TEXT;
+          fdinfo->wxflag = WX_OPEN | WX_TEXT;
   }
-  if (!(MSVCRT_fdesc[2].wxflag & WX_OPEN) || MSVCRT_fdesc[2].handle == INVALID_HANDLE_VALUE)
+
+  fdinfo = msvcrt_get_ioinfo(2);
+  if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE)
   {
       HANDLE std = GetStdHandle(STD_ERROR_HANDLE);
       if (std != INVALID_HANDLE_VALUE && DuplicateHandle(GetCurrentProcess(), std,
-                                                         GetCurrentProcess(), &MSVCRT_fdesc[2].handle,
+                                                         GetCurrentProcess(), &fdinfo->handle,
                                                          0, TRUE, DUPLICATE_SAME_ACCESS))
-          MSVCRT_fdesc[2].wxflag = WX_OPEN | WX_TEXT;
+          fdinfo->wxflag = WX_OPEN | WX_TEXT;
   }
 
-  TRACE(":handles (%p)(%p)(%p)\n",MSVCRT_fdesc[0].handle,
-	MSVCRT_fdesc[1].handle,MSVCRT_fdesc[2].handle);
+  TRACE(":handles (%p)(%p)(%p)\n", msvcrt_get_ioinfo(0)->handle,
+	msvcrt_get_ioinfo(1)->handle, msvcrt_get_ioinfo(2)->handle);
 
   memset(MSVCRT__iob,0,3*sizeof(MSVCRT_FILE));
   for (i = 0; i < 3; i++)
@@ -771,10 +825,10 @@ int CDECL MSVCRT__dup2(int od, int nd)
   {
     HANDLE handle;
 
-    if (DuplicateHandle(GetCurrentProcess(), MSVCRT_fdesc[od].handle,
+    if (DuplicateHandle(GetCurrentProcess(), msvcrt_get_ioinfo(od)->handle,
      GetCurrentProcess(), &handle, 0, TRUE, DUPLICATE_SAME_ACCESS))
     {
-      int wxflag = MSVCRT_fdesc[od].wxflag & ~MSVCRT__O_NOINHERIT;
+      int wxflag = msvcrt_get_ioinfo(od)->wxflag & ~MSVCRT__O_NOINHERIT;
 
       if (msvcrt_is_valid_fd(nd))
         MSVCRT__close(nd);
@@ -836,7 +890,7 @@ int CDECL _eof(int fd)
   if (hand == INVALID_HANDLE_VALUE)
     return -1;
 
-  if (MSVCRT_fdesc[fd].wxflag & WX_ATEOF) return TRUE;
+  if (msvcrt_get_ioinfo(fd)->wxflag & WX_ATEOF) return TRUE;
 
   /* Otherwise we do it the hard way */
   hcurpos = hendpos = 0;
@@ -874,6 +928,8 @@ int CDECL MSVCRT__fcloseall(void)
 /* free everything on process exit */
 void msvcrt_free_io(void)
 {
+    int i;
+
     MSVCRT__fcloseall();
     /* The Win32 _fcloseall() function explicitly doesn't close stdin,
      * stdout, and stderr (unlike GNU), so we need to fclose() them here
@@ -882,6 +938,10 @@ void msvcrt_free_io(void)
     MSVCRT_fclose(&MSVCRT__iob[0]);
     MSVCRT_fclose(&MSVCRT__iob[1]);
     MSVCRT_fclose(&MSVCRT__iob[2]);
+
+    for(i=0; i<sizeof(MSVCRT___pioinfo)/sizeof(MSVCRT___pioinfo[0]); i++)
+        MSVCRT_free(MSVCRT___pioinfo[i]);
+
     MSVCRT_file_cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&MSVCRT_file_cs);
 }
@@ -916,7 +976,7 @@ __int64 CDECL MSVCRT__lseeki64(int fd, __int64 offset, int whence)
   if ((ofs.u.LowPart = SetFilePointer(hand, ofs.u.LowPart, &ofs.u.HighPart, whence)) != INVALID_SET_FILE_POINTER ||
       GetLastError() == ERROR_SUCCESS)
   {
-    MSVCRT_fdesc[fd].wxflag &= ~(WX_ATEOF|WX_READEOF);
+    msvcrt_get_ioinfo(fd)->wxflag &= ~(WX_ATEOF|WX_READEOF);
     /* FIXME: What if we seek _to_ EOF - is EOF set? */
 
     return ofs.QuadPart;
@@ -1015,7 +1075,7 @@ int CDECL MSVCRT__fseeki64(MSVCRT_FILE* file, __int64 offset, int whence)
 
   if(whence == SEEK_CUR && file->_flag & MSVCRT__IOREAD ) {
 	offset -= file->_cnt;
-	if (MSVCRT_fdesc[file->_file].wxflag & WX_TEXT) {
+	if (msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT) {
 		/* Black magic correction for CR removal */
 		int i;
 		for (i=0; i<file->_cnt; i++) {
@@ -1023,7 +1083,7 @@ int CDECL MSVCRT__fseeki64(MSVCRT_FILE* file, __int64 offset, int whence)
 				offset--;
 		}
 		/* Black magic when reading CR at buffer boundary*/
-		if(MSVCRT_fdesc[file->_file].wxflag & WX_READCR)
+		if(msvcrt_get_ioinfo(file->_file)->wxflag & WX_READCR)
 		    offset--;
 	}
   }
@@ -1894,12 +1954,13 @@ static int read_i(int fd, void *buf, unsigned int count)
   DWORD num_read;
   char *bufstart = buf;
   HANDLE hand = msvcrt_fdtoh(fd);
+  ioinfo *fdinfo = msvcrt_get_ioinfo(fd);
 
   if (count == 0)
     return 0;
 
-  if (MSVCRT_fdesc[fd].wxflag & WX_READEOF) {
-     MSVCRT_fdesc[fd].wxflag |= WX_ATEOF;
+  if (fdinfo->wxflag & WX_READEOF) {
+     fdinfo->wxflag |= WX_ATEOF;
      TRACE("already at EOF, returning 0\n");
      return 0;
   }
@@ -1916,33 +1977,33 @@ static int read_i(int fd, void *buf, unsigned int count)
     {
         if (count != 0 && num_read == 0)
         {
-            MSVCRT_fdesc[fd].wxflag |= (WX_ATEOF|WX_READEOF);
+            fdinfo->wxflag |= (WX_ATEOF|WX_READEOF);
             TRACE(":EOF %s\n",debugstr_an(buf,num_read));
         }
-        else if (MSVCRT_fdesc[fd].wxflag & WX_TEXT)
+        else if (fdinfo->wxflag & WX_TEXT)
         {
             DWORD i, j;
             if (bufstart[num_read-1] == '\r')
             {
                 if(count == 1)
                 {
-                    MSVCRT_fdesc[fd].wxflag  &=  ~WX_READCR;
+                    fdinfo->wxflag  &=  ~WX_READCR;
                     ReadFile(hand, bufstart, 1, &num_read, NULL);
                 }
                 else
                 {
-                    MSVCRT_fdesc[fd].wxflag  |= WX_READCR;
+                    fdinfo->wxflag  |= WX_READCR;
                     num_read--;
                 }
             }
 	    else
-	      MSVCRT_fdesc[fd].wxflag  &=  ~WX_READCR;
+	      fdinfo->wxflag  &=  ~WX_READCR;
             for (i=0, j=0; i<num_read; i++)
             {
                 /* in text mode, a ctrl-z signals EOF */
                 if (bufstart[i] == 0x1a)
                 {
-                    MSVCRT_fdesc[fd].wxflag |= (WX_ATEOF|WX_READEOF);
+                    fdinfo->wxflag |= (WX_ATEOF|WX_READEOF);
                     TRACE(":^Z EOF %s\n",debugstr_an(buf,num_read));
                     break;
                 }
@@ -1962,7 +2023,7 @@ static int read_i(int fd, void *buf, unsigned int count)
         if (GetLastError() == ERROR_BROKEN_PIPE)
         {
             TRACE(":end-of-pipe\n");
-            MSVCRT_fdesc[fd].wxflag |= (WX_ATEOF|WX_READEOF);
+            fdinfo->wxflag |= (WX_ATEOF|WX_READEOF);
             return 0;
         }
         else
@@ -1992,13 +2053,13 @@ int CDECL MSVCRT__read(int fd, void *buf, unsigned int count)
  */
 int CDECL _setmode(int fd,int mode)
 {
-  int ret = MSVCRT_fdesc[fd].wxflag & WX_TEXT ? MSVCRT__O_TEXT : MSVCRT__O_BINARY;
+  int ret = msvcrt_get_ioinfo(fd)->wxflag & WX_TEXT ? MSVCRT__O_TEXT : MSVCRT__O_BINARY;
   if (mode & (~(MSVCRT__O_TEXT|MSVCRT__O_BINARY)))
     FIXME("fd (%d) mode (0x%08x) unknown\n",fd,mode);
   if ((mode & MSVCRT__O_TEXT) == MSVCRT__O_TEXT)
-    MSVCRT_fdesc[fd].wxflag |= WX_TEXT;
+    msvcrt_get_ioinfo(fd)->wxflag |= WX_TEXT;
   else
-    MSVCRT_fdesc[fd].wxflag &= ~WX_TEXT;
+    msvcrt_get_ioinfo(fd)->wxflag &= ~WX_TEXT;
   return ret;
 }
 
@@ -2354,10 +2415,10 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
     }
 
   /* If appending, go to EOF */
-  if (MSVCRT_fdesc[fd].wxflag & WX_APPEND)
+  if (msvcrt_get_ioinfo(fd)->wxflag & WX_APPEND)
     MSVCRT__lseek(fd, 0, FILE_END);
 
-  if (!(MSVCRT_fdesc[fd].wxflag & WX_TEXT))
+  if (!(msvcrt_get_ioinfo(fd)->wxflag & WX_TEXT))
     {
       if (WriteFile(hand, buf, count, &num_written, NULL)
 	  &&  (num_written == count))
@@ -2574,7 +2635,7 @@ MSVCRT_wint_t CDECL MSVCRT_fgetwc(MSVCRT_FILE* file)
 {
   int c;
 
-  if (!(MSVCRT_fdesc[file->_file].wxflag & WX_TEXT))
+  if (!(msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT))
     {
       MSVCRT_wchar_t wc;
       unsigned int i;
@@ -2964,7 +3025,7 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
       i = (file->_cnt<rcnt) ? file->_cnt : rcnt;
       /* If the buffer fill reaches eof but fread wouldn't, clear eof. */
       if (i > 0 && i < file->_cnt) {
-        MSVCRT_fdesc[file->_file].wxflag &= ~WX_ATEOF;
+        msvcrt_get_ioinfo(file->_file)->wxflag &= ~WX_ATEOF;
         file->_flag &= ~MSVCRT__IOEOF;
       }
       if (i > 0) {
@@ -2981,7 +3042,7 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
     /* expose feof condition in the flags
      * MFC tests file->_flag for feof, and doesn't call feof())
      */
-    if ( MSVCRT_fdesc[file->_file].wxflag & WX_ATEOF)
+    if (msvcrt_get_ioinfo(file->_file)->wxflag & WX_ATEOF)
         file->_flag |= MSVCRT__IOEOF;
     else if (i == -1)
     {
@@ -3081,31 +3142,30 @@ int CDECL MSVCRT_fsetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
  */
 __int64 CDECL MSVCRT__ftelli64(MSVCRT_FILE* file)
 {
-  /* TODO: just call fgetpos and return lower half of result */
-  int off=0;
-  __int64 pos;
-  pos = _telli64(file->_file);
-  if(pos == -1) return -1;
-  if(file->_bufsiz)  {
-	if( file->_flag & MSVCRT__IOWRT ) {
-		off = file->_ptr - file->_base;
-	} else {
-		off = -file->_cnt;
-		if (MSVCRT_fdesc[file->_file].wxflag & WX_TEXT) {
-			/* Black magic correction for CR removal */
-			int i;
-			for (i=0; i<file->_cnt; i++) {
-				if (file->_ptr[i] == '\n')
-					off--;
-			}
-			/* Black magic when reading CR at buffer boundary*/
-			if(MSVCRT_fdesc[file->_file].wxflag & WX_READCR)
-			  off--;
-
-		}
-	}
-  }
-  return off + pos;
+    /* TODO: just call fgetpos and return lower half of result */
+    int off=0;
+    __int64 pos;
+    pos = _telli64(file->_file);
+    if(pos == -1) return -1;
+    if(file->_bufsiz)  {
+        if( file->_flag & MSVCRT__IOWRT ) {
+            off = file->_ptr - file->_base;
+        } else {
+            off = -file->_cnt;
+            if (msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT) {
+                /* Black magic correction for CR removal */
+                int i;
+                for (i=0; i<file->_cnt; i++) {
+                    if (file->_ptr[i] == '\n')
+                        off--;
+                }
+                /* Black magic when reading CR at buffer boundary*/
+                if(msvcrt_get_ioinfo(file->_file)->wxflag & WX_READCR)
+                    off--;
+            }
+        }
+    }
+    return off + pos;
 }
 
 /*********************************************************************
@@ -3121,29 +3181,29 @@ LONG CDECL MSVCRT_ftell(MSVCRT_FILE* file)
  */
 int CDECL MSVCRT_fgetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
 {
-  int off=0;
-  *pos = MSVCRT__lseeki64(file->_file,0,SEEK_CUR);
-  if(*pos == -1) return -1;
-  if(file->_bufsiz)  {
-	if( file->_flag & MSVCRT__IOWRT ) {
-		off = file->_ptr - file->_base;
-	} else {
-		off = -file->_cnt;
-		if (MSVCRT_fdesc[file->_file].wxflag & WX_TEXT) {
-			/* Black magic correction for CR removal */
-			int i;
-			for (i=0; i<file->_cnt; i++) {
-				if (file->_ptr[i] == '\n')
-					off--;
-			}
-		        /* Black magic when reading CR at buffer boundary*/
-			if(MSVCRT_fdesc[file->_file].wxflag & WX_READCR)
-			  off--;
-		}
-	}
-  }
-  *pos += off;
-  return 0;
+    int off=0;
+    *pos = MSVCRT__lseeki64(file->_file,0,SEEK_CUR);
+    if(*pos == -1) return -1;
+    if(file->_bufsiz)  {
+        if( file->_flag & MSVCRT__IOWRT ) {
+            off = file->_ptr - file->_base;
+        } else {
+            off = -file->_cnt;
+            if (msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT) {
+                /* Black magic correction for CR removal */
+                int i;
+                for (i=0; i<file->_cnt; i++) {
+                    if (file->_ptr[i] == '\n')
+                        off--;
+                }
+                /* Black magic when reading CR at buffer boundary*/
+                if(msvcrt_get_ioinfo(file->_file)->wxflag & WX_READCR)
+                    off--;
+            }
+        }
+    }
+    *pos += off;
+    return 0;
 }
 
 /*********************************************************************
@@ -3152,7 +3212,7 @@ int CDECL MSVCRT_fgetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
 int CDECL MSVCRT_fputs(const char *s, MSVCRT_FILE* file)
 {
     MSVCRT_size_t i, len = strlen(s);
-    if (!(MSVCRT_fdesc[file->_file].wxflag & WX_TEXT))
+    if (!(msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT))
       return MSVCRT_fwrite(s,sizeof(*s),len,file) == len ? 0 : MSVCRT_EOF;
     for (i=0; i<len; i++)
       if (MSVCRT_fputc(s[i], file) == MSVCRT_EOF) 
@@ -3166,7 +3226,7 @@ int CDECL MSVCRT_fputs(const char *s, MSVCRT_FILE* file)
 int CDECL MSVCRT_fputws(const MSVCRT_wchar_t *s, MSVCRT_FILE* file)
 {
     MSVCRT_size_t i, len = strlenW(s);
-    if (!(MSVCRT_fdesc[file->_file].wxflag & WX_TEXT))
+    if (!(msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT))
       return MSVCRT_fwrite(s,sizeof(*s),len,file) == len ? 0 : MSVCRT_EOF;
     for (i=0; i<len; i++)
       {
@@ -3677,26 +3737,3 @@ int CDECL _setmaxstdio(int newmax)
     FIXME("stub: setting new maximum for number of simultaneously open files not implemented,returning %d\n",res);
     return res;
 }
-
-/*********************************************************************
- *		__pioinfo (MSVCRT.@)
- * FIXME: see MSVCRT_MAX_FILES define.
- */
-ioinfo * MSVCRT___pioinfo[] = { /* array of pointers to ioinfo arrays [64] */
-    &MSVCRT_fdesc[0 * 64], &MSVCRT_fdesc[1 * 64], &MSVCRT_fdesc[2 * 64],
-    &MSVCRT_fdesc[3 * 64], &MSVCRT_fdesc[4 * 64], &MSVCRT_fdesc[5 * 64],
-    &MSVCRT_fdesc[6 * 64], &MSVCRT_fdesc[7 * 64], &MSVCRT_fdesc[8 * 64],
-    &MSVCRT_fdesc[9 * 64], &MSVCRT_fdesc[10 * 64], &MSVCRT_fdesc[11 * 64],
-    &MSVCRT_fdesc[12 * 64], &MSVCRT_fdesc[13 * 64], &MSVCRT_fdesc[14 * 64],
-    &MSVCRT_fdesc[15 * 64], &MSVCRT_fdesc[16 * 64], &MSVCRT_fdesc[17 * 64],
-    &MSVCRT_fdesc[18 * 64], &MSVCRT_fdesc[19 * 64], &MSVCRT_fdesc[20 * 64],
-    &MSVCRT_fdesc[21 * 64], &MSVCRT_fdesc[22 * 64], &MSVCRT_fdesc[23 * 64],
-    &MSVCRT_fdesc[24 * 64], &MSVCRT_fdesc[25 * 64], &MSVCRT_fdesc[26 * 64],
-    &MSVCRT_fdesc[27 * 64], &MSVCRT_fdesc[28 * 64], &MSVCRT_fdesc[29 * 64],
-    &MSVCRT_fdesc[30 * 64], &MSVCRT_fdesc[31 * 64]
-} ;
-
-/*********************************************************************
- *		__badioinfo (MSVCRT.@)
- */
-ioinfo MSVCRT___badioinfo = { INVALID_HANDLE_VALUE, WX_TEXT };
