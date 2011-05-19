@@ -253,7 +253,7 @@ static HRESULT WINAPI corruntimehost_Start(
     ICorRuntimeHost* iface)
 {
     FIXME("stub %p\n", iface);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI corruntimehost_Stop(
