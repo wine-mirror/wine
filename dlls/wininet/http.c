@@ -720,26 +720,35 @@ static void HTTP_ProcessCookies( http_request_t *request )
     int numCookies = 0;
     LPHTTPHEADERW setCookieHeader;
 
-    while((HeaderIndex = HTTP_GetCustomHeaderIndex(request, szSet_Cookie, numCookies, FALSE)) != -1)
+    if(request->hdr.dwFlags & INTERNET_FLAG_NO_COOKIES)
+        return;
+
+    while((HeaderIndex = HTTP_GetCustomHeaderIndex(request, szSet_Cookie, numCookies++, FALSE)) != -1)
     {
+        HTTPHEADERW *host;
+        const WCHAR *data;
+        WCHAR *name;
+
         setCookieHeader = &request->custHeaders[HeaderIndex];
 
-        if (!(request->hdr.dwFlags & INTERNET_FLAG_NO_COOKIES) && setCookieHeader->lpszValue)
-        {
-            int len;
-            static const WCHAR szFmt[] = { 'h','t','t','p',':','/','/','%','s','%','s',0};
-            LPWSTR buf_url;
-            LPHTTPHEADERW Host;
+        if (!setCookieHeader->lpszValue)
+            continue;
 
-            Host = HTTP_GetHeader(request, hostW);
-            len = lstrlenW(Host->lpszValue) + 9 + lstrlenW(request->path);
-            buf_url = heap_alloc(len*sizeof(WCHAR));
-            sprintfW(buf_url, szFmt, Host->lpszValue, request->path);
-            InternetSetCookieW(buf_url, NULL, setCookieHeader->lpszValue);
+        host = HTTP_GetHeader(request, hostW);
+        if(!host)
+            continue;
 
-            HeapFree(GetProcessHeap(), 0, buf_url);
-        }
-        numCookies++;
+        data = strchrW(setCookieHeader->lpszValue, '=');
+        if(!data)
+            continue;
+
+        name = heap_strndupW(setCookieHeader->lpszValue, data-setCookieHeader->lpszValue);
+        if(!name)
+            continue;
+
+        data++;
+        set_cookie(host->lpszValue, request->path, name, data);
+        heap_free(name);
     }
 }
 
