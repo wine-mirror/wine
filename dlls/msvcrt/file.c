@@ -380,6 +380,9 @@ static int msvcrt_init_fp(MSVCRT_FILE* file, int fd, unsigned stream_flags)
   file->_file = fd;
   file->_flag = stream_flags;
 
+  if(file<MSVCRT__iob || file>=MSVCRT__iob+_IOB_ENTRIES)
+      InitializeCriticalSection(&((file_crit*)file)->crit);
+
   TRACE(":got FILE* (%p)\n",file);
   return 0;
 }
@@ -1034,7 +1037,10 @@ LONG CDECL MSVCRT__lseek(int fd, LONG offset, int whence)
  */
 void CDECL MSVCRT__lock_file(MSVCRT_FILE *file)
 {
-    FIXME("(%p) stub\n",file);
+    if(file>=MSVCRT__iob && file<MSVCRT__iob+_IOB_ENTRIES)
+        _lock(_STREAM_LOCKS+(file-MSVCRT__iob));
+    else
+        EnterCriticalSection(&((file_crit*)file)->crit);
 }
 
 /*********************************************************************
@@ -1042,7 +1048,10 @@ void CDECL MSVCRT__lock_file(MSVCRT_FILE *file)
  */
 void CDECL MSVCRT__unlock_file(MSVCRT_FILE *file)
 {
-    FIXME("(%p) stub\n",file);
+    if(file>=MSVCRT__iob && file<MSVCRT__iob+_IOB_ENTRIES)
+        _unlock(_STREAM_LOCKS+(file-MSVCRT__iob));
+    else
+        LeaveCriticalSection(&((file_crit*)file)->crit);
 }
 
 /*********************************************************************
@@ -2555,6 +2564,8 @@ int CDECL MSVCRT_fclose(MSVCRT_FILE* file)
   r=MSVCRT__close(file->_file);
 
   file->_flag = 0;
+  if(file<MSVCRT__iob || file>=MSVCRT__iob+_IOB_ENTRIES)
+      DeleteCriticalSection(&((file_crit*)file)->crit);
 
   if(file == msvcrt_get_file(MSVCRT_stream_idx-1)) {
     while(MSVCRT_stream_idx>3 && !file->_flag) {
