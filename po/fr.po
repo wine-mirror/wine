@@ -8834,9 +8834,8 @@ msgid "&View TypeLib..."
 msgstr "&Afficher une TypeLib..."
 
 #: oleview.rc:32
-#, fuzzy
 msgid "&System Configuration"
-msgstr "&Configuration système..."
+msgstr "&Configuration système"
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
@@ -9128,7 +9127,6 @@ msgid "&Copy...\tF8"
 msgstr "C&opier...\tF8"
 
 #: progman.rc:35
-#, fuzzy
 msgid "&Properties\tAlt+Enter"
 msgstr "&Propriétés\tAlt+Entrée"
 
@@ -9137,7 +9135,6 @@ msgid "&Execute..."
 msgstr "E&xécuter..."
 
 #: progman.rc:39
-#, fuzzy
 msgid "E&xit Windows"
 msgstr "&Quitter Windows..."
 
