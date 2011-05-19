@@ -135,7 +135,7 @@ extern int MSVCRT___lc_codepage;
 extern int MSVCRT___lc_collate_cp;
 extern int MSVCRT___mb_cur_max;
 extern WORD MSVCRT__ctype [257];
-extern WORD* MSVCRT__pctype;
+extern unsigned short *MSVCRT__pctype;
 
 void   msvcrt_set_errno(int);
 
