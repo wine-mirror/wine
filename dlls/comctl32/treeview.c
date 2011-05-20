@@ -2621,6 +2621,8 @@ TREEVIEW_DrawItem(const TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *item)
 	if (item->pszText)
 	{
 	    RECT rcText;
+	    UINT align;
+	    SIZE sz;
 
 	    rcText.top = item->rect.top;
 	    rcText.bottom = item->rect.bottom;
@@ -2631,19 +2633,22 @@ TREEVIEW_DrawItem(const TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *item)
                   debugstr_w(item->pszText), wine_dbgstr_rect(&rcText));
 
 	    /* Draw it */
-	    ExtTextOutW(hdc, rcText.left + 2, rcText.top + 1,
+	    GetTextExtentPoint32W(hdc, item->pszText, strlenW(item->pszText), &sz);
+
+	    align = SetTextAlign(hdc, TA_LEFT | TA_TOP);
+	    ExtTextOutW(hdc, rcText.left + 2, (rcText.top + rcText.bottom - sz.cy) / 2,
 		        ETO_CLIPPED | ETO_OPAQUE,
 			&rcText,
 		        item->pszText,
 		        lstrlenW(item->pszText),
 			NULL);
-			
-	    /* Draw the box around the selected item */
+	    SetTextAlign(hdc, align);
+
+	    /* Draw focus box around the selected item */
 	    if ((item == infoPtr->selectedItem) && inFocus)
 	    {
 		DrawFocusRect(hdc,&rcText);
 	    }
-
 	}
     }
 
