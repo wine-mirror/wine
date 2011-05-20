@@ -2453,7 +2453,8 @@ TREEVIEW_DrawItemLines(const TREEVIEW_INFO *infoPtr, HDC hdc, const TREEVIEW_ITE
                     MoveToEx(hdc, centerx - plussize + 1, centery, NULL);
                     LineTo(hdc, centerx + plussize, centery);
     
-                    if (!(item->state & TVIS_EXPANDED))
+                    if (!(item->state & TVIS_EXPANDED) ||
+                         (item->state & TVIS_EXPANDPARTIAL))
                     {
                         MoveToEx(hdc, centerx, centery - plussize + 1, NULL);
                         LineTo(hdc, centerx, centery + plussize);
@@ -2463,8 +2464,9 @@ TREEVIEW_DrawItemLines(const TREEVIEW_INFO *infoPtr, HDC hdc, const TREEVIEW_ITE
                 {
                     Rectangle(hdc, centerx - plussize + 1, centery - 1,
                     centerx + plussize, centery + 2);
-    
-                    if (!(item->state & TVIS_EXPANDED))
+
+                    if (!(item->state & TVIS_EXPANDED) ||
+                         (item->state & TVIS_EXPANDPARTIAL))
                     {
                         Rectangle(hdc, centerx - 1, centery - plussize + 1,
                         centerx + 2, centery + plussize);
