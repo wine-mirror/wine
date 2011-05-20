@@ -2557,6 +2557,7 @@ int CDECL MSVCRT_fclose(MSVCRT_FILE* file)
 {
   int r, flag;
 
+  MSVCRT__lock_file(file);
   flag = file->_flag;
   MSVCRT_free(file->_tmpfname);
   file->_tmpfname = NULL;
@@ -2569,6 +2570,7 @@ int CDECL MSVCRT_fclose(MSVCRT_FILE* file)
   r=MSVCRT__close(file->_file);
 
   file->_flag = 0;
+  MSVCRT__unlock_file(file);
   if(file<MSVCRT__iob || file>=MSVCRT__iob+_IOB_ENTRIES)
       DeleteCriticalSection(&((file_crit*)file)->crit);
 
