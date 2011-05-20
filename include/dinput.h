@@ -2159,6 +2159,37 @@ extern const DIDATAFORMAT c_dfDIJoystick2;
 };
 #endif
 
+#define DIAXIS_ANY_X_1             0xFF00C201
+#define DIAXIS_ANY_X_2             0xFF00C202
+#define DIAXIS_ANY_Y_1             0xFF014201
+#define DIAXIS_ANY_Y_2             0xFF014202
+#define DIAXIS_ANY_Z_1             0xFF01C201
+#define DIAXIS_ANY_Z_2             0xFF01C202
+#define DIAXIS_ANY_R_1             0xFF024201
+#define DIAXIS_ANY_R_2             0xFF024202
+#define DIAXIS_ANY_U_1             0xFF02C201
+#define DIAXIS_ANY_U_2             0xFF02C202
+#define DIAXIS_ANY_V_1             0xFF034201
+#define DIAXIS_ANY_V_2             0xFF034202
+#define DIAXIS_ANY_A_1             0xFF03C201
+#define DIAXIS_ANY_A_2             0xFF03C202
+#define DIAXIS_ANY_B_1             0xFF044201
+#define DIAXIS_ANY_B_2             0xFF044202
+#define DIAXIS_ANY_C_1             0xFF04C201
+#define DIAXIS_ANY_C_2             0xFF04C202
+#define DIAXIS_ANY_S_1             0xFF054201
+#define DIAXIS_ANY_S_2             0xFF054202
+#define DIAXIS_ANY_1               0xFF004201
+#define DIAXIS_ANY_2               0xFF004202
+#define DIAXIS_ANY_3               0xFF004203
+#define DIAXIS_ANY_4               0xFF004204
+#define DIPOV_ANY_1                0xFF004601
+#define DIPOV_ANY_2                0xFF004602
+#define DIPOV_ANY_3                0xFF004603
+#define DIPOV_ANY_4                0xFF004604
+#define DIBUTTON_ANY(instance)     (0xFF004400 | (instance))
+
+
 /*****************************************************************************
  * IDirectInputA interface
  */
