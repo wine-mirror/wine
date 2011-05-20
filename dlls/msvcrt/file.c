@@ -774,13 +774,18 @@ int CDECL _flushall(void)
  */
 int CDECL MSVCRT_fflush(MSVCRT_FILE* file)
 {
-  if(!file) {
-	_flushall();
-  } else if(file->_flag & MSVCRT__IOWRT) {
-  	int res=msvcrt_flush_buffer(file);
-  	return res;
-  }
-  return 0;
+    if(!file) {
+        _flushall();
+    } else if(file->_flag & MSVCRT__IOWRT) {
+        int res;
+
+        MSVCRT__lock_file(file);
+        res = msvcrt_flush_buffer(file);
+        MSVCRT__unlock_file(file);
+
+        return res;
+    }
+    return 0;
 }
 
 /*********************************************************************
