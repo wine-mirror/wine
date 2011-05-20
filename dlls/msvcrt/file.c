@@ -1198,7 +1198,10 @@ int CDECL MSVCRT__chsize(int fd, MSVCRT_long size)
 void CDECL MSVCRT_clearerr(MSVCRT_FILE* file)
 {
   TRACE(":file (%p) fd (%d)\n",file,file->_file);
+
+  MSVCRT__lock_file(file);
   file->_flag &= ~(MSVCRT__IOERR | MSVCRT__IOEOF);
+  MSVCRT__unlock_file(file);
 }
 
 /*********************************************************************
@@ -1338,8 +1341,15 @@ __int64 CDECL MSVCRT__filelengthi64(int fd)
  */
 int CDECL MSVCRT__fileno(MSVCRT_FILE* file)
 {
+  int ret;
+
   TRACE(":FILE* (%p) fd (%d)\n",file,file->_file);
-  return file->_file;
+
+  MSVCRT__lock_file(file);
+  ret = file->_file;
+  MSVCRT__unlock_file(file);
+
+  return ret;
 }
 
 /*********************************************************************
@@ -2589,7 +2599,13 @@ int CDECL MSVCRT_fclose(MSVCRT_FILE* file)
  */
 int CDECL MSVCRT_feof(MSVCRT_FILE* file)
 {
-  return file->_flag & MSVCRT__IOEOF;
+    int ret;
+
+    MSVCRT__lock_file(file);
+    ret = file->_flag & MSVCRT__IOEOF;
+    MSVCRT__unlock_file(file);
+
+    return ret;
 }
 
 /*********************************************************************
@@ -2597,7 +2613,13 @@ int CDECL MSVCRT_feof(MSVCRT_FILE* file)
  */
 int CDECL MSVCRT_ferror(MSVCRT_FILE* file)
 {
-  return file->_flag & MSVCRT__IOERR;
+    int ret;
+
+    MSVCRT__lock_file(file);
+    ret = file->_flag & MSVCRT__IOERR;
+    MSVCRT__unlock_file(file);
+
+    return ret;
 }
 
 /*********************************************************************
