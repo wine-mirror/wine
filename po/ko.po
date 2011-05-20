@@ -6820,13 +6820,12 @@ msgid "&About Wine"
 msgstr "WINE 정보(&A)"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl-F4"
-msgstr "닫기(&C)\tAlt-F4"
+msgstr "닫기(&C)\tCtrl-F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl-F6"
-msgstr ""
+msgstr "다음(&T)\tCtrl-F6"
 
 #: user32.rc:68 regedit.rc:176 winefile.rc:100
 msgid "Error"
@@ -8737,9 +8736,8 @@ msgid "&View TypeLib..."
 msgstr "타입 라이브러리 보기(&V)..."
 
 #: oleview.rc:32
-#, fuzzy
 msgid "&System Configuration"
-msgstr "시스템 설정(&S)..."
+msgstr "시스템 설정(&S)"
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
@@ -9023,18 +9021,16 @@ msgid "&Copy...\tF8"
 msgstr "복사(&C)...\tF8"
 
 #: progman.rc:35
-#, fuzzy
 msgid "&Properties\tAlt+Enter"
-msgstr "속성(&I)\tAlt+Enter"
+msgstr "속성(&P)\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
 msgstr "실행(&E)..."
 
 #: progman.rc:39
-#, fuzzy
 msgid "E&xit Windows"
-msgstr "창 종료(&X)..."
+msgstr "창 종료(&X)"
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
