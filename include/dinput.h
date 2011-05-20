@@ -2131,6 +2131,22 @@ typedef struct DIMOUSESTATE2 {
 #define DIMOFS_BUTTON6 (FIELD_OFFSET(DIMOUSESTATE2, rgbButtons) + 6)
 #define DIMOFS_BUTTON7 (FIELD_OFFSET(DIMOUSESTATE2, rgbButtons) + 7)
 
+/* New DirectInput8 mouse definitions */
+
+#define DIMOUSE_XAXISAB            (0x82000200 | DIMOFS_X)
+#define DIMOUSE_YAXISAB            (0x82000200 | DIMOFS_Y)
+#define DIMOUSE_XAXIS              (0x82000300 | DIMOFS_X)
+#define DIMOUSE_YAXIS              (0x82000300 | DIMOFS_Y)
+#define DIMOUSE_WHEEL              (0x82000300 | DIMOFS_Z)
+#define DIMOUSE_BUTTON0            (0x82000400 | DIMOFS_BUTTON0)
+#define DIMOUSE_BUTTON1            (0x82000400 | DIMOFS_BUTTON1)
+#define DIMOUSE_BUTTON2            (0x82000400 | DIMOFS_BUTTON2)
+#define DIMOUSE_BUTTON3            (0x82000400 | DIMOFS_BUTTON3)
+#define DIMOUSE_BUTTON4            (0x82000400 | DIMOFS_BUTTON4)
+#define DIMOUSE_BUTTON5            (0x82000400 | DIMOFS_BUTTON5)
+#define DIMOUSE_BUTTON6            (0x82000400 | DIMOFS_BUTTON6)
+#define DIMOUSE_BUTTON7            (0x82000400 | DIMOFS_BUTTON7)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
