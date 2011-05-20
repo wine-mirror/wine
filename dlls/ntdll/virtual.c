@@ -1054,7 +1054,7 @@ static NTSTATUS check_architecture( const IMAGE_NT_HEADERS *nt )
             WARN( "loading 32-bit dll in 64-bit mode will fail\n" );
         return STATUS_INVALID_IMAGE_FORMAT;
     }
-#elif defined(__ARMEL__)
+#elif defined(__arm__) && !defined(__ARMEB__)
     if (nt->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM ||
         nt->FileHeader.Machine == IMAGE_FILE_MACHINE_THUMB)
         return STATUS_SUCCESS;
