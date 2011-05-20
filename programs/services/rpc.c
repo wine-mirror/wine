@@ -888,12 +888,37 @@ static BOOL service_accepts_control(const struct service_entry *service, DWORD d
 }
 
 /******************************************************************************
+ * service_send_command
+ */
+BOOL service_send_command( struct service_entry *service, HANDLE pipe,
+                           const void *data, DWORD size, DWORD *result )
+{
+    DWORD count;
+    BOOL r;
+
+    r = WriteFile(pipe, data, size, &count, NULL);
+    if (!r || count != size)
+    {
+        WINE_ERR("service protocol error - failed to write pipe!\n");
+        return FALSE;
+    }
+    r = ReadFile(pipe, result, sizeof *result, &count, NULL);
+    if (!r || count != sizeof *result)
+    {
+        WINE_ERR("service protocol error - failed to read pipe "
+            "r = %d  count = %d!\n", r, count);
+        return FALSE;
+    }
+    return r;
+}
+
+/******************************************************************************
  * service_send_control
  */
 static BOOL service_send_control(struct service_entry *service, HANDLE pipe, DWORD dwControl, DWORD *result)
 {
     service_start_info *ssi;
-    DWORD len, count = 0;
+    DWORD len;
     BOOL r;
 
     /* calculate how much space we need to send the startup info */
@@ -906,16 +931,8 @@ static BOOL service_send_control(struct service_entry *service, HANDLE pipe, DWO
     ssi->name_size = strlenW(service->name) + 1;
     strcpyW( ssi->data, service->name );
 
-    r = WriteFile(pipe, ssi, ssi->total_size, &count, NULL);
-    if (!r || count != ssi->total_size)
-    {
-        WINE_ERR("service protocol error - failed to write pipe!\n");
-        return r;
-    }
-    r = ReadFile(pipe, result, sizeof *result, &count, NULL);
-    if (!r || count != sizeof *result)
-        WINE_ERR("service protocol error - failed to read pipe "
-            "r = %d  count = %d!\n", r, count);
+    r = service_send_command( service, pipe, ssi, ssi->total_size, result );
+    HeapFree( GetProcessHeap(), 0, ssi );
     return r;
 }
 

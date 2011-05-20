@@ -671,7 +671,7 @@ static DWORD service_wait_for_startup(struct service_entry *service_entry, HANDL
  */
 static BOOL service_send_start_message(struct service_entry *service, LPCWSTR *argv, DWORD argc)
 {
-    DWORD i, len, count, result;
+    DWORD i, len, result;
     service_start_info *ssi;
     LPWSTR p;
     BOOL r;
@@ -708,15 +708,11 @@ static BOOL service_send_start_message(struct service_entry *service, LPCWSTR *a
     }
     *p=0;
 
-    r = WriteFile(service->control_pipe, ssi, ssi->total_size, &count, NULL);
-    if (r)
+    r = service_send_command( service, service->control_pipe, ssi, ssi->total_size, &result );
+    if (r && result)
     {
-        r = ReadFile(service->control_pipe, &result, sizeof result, &count, NULL);
-        if (r && result)
-        {
-            SetLastError(result);
-            r = FALSE;
-        }
+        SetLastError(result);
+        r = FALSE;
     }
 
     HeapFree(GetProcessHeap(),0,ssi);
