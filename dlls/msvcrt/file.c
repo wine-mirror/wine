@@ -3768,20 +3768,25 @@ int CDECL MSVCRT_printf_s(const char *format, ...)
  */
 int CDECL MSVCRT_ungetc(int c, MSVCRT_FILE * file)
 {
-	if (c == MSVCRT_EOF)
-		return MSVCRT_EOF;
-	if(file->_bufsiz == 0) {
-		msvcrt_alloc_buffer(file);
-		file->_ptr++;
-	}
-	if(file->_ptr>file->_base) {
-		file->_ptr--;
-		*file->_ptr=c;
-		file->_cnt++;
-		MSVCRT_clearerr(file);
-		return c;
-	}
-	return MSVCRT_EOF;
+    if (c == MSVCRT_EOF)
+        return MSVCRT_EOF;
+
+    MSVCRT__lock_file(file);
+    if(file->_bufsiz == 0) {
+        msvcrt_alloc_buffer(file);
+        file->_ptr++;
+    }
+    if(file->_ptr>file->_base) {
+        file->_ptr--;
+        *file->_ptr=c;
+        file->_cnt++;
+        MSVCRT_clearerr(file);
+        MSVCRT__unlock_file(file);
+        return c;
+    }
+
+    MSVCRT__unlock_file(file);
+    return MSVCRT_EOF;
 }
 
 /*********************************************************************
@@ -3789,14 +3794,20 @@ int CDECL MSVCRT_ungetc(int c, MSVCRT_FILE * file)
  */
 MSVCRT_wint_t CDECL MSVCRT_ungetwc(MSVCRT_wint_t wc, MSVCRT_FILE * file)
 {
-	MSVCRT_wchar_t mwc = wc;
-	char * pp = (char *)&mwc;
-	int i;
-	for(i=sizeof(MSVCRT_wchar_t)-1;i>=0;i--) {
-		if(pp[i] != MSVCRT_ungetc(pp[i],file))
-			return MSVCRT_WEOF;
-	}
-	return mwc;
+    MSVCRT_wchar_t mwc = wc;
+    char * pp = (char *)&mwc;
+    int i;
+
+    MSVCRT__lock_file(file);
+    for(i=sizeof(MSVCRT_wchar_t)-1;i>=0;i--) {
+        if(pp[i] != MSVCRT_ungetc(pp[i],file)) {
+            MSVCRT__unlock_file(file);
+            return MSVCRT_WEOF;
+        }
+    }
+
+    MSVCRT__unlock_file(file);
+    return mwc;
 }
 
 /*********************************************************************
