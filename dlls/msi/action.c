@@ -2316,28 +2316,40 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
-static UINT execute_script(MSIPACKAGE *package, UINT script )
+static UINT execute_script_action( MSIPACKAGE *package, UINT script, UINT index )
 {
-    UINT i;
-    UINT rc = ERROR_SUCCESS;
+    const WCHAR *action = package->script->Actions[script][index];
+    ui_actionstart( package, action );
+    TRACE("executing %s\n", debugstr_w(action));
+    return ACTION_PerformAction( package, action, script );
+}
 
-    TRACE("Executing Script %i\n",script);
+static UINT execute_script( MSIPACKAGE *package, UINT script )
+{
+    UINT i, rc = ERROR_SUCCESS;
+
+    TRACE("executing script %u\n", script);
 
     if (!package->script)
     {
         ERR("no script!\n");
         return ERROR_FUNCTION_FAILED;
     }
-
-    for (i = 0; i < package->script->ActionCount[script]; i++)
+    if (script == ROLLBACK_SCRIPT)
     {
-        LPWSTR action;
-        action = package->script->Actions[script][i];
-        ui_actionstart(package, action);
-        TRACE("Executing Action (%s)\n",debugstr_w(action));
-        rc = ACTION_PerformAction(package, action, script);
-        if (rc != ERROR_SUCCESS)
-            break;
+        for (i = package->script->ActionCount[script]; i > 0; i--)
+        {
+            rc = execute_script_action( package, script, i - 1 );
+            if (rc != ERROR_SUCCESS) break;
+        }
+    }
+    else
+    {
+        for (i = 0; i < package->script->ActionCount[script]; i++)
+        {
+            rc = execute_script_action( package, script, i );
+            if (rc != ERROR_SUCCESS) break;
+        }
     }
     msi_free_action_script(package, script);
     return rc;
@@ -8153,7 +8165,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
                          LPCWSTR szCommandLine )
 {
     UINT rc;
-    BOOL ui_exists;
+    BOOL ui_exists, needs_rollback = FALSE;
     static const WCHAR szDisableRollback[] = {'D','I','S','A','B','L','E','R','O','L','L','B','A','C','K',0};
     static const WCHAR szAction[] = {'A','C','T','I','O','N',0};
     static const WCHAR szInstall[] = {'I','N','S','T','A','L','L',0};
@@ -8248,10 +8260,20 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     else if (rc == ERROR_INSTALL_SUSPEND)
         ACTION_PerformActionSequence(package, -4);
     else  /* failed */
+    {
         ACTION_PerformActionSequence(package, -3);
+        needs_rollback = TRUE;
+    }
 
     /* finish up running custom actions */
     ACTION_FinishCustomActions(package);
+
+    if (needs_rollback && !msi_get_property_int( package->db, szRollbackDisabled, 0 ))
+    {
+        WARN("installation failed, running rollback script\n");
+        msi_set_property( package->db, szRollbackDisabled, NULL );
+        execute_script( package, ROLLBACK_SCRIPT );
+    }
 
     if (rc == ERROR_SUCCESS && package->need_reboot)
         return ERROR_SUCCESS_REBOOT_REQUIRED;

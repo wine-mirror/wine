@@ -328,12 +328,6 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
 
             msi_free(actiondata);
         }
-        if (type & msidbCustomActionTypeRollback)
-        {
-            FIXME("Rollbacks not supported yet\n");
-            rc = ERROR_SUCCESS;
-            goto end;
-        }
     }
     else if (!check_execution_scheduling_options(package,action,type))
     {
