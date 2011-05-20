@@ -238,10 +238,10 @@ static INT_PTR CDECL cabinet_open_stream( char *pszFile, int oflag, int pmode )
     if (msi_clone_open_stream( package_disk.package->db, cab->storage, encoded, &stream ) != ERROR_SUCCESS)
     {
         hr = IStorage_OpenStream( cab->storage, encoded, NULL, STGM_READ|STGM_SHARE_EXCLUSIVE, 0, &stream );
-        msi_free( encoded );
         if (FAILED(hr))
         {
             WARN("failed to open stream 0x%08x\n", hr);
+            msi_free( encoded );
             return 0;
         }
     }
