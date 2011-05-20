@@ -893,16 +893,28 @@ static BOOL service_accepts_control(const struct service_entry *service, DWORD d
 BOOL service_send_command( struct service_entry *service, HANDLE pipe,
                            const void *data, DWORD size, DWORD *result )
 {
+    OVERLAPPED overlapped;
     DWORD count;
     BOOL r;
 
-    r = WriteFile(pipe, data, size, &count, NULL);
+    overlapped.hEvent = service->overlapped_event;
+    r = WriteFile(pipe, data, size, &count, &overlapped);
+    if (!r && GetLastError() == ERROR_IO_PENDING)
+    {
+        WaitForSingleObject( service->overlapped_event, service_pipe_timeout );
+        r = GetOverlappedResult( pipe, &overlapped, &count, FALSE );
+    }
     if (!r || count != size)
     {
         WINE_ERR("service protocol error - failed to write pipe!\n");
         return FALSE;
     }
-    r = ReadFile(pipe, result, sizeof *result, &count, NULL);
+    r = ReadFile(pipe, result, sizeof *result, &count, &overlapped);
+    if (!r && GetLastError() == ERROR_IO_PENDING)
+    {
+        WaitForSingleObject( service->overlapped_event, service_pipe_timeout );
+        r = GetOverlappedResult( pipe, &overlapped, &count, FALSE );
+    }
     if (!r || count != sizeof *result)
     {
         WINE_ERR("service protocol error - failed to read pipe "

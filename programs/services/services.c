@@ -95,6 +95,7 @@ void free_service_entry(struct service_entry *entry)
     HeapFree(GetProcessHeap(), 0, entry->dependOnGroups);
     CloseHandle(entry->control_mutex);
     CloseHandle(entry->control_pipe);
+    CloseHandle(entry->overlapped_event);
     CloseHandle(entry->status_changed_event);
     HeapFree(GetProcessHeap(), 0, entry);
 }
@@ -672,8 +673,10 @@ static DWORD service_wait_for_startup(struct service_entry *service_entry, HANDL
 /******************************************************************************
  * service_send_start_message
  */
-static BOOL service_send_start_message(struct service_entry *service, LPCWSTR *argv, DWORD argc)
+static BOOL service_send_start_message(struct service_entry *service, HANDLE process_handle,
+                                       LPCWSTR *argv, DWORD argc)
 {
+    OVERLAPPED overlapped;
     DWORD i, len, result;
     service_start_info *ssi;
     LPWSTR p;
@@ -681,12 +684,27 @@ static BOOL service_send_start_message(struct service_entry *service, LPCWSTR *a
 
     WINE_TRACE("%s %p %d\n", wine_dbgstr_w(service->name), argv, argc);
 
-    /* FIXME: this can block so should be done in another thread */
-    r = ConnectNamedPipe(service->control_pipe, NULL);
-    if (!r && GetLastError() != ERROR_PIPE_CONNECTED)
+    overlapped.hEvent = service->overlapped_event;
+    if (!ConnectNamedPipe(service->control_pipe, &overlapped))
     {
-        WINE_ERR("pipe connect failed\n");
-        return FALSE;
+        if (GetLastError() == ERROR_IO_PENDING)
+        {
+            HANDLE handles[2];
+            handles[0] = service->overlapped_event;
+            handles[1] = process_handle;
+            if (WaitForMultipleObjects( 2, handles, FALSE, service_pipe_timeout ) != WAIT_OBJECT_0)
+                CancelIo( service->control_pipe );
+            if (!HasOverlappedCompleted( &overlapped ))
+            {
+                WINE_ERR( "service %s failed to start\n", wine_dbgstr_w( service->name ));
+                return FALSE;
+            }
+        }
+        else if (GetLastError() != ERROR_PIPE_CONNECTED)
+        {
+            WINE_ERR("pipe connect failed\n");
+            return FALSE;
+        }
     }
 
     /* calculate how much space do we need to send the startup info */
@@ -743,9 +761,11 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
 
     if (!service->status_changed_event)
         service->status_changed_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    if (!service->overlapped_event)
+        service->overlapped_event = CreateEventW(NULL, TRUE, FALSE, NULL);
 
     name = service_get_pipe_name();
-    service->control_pipe = CreateNamedPipeW(name, PIPE_ACCESS_DUPLEX,
+    service->control_pipe = CreateNamedPipeW(name, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
                   PIPE_TYPE_BYTE|PIPE_WAIT, 1, 256, 256, 10000, NULL );
     HeapFree(GetProcessHeap(), 0, name);
     if (service->control_pipe==INVALID_HANDLE_VALUE)
@@ -760,7 +780,7 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
 
     if (err == ERROR_SUCCESS)
     {
-        if (!service_send_start_message(service, service_argv, service_argc))
+        if (!service_send_start_message(service, process_handle, service_argv, service_argc))
             err = ERROR_SERVICE_REQUEST_TIMEOUT;
     }
 

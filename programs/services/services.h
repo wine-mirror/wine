@@ -44,6 +44,7 @@ struct service_entry
     LPWSTR dependOnGroups;
     HANDLE control_mutex;
     HANDLE control_pipe;
+    HANDLE overlapped_event;
     HANDLE status_changed_event;
 };
 
