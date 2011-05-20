@@ -426,7 +426,7 @@ DECLARE_INTERFACE_(ID3DXPMesh, ID3DXBaseMesh)
     STDMETHOD(TrimByFaces)(THIS_ DWORD new_faces_min, DWORD new_faces_max, DWORD* face_remap, DWORD* vertex_remap) PURE;
     STDMETHOD(TrimByVertices)(THIS_ DWORD new_vertices_min, DWORD new_vertices_max, DWORD* face_remap, DWORD* vertex_remap) PURE;
     STDMETHOD(GetAdjacency)(THIS_ DWORD* adjacency) PURE;
-    STDMETHOD(GenerateVertexHistory)(THIS, DWORD* vertex_history) PURE;
+    STDMETHOD(GenerateVertexHistory)(THIS_ DWORD* vertex_history) PURE;
 };
 #undef INTERFACE
 
