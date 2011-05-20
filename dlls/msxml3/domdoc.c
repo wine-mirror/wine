@@ -455,7 +455,7 @@ static void sax_serror(void* ctx, xmlErrorPtr err)
     LIBXML2_CALLBACK_SERROR(doparse, err);
 }
 
-static xmlDocPtr doparse(domdoc* This, char *ptr, int len, xmlChar const* encoding)
+static xmlDocPtr doparse(domdoc* This, char const* ptr, int len, xmlCharEncoding encoding)
 {
     xmlDocPtr doc = NULL;
     xmlParserCtxtPtr pctx;
@@ -506,7 +506,10 @@ static xmlDocPtr doparse(domdoc* This, char *ptr, int len, xmlChar const* encodi
     pctx->sax = &sax_handler;
     pctx->_private = This;
     pctx->recovery = 0;
-    pctx->encoding = xmlStrdup(encoding);
+
+    if (encoding != XML_CHAR_ENCODING_NONE)
+        xmlSwitchEncoding(pctx, encoding);
+
     xmlParseDocument(pctx);
 
     if (pctx->wellFormed)
@@ -763,7 +766,7 @@ static HRESULT WINAPI domdoc_IPersistStreamInit_Load(
     len = GlobalSize(hglobal);
     ptr = GlobalLock(hglobal);
     if (len != 0)
-        xmldoc = doparse(This, ptr, len, NULL);
+        xmldoc = doparse(This, ptr, len, XML_CHAR_ENCODING_NONE);
     GlobalUnlock(hglobal);
 
     if (!xmldoc)
@@ -2071,7 +2074,7 @@ static HRESULT domdoc_onDataAvailable(void *obj, char *ptr, DWORD len)
     domdoc *This = obj;
     xmlDocPtr xmldoc;
 
-    xmldoc = doparse(This, ptr, len, NULL);
+    xmldoc = doparse(This, ptr, len, XML_CHAR_ENCODING_NONE);
     if(xmldoc) {
         xmldoc->_private = create_priv();
         return attach_xmldoc(This, xmldoc);
@@ -2279,21 +2282,6 @@ static HRESULT WINAPI domdoc_abort(
 }
 
 
-static BOOL bstr_to_utf8( BSTR bstr, char **pstr, int *plen )
-{
-    UINT len;
-    LPSTR str;
-
-    len = WideCharToMultiByte( CP_UTF8, 0, bstr, -1, NULL, 0, NULL, NULL );
-    str = heap_alloc( len );
-    if ( !str )
-        return FALSE;
-    WideCharToMultiByte( CP_UTF8, 0, bstr, -1, str, len, NULL, NULL );
-    *plen = len;
-    *pstr = str;
-    return TRUE;
-}
-
 /* don't rely on data to be in BSTR format, treat it as WCHAR string */
 static HRESULT WINAPI domdoc_loadXML(
     IXMLDOMDocument3 *iface,
@@ -2301,11 +2289,8 @@ static HRESULT WINAPI domdoc_loadXML(
     VARIANT_BOOL* isSuccessful )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    static const xmlChar encoding[] = "UTF-8";
     xmlDocPtr xmldoc = NULL;
     HRESULT hr = S_FALSE, hr2;
-    char *str;
-    int len;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w( bstrXML ), isSuccessful );
 
@@ -2315,10 +2300,9 @@ static HRESULT WINAPI domdoc_loadXML(
     {
         *isSuccessful = VARIANT_FALSE;
 
-        if ( bstrXML && bstr_to_utf8( bstrXML, &str, &len ) )
+        if ( bstrXML )
         {
-            xmldoc = doparse(This, str, len, encoding);
-            heap_free( str );
+            xmldoc = doparse(This, (LPCSTR)bstrXML, lstrlenW(bstrXML) * sizeof(*bstrXML), XML_CHAR_ENCODING_UTF16LE);
             if ( !xmldoc )
             {
                 This->error = E_FAIL;
