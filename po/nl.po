@@ -8550,6 +8550,21 @@ msgstr "Meer? "
 msgid "The input line is too long.\n"
 msgstr "De invoerregel is te lang.\n"
 
+#: hostname.rc:27
+msgid "Usage: hostname\n"
+msgstr ""
+
+#: hostname.rc:28
+#, fuzzy
+msgid "Error: Invalid option '%c'.\n"
+msgstr "Fout: Foutieve sleutelnaam\n"
+
+#: hostname.rc:29
+msgid ""
+"Error: Setting the system hostname is not possible with the hostname "
+"utility.\n"
+msgstr ""
+
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
 msgstr "Gebruik: ipconfig [ /? | /all ]\n"

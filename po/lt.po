@@ -8416,6 +8416,21 @@ msgstr "Daugiau? "
 msgid "The input line is too long.\n"
 msgstr "Įvedimo eilutė per ilga.\n"
 
+#: hostname.rc:27
+msgid "Usage: hostname\n"
+msgstr ""
+
+#: hostname.rc:28
+#, fuzzy
+msgid "Error: Invalid option '%c'.\n"
+msgstr "Klaida: Netinkamas rakto vardas\n"
+
+#: hostname.rc:29
+msgid ""
+"Error: Setting the system hostname is not possible with the hostname "
+"utility.\n"
+msgstr ""
+
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
 msgstr "Naudojimas: ipconfig [ /? | /all ]\n"

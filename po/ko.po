@@ -8367,6 +8367,21 @@ msgstr " 더? "
 msgid "The input line is too long.\n"
 msgstr "이 출력 줄은 너무 깁니다.\n"
 
+#: hostname.rc:27
+msgid "Usage: hostname\n"
+msgstr ""
+
+#: hostname.rc:28
+#, fuzzy
+msgid "Error: Invalid option '%c'.\n"
+msgstr "에러: 올바르지 않은 키 이름\n"
+
+#: hostname.rc:29
+msgid ""
+"Error: Setting the system hostname is not possible with the hostname "
+"utility.\n"
+msgstr ""
+
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
 msgstr "사용법: ipconfig [ /? | /all ]\n"

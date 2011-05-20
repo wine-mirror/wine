@@ -1,0 +1,12 @@
+EXTRADEFS = -DWINE_NO_UNICODE_MACROS
+MODULE    = hostname.exe
+APPMODE   = -mconsole -municode
+EXTRALIBS = @SOCKETLIBS@
+DELAYIMPORTS = user32
+
+C_SRCS = hostname.c
+
+RC_SRCS = hostname.rc
+PO_SRCS = hostname.rc
+
+@MAKE_PROG_RULES@

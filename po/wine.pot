@@ -7977,6 +7977,20 @@ msgstr ""
 msgid "The input line is too long.\n"
 msgstr ""
 
+#: hostname.rc:27
+msgid "Usage: hostname\n"
+msgstr ""
+
+#: hostname.rc:28
+msgid "Error: Invalid option '%c'.\n"
+msgstr ""
+
+#: hostname.rc:29
+msgid ""
+"Error: Setting the system hostname is not possible with the hostname "
+"utility.\n"
+msgstr ""
+
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
 msgstr ""
