@@ -30,6 +30,10 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "d3dx9.h"
+#undef MAKE_DDHRESULT
+#include "dxfile.h"
+#include "rmxfguid.h"
+#include "rmxftmpl.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "d3dx9_36_private.h"
@@ -1808,6 +1812,223 @@ HRESULT WINAPI D3DXCreateMeshFVF(DWORD numfaces, DWORD numvertices, DWORD option
     return D3DXCreateMesh(numfaces, numvertices, options, declaration, device, mesh);
 }
 
+
+static HRESULT get_next_child(IDirectXFileData *filedata, IDirectXFileData **child, const GUID **type)
+{
+    HRESULT hr;
+    IDirectXFileDataReference *child_ref = NULL;
+    IDirectXFileObject *child_obj = NULL;
+    IDirectXFileData *child_data = NULL;
+
+    hr = IDirectXFileData_GetNextObject(filedata, &child_obj);
+    if (FAILED(hr)) return hr;
+
+    hr = IDirectXFileObject_QueryInterface(child_obj, &IID_IDirectXFileDataReference, (void**)&child_ref);
+    if (SUCCEEDED(hr)) {
+        hr = IDirectXFileDataReference_Resolve(child_ref, &child_data);
+        IDirectXFileDataReference_Release(child_ref);
+    } else {
+        hr = IDirectXFileObject_QueryInterface(child_obj, &IID_IDirectXFileData, (void**)&child_data);
+    }
+    IDirectXFileObject_Release(child_obj);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IDirectXFileData_GetType(child_data, type);
+    if (FAILED(hr)) {
+        IDirectXFileData_Release(child_data);
+    } else {
+        *child = child_data;
+    }
+
+    return hr;
+}
+
+static HRESULT filedata_get_name(IDirectXFileData *filedata, char **name)
+{
+    HRESULT hr;
+    DWORD name_len;
+
+    hr = IDirectXFileData_GetName(filedata, NULL, &name_len);
+    if (FAILED(hr)) return hr;
+
+    if (!name_len)
+        name_len++;
+    *name = HeapAlloc(GetProcessHeap(), 0, name_len);
+    if (!*name) return E_OUTOFMEMORY;
+
+    hr = IDirectXFileObject_GetName(filedata, *name, &name_len);
+    if (FAILED(hr))
+        HeapFree(GetProcessHeap(), 0, name);
+    if (!name_len)
+        (*name)[0] = 0;
+
+    return hr;
+}
+
+static HRESULT parse_transform_matrix(IDirectXFileData *filedata, D3DXMATRIX *transform)
+{
+    HRESULT hr;
+    DWORD data_size;
+    BYTE *data;
+
+    /* template Matrix4x4 {
+     *     array FLOAT matrix[16];
+     * }
+     * template FrameTransformMatrix {
+     *     Matrix4x4 frameMatrix;
+     * }
+     */
+
+    hr = IDirectXFileData_GetData(filedata, NULL, &data_size, (void**)&data);
+    if (FAILED(hr)) return hr;
+
+    if (data_size != sizeof(D3DXMATRIX)) {
+        WARN("incorrect data size (%u bytes)\n", data_size);
+        return E_FAIL;
+    }
+
+    memcpy(transform, data, sizeof(D3DXMATRIX));
+
+    return D3D_OK;
+}
+
+static HRESULT load_frame(IDirectXFileData *filedata,
+                          DWORD options,
+                          LPDIRECT3DDEVICE9 device,
+                          LPD3DXALLOCATEHIERARCHY alloc_hier,
+                          D3DXFRAME **frame_out)
+{
+    HRESULT hr;
+    const GUID *type;
+    IDirectXFileData *child;
+    char *name = NULL;
+    D3DXFRAME *frame = NULL;
+    D3DXFRAME **next_child;
+
+    hr = filedata_get_name(filedata, &name);
+    if (FAILED(hr)) return hr;
+
+    hr = alloc_hier->lpVtbl->CreateFrame(alloc_hier, name, frame_out);
+    HeapFree(GetProcessHeap(), 0, name);
+    if (FAILED(hr)) return E_FAIL;
+
+    frame = *frame_out;
+    D3DXMatrixIdentity(&frame->TransformationMatrix);
+    next_child = &frame->pFrameFirstChild;
+
+    while (SUCCEEDED(hr = get_next_child(filedata, &child, &type)))
+    {
+        if (IsEqualGUID(type, &TID_D3DRMMesh)) {
+            FIXME("Mesh loading not implemented\n");
+            hr = E_NOTIMPL;
+        } else if (IsEqualGUID(type, &TID_D3DRMFrameTransformMatrix)) {
+            hr = parse_transform_matrix(child, &frame->TransformationMatrix);
+        } else if (IsEqualGUID(type, &TID_D3DRMFrame)) {
+            hr = load_frame(child, options, device, alloc_hier, next_child);
+            if (SUCCEEDED(hr))
+                next_child = &(*next_child)->pFrameSibling;
+        }
+        if (FAILED(hr)) break;
+    }
+    if (hr == DXFILEERR_NOMOREOBJECTS)
+        hr = D3D_OK;
+
+    return hr;
+}
+
+HRESULT WINAPI D3DXLoadMeshHierarchyFromXInMemory(LPCVOID memory,
+                                                  DWORD memory_size,
+                                                  DWORD options,
+                                                  LPDIRECT3DDEVICE9 device,
+                                                  LPD3DXALLOCATEHIERARCHY alloc_hier,
+                                                  LPD3DXLOADUSERDATA load_user_data,
+                                                  LPD3DXFRAME *frame_hierarchy,
+                                                  LPD3DXANIMATIONCONTROLLER *anim_controller)
+{
+    HRESULT hr;
+    IDirectXFile *dxfile = NULL;
+    IDirectXFileEnumObject *enumobj = NULL;
+    IDirectXFileData *filedata = NULL;
+    DXFILELOADMEMORY source;
+    D3DXFRAME *first_frame = NULL;
+    D3DXFRAME **next_frame = &first_frame;
+
+    TRACE("(%p, %u, %x, %p, %p, %p, %p, %p)\n", memory, memory_size, options,
+          device, alloc_hier, load_user_data, frame_hierarchy, anim_controller);
+
+    if (!memory || !memory_size || !device || !frame_hierarchy || !alloc_hier)
+        return D3DERR_INVALIDCALL;
+    if (load_user_data || anim_controller) {
+        if (load_user_data)
+            FIXME("Loading user data not implemented\n");
+        if (anim_controller)
+            FIXME("Animation controller creation not implemented\n");
+        return E_NOTIMPL;
+    }
+
+    hr = DirectXFileCreate(&dxfile);
+    if (FAILED(hr)) goto cleanup;
+
+    hr = IDirectXFile_RegisterTemplates(dxfile, D3DRM_XTEMPLATES, D3DRM_XTEMPLATE_BYTES);
+    if (FAILED(hr)) goto cleanup;
+
+    source.lpMemory = (void*)memory;
+    source.dSize = memory_size;
+    hr = IDirectXFile_CreateEnumObject(dxfile, &source, DXFILELOAD_FROMMEMORY, &enumobj);
+    if (FAILED(hr)) goto cleanup;
+
+    while (SUCCEEDED(hr = IDirectXFileEnumObject_GetNextDataObject(enumobj, &filedata)))
+    {
+        const GUID *guid = NULL;
+
+        hr = IDirectXFileData_GetType(filedata, &guid);
+        if (SUCCEEDED(hr)) {
+            if (IsEqualGUID(guid, &TID_D3DRMMesh)) {
+                FIXME("Mesh loading not implemented\n");
+                hr = E_NOTIMPL;
+                goto cleanup;
+            } else if (IsEqualGUID(guid, &TID_D3DRMFrame)) {
+                hr = load_frame(filedata, options, device, alloc_hier, next_frame);
+                if (FAILED(hr)) goto cleanup;
+            }
+            while (*next_frame)
+                next_frame = &(*next_frame)->pFrameSibling;
+        }
+
+        IDirectXFileData_Release(filedata);
+        filedata = NULL;
+        if (FAILED(hr))
+            goto cleanup;
+    }
+    if (hr != DXFILEERR_NOMOREOBJECTS)
+        goto cleanup;
+
+    if (!first_frame) {
+        hr = E_FAIL;
+    } else if (first_frame->pFrameSibling) {
+        D3DXFRAME *root_frame = NULL;
+        hr = alloc_hier->lpVtbl->CreateFrame(alloc_hier, NULL, &root_frame);
+        if (FAILED(hr)) {
+            hr = E_FAIL;
+            goto cleanup;
+        }
+        D3DXMatrixIdentity(&root_frame->TransformationMatrix);
+        root_frame->pFrameFirstChild = first_frame;
+        *frame_hierarchy = root_frame;
+        hr = D3D_OK;
+    } else {
+        *frame_hierarchy = first_frame;
+        hr = D3D_OK;
+    }
+
+cleanup:
+    if (FAILED(hr) && first_frame) D3DXFrameDestroy(first_frame, alloc_hier);
+    if (filedata) IDirectXFileData_Release(filedata);
+    if (enumobj) IDirectXFileEnumObject_Release(enumobj);
+    if (dxfile) IDirectXFile_Release(dxfile);
+    return hr;
+}
 
 HRESULT WINAPI D3DXFrameDestroy(LPD3DXFRAME frame, LPD3DXALLOCATEHIERARCHY alloc_hier)
 {

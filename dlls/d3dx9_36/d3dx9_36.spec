@@ -174,7 +174,7 @@
 @ stub D3DXLoadMeshFromXW(ptr long ptr ptr ptr ptr ptr ptr)
 @ stub D3DXLoadMeshFromXof(ptr long ptr ptr ptr ptr ptr ptr)
 @ stub D3DXLoadMeshHierarchyFromXA(ptr long ptr ptr ptr ptr ptr)
-@ stub D3DXLoadMeshHierarchyFromXInMemory(ptr long long ptr ptr ptr ptr ptr)
+@ stdcall D3DXLoadMeshHierarchyFromXInMemory(ptr long long ptr ptr ptr ptr ptr)
 @ stub D3DXLoadMeshHierarchyFromXW(ptr long ptr ptr ptr ptr ptr)
 @ stub D3DXLoadPatchMeshFromXof(ptr long ptr ptr ptr long ptr)
 @ stub D3DXLoadPRTBufferFromFileA(ptr ptr)
