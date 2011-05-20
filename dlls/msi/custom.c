@@ -89,7 +89,7 @@ static CRITICAL_SECTION msi_custom_action_cs = { &msi_custom_action_cs_debug, -1
 
 static struct list msi_pending_custom_actions = LIST_INIT( msi_pending_custom_actions );
 
-static UINT schedule_action( MSIPACKAGE *package, UINT script, const WCHAR *action )
+UINT msi_schedule_action( MSIPACKAGE *package, UINT script, const WCHAR *action )
 {
     UINT count;
     WCHAR **newbuf = NULL;
@@ -286,17 +286,17 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
             if (type & msidbCustomActionTypeCommit)
             {
                 TRACE("Deferring commit action\n");
-                schedule_action(package, COMMIT_SCRIPT, deferred);
+                msi_schedule_action(package, COMMIT_SCRIPT, deferred);
             }
             else if (type & msidbCustomActionTypeRollback)
             {
-                FIXME("Deferring rollback only action\n");
-                schedule_action(package, ROLLBACK_SCRIPT, deferred);
+                TRACE("Deferring rollback action\n");
+                msi_schedule_action(package, ROLLBACK_SCRIPT, deferred);
             }
             else
             {
                 TRACE("Deferring action\n");
-                schedule_action(package, INSTALL_SCRIPT, deferred);
+                msi_schedule_action(package, INSTALL_SCRIPT, deferred);
             }
 
             rc = ERROR_SUCCESS;
