@@ -38,6 +38,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(service);
 HANDLE g_hStartedEvent;
 struct scmdatabase *active_database;
 
+DWORD service_pipe_timeout = 10000;
+DWORD service_kill_timeout = 20000;
+
 static const int is_win64 = (sizeof(void *) > sizeof(int));
 
 static const WCHAR SZ_LOCAL_SYSTEM[] = {'L','o','c','a','l','S','y','s','t','e','m',0};
@@ -650,7 +653,7 @@ static DWORD service_wait_for_startup(struct service_entry *service_entry, HANDL
         DWORD dwCurrentStatus;
         HANDLE handles[2] = { service_entry->status_changed_event, process_handle };
         DWORD ret;
-        ret = WaitForMultipleObjects(sizeof(handles)/sizeof(handles[0]), handles, FALSE, 20000);
+        ret = WaitForMultipleObjects( 2, handles, FALSE, service_pipe_timeout );
         if (ret != WAIT_OBJECT_0)
             return ERROR_SERVICE_REQUEST_TIMEOUT;
         service_lock_shared(service_entry);
@@ -775,12 +778,42 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
     return err;
 }
 
+static void load_registry_parameters(void)
+{
+    static const WCHAR controlW[] =
+        { 'S','y','s','t','e','m','\\',
+          'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+          'C','o','n','t','r','o','l',0 };
+    static const WCHAR pipetimeoutW[] =
+        {'S','e','r','v','i','c','e','s','P','i','p','e','T','i','m','e','o','u','t',0};
+    static const WCHAR killtimeoutW[] =
+        {'W','a','i','t','T','o','K','i','l','l','S','e','r','v','i','c','e','T','i','m','e','o','u','t',0};
+    HKEY key;
+    WCHAR buffer[64];
+    DWORD type, count, val;
+
+    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, controlW, &key )) return;
+
+    count = sizeof(buffer);
+    if (!RegQueryValueExW( key, pipetimeoutW, NULL, &type, (BYTE *)buffer, &count ) &&
+        type == REG_SZ && (val = atoiW( buffer )))
+        service_pipe_timeout = val;
+
+    count = sizeof(buffer);
+    if (!RegQueryValueExW( key, killtimeoutW, NULL, &type, (BYTE *)buffer, &count ) &&
+        type == REG_SZ && (val = atoiW( buffer )))
+        service_kill_timeout = val;
+
+    RegCloseKey( key );
+}
 
 int main(int argc, char *argv[])
 {
     static const WCHAR svcctl_started_event[] = SVCCTL_STARTED_EVENT;
     DWORD err;
+
     g_hStartedEvent = CreateEventW(NULL, TRUE, FALSE, svcctl_started_event);
+    load_registry_parameters();
     err = scmdatabase_create(&active_database);
     if (err != ERROR_SUCCESS)
         return err;

@@ -80,6 +80,9 @@ BOOL service_send_command( struct service_entry *service, HANDLE pipe,
 
 extern HANDLE g_hStartedEvent;
 
+extern DWORD service_pipe_timeout;
+extern DWORD service_kill_timeout;
+
 DWORD RPC_Init(void);
 DWORD RPC_MainLoop(void);
 
