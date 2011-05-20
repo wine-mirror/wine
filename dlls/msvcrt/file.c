@@ -2563,9 +2563,16 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
 int CDECL MSVCRT__putw(int val, MSVCRT_FILE* file)
 {
   int len;
+
+  MSVCRT__lock_file(file);
   len = MSVCRT__write(file->_file, &val, sizeof(val));
-  if (len == sizeof(val)) return val;
+  if (len == sizeof(val)) {
+    MSVCRT__unlock_file(file);
+    return val;
+  }
+
   file->_flag |= MSVCRT__IOERR;
+  MSVCRT__unlock_file(file);
   return MSVCRT_EOF;
 }
 
@@ -2883,38 +2890,44 @@ MSVCRT_wchar_t * CDECL MSVCRT_fgetws(MSVCRT_wchar_t *s, int size, MSVCRT_FILE* f
  */
 MSVCRT_size_t CDECL MSVCRT_fwrite(const void *ptr, MSVCRT_size_t size, MSVCRT_size_t nmemb, MSVCRT_FILE* file)
 {
-  MSVCRT_size_t wrcnt=size * nmemb;
-  int written = 0;
-  if (size == 0)
-      return 0;
-  if(file->_cnt) {
-	int pcnt=(file->_cnt>wrcnt)? wrcnt: file->_cnt;
-	memcpy(file->_ptr, ptr, pcnt);
-	file->_cnt -= pcnt;
-	file->_ptr += pcnt;
-	written = pcnt;
-	wrcnt -= pcnt;
+    MSVCRT_size_t wrcnt=size * nmemb;
+    int written = 0;
+    if (size == 0)
+        return 0;
+
+    MSVCRT__lock_file(file);
+    if(file->_cnt) {
+        int pcnt=(file->_cnt>wrcnt)? wrcnt: file->_cnt;
+        memcpy(file->_ptr, ptr, pcnt);
+        file->_cnt -= pcnt;
+        file->_ptr += pcnt;
+        written = pcnt;
+        wrcnt -= pcnt;
         ptr = (const char*)ptr + pcnt;
-  } else if(!(file->_flag & MSVCRT__IOWRT)) {
-	if(file->_flag & MSVCRT__IORW) {
-		file->_flag |= MSVCRT__IOWRT;
-	} else
-		return 0;
-  }
-  if(wrcnt) {
-	/* Flush buffer */
-  	int res=msvcrt_flush_buffer(file);
-	if(!res) {
-		int pwritten = MSVCRT__write(file->_file, ptr, wrcnt);
-  		if (pwritten <= 0)
-                {
-                    file->_flag |= MSVCRT__IOERR;
-                    pwritten=0;
-                }
-		written += pwritten;
-	}
-  }
-  return written / size;
+    } else if(!(file->_flag & MSVCRT__IOWRT)) {
+        if(file->_flag & MSVCRT__IORW) {
+            file->_flag |= MSVCRT__IOWRT;
+        } else {
+            MSVCRT__unlock_file(file);
+            return 0;
+        }
+    }
+    if(wrcnt) {
+        /* Flush buffer */
+        int res=msvcrt_flush_buffer(file);
+        if(!res) {
+            int pwritten = MSVCRT__write(file->_file, ptr, wrcnt);
+            if (pwritten <= 0)
+            {
+                file->_flag |= MSVCRT__IOERR;
+                pwritten=0;
+            }
+            written += pwritten;
+        }
+    }
+
+    MSVCRT__unlock_file(file);
+    return written / size;
 }
 
 /*********************************************************************
@@ -3060,18 +3073,26 @@ int CDECL MSVCRT__flsbuf(int c, MSVCRT_FILE* file);
  */
 int CDECL MSVCRT_fputc(int c, MSVCRT_FILE* file)
 {
+  int res;
+
+  MSVCRT__lock_file(file);
   if(file->_cnt>0) {
     *file->_ptr++=c;
     file->_cnt--;
     if (c == '\n')
     {
-      int res = msvcrt_flush_buffer(file);
+      res = msvcrt_flush_buffer(file);
+      MSVCRT__unlock_file(file);
       return res ? res : c;
     }
-    else
+    else {
+      MSVCRT__unlock_file(file);
       return c & 0xff;
+    }
   } else {
-    return MSVCRT__flsbuf(c, file);
+    res = MSVCRT__flsbuf(c, file);
+    MSVCRT__unlock_file(file);
+    return res;
   }
 }
 
@@ -3376,11 +3397,21 @@ int CDECL MSVCRT_fgetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
 int CDECL MSVCRT_fputs(const char *s, MSVCRT_FILE* file)
 {
     MSVCRT_size_t i, len = strlen(s);
-    if (!(msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT))
-      return MSVCRT_fwrite(s,sizeof(*s),len,file) == len ? 0 : MSVCRT_EOF;
+    int ret;
+
+    MSVCRT__lock_file(file);
+    if (!(msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT)) {
+      ret = MSVCRT_fwrite(s,sizeof(*s),len,file) == len ? 0 : MSVCRT_EOF;
+      MSVCRT__unlock_file(file);
+      return ret;
+    }
     for (i=0; i<len; i++)
-      if (MSVCRT_fputc(s[i], file) == MSVCRT_EOF) 
-	return MSVCRT_EOF;
+      if (MSVCRT_fputc(s[i], file) == MSVCRT_EOF)  {
+        MSVCRT__unlock_file(file);
+        return MSVCRT_EOF;
+      }
+
+    MSVCRT__unlock_file(file);
     return 0;
 }
 
@@ -3390,15 +3421,23 @@ int CDECL MSVCRT_fputs(const char *s, MSVCRT_FILE* file)
 int CDECL MSVCRT_fputws(const MSVCRT_wchar_t *s, MSVCRT_FILE* file)
 {
     MSVCRT_size_t i, len = strlenW(s);
-    if (!(msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT))
-      return MSVCRT_fwrite(s,sizeof(*s),len,file) == len ? 0 : MSVCRT_EOF;
-    for (i=0; i<len; i++)
-      {
-        if ((s[i] == '\n') && (MSVCRT_fputc('\r', file) == MSVCRT_EOF))
-	  return MSVCRT_WEOF;
-	if (MSVCRT_fputwc(s[i], file) == MSVCRT_WEOF)
-	  return MSVCRT_WEOF; 
-      }
+    int ret;
+
+    MSVCRT__lock_file(file);
+    if (!(msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT)) {
+        ret = MSVCRT_fwrite(s,sizeof(*s),len,file) == len ? 0 : MSVCRT_EOF;
+        MSVCRT__unlock_file(file);
+        return ret;
+    }
+    for (i=0; i<len; i++) {
+        if (((s[i] == '\n') && (MSVCRT_fputc('\r', file) == MSVCRT_EOF))
+                || MSVCRT_fputwc(s[i], file) == MSVCRT_WEOF) {
+            MSVCRT__unlock_file(file);
+            return MSVCRT_WEOF;
+        }
+    }
+
+    MSVCRT__unlock_file(file);
     return 0;
 }
 
@@ -3490,8 +3529,17 @@ int CDECL MSVCRT__putwch(int c)
 int CDECL MSVCRT_puts(const char *s)
 {
     MSVCRT_size_t len = strlen(s);
-    if (MSVCRT_fwrite(s,sizeof(*s),len,MSVCRT_stdout) != len) return MSVCRT_EOF;
-    return MSVCRT_fwrite("\n",1,1,MSVCRT_stdout) == 1 ? 0 : MSVCRT_EOF;
+    int ret;
+
+    MSVCRT__lock_file(MSVCRT_stdout);
+    if(MSVCRT_fwrite(s, sizeof(*s), len, MSVCRT_stdout) != len) {
+        MSVCRT__unlock_file(MSVCRT_stdout);
+        return MSVCRT_EOF;
+    }
+
+    ret = MSVCRT_fwrite("\n",1,1,MSVCRT_stdout) == 1 ? 0 : MSVCRT_EOF;
+    MSVCRT__unlock_file(MSVCRT_stdout);
+    return ret;
 }
 
 /*********************************************************************
@@ -3501,8 +3549,17 @@ int CDECL _putws(const MSVCRT_wchar_t *s)
 {
     static const MSVCRT_wchar_t nl = '\n';
     MSVCRT_size_t len = strlenW(s);
-    if (MSVCRT_fwrite(s,sizeof(*s),len,MSVCRT_stdout) != len) return MSVCRT_EOF;
-    return MSVCRT_fwrite(&nl,sizeof(nl),1,MSVCRT_stdout) == 1 ? 0 : MSVCRT_EOF;
+    int ret;
+
+    MSVCRT__lock_file(MSVCRT_stdout);
+    if(MSVCRT_fwrite(s, sizeof(*s), len, MSVCRT_stdout) != len) {
+        MSVCRT__unlock_file(MSVCRT_stdout);
+        return MSVCRT_EOF;
+    }
+
+    ret = MSVCRT_fwrite(&nl,sizeof(nl),1,MSVCRT_stdout) == 1 ? 0 : MSVCRT_EOF;
+    MSVCRT__unlock_file(MSVCRT_stdout);
+    return ret;
 }
 
 /*********************************************************************
