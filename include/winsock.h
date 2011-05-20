@@ -1036,7 +1036,6 @@ int WINAPI WS(closesocket)(SOCKET);
 int WINAPI WS(connect)(SOCKET,const struct WS(sockaddr)*,int);
 struct WS(hostent)* WINAPI WS(gethostbyaddr)(const char*,int,int);
 struct WS(hostent)* WINAPI WS(gethostbyname)(const char*);
-/* gethostname not defined because of conflicts with unistd.h */
 int WINAPI WS(getpeername)(SOCKET,struct WS(sockaddr)*,int*);
 struct WS(protoent)* WINAPI WS(getprotobyname)(const char*);
 struct WS(protoent)* WINAPI WS(getprotobynumber)(int);
@@ -1058,6 +1057,11 @@ int WINAPI WS(sendto)(SOCKET,const char*,int,int,const struct WS(sockaddr)*,int)
 int WINAPI WS(setsockopt)(SOCKET,int,int,const char*,int);
 int WINAPI WS(shutdown)(SOCKET,int);
 SOCKET WINAPI WS(socket)(int,int,int);
+
+#if defined(__MINGW32__) || defined (_MSC_VER)
+/* gethostname is not defined on Unix because of conflicts with unistd.h */
+int WINAPI WS(gethostname)(char*,int);
+#endif
 
 #endif /* !defined(__WINE_WINSOCK2__) || WS_API_PROTOTYPES */
 
