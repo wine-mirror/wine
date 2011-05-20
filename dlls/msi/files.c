@@ -865,10 +865,9 @@ static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
 
     if (GetFileAttributesW(destdir) == INVALID_FILE_ATTRIBUTES)
     {
-        ret = CreateDirectoryW(destdir, NULL);
-        if (!ret)
+        if (!(ret = msi_create_full_path(destdir)))
         {
-            WARN("CreateDirectory failed: %d\n", GetLastError());
+            WARN("failed to create directory %u\n", GetLastError());
             goto done;
         }
     }
