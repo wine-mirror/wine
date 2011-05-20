@@ -1825,6 +1825,14 @@ UINT WINAPI MsiEnumComponentCostsA( MSIHANDLE handle, LPCSTR component, DWORD in
     return r;
 }
 
+static UINT set_drive( WCHAR *buffer, WCHAR letter )
+{
+    buffer[0] = letter;
+    buffer[1] = ':';
+    buffer[2] = 0;
+    return 2;
+}
+
 UINT WINAPI MsiEnumComponentCostsW( MSIHANDLE handle, LPCWSTR component, DWORD index,
                                     INSTALLSTATE state, LPWSTR drive, DWORD *buflen,
                                     int *cost, int *temp )
@@ -1896,29 +1904,20 @@ UINT WINAPI MsiEnumComponentCostsW( MSIHANDLE handle, LPCWSTR component, DWORD i
         if (!comp->Enabled || !comp->KeyPath)
         {
             *cost = 0;
-            drive[0] = path[0];
-            drive[1] = ':';
-            drive[2] = 0;
-            *buflen = 2;
+            *buflen = set_drive( drive, path[0] );
             r = ERROR_SUCCESS;
         }
         else if ((file = msi_get_loaded_file( package, comp->KeyPath )))
         {
             *cost = max( 8, comp->Cost / 512 );
-            drive[0] = file->TargetPath[0];
-            drive[1] = ':';
-            drive[2] = 0;
-            *buflen = 2;
+            *buflen = set_drive( drive, file->TargetPath[0] );
             r = ERROR_SUCCESS;
         }
     }
     else if (IStorage_Stat( package->db->storage, &stat, STATFLAG_NONAME ) == S_OK)
     {
         *temp = max( 8, stat.cbSize.QuadPart / 512 );
-        drive[0] = path[0];
-        drive[1] = ':';
-        drive[2] = 0;
-        *buflen = 2;
+        *buflen = set_drive( drive, path[0] );
         r = ERROR_SUCCESS;
     }
     msiobj_release( &package->hdr );
