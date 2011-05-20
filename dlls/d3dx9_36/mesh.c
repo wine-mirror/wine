@@ -36,6 +36,7 @@
 #include "rmxftmpl.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "wine/list.h"
 #include "d3dx9_36_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
@@ -1822,6 +1823,12 @@ struct mesh_data {
     DWORD *indices;
 
     DWORD fvf;
+
+    /* optional mesh data */
+
+    DWORD num_normals;
+    D3DXVECTOR3 *normals;
+    DWORD *normal_indices;
 };
 
 static HRESULT get_next_child(IDirectXFileData *filedata, IDirectXFileData **child, const GUID **type)
@@ -1853,6 +1860,95 @@ static HRESULT get_next_child(IDirectXFileData *filedata, IDirectXFileData **chi
     }
 
     return hr;
+}
+
+static HRESULT parse_normals(IDirectXFileData *filedata, struct mesh_data *mesh)
+{
+    HRESULT hr;
+    DWORD data_size;
+    BYTE *data;
+    DWORD *index_out_ptr;
+    int i;
+    DWORD num_face_indices = mesh->num_poly_faces * 2 + mesh->num_tri_faces;
+
+    HeapFree(GetProcessHeap(), 0, mesh->normals);
+    mesh->num_normals = 0;
+    mesh->normals = NULL;
+    mesh->normal_indices = NULL;
+    mesh->fvf |= D3DFVF_NORMAL;
+
+    hr = IDirectXFileData_GetData(filedata, NULL, &data_size, (void**)&data);
+    if (FAILED(hr)) return hr;
+
+    /* template Vector {
+     *     FLOAT x;
+     *     FLOAT y;
+     *     FLOAT z;
+     * }
+     * template MeshFace {
+     *     DWORD nFaceVertexIndices;
+     *     array DWORD faceVertexIndices[nFaceVertexIndices];
+     * }
+     * template MeshNormals {
+     *     DWORD nNormals;
+     *     array Vector normals[nNormals];
+     *     DWORD nFaceNormals;
+     *     array MeshFace faceNormals[nFaceNormals];
+     * }
+     */
+
+    if (data_size < sizeof(DWORD) * 2)
+        goto truncated_data_error;
+    mesh->num_normals = *(DWORD*)data;
+    data += sizeof(DWORD);
+    if (data_size < sizeof(DWORD) * 2 + mesh->num_normals * sizeof(D3DXVECTOR3) +
+                    num_face_indices * sizeof(DWORD))
+        goto truncated_data_error;
+
+    mesh->normals = HeapAlloc(GetProcessHeap(), 0, mesh->num_normals * sizeof(D3DXVECTOR3));
+    mesh->normal_indices = HeapAlloc(GetProcessHeap(), 0, num_face_indices * sizeof(DWORD));
+    if (!mesh->normals || !mesh->normal_indices)
+        return E_OUTOFMEMORY;
+
+    memcpy(mesh->normals, data, mesh->num_normals * sizeof(D3DXVECTOR3));
+    data += mesh->num_normals * sizeof(D3DXVECTOR3);
+    for (i = 0; i < mesh->num_normals; i++)
+        D3DXVec3Normalize(&mesh->normals[i], &mesh->normals[i]);
+
+    if (*(DWORD*)data != mesh->num_poly_faces) {
+        WARN("number of face normals (%u) doesn't match number of faces (%u)\n",
+             *(DWORD*)data, mesh->num_poly_faces);
+        return E_FAIL;
+    }
+    data += sizeof(DWORD);
+    index_out_ptr = mesh->normal_indices;
+    for (i = 0; i < mesh->num_poly_faces; i++)
+    {
+        DWORD j;
+        DWORD count = *(DWORD*)data;
+        if (count != mesh->num_tri_per_face[i] + 2) {
+            WARN("face %u: number of normals (%u) doesn't match number of vertices (%u)\n",
+                 i, count, mesh->num_tri_per_face[i] + 2);
+            return E_FAIL;
+        }
+        data += sizeof(DWORD);
+
+        for (j = 0; j < count; j++) {
+            DWORD normal_index = *(DWORD*)data;
+            if (normal_index >= mesh->num_normals) {
+                WARN("face %u, normal index %u: reference to undefined normal %u (only %u normals)\n",
+                     i, j, normal_index, mesh->num_normals);
+                return E_FAIL;
+            }
+            *index_out_ptr++ = normal_index;
+            data += sizeof(DWORD);
+        }
+    }
+
+    return D3D_OK;
+truncated_data_error:
+    WARN("truncated data (%u bytes)\n", data_size);
+    return E_FAIL;
 }
 
 /* for provide_flags parameters */
@@ -1953,8 +2049,7 @@ static HRESULT parse_mesh(IDirectXFileData *filedata, struct mesh_data *mesh_dat
     while (SUCCEEDED(hr = get_next_child(filedata, &child, &type)))
     {
         if (IsEqualGUID(type, &TID_D3DRMMeshNormals)) {
-            FIXME("Mesh normal loading not implemented.\n");
-            hr = E_NOTIMPL;
+            hr = parse_normals(child, mesh_data);
         } else if (IsEqualGUID(type, &TID_D3DRMMeshVertexColors)) {
             FIXME("Mesh vertex color loading not implemented.\n");
             hr = E_NOTIMPL;
@@ -1997,8 +2092,13 @@ static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
     HRESULT hr;
     DWORD *index_in_ptr;
     struct mesh_data mesh_data;
+    DWORD total_vertices;
     ID3DXMesh *d3dxmesh = NULL;
     ID3DXBuffer *adjacency = NULL;
+    struct vertex_duplication {
+        DWORD normal_index;
+        struct list entry;
+    } *duplications = NULL;
     int i;
     void *vertices = NULL;
     void *indices = NULL;
@@ -2015,7 +2115,54 @@ static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
     hr = parse_mesh(filedata, &mesh_data, provide_flags);
     if (FAILED(hr)) goto cleanup;
 
-    hr = D3DXCreateMeshFVF(mesh_data.num_tri_faces, mesh_data.num_vertices, D3DXMESH_MANAGED, mesh_data.fvf, device, &d3dxmesh);
+    total_vertices = mesh_data.num_vertices;
+    if (mesh_data.fvf & D3DFVF_NORMAL) {
+        /* duplicate vertices with multiple normals */
+        DWORD num_face_indices = mesh_data.num_poly_faces * 2 + mesh_data.num_tri_faces;
+        duplications = HeapAlloc(GetProcessHeap(), 0, (mesh_data.num_vertices + num_face_indices) * sizeof(*duplications));
+        if (!duplications) {
+            hr = E_OUTOFMEMORY;
+            goto cleanup;
+        }
+        for (i = 0; i < total_vertices; i++)
+        {
+            duplications[i].normal_index = -1;
+            list_init(&duplications[i].entry);
+        }
+        for (i = 0; i < num_face_indices; i++) {
+            DWORD vertex_index = mesh_data.indices[i];
+            DWORD normal_index = mesh_data.normal_indices[i];
+            struct vertex_duplication *dup_ptr = &duplications[vertex_index];
+
+            if (dup_ptr->normal_index == -1) {
+                dup_ptr->normal_index = normal_index;
+            } else {
+                D3DXVECTOR3 *new_normal = &mesh_data.normals[normal_index];
+                struct list *dup_list = &dup_ptr->entry;
+                while (TRUE) {
+                    D3DXVECTOR3 *cur_normal = &mesh_data.normals[dup_ptr->normal_index];
+                    if (new_normal->x == cur_normal->x &&
+                        new_normal->y == cur_normal->y &&
+                        new_normal->z == cur_normal->z)
+                    {
+                        mesh_data.indices[i] = dup_ptr - duplications;
+                        break;
+                    } else if (!list_next(dup_list, &dup_ptr->entry)) {
+                        dup_ptr = &duplications[total_vertices++];
+                        dup_ptr->normal_index = normal_index;
+                        list_add_tail(dup_list, &dup_ptr->entry);
+                        mesh_data.indices[i] = dup_ptr - duplications;
+                        break;
+                    } else {
+                        dup_ptr = LIST_ENTRY(list_next(dup_list, &dup_ptr->entry),
+                                             struct vertex_duplication, entry);
+                    }
+                }
+            }
+        }
+    }
+
+    hr = D3DXCreateMeshFVF(mesh_data.num_tri_faces, total_vertices, D3DXMESH_MANAGED, mesh_data.fvf, device, &d3dxmesh);
     if (FAILED(hr)) goto cleanup;
 
     hr = d3dxmesh->lpVtbl->LockVertexBuffer(d3dxmesh, D3DLOCK_DISCARD, &vertices);
@@ -2025,6 +2172,30 @@ static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
     for (i = 0; i < mesh_data.num_vertices; i++) {
         *(D3DXVECTOR3*)out_ptr = mesh_data.vertices[i];
         out_ptr += sizeof(D3DXVECTOR3);
+        if (mesh_data.fvf & D3DFVF_NORMAL) {
+            if (duplications[i].normal_index == -1)
+                ZeroMemory(out_ptr, sizeof(D3DXVECTOR3));
+            else
+                *(D3DXVECTOR3*)out_ptr = mesh_data.normals[duplications[i].normal_index];
+            out_ptr += sizeof(D3DXVECTOR3);
+        }
+    }
+    if (mesh_data.fvf & D3DFVF_NORMAL) {
+        DWORD vertex_size = D3DXGetFVFVertexSize(mesh_data.fvf);
+        out_ptr = vertices;
+        for (i = 0; i < mesh_data.num_vertices; i++) {
+            struct vertex_duplication *dup_ptr;
+            LIST_FOR_EACH_ENTRY(dup_ptr, &duplications[i].entry, struct vertex_duplication, entry)
+            {
+                int j = dup_ptr - duplications;
+                BYTE *dest_vertex = (BYTE*)vertices + j * vertex_size;
+
+                memcpy(dest_vertex, out_ptr, vertex_size);
+                dest_vertex += sizeof(D3DXVECTOR3);
+                *(D3DXVECTOR3*)dest_vertex = mesh_data.normals[dup_ptr->normal_index];
+            }
+            out_ptr += vertex_size;
+        }
     }
     d3dxmesh->lpVtbl->UnlockVertexBuffer(d3dxmesh);
 
@@ -2078,6 +2249,9 @@ cleanup:
     HeapFree(GetProcessHeap(), 0, mesh_data.vertices);
     HeapFree(GetProcessHeap(), 0, mesh_data.num_tri_per_face);
     HeapFree(GetProcessHeap(), 0, mesh_data.indices);
+    HeapFree(GetProcessHeap(), 0, mesh_data.normals);
+    HeapFree(GetProcessHeap(), 0, mesh_data.normal_indices);
+    HeapFree(GetProcessHeap(), 0, duplications);
     return hr;
 }
 
