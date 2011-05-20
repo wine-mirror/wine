@@ -3479,7 +3479,7 @@ int CDECL _wrename(const MSVCRT_wchar_t *oldpath,const MSVCRT_wchar_t *newpath)
  */
 int CDECL MSVCRT_setvbuf(MSVCRT_FILE* file, char *buf, int mode, MSVCRT_size_t size)
 {
-  /* TODO: Check if file busy */
+  MSVCRT__lock_file(file);
   if(file->_bufsiz) {
 	MSVCRT_free(file->_base);
 	file->_bufsiz = 0;
@@ -3494,6 +3494,7 @@ int CDECL MSVCRT_setvbuf(MSVCRT_FILE* file, char *buf, int mode, MSVCRT_size_t s
   } else {
 	file->_flag |= MSVCRT__IONBF;
   }
+  MSVCRT__unlock_file(file);
   return 0;
 }
 
