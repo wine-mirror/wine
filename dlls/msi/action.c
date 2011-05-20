@@ -7719,7 +7719,9 @@ static UINT ACTION_AllocateRegistrySpace( MSIPACKAGE *package )
 
 static UINT ACTION_DisableRollback( MSIPACKAGE *package )
 {
-    FIXME("%p\n", package);
+    TRACE("%p\n", package);
+
+    msi_set_property( package->db, szRollbackDisabled, szOne );
     return ERROR_SUCCESS;
 }
 
@@ -8146,7 +8148,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
 {
     UINT rc;
     BOOL ui_exists;
-
+    static const WCHAR szDisableRollback[] = {'D','I','S','A','B','L','E','R','O','L','L','B','A','C','K',0};
     static const WCHAR szAction[] = {'A','C','T','I','O','N',0};
     static const WCHAR szInstall[] = {'I','N','S','T','A','L','L',0};
 
@@ -8209,6 +8211,12 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     msi_parse_command_line( package, szCommandLine, FALSE );
     msi_adjust_privilege_properties( package );
     msi_set_context( package );
+
+    if (msi_get_property_int( package->db, szDisableRollback, 0 ))
+    {
+        TRACE("disabling rollback\n");
+        msi_set_property( package->db, szRollbackDisabled, szOne );
+    }
 
     if (needs_ui_sequence( package))
     {
