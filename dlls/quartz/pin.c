@@ -199,6 +199,7 @@ static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinI
     pPinImpl->fnDone = pDone;
     pPinImpl->fnPreConnect = NULL;
     pPinImpl->pAlloc = NULL;
+    pPinImpl->prefAlloc = NULL;
     pPinImpl->pReader = NULL;
     pPinImpl->hThread = NULL;
     pPinImpl->hEventStateChanged = CreateEventW(NULL, TRUE, TRUE, NULL);
