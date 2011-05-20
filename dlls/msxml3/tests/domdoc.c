@@ -9946,13 +9946,15 @@ static void test_selection(void)
 static void test_load(void)
 {
     IXMLDOMDocument *doc;
+    IXMLDOMNodeList *list;
     VARIANT_BOOL b;
     HANDLE hfile;
     VARIANT src;
     HRESULT hr;
     BOOL ret;
-    BSTR path;
+    BSTR path, bstr1, bstr2;
     DWORD written;
+    void* ptr;
 
     /* prepare a file */
     hfile = CreateFileA("test.xml", GENERIC_WRITE|GENERIC_READ, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
@@ -9992,6 +9994,96 @@ static void test_load(void)
     IXMLDOMDocument_Release(doc);
 
     DeleteFileA("test.xml");
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(szExampleXML), &b);
+    EXPECT_HR(hr, S_OK);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+
+    hr = IXMLDOMDocument_selectNodes(doc, _bstr_("//*"), &list);
+    EXPECT_HR(hr, S_OK);
+    bstr1 = _bstr_(list_to_string(list));
+
+    hr = IXMLDOMNodeList_reset(list);
+    EXPECT_HR(hr, S_OK);
+
+    IXMLDOMDocument_Release(doc);
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    VariantInit(&src);
+    V_ARRAY(&src) = SafeArrayCreateVector(VT_UI1, 0, lstrlenA(szExampleXML));
+    V_VT(&src) = VT_ARRAY|VT_UI1;
+    ok(V_ARRAY(&src) != NULL, "SafeArrayCreateVector() returned NULL\n");
+    ptr = NULL;
+    hr = SafeArrayAccessData(V_ARRAY(&src), &ptr);
+    EXPECT_HR(hr, S_OK);
+    ok(ptr != NULL, "SafeArrayAccessData() returned NULL\n");
+
+    memcpy(ptr, szExampleXML, lstrlenA(szExampleXML));
+    hr = SafeArrayUnlock(V_ARRAY(&src));
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_load(doc, src, &b);
+    EXPECT_HR(hr, S_OK);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+
+    hr = IXMLDOMDocument_selectNodes(doc, _bstr_("//*"), &list);
+    EXPECT_HR(hr, S_OK);
+    bstr2 = _bstr_(list_to_string(list));
+
+    hr = IXMLDOMNodeList_reset(list);
+    EXPECT_HR(hr, S_OK);
+
+    ok(lstrcmpW(bstr1, bstr2) == 0, "strings not equal: %s : %s\n",
+       wine_dbgstr_w(bstr1), wine_dbgstr_w(bstr2));
+
+    IXMLDOMDocument_Release(doc);
+    IXMLDOMNodeList_Release(list);
+    VariantClear(&src);
+
+    /* UTF-16 isn't accepted */
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    V_ARRAY(&src) = SafeArrayCreateVector(VT_UI1, 0, lstrlenW(szComplete1) * sizeof(WCHAR));
+    V_VT(&src) = VT_ARRAY|VT_UI1;
+    ok(V_ARRAY(&src) != NULL, "SafeArrayCreateVector() returned NULL\n");
+    ptr = NULL;
+    hr = SafeArrayAccessData(V_ARRAY(&src), &ptr);
+    EXPECT_HR(hr, S_OK);
+    ok(ptr != NULL, "SafeArrayAccessData() returned NULL\n");
+
+    memcpy(ptr, szComplete1, lstrlenW(szComplete1) * sizeof(WCHAR));
+    hr = SafeArrayUnlock(V_ARRAY(&src));
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_load(doc, src, &b);
+    todo_wine EXPECT_HR(hr, S_FALSE);
+    todo_wine ok(b == VARIANT_FALSE, "got %d\n", b);
+
+    VariantClear(&src);
+
+    /* it doesn't like it as a VT_ARRAY|VT_UI2 either */
+    V_ARRAY(&src) = SafeArrayCreateVector(VT_UI2, 0, lstrlenW(szComplete1));
+    V_VT(&src) = VT_ARRAY|VT_UI2;
+    ok(V_ARRAY(&src) != NULL, "SafeArrayCreateVector() returned NULL\n");
+    ptr = NULL;
+    hr = SafeArrayAccessData(V_ARRAY(&src), &ptr);
+    EXPECT_HR(hr, S_OK);
+    ok(ptr != NULL, "SafeArrayAccessData() returned NULL\n");
+
+    memcpy(ptr, szComplete1, lstrlenW(szComplete1) * sizeof(WCHAR));
+    hr = SafeArrayUnlock(V_ARRAY(&src));
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_load(doc, src, &b);
+    todo_wine EXPECT_HR(hr, E_INVALIDARG);
+    ok(b == VARIANT_FALSE, "got %d\n", b);
+
+    VariantClear(&src);
+    IXMLDOMDocument_Release(doc);
+
     free_bstrs();
 }
 

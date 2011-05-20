@@ -2113,6 +2113,8 @@ static HRESULT WINAPI domdoc_load(
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&source));
 
+    if (!isSuccessful)
+        return E_POINTER;
     *isSuccessful = VARIANT_FALSE;
 
     assert( &This->node );
@@ -2125,6 +2127,51 @@ static HRESULT WINAPI domdoc_load(
     case VT_BSTR|VT_BYREF:
         if (!V_BSTRREF(&source)) return E_INVALIDARG;
         filename = *V_BSTRREF(&source);
+        break;
+    case VT_ARRAY|VT_UI1:
+        {
+            SAFEARRAY *psa = V_ARRAY(&source);
+            char *str;
+            LONG len;
+            UINT dim = SafeArrayGetDim(psa);
+
+            switch (dim)
+            {
+            case 0:
+                ERR("SAFEARRAY == NULL\n");
+                hr = This->error = E_INVALIDARG;
+                break;
+            case 1:
+                /* Only takes UTF-8 strings.
+                 * NOT NULL-terminated. */
+                SafeArrayAccessData(psa, (void**)&str);
+                SafeArrayGetUBound(psa, 1, &len);
+
+                if ((xmldoc = doparse(This, str, ++len, XML_CHAR_ENCODING_UTF8)))
+                {
+                    hr = This->error = S_OK;
+                    *isSuccessful = VARIANT_TRUE;
+                    TRACE("parsed document %p\n", xmldoc);
+                }
+                else
+                {
+                    This->error = E_FAIL;
+                    TRACE("failed to parse document\n");
+                }
+
+                SafeArrayUnaccessData(psa);
+
+                if(xmldoc)
+                {
+                    xmldoc->_private = create_priv();
+                    return attach_xmldoc(This, xmldoc);
+                }
+                break;
+            default:
+                FIXME("unhandled SAFEARRAY dim: %d\n", dim);
+                hr = This->error = E_NOTIMPL;
+            }
+        }
         break;
     case VT_UNKNOWN:
         hr = IUnknown_QueryInterface(V_UNKNOWN(&source), &IID_IXMLDOMDocument3, (void**)&pNewDoc);
