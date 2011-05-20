@@ -762,6 +762,10 @@ BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
         r = msi_get_property_int( package->db, szInstalled, 0 ) != 0;
         break;
 
+    case MSIRUNMODE_ROLLBACKENABLED:
+        r = msi_get_property_int( package->db, szRollbackDisabled, 0 ) == 0;
+        break;
+
     case MSIRUNMODE_REBOOTATEND:
         r = package->need_reboot;
         break;
