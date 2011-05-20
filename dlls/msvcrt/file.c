@@ -2605,36 +2605,47 @@ int CDECL MSVCRT_ferror(MSVCRT_FILE* file)
  */
 int CDECL MSVCRT__filbuf(MSVCRT_FILE* file)
 {
-  /* Allocate buffer if needed */
-  if(file->_bufsiz == 0 && !(file->_flag & MSVCRT__IONBF) ) {
-	msvcrt_alloc_buffer(file);
-  }
-  if(!(file->_flag & MSVCRT__IOREAD)) {
-	if(file->_flag & MSVCRT__IORW) {
-		file->_flag |= MSVCRT__IOREAD;
-	} else {
-		return MSVCRT_EOF;
-	}
-  }
-  if(file->_flag & MSVCRT__IONBF) {
-	unsigned char c;
-        int r;
-  	if ((r = read_i(file->_file,&c,1)) != 1) {
-            file->_flag |= (r == 0) ? MSVCRT__IOEOF : MSVCRT__IOERR;
+    unsigned char c;
+    MSVCRT__lock_file(file);
+
+    /* Allocate buffer if needed */
+    if(file->_bufsiz == 0 && !(file->_flag & MSVCRT__IONBF))
+        msvcrt_alloc_buffer(file);
+
+    if(!(file->_flag & MSVCRT__IOREAD)) {
+        if(file->_flag & MSVCRT__IORW)
+            file->_flag |= MSVCRT__IOREAD;
+        else {
+            MSVCRT__unlock_file(file);
             return MSVCRT_EOF;
-	}
-  	return c;
-  } else {
-	file->_cnt = read_i(file->_file, file->_base, file->_bufsiz);
-	if(file->_cnt<=0) {
+        }
+    }
+
+    if(file->_flag & MSVCRT__IONBF) {
+        int r;
+        if ((r = read_i(file->_file,&c,1)) != 1) {
+            file->_flag |= (r == 0) ? MSVCRT__IOEOF : MSVCRT__IOERR;
+            MSVCRT__unlock_file(file);
+            return MSVCRT_EOF;
+        }
+
+        MSVCRT__unlock_file(file);
+        return c;
+    } else {
+        file->_cnt = read_i(file->_file, file->_base, file->_bufsiz);
+        if(file->_cnt<=0) {
             file->_flag |= (file->_cnt == 0) ? MSVCRT__IOEOF : MSVCRT__IOERR;
             file->_cnt = 0;
+            MSVCRT__unlock_file(file);
             return MSVCRT_EOF;
-	}
-	file->_cnt--;
-	file->_ptr = file->_base+1;
-	return *(unsigned char *)file->_base;
-  }
+        }
+
+        file->_cnt--;
+        file->_ptr = file->_base+1;
+        c = *(unsigned char *)file->_base;
+        MSVCRT__unlock_file(file);
+        return c;
+    }
 }
 
 /*********************************************************************
