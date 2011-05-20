@@ -335,6 +335,14 @@ static void free_parameter(D3DXHANDLE handle, BOOL element, BOOL child)
                 if (*(IUnknown **)param->data) IUnknown_Release(*(IUnknown **)param->data);
                 break;
 
+            case D3DXPT_SAMPLER:
+            case D3DXPT_SAMPLER1D:
+            case D3DXPT_SAMPLER2D:
+            case D3DXPT_SAMPLER3D:
+            case D3DXPT_SAMPLERCUBE:
+                /* Todo: free sampler */
+                break;
+
             default:
                 FIXME("Unhandled type %s\n", debug_d3dxparameter_type(param->type));
                 break;
@@ -1210,27 +1218,53 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetValue(ID3DXBaseEffect *iface, D3DXH
 
     if (!param) param = get_parameter_by_name(This, NULL, parameter);
 
-    if (data && param && param->data && param->bytes <= bytes)
+    /* samplers don't touch data */
+    if (param->class == D3DXPC_OBJECT && (param->type == D3DXPT_SAMPLER
+            || param->type == D3DXPT_SAMPLER1D || param->type == D3DXPT_SAMPLER2D
+            || param->type == D3DXPT_SAMPLER3D || param->type == D3DXPT_SAMPLERCUBE))
     {
-        if (param->type == D3DXPT_VERTEXSHADER || param->type == D3DXPT_PIXELSHADER
-                || param->type == D3DXPT_TEXTURE || param->type == D3DXPT_TEXTURE1D
-                || param->type == D3DXPT_TEXTURE2D || param->type ==  D3DXPT_TEXTURE3D
-                || param->type == D3DXPT_TEXTURECUBE)
-        {
-            UINT i;
+        TRACE("Sampler: returning E_FAIL\n");
+        return E_FAIL;
+    }
 
-            for (i = 0; i < (param->element_count ? param->element_count : 1); ++i)
-            {
-                IUnknown *unk = ((IUnknown **)param->data)[i];
-                if (unk) IUnknown_AddRef(unk);
-                ((IUnknown **)data)[i] = unk;
-            }
-        }
-        else
+    if (data && param && param->bytes <= bytes)
+    {
+        TRACE("Type %s\n", debug_d3dxparameter_type(param->type));
+
+        switch (param->type)
         {
-            TRACE("Copy %u bytes\n", param->bytes);
-            memcpy(data, param->data, param->bytes);
+            case D3DXPT_VOID:
+            case D3DXPT_BOOL:
+            case D3DXPT_INT:
+            case D3DXPT_FLOAT:
+            case D3DXPT_STRING:
+                break;
+
+            case D3DXPT_VERTEXSHADER:
+            case D3DXPT_PIXELSHADER:
+            case D3DXPT_TEXTURE:
+            case D3DXPT_TEXTURE1D:
+            case D3DXPT_TEXTURE2D:
+            case D3DXPT_TEXTURE3D:
+            case D3DXPT_TEXTURECUBE:
+            {
+                UINT i;
+
+                for (i = 0; i < (param->element_count ? param->element_count : 1); ++i)
+                {
+                    IUnknown *unk = ((IUnknown **)param->data)[i];
+                    if (unk) IUnknown_AddRef(unk);
+                }
+                break;
+            }
+
+            default:
+                FIXME("Unhandled type %s\n", debug_d3dxparameter_type(param->type));
+                break;
         }
+
+        TRACE("Copy %u bytes\n", param->bytes);
+        memcpy(data, param->data, param->bytes);
         return D3D_OK;
     }
 
@@ -3336,7 +3370,7 @@ static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value, cons
         {
             struct d3dx_parameter *member = get_parameter_struct(param->member_handles[i]);
 
-            hr = d3dx9_parse_value(member, (char *)value + old_size, ptr);
+            hr = d3dx9_parse_value(member, value ? (char *)value + old_size : NULL, ptr);
             if (hr != D3D_OK)
             {
                 WARN("Failed to parse value\n");
@@ -3393,6 +3427,25 @@ static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value, cons
                     param->data = value;
                     break;
 
+                case D3DXPT_SAMPLER:
+                case D3DXPT_SAMPLER1D:
+                case D3DXPT_SAMPLER2D:
+                case D3DXPT_SAMPLER3D:
+                case D3DXPT_SAMPLERCUBE:
+                {
+                    UINT state_count;
+
+                    read_dword(ptr, &state_count);
+                    TRACE("Count: %u\n", state_count);
+
+                    for (i = 0; i < state_count; ++i)
+                    {
+                        /* Todo: parse states */
+                        skip_dword_unknown(ptr, 4);
+                    }
+                    break;
+                }
+
                 default:
                     FIXME("Unhandled type %s\n", debug_d3dxparameter_type(param->type));
                     break;
@@ -3415,15 +3468,18 @@ static HRESULT d3dx9_parse_init_value(struct d3dx_parameter *param, const char *
 
     TRACE("param size: %u\n", size);
 
-    value = HeapAlloc(GetProcessHeap(), 0, size);
-    if (!value)
+    if (size)
     {
-        ERR("Failed to allocate data memory.\n");
-        return E_OUTOFMEMORY;
-    }
+        value = HeapAlloc(GetProcessHeap(), 0, size);
+        if (!value)
+        {
+            ERR("Failed to allocate data memory.\n");
+            return E_OUTOFMEMORY;
+        }
 
-    TRACE("Data: %s.\n", debugstr_an(ptr, size));
-    memcpy(value, ptr, size);
+        TRACE("Data: %s.\n", debugstr_an(ptr, size));
+        memcpy(value, ptr, size);
+    }
 
     hr = d3dx9_parse_value(param, value, &ptr);
     if (hr != D3D_OK)
@@ -3612,6 +3668,14 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
                     case D3DXPT_TEXTURE3D:
                     case D3DXPT_TEXTURECUBE:
                         param->bytes = sizeof(LPDIRECT3DBASETEXTURE9);
+                        break;
+
+                    case D3DXPT_SAMPLER:
+                    case D3DXPT_SAMPLER1D:
+                    case D3DXPT_SAMPLER2D:
+                    case D3DXPT_SAMPLER3D:
+                    case D3DXPT_SAMPLERCUBE:
+                        param->bytes = 0;
                         break;
 
                     default:
