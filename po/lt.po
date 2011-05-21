@@ -6,14 +6,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-05-19 22:50+0300\n"
+"PO-Revision-Date: 2011-05-23 19:33+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Virtaal 0.7.0-beta4\n"
+"X-Generator: Virtaal 0.7.0-rc1\n"
 "X-Project-Style: default\n"
 
 #: appwiz.rc:28
@@ -280,23 +280,23 @@ msgstr "Kaštoninė"
 
 #: comdlg32.rc:133 wordpad.rc:116
 msgid "Green"
-msgstr "Žalia"
+msgstr "Tamsiai žalia"
 
 #: comdlg32.rc:134 wordpad.rc:117
 msgid "Olive"
-msgstr "Alyvinė"
+msgstr "Tamsiai geltona"
 
 #: comdlg32.rc:135 wordpad.rc:118
 msgid "Navy"
-msgstr "Ultramarinas"
+msgstr "Tamsiai mėlyna"
 
 #: comdlg32.rc:136 wordpad.rc:119
 msgid "Purple"
-msgstr "Purpurinė"
+msgstr "Violetinė"
 
 #: comdlg32.rc:137 wordpad.rc:120
 msgid "Teal"
-msgstr "Neutrali ciano"
+msgstr "Tamsiai žydra"
 
 #: comdlg32.rc:138 wordpad.rc:121
 msgid "Gray"
@@ -312,7 +312,7 @@ msgstr "Raudona"
 
 #: comdlg32.rc:141 wordpad.rc:124
 msgid "Lime"
-msgstr "Gelsvai žalsva"
+msgstr "Žalia"
 
 #: comdlg32.rc:142 wordpad.rc:125
 msgid "Yellow"
@@ -324,7 +324,7 @@ msgstr "Mėlyna"
 
 #: comdlg32.rc:144 wordpad.rc:127
 msgid "Fuchsia"
-msgstr "Fuksija"
+msgstr "Purpurinė"
 
 #: comdlg32.rc:145 wordpad.rc:128
 msgid "Aqua"
@@ -8418,18 +8418,18 @@ msgstr "Įvedimo eilutė per ilga.\n"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr ""
+msgstr "Naudojimas: hostname\n"
 
 #: hostname.rc:28
-#, fuzzy
 msgid "Error: Invalid option '%c'.\n"
-msgstr "Klaida: Netinkamas rakto vardas\n"
+msgstr "Klaida: netinkamas parametras „%c“.\n"
 
 #: hostname.rc:29
 msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
 msgstr ""
+"Klaida: su programa „hostname“ neįmanoma nustatyti kompiuterio vardo.\n"
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
