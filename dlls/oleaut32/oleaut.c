@@ -599,8 +599,11 @@ ULONG WINAPI OaBuildVersion(void)
     case 0x80000a04:  /* WIN98 */
     case 0x00000004:  /* NT40 */
     case 0x00000005:  /* W2K */
-    case 0x00000105:  /* WinXP */
 		return MAKELONG(0xffff, 40);
+    case 0x00000105:  /* WinXP */
+    case 0x00000006:  /* Vista */
+    case 0x00000106:  /* Win7 */
+		return MAKELONG(0xffff, 50);
     default:
 		FIXME("Version value not known yet. Please investigate it !\n");
 		return MAKELONG(0xffff, 40);  /* for now return the same value as for w2k */
