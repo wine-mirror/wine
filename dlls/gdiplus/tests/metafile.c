@@ -40,9 +40,14 @@ typedef struct emfplus_check_state
 
 static void check_record(int count, const char *desc, const struct emfplus_record *expected, const struct emfplus_record *actual)
 {
-    ok(expected->record_type == actual->record_type,
-        "%s.%i: Expected record type 0x%x, got 0x%x\n", desc, count,
-        expected->record_type, actual->record_type);
+    if (expected->todo)
+        todo_wine ok(expected->record_type == actual->record_type,
+            "%s.%i: Expected record type 0x%x, got 0x%x\n", desc, count,
+            expected->record_type, actual->record_type);
+    else
+        ok(expected->record_type == actual->record_type,
+            "%s.%i: Expected record type 0x%x, got 0x%x\n", desc, count,
+            expected->record_type, actual->record_type);
 }
 
 typedef struct EmfPlusRecordHeader
@@ -130,7 +135,10 @@ static void check_emfplus(HENHMETAFILE hemf, const emfplus_record *expected, con
 
     EnumEnhMetaFile(0, hemf, enum_emf_proc, &state, NULL);
 
-    ok(expected[state.count].record_type == 0, "%s: Got %i records, expecting more\n", desc, state.count);
+    if (expected[state.count].todo)
+        todo_wine ok(expected[state.count].record_type == 0, "%s: Got %i records, expecting more\n", desc, state.count);
+    else
+        ok(expected[state.count].record_type == 0, "%s: Got %i records, expecting more\n", desc, state.count);
 }
 
 static BOOL CALLBACK enum_metafile_proc(EmfPlusRecordType record_type, unsigned int flags,
@@ -180,7 +188,10 @@ static void check_metafile(GpMetafile *metafile, const emfplus_record *expected,
         3, src_rect, src_unit, enum_metafile_proc, &state, NULL);
     expect(Ok, stat);
 
-    ok(expected[state.count].record_type == 0, "%s: Got %i records, expecting more\n", desc, state.count);
+    if (expected[state.count].todo)
+        todo_wine ok(expected[state.count].record_type == 0, "%s: Got %i records, expecting more\n", desc, state.count);
+    else
+        ok(expected[state.count].record_type == 0, "%s: Got %i records, expecting more\n", desc, state.count);
 
     GdipDeleteGraphics(graphics);
 
@@ -264,6 +275,89 @@ static void test_empty(void)
     ok(ret != 0, "Failed to delete enhmetafile %p\n", hemf);
 }
 
+static const emfplus_record getdc_records[] = {
+    {0, EMR_HEADER},
+    {0, EmfPlusRecordTypeHeader},
+    {1, EmfPlusRecordTypeGetDC},
+    {1, EMR_CREATEBRUSHINDIRECT},
+    {1, EMR_SELECTOBJECT},
+    {0, EMR_RECTANGLE},
+    {0, EMR_SELECTOBJECT},
+    {0, EMR_DELETEOBJECT},
+    {0, EmfPlusRecordTypeEndOfFile},
+    {0, EMR_EOF},
+    {0}
+};
+
+static void test_getdc(void)
+{
+    GpStatus stat;
+    GpMetafile *metafile;
+    GpGraphics *graphics;
+    HDC hdc, metafile_dc;
+    HENHMETAFILE hemf;
+    BOOL ret;
+    static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
+    static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
+    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
+    HBRUSH hbrush, holdbrush;
+
+    hdc = CreateCompatibleDC(0);
+
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(Ok, stat);
+
+    DeleteDC(hdc);
+
+    if (stat != Ok)
+        return;
+
+    stat = GdipGetHemfFromMetafile(metafile, &hemf);
+    expect(InvalidParameter, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipGetDC(graphics, &metafile_dc);
+    expect(Ok, stat);
+
+    if (stat != Ok)
+    {
+        GdipDeleteGraphics(graphics);
+        GdipDisposeImage((GpImage*)metafile);
+        return;
+    }
+
+    hbrush = CreateSolidBrush(0xff0000);
+
+    holdbrush = SelectObject(metafile_dc, hbrush);
+
+    Rectangle(metafile_dc, 25, 25, 75, 75);
+
+    SelectObject(metafile_dc, holdbrush);
+
+    DeleteObject(hbrush);
+
+    stat = GdipReleaseDC(graphics, metafile_dc);
+    expect(Ok, stat);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    check_metafile(metafile, getdc_records, "getdc metafile", dst_points, &frame, UnitPixel);
+
+    stat = GdipGetHemfFromMetafile(metafile, &hemf);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
+
+    check_emfplus(hemf, getdc_records, "getdc emf");
+
+    ret = DeleteEnhMetaFile(hemf);
+    ok(ret != 0, "Failed to delete enhmetafile %p\n", hemf);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -277,6 +371,7 @@ START_TEST(metafile)
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     test_empty();
+    test_getdc();
 
     GdiplusShutdown(gdiplusToken);
 }
