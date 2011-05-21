@@ -6,14 +6,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-05-23 19:33+0300\n"
+"PO-Revision-Date: 2011-06-14 20:36+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Virtaal 0.7.0-rc1\n"
+"X-Generator: Virtaal 0.7.0-rc2\n"
 "X-Project-Style: default\n"
 
 #: appwiz.rc:28
@@ -6004,11 +6004,7 @@ msgstr "Lentelė"
 #: shdoclc.rc:100 shell32.rc:82
 #, fuzzy
 msgid "&Select"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Pažymėti\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"Iš&rinkti"
+msgstr "&Parinkti"
 
 #: shdoclc.rc:102
 msgid "&Cell"
@@ -8414,11 +8410,11 @@ msgstr "Įvedimo eilutė per ilga.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
-msgstr ""
+msgstr "DirectX diagnostikos įrankis"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
-msgstr ""
+msgstr "Naudojimas: dxdiag [/whql:off | /whql:on] [/t failas | /x failas]"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
@@ -9302,13 +9298,8 @@ msgid "Status &Bar"
 msgstr "&Būsenos juosta"
 
 #: regedit.rc:67 winefile.rc:50
-#, fuzzy
 msgid "Sp&lit"
-msgstr ""
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Skaidyti\n"
-"#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
-"&Polangių skirtukas"
+msgstr "Po&langių skirtukas"
 
 #: regedit.rc:74
 msgid "&Remove Favorite..."
