@@ -55,6 +55,8 @@ typedef BOOL (CALLBACK * ImageAbort)(VOID *);
 typedef ImageAbort DrawImageAbort;
 typedef ImageAbort GetThumbnailImageAbort;
 
+typedef BOOL (CALLBACK * EnumerateMetafileProc)(EmfPlusRecordType,UINT,UINT,const BYTE*,VOID*);
+
 #ifdef __cplusplus
 }
 #endif

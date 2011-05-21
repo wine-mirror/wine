@@ -198,7 +198,7 @@
 198 stub GdipEnumerateMetafileDestRectI
 199 stub GdipEnumerateMetafileSrcRectDestPoint
 200 stub GdipEnumerateMetafileSrcRectDestPointI
-201 stub GdipEnumerateMetafileSrcRectDestPoints
+201 stdcall GdipEnumerateMetafileSrcRectDestPoints(ptr ptr ptr long ptr long ptr ptr ptr)
 202 stub GdipEnumerateMetafileSrcRectDestPointsI
 203 stub GdipEnumerateMetafileSrcRectDestRect
 204 stub GdipEnumerateMetafileSrcRectDestRectI

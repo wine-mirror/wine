@@ -322,3 +322,22 @@ GpStatus WINGDIPAPI GdipGetHemfFromMetafile(GpMetafile *metafile, HENHMETAFILE *
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics *graphics,
+    GDIPCONST GpMetafile *metafile, GDIPCONST GpPointF *destPoints, INT count,
+    GDIPCONST GpRectF *srcRect, Unit srcUnit, EnumerateMetafileProc callback,
+    VOID *callbackData, GDIPCONST GpImageAttributes *imageAttributes)
+{
+    FIXME("(%p,%p,%p,%i,%p,%i,%p,%p,%p): stub\n", graphics, metafile,
+        destPoints, count, srcRect, srcUnit, callback, callbackData,
+        imageAttributes);
+
+    if (!graphics || !metafile || !destPoints || count != 3 || !srcRect)
+        return InvalidParameter;
+
+    TRACE("%s %i -> %s %s %s\n", debugstr_rectf(srcRect), srcUnit,
+        debugstr_pointf(&destPoints[0]), debugstr_pointf(&destPoints[1]),
+        debugstr_pointf(&destPoints[2]));
+
+    return NotImplemented;
+}

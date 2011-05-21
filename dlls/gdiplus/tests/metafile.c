@@ -140,6 +140,61 @@ static void check_emfplus(HENHMETAFILE hemf, const emfplus_record *expected, con
     ok(expected[state.count].record_type == 0, "%s: Got %i records, expecting more\n", desc, state.count);
 }
 
+static BOOL CALLBACK enum_metafile_proc(EmfPlusRecordType record_type, unsigned int flags,
+    unsigned int dataSize, const unsigned char *pStr, void *userdata)
+{
+    emfplus_check_state *state = (emfplus_check_state*)userdata;
+    emfplus_record actual;
+
+    actual.todo = 0;
+    actual.record_type = record_type;
+    actual.is_emfplus = ((record_type & GDIP_EMFPLUS_RECORD_BASE) == GDIP_EMFPLUS_RECORD_BASE);
+
+    if (dataSize == 0)
+        ok(pStr == NULL, "non-NULL pStr\n");
+
+    if (state->expected[state->count].record_type)
+    {
+        check_record(state->count, state->desc, &state->expected[state->count], &actual);
+
+        state->count++;
+    }
+    else
+    {
+        ok(0, "%s: Unexpected EMF 0x%x record\n", state->desc, record_type);
+    }
+
+    return TRUE;
+}
+
+static void check_metafile(GpMetafile *metafile, const emfplus_record *expected, const char *desc,
+    const GpPointF *dst_points, const GpRectF *src_rect, Unit src_unit)
+{
+    GpStatus stat;
+    HDC hdc;
+    GpGraphics *graphics;
+    emfplus_check_state state;
+
+    state.desc = desc;
+    state.count = 0;
+    state.expected = expected;
+
+    hdc = CreateCompatibleDC(0);
+
+    stat = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipEnumerateMetafileSrcRectDestPoints(graphics, metafile, dst_points,
+        3, src_rect, src_unit, enum_metafile_proc, &state, NULL);
+    todo_wine expect(Ok, stat);
+
+    todo_wine ok(expected[state.count].record_type == 0, "%s: Got %i records, expecting more\n", desc, state.count);
+
+    GdipDeleteGraphics(graphics);
+
+    DeleteDC(hdc);
+}
+
 static const emfplus_record empty_records[] = {
     {0, EMR_HEADER, 0},
     {0, EmfPlusRecordTypeHeader, 1},
@@ -157,6 +212,7 @@ static void test_empty(void)
     HENHMETAFILE hemf, dummy;
     BOOL ret;
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
+    static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
     static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
 
     hdc = CreateCompatibleDC(0);
@@ -199,6 +255,8 @@ static void test_empty(void)
     stat = GdipDeleteGraphics(graphics);
     expect(Ok, stat);
 
+    check_metafile(metafile, empty_records, "empty metafile", dst_points, &frame, UnitPixel);
+
     stat = GdipGetHemfFromMetafile(metafile, &hemf);
     expect(Ok, stat);
 
@@ -208,7 +266,7 @@ static void test_empty(void)
     stat = GdipDisposeImage((GpImage*)metafile);
     expect(Ok, stat);
 
-    check_emfplus(hemf, empty_records, "empty");
+    check_emfplus(hemf, empty_records, "empty emf");
 
     ret = DeleteEnhMetaFile(hemf);
     ok(ret != 0, "Failed to delete enhmetafile %p\n", hemf);
