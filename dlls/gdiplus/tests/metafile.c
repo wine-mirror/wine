@@ -29,7 +29,6 @@ typedef struct emfplus_record
 {
     ULONG todo;
     ULONG record_type;
-    int is_emfplus;
 } emfplus_record;
 
 typedef struct emfplus_check_state
@@ -43,10 +42,6 @@ static void check_record(int count, const char *desc, const struct emfplus_recor
 {
     ok(expected->record_type == actual->record_type,
         "%s.%i: Expected record type 0x%x, got 0x%x\n", desc, count,
-        expected->record_type, actual->record_type);
-
-    ok(expected->is_emfplus == actual->is_emfplus,
-        "%s.%i: Expected is_emfplus %i, got %i\n", desc, count,
         expected->record_type, actual->record_type);
 }
 
@@ -89,7 +84,6 @@ static int CALLBACK enum_emf_proc(HDC hDC, HANDLETABLE *lpHTable, const ENHMETAR
                 {
                     actual.todo = 0;
                     actual.record_type = record->Type;
-                    actual.is_emfplus = 1;
 
                     check_record(state->count, state->desc, &state->expected[state->count], &actual);
 
@@ -113,7 +107,6 @@ static int CALLBACK enum_emf_proc(HDC hDC, HANDLETABLE *lpHTable, const ENHMETAR
     {
         actual.todo = 0;
         actual.record_type = lpEMFR->iType;
-        actual.is_emfplus = 0;
 
         check_record(state->count, state->desc, &state->expected[state->count], &actual);
 
@@ -148,7 +141,6 @@ static BOOL CALLBACK enum_metafile_proc(EmfPlusRecordType record_type, unsigned 
 
     actual.todo = 0;
     actual.record_type = record_type;
-    actual.is_emfplus = ((record_type & GDIP_EMFPLUS_RECORD_BASE) == GDIP_EMFPLUS_RECORD_BASE);
 
     if (dataSize == 0)
         ok(pStr == NULL, "non-NULL pStr\n");
@@ -196,10 +188,10 @@ static void check_metafile(GpMetafile *metafile, const emfplus_record *expected,
 }
 
 static const emfplus_record empty_records[] = {
-    {0, EMR_HEADER, 0},
-    {0, EmfPlusRecordTypeHeader, 1},
-    {0, EmfPlusRecordTypeEndOfFile, 1},
-    {0, EMR_EOF, 0},
+    {0, EMR_HEADER},
+    {0, EmfPlusRecordTypeHeader},
+    {0, EmfPlusRecordTypeEndOfFile},
+    {0, EMR_EOF},
     {0}
 };
 
