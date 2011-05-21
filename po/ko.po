@@ -369,7 +369,7 @@ msgstr ""
 
 #: comdlg32.rc:77
 msgid "A printer error occurred."
-msgstr "프린터 에러 발생."
+msgstr "프린터 오류 발생."
 
 #: comdlg32.rc:78
 msgid "No default printer defined."
@@ -385,7 +385,7 @@ msgstr "메모리 부족"
 
 #: comdlg32.rc:81
 msgid "An error occurred."
-msgstr "에러 발생."
+msgstr "오류 발생."
 
 #: comdlg32.rc:82
 msgid "Unknown printer driver."
@@ -433,7 +433,7 @@ msgstr "정지; "
 
 #: comdlg32.rc:95
 msgid "Error; "
-msgstr "에러; "
+msgstr "오류; "
 
 #: comdlg32.rc:96
 msgid "Pending deletion; "
@@ -2207,7 +2207,7 @@ msgstr "높음(&H)"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
-msgstr "객페를 기본 형식으로 변환하는 중에 에러 발생"
+msgstr "객페를 기본 형식으로 변환하는 중에 오류 발생"
 
 #: jscript.rc:26
 msgid "Invalid procedure call or argument"
@@ -2235,7 +2235,7 @@ msgstr "인수는 옵션이 아닙니다"
 
 #: jscript.rc:32
 msgid "Syntax error"
-msgstr "문법 에러"
+msgstr "문법 오류"
 
 #: jscript.rc:33
 msgid "Expected ';'"
@@ -2295,7 +2295,7 @@ msgstr "JScript 객체가 필요함"
 
 #: jscript.rc:47
 msgid "Syntax error in regular expression"
-msgstr "정규 표현식에 문법에러가 있음"
+msgstr "정규 표현식에 문법오류가 있음"
 
 #: jscript.rc:48
 msgid "URI to be encoded contains invalid characters"
@@ -2403,7 +2403,7 @@ msgstr "잘못된 명령\n"
 
 #: winerror.mc:141
 msgid "CRC error\n"
-msgstr "CRC 에러\n"
+msgstr "CRC 오류\n"
 
 #: winerror.mc:146
 msgid "Bad length\n"
@@ -2411,7 +2411,7 @@ msgstr "나쁜 길이\n"
 
 #: winerror.mc:151 winerror.mc:526
 msgid "Seek error\n"
-msgstr "찾기 에러\n"
+msgstr "찾기 오류\n"
 
 #: winerror.mc:156
 msgid "Not DOS disk\n"
@@ -2491,7 +2491,7 @@ msgstr "명령이 너무 많습니다\n"
 
 #: winerror.mc:251
 msgid "Adaptor hardware error\n"
-msgstr "어댑터 하드웨어 에러\n"
+msgstr "어댑터 하드웨어 오류\n"
 
 #: winerror.mc:256
 msgid "Bad network response\n"
@@ -2499,7 +2499,7 @@ msgstr "나쁜 네트워크 반응\n"
 
 #: winerror.mc:261
 msgid "Unexpected network error\n"
-msgstr "예기치 않은 네트워크 에러\n"
+msgstr "예기치 않은 네트워크 오류\n"
 
 #: winerror.mc:266
 msgid "Bad remote adaptor\n"
@@ -2943,7 +2943,7 @@ msgstr "Ring 2 스택은 이미 사용중입니다\n"
 
 #: winerror.mc:826
 msgid "Error in use of filename wildcards\n"
-msgstr "파일이름의 와일드카드 사용 에러\n"
+msgstr "파일이름의 와일드카드 사용 오류\n"
 
 #: winerror.mc:831
 msgid "Invalid signal number\n"
@@ -2951,7 +2951,7 @@ msgstr "올바르지 않은 시그널 번호\n"
 
 #: winerror.mc:836
 msgid "Error setting signal handler\n"
-msgstr "시그널 핸들러 설정 에러\n"
+msgstr "시그널 핸들러 설정 오류\n"
 
 #: winerror.mc:841
 msgid "Segment locked\n"
@@ -3095,7 +3095,7 @@ msgstr "메모리 위치에 접근할 수 없습니다\n"
 
 #: winerror.mc:1016
 msgid "Swap error\n"
-msgstr "스왑 에러\n"
+msgstr "스왑 오류\n"
 
 #: winerror.mc:1021
 msgid "Stack overflow\n"
@@ -3247,7 +3247,7 @@ msgstr "데이터베이스가 존재하지 않습니다\n"
 
 #: winerror.mc:1206
 msgid "Service-specific error\n"
-msgstr "서비스-의존적인 에러\n"
+msgstr "서비스-의존적인 오류\n"
 
 #: winerror.mc:1211
 msgid "Process aborted\n"
@@ -3387,7 +3387,7 @@ msgstr "이 작업을 종료하지 않음\n"
 
 #: winerror.mc:1381
 msgid "I/O device error\n"
-msgstr "입출력 장치 에러\n"
+msgstr "입출력 장치 오류\n"
 
 #: winerror.mc:1386
 msgid "No serial devices found\n"
@@ -3415,7 +3415,7 @@ msgstr "플로피가 잘몫된 실린더를 보고함\n"
 
 #: winerror.mc:1416
 msgid "Unknown floppy error\n"
-msgstr "알 수 없는 플로피 에러\n"
+msgstr "알 수 없는 플로피 오류\n"
 
 #: winerror.mc:1421
 msgid "Floppy registers inconsistent\n"
@@ -3619,7 +3619,7 @@ msgstr "컨테이너가 아님\n"
 
 #: winerror.mc:1671
 msgid "Extended error\n"
-msgstr "확장된 에러\n"
+msgstr "확장된 오류\n"
 
 #: winerror.mc:1676
 msgid "Invalid group name\n"
@@ -4035,7 +4035,7 @@ msgstr "내부 데이터베이스 손상\n"
 
 #: winerror.mc:2196
 msgid "Internal error\n"
-msgstr "내부 에러\n"
+msgstr "내부 오류\n"
 
 #: winerror.mc:2201
 msgid "Generic access types not mapped\n"
@@ -4131,7 +4131,7 @@ msgstr "비밀이 너무 김\n"
 
 #: winerror.mc:2316
 msgid "Internal security DB error\n"
-msgstr "내부 보안 ID 에러\n"
+msgstr "내부 보안 ID 오류\n"
 
 #: winerror.mc:2321
 msgid "Too many context IDs\n"
@@ -4731,7 +4731,7 @@ msgstr "RPC 호출 실패 그리고 실행못함\n"
 
 #: winerror.mc:3071
 msgid "RPC protocol error\n"
-msgstr "RPC  프로토콜 에러\n"
+msgstr "RPC  프로토콜 오류\n"
 
 #: winerror.mc:3076
 msgid "Unsupported transfer syntax\n"
@@ -4867,7 +4867,7 @@ msgstr "가능한 보안 컨텍스가 없음\n"
 
 #: winerror.mc:3246
 msgid "RPCInternal error\n"
-msgstr "RPC 내부 에러\n"
+msgstr "RPC 내부 오류\n"
 
 #: winerror.mc:3251
 msgid "RPC divide-by-zero\n"
@@ -4875,7 +4875,7 @@ msgstr "RPC 0으로 나눔\n"
 
 #: winerror.mc:3256
 msgid "Address error\n"
-msgstr "주소 에러\n"
+msgstr "주소 오류\n"
 
 #: winerror.mc:3261
 msgid "Floating-point divide-by-zero\n"
@@ -5091,7 +5091,7 @@ msgstr "어떤 등록된 주요 이름이 없음\n"
 
 #: winerror.mc:3526
 msgid "Not an RPC error\n"
-msgstr "RPC 에러가 아닙\n"
+msgstr "RPC 오류가 아닙\n"
 
 #: winerror.mc:3531
 msgid "UUID is local only\n"
@@ -5099,7 +5099,7 @@ msgstr "UUID는 오직 로컬에서만 가능합니다\n"
 
 #: winerror.mc:3536
 msgid "Security package error\n"
-msgstr "보안 패키지 에러\n"
+msgstr "보안 패키지 오류\n"
 
 #: winerror.mc:3541
 msgid "Thread not cancelled\n"
@@ -6646,7 +6646,7 @@ msgstr "새 폴더를 만들 수 없습니다: 만들 권한이 없습니다."
 
 #: shell32.rc:155
 msgid "Error during creation of a new folder"
-msgstr "새 폴더를 만드는 과정에서 에러발생"
+msgstr "새 폴더를 만드는 과정에서 오류발생"
 
 #: shell32.rc:156
 msgid "Confirm file deletion"
@@ -6723,11 +6723,11 @@ msgstr "Wine 제어판"
 
 #: shell32.rc:179
 msgid "Unable to display Run File dialog box (internal error)"
-msgstr "파일 실행 대화 상자를 보여줄수 없습니다(내부 에러)"
+msgstr "파일 실행 대화 상자를 보여줄수 없습니다(내부 오류)"
 
 #: shell32.rc:180
 msgid "Unable to display Browse dialog box (internal error)"
-msgstr "찾기 대화 상자를 보여 줄 수 없습니다(내부 에러)"
+msgstr "찾기 대화 상자를 보여 줄 수 없습니다(내부 오류)"
 
 #: shell32.rc:182
 msgid "Executable files (*.exe)"
@@ -6829,7 +6829,7 @@ msgstr "다음(&T)\tCtrl-F6"
 
 #: user32.rc:68 regedit.rc:176 winefile.rc:100
 msgid "Error"
-msgstr "에러"
+msgstr "오류"
 
 #: user32.rc:69
 msgid "&More Windows..."
@@ -6862,7 +6862,7 @@ msgstr "지정된 명령이 실행되었습니다."
 
 #: winmm.rc:29
 msgid "Undefined external error."
-msgstr "알수 없는 외부 에러."
+msgstr "알수 없는 외부 오류."
 
 #: winmm.rc:30
 msgid "A device ID has been used that is out of range for your system."
@@ -6905,7 +6905,7 @@ msgstr ""
 
 #: winmm.rc:37
 msgid "An error number was specified that is not defined in the system."
-msgstr "이 에러 넘버는 시스템에서 정의되지 않았습니다."
+msgstr "이 오류 넘버는 시스템에서 정의되지 않았습니다."
 
 #: winmm.rc:38
 msgid "An invalid flag was passed to a system function."
@@ -7032,7 +7032,7 @@ msgstr ""
 #: winmm.rc:63
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
-msgstr "이 지정된 장치 드라이버를 불러오는 중에 감지되지 않은 에러가 있습니다."
+msgstr "이 지정된 장치 드라이버를 불러오는 중에 감지되지 않은 오류가 있습니다."
 
 #: winmm.rc:64
 msgid "No command was specified."
@@ -7098,7 +7098,7 @@ msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
 msgstr ""
-"이것은 장치 드라이버 문제입니다. 드라이버가 닫혔습니다. 에러에 접근 할 수 없"
+"이것은 장치 드라이버 문제입니다. 드라이버가 닫혔습니다. 오류에 접근 할 수 없"
 "습니다."
 
 #: winmm.rc:76
@@ -7110,7 +7110,7 @@ msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
 msgstr ""
-"하나나 더 많은 장치에서 에러 발생. 장치가 발생시키는 에러를 처리 할수 있도록 "
+"하나나 더 많은 장치에서 오류 발생. 장치가 발생시키는 오류를 처리 할수 있도록 "
 "각가의 장치에 명령을 지정하십시오."
 
 #: winmm.rc:78
@@ -7398,7 +7398,7 @@ msgstr ""
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."
-msgstr "지정된 포트에 에러가 발생했습니다."
+msgstr "지정된 포트에 오류가 발생했습니다."
 
 #: winmm.rc:129
 msgid ""
@@ -7458,11 +7458,11 @@ msgstr "성공"
 
 #: wldap32.rc:28
 msgid "Operations Error"
-msgstr "작업 에러"
+msgstr "작업 오류"
 
 #: wldap32.rc:29
 msgid "Protocol Error"
-msgstr "프로토콜 에러"
+msgstr "프로토콜 오류"
 
 #: wldap32.rc:30
 msgid "Time Limit Exceeded"
@@ -7586,7 +7586,7 @@ msgstr "정렬 제어가 빠졌습니다"
 
 #: wldap32.rc:88
 msgid "Index range error"
-msgstr "인덱스 범위 에러"
+msgstr "인덱스 범위 오류"
 
 #: wldap32.rc:91
 msgid "Naming Violation"
@@ -7630,15 +7630,15 @@ msgstr "서바 다운"
 
 #: wldap32.rc:109
 msgid "Local Error"
-msgstr "로컬 에러"
+msgstr "로컬 오류"
 
 #: wldap32.rc:110
 msgid "Encoding Error"
-msgstr "인코딩 에러"
+msgstr "인코딩 오류"
 
 #: wldap32.rc:111
 msgid "Decoding Error"
-msgstr "디코딩 에러"
+msgstr "디코딩 오류"
 
 #: wldap32.rc:112
 msgid "Timeout"
@@ -7650,7 +7650,7 @@ msgstr "알수 없는 인증"
 
 #: wldap32.rc:114
 msgid "Filter Error"
-msgstr "필터 에러"
+msgstr "필터 오류"
 
 #: wldap32.rc:115
 msgid "User Cancelled"
@@ -7658,7 +7658,7 @@ msgstr "사용자가 취소함"
 
 #: wldap32.rc:116
 msgid "Parameter Error"
-msgstr "매개변수 에러"
+msgstr "매개변수 오류"
 
 #: wldap32.rc:117
 msgid "No Memory"
@@ -8077,7 +8077,7 @@ msgid ""
 "if redirected). No check is made that the file is readable text.\n"
 msgstr ""
 "TYPE <파일이름>  <파일 이름>를 콘솔 장치로 복사 (만약 방향이 재정의 된다면\n"
-"어디나). 아무 에러가 없으면 그 파일을 읽을 수 있는 텍스트입니다.\n"
+"어디나). 아무 오류가 없으면 그 파일을 읽을 수 있는 텍스트입니다.\n"
 
 #: cmd.rc:201
 msgid ""
@@ -8257,7 +8257,7 @@ msgstr "인수가 없습니다\n"
 
 #: cmd.rc:265
 msgid "Syntax error\n"
-msgstr "문법 에러\n"
+msgstr "문법 오류\n"
 
 #: cmd.rc:266
 msgid "%s: File Not Found\n"
@@ -8322,7 +8322,7 @@ msgstr "검증(Verify)은 반드시 ON 이나 OFF가 되어야 합니다.\n"
 
 #: cmd.rc:281
 msgid "Parameter error\n"
-msgstr "매개변수 에러\n"
+msgstr "매개변수 오류\n"
 
 #: cmd.rc:282
 msgid ""
@@ -8368,18 +8368,18 @@ msgstr "이 출력 줄은 너무 깁니다.\n"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr ""
+msgstr "사용법:hostname\n"
 
 #: hostname.rc:28
-#, fuzzy
 msgid "Error: Invalid option '%c'.\n"
-msgstr "에러: 올바르지 않은 키 이름\n"
+msgstr "오류: 올바르지 않은 옵션 '%c'.\n"
 
 #: hostname.rc:29
 msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
 msgstr ""
+"오류: hostname유틸리티를  사용해서 시스템 호스트이름을 설정할 수 없습니다.\n"
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
@@ -8387,7 +8387,7 @@ msgstr "사용법: ipconfig [ /? | /all ]\n"
 
 #: ipconfig.rc:28
 msgid "Error: Unknown or invalid command line parameters specified\n"
-msgstr "에러: 알수 없거나 올바르지 않은 명령어 라인 매개변수가 지정됨\n"
+msgstr "오류: 알수 없거나 올바르지 않은 명령어 라인 매개변수가 지정됨\n"
 
 #: ipconfig.rc:29
 msgid "%s adapter %s\n"
@@ -8632,7 +8632,7 @@ msgstr "메모장"
 
 #: notepad.rc:69 progman.rc:61 winhlp32.rc:79
 msgid "ERROR"
-msgstr "에러!!"
+msgstr "오류!!"
 
 #: notepad.rc:70 progman.rc:62 winhlp32.rc:80
 msgid "WARNING"
@@ -8978,7 +8978,7 @@ msgstr "CoGetClassObject 실패."
 
 #: oleview.rc:143
 msgid "Unknown error"
-msgstr "알수 없는 에러"
+msgstr "알수 없는 오류"
 
 #: oleview.rc:146
 msgid "bytes"
@@ -9090,11 +9090,11 @@ msgstr "구현되지 않았음"
 
 #: progman.rc:68
 msgid "Error reading `%s'."
-msgstr "`%s' 읽기 에러."
+msgstr "`%s' 읽기 오류."
 
 #: progman.rc:69
 msgid "Error writing `%s'."
-msgstr "`%s' 쓰기 에러."
+msgstr "`%s' 쓰기 오류."
 
 #: progman.rc:72
 msgid ""
@@ -9169,20 +9169,20 @@ msgstr "작업이 성공적으로 끝났습니다\n"
 
 #: reg.rc:32
 msgid "Error: Invalid key name\n"
-msgstr "에러: 올바르지 않은 키 이름\n"
+msgstr "오류: 올바르지 않은 키 이름\n"
 
 #: reg.rc:33
 msgid "Error: Invalid command line parameters\n"
-msgstr "에러:올바르지 않은 명령라인 매개변수\n"
+msgstr "오류:올바르지 않은 명령라인 매개변수\n"
 
 #: reg.rc:34
 msgid "Error: Unable to add keys to remote machine\n"
-msgstr "에러: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
 
 #: reg.rc:35
 msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
-msgstr "에러: 이 시스템에서 지정된 레지스트리 키나 값을 찾을수 없습니다\n"
+msgstr "오류: 이 시스템에서 지정된 레지스트리 키나 값을 찾을수 없습니다\n"
 
 #: regedit.rc:31
 msgid "&Registry"
@@ -9555,23 +9555,23 @@ msgstr "사용법: taskkill [/?] [/f] [/im 프로세스이름 | /pid 프로세�
 
 #: taskkill.rc:28
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr "에러: 알수 없거나 올바르지 않은 명령라인 옵션이 지정되었습니다.\n"
+msgstr "오류: 알수 없거나 올바르지 않은 명령라인 옵션이 지정되었습니다.\n"
 
 #: taskkill.rc:29
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr "에러: 올바르지 않은 명령어 라인 옵션이 지정되었습니다.\n"
+msgstr "오류: 올바르지 않은 명령어 라인 옵션이 지정되었습니다.\n"
 
 #: taskkill.rc:30
 msgid "Error: One of options /im or /pid must be specified.\n"
-msgstr "에러: /im 니 /pid  옵션중의 하나는 반드시 지정되어야합니다.\n"
+msgstr "오류: /im 니 /pid  옵션중의 하나는 반드시 지정되어야합니다.\n"
 
 #: taskkill.rc:31
 msgid "Error: Option %s expects a command line parameter.\n"
-msgstr "에러: 롭션 %s 는 하나의 명령어라인 매개변수가 올것으로 예상합니다.\n"
+msgstr "오류: 롭션 %s 는 하나의 명령어라인 매개변수가 올것으로 예상합니다.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr "에러:  /im 와 /pid 옵션은 같이 사용할 수 없습니다.\n"
+msgstr "오류:  /im 와 /pid 옵션은 같이 사용할 수 없습니다.\n"
 
 #: taskkill.rc:33
 msgid "Close message sent to top-level windows of process with PID %u.\n"
@@ -9592,19 +9592,19 @@ msgstr "PID %u 의 프로세스 \"%s\" 는 강제로 종료되엇습니다.\n"
 
 #: taskkill.rc:37
 msgid "Error: Could not find process \"%s\".\n"
-msgstr "에러: 프로세스 \"%s\"를 찾을 수 없습니다.\n"
+msgstr "오류: 프로세스 \"%s\"를 찾을 수 없습니다.\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr "에러: 프로세스 목록을 열거 할 수 업습니다.\n"
+msgstr "오류: 프로세스 목록을 열거 할 수 업습니다.\n"
 
 #: taskkill.rc:39
 msgid "Error: Unable to terminate process \"%s\".\n"
-msgstr "에러: \"%s\" 프로세스를 중단시킬 수 없습니다.\n"
+msgstr "오류: \"%s\" 프로세스를 중단시킬 수 없습니다.\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr "에러: 프로세스 자가 종료는 허용되지 않습니다.\n"
+msgstr "오류: 프로세스 자가 종료는 허용되지 않습니다.\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -10124,7 +10124,7 @@ msgstr "고정"
 
 #: taskmgr.rc:329
 msgid "Err"
-msgstr "에러"
+msgstr "오류"
 
 #: taskmgr.rc:330
 msgid "Warn"
@@ -10621,7 +10621,7 @@ msgstr "설치 - 현재 설정"
 
 #: wineconsole.rc:38
 msgid "Configuration error"
-msgstr "설정 에러"
+msgstr "설정 오류"
 
 #: wineconsole.rc:39
 msgid "Screen buffer size must be greater or equal to the window's one"
@@ -10708,7 +10708,7 @@ msgstr "Wine 프로그램 충돌"
 
 #: winedbg.rc:36
 msgid "Internal errors - invalid parameters received"
-msgstr "내부 에러 -올바르지 않은 매개변수가 들어옴"
+msgstr "내부 오류 -올바르지 않은 매개변수가 들어옴"
 
 #: winedbg.rc:37
 msgid "(unidentified)"
@@ -10808,7 +10808,7 @@ msgstr "글꼴 설정 적용"
 
 #: winefile.rc:94
 msgid "Error while selecting new font."
-msgstr "새 글꼴 선택 에러."
+msgstr "새 글꼴 선택 오류."
 
 #: winefile.rc:99
 msgid "Wine File Manager"
@@ -11382,7 +11382,7 @@ msgstr ""
 "[/U]  이미 대상 디렉토리에 존재하는 파일만 복사\n"
 "[/R]  읽기 전용 파일도 덮어 쓰기\n"
 "[/H]  숨은 파일이나 시스템 파일도 포함해서 복사\n"
-"[/C]  복사하는 동안에 에러가 발생해도 계속 진행\n"
+"[/C]  복사하는 동안에 오류가 발생해도 계속 진행\n"
 "[/A]  오직 압축 속성이 설정되어있는 파일만 복사\n"
 "[/M]  오직 압축 속성을 제거하면서  압축 속성이 설정되어있는\n"
 "\t파일만 복사\n"
