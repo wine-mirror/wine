@@ -3730,3 +3730,13 @@ VOID WINAPI ApplicationRecoveryFinished(BOOL success)
     FIXME(": stub\n");
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 }
+
+/**********************************************************************
+ *           ApplicationRecoveryInProgress     (KERNEL32.@)
+ */
+HRESULT WINAPI ApplicationRecoveryInProgress(PBOOL canceled)
+{
+    FIXME(":%p stub\n", canceled);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return E_FAIL;
+}
