@@ -3711,6 +3711,7 @@ DEP_SYSTEM_POLICY_TYPE WINAPI GetSystemDEPPolicy(void)
     FIXME("stub\n");
     return OptIn;
 }
+
 /**********************************************************************
  *           SetProcessDEPPolicy     (KERNEL32.@)
  */
@@ -3719,4 +3720,13 @@ BOOL WINAPI SetProcessDEPPolicy(DWORD newDEP)
     FIXME("(%d): stub\n", newDEP);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
+}
+
+/**********************************************************************
+ *           ApplicationRecoveryFinished     (KERNEL32.@)
+ */
+VOID WINAPI ApplicationRecoveryFinished(BOOL success)
+{
+    FIXME(": stub\n");
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 }
