@@ -178,9 +178,9 @@ static void check_metafile(GpMetafile *metafile, const emfplus_record *expected,
 
     stat = GdipEnumerateMetafileSrcRectDestPoints(graphics, metafile, dst_points,
         3, src_rect, src_unit, enum_metafile_proc, &state, NULL);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
-    todo_wine ok(expected[state.count].record_type == 0, "%s: Got %i records, expecting more\n", desc, state.count);
+    ok(expected[state.count].record_type == 0, "%s: Got %i records, expecting more\n", desc, state.count);
 
     GdipDeleteGraphics(graphics);
 

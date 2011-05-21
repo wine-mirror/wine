@@ -323,21 +323,84 @@ GpStatus WINGDIPAPI GdipGetHemfFromMetafile(GpMetafile *metafile, HENHMETAFILE *
     return Ok;
 }
 
+struct enum_metafile_data
+{
+    EnumerateMetafileProc callback;
+    void *callback_data;
+};
+
+static int CALLBACK enum_metafile_proc(HDC hDC, HANDLETABLE *lpHTable, const ENHMETARECORD *lpEMFR,
+    int nObj, LPARAM lpData)
+{
+    BOOL ret;
+    struct enum_metafile_data *data = (struct enum_metafile_data*)lpData;
+    const BYTE* pStr;
+
+    /* First check for an EMF+ record. */
+    if (lpEMFR->iType == EMR_GDICOMMENT)
+    {
+        const EMRGDICOMMENT *comment = (const EMRGDICOMMENT*)lpEMFR;
+
+        if (comment->cbData >= 4 && memcmp(comment->Data, "EMF+", 4) == 0)
+        {
+            int offset = 4;
+
+            while (offset + sizeof(EmfPlusRecordHeader) <= comment->cbData)
+            {
+                const EmfPlusRecordHeader *record = (const EmfPlusRecordHeader*)&comment->Data[offset];
+
+                if (record->DataSize)
+                    pStr = (const BYTE*)(record+1);
+                else
+                    pStr = NULL;
+
+                ret = data->callback(record->Type, record->Flags, record->DataSize,
+                    pStr, data->callback_data);
+
+                if (!ret)
+                    return 0;
+
+                offset += record->Size;
+            }
+
+            return 1;
+        }
+    }
+
+    if (lpEMFR->nSize != 8)
+        pStr = (const BYTE*)lpEMFR->dParm;
+    else
+        pStr = NULL;
+
+    return data->callback(lpEMFR->iType, 0, lpEMFR->nSize-8,
+        pStr, data->callback_data);
+}
+
 GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics *graphics,
     GDIPCONST GpMetafile *metafile, GDIPCONST GpPointF *destPoints, INT count,
     GDIPCONST GpRectF *srcRect, Unit srcUnit, EnumerateMetafileProc callback,
     VOID *callbackData, GDIPCONST GpImageAttributes *imageAttributes)
 {
-    FIXME("(%p,%p,%p,%i,%p,%i,%p,%p,%p): stub\n", graphics, metafile,
+    struct enum_metafile_data data;
+
+    TRACE("(%p,%p,%p,%i,%p,%i,%p,%p,%p)\n", graphics, metafile,
         destPoints, count, srcRect, srcUnit, callback, callbackData,
         imageAttributes);
 
     if (!graphics || !metafile || !destPoints || count != 3 || !srcRect)
         return InvalidParameter;
 
+    if (!metafile->hemf)
+        return InvalidParameter;
+
     TRACE("%s %i -> %s %s %s\n", debugstr_rectf(srcRect), srcUnit,
         debugstr_pointf(&destPoints[0]), debugstr_pointf(&destPoints[1]),
         debugstr_pointf(&destPoints[2]));
 
-    return NotImplemented;
+    data.callback = callback;
+    data.callback_data = callbackData;
+
+    EnumEnhMetaFile(0, metafile->hemf, enum_metafile_proc, &data, NULL);
+
+    return Ok;
 }
