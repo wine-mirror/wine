@@ -20,7 +20,7 @@ EXTRA_OBJS = build.res $(TESTBINS:.exe=.res)
 @MAKE_PROG_RULES@
 
 clean::
-	$(RM) build.rc build.nfo winetest-dist.exe $(TESTBINS)
+	$(RM) build.rc build.nfo $(TESTBINS)
 
 build.rc: dummy
 	build="BUILD_INFO STRINGRES build.nfo STRINGTABLE { 1 \"`GIT_DIR=$(top_srcdir)/.git git rev-parse HEAD 2>/dev/null`\" }" && (echo $$build | cmp -s - $@) || echo $$build >$@ || ($(RM) $@ && exit 1)
@@ -29,13 +29,3 @@ build.nfo:
 	-$(CC) -v 2>$@
 
 build.res: build.nfo
-
-# Rules for building distributable executable
-
-.PHONY: dist
-
-dist: winetest-dist.exe$(DLLEXT)
-
-winetest-dist.exe$(DLLEXT): winetest.exe$(DLLEXT)
-	cp winetest.exe$(DLLEXT) $@
-	-upx -9 -qqq $@
