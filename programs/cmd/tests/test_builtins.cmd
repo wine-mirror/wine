@@ -78,6 +78,22 @@ if /i not foo==FOO echo if /i seems to be broken
 if /I foo==FOO echo if /I seems to work
 if /I not foo==FOO echo if /I seems to be broken
 
+echo -----------Testing del /a-----------
+del /f/q *.test > nul
+echo r > r.test
+attrib +r r.test
+echo not-r > not-r.test
+
+if not exist not-r.test echo not-r.test not found before delete, bad
+del /a:-r *.test
+if not exist not-r.test echo not-r.test not found after delete, good
+
+if not exist r.test echo r.test not found before delete, bad
+if exist r.test echo r.test found before delete, good
+del /a:r *.test
+if not exist r.test echo r.test not found after delete, good
+if exist r.test echo r.test found after delete, bad
+
 echo -----------Testing GOTO-----------
 if a==a goto dest1
 :dest1

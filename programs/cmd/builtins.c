@@ -712,9 +712,10 @@ BOOL WCMD_delete (WCHAR *command, BOOL expectDir) {
               /* Only proceed if ok to */
               if (ok) {
 
-                /* If file is read only, and /F supplied, delete it */
+                /* If file is read only, and /A:r or /F supplied, delete it */
                 if (fd.dwFileAttributes & FILE_ATTRIBUTE_READONLY &&
-                    strstrW (quals, parmF) != NULL) {
+                    ((wanted_attrs & FILE_ATTRIBUTE_READONLY) ||
+                    strstrW (quals, parmF) != NULL)) {
                     SetFileAttributesW(fpath, fd.dwFileAttributes & ~FILE_ATTRIBUTE_READONLY);
                 }
 
