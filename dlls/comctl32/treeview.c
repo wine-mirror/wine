@@ -33,7 +33,7 @@
  *
  *   missing styles: TVS_FULLROWSELECT, TVS_INFOTIP, TVS_RTLREADING,
  *
- *   missing item styles: TVIS_CUT, TVIS_EXPANDPARTIAL, TVIS_EX_FLAT,
+ *   missing item styles: TVIS_EXPANDPARTIAL, TVIS_EX_FLAT,
  *      TVIS_EX_DISABLED
  *
  *   Make the insertion mark look right.
@@ -2601,12 +2601,14 @@ TREEVIEW_DrawItem(const TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *item)
 
 	if (infoPtr->himlNormal)
 	{
-	    int ovlIdx = item->state & TVIS_OVERLAYMASK;
+            UINT style = item->state & TVIS_CUT ? ILD_SELECTED : ILD_NORMAL;
 
-	    ImageList_Draw(infoPtr->himlNormal, imageIndex, hdc,
-			   item->imageOffset,
-			   centery - infoPtr->normalImageHeight / 2,
-			   ILD_NORMAL | ovlIdx);
+            style |= item->state & TVIS_OVERLAYMASK;
+
+            ImageList_DrawEx(infoPtr->himlNormal, imageIndex, hdc,
+                         item->imageOffset, centery - infoPtr->normalImageHeight / 2,
+                         0, 0, infoPtr->clrBk, item->state & TVIS_CUT ? GETBKCOLOR(infoPtr->clrBk) : CLR_DEFAULT,
+                         style);
 	}
     }
 
