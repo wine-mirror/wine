@@ -978,6 +978,7 @@
 @ stdcall RegSetValueExW(long wstr long long ptr long) advapi32.RegSetValueExW
 @ stdcall RegUnLoadKeyA(long str) advapi32.RegUnLoadKeyA
 @ stdcall RegUnLoadKeyW(long wstr) advapi32.RegUnLoadKeyW
+@ stdcall RegisterApplicationRecoveryCallback(ptr ptr long long)
 @ stdcall RegisterApplicationRestart(wstr long)
 @ stub RegisterConsoleIME
 @ stub RegisterConsoleOS2
