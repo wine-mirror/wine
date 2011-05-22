@@ -532,6 +532,53 @@ void WCMD_create_dir (void) {
     if (!create_full_path(param1)) WCMD_print_error ();
 }
 
+/* Parse the /A options given by the user on the commandline
+ * into a bitmask of wanted attributes (*wantSet),
+ * and a bitmask of unwanted attributes (*wantClear).
+ */
+static void WCMD_delete_parse_attributes(DWORD *wantSet, DWORD *wantClear) {
+    static const WCHAR parmA[] = {'/','A','\0'};
+    WCHAR *p;
+
+    /* both are strictly 'out' parameters */
+    *wantSet=0;
+    *wantClear=0;
+
+    /* For each /A argument */
+    for (p=strstrW(quals, parmA); p != NULL; p=strstrW(p, parmA)) {
+        /* Skip /A itself */
+        p += 2;
+
+        /* Skip optional : */
+        if (*p == ':') p++;
+
+        /* For each of the attribute specifier chars to this /A option */
+        for (; *p != 0 && *p != '/'; p++) {
+            BOOL negate = FALSE;
+            DWORD mask  = 0;
+
+            if (*p == '-') {
+                negate=TRUE;
+                p++;
+            }
+
+            /* Convert the attribute specifier to a bit in one of the masks */
+            switch (*p) {
+            case 'R': mask = FILE_ATTRIBUTE_READONLY; break;
+            case 'H': mask = FILE_ATTRIBUTE_HIDDEN;   break;
+            case 'S': mask = FILE_ATTRIBUTE_SYSTEM;   break;
+            case 'A': mask = FILE_ATTRIBUTE_ARCHIVE;  break;
+            default:
+                WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
+            }
+            if (negate)
+                *wantClear |= mask;
+            else
+                *wantSet |= mask;
+        }
+    }
+}
+
 /****************************************************************************
  * WCMD_delete
  *
@@ -551,11 +598,14 @@ BOOL WCMD_delete (WCHAR *command, BOOL expectDir) {
     int   argsProcessed = 0;
     WCHAR *argN          = command;
     BOOL  foundAny      = FALSE;
-    static const WCHAR parmA[] = {'/','A','\0'};
     static const WCHAR parmQ[] = {'/','Q','\0'};
     static const WCHAR parmP[] = {'/','P','\0'};
     static const WCHAR parmS[] = {'/','S','\0'};
     static const WCHAR parmF[] = {'/','F','\0'};
+    DWORD wanted_attrs;
+    DWORD unwanted_attrs;
+
+    WCMD_delete_parse_attributes(&wanted_attrs, &unwanted_attrs);
 
     /* If not recursing, clear error flag */
     if (expectDir) errorlevel = 0;
@@ -644,64 +694,11 @@ BOOL WCMD_delete (WCHAR *command, BOOL expectDir) {
             }
             else strcpyW (fpath, fd.cFileName);
             if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-              BOOL  ok = TRUE;
-              WCHAR *nextA = strstrW (quals, parmA);
+              BOOL ok;
 
               /* Handle attribute matching (/A) */
-              if (nextA != NULL) {
-                ok = FALSE;
-                while (nextA != NULL && !ok) {
-
-                  WCHAR *thisA = (nextA+2);
-                  BOOL  stillOK = TRUE;
-
-                  /* Skip optional : */
-                  if (*thisA == ':') thisA++;
-
-                  /* Parse each of the /A[:]xxx in turn */
-                  while (*thisA && *thisA != '/') {
-                    BOOL negate    = FALSE;
-                    BOOL attribute = FALSE;
-
-                    /* Match negation of attribute first */
-                    if (*thisA == '-') {
-                      negate=TRUE;
-                      thisA++;
-                    }
-
-                    /* Match attribute */
-                    switch (*thisA) {
-                    case 'R': attribute = (fd.dwFileAttributes & FILE_ATTRIBUTE_READONLY);
-                              break;
-                    case 'H': attribute = (fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN);
-                              break;
-                    case 'S': attribute = (fd.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM);
-                              break;
-                    case 'A': attribute = (fd.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE);
-                              break;
-                    default:
-                        WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
-                    }
-
-                    /* Now check result, keeping a running boolean about whether it
-                       matches all parsed attributes so far                         */
-                    if (attribute && !negate) {
-                        stillOK = stillOK;
-                    } else if (!attribute && negate) {
-                        stillOK = stillOK;
-                    } else {
-                        stillOK = FALSE;
-                    }
-                    thisA++;
-                  }
-
-                  /* Save the running total as the final result */
-                  ok = stillOK;
-
-                  /* Step on to next /A set */
-                  nextA = strstrW (nextA+1, parmA);
-                }
-              }
+              ok =  ((fd.dwFileAttributes & wanted_attrs) == wanted_attrs)
+                 && ((fd.dwFileAttributes & unwanted_attrs) == 0);
 
               /* /P means prompt for each file */
               if (ok && strstrW (quals, parmP) != NULL) {
