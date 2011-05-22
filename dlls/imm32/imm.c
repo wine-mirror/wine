@@ -1154,7 +1154,7 @@ static INT CopyCompAttrIMEtoClient(InputContextData *data, LPBYTE source, INT sl
     return rc;
 }
 
-static INT CopyCompClauseIMEtoClient(InputContextData *data, LPBYTE source, INT slen, LPBYTE ssource, INT sslen,
+static INT CopyCompClauseIMEtoClient(InputContextData *data, LPBYTE source, INT slen, LPBYTE ssource,
                                      LPBYTE target, INT tlen, BOOL unicode )
 {
     INT rc;
@@ -1265,13 +1265,13 @@ static LONG ImmGetCompositionStringT( HIMC hIMC, DWORD dwIndex, LPVOID lpBuf,
     case GCS_COMPCLAUSE:
         TRACE("GCS_COMPCLAUSE\n");
         rc = CopyCompClauseIMEtoClient(data, compdata + compstr->dwCompClauseOffset,compstr->dwCompClauseLen,
-                                       compdata + compstr->dwCompStrOffset, compstr->dwCompStrLen,
+                                       compdata + compstr->dwCompStrOffset,
                                        lpBuf, dwBufLen, unicode);
         break;
     case GCS_RESULTCLAUSE:
         TRACE("GCS_RESULTCLAUSE\n");
         rc = CopyCompClauseIMEtoClient(data, compdata + compstr->dwResultClauseOffset,compstr->dwResultClauseLen,
-                                       compdata + compstr->dwResultStrOffset, compstr->dwResultStrLen,
+                                       compdata + compstr->dwResultStrOffset,
                                        lpBuf, dwBufLen, unicode);
         break;
     case GCS_RESULTREADSTR:
@@ -1281,7 +1281,7 @@ static LONG ImmGetCompositionStringT( HIMC hIMC, DWORD dwIndex, LPVOID lpBuf,
     case GCS_RESULTREADCLAUSE:
         TRACE("GCS_RESULTREADCLAUSE\n");
         rc = CopyCompClauseIMEtoClient(data, compdata + compstr->dwResultReadClauseOffset,compstr->dwResultReadClauseLen,
-                                       compdata + compstr->dwResultStrOffset, compstr->dwResultStrLen,
+                                       compdata + compstr->dwResultStrOffset,
                                        lpBuf, dwBufLen, unicode);
         break;
     case GCS_COMPREADSTR:
@@ -1297,7 +1297,7 @@ static LONG ImmGetCompositionStringT( HIMC hIMC, DWORD dwIndex, LPVOID lpBuf,
     case GCS_COMPREADCLAUSE:
         TRACE("GCS_COMPREADCLAUSE\n");
         rc = CopyCompClauseIMEtoClient(data, compdata + compstr->dwCompReadClauseOffset,compstr->dwCompReadClauseLen,
-                                       compdata + compstr->dwCompStrOffset, compstr->dwCompStrLen,
+                                       compdata + compstr->dwCompStrOffset,
                                        lpBuf, dwBufLen, unicode);
         break;
     case GCS_CURSORPOS:
