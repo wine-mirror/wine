@@ -395,9 +395,8 @@ wine_fn_config_test ()
     wine_fn_append_rule ALL_WINETEST_DEPENDS \
 "$ac_name.exe: \$(top_builddir)/$ac_dir/$ac_name.exe$DLLEXT
 	cp \$(top_builddir)/$ac_dir/$ac_name.exe$DLLEXT \$[@] && \$(STRIP) \$[@]
-$ac_name.rc:
-	echo \"$ac_name.exe TESTRES \\\"$ac_name.exe\\\"\" >\$[@] || (\$(RM) \$[@] && false)
-$ac_name.res: $ac_name.rc $ac_name.exe"
+$ac_name.res: $ac_name.exe
+	echo \"$ac_name.exe TESTRES \\\"$ac_name.exe\\\"\" | \$(LDPATH) \$(WRC) \$(RCFLAGS) -o \$[@]"
     wine_fn_all_dir_rules $ac_dir Maketest.rules
 
     AS_VAR_IF([enable_tests],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
