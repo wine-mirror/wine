@@ -49,6 +49,7 @@
 #include "winreg.h"
 #define USE_WS_PREFIX
 #include "winsock2.h"
+#include "winternl.h"
 #include "ws2ipdef.h"
 #include "iphlpapi.h"
 #include "ifenum.h"
@@ -2033,6 +2034,7 @@ DWORD WINAPI NotifyAddrChange(PHANDLE Handle, LPOVERLAPPED overlapped)
 {
   FIXME("(Handle %p, overlapped %p): stub\n", Handle, overlapped);
   if (Handle) *Handle = INVALID_HANDLE_VALUE;
+  if (overlapped) ((IO_STATUS_BLOCK *) overlapped)->u.Status = STATUS_PENDING;
   return ERROR_IO_PENDING;
 }
 

@@ -849,9 +849,9 @@ static void testNotifyAddrChange(void)
     ok(ret == ERROR_IO_PENDING, "NotifyAddrChange returned %d, expected ERROR_IO_PENDING\n", ret);
     todo_wine ok(handle != INVALID_HANDLE_VALUE, "NotifyAddrChange returned invalid file handle\n");
     success = GetOverlappedResult(handle, &overlapped, &bytes, FALSE);
-    todo_wine ok(success == FALSE, "GetOverlappedResult returned TRUE, expected FALSE\n");
+    ok(success == FALSE, "GetOverlappedResult returned TRUE, expected FALSE\n");
     ret = GetLastError();
-    todo_wine ok(ret == ERROR_IO_INCOMPLETE, "GetLastError returned %d, expected ERROR_IO_INCOMPLETE\n", ret);
+    ok(ret == ERROR_IO_INCOMPLETE, "GetLastError returned %d, expected ERROR_IO_INCOMPLETE\n", ret);
     success = gCancelIPChangeNotify(&overlapped);
     todo_wine ok(success == TRUE, "CancelIPChangeNotify returned FALSE, expected TRUE\n");
 
