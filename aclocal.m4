@@ -151,7 +151,6 @@ Makefile: Makefile.in Make.vars.in Make.rules config.status
 	@./config.status Make.tmp Makefile"
 
 ALL_POT_FILES=""
-AC_SUBST(ALL_WINETEST_DEPENDS,["# Test binaries"])
 AC_SUBST(ALL_TEST_BINARIES,"")
 
 wine_fn_append_file ()
@@ -392,19 +391,19 @@ wine_fn_config_test ()
     ac_dir=$[1]
     ac_name=$[2]
     wine_fn_append_file ALL_TEST_BINARIES $ac_name.exe
-    wine_fn_append_rule ALL_WINETEST_DEPENDS \
-"$ac_name.exe: \$(top_builddir)/$ac_dir/$ac_name.exe$DLLEXT
-	cp \$(top_builddir)/$ac_dir/$ac_name.exe$DLLEXT \$[@] && \$(STRIP) \$[@]
-$ac_name.res: $ac_name.exe
-	echo \"$ac_name.exe TESTRES \\\"$ac_name.exe\\\"\" | \$(LDPATH) \$(WRC) \$(RCFLAGS) -o \$[@]"
     wine_fn_all_dir_rules $ac_dir Maketest.rules
 
     AS_VAR_IF([enable_tests],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"all programs/winetest: $ac_dir
+"all $ac_dir/$ac_name.exe$DLLEXT: $ac_dir
 .PHONY: $ac_dir
 $ac_dir: $ac_dir/Makefile __builddeps__ dummy
 	@cd $ac_dir && \$(MAKE)
-test: $ac_dir/__test__
+programs/winetest/$ac_name.exe: $ac_dir/$ac_name.exe$DLLEXT
+	cp $ac_dir/$ac_name.exe$DLLEXT \$[@] && \$(STRIP) \$[@]
+programs/winetest/$ac_name.res: programs/winetest/$ac_name.exe
+	echo \"$ac_name.exe TESTRES \\\"programs/winetest/$ac_name.exe\\\"\" | \$(LDPATH) \$(WRC) \$(RCFLAGS) -o \$[@]
+programs/winetest: programs/winetest/$ac_name.res
+check test: $ac_dir/__test__
 .PHONY: $ac_dir/__test__
 $ac_dir/__test__: dummy
 	@cd $ac_dir && \$(MAKE) test

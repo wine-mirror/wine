@@ -39,5 +39,3 @@ dist: winetest-dist.exe$(DLLEXT)
 winetest-dist.exe$(DLLEXT): winetest.exe$(DLLEXT)
 	cp winetest.exe$(DLLEXT) $@
 	-upx -9 -qqq $@
-
-@ALL_WINETEST_DEPENDS@
