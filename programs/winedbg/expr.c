@@ -278,7 +278,6 @@ struct dbg_lvalue expr_eval(struct expr* exp)
     int		                        i;
     struct dbg_lvalue                   exp1;
     struct dbg_lvalue                   exp2;
-    unsigned int	                cexp[5];
     DWORD64	                        scale1, scale2, scale3;
     struct dbg_type                     type1, type2;
     DWORD                               tag;
@@ -397,6 +396,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         }
         break;
     case EXPR_TYPE_CALL:
+#if 0
         /*
          * First, evaluate all of the arguments.  If any of them are not
          * evaluable, then bail.
@@ -424,7 +424,6 @@ struct dbg_lvalue expr_eval(struct expr* exp)
             /* should never be here */
         }
 
-#if 0
         /* FIXME: NEWDBG NIY */
         /* Anyway, I wonder how this could work depending on the calling order of
          * the function (cdecl vs pascal for example)
