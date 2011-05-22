@@ -147,6 +147,25 @@ typedef struct
     WORD idCount;
 } ICONDIR;
 
+typedef struct
+{
+    WORD offset;
+    WORD length;
+    WORD flags;
+    WORD id;
+    WORD handle;
+    WORD usage;
+} NE_NAMEINFO;
+
+typedef struct
+{
+    WORD  type_id;
+    WORD  count;
+    DWORD resloader;
+} NE_TYPEINFO;
+
+#define NE_RSCTYPE_ICON        0x8003
+#define NE_RSCTYPE_GROUP_ICON  0x800e
 
 #include "poppack.h"
 
@@ -491,7 +510,99 @@ end:
     return hr;
 }
 
-static IStream *add_module_icons_to_stream(HMODULE hModule, GRPICONDIR *grpIconDir)
+struct IconData16 {
+    BYTE *fileBytes;
+    DWORD fileSize;
+    NE_TYPEINFO *iconResources;
+    WORD alignmentShiftCount;
+};
+
+static int populate_module16_icons(struct IconData16 *iconData16, GRPICONDIR *grpIconDir, ICONDIRENTRY *iconDirEntries, BYTE *icons, SIZE_T *iconOffset)
+{
+    int i, j;
+    int validEntries = 0;
+
+    for (i = 0; i < grpIconDir->idCount; i++)
+    {
+        BYTE *iconPtr = (BYTE*)iconData16->iconResources;
+        NE_NAMEINFO *matchingIcon = NULL;
+        iconPtr += sizeof(NE_TYPEINFO);
+        for (j = 0; j < iconData16->iconResources->count; j++)
+        {
+            NE_NAMEINFO *iconInfo = (NE_NAMEINFO*)iconPtr;
+            if ((((BYTE*)iconPtr) + sizeof(NE_NAMEINFO)) > (iconData16->fileBytes + iconData16->fileSize))
+            {
+                WINE_WARN("file too small for icon NE_NAMEINFO\n");
+                break;
+            }
+            if (iconInfo->id == (0x8000 | grpIconDir->idEntries[i].nID))
+            {
+                matchingIcon = iconInfo;
+                break;
+            }
+            iconPtr += sizeof(NE_NAMEINFO);
+        }
+
+        if (matchingIcon == NULL)
+            continue;
+        if (((matchingIcon->offset << iconData16->alignmentShiftCount) + grpIconDir->idEntries[i].dwBytesInRes) > iconData16->fileSize)
+        {
+            WINE_WARN("file too small for icon contents\n");
+            break;
+        }
+
+        iconDirEntries[validEntries].bWidth = grpIconDir->idEntries[i].bWidth;
+        iconDirEntries[validEntries].bHeight = grpIconDir->idEntries[i].bHeight;
+        iconDirEntries[validEntries].bColorCount = grpIconDir->idEntries[i].bColorCount;
+        iconDirEntries[validEntries].bReserved = grpIconDir->idEntries[i].bReserved;
+        iconDirEntries[validEntries].wPlanes = grpIconDir->idEntries[i].wPlanes;
+        iconDirEntries[validEntries].wBitCount = grpIconDir->idEntries[i].wBitCount;
+        iconDirEntries[validEntries].dwBytesInRes = grpIconDir->idEntries[i].dwBytesInRes;
+        iconDirEntries[validEntries].dwImageOffset = *iconOffset;
+        validEntries++;
+        memcpy(&icons[*iconOffset], &iconData16->fileBytes[matchingIcon->offset << iconData16->alignmentShiftCount], grpIconDir->idEntries[i].dwBytesInRes);
+        *iconOffset += grpIconDir->idEntries[i].dwBytesInRes;
+    }
+    return validEntries;
+}
+
+static int populate_module_icons(HMODULE hModule, GRPICONDIR *grpIconDir, ICONDIRENTRY *iconDirEntries, BYTE *icons, SIZE_T *iconOffset)
+{
+    int i;
+    int validEntries = 0;
+
+    for (i = 0; i < grpIconDir->idCount; i++)
+    {
+        HRSRC hResInfo;
+        LPCWSTR lpName = MAKEINTRESOURCEW(grpIconDir->idEntries[i].nID);
+        if ((hResInfo = FindResourceW(hModule, lpName, (LPCWSTR)RT_ICON)))
+        {
+            HGLOBAL hResData;
+            if ((hResData = LoadResource(hModule, hResInfo)))
+            {
+                BITMAPINFO *pIcon;
+                if ((pIcon = LockResource(hResData)))
+                {
+                    iconDirEntries[validEntries].bWidth = grpIconDir->idEntries[i].bWidth;
+                    iconDirEntries[validEntries].bHeight = grpIconDir->idEntries[i].bHeight;
+                    iconDirEntries[validEntries].bColorCount = grpIconDir->idEntries[i].bColorCount;
+                    iconDirEntries[validEntries].bReserved = grpIconDir->idEntries[i].bReserved;
+                    iconDirEntries[validEntries].wPlanes = grpIconDir->idEntries[i].wPlanes;
+                    iconDirEntries[validEntries].wBitCount = grpIconDir->idEntries[i].wBitCount;
+                    iconDirEntries[validEntries].dwBytesInRes = grpIconDir->idEntries[i].dwBytesInRes;
+                    iconDirEntries[validEntries].dwImageOffset = *iconOffset;
+                    validEntries++;
+                    memcpy(&icons[*iconOffset], pIcon, grpIconDir->idEntries[i].dwBytesInRes);
+                    *iconOffset += grpIconDir->idEntries[i].dwBytesInRes;
+                }
+                FreeResource(hResData);
+            }
+        }
+    }
+    return validEntries;
+}
+
+static IStream *add_module_icons_to_stream(struct IconData16 *iconData16, HMODULE hModule, GRPICONDIR *grpIconDir)
 {
     int i;
     SIZE_T iconsSize = 0;
@@ -529,34 +640,10 @@ static IStream *add_module_icons_to_stream(HMODULE hModule, GRPICONDIR *grpIconD
     }
 
     iconOffset = 0;
-    for (i = 0; i < grpIconDir->idCount; i++)
-    {
-        HRSRC hResInfo;
-        LPCWSTR lpName = MAKEINTRESOURCEW(grpIconDir->idEntries[i].nID);
-        if ((hResInfo = FindResourceW(hModule, lpName, (LPCWSTR)RT_ICON)))
-        {
-            HGLOBAL hResData;
-            if ((hResData = LoadResource(hModule, hResInfo)))
-            {
-                BITMAPINFO *pIcon;
-                if ((pIcon = LockResource(hResData)))
-                {
-                    iconDirEntries[validEntries].bWidth = grpIconDir->idEntries[i].bWidth;
-                    iconDirEntries[validEntries].bHeight = grpIconDir->idEntries[i].bHeight;
-                    iconDirEntries[validEntries].bColorCount = grpIconDir->idEntries[i].bColorCount;
-                    iconDirEntries[validEntries].bReserved = grpIconDir->idEntries[i].bReserved;
-                    iconDirEntries[validEntries].wPlanes = grpIconDir->idEntries[i].wPlanes;
-                    iconDirEntries[validEntries].wBitCount = grpIconDir->idEntries[i].wBitCount;
-                    iconDirEntries[validEntries].dwBytesInRes = grpIconDir->idEntries[i].dwBytesInRes;
-                    iconDirEntries[validEntries].dwImageOffset = iconOffset;
-                    validEntries++;
-                    memcpy(&icons[iconOffset], pIcon, grpIconDir->idEntries[i].dwBytesInRes);
-                    iconOffset += grpIconDir->idEntries[i].dwBytesInRes;
-                }
-                FreeResource(hResData);
-            }
-        }
-    }
+    if (iconData16)
+        validEntries = populate_module16_icons(iconData16, grpIconDir, iconDirEntries, icons, &iconOffset);
+    else if (hModule)
+        validEntries = populate_module_icons(hModule, grpIconDir, iconDirEntries, icons, &iconOffset);
 
     if (validEntries == 0)
     {
@@ -601,6 +688,137 @@ end:
     return stream;
 }
 
+static HRESULT open_module16_icon(LPCWSTR szFileName, int nIndex, IStream **ppStream)
+{
+    HANDLE hFile = INVALID_HANDLE_VALUE;
+    HANDLE hFileMapping = NULL;
+    DWORD fileSize;
+    BYTE *fileBytes = NULL;
+    IMAGE_DOS_HEADER *dosHeader;
+    IMAGE_OS2_HEADER *neHeader;
+    BYTE *rsrcTab;
+    NE_TYPEINFO *iconGroupResources;
+    NE_TYPEINFO *iconResources;
+    NE_NAMEINFO *iconDirPtr;
+    GRPICONDIR *iconDir;
+    WORD alignmentShiftCount;
+    struct IconData16 iconData16;
+    HRESULT hr = E_FAIL;
+
+    hFile = CreateFileW(szFileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+        OPEN_EXISTING, FILE_FLAG_RANDOM_ACCESS, NULL);
+    if (hFile == INVALID_HANDLE_VALUE)
+    {
+        WINE_WARN("opening %s failed with error %d\n", wine_dbgstr_w(szFileName), GetLastError());
+        goto end;
+    }
+
+    hFileMapping = CreateFileMappingW(hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL);
+    if (hFileMapping == NULL)
+    {
+        WINE_WARN("CreateFileMapping failed, error %d\n", GetLastError());
+        goto end;
+    }
+
+    fileSize = GetFileSize(hFile, NULL);
+
+    fileBytes = MapViewOfFile(hFileMapping, FILE_MAP_READ, 0, 0, 0);
+    if (fileBytes == NULL)
+    {
+        WINE_WARN("MapViewOfFile failed, error %d\n", GetLastError());
+        goto end;
+    }
+
+    dosHeader = (IMAGE_DOS_HEADER*)fileBytes;
+    if (sizeof(IMAGE_DOS_HEADER) >= fileSize || dosHeader->e_magic != IMAGE_DOS_SIGNATURE)
+    {
+        WINE_WARN("file too small for MZ header\n");
+        goto end;
+    }
+
+    neHeader = (IMAGE_OS2_HEADER*)(fileBytes + dosHeader->e_lfanew);
+    if ((((BYTE*)neHeader) + sizeof(IMAGE_OS2_HEADER)) > (fileBytes + fileSize) ||
+        neHeader->ne_magic != IMAGE_OS2_SIGNATURE)
+    {
+        WINE_WARN("file too small for NE header\n");
+        goto end;
+    }
+
+    rsrcTab = ((BYTE*)neHeader) + neHeader->ne_rsrctab;
+    if ((rsrcTab + 2) > (fileBytes + fileSize))
+    {
+        WINE_WARN("file too small for resource table\n");
+        goto end;
+    }
+
+    alignmentShiftCount = *(WORD*)rsrcTab;
+    rsrcTab += 2;
+    iconGroupResources = NULL;
+    iconResources = NULL;
+    for (;;)
+    {
+        NE_TYPEINFO *neTypeInfo = (NE_TYPEINFO*)rsrcTab;
+        if ((rsrcTab + sizeof(NE_TYPEINFO)) > (fileBytes + fileSize))
+        {
+            WINE_WARN("file too small for resource table\n");
+            goto end;
+        }
+        if (neTypeInfo->type_id == 0)
+            break;
+        else if (neTypeInfo->type_id == NE_RSCTYPE_GROUP_ICON)
+            iconGroupResources = neTypeInfo;
+        else if (neTypeInfo->type_id == NE_RSCTYPE_ICON)
+            iconResources = neTypeInfo;
+        rsrcTab += sizeof(NE_TYPEINFO) + neTypeInfo->count*sizeof(NE_NAMEINFO);
+    }
+    if (iconGroupResources == NULL)
+    {
+        WINE_WARN("no group icon resource type found\n");
+        goto end;
+    }
+    if (iconResources == NULL)
+    {
+        WINE_WARN("no icon resource type found\n");
+        goto end;
+    }
+
+    if (nIndex >= iconGroupResources->count)
+    {
+        WINE_WARN("icon index out of range\n");
+        goto end;
+    }
+
+    iconDirPtr = (NE_NAMEINFO*)(((BYTE*)iconGroupResources) + sizeof(NE_TYPEINFO) + nIndex*sizeof(NE_NAMEINFO));
+    if ((((BYTE*)iconDirPtr) + sizeof(NE_NAMEINFO)) > (fileBytes + fileSize))
+    {
+        WINE_WARN("file to small for icon group NE_NAMEINFO\n");
+        goto end;
+    }
+    iconDir = (GRPICONDIR*)(fileBytes + (iconDirPtr->offset << alignmentShiftCount));
+    if ((((BYTE*)iconDir) + sizeof(GRPICONDIR) + iconDir->idCount*sizeof(GRPICONDIRENTRY)) > (fileBytes + fileSize))
+    {
+        WINE_WARN("file too small for GRPICONDIR\n");
+        goto end;
+    }
+
+    iconData16.fileBytes = fileBytes;
+    iconData16.fileSize = fileSize;
+    iconData16.iconResources = iconResources;
+    iconData16.alignmentShiftCount = alignmentShiftCount;
+    *ppStream = add_module_icons_to_stream(&iconData16, NULL, iconDir);
+    if (*ppStream)
+        hr = S_OK;
+
+end:
+    if (hFile != INVALID_HANDLE_VALUE)
+        CloseHandle(hFile);
+    if (hFileMapping != NULL)
+        CloseHandle(hFileMapping);
+    if (fileBytes != NULL)
+        UnmapViewOfFile(fileBytes);
+    return hr;
+}
+
 static BOOL CALLBACK EnumResNameProc(HMODULE hModule, LPCWSTR lpszType, LPWSTR lpszName, LONG_PTR lParam)
 {
     ENUMRESSTRUCT *sEnumRes = (ENUMRESSTRUCT *) lParam;
@@ -626,9 +844,14 @@ static HRESULT open_module_icon(LPCWSTR szFileName, int nIndex, IStream **ppStre
     hModule = LoadLibraryExW(szFileName, 0, LOAD_LIBRARY_AS_DATAFILE);
     if (!hModule)
     {
-        WINE_WARN("LoadLibraryExW (%s) failed, error %d\n",
-                 wine_dbgstr_w(szFileName), GetLastError());
-        return HRESULT_FROM_WIN32(GetLastError());
+        if (GetLastError() == ERROR_BAD_EXE_FORMAT)
+            return open_module16_icon(szFileName, nIndex, ppStream);
+        else
+        {
+            WINE_WARN("LoadLibraryExW (%s) failed, error %d\n",
+                     wine_dbgstr_w(szFileName), GetLastError());
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
     }
 
     if (nIndex < 0)
@@ -656,7 +879,7 @@ static HRESULT open_module_icon(LPCWSTR szFileName, int nIndex, IStream **ppStre
         {
             if ((pIconDir = LockResource(hResData)))
             {
-                *ppStream = add_module_icons_to_stream(hModule, pIconDir);
+                *ppStream = add_module_icons_to_stream(0, hModule, pIconDir);
                 if (*ppStream)
                     hr = S_OK;
             }
