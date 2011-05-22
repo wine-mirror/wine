@@ -15526,6 +15526,7 @@ wine_fn_config_dll winscard enable_winscard implib
 wine_fn_config_dll winsock.dll16 enable_win16
 wine_fn_config_dll winspool.drv enable_winspool_drv po,implib winspool
 wine_fn_config_test dlls/winspool.drv/tests winspool.drv_test
+wine_fn_config_dll winsta enable_winsta
 wine_fn_config_dll wintab.dll16 enable_win16
 wine_fn_config_dll wintab32 enable_wintab32 implib
 wine_fn_config_test dlls/wintab32/tests wintab32_test
