@@ -1313,6 +1313,7 @@ static void test_TCM_SETITEMEXTRA(void)
 static void test_TCS_OWNERDRAWFIXED(void)
 {
     LPARAM lparam, lparam2;
+    ULONG_PTR itemdata;
     TCITEMA item;
     HWND hTab;
     BOOL ret;
@@ -1335,9 +1336,9 @@ static void test_TCS_OWNERDRAWFIXED(void)
     ShowWindow(hTab, SW_SHOW);
     RedrawWindow(hTab, NULL, 0, RDW_UPDATENOW);
 
-    lparam = 0;
-    memset(&lparam, 0xde, 4);
-    ok(g_drawitem.itemData == lparam, "got %lx, expected %lx\n", g_drawitem.itemData, lparam);
+    itemdata = 0;
+    memset(&itemdata, 0xde, 4);
+    ok(g_drawitem.itemData == itemdata, "got %lx, expected %lx\n", g_drawitem.itemData, itemdata);
 
     DestroyWindow(hTab);
 
