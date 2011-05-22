@@ -473,7 +473,7 @@ static DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr
   u_char *p, *buf;
   size_t mibLen;
   int mib[] = { CTL_NET, AF_ROUTE, 0, AF_LINK, NET_RT_IFLIST, 0 };
-  int addrLen;
+  unsigned addrLen;
   BOOL found = FALSE;
 
   if (!name || !len || !addr || !type)
