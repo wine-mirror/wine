@@ -80,13 +80,13 @@ typedef struct
 typedef struct
 {
         IShellView2       IShellView2_iface;
-	LONG			ref;
-	const IOleCommandTargetVtbl* lpvtblOleCommandTarget;
-	const IDropTargetVtbl*	lpvtblDropTarget;
-	const IDropSourceVtbl*	lpvtblDropSource;
-	const IViewObjectVtbl*	lpvtblViewObject;
-	const IFolderViewVtbl*  lpvtblFolderView;
-	const IShellFolderViewVtbl *lpvtblShellFolderView;
+        IOleCommandTarget IOleCommandTarget_iface;
+        IDropTarget       IDropTarget_iface;
+        IDropSource       IDropSource_iface;
+        IViewObject       IViewObject_iface;
+        IFolderView       IFolderView_iface;
+        IShellFolderView  IShellFolderView_iface;
+        LONG              ref;
 	IShellFolder*	pSFParent;
 	IShellFolder2*	pSF2Parent;
 	IShellBrowser*	pShellBrowser;
@@ -125,34 +125,34 @@ static inline IShellViewImpl *impl_from_IShellView2(IShellView2 *iface)
     return CONTAINING_RECORD(iface, IShellViewImpl, IShellView2_iface);
 }
 
-static inline IShellViewImpl *impl_from_IOleCommandTarget( IOleCommandTarget *iface )
+static inline IShellViewImpl *impl_from_IOleCommandTarget(IOleCommandTarget *iface)
 {
-    return (IShellViewImpl *)((char*)iface - FIELD_OFFSET(IShellViewImpl, lpvtblOleCommandTarget));
+    return CONTAINING_RECORD(iface, IShellViewImpl, IOleCommandTarget_iface);
 }
 
-static inline IShellViewImpl *impl_from_IDropTarget( IDropTarget *iface )
+static inline IShellViewImpl *impl_from_IDropTarget(IDropTarget *iface)
 {
-    return (IShellViewImpl *)((char*)iface - FIELD_OFFSET(IShellViewImpl, lpvtblDropTarget));
+    return CONTAINING_RECORD(iface, IShellViewImpl, IDropTarget_iface);
 }
 
-static inline IShellViewImpl *impl_from_IDropSource( IDropSource *iface )
+static inline IShellViewImpl *impl_from_IDropSource(IDropSource *iface)
 {
-    return (IShellViewImpl *)((char*)iface - FIELD_OFFSET(IShellViewImpl, lpvtblDropSource));
+    return CONTAINING_RECORD(iface, IShellViewImpl, IDropSource_iface);
 }
 
-static inline IShellViewImpl *impl_from_IViewObject( IViewObject *iface )
+static inline IShellViewImpl *impl_from_IViewObject(IViewObject *iface)
 {
-    return (IShellViewImpl *)((char*)iface - FIELD_OFFSET(IShellViewImpl, lpvtblViewObject));
+    return CONTAINING_RECORD(iface, IShellViewImpl, IViewObject_iface);
 }
 
-static inline IShellViewImpl *impl_from_IFolderView( IFolderView *iface )
+static inline IShellViewImpl *impl_from_IFolderView(IFolderView *iface)
 {
-    return (IShellViewImpl *)((char*)iface - FIELD_OFFSET(IShellViewImpl, lpvtblFolderView));
+    return CONTAINING_RECORD(iface, IShellViewImpl, IFolderView_iface);
 }
 
-static inline IShellViewImpl *impl_from_IShellFolderView( IShellFolderView *iface )
+static inline IShellViewImpl *impl_from_IShellFolderView(IShellFolderView *iface)
 {
-    return (IShellViewImpl *)((char*)iface - FIELD_OFFSET(IShellViewImpl, lpvtblShellFolderView));
+    return CONTAINING_RECORD(iface, IShellViewImpl, IShellFolderView_iface);
 }
 
 /* ListView Header ID's */
@@ -207,12 +207,12 @@ IShellView * IShellView_Constructor( IShellFolder * pFolder)
 	sv=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IShellViewImpl));
 	sv->ref=1;
 	sv->IShellView2_iface.lpVtbl = &svvt;
-	sv->lpvtblOleCommandTarget=&ctvt;
-	sv->lpvtblDropTarget=&dtvt;
-	sv->lpvtblDropSource=&dsvt;
-	sv->lpvtblViewObject=&vovt;
-	sv->lpvtblFolderView=&fviewvt;
-	sv->lpvtblShellFolderView=&shellfolderviewvt;
+	sv->IOleCommandTarget_iface.lpVtbl = &ctvt;
+	sv->IDropTarget_iface.lpVtbl = &dtvt;
+	sv->IDropSource_iface.lpVtbl = &dsvt;
+	sv->IViewObject_iface.lpVtbl = &vovt;
+	sv->IFolderView_iface.lpVtbl = &fviewvt;
+	sv->IShellFolderView_iface.lpVtbl = &shellfolderviewvt;
 
 	sv->pSFParent = pFolder;
 	if(pFolder) IShellFolder_AddRef(pFolder);
@@ -656,7 +656,7 @@ static INT CALLBACK fill_list( LPVOID ptr, LPVOID arg )
 
 static HRESULT ShellView_FillList(IShellViewImpl *This)
 {
-    IShellFolderView *folderview = (IShellFolderView*)&This->lpvtblShellFolderView;
+    IShellFolderView *folderview = &This->IShellFolderView_iface;
     LPENUMIDLIST pEnumIDList;
     LPITEMIDLIST pidl;
     DWORD fetched;
@@ -1469,7 +1469,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 
 	      if (SUCCEEDED(IShellFolder_GetUIObjectOf(This->pSFParent, This->hWnd, This->cidl, (LPCITEMIDLIST*)This->apidl, &IID_IDataObject,0,(LPVOID *)&pda)))
 	      {
-	          IDropSource * pds = (IDropSource*)&(This->lpvtblDropSource);	/* own DropSource interface */
+                  IDropSource *pds = &This->IDropSource_iface; /* own DropSource interface */
 
 	  	  if (SUCCEEDED(IShellFolder_GetAttributesOf(This->pSFParent, This->cidl, (LPCITEMIDLIST*)This->apidl, &dwAttributes)))
 		  {
@@ -1746,27 +1746,27 @@ static HRESULT WINAPI IShellView_fnQueryInterface(IShellView2 *iface, REFIID rii
 	}
 	else if(IsEqualIID(riid, &IID_IShellFolderView))
 	{
-	  *ppvObj = &This->lpvtblShellFolderView;
+          *ppvObj = &This->IShellFolderView_iface;
 	}
 	else if(IsEqualIID(riid, &IID_IFolderView))
 	{
-	  *ppvObj = &This->lpvtblFolderView;
+          *ppvObj = &This->IFolderView_iface;
 	}
 	else if(IsEqualIID(riid, &IID_IOleCommandTarget))
 	{
-          *ppvObj = &This->lpvtblOleCommandTarget;
+          *ppvObj = &This->IOleCommandTarget_iface;
 	}
 	else if(IsEqualIID(riid, &IID_IDropTarget))
 	{
-          *ppvObj = &This->lpvtblDropTarget;
+          *ppvObj = &This->IDropTarget_iface;
 	}
 	else if(IsEqualIID(riid, &IID_IDropSource))
 	{
-          *ppvObj = &This->lpvtblDropSource;
+          *ppvObj = &This->IDropSource_iface;
 	}
 	else if(IsEqualIID(riid, &IID_IViewObject))
 	{
-          *ppvObj = &This->lpvtblViewObject;
+          *ppvObj = &This->IViewObject_iface;
 	}
 
 	if(*ppvObj)
@@ -2007,7 +2007,7 @@ static HRESULT WINAPI IShellView_fnSaveViewState(IShellView2 *iface)
 static HRESULT WINAPI IShellView_fnSelectItem(IShellView2 *iface, LPCITEMIDLIST pidl, UINT flags)
 {
     IShellViewImpl *This = impl_from_IShellView2(iface);
-    IFolderView *view = (IFolderView*)&This->lpvtblFolderView;
+    IFolderView *view = &This->IFolderView_iface;
     int i;
 
     TRACE("(%p)->(pidl=%p, 0x%08x)\n",This, pidl, flags);
@@ -3021,7 +3021,7 @@ static HRESULT WINAPI IShellFolderView_fnAutoArrange(IShellFolderView *iface)
 static HRESULT WINAPI IShellFolderView_fnGetAutoArrange(IShellFolderView *iface)
 {
     IShellViewImpl *This = impl_from_IShellFolderView(iface);
-    IFolderView *view = (IFolderView*)&This->lpvtblFolderView;
+    IFolderView *view = &This->IFolderView_iface;
 
     TRACE("(%p)\n", This);
     return IFolderView_GetAutoArrange(view);
@@ -3043,7 +3043,7 @@ static HRESULT WINAPI IShellFolderView_fnGetObject(
     UINT item)
 {
     IShellViewImpl *This = impl_from_IShellFolderView(iface);
-    IFolderView *view = (IFolderView*)&This->lpvtblFolderView;
+    IFolderView *view = &This->IFolderView_iface;
 
     TRACE("(%p)->(%p %d)\n", This, pidl, item);
     return IFolderView_Item(view, item, pidl);
@@ -3077,7 +3077,7 @@ static HRESULT WINAPI IShellFolderView_fnGetObjectCount(
     UINT *count)
 {
     IShellViewImpl *This = impl_from_IShellFolderView(iface);
-    IFolderView *view = (IFolderView*)&This->lpvtblFolderView;
+    IFolderView *view = &This->IFolderView_iface;
 
     TRACE("(%p)->(%p)\n", This, count);
     return IFolderView_ItemCount(view, SVGIO_ALLVIEW, (INT*)count);
