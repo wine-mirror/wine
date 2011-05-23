@@ -883,8 +883,13 @@ static HRESULT ddraw_set_display_mode(IDirectDrawImpl *ddraw, DWORD Width, DWORD
 
     /* TODO: Lose the primary surface */
     hr = wined3d_device_set_display_mode(ddraw->wined3d_device, 0, &Mode);
-    wined3d_device_restore_fullscreen_window(ddraw->wined3d_device, ddraw->dest_window);
-    wined3d_device_setup_fullscreen_window(ddraw->wined3d_device, ddraw->dest_window, Width, Height);
+
+    if (ddraw->cooperative_level & DDSCL_EXCLUSIVE)
+    {
+        wined3d_device_restore_fullscreen_window(ddraw->wined3d_device, ddraw->dest_window);
+        wined3d_device_setup_fullscreen_window(ddraw->wined3d_device, ddraw->dest_window, Width, Height);
+    }
+
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
     {

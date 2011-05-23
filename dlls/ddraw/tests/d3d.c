@@ -4046,7 +4046,7 @@ static void test_coop_level_mode_set(void)
     ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
 
     GetWindowRect(window, &r);
-    todo_wine ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
+    ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
             fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
             r.left, r.top, r.right, r.bottom);
 
