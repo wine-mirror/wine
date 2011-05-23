@@ -632,6 +632,7 @@ DECL_HANDLER(queue_exception_event)
     {
         debug_event_t data;
         struct debug_event *event;
+        struct thread *thread = current;
 
         if ((req->len % sizeof(client_ptr_t)) != 0 ||
             req->len > get_req_data_size() ||
@@ -649,19 +650,19 @@ DECL_HANDLER(queue_exception_event)
         data.exception.nb_params = req->len / sizeof(client_ptr_t);
         memcpy( data.exception.params, get_req_data(), req->len );
 
-        if ((event = alloc_debug_event( current, EXCEPTION_DEBUG_EVENT, &data )))
+        if ((event = alloc_debug_event( thread, EXCEPTION_DEBUG_EVENT, &data )))
         {
             const context_t *context = (const context_t *)((const char *)get_req_data() + req->len);
             data_size_t size = get_req_data_size() - req->len;
 
             memset( &event->context, 0, sizeof(event->context) );
             memcpy( &event->context, context, min( sizeof(event->context), size ) );
-            current->context = &event->context;
+            thread->context = &event->context;
 
-            if ((reply->handle = alloc_handle( current->process, event, SYNCHRONIZE, 0 )))
+            if ((reply->handle = alloc_handle( thread->process, event, SYNCHRONIZE, 0 )))
             {
                 link_event( event );
-                suspend_process( current->process );
+                suspend_process( thread->process );
             }
             release_object( event );
         }
