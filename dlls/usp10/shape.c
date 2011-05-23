@@ -48,6 +48,7 @@ static void ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
 typedef VOID (*ShapeCharGlyphPropProc)( HDC , ScriptCache*, SCRIPT_ANALYSIS*, const WCHAR*, const INT, const WORD*, const INT, WORD*, SCRIPT_CHARPROP*, SCRIPT_GLYPHPROP*);
 
 static void ShapeCharGlyphProp_Default( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS* psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD* pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP* pGlyphProp);
+static void ShapeCharGlyphProp_Arabic( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 
 extern const unsigned short wine_shaping_table[];
 extern const unsigned short wine_shaping_forms[LAST_ARABIC_CHAR - FIRST_ARABIC_CHAR + 1][4];
@@ -385,11 +386,11 @@ static const ScriptShapeData ShapingData[] =
     {{ standard_features, 2}, NULL, "latn", NULL, NULL},
     {{ standard_features, 2}, NULL, "" , NULL, NULL},
     {{ standard_features, 2}, NULL, "latn", NULL, NULL},
-    {{ arabic_features, 6}, required_arabic_features, "arab", ContextualShape_Arabic, NULL},
-    {{ arabic_features, 6}, required_arabic_features, "arab", ContextualShape_Arabic, NULL},
+    {{ arabic_features, 6}, required_arabic_features, "arab", ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
+    {{ arabic_features, 6}, required_arabic_features, "arab", ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
     {{ hebrew_features, 1}, NULL, "hebr", NULL, NULL},
     {{ syriac_features, 4}, required_syriac_features, "syrc", ContextualShape_Syriac, NULL},
-    {{ arabic_features, 6}, required_arabic_features, "arab", ContextualShape_Arabic, NULL},
+    {{ arabic_features, 6}, required_arabic_features, "arab", ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
     {{ NULL, 0}, NULL, "thaa", NULL, NULL},
     {{ standard_features, 2}, NULL, "grek", NULL, NULL},
     {{ standard_features, 2}, NULL, "cyrl", NULL, NULL},
@@ -1510,6 +1511,121 @@ static void ShapeCharGlyphProp_Default( HDC hdc, ScriptCache* psc, SCRIPT_ANALYS
 
     GDEF_UpdateGlyphProps(hdc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
+}
+
+static void ShapeCharGlyphProp_Arabic( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp )
+{
+    int i,k;
+    int initGlyph, finaGlyph;
+    INT dirR, dirL;
+    BYTE *spaces;
+
+    spaces = HeapAlloc(GetProcessHeap(),0,cGlyphs);
+    memset(spaces,0,cGlyphs);
+
+    if (!psa->fLogicalOrder && psa->fRTL)
+    {
+        initGlyph = cGlyphs-1;
+        finaGlyph = 0;
+        dirR = 1;
+        dirL = -1;
+    }
+    else
+    {
+        initGlyph = 0;
+        finaGlyph = cGlyphs-1;
+        dirR = -1;
+        dirL = 1;
+    }
+
+    for (i = 0; i < cGlyphs; i++)
+    {
+        for (k = 0; k < cChars; k++)
+            if (pwLogClust[k] == i)
+            {
+                if (pwcChars[k] == 0x0020)
+                    spaces[i] = 1;
+            }
+    }
+
+    for (i = 0; i < cGlyphs; i++)
+    {
+        int char_index[20];
+        int char_count = 0;
+        BOOL isInit, isFinal;
+
+        for (k = 0; k < cChars; k++)
+        {
+            if (pwLogClust[k] == i)
+            {
+                char_index[char_count] = k;
+                char_count++;
+            }
+        }
+
+        isInit = (i == initGlyph || (i+dirR > 0 && i+dirR < cGlyphs && spaces[i+dirR]));
+        isFinal = (i == finaGlyph || (i+dirL > 0 && i+dirL < cGlyphs && spaces[i+dirL]));
+
+        if (char_count == 0)
+        {
+            FIXME("No chars in this glyph?  Must be an error\n");
+            continue;
+        }
+
+        if (char_count == 1)
+        {
+            if (pwcChars[char_index[0]] == 0x0020)  /* space */
+            {
+                pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_ARABIC_BLANK;
+                pCharProp[char_index[0]].fCanGlyphAlone = 1;
+            }
+            else if (pwcChars[char_index[0]] == 0x0640)  /* kashida */
+                pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_ARABIC_KASHIDA;
+            else if (pwcChars[char_index[0]] == 0x0633)  /* SEEN */
+            {
+                if (!isInit && !isFinal)
+                    pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_ARABIC_SEEN_M;
+                else if (isInit)
+                    pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_ARABIC_SEEN;
+                else
+                    pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
+            }
+            else if (!isInit)
+            {
+                if (pwcChars[char_index[0]] == 0x0628 ) /* BA */
+                    pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_ARABIC_BA;
+                else if (pwcChars[char_index[0]] == 0x0631 ) /* RA */
+                    pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_ARABIC_RA;
+                else if (pwcChars[char_index[0]] == 0x0647 ) /* HA */
+                    pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_ARABIC_HA;
+                else if ((pwcChars[char_index[0]] == 0x0627 || pwcChars[char_index[0]] == 0x0625 || pwcChars[char_index[0]] == 0x0623 || pwcChars[char_index[0]] == 0x0622) ) /* alef-like */
+                    pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_ARABIC_ALEF;
+                else
+                    pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
+            }
+            else if (!isInit && !isFinal)
+                pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_ARABIC_NORMAL;
+            else
+                pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
+        }
+        else if (char_count == 2)
+        {
+            if ((pwcChars[char_index[0]] == 0x0628 && pwcChars[char_index[1]]== 0x0631) ||  (pwcChars[char_index[0]] == 0x0631 && pwcChars[char_index[1]]== 0x0628)) /* BA+RA */
+                pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_ARABIC_BARA;
+            else if (!isInit)
+                pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_ARABIC_NORMAL;
+            else
+                pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
+        }
+        else if (!isInit && !isFinal)
+            pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_ARABIC_NORMAL;
+        else
+            pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
+    }
+
+    GDEF_UpdateGlyphProps(hdc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
+    UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
+    HeapFree(GetProcessHeap(),0,spaces);
 }
 
 void SHAPE_CharGlyphProp(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp)
