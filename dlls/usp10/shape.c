@@ -49,6 +49,7 @@ typedef VOID (*ShapeCharGlyphPropProc)( HDC , ScriptCache*, SCRIPT_ANALYSIS*, co
 
 static void ShapeCharGlyphProp_Default( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS* psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD* pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP* pGlyphProp);
 static void ShapeCharGlyphProp_Arabic( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
+static void ShapeCharGlyphProp_Thai( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 
 extern const unsigned short wine_shaping_table[];
 extern const unsigned short wine_shaping_forms[LAST_ARABIC_CHAR - FIRST_ARABIC_CHAR + 1][4];
@@ -399,11 +400,11 @@ static const ScriptShapeData ShapingData[] =
     {{ sinhala_features, 7}, NULL, "sinh", NULL, NULL},
     {{ tibetan_features, 2}, NULL, "tibt", NULL, NULL},
     {{ tibetan_features, 2}, NULL, "tibt", NULL, NULL},
-    {{ tibetan_features, 2}, NULL, "phag", ContextualShape_Phags_pa, NULL},
-    {{ thai_features, 1}, NULL, "thai", NULL, NULL},
-    {{ thai_features, 1}, NULL, "thai", NULL, NULL},
-    {{ thai_features, 1}, required_lao_features, "lao", NULL, NULL},
-    {{ thai_features, 1}, required_lao_features, "lao", NULL, NULL},
+    {{ tibetan_features, 2}, NULL, "phag", ContextualShape_Phags_pa, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, NULL, "thai", NULL, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, NULL, "thai", NULL, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, required_lao_features, "lao", NULL, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, required_lao_features, "lao", NULL, ShapeCharGlyphProp_Thai},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
@@ -1626,6 +1627,80 @@ static void ShapeCharGlyphProp_Arabic( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
     GDEF_UpdateGlyphProps(hdc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
     HeapFree(GetProcessHeap(),0,spaces);
+}
+
+static void ShapeCharGlyphProp_Thai( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp )
+{
+    int i,k;
+    int finaGlyph;
+    INT dirL;
+    BYTE *spaces;
+
+    spaces = HeapAlloc(GetProcessHeap(),0,cGlyphs);
+    memset(spaces,0,cGlyphs);
+
+    if (!psa->fLogicalOrder && psa->fRTL)
+    {
+        finaGlyph = 0;
+        dirL = -1;
+    }
+    else
+    {
+        finaGlyph = cGlyphs-1;
+        dirL = 1;
+    }
+
+    for (i = 0; i < cGlyphs; i++)
+    {
+        for (k = 0; k < cChars; k++)
+            if (pwLogClust[k] == i)
+            {
+                if (pwcChars[k] == 0x0020)
+                    spaces[i] = 1;
+            }
+    }
+
+    for (i = 0; i < cGlyphs; i++)
+    {
+        int char_index[20];
+        int char_count = 0;
+
+        for (k = 0; k < cChars; k++)
+        {
+            if (pwLogClust[k] == i)
+            {
+                char_index[char_count] = k;
+                char_count++;
+            }
+        }
+
+        if (char_count == 0)
+        {
+            FIXME("No chars in this glyph?  Must be an error\n");
+            continue;
+        }
+
+        if (char_count ==1 && pwcChars[char_index[0]] == 0x0020)  /* space */
+        {
+            pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_CHARACTER;
+            pCharProp[char_index[0]].fCanGlyphAlone = 1;
+        }
+        else if (i == finaGlyph)
+            pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
+        else
+            pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_CHARACTER;
+    }
+
+    HeapFree(GetProcessHeap(),0,spaces);
+    GDEF_UpdateGlyphProps(hdc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
+    UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
+
+    /* Do not allow justification between marks and their base */
+    for (i = 0; i < cGlyphs; i++)
+    {
+        if (!pGlyphProp[i].sva.fClusterStart)
+            pGlyphProp[i-dirL].sva.uJustification = SCRIPT_JUSTIFY_NONE;
+    }
 }
 
 void SHAPE_CharGlyphProp(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp)
