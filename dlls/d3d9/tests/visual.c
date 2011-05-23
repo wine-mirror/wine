@@ -2127,6 +2127,9 @@ static void z_range_test(IDirect3DDevice9 *device)
         {0, 0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
         D3DDECL_END()
     };
+
+    IDirect3DDevice9_GetDeviceCaps(device, &caps);
+
     /* Does the Present clear the depth stencil? Clear the depth buffer with some value != 0,
      * then call Present. Then clear the color buffer to make sure it has some defined content
      * after the Present with D3DSWAPEFFECT_DISCARD. After that draw a plane that is somewhere cut
@@ -2183,7 +2186,14 @@ static void z_range_test(IDirect3DDevice9 *device)
     color = getPixelColor(device, 28, 238);
     ok(color == 0x00ffffff, "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
     color = getPixelColor(device, 28, 241);
-    ok(color == 0x00ffffff, "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+    if (caps.PrimitiveMiscCaps & D3DPMISCCAPS_CLIPTLVERTS)
+    {
+        ok(color == 0x00ffffff, "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+    }
+    else
+    {
+        ok(color == 0x00ffff00, "Z range failed: Got color 0x%08x, expected 0x00ffff00.\n", color);
+    }
 
     /* Not clipped, > z buffer clear value(0.75) */
     color = getPixelColor(device, 31, 238);
@@ -2209,13 +2219,19 @@ static void z_range_test(IDirect3DDevice9 *device)
     color = getPixelColor(device, 321, 238);
     ok(color == 0x00ffffff, "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
     color = getPixelColor(device, 321, 241);
-    ok(color == 0x00ffffff, "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+    if (caps.PrimitiveMiscCaps & D3DPMISCCAPS_CLIPTLVERTS)
+    {
+        ok(color == 0x00ffffff, "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+    }
+    else
+    {
+        ok(color == 0x0000ff00, "Z range failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+    }
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
 
     /* Test the shader path */
-    IDirect3DDevice9_GetDeviceCaps(device, &caps);
     if (caps.VertexShaderVersion < D3DVS_VERSION(1, 1)) {
         skip("Vertex shaders not supported\n");
         goto out;
