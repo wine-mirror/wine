@@ -588,20 +588,15 @@ typedef struct
 /* Structure copy */
 #define ME(x,f,e) { x, #x, (void (*)(const void *))(f), offsetof(STRUCT, e) }
 
-#define DD_STRUCT_COPY_BYSIZE(to,from)                  \
-        do {                                            \
-                DWORD __size = (to)->dwSize;            \
-                DWORD __copysize = __size;              \
-                DWORD __resetsize = __size;             \
-                assert(to != from);                     \
-                if (__resetsize > sizeof(*to))          \
-                    __resetsize = sizeof(*to);          \
-                memset(to,0,__resetsize);               \
-                if ((from)->dwSize < __size)            \
-                    __copysize = (from)->dwSize;        \
-                memcpy(to,from,__copysize);             \
-                (to)->dwSize = __size;/*restore size*/  \
-        } while (0)
+#define DD_STRUCT_COPY_BYSIZE(to,from)                            \
+    do {                                                          \
+        DWORD __size = (to)->dwSize;                              \
+        DWORD __copysize = min(__size, (from)->dwSize);           \
+        assert(to != from);                                       \
+        memcpy(to, from, __copysize);                             \
+        memset((char*)(to) + __copysize, 0, __size - __copysize); \
+        (to)->dwSize = __size; /* restore size */                 \
+    } while (0)
 
 
 #endif
