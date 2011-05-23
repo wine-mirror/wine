@@ -5753,9 +5753,9 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
         if (glyphsize > max_glyphsize)
             max_glyphsize = glyphsize;
 
-        left = pti[i].x - glyphmetrics.gmptGlyphOrigin.x;
+        left = pti[i].x + glyphmetrics.gmptGlyphOrigin.x;
         top = pti[i].y - glyphmetrics.gmptGlyphOrigin.y;
-        right = pti[i].x - glyphmetrics.gmptGlyphOrigin.x + glyphmetrics.gmBlackBoxX;
+        right = pti[i].x + glyphmetrics.gmptGlyphOrigin.x + glyphmetrics.gmBlackBoxX;
         bottom = pti[i].y - glyphmetrics.gmptGlyphOrigin.y + glyphmetrics.gmBlackBoxY;
 
         if (left < min_x) min_x = left;
@@ -5786,7 +5786,7 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
         GetGlyphOutlineW(hdc, text[i], ggo_flags,
             &glyphmetrics, max_glyphsize, glyph_mask, &identity);
 
-        left = pti[i].x - glyphmetrics.gmptGlyphOrigin.x;
+        left = pti[i].x + glyphmetrics.gmptGlyphOrigin.x;
         top = pti[i].y - glyphmetrics.gmptGlyphOrigin.y;
         stride = (glyphmetrics.gmBlackBoxX + 3) & (~3);
 
