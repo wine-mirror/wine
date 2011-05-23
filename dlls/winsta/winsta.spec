@@ -48,8 +48,8 @@
 @ stub WinStationNtsdDebug
 @ stub WinStationOpenServerA
 @ stub WinStationOpenServerW
-@ stub WinStationQueryInformationA
-@ stub WinStationQueryInformationW
+@ stdcall WinStationQueryInformationA(ptr long long ptr long ptr)
+@ stdcall WinStationQueryInformationW(ptr long long ptr long ptr)
 @ stub WinStationQueryLicense
 @ stub WinStationQueryLogonCredentialsW
 @ stub WinStationQueryUpdateRequired
