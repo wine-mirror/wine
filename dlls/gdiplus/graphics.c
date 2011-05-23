@@ -5674,9 +5674,9 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
                                          GDIPCONST PointF *positions, INT flags,
                                          GDIPCONST GpMatrix *matrix )
 {
-    static const INT unsupported_flags = ~(DriverStringOptionsCmapLookup);
+    static const INT unsupported_flags = ~(DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance);
     GpStatus stat;
-    PointF *real_positions;
+    PointF *real_positions, real_position;
     POINT *pti;
     HFONT hfont;
     HDC hdc;
@@ -5695,12 +5695,6 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
     if (length <= 0)
         return Ok;
 
-    if (flags & DriverStringOptionsRealizedAdvance)
-    {
-        FIXME("Not implemented for DriverStringOptionsRealizedAdvance\n");
-        return NotImplemented;
-    }
-
     if (!(flags & DriverStringOptionsCmapLookup))
         ggo_flags |= GGO_GLYPH_INDEX;
 
@@ -5710,22 +5704,31 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
     if (matrix)
         FIXME("Ignoring matrix\n");
 
-    real_positions = GdipAlloc(sizeof(PointF) * length);
-    if (!real_positions)
-        return OutOfMemory;
-
     pti = GdipAlloc(sizeof(POINT) * length);
     if (!pti)
-    {
-        GdipFree(real_positions);
         return OutOfMemory;
+
+    if (flags & DriverStringOptionsRealizedAdvance)
+    {
+        real_position = positions[0];
+
+        transform_and_round_points(graphics, pti, &real_position, 1);
     }
+    else
+    {
+        real_positions = GdipAlloc(sizeof(PointF) * length);
+        if (!real_positions)
+        {
+            GdipFree(pti);
+            return OutOfMemory;
+        }
 
-    memcpy(real_positions, positions, sizeof(PointF) * length);
+        memcpy(real_positions, positions, sizeof(PointF) * length);
 
-    transform_and_round_points(graphics, pti, real_positions, length);
+        transform_and_round_points(graphics, pti, real_positions, length);
 
-    GdipFree(real_positions);
+        GdipFree(real_positions);
+    }
 
     get_font_hfont(graphics, font, &hfont);
 
@@ -5762,6 +5765,12 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
         if (top < min_y) min_y = top;
         if (right > max_x) max_x = right;
         if (bottom > max_y) max_y = bottom;
+
+        if (i+1 < length && (flags & DriverStringOptionsRealizedAdvance) == DriverStringOptionsRealizedAdvance)
+        {
+            pti[i+1].x = pti[i].x + glyphmetrics.gmCellIncX;
+            pti[i+1].y = pti[i].y + glyphmetrics.gmCellIncY;
+        }
     }
 
     glyph_mask = GdipAlloc(max_glyphsize);
