@@ -125,19 +125,7 @@ static BOOL createObjects(void)
     if (FAILED(hr)) goto err;
 
     hr = IDirect3D7_CreateDevice(Direct3D, &IID_IDirect3DTnLHalDevice, Surface, &Direct3DDevice);
-    if(FAILED(hr))
-    {
-        trace("Creating a TnLHal Device failed, trying HAL\n");
-        hr = IDirect3D7_CreateDevice(Direct3D, &IID_IDirect3DHALDevice, Surface, &Direct3DDevice);
-        if(FAILED(hr))
-        {
-            trace("Creating a HAL device failed, trying Ref\n");
-            hr = IDirect3D7_CreateDevice(Direct3D, &IID_IDirect3DRefDevice, Surface, &Direct3DDevice);
-            if (SUCCEEDED(hr))
-                refdevice = TRUE;
-        }
-    }
-    if(!Direct3DDevice) goto err;
+    if (FAILED(hr) || !Direct3DDevice) goto err;
     return TRUE;
 
     err:
@@ -2801,55 +2789,58 @@ out:
 }
 
 /* This test tests depth clamping / clipping behaviour:
- *   - When D3DRS_CLIPPING is disabled depth values are *clamped* to the
- *   minimum/maximum z value.
+ *   - With software vertex processing, depth values are clamped to the
+ *     minimum / maximum z value when D3DRS_CLIPPING is disabled, and clipped
+ *     when D3DRS_CLIPPING is enabled. Pretransformed vertices behave the
+ *     same as regular vertices here.
+ *   - With hardware vertex processing, D3DRS_CLIPPING seems to be ignored.
+ *     Normal vertices are always clipped. Pretransformed vertices are
+ *     clipped when D3DPMISCCAPS_CLIPTLVERTS is set, clamped when it isn't.
  *   - The viewport's MinZ/MaxZ is irrelevant for this.
- *   - When D3DRS_CLIPPING is enabled depth values are clipped.
- *   - Pretransformed vertices behave the same as regular vertices.
  */
 static void depth_clamp_test(IDirect3DDevice7 *device)
 {
     struct tvertex quad1[] =
     {
-        {    0,    0,  5.0f, 1.0, 0xff002b7f},
-        {  640,    0,  5.0f, 1.0, 0xff002b7f},
-        {    0,  480,  5.0f, 1.0, 0xff002b7f},
-        {  640,  480,  5.0f, 1.0, 0xff002b7f},
+        {  0.0f,   0.0f,  5.0f, 1.0f, 0xff002b7f},
+        {640.0f,   0.0f,  5.0f, 1.0f, 0xff002b7f},
+        {  0.0f, 480.0f,  5.0f, 1.0f, 0xff002b7f},
+        {640.0f, 480.0f,  5.0f, 1.0f, 0xff002b7f},
     };
     struct tvertex quad2[] =
     {
-        {    0,  300, 10.0f, 1.0, 0xfff9e814},
-        {  640,  300, 10.0f, 1.0, 0xfff9e814},
-        {    0,  360, 10.0f, 1.0, 0xfff9e814},
-        {  640,  360, 10.0f, 1.0, 0xfff9e814},
+        {  0.0f, 300.0f, 10.0f, 1.0f, 0xfff9e814},
+        {640.0f, 300.0f, 10.0f, 1.0f, 0xfff9e814},
+        {  0.0f, 360.0f, 10.0f, 1.0f, 0xfff9e814},
+        {640.0f, 360.0f, 10.0f, 1.0f, 0xfff9e814},
     };
-    struct vertex quad3[] =
+    struct tvertex quad3[] =
     {
-        {-0.65, 0.55,  5.0f,      0xffffffff},
-        {-0.35, 0.55,  5.0f,      0xffffffff},
-        {-0.65, 0.15,  5.0f,      0xffffffff},
-        {-0.35, 0.15,  5.0f,      0xffffffff},
+        {112.0f, 108.0f,  5.0f, 1.0f, 0xffffffff},
+        {208.0f, 108.0f,  5.0f, 1.0f, 0xffffffff},
+        {112.0f, 204.0f,  5.0f, 1.0f, 0xffffffff},
+        {208.0f, 204.0f,  5.0f, 1.0f, 0xffffffff},
     };
-    struct vertex quad4[] =
+    struct tvertex quad4[] =
     {
-        {-0.87, 0.83, 10.0f,      0xffffffff},
-        {-0.65, 0.83, 10.0f,      0xffffffff},
-        {-0.87, 0.55, 10.0f,      0xffffffff},
-        {-0.65, 0.55, 10.0f,      0xffffffff},
+        { 42.0f,  41.0f, 10.0f, 1.0f, 0xffffffff},
+        {112.0f,  41.0f, 10.0f, 1.0f, 0xffffffff},
+        { 42.0f, 108.0f, 10.0f, 1.0f, 0xffffffff},
+        {112.0f, 108.0f, 10.0f, 1.0f, 0xffffffff},
     };
     struct vertex quad5[] =
     {
-        { -0.5,  0.5, 10.0f,      0xff14f914},
-        {  0.5,  0.5, 10.0f,      0xff14f914},
-        { -0.5, -0.5, 10.0f,      0xff14f914},
-        {  0.5, -0.5, 10.0f,      0xff14f914},
+        { -0.5f,   0.5f, 10.0f,       0xff14f914},
+        {  0.5f,   0.5f, 10.0f,       0xff14f914},
+        { -0.5f,  -0.5f, 10.0f,       0xff14f914},
+        {  0.5f,  -0.5f, 10.0f,       0xff14f914},
     };
-    struct tvertex quad6[] =
+    struct vertex quad6[] =
     {
-        {    0,  120, 10.0f, 1.0, 0xfff91414},
-        {  640,  120, 10.0f, 1.0, 0xfff91414},
-        {    0,  180, 10.0f, 1.0, 0xfff91414},
-        {  640,  180, 10.0f, 1.0, 0xfff91414},
+        { -1.0f,   0.5f, 10.0f,       0xfff91414},
+        {  1.0f,   0.5f, 10.0f,       0xfff91414},
+        { -1.0f,  0.25f, 10.0f,       0xfff91414},
+        {  1.0f,  0.25f, 10.0f,       0xfff91414},
     };
 
     D3DVIEWPORT7 vp;
@@ -2866,7 +2857,7 @@ static void depth_clamp_test(IDirect3DDevice7 *device)
     hr = IDirect3DDevice7_SetViewport(device, &vp);
     ok(SUCCEEDED(hr), "SetViewport failed, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0, 0);
+    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ff00, 1.0, 0);
     ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_CLIPPING, FALSE);
@@ -2885,34 +2876,40 @@ static void depth_clamp_test(IDirect3DDevice7 *device)
     ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#x.\n", hr);
     hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZRHW | D3DFVF_DIFFUSE, quad2, 4, 0);
     ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#x.\n", hr);
-    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_DIFFUSE, quad3, 4, 0);
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_CLIPPING, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZRHW | D3DFVF_DIFFUSE, quad3, 4, 0);
     ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#x.\n", hr);
-    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_DIFFUSE, quad4, 4, 0);
+    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZRHW | D3DFVF_DIFFUSE, quad4, 4, 0);
+    ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_CLIPPING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_DIFFUSE, quad5, 4, 0);
     ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_CLIPPING, TRUE);
     ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_DIFFUSE, quad5, 4, 0);
-    ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#x.\n", hr);
-    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZRHW | D3DFVF_DIFFUSE, quad6, 4, 0);
+    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_DIFFUSE, quad6, 4, 0);
     ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice7_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
     color = getPixelColor(device, 75, 75);
-    ok(color_match(color, 0x00ffffff, 1), "color 0x%08x.\n", color);
+    todo_wine ok(color_match(color, 0x00ffffff, 1) || color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
     color = getPixelColor(device, 150, 150);
-    ok(color_match(color, 0x00ffffff, 1) ||
-       broken(color == 0x00f91414), /* Reference rasterizer */
-       "color 0x%08x.\n", color);
+    todo_wine ok(color_match(color, 0x00ffffff, 1) || color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
     color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x00002b7f, 1), "color 0x%08x.\n", color);
+    todo_wine ok(color_match(color, 0x00002b7f, 1) || color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
     color = getPixelColor(device, 320, 330);
-    ok(color_match(color, 0x00f9e814, 1), "color 0x%08x.\n", color);
+    todo_wine ok(color_match(color, 0x00f9e814, 1) || color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
     color = getPixelColor(device, 320, 330);
-    ok(color_match(color, 0x00f9e814, 1), "color 0x%08x.\n", color);
+    todo_wine ok(color_match(color, 0x00f9e814, 1) || color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
 
     vp.dvMinZ = 0.0;
     vp.dvMaxZ = 1.0;
