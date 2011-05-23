@@ -612,7 +612,6 @@ static inline void copy_to_surfacedesc2(DDSURFACEDESC2 *to, DDSURFACEDESC2 *from
     DD_STRUCT_COPY_BYSIZE_(to, from, from_size);
 }
 
+HRESULT hr_ddraw_from_wined3d(HRESULT hr) DECLSPEC_HIDDEN;
 
 #endif
-
-HRESULT hr_ddraw_from_wined3d(HRESULT hr) DECLSPEC_HIDDEN;
