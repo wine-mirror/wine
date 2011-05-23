@@ -1888,7 +1888,7 @@ HRESULT CDECL wined3d_device_multiply_transform(struct wined3d_device *device,
  * stateblock problems. When capturing the state block, I duplicate the
  * hashmap, but when recording, just build a chain pretty much of commands to
  * be replayed. */
-HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device, DWORD light_idx, const WINED3DLIGHT *light)
+HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device, UINT light_idx, const WINED3DLIGHT *light)
 {
     UINT hash_idx = LIGHTMAP_HASHFUNC(light_idx);
     struct wined3d_light_info *object = NULL;
@@ -2225,7 +2225,7 @@ HRESULT CDECL wined3d_device_set_clip_plane(struct wined3d_device *device, UINT 
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_clip_plane(struct wined3d_device *device, DWORD plane_idx, float *plane)
+HRESULT CDECL wined3d_device_get_clip_plane(struct wined3d_device *device, UINT plane_idx, float *plane)
 {
     TRACE("device %p, plane_idx %u, plane %p.\n", device, plane_idx, plane);
 
@@ -3690,7 +3690,7 @@ HRESULT CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *devi
 }
 
 HRESULT CDECL wined3d_device_get_texture_stage_state(struct wined3d_device *device,
-        DWORD stage, WINED3DTEXTURESTAGESTATETYPE state, DWORD *value)
+        UINT stage, WINED3DTEXTURESTAGESTATETYPE state, DWORD *value)
 {
     TRACE("device %p, stage %u, state %s, value %p.\n",
             device, stage, debug_d3dtexturestate(state), value);
@@ -3708,7 +3708,7 @@ HRESULT CDECL wined3d_device_get_texture_stage_state(struct wined3d_device *devi
 }
 
 HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
-        DWORD stage, struct wined3d_texture *texture)
+        UINT stage, struct wined3d_texture *texture)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_texture *prev;
@@ -3815,7 +3815,7 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
 }
 
 HRESULT CDECL wined3d_device_get_texture(struct wined3d_device *device,
-        DWORD stage, struct wined3d_texture **texture)
+        UINT stage, struct wined3d_texture **texture)
 {
     TRACE("device %p, stage %u, texture %p.\n", device, stage, texture);
 
@@ -5030,7 +5030,7 @@ void CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
 }
 
 HRESULT CDECL wined3d_device_get_render_target(struct wined3d_device *device,
-        DWORD render_target_idx, struct wined3d_surface **render_target)
+        UINT render_target_idx, struct wined3d_surface **render_target)
 {
     TRACE("device %p, render_target_idx %u, render_target %p.\n",
             device, render_target_idx, render_target);
@@ -5066,7 +5066,7 @@ HRESULT CDECL wined3d_device_get_depth_stencil(struct wined3d_device *device, st
 }
 
 HRESULT CDECL wined3d_device_set_render_target(struct wined3d_device *device,
-        DWORD render_target_idx, struct wined3d_surface *render_target, BOOL set_viewport)
+        UINT render_target_idx, struct wined3d_surface *render_target, BOOL set_viewport)
 {
     struct wined3d_surface *prev;
 
