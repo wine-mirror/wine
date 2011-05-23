@@ -107,7 +107,7 @@ static int hostname_message(int msg)
     return hostname_printfW(formatW, msg_buffer);
 }
 
-void display_computer_name(void)
+static void display_computer_name(void)
 {
     static const WCHAR fmtW[] = {'%','s','\n',0};
 
