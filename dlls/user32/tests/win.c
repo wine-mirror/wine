@@ -56,6 +56,7 @@ static int  (WINAPI *pGetWindowRgnBox)(HWND,LPRECT);
 static BOOL (WINAPI *pGetGUIThreadInfo)(DWORD, GUITHREADINFO*);
 static BOOL (WINAPI *pGetProcessDefaultLayout)( DWORD *layout );
 static BOOL (WINAPI *pSetProcessDefaultLayout)( DWORD layout );
+static BOOL (WINAPI *pFlashWindowEx)( PFLASHWINFO pfwi );
 static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
 static DWORD (WINAPI *pGetLayout)(HDC hdc);
 static BOOL (WINAPI *pMirrorRgn)(HWND hwnd, HRGN hrgn);
@@ -6446,6 +6447,96 @@ static void test_rtl_layout(void)
     DestroyWindow( parent );
 }
 
+static void test_FlashWindowEx(void)
+{
+    HWND hwnd;
+    FLASHWINFO finfo;
+    BOOL ret;
+
+    if (!pFlashWindowEx)
+    {
+        win_skip( "FlashWindowEx not supported\n" );
+        return;
+    }
+
+    hwnd = CreateWindowExA( 0, "MainWindowClass", "FlashWindow", WS_POPUP,
+                            0, 0, 0, 0, 0, 0, 0, NULL );
+    ok( hwnd != 0, "CreateWindowExA error %d\n", GetLastError() );
+
+    finfo.cbSize = sizeof(FLASHWINFO);
+    finfo.dwFlags = FLASHW_TIMER;
+    finfo.uCount = 3;
+    finfo.dwTimeout = 200;
+    finfo.hwnd = NULL;
+    SetLastError(0xdeadbeef);
+    ret = pFlashWindowEx(&finfo);
+    todo_wine ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+                 "FlashWindowEx returned with %d\n", GetLastError());
+
+    finfo.hwnd = hwnd;
+    SetLastError(0xdeadbeef);
+    ret = pFlashWindowEx(NULL);
+    todo_wine ok(!ret && GetLastError() == ERROR_NOACCESS,
+       "FlashWindowEx returned with %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pFlashWindowEx(&finfo);
+    todo_wine ok(!ret, "FlashWindowEx succeeded\n");
+
+    finfo.cbSize = sizeof(FLASHWINFO) - 1;
+    SetLastError(0xdeadbeef);
+    ret = pFlashWindowEx(&finfo);
+    todo_wine ok(!ret && GetLastError()==ERROR_INVALID_PARAMETER,
+       "FlashWindowEx succeeded\n");
+
+    finfo.cbSize = sizeof(FLASHWINFO) + 1;
+    SetLastError(0xdeadbeef);
+    ret = pFlashWindowEx(&finfo);
+    todo_wine ok(!ret && GetLastError()==ERROR_INVALID_PARAMETER,
+       "FlashWindowEx succeeded\n");
+    finfo.cbSize = sizeof(FLASHWINFO);
+
+    DestroyWindow( hwnd );
+
+    SetLastError(0xdeadbeef);
+    ret = pFlashWindowEx(&finfo);
+    todo_wine ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+       "FlashWindowEx returned with %d\n", GetLastError());
+
+    ok(finfo.cbSize == sizeof(FLASHWINFO), "FlashWindowEx modified cdSize to %x\n", finfo.cbSize);
+    ok(finfo.hwnd == hwnd, "FlashWindowEx modified hwnd to %p\n", finfo.hwnd);
+    ok(finfo.dwFlags == FLASHW_TIMER, "FlashWindowEx modified dwFlags to %x\n", finfo.dwFlags);
+    ok(finfo.uCount == 3, "FlashWindowEx modified uCount to %x\n", finfo.uCount);
+    ok(finfo.dwTimeout == 200, "FlashWindowEx modified dwTimeout to %x\n", finfo.dwTimeout);
+
+    hwnd = CreateWindowExA( 0, "MainWindowClass", "FlashWindow", WS_VISIBLE | WS_POPUPWINDOW,
+                            0, 0, 0, 0, 0, 0, 0, NULL );
+    ok( hwnd != 0, "CreateWindowExA error %d\n", GetLastError() );
+    finfo.hwnd = hwnd;
+
+    SetLastError(0xdeadbeef);
+    ret = pFlashWindowEx(NULL);
+    todo_wine ok(!ret && GetLastError() == ERROR_NOACCESS,
+       "FlashWindowEx returned with %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pFlashWindowEx(&finfo);
+    todo_wine ok(!ret, "FlashWindowEx succeeded\n");
+
+    ok(finfo.cbSize == sizeof(FLASHWINFO), "FlashWindowEx modified cdSize to %x\n", finfo.cbSize);
+    ok(finfo.hwnd == hwnd, "FlashWindowEx modified hwnd to %p\n", finfo.hwnd);
+    ok(finfo.dwFlags == FLASHW_TIMER, "FlashWindowEx modified dwFlags to %x\n", finfo.dwFlags);
+    ok(finfo.uCount == 3, "FlashWindowEx modified uCount to %x\n", finfo.uCount);
+    ok(finfo.dwTimeout == 200, "FlashWindowEx modified dwTimeout to %x\n", finfo.dwTimeout);
+
+    finfo.dwFlags = FLASHW_STOP;
+    SetLastError(0xdeadbeef);
+    ret = pFlashWindowEx(&finfo);
+    ok(ret, "FlashWindowEx failed with %d\n", GetLastError());
+
+    DestroyWindow( hwnd );
+}
+
 static void test_FindWindowEx(void)
 {
     HWND hwnd, found;
@@ -6518,6 +6609,7 @@ START_TEST(win)
     pGetGUIThreadInfo = (void *)GetProcAddress( user32, "GetGUIThreadInfo" );
     pGetProcessDefaultLayout = (void *)GetProcAddress( user32, "GetProcessDefaultLayout" );
     pSetProcessDefaultLayout = (void *)GetProcAddress( user32, "SetProcessDefaultLayout" );
+    pFlashWindowEx = (void *)GetProcAddress( user32, "FlashWindowEx" );
     pGetLayout = (void *)GetProcAddress( gdi32, "GetLayout" );
     pSetLayout = (void *)GetProcAddress( gdi32, "SetLayout" );
     pMirrorRgn = (void *)GetProcAddress( gdi32, "MirrorRgn" );
@@ -6562,6 +6654,7 @@ START_TEST(win)
     test_capture_3(hwndMain, hwndMain2);
     test_capture_4();
     test_rtl_layout();
+    test_FlashWindowEx();
 
     test_CreateWindow();
     test_parent_owner();
