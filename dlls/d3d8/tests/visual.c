@@ -140,9 +140,10 @@ static IDirect3DDevice8 *init_d3d8(void)
     present_parameters.BackBufferHeight = 480;
     present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
     present_parameters.EnableAutoDepthStencil = TRUE;
-    present_parameters.AutoDepthStencilFormat = D3DFMT_D16;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
 
-    hr = IDirect3D8_CreateDevice(d3d8_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, present_parameters.hDeviceWindow, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
+    hr = IDirect3D8_CreateDevice(d3d8_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
     ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL || broken(hr == D3DERR_NOTAVAILABLE), "IDirect3D_CreateDevice returned: %#08x\n", hr);
 
     return device_ptr;
@@ -1292,59 +1293,63 @@ static void texop_test(IDirect3DDevice8 *device)
 }
 
 /* This test tests depth clamping / clipping behaviour:
- *   - When D3DRS_CLIPPING is disabled depth values are *clamped* to the
- *   minimum/maximum z value.
+ *   - With software vertex processing, depth values are clamped to the
+ *     minimum / maximum z value when D3DRS_CLIPPING is disabled, and clipped
+ *     when D3DRS_CLIPPING is enabled. Pretransformed vertices behave the
+ *     same as regular vertices here.
+ *   - With hardware vertex processing, D3DRS_CLIPPING seems to be ignored.
+ *     Normal vertices are always clipped. Pretransformed vertices are
+ *     clipped when D3DPMISCCAPS_CLIPTLVERTS is set, clamped when it isn't.
  *   - The viewport's MinZ/MaxZ is irrelevant for this.
- *   - When D3DRS_CLIPPING is enabled depth values are clipped.
- *   - Pretransformed vertices behave the same as regular vertices.
  */
 static void depth_clamp_test(IDirect3DDevice8 *device)
 {
     const struct tvertex quad1[] =
     {
-        {    0,    0,  5.0f, 1.0, 0xff002b7f},
-        {  640,    0,  5.0f, 1.0, 0xff002b7f},
-        {    0,  480,  5.0f, 1.0, 0xff002b7f},
-        {  640,  480,  5.0f, 1.0, 0xff002b7f},
+        {  0.0f,   0.0f,  5.0f, 1.0f, 0xff002b7f},
+        {640.0f,   0.0f,  5.0f, 1.0f, 0xff002b7f},
+        {  0.0f, 480.0f,  5.0f, 1.0f, 0xff002b7f},
+        {640.0f, 480.0f,  5.0f, 1.0f, 0xff002b7f},
     };
     const struct tvertex quad2[] =
     {
-        {    0,  300, 10.0f, 1.0, 0xfff9e814},
-        {  640,  300, 10.0f, 1.0, 0xfff9e814},
-        {    0,  360, 10.0f, 1.0, 0xfff9e814},
-        {  640,  360, 10.0f, 1.0, 0xfff9e814},
+        {  0.0f, 300.0f, 10.0f, 1.0f, 0xfff9e814},
+        {640.0f, 300.0f, 10.0f, 1.0f, 0xfff9e814},
+        {  0.0f, 360.0f, 10.0f, 1.0f, 0xfff9e814},
+        {640.0f, 360.0f, 10.0f, 1.0f, 0xfff9e814},
     };
-    const struct vertex quad3[] =
+    const struct tvertex quad3[] =
     {
-        {-0.65f, 0.55f,  5.0f,      0xffffffff},
-        {-0.35f, 0.55f,  5.0f,      0xffffffff},
-        {-0.65f, 0.15f,  5.0f,      0xffffffff},
-        {-0.35f, 0.15f,  5.0f,      0xffffffff},
+        {112.0f, 108.0f,  5.0f, 1.0f, 0xffffffff},
+        {208.0f, 108.0f,  5.0f, 1.0f, 0xffffffff},
+        {112.0f, 204.0f,  5.0f, 1.0f, 0xffffffff},
+        {208.0f, 204.0f,  5.0f, 1.0f, 0xffffffff},
     };
-    const struct vertex quad4[] =
+    const struct tvertex quad4[] =
     {
-        {-0.87f, 0.83f, 10.0f,      0xffffffff},
-        {-0.65f, 0.83f, 10.0f,      0xffffffff},
-        {-0.87f, 0.55f, 10.0f,      0xffffffff},
-        {-0.65f, 0.55f, 10.0f,      0xffffffff},
+        { 42.0f,  41.0f, 10.0f, 1.0f, 0xffffffff},
+        {112.0f,  41.0f, 10.0f, 1.0f, 0xffffffff},
+        { 42.0f, 108.0f, 10.0f, 1.0f, 0xffffffff},
+        {112.0f, 108.0f, 10.0f, 1.0f, 0xffffffff},
     };
     const struct vertex quad5[] =
     {
-        { -0.5,  0.5, 10.0f,      0xff14f914},
-        {  0.5,  0.5, 10.0f,      0xff14f914},
-        { -0.5, -0.5, 10.0f,      0xff14f914},
-        {  0.5, -0.5, 10.0f,      0xff14f914},
+        { -0.5f,   0.5f, 10.0f,       0xff14f914},
+        {  0.5f,   0.5f, 10.0f,       0xff14f914},
+        { -0.5f,  -0.5f, 10.0f,       0xff14f914},
+        {  0.5f,  -0.5f, 10.0f,       0xff14f914},
     };
-    const struct tvertex quad6[] =
+    const struct vertex quad6[] =
     {
-        {    0,  120, 10.0f, 1.0, 0xfff91414},
-        {  640,  120, 10.0f, 1.0, 0xfff91414},
-        {    0,  180, 10.0f, 1.0, 0xfff91414},
-        {  640,  180, 10.0f, 1.0, 0xfff91414},
+        { -1.0f,   0.5f, 10.0f,       0xfff91414},
+        {  1.0f,   0.5f, 10.0f,       0xfff91414},
+        { -1.0f,  0.25f, 10.0f,       0xfff91414},
+        {  1.0f,  0.25f, 10.0f,       0xfff91414},
     };
 
     D3DVIEWPORT8 vp;
     D3DCOLOR color;
+    D3DCAPS8 caps;
     HRESULT hr;
 
     vp.X = 0;
@@ -1354,10 +1359,13 @@ static void depth_clamp_test(IDirect3DDevice8 *device)
     vp.MinZ = 0.0;
     vp.MaxZ = 7.5;
 
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+
     hr = IDirect3DDevice8_SetViewport(device, &vp);
     ok(SUCCEEDED(hr), "SetViewport failed, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0, 0);
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ff00, 1.0, 0);
     ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_CLIPPING, FALSE);
@@ -1380,22 +1388,24 @@ static void depth_clamp_test(IDirect3DDevice8 *device)
     hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, sizeof(*quad2));
     ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
-    ok(SUCCEEDED(hr), "SetVertexShader failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_CLIPPING, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3, sizeof(*quad3));
     ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
     hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad4, sizeof(*quad4));
     ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_CLIPPING, TRUE);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_CLIPPING, FALSE);
     ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(SUCCEEDED(hr), "SetVertexShader failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad5, sizeof(*quad5));
     ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
-    ok(SUCCEEDED(hr), "SetVertexShader failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_CLIPPING, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad6, sizeof(*quad6));
     ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
@@ -1403,16 +1413,32 @@ static void depth_clamp_test(IDirect3DDevice8 *device)
     hr = IDirect3DDevice8_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
-    color = getPixelColor(device, 75, 75);
-    ok(color_match(color, 0x00ffffff, 1), "color 0x%08x.\n", color);
-    color = getPixelColor(device, 150, 150);
-    ok(color_match(color, 0x00ffffff, 1), "color 0x%08x.\n", color);
-    color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x00002b7f, 1), "color 0x%08x.\n", color);
-    color = getPixelColor(device, 320, 330);
-    ok(color_match(color, 0x00f9e814, 1), "color 0x%08x.\n", color);
-    color = getPixelColor(device, 320, 330);
-    ok(color_match(color, 0x00f9e814, 1), "color 0x%08x.\n", color);
+    if (caps.PrimitiveMiscCaps & D3DPMISCCAPS_CLIPTLVERTS)
+    {
+        color = getPixelColor(device, 75, 75);
+        todo_wine ok(color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
+        color = getPixelColor(device, 150, 150);
+        todo_wine ok(color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
+        color = getPixelColor(device, 320, 240);
+        todo_wine ok(color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
+        color = getPixelColor(device, 320, 330);
+        todo_wine ok(color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
+        color = getPixelColor(device, 320, 330);
+        todo_wine ok(color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
+    }
+    else
+    {
+        color = getPixelColor(device, 75, 75);
+        ok(color_match(color, 0x00ffffff, 1), "color 0x%08x.\n", color);
+        color = getPixelColor(device, 150, 150);
+        ok(color_match(color, 0x00ffffff, 1), "color 0x%08x.\n", color);
+        color = getPixelColor(device, 320, 240);
+        ok(color_match(color, 0x00002b7f, 1), "color 0x%08x.\n", color);
+        color = getPixelColor(device, 320, 330);
+        ok(color_match(color, 0x00f9e814, 1), "color 0x%08x.\n", color);
+        color = getPixelColor(device, 320, 330);
+        ok(color_match(color, 0x00f9e814, 1), "color 0x%08x.\n", color);
+    }
 
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
