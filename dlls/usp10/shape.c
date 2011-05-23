@@ -44,6 +44,9 @@ static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
 static void ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 
+
+typedef VOID (*ShapeCharGlyphPropProc)( HDC , ScriptCache*, SCRIPT_ANALYSIS*, const WCHAR*, const INT, const WORD*, const INT, WORD*, SCRIPT_CHARPROP*, SCRIPT_GLYPHPROP*);
+
 extern const unsigned short wine_shaping_table[];
 extern const unsigned short wine_shaping_forms[LAST_ARABIC_CHAR - FIRST_ARABIC_CHAR + 1][4];
 
@@ -332,39 +335,40 @@ static const char* required_lao_features[] =
 };
 
 typedef struct ScriptShapeDataTag {
-    TEXTRANGE_PROPERTIES  defaultTextRange;
-    const char**          requiredFeatures;
-    CHAR                  otTag[5];
-    ContextualShapingProc contextProc;
+    TEXTRANGE_PROPERTIES   defaultTextRange;
+    const char**           requiredFeatures;
+    CHAR                   otTag[5];
+    ContextualShapingProc  contextProc;
+    ShapeCharGlyphPropProc charGlyphPropProc;
 } ScriptShapeData;
 
 /* in order of scripts */
 static const ScriptShapeData ShapingData[] =
 {
-    {{ standard_features, 2}, NULL, "", NULL},
-    {{ standard_features, 2}, NULL, "latn", NULL},
-    {{ standard_features, 2}, NULL, "latn", NULL},
-    {{ standard_features, 2}, NULL, "latn", NULL},
-    {{ standard_features, 2}, NULL, "" , NULL},
-    {{ standard_features, 2}, NULL, "latn", NULL},
-    {{ arabic_features, 6}, required_arabic_features, "arab", ContextualShape_Arabic},
-    {{ arabic_features, 6}, required_arabic_features, "arab", ContextualShape_Arabic},
-    {{ hebrew_features, 1}, NULL, "hebr", NULL},
-    {{ syriac_features, 4}, required_syriac_features, "syrc", ContextualShape_Syriac},
-    {{ arabic_features, 6}, required_arabic_features, "arab", ContextualShape_Arabic},
-    {{ NULL, 0}, NULL, "thaa", NULL},
-    {{ standard_features, 2}, NULL, "grek", NULL},
-    {{ standard_features, 2}, NULL, "cyrl", NULL},
-    {{ standard_features, 2}, NULL, "armn", NULL},
-    {{ standard_features, 2}, NULL, "geor", NULL},
-    {{ sinhala_features, 7}, NULL, "sinh", NULL},
-    {{ tibetan_features, 2}, NULL, "tibt", NULL},
-    {{ tibetan_features, 2}, NULL, "tibt", NULL},
-    {{ tibetan_features, 2}, NULL, "phag", ContextualShape_Phags_pa},
-    {{ thai_features, 1}, NULL, "thai", NULL},
-    {{ thai_features, 1}, NULL, "thai", NULL},
-    {{ thai_features, 1}, required_lao_features, "lao", NULL},
-    {{ thai_features, 1}, required_lao_features, "lao", NULL},
+    {{ standard_features, 2}, NULL, "", NULL, NULL},
+    {{ standard_features, 2}, NULL, "latn", NULL, NULL},
+    {{ standard_features, 2}, NULL, "latn", NULL, NULL},
+    {{ standard_features, 2}, NULL, "latn", NULL, NULL},
+    {{ standard_features, 2}, NULL, "" , NULL, NULL},
+    {{ standard_features, 2}, NULL, "latn", NULL, NULL},
+    {{ arabic_features, 6}, required_arabic_features, "arab", ContextualShape_Arabic, NULL},
+    {{ arabic_features, 6}, required_arabic_features, "arab", ContextualShape_Arabic, NULL},
+    {{ hebrew_features, 1}, NULL, "hebr", NULL, NULL},
+    {{ syriac_features, 4}, required_syriac_features, "syrc", ContextualShape_Syriac, NULL},
+    {{ arabic_features, 6}, required_arabic_features, "arab", ContextualShape_Arabic, NULL},
+    {{ NULL, 0}, NULL, "thaa", NULL, NULL},
+    {{ standard_features, 2}, NULL, "grek", NULL, NULL},
+    {{ standard_features, 2}, NULL, "cyrl", NULL, NULL},
+    {{ standard_features, 2}, NULL, "armn", NULL, NULL},
+    {{ standard_features, 2}, NULL, "geor", NULL, NULL},
+    {{ sinhala_features, 7}, NULL, "sinh", NULL, NULL},
+    {{ tibetan_features, 2}, NULL, "tibt", NULL, NULL},
+    {{ tibetan_features, 2}, NULL, "tibt", NULL, NULL},
+    {{ tibetan_features, 2}, NULL, "phag", ContextualShape_Phags_pa, NULL},
+    {{ thai_features, 1}, NULL, "thai", NULL, NULL},
+    {{ thai_features, 1}, NULL, "thai", NULL, NULL},
+    {{ thai_features, 1}, required_lao_features, "lao", NULL, NULL},
+    {{ thai_features, 1}, required_lao_features, "lao", NULL, NULL},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
@@ -1311,6 +1315,12 @@ static void ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     }
 
     HeapFree(GetProcessHeap(),0,context_shape);
+}
+
+void SHAPE_CharGlyphProp(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp)
+{
+    if (ShapingData[psa->eScript].charGlyphPropProc)
+        ShapingData[psa->eScript].charGlyphPropProc(hdc, psc, psa, pwcChars, cChars, pwGlyphs, cGlyphs, pwLogClust, pCharProp, pGlyphProp);
 }
 
 void SHAPE_ContextualShaping(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
