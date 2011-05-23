@@ -2293,7 +2293,7 @@ static BOOL end_of_read_data( http_request_t *req )
 }
 
 /* fetch some more data into the read buffer (the read section must be held) */
-static DWORD refill_read_buffer(http_request_t *req, read_mode_t read_mode)
+static DWORD refill_read_buffer(http_request_t *req, read_mode_t read_mode, DWORD *read_bytes)
 {
     DWORD res, read=0;
 
@@ -2311,6 +2311,8 @@ static DWORD refill_read_buffer(http_request_t *req, read_mode_t read_mode)
     req->read_size += read;
 
     TRACE("read %u bytes, read_size %u\n", read, req->read_size);
+    if(read_bytes)
+        *read_bytes = read;
     return res;
 }
 
@@ -2636,21 +2638,29 @@ static DWORD set_content_length(http_request_t *request, DWORD status_code)
 static void HTTP_ReceiveRequestData(http_request_t *req, BOOL first_notif)
 {
     INTERNET_ASYNC_RESULT iar;
-    DWORD res;
+    DWORD res, read = 0;
+    read_mode_t mode;
 
     TRACE("%p\n", req);
 
     EnterCriticalSection( &req->read_section );
-    if ((res = refill_read_buffer(req, READMODE_ASYNC)) == ERROR_SUCCESS) {
+
+    mode = first_notif && req->read_size ? READMODE_NOBLOCK : READMODE_ASYNC;
+    res = refill_read_buffer(req, mode, &read);
+    if(res == ERROR_SUCCESS) {
         iar.dwResult = (DWORD_PTR)req->hdr.hInternet;
         iar.dwError = first_notif ? 0 : get_avail_data(req);
-        if(!first_notif && !iar.dwError)
-            ERR("No data reported!\n");
     }else {
         iar.dwResult = 0;
         iar.dwError = res;
     }
+
     LeaveCriticalSection( &req->read_section );
+
+    if(res != ERROR_SUCCESS || (mode != READMODE_NOBLOCK && !read)) {
+        WARN("res %u read %u, closing connection\n", res, read);
+        http_release_netconn(req, FALSE);
+    }
 
     INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_REQUEST_COMPLETE, &iar,
                           sizeof(INTERNET_ASYNC_RESULT));
@@ -2970,7 +2980,7 @@ static DWORD HTTPREQ_QueryDataAvailable(object_header_t *hdr, DWORD *available, 
         /* never wait, if we can't enter the section we queue an async request right away */
         if (TryEnterCriticalSection( &req->read_section ))
         {
-            refill_read_buffer(req, READMODE_NOBLOCK);
+            refill_read_buffer(req, READMODE_NOBLOCK, NULL);
             if ((*available = get_avail_data( req ))) goto done;
             if (end_of_read_data( req )) goto done;
             LeaveCriticalSection( &req->read_section );
@@ -2988,7 +2998,7 @@ static DWORD HTTPREQ_QueryDataAvailable(object_header_t *hdr, DWORD *available, 
 
     if (!(*available = get_avail_data( req )) && !end_of_read_data( req ))
     {
-        refill_read_buffer( req, READMODE_ASYNC );
+        refill_read_buffer( req, READMODE_ASYNC, NULL );
         *available = get_avail_data( req );
     }
 
