@@ -5593,7 +5593,7 @@ struct hugeVertex
     DWORD diffuse, specular;
 };
 
-static void fixed_function_varying_test(IDirect3DDevice9 *device) {
+static void pretransformed_varying_test(IDirect3DDevice9 *device) {
     /* dcl_position: fails to compile */
     const DWORD blendweight_code[] = {
         0xffff0300,                             /* ps_3_0                   */
@@ -5675,20 +5675,6 @@ static void fixed_function_varying_test(IDirect3DDevice9 *device) {
     };
     /* Declare a monster vertex type :-) */
     static const D3DVERTEXELEMENT9 decl_elements[] = {
-        {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
-        {0,  16,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDWEIGHT,    0},
-        {0,  32,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDINDICES,   0},
-        {0,  48,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,         0},
-        {0,  64,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_FOG,            0},
-        {0,  80,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,       0},
-        {0,  96,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TANGENT,        0},
-        {0, 112,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BINORMAL,       0},
-        {0, 128,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_DEPTH,          0},
-        {0, 144,  D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,          0},
-        {0, 148,  D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,          1},
-        D3DDECL_END()
-    };
-    static const D3DVERTEXELEMENT9 decl_elements2[] = {
         {0,   0,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITIONT,      0},
         {0,  16,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDWEIGHT,    0},
         {0,  32,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDINDICES,   0},
@@ -5758,11 +5744,9 @@ static void fixed_function_varying_test(IDirect3DDevice9 *device) {
     };
     struct hugeVertex data2[4];
     IDirect3DVertexDeclaration9 *decl;
-    IDirect3DVertexDeclaration9 *decl2;
     HRESULT hr;
     unsigned int i;
     DWORD color, r, g, b, r_e, g_e, b_e;
-    BOOL drawok;
 
     memcpy(data2, data, sizeof(data2));
     data2[0].pos_x = 0;     data2[0].pos_y = 0;
@@ -5771,8 +5755,6 @@ static void fixed_function_varying_test(IDirect3DDevice9 *device) {
     data2[3].pos_x = 640;   data2[3].pos_y = 480;
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &decl);
-    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %08x\n", hr);
-    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements2, &decl2);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %08x\n", hr);
     hr = IDirect3DDevice9_SetVertexDeclaration(device, decl);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration returned %08x\n", hr);
@@ -5784,56 +5766,7 @@ static void fixed_function_varying_test(IDirect3DDevice9 *device) {
            tests[i].name, hr);
     }
 
-    for(i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
-    {
-        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
-        ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
-
-        IDirect3DDevice9_SetPixelShader(device, tests[i].shader);
-        ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %08x\n", hr);
-
-        hr = IDirect3DDevice9_BeginScene(device);
-        ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %08x\n", hr);
-        drawok = FALSE;
-        if(SUCCEEDED(hr))
-        {
-            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, data, sizeof(data[0]));
-            ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "DrawPrimitiveUP failed (%08x)\n", hr);
-            drawok = SUCCEEDED(hr);
-            hr = IDirect3DDevice9_EndScene(device);
-            ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %08x\n", hr);
-        }
-
-        /* Some drivers reject the combination of ps_3_0 and fixed function vertex processing. Accept
-         * the failure and do not check the color if it failed
-         */
-        if(!drawok) {
-            continue;
-        }
-
-        color = getPixelColor(device, 360, 240);
-        r = color & 0x00ff0000 >> 16;
-        g = color & 0x0000ff00 >>  8;
-        b = color & 0x000000ff;
-        r_e = tests[i].color & 0x00ff0000 >> 16;
-        g_e = tests[i].color & 0x0000ff00 >>  8;
-        b_e = tests[i].color & 0x000000ff;
-
-        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-        ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
-
-        if(tests[i].todo) {
-            todo_wine ok(abs(r - r_e) <= 1 && abs(g - g_e) <= 1 && abs(b - b_e) <= 1,
-                         "Test %s returned color 0x%08x, expected 0x%08x(todo)\n",
-                         tests[i].name, color, tests[i].color);
-        } else {
-            ok(abs(r - r_e) <= 1 && abs(g - g_e) <= 1 && abs(b - b_e) <= 1,
-               "Test %s returned color 0x%08x, expected 0x%08x\n",
-               tests[i].name, color, tests[i].color);
-        }
-    }
-
-    hr = IDirect3DDevice9_SetVertexDeclaration(device, decl2);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, decl);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration returned %08x\n", hr);
     for(i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
     {
@@ -5883,7 +5816,6 @@ static void fixed_function_varying_test(IDirect3DDevice9 *device) {
         IDirect3DPixelShader9_Release(tests[i].shader);
     }
 
-    IDirect3DVertexDeclaration9_Release(decl2);
     IDirect3DVertexDeclaration9_Release(decl);
 }
 
@@ -12175,7 +12107,7 @@ START_TEST(visual)
                 dp2add_ps_test(device_ptr);
                 if (caps.PixelShaderVersion >= D3DPS_VERSION(3, 0) && caps.VertexShaderVersion >= D3DVS_VERSION(3, 0)) {
                     nested_loop_test(device_ptr);
-                    fixed_function_varying_test(device_ptr);
+                    pretransformed_varying_test(device_ptr);
                     vFace_register_test(device_ptr);
                     vpos_register_test(device_ptr);
                     multiple_rendertargets_test(device_ptr);
