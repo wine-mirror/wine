@@ -287,13 +287,14 @@ static void test_createconfigstream(void)
     GetFullPathNameW(file, MAX_PATH, path, NULL);
 
     hr = pCreateConfigStream(NULL, &stream);
-    todo_wine ok(hr == E_FAIL, "CreateConfigStream returned %x\n", hr);
+    todo_wine ok(hr == E_FAIL || broken(hr == ERROR_PROC_NOT_FOUND), /* some WinXP, Win2K3 and Win7 */
+                 "CreateConfigStream returned %x\n", hr);
 
     hr = pCreateConfigStream(path, NULL);
-    todo_wine ok(hr == E_POINTER, "CreateConfigStream returned %x\n", hr);
+    todo_wine ok(hr == COR_E_NULLREFERENCE, "CreateConfigStream returned %x\n", hr);
 
     hr = pCreateConfigStream(NULL, NULL);
-    todo_wine ok(hr == E_POINTER, "CreateConfigStream returned %x\n", hr);
+    todo_wine ok(hr == COR_E_NULLREFERENCE, "CreateConfigStream returned %x\n", hr);
 
     hr = pCreateConfigStream(nonexistent, &stream);
     todo_wine ok(hr == COR_E_FILENOTFOUND, "CreateConfigStream returned %x\n", hr);
