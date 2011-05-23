@@ -198,7 +198,7 @@ static inline MSVCRT_FILE* msvcrt_get_file(int i)
     if(!ret) {
         MSVCRT_fstream[i/MSVCRT_FD_BLOCK_SIZE] = MSVCRT_calloc(MSVCRT_FD_BLOCK_SIZE, sizeof(file_crit));
         if(!MSVCRT_fstream[i/MSVCRT_FD_BLOCK_SIZE]) {
-            ERR("out of memory");
+            ERR("out of memory\n");
             *MSVCRT__errno() = MSVCRT_ENOMEM;
             return NULL;
         }
