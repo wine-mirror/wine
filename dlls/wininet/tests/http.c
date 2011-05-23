@@ -102,7 +102,7 @@ static int expect[MAX_INTERNET_STATUS], optional[MAX_INTERNET_STATUS],
     wine_allow[MAX_INTERNET_STATUS], notified[MAX_INTERNET_STATUS];
 static const char *status_string[MAX_INTERNET_STATUS];
 
-static HANDLE hCompleteEvent;
+static HANDLE hCompleteEvent, conn_close_event;
 
 #define TESTF_REDIRECT      0x01
 #define TESTF_COMPRESSED    0x02
@@ -1765,6 +1765,13 @@ static DWORD CALLBACK server_thread(LPVOID param)
             static const char nocontentmsg[] = "HTTP/1.1 204 No Content\r\nConnection: close\r\n\r\n";
             send(c, nocontentmsg, sizeof(nocontentmsg)-1, 0);
         }
+        if (strstr(buffer, "GET /test_conn_close"))
+        {
+            static const char conn_close_response[] = "HTTP/1.1 200 OK\r\nConnection: close\r\n\r\nsome content";
+            send(c, conn_close_response, sizeof(conn_close_response)-1, 0);
+            WaitForSingleObject(conn_close_event, INFINITE);
+            trace("closing connection\n");
+        }
 
         shutdown(c, 2);
         closesocket(c);
@@ -2166,6 +2173,84 @@ static void test_no_content(int port)
     CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_SENT);
     CHECK_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
     CHECK_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
+    CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+
+    close_async_handle(session, hCompleteEvent, 2);
+    CloseHandle(hCompleteEvent);
+}
+
+static void test_conn_close(int port)
+{
+    HINTERNET session, connection, req;
+    DWORD res, avail, size;
+    BYTE buf[1024];
+
+    trace("Testing connection close connection...\n");
+
+    hCompleteEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    conn_close_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+    session = InternetOpenA("", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, INTERNET_FLAG_ASYNC);
+    ok(session != NULL,"InternetOpen failed with error %u\n", GetLastError());
+
+    pInternetSetStatusCallbackA(session, callback);
+
+    SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
+    connection = InternetConnectA(session, "localhost", port,
+            NULL, NULL, INTERNET_SERVICE_HTTP, 0x0, 0xdeadbeef);
+    ok(connection != NULL,"InternetConnect failed with error %u\n", GetLastError());
+    CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
+
+    SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
+    req = HttpOpenRequestA(connection, "GET", "/test_conn_close", NULL, NULL, NULL,
+            INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_RESYNCHRONIZE, 0xdeadbead);
+    ok(req != NULL, "HttpOpenRequest failed: %u\n", GetLastError());
+    CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
+
+    SET_OPTIONAL(INTERNET_STATUS_COOKIE_SENT);
+    SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    SET_EXPECT(INTERNET_STATUS_SENDING_REQUEST);
+    SET_EXPECT(INTERNET_STATUS_REQUEST_SENT);
+    SET_EXPECT(INTERNET_STATUS_RECEIVING_RESPONSE);
+    SET_EXPECT(INTERNET_STATUS_RESPONSE_RECEIVED);
+    SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+
+    res = HttpSendRequestA(req, NULL, -1, NULL, 0);
+    ok(!res && (GetLastError() == ERROR_IO_PENDING),
+       "Asynchronous HttpSendRequest NOT returning 0 with error ERROR_IO_PENDING\n");
+    WaitForSingleObject(hCompleteEvent, INFINITE);
+
+    CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    CHECK_NOTIFIED(INTERNET_STATUS_SENDING_REQUEST);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_SENT);
+    CHECK_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
+    CHECK_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+
+    avail = 0;
+    res = InternetQueryDataAvailable(req, &avail, 0, 0);
+    ok(res, "InternetQueryDataAvailable failed: %u\n", GetLastError());
+    ok(avail != 0, "avail = 0\n");
+
+    size = 0;
+    res = InternetReadFile(req, buf, avail, &size);
+    ok(res, "InternetReadFile failed: %u\n", GetLastError());
+
+    res = InternetQueryDataAvailable(req, &avail, 0, 0);
+    ok(!res && (GetLastError() == ERROR_IO_PENDING),
+       "Asynchronous HttpSendRequest NOT returning 0 with error ERROR_IO_PENDING\n");
+    ok(!avail, "avail = %u, expected 0\n", avail);
+
+    SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
+    SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
+    SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+    SetEvent(conn_close_event);
+    WaitForSingleObject(hCompleteEvent, INFINITE);
     CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
     CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
@@ -2708,6 +2793,7 @@ static void test_http_connection(void)
     test_options(si.port);
     test_url_caching(si.port, &si.num_testH_retrievals);
     test_no_content(si.port);
+    test_conn_close(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");
