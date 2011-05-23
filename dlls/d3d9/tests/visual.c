@@ -11099,7 +11099,7 @@ static void intz_test(IDirect3DDevice9 *device)
         0x02000001, 0x80010001, 0x80e40000,                                     /* mov r1.x, r0                 */
         0x03010042, 0x800f0000, 0xb0e40000, 0xa0e40800,                         /* texldp r0, t0, s0            */
         0x02000001, 0x80020001, 0x80000000,                                     /* mov r1.y, r0.x               */
-        0x02000001, 0x800f0800, 0x80e40001,                                     /* mov 0C0, r1                  */
+        0x02000001, 0x800f0800, 0x80e40001,                                     /* mov oC0, r1                  */
         0x0000ffff,                                                             /* end                          */
     };
     struct
@@ -11109,10 +11109,10 @@ static void intz_test(IDirect3DDevice9 *device)
     }
     quad[] =
     {
-        { -1.0f,  1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f},
-        {  1.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f},
-        { -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f},
-        {  1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f},
+        { -1.0f,  1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.5f},
+        {  1.0f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.5f},
+        { -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+        {  1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.5f},
     };
     struct
     {
@@ -11121,14 +11121,14 @@ static void intz_test(IDirect3DDevice9 *device)
     }
     expected_colors[] =
     {
-        {400,  60, D3DCOLOR_ARGB(0x00, 0x9f, 0xff, 0x00)},
-        {560, 180, D3DCOLOR_ARGB(0x00, 0xdf, 0x55, 0x00)},
-        {560, 300, D3DCOLOR_ARGB(0x00, 0xdf, 0x66, 0x00)},
-        {400, 420, D3DCOLOR_ARGB(0x00, 0x9f, 0xb6, 0x00)},
-        {240, 420, D3DCOLOR_ARGB(0x00, 0x60, 0x6d, 0x00)},
-        { 80, 300, D3DCOLOR_ARGB(0x00, 0x20, 0x33, 0x00)},
-        { 80, 180, D3DCOLOR_ARGB(0x00, 0x20, 0x55, 0x00)},
-        {240,  60, D3DCOLOR_ARGB(0x00, 0x60, 0xff, 0x00)},
+        { 80, 100, D3DCOLOR_ARGB(0x00, 0x20, 0x40, 0x00)},
+        {240, 100, D3DCOLOR_ARGB(0x00, 0x60, 0xbf, 0x00)},
+        {400, 100, D3DCOLOR_ARGB(0x00, 0x9f, 0x40, 0x00)},
+        {560, 100, D3DCOLOR_ARGB(0x00, 0xdf, 0xbf, 0x00)},
+        { 80, 450, D3DCOLOR_ARGB(0x00, 0x20, 0x40, 0x00)},
+        {240, 450, D3DCOLOR_ARGB(0x00, 0x60, 0xbf, 0x00)},
+        {400, 450, D3DCOLOR_ARGB(0x00, 0x9f, 0x40, 0x00)},
+        {560, 450, D3DCOLOR_ARGB(0x00, 0xdf, 0xbf, 0x00)},
     };
 
     IDirect3DSurface9 *original_ds, *original_rt, *rt;
