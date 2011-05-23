@@ -47,6 +47,8 @@ static void ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
 
 typedef VOID (*ShapeCharGlyphPropProc)( HDC , ScriptCache*, SCRIPT_ANALYSIS*, const WCHAR*, const INT, const WORD*, const INT, WORD*, SCRIPT_CHARPROP*, SCRIPT_GLYPHPROP*);
 
+static void ShapeCharGlyphProp_Default( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS* psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD* pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP* pGlyphProp);
+
 extern const unsigned short wine_shaping_table[];
 extern const unsigned short wine_shaping_forms[LAST_ARABIC_CHAR - FIRST_ARABIC_CHAR + 1][4];
 
@@ -1317,10 +1319,46 @@ static void ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     HeapFree(GetProcessHeap(),0,context_shape);
 }
 
+static void ShapeCharGlyphProp_Default( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS* psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD* pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP* pGlyphProp)
+{
+    int i,k;
+
+    for (i = 0; i < cGlyphs; i++)
+    {
+        int char_index[20];
+        int char_count = 0;
+
+        for (k = 0; k < cChars; k++)
+        {
+            if (pwLogClust[k] == i)
+            {
+                char_index[char_count] = k;
+                char_count++;
+            }
+        }
+
+        if (char_count == 0)
+        {
+            FIXME("No chars in this glyph?  Must be an error\n");
+            continue;
+        }
+
+        if (char_count ==1 && pwcChars[char_index[0]] == 0x0020)  /* space */
+        {
+            pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_BLANK;
+            pCharProp[char_index[0]].fCanGlyphAlone = 1;
+        }
+        else
+            pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_CHARACTER;
+    }
+}
+
 void SHAPE_CharGlyphProp(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp)
 {
     if (ShapingData[psa->eScript].charGlyphPropProc)
         ShapingData[psa->eScript].charGlyphPropProc(hdc, psc, psa, pwcChars, cChars, pwGlyphs, cGlyphs, pwLogClust, pCharProp, pGlyphProp);
+    else
+        ShapeCharGlyphProp_Default(hdc, psc, psa, pwcChars, cChars, pwGlyphs, cGlyphs, pwLogClust, pCharProp, pGlyphProp);
 }
 
 void SHAPE_ContextualShaping(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
