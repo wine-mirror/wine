@@ -1026,6 +1026,30 @@ static void GDEF_UpdateGlyphProps(HDC hdc, const WORD *pwGlyphs, const WORD cGly
     }
 }
 
+static void UpdateClustersFromGlyphProp(const int cGlyphs, const int cChars, WORD* pwLogClust, SCRIPT_GLYPHPROP *pGlyphProp)
+{
+    int i;
+
+    for (i = 0; i < cGlyphs; i++)
+    {
+        if (!pGlyphProp[i].sva.fClusterStart)
+        {
+            int j;
+            for (j = 0; j < cChars; j++)
+            {
+                if (pwLogClust[j] == i)
+                {
+                    int k = j;
+                    while (!pGlyphProp[pwLogClust[k]].sva.fClusterStart && k >= 0 && k <cChars)
+                        k-=1;
+                    if (pGlyphProp[pwLogClust[k]].sva.fClusterStart)
+                        pwLogClust[j] = pwLogClust[k];
+                }
+            }
+        }
+    }
+}
+
 static void UpdateClusters(int nextIndex, int changeCount, int write_dir, int chars, WORD* pwLogClust )
 {
     if (changeCount == 0)
@@ -1485,6 +1509,7 @@ static void ShapeCharGlyphProp_Default( HDC hdc, ScriptCache* psc, SCRIPT_ANALYS
     }
 
     GDEF_UpdateGlyphProps(hdc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
+    UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
 }
 
 void SHAPE_CharGlyphProp(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp)
