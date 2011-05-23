@@ -190,10 +190,16 @@ static void test_occlusion_query_states(IDirect3D9 *pD3d, HWND hwnd)
     hr = IDirect3DQuery9_Issue(pQuery, D3DISSUE_BEGIN);
     ok(hr == D3D_OK, "IDirect3DQuery9_Issue(D3DQUERY_BEGIN) on a started query returned %08x\n", hr);
 
+    *((DWORD *)data) = 0x12345678;
     hr = IDirect3DQuery9_GetData(pQuery, NULL, 0, D3DGETDATA_FLUSH);
-    ok(hr == S_FALSE, "IDirect3DQuery9_GetData(NULL) on a started query returned %08x\n", hr);
+    ok(hr == S_FALSE || hr == D3D_OK, "IDirect3DQuery9_GetData(NULL) on a started query returned %08x\n", hr);
     hr = IDirect3DQuery9_GetData(pQuery, data, IDirect3DQuery9_GetDataSize(pQuery), D3DGETDATA_FLUSH);
-    ok(hr == S_FALSE, "IDirect3DQuery9_GetData on a started query returned %08x\n", hr);
+    ok(hr == S_FALSE || hr == D3D_OK, "IDirect3DQuery9_GetData on a started query returned %08x\n", hr);
+    if (hr == D3D_OK)
+    {
+        DWORD value = *((DWORD *)data);
+        ok(value == 0, "The unfinished query returned %u, expected 0\n", value);
+    }
 
     hr = IDirect3DDevice9_SetFVF(pDevice, D3DFVF_XYZ);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %08x\n", hr);
