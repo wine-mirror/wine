@@ -3565,9 +3565,7 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     surface->version = 7;
     surface->ddraw = ddraw;
 
-    surface->surface_desc.dwSize = sizeof(DDSURFACEDESC2);
-    surface->surface_desc.u4.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
-    DD_STRUCT_COPY_BYSIZE(&surface->surface_desc, desc);
+    copy_to_surfacedesc2(&surface->surface_desc, desc);
 
     surface->first_attached = surface;
     surface->ImplType = surface_type;

@@ -3125,8 +3125,7 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
         DDSD->ddsCaps.dwCaps2 &= ~DDSCAPS2_MIPMAPSUBLEVEL;
 
     /* Modify some flags */
-    desc2.dwSize = sizeof(desc2);   /* For the struct copy */
-    DD_STRUCT_COPY_BYSIZE(&desc2, DDSD);
+    copy_to_surfacedesc2(&desc2, DDSD);
     desc2.u4.ddpfPixelFormat.dwSize=sizeof(DDPIXELFORMAT); /* Just to be sure */
 
     /* Get the video mode from WineD3D - we will need it */

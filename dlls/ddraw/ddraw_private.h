@@ -588,15 +588,29 @@ typedef struct
 /* Structure copy */
 #define ME(x,f,e) { x, #x, (void (*)(const void *))(f), offsetof(STRUCT, e) }
 
-#define DD_STRUCT_COPY_BYSIZE(to,from)                            \
+#define DD_STRUCT_COPY_BYSIZE_(to,from,from_size)                 \
     do {                                                          \
         DWORD __size = (to)->dwSize;                              \
-        DWORD __copysize = min(__size, (from)->dwSize);           \
+        DWORD __copysize = min(__size, from_size);                \
         assert(to != from);                                       \
         memcpy(to, from, __copysize);                             \
         memset((char*)(to) + __copysize, 0, __size - __copysize); \
         (to)->dwSize = __size; /* restore size */                 \
     } while (0)
+
+#define DD_STRUCT_COPY_BYSIZE(to,from) DD_STRUCT_COPY_BYSIZE_(to,from,(from)->dwSize)
+
+#define SIZEOF_END_PADDING(type, last_field) \
+    (sizeof(type) - offsetof(type, last_field) - sizeof(((type *)0)->last_field))
+
+static inline void copy_to_surfacedesc2(DDSURFACEDESC2 *to, DDSURFACEDESC2 *from)
+{
+    DWORD from_size = from->dwSize;
+    if (from_size == sizeof(DDSURFACEDESC))
+        from_size -= SIZEOF_END_PADDING(DDSURFACEDESC, ddsCaps);
+    to->dwSize = sizeof(DDSURFACEDESC2); /* for struct copy */
+    DD_STRUCT_COPY_BYSIZE_(to, from, from_size);
+}
 
 
 #endif
