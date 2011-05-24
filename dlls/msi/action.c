@@ -36,6 +36,7 @@
 #include "objbase.h"
 #include "mscoree.h"
 #include "shlwapi.h"
+#include "imagehlp.h"
 #include "wine/unicode.h"
 #include "winver.h"
 
@@ -7097,7 +7098,6 @@ static UINT ACTION_MigrateFeatureStates( MSIPACKAGE *package )
 {
     UINT r;
     MSIQUERY *view;
-
     static const WCHAR query[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','U','p','g','r','a','d','e',0};
 
@@ -7116,6 +7116,66 @@ static UINT ACTION_MigrateFeatureStates( MSIPACKAGE *package )
     if (r == ERROR_SUCCESS)
     {
         r = MSI_IterateRecords( view, NULL, ITERATE_MigrateFeatureStates, package );
+        msiobj_release( &view->hdr );
+    }
+    return ERROR_SUCCESS;
+}
+
+static void bind_image( const char *filename, const char *path )
+{
+    if (!BindImageEx( 0, filename, path, NULL, NULL ))
+    {
+        WARN("failed to bind image %u\n", GetLastError());
+    }
+}
+
+static UINT ITERATE_BindImage( MSIRECORD *rec, LPVOID param )
+{
+    UINT i;
+    MSIFILE *file;
+    MSIPACKAGE *package = param;
+    const WCHAR *key = MSI_RecordGetString( rec, 1 );
+    const WCHAR *paths = MSI_RecordGetString( rec, 2 );
+    char *filenameA, *pathA;
+    WCHAR *pathW, **path_list;
+
+    if (!(file = msi_get_loaded_file( package, key )))
+    {
+        WARN("file %s not found\n", debugstr_w(key));
+        return ERROR_SUCCESS;
+    }
+    if (!(filenameA = strdupWtoA( file->TargetPath ))) return ERROR_SUCCESS;
+    path_list = msi_split_string( paths, ';' );
+    if (!path_list) bind_image( filenameA, NULL );
+    else
+    {
+        for (i = 0; path_list[i] && path_list[i][0]; i++)
+        {
+            deformat_string( package, path_list[i], &pathW );
+            if ((pathA = strdupWtoA( pathW )))
+            {
+                bind_image( filenameA, pathA );
+                msi_free( pathA );
+            }
+            msi_free( pathW );
+        }
+    }
+    msi_free( path_list );
+    msi_free( filenameA );
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_BindImage( MSIPACKAGE *package )
+{
+    UINT r;
+    MSIQUERY *view;
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','B','i','n','d','I','m','a','g','e',0};
+
+    r = MSI_DatabaseOpenViewW( package->db, query, &view );
+    if (r == ERROR_SUCCESS)
+    {
+        r = MSI_IterateRecords( view, NULL, ITERATE_BindImage, package );
         msiobj_release( &view->hdr );
     }
     return ERROR_SUCCESS;
@@ -7143,12 +7203,6 @@ static UINT msi_unimplemented_action_stub( MSIPACKAGE *package,
               action, count, debugstr_w(table));
 
     return ERROR_SUCCESS;
-}
-
-static UINT ACTION_BindImage( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'B','i','n','d','I','m','a','g','e',0 };
-    return msi_unimplemented_action_stub( package, "BindImage", table );
 }
 
 static UINT ACTION_IsolateComponents( MSIPACKAGE *package )
