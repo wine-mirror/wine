@@ -19,6 +19,12 @@
 #include <idispids.h>
 #include <xmldsodid.h>
 
+#if !defined(progid) && !defined(__WIDL__)
+#define threading(model)
+#define progid(str)
+#define vi_progid(str)
+#endif
+
 interface IXMLDOMDocument;
 
 [
