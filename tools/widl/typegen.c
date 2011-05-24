@@ -3111,7 +3111,7 @@ static unsigned int get_required_buffer_size_type(
     const type_t *type, const char *name, const attr_list_t *attrs, int toplevel_param, unsigned int *alignment)
 {
     *alignment = 0;
-    switch (typegen_detect_type(type, NULL, TDT_IGNORE_STRINGS|TDT_IGNORE_RANGES))
+    switch (typegen_detect_type(type, NULL, TDT_IGNORE_RANGES))
     {
     case TGT_USER_TYPE:
     {
@@ -3188,27 +3188,8 @@ static unsigned int get_required_buffer_size_type(
         if (get_pointer_fc(type, attrs, toplevel_param) == RPC_FC_RP)
         {
             const type_t *ref = type_pointer_get_ref(type);
-            switch (typegen_detect_type(ref, NULL, TDT_ALL_TYPES))
-            {
-            case TGT_BASIC:
-            case TGT_ENUM:
-            case TGT_RANGE:
-                return get_required_buffer_size_type( ref, name, NULL, FALSE, alignment );
-            case TGT_STRUCT:
-                if (get_struct_fc(ref) == RPC_FC_STRUCT)
-                    return get_required_buffer_size_type( ref, name, NULL, FALSE, alignment );
-                break;
-            case TGT_USER_TYPE:
-            case TGT_CTXT_HANDLE:
-            case TGT_CTXT_HANDLE_POINTER:
-            case TGT_STRING:
-            case TGT_POINTER:
-            case TGT_ARRAY:
-            case TGT_IFACE_POINTER:
-            case TGT_UNION:
-            case TGT_INVALID:
-                break;
-            }
+            if (is_string_type( attrs, ref )) break;
+            return get_required_buffer_size_type( ref, name, ref->attrs, FALSE, alignment );
         }
         break;
 
