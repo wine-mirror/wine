@@ -166,6 +166,7 @@ static BOOL test_instantiation(void)
     IFileOpenDialog *pfod;
     IFileSaveDialog *pfsd;
     IServiceProvider *psp;
+    IOleWindow *pow;
     IUnknown *punk;
     HRESULT hr;
     LONG ref;
@@ -235,6 +236,31 @@ static BOOL test_instantiation(void)
     ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
+    hr = IFileOpenDialog_QueryInterface(pfod, &IID_IOleWindow, (void**)&pow);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        HWND hwnd;
+
+        hr = IOleWindow_ContextSensitiveHelp(pow, TRUE);
+        todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+        hr = IOleWindow_ContextSensitiveHelp(pow, FALSE);
+        todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+        if(0)
+        {
+            /* Crashes on win7 */
+            IOleWindow_GetWindow(pow, NULL);
+        }
+
+        hr = IOleWindow_GetWindow(pow, &hwnd);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(hwnd == NULL, "Got %p\n", hwnd);
+
+        IOleWindow_Release(pow);
+    }
+
     ref = IFileOpenDialog_Release(pfod);
     ok(!ref, "Got refcount %d, should have been released.\n", ref);
 
@@ -279,6 +305,32 @@ static BOOL test_instantiation(void)
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IShellBrowser, (void**)&punk);
     ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+    hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IOleWindow, (void**)&pow);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        HWND hwnd;
+
+        hr = IOleWindow_ContextSensitiveHelp(pow, TRUE);
+        todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+        hr = IOleWindow_ContextSensitiveHelp(pow, FALSE);
+        todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+        if(0)
+        {
+            /* Crashes on win7 */
+            IOleWindow_GetWindow(pow, NULL);
+        }
+
+        hr = IOleWindow_GetWindow(pow, &hwnd);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(hwnd == NULL, "Got %p\n", hwnd);
+
+        IOleWindow_Release(pow);
+    }
+
 
     ref = IFileSaveDialog_Release(pfsd);
     ok(!ref, "Got refcount %d, should have been released.\n", ref);

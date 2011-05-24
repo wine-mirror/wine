@@ -65,6 +65,7 @@ typedef struct FileDialogImpl {
     IExplorerBrowserEvents IExplorerBrowserEvents_iface;
     IServiceProvider       IServiceProvider_iface;
     ICommDlgBrowser3       ICommDlgBrowser3_iface;
+    IOleWindow             IOleWindow_iface;
     LONG ref;
 
     FILEOPENDIALOGOPTIONS options;
@@ -909,6 +910,10 @@ static HRESULT WINAPI IFileDialog2_fnQueryInterface(IFileDialog2 *iface,
             IsEqualGUID(&IID_ICommDlgBrowser, riid))
     {
         *ppvObject = &This->ICommDlgBrowser3_iface;
+    }
+    else if(IsEqualGUID(&IID_IOleWindow, riid))
+    {
+        *ppvObject = &This->IOleWindow_iface;
     }
     else
         FIXME("Unknown interface requested: %s.\n", debugstr_guid(riid));
@@ -2206,6 +2211,55 @@ static const ICommDlgBrowser3Vtbl vt_ICommDlgBrowser3 = {
     ICommDlgBrowser3_fnOnPreviewCreated
 };
 
+/**************************************************************************
+ * IOleWindow implementation
+ */
+static inline FileDialogImpl *impl_from_IOleWindow(IOleWindow *iface)
+{
+    return CONTAINING_RECORD(iface, FileDialogImpl, IOleWindow_iface);
+}
+
+static HRESULT WINAPI IOleWindow_fnQueryInterface(IOleWindow *iface, REFIID riid, void **ppvObject)
+{
+    FileDialogImpl *This = impl_from_IOleWindow(iface);
+    return IFileDialog2_QueryInterface(&This->IFileDialog2_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI IOleWindow_fnAddRef(IOleWindow *iface)
+{
+    FileDialogImpl *This = impl_from_IOleWindow(iface);
+    return IFileDialog2_AddRef(&This->IFileDialog2_iface);
+}
+
+static ULONG WINAPI IOleWindow_fnRelease(IOleWindow *iface)
+{
+    FileDialogImpl *This = impl_from_IOleWindow(iface);
+    return IFileDialog2_Release(&This->IFileDialog2_iface);
+}
+
+static HRESULT WINAPI IOleWindow_fnContextSensitiveHelp(IOleWindow *iface, BOOL fEnterMOde)
+{
+    FileDialogImpl *This = impl_from_IOleWindow(iface);
+    FIXME("Stub: %p (%d)\n", This, fEnterMOde);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IOleWindow_fnGetWindow(IOleWindow *iface, HWND *phwnd)
+{
+    FileDialogImpl *This = impl_from_IOleWindow(iface);
+    TRACE("%p (%p)\n", This, phwnd);
+    *phwnd = This->dlg_hwnd;
+    return S_OK;
+}
+
+static const IOleWindowVtbl vt_IOleWindow = {
+    IOleWindow_fnQueryInterface,
+    IOleWindow_fnAddRef,
+    IOleWindow_fnRelease,
+    IOleWindow_fnGetWindow,
+    IOleWindow_fnContextSensitiveHelp
+};
+
 static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv, enum ITEMDLG_TYPE type)
 {
     FileDialogImpl *fdimpl;
@@ -2227,6 +2281,7 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     fdimpl->IExplorerBrowserEvents_iface.lpVtbl = &vt_IExplorerBrowserEvents;
     fdimpl->IServiceProvider_iface.lpVtbl = &vt_IServiceProvider;
     fdimpl->ICommDlgBrowser3_iface.lpVtbl = &vt_ICommDlgBrowser3;
+    fdimpl->IOleWindow_iface.lpVtbl = &vt_IOleWindow;
 
     if(type == ITEMDLG_TYPE_OPEN)
     {
