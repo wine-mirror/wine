@@ -805,7 +805,6 @@ void __cdecl     MSVCRT_abort(void);
 MSVCRT_ulong* __cdecl MSVCRT___doserrno(void);
 int* __cdecl     MSVCRT__errno(void);
 char* __cdecl    MSVCRT_getenv(const char*);
-char* __cdecl    MSVCRT_setlocale(int,const char*);
 int __cdecl      MSVCRT_fclose(MSVCRT_FILE*);
 void __cdecl     MSVCRT_terminate(void);
 MSVCRT_FILE* __cdecl MSVCRT__iob_func(void);
@@ -877,6 +876,7 @@ typedef struct MSVCRT_localeinfo_struct
 #define MSVCRT__DISABLE_PER_THREAD_LOCALE 2
 
 extern MSVCRT__locale_t MSVCRT_locale;
+MSVCRT__locale_t MSVCRT__create_locale(int, const char*);
 MSVCRT__locale_t get_locale(void);
 void __cdecl MSVCRT__free_locale(MSVCRT__locale_t);
 
