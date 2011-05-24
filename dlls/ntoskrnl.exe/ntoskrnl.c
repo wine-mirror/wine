@@ -1414,6 +1414,21 @@ NTSTATUS WINAPI ObReferenceObjectByHandle( HANDLE obj, ACCESS_MASK access,
     return STATUS_NOT_IMPLEMENTED;
 }
 
+ /***********************************************************************
+ *           ObReferenceObjectByName    (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI ObReferenceObjectByName( UNICODE_STRING *ObjectName,
+                                         ULONG Attributes,
+                                         ACCESS_STATE *AccessState,
+                                         ACCESS_MASK DesiredAccess,
+                                         POBJECT_TYPE ObjectType,
+                                         KPROCESSOR_MODE AccessMode,
+                                         void *ParseContext,
+                                         void **Object)
+{
+    FIXME("stub\n");
+    return STATUS_NOT_IMPLEMENTED;
+}
 
 /***********************************************************************
  *           ObfDereferenceObject   (NTOSKRNL.EXE.@)

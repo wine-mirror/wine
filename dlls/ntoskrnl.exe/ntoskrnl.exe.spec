@@ -810,7 +810,7 @@
 @ stub ObQueryNameString
 @ stub ObQueryObjectAuditingByHandle
 @ stdcall ObReferenceObjectByHandle(long long ptr long ptr ptr)
-@ stub ObReferenceObjectByName
+@ stdcall ObReferenceObjectByName(ptr long ptr long ptr long ptr ptr)
 @ stub ObReferenceObjectByPointer
 @ stub ObReferenceSecurityDescriptor
 @ stub ObReleaseObjectSecurity
