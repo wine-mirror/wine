@@ -1302,12 +1302,12 @@ static void test_expandnotify(void)
 
     item.state = TVIS_EXPANDED;
     ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
-    ok(ret == TRUE, "got %d\n", ret);
+    expect(TRUE, ret);
     ok((item.state & TVIS_EXPANDED) == 0, "expected collapsed\n");
 
     /* preselect root node here */
     ret = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hRoot);
-    ok(ret == TRUE, "got %d\n", ret);
+    expect(TRUE, ret);
 
     g_get_from_expand = TRUE;
     /* expand */
@@ -1315,7 +1315,7 @@ static void test_expandnotify(void)
     g_item_expanding.state = 0xdeadbeef;
     g_item_expanded.state = 0xdeadbeef;
     ret = SendMessageA(hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)hRoot);
-    ok(ret == TRUE, "got %d\n", ret);
+    expect(TRUE, ret);
     ok(g_item_expanding.state == TVIS_SELECTED, "got state on TVN_ITEMEXPANDING 0x%08x\n",
        g_item_expanding.state);
     ok(g_item_expanded.state == (TVIS_SELECTED|TVIS_EXPANDED), "got state on TVN_ITEMEXPANDED 0x%08x\n",
@@ -1326,16 +1326,16 @@ static void test_expandnotify(void)
     /* check that it's expanded */
     item.state = TVIS_EXPANDED;
     ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
-    ok(ret == TRUE, "got %d\n", ret);
+    expect(TRUE, ret);
     ok((item.state & TVIS_EXPANDED) == TVIS_EXPANDED, "expected expanded\n");
 
     /* collapse */
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     ret = SendMessageA(hTree, TVM_EXPAND, TVE_COLLAPSE, (LPARAM)hRoot);
-    ok(ret == TRUE, "got %d\n", ret);
+    expect(TRUE, ret);
     item.state = TVIS_EXPANDED;
     ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
-    ok(ret == TRUE, "got %d\n", ret);
+    expect(TRUE, ret);
     ok((item.state & TVIS_EXPANDED) == 0, "expected collapsed\n");
     /* all next collapse/expand attempts won't produce any notifications,
        the only way is to reset with all children removed */
@@ -1345,7 +1345,7 @@ static void test_expandnotify(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     ret = SendMessageA(hTree, TVM_EXPAND, TVE_TOGGLE, (LPARAM)hChild);
     expect(FALSE, ret);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "toggle node without children", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "toggle node without children", FALSE);
 
     DestroyWindow(hTree);
 
@@ -1354,8 +1354,25 @@ static void test_expandnotify(void)
     fill_tree(hTree);
     g_get_rect_in_expand = TRUE;
     ret = TreeView_Select(hTree, hChild, TVGN_CARET);
+    expect(TRUE, ret);
     g_get_rect_in_expand = FALSE;
-    ok(ret, "got %d\n", ret);
+
+    DestroyWindow(hTree);
+
+    /* TVE_TOGGLE acts as any other TVM_EXPAND */
+    hTree = create_treeview_control(0);
+    fill_tree(hTree);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ret = SendMessageA(hTree, TVM_EXPAND, TVE_TOGGLE, (LPARAM)hRoot);
+    expect(TRUE, ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_expand_seq, "toggle node (expand)", FALSE);
+
+    /* toggle again - no notifications */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ret = SendMessageA(hTree, TVM_EXPAND, TVE_TOGGLE, (LPARAM)hRoot);
+    expect(TRUE, ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "toggle node (collapse)", FALSE);
 
     DestroyWindow(hTree);
 }

@@ -3489,14 +3489,14 @@ static void TREEVIEW_SingleExpand(TREEVIEW_INFO *infoPtr,
 }
 
 static BOOL
-TREEVIEW_Toggle(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item, BOOL bUser)
+TREEVIEW_Toggle(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item, BOOL user)
 {
-    TRACE("\n");
+    TRACE("item=%p, user=%d\n", item, user);
 
     if (item->state & TVIS_EXPANDED)
-	return TREEVIEW_Collapse(infoPtr, item, FALSE, bUser);
+	return TREEVIEW_Collapse(infoPtr, item, FALSE, user);
     else
-	return TREEVIEW_Expand(infoPtr, item, FALSE, bUser);
+	return TREEVIEW_Expand(infoPtr, item, FALSE, user);
 }
 
 static VOID
@@ -3538,7 +3538,7 @@ TREEVIEW_ExpandMsg(TREEVIEW_INFO *infoPtr, UINT flag, HTREEITEM item)
 			       FALSE);
 
     case TVE_TOGGLE:
-	return TREEVIEW_Toggle(infoPtr, item, TRUE);
+	return TREEVIEW_Toggle(infoPtr, item, FALSE);
 
     default:
 	return 0;
