@@ -841,21 +841,20 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         if (!feature)
             continue;
 
-        if (feature->ActionRequest != INSTALLSTATE_LOCAL &&
-            feature->ActionRequest != INSTALLSTATE_ADVERTISED )
+        feature->Action = msi_get_feature_action( package, feature );
+        if (feature->Action != INSTALLSTATE_LOCAL &&
+            feature->Action != INSTALLSTATE_ADVERTISED )
         {
-            TRACE("Feature %s not scheduled for installation, skipping registration of class %s\n",
+            TRACE("feature %s not scheduled for installation, skipping registration of class %s\n",
                   debugstr_w(feature->Feature), debugstr_w(cls->clsid));
             continue;
         }
-        feature->Action = feature->ActionRequest;
 
         if (!comp->KeyPath || !(file = msi_get_loaded_file( package, comp->KeyPath )))
         {
             TRACE("COM server not provided, skipping class %s\n", debugstr_w(cls->clsid));
             continue;
         }
-
         TRACE("Registering class %s (%p)\n", debugstr_w(cls->clsid), cls);
 
         cls->Installed = TRUE;
@@ -1005,14 +1004,13 @@ UINT ACTION_UnregisterClassInfo( MSIPACKAGE *package )
         if (!feature)
             continue;
 
-        if (feature->ActionRequest != INSTALLSTATE_ABSENT)
+        feature->Action = msi_get_feature_action( package, feature );
+        if (feature->Action != INSTALLSTATE_ABSENT)
         {
-            TRACE("Feature %s not scheduled for removal, skipping unregistration of class %s\n",
+            TRACE("feature %s not scheduled for removal, skipping unregistration of class %s\n",
                   debugstr_w(feature->Feature), debugstr_w(cls->clsid));
             continue;
         }
-        feature->Action = feature->ActionRequest;
-
         TRACE("Unregistering class %s (%p)\n", debugstr_w(cls->clsid), cls);
 
         cls->Installed = FALSE;
@@ -1288,15 +1286,14 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
          * yes. MSDN says that these are based on _Feature_ not on
          * Component.  So verify the feature is to be installed
          */
-        if (feature->ActionRequest != INSTALLSTATE_LOCAL &&
-            !(install_on_demand && feature->ActionRequest == INSTALLSTATE_ADVERTISED))
+        feature->Action = msi_get_feature_action( package, feature );
+        if (feature->Action != INSTALLSTATE_LOCAL &&
+            !(install_on_demand && feature->Action == INSTALLSTATE_ADVERTISED))
         {
-            TRACE("Feature %s not scheduled for installation, skipping registration of extension %s\n",
-                   debugstr_w(feature->Feature), debugstr_w(ext->Extension));
+            TRACE("feature %s not scheduled for installation, skipping registration of extension %s\n",
+                  debugstr_w(feature->Feature), debugstr_w(ext->Extension));
             continue;
         }
-        feature->Action = feature->ActionRequest;
-
         TRACE("Registering extension %s (%p)\n", debugstr_w(ext->Extension), ext);
 
         ext->Installed = TRUE;
@@ -1394,13 +1391,13 @@ UINT ACTION_UnregisterExtensionInfo( MSIPACKAGE *package )
         if (!feature)
             continue;
 
-        if (feature->ActionRequest != INSTALLSTATE_ABSENT)
+        feature->Action = msi_get_feature_action( package, feature );
+        if (feature->Action != INSTALLSTATE_ABSENT)
         {
-            TRACE("Feature %s not scheduled for removal, skipping unregistration of extension %s\n",
-                   debugstr_w(feature->Feature), debugstr_w(ext->Extension));
+            TRACE("feature %s not scheduled for removal, skipping unregistration of extension %s\n",
+                  debugstr_w(feature->Feature), debugstr_w(ext->Extension));
             continue;
         }
-
         TRACE("Unregistering extension %s\n", debugstr_w(ext->Extension));
 
         ext->Installed = FALSE;

@@ -827,6 +827,12 @@ INSTALLSTATE msi_get_component_action( MSIPACKAGE *package, MSICOMPONENT *comp )
     return comp->ActionRequest;
 }
 
+INSTALLSTATE msi_get_feature_action( MSIPACKAGE *package, MSIFEATURE *feature )
+{
+    if (package->need_rollback) return feature->Installed;
+    return feature->ActionRequest;
+}
+
 static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = param;
