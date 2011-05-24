@@ -1649,10 +1649,9 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     {
         GL_EXTCALL(glProvokingVertexEXT(GL_FIRST_VERTEX_CONVENTION_EXT));
     }
+    device->frag_pipe->enable_extension(TRUE);
 
     LEAVE_GL();
-
-    device->frag_pipe->enable_extension(TRUE);
 
     TRACE("Created context %p.\n", ret);
 
@@ -1913,14 +1912,13 @@ static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *
     Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_CLIPPING), StateTable);
 
     set_blit_dimension(width, height);
+    device->frag_pipe->enable_extension(FALSE);
 
     LEAVE_GL();
 
     context->blit_w = width; context->blit_h = height;
     Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);
     Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
-
-    device->frag_pipe->enable_extension(FALSE);
 }
 
 /* Do not call while under the GL lock. */
@@ -2208,6 +2206,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
         LEAVE_GL();
     }
 
+    ENTER_GL();
     if (context->last_was_blit)
     {
         device->frag_pipe->enable_extension(TRUE);
@@ -2216,7 +2215,6 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
     /* Blending and clearing should be orthogonal, but tests on the nvidia
      * driver show that disabling blending when clearing improves the clearing
      * performance incredibly. */
-    ENTER_GL();
     glDisable(GL_BLEND);
     glEnable(GL_SCISSOR_TEST);
     checkGLcall("glEnable GL_SCISSOR_TEST");
@@ -2286,12 +2284,12 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
         LEAVE_GL();
     }
 
+    ENTER_GL();
     if (context->last_was_blit)
     {
         device->frag_pipe->enable_extension(TRUE);
     }
 
-    ENTER_GL();
     for (i = 0; i < context->numDirtyEntries; ++i)
     {
         DWORD rep = context->dirtyArray[i];
@@ -2381,8 +2379,16 @@ struct wined3d_context *context_acquire(struct wined3d_device *device, struct wi
 
     if (context != current_context)
     {
-        if (!context_set_current(context)) ERR("Failed to activate the new context.\n");
-        else device->frag_pipe->enable_extension(!context->last_was_blit);
+        if (!context_set_current(context))
+        {
+            ERR("Failed to activate the new context.\n");
+        }
+        else
+        {
+            ENTER_GL();
+            device->frag_pipe->enable_extension(!context->last_was_blit);
+            LEAVE_GL();
+        }
 
         if (context->vshader_const_dirty)
         {

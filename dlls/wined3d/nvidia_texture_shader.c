@@ -623,10 +623,9 @@ static void nvrc_texfactor(DWORD state, struct wined3d_stateblock *stateblock, s
 /* Context activation is done by the caller. */
 static void nvrc_enable(BOOL enable) {}
 
-/* Context activation is done by the caller. */
+/* Context activation and GL locking are done by the caller. */
 static void nvts_enable(BOOL enable)
 {
-    ENTER_GL();
     if(enable) {
         glEnable(GL_TEXTURE_SHADER_NV);
         checkGLcall("glEnable(GL_TEXTURE_SHADER_NV)");
@@ -634,7 +633,6 @@ static void nvts_enable(BOOL enable)
         glDisable(GL_TEXTURE_SHADER_NV);
         checkGLcall("glDisable(GL_TEXTURE_SHADER_NV)");
     }
-    LEAVE_GL();
 }
 
 static void nvrc_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)

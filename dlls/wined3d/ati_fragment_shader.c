@@ -1054,10 +1054,9 @@ static const struct StateEntryTemplate atifs_fragmentstate_template[] = {
     {0 /* Terminate */,                                   { 0,                                                  0                       }, WINED3D_GL_EXT_NONE             },
 };
 
-/* Context activation is done by the caller. */
+/* Context activation and GL locking are done by the caller. */
 static void atifs_enable(BOOL enable)
 {
-    ENTER_GL();
     if(enable) {
         glEnable(GL_FRAGMENT_SHADER_ATI);
         checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
@@ -1065,7 +1064,6 @@ static void atifs_enable(BOOL enable)
         glDisable(GL_FRAGMENT_SHADER_ATI);
         checkGLcall("glDisable(GL_FRAGMENT_SHADER_ATI)");
     }
-    LEAVE_GL();
 }
 
 static void atifs_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)

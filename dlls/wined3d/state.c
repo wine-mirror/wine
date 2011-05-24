@@ -5578,7 +5578,7 @@ static const struct StateEntryTemplate ffp_fragmentstate_template[] = {
     {0 /* Terminate */,                                   { 0,                                                  0                   }, WINED3D_GL_EXT_NONE             },
 };
 
-/* Context activation is done by the caller. */
+/* Context activation and GL locking are done by the caller. */
 static void ffp_enable(BOOL enable) {}
 
 static void ffp_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)

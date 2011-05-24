@@ -5504,10 +5504,9 @@ struct arbfp_ffp_desc
     unsigned int num_textures_used;
 };
 
-/* Context activation is done by the caller. */
+/* Context activation and GL locking are done by the caller. */
 static void arbfp_enable(BOOL enable)
 {
-    ENTER_GL();
     if(enable) {
         glEnable(GL_FRAGMENT_PROGRAM_ARB);
         checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB)");
@@ -5515,7 +5514,6 @@ static void arbfp_enable(BOOL enable)
         glDisable(GL_FRAGMENT_PROGRAM_ARB);
         checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
     }
-    LEAVE_GL();
 }
 
 static HRESULT arbfp_alloc(struct wined3d_device *device)
