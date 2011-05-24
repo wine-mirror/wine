@@ -447,6 +447,7 @@ SRCDIR_INCLUDES = \
 	rpcndr.h \
 	rpcnterr.h \
 	rpcproxy.h \
+	rpcsal.h \
 	rstbas.idl \
 	rstinf.idl \
 	rstloc.idl \

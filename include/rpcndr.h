@@ -24,6 +24,7 @@
 #define __WINE_RPCNDR_H
 
 #include <basetsd.h>
+#include <rpcsal.h>
 
 #ifdef __cplusplus
 extern "C" {
