@@ -619,6 +619,20 @@ static void test_ScriptShapeOpenType(HDC hdc)
                             {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
                             {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}} };
 
+    /* Lao */
+    static const WCHAR test_lao[] = {0x0ead, 0x0eb1, 0x0e81, 0x0eaa, 0x0ead, 0x0e99, 0x0ea5, 0x0eb2, 0x0ea7, 0};
+    static const shapeTest_char lao_c[] = {{0,{0,0}},{0,{0,0}},{2,{0,0}},{3,{0,0}},{4,{0,0}},{5,{0,0}},{6,{0,0}},{7,{0,0}},{8,{0,0}}};
+    static const shapeTest_glyph lao_g[] = {
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,0,1,1,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}} };
+
     if (!pScriptItemizeOpenType || !pScriptShapeOpenType)
     {
         win_skip("ScriptShapeOpenType not available on this platform\n");
@@ -696,6 +710,14 @@ static void test_ScriptShapeOpenType(HDC hdc)
     if (hfont != NULL)
     {
         test_shape_ok_valid(test_valid, hdc, test_phagspa, 11, &Control, &State, 0, 11, phagspa_c, phagspa_g);
+        SelectObject(hdc, hfont_orig);
+        DeleteObject(hfont);
+    }
+
+    test_valid = find_font_for_range(hdc, "DokChampa", 25, test_lao[0], &hfont, &hfont_orig);
+    if (hfont != NULL)
+    {
+        test_shape_ok_valid(test_valid, hdc, test_lao, 9, &Control, &State, 0, 9, lao_c, lao_g);
         SelectObject(hdc, hfont_orig);
         DeleteObject(hfont);
     }
