@@ -2259,7 +2259,7 @@ static void FILEDLG95_MRU_load_filename(LPWSTR stored_path)
     TRACE("got MRU path: %s\n", wine_dbgstr_w(stored_path));
 }
 
-static void FILEDLG95_OnOpenMessage(HWND hwnd, int idCaption, int idText)
+void FILEDLG95_OnOpenMessage(HWND hwnd, int idCaption, int idText)
 {
   WCHAR strMsgTitle[MAX_PATH];
   WCHAR strMsgText [MAX_PATH];

@@ -87,6 +87,7 @@ typedef struct FileDialogImpl {
     DWORD ebevents_cookie;
 
     LPWSTR set_filename;
+    LPWSTR default_ext;
     LPWSTR custom_title;
     LPWSTR custom_okbutton;
     LPWSTR custom_cancelbutton;
@@ -271,6 +272,21 @@ static void fill_filename_from_selection(FileDialogImpl *This)
     return;
 }
 
+static LPWSTR get_first_ext_from_spec(LPWSTR buf, LPCWSTR spec)
+{
+    WCHAR *endpos, *ext;
+
+    lstrcpyW(buf, spec);
+    if( (endpos = StrChrW(buf, ';')) )
+        *endpos = '\0';
+
+    ext = PathFindExtensionW(buf);
+    if(StrChrW(ext, '*'))
+        return NULL;
+
+    return ext;
+}
+
 static HRESULT on_default_action(FileDialogImpl *This)
 {
     IShellFolder *psf_parent, *psf_desktop;
@@ -316,8 +332,61 @@ static HRESULT on_default_action(FileDialogImpl *This)
             open_action = ONOPEN_BROWSE;
 
         open_action = FILEDLG95_ValidatePathAction(canon_filename, &psf_parent, This->dlg_hwnd,
-                                                   This->options, (This->dlg_type == ITEMDLG_TYPE_SAVE),
+                                                   This->options & ~FOS_FILEMUSTEXIST,
+                                                   (This->dlg_type == ITEMDLG_TYPE_SAVE),
                                                    open_action);
+
+        /* Add the proper extension */
+        if(open_action == ONOPEN_OPEN)
+        {
+            static const WCHAR dotW[] = {'.',0};
+
+            if(This->dlg_type == ITEMDLG_TYPE_SAVE)
+            {
+                WCHAR extbuf[MAX_PATH], *newext = NULL;
+
+                if(This->filterspec_count)
+                {
+                    newext = get_first_ext_from_spec(extbuf, This->filterspecs[This->filetypeindex].pszSpec);
+                }
+                else if(This->default_ext)
+                {
+                    lstrcpyW(extbuf, dotW);
+                    lstrcatW(extbuf, This->default_ext);
+                    newext = extbuf;
+                }
+
+                if(newext)
+                {
+                    WCHAR *ext = PathFindExtensionW(canon_filename);
+                    if(lstrcmpW(ext, newext))
+                        lstrcatW(canon_filename, newext);
+                }
+            }
+            else
+            {
+                if( !(This->options & FOS_NOVALIDATE) && (This->options & FOS_FILEMUSTEXIST) &&
+                    !PathFileExistsW(canon_filename))
+                {
+                    if(This->default_ext)
+                    {
+                        lstrcatW(canon_filename, dotW);
+                        lstrcatW(canon_filename, This->default_ext);
+
+                        if(!PathFileExistsW(canon_filename))
+                        {
+                            FILEDLG95_OnOpenMessage(This->dlg_hwnd, 0, IDS_FILENOTEXISTING);
+                            open_action = ONOPEN_BROWSE;
+                        }
+                    }
+                    else
+                    {
+                        FILEDLG95_OnOpenMessage(This->dlg_hwnd, 0, IDS_FILENOTEXISTING);
+                        open_action = ONOPEN_BROWSE;
+                    }
+                }
+            }
+        }
 
         pidla[i] = COMDLG32_SHSimpleIDListFromPathAW(canon_filename);
 
@@ -959,6 +1028,7 @@ static ULONG WINAPI IFileDialog2_fnRelease(IFileDialog2 *iface)
         if(This->psia_results)      IShellItemArray_Release(This->psia_results);
 
         LocalFree(This->set_filename);
+        LocalFree(This->default_ext);
         LocalFree(This->custom_title);
         LocalFree(This->custom_okbutton);
         LocalFree(This->custom_cancelbutton);
@@ -1281,8 +1351,12 @@ static HRESULT WINAPI IFileDialog2_fnAddPlace(IFileDialog2 *iface, IShellItem *p
 static HRESULT WINAPI IFileDialog2_fnSetDefaultExtension(IFileDialog2 *iface, LPCWSTR pszDefaultExtension)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%s)\n", This, debugstr_w(pszDefaultExtension));
-    return E_NOTIMPL;
+    TRACE("%p (%s)\n", This, debugstr_w(pszDefaultExtension));
+
+    LocalFree(This->default_ext);
+    This->default_ext = StrDupW(pszDefaultExtension);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialog2_fnClose(IFileDialog2 *iface, HRESULT hr)
@@ -2316,6 +2390,7 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     fdimpl->peb = NULL;
 
     fdimpl->set_filename = NULL;
+    fdimpl->default_ext = NULL;
     fdimpl->custom_cancelbutton = fdimpl->custom_filenamelabel = NULL;
 
     /* FIXME: The default folder setting should be restored for the

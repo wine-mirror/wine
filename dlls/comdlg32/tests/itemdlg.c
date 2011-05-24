@@ -27,6 +27,7 @@
 
 static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMIDLIST,IShellItem**);
 static HRESULT (WINAPI *pSHGetIDListFromObject)(IUnknown*, PIDLIST_ABSOLUTE*);
+static HRESULT (WINAPI *pSHCreateItemFromParsingName)(PCWSTR,IBindCtx*,REFIID,void**);
 
 static void init_function_pointers(void)
 {
@@ -35,6 +36,7 @@ static void init_function_pointers(void)
 #define MAKEFUNC(f) (p##f = (void*)GetProcAddress(hmod, #f))
     MAKEFUNC(SHCreateShellItem);
     MAKEFUNC(SHGetIDListFromObject);
+    MAKEFUNC(SHCreateItemFromParsingName);
 #undef MAKEFUNC
 }
 
@@ -48,6 +50,8 @@ typedef struct {
     LONG OnFileOk, OnFolderChanging, OnFolderChange;
     LONG OnSelectionChange, OnShareViolation, OnTypeChange;
     LONG OnOverwrite;
+    LPCWSTR set_filename;
+    BOOL set_filename_tried;
 } IFileDialogEventsImpl;
 
 static inline IFileDialogEventsImpl *impl_from_IFileDialogEvents(IFileDialogEvents *iface)
@@ -99,6 +103,34 @@ static HRESULT WINAPI IFileDialogEvents_fnOnFolderChange(IFileDialogEvents *ifac
 {
     IFileDialogEventsImpl *This = impl_from_IFileDialogEvents(iface);
     This->OnFolderChange++;
+
+    if(This->set_filename)
+    {
+        IOleWindow *pow;
+        HWND dlg_hwnd;
+        HRESULT hr;
+        BOOL br;
+
+        hr = IFileDialog_QueryInterface(pfd, &IID_IOleWindow, (void**)&pow);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+        hr = IOleWindow_GetWindow(pow, &dlg_hwnd);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(dlg_hwnd != NULL, "Got NULL.\n");
+
+        IOleWindow_Release(pow);
+
+        hr = IFileDialog_SetFileName(pfd, This->set_filename);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+        if(!This->set_filename_tried)
+        {
+            br = PostMessageW(dlg_hwnd, WM_COMMAND, IDOK, 0);
+            ok(br, "Failed\n");
+            This->set_filename_tried = TRUE;
+        }
+    }
+
     return S_OK;
 }
 
@@ -523,8 +555,6 @@ static void test_basics(void)
     ok(hr == S_OK, "got 0x%08x.\n", hr);
 
     /* SetDefaultExtension */
-    todo_wine
-    {
     hr = IFileOpenDialog_SetDefaultExtension(pfod, NULL);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
     hr = IFileOpenDialog_SetDefaultExtension(pfod, txt);
@@ -538,7 +568,6 @@ static void test_basics(void)
     ok(hr == S_OK, "got 0x%08x.\n", hr);
     hr = IFileSaveDialog_SetDefaultExtension(pfsd, null);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
-    }
 
     /* SetDefaultFolder */
     hr = IFileOpenDialog_SetDefaultFolder(pfod, NULL);
@@ -921,6 +950,245 @@ static void test_advise(void)
     ok(!ref, "Got refcount %d, should have been released.\n", ref);
 }
 
+static void touch_file(LPCWSTR filename)
+{
+    HANDLE file;
+    file = CreateFileW(filename, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to create file.\n");
+    CloseHandle(file);
+}
+
+static void test_filename_savedlg_(LPCWSTR set_filename, LPCWSTR defext,
+                                   const COMDLG_FILTERSPEC *filterspec, UINT fs_count,
+                                   LPCWSTR exp_filename, const char *file, int line)
+{
+    IFileSaveDialog *pfsd;
+    IFileDialogEventsImpl *pfdeimpl;
+    IFileDialogEvents *pfde;
+    DWORD cookie;
+    LPWSTR filename;
+    IShellItem *psi;
+    LONG ref;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IFileSaveDialog, (void**)&pfsd);
+    ok_(file,line)(hr == S_OK, "Got 0x%08x\n", hr);
+
+    if(fs_count)
+    {
+        hr = IFileSaveDialog_SetFileTypes(pfsd, fs_count, filterspec);
+        ok_(file,line)(hr == S_OK, "SetFileTypes failed: Got 0x%08x\n", hr);
+    }
+
+    if(defext)
+    {
+        hr = IFileSaveDialog_SetDefaultExtension(pfsd, defext);
+        ok_(file,line)(hr == S_OK, "SetDefaultExtensions failed: Got 0x%08x\n", hr);
+    }
+
+    pfde = IFileDialogEvents_Constructor();
+    pfdeimpl = impl_from_IFileDialogEvents(pfde);
+    pfdeimpl->set_filename = set_filename;
+    hr = IFileSaveDialog_Advise(pfsd, pfde, &cookie);
+    ok_(file,line)(hr == S_OK, "Advise failed: Got 0x%08x\n", hr);
+
+    hr = IFileSaveDialog_Show(pfsd, NULL);
+    ok_(file,line)(hr == S_OK, "Show failed: Got 0x%08x\n", hr);
+
+    hr = IFileSaveDialog_GetFileName(pfsd, &filename);
+    ok_(file,line)(hr == S_OK, "GetFileName failed: Got 0x%08x\n", hr);
+    ok_(file,line)(!lstrcmpW(filename, set_filename), "Got %s\n", wine_dbgstr_w(filename));
+    CoTaskMemFree(filename);
+
+    hr = IFileSaveDialog_GetResult(pfsd, &psi);
+    ok_(file,line)(hr == S_OK, "GetResult failed: Got 0x%08x\n", hr);
+
+    hr = IShellItem_GetDisplayName(psi, SIGDN_PARENTRELATIVEPARSING, &filename);
+    ok_(file,line)(hr == S_OK, "GetDisplayName failed: Got 0x%08x\n", hr);
+    ok_(file,line)(!lstrcmpW(filename, exp_filename), "(GetDisplayName) Got %s\n", wine_dbgstr_w(filename));
+    CoTaskMemFree(filename);
+    IShellItem_Release(psi);
+
+    hr = IFileSaveDialog_Unadvise(pfsd, cookie);
+    ok_(file,line)(hr == S_OK, "Unadvise failed: Got 0x%08x\n", hr);
+
+    ref = IFileSaveDialog_Release(pfsd);
+    ok_(file,line)(!ref, "Got refcount %d, should have been released.\n", ref);
+
+    IFileDialogEvents_Release(pfde);
+}
+#define test_filename_savedlg(set_filename, defext, filterspec, fs_count, exp_filename) \
+    test_filename_savedlg_(set_filename, defext, filterspec, fs_count, exp_filename, __FILE__, __LINE__)
+
+static void test_filename_opendlg_(LPCWSTR set_filename, IShellItem *psi_current, LPCWSTR defext,
+                                   const COMDLG_FILTERSPEC *filterspec, UINT fs_count,
+                                   LPCWSTR exp_filename, const char *file, int line)
+{
+    IFileOpenDialog *pfod;
+    IFileDialogEventsImpl *pfdeimpl;
+    IFileDialogEvents *pfde;
+    DWORD cookie;
+    LPWSTR filename;
+    IShellItemArray *psia;
+    IShellItem *psi;
+    LONG ref;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IFileOpenDialog, (void**)&pfod);
+    ok_(file,line)(hr == S_OK, "CoCreateInstance failed: Got 0x%08x\n", hr);
+
+    if(defext)
+    {
+        hr = IFileOpenDialog_SetDefaultExtension(pfod, defext);
+        ok_(file,line)(hr == S_OK, "SetDefaultExtensions failed: Got 0x%08x\n", hr);
+    }
+
+    if(fs_count)
+    {
+        hr = IFileOpenDialog_SetFileTypes(pfod, 2, filterspec);
+        ok_(file,line)(hr == S_OK, "SetFileTypes failed: Got 0x%08x\n", hr);
+    }
+
+    hr = IFileOpenDialog_SetFolder(pfod, psi_current);
+    ok_(file,line)(hr == S_OK, "SetFolder failed: Got 0x%08x\n", hr);
+
+    pfde = IFileDialogEvents_Constructor();
+    pfdeimpl = impl_from_IFileDialogEvents(pfde);
+    pfdeimpl->set_filename = set_filename;
+    pfdeimpl->set_filename_tried = FALSE;
+    hr = IFileOpenDialog_Advise(pfod, pfde, &cookie);
+    ok_(file,line)(hr == S_OK, "Advise failed: Got 0x%08x\n", hr);
+
+    hr = IFileOpenDialog_Show(pfod, NULL);
+    ok_(file,line)(hr == S_OK || (!exp_filename && hr == HRESULT_FROM_WIN32(ERROR_CANCELLED)),
+                   "Show failed: Got 0x%08x\n", hr);
+    if(hr == S_OK)
+    {
+        hr = IFileOpenDialog_GetResult(pfod, &psi);
+        ok_(file,line)(hr == S_OK, "GetResult failed: Got 0x%08x\n", hr);
+
+        hr = IShellItem_GetDisplayName(psi, SIGDN_PARENTRELATIVEPARSING, &filename);
+        ok_(file,line)(hr == S_OK, "GetDisplayName(Result) failed: Got 0x%08x\n", hr);
+        ok_(file,line)(!lstrcmpW(filename, exp_filename), "(GetResult) Got %s\n", wine_dbgstr_w(filename));
+        CoTaskMemFree(filename);
+        IShellItem_Release(psi);
+
+        hr = IFileOpenDialog_GetResults(pfod, &psia);
+        ok_(file,line)(hr == S_OK, "GetResults failed: Got 0x%08x\n", hr);
+        hr = IShellItemArray_GetItemAt(psia, 0, &psi);
+        ok_(file,line)(hr == S_OK, "GetItemAt failed: Got 0x%08x\n", hr);
+
+        hr = IShellItem_GetDisplayName(psi, SIGDN_PARENTRELATIVEPARSING, &filename);
+        ok_(file,line)(hr == S_OK, "GetDisplayName(Results) failed: Got 0x%08x\n", hr);
+        ok_(file,line)(!lstrcmpW(filename, exp_filename), "(GetResults) Got %s\n", wine_dbgstr_w(filename));
+        CoTaskMemFree(filename);
+
+        IShellItem_Release(psi);
+        IShellItemArray_Release(psia);
+    }
+    else
+    {
+        hr = IFileOpenDialog_GetResult(pfod, &psi);
+        ok_(file,line)(hr == E_UNEXPECTED, "GetResult: Got 0x%08x\n", hr);
+
+        hr = IFileOpenDialog_GetResults(pfod, &psia);
+        ok_(file,line)(hr == E_FAIL, "GetResults: Got 0x%08x\n", hr);
+    }
+
+    hr = IFileOpenDialog_GetFileName(pfod, &filename);
+    ok_(file,line)(hr == S_OK, "GetFileName failed: Got 0x%08x\n", hr);
+    ok_(file,line)(!lstrcmpW(filename, set_filename), "(GetFileName) Got %s\n", wine_dbgstr_w(filename));
+    CoTaskMemFree(filename);
+
+
+    hr = IFileOpenDialog_Unadvise(pfod, cookie);
+    ok_(file,line)(hr == S_OK, "Unadvise failed: Got 0x%08x\n", hr);
+
+    ref = IFileOpenDialog_Release(pfod);
+    ok_(file,line)(!ref, "Got refcount %d, should have been released.\n", ref);
+
+    IFileDialogEvents_Release(pfde);
+}
+#define test_filename_opendlg(set_filename, psi, defext, filterspec, fs_count, exp_filename) \
+    test_filename_opendlg_(set_filename, psi, defext, filterspec, fs_count, exp_filename, __FILE__, __LINE__)
+
+static void test_filename(void)
+{
+    IShellItem *psi_current;
+    HRESULT hr;
+    WCHAR buf[MAX_PATH];
+
+    static const WCHAR filename_noextW[] = {'w','i','n','e','t','e','s','t',0};
+    static const WCHAR filename_dotextW[] = {'w','i','n','e','t','e','s','t','.',0};
+    static const WCHAR filename_dotanddefW[] = {'w','i','n','e','t','e','s','t','.','.','w','t','e',0};
+    static const WCHAR filename_defextW[] = {'w','i','n','e','t','e','s','t','.','w','t','e',0};
+    static const WCHAR filename_ext1W[] = {'w','i','n','e','t','e','s','t','.','w','t','1',0};
+    static const WCHAR filename_ext2W[] = {'w','i','n','e','t','e','s','t','.','w','t','2',0};
+    static const WCHAR filename_ext1anddefW[] =
+        {'w','i','n','e','t','e','s','t','.','w','t','1','.','w','t','e',0};
+    static const WCHAR defextW[] = {'w','t','e',0};
+    static const WCHAR desc1[] = {'d','e','s','c','r','i','p','t','i','o','n','1',0};
+    static const WCHAR desc2[] = {'d','e','s','c','r','i','p','t','i','o','n','2',0};
+    static const WCHAR descdef[] = {'d','e','f','a','u','l','t',' ','d','e','s','c',0};
+    static const WCHAR ext1[] = {'*','.','w','t','1',0};
+    static const WCHAR ext2[] = {'*','.','w','t','2',0};
+    static const WCHAR extdef[] = {'*','.','w','t','e',0};
+    static const WCHAR complexext[] = {'*','.','w','t','2',';','*','.','w','t','1',0};
+
+    static const COMDLG_FILTERSPEC filterspec[] = {
+        { desc1, ext1 }, { desc2, ext2 }, { descdef, extdef }
+    };
+    static const COMDLG_FILTERSPEC filterspec2[] = {
+        { desc1, complexext }
+    };
+
+    /* No extension */
+    test_filename_savedlg(filename_noextW, NULL, NULL, 0, filename_noextW);
+    /* Default extension */
+    test_filename_savedlg(filename_noextW, defextW, NULL, 0, filename_defextW);
+    /* Default extension on filename ending with a . */
+    test_filename_savedlg(filename_dotextW, defextW, NULL, 0, filename_dotanddefW);
+    /* Default extension on filename with default extension */
+    test_filename_savedlg(filename_defextW, defextW, NULL, 0, filename_defextW);
+    /* Default extension on filename with another extension */
+    test_filename_savedlg(filename_ext1W, defextW, NULL, 0, filename_ext1anddefW);
+    /* Default extension, filterspec without default extension */
+    test_filename_savedlg(filename_noextW, defextW, filterspec, 2, filename_ext1W);
+    /* Default extension, filterspec with default extension */
+    test_filename_savedlg(filename_noextW, defextW, filterspec, 3, filename_ext1W);
+    /* Default extension, filterspec with "complex" extension */
+    test_filename_savedlg(filename_noextW, defextW, filterspec2, 1, filename_ext2W);
+
+    GetCurrentDirectoryW(MAX_PATH, buf);
+    ok(!!pSHCreateItemFromParsingName, "SHCreateItemFromParsingName is missing.\n");
+    hr = pSHCreateItemFromParsingName(buf, NULL, &IID_IShellItem, (void**)&psi_current);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    touch_file(filename_noextW);
+    touch_file(filename_defextW);
+    touch_file(filename_ext2W);
+
+    /* IFileOpenDialog, default extension */
+    test_filename_opendlg(filename_noextW, psi_current, defextW, NULL, 0, filename_noextW);
+    /* IFileOpenDialog, default extension and filterspec */
+    test_filename_opendlg(filename_noextW, psi_current, defextW, filterspec, 2, filename_noextW);
+
+    DeleteFileW(filename_noextW);
+    /* IFileOpenDialog, default extension, noextW deleted */
+    test_filename_opendlg(filename_noextW, psi_current, defextW, NULL, 0, filename_defextW);
+    if(0) /* Interactive */
+    {
+    /* IFileOpenDialog, filterspec, no default extension, noextW deleted */
+    test_filename_opendlg(filename_noextW, psi_current, NULL, filterspec, 2, NULL);
+    }
+
+    IShellItem_Release(psi_current);
+    DeleteFileW(filename_defextW);
+    DeleteFileW(filename_ext2W);
+}
+
 START_TEST(itemdlg)
 {
     OleInitialize(NULL);
@@ -930,6 +1198,7 @@ START_TEST(itemdlg)
     {
         test_basics();
         test_advise();
+        test_filename();
     }
     else
         skip("Skipping all Item Dialog tests.\n");

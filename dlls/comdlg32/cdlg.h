@@ -178,6 +178,7 @@ void COMDLG32_GetCanonicalPath(PCIDLIST_ABSOLUTE pidlAbsCurrent, LPWSTR lpstrFil
 int FILEDLG95_ValidatePathAction(LPWSTR lpstrPathAndFile, IShellFolder **ppsf,
                                  HWND hwnd, DWORD flags, BOOL isSaveDlg, int defAction) DECLSPEC_HIDDEN;
 int COMDLG32_SplitFileNames(LPWSTR lpstrEdit, UINT nStrLen, LPWSTR *lpstrFileList, UINT *sizeUsed) DECLSPEC_HIDDEN;
+void FILEDLG95_OnOpenMessage(HWND hwnd, int idCaption, int idText) DECLSPEC_HIDDEN;
 
 /* ITEMIDLIST */
 
