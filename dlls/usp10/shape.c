@@ -51,6 +51,7 @@ static void ShapeCharGlyphProp_Default( HDC hdc, ScriptCache* psc, SCRIPT_ANALYS
 static void ShapeCharGlyphProp_Arabic( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 static void ShapeCharGlyphProp_Thai( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 static void ShapeCharGlyphProp_None( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
+static void ShapeCharGlyphProp_Tibet( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 
 extern const unsigned short wine_shaping_table[];
 extern const unsigned short wine_shaping_forms[LAST_ARABIC_CHAR - FIRST_ARABIC_CHAR + 1][4];
@@ -399,8 +400,8 @@ static const ScriptShapeData ShapingData[] =
     {{ standard_features, 2}, NULL, "armn", NULL, NULL},
     {{ standard_features, 2}, NULL, "geor", NULL, NULL},
     {{ sinhala_features, 7}, NULL, "sinh", NULL, NULL},
-    {{ tibetan_features, 2}, NULL, "tibt", NULL, ShapeCharGlyphProp_None},
-    {{ tibetan_features, 2}, NULL, "tibt", NULL, ShapeCharGlyphProp_None},
+    {{ tibetan_features, 2}, NULL, "tibt", NULL, ShapeCharGlyphProp_Tibet},
+    {{ tibetan_features, 2}, NULL, "tibt", NULL, ShapeCharGlyphProp_Tibet},
     {{ tibetan_features, 2}, NULL, "phag", ContextualShape_Phags_pa, ShapeCharGlyphProp_Thai},
     {{ thai_features, 1}, NULL, "thai", NULL, ShapeCharGlyphProp_Thai},
     {{ thai_features, 1}, NULL, "thai", NULL, ShapeCharGlyphProp_Thai},
@@ -1738,6 +1739,52 @@ static void ShapeCharGlyphProp_None( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS*
     }
     GDEF_UpdateGlyphProps(hdc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
+}
+
+static void ShapeCharGlyphProp_Tibet( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS* psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD* pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP* pGlyphProp)
+{
+    int i,k;
+
+    for (i = 0; i < cGlyphs; i++)
+    {
+        int char_index[20];
+        int char_count = 0;
+
+        for (k = 0; k < cChars; k++)
+        {
+            if (pwLogClust[k] == i)
+            {
+                char_index[char_count] = k;
+                char_count++;
+            }
+        }
+
+        if (char_count == 0)
+        {
+            FIXME("No chars in this glyph?  Must be an error\n");
+            continue;
+        }
+
+        if (char_count ==1 && pwcChars[char_index[0]] == 0x0020)  /* space */
+        {
+            pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_BLANK;
+            pCharProp[char_index[0]].fCanGlyphAlone = 1;
+        }
+        else
+            pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
+    }
+    GDEF_UpdateGlyphProps(hdc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
+    UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
+
+    /* Tibeten script does not set sva.fDiacritic or sva.fZeroWidth */
+    for (i = 0; i < cGlyphs; i++)
+    {
+        if (!pGlyphProp[i].sva.fClusterStart)
+        {
+            pGlyphProp[i].sva.fDiacritic = 0;
+            pGlyphProp[i].sva.fZeroWidth = 0;
+        }
+    }
 }
 
 void SHAPE_CharGlyphProp(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp)
