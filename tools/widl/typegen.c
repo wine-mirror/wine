@@ -3214,9 +3214,17 @@ static unsigned int get_required_buffer_size_type(
 
     case TGT_ARRAY:
         if (get_pointer_fc(type, attrs, toplevel_param) == RPC_FC_RP)
-            return type_array_get_dim(type) *
-                get_required_buffer_size_type(type_array_get_element(type), name,
-                                              NULL, FALSE, alignment);
+        {
+            switch (get_array_fc(type))
+            {
+            case RPC_FC_SMFARRAY:
+            case RPC_FC_LGFARRAY:
+                return type_array_get_dim(type) *
+                    get_required_buffer_size_type(type_array_get_element(type), name,
+                                                  NULL, FALSE, alignment);
+            }
+        }
+        break;
 
     default:
         break;
