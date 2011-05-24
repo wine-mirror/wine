@@ -93,6 +93,73 @@ typedef struct FileDialogImpl {
 } FileDialogImpl;
 
 /**************************************************************************
+ * Event wrappers.
+ */
+static HRESULT events_OnFileOk(FileDialogImpl *This)
+{
+    events_client *cursor;
+    HRESULT hr = S_OK;
+    TRACE("%p\n", This);
+
+    LIST_FOR_EACH_ENTRY(cursor, &This->events_clients, events_client, entry)
+    {
+        TRACE("Notifying %p\n", cursor);
+        hr = IFileDialogEvents_OnFileOk(cursor->pfde, (IFileDialog*)&This->IFileDialog2_iface);
+        if(FAILED(hr) && hr != E_NOTIMPL)
+            break;
+    }
+
+    if(hr == E_NOTIMPL)
+        hr = S_OK;
+
+    return hr;
+}
+
+static HRESULT events_OnFolderChanging(FileDialogImpl *This, IShellItem *folder)
+{
+    events_client *cursor;
+    HRESULT hr = S_OK;
+    TRACE("%p (%p)\n", This, folder);
+
+    LIST_FOR_EACH_ENTRY(cursor, &This->events_clients, events_client, entry)
+    {
+        TRACE("Notifying %p\n", cursor);
+        hr = IFileDialogEvents_OnFolderChanging(cursor->pfde, (IFileDialog*)&This->IFileDialog2_iface, folder);
+        if(FAILED(hr) && hr != E_NOTIMPL)
+            break;
+    }
+
+    if(hr == E_NOTIMPL)
+        hr = S_OK;
+
+    return hr;
+}
+
+static void events_OnFolderChange(FileDialogImpl *This)
+{
+    events_client *cursor;
+    TRACE("%p\n", This);
+
+    LIST_FOR_EACH_ENTRY(cursor, &This->events_clients, events_client, entry)
+    {
+        TRACE("Notifying %p\n", cursor);
+        IFileDialogEvents_OnFolderChange(cursor->pfde, (IFileDialog*)&This->IFileDialog2_iface);
+    }
+}
+
+static void events_OnSelectionChange(FileDialogImpl *This)
+{
+    events_client *cursor;
+    TRACE("%p\n", This);
+
+    LIST_FOR_EACH_ENTRY(cursor, &This->events_clients, events_client, entry)
+    {
+        TRACE("Notifying %p\n", cursor);
+        IFileDialogEvents_OnSelectionChange(cursor->pfde, (IFileDialog*)&This->IFileDialog2_iface);
+    }
+}
+
+/**************************************************************************
  * Helper functions.
  */
 static UINT get_file_name(FileDialogImpl *This, LPWSTR *str)
@@ -280,6 +347,9 @@ static HRESULT on_default_action(FileDialogImpl *This)
         break;
 
     case ONOPEN_OPEN:
+        if(events_OnFileOk(This) != S_OK)
+            break;
+
         hr = SHGetDesktopFolder(&psf_desktop);
         if(SUCCEEDED(hr))
         {
@@ -288,7 +358,6 @@ static HRESULT on_default_action(FileDialogImpl *This)
 
             hr = SHCreateShellItemArray(NULL, psf_desktop, file_count, (PCUITEMID_CHILD_ARRAY)pidla,
                                         &This->psia_results);
-
             if(SUCCEEDED(hr))
                 ret = S_OK;
 
@@ -1818,7 +1887,25 @@ static HRESULT WINAPI IExplorerBrowserEvents_fnOnNavigationPending(IExplorerBrow
                                                                    PCIDLIST_ABSOLUTE pidlFolder)
 {
     FileDialogImpl *This = impl_from_IExplorerBrowserEvents(iface);
+    IShellItem *psi;
+    HRESULT hr;
     TRACE("%p (%p)\n", This, pidlFolder);
+
+    hr = SHCreateItemFromIDList(pidlFolder, &IID_IShellItem, (void**)&psi);
+    if(SUCCEEDED(hr))
+    {
+        hr = events_OnFolderChanging(This, psi);
+        IShellItem_Release(psi);
+
+        /* The ExplorerBrowser treats S_FALSE as S_OK, we don't. */
+        if(hr == S_FALSE)
+            hr = E_FAIL;
+
+        return hr;
+    }
+    else
+        ERR("Failed to convert pidl (%p) to a shellitem.\n", pidlFolder);
+
     return S_OK;
 }
 
@@ -1846,6 +1933,8 @@ static HRESULT WINAPI IExplorerBrowserEvents_fnOnNavigationComplete(IExplorerBro
         ERR("Failed to get the current folder.\n");
         This->psi_folder = NULL;
     }
+
+    events_OnFolderChange(This);
 
     return S_OK;
 }
@@ -1993,7 +2082,10 @@ static HRESULT WINAPI ICommDlgBrowser3_fnOnStateChange(ICommDlgBrowser3 *iface,
             hr = SHCreateShellItemArrayFromDataObject(new_selection, &IID_IShellItemArray,
                                                       (void**)&This->psia_selection);
             if(SUCCEEDED(hr))
+            {
                 fill_filename_from_selection(This);
+                events_OnSelectionChange(This);
+            }
 
             IDataObject_Release(new_selection);
         }
