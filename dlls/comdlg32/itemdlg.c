@@ -1109,7 +1109,7 @@ static HRESULT WINAPI IFileDialog2_fnGetCurrentSelection(IFileDialog2 *iface, IS
 static HRESULT WINAPI IFileDialog2_fnSetFileName(IFileDialog2 *iface, LPCWSTR pszName)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    TRACE("%p (%p)\n", iface, pszName);
+    TRACE("%p (%s)\n", iface, debugstr_w(pszName));
 
     set_file_name(This, pszName);
 
@@ -1134,7 +1134,7 @@ static HRESULT WINAPI IFileDialog2_fnGetFileName(IFileDialog2 *iface, LPWSTR *ps
 static HRESULT WINAPI IFileDialog2_fnSetTitle(IFileDialog2 *iface, LPCWSTR pszTitle)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    TRACE("%p (%p)\n", This, pszTitle);
+    TRACE("%p (%s)\n", This, debugstr_w(pszTitle));
 
     LocalFree(This->custom_title);
     This->custom_title = StrDupW(pszTitle);
@@ -1146,7 +1146,7 @@ static HRESULT WINAPI IFileDialog2_fnSetTitle(IFileDialog2 *iface, LPCWSTR pszTi
 static HRESULT WINAPI IFileDialog2_fnSetOkButtonLabel(IFileDialog2 *iface, LPCWSTR pszText)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    TRACE("%p (%p)\n", This, pszText);
+    TRACE("%p (%s)\n", This, debugstr_w(pszText));
 
     LocalFree(This->custom_okbutton);
     This->custom_okbutton = StrDupW(pszText);
@@ -1159,7 +1159,7 @@ static HRESULT WINAPI IFileDialog2_fnSetOkButtonLabel(IFileDialog2 *iface, LPCWS
 static HRESULT WINAPI IFileDialog2_fnSetFileNameLabel(IFileDialog2 *iface, LPCWSTR pszLabel)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    TRACE("%p (%p)\n", This, pszLabel);
+    TRACE("%p (%s)\n", This, debugstr_w(pszLabel));
 
     LocalFree(This->custom_filenamelabel);
     This->custom_filenamelabel = StrDupW(pszLabel);
@@ -1246,7 +1246,7 @@ static HRESULT WINAPI IFileDialog2_fnSetFilter(IFileDialog2 *iface, IShellItemFi
 static HRESULT WINAPI IFileDialog2_fnSetCancelButtonLabel(IFileDialog2 *iface, LPCWSTR pszLabel)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    TRACE("%p (%p)\n", This, pszLabel);
+    TRACE("%p (%s)\n", This, debugstr_w(pszLabel));
 
     LocalFree(This->custom_cancelbutton);
     This->custom_cancelbutton = StrDupW(pszLabel);
