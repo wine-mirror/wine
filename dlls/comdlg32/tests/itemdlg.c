@@ -217,13 +217,13 @@ static BOOL test_instantiation(void)
     ok(hr == S_OK, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr)) IFileDialog_Release(pfd);
 
-    hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialogCustomize, (void**)&pfd);
+    hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialogCustomize, (void**)&punk);
     todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
-    if(SUCCEEDED(hr)) IFileDialog_Release(pfd);
+    if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileSaveDialog, (void**)&pfsd);
     ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
-    if(SUCCEEDED(hr)) IFileOpenDialog_Release(pfsd);
+    if(SUCCEEDED(hr)) IFileSaveDialog_Release(pfsd);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IServiceProvider, (void**)&psp);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
@@ -248,9 +248,9 @@ static BOOL test_instantiation(void)
         IServiceProvider_Release(psp);
     }
 
-    hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialogEvents, (void**)&pfd);
+    hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialogEvents, (void**)&punk);
     ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
-    if(SUCCEEDED(hr)) IFileDialogEvents_Release(pfd);
+    if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IExplorerBrowser, (void**)&punk);
     ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
@@ -310,17 +310,17 @@ static BOOL test_instantiation(void)
     ok(hr == S_OK, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr)) IFileDialog_Release(pfd);
 
-    hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileDialogCustomize, (void**)&pfd);
+    hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileDialogCustomize, (void**)&punk);
     todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
-    if(SUCCEEDED(hr)) IFileDialogCustomize_Release(pfd);
+    if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
-    hr = IFileOpenDialog_QueryInterface(pfsd, &IID_IFileOpenDialog, (void**)&pfod);
+    hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileOpenDialog, (void**)&pfod);
     ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr)) IFileOpenDialog_Release(pfod);
 
-    hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileDialogEvents, (void**)&pfd);
+    hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileDialogEvents, (void**)&punk);
     ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
-    if(SUCCEEDED(hr)) IFileDialogEvents_Release(pfd);
+    if(SUCCEEDED(hr)) IUnknown_Release(pfd);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IExplorerBrowser, (void**)&punk);
     ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
