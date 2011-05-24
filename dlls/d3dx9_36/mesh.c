@@ -6,6 +6,7 @@
  * Copyright (C) 2009 David Adam
  * Copyright (C) 2010 Tony Wasserka
  * Copyright (C) 2011 Dylan Smith
+ * Copyright (C) 2011 Michael Mc Donnell
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -52,7 +53,10 @@ typedef struct ID3DXMeshImpl
     DWORD options;
     DWORD fvf;
     IDirect3DDevice9 *device;
+    D3DVERTEXELEMENT9 cached_declaration[MAX_FVF_DECL_SIZE];
     IDirect3DVertexDeclaration9 *vertex_declaration;
+    UINT vertex_declaration_size;
+    UINT num_elem;
     IDirect3DVertexBuffer9 *vertex_buffer;
     IDirect3DIndexBuffer9 *index_buffer;
     DWORD *attrib_buffer;
@@ -106,7 +110,8 @@ static ULONG WINAPI ID3DXMeshImpl_Release(ID3DXMesh *iface)
     {
         IDirect3DIndexBuffer9_Release(This->index_buffer);
         IDirect3DVertexBuffer9_Release(This->vertex_buffer);
-        IDirect3DVertexDeclaration9_Release(This->vertex_declaration);
+        if (This->vertex_declaration)
+            IDirect3DVertexDeclaration9_Release(This->vertex_declaration);
         IDirect3DDevice9_Release(This->device);
         HeapFree(GetProcessHeap(), 0, This->attrib_buffer);
         HeapFree(GetProcessHeap(), 0, This->attrib_table);
@@ -126,6 +131,12 @@ static HRESULT WINAPI ID3DXMeshImpl_DrawSubset(ID3DXMesh *iface, DWORD attrib_id
     DWORD vertex_size;
 
     TRACE("(%p)->(%u)\n", This, attrib_id);
+
+    if (!This->vertex_declaration)
+    {
+        WARN("Can't draw a mesh with an invalid vertex declaration.\n");
+        return E_FAIL;
+    }
 
     vertex_size = iface->lpVtbl->GetNumBytesPerVertex(iface);
 
@@ -186,32 +197,31 @@ static DWORD WINAPI ID3DXMeshImpl_GetFVF(ID3DXMesh *iface)
     return This->fvf;
 }
 
+static void copy_declaration(D3DVERTEXELEMENT9 *dst, const D3DVERTEXELEMENT9 *src, UINT num_elem)
+{
+    memcpy(dst, src, num_elem * sizeof(*src));
+}
+
 static HRESULT WINAPI ID3DXMeshImpl_GetDeclaration(ID3DXMesh *iface, D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE])
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
-    UINT numelements;
 
     TRACE("(%p)\n", This);
 
     if (declaration == NULL) return D3DERR_INVALIDCALL;
 
-    return IDirect3DVertexDeclaration9_GetDeclaration(This->vertex_declaration,
-                                                      declaration,
-                                                      &numelements);
+    copy_declaration(declaration, This->cached_declaration, This->num_elem);
+
+    return D3D_OK;
 }
 
 static DWORD WINAPI ID3DXMeshImpl_GetNumBytesPerVertex(ID3DXMesh *iface)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
-    UINT numelements;
-    D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE] = { D3DDECL_END() };
 
     TRACE("iface (%p)\n", This);
 
-    IDirect3DVertexDeclaration9_GetDeclaration(This->vertex_declaration,
-                                               declaration,
-                                               &numelements);
-    return D3DXGetDeclVertexSize(declaration, 0);
+    return This->vertex_declaration_size;
 }
 
 static DWORD WINAPI ID3DXMeshImpl_GetOptions(ID3DXMesh *iface)
@@ -603,11 +613,61 @@ cleanup:
 
 static HRESULT WINAPI ID3DXMeshImpl_UpdateSemantics(ID3DXMesh *iface, D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE])
 {
+    HRESULT hr;
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    UINT vertex_declaration_size;
+    int i;
 
-    FIXME("(%p)->(%p): stub\n", This, declaration);
+    TRACE("(%p)->(%p)\n", This, declaration);
 
-    return E_NOTIMPL;
+    if (!declaration)
+    {
+        WARN("Invalid declaration. Can't use NULL declaration.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    /* New declaration must be same size as original */
+    vertex_declaration_size = D3DXGetDeclVertexSize(declaration, declaration[0].Stream);
+    if (vertex_declaration_size != This->vertex_declaration_size)
+    {
+        WARN("Invalid declaration. New vertex size does not match the orginal vertex size.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    /* New declaration must not contain non-zero Stream value  */
+    for (i = 0; declaration[i].Stream != 0xff; i++)
+    {
+        if (declaration[i].Stream != 0)
+        {
+            WARN("Invalid declaration. New declaration contains non-zero Stream value.\n");
+            return D3DERR_INVALIDCALL;
+        }
+    }
+
+    This->num_elem = i + 1;
+    copy_declaration(This->cached_declaration, declaration, This->num_elem);
+
+    if (This->vertex_declaration)
+        IDirect3DVertexDeclaration9_Release(This->vertex_declaration);
+
+    /* An application can pass an invalid declaration to UpdateSemantics and
+     * still expect D3D_OK (see tests). If the declaration is invalid, then
+     * subsequent calls to DrawSubset will fail. This is handled by setting the
+     * vertex declaration to NULL.
+     *     GetDeclaration, GetNumBytesPerVertex must, however, use the new
+     * invalid declaration. This is handled by them using the cached vertex
+     * declaration instead of the actual vertex declaration.
+     */
+    hr = IDirect3DDevice9_CreateVertexDeclaration(This->device,
+                                                  declaration,
+                                                  &This->vertex_declaration);
+    if (FAILED(hr))
+    {
+        WARN("Using invalid declaration. Calls to DrawSubset will fail.\n");
+        This->vertex_declaration = NULL;
+    }
+
+    return D3D_OK;
 }
 
 /*** ID3DXMesh ***/
@@ -1652,6 +1712,8 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, 
     HRESULT hr;
     DWORD fvf;
     IDirect3DVertexDeclaration9 *vertex_declaration;
+    UINT vertex_declaration_size;
+    UINT num_elem;
     IDirect3DVertexBuffer9 *vertex_buffer;
     IDirect3DIndexBuffer9 *index_buffer;
     DWORD *attrib_buffer;
@@ -1674,6 +1736,7 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, 
     for (i = 0; declaration[i].Stream != 0xff; i++)
         if (declaration[i].Stream != 0)
             return D3DERR_INVALIDCALL;
+    num_elem = i + 1;
 
     if (options & D3DXMESH_32BIT)
         index_format = D3DFMT_INDEX32;
@@ -1734,10 +1797,11 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, 
         WARN("Unexpected return value %x from IDirect3DDevice9_CreateVertexDeclaration.\n",hr);
         return hr;
     }
+    vertex_declaration_size = D3DXGetDeclVertexSize(declaration, declaration[0].Stream);
 
     /* Create vertex buffer */
     hr = IDirect3DDevice9_CreateVertexBuffer(device,
-                                             numvertices * D3DXGetDeclVertexSize(declaration, declaration[0].Stream),
+                                             numvertices * vertex_declaration_size,
                                              vertex_usage,
                                              fvf,
                                              vertex_pool,
@@ -1787,7 +1851,10 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, 
     object->device = device;
     IDirect3DDevice9_AddRef(device);
 
+    copy_declaration(object->cached_declaration, declaration, num_elem);
     object->vertex_declaration = vertex_declaration;
+    object->vertex_declaration_size = vertex_declaration_size;
+    object->num_elem = num_elem;
     object->vertex_buffer = vertex_buffer;
     object->index_buffer = index_buffer;
     object->attrib_buffer = attrib_buffer;

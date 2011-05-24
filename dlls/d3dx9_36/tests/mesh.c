@@ -4490,7 +4490,7 @@ static void test_update_semantics(void)
     }
 
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration);
-    todo_wine ok(hr == D3D_OK, "Test UpdateSematics, got %#x expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "Test UpdateSematics, got %#x expected %#x\n", hr, D3D_OK);
 
     /* Check that declaration was written by getting it again */
     memset(declaration, 0, sizeof(declaration));
@@ -4505,8 +4505,8 @@ static void test_update_semantics(void)
     {
         if (decl_ptr->Usage == D3DDECLUSAGE_POSITION)
         {
-            todo_wine ok(decl_ptr->Offset == offset, "Test UpdateSematics, got offset %d expected %d\n",
-                         decl_ptr->Offset, offset);
+            ok(decl_ptr->Offset == offset, "Test UpdateSematics, got offset %d expected %d\n",
+               decl_ptr->Offset, offset);
         }
     }
 
@@ -4516,7 +4516,7 @@ static void test_update_semantics(void)
     memset(declaration, filler_a, sizeof(declaration));
     memcpy(declaration, declaration0, sizeof(declaration0));
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration);
-    todo_wine ok(hr == D3D_OK, "Test UpdateSematics, "
+    ok(hr == D3D_OK, "Test UpdateSematics, "
        "got %#x expected D3D_OK\n", hr);
     memset(declaration, filler_b, sizeof(declaration));
     hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
@@ -4549,13 +4549,13 @@ static void test_update_semantics(void)
     }
 
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration);
-    todo_wine ok(hr == D3D_OK, "Test UpdateSematics for overlapping fields, "
-                 "got %#x expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "Test UpdateSematics for overlapping fields, "
+       "got %#x expected D3D_OK\n", hr);
 
     /* Set the position type to color instead of float3 */
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_pos_type_color);
-    todo_wine ok(hr == D3D_OK, "Test UpdateSematics position type color, "
-                 "got %#x expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "Test UpdateSematics position type color, "
+       "got %#x expected D3D_OK\n", hr);
 
     /* The following test cases show that NULL, smaller or larger declarations,
      * and declarations with non-zero Stream values are not accepted.
@@ -4567,8 +4567,8 @@ static void test_update_semantics(void)
     /* Null declaration (invalid declaration) */
     mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
     hr = mesh->lpVtbl->UpdateSemantics(mesh, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Test UpdateSematics null pointer declaration, "
-                 "got %#x expected D3DERR_INVALIDCALL\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Test UpdateSematics null pointer declaration, "
+       "got %#x expected D3DERR_INVALIDCALL\n", hr);
     vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
     ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
        vertex_size, exp_vertex_size);
@@ -4581,8 +4581,8 @@ static void test_update_semantics(void)
     /* Smaller vertex declaration (invalid declaration) */
     mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_smaller);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Test UpdateSematics for smaller vertex declaration, "
-                 "got %#x expected D3DERR_INVALIDCALL\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Test UpdateSematics for smaller vertex declaration, "
+       "got %#x expected D3DERR_INVALIDCALL\n", hr);
     vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
     ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
        vertex_size, exp_vertex_size);
@@ -4595,8 +4595,8 @@ static void test_update_semantics(void)
     /* Larger vertex declaration (invalid declaration) */
     mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_larger);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Test UpdateSematics for larger vertex declaration, "
-                 "got %#x expected D3DERR_INVALIDCALL\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Test UpdateSematics for larger vertex declaration, "
+       "got %#x expected D3DERR_INVALIDCALL\n", hr);
     vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
     ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
        vertex_size, exp_vertex_size);
@@ -4609,7 +4609,7 @@ static void test_update_semantics(void)
     /* Use multiple streams and keep the same vertex size (invalid declaration) */
     mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_multiple_streams);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Test UpdateSematics using multiple streams, "
+    ok(hr == D3DERR_INVALIDCALL, "Test UpdateSematics using multiple streams, "
                  "got %#x expected D3DERR_INVALIDCALL\n", hr);
     vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
     ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
@@ -4629,8 +4629,8 @@ static void test_update_semantics(void)
     /* Double usage (invalid declaration) */
     mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_double_usage);
-    todo_wine ok(hr == D3D_OK, "Test UpdateSematics double usage, "
-                 "got %#x expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "Test UpdateSematics double usage, "
+       "got %#x expected D3D_OK\n", hr);
     vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
     ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
        vertex_size, exp_vertex_size);
@@ -4638,13 +4638,13 @@ static void test_update_semantics(void)
     hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
     ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
     equal = memcmp(declaration, declaration_double_usage, sizeof(declaration_double_usage));
-    todo_wine ok(equal == 0, "Vertex declarations were not equal\n");
+    ok(equal == 0, "Vertex declarations were not equal\n");
 
     /* Set the position to an undefined type (invalid declaration) */
     mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_undefined_type);
-    todo_wine ok(hr == D3D_OK, "Test UpdateSematics undefined type, "
-                 "got %#x expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "Test UpdateSematics undefined type, "
+       "got %#x expected D3D_OK\n", hr);
     vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
     ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
        vertex_size, exp_vertex_size);
@@ -4652,12 +4652,12 @@ static void test_update_semantics(void)
     hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
     ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
     equal = memcmp(declaration, declaration_undefined_type, sizeof(declaration_undefined_type));
-    todo_wine ok(equal == 0, "Vertex declarations were not equal\n");
+    ok(equal == 0, "Vertex declarations were not equal\n");
 
     /* Use a not 4 byte aligned offset (invalid declaration) */
     mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_not_4_byte_aligned_offset);
-    todo_wine ok(hr == D3D_OK, "Test UpdateSematics not 4 byte aligned offset, "
+    ok(hr == D3D_OK, "Test UpdateSematics not 4 byte aligned offset, "
        "got %#x expected D3D_OK\n", hr);
     vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
     ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
@@ -4667,7 +4667,7 @@ static void test_update_semantics(void)
     ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
     equal = memcmp(declaration, declaration_not_4_byte_aligned_offset,
                    sizeof(declaration_not_4_byte_aligned_offset));
-    todo_wine ok(equal == 0, "Vertex declarations were not equal\n");
+    ok(equal == 0, "Vertex declarations were not equal\n");
 
 cleanup:
     if (mesh)
