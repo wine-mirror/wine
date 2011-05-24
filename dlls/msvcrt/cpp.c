@@ -1049,6 +1049,16 @@ MSVCRT_unexpected_function CDECL MSVCRT_set_unexpected(MSVCRT_unexpected_functio
 }
 
 /******************************************************************
+ *              _get_unexpected (MSVCRT.@)
+ */
+MSVCRT_unexpected_function CDECL MSVCRT__get_unexpected(void)
+{
+    thread_data_t *data = msvcrt_get_thread_data();
+    TRACE("returning %p\n", data->unexpected_handler);
+    return data->unexpected_handler;
+}
+
+/******************************************************************
  *              ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z  (MSVCRT.@)
  */
 MSVCRT__se_translator_function CDECL MSVCRT__set_se_translator(MSVCRT__se_translator_function func)
