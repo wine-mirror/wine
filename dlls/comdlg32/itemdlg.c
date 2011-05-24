@@ -1915,13 +1915,7 @@ static HRESULT WINAPI IServiceProvider_fnQueryService(IServiceProvider *iface,
         FIXME("Interface %s requested from unknown service %s\n",
               debugstr_guid(riid), debugstr_guid(guidService));
 
-    if(SUCCEEDED(hr) && *ppv)
-    {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    return E_FAIL;
+    return hr;
 }
 
 static const IServiceProviderVtbl vt_IServiceProvider = {

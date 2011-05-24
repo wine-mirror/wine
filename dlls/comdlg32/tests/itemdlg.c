@@ -157,6 +157,7 @@ static BOOL test_instantiation(void)
     IServiceProvider *psp;
     IUnknown *punk;
     HRESULT hr;
+    LONG ref;
 
     /* Instantiate FileOpenDialog */
     hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
@@ -223,7 +224,8 @@ static BOOL test_instantiation(void)
     ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
-    IFileOpenDialog_Release(pfod);
+    ref = IFileOpenDialog_Release(pfod);
+    ok(!ref, "Got refcount %d, should have been released.\n", ref);
 
     /* Instantiate FileSaveDialog */
     hr = CoCreateInstance(&CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
@@ -267,7 +269,8 @@ static BOOL test_instantiation(void)
     ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
-    IFileSaveDialog_Release(pfsd);
+    ref = IFileSaveDialog_Release(pfsd);
+    ok(!ref, "Got refcount %d, should have been released.\n", ref);
     return TRUE;
 }
 
@@ -284,6 +287,7 @@ static void test_basics(void)
     LPITEMIDLIST pidl;
     WCHAR *filename;
     UINT filetype;
+    LONG ref;
     HRESULT hr;
     const WCHAR txt[] = {'t','x','t', 0};
     const WCHAR null[] = {0};
@@ -735,8 +739,10 @@ static void test_basics(void)
 
     /* Cleanup */
     IShellItem_Release(psidesktop);
-    IFileOpenDialog_Release(pfod);
-    IFileSaveDialog_Release(pfsd);
+    ref = IFileOpenDialog_Release(pfod);
+    ok(!ref, "Got refcount %d, should have been released.\n", ref);
+    ref = IFileSaveDialog_Release(pfsd);
+    ok(!ref, "Got refcount %d, should have been released.\n", ref);
 }
 
 static void test_advise_helper(IFileDialog *pfd)
@@ -811,20 +817,23 @@ static void test_advise(void)
 {
     IFileDialog *pfd;
     HRESULT hr;
+    LONG ref;
 
     trace("Testing FileOpenDialog (advise)\n");
     hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileDialog, (void**)&pfd);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
     test_advise_helper(pfd);
-    IFileDialog_Release(pfd);
+    ref = IFileDialog_Release(pfd);
+    ok(!ref, "Got refcount %d, should have been released.\n", ref);
 
     trace("Testing FileSaveDialog (advise)\n");
     hr = CoCreateInstance(&CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFileDialog, (void**)&pfd);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
     test_advise_helper(pfd);
-    IFileDialog_Release(pfd);
+    ref = IFileDialog_Release(pfd);
+    ok(!ref, "Got refcount %d, should have been released.\n", ref);
 }
 
 START_TEST(itemdlg)
