@@ -2582,19 +2582,12 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!comp->Enabled)
+    comp->Action = msi_get_component_action( package, comp );
+    if (comp->Action != INSTALLSTATE_LOCAL)
     {
-        TRACE("component is disabled\n");
+        TRACE("component not scheduled for installation %s\n", debugstr_w(component));
         return ERROR_SUCCESS;
     }
-
-    if (comp->ActionRequest != INSTALLSTATE_LOCAL)
-    {
-        TRACE("Component not scheduled for installation: %s\n", debugstr_w(component));
-        comp->Action = comp->Installed;
-        return ERROR_SUCCESS;
-    }
-    comp->Action = INSTALLSTATE_LOCAL;
 
     name = MSI_RecordGetString(row, 4);
     if( MSI_RecordIsNull(row,5) && name )
@@ -2758,19 +2751,12 @@ static UINT ITERATE_RemoveRegistryValuesOnUninstall( MSIRECORD *row, LPVOID para
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!comp->Enabled)
+    comp->Action = msi_get_component_action( package, comp );
+    if (comp->Action != INSTALLSTATE_ABSENT)
     {
-        TRACE("component is disabled\n");
+        TRACE("component not scheduled for removal %s\n", debugstr_w(component));
         return ERROR_SUCCESS;
     }
-
-    if (comp->ActionRequest != INSTALLSTATE_ABSENT)
-    {
-        TRACE("Component not scheduled for removal: %s\n", debugstr_w(component));
-        comp->Action = comp->Installed;
-        return ERROR_SUCCESS;
-    }
-    comp->Action = INSTALLSTATE_ABSENT;
 
     name = MSI_RecordGetString( row, 4 );
     if (MSI_RecordIsNull( row, 5 ) && name )
@@ -2835,19 +2821,12 @@ static UINT ITERATE_RemoveRegistryValuesOnInstall( MSIRECORD *row, LPVOID param 
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!comp->Enabled)
+    comp->Action = msi_get_component_action( package, comp );
+    if (comp->Action != INSTALLSTATE_LOCAL)
     {
-        TRACE("component is disabled\n");
+        TRACE("component not scheduled for installation %s\n", debugstr_w(component));
         return ERROR_SUCCESS;
     }
-
-    if (comp->ActionRequest != INSTALLSTATE_LOCAL)
-    {
-        TRACE("Component not scheduled for installation: %s\n", debugstr_w(component));
-        comp->Action = comp->Installed;
-        return ERROR_SUCCESS;
-    }
-    comp->Action = INSTALLSTATE_LOCAL;
 
     if ((name = MSI_RecordGetString( row, 4 )))
     {
@@ -3252,8 +3231,9 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                             comp->RefCount,
                             comp->ActionRequest);
 
-        if (comp->ActionRequest == INSTALLSTATE_LOCAL ||
-            comp->ActionRequest == INSTALLSTATE_SOURCE)
+        comp->Action = msi_get_component_action( package, comp );
+        if (comp->Action == INSTALLSTATE_LOCAL ||
+            comp->Action == INSTALLSTATE_SOURCE)
         {
             if (package->Context == MSIINSTALLCONTEXT_MACHINE)
                 rc = MSIREG_OpenUserDataComponentKey(comp->ComponentId, szLocalSid, &hkey, TRUE);
@@ -3273,7 +3253,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                 msi_reg_set_val_str(hkey, szPermKey, comp->FullKeypath);
             }
 
-            if (comp->ActionRequest == INSTALLSTATE_LOCAL)
+            if (comp->Action == INSTALLSTATE_LOCAL)
                 msi_reg_set_val_str(hkey, squished_pc, comp->FullKeypath);
             else
             {
@@ -3313,14 +3293,13 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
             }
             RegCloseKey(hkey);
         }
-        else if (comp->ActionRequest == INSTALLSTATE_ABSENT)
+        else if (comp->Action == INSTALLSTATE_ABSENT)
         {
             if (package->Context == MSIINSTALLCONTEXT_MACHINE)
                 MSIREG_DeleteUserDataComponentKey(comp->ComponentId, szLocalSid);
             else
                 MSIREG_DeleteUserDataComponentKey(comp->ComponentId, NULL);
         }
-        comp->Action = comp->ActionRequest;
 
         /* UI stuff */
         uirow = MSI_CreateRecord(3);
@@ -3330,7 +3309,6 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
         msi_ui_actiondata( package, szProcessComponents, uirow );
         msiobj_release( &uirow->hdr );
     }
-
     return ERROR_SUCCESS;
 }
 
