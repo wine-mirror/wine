@@ -297,9 +297,9 @@ static void test_ScriptItemize( void )
     test_items_ok(test10,4,&Control,&State,1,t101,FALSE,0);
 }
 
-static inline void _test_shape_ok(HDC hdc, LPCWSTR string, DWORD cchString,
-                         SCRIPT_CONTROL *Control, SCRIPT_STATE *State,
-                         DWORD item, DWORD nGlyphs,
+static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
+                         DWORD cchString, SCRIPT_CONTROL *Control,
+                         SCRIPT_STATE *State, DWORD item, DWORD nGlyphs,
                          const shapeTest_char* charItems,
                          const shapeTest_glyph* glyphItems)
 {
@@ -315,11 +315,26 @@ static inline void _test_shape_ok(HDC hdc, LPCWSTR string, DWORD cchString,
     ULONG tags[15];
 
     hr = pScriptItemizeOpenType(string, cchString, 15, Control, State, outpItems, tags, &outnItems);
-    winetest_ok(!hr, "ScriptItemizeOpenType should return S_OK not %08x\n", hr);
-
-    if (outnItems < item)
+    if (hr == USP_E_SCRIPT_NOT_IN_FONT)
     {
-        winetest_win_skip("Did not get enough items\n");
+        if (valid > 0)
+            winetest_win_skip("Select font does not support script\n");
+        else
+            winetest_trace("Select font does not support script\n");
+        return;
+    }
+    if (valid > 0)
+        winetest_ok(!hr, "ScriptItemizeOpenType should return S_OK not %08x\n", hr);
+    else if (hr)
+        winetest_trace("ScriptItemizeOpenType should return S_OK not %08x\n", hr);
+
+
+    if (outnItems <= item)
+    {
+        if (valid > 0)
+            winetest_win_skip("Did not get enough items\n");
+        else
+            winetest_trace("Did not get enough items\n");
         return;
     }
 
@@ -333,27 +348,61 @@ static inline void _test_shape_ok(HDC hdc, LPCWSTR string, DWORD cchString,
     memset(glyphProp,'a',sizeof(SCRIPT_GLYPHPROP) * cchString);
 
     hr = pScriptShapeOpenType(hdc, &sc, &outpItems[item].a, tags[item], 0x00000000, NULL, NULL, 0, string, cchString, maxGlyphs, logclust, charProp, glyphs, glyphProp, &outnGlyphs);
-    winetest_ok(hr == S_OK, "ScriptShapeOpenType failed (%x)\n",hr);
+    if (valid > 0)
+        winetest_ok(hr == S_OK, "ScriptShapeOpenType failed (%x)\n",hr);
+    else if (hr != S_OK)
+        winetest_trace("ScriptShapeOpenType failed (%x)\n",hr);
     if (FAILED(hr))
         return;
 
     for (x = 0; x < cchString; x++)
     {
-        winetest_ok(logclust[x] == charItems[x].wLogClust, "%i: invalid LogClust(%i)\n",x,logclust[x]);
-        winetest_ok(charProp[x].fCanGlyphAlone == charItems[x].CharProp.fCanGlyphAlone, "%i: invalid fCanGlyphAlone\n",x);
+        if (valid > 0)
+            winetest_ok(logclust[x] == charItems[x].wLogClust, "%i: invalid LogClust(%i)\n",x,logclust[x]);
+        else if (logclust[x] != charItems[x].wLogClust)
+            winetest_trace("%i: invalid LogClust(%i)\n",x,logclust[x]);
+        if (valid > 0)
+            winetest_ok(charProp[x].fCanGlyphAlone == charItems[x].CharProp.fCanGlyphAlone, "%i: invalid fCanGlyphAlone\n",x);
+        else if (charProp[x].fCanGlyphAlone != charItems[x].CharProp.fCanGlyphAlone)
+            winetest_trace("%i: invalid fCanGlyphAlone\n",x);
     }
 
-    winetest_ok(nGlyphs == outnGlyphs, "got incorrect number of glyphs (%i)\n",outnGlyphs);
+    if(valid)
+        winetest_ok(nGlyphs == outnGlyphs, "got incorrect number of glyphs (%i)\n",outnGlyphs);
+    else if (nGlyphs != outnGlyphs)
+        winetest_trace("got incorrect number of glyphs (%i)\n",outnGlyphs);
     for (x = 0; x < outnGlyphs; x++)
     {
         if (glyphItems[x].Glyph)
-            winetest_ok(glyphs[x]!=0, "%i: Glyph not present when it should be\n",x);
+        {
+            if (valid > 0)
+                winetest_ok(glyphs[x]!=0, "%i: Glyph not present when it should be\n",x);
+            else if (glyphs[x]==0)
+                winetest_trace("%i: Glyph not present when it should be\n",x);
+        }
         else
-            winetest_ok(glyphs[x]==0, "%i: Glyph present when it should not be\n",x);
-        winetest_ok(glyphProp[x].sva.uJustification == glyphItems[x].GlyphProp.sva.uJustification, "%i: uJustification incorrect (%i)\n",x,glyphProp[x].sva.uJustification);
-        winetest_ok(glyphProp[x].sva.fClusterStart == glyphItems[x].GlyphProp.sva.fClusterStart, "%i: fClusterStart incorrect (%i)\n",x,glyphProp[x].sva.fClusterStart);
-        winetest_ok(glyphProp[x].sva.fDiacritic == glyphItems[x].GlyphProp.sva.fDiacritic, "%i: fDiacritic incorrect (%i)\n",x,glyphProp[x].sva.fDiacritic);
-        winetest_ok(glyphProp[x].sva.fZeroWidth == glyphItems[x].GlyphProp.sva.fZeroWidth, "%i: fZeroWidth incorrect (%i)\n",x,glyphProp[x].sva.fZeroWidth);
+        {
+            if (valid > 0)
+                winetest_ok(glyphs[x]==0, "%i: Glyph present when it should not be\n",x);
+            else if (glyphs[x]!=0)
+                winetest_trace("%i: Glyph present when it should not be\n",x);
+        }
+        if (valid > 0)
+            winetest_ok(glyphProp[x].sva.uJustification == glyphItems[x].GlyphProp.sva.uJustification, "%i: uJustification incorrect (%i)\n",x,glyphProp[x].sva.uJustification);
+        else if (glyphProp[x].sva.uJustification != glyphItems[x].GlyphProp.sva.uJustification)
+            winetest_trace("%i: uJustification incorrect (%i)\n",x,glyphProp[x].sva.uJustification);
+        if (valid > 0)
+            winetest_ok(glyphProp[x].sva.fClusterStart == glyphItems[x].GlyphProp.sva.fClusterStart, "%i: fClusterStart incorrect (%i)\n",x,glyphProp[x].sva.fClusterStart);
+        else if (glyphProp[x].sva.fClusterStart != glyphItems[x].GlyphProp.sva.fClusterStart)
+            winetest_trace("%i: fClusterStart incorrect (%i)\n",x,glyphProp[x].sva.fClusterStart);
+        if (valid > 0)
+            winetest_ok(glyphProp[x].sva.fDiacritic == glyphItems[x].GlyphProp.sva.fDiacritic, "%i: fDiacritic incorrect (%i)\n",x,glyphProp[x].sva.fDiacritic);
+        else if (glyphProp[x].sva.fDiacritic != glyphItems[x].GlyphProp.sva.fDiacritic)
+            winetest_trace("%i: fDiacritic incorrect (%i)\n",x,glyphProp[x].sva.fDiacritic);
+        if (valid > 0)
+            winetest_ok(glyphProp[x].sva.fZeroWidth == glyphItems[x].GlyphProp.sva.fZeroWidth, "%i: fZeroWidth incorrect (%i)\n",x,glyphProp[x].sva.fZeroWidth);
+        else if (glyphProp[x].sva.fZeroWidth != glyphItems[x].GlyphProp.sva.fZeroWidth)
+            winetest_trace("%i: fZeroWidth incorrect (%i)\n",x,glyphProp[x].sva.fZeroWidth);
     }
 
     HeapFree(GetProcessHeap(),0,logclust);
@@ -363,8 +412,105 @@ static inline void _test_shape_ok(HDC hdc, LPCWSTR string, DWORD cchString,
     ScriptFreeCache(&sc);
 }
 
-#define test_shape_ok(a,b,c,d,e,f,g,h,i) (winetest_set_location(__FILE__,__LINE__), 0) ? 0 : _test_shape_ok(a,b,c,d,e,f,g,h,i)
+#define test_shape_ok(a,b,c,d,e,f,g,h,i) (winetest_set_location(__FILE__,__LINE__), 0) ? 0 : _test_shape_ok(1,a,b,c,d,e,f,g,h,i)
 
+#define test_shape_ok_valid(v,a,b,c,d,e,f,g,h,i) (winetest_set_location(__FILE__,__LINE__), 0) ? 0 : _test_shape_ok(v,a,b,c,d,e,f,g,h,i)
+
+typedef struct tagRangeP {
+    BYTE range;
+    LOGFONTA lf;
+} fontEnumParam;
+
+int CALLBACK enumFontProc( const LOGFONT *lpelfe, const TEXTMETRIC *lpntme,
+                           DWORD FontType, LPARAM lParam)
+{
+    NEWTEXTMETRICEX *ntme = (NEWTEXTMETRICEX*)lpntme;
+    fontEnumParam *rp = (fontEnumParam*) lParam;
+    int idx = 0;
+    DWORD i;
+    DWORD mask = 0;
+
+    if (FontType != TRUETYPE_FONTTYPE)
+        return 1;
+
+    i = rp->range;
+    while (i > sizeof(DWORD)*8)
+    {
+        idx++;
+        i -= (sizeof(DWORD)*8);
+    }
+    if (idx > 3)
+        return 0;
+
+    mask = 1 << i;
+
+    if (ntme->ntmFontSig.fsUsb[idx] & mask)
+    {
+        memcpy(&(rp->lf),lpelfe,sizeof(LOGFONT));
+        return 0;
+    }
+    return 1;
+}
+
+static int _find_font_for_range(HDC hdc, const CHAR *recommended, BYTE range, const WCHAR check, HFONT *hfont, HFONT *origFont)
+{
+    int rc = 0;
+    fontEnumParam lParam;
+
+    lParam.range = range;
+    memset(&lParam.lf,0,sizeof(LOGFONT));
+    *hfont = NULL;
+
+    if (recommended)
+    {
+        lstrcpyA(lParam.lf.lfFaceName, recommended);
+        if (!EnumFontFamiliesExA(hdc, &lParam.lf, enumFontProc, (LPARAM)&lParam, 0))
+        {
+            *hfont = CreateFontIndirectA(&lParam.lf);
+            if (*hfont)
+            {
+                winetest_trace("using font %s\n",lParam.lf.lfFaceName);
+                rc = 1;
+            }
+        }
+    }
+
+    if (!*hfont)
+    {
+        memset(&lParam.lf,0,sizeof(LOGFONT));
+        lParam.lf.lfCharSet = DEFAULT_CHARSET;
+
+        if (!EnumFontFamiliesExA(hdc, &lParam.lf, enumFontProc, (LPARAM)&lParam, 0) && lParam.lf.lfFaceName[0])
+        {
+            *hfont = CreateFontIndirectA(&lParam.lf);
+            if (*hfont)
+                winetest_trace("trying font %s: failures will only be warnings\n",lParam.lf.lfFaceName);
+        }
+    }
+
+    if (*hfont)
+    {
+        WORD glyph = 0;
+
+        *origFont = SelectObject(hdc,*hfont);
+        if (GetGlyphIndicesW(hdc, &check, 1, &glyph, 0) == GDI_ERROR || glyph ==0)
+        {
+            winetest_trace("    Font fails to contain required glyphs\n");
+            SelectObject(hdc,*origFont);
+            DeleteObject(*hfont);
+            *hfont=NULL;
+            rc = 0;
+        }
+        else if (!rc)
+            rc = -1;
+    }
+    else
+        winetest_trace("Failed to find usable font\n");
+
+    return rc;
+}
+
+#define find_font_for_range(a,b,c,d,e,f) (winetest_set_location(__FILE__,__LINE__), 0) ? 0 : _find_font_for_range(a,b,c,d,e,f)
 
 static void test_ScriptShapeOpenType(HDC hdc)
 {
@@ -377,6 +523,8 @@ static void test_ScriptShapeOpenType(HDC hdc)
     SCRIPT_CONTROL  Control;
     SCRIPT_STATE    State;
     int nb, outnItems;
+    HFONT hfont, hfont_orig;
+    int test_valid;
 
     static const WCHAR test1[] = {'w', 'i', 'n', 'e',0};
     static const shapeTest_char t1_c[] = {{0,{0,0}},{1,{0,0}},{2,{0,0}},{3,{0,0}}};
