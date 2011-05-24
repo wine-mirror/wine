@@ -6041,12 +6041,12 @@ static UINT ITERATE_InstallODBCDriver( MSIRECORD *rec, LPVOID param )
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!comp->Enabled)
+    comp->Action = msi_get_component_action( package, comp );
+    if (comp->Action != INSTALLSTATE_LOCAL)
     {
-        TRACE("component is disabled\n");
+        TRACE("component not scheduled for installation %s\n", debugstr_w(component));
         return ERROR_SUCCESS;
     }
-
     desc = MSI_RecordGetString(rec, 3);
 
     file_key = MSI_RecordGetString( rec, 4 );
@@ -6133,12 +6133,12 @@ static UINT ITERATE_InstallODBCTranslator( MSIRECORD *rec, LPVOID param )
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!comp->Enabled)
+    comp->Action = msi_get_component_action( package, comp );
+    if (comp->Action != INSTALLSTATE_LOCAL)
     {
-        TRACE("component is disabled\n");
+        TRACE("component not scheduled for installation %s\n", debugstr_w(component));
         return ERROR_SUCCESS;
     }
-
     desc = MSI_RecordGetString(rec, 3);
 
     file_key = MSI_RecordGetString( rec, 4 );
@@ -6219,9 +6219,10 @@ static UINT ITERATE_InstallODBCDataSource( MSIRECORD *rec, LPVOID param )
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!comp->Enabled)
+    comp->Action = msi_get_component_action( package, comp );
+    if (comp->Action != INSTALLSTATE_LOCAL)
     {
-        TRACE("component is disabled\n");
+        TRACE("component not scheduled for installation %s\n", debugstr_w(component));
         return ERROR_SUCCESS;
     }
 
@@ -6312,9 +6313,10 @@ static UINT ITERATE_RemoveODBCDriver( MSIRECORD *rec, LPVOID param )
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!comp->Enabled)
+    comp->Action = msi_get_component_action( package, comp );
+    if (comp->Action != INSTALLSTATE_ABSENT)
     {
-        TRACE("component is disabled\n");
+        TRACE("component not scheduled for removal %s\n", debugstr_w(component));
         return ERROR_SUCCESS;
     }
 
@@ -6350,9 +6352,10 @@ static UINT ITERATE_RemoveODBCTranslator( MSIRECORD *rec, LPVOID param )
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!comp->Enabled)
+    comp->Action = msi_get_component_action( package, comp );
+    if (comp->Action != INSTALLSTATE_ABSENT)
     {
-        TRACE("component is disabled\n");
+        TRACE("component not scheduled for removal %s\n", debugstr_w(component));
         return ERROR_SUCCESS;
     }
 
@@ -6394,9 +6397,10 @@ static UINT ITERATE_RemoveODBCDataSource( MSIRECORD *rec, LPVOID param )
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!comp->Enabled)
+    comp->Action = msi_get_component_action( package, comp );
+    if (comp->Action != INSTALLSTATE_ABSENT)
     {
-        TRACE("component is disabled\n");
+        TRACE("component not scheduled for removal %s\n", debugstr_w(component));
         return ERROR_SUCCESS;
     }
 
