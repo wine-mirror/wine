@@ -63,7 +63,7 @@ static void msi_file_update_ui( MSIPACKAGE *package, MSIFILE *f, const WCHAR *ac
     msi_ui_progress( package, 2, f->FileSize, 0, 0 );
 }
 
-static msi_file_state calculate_install_state( MSIFILE *file )
+static msi_file_state calculate_install_state( MSIPACKAGE *package, MSIFILE *file )
 {
     MSICOMPONENT *comp = file->Component;
     VS_FIXEDFILEINFO *file_version;
@@ -71,8 +71,8 @@ static msi_file_state calculate_install_state( MSIFILE *file )
     msi_file_state state;
     DWORD file_size;
 
-    if (comp->ActionRequest != INSTALLSTATE_LOCAL || !comp->Enabled ||
-        (comp->assembly && comp->assembly->installed))
+    comp->Action = msi_get_component_action( package, comp );
+    if (comp->Action != INSTALLSTATE_LOCAL || (comp->assembly && comp->assembly->installed))
     {
         TRACE("file %s is not scheduled for install\n", debugstr_w(file->File));
         return msifs_skipped;
@@ -147,13 +147,12 @@ static void schedule_install_files(MSIPACKAGE *package)
     {
         MSICOMPONENT *comp = file->Component;
 
-        file->state = calculate_install_state( file );
+        file->state = calculate_install_state( package, file );
         if (file->state == msifs_overwrite && (comp->Attributes & msidbComponentAttributesNeverOverwrite))
         {
             TRACE("not overwriting %s\n", debugstr_w(file->TargetPath));
             file->state = msifs_skipped;
         }
-        comp->Action = INSTALLSTATE_LOCAL;
         msi_ui_progress( package, 2, file->FileSize, 0, 0 );
     }
 }
@@ -393,8 +392,8 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     msi_init_assembly_caches( package );
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
     {
-        if (comp->ActionRequest == INSTALLSTATE_LOCAL && comp->Enabled &&
-            comp->assembly && !comp->assembly->installed)
+        comp->Action = msi_get_component_action( package, comp );
+        if (comp->Action == INSTALLSTATE_LOCAL && comp->assembly && !comp->assembly->installed)
         {
             rc = msi_install_assembly( package, comp );
             if (rc != ERROR_SUCCESS)
@@ -783,19 +782,12 @@ static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!comp->Enabled)
+    comp->Action = msi_get_component_action( package, comp );
+    if (comp->Action != INSTALLSTATE_LOCAL)
     {
-        TRACE("component is disabled\n");
+        TRACE("component not scheduled for installation %s\n", debugstr_w(component));
         return ERROR_SUCCESS;
     }
-
-    if (comp->ActionRequest != INSTALLSTATE_LOCAL && comp->ActionRequest != INSTALLSTATE_SOURCE)
-    {
-        TRACE("Component not scheduled for installation: %s\n", debugstr_w(component));
-        comp->Action = comp->Installed;
-        return ERROR_SUCCESS;
-    }
-    comp->Action = comp->ActionRequest;
 
     sourcename = MSI_RecordGetString(rec, 3);
     options = MSI_RecordGetInteger(rec, 7);
@@ -979,19 +971,12 @@ static UINT ITERATE_DuplicateFiles(MSIRECORD *row, LPVOID param)
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!comp->Enabled)
+    comp->Action = msi_get_component_action( package, comp );
+    if (comp->Action != INSTALLSTATE_LOCAL)
     {
-        TRACE("component is disabled\n");
+        TRACE("component not scheduled for installation %s\n", debugstr_w(component));
         return ERROR_SUCCESS;
     }
-
-    if (comp->ActionRequest != INSTALLSTATE_LOCAL)
-    {
-        TRACE("Component not scheduled for installation %s\n", debugstr_w(component));
-        comp->Action = comp->Installed;
-        return ERROR_SUCCESS;
-    }
-    comp->Action = INSTALLSTATE_LOCAL;
 
     file_key = MSI_RecordGetString(row,3);
     if (!file_key)
@@ -1067,19 +1052,12 @@ static UINT ITERATE_RemoveDuplicateFiles( MSIRECORD *row, LPVOID param )
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!comp->Enabled)
+    comp->Action = msi_get_component_action( package, comp );
+    if (comp->Action != INSTALLSTATE_ABSENT)
     {
-        TRACE("component is disabled\n");
+        TRACE("component not scheduled for removal %s\n", debugstr_w(component));
         return ERROR_SUCCESS;
     }
-
-    if (comp->ActionRequest != INSTALLSTATE_ABSENT)
-    {
-        TRACE("Component not scheduled for removal %s\n", debugstr_w(component));
-        comp->Action = comp->Installed;
-        return ERROR_SUCCESS;
-    }
-    comp->Action = INSTALLSTATE_ABSENT;
 
     file_key = MSI_RecordGetString( row, 3 );
     if (!file_key)
@@ -1139,15 +1117,13 @@ UINT ACTION_RemoveDuplicateFiles( MSIPACKAGE *package )
 
 static BOOL verify_comp_for_removal(MSICOMPONENT *comp, UINT install_mode)
 {
-    INSTALLSTATE request = comp->ActionRequest;
-
     /* special case */
-    if (request != INSTALLSTATE_SOURCE &&
+    if (comp->Action != INSTALLSTATE_SOURCE &&
         comp->Attributes & msidbComponentAttributesSourceOnly &&
         (install_mode == msidbRemoveFileInstallModeOnRemove ||
          install_mode == msidbRemoveFileInstallModeOnBoth)) return TRUE;
 
-    switch (request)
+    switch (comp->Action)
     {
     case INSTALLSTATE_LOCAL:
     case INSTALLSTATE_SOURCE:
@@ -1182,16 +1158,10 @@ static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!comp->Enabled)
-    {
-        TRACE("component is disabled\n");
-        return ERROR_SUCCESS;
-    }
-
+    comp->Action = msi_get_component_action( package, comp );
     if (!verify_comp_for_removal(comp, install_mode))
     {
         TRACE("Skipping removal due to install mode\n");
-        comp->Action = comp->Installed;
         return ERROR_SUCCESS;
     }
 
@@ -1300,15 +1270,9 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         if ( file->state == msifs_installed )
             ERR("removing installed file %s\n", debugstr_w(file->TargetPath));
 
-        if ( file->Component->ActionRequest != INSTALLSTATE_ABSENT ||
-             file->Component->Installed == INSTALLSTATE_SOURCE )
+        file->Component->Action = msi_get_component_action( package, file->Component );
+        if (file->Component->Action != INSTALLSTATE_ABSENT || file->Component->Installed == INSTALLSTATE_SOURCE)
             continue;
-
-        if (!file->Component->Enabled)
-        {
-            TRACE("component is disabled\n");
-            continue;
-        }
 
         if (file->Component->Attributes & msidbComponentAttributesPermanent)
         {
