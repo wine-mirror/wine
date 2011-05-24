@@ -559,6 +559,21 @@ static void test_ScriptShapeOpenType(HDC hdc)
                             {1,{{SCRIPT_JUSTIFY_ARABIC_NORMAL,1,0,0,0,0},0}},
                             {1,{{SCRIPT_JUSTIFY_ARABIC_SEEN,1,0,0,0,0},0}} };
 
+    /* Thai */
+    static const WCHAR test_thai[] = {0x0e2a, 0x0e04, 0x0e23, 0x0e34, 0x0e1b, 0x0e15, 0x0e4c, 0x0e44, 0x0e17, 0x0e22,};
+    static const shapeTest_char thai_c[] = {{0,{0,0}},{1,{0,0}},{2,{0,0}},{2,{0,0}},{4,{0,0}},{5,{0,0}},{5,{0,0}},{7,{0,0}},{8,{0,0}},{9,{0,0}}};
+    static const shapeTest_glyph thai_g[] = {
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,0,1,1,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,0,1,1,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}}};
+
     if (!pScriptItemizeOpenType || !pScriptShapeOpenType)
     {
         win_skip("ScriptShapeOpenType not available on this platform\n");
@@ -604,6 +619,14 @@ static void test_ScriptShapeOpenType(HDC hdc)
     if (hfont != NULL)
     {
         test_shape_ok_valid(test_valid, hdc, test_arabic, 4, &Control, &State, 0, 3, arabic_c, arabic_g);
+        SelectObject(hdc, hfont_orig);
+        DeleteObject(hfont);
+    }
+
+    test_valid = find_font_for_range(hdc, "Microsoft Sans Serif", 24, test_thai[0], &hfont, &hfont_orig);
+    if (hfont != NULL)
+    {
+        test_shape_ok_valid(test_valid, hdc, test_thai, 10, &Control, &State, 0, 10, thai_c, thai_g);
         SelectObject(hdc, hfont_orig);
         DeleteObject(hfont);
     }
