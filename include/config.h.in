@@ -1151,6 +1151,12 @@
 /* Define to 1 if you have the <zlib.h> header file. */
 #undef HAVE_ZLIB_H
 
+/* Define to 1 if you have the `_finite' function. */
+#undef HAVE__FINITE
+
+/* Define to 1 if you have the `_isnan' function. */
+#undef HAVE__ISNAN
+
 /* Define to 1 if you have the `_pclose' function. */
 #undef HAVE__PCLOSE
 

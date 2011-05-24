@@ -31,6 +31,14 @@ int isinf(double x)
   return (!(finite(x) || isnand(x)));
 }
 
+#elif defined(HAVE_FLOAT_H) && defined(HAVE__ISNAN) && defined(HAVE__FINITE)
+#include <float.h>
+
+int isinf(double x)
+{
+  return (!(_finite(x) || _isnan(x)));
+}
+
 #else
 #error No isinf() implementation available.
 #endif

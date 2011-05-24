@@ -1939,6 +1939,8 @@ dnl **** Check for functions ****
 ac_save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS $BUILTINFLAG"
 AC_CHECK_FUNCS(\
+	_finite \
+	_isnan \
 	_pclose \
 	_popen \
 	_snprintf \

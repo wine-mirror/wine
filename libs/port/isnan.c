@@ -31,6 +31,14 @@ int isnan(double x)
   return isnand(x);
 }
 
+#elif defined(HAVE_FLOAT_H) && defined(HAVE__ISNAN)
+#include <float.h>
+
+int isnan(double x)
+{
+  return _isnan(x);
+}
+
 #else
 #error No isnan() implementation available.
 #endif
