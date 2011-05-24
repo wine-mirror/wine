@@ -513,7 +513,7 @@ typedef struct {
 
 typedef struct {
     DWORD	dwCallback;
-    LPCSTR	lpfilename;
+    SEGPTR	lpfilename;
 } MCI_LOAD_PARMS16, *LPMCI_LOAD_PARMS16;
 
 typedef struct {
@@ -582,7 +582,7 @@ typedef struct {
     WORD	wReserved1;
     WORD	nCmdShow;
     WORD	wReserved2;
-    LPCSTR	lpstrText;
+    SEGPTR	lpstrText;
 } MCI_ANIM_WINDOW_PARMS16, *LPMCI_ANIM_WINDOW_PARMS16;
 
 typedef struct {
@@ -605,9 +605,9 @@ typedef struct {
     DWORD		dwCallback;
     MCIDEVICEID16	wDeviceID;
     WORD		wReserved0;
-    LPCSTR		lpstrDeviceType;
-    LPCSTR		lpstrElementName;
-    LPCSTR		lpstrAlias;
+    SEGPTR		lpstrDeviceType;
+    SEGPTR		lpstrElementName;
+    SEGPTR		lpstrAlias;
     DWORD		dwStyle;
     HWND16		hWndParent;
     WORD		wReserved1;
@@ -634,13 +634,13 @@ typedef struct {
 
 typedef struct {
     DWORD   dwCallback;
-    LPCSTR  lpfilename;
+    SEGPTR  lpfilename;
     RECT16  rc;
 } MCI_OVLY_SAVE_PARMS16, *LPMCI_OVLY_SAVE_PARMS16;
 
 typedef struct {
     DWORD	dwCallback;
-    LPCSTR	lpfilename;
+    SEGPTR	lpfilename;
     RECT16	rc;
 } MCI_OVLY_LOAD_PARMS16, *LPMCI_OVLY_LOAD_PARMS16;
 
@@ -652,7 +652,7 @@ typedef struct {
 
 typedef struct {
     DWORD   dwCallback;
-    LPSTR   lpstrFileName;
+    SEGPTR  lpstrFileName;
     RECT16  rc;
 } MCI_DGV_CAPTURE_PARMS16, *LPMCI_DGV_CAPTURE_PARMS16;
 
@@ -687,18 +687,18 @@ typedef MCI_DGV_RECT_PARMS16 MCI_DGV_FREEZE_PARMS16, * LPMCI_DGV_FREEZE_PARMS16;
 
 typedef struct  {
     DWORD   dwCallback;
-    LPSTR   lpstrReturn;
+    SEGPTR  lpstrReturn;
     DWORD   dwRetSize;
     DWORD   dwItem;
 } MCI_DGV_INFO_PARMS16, * LPMCI_DGV_INFO_PARMS16;
 
 typedef struct {
     DWORD   dwCallback;
-    LPSTR   lpstrReturn;
+    SEGPTR  lpstrReturn;
     DWORD   dwLength;
     DWORD   dwNumber;
     DWORD   dwItem;
-    LPSTR   lpstrAlgorithm;
+    SEGPTR  lpstrAlgorithm;
 } MCI_DGV_LIST_PARMS16, *LPMCI_DGV_LIST_PARMS16;
 
 typedef MCI_LOAD_PARMS16  MCI_DGV_LOAD_PARMS16 , * LPMCI_DGV_LOAD_PARMS16;
@@ -707,9 +707,9 @@ typedef struct {
     DWORD   dwCallback;
     UINT16  wDeviceID;
     UINT16  wReserved0;
-    LPSTR   lpstrDeviceType;
-    LPSTR   lpstrElementName;
-    LPSTR   lpstrAlias;
+    SEGPTR  lpstrDeviceType;
+    SEGPTR  lpstrElementName;
+    SEGPTR  lpstrAlias;
     DWORD   dwStyle;
     HWND16  hWndParent;
     UINT16  wReserved1;
@@ -728,8 +728,8 @@ typedef MCI_DGV_RECT_PARMS16 MCI_DGV_PUT_PARMS16, * LPMCI_DGV_PUT_PARMS16;
 typedef struct {
     DWORD       dwCallback;
     DWORD       dwItem;
-    LPSTR       lpstrName;
-    DWORD       lpstrAlgorithm;
+    SEGPTR      lpstrName;
+    SEGPTR      lpstrAlgorithm;
     DWORD       dwHandle;
 } MCI_DGV_QUALITY_PARMS16, *LPMCI_DGV_QUALITY_PARMS16;
 
@@ -744,19 +744,19 @@ typedef struct {
 
 typedef struct {
     DWORD   dwCallback;
-    LPSTR   lpstrPath;
+    SEGPTR  lpstrPath;
     DWORD   dwSize;
 } MCI_DGV_RESERVE_PARMS16, *LPMCI_DGV_RESERVE_PARMS16A;
 
 typedef struct {
     DWORD   dwCallback;
-    LPSTR   lpstrFileName;
+    SEGPTR  lpstrFileName;
     RECT16  rc;
 } MCI_DGV_RESTORE_PARMS16, *LPMCI_DGV_RESTORE_PARMS16;
 
 typedef struct {
     DWORD   dwCallback;
-    LPSTR   lpstrFileName;
+    SEGPTR  lpstrFileName;
     RECT16  rc;
 } MCI_DGV_SAVE_PARMS16, *LPMCI_DGV_SAVE_PARMS16;
 
@@ -765,8 +765,8 @@ typedef struct {
     DWORD   dwItem;
     DWORD   dwValue;
     DWORD   dwOver;
-    LPSTR   lpstrAlgorithm;
-    LPSTR   lpstrQuality;
+    SEGPTR  lpstrAlgorithm;
+    SEGPTR  lpstrQuality;
 } MCI_DGV_SETAUDIO_PARMS16, *LPMCI_DGV_SETAUDIO_PARMS16;
 
 typedef struct {
@@ -774,8 +774,8 @@ typedef struct {
     DWORD   dwItem;
     DWORD   dwValue;
     DWORD   dwOver;
-    LPSTR   lpstrAlgorithm;
-    LPSTR   lpstrQuality;
+    SEGPTR  lpstrAlgorithm;
+    SEGPTR  lpstrQuality;
     DWORD   dwSourceNumber;
 } MCI_DGV_SETVIDEO_PARMS16, *LPMCI_DGV_SETVIDEO_PARMS16;
 
