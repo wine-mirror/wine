@@ -1274,7 +1274,7 @@ struct wined3d_pixel_format
     BOOL doubleBuffer;
     int auxBuffers;
     int numSamples;
-} wined3d_pixel_format;
+};
 
 /* The driver names reflect the lowest GPU supported
  * by a certain driver, so DRIVER_AMD_R300 supports
