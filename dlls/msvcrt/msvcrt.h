@@ -169,7 +169,9 @@ struct __thread_data {
     unsigned char                  *mbstok_next;        /* next ptr for mbstok() */
     char                           *strerror_buffer;    /* buffer for strerror */
     MSVCRT_wchar_t                 *wcserror_buffer;    /* buffer for wcserror */
-    void                           *unk2[4];
+    char                           *tmpnam_buffer;      /* buffer for tmpname() */
+    MSVCRT_wchar_t                 *wtmpnam_buffer;     /* buffer for wtmpname() */
+    void                           *unk2[2];
     char                           *asctime_buffer;     /* buffer for asctime */
     MSVCRT_wchar_t                 *wasctime_buffer;    /* buffer for wasctime */
     struct MSVCRT_tm               *time_buffer;        /* buffer for localtime/gmtime */

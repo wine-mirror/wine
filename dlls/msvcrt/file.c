@@ -108,8 +108,6 @@ static int MSVCRT_umask = 0;
 
 /* INTERNAL: static data for tmpnam and _wtmpname functions */
 static int tmpnam_unique;
-static char MSVCRT_tmpname[MAX_PATH];
-static MSVCRT_wchar_t MSVCRT_wtmpname[MAX_PATH];
 
 static const unsigned int EXE = 'e' << 16 | 'x' << 8 | 'e';
 static const unsigned int BAT = 'b' << 16 | 'a' << 8 | 't';
@@ -3654,8 +3652,16 @@ char * CDECL MSVCRT_tmpnam(char *s)
   char tmpstr[16];
   char *p;
   int count, size;
-  if (s == 0)
-    s = MSVCRT_tmpname;
+
+  if (!s) {
+    thread_data_t *data = msvcrt_get_thread_data();
+
+    if(!data->tmpnam_buffer)
+      data->tmpnam_buffer = MSVCRT_malloc(MAX_PATH);
+
+    s = data->tmpnam_buffer;
+  }
+
   msvcrt_int_to_base32(GetCurrentProcessId(), tmpstr);
   p = s + sprintf(s, "\\s%s.", tmpstr);
   for (count = 0; count < MSVCRT_TMP_MAX; count++)
@@ -3672,14 +3678,21 @@ char * CDECL MSVCRT_tmpnam(char *s)
 /*********************************************************************
  *              _wtmpnam (MSVCRT.@)
  */
-MSVCRT_wchar_t * MSVCRT_wtmpnam(MSVCRT_wchar_t *s)
+MSVCRT_wchar_t * CDECL MSVCRT_wtmpnam(MSVCRT_wchar_t *s)
 {
     static const MSVCRT_wchar_t format[] = {'\\','s','%','s','.',0};
     MSVCRT_wchar_t tmpstr[16];
     MSVCRT_wchar_t *p;
     int count, size;
-    if (s == 0)
-        s = MSVCRT_wtmpname;
+    if (!s) {
+        thread_data_t *data = msvcrt_get_thread_data();
+
+        if(!data->wtmpnam_buffer)
+            data->wtmpnam_buffer = MSVCRT_malloc(sizeof(MSVCRT_wchar_t[MAX_PATH]));
+
+        s = data->wtmpnam_buffer;
+    }
+
     msvcrt_int_to_base32_w(GetCurrentProcessId(), tmpstr);
     p = s + MSVCRT__snwprintf(s, MAX_PATH, format, tmpstr);
     for (count = 0; count < MSVCRT_TMP_MAX; count++)
