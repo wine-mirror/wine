@@ -2,6 +2,7 @@
  * Copyright 2008 David Adam
  * Copyright 2008 Luis Busquets
  * Copyright 2009 Henri Verbeet for CodeWeavers
+ * Copyright 2011 Michael Mc Donnell
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -87,6 +88,93 @@ typedef WORD face[3];
 static BOOL compare_face(face a, face b)
 {
     return (a[0]==b[0] && a[1] == b[1] && a[2] == b[2]);
+}
+
+struct test_context
+{
+    HWND hwnd;
+    IDirect3D9 *d3d;
+    IDirect3DDevice9 *device;
+};
+
+/* Initializes a test context struct. Use it to initialize DirectX.
+ *
+ * Returns NULL if an error occured.
+ */
+static struct test_context *new_test_context(void)
+{
+    HRESULT hr;
+    HWND hwnd = NULL;
+    IDirect3D9 *d3d = NULL;
+    IDirect3DDevice9 *device = NULL;
+    D3DPRESENT_PARAMETERS d3dpp = {0};
+    struct test_context *test_context;
+
+    hwnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
+    if (!hwnd)
+    {
+        skip("Couldn't create application window\n");
+        goto error;
+    }
+
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    if (!d3d)
+    {
+        skip("Couldn't create IDirect3D9 object\n");
+        goto error;
+    }
+
+    memset(&d3dpp, 0, sizeof(d3dpp));
+    d3dpp.Windowed = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
+                                 D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &device);
+    if (FAILED(hr))
+    {
+        skip("Couldn't create IDirect3DDevice9 object %#x\n", hr);
+        goto error;
+    }
+
+    test_context = HeapAlloc(GetProcessHeap(), 0, sizeof(*test_context));
+    if (!test_context)
+    {
+        skip("Couldn't allocate memory for test_context\n");
+        goto error;
+    }
+    test_context->hwnd = hwnd;
+    test_context->d3d = d3d;
+    test_context->device = device;
+
+    return test_context;
+
+error:
+    if (device)
+        IDirect3DDevice9_Release(device);
+
+    if (d3d)
+        IDirect3D9_Release(d3d);
+
+    if (hwnd)
+        DestroyWindow(hwnd);
+
+    return NULL;
+}
+
+static void free_test_context(struct test_context *test_context)
+{
+    if (!test_context)
+        return;
+
+    if (test_context->device)
+        IDirect3DDevice9_Release(test_context->device);
+
+    if (test_context->d3d)
+        IDirect3D9_Release(test_context->d3d);
+
+    if (test_context->hwnd)
+        DestroyWindow(test_context->hwnd);
+
+    HeapFree(GetProcessHeap(), 0, test_context);
 }
 
 struct mesh
@@ -4259,6 +4347,335 @@ static void D3DXGenerateAdjacencyTest(void)
     if (d3dxmesh) d3dxmesh->lpVtbl->Release(d3dxmesh);
 }
 
+static void test_update_semantics(void)
+{
+    HRESULT hr;
+    struct test_context *test_context = NULL;
+    ID3DXMesh *mesh = NULL;
+    D3DVERTEXELEMENT9 declaration0[] =
+    {
+         {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+         {0, 24, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+         {0, 36, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+         D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_pos_type_color[] =
+    {
+         {0, 0, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+         {0, 24, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+         {0, 36, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+         D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_smaller[] =
+    {
+         {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+         {0, 24, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+         D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_larger[] =
+    {
+         {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+         {0, 24, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+         {0, 36, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+         {0, 40, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TANGENT, 0},
+         D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_multiple_streams[] =
+    {
+         {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+         {1, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TANGENT, 0},
+         {0, 24, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+         {0, 36, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+
+         D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_double_usage[] =
+    {
+         {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+         {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+         {0, 24, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+         {0, 36, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+         D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_undefined_type[] =
+    {
+         {0, 0, D3DDECLTYPE_UNUSED+1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+         {0, 24, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+         {0, 36, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+         D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_not_4_byte_aligned_offset[] =
+    {
+         {0, 3, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+         {0, 24, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+         {0, 36, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+         D3DDECL_END()
+    };
+    static const struct
+    {
+        D3DXVECTOR3 position0;
+        D3DXVECTOR3 position1;
+        D3DXVECTOR3 normal;
+        DWORD color;
+    }
+    vertices[] =
+    {
+        { { 0.0f,  1.0f,  0.f}, { 1.0f,  0.0f,  0.f}, {0.0f, 0.0f, 1.0f}, 0xffff0000 },
+        { { 1.0f, -1.0f,  0.f}, {-1.0f, -1.0f,  0.f}, {0.0f, 0.0f, 1.0f}, 0xff00ff00 },
+        { {-1.0f, -1.0f,  0.f}, {-1.0f,  1.0f,  0.f}, {0.0f, 0.0f, 1.0f}, 0xff0000ff },
+    };
+    unsigned int faces[] = {0, 1, 2};
+    unsigned int attributes[] = {0};
+    unsigned int num_faces = ARRAY_SIZE(faces) / 3;
+    unsigned int num_vertices = ARRAY_SIZE(vertices);
+    int offset = sizeof(D3DXVECTOR3);
+    DWORD options = D3DXMESH_32BIT | D3DXMESH_SYSTEMMEM;
+    void *vertex_buffer;
+    void *index_buffer;
+    DWORD *attributes_buffer;
+    D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE];
+    D3DVERTEXELEMENT9 *decl_ptr;
+    DWORD exp_vertex_size = sizeof(*vertices);
+    DWORD vertex_size = 0;
+    int equal;
+    int i = 0;
+    int *decl_mem;
+    int filler_a = 0xaaaaaaaa;
+    int filler_b = 0xbbbbbbbb;
+
+    test_context = new_test_context();
+    if (!test_context)
+    {
+        skip("Couldn't create a test_context\n");
+        goto cleanup;
+    }
+
+    hr = D3DXCreateMesh(num_faces, num_vertices, options, declaration0,
+                        test_context->device, &mesh);
+    if (FAILED(hr))
+    {
+        skip("Couldn't create test mesh %#x\n", hr);
+        goto cleanup;
+    }
+
+    mesh->lpVtbl->LockVertexBuffer(mesh, 0, &vertex_buffer);
+    memcpy(vertex_buffer, vertices, sizeof(vertices));
+    mesh->lpVtbl->UnlockVertexBuffer(mesh);
+
+    mesh->lpVtbl->LockIndexBuffer(mesh, 0, &index_buffer);
+    memcpy(index_buffer, faces, sizeof(faces));
+    mesh->lpVtbl->UnlockIndexBuffer(mesh);
+
+    mesh->lpVtbl->LockAttributeBuffer(mesh, 0, &attributes_buffer);
+    memcpy(attributes_buffer, attributes, sizeof(attributes));
+    mesh->lpVtbl->UnlockAttributeBuffer(mesh);
+
+    /* Get the declaration and try to change it */
+    hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
+    if (FAILED(hr))
+    {
+        skip("Couldn't get vertex declaration %#x\n", hr);
+        goto cleanup;
+    }
+    equal = memcmp(declaration, declaration0, sizeof(declaration0));
+    ok(equal == 0, "Vertex declarations were not equal\n");
+
+    for (decl_ptr = declaration; decl_ptr->Stream != 0xFF; decl_ptr++)
+    {
+        if (decl_ptr->Usage == D3DDECLUSAGE_POSITION)
+        {
+            /* Use second vertex position instead of first */
+            decl_ptr->Offset = offset;
+        }
+    }
+
+    hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration);
+    todo_wine ok(hr == D3D_OK, "Test UpdateSematics, got %#x expected %#x\n", hr, D3D_OK);
+
+    /* Check that declaration was written by getting it again */
+    memset(declaration, 0, sizeof(declaration));
+    hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
+    if (FAILED(hr))
+    {
+        skip("Couldn't get vertex declaration %#x\n", hr);
+        goto cleanup;
+    }
+
+    for (decl_ptr = declaration; decl_ptr->Stream != 0xFF; decl_ptr++)
+    {
+        if (decl_ptr->Usage == D3DDECLUSAGE_POSITION)
+        {
+            todo_wine ok(decl_ptr->Offset == offset, "Test UpdateSematics, got offset %d expected %d\n",
+                         decl_ptr->Offset, offset);
+        }
+    }
+
+    /* Check that GetDeclaration only writes up to the D3DDECL_END() marker and
+     * not the full MAX_FVF_DECL_SIZE elements.
+     */
+    memset(declaration, filler_a, sizeof(declaration));
+    memcpy(declaration, declaration0, sizeof(declaration0));
+    hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration);
+    todo_wine ok(hr == D3D_OK, "Test UpdateSematics, "
+       "got %#x expected D3D_OK\n", hr);
+    memset(declaration, filler_b, sizeof(declaration));
+    hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
+    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
+    decl_mem = (int*)declaration;
+    for (i = sizeof(declaration0)/sizeof(*decl_mem); i < sizeof(declaration)/sizeof(*decl_mem); i++)
+    {
+        equal = memcmp(&decl_mem[i], &filler_b, sizeof(filler_b));
+        ok(equal == 0,
+           "GetDeclaration wrote past the D3DDECL_END() marker. "
+           "Got %#x, expected  %#x\n", decl_mem[i], filler_b);
+        if (equal != 0) break;
+    }
+
+    /* UpdateSemantics does not check for overlapping fields */
+    memset(declaration, 0, sizeof(declaration));
+    hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
+    if (FAILED(hr))
+    {
+        skip("Couldn't get vertex declaration %#x\n", hr);
+        goto cleanup;
+    }
+
+    for (decl_ptr = declaration; decl_ptr->Stream != 0xFF; decl_ptr++)
+    {
+        if (decl_ptr->Type == D3DDECLTYPE_FLOAT3)
+        {
+            decl_ptr->Type = D3DDECLTYPE_FLOAT4;
+        }
+    }
+
+    hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration);
+    todo_wine ok(hr == D3D_OK, "Test UpdateSematics for overlapping fields, "
+                 "got %#x expected D3D_OK\n", hr);
+
+    /* Set the position type to color instead of float3 */
+    hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_pos_type_color);
+    todo_wine ok(hr == D3D_OK, "Test UpdateSematics position type color, "
+                 "got %#x expected D3D_OK\n", hr);
+
+    /* The following test cases show that NULL, smaller or larger declarations,
+     * and declarations with non-zero Stream values are not accepted.
+     * UpdateSemantics returns D3DERR_INVALIDCALL and the previously set
+     * declaration will be used by DrawSubset, GetNumBytesPerVertex, and
+     * GetDeclaration.
+     */
+
+    /* Null declaration (invalid declaration) */
+    mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
+    hr = mesh->lpVtbl->UpdateSemantics(mesh, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Test UpdateSematics null pointer declaration, "
+                 "got %#x expected D3DERR_INVALIDCALL\n", hr);
+    vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
+    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
+       vertex_size, exp_vertex_size);
+    memset(declaration, 0, sizeof(declaration));
+    hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
+    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
+    equal = memcmp(declaration, declaration0, sizeof(declaration0));
+    ok(equal == 0, "Vertex declarations were not equal\n");
+
+    /* Smaller vertex declaration (invalid declaration) */
+    mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
+    hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_smaller);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Test UpdateSematics for smaller vertex declaration, "
+                 "got %#x expected D3DERR_INVALIDCALL\n", hr);
+    vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
+    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
+       vertex_size, exp_vertex_size);
+    memset(declaration, 0, sizeof(declaration));
+    hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
+    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
+    equal = memcmp(declaration, declaration0, sizeof(declaration0));
+    ok(equal == 0, "Vertex declarations were not equal\n");
+
+    /* Larger vertex declaration (invalid declaration) */
+    mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
+    hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_larger);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Test UpdateSematics for larger vertex declaration, "
+                 "got %#x expected D3DERR_INVALIDCALL\n", hr);
+    vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
+    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
+       vertex_size, exp_vertex_size);
+    memset(declaration, 0, sizeof(declaration));
+    hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
+    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
+    equal = memcmp(declaration, declaration0, sizeof(declaration0));
+    ok(equal == 0, "Vertex declarations were not equal\n");
+
+    /* Use multiple streams and keep the same vertex size (invalid declaration) */
+    mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
+    hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_multiple_streams);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Test UpdateSematics using multiple streams, "
+                 "got %#x expected D3DERR_INVALIDCALL\n", hr);
+    vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
+    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
+       vertex_size, exp_vertex_size);
+    memset(declaration, 0, sizeof(declaration));
+    hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
+    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
+    equal = memcmp(declaration, declaration0, sizeof(declaration0));
+    ok(equal == 0, "Vertex declarations were not equal\n");
+
+    /* The next following test cases show that some invalid declarations are
+     * accepted with a D3D_OK. An access violation is thrown on Windows if
+     * DrawSubset is called. The methods GetNumBytesPerVertex and GetDeclaration
+     * are not affected, which indicates that the declaration is cached.
+     */
+
+    /* Double usage (invalid declaration) */
+    mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
+    hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_double_usage);
+    todo_wine ok(hr == D3D_OK, "Test UpdateSematics double usage, "
+                 "got %#x expected D3D_OK\n", hr);
+    vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
+    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
+       vertex_size, exp_vertex_size);
+    memset(declaration, 0, sizeof(declaration));
+    hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
+    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
+    equal = memcmp(declaration, declaration_double_usage, sizeof(declaration_double_usage));
+    todo_wine ok(equal == 0, "Vertex declarations were not equal\n");
+
+    /* Set the position to an undefined type (invalid declaration) */
+    mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
+    hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_undefined_type);
+    todo_wine ok(hr == D3D_OK, "Test UpdateSematics undefined type, "
+                 "got %#x expected D3D_OK\n", hr);
+    vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
+    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
+       vertex_size, exp_vertex_size);
+    memset(declaration, 0, sizeof(declaration));
+    hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
+    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
+    equal = memcmp(declaration, declaration_undefined_type, sizeof(declaration_undefined_type));
+    todo_wine ok(equal == 0, "Vertex declarations were not equal\n");
+
+    /* Use a not 4 byte aligned offset (invalid declaration) */
+    mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
+    hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_not_4_byte_aligned_offset);
+    todo_wine ok(hr == D3D_OK, "Test UpdateSematics not 4 byte aligned offset, "
+       "got %#x expected D3D_OK\n", hr);
+    vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
+    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
+       vertex_size, exp_vertex_size);
+    memset(declaration, 0, sizeof(declaration));
+    hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
+    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
+    equal = memcmp(declaration, declaration_not_4_byte_aligned_offset,
+                   sizeof(declaration_not_4_byte_aligned_offset));
+    todo_wine ok(equal == 0, "Vertex declarations were not equal\n");
+
+cleanup:
+    if (mesh)
+        mesh->lpVtbl->Release(mesh);
+
+    free_test_context(test_context);
+}
+
 START_TEST(mesh)
 {
     D3DXBoundProbeTest();
@@ -4277,4 +4694,5 @@ START_TEST(mesh)
     test_get_decl_vertex_size();
     test_fvf_decl_conversion();
     D3DXGenerateAdjacencyTest();
+    test_update_semantics();
 }
