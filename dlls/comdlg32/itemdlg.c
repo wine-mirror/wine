@@ -872,15 +872,38 @@ static LRESULT on_command_filetype(FileDialogImpl *This, WPARAM wparam, LPARAM l
     {
         IShellView *psv;
         HRESULT hr;
+        LPWSTR filename;
+        UINT prev_index = This->filetypeindex;
 
         This->filetypeindex = SendMessageW((HWND)lparam, CB_GETCURSEL, 0, 0);
         TRACE("File type selection changed to %d.\n", This->filetypeindex);
+
+        if(prev_index == This->filetypeindex)
+            return FALSE;
 
         hr = IExplorerBrowser_GetCurrentView(This->peb, &IID_IShellView, (void**)&psv);
         if(SUCCEEDED(hr))
         {
             IShellView_Refresh(psv);
             IShellView_Release(psv);
+        }
+
+        if(This->dlg_type == ITEMDLG_TYPE_SAVE && get_file_name(This, &filename))
+        {
+            WCHAR buf[MAX_PATH], extbuf[MAX_PATH], *ext;
+
+            ext = get_first_ext_from_spec(extbuf, This->filterspecs[This->filetypeindex].pszSpec);
+            if(ext)
+            {
+                lstrcpyW(buf, filename);
+
+                if(PathMatchSpecW(buf, This->filterspecs[prev_index].pszSpec))
+                    PathRemoveExtensionW(buf);
+
+                lstrcatW(buf, ext);
+                set_file_name(This, buf);
+            }
+            CoTaskMemFree(filename);
         }
     }
 
