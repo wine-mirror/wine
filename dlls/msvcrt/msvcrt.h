@@ -157,6 +157,7 @@ typedef struct MSVCRT_localeinfo_struct
 /* TLS data */
 extern DWORD msvcrt_tls_index;
 
+/* Keep in sync with msvcr90/tests/msvcr90.c */
 struct __thread_data {
     DWORD                           tid;
     HANDLE                          handle;

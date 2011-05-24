@@ -23,6 +23,8 @@
 #include <fcntl.h>
 #include <share.h>
 #include <sys/stat.h>
+#include <time.h>
+#include <locale.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -78,6 +80,25 @@ static int (__cdecl *p_wsopen_s)(int*, const wchar_t*, int, int, int);
 static void* (__cdecl *p_realloc_crt)(void*, size_t);
 static void* (__cdecl *p_malloc)(size_t);
 static void (__cdecl *p_free)(void*);
+static void* (__cdecl *p_getptd)(void);
+static int* (__cdecl *p_errno)(void);
+static __msvcrt_ulong* (__cdecl *p_doserrno)(void);
+static void (__cdecl *p_srand)(unsigned int);
+static char* (__cdecl *p_strtok)(char*, const char*);
+static wchar_t* (__cdecl *p_wcstok)(wchar_t*, const wchar_t*);
+static char* (__cdecl *p_strerror)(int);
+static wchar_t* (__cdecl *p_wcserror)(int);
+static char* (__cdecl *p_tmpnam)(char*);
+static wchar_t* (__cdecl *p_wtmpnam)(wchar_t*);
+static char* (__cdecl *p_asctime)(struct tm*);
+static wchar_t* (__cdecl *p_wasctime)(struct tm*);
+static struct tm* (__cdecl *p_localtime64)(__time64_t*);
+static char* (__cdecl *p_ecvt)(double, int, int*, int*);
+static int* (__cdecl *p_fpecode)(void);
+static int (__cdecl *p_configthreadlocale)(int);
+static void* (__cdecl *p_get_terminate)(void);
+static void* (__cdecl *p_get_unexpected)(void);
+
 
 /* type info */
 typedef struct __type_info
@@ -225,6 +246,24 @@ static BOOL init(void)
     SET(p_realloc_crt, "_realloc_crt");
     SET(p_malloc, "malloc");
     SET(p_free, "free");
+    SET(p_getptd, "_getptd");
+    SET(p_errno, "_errno");
+    SET(p_doserrno, "__doserrno");
+    SET(p_srand, "srand");
+    SET(p_strtok, "strtok");
+    SET(p_wcstok, "wcstok");
+    SET(p_strerror, "strerror");
+    SET(p_wcserror, "_wcserror");
+    SET(p_tmpnam, "tmpnam");
+    SET(p_wtmpnam, "_wtmpnam");
+    SET(p_asctime, "asctime");
+    SET(p_wasctime, "_wasctime");
+    SET(p_localtime64, "_localtime64");
+    SET(p_ecvt, "_ecvt");
+    SET(p_fpecode, "__fpecode");
+    SET(p_configthreadlocale, "_configthreadlocale");
+    SET(p_get_terminate, "_get_terminate");
+    SET(p_get_unexpected, "_get_unexpected");
     if (sizeof(void *) == 8)
     {
         SET(p_type_info_name_internal_method, "?_name_internal_method@type_info@@QEBAPEBDPEAU__type_info_node@@@Z");
@@ -864,6 +903,84 @@ static void test_typeinfo(void)
     call_func1(ptype_info_dtor, &t1);
 }
 
+/* Keep in sync with msvcrt/msvcrt.h */
+struct __thread_data {
+    DWORD                           tid;
+    HANDLE                          handle;
+    int                             thread_errno;
+    __msvcrt_ulong                  thread_doserrno;
+    int                             unk1;
+    unsigned int                    random_seed;
+    char                            *strtok_next;
+    wchar_t                         *wcstok_next;
+    unsigned char                   *mbstok_next;
+    char                            *strerror_buffer;
+    wchar_t                         *wcserror_buffer;
+    char                            *tmpnam_buffer;
+    wchar_t                         *wtmpnam_buffer;
+    void                            *unk2[2];
+    char                            *asctime_buffer;
+    wchar_t                         *wasctime_buffer;
+    struct tm                       *time_buffer;
+    char                            *efcvt_buffer;
+    int                             unk3[2];
+    void                            *unk4[4];
+    int                             fpecode;
+    pthreadmbcinfo                  mbcinfo;
+    pthreadlocinfo                  locinfo;
+    BOOL                            have_locale;
+    int                             unk5[1];
+    void*                           terminate_handler;
+    void*                           unexpected_handler;
+    void*                           se_translator;
+    void                            *unk6[3];
+    int                             unk7;
+    EXCEPTION_RECORD                *exc_record;
+};
+
+static void test_getptd(void)
+{
+    struct __thread_data *ptd = p_getptd();
+    DWORD tid = GetCurrentThreadId();
+    wchar_t testW[] = {'t','e','s','t',0}, tW[] = {'t',0}, *wp;
+    char test[] = "test", *p;
+    struct tm time;
+    __time64_t secs = 0;
+    int dec, sign;
+    void *mbcinfo, *locinfo;
+
+    ok(ptd->tid == tid, "ptd->tid = %x, expected %x\n", ptd->tid, tid);
+    ok(ptd->handle == INVALID_HANDLE_VALUE, "ptd->handle = %p\n", ptd->handle);
+    ok(p_errno() == &ptd->thread_errno, "ptd->thread_errno is different then _errno()\n");
+    ok(p_doserrno() == &ptd->thread_doserrno, "ptd->thread_doserrno is different then __doserrno()\n");
+    p_srand(1234);
+    ok(ptd->random_seed == 1234, "ptd->random_seed = %d\n", ptd->random_seed);
+    p = p_strtok(test, "t");
+    ok(ptd->strtok_next == p+3, "ptd->strtok_next is incorrect\n");
+    wp = p_wcstok(testW, tW);
+    ok(ptd->wcstok_next == wp+3, "ptd->wcstok_next is incorrect\n");
+    ok(p_strerror(0) == ptd->strerror_buffer, "ptd->strerror_buffer is incorrect\n");
+    ok(p_wcserror(0) == ptd->wcserror_buffer, "ptd->wcserror_buffer is incorrect\n");
+    ok(p_tmpnam(NULL) == ptd->tmpnam_buffer, "ptd->tmpnam_buffer is incorrect\n");
+    ok(p_wtmpnam(NULL) == ptd->wtmpnam_buffer, "ptd->wtmpnam_buffer is incorrect\n");
+    memset(&time, 0, sizeof(time));
+    time.tm_mday = 1;
+    ok(p_asctime(&time) == ptd->asctime_buffer, "ptd->asctime_buffer is incorrect\n");
+    ok(p_wasctime(&time) == ptd->wasctime_buffer, "ptd->wasctime_buffer is incorrect\n");
+    ok(p_localtime64(&secs) == ptd->time_buffer, "ptd->time_buffer is incorrect\n");
+    ok(p_ecvt(3.12, 1, &dec, &sign) == ptd->efcvt_buffer, "ptd->efcvt_buffer is incorrect\n");
+    ok(p_fpecode() == &ptd->fpecode, "ptd->fpecode is incorrect\n");
+    mbcinfo = ptd->mbcinfo;
+    locinfo = ptd->locinfo;
+    todo_wine ok(ptd->have_locale == 1, "ptd->have_locale = %x\n", ptd->have_locale);
+    p_configthreadlocale(1);
+    todo_wine ok(mbcinfo == ptd->mbcinfo, "ptd->mbcinfo != mbcinfo\n");
+    todo_wine ok(locinfo == ptd->locinfo, "ptd->locinfo != locinfo\n");
+    todo_wine ok(ptd->have_locale == 3, "ptd->have_locale = %x\n", ptd->have_locale);
+    ok(p_get_terminate() == ptd->terminate_handler, "ptd->terminate_handler != _get_terminate()\n");
+    ok(p_get_unexpected() == ptd->unexpected_handler, "ptd->unexpected_handler != _get_unexpected()\n");
+}
+
 START_TEST(msvcr90)
 {
     if(!init())
@@ -883,4 +1000,5 @@ START_TEST(msvcr90)
     test__wsopen_s();
     test__realloc_crt();
     test_typeinfo();
+    test_getptd();
 }
