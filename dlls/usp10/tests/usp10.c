@@ -367,7 +367,7 @@ static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
             winetest_trace("%i: invalid fCanGlyphAlone\n",x);
     }
 
-    if(valid)
+    if (valid > 0)
         winetest_ok(nGlyphs == outnGlyphs, "got incorrect number of glyphs (%i)\n",outnGlyphs);
     else if (nGlyphs != outnGlyphs)
         winetest_trace("got incorrect number of glyphs (%i)\n",outnGlyphs);
