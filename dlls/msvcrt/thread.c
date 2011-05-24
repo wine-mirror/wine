@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 /********************************************************************/
 
 typedef struct {
+  HANDLE is_ready, thread;
   MSVCRT__beginthread_start_routine_t start_address;
   void *arglist;
 } _beginthread_trampoline_t;
@@ -44,6 +45,8 @@ thread_data_t *msvcrt_get_thread_data(void)
         if (!(ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ptr) )))
             _amsg_exit( _RT_THREAD );
         if (!TlsSetValue( msvcrt_tls_index, ptr )) _amsg_exit( _RT_THREAD );
+        ptr->tid = GetCurrentThreadId();
+        ptr->handle = INVALID_HANDLE_VALUE;
         ptr->random_seed = 1;
     }
     SetLastError( err );
@@ -56,13 +59,19 @@ thread_data_t *msvcrt_get_thread_data(void)
  */
 static DWORD CALLBACK _beginthread_trampoline(LPVOID arg)
 {
-    _beginthread_trampoline_t local_trampoline;
+    _beginthread_trampoline_t local_trampoline, *trampoline = arg;
+    thread_data_t *data = msvcrt_get_thread_data();
 
-    /* Maybe it's just being paranoid, but freeing arg right
-     * away seems safer.
-     */
-    memcpy(&local_trampoline,arg,sizeof(local_trampoline));
-    MSVCRT_free(arg);
+    if(!DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(),
+            &trampoline->thread, 0, TRUE, DUPLICATE_SAME_ACCESS)) {
+        trampoline->thread = NULL;
+        SetEvent(&trampoline->is_ready);
+        return 0;
+    }
+
+    memcpy(&local_trampoline, trampoline, sizeof(local_trampoline));
+    data->handle = local_trampoline.thread;
+    SetEvent(trampoline->is_ready);
 
     local_trampoline.start_address(local_trampoline.arglist);
     return 0;
@@ -76,21 +85,35 @@ MSVCRT_uintptr_t CDECL _beginthread(
   unsigned int stack_size, /* [in] Stack size for new thread or 0 */
   void *arglist)           /* [in] Argument list to be passed to new thread or NULL */
 {
-  _beginthread_trampoline_t* trampoline;
+  _beginthread_trampoline_t trampoline;
+  HANDLE thread;
 
   TRACE("(%p, %d, %p)\n", start_address, stack_size, arglist);
 
-  /* Allocate the trampoline here so that it is still valid when the thread
-   * starts... typically after this function has returned.
-   * _beginthread_trampoline is responsible for freeing the trampoline
-   */
-  trampoline=MSVCRT_malloc(sizeof(*trampoline));
-  trampoline->start_address = start_address;
-  trampoline->arglist = arglist;
+  trampoline.is_ready = CreateEventW(NULL, FALSE, FALSE, NULL);
+  if(!trampoline.is_ready) {
+      *MSVCRT__errno() = MSVCRT_EAGAIN;
+      return -1;
+  }
+  trampoline.start_address = start_address;
+  trampoline.arglist = arglist;
 
-  /* FIXME */
-  return (MSVCRT_uintptr_t)CreateThread(NULL, stack_size, _beginthread_trampoline,
-				     trampoline, 0, NULL);
+  thread = CreateThread(NULL, stack_size, _beginthread_trampoline,
+          &trampoline, 0, NULL);
+  if(!thread) {
+      *MSVCRT__errno() = MSVCRT_EAGAIN;
+      return -1;
+  }
+  CloseHandle(thread);
+
+  WaitForSingleObject(trampoline.is_ready, INFINITE);
+  CloseHandle(trampoline.is_ready);
+
+  if(!trampoline.thread) {
+      *MSVCRT__errno() = MSVCRT_EAGAIN;
+      return -1;
+  }
+  return (MSVCRT_uintptr_t)trampoline.thread;
 }
 
 /*********************************************************************

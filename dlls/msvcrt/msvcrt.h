@@ -107,6 +107,8 @@ struct MSVCRT_tm {
 extern DWORD msvcrt_tls_index;
 
 struct __thread_data {
+    DWORD                           tid;
+    HANDLE                          handle;
     int                             thread_errno;
     MSVCRT_ulong                    thread_doserrno;
     unsigned int                    random_seed;        /* seed for rand() */

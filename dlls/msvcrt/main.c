@@ -66,6 +66,7 @@ static inline void msvcrt_free_tls_mem(void)
   thread_data_t *tls = TlsGetValue(msvcrt_tls_index);
   if (tls)
   {
+    CloseHandle(tls->handle);
     HeapFree(GetProcessHeap(),0,tls->efcvt_buffer);
     HeapFree(GetProcessHeap(),0,tls->asctime_buffer);
     HeapFree(GetProcessHeap(),0,tls->wasctime_buffer);
