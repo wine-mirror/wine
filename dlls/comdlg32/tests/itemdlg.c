@@ -40,6 +40,9 @@ static void init_function_pointers(void)
 #undef MAKEFUNC
 }
 
+#include <initguid.h>
+DEFINE_GUID(IID_IFileDialogCustomizeAlt, 0x8016B7B3, 0x3D49, 0x4504, 0xA0,0xAA, 0x2A,0x37,0x49,0x4E,0x60,0x6F);
+
 /**************************************************************************
  * IFileDialogEvents implementation
  */
@@ -218,7 +221,11 @@ static BOOL test_instantiation(void)
     if(SUCCEEDED(hr)) IFileDialog_Release(pfd);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialogCustomize, (void**)&punk);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+    hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialogCustomizeAlt, (void**)&punk);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileSaveDialog, (void**)&pfsd);
@@ -311,7 +318,11 @@ static BOOL test_instantiation(void)
     if(SUCCEEDED(hr)) IFileDialog_Release(pfd);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileDialogCustomize, (void**)&punk);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+    hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileDialogCustomizeAlt, (void**)&punk);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileOpenDialog, (void**)&pfod);

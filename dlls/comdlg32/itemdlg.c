@@ -42,6 +42,11 @@
 #define IDC_NAVBACK          201
 #define IDC_NAVFORWARD       202
 
+#include <initguid.h>
+/* This seems to be another version of IID_IFileDialogCustomize. If
+ * there is any difference I have yet to find it. */
+DEFINE_GUID(IID_IFileDialogCustomizeAlt, 0x8016B7B3, 0x3D49, 0x4504, 0xA0,0xAA, 0x2A,0x37,0x49,0x4E,0x60,0x6F);
+
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 enum ITEMDLG_TYPE {
@@ -66,6 +71,7 @@ typedef struct FileDialogImpl {
     IServiceProvider       IServiceProvider_iface;
     ICommDlgBrowser3       ICommDlgBrowser3_iface;
     IOleWindow             IOleWindow_iface;
+    IFileDialogCustomize   IFileDialogCustomize_iface;
     LONG ref;
 
     FILEOPENDIALOGOPTIONS options;
@@ -1006,6 +1012,11 @@ static HRESULT WINAPI IFileDialog2_fnQueryInterface(IFileDialog2 *iface,
     else if(IsEqualGUID(&IID_IOleWindow, riid))
     {
         *ppvObject = &This->IOleWindow_iface;
+    }
+    else if(IsEqualGUID(riid, &IID_IFileDialogCustomize) ||
+            IsEqualGUID(riid, &IID_IFileDialogCustomizeAlt))
+    {
+        *ppvObject = &This->IFileDialogCustomize_iface;
     }
     else
         FIXME("Unknown interface requested: %s.\n", debugstr_guid(riid));
@@ -2357,6 +2368,308 @@ static const IOleWindowVtbl vt_IOleWindow = {
     IOleWindow_fnContextSensitiveHelp
 };
 
+/**************************************************************************
+ * IFileDialogCustomize implementation
+ */
+static inline FileDialogImpl *impl_from_IFileDialogCustomize(IFileDialogCustomize *iface)
+{
+    return CONTAINING_RECORD(iface, FileDialogImpl, IFileDialogCustomize_iface);
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnQueryInterface(IFileDialogCustomize *iface,
+                                                            REFIID riid, void **ppvObject)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    return IFileDialog2_QueryInterface(&This->IFileDialog2_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI IFileDialogCustomize_fnAddRef(IFileDialogCustomize *iface)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    return IFileDialog2_AddRef(&This->IFileDialog2_iface);
+}
+
+static ULONG WINAPI IFileDialogCustomize_fnRelease(IFileDialogCustomize *iface)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    return IFileDialog2_Release(&This->IFileDialog2_iface);
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnEnableOpenDropDown(IFileDialogCustomize *iface,
+                                                                DWORD dwIDCtl)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d)\n", This, dwIDCtl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnAddMenu(IFileDialogCustomize *iface,
+                                                     DWORD dwIDCtl,
+                                                     LPCWSTR pszLabel)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d, %s)\n", This, dwIDCtl, debugstr_w(pszLabel));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnAddPushButton(IFileDialogCustomize *iface,
+                                                           DWORD dwIDCtl,
+                                                           LPCWSTR pszLabel)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d, %s)\n", This, dwIDCtl, debugstr_w(pszLabel));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnAddComboBox(IFileDialogCustomize *iface,
+                                                         DWORD dwIDCtl)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d)\n", This, dwIDCtl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnAddRadioButtonList(IFileDialogCustomize *iface,
+                                                                DWORD dwIDCtl)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d)\n", This, dwIDCtl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnAddCheckButton(IFileDialogCustomize *iface,
+                                                            DWORD dwIDCtl,
+                                                            LPCWSTR pszLabel,
+                                                            BOOL bChecked)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d, %s, %d)\n", This, dwIDCtl, debugstr_w(pszLabel), bChecked);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnAddEditBox(IFileDialogCustomize *iface,
+                                                        DWORD dwIDCtl,
+                                                        LPCWSTR pszText)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d, %s)\n", This, dwIDCtl, debugstr_w(pszText));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnAddSeparator(IFileDialogCustomize *iface,
+                                                          DWORD dwIDCtl)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d)\n", This, dwIDCtl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnAddText(IFileDialogCustomize *iface,
+                                                     DWORD dwIDCtl,
+                                                     LPCWSTR pszText)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d, %s)\n", This, dwIDCtl, debugstr_w(pszText));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnSetControlLabel(IFileDialogCustomize *iface,
+                                                             DWORD dwIDCtl,
+                                                             LPCWSTR pszLabel)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d, %s)\n", This, dwIDCtl, debugstr_w(pszLabel));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnGetControlState(IFileDialogCustomize *iface,
+                                                             DWORD dwIDCtl,
+                                                             CDCONTROLSTATEF *pdwState)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d, %p)\n", This, dwIDCtl, pdwState);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnSetControlState(IFileDialogCustomize *iface,
+                                                             DWORD dwIDCtl,
+                                                             CDCONTROLSTATEF dwState)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d, %x)\n", This, dwIDCtl, dwState);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnGetEditBoxText(IFileDialogCustomize *iface,
+                                                            DWORD dwIDCtl,
+                                                            WCHAR **ppszText)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d, %p)\n", This, dwIDCtl, ppszText);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnSetEditBoxText(IFileDialogCustomize *iface,
+                                                            DWORD dwIDCtl,
+                                                            LPCWSTR pszText)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d, %s)\n", This, dwIDCtl, debugstr_w(pszText));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnGetCheckButtonState(IFileDialogCustomize *iface,
+                                                                 DWORD dwIDCtl,
+                                                                 BOOL *pbChecked)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d, %p)\n", This, dwIDCtl, pbChecked);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnSetCheckButtonState(IFileDialogCustomize *iface,
+                                                                 DWORD dwIDCtl,
+                                                                 BOOL bChecked)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d, %d)\n", This, dwIDCtl, bChecked);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnAddControlItem(IFileDialogCustomize *iface,
+                                                            DWORD dwIDCtl,
+                                                            DWORD dwIDItem,
+                                                            LPCWSTR pszLabel)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d, %d, %s)\n", This, dwIDCtl, dwIDItem, debugstr_w(pszLabel));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnRemoveControlItem(IFileDialogCustomize *iface,
+                                                               DWORD dwIDCtl,
+                                                               DWORD dwIDItem)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d, %d)\n", This, dwIDCtl, dwIDItem);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnRemoveAllControlItems(IFileDialogCustomize *iface,
+                                                                   DWORD dwIDCtl)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    TRACE("%p (%d)\n", This, dwIDCtl);
+
+    /* Not implemented by native */
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnGetControlItemState(IFileDialogCustomize *iface,
+                                                                 DWORD dwIDCtl,
+                                                                 DWORD dwIDItem,
+                                                                 CDCONTROLSTATEF *pdwState)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnSetControlItemState(IFileDialogCustomize *iface,
+                                                                 DWORD dwIDCtl,
+                                                                 DWORD dwIDItem,
+                                                                 CDCONTROLSTATEF dwState)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnGetSelectedControlItem(IFileDialogCustomize *iface,
+                                                                    DWORD dwIDCtl,
+                                                                    DWORD *pdwIDItem)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnSetSelectedControlItem(IFileDialogCustomize *iface,
+                                                                    DWORD dwIDCtl,
+                                                                    DWORD dwIDItem)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d, %d)\n", This, dwIDCtl, dwIDItem);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnStartVisualGroup(IFileDialogCustomize *iface,
+                                                              DWORD dwIDCtl,
+                                                              LPCWSTR pszLabel)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d, %s)\n", This, dwIDCtl, debugstr_w(pszLabel));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnEndVisualGroup(IFileDialogCustomize *iface)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnMakeProminent(IFileDialogCustomize *iface,
+                                                           DWORD dwIDCtl)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d)\n", This, dwIDCtl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IFileDialogCustomize_fnSetControlItemText(IFileDialogCustomize *iface,
+                                                                DWORD dwIDCtl,
+                                                                DWORD dwIDItem,
+                                                                LPCWSTR pszLabel)
+{
+    FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    FIXME("stub - %p (%d, %d, %p)\n", This, dwIDCtl, dwIDItem, debugstr_w(pszLabel));
+    return E_NOTIMPL;
+}
+
+const IFileDialogCustomizeVtbl vt_IFileDialogCustomize = {
+    IFileDialogCustomize_fnQueryInterface,
+    IFileDialogCustomize_fnAddRef,
+    IFileDialogCustomize_fnRelease,
+    IFileDialogCustomize_fnEnableOpenDropDown,
+    IFileDialogCustomize_fnAddMenu,
+    IFileDialogCustomize_fnAddPushButton,
+    IFileDialogCustomize_fnAddComboBox,
+    IFileDialogCustomize_fnAddRadioButtonList,
+    IFileDialogCustomize_fnAddCheckButton,
+    IFileDialogCustomize_fnAddEditBox,
+    IFileDialogCustomize_fnAddSeparator,
+    IFileDialogCustomize_fnAddText,
+    IFileDialogCustomize_fnSetControlLabel,
+    IFileDialogCustomize_fnGetControlState,
+    IFileDialogCustomize_fnSetControlState,
+    IFileDialogCustomize_fnGetEditBoxText,
+    IFileDialogCustomize_fnSetEditBoxText,
+    IFileDialogCustomize_fnGetCheckButtonState,
+    IFileDialogCustomize_fnSetCheckButtonState,
+    IFileDialogCustomize_fnAddControlItem,
+    IFileDialogCustomize_fnRemoveControlItem,
+    IFileDialogCustomize_fnRemoveAllControlItems,
+    IFileDialogCustomize_fnGetControlItemState,
+    IFileDialogCustomize_fnSetControlItemState,
+    IFileDialogCustomize_fnGetSelectedControlItem,
+    IFileDialogCustomize_fnSetSelectedControlItem,
+    IFileDialogCustomize_fnStartVisualGroup,
+    IFileDialogCustomize_fnEndVisualGroup,
+    IFileDialogCustomize_fnMakeProminent,
+    IFileDialogCustomize_fnSetControlItemText
+};
+
 static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv, enum ITEMDLG_TYPE type)
 {
     FileDialogImpl *fdimpl;
@@ -2379,6 +2692,7 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     fdimpl->IServiceProvider_iface.lpVtbl = &vt_IServiceProvider;
     fdimpl->ICommDlgBrowser3_iface.lpVtbl = &vt_ICommDlgBrowser3;
     fdimpl->IOleWindow_iface.lpVtbl = &vt_IOleWindow;
+    fdimpl->IFileDialogCustomize_iface.lpVtbl = &vt_IFileDialogCustomize;
 
     if(type == ITEMDLG_TYPE_OPEN)
     {
