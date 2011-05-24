@@ -65,6 +65,19 @@ static DWORD resource_access_from_pool(WINED3DPOOL pool)
     }
 }
 
+static void resource_check_usage(DWORD usage)
+{
+    static const DWORD handled = WINED3DUSAGE_RENDERTARGET
+            | WINED3DUSAGE_DEPTHSTENCIL
+            | WINED3DUSAGE_DYNAMIC
+            | WINED3DUSAGE_AUTOGENMIPMAP
+            | WINED3DUSAGE_STATICDECL
+            | WINED3DUSAGE_OVERLAY;
+
+    if (usage & ~handled)
+        FIXME("Unhandled usage flags %#x.\n", usage & ~handled);
+}
+
 HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *device,
         WINED3DRESOURCETYPE resource_type, const struct wined3d_format *format,
         WINED3DMULTISAMPLE_TYPE multisample_type, UINT multisample_quality,
@@ -92,6 +105,8 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     resource->parent_ops = parent_ops;
     resource->resource_ops = resource_ops;
     list_init(&resource->privateData);
+
+    resource_check_usage(usage);
 
     if (size)
     {
