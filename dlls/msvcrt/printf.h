@@ -111,19 +111,19 @@ static inline int FUNC_NAME(pf_fill)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ct
 }
 
 static inline int FUNC_NAME(pf_output_wstr)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        const MSVCRT_wchar_t *str, int len, MSVCRT__locale_t locale)
+        const MSVCRT_wchar_t *str, int len, MSVCRT_pthreadlocinfo locinfo)
 {
 #ifdef PRINTF_WIDE
     return pf_puts(puts_ctx, len, str);
 #else
     LPSTR out;
-    int len_a = WideCharToMultiByte(locale->locinfo->lc_codepage, 0, str, len, NULL, 0, NULL, NULL);
+    int len_a = WideCharToMultiByte(locinfo->lc_codepage, 0, str, len, NULL, 0, NULL, NULL);
 
     out = HeapAlloc(GetProcessHeap(), 0, len_a);
     if(!out)
         return -1;
 
-    WideCharToMultiByte(locale->locinfo->lc_codepage, 0, str, len, out, len_a, NULL, NULL);
+    WideCharToMultiByte(locinfo->lc_codepage, 0, str, len, out, len_a, NULL, NULL);
     len = pf_puts(puts_ctx, len_a, out);
     HeapFree(GetProcessHeap(), 0, out);
     return len;
@@ -131,17 +131,17 @@ static inline int FUNC_NAME(pf_output_wstr)(FUNC_NAME(puts_clbk) pf_puts, void *
 }
 
 static inline int FUNC_NAME(pf_output_str)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        const char *str, int len, MSVCRT__locale_t locale)
+        const char *str, int len, MSVCRT_pthreadlocinfo locinfo)
 {
 #ifdef PRINTF_WIDE
     LPWSTR out;
-    int len_w = MultiByteToWideChar(locale->locinfo->lc_codepage, 0, str, len, NULL, 0);
+    int len_w = MultiByteToWideChar(locinfo->lc_codepage, 0, str, len, NULL, 0);
 
     out = HeapAlloc(GetProcessHeap(), 0, len_w*sizeof(WCHAR));
     if(!out)
         return -1;
 
-    MultiByteToWideChar(locale->locinfo->lc_codepage, 0, str, len, out, len_w);
+    MultiByteToWideChar(locinfo->lc_codepage, 0, str, len, out, len_w);
     len = pf_puts(puts_ctx, len_w, out);
     HeapFree(GetProcessHeap(), 0, out);
     return len;
@@ -151,7 +151,7 @@ static inline int FUNC_NAME(pf_output_str)(FUNC_NAME(puts_clbk) pf_puts, void *p
 }
 
 static inline int FUNC_NAME(pf_output_format_wstr)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        const MSVCRT_wchar_t *str, int len, FUNC_NAME(pf_flags) *flags, MSVCRT__locale_t locale)
+        const MSVCRT_wchar_t *str, int len, FUNC_NAME(pf_flags) *flags, MSVCRT_pthreadlocinfo locinfo)
 {
     int r, ret;
 
@@ -164,7 +164,7 @@ static inline int FUNC_NAME(pf_output_format_wstr)(FUNC_NAME(puts_clbk) pf_puts,
     r = FUNC_NAME(pf_fill)(pf_puts, puts_ctx, len, flags, TRUE);
     ret = r;
     if(r >= 0) {
-        r = FUNC_NAME(pf_output_wstr)(pf_puts, puts_ctx, str, len, locale);
+        r = FUNC_NAME(pf_output_wstr)(pf_puts, puts_ctx, str, len, locinfo);
         ret += r;
     }
     if(r >= 0) {
@@ -176,7 +176,7 @@ static inline int FUNC_NAME(pf_output_format_wstr)(FUNC_NAME(puts_clbk) pf_puts,
 }
 
 static inline int FUNC_NAME(pf_output_format_str)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        const char *str, int len, FUNC_NAME(pf_flags) *flags, MSVCRT__locale_t locale)
+        const char *str, int len, FUNC_NAME(pf_flags) *flags, MSVCRT_pthreadlocinfo locinfo)
 {
     int r, ret;
 
@@ -189,7 +189,7 @@ static inline int FUNC_NAME(pf_output_format_str)(FUNC_NAME(puts_clbk) pf_puts, 
     r = FUNC_NAME(pf_fill)(pf_puts, puts_ctx, len, flags, TRUE);
     ret = r;
     if(r >= 0) {
-        r = FUNC_NAME(pf_output_str)(pf_puts, puts_ctx, str, len, locale);
+        r = FUNC_NAME(pf_output_str)(pf_puts, puts_ctx, str, len, locinfo);
         ret += r;
     }
     if(r >= 0) {
@@ -201,27 +201,27 @@ static inline int FUNC_NAME(pf_output_format_str)(FUNC_NAME(puts_clbk) pf_puts, 
 }
 
 static inline int FUNC_NAME(pf_handle_string)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        const void *str, int len, FUNC_NAME(pf_flags) *flags, MSVCRT__locale_t locale)
+        const void *str, int len, FUNC_NAME(pf_flags) *flags, MSVCRT_pthreadlocinfo locinfo)
 {
 #ifdef PRINTF_WIDE
     static const MSVCRT_wchar_t nullW[] = {'(','n','u','l','l',')',0};
 
     if(!str)
-        return FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, nullW, 6, flags, locale);
+        return FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, nullW, 6, flags, locinfo);
 #else
     if(!str)
-        return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, "(null)", 6, flags, locale);
+        return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, "(null)", 6, flags, locinfo);
 #endif
 
     if(flags->WideString || flags->IntegerLength=='l')
-        return FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, str, len, flags, locale);
+        return FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, str, len, flags, locinfo);
     if(flags->IntegerLength == 'h')
-        return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, str, len, flags, locale);
+        return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, str, len, flags, locinfo);
 
     if((flags->Format=='S' || flags->Format=='C') == (sizeof(APICHAR)==sizeof(MSVCRT_wchar_t)))
-        return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, str, len, flags, locale);
+        return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, str, len, flags, locinfo);
     else
-        return FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, str, len, flags, locale);
+        return FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, str, len, flags, locinfo);
 }
 
 static inline void FUNC_NAME(pf_rebuild_format_string)(char *p, FUNC_NAME(pf_flags) *flags)
@@ -339,6 +339,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
         MSVCRT__locale_t locale, BOOL positional_params, BOOL invoke_invalid_param_handler,
         args_clbk pf_args, void *args_ctx, __ms_va_list *valist)
 {
+    MSVCRT_pthreadlocinfo locinfo;
     const APICHAR *q, *p = fmt;
     APICHAR buf[32];
     int written = 0, pos, i;
@@ -347,7 +348,9 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
     TRACE("Format is: %s\n", FUNC_NAME(debugstr)(fmt));
 
     if(!locale)
-        locale = get_locale();
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
 
     while(*p) {
         /* output characters before '%' */
@@ -467,14 +470,14 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
         if(flags.Format == 's' || flags.Format == 'S') {
             i = FUNC_NAME(pf_handle_string)(pf_puts, puts_ctx,
                     pf_args(args_ctx, pos, VT_PTR, valist).get_ptr,
-                    -1,  &flags, locale);
+                    -1,  &flags, locinfo);
         } else if(flags.Format == 'c' || flags.Format == 'C') {
             int ch = pf_args(args_ctx, pos, VT_INT, valist).get_int;
 
             if((ch&0xff) != ch)
                 FIXME("multibyte characters printing not supported\n");
 
-            i = FUNC_NAME(pf_handle_string)(pf_puts, puts_ctx, &ch, 1, &flags, locale);
+            i = FUNC_NAME(pf_handle_string)(pf_puts, puts_ctx, &ch, 1, &flags, locinfo);
         } else if(flags.Format == 'p') {
             flags.Format = 'X';
             flags.PadZero = '0';
@@ -486,9 +489,9 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             flags.Precision = i;
 
 #ifdef PRINTF_WIDE
-            i = FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, buf, -1, &flags, locale);
+            i = FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, buf, -1, &flags, locinfo);
 #else
-            i = FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, buf, -1, &flags, locale);
+            i = FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, buf, -1, &flags, locinfo);
 #endif
         } else if(flags.Format == 'n') {
             int *used;
@@ -522,9 +525,9 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                             args_ctx, pos, VT_INT, valist).get_int);
 
 #ifdef PRINTF_WIDE
-            i = FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, tmp, -1, &flags, locale);
+            i = FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, tmp, -1, &flags, locinfo);
 #else
-            i = FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, tmp, -1, &flags, locale);
+            i = FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, tmp, -1, &flags, locinfo);
 #endif
             if(tmp != buf)
                 HeapFree(GetProcessHeap(), 0, tmp);
@@ -545,9 +548,9 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
 
             decimal_point = strchr(tmp, '.');
             if(decimal_point)
-                *decimal_point = *locale->locinfo->lconv->decimal_point;
+                *decimal_point = *locinfo->lconv->decimal_point;
 
-            i = FUNC_NAME(pf_output_str)(pf_puts, puts_ctx, tmp, strlen(tmp), locale);
+            i = FUNC_NAME(pf_output_str)(pf_puts, puts_ctx, tmp, strlen(tmp), locinfo);
             if(tmp != buf_a)
                 HeapFree(GetProcessHeap(), 0, tmp);
         } else {

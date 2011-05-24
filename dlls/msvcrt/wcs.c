@@ -196,6 +196,7 @@ int CDECL MSVCRT__wcslwr_s( MSVCRT_wchar_t* str, MSVCRT_size_t n )
 double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
         MSVCRT__locale_t locale)
 {
+    MSVCRT_pthreadlocinfo locinfo;
     unsigned __int64 d=0, hlp;
     unsigned fpcontrol;
     int exp=0, sign=1;
@@ -209,7 +210,9 @@ double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
     }
 
     if(!locale)
-        locale = get_locale();
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
 
     p = str;
     while(isspaceW(*p))
@@ -234,7 +237,7 @@ double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
         exp++;
         p++;
     }
-    if(*p == *locale->locinfo->lconv->decimal_point)
+    if(*p == *locinfo->lconv->decimal_point)
         p++;
 
     while(isdigitW(*p)) {
@@ -309,22 +312,25 @@ double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
 static MSVCRT_size_t CDECL MSVCRT_wcsrtombs_l(char *mbstr, const MSVCRT_wchar_t **wcstr,
         MSVCRT_size_t count, MSVCRT__locale_t locale)
 {
+    MSVCRT_pthreadlocinfo locinfo;
     char default_char = '\0';
     MSVCRT_size_t tmp = 0;
     BOOL used_default;
 
     if(!locale)
-        locale = get_locale();
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
 
     if(!mbstr)
-        return WideCharToMultiByte(locale->locinfo->lc_codepage, WC_NO_BEST_FIT_CHARS,
+        return WideCharToMultiByte(locinfo->lc_codepage, WC_NO_BEST_FIT_CHARS,
                 *wcstr, -1, NULL, 0, &default_char, &used_default)-1;
 
     while(**wcstr) {
         char buf[3];
         MSVCRT_size_t i, size;
 
-        size = WideCharToMultiByte(locale->locinfo->lc_codepage, WC_NO_BEST_FIT_CHARS,
+        size = WideCharToMultiByte(locinfo->lc_codepage, WC_NO_BEST_FIT_CHARS,
                 *wcstr, 1, buf, 3, &default_char, &used_default);
         if(used_default)
             return -1;
@@ -1020,11 +1026,10 @@ MSVCRT_wchar_t * CDECL MSVCRT_wcstok( MSVCRT_wchar_t *str, const MSVCRT_wchar_t 
  */
 INT CDECL MSVCRT_wctob( MSVCRT_wint_t wchar )
 {
-    MSVCRT__locale_t locale = get_locale();
     char out;
     BOOL error;
 
-    if(WideCharToMultiByte( locale->locinfo->lc_codepage, 0, &wchar, 1, &out, 1, NULL, &error ) && !error)
+    if(WideCharToMultiByte( get_locinfo()->lc_codepage, 0, &wchar, 1, &out, 1, NULL, &error ) && !error)
         return (INT)out;
     return MSVCRT_EOF;
 }
@@ -1034,8 +1039,7 @@ INT CDECL MSVCRT_wctob( MSVCRT_wint_t wchar )
  */
 INT CDECL MSVCRT_wctomb( char *dst, MSVCRT_wchar_t ch )
 {
-    MSVCRT__locale_t locale = get_locale();
-    return WideCharToMultiByte( locale->locinfo->lc_codepage, 0, &ch, 1, dst, 6, NULL, NULL );
+    return WideCharToMultiByte( get_locinfo()->lc_codepage, 0, &ch, 1, dst, 6, NULL, NULL );
 }
 
 /*********************************************************************

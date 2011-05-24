@@ -58,9 +58,6 @@ int CDECL _strlwr_s_l(char *str, MSVCRT_size_t len, MSVCRT__locale_t locale)
 {
     char *ptr = str;
 
-    if(!locale)
-        locale = get_locale();
-
     if (!str || !len)
     {
         *MSVCRT__errno() = MSVCRT_EINVAL;
@@ -121,9 +118,6 @@ char* CDECL _strlwr(char *str)
 int CDECL _strupr_s_l(char *str, MSVCRT_size_t len, MSVCRT__locale_t locale)
 {
     char *ptr = str;
-
-    if(!locale)
-        locale = get_locale();
 
     if (!str || !len)
     {
@@ -293,6 +287,7 @@ void CDECL MSVCRT__swab(char* src, char* dst, int len)
  */
 double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t locale)
 {
+    MSVCRT_pthreadlocinfo locinfo;
     unsigned __int64 d=0, hlp;
     unsigned fpcontrol;
     int exp=0, sign=1;
@@ -306,7 +301,9 @@ double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t loca
     }
 
     if(!locale)
-        locale = get_locale();
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
 
     /* FIXME: use *_l functions */
     p = str;
@@ -333,7 +330,7 @@ double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t loca
         p++;
     }
 
-    if(*p == *locale->locinfo->lconv->decimal_point)
+    if(*p == *locinfo->lconv->decimal_point)
         p++;
 
     while(isdigit(*p)) {
@@ -431,6 +428,7 @@ double CDECL MSVCRT__atof_l( const char *str, MSVCRT__locale_t locale)
  */
 int CDECL MSVCRT__atoflt_l( MSVCRT__CRT_FLOAT *value, char *str, MSVCRT__locale_t locale)
 {
+    MSVCRT_pthreadlocinfo locinfo;
     unsigned __int64 d=0, hlp;
     unsigned fpcontrol;
     int exp=0, sign=1;
@@ -439,7 +437,9 @@ int CDECL MSVCRT__atoflt_l( MSVCRT__CRT_FLOAT *value, char *str, MSVCRT__locale_
     BOOL found_digit = FALSE;
 
     if(!locale)
-        locale = get_locale();
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
 
     /* FIXME: use *_l functions */
     p = str;
@@ -466,7 +466,7 @@ int CDECL MSVCRT__atoflt_l( MSVCRT__CRT_FLOAT *value, char *str, MSVCRT__locale_
         p++;
     }
 
-    if(*p == *locale->locinfo->lconv->decimal_point)
+    if(*p == *locinfo->lconv->decimal_point)
         p++;
 
     while(isdigit(*p)) {
@@ -536,10 +536,14 @@ int CDECL MSVCRT__atoflt_l( MSVCRT__CRT_FLOAT *value, char *str, MSVCRT__locale_
  */
 int CDECL MSVCRT_strcoll_l( const char* str1, const char* str2, MSVCRT__locale_t locale )
 {
-    if(!locale)
-        locale = get_locale();
+    MSVCRT_pthreadlocinfo locinfo;
 
-    return CompareStringA(locale->locinfo->lc_handle[MSVCRT_LC_CTYPE], 0, str1, -1, str2, -1)-2;
+    if(!locale)
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
+
+    return CompareStringA(locinfo->lc_handle[MSVCRT_LC_CTYPE], 0, str1, -1, str2, -1)-2;
 }
 
 /*********************************************************************
@@ -555,10 +559,14 @@ int CDECL MSVCRT_strcoll( const char* str1, const char* str2 )
  */
 int CDECL MSVCRT__stricoll_l( const char* str1, const char* str2, MSVCRT__locale_t locale )
 {
-    if(!locale)
-        locale = get_locale();
+    MSVCRT_pthreadlocinfo locinfo;
 
-    return CompareStringA(locale->locinfo->lc_handle[MSVCRT_LC_CTYPE], NORM_IGNORECASE,
+    if(!locale)
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
+
+    return CompareStringA(locinfo->lc_handle[MSVCRT_LC_CTYPE], NORM_IGNORECASE,
             str1, -1, str2, -1)-2;
 }
 
@@ -575,10 +583,14 @@ int CDECL MSVCRT__stricoll( const char* str1, const char* str2 )
  */
 int CDECL MSVCRT_strncoll_l( const char* str1, const char* str2, MSVCRT_size_t count, MSVCRT__locale_t locale )
 {
-    if(!locale)
-        locale = get_locale();
+    MSVCRT_pthreadlocinfo locinfo;
 
-    return CompareStringA(locale->locinfo->lc_handle[MSVCRT_LC_CTYPE], 0, str1, count, str2, count)-2;
+    if(!locale)
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
+
+    return CompareStringA(locinfo->lc_handle[MSVCRT_LC_CTYPE], 0, str1, count, str2, count)-2;
 }
 
 /*********************************************************************
@@ -594,10 +606,14 @@ int CDECL MSVCRT_strncoll( const char* str1, const char* str2, MSVCRT_size_t cou
  */
 int CDECL MSVCRT__strnicoll_l( const char* str1, const char* str2, MSVCRT_size_t count, MSVCRT__locale_t locale )
 {
-    if(!locale)
-        locale = get_locale();
+    MSVCRT_pthreadlocinfo locinfo;
 
-    return CompareStringA(locale->locinfo->lc_handle[MSVCRT_LC_CTYPE], NORM_IGNORECASE,
+    if(!locale)
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
+
+    return CompareStringA(locinfo->lc_handle[MSVCRT_LC_CTYPE], NORM_IGNORECASE,
             str1, count, str2, count)-2;
 }
 

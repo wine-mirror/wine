@@ -877,7 +877,7 @@ typedef struct MSVCRT_localeinfo_struct
 
 extern MSVCRT__locale_t MSVCRT_locale;
 MSVCRT__locale_t MSVCRT__create_locale(int, const char*);
-MSVCRT__locale_t get_locale(void);
+MSVCRT_pthreadlocinfo get_locinfo(void);
 void __cdecl MSVCRT__free_locale(MSVCRT__locale_t);
 
 #ifndef __WINE_MSVCRT_TEST

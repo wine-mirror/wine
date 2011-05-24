@@ -354,13 +354,23 @@ static inline void swap_pointers(void **p1, void **p2) {
 }
 
 /* INTERNAL: returns _locale_t struct for current locale */
-MSVCRT__locale_t get_locale(void) {
+static MSVCRT__locale_t get_locale(void) {
     thread_data_t *data = msvcrt_get_thread_data();
 
     if(!data || !data->locale)
         return MSVCRT_locale;
 
     return data->locale;
+}
+
+/* INTERNAL: returns pthreadlocinfo struct */
+MSVCRT_pthreadlocinfo get_locinfo(void) {
+    thread_data_t *data = msvcrt_get_thread_data();
+
+    if(!data || !data->locale)
+        return MSVCRT_locale->locinfo;
+
+    return data->locale->locinfo;
 }
 
 /* INTERNAL: constructs string returned by setlocale */

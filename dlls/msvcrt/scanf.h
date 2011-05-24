@@ -130,6 +130,7 @@
 #endif /* CONSOLE */
 
 _FUNCTION_ {
+    MSVCRT_pthreadlocinfo locinfo;
     int rd = 0, consumed = 0;
     int nch;
     if (!*format) return 0;
@@ -153,7 +154,9 @@ _FUNCTION_ {
     }
 
     if(!locale)
-        locale = get_locale();
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
 
     while (*format) {
 	/* a whitespace character in the format string causes scanf to read,
@@ -314,7 +317,7 @@ _FUNCTION_ {
                         nch = _GETC_(file);
                     }
 		    /* get first digit. */
-		    if (*locale->locinfo->lconv->decimal_point != nch) {
+		    if (*locinfo->lconv->decimal_point != nch) {
 		      if (!_ISDIGIT_(nch)) break;
 		      cur = (nch - '0');
 		      nch = _GETC_(file);
@@ -329,7 +332,7 @@ _FUNCTION_ {
 		      cur = 0; /* Fix: .8 -> 0.8 */
 		    }
 		    /* handle decimals */
-                    if (width!=0 && nch == *locale->locinfo->lconv->decimal_point) {
+                    if (width!=0 && nch == *locinfo->lconv->decimal_point) {
                         long double dec = 1;
                         nch = _GETC_(file);
 			if (width>0) width--;

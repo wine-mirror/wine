@@ -63,7 +63,7 @@ unsigned short *MSVCRT__pctype = NULL;
  */
 const unsigned short* CDECL MSVCRT___pctype_func(void)
 {
-    return get_locale()->locinfo->pctype;
+    return get_locinfo()->pctype;
 }
 
 /*********************************************************************
@@ -71,24 +71,28 @@ const unsigned short* CDECL MSVCRT___pctype_func(void)
  */
 int CDECL _isctype_l(int c, int type, MSVCRT__locale_t locale)
 {
+  MSVCRT_pthreadlocinfo locinfo;
+
   if(!locale)
-      locale = get_locale();
+    locinfo = get_locinfo();
+  else
+    locinfo = locale->locinfo;
 
   if (c >= -1 && c <= 255)
-    return locale->locinfo->pctype[c] & type;
+    return locinfo->pctype[c] & type;
 
-  if (locale->locinfo->mb_cur_max != 1 && c > 0)
+  if (locinfo->mb_cur_max != 1 && c > 0)
   {
     /* FIXME: Is there a faster way to do this? */
     WORD typeInfo;
     char convert[3], *pconv = convert;
 
-    if (locale->locinfo->pctype[(UINT)c >> 8] & MSVCRT__LEADBYTE)
+    if (locinfo->pctype[(UINT)c >> 8] & MSVCRT__LEADBYTE)
       *pconv++ = (UINT)c >> 8;
     *pconv++ = c & 0xff;
     *pconv = 0;
 
-    if (GetStringTypeExA(locale->locinfo->lc_handle[MSVCRT_LC_CTYPE],
+    if (GetStringTypeExA(locinfo->lc_handle[MSVCRT_LC_CTYPE],
                 CT_CTYPE1, convert, convert[1] ? 2 : 1, &typeInfo))
       return typeInfo & type;
   }
@@ -333,20 +337,24 @@ int CDECL MSVCRT___iscsymf(int c)
  */
 int CDECL MSVCRT__toupper_l(int c, MSVCRT__locale_t locale)
 {
+    MSVCRT_pthreadlocinfo locinfo;
+
     if(!locale)
-        locale = get_locale();
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
 
     if(c < 256)
-        return locale->locinfo->pcumap[c];
+        return locinfo->pcumap[c];
 
-    if(locale->locinfo->pctype[(c>>8)&255] & MSVCRT__LEADBYTE)
+    if(locinfo->pctype[(c>>8)&255] & MSVCRT__LEADBYTE)
     {
         WCHAR wide, upper;
         char str[2], *p = str;
         *p++ = (c>>8) & 255;
         *p++ = c & 255;
 
-        if(!MultiByteToWideChar(locale->locinfo->lc_codepage,
+        if(!MultiByteToWideChar(locinfo->lc_codepage,
                     MB_ERR_INVALID_CHARS, str, 2, &wide, 1))
             return c;
 
@@ -354,7 +362,7 @@ int CDECL MSVCRT__toupper_l(int c, MSVCRT__locale_t locale)
         if(upper == wide)
             return c;
 
-        WideCharToMultiByte(locale->locinfo->lc_codepage, 0,
+        WideCharToMultiByte(locinfo->lc_codepage, 0,
                 &upper, 1, str, 2, NULL, NULL);
 
         return str[0] + (str[1]<<8);
@@ -384,20 +392,24 @@ int CDECL MSVCRT__toupper(int c)
  */
 int CDECL MSVCRT__tolower_l(int c, MSVCRT__locale_t locale)
 {
+    MSVCRT_pthreadlocinfo locinfo;
+
     if(!locale)
-        locale = get_locale();
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
 
     if(c < 256)
-        return locale->locinfo->pclmap[c];
+        return locinfo->pclmap[c];
 
-    if(locale->locinfo->pctype[(c>>8)&255] & MSVCRT__LEADBYTE)
+    if(locinfo->pctype[(c>>8)&255] & MSVCRT__LEADBYTE)
     {
         WCHAR wide, upper;
         char str[2], *p = str;
         *p++ = (c>>8) & 255;
         *p++ = c & 255;
 
-        if(!MultiByteToWideChar(locale->locinfo->lc_codepage,
+        if(!MultiByteToWideChar(locinfo->lc_codepage,
                     MB_ERR_INVALID_CHARS, str, 2, &wide, 1))
             return c;
 
@@ -405,7 +417,7 @@ int CDECL MSVCRT__tolower_l(int c, MSVCRT__locale_t locale)
         if(upper == wide)
             return c;
 
-        WideCharToMultiByte(locale->locinfo->lc_codepage, 0,
+        WideCharToMultiByte(locinfo->lc_codepage, 0,
                 &upper, 1, str, 2, NULL, NULL);
 
         return str[0] + (str[1]<<8);
