@@ -102,6 +102,57 @@ struct MSVCRT_tm {
     int tm_isdst;
 };
 
+typedef struct MSVCRT_tagLC_ID {
+    unsigned short wLanguage;
+    unsigned short wCountry;
+    unsigned short wCodePage;
+} MSVCRT_LC_ID, *MSVCRT_LPLC_ID;
+
+typedef struct MSVCRT_threadlocaleinfostruct {
+    int refcount;
+    unsigned int lc_codepage;
+    unsigned int lc_collate_cp;
+    unsigned long lc_handle[6];
+    MSVCRT_LC_ID lc_id[6];
+    struct {
+        char *locale;
+        wchar_t *wlocale;
+        int *refcount;
+        int *wrefcount;
+    } lc_category[6];
+    int lc_clike;
+    int mb_cur_max;
+    int *lconv_intl_refcount;
+    int *lconv_num_refcount;
+    int *lconv_mon_refcount;
+    struct MSVCRT_lconv *lconv;
+    int *ctype1_refcount;
+    unsigned short *ctype1;
+    unsigned short *pctype;
+    unsigned char *pclmap;
+    unsigned char *pcumap;
+    struct MSVCRT___lc_time_data *lc_time_curr;
+} MSVCRT_threadlocinfo;
+
+typedef struct MSVCRT_threadmbcinfostruct {
+    int refcount;
+    int mbcodepage;
+    int ismbcodepage;
+    int mblcid;
+    unsigned short mbulinfo[6];
+    char mbctype[257];
+    char mbcasemap[256];
+} MSVCRT_threadmbcinfo;
+
+typedef struct MSVCRT_threadlocaleinfostruct *MSVCRT_pthreadlocinfo;
+typedef struct MSVCRT_threadmbcinfostruct *MSVCRT_pthreadmbcinfo;
+
+typedef struct MSVCRT_localeinfo_struct
+{
+    MSVCRT_pthreadlocinfo locinfo;
+    MSVCRT_pthreadmbcinfo mbcinfo;
+} MSVCRT__locale_tstruct, *MSVCRT__locale_t;
+
 
 /* TLS data */
 extern DWORD msvcrt_tls_index;
@@ -126,8 +177,10 @@ struct __thread_data {
     int                             unk3[2];
     void                           *unk4[4];
     int                             fpecode;
-    struct MSVCRT_localeinfo_struct *locale;
-    int                             unk5[2];
+    MSVCRT_pthreadmbcinfo           mbcinfo;
+    MSVCRT_pthreadlocinfo           locinfo;
+    BOOL                            have_locale;
+    int                             unk5[1];
     MSVCRT_terminate_function       terminate_handler;
     MSVCRT_unexpected_function      unexpected_handler;
     MSVCRT__se_translator_function  se_translator;
@@ -821,57 +874,6 @@ int            __cdecl MSVCRT_sprintf(char*,const char*,...);
 int            __cdecl MSVCRT__scprintf(const char*,...);
 int            __cdecl MSVCRT_raise(int sig);
 
-typedef struct MSVCRT_tagLC_ID {
-    unsigned short wLanguage;
-    unsigned short wCountry;
-    unsigned short wCodePage;
-} MSVCRT_LC_ID, *MSVCRT_LPLC_ID;
-
-typedef struct MSVCRT_threadlocaleinfostruct {
-    int refcount;
-    unsigned int lc_codepage;
-    unsigned int lc_collate_cp;
-    unsigned long lc_handle[6];
-    MSVCRT_LC_ID lc_id[6];
-    struct {
-        char *locale;
-        wchar_t *wlocale;
-        int *refcount;
-        int *wrefcount;
-    } lc_category[6];
-    int lc_clike;
-    int mb_cur_max;
-    int *lconv_intl_refcount;
-    int *lconv_num_refcount;
-    int *lconv_mon_refcount;
-    struct MSVCRT_lconv *lconv;
-    int *ctype1_refcount;
-    unsigned short *ctype1;
-    unsigned short *pctype;
-    unsigned char *pclmap;
-    unsigned char *pcumap;
-    struct MSVCRT___lc_time_data *lc_time_curr;
-} MSVCRT_threadlocinfo;
-
-typedef struct MSVCRT_threadmbcinfostruct {
-    int refcount;
-    int mbcodepage;
-    int ismbcodepage;
-    int mblcid;
-    unsigned short mbulinfo[6];
-    char mbctype[257];
-    char mbcasemap[256];
-} MSVCRT_threadmbcinfo;
-
-typedef struct MSVCRT_threadlocaleinfostruct *MSVCRT_pthreadlocinfo;
-typedef struct MSVCRT_threadmbcinfostruct *MSVCRT_pthreadmbcinfo;
-
-typedef struct MSVCRT_localeinfo_struct
-{
-    MSVCRT_pthreadlocinfo locinfo;
-    MSVCRT_pthreadmbcinfo mbcinfo;
-} MSVCRT__locale_tstruct, *MSVCRT__locale_t;
-
 #define MSVCRT__ENABLE_PER_THREAD_LOCALE 1
 #define MSVCRT__DISABLE_PER_THREAD_LOCALE 2
 
@@ -879,6 +881,8 @@ extern MSVCRT__locale_t MSVCRT_locale;
 MSVCRT__locale_t MSVCRT__create_locale(int, const char*);
 MSVCRT_pthreadlocinfo get_locinfo(void);
 void __cdecl MSVCRT__free_locale(MSVCRT__locale_t);
+void free_locinfo(MSVCRT_pthreadlocinfo);
+void free_mbcinfo(MSVCRT_pthreadmbcinfo);
 
 #ifndef __WINE_MSVCRT_TEST
 int            __cdecl MSVCRT__write(int,const void*,unsigned int);

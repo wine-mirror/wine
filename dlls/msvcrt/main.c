@@ -64,6 +64,7 @@ static inline BOOL msvcrt_free_tls(void)
 static inline void msvcrt_free_tls_mem(void)
 {
   thread_data_t *tls = TlsGetValue(msvcrt_tls_index);
+
   if (tls)
   {
     CloseHandle(tls->handle);
@@ -72,7 +73,8 @@ static inline void msvcrt_free_tls_mem(void)
     HeapFree(GetProcessHeap(),0,tls->wasctime_buffer);
     HeapFree(GetProcessHeap(),0,tls->strerror_buffer);
     HeapFree(GetProcessHeap(),0,tls->wcserror_buffer);
-    MSVCRT__free_locale(tls->locale);
+    free_locinfo(tls->locinfo);
+    free_mbcinfo(tls->mbcinfo);
   }
   HeapFree(GetProcessHeap(), 0, tls);
 }
