@@ -3537,7 +3537,7 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
 {
     int in_attr, out_attr, pointer_type;
     const type_t *type = var->type;
-    unsigned int start_offset = type->typestring_offset;
+    unsigned int alignment, start_offset = type->typestring_offset;
 
     if (is_ptr(type) || is_array(type))
         pointer_type = get_pointer_fc(type, var->attrs, pass != PASS_RETURN);
@@ -3561,6 +3561,8 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
         case PASS_RETURN:
             break;
         }
+
+    if (phase == PHASE_BUFFERSIZE && get_required_buffer_size( var, &alignment, pass )) return;
 
     write_parameter_conf_or_var_exprs(file, indent, local_var_prefix, phase, var);
 
