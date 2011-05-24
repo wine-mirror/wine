@@ -111,22 +111,30 @@ struct __thread_data {
     HANDLE                          handle;
     int                             thread_errno;
     MSVCRT_ulong                    thread_doserrno;
+    int                             unk1;
     unsigned int                    random_seed;        /* seed for rand() */
     char                           *strtok_next;        /* next ptr for strtok() */
-    unsigned char                  *mbstok_next;        /* next ptr for mbstok() */
     MSVCRT_wchar_t                 *wcstok_next;        /* next ptr for wcstok() */
-    char                           *efcvt_buffer;       /* buffer for ecvt/fcvt */
+    unsigned char                  *mbstok_next;        /* next ptr for mbstok() */
+    char                           *strerror_buffer;    /* buffer for strerror */
+    MSVCRT_wchar_t                 *wcserror_buffer;    /* buffer for wcserror */
+    void                           *unk2[4];
     char                           *asctime_buffer;     /* buffer for asctime */
     MSVCRT_wchar_t                 *wasctime_buffer;    /* buffer for wasctime */
     struct MSVCRT_tm                time_buffer;        /* buffer for localtime/gmtime */
-    char                           *strerror_buffer;    /* buffer for strerror */
-    MSVCRT_wchar_t                 *wcserror_buffer;    /* buffer for wcserror */
+    char                           *efcvt_buffer;       /* buffer for ecvt/fcvt */
+    int                             unk3[2];
+    void                           *unk4[4];
     int                             fpecode;
+    struct MSVCRT_localeinfo_struct *locale;
+    int                             unk5[2];
     MSVCRT_terminate_function       terminate_handler;
     MSVCRT_unexpected_function      unexpected_handler;
     MSVCRT__se_translator_function  se_translator;
+    void                           *unk6[3];
+    int                             unk7;
     EXCEPTION_RECORD               *exc_record;
-    struct MSVCRT_localeinfo_struct *locale;
+    void                           *unk8[100];
 };
 
 typedef struct __thread_data thread_data_t;
