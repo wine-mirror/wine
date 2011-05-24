@@ -585,6 +585,24 @@ static void test_ScriptShapeOpenType(HDC hdc)
                             {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
                             {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}} };
 
+    /* Thaana */
+    static const WCHAR test_thaana[] = {0x078a, 0x07ae, 0x0792, 0x07b0, 0x0020, 0x0796, 0x07aa, 0x0789, 0x07b0, 0x0795, 0x07ac, 0x0791, 0x07b0};
+    static const shapeTest_char thaana_c[] = {{12,{0,0}},{12,{0,0}},{10,{0,0}},{10,{0,0}},{8,{1,0}},{7,{0,0}},{7,{0,0}},{5,{0,0}},{5,{0,0}},{3,{0,0}},{3,{0,0}},{1,{0,0}},{1,{0,0}}};
+    static const shapeTest_glyph thaana_g[] = {
+                            {1,{{SCRIPT_JUSTIFY_NONE,0,1,1,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,0,1,1,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,0,1,1,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,0,1,1,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,0,1,1,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,0,1,1,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}} };
+
     if (!pScriptItemizeOpenType || !pScriptShapeOpenType)
     {
         win_skip("ScriptShapeOpenType not available on this platform\n");
@@ -646,6 +664,14 @@ static void test_ScriptShapeOpenType(HDC hdc)
     if (hfont != NULL)
     {
         test_shape_ok_valid(test_valid, hdc, test_syriac, 6, &Control, &State, 0, 6, syriac_c, syriac_g);
+        SelectObject(hdc, hfont_orig);
+        DeleteObject(hfont);
+    }
+
+    test_valid = find_font_for_range(hdc, "MV Boli", 72, test_thaana[0], &hfont, &hfont_orig);
+    if (hfont != NULL)
+    {
+        test_shape_ok_valid(test_valid, hdc, test_thaana, 13, &Control, &State, 0, 13, thaana_c, thaana_g);
         SelectObject(hdc, hfont_orig);
         DeleteObject(hfont);
     }
