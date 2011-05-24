@@ -1977,9 +1977,9 @@ static struct wined3d_context *FindContext(struct wined3d_device *device, struct
 }
 
 /* Context activation is done by the caller. */
-static void context_apply_draw_buffers(struct wined3d_context *context, UINT rt_count, struct wined3d_surface **rts)
+static void context_apply_draw_buffers(struct wined3d_context *context, DWORD rt_mask, struct wined3d_surface **rts)
 {
-    if (!rt_count)
+    if (!rt_mask)
     {
         ENTER_GL();
         glDrawBuffer(GL_NONE);
@@ -1999,19 +1999,22 @@ static void context_apply_draw_buffers(struct wined3d_context *context, UINT rt_
         if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
         {
             const struct wined3d_gl_info *gl_info = context->gl_info;
-            unsigned int i;
+            unsigned int i = 0;
 
-            for (i = 0; i < rt_count; ++i)
+            while (rt_mask)
             {
-                if (rts[i] && rts[i]->resource.format->id != WINED3DFMT_NULL)
+                if ((rt_mask & 1) && rts[i] && rts[i]->resource.format->id != WINED3DFMT_NULL)
                     context->draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
                 else
                     context->draw_buffers[i] = GL_NONE;
+
+                rt_mask >>= 1;
+                ++i;
             }
 
             if (gl_info->supported[ARB_DRAW_BUFFERS])
             {
-                GL_EXTCALL(glDrawBuffersARB(rt_count, context->draw_buffers));
+                GL_EXTCALL(glDrawBuffersARB(i, context->draw_buffers));
                 checkGLcall("glDrawBuffers()");
             }
             else
@@ -2153,6 +2156,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
         UINT rt_count, struct wined3d_surface **rts, struct wined3d_surface *depth_stencil)
 {
     const struct StateEntry *state_table = device->StateTable;
+    DWORD rt_mask = 0;
     UINT i;
 
     if (!context_validate_rt_config(rt_count, rts, depth_stencil))
@@ -2170,6 +2174,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
             for (i = 0; i < rt_count; ++i)
             {
                 context->blit_targets[i] = rts[i];
+                rt_mask |= (1 << i);
             }
             while (i < context->gl_info->limits.buffers)
             {
@@ -2183,12 +2188,17 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
         else
         {
             context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL, SFLAG_INDRAWABLE);
+            rt_mask = 1;
         }
 
         LEAVE_GL();
     }
+    else
+    {
+        rt_mask = 1;
+    }
 
-    context_apply_draw_buffers(context, rt_count, rts);
+    context_apply_draw_buffers(context, rt_mask, rts);
     context->draw_buffer_dirty = TRUE;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
@@ -2261,7 +2271,11 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
 
     if (context->draw_buffer_dirty)
     {
-        context_apply_draw_buffers(context, context->gl_info->limits.buffers, fb->render_targets);
+        const struct wined3d_shader *ps = device->stateBlock->state.pixel_shader;
+        DWORD rt_mask = ps ? ps->reg_maps.rt_mask : 1;
+
+        rt_mask &= device->valid_rt_mask;
+        context_apply_draw_buffers(context, rt_mask, fb->render_targets);
         context->draw_buffer_dirty = FALSE;
     }
 

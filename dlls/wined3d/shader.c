@@ -418,7 +418,7 @@ static void shader_record_register_usage(struct wined3d_shader *shader, struct w
             break;
 
         case WINED3DSPR_COLOROUT:
-            reg_maps->highest_render_target = max(reg_maps->highest_render_target, reg->idx);
+            reg_maps->rt_mask |= (1 << reg->idx);
             break;
 
         default:
@@ -820,6 +820,11 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         }
     }
     reg_maps->loop_depth = max_loop_depth;
+
+    /* PS before 2.0 don't have explicit color outputs. Instead the value of
+     * R0 is written to the render target. */
+    if (shader_version.major < 2 && shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
+        reg_maps->rt_mask |= (1 << 0);
 
     shader->functionLength = ((const char *)ptr - (const char *)byte_code);
 

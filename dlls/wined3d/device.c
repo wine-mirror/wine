@@ -1166,6 +1166,9 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     device->updateStateBlock = device->stateBlock;
     wined3d_stateblock_incref(device->updateStateBlock);
 
+    device->valid_rt_mask = 0;
+    for (i = 0; i < gl_info->limits.buffers; ++i)
+        device->valid_rt_mask |= (1 << i);
     device->fb.render_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             sizeof(*device->fb.render_targets) * gl_info->limits.buffers);
 

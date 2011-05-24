@@ -1118,7 +1118,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
             else
             {
                 if(ctx->cur_ps_args->super.srgb_correction) FIXME("sRGB correction on higher render targets\n");
-                if (reg_maps->highest_render_target > 0)
+                if (reg_maps->rt_mask > 1)
                 {
                     sprintf(register_name, "result.color[%u]", reg->idx);
                 }
@@ -3615,7 +3615,7 @@ static GLuint shader_arb_generate_pshader(struct wined3d_shader *shader,
         priv_ctx.target_version = ARB;
     }
 
-    if (reg_maps->highest_render_target > 0)
+    if (reg_maps->rt_mask > 1)
     {
         shader_addline(buffer, "OPTION ARB_draw_buffers;\n");
     }

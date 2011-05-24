@@ -560,9 +560,10 @@ struct wined3d_shader_reg_maps
     WORD usespow        : 1;
     WORD padding        : 3;
 
+    DWORD rt_mask; /* Used render targets, 32 max. */
+
     /* Whether or not loops are used in this shader, and nesting depth */
     unsigned loop_depth;
-    unsigned highest_render_target;
     UINT min_rel_offset, max_rel_offset;
 };
 
@@ -1716,6 +1717,7 @@ struct wined3d_device
     unsigned int            highest_dirty_ps_const, highest_dirty_vs_const;
 
     /* Render Target Support */
+    DWORD valid_rt_mask;
     struct wined3d_fb_state fb;
     struct wined3d_surface *onscreen_depth_stencil;
     struct wined3d_surface *auto_depth_stencil;
