@@ -708,7 +708,7 @@
 @ cdecl _getmaxstdio() msvcrt._getmaxstdio
 @ cdecl _getmbcp() msvcrt._getmbcp
 @ cdecl _getpid() msvcrt._getpid
-@ stub _getptd
+@ cdecl _getptd() msvcrt._getptd
 @ cdecl _getsystime(ptr) msvcrt._getsystime
 @ cdecl _getw(ptr) msvcrt._getw
 @ stub _getwch

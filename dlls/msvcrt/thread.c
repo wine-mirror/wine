@@ -159,3 +159,12 @@ void CDECL _endthreadex(
   /* FIXME */
   ExitThread(retval);
 }
+
+/*********************************************************************
+ * _getptd - not exported in native msvcrt
+ */
+thread_data_t* CDECL _getptd(void)
+{
+    FIXME("returns undocumented/not fully filled data\n");
+    return msvcrt_get_thread_data();
+}

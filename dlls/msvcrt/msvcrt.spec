@@ -1502,3 +1502,4 @@
 @ cdecl _wdupenv_s(ptr ptr wstr)
 @ cdecl _get_printf_count_output()
 @ cdecl _set_printf_count_output(long)
+@ cdecl _getptd()
