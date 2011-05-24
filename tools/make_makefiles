@@ -75,6 +75,7 @@ my %modules16 =
 # Default patterns for top-level .gitignore
 my @ignores = (
     "*.[oa]",
+    "*.exe",
     "*.fake",
     "*.man",
     "*.ok",
@@ -93,12 +94,10 @@ my @ignores = (
     "dlldata.c",
     "dlls/*/*.def",
     "dlls/shell32/AUTHORS",
-    "*/*/tests/*crosstest.exe",
     "*/*/tests/testlist.c",
     "include/config.h",
     "include/stamp-h",
     "msg.pot",
-    "programs/winetest/*_test.exe",
     "programs/winetest/build.nfo",
     "programs/winetest/build.rc",
     "rsrc.pot",

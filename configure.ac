@@ -268,7 +268,6 @@ fi
 AC_CHECK_TOOLS(AR,[ar gar],ar)
 AC_SUBST(ARFLAGS,rc)
 AC_PROG_RANLIB
-AC_CHECK_TOOL(STRIP,strip,strip)
 AC_PROG_LN_S
 AC_PROG_EGREP
 AC_PATH_PROG(LDCONFIG, ldconfig, true, [/sbin /usr/sbin $PATH])
@@ -699,7 +698,6 @@ case $host_os in
     LDDLLFLAGS="-bundle -multiply_defined suppress"
     LIBWINE_LDFLAGS="-multiply_defined suppress"
     LDSHARED="\$(CC) -dynamiclib"
-    STRIP="$STRIP -x"
     LDRPATH_LOCAL="&& install_name_tool -change @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/libwine.1.dylib @executable_path/\$(top_builddir)/libs/wine/libwine.1.dylib \$@ || \$(RM) \$@"
     dnl declare needed frameworks
     AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")
