@@ -134,6 +134,7 @@ static CRITICAL_SECTION g_sessions_lock;
 static struct list g_sessions = LIST_INIT(g_sessions);
 
 static const WCHAR defaultW[] = {'d','e','f','a','u','l','t',0};
+static const char defname[] = "default";
 
 static const IAudioClientVtbl AudioClient_Vtbl;
 static const IAudioRenderClientVtbl AudioRenderClient_Vtbl;
@@ -206,40 +207,186 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     return TRUE;
 }
 
-HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, void ***keys,
-        UINT *num, UINT *def_index)
+static HRESULT alsa_get_card_devices(EDataFlow flow, WCHAR **ids, char **keys,
+        UINT *num, snd_ctl_t *ctl, int card, const WCHAR *cardnameW)
 {
-    TRACE("%d %p %p %p\n", flow, ids, num, def_index);
+    static const WCHAR dashW[] = {' ','-',' ',0};
+    int err, device;
+    snd_pcm_info_t *info;
 
-    *num = 1;
-    *def_index = 0;
-
-    *ids = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR *));
-    if(!*ids)
+    info = HeapAlloc(GetProcessHeap(), 0, snd_pcm_info_sizeof());
+    if(!info)
         return E_OUTOFMEMORY;
 
-    (*ids)[0] = HeapAlloc(GetProcessHeap(), 0, sizeof(defaultW));
-    if(!(*ids)[0]){
-        HeapFree(GetProcessHeap(), 0, *ids);
-        return E_OUTOFMEMORY;
+    snd_pcm_info_set_subdevice(info, 0);
+    snd_pcm_info_set_stream(info,
+            flow == eRender ? SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE);
+
+    device = -1;
+    for(err = snd_ctl_pcm_next_device(ctl, &device); device != -1 && err >= 0;
+            err = snd_ctl_pcm_next_device(ctl, &device)){
+        const char *devname;
+
+        snd_pcm_info_set_device(info, device);
+
+        if((err = snd_ctl_pcm_info(ctl, info)) < 0){
+            if(err == -ENOENT)
+                /* This device doesn't have the right stream direction */
+                continue;
+
+            WARN("Failed to get info for card %d, device %d: %d (%s)\n",
+                    card, device, err, snd_strerror(err));
+            continue;
+        }
+
+        if(ids && keys){
+            DWORD len, cardlen;
+
+            devname = snd_pcm_info_get_name(info);
+            if(!devname){
+                WARN("Unable to get device name for card %d, device %d\n", card,
+                        device);
+                continue;
+            }
+
+            cardlen = lstrlenW(cardnameW);
+            len = MultiByteToWideChar(CP_UNIXCP, 0, devname, -1, NULL, 0);
+            len += lstrlenW(dashW);
+            len += cardlen;
+            ids[*num] = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+            if(!ids[*num]){
+                HeapFree(GetProcessHeap(), 0, info);
+                return E_OUTOFMEMORY;
+            }
+            memcpy(ids[*num], cardnameW, cardlen * sizeof(WCHAR));
+            memcpy(ids[*num] + cardlen, dashW, lstrlenW(dashW) * sizeof(WCHAR));
+            cardlen += lstrlenW(dashW);
+            MultiByteToWideChar(CP_UNIXCP, 0, devname, -1, ids[*num] + cardlen,
+                    len - cardlen);
+
+            keys[*num] = HeapAlloc(GetProcessHeap(), 0, 32);
+            if(!keys[*num]){
+                HeapFree(GetProcessHeap(), 0, info);
+                HeapFree(GetProcessHeap(), 0, ids[*num]);
+                return E_OUTOFMEMORY;
+            }
+            sprintf(keys[*num], "hw:%d,%d", card, device);
+        }
+
+        ++(*num);
     }
 
-    lstrcpyW((*ids)[0], defaultW);
+    HeapFree(GetProcessHeap(), 0, info);
 
-    *keys = HeapAlloc(GetProcessHeap(), 0, sizeof(void *));
-    (*keys)[0] = NULL;
+    if(err != 0)
+        WARN("Got a failure during device enumeration on card %d: %d (%s)\n",
+                card, err, snd_strerror(err));
 
     return S_OK;
 }
 
-HRESULT WINAPI AUDDRV_GetAudioEndpoint(void *key, IMMDevice *dev,
+static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, char **keys,
+        UINT *num)
+{
+    int err, card;
+
+    card = -1;
+    *num = 0;
+    for(err = snd_card_next(&card); card != -1 && err >= 0;
+            err = snd_card_next(&card)){
+        char cardpath[64];
+        const char *cardname;
+        WCHAR *cardnameW;
+        snd_ctl_t *ctl;
+        DWORD len;
+
+        sprintf(cardpath, "hw:%u", card);
+
+        if((err = snd_ctl_open(&ctl, cardpath, 0)) < 0){
+            WARN("Unable to open ctl for ALSA device %s: %d (%s)\n", cardpath,
+                    err, snd_strerror(err));
+            continue;
+        }
+
+        if((err = snd_card_get_name(card, (char **)&cardname)) < 0){
+            WARN("Unable to get card name for ALSA device %s: %d (%s)\n",
+                    cardpath, err, snd_strerror(err));
+            /* FIXME: Should be localized */
+            cardname = "Unknown soundcard";
+        }
+
+        len = MultiByteToWideChar(CP_UNIXCP, 0, cardname, -1, NULL, 0);
+        cardnameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if(!cardnameW){
+            snd_ctl_close(ctl);
+            return E_OUTOFMEMORY;
+        }
+        MultiByteToWideChar(CP_UNIXCP, 0, cardname, -1, cardnameW, len);
+
+        alsa_get_card_devices(flow, ids, keys, num, ctl, card, cardnameW);
+
+        HeapFree(GetProcessHeap(), 0, cardnameW);
+
+        snd_ctl_close(ctl);
+    }
+
+    if(err != 0)
+        WARN("Got a failure during card enumeration: %d (%s)\n",
+                err, snd_strerror(err));
+
+    return S_OK;
+}
+
+HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
+        UINT *num, UINT *def_index)
+{
+    HRESULT hr;
+
+    TRACE("%d %p %p %p %p\n", flow, ids, keys, num, def_index);
+
+    hr = alsa_enum_devices(flow, NULL, NULL, num);
+    if(FAILED(hr))
+        return hr;
+
+    *ids = HeapAlloc(GetProcessHeap(), 0, (*num + 1) * sizeof(WCHAR *));
+    *keys = HeapAlloc(GetProcessHeap(), 0, (*num + 1) * sizeof(char *));
+    if(!*ids || !*keys){
+        HeapFree(GetProcessHeap(), 0, *ids);
+        HeapFree(GetProcessHeap(), 0, *keys);
+        return E_OUTOFMEMORY;
+    }
+
+    (*ids)[0] = HeapAlloc(GetProcessHeap(), 0, sizeof(defaultW));
+    memcpy((*ids)[0], defaultW, sizeof(defaultW));
+    (*keys)[0] = HeapAlloc(GetProcessHeap(), 0, sizeof(defname));
+    memcpy((*keys)[0], defname, sizeof(defname));
+    *def_index = 0;
+
+    hr = alsa_enum_devices(flow, (*ids) + 1, (*keys) + 1, num);
+    if(FAILED(hr)){
+        int i;
+        for(i = 0; i < *num; ++i){
+            HeapFree(GetProcessHeap(), 0, (*ids)[i]);
+            HeapFree(GetProcessHeap(), 0, (*keys)[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, *ids);
+        HeapFree(GetProcessHeap(), 0, *keys);
+        return E_OUTOFMEMORY;
+    }
+
+    ++(*num); /* for default device */
+
+    return S_OK;
+}
+
+HRESULT WINAPI AUDDRV_GetAudioEndpoint(const char *key, IMMDevice *dev,
         EDataFlow dataflow, IAudioClient **out)
 {
     ACImpl *This;
     int err;
     snd_pcm_stream_t stream;
 
-    TRACE("%p %p %d %p\n", key, dev, dataflow, out);
+    TRACE("\"%s\" %p %d %p\n", key, dev, dataflow, out);
 
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ACImpl));
     if(!This)
@@ -262,10 +409,10 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(void *key, IMMDevice *dev,
     }
 
     This->dataflow = dataflow;
-    if((err = snd_pcm_open(&This->pcm_handle, "default", stream,
+    if((err = snd_pcm_open(&This->pcm_handle, key, stream,
                     SND_PCM_NONBLOCK)) < 0){
         HeapFree(GetProcessHeap(), 0, This);
-        WARN("Unable to open PCM \"default\": %d (%s)\n", err,
+        WARN("Unable to open PCM \"%s\": %d (%s)\n", key, err,
                 snd_strerror(err));
         return E_FAIL;
     }
