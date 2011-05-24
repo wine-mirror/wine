@@ -172,7 +172,7 @@ struct __thread_data {
     void                           *unk2[4];
     char                           *asctime_buffer;     /* buffer for asctime */
     MSVCRT_wchar_t                 *wasctime_buffer;    /* buffer for wasctime */
-    struct MSVCRT_tm                time_buffer;        /* buffer for localtime/gmtime */
+    struct MSVCRT_tm               *time_buffer;        /* buffer for localtime/gmtime */
     char                           *efcvt_buffer;       /* buffer for ecvt/fcvt */
     int                             unk3[2];
     void                           *unk4[4];

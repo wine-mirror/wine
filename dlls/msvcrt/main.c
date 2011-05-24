@@ -73,6 +73,7 @@ static inline void msvcrt_free_tls_mem(void)
     HeapFree(GetProcessHeap(),0,tls->wasctime_buffer);
     HeapFree(GetProcessHeap(),0,tls->strerror_buffer);
     HeapFree(GetProcessHeap(),0,tls->wcserror_buffer);
+    HeapFree(GetProcessHeap(),0,tls->time_buffer);
     free_locinfo(tls->locinfo);
     free_mbcinfo(tls->mbcinfo);
   }
