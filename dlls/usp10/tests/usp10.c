@@ -574,6 +574,17 @@ static void test_ScriptShapeOpenType(HDC hdc)
                             {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
                             {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}}};
 
+    /* Syriac */
+    static const WCHAR test_syriac[] = {0x0710, 0x0710, 0x0710, 0x0728, 0x0718, 0x0723,0};
+    static const shapeTest_char syriac_c[] = {{5,{0,0}},{4,{0,0}},{3,{0,0}},{2,{0,0}},{1,{0,0}},{0,{0,0}}};
+    static const shapeTest_glyph syriac_g[] = {
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}} };
+
     if (!pScriptItemizeOpenType || !pScriptShapeOpenType)
     {
         win_skip("ScriptShapeOpenType not available on this platform\n");
@@ -627,6 +638,14 @@ static void test_ScriptShapeOpenType(HDC hdc)
     if (hfont != NULL)
     {
         test_shape_ok_valid(test_valid, hdc, test_thai, 10, &Control, &State, 0, 10, thai_c, thai_g);
+        SelectObject(hdc, hfont_orig);
+        DeleteObject(hfont);
+    }
+
+    test_valid = find_font_for_range(hdc, "Estrangelo Edessa", 71, test_syriac[0], &hfont, &hfont_orig);
+    if (hfont != NULL)
+    {
+        test_shape_ok_valid(test_valid, hdc, test_syriac, 6, &Control, &State, 0, 6, syriac_c, syriac_g);
         SelectObject(hdc, hfont_orig);
         DeleteObject(hfont);
     }
