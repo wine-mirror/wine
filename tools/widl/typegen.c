@@ -3185,13 +3185,19 @@ static unsigned int get_required_buffer_size_type(
         break;
 
     case TGT_POINTER:
-        if (get_pointer_fc(type, attrs, toplevel_param) == RPC_FC_RP)
         {
+            unsigned int size, align;
             const type_t *ref = type_pointer_get_ref(type);
             if (is_string_type( attrs, ref )) break;
-            return get_required_buffer_size_type( ref, name, ref->attrs, FALSE, alignment );
+            if (!(size = get_required_buffer_size_type( ref, name, NULL, FALSE, &align ))) break;
+            if (get_pointer_fc(type, attrs, toplevel_param) != RPC_FC_RP)
+            {
+                size += 4 + align;
+                align = 4;
+            }
+            *alignment = align;
+            return size;
         }
-        break;
 
     case TGT_ARRAY:
         if (get_pointer_fc(type, attrs, toplevel_param) == RPC_FC_RP)
