@@ -3536,6 +3536,7 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
                                enum pass pass, enum remoting_phase phase, const var_t *var)
 {
     int in_attr, out_attr, pointer_type;
+    const char *type_str = NULL;
     const type_t *type = var->type;
     unsigned int alignment, start_offset = type->typestring_offset;
 
@@ -3785,8 +3786,6 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
                 print_phase_function(file, indent, "Pointer", local_var_prefix, phase, var, start_offset);
             break;
         case TGT_STRUCT:
-        {
-            const char *struct_type = NULL;
             switch (get_struct_fc(ref))
             {
             case RPC_FC_STRUCT:
@@ -3794,7 +3793,7 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
                  * pass and don't have any memory to free and so don't
                  * need a freeing pass */
                 if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
-                    struct_type = "SimpleStruct";
+                    type_str = "SimpleStruct";
                 else if (phase == PHASE_FREE && pass == PASS_RETURN)
                 {
                     print_file(file, indent, "if (%s%s)\n", local_var_prefix, var->name);
@@ -3804,57 +3803,62 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
                 }
                 break;
             case RPC_FC_PSTRUCT:
-                struct_type = "SimpleStruct";
+                type_str = "SimpleStruct";
                 break;
             case RPC_FC_CSTRUCT:
             case RPC_FC_CPSTRUCT:
-                struct_type = "ConformantStruct";
+                type_str = "ConformantStruct";
                 break;
             case RPC_FC_CVSTRUCT:
-                struct_type = "ConformantVaryingStruct";
+                type_str = "ConformantVaryingStruct";
                 break;
             case RPC_FC_BOGUS_STRUCT:
-                struct_type = "ComplexStruct";
+                type_str = "ComplexStruct";
                 break;
             default:
                 error("write_remoting_arguments: Unsupported type: %s (0x%02x)\n", var->name, get_struct_fc(ref));
             }
 
-            if (struct_type)
+            if (type_str)
             {
                 if (phase == PHASE_FREE)
-                    struct_type = "Pointer";
+                    type_str = "Pointer";
                 else
                     start_offset = ref->typestring_offset;
-                print_phase_function(file, indent, struct_type, local_var_prefix, phase, var, start_offset);
+                print_phase_function(file, indent, type_str, local_var_prefix, phase, var, start_offset);
             }
             break;
-        }
         case TGT_UNION:
-        {
-            const char *union_type = NULL;
             if (phase == PHASE_FREE)
-                union_type = "Pointer";
+                type_str = "Pointer";
             else
             {
                 if (type_get_type(ref) == TYPE_UNION)
-                    union_type = "NonEncapsulatedUnion";
+                    type_str = "NonEncapsulatedUnion";
                 else if (type_get_type(ref) == TYPE_ENCAPSULATED_UNION)
-                    union_type = "EncapsulatedUnion";
+                    type_str = "EncapsulatedUnion";
 
                 start_offset = ref->typestring_offset;
             }
 
-            print_phase_function(file, indent, union_type, local_var_prefix,
+            print_phase_function(file, indent, type_str, local_var_prefix,
                                  phase, var, start_offset);
             break;
-        }
+        case TGT_USER_TYPE:
+            if (phase != PHASE_FREE)
+            {
+                type_str = "UserMarshal";
+                start_offset = ref->typestring_offset;
+            }
+            else type_str = "Pointer";
+
+            print_phase_function(file, indent, type_str, local_var_prefix, phase, var, start_offset);
+            break;
         case TGT_STRING:
         case TGT_POINTER:
         case TGT_ARRAY:
         case TGT_RANGE:
         case TGT_IFACE_POINTER:
-        case TGT_USER_TYPE:
         case TGT_CTXT_HANDLE:
         case TGT_CTXT_HANDLE_POINTER:
             print_phase_function(file, indent, "Pointer", local_var_prefix, phase, var, start_offset);
