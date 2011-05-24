@@ -816,6 +816,17 @@ void msi_ui_actiondata( MSIPACKAGE *package, const WCHAR *action, MSIRECORD *rec
     msiobj_release( &row->hdr );
 }
 
+INSTALLSTATE msi_get_component_action( MSIPACKAGE *package, MSICOMPONENT *comp )
+{
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled: %s\n", debugstr_w(comp->Component));
+        return INSTALLSTATE_UNKNOWN;
+    }
+    if (package->need_rollback) return comp->Installed;
+    return comp->ActionRequest;
+}
+
 static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = param;
@@ -832,19 +843,12 @@ static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!comp->Enabled)
+    comp->Action = msi_get_component_action( package, comp );
+    if (comp->Action != INSTALLSTATE_LOCAL)
     {
-        TRACE("component is disabled\n");
+        TRACE("component not scheduled for installation: %s\n", debugstr_w(component));
         return ERROR_SUCCESS;
     }
-
-    if (comp->ActionRequest != INSTALLSTATE_LOCAL)
-    {
-        TRACE("Component not scheduled for installation: %s\n", debugstr_w(component));
-        comp->Action = comp->Installed;
-        return ERROR_SUCCESS;
-    }
-    comp->Action = INSTALLSTATE_LOCAL;
 
     dir = MSI_RecordGetString(row,1);
     if (!dir)
@@ -907,19 +911,12 @@ static UINT ITERATE_RemoveFolders( MSIRECORD *row, LPVOID param )
     if (!comp)
         return ERROR_SUCCESS;
 
-    if (!comp->Enabled)
+    comp->Action = msi_get_component_action( package, comp );
+    if (comp->Action != INSTALLSTATE_ABSENT)
     {
-        TRACE("component is disabled\n");
+        TRACE("component not scheduled for removal %s\n", debugstr_w(component));
         return ERROR_SUCCESS;
     }
-
-    if (comp->ActionRequest != INSTALLSTATE_ABSENT)
-    {
-        TRACE("Component not scheduled for removal: %s\n", debugstr_w(component));
-        comp->Action = comp->Installed;
-        return ERROR_SUCCESS;
-    }
-    comp->Action = INSTALLSTATE_ABSENT;
 
     dir = MSI_RecordGetString( row, 1 );
     if (!dir)
@@ -7468,7 +7465,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
                          LPCWSTR szCommandLine )
 {
     UINT rc;
-    BOOL ui_exists, needs_rollback = FALSE;
+    BOOL ui_exists;
     static const WCHAR szDisableRollback[] = {'D','I','S','A','B','L','E','R','O','L','L','B','A','C','K',0};
     static const WCHAR szAction[] = {'A','C','T','I','O','N',0};
     static const WCHAR szInstall[] = {'I','N','S','T','A','L','L',0};
@@ -7565,13 +7562,16 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     else  /* failed */
     {
         ACTION_PerformActionSequence(package, -3);
-        needs_rollback = TRUE;
+        if (!msi_get_property_int( package->db, szRollbackDisabled, 0 ))
+        {
+            package->need_rollback = TRUE;
+        }
     }
 
     /* finish up running custom actions */
     ACTION_FinishCustomActions(package);
 
-    if (needs_rollback && !msi_get_property_int( package->db, szRollbackDisabled, 0 ))
+    if (package->need_rollback)
     {
         WARN("installation failed, running rollback script\n");
         msi_set_property( package->db, szRollbackDisabled, NULL );

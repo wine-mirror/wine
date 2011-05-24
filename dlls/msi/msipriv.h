@@ -400,6 +400,7 @@ typedef struct tagMSIPACKAGE
     unsigned char commit_action_running : 1;
     unsigned char rollback_action_running : 1;
     unsigned char need_reboot : 1;
+    unsigned char need_rollback : 1;
 } MSIPACKAGE;
 
 typedef struct tagMSIPREVIEW
@@ -771,6 +772,7 @@ extern UINT MSI_Sequence( MSIPACKAGE *package, LPCWSTR szTable, INT iSequenceMod
 extern UINT MSI_SetFeatureStates( MSIPACKAGE *package ) DECLSPEC_HIDDEN;
 extern UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine, BOOL preserve_case ) DECLSPEC_HIDDEN;
 extern UINT msi_schedule_action( MSIPACKAGE *package, UINT script, const WCHAR *action ) DECLSPEC_HIDDEN;
+extern INSTALLSTATE msi_get_component_action( MSIPACKAGE *package, MSICOMPONENT *comp ) DECLSPEC_HIDDEN;
 
 /* record internals */
 extern void MSI_CloseRecord( MSIOBJECTHDR * ) DECLSPEC_HIDDEN;
