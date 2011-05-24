@@ -207,6 +207,7 @@ static UINT ITERATE_RegisterFonts(MSIRECORD *row, LPVOID param)
     LPWSTR name;
     LPCWSTR filename;
     MSIFILE *file;
+    MSICOMPONENT *comp;
     HKEY hkey1, hkey2;
     MSIRECORD *uirow;
     LPWSTR uipath, p;
@@ -215,19 +216,19 @@ static UINT ITERATE_RegisterFonts(MSIRECORD *row, LPVOID param)
     file = msi_get_loaded_file( package, filename );
     if (!file)
     {
-        ERR("Unable to load file\n");
+        WARN("unable to find file %s\n", debugstr_w(file->File));
         return ERROR_SUCCESS;
     }
-
-    if (!file->Component->Enabled)
+    comp = msi_get_loaded_component( package, file->Component->Component );
+    if (!comp)
     {
-        TRACE("component is disabled\n");
+        WARN("unable to find component %s\n", debugstr_w(comp->Component));
         return ERROR_SUCCESS;
     }
-
-    if (file->Component->ActionRequest != INSTALLSTATE_LOCAL)
+    comp->Action = msi_get_component_action( package, comp );
+    if (comp->Action != INSTALLSTATE_LOCAL)
     {
-        TRACE("Component not scheduled for installation\n");
+        TRACE("component not scheduled for installation %s\n", debugstr_w(comp->Component));
         return ERROR_SUCCESS;
     }
 
@@ -291,6 +292,7 @@ static UINT ITERATE_UnregisterFonts( MSIRECORD *row, LPVOID param )
     LPWSTR name;
     LPCWSTR filename;
     MSIFILE *file;
+    MSICOMPONENT *comp;
     HKEY hkey1, hkey2;
     MSIRECORD *uirow;
     LPWSTR uipath, p;
@@ -299,19 +301,19 @@ static UINT ITERATE_UnregisterFonts( MSIRECORD *row, LPVOID param )
     file = msi_get_loaded_file( package, filename );
     if (!file)
     {
-        ERR("Unable to load file\n");
+        WARN("unable to find file %s\n", debugstr_w(file->File));
         return ERROR_SUCCESS;
     }
-
-    if (!file->Component->Enabled)
+    comp = msi_get_loaded_component( package, file->Component->Component );
+    if (!comp)
     {
-        TRACE("component is disabled\n");
+        WARN("unable to find component %s\n", debugstr_w(comp->Component));
         return ERROR_SUCCESS;
     }
-
-    if (file->Component->ActionRequest != INSTALLSTATE_ABSENT)
+    comp->Action = msi_get_component_action( package, comp );
+    if (comp->Action != INSTALLSTATE_ABSENT)
     {
-        TRACE("Component not scheduled for removal\n");
+        TRACE("component not scheduled for removal %s\n", debugstr_w(comp->Component));
         return ERROR_SUCCESS;
     }
 
