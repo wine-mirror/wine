@@ -755,11 +755,13 @@ extern UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg ) DECLSPEC
 extern UINT MSI_DatabaseApplyTransformW( MSIDATABASE *db,
                  LPCWSTR szTransformFile, int iErrorCond ) DECLSPEC_HIDDEN;
 extern void append_storage_to_db( MSIDATABASE *db, IStorage *stg ) DECLSPEC_HIDDEN;
+extern UINT msi_apply_transforms( MSIPACKAGE *package ) DECLSPEC_HIDDEN;
 
 /* patch functions */
 extern UINT msi_check_patch_applicable( MSIPACKAGE *package, MSISUMMARYINFO *si ) DECLSPEC_HIDDEN;
 extern UINT msi_parse_patch_summary( MSISUMMARYINFO *si, MSIPATCHINFO **patch ) DECLSPEC_HIDDEN;
 extern UINT msi_apply_patch_db( MSIPACKAGE *package, MSIDATABASE *patch_db, MSIPATCHINFO *patch ) DECLSPEC_HIDDEN;
+extern UINT msi_apply_patches( MSIPACKAGE *package ) DECLSPEC_HIDDEN;
 
 /* action internals */
 extern UINT MSI_InstallPackage( MSIPACKAGE *, LPCWSTR, LPCWSTR ) DECLSPEC_HIDDEN;
