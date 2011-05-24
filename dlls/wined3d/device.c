@@ -2980,7 +2980,7 @@ static void device_map_vsamplers(struct wined3d_device *device, BOOL ps, const s
     }
 }
 
-void IWineD3DDeviceImpl_FindTexUnitMap(struct wined3d_device *device)
+void device_update_tex_unit_map(struct wined3d_device *device)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_state *state = &device->stateBlock->state;

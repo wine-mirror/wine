@@ -2234,7 +2234,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
     /* Preload resources before FBO setup. Texture preload in particular may
      * result in changes to the current FBO, due to using e.g. FBO blits for
      * updating a resource location. */
-    IWineD3DDeviceImpl_FindTexUnitMap(device);
+    device_update_tex_unit_map(device);
     device_preload_textures(device);
     if (isStateDirty(context, STATE_VDECL))
         device_update_stream_info(device, context->gl_info);
