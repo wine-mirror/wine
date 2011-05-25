@@ -79,6 +79,7 @@ typedef struct
 
 static BOOL test_DestroyWindow_flag;
 static HWINEVENTHOOK hEvent_hook;
+static HHOOK hKBD_hook;
 static HHOOK hCBT_hook;
 static DWORD cbt_hook_thread_id;
 
@@ -105,7 +106,8 @@ typedef enum {
     beginpaint=0x40,
     optional=0x80,
     hook=0x100,
-    winevent_hook=0x200
+    winevent_hook=0x200,
+    kbd_hook=0x400
 } msg_flags_t;
 
 struct message {
@@ -1944,6 +1946,11 @@ static void dump_sequence(const struct message *expected, const char *context, c
                 trace_(file, line)( "  %u: expected: winevent %04x - actual: %s\n",
                                     count, expected->message, actual->output );
             }
+            else if (expected->flags & kbd_hook)
+            {
+                trace_(file, line)( "  %u: expected: kbd %04x - actual: %s\n",
+                                    count, expected->message, actual->output );
+            }
             else
             {
                 trace_(file, line)( "  %u: expected: msg %04x - actual: %s\n",
@@ -2111,6 +2118,11 @@ static void ok_sequence_(const struct message *expected_list, const char *contex
 		"%s: %u: the msg 0x%04x should have been sent by a winevent hook\n",
                 context, count, expected->message);
             if ((expected->flags & winevent_hook) != (actual->flags & winevent_hook)) dump++;
+
+	    ok_( file, line) ((expected->flags & kbd_hook) == (actual->flags & kbd_hook),
+		"%s: %u: the msg 0x%04x should have been sent by a keyboard hook\n",
+                context, count, expected->message);
+            if ((expected->flags & kbd_hook) != (actual->flags & kbd_hook)) dump++;
 
 	    expected++;
 	    actual++;
@@ -12883,11 +12895,63 @@ static void test_SetParent(void)
     flush_sequence();
 }
 
+static const struct message WmHotkeyPressLWIN[] = {
+    { WM_KEYDOWN, kbd_hook|wparam|lparam, VK_LWIN, LLKHF_INJECTED },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_LWIN, 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_LWIN, 1 },
+    { WM_PAINT, sent|optional },
+    { 0 }
+};
+static const struct message WmHotkeyPress[] = {
+    { WM_KEYDOWN, kbd_hook|lparam, 0, LLKHF_INJECTED },
+    { WM_HOTKEY, sent|wparam, 5 },
+    { 0 }
+};
+static const struct message WmHotkeyRelease[] = {
+    { WM_KEYUP, kbd_hook|lparam, 0, LLKHF_INJECTED|LLKHF_UP },
+    { HCBT_KEYSKIPPED, hook|lparam|optional, 0, 0x80000001 },
+    { WM_KEYUP, sent|lparam, 0, 0x80000001 },
+    { 0 }
+};
+static const struct message WmHotkeyReleaseLWIN[] = {
+    { WM_KEYUP, kbd_hook|wparam|lparam, VK_LWIN, LLKHF_INJECTED|LLKHF_UP },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_LWIN, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_LWIN, 0xc0000001 },
+    { 0 }
+};
+
+static int hotkey_letter;
+
+static LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+    struct recvd_message msg;
+
+    if (nCode == HC_ACTION)
+    {
+        KBDLLHOOKSTRUCT *kdbhookstruct = (KBDLLHOOKSTRUCT*)lParam;
+
+        msg.message = wParam;
+        msg.flags = kbd_hook|wparam|lparam;
+        msg.wParam = kdbhookstruct->vkCode;
+        msg.lParam = kdbhookstruct->flags;
+        msg.descr = "KeyboardHookProc";
+        add_message(&msg);
+
+        if (wParam == WM_KEYUP || wParam == WM_KEYDOWN)
+        {
+            ok(kdbhookstruct->vkCode == VK_LWIN || kdbhookstruct->vkCode == hotkey_letter,
+               "unexpected keycode %x\n", kdbhookstruct->vkCode);
+       }
+    }
+
+    return CallNextHookEx(hKBD_hook, nCode, wParam, lParam);
+}
+
 static void test_hotkey(void)
 {
     HWND test_window, taskbar_window;
     BOOL ret;
-    int hotkey_letter;
+    MSG msg;
 
     SetLastError(0xdeadbeef);
     ret = UnregisterHotKey(NULL, 0);
@@ -12902,6 +12966,8 @@ static void test_hotkey(void)
 
     test_window = CreateWindowEx(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                            100, 100, 200, 200, 0, 0, 0, NULL);
+
+    flush_sequence();
 
     SetLastError(0xdeadbeef);
     ret = UnregisterHotKey(test_window, 0);
@@ -12930,6 +12996,9 @@ static void test_hotkey(void)
         ok(0, "Couldn't find any free Windows Key + letter combination\n");
         goto end;
     }
+
+    hKBD_hook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, GetModuleHandle(NULL), 0);
+    ok(hKBD_hook != NULL, "failed to install hook, err %i\n", GetLastError());
 
     /* Same key combination, different id */
     SetLastError(0xdeadbeef);
@@ -12963,6 +13032,34 @@ static void test_hotkey(void)
         ok(GetLastError() == ERROR_WINDOW_OF_OTHER_THREAD, "unexpected error %d\n", GetLastError());
     }
 
+    /* Inject the appropriate key sequence */
+    keybd_event(VK_LWIN, 0, 0, 0);
+    while (PeekMessage(&msg, NULL, 0, 0, TRUE))
+        DispatchMessage(&msg);
+    ok_sequence(WmHotkeyPressLWIN, "window hotkey press LWIN", FALSE);
+
+    keybd_event(hotkey_letter, 0, 0, 0);
+    while (PeekMessage(&msg, NULL, 0, 0, TRUE))
+    {
+        if (msg.message == WM_HOTKEY)
+        {
+            ok(msg.hwnd == test_window, "unexpected hwnd %p\n", msg.hwnd);
+            ok(msg.lParam == MAKELPARAM(MOD_WIN, hotkey_letter), "unexpected WM_HOTKEY lparam %lx\n", msg.lParam);
+        }
+        DispatchMessage(&msg);
+    }
+    ok_sequence(WmHotkeyPress, "window hotkey press", FALSE);
+
+    keybd_event(hotkey_letter, 0, KEYEVENTF_KEYUP, 0);
+    while (PeekMessage(&msg, NULL, 0, 0, TRUE))
+        DispatchMessage(&msg);
+    ok_sequence(WmHotkeyRelease, "window hotkey release", FALSE);
+
+    keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
+    while (PeekMessage(&msg, NULL, 0, 0, TRUE))
+        DispatchMessage(&msg);
+    ok_sequence(WmHotkeyReleaseLWIN, "window hotkey release LWIN", FALSE);
+
     /* Unregister hotkey properly */
     SetLastError(0xdeadbeef);
     ret = UnregisterHotKey(test_window, 5);
@@ -12981,11 +13078,60 @@ static void test_hotkey(void)
     ok(ret == TRUE, "expected TRUE, got %i\n", ret);
     ok(GetLastError() == 0xdeadbeef, "unexpected error %d\n", GetLastError());
 
+    /* Inject the appropriate key sequence */
+    keybd_event(VK_LWIN, 0, 0, 0);
+    while (PeekMessage(&msg, NULL, 0, 0, TRUE))
+    {
+        ok(msg.hwnd != NULL, "unexpected thread message %x\n", msg.message);
+        DispatchMessage(&msg);
+    }
+    ok_sequence(WmHotkeyPressLWIN, "thread hotkey press LWIN", FALSE);
+
+    keybd_event(hotkey_letter, 0, 0, 0);
+    while (PeekMessage(&msg, NULL, 0, 0, TRUE))
+    {
+        if (msg.message == WM_HOTKEY)
+        {
+            struct recvd_message message;
+            ok(msg.hwnd == NULL, "unexpected hwnd %p\n", msg.hwnd);
+            ok(msg.lParam == MAKELPARAM(MOD_WIN, hotkey_letter), "unexpected WM_HOTKEY lparam %lx\n", msg.lParam);
+            message.message = msg.message;
+            message.flags = sent|wparam|lparam;
+            message.wParam = msg.wParam;
+            message.lParam = msg.lParam;
+            message.descr = "test_hotkey thread message";
+            add_message(&message);
+        }
+        else
+            ok(msg.hwnd != NULL, "unexpected thread message %x\n", msg.message);
+        DispatchMessage(&msg);
+    }
+    ok_sequence(WmHotkeyPress, "thread hotkey press", FALSE);
+
+    keybd_event(hotkey_letter, 0, KEYEVENTF_KEYUP, 0);
+    while (PeekMessage(&msg, NULL, 0, 0, TRUE))
+    {
+        ok(msg.hwnd != NULL, "unexpected thread message %x\n", msg.message);
+        DispatchMessage(&msg);
+    }
+    ok_sequence(WmHotkeyRelease, "thread hotkey release", FALSE);
+
+    keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
+    while (PeekMessage(&msg, NULL, 0, 0, TRUE))
+    {
+        ok(msg.hwnd != NULL, "unexpected thread message %x\n", msg.message);
+        DispatchMessage(&msg);
+    }
+    ok_sequence(WmHotkeyReleaseLWIN, "thread hotkey release LWIN", FALSE);
+
     /* Unregister thread hotkey */
     SetLastError(0xdeadbeef);
     ret = UnregisterHotKey(NULL, 5);
     ok(ret == TRUE, "expected TRUE, got %i\n", ret);
     ok(GetLastError() == 0xdeadbeef, "unexpected error %d\n", GetLastError());
+
+    UnhookWindowsHookEx(hKBD_hook);
+    hKBD_hook = NULL;
 
 end:
     UnregisterHotKey(NULL, 5);
