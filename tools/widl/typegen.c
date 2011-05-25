@@ -342,6 +342,31 @@ static int get_padding(const var_list_t *fields)
     return ROUNDING(offset, salign);
 }
 
+static unsigned int get_stack_size( const type_t *type, const attr_list_t *attrs, int *by_value )
+{
+    unsigned int stack_size;
+    int by_val;
+
+    switch (typegen_detect_type( type, attrs, TDT_ALL_TYPES ))
+    {
+    case TGT_BASIC:
+    case TGT_ENUM:
+    case TGT_RANGE:
+    case TGT_STRUCT:
+    case TGT_UNION:
+    case TGT_USER_TYPE:
+        stack_size = type_memsize( type );
+        by_val = (pointer_size < 8 || stack_size <= pointer_size); /* FIXME: should be platform-specific */
+        break;
+    default:
+        by_val = 0;
+        break;
+    }
+    if (!by_val) stack_size = pointer_size;
+    if (by_value) *by_value = by_val;
+    return ROUND_SIZE( stack_size, pointer_size );
+}
+
 unsigned char get_struct_fc(const type_t *type)
 {
   int has_pointer = 0;
@@ -871,7 +896,8 @@ static unsigned int write_procformatstring_type(FILE *file, int indent,
         else
             print_file(file, indent, "0x4d,    /* FC_IN_PARAM */\n");
 
-        print_file(file, indent, "0x01,\n");
+        size = get_stack_size( type, attrs, NULL );
+        print_file(file, indent, "0x%02x,\n", size / pointer_size );
         print_file(file, indent, "NdrFcShort(0x%x),	/* type offset = %u */\n",
                    type->typestring_offset, type->typestring_offset);
         size = 4; /* includes param type prefix */
