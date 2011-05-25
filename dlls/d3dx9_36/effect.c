@@ -3519,7 +3519,7 @@ static HRESULT d3dx9_parse_name(char **name, const char *ptr)
     return D3D_OK;
 }
 
-static HRESULT d3dx9_parse_data(struct d3dx_parameter *param, const char **ptr)
+static HRESULT d3dx9_parse_data(struct d3dx_parameter *param, const char **ptr, LPDIRECT3DDEVICE9 device)
 {
     DWORD size;
     HRESULT hr;
@@ -3549,7 +3549,7 @@ static HRESULT d3dx9_parse_data(struct d3dx_parameter *param, const char **ptr)
             break;
 
         case D3DXPT_VERTEXSHADER:
-            hr = IDirect3DDevice9_CreateVertexShader(param->base->effect->device, (DWORD *)*ptr, (LPDIRECT3DVERTEXSHADER9 *)param->data);
+            hr = IDirect3DDevice9_CreateVertexShader(device, (DWORD *)*ptr, (LPDIRECT3DVERTEXSHADER9 *)param->data);
             if (hr != D3D_OK)
             {
                 WARN("Failed to create vertex shader\n");
@@ -3558,7 +3558,7 @@ static HRESULT d3dx9_parse_data(struct d3dx_parameter *param, const char **ptr)
             break;
 
         case D3DXPT_PIXELSHADER:
-            hr = IDirect3DDevice9_CreatePixelShader(param->base->effect->device, (DWORD *)*ptr, (LPDIRECT3DPIXELSHADER9 *)param->data);
+            hr = IDirect3DDevice9_CreatePixelShader(device, (DWORD *)*ptr, (LPDIRECT3DPIXELSHADER9 *)param->data);
             if (hr != D3D_OK)
             {
                 WARN("Failed to create pixel shader\n");
@@ -4252,7 +4252,7 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
 
         param = get_parameter_struct(base->objects[id]);
 
-        hr = d3dx9_parse_data(param, &ptr);
+        hr = d3dx9_parse_data(param, &ptr, base->effect->device);
         if (hr != D3D_OK)
         {
             WARN("Failed to parse data\n");
