@@ -74,8 +74,6 @@ extern BOOL  CDECL MFDRV_Ellipse( PHYSDEV dev, INT left, INT top,
 extern BOOL  CDECL MFDRV_EndPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern INT  CDECL MFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right,
                                          INT bottom ) DECLSPEC_HIDDEN;
-extern INT  CDECL MFDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
-                                   INT cbOutput, LPVOID out_data ) DECLSPEC_HIDDEN;
 extern BOOL  CDECL MFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType ) DECLSPEC_HIDDEN;
 extern INT   CDECL MFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode ) DECLSPEC_HIDDEN;
 extern BOOL  CDECL MFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y,
@@ -85,7 +83,6 @@ extern BOOL  CDECL MFDRV_FillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL  CDECL MFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush ) DECLSPEC_HIDDEN;
 extern BOOL  CDECL MFDRV_FlattenPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL  CDECL MFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT x, INT y ) DECLSPEC_HIDDEN;
-extern INT  CDECL MFDRV_GetDeviceCaps( PHYSDEV dev , INT cap ) DECLSPEC_HIDDEN;
 extern INT  CDECL MFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL  CDECL MFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL  CDECL MFDRV_LineTo( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;

@@ -32,6 +32,52 @@ WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 
 static BOOL CDECL MFDRV_DeleteDC( PHYSDEV dev );
 
+
+/**********************************************************************
+ *           MFDRV_ExtEscape
+ */
+static INT CDECL MFDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
+                                  INT cbOutput, LPVOID out_data )
+{
+    METARECORD *mr;
+    DWORD len;
+    INT ret;
+
+    if (cbOutput) return 0;  /* escapes that require output cannot work in metafiles */
+
+    len = sizeof(*mr) + sizeof(WORD) + ((cbInput + 1) & ~1);
+    mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+    mr->rdSize = len / 2;
+    mr->rdFunction = META_ESCAPE;
+    mr->rdParm[0] = nEscape;
+    mr->rdParm[1] = cbInput;
+    memcpy(&(mr->rdParm[2]), in_data, cbInput);
+    ret = MFDRV_WriteRecord( dev, mr, len);
+    HeapFree(GetProcessHeap(), 0, mr);
+    return ret;
+}
+
+
+/******************************************************************
+ *         MFDRV_GetDeviceCaps
+ *
+ *A very simple implementation that returns DT_METAFILE
+ */
+static INT CDECL MFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
+{
+    switch(cap)
+    {
+    case TECHNOLOGY:
+        return DT_METAFILE;
+    case TEXTCAPS:
+        return 0;
+    default:
+        TRACE(" unsupported capability %d, will return 0\n", cap );
+    }
+    return 0;
+}
+
+
 static const DC_FUNCTIONS MFDRV_Funcs =
 {
     NULL,                            /* pAbortDoc */
@@ -532,49 +578,4 @@ BOOL MFDRV_MetaParam8(PHYSDEV dev, short func, short param1, short param2,
     *(mr->rdParm + 6) = param2;
     *(mr->rdParm + 7) = param1;
     return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
-}
-
-
-/**********************************************************************
- *           MFDRV_ExtEscape
- */
-INT CDECL MFDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
-                           INT cbOutput, LPVOID out_data )
-{
-    METARECORD *mr;
-    DWORD len;
-    INT ret;
-
-    if (cbOutput) return 0;  /* escapes that require output cannot work in metafiles */
-
-    len = sizeof(*mr) + sizeof(WORD) + ((cbInput + 1) & ~1);
-    mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
-    mr->rdSize = len / 2;
-    mr->rdFunction = META_ESCAPE;
-    mr->rdParm[0] = nEscape;
-    mr->rdParm[1] = cbInput;
-    memcpy(&(mr->rdParm[2]), in_data, cbInput);
-    ret = MFDRV_WriteRecord( dev, mr, len);
-    HeapFree(GetProcessHeap(), 0, mr);
-    return ret;
-}
-
-
-/******************************************************************
- *         MFDRV_GetDeviceCaps
- *
- *A very simple implementation that returns DT_METAFILE
- */
-INT CDECL MFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
-{
-    switch(cap)
-    {
-    case TECHNOLOGY:
-        return DT_METAFILE;
-    case TEXTCAPS:
-        return 0;
-    default:
-        TRACE(" unsupported capability %d, will return 0\n", cap );
-    }
-    return 0;
 }
