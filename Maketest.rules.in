@@ -33,7 +33,7 @@ $(MODULE) $(MODULE).so: $(OBJS) Makefile.in
 	$(WINEGCC) $(APPMODE) $(OBJS) -o $@ $(LIBPORT) $(ALL_LIBS)
 
 $(WINETEST_EXE): $(OBJS) Makefile.in
-	$(WINEGCC) -s $(APPMODE) $(OBJS) -o $@ $(LIBPORT) $(ALL_LIBS)
+	$(WINEGCC) -s -Wb,-F,$(MODULE) $(APPMODE) $(OBJS) -o $@ $(LIBPORT) $(ALL_LIBS)
 
 $(WINETEST_RES): $(WINETEST_EXE)
 	echo "$(MODULE) TESTRES \"$(WINETEST_EXE)\"" | $(LDPATH) $(WRC) $(RCFLAGS) -o $@
