@@ -37,8 +37,6 @@
 #include "winldap_private.h"
 #include "wldap32.h"
 
-extern HINSTANCE hwldap32;
-
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
 ULONG map_error( int error )
