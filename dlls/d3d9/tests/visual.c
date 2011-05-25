@@ -9301,7 +9301,7 @@ static void stream_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "IDirect3DDevice9_SetVertexShader failed hr=%08x\n", hr);
 
     hr = IDirect3DDevice9_SetIndices(device, ib);
-    ok(hr == D3D_OK, "IDirect3DIndexBuffer9_Unlock failed with %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetIndices failed with %08x\n", hr);
 
     /* run all tests */
     for( i = 0; i < sizeof(testcases)/sizeof(testcases[0]); ++i)
@@ -9327,17 +9327,17 @@ static void stream_test(IDirect3DDevice9 *device)
             hr = IDirect3DDevice9_SetStreamSourceFreq(device, act.strVertex, (D3DSTREAMSOURCE_INDEXEDDATA | act.idxVertex));
             ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSourceFreq failed with %08x (case %i)\n", hr, i);
             hr = IDirect3DDevice9_SetStreamSource(device, act.strVertex, vb, 0, sizeof(quad[0]));
-            ok(hr == D3D_OK, "IDirect3DIndexBuffer9_Unlock failed with %08x (case %i)\n", hr, i);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %08x (case %i)\n", hr, i);
 
             hr = IDirect3DDevice9_SetStreamSourceFreq(device, act.strColor, (D3DSTREAMSOURCE_INDEXEDDATA | act.idxColor));
             ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSourceFreq failed with %08x (case %i)\n", hr, i);
             hr = IDirect3DDevice9_SetStreamSource(device, act.strColor, vb2, 0, sizeof(vertcolor[0]));
-            ok(hr == D3D_OK, "IDirect3DIndexBuffer9_Unlock failed with %08x (case %i)\n", hr, i);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %08x (case %i)\n", hr, i);
 
             hr = IDirect3DDevice9_SetStreamSourceFreq(device, act.strInstance, (D3DSTREAMSOURCE_INSTANCEDATA | act.idxInstance));
             ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSourceFreq failed with %08x (case %i)\n", hr, i);
             hr = IDirect3DDevice9_SetStreamSource(device, act.strInstance, vb3, 0, sizeof(instancepos[0]));
-            ok(hr == D3D_OK, "IDirect3DIndexBuffer9_Unlock failed with %08x (case %i)\n", hr, i);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %08x (case %i)\n", hr, i);
 
             hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
             ok(hr == D3D_OK, "IDirect3DDevice9_DrawIndexedPrimitive failed with %08x (case %i)\n", hr, i);
@@ -9454,9 +9454,9 @@ static void np2_stretch_rect_test(IDirect3DDevice9 *device) {
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with %08x\n", hr);
     hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed with %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed with %08x\n", hr);
     hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed with %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed with %08x\n", hr);
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %08x\n", hr);
