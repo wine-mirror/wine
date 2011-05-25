@@ -37,6 +37,7 @@ RC_SRCS = \
 	rsrc_Fr.rc \
 	rsrc_He.rc \
 	rsrc_It.rc \
+	rsrc_Ja.rc \
 	rsrc_Ko.rc \
 	rsrc_Lt.rc \
 	rsrc_Nl.rc \
