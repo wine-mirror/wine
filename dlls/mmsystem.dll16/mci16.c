@@ -385,38 +385,9 @@ static MMSYSTEM_MapType	MCI_MapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR* l
 /**************************************************************************
  * 			MCI_UnMapMsg16To32W			[internal]
  */
-static  MMSYSTEM_MapType	MCI_UnMapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR lParam, DWORD result)
+static  void	MCI_UnMapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR lParam, DWORD result)
 {
     switch (wMsg) {
-	/* case MCI_CAPTURE */
-    case MCI_CLOSE:
-    case MCI_CLOSE_DRIVER:
-    case MCI_CONFIGURE:
-    case MCI_COPY:
-    case MCI_CUE:
-    case MCI_CUT:
-    case MCI_DELETE:
-    case MCI_GETDEVCAPS:
-	/* case MCI_INDEX: */
-	/* case MCI_MARK: */
-	/* case MCI_MONITOR: */
-    case MCI_PASTE:
-    case MCI_PAUSE:
-    case MCI_PLAY:
-    case MCI_REALIZE:
-    case MCI_RECORD:
-    case MCI_RESUME:
-    case MCI_SEEK:
-    case MCI_SET:
-	/* case MCI_SETTIMECODE:*/
-	/* case MCI_SIGNAL:*/
-    case MCI_SPIN:
-    case MCI_STEP:
-    case MCI_STOP:
-	/* case MCI_UNDO: */
-    case MCI_UPDATE:
-	return MMSYSTEM_MAP_OK;
-
     case MCI_WHERE:
     case MCI_FREEZE:
     case MCI_UNFREEZE:
@@ -431,7 +402,7 @@ static  MMSYSTEM_MapType	MCI_UnMapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR
             mdrp16->rc.bottom = mdrp32->rc.bottom;
             HeapFree(GetProcessHeap(), 0, base);
         }
-        return MMSYSTEM_MAP_OK;
+        break;
     case MCI_STATUS:
         if (lParam) {
             LPMCI_DGV_STATUS_PARMSW mdsp32w = (LPMCI_DGV_STATUS_PARMSW)lParam;
@@ -441,25 +412,24 @@ static  MMSYSTEM_MapType	MCI_UnMapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR
             HeapFree(GetProcessHeap(), 0, (LPVOID)mdsp32w->lpstrDrive);
             HeapFree(GetProcessHeap(), 0, base);
         }
-        return MMSYSTEM_MAP_OK;
+        break;
     case MCI_WINDOW:
         if (lParam) {
             LPMCI_OVLY_WINDOW_PARMSW mowp32w = (LPMCI_OVLY_WINDOW_PARMSW)lParam;
             HeapFree(GetProcessHeap(), 0, (LPVOID)mowp32w->lpstrText);
             HeapFree(GetProcessHeap(), 0, mowp32w);
         }
-        return MMSYSTEM_MAP_OK;
-
+        break;
     case MCI_BREAK:
 	HeapFree(GetProcessHeap(), 0, (LPVOID)lParam);
-	return MMSYSTEM_MAP_OK;
+        break;
     case MCI_ESCAPE:
         if (lParam) {
             LPMCI_VD_ESCAPE_PARMSW	mvep32W = (LPMCI_VD_ESCAPE_PARMSW)lParam;
             HeapFree(GetProcessHeap(), 0, (LPVOID)mvep32W->lpstrCommand);
             HeapFree(GetProcessHeap(), 0, (LPVOID)lParam);
         }
-	return MMSYSTEM_MAP_OK;
+        break;
     case MCI_INFO:
         if (lParam) {
             LPMCI_INFO_PARMSW	        mip32w = (LPMCI_INFO_PARMSW)lParam;
@@ -475,7 +445,7 @@ static  MMSYSTEM_MapType	MCI_UnMapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR
             HeapFree(GetProcessHeap(), 0, mip32w->lpstrReturn);
             HeapFree(GetProcessHeap(), 0, base);
         }
-	return MMSYSTEM_MAP_OK;
+        break;
     case MCI_SYSINFO:
         if (lParam) {
             MCI_SYSINFO_PARMSW *msip32w = (MCI_SYSINFO_PARMSW *)lParam;
@@ -497,14 +467,14 @@ static  MMSYSTEM_MapType	MCI_UnMapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR
             HeapFree(GetProcessHeap(), 0, msip32w->lpstrReturn);
             HeapFree(GetProcessHeap(), 0, base);
         }
-	return MMSYSTEM_MAP_OK;
+        break;
     case MCI_SOUND:
         if (lParam) {
             LPMCI_SOUND_PARMSW          msp32W = (LPMCI_SOUND_PARMSW)lParam;
             HeapFree(GetProcessHeap(), 0, (LPVOID)msp32W->lpstrSoundName);
             HeapFree(GetProcessHeap(), 0, (LPVOID)lParam);
         }
-	return MMSYSTEM_MAP_OK;
+        break;
     case MCI_OPEN:
     case MCI_OPEN_DRIVER:
 	if (lParam) {
@@ -521,26 +491,10 @@ static  MMSYSTEM_MapType	MCI_UnMapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR
                 HeapFree(GetProcessHeap(), 0, (LPWSTR)mop32w->lpstrAlias);
             HeapFree(GetProcessHeap(), 0, base);
 	}
-	return MMSYSTEM_MAP_OK;
-    case DRV_LOAD:
-    case DRV_ENABLE:
-    case DRV_OPEN:
-    case DRV_CLOSE:
-    case DRV_DISABLE:
-    case DRV_FREE:
-    case DRV_CONFIGURE:
-    case DRV_QUERYCONFIGURE:
-    case DRV_INSTALL:
-    case DRV_REMOVE:
-    case DRV_EXITSESSION:
-    case DRV_EXITAPPLICATION:
-    case DRV_POWER:
-	FIXME("This is a hack\n");
-	return MMSYSTEM_MAP_OK;
+        break;
     default:
 	FIXME("Map/Unmap internal error on msg=%s\n", MCI_MessageToString(wMsg));
     }
-    return MMSYSTEM_MAP_MSGERROR;
 }
 
 /* ###################################################
