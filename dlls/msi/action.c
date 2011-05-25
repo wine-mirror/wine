@@ -3141,7 +3141,7 @@ static void ACTION_RefCountComponent( MSIPACKAGE* package, MSICOMPONENT *comp )
     {
         ComponentList *cl;
 
-        if (feature->ActionRequest != INSTALLSTATE_LOCAL)
+        if (msi_get_feature_action( package, feature ) != INSTALLSTATE_LOCAL)
             continue;
 
         LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
@@ -3156,7 +3156,7 @@ static void ACTION_RefCountComponent( MSIPACKAGE* package, MSICOMPONENT *comp )
     {
         ComponentList *cl;
 
-        if (feature->ActionRequest != INSTALLSTATE_ABSENT)
+        if (msi_get_feature_action( package, feature ) != INSTALLSTATE_ABSENT)
             continue;
 
         LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
@@ -3230,14 +3230,14 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
 
         ACTION_RefCountComponent( package, comp );
 
-        TRACE("Component %s (%s), Keypath=%s, RefCount=%i Request=%u\n",
+        comp->Action = msi_get_component_action( package, comp );
+        TRACE("Component %s (%s), Keypath=%s, RefCount=%u Action=%u\n",
                             debugstr_w(comp->Component),
                             debugstr_w(squished_cc),
                             debugstr_w(comp->FullKeypath),
                             comp->RefCount,
-                            comp->ActionRequest);
+                            comp->Action);
 
-        comp->Action = msi_get_component_action( package, comp );
         if (comp->Action == INSTALLSTATE_LOCAL ||
             comp->Action == INSTALLSTATE_SOURCE)
         {
