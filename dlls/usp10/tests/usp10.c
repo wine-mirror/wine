@@ -421,7 +421,7 @@ typedef struct tagRangeP {
     LOGFONTA lf;
 } fontEnumParam;
 
-int CALLBACK enumFontProc( const LOGFONT *lpelfe, const TEXTMETRIC *lpntme,
+static int CALLBACK enumFontProc( const LOGFONT *lpelfe, const TEXTMETRIC *lpntme,
                            DWORD FontType, LPARAM lParam)
 {
     NEWTEXTMETRICEX *ntme = (NEWTEXTMETRICEX*)lpntme;
