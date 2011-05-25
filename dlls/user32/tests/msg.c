@@ -12883,6 +12883,117 @@ static void test_SetParent(void)
     flush_sequence();
 }
 
+static void test_hotkey(void)
+{
+    HWND test_window, taskbar_window;
+    BOOL ret;
+    int hotkey_letter;
+
+    SetLastError(0xdeadbeef);
+    ret = UnregisterHotKey(NULL, 0);
+    todo_wine ok(ret == FALSE, "expected FALSE, got %i\n", ret);
+    todo_wine ok(GetLastError() == ERROR_HOTKEY_NOT_REGISTERED, "unexpected error %d\n", GetLastError());
+
+    if (ret == TRUE)
+    {
+        skip("hotkeys not supported\n");
+        return;
+    }
+
+    test_window = CreateWindowEx(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                           100, 100, 200, 200, 0, 0, 0, NULL);
+
+    SetLastError(0xdeadbeef);
+    ret = UnregisterHotKey(test_window, 0);
+    ok(ret == FALSE, "expected FALSE, got %i\n", ret);
+    ok(GetLastError() == ERROR_HOTKEY_NOT_REGISTERED, "unexpected error %d\n", GetLastError());
+
+    /* Search for a Windows Key + letter combination that hasn't been registered */
+    for (hotkey_letter = 0x41; hotkey_letter <= 0x51; hotkey_letter ++)
+    {
+        SetLastError(0xdeadbeef);
+        ret = RegisterHotKey(test_window, 5, MOD_WIN, hotkey_letter);
+
+        if (ret == TRUE)
+        {
+            ok(GetLastError() == 0xdeadbeef, "unexpected error %d\n", GetLastError());
+            break;
+        }
+        else
+        {
+            ok(GetLastError() == ERROR_HOTKEY_ALREADY_REGISTERED, "unexpected error %d\n", GetLastError());
+        }
+    }
+
+    if (hotkey_letter == 0x52)
+    {
+        ok(0, "Couldn't find any free Windows Key + letter combination\n");
+        goto end;
+    }
+
+    /* Same key combination, different id */
+    SetLastError(0xdeadbeef);
+    ret = RegisterHotKey(test_window, 4, MOD_WIN, hotkey_letter);
+    ok(ret == FALSE, "expected FALSE, got %i\n", ret);
+    ok(GetLastError() == ERROR_HOTKEY_ALREADY_REGISTERED, "unexpected error %d\n", GetLastError());
+
+    /* Same key combination, different window */
+    SetLastError(0xdeadbeef);
+    ret = RegisterHotKey(NULL, 5, MOD_WIN, hotkey_letter);
+    ok(ret == FALSE, "expected FALSE, got %i\n", ret);
+    ok(GetLastError() == ERROR_HOTKEY_ALREADY_REGISTERED, "unexpected error %d\n", GetLastError());
+
+    /* Register the same hotkey twice */
+    SetLastError(0xdeadbeef);
+    ret = RegisterHotKey(test_window, 5, MOD_WIN, hotkey_letter);
+    ok(ret == FALSE, "expected FALSE, got %i\n", ret);
+    ok(GetLastError() == ERROR_HOTKEY_ALREADY_REGISTERED, "unexpected error %d\n", GetLastError());
+
+    /* Window on another thread */
+    taskbar_window = FindWindowA("Shell_TrayWnd", NULL);
+    if (!taskbar_window)
+    {
+        skip("no taskbar?\n");
+    }
+    else
+    {
+        SetLastError(0xdeadbeef);
+        ret = RegisterHotKey(taskbar_window, 5, 0, hotkey_letter);
+        ok(ret == FALSE, "expected FALSE, got %i\n", ret);
+        ok(GetLastError() == ERROR_WINDOW_OF_OTHER_THREAD, "unexpected error %d\n", GetLastError());
+    }
+
+    /* Unregister hotkey properly */
+    SetLastError(0xdeadbeef);
+    ret = UnregisterHotKey(test_window, 5);
+    ok(ret == TRUE, "expected TRUE, got %i\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "unexpected error %d\n", GetLastError());
+
+    /* Unregister hotkey again */
+    SetLastError(0xdeadbeef);
+    ret = UnregisterHotKey(test_window, 5);
+    ok(ret == FALSE, "expected FALSE, got %i\n", ret);
+    ok(GetLastError() == ERROR_HOTKEY_NOT_REGISTERED, "unexpected error %d\n", GetLastError());
+
+    /* Register thread hotkey */
+    SetLastError(0xdeadbeef);
+    ret = RegisterHotKey(NULL, 5, MOD_WIN, hotkey_letter);
+    ok(ret == TRUE, "expected TRUE, got %i\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "unexpected error %d\n", GetLastError());
+
+    /* Unregister thread hotkey */
+    SetLastError(0xdeadbeef);
+    ret = UnregisterHotKey(NULL, 5);
+    ok(ret == TRUE, "expected TRUE, got %i\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "unexpected error %d\n", GetLastError());
+
+end:
+    UnregisterHotKey(NULL, 5);
+    UnregisterHotKey(test_window, 5);
+    DestroyWindow(test_window);
+    flush_sequence();
+}
+
 START_TEST(msg)
 {
     char **test_argv;
@@ -12991,6 +13102,7 @@ START_TEST(msg)
     test_paintingloop();
     test_defwinproc();
     test_clipboard_viewers();
+    test_hotkey();
     /* keep it the last test, under Windows it tends to break the tests
      * which rely on active/foreground windows being correct.
      */
