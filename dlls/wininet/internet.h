@@ -47,7 +47,7 @@
 #define ioctlsocket ioctl
 #endif /* __MINGW32__ */
 
-extern HMODULE WININET_hModule;
+extern HMODULE WININET_hModule DECLSPEC_HIDDEN;
 
 #ifndef INET6_ADDRSTRLEN
 #define INET6_ADDRSTRLEN 46
@@ -67,9 +67,9 @@ typedef struct {
     struct list conn_pool;
 } server_t;
 
-void server_addref(server_t*);
-void server_release(server_t*);
-BOOL collect_connections(BOOL);
+void server_addref(server_t*) DECLSPEC_HIDDEN;
+void server_release(server_t*) DECLSPEC_HIDDEN;
+BOOL collect_connections(BOOL) DECLSPEC_HIDDEN;
 
 /* used for netconnection.c stuff */
 typedef struct
