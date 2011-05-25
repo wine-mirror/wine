@@ -21,6 +21,7 @@
 #include <stdio.h>
 
 #define COBJMACROS
+#define CONST_VTABLE
 
 #include "shlobj.h"
 #include "shlwapi.h"
@@ -123,12 +124,17 @@ static void dbg_print_guid(const GUID *guid) {
  * IExplorerBrowserEvents implementation
  */
 typedef struct {
-    const IExplorerBrowserEventsVtbl *lpVtbl;
+    IExplorerBrowserEvents IExplorerBrowserEvents_iface;
     LONG ref;
     UINT pending, created, completed, failed;
 } IExplorerBrowserEventsImpl;
 
 static IExplorerBrowserEventsImpl ebev;
+
+static inline IExplorerBrowserEventsImpl *impl_from_IExplorerBrowserEvents(IExplorerBrowserEvents *iface)
+{
+    return CONTAINING_RECORD(iface, IExplorerBrowserEventsImpl, IExplorerBrowserEvents_iface);
+}
 
 static HRESULT WINAPI IExplorerBrowserEvents_fnQueryInterface(IExplorerBrowserEvents *iface,
                                                               REFIID riid, void **ppvObj)
@@ -139,20 +145,20 @@ static HRESULT WINAPI IExplorerBrowserEvents_fnQueryInterface(IExplorerBrowserEv
 
 static ULONG WINAPI IExplorerBrowserEvents_fnAddRef(IExplorerBrowserEvents *iface)
 {
-    IExplorerBrowserEventsImpl *This = (IExplorerBrowserEventsImpl*)iface;
+    IExplorerBrowserEventsImpl *This = impl_from_IExplorerBrowserEvents(iface);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI IExplorerBrowserEvents_fnRelease(IExplorerBrowserEvents *iface)
 {
-    IExplorerBrowserEventsImpl *This = (IExplorerBrowserEventsImpl*)iface;
+    IExplorerBrowserEventsImpl *This = impl_from_IExplorerBrowserEvents(iface);
     return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI IExplorerBrowserEvents_fnOnNavigationPending(IExplorerBrowserEvents *iface,
                                                                    PCIDLIST_ABSOLUTE pidlFolder)
 {
-    IExplorerBrowserEventsImpl *This = (IExplorerBrowserEventsImpl*)iface;
+    IExplorerBrowserEventsImpl *This = impl_from_IExplorerBrowserEvents(iface);
     This->pending++;
     return S_OK;
 }
@@ -160,21 +166,21 @@ static HRESULT WINAPI IExplorerBrowserEvents_fnOnNavigationPending(IExplorerBrow
 static HRESULT WINAPI IExplorerBrowserEvents_fnOnNavigationComplete(IExplorerBrowserEvents *iface,
                                                                     PCIDLIST_ABSOLUTE pidlFolder)
 {
-    IExplorerBrowserEventsImpl *This = (IExplorerBrowserEventsImpl*)iface;
+    IExplorerBrowserEventsImpl *This = impl_from_IExplorerBrowserEvents(iface);
     This->completed++;
     return S_OK;
 }
 static HRESULT WINAPI IExplorerBrowserEvents_fnOnNavigationFailed(IExplorerBrowserEvents *iface,
                                                                   PCIDLIST_ABSOLUTE pidlFolder)
 {
-    IExplorerBrowserEventsImpl *This = (IExplorerBrowserEventsImpl*)iface;
+    IExplorerBrowserEventsImpl *This = impl_from_IExplorerBrowserEvents(iface);
     This->failed++;
     return S_OK;
 }
 static HRESULT WINAPI IExplorerBrowserEvents_fnOnViewCreated(IExplorerBrowserEvents *iface,
                                                              IShellView *psv)
 {
-    IExplorerBrowserEventsImpl *This = (IExplorerBrowserEventsImpl*)iface;
+    IExplorerBrowserEventsImpl *This = impl_from_IExplorerBrowserEvents(iface);
     This->created++;
     return S_OK;
 }
@@ -195,11 +201,16 @@ static const IExplorerBrowserEventsVtbl ebevents =
  */
 typedef struct
 {
-    const IExplorerPaneVisibilityVtbl *lpVtbl;
+    IExplorerPaneVisibility IExplorerPaneVisibility_iface;
     LONG ref;
     LONG count;
     LONG np, cp, cp_o, cp_v, dp, pp, qp, aqp, unk; /* The panes */
 } IExplorerPaneVisibilityImpl;
+
+static inline IExplorerPaneVisibilityImpl *impl_from_IExplorerPaneVisibility(IExplorerPaneVisibility *iface)
+{
+    return CONTAINING_RECORD(iface, IExplorerPaneVisibilityImpl, IExplorerPaneVisibility_iface);
+}
 
 static HRESULT WINAPI IExplorerPaneVisibility_fnQueryInterface(IExplorerPaneVisibility *iface,
                                                                REFIID riid, LPVOID *ppvObj)
@@ -212,13 +223,13 @@ static HRESULT WINAPI IExplorerPaneVisibility_fnQueryInterface(IExplorerPaneVisi
 
 static ULONG WINAPI IExplorerPaneVisibility_fnAddRef(IExplorerPaneVisibility *iface)
 {
-    IExplorerPaneVisibilityImpl *This = (IExplorerPaneVisibilityImpl *)iface;
+    IExplorerPaneVisibilityImpl *This = impl_from_IExplorerPaneVisibility(iface);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI IExplorerPaneVisibility_fnRelease(IExplorerPaneVisibility *iface)
 {
-    IExplorerPaneVisibilityImpl *This = (IExplorerPaneVisibilityImpl *)iface;
+    IExplorerPaneVisibilityImpl *This = impl_from_IExplorerPaneVisibility(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     if(!ref)
@@ -231,7 +242,7 @@ static HRESULT WINAPI IExplorerPaneVisibility_fnGetPaneState(IExplorerPaneVisibi
                                                              REFEXPLORERPANE ep,
                                                              EXPLORERPANESTATE *peps)
 {
-    IExplorerPaneVisibilityImpl *This = (IExplorerPaneVisibilityImpl *)iface;
+    IExplorerPaneVisibilityImpl *This = impl_from_IExplorerPaneVisibility(iface);
     This->count++;
 
     ok(ep != NULL, "ep is NULL.\n");
@@ -269,7 +280,7 @@ static IExplorerPaneVisibilityImpl *create_explorerpanevisibility(void)
     IExplorerPaneVisibilityImpl *epv;
 
     epv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IExplorerPaneVisibilityImpl));
-    epv->lpVtbl = &epvvt;
+    epv->IExplorerPaneVisibility_iface.lpVtbl = &epvvt;
     epv->ref = 1;
 
     return epv;
@@ -280,12 +291,17 @@ static IExplorerPaneVisibilityImpl *create_explorerpanevisibility(void)
  */
 typedef struct
 {
-    const ICommDlgBrowser3Vtbl *lpVtbl;
+    ICommDlgBrowser3 ICommDlgBrowser3_iface;
     LONG ref;
     UINT OnDefaultCommand, OnStateChange, IncludeObject;
     UINT Notify, GetDefaultMenuText, GetViewFlags;
     UINT OnColumnClicked, GetCurrentFilter, OnPreviewCreated;
 } ICommDlgBrowser3Impl;
+
+static inline ICommDlgBrowser3Impl *impl_from_ICommDlgBrowser3(ICommDlgBrowser3 *iface)
+{
+    return CONTAINING_RECORD(iface, ICommDlgBrowser3Impl, ICommDlgBrowser3_iface);
+}
 
 static HRESULT WINAPI ICommDlgBrowser3_fnQueryInterface(ICommDlgBrowser3 *iface, REFIID riid, LPVOID *ppvObj)
 {
@@ -297,13 +313,13 @@ static HRESULT WINAPI ICommDlgBrowser3_fnQueryInterface(ICommDlgBrowser3 *iface,
 
 static ULONG WINAPI ICommDlgBrowser3_fnAddRef(ICommDlgBrowser3 *iface)
 {
-    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    ICommDlgBrowser3Impl *This = impl_from_ICommDlgBrowser3(iface);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI ICommDlgBrowser3_fnRelease(ICommDlgBrowser3 *iface)
 {
-    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    ICommDlgBrowser3Impl *This = impl_from_ICommDlgBrowser3(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     if(!ref)
@@ -314,7 +330,7 @@ static ULONG WINAPI ICommDlgBrowser3_fnRelease(ICommDlgBrowser3 *iface)
 
 static HRESULT WINAPI ICommDlgBrowser3_fnOnDefaultCommand(ICommDlgBrowser3* iface, IShellView *shv)
 {
-    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    ICommDlgBrowser3Impl *This = impl_from_ICommDlgBrowser3(iface);
     This->OnDefaultCommand++;
     return E_NOTIMPL;
 }
@@ -324,7 +340,7 @@ static HRESULT WINAPI ICommDlgBrowser3_fnOnStateChange(
     IShellView *shv,
     ULONG uChange)
 {
-    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    ICommDlgBrowser3Impl *This = impl_from_ICommDlgBrowser3(iface);
     This->OnStateChange++;
     return E_NOTIMPL;
 }
@@ -334,7 +350,7 @@ static HRESULT WINAPI ICommDlgBrowser3_fnIncludeObject(
     IShellView *shv,
     LPCITEMIDLIST pidl)
 {
-    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    ICommDlgBrowser3Impl *This = impl_from_ICommDlgBrowser3(iface);
     This->IncludeObject++;
     return S_OK;
 }
@@ -344,7 +360,7 @@ static HRESULT WINAPI ICommDlgBrowser3_fnNotify(
     IShellView *ppshv,
     DWORD dwNotifyType)
 {
-    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    ICommDlgBrowser3Impl *This = impl_from_ICommDlgBrowser3(iface);
     This->Notify++;
     return E_NOTIMPL;
 }
@@ -355,7 +371,7 @@ static HRESULT WINAPI ICommDlgBrowser3_fnGetDefaultMenuText(
     LPWSTR pszText,
     int cchMax)
 {
-    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    ICommDlgBrowser3Impl *This = impl_from_ICommDlgBrowser3(iface);
     This->GetDefaultMenuText++;
     return E_NOTIMPL;
 }
@@ -364,7 +380,7 @@ static HRESULT WINAPI ICommDlgBrowser3_fnGetViewFlags(
     ICommDlgBrowser3* iface,
     DWORD *pdwFlags)
 {
-    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    ICommDlgBrowser3Impl *This = impl_from_ICommDlgBrowser3(iface);
     This->GetViewFlags++;
     return E_NOTIMPL;
 }
@@ -374,7 +390,7 @@ static HRESULT WINAPI ICommDlgBrowser3_fnOnColumnClicked(
     IShellView *ppshv,
     int iColumn)
 {
-    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    ICommDlgBrowser3Impl *This = impl_from_ICommDlgBrowser3(iface);
     This->OnColumnClicked++;
     return E_NOTIMPL;
 }
@@ -384,7 +400,7 @@ static HRESULT WINAPI ICommDlgBrowser3_fnGetCurrentFilter(
     LPWSTR pszFileSpec,
     int cchFileSpec)
 {
-    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    ICommDlgBrowser3Impl *This = impl_from_ICommDlgBrowser3(iface);
     This->GetCurrentFilter++;
     return E_NOTIMPL;
 }
@@ -393,7 +409,7 @@ static HRESULT WINAPI ICommDlgBrowser3_fnOnPreviewCreated(
     ICommDlgBrowser3* iface,
     IShellView *ppshv)
 {
-    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    ICommDlgBrowser3Impl *This = impl_from_ICommDlgBrowser3(iface);
     This->OnPreviewCreated++;
     return E_NOTIMPL;
 }
@@ -419,7 +435,7 @@ static ICommDlgBrowser3Impl *create_commdlgbrowser3(void)
     ICommDlgBrowser3Impl *cdb;
 
     cdb = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ICommDlgBrowser3Impl));
-    cdb->lpVtbl = &cdbvtbl;
+    cdb->ICommDlgBrowser3_iface.lpVtbl = &cdbvtbl;
     cdb->ref = 1;
 
     return cdb;
@@ -429,7 +445,7 @@ static ICommDlgBrowser3Impl *create_commdlgbrowser3(void)
  * IServiceProvider Implementation
  */
 typedef struct {
-    const IServiceProviderVtbl *lpVtbl;
+    IServiceProvider IServiceProvider_iface;
     LONG ref;
     struct services {
         REFGUID service;
@@ -438,6 +454,11 @@ typedef struct {
         void *punk;
     } *interfaces;
 } IServiceProviderImpl;
+
+static inline IServiceProviderImpl *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, IServiceProviderImpl, IServiceProvider_iface);
+}
 
 static HRESULT WINAPI IServiceProvider_fnQueryInterface(IServiceProvider *iface, REFIID riid, LPVOID *ppvObj)
 {
@@ -462,13 +483,13 @@ static HRESULT WINAPI IServiceProvider_fnQueryInterface(IServiceProvider *iface,
 
 static ULONG WINAPI IServiceProvider_fnAddRef(IServiceProvider *iface)
 {
-    IServiceProviderImpl *This = (IServiceProviderImpl*)iface;
+    IServiceProviderImpl *This = impl_from_IServiceProvider(iface);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI IServiceProvider_fnRelease(IServiceProvider *iface)
 {
-    IServiceProviderImpl *This = (IServiceProviderImpl*)iface;
+    IServiceProviderImpl *This = impl_from_IServiceProvider(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     if(!ref)
@@ -482,7 +503,7 @@ static HRESULT WINAPI IServiceProvider_fnQueryService(IServiceProvider *iface,
                                                       REFIID riid,
                                                       void **ppv)
 {
-    IServiceProviderImpl *This = (IServiceProviderImpl*)iface;
+    IServiceProviderImpl *This = impl_from_IServiceProvider(iface);
     BOOL was_in_list = FALSE;
     IUnknown *punk = NULL;
     UINT i;
@@ -529,7 +550,7 @@ static const IServiceProviderVtbl spvtbl =
 static IServiceProviderImpl *create_serviceprovider(void)
 {
     IServiceProviderImpl *sp = HeapAlloc(GetProcessHeap(), 0, sizeof(IServiceProviderImpl));
-    sp->lpVtbl = &spvtbl;
+    sp->IServiceProvider_iface.lpVtbl = &spvtbl;
     sp->ref = 1;
     return sp;
 }
@@ -932,7 +953,7 @@ static void test_SetSite(void)
     {
         spimpl->interfaces = expected;
 
-        hr = IObjectWithSite_SetSite(pow, (IUnknown*)spimpl);
+        hr = IObjectWithSite_SetSite(pow, (IUnknown*)&spimpl->IServiceProvider_iface);
         ok(hr == S_OK, "Got 0x%08x\n", hr);
 
         if(FAILED(hr))
@@ -943,9 +964,9 @@ static void test_SetSite(void)
     {
         skip("Failed to set site.\n");
 
-        IServiceProvider_Release((IServiceProvider*)spimpl);
-        ICommDlgBrowser3_Release((ICommDlgBrowser3*)cdbimpl);
-        IExplorerPaneVisibility_Release((IExplorerPaneVisibility*)epvimpl);
+        IServiceProvider_Release(&spimpl->IServiceProvider_iface);
+        ICommDlgBrowser3_Release(&cdbimpl->ICommDlgBrowser3_iface);
+        IExplorerPaneVisibility_Release(&epvimpl->IExplorerPaneVisibility_iface);
         IExplorerBrowser_Destroy(peb);
         ref = IExplorerBrowser_Release(peb);
         ok(ref == 0, "Got ref %d\n", ref);
@@ -993,40 +1014,40 @@ static void test_SetSite(void)
     }
 
     /* Test when IServiceProvider is released. */
-    IServiceProvider_AddRef((IServiceProvider*)spimpl);
-    ref = IServiceProvider_Release((IServiceProvider*)spimpl);
+    IServiceProvider_AddRef(&spimpl->IServiceProvider_iface);
+    ref = IServiceProvider_Release(&spimpl->IServiceProvider_iface);
     ok(ref == 2, "Got ref %d\n", ref);
 
     hr = IObjectWithSite_SetSite(pow, NULL);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
 
-    IServiceProvider_AddRef((IServiceProvider*)spimpl);
-    ref = IServiceProvider_Release((IServiceProvider*)spimpl);
+    IServiceProvider_AddRef(&spimpl->IServiceProvider_iface);
+    ref = IServiceProvider_Release(&spimpl->IServiceProvider_iface);
     ok(ref == 1, "Got ref %d\n", ref);
 
-    hr = IObjectWithSite_SetSite(pow, (IUnknown*)spimpl);
+    hr = IObjectWithSite_SetSite(pow, (IUnknown*)&spimpl->IServiceProvider_iface);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
 
-    IServiceProvider_AddRef((IServiceProvider*)spimpl);
-    ref = IServiceProvider_Release((IServiceProvider*)spimpl);
+    IServiceProvider_AddRef(&spimpl->IServiceProvider_iface);
+    ref = IServiceProvider_Release(&spimpl->IServiceProvider_iface);
     ok(ref == 2, "Got ref %d\n", ref);
 
     IExplorerBrowser_Destroy(peb);
 
-    IServiceProvider_AddRef((IServiceProvider*)spimpl);
-    ref = IServiceProvider_Release((IServiceProvider*)spimpl);
+    IServiceProvider_AddRef(&spimpl->IServiceProvider_iface);
+    ref = IServiceProvider_Release(&spimpl->IServiceProvider_iface);
     ok(ref == 2, "Got ref %d\n", ref);
 
     IObjectWithSite_Release(pow);
     ref = IExplorerBrowser_Release(peb);
     ok(ref == 0, "Got ref %d\n", ref);
 
-    ref = IServiceProvider_Release((IServiceProvider*)spimpl);
+    ref = IServiceProvider_Release(&spimpl->IServiceProvider_iface);
     ok(ref == 0, "Got ref %d\n", ref);
 
-    ref = ICommDlgBrowser3_Release((ICommDlgBrowser3*)cdbimpl);
+    ref = ICommDlgBrowser3_Release(&cdbimpl->ICommDlgBrowser3_iface);
     ok(ref == 0, "Got ref %d\n", ref);
-    ref = IExplorerPaneVisibility_Release((IExplorerPaneVisibility*)epvimpl);
+    ref = IExplorerPaneVisibility_Release(&epvimpl->IExplorerPaneVisibility_iface);
     ok(ref == 0, "Got ref %d\n", ref);
 }
 
@@ -1171,8 +1192,8 @@ static void test_Advise(void)
     UINT i, ref;
 
     /* Set up our IExplorerBrowserEvents implementation */
-    ebev.lpVtbl = &ebevents;
-    pebe = (IExplorerBrowserEvents*) &ebev;
+    ebev.IExplorerBrowserEvents_iface.lpVtbl = &ebevents;
+    pebe = &ebev.IExplorerBrowserEvents_iface;
 
     ebrowser_instantiate(&peb);
 
@@ -1372,10 +1393,10 @@ static void test_navigation(void)
     ebrowser_initialize(peb2);
 
     /* Set up our IExplorerBrowserEvents implementation */
-    ebev.lpVtbl = &ebevents;
+    ebev.IExplorerBrowserEvents_iface.lpVtbl = &ebevents;
 
-    IExplorerBrowser_Advise(peb, (IExplorerBrowserEvents*)&ebev, &cookie);
-    IExplorerBrowser_Advise(peb2, (IExplorerBrowserEvents*)&ebev, &cookie2);
+    IExplorerBrowser_Advise(peb, &ebev.IExplorerBrowserEvents_iface, &cookie);
+    IExplorerBrowser_Advise(peb2, &ebev.IExplorerBrowserEvents_iface, &cookie2);
 
     /* These should all fail */
     test_browse_pidl(peb, &ebev, 0, SBSP_ABSOLUTE | SBSP_RELATIVE, E_FAIL, 0, 0, 0, 0);
@@ -1487,7 +1508,7 @@ static void test_navigation(void)
     /* Test some options that affect browsing */
 
     ebrowser_instantiate(&peb);
-    hr = IExplorerBrowser_Advise(peb, (IExplorerBrowserEvents*)&ebev, &cookie);
+    hr = IExplorerBrowser_Advise(peb, &ebev.IExplorerBrowserEvents_iface, &cookie);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
     hr = IExplorerBrowser_SetOptions(peb, EBO_NAVIGATEONCE);
     ok(hr == S_OK, "got (0x%08x)\n", hr);
