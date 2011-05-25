@@ -559,20 +559,12 @@ UINT ACTION_MsiPublishAssemblies( MSIPACKAGE *package )
 
         if (!assembly || !comp->ComponentId) continue;
 
-        if (!comp->Enabled)
+        comp->Action = msi_get_component_action( package, comp );
+        if (comp->Action != INSTALLSTATE_LOCAL)
         {
-            TRACE("component is disabled: %s\n", debugstr_w(comp->Component));
+            TRACE("component not scheduled for installation %s\n", debugstr_w(comp->Component));
             continue;
         }
-
-        if (comp->ActionRequest != INSTALLSTATE_LOCAL)
-        {
-            TRACE("Component not scheduled for installation: %s\n", debugstr_w(comp->Component));
-            comp->Action = comp->Installed;
-            continue;
-        }
-        comp->Action = INSTALLSTATE_LOCAL;
-
         TRACE("publishing %s\n", debugstr_w(comp->Component));
 
         CLSIDFromString( package->ProductCode, &guid );
@@ -628,20 +620,12 @@ UINT ACTION_MsiUnpublishAssemblies( MSIPACKAGE *package )
 
         if (!assembly || !comp->ComponentId) continue;
 
-        if (!comp->Enabled)
+        comp->Action = msi_get_component_action( package, comp );
+        if (comp->Action != INSTALLSTATE_ABSENT)
         {
-            TRACE("component is disabled: %s\n", debugstr_w(comp->Component));
+            TRACE("component not scheduled for removal %s\n", debugstr_w(comp->Component));
             continue;
         }
-
-        if (comp->ActionRequest != INSTALLSTATE_ABSENT)
-        {
-            TRACE("Component not scheduled for removal: %s\n", debugstr_w(comp->Component));
-            comp->Action = comp->Installed;
-            continue;
-        }
-        comp->Action = INSTALLSTATE_ABSENT;
-
         TRACE("unpublishing %s\n", debugstr_w(comp->Component));
 
         win32 = assembly->attributes & msidbAssemblyAttributesWin32;
