@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-05-04 19:31+0900\n"
+"PO-Revision-Date: 2011-05-25 20:04+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -6827,13 +6827,12 @@ msgid "&About Wine"
 msgstr "Wineについて(&A)"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl-F4"
-msgstr "閉じる(&C)\tAlt-F4"
+msgstr "閉じる(&C)\tCtrl-F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl-F6"
-msgstr ""
+msgstr "次のウィンドウ(&N)\tCtrl-F6"
 
 #: user32.rc:68 regedit.rc:176 winefile.rc:100
 msgid "Error"
@@ -8397,18 +8396,18 @@ msgstr "入力行が長すぎます。\n"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr ""
+msgstr "使い方: hostname\n"
 
 #: hostname.rc:28
-#, fuzzy
 msgid "Error: Invalid option '%c'.\n"
-msgstr "エラー: キー名が無効です\n"
+msgstr "エラー: 無効なオプション '%c'\n"
 
 #: hostname.rc:29
 msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
 msgstr ""
+"エラー: hostname ユーティリティではシステムのホスト名を設定できません。\n"
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
@@ -8768,9 +8767,8 @@ msgid "&View TypeLib..."
 msgstr "TypeLib の表示(&V)..."
 
 #: oleview.rc:32
-#, fuzzy
 msgid "&System Configuration"
-msgstr "システム設定(&S)..."
+msgstr "システム設定(&S)"
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
@@ -9054,18 +9052,16 @@ msgid "&Copy...\tF8"
 msgstr "コピー(&C)...\tF8"
 
 #: progman.rc:35
-#, fuzzy
 msgid "&Properties\tAlt+Enter"
-msgstr "プロパティ(&I)\tAlt+Enter"
+msgstr "プロパティ(&P)\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
 msgstr "実行(&E)..."
 
 #: progman.rc:39
-#, fuzzy
 msgid "E&xit Windows"
-msgstr "Windowsの終了(&X)..."
+msgstr "Windowsの終了(&X)"
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
