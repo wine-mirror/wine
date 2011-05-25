@@ -7246,8 +7246,7 @@ static BOOL ACTION_HandleStandardAction( MSIPACKAGE *package, LPCWSTR action, UI
                 *rc = StandardActions[i].handler( package );
                 ui_actioninfo( package, action, FALSE, *rc );
 
-                if (StandardActions[i].action_rollback &&
-                    !msi_get_property_int( package->db, szRollbackDisabled, 0 ))
+                if (StandardActions[i].action_rollback && !package->need_rollback)
                 {
                     TRACE("scheduling rollback action\n");
                     msi_schedule_action( package, ROLLBACK_SCRIPT, StandardActions[i].action_rollback );
@@ -7484,7 +7483,6 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     if (package->need_rollback)
     {
         WARN("installation failed, running rollback script\n");
-        msi_set_property( package->db, szRollbackDisabled, NULL );
         execute_script( package, ROLLBACK_SCRIPT );
     }
 
