@@ -67,7 +67,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX    " ウィンドウ設定 ",IDC_STATIC,8,4,244,84
-    CONTROL     "Automatically capture the &mouse in full-screen windows",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "フルスクリーン ウィンドウでマウスを自動的に捕捉する(&M)",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
     CONTROL     "ウィンドウ マネージャがウィンドウを装飾するのを許可する(&D)",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
     CONTROL     "ウィンドウ マネージャがウィンドウを制御するのを許可する(&W)",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
     CONTROL     "仮想デスクトップをエミュレートする(&D)",IDC_ENABLE_DESKTOP,"Button",
@@ -140,7 +140,7 @@ BEGIN
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "追加(&A)...",IDC_BUTTON_ADD,15,98,37,14
     PUSHBUTTON      "削除(&R)",IDC_BUTTON_REMOVE,56,98,37,14
-    PUSHBUTTON      "自動検出(&D)...",IDC_BUTTON_AUTODETECT,197,98,49,14
+    PUSHBUTTON      "自動検出(&D)",IDC_BUTTON_AUTODETECT,197,98,49,14
 
     /* editing drive details */
     LTEXT           "パス(&P):",IDC_STATIC_PATH,15,123,20,9
