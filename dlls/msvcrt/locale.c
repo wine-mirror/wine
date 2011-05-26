@@ -43,8 +43,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 MSVCRT__locale_t MSVCRT_locale = NULL;
 int MSVCRT___lc_codepage = 0;
 int MSVCRT___lc_collate_cp = 0;
-HANDLE MSVCRT___lc_handle[MSVCRT_LC_MAX - MSVCRT_LC_MIN + 1] = { 0 };
-unsigned char charmax = CHAR_MAX;
+LCID MSVCRT___lc_handle[MSVCRT_LC_MAX - MSVCRT_LC_MIN + 1] = { 0 };
+static unsigned char charmax = CHAR_MAX;
 
 /* MT */
 #define LOCK_LOCALE   _mlock(_SETLOCALE_LOCK);
@@ -572,7 +572,7 @@ int CDECL __lconv_init(void)
 /*********************************************************************
  *      ___lc_handle_func (MSVCRT.@)
  */
-HANDLE * CDECL ___lc_handle_func(void)
+LCID* CDECL ___lc_handle_func(void)
 {
     return MSVCRT___lc_handle;
 }
@@ -1234,10 +1234,14 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
     UNLOCK_LOCALE;
 
     if(locinfo == MSVCRT_locale->locinfo) {
+        int i;
+
         MSVCRT___lc_codepage = locinfo->lc_codepage;
         MSVCRT___lc_collate_cp = locinfo->lc_collate_cp;
         MSVCRT___mb_cur_max = locinfo->mb_cur_max;
         MSVCRT__pctype = locinfo->pctype;
+        for(i=MSVCRT_LC_MIN; i<=MSVCRT_LC_MAX; i++)
+            MSVCRT___lc_handle[i] = MSVCRT_locale->locinfo->lc_handle[i];
     }
 
     if(category == MSVCRT_LC_ALL)
@@ -1290,4 +1294,23 @@ int CDECL _configthreadlocale(int type)
         return ret;
 
     return -1;
+}
+
+BOOL msvcrt_init_locale(void)
+{
+    int i;
+
+    LOCK_LOCALE;
+    MSVCRT_locale = MSVCRT__create_locale(0, "C");
+    UNLOCK_LOCALE;
+    if(!MSVCRT_locale)
+        return FALSE;
+
+    MSVCRT___lc_codepage = MSVCRT_locale->locinfo->lc_codepage;
+    MSVCRT___lc_collate_cp = MSVCRT_locale->locinfo->lc_collate_cp;
+    MSVCRT___mb_cur_max = MSVCRT_locale->locinfo->mb_cur_max;
+    MSVCRT__pctype = MSVCRT_locale->locinfo->pctype;
+    for(i=MSVCRT_LC_MIN; i<=MSVCRT_LC_MAX; i++)
+        MSVCRT___lc_handle[i] = MSVCRT_locale->locinfo->lc_handle[i];
+    return TRUE;
 }

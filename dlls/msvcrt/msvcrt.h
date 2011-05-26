@@ -112,7 +112,7 @@ typedef struct MSVCRT_threadlocaleinfostruct {
     int refcount;
     unsigned int lc_codepage;
     unsigned int lc_collate_cp;
-    unsigned long lc_handle[6];
+    MSVCRT_ulong lc_handle[6];
     MSVCRT_LC_ID lc_id[6];
     struct {
         char *locale;
@@ -234,6 +234,7 @@ extern char* __cdecl __unDNameEx(char *,const char*,int,malloc_func_t,free_func_
 extern void msvcrt_init_mt_locks(void);
 extern void msvcrt_free_mt_locks(void);
 
+extern BOOL msvcrt_init_locale(void);
 extern void msvcrt_init_math(void);
 extern void msvcrt_init_io(void);
 extern void msvcrt_free_io(void);
@@ -881,7 +882,6 @@ int            __cdecl MSVCRT_raise(int sig);
 #define MSVCRT__DISABLE_PER_THREAD_LOCALE 2
 
 extern MSVCRT__locale_t MSVCRT_locale;
-MSVCRT__locale_t MSVCRT__create_locale(int, const char*);
 MSVCRT_pthreadlocinfo get_locinfo(void);
 void __cdecl MSVCRT__free_locale(MSVCRT__locale_t);
 void free_locinfo(MSVCRT_pthreadlocinfo);

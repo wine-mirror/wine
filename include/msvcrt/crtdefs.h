@@ -212,7 +212,7 @@ typedef struct threadlocaleinfostruct {
     int refcount;
     unsigned int lc_codepage;
     unsigned int lc_collate_cp;
-    unsigned long lc_handle[6];
+    __msvcrt_ulong lc_handle[6];
     LC_ID lc_id[6];
     struct {
         char *locale;

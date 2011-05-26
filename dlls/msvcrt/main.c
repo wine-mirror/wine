@@ -74,8 +74,10 @@ static inline void msvcrt_free_tls_mem(void)
     HeapFree(GetProcessHeap(),0,tls->strerror_buffer);
     HeapFree(GetProcessHeap(),0,tls->wcserror_buffer);
     HeapFree(GetProcessHeap(),0,tls->time_buffer);
-    free_locinfo(tls->locinfo);
-    free_mbcinfo(tls->mbcinfo);
+    if(tls->have_locale) {
+        free_locinfo(tls->locinfo);
+        free_mbcinfo(tls->mbcinfo);
+    }
   }
   HeapFree(GetProcessHeap(), 0, tls);
 }
@@ -96,7 +98,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     if (!msvcrt_init_tls())
       return FALSE;
     msvcrt_init_mt_locks();
-    if(!(MSVCRT_locale = MSVCRT__create_locale(0, "C"))) {
+    if(!msvcrt_init_locale()) {
         msvcrt_free_mt_locks();
         msvcrt_free_tls_mem();
         return FALSE;
