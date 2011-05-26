@@ -410,25 +410,30 @@ const char *get_nm_command(void)
 char *get_temp_file_name( const char *prefix, const char *suffix )
 {
     char *name;
-    const char *ext;
+    const char *ext, *basename;
     int fd;
 
     if (!nb_tmp_files && !save_temps) atexit( cleanup_tmp_files );
 
     if (!prefix || !prefix[0]) prefix = "winebuild";
     if (!suffix) suffix = "";
-    if (!(ext = strchr( prefix, '.' ))) ext = prefix + strlen(prefix);
+    if ((basename = strrchr( prefix, '/' ))) basename++;
+    else basename = prefix;
+    if (!(ext = strchr( basename, '.' ))) ext = prefix + strlen(prefix);
     name = xmalloc( sizeof("/tmp/") + (ext - prefix) + sizeof(".XXXXXX") + strlen(suffix) );
-    strcpy( name, "/tmp/" );
-    memcpy( name + 5, prefix, ext - prefix );
-    strcpy( name + 5 + (ext - prefix), ".XXXXXX" );
+    memcpy( name, prefix, ext - prefix );
+    strcpy( name + (ext - prefix), ".XXXXXX" );
     strcat( name, suffix );
 
-    /* first try without the /tmp/ prefix */
-    if ((fd = mkstemps( name + 5, strlen(suffix) )) != -1)
-        name += 5;
-    else if ((fd = mkstemps( name, strlen(suffix) )) == -1)
-        fatal_error( "could not generate a temp file\n" );
+    if ((fd = mkstemps( name, strlen(suffix) )) == -1)
+    {
+        strcpy( name, "/tmp/" );
+        memcpy( name + 5, basename, ext - basename );
+        strcpy( name + 5 + (ext - basename), ".XXXXXX" );
+        strcat( name, suffix );
+        if ((fd = mkstemps( name, strlen(suffix) )) == -1)
+            fatal_error( "could not generate a temp file\n" );
+    }
 
     close( fd );
     if (nb_tmp_files >= max_tmp_files)
