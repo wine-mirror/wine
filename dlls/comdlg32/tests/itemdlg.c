@@ -848,7 +848,7 @@ static void test_basics(void)
     ok(!ref, "Got refcount %d, should have been released.\n", ref);
 }
 
-void ensure_zero_events_(const char *file, int line, IFileDialogEventsImpl *impl)
+static void ensure_zero_events_(const char *file, int line, IFileDialogEventsImpl *impl)
 {
     ok_(file, line)(!impl->OnFileOk, "OnFileOk: %d\n", impl->OnFileOk);
     ok_(file, line)(!impl->OnFolderChanging, "OnFolderChanging: %d\n", impl->OnFolderChanging);
