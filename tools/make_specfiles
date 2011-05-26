@@ -102,6 +102,10 @@ my @dll_groups =
   "xinput1_1",
   "xinput9_1_0",
  ],
+ [
+  "setupapi",
+  "cfgmgr32",
+ ],
 );
 
 my $update_flags = 0;
