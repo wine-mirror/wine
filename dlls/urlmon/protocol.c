@@ -335,7 +335,7 @@ HRESULT protocol_continue(Protocol *protocol, PROTOCOLDATA *data)
         protocol->flags |= FLAG_FIRST_CONTINUE_COMPLETE;
     }
 
-    if(data->pData >= (LPVOID)BINDSTATUS_DOWNLOADINGDATA) {
+    if(data->pData >= (LPVOID)BINDSTATUS_DOWNLOADINGDATA && !protocol->available_bytes) {
         BOOL res;
 
         /* InternetQueryDataAvailable may immediately fork and perform its asynchronous
@@ -367,33 +367,33 @@ HRESULT protocol_read(Protocol *protocol, void *buf, ULONG size, ULONG *read_ret
         return S_FALSE;
     }
 
-    if(!(protocol->flags & FLAG_REQUEST_COMPLETE)) {
+    if(!(protocol->flags & FLAG_REQUEST_COMPLETE) || !protocol->available_bytes) {
         *read_ret = 0;
         return E_PENDING;
     }
 
-    while(read < size) {
-        if(protocol->available_bytes) {
-            ULONG len;
+    while(read < size && protocol->available_bytes) {
+        ULONG len;
 
-            res = InternetReadFile(protocol->request, ((BYTE *)buf)+read,
-                    protocol->available_bytes > size-read ? size-read : protocol->available_bytes, &len);
-            if(!res) {
-                WARN("InternetReadFile failed: %d\n", GetLastError());
-                hres = INET_E_DOWNLOAD_FAILURE;
-                report_result(protocol, hres);
-                break;
-            }
+        res = InternetReadFile(protocol->request, ((BYTE *)buf)+read,
+                protocol->available_bytes > size-read ? size-read : protocol->available_bytes, &len);
+        if(!res) {
+            WARN("InternetReadFile failed: %d\n", GetLastError());
+            hres = INET_E_DOWNLOAD_FAILURE;
+            report_result(protocol, hres);
+            break;
+        }
 
-            if(!len) {
-                all_data_read(protocol);
-                break;
-            }
+        if(!len) {
+            all_data_read(protocol);
+            break;
+        }
 
-            read += len;
-            protocol->current_position += len;
-            protocol->available_bytes -= len;
-        }else {
+        read += len;
+        protocol->current_position += len;
+        protocol->available_bytes -= len;
+
+        if(!protocol->available_bytes) {
             /* InternetQueryDataAvailable may immediately fork and perform its asynchronous
              * read, so clear the flag _before_ calling so it does not incorrectly get cleared
              * after the status callback is called */
