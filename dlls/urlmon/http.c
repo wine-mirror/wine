@@ -36,7 +36,7 @@ typedef struct {
 
     BOOL https;
     IHttpNegotiate *http_negotiate;
-    LPWSTR full_header;
+    WCHAR *full_header;
 
     LONG ref;
 } HttpProtocol;
@@ -56,9 +56,8 @@ static inline HttpProtocol *impl_from_IWinInetHttpInfo(IWinInetHttpInfo *iface)
     return CONTAINING_RECORD(iface, HttpProtocol, IWinInetHttpInfo_iface);
 }
 
-/* Default headers from native */
-static const WCHAR wszHeaders[] = {'A','c','c','e','p','t','-','E','n','c','o','d','i','n','g',
-                                   ':',' ','g','z','i','p',',',' ','d','e','f','l','a','t','e',0};
+static const WCHAR default_headersW[] = {
+    'A','c','c','e','p','t','-','E','n','c','o','d','i','n','g',':',' ','g','z','i','p',',',' ','d','e','f','l','a','t','e',0};
 
 static LPWSTR query_http_info(HttpProtocol *This, DWORD option)
 {
@@ -277,7 +276,7 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD reques
     LPOLESTR accept_mimes[257];
     const WCHAR **accept_types;
     BYTE security_id[512];
-    DWORD len = 0, port;
+    DWORD len, port;
     ULONG num, error;
     BOOL res, b;
     HRESULT hres;
@@ -371,7 +370,7 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD reques
         return hres;
     }
 
-    hres = IHttpNegotiate_BeginningTransaction(This->http_negotiate, url, wszHeaders,
+    hres = IHttpNegotiate_BeginningTransaction(This->http_negotiate, url, default_headersW,
             0, &addl_header);
     SysFreeString(url);
     if(hres != S_OK) {
@@ -380,17 +379,18 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD reques
         return hres;
     }
 
-    if(addl_header) {
-        int len_addl_header = strlenW(addl_header);
+    len = addl_header ? strlenW(addl_header) : 0;
 
-        This->full_header = heap_alloc(len_addl_header*sizeof(WCHAR)+sizeof(wszHeaders));
-
-        lstrcpyW(This->full_header, addl_header);
-        lstrcpyW(&This->full_header[len_addl_header], wszHeaders);
-        CoTaskMemFree(addl_header);
-    }else {
-        This->full_header = (LPWSTR)wszHeaders;
+    This->full_header = heap_alloc(len*sizeof(WCHAR)+sizeof(default_headersW));
+    if(!This->full_header) {
+        IServiceProvider_Release(service_provider);
+        return E_OUTOFMEMORY;
     }
+
+    if(len)
+        memcpy(This->full_header, addl_header, len*sizeof(WCHAR));
+    CoTaskMemFree(addl_header);
+    memcpy(This->full_header+len, default_headersW, sizeof(default_headersW));
 
     hres = IServiceProvider_QueryService(service_provider, &IID_IHttpNegotiate2,
             &IID_IHttpNegotiate2, (void **)&http_negotiate2);
@@ -525,13 +525,12 @@ static void HttpProtocol_close_connection(Protocol *prot)
 
     if(This->http_negotiate) {
         IHttpNegotiate_Release(This->http_negotiate);
-        This->http_negotiate = 0;
+        This->http_negotiate = NULL;
     }
 
     if(This->full_header) {
-        if(This->full_header != wszHeaders)
-            heap_free(This->full_header);
-        This->full_header = 0;
+        heap_free(This->full_header);
+        This->full_header = NULL;
     }
 }
 
