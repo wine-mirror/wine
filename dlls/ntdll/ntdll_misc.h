@@ -232,6 +232,8 @@ static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
     return (struct ntdll_thread_data *)NtCurrentTeb()->SpareBytes1;
 }
 
+extern mode_t FILE_umask DECLSPEC_HIDDEN;
+
 /* Register functions */
 
 #ifdef __i386__
