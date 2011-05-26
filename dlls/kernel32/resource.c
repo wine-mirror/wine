@@ -903,7 +903,6 @@ struct resource_size_info {
 
 struct mapping_info {
     HANDLE file;
-    HANDLE mapping;
     void *base;
     DWORD size;
     BOOL read_write;
@@ -1062,6 +1061,7 @@ static BOOL read_mapped_resources( QUEUEDUPDATES *updates, void *base, DWORD map
 static BOOL map_file_into_memory( struct mapping_info *mi )
 {
     DWORD page_attr, perm;
+    HANDLE mapping;
 
     if (mi->read_write)
     {
@@ -1074,15 +1074,13 @@ static BOOL map_file_into_memory( struct mapping_info *mi )
         perm = FILE_MAP_READ;
     }
 
-    mi->mapping = CreateFileMappingW( mi->file, NULL, page_attr, 0, 0, NULL );
-    if (!mi->mapping)
-        return FALSE;
+    mapping = CreateFileMappingW( mi->file, NULL, page_attr, 0, 0, NULL );
+    if (!mapping) return FALSE;
 
-    mi->base = MapViewOfFile( mi->mapping, perm, 0, 0, mi->size );
-    if (!mi->base)
-        return FALSE;
+    mi->base = MapViewOfFile( mapping, perm, 0, 0, mi->size );
+    CloseHandle( mapping );
 
-    return TRUE;
+    return mi->base != NULL;
 }
 
 static BOOL unmap_file_from_memory( struct mapping_info *mi )
@@ -1090,9 +1088,6 @@ static BOOL unmap_file_from_memory( struct mapping_info *mi )
     if (mi->base)
         UnmapViewOfFile( mi->base );
     mi->base = NULL;
-    if (mi->mapping)
-        CloseHandle( mi->mapping );
-    mi->mapping = NULL;
     return TRUE;
 }
 
@@ -1126,10 +1121,7 @@ static struct mapping_info *create_mapping( LPCWSTR name, BOOL rw )
         if (map_file_into_memory( mi ))
             return mi;
     }
-
-    unmap_file_from_memory( mi );
-    HeapFree( GetProcessHeap(), 0, mi );
-
+    destroy_mapping( mi );
     return NULL;
 }
 
