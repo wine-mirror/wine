@@ -476,6 +476,37 @@ void WCMD_opt_s_strip_quotes(WCHAR *cmd) {
 
 
 /*************************************************************************
+ * WCMD_is_magic_envvar
+ * Return TRUE if s is '%'magicvar'%'
+ * and is not masked by a real environment variable.
+ */
+
+static inline BOOL WCMD_is_magic_envvar(const WCHAR *s, const WCHAR *magicvar)
+{
+    int len;
+
+    if (s[0] != '%')
+        return FALSE;         /* Didn't begin with % */
+    len = strlenW(s);
+    if (len < 2 || s[len-1] != '%')
+        return FALSE;         /* Didn't end with another % */
+
+    if (CompareStringW(LOCALE_USER_DEFAULT,
+                       NORM_IGNORECASE | SORT_STRINGSORT,
+                       s+1, len-2, magicvar, -1) != CSTR_EQUAL) {
+        /* Name doesn't match. */
+        return FALSE;
+    }
+
+    if (GetEnvironmentVariableW(magicvar, NULL, 0) > 0) {
+        /* Masked by real environment variable. */
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/*************************************************************************
  * WCMD_expand_envvar
  *
  *	Expands environment variables, allowing for WCHARacter substitution
@@ -489,15 +520,10 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forVar, WCHAR *forVal) {
     int len;
 
     static const WCHAR ErrorLvl[]  = {'E','R','R','O','R','L','E','V','E','L','\0'};
-    static const WCHAR ErrorLvlP[] = {'%','E','R','R','O','R','L','E','V','E','L','%','\0'};
     static const WCHAR Date[]      = {'D','A','T','E','\0'};
-    static const WCHAR DateP[]     = {'%','D','A','T','E','%','\0'};
     static const WCHAR Time[]      = {'T','I','M','E','\0'};
-    static const WCHAR TimeP[]     = {'%','T','I','M','E','%','\0'};
     static const WCHAR Cd[]        = {'C','D','\0'};
-    static const WCHAR CdP[]       = {'%','C','D','%','\0'};
     static const WCHAR Random[]    = {'R','A','N','D','O','M','\0'};
-    static const WCHAR RandomP[]   = {'%','R','A','N','D','O','M','%','\0'};
     static const WCHAR Delims[]    = {'%',' ',':','\0'};
 
     WINE_TRACE("Expanding: %s (%s,%s)\n", wine_dbgstr_w(start),
@@ -545,47 +571,22 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forVar, WCHAR *forVal) {
     /* Expand to contents, if unchanged, return */
     /* Handle DATE, TIME, ERRORLEVEL and CD replacements allowing */
     /* override if existing env var called that name              */
-    if ((CompareStringW(LOCALE_USER_DEFAULT,
-                        NORM_IGNORECASE | SORT_STRINGSORT,
-                        thisVar, 12, ErrorLvlP, -1) == 2) &&
-                (GetEnvironmentVariableW(ErrorLvl, thisVarContents, 1) == 0) &&
-                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
+    if (WCMD_is_magic_envvar(thisVar, ErrorLvl)) {
       static const WCHAR fmt[] = {'%','d','\0'};
       wsprintfW(thisVarContents, fmt, errorlevel);
       len = strlenW(thisVarContents);
-
-    } else if ((CompareStringW(LOCALE_USER_DEFAULT,
-                               NORM_IGNORECASE | SORT_STRINGSORT,
-                               thisVar, 6, DateP, -1) == 2) &&
-                (GetEnvironmentVariableW(Date, thisVarContents, 1) == 0) &&
-                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
-
+    } else if (WCMD_is_magic_envvar(thisVar, Date)) {
       GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL,
                     NULL, thisVarContents, MAXSTRING);
       len = strlenW(thisVarContents);
-
-    } else if ((CompareStringW(LOCALE_USER_DEFAULT,
-                               NORM_IGNORECASE | SORT_STRINGSORT,
-                               thisVar, 6, TimeP, -1) == 2) &&
-                (GetEnvironmentVariableW(Time, thisVarContents, 1) == 0) &&
-                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
+    } else if (WCMD_is_magic_envvar(thisVar, Time)) {
       GetTimeFormatW(LOCALE_USER_DEFAULT, TIME_NOSECONDS, NULL,
                         NULL, thisVarContents, MAXSTRING);
       len = strlenW(thisVarContents);
-
-    } else if ((CompareStringW(LOCALE_USER_DEFAULT,
-                               NORM_IGNORECASE | SORT_STRINGSORT,
-                               thisVar, 4, CdP, -1) == 2) &&
-                (GetEnvironmentVariableW(Cd, thisVarContents, 1) == 0) &&
-                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
+    } else if (WCMD_is_magic_envvar(thisVar, Cd)) {
       GetCurrentDirectoryW(MAXSTRING, thisVarContents);
       len = strlenW(thisVarContents);
-
-    } else if ((CompareStringW(LOCALE_USER_DEFAULT,
-                               NORM_IGNORECASE | SORT_STRINGSORT,
-                               thisVar, 8, RandomP, -1) == 2) &&
-                (GetEnvironmentVariableW(Random, thisVarContents, 1) == 0) &&
-                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
+    } else if (WCMD_is_magic_envvar(thisVar, Random)) {
       static const WCHAR fmt[] = {'%','d','\0'};
       wsprintfW(thisVarContents, fmt, rand() % 32768);
       len = strlenW(thisVarContents);
