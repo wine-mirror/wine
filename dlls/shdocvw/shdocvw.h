@@ -251,6 +251,7 @@ void handle_navigation_error(DocHost*,HRESULT,BSTR,IHTMLWindow2*) DECLSPEC_HIDDE
 #define WM_DOCHOSTTASK (WM_USER+0x300)
 void push_dochost_task(DocHost*,task_header_t*,task_proc_t,task_destr_t,BOOL) DECLSPEC_HIDDEN;
 LRESULT  process_dochost_tasks(DocHost*) DECLSPEC_HIDDEN;
+void abort_dochost_tasks(DocHost*,task_proc_t) DECLSPEC_HIDDEN;
 
 HRESULT InternetExplorer_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 void InternetExplorer_WebBrowser_Init(InternetExplorer*) DECLSPEC_HIDDEN;

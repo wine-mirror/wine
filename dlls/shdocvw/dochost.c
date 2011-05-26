@@ -62,11 +62,14 @@ LRESULT process_dochost_tasks(DocHost *This)
     return 0;
 }
 
-static void abort_dochost_tasks(DocHost *This)
+void abort_dochost_tasks(DocHost *This, task_proc_t proc)
 {
     task_header_t *task, *cursor;
 
     LIST_FOR_EACH_ENTRY_SAFE(task, cursor, &This->task_queue, task_header_t, entry) {
+        if(proc && proc != task->proc)
+            continue;
+
         list_remove(&task->entry);
         task->destr(task);
     }
@@ -886,7 +889,7 @@ void DocHost_Init(DocHost *This, IDispatch *disp, const IDocHostContainerVtbl* c
 
 void DocHost_Release(DocHost *This)
 {
-    abort_dochost_tasks(This);
+    abort_dochost_tasks(This, NULL);
     release_dochost_client(This);
     DocHost_ClientSite_Release(This);
 

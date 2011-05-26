@@ -761,6 +761,7 @@ static HRESULT async_doc_navigate(DocHost *This, LPCWSTR url, LPCWSTR headers, P
     }
 
     task->async_notif = async_notif;
+    abort_dochost_tasks(This, doc_navigate_proc);
     push_dochost_task(This, &task->header, doc_navigate_proc, doc_navigate_task_destr, FALSE);
     return S_OK;
 }
