@@ -133,7 +133,5 @@ mkstemps (
       value += 7777;
     }
 
-  /* We return the null string if we can't find a unique file name.  */
-  template[0] = '\0';
   return -1;
 }
