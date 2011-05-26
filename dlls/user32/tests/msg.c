@@ -13192,6 +13192,10 @@ static void test_hotkey(void)
         DispatchMessage(&msg);
     ok_sequence(WmHotkeyReleaseLWIN, "window hotkey release LWIN", FALSE);
 
+    /* Register same hwnd/id with different key combination */
+    ret = RegisterHotKey(test_window, 5, 0, hotkey_letter);
+    ok(ret == TRUE, "expected TRUE, got %i, err=%d\n", ret, GetLastError());
+
     /* Unregister hotkey properly */
     SetLastError(0xdeadbeef);
     ret = UnregisterHotKey(test_window, 5);
