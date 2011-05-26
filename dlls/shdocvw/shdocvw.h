@@ -80,9 +80,11 @@ typedef struct {
 struct _task_header_t;
 
 typedef void (*task_proc_t)(DocHost*, struct _task_header_t*);
+typedef void (*task_destr_t)(struct _task_header_t*);
 
 typedef struct _task_header_t {
     task_proc_t proc;
+    task_destr_t destr;
 } task_header_t;
 
 typedef struct _IDocHostContainerVtbl
@@ -244,7 +246,7 @@ HRESULT get_location_url(DocHost*,BSTR*) DECLSPEC_HIDDEN;
 void handle_navigation_error(DocHost*,HRESULT,BSTR,IHTMLWindow2*) DECLSPEC_HIDDEN;
 
 #define WM_DOCHOSTTASK (WM_USER+0x300)
-void push_dochost_task(DocHost*,task_header_t*,task_proc_t,BOOL) DECLSPEC_HIDDEN;
+void push_dochost_task(DocHost*,task_header_t*,task_proc_t,task_destr_t,BOOL) DECLSPEC_HIDDEN;
 LRESULT  process_dochost_task(DocHost*,LPARAM) DECLSPEC_HIDDEN;
 
 HRESULT InternetExplorer_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;

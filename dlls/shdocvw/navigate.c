@@ -674,15 +674,15 @@ typedef struct {
     BOOL async_notif;
 } task_doc_navigate_t;
 
-static HRESULT free_doc_navigate_task(task_doc_navigate_t *task, BOOL free_task)
+static void doc_navigate_task_destr(task_header_t *t)
 {
+    task_doc_navigate_t *task = (task_doc_navigate_t*)t;
+
     SysFreeString(task->url);
     SysFreeString(task->headers);
     if(task->post_data)
         SafeArrayDestroy(task->post_data);
-    if(free_task)
-        heap_free(task);
-    return E_OUTOFMEMORY;
+    heap_free(task);
 }
 
 static void doc_navigate_proc(DocHost *This, task_header_t *t)
@@ -691,15 +691,16 @@ static void doc_navigate_proc(DocHost *This, task_header_t *t)
     IHTMLPrivateWindow *priv_window;
     HRESULT hres;
 
-    if(!This->doc_navigate)
+    if(!This->doc_navigate) {
+        ERR("Skip nav\n");
         return;
+    }
 
     if(task->async_notif) {
         VARIANT_BOOL cancel = VARIANT_FALSE;
         on_before_navigate2(This, task->url, task->post_data, task->headers, &cancel);
         if(cancel) {
             TRACE("Navigation calnceled\n");
-            free_doc_navigate_task(task, FALSE);
             return;
         }
     }
@@ -711,8 +712,6 @@ static void doc_navigate_proc(DocHost *This, task_header_t *t)
     }else {
         WARN("Could not get IHTMLPrivateWindow iface: %08x\n", hres);
     }
-
-    free_doc_navigate_task(task, FALSE);
 }
 
 static HRESULT async_doc_navigate(DocHost *This, LPCWSTR url, LPCWSTR headers, PBYTE post_data, ULONG post_data_size,
@@ -720,24 +719,33 @@ static HRESULT async_doc_navigate(DocHost *This, LPCWSTR url, LPCWSTR headers, P
 {
     task_doc_navigate_t *task;
 
+    TRACE("%s\n", debugstr_w(url));
+
     task = heap_alloc_zero(sizeof(*task));
     if(!task)
         return E_OUTOFMEMORY;
 
     task->url = SysAllocString(url);
-    if(!task->url)
-        return free_doc_navigate_task(task, TRUE);
+    if(!task->url) {
+        doc_navigate_task_destr(&task->header);
+        return E_OUTOFMEMORY;
+    }
 
     if(headers) {
         task->headers = SysAllocString(headers);
-        if(!task->headers)
-            return free_doc_navigate_task(task, TRUE);
+        if(!task->headers) {
+            doc_navigate_task_destr(&task->header);
+            return E_OUTOFMEMORY;
+        }
     }
 
     if(post_data) {
         task->post_data = SafeArrayCreateVector(VT_UI1, 0, post_data_size);
-        if(!task->post_data)
-            return free_doc_navigate_task(task, TRUE);
+        if(!task->post_data) {
+            doc_navigate_task_destr(&task->header);
+            return E_OUTOFMEMORY;
+        }
+
         memcpy(task->post_data->pvData, post_data, post_data_size);
     }
 
@@ -747,13 +755,13 @@ static HRESULT async_doc_navigate(DocHost *This, LPCWSTR url, LPCWSTR headers, P
         on_before_navigate2(This, task->url, task->post_data, task->headers, &cancel);
         if(cancel) {
             TRACE("Navigation calnceled\n");
-            free_doc_navigate_task(task, TRUE);
+            doc_navigate_task_destr(&task->header);
             return S_OK;
         }
     }
 
     task->async_notif = async_notif;
-    push_dochost_task(This, &task->header, doc_navigate_proc, FALSE);
+    push_dochost_task(This, &task->header, doc_navigate_proc, doc_navigate_task_destr, FALSE);
     return S_OK;
 }
 
@@ -802,6 +810,14 @@ typedef struct {
     BindStatusCallback *bsc;
 } task_navigate_bsc_t;
 
+static void navigate_bsc_task_destr(task_header_t *t)
+{
+    task_navigate_bsc_t *task = (task_navigate_bsc_t*)t;
+
+    IBindStatusCallback_Release(&task->bsc->IBindStatusCallback_iface);
+    heap_free(task);
+}
+
 static void navigate_bsc_proc(DocHost *This, task_header_t *t)
 {
     task_navigate_bsc_t *task = (task_navigate_bsc_t*)t;
@@ -810,8 +826,6 @@ static void navigate_bsc_proc(DocHost *This, task_header_t *t)
         create_doc_view_hwnd(This);
 
     navigate_bsc(This, task->bsc, NULL);
-
-    IBindStatusCallback_Release(&task->bsc->IBindStatusCallback_iface);
 }
 
 
@@ -868,7 +882,7 @@ HRESULT navigate_url(DocHost *This, LPCWSTR url, const VARIANT *Flags,
 
         task = heap_alloc(sizeof(*task));
         task->bsc = create_callback(This, url, post_data, post_data_len, headers);
-        push_dochost_task(This, &task->header, navigate_bsc_proc, This->url == NULL);
+        push_dochost_task(This, &task->header, navigate_bsc_proc, navigate_bsc_task_destr, This->url == NULL);
     }
 
     if(post_data)
@@ -888,6 +902,8 @@ static HRESULT navigate_hlink(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
     BINDINFO bindinfo;
     DWORD bindf = 0;
     HRESULT hres;
+
+    TRACE("\n");
 
     hres = IMoniker_GetDisplayName(mon, 0, NULL, &url);
     if(FAILED(hres))

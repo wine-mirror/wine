@@ -31,9 +31,10 @@ DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
 
 static ATOM doc_view_atom = 0;
 
-void push_dochost_task(DocHost *This, task_header_t *task, task_proc_t proc, BOOL send)
+void push_dochost_task(DocHost *This, task_header_t *task, task_proc_t proc, task_destr_t destr, BOOL send)
 {
     task->proc = proc;
+    task->destr = destr;
 
     /* FIXME: Don't use lParam */
     if(send)
@@ -48,7 +49,10 @@ LRESULT process_dochost_task(DocHost *This, LPARAM lparam)
 
     task->proc(This, task);
 
-    heap_free(task);
+    if(task->destr)
+        task->destr(task);
+    else
+        heap_free(task);
     return 0;
 }
 
@@ -185,14 +189,20 @@ typedef struct {
     READYSTATE ready_state;
 } ready_state_task_t;
 
+static void ready_state_task_destr(task_header_t *_task)
+{
+    ready_state_task_t *task = (ready_state_task_t*)_task;
+
+    IUnknown_Release(task->doc);
+    heap_free(task);
+}
+
 static void ready_state_proc(DocHost *This, task_header_t *_task)
 {
     ready_state_task_t *task = (ready_state_task_t*)_task;
 
     if(task->doc == This->document)
         update_ready_state(This, task->ready_state);
-
-    IUnknown_Release(task->doc);
 }
 
 static void push_ready_state_task(DocHost *This, READYSTATE ready_state)
@@ -203,7 +213,12 @@ static void push_ready_state_task(DocHost *This, READYSTATE ready_state)
     task->doc = This->document;
     task->ready_state = ready_state;
 
-    push_dochost_task(This, &task->header, ready_state_proc, FALSE);
+    push_dochost_task(This, &task->header, ready_state_proc, ready_state_task_destr, FALSE);
+}
+
+static void object_available_task_destr(task_header_t *task)
+{
+    heap_free(task);
 }
 
 static void object_available_proc(DocHost *This, task_header_t *task)
@@ -242,7 +257,7 @@ HRESULT dochost_object_available(DocHost *This, IUnknown *doc)
     /* FIXME: Call SetAdvise */
 
     task = heap_alloc(sizeof(*task));
-    push_dochost_task(This, task, object_available_proc, FALSE);
+    push_dochost_task(This, task, object_available_proc, object_available_task_destr, FALSE);
 
     hres = get_doc_ready_state(This, &ready_state);
     if(SUCCEEDED(hres)) {
