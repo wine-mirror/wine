@@ -159,8 +159,6 @@ static void free_package_structures( MSIPACKAGE *package )
 
     TRACE("Freeing package action data\n");
 
-    remove_tracked_tempfiles(package);
-
     LIST_FOR_EACH_SAFE( item, cursor, &package->features )
     {
         MSIFEATURE *feature = LIST_ENTRY( item, MSIFEATURE, entry );
@@ -338,6 +336,8 @@ static void free_package_structures( MSIPACKAGE *package )
     msi_free( package->ActionFormat );
     msi_free( package->LastAction );
     msi_free( package->langids );
+
+    remove_tracked_tempfiles(package);
 
     /* cleanup control event subscriptions */
     ControlEvent_CleanupSubscriptions( package );
