@@ -3724,6 +3724,42 @@ struct set_user_object_info_reply
 
 
 
+struct register_hotkey_request
+{
+    struct request_header __header;
+    user_handle_t  window;
+    int            id;
+    unsigned int   flags;
+    unsigned int   vkey;
+    char __pad_28[4];
+};
+struct register_hotkey_reply
+{
+    struct reply_header __header;
+    int            replaced;
+    unsigned int   flags;
+    unsigned int   vkey;
+    char __pad_20[4];
+};
+
+
+
+struct unregister_hotkey_request
+{
+    struct request_header __header;
+    user_handle_t  window;
+    int            id;
+    char __pad_20[4];
+};
+struct unregister_hotkey_reply
+{
+    struct reply_header __header;
+    unsigned int   flags;
+    unsigned int   vkey;
+};
+
+
+
 struct attach_thread_input_request
 {
     struct request_header __header;
@@ -5023,6 +5059,8 @@ enum request
     REQ_set_thread_desktop,
     REQ_enum_desktop,
     REQ_set_user_object_info,
+    REQ_register_hotkey,
+    REQ_unregister_hotkey,
     REQ_attach_thread_input,
     REQ_get_thread_input,
     REQ_get_last_input_time,
@@ -5275,6 +5313,8 @@ union generic_request
     struct set_thread_desktop_request set_thread_desktop_request;
     struct enum_desktop_request enum_desktop_request;
     struct set_user_object_info_request set_user_object_info_request;
+    struct register_hotkey_request register_hotkey_request;
+    struct unregister_hotkey_request unregister_hotkey_request;
     struct attach_thread_input_request attach_thread_input_request;
     struct get_thread_input_request get_thread_input_request;
     struct get_last_input_time_request get_last_input_time_request;
@@ -5525,6 +5565,8 @@ union generic_reply
     struct set_thread_desktop_reply set_thread_desktop_reply;
     struct enum_desktop_reply enum_desktop_reply;
     struct set_user_object_info_reply set_user_object_info_reply;
+    struct register_hotkey_reply register_hotkey_reply;
+    struct unregister_hotkey_reply unregister_hotkey_reply;
     struct attach_thread_input_reply attach_thread_input_reply;
     struct get_thread_input_reply get_thread_input_reply;
     struct get_last_input_time_reply get_last_input_time_reply;
@@ -5592,6 +5634,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 423
+#define SERVER_PROTOCOL_VERSION 424
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

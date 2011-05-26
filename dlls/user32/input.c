@@ -983,9 +983,25 @@ UINT WINAPI GetKeyboardLayoutList(INT nBuff, HKL *layouts)
  */
 BOOL WINAPI RegisterHotKey(HWND hwnd,INT id,UINT modifiers,UINT vk)
 {
-    static int once;
-    if (!once++) FIXME_(keyboard)("(%p,%d,0x%08x,%X): stub\n",hwnd,id,modifiers,vk);
-    return TRUE;
+    BOOL ret;
+
+    TRACE_(keyboard)("(%p,%d,0x%08x,%X)\n",hwnd,id,modifiers,vk);
+
+    /* FIXME: Register hotkey with user driver. */
+
+    SERVER_START_REQ( register_hotkey )
+    {
+        req->window = wine_server_user_handle( hwnd );
+        req->id = id;
+        req->flags = modifiers;
+        req->vkey = vk;
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+
+    /* FIXME: Unregister new or replaced hotkey with user driver if necessary. */
+
+    return ret;
 }
 
 /***********************************************************************
@@ -993,9 +1009,21 @@ BOOL WINAPI RegisterHotKey(HWND hwnd,INT id,UINT modifiers,UINT vk)
  */
 BOOL WINAPI UnregisterHotKey(HWND hwnd,INT id)
 {
-    static int once;
-    if (!once++) FIXME_(keyboard)("(%p,%d): stub\n",hwnd,id);
-    return TRUE;
+    BOOL ret;
+
+    TRACE_(keyboard)("(%p,%d)\n",hwnd,id);
+
+    SERVER_START_REQ( unregister_hotkey )
+    {
+        req->window = wine_server_user_handle( hwnd );
+        req->id = id;
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+
+    /* FIXME: Unregister hotkey with user driver if necessary. */
+
+    return ret;
 }
 
 /***********************************************************************

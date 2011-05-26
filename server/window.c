@@ -1727,6 +1727,7 @@ void destroy_window( struct window *win )
     if (win == shell_listview) shell_listview = NULL;
     if (win == progman_window) progman_window = NULL;
     if (win == taskman_window) taskman_window = NULL;
+    free_hotkeys( win->desktop, win->handle );
     free_user_handle( win->handle );
     destroy_properties( win );
     list_remove( &win->entry );

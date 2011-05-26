@@ -13155,8 +13155,8 @@ static void test_hotkey(void)
 
     SetLastError(0xdeadbeef);
     ret = UnregisterHotKey(NULL, 0);
-    todo_wine ok(ret == FALSE, "expected FALSE, got %i\n", ret);
-    todo_wine ok(GetLastError() == ERROR_HOTKEY_NOT_REGISTERED, "unexpected error %d\n", GetLastError());
+    ok(ret == FALSE, "expected FALSE, got %i\n", ret);
+    ok(GetLastError() == ERROR_HOTKEY_NOT_REGISTERED, "unexpected error %d\n", GetLastError());
 
     if (ret == TRUE)
     {
@@ -13247,7 +13247,7 @@ static void test_hotkey(void)
         }
         DispatchMessage(&msg);
     }
-    ok_sequence(WmHotkeyPress, "window hotkey press", FALSE);
+    ok_sequence(WmHotkeyPress, "window hotkey press", TRUE);
 
     key_state = GetAsyncKeyState(hotkey_letter);
     ok((key_state & 0x8000) == 0x8000, "unexpected key state %x\n", key_state);
@@ -13255,7 +13255,7 @@ static void test_hotkey(void)
     keybd_event(hotkey_letter, 0, KEYEVENTF_KEYUP, 0);
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         DispatchMessage(&msg);
-    ok_sequence(WmHotkeyRelease, "window hotkey release", FALSE);
+    ok_sequence(WmHotkeyRelease, "window hotkey release", TRUE);
 
     keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
@@ -13278,7 +13278,7 @@ static void test_hotkey(void)
         }
         DispatchMessage(&msg);
     }
-    ok_sequence(WmHotkeyCombined, "window hotkey combined", FALSE);
+    ok_sequence(WmHotkeyCombined, "window hotkey combined", TRUE);
 
     /* Register same hwnd/id with different key combination */
     ret = RegisterHotKey(test_window, 5, 0, hotkey_letter);
@@ -13307,7 +13307,7 @@ static void test_hotkey(void)
         }
         DispatchMessage(&msg);
     }
-    ok_sequence(WmHotkeyNew, "window hotkey new", FALSE);
+    ok_sequence(WmHotkeyNew, "window hotkey new", TRUE);
 
     /* Unregister hotkey properly */
     ret = UnregisterHotKey(test_window, 5);
@@ -13351,7 +13351,7 @@ static void test_hotkey(void)
             ok(msg.hwnd != NULL, "unexpected thread message %x\n", msg.message);
         DispatchMessage(&msg);
     }
-    ok_sequence(WmHotkeyPress, "thread hotkey press", FALSE);
+    ok_sequence(WmHotkeyPress, "thread hotkey press", TRUE);
 
     keybd_event(hotkey_letter, 0, KEYEVENTF_KEYUP, 0);
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
@@ -13359,7 +13359,7 @@ static void test_hotkey(void)
         ok(msg.hwnd != NULL, "unexpected thread message %x\n", msg.message);
         DispatchMessage(&msg);
     }
-    ok_sequence(WmHotkeyRelease, "thread hotkey release", FALSE);
+    ok_sequence(WmHotkeyRelease, "thread hotkey release", TRUE);
 
     keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))

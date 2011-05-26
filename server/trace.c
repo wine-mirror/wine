@@ -3078,6 +3078,33 @@ static void dump_set_user_object_info_reply( const struct set_user_object_info_r
     dump_varargs_unicode_str( ", name=", cur_size );
 }
 
+static void dump_register_hotkey_request( const struct register_hotkey_request *req )
+{
+    fprintf( stderr, " window=%08x", req->window );
+    fprintf( stderr, ", id=%d", req->id );
+    fprintf( stderr, ", flags=%08x", req->flags );
+    fprintf( stderr, ", vkey=%08x", req->vkey );
+}
+
+static void dump_register_hotkey_reply( const struct register_hotkey_reply *req )
+{
+    fprintf( stderr, " replaced=%d", req->replaced );
+    fprintf( stderr, ", flags=%08x", req->flags );
+    fprintf( stderr, ", vkey=%08x", req->vkey );
+}
+
+static void dump_unregister_hotkey_request( const struct unregister_hotkey_request *req )
+{
+    fprintf( stderr, " window=%08x", req->window );
+    fprintf( stderr, ", id=%d", req->id );
+}
+
+static void dump_unregister_hotkey_reply( const struct unregister_hotkey_reply *req )
+{
+    fprintf( stderr, " flags=%08x", req->flags );
+    fprintf( stderr, ", vkey=%08x", req->vkey );
+}
+
 static void dump_attach_thread_input_request( const struct attach_thread_input_request *req )
 {
     fprintf( stderr, " tid_from=%04x", req->tid_from );
@@ -4057,6 +4084,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_thread_desktop_request,
     (dump_func)dump_enum_desktop_request,
     (dump_func)dump_set_user_object_info_request,
+    (dump_func)dump_register_hotkey_request,
+    (dump_func)dump_unregister_hotkey_request,
     (dump_func)dump_attach_thread_input_request,
     (dump_func)dump_get_thread_input_request,
     (dump_func)dump_get_last_input_time_request,
@@ -4305,6 +4334,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     (dump_func)dump_enum_desktop_reply,
     (dump_func)dump_set_user_object_info_reply,
+    (dump_func)dump_register_hotkey_reply,
+    (dump_func)dump_unregister_hotkey_reply,
     NULL,
     (dump_func)dump_get_thread_input_reply,
     (dump_func)dump_get_last_input_time_reply,
@@ -4553,6 +4584,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_thread_desktop",
     "enum_desktop",
     "set_user_object_info",
+    "register_hotkey",
+    "unregister_hotkey",
     "attach_thread_input",
     "get_thread_input",
     "get_last_input_time",
@@ -4655,9 +4688,12 @@ static const struct
     { "ERROR_CLASS_DOES_NOT_EXIST",  0xc0010000 | ERROR_CLASS_DOES_NOT_EXIST },
     { "ERROR_CLASS_HAS_WINDOWS",     0xc0010000 | ERROR_CLASS_HAS_WINDOWS },
     { "ERROR_CLIPBOARD_NOT_OPEN",    0xc0010000 | ERROR_CLIPBOARD_NOT_OPEN },
+    { "ERROR_HOTKEY_ALREADY_REGISTERED", 0xc0010000 | ERROR_HOTKEY_ALREADY_REGISTERED },
+    { "ERROR_HOTKEY_NOT_REGISTERED", 0xc0010000 | ERROR_HOTKEY_NOT_REGISTERED },
     { "ERROR_INVALID_CURSOR_HANDLE", 0xc0010000 | ERROR_INVALID_CURSOR_HANDLE },
     { "ERROR_INVALID_INDEX",         0xc0010000 | ERROR_INVALID_INDEX },
     { "ERROR_INVALID_WINDOW_HANDLE", 0xc0010000 | ERROR_INVALID_WINDOW_HANDLE },
+    { "ERROR_WINDOW_OF_OTHER_THREAD", 0xc0010000 | ERROR_WINDOW_OF_OTHER_THREAD },
     { "FILE_DELETED",                STATUS_FILE_DELETED },
     { "FILE_IS_A_DIRECTORY",         STATUS_FILE_IS_A_DIRECTORY },
     { "FILE_LOCK_CONFLICT",          STATUS_FILE_LOCK_CONFLICT },

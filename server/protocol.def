@@ -2632,6 +2632,29 @@ enum coords_relative
 #define SET_USER_OBJECT_FLAGS 1
 
 
+/* Register a hotkey */
+@REQ(register_hotkey)
+    user_handle_t  window;        /* handle to the window */
+    int            id;            /* hotkey identifier */
+    unsigned int   flags;         /* modifier keys */
+    unsigned int   vkey;          /* virtual key code */
+@REPLY
+    int            replaced;      /* did we replace an existing hotkey? */
+    unsigned int   flags;         /* flags of replaced hotkey */
+    unsigned int   vkey;          /* virtual key code of replaced hotkey */
+@END
+
+
+/* Unregister a hotkey */
+@REQ(unregister_hotkey)
+    user_handle_t  window;        /* handle to the window */
+    int            id;            /* hotkey identifier */
+@REPLY
+    unsigned int   flags;         /* flags of removed hotkey */
+    unsigned int   vkey;          /* virtual key code of removed hotkey */
+@END
+
+
 /* Attach (or detach) thread inputs */
 @REQ(attach_thread_input)
     thread_id_t    tid_from;       /* thread to be attached */

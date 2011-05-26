@@ -291,6 +291,8 @@ DECL_HANDLER(get_thread_desktop);
 DECL_HANDLER(set_thread_desktop);
 DECL_HANDLER(enum_desktop);
 DECL_HANDLER(set_user_object_info);
+DECL_HANDLER(register_hotkey);
+DECL_HANDLER(unregister_hotkey);
 DECL_HANDLER(attach_thread_input);
 DECL_HANDLER(get_thread_input);
 DECL_HANDLER(get_last_input_time);
@@ -542,6 +544,8 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_thread_desktop,
     (req_handler)req_enum_desktop,
     (req_handler)req_set_user_object_info,
+    (req_handler)req_register_hotkey,
+    (req_handler)req_unregister_hotkey,
     (req_handler)req_attach_thread_input,
     (req_handler)req_get_thread_input,
     (req_handler)req_get_last_input_time,
@@ -1705,6 +1709,21 @@ C_ASSERT( sizeof(struct set_user_object_info_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct set_user_object_info_reply, is_desktop) == 8 );
 C_ASSERT( FIELD_OFFSET(struct set_user_object_info_reply, old_obj_flags) == 12 );
 C_ASSERT( sizeof(struct set_user_object_info_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct register_hotkey_request, window) == 12 );
+C_ASSERT( FIELD_OFFSET(struct register_hotkey_request, id) == 16 );
+C_ASSERT( FIELD_OFFSET(struct register_hotkey_request, flags) == 20 );
+C_ASSERT( FIELD_OFFSET(struct register_hotkey_request, vkey) == 24 );
+C_ASSERT( sizeof(struct register_hotkey_request) == 32 );
+C_ASSERT( FIELD_OFFSET(struct register_hotkey_reply, replaced) == 8 );
+C_ASSERT( FIELD_OFFSET(struct register_hotkey_reply, flags) == 12 );
+C_ASSERT( FIELD_OFFSET(struct register_hotkey_reply, vkey) == 16 );
+C_ASSERT( sizeof(struct register_hotkey_reply) == 24 );
+C_ASSERT( FIELD_OFFSET(struct unregister_hotkey_request, window) == 12 );
+C_ASSERT( FIELD_OFFSET(struct unregister_hotkey_request, id) == 16 );
+C_ASSERT( sizeof(struct unregister_hotkey_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct unregister_hotkey_reply, flags) == 8 );
+C_ASSERT( FIELD_OFFSET(struct unregister_hotkey_reply, vkey) == 12 );
+C_ASSERT( sizeof(struct unregister_hotkey_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct attach_thread_input_request, tid_from) == 12 );
 C_ASSERT( FIELD_OFFSET(struct attach_thread_input_request, tid_to) == 16 );
 C_ASSERT( FIELD_OFFSET(struct attach_thread_input_request, attach) == 20 );

@@ -136,6 +136,16 @@ struct msg_queue
     timeout_t              last_get_msg;    /* time of last get message call */
 };
 
+struct hotkey
+{
+    struct list         entry;        /* entry in desktop hotkey list */
+    struct msg_queue   *queue;        /* queue owning this hotkey */
+    user_handle_t       win;          /* window handle */
+    int                 id;           /* hotkey id */
+    unsigned int        vkey;         /* virtual key code */
+    unsigned int        flags;        /* key modifiers */
+};
+
 static void msg_queue_dump( struct object *obj, int verbose );
 static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *entry );
 static void msg_queue_remove_queue( struct object *obj, struct wait_queue_entry *entry );
@@ -905,10 +915,20 @@ static void msg_queue_destroy( struct object *obj )
 {
     struct msg_queue *queue = (struct msg_queue *)obj;
     struct list *ptr;
+    struct hotkey *hotkey, *hotkey2;
     int i;
 
     cleanup_results( queue );
     for (i = 0; i < NB_MSG_KINDS; i++) empty_msg_list( &queue->msg_list[i] );
+
+    LIST_FOR_EACH_ENTRY_SAFE( hotkey, hotkey2, &queue->input->desktop->hotkeys, struct hotkey, entry )
+    {
+        if (hotkey->queue == queue)
+        {
+            list_remove( &hotkey->entry );
+            free( hotkey );
+        }
+    }
 
     while ((ptr = list_head( &queue->pending_timers )))
     {
@@ -1921,6 +1941,21 @@ void post_win_event( struct thread *thread, unsigned int event,
     }
 }
 
+/* free all hotkeys on a desktop, optionally filtering by window */
+void free_hotkeys( struct desktop *desktop, user_handle_t window )
+{
+    struct hotkey *hotkey, *hotkey2;
+
+    LIST_FOR_EACH_ENTRY_SAFE( hotkey, hotkey2, &desktop->hotkeys, struct hotkey, entry )
+    {
+        if (!window || hotkey->win == window)
+        {
+            list_remove( &hotkey->entry );
+            free( hotkey );
+        }
+    }
+}
+
 
 /* check if the thread owning the window is hung */
 DECL_HANDLER(is_window_hung)
@@ -2364,6 +2399,123 @@ DECL_HANDLER(kill_win_timer)
     release_object( thread );
 }
 
+DECL_HANDLER(register_hotkey)
+{
+    struct desktop *desktop;
+    user_handle_t win_handle = req->window;
+    struct hotkey *hotkey;
+    struct hotkey *new_hotkey = NULL;
+    struct thread *thread;
+    const int modifier_flags = MOD_ALT|MOD_CONTROL|MOD_SHIFT|MOD_WIN;
+
+    if (!(desktop = get_thread_desktop( current, 0 ))) return;
+
+    if (win_handle)
+    {
+        if (!get_user_object_handle( &win_handle, USER_WINDOW ))
+        {
+            release_object( desktop );
+            set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
+            return;
+        }
+
+        thread = get_window_thread( win_handle );
+        if (thread) release_object( thread );
+
+        if (thread != current)
+        {
+            release_object( desktop );
+            set_win32_error( ERROR_WINDOW_OF_OTHER_THREAD );
+            return;
+        }
+    }
+
+    LIST_FOR_EACH_ENTRY( hotkey, &desktop->hotkeys, struct hotkey, entry )
+    {
+        if (req->vkey == hotkey->vkey &&
+            (req->flags & modifier_flags) == (hotkey->flags & modifier_flags))
+        {
+            release_object( desktop );
+            set_win32_error( ERROR_HOTKEY_ALREADY_REGISTERED );
+            return;
+        }
+        if (current->queue == hotkey->queue && win_handle == hotkey->win && req->id == hotkey->id)
+            new_hotkey = hotkey;
+    }
+
+    if (new_hotkey)
+    {
+        reply->replaced = 1;
+        reply->flags    = new_hotkey->flags;
+        reply->vkey     = new_hotkey->vkey;
+    }
+    else
+    {
+        new_hotkey = mem_alloc( sizeof(*new_hotkey) );
+        if (new_hotkey)
+        {
+            list_add_tail( &desktop->hotkeys, &new_hotkey->entry );
+            new_hotkey->queue  = current->queue;
+            new_hotkey->win    = win_handle;
+            new_hotkey->id     = req->id;
+        }
+    }
+
+    if (new_hotkey)
+    {
+        new_hotkey->flags = req->flags;
+        new_hotkey->vkey  = req->vkey;
+    }
+
+    release_object( desktop );
+}
+
+DECL_HANDLER(unregister_hotkey)
+{
+    struct desktop *desktop;
+    user_handle_t win_handle = req->window;
+    struct hotkey *hotkey;
+    struct thread *thread;
+
+    if (!(desktop = get_thread_desktop( current, 0 ))) return;
+
+    if (win_handle)
+    {
+        if (!get_user_object_handle( &win_handle, USER_WINDOW ))
+        {
+            release_object( desktop );
+            set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
+            return;
+        }
+
+        thread = get_window_thread( win_handle );
+        if (thread) release_object( thread );
+
+        if (thread != current)
+        {
+            release_object( desktop );
+            set_win32_error( ERROR_WINDOW_OF_OTHER_THREAD );
+            return;
+        }
+    }
+
+    LIST_FOR_EACH_ENTRY( hotkey, &desktop->hotkeys, struct hotkey, entry )
+    {
+        if (current->queue == hotkey->queue && win_handle == hotkey->win && req->id == hotkey->id)
+            goto found;
+    }
+
+    release_object( desktop );
+    set_win32_error( ERROR_HOTKEY_NOT_REGISTERED );
+    return;
+
+found:
+    reply->flags = hotkey->flags;
+    reply->vkey  = hotkey->vkey;
+    list_remove( &hotkey->entry );
+    free( hotkey );
+    release_object( desktop );
+}
 
 /* attach (or detach) thread inputs */
 DECL_HANDLER(attach_thread_input)
