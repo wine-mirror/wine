@@ -396,7 +396,7 @@ wine_fn_config_test ()
     AS_VAR_IF([enable_tests],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "all: $ac_dir
 .PHONY: $ac_dir
-$ac_dir: $ac_dir/Makefile __builddeps__ dummy
+$ac_dir: $ac_dir/Makefile programs/winetest/Makefile __builddeps__ dummy
 	@cd $ac_dir && \$(MAKE)
 programs/winetest: $ac_dir
 check test: $ac_dir/__test__
