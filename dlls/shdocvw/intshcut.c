@@ -816,7 +816,8 @@ static InternetShortcut *create_shortcut(void)
         newshortcut->IPersistFile_iface.lpVtbl = &persistFileVtbl;
         newshortcut->IPropertySetStorage_iface.lpVtbl = &propertySetStorageVtbl;
         newshortcut->refCount = 0;
-        hr = StgCreateStorageEx(NULL, STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE, STGFMT_STORAGE, 0, NULL, NULL, &IID_IPropertySetStorage, (void **) &newshortcut->property_set_storage);
+        hr = StgCreateStorageEx(NULL, STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_DELETEONRELEASE,
+                                STGFMT_STORAGE, 0, NULL, NULL, &IID_IPropertySetStorage, (void **) &newshortcut->property_set_storage);
         if FAILED(hr)
         {
             TRACE("Failed to create the storage object needed for the shortcut.\n");
