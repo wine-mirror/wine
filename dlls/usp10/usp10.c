@@ -625,6 +625,8 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
 {
 
 #define Numeric_space 0x0020
+#define ZWNJ 0x200C
+#define ZWJ  0x200D
 
     int   cnt = 0, index = 0, str = 0;
     int   New_Script = SCRIPT_UNDEFINED;
@@ -665,7 +667,7 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
         }
     }
 
-    while (pwcInChars[cnt] == Numeric_space && cnt < cInChars)
+    while ((pwcInChars[cnt] == Numeric_space || pwcInChars[cnt] == ZWJ || pwcInChars[cnt] == ZWNJ) && cnt < cInChars)
         cnt++;
 
     if (cnt == cInChars) /* All Spaces */
@@ -704,12 +706,12 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
         if (levels && (levels[cnt] == pItems[index].a.s.uBidiLevel && (!strength || (strength[cnt] == 0 || strength[cnt] == str))))
             continue;
 
-        if(pwcInChars[cnt] != Numeric_space)
+        if(pwcInChars[cnt] != Numeric_space && pwcInChars[cnt] != ZWJ && pwcInChars[cnt] != ZWNJ)
             New_Script = get_char_script(pwcInChars[cnt]);
         else if (levels)
         {
             int j = 1;
-            while (cnt + j < cInChars - 1 && pwcInChars[cnt+j] == Numeric_space)
+            while (cnt + j < cInChars - 1 && (pwcInChars[cnt+j] == Numeric_space || pwcInChars[cnt+j] == ZWJ || pwcInChars[cnt+j] == ZWNJ))
                 j++;
             New_Script = get_char_script(pwcInChars[cnt+j]);
         }
