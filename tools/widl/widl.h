@@ -66,7 +66,7 @@ extern char *regscript_name;
 extern char *regscript_token;
 extern const char *prefix_client;
 extern const char *prefix_server;
-extern size_t pointer_size;
+extern unsigned int pointer_size;
 extern time_t now;
 
 extern int line_number;
