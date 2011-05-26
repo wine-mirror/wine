@@ -13076,6 +13076,7 @@ static void test_hotkey(void)
     HWND test_window, taskbar_window;
     BOOL ret;
     MSG msg;
+    SHORT key_state;
 
     SetLastError(0xdeadbeef);
     ret = UnregisterHotKey(NULL, 0);
@@ -13175,6 +13176,9 @@ static void test_hotkey(void)
         DispatchMessage(&msg);
     }
     ok_sequence(WmHotkeyPress, "window hotkey press", FALSE);
+
+    key_state = GetAsyncKeyState(hotkey_letter);
+    ok((key_state & 0x8000) == 0x8000, "unexpected key state %x\n", key_state);
 
     keybd_event(hotkey_letter, 0, KEYEVENTF_KEYUP, 0);
     while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE) ||
