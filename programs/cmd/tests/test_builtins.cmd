@@ -94,6 +94,24 @@ del /a:r *.test
 if not exist r.test echo r.test not found after delete, good
 if exist r.test echo r.test found after delete, bad
 
+echo -----------Testing Errorlevel-----------
+rem nt 4.0 doesn't really support a way of setting errorlevel, so this is weak
+rem See http://www.robvanderwoude.com/exit.php
+call :setError 1
+echo %ErrorLevel%
+if errorlevel 2 echo errorlevel too high, bad
+if errorlevel 1 echo errorlevel just right, good
+call :setError 0
+echo abc%ErrorLevel%def
+if errorlevel 1 echo errorlevel nonzero, bad
+if not errorlevel 1 echo errorlevel zero, good
+rem Now verify that setting a real variable hides its magic variable
+set errorlevel=7
+echo %ErrorLevel% should be 7
+if errorlevel 7 echo setting var worked too well, bad
+call :setError 3
+echo %ErrorLevel% should still be 7
+
 echo -----------Testing GOTO-----------
 if a==a goto dest1
 :dest1
@@ -107,3 +125,11 @@ echo goto with a leading tab worked
 if d==d goto dest4
 :dest4@space@
 echo goto with a following space worked
+
+echo -----------Done, jumping to EOF-----------
+goto :eof
+rem Subroutine to set errorlevel and return
+rem in windows nt 4.0, this always sets errorlevel 1, since /b isn't supported
+:setError
+exit /B %1
+rem This line runs under cmd in windows NT 4, but not in more modern versions.

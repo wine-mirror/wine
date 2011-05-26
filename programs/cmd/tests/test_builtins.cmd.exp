@@ -82,8 +82,16 @@ if /I seems to work
 not-r.test not found after delete, good
 r.test found before delete, good
 r.test not found after delete, good
+-----------Testing Errorlevel-----------
+1
+errorlevel just right, good
+abc0def@or_broken@abc1def
+errorlevel zero, good@or_broken@errorlevel nonzero, bad
+7 should be 7
+7 should still be 7
 -----------Testing GOTO-----------
 goto with no leading space worked
 goto with a leading space worked
 goto with a leading tab worked
 goto with a following space worked
+-----------Done, jumping to EOF-----------
