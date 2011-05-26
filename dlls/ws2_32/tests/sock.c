@@ -30,7 +30,6 @@
 #include "wine/test.h"
 
 #define MAX_CLIENTS 4      /* Max number of clients */
-#define NUM_TESTS   4      /* Number of tests performed */
 #define FIRST_CHAR 'A'     /* First character in transferred pattern */
 #define BIND_SLEEP 10      /* seconds to wait between attempts to bind() */
 #define BIND_TRIES 6       /* Number of bind() attempts */
@@ -252,6 +251,16 @@ static void read_zero_bytes ( SOCKET s )
     ok ( n <= 0, "garbage data received: %d bytes\n", n );
 }
 
+static int do_oob_send ( SOCKET s, char *buf, int buflen, int sendlen )
+{
+    char* last = buf + buflen, *p;
+    int n = 1;
+    for ( p = buf; n > 0 && p < last; p += n )
+        n = send ( s, p, min ( sendlen, last - p ), MSG_OOB );
+    wsa_ok ( n, 0 <=, "do_oob_send (%x): error %d\n" );
+    return p - buf;
+}
+
 static int do_synchronous_send ( SOCKET s, char *buf, int buflen, int sendlen )
 {
     char* last = buf + buflen, *p;
@@ -455,6 +464,76 @@ static VOID WINAPI simple_server ( server_params *par )
 }
 
 /*
+ * oob_server: A very basic server receiving out-of-band data.
+ */
+static VOID WINAPI oob_server ( server_params *par )
+{
+    test_params *gen = par->general;
+    server_memory *mem;
+    u_long atmark;
+    int pos, n_recvd, n_expected = gen->n_chunks * gen->chunk_size, tmp,
+        id = GetCurrentThreadId();
+
+    trace ( "oob_server (%x) starting\n", id );
+
+    set_so_opentype ( FALSE ); /* non-overlapped */
+    server_start ( par );
+    mem = TlsGetValue ( tls );
+
+    wsa_ok ( set_blocking ( mem->s, TRUE ), 0 ==, "oob_server (%x): failed to set blocking mode: %d\n");
+    wsa_ok ( listen ( mem->s, SOMAXCONN ), 0 ==, "oob_server (%x): listen failed: %d\n");
+
+    trace ( "oob_server (%x) ready\n", id );
+    SetEvent ( server_ready ); /* notify clients */
+
+    trace ( "oob_server (%x): waiting for client\n", id );
+
+    /* accept a single connection */
+    tmp = sizeof ( mem->sock[0].peer );
+    mem->sock[0].s = accept ( mem->s, (struct sockaddr*) &mem->sock[0].peer, &tmp );
+    wsa_ok ( mem->sock[0].s, INVALID_SOCKET !=, "oob_server (%x): accept failed: %d\n" );
+
+    ok ( mem->sock[0].peer.sin_addr.s_addr == inet_addr ( gen->inet_addr ),
+         "oob_server (%x): strange peer address\n", id );
+
+    /* check atmark state */
+    ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
+    todo_wine ok ( atmark == 1, "oob_server (%x): unexpectedly at the OOB mark: %i\n", id, atmark );
+
+    /* Receive normal data and check atmark state */
+    n_recvd = do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, n_expected, par->buflen );
+    ok ( n_recvd == n_expected,
+         "simple_server (%x): received less data than expected: %d of %d\n", id, n_recvd, n_expected );
+    pos = test_buffer ( mem->sock[0].buf, gen->chunk_size, gen->n_chunks );
+    ok ( pos == -1, "simple_server (%x): test pattern error: %d\n", id, pos);
+
+    ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
+    todo_wine ok ( atmark == 1, "oob_server (%x): unexpectedly at the OOB mark: %i\n", id, atmark );
+
+    /* Receive a part of the out-of-band data and check atmark state */
+    n_recvd = do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, 8, par->buflen );
+    ok ( n_recvd == 8,
+         "oob_server (%x): received less data than expected: %d of %d\n", id, n_recvd, 8 );
+    n_expected -= 8;
+
+    ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
+    ok ( atmark == 0, "oob_server (%x): not at the OOB mark: %i\n", id, atmark );
+
+    /* Receive the rest of the out-of-band data and check atmark state */
+    n_recvd = do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, n_expected, par->buflen );
+
+    ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
+    ok ( atmark == 0, "oob_server (%x): not at the OOB mark: %i\n", id, atmark );
+
+    /* cleanup */
+    wsa_ok ( closesocket ( mem->sock[0].s ),  0 ==, "oob_server (%x): closesocket error: %d\n" );
+    mem->sock[0].s = INVALID_SOCKET;
+
+    trace ( "oob_server (%x) exiting\n", id );
+    server_stop ();
+}
+
+/*
  * select_server: A non-blocking server.
  */
 static VOID WINAPI select_server ( server_params *par )
@@ -633,6 +712,52 @@ static VOID WINAPI simple_client ( client_params *par )
     /* cleanup */
     read_zero_bytes ( mem->s );
     trace ( "simple_client (%x) exiting\n", id );
+    client_stop ();
+}
+
+/*
+ * oob_client: A very basic client sending out-of-band data.
+ */
+static VOID WINAPI oob_client ( client_params *par )
+{
+    test_params *gen = par->general;
+    client_memory *mem;
+    int n_sent, n_expected = gen->n_chunks * gen->chunk_size, id;
+
+    id = GetCurrentThreadId();
+    trace ( "oob_client (%x): starting\n", id );
+    /* wait here because we want to call set_so_opentype before creating a socket */
+    WaitForSingleObject ( server_ready, INFINITE );
+    trace ( "oob_client (%x): server ready\n", id );
+
+    check_so_opentype ();
+    set_so_opentype ( FALSE ); /* non-overlapped */
+    client_start ( par );
+    mem = TlsGetValue ( tls );
+
+    /* Connect */
+    wsa_ok ( connect ( mem->s, (struct sockaddr*) &mem->addr, sizeof ( mem->addr ) ),
+             0 ==, "oob_client (%x): connect error: %d\n" );
+    ok ( set_blocking ( mem->s, TRUE ) == 0,
+         "oob_client (%x): failed to set blocking mode\n", id );
+    trace ( "oob_client (%x) connected\n", id );
+
+    /* send data to server */
+    n_sent = do_synchronous_send ( mem->s, mem->send_buf, n_expected, par->buflen );
+    ok ( n_sent == n_expected,
+         "oob_client (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
+
+    /* send out-of-band data to server */
+    n_sent = do_oob_send ( mem->s, mem->send_buf, n_expected, par->buflen );
+    ok ( n_sent == n_expected,
+         "oob_client (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
+
+    /* shutdown send direction */
+    wsa_ok ( shutdown ( mem->s, SD_SEND ), 0 ==, "simple_client (%x): shutdown failed: %d\n" );
+
+    /* cleanup */
+    read_zero_bytes ( mem->s );
+    trace ( "oob_client (%x) exiting\n", id );
     client_stop ();
 }
 
@@ -1268,7 +1393,7 @@ cleanup:
             SERVERIP, \
             SERVERPORT
 
-static test_setup tests [NUM_TESTS] =
+static test_setup tests [] =
 {
     /* Test 0: synchronous client and server */
     {
@@ -1333,7 +1458,28 @@ static test_setup tests [NUM_TESTS] =
             128
         }
     },
-        /* Test 3: synchronous mixed client and server */
+    /* Test 3: OOB client, OOB server */
+    {
+        {
+            STD_STREAM_SOCKET,
+            128,
+            16,
+            1
+        },
+        oob_server,
+        {
+            NULL,
+            0,
+            128
+        },
+        oob_client,
+        {
+            NULL,
+            0,
+            128
+        }
+    },
+    /* Test 4: synchronous mixed client and server */
     {
         {
             STD_STREAM_SOCKET,
@@ -4682,7 +4828,7 @@ START_TEST( sock )
     test_ip_pktinfo();
     test_extendedSocketOptions();
 
-    for (i = 0; i < NUM_TESTS; i++)
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
     {
         trace ( " **** STARTING TEST %d ****\n", i );
         do_test (  &tests[i] );
