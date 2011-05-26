@@ -113,6 +113,26 @@ CONFIGRET WINAPI CM_Get_Device_ID_ListW(
 }
 
 /***********************************************************************
+ *             CM_Get_Device_ID_List_SizeA  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_ID_List_SizeA( PULONG  pulLen, PCSTR  pszFilter, ULONG  ulFlags )
+{
+    FIXME("%p %s 0x%08x\n", pulLen, debugstr_a(pszFilter), ulFlags);
+
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
+ *             CM_Get_Device_ID_List_SizeW  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_ID_List_SizeW( PULONG  pulLen, PCWSTR  pszFilter, ULONG  ulFlags )
+{
+    FIXME("%p %s 0x%08x\n", pulLen, debugstr_w(pszFilter), ulFlags);
+
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
  *              CM_Get_Parent (SETUPAPI.@)
  */
 DWORD WINAPI CM_Get_Parent(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags)

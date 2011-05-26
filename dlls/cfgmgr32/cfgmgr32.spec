@@ -68,8 +68,8 @@
 @ stdcall CM_Get_Device_ID_ListW(wstr ptr long long) setupapi.CM_Get_Device_ID_ListW
 @ stub CM_Get_Device_ID_List_ExA
 @ stub CM_Get_Device_ID_List_ExW
-@ stub CM_Get_Device_ID_List_SizeA
-@ stub CM_Get_Device_ID_List_SizeW
+@ stdcall CM_Get_Device_ID_List_SizeA(ptr str long) setupapi.CM_Get_Device_ID_List_SizeA
+@ stdcall CM_Get_Device_ID_List_SizeW(ptr wstr long) setupapi.CM_Get_Device_ID_List_SizeW
 @ stub CM_Get_Device_ID_List_Size_ExA
 @ stub CM_Get_Device_ID_List_Size_ExW
 @ stdcall CM_Get_Device_ID_Size(ptr ptr long) setupapi.CM_Get_Device_ID_Size
