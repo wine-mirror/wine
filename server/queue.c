@@ -1316,6 +1316,42 @@ static void release_hardware_message( struct msg_queue *queue, unsigned int hw_i
     }
 }
 
+static int queue_hotkey_message( struct desktop *desktop, struct message *msg )
+{
+    struct hotkey *hotkey;
+    unsigned int modifiers = 0;
+
+    if (msg->msg != WM_KEYDOWN) return 0;
+
+    if (desktop->keystate[VK_MENU] & 0x80) modifiers |= MOD_ALT;
+    if (desktop->keystate[VK_CONTROL] & 0x80) modifiers |= MOD_CONTROL;
+    if (desktop->keystate[VK_SHIFT] & 0x80) modifiers |= MOD_SHIFT;
+    if ((desktop->keystate[VK_LWIN] & 0x80) || (desktop->keystate[VK_RWIN] & 0x80)) modifiers |= MOD_WIN;
+
+    LIST_FOR_EACH_ENTRY( hotkey, &desktop->hotkeys, struct hotkey, entry )
+    {
+        if (hotkey->vkey != msg->wparam) continue;
+        if ((hotkey->flags & (MOD_ALT|MOD_CONTROL|MOD_SHIFT|MOD_WIN)) == modifiers) goto found;
+    }
+
+    return 0;
+
+found:
+    msg->type      = MSG_POSTED;
+    msg->win       = hotkey->win;
+    msg->msg       = WM_HOTKEY;
+    msg->wparam    = hotkey->id;
+    msg->lparam    = ((hotkey->vkey & 0xffff) << 16) | modifiers;
+
+    free( msg->data );
+    msg->data      = NULL;
+    msg->data_size = 0;
+
+    list_add_tail( &hotkey->queue->msg_list[POST_MESSAGE], &msg->entry );
+    set_queue_bits( hotkey->queue, QS_POSTMESSAGE|QS_ALLPOSTMESSAGE );
+    return 1;
+}
+
 /* find the window that should receive a given hardware message */
 static user_handle_t find_hardware_message_window( struct desktop *desktop, struct thread_input *input,
                                                    struct message *msg, unsigned int *msg_code )
@@ -1358,6 +1394,7 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
 
     if (is_keyboard_msg( msg ))
     {
+        if (queue_hotkey_message( desktop, msg )) return;
         if (desktop->keystate[VK_MENU] & 0x80) msg->lparam |= KF_ALTDOWN << 16;
         if (msg->wparam == VK_SHIFT || msg->wparam == VK_LSHIFT || msg->wparam == VK_RSHIFT)
             msg->lparam &= ~(KF_EXTENDED << 16);

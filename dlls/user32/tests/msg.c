@@ -13247,7 +13247,7 @@ static void test_hotkey(void)
         }
         DispatchMessage(&msg);
     }
-    ok_sequence(WmHotkeyPress, "window hotkey press", TRUE);
+    ok_sequence(WmHotkeyPress, "window hotkey press", FALSE);
 
     key_state = GetAsyncKeyState(hotkey_letter);
     ok((key_state & 0x8000) == 0x8000, "unexpected key state %x\n", key_state);
@@ -13278,7 +13278,7 @@ static void test_hotkey(void)
         }
         DispatchMessage(&msg);
     }
-    ok_sequence(WmHotkeyCombined, "window hotkey combined", TRUE);
+    ok_sequence(WmHotkeyCombined, "window hotkey combined", FALSE);
 
     /* Register same hwnd/id with different key combination */
     ret = RegisterHotKey(test_window, 5, 0, hotkey_letter);
@@ -13307,7 +13307,7 @@ static void test_hotkey(void)
         }
         DispatchMessage(&msg);
     }
-    ok_sequence(WmHotkeyNew, "window hotkey new", TRUE);
+    ok_sequence(WmHotkeyNew, "window hotkey new", FALSE);
 
     /* Unregister hotkey properly */
     ret = UnregisterHotKey(test_window, 5);
@@ -13351,7 +13351,7 @@ static void test_hotkey(void)
             ok(msg.hwnd != NULL, "unexpected thread message %x\n", msg.message);
         DispatchMessage(&msg);
     }
-    ok_sequence(WmHotkeyPress, "thread hotkey press", TRUE);
+    ok_sequence(WmHotkeyPress, "thread hotkey press", FALSE);
 
     keybd_event(hotkey_letter, 0, KEYEVENTF_KEYUP, 0);
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
