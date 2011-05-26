@@ -120,6 +120,7 @@ struct msg_queue
     unsigned int           changed_bits;    /* changed wakeup bits */
     unsigned int           changed_mask;    /* changed wakeup mask */
     int                    paint_count;     /* pending paint messages count */
+    int                    hotkey_count;    /* pending hotkey messages count */
     int                    quit_message;    /* is there a pending quit message? */
     int                    exit_code;       /* exit code of pending quit message */
     int                    cursor_count;    /* per-queue cursor show count */
@@ -279,6 +280,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         queue->changed_bits    = 0;
         queue->changed_mask    = 0;
         queue->paint_count     = 0;
+        queue->hotkey_count    = 0;
         queue->quit_message    = 0;
         queue->cursor_count    = 0;
         queue->recv_result     = NULL;
@@ -600,6 +602,8 @@ static void remove_queue_message( struct msg_queue *queue, struct message *msg,
     case POST_MESSAGE:
         if (list_empty( &queue->msg_list[kind] ) && !queue->quit_message)
             clear_queue_bits( queue, QS_POSTMESSAGE|QS_ALLPOSTMESSAGE );
+        if (msg->msg == WM_HOTKEY && --queue->hotkey_count == 0)
+            clear_queue_bits( queue, QS_HOTKEY );
         break;
     }
     free_message( msg );
@@ -1358,7 +1362,8 @@ found:
     msg->data_size = 0;
 
     list_add_tail( &hotkey->queue->msg_list[POST_MESSAGE], &msg->entry );
-    set_queue_bits( hotkey->queue, QS_POSTMESSAGE|QS_ALLPOSTMESSAGE );
+    set_queue_bits( hotkey->queue, QS_POSTMESSAGE|QS_ALLPOSTMESSAGE|QS_HOTKEY );
+    hotkey->queue->hotkey_count++;
     return 1;
 }
 
@@ -1942,6 +1947,11 @@ void post_message( user_handle_t win, unsigned int message, lparam_t wparam, lpa
 
         list_add_tail( &thread->queue->msg_list[POST_MESSAGE], &msg->entry );
         set_queue_bits( thread->queue, QS_POSTMESSAGE|QS_ALLPOSTMESSAGE );
+        if (message == WM_HOTKEY)
+        {
+            set_queue_bits( thread->queue, QS_HOTKEY );
+            thread->queue->hotkey_count++;
+        }
     }
     release_object( thread );
 }
@@ -2150,6 +2160,11 @@ DECL_HANDLER(send_message)
         case MSG_POSTED:
             list_add_tail( &recv_queue->msg_list[POST_MESSAGE], &msg->entry );
             set_queue_bits( recv_queue, QS_POSTMESSAGE|QS_ALLPOSTMESSAGE );
+            if (msg->msg == WM_HOTKEY)
+            {
+                set_queue_bits( recv_queue, QS_HOTKEY );
+                recv_queue->hotkey_count++;
+            }
             break;
         case MSG_HARDWARE:  /* should use send_hardware_message instead */
         case MSG_CALLBACK_RESULT:  /* cannot send this one */
@@ -2243,6 +2258,11 @@ DECL_HANDLER(get_message)
     /* then check for posted messages */
     if ((filter & QS_POSTMESSAGE) &&
         get_posted_message( queue, get_win, req->get_first, req->get_last, req->flags, reply ))
+        return;
+
+    if ((filter & QS_HOTKEY) && queue->hotkey_count &&
+        req->get_first <= WM_HOTKEY && req->get_last >= WM_HOTKEY &&
+        get_posted_message( queue, get_win, WM_HOTKEY, WM_HOTKEY, req->flags, reply ))
         return;
 
     /* only check for quit messages if not posted messages pending.
