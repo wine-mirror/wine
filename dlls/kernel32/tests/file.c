@@ -3013,6 +3013,7 @@ static void test_ReplaceFileA(void)
     ok(!ret && (GetLastError() == ERROR_FILE_NOT_FOUND ||
         GetLastError() == ERROR_ACCESS_DENIED),
         "ReplaceFileA: unexpected error %d\n", GetLastError());
+    DeleteFileA( replacement );
 
     /*
      * if the first round (w/ backup) worked then as long as there is no
@@ -3107,6 +3108,7 @@ static void test_ReplaceFileW(void)
     ok(!ret && (GetLastError() == ERROR_FILE_NOT_FOUND ||
        GetLastError() == ERROR_ACCESS_DENIED),
         "ReplaceFileW: unexpected error %d\n", GetLastError());
+    DeleteFileW( replacement );
 
     if (removeBackup)
     {
