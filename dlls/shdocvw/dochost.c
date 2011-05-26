@@ -33,26 +33,32 @@ static ATOM doc_view_atom = 0;
 
 void push_dochost_task(DocHost *This, task_header_t *task, task_proc_t proc, task_destr_t destr, BOOL send)
 {
+    BOOL is_empty;
+
     task->proc = proc;
     task->destr = destr;
 
-    /* FIXME: Don't use lParam */
+    is_empty = list_empty(&This->task_queue);
+    list_add_tail(&This->task_queue, &task->entry);
+
     if(send)
-        SendMessageW(This->frame_hwnd, WM_DOCHOSTTASK, 0, (LPARAM)task);
-    else
-        PostMessageW(This->frame_hwnd, WM_DOCHOSTTASK, 0, (LPARAM)task);
+        SendMessageW(This->frame_hwnd, WM_DOCHOSTTASK, 0, 0);
+    else if(is_empty)
+        PostMessageW(This->frame_hwnd, WM_DOCHOSTTASK, 0, 0);
 }
 
-LRESULT process_dochost_task(DocHost *This, LPARAM lparam)
+LRESULT process_dochost_tasks(DocHost *This)
 {
-    task_header_t *task = (task_header_t*)lparam;
+    task_header_t *task;
 
-    task->proc(This, task);
+    while(!list_empty(&This->task_queue)) {
+        task = LIST_ENTRY(This->task_queue.next, task_header_t, entry);
+        list_remove(&task->entry);
 
-    if(task->destr)
+        task->proc(This, task);
         task->destr(task);
-    else
-        heap_free(task);
+    }
+
     return 0;
 }
 
@@ -860,6 +866,7 @@ void DocHost_Init(DocHost *This, IDispatch *disp, const IDocHostContainerVtbl* c
     This->container_vtbl = container;
 
     This->ready_state = READYSTATE_UNINITIALIZED;
+    list_init(&This->task_queue);
 
     DocHost_ClientSite_Init(This);
     DocHost_Frame_Init(This);

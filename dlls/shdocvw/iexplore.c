@@ -649,7 +649,7 @@ ie_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_NOTIFY:
         return iewnd_OnNotify(This, wparam, lparam);
     case WM_DOCHOSTTASK:
-        return process_dochost_task(&This->doc_host->doc_host, lparam);
+        return process_dochost_tasks(&This->doc_host->doc_host);
     case WM_UPDATEADDRBAR:
         return update_addrbar(This, lparam);
     }
