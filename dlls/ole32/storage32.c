@@ -5062,7 +5062,7 @@ static HRESULT TransactedSnapshotImpl_Construct(StorageBaseImpl *parentStorage,
     (*result)->base.openFlags = parentStorage->openFlags;
 
     /* Create a new temporary storage to act as the scratch file. */
-    hr = StgCreateDocfile(NULL, STGM_READWRITE|STGM_SHARE_EXCLUSIVE|STGM_CREATE,
+    hr = StgCreateDocfile(NULL, STGM_READWRITE|STGM_SHARE_EXCLUSIVE|STGM_CREATE|STGM_DELETEONRELEASE,
         0, (IStorage**)&(*result)->scratch);
 
     if (SUCCEEDED(hr))
