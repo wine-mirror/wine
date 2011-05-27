@@ -165,8 +165,6 @@ typedef struct {
 } IDirectXFileSaveObjectImpl;
 
 HRESULT IDirectXFileImpl_Create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
-HRESULT IDirectXFileFileObjectImpl_Create(IDirectXFileObjectImpl** ppObj) DECLSPEC_HIDDEN;
-HRESULT IDirectXFileFileSaveObjectImpl_Create(IDirectXFileSaveObjectImpl** ppObj) DECLSPEC_HIDDEN;
 
 BOOL read_bytes(parse_buffer * buf, LPVOID data, DWORD size) DECLSPEC_HIDDEN;
 BOOL parse_template(parse_buffer * buf) DECLSPEC_HIDDEN;
