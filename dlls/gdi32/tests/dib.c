@@ -99,6 +99,31 @@ static const char *sha1_graphics_a8r8g8b8[] =
     NULL
 };
 
+static const char *sha1_graphics_r5g5b5[] =
+{
+    "2a2ab8b3c019e70b788ade028b0e9e53ffc529ae",
+    "847005cf7371f511bcc837251cde07b1796f6113",
+    "a8f75743a930843ec14d516cd048b6e0468e5d89",
+    "d094f51ce9b9daa9c1d9594ea88be2a2db651459",
+    "cf3928e240c9149788e1635b115a4e5baea0dd8f",
+    "a9034a905daa91757b4f63345c0e40638cd53ca8",
+    "15ee915d989e49bb9bab5b834d8f355bd067cd8f",
+    "99474fecf11df7b7035c35be6b8b697be9889418",
+    "cbc2898717f97ebb07c0c7cc04abde936dc5b584",
+    "29c896b591fdf4ddd23e5c0da1818c37e4686d94",
+    "4b5b275d33c1ebfe5bdc61df2ad125e865b800fa",
+    "92df731fa1f89550d9d4f7ea36c13f2e57c4b02a",
+    "420e39ff3bdd04c4b6cc2c98e99cb7993c7a0de5",
+    "1fabf0fdd046857b1974e31c1c1764fa9d1a762f",
+    "449092689226a1172b6086ba1181d6b6d6499f26",
+    "5c636ffadec10fbe440b552fe6436f3dbc607dcf",
+    "4aac89fc18c128eddb69eea658272af53138a1cb",
+    "3a50ce21b3563a604b4fc9f247a30f5a981f1ba6",
+    "d7d97e28ed316f6596c737eb83baa5948d86b673",
+    "ecc2991277d7314f55b00e0f284ae3703aeef81e",
+    NULL
+};
+
 static inline DWORD get_stride(BITMAPINFO *bmi)
 {
     return ((bmi->bmiHeader.biBitCount * bmi->bmiHeader.biWidth + 31) >> 3) & ~3;
@@ -623,6 +648,7 @@ static void test_simple_graphics(void)
 
 
     /* r5g5b5 */
+    trace("555\n");
     bmi->bmiHeader.biBitCount = 16;
     bmi->bmiHeader.biCompression = BI_RGB;
 
@@ -635,6 +661,12 @@ static void test_simple_graphics(void)
 todo_wine
     ok(ds.dsBmih.biCompression == BI_BITFIELDS, "got %x\n", ds.dsBmih.biCompression);
 
+    orig_bm = SelectObject(mem_dc, dib);
+
+    sha1 = sha1_graphics_r5g5b5;
+    draw_graphics(mem_dc, bmi, bits, &sha1);
+
+    SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
 
     DeleteDC(mem_dc);

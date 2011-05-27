@@ -26,7 +26,17 @@ static inline DWORD *get_pixel_ptr_32(const dib_info *dib, int x, int y)
     return (DWORD *)((BYTE*)dib->bits + y * dib->stride + x * 4);
 }
 
+static inline WORD *get_pixel_ptr_16(const dib_info *dib, int x, int y)
+{
+    return (WORD *)((BYTE*)dib->bits + y * dib->stride + x * 2);
+}
+
 static inline void do_rop_32(DWORD *ptr, DWORD and, DWORD xor)
+{
+    *ptr = (*ptr & and) ^ xor;
+}
+
+static inline void do_rop_16(WORD *ptr, WORD and, WORD xor)
 {
     *ptr = (*ptr & and) ^ xor;
 }
@@ -38,10 +48,24 @@ static void solid_rects_32(const dib_info *dib, int num, const RECT *rc, DWORD a
 
     for(i = 0; i < num; i++, rc++)
     {
-        start = ptr = get_pixel_ptr_32(dib, rc->left, rc->top);
+        start = get_pixel_ptr_32(dib, rc->left, rc->top);
         for(y = rc->top; y < rc->bottom; y++, start += dib->stride / 4)
             for(x = rc->left, ptr = start; x < rc->right; x++)
                 do_rop_32(ptr++, and, xor);
+    }
+}
+
+static void solid_rects_16(const dib_info *dib, int num, const RECT *rc, DWORD and, DWORD xor)
+{
+    WORD *ptr, *start;
+    int x, y, i;
+
+    for(i = 0; i < num; i++, rc++)
+    {
+        start = get_pixel_ptr_16(dib, rc->left, rc->top);
+        for(y = rc->top; y < rc->bottom; y++, start += dib->stride / 2)
+            for(x = rc->left, ptr = start; x < rc->right; x++)
+                do_rop_16(ptr++, and, xor);
     }
 }
 
@@ -120,6 +144,52 @@ static void pattern_rects_32(const dib_info *dib, int num, const RECT *rc, const
     }
 }
 
+static void pattern_rects_16(const dib_info *dib, int num, const RECT *rc, const POINT *origin,
+                             const dib_info *brush, void *and_bits, void *xor_bits)
+{
+    WORD *ptr, *start, *start_and, *and_ptr, *start_xor, *xor_ptr;
+    int x, y, i;
+    POINT offset;
+
+    for(i = 0; i < num; i++, rc++)
+    {
+        offset = calc_brush_offset(rc, brush, origin);
+
+        start = get_pixel_ptr_16(dib, rc->left, rc->top);
+        start_and = (WORD*)and_bits + offset.y * brush->stride / 2;
+        start_xor = (WORD*)xor_bits + offset.y * brush->stride / 2;
+
+        for(y = rc->top; y < rc->bottom; y++, start += dib->stride / 2)
+        {
+            and_ptr = start_and + offset.x;
+            xor_ptr = start_xor + offset.x;
+
+            for(x = rc->left, ptr = start; x < rc->right; x++)
+            {
+                do_rop_16(ptr++, *and_ptr++, *xor_ptr++);
+                if(and_ptr == start_and + brush->width)
+                {
+                    and_ptr = start_and;
+                    xor_ptr = start_xor;
+                }
+            }
+
+            offset.y++;
+            if(offset.y == brush->height)
+            {
+                start_and = and_bits;
+                start_xor = xor_bits;
+                offset.y = 0;
+            }
+            else
+            {
+                start_and += brush->stride / 2;
+                start_xor += brush->stride / 2;
+            }
+        }
+    }
+}
+
 static void pattern_rects_null(const dib_info *dib, int num, const RECT *rc, const POINT *origin,
                                const dib_info *brush, void *and_bits, void *xor_bits)
 {
@@ -156,6 +226,12 @@ static DWORD colorref_to_pixel_masks(const dib_info *dib, COLORREF colour)
            put_field(b, dib->blue_shift,  dib->blue_len);
 }
 
+static DWORD colorref_to_pixel_555(const dib_info *dib, COLORREF color)
+{
+    return ( ((color >> 19) & 0x1f) | ((color >> 6) & 0x03e0) | ((color << 7) & 0x7c00) );
+}
+
+
 static DWORD colorref_to_pixel_null(const dib_info *dib, COLORREF color)
 {
     return 0;
@@ -172,6 +248,20 @@ const primitive_funcs funcs_32 =
 {
     solid_rects_32,
     pattern_rects_32,
+    colorref_to_pixel_masks
+};
+
+const primitive_funcs funcs_555 =
+{
+    solid_rects_16,
+    pattern_rects_16,
+    colorref_to_pixel_555
+};
+
+const primitive_funcs funcs_16 =
+{
+    solid_rects_16,
+    pattern_rects_16,
     colorref_to_pixel_masks
 };
 

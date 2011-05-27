@@ -66,6 +66,7 @@ static void init_bit_fields(dib_info *dib, const DWORD *bit_fields)
 static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit_fields, void *bits)
 {
     static const DWORD bit_fields_888[3] = {0xff0000, 0x00ff00, 0x0000ff};
+    static const DWORD bit_fields_555[3] = {0x7c00, 0x03e0, 0x001f};
 
     dib->bit_count = bi->biBitCount;
     dib->width     = bi->biWidth;
@@ -98,6 +99,18 @@ static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
             dib->funcs = &funcs_8888;
         else
             dib->funcs = &funcs_32;
+        break;
+
+    case 16:
+        if(bi->biCompression == BI_RGB)
+            bit_fields = bit_fields_555;
+
+        init_bit_fields(dib, bit_fields);
+
+        if(dib->red_mask == 0x7c00 && dib->green_mask == 0x03e0 && dib->blue_mask == 0x001f)
+            dib->funcs = &funcs_555;
+        else
+            dib->funcs = &funcs_16;
         break;
 
     default:
