@@ -21,11 +21,12 @@
 
 typedef unsigned char MSVCP_bool;
 typedef int MSVCP_long;
+typedef SIZE_T MSVCP_size_t;
 
 void __cdecl _invalid_parameter(const wchar_t*, const wchar_t*,
         const wchar_t*, unsigned int, uintptr_t);
 
-extern void* (__cdecl *MSVCRT_operator_new)(size_t);
+extern void* (__cdecl *MSVCRT_operator_new)(MSVCP_size_t);
 extern void (__cdecl *MSVCRT_operator_delete)(void*);
 
 /* Copied from dlls/msvcrt/cpp.c */
@@ -150,8 +151,8 @@ typedef struct _basic_string_char
         char buf[BUF_SIZE_CHAR];
         char *ptr;
     } data;
-    size_t size;
-    size_t res;
+    MSVCP_size_t size;
+    MSVCP_size_t res;
 } basic_string_char;
 
 basic_string_char* __stdcall MSVCP_basic_string_char_ctor_cstr(basic_string_char*, const char*);
@@ -167,14 +168,14 @@ typedef struct _basic_string_wchar
         wchar_t buf[BUF_SIZE_WCHAR];
         wchar_t *ptr;
     } data;
-    size_t size;
-    size_t res;
+    MSVCP_size_t size;
+    MSVCP_size_t res;
 } basic_string_wchar;
 
-char* __stdcall MSVCP_allocator_char_allocate(void*, size_t);
-void __stdcall MSVCP_allocator_char_deallocate(void*, char*, size_t);
-wchar_t* __stdcall MSVCP_allocator_wchar_allocate(void*, size_t);
-void __stdcall MSVCP_allocator_wchar_deallocate(void*, wchar_t*, size_t);
+char* __stdcall MSVCP_allocator_char_allocate(void*, MSVCP_size_t);
+void __stdcall MSVCP_allocator_char_deallocate(void*, char*, MSVCP_size_t);
+wchar_t* __stdcall MSVCP_allocator_wchar_allocate(void*, MSVCP_size_t);
+void __stdcall MSVCP_allocator_wchar_deallocate(void*, wchar_t*, MSVCP_size_t);
 
 /* class locale */
 typedef struct

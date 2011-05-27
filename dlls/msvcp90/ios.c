@@ -85,12 +85,12 @@ MSVCP_bool ios_base_Sync = FALSE;
 
 typedef struct _ios_base {
     const vtable_ptr *vtable;
-    size_t stdstr;
+    MSVCP_size_t stdstr;
     IOSB_iostate state;
     IOSB_iostate except;
     IOSB_fmtflags fmtfl;
-    size_t prec;
-    size_t wide;
+    MSVCP_size_t prec;
+    MSVCP_size_t wide;
     IOS_BASE_iosarray *arr;
     IOS_BASE_fnarray *calls;
     locale *loc;
@@ -484,16 +484,16 @@ MSVCP_long* __thiscall ios_base_iword(ios_base *this, int index)
 /* ?precision@ios_base@std@@QAEHH@Z */
 /* ?precision@ios_base@std@@QEAA_J_J@Z */
 DEFINE_THISCALL_WRAPPER(ios_base_precision_set, 8)
-size_t __thiscall ios_base_precision_set(ios_base *this, size_t precision)
+MSVCP_size_t __thiscall ios_base_precision_set(ios_base *this, MSVCP_size_t precision)
 {
-    FIXME("(%p %lu) stub\n", this, (unsigned long)precision);
+    FIXME("(%p %lu) stub\n", this, precision);
     return 0;
 }
 
 /* ?precision@ios_base@std@@QBEHXZ */
 /* ?precision@ios_base@std@@QEBA_JXZ */
 DEFINE_THISCALL_WRAPPER(ios_base_precision_get, 4)
-size_t __thiscall ios_base_precision_get(const ios_base *this)
+MSVCP_size_t __thiscall ios_base_precision_get(const ios_base *this)
 {
     FIXME("(%p) stub\n", this);
     return 0;
@@ -584,16 +584,16 @@ void __thiscall ios_base_unsetf(ios_base *this, IOSB_fmtflags flags)
 /* ?width@ios_base@std@@QAEHH@Z */
 /* ?width@ios_base@std@@QEAA_J_J@Z */
 DEFINE_THISCALL_WRAPPER(ios_base_width_set, 8)
-size_t __thiscall ios_base_width_set(ios_base *this, size_t width)
+MSVCP_size_t __thiscall ios_base_width_set(ios_base *this, MSVCP_size_t width)
 {
-    FIXME("(%p %lu) stub\n", this, (unsigned long)width);
+    FIXME("(%p %lu) stub\n", this, width);
     return 0;
 }
 
 /* ?width@ios_base@std@@QBEHXZ */
 /* ?width@ios_base@std@@QEBA_JXZ */
 DEFINE_THISCALL_WRAPPER(ios_base_width_get, 4)
-size_t __thiscall ios_base_width_get(ios_base *this)
+MSVCP_size_t __thiscall ios_base_width_get(ios_base *this)
 {
     FIXME("(%p) stub\n", this);
     return 0;
