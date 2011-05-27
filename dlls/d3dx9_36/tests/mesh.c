@@ -4904,6 +4904,521 @@ static void test_create_skin_info(void)
     ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
 }
 
+static void test_convert_adjacency_to_point_reps(void)
+{
+    HRESULT hr;
+    struct test_context *test_context = NULL;
+    const DWORD options = D3DXMESH_32BIT | D3DXMESH_SYSTEMMEM;
+    const DWORD options_16bit = D3DXMESH_SYSTEMMEM;
+    const D3DVERTEXELEMENT9 declaration[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        {0, 24, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+        D3DDECL_END()
+    };
+    const unsigned int VERTS_PER_FACE = 3;
+    void *vertex_buffer;
+    void *index_buffer;
+    DWORD *attributes_buffer;
+    int i, j;
+    enum color { RED = 0xffff0000, GREEN = 0xff00ff00, BLUE = 0xff0000ff};
+    struct vertex_pnc
+    {
+        D3DXVECTOR3 position;
+        D3DXVECTOR3 normal;
+        enum color color; /* In case of manual visual inspection */
+    };
+    D3DXVECTOR3 up = {0.0f, 0.0f, 1.0f};
+    /* mesh0 (one face)
+     *
+     * 0--1
+     * | /
+     * |/
+     * 2
+     */
+    const struct vertex_pnc vertices0[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up, RED},
+        {{ 2.0f,  3.0f,  0.f}, up, GREEN},
+        {{ 0.0f,  0.0f,  0.f}, up, BLUE},
+    };
+    const DWORD indices0[] = {0, 1, 2};
+    const unsigned int num_vertices0 = ARRAY_SIZE(vertices0);
+    const unsigned int num_faces0 = ARRAY_SIZE(indices0) / VERTS_PER_FACE;
+    const DWORD adjacency0[] = {-1, -1, -1};
+    const DWORD exp_point_rep0[] = {0, 1, 2};
+    /* mesh1 (right)
+     *
+     * 0--1 3
+     * | / /|
+     * |/ / |
+     * 2 5--4
+     */
+    const struct vertex_pnc vertices1[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up, RED},
+        {{ 2.0f,  3.0f,  0.f}, up, GREEN},
+        {{ 0.0f,  0.0f,  0.f}, up, BLUE},
+
+        {{ 3.0f,  3.0f,  0.f}, up, GREEN},
+        {{ 3.0f,  0.0f,  0.f}, up, RED},
+        {{ 1.0f,  0.0f,  0.f}, up, BLUE},
+    };
+    const DWORD indices1[] = {0, 1, 2, 3, 4, 5};
+    const unsigned int num_vertices1 = ARRAY_SIZE(vertices1);
+    const unsigned int num_faces1 = ARRAY_SIZE(indices1) / VERTS_PER_FACE;
+    const DWORD adjacency1[] = {-1, 1, -1, -1, -1, 0};
+    const DWORD exp_point_rep1[] = {0, 1, 2, 1, 4, 2};
+    /* mesh2 (left)
+     *
+     *    3 0--1
+     *   /| | /
+     *  / | |/
+     * 5--4 2
+     */
+    const struct vertex_pnc vertices2[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up, RED},
+        {{ 2.0f,  3.0f,  0.f}, up, GREEN},
+        {{ 0.0f,  0.0f,  0.f}, up, BLUE},
+
+        {{-1.0f,  3.0f,  0.f}, up, RED},
+        {{-1.0f,  0.0f,  0.f}, up, GREEN},
+        {{-3.0f,  0.0f,  0.f}, up, BLUE},
+    };
+    const DWORD indices2[] = {0, 1, 2, 3, 4, 5};
+    const unsigned int num_vertices2 = ARRAY_SIZE(vertices2);
+    const unsigned int num_faces2 = ARRAY_SIZE(indices2) / VERTS_PER_FACE;
+    const DWORD adjacency2[] = {-1, -1, 1, 0, -1, -1};
+    const DWORD exp_point_rep2[] = {0, 1, 2, 0, 2, 5};
+    /* mesh3 (above)
+     *
+     *    3
+     *   /|
+     *  / |
+     * 5--4
+     * 0--1
+     * | /
+     * |/
+     * 2
+     */
+    struct vertex_pnc vertices3[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up, RED},
+        {{ 2.0f,  3.0f,  0.f}, up, GREEN},
+        {{ 0.0f,  0.0f,  0.f}, up, BLUE},
+
+        {{ 2.0f,  7.0f,  0.f}, up, BLUE},
+        {{ 2.0f,  4.0f,  0.f}, up, GREEN},
+        {{ 0.0f,  4.0f,  0.f}, up, RED},
+    };
+    const DWORD indices3[] = {0, 1, 2, 3, 4, 5};
+    const unsigned int num_vertices3 = ARRAY_SIZE(vertices3);
+    const unsigned int num_faces3 = ARRAY_SIZE(indices3) / VERTS_PER_FACE;
+    const DWORD adjacency3[] = {1, -1, -1, -1, 0, -1};
+    const DWORD exp_point_rep3[] = {0, 1, 2, 3, 1, 0};
+    /* mesh4 (below, tip against tip)
+     *
+     * 0--1
+     * | /
+     * |/
+     * 2
+     * 3
+     * |\
+     * | \
+     * 5--4
+     */
+    struct vertex_pnc vertices4[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up, RED},
+        {{ 2.0f,  3.0f,  0.f}, up, GREEN},
+        {{ 0.0f,  0.0f,  0.f}, up, BLUE},
+
+        {{ 0.0f, -4.0f,  0.f}, up, BLUE},
+        {{ 2.0f, -7.0f,  0.f}, up, GREEN},
+        {{ 0.0f, -7.0f,  0.f}, up, RED},
+    };
+    const DWORD indices4[] = {0, 1, 2, 3, 4, 5};
+    const unsigned int num_vertices4 = ARRAY_SIZE(vertices4);
+    const unsigned int num_faces4 = ARRAY_SIZE(indices4) / VERTS_PER_FACE;
+    const DWORD adjacency4[] = {-1, -1, -1, -1, -1, -1};
+    const DWORD exp_point_rep4[] = {0, 1, 2, 3, 4, 5};
+    /* mesh5 (gap in mesh)
+     *
+     *    0      3-----4  15
+     *   / \      \   /  /  \
+     *  /   \      \ /  /    \
+     * 2-----1      5 17-----16
+     * 6-----7      9 12-----13
+     *  \   /      / \  \    /
+     *   \ /      /   \  \  /
+     *    8     10-----11 14
+     *
+     */
+    const struct vertex_pnc vertices5[] =
+    {
+        {{ 0.0f,  1.0f,  0.f}, up, RED},
+        {{ 1.0f, -1.0f,  0.f}, up, GREEN},
+        {{-1.0f, -1.0f,  0.f}, up, BLUE},
+
+        {{ 0.1f,  1.0f,  0.f}, up, RED},
+        {{ 2.1f,  1.0f,  0.f}, up, BLUE},
+        {{ 1.1f, -1.0f,  0.f}, up, GREEN},
+
+        {{-1.0f, -1.1f,  0.f}, up, BLUE},
+        {{ 1.0f, -1.1f,  0.f}, up, GREEN},
+        {{ 0.0f, -3.1f,  0.f}, up, RED},
+
+        {{ 1.1f, -1.1f,  0.f}, up, GREEN},
+        {{ 2.1f, -3.1f,  0.f}, up, BLUE},
+        {{ 0.1f, -3.1f,  0.f}, up, RED},
+
+        {{ 1.2f, -1.1f,  0.f}, up, GREEN},
+        {{ 3.2f, -1.1f,  0.f}, up, RED},
+        {{ 2.2f, -3.1f,  0.f}, up, BLUE},
+
+        {{ 2.2f,  1.0f,  0.f}, up, BLUE},
+        {{ 3.2f, -1.0f,  0.f}, up, RED},
+        {{ 1.2f, -1.0f,  0.f}, up, GREEN},
+    };
+    const DWORD indices5[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17};
+    const unsigned int num_vertices5 = ARRAY_SIZE(vertices5);
+    const unsigned int num_faces5 = ARRAY_SIZE(indices5) / VERTS_PER_FACE;
+    const DWORD adjacency5[] = {-1, 2, -1, -1, 5, -1, 0, -1, -1, 4, -1, -1, 5, -1, 3, -1, 4, 1};
+    const DWORD exp_point_rep5[] = {0, 1, 2, 3, 4, 5, 2, 1, 8, 5, 10, 11, 5, 13, 10, 4, 13, 5};
+    const WORD indices5_16bit[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17};
+    /* mesh6 (indices re-ordering)
+     *
+     * 0--1 6 3
+     * | / /| |\
+     * |/ / | | \
+     * 2 8--7 5--4
+     */
+    const struct vertex_pnc vertices6[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up, RED},
+        {{ 2.0f,  3.0f,  0.f}, up, GREEN},
+        {{ 0.0f,  0.0f,  0.f}, up, BLUE},
+
+        {{ 3.0f,  3.0f,  0.f}, up, GREEN},
+        {{ 3.0f,  0.0f,  0.f}, up, RED},
+        {{ 1.0f,  0.0f,  0.f}, up, BLUE},
+
+        {{ 4.0f,  3.0f,  0.f}, up, GREEN},
+        {{ 6.0f,  0.0f,  0.f}, up, BLUE},
+        {{ 4.0f,  0.0f,  0.f}, up, RED},
+    };
+    const DWORD indices6[] = {0, 1, 2, 6, 7, 8, 3, 4, 5};
+    const unsigned int num_vertices6 = ARRAY_SIZE(vertices6);
+    const unsigned int num_faces6 = ARRAY_SIZE(indices6) / VERTS_PER_FACE;
+    const DWORD adjacency6[] = {-1, 1, -1, 2, -1, 0, -1, -1, 1};
+    const DWORD exp_point_rep6[] = {0, 1, 2, 1, 4, 5, 1, 5, 2};
+    /* mesh7 (expands collapsed triangle)
+     *
+     * 0--1 3
+     * | / /|
+     * |/ / |
+     * 2 5--4
+     */
+    const struct vertex_pnc vertices7[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up, RED},
+        {{ 2.0f,  3.0f,  0.f}, up, GREEN},
+        {{ 0.0f,  0.0f,  0.f}, up, BLUE},
+
+        {{ 3.0f,  3.0f,  0.f}, up, GREEN},
+        {{ 3.0f,  0.0f,  0.f}, up, RED},
+        {{ 1.0f,  0.0f,  0.f}, up, BLUE},
+    };
+    const DWORD indices7[] = {0, 1, 2, 3, 3, 3}; /* Face 1 is collapsed*/
+    const unsigned int num_vertices7 = ARRAY_SIZE(vertices7);
+    const unsigned int num_faces7 = ARRAY_SIZE(indices7) / VERTS_PER_FACE;
+    const DWORD adjacency7[] = {-1, -1, -1, -1, -1, -1};
+    const DWORD exp_point_rep7[] = {0, 1, 2, 3, 4, 5};
+    /* mesh8 (indices re-ordering and double replacement)
+     *
+     * 0--1 9  6
+     * | / /|  |\
+     * |/ / |  | \
+     * 2 11-10 8--7
+     *         3--4
+     *         | /
+     *         |/
+     *         5
+     */
+    const struct vertex_pnc vertices8[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up, RED},
+        {{ 2.0f,  3.0f,  0.f}, up, GREEN},
+        {{ 0.0f,  0.0f,  0.f}, up, BLUE},
+
+        {{ 4.0,  -4.0,  0.f}, up, RED},
+        {{ 6.0,  -4.0,  0.f}, up, BLUE},
+        {{ 4.0,  -7.0,  0.f}, up, GREEN},
+
+        {{ 4.0f,  3.0f,  0.f}, up, GREEN},
+        {{ 6.0f,  0.0f,  0.f}, up, BLUE},
+        {{ 4.0f,  0.0f,  0.f}, up, RED},
+
+        {{ 3.0f,  3.0f,  0.f}, up, GREEN},
+        {{ 3.0f,  0.0f,  0.f}, up, RED},
+        {{ 1.0f,  0.0f,  0.f}, up, BLUE},
+    };
+    const DWORD indices8[] = {0, 1, 2, 9, 10, 11, 6, 7, 8, 3, 4, 5};
+    const unsigned int num_vertices8 = ARRAY_SIZE(vertices8);
+    const unsigned int num_faces8 = ARRAY_SIZE(indices8) / VERTS_PER_FACE;
+    const DWORD adjacency8[] = {-1, 1, -1, 2, -1, 0, -1, 3, 1, 2, -1, -1};
+    const DWORD exp_point_rep8[] = {0, 1, 2, 3, 4, 5, 1, 4, 3, 1, 3, 2};
+    /* mesh9 (right, shared vertices)
+     *
+     * 0--1
+     * | /|
+     * |/ |
+     * 2--3
+     */
+    const struct vertex_pnc vertices9[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up, RED},
+        {{ 2.0f,  3.0f,  0.f}, up, GREEN},
+        {{ 0.0f,  0.0f,  0.f}, up, BLUE},
+
+        {{ 2.0f,  0.0f,  0.f}, up, RED},
+    };
+    const DWORD indices9[] = {0, 1, 2, 1, 3, 2};
+    const unsigned int num_vertices9 = ARRAY_SIZE(vertices9);
+    const unsigned int num_faces9 = ARRAY_SIZE(indices9) / VERTS_PER_FACE;
+    const DWORD adjacency9[] = {-1, 1, -1, -1, -1, 0};
+    const DWORD exp_point_rep9[] = {0, 1, 2, 3};
+    /* All mesh data */
+    ID3DXMesh *mesh = NULL;
+    ID3DXMesh *mesh_null_check = NULL;
+    unsigned int attributes[] = {0};
+    struct
+    {
+        const struct vertex_pnc *vertices;
+        const DWORD *indices;
+        const DWORD num_vertices;
+        const DWORD num_faces;
+        const DWORD *adjacency;
+        const DWORD *exp_point_reps;
+        const DWORD options;
+    }
+    tc[] =
+    {
+        {
+            vertices0,
+            indices0,
+            num_vertices0,
+            num_faces0,
+            adjacency0,
+            exp_point_rep0,
+            options
+        },
+        {
+            vertices1,
+            indices1,
+            num_vertices1,
+            num_faces1,
+            adjacency1,
+            exp_point_rep1,
+            options
+        },
+        {
+            vertices2,
+            indices2,
+            num_vertices2,
+            num_faces2,
+            adjacency2,
+            exp_point_rep2,
+            options
+        },
+        {
+            vertices3,
+            indices3,
+            num_vertices3,
+            num_faces3,
+            adjacency3,
+            exp_point_rep3,
+            options
+        },
+        {
+            vertices4,
+            indices4,
+            num_vertices4,
+            num_faces4,
+            adjacency4,
+            exp_point_rep4,
+            options
+        },
+        {
+            vertices5,
+            indices5,
+            num_vertices5,
+            num_faces5,
+            adjacency5,
+            exp_point_rep5,
+            options
+        },
+        {
+            vertices6,
+            indices6,
+            num_vertices6,
+            num_faces6,
+            adjacency6,
+            exp_point_rep6,
+            options
+        },
+        {
+            vertices7,
+            indices7,
+            num_vertices7,
+            num_faces7,
+            adjacency7,
+            exp_point_rep7,
+            options
+        },
+        {
+            vertices8,
+            indices8,
+            num_vertices8,
+            num_faces8,
+            adjacency8,
+            exp_point_rep8,
+            options
+        },
+        {
+            vertices9,
+            indices9,
+            num_vertices9,
+            num_faces9,
+            adjacency9,
+            exp_point_rep9,
+            options
+        },
+        {
+            vertices5,
+            (DWORD*)indices5_16bit,
+            num_vertices5,
+            num_faces5,
+            adjacency5,
+            exp_point_rep5,
+            options_16bit
+        },
+    };
+    DWORD *point_reps = NULL;
+
+    test_context = new_test_context();
+    if (!test_context)
+    {
+        skip("Couldn't create test context\n");
+        goto cleanup;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tc); i++)
+    {
+        hr = D3DXCreateMesh(tc[i].num_faces, tc[i].num_vertices, tc[i].options, declaration,
+                            test_context->device, &mesh);
+        if (FAILED(hr))
+        {
+            skip("Couldn't create mesh %d. Got %x expected D3D_OK\n", i, hr);
+            goto cleanup;
+        }
+
+        if (i == 0) /* Save first mesh for later NULL checks */
+            mesh_null_check = mesh;
+
+        point_reps = HeapAlloc(GetProcessHeap(), 0, tc[i].num_vertices * sizeof(*point_reps));
+        if (!point_reps)
+        {
+            skip("Couldn't allocate point reps array.\n");
+            goto cleanup;
+        }
+
+        hr = mesh->lpVtbl->LockVertexBuffer(mesh, 0, &vertex_buffer);
+        if (FAILED(hr))
+        {
+            skip("Couldn't lock vertex buffer.\n");
+            goto cleanup;
+        }
+        memcpy(vertex_buffer, tc[i].vertices, tc[i].num_vertices * sizeof(*tc[i].vertices));
+        hr = mesh->lpVtbl->UnlockVertexBuffer(mesh);
+        if (FAILED(hr))
+        {
+            skip("Couldn't unlock vertex buffer.\n");
+            goto cleanup;
+        }
+
+        hr = mesh->lpVtbl->LockIndexBuffer(mesh, 0, &index_buffer);
+        if (FAILED(hr))
+        {
+            skip("Couldn't lock index buffer.\n");
+            goto cleanup;
+        }
+        if (tc[i].options & D3DXMESH_32BIT)
+        {
+            memcpy(index_buffer, tc[i].indices, VERTS_PER_FACE * tc[i].num_faces * sizeof(DWORD));
+        }
+        else
+        {
+            memcpy(index_buffer, tc[i].indices, VERTS_PER_FACE * tc[i].num_faces * sizeof(WORD));
+        }
+        hr = mesh->lpVtbl->UnlockIndexBuffer(mesh);
+        if (FAILED(hr)) {
+            skip("Couldn't unlock index buffer.\n");
+            goto cleanup;
+        }
+
+        hr = mesh->lpVtbl->LockAttributeBuffer(mesh, 0, &attributes_buffer);
+        if (FAILED(hr))
+        {
+            skip("Couldn't lock attributes buffer.\n");
+            goto cleanup;
+        }
+        memcpy(attributes_buffer, attributes, sizeof(attributes));
+        hr = mesh->lpVtbl->UnlockAttributeBuffer(mesh);
+        if (FAILED(hr))
+        {
+            skip("Couldn't unlock attributes buffer.\n");
+            goto cleanup;
+        }
+
+        /* Convert adjacency to point representation */
+        memset(point_reps, -1, tc[i].num_vertices * sizeof(*point_reps));
+        hr = mesh->lpVtbl->ConvertAdjacencyToPointReps(mesh, tc[i].adjacency, point_reps);
+        todo_wine ok(hr == D3D_OK, "ConvertAdjacencyToPointReps failed case %d. "
+           "Got %x expected D3D_OK\n", i, hr);
+
+        /* Check point representation */
+        for (j = 0; j < tc[i].num_vertices; j++)
+        {
+            todo_wine ok(point_reps[j] == tc[i].exp_point_reps[j],
+                         "Unexpected point representation at (%d, %d)."
+                         " Got %d expected %d\n",
+                         i, j, point_reps[j], tc[i].exp_point_reps[j]);
+        }
+
+        HeapFree(GetProcessHeap(), 0, point_reps);
+
+        if (i != 0) /* First mesh will be freed during cleanup */
+            mesh->lpVtbl->Release(mesh);
+    }
+
+    /* NULL checks */
+    hr = mesh_null_check->lpVtbl->ConvertAdjacencyToPointReps(mesh_null_check, tc[0].adjacency, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "ConvertAdjacencyToPointReps point_reps NULL. "
+                 "Got %x expected D3DERR_INVALIDCALL\n", hr);
+    hr = mesh_null_check->lpVtbl->ConvertAdjacencyToPointReps(mesh_null_check, NULL, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "ConvertAdjacencyToPointReps adjacency and point_reps NULL. "
+                 "Got %x expected D3DERR_INVALIDCALL\n", hr);
+
+cleanup:
+    if (mesh_null_check)
+        mesh_null_check->lpVtbl->Release(mesh_null_check);
+    HeapFree(GetProcessHeap(), 0, point_reps);
+    free_test_context(test_context);
+}
+
 START_TEST(mesh)
 {
     D3DXBoundProbeTest();
@@ -4924,4 +5439,5 @@ START_TEST(mesh)
     D3DXGenerateAdjacencyTest();
     test_update_semantics();
     test_create_skin_info();
+    test_convert_adjacency_to_point_reps();
 }
