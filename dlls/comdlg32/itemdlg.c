@@ -3120,14 +3120,62 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetCheckButtonState(IFileDialogCust
     return S_OK;
 }
 
+static UINT get_combobox_index_from_id(HWND cb_hwnd, DWORD dwIDItem)
+{
+    UINT count = SendMessageW(cb_hwnd, CB_GETCOUNT, 0, 0);
+    UINT i;
+    if(!count || (count == CB_ERR))
+        return -1;
+
+    for(i = 0; i < count; i++)
+        if(SendMessageW(cb_hwnd, CB_GETITEMDATA, i, 0) == dwIDItem)
+            return i;
+
+    TRACE("Item with id %d not found in combobox %p (item count: %d)\n", dwIDItem, cb_hwnd, count);
+    return -1;
+}
+
 static HRESULT WINAPI IFileDialogCustomize_fnAddControlItem(IFileDialogCustomize *iface,
                                                             DWORD dwIDCtl,
                                                             DWORD dwIDItem,
                                                             LPCWSTR pszLabel)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d, %d, %s)\n", This, dwIDCtl, dwIDItem, debugstr_w(pszLabel));
-    return E_NOTIMPL;
+    customctrl *ctrl = get_cctrl(This, dwIDCtl);
+    TRACE("%p (%d, %d, %s)\n", This, dwIDCtl, dwIDItem, debugstr_w(pszLabel));
+
+    if(!ctrl) return E_FAIL;
+
+    switch(ctrl->type)
+    {
+    case IDLG_CCTRL_COMBOBOX:
+    {
+        UINT index;
+
+        if(get_combobox_index_from_id(ctrl->hwnd, dwIDItem) != -1)
+            return E_INVALIDARG;
+
+        index = SendMessageW(ctrl->hwnd, CB_ADDSTRING, 0, (LPARAM)pszLabel);
+        SendMessageW(ctrl->hwnd, CB_SETITEMDATA, index, dwIDItem);
+
+        return S_OK;
+    }
+    case IDLG_CCTRL_MENU:
+    {
+        TBBUTTON tbb;
+        SendMessageW(ctrl->hwnd, TB_GETBUTTON, 0, (LPARAM)&tbb);
+
+        if(GetMenuState((HMENU)tbb.dwData, dwIDItem, MF_BYCOMMAND) != -1)
+            return E_INVALIDARG;
+
+        AppendMenuW((HMENU)tbb.dwData, MF_STRING, dwIDItem, pszLabel);
+        return S_OK;
+    }
+    default:
+        break;
+    }
+
+    return E_NOINTERFACE; /* win7 */
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnRemoveControlItem(IFileDialogCustomize *iface,
@@ -3135,8 +3183,46 @@ static HRESULT WINAPI IFileDialogCustomize_fnRemoveControlItem(IFileDialogCustom
                                                                DWORD dwIDItem)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d, %d)\n", This, dwIDCtl, dwIDItem);
-    return E_NOTIMPL;
+    customctrl *ctrl = get_cctrl(This, dwIDCtl);
+    TRACE("%p (%d, %d)\n", This, dwIDCtl, dwIDItem);
+
+    if(!ctrl) return E_FAIL;
+
+    switch(ctrl->type)
+    {
+    case IDLG_CCTRL_COMBOBOX:
+    {
+        UINT i, count = SendMessageW(ctrl->hwnd, CB_GETCOUNT, 0, 0);
+        if(!count || (count == CB_ERR))
+            return E_FAIL;
+
+        for(i = 0; i < count; i++)
+            if(SendMessageW(ctrl->hwnd, CB_GETITEMDATA, 0, 0) == dwIDItem)
+            {
+                if(SendMessageW(ctrl->hwnd, CB_DELETESTRING, i, 0) == CB_ERR)
+                    return E_FAIL;
+                return S_OK;
+            }
+
+        return E_UNEXPECTED;
+    }
+    case IDLG_CCTRL_MENU:
+    {
+        TBBUTTON tbb;
+        HMENU hmenu;
+        SendMessageW(ctrl->hwnd, TB_GETBUTTON, 0, (LPARAM)&tbb);
+        hmenu = (HMENU)tbb.dwData;
+
+        if(!hmenu || !DeleteMenu(hmenu, dwIDItem, MF_BYCOMMAND))
+            return E_UNEXPECTED;
+
+        return S_OK;
+    }
+    default:
+        break;
+    }
+
+    return E_FAIL;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnRemoveAllControlItems(IFileDialogCustomize *iface,
@@ -3174,7 +3260,26 @@ static HRESULT WINAPI IFileDialogCustomize_fnGetSelectedControlItem(IFileDialogC
                                                                     DWORD *pdwIDItem)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p\n", This);
+    customctrl *ctrl = get_cctrl(This, dwIDCtl);
+    TRACE("%p (%d, %p)\n", This, dwIDCtl, pdwIDItem);
+
+    if(!ctrl) return E_FAIL;
+
+    switch(ctrl->type)
+    {
+    case IDLG_CCTRL_COMBOBOX:
+    {
+        UINT index = SendMessageW(ctrl->hwnd, CB_GETCURSEL, 0, 0);
+        if(index == CB_ERR)
+            return E_FAIL;
+
+        *pdwIDItem = SendMessageW(ctrl->hwnd, CB_GETITEMDATA, index, 0);
+        return S_OK;
+    }
+    default:
+        FIXME("Unsupported control type %d\n", ctrl->type);
+    }
+
     return E_NOTIMPL;
 }
 
@@ -3183,8 +3288,30 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetSelectedControlItem(IFileDialogC
                                                                     DWORD dwIDItem)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d, %d)\n", This, dwIDCtl, dwIDItem);
-    return E_NOTIMPL;
+    customctrl *ctrl = get_cctrl(This, dwIDCtl);
+    TRACE("%p (%d, %d)\n", This, dwIDCtl, dwIDItem);
+
+    if(!ctrl) return E_INVALIDARG;
+
+    switch(ctrl->type)
+    {
+    case IDLG_CCTRL_COMBOBOX:
+    {
+        UINT index = get_combobox_index_from_id(ctrl->hwnd, dwIDItem);
+
+        if(index == -1)
+            return E_INVALIDARG;
+
+        if(SendMessageW(ctrl->hwnd, CB_SETCURSEL, index, 0) == CB_ERR)
+            return E_FAIL;
+
+        return S_OK;
+    }
+    default:
+        FIXME("Unsupported control type %d\n", ctrl->type);
+    }
+
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnStartVisualGroup(IFileDialogCustomize *iface,
