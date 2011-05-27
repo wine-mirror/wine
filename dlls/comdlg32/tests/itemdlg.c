@@ -1290,9 +1290,8 @@ static BOOL CALLBACK find_window_callback(HWND hwnd, LPARAM lparam)
 static HWND find_window(HWND parent, LPCWSTR class, LPCWSTR text)
 {
     struct fw_arg arg = {class, text, NULL};
-    BOOL br;
 
-    br = EnumChildWindows(parent, find_window_callback, (LPARAM)&arg);
+    EnumChildWindows(parent, find_window_callback, (LPARAM)&arg);
     return arg.hwnd_res;
 }
 
