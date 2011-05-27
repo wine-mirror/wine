@@ -100,7 +100,7 @@ typedef struct __type_info
 {
     const vtable_ptr *vtable;
     char              *name;        /* Unmangled name, allocated lazily */
-    char               mangled[32]; /* Variable length, but we declare it large enough for static RTTI */
+    char               mangled[64]; /* Variable length, but we declare it large enough for static RTTI */
 } type_info;
 
 /* offsets for computing the this pointer */

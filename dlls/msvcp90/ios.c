@@ -96,8 +96,18 @@ typedef struct _ios_base {
     locale *loc;
 } ios_base;
 
+typedef struct {
+    ios_base child;
+    /*basic_streambuf_char*/void *strbuf;
+    /*basic_ostream_char*/void *stream;
+    char fillch;
+} basic_ios_char;
+
 /* ??_7ios_base@std@@6B@ */
 extern const vtable_ptr MSVCP_ios_base_vtable;
+
+/* ??_7?$basic_ios@DU?$char_traits@D@std@@@std@@6B@ */
+extern const vtable_ptr MSVCP_basic_ios_char_vtable;
 
 static const type_info ios_base_type_info = {
     &MSVCP_ios_base_vtable,
@@ -148,10 +158,47 @@ const rtti_object_locator ios_base_rtti = {
     &ios_base_type_hierarchy
 };
 
+static const type_info basic_ios_char_type_info = {
+    &MSVCP_basic_ios_char_vtable,
+    NULL,
+    ".?AV?$basic_ios@DU?$char_traits@D@std@@@std@@"
+};
+
+static const rtti_base_descriptor basic_ios_char_rtti_base_descriptor = {
+    &basic_ios_char_type_info,
+    2,
+    { 0, -1, 0 },
+    64
+};
+
+static const rtti_base_array basic_ios_char_rtti_base_array = {
+    {
+        &basic_ios_char_rtti_base_descriptor,
+        &ios_base_rtti_base_descriptor,
+        &iosb_rtti_base_descriptor
+    }
+};
+
+static const rtti_object_hierarchy basic_ios_char_hierarchy = {
+    0,
+    0,
+    3,
+    &basic_ios_char_rtti_base_array
+};
+
+const rtti_object_locator basic_ios_char_rtti = {
+    0,
+    0,
+    0,
+    &basic_ios_char_type_info,
+    &basic_ios_char_hierarchy
+};
+
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
     __ASM_VTABLE(ios_base, "");
+    __ASM_VTABLE(basic_ios_char, "");
 #ifndef __GNUC__
 }
 #endif
@@ -556,5 +603,182 @@ size_t __thiscall ios_base_width_get(ios_base *this)
 int CDECL ios_base_xalloc(void)
 {
     FIXME("stub\n");
+    return 0;
+}
+
+/* ??0?$basic_ios@DU?$char_traits@D@std@@@std@@IAE@XZ */
+/* ??0?$basic_ios@DU?$char_traits@D@std@@@std@@IEAA@XZ */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_ctor, 4)
+basic_ios_char* __thiscall basic_ios_char_ctor(basic_ios_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ??0?$basic_ios@DU?$char_traits@D@std@@@std@@QAE@PAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z */
+/* ??0?$basic_ios@DU?$char_traits@D@std@@@std@@QEAA@PEAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_copy_ctor, 8)
+basic_ios_char* __thiscall basic_ios_char_copy_ctor(basic_ios_char *this, const basic_ios_char *copy)
+{
+    FIXME("(%p %p) stub\n", this, copy);
+    return NULL;
+}
+
+/* ??1?$basic_ios@DU?$char_traits@D@std@@@std@@UAE@XZ */
+/* ??1?$basic_ios@DU?$char_traits@D@std@@@std@@UEAA@XZ */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_dtor, 4)
+void __thiscall basic_ios_char_dtor(basic_ios_char *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_ios_char_vector_dtor, 8)
+basic_ios_char* __thiscall MSVCP_basic_ios_char_vector_dtor(basic_ios_char *this, unsigned int flags)
+{
+    TRACE("(%p %x) stub\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            basic_ios_char_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        basic_ios_char_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ?clear@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEXH_N@Z */
+/* ?clear@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAXH_N@Z */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_clear_reraise, 12)
+void __thiscall basic_ios_char_clear_reraise(basic_ios_char *this, IOSB_iostate state, MSVCP_bool reraise)
+{
+    FIXME("(%p %x %x) stub\n", this, state, reraise);
+}
+
+/* ?clear@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEXI@Z */
+/* ?clear@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAXI@Z */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_clear, 8)
+void __thiscall basic_ios_char_clear(basic_ios_char *this, unsigned int state)
+{
+    basic_ios_char_clear_reraise(this, (IOSB_iostate)state, FALSE);
+}
+
+/* ?copyfmt@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEAAV12@ABV12@@Z */
+/* ?copyfmt@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAAEAV12@AEBV12@@Z */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_copyfmt, 8)
+basic_ios_char* __thiscall basic_ios_char_copyfmt(basic_ios_char *this, basic_ios_char *copy)
+{
+    FIXME("(%p %p) stub\n", this, copy);
+    return NULL;
+}
+
+/* ?fill@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEDD@Z */
+/* ?fill@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAADD@Z */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_fill_set, 8)
+char __thiscall basic_ios_char_fill_set(basic_ios_char *this, char fill)
+{
+    FIXME("(%p %c) stub\n", this, fill);
+    return 0;
+}
+
+/* ?fill@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEDXZ */
+/* ?fill@?$basic_ios@DU?$char_traits@D@std@@@std@@QEBADXZ */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_fill_get, 4)
+char __thiscall basic_ios_char_fill_get(basic_ios_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?imbue@?$basic_ios@DU?$char_traits@D@std@@@std@@QAE?AVlocale@2@ABV32@@Z */
+/* ?imbue@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAA?AVlocale@2@AEBV32@@Z */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_imbue, 4)
+locale __thiscall basic_ios_char_imbue(basic_ios_char *this)
+{
+    locale ret = { NULL };
+    FIXME("(%p) stub\n", this);
+    return ret;
+}
+
+/* ?init@?$basic_ios@DU?$char_traits@D@std@@@std@@IAEXPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@_N@Z */
+/* ?init@?$basic_ios@DU?$char_traits@D@std@@@std@@IEAAXPEAV?$basic_streambuf@DU?$char_traits@D@std@@@2@_N@Z */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_init, 12)
+void __thiscall basic_ios_char_init(basic_ios_char *this, /*basic_streambuf_char*/void *streambuf, MSVCP_bool isstd)
+{
+    FIXME("(%p %p %x) stub\n", this, streambuf, isstd);
+}
+
+/* ?narrow@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEDDD@Z */
+/* ?narrow@?$basic_ios@DU?$char_traits@D@std@@@std@@QEBADDD@Z */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_narrow, 12)
+char __thiscall basic_ios_char_narrow(basic_ios_char *this, char ch, char def)
+{
+    FIXME("(%p %c %c) stub\n", this, ch, def);
+    return def;
+}
+
+/* ?rdbuf@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PAV32@@Z */
+/* ?rdbuf@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAPEAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PEAV32@@Z */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_rdbuf_set, 8)
+/*basic_streambuf_char*/void* __thiscall basic_ios_char_rdbuf_set(basic_ios_char *this, /*basic_streambuf_char*/void *streambuf)
+{
+    FIXME("(%p %p) stub\n", this, streambuf);
+    return NULL;
+}
+
+/* ?rdbuf@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@XZ */
+/* ?rdbuf@?$basic_ios@DU?$char_traits@D@std@@@std@@QEBAPEAV?$basic_streambuf@DU?$char_traits@D@std@@@2@XZ */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_rdbuf_get, 4)
+/*basic_streambuf_char*/void* __thiscall basic_ios_char_rdbuf_get(const basic_ios_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?setstate@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEXH_N@Z */
+/* ?setstate@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAXH_N@Z */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_setstate_reraise, 12)
+void __thiscall basic_ios_char_setstate_reraise(basic_ios_char *this, IOSB_iostate state, MSVCP_bool reraise)
+{
+    FIXME("(%p %x %x) stub\n", this, state, reraise);
+}
+
+/* ?setstate@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEXI@Z */
+/* ?setstate@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAXI@Z */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_setstate, 8)
+void __thiscall basic_ios_char_setstate(basic_ios_char *this, unsigned int state)
+{
+    basic_ios_char_setstate_reraise(this, (IOSB_iostate)state, FALSE);
+}
+
+/* ?tie@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEPAV?$basic_ostream@DU?$char_traits@D@std@@@2@PAV32@@Z */
+/* ?tie@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAPEAV?$basic_ostream@DU?$char_traits@D@std@@@2@PEAV32@@Z */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_tie_set, 8)
+/*basic_ostream_char*/void* __thiscall basic_ios_char_tie_set(basic_ios_char *this, /*basic_ostream_char*/void *ostream)
+{
+    FIXME("(%p %p) stub\n", this, ostream);
+    return NULL;
+}
+
+/* ?tie@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEPAV?$basic_ostream@DU?$char_traits@D@std@@@2@XZ */
+/* ?tie@?$basic_ios@DU?$char_traits@D@std@@@std@@QEBAPEAV?$basic_ostream@DU?$char_traits@D@std@@@2@XZ */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_tie_get, 4)
+/*basic_ostream_char*/void* __thiscall basic_ios_char_tie_get(const basic_ios_char *this)
+{
+    FIXME("(%p)\n", this);
+    return NULL;
+}
+
+/* ?widen@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEDD@Z */
+/* ?widen@?$basic_ios@DU?$char_traits@D@std@@@std@@QEBADD@Z */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_widen, 8)
+char __thiscall basic_ios_char_widen(basic_ios_char *this, char ch)
+{
+    FIXME("(%p %c)\n", this, ch);
     return 0;
 }
