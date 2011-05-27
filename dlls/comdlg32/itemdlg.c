@@ -591,13 +591,15 @@ static inline customctrl *get_cctrl(FileDialogImpl *This, DWORD ctlid)
     return NULL;
 }
 
-static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width)
+static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width, BOOL multiline)
 {
     LPWSTR text;
     UINT len, final_width;
+    UINT lines, final_height;
     SIZE size;
     RECT rc;
     HDC hdc;
+    WCHAR *c;
 
     TRACE("\n");
 
@@ -610,9 +612,22 @@ static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width)
     GetTextExtentPoint32W(hdc, text, lstrlenW(text), &size);
     ReleaseDC(hctrl, hdc);
 
-    GetWindowRect(hctrl, &rc);
+    if(len && multiline)
+    {
+        /* FIXME: line-wrap */
+        for(lines = 1, c = text; *c != '\0'; c++)
+            if(*c == '\n') lines++;
+
+        final_height = size.cy*lines + 2*4;
+    }
+    else
+    {
+        GetWindowRect(hctrl, &rc);
+        final_height = rc.bottom - rc.top;
+    }
+
     final_width = min(max(size.cx, min_width) + 4, max_width);
-    SetWindowPos(hctrl, NULL, 0, 0, final_width, rc.bottom - rc.top,
+    SetWindowPos(hctrl, NULL, 0, 0, final_width, final_height,
                  SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
 
     HeapFree(GetProcessHeap(), 0, text);
@@ -628,7 +643,7 @@ static void customctrl_resize(FileDialogImpl *This, customctrl *ctrl)
     case IDLG_CCTRL_COMBOBOX:
     case IDLG_CCTRL_CHECKBUTTON:
     case IDLG_CCTRL_TEXT:
-        ctrl_resize(ctrl->hwnd, 160, 160);
+        ctrl_resize(ctrl->hwnd, 160, 160, TRUE);
         GetWindowRect(ctrl->hwnd, &rc);
         SetWindowPos(ctrl->wrapper_hwnd, NULL, 0, 0, rc.right-rc.left, rc.bottom-rc.top,
                      SWP_NOZORDER|SWP_NOMOVE|SWP_NOZORDER);
@@ -1349,21 +1364,21 @@ static void update_control_text(FileDialogImpl *This)
        (hitem = GetDlgItem(This->dlg_hwnd, IDOK)))
     {
         SetWindowTextW(hitem, This->custom_okbutton);
-        ctrl_resize(hitem, 50, 250);
+        ctrl_resize(hitem, 50, 250, FALSE);
     }
 
     if(This->custom_cancelbutton &&
        (hitem = GetDlgItem(This->dlg_hwnd, IDCANCEL)))
     {
         SetWindowTextW(hitem, This->custom_cancelbutton);
-        ctrl_resize(hitem, 50, 250);
+        ctrl_resize(hitem, 50, 250, FALSE);
     }
 
     if(This->custom_filenamelabel &&
        (hitem = GetDlgItem(This->dlg_hwnd, IDC_FILENAMESTATIC)))
     {
         SetWindowTextW(hitem, This->custom_filenamelabel);
-        ctrl_resize(hitem, 50, 250);
+        ctrl_resize(hitem, 50, 250, FALSE);
     }
 }
 
