@@ -93,6 +93,7 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "b2261353decda2712b83538ab434a49ce21f3172",
     "ef654fedcb494dae79559f4db8b691ae2d522a3f",
     "a694872f38e66a7ff471440c3e6a9310ef78328a",
+    "d7398de15b2837a58a62a701ca1b3384625afec4",
     "e2a8eef4aeda3a0f6c950075acba38f1f9e0814d",
     "8b66f14d51ecdeea12bc993302bb9b7d3ec085a1",
     "7da9dd3d40d44d92deb9883fb7110443c2d5769a",
@@ -118,6 +119,7 @@ static const char *sha1_graphics_r5g5b5[] =
     "449092689226a1172b6086ba1181d6b6d6499f26",
     "5c636ffadec10fbe440b552fe6436f3dbc607dcf",
     "4aac89fc18c128eddb69eea658272af53138a1cb",
+    "9d21bcfdeaf1ca5d47eb823bdefc24d7a95f4f56",
     "3a50ce21b3563a604b4fc9f247a30f5a981f1ba6",
     "d7d97e28ed316f6596c737eb83baa5948d86b673",
     "ecc2991277d7314f55b00e0f284ae3703aeef81e",
@@ -286,10 +288,11 @@ static const RECT rectangles[] =
     {140,  20, 143,  30}, /* width == 3 */
     {200,  20, 210,  21}, /* height == 1 */
     {200,  30, 210,  32}, /* height == 2 */
-    {200,  40, 210,  43} /* height == 3 */
+    {200,  40, 210,  43}  /* height == 3 */
 };
 
-static const BITMAPINFOHEADER dib_brush_header_32 = {sizeof(BITMAPINFOHEADER), 16, -16, 1, 32, BI_RGB, 0, 0, 0, 0, 0};
+static const BITMAPINFOHEADER dib_brush_header_32   = {sizeof(BITMAPINFOHEADER), 16, -16, 1, 32, BI_RGB, 0, 0, 0, 0, 0};
+static const BITMAPINFOHEADER dib_brush_header_555  = {sizeof(BITMAPINFOHEADER), 16, -16, 1, 16, BI_RGB, 0, 0, 0, 0, 0};
 
 static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sha1)
 {
@@ -524,6 +527,36 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     }
     compare_hash(bmi, bits, sha1, "bottom-up dib brush patblt");
     memset(bits, 0xcc, dib_size);
+
+    /* 555 dib pattern brush */
+
+    brush_bi->bmiHeader = dib_brush_header_555;
+    brush_bits = (BYTE*)brush_bi + sizeof(BITMAPINFOHEADER);
+    memset(brush_bits, 0, 16 * 16 * sizeof(WORD));
+    brush_bits[0] = brush_bits[1] = 0xff;
+    brush_bits[32] = brush_bits[34] = 0x7c;
+
+    dib_brush = CreateDIBPatternBrushPt(brush_bi, DIB_RGB_COLORS);
+
+    SelectObject(hdc, dib_brush);
+    SetBrushOrgEx(hdc, 1, 1, NULL);
+
+    for(i = 0, y = 10; i < 256; i++)
+    {
+        BOOL ret;
+
+        if(!rop_uses_src(rop3[i]))
+        {
+            ret = PatBlt(hdc, 10 + i, y, 100, 20, rop3[i]);
+            ok(ret, "got FALSE for %x\n", rop3[i]);
+            y += 25;
+        }
+    }
+    compare_hash(bmi, bits, sha1, "top-down 555 dib brush patblt");
+    memset(bits, 0xcc, dib_size);
+
+    SelectObject(hdc, orig_brush);
+    DeleteObject(dib_brush);
 
     SetBrushOrgEx(hdc, 0, 0, NULL);
 
