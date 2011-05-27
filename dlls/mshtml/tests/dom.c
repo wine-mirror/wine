@@ -3920,6 +3920,7 @@ static void test_screen(IHTMLWindow2 *window)
 {
     IHTMLScreen *screen, *screen2;
     IDispatchEx *dispex;
+    RECT work_area;
     LONG l, exl;
     HDC hdc;
     HRESULT hres;
@@ -3964,6 +3965,13 @@ static void test_screen(IHTMLWindow2 *window)
     ok(l == exl, "height = %d, expected %d\n", l, exl);
 
     DeleteObject(hdc);
+
+    SystemParametersInfoW(SPI_GETWORKAREA, 0, &work_area, 0);
+
+    l = 0xdeadbeef;
+    hres = IHTMLScreen_get_availHeight(screen, &l);
+    ok(hres == S_OK, "get_availHeight failed: %08x\n", hres);
+    ok(l == work_area.bottom-work_area.top, "availHeight = %d, expected %d\n", l, work_area.bottom-work_area.top);
 
     IHTMLScreen_Release(screen);
 }
