@@ -1200,11 +1200,21 @@ static void test_filename(void)
     DeleteFileW(filename_ext2W);
 }
 
+static const WCHAR label[] = {'l','a','b','e','l',0};
+static const WCHAR menuW[] = {'m','e','n','u','_','i','t','e','m',0};
+static const WCHAR pushbutton1W[] = {'p','u','s','h','b','u','t','t','o','n','_','i','t','e','m',0};
+static const WCHAR pushbutton2W[] = {'p','u','s','h','b','u','t','t','o','n','2','_','i','t','e','m',0};
+static const WCHAR checkbutton1W[] = {'c','h','e','c','k','b','u','t','t','o','n','1','_','i','t','e','m',0};
+static const WCHAR editbox1W[] = {'e','d','i','t','b','o','x','W','1','_','i','t','e','m',0};
+static const WCHAR textW[] = {'t','e','x','t','_','i','t','e','m',0};
+static const WCHAR visualgroup1W[] = {'v','i','s','u','a','l','g','r','o','u','p','1',0};
+
 static void test_customize(void)
 {
     IFileDialog *pfod;
     IFileDialogCustomize *pfdc;
     IOleWindow *pow;
+    UINT i;
     LONG ref;
     HWND dlg_hwnd;
     HRESULT hr;
@@ -1220,12 +1230,73 @@ static void test_customize(void)
         return;
     }
 
+    i = 0;
+    hr = IFileDialogCustomize_AddPushButton(pfdc, i, pushbutton1W);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    hr = IFileDialogCustomize_AddPushButton(pfdc, i, pushbutton1W);
+    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+
     hr = IFileDialog_QueryInterface(pfod, &IID_IOleWindow, (void**)&pow);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
     hr = IOleWindow_GetWindow(pow, &dlg_hwnd);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
     ok(dlg_hwnd == NULL, "NULL\n");
     IOleWindow_Release(pow);
+
+    hr = IFileDialogCustomize_EnableOpenDropDown(pfdc, i);
+    todo_wine ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    hr = IFileDialogCustomize_EnableOpenDropDown(pfdc, ++i);
+    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileDialogCustomize_AddMenu(pfdc, i, menuW);
+    todo_wine ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    hr = IFileDialogCustomize_AddMenu(pfdc, ++i, label);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileDialogCustomize_AddPushButton(pfdc, i, pushbutton2W);
+    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    hr = IFileDialogCustomize_AddPushButton(pfdc, ++i, pushbutton2W);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileDialogCustomize_AddComboBox(pfdc, i);
+    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    hr = IFileDialogCustomize_AddComboBox(pfdc, ++i);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileDialogCustomize_AddRadioButtonList(pfdc, i);
+    todo_wine ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    hr = IFileDialogCustomize_AddRadioButtonList(pfdc, ++i);
+    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileDialogCustomize_AddCheckButton(pfdc, i, label, TRUE);
+    todo_wine ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    hr = IFileDialogCustomize_AddCheckButton(pfdc, ++i, checkbutton1W, TRUE);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileDialogCustomize_AddEditBox(pfdc, i, label);
+    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    hr = IFileDialogCustomize_AddEditBox(pfdc, ++i, editbox1W);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileDialogCustomize_AddSeparator(pfdc, i);
+    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    hr = IFileDialogCustomize_AddSeparator(pfdc, ++i);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileDialogCustomize_AddText(pfdc, i, label);
+    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    hr = IFileDialogCustomize_AddText(pfdc, ++i, textW);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileDialogCustomize_StartVisualGroup(pfdc, i, label);
+    todo_wine ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    hr = IFileDialogCustomize_StartVisualGroup(pfdc, ++i, visualgroup1W);
+    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileDialogCustomize_StartVisualGroup(pfdc, ++i, label);
+    todo_wine ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    hr = IFileDialogCustomize_EndVisualGroup(pfdc);
+    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
 
     IFileDialogCustomize_Release(pfdc);
     ref = IFileOpenDialog_Release(pfod);

@@ -49,10 +49,32 @@ DEFINE_GUID(IID_IFileDialogCustomizeAlt, 0x8016B7B3, 0x3D49, 0x4504, 0xA0,0xAA, 
 
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
+static const WCHAR notifysink_childW[] = {'n','f','s','_','c','h','i','l','d',0};
+static const WCHAR floatnotifysinkW[] = {'F','l','o','a','t','N','o','t','i','f','y','S','i','n','k',0};
+
 enum ITEMDLG_TYPE {
     ITEMDLG_TYPE_OPEN,
     ITEMDLG_TYPE_SAVE
 };
+
+enum ITEMDLG_CCTRL_TYPE {
+    IDLG_CCTRL_MENU,
+    IDLG_CCTRL_PUSHBUTTON,
+    IDLG_CCTRL_COMBOBOX,
+    IDLG_CCTRL_RADIOBUTTONLIST,
+    IDLG_CCTRL_CHECKBUTTON,
+    IDLG_CCTRL_EDITBOX,
+    IDLG_CCTRL_SEPARATOR,
+    IDLG_CCTRL_TEXT
+};
+
+typedef struct {
+    HWND hwnd, wrapper_hwnd;
+    UINT id, dlgid;
+    enum ITEMDLG_CCTRL_TYPE type;
+    CDCONTROLSTATEF cdcstate;
+    struct list entry;
+} customctrl;
 
 typedef struct {
     struct list entry;
@@ -99,7 +121,10 @@ typedef struct FileDialogImpl {
     LPWSTR custom_cancelbutton;
     LPWSTR custom_filenamelabel;
 
+    UINT cctrl_width, cctrl_def_height, cctrls_cols;
     HWND cctrls_hwnd;
+    struct list cctrls;
+    UINT_PTR cctrl_next_dlgid;
 } FileDialogImpl;
 
 /**************************************************************************
@@ -460,6 +485,30 @@ static HRESULT on_default_action(FileDialogImpl *This)
 /**************************************************************************
  * Control functions.
  */
+static inline customctrl *get_cctrl_from_dlgid(FileDialogImpl *This, DWORD dlgid)
+{
+    customctrl *ctrl;
+
+    LIST_FOR_EACH_ENTRY(ctrl, &This->cctrls, customctrl, entry)
+        if(ctrl->dlgid == dlgid)
+            return ctrl;
+
+    ERR("Failed to find control with dialog id %d\n", dlgid);
+    return NULL;
+}
+
+static inline customctrl *get_cctrl(FileDialogImpl *This, DWORD ctlid)
+{
+    customctrl *ctrl;
+
+    LIST_FOR_EACH_ENTRY(ctrl, &This->cctrls, customctrl, entry)
+        if(ctrl->id == ctlid)
+            return ctrl;
+
+    ERR("Failed to find control with control id %d\n", ctlid);
+    return NULL;
+}
+
 static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width)
 {
     LPWSTR text;
@@ -485,6 +534,78 @@ static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width)
                  SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
 
     HeapFree(GetProcessHeap(), 0, text);
+}
+
+static LRESULT notifysink_on_create(HWND hwnd, CREATESTRUCTW *crs)
+{
+    FileDialogImpl *This = crs->lpCreateParams;
+    TRACE("%p\n", This);
+
+    SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LPARAM)This);
+    return TRUE;
+}
+
+static LRESULT CALLBACK notifysink_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
+{
+    HWND hwnd_child;
+    RECT rc;
+
+    switch(message)
+    {
+    case WM_NCCREATE:         return notifysink_on_create(hwnd, (CREATESTRUCTW*)lparam);
+    case WM_SIZE:
+        hwnd_child = GetPropW(hwnd, notifysink_childW);
+        GetClientRect(hwnd, &rc);
+        SetWindowPos(hwnd_child, NULL, 0, 0, rc.right, rc.bottom, SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
+        return TRUE;
+    }
+
+    return DefWindowProcW(hwnd, message, wparam, lparam);
+}
+
+static HRESULT cctrl_create_new(FileDialogImpl *This, DWORD id,
+                                LPCWSTR text, LPCWSTR wndclass, DWORD ctrl_wsflags,
+                                DWORD ctrl_exflags, UINT height, customctrl **ppctrl)
+{
+    HWND ns_hwnd, control_hwnd;
+    DWORD wsflags = WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS;
+    customctrl *ctrl;
+
+    if(get_cctrl(This, id))
+        return E_UNEXPECTED; /* Duplicate id */
+
+    ns_hwnd = CreateWindowExW(0, floatnotifysinkW, NULL, wsflags,
+                              0, 0, This->cctrl_width, height, This->cctrls_hwnd,
+                              (HMENU)This->cctrl_next_dlgid, COMDLG32_hInstance, This);
+    control_hwnd = CreateWindowExW(ctrl_exflags, wndclass, text, wsflags | ctrl_wsflags,
+                                   0, 0, This->cctrl_width, height, ns_hwnd,
+                                   (HMENU)This->cctrl_next_dlgid, COMDLG32_hInstance, 0);
+
+    if(!ns_hwnd || !control_hwnd)
+    {
+        ERR("Failed to create wrapper (%p) or control (%p)\n", ns_hwnd, control_hwnd);
+        DestroyWindow(ns_hwnd);
+        DestroyWindow(control_hwnd);
+
+        return E_FAIL;
+    }
+
+    SetPropW(ns_hwnd, notifysink_childW, control_hwnd);
+
+    ctrl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(customctrl));
+    if(!ctrl)
+        return E_OUTOFMEMORY;
+
+    ctrl->hwnd = control_hwnd;
+    ctrl->wrapper_hwnd = ns_hwnd;
+    ctrl->id = id;
+    ctrl->dlgid = This->cctrl_next_dlgid;
+    ctrl->cdcstate = CDCS_ENABLED | CDCS_VISIBLE;
+    list_add_tail(&This->cctrls, &ctrl->entry);
+    if(ppctrl) *ppctrl = ctrl;
+
+    This->cctrl_next_dlgid++;
+    return S_OK;
 }
 
 /**************************************************************************
@@ -533,7 +654,25 @@ static LRESULT ctrl_container_on_create(HWND hwnd, CREATESTRUCTW *crs)
 
 static LRESULT ctrl_container_on_wm_destroy(FileDialogImpl *This)
 {
+    customctrl *cur1, *cur2;
     TRACE("%p", This);
+
+    LIST_FOR_EACH_ENTRY_SAFE(cur1, cur2, &This->cctrls, customctrl, entry)
+    {
+        TRACE("Freeing control %p\n", cur1);
+        list_remove(&cur1->entry);
+
+        if(cur1->type == IDLG_CCTRL_MENU)
+        {
+            TBBUTTON tbb;
+            SendMessageW(cur1->hwnd, TB_GETBUTTON, 0, (LPARAM)&tbb);
+            DestroyMenu((HMENU)tbb.dwData);
+        }
+
+        DestroyWindow(cur1->hwnd);
+        HeapFree(GetProcessHeap(), 0, cur1);
+    }
+
     return TRUE;
 }
 
@@ -556,6 +695,15 @@ static HRESULT init_custom_controls(FileDialogImpl *This)
     WNDCLASSW wc;
     static const WCHAR ctrl_container_classname[] =
         {'i','d','l','g','_','c','o','n','t','a','i','n','e','r','_','p','a','n','e',0};
+
+    InitCommonControlsEx(NULL);
+
+    This->cctrl_width = 160;      /* Controls have a fixed width */
+    This->cctrl_def_height = 23;
+    This->cctrls_cols = 0;
+
+    This->cctrl_next_dlgid = 0x2000;
+    list_init(&This->cctrls);
 
     if( !GetClassInfoW(COMDLG32_hInstance, ctrl_container_classname, &wc) )
     {
@@ -581,6 +729,25 @@ static HRESULT init_custom_controls(FileDialogImpl *This)
         return E_FAIL;
 
     SetWindowLongW(This->cctrls_hwnd, GWL_STYLE, WS_TABSTOP);
+
+    /* Register class for  */
+    if( !GetClassInfoW(COMDLG32_hInstance, floatnotifysinkW, &wc) ||
+        wc.hInstance != COMDLG32_hInstance)
+    {
+        wc.style            = CS_HREDRAW | CS_VREDRAW;
+        wc.lpfnWndProc      = notifysink_proc;
+        wc.cbClsExtra       = 0;
+        wc.cbWndExtra       = 0;
+        wc.hInstance        = COMDLG32_hInstance;
+        wc.hIcon            = 0;
+        wc.hCursor          = LoadCursorW(0, (LPWSTR)IDC_ARROW);
+        wc.hbrBackground    = (HBRUSH)(COLOR_BTNFACE + 1);
+        wc.lpszMenuName     = NULL;
+        wc.lpszClassName    = floatnotifysinkW;
+
+        if (!RegisterClassW(&wc))
+            ERR("Failed to register FloatNotifySink window class.\n");
+    }
 
     return S_OK;
 }
@@ -2525,8 +2692,30 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddMenu(IFileDialogCustomize *iface
                                                      LPCWSTR pszLabel)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d, %s)\n", This, dwIDCtl, debugstr_w(pszLabel));
-    return E_NOTIMPL;
+    customctrl *ctrl;
+    TBBUTTON tbb;
+    HRESULT hr;
+    TRACE("%p (%d, %p)\n", This, dwIDCtl, pszLabel);
+
+    hr = cctrl_create_new(This, dwIDCtl, NULL, TOOLBARCLASSNAMEW,
+                          TBSTYLE_FLAT | CCS_NODIVIDER, 0,
+                          This->cctrl_def_height, &ctrl);
+    if(SUCCEEDED(hr))
+    {
+        ctrl->type = IDLG_CCTRL_MENU;
+
+        /* Add the actual button with a popup menu. */
+        tbb.iBitmap = I_IMAGENONE;
+        tbb.dwData = (DWORD_PTR)CreatePopupMenu();
+        tbb.iString = (DWORD_PTR)pszLabel;
+        tbb.fsState = TBSTATE_ENABLED;
+        tbb.fsStyle = BTNS_WHOLEDROPDOWN;
+        tbb.idCommand = 1;
+
+        SendMessageW(ctrl->hwnd, TB_ADDBUTTONSW, 1, (LPARAM)&tbb);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnAddPushButton(IFileDialogCustomize *iface,
@@ -2534,16 +2723,32 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddPushButton(IFileDialogCustomize 
                                                            LPCWSTR pszLabel)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d, %s)\n", This, dwIDCtl, debugstr_w(pszLabel));
-    return E_NOTIMPL;
+    customctrl *ctrl;
+    HRESULT hr;
+    TRACE("%p (%d, %p)\n", This, dwIDCtl, pszLabel);
+
+    hr = cctrl_create_new(This, dwIDCtl, pszLabel, WC_BUTTONW, BS_MULTILINE, 0,
+                          This->cctrl_def_height, &ctrl);
+    if(SUCCEEDED(hr))
+        ctrl->type = IDLG_CCTRL_PUSHBUTTON;
+
+    return hr;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnAddComboBox(IFileDialogCustomize *iface,
                                                          DWORD dwIDCtl)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d)\n", This, dwIDCtl);
-    return E_NOTIMPL;
+    customctrl *ctrl;
+    HRESULT hr;
+    TRACE("%p (%d)\n", This, dwIDCtl);
+
+    hr =  cctrl_create_new(This, dwIDCtl, NULL, WC_COMBOBOXW, CBS_DROPDOWNLIST, 0,
+                           This->cctrl_def_height, &ctrl);
+    if(SUCCEEDED(hr))
+        ctrl->type = IDLG_CCTRL_COMBOBOX;
+
+    return hr;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnAddRadioButtonList(IFileDialogCustomize *iface,
@@ -2560,8 +2765,19 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddCheckButton(IFileDialogCustomize
                                                             BOOL bChecked)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d, %s, %d)\n", This, dwIDCtl, debugstr_w(pszLabel), bChecked);
-    return E_NOTIMPL;
+    customctrl *ctrl;
+    HRESULT hr;
+    TRACE("%p (%d, %p, %d)\n", This, dwIDCtl, pszLabel, bChecked);
+
+    hr = cctrl_create_new(This, dwIDCtl, pszLabel, WC_BUTTONW, BS_AUTOCHECKBOX, 0,
+                          This->cctrl_def_height, &ctrl);
+    if(SUCCEEDED(hr))
+    {
+        ctrl->type = IDLG_CCTRL_CHECKBUTTON;
+        SendMessageW(ctrl->hwnd, BM_SETCHECK, bChecked ? BST_CHECKED : BST_UNCHECKED, 0);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnAddEditBox(IFileDialogCustomize *iface,
@@ -2569,16 +2785,32 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddEditBox(IFileDialogCustomize *if
                                                         LPCWSTR pszText)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d, %s)\n", This, dwIDCtl, debugstr_w(pszText));
-    return E_NOTIMPL;
+    customctrl *ctrl;
+    HRESULT hr;
+    TRACE("%p (%d, %p)\n", This, dwIDCtl, pszText);
+
+    hr = cctrl_create_new(This, dwIDCtl, pszText, WC_EDITW, ES_AUTOHSCROLL, WS_EX_CLIENTEDGE,
+                          This->cctrl_def_height, &ctrl);
+    if(SUCCEEDED(hr))
+        ctrl->type = IDLG_CCTRL_EDITBOX;
+
+    return hr;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnAddSeparator(IFileDialogCustomize *iface,
                                                           DWORD dwIDCtl)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d)\n", This, dwIDCtl);
-    return E_NOTIMPL;
+    customctrl *ctrl;
+    HRESULT hr;
+    TRACE("%p (%d)\n", This, dwIDCtl);
+
+    hr = cctrl_create_new(This, dwIDCtl, NULL, WC_STATICW, SS_ETCHEDHORZ, 0,
+                          GetSystemMetrics(SM_CYEDGE), &ctrl);
+    if(SUCCEEDED(hr))
+        ctrl->type = IDLG_CCTRL_SEPARATOR;
+
+    return hr;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnAddText(IFileDialogCustomize *iface,
@@ -2586,8 +2818,16 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddText(IFileDialogCustomize *iface
                                                      LPCWSTR pszText)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d, %s)\n", This, dwIDCtl, debugstr_w(pszText));
-    return E_NOTIMPL;
+    customctrl *ctrl;
+    HRESULT hr;
+    TRACE("%p (%d, %p)\n", This, dwIDCtl, pszText);
+
+    hr = cctrl_create_new(This, dwIDCtl, pszText, WC_STATICW, 0, 0,
+                          This->cctrl_def_height, &ctrl);
+    if(SUCCEEDED(hr))
+        ctrl->type = IDLG_CCTRL_TEXT;
+
+    return hr;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnSetControlLabel(IFileDialogCustomize *iface,
