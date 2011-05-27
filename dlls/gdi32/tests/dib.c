@@ -178,6 +178,32 @@ static const char *sha1_graphics_r4g4b4[] =
     NULL
 };
 
+static const char *sha1_graphics_8[] =
+{
+    "41728d7ff2bb425b5fc06521adeabf6cc73136f3",
+    "512246d4886ab889a090b167ba194577cb95272e",
+    "921e852d4564cb9e5ac15ff68b5207bebea871d1",
+    "9636b0ebefc443ea11949ccd28f6ca454277dd41",
+    "aa9050da55e6b6957c60b7d603fce539cb5c0048",
+    "e2b93aca15fb1233ac09a713dced1f4cd950b1e4",
+    "3e3a603fc26cc305aa27f88da7d2a3b0073877d8",
+    "390b2bf70daba36310683f46af9cd50b9a061396",
+    "82d21737e9a7247397a6c983a9b6d9a0452dd74d",
+    "2a8460af91675e01cbe9384eb6cd3eb2cb420960",
+    "1af53b1218ee9844fcda891b836d42f6b2f66bd5",
+    "da1cc34a9d9b779fc7849e03e214096026506464",
+    "5ba8f99ca034666effa556748c49a0f5a015125f",
+    "b67ba2f55659c75ac72c1112494461bb3086e1a4",
+    "73e2859ce849f756f954718ce3c90f02e31712b6",
+    "196d832d283bf642d2e481e5452ca175f7902761",
+    "9552f48b88982633a44001227abb847dae4d06b0",
+    "cfc67c325c7cdf96d90af9b3cceb8d0504cbb3b0",
+    "1f13ea0034db4b0ffa4ddcff9664fd892058f9cd",
+    "3caf512cfddfd463d0750cfe3cadb58548eb2ae8",
+    "4e5e7d5fd64818b2b3d3e793c88f603b699d2f0f",
+    NULL
+};
+
 static inline DWORD get_stride(BITMAPINFO *bmi)
 {
     return ((bmi->bmiHeader.biBitCount * bmi->bmiHeader.biWidth + 31) >> 3) & ~3;
@@ -795,6 +821,38 @@ todo_wine
     orig_bm = SelectObject(mem_dc, dib);
 
     sha1 = sha1_graphics_r4g4b4;
+    draw_graphics(mem_dc, bmi, bits, &sha1);
+
+    SelectObject(mem_dc, orig_bm);
+    DeleteObject(dib);
+
+    /* 8 */
+    trace("8\n");
+    bmi->bmiHeader.biBitCount = 8;
+    bmi->bmiHeader.biCompression = BI_RGB;
+    bmi->bmiHeader.biClrUsed = 5;
+    bmi->bmiColors[0].rgbRed = 0xff;
+    bmi->bmiColors[0].rgbGreen = 0xff;
+    bmi->bmiColors[0].rgbBlue = 0xff;
+    bmi->bmiColors[1].rgbRed = 0;
+    bmi->bmiColors[1].rgbGreen = 0;
+    bmi->bmiColors[1].rgbBlue = 0;
+    bmi->bmiColors[2].rgbRed = 0xff;
+    bmi->bmiColors[2].rgbGreen = 0;
+    bmi->bmiColors[2].rgbBlue = 0;
+    bmi->bmiColors[3].rgbRed = 0;
+    bmi->bmiColors[3].rgbGreen = 0xff;
+    bmi->bmiColors[3].rgbBlue = 0;
+    bmi->bmiColors[4].rgbRed = 0;
+    bmi->bmiColors[4].rgbGreen = 0;
+    bmi->bmiColors[4].rgbBlue = 0xff;
+
+    dib = CreateDIBSection(0, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(dib != NULL, "ret NULL\n");
+
+    orig_bm = SelectObject(mem_dc, dib);
+
+    sha1 = sha1_graphics_8;
     draw_graphics(mem_dc, bmi, bits, &sha1);
 
     SelectObject(mem_dc, orig_bm);
