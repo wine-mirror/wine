@@ -194,6 +194,88 @@ static void events_OnSelectionChange(FileDialogImpl *This)
     }
 }
 
+static inline HRESULT get_cctrl_event(IFileDialogEvents *pfde, IFileDialogControlEvents **pfdce)
+{
+    return IFileDialogEvents_QueryInterface(pfde, &IID_IFileDialogControlEvents, (void**)pfdce);
+}
+
+static HRESULT cctrl_event_OnButtonClicked(FileDialogImpl *This, DWORD ctl_id)
+{
+    events_client *cursor;
+    TRACE("%p\n", This);
+
+    LIST_FOR_EACH_ENTRY(cursor, &This->events_clients, events_client, entry)
+    {
+        IFileDialogControlEvents *pfdce;
+        if(SUCCEEDED(get_cctrl_event(cursor->pfde, &pfdce)))
+        {
+            TRACE("Notifying %p\n", cursor);
+            IFileDialogControlEvents_OnButtonClicked(pfdce, &This->IFileDialogCustomize_iface, ctl_id);
+            IFileDialogControlEvents_Release(pfdce);
+        }
+    }
+
+    return S_OK;
+}
+
+static HRESULT cctrl_event_OnItemSelected(FileDialogImpl *This, DWORD ctl_id, DWORD item_id)
+{
+    events_client *cursor;
+    TRACE("%p\n", This);
+
+    LIST_FOR_EACH_ENTRY(cursor, &This->events_clients, events_client, entry)
+    {
+        IFileDialogControlEvents *pfdce;
+        if(SUCCEEDED(get_cctrl_event(cursor->pfde, &pfdce)))
+        {
+            TRACE("Notifying %p\n", cursor);
+            IFileDialogControlEvents_OnItemSelected(pfdce, &This->IFileDialogCustomize_iface, ctl_id, item_id);
+            IFileDialogControlEvents_Release(pfdce);
+        }
+    }
+
+    return S_OK;
+}
+
+static HRESULT cctrl_event_OnCheckButtonToggled(FileDialogImpl *This, DWORD ctl_id, BOOL checked)
+{
+    events_client *cursor;
+    TRACE("%p\n", This);
+
+    LIST_FOR_EACH_ENTRY(cursor, &This->events_clients, events_client, entry)
+    {
+        IFileDialogControlEvents *pfdce;
+        if(SUCCEEDED(get_cctrl_event(cursor->pfde, &pfdce)))
+        {
+            TRACE("Notifying %p\n", cursor);
+            IFileDialogControlEvents_OnCheckButtonToggled(pfdce, &This->IFileDialogCustomize_iface, ctl_id, checked);
+            IFileDialogControlEvents_Release(pfdce);
+        }
+    }
+
+    return S_OK;
+}
+
+static HRESULT cctrl_event_OnControlActivating(FileDialogImpl *This,
+                                                  DWORD ctl_id)
+{
+    events_client *cursor;
+    TRACE("%p\n", This);
+
+    LIST_FOR_EACH_ENTRY(cursor, &This->events_clients, events_client, entry)
+    {
+        IFileDialogControlEvents *pfdce;
+        if(SUCCEEDED(get_cctrl_event(cursor->pfde, &pfdce)))
+        {
+            TRACE("Notifying %p\n", cursor);
+            IFileDialogControlEvents_OnControlActivating(pfdce, &This->IFileDialogCustomize_iface, ctl_id);
+            IFileDialogControlEvents_Release(pfdce);
+        }
+    }
+
+    return S_OK;
+}
+
 /**************************************************************************
  * Helper functions.
  */
@@ -568,14 +650,99 @@ static LRESULT notifysink_on_create(HWND hwnd, CREATESTRUCTW *crs)
     return TRUE;
 }
 
+static LRESULT notifysink_on_bn_clicked(FileDialogImpl *This, HWND hwnd, WPARAM wparam)
+{
+    customctrl *ctrl = get_cctrl_from_dlgid(This, LOWORD(wparam));
+
+    TRACE("%p, %lx\n", This, wparam);
+
+    if(ctrl)
+    {
+        if(ctrl->type == IDLG_CCTRL_CHECKBUTTON)
+        {
+            BOOL checked = (SendMessageW(ctrl->hwnd, BM_GETCHECK, 0, 0) == BST_CHECKED);
+            cctrl_event_OnCheckButtonToggled(This, ctrl->id, checked);
+        }
+        else
+            cctrl_event_OnButtonClicked(This, ctrl->id);
+    }
+
+    return TRUE;
+}
+
+static LRESULT notifysink_on_cbn_selchange(FileDialogImpl *This, HWND hwnd, WPARAM wparam)
+{
+    customctrl *ctrl = get_cctrl_from_dlgid(This, LOWORD(wparam));
+    TRACE("%p, %p (%lx)\n", This, ctrl, wparam);
+
+    if(ctrl)
+    {
+        UINT index = SendMessageW(ctrl->hwnd, CB_GETCURSEL, 0, 0);
+        UINT selid = SendMessageW(ctrl->hwnd, CB_GETITEMDATA, index, 0);
+
+        cctrl_event_OnItemSelected(This, ctrl->id, selid);
+    }
+    return TRUE;
+}
+
+static LRESULT notifysink_on_tvn_dropdown(FileDialogImpl *This, LPARAM lparam)
+{
+    NMTOOLBARW *nmtb = (NMTOOLBARW*)lparam;
+    customctrl *ctrl = get_cctrl_from_dlgid(This, GetDlgCtrlID(nmtb->hdr.hwndFrom));
+    POINT pt = { 0, nmtb->rcButton.bottom };
+    TBBUTTON tbb;
+    UINT idcmd;
+
+    TRACE("%p, %p (%lx)\n", This, ctrl, lparam);
+
+    if(ctrl)
+    {
+        cctrl_event_OnControlActivating(This,ctrl->id);
+
+        SendMessageW(ctrl->hwnd, TB_GETBUTTON, 0, (LPARAM)&tbb);
+        ClientToScreen(ctrl->hwnd, &pt);
+        idcmd = TrackPopupMenu((HMENU)tbb.dwData, TPM_RETURNCMD, pt.x, pt.y, 0, This->dlg_hwnd, NULL);
+        if(idcmd)
+            cctrl_event_OnItemSelected(This, ctrl->id, idcmd);
+    }
+
+    return TBDDRET_DEFAULT;
+}
+
+static LRESULT notifysink_on_wm_command(FileDialogImpl *This, HWND hwnd, WPARAM wparam, LPARAM lparam)
+{
+    switch(HIWORD(wparam))
+    {
+    case BN_CLICKED:          return notifysink_on_bn_clicked(This, hwnd, wparam);
+    case CBN_SELCHANGE:       return notifysink_on_cbn_selchange(This, hwnd, wparam);
+    }
+
+    return FALSE;
+}
+
+static LRESULT notifysink_on_wm_notify(FileDialogImpl *This, HWND hwnd, WPARAM wparam, LPARAM lparam)
+{
+    NMHDR *nmhdr = (NMHDR*)lparam;
+
+    switch(nmhdr->code)
+    {
+    case TBN_DROPDOWN:        return notifysink_on_tvn_dropdown(This, lparam);
+    }
+
+    return FALSE;
+}
+
 static LRESULT CALLBACK notifysink_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
+    FileDialogImpl *This = (FileDialogImpl*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
     HWND hwnd_child;
     RECT rc;
 
     switch(message)
     {
     case WM_NCCREATE:         return notifysink_on_create(hwnd, (CREATESTRUCTW*)lparam);
+    case WM_COMMAND:          return notifysink_on_wm_command(This, hwnd, wparam, lparam);
+    case WM_NOTIFY:           return notifysink_on_wm_notify(This, hwnd, wparam, lparam);
     case WM_SIZE:
         hwnd_child = GetPropW(hwnd, notifysink_childW);
         GetClientRect(hwnd, &rc);
