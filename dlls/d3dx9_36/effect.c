@@ -30,6 +30,61 @@ static const struct ID3DXEffectVtbl ID3DXEffect_Vtbl;
 static const struct ID3DXBaseEffectVtbl ID3DXBaseEffect_Vtbl;
 static const struct ID3DXEffectCompilerVtbl ID3DXEffectCompiler_Vtbl;
 
+enum STATE_CLASS
+{
+    SC_LIGHTENABLE,
+    SC_FVF,
+    SC_LIGHT,
+    SC_MATERIAL,
+    SC_NPATCHMODE,
+    SC_PIXELSHADER,
+    SC_RENDERSTATE,
+    SC_SETSAMPLER,
+    SC_SAMPLERSTATE,
+    SC_TEXTURE,
+    SC_TEXTURESTAGE,
+    SC_TRANSFORM,
+    SC_VERTEXSHADER,
+    SC_SHADERCONST,
+    SC_UNKNOWN,
+};
+
+enum MATERIAL_TYPE
+{
+    MT_DIFFUSE,
+    MT_AMBIENT,
+    MT_SPECULAR,
+    MT_EMISSIVE,
+    MT_POWER,
+};
+
+enum LIGHT_TYPE
+{
+    LT_TYPE,
+    LT_DIFFUSE,
+    LT_SPECULAR,
+    LT_AMBIENT,
+    LT_POSITION,
+    LT_DIRECTION,
+    LT_RANGE,
+    LT_FALLOFF,
+    LT_ATTENUATION0,
+    LT_ATTENUATION1,
+    LT_ATTENUATION2,
+    LT_THETA,
+    LT_PHI,
+};
+
+enum SHADER_CONSTANT_TYPE
+{
+    SCT_VSFLOAT,
+    SCT_VSBOOL,
+    SCT_VSINT,
+    SCT_PSFLOAT,
+    SCT_PSBOOL,
+    SCT_PSINT,
+};
+
 struct d3dx_parameter
 {
     char *name;
@@ -49,12 +104,21 @@ struct d3dx_parameter
     D3DXHANDLE *member_handles;
 };
 
+struct d3dx_state
+{
+    UINT operation;
+    UINT index;
+
+    D3DXHANDLE parameter;
+};
+
 struct d3dx_pass
 {
     char *name;
     UINT state_count;
     UINT annotation_count;
 
+    struct d3dx_state *states;
     D3DXHANDLE *annotation_handles;
 };
 
@@ -105,6 +169,210 @@ struct ID3DXEffectCompilerImpl
 static struct d3dx_parameter *get_parameter_by_name(struct ID3DXBaseEffectImpl *base,
         struct d3dx_parameter *parameter, LPCSTR name);
 static struct d3dx_parameter *get_parameter_annotation_by_name(struct d3dx_parameter *parameter, LPCSTR name);
+
+static const struct
+{
+    enum STATE_CLASS class;
+    UINT op;
+    LPCSTR name;
+}
+state_table[] =
+{
+    /* Render sates */
+    {SC_RENDERSTATE, D3DRS_ZENABLE, "D3DRS_ZENABLE"}, /* 0x0 */
+    {SC_RENDERSTATE, D3DRS_FILLMODE, "D3DRS_FILLMODE"},
+    {SC_RENDERSTATE, D3DRS_SHADEMODE, "D3DRS_SHADEMODE"},
+    {SC_RENDERSTATE, D3DRS_ZWRITEENABLE, "D3DRS_ZWRITEENABLE"},
+    {SC_RENDERSTATE, D3DRS_ALPHATESTENABLE, "D3DRS_ALPHATESTENABLE"},
+    {SC_RENDERSTATE, D3DRS_LASTPIXEL, "D3DRS_LASTPIXEL"},
+    {SC_RENDERSTATE, D3DRS_SRCBLEND, "D3DRS_SRCBLEND"},
+    {SC_RENDERSTATE, D3DRS_DESTBLEND, "D3DRS_DESTBLEND"},
+    {SC_RENDERSTATE, D3DRS_CULLMODE, "D3DRS_CULLMODE"},
+    {SC_RENDERSTATE, D3DRS_ZFUNC, "D3DRS_ZFUNC"},
+    {SC_RENDERSTATE, D3DRS_ALPHAREF, "D3DRS_ALPHAREF"},
+    {SC_RENDERSTATE, D3DRS_ALPHAFUNC, "D3DRS_ALPHAFUNC"},
+    {SC_RENDERSTATE, D3DRS_DITHERENABLE, "D3DRS_DITHERENABLE"},
+    {SC_RENDERSTATE, D3DRS_ALPHABLENDENABLE, "D3DRS_ALPHABLENDENABLE"},
+    {SC_RENDERSTATE, D3DRS_FOGENABLE, "D3DRS_FOGENABLE"},
+    {SC_RENDERSTATE, D3DRS_SPECULARENABLE, "D3DRS_SPECULARENABLE"},
+    {SC_RENDERSTATE, D3DRS_FOGCOLOR, "D3DRS_FOGCOLOR"}, /* 0x10 */
+    {SC_RENDERSTATE, D3DRS_FOGTABLEMODE, "D3DRS_FOGTABLEMODE"},
+    {SC_RENDERSTATE, D3DRS_FOGSTART, "D3DRS_FOGSTART"},
+    {SC_RENDERSTATE, D3DRS_FOGEND, "D3DRS_FOGEND"},
+    {SC_RENDERSTATE, D3DRS_FOGDENSITY, "D3DRS_FOGDENSITY"},
+    {SC_RENDERSTATE, D3DRS_RANGEFOGENABLE, "D3DRS_RANGEFOGENABLE"},
+    {SC_RENDERSTATE, D3DRS_STENCILENABLE, "D3DRS_STENCILENABLE"},
+    {SC_RENDERSTATE, D3DRS_STENCILFAIL, "D3DRS_STENCILFAIL"},
+    {SC_RENDERSTATE, D3DRS_STENCILZFAIL, "D3DRS_STENCILZFAIL"},
+    {SC_RENDERSTATE, D3DRS_STENCILPASS, "D3DRS_STENCILPASS"},
+    {SC_RENDERSTATE, D3DRS_STENCILFUNC, "D3DRS_STENCILFUNC"},
+    {SC_RENDERSTATE, D3DRS_STENCILREF, "D3DRS_STENCILREF"},
+    {SC_RENDERSTATE, D3DRS_STENCILMASK, "D3DRS_STENCILMASK"},
+    {SC_RENDERSTATE, D3DRS_STENCILWRITEMASK, "D3DRS_STENCILWRITEMASK"},
+    {SC_RENDERSTATE, D3DRS_TEXTUREFACTOR, "D3DRS_TEXTUREFACTOR"},
+    {SC_RENDERSTATE, D3DRS_WRAP0, "D3DRS_WRAP0"},
+    {SC_RENDERSTATE, D3DRS_WRAP1, "D3DRS_WRAP1"}, /* 0x20 */
+    {SC_RENDERSTATE, D3DRS_WRAP2, "D3DRS_WRAP2"},
+    {SC_RENDERSTATE, D3DRS_WRAP3, "D3DRS_WRAP3"},
+    {SC_RENDERSTATE, D3DRS_WRAP4, "D3DRS_WRAP4"},
+    {SC_RENDERSTATE, D3DRS_WRAP5, "D3DRS_WRAP5"},
+    {SC_RENDERSTATE, D3DRS_WRAP6, "D3DRS_WRAP6"},
+    {SC_RENDERSTATE, D3DRS_WRAP7, "D3DRS_WRAP7"},
+    {SC_RENDERSTATE, D3DRS_WRAP8, "D3DRS_WRAP8"},
+    {SC_RENDERSTATE, D3DRS_WRAP9, "D3DRS_WRAP9"},
+    {SC_RENDERSTATE, D3DRS_WRAP10, "D3DRS_WRAP10"},
+    {SC_RENDERSTATE, D3DRS_WRAP11, "D3DRS_WRAP11"},
+    {SC_RENDERSTATE, D3DRS_WRAP12, "D3DRS_WRAP12"},
+    {SC_RENDERSTATE, D3DRS_WRAP13, "D3DRS_WRAP13"},
+    {SC_RENDERSTATE, D3DRS_WRAP14, "D3DRS_WRAP14"},
+    {SC_RENDERSTATE, D3DRS_WRAP15, "D3DRS_WRAP15"},
+    {SC_RENDERSTATE, D3DRS_CLIPPING, "D3DRS_CLIPPING"},
+    {SC_RENDERSTATE, D3DRS_LIGHTING, "D3DRS_LIGHTING"}, /* 0x30 */
+    {SC_RENDERSTATE, D3DRS_AMBIENT, "D3DRS_AMBIENT"},
+    {SC_RENDERSTATE, D3DRS_FOGVERTEXMODE, "D3DRS_FOGVERTEXMODE"},
+    {SC_RENDERSTATE, D3DRS_COLORVERTEX, "D3DRS_COLORVERTEX"},
+    {SC_RENDERSTATE, D3DRS_LOCALVIEWER, "D3DRS_LOCALVIEWER"},
+    {SC_RENDERSTATE, D3DRS_NORMALIZENORMALS, "D3DRS_NORMALIZENORMALS"},
+    {SC_RENDERSTATE, D3DRS_DIFFUSEMATERIALSOURCE, "D3DRS_DIFFUSEMATERIALSOURCE"},
+    {SC_RENDERSTATE, D3DRS_SPECULARMATERIALSOURCE, "D3DRS_SPECULARMATERIALSOURCE"},
+    {SC_RENDERSTATE, D3DRS_AMBIENTMATERIALSOURCE, "D3DRS_AMBIENTMATERIALSOURCE"},
+    {SC_RENDERSTATE, D3DRS_EMISSIVEMATERIALSOURCE, "D3DRS_EMISSIVEMATERIALSOURCE"},
+    {SC_RENDERSTATE, D3DRS_VERTEXBLEND, "D3DRS_VERTEXBLEND"},
+    {SC_RENDERSTATE, D3DRS_CLIPPLANEENABLE, "D3DRS_CLIPPLANEENABLE"},
+    {SC_RENDERSTATE, D3DRS_POINTSIZE, "D3DRS_POINTSIZE"},
+    {SC_RENDERSTATE, D3DRS_POINTSIZE_MIN, "D3DRS_POINTSIZE_MIN"},
+    {SC_RENDERSTATE, D3DRS_POINTSIZE_MAX, "D3DRS_POINTSIZE_MAX"},
+    {SC_RENDERSTATE, D3DRS_POINTSPRITEENABLE, "D3DRS_POINTSPRITEENABLE"},
+    {SC_RENDERSTATE, D3DRS_POINTSCALEENABLE, "D3DRS_POINTSCALEENABLE"}, /* 0x40 */
+    {SC_RENDERSTATE, D3DRS_POINTSCALE_A, "D3DRS_POINTSCALE_A"},
+    {SC_RENDERSTATE, D3DRS_POINTSCALE_B, "D3DRS_POINTSCALE_B"},
+    {SC_RENDERSTATE, D3DRS_POINTSCALE_C, "D3DRS_POINTSCALE_C"},
+    {SC_RENDERSTATE, D3DRS_MULTISAMPLEANTIALIAS, "D3DRS_MULTISAMPLEANTIALIAS"},
+    {SC_RENDERSTATE, D3DRS_MULTISAMPLEMASK, "D3DRS_MULTISAMPLEMASK"},
+    {SC_RENDERSTATE, D3DRS_PATCHEDGESTYLE, "D3DRS_PATCHEDGESTYLE"},
+    {SC_RENDERSTATE, D3DRS_DEBUGMONITORTOKEN, "D3DRS_DEBUGMONITORTOKEN"},
+    {SC_RENDERSTATE, D3DRS_INDEXEDVERTEXBLENDENABLE, "D3DRS_INDEXEDVERTEXBLENDENABLE"},
+    {SC_RENDERSTATE, D3DRS_COLORWRITEENABLE, "D3DRS_COLORWRITEENABLE"},
+    {SC_RENDERSTATE, D3DRS_TWEENFACTOR, "D3DRS_TWEENFACTOR"},
+    {SC_RENDERSTATE, D3DRS_BLENDOP, "D3DRS_BLENDOP"},
+    {SC_RENDERSTATE, D3DRS_POSITIONDEGREE, "D3DRS_POSITIONDEGREE"},
+    {SC_RENDERSTATE, D3DRS_NORMALDEGREE, "D3DRS_NORMALDEGREE"},
+    {SC_RENDERSTATE, D3DRS_SCISSORTESTENABLE, "D3DRS_SCISSORTESTENABLE"},
+    {SC_RENDERSTATE, D3DRS_SLOPESCALEDEPTHBIAS, "D3DRS_SLOPESCALEDEPTHBIAS"},
+    {SC_RENDERSTATE, D3DRS_ANTIALIASEDLINEENABLE, "D3DRS_ANTIALIASEDLINEENABLE"}, /* 0x50 */
+    {SC_RENDERSTATE, D3DRS_MINTESSELLATIONLEVEL, "D3DRS_MINTESSELLATIONLEVEL"},
+    {SC_RENDERSTATE, D3DRS_MAXTESSELLATIONLEVEL, "D3DRS_MAXTESSELLATIONLEVEL"},
+    {SC_RENDERSTATE, D3DRS_ADAPTIVETESS_X, "D3DRS_ADAPTIVETESS_X"},
+    {SC_RENDERSTATE, D3DRS_ADAPTIVETESS_Y, "D3DRS_ADAPTIVETESS_Y"},
+    {SC_RENDERSTATE, D3DRS_ADAPTIVETESS_Z, "D3DRS_ADAPTIVETESS_Z"},
+    {SC_RENDERSTATE, D3DRS_ADAPTIVETESS_W, "D3DRS_ADAPTIVETESS_W"},
+    {SC_RENDERSTATE, D3DRS_ENABLEADAPTIVETESSELLATION, "D3DRS_ENABLEADAPTIVETESSELLATION"},
+    {SC_RENDERSTATE, D3DRS_TWOSIDEDSTENCILMODE, "D3DRS_TWOSIDEDSTENCILMODE"},
+    {SC_RENDERSTATE, D3DRS_CCW_STENCILFAIL, "D3DRS_CCW_STENCILFAIL"},
+    {SC_RENDERSTATE, D3DRS_CCW_STENCILZFAIL, "D3DRS_CCW_STENCILZFAIL"},
+    {SC_RENDERSTATE, D3DRS_CCW_STENCILPASS, "D3DRS_CCW_STENCILPASS"},
+    {SC_RENDERSTATE, D3DRS_CCW_STENCILFUNC, "D3DRS_CCW_STENCILFUNC"},
+    {SC_RENDERSTATE, D3DRS_COLORWRITEENABLE1, "D3DRS_COLORWRITEENABLE1"},
+    {SC_RENDERSTATE, D3DRS_COLORWRITEENABLE2, "D3DRS_COLORWRITEENABLE2"},
+    {SC_RENDERSTATE, D3DRS_COLORWRITEENABLE3, "D3DRS_COLORWRITEENABLE3"},
+    {SC_RENDERSTATE, D3DRS_BLENDFACTOR, "D3DRS_BLENDFACTOR"}, /* 0x60 */
+    {SC_RENDERSTATE, D3DRS_SRGBWRITEENABLE, "D3DRS_SRGBWRITEENABLE"},
+    {SC_RENDERSTATE, D3DRS_DEPTHBIAS, "D3DRS_DEPTHBIAS"},
+    {SC_RENDERSTATE, D3DRS_SEPARATEALPHABLENDENABLE, "D3DRS_SEPARATEALPHABLENDENABLE"},
+    {SC_RENDERSTATE, D3DRS_SRCBLENDALPHA, "D3DRS_SRCBLENDALPHA"},
+    {SC_RENDERSTATE, D3DRS_DESTBLENDALPHA, "D3DRS_DESTBLENDALPHA"},
+    {SC_RENDERSTATE, D3DRS_BLENDOPALPHA, "D3DRS_BLENDOPALPHA"},
+    /* Texture stages */
+    {SC_TEXTURESTAGE, D3DTSS_COLOROP, "D3DTSS_COLOROP"},
+    {SC_TEXTURESTAGE, D3DTSS_COLORARG0, "D3DTSS_COLORARG0"},
+    {SC_TEXTURESTAGE, D3DTSS_COLORARG1, "D3DTSS_COLORARG1"},
+    {SC_TEXTURESTAGE, D3DTSS_COLORARG2, "D3DTSS_COLORARG2"},
+    {SC_TEXTURESTAGE, D3DTSS_ALPHAOP, "D3DTSS_ALPHAOP"},
+    {SC_TEXTURESTAGE, D3DTSS_ALPHAARG0, "D3DTSS_ALPHAARG0"},
+    {SC_TEXTURESTAGE, D3DTSS_ALPHAARG1, "D3DTSS_ALPHAARG1"},
+    {SC_TEXTURESTAGE, D3DTSS_ALPHAARG2, "D3DTSS_ALPHAARG2"},
+    {SC_TEXTURESTAGE, D3DTSS_RESULTARG, "D3DTSS_RESULTARG"},
+    {SC_TEXTURESTAGE, D3DTSS_BUMPENVMAT00, "D3DTSS_BUMPENVMAT00"}, /* 0x70 */
+    {SC_TEXTURESTAGE, D3DTSS_BUMPENVMAT01, "D3DTSS_BUMPENVMAT01"},
+    {SC_TEXTURESTAGE, D3DTSS_BUMPENVMAT10, "D3DTSS_BUMPENVMAT10"},
+    {SC_TEXTURESTAGE, D3DTSS_BUMPENVMAT11, "D3DTSS_BUMPENVMAT11"},
+    {SC_TEXTURESTAGE, D3DTSS_TEXCOORDINDEX, "D3DTSS_TEXCOORDINDEX"},
+    {SC_TEXTURESTAGE, D3DTSS_BUMPENVLSCALE, "D3DTSS_BUMPENVLSCALE"},
+    {SC_TEXTURESTAGE, D3DTSS_BUMPENVLOFFSET, "D3DTSS_BUMPENVLOFFSET"},
+    {SC_TEXTURESTAGE, D3DTSS_TEXTURETRANSFORMFLAGS, "D3DTSS_TEXTURETRANSFORMFLAGS"},
+    /* */
+    {SC_UNKNOWN, 0, "UNKNOWN"},
+    /* NPatchMode */
+    {SC_NPATCHMODE, 0, "NPatchMode"},
+    /* */
+    {SC_UNKNOWN, 0, "UNKNOWN"},
+    /* Transform */
+    {SC_TRANSFORM, D3DTS_PROJECTION, "D3DTS_PROJECTION"},
+    {SC_TRANSFORM, D3DTS_VIEW, "D3DTS_VIEW"},
+    {SC_TRANSFORM, D3DTS_WORLD, "D3DTS_WORLD"},
+    {SC_TRANSFORM, D3DTS_TEXTURE0, "D3DTS_TEXTURE0"},
+    /* Material */
+    {SC_MATERIAL, MT_DIFFUSE, "MaterialDiffuse"},
+    {SC_MATERIAL, MT_AMBIENT, "MaterialAmbient"}, /* 0x80 */
+    {SC_MATERIAL, MT_SPECULAR, "MaterialSpecular"},
+    {SC_MATERIAL, MT_EMISSIVE, "MaterialEmissive"},
+    {SC_MATERIAL, MT_POWER, "MaterialPower"},
+    /* Light */
+    {SC_LIGHT, LT_TYPE, "LightType"},
+    {SC_LIGHT, LT_DIFFUSE, "LightDiffuse"},
+    {SC_LIGHT, LT_SPECULAR, "LightSpecular"},
+    {SC_LIGHT, LT_AMBIENT, "LightAmbient"},
+    {SC_LIGHT, LT_POSITION, "LightPosition"},
+    {SC_LIGHT, LT_DIRECTION, "LightDirection"},
+    {SC_LIGHT, LT_RANGE, "LighRange"},
+    {SC_LIGHT, LT_FALLOFF, "LightFallOff"},
+    {SC_LIGHT, LT_ATTENUATION0, "LightAttenuation0"},
+    {SC_LIGHT, LT_ATTENUATION1, "LightAttenuation1"},
+    {SC_LIGHT, LT_ATTENUATION2, "LightAttenuation2"},
+    {SC_LIGHT, LT_THETA, "LightTheta"},
+    {SC_LIGHT, LT_PHI, "LightPhi"}, /* 0x90 */
+    /* Ligthenable */
+    {SC_LIGHTENABLE, 0, "LightEnable"},
+    /* Vertexshader */
+    {SC_VERTEXSHADER, 0, "Vertexshader"},
+    /* Pixelshader */
+    {SC_PIXELSHADER, 0, "Pixelshader"},
+    /* Shader constants */
+    {SC_SHADERCONST, SCT_VSFLOAT, "VertexShaderConstantF"},
+    {SC_SHADERCONST, SCT_VSBOOL, "VertexShaderConstantB"},
+    {SC_SHADERCONST, SCT_VSINT, "VertexShaderConstantI"},
+    {SC_SHADERCONST, SCT_VSFLOAT, "VertexShaderConstant"},
+    {SC_SHADERCONST, SCT_VSFLOAT, "VertexShaderConstant1"},
+    {SC_SHADERCONST, SCT_VSFLOAT, "VertexShaderConstant2"},
+    {SC_SHADERCONST, SCT_VSFLOAT, "VertexShaderConstant3"},
+    {SC_SHADERCONST, SCT_VSFLOAT, "VertexShaderConstant4"},
+    {SC_SHADERCONST, SCT_PSFLOAT, "PixelShaderConstantF"},
+    {SC_SHADERCONST, SCT_PSBOOL, "PixelShaderConstantB"},
+    {SC_SHADERCONST, SCT_PSINT, "PixelShaderConstantI"},
+    {SC_SHADERCONST, SCT_PSFLOAT, "PixelShaderConstant"},
+    {SC_SHADERCONST, SCT_PSFLOAT, "PixelShaderConstant1"}, /* 0xa0 */
+    {SC_SHADERCONST, SCT_PSFLOAT, "PixelShaderConstant2"},
+    {SC_SHADERCONST, SCT_PSFLOAT, "PixelShaderConstant3"},
+    {SC_SHADERCONST, SCT_PSFLOAT, "PixelShaderConstant4"},
+    /* Texture */
+    {SC_TEXTURE, 0, "Texture"},
+    /* Sampler states */
+    {SC_SAMPLERSTATE, D3DSAMP_ADDRESSU, "AddressU"},
+    {SC_SAMPLERSTATE, D3DSAMP_ADDRESSV, "AddressV"},
+    {SC_SAMPLERSTATE, D3DSAMP_ADDRESSW, "AddressW"},
+    {SC_SAMPLERSTATE, D3DSAMP_BORDERCOLOR, "BorderColor"},
+    {SC_SAMPLERSTATE, D3DSAMP_MAGFILTER, "MagFilter"},
+    {SC_SAMPLERSTATE, D3DSAMP_MINFILTER, "MinFilter"},
+    {SC_SAMPLERSTATE, D3DSAMP_MIPFILTER, "MipFilter"},
+    {SC_SAMPLERSTATE, D3DSAMP_MIPMAPLODBIAS, "MipMapLodBias"},
+    {SC_SAMPLERSTATE, D3DSAMP_MAXMIPLEVEL, "MaxMipLevel"},
+    {SC_SAMPLERSTATE, D3DSAMP_MAXANISOTROPY, "MaxAnisotropy"},
+    {SC_SAMPLERSTATE, D3DSAMP_SRGBTEXTURE, "SRGBTexture"},
+    {SC_SAMPLERSTATE, D3DSAMP_ELEMENTINDEX, "ElementIndex"}, /* 0xb0 */
+    {SC_SAMPLERSTATE, D3DSAMP_DMAPOFFSET, "DMAPOffset"},
+    /* Set sampler */
+    {SC_SETSAMPLER, 0, "Sampler"},
+};
 
 static inline void read_dword(const char **ptr, DWORD *d)
 {
@@ -356,6 +624,11 @@ static void free_parameter(D3DXHANDLE handle, BOOL element, BOOL child)
     HeapFree(GetProcessHeap(), 0, param);
 }
 
+static void free_state(struct d3dx_state *state)
+{
+    free_parameter(state->parameter, FALSE, FALSE);
+}
+
 static void free_pass(D3DXHANDLE handle)
 {
     unsigned int i;
@@ -375,6 +648,15 @@ static void free_pass(D3DXHANDLE handle)
             free_parameter(pass->annotation_handles[i], FALSE, FALSE);
         }
         HeapFree(GetProcessHeap(), 0, pass->annotation_handles);
+    }
+
+    if (pass->states)
+    {
+        for (i = 0; i < pass->state_count; ++i)
+        {
+            free_state(&pass->states[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, pass->states);
     }
 
     HeapFree(GetProcessHeap(), 0, pass->name);
@@ -3832,6 +4114,56 @@ static HRESULT d3dx9_parse_effect_annotation(struct d3dx_parameter *anno, const 
     return D3D_OK;
 }
 
+static HRESULT d3dx9_parse_state(struct d3dx_state *state, const char *data, const char **ptr, D3DXHANDLE *objects)
+{
+    DWORD offset;
+    const char *ptr2;
+    HRESULT hr;
+    struct d3dx_parameter *parameter;
+
+    parameter = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*parameter));
+    if (!parameter)
+    {
+        ERR("Out of memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    read_dword(ptr, &state->operation);
+    TRACE("Operation: %#x (%s)\n", state->operation, state_table[state->operation].name);
+
+    read_dword(ptr, &state->index);
+    TRACE("Index: %#x\n", state->index);
+
+    read_dword(ptr, &offset);
+    TRACE("Typedef offset: %#x\n", offset);
+    ptr2 = data + offset;
+    hr = d3dx9_parse_effect_typedef(parameter, data, &ptr2, NULL, 0);
+    if (hr != D3D_OK)
+    {
+        WARN("Failed to parse type definition\n");
+        goto err_out;
+    }
+
+    read_dword(ptr, &offset);
+    TRACE("Value offset: %#x\n", offset);
+    hr = d3dx9_parse_init_value(parameter, data + offset, objects);
+    if (hr != D3D_OK)
+    {
+        WARN("Failed to parse value\n");
+        goto err_out;
+    }
+
+    state->parameter = get_parameter_handle(parameter);
+
+    return D3D_OK;
+
+err_out:
+
+    free_parameter(get_parameter_handle(parameter), FALSE, FALSE);
+
+    return hr;
+}
+
 static HRESULT d3dx9_parse_effect_parameter(struct d3dx_parameter *param, const char *data, const char **ptr, D3DXHANDLE *objects)
 {
     DWORD offset;
@@ -3924,6 +4256,7 @@ static HRESULT d3dx9_parse_effect_pass(struct d3dx_pass *pass, const char *data,
     HRESULT hr;
     unsigned int i;
     D3DXHANDLE *annotation_handles = NULL;
+    struct d3dx_state *states = NULL;
     char *name = NULL;
 
     read_dword(ptr, &offset);
@@ -3976,14 +4309,28 @@ static HRESULT d3dx9_parse_effect_pass(struct d3dx_pass *pass, const char *data,
 
     if (pass->state_count)
     {
+        states = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*states) * pass->state_count);
+        if (!states)
+        {
+            ERR("Out of memory\n");
+            hr = E_OUTOFMEMORY;
+            goto err_out;
+        }
+
         for (i = 0; i < pass->state_count; ++i)
         {
-            skip_dword_unknown(ptr, 4);
+            hr = d3dx9_parse_state(&states[i], data, ptr, objects);
+            if (hr != D3D_OK)
+            {
+                WARN("Failed to parse annotations\n");
+                goto err_out;
+            }
         }
     }
 
     pass->name = name;
     pass->annotation_handles = annotation_handles;
+    pass->states = states;
 
     return D3D_OK;
 
@@ -3996,6 +4343,15 @@ err_out:
             free_parameter(annotation_handles[i], FALSE, FALSE);
         }
         HeapFree(GetProcessHeap(), 0, annotation_handles);
+    }
+
+    if (states)
+    {
+        for (i = 0; i < pass->state_count; ++i)
+        {
+            free_state(&states[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, states);
     }
 
     HeapFree(GetProcessHeap(), 0, name);
