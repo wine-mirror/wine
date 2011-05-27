@@ -162,6 +162,8 @@ static void* do_call_func3(void *func, void *_this,
 
 #endif /* __i386__ */
 
+#define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
+#define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
 static BOOL init(void)
 {
     HMODULE msvcr = LoadLibraryA("msvcr90.dll");
@@ -180,39 +182,39 @@ static BOOL init(void)
     p_set_invalid_parameter_handler(test_invalid_parameter_handler);
 
     if(sizeof(void*) == 8) { /* 64-bit initialization */
-        p_char_assign = (void*)GetProcAddress(msvcp, "?assign@?$char_traits@D@std@@SAXAEADAEBD@Z");
-        p_wchar_assign = (void*)GetProcAddress(msvcp, "?assign@?$char_traits@_W@std@@SAXAEA_WAEB_W@Z");
-        p_short_assign = (void*)GetProcAddress(msvcp, "?assign@?$char_traits@G@std@@SAXAEAGAEBG@Z");
+        SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAEADAEBD@Z");
+        SET(p_wchar_assign, "?assign@?$char_traits@_W@std@@SAXAEA_WAEB_W@Z");
+        SET(p_short_assign, "?assign@?$char_traits@G@std@@SAXAEAGAEBG@Z");
 
-        p_char_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@D@std@@SA_NAEBD0@Z");
-        p_wchar_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@_W@std@@SA_NAEB_W0@Z");
-        p_short_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@G@std@@SA_NAEBG0@Z");
+        SET(p_char_eq, "?eq@?$char_traits@D@std@@SA_NAEBD0@Z");
+        SET(p_wchar_eq, "?eq@?$char_traits@_W@std@@SA_NAEB_W0@Z");
+        SET(p_short_eq, "?eq@?$char_traits@G@std@@SA_NAEBG0@Z");
 
-        p_Copy_s = (void*)GetProcAddress(msvcp, "?_Copy_s@?$char_traits@D@std@@SAPEADPEAD_KPEBD1@Z");
+        SET(p_Copy_s, "?_Copy_s@?$char_traits@D@std@@SAPEADPEAD_KPEBD1@Z");
 
-        p_char_address = (void*)GetProcAddress(msvcp, "?address@?$allocator@D@std@@QEBAPEADAEAD@Z");
-        p_char_ctor = (void*)GetProcAddress(msvcp, "??0?$allocator@D@std@@QEAA@XZ");
-        p_char_deallocate = (void*)GetProcAddress(msvcp, "?deallocate@?$allocator@D@std@@QEAAXPEAD_K@Z");
-        p_char_allocate = (void*)GetProcAddress(msvcp, "?allocate@?$allocator@D@std@@QEAAPEAD_K@Z");
-        p_char_construct = (void*)GetProcAddress(msvcp, "?construct@?$allocator@D@std@@QEAAXPEADAEBD@Z");
-        p_char_max_size = (void*)GetProcAddress(msvcp, "?max_size@?$allocator@D@std@@QEBA_KXZ");
+        SET(p_char_address, "?address@?$allocator@D@std@@QEBAPEADAEAD@Z");
+        SET(p_char_ctor, "??0?$allocator@D@std@@QEAA@XZ");
+        SET(p_char_deallocate, "?deallocate@?$allocator@D@std@@QEAAXPEAD_K@Z");
+        SET(p_char_allocate, "?allocate@?$allocator@D@std@@QEAAPEAD_K@Z");
+        SET(p_char_construct, "?construct@?$allocator@D@std@@QEAAXPEADAEBD@Z");
+        SET(p_char_max_size, "?max_size@?$allocator@D@std@@QEBA_KXZ");
     } else {
-        p_char_assign = (void*)GetProcAddress(msvcp, "?assign@?$char_traits@D@std@@SAXAADABD@Z");
-        p_wchar_assign = (void*)GetProcAddress(msvcp, "?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z");
-        p_short_assign = (void*)GetProcAddress(msvcp, "?assign@?$char_traits@G@std@@SAXAAGABG@Z");
+        SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAADABD@Z");
+        SET(p_wchar_assign, "?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z");
+        SET(p_short_assign, "?assign@?$char_traits@G@std@@SAXAAGABG@Z");
 
-        p_char_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@D@std@@SA_NABD0@Z");
-        p_wchar_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@_W@std@@SA_NAB_W0@Z");
-        p_short_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@G@std@@SA_NABG0@Z");
+        SET(p_char_eq, "?eq@?$char_traits@D@std@@SA_NABD0@Z");
+        SET(p_wchar_eq, "?eq@?$char_traits@_W@std@@SA_NAB_W0@Z");
+        SET(p_short_eq, "?eq@?$char_traits@G@std@@SA_NABG0@Z");
 
-        p_Copy_s = (void*)GetProcAddress(msvcp, "?_Copy_s@?$char_traits@D@std@@SAPADPADIPBDI@Z");
+        SET(p_Copy_s, "?_Copy_s@?$char_traits@D@std@@SAPADPADIPBDI@Z");
 
-        p_char_address = (void*)GetProcAddress(msvcp, "?address@?$allocator@D@std@@QBEPADAAD@Z");
-        p_char_ctor = (void*)GetProcAddress(msvcp, "??0?$allocator@D@std@@QAE@XZ");
-        p_char_deallocate = (void*)GetProcAddress(msvcp, "?deallocate@?$allocator@D@std@@QAEXPADI@Z");
-        p_char_allocate = (void*)GetProcAddress(msvcp, "?allocate@?$allocator@D@std@@QAEPADI@Z");
-        p_char_construct = (void*)GetProcAddress(msvcp, "?construct@?$allocator@D@std@@QAEXPADABD@Z");
-        p_char_max_size = (void*)GetProcAddress(msvcp, "?max_size@?$allocator@D@std@@QBEIXZ");
+        SET(p_char_address, "?address@?$allocator@D@std@@QBEPADAAD@Z");
+        SET(p_char_ctor, "??0?$allocator@D@std@@QAE@XZ");
+        SET(p_char_deallocate, "?deallocate@?$allocator@D@std@@QAEXPADI@Z");
+        SET(p_char_allocate, "?allocate@?$allocator@D@std@@QAEPADI@Z");
+        SET(p_char_construct, "?construct@?$allocator@D@std@@QAEXPADABD@Z");
+        SET(p_char_max_size, "?max_size@?$allocator@D@std@@QBEIXZ");
     }
 
     return TRUE;
@@ -222,11 +224,6 @@ static void test_assign(void)
 {
     const char in[] = "abc";
     char out[4];
-
-    if(!p_char_assign || !p_wchar_assign || !p_short_assign) {
-        win_skip("assign tests skipped\n");
-        return;
-    }
 
     out[1] = '#';
     p_char_assign(out, in);
@@ -254,11 +251,6 @@ static void test_equal(void)
     static const char in4[] = "b";
     BYTE ret;
 
-    if(!p_char_eq || !p_wchar_eq || !p_short_eq) {
-        win_skip("equal tests skipped\n");
-        return;
-    }
-
     ret = p_char_eq(in1, in2);
     ok(ret == TRUE, "ret = %d\n", (int)ret);
     ret = p_char_eq(in1, in3);
@@ -285,11 +277,6 @@ static void test_Copy_s(void)
 {
     static const char src[] = "abcd";
     char dest[32], *ret;
-
-    if(!p_Copy_s) {
-        win_skip("Copy_s tests skipped\n");
-        return;
-    }
 
     dest[4] = '#';
     dest[5] = '\0';
@@ -334,12 +321,6 @@ static void test_allocator_char(void)
     char *ptr;
     char val;
     unsigned int size;
-
-    if(!p_char_address || !p_char_ctor || !p_char_deallocate || !p_char_allocate
-            || !p_char_construct || !p_char_max_size) {
-        win_skip("allocator<char> class not available\n");
-        return;
-    }
 
     allocator = call_func1(p_char_ctor, allocator);
     ok(allocator == (void*)0xdeadbeef, "allocator = %p\n", allocator);
