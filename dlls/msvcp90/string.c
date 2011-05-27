@@ -38,14 +38,14 @@ void CDECL MSVCP_char_traits_char_assign(char *ch, const char *assign)
 
 /* ?eq@?$char_traits@D@std@@SA_NABD0@Z */
 /* ?eq@?$char_traits@D@std@@SA_NAEBD0@Z */
-MSVCP_BOOL CDECL MSVCP_char_traits_char_eq(const char *ch1, const char *ch2)
+MSVCP_bool CDECL MSVCP_char_traits_char_eq(const char *ch1, const char *ch2)
 {
     return *ch1 == *ch2;
 }
 
 /* ?lt@?$char_traits@D@std@@SA_NABD0@Z */
 /* ?lt@?$char_traits@D@std@@SA_NAEBD0@Z */
-MSVCP_BOOL CDECL MSVCP_char_traits_lt(const char *ch1, const char *ch2)
+MSVCP_bool CDECL MSVCP_char_traits_lt(const char *ch1, const char *ch2)
 {
     return *ch1 < *ch2;
 }
@@ -143,7 +143,7 @@ int CDECL MSVCP_char_traits_char_to_int_type(const char *ch)
 
 /* ?eq_int_type@?$char_traits@D@std@@SA_NABH0@Z */
 /* ?eq_int_type@?$char_traits@D@std@@SA_NAEBH0@Z */
-MSVCP_BOOL CDECL MSVCP_char_traits_char_eq_int_type(const int *i1, const int *i2)
+MSVCP_bool CDECL MSVCP_char_traits_char_eq_int_type(const int *i1, const int *i2)
 {
     return *i1 == *i2;
 }
@@ -173,14 +173,14 @@ void CDECL MSVCP_char_traits_wchar_assign(wchar_t *ch,
 
 /* ?eq@?$char_traits@_W@std@@SA_NAB_W0@Z */
 /* ?eq@?$char_traits@_W@std@@SA_NAEB_W0@Z */
-MSVCP_BOOL CDECL MSVCP_char_traits_wchar_eq(wchar_t *ch1, wchar_t *ch2)
+MSVCP_bool CDECL MSVCP_char_traits_wchar_eq(wchar_t *ch1, wchar_t *ch2)
 {
     return *ch1 == *ch2;
 }
 
 /* ?lt@?$char_traits@_W@std@@SA_NAB_W0@Z */
 /* ?lt@?$char_traits@_W@std@@SA_NAEB_W0@Z */
-MSVCP_BOOL CDECL MSVCP_char_traits_wchar_lt(const wchar_t *ch1,
+MSVCP_bool CDECL MSVCP_char_traits_wchar_lt(const wchar_t *ch1,
         const wchar_t *ch2)
 {
     return *ch1 < *ch2;
@@ -291,7 +291,7 @@ unsigned short CDECL MSVCP_char_traits_wchar_to_int_type(const wchar_t *ch)
 
 /* ?eq_int_type@?$char_traits@_W@std@@SA_NABG0@Z */
 /* ?eq_int_type@?$char_traits@_W@std@@SA_NAEBG0@Z */
-MSVCP_BOOL CDECL MSVCP_char_traits_wchar_eq_int_tpe(const unsigned short *i1,
+MSVCP_bool CDECL MSVCP_char_traits_wchar_eq_int_tpe(const unsigned short *i1,
         const unsigned short *i2)
 {
     return *i1 == *i2;
@@ -322,7 +322,7 @@ void CDECL MSVCP_char_traits_short_assign(unsigned short *ch,
 
 /* ?eq@?$char_traits@G@std@@SA_NABG0@Z */
 /* ?eq@?$char_traits@G@std@@SA_NAEBG0@Z */
-MSVCP_BOOL CDECL MSVCP_char_traits_short_eq(const unsigned short *ch1,
+MSVCP_bool CDECL MSVCP_char_traits_short_eq(const unsigned short *ch1,
         const unsigned short *ch2)
 {
     return *ch1 == *ch2;
@@ -330,7 +330,7 @@ MSVCP_BOOL CDECL MSVCP_char_traits_short_eq(const unsigned short *ch1,
 
 /* ?lt@?$char_traits@G@std@@SA_NABG0@Z */
 /* ?lt@?$char_traits@G@std@@SA_NAEBG0@Z */
-MSVCP_BOOL CDECL MSVCP_char_traits_short_lt(const unsigned short *ch1,
+MSVCP_bool CDECL MSVCP_char_traits_short_lt(const unsigned short *ch1,
         const unsigned short *ch2)
 {
     return *ch1 < *ch2;
@@ -446,7 +446,7 @@ unsigned short CDECL MSVCP_char_traits_short_to_int_type(const unsigned short *c
 
 /* ?eq_int_type@?$char_traits@G@std@@SA_NABG0@Z */
 /* ?eq_int_type@?$char_traits@G@std@@SA_NAEBG0@Z */
-MSVCP_BOOL CDECL MSVCP_char_traits_short_eq_int_type(unsigned short *i1,
+MSVCP_bool CDECL MSVCP_char_traits_short_eq_int_type(unsigned short *i1,
         unsigned short *i2)
 {
     return *i1 == *i2;
@@ -526,7 +526,7 @@ static void basic_string_char_eos(basic_string_char *this, size_t len)
 }
 
 /* Internal: basic_string_char_inside - checks if given pointer points inside stored string */
-static MSVCP_BOOL basic_string_char_inside(
+static MSVCP_bool basic_string_char_inside(
         basic_string_char *this, const char *ptr)
 {
     char *cstr = basic_string_char_ptr(this);
@@ -537,7 +537,7 @@ static MSVCP_BOOL basic_string_char_inside(
 /* Internal: basic_string_char_tidy - initialize basic_string buffer, deallocates data */
 /* Caution: new_size have to be smaller than BUF_SIZE_CHAR */
 static void basic_string_char_tidy(basic_string_char *this,
-        MSVCP_BOOL built, size_t new_size)
+        MSVCP_bool built, size_t new_size)
 {
     if(built && BUF_SIZE_CHAR<=this->res) {
         char *ptr = this->data.ptr;
@@ -552,8 +552,8 @@ static void basic_string_char_tidy(basic_string_char *this,
 }
 
 /* Internal: basic_string_char_grow - changes size of internal buffer */
-static MSVCP_BOOL basic_string_char_grow(
-        basic_string_char *this, size_t new_size, MSVCP_BOOL trim)
+static MSVCP_bool basic_string_char_grow(
+        basic_string_char *this, size_t new_size, MSVCP_bool trim)
 {
     if(this->res < new_size) {
         size_t new_res = new_size;
@@ -1046,7 +1046,7 @@ int __thiscall MSVCP_basic_string_char_compare(
 
 /* ??$?MDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
 /* ??$?MDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-MSVCP_BOOL __cdecl MSVCP_basic_string_char_lower(
+MSVCP_bool __cdecl MSVCP_basic_string_char_lower(
         const basic_string_char *left, const basic_string_char *right)
 {
     return MSVCP_basic_string_char_compare(left, right) < 0;
@@ -1054,7 +1054,7 @@ MSVCP_BOOL __cdecl MSVCP_basic_string_char_lower(
 
 /* ??$?MDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PBD@Z */
 /* ??$?MDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
-MSVCP_BOOL __cdecl MSVCP_basic_string_char_lower_bstr_cstr(
+MSVCP_bool __cdecl MSVCP_basic_string_char_lower_bstr_cstr(
         const basic_string_char *left, const char *right)
 {
     return MSVCP_basic_string_char_compare_cstr(left, right) < 0;
@@ -1062,7 +1062,7 @@ MSVCP_BOOL __cdecl MSVCP_basic_string_char_lower_bstr_cstr(
 
 /* ??$?MDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPBDABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
 /* ??$?MDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-MSVCP_BOOL __cdecl MSVCP_basic_string_char_lower_cstr_bstr(
+MSVCP_bool __cdecl MSVCP_basic_string_char_lower_cstr_bstr(
         const char *left, const basic_string_char *right)
 {
     return MSVCP_basic_string_char_compare_cstr(right, left) > 0;
@@ -1198,7 +1198,7 @@ static void basic_string_wchar_eos(basic_string_wchar *this, size_t len)
 }
 
 /* Internal: basic_string_char_inside - checks if given pointer points inside stored string */
-static MSVCP_BOOL basic_string_wchar_inside(
+static MSVCP_bool basic_string_wchar_inside(
         basic_string_wchar *this, const wchar_t *ptr)
 {
     wchar_t *cstr = basic_string_wchar_ptr(this);
@@ -1209,7 +1209,7 @@ static MSVCP_BOOL basic_string_wchar_inside(
 /* Internal: basic_string_char_tidy - initialize basic_string buffer, deallocates data */
 /* Caution: new_size have to be smaller than BUF_SIZE_WCHAR */
 static void basic_string_wchar_tidy(basic_string_wchar *this,
-        MSVCP_BOOL built, size_t new_size)
+        MSVCP_bool built, size_t new_size)
 {
     if(built && BUF_SIZE_WCHAR<=this->res) {
         wchar_t *ptr = this->data.ptr;
@@ -1224,8 +1224,8 @@ static void basic_string_wchar_tidy(basic_string_wchar *this,
 }
 
 /* Internal: basic_string_wchar_grow - changes size of internal buffer */
-static MSVCP_BOOL basic_string_wchar_grow(
-        basic_string_wchar *this, size_t new_size, MSVCP_BOOL trim)
+static MSVCP_bool basic_string_wchar_grow(
+        basic_string_wchar *this, size_t new_size, MSVCP_bool trim)
 {
     if(this->res < new_size) {
         size_t new_res = new_size;
@@ -1716,7 +1716,7 @@ int __thiscall MSVCP_basic_string_wchar_compare(
 
 /* ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@0@Z */
 /* ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@0@Z */
-MSVCP_BOOL __cdecl MSVCP_basic_string_wchar_lower(
+MSVCP_bool __cdecl MSVCP_basic_string_wchar_lower(
         const basic_string_wchar *left, const basic_string_wchar *right)
 {
     return MSVCP_basic_string_wchar_compare(left, right) < 0;
@@ -1724,7 +1724,7 @@ MSVCP_BOOL __cdecl MSVCP_basic_string_wchar_lower(
 
 /* ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PB_W@Z */
 /* ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PEB_W@Z */
-MSVCP_BOOL __cdecl MSVCP_basic_string_wchar_lower_bstr_cstr(
+MSVCP_bool __cdecl MSVCP_basic_string_wchar_lower_bstr_cstr(
         const basic_string_wchar *left, const wchar_t *right)
 {
     return MSVCP_basic_string_wchar_compare_cstr(left, right) < 0;
@@ -1732,7 +1732,7 @@ MSVCP_BOOL __cdecl MSVCP_basic_string_wchar_lower_bstr_cstr(
 
 /* ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPB_WABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z */
 /* ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPEB_WAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z */
-MSVCP_BOOL __cdecl MSVCP_basic_string_wchar_lower_cstr_bstr(
+MSVCP_bool __cdecl MSVCP_basic_string_wchar_lower_cstr_bstr(
         const wchar_t *left, const basic_string_wchar *right)
 {
     return MSVCP_basic_string_wchar_compare_cstr(right, left) > 0;

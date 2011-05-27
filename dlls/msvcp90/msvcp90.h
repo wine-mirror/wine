@@ -19,7 +19,8 @@
 #include "stdlib.h"
 #include "windef.h"
 
-typedef unsigned char MSVCP_BOOL;
+typedef unsigned char MSVCP_bool;
+typedef int MSVCP_long;
 
 void __cdecl _invalid_parameter(const wchar_t*, const wchar_t*,
         const wchar_t*, unsigned int, uintptr_t);
@@ -48,6 +49,30 @@ extern void (__cdecl *MSVCRT_operator_delete)(void*);
 #define DEFINE_THISCALL_WRAPPER(func,args) /* nothing */
 
 #endif /* __i386__ */
+
+#ifdef _WIN64
+
+#define __ASM_VTABLE(name,funcs) \
+    __asm__(".data\n" \
+            "\t.align 8\n" \
+            "\t.quad " __ASM_NAME(#name "_rtti") "\n" \
+            "\t.globl " __ASM_NAME("MSVCP_" #name "_vtable") "\n" \
+            __ASM_NAME("MSVCP_" #name "_vtable") ":\n" \
+            "\t.quad " THISCALL_NAME(MSVCP_ ## name ## _vector_dtor) "\n" \
+            funcs "\n\t.text");
+
+#else
+
+#define __ASM_VTABLE(name,funcs) \
+    __asm__(".data\n" \
+            "\t.align 4\n" \
+            "\t.long " __ASM_NAME(#name "_rtti") "\n" \
+            "\t.globl " __ASM_NAME("MSVCP_" #name "_vtable") "\n" \
+            __ASM_NAME("MSVCP_" #name "_vtable") ":\n" \
+            "\t.long " THISCALL_NAME(MSVCP_ ## name ## _vector_dtor) "\n" \
+            funcs "\n\t.text");
+
+#endif /* _WIN64 */
 
 /* exception object */
 typedef void (*vtable_ptr)(void);
@@ -150,3 +175,9 @@ char* __stdcall MSVCP_allocator_char_allocate(void*, size_t);
 void __stdcall MSVCP_allocator_char_deallocate(void*, char*, size_t);
 wchar_t* __stdcall MSVCP_allocator_wchar_allocate(void*, size_t);
 void __stdcall MSVCP_allocator_wchar_deallocate(void*, wchar_t*, size_t);
+
+/* class locale */
+typedef struct
+{
+    /*_Lockimp*/void *ptr;
+} locale;

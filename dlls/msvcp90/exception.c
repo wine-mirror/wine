@@ -64,15 +64,6 @@ void WINAPI _CxxThrowException(exception*,const cxx_exception_type*);
 
 #ifdef _WIN64
 
-#define __ASM_VTABLE(name,funcs) \
-    __asm__(".data\n" \
-            "\t.align 8\n" \
-            "\t.quad " __ASM_NAME(#name "_rtti") "\n" \
-            "\t.globl " __ASM_NAME("MSVCP_" #name "_vtable") "\n" \
-            __ASM_NAME("MSVCP_" #name "_vtable") ":\n" \
-            "\t.quad " THISCALL_NAME(MSVCP_ ## name ## _vector_dtor) "\n" \
-            funcs "\n\t.text");
-
 #define __ASM_EXCEPTION_VTABLE(name) \
     __ASM_VTABLE(name, "\t.quad " THISCALL_NAME(MSVCP_what_exception) )
 
@@ -80,15 +71,6 @@ void WINAPI _CxxThrowException(exception*,const cxx_exception_type*);
     __ASM_VTABLE(name, "\t.quad " THISCALL_NAME(MSVCP_logic_error_what) )
 
 #else
-
-#define __ASM_VTABLE(name,funcs) \
-    __asm__(".data\n" \
-            "\t.align 4\n" \
-            "\t.long " __ASM_NAME(#name "_rtti") "\n" \
-            "\t.globl " __ASM_NAME("MSVCP_" #name "_vtable") "\n" \
-            __ASM_NAME("MSVCP_" #name "_vtable") ":\n" \
-            "\t.long " THISCALL_NAME(MSVCP_ ## name ## _vector_dtor) "\n" \
-            funcs "\n\t.text");
 
 #define __ASM_EXCEPTION_VTABLE(name) \
     __ASM_VTABLE(name, "\t.long " THISCALL_NAME(MSVCP_what_exception) )
