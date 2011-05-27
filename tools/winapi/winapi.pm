@@ -391,7 +391,7 @@ sub parse_spec_file($$) {
 		    }
 		}
 	    }
-	} elsif(/^(\d+|@)\s+stub(?:\s+(-arch=(?:$ARCHES)(?:,(?:$ARCHES))*|-noname|-norelay|-ordinal|-i386|-ret16|-ret64|-private))*\s+(\S+)$/) {
+	} elsif(/^(\d+|@)\s+stub(?:\s+(-arch=(?:$ARCHES)(?:,(?:$ARCHES))*|-noname|-norelay|-ordinal|-i386|-ret16|-ret64|-private))*\s+(\S+?)\s*(\(\s*(.*?)\s*\))?$/) {
 	    $ordinal = $1;
 
 	    my $flags = $2;
