@@ -962,8 +962,8 @@
 @ stub -arch=win64 ??0_Lockit@std@@QEAA@H@Z
 @ stub -arch=win32 ??0_Lockit@std@@QAE@XZ
 @ stub -arch=win64 ??0_Lockit@std@@QEAA@XZ
-@ stub -arch=win32 ??0_Mutex@std@@QAE@XZ
-@ stub -arch=win64 ??0_Mutex@std@@QEAA@XZ
+@ thiscall -arch=win32 ??0_Mutex@std@@QAE@XZ(ptr) msvcp90.??0_Mutex@std@@QAE@XZ
+@ cdecl -arch=win64 ??0_Mutex@std@@QEAA@XZ(ptr) msvcp90.??0_Mutex@std@@QEAA@XZ
 @ stub -arch=win32 ??0_Timevec@std@@QAE@ABV01@@Z
 @ stub -arch=win64 ??0_Timevec@std@@QEAA@AEBV01@@Z
 @ stub -arch=win32 ??0_Timevec@std@@QAE@PAX@Z
@@ -1181,8 +1181,8 @@
 @ stub -arch=win64 ??1_Locinfo@std@@QEAA@XZ
 @ stub -arch=win32 ??1_Lockit@std@@QAE@XZ
 @ stub -arch=win64 ??1_Lockit@std@@QEAA@XZ
-@ stub -arch=win32 ??1_Mutex@std@@QAE@XZ
-@ stub -arch=win64 ??1_Mutex@std@@QEAA@XZ
+@ thiscall -arch=win32 ??1_Mutex@std@@QAE@XZ(ptr) msvcp90.??1_Mutex@std@@QAE@XZ
+@ cdecl -arch=win64 ??1_Mutex@std@@QEAA@XZ(ptr) msvcp90.??1_Mutex@std@@QEAA@XZ
 @ stub -arch=win32 ??1_Timevec@std@@QAE@XZ
 @ stub -arch=win64 ??1_Timevec@std@@QEAA@XZ
 @ stub -arch=win32 ??1_UShinit@std@@QAE@XZ
@@ -2309,8 +2309,8 @@
 @ stub -arch=win64 ?_Lock@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAAXXZ
 @ stub -arch=win32 ?_Lock@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEXXZ
 @ stub -arch=win64 ?_Lock@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAAXXZ
-@ stub -arch=win32 ?_Lock@_Mutex@std@@QAEXXZ
-@ stub -arch=win64 ?_Lock@_Mutex@std@@QEAAXXZ
+@ thiscall -arch=win32 ?_Lock@_Mutex@std@@QAEXXZ(ptr) msvcp90.?_Lock@_Mutex@std@@QAEXXZ
+@ cdecl -arch=win64 ?_Lock@_Mutex@std@@QEAAXXZ(ptr) msvcp90.?_Lock@_Mutex@std@@QEAAXXZ
 @ stub -arch=win32 ?_Makpat@?$_Mpunct@D@std@@AAEXAAUpattern@money_base@2@III@Z
 @ stub -arch=win64 ?_Makpat@?$_Mpunct@D@std@@AEAAXAEAUpattern@money_base@2@III@Z
 @ stub -arch=win32 ?_Makpat@?$_Mpunct@G@std@@AAEXAAUpattern@money_base@2@III@Z
@@ -2463,8 +2463,8 @@
 @ stub -arch=win64 ?_Unlock@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAAXXZ
 @ stub -arch=win32 ?_Unlock@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEXXZ
 @ stub -arch=win64 ?_Unlock@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAAXXZ
-@ stub -arch=win32 ?_Unlock@_Mutex@std@@QAEXXZ
-@ stub -arch=win64 ?_Unlock@_Mutex@std@@QEAAXXZ
+@ thiscall -arch=win32 ?_Unlock@_Mutex@std@@QAEXXZ(ptr) msvcp90.?_Unlock@_Mutex@std@@QAEXXZ
+@ cdecl -arch=win64 ?_Unlock@_Mutex@std@@QEAAXXZ(ptr) msvcp90.?_Unlock@_Mutex@std@@QEAAXXZ
 @ stub ?_Xlen@_String_base@std@@QBEXXZ
 @ stub ?_Xran@_String_base@std@@QBEXXZ
 @ stub -arch=win32 ?always_noconv@codecvt_base@std@@QBE_NXZ

@@ -196,8 +196,8 @@
 @ stub -arch=win64 ??0_Lockit@std@@QEAA@XZ
 @ stub -arch=win32 ??0_Mutex@std@@QAE@W4_Uninitialized@1@@Z
 @ stub -arch=win64 ??0_Mutex@std@@QEAA@W4_Uninitialized@1@@Z
-@ stub -arch=win32 ??0_Mutex@std@@QAE@XZ
-@ stub -arch=win64 ??0_Mutex@std@@QEAA@XZ
+@ thiscall -arch=win32 ??0_Mutex@std@@QAE@XZ(ptr) msvcp90.??0_Mutex@std@@QAE@XZ
+@ cdecl -arch=win64 ??0_Mutex@std@@QEAA@XZ(ptr) msvcp90.??0_Mutex@std@@QEAA@XZ
 @ stub -arch=win32 ??0_Runtime_object@details@Concurrency@@QAE@H@Z
 @ stub -arch=win64 ??0_Runtime_object@details@Concurrency@@QEAA@H@Z
 @ stub -arch=win32 ??0_Runtime_object@details@Concurrency@@QAE@XZ
@@ -316,8 +316,8 @@
 @ stub -arch=win64 ??1_Locinfo@std@@QEAA@XZ
 @ stub -arch=win32 ??1_Lockit@std@@QAE@XZ
 @ stub -arch=win64 ??1_Lockit@std@@QEAA@XZ
-@ stub -arch=win32 ??1_Mutex@std@@QAE@XZ
-@ stub -arch=win64 ??1_Mutex@std@@QEAA@XZ
+@ thiscall -arch=win32 ??1_Mutex@std@@QAE@XZ(ptr) msvcp90.??1_Mutex@std@@QAE@XZ
+@ cdecl -arch=win64 ??1_Mutex@std@@QEAA@XZ(ptr) msvcp90.??1_Mutex@std@@QEAA@XZ
 @ stub -arch=win32 ??1_Timevec@std@@QAE@XZ
 @ stub -arch=win64 ??1_Timevec@std@@QEAA@XZ
 @ stub -arch=win32 ??1_UShinit@std@@QAE@XZ
@@ -1080,8 +1080,8 @@
 @ stub -arch=win64 ?_Lock@?$basic_streambuf@GU?$char_traits@G@std@@@std@@UEAAXXZ
 @ stub -arch=win32 ?_Lock@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@UAEXXZ
 @ stub -arch=win64 ?_Lock@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@UEAAXXZ
-@ stub -arch=win32 ?_Lock@_Mutex@std@@QAEXXZ
-@ stub -arch=win64 ?_Lock@_Mutex@std@@QEAAXXZ
+@ thiscall -arch=win32 ?_Lock@_Mutex@std@@QAEXXZ(ptr) msvcp90.?_Lock@_Mutex@std@@QAEXXZ
+@ cdecl -arch=win64 ?_Lock@_Mutex@std@@QEAAXXZ(ptr) msvcp90.?_Lock@_Mutex@std@@QEAAXXZ
 @ stub -arch=win32 ?_Lockit_ctor@_Lockit@std@@CAXPAV12@@Z
 @ stub -arch=win64 ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@@Z
 @ stub -arch=win32 ?_Lockit_ctor@_Lockit@std@@CAXPAV12@H@Z
@@ -1114,14 +1114,14 @@
 @ stub -arch=win64 ?_Mtx_new@threads@stdext@@YAXAEAPEAX@Z
 @ stub -arch=win32 ?_Mtx_unlock@threads@stdext@@YAXPAX@Z
 @ stub -arch=win64 ?_Mtx_unlock@threads@stdext@@YAXPEAX@Z
-@ stub -arch=win32 ?_Mutex_Lock@_Mutex@std@@CAXPAV12@@Z
-@ stub -arch=win64 ?_Mutex_Lock@_Mutex@std@@CAXPEAV12@@Z
-@ stub -arch=win32 ?_Mutex_Unlock@_Mutex@std@@CAXPAV12@@Z
-@ stub -arch=win64 ?_Mutex_Unlock@_Mutex@std@@CAXPEAV12@@Z
-@ stub -arch=win32 ?_Mutex_ctor@_Mutex@std@@CAXPAV12@@Z
-@ stub -arch=win64 ?_Mutex_ctor@_Mutex@std@@CAXPEAV12@@Z
-@ stub -arch=win32 ?_Mutex_dtor@_Mutex@std@@CAXPAV12@@Z
-@ stub -arch=win64 ?_Mutex_dtor@_Mutex@std@@CAXPEAV12@@Z
+@ cdecl -arch=win32 ?_Mutex_Lock@_Mutex@std@@CAXPAV12@@Z(ptr) msvcp90.?_Mutex_Lock@_Mutex@std@@CAXPAV12@@Z
+@ cdecl -arch=win64 ?_Mutex_Lock@_Mutex@std@@CAXPEAV12@@Z(ptr) msvcp90.?_Mutex_Lock@_Mutex@std@@CAXPEAV12@@Z
+@ cdecl -arch=win32 ?_Mutex_Unlock@_Mutex@std@@CAXPAV12@@Z(ptr) msvcp90.?_Mutex_Unlock@_Mutex@std@@CAXPAV12@@Z
+@ cdecl -arch=win64 ?_Mutex_Unlock@_Mutex@std@@CAXPEAV12@@Z(ptr) msvcp90.?_Mutex_Unlock@_Mutex@std@@CAXPEAV12@@Z
+@ cdecl -arch=win32 ?_Mutex_ctor@_Mutex@std@@CAXPAV12@@Z(ptr) msvcp90.?_Mutex_ctor@_Mutex@std@@CAXPAV12@@Z
+@ cdecl -arch=win64 ?_Mutex_ctor@_Mutex@std@@CAXPEAV12@@Z(ptr) msvcp90.?_Mutex_ctor@_Mutex@std@@CAXPEAV12@@Z
+@ cdecl -arch=win32 ?_Mutex_dtor@_Mutex@std@@CAXPAV12@@Z(ptr) msvcp90.?_Mutex_dtor@_Mutex@std@@CAXPAV12@@Z
+@ cdecl -arch=win64 ?_Mutex_dtor@_Mutex@std@@CAXPEAV12@@Z(ptr) msvcp90.?_Mutex_dtor@_Mutex@std@@CAXPEAV12@@Z
 @ stub ?_Nomemory@std@@YAXXZ
 @ stub -arch=win32 ?_Orphan_all@_Container_base0@std@@QAEXXZ
 @ stub -arch=win64 ?_Orphan_all@_Container_base0@std@@QEAAXXZ
@@ -1225,8 +1225,8 @@
 @ stub -arch=win64 ?_Unlock@?$basic_streambuf@GU?$char_traits@G@std@@@std@@UEAAXXZ
 @ stub -arch=win32 ?_Unlock@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@UAEXXZ
 @ stub -arch=win64 ?_Unlock@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@UEAAXXZ
-@ stub -arch=win32 ?_Unlock@_Mutex@std@@QAEXXZ
-@ stub -arch=win64 ?_Unlock@_Mutex@std@@QEAAXXZ
+@ thiscall -arch=win32 ?_Unlock@_Mutex@std@@QAEXXZ(ptr) msvcp90.?_Unlock@_Mutex@std@@QAEXXZ
+@ cdecl -arch=win64 ?_Unlock@_Mutex@std@@QEAAXXZ(ptr) msvcp90.?_Unlock@_Mutex@std@@QEAAXXZ
 @ stub ?_XLgamma@tr1@std@@YAMM@Z
 @ stub ?_XLgamma@tr1@std@@YANN@Z
 @ stub ?_XLgamma@tr1@std@@YAOO@Z
