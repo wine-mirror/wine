@@ -91,8 +91,8 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "6c530622a025d872a642e8f950867884d7b136cb",
     "7c07d91b8f68fb31821701b3dcb96de018bf0c66",
     "b2261353decda2712b83538ab434a49ce21f3172",
-    "a8b59f25984b066fc6b91cae6bf983a78028ba7f",
-    "3d95adb85b9673a932ac847a4b5451fa59885f74",
+    "ef654fedcb494dae79559f4db8b691ae2d522a3f",
+    "a694872f38e66a7ff471440c3e6a9310ef78328a",
     "e2a8eef4aeda3a0f6c950075acba38f1f9e0814d",
     "8b66f14d51ecdeea12bc993302bb9b7d3ec085a1",
     "7da9dd3d40d44d92deb9883fb7110443c2d5769a",
@@ -451,6 +451,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     memset(brush_bits, 0, 16 * 16 * sizeof(DWORD));
     brush_bits[2] = 0xff;
     brush_bits[6] = 0xff;
+    brush_bits[14] = 0xff;
     brush_bits[65] = 0xff;
     brush_bits[69] = 0xff;
 
