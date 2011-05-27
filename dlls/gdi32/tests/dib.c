@@ -100,6 +100,32 @@ static const char *sha1_graphics_a8r8g8b8[] =
     NULL
 };
 
+static const char *sha1_graphics_a8b8g8r8[] =
+{
+    "a3cadd34d95d3d5cc23344f69aab1c2e55935fcf",
+    "e0bc877697093ed440e125154e247ca9d65e933c",
+    "c6d7faf5a502299f99d59eef3f7650bd63dbe108",
+    "9d8c05c3ebd786e7d052418e905a80a64bf7853d",
+    "3da12af0a810fd993fa3dbe23328a4fcd2b6c92a",
+    "b91c8f21cc4d7994abc551feff5b6927d267a9db",
+    "d49dd2c6a37e975b6dc3d201ccc217a788b30284",
+    "ca6753f9eb44529cf8c67cd6abcd4ed1ef758904",
+    "18c3ae944e0afb6c43c21cde093ddb22a27611e4",
+    "b753ebb39d90210cc717f57b53dd439f7de6b077",
+    "38c017dd1fff26b492a57e09f3ce2c4370faf225",
+    "94368cea5033b435454daa56d55546310675131e",
+    "bf57a6a37fb107d29ed3d45695919887abcb7902",
+    "3db0f8bcca3d94920aa57be6321202b8c3c08822",
+    "1f1fc165a4dae7ba118ddccb58a279bfe3876b0a",
+    "66da15b6780a4ca3b3d2eb1d1dba4e30f7b74964",
+    "42fefefe4435570fa8038ec759140c66c76570e9",
+    "3369889a67d6c79a24ee15f7d14374f9995215e4",
+    "4851c5b7d5bc18590e787c0c218a592ef504e738",
+    "9aa506e3df33e0d5298755aa4144e10eb4b5adcf",
+    "abdf003699364fe45fab7dc61e67c606d0063b40",
+    NULL
+};
+
 static const char *sha1_graphics_r5g5b5[] =
 {
     "2a2ab8b3c019e70b788ade028b0e9e53ffc529ae",
@@ -123,6 +149,32 @@ static const char *sha1_graphics_r5g5b5[] =
     "3a50ce21b3563a604b4fc9f247a30f5a981f1ba6",
     "d7d97e28ed316f6596c737eb83baa5948d86b673",
     "ecc2991277d7314f55b00e0f284ae3703aeef81e",
+    NULL
+};
+
+static const char *sha1_graphics_r4g4b4[] =
+{
+    "2a2ab8b3c019e70b788ade028b0e9e53ffc529ae",
+    "cfa0ab83ee93283ad914c3748f0532da1697af1d",
+    "8bd18697d1ef27492805667a0bc956343ac08667",
+    "e8501c830321584474654f90e40eaf27dc21e6a8",
+    "d95ab10fcfb8447b41742e89f1ae8cd297a32fc4",
+    "821177710961d2cb5f7e7dfc0e06e767b6042753",
+    "667124365ffadeea1d8791bedda77a0c7b898de8",
+    "c9f23e684b600dea17575b4b17175fbd9106c3a9",
+    "7678876e50eae35d1eaa096aae25afaa0b864bf3",
+    "fb52b0c373a5f2a60b981604b120962942d2447a",
+    "5ab8dd07436681d762fa04ad7c6d71291c488924",
+    "0167981d9e1490a2ebd396ff7582f0943aa8e1b8",
+    "115a6bd382410a4a1d3c1fa71d8bf02536863e38",
+    "65c6d1228e3b6d63d42647f14217bc1658b70d9a",
+    "25fcb75aa687aac35b8f72640889fe92413e00c5",
+    "dbc8d66b419880108793db91c05766c0c6efd86d",
+    "6092ccbab6b6e073c6ac8244d122f2cfc453aa38",
+    "32b6e0aa79b7e96cd0ab2da167f6463c011023a8",
+    "d591232bbc2592462c819a9486750f64180518fd",
+    "0e183a4c30b3da345129cffe33fe0fc593d8666b",
+    "f14d9a4bd8a365b7c8f068a0dad481b6eb2b178b",
     NULL
 };
 
@@ -679,6 +731,29 @@ static void test_simple_graphics(void)
     SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
 
+    /* a8b8g8r8 - bitfields. */
+    trace("a8b8g8r8 - bitfields\n");
+    bmi->bmiHeader.biBitCount = 32;
+    bmi->bmiHeader.biCompression = BI_BITFIELDS;
+    bit_fields[0] = 0x0000ff;
+    bit_fields[1] = 0x00ff00;
+    bit_fields[2] = 0xff0000;
+
+    dib = CreateDIBSection(mem_dc, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(dib != NULL, "ret NULL\n");
+    ok(GetObjectW( dib, sizeof(ds), &ds ), "GetObject failed\n");
+    ok(ds.dsBitfields[0] == 0x0000ff, "got %08x\n", ds.dsBitfields[0]);
+    ok(ds.dsBitfields[1] == 0x00ff00, "got %08x\n", ds.dsBitfields[1]);
+    ok(ds.dsBitfields[2] == 0xff0000, "got %08x\n", ds.dsBitfields[2]);
+    ok(ds.dsBmih.biCompression == BI_BITFIELDS, "got %x\n", ds.dsBmih.biCompression);
+
+    orig_bm = SelectObject(mem_dc, dib);
+
+    sha1 = sha1_graphics_a8b8g8r8;
+    draw_graphics(mem_dc, bmi, bits, &sha1);
+
+    SelectObject(mem_dc, orig_bm);
+    DeleteObject(dib);
 
     /* r5g5b5 */
     trace("555\n");
@@ -697,6 +772,29 @@ todo_wine
     orig_bm = SelectObject(mem_dc, dib);
 
     sha1 = sha1_graphics_r5g5b5;
+    draw_graphics(mem_dc, bmi, bits, &sha1);
+
+    SelectObject(mem_dc, orig_bm);
+    DeleteObject(dib);
+
+    /* r4g4b4 */
+    trace("444\n");
+    bmi->bmiHeader.biBitCount = 16;
+    bmi->bmiHeader.biCompression = BI_BITFIELDS;
+    bit_fields[0] = 0x0f00;
+    bit_fields[1] = 0x00f0;
+    bit_fields[2] = 0x000f;
+    dib = CreateDIBSection(0, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(dib != NULL, "ret NULL\n");
+    ok(GetObjectW( dib, sizeof(ds), &ds ), "GetObject failed\n");
+    ok(ds.dsBitfields[0] == 0x0f00, "got %08x\n", ds.dsBitfields[0]);
+    ok(ds.dsBitfields[1] == 0x00f0, "got %08x\n", ds.dsBitfields[1]);
+    ok(ds.dsBitfields[2] == 0x000f, "got %08x\n", ds.dsBitfields[2]);
+    ok(ds.dsBmih.biCompression == BI_BITFIELDS, "got %x\n", ds.dsBmih.biCompression);
+
+    orig_bm = SelectObject(mem_dc, dib);
+
+    sha1 = sha1_graphics_r4g4b4;
     draw_graphics(mem_dc, bmi, bits, &sha1);
 
     SelectObject(mem_dc, orig_bm);
