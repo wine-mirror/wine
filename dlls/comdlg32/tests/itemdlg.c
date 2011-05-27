@@ -1200,6 +1200,38 @@ static void test_filename(void)
     DeleteFileW(filename_ext2W);
 }
 
+static void test_customize(void)
+{
+    IFileDialog *pfod;
+    IFileDialogCustomize *pfdc;
+    IOleWindow *pow;
+    LONG ref;
+    HWND dlg_hwnd;
+    HRESULT hr;
+    hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IFileDialog, (void**)&pfod);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialogCustomize, (void**)&pfdc);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    if(FAILED(hr))
+    {
+        skip("Skipping IFileDialogCustomize tests.\n");
+        return;
+    }
+
+    hr = IFileDialog_QueryInterface(pfod, &IID_IOleWindow, (void**)&pow);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    hr = IOleWindow_GetWindow(pow, &dlg_hwnd);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(dlg_hwnd == NULL, "NULL\n");
+    IOleWindow_Release(pow);
+
+    IFileDialogCustomize_Release(pfdc);
+    ref = IFileOpenDialog_Release(pfod);
+    ok(!ref, "Refcount not zero (%d).\n", ref);
+}
+
 START_TEST(itemdlg)
 {
     OleInitialize(NULL);
@@ -1210,6 +1242,7 @@ START_TEST(itemdlg)
         test_basics();
         test_advise();
         test_filename();
+        test_customize();
     }
     else
         skip("Skipping all Item Dialog tests.\n");

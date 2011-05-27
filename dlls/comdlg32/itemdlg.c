@@ -98,6 +98,8 @@ typedef struct FileDialogImpl {
     LPWSTR custom_okbutton;
     LPWSTR custom_cancelbutton;
     LPWSTR custom_filenamelabel;
+
+    HWND cctrls_hwnd;
 } FileDialogImpl;
 
 /**************************************************************************
@@ -486,6 +488,104 @@ static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width)
 }
 
 /**************************************************************************
+ * Container functions.
+ */
+static UINT ctrl_container_resize(FileDialogImpl *This, UINT container_width)
+{
+    return 0;
+}
+
+static void ctrl_container_reparent(FileDialogImpl *This, HWND parent)
+{
+    LONG wndstyle;
+
+    if(parent)
+    {
+        wndstyle = GetWindowLongW(This->cctrls_hwnd, GWL_STYLE);
+        wndstyle &= ~(WS_POPUP);
+        wndstyle |= WS_CHILD;
+        SetWindowLongW(This->cctrls_hwnd, GWL_STYLE, wndstyle);
+
+        SetParent(This->cctrls_hwnd, parent);
+        ShowWindow(This->cctrls_hwnd, TRUE);
+    }
+    else
+    {
+        ShowWindow(This->cctrls_hwnd, FALSE);
+
+        wndstyle = GetWindowLongW(This->cctrls_hwnd, GWL_STYLE);
+        wndstyle &= ~(WS_CHILD);
+        wndstyle |= WS_POPUP;
+        SetWindowLongW(This->cctrls_hwnd, GWL_STYLE, wndstyle);
+
+        SetParent(This->cctrls_hwnd, NULL);
+    }
+}
+
+static LRESULT ctrl_container_on_create(HWND hwnd, CREATESTRUCTW *crs)
+{
+    FileDialogImpl *This = crs->lpCreateParams;
+    TRACE("%p\n", This);
+
+    SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LPARAM)This);
+    return TRUE;
+}
+
+static LRESULT ctrl_container_on_wm_destroy(FileDialogImpl *This)
+{
+    TRACE("%p", This);
+    return TRUE;
+}
+
+static LRESULT CALLBACK ctrl_container_wndproc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)
+{
+    FileDialogImpl *This = (FileDialogImpl*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+
+    switch(umessage)
+    {
+    case WM_NCCREATE:         return ctrl_container_on_create(hwnd, (CREATESTRUCTW*)lparam);
+    case WM_DESTROY:          return ctrl_container_on_wm_destroy(This);
+    default:                  return DefWindowProcW(hwnd, umessage, wparam, lparam);
+    }
+
+    return FALSE;
+}
+
+static HRESULT init_custom_controls(FileDialogImpl *This)
+{
+    WNDCLASSW wc;
+    static const WCHAR ctrl_container_classname[] =
+        {'i','d','l','g','_','c','o','n','t','a','i','n','e','r','_','p','a','n','e',0};
+
+    if( !GetClassInfoW(COMDLG32_hInstance, ctrl_container_classname, &wc) )
+    {
+        wc.style            = CS_HREDRAW | CS_VREDRAW;
+        wc.lpfnWndProc      = ctrl_container_wndproc;
+        wc.cbClsExtra       = 0;
+        wc.cbWndExtra       = 0;
+        wc.hInstance        = COMDLG32_hInstance;
+        wc.hIcon            = 0;
+        wc.hCursor          = LoadCursorW(0, (LPWSTR)IDC_ARROW);
+        wc.hbrBackground    = (HBRUSH)(COLOR_BTNFACE + 1);
+        wc.lpszMenuName     = NULL;
+        wc.lpszClassName    = ctrl_container_classname;
+
+        if(!RegisterClassW(&wc)) return E_FAIL;
+    }
+
+    This->cctrls_hwnd = CreateWindowExW(0, ctrl_container_classname, NULL,
+                                        WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+                                        0, 0, 0, 0, NULL, 0,
+                                        COMDLG32_hInstance, (void*)This);
+    if(!This->cctrls_hwnd)
+        return E_FAIL;
+
+    SetWindowLongW(This->cctrls_hwnd, GWL_STYLE, WS_TABSTOP);
+
+    return S_OK;
+}
+
+/**************************************************************************
  * Window related functions.
  */
 static SIZE update_layout(FileDialogImpl *This)
@@ -495,7 +595,7 @@ static SIZE update_layout(FileDialogImpl *This)
     RECT dialog_rc;
     RECT cancel_rc, open_rc;
     RECT filetype_rc, filename_rc, filenamelabel_rc;
-    RECT toolbar_rc, ebrowser_rc;
+    RECT toolbar_rc, ebrowser_rc, customctrls_rc;
     int missing_width, missing_height;
     static const UINT vspacing = 4, hspacing = 4;
     SIZE ret;
@@ -606,21 +706,34 @@ static SIZE update_layout(FileDialogImpl *This)
         MapWindowPoints(NULL, This->dlg_hwnd, (POINT*)&toolbar_rc, 2);
     }
 
+    /* The custom controls */
+    customctrls_rc.left = dialog_rc.left + vspacing;
+    customctrls_rc.right = dialog_rc.right - vspacing;
+    customctrls_rc.bottom = filename_rc.top - hspacing;
+    customctrls_rc.top = customctrls_rc.bottom -
+        ctrl_container_resize(This, customctrls_rc.right - customctrls_rc.left);
+
     /* The ExplorerBrowser control. */
     ebrowser_rc.left = dialog_rc.left + vspacing;
     ebrowser_rc.top = toolbar_rc.bottom + vspacing;
     ebrowser_rc.right = dialog_rc.right - hspacing;
-    ebrowser_rc.bottom = filename_rc.top - hspacing;
+    ebrowser_rc.bottom = customctrls_rc.top - hspacing;
 
     /****
      * Move everything to the right place.
      */
 
     /* FIXME: The Save Dialog uses a slightly different layout. */
-    hdwp = BeginDeferWindowPos(6);
+    hdwp = BeginDeferWindowPos(7);
 
     if(hdwp && This->peb)
         IExplorerBrowser_SetRect(This->peb, &hdwp, ebrowser_rc);
+
+    if(hdwp && This->cctrls_hwnd)
+        DeferWindowPos(hdwp, This->cctrls_hwnd, NULL,
+                       customctrls_rc.left, customctrls_rc.top,
+                       customctrls_rc.right - customctrls_rc.left, customctrls_rc.bottom - customctrls_rc.top,
+                       SWP_NOZORDER | SWP_NOACTIVATE);
 
     /* The default controls */
     if(hdwp && (hwnd = GetDlgItem(This->dlg_hwnd, IDC_FILETYPE)) )
@@ -797,6 +910,7 @@ static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
        (hitem = GetDlgItem(This->dlg_hwnd, IDC_FILENAME)) )
         SendMessageW(hitem, WM_SETTEXT, 0, (LPARAM)This->set_filename);
 
+    ctrl_container_reparent(This, This->dlg_hwnd);
     init_explorerbrowser(This);
     init_toolbar(This, hwnd);
     update_control_text(This);
@@ -834,6 +948,7 @@ static LRESULT on_wm_destroy(FileDialogImpl *This)
         This->peb = NULL;
     }
 
+    ctrl_container_reparent(This, NULL);
     This->dlg_hwnd = NULL;
 
     return TRUE;
@@ -1054,6 +1169,8 @@ static ULONG WINAPI IFileDialog2_fnRelease(IFileDialog2 *iface)
             LocalFree((void*)This->filterspecs[i].pszSpec);
         }
         HeapFree(GetProcessHeap(), 0, This->filterspecs);
+
+        DestroyWindow(This->cctrls_hwnd);
 
         if(This->psi_defaultfolder) IShellItem_Release(This->psi_defaultfolder);
         if(This->psi_setfolder)     IShellItem_Release(This->psi_setfolder);
@@ -2735,6 +2852,14 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     SHGetDesktopFolder(&psf);
     SHGetItemFromObject((IUnknown*)psf, &IID_IShellItem, (void**)&fdimpl->psi_defaultfolder);
     IShellFolder_Release(psf);
+
+    hr = init_custom_controls(fdimpl);
+    if(FAILED(hr))
+    {
+        ERR("Failed to initialize custom controls (0x%08x).\n", hr);
+        IUnknown_Release((IUnknown*)fdimpl);
+        return E_FAIL;
+    }
 
     hr = IUnknown_QueryInterface((IUnknown*)fdimpl, riid, ppv);
     IUnknown_Release((IUnknown*)fdimpl);
