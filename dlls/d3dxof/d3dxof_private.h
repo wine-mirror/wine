@@ -88,19 +88,19 @@ struct _xobject {
 typedef struct _xobject xobject;
 
 typedef struct {
-    const IDirectXFileVtbl *lpVtbl;
+    IDirectXFile IDirectXFile_iface;
     LONG ref;
     ULONG nb_xtemplates;
     xtemplate xtemplates[MAX_TEMPLATES];
 } IDirectXFileImpl;
 
 typedef struct {
-    const IDirectXFileBinaryVtbl *lpVtbl;
+    IDirectXFileBinary IDirectXFileBinary_iface;
     LONG ref;
 } IDirectXFileBinaryImpl;
 
 typedef struct {
-    const IDirectXFileDataVtbl *lpVtbl;
+    IDirectXFileData IDirectXFileData_iface;
     LONG ref;
     xobject* pobj;
     int cur_enum_object;
@@ -110,13 +110,13 @@ typedef struct {
 } IDirectXFileDataImpl;
 
 typedef struct {
-    const IDirectXFileDataReferenceVtbl *lpVtbl;
+    IDirectXFileDataReference IDirectXFileDataReference_iface;
     LONG ref;
     xobject* ptarget;
 } IDirectXFileDataReferenceImpl;
 
 typedef struct {
-    const IDirectXFileObjectVtbl *lpVtbl;
+    IDirectXFileObject IDirectXFileObject_iface;
     LONG ref;
 } IDirectXFileObjectImpl;
 
@@ -144,7 +144,7 @@ typedef struct {
 } parse_buffer;
 
 typedef struct {
-    const IDirectXFileEnumObjectVtbl *lpVtbl;
+    IDirectXFileEnumObject IDirectXFileEnumObject_iface;
     LONG ref;
     DXFILELOADOPTIONS source;
     HANDLE hFile;
@@ -160,7 +160,7 @@ typedef struct {
 } IDirectXFileEnumObjectImpl;
 
 typedef struct {
-    const IDirectXFileSaveObjectVtbl *lpVtbl;
+    IDirectXFileSaveObject IDirectXFileSaveObject_iface;
     LONG ref;
 } IDirectXFileSaveObjectImpl;
 
