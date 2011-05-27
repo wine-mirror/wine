@@ -1974,26 +1974,21 @@ static struct wined3d_context *FindContext(struct wined3d_device *device, struct
     return context;
 }
 
-/* Context activation is done by the caller. */
+/* Context activation and GL locking are done by the caller. */
 static void context_apply_draw_buffers(struct wined3d_context *context, DWORD rt_mask, struct wined3d_surface **rts)
 {
     if (!rt_mask)
     {
-        ENTER_GL();
         glDrawBuffer(GL_NONE);
         checkGLcall("glDrawBuffer()");
-        LEAVE_GL();
     }
     else if (!surface_is_offscreen(rts[0]))
     {
-        ENTER_GL();
         glDrawBuffer(surface_get_gl_buffer(rts[0]));
         checkGLcall("glDrawBuffer()");
-        LEAVE_GL();
     }
     else
     {
-        ENTER_GL();
         if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
         {
             const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -2026,7 +2021,6 @@ static void context_apply_draw_buffers(struct wined3d_context *context, DWORD rt
             glDrawBuffer(rts[0]->resource.device->offscreenBuffer);
             checkGLcall("glDrawBuffer()");
         }
-        LEAVE_GL();
     }
 }
 
@@ -2115,6 +2109,7 @@ void context_apply_blit_state(struct wined3d_context *context, struct wined3d_de
         context->draw_buffer_dirty = TRUE;
     }
 
+    ENTER_GL();
     if (context->draw_buffer_dirty)
     {
         context_apply_draw_buffers(context, 1, &context->current_rt);
@@ -2124,10 +2119,9 @@ void context_apply_blit_state(struct wined3d_context *context, struct wined3d_de
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        ENTER_GL();
         context_check_fbo_status(context, GL_FRAMEBUFFER);
-        LEAVE_GL();
     }
+    LEAVE_GL();
 
     SetupForBlit(device, context);
 }
@@ -2196,17 +2190,15 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
         rt_mask = 1;
     }
 
+    ENTER_GL();
     context_apply_draw_buffers(context, rt_mask, rts);
     context->draw_buffer_dirty = TRUE;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        ENTER_GL();
         context_check_fbo_status(context, GL_FRAMEBUFFER);
-        LEAVE_GL();
     }
 
-    ENTER_GL();
     if (context->last_was_blit)
     {
         device->frag_pipe->enable_extension(TRUE);
@@ -2267,6 +2259,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
         }
     }
 
+    ENTER_GL();
     if (context->draw_buffer_dirty)
     {
         const struct wined3d_shader *ps = device->stateBlock->state.pixel_shader;
@@ -2279,12 +2272,9 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        ENTER_GL();
         context_check_fbo_status(context, GL_FRAMEBUFFER);
-        LEAVE_GL();
     }
 
-    ENTER_GL();
     if (context->last_was_blit)
     {
         device->frag_pipe->enable_extension(TRUE);
