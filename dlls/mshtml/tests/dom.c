@@ -3973,6 +3973,11 @@ static void test_screen(IHTMLWindow2 *window)
     ok(hres == S_OK, "get_availHeight failed: %08x\n", hres);
     ok(l == work_area.bottom-work_area.top, "availHeight = %d, expected %d\n", l, work_area.bottom-work_area.top);
 
+    l = 0xdeadbeef;
+    hres = IHTMLScreen_get_availWidth(screen, &l);
+    ok(hres == S_OK, "get_availWidth failed: %08x\n", hres);
+    ok(l == work_area.right-work_area.left, "availWidth = %d, expected %d\n", l, work_area.right-work_area.left);
+
     IHTMLScreen_Release(screen);
 }
 
