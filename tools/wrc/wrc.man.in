@@ -39,7 +39,7 @@ messages, 16=preprocessor scanner and 32=preprocessor parser trace.
 .TP
 .I \fB\-\-endianess\fR=\fIe\fR
 Win32 only; set output byte\-ordering, where \fIe\fR is one of n[ative],
-l[ittle] or b[ig].  Only resources in source-form can be reorderd. Native
+l[ittle] or b[ig].  Only resources in source-form can be reordered. Native
 ordering depends on the system on which \fBwrc\fR was built. You can see
 the native ordering by typing \fIwrc \-h\fR.
 .TP
@@ -188,12 +188,12 @@ CHARACTERISTICS 876
 .B wrc
 was written by Bertho A. Stultiens and is a nearly complete rewrite of
 the first wine resource compiler (1994) by Martin von Loewis.
-Additional resource\-types were contributed Ulrich Czekalla and Albert
+Additional resource\-types were contributed by Ulrich Czekalla and Albert
 den Haan. Many cleanups by Dimitrie O. Paun in 2002-2003.
 Bugfixes have been contributed by many Wine developers.
 .SH BUGS
 \- The preprocessor recognizes variable argument macros, but does not
-expanded them correctly.
+expand them correctly.
 .br
 \- Error reporting should be more precise, as currently the column and
 line number reported are those of the next token. 
