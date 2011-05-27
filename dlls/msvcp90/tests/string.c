@@ -331,6 +331,8 @@ static void* do_call_func6(void *func, void *_this,
 
 #endif /* __i386__ */
 
+#define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
+#define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
 static BOOL init(void)
 {
     HMODULE msvcr = LoadLibraryA("msvcr90.dll");
@@ -349,124 +351,124 @@ static BOOL init(void)
     p_set_invalid_parameter_handler(test_invalid_parameter_handler);
 
     if(sizeof(void*) == 8) { /* 64-bit initialization */
-        p_basic_string_char_ctor = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_ctor,
                 "??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@XZ");
-        p_basic_string_char_copy_ctor = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_copy_ctor,
                 "??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@AEBV01@@Z");
-        p_basic_string_char_ctor_cstr = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_ctor_cstr,
                 "??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@PEBD@Z");
-        p_basic_string_char_dtor = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_dtor,
                 "??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@XZ");
-        p_basic_string_char_erase = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_erase,
                 "?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@_K0@Z");
-        p_basic_string_char_assign_cstr_len = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_assign_cstr_len,
                 "?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@PEBD_K@Z");
-        p_basic_string_char_cstr = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_cstr,
                 "?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ");
-        p_basic_string_char_data = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_data,
                 "?data@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ");
-        p_basic_string_char_size = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_size,
                 "?size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ");
-        p_basic_string_char_capacity = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_capacity,
                 "?capacity@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ");
-        p_basic_string_char_swap = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_swap,
                 "?swap@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXAEAV12@@Z");
-        p_basic_string_char_append = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_append,
                 "?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@AEBV12@@Z");
-        p_basic_string_char_append_substr = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_append_substr,
                 "?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@AEBV12@_K1@Z");
-        p_basic_string_char_compare_substr_substr = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_compare_substr_substr,
                 "?compare@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAH_K0AEBV12@00@Z");
-        p_basic_string_char_compare_substr_cstr_len = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_compare_substr_cstr_len,
                 "?compare@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAH_K0PEBD0@Z");
-        p_basic_string_char_concatenate = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_concatenate,
                 "??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@AEBV10@0@Z");
-        p_basic_string_char_concatenate_cstr = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_concatenate_cstr,
                 "??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@AEBV10@PEBD@Z");
-        p_basic_string_char_find_cstr_substr = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_find_cstr_substr,
                 "?find@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z");
 
-        p_basic_string_wchar_ctor = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_ctor,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@XZ");
-        p_basic_string_wchar_copy_ctor = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_copy_ctor,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@AEBV01@@Z");
-        p_basic_string_wchar_ctor_cstr = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_ctor_cstr,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@PEB_W@Z");
-        p_basic_string_wchar_dtor = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_dtor,
                 "??1?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@XZ");
-        p_basic_string_wchar_erase = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_erase,
                 "?erase@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@_K0@Z");
-        p_basic_string_wchar_assign_cstr_len = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_assign_cstr_len,
                 "?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@PEB_W_K@Z");
-        p_basic_string_wchar_cstr = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_cstr,
                 "?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAPEB_WXZ");
-        p_basic_string_wchar_data = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_data,
                 "?data@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAPEB_WXZ");
-        p_basic_string_wchar_size = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_size,
                 "?size@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ");
-        p_basic_string_wchar_capacity = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_capacity,
                 "?capacity@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ");
-        p_basic_string_wchar_swap = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_swap,
                 "?swap@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAXAEAV12@@Z");
     } else {
-        p_basic_string_char_ctor = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_ctor,
                 "??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ");
-        p_basic_string_char_copy_ctor = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_copy_ctor,
                 "??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@ABV01@@Z");
-        p_basic_string_char_ctor_cstr = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_ctor_cstr,
                 "??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@PBD@Z");
-        p_basic_string_char_dtor = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_dtor,
                 "??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ");
-        p_basic_string_char_erase = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_erase,
                 "?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@II@Z");
-        p_basic_string_char_assign_cstr_len = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_assign_cstr_len,
                 "?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@PBDI@Z");
-        p_basic_string_char_cstr = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_cstr,
                 "?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ");
-        p_basic_string_char_data = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_data,
                 "?data@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ");
-        p_basic_string_char_size = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_size,
                 "?size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ");
-        p_basic_string_char_capacity = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_capacity,
                 "?capacity@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ");
-        p_basic_string_char_swap = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_swap,
                 "?swap@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXAAV12@@Z");
-        p_basic_string_char_append = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_append,
                 "?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@ABV12@@Z");
-        p_basic_string_char_append_substr = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_append_substr,
                 "?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@ABV12@II@Z");
-        p_basic_string_char_compare_substr_substr = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_compare_substr_substr,
                 "?compare@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEHIIABV12@II@Z");
-        p_basic_string_char_compare_substr_cstr_len = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_compare_substr_cstr_len,
                 "?compare@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEHIIPBDI@Z");
-        p_basic_string_char_concatenate = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_concatenate,
                 "??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@ABV10@0@Z");
-        p_basic_string_char_concatenate_cstr = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_concatenate_cstr,
                 "??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@ABV10@PBD@Z");
-        p_basic_string_char_find_cstr_substr = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_char_find_cstr_substr,
                 "?find@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z");
 
-        p_basic_string_wchar_ctor = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_ctor,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@XZ");
-        p_basic_string_wchar_copy_ctor = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_copy_ctor,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@ABV01@@Z");
-        p_basic_string_wchar_ctor_cstr = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_ctor_cstr,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@PB_W@Z");
-        p_basic_string_wchar_dtor = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_dtor,
                 "??1?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@XZ");
-        p_basic_string_wchar_erase = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_erase,
                 "?erase@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@II@Z");
-        p_basic_string_wchar_assign_cstr_len = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_assign_cstr_len,
                 "?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@PB_WI@Z");
-        p_basic_string_wchar_cstr = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_cstr,
                 "?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPB_WXZ");
-        p_basic_string_wchar_data = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_data,
                 "?data@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPB_WXZ");
-        p_basic_string_wchar_size = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_size,
                 "?size@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ");
-        p_basic_string_wchar_capacity = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_capacity,
                 "?capacity@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ");
-        p_basic_string_wchar_swap = (void*)GetProcAddress(msvcp,
+        SET(p_basic_string_wchar_swap,
                 "?swap@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXAAV12@@Z");
     }
 
@@ -477,15 +479,6 @@ static void test_basic_string_char(void) {
     basic_string_char str1, str2, *pstr;
     const char *str;
     size_t size, capacity;
-
-    if(!p_basic_string_char_ctor || !p_basic_string_char_copy_ctor
-            || !p_basic_string_char_ctor_cstr || !p_basic_string_char_dtor
-            || !p_basic_string_char_erase || !p_basic_string_char_assign_cstr_len
-            || !p_basic_string_char_cstr || !p_basic_string_char_data
-            || !p_basic_string_char_size || !p_basic_string_char_capacity) {
-        win_skip("basic_string<char> unavailable\n");
-        return;
-    }
 
     call_func1(p_basic_string_char_ctor, &str1);
     str = NULL;
@@ -555,12 +548,6 @@ static void test_basic_string_char_swap(void) {
     basic_string_char str1, str2;
     char atmp1[32], atmp2[32];
 
-    if(!p_basic_string_char_ctor_cstr || !p_basic_string_char_dtor ||
-            !p_basic_string_char_swap || !p_basic_string_char_cstr) {
-        win_skip("basic_string<char> unavailable\n");
-        return;
-    }
-
     /* Swap self, local */
     strcpy(atmp1, "qwerty");
     call_func2(p_basic_string_char_ctor_cstr, &str1, atmp1);
@@ -589,13 +576,6 @@ static void test_basic_string_char_append(void) {
     basic_string_char str1, str2;
     const char *str;
 
-    if(!p_basic_string_char_ctor_cstr || !p_basic_string_char_dtor
-            || !p_basic_string_char_append || !p_basic_string_char_append_substr
-            || !p_basic_string_char_cstr) {
-        win_skip("basic_string<char> unavailable\n");
-        return;
-    }
-
     call_func2(p_basic_string_char_ctor_cstr, &str1, "");
     call_func2(p_basic_string_char_ctor_cstr, &str2, "append");
 
@@ -622,13 +602,6 @@ static void test_basic_string_char_append(void) {
 static void test_basic_string_char_compare(void) {
     basic_string_char str1, str2;
     int ret;
-
-    if(!p_basic_string_char_ctor_cstr || !p_basic_string_char_dtor
-            || !p_basic_string_char_compare_substr_substr
-            || !p_basic_string_char_compare_substr_cstr_len) {
-        win_skip("basic_string<char> unavailable\n");
-        return;
-    }
 
     call_func2(p_basic_string_char_ctor_cstr, &str1, "str1str");
     call_func2(p_basic_string_char_ctor_cstr, &str2, "str9str");
@@ -664,13 +637,6 @@ static void test_basic_string_char_concatenate(void) {
     basic_string_char str, ret;
     const char *cstr;
 
-    if(!p_basic_string_char_ctor_cstr || !p_basic_string_char_concatenate
-            || !p_basic_string_char_concatenate_cstr || !p_basic_string_char_cstr
-            || !p_basic_string_char_dtor) {
-        win_skip("basic_string<char> unavailable\n");
-        return;
-    }
-
     call_func2(p_basic_string_char_ctor_cstr, &str, "test ");
     /* CDECL calling convention with return bigger than 8 bytes */
     p_basic_string_char_concatenate(&ret, &str, &str);
@@ -693,12 +659,6 @@ static void test_basic_string_char_find(void) {
     basic_string_char str;
     size_t ret;
 
-    if(!p_basic_string_char_ctor || !p_basic_string_char_assign_cstr_len
-            || !p_basic_string_char_dtor || !p_basic_string_char_find_cstr_substr) {
-        win_skip("basic_stringr> unavailable\n");
-        return;
-    }
-
     call_func1(p_basic_string_char_ctor, &str);
     call_func3(p_basic_string_char_assign_cstr_len, &str, tmp, 7);
     ret = (size_t)call_func4(p_basic_string_char_find_cstr_substr, &str, "aaa", 0, 3);
@@ -716,15 +676,6 @@ static void test_basic_string_wchar(void) {
     basic_string_wchar str1, str2, *pstr;
     const wchar_t *str;
     size_t size, capacity;
-
-    if(!p_basic_string_wchar_ctor || !p_basic_string_wchar_copy_ctor
-            || !p_basic_string_wchar_ctor_cstr || !p_basic_string_wchar_dtor
-            || !p_basic_string_wchar_erase || !p_basic_string_wchar_assign_cstr_len
-            || !p_basic_string_wchar_cstr || !p_basic_string_wchar_data
-            || !p_basic_string_wchar_size || !p_basic_string_wchar_capacity) {
-        win_skip("basic_string<wchar_t> unavailable\n");
-        return;
-    }
 
     call_func1(p_basic_string_wchar_ctor, &str1);
     str = NULL;
@@ -794,12 +745,6 @@ static void test_basic_string_wchar(void) {
 static void test_basic_string_wchar_swap(void) {
     basic_string_wchar str1, str2;
     wchar_t wtmp1[32], wtmp2[32];
-
-    if(!p_basic_string_wchar_ctor_cstr || !p_basic_string_wchar_dtor ||
-            !p_basic_string_wchar_swap || !p_basic_string_wchar_cstr) {
-        win_skip("basic_string<wchar_t> unavailable\n");
-        return;
-    }
 
     /* Swap self, local */
     mbstowcs(wtmp1, "qwerty", 32);
