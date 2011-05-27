@@ -55,6 +55,8 @@ static HRESULT (WINAPI *pScriptItemizeOpenType)( const WCHAR *pwcInChars, int cI
 
 static HRESULT (WINAPI *pScriptShapeOpenType)( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa, OPENTYPE_TAG tagScript, OPENTYPE_TAG tagLangSys, int *rcRangeChars, TEXTRANGE_PROPERTIES **rpRangeProperties, int cRanges, const WCHAR *pwcChars, int cChars, int cMaxGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProps, WORD *pwOutGlyphs, SCRIPT_GLYPHPROP *pOutGlyphProps, int *pcGlyphs);
 
+static DWORD (WINAPI *pGetGlyphIndicesW)(HDC hdc, LPCWSTR lpstr, INT count, LPWORD pgi, DWORD flags);
+
 static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
                          SCRIPT_CONTROL *Control, SCRIPT_STATE *State,
                          DWORD nItems, const itemTest* items, BOOL nItemsToDo,
@@ -216,6 +218,7 @@ static void test_ScriptItemize( void )
     ok (usp10 != 0,"Unable to LoadLibrary on usp10.dll\n");
     pScriptItemizeOpenType = (void*)GetProcAddress(usp10, "ScriptItemizeOpenType");
     pScriptShapeOpenType = (void*)GetProcAddress(usp10, "ScriptShapeOpenType");
+    pGetGlyphIndicesW = (void*)GetProcAddress(GetModuleHandleA("gdi32.dll"), "GetGlyphIndicesW");
 
     memset(&Control, 0, sizeof(Control));
     memset(&State, 0, sizeof(State));
@@ -493,7 +496,7 @@ static int _find_font_for_range(HDC hdc, const CHAR *recommended, BYTE range, co
         WORD glyph = 0;
 
         *origFont = SelectObject(hdc,*hfont);
-        if (GetGlyphIndicesW(hdc, &check, 1, &glyph, 0) == GDI_ERROR || glyph ==0)
+        if (pGetGlyphIndicesW && (pGetGlyphIndicesW(hdc, &check, 1, &glyph, 0) == GDI_ERROR || glyph ==0))
         {
             winetest_trace("    Font fails to contain required glyphs\n");
             SelectObject(hdc,*origFont);
