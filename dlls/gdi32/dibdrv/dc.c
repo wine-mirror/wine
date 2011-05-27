@@ -63,7 +63,8 @@ static void init_bit_fields(dib_info *dib, const DWORD *bit_fields)
     calc_shift_and_len(dib->blue_mask,  &dib->blue_shift,  &dib->blue_len);
 }
 
-static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit_fields, void *bits)
+static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit_fields,
+                          RGBQUAD *color_table, int color_table_size, void *bits)
 {
     static const DWORD bit_fields_888[3] = {0xff0000, 0x00ff00, 0x0000ff};
     static const DWORD bit_fields_555[3] = {0x7c00, 0x03e0, 0x001f};
@@ -118,13 +119,26 @@ static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
         return FALSE;
     }
 
+    if(color_table)
+    {
+        dib->color_table = HeapAlloc(GetProcessHeap(), 0, color_table_size * sizeof(dib->color_table[0]));
+        if(!dib->color_table) return FALSE;
+        dib->color_table_size = color_table_size;
+        memcpy(dib->color_table, color_table, color_table_size * sizeof(color_table[0]));
+    }
+    else
+    {
+        dib->color_table = NULL;
+        dib->color_table_size = 0;
+    }
+
     return TRUE;
 }
 
-BOOL init_dib_info_from_packed(dib_info *dib, const BITMAPINFOHEADER *bi, WORD usage)
+BOOL init_dib_info_from_packed(dib_info *dib, const BITMAPINFOHEADER *bi, WORD usage, HPALETTE palette)
 {
     DWORD *masks = NULL;
-    RGBQUAD *color_table = NULL;
+    RGBQUAD *color_table = NULL, pal_table[256];
     BYTE *ptr = (BYTE*)bi + bi->biSize;
     int num_colors = bi->biClrUsed;
 
@@ -135,17 +149,37 @@ BOOL init_dib_info_from_packed(dib_info *dib, const BITMAPINFOHEADER *bi, WORD u
     }
 
     if(!num_colors && bi->biBitCount <= 8) num_colors = 1 << bi->biBitCount;
-    if(num_colors) color_table = (RGBQUAD*)ptr;
-    if(usage == DIB_PAL_COLORS)
-        ptr += num_colors * sizeof(WORD);
-    else
-        ptr += num_colors * sizeof(*color_table);
+    if(num_colors)
+    {
+        if(usage == DIB_PAL_COLORS)
+        {
+            PALETTEENTRY entries[256];
+            const WORD *index = (const WORD*) ptr;
+            UINT i, count = GetPaletteEntries( palette, 0, num_colors, entries );
+            for (i = 0; i < num_colors; i++, index++)
+            {
+                PALETTEENTRY *entry = &entries[*index % count];
+                pal_table[i].rgbRed      = entry->peRed;
+                pal_table[i].rgbGreen    = entry->peGreen;
+                pal_table[i].rgbBlue     = entry->peBlue;
+                pal_table[i].rgbReserved = 0;
+            }
+            color_table = pal_table;
+            ptr += num_colors * sizeof(WORD);
+        }
+        else
+        {
+            color_table = (RGBQUAD*)ptr;
+            ptr += num_colors * sizeof(*color_table);
+        }
+    }
 
-    return init_dib_info(dib, bi, masks, ptr);
+    return init_dib_info(dib, bi, masks, color_table, num_colors, ptr);
 }
 
 static void clear_dib_info(dib_info *dib)
 {
+    dib->color_table = NULL;
     dib->bits = NULL;
 }
 
@@ -156,6 +190,8 @@ static void clear_dib_info(dib_info *dib)
  */
 void free_dib_info(dib_info *dib, BOOL free_bits)
 {
+    HeapFree(GetProcessHeap(), 0, dib->color_table);
+    dib->color_table = NULL;
     if(free_bits)
     {
         HeapFree(GetProcessHeap(), 0, dib->bits);
@@ -176,6 +212,14 @@ void copy_dib_color_info(dib_info *dst, const dib_info *src)
     dst->green_shift      = src->green_shift;
     dst->blue_shift       = src->blue_shift;
     dst->funcs            = src->funcs;
+    dst->color_table_size = src->color_table_size;
+    dst->color_table      = NULL;
+    if(dst->color_table_size)
+    {
+        int size = dst->color_table_size * sizeof(dst->color_table[0]);
+        dst->color_table = HeapAlloc(GetProcessHeap(), 0, size);
+        memcpy(dst->color_table, src->color_table, size);
+    }
 }
 
 /**************************************************************
@@ -239,7 +283,8 @@ static HBITMAP CDECL dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
     clear_dib_info(&pdev->brush_dib);
     pdev->brush_and_bits = pdev->brush_xor_bits = NULL;
 
-    if(!init_dib_info(&pdev->dib, &bmp->dib->dsBmih, bmp->dib->dsBitfields, bmp->dib->dsBm.bmBits))
+    if(!init_dib_info(&pdev->dib, &bmp->dib->dsBmih, bmp->dib->dsBitfields,
+                      bmp->color_table, bmp->nb_colors, bmp->dib->dsBm.bmBits))
         pdev->defer |= DEFER_FORMAT;
 
     GDI_ReleaseObj( bitmap );

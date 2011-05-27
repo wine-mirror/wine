@@ -1117,9 +1117,11 @@ HBRUSH CDECL dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
     {
         BITMAPINFOHEADER *bi = GlobalLock((HGLOBAL)logbrush.lbHatch);
         dib_info orig_dib;
+        WORD usage = LOWORD(logbrush.lbColor);
+        HPALETTE pal = (usage == DIB_PAL_COLORS) ? GetCurrentObject(dev->hdc, OBJ_PAL) : NULL;
 
         if(!bi) return NULL;
-        if(init_dib_info_from_packed(&orig_dib, bi, LOWORD(logbrush.lbColor)))
+        if(init_dib_info_from_packed(&orig_dib, bi, usage, pal))
         {
             copy_dib_color_info(&pdev->brush_dib, &pdev->dib);
             if(convert_dib(&pdev->brush_dib, &orig_dib))
