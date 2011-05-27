@@ -112,84 +112,6 @@ static void context_destroy_fbo(struct wined3d_context *context, GLuint *fbo)
 }
 
 /* GL locking is done by the caller */
-static void context_apply_attachment_filter_states(const struct wined3d_context *context,
-        struct wined3d_surface *surface, DWORD location)
-{
-    /* Update base texture states array */
-    if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
-    {
-        struct wined3d_texture *texture = surface->container.u.texture;
-        struct wined3d_device *device = surface->resource.device;
-        BOOL update_minfilter = FALSE;
-        BOOL update_magfilter = FALSE;
-        struct gl_texture *gl_tex;
-
-        switch (location)
-        {
-            case SFLAG_INTEXTURE:
-            case SFLAG_INSRGBTEX:
-                gl_tex = wined3d_texture_get_gl_texture(texture,
-                        context->gl_info, location == SFLAG_INSRGBTEX);
-                break;
-
-            default:
-                ERR("Unsupported location %s (%#x).\n", debug_surflocation(location), location);
-                return;
-        }
-
-        if (gl_tex->states[WINED3DTEXSTA_MINFILTER] != WINED3DTEXF_POINT
-            || gl_tex->states[WINED3DTEXSTA_MIPFILTER] != WINED3DTEXF_NONE)
-        {
-            gl_tex->states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT;
-            gl_tex->states[WINED3DTEXSTA_MIPFILTER] = WINED3DTEXF_NONE;
-            update_minfilter = TRUE;
-        }
-
-        if (gl_tex->states[WINED3DTEXSTA_MAGFILTER] != WINED3DTEXF_POINT)
-        {
-            gl_tex->states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_POINT;
-            update_magfilter = TRUE;
-        }
-
-        if (texture->bind_count)
-        {
-            WARN("Render targets should not be bound to a sampler\n");
-            device_invalidate_state(device, STATE_SAMPLER(texture->sampler));
-        }
-
-        if (update_minfilter || update_magfilter)
-        {
-            GLenum target, bind_target;
-            GLint old_binding;
-
-            target = surface->texture_target;
-            if (target == GL_TEXTURE_2D)
-            {
-                bind_target = GL_TEXTURE_2D;
-                glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
-            }
-            else if (target == GL_TEXTURE_RECTANGLE_ARB)
-            {
-                bind_target = GL_TEXTURE_RECTANGLE_ARB;
-                glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_binding);
-            }
-            else
-            {
-                bind_target = GL_TEXTURE_CUBE_MAP_ARB;
-                glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
-            }
-
-            glBindTexture(bind_target, gl_tex->name);
-            if (update_minfilter) glTexParameteri(bind_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            if (update_magfilter) glTexParameteri(bind_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glBindTexture(bind_target, old_binding);
-        }
-
-        checkGLcall("apply_attachment_filter_states()");
-    }
-}
-
-/* GL locking is done by the caller */
 void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         GLenum fbo_target, struct wined3d_surface *depth_stencil, BOOL use_render_buffer)
 {
@@ -220,7 +142,6 @@ void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         else
         {
             surface_prepare_texture(depth_stencil, gl_info, FALSE);
-            context_apply_attachment_filter_states(context, depth_stencil, SFLAG_INTEXTURE);
 
             if (format_flags & WINED3DFMT_FLAG_DEPTH)
             {
@@ -279,7 +200,6 @@ static void context_attach_surface_fbo(const struct wined3d_context *context,
             case SFLAG_INSRGBTEX:
                 srgb = location == SFLAG_INSRGBTEX;
                 surface_prepare_texture(surface, gl_info, srgb);
-                context_apply_attachment_filter_states(context, surface, location);
                 gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_COLOR_ATTACHMENT0 + idx,
                         surface->texture_target, surface_get_texture_name(surface, gl_info, srgb),
                         surface->texture_level);
@@ -450,31 +370,20 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
 
     context_bind_fbo(context, target, &entry->id);
 
-    if (!entry->attached)
-    {
-        /* Apply render targets */
-        for (i = 0; i < gl_info->limits.buffers; ++i)
-        {
-            context_attach_surface_fbo(context, target, i, entry->render_targets[i], entry->location);
-        }
+    if (entry->attached) return;
 
-        /* Apply depth targets */
-        if (entry->depth_stencil)
-            surface_set_compatible_renderbuffer(entry->depth_stencil, entry->render_targets[0]);
-        context_attach_depth_stencil_fbo(context, target, entry->depth_stencil, TRUE);
-
-        entry->attached = TRUE;
-    }
-    else
+    /* Apply render targets */
+    for (i = 0; i < gl_info->limits.buffers; ++i)
     {
-        for (i = 0; i < gl_info->limits.buffers; ++i)
-        {
-            if (entry->render_targets[i])
-                context_apply_attachment_filter_states(context, entry->render_targets[i], entry->location);
-        }
-        if (entry->depth_stencil)
-            context_apply_attachment_filter_states(context, entry->depth_stencil, SFLAG_INTEXTURE);
+        context_attach_surface_fbo(context, target, i, entry->render_targets[i], entry->location);
     }
+
+    /* Apply depth targets */
+    if (entry->depth_stencil)
+        surface_set_compatible_renderbuffer(entry->depth_stencil, entry->render_targets[0]);
+    context_attach_depth_stencil_fbo(context, target, entry->depth_stencil, TRUE);
+
+    entry->attached = TRUE;
 }
 
 /* GL locking is done by the caller */
