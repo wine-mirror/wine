@@ -2991,8 +2991,24 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetControlLabel(IFileDialogCustomiz
                                                              LPCWSTR pszLabel)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d, %s)\n", This, dwIDCtl, debugstr_w(pszLabel));
-    return E_NOTIMPL;
+    customctrl *ctrl = get_cctrl(This, dwIDCtl);
+    TRACE("%p (%d, %p)\n", This, dwIDCtl, pszLabel);
+
+    if(!ctrl) return E_INVALIDARG;
+
+    switch(ctrl->type)
+    {
+    case IDLG_CCTRL_MENU:
+    case IDLG_CCTRL_PUSHBUTTON:
+    case IDLG_CCTRL_CHECKBUTTON:
+    case IDLG_CCTRL_TEXT:
+        SendMessageW(ctrl->hwnd, WM_SETTEXT, 0, (LPARAM)pszLabel);
+        break;
+    default:
+        break;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnGetControlState(IFileDialogCustomize *iface,
@@ -3000,8 +3016,13 @@ static HRESULT WINAPI IFileDialogCustomize_fnGetControlState(IFileDialogCustomiz
                                                              CDCONTROLSTATEF *pdwState)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d, %p)\n", This, dwIDCtl, pdwState);
-    return E_NOTIMPL;
+    customctrl *ctrl = get_cctrl(This, dwIDCtl);
+    TRACE("%p (%d, %p)\n", This, dwIDCtl, pdwState);
+
+    if(!ctrl) return E_NOTIMPL;
+
+    *pdwState = ctrl->cdcstate;
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnSetControlState(IFileDialogCustomize *iface,
@@ -3009,8 +3030,31 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetControlState(IFileDialogCustomiz
                                                              CDCONTROLSTATEF dwState)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d, %x)\n", This, dwIDCtl, dwState);
-    return E_NOTIMPL;
+    customctrl *ctrl = get_cctrl(This,dwIDCtl);
+    TRACE("%p (%d, %x)\n", This, dwIDCtl, dwState);
+
+    if(ctrl)
+    {
+        LONG wndstyle = GetWindowLongW(ctrl->hwnd, GWL_STYLE);
+
+        if(dwState & CDCS_ENABLED)
+            wndstyle &= ~(WS_DISABLED);
+        else
+            wndstyle |= WS_DISABLED;
+
+        if(dwState & CDCS_VISIBLE)
+            wndstyle |= WS_VISIBLE;
+        else
+            wndstyle &= ~(WS_VISIBLE);
+
+        SetWindowLongW(ctrl->hwnd, GWL_STYLE, wndstyle);
+
+        /* We save the state separately since at least one application
+         * relies on being able to hide a control. */
+        ctrl->cdcstate = dwState;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnGetEditBoxText(IFileDialogCustomize *iface,
@@ -3018,8 +3062,19 @@ static HRESULT WINAPI IFileDialogCustomize_fnGetEditBoxText(IFileDialogCustomize
                                                             WCHAR **ppszText)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d, %p)\n", This, dwIDCtl, ppszText);
-    return E_NOTIMPL;
+    customctrl *ctrl = get_cctrl(This, dwIDCtl);
+    WCHAR len, *text;
+    TRACE("%p (%d, %p)\n", This, dwIDCtl, ppszText);
+
+    if(!ctrl || !(len = SendMessageW(ctrl->hwnd, WM_GETTEXTLENGTH, 0, 0)))
+        return E_FAIL;
+
+    text = CoTaskMemAlloc(sizeof(WCHAR)*(len+1));
+    if(!text) return E_FAIL;
+
+    SendMessageW(ctrl->hwnd, WM_GETTEXT, len+1, (LPARAM)text);
+    *ppszText = text;
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnSetEditBoxText(IFileDialogCustomize *iface,
@@ -3027,8 +3082,14 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetEditBoxText(IFileDialogCustomize
                                                             LPCWSTR pszText)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d, %s)\n", This, dwIDCtl, debugstr_w(pszText));
-    return E_NOTIMPL;
+    customctrl *ctrl = get_cctrl(This, dwIDCtl);
+    TRACE("%p (%d, %s)\n", This, dwIDCtl, debugstr_w(pszText));
+
+    if(!ctrl || ctrl->type != IDLG_CCTRL_EDITBOX)
+        return E_FAIL;
+
+    SendMessageW(ctrl->hwnd, WM_SETTEXT, 0, (LPARAM)pszText);
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnGetCheckButtonState(IFileDialogCustomize *iface,
@@ -3036,8 +3097,13 @@ static HRESULT WINAPI IFileDialogCustomize_fnGetCheckButtonState(IFileDialogCust
                                                                  BOOL *pbChecked)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d, %p)\n", This, dwIDCtl, pbChecked);
-    return E_NOTIMPL;
+    customctrl *ctrl = get_cctrl(This, dwIDCtl);
+    TRACE("%p (%d, %p)\n", This, dwIDCtl, pbChecked);
+
+    if(ctrl)
+        *pbChecked = (SendMessageW(ctrl->hwnd, BM_GETCHECK, 0, 0) == BST_CHECKED);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnSetCheckButtonState(IFileDialogCustomize *iface,
@@ -3045,8 +3111,13 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetCheckButtonState(IFileDialogCust
                                                                  BOOL bChecked)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d, %d)\n", This, dwIDCtl, bChecked);
-    return E_NOTIMPL;
+    customctrl *ctrl = get_cctrl(This, dwIDCtl);
+    TRACE("%p (%d, %d)\n", This, dwIDCtl, bChecked);
+
+    if(ctrl)
+        SendMessageW(ctrl->hwnd, BM_SETCHECK, bChecked ? BST_CHECKED:BST_UNCHECKED, 0);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnAddControlItem(IFileDialogCustomize *iface,
