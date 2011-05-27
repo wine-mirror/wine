@@ -42,6 +42,7 @@ typedef struct primitive_funcs
     void        (* solid_rects)(const dib_info *dib, int num, const RECT *rc, DWORD and, DWORD xor);
     void      (* pattern_rects)(const dib_info *dib, int num, const RECT *rc, const POINT *orign, const dib_info *brush, void *and_bits, void *xor_bits);
     DWORD (* colorref_to_pixel)(const dib_info *dib, COLORREF color);
+    BOOL         (* convert_to)(dib_info *dst, const dib_info *src, const RECT *src_rect);
 } primitive_funcs;
 
 extern const primitive_funcs funcs_8888 DECLSPEC_HIDDEN;

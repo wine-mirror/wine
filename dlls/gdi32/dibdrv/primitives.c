@@ -21,6 +21,10 @@
 #include "gdi_private.h"
 #include "dibdrv.h"
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(dib);
+
 static inline DWORD *get_pixel_ptr_32(const dib_info *dib, int x, int y)
 {
     return (DWORD *)((BYTE*)dib->bits + y * dib->stride + x * 4);
@@ -237,37 +241,330 @@ static DWORD colorref_to_pixel_null(const dib_info *dib, COLORREF color)
     return 0;
 }
 
+static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_rect)
+{
+    DWORD *dst_start = dst->bits, *dst_pixel, src_val;
+    int x, y;
+
+    switch(src->bit_count)
+    {
+    case 32:
+    {
+        DWORD *src_start = get_pixel_ptr_32(src, src_rect->left, src_rect->top);
+        if(src->funcs == &funcs_8888)
+        {
+            if(src->stride > 0 && dst->stride > 0 && src_rect->left == 0 && src_rect->right == src->width)
+                memcpy(dst->bits, src_start, (src_rect->bottom - src_rect->top) * src->stride);
+            else
+            {
+                for(y = src_rect->top; y < src_rect->bottom; y++)
+                {
+                    memcpy(dst_start, src_start, (src_rect->right - src_rect->left) * 4);
+                    dst_start += dst->stride / 4;
+                    src_start += src->stride / 4;
+                }
+            }
+        }
+        else
+        {
+            FIXME("Unsupported conversion: 32 -> 8888\n");
+            return FALSE;
+        }
+        break;
+    }
+
+    case 16:
+    {
+        WORD *src_start = get_pixel_ptr_16(src, src_rect->left, src_rect->top), *src_pixel;
+        if(src->funcs == &funcs_555)
+        {
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                dst_pixel = dst_start;
+                src_pixel = src_start;
+                for(x = src_rect->left; x < src_rect->right; x++)
+                {
+                    src_val = *src_pixel++;
+                    *dst_pixel++ = ((src_val << 9) & 0xf80000) | ((src_val << 4) & 0x070000) |
+                                   ((src_val << 6) & 0x00f800) | ((src_val << 1) & 0x000700) |
+                                   ((src_val << 3) & 0x0000f8) | ((src_val >> 2) & 0x000007);
+                }
+                dst_start += dst->stride / 4;
+                src_start += src->stride / 2;
+            }
+        }
+        else
+        {
+            FIXME("Unsupported conversion: 16 -> 8888\n");
+            return FALSE;
+        }
+        break;
+    }
+
+    default:
+        FIXME("Unsupported conversion: %d -> 8888\n", src->bit_count);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_rect)
+{
+    DWORD *dst_start = dst->bits, *dst_pixel, src_val;
+    int x, y;
+
+    switch(src->bit_count)
+    {
+    case 32:
+    {
+        DWORD *src_start = get_pixel_ptr_32(src, src_rect->left, src_rect->top), *src_pixel;
+
+        if(src->funcs == &funcs_8888)
+        {
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                dst_pixel = dst_start;
+                src_pixel = src_start;
+                for(x = src_rect->left; x < src_rect->right; x++)
+                {
+                    src_val = *src_pixel++;
+                    *dst_pixel++ = put_field((src_val >> 16) & 0xff, dst->red_shift,   dst->red_len)   |
+                                   put_field((src_val >>  8) & 0xff, dst->green_shift, dst->green_len) |
+                                   put_field( src_val        & 0xff, dst->blue_shift,  dst->blue_len);
+                }
+                dst_start += dst->stride / 4;
+                src_start += src->stride / 4;
+            }
+        }
+        else
+        {
+            FIXME("Unsupported conversion: 32 -> 32\n");
+            return FALSE;
+        }
+        break;
+    }
+
+    case 16:
+    {
+        WORD *src_start = get_pixel_ptr_16(src, src_rect->left, src_rect->top), *src_pixel;
+        if(src->funcs == &funcs_555)
+        {
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                dst_pixel = dst_start;
+                src_pixel = src_start;
+                for(x = src_rect->left; x < src_rect->right; x++)
+                {
+                    src_val = *src_pixel++;
+                    *dst_pixel++ = put_field(((src_val >> 7) & 0xf8) | ((src_val >> 12) & 0x07), dst->red_shift,   dst->red_len) |
+                                   put_field(((src_val >> 2) & 0xf8) | ((src_val >>  7) & 0x07), dst->green_shift, dst->green_len) |
+                                   put_field(((src_val << 3) & 0xf8) | ((src_val >>  2) & 0x07), dst->blue_shift,  dst->blue_len);
+                }
+                dst_start += dst->stride / 4;
+                src_start += src->stride / 2;
+            }
+        }
+        else
+        {
+            FIXME("Unsupported conversion: 16 -> 8888\n");
+            return FALSE;
+        }
+        break;
+    }
+
+    default:
+        FIXME("Unsupported conversion: %d -> 32\n", src->bit_count);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_rect)
+{
+    WORD *dst_start = dst->bits, *dst_pixel;
+    INT x, y;
+    DWORD src_val;
+
+    switch(src->bit_count)
+    {
+    case 32:
+    {
+        DWORD *src_start = get_pixel_ptr_32(src, src_rect->left, src_rect->top), *src_pixel;
+
+        if(src->funcs == &funcs_8888)
+        {
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                dst_pixel = dst_start;
+                src_pixel = src_start;
+                for(x = src_rect->left; x < src_rect->right; x++)
+                {
+                    src_val = *src_pixel++;
+                    *dst_pixel++ = ((src_val >> 9) & 0x7c00) |
+                                   ((src_val >> 6) & 0x03e0) |
+                                   ((src_val >> 3) & 0x001e);
+                }
+                dst_start += dst->stride / 2;
+                src_start += src->stride / 4;
+            }
+        }
+        else
+        {
+            FIXME("Unsupported conversion: 32 -> 555\n");
+            return FALSE;
+        }
+        break;
+    }
+
+    case 16:
+    {
+        WORD *src_start = get_pixel_ptr_16(src, src_rect->left, src_rect->top);
+        if(src->funcs == &funcs_555)
+        {
+            if(src->stride > 0 && dst->stride > 0 && src_rect->left == 0 && src_rect->right == src->width)
+                memcpy(dst->bits, src_start, (src_rect->bottom - src_rect->top) * src->stride);
+            else
+            {
+                for(y = src_rect->top; y < src_rect->bottom; y++)
+                {
+                    memcpy(dst_start, src_start, (src_rect->right - src_rect->left) * 2);
+                    dst_start += dst->stride / 2;
+                    src_start += src->stride / 2;
+                }
+            }
+        }
+        else
+        {
+            FIXME("Unsupported conversion: 16 -> 555\n");
+            return FALSE;
+        }
+        break;
+    }
+
+    default:
+        FIXME("Unsupported conversion: %d -> 555\n", src->bit_count);
+        return FALSE;
+
+    }
+    return TRUE;
+}
+
+static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_rect)
+{
+    WORD *dst_start = dst->bits, *dst_pixel;
+    INT x, y;
+    DWORD src_val;
+
+    switch(src->bit_count)
+    {
+    case 32:
+    {
+        DWORD *src_start = get_pixel_ptr_32(src, src_rect->left, src_rect->top), *src_pixel;
+
+        if(src->funcs == &funcs_8888)
+        {
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                dst_pixel = dst_start;
+                src_pixel = src_start;
+                for(x = src_rect->left; x < src_rect->right; x++)
+                {
+                    src_val = *src_pixel++;
+                    *dst_pixel++ = put_field((src_val >> 16) & 0xff, dst->red_shift,   dst->red_len)   |
+                                   put_field((src_val >>  8) & 0xff, dst->green_shift, dst->green_len) |
+                                   put_field( src_val        & 0xff, dst->blue_shift,  dst->blue_len);
+                }
+                dst_start += dst->stride / 2;
+                src_start += src->stride / 4;
+            }
+        }
+        else
+        {
+            FIXME("Unsupported conversion: 32 -> 16\n");
+            return FALSE;
+        }
+        break;
+    }
+
+    case 16:
+    {
+        WORD *src_start = get_pixel_ptr_16(src, src_rect->left, src_rect->top), *src_pixel;
+        if(src->funcs == &funcs_555)
+        {
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                dst_pixel = dst_start;
+                src_pixel = src_start;
+                for(x = src_rect->left; x < src_rect->right; x++)
+                {
+                    src_val = *src_pixel++;
+                    *dst_pixel++ = put_field(((src_val >> 7) & 0xf8) | ((src_val >> 12) & 0x07), dst->red_shift,   dst->red_len) |
+                                   put_field(((src_val >> 2) & 0xf8) | ((src_val >>  7) & 0x07), dst->green_shift, dst->green_len) |
+                                   put_field(((src_val << 3) & 0xf8) | ((src_val >>  2) & 0x07), dst->blue_shift,  dst->blue_len);
+                }
+                dst_start += dst->stride / 2;
+                src_start += src->stride / 2;
+            }
+        }
+        else
+        {
+            FIXME("Unsupported conversion: 16 -> 16\n");
+            return FALSE;
+        }
+        break;
+    }
+
+    default:
+        FIXME("Unsupported conversion: %d -> 16\n", src->bit_count);
+        return FALSE;
+
+    }
+    return TRUE;
+}
+
+static BOOL convert_to_null(dib_info *dst, const dib_info *src, const RECT *src_rect)
+{
+    return TRUE;
+}
+
 const primitive_funcs funcs_8888 =
 {
     solid_rects_32,
     pattern_rects_32,
-    colorref_to_pixel_888
+    colorref_to_pixel_888,
+    convert_to_8888
 };
 
 const primitive_funcs funcs_32 =
 {
     solid_rects_32,
     pattern_rects_32,
-    colorref_to_pixel_masks
+    colorref_to_pixel_masks,
+    convert_to_32
 };
 
 const primitive_funcs funcs_555 =
 {
     solid_rects_16,
     pattern_rects_16,
-    colorref_to_pixel_555
+    colorref_to_pixel_555,
+    convert_to_555
 };
 
 const primitive_funcs funcs_16 =
 {
     solid_rects_16,
     pattern_rects_16,
-    colorref_to_pixel_masks
+    colorref_to_pixel_masks,
+    convert_to_16
 };
 
 const primitive_funcs funcs_null =
 {
     solid_rects_null,
     pattern_rects_null,
-    colorref_to_pixel_null
+    colorref_to_pixel_null,
+    convert_to_null
 };

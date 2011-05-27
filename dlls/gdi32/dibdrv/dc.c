@@ -178,25 +178,6 @@ void copy_dib_color_info(dib_info *dst, const dib_info *src)
     dst->funcs            = src->funcs;
 }
 
-static BOOL dib_formats_match(const dib_info *d1, const dib_info *d2)
-{
-    if(d1->bit_count != d2->bit_count) return FALSE;
-
-    switch(d1->bit_count)
-    {
-    case 24: return TRUE;
-
-    case 32:
-    case 16:
-        return (d1->red_mask == d2->red_mask) && (d1->green_mask == d2->green_mask) &&
-            (d1->blue_mask == d2->blue_mask);
-
-    default:
-        ERR("Unexpected depth %d\n", d1->bit_count);
-        return FALSE;
-    }
-}
-
 /**************************************************************
  *            convert_dib
  *
@@ -207,34 +188,22 @@ static BOOL dib_formats_match(const dib_info *d1, const dib_info *d2)
  */
 BOOL convert_dib(dib_info *dst, const dib_info *src)
 {
-    INT y;
+    BOOL ret;
+    RECT src_rect;
 
     dst->height = src->height;
     dst->width = src->width;
     dst->stride = ((dst->width * dst->bit_count + 31) >> 3) & ~3;
-    dst->bits = NULL;
+    dst->bits = HeapAlloc(GetProcessHeap(), 0, dst->height * dst->stride);
 
-    if(dib_formats_match(src, dst))
-    {
-        dst->bits = HeapAlloc(GetProcessHeap(), 0, dst->height * dst->stride);
+    src_rect.left = src_rect.top = 0;
+    src_rect.right = src->width;
+    src_rect.bottom = src->height;
 
-        if(src->stride > 0)
-            memcpy(dst->bits, src->bits, dst->height * dst->stride);
-        else
-        {
-            BYTE *src_bits = src->bits;
-            BYTE *dst_bits = dst->bits;
-            for(y = 0; y < dst->height; y++)
-            {
-                memcpy(dst_bits, src_bits, dst->stride);
-                dst_bits += dst->stride;
-                src_bits += src->stride;
-            }
-        }
-        return TRUE;
-    }
-    FIXME("Format conversion not implemented\n");
-    return FALSE;
+    ret = dst->funcs->convert_to(dst, src, &src_rect);
+
+    if(!ret) free_dib_info(dst, TRUE);
+    return ret;
 }
 
 /***********************************************************************

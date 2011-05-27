@@ -992,6 +992,8 @@ static BOOL create_pattern_brush_bits(dibdrv_physdev *pdev)
     assert(pdev->brush_and_bits == NULL);
     assert(pdev->brush_xor_bits == NULL);
 
+    assert(pdev->brush_dib.stride > 0);
+
     and_bits = pdev->brush_and_bits = HeapAlloc(GetProcessHeap(), 0, size);
     xor_bits = pdev->brush_xor_bits = HeapAlloc(GetProcessHeap(), 0, size);
 
@@ -1002,20 +1004,10 @@ static BOOL create_pattern_brush_bits(dibdrv_physdev *pdev)
         return FALSE;
     }
 
-    if(pdev->brush_dib.stride < 0)
-        brush_bits = (DWORD*)((BYTE*)brush_bits + (pdev->brush_dib.height - 1) * pdev->brush_dib.stride);
-
     while(size)
     {
         calc_and_xor_masks(pdev->brush_rop, *brush_bits++, and_bits++, xor_bits++);
         size -= 4;
-    }
-
-    if(pdev->brush_dib.stride < 0)
-    {
-        /* Update the bits ptrs if the dib is bottom up.  The subtraction is because stride is -ve */
-        pdev->brush_and_bits = (BYTE*)pdev->brush_and_bits - (pdev->brush_dib.height - 1) * pdev->brush_dib.stride;
-        pdev->brush_xor_bits = (BYTE*)pdev->brush_xor_bits - (pdev->brush_dib.height - 1) * pdev->brush_dib.stride;
     }
 
     return TRUE;
