@@ -954,7 +954,7 @@ static void test_ignore_selection(HWND hWndTrackbar){
 static void test_initial_state(void)
 {
     HWND hWnd;
-    DWORD ret;
+    int ret;
 
     hWnd = create_trackbar(0, hWndParent);
 
