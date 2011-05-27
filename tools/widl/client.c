@@ -351,7 +351,10 @@ static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
     indent--;
     print_client("},\n");
     print_client("0,\n");
-    print_client("0,\n");
+    if (!list_empty( &generic_handle_list ))
+        print_client("BindingRoutines,\n");
+    else
+        print_client("0,\n");
     if (expr_eval_routines)
         print_client("ExprEvalRoutines,\n");
     else
@@ -496,6 +499,23 @@ static void write_client_ifaces(const statement_list_t *stmts, int expr_eval_rou
     }
 }
 
+static void write_generic_handle_routine_list(void)
+{
+    generic_handle_t *gh;
+
+    if (list_empty( &generic_handle_list )) return;
+    print_client( "static const GENERIC_BINDING_ROUTINE_PAIR BindingRoutines[] =\n" );
+    print_client( "{\n" );
+    indent++;
+    LIST_FOR_EACH_ENTRY( gh, &generic_handle_list, generic_handle_t, entry )
+    {
+        print_client( "{ (GENERIC_BINDING_ROUTINE)%s_bind, (GENERIC_UNBIND_ROUTINE)%s_unbind },\n",
+                      gh->name, gh->name );
+    }
+    indent--;
+    print_client( "};\n\n" );
+}
+
 static void write_client_routines(const statement_list_t *stmts)
 {
     unsigned int proc_offset = 0;
@@ -508,6 +528,7 @@ static void write_client_routines(const statement_list_t *stmts)
     expr_eval_routines = write_expr_eval_routines(client, client_token);
     if (expr_eval_routines)
         write_expr_eval_routine_list(client, client_token);
+    write_generic_handle_routine_list();
     write_user_quad_list(client);
 
     write_client_ifaces(stmts, expr_eval_routines, &proc_offset);

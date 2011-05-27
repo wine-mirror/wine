@@ -48,6 +48,7 @@ typedef struct _importinfo_t importinfo_t;
 typedef struct _typelib_t typelib_t;
 typedef struct _user_type_t user_type_t;
 typedef struct _user_type_t context_handle_t;
+typedef struct _user_type_t generic_handle_t;
 typedef struct _type_list_t type_list_t;
 typedef struct _statement_t statement_t;
 
@@ -60,6 +61,7 @@ typedef struct list ifref_list_t;
 typedef struct list array_dims_t;
 typedef struct list user_type_list_t;
 typedef struct list context_handle_list_t;
+typedef struct list generic_handle_list_t;
 typedef struct list statement_list_t;
 
 enum attr_type
@@ -530,6 +532,7 @@ typedef enum {
 
 extern syskind_t typelib_kind;
 extern user_type_list_t user_type_list;
+extern generic_handle_list_t generic_handle_list;
 void check_for_additional_prototype_types(const var_list_t *list);
 
 void init_types(void);
