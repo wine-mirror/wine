@@ -64,11 +64,16 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
  * DirectX File ClassFactory
  */
 typedef struct {
-    IClassFactory ITF_IClassFactory;
+    IClassFactory IClassFactory_iface;
 
     LONG ref;
     HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
 } IClassFactoryImpl;
+
+static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
+}
 
 struct object_creation_info
 {
@@ -83,13 +88,13 @@ static const struct object_creation_info object_creation[] =
 
 static HRESULT WINAPI XFCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid, LPVOID *ppobj)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
 	|| IsEqualGUID(riid, &IID_IClassFactory))
     {
 	IClassFactory_AddRef(iface);
-	*ppobj = This;
+	*ppobj = &This->IClassFactory_iface;
 	return S_OK;
     }
 
@@ -99,13 +104,13 @@ static HRESULT WINAPI XFCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid, LPVO
 
 static ULONG WINAPI XFCF_AddRef(LPCLASSFACTORY iface)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI XFCF_Release(LPCLASSFACTORY iface)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
     ULONG ref = InterlockedDecrement(&This->ref);
 
@@ -117,7 +122,7 @@ static ULONG WINAPI XFCF_Release(LPCLASSFACTORY iface)
 
 static HRESULT WINAPI XFCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     HRESULT hres;
     LPUNKNOWN punk;
     
@@ -134,7 +139,7 @@ static HRESULT WINAPI XFCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter
 
 static HRESULT WINAPI XFCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     FIXME("(%p)->(%d),stub!\n",This,dolock);
     return S_OK;
 }
@@ -211,12 +216,12 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     factory = HeapAlloc(GetProcessHeap(), 0, sizeof(*factory));
     if (factory == NULL) return E_OUTOFMEMORY;
 
-    factory->ITF_IClassFactory.lpVtbl = &XFCF_Vtbl;
+    factory->IClassFactory_iface.lpVtbl = &XFCF_Vtbl;
     factory->ref = 1;
 
     factory->pfnCreateInstance = object_creation[i].pfnCreateInstance;
 
-    *ppv = &(factory->ITF_IClassFactory);
+    *ppv = &(factory->IClassFactory_iface);
     return S_OK;
 }
 
