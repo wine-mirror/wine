@@ -536,6 +536,29 @@ static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width)
     HeapFree(GetProcessHeap(), 0, text);
 }
 
+static void customctrl_resize(FileDialogImpl *This, customctrl *ctrl)
+{
+    RECT rc;
+
+    switch(ctrl->type)
+    {
+    case IDLG_CCTRL_PUSHBUTTON:
+    case IDLG_CCTRL_COMBOBOX:
+    case IDLG_CCTRL_CHECKBUTTON:
+    case IDLG_CCTRL_TEXT:
+        ctrl_resize(ctrl->hwnd, 160, 160);
+        GetWindowRect(ctrl->hwnd, &rc);
+        SetWindowPos(ctrl->wrapper_hwnd, NULL, 0, 0, rc.right-rc.left, rc.bottom-rc.top,
+                     SWP_NOZORDER|SWP_NOMOVE|SWP_NOZORDER);
+    case IDLG_CCTRL_RADIOBUTTONLIST:
+    case IDLG_CCTRL_EDITBOX:
+    case IDLG_CCTRL_SEPARATOR:
+    case IDLG_CCTRL_MENU:
+        /* Nothing */
+        break;
+    }
+}
+
 static LRESULT notifysink_on_create(HWND hwnd, CREATESTRUCTW *crs)
 {
     FileDialogImpl *This = crs->lpCreateParams;
@@ -613,7 +636,126 @@ static HRESULT cctrl_create_new(FileDialogImpl *This, DWORD id,
  */
 static UINT ctrl_container_resize(FileDialogImpl *This, UINT container_width)
 {
-    return 0;
+    UINT container_height;
+    UINT column_width;
+    UINT nr_of_cols;
+    UINT max_control_height, total_height = 0;
+    UINT cur_col_pos, cur_row_pos;
+    customctrl *ctrl;
+    BOOL fits_height;
+    static const UINT col_indent = 100; /* The first column is indented 100px */
+    static const UINT cspacing = 90;    /* Columns are spaced with 90px */
+    static const UINT rspacing = 4;     /* Rows are spaced with 4 px. */
+
+    /* Given the new width of the container, this function determines the
+     * needed height of the container and places the controls according to
+     * the new layout. Returns the new height.
+     */
+
+    TRACE("%p\n", This);
+
+    column_width = This->cctrl_width + cspacing;
+    nr_of_cols = (container_width - col_indent + cspacing) / column_width;
+
+    /* We don't need to do anything unless the number of visible columns has changed. */
+    if(nr_of_cols == This->cctrls_cols)
+    {
+        RECT rc;
+        GetWindowRect(This->cctrls_hwnd, &rc);
+        return rc.bottom - rc.top;
+    }
+
+   This->cctrls_cols = nr_of_cols;
+
+    /* Get the size of the tallest control, and the total size of
+     * all the controls to figure out the number of slots we need.
+     */
+    max_control_height = 0;
+    LIST_FOR_EACH_ENTRY(ctrl, &This->cctrls, customctrl, entry)
+    {
+        if(ctrl->cdcstate & CDCS_VISIBLE)
+        {
+            RECT rc;
+            UINT control_height;
+            GetWindowRect(ctrl->wrapper_hwnd, &rc);
+            control_height = rc.bottom - rc.top;
+            max_control_height = max(max_control_height, control_height);
+
+            total_height +=  control_height + rspacing;
+        }
+    }
+
+    if(!total_height)
+        return 0;
+
+    container_height = max(total_height / nr_of_cols, max_control_height + rspacing);
+    TRACE("Guess: container_height: %d\n",container_height);
+
+    /* Incrementally increase container_height until all the controls
+     * fit.
+     */
+    do {
+        UINT columns_needed = 1;
+        cur_row_pos = 0;
+
+        fits_height = TRUE;
+        LIST_FOR_EACH_ENTRY(ctrl, &This->cctrls, customctrl, entry)
+        {
+            if(ctrl->cdcstate & CDCS_VISIBLE)
+            {
+                RECT rc;
+                UINT control_height;
+                GetWindowRect(ctrl->wrapper_hwnd, &rc);
+                control_height = rc.bottom - rc.top;
+
+                if(cur_row_pos + control_height > container_height)
+                {
+                    if(++columns_needed > nr_of_cols)
+                    {
+                        container_height += 1;
+                        fits_height = FALSE;
+                        break;
+                    }
+                    cur_row_pos = 0;
+                }
+
+                cur_row_pos += control_height + rspacing;
+            }
+        }
+    } while(!fits_height);
+
+    TRACE("Final container height: %d\n", container_height);
+
+    /* Move the controls to their final destination
+     */
+    cur_col_pos = col_indent, cur_row_pos = 0;
+    LIST_FOR_EACH_ENTRY(ctrl, &This->cctrls, customctrl, entry)
+    {
+        if(ctrl->cdcstate & CDCS_VISIBLE)
+        {
+            RECT rc;
+            UINT control_height;
+            GetWindowRect(ctrl->wrapper_hwnd, &rc);
+            control_height = rc.bottom - rc.top;
+
+            if(cur_row_pos + control_height > container_height)
+            {
+                cur_row_pos = 0;
+                cur_col_pos += This->cctrl_width + cspacing;
+            }
+
+            SetWindowPos(ctrl->wrapper_hwnd, NULL, cur_col_pos, cur_row_pos, 0, 0,
+                         SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER);
+
+            cur_row_pos += control_height + rspacing;
+        }
+    }
+
+    /* Sanity check */
+    if(cur_row_pos + This->cctrl_width > container_width)
+        ERR("-- Failed to place controls properly.\n");
+
+    return container_height;
 }
 
 static void ctrl_container_reparent(FileDialogImpl *This, HWND parent)
@@ -622,6 +764,9 @@ static void ctrl_container_reparent(FileDialogImpl *This, HWND parent)
 
     if(parent)
     {
+        customctrl *ctrl;
+        HFONT font;
+
         wndstyle = GetWindowLongW(This->cctrls_hwnd, GWL_STYLE);
         wndstyle &= ~(WS_POPUP);
         wndstyle |= WS_CHILD;
@@ -629,6 +774,17 @@ static void ctrl_container_reparent(FileDialogImpl *This, HWND parent)
 
         SetParent(This->cctrls_hwnd, parent);
         ShowWindow(This->cctrls_hwnd, TRUE);
+
+        /* Set the fonts to match the dialog font. */
+        font = (HFONT)SendMessageW(parent, WM_GETFONT, 0, 0);
+        if(!font)
+            ERR("Failed to get font handle from dialog.\n");
+
+        LIST_FOR_EACH_ENTRY(ctrl, &This->cctrls, customctrl, entry)
+        {
+            if(font) SendMessageW(ctrl->hwnd, WM_SETFONT, (WPARAM)font, TRUE);
+            customctrl_resize(This, ctrl);
+        }
     }
     else
     {
