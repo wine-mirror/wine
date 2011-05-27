@@ -304,6 +304,8 @@ void context_check_fbo_status(struct wined3d_context *context, GLenum target)
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLenum status;
 
+    if (!FIXME_ON(d3d)) return;
+
     status = gl_info->fbo_ops.glCheckFramebufferStatus(target);
     if (status == GL_FRAMEBUFFER_COMPLETE)
     {
