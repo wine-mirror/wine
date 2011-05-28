@@ -242,7 +242,7 @@ static HRESULT WINAPI StreamOnMemory_Clone(IStream *iface,
 }
 
 
-const IStreamVtbl StreamOnMemory_Vtbl =
+static const IStreamVtbl StreamOnMemory_Vtbl =
 {
     /*** IUnknown methods ***/
     StreamOnMemory_QueryInterface,
@@ -538,7 +538,7 @@ static HRESULT WINAPI StreamOnStreamRange_Clone(IStream *iface,
 }
 
 
-const IStreamVtbl StreamOnStreamRange_Vtbl =
+static const IStreamVtbl StreamOnStreamRange_Vtbl =
 {
     /*** IUnknown methods ***/
     StreamOnStreamRange_QueryInterface,
@@ -854,7 +854,7 @@ static HRESULT WINAPI IWICStreamImpl_InitializeFromIStreamRegion(IWICStream *ifa
 }
 
 
-const IWICStreamVtbl WICStream_Vtbl =
+static const IWICStreamVtbl WICStream_Vtbl =
 {
     /*** IUnknown methods ***/
     IWICStreamImpl_QueryInterface,
