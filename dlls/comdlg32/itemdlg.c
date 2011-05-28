@@ -3530,7 +3530,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetControlItemText(IFileDialogCusto
     return E_NOTIMPL;
 }
 
-const IFileDialogCustomizeVtbl vt_IFileDialogCustomize = {
+static const IFileDialogCustomizeVtbl vt_IFileDialogCustomize = {
     IFileDialogCustomize_fnQueryInterface,
     IFileDialogCustomize_fnAddRef,
     IFileDialogCustomize_fnRelease,
