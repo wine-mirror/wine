@@ -82,6 +82,7 @@ void write_endpoints( FILE *f, const char *prefix, const str_list_t *list );
 void write_exceptions( FILE *file );
 unsigned int type_memsize(const type_t *t);
 int decl_indirect(const type_t *t);
+int is_interpreted_func(const type_t *iface, const var_t *func);
 void write_parameters_init(FILE *file, int indent, const var_t *func, const char *local_var_prefix);
 void print(FILE *file, int indent, const char *format, va_list ap);
 expr_t *get_size_is_expr(const type_t *t, const char *name);

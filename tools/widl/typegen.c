@@ -908,6 +908,19 @@ static unsigned int write_procformatstring_type(FILE *file, int indent,
     return size;
 }
 
+int is_interpreted_func( const type_t *iface, const var_t *func )
+{
+    const char *str;
+    const type_t *ret_type = type_function_get_rettype( func->type );
+
+    /* return value must fit in a long_ptr for interpreted functions */
+    if (type_get_type( ret_type ) == TYPE_BASIC && type_memsize( ret_type ) > pointer_size)
+        return 0;
+    if ((str = get_attrp( func->attrs, ATTR_OPTIMIZE ))) return !strcmp( str, "i" );
+    if ((str = get_attrp( iface->attrs, ATTR_OPTIMIZE ))) return !strcmp( str, "i" );
+    return 0;
+}
+
 static void write_procformatstring_func( FILE *file, int indent,
                                          const var_t *func, unsigned int *offset )
 {
@@ -1229,7 +1242,7 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *cont_type,
         print_file(file, 2, "NdrFcShort(0x%hx),\t/* offset = %d */\n",
                    (unsigned short)offset, offset);
     }
-    else
+    else if (!iface || is_interpreted_func( iface, current_func ))
     {
         unsigned int callback_offset = 0;
         struct expr_eval_routine *eval;
@@ -1266,6 +1279,12 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *cont_type,
         print_file(file, 2, "0x%x,\t/* Corr desc: %s in %s */\n", conftype, conftype_string, name);
         print_file(file, 2, "0x%x,\t/* %s */\n", RPC_FC_CALLBACK, "FC_CALLBACK");
         print_file(file, 2, "NdrFcShort(0x%hx),\t/* %u */\n", (unsigned short)callback_offset, callback_offset);
+    }
+    else  /* output a dummy corr desc that isn't used */
+    {
+        print_file(file, 2, "0x%x,\t/* Corr desc: unused for %s */\n", conftype, name);
+        print_file(file, 2, "0x0,\n" );
+        print_file(file, 2, "NdrFcShort(0x0),\n" );
     }
     return 4;
 }
