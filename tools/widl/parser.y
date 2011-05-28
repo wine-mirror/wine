@@ -452,8 +452,12 @@ arg:	  attributes decl_spec m_any_declarator	{ if ($2->stgclass != STG_NONE && $
 						}
 	;
 
-array:	  '[' m_expr ']'			{ $$ = $2; }
+array:	  '[' expr ']'				{ $$ = $2;
+						  if (!$$->is_const)
+						      error_loc("array dimension is not an integer constant\n");
+						}
 	| '[' '*' ']'				{ $$ = make_expr(EXPR_VOID); }
+	| '[' ']'				{ $$ = make_expr(EXPR_VOID); }
 	;
 
 m_attributes:					{ $$ = NULL; }
@@ -637,16 +641,6 @@ enumdef: tENUM t_ident '{' enums '}'		{ $$ = type_new_enum($2, TRUE, $4); }
 m_exprs:  m_expr                                { $$ = append_expr( NULL, $1 ); }
 	| m_exprs ',' m_expr                    { $$ = append_expr( $1, $3 ); }
 	;
-
-/*
-exprs:						{ $$ = make_expr(EXPR_VOID); }
-	| expr_list
-	;
-
-expr_list: expr
-	| expr_list ',' expr			{ LINK($3, $1); $$ = $3; }
-	;
-*/
 
 m_expr:						{ $$ = make_expr(EXPR_VOID); }
 	| expr
