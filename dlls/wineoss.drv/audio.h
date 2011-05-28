@@ -158,26 +158,26 @@ typedef struct {
     OSS_MSG_RING		msgRing;
 } WINE_WAVEIN;
 
-extern WINE_WAVEOUT	WOutDev[MAX_WAVEDRV];
-extern WINE_WAVEIN	WInDev[MAX_WAVEDRV];
-extern unsigned         numOutDev;
-extern unsigned         numInDev;
+extern WINE_WAVEOUT	WOutDev[MAX_WAVEDRV] DECLSPEC_HIDDEN;
+extern WINE_WAVEIN	WInDev[MAX_WAVEDRV] DECLSPEC_HIDDEN;
+extern unsigned         numOutDev DECLSPEC_HIDDEN;
+extern unsigned         numInDev DECLSPEC_HIDDEN;
 
-extern int getEnables(OSS_DEVICE *ossdev);
-extern void copy_format(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2);
+extern int getEnables(OSS_DEVICE *ossdev) DECLSPEC_HIDDEN;
+extern void copy_format(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2) DECLSPEC_HIDDEN;
 
 extern DWORD OSS_OpenDevice(OSS_DEVICE* ossdev, unsigned req_access,
                             int* frag, int strict_format,
-                            int sample_rate, int stereo, int fmt);
+                            int sample_rate, int stereo, int fmt) DECLSPEC_HIDDEN;
 
-extern void OSS_CloseDevice(OSS_DEVICE* ossdev);
+extern void OSS_CloseDevice(OSS_DEVICE* ossdev) DECLSPEC_HIDDEN;
 
-extern DWORD wodSetVolume(WORD wDevID, DWORD dwParam);
+extern DWORD wodSetVolume(WORD wDevID, DWORD dwParam) DECLSPEC_HIDDEN;
 
 /* dscapture.c */
-extern DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv);
-extern DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc);
+extern DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv) DECLSPEC_HIDDEN;
+extern DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc) DECLSPEC_HIDDEN;
 
 /* dsrender.c */
-extern DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
-extern DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc);
+extern DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv) DECLSPEC_HIDDEN;
+extern DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc) DECLSPEC_HIDDEN;
