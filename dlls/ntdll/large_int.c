@@ -264,7 +264,7 @@ UINT WINAPI RtlEnlargedUnsignedDivide( ULONGLONG a, UINT b, UINT *remptr )
     p1 = a >> 32;
     p2 = a &  0xffffffffLL;
 
-    __asm__("div %4,%%eax"
+    __asm__("divl %4,%%eax"
             : "=a" (ret), "=d" (rem)
             : "0" (p2), "1" (p1), "g" (b) );
     if (remptr) *remptr = rem;
