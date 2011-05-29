@@ -2440,13 +2440,13 @@ static void test_SetLocaleInfoA(void)
 
   /* IDATE */
   SetLastError(0);
-  bRet = SetLocaleInfoA(lcid, LOCALE_IDATE, (LPSTR)test_SetLocaleInfoA);
+  bRet = SetLocaleInfoA(lcid, LOCALE_IDATE, "test_SetLocaleInfoA");
   ok(!bRet && GetLastError() == ERROR_INVALID_FLAGS,
      "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
 
   /* ILDATE */
   SetLastError(0);
-  bRet = SetLocaleInfoA(lcid, LOCALE_ILDATE, (LPSTR)test_SetLocaleInfoA);
+  bRet = SetLocaleInfoA(lcid, LOCALE_ILDATE, "test_SetLocaleInfoA");
   ok(!bRet && GetLastError() == ERROR_INVALID_FLAGS,
      "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
 }
