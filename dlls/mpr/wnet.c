@@ -1173,7 +1173,7 @@ static DWORD _enumerateContextW(PWNetEnumerator enumerator, LPDWORD lpcCount,
         if (ret == WN_SUCCESS)
         {
             /* reflect the fact that we already enumerated "Entire Network" */
-            lpcCount++;
+            (*lpcCount)++;
             *lpBufferSize = bufferSize + bytesNeeded;
         }
         else
