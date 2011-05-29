@@ -105,7 +105,8 @@ GpStatus WINGDIPAPI GdipCreateMatrix3I(GDIPCONST GpRect *rect, GDIPCONST GpPoint
     GpMatrix **matrix)
 {
     GpRectF rectF;
-    GpPointF ptF;
+    GpPointF ptF[3];
+    int i;
 
     TRACE("(%p, %p, %p)\n", rect, pt, matrix);
 
@@ -114,10 +115,11 @@ GpStatus WINGDIPAPI GdipCreateMatrix3I(GDIPCONST GpRect *rect, GDIPCONST GpPoint
     rectF.Width = (REAL)rect->Width;
     rectF.Height = (REAL)rect->Height;
 
-    ptF.X = (REAL)pt->X;
-    ptF.Y = (REAL)pt->Y;
-
-    return GdipCreateMatrix3(&rectF, &ptF, matrix);
+    for (i = 0; i < 3; i++) {
+        ptF[i].X = (REAL)pt[i].X;
+        ptF[i].Y = (REAL)pt[i].Y;
+    }
+    return GdipCreateMatrix3(&rectF, ptF, matrix);
 }
 
 GpStatus WINGDIPAPI GdipCloneMatrix(GpMatrix *matrix, GpMatrix **clone)
