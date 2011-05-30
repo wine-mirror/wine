@@ -2719,15 +2719,10 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
 static HRESULT _VarChangeTypeExWrap (VARIANTARG* pvargDest,
                     VARIANTARG* pvargSrc, LCID lcid, USHORT wFlags, VARTYPE vt)
 {
-    HRESULT res;
-    VARTYPE flags;
+    VARIANTARG vtmpsrc = *pvargSrc;
 
-    flags = V_VT(pvargSrc) & ~VT_TYPEMASK;
-    V_VT(pvargSrc) &= ~VT_RESERVED;
-    res = VariantChangeTypeEx(pvargDest,pvargSrc,lcid,wFlags,vt);
-    V_VT(pvargSrc) |= flags;
-
-    return res;
+    V_VT(&vtmpsrc) &= ~VT_RESERVED;
+    return VariantChangeTypeEx(pvargDest,&vtmpsrc,lcid,wFlags,vt);
 }
 
 /**********************************************************************
