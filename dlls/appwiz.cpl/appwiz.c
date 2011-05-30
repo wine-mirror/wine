@@ -100,6 +100,7 @@ static const WCHAR CommentsW[] = {'C','o','m','m','e','n','t','s',0};
 static const WCHAR UninstallCommandlineW[] = {'U','n','i','n','s','t','a','l','l',
     'S','t','r','i','n','g',0};
 static const WCHAR WindowsInstallerW[] = {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
+static const WCHAR SystemComponentW[] = {'S','y','s','t','e','m','C','o','m','p','o','n','e','n','t',0};
 
 static const WCHAR PathUninstallW[] = {
         'S','o','f','t','w','a','r','e','\\',
@@ -153,7 +154,7 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
     HKEY hkeyApp;
     int i, id = 0;
     DWORD sizeOfSubKeyName, displen, uninstlen;
-    DWORD dwNoModify, dwType, value;
+    DWORD dwNoModify, dwType, value, size;
     WCHAR subKeyName[256];
     WCHAR *command;
     APPINFO *info = NULL;
@@ -165,12 +166,19 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
         NULL, NULL, NULL) != ERROR_NO_MORE_ITEMS; ++i)
     {
         RegOpenKeyExW(root, subKeyName, 0, KEY_READ, &hkeyApp);
-
+        size = sizeof(value);
+        if (!RegQueryValueExW(hkeyApp, SystemComponentW, NULL, &dwType, (LPBYTE)&value, &size)
+            && dwType == REG_DWORD && value == 1)
+        {
+            RegCloseKey(hkeyApp);
+            sizeOfSubKeyName = sizeof(subKeyName) / sizeof(subKeyName[0]);
+            continue;
+        }
         displen = 0;
         uninstlen = 0;
         if (!RegQueryValueExW(hkeyApp, DisplayNameW, 0, 0, NULL, &displen))
         {
-            DWORD size = sizeof(value);
+            size = sizeof(value);
             if (!RegQueryValueExW(hkeyApp, WindowsInstallerW, NULL, &dwType, (LPBYTE)&value, &size)
                 && dwType == REG_DWORD && value == 1)
             {
