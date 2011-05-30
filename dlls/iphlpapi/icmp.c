@@ -187,7 +187,7 @@ BOOL WINAPI IcmpCloseHandle(HANDLE  IcmpHandle)
         return FALSE;
     }
 
-    shutdown(icp->sid,2);
+    close( icp->sid );
     HeapFree(GetProcessHeap (), 0, icp);
     return TRUE;
 }
