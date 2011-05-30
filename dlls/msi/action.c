@@ -4815,6 +4815,10 @@ static UINT msi_publish_install_properties(MSIPACKAGE *package, HKEY hkey)
         {'A','R','P','U','R','L','U','P','D','A','T','E','I','N','F','O',0};
     static const WCHAR szURLUpdateInfo[] =
         {'U','R','L','U','p','d','a','t','e','I','n','f','o',0};
+    static const WCHAR szARPSYSTEMCOMPONENT[] =
+        {'A','R','P','S','Y','S','T','E','M','C','O','M','P','O','N','E','N','T',0};
+    static const WCHAR szSystemComponent[] =
+        {'S','y','s','t','e','m','C','o','m','p','o','n','e','n','t',0};
 
     static const WCHAR *propval[] = {
         szARPAUTHORIZEDCDFPREFIX, szAuthorizedCDFPrefix,
@@ -4844,7 +4848,10 @@ static UINT msi_publish_install_properties(MSIPACKAGE *package, HKEY hkey)
     }
 
     msi_reg_set_val_dword(hkey, szWindowsInstaller, 1);
-
+    if (msi_get_property_int( package->db, szARPSYSTEMCOMPONENT, 0 ))
+    {
+        msi_reg_set_val_dword( hkey, szSystemComponent, 1 );
+    }
     size = deformat_string(package, modpath_fmt, &buffer);
     RegSetValueExW(hkey, szModifyPath, 0, REG_EXPAND_SZ, (LPBYTE)buffer, size);
     RegSetValueExW(hkey, szUninstallString, 0, REG_EXPAND_SZ, (LPBYTE)buffer, size);
