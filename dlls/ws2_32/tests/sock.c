@@ -470,7 +470,7 @@ static VOID WINAPI oob_server ( server_params *par )
 {
     test_params *gen = par->general;
     server_memory *mem;
-    u_long atmark;
+    u_long atmark = 0;
     int pos, n_recvd, n_expected = gen->n_chunks * gen->chunk_size, tmp,
         id = GetCurrentThreadId();
 
