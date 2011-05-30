@@ -82,6 +82,9 @@ if /I seems to work
 not-r.test not found after delete, good
 r.test found before delete, good
 r.test not found after delete, good
+------------ Testing del /q --------------
+del /q * succeeded on file1
+del /q * succeeded on file2.dat
 -----------Testing Errorlevel-----------
 1
 errorlevel just right, good

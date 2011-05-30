@@ -579,6 +579,48 @@ static void WCMD_delete_parse_attributes(DWORD *wantSet, DWORD *wantClear) {
     }
 }
 
+/* If filename part of parameter is * or *.*,
+ * and neither /Q nor /P options were given,
+ * prompt the user whether to proceed.
+ * Returns FALSE if user says no, TRUE otherwise.
+ * *pPrompted is set to TRUE if the user is prompted.
+ * (If /P supplied, del will prompt for individual files later.)
+ */
+static BOOL WCMD_delete_confirm_wildcard(WCHAR *filename, BOOL *pPrompted) {
+    static const WCHAR parmP[] = {'/','P','\0'};
+    static const WCHAR parmQ[] = {'/','Q','\0'};
+
+    if ((strstrW(quals, parmQ) == NULL) && (strstrW(quals, parmP) == NULL)) {
+        static const WCHAR anyExt[]= {'.','*','\0'};
+        WCHAR drive[10];
+        WCHAR dir[MAX_PATH];
+        WCHAR fname[MAX_PATH];
+        WCHAR ext[MAX_PATH];
+        WCHAR fpath[MAX_PATH];
+
+        /* Convert path into actual directory spec */
+        GetFullPathNameW(filename, sizeof(fpath)/sizeof(WCHAR), fpath, NULL);
+        WCMD_splitpath(fpath, drive, dir, fname, ext);
+
+        /* Only prompt for * and *.*, not *a, a*, *.a* etc */
+        if ((strcmpW(fname, starW) == 0) &&
+            (*ext == 0x00 || (strcmpW(ext, anyExt) == 0))) {
+
+            WCHAR question[MAXSTRING];
+            static const WCHAR fmt[] = {'%','s',' ','\0'};
+
+            /* Caller uses this to suppress "file not found" warning later */
+            *pPrompted = TRUE;
+
+            /* Ask for confirmation */
+            wsprintfW(question, fmt, fpath);
+            return WCMD_ask_confirm(question, TRUE, NULL);
+        }
+    }
+    /* No scary wildcard, or question suppressed, so it's ok to delete the file(s) */
+    return TRUE;
+}
+
 /****************************************************************************
  * WCMD_delete
  *
@@ -598,7 +640,6 @@ BOOL WCMD_delete (WCHAR *command, BOOL expectDir) {
     int   argsProcessed = 0;
     WCHAR *argN          = command;
     BOOL  foundAny      = FALSE;
-    static const WCHAR parmQ[] = {'/','Q','\0'};
     static const WCHAR parmP[] = {'/','P','\0'};
     static const WCHAR parmS[] = {'/','S','\0'};
     static const WCHAR parmF[] = {'/','F','\0'};
@@ -623,43 +664,15 @@ BOOL WCMD_delete (WCHAR *command, BOOL expectDir) {
         WCHAR *p;
         BOOL handleParm = TRUE;
         BOOL found = FALSE;
-        static const WCHAR anyExt[]= {'.','*','\0'};
 
         strcpyW(argCopy, thisArg);
         WINE_TRACE("del: Processing arg %s (quals:%s)\n",
                    wine_dbgstr_w(argCopy), wine_dbgstr_w(quals));
         argsProcessed++;
 
-        /* If filename part of parameter is * or *.*, prompt unless
-           /Q supplied.                                            */
-        if ((strstrW (quals, parmQ) == NULL) && (strstrW (quals, parmP) == NULL)) {
-
-          WCHAR drive[10];
-          WCHAR dir[MAX_PATH];
-          WCHAR fname[MAX_PATH];
-          WCHAR ext[MAX_PATH];
-
-          /* Convert path into actual directory spec */
-          GetFullPathNameW(argCopy, sizeof(fpath)/sizeof(WCHAR), fpath, NULL);
-          WCMD_splitpath(fpath, drive, dir, fname, ext);
-
-          /* Only prompt for * and *.*, not *a, a*, *.a* etc */
-          if ((strcmpW(fname, starW) == 0) &&
-              (*ext == 0x00 || (strcmpW(ext, anyExt) == 0))) {
-            BOOL  ok;
-            WCHAR  question[MAXSTRING];
-            static const WCHAR fmt[] = {'%','s',' ','\0'};
-
-            /* Note: Flag as found, to avoid file not found message */
-            found = TRUE;
-
-            /* Ask for confirmation */
-            wsprintfW(question, fmt, fpath);
-            ok = WCMD_ask_confirm(question, TRUE, NULL);
-
-            /* Abort if answer is 'N' */
-            if (!ok) continue;
-          }
+        if (!WCMD_delete_confirm_wildcard(argCopy, &found)) {
+            /* Skip this arg if user declines to delete *.* */
+            continue;
         }
 
         /* First, try to delete in the current directory */

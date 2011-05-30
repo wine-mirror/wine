@@ -94,6 +94,18 @@ del /a:r *.test
 if not exist r.test echo r.test not found after delete, good
 if exist r.test echo r.test found after delete, bad
 
+echo ------------ Testing del /q --------------
+mkdir del_q_dir
+cd del_q_dir
+echo abc > file1
+echo abc > file2.dat
+rem If /q doesn't work, cmd will prompt and the test case should hang
+del /q * > nul
+for %%a in (1 2.dat) do if exist file%%a echo del /q * failed on file%%a
+for %%a in (1 2.dat) do if not exist file%%a echo del /q * succeeded on file%%a
+cd ..
+rmdir del_q_dir
+
 echo -----------Testing Errorlevel-----------
 rem nt 4.0 doesn't really support a way of setting errorlevel, so this is weak
 rem See http://www.robvanderwoude.com/exit.php
