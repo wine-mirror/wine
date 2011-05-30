@@ -458,6 +458,116 @@ static void COM_RevokeAllClasses(const struct apartment *apt)
   LeaveCriticalSection( &csRegisteredClassList );
 }
 
+/******************************************************************************
+ * Implementation of the manual reset event object. (CLSID_ManualResetEvent)
+ */
+
+typedef struct ManualResetEvent {
+    ISynchronize   ISynchronize_iface;
+    LONG ref;
+    HANDLE event;
+} MREImpl;
+
+static inline MREImpl *impl_from_ISynchronize(ISynchronize *iface)
+{
+    return CONTAINING_RECORD(iface, MREImpl, ISynchronize_iface);
+}
+
+static HRESULT WINAPI ISynchronize_fnQueryInterface(ISynchronize *iface, REFIID riid, void **ppv)
+{
+    MREImpl *This = impl_from_ISynchronize(iface);
+    TRACE("%p (%s, %p)\n", This, debugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+    if(IsEqualGUID(riid, &IID_IUnknown) ||
+       IsEqualGUID(riid, &IID_ISynchronize))
+        *ppv = This;
+    else
+        ERR("Unknown interface %s requested.\n", debugstr_guid(riid));
+
+    if(*ppv)
+    {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ISynchronize_fnAddRef(ISynchronize *iface)
+{
+    MREImpl *This = impl_from_ISynchronize(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+    TRACE("%p - ref %d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI ISynchronize_fnRelease(ISynchronize *iface)
+{
+    MREImpl *This = impl_from_ISynchronize(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+    TRACE("%p - ref %d\n", This, ref);
+
+    if(!ref)
+    {
+        CloseHandle(This->event);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI ISynchronize_fnWait(ISynchronize *iface, DWORD dwFlags, DWORD dwMilliseconds)
+{
+    MREImpl *This = impl_from_ISynchronize(iface);
+    UINT index;
+    TRACE("%p (%08x, %08x)\n", This, dwFlags, dwMilliseconds);
+    return CoWaitForMultipleHandles(dwFlags, dwMilliseconds, 1, &This->event, &index);
+}
+
+static HRESULT WINAPI ISynchronize_fnSignal(ISynchronize *iface)
+{
+    MREImpl *This = impl_from_ISynchronize(iface);
+    TRACE("%p\n", This);
+    SetEvent(This->event);
+    return S_OK;
+}
+
+static HRESULT WINAPI ISynchronize_fnReset(ISynchronize *iface)
+{
+    MREImpl *This = impl_from_ISynchronize(iface);
+    TRACE("%p\n", This);
+    ResetEvent(This->event);
+    return S_OK;
+}
+
+static ISynchronizeVtbl vt_ISynchronize = {
+    ISynchronize_fnQueryInterface,
+    ISynchronize_fnAddRef,
+    ISynchronize_fnRelease,
+    ISynchronize_fnWait,
+    ISynchronize_fnSignal,
+    ISynchronize_fnReset
+};
+
+static HRESULT ManualResetEvent_Construct(IUnknown *punkouter, REFIID iid, void **ppv)
+{
+    MREImpl *This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MREImpl));
+    HRESULT hr;
+
+    if(punkouter)
+        FIXME("Aggregation not implemented.\n");
+
+    This->ref = 1;
+    This->ISynchronize_iface.lpVtbl = &vt_ISynchronize;
+    This->event = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    hr = ISynchronize_QueryInterface(&This->ISynchronize_iface, iid, ppv);
+    ISynchronize_Release(&This->ISynchronize_iface);
+    return hr;
+}
+
 /***********************************************************************
  *           CoRevokeClassObject [OLE32.@]
  *
@@ -2509,6 +2619,9 @@ HRESULT WINAPI CoCreateInstance(
     TRACE("Retrieved GIT (%p)\n", *ppv);
     return S_OK;
   }
+
+  if (IsEqualCLSID(rclsid, &CLSID_ManualResetEvent))
+      return ManualResetEvent_Construct(pUnkOuter, iid, ppv);
 
   /*
    * Get a class factory to construct the object we want.
