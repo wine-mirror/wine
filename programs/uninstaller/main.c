@@ -60,7 +60,7 @@ static const WCHAR PathUninstallW[] = {
         'U','n','i','n','s','t','a','l','l',0 };
 static const WCHAR UninstallCommandlineW[] = {'U','n','i','n','s','t','a','l','l','S','t','r','i','n','g',0};
 static const WCHAR WindowsInstallerW[] = {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
-
+static const WCHAR SystemComponentW[] = {'S','y','s','t','e','m','C','o','m','p','o','n','e','n','t',0};
 
 /**
  * Used to output program list when used with --list
@@ -176,19 +176,27 @@ static int FetchFromRootKey(HKEY root)
 {
     HKEY hkeyApp;
     int i;
-    DWORD sizeOfSubKeyName, displen, uninstlen;
+    DWORD sizeOfSubKeyName, displen, uninstlen, value, type, size;
     WCHAR subKeyName[256];
 
     sizeOfSubKeyName = 255;
     for (i=0; RegEnumKeyExW( root, i, subKeyName, &sizeOfSubKeyName, NULL, NULL, NULL, NULL ) != ERROR_NO_MORE_ITEMS; ++i)
     {
         RegOpenKeyExW(root, subKeyName, 0, KEY_READ, &hkeyApp);
+        if (!RegQueryValueExW(hkeyApp, SystemComponentW, NULL, &type, (LPBYTE)&value, &size) &&
+            type == REG_DWORD && value == 1)
+        {
+            RegCloseKey(hkeyApp);
+            sizeOfSubKeyName = 255;
+            continue;
+        }
         if (!RegQueryValueExW(hkeyApp, DisplayNameW, NULL, NULL, NULL, &displen))
         {
-            DWORD value, type;
             WCHAR *command;
 
-            if (!RegQueryValueExW(hkeyApp, WindowsInstallerW, NULL, &type, NULL, &value) && type == REG_DWORD && value == 1)
+            size = sizeof(value);
+            if (!RegQueryValueExW(hkeyApp, WindowsInstallerW, NULL, &type, (LPBYTE)&value, &size) &&
+                type == REG_DWORD && value == 1)
             {
                 static const WCHAR fmtW[] = {'m','s','i','e','x','e','c',' ','/','x','%','s',0};
                 command = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(fmtW) + lstrlenW(subKeyName)) * sizeof(WCHAR));
