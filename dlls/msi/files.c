@@ -1164,7 +1164,10 @@ static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
         TRACE("Skipping removal due to install mode\n");
         return ERROR_SUCCESS;
     }
-
+    if (comp->assembly && !comp->assembly->application)
+    {
+        return ERROR_SUCCESS;
+    }
     if (comp->Attributes & msidbComponentAttributesPermanent)
     {
         TRACE("permanent component, not removing file\n");
@@ -1266,15 +1269,19 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         MSIRECORD *uirow;
         LPWSTR dir, p;
         VS_FIXEDFILEINFO *ver;
+        MSICOMPONENT *comp = file->Component;
 
         if ( file->state == msifs_installed )
             ERR("removing installed file %s\n", debugstr_w(file->TargetPath));
 
-        file->Component->Action = msi_get_component_action( package, file->Component );
-        if (file->Component->Action != INSTALLSTATE_ABSENT || file->Component->Installed == INSTALLSTATE_SOURCE)
+        comp->Action = msi_get_component_action( package, comp );
+        if (comp->Action != INSTALLSTATE_ABSENT || comp->Installed == INSTALLSTATE_SOURCE)
             continue;
 
-        if (file->Component->Attributes & msidbComponentAttributesPermanent)
+        if (comp->assembly && !comp->assembly->application)
+            continue;
+
+        if (comp->Attributes & msidbComponentAttributesPermanent)
         {
             TRACE("permanent component, not removing file\n");
             continue;
@@ -1299,7 +1306,7 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         {
             WARN("failed to delete %s (%u)\n",  debugstr_w(file->TargetPath), GetLastError());
         }
-        else if (!has_persistent_dir( package, file->Component ))
+        else if (!has_persistent_dir( package, comp ))
         {
             if ((dir = strdupW( file->TargetPath )))
             {
@@ -1312,7 +1319,7 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
 
         uirow = MSI_CreateRecord( 9 );
         MSI_RecordSetStringW( uirow, 1, file->FileName );
-        MSI_RecordSetStringW( uirow, 9, file->Component->Directory );
+        MSI_RecordSetStringW( uirow, 9, comp->Directory );
         msi_ui_actiondata( package, szRemoveFiles, uirow );
         msiobj_release( &uirow->hdr );
         /* FIXME: call msi_ui_progress here? */
