@@ -123,7 +123,7 @@ static void test_refcount(void)
     ref = getRefcount( (IUnknown *) lpDirectXFile);
     ok(ref == 1, "Got refcount %d, expected 1\n", ref);
     ref = IDirectXFile_AddRef(lpDirectXFile);
-    ok(ref == 2, "Got refcount %d, expected 1\n", ref);
+    ok(ref == 2, "Got refcount %d, expected 2\n", ref);
     ref = IDirectXFile_Release(lpDirectXFile);
     ok(ref == 1, "Got refcount %d, expected 1\n", ref);
 
