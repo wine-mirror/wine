@@ -130,6 +130,28 @@ static void test_set_coop(LPDIRECTINPUT pDI, HWND hwnd)
     if (pKeyboard) IUnknown_Release(pKeyboard);
 }
 
+static void test_get_prop(LPDIRECTINPUT pDI, HWND hwnd)
+{
+    HRESULT hr;
+    LPDIRECTINPUTDEVICE pKeyboard = NULL;
+    DIPROPRANGE diprg;
+
+    hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKeyboard, NULL);
+    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
+    if (FAILED(hr)) return;
+
+    memset(&diprg, 0, sizeof(diprg));
+    diprg.diph.dwSize       = sizeof(DIPROPRANGE);
+    diprg.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    diprg.diph.dwHow        = DIPH_DEVICE;
+    diprg.diph.dwObj        = 0;
+
+    hr = IDirectInputDevice_GetProperty(pKeyboard, DIPROP_RANGE, &diprg.diph);
+    ok(hr == DIERR_UNSUPPORTED, "IDirectInputDevice_GetProperty() did not return DIPROP_RANGE but: %08x\n", hr);
+
+    if (pKeyboard) IUnknown_Release(pKeyboard);
+}
+
 static void keyboard_tests(DWORD version)
 {
     HRESULT hr;
@@ -155,6 +177,7 @@ static void keyboard_tests(DWORD version)
     {
         acquire_tests(pDI, hwnd);
         test_set_coop(pDI, hwnd);
+        test_get_prop(pDI, hwnd);
     }
 
     DestroyWindow(hwnd);

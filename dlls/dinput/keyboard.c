@@ -509,6 +509,8 @@ static HRESULT WINAPI SysKeyboardWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface,
                 memcpy(ps->wsz, didoi.tszName, sizeof(ps->wsz));
             return hr;
         }
+        case (DWORD_PTR) DIPROP_RANGE:
+            return DIERR_UNSUPPORTED;
         default:
             return IDirectInputDevice2AImpl_GetProperty( IDirectInputDevice8A_from_impl(This), rguid, pdiph );
     }
