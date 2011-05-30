@@ -192,8 +192,8 @@ Hibák:	Wine hibabejelentés a Bugzilla-n keresztül itt: http://bugs.winehq.org
 
 IRC:	Azonnali segítség elérhetõ a #WineHQ csatornán a irc.freenode.net-en.
 
-CVS:	A jelenlegi Wine fejlesztõi fa elérhetõ CVS-en keresztül.
-	Látogasson el ide a további információhoz: http://www.winehq.org/cvs
+Git:	A jelenlegi Wine fejlesztõi fa elérhetõ Git-en keresztül.
+	Látogasson el ide a további információhoz: http://www.winehq.org/git
 
 Levelezõlisták:
 	Elérhetõ néhány levelezõlista a Wine fejlesztõk számára; nézze meg a

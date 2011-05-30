@@ -190,8 +190,8 @@ Bugs:	Relate erros ao Wine Bugzilla em http://bugs.winehq.org
 
 IRC:	A ajuda online está disponível em #WineHQ em irc.freenode.net.
 
-CVS:	O árvore de desenvolvimento atual do Wine está disponível por CVS.
-	Vá em http://www.winehq.org/cvs para mais informação.
+Git:	O árvore de desenvolvimento atual do Wine está disponível por Git.
+	Vá em http://www.winehq.org/git para mais informação.
 
 Mailing Lists:
 	Há diversas listas de mensagens para colaboradores no desenvolvimento 
