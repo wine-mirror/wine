@@ -161,6 +161,12 @@ static void start_dosbox( const char *appname, const char *args )
     char *dosbox = find_dosbox();
 
     if (!dosbox) return;
+    if (tolower(appname[0]) == 'z')
+    {
+        WINE_MESSAGE( "winevdm: Cannot start DOS application %s\n", appname );
+        WINE_MESSAGE( "         because DOSBox doesn't support running from the Z: drive.\n" );
+        ExitProcess(1);
+    }
     if (!GetTempPathW( MAX_PATH, path )) return;
     if (!GetTempFileNameW( path, cfgW, 0, config )) return;
     if (!GetCurrentDirectoryW( MAX_PATH, path )) return;
