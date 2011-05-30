@@ -64,8 +64,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 typedef struct
 {
-    const IAutoComplete2Vtbl  *lpVtbl;
-    const IAutoCompleteDropDownVtbl *lpDropDownVtbl;
+    IAutoComplete2 IAutoComplete2_iface;
+    IAutoCompleteDropDown IAutoCompleteDropDown_iface;
     LONG ref;
     BOOL initialized;
     BOOL enabled;
@@ -85,16 +85,15 @@ static const IAutoCompleteDropDownVtbl acdropdownvt;
 static const WCHAR autocomplete_propertyW[] = {'W','i','n','e',' ','A','u','t','o',
                                                'c','o','m','p','l','e','t','e',' ',
                                                'c','o','n','t','r','o','l',0};
-/*
-  converts This to an interface pointer
-*/
-#define _IUnknown_(This)              ((IUnknown*)&(This)->lpVtbl)
-#define _IAutoComplete2_(This)        ((IAutoComplete2*)&(This)->lpVtbl)
-#define _IAutoCompleteDropDown_(This) (&(This)->lpDropDownVtbl)
+
+static inline IAutoCompleteImpl *impl_from_IAutoComplete2(IAutoComplete2 *iface)
+{
+    return CONTAINING_RECORD(iface, IAutoCompleteImpl, IAutoComplete2_iface);
+}
 
 static inline IAutoCompleteImpl *impl_from_IAutoCompleteDropDown(IAutoCompleteDropDown *iface)
 {
-    return (IAutoCompleteImpl *)((char *)iface - FIELD_OFFSET(IAutoCompleteImpl, lpDropDownVtbl));
+    return CONTAINING_RECORD(iface, IAutoCompleteImpl, IAutoCompleteDropDown_iface);
 }
 
 static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -134,13 +133,13 @@ HRESULT WINAPI IAutoComplete_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVO
         return E_OUTOFMEMORY;
 
     lpac->ref = 1;
-    lpac->lpVtbl = &acvt;
-    lpac->lpDropDownVtbl = &acdropdownvt;
+    lpac->IAutoComplete2_iface.lpVtbl = &acvt;
+    lpac->IAutoCompleteDropDown_iface.lpVtbl = &acdropdownvt;
     lpac->enabled = TRUE;
     lpac->options = ACO_AUTOAPPEND;
 
-    hr = IUnknown_QueryInterface(_IUnknown_ (lpac), riid, ppv);
-    IUnknown_Release(_IUnknown_ (lpac));
+    hr = IAutoComplete2_QueryInterface(&lpac->IAutoComplete2_iface, riid, ppv);
+    IAutoComplete2_Release(&lpac->IAutoComplete2_iface);
 
     TRACE("-- (%p)->\n",lpac);
 
@@ -155,8 +154,8 @@ static HRESULT WINAPI IAutoComplete2_fnQueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
-    
+    IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
+
     TRACE("(%p)->(IID:%s,%p)\n", This, shdebugstr_guid(riid), ppvObj);
     *ppvObj = NULL;
 
@@ -168,7 +167,7 @@ static HRESULT WINAPI IAutoComplete2_fnQueryInterface(
     }
     else if (IsEqualIID(riid, &IID_IAutoCompleteDropDown))
     {
-        *ppvObj = _IAutoCompleteDropDown_(This);
+        *ppvObj = &This->IAutoCompleteDropDown_iface;
     }
 
     if (*ppvObj)
@@ -187,9 +186,9 @@ static HRESULT WINAPI IAutoComplete2_fnQueryInterface(
 static ULONG WINAPI IAutoComplete2_fnAddRef(
 	IAutoComplete2 * iface)
 {
-    IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
+    IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
-    
+
     TRACE("(%p)->(%u)\n", This, refCount - 1);
 
     return refCount;
@@ -201,7 +200,7 @@ static ULONG WINAPI IAutoComplete2_fnAddRef(
 static ULONG WINAPI IAutoComplete2_fnRelease(
 	IAutoComplete2 * iface)
 {
-    IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
+    IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->(%u)\n", This, refCount + 1);
@@ -224,8 +223,7 @@ static HRESULT WINAPI IAutoComplete2_fnEnable(
     IAutoComplete2 * iface,
     BOOL fEnable)
 {
-    IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
-
+    IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
     HRESULT hr = S_OK;
 
     TRACE("(%p)->(%s)\n", This, (fEnable)?"true":"false");
@@ -245,7 +243,7 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
     LPCOLESTR pwzsRegKeyPath,
     LPCOLESTR pwszQuickComplete)
 {
-    IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
+    IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
 
     TRACE("(%p)->(%p, %p, %s, %s)\n",
 	  This, hwndEdit, punkACL, debugstr_w(pwzsRegKeyPath), debugstr_w(pwszQuickComplete));
@@ -274,7 +272,7 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
     This->hwndEdit = hwndEdit;
     This->wpOrigEditProc = (WNDPROC) SetWindowLongPtrW( hwndEdit, GWLP_WNDPROC, (LONG_PTR) ACEditSubclassProc);
     /* Keep at least one reference to the object until the edit window is destroyed. */
-    IAutoComplete2_AddRef((IAutoComplete2 *)This);
+    IAutoComplete2_AddRef(&This->IAutoComplete2_iface);
     SetPropW( hwndEdit, autocomplete_propertyW, This );
 
     if (This->options & ACO_AUTOSUGGEST)
@@ -326,9 +324,8 @@ static HRESULT WINAPI IAutoComplete2_fnGetOptions(
     IAutoComplete2 * iface,
     DWORD *pdwFlag)
 {
+    IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
     HRESULT hr = S_OK;
-
-    IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
 
     TRACE("(%p) -> (%p)\n", This, pdwFlag);
 
@@ -344,9 +341,8 @@ static HRESULT WINAPI IAutoComplete2_fnSetOptions(
     IAutoComplete2 * iface,
     DWORD dwFlag)
 {
+    IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
     HRESULT hr = S_OK;
-
-    IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
 
     TRACE("(%p) -> (0x%x)\n", This, dwFlag);
 
@@ -434,19 +430,19 @@ static HRESULT WINAPI IAutoCompleteDropDown_fnQueryInterface(IAutoCompleteDropDo
             REFIID riid, LPVOID *ppvObj)
 {
     IAutoCompleteImpl *This = impl_from_IAutoCompleteDropDown(iface);
-    return IAutoComplete2_fnQueryInterface(_IAutoComplete2_(This), riid, ppvObj);
+    return IAutoComplete2_fnQueryInterface(&This->IAutoComplete2_iface, riid, ppvObj);
 }
 
 static ULONG WINAPI IAutoCompleteDropDown_fnAddRef(IAutoCompleteDropDown *iface)
 {
     IAutoCompleteImpl *This = impl_from_IAutoCompleteDropDown(iface);
-    return IAutoComplete2_fnAddRef(_IAutoComplete2_(This));
+    return IAutoComplete2_fnAddRef(&This->IAutoComplete2_iface);
 }
 
 static ULONG WINAPI IAutoCompleteDropDown_fnRelease(IAutoCompleteDropDown *iface)
 {
     IAutoCompleteImpl *This = impl_from_IAutoCompleteDropDown(iface);
-    return IAutoComplete2_fnRelease(_IAutoComplete2_(This));
+    return IAutoComplete2_fnRelease(&This->IAutoComplete2_iface);
 }
 
 /**************************************************************************
@@ -636,7 +632,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 	    This->hwndEdit = NULL;
 	    if (This->hwndListBox)
 		    DestroyWindow(This->hwndListBox);
-	    IAutoComplete2_Release((IAutoComplete2 *)This);
+            IAutoComplete2_Release(&This->IAutoComplete2_iface);
 	    return CallWindowProcW(proc, hwnd, uMsg, wParam, lParam);
 	}
 	default:
