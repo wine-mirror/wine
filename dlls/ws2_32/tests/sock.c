@@ -2328,18 +2328,18 @@ static void test_select(void)
     SetLastError(0);
     ret = select(maxfd+1, 0, 0, 0, &select_timeout);
     ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
-    ok ( GetLastError() == WSAEINVAL, "expected WSAEINVAL, got %i\n", ret);
+    ok ( WSAGetLastError() == WSAEINVAL, "expected WSAEINVAL, got %i\n", WSAGetLastError());
 
     SetLastError(0);
     ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
     ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
-    ok ( GetLastError() == WSAEINVAL, "expected WSAEINVAL, got %i\n", ret);
+    ok ( WSAGetLastError() == WSAEINVAL, "expected WSAEINVAL, got %i\n", WSAGetLastError());
 
     FD_SET(INVALID_SOCKET, &readfds);
     SetLastError(0);
     ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
     ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
-    ok ( GetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", ret);
+    ok ( WSAGetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", WSAGetLastError());
     ok ( !FD_ISSET(fdRead, &readfds), "FD should not be set\n");
 
     FD_ZERO(&readfds);
@@ -2347,7 +2347,7 @@ static void test_select(void)
     SetLastError(0);
     ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
     ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
-    ok ( GetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", ret);
+    ok ( WSAGetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", WSAGetLastError());
     ok ( !FD_ISSET(fdRead, &writefds), "FD should not be set\n");
 
     FD_ZERO(&writefds);
@@ -2355,7 +2355,7 @@ static void test_select(void)
     SetLastError(0);
     ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
     ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
-    ok ( GetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", ret);
+    ok ( WSAGetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", WSAGetLastError());
     ok ( !FD_ISSET(fdRead, &exceptfds), "FD should not be set\n");
 }
 
