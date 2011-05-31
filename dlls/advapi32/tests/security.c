@@ -3723,6 +3723,159 @@ static void test_EqualSid(void)
     FreeSid(sid2);
 }
 
+static void test_GetUserNameA(void)
+{
+    char buffer[UNLEN + 1], filler[UNLEN + 1];
+    DWORD required_len, buffer_len;
+    BOOL ret;
+
+    /* Test crashes on Windows. */
+    if (0)
+    {
+        SetLastError(0xdeadbeef);
+        GetUserNameA(NULL, NULL);
+    }
+
+    SetLastError(0xdeadbeef);
+    required_len = 0;
+    ret = GetUserNameA(NULL, &required_len);
+    ok(ret == FALSE, "GetUserNameA returned %d\n", ret);
+    ok(required_len != 0, "Outputted buffer length was %u\n", required_len);
+    todo_wine
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Last error was %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    required_len = 1;
+    ret = GetUserNameA(NULL, &required_len);
+    ok(ret == FALSE, "GetUserNameA returned %d\n", ret);
+    ok(required_len != 0 && required_len != 1, "Outputted buffer length was %u\n", required_len);
+    todo_wine
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Last error was %u\n", GetLastError());
+
+    /* Tests crashes on Windows. */
+    if (0)
+    {
+        SetLastError(0xdeadbeef);
+        required_len = UNLEN + 1;
+        GetUserNameA(NULL, &required_len);
+
+        SetLastError(0xdeadbeef);
+        GetUserNameA(buffer, NULL);
+    }
+
+    memset(filler, 'x', sizeof(filler));
+
+    /* Note that GetUserNameA on XP and newer outputs the number of bytes
+     * required for a Unicode string, which affects a test in the next block. */
+    SetLastError(0xdeadbeef);
+    memcpy(buffer, filler, sizeof(filler));
+    required_len = 0;
+    ret = GetUserNameA(buffer, &required_len);
+    ok(ret == FALSE, "GetUserNameA returned %d\n", ret);
+    ok(!memcmp(buffer, filler, sizeof(filler)), "Output buffer was altered\n");
+    ok(required_len != 0, "Outputted buffer length was %u\n", required_len);
+    todo_wine
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Last error was %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    memcpy(buffer, filler, sizeof(filler));
+    buffer_len = required_len;
+    ret = GetUserNameA(buffer, &buffer_len);
+    ok(ret == TRUE, "GetUserNameA returned %d, last error %u\n", ret, GetLastError());
+    ok(memcmp(buffer, filler, sizeof(filler)) != 0, "Output buffer was untouched\n");
+    todo_wine
+    ok(buffer_len == required_len ||
+       broken(buffer_len == required_len / sizeof(WCHAR)), /* XP+ */
+       "Outputted buffer length was %u\n", buffer_len);
+
+    /* Use the reported buffer size from the last GetUserNameA call and pass
+     * a length that is one less than the required value. */
+    SetLastError(0xdeadbeef);
+    memcpy(buffer, filler, sizeof(filler));
+    buffer_len--;
+    ret = GetUserNameA(buffer, &buffer_len);
+    ok(ret == FALSE, "GetUserNameA returned %d\n", ret);
+    todo_wine {
+    ok(!memcmp(buffer, filler, sizeof(filler)), "Output buffer was untouched\n");
+    ok(buffer_len == required_len, "Outputted buffer length was %u\n", buffer_len);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Last error was %u\n", GetLastError());
+    }
+}
+
+static void test_GetUserNameW(void)
+{
+    WCHAR buffer[UNLEN + 1], filler[UNLEN + 1];
+    DWORD required_len, buffer_len;
+    BOOL ret;
+
+    /* Test crashes on Windows. */
+    if (0)
+    {
+        SetLastError(0xdeadbeef);
+        GetUserNameW(NULL, NULL);
+    }
+
+    SetLastError(0xdeadbeef);
+    required_len = 0;
+    ret = GetUserNameW(NULL, &required_len);
+    ok(ret == FALSE, "GetUserNameW returned %d\n", ret);
+    ok(required_len != 0, "Outputted buffer length was %u\n", required_len);
+    todo_wine
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Last error was %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    required_len = 1;
+    ret = GetUserNameW(NULL, &required_len);
+    ok(ret == FALSE, "GetUserNameW returned %d\n", ret);
+    ok(required_len != 0 && required_len != 1, "Outputted buffer length was %u\n", required_len);
+    todo_wine
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Last error was %u\n", GetLastError());
+
+    /* Tests crash on Windows. */
+    if (0)
+    {
+        SetLastError(0xdeadbeef);
+        required_len = UNLEN + 1;
+        GetUserNameW(NULL, &required_len);
+
+        SetLastError(0xdeadbeef);
+        GetUserNameW(buffer, NULL);
+    }
+
+    memset(filler, 'x', sizeof(filler));
+
+    SetLastError(0xdeadbeef);
+    memcpy(buffer, filler, sizeof(filler));
+    required_len = 0;
+    ret = GetUserNameW(buffer, &required_len);
+    ok(ret == FALSE, "GetUserNameW returned %d\n", ret);
+    ok(!memcmp(buffer, filler, sizeof(filler)), "Output buffer was altered\n");
+    ok(required_len != 0, "Outputted buffer length was %u\n", required_len);
+    todo_wine
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Last error was %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    memcpy(buffer, filler, sizeof(filler));
+    buffer_len = required_len;
+    ret = GetUserNameW(buffer, &buffer_len);
+    ok(ret == TRUE, "GetUserNameW returned %d, last error %u\n", ret, GetLastError());
+    ok(memcmp(buffer, filler, sizeof(filler)) != 0, "Output buffer was untouched\n");
+    ok(buffer_len == required_len, "Outputted buffer length was %u\n", buffer_len);
+
+    /* GetUserNameW on XP and newer writes a truncated portion of the username string to the buffer. */
+    SetLastError(0xdeadbeef);
+    memcpy(buffer, filler, sizeof(filler));
+    buffer_len--;
+    ret = GetUserNameW(buffer, &buffer_len);
+    ok(ret == FALSE, "GetUserNameW returned %d\n", ret);
+    ok(!memcmp(buffer, filler, sizeof(filler)) ||
+       broken(memcmp(buffer, filler, sizeof(filler)) != 0), /* XP+ */
+       "Output buffer was altered\n");
+    ok(buffer_len == required_len, "Outputted buffer length was %u\n", buffer_len);
+    todo_wine
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Last error was %u\n", GetLastError());
+}
+
 START_TEST(security)
 {
     init();
@@ -3756,4 +3909,6 @@ START_TEST(security)
     test_GetSidSubAuthority();
     test_CheckTokenMembership();
     test_EqualSid();
+    test_GetUserNameA();
+    test_GetUserNameW();
 }
