@@ -157,17 +157,19 @@ const char* source_get(const struct module* module, unsigned idx)
 }
 
 /******************************************************************
- *		SymEnumSourceFiles (DBGHELP.@)
+ *		SymEnumSourceFilesW (DBGHELP.@)
  *
  */
-BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG64 ModBase, PCSTR Mask,
-                               PSYM_ENUMSOURCEFILES_CALLBACK cbSrcFiles,
-                               PVOID UserContext)
+BOOL WINAPI SymEnumSourceFilesW(HANDLE hProcess, ULONG64 ModBase, PCWSTR Mask,
+                                PSYM_ENUMSOURCEFILES_CALLBACKW cbSrcFiles,
+                                PVOID UserContext)
 {
     struct module_pair  pair;
-    SOURCEFILE          sf;
+    SOURCEFILEW         sf;
     char*               ptr;
-    
+    WCHAR*              conversion_buffer = NULL;
+    DWORD               conversion_buffer_len = 0;
+
     if (!cbSrcFiles) return FALSE;
     pair.pcs = process_find_by_handle(hProcess);
     if (!pair.pcs) return FALSE;
@@ -181,7 +183,7 @@ BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG64 ModBase, PCSTR Mask,
     {
         if (Mask[0] == '!')
         {
-            pair.requested = module_find_by_nameA(pair.pcs, Mask + 1);
+            pair.requested = module_find_by_nameW(pair.pcs, Mask + 1);
             if (!module_get_debug(&pair)) return FALSE;
         }
         else
@@ -193,13 +195,117 @@ BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG64 ModBase, PCSTR Mask,
     if (!pair.effective->sources) return FALSE;
     for (ptr = pair.effective->sources; *ptr; ptr += strlen(ptr) + 1)
     {
+        DWORD len = MultiByteToWideChar(CP_ACP, 0, ptr, -1, NULL, 0);
+
+        if (len > conversion_buffer_len)
+        {
+            HeapFree(GetProcessHeap(), 0, conversion_buffer);
+            conversion_buffer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+            if (!conversion_buffer) return FALSE;
+            conversion_buffer_len = len;
+        }
+
+        MultiByteToWideChar(CP_ACP, 0, ptr, -1, conversion_buffer, len);
+
         /* FIXME: not using Mask */
         sf.ModBase = ModBase;
-        sf.FileName = ptr;
+        sf.FileName = conversion_buffer;
         if (!cbSrcFiles(&sf, UserContext)) break;
     }
 
+    HeapFree(GetProcessHeap(), 0, conversion_buffer);
     return TRUE;
+}
+
+struct enum_sources_files_context
+{
+    PSYM_ENUMSOURCEFILES_CALLBACK callbackA;
+    PVOID caller_context;
+    char *conversion_buffer;
+    DWORD conversion_buffer_len;
+    DWORD callback_error;
+};
+
+static BOOL CALLBACK enum_source_files_W_to_A(PSOURCEFILEW source_file, PVOID context)
+{
+    struct enum_sources_files_context *ctx = context;
+    SOURCEFILE source_fileA;
+    DWORD len;
+
+    len = WideCharToMultiByte(CP_ACP, 0, source_file->FileName, -1, NULL, 0, NULL, NULL);
+    if (len > ctx->conversion_buffer_len)
+    {
+        char *ptr = ctx->conversion_buffer ? HeapReAlloc(GetProcessHeap(), 0, ctx->conversion_buffer, len) :
+                                             HeapAlloc(GetProcessHeap(), 0, len);
+
+        if (!ptr)
+        {
+            ctx->callback_error = ERROR_OUTOFMEMORY;
+            return FALSE;
+        }
+
+        ctx->conversion_buffer = ptr;
+        ctx->conversion_buffer_len = len;
+    }
+
+    WideCharToMultiByte(CP_ACP, 0, source_file->FileName, -1, ctx->conversion_buffer, len, NULL, NULL);
+
+    source_fileA.ModBase = source_file->ModBase;
+    source_fileA.FileName = ctx->conversion_buffer;
+    return ctx->callbackA(&source_fileA, ctx->caller_context);
+}
+
+/******************************************************************
+ *		SymEnumSourceFiles (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG64 ModBase, PCSTR Mask,
+                               PSYM_ENUMSOURCEFILES_CALLBACK cbSrcFiles,
+                               PVOID UserContext)
+{
+    WCHAR *maskW = NULL;
+    PSYM_ENUMSOURCEFILES_CALLBACKW callbackW;
+    PVOID context;
+    struct enum_sources_files_context callback_context = {cbSrcFiles, UserContext};
+    BOOL ret;
+
+    if (Mask)
+    {
+        DWORD len = MultiByteToWideChar(CP_ACP, 0, Mask, -1, NULL, 0);
+
+        maskW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!maskW)
+        {
+            SetLastError(ERROR_OUTOFMEMORY);
+            return FALSE;
+        }
+
+        MultiByteToWideChar(CP_ACP, 0, Mask, -1, maskW, len);
+    }
+
+    if (cbSrcFiles)
+    {
+        callbackW = enum_source_files_W_to_A;
+        context = &callback_context;
+    }
+    else
+    {
+        callbackW = NULL;
+        context = UserContext;
+    }
+
+    ret = SymEnumSourceFilesW(hProcess, ModBase, maskW, callbackW, context);
+
+    if (callback_context.callback_error)
+    {
+        SetLastError(callback_context.callback_error);
+        ret = FALSE;
+    }
+
+    HeapFree(GetProcessHeap(), 0, callback_context.conversion_buffer);
+    HeapFree(GetProcessHeap(), 0, maskW);
+
+    return ret;
 }
 
 /******************************************************************

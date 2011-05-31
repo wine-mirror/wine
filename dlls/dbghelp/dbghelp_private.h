@@ -538,6 +538,9 @@ extern struct module*
                     module_find_by_addr(const struct process* pcs, unsigned long addr,
                                         enum module_type type) DECLSPEC_HIDDEN;
 extern struct module*
+                    module_find_by_nameW(const struct process* pcs,
+                                         const WCHAR* name) DECLSPEC_HIDDEN;
+extern struct module*
                     module_find_by_nameA(const struct process* pcs,
                                          const char* name) DECLSPEC_HIDDEN;
 extern struct module*

@@ -234,10 +234,10 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
 }
 
 /***********************************************************************
- *	module_find_by_name
+ *	module_find_by_nameW
  *
  */
-static struct module* module_find_by_name(const struct process* pcs, const WCHAR* name)
+struct module* module_find_by_nameW(const struct process* pcs, const WCHAR* name)
 {
     struct module*      module;
 
@@ -254,7 +254,7 @@ struct module* module_find_by_nameA(const struct process* pcs, const char* name)
     WCHAR wname[MAX_PATH];
 
     MultiByteToWideChar(CP_ACP, 0, name, -1, wname, sizeof(wname) / sizeof(WCHAR));
-    return module_find_by_name(pcs, wname);
+    return module_find_by_nameW(pcs, wname);
 }
 
 /***********************************************************************

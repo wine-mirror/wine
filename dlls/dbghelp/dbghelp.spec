@@ -45,7 +45,7 @@
 @ stub SymEnumProcesses
 @ stub SymEnumSourceFileTokens
 @ stdcall SymEnumSourceFiles(ptr int64 str ptr ptr)
-@ stub SymEnumSourceFilesW
+@ stdcall SymEnumSourceFilesW(ptr int64 wstr ptr ptr)
 @ stub SymEnumSourceLines
 @ stub SymEnumSourceLinesW
 @ stub SymEnumSym
