@@ -48,14 +48,16 @@ WINE_DEFAULT_DEBUG_CHANNEL (shell);
 */
 
 typedef struct {
-    const IDropTargetHelperVtbl *lpVtbl;
+    IDropTargetHelper IDropTargetHelper_iface;
     LONG ref;
 } IDropTargetHelperImpl;
 
 static const IDropTargetHelperVtbl vt_IDropTargetHelper;
 
-#define _IUnknown_(This)          ((IUnknown*)&(This)->lpVtbl)
-#define _IDropTargetHelper_(This) (&(This)->lpVtbl)
+static inline IDropTargetHelperImpl *impl_from_IDropTargetHelper(IDropTargetHelper *iface)
+{
+    return CONTAINING_RECORD(iface, IDropTargetHelperImpl, IDropTargetHelper_iface);
+}
 
 /**************************************************************************
 *	IDropTargetHelper_Constructor
@@ -75,10 +77,10 @@ HRESULT WINAPI IDropTargetHelper_Constructor (IUnknown * pUnkOuter, REFIID riid,
     if (!dth) return E_OUTOFMEMORY;
 
     dth->ref = 0;
-    dth->lpVtbl = &vt_IDropTargetHelper;
+    dth->IDropTargetHelper_iface.lpVtbl = &vt_IDropTargetHelper;
 
-    if (FAILED (IUnknown_QueryInterface (_IUnknown_ (dth), riid, ppv))) {
-	IUnknown_Release (_IUnknown_ (dth));
+    if (FAILED (IDropTargetHelper_QueryInterface (&dth->IDropTargetHelper_iface, riid, ppv))) {
+        IDropTargetHelper_Release (&dth->IDropTargetHelper_iface);
 	return E_NOINTERFACE;
     }
 
@@ -91,7 +93,7 @@ HRESULT WINAPI IDropTargetHelper_Constructor (IUnknown * pUnkOuter, REFIID riid,
  */
 static HRESULT WINAPI IDropTargetHelper_fnQueryInterface (IDropTargetHelper * iface, REFIID riid, LPVOID * ppvObj)
 {
-    IDropTargetHelperImpl *This = (IDropTargetHelperImpl *)iface;
+    IDropTargetHelperImpl *This = impl_from_IDropTargetHelper(iface);
 
     TRACE ("(%p)->(%s,%p)\n", This, shdebugstr_guid (riid), ppvObj);
 
@@ -112,7 +114,7 @@ static HRESULT WINAPI IDropTargetHelper_fnQueryInterface (IDropTargetHelper * if
 
 static ULONG WINAPI IDropTargetHelper_fnAddRef (IDropTargetHelper * iface)
 {
-    IDropTargetHelperImpl *This = (IDropTargetHelperImpl *)iface;
+    IDropTargetHelperImpl *This = impl_from_IDropTargetHelper(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
 
     TRACE ("(%p)->(count=%u)\n", This, refCount - 1);
@@ -122,7 +124,7 @@ static ULONG WINAPI IDropTargetHelper_fnAddRef (IDropTargetHelper * iface)
 
 static ULONG WINAPI IDropTargetHelper_fnRelease (IDropTargetHelper * iface)
 {
-    IDropTargetHelperImpl *This = (IDropTargetHelperImpl *)iface;
+    IDropTargetHelperImpl *This = impl_from_IDropTargetHelper(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
 
     TRACE ("(%p)->(count=%u)\n", This, refCount + 1);
@@ -142,35 +144,35 @@ static HRESULT WINAPI IDropTargetHelper_fnDragEnter (
 	POINT* ppt,
 	DWORD dwEffect)
 {
-    IDropTargetHelperImpl *This = (IDropTargetHelperImpl *)iface;
+    IDropTargetHelperImpl *This = impl_from_IDropTargetHelper(iface);
     FIXME ("(%p)->(%p %p %p 0x%08x)\n", This,hwndTarget, pDataObject, ppt, dwEffect);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDropTargetHelper_fnDragLeave (IDropTargetHelper * iface)
 {
-    IDropTargetHelperImpl *This = (IDropTargetHelperImpl *)iface;
+    IDropTargetHelperImpl *This = impl_from_IDropTargetHelper(iface);
     FIXME ("(%p)->()\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDropTargetHelper_fnDragOver (IDropTargetHelper * iface, POINT* ppt, DWORD dwEffect)
 {
-    IDropTargetHelperImpl *This = (IDropTargetHelperImpl *)iface;
+    IDropTargetHelperImpl *This = impl_from_IDropTargetHelper(iface);
     FIXME ("(%p)->(%p 0x%08x)\n", This, ppt, dwEffect);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDropTargetHelper_fnDrop (IDropTargetHelper * iface, IDataObject* pDataObject, POINT* ppt, DWORD dwEffect)
 {
-    IDropTargetHelperImpl *This = (IDropTargetHelperImpl *)iface;
+    IDropTargetHelperImpl *This = impl_from_IDropTargetHelper(iface);
     FIXME ("(%p)->(%p %p 0x%08x)\n", This, pDataObject, ppt, dwEffect);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDropTargetHelper_fnShow (IDropTargetHelper * iface, BOOL fShow)
 {
-    IDropTargetHelperImpl *This = (IDropTargetHelperImpl *)iface;
+    IDropTargetHelperImpl *This = impl_from_IDropTargetHelper(iface);
     FIXME ("(%p)->(%u)\n", This, fShow);
     return E_NOTIMPL;
 }
