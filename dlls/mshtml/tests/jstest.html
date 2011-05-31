@@ -43,6 +43,25 @@ function test_createDocumentFragment() {
     ok(cloned.nodeName === "#document-fragment", "cloned.nodeName = " + cloned.nodeName);
 }
 
+function test_document_name_as_index() {
+    document.body.innerHTML = '<form name="formname"></form>';
+    var e = document.getElementById("formname");
+    ok(!!e, "e is null");
+
+    ok(document.formname === e, "document.formname != getElementById('formname')");
+    ok("formname" in document, "formname' is not in document");
+
+    document.body.removeChild(e);
+
+    ok(document.formname === undefined, "document.formname is not undefined");
+    ok(!("formname" in document), "formname' is in document");
+
+    document.body.innerHTML = '<form id="formid"></form>';
+    var e = document.getElementById("formid");
+    ok(!!e, "e is null");
+    ok(!("formid" in document), "formid is in document");
+}
+
 var globalVar = false;
 
 function runTest() {
@@ -55,6 +74,7 @@ function runTest() {
     test_removeAttribute(document.body);
     test_select_index();
     test_createDocumentFragment();
+    test_document_name_as_index();
 
     var r = window.execScript("globalVar = true;");
     ok(r === undefined, "execScript returned " + r);

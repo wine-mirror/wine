@@ -623,6 +623,10 @@ struct HTMLDocumentNode {
     nsDocumentEventListener *nsevent_listener;
     BOOL *event_vector;
 
+    WCHAR **elem_vars;
+    unsigned elem_vars_size;
+    unsigned elem_vars_cnt;
+
     BOOL skip_mutation_notif;
 
     struct list bindings;
