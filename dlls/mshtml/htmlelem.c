@@ -819,8 +819,27 @@ static HRESULT WINAPI HTMLElement_get_lang(IHTMLElement *iface, BSTR *p)
 static HRESULT WINAPI HTMLElement_get_offsetLeft(IHTMLElement *iface, LONG *p)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMNSHTMLElement *nselem;
+    PRInt32 off_left = 0;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMNSHTMLElement, (void**)&nselem);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMNSHTMLElement: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMNSHTMLElement_GetOffsetLeft(nselem, &off_left);
+    nsIDOMNSHTMLElement_Release(nselem);
+    if(NS_FAILED(nsres)) {
+        ERR("GetOffsetLeft failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = off_left;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_get_offsetTop(IHTMLElement *iface, LONG *p)

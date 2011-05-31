@@ -947,6 +947,9 @@ static void _test_elem_offset(unsigned line, IUnknown *unk)
     hres = IHTMLElement_get_offsetWidth(elem, &l);
     ok_(__FILE__,line) (hres == S_OK, "get_offsetWidth failed: %08x\n", hres);
 
+    hres = IHTMLElement_get_offsetLeft(elem, &l);
+    ok_(__FILE__,line) (hres == S_OK, "get_offsetLeft failed: %08x\n", hres);
+
     IHTMLElement_Release(elem);
 }
 
