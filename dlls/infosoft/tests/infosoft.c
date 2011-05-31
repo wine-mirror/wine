@@ -19,6 +19,7 @@
  */
 
 #define COBJMACROS
+#define CONST_VTABLE
 
 #include <stdio.h>
 #include <ole2.h>
@@ -53,26 +54,25 @@ static struct expected testres[] = {
     { 23, 3, {'b','o','x',0}},
 };
 
-static HRESULT WINAPI ws_QueryInterface(IWordSink *ws, REFIID riid, void **ppvObject)
+static HRESULT WINAPI ws_QueryInterface(IWordSink *iface, REFIID riid, void **ppvObject)
 {
     ok(0, "not expected\n");
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI ws_AddRef(IWordSink *ws)
+static ULONG WINAPI ws_AddRef(IWordSink *iface)
 {
     ok(0, "not expected\n");
     return 2;
 }
 
-static ULONG WINAPI ws_Release(IWordSink *ws)
+static ULONG WINAPI ws_Release(IWordSink *iface)
 {
     ok(0, "not expected\n");
     return 1;
 }
 
-static HRESULT WINAPI ws_PutWord(IWordSink *ws,
-                                 ULONG cwc, const WCHAR * pwcInBuf,
+static HRESULT WINAPI ws_PutWord(IWordSink *iface, ULONG cwc, const WCHAR *pwcInBuf,
                                  ULONG cwcSrcLen, ULONG cwcSrcPos)
 {
     ok(testres[wordnum].len == cwcSrcLen, "wrong length\n");
@@ -82,27 +82,26 @@ static HRESULT WINAPI ws_PutWord(IWordSink *ws,
     return S_OK;
 }
 
-static HRESULT WINAPI ws_PutAltWord(IWordSink *ws,
-                                    ULONG cwc, const WCHAR * pwcInBuf,
+static HRESULT WINAPI ws_PutAltWord(IWordSink *iface, ULONG cwc, const WCHAR *pwcInBuf,
                                     ULONG cwcSrcLen, ULONG cwcSrcPos)
 {
     ok(0, "not expected\n");
     return S_OK;
 }
 
-static HRESULT WINAPI ws_StartAltPhrase(IWordSink *ws)
+static HRESULT WINAPI ws_StartAltPhrase(IWordSink *iface)
 {
     ok(0, "not expected\n");
     return S_OK;
 }
 
-static HRESULT WINAPI ws_EndAltPhrase(IWordSink *ws)
+static HRESULT WINAPI ws_EndAltPhrase(IWordSink *iface)
 {
     ok(0, "not expected\n");
     return S_OK;
 }
 
-static HRESULT WINAPI ws_PutBreak(IWordSink *ws, WORDREP_BREAK_TYPE breakType)
+static HRESULT WINAPI ws_PutBreak(IWordSink *iface, WORDREP_BREAK_TYPE breakType)
 {
     ok(0, "not expected\n");
     return S_OK;
@@ -122,10 +121,10 @@ static const IWordSinkVtbl wsvt =
 
 typedef struct _wordsink_impl
 {
-    const IWordSinkVtbl *vtbl;
+    IWordSink IWordSink_iface;
 } wordsink_impl;
 
-static wordsink_impl wordsink = { &wsvt };
+static wordsink_impl wordsink = { { &wsvt } };
 
 static HRESULT WINAPI fillbuf_none(TEXT_SOURCE *ts)
 {
@@ -180,7 +179,7 @@ START_TEST(infosoft)
     ts.awcBuffer = teststring;
     ts.iEnd = lstrlenW(ts.awcBuffer);
     ts.iCur = 0;
-    r = IWordBreaker_BreakText( wb, &ts, (IWordSink*) &wordsink, NULL);
+    r = IWordBreaker_BreakText(wb, &ts, &wordsink.IWordSink_iface, NULL);
     ok( r == S_OK, "failed\n");
 
     ok(wordnum == 4, "words not processed\n");
@@ -194,7 +193,7 @@ START_TEST(infosoft)
     r = fillbuf_many(&ts);
     ok( r == S_OK, "failed\n");
 
-    r = IWordBreaker_BreakText( wb, &ts, (IWordSink*) &wordsink, NULL);
+    r = IWordBreaker_BreakText(wb, &ts, &wordsink.IWordSink_iface, NULL);
     ok( r == S_OK, "failed\n");
 
     ok(wordnum == 4, "words not processed\n");
