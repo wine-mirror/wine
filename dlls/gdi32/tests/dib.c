@@ -209,6 +209,33 @@ static const char *sha1_graphics_8[] =
     NULL
 };
 
+static const char *sha1_graphics_4[] =
+{
+    "fa867e2976a549ecd3b1fa67df54963232fcef8c",
+    "256d742b4da96b373b4fa5663d0ad3b5faab5c8e",
+    "d96d8f4232b930bccd53b903b5efaf8c0bdb16f4",
+    "9401799e6116c35e5f0e5bdca07ea25316757a72",
+    "482ae2b0ef1d64752b5ef11cc7f35a33eb55d07c",
+    "dcfb3e01100b41c0f75a1c5f84b6de6b90138281",
+    "2505598845fa026ea7187582461efbf06cb6904f",
+    "3981a19363beca8f28d32a5928ac296fd22a5296",
+    "01404024ebb2c266d17d734059524d874491650f",
+    "c87bbff3f83b8ec11bb03cfa9bc9ee5166c4c7ef",
+    "f35c5d62853be78c5d39fb2f45200dc262aa8e18",
+    "46e94a55f5f58a6b915078d8ffdc725f53aab516",
+    "665bbbc749a5ffeedc0d62aef0661a5ce845b017",
+    "1f26a01730f67d40ea711a50d9d801bac15a642e",
+    "3b53d24178cfacba53103a44dfd5d072b15a6781",
+    "fa0d5f2d9419d8310fe4af7a290d13c5026c77de",
+    "5070ecae5085209508f7450d5f21c69737a178e9",
+    "0f44e12ecd1ea7e39433890443626d4fc35204a4",
+    "eb38683e812fd13dca971ba8f4cfd2b6820d3524",
+    "39c16648cf6c261be71a33cec41867f28e119b94",
+    "26ad5116562e7b58c76a26eaf521e2e40899e944",
+    "1bcc54eaf8e3c2b7c59ecccb23c240181d7ba8b8",
+    NULL
+};
+
 static inline DWORD get_stride(BITMAPINFO *bmi)
 {
     return ((bmi->bmiHeader.biBitCount * bmi->bmiHeader.biWidth + 31) >> 3) & ~3;
@@ -897,6 +924,21 @@ todo_wine
     orig_bm = SelectObject(mem_dc, dib);
 
     sha1 = sha1_graphics_8;
+    draw_graphics(mem_dc, bmi, bits, &sha1);
+
+    SelectObject(mem_dc, orig_bm);
+    DeleteObject(dib);
+
+    /* 4 */
+    trace("4\n");
+    bmi->bmiHeader.biBitCount = 4;
+
+    dib = CreateDIBSection(0, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(dib != NULL, "ret NULL\n");
+
+    orig_bm = SelectObject(mem_dc, dib);
+
+    sha1 = sha1_graphics_4;
     draw_graphics(mem_dc, bmi, bits, &sha1);
 
     SelectObject(mem_dc, orig_bm);
