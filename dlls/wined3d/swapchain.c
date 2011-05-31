@@ -1072,7 +1072,10 @@ err:
         for (i = 0; i < swapchain->presentParms.BackBufferCount; ++i)
         {
             if (swapchain->back_buffers[i])
+            {
+                surface_set_container(swapchain->back_buffers[i], WINED3D_CONTAINER_NONE, NULL);
                 wined3d_surface_decref(swapchain->back_buffers[i]);
+            }
         }
         HeapFree(GetProcessHeap(), 0, swapchain->back_buffers);
     }
@@ -1089,7 +1092,10 @@ err:
     }
 
     if (swapchain->front_buffer)
+    {
+        surface_set_container(swapchain->front_buffer, WINED3D_CONTAINER_NONE, NULL);
         wined3d_surface_decref(swapchain->front_buffer);
+    }
 
     return hr;
 }
