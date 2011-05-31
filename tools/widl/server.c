@@ -53,15 +53,13 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 {
     const statement_t *stmt;
     const var_t *var;
-    const var_t* explicit_handle_var;
 
     STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
     {
+        unsigned char explicit_fc, implicit_fc;
         var_t *func = stmt->u.var;
         int has_full_pointer = is_full_pointer_function(func);
-
-        /* check for a defined binding handle */
-        explicit_handle_var = get_explicit_handle_var(func);
+        const var_t *handle_var = get_func_handle_var( iface, func, &explicit_fc, &implicit_fc );
 
         print_server("struct __frame_%s_%s\n{\n", iface->name, get_name(func));
         indent++;
@@ -109,9 +107,9 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 
         write_parameters_init(server, indent, func, "__frame->");
 
-        if (explicit_handle_var)
+        if (explicit_fc == RPC_FC_BIND_PRIMITIVE)
         {
-            print_server("__frame->%s = _pRpcMessage->Handle;\n", explicit_handle_var->name);
+            print_server("__frame->%s = _pRpcMessage->Handle;\n", handle_var->name);
             fprintf(server, "\n");
         }
 

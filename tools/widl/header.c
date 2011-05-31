@@ -615,23 +615,6 @@ static void write_library(FILE *header, const typelib_t *typelib)
 }
 
 
-const var_t* get_explicit_handle_var(const var_t *func)
-{
-    const var_t* var;
-
-    if (!type_get_function_args(func->type))
-        return NULL;
-
-    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
-    {
-        const type_t *type = var->type;
-        if (type_get_type(type) == TYPE_BASIC && type_basic_get_type(type) == TYPE_BASIC_HANDLE)
-            return var;
-    }
-
-    return NULL;
-}
-
 const type_t* get_explicit_generic_handle_type(const var_t* var)
 {
     const type_t *t;
@@ -644,31 +627,44 @@ const type_t* get_explicit_generic_handle_type(const var_t* var)
     return NULL;
 }
 
-const var_t* get_explicit_generic_handle_var(const var_t *func)
+const var_t *get_func_handle_var( const type_t *iface, const var_t *func,
+                                  unsigned char *explicit_fc, unsigned char *implicit_fc )
 {
-    const var_t* var;
+    const var_t *var;
+    const var_list_t *args = type_get_function_args( func->type );
 
-    if (!type_get_function_args(func->type))
-        return NULL;
-
-    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
-        if (get_explicit_generic_handle_type(var))
+    *explicit_fc = *implicit_fc = 0;
+    if (args) LIST_FOR_EACH_ENTRY( var, args, const var_t, entry )
+    {
+        if (!is_attr( var->attrs, ATTR_IN ) && is_attr( var->attrs, ATTR_OUT )) continue;
+        if (type_get_type( var->type ) == TYPE_BASIC && type_basic_get_type( var->type ) == TYPE_BASIC_HANDLE)
+        {
+            *explicit_fc = RPC_FC_BIND_PRIMITIVE;
             return var;
-
-    return NULL;
-}
-
-const var_t* get_context_handle_var(const var_t *func)
-{
-    const var_t* var;
-
-    if (!type_get_function_args(func->type))
-        return NULL;
-
-    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
-        if (is_attr(var->attrs, ATTR_IN) && is_context_handle(var->type))
+        }
+        if (get_explicit_generic_handle_type( var ))
+        {
+            *explicit_fc = RPC_FC_BIND_GENERIC;
             return var;
+        }
+        if (is_context_handle( var->type ))
+        {
+            *explicit_fc = RPC_FC_BIND_CONTEXT;
+            return var;
+        }
+    }
 
+    if ((var = get_attrp( iface->attrs, ATTR_IMPLICIT_HANDLE )))
+    {
+        if (type_get_type( var->type ) == TYPE_BASIC &&
+            type_basic_get_type( var->type ) == TYPE_BASIC_HANDLE)
+            *implicit_fc = RPC_FC_BIND_PRIMITIVE;
+        else
+            *implicit_fc = RPC_FC_BIND_GENERIC;
+        return var;
+    }
+
+    *implicit_fc = RPC_FC_AUTO_HANDLE;
     return NULL;
 }
 
