@@ -4234,6 +4234,9 @@ static HRESULT WINAPI d3d7_EnumDevices(IDirect3D7 *iface, LPD3DENUMDEVICESCALLBA
 
     TRACE("iface %p, callback %p, context %p.\n", iface, callback, context);
 
+    if (!callback)
+        return DDERR_INVALIDPARAMS;
+
     EnterCriticalSection(&ddraw_cs);
 
     hr = IDirect3DImpl_GetCaps(This->wineD3D, &device_desc1, &device_desc7);
@@ -4290,6 +4293,9 @@ static HRESULT WINAPI d3d3_EnumDevices(IDirect3D3 *iface, LPD3DENUMDEVICESCALLBA
     strcpy(device_name,"Direct3D HEL");
 
     TRACE("iface %p, callback %p, context %p.\n", iface, callback, context);
+
+    if (!callback)
+        return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
 

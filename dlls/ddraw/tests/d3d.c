@@ -865,7 +865,11 @@ static HRESULT WINAPI enumDevicesCallbackTest7(LPSTR DeviceDescription, LPSTR De
     IDirect3D7_EnumDevices. */
 static void D3D7EnumTest(void)
 {
+    HRESULT hr;
     D3D7ETest d3d7et;
+
+    hr = IDirect3D7_EnumDevices(lpD3D, NULL, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "IDirect3D7_EnumDevices returned 0x%08x\n", hr);
 
     memset(&d3d7et, 0, sizeof(d3d7et));
     IDirect3D7_EnumDevices(lpD3D, enumDevicesCallbackTest7, &d3d7et);
@@ -892,6 +896,10 @@ static void CapsTest(void)
     ok(hr == DD_OK, "Cannot create a DirectDraw 1 interface, hr = %08x\n", hr);
     hr = IDirectDraw_QueryInterface(dd1, &IID_IDirect3D3, (void **) &d3d3);
     ok(hr == D3D_OK, "IDirectDraw_QueryInterface returned %08x\n", hr);
+
+    hr = IDirect3D3_EnumDevices(d3d3, NULL, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "IDirect3D3_EnumDevices returned 0x%08x\n", hr);
+
     ver = 3;
     IDirect3D3_EnumDevices(d3d3, enumDevicesCallback, &ver);
 
@@ -902,6 +910,10 @@ static void CapsTest(void)
     ok(hr == DD_OK, "Cannot create a DirectDraw 1 interface, hr = %08x\n", hr);
     hr = IDirectDraw_QueryInterface(dd1, &IID_IDirect3D2, (void **) &d3d2);
     ok(hr == D3D_OK, "IDirectDraw_QueryInterface returned %08x\n", hr);
+
+    hr = IDirect3D2_EnumDevices(d3d2, NULL, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "IDirect3D2_EnumDevices returned 0x%08x\n", hr);
+
     ver = 2;
     IDirect3D2_EnumDevices(d3d2, enumDevicesCallback, &ver);
 
