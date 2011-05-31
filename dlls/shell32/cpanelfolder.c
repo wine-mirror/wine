@@ -60,10 +60,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 typedef struct {
     IShellFolder2      IShellFolder2_iface;
-    LONG                   ref;
-    const IPersistFolder2Vtbl    *lpVtblPersistFolder2;
-    const IShellExecuteHookWVtbl *lpVtblShellExecuteHookW;
-    const IShellExecuteHookAVtbl *lpVtblShellExecuteHookA;
+    IPersistFolder2    IPersistFolder2_iface;
+    IShellExecuteHookW IShellExecuteHookW_iface;
+    IShellExecuteHookA IShellExecuteHookA_iface;
+    LONG               ref;
 
     IUnknown *pUnkOuter;	/* used for aggregation */
 
@@ -82,30 +82,21 @@ static inline ICPanelImpl *impl_from_IShellFolder2(IShellFolder2 *iface)
     return CONTAINING_RECORD(iface, ICPanelImpl, IShellFolder2_iface);
 }
 
-static inline ICPanelImpl *impl_from_IPersistFolder2( IPersistFolder2 *iface )
+static inline ICPanelImpl *impl_from_IPersistFolder2(IPersistFolder2 *iface)
 {
-    return (ICPanelImpl *)((char*)iface - FIELD_OFFSET(ICPanelImpl, lpVtblPersistFolder2));
+    return CONTAINING_RECORD(iface, ICPanelImpl, IPersistFolder2_iface);
 }
 
-static inline ICPanelImpl *impl_from_IShellExecuteHookW( IShellExecuteHookW *iface )
+static inline ICPanelImpl *impl_from_IShellExecuteHookW(IShellExecuteHookW *iface)
 {
-    return (ICPanelImpl *)((char*)iface - FIELD_OFFSET(ICPanelImpl, lpVtblShellExecuteHookW));
+    return CONTAINING_RECORD(iface, ICPanelImpl, IShellExecuteHookW_iface);
 }
 
-static inline ICPanelImpl *impl_from_IShellExecuteHookA( IShellExecuteHookA *iface )
+static inline ICPanelImpl *impl_from_IShellExecuteHookA(IShellExecuteHookA *iface)
 {
-    return (ICPanelImpl *)((char*)iface - FIELD_OFFSET(ICPanelImpl, lpVtblShellExecuteHookA));
+    return CONTAINING_RECORD(iface, ICPanelImpl, IShellExecuteHookA_iface);
 }
 
-
-/*
-  converts This to an interface pointer
-*/
-#define _IPersist_(This)           (&(This)->lpVtblPersistFolder2)
-#define _IPersistFolder_(This)     (&(This)->lpVtblPersistFolder2)
-#define _IPersistFolder2_(This)    (&(This)->lpVtblPersistFolder2)
-#define _IShellExecuteHookW_(This) (&(This)->lpVtblShellExecuteHookW)
-#define _IShellExecuteHookA_(This) (&(This)->lpVtblShellExecuteHookA)
 
 /***********************************************************************
 *   IShellFolder [ControlPanel] implementation
@@ -138,9 +129,9 @@ HRESULT WINAPI IControlPanel_Constructor(IUnknown* pUnkOuter, REFIID riid, LPVOI
 
     sf->ref = 0;
     sf->IShellFolder2_iface.lpVtbl = &vt_ShellFolder2;
-    sf->lpVtblPersistFolder2 = &vt_PersistFolder2;
-    sf->lpVtblShellExecuteHookW = &vt_ShellExecuteHookW;
-    sf->lpVtblShellExecuteHookA = &vt_ShellExecuteHookA;
+    sf->IPersistFolder2_iface.lpVtbl = &vt_PersistFolder2;
+    sf->IShellExecuteHookW_iface.lpVtbl = &vt_ShellExecuteHookW;
+    sf->IShellExecuteHookA_iface.lpVtbl = &vt_ShellExecuteHookA;
     sf->pidlRoot = _ILCreateControlPanel();	/* my qualified pidl */
     sf->pUnkOuter = pUnkOuter ? pUnkOuter : (IUnknown *)&sf->IShellFolder2_iface;
 
@@ -172,11 +163,11 @@ static HRESULT WINAPI ISF_ControlPanel_fnQueryInterface(IShellFolder2 *iface, RE
 	*ppvObject = This;
     else if (IsEqualIID(riid, &IID_IPersist) ||
 	       IsEqualIID(riid, &IID_IPersistFolder) || IsEqualIID(riid, &IID_IPersistFolder2))
-	*ppvObject = _IPersistFolder2_(This);
+        *ppvObject = &This->IPersistFolder2_iface;
     else if (IsEqualIID(riid, &IID_IShellExecuteHookW))
-	*ppvObject = _IShellExecuteHookW_(This);
+        *ppvObject = &This->IShellExecuteHookW_iface;
     else if (IsEqualIID(riid, &IID_IShellExecuteHookA))
-	*ppvObject = _IShellExecuteHookA_(This);
+        *ppvObject = &This->IShellExecuteHookA_iface;
 
     if (*ppvObject) {
 	IUnknown_AddRef((IUnknown *)(*ppvObject));
@@ -973,10 +964,11 @@ static ULONG STDMETHODCALLTYPE IShellExecuteHookW_fnRelease(IShellExecuteHookW* 
     return IUnknown_Release(This->pUnkOuter);
 }
 
-static HRESULT WINAPI IShellExecuteHookW_fnExecute(IShellExecuteHookW* iface, LPSHELLEXECUTEINFOW psei)
+static HRESULT WINAPI IShellExecuteHookW_fnExecute(IShellExecuteHookW *iface,
+        LPSHELLEXECUTEINFOW psei)
 {
+    ICPanelImpl *This = impl_from_IShellExecuteHookW(iface);
     static const WCHAR wCplopen[] = {'c','p','l','o','p','e','n','\0'};
-    ICPanelImpl *This = (ICPanelImpl *)iface;
 
     SHELLEXECUTEINFOW sei_tmp;
     PIDLCPanelStruct* pcpanel;
@@ -1061,9 +1053,10 @@ static ULONG STDMETHODCALLTYPE IShellExecuteHookA_fnRelease(IShellExecuteHookA* 
     return IUnknown_Release(This->pUnkOuter);
 }
 
-static HRESULT WINAPI IShellExecuteHookA_fnExecute(IShellExecuteHookA* iface, LPSHELLEXECUTEINFOA psei)
+static HRESULT WINAPI IShellExecuteHookA_fnExecute(IShellExecuteHookA *iface,
+        LPSHELLEXECUTEINFOA psei)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellExecuteHookA(iface);
 
     SHELLEXECUTEINFOA sei_tmp;
     PIDLCPanelStruct* pcpanel;
