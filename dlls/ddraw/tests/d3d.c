@@ -867,11 +867,6 @@ static void D3D7EnumTest(void)
 {
     D3D7ETest d3d7et;
 
-    if (!lpD3D) {
-        skip("No Direct3D7 interface.\n");
-        return;
-    }
-
     memset(&d3d7et, 0, sizeof(d3d7et));
     IDirect3D7_EnumDevices(lpD3D, enumDevicesCallbackTest7, &d3d7et);
 
