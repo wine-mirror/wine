@@ -103,18 +103,18 @@ static HRESULT  WINAPI  IDirect3D9Impl_RegisterSoftwareDevice(IDirect3D9Ex *ifac
     return hr;
 }
 
-static UINT     WINAPI  IDirect3D9Impl_GetAdapterCount(IDirect3D9Ex *iface)
+static UINT WINAPI IDirect3D9Impl_GetAdapterCount(IDirect3D9Ex *iface)
 {
     IDirect3D9Impl *This = impl_from_IDirect3D9Ex(iface);
-    HRESULT hr;
+    UINT ret;
 
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = wined3d_get_adapter_count(This->WineD3D);
+    ret = wined3d_get_adapter_count(This->WineD3D);
     wined3d_mutex_unlock();
 
-    return hr;
+    return ret;
 }
 
 static HRESULT WINAPI IDirect3D9Impl_GetAdapterIdentifier(IDirect3D9Ex *iface, UINT Adapter,
@@ -153,7 +153,7 @@ static UINT WINAPI IDirect3D9Impl_GetAdapterModeCount(IDirect3D9Ex *iface, UINT 
         D3DFORMAT Format)
 {
     IDirect3D9Impl *This = impl_from_IDirect3D9Ex(iface);
-    HRESULT hr;
+    UINT ret;
 
     TRACE("iface %p, adapter %u, format %#x.\n", iface, Adapter, Format);
 
@@ -163,10 +163,10 @@ static UINT WINAPI IDirect3D9Impl_GetAdapterModeCount(IDirect3D9Ex *iface, UINT 
     }
 
     wined3d_mutex_lock();
-    hr = wined3d_get_adapter_mode_count(This->WineD3D, Adapter, wined3dformat_from_d3dformat(Format));
+    ret = wined3d_get_adapter_mode_count(This->WineD3D, Adapter, wined3dformat_from_d3dformat(Format));
     wined3d_mutex_unlock();
 
-    return hr;
+    return ret;
 }
 
 static HRESULT WINAPI IDirect3D9Impl_EnumAdapterModes(IDirect3D9Ex *iface, UINT Adapter,
@@ -468,7 +468,7 @@ static UINT WINAPI IDirect3D9ExImpl_GetAdapterModeCountEx(IDirect3D9Ex *iface,
 {
     FIXME("iface %p, adapter %u, filter %p stub!\n", iface, adapter, filter);
 
-    return E_NOTIMPL;
+    return 0;
 }
 
 static HRESULT WINAPI IDirect3D9ExImpl_EnumAdapterModesEx(IDirect3D9Ex *iface,
