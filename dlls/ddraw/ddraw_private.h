@@ -135,21 +135,6 @@ struct IDirectDrawImpl
 
 HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type) DECLSPEC_HIDDEN;
 
-/* Helper structures */
-typedef struct EnumDisplayModesCBS
-{
-    void *context;
-    LPDDENUMMODESCALLBACK2 callback;
-} EnumDisplayModesCBS;
-
-typedef struct EnumSurfacesCBS
-{
-    void *context;
-    LPDDENUMSURFACESCALLBACK7 callback;
-    LPDDSURFACEDESC2 pDDSD;
-    DWORD Flags;
-} EnumSurfacesCBS;
-
 /* Utility functions */
 void DDRAW_Convert_DDSCAPS_1_To_2(const DDSCAPS *pIn, DDSCAPS2 *pOut) DECLSPEC_HIDDEN;
 void DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(const DDDEVICEIDENTIFIER2 *pIn, DDDEVICEIDENTIFIER *pOut) DECLSPEC_HIDDEN;
@@ -340,21 +325,6 @@ static inline IDirect3DDeviceImpl *device_from_device3(IDirect3DDevice3 *iface)
 {
     return (IDirect3DDeviceImpl *)((char*)iface - FIELD_OFFSET(IDirect3DDeviceImpl, IDirect3DDevice3_vtbl));
 }
-
-/* Structures */
-struct EnumTextureFormatsCBS
-{
-    LPD3DENUMTEXTUREFORMATSCALLBACK cbv2;
-    LPD3DENUMPIXELFORMATSCALLBACK cbv7;
-    void *Context;
-};
-
-/* Structure for EnumZBufferFormats */
-struct EnumZBufferFormatsData
-{
-    LPD3DENUMPIXELFORMATSCALLBACK Callback;
-    void *Context;
-};
 
 /*****************************************************************************
  * IDirectDrawClipper implementation structure
