@@ -366,10 +366,8 @@ static ULONG WINAPI OmNavigator_Release(IOmNavigator *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        if(This->plugins) {
+        if(This->plugins)
             This->plugins->navigator = NULL;
-            IHTMLPluginsCollection_Release(&This->plugins->IHTMLPluginsCollection_iface);
-        }
         if(This->mime_types)
             This->mime_types->navigator = NULL;
         release_dispex(&This->dispex);
