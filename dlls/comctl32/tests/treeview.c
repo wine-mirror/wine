@@ -634,7 +634,7 @@ static void test_get_set_bkcolor(void)
 
     /* If the value is -1, the control is using the system color for the background color. */
     crColor = (COLORREF)SendMessage( hTree, TVM_GETBKCOLOR, 0, 0 );
-    ok(crColor == -1, "Default background color reported as 0x%.8x\n", crColor);
+    ok(crColor == ~0u, "Default background color reported as 0x%.8x\n", crColor);
 
     /* Test for black background */
     SendMessage( hTree, TVM_SETBKCOLOR, 0, RGB(0,0,0) );
@@ -873,7 +873,7 @@ static void test_get_set_textcolor(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     crColor = (COLORREF)SendMessage( hTree, TVM_GETTEXTCOLOR, 0, 0 );
-    ok(crColor == -1, "Default text color reported as 0x%.8x\n", crColor);
+    ok(crColor == ~0u, "Default text color reported as 0x%.8x\n", crColor);
 
     /* Test for black text */
     SendMessage( hTree, TVM_SETTEXTCOLOR, 0, RGB(0,0,0) );
@@ -1453,7 +1453,7 @@ static void test_WM_PAINT(void)
     hTree = create_treeview_control(0);
 
     clr = SendMessageA(hTree, TVM_SETBKCOLOR, 0, RGB(255, 0, 0));
-    ok(clr == -1, "got %d, expected -1\n", clr);
+    ok(clr == ~0u, "got %d, expected -1\n", clr);
 
     hdc = GetDC(hMainWnd);
 
