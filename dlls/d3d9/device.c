@@ -1130,7 +1130,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_CreateOffscreenPlainSurface(IDirect
         */
     hr = IDirect3DDevice9Impl_CreateSurface(This, Width, Height, Format, TRUE /* Lockable */,
             FALSE /* Discard */, 0 /* Level */, ppSurface, 0 /* Usage (undefined/none) */,
-            (WINED3DPOOL)Pool, D3DMULTISAMPLE_NONE, 0 /* MultisampleQuality */);
+            Pool, D3DMULTISAMPLE_NONE, 0 /* MultisampleQuality */);
 
     return hr;
 }
