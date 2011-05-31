@@ -294,8 +294,12 @@ static HRESULT WINAPI HTMLMimeTypesCollection_Invoke(IHTMLMimeTypesCollection *i
 static HRESULT WINAPI HTMLMimeTypesCollection_get_length(IHTMLMimeTypesCollection *iface, LONG *p)
 {
     HTMLMimeTypesCollection *This = impl_from_IHTMLMimeTypesCollection(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    /* This is just a stub for compatibility with other browser in IE */
+    *p = 0;
+    return S_OK;
 }
 
 static const IHTMLMimeTypesCollectionVtbl HTMLMimeTypesCollectionVtbl = {
