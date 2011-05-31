@@ -1078,14 +1078,19 @@ static void write_com_interface_end(FILE *header, type_t *iface)
 static void write_rpc_interface_start(FILE *header, const type_t *iface)
 {
   unsigned int ver = get_attrv(iface->attrs, ATTR_VERSION);
-  const char *var = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
+  const var_t *var = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
 
   fprintf(header, "/*****************************************************************************\n");
   fprintf(header, " * %s interface (v%d.%d)\n", iface->name, MAJORVERSION(ver), MINORVERSION(ver));
   fprintf(header, " */\n");
   fprintf(header,"#ifndef __%s_INTERFACE_DEFINED__\n", iface->name);
   fprintf(header,"#define __%s_INTERFACE_DEFINED__\n\n", iface->name);
-  if (var) fprintf(header, "extern handle_t %s;\n", var);
+  if (var)
+  {
+      fprintf(header, "extern ");
+      write_type_decl( header, var->type, var->name );
+      fprintf(header, ";\n");
+  }
   if (old_names)
   {
       fprintf(header, "extern RPC_IF_HANDLE %s%s_ClientIfHandle;\n", prefix_client, iface->name);

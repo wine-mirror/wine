@@ -75,7 +75,7 @@ static void check_pointers(const var_t *func)
 static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 {
     const statement_t *stmt;
-    const char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
+    const var_t *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
     int method_count = 0;
 
     if (!implicit_handle)
@@ -245,7 +245,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         }
         else if (implicit_handle)
         {
-            print_client("__frame->_Handle = %s;\n", implicit_handle);
+            print_client("__frame->_Handle = %s;\n", implicit_handle->name);
             fprintf(client, "\n");
         }
 
@@ -334,7 +334,7 @@ static void write_stubdescdecl(type_t *iface)
 
 static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
 {
-    const char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
+    const var_t *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
 
     print_client("static const MIDL_STUB_DESC %s_StubDesc =\n", iface->name);
     print_client("{\n");
@@ -345,7 +345,7 @@ static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
     print_client("{\n");
     indent++;
     if (implicit_handle)
-        print_client("&%s,\n", implicit_handle);
+        print_client("&%s,\n", implicit_handle->name);
     else
         print_client("&%s__MIDL_AutoBindHandle,\n", iface->name);
     indent--;
@@ -423,12 +423,12 @@ static void write_clientinterfacedecl(type_t *iface)
 
 static void write_implicithandledecl(type_t *iface)
 {
-    const char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
+    const var_t *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
 
     if (implicit_handle)
     {
-        fprintf(client, "handle_t %s;\n", implicit_handle);
-        fprintf(client, "\n");
+        write_type_decl( client, implicit_handle->type, implicit_handle->name );
+        fprintf(client, ";\n\n");
     }
 }
 

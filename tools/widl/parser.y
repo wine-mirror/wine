@@ -522,7 +522,7 @@ attribute:					{ $$ = NULL; }
 	| tIGNORE				{ $$ = make_attr(ATTR_IGNORE); }
 	| tIIDIS '(' expr ')'			{ $$ = make_attrp(ATTR_IIDIS, $3); }
 	| tIMMEDIATEBIND			{ $$ = make_attr(ATTR_IMMEDIATEBIND); }
-	| tIMPLICITHANDLE '(' tHANDLET aIDENTIFIER ')'	{ $$ = make_attrp(ATTR_IMPLICIT_HANDLE, $4); }
+	| tIMPLICITHANDLE '(' arg ')'		{ $$ = make_attrp(ATTR_IMPLICIT_HANDLE, $3); }
 	| tIN					{ $$ = make_attr(ATTR_IN); }
 	| tINPUTSYNC				{ $$ = make_attr(ATTR_INPUTSYNC); }
 	| tLENGTHIS '(' m_exprs ')'		{ $$ = make_attrp(ATTR_LENGTHIS, $3); }
@@ -2124,6 +2124,17 @@ static attr_list_t *check_iface_attrs(const char *name, attr_list_t *attrs)
     if (!allowed_attr[attr->type].on_interface)
       error_loc("inapplicable attribute %s for interface %s\n",
                 allowed_attr[attr->type].display_name, name);
+    if (attr->type == ATTR_IMPLICIT_HANDLE)
+    {
+        const var_t *var = attr->u.pval;
+        if (type_get_type( var->type) == TYPE_BASIC &&
+            type_basic_get_type( var->type ) == TYPE_BASIC_HANDLE)
+            continue;
+        if (is_aliaschain_attr( var->type, ATTR_HANDLE ))
+            continue;
+      error_loc("attribute %s requires a handle type in interface %s\n",
+                allowed_attr[attr->type].display_name, name);
+    }
   }
   return attrs;
 }
