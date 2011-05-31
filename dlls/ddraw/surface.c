@@ -84,7 +84,7 @@ static HRESULT WINAPI ddraw_surface7_QueryInterface(IDirectDrawSurface7 *iface, 
           || IsEqualGUID(riid, &IID_IDirectDrawSurface) )
     {
         IUnknown_AddRef(iface);
-        *obj = &This->IDirectDrawSurface3_vtbl;
+        *obj = &This->IDirectDrawSurface3_iface;
         TRACE("(%p) returning IDirectDrawSurface3 interface at %p\n", This, *obj);
         return S_OK;
     }
@@ -567,7 +567,7 @@ static HRESULT WINAPI ddraw_surface3_GetAttachedSurface(IDirectDrawSurface3 *ifa
             &caps2, &attachment7);
     if (FAILED(hr)) *attachment = NULL;
     else *attachment = attachment7 ?
-            (IDirectDrawSurface3 *)&((IDirectDrawSurfaceImpl *)attachment7)->IDirectDrawSurface3_vtbl : NULL;
+            &((IDirectDrawSurfaceImpl *)attachment7)->IDirectDrawSurface3_iface : NULL;
 
     return hr;
 }
@@ -1561,7 +1561,7 @@ static HRESULT CALLBACK EnumCallback(IDirectDrawSurface7 *surface, DDSURFACEDESC
 {
     const struct callback_info *info = context;
 
-    return info->callback((IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)surface)->IDirectDrawSurface3_vtbl,
+    return info->callback((IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)surface)->IDirectDrawSurface3_iface,
             (DDSURFACEDESC *)surface_desc, info->context);
 }
 
@@ -3447,7 +3447,7 @@ IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawSurface3
 {
     if (!iface) return NULL;
     assert(iface->lpVtbl == &ddraw_surface3_vtbl);
-    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface3_vtbl);
+    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface3_iface);
 }
 
 static void STDMETHODCALLTYPE ddraw_surface_wined3d_object_destroyed(void *parent)
@@ -3608,7 +3608,7 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     }
 
     surface->lpVtbl = &ddraw_surface7_vtbl;
-    surface->IDirectDrawSurface3_vtbl = &ddraw_surface3_vtbl;
+    surface->IDirectDrawSurface3_iface.lpVtbl = &ddraw_surface3_vtbl;
     surface->IDirectDrawGammaControl_vtbl = &ddraw_gamma_control_vtbl;
     surface->IDirect3DTexture2_vtbl = &d3d_texture2_vtbl;
     surface->IDirect3DTexture_vtbl = &d3d_texture1_vtbl;

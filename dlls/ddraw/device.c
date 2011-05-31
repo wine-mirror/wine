@@ -1967,7 +1967,7 @@ static HRESULT WINAPI IDirect3DDeviceImpl_2_GetRenderTarget(IDirect3DDevice2 *if
     hr = IDirect3DDevice7_GetRenderTarget((IDirect3DDevice7 *)This, (IDirectDrawSurface7 **)RenderTarget);
     if(hr != D3D_OK) return hr;
     *RenderTarget = *RenderTarget ?
-            (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)*RenderTarget)->IDirectDrawSurface3_vtbl : NULL;
+            (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)*RenderTarget)->IDirectDrawSurface3_iface : NULL;
     return D3D_OK;
 }
 

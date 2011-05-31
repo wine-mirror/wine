@@ -153,7 +153,7 @@ struct IDirectDrawSurfaceImpl
 {
     /* IUnknown fields */
     const IDirectDrawSurface7Vtbl *lpVtbl;
-    const IDirectDrawSurface3Vtbl *IDirectDrawSurface3_vtbl;
+    IDirectDrawSurface3 IDirectDrawSurface3_iface;
     const IDirectDrawGammaControlVtbl *IDirectDrawGammaControl_vtbl;
     const IDirect3DTexture2Vtbl *IDirect3DTexture2_vtbl;
     const IDirect3DTextureVtbl *IDirect3DTexture_vtbl;
@@ -222,7 +222,7 @@ static inline IDirectDrawSurfaceImpl *surface_from_texture2(IDirect3DTexture2 *i
 
 static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface3_vtbl);
+    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface3_iface);
 }
 
 IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface) DECLSPEC_HIDDEN;
