@@ -59,7 +59,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 */
 
 typedef struct {
-    const IShellFolder2Vtbl      *lpVtbl;
+    IShellFolder2      IShellFolder2_iface;
     LONG                   ref;
     const IPersistFolder2Vtbl    *lpVtblPersistFolder2;
     const IShellExecuteHookWVtbl *lpVtblShellExecuteHookW;
@@ -76,6 +76,11 @@ static const IShellFolder2Vtbl vt_ShellFolder2;
 static const IPersistFolder2Vtbl vt_PersistFolder2;
 static const IShellExecuteHookWVtbl vt_ShellExecuteHookW;
 static const IShellExecuteHookAVtbl vt_ShellExecuteHookA;
+
+static inline ICPanelImpl *impl_from_IShellFolder2(IShellFolder2 *iface)
+{
+    return CONTAINING_RECORD(iface, ICPanelImpl, IShellFolder2_iface);
+}
 
 static inline ICPanelImpl *impl_from_IPersistFolder2( IPersistFolder2 *iface )
 {
@@ -96,10 +101,6 @@ static inline ICPanelImpl *impl_from_IShellExecuteHookA( IShellExecuteHookA *ifa
 /*
   converts This to an interface pointer
 */
-#define _IUnknown_(This)           ((IUnknown*)&(This)->lpVtbl)
-#define _IShellFolder_(This)       ((IShellFolder*)&(This)->lpVtbl)
-#define _IShellFolder2_(This)      (&(This)->lpVtbl)
-
 #define _IPersist_(This)           (&(This)->lpVtblPersistFolder2)
 #define _IPersistFolder_(This)     (&(This)->lpVtblPersistFolder2)
 #define _IPersistFolder2_(This)    (&(This)->lpVtblPersistFolder2)
@@ -136,15 +137,15 @@ HRESULT WINAPI IControlPanel_Constructor(IUnknown* pUnkOuter, REFIID riid, LPVOI
 	return E_OUTOFMEMORY;
 
     sf->ref = 0;
-    sf->lpVtbl = &vt_ShellFolder2;
+    sf->IShellFolder2_iface.lpVtbl = &vt_ShellFolder2;
     sf->lpVtblPersistFolder2 = &vt_PersistFolder2;
     sf->lpVtblShellExecuteHookW = &vt_ShellExecuteHookW;
     sf->lpVtblShellExecuteHookA = &vt_ShellExecuteHookA;
     sf->pidlRoot = _ILCreateControlPanel();	/* my qualified pidl */
-    sf->pUnkOuter = pUnkOuter ? pUnkOuter : _IUnknown_ (sf);
+    sf->pUnkOuter = pUnkOuter ? pUnkOuter : (IUnknown *)&sf->IShellFolder2_iface;
 
-    if (FAILED(IUnknown_QueryInterface(_IUnknown_(sf), riid, ppv))) {
-	IUnknown_Release(_IUnknown_(sf));
+    if (FAILED(IShellFolder2_QueryInterface(&sf->IShellFolder2_iface, riid, ppv))) {
+        IShellFolder2_Release(&sf->IShellFolder2_iface);
 	return E_NOINTERFACE;
     }
 
@@ -157,9 +158,10 @@ HRESULT WINAPI IControlPanel_Constructor(IUnknown* pUnkOuter, REFIID riid, LPVOI
  *
  * NOTES supports not IPersist/IPersistFolder
  */
-static HRESULT WINAPI ISF_ControlPanel_fnQueryInterface(IShellFolder2 * iface, REFIID riid, LPVOID * ppvObject)
+static HRESULT WINAPI ISF_ControlPanel_fnQueryInterface(IShellFolder2 *iface, REFIID riid,
+        void **ppvObject)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
 
     TRACE("(%p)->(%s,%p)\n", This, shdebugstr_guid(riid), ppvObject);
 
@@ -185,9 +187,9 @@ static HRESULT WINAPI ISF_ControlPanel_fnQueryInterface(IShellFolder2 * iface, R
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI ISF_ControlPanel_fnAddRef(IShellFolder2 * iface)
+static ULONG WINAPI ISF_ControlPanel_fnAddRef(IShellFolder2 *iface)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
 
     TRACE("(%p)->(count=%u)\n", This, refCount - 1);
@@ -195,9 +197,9 @@ static ULONG WINAPI ISF_ControlPanel_fnAddRef(IShellFolder2 * iface)
     return refCount;
 }
 
-static ULONG WINAPI ISF_ControlPanel_fnRelease(IShellFolder2 * iface)
+static ULONG WINAPI ISF_ControlPanel_fnRelease(IShellFolder2 *iface)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->(count=%u)\n", This, refCount + 1);
@@ -213,14 +215,11 @@ static ULONG WINAPI ISF_ControlPanel_fnRelease(IShellFolder2 * iface)
 /**************************************************************************
 *	ISF_ControlPanel_fnParseDisplayName
 */
-static HRESULT WINAPI
-ISF_ControlPanel_fnParseDisplayName(IShellFolder2 * iface,
-				   HWND hwndOwner,
-				   LPBC pbc,
-				   LPOLESTR lpszDisplayName,
-				   DWORD * pchEaten, LPITEMIDLIST * ppidl, DWORD * pdwAttributes)
+static HRESULT WINAPI ISF_ControlPanel_fnParseDisplayName(IShellFolder2 *iface, HWND hwndOwner,
+        LPBC pbc, LPOLESTR lpszDisplayName, DWORD *pchEaten, LPITEMIDLIST *ppidl,
+        DWORD *pdwAttributes)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
 
     HRESULT hr = E_INVALIDARG;
 
@@ -452,10 +451,10 @@ static BOOL CreateCPanelEnumList(
 /**************************************************************************
 *		ISF_ControlPanel_fnEnumObjects
 */
-static HRESULT WINAPI
-ISF_ControlPanel_fnEnumObjects(IShellFolder2 * iface, HWND hwndOwner, DWORD dwFlags, LPENUMIDLIST * ppEnumIDList)
+static HRESULT WINAPI ISF_ControlPanel_fnEnumObjects(IShellFolder2 *iface, HWND hwndOwner,
+        DWORD dwFlags, LPENUMIDLIST *ppEnumIDList)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
 
     TRACE("(%p)->(HWND=%p flags=0x%08x pplist=%p)\n", This, hwndOwner, dwFlags, ppEnumIDList);
 
@@ -471,11 +470,10 @@ ISF_ControlPanel_fnEnumObjects(IShellFolder2 * iface, HWND hwndOwner, DWORD dwFl
 /**************************************************************************
 *		ISF_ControlPanel_fnBindToObject
 */
-static HRESULT WINAPI
-ISF_ControlPanel_fnBindToObject(IShellFolder2 * iface, LPCITEMIDLIST pidl,
-			       LPBC pbcReserved, REFIID riid, LPVOID * ppvOut)
+static HRESULT WINAPI ISF_ControlPanel_fnBindToObject(IShellFolder2 *iface, LPCITEMIDLIST pidl,
+        LPBC pbcReserved, REFIID riid, void **ppvOut)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
 
     TRACE("(%p)->(pidl=%p,%p,%s,%p)\n", This, pidl, pbcReserved, shdebugstr_guid(riid), ppvOut);
 
@@ -485,11 +483,10 @@ ISF_ControlPanel_fnBindToObject(IShellFolder2 * iface, LPCITEMIDLIST pidl,
 /**************************************************************************
 *	ISF_ControlPanel_fnBindToStorage
 */
-static HRESULT WINAPI
-ISF_ControlPanel_fnBindToStorage(IShellFolder2 * iface,
-				LPCITEMIDLIST pidl, LPBC pbcReserved, REFIID riid, LPVOID * ppvOut)
+static HRESULT WINAPI ISF_ControlPanel_fnBindToStorage(IShellFolder2 *iface, LPCITEMIDLIST pidl,
+        LPBC pbcReserved, REFIID riid, void **ppvOut)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
 
     FIXME("(%p)->(pidl=%p,%p,%s,%p) stub\n", This, pidl, pbcReserved, shdebugstr_guid(riid), ppvOut);
 
@@ -501,15 +498,15 @@ ISF_ControlPanel_fnBindToStorage(IShellFolder2 * iface,
 * 	ISF_ControlPanel_fnCompareIDs
 */
 
-static HRESULT WINAPI
-ISF_ControlPanel_fnCompareIDs(IShellFolder2 * iface, LPARAM lParam, LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
+static HRESULT WINAPI ISF_ControlPanel_fnCompareIDs(IShellFolder2 *iface, LPARAM lParam,
+        LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
 
     int nReturn;
 
     TRACE("(%p)->(0x%08lx,pidl1=%p,pidl2=%p)\n", This, lParam, pidl1, pidl2);
-    nReturn = SHELL32_CompareIDs(_IShellFolder_(This), lParam, pidl1, pidl2);
+    nReturn = SHELL32_CompareIDs((IShellFolder *)&This->IShellFolder2_iface, lParam, pidl1, pidl2);
     TRACE("-- %i\n", nReturn);
     return nReturn;
 }
@@ -517,10 +514,10 @@ ISF_ControlPanel_fnCompareIDs(IShellFolder2 * iface, LPARAM lParam, LPCITEMIDLIS
 /**************************************************************************
 *	ISF_ControlPanel_fnCreateViewObject
 */
-static HRESULT WINAPI
-ISF_ControlPanel_fnCreateViewObject(IShellFolder2 * iface, HWND hwndOwner, REFIID riid, LPVOID * ppvOut)
+static HRESULT WINAPI ISF_ControlPanel_fnCreateViewObject(IShellFolder2 *iface, HWND hwndOwner,
+        REFIID riid, void **ppvOut)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
 
     LPSHELLVIEW pShellView;
     HRESULT hr = E_INVALIDARG;
@@ -551,10 +548,10 @@ ISF_ControlPanel_fnCreateViewObject(IShellFolder2 * iface, HWND hwndOwner, REFII
 /**************************************************************************
 *  ISF_ControlPanel_fnGetAttributesOf
 */
-static HRESULT WINAPI
-ISF_ControlPanel_fnGetAttributesOf(IShellFolder2 * iface, UINT cidl, LPCITEMIDLIST * apidl, DWORD * rgfInOut)
+static HRESULT WINAPI ISF_ControlPanel_fnGetAttributesOf(IShellFolder2 *iface, UINT cidl,
+        LPCITEMIDLIST *apidl, DWORD *rgfInOut)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
 
     HRESULT hr = S_OK;
 
@@ -571,7 +568,7 @@ ISF_ControlPanel_fnGetAttributesOf(IShellFolder2 * iface, UINT cidl, LPCITEMIDLI
 
     while(cidl > 0 && *apidl) {
 	pdump(*apidl);
-	SHELL32_GetItemAttributes(_IShellFolder_(This), *apidl, rgfInOut);
+        SHELL32_GetItemAttributes((IShellFolder *)&This->IShellFolder2_iface, *apidl, rgfInOut);
 	apidl++;
 	cidl--;
     }
@@ -594,12 +591,10 @@ ISF_ControlPanel_fnGetAttributesOf(IShellFolder2 * iface, UINT cidl, LPCITEMIDLI
 *  LPVOID*        ppvObject) //[out] Resulting Interface
 *
 */
-static HRESULT WINAPI
-ISF_ControlPanel_fnGetUIObjectOf(IShellFolder2 * iface,
-				HWND hwndOwner,
-				UINT cidl, LPCITEMIDLIST * apidl, REFIID riid, UINT * prgfInOut, LPVOID * ppvOut)
+static HRESULT WINAPI ISF_ControlPanel_fnGetUIObjectOf(IShellFolder2 *iface, HWND hwndOwner,
+        UINT cidl, LPCITEMIDLIST *apidl, REFIID riid, UINT *prgfInOut, void **ppvOut)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
 
     LPITEMIDLIST pidl;
     IUnknown *pObj = NULL;
@@ -648,9 +643,10 @@ ISF_ControlPanel_fnGetUIObjectOf(IShellFolder2 * iface,
 /**************************************************************************
 *	ISF_ControlPanel_fnGetDisplayNameOf
 */
-static HRESULT WINAPI ISF_ControlPanel_fnGetDisplayNameOf(IShellFolder2 * iface, LPCITEMIDLIST pidl, DWORD dwFlags, LPSTRRET strRet)
+static HRESULT WINAPI ISF_ControlPanel_fnGetDisplayNameOf(IShellFolder2 *iface, LPCITEMIDLIST pidl,
+        DWORD dwFlags, LPSTRRET strRet)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
 
     CHAR szPath[MAX_PATH];
     WCHAR wszPath[MAX_PATH+1]; /* +1 for potential backslash */
@@ -714,29 +710,31 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetDisplayNameOf(IShellFolder2 * iface,
 *  DWORD         dwFlags,    //[in ] SHGNO formatting flags
 *  LPITEMIDLIST* ppidlOut)   //[out] simple pidl returned
 */
-static HRESULT WINAPI ISF_ControlPanel_fnSetNameOf(IShellFolder2 * iface, HWND hwndOwner, LPCITEMIDLIST pidl,	/*simple pidl */
-						  LPCOLESTR lpName, DWORD dwFlags, LPITEMIDLIST * pPidlOut)
+static HRESULT WINAPI ISF_ControlPanel_fnSetNameOf(IShellFolder2 *iface, HWND hwndOwner,
+        LPCITEMIDLIST pidl, LPCOLESTR lpName, DWORD dwFlags, LPITEMIDLIST *pPidlOut)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
     FIXME("(%p)->(%p,pidl=%p,%s,%u,%p)\n", This, hwndOwner, pidl, debugstr_w(lpName), dwFlags, pPidlOut);
     return E_FAIL;
 }
 
-static HRESULT WINAPI ISF_ControlPanel_fnGetDefaultSearchGUID(IShellFolder2 * iface, GUID * pguid)
+static HRESULT WINAPI ISF_ControlPanel_fnGetDefaultSearchGUID(IShellFolder2 *iface, GUID *pguid)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
-static HRESULT WINAPI ISF_ControlPanel_fnEnumSearches(IShellFolder2 * iface, IEnumExtraSearch ** ppenum)
+static HRESULT WINAPI ISF_ControlPanel_fnEnumSearches(IShellFolder2 *iface,
+        IEnumExtraSearch **ppenum)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
-static HRESULT WINAPI ISF_ControlPanel_fnGetDefaultColumn(IShellFolder2 * iface, DWORD dwRes, ULONG * pSort, ULONG * pDisplay)
+static HRESULT WINAPI ISF_ControlPanel_fnGetDefaultColumn(IShellFolder2 *iface, DWORD dwRes,
+        ULONG *pSort, ULONG *pDisplay)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
 
     TRACE("(%p)\n", This);
 
@@ -744,9 +742,10 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetDefaultColumn(IShellFolder2 * iface,
     if (pDisplay) *pDisplay = 0;
     return S_OK;
 }
-static HRESULT WINAPI ISF_ControlPanel_fnGetDefaultColumnState(IShellFolder2 * iface, UINT iColumn, DWORD * pcsFlags)
+static HRESULT WINAPI ISF_ControlPanel_fnGetDefaultColumnState(IShellFolder2 *iface, UINT iColumn,
+        DWORD *pcsFlags)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
 
     TRACE("(%p)\n", This);
 
@@ -754,16 +753,18 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetDefaultColumnState(IShellFolder2 * i
     *pcsFlags = ControlPanelSFHeader[iColumn].pcsFlags;
     return S_OK;
 }
-static HRESULT WINAPI ISF_ControlPanel_fnGetDetailsEx(IShellFolder2 * iface, LPCITEMIDLIST pidl, const SHCOLUMNID * pscid, VARIANT * pv)
+static HRESULT WINAPI ISF_ControlPanel_fnGetDetailsEx(IShellFolder2 *iface, LPCITEMIDLIST pidl,
+        const SHCOLUMNID *pscid, VARIANT *pv)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ISF_ControlPanel_fnGetDetailsOf(IShellFolder2 * iface, LPCITEMIDLIST pidl, UINT iColumn, SHELLDETAILS * psd)
+static HRESULT WINAPI ISF_ControlPanel_fnGetDetailsOf(IShellFolder2 *iface, LPCITEMIDLIST pidl,
+        UINT iColumn, SHELLDETAILS *psd)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
     PIDLCPanelStruct* pcpanel;
     HRESULT hr;
 
@@ -800,9 +801,10 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetDetailsOf(IShellFolder2 * iface, LPC
 
     return hr;
 }
-static HRESULT WINAPI ISF_ControlPanel_fnMapColumnToSCID(IShellFolder2 * iface, UINT column, SHCOLUMNID * pscid)
+static HRESULT WINAPI ISF_ControlPanel_fnMapColumnToSCID(IShellFolder2 *iface, UINT column,
+        SHCOLUMNID *pscid)
 {
-    ICPanelImpl *This = (ICPanelImpl *)iface;
+    ICPanelImpl *This = impl_from_IShellFolder2(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
@@ -843,7 +845,7 @@ static HRESULT WINAPI ICPanel_PersistFolder2_QueryInterface(IPersistFolder2 * if
 
     TRACE("(%p)\n", This);
 
-    return IUnknown_QueryInterface(_IUnknown_(This), iid, ppvObject);
+    return IShellFolder2_QueryInterface(&This->IShellFolder2_iface, iid, ppvObject);
 }
 
 /************************************************************************
@@ -855,7 +857,7 @@ static ULONG WINAPI ICPanel_PersistFolder2_AddRef(IPersistFolder2 * iface)
 
     TRACE("(%p)->(count=%u)\n", This, This->ref);
 
-    return IUnknown_AddRef(_IUnknown_(This));
+    return IShellFolder2_AddRef(&This->IShellFolder2_iface);
 }
 
 /************************************************************************
@@ -867,7 +869,7 @@ static ULONG WINAPI ICPanel_PersistFolder2_Release(IPersistFolder2 * iface)
 
     TRACE("(%p)->(count=%u)\n", This, This->ref);
 
-    return IUnknown_Release(_IUnknown_(This));
+    return IShellFolder2_Release(&This->IShellFolder2_iface);
 }
 
 /************************************************************************
