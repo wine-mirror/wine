@@ -118,6 +118,10 @@ static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
         dib->funcs = &funcs_8;
         break;
 
+    case 4:
+        dib->funcs = &funcs_4;
+        break;
+
     default:
         TRACE("bpp %d not supported, will forward to graphics driver.\n", dib->bit_count);
         return FALSE;

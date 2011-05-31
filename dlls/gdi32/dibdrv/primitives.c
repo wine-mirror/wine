@@ -42,6 +42,11 @@ static inline BYTE *get_pixel_ptr_8(const dib_info *dib, int x, int y)
     return (BYTE*)dib->bits + y * dib->stride + x;
 }
 
+static inline BYTE *get_pixel_ptr_4(const dib_info *dib, int x, int y)
+{
+    return (BYTE*)dib->bits + y * dib->stride + x / 2;
+}
+
 static inline void do_rop_32(DWORD *ptr, DWORD and, DWORD xor)
 {
     *ptr = (*ptr & and) ^ xor;
@@ -96,6 +101,32 @@ static void solid_rects_8(const dib_info *dib, int num, const RECT *rc, DWORD an
         for(y = rc->top; y < rc->bottom; y++, start += dib->stride)
             for(x = rc->left, ptr = start; x < rc->right; x++)
                 do_rop_8(ptr++, and, xor);
+    }
+}
+
+static void solid_rects_4(const dib_info *dib, int num, const RECT *rc, DWORD and, DWORD xor)
+{
+    BYTE *ptr, *start;
+    int x, y, i;
+    BYTE byte_and = (and & 0xf) | ((and << 4) & 0xf0);
+    BYTE byte_xor = (xor & 0xf) | ((xor << 4) & 0xf0);
+
+    for(i = 0; i < num; i++, rc++)
+    {
+        if(rc->left >= rc->right) continue;
+        start = get_pixel_ptr_4(dib, rc->left, rc->top);
+        for(y = rc->top; y < rc->bottom; y++, start += dib->stride)
+        {
+            ptr = start;
+            if(rc->left & 1) /* upper nibble untouched */
+                do_rop_8(ptr++, byte_and | 0xf0, byte_xor & 0x0f);
+
+            for(x = (rc->left + 1) & ~1; x < (rc->right & ~1); x += 2)
+                do_rop_8(ptr++, byte_and, byte_xor);
+
+            if(rc->right & 1) /* lower nibble untouched */
+                do_rop_8(ptr, byte_and | 0x0f, byte_xor & 0xf0);
+        }
     }
 }
 
@@ -245,6 +276,86 @@ static void pattern_rects_8(const dib_info *dib, int num, const RECT *rc, const 
                 do_rop_8(ptr++, *and_ptr++, *xor_ptr++);
                 if(and_ptr == start_and + brush->width)
                 {
+                    and_ptr = start_and;
+                    xor_ptr = start_xor;
+                }
+            }
+
+            offset.y++;
+            if(offset.y == brush->height)
+            {
+                start_and = and_bits;
+                start_xor = xor_bits;
+                offset.y = 0;
+            }
+            else
+            {
+                start_and += brush->stride;
+                start_xor += brush->stride;
+            }
+        }
+    }
+}
+
+static void pattern_rects_4(const dib_info *dib, int num, const RECT *rc, const POINT *origin,
+                            const dib_info *brush, void *and_bits, void *xor_bits)
+{
+    BYTE *ptr, *start, *start_and, *and_ptr, *start_xor, *xor_ptr;
+    int x, y, i;
+    POINT offset;
+
+    for(i = 0; i < num; i++, rc++)
+    {
+        offset = calc_brush_offset(rc, brush, origin);
+
+        start = get_pixel_ptr_4(dib, rc->left, rc->top);
+        start_and = (BYTE*)and_bits + offset.y * brush->stride;
+        start_xor = (BYTE*)xor_bits + offset.y * brush->stride;
+
+        for(y = rc->top; y < rc->bottom; y++, start += dib->stride)
+        {
+            INT brush_x = offset.x;
+            BYTE byte_and, byte_xor;
+
+            and_ptr = start_and + brush_x / 2;
+            xor_ptr = start_xor + brush_x / 2;
+
+            for(x = rc->left, ptr = start; x < rc->right; x++)
+            {
+                /* FIXME: Two pixels at a time */
+                if(x & 1) /* lower dst nibble */
+                {
+                    if(brush_x & 1) /* lower pat nibble */
+                    {
+                        byte_and = *and_ptr++ | 0xf0;
+                        byte_xor = *xor_ptr++ & 0x0f;
+                    }
+                    else /* upper pat nibble */
+                    {
+                        byte_and = (*and_ptr >> 4) | 0xf0;
+                        byte_xor = (*xor_ptr >> 4) & 0x0f;
+                    }
+                }
+                else /* upper dst nibble */
+                {
+                    if(brush_x & 1) /* lower pat nibble */
+                    {
+                        byte_and = (*and_ptr++ << 4) | 0x0f;
+                        byte_xor = (*xor_ptr++ << 4) & 0xf0;
+                    }
+                    else /* upper pat nibble */
+                    {
+                        byte_and = *and_ptr | 0x0f;
+                        byte_xor = *xor_ptr & 0xf0;
+                    }
+                }
+                do_rop_8(ptr, byte_and, byte_xor);
+
+                if(x & 1) ptr++;
+
+                if(++brush_x == brush->width)
+                {
+                    brush_x = 0;
                     and_ptr = start_and;
                     xor_ptr = start_xor;
                 }
@@ -837,6 +948,123 @@ static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
     return TRUE;
 }
 
+static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rect)
+{
+    BYTE *dst_start = dst->bits, *dst_pixel, dst_val;
+    INT x, y;
+    DWORD src_val;
+
+    switch(src->bit_count)
+    {
+    case 32:
+    {
+        DWORD *src_start = get_pixel_ptr_32(src, src_rect->left, src_rect->top), *src_pixel;
+
+        if(src->funcs == &funcs_8888)
+        {
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                dst_pixel = dst_start;
+                src_pixel = src_start;
+                for(x = src_rect->left; x < src_rect->right; x++)
+                {
+                    src_val = *src_pixel++;
+                    dst_val = colorref_to_pixel_colortable(dst, ((src_val >> 16) & 0x0000ff) |
+                                                                ( src_val        & 0x00ff00) |
+                                                                ((src_val << 16) & 0xff0000) );
+                    if((x - src_rect->left) & 1)
+                    {
+                        *dst_pixel = (dst_val & 0x0f) | (*dst_pixel & 0xf0);
+                        dst_pixel++;
+                    }
+                    else
+                        *dst_pixel = (dst_val << 4) & 0xf0;
+                }
+                dst_start += dst->stride;
+                src_start += src->stride / 4;
+            }
+        }
+        else
+        {
+            FIXME("Unsupported conversion: 32 -> 4\n");
+            return FALSE;
+        }
+        break;
+    }
+
+    case 16:
+    {
+        WORD *src_start = get_pixel_ptr_16(src, src_rect->left, src_rect->top), *src_pixel;
+        if(src->funcs == &funcs_555)
+        {
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                dst_pixel = dst_start;
+                src_pixel = src_start;
+                for(x = src_rect->left; x < src_rect->right; x++)
+                {
+                    src_val = *src_pixel++;
+                    dst_val = colorref_to_pixel_colortable(dst, ((src_val >>  7) & 0x0000f8) | ((src_val >> 12) & 0x000007) |
+                                                                ((src_val <<  6) & 0x00f800) | ((src_val <<  1) & 0x000700) |
+                                                                ((src_val << 19) & 0xf80000) | ((src_val << 14) & 0x070000) );
+                    if((x - src_rect->left) & 1)
+                    {
+                        *dst_pixel = (dst_val & 0x0f) | (*dst_pixel & 0xf0);
+                        dst_pixel++;
+                    }
+                    else
+                        *dst_pixel = (dst_val << 4) & 0xf0;
+                }
+                dst_start += dst->stride;
+                src_start += src->stride / 2;
+            }
+        }
+        else
+        {
+            FIXME("Unsupported conversion: 16 -> 4\n");
+            return FALSE;
+        }
+        break;
+    }
+
+    case 8:
+    {
+        BYTE *src_start = get_pixel_ptr_8(src, src_rect->left, src_rect->top), *src_pixel;
+
+        for(y = src_rect->top; y < src_rect->bottom; y++)
+        {
+            dst_pixel = dst_start;
+            src_pixel = src_start;
+            for(x = src_rect->left; x < src_rect->right; x++)
+            {
+                RGBQUAD rgb;
+                src_val = *src_pixel++;
+                if(src_val >= src->color_table_size) src_val = src->color_table_size - 1;
+                rgb = src->color_table[src_val];
+                dst_val = colorref_to_pixel_colortable(dst, RGB(rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue));
+                if((x - src_rect->left) & 1)
+                {
+                    *dst_pixel = (dst_val & 0x0f) | (*dst_pixel & 0xf0);
+                    dst_pixel++;
+                }
+                else
+                    *dst_pixel = (dst_val << 4) & 0xf0;
+            }
+            dst_start += dst->stride;
+            src_start += src->stride;
+        }
+        break;
+    }
+
+    default:
+        FIXME("Unsupported conversion: %d -> 4\n", src->bit_count);
+        return FALSE;
+
+    }
+
+    return TRUE;
+}
+
 static BOOL convert_to_null(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
     return TRUE;
@@ -880,6 +1108,14 @@ const primitive_funcs funcs_8 =
     pattern_rects_8,
     colorref_to_pixel_colortable,
     convert_to_8
+};
+
+const primitive_funcs funcs_4 =
+{
+    solid_rects_4,
+    pattern_rects_4,
+    colorref_to_pixel_colortable,
+    convert_to_4
 };
 
 const primitive_funcs funcs_null =
