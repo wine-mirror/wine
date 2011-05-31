@@ -1462,7 +1462,7 @@ static void render_state_test_data_init(struct render_state_data *data)
    data->states[idx++] = TRUE;                  /* ALPHABLENDENABLE */
    data->states[idx++] = TRUE;                  /* FOGENABLE */
    data->states[idx++] = TRUE;                  /* SPECULARENABLE */
-   data->states[idx++] = 255 << 31;             /* FOGCOLOR */
+   data->states[idx++] = 1 << 31;               /* FOGCOLOR */
    data->states[idx++] = D3DFOG_EXP;            /* FOGTABLEMODE */
    data->states[idx++] = to_dword(0.1f);        /* FOGSTART */
    data->states[idx++] = to_dword(0.8f);        /* FOGEND */
