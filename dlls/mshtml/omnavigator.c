@@ -199,6 +199,7 @@ static HRESULT create_plugins_collection(OmNavigator *navigator, HTMLPluginsColl
 }
 
 struct HTMLMimeTypesCollection {
+    DispatchEx dispex;
     IHTMLMimeTypesCollection IHTMLMimeTypesCollection_iface;
 
     LONG ref;
@@ -221,6 +222,8 @@ static HRESULT WINAPI HTMLMimeTypesCollection_QueryInterface(IHTMLMimeTypesColle
     }else if(IsEqualGUID(&IID_IHTMLMimeTypesCollection, riid)) {
         TRACE("(%p)->(IID_IHTMLMimeTypesCollection %p)\n", This, ppv);
         *ppv = &This->IHTMLMimeTypesCollection_iface;
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+        return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;
         WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
@@ -251,6 +254,7 @@ static ULONG WINAPI HTMLMimeTypesCollection_Release(IHTMLMimeTypesCollection *if
     if(!ref) {
         if(This->navigator)
             This->navigator->mime_types = NULL;
+        release_dispex(&This->dispex);
         heap_free(This);
     }
 
@@ -260,24 +264,22 @@ static ULONG WINAPI HTMLMimeTypesCollection_Release(IHTMLMimeTypesCollection *if
 static HRESULT WINAPI HTMLMimeTypesCollection_GetTypeInfoCount(IHTMLMimeTypesCollection *iface, UINT *pctinfo)
 {
     HTMLMimeTypesCollection *This = impl_from_IHTMLMimeTypesCollection(iface);
-    FIXME("%p\n", This);
-    return E_NOTIMPL;
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLMimeTypesCollection_GetTypeInfo(IHTMLMimeTypesCollection *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLMimeTypesCollection *This = impl_from_IHTMLMimeTypesCollection(iface);
-    FIXME("%p\n", This);
-    return E_NOTIMPL;
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLMimeTypesCollection_GetIDsOfNames(IHTMLMimeTypesCollection *iface, REFIID riid,
         LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     HTMLMimeTypesCollection *This = impl_from_IHTMLMimeTypesCollection(iface);
-    FIXME("%p\n", This);
-    return E_NOTIMPL;
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+            lcid, rgDispId);
 }
 
 static HRESULT WINAPI HTMLMimeTypesCollection_Invoke(IHTMLMimeTypesCollection *iface, DISPID dispIdMember,
@@ -285,8 +287,8 @@ static HRESULT WINAPI HTMLMimeTypesCollection_Invoke(IHTMLMimeTypesCollection *i
         EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLMimeTypesCollection *This = impl_from_IHTMLMimeTypesCollection(iface);
-    FIXME("%p\n", This);
-    return E_NOTIMPL;
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI HTMLMimeTypesCollection_get_length(IHTMLMimeTypesCollection *iface, LONG *p)
@@ -307,6 +309,17 @@ static const IHTMLMimeTypesCollectionVtbl HTMLMimeTypesCollectionVtbl = {
     HTMLMimeTypesCollection_get_length
 };
 
+static const tid_t HTMLMimeTypesCollection_iface_tids[] = {
+    IHTMLMimeTypesCollection_tid,
+    0
+};
+static dispex_static_data_t HTMLMimeTypesCollection_dispex = {
+    NULL,
+    IHTMLMimeTypesCollection_tid,
+    NULL,
+    HTMLMimeTypesCollection_iface_tids
+};
+
 static HRESULT create_mime_types_collection(OmNavigator *navigator, HTMLMimeTypesCollection **ret)
 {
     HTMLMimeTypesCollection *col;
@@ -318,6 +331,9 @@ static HRESULT create_mime_types_collection(OmNavigator *navigator, HTMLMimeType
     col->IHTMLMimeTypesCollection_iface.lpVtbl = &HTMLMimeTypesCollectionVtbl;
     col->ref = 1;
     col->navigator = navigator;
+
+    init_dispex(&col->dispex, (IUnknown*)&col->IHTMLMimeTypesCollection_iface,
+                &HTMLMimeTypesCollection_dispex);
 
     *ret = col;
     return S_OK;

@@ -138,6 +138,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLImgElement) \
     XIID(IHTMLInputElement) \
     XIID(IHTMLLocation) \
+    XIID(IHTMLMimeTypesCollection) \
     XIID(IHTMLObjectElement) \
     XIID(IHTMLOptionElement) \
     XIID(IHTMLPluginsCollection) \

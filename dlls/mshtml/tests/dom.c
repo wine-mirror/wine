@@ -3827,6 +3827,26 @@ static void test_plugins_col(IOmNavigator *nav)
     ok(!ref, "ref=%d\n", ref);
 }
 
+static void test_mime_types_col(IOmNavigator *nav)
+{
+    IHTMLMimeTypesCollection *col, *col2;
+    ULONG ref;
+    HRESULT hres;
+
+    hres = IOmNavigator_get_mimeTypes(nav, &col);
+    ok(hres == S_OK, "get_mimeTypes failed: %08x\n", hres);
+
+    hres = IOmNavigator_get_mimeTypes(nav, &col2);
+    ok(hres == S_OK, "get_mimeTypes failed: %08x\n", hres);
+    ok(iface_cmp((IUnknown*)col, (IUnknown*)col2), "col != col2\n");
+    IHTMLMimeTypesCollection_Release(col2);
+
+    test_disp((IUnknown*)col, &IID_IHTMLMimeTypesCollection, "[object]");
+
+    ref = IHTMLMimeTypesCollection_Release(col);
+    ok(!ref, "ref=%d\n", ref);
+}
+
 static void test_navigator(IHTMLDocument2 *doc)
 {
     IHTMLWindow2 *window;
@@ -3914,6 +3934,7 @@ static void test_navigator(IHTMLDocument2 *doc)
     }
 
     test_plugins_col(navigator);
+    test_mime_types_col(navigator);
 
     ref = IOmNavigator_Release(navigator);
     ok(!ref, "navigator should be destroyed here\n");
