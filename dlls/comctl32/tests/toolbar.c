@@ -64,7 +64,7 @@ static const struct message ttgetdispinfo_parent_seq[] = {
 #define compare(val, exp, format) ok((val) == (exp), #val " value " format " expected " format "\n", (val), (exp));
 
 #define check_button_size(handle, width, height, ...) {\
-    DWORD bsize = SendMessageA(handle, TB_GETBUTTONSIZE, 0, 0);\
+    LRESULT bsize = SendMessageA(handle, TB_GETBUTTONSIZE, 0, 0);\
     ok(bsize == MAKELONG(width, height), "Unexpected button size - got size (%d, %d), expected (%d, %d)\n", LOWORD(bsize), HIWORD(bsize), width, height);\
     }
 
@@ -1000,7 +1000,7 @@ static tbsize_alt_result_t tbsize_alt_results[] =
   { 20, 2, { 107, 2, 207, 102 } }
 };
 
-static int tbsize_alt_numtests = 0;
+static DWORD tbsize_alt_numtests = 0;
 
 #define check_sizes_todo(todomask) { \
         RECT rc; \
@@ -1529,7 +1529,7 @@ static void test_setrows(void)
 {
     TBBUTTON buttons[9];
     HWND hToolbar;
-    int i;
+    DWORD i;
 
     for (i=0; i<9; i++)
         MakeButton(buttons+i, 1000+i, TBSTYLE_FLAT | TBSTYLE_CHECKGROUP, 0);
