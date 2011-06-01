@@ -896,7 +896,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShader(ID3D10Device 
     }
 
     TRACE("Created geometry shader %p.\n", object);
-    *shader = (ID3D10GeometryShader *)object;
+    *shader = &object->ID3D10GeometryShader_iface;
 
     return S_OK;
 }

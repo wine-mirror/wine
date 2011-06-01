@@ -180,7 +180,7 @@ HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d1
 /* ID3D10GeometryShader */
 struct d3d10_geometry_shader
 {
-    const struct ID3D10GeometryShaderVtbl *vtbl;
+    ID3D10GeometryShader ID3D10GeometryShader_iface;
     LONG refcount;
 
     struct wined3d_shader *wined3d_shader;

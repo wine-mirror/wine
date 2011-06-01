@@ -267,6 +267,11 @@ HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d1
     return S_OK;
 }
 
+static inline struct d3d10_geometry_shader *impl_from_ID3D10GeometryShader(ID3D10GeometryShader *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_geometry_shader, ID3D10GeometryShader_iface);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE d3d10_geometry_shader_QueryInterface(ID3D10GeometryShader *iface,
@@ -291,7 +296,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_geometry_shader_QueryInterface(ID3D10Geom
 
 static ULONG STDMETHODCALLTYPE d3d10_geometry_shader_AddRef(ID3D10GeometryShader *iface)
 {
-    struct d3d10_geometry_shader *This = (struct d3d10_geometry_shader *)iface;
+    struct d3d10_geometry_shader *This = impl_from_ID3D10GeometryShader(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -301,7 +306,7 @@ static ULONG STDMETHODCALLTYPE d3d10_geometry_shader_AddRef(ID3D10GeometryShader
 
 static ULONG STDMETHODCALLTYPE d3d10_geometry_shader_Release(ID3D10GeometryShader *iface)
 {
-    struct d3d10_geometry_shader *This = (struct d3d10_geometry_shader *)iface;
+    struct d3d10_geometry_shader *This = impl_from_ID3D10GeometryShader(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -376,7 +381,7 @@ HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader, struct 
     struct d3d10_shader_info shader_info;
     HRESULT hr;
 
-    shader->vtbl = &d3d10_geometry_shader_vtbl;
+    shader->ID3D10GeometryShader_iface.lpVtbl = &d3d10_geometry_shader_vtbl;
     shader->refcount = 1;
 
     shader_info.output_signature = &shader->output_signature;
