@@ -933,11 +933,33 @@ static unsigned int write_procformatstring_type(FILE *file, int indent,
 int is_interpreted_func( const type_t *iface, const var_t *func )
 {
     const char *str;
+    const var_t *var;
+    const var_list_t *args = type_get_function_args( func->type );
     const type_t *ret_type = type_function_get_rettype( func->type );
 
-    /* return value must fit in a long_ptr for interpreted functions */
-    if (type_get_type( ret_type ) == TYPE_BASIC && type_memsize( ret_type ) > pointer_size)
-        return 0;
+    if (type_get_type( ret_type ) == TYPE_BASIC)
+    {
+        switch (type_basic_get_type( ret_type ))
+        {
+        case TYPE_BASIC_INT64:
+        case TYPE_BASIC_HYPER:
+            /* return value must fit in a long_ptr */
+            if (pointer_size < 8) return 0;
+            break;
+        case TYPE_BASIC_FLOAT:
+        case TYPE_BASIC_DOUBLE:
+            /* floating point values can't be returned */
+            return 0;
+        default:
+            break;
+        }
+    }
+    /* unions passed by value are not supported */
+    if (args) LIST_FOR_EACH_ENTRY( var, args, const var_t, entry )
+                  if (type_get_type( var->type ) == TYPE_UNION ||
+                      type_get_type( var->type ) == TYPE_ENCAPSULATED_UNION)
+                      return 0;
+
     if ((str = get_attrp( func->attrs, ATTR_OPTIMIZE ))) return !strcmp( str, "i" );
     if ((str = get_attrp( iface->attrs, ATTR_OPTIMIZE ))) return !strcmp( str, "i" );
     return 0;
