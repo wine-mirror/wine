@@ -2926,6 +2926,7 @@ static unsigned int write_ip_tfs(FILE *file, const attr_list_t *attrs, type_t *t
     if (!iid && processed(type)) return type->typestring_offset;
 
     print_start_tfs_comment(file, type, start_offset);
+    update_tfsoff(type, start_offset, file);
 
     if (iid)
     {
@@ -2942,7 +2943,6 @@ static unsigned int write_ip_tfs(FILE *file, const attr_list_t *attrs, type_t *t
         if (! uuid)
             error("%s: interface %s missing UUID\n", __FUNCTION__, base->name);
 
-        update_tfsoff(type, start_offset, file);
         print_file(file, 2, "0x2f,\t/* FC_IP */\n");
         print_file(file, 2, "0x5a,\t/* FC_CONSTANT_IID */\n");
         print_file(file, 2, "NdrFcLong(0x%08x),\n", uuid->Data1);
@@ -3004,6 +3004,7 @@ static unsigned int write_contexthandle_tfs(FILE *file,
     print_file(file, 2, "0, /* FIXME: param num */\n");
     *typeformat_offset += 4;
 
+    update_tfsoff( type, start_offset, file );
     return start_offset;
 }
 
@@ -3029,6 +3030,7 @@ static unsigned int write_range_tfs(FILE *file, const attr_list_t *attrs,
     print_file(file, 2, "0x%x,\t/* %s */\n", fc, string_of_type(fc));
     print_file(file, 2, "NdrFcLong(0x%x),\t/* %u */\n", range_min->cval, range_min->cval);
     print_file(file, 2, "NdrFcLong(0x%x),\t/* %u */\n", range_max->cval, range_max->cval);
+    update_tfsoff( type, start_offset, file );
     *typeformat_offset += 10;
 
     return start_offset;
@@ -3080,6 +3082,7 @@ static unsigned int write_type_tfs(FILE *file, int indent,
                            string_of_type(ptr_type));
                 print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
                            reloff, reloff, absoff);
+                update_tfsoff( type, off, file );
                 *typeformat_offset += 4;
             }
         }
@@ -3162,26 +3165,16 @@ static unsigned int process_tfs_stmts(FILE *file, const statement_list_t *stmts,
             current_func = func;
             if (is_local(func->attrs)) continue;
 
-                if (!is_void(type_function_get_rettype(func->type)))
-                {
-                    update_tfsoff(type_function_get_rettype(func->type),
-                                  write_type_tfs(
-                                      file, 2, func->attrs,
-                                      type_function_get_rettype(func->type),
-                                      func->name, TYPE_CONTEXT_PARAM,
-                                      typeformat_offset),
-                                  file);
-                }
+            if (!is_void(type_function_get_rettype(func->type)))
+            {
+                write_type_tfs( file, 2, func->attrs, type_function_get_rettype(func->type),
+                                func->name, TYPE_CONTEXT_PARAM, typeformat_offset);
+            }
 
-                if (type_get_function_args(func->type))
-                    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
-                        update_tfsoff(
-                            var->type,
-                            write_type_tfs(
-                                file, 2, var->attrs, var->type, var->name,
-                                TYPE_CONTEXT_TOPLEVELPARAM,
-                                typeformat_offset),
-                            file);
+            if (type_get_function_args(func->type))
+                LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
+                    write_type_tfs( file, 2, var->attrs, var->type, var->name,
+                                    TYPE_CONTEXT_TOPLEVELPARAM, typeformat_offset );
         }
     }
 
