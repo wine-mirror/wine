@@ -72,6 +72,14 @@ extern time_t now;
 extern int line_number;
 extern int char_number;
 
+enum stub_mode
+{
+    MODE_Os,  /* inline stubs */
+    MODE_Oi,  /* old-style interpreted stubs */
+    MODE_Oif  /* new-style fully interpreted stubs */
+};
+extern enum stub_mode stub_mode;
+
 extern void write_header(const statement_list_t *stmts);
 extern void write_id_data(const statement_list_t *stmts);
 extern void write_proxies(const statement_list_t *stmts);

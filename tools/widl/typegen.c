@@ -962,7 +962,7 @@ int is_interpreted_func( const type_t *iface, const var_t *func )
 
     if ((str = get_attrp( func->attrs, ATTR_OPTIMIZE ))) return !strcmp( str, "i" );
     if ((str = get_attrp( iface->attrs, ATTR_OPTIMIZE ))) return !strcmp( str, "i" );
-    return 0;
+    return (stub_mode != MODE_Os);
 }
 
 static void write_procformatstring_func( FILE *file, int indent,

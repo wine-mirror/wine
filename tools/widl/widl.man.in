@@ -59,6 +59,12 @@ Generate a UUID file. The default output filename is \fIinfile\fB_i.c\fR.
 .B Proxy/stub generation options:
 .IP "\fB-c\fR"
 Generate a client stub file. The default output filename is \fIinfile\fB_c.c\fR.
+.IP "\fB-Os\fR"
+Generate inline stubs.
+.IP "\fB-Oi\fR"
+Generate old-style interpreted stubs.
+.IP "\fB-Oif, -Oic, -Oicf\fR"
+Generate new-style fully interpreted stubs.
 .IP "\fB-p\fR"
 Generate a proxy. The default output filename is \fIinfile\fB_p.c\fR.
 .IP "\fB--prefix-all=\fIprefix\fR"

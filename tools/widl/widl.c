@@ -46,7 +46,6 @@
 /* future options to reserve characters for: */
 /* A = ACF input filename */
 /* J = do not search standard include path */
-/* O = generate interpreted stubs */
 /* w = select win16/win32 output (?) */
 
 static const char usage[] =
@@ -65,6 +64,7 @@ static const char usage[] =
 "   -N                 Do not preprocess input\n"
 "   --oldnames         Use old naming conventions\n"
 "   -o, --output=NAME  Set the output file name\n"
+"   -Otype             Type of stubs to generate (-Os, -Oi, -Oif)\n"
 "   -p                 Generate proxy\n"
 "   --prefix-all=p     Prefix names of client stubs / server functions with 'p'\n"
 "   --prefix-client=p  Prefix names of client stubs with 'p'\n"
@@ -111,6 +111,7 @@ int do_win32 = 1;
 int do_win64 = 1;
 int win32_packing = 8;
 int win64_packing = 8;
+enum stub_mode stub_mode = MODE_Os;
 
 char *input_name;
 char *header_name;
@@ -156,7 +157,7 @@ enum {
 };
 
 static const char short_options[] =
-    "b:cC:d:D:EhH:I:m:No:pP:rsS:tT:uU:VW";
+    "b:cC:d:D:EhH:I:m:No:O:pP:rsS:tT:uU:VW";
 static const struct option long_options[] = {
     { "dlldata", 1, NULL, DLLDATA_OPTION },
     { "dlldata-only", 0, NULL, DLLDATA_ONLY_OPTION },
@@ -581,6 +582,14 @@ int main(int argc,char *argv[])
       break;
     case 'o':
       output_name = xstrdup(optarg);
+      break;
+    case 'O':
+      if (!strcmp( optarg, "s" )) stub_mode = MODE_Os;
+      else if (!strcmp( optarg, "i" )) stub_mode = MODE_Oi;
+      else if (!strcmp( optarg, "ic" )) stub_mode = MODE_Oif;
+      else if (!strcmp( optarg, "if" )) stub_mode = MODE_Oif;
+      else if (!strcmp( optarg, "icf" )) stub_mode = MODE_Oif;
+      else error( "Invalid argument '-O%s'\n", optarg );
       break;
     case 'p':
       do_everything = 0;
