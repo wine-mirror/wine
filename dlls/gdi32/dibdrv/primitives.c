@@ -626,6 +626,29 @@ static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
         break;
     }
 
+    case 24:
+    {
+        BYTE *src_start = get_pixel_ptr_24(src, src_rect->left, src_rect->top), *src_pixel;
+
+        for(y = src_rect->top; y < src_rect->bottom; y++)
+        {
+            dst_pixel = dst_start;
+            src_pixel = src_start;
+            for(x = src_rect->left; x < src_rect->right; x++)
+            {
+                RGBQUAD rgb;
+                rgb.rgbBlue  = *src_pixel++;
+                rgb.rgbGreen = *src_pixel++;
+                rgb.rgbRed   = *src_pixel++;
+
+                *dst_pixel++ = ((rgb.rgbRed << 16) & 0xff0000) | ((rgb.rgbGreen << 8) & 0x00ff00) | (rgb.rgbBlue & 0x0000ff);
+            }
+            dst_start += dst->stride / 4;
+            src_start += src->stride;
+        }
+        break;
+    }
+
     case 16:
     {
         WORD *src_start = get_pixel_ptr_16(src, src_rect->left, src_rect->top), *src_pixel;
@@ -739,6 +762,31 @@ static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
         {
             FIXME("Unsupported conversion: 32 -> 32\n");
             return FALSE;
+        }
+        break;
+    }
+
+    case 24:
+    {
+        BYTE *src_start = get_pixel_ptr_24(src, src_rect->left, src_rect->top), *src_pixel;
+
+        for(y = src_rect->top; y < src_rect->bottom; y++)
+        {
+            dst_pixel = dst_start;
+            src_pixel = src_start;
+            for(x = src_rect->left; x < src_rect->right; x++)
+            {
+                RGBQUAD rgb;
+                rgb.rgbBlue  = *src_pixel++;
+                rgb.rgbGreen = *src_pixel++;
+                rgb.rgbRed   = *src_pixel++;
+
+                *dst_pixel++ = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len)   |
+                               put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
+                               put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
+            }
+            dst_start += dst->stride / 4;
+            src_start += src->stride;
         }
         break;
     }
@@ -860,6 +908,24 @@ static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
         {
             FIXME("Unsupported conversion: 32 -> 24\n");
             return FALSE;
+        }
+        break;
+    }
+
+    case 24:
+    {
+        BYTE *src_start = get_pixel_ptr_24(src, src_rect->left, src_rect->top);
+
+        if(src->stride > 0 && dst->stride > 0 && src_rect->left == 0 && src_rect->right == src->width)
+            memcpy(dst->bits, src_start, (src_rect->bottom - src_rect->top) * src->stride);
+        else
+        {
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                memcpy(dst_start, src_start, (src_rect->right - src_rect->left) * 3);
+                dst_start += dst->stride;
+                src_start += src->stride;
+            }
         }
         break;
     }
@@ -986,6 +1052,31 @@ static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
         break;
     }
 
+    case 24:
+    {
+        BYTE *src_start = get_pixel_ptr_24(src, src_rect->left, src_rect->top), *src_pixel;
+
+        for(y = src_rect->top; y < src_rect->bottom; y++)
+        {
+            dst_pixel = dst_start;
+            src_pixel = src_start;
+            for(x = src_rect->left; x < src_rect->right; x++)
+            {
+                RGBQUAD rgb;
+                rgb.rgbBlue  = *src_pixel++;
+                rgb.rgbGreen = *src_pixel++;
+                rgb.rgbRed   = *src_pixel++;
+
+                *dst_pixel++ = ((rgb.rgbRed   << 7) & 0x7c00) |
+                               ((rgb.rgbGreen << 2) & 0x03e0) |
+                               ((rgb.rgbBlue  >> 3) & 0x001f);
+            }
+            dst_start += dst->stride / 2;
+            src_start += src->stride;
+        }
+        break;
+    }
+
     case 16:
     {
         WORD *src_start = get_pixel_ptr_16(src, src_rect->left, src_rect->top);
@@ -1101,6 +1192,31 @@ static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
         {
             FIXME("Unsupported conversion: 32 -> 16\n");
             return FALSE;
+        }
+        break;
+    }
+
+    case 24:
+    {
+        BYTE *src_start = get_pixel_ptr_24(src, src_rect->left, src_rect->top), *src_pixel;
+
+        for(y = src_rect->top; y < src_rect->bottom; y++)
+        {
+            dst_pixel = dst_start;
+            src_pixel = src_start;
+            for(x = src_rect->left; x < src_rect->right; x++)
+            {
+                RGBQUAD rgb;
+                rgb.rgbBlue  = *src_pixel++;
+                rgb.rgbGreen = *src_pixel++;
+                rgb.rgbRed   = *src_pixel++;
+
+                *dst_pixel++ = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
+                               put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
+                               put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
+            }
+            dst_start += dst->stride / 2;
+            src_start += src->stride;
         }
         break;
     }
@@ -1231,6 +1347,31 @@ static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
         {
             FIXME("Unsupported conversion: 32 -> 8\n");
             return FALSE;
+        }
+        break;
+    }
+
+    case 24:
+    {
+        BYTE *src_start = get_pixel_ptr_24(src, src_rect->left, src_rect->top), *src_pixel;
+
+        for(y = src_rect->top; y < src_rect->bottom; y++)
+        {
+            dst_pixel = dst_start;
+            src_pixel = src_start;
+            for(x = src_rect->left; x < src_rect->right; x++)
+            {
+                RGBQUAD rgb;
+                rgb.rgbBlue  = *src_pixel++;
+                rgb.rgbGreen = *src_pixel++;
+                rgb.rgbRed   = *src_pixel++;
+
+                *dst_pixel++ = colorref_to_pixel_colortable(dst, ( rgb.rgbRed         & 0x0000ff) |
+                                                                 ((rgb.rgbGreen << 8) & 0x00ff00) |
+                                                                 ((rgb.rgbBlue << 16) & 0xff0000));
+            }
+            dst_start += dst->stride;
+            src_start += src->stride;
         }
         break;
     }
@@ -1374,6 +1515,39 @@ static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
         {
             FIXME("Unsupported conversion: 32 -> 4\n");
             return FALSE;
+        }
+        break;
+    }
+
+    case 24:
+    {
+        BYTE *src_start = get_pixel_ptr_24(src, src_rect->left, src_rect->top), *src_pixel;
+
+        for(y = src_rect->top; y < src_rect->bottom; y++)
+        {
+            dst_pixel = dst_start;
+            src_pixel = src_start;
+            for(x = src_rect->left; x < src_rect->right; x++)
+            {
+                RGBQUAD rgb;
+                rgb.rgbBlue  = *src_pixel++;
+                rgb.rgbGreen = *src_pixel++;
+                rgb.rgbRed   = *src_pixel++;
+
+                dst_val = colorref_to_pixel_colortable(dst, ( rgb.rgbRed         & 0x0000ff) |
+                                                            ((rgb.rgbGreen << 8) & 0x00ff00) |
+                                                            ((rgb.rgbBlue << 16) & 0xff0000));
+
+                if((x - src_rect->left) & 1)
+                {
+                    *dst_pixel = (dst_val & 0x0f) | (*dst_pixel & 0xf0);
+                    dst_pixel++;
+                }
+                else
+                    *dst_pixel = (dst_val << 4) & 0xf0;
+            }
+            dst_start += dst->stride;
+            src_start += src->stride;
         }
         break;
     }
