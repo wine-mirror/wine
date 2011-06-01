@@ -93,6 +93,7 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "b2261353decda2712b83538ab434a49ce21f3172",
     "ef654fedcb494dae79559f4db8b691ae2d522a3f",
     "a694872f38e66a7ff471440c3e6a9310ef78328a",
+    "c311dd74325e8cebfc8529a6d24a6fa4ecb7137e",
     "d7398de15b2837a58a62a701ca1b3384625afec4",
     "a78b28472bb7ff480ddedd06b9cf2daa775fa7ae",
     "5246ef357e7317b9d141a3294d300c195da76cb7",
@@ -121,6 +122,7 @@ static const char *sha1_graphics_a8b8g8r8[] =
     "1f1fc165a4dae7ba118ddccb58a279bfe3876b0a",
     "66da15b6780a4ca3b3d2eb1d1dba4e30f7b74964",
     "42fefefe4435570fa8038ec759140c66c76570e9",
+    "ca7e859647b9498b53fdd92543ad8aea98ff46f3",
     "3369889a67d6c79a24ee15f7d14374f9995215e4",
     "473a1fd07df800c87a5d3286b642ace10c61c6af",
     "10cd25a0ed5cd8f978d7d68236f81d949b938e84",
@@ -149,6 +151,7 @@ static const char *sha1_graphics_24[] =
     "1036b91d93e31cd1d4740d0c8642e115e5a38188",
     "3469776cc7d8f6fd3bce17a39eec0b4092294e49",
     "1cb7f3fcf42c9ca47a0689195ced239a09d3c308",
+    "413a7989969c229dee4ab1798362f32f96cf0a10",
     "0bb222e540b82720d4971e4a2fc626899af03e03",
     "adc20832d8c43f1cf372d8392535492013cd2306",
     "45649794dcbcabda487f66f7a80fc1bec79047a1",
@@ -177,6 +180,7 @@ static const char *sha1_graphics_r5g5b5[] =
     "449092689226a1172b6086ba1181d6b6d6499f26",
     "5c636ffadec10fbe440b552fe6436f3dbc607dcf",
     "4aac89fc18c128eddb69eea658272af53138a1cb",
+    "897d16f4d6a6ddad685d23ed7828d4f676539b75",
     "9d21bcfdeaf1ca5d47eb823bdefc24d7a95f4f56",
     "6daaf945a955928c5c124c880522ca4634fb2343",
     "12a288390d16e1efa99d4185301de48a4d433b14",
@@ -205,6 +209,7 @@ static const char *sha1_graphics_r4g4b4[] =
     "25fcb75aa687aac35b8f72640889fe92413e00c5",
     "dbc8d66b419880108793db91c05766c0c6efd86d",
     "6092ccbab6b6e073c6ac8244d122f2cfc453aa38",
+    "e61a4f2657a444d8c49f84fb944f9f847667bf2b",
     "32b6e0aa79b7e96cd0ab2da167f6463c011023a8",
     "1d283aa4d2b2114f7809fe59357d590c7c779aa7",
     "29640e2ddd2d3016da14507c3ce9b2ce32f39bb4",
@@ -233,6 +238,7 @@ static const char *sha1_graphics_8[] =
     "73e2859ce849f756f954718ce3c90f02e31712b6",
     "196d832d283bf642d2e481e5452ca175f7902761",
     "9552f48b88982633a44001227abb847dae4d06b0",
+    "6e375e1485a1e45ac6ab10af49645d5fb2e76dff",
     "cfc67c325c7cdf96d90af9b3cceb8d0504cbb3b0",
     "7262364067e03c7fa498af1d59d228d6c63b460e",
     "5241241a355a667ef0834049adf4218e8b3f16b8",
@@ -261,6 +267,7 @@ static const char *sha1_graphics_4[] =
     "3b53d24178cfacba53103a44dfd5d072b15a6781",
     "fa0d5f2d9419d8310fe4af7a290d13c5026c77de",
     "5070ecae5085209508f7450d5f21c69737a178e9",
+    "d17f4358ae529f920960ed89e535902ee13b0033",
     "0f44e12ecd1ea7e39433890443626d4fc35204a4",
     "eb38683e812fd13dca971ba8f4cfd2b6820d3524",
     "73bbc83f88f1aaa6df0158b63e70bb3165163163",
@@ -435,7 +442,8 @@ static const RECT rectangles[] =
     {200,  40, 210,  43}  /* height == 3 */
 };
 
-static const BITMAPINFOHEADER dib_brush_header_32   = {sizeof(BITMAPINFOHEADER), 16, -16, 1, 32, BI_RGB, 0, 0, 0, 0, 0};
+static const BITMAPINFOHEADER dib_brush_header_8888 = {sizeof(BITMAPINFOHEADER), 16, -16, 1, 32, BI_RGB, 0, 0, 0, 0, 0};
+static const BITMAPINFOHEADER dib_brush_header_24   = {sizeof(BITMAPINFOHEADER), 16, -16, 1, 24, BI_RGB, 0, 0, 0, 0, 0};
 static const BITMAPINFOHEADER dib_brush_header_555  = {sizeof(BITMAPINFOHEADER), 16, -16, 1, 16, BI_RGB, 0, 0, 0, 0, 0};
 static const BITMAPINFOHEADER dib_brush_header_8    = {sizeof(BITMAPINFOHEADER), 16, -16, 1,  8, BI_RGB, 0, 0, 0, 0, 0};
 static const BITMAPINFOHEADER dib_brush_header_4    = {sizeof(BITMAPINFOHEADER), 16, -16, 1,  4, BI_RGB, 0, 0, 0, 0, 0};
@@ -618,9 +626,9 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     ExtSelectClipRgn(hdc, NULL, RGN_COPY);
 
-    /* DIB pattern brush */
+    /* 8888 DIB pattern brush */
 
-    brush_bi->bmiHeader = dib_brush_header_32;
+    brush_bi->bmiHeader = dib_brush_header_8888;
     brush_bits = (BYTE*)brush_bi + sizeof(BITMAPINFOHEADER);
     memset(brush_bits, 0, 16 * 16 * sizeof(DWORD));
     brush_bits[2] = 0xff;
@@ -645,13 +653,13 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash(bmi, bits, sha1, "top-down dib brush patblt");
+    compare_hash(bmi, bits, sha1, "top-down 8888 dib brush patblt");
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
     DeleteObject(dib_brush);
 
-    /* Bottom-up DIB pattern brush */
+    /* 8888 bottom-up DIB pattern brush */
 
     brush_bi->bmiHeader.biHeight = -brush_bi->bmiHeader.biHeight;
 
@@ -675,8 +683,38 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash(bmi, bits, sha1, "bottom-up dib brush patblt");
+    compare_hash(bmi, bits, sha1, "bottom-up 8888 dib brush patblt");
     memset(bits, 0xcc, dib_size);
+
+    /* 24 bpp dib pattern brush */
+
+    brush_bi->bmiHeader = dib_brush_header_24;
+    brush_bits = (BYTE*)brush_bi + sizeof(BITMAPINFOHEADER);
+    memset(brush_bits, 0, 16 * 16 * 3);
+    brush_bits[0] = brush_bits[3] = brush_bits[6] = brush_bits[8] = 0xff;
+    brush_bits[49] = brush_bits[52] = 0xff;
+
+    dib_brush = CreateDIBPatternBrushPt(brush_bi, DIB_RGB_COLORS);
+
+    SelectObject(hdc, dib_brush);
+    SetBrushOrgEx(hdc, 1, 1, NULL);
+
+    for(i = 0, y = 10; i < 256; i++)
+    {
+        BOOL ret;
+
+        if(!rop_uses_src(rop3[i]))
+        {
+            ret = PatBlt(hdc, 10 + i, y, 100, 20, rop3[i]);
+            ok(ret, "got FALSE for %x\n", rop3[i]);
+            y += 25;
+        }
+    }
+    compare_hash(bmi, bits, sha1, "top-down 24 bpp brush patblt");
+    memset(bits, 0xcc, dib_size);
+
+    SelectObject(hdc, orig_brush);
+    DeleteObject(dib_brush);
 
     /* 555 dib pattern brush */
 
