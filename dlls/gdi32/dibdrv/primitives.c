@@ -32,6 +32,16 @@ static inline DWORD *get_pixel_ptr_32(const dib_info *dib, int x, int y)
     return (DWORD *)((BYTE*)dib->bits + y * dib->stride + x * 4);
 }
 
+static inline DWORD *get_pixel_ptr_24_dword(const dib_info *dib, int x, int y)
+{
+    return (DWORD *)((BYTE*)dib->bits + y * dib->stride) + x * 3 / 4;
+}
+
+static inline BYTE *get_pixel_ptr_24(const dib_info *dib, int x, int y)
+{
+    return (BYTE*)dib->bits + y * dib->stride + x * 3;
+}
+
 static inline WORD *get_pixel_ptr_16(const dib_info *dib, int x, int y)
 {
     return (WORD *)((BYTE*)dib->bits + y * dib->stride + x * 2);
@@ -73,6 +83,87 @@ static void solid_rects_32(const dib_info *dib, int num, const RECT *rc, DWORD a
         for(y = rc->top; y < rc->bottom; y++, start += dib->stride / 4)
             for(x = rc->left, ptr = start; x < rc->right; x++)
                 do_rop_32(ptr++, and, xor);
+    }
+}
+
+static void solid_rects_24(const dib_info *dib, int num, const RECT *rc, DWORD and, DWORD xor)
+{
+    DWORD *ptr, *start;
+    BYTE *byte_ptr, *byte_start;
+    int x, y, i;
+    DWORD and_masks[3], xor_masks[3];
+
+    and_masks[0] = ( and        & 0x00ffffff) | ((and << 24) & 0xff000000);
+    and_masks[1] = ((and >>  8) & 0x0000ffff) | ((and << 16) & 0xffff0000);
+    and_masks[2] = ((and >> 16) & 0x000000ff) | ((and <<  8) & 0xffffff00);
+    xor_masks[0] = ( xor        & 0x00ffffff) | ((xor << 24) & 0xff000000);
+    xor_masks[1] = ((xor >>  8) & 0x0000ffff) | ((xor << 16) & 0xffff0000);
+    xor_masks[2] = ((xor >> 16) & 0x000000ff) | ((xor <<  8) & 0xffffff00);
+
+    for(i = 0; i < num; i++, rc++)
+    {
+        if(rc->left >= rc->right) continue;
+
+        if((rc->left & ~3) == (rc->right & ~3)) /* Special case for lines that start and end in the same DWORD triplet */
+        {
+            byte_start = get_pixel_ptr_24(dib, rc->left, rc->top);
+            for(y = rc->top; y < rc->bottom; y++, byte_start += dib->stride)
+            {
+                for(x = rc->left, byte_ptr = byte_start; x < rc->right; x++)
+                {
+                    do_rop_8(byte_ptr++, and_masks[0] & 0xff, xor_masks[0] & 0xff);
+                    do_rop_8(byte_ptr++, and_masks[1] & 0xff, xor_masks[1] & 0xff);
+                    do_rop_8(byte_ptr++, and_masks[2] & 0xff, xor_masks[2] & 0xff);
+                }
+            }
+        }
+        else
+        {
+            start = get_pixel_ptr_24_dword(dib, rc->left, rc->top);
+            for(y = rc->top; y < rc->bottom; y++, start += dib->stride / 4)
+            {
+                ptr = start;
+
+                switch(rc->left & 3)
+                {
+                case 1:
+                    do_rop_32(ptr++, and_masks[0] | 0x00ffffff, xor_masks[0] & 0xff000000);
+                    do_rop_32(ptr++, and_masks[1], xor_masks[1]);
+                    do_rop_32(ptr++, and_masks[2], xor_masks[2]);
+                    break;
+                case 2:
+                    do_rop_32(ptr++, and_masks[1] | 0x0000ffff, xor_masks[1] & 0xffff0000);
+                    do_rop_32(ptr++, and_masks[2], xor_masks[2]);
+                    break;
+                case 3:
+                    do_rop_32(ptr++, and_masks[2] | 0x000000ff, xor_masks[2] & 0xffffff00);
+                    break;
+                }
+
+                for(x = (rc->left + 3) & ~3; x < (rc->right & ~3); x += 4)
+                {
+                    do_rop_32(ptr++, and_masks[0], xor_masks[0]);
+                    do_rop_32(ptr++, and_masks[1], xor_masks[1]);
+                    do_rop_32(ptr++, and_masks[2], xor_masks[2]);
+                }
+
+                switch(rc->right & 3)
+                {
+                case 1:
+                    do_rop_32(ptr, and_masks[0] | 0xff000000, xor_masks[0] & 0x00ffffff);
+                    break;
+                case 2:
+                    do_rop_32(ptr++, and_masks[0], xor_masks[0]);
+                    do_rop_32(ptr,   and_masks[1] | 0xffff0000, xor_masks[1] & 0x0000ffff);
+                    break;
+                case 3:
+                    do_rop_32(ptr++, and_masks[0], xor_masks[0]);
+                    do_rop_32(ptr++, and_masks[1], xor_masks[1]);
+                    do_rop_32(ptr,   and_masks[2] | 0xffffff00, xor_masks[2] & 0x000000ff);
+                    break;
+                }
+            }
+        }
     }
 }
 
@@ -200,6 +291,54 @@ static void pattern_rects_32(const dib_info *dib, int num, const RECT *rc, const
             {
                 start_and += brush->stride / 4;
                 start_xor += brush->stride / 4;
+            }
+        }
+    }
+}
+
+static void pattern_rects_24(const dib_info *dib, int num, const RECT *rc, const POINT *origin,
+                             const dib_info *brush, void *and_bits, void *xor_bits)
+{
+    BYTE *ptr, *start, *start_and, *and_ptr, *start_xor, *xor_ptr;
+    int x, y, i;
+    POINT offset;
+
+    for(i = 0; i < num; i++, rc++)
+    {
+        offset = calc_brush_offset(rc, brush, origin);
+
+        start = get_pixel_ptr_24(dib, rc->left, rc->top);
+        start_and = (BYTE*)and_bits + offset.y * brush->stride;
+        start_xor = (BYTE*)xor_bits + offset.y * brush->stride;
+
+        for(y = rc->top; y < rc->bottom; y++, start += dib->stride)
+        {
+            and_ptr = start_and + offset.x * 3;
+            xor_ptr = start_xor + offset.x * 3;
+
+            for(x = rc->left, ptr = start; x < rc->right; x++)
+            {
+                do_rop_8(ptr++, *and_ptr++, *xor_ptr++);
+                do_rop_8(ptr++, *and_ptr++, *xor_ptr++);
+                do_rop_8(ptr++, *and_ptr++, *xor_ptr++);
+                if(and_ptr == start_and + brush->width * 3)
+                {
+                    and_ptr = start_and;
+                    xor_ptr = start_xor;
+                }
+            }
+
+            offset.y++;
+            if(offset.y == brush->height)
+            {
+                start_and = and_bits;
+                start_xor = xor_bits;
+                offset.y = 0;
+            }
+            else
+            {
+                start_and += brush->stride;
+                start_xor += brush->stride;
             }
         }
     }
@@ -683,6 +822,127 @@ static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
 
     default:
         FIXME("Unsupported conversion: %d -> 32\n", src->bit_count);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_rect)
+{
+    BYTE *dst_start = dst->bits, *dst_pixel;
+    DWORD src_val;
+    int x, y;
+
+    switch(src->bit_count)
+    {
+    case 32:
+    {
+        DWORD *src_start = get_pixel_ptr_32(src, src_rect->left, src_rect->top), *src_pixel;
+        if(src->funcs == &funcs_8888)
+        {
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                dst_pixel = dst_start;
+                src_pixel = src_start;
+                for(x = src_rect->left; x < src_rect->right; x++)
+                {
+                    src_val = *src_pixel++;
+                    *dst_pixel++ =  src_val        & 0xff;
+                    *dst_pixel++ = (src_val >>  8) & 0xff;
+                    *dst_pixel++ = (src_val >> 16) & 0xff;
+                }
+                dst_start += dst->stride;
+                src_start += src->stride / 4;
+            }
+        }
+        else
+        {
+            FIXME("Unsupported conversion: 32 -> 24\n");
+            return FALSE;
+        }
+        break;
+    }
+
+    case 16:
+    {
+        WORD *src_start = get_pixel_ptr_16(src, src_rect->left, src_rect->top), *src_pixel;
+        if(src->funcs == &funcs_555)
+        {
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                dst_pixel = dst_start;
+                src_pixel = src_start;
+                for(x = src_rect->left; x < src_rect->right; x++)
+                {
+                    src_val = *src_pixel++;
+                    *dst_pixel++ = ((src_val << 3) & 0xf8) | ((src_val >>  2) & 0x07);
+                    *dst_pixel++ = ((src_val >> 2) & 0xf8) | ((src_val >>  7) & 0x07);
+                    *dst_pixel++ = ((src_val >> 7) & 0xf8) | ((src_val >> 12) & 0x07);
+                }
+                dst_start += dst->stride;
+                src_start += src->stride / 2;
+            }
+        }
+        else
+        {
+            FIXME("Unsupported conversion: 16 -> 24\n");
+            return FALSE;
+        }
+        break;
+    }
+
+    case 8:
+    {
+        BYTE *src_start = get_pixel_ptr_8(src, src_rect->left, src_rect->top), *src_pixel;
+        for(y = src_rect->top; y < src_rect->bottom; y++)
+        {
+            dst_pixel = dst_start;
+            src_pixel = src_start;
+            for(x = src_rect->left; x < src_rect->right; x++)
+            {
+                RGBQUAD rgb;
+                src_val = *src_pixel++;
+                if(src_val >= src->color_table_size) src_val = src->color_table_size - 1;
+                rgb = src->color_table[src_val];
+                *dst_pixel++ = rgb.rgbBlue;
+                *dst_pixel++ = rgb.rgbGreen;
+                *dst_pixel++ = rgb.rgbRed;
+            }
+            dst_start += dst->stride;
+            src_start += src->stride;
+        }
+        break;
+    }
+
+    case 4:
+    {
+        BYTE *src_start = get_pixel_ptr_4(src, src_rect->left, src_rect->top), *src_pixel;
+        for(y = src_rect->top; y < src_rect->bottom; y++)
+        {
+            dst_pixel = dst_start;
+            src_pixel = src_start;
+            for(x = src_rect->left; x < src_rect->right; x++)
+            {
+                RGBQUAD rgb;
+                if(x & 1)
+                    src_val = *src_pixel++ & 0xf;
+                else
+                    src_val = (*src_pixel >> 4) & 0xf;
+                if(src_val >= src->color_table_size) src_val = src->color_table_size - 1;
+                rgb = src->color_table[src_val];
+                *dst_pixel++ = rgb.rgbBlue;
+                *dst_pixel++ = rgb.rgbGreen;
+                *dst_pixel++ = rgb.rgbRed;
+            }
+            dst_start += dst->stride;
+            src_start += src->stride;
+        }
+        break;
+    }
+
+    default:
+        FIXME("Unsupported conversion: %d -> 24\n", src->bit_count);
         return FALSE;
     }
 
@@ -1259,6 +1519,14 @@ const primitive_funcs funcs_32 =
     pattern_rects_32,
     colorref_to_pixel_masks,
     convert_to_32
+};
+
+const primitive_funcs funcs_24 =
+{
+    solid_rects_24,
+    pattern_rects_24,
+    colorref_to_pixel_888,
+    convert_to_24
 };
 
 const primitive_funcs funcs_555 =

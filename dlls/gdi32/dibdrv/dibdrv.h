@@ -47,6 +47,7 @@ typedef struct primitive_funcs
 
 extern const primitive_funcs funcs_8888 DECLSPEC_HIDDEN;
 extern const primitive_funcs funcs_32   DECLSPEC_HIDDEN;
+extern const primitive_funcs funcs_24   DECLSPEC_HIDDEN;
 extern const primitive_funcs funcs_555  DECLSPEC_HIDDEN;
 extern const primitive_funcs funcs_16   DECLSPEC_HIDDEN;
 extern const primitive_funcs funcs_8    DECLSPEC_HIDDEN;

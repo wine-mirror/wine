@@ -102,6 +102,10 @@ static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
             dib->funcs = &funcs_32;
         break;
 
+    case 24:
+        dib->funcs = &funcs_24;
+        break;
+
     case 16:
         if(bi->biCompression == BI_RGB)
             bit_fields = bit_fields_555;
