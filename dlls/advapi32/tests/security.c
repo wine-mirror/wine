@@ -3741,7 +3741,6 @@ static void test_GetUserNameA(void)
     ret = GetUserNameA(NULL, &required_len);
     ok(ret == FALSE, "GetUserNameA returned %d\n", ret);
     ok(required_len != 0, "Outputted buffer length was %u\n", required_len);
-    todo_wine
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Last error was %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -3749,7 +3748,6 @@ static void test_GetUserNameA(void)
     ret = GetUserNameA(NULL, &required_len);
     ok(ret == FALSE, "GetUserNameA returned %d\n", ret);
     ok(required_len != 0 && required_len != 1, "Outputted buffer length was %u\n", required_len);
-    todo_wine
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Last error was %u\n", GetLastError());
 
     /* Tests crashes on Windows. */
@@ -3774,7 +3772,6 @@ static void test_GetUserNameA(void)
     ok(ret == FALSE, "GetUserNameA returned %d\n", ret);
     ok(!memcmp(buffer, filler, sizeof(filler)), "Output buffer was altered\n");
     ok(required_len != 0, "Outputted buffer length was %u\n", required_len);
-    todo_wine
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Last error was %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -3783,7 +3780,6 @@ static void test_GetUserNameA(void)
     ret = GetUserNameA(buffer, &buffer_len);
     ok(ret == TRUE, "GetUserNameA returned %d, last error %u\n", ret, GetLastError());
     ok(memcmp(buffer, filler, sizeof(filler)) != 0, "Output buffer was untouched\n");
-    todo_wine
     ok(buffer_len == required_len ||
        broken(buffer_len == required_len / sizeof(WCHAR)), /* XP+ */
        "Outputted buffer length was %u\n", buffer_len);
@@ -3795,11 +3791,9 @@ static void test_GetUserNameA(void)
     buffer_len--;
     ret = GetUserNameA(buffer, &buffer_len);
     ok(ret == FALSE, "GetUserNameA returned %d\n", ret);
-    todo_wine {
     ok(!memcmp(buffer, filler, sizeof(filler)), "Output buffer was untouched\n");
     ok(buffer_len == required_len, "Outputted buffer length was %u\n", buffer_len);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Last error was %u\n", GetLastError());
-    }
 }
 
 static void test_GetUserNameW(void)
@@ -3820,7 +3814,6 @@ static void test_GetUserNameW(void)
     ret = GetUserNameW(NULL, &required_len);
     ok(ret == FALSE, "GetUserNameW returned %d\n", ret);
     ok(required_len != 0, "Outputted buffer length was %u\n", required_len);
-    todo_wine
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Last error was %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -3828,7 +3821,6 @@ static void test_GetUserNameW(void)
     ret = GetUserNameW(NULL, &required_len);
     ok(ret == FALSE, "GetUserNameW returned %d\n", ret);
     ok(required_len != 0 && required_len != 1, "Outputted buffer length was %u\n", required_len);
-    todo_wine
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Last error was %u\n", GetLastError());
 
     /* Tests crash on Windows. */
@@ -3851,7 +3843,6 @@ static void test_GetUserNameW(void)
     ok(ret == FALSE, "GetUserNameW returned %d\n", ret);
     ok(!memcmp(buffer, filler, sizeof(filler)), "Output buffer was altered\n");
     ok(required_len != 0, "Outputted buffer length was %u\n", required_len);
-    todo_wine
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Last error was %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -3872,7 +3863,6 @@ static void test_GetUserNameW(void)
        broken(memcmp(buffer, filler, sizeof(filler)) != 0), /* XP+ */
        "Output buffer was altered\n");
     ok(buffer_len == required_len, "Outputted buffer length was %u\n", buffer_len);
-    todo_wine
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Last error was %u\n", GetLastError());
 }
 
