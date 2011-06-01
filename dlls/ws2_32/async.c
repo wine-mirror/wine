@@ -284,6 +284,7 @@ static HANDLE run_query( HWND hWnd, UINT uMsg, LPTHREAD_START_ROUTINE func,
     if (!thread)
     {
         SetLastError( WSAEWOULDBLOCK );
+        HeapFree( GetProcessHeap(), 0, query );
         return 0;
     }
     CloseHandle( thread );
