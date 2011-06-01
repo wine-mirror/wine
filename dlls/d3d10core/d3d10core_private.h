@@ -209,7 +209,7 @@ void shader_free_signature(struct wined3d_shader_signature *s) DECLSPEC_HIDDEN;
 /* ID3D10BlendState */
 struct d3d10_blend_state
 {
-    const struct ID3D10BlendStateVtbl *vtbl;
+    ID3D10BlendState ID3D10BlendState_iface;
     LONG refcount;
 };
 

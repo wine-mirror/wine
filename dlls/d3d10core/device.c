@@ -968,7 +968,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState(ID3D10Device *ifa
     }
 
     TRACE("Created blend state %p.\n", object);
-    *blend_state = (ID3D10BlendState *)object;
+    *blend_state = &object->ID3D10BlendState_iface;
 
     return S_OK;
 }

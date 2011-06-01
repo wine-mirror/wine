@@ -24,6 +24,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
+static inline struct d3d10_blend_state *impl_from_ID3D10BlendState(ID3D10BlendState *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_blend_state, ID3D10BlendState_iface);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE d3d10_blend_state_QueryInterface(ID3D10BlendState *iface,
@@ -48,7 +53,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_blend_state_QueryInterface(ID3D10BlendSta
 
 static ULONG STDMETHODCALLTYPE d3d10_blend_state_AddRef(ID3D10BlendState *iface)
 {
-    struct d3d10_blend_state *This = (struct d3d10_blend_state *)iface;
+    struct d3d10_blend_state *This = impl_from_ID3D10BlendState(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u.\n", This, refcount);
@@ -58,7 +63,7 @@ static ULONG STDMETHODCALLTYPE d3d10_blend_state_AddRef(ID3D10BlendState *iface)
 
 static ULONG STDMETHODCALLTYPE d3d10_blend_state_Release(ID3D10BlendState *iface)
 {
-    struct d3d10_blend_state *This = (struct d3d10_blend_state *)iface;
+    struct d3d10_blend_state *This = impl_from_ID3D10BlendState(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", This, refcount);
@@ -129,7 +134,7 @@ static const struct ID3D10BlendStateVtbl d3d10_blend_state_vtbl =
 
 HRESULT d3d10_blend_state_init(struct d3d10_blend_state *state)
 {
-    state->vtbl = &d3d10_blend_state_vtbl;
+    state->ID3D10BlendState_iface.lpVtbl = &d3d10_blend_state_vtbl;
     state->refcount = 1;
 
     return S_OK;
