@@ -469,15 +469,15 @@ static BOOL URLCacheContainers_AddContainer(LPCWSTR cache_prefix, LPCWSTR path, 
     pContainer->path = heap_strdupW(path);
     if (!pContainer->path)
     {
-        HeapFree(GetProcessHeap(), 0, pContainer);
+        heap_free(pContainer);
         return FALSE;
     }
 
     pContainer->cache_prefix = heap_alloc((cache_prefix_len + 1) * sizeof(WCHAR));
     if (!pContainer->cache_prefix)
     {
-        HeapFree(GetProcessHeap(), 0, pContainer->path);
-        HeapFree(GetProcessHeap(), 0, pContainer);
+        heap_free(pContainer->path);
+        heap_free(pContainer);
         return FALSE;
     }
 
@@ -489,8 +489,8 @@ static BOOL URLCacheContainers_AddContainer(LPCWSTR cache_prefix, LPCWSTR path, 
     if ((pContainer->hMutex = CreateMutexW(NULL, FALSE, mutex_name)) == NULL)
     {
         ERR("couldn't create mutex (error is %d)\n", GetLastError());
-        HeapFree(GetProcessHeap(), 0, pContainer->path);
-        HeapFree(GetProcessHeap(), 0, pContainer);
+        heap_free(pContainer->path);
+        heap_free(pContainer);
         return FALSE;
     }
 
@@ -505,9 +505,9 @@ static void URLCacheContainer_DeleteContainer(URLCACHECONTAINER * pContainer)
 
     URLCacheContainer_CloseIndex(pContainer);
     CloseHandle(pContainer->hMutex);
-    HeapFree(GetProcessHeap(), 0, pContainer->path);
-    HeapFree(GetProcessHeap(), 0, pContainer->cache_prefix);
-    HeapFree(GetProcessHeap(), 0, pContainer);
+    heap_free(pContainer->path);
+    heap_free(pContainer->cache_prefix);
+    heap_free(pContainer);
 }
 
 void URLCacheContainers_CreateDefaults(void)
@@ -607,7 +607,7 @@ static DWORD URLCacheContainers_FindContainerA(LPCSTR lpszUrl, URLCACHECONTAINER
         return ERROR_OUTOFMEMORY;
 
     ret = URLCacheContainers_FindContainerW(url, ppContainer);
-    HeapFree(GetProcessHeap(), 0, url);
+    heap_free(url);
     return ret;
 }
 
@@ -1263,7 +1263,7 @@ static BOOL URLCache_FindHashW(LPCURLCACHE_HEADER pHeader, LPCWSTR lpszUrl, stru
     }
 
     ret = URLCache_FindHash(pHeader, urlA, ppHashEntry);
-    HeapFree(GetProcessHeap(), 0, urlA);
+    heap_free(urlA);
     return ret;
 }
 
@@ -2328,32 +2328,31 @@ BOOL WINAPI CreateUrlCacheEntryA(
 
     if (lpszUrlName && (url_name = heap_strdupAtoW(lpszUrlName)))
     {
-	if (!lpszFileExtension || (file_extension = heap_strdupAtoW(lpszFileExtension)))
-	{
-	    if (CreateUrlCacheEntryW(url_name, dwExpectedFileSize, file_extension, file_name, dwReserved))
-	    {
-		if (WideCharToMultiByte(CP_ACP, 0, file_name, -1, lpszFileName, MAX_PATH, NULL, NULL) < MAX_PATH)
-		{
-		    bSuccess = TRUE;
-		}
-		else
-		{
-		    dwError = GetLastError();
-		}
-	    }
-	    else
-	    {
-		dwError = GetLastError();
-	    }
-	    HeapFree(GetProcessHeap(), 0, file_extension);
-	}
-	else
-	{
-	    dwError = GetLastError();
-	}
-        HeapFree(GetProcessHeap(), 0, url_name);
-	if (!bSuccess)
-	    SetLastError(dwError);
+        if (!lpszFileExtension || (file_extension = heap_strdupAtoW(lpszFileExtension)))
+        {
+            if (CreateUrlCacheEntryW(url_name, dwExpectedFileSize, file_extension, file_name, dwReserved))
+            {
+                if (WideCharToMultiByte(CP_ACP, 0, file_name, -1, lpszFileName, MAX_PATH, NULL, NULL) < MAX_PATH)
+                {
+                    bSuccess = TRUE;
+                }
+                else
+                {
+                    dwError = GetLastError();
+                }
+            }
+            else
+            {
+                dwError = GetLastError();
+            }
+            heap_free(file_extension);
+        }
+        else
+        {
+            dwError = GetLastError();
+        }
+        heap_free(url_name);
+        if (!bSuccess) SetLastError(dwError);
     }
     return bSuccess;
 }
@@ -2796,8 +2795,8 @@ static BOOL CommitUrlCacheEntryInternal(
 
 cleanup:
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
-    HeapFree(GetProcessHeap(), 0, lpszUrlNameA);
-    HeapFree(GetProcessHeap(), 0, lpszFileExtensionA);
+    heap_free(lpszUrlNameA);
+    heap_free(lpszFileExtensionA);
 
     if (error == ERROR_SUCCESS)
         return TRUE;
@@ -2867,11 +2866,10 @@ BOOL WINAPI CommitUrlCacheEntryA(
                                            file_extension, original_url);
 
 cleanup:
-    HeapFree(GetProcessHeap(), 0, original_url);
-    HeapFree(GetProcessHeap(), 0, file_extension);
-    HeapFree(GetProcessHeap(), 0, local_file_name);
-    HeapFree(GetProcessHeap(), 0, url_name);
-
+    heap_free(original_url);
+    heap_free(file_extension);
+    heap_free(local_file_name);
+    heap_free(url_name);
     return bSuccess;
 }
 
@@ -2918,7 +2916,7 @@ BOOL WINAPI CommitUrlCacheEntryW(
 	}
 	if (header_info)
 	{
-	    HeapFree(GetProcessHeap(), 0, header_info);
+	    heap_free(header_info);
 	    if (!bSuccess)
 		SetLastError(dwError);
 	}
@@ -3103,12 +3101,8 @@ BOOL WINAPI UnlockUrlCacheEntryStream(
     if (!UnlockUrlCacheEntryFileA(pStream->lpszUrl, 0))
         return FALSE;
 
-    /* close file handle */
     CloseHandle(pStream->hFile);
-
-    /* free allocated space */
-    HeapFree(GetProcessHeap(), 0, pStream);
-
+    heap_free(pStream);
     return TRUE;
 }
 
@@ -3184,7 +3178,7 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
     error = URLCacheContainers_FindContainerW(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)
     {
-        HeapFree(GetProcessHeap(), 0, urlA);
+        heap_free(urlA);
         SetLastError(error);
         return FALSE;
     }
@@ -3192,14 +3186,14 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
     error = URLCacheContainer_OpenIndex(pContainer);
     if (error != ERROR_SUCCESS)
     {
-        HeapFree(GetProcessHeap(), 0, urlA);
+        heap_free(urlA);
         SetLastError(error);
         return FALSE;
     }
 
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
     {
-        HeapFree(GetProcessHeap(), 0, urlA);
+        heap_free(urlA);
         return FALSE;
     }
 
@@ -3207,7 +3201,7 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
     {
         URLCacheContainer_UnlockIndex(pContainer, pHeader);
         TRACE("entry %s not found!\n", debugstr_a(urlA));
-        HeapFree(GetProcessHeap(), 0, urlA);
+        heap_free(urlA);
         SetLastError(ERROR_FILE_NOT_FOUND);
         return FALSE;
     }
@@ -3215,8 +3209,7 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
     ret = DeleteUrlCacheEntryInternal(pHeader, pHashEntry);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
-
-    HeapFree(GetProcessHeap(), 0, urlA);
+    heap_free(urlA);
     return ret;
 }
 
@@ -3360,7 +3353,7 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryA(LPCSTR lpszUrlSearchPattern,
         pEntryHandle->lpszUrlSearchPattern = heap_strdupAtoW(lpszUrlSearchPattern);
         if (!pEntryHandle->lpszUrlSearchPattern)
         {
-            HeapFree(GetProcessHeap(), 0, pEntryHandle);
+            heap_free(pEntryHandle);
             return NULL;
         }
     }
@@ -3372,7 +3365,7 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryA(LPCSTR lpszUrlSearchPattern,
 
     if (!FindNextUrlCacheEntryA(pEntryHandle, lpFirstCacheEntryInfo, lpdwFirstCacheEntryInfoBufferSize))
     {
-        HeapFree(GetProcessHeap(), 0, pEntryHandle);
+        heap_free(pEntryHandle);
         return NULL;
     }
     return pEntryHandle;
@@ -3399,7 +3392,7 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryW(LPCWSTR lpszUrlSearchPattern,
         pEntryHandle->lpszUrlSearchPattern = heap_strdupW(lpszUrlSearchPattern);
         if (!pEntryHandle->lpszUrlSearchPattern)
         {
-            HeapFree(GetProcessHeap(), 0, pEntryHandle);
+            heap_free(pEntryHandle);
             return NULL;
         }
     }
@@ -3411,7 +3404,7 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryW(LPCWSTR lpszUrlSearchPattern,
 
     if (!FindNextUrlCacheEntryW(pEntryHandle, lpFirstCacheEntryInfo, lpdwFirstCacheEntryInfoBufferSize))
     {
-        HeapFree(GetProcessHeap(), 0, pEntryHandle);
+        heap_free(pEntryHandle);
         return NULL;
     }
     return pEntryHandle;
@@ -3545,9 +3538,8 @@ BOOL WINAPI FindCloseUrlCache(HANDLE hEnumHandle)
     }
 
     pEntryHandle->dwMagic = 0;
-    HeapFree(GetProcessHeap(), 0, pEntryHandle->lpszUrlSearchPattern);
-    HeapFree(GetProcessHeap(), 0, pEntryHandle);
-
+    heap_free(pEntryHandle->lpszUrlSearchPattern);
+    heap_free(pEntryHandle);
     return TRUE;
 }
 

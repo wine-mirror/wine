@@ -210,7 +210,7 @@ static PCCERT_CONTEXT X509_to_cert_context(X509 *cert)
     if (malloced)
         free(buffer);
     else
-        HeapFree(GetProcessHeap(),0,buffer);
+        heap_free(buffer);
 
     return ret;
 }
@@ -482,7 +482,7 @@ static DWORD init_openssl(void)
 
     pCRYPTO_set_id_callback(ssl_thread_id);
     num_ssl_locks = pCRYPTO_num_locks();
-    ssl_locks = HeapAlloc(GetProcessHeap(), 0, num_ssl_locks * sizeof(CRITICAL_SECTION));
+    ssl_locks = heap_alloc(num_ssl_locks * sizeof(CRITICAL_SECTION));
     if(!ssl_locks)
         return ERROR_OUTOFMEMORY;
 
@@ -582,7 +582,7 @@ void NETCON_unload(void)
     {
         int i;
         for (i = 0; i < num_ssl_locks; i++) DeleteCriticalSection(&ssl_locks[i]);
-        HeapFree(GetProcessHeap(), 0, ssl_locks);
+        heap_free(ssl_locks);
     }
 #endif
 }
