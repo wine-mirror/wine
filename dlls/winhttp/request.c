@@ -1544,7 +1544,7 @@ end:
     return TRUE;
 }
 
-static BOOL handle_redirect( request_t *request )
+static BOOL handle_redirect( request_t *request, DWORD status )
 {
     BOOL ret = FALSE;
     DWORD size, len;
@@ -1626,9 +1626,11 @@ static BOOL handle_redirect( request_t *request )
     if ((index = get_header_index( request, attr_content_type, 0, TRUE )) >= 0) delete_header( request, index );
     if ((index = get_header_index( request, attr_content_length, 0, TRUE )) >= 0 ) delete_header( request, index );
 
-    /* redirects are always GET requests */
-    heap_free( request->verb );
-    request->verb = strdupW( getW );
+    if (status != HTTP_STATUS_REDIRECT_KEEP_VERB)
+    {
+        heap_free( request->verb );
+        request->verb = strdupW( getW );
+    }
     ret = TRUE;
 
 end:
@@ -1840,7 +1842,7 @@ static BOOL receive_response( request_t *request, BOOL async )
             if (request->hdr.disable_flags & WINHTTP_DISABLE_REDIRECTS) break;
 
             drain_content( request );
-            if (!(ret = handle_redirect( request ))) break;
+            if (!(ret = handle_redirect( request, status ))) break;
 
             clear_response_headers( request );
             ret = send_request( request, NULL, 0, NULL, 0, 0, 0, FALSE ); /* recurse synchronously */
