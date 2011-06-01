@@ -95,7 +95,7 @@ __ASM_GLOBAL_FUNC(call_stubless_func,
                   "addl %edx,%esp\n\t"
                   "jmp *%ecx" );
 
-HRESULT WINAPI ObjectStubless(DWORD *args)
+CLIENT_CALL_RETURN WINAPI ObjectStubless(DWORD *args)
 {
     DWORD index = args[0];
     void **iface = (void **)args[2];

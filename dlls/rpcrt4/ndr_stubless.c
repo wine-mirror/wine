@@ -548,10 +548,7 @@ void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
     }
 }
 
-/* the return type should be CLIENT_CALL_RETURN, but this is incompatible
- * with the way gcc returns structures. "void *" should be the largest type
- * that MIDL should allow you to return anyway */
-LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat, ...)
+CLIENT_CALL_RETURN WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat, ...)
 {
     /* pointer to start of stack where arguments start */
     RPC_MESSAGE rpcMsg;
@@ -629,7 +626,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     if (!(pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT))
     {
         pFormat = client_get_handle(&stubMsg, pProcHeader, pHandleFormat, &hBinding);
-        if (!pFormat) return 0;
+        if (!pFormat) goto done;
     }
 
     bV2Format = (pStubDesc->Version >= 0x20000);
@@ -899,9 +896,9 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         client_free_handle(&stubMsg, pProcHeader, pHandleFormat, hBinding);
     }
 
+done:
     TRACE("RetVal = 0x%lx\n", RetVal);
-
-    return RetVal;
+    return *(CLIENT_CALL_RETURN *)&RetVal;
 }
 
 /* Calls a function with the specified arguments, restoring the stack
@@ -1638,7 +1635,7 @@ struct async_call_data
     ULONG_PTR NdrCorrCache[256];
 };
 
-LONG_PTR WINAPIV NdrAsyncClientCall(PMIDL_STUB_DESC pStubDesc,
+CLIENT_CALL_RETURN WINAPIV NdrAsyncClientCall(PMIDL_STUB_DESC pStubDesc,
   PFORMAT_STRING pFormat, ...)
 {
     /* pointer to start of stack where arguments start */
@@ -1658,6 +1655,7 @@ LONG_PTR WINAPIV NdrAsyncClientCall(PMIDL_STUB_DESC pStubDesc,
     const NDR_PROC_HEADER * pProcHeader = (const NDR_PROC_HEADER *)&pFormat[0];
     /* -Oif or -Oicf generated format */
     BOOL bV2Format = FALSE;
+    LONG_PTR RetVal;
     __ms_va_list args;
 
     TRACE("pStubDesc %p, pFormat %p, ...\n", pStubDesc, pFormat);
@@ -1720,7 +1718,7 @@ LONG_PTR WINAPIV NdrAsyncClientCall(PMIDL_STUB_DESC pStubDesc,
     async_call_data->pHandleFormat = pFormat;
 
     pFormat = client_get_handle(pStubMsg, pProcHeader, async_call_data->pHandleFormat, &async_call_data->hBinding);
-    if (!pFormat) return 0;
+    if (!pFormat) goto done;
 
     bV2Format = (pStubDesc->Version >= 0x20000);
 
@@ -1846,8 +1844,10 @@ LONG_PTR WINAPIV NdrAsyncClientCall(PMIDL_STUB_DESC pStubDesc,
         }
     }
 
+done:
     TRACE("returning 0\n");
-    return 0;
+    RetVal = 0;
+    return *(CLIENT_CALL_RETURN *)&RetVal;
 }
 
 RPC_STATUS NdrpCompleteAsyncClientCall(RPC_ASYNC_STATE *pAsync, void *Reply)

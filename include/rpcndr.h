@@ -414,11 +414,17 @@ typedef struct _MIDL_STUBLESS_PROXY_INFO
   PMIDL_SYNTAX_INFO pSyntaxInfo;
 } MIDL_STUBLESS_PROXY_INFO, *PMIDL_STUBLESS_PROXY_INFO;
 
+
+#if defined(__i386__) && !defined(__MSC_VER) && !defined(__MINGW32__) && !defined(__CYGWIN__)
+/* Calling convention for returning structures/unions is different between Windows and gcc on i386 */
+typedef LONG_PTR CLIENT_CALL_RETURN;
+#else
 typedef union _CLIENT_CALL_RETURN
 {
   void *Pointer;
   LONG_PTR Simple;
 } CLIENT_CALL_RETURN;
+#endif
 
 typedef enum {
   STUB_UNMARSHAL,
@@ -645,15 +651,13 @@ RPCRTAPI void RPC_ENTRY
 RPCRTAPI unsigned char* RPC_ENTRY
   NdrUserMarshalSimpleTypeConvert( ULONG *pFlags, unsigned char *pBuffer, unsigned char FormatChar );
 
-/* Note: this should return a CLIENT_CALL_RETURN, but calling convention for
- * returning structures/unions is different between Windows and gcc on i386. */
-LONG_PTR RPC_VAR_ENTRY
+CLIENT_CALL_RETURN RPC_VAR_ENTRY
   NdrClientCall2( PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ... );
-LONG_PTR RPC_VAR_ENTRY
+CLIENT_CALL_RETURN RPC_VAR_ENTRY
   NdrClientCall( PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ... );
-LONG_PTR RPC_VAR_ENTRY
+CLIENT_CALL_RETURN RPC_VAR_ENTRY
   NdrAsyncClientCall( PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ... );
-LONG_PTR RPC_VAR_ENTRY
+CLIENT_CALL_RETURN RPC_VAR_ENTRY
   NdrDcomAsyncClientCall( PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ... );
 
 RPCRTAPI void RPC_ENTRY
