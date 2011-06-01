@@ -4734,7 +4734,8 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                      dwStatusCode == HTTP_STATUS_REDIRECT_METHOD) &&
                     HTTP_HttpQueryInfoW(request,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,NULL) == ERROR_SUCCESS)
                 {
-                    if (strcmpW(request->verb, szGET) && strcmpW(request->verb, szHEAD))
+                    if (strcmpW(request->verb, szGET) && strcmpW(request->verb, szHEAD) &&
+                        dwStatusCode != HTTP_STATUS_REDIRECT_KEEP_VERB)
                     {
                         HeapFree(GetProcessHeap(), 0, request->verb);
                         request->verb = heap_strdupW(szGET);
@@ -4904,7 +4905,8 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
             dwBufferSize=sizeof(szNewLocation);
             if (HTTP_HttpQueryInfoW(request, HTTP_QUERY_LOCATION, szNewLocation, &dwBufferSize, NULL) == ERROR_SUCCESS)
             {
-                if (strcmpW(request->verb, szGET) && strcmpW(request->verb, szHEAD))
+                if (strcmpW(request->verb, szGET) && strcmpW(request->verb, szHEAD) &&
+                    dwCode != HTTP_STATUS_REDIRECT_KEEP_VERB)
                 {
                     HeapFree(GetProcessHeap(), 0, request->verb);
                     request->verb = heap_strdupW(szGET);
