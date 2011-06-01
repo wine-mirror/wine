@@ -54,6 +54,16 @@ typedef struct {
     int unk;
 } D3D7ETest;
 
+#define MAX_ENUMERATION_COUNT 10
+typedef struct
+{
+    unsigned int count;
+    char *callback_description_ptrs[MAX_ENUMERATION_COUNT];
+    char callback_description_strings[MAX_ENUMERATION_COUNT][100];
+    char *callback_name_ptrs[MAX_ENUMERATION_COUNT];
+    char callback_name_strings[MAX_ENUMERATION_COUNT][100];
+} D3D7ELifetimeTest;
+
 /* To compare bad floating point numbers. Not the ideal way to do it,
  * but it should be enough for here */
 #define comparefloat(a, b) ( (((a) - (b)) < 0.0001) && (((a) - (b)) > -0.0001) )
@@ -860,6 +870,24 @@ static HRESULT WINAPI enumDevicesCallbackTest7(LPSTR DeviceDescription, LPSTR De
     return DDENUMRET_OK;
 }
 
+static HRESULT WINAPI enumDevicesLifetimeTest7(LPSTR DeviceDescription, LPSTR DeviceName, LPD3DDEVICEDESC7 lpdd7, LPVOID Context)
+{
+    D3D7ELifetimeTest *ctx = Context;
+
+    if (ctx->count == MAX_ENUMERATION_COUNT)
+    {
+        ok(0, "Enumerated too many devices for context in callback\n");
+        return DDENUMRET_CANCEL;
+    }
+
+    ctx->callback_description_ptrs[ctx->count] = DeviceDescription;
+    strcpy(ctx->callback_description_strings[ctx->count], DeviceDescription);
+    ctx->callback_name_ptrs[ctx->count] = DeviceName;
+    strcpy(ctx->callback_name_strings[ctx->count], DeviceName);
+
+    ctx->count++;
+    return DDENUMRET_OK;
+}
 
 /*  Check the deviceGUID of devices enumerated by
     IDirect3D7_EnumDevices. */
@@ -882,6 +910,75 @@ static void D3D7EnumTest(void)
 
     if(d3d7et.tnlhal)
         ok(d3d7et.hal, "TnLHal device enumerated, but no Hal device found.\n");
+}
+
+static void D3D7EnumLifetimeTest(void)
+{
+    D3D7ELifetimeTest ctx, ctx2;
+    HRESULT hr;
+    unsigned int i;
+
+    ctx.count = 0;
+    hr = IDirect3D7_EnumDevices(lpD3D, enumDevicesLifetimeTest7, &ctx);
+    ok(hr == D3D_OK, "IDirect3D7_EnumDevices returned 0x%08x\n", hr);
+
+    /* The enumeration strings remain valid even after IDirect3D7_EnumDevices finishes. */
+    for (i = 0; i < ctx.count; i++)
+    {
+        ok(!strcmp(ctx.callback_description_ptrs[i], ctx.callback_description_strings[i]),
+           "Got '%s' and '%s'\n", ctx.callback_description_ptrs[i], ctx.callback_description_strings[i]);
+        ok(!strcmp(ctx.callback_name_ptrs[i], ctx.callback_name_strings[i]),
+           "Got '%s' and '%s'\n", ctx.callback_name_ptrs[i], ctx.callback_name_strings[i]);
+    }
+
+    ctx2.count = 0;
+    hr = IDirect3D7_EnumDevices(lpD3D, enumDevicesLifetimeTest7, &ctx2);
+    ok(hr == D3D_OK, "IDirect3D7_EnumDevices returned 0x%08x\n", hr);
+
+    /* The enumeration strings and their order are identical across enumerations. */
+    ok(ctx.count == ctx2.count, "Enumerated %u and %u devices\n", ctx.count, ctx2.count);
+    if (ctx.count == ctx2.count)
+    {
+        for (i = 0; i < ctx.count; i++)
+        {
+            ok(ctx.callback_description_ptrs[i] == ctx2.callback_description_ptrs[i],
+               "Unequal description pointers %p and %p\n", ctx.callback_description_ptrs[i], ctx2.callback_description_ptrs[i]);
+            ok(!strcmp(ctx.callback_description_strings[i], ctx2.callback_description_strings[i]),
+               "Got '%s' and '%s'\n", ctx.callback_description_strings[i], ctx2.callback_description_strings[i]);
+            ok(ctx.callback_name_ptrs[i] == ctx2.callback_name_ptrs[i],
+               "Unequal name pointers %p and %p\n", ctx.callback_name_ptrs[i], ctx2.callback_name_ptrs[i]);
+            ok(!strcmp(ctx.callback_name_strings[i], ctx2.callback_name_strings[i]),
+               "Got '%s' and '%s'\n", ctx.callback_name_strings[i], ctx2.callback_name_strings[i]);
+        }
+    }
+
+    /* Try altering the contents of the enumeration strings. */
+    for (i = 0; i < ctx2.count; i++)
+    {
+        strcpy(ctx2.callback_description_ptrs[i], "Fake Description");
+        strcpy(ctx2.callback_name_ptrs[i], "Fake Device");
+    }
+
+    ctx2.count = 0;
+    hr = IDirect3D7_EnumDevices(lpD3D, enumDevicesLifetimeTest7, &ctx2);
+    ok(hr == D3D_OK, "IDirect3D7_EnumDevices returned 0x%08x\n", hr);
+
+    /* The original contents of the enumeration strings are not restored. */
+    ok(ctx.count == ctx2.count, "Enumerated %u and %u devices\n", ctx.count, ctx2.count);
+    if (ctx.count == ctx2.count)
+    {
+        for (i = 0; i < ctx.count; i++)
+        {
+            ok(ctx.callback_description_ptrs[i] == ctx2.callback_description_ptrs[i],
+               "Unequal description pointers %p and %p\n", ctx.callback_description_ptrs[i], ctx2.callback_description_ptrs[i]);
+            ok(strcmp(ctx.callback_description_strings[i], ctx2.callback_description_strings[i]) != 0,
+               "Got '%s' and '%s'\n", ctx.callback_description_strings[i], ctx2.callback_description_strings[i]);
+            ok(ctx.callback_name_ptrs[i] == ctx2.callback_name_ptrs[i],
+               "Unequal name pointers %p and %p\n", ctx.callback_name_ptrs[i], ctx2.callback_name_ptrs[i]);
+            ok(strcmp(ctx.callback_name_strings[i], ctx2.callback_name_strings[i]) != 0,
+               "Got '%s' and '%s'\n", ctx.callback_name_strings[i], ctx2.callback_name_strings[i]);
+        }
+    }
 }
 
 static void CapsTest(void)
@@ -4093,6 +4190,7 @@ START_TEST(d3d)
         SceneTest();
         LimitTest();
         D3D7EnumTest();
+        D3D7EnumLifetimeTest();
         SetMaterialTest();
         ComputeSphereVisibility();
         CapsTest();

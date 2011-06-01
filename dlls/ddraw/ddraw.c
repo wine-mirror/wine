@@ -39,6 +39,35 @@ static const DDDEVICEIDENTIFIER2 deviceidentifier =
     0
 };
 
+static struct enum_device_entry
+{
+    char interface_name[100];
+    char device_name[100];
+    const GUID *device_guid;
+} device_list7[] =
+{
+    /* T&L HAL device */
+    {
+        "WINE Direct3D7 Hardware Transform and Lighting acceleration using WineD3D",
+        "Wine D3D7 T&L HAL",
+        &IID_IDirect3DTnLHalDevice,
+    },
+
+    /* HAL device */
+    {
+        "WINE Direct3D7 Hardware acceleration using WineD3D",
+        "Wine D3D7 HAL",
+        &IID_IDirect3DHALDevice,
+    },
+
+    /* RGB device */
+    {
+        "WINE Direct3D7 RGB Software Emulation using WineD3D",
+        "Wine D3D7 RGB",
+        &IID_IDirect3DRGBDevice,
+    },
+};
+
 static void STDMETHODCALLTYPE ddraw_null_wined3d_object_destroyed(void *parent) {}
 
 const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops =
@@ -4220,17 +4249,11 @@ static HRESULT WINAPI ddraw1_DuplicateSurface(IDirectDraw *iface, IDirectDrawSur
  *****************************************************************************/
 static HRESULT WINAPI d3d7_EnumDevices(IDirect3D7 *iface, LPD3DENUMDEVICESCALLBACK7 callback, void *context)
 {
-    char interface_name_tnl[] = "WINE Direct3D7 Hardware Transform and Lighting acceleration using WineD3D";
-    char device_name_tnl[] = "Wine D3D7 T&L HAL";
-    char interface_name_hal[] = "WINE Direct3D7 Hardware acceleration using WineD3D";
-    char device_name_hal[] = "Wine D3D7 HAL";
-    char interface_name_rgb[] = "WINE Direct3D7 RGB Software Emulation using WineD3D";
-    char device_name_rgb[] = "Wine D3D7 RGB";
-
     IDirectDrawImpl *This = impl_from_IDirect3D7(iface);
     D3DDEVICEDESC7 device_desc7;
     D3DDEVICEDESC device_desc1;
     HRESULT hr;
+    size_t i;
 
     TRACE("iface %p, callback %p, context %p.\n", iface, callback, context);
 
@@ -4245,13 +4268,12 @@ static HRESULT WINAPI d3d7_EnumDevices(IDirect3D7 *iface, LPD3DENUMDEVICESCALLBA
         LeaveCriticalSection(&ddraw_cs);
         return hr;
     }
-    callback(interface_name_tnl, device_name_tnl, &device_desc7, context);
 
-    device_desc7.deviceGUID = IID_IDirect3DHALDevice;
-    callback(interface_name_hal, device_name_hal, &device_desc7, context);
-
-    device_desc7.deviceGUID = IID_IDirect3DRGBDevice;
-    callback(interface_name_rgb, device_name_rgb, &device_desc7, context);
+    for (i = 0; i < sizeof(device_list7)/sizeof(device_list7[0]); i++)
+    {
+        device_desc7.deviceGUID = *device_list7[i].device_guid;
+        callback(device_list7[i].interface_name, device_list7[i].device_name, &device_desc7, context);
+    }
 
     TRACE("End of enumeration.\n");
 
