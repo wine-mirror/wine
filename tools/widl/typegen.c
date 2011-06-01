@@ -370,6 +370,28 @@ static unsigned int get_stack_size( const type_t *type, const attr_list_t *attrs
     return ROUND_SIZE( stack_size, pointer_size );
 }
 
+static unsigned char get_contexthandle_flags( const type_t *iface, const attr_list_t *attrs,
+                                              const type_t *type )
+{
+    unsigned char flags = 0;
+
+    if (is_attr(iface->attrs, ATTR_STRICTCONTEXTHANDLE)) flags |= NDR_STRICT_CONTEXT_HANDLE;
+
+    if (is_ptr(type) &&
+        !is_attr( type->attrs, ATTR_CONTEXTHANDLE ) &&
+        !is_attr( attrs, ATTR_CONTEXTHANDLE ))
+        flags |= 0x80;
+
+    if (is_attr(attrs, ATTR_IN))
+    {
+        flags |= 0x40;
+        if (!is_attr(attrs, ATTR_OUT)) flags |= NDR_CONTEXT_HANDLE_CANNOT_BE_NULL;
+    }
+    if (is_attr(attrs, ATTR_OUT)) flags |= 0x20;
+
+    return flags;
+}
+
 unsigned char get_struct_fc(const type_t *type)
 {
   int has_pointer = 0;
@@ -2939,27 +2961,26 @@ static unsigned int write_ip_tfs(FILE *file, const attr_list_t *attrs, type_t *t
 
 static unsigned int write_contexthandle_tfs(FILE *file,
                                             const attr_list_t *attrs,
-                                            const type_t *type,
+                                            type_t *type,
+                                            int toplevel_param,
                                             unsigned int *typeformat_offset)
 {
     unsigned int start_offset = *typeformat_offset;
-    unsigned char flags = 0;
+    unsigned char flags = get_contexthandle_flags( current_iface, attrs, type );
 
-    if (is_attr(current_iface->attrs, ATTR_STRICTCONTEXTHANDLE))
-        flags |= NDR_STRICT_CONTEXT_HANDLE;
+    print_start_tfs_comment(file, type, start_offset);
 
-    if (is_ptr(type))
-        flags |= 0x80;
-    if (is_attr(attrs, ATTR_IN))
+    if (flags & 0x80)  /* via ptr */
     {
-        flags |= 0x40;
-        if (!is_attr(attrs, ATTR_OUT))
-            flags |= NDR_CONTEXT_HANDLE_CANNOT_BE_NULL;
+        int pointer_type = get_pointer_fc( type, attrs, toplevel_param );
+        if (!pointer_type) pointer_type = RPC_FC_RP;
+        *typeformat_offset += 4;
+        print_file(file, 2,"0x%x, 0x0,\t/* %s */\n", pointer_type, string_of_type(pointer_type) );
+        print_file(file, 2, "NdrFcShort(0x2),\t /* Offset= 2 (%u) */\n", *typeformat_offset);
+        print_file(file, 0, "/* %2u */\n", *typeformat_offset);
     }
-    if (is_attr(attrs, ATTR_OUT))
-        flags |= 0x20;
 
-    WRITE_FCTYPE(file, FC_BIND_CONTEXT, *typeformat_offset);
+    print_file(file, 2, "0x%02x,\t/* FC_BIND_CONTEXT */\n", RPC_FC_BIND_CONTEXT);
     print_file(file, 2, "0x%x,\t/* Context flags: ", flags);
     /* return and can't be null values overlap */
     if (((flags & 0x21) != 0x21) && (flags & NDR_CONTEXT_HANDLE_CANNOT_BE_NULL))
@@ -2979,7 +3000,7 @@ static unsigned int write_contexthandle_tfs(FILE *file,
     if (flags & 0x80)
         print_file(file, 0, "via ptr, ");
     print_file(file, 0, "*/\n");
-    print_file(file, 2, "0, /* FIXME: rundown routine index*/\n");
+    print_file(file, 2, "0x%x,\t/* rundown routine */\n", get_context_handle_offset( type ));
     print_file(file, 2, "0, /* FIXME: param num */\n");
     *typeformat_offset += 4;
 
@@ -3025,7 +3046,8 @@ static unsigned int write_type_tfs(FILE *file, int indent,
     {
     case TGT_CTXT_HANDLE:
     case TGT_CTXT_HANDLE_POINTER:
-        return write_contexthandle_tfs(file, attrs, type, typeformat_offset);
+        return write_contexthandle_tfs(file, attrs, type,
+                                       context == TYPE_CONTEXT_TOPLEVELPARAM, typeformat_offset);
     case TGT_USER_TYPE:
         return write_user_tfs(file, type, typeformat_offset);
     case TGT_STRING:
