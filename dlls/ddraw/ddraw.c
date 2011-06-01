@@ -4271,8 +4271,16 @@ static HRESULT WINAPI d3d7_EnumDevices(IDirect3D7 *iface, LPD3DENUMDEVICESCALLBA
 
     for (i = 0; i < sizeof(device_list7)/sizeof(device_list7[0]); i++)
     {
+        HRESULT ret;
+
         device_desc7.deviceGUID = *device_list7[i].device_guid;
-        callback(device_list7[i].interface_name, device_list7[i].device_name, &device_desc7, context);
+        ret = callback(device_list7[i].interface_name, device_list7[i].device_name, &device_desc7, context);
+        if (ret != DDENUMRET_OK)
+        {
+            TRACE("Application cancelled the enumeration.\n");
+            LeaveCriticalSection(&ddraw_cs);
+            return D3D_OK;
+        }
     }
 
     TRACE("End of enumeration.\n");

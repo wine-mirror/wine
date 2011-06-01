@@ -54,6 +54,11 @@ typedef struct {
     int unk;
 } D3D7ETest;
 
+typedef struct {
+    HRESULT desired_ret;
+    int total;
+} D3D7ECancelTest;
+
 #define MAX_ENUMERATION_COUNT 10
 typedef struct
 {
@@ -870,6 +875,15 @@ static HRESULT WINAPI enumDevicesCallbackTest7(LPSTR DeviceDescription, LPSTR De
     return DDENUMRET_OK;
 }
 
+static HRESULT WINAPI enumDevicesCancelTest7(LPSTR DeviceDescription, LPSTR DeviceName, LPD3DDEVICEDESC7 lpdd7, LPVOID Context)
+{
+    D3D7ECancelTest *d3d7et = Context;
+
+    d3d7et->total++;
+
+    return d3d7et->desired_ret;
+}
+
 static HRESULT WINAPI enumDevicesLifetimeTest7(LPSTR DeviceDescription, LPSTR DeviceName, LPD3DDEVICEDESC7 lpdd7, LPVOID Context)
 {
     D3D7ELifetimeTest *ctx = Context;
@@ -895,12 +909,14 @@ static void D3D7EnumTest(void)
 {
     HRESULT hr;
     D3D7ETest d3d7et;
+    D3D7ECancelTest d3d7_cancel_test;
 
     hr = IDirect3D7_EnumDevices(lpD3D, NULL, NULL);
     ok(hr == DDERR_INVALIDPARAMS, "IDirect3D7_EnumDevices returned 0x%08x\n", hr);
 
     memset(&d3d7et, 0, sizeof(d3d7et));
-    IDirect3D7_EnumDevices(lpD3D, enumDevicesCallbackTest7, &d3d7et);
+    hr = IDirect3D7_EnumDevices(lpD3D, enumDevicesCallbackTest7, &d3d7et);
+    ok(hr == D3D_OK, "IDirect3D7_EnumDevices returned 0x%08x\n", hr);
 
     /* A couple of games (Delta Force LW and TFD) rely on this behaviour */
     ok(d3d7et.tnlhal < d3d7et.total, "TnLHal device enumerated as only device.\n");
@@ -910,6 +926,23 @@ static void D3D7EnumTest(void)
 
     if(d3d7et.tnlhal)
         ok(d3d7et.hal, "TnLHal device enumerated, but no Hal device found.\n");
+
+    d3d7_cancel_test.desired_ret = DDENUMRET_CANCEL;
+    d3d7_cancel_test.total = 0;
+    hr = IDirect3D7_EnumDevices(lpD3D, enumDevicesCancelTest7, &d3d7_cancel_test);
+    ok(hr == D3D_OK, "IDirect3D7_EnumDevices returned 0x%08x\n", hr);
+
+    ok(d3d7_cancel_test.total == 1, "Enumerated a total of %u devices\n",
+       d3d7_cancel_test.total);
+
+    /* An enumeration callback can return any value besides DDENUMRET_OK to stop enumeration. */
+    d3d7_cancel_test.desired_ret = E_INVALIDARG;
+    d3d7_cancel_test.total = 0;
+    hr = IDirect3D7_EnumDevices(lpD3D, enumDevicesCancelTest7, &d3d7_cancel_test);
+    ok(hr == D3D_OK, "IDirect3D7_EnumDevices returned 0x%08x\n", hr);
+
+    ok(d3d7_cancel_test.total == 1, "Enumerated a total of %u devices\n",
+       d3d7_cancel_test.total);
 }
 
 static void D3D7EnumLifetimeTest(void)
