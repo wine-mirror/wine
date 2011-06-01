@@ -800,7 +800,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilView(ID3D10Devic
     }
 
     TRACE("Created depthstencil view %p.\n", object);
-    *view = (ID3D10DepthStencilView *)object;
+    *view = &object->ID3D10DepthStencilView_iface;
 
     return S_OK;
 }

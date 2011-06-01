@@ -123,7 +123,7 @@ HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d10_device *devi
 /* ID3D10DepthStencilView */
 struct d3d10_depthstencil_view
 {
-    const struct ID3D10DepthStencilViewVtbl *vtbl;
+    ID3D10DepthStencilView ID3D10DepthStencilView_iface;
     LONG refcount;
 };
 

@@ -164,6 +164,11 @@ static HRESULT set_rtdesc_from_resource(D3D10_RENDER_TARGET_VIEW_DESC *desc, ID3
     }
 }
 
+static inline struct d3d10_depthstencil_view *impl_from_ID3D10DepthStencilView(ID3D10DepthStencilView *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_depthstencil_view, ID3D10DepthStencilView_iface);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE d3d10_depthstencil_view_QueryInterface(ID3D10DepthStencilView *iface,
@@ -189,7 +194,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_depthstencil_view_QueryInterface(ID3D10De
 
 static ULONG STDMETHODCALLTYPE d3d10_depthstencil_view_AddRef(ID3D10DepthStencilView *iface)
 {
-    struct d3d10_depthstencil_view *This = (struct d3d10_depthstencil_view *)iface;
+    struct d3d10_depthstencil_view *This = impl_from_ID3D10DepthStencilView(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u.\n", This, refcount);
@@ -199,7 +204,7 @@ static ULONG STDMETHODCALLTYPE d3d10_depthstencil_view_AddRef(ID3D10DepthStencil
 
 static ULONG STDMETHODCALLTYPE d3d10_depthstencil_view_Release(ID3D10DepthStencilView *iface)
 {
-    struct d3d10_depthstencil_view *This = (struct d3d10_depthstencil_view *)iface;
+    struct d3d10_depthstencil_view *This = impl_from_ID3D10DepthStencilView(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", This, refcount);
@@ -280,7 +285,7 @@ static const struct ID3D10DepthStencilViewVtbl d3d10_depthstencil_view_vtbl =
 
 HRESULT d3d10_depthstencil_view_init(struct d3d10_depthstencil_view *view)
 {
-    view->vtbl = &d3d10_depthstencil_view_vtbl;
+    view->ID3D10DepthStencilView_iface.lpVtbl = &d3d10_depthstencil_view_vtbl;
     view->refcount = 1;
 
     return S_OK;
