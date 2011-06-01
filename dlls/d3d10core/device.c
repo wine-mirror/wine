@@ -713,7 +713,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture3D(ID3D10Device *ifac
     }
 
     TRACE("Created 3D texture %p.\n", object);
-    *texture = (ID3D10Texture3D *)object;
+    *texture = &object->ID3D10Texture3D_iface;
 
     return S_OK;
 }

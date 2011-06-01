@@ -251,6 +251,11 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
     return S_OK;
 }
 
+static inline struct d3d10_texture3d *impl_from_ID3D10Texture3D(ID3D10Texture3D *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_texture3d, ID3D10Texture3D_iface);
+}
+
 static HRESULT STDMETHODCALLTYPE d3d10_texture3d_QueryInterface(ID3D10Texture3D *iface, REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
@@ -273,7 +278,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_QueryInterface(ID3D10Texture3D 
 
 static ULONG STDMETHODCALLTYPE d3d10_texture3d_AddRef(ID3D10Texture3D *iface)
 {
-    struct d3d10_texture3d *texture = (struct d3d10_texture3d *)iface;
+    struct d3d10_texture3d *texture = impl_from_ID3D10Texture3D(iface);
     ULONG refcount = InterlockedIncrement(&texture->refcount);
 
     TRACE("%p increasing refcount to %u.\n", texture, refcount);
@@ -291,7 +296,7 @@ static void STDMETHODCALLTYPE d3d10_texture3d_wined3d_object_released(void *pare
 
 static ULONG STDMETHODCALLTYPE d3d10_texture3d_Release(ID3D10Texture3D *iface)
 {
-    struct d3d10_texture3d *texture = (struct d3d10_texture3d *)iface;
+    struct d3d10_texture3d *texture = impl_from_ID3D10Texture3D(iface);
     ULONG refcount = InterlockedDecrement(&texture->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", texture, refcount);
@@ -356,7 +361,7 @@ static UINT STDMETHODCALLTYPE d3d10_texture3d_GetEvictionPriority(ID3D10Texture3
 static HRESULT STDMETHODCALLTYPE d3d10_texture3d_Map(ID3D10Texture3D *iface, UINT sub_resource_idx,
         D3D10_MAP map_type, UINT map_flags, D3D10_MAPPED_TEXTURE3D *mapped_texture)
 {
-    struct d3d10_texture3d *texture = (struct d3d10_texture3d *)iface;
+    struct d3d10_texture3d *texture = impl_from_ID3D10Texture3D(iface);
     struct wined3d_resource *sub_resource;
     WINED3DLOCKED_BOX wined3d_map_desc;
     HRESULT hr;
@@ -384,7 +389,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_Map(ID3D10Texture3D *iface, UIN
 
 static void STDMETHODCALLTYPE d3d10_texture3d_Unmap(ID3D10Texture3D *iface, UINT sub_resource_idx)
 {
-    struct d3d10_texture3d *texture = (struct d3d10_texture3d *)iface;
+    struct d3d10_texture3d *texture = impl_from_ID3D10Texture3D(iface);
     struct wined3d_resource *sub_resource;
 
     TRACE("iface %p, sub_resource_idx %u.\n", iface, sub_resource_idx);
@@ -397,7 +402,7 @@ static void STDMETHODCALLTYPE d3d10_texture3d_Unmap(ID3D10Texture3D *iface, UINT
 
 static void STDMETHODCALLTYPE d3d10_texture3d_GetDesc(ID3D10Texture3D *iface, D3D10_TEXTURE3D_DESC *desc)
 {
-    struct d3d10_texture3d *texture = (struct d3d10_texture3d *)iface;
+    struct d3d10_texture3d *texture = impl_from_ID3D10Texture3D(iface);
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
@@ -435,7 +440,7 @@ HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d10_devic
 {
     HRESULT hr;
 
-    texture->vtbl = &d3d10_texture3d_vtbl;
+    texture->ID3D10Texture3D_iface.lpVtbl = &d3d10_texture3d_vtbl;
     texture->refcount = 1;
     texture->desc = *desc;
 

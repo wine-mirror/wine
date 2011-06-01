@@ -98,7 +98,7 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
 /* ID3D10Texture3D */
 struct d3d10_texture3d
 {
-    const struct ID3D10Texture3DVtbl *vtbl;
+    ID3D10Texture3D ID3D10Texture3D_iface;
     LONG refcount;
 
     struct wined3d_texture *wined3d_texture;
