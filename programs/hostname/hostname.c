@@ -109,7 +109,7 @@ static int hostname_message(int msg)
 
 static void display_computer_name(void)
 {
-    static const WCHAR fmtW[] = {'%','s','\n',0};
+    static const WCHAR fmtW[] = {'%','s','\r','\n',0};
 
     char nameA[256];
     WCHAR nameW[256];
