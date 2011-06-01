@@ -3796,7 +3796,7 @@ end:
     if (hThread != NULL)
         CloseHandle(hThread);
     if (hWnd != NULL)
-        CloseHandle(hWnd);
+        DestroyWindow(hWnd);
     if (hEvent != NULL)
         CloseHandle(hEvent);
     if (hEvent2 != NULL)
