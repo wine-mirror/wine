@@ -145,7 +145,7 @@ HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view,
 /* ID3D10ShaderResourceView */
 struct d3d10_shader_resource_view
 {
-    const struct ID3D10ShaderResourceViewVtbl *vtbl;
+    ID3D10ShaderResourceView ID3D10ShaderResourceView_iface;
     LONG refcount;
 };
 

@@ -468,6 +468,11 @@ HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view,
     return S_OK;
 }
 
+static inline struct d3d10_shader_resource_view *impl_from_ID3D10ShaderResourceView(ID3D10ShaderResourceView *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_shader_resource_view, ID3D10ShaderResourceView_iface);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_QueryInterface(ID3D10ShaderResourceView *iface,
@@ -493,7 +498,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_QueryInterface(ID3D1
 
 static ULONG STDMETHODCALLTYPE d3d10_shader_resource_view_AddRef(ID3D10ShaderResourceView *iface)
 {
-    struct d3d10_shader_resource_view *This = (struct d3d10_shader_resource_view *)iface;
+    struct d3d10_shader_resource_view *This = impl_from_ID3D10ShaderResourceView(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u.\n", This, refcount);
@@ -503,7 +508,7 @@ static ULONG STDMETHODCALLTYPE d3d10_shader_resource_view_AddRef(ID3D10ShaderRes
 
 static ULONG STDMETHODCALLTYPE d3d10_shader_resource_view_Release(ID3D10ShaderResourceView *iface)
 {
-    struct d3d10_shader_resource_view *This = (struct d3d10_shader_resource_view *)iface;
+    struct d3d10_shader_resource_view *This = impl_from_ID3D10ShaderResourceView(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", This, refcount);
@@ -585,7 +590,7 @@ static const struct ID3D10ShaderResourceViewVtbl d3d10_shader_resource_view_vtbl
 
 HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view)
 {
-    view->vtbl = &d3d10_shader_resource_view_vtbl;
+    view->ID3D10ShaderResourceView_iface.lpVtbl = &d3d10_shader_resource_view_vtbl;
     view->refcount = 1;
 
     return S_OK;

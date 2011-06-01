@@ -742,7 +742,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Dev
     }
 
     TRACE("Created shader resource view %p.\n", object);
-    *view = (ID3D10ShaderResourceView *)object;
+    *view = &object->ID3D10ShaderResourceView_iface;
 
     return S_OK;
 }
