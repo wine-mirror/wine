@@ -4810,6 +4810,67 @@ static void test_synchronous_WSAIoctl(void)
     CloseHandle( previous_port );
 }
 
+#define WM_ASYNCCOMPLETE (WM_USER + 100)
+static HWND create_async_message_window(void)
+{
+    static const char class_name[] = "ws2_32 async message window class";
+
+    WNDCLASSEXA wndclass;
+    HWND hWnd;
+
+    wndclass.cbSize         = sizeof(wndclass);
+    wndclass.style          = CS_HREDRAW | CS_VREDRAW;
+    wndclass.lpfnWndProc    = DefWindowProcA;
+    wndclass.cbClsExtra     = 0;
+    wndclass.cbWndExtra     = 0;
+    wndclass.hInstance      = GetModuleHandleA(NULL);
+    wndclass.hIcon          = LoadIconA(NULL, IDI_APPLICATION);
+    wndclass.hIconSm        = LoadIconA(NULL, IDI_APPLICATION);
+    wndclass.hCursor        = LoadCursorA(NULL, IDC_ARROW);
+    wndclass.hbrBackground  = (HBRUSH)(COLOR_WINDOW + 1);
+    wndclass.lpszClassName  = class_name;
+    wndclass.lpszMenuName   = NULL;
+
+    RegisterClassExA(&wndclass);
+
+    hWnd = CreateWindow(class_name, "ws2_32 async message window", WS_OVERLAPPEDWINDOW,
+                        0, 0, 500, 500, NULL, NULL, GetModuleHandleA(NULL), NULL);
+    if (!hWnd)
+    {
+        ok(0, "failed to create window: %u\n", GetLastError());
+        return NULL;
+    }
+
+    return hWnd;
+}
+
+static void test_WSAAsyncGetServByPort(void)
+{
+    HWND hwnd = create_async_message_window();
+    HANDLE ret;
+    char buffer[MAXGETHOSTSTRUCT];
+
+    if (!hwnd)
+        return;
+
+    /* FIXME: The asynchronous window messages should be tested. */
+
+    /* Parameters are not checked when initiating the asynchronous operation.  */
+    ret = WSAAsyncGetServByPort(NULL, 0, 0, NULL, NULL, 0);
+    ok(ret != NULL, "WSAAsyncGetServByPort returned NULL\n");
+
+    ret = WSAAsyncGetServByPort(hwnd, WM_ASYNCCOMPLETE, 0, NULL, NULL, 0);
+    ok(ret != NULL, "WSAAsyncGetServByPort returned NULL\n");
+
+    ret = WSAAsyncGetServByPort(hwnd, WM_ASYNCCOMPLETE, htons(80), NULL, NULL, 0);
+    ok(ret != NULL, "WSAAsyncGetServByPort returned NULL\n");
+
+    ret = WSAAsyncGetServByPort(hwnd, WM_ASYNCCOMPLETE, htons(80), NULL, buffer, MAXGETHOSTSTRUCT);
+    ok(ret != NULL, "WSAAsyncGetServByPort returned NULL\n");
+
+    DestroyWindow(hwnd);
+}
+
 /**************** Main program  ***************/
 
 START_TEST( sock )
@@ -4869,6 +4930,8 @@ START_TEST( sock )
     test_ConnectEx();
 
     test_sioRoutingInterfaceQuery();
+
+    test_WSAAsyncGetServByPort();
 
     /* this is a io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
