@@ -459,6 +459,26 @@ unsigned int get_context_handle_offset( const type_t *type )
     return index;
 }
 
+unsigned int get_generic_handle_offset( const type_t *type )
+{
+    generic_handle_t *gh;
+    unsigned int index = 0;
+
+    while (!is_attr( type->attrs, ATTR_HANDLE ))
+    {
+        if (type_is_alias( type )) type = type_alias_get_aliasee( type );
+        else if (is_ptr( type )) type = type_pointer_get_ref( type );
+        else error( "internal error: %s is not a generic handle\n", type->name );
+    }
+    LIST_FOR_EACH_ENTRY( gh, &generic_handle_list, generic_handle_t, entry )
+    {
+        if (!strcmp( type->name, gh->name )) return index;
+        index++;
+    }
+    error( "internal error: %s is not registered as a generic handle\n", type->name );
+    return index;
+}
+
 /* check for types which require additional prototypes to be generated in the
  * header */
 void check_for_additional_prototype_types(const var_list_t *list)

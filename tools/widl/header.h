@@ -37,6 +37,7 @@ extern void write_type_right(FILE *h, type_t *t, int is_field);
 extern void write_type_decl(FILE *f, type_t *t, const char *name);
 extern void write_type_decl_left(FILE *f, type_t *t);
 extern unsigned int get_context_handle_offset( const type_t *type );
+extern unsigned int get_generic_handle_offset( const type_t *type );
 extern int needs_space_after(type_t *t);
 extern int is_object(const type_t *iface);
 extern int is_local(const attr_list_t *list);

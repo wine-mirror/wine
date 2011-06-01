@@ -392,6 +392,18 @@ static unsigned char get_contexthandle_flags( const type_t *iface, const attr_li
     return flags;
 }
 
+static unsigned int get_rpc_flags( const attr_list_t *attrs )
+{
+    unsigned int flags = 0;
+
+    if (is_attr( attrs, ATTR_IDEMPOTENT )) flags |= 0x0001;
+    if (is_attr( attrs, ATTR_BROADCAST )) flags |= 0x0002;
+    if (is_attr( attrs, ATTR_MAYBE )) flags |= 0x0004;
+    if (is_attr( attrs, ATTR_MESSAGE )) flags |= 0x0100;
+    if (is_attr( attrs, ATTR_ASYNC )) flags |= 0x4000;
+    return flags;
+}
+
 unsigned char get_struct_fc(const type_t *type)
 {
   int has_pointer = 0;
@@ -965,9 +977,92 @@ int is_interpreted_func( const type_t *iface, const var_t *func )
     return (stub_mode != MODE_Os);
 }
 
-static void write_procformatstring_func( FILE *file, int indent,
-                                         const var_t *func, unsigned int *offset )
+static void write_proc_func_header( FILE *file, int indent, const type_t *iface,
+                                    const var_t *func, unsigned int *offset,
+                                    unsigned short num_proc )
 {
+    var_t *var;
+    var_list_t *args = type_get_function_args( func->type );
+    unsigned char explicit_fc, implicit_fc;
+    unsigned char handle_flags;
+    const var_t *handle_var = get_func_handle_var( iface, func, &explicit_fc, &implicit_fc );
+    unsigned char oi_flags = RPC_FC_PROC_OIF_RPCFLAGS | RPC_FC_PROC_OIF_NEWINIT;
+    unsigned int rpc_flags = get_rpc_flags( func->attrs );
+    unsigned int stack_size = 0;
+    unsigned short param_num = 0;
+    unsigned short handle_stack_offset = 0;
+    unsigned short handle_param_num = 0;
+
+    if (is_full_pointer_function( func )) oi_flags |= RPC_FC_PROC_OIF_FULLPTR;
+    if (is_object( iface ))
+    {
+        oi_flags |= RPC_FC_PROC_OIF_OBJECT;
+        stack_size += pointer_size;
+    }
+
+    if (args) LIST_FOR_EACH_ENTRY( var, args, var_t, entry )
+    {
+        if (var == handle_var)
+        {
+            handle_stack_offset = stack_size;
+            handle_param_num = param_num;
+        }
+        stack_size += get_stack_size( var->type, var->attrs, NULL );
+        param_num++;
+    }
+    if (!is_void( type_function_get_rettype( func->type ))) stack_size += pointer_size;
+
+    print_file( file, 0, "/* %u (procedure %s::%s) */\n", *offset, iface->name, func->name );
+    print_file( file, indent, "0x%02x,\t/* %s */\n", implicit_fc,
+                implicit_fc ? string_of_type(implicit_fc) : "explicit handle" );
+    print_file( file, indent, "0x%02x,\n", oi_flags );
+    print_file( file, indent, "NdrFcLong(0x%x),\n", rpc_flags );
+    print_file( file, indent, "NdrFcShort(0x%hx),\t/* method %hu */\n", num_proc, num_proc );
+    print_file( file, indent, "NdrFcShort(0x%hx),\t/* stack size = %hu */\n", stack_size, stack_size );
+    *offset += 10;
+
+    if (implicit_fc) return;
+
+    switch (explicit_fc)
+    {
+    case RPC_FC_BIND_PRIMITIVE:
+        handle_flags = 0;
+        print_file( file, indent, "0x%02x,\t/* %s */\n", explicit_fc, string_of_type(explicit_fc) );
+        print_file( file, indent, "0x%02x,\n", handle_flags );
+        print_file( file, indent, "NdrFcShort(0x%hx),\t/* stack offset = %hu */\n",
+                    handle_stack_offset, handle_stack_offset );
+        *offset += 4;
+        break;
+    case RPC_FC_BIND_GENERIC:
+        handle_flags = type_memsize( handle_var->type );
+        print_file( file, indent, "0x%02x,\t/* %s */\n", explicit_fc, string_of_type(explicit_fc) );
+        print_file( file, indent, "0x%02x,\n", handle_flags );
+        print_file( file, indent, "NdrFcShort(0x%hx),\t/* stack offset = %hu */\n",
+                    handle_stack_offset, handle_stack_offset );
+        print_file( file, indent, "0x%02x,\n", get_generic_handle_offset( handle_var->type ) );
+        print_file( file, indent, "0x%x,\t/* FC_PAD */\n", RPC_FC_PAD);
+        *offset += 6;
+        break;
+    case RPC_FC_BIND_CONTEXT:
+        handle_flags = get_contexthandle_flags( iface, handle_var->attrs, handle_var->type );
+        print_file( file, indent, "0x%02x,\t/* %s */\n", explicit_fc, string_of_type(explicit_fc) );
+        print_file( file, indent, "0x%02x,\n", handle_flags );
+        print_file( file, indent, "NdrFcShort(0x%hx),\t/* stack offset = %hu */\n",
+                    handle_stack_offset, handle_stack_offset );
+        print_file( file, indent, "0x%02x,\n", get_context_handle_offset( handle_var->type ) );
+        print_file( file, indent, "0x%02x,\t/* param %hu */\n", handle_param_num, handle_param_num );
+        *offset += 6;
+        break;
+    }
+}
+
+static void write_procformatstring_func( FILE *file, int indent, const type_t *iface,
+                                         const var_t *func, unsigned int *offset,
+                                         unsigned short num_proc )
+{
+    if (is_interpreted_func( iface, func ))
+        write_proc_func_header( file, indent, iface, func, offset, num_proc );
+
     /* emit argument data */
     if (type_get_function_args(func->type))
     {
@@ -1003,13 +1098,16 @@ static void write_procformatstring_stmts(FILE *file, int indent, const statement
         if (stmt->type == STMT_TYPE && type_get_type(stmt->u.type) == TYPE_INTERFACE)
         {
             const statement_t *stmt_func;
-            if (!pred(stmt->u.type))
-                continue;
-            STATEMENTS_FOR_EACH_FUNC(stmt_func, type_iface_get_stmts(stmt->u.type))
+            const type_t *iface = stmt->u.type;
+            const type_t *parent = type_iface_get_inherit( iface );
+            int count = parent ? count_methods( parent ) : 0;
+
+            if (!pred(iface)) continue;
+            STATEMENTS_FOR_EACH_FUNC(stmt_func, type_iface_get_stmts(iface))
             {
-                const var_t *func = stmt_func->u.var;
+                var_t *func = stmt_func->u.var;
                 if (is_local(func->attrs)) continue;
-                write_procformatstring_func( file, indent, func, offset );
+                write_procformatstring_func( file, indent, iface, func, offset, count++ );
             }
         }
         else if (stmt->type == STMT_LIBRARY)
@@ -4024,10 +4122,10 @@ void write_remoting_arguments(FILE *file, int indent, const var_t *func, const c
 }
 
 
-unsigned int get_size_procformatstring_func(const var_t *func)
+unsigned int get_size_procformatstring_func(const type_t *iface, const var_t *func)
 {
     unsigned int offset = 0;
-    write_procformatstring_func( NULL, 0, func, &offset );
+    write_procformatstring_func( NULL, 0, iface, func, &offset, 0 );
     return offset;
 }
 
@@ -4057,7 +4155,7 @@ unsigned int get_size_procformatstring(const statement_list_t *stmts, type_pred_
         {
             const var_t *func = stmt_func->u.var;
             if (!is_local(func->attrs))
-                size += get_size_procformatstring_func( func );
+                size += get_size_procformatstring_func( iface, func );
         }
     }
     return size;

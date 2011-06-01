@@ -602,7 +602,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
       func->procstring_offset = *proc_offset;
       gen_proxy(iface, func, idx, *proc_offset);
       gen_stub(iface, func, cname, *proc_offset);
-      *proc_offset += get_size_procformatstring_func( func );
+      *proc_offset += get_size_procformatstring_func( iface, func );
     }
   }
 

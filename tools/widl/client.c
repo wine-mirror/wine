@@ -285,7 +285,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         }
 
         /* update proc_offset */
-        *proc_offset += get_size_procformatstring_func( func );
+        *proc_offset += get_size_procformatstring_func( iface, func );
 
         indent--;
         print_client("}\n");
