@@ -1038,7 +1038,7 @@ static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
                     src_val = *src_pixel++;
                     *dst_pixel++ = ((src_val >> 9) & 0x7c00) |
                                    ((src_val >> 6) & 0x03e0) |
-                                   ((src_val >> 3) & 0x001e);
+                                   ((src_val >> 3) & 0x001f);
                 }
                 dst_start += dst->stride / 2;
                 src_start += src->stride / 4;
