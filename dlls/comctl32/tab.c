@@ -1770,6 +1770,7 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
     {
         /* this could be considered broken on 64 bit, but that's how it works -
            only first 4 bytes are copied */
+        dis.itemData = 0;
         memcpy(&dis.itemData, (ULONG_PTR*)TAB_GetItem(infoPtr, iItem)->extra, 4);
     }
 
