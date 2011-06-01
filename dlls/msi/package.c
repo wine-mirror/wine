@@ -1005,7 +1005,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     msi_set_property( package->db, szProductState, bufstr );
 
     len = 0;
-    if (!GetUserNameW( NULL, &len ) && GetLastError() == ERROR_MORE_DATA)
+    if (!GetUserNameW( NULL, &len ) && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
     {
         WCHAR *username;
         if ((username = msi_alloc( len * sizeof(WCHAR) )))
