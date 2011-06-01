@@ -130,6 +130,34 @@ static const char *sha1_graphics_a8b8g8r8[] =
     NULL
 };
 
+static const char *sha1_graphics_24[] =
+{
+    "e993b15c9bd14fb45a15310450b7083c44e42665",
+    "edbd7bab3d957fbc85e89612197cf918f5f5af20",
+    "6a7efb3b6e0b49336df1bd2937ca09a11d976531",
+    "236eb5ca9da70ec7cc719cd2fd291bab14000257",
+    "f98023c7cd8c068f2d7a77ce3600004b90ea12d6",
+    "5c4cb9cea2226fc671bb4a11f8253343ee94bb4b",
+    "fd4be592483623dbc800fe28210a1f0daa71999b",
+    "788b8de98c47974fa9f232a6042ae4ca546ddb7d",
+    "a8772e6c44ba633fb384a7c4b50b435f1406107e",
+    "883bc8f305c602edca785e21cd00f488583fb13f",
+    "3bac4e80993f49dc3926e30524115fca9d7a8026",
+    "91369e35be29059a0665782541db4c8b324c6bb2",
+    "0fa8cf332a56bb6d7e14e85861fdd60f51d70501",
+    "593d694cdcc8349b3bfc8257041dbcb27e61da45",
+    "1036b91d93e31cd1d4740d0c8642e115e5a38188",
+    "3469776cc7d8f6fd3bce17a39eec0b4092294e49",
+    "1cb7f3fcf42c9ca47a0689195ced239a09d3c308",
+    "0bb222e540b82720d4971e4a2fc626899af03e03",
+    "adc20832d8c43f1cf372d8392535492013cd2306",
+    "45649794dcbcabda487f66f7a80fc1bec79047a1",
+    "b4df692ac70a5f9f303270df4641ab014c6cbf46",
+    "8bc3128ba47891366fd7b02fde7ca19100e64b9f",
+    "e649e00efe7fea1eb8b17f7867fe089e5270c44b",
+    NULL
+};
+
 static const char *sha1_graphics_r5g5b5[] =
 {
     "2a2ab8b3c019e70b788ade028b0e9e53ffc529ae",
@@ -630,7 +658,11 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     dib_brush = CreateDIBPatternBrushPt(brush_bi, DIB_RGB_COLORS);
 
     SelectObject(hdc, dib_brush);
-    SetBrushOrgEx(hdc, 100, 100, NULL);
+
+    /* This used to set the x origin to 100 as well, but
+       there's a Windows bug for 24 bpp where the brush's x offset
+       is incorrectly calculated for rops that involve both D and P */
+    SetBrushOrgEx(hdc, 4, 100, NULL);
 
     for(i = 0, y = 10; i < 256; i++)
     {
@@ -879,6 +911,21 @@ static void test_simple_graphics(void)
     orig_bm = SelectObject(mem_dc, dib);
 
     sha1 = sha1_graphics_a8b8g8r8;
+    draw_graphics(mem_dc, bmi, bits, &sha1);
+
+    SelectObject(mem_dc, orig_bm);
+    DeleteObject(dib);
+
+    /* 24 */
+    trace("24\n");
+    bmi->bmiHeader.biBitCount = 24;
+    bmi->bmiHeader.biCompression = BI_RGB;
+
+    dib = CreateDIBSection(0, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(dib != NULL, "ret NULL\n");
+    orig_bm = SelectObject(mem_dc, dib);
+
+    sha1 = sha1_graphics_24;
     draw_graphics(mem_dc, bmi, bits, &sha1);
 
     SelectObject(mem_dc, orig_bm);
