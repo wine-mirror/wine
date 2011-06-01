@@ -887,7 +887,7 @@ int decl_indirect(const type_t *t)
 static unsigned int write_procformatstring_type(FILE *file, int indent,
                                                 const type_t *type,
                                                 const attr_list_t *attrs,
-                                                int is_return)
+                                                int is_return, int is_interpreted)
 {
     unsigned int size;
 
@@ -924,6 +924,11 @@ static unsigned int write_procformatstring_type(FILE *file, int indent,
     }
     else
     {
+        unsigned short offset = type->typestring_offset;
+
+        if (is_interpreted && is_array(type) && type_array_is_decl_as_ptr(type))
+            offset = type->details.array.ptr_tfsoff;
+
         if (is_return)
             print_file(file, indent, "0x52,    /* FC_RETURN_PARAM */\n");
         else if (is_in && is_out)
@@ -935,8 +940,7 @@ static unsigned int write_procformatstring_type(FILE *file, int indent,
 
         size = get_stack_size( type, attrs, NULL );
         print_file(file, indent, "0x%02x,\n", size / pointer_size );
-        print_file(file, indent, "NdrFcShort(0x%x),	/* type offset = %u */\n",
-                   type->typestring_offset, type->typestring_offset);
+        print_file(file, indent, "NdrFcShort(0x%x),	/* type offset = %u */\n", offset, offset);
         size = 4; /* includes param type prefix */
     }
     return size;
@@ -1060,8 +1064,9 @@ static void write_procformatstring_func( FILE *file, int indent, const type_t *i
                                          const var_t *func, unsigned int *offset,
                                          unsigned short num_proc )
 {
-    if (is_interpreted_func( iface, func ))
-        write_proc_func_header( file, indent, iface, func, offset, num_proc );
+    int is_interpreted = is_interpreted_func( iface, func );
+
+    if (is_interpreted) write_proc_func_header( file, indent, iface, func, offset, num_proc );
 
     /* emit argument data */
     if (type_get_function_args(func->type))
@@ -1070,7 +1075,8 @@ static void write_procformatstring_func( FILE *file, int indent, const type_t *i
         LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
         {
             print_file( file, 0, "/* %u (parameter %s) */\n", *offset, var->name );
-            *offset += write_procformatstring_type(file, indent, var->type, var->attrs, FALSE);
+            *offset += write_procformatstring_type(file, indent, var->type, var->attrs,
+                                                   FALSE, is_interpreted);
         }
     }
 
@@ -1085,7 +1091,8 @@ static void write_procformatstring_func( FILE *file, int indent, const type_t *i
     else
     {
         print_file( file, 0, "/* %u (return value) */\n", *offset );
-        *offset += write_procformatstring_type(file, indent, type_function_get_rettype(func->type), NULL, TRUE);
+        *offset += write_procformatstring_type(file, indent, type_function_get_rettype(func->type),
+                                               NULL, TRUE, is_interpreted);
     }
 }
 
@@ -3192,7 +3199,7 @@ static unsigned int write_type_tfs(FILE *file, int indent,
             int ptr_type;
             ptr_type = get_pointer_fc(type, attrs,
                                       context == TYPE_CONTEXT_TOPLEVELPARAM);
-            if (ptr_type != RPC_FC_RP)
+            if (ptr_type != RPC_FC_RP || type_array_is_decl_as_ptr(type))
             {
                 unsigned int absoff = type->typestring_offset;
                 short reloff = absoff - (*typeformat_offset + 2);
@@ -3202,9 +3209,10 @@ static unsigned int write_type_tfs(FILE *file, int indent,
                            string_of_type(ptr_type));
                 print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
                            reloff, reloff, absoff);
-                update_tfsoff( type, off, file );
+                if (ptr_type != RPC_FC_RP) update_tfsoff( type, off, file );
                 *typeformat_offset += 4;
             }
+            type->details.array.ptr_tfsoff = off;
         }
         return off;
     }

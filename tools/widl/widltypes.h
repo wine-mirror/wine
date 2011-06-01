@@ -354,6 +354,7 @@ struct array_details
   unsigned int dim;
   unsigned char ptr_def_fc;
   unsigned char declptr; /* if declared as a pointer */
+  unsigned short ptr_tfsoff;  /* offset of pointer definition for declptr */
 };
 
 struct coclass_details
