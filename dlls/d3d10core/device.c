@@ -681,7 +681,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture2D(ID3D10Device *ifac
         return hr;
     }
 
-    *texture = (ID3D10Texture2D *)object;
+    *texture = &object->ID3D10Texture2D_iface;
 
     TRACE("Created ID3D10Texture2D %p\n", object);
 
@@ -1380,7 +1380,7 @@ static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *
 
     *surface = texture->wined3d_surface;
     wined3d_surface_incref(*surface);
-    ID3D10Texture2D_Release((ID3D10Texture2D *)texture);
+    ID3D10Texture2D_Release(&texture->ID3D10Texture2D_iface);
 
     return S_OK;
 }
@@ -1423,7 +1423,7 @@ static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_par
 
     *surface = texture->wined3d_surface;
     wined3d_surface_incref(*surface);
-    ID3D10Texture2D_Release((ID3D10Texture2D *)texture);
+    ID3D10Texture2D_Release(&texture->ID3D10Texture2D_iface);
 
     return S_OK;
 }
@@ -1464,7 +1464,7 @@ static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_pa
 
     *surface = texture->wined3d_surface;
     wined3d_surface_incref(*surface);
-    ID3D10Texture2D_Release((ID3D10Texture2D *)texture);
+    ID3D10Texture2D_Release(&texture->ID3D10Texture2D_iface);
 
     return S_OK;
 }

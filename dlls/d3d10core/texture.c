@@ -24,11 +24,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
+static inline struct d3d10_texture2d *impl_from_ID3D10Texture2D(ID3D10Texture2D *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_texture2d, ID3D10Texture2D_iface);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE d3d10_texture2d_QueryInterface(ID3D10Texture2D *iface, REFIID riid, void **object)
 {
-    struct d3d10_texture2d *This = (struct d3d10_texture2d *)iface;
+    struct d3d10_texture2d *This = impl_from_ID3D10Texture2D(iface);
 
     TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
 
@@ -56,7 +61,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture2d_QueryInterface(ID3D10Texture2D 
 
 static ULONG STDMETHODCALLTYPE d3d10_texture2d_AddRef(ID3D10Texture2D *iface)
 {
-    struct d3d10_texture2d *This = (struct d3d10_texture2d *)iface;
+    struct d3d10_texture2d *This = impl_from_ID3D10Texture2D(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -77,7 +82,7 @@ static void STDMETHODCALLTYPE d3d10_texture2d_wined3d_object_released(void *pare
 
 static ULONG STDMETHODCALLTYPE d3d10_texture2d_Release(ID3D10Texture2D *iface)
 {
-    struct d3d10_texture2d *This = (struct d3d10_texture2d *)iface;
+    struct d3d10_texture2d *This = impl_from_ID3D10Texture2D(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -166,7 +171,7 @@ static void STDMETHODCALLTYPE d3d10_texture2d_Unmap(ID3D10Texture2D *iface, UINT
 
 static void STDMETHODCALLTYPE d3d10_texture2d_GetDesc(ID3D10Texture2D *iface, D3D10_TEXTURE2D_DESC *desc)
 {
-    struct d3d10_texture2d *This = (struct d3d10_texture2d *)iface;
+    struct d3d10_texture2d *This = impl_from_ID3D10Texture2D(iface);
 
     TRACE("iface %p, desc %p\n", iface, desc);
 
@@ -204,7 +209,7 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
 {
     HRESULT hr;
 
-    texture->vtbl = &d3d10_texture2d_vtbl;
+    texture->ID3D10Texture2D_iface.lpVtbl = &d3d10_texture2d_vtbl;
     texture->refcount = 1;
     texture->desc = *desc;
 
@@ -220,7 +225,7 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
         }
 
         hr = IWineDXGIDevice_create_surface(wine_device, NULL, 0, NULL,
-                (IUnknown *)texture, (void **)&texture->dxgi_surface);
+                (IUnknown *)&texture->ID3D10Texture2D_iface, (void **)&texture->dxgi_surface);
         IWineDXGIDevice_Release(wine_device);
         if (FAILED(hr))
         {

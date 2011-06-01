@@ -84,7 +84,7 @@ void d3d10_device_init(struct d3d10_device *device, void *outer_unknown) DECLSPE
 /* ID3D10Texture2D */
 struct d3d10_texture2d
 {
-    const struct ID3D10Texture2DVtbl *vtbl;
+    ID3D10Texture2D ID3D10Texture2D_iface;
     LONG refcount;
 
     IUnknown *dxgi_surface;
