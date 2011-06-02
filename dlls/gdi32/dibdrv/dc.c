@@ -357,6 +357,37 @@ static void CDECL dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip
     return next->funcs->pSetDeviceClipping( next, vis_rgn, clip_rgn);
 }
 
+static void update_masks( dibdrv_physdev *pdev, INT rop )
+{
+    calc_and_xor_masks( rop, pdev->pen_color, &pdev->pen_and, &pdev->pen_xor );
+    update_brush_rop( pdev, rop );
+    if( GetBkMode( pdev->dev.hdc ) == OPAQUE )
+        calc_and_xor_masks( rop, pdev->bkgnd_color, &pdev->bkgnd_and, &pdev->bkgnd_xor );
+}
+
+/***********************************************************************
+ *           dibdrv_SetDIBColorTable
+ */
+static UINT CDECL dibdrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, const RGBQUAD *colors )
+{
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetDIBColorTable );
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+    TRACE("(%p, %d, %d, %p)\n", dev, pos, count, colors);
+
+    if( pdev->dib.color_table && pos < pdev->dib.color_table_size )
+    {
+        if( pos + count > pdev->dib.color_table_size ) count = pdev->dib.color_table_size - pos;
+        memcpy( pdev->dib.color_table + pos, colors, count * sizeof(RGBQUAD) );
+
+        pdev->pen_color   = pdev->dib.funcs->colorref_to_pixel( &pdev->dib, pdev->pen_colorref );
+        pdev->brush_color = pdev->dib.funcs->colorref_to_pixel( &pdev->dib, pdev->brush_colorref );
+        pdev->bkgnd_color = pdev->dib.funcs->colorref_to_pixel( &pdev->dib, GetBkColor( dev->hdc ) );
+
+        update_masks( pdev, GetROP2( dev->hdc ) );
+    }
+    return next->funcs->pSetDIBColorTable( next, pos, count, colors );
+}
+
 /***********************************************************************
  *           dibdrv_SetROP2
  */
@@ -365,10 +396,7 @@ static INT CDECL dibdrv_SetROP2( PHYSDEV dev, INT rop )
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetROP2 );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
 
-    calc_and_xor_masks(rop, pdev->pen_color, &pdev->pen_and, &pdev->pen_xor);
-    update_brush_rop(pdev, rop);
-    if( GetBkMode(dev->hdc) == OPAQUE )
-        calc_and_xor_masks(rop, pdev->bkgnd_color, &pdev->bkgnd_and, &pdev->bkgnd_xor);
+    update_masks( pdev, rop );
 
     return next->funcs->pSetROP2( next, rop );
 }
@@ -462,7 +490,7 @@ const DC_FUNCTIONS dib_driver =
     dibdrv_SetBkMode,                   /* pSetBkMode */
     dibdrv_SetDCBrushColor,             /* pSetDCBrushColor */
     dibdrv_SetDCPenColor,               /* pSetDCPenColor */
-    NULL,                               /* pSetDIBColorTable */
+    dibdrv_SetDIBColorTable,            /* pSetDIBColorTable */
     NULL,                               /* pSetDIBits */
     NULL,                               /* pSetDIBitsToDevice */
     dibdrv_SetDeviceClipping,           /* pSetDeviceClipping */

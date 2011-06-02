@@ -118,6 +118,7 @@ typedef struct dibdrv_physdev
     DWORD defer;
 
     /* pen */
+    COLORREF pen_colorref;
     DWORD pen_color, pen_and, pen_xor;
     dash_pattern pen_pattern;
     dash_pos dash_pos;
@@ -126,6 +127,7 @@ typedef struct dibdrv_physdev
     /* brush */
     UINT brush_style;
     INT brush_rop;   /* PatBlt, for example, can override the DC's rop2 */
+    COLORREF brush_colorref;
     DWORD brush_color, brush_and, brush_xor;
     dib_info brush_dib;
     void *brush_and_bits, *brush_xor_bits;
