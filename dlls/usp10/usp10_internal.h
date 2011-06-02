@@ -58,6 +58,9 @@
 #define Script_Bengali_Currency 28
 #define Script_Gurmukhi 29
 #define Script_Gurmukhi_Numeric 30
+#define Script_Gujarati 31
+#define Script_Gujarati_Numeric 32
+#define Script_Gujarati_Currency 33
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
