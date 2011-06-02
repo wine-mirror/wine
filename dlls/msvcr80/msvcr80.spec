@@ -195,7 +195,7 @@
 @ cdecl ___unguarded_readlc_active_add_func() msvcrt.___unguarded_readlc_active_add_func
 @ extern __argc msvcrt.__argc
 @ extern __argv msvcrt.__argv
-# extern __badioinfo #don't forward to msvcrt.__badioinfo, it has different size
+### extern __badioinfo #don't forward to msvcrt.__badioinfo, it has different size
 @ cdecl __clean_type_info_names_internal(ptr) msvcr90.__clean_type_info_names_internal
 @ cdecl -arch=i386 __control87_2(long long ptr ptr) msvcrt.__control87_2
 @ stub __create_locale
@@ -283,7 +283,7 @@
 @ cdecl __p__winver() msvcrt.__p__winver
 @ cdecl __p__wpgmptr() msvcrt.__p__wpgmptr
 @ cdecl __pctype_func() msvcrt.__pctype_func
-# extern __pioinfo #don't forward to msvcrt.__pioinfo, it has different size
+### extern __pioinfo #don't forward to msvcrt.__pioinfo, it has different size
 @ stub __pwctype_func
 @ cdecl __pxcptinfoptrs() msvcrt.__pxcptinfoptrs
 @ stub __report_gsfailure
