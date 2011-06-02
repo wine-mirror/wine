@@ -52,6 +52,7 @@ static void ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
 static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Telugu(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Kannada(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static void ContextualShape_Malayalam(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 
 typedef VOID (*ShapeCharGlyphPropProc)( HDC , ScriptCache*, SCRIPT_ANALYSIS*, const WCHAR*, const INT, const WORD*, const INT, WORD*, SCRIPT_CHARPROP*, SCRIPT_GLYPHPROP*);
 
@@ -68,6 +69,7 @@ static void ShapeCharGlyphProp_Oriya( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS
 static void ShapeCharGlyphProp_Tamil( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 static void ShapeCharGlyphProp_Telugu( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 static void ShapeCharGlyphProp_Kannada( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
+static void ShapeCharGlyphProp_Malayalam( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 
 extern const unsigned short wine_shaping_table[];
 extern const unsigned short wine_shaping_forms[LAST_ARABIC_CHAR - FIRST_ARABIC_CHAR + 1][4];
@@ -684,6 +686,8 @@ static const ScriptShapeData ShapingData[] =
     {{ telugu_features, 15}, required_telugu_features, "telu", "tel2", ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
     {{ telugu_features, 15}, required_telugu_features, "knda", "knd2", ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
     {{ telugu_features, 15}, required_telugu_features, "knda", "knd2", ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
+    {{ telugu_features, 15}, required_telugu_features, "mlym", "mlm2", ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
+    {{ telugu_features, 15}, required_telugu_features, "mlym", "mlm2", ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
@@ -1980,6 +1984,18 @@ static void Reorder_Like_Kannada(LPWSTR pwChar, INT start, INT main, INT end, le
     Reorder_Mantra_precede_syllable(pwChar, start, main, end, lexical);
 }
 
+static void Reorder_Like_Malayalam(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lexical)
+{
+    TRACE("Syllable (%i..%i..%i)\n",start,main,end);
+    if (start == main && main == end)  return;
+
+    main = Indic_FindBaseConsonant(pwChar, start, main, end, lexical);
+    if (lexical(pwChar[main]) == lex_Vowel) return;
+
+    Reorder_Ra_follows_mantra_post(pwChar, start, main, end, lexical);
+    Reorder_Mantra_precede_base(pwChar, start, main, end, lexical);
+}
+
 static int sinhala_lex(WCHAR c)
 {
     switch (c)
@@ -2551,6 +2567,60 @@ static void ContextualShape_Kannada(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     HeapFree(GetProcessHeap(),0,input);
 }
 
+static int malayalam_lex(WCHAR c)
+{
+    switch (c)
+    {
+        case 0x0D35: return lex_Consonant;
+        case 0x0D4D: return lex_Halant;
+        case 0x0D57: return lex_Mantra_post;
+        case 0x200C: return lex_ZWNJ;
+        case 0x200D: return lex_ZWJ;
+        default:
+            if (c>=0x0D02 && c<=0x0D03) return lex_Modifier;
+            else if (c>=0x0D05 && c<=0x0D14) return lex_Vowel;
+            else if (c>=0x0D15 && c<=0x0D39) return lex_Consonant;
+            else if (c>=0x0D3E && c<=0x0D44) return lex_Mantra_post;
+            else if (c>=0x0D46 && c<=0x0D48) return lex_Mantra_pre;
+            else if (c>=0x0D60 && c<=0x0D61) return lex_Vowel;
+            else if (c>=0x0D62 && c<=0x0D63) return lex_Mantra_below;
+            else return lex_Generic;
+    }
+}
+
+static const VowelComponents Malayalam_vowels[] = {
+            {0x0D4A, {0x0D46,0x0D3E,0x0000}},
+            {0x0D4B, {0x0D47,0x0D3E,0x0000}},
+            {0x0D4C, {0x0D46,0x0D57,0x0000}},
+            {0x0000, {0x0000,0x0000,0x0000}}};
+
+static void ContextualShape_Malayalam(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+{
+    int cCount = cChars;
+    WCHAR *input;
+
+    if (*pcGlyphs != cChars)
+    {
+        ERR("Number of Glyphs and Chars need to match at the beginning\n");
+        return;
+    }
+
+    input = HeapAlloc(GetProcessHeap(), 0, (cChars*2) * sizeof(WCHAR));
+    memcpy(input, pwcChars, cChars * sizeof(WCHAR));
+
+    /* Step 1: Decompose Vowels */
+    DecomposeVowels(hdc, input,  &cCount, Malayalam_vowels);
+    TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
+
+    /* Step 2: Reorder within Syllables */
+    Indic_ReorderCharacters( input, cCount, malayalam_lex, Reorder_Like_Malayalam);
+    TRACE("reordered string %s\n",debugstr_wn(input,cCount));
+    GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
+    *pcGlyphs = cCount;
+
+    HeapFree(GetProcessHeap(),0,input);
+}
+
 static void ShapeCharGlyphProp_Default( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS* psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD* pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP* pGlyphProp)
 {
     int i,k;
@@ -2947,6 +3017,11 @@ static void ShapeCharGlyphProp_Telugu( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
 static void ShapeCharGlyphProp_Kannada( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp )
 {
     ShapeCharGlyphProp_BaseIndic(hdc, psc, psa, pwcChars, cChars, pwGlyphs, cGlyphs, pwLogClust, pCharProp, pGlyphProp, kannada_lex);
+}
+
+static void ShapeCharGlyphProp_Malayalam( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp )
+{
+    ShapeCharGlyphProp_BaseIndic(hdc, psc, psa, pwcChars, cChars, pwGlyphs, cGlyphs, pwLogClust, pCharProp, pGlyphProp, malayalam_lex);
 }
 
 void SHAPE_CharGlyphProp(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp)

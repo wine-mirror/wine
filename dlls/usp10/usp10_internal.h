@@ -69,6 +69,8 @@
 #define Script_Telugu_Numeric 39
 #define Script_Kannada 40
 #define Script_Kannada_Numeric 41
+#define Script_Malayalam 42
+#define Script_Malayalam_Numeric 43
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
