@@ -74,6 +74,11 @@ typedef struct {
     OPENTYPE_TAG userLang;
 } ScriptCache;
 
+enum {lex_Halant, lex_Composed_Vowel, lex_Mantra_post, lex_Mantra_pre, lex_Mantra_above, lex_Mantra_below, lex_ZWJ, lex_ZWNJ, lex_NBSP, lex_Modifier, lex_Vowel, lex_Consonant, lex_Generic, lex_Ra, lex_Vedic, lex_Anudatta, lex_Nukta};
+
+typedef int (*lexical_function)(WCHAR c);
+typedef void (*reorder_function)(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lex);
+
 #define odd(x) ((x) & 1)
 
 BOOL BIDI_DetermineLevels( LPCWSTR lpString, INT uCount, const SCRIPT_STATE *s,
@@ -86,3 +91,6 @@ void SHAPE_ContextualShaping(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WC
 void SHAPE_ApplyDefaultOpentypeFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, INT cChars, WORD *pwLogClust) DECLSPEC_HIDDEN;
 HRESULT SHAPE_CheckFontForRequiredFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa) DECLSPEC_HIDDEN;
 void SHAPE_CharGlyphProp(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp) DECLSPEC_HIDDEN;
+
+void Indic_ReorderCharacters( LPWSTR input, int cChars, lexical_function lexical_f, reorder_function reorder_f) DECLSPEC_HIDDEN;
+int Indic_FindBaseConsonant(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lex) DECLSPEC_HIDDEN;

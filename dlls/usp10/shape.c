@@ -43,6 +43,7 @@ typedef VOID (*ContextualShapingProc)(HDC, ScriptCache*, SCRIPT_ANALYSIS*,
 static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 
 
 typedef VOID (*ShapeCharGlyphPropProc)( HDC , ScriptCache*, SCRIPT_ANALYSIS*, const WCHAR*, const INT, const WORD*, const INT, WORD*, SCRIPT_CHARPROP*, SCRIPT_GLYPHPROP*);
@@ -279,6 +280,12 @@ typedef struct {
 
 static INT GSUB_apply_lookup(const GSUB_LookupList* lookup, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count);
 
+typedef struct tagVowelComponents
+{
+    WCHAR base;
+    WCHAR parts[3];
+} VowelComponents;
+
 /* the orders of joined_forms and contextual_features need to line up */
 static const char* contextual_features[] =
 {
@@ -400,7 +407,7 @@ static const ScriptShapeData ShapingData[] =
     {{ standard_features, 2}, NULL, "cyrl", "", NULL, NULL},
     {{ standard_features, 2}, NULL, "armn", "", NULL, NULL},
     {{ standard_features, 2}, NULL, "geor", "", NULL, NULL},
-    {{ sinhala_features, 7}, NULL, "sinh", "", NULL, NULL},
+    {{ sinhala_features, 7}, NULL, "sinh", "", ContextualShape_Sinhala, NULL},
     {{ tibetan_features, 2}, NULL, "tibt", "", NULL, ShapeCharGlyphProp_Tibet},
     {{ tibetan_features, 2}, NULL, "tibt", "", NULL, ShapeCharGlyphProp_Tibet},
     {{ tibetan_features, 2}, NULL, "phag", "", ContextualShape_Phags_pa, ShapeCharGlyphProp_Thai},
@@ -1491,6 +1498,160 @@ static void ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     }
 
     HeapFree(GetProcessHeap(),0,context_shape);
+}
+
+static void ReplaceInsertChars(HDC hdc, INT cWalk, INT* pcChars, WCHAR *pwOutChars, const WCHAR *replacements)
+{
+    int i;
+
+    /* Replace */
+    pwOutChars[cWalk] = replacements[0];
+    cWalk=cWalk+1;
+
+    /* Insert */
+    for (i = 1; replacements[i] != 0x0000 && i < 3; i++)
+    {
+        int j;
+        for (j = *pcChars; j > cWalk; j--)
+            pwOutChars[j] = pwOutChars[j-1];
+        *pcChars= *pcChars+1;
+        pwOutChars[cWalk] = replacements[i];
+        cWalk = cWalk+1;
+    }
+}
+
+static void DecomposeVowels(HDC hdc, WCHAR *pwOutChars, INT *pcChars, const VowelComponents vowels[])
+{
+    int i;
+    int cWalk;
+
+    for (cWalk = 0; cWalk < *pcChars; cWalk++)
+    {
+        for (i = 0; vowels[i].base != 0x0; i++)
+        {
+            if (pwOutChars[cWalk] == vowels[i].base)
+            {
+                ReplaceInsertChars(hdc, cWalk, pcChars, pwOutChars, vowels[i].parts);
+                break;
+            }
+        }
+    }
+}
+
+static void Reorder_Ra_follows_base(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lexical)
+{
+    if (start != main && end > start+1 && lexical(pwChar[start]) == lex_Ra && lexical(pwChar[start+1]) == lex_Halant)
+    {
+        int j;
+        WORD Ra = pwChar[start];
+        WORD H = pwChar[start+1];
+
+        TRACE("Doing reorder of Ra to %i\n",main);
+        for (j = start; j < main-1; j++)
+            pwChar[j] = pwChar[j+2];
+        pwChar[main-1] = Ra;
+        pwChar[main] = H;
+    }
+}
+
+static void Reorder_Mantra_precede_base(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lexical)
+{
+    int i;
+
+    /* reorder Mantras */
+    if (end > main)
+    {
+        for (i = 1; i <= end-main; i++)
+        {
+            if (lexical(pwChar[main+i]) == lex_Mantra_pre)
+            {
+                int j;
+                WCHAR c = pwChar[main+i];
+                TRACE("Doing reorder of %x %x\n",c,pwChar[main]);
+                for (j = main+i; j > main; j--)
+                    pwChar[j] = pwChar[j-1];
+                pwChar[main] = c;
+            }
+        }
+    }
+}
+
+static void Reorder_Like_Sinhala(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lexical)
+{
+    TRACE("Syllable (%i..%i..%i)\n",start,main,end);
+    if (start == main && main == end)  return;
+
+    main = Indic_FindBaseConsonant(pwChar, start, main, end, lexical);
+    if (lexical(pwChar[main]) == lex_Vowel) return;
+
+    Reorder_Ra_follows_base(pwChar, start, main, end, lexical);
+    Reorder_Mantra_precede_base(pwChar, start, main, end, lexical);
+}
+
+static int sinhala_lex(WCHAR c)
+{
+    switch (c)
+    {
+        case 0x0DCA: return lex_Halant;
+        case 0x0DCF:
+        case 0x0DDF:
+        case 0x0DD8: return lex_Mantra_post;
+        case 0x0DD9:
+        case 0x0DDB: return lex_Mantra_pre;
+        case 0x0DDA:
+        case 0x0DDC: return lex_Composed_Vowel;
+        case 0x200D: return lex_ZWJ;
+        case 0x200C: return lex_ZWNJ;
+        case 0x00A0: return lex_NBSP;
+        default:
+            if (c>=0x0D82 && c <=0x0D83) return lex_Modifier;
+            else if (c>=0x0D85 && c <=0x0D96) return lex_Vowel;
+            else if (c>=0x0D96 && c <=0x0DC6) return lex_Consonant;
+            else if (c>=0x0DD0 && c <=0x0DD1) return lex_Mantra_post;
+            else if (c>=0x0DD2 && c <=0x0DD3) return lex_Mantra_above;
+            else if (c>=0x0DD4 && c <=0x0DD6) return lex_Mantra_below;
+            else if (c>=0x0DDD && c <=0x0DDE) return lex_Composed_Vowel;
+            else if (c>=0x0DF2 && c <=0x0DF3) return lex_Mantra_post;
+            else return lex_Generic;
+    }
+}
+
+static const VowelComponents Sinhala_vowels[] = {
+            {0x0DDA, {0x0DD9,0x0DCA,0x0}},
+            {0x0DDC, {0x0DD9,0x0DCF,0x0}},
+            {0x0DDD, {0x0DD9,0x0DCF,0x0DCA}},
+            {0x0DDE, {0x0DD9,0x0DDF,0x0}},
+            {0x0000, {0x0000,0x0000,0x0}}};
+
+static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+{
+    int cCount = cChars;
+    WCHAR *input;
+
+    if (*pcGlyphs != cChars)
+    {
+        ERR("Number of Glyphs and Chars need to match at the beginning\n");
+        return;
+    }
+
+    input = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR) * (cChars * 3));
+
+    memcpy(input, pwcChars, cChars * sizeof(WCHAR));
+
+    /* Step 1:  Decompose multi part vowels */
+    DecomposeVowels(hdc, input,  &cCount, Sinhala_vowels);
+
+    TRACE("New double vowel expanded string %s (%i)\n",debugstr_wn(input,cCount),cCount);
+
+    /* Step 2:  Reorder within Syllables */
+    Indic_ReorderCharacters( input, cCount, sinhala_lex, Reorder_Like_Sinhala);
+    TRACE("reordered string %s\n",debugstr_wn(input,cCount));
+
+    /* Step 3:  Get glyphs */
+    GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
+    *pcGlyphs = cCount;
+
+    HeapFree(GetProcessHeap(),0,input);
 }
 
 static void ShapeCharGlyphProp_Default( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS* psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD* pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP* pGlyphProp)
