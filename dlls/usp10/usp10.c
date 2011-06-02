@@ -77,6 +77,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Arabic,     0x750,  0x77f,  0, 0},
     /* Thaana: U+0780–U+07BF */
     { Script_Thaana,     0x780,  0x7bf,  0, 0},
+    /* Devanagari: U+0900–U+097F */
+    { Script_Devanagari, 0x900,  0x97f,  Script_Devanagari_Numeric, 0},
     /* Sinhala: U+0D80–U+0DFF */
     { Script_Sinhala,   0xd80,  0xdff,  0, 0},
     /* Thai: U+0E00–U+0E7F */
@@ -87,6 +89,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Tibetan,   0xf00,  0xfff,  Script_Tibetan_Numeric, 0},
     /* Georgian: U+10A0–U+10FF */
     { Script_Georgian,   0x10a0,  0x10ff,  0, 0},
+    /* Vedic Extensions: U+1CD0-U+1CFF */
+    { Script_Devanagari, 0x1cd0, 0x1cff, Script_Devanagari_Numeric, 0},
     /* Phonetic Extensions: U+1D00–U+1DBF */
     { Script_Latin,      0x1d00, 0x1dbf, 0, 0},
     /* Latin Extended Additional: U+1E00–U+1EFF */
@@ -106,6 +110,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Latin,      0xa700, 0xa7ff, 0, 0},
     /* Phags-pa: U+A840–U+A87F */
     { Script_Phags_pa,   0xa840, 0xa87f, 0, 0},
+    /* Devanagari Extended: U+A8E0-U+A8FF */
+    { Script_Devanagari, 0xa8e0, 0xa8ff, Script_Devanagari_Numeric, 0},
     /* Latin Ligatures: U+FB00–U+FB06 */
     { Script_Latin,      0xfb00, 0xfb06, 0, 0},
     /* Armenian ligatures U+FB13..U+FB17 */
@@ -201,6 +207,12 @@ static const scriptData scriptInformation[] = {
     {{Script_Lao_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_LAO, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('l','a','o',' ')},
+    {{Script_Devanagari, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_HINDI, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 0, 0},
+     MS_MAKE_TAG('d','e','v','a')},
+    {{Script_Devanagari_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_HINDI, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('d','e','v','a')},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -216,7 +228,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[16].props, &scriptInformation[17].props,
     &scriptInformation[18].props, &scriptInformation[19].props,
     &scriptInformation[20].props, &scriptInformation[21].props,
-    &scriptInformation[22].props, &scriptInformation[23].props
+    &scriptInformation[22].props, &scriptInformation[23].props,
+    &scriptInformation[24].props, &scriptInformation[25].props
 };
 
 typedef struct {

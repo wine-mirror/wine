@@ -50,6 +50,9 @@
 #define Script_Thai_Numeric 21
 #define Script_Lao 22
 #define Script_Lao_Numeric 23
+/* Unicode Chapter 9 */
+#define Script_Devanagari 24
+#define Script_Devanagari_Numeric 25
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
