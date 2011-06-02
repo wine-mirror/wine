@@ -93,7 +93,7 @@ struct d3d10_effect_shader_variable
 /* ID3D10EffectType */
 struct d3d10_effect_type
 {
-    const struct ID3D10EffectTypeVtbl *vtbl;
+    ID3D10EffectType ID3D10EffectType_iface;
 
     char *name;
     D3D10_SHADER_VARIABLE_TYPE basetype;

@@ -60,7 +60,7 @@ static const struct ID3D10EffectTypeVtbl d3d10_effect_type_vtbl;
 /* null objects - needed for invalid calls */
 static struct d3d10_effect_technique null_technique = {&d3d10_effect_technique_vtbl};
 static struct d3d10_effect_pass null_pass = {&d3d10_effect_pass_vtbl};
-static struct d3d10_effect_type null_type = {&d3d10_effect_type_vtbl};
+static struct d3d10_effect_type null_type = {{&d3d10_effect_type_vtbl}};
 static struct d3d10_effect_variable null_local_buffer = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_constant_buffer_vtbl,
         &null_local_buffer, &null_type};
 static struct d3d10_effect_variable null_variable = {&d3d10_effect_variable_vtbl,
@@ -95,12 +95,12 @@ static char anonymous_name[] = "$Anonymous";
 static char anonymous_vertexshader_name[] = "vertexshader";
 static char anonymous_pixelshader_name[] = "pixelshader";
 static char anonymous_geometryshader_name[] = "geometryshader";
-static struct d3d10_effect_type anonymous_vs_type = {&d3d10_effect_type_vtbl, anonymous_vertexshader_name,
-        D3D10_SVT_VERTEXSHADER, D3D10_SVC_OBJECT};
-static struct d3d10_effect_type anonymous_ps_type = {&d3d10_effect_type_vtbl, anonymous_pixelshader_name,
-        D3D10_SVT_PIXELSHADER, D3D10_SVC_OBJECT};
-static struct d3d10_effect_type anonymous_gs_type = {&d3d10_effect_type_vtbl, anonymous_geometryshader_name,
-        D3D10_SVT_GEOMETRYSHADER, D3D10_SVC_OBJECT};
+static struct d3d10_effect_type anonymous_vs_type = {{&d3d10_effect_type_vtbl},
+        anonymous_vertexshader_name, D3D10_SVT_VERTEXSHADER, D3D10_SVC_OBJECT};
+static struct d3d10_effect_type anonymous_ps_type = {{&d3d10_effect_type_vtbl},
+        anonymous_pixelshader_name, D3D10_SVT_PIXELSHADER, D3D10_SVC_OBJECT};
+static struct d3d10_effect_type anonymous_gs_type = {{&d3d10_effect_type_vtbl},
+        anonymous_geometryshader_name, D3D10_SVT_GEOMETRYSHADER, D3D10_SVC_OBJECT};
 static struct d3d10_effect_variable anonymous_vs = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl,
         &null_local_buffer, &anonymous_vs_type, &null_shader_variable, anonymous_name};
 static struct d3d10_effect_variable anonymous_ps = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl,
@@ -524,7 +524,7 @@ static HRESULT parse_fx10_type(struct d3d10_effect_type *t, const char *ptr, con
         }
 
         /* create a copy of the original type with some minor changes */
-        t->elementtype->vtbl = &d3d10_effect_type_vtbl;
+        t->elementtype->ID3D10EffectType_iface.lpVtbl = &d3d10_effect_type_vtbl;
         t->elementtype->effect = t->effect;
 
         if (!copy_name(t->name, &t->elementtype->name))
@@ -591,7 +591,7 @@ static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, cons
         return NULL;
     }
 
-    type->vtbl = &d3d10_effect_type_vtbl;
+    type->ID3D10EffectType_iface.lpVtbl = &d3d10_effect_type_vtbl;
     type->id = offset;
     type->effect = effect;
     hr = parse_fx10_type(type, data + offset, data);
@@ -867,7 +867,7 @@ static HRESULT parse_fx10_anonymous_shader(struct d3d10_effect *e, struct d3d10_
 
     t->type_class = D3D10_SVC_OBJECT;
 
-    t->vtbl = &d3d10_effect_type_vtbl;
+    t->ID3D10EffectType_iface.lpVtbl = &d3d10_effect_type_vtbl;
 
     v->type = t;
     v->effect = e;
@@ -1315,7 +1315,7 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_variable *l, const ch
         ERR("Failed to allocate local buffer type memory.\n");
         return E_OUTOFMEMORY;
     }
-    l->type->vtbl = &d3d10_effect_type_vtbl;
+    l->type->ID3D10EffectType_iface.lpVtbl = &d3d10_effect_type_vtbl;
     l->type->type_class = D3D10_SVC_OBJECT;
     l->type->effect = l->effect;
 
@@ -2673,7 +2673,7 @@ static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_variable_GetType
 
     TRACE("iface %p\n", iface);
 
-    return (ID3D10EffectType *)This->type;
+    return &This->type->ID3D10EffectType_iface;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_variable_GetDesc(ID3D10EffectVariable *iface,
@@ -6187,16 +6187,23 @@ static const struct ID3D10EffectSamplerVariableVtbl d3d10_effect_sampler_variabl
 
 /* ID3D10EffectType methods */
 
+static inline struct d3d10_effect_type *impl_from_ID3D10EffectType(ID3D10EffectType *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_effect_type, ID3D10EffectType_iface);
+}
+
 static BOOL STDMETHODCALLTYPE d3d10_effect_type_IsValid(ID3D10EffectType *iface)
 {
+    struct d3d10_effect_type *This = impl_from_ID3D10EffectType(iface);
+
     TRACE("iface %p\n", iface);
 
-    return (struct d3d10_effect_type *)iface != &null_type;
+    return This != &null_type;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_type_GetDesc(ID3D10EffectType *iface, D3D10_EFFECT_TYPE_DESC *desc)
 {
-    struct d3d10_effect_type *This = (struct d3d10_effect_type *)iface;
+    struct d3d10_effect_type *This = impl_from_ID3D10EffectType(iface);
 
     TRACE("iface %p, desc %p\n", iface, desc);
 
@@ -6229,7 +6236,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_type_GetDesc(ID3D10EffectType *ifa
 static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTypeByIndex(ID3D10EffectType *iface,
         UINT index)
 {
-    struct d3d10_effect_type *This = (struct d3d10_effect_type *)iface;
+    struct d3d10_effect_type *This = impl_from_ID3D10EffectType(iface);
     struct d3d10_effect_type *t;
 
     TRACE("iface %p, index %u\n", iface, index);
@@ -6237,20 +6244,20 @@ static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTy
     if (index >= This->member_count)
     {
         WARN("Invalid index specified\n");
-        return (ID3D10EffectType *)&null_type;
+        return &null_type.ID3D10EffectType_iface;
     }
 
     t = (&This->members[index])->type;
 
     TRACE("Returning member %p, %s\n", t, debugstr_a(t->name));
 
-    return (ID3D10EffectType *)t;
+    return &t->ID3D10EffectType_iface;
 }
 
 static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTypeByName(ID3D10EffectType *iface,
         LPCSTR name)
 {
-    struct d3d10_effect_type *This = (struct d3d10_effect_type *)iface;
+    struct d3d10_effect_type *This = impl_from_ID3D10EffectType(iface);
     unsigned int i;
 
     TRACE("iface %p, name %s\n", iface, debugstr_a(name));
@@ -6258,7 +6265,7 @@ static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTy
     if (!name)
     {
         WARN("Invalid name specified\n");
-        return (ID3D10EffectType *)&null_type;
+        return &null_type.ID3D10EffectType_iface;
     }
 
     for (i = 0; i < This->member_count; ++i)
@@ -6270,20 +6277,20 @@ static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTy
             if (!strcmp(typem->name, name))
             {
                 TRACE("Returning type %p.\n", typem->type);
-                return (ID3D10EffectType *)typem->type;
+                return &typem->type->ID3D10EffectType_iface;
             }
         }
     }
 
     WARN("Invalid name specified\n");
 
-    return (ID3D10EffectType *)&null_type;
+    return &null_type.ID3D10EffectType_iface;
 }
 
 static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTypeBySemantic(ID3D10EffectType *iface,
         LPCSTR semantic)
 {
-    struct d3d10_effect_type *This = (struct d3d10_effect_type *)iface;
+    struct d3d10_effect_type *This = impl_from_ID3D10EffectType(iface);
     unsigned int i;
 
     TRACE("iface %p, semantic %s\n", iface, debugstr_a(semantic));
@@ -6291,7 +6298,7 @@ static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTy
     if (!semantic)
     {
         WARN("Invalid semantic specified\n");
-        return (ID3D10EffectType *)&null_type;
+        return &null_type.ID3D10EffectType_iface;
     }
 
     for (i = 0; i < This->member_count; ++i)
@@ -6303,19 +6310,19 @@ static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTy
             if (!strcmp(typem->semantic, semantic))
             {
                 TRACE("Returning type %p.\n", typem->type);
-                return (ID3D10EffectType *)typem->type;
+                return &typem->type->ID3D10EffectType_iface;
             }
         }
     }
 
     WARN("Invalid semantic specified\n");
 
-    return (ID3D10EffectType *)&null_type;
+    return &null_type.ID3D10EffectType_iface;
 }
 
 static LPCSTR STDMETHODCALLTYPE d3d10_effect_type_GetMemberName(ID3D10EffectType *iface, UINT index)
 {
-    struct d3d10_effect_type *This = (struct d3d10_effect_type *)iface;
+    struct d3d10_effect_type *This = impl_from_ID3D10EffectType(iface);
     struct d3d10_effect_type_member *typem;
 
     TRACE("iface %p, index %u\n", iface, index);
@@ -6335,7 +6342,7 @@ static LPCSTR STDMETHODCALLTYPE d3d10_effect_type_GetMemberName(ID3D10EffectType
 
 static LPCSTR STDMETHODCALLTYPE d3d10_effect_type_GetMemberSemantic(ID3D10EffectType *iface, UINT index)
 {
-    struct d3d10_effect_type *This = (struct d3d10_effect_type *)iface;
+    struct d3d10_effect_type *This = impl_from_ID3D10EffectType(iface);
     struct d3d10_effect_type_member *typem;
 
     TRACE("iface %p, index %u\n", iface, index);
