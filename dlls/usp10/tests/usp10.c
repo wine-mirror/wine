@@ -748,6 +748,19 @@ static void test_ScriptShapeOpenType(HDC hdc)
                             {1,{{SCRIPT_JUSTIFY_NONE,0,0,0,0,0},0}},
                             {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}} };
 
+    /* Devanagari */
+    static const WCHAR test_devanagari[] = {0x0926, 0x0947, 0x0935, 0x0928, 0x093e, 0x0917, 0x0930, 0x0940};
+    static const shapeTest_char devanagari_c[] = {{0,{0,0}},{0,{0,0}},{2,{0,0}},{3,{0,0}},{3,{0,0}},{5,{0,0}},{6,{0,0}},{6,{0,0}}};
+    static const shapeTest_glyph devanagari_g[] = {
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,0,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,0,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,0,0,0,0,0},0}} };
+
     if (!pScriptItemizeOpenType || !pScriptShapeOpenType)
     {
         win_skip("ScriptShapeOpenType not available on this platform\n");
@@ -841,6 +854,14 @@ static void test_ScriptShapeOpenType(HDC hdc)
     if (hfont != NULL)
     {
         test_shape_ok_valid(test_valid, hdc, test_tibetan, 17, &Control, &State, 0, 17, tibetan_c, tibetan_g);
+        SelectObject(hdc, hfont_orig);
+        DeleteObject(hfont);
+    }
+
+    test_valid = find_font_for_range(hdc, "Mangal", 15, test_devanagari[0], &hfont, &hfont_orig);
+    if (hfont != NULL)
+    {
+        test_shape_ok_valid(test_valid, hdc, test_devanagari, 8, &Control, &State, 0, 8, devanagari_c, devanagari_g);
         SelectObject(hdc, hfont_orig);
         DeleteObject(hfont);
     }
