@@ -12049,6 +12049,85 @@ static void ds_size_test(IDirect3DDevice9 *device)
     IDirect3DSurface9_Release(old_ds);
 }
 
+static void unbound_sampler_test(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    IDirect3DPixelShader9 *ps;
+    IDirect3DSurface9 *rt, *old_rt;
+    DWORD color;
+
+    static const DWORD ps_code[] =
+    {
+        0xffff0200,                                     /* ps_2_0           */
+        0x0200001f, 0x90000000, 0xa00f0800,             /* dcl_2d s0        */
+        0x0200001f, 0x80000000, 0xb00f0000,             /* dcl t0           */
+        0x03000042, 0x800f0000, 0xb0e40000, 0xa0e40800, /* texld r0, t0, s0 */
+        0x02000001, 0x800f0800, 0x80e40000,             /* mov oC0, r0      */
+        0x0000ffff,                                     /* end              */
+    };
+
+    static const struct
+    {
+        float x, y, z;
+        float u, v;
+    }
+    quad[] =
+    {
+        {-1.0f,  -1.0f,  0.1f,   0.0f,   0.0f},
+        {-1.0f,   1.0f,  0.1f,   1.0f,   0.0f},
+        { 1.0f,  -1.0f,  0.1f,   0.0f,   1.0f},
+        { 1.0f,   1.0f,  0.1f,   1.0f,   1.0f}
+    };
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStage failed, %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreatePixelShader(device, ps_code, &ps);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_CreatePixelShader failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 64, 64, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, TRUE, &rt, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateRenderTarget failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &old_rt);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_GetRenderTarget failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderTarget failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1 );
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetFVF failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x56ffffff, 0, 0);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_Clear failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetPixelShader(device, ps);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetPixelShader failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_BeginScene failed, hr %#x.\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_DrawPrimitiveUP failed, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_EndScene failed, hr %#x.\n", hr);
+    }
+
+    color = getPixelColorFromSurface(rt, 32, 32);
+    todo_wine ok(color == 0x56000000, "Unbound sampler color is %#x.\n", color);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, old_rt);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderTarget failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetPixelShader failed, hr %#x.\n", hr);
+
+    IDirect3DSurface9_Release(rt);
+    IDirect3DSurface9_Release(old_rt);
+    IDirect3DPixelShader9_Release(ps);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -12192,6 +12271,7 @@ START_TEST(visual)
             cnd_test(device_ptr);
             if (caps.PixelShaderVersion >= D3DPS_VERSION(2, 0)) {
                 dp2add_ps_test(device_ptr);
+                unbound_sampler_test(device_ptr);
                 if (caps.PixelShaderVersion >= D3DPS_VERSION(3, 0) && caps.VertexShaderVersion >= D3DVS_VERSION(3, 0)) {
                     nested_loop_test(device_ptr);
                     pretransformed_varying_test(device_ptr);
