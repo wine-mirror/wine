@@ -19,6 +19,8 @@
 #ifndef __WINE_D3DVEC_INL
 #define __WINE_D3DVEC_INL
 
+#include <math.h>
+
 /*** constructors ***/
 
 inline _D3DVECTOR::_D3DVECTOR(D3DVALUE f)
