@@ -1254,7 +1254,7 @@ static void test_removeimage(void)
 static void test_delete_selection(void)
 {
     HWND hTab;
-    DWORD ret;
+    INT ret;
 
     hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE, 4);
     ok(hTab != NULL, "Failed to create tab control\n");
@@ -1312,8 +1312,8 @@ static void test_TCM_SETITEMEXTRA(void)
 
 static void test_TCS_OWNERDRAWFIXED(void)
 {
-    LPARAM lparam, lparam2;
-    ULONG_PTR itemdata;
+    LPARAM lparam;
+    ULONG_PTR itemdata, itemdata2;
     TCITEMA item;
     HWND hTab;
     BOOL ret;
@@ -1338,7 +1338,7 @@ static void test_TCS_OWNERDRAWFIXED(void)
 
     itemdata = 0;
     memset(&itemdata, 0xde, 4);
-    ok(g_drawitem.itemData == itemdata, "got %lx, expected %lx\n", g_drawitem.itemData, itemdata);
+    ok(g_drawitem.itemData == itemdata, "got 0x%lx, expected 0x%lx\n", g_drawitem.itemData, itemdata);
 
     DestroyWindow(hTab);
 
@@ -1368,7 +1368,8 @@ static void test_TCS_OWNERDRAWFIXED(void)
     ShowWindow(hTab, SW_SHOW);
     RedrawWindow(hTab, NULL, 0, RDW_UPDATENOW);
 
-    ok(*(ULONG_PTR*)g_drawitem.itemData == lparam, "got %lx, expected %lx\n", g_drawitem.itemData, lparam);
+    memset(&itemdata, 0xde, sizeof(ULONG_PTR));
+    ok(*(ULONG_PTR*)g_drawitem.itemData == itemdata, "got 0x%lx, expected 0x%lx\n", g_drawitem.itemData, itemdata);
 
     DestroyWindow(hTab);
 
@@ -1397,11 +1398,11 @@ static void test_TCS_OWNERDRAWFIXED(void)
     ShowWindow(hTab, SW_SHOW);
     RedrawWindow(hTab, NULL, 0, RDW_UPDATENOW);
 
-    lparam = 0;
-    memset(&lparam, 0xde, 4);
-    memset(&lparam2, 0xde, sizeof(LPARAM)-1);
-    ok(g_drawitem.itemData == lparam || broken(g_drawitem.itemData == lparam2) /* win98 */,
-        "got 0x%lx, expected 0x%lx\n", g_drawitem.itemData, lparam);
+    itemdata = itemdata2 = 0;
+    memset(&itemdata, 0xde, 4);
+    memset(&itemdata2, 0xde, sizeof(LPARAM)-1);
+    ok(g_drawitem.itemData == itemdata || broken(g_drawitem.itemData == itemdata2) /* win98 */,
+        "got 0x%lx, expected 0x%lx\n", g_drawitem.itemData, itemdata);
 
     DestroyWindow(hTab);
 }
