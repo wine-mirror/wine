@@ -3410,6 +3410,8 @@ static BOOL CheckTextureCapability(const struct wined3d_adapter *adapter, const 
         case WINED3DFMT_R16G16B16A16_SNORM:
         case WINED3DFMT_R10G10B10_SNORM_A2_UNORM:
         case WINED3DFMT_R10G11B11_SNORM:
+        case WINED3DFMT_R16:
+        case WINED3DFMT_AL16:
             TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
             return FALSE;
 

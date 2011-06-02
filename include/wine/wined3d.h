@@ -252,6 +252,8 @@ enum wined3d_format_id
     WINED3DFMT_NVHS                         = WINEMAKEFOURCC('N','V','H','S'),
     WINED3DFMT_INTZ                         = WINEMAKEFOURCC('I','N','T','Z'),
     WINED3DFMT_NULL                         = WINEMAKEFOURCC('N','U','L','L'),
+    WINED3DFMT_R16                          = WINEMAKEFOURCC(' ','R','1','6'),
+    WINED3DFMT_AL16                         = WINEMAKEFOURCC('A','L','1','6'),
 
     WINED3DFMT_FORCE_DWORD = 0xffffffff
 };

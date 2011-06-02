@@ -134,6 +134,9 @@ static const struct StaticPixelFormatDesc formats[] =
     {WINED3DFMT_NVHU,                       0x0,        0x0,        0x0,        0x0,        2,      0,      0},
     {WINED3DFMT_NVHS,                       0x0,        0x0,        0x0,        0x0,        2,      0,      0},
     {WINED3DFMT_NULL,                       0xff000000, 0x000000ff, 0x0000ff00, 0x00ff0000, 4,      0,      0},
+    /* Unsure about them, could not find a Windows driver that supports them */
+    {WINED3DFMT_R16,                        0x0,        0x0000ffff, 0x0,        0x0,        2,      0,      0},
+    {WINED3DFMT_AL16,                       0xffff0000, 0x0,        0x0,        0x0,        4,      0,      0},
 };
 
 struct wined3d_format_base_flags
@@ -1765,6 +1768,8 @@ const char *debug_d3dformat(enum wined3d_format_id format_id)
         FMT_TO_STR(WINED3DFMT_B8G8R8X8_UNORM);
         FMT_TO_STR(WINED3DFMT_INTZ);
         FMT_TO_STR(WINED3DFMT_NULL);
+        FMT_TO_STR(WINED3DFMT_R16);
+        FMT_TO_STR(WINED3DFMT_AL16);
 #undef FMT_TO_STR
         default:
         {
