@@ -997,7 +997,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilState(ID3D10Devi
     }
 
     TRACE("Created depthstencil state %p.\n", object);
-    *depth_stencil_state = (ID3D10DepthStencilState *)object;
+    *depth_stencil_state = &object->ID3D10DepthStencilState_iface;
 
     return S_OK;
 }

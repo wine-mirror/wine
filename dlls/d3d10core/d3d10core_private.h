@@ -218,7 +218,7 @@ HRESULT d3d10_blend_state_init(struct d3d10_blend_state *state) DECLSPEC_HIDDEN;
 /* ID3D10DepthStencilState */
 struct d3d10_depthstencil_state
 {
-    const struct ID3D10DepthStencilStateVtbl *vtbl;
+    ID3D10DepthStencilState ID3D10DepthStencilState_iface;
     LONG refcount;
 };
 
