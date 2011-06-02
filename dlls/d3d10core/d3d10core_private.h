@@ -245,7 +245,7 @@ HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state) DECLSPEC_HID
 /* ID3D10Query */
 struct d3d10_query
 {
-    const struct ID3D10QueryVtbl *vtbl;
+    ID3D10Query ID3D10Query_iface;
     LONG refcount;
 };
 

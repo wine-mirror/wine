@@ -24,6 +24,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
+static inline struct d3d10_query *impl_from_ID3D10Query(ID3D10Query *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_query, ID3D10Query_iface);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE d3d10_query_QueryInterface(ID3D10Query *iface, REFIID riid, void **object)
@@ -48,7 +53,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_query_QueryInterface(ID3D10Query *iface, 
 
 static ULONG STDMETHODCALLTYPE d3d10_query_AddRef(ID3D10Query *iface)
 {
-    struct d3d10_query *This = (struct d3d10_query *)iface;
+    struct d3d10_query *This = impl_from_ID3D10Query(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u.\n", This, refcount);
@@ -58,7 +63,7 @@ static ULONG STDMETHODCALLTYPE d3d10_query_AddRef(ID3D10Query *iface)
 
 static ULONG STDMETHODCALLTYPE d3d10_query_Release(ID3D10Query *iface)
 {
-    struct d3d10_query *This = (struct d3d10_query *)iface;
+    struct d3d10_query *This = impl_from_ID3D10Query(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", This, refcount);
@@ -159,7 +164,7 @@ static const struct ID3D10QueryVtbl d3d10_query_vtbl =
 
 HRESULT d3d10_query_init(struct d3d10_query *query)
 {
-    query->vtbl = &d3d10_query_vtbl;
+    query->ID3D10Query_iface.lpVtbl = &d3d10_query_vtbl;
     query->refcount = 1;
 
     return S_OK;

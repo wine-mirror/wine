@@ -1084,7 +1084,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateQuery(ID3D10Device *iface,
     }
 
     TRACE("Created query %p.\n", object);
-    *query = (ID3D10Query *)object;
+    *query = &object->ID3D10Query_iface;
 
     return S_OK;
 }
