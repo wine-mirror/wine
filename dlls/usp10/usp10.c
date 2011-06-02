@@ -91,6 +91,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Tamil,      0xb80,  0xbff,  Script_Tamil_Numeric, 0},
     /* Telugu: U+0C00–U+0C7F */
     { Script_Telugu,     0xc00,  0xc7f,  Script_Telugu_Numeric, 0},
+    /* Kannada: U+0C80–U+0CFF */
+    { Script_Kannada,    0xc80,  0xcff,  Script_Kannada_Numeric, 0},
     /* Sinhala: U+0D80–U+0DFF */
     { Script_Sinhala,   0xd80,  0xdff,  0, 0},
     /* Thai: U+0E00–U+0E7F */
@@ -267,6 +269,12 @@ static const scriptData scriptInformation[] = {
     {{Script_Telugu_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_TELUGU, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('t','e','l','u')},
+    {{Script_Kannada, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_KANNADA, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 0, 0},
+     MS_MAKE_TAG('k','n','d','a')},
+    {{Script_Kannada_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_KANNADA, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('k','n','d','a')},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -290,7 +298,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[32].props, &scriptInformation[33].props,
     &scriptInformation[34].props, &scriptInformation[35].props,
     &scriptInformation[36].props, &scriptInformation[37].props,
-    &scriptInformation[38].props, &scriptInformation[39].props
+    &scriptInformation[38].props, &scriptInformation[39].props,
+    &scriptInformation[40].props, &scriptInformation[41].props
 };
 
 typedef struct {

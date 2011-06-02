@@ -250,6 +250,11 @@ static void test_ScriptItemize( void )
     static const itemTest t171[2] = {{{0,0,0,0,0},0,0,0,0,telu_tag},{{0,0,0,0,0},6,0,0,0,-1}};
     static const itemTest t172[2] = {{{0,0,0,0,0},0,0,0,2,telu_tag},{{0,0,0,0,0},6,0,0,0,-1}};
 
+    /* Kannada */
+    static const WCHAR test18[] = {0x0c95, 0x0ca8, 0x0ccd, 0x0ca8, 0x0ca1};
+    static const itemTest t181[2] = {{{0,0,0,0,0},0,0,0,0,knda_tag},{{0,0,0,0,0},5,0,0,0,-1}};
+    static const itemTest t182[2] = {{{0,0,0,0,0},0,0,0,2,knda_tag},{{0,0,0,0,0},5,0,0,0,-1}};
+
     SCRIPT_ITEM items[15];
     SCRIPT_CONTROL  Control;
     SCRIPT_STATE    State;
@@ -299,6 +304,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test15,5,NULL,NULL,1,t151,FALSE,0);
     test_items_ok(test16,5,NULL,NULL,1,t161,FALSE,0);
     test_items_ok(test17,6,NULL,NULL,1,t171,FALSE,0);
+    test_items_ok(test18,5,NULL,NULL,1,t181,FALSE,0);
 
     State.uBidiLevel = 0;
     test_items_ok(test1,4,&Control,&State,1,t11,FALSE,0);
@@ -322,6 +328,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test15,5,&Control,&State,1,t151,FALSE,0);
     test_items_ok(test16,5,&Control,&State,1,t161,FALSE,0);
     test_items_ok(test17,6,&Control,&State,1,t171,FALSE,0);
+    test_items_ok(test18,5,&Control,&State,1,t181,FALSE,0);
 
     State.uBidiLevel = 1;
     test_items_ok(test1,4,&Control,&State,1,t12,FALSE,0);
@@ -345,6 +352,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test15,5,&Control,&State,1,t152,FALSE,0);
     test_items_ok(test16,5,&Control,&State,1,t162,FALSE,0);
     test_items_ok(test17,6,&Control,&State,1,t172,FALSE,0);
+    test_items_ok(test18,5,&Control,&State,1,t182,FALSE,0);
 
     State.uBidiLevel = 1;
     Control.fMergeNeutralItems = TRUE;
@@ -369,6 +377,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test15,5,&Control,&State,1,t152,FALSE,0);
     test_items_ok(test16,5,&Control,&State,1,t162,FALSE,0);
     test_items_ok(test17,6,&Control,&State,1,t172,FALSE,0);
+    test_items_ok(test18,5,&Control,&State,1,t182,FALSE,0);
 }
 
 static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
