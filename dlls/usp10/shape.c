@@ -376,6 +376,7 @@ typedef struct ScriptShapeDataTag {
     TEXTRANGE_PROPERTIES   defaultTextRange;
     const char**           requiredFeatures;
     CHAR                   otTag[5];
+    CHAR                   newOtTag[5];
     ContextualShapingProc  contextProc;
     ShapeCharGlyphPropProc charGlyphPropProc;
 } ScriptShapeData;
@@ -383,30 +384,30 @@ typedef struct ScriptShapeDataTag {
 /* in order of scripts */
 static const ScriptShapeData ShapingData[] =
 {
-    {{ standard_features, 2}, NULL, "", NULL, NULL},
-    {{ standard_features, 2}, NULL, "latn", NULL, NULL},
-    {{ standard_features, 2}, NULL, "latn", NULL, NULL},
-    {{ standard_features, 2}, NULL, "latn", NULL, NULL},
-    {{ standard_features, 2}, NULL, "" , NULL, NULL},
-    {{ standard_features, 2}, NULL, "latn", NULL, NULL},
-    {{ arabic_features, 6}, required_arabic_features, "arab", ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
-    {{ arabic_features, 6}, required_arabic_features, "arab", ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
-    {{ hebrew_features, 1}, NULL, "hebr", NULL, NULL},
-    {{ syriac_features, 4}, required_syriac_features, "syrc", ContextualShape_Syriac, ShapeCharGlyphProp_None},
-    {{ arabic_features, 6}, required_arabic_features, "arab", ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
-    {{ NULL, 0}, NULL, "thaa", NULL, ShapeCharGlyphProp_None},
-    {{ standard_features, 2}, NULL, "grek", NULL, NULL},
-    {{ standard_features, 2}, NULL, "cyrl", NULL, NULL},
-    {{ standard_features, 2}, NULL, "armn", NULL, NULL},
-    {{ standard_features, 2}, NULL, "geor", NULL, NULL},
-    {{ sinhala_features, 7}, NULL, "sinh", NULL, NULL},
-    {{ tibetan_features, 2}, NULL, "tibt", NULL, ShapeCharGlyphProp_Tibet},
-    {{ tibetan_features, 2}, NULL, "tibt", NULL, ShapeCharGlyphProp_Tibet},
-    {{ tibetan_features, 2}, NULL, "phag", ContextualShape_Phags_pa, ShapeCharGlyphProp_Thai},
-    {{ thai_features, 1}, NULL, "thai", NULL, ShapeCharGlyphProp_Thai},
-    {{ thai_features, 1}, NULL, "thai", NULL, ShapeCharGlyphProp_Thai},
-    {{ thai_features, 1}, required_lao_features, "lao", NULL, ShapeCharGlyphProp_Thai},
-    {{ thai_features, 1}, required_lao_features, "lao", NULL, ShapeCharGlyphProp_Thai},
+    {{ standard_features, 2}, NULL, "", "", NULL, NULL},
+    {{ standard_features, 2}, NULL, "latn", "", NULL, NULL},
+    {{ standard_features, 2}, NULL, "latn", "", NULL, NULL},
+    {{ standard_features, 2}, NULL, "latn", "", NULL, NULL},
+    {{ standard_features, 2}, NULL, "" , "", NULL, NULL},
+    {{ standard_features, 2}, NULL, "latn", "", NULL, NULL},
+    {{ arabic_features, 6}, required_arabic_features, "arab", "", ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
+    {{ arabic_features, 6}, required_arabic_features, "arab", "", ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
+    {{ hebrew_features, 1}, NULL, "hebr", "", NULL, NULL},
+    {{ syriac_features, 4}, required_syriac_features, "syrc", "", ContextualShape_Syriac, ShapeCharGlyphProp_None},
+    {{ arabic_features, 6}, required_arabic_features, "arab", "", ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
+    {{ NULL, 0}, NULL, "thaa", "", NULL, ShapeCharGlyphProp_None},
+    {{ standard_features, 2}, NULL, "grek", "", NULL, NULL},
+    {{ standard_features, 2}, NULL, "cyrl", "", NULL, NULL},
+    {{ standard_features, 2}, NULL, "armn", "", NULL, NULL},
+    {{ standard_features, 2}, NULL, "geor", "", NULL, NULL},
+    {{ sinhala_features, 7}, NULL, "sinh", "", NULL, NULL},
+    {{ tibetan_features, 2}, NULL, "tibt", "", NULL, ShapeCharGlyphProp_Tibet},
+    {{ tibetan_features, 2}, NULL, "tibt", "", NULL, ShapeCharGlyphProp_Tibet},
+    {{ tibetan_features, 2}, NULL, "phag", "", ContextualShape_Phags_pa, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, NULL, "thai", "", NULL, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, NULL, "thai", "", NULL, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, required_lao_features, "lao", "", NULL, ShapeCharGlyphProp_Thai},
+    {{ thai_features, 1}, required_lao_features, "lao", "", NULL, ShapeCharGlyphProp_Thai},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
@@ -816,12 +817,20 @@ static INT GSUB_apply_feature(const GSUB_Header * header, const GSUB_Feature* fe
     return out_index;
 }
 
-static const char* get_opentype_script(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc)
+static const char* get_opentype_script(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc, BOOL tryNew)
 {
     UINT charset;
 
     if (psc->userScript != 0)
-        return (char*)&psc->userScript;
+    {
+        if (tryNew && ShapingData[psa->eScript].newOtTag[0] != 0 && strncmp((char*)&psc->userScript,ShapingData[psa->eScript].otTag,4)==0)
+            return ShapingData[psa->eScript].newOtTag;
+        else
+            return (char*)&psc->userScript;
+    }
+
+    if (tryNew && ShapingData[psa->eScript].newOtTag[0] != 0)
+        return ShapingData[psa->eScript].newOtTag;
 
     if (ShapingData[psa->eScript].otTag[0] != 0)
         return ShapingData[psa->eScript].otTag;
@@ -866,17 +875,22 @@ static LPCVOID load_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc
     {
         const GSUB_Script *script;
         const GSUB_LangSys *language;
+        int attempt = 2;
 
-        script = GSUB_get_script_table(psc->GSUB_Table, get_opentype_script(hdc,psa,psc));
-        if (script)
+        do
         {
-            if (psc->userLang != 0)
-                language = GSUB_get_lang_table(script,(char*)&psc->userLang);
-            else
-                language = GSUB_get_lang_table(script, "xxxx"); /* Need to get Lang tag */
-            if (language)
-                feature = GSUB_get_feature(psc->GSUB_Table, language, feat);
-        }
+            script = GSUB_get_script_table(psc->GSUB_Table, get_opentype_script(hdc,psa,psc,(attempt==2)));
+            attempt--;
+            if (script)
+            {
+                if (psc->userLang != 0)
+                    language = GSUB_get_lang_table(script,(char*)&psc->userLang);
+                else
+                    language = GSUB_get_lang_table(script, "xxxx"); /* Need to get Lang tag */
+                if (language)
+                    feature = GSUB_get_feature(psc->GSUB_Table, language, feat);
+            }
+        } while(attempt && !feature);
 
         /* try in the default (latin) table */
         if (!feature)
