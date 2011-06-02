@@ -1055,7 +1055,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateSamplerState(ID3D10Device *i
     }
 
     TRACE("Created sampler state %p.\n", object);
-    *sampler_state = (ID3D10SamplerState *)object;
+    *sampler_state = &object->ID3D10SamplerState_iface;
 
     return S_OK;
 }

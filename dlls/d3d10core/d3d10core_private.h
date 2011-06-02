@@ -236,7 +236,7 @@ HRESULT d3d10_rasterizer_state_init(struct d3d10_rasterizer_state *state) DECLSP
 /* ID3D10SamplerState */
 struct d3d10_sampler_state
 {
-    const struct ID3D10SamplerStateVtbl *vtbl;
+    ID3D10SamplerState ID3D10SamplerState_iface;
     LONG refcount;
 };
 

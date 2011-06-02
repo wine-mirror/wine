@@ -372,6 +372,11 @@ HRESULT d3d10_rasterizer_state_init(struct d3d10_rasterizer_state *state)
     return S_OK;
 }
 
+static inline struct d3d10_sampler_state *impl_from_ID3D10SamplerState(ID3D10SamplerState *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_sampler_state, ID3D10SamplerState_iface);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE d3d10_sampler_state_QueryInterface(ID3D10SamplerState *iface,
@@ -396,7 +401,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_sampler_state_QueryInterface(ID3D10Sample
 
 static ULONG STDMETHODCALLTYPE d3d10_sampler_state_AddRef(ID3D10SamplerState *iface)
 {
-    struct d3d10_sampler_state *This = (struct d3d10_sampler_state *)iface;
+    struct d3d10_sampler_state *This = impl_from_ID3D10SamplerState(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u.\n", This, refcount);
@@ -406,7 +411,7 @@ static ULONG STDMETHODCALLTYPE d3d10_sampler_state_AddRef(ID3D10SamplerState *if
 
 static ULONG STDMETHODCALLTYPE d3d10_sampler_state_Release(ID3D10SamplerState *iface)
 {
-    struct d3d10_sampler_state *This = (struct d3d10_sampler_state *)iface;
+    struct d3d10_sampler_state *This = impl_from_ID3D10SamplerState(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", This, refcount);
@@ -477,7 +482,7 @@ static const struct ID3D10SamplerStateVtbl d3d10_sampler_state_vtbl =
 
 HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state)
 {
-    state->vtbl = &d3d10_sampler_state_vtbl;
+    state->ID3D10SamplerState_iface.lpVtbl = &d3d10_sampler_state_vtbl;
     state->refcount = 1;
 
     return S_OK;
