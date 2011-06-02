@@ -57,7 +57,7 @@ void WCMD_clear_screen (void);
 void WCMD_color (void);
 void WCMD_copy (void);
 void WCMD_create_dir (void);
-BOOL WCMD_delete (WCHAR *, BOOL);
+BOOL WCMD_delete (WCHAR *);
 void WCMD_directory (WCHAR *);
 void WCMD_echo (const WCHAR *);
 void WCMD_endlocal (void);

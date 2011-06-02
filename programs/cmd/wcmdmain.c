@@ -1447,7 +1447,7 @@ void WCMD_execute (WCHAR *command, WCHAR *redirects,
 	break;
       case WCMD_DEL:
       case WCMD_ERASE:
-        WCMD_delete (p, TRUE);
+        WCMD_delete (p);
         break;
       case WCMD_DIR:
         WCMD_directory (p);

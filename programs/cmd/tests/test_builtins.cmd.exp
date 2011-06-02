@@ -85,6 +85,7 @@ r.test not found after delete, good
 ------------ Testing del /q --------------
 del /q * succeeded on file1
 del /q * succeeded on file2.dat
+------------ Testing del /s --------------
 -----------Testing Errorlevel-----------
 1
 errorlevel just right, good

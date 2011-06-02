@@ -106,6 +106,26 @@ for %%a in (1 2.dat) do if not exist file%%a echo del /q * succeeded on file%%a
 cd ..
 rmdir del_q_dir
 
+echo ------------ Testing del /s --------------
+mkdir "foo bar"
+cd "foo bar"
+echo hi > file1.dat
+echo there > file2.dat
+echo bub > file3.dat
+echo bye > "file with spaces.dat"
+cd ..
+del /s file1.dat > nul
+del file2.dat /s > nul
+del "file3.dat" /s > nul
+del "file with spaces.dat" /s > nul
+cd "foo bar"
+for %%f in (1 2 3) do if exist file%%f.dat echo Del /s failed on file%%f
+for %%f in (1 2 3) do if exist file%%f.dat del file%%f.dat
+if exist "file with spaces.dat" echo Del /s failed on "file with spaces.dat"
+if exist "file with spaces.dat" del "file with spaces.dat"
+cd ..
+rmdir "foo bar"
+
 echo -----------Testing Errorlevel-----------
 rem nt 4.0 doesn't really support a way of setting errorlevel, so this is weak
 rem See http://www.robvanderwoude.com/exit.php

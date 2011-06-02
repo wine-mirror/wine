@@ -621,6 +621,186 @@ static BOOL WCMD_delete_confirm_wildcard(WCHAR *filename, BOOL *pPrompted) {
     return TRUE;
 }
 
+/* Helper function for WCMD_delete().
+ * Deletes a single file, directory, or wildcard.
+ * If /S was given, does it recursively.
+ * Returns TRUE if a file was deleted.
+ */
+static BOOL WCMD_delete_one (WCHAR *thisArg) {
+
+    static const WCHAR parmP[] = {'/','P','\0'};
+    static const WCHAR parmS[] = {'/','S','\0'};
+    static const WCHAR parmF[] = {'/','F','\0'};
+    DWORD wanted_attrs;
+    DWORD unwanted_attrs;
+    BOOL found = FALSE;
+    WCHAR argCopy[MAX_PATH];
+    WIN32_FIND_DATAW fd;
+    HANDLE hff;
+    WCHAR fpath[MAX_PATH];
+    WCHAR *p;
+    BOOL handleParm = TRUE;
+
+    WCMD_delete_parse_attributes(&wanted_attrs, &unwanted_attrs);
+
+    strcpyW(argCopy, thisArg);
+    WINE_TRACE("del: Processing arg %s (quals:%s)\n",
+               wine_dbgstr_w(argCopy), wine_dbgstr_w(quals));
+
+    if (!WCMD_delete_confirm_wildcard(argCopy, &found)) {
+        /* Skip this arg if user declines to delete *.* */
+        return FALSE;
+    }
+
+    /* First, try to delete in the current directory */
+    hff = FindFirstFileW(argCopy, &fd);
+    if (hff == INVALID_HANDLE_VALUE) {
+      handleParm = FALSE;
+    } else {
+      found = TRUE;
+    }
+
+    /* Support del <dirname> by just deleting all files dirname\* */
+    if (handleParm
+        && (strchrW(argCopy,'*') == NULL)
+        && (strchrW(argCopy,'?') == NULL)
+        && (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+    {
+      WCHAR modifiedParm[MAX_PATH];
+      static const WCHAR slashStar[] = {'\\','*','\0'};
+
+      strcpyW(modifiedParm, argCopy);
+      strcatW(modifiedParm, slashStar);
+      FindClose(hff);
+      found = TRUE;
+      WCMD_delete_one(modifiedParm);
+
+    } else if (handleParm) {
+
+      /* Build the filename to delete as <supplied directory>\<findfirst filename> */
+      strcpyW (fpath, argCopy);
+      do {
+        p = strrchrW (fpath, '\\');
+        if (p != NULL) {
+          *++p = '\0';
+          strcatW (fpath, fd.cFileName);
+        }
+        else strcpyW (fpath, fd.cFileName);
+        if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+          BOOL ok;
+
+          /* Handle attribute matching (/A) */
+          ok =  ((fd.dwFileAttributes & wanted_attrs) == wanted_attrs)
+             && ((fd.dwFileAttributes & unwanted_attrs) == 0);
+
+          /* /P means prompt for each file */
+          if (ok && strstrW (quals, parmP) != NULL) {
+            WCHAR  question[MAXSTRING];
+
+            /* Ask for confirmation */
+            wsprintfW(question, WCMD_LoadMessage(WCMD_DELPROMPT), fpath);
+            ok = WCMD_ask_confirm(question, FALSE, NULL);
+          }
+
+          /* Only proceed if ok to */
+          if (ok) {
+
+            /* If file is read only, and /A:r or /F supplied, delete it */
+            if (fd.dwFileAttributes & FILE_ATTRIBUTE_READONLY &&
+                ((wanted_attrs & FILE_ATTRIBUTE_READONLY) ||
+                strstrW (quals, parmF) != NULL)) {
+                SetFileAttributesW(fpath, fd.dwFileAttributes & ~FILE_ATTRIBUTE_READONLY);
+            }
+
+            /* Now do the delete */
+            if (!DeleteFileW(fpath)) WCMD_print_error ();
+          }
+
+        }
+      } while (FindNextFileW(hff, &fd) != 0);
+      FindClose (hff);
+    }
+
+    /* Now recurse into all subdirectories handling the parameter in the same way */
+    if (strstrW (quals, parmS) != NULL) {
+
+      WCHAR thisDir[MAX_PATH];
+      int cPos;
+
+      WCHAR drive[10];
+      WCHAR dir[MAX_PATH];
+      WCHAR fname[MAX_PATH];
+      WCHAR ext[MAX_PATH];
+
+      /* Convert path into actual directory spec */
+      GetFullPathNameW(argCopy, sizeof(thisDir)/sizeof(WCHAR), thisDir, NULL);
+      WCMD_splitpath(thisDir, drive, dir, fname, ext);
+
+      strcpyW(thisDir, drive);
+      strcatW(thisDir, dir);
+      cPos = strlenW(thisDir);
+
+      WINE_TRACE("Searching recursively in '%s'\n", wine_dbgstr_w(thisDir));
+
+      /* Append '*' to the directory */
+      thisDir[cPos] = '*';
+      thisDir[cPos+1] = 0x00;
+
+      hff = FindFirstFileW(thisDir, &fd);
+
+      /* Remove residual '*' */
+      thisDir[cPos] = 0x00;
+
+      if (hff != INVALID_HANDLE_VALUE) {
+        DIRECTORY_STACK *allDirs = NULL;
+        DIRECTORY_STACK *lastEntry = NULL;
+
+        do {
+          if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+              (strcmpW(fd.cFileName, dotdotW) != 0) &&
+              (strcmpW(fd.cFileName, dotW) != 0)) {
+
+            DIRECTORY_STACK *nextDir;
+            WCHAR subParm[MAX_PATH];
+
+            /* Work out search parameter in sub dir */
+            strcpyW (subParm, thisDir);
+            strcatW (subParm, fd.cFileName);
+            strcatW (subParm, slashW);
+            strcatW (subParm, fname);
+            strcatW (subParm, ext);
+            WINE_TRACE("Recursive, Adding to search list '%s'\n", wine_dbgstr_w(subParm));
+
+            /* Allocate memory, add to list */
+            nextDir = HeapAlloc(GetProcessHeap(),0,sizeof(DIRECTORY_STACK));
+            if (allDirs == NULL) allDirs = nextDir;
+            if (lastEntry != NULL) lastEntry->next = nextDir;
+            lastEntry = nextDir;
+            nextDir->next = NULL;
+            nextDir->dirName = HeapAlloc(GetProcessHeap(),0,
+	 (strlenW(subParm)+1) * sizeof(WCHAR));
+            strcpyW(nextDir->dirName, subParm);
+          }
+        } while (FindNextFileW(hff, &fd) != 0);
+        FindClose (hff);
+
+        /* Go through each subdir doing the delete */
+        while (allDirs != NULL) {
+          DIRECTORY_STACK *tempDir;
+
+          tempDir = allDirs->next;
+          found |= WCMD_delete_one (allDirs->dirName);
+
+          HeapFree(GetProcessHeap(),0,allDirs->dirName);
+          HeapFree(GetProcessHeap(),0,allDirs);
+          allDirs = tempDir;
+        }
+      }
+    }
+
+    return found;
+}
+
 /****************************************************************************
  * WCMD_delete
  *
@@ -634,205 +814,37 @@ static BOOL WCMD_delete_confirm_wildcard(WCHAR *filename, BOOL *pPrompted) {
  *         non-hidden files
  */
 
-BOOL WCMD_delete (WCHAR *command, BOOL expectDir) {
-
-    int   argno         = 0;
-    int   argsProcessed = 0;
-    WCHAR *argN          = command;
+BOOL WCMD_delete (WCHAR *command) {
+    int   argno;
+    WCHAR *argN;
+    BOOL  argsProcessed = FALSE;
     BOOL  foundAny      = FALSE;
-    static const WCHAR parmP[] = {'/','P','\0'};
-    static const WCHAR parmS[] = {'/','S','\0'};
-    static const WCHAR parmF[] = {'/','F','\0'};
-    DWORD wanted_attrs;
-    DWORD unwanted_attrs;
 
-    WCMD_delete_parse_attributes(&wanted_attrs, &unwanted_attrs);
+    errorlevel = 0;
 
-    /* If not recursing, clear error flag */
-    if (expectDir) errorlevel = 0;
+    for (argno=0; ; argno++) {
+        BOOL found;
+        WCHAR *thisArg;
 
-    /* Loop through all args */
-    while (argN) {
-      WCHAR *thisArg = WCMD_parameter (command, argno++, &argN);
-      WCHAR argCopy[MAX_PATH];
+        argN = NULL;
+        thisArg = WCMD_parameter (command, argno, &argN);
+        if (!argN)
+            break;       /* no more parameters */
+        if (argN[0] == '/')
+            continue;    /* skip options */
 
-      if (argN && argN[0] != '/') {
-
-        WIN32_FIND_DATAW fd;
-        HANDLE hff;
-        WCHAR fpath[MAX_PATH];
-        WCHAR *p;
-        BOOL handleParm = TRUE;
-        BOOL found = FALSE;
-
-        strcpyW(argCopy, thisArg);
-        WINE_TRACE("del: Processing arg %s (quals:%s)\n",
-                   wine_dbgstr_w(argCopy), wine_dbgstr_w(quals));
-        argsProcessed++;
-
-        if (!WCMD_delete_confirm_wildcard(argCopy, &found)) {
-            /* Skip this arg if user declines to delete *.* */
-            continue;
-        }
-
-        /* First, try to delete in the current directory */
-        hff = FindFirstFileW(argCopy, &fd);
-        if (hff == INVALID_HANDLE_VALUE) {
-          handleParm = FALSE;
-        } else {
-          found = TRUE;
-        }
-
-        /* Support del <dirname> by just deleting all files dirname\* */
-        if (handleParm && (strchrW(argCopy,'*') == NULL) && (strchrW(argCopy,'?') == NULL)
-		&& (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-          WCHAR modifiedParm[MAX_PATH];
-          static const WCHAR slashStar[] = {'\\','*','\0'};
-
-          strcpyW(modifiedParm, argCopy);
-          strcatW(modifiedParm, slashStar);
-          FindClose(hff);
-          found = TRUE;
-          WCMD_delete(modifiedParm, FALSE);
-
-        } else if (handleParm) {
-
-          /* Build the filename to delete as <supplied directory>\<findfirst filename> */
-          strcpyW (fpath, argCopy);
-          do {
-            p = strrchrW (fpath, '\\');
-            if (p != NULL) {
-              *++p = '\0';
-              strcatW (fpath, fd.cFileName);
-            }
-            else strcpyW (fpath, fd.cFileName);
-            if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-              BOOL ok;
-
-              /* Handle attribute matching (/A) */
-              ok =  ((fd.dwFileAttributes & wanted_attrs) == wanted_attrs)
-                 && ((fd.dwFileAttributes & unwanted_attrs) == 0);
-
-              /* /P means prompt for each file */
-              if (ok && strstrW (quals, parmP) != NULL) {
-                WCHAR  question[MAXSTRING];
-
-                /* Ask for confirmation */
-                wsprintfW(question, WCMD_LoadMessage(WCMD_DELPROMPT), fpath);
-                ok = WCMD_ask_confirm(question, FALSE, NULL);
-              }
-
-              /* Only proceed if ok to */
-              if (ok) {
-
-                /* If file is read only, and /A:r or /F supplied, delete it */
-                if (fd.dwFileAttributes & FILE_ATTRIBUTE_READONLY &&
-                    ((wanted_attrs & FILE_ATTRIBUTE_READONLY) ||
-                    strstrW (quals, parmF) != NULL)) {
-                    SetFileAttributesW(fpath, fd.dwFileAttributes & ~FILE_ATTRIBUTE_READONLY);
-                }
-
-                /* Now do the delete */
-                if (!DeleteFileW(fpath)) WCMD_print_error ();
-              }
-
-            }
-          } while (FindNextFileW(hff, &fd) != 0);
-          FindClose (hff);
-        }
-
-        /* Now recurse into all subdirectories handling the parameter in the same way */
-        if (strstrW (quals, parmS) != NULL) {
-
-          WCHAR thisDir[MAX_PATH];
-          int cPos;
-
-          WCHAR drive[10];
-          WCHAR dir[MAX_PATH];
-          WCHAR fname[MAX_PATH];
-          WCHAR ext[MAX_PATH];
-
-          /* Convert path into actual directory spec */
-          GetFullPathNameW(argCopy, sizeof(thisDir)/sizeof(WCHAR), thisDir, NULL);
-          WCMD_splitpath(thisDir, drive, dir, fname, ext);
-
-          strcpyW(thisDir, drive);
-          strcatW(thisDir, dir);
-          cPos = strlenW(thisDir);
-
-          WINE_TRACE("Searching recursively in '%s'\n", wine_dbgstr_w(thisDir));
-
-          /* Append '*' to the directory */
-          thisDir[cPos] = '*';
-          thisDir[cPos+1] = 0x00;
-
-          hff = FindFirstFileW(thisDir, &fd);
-
-          /* Remove residual '*' */
-          thisDir[cPos] = 0x00;
-
-          if (hff != INVALID_HANDLE_VALUE) {
-            DIRECTORY_STACK *allDirs = NULL;
-            DIRECTORY_STACK *lastEntry = NULL;
-
-            do {
-              if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-                  (strcmpW(fd.cFileName, dotdotW) != 0) &&
-                  (strcmpW(fd.cFileName, dotW) != 0)) {
-
-                DIRECTORY_STACK *nextDir;
-                WCHAR subParm[MAX_PATH];
-
-                /* Work out search parameter in sub dir */
-                strcpyW (subParm, thisDir);
-                strcatW (subParm, fd.cFileName);
-                strcatW (subParm, slashW);
-                strcatW (subParm, fname);
-                strcatW (subParm, ext);
-                WINE_TRACE("Recursive, Adding to search list '%s'\n", wine_dbgstr_w(subParm));
-
-                /* Allocate memory, add to list */
-                nextDir = HeapAlloc(GetProcessHeap(),0,sizeof(DIRECTORY_STACK));
-                if (allDirs == NULL) allDirs = nextDir;
-                if (lastEntry != NULL) lastEntry->next = nextDir;
-                lastEntry = nextDir;
-                nextDir->next = NULL;
-                nextDir->dirName = HeapAlloc(GetProcessHeap(),0,
-                                             (strlenW(subParm)+1) * sizeof(WCHAR));
-                strcpyW(nextDir->dirName, subParm);
-              }
-            } while (FindNextFileW(hff, &fd) != 0);
-            FindClose (hff);
-
-            /* Go through each subdir doing the delete */
-            while (allDirs != NULL) {
-              DIRECTORY_STACK *tempDir;
-
-              tempDir = allDirs->next;
-              found |= WCMD_delete (allDirs->dirName, FALSE);
-
-              HeapFree(GetProcessHeap(),0,allDirs->dirName);
-              HeapFree(GetProcessHeap(),0,allDirs);
-              allDirs = tempDir;
-            }
-          }
-        }
-        /* Keep running total to see if any found, and if not recursing
-           issue error message                                         */
-        if (expectDir) {
-          if (!found) {
+        argsProcessed = TRUE;
+        found = WCMD_delete_one(thisArg);
+        if (!found) {
             errorlevel = 1;
-            WCMD_output (WCMD_LoadMessage(WCMD_FILENOTFOUND), argCopy);
-          }
+            WCMD_output (WCMD_LoadMessage(WCMD_FILENOTFOUND), thisArg);
         }
         foundAny |= found;
-      }
     }
 
     /* Handle no valid args */
-    if (argsProcessed == 0) {
-      WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
-    }
+    if (!argsProcessed)
+        WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
 
     return foundAny;
 }
