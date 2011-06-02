@@ -804,6 +804,15 @@ static void test_ScriptShapeOpenType(HDC hdc)
                             {1,{{SCRIPT_JUSTIFY_NONE,0,0,0,0,0},0}},
                             {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}} };
 
+    /* Tamil */
+    static const WCHAR test_tamil[] = {0x0ba4, 0x0bae, 0x0bbf, 0x0bb4, 0x0bcd};
+    static const shapeTest_char tamil_c[] = {{0,{0,0}},{1,{0,0}},{1,{0,0}},{3,{0,0}},{3,{0,0}}};
+    static const shapeTest_glyph tamil_g[] = {
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,0,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}} };
+
     if (!pScriptItemizeOpenType || !pScriptShapeOpenType)
     {
         win_skip("ScriptShapeOpenType not available on this platform\n");
@@ -937,6 +946,14 @@ static void test_ScriptShapeOpenType(HDC hdc)
     if (hfont != NULL)
     {
         test_shape_ok_valid(test_valid, hdc, test_oriya, 5, &Control, &State, 0, 4, oriya_c, oriya_g);
+        SelectObject(hdc, hfont_orig);
+        DeleteObject(hfont);
+    }
+
+    test_valid = find_font_for_range(hdc, "Latha", 20, test_tamil[0], &hfont, &hfont_orig);
+    if (hfont != NULL)
+    {
+        test_shape_ok_valid(test_valid, hdc, test_tamil, 5, &Control, &State, 0, 4, tamil_c, tamil_g);
         SelectObject(hdc, hfont_orig);
         DeleteObject(hfont);
     }
