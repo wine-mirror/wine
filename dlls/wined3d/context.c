@@ -2221,6 +2221,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
     if (context->last_was_blit)
     {
         device->frag_pipe->enable_extension(TRUE);
+        context->last_was_blit = FALSE;
     }
 
     /* Blending and clearing should be orthogonal, but tests on the nvidia
@@ -2231,7 +2232,6 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
     checkGLcall("glEnable GL_SCISSOR_TEST");
     LEAVE_GL();
 
-    context->last_was_blit = FALSE;
     context_invalidate_state(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), state_table);
     context_invalidate_state(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE), state_table);
     context_invalidate_state(context, STATE_SCISSORRECT, state_table);
