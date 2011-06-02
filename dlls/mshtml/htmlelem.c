@@ -923,8 +923,41 @@ static HRESULT WINAPI HTMLElement_get_offsetHeight(IHTMLElement *iface, LONG *p)
 static HRESULT WINAPI HTMLElement_get_offsetParent(IHTMLElement *iface, IHTMLElement **p)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMNSHTMLElement *nselem;
+    nsIDOMElement *nsparent;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMNSHTMLElement, (void**)&nselem);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMNSHTMLElement: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMNSHTMLElement_GetOffsetParent(nselem, &nsparent);
+    nsIDOMNSHTMLElement_Release(nselem);
+    if(NS_FAILED(nsres)) {
+        ERR("GetOffsetParent failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    if(nsparent) {
+        HTMLDOMNode *node;
+
+        hres = get_node(This->node.doc, (nsIDOMNode*)nsparent, TRUE, &node);
+        nsIDOMElement_Release(nsparent);
+        if(FAILED(hres))
+            return hres;
+
+        hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)p);
+    }else {
+        *p = NULL;
+        hres = S_OK;
+    }
+
+    return hres;
 }
 
 static HRESULT WINAPI HTMLElement_put_innerHTML(IHTMLElement *iface, BSTR v)

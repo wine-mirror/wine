@@ -931,10 +931,11 @@ static void _test_elem_attr(unsigned line, IHTMLElement *elem, const char *name,
     VariantClear(&value);
 }
 
-#define test_elem_offset(u) _test_elem_offset(__LINE__,u)
-static void _test_elem_offset(unsigned line, IUnknown *unk)
+#define test_elem_offset(a,b) _test_elem_offset(__LINE__,a,b)
+static void _test_elem_offset(unsigned line, IUnknown *unk, const char *parent_tag)
 {
     IHTMLElement *elem = _get_elem_iface(line, unk);
+    IHTMLElement *off_parent;
     LONG l;
     HRESULT hres;
 
@@ -949,6 +950,12 @@ static void _test_elem_offset(unsigned line, IUnknown *unk)
 
     hres = IHTMLElement_get_offsetLeft(elem, &l);
     ok_(__FILE__,line) (hres == S_OK, "get_offsetLeft failed: %08x\n", hres);
+
+    hres = IHTMLElement_get_offsetParent(elem, &off_parent);
+    ok_(__FILE__,line) (hres == S_OK, "get_offsetParent failed: %08x\n", hres);
+
+    _test_elem_tag(line, (IUnknown*)off_parent, parent_tag);
+    IHTMLElement_Release(off_parent);
 
     IHTMLElement_Release(elem);
 }
@@ -6513,7 +6520,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem_title((IUnknown*)select, NULL);
         test_elem_set_title((IUnknown*)select, "Title");
         test_elem_title((IUnknown*)select, "Title");
-        test_elem_offset((IUnknown*)select);
+        test_elem_offset((IUnknown*)select, "BODY");
         test_elem_bounding_client_rect((IUnknown*)select);
 
         node = get_first_child((IUnknown*)select);
