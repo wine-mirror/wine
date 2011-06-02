@@ -131,6 +131,7 @@ static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
 #define guru_tag MS_MAKE_TAG('g','u','r','u')
 #define gujr_tag MS_MAKE_TAG('g','u','j','r')
 #define orya_tag MS_MAKE_TAG('o','r','y','a')
+#define taml_tag MS_MAKE_TAG('t','a','m','l')
 
 static void test_ScriptItemize( void )
 {
@@ -237,6 +238,10 @@ static void test_ScriptItemize( void )
     static const itemTest t151[2] = {{{0,0,0,0,0},0,0,0,0,orya_tag},{{0,0,0,0,0},5,0,0,0,-1}};
     static const itemTest t152[2] = {{{0,0,0,0,0},0,0,0,2,orya_tag},{{0,0,0,0,0},5,0,0,0,-1}};
 
+    /* Tamil */
+    static const WCHAR test16[] = {0x0ba4, 0x0bae, 0x0bbf, 0x0bb4, 0x0bcd};
+    static const itemTest t161[2] = {{{0,0,0,0,0},0,0,0,0,taml_tag},{{0,0,0,0,0},5,0,0,0,-1}};
+    static const itemTest t162[2] = {{{0,0,0,0,0},0,0,0,2,taml_tag},{{0,0,0,0,0},5,0,0,0,-1}};
 
     SCRIPT_ITEM items[15];
     SCRIPT_CONTROL  Control;
@@ -285,6 +290,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test13,7,NULL,NULL,1,t131,FALSE,0);
     test_items_ok(test14,7,NULL,NULL,1,t141,FALSE,0);
     test_items_ok(test15,5,NULL,NULL,1,t151,FALSE,0);
+    test_items_ok(test16,5,NULL,NULL,1,t161,FALSE,0);
 
     State.uBidiLevel = 0;
     test_items_ok(test1,4,&Control,&State,1,t11,FALSE,0);
@@ -306,6 +312,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test13,7,&Control,&State,1,t131,FALSE,0);
     test_items_ok(test14,7,&Control,&State,1,t141,FALSE,0);
     test_items_ok(test15,5,&Control,&State,1,t151,FALSE,0);
+    test_items_ok(test16,5,&Control,&State,1,t161,FALSE,0);
 
     State.uBidiLevel = 1;
     test_items_ok(test1,4,&Control,&State,1,t12,FALSE,0);
@@ -327,6 +334,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test13,7,&Control,&State,1,t132,FALSE,0);
     test_items_ok(test14,7,&Control,&State,1,t142,FALSE,0);
     test_items_ok(test15,5,&Control,&State,1,t152,FALSE,0);
+    test_items_ok(test16,5,&Control,&State,1,t162,FALSE,0);
 
     State.uBidiLevel = 1;
     Control.fMergeNeutralItems = TRUE;
@@ -349,6 +357,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test13,7,&Control,&State,1,t132,FALSE,0);
     test_items_ok(test14,7,&Control,&State,1,t142,FALSE,0);
     test_items_ok(test15,5,&Control,&State,1,t152,FALSE,0);
+    test_items_ok(test16,5,&Control,&State,1,t162,FALSE,0);
 }
 
 static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,

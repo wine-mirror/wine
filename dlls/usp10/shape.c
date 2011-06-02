@@ -49,6 +49,7 @@ static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
 static void ContextualShape_Gurmukhi(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Gujarati(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 
 
 typedef VOID (*ShapeCharGlyphPropProc)( HDC , ScriptCache*, SCRIPT_ANALYSIS*, const WCHAR*, const INT, const WORD*, const INT, WORD*, SCRIPT_CHARPROP*, SCRIPT_GLYPHPROP*);
@@ -63,6 +64,7 @@ static void ShapeCharGlyphProp_Bengali( HDC hdc, ScriptCache *psc, SCRIPT_ANALYS
 static void ShapeCharGlyphProp_Gurmukhi( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 static void ShapeCharGlyphProp_Gujarati( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 static void ShapeCharGlyphProp_Oriya( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
+static void ShapeCharGlyphProp_Tamil( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 
 extern const unsigned short wine_shaping_table[];
 extern const unsigned short wine_shaping_forms[LAST_ARABIC_CHAR - FIRST_ARABIC_CHAR + 1][4];
@@ -551,6 +553,41 @@ static OPENTYPE_FEATURE_RECORD oriya_features[] =
     { MS_MAKE_TAG('c','a','l','t'), 1},
 };
 
+static const char* required_tamil_features[] =
+{
+    "nukt",
+    "akhn",
+    "rphf",
+    "pref",
+    "half",
+    "pres",
+    "abvs",
+    "blws",
+    "psts",
+    "haln",
+    "calt",
+    NULL
+};
+
+static OPENTYPE_FEATURE_RECORD tamil_features[] =
+{
+    /* Localized forms */
+    { MS_MAKE_TAG('l','o','c','l'), 1},
+    /* Base forms */
+    { MS_MAKE_TAG('n','u','k','t'), 1},
+    { MS_MAKE_TAG('a','k','h','n'), 1},
+    { MS_MAKE_TAG('r','p','h','f'), 1},
+    { MS_MAKE_TAG('p','r','e','f'), 1},
+    { MS_MAKE_TAG('h','a','l','f'), 1},
+    /* Presentation forms */
+    { MS_MAKE_TAG('p','r','e','s'), 1},
+    { MS_MAKE_TAG('a','b','v','s'), 1},
+    { MS_MAKE_TAG('b','l','w','s'), 1},
+    { MS_MAKE_TAG('p','s','t','s'), 1},
+    { MS_MAKE_TAG('h','a','l','n'), 1},
+    { MS_MAKE_TAG('c','a','l','t'), 1},
+};
+
 typedef struct ScriptShapeDataTag {
     TEXTRANGE_PROPERTIES   defaultTextRange;
     const char**           requiredFeatures;
@@ -598,6 +635,8 @@ static const ScriptShapeData ShapingData[] =
     {{ devanagari_features, 15}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
     {{ oriya_features, 13}, required_oriya_features, "orya", "ory2", ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
     {{ oriya_features, 13}, required_oriya_features, "orya", "ory2", ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
+    {{ tamil_features, 12}, required_tamil_features, "taml", "tam2", ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
+    {{ tamil_features, 12}, required_tamil_features, "taml", "tam2", ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
@@ -2265,6 +2304,62 @@ static void ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     HeapFree(GetProcessHeap(),0,input);
 }
 
+static int tamil_lex(WCHAR c)
+{
+    switch (c)
+    {
+        case 0x0BC0: return lex_Mantra_above;
+        case 0x0BCD: return lex_Halant;
+        case 0x0BD7: return lex_Mantra_post;
+        case 0x200C: return lex_ZWNJ;
+        case 0x200D: return lex_ZWJ;
+        default:
+            if (c>=0x0B95 && c<=0x0BB9) return lex_Consonant;
+            else if (c>=0x0BBE && c<=0x0BBF) return lex_Mantra_post;
+            else if (c>=0x0BC1 && c<=0x0BC2) return lex_Mantra_below;
+            else if (c>=0x0BC6 && c<=0x0BC8) return lex_Mantra_pre;
+            else return lex_Generic;
+    }
+}
+
+static const VowelComponents Tamil_vowels[] = {
+            {0x0BCA, {0x0BC6,0x0BBE,0x0000}},
+            {0x0BCB, {0x0BC7,0x0BBE,0x0000}},
+            {0x0BCB, {0x0BC6,0x0BD7,0x0000}},
+            {0x0000, {0x0000,0x0000,0x0000}}};
+
+static const ConsonantComponents Tamil_consonants[] = {
+            {{0x0B92,0x0BD7,0x0000}, 0x0B94},
+            {{0x0000,0x0000,0x0000}, 0x0000}};
+
+static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+{
+    int cCount = cChars;
+    WCHAR *input;
+
+    if (*pcGlyphs != cChars)
+    {
+        ERR("Number of Glyphs and Chars need to match at the beginning\n");
+        return;
+    }
+
+    input = HeapAlloc(GetProcessHeap(), 0, (cChars*2) * sizeof(WCHAR));
+    memcpy(input, pwcChars, cChars * sizeof(WCHAR));
+
+    /* Step 1: Decompose Vowels and Compose Consonents */
+    DecomposeVowels(hdc, input,  &cCount, Tamil_vowels);
+    ComposeConsonants(hdc, input, &cCount, Tamil_consonants);
+    TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
+
+    /* Step 2: Reorder within Syllables */
+    Indic_ReorderCharacters( input, cCount, tamil_lex, Reorder_Like_Sinhala);
+    TRACE("reordered string %s\n",debugstr_wn(input,cCount));
+    GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
+    *pcGlyphs = cCount;
+
+    HeapFree(GetProcessHeap(),0,input);
+}
+
 static void ShapeCharGlyphProp_Default( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS* psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD* pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP* pGlyphProp)
 {
     int i,k;
@@ -2646,6 +2741,11 @@ static void ShapeCharGlyphProp_Gujarati( HDC hdc, ScriptCache *psc, SCRIPT_ANALY
 static void ShapeCharGlyphProp_Oriya( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp )
 {
     ShapeCharGlyphProp_BaseIndic(hdc, psc, psa, pwcChars, cChars, pwGlyphs, cGlyphs, pwLogClust, pCharProp, pGlyphProp, oriya_lex);
+}
+
+static void ShapeCharGlyphProp_Tamil( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp )
+{
+    ShapeCharGlyphProp_BaseIndic(hdc, psc, psa, pwcChars, cChars, pwGlyphs, cGlyphs, pwLogClust, pCharProp, pGlyphProp, tamil_lex);
 }
 
 void SHAPE_CharGlyphProp(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp)

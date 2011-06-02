@@ -63,6 +63,8 @@
 #define Script_Gujarati_Currency 33
 #define Script_Oriya 34
 #define Script_Oriya_Numeric 35
+#define Script_Tamil 36
+#define Script_Tamil_Numeric 37
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
