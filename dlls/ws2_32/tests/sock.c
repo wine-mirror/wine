@@ -2258,6 +2258,43 @@ static VOID WINAPI SelectReadThread(select_thread_params *par)
     par->ReadKilled = (ret == 1);
 }
 
+static void test_errors(void)
+{
+    SOCKET sock;
+    SOCKADDR_IN  SockAddr;
+    int ret, err;
+
+    WSASetLastError(NO_ERROR);
+    sock = socket(PF_INET, SOCK_STREAM, 0);
+    ok( (sock != INVALID_SOCKET), "socket failed unexpectedly: %d\n", WSAGetLastError() );
+    memset(&SockAddr, 0, sizeof(SockAddr));
+    SockAddr.sin_family = AF_INET;
+    SockAddr.sin_port = htons(6924);
+    SockAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    ret = connect(sock, (PSOCKADDR)&SockAddr, sizeof(SockAddr));
+    ok( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got: %d\n", ret );
+    if (ret == SOCKET_ERROR)
+    {
+        err = WSAGetLastError();
+        ok( (err == WSAECONNREFUSED), "expected WSAECONNREFUSED, got: %d\n", err );
+    }
+
+    {
+        TIMEVAL timeval;
+        fd_set set = {1, {sock}};
+
+        timeval.tv_sec = 0;
+        timeval.tv_usec = 50000;
+
+        ret = select(1, NULL, &set, NULL, &timeval);
+        todo_wine ok( (ret == 0), "expected 0 (timeout), got: %d\n", ret );
+    }
+
+    ret = closesocket(sock);
+    ok ( (ret == 0), "closesocket failed unexpectedly: %d\n", WSAGetLastError());
+}
+
 static void test_select(void)
 {
     SOCKET fdRead, fdWrite;
@@ -4907,6 +4944,7 @@ START_TEST( sock )
     test_WSAStringToAddressA();
     test_WSAStringToAddressW();
 
+    test_errors();
     test_select();
     test_accept();
     test_getpeername();
