@@ -79,6 +79,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Thaana,     0x780,  0x7bf,  0, 0},
     /* Devanagari: U+0900–U+097F */
     { Script_Devanagari, 0x900,  0x97f,  Script_Devanagari_Numeric, 0},
+    /* Bengali: U+0980–U+09FF */
+    { Script_Bengali,    0x980,  0x9ff,  Script_Bengali_Numeric, 0},
     /* Sinhala: U+0D80–U+0DFF */
     { Script_Sinhala,   0xd80,  0xdff,  0, 0},
     /* Thai: U+0E00–U+0E7F */
@@ -213,6 +215,15 @@ static const scriptData scriptInformation[] = {
     {{Script_Devanagari_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_HINDI, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('d','e','v','a')},
+    {{Script_Bengali, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_BENGALI, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 0, 0},
+     MS_MAKE_TAG('b','e','n','g')},
+    {{Script_Bengali_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_BENGALI, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('b','e','n','g')},
+    {{Script_Bengali_Currency, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_BENGALI, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('b','e','n','g')},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -229,7 +240,9 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[18].props, &scriptInformation[19].props,
     &scriptInformation[20].props, &scriptInformation[21].props,
     &scriptInformation[22].props, &scriptInformation[23].props,
-    &scriptInformation[24].props, &scriptInformation[25].props
+    &scriptInformation[24].props, &scriptInformation[25].props,
+    &scriptInformation[26].props, &scriptInformation[27].props,
+    &scriptInformation[28].props
 };
 
 typedef struct {

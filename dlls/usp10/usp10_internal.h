@@ -53,6 +53,9 @@
 /* Unicode Chapter 9 */
 #define Script_Devanagari 24
 #define Script_Devanagari_Numeric 25
+#define Script_Bengali 26
+#define Script_Bengali_Numeric 27
+#define Script_Bengali_Currency 28
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
