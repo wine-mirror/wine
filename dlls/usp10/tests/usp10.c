@@ -783,6 +783,18 @@ static void test_ScriptShapeOpenType(HDC hdc)
                             {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
                             {1,{{SCRIPT_JUSTIFY_NONE,0,0,0,0,0},0}} };
 
+    /* Gujarati */
+    static const WCHAR test_gujarati[] = {0x0a97, 0x0ac1, 0x0a9c, 0x0ab0, 0x0abe, 0x0aa4, 0x0ac0};
+    static const shapeTest_char gujarati_c[] = {{0,{0,0}},{0,{0,0}},{2,{0,0}},{3,{0,0}},{3,{0,0}},{5,{0,0}},{5,{0,0}}};
+    static const shapeTest_glyph gujarati_g[] = {
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,0,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,0,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,0,0,0,0,0},0}} };
+
     if (!pScriptItemizeOpenType || !pScriptShapeOpenType)
     {
         win_skip("ScriptShapeOpenType not available on this platform\n");
@@ -900,6 +912,14 @@ static void test_ScriptShapeOpenType(HDC hdc)
     if (hfont != NULL)
     {
         test_shape_ok_valid(test_valid, hdc, test_gurmukhi, 7, &Control, &State, 0, 7, gurmukhi_c, gurmukhi_g);
+        SelectObject(hdc, hfont_orig);
+        DeleteObject(hfont);
+    }
+
+    test_valid = find_font_for_range(hdc, "Shruti", 18, test_gujarati[0], &hfont, &hfont_orig);
+    if (hfont != NULL)
+    {
+        test_shape_ok_valid(test_valid, hdc, test_gujarati, 7, &Control, &State, 0, 7, gujarati_c, gujarati_g);
         SelectObject(hdc, hfont_orig);
         DeleteObject(hfont);
     }
