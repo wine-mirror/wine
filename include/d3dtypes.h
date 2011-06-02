@@ -336,9 +336,9 @@ typedef struct _D3DMATRIX {
 
     /* This is different from MS, but avoids anonymous structs. */
     D3DVALUE &operator () (int r, int c)
-	{ return ((D3DVALUE [4][4])&_11)[r][c]; }
+	{ return (&_11)[r*4 + c]; }
     const D3DVALUE &operator() (int r, int c) const
-	{ return ((const D3DVALUE [4][4])&_11)[r][c]; }
+	{ return (&_11)[r*4 + c]; }
 #endif
 } D3DMATRIX, *LPD3DMATRIX;
 
