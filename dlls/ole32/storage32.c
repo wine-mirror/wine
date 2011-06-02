@@ -87,6 +87,9 @@ struct StorageInternalImpl
 };
 typedef struct StorageInternalImpl StorageInternalImpl;
 
+static const IStorageVtbl TransactedSnapshotImpl_Vtbl;
+static const IStorageVtbl Storage32InternalImpl_Vtbl;
+
 /* Method definitions for the Storage32InternalImpl class. */
 static StorageInternalImpl* StorageInternalImpl_Construct(StorageBaseImpl* parentStorage,
                                                           DWORD openFlags, DirRef storageDirEntry);
@@ -1600,163 +1603,88 @@ static HRESULT findTreeParent(StorageBaseImpl *storage, DirRef storageEntry,
 }
 
 
-/*************************************************************************
- * CopyTo (IStorage)
- */
-static HRESULT WINAPI StorageBaseImpl_CopyTo(
-  IStorage*   iface,
-  DWORD       ciidExclude,  /* [in] */
-  const IID*  rgiidExclude, /* [size_is][unique][in] */
-  SNB         snbExclude,   /* [unique][in] */
-  IStorage*   pstgDest)     /* [unique][in] */
+static HRESULT StorageBaseImpl_CopyStorageEntryTo(StorageBaseImpl *This,
+    DirRef srcEntry, BOOL skip_storage, BOOL skip_stream,
+    SNB snbExclude, IStorage *pstgDest);
+
+static HRESULT StorageBaseImpl_CopyChildEntryTo(StorageBaseImpl *This,
+    DirRef srcEntry, BOOL skip_storage, BOOL skip_stream,
+    SNB snbExclude, IStorage *pstgDest)
 {
-  StorageBaseImpl* const This=(StorageBaseImpl*)iface;
+  DirEntry data;
+  HRESULT hr;
+  BOOL skip = FALSE;
+  IStorage *pstgTmp;
+  IStream *pstrChild, *pstrTmp;
+  STATSTG strStat;
 
-  IEnumSTATSTG *elements     = 0;
-  STATSTG      curElement, strStat;
-  HRESULT      hr;
-  IStorage     *pstgTmp, *pstgChild;
-  IStream      *pstrTmp, *pstrChild;
-  DirRef       srcEntryRef;
-  DirEntry     srcEntry;
-  BOOL         skip = FALSE, skip_storage = FALSE, skip_stream = FALSE;
-  int          i;
+  if (srcEntry == DIRENTRY_NULL)
+    return S_OK;
 
-  TRACE("(%p, %d, %p, %p, %p)\n",
-	iface, ciidExclude, rgiidExclude,
-	snbExclude, pstgDest);
+  hr = StorageBaseImpl_ReadDirEntry( This, srcEntry, &data );
 
-  if ( pstgDest == 0 )
-    return STG_E_INVALIDPOINTER;
-
-  /*
-   * Enumerate the elements
-   */
-  hr = IStorage_EnumElements( iface, 0, 0, 0, &elements );
-
-  if ( hr != S_OK )
+  if (FAILED(hr))
     return hr;
 
-  /*
-   * set the class ID
-   */
-  IStorage_Stat( iface, &curElement, STATFLAG_NONAME);
-  IStorage_SetClass( pstgDest, &curElement.clsid );
-
-  for(i = 0; i < ciidExclude; ++i)
+  if ( snbExclude )
   {
-    if(IsEqualGUID(&IID_IStorage, &rgiidExclude[i]))
-        skip_storage = TRUE;
-    else if(IsEqualGUID(&IID_IStream, &rgiidExclude[i]))
-        skip_stream = TRUE;
-    else
-        WARN("Unknown excluded GUID: %s\n", debugstr_guid(&rgiidExclude[i]));
+    WCHAR **snb = snbExclude;
+
+    while ( *snb != NULL && !skip )
+    {
+      if ( lstrcmpW(data.name, *snb) == 0 )
+        skip = TRUE;
+      ++snb;
+    }
   }
 
-  do
+  if (!skip)
   {
-    /*
-     * Obtain the next element
-     */
-    hr = IEnumSTATSTG_Next( elements, 1, &curElement, NULL );
-
-    if ( hr == S_FALSE )
+    if (data.stgType == STGTY_STORAGE && !skip_storage)
     {
-      hr = S_OK;   /* done, every element has been copied */
-      break;
-    }
-
-    if ( snbExclude )
-    {
-      WCHAR **snb = snbExclude;
-      skip = FALSE;
-      while ( *snb != NULL && !skip )
-      {
-        if ( lstrcmpW(curElement.pwcsName, *snb) == 0 )
-          skip = TRUE;
-        ++snb;
-      }
-    }
-
-    if ( skip )
-      goto cleanup;
-
-    if (curElement.type == STGTY_STORAGE)
-    {
-      if(skip_storage)
-        goto cleanup;
-
-      /*
-       * open child source storage
-       */
-      hr = IStorage_OpenStorage( iface, curElement.pwcsName, NULL,
-				 STGM_READ|STGM_SHARE_EXCLUSIVE,
-				 NULL, 0, &pstgChild );
-
-      if (hr != S_OK)
-        goto cleanup;
-
       /*
        * create a new storage in destination storage
        */
-      hr = IStorage_CreateStorage( pstgDest, curElement.pwcsName,
+      hr = IStorage_CreateStorage( pstgDest, data.name,
                                    STGM_FAILIFTHERE|STGM_WRITE|STGM_SHARE_EXCLUSIVE,
-				   0, 0,
+                                   0, 0,
                                    &pstgTmp );
+
       /*
        * if it already exist, don't create a new one use this one
        */
       if (hr == STG_E_FILEALREADYEXISTS)
       {
-        hr = IStorage_OpenStorage( pstgDest, curElement.pwcsName, NULL,
+        hr = IStorage_OpenStorage( pstgDest, data.name, NULL,
                                    STGM_WRITE|STGM_SHARE_EXCLUSIVE,
                                    NULL, 0, &pstgTmp );
       }
 
-      if (hr == S_OK)
+      if (SUCCEEDED(hr))
       {
-        /*
-         * do the copy recursively
-         */
-        hr = IStorage_CopyTo( pstgChild, ciidExclude, rgiidExclude,
-                                 NULL, pstgTmp );
+        hr = StorageBaseImpl_CopyStorageEntryTo( This, srcEntry, skip_storage,
+                                                 skip_stream, NULL, pstgTmp );
 
-        IStorage_Release( pstgTmp );
+        IStorage_Release(pstgTmp);
       }
-
-      IStorage_Release( pstgChild );
     }
-    else if (curElement.type == STGTY_STREAM)
+    else if (data.stgType == STGTY_STREAM && !skip_stream)
     {
-      if(skip_stream)
-        goto cleanup;
-
       /*
        * create a new stream in destination storage. If the stream already
        * exist, it will be deleted and a new one will be created.
        */
-      hr = IStorage_CreateStream( pstgDest, curElement.pwcsName,
+      hr = IStorage_CreateStream( pstgDest, data.name,
                                   STGM_CREATE|STGM_WRITE|STGM_SHARE_EXCLUSIVE,
                                   0, 0, &pstrTmp );
-
-      if (hr != S_OK)
-        goto cleanup;
 
       /*
        * open child stream storage. This operation must succeed even if the
        * stream is already open, so we use internal functions to do it.
        */
-      srcEntryRef = findElement( This, This->storageDirEntry, curElement.pwcsName,
-        &srcEntry);
-      if (!srcEntryRef)
-      {
-        ERR("source stream not found\n");
-        hr = STG_E_DOCFILECORRUPT;
-      }
-
       if (hr == S_OK)
       {
-        pstrChild = (IStream*)StgStreamImpl_Construct(This, STGM_READ|STGM_SHARE_EXCLUSIVE, srcEntryRef);
+        pstrChild = (IStream*)StgStreamImpl_Construct(This, STGM_READ|STGM_SHARE_EXCLUSIVE, srcEntry);
         if (pstrChild)
           IStream_AddRef(pstrChild);
         else
@@ -1786,21 +1714,126 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
 
       IStream_Release( pstrTmp );
     }
-    else
-    {
-      WARN("unknown element type: %d\n", curElement.type);
-    }
+  }
 
-cleanup:
-    CoTaskMemFree(curElement.pwcsName);
-  } while (hr == S_OK);
+  /* copy siblings */
+  if (SUCCEEDED(hr))
+    hr = StorageBaseImpl_CopyChildEntryTo( This, data.leftChild, skip_storage,
+                                           skip_stream, snbExclude, pstgDest );
 
-  /*
-   * Clean-up
-   */
-  IEnumSTATSTG_Release(elements);
+  if (SUCCEEDED(hr))
+    hr = StorageBaseImpl_CopyChildEntryTo( This, data.rightChild, skip_storage,
+                                           skip_stream, snbExclude, pstgDest );
 
   return hr;
+}
+
+static HRESULT StorageBaseImpl_CopyStorageEntryTo(StorageBaseImpl *This,
+    DirRef srcEntry, BOOL skip_storage, BOOL skip_stream,
+    SNB snbExclude, IStorage *pstgDest)
+{
+  DirEntry data;
+  HRESULT hr;
+
+  hr = StorageBaseImpl_ReadDirEntry( This, srcEntry, &data );
+
+  if (SUCCEEDED(hr))
+    hr = IStorage_SetClass( pstgDest, &data.clsid );
+
+  if (SUCCEEDED(hr))
+    hr = StorageBaseImpl_CopyChildEntryTo( This, data.dirRootEntry, skip_storage,
+      skip_stream, snbExclude, pstgDest );
+
+  return hr;
+}
+
+/*************************************************************************
+ * CopyTo (IStorage)
+ */
+static HRESULT WINAPI StorageBaseImpl_CopyTo(
+  IStorage*   iface,
+  DWORD       ciidExclude,  /* [in] */
+  const IID*  rgiidExclude, /* [size_is][unique][in] */
+  SNB         snbExclude,   /* [unique][in] */
+  IStorage*   pstgDest)     /* [unique][in] */
+{
+  StorageBaseImpl* const This=(StorageBaseImpl*)iface;
+
+  BOOL         skip_storage = FALSE, skip_stream = FALSE;
+  int          i;
+
+  TRACE("(%p, %d, %p, %p, %p)\n",
+	iface, ciidExclude, rgiidExclude,
+	snbExclude, pstgDest);
+
+  if ( pstgDest == 0 )
+    return STG_E_INVALIDPOINTER;
+
+  for(i = 0; i < ciidExclude; ++i)
+  {
+    if(IsEqualGUID(&IID_IStorage, &rgiidExclude[i]))
+        skip_storage = TRUE;
+    else if(IsEqualGUID(&IID_IStream, &rgiidExclude[i]))
+        skip_stream = TRUE;
+    else
+        WARN("Unknown excluded GUID: %s\n", debugstr_guid(&rgiidExclude[i]));
+  }
+
+  if (!skip_storage)
+  {
+    /* Give up early if it looks like this would be infinitely recursive.
+     * Oddly enough, this includes some cases that aren't really recursive, like
+     * copying to a transacted child. */
+    IStorage *pstgDestAncestor = pstgDest;
+    IStorage *pstgDestAncestorChild = NULL;
+
+    /* Go up the chain from the destination until we find the source storage. */
+    while (pstgDestAncestor != iface) {
+      pstgDestAncestorChild = pstgDest;
+
+      if (pstgDestAncestor->lpVtbl == &TransactedSnapshotImpl_Vtbl)
+      {
+        TransactedSnapshotImpl *impl = (TransactedSnapshotImpl*) pstgDestAncestor;
+
+        pstgDestAncestor = (IStorage*)impl->transactedParent;
+      }
+      else if (pstgDestAncestor->lpVtbl == &Storage32InternalImpl_Vtbl)
+      {
+        StorageInternalImpl *impl = (StorageInternalImpl*) pstgDestAncestor;
+
+        pstgDestAncestor = (IStorage*)impl->parentStorage;
+      }
+      else
+        break;
+    }
+
+    if (pstgDestAncestor == iface)
+    {
+      BOOL fail = TRUE;
+
+      if (pstgDestAncestorChild && snbExclude)
+      {
+        StorageBaseImpl *ancestorChildBase = (StorageBaseImpl*)pstgDestAncestorChild;
+        DirEntry data;
+        WCHAR **snb = snbExclude;
+
+        StorageBaseImpl_ReadDirEntry(ancestorChildBase, ancestorChildBase->storageDirEntry, &data);
+
+        while ( *snb != NULL && fail )
+        {
+          if ( lstrcmpW(data.name, *snb) == 0 )
+            fail = FALSE;
+          ++snb;
+        }
+      }
+
+      if (fail)
+        return STG_E_ACCESSDENIED;
+    }
+  }
+
+  return StorageBaseImpl_CopyStorageEntryTo( This, This->storageDirEntry,
+    skip_storage, skip_stream, snbExclude, pstgDest );
 }
 
 /*************************************************************************
