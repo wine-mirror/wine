@@ -2821,3 +2821,13 @@ BOOL WINAPI ImmDisableTextFrameService(DWORD idThread)
     FIXME("Stub\n");
     return FALSE;
 }
+
+/***********************************************************************
+ *              ImmEnumInputContext(IMM32.@)
+ */
+
+BOOL WINAPI ImmEnumInputContext(DWORD idThread, IMCENUMPROC lpfn, LPARAM lParam)
+{
+    FIXME("Stub\n");
+    return FALSE;
+}
