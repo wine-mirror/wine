@@ -117,7 +117,7 @@ BEGIN
                     WS_EX_CLIENTEDGE
     PUSHBUTTON      "",IDC_CPU_USAGE_HISTORY_GRAPH,81,17,
                     153,37,0,WS_EX_CLIENTEDGE
-    PUSHBUTTON      "Historia u¿ycia pamiêci",IDC_MEM_USAGE_HISTORY_GRAPH,81,75,
+    PUSHBUTTON      "",IDC_MEM_USAGE_HISTORY_GRAPH,81,75,
                     153,37,0,WS_EX_CLIENTEDGE
 END
 
