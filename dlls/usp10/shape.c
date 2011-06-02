@@ -46,6 +46,7 @@ static void ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
 static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Devanagari(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static void ContextualShape_Gurmukhi(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 
 
 typedef VOID (*ShapeCharGlyphPropProc)( HDC , ScriptCache*, SCRIPT_ANALYSIS*, const WCHAR*, const INT, const WORD*, const INT, WORD*, SCRIPT_CHARPROP*, SCRIPT_GLYPHPROP*);
@@ -57,6 +58,7 @@ static void ShapeCharGlyphProp_None( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
 static void ShapeCharGlyphProp_Tibet( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 static void ShapeCharGlyphProp_Devanagari( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 static void ShapeCharGlyphProp_Bengali( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
+static void ShapeCharGlyphProp_Gurmukhi( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 
 extern const unsigned short wine_shaping_table[];
 extern const unsigned short wine_shaping_forms[LAST_ARABIC_CHAR - FIRST_ARABIC_CHAR + 1][4];
@@ -467,6 +469,47 @@ static OPENTYPE_FEATURE_RECORD bengali_features[] =
     { MS_MAKE_TAG('c','a','l','t'), 1},
 };
 
+static const char* required_gurmukhi_features[] =
+{
+    "nukt",
+    "akhn",
+    "rphf",
+    "blwf",
+    "half",
+    "pstf",
+    "vatu",
+    "cjct",
+    "pres",
+    "abvs",
+    "blws",
+    "psts",
+    "haln",
+    "calt",
+    NULL
+};
+
+static OPENTYPE_FEATURE_RECORD gurmukhi_features[] =
+{
+    /* Localized forms */
+    { MS_MAKE_TAG('l','o','c','l'), 1},
+    /* Base forms */
+    { MS_MAKE_TAG('n','u','k','t'), 1},
+    { MS_MAKE_TAG('a','k','h','n'), 1},
+    { MS_MAKE_TAG('r','p','h','f'), 1},
+    { MS_MAKE_TAG('b','l','w','f'), 1},
+    { MS_MAKE_TAG('h','a','l','f'), 1},
+    { MS_MAKE_TAG('p','s','t','f'), 1},
+    { MS_MAKE_TAG('v','a','t','u'), 1},
+    { MS_MAKE_TAG('c','j','c','t'), 1},
+    /* Presentation forms */
+    { MS_MAKE_TAG('p','r','e','s'), 1},
+    { MS_MAKE_TAG('a','b','v','s'), 1},
+    { MS_MAKE_TAG('b','l','w','s'), 1},
+    { MS_MAKE_TAG('p','s','t','s'), 1},
+    { MS_MAKE_TAG('h','a','l','n'), 1},
+    { MS_MAKE_TAG('c','a','l','t'), 1},
+};
+
 typedef struct ScriptShapeDataTag {
     TEXTRANGE_PROPERTIES   defaultTextRange;
     const char**           requiredFeatures;
@@ -507,6 +550,8 @@ static const ScriptShapeData ShapingData[] =
     {{ devanagari_features, 15}, required_devanagari_features, "deva", "dev2", ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
     {{ bengali_features, 16}, required_bengali_features, "beng", "bng2", ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
     {{ bengali_features, 16}, required_bengali_features, "beng", "bng2", ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
+    {{ gurmukhi_features, 15}, required_gurmukhi_features, "guru", "gur2", ContextualShape_Gurmukhi, ShapeCharGlyphProp_Gurmukhi},
+    {{ gurmukhi_features, 15}, required_gurmukhi_features, "guru", "gur2", ContextualShape_Gurmukhi, ShapeCharGlyphProp_Gurmukhi},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
@@ -1985,6 +2030,71 @@ static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     HeapFree(GetProcessHeap(),0,input);
 }
 
+static int gurmukhi_lex(WCHAR c)
+{
+    switch (c)
+    {
+        case 0x0A2f: return lex_Consonant;
+        case 0x0A30:
+        case 0x0A35:
+        case 0x0A39: return lex_Ra;
+        case 0x0A3C: return lex_Nukta;
+        case 0x0A3F: return lex_Mantra_pre;
+        case 0x0A03:
+        case 0x0A3E:
+        case 0x0A40: return lex_Mantra_post;
+        case 0x0A4D: return lex_Halant;
+        case 0x0A70:
+        case 0x0A71: return lex_Modifier;
+        case 0x200C: return lex_ZWNJ;
+        case 0x200D: return lex_ZWJ;
+        default:
+            if (c>=0x0A01 && c<=0x0A02) return lex_Modifier;
+            else if (c>=0x0A05 && c<=0x0A14) return lex_Vowel;
+            else if (c>=0x0A15 && c<=0x0A38) return lex_Consonant;
+            else if (c>=0x0A41 && c<=0x0A42) return lex_Mantra_below;
+            else if (c>=0x0A47 && c<=0x0A4C) return lex_Mantra_above;
+            else if (c>=0x0A59 && c<=0x0A5E) return lex_Consonant;
+            else return lex_Generic;
+    }
+}
+
+static const ConsonantComponents Gurmukhi_consonants[] = {
+            {{0x0A32,0x0A3C,0x0000}, 0x0A33},
+            {{0x0A38,0x0A3C,0x0000}, 0x0A36},
+            {{0x0A16,0x0A3C,0x0000}, 0x0A59},
+            {{0x0A17,0x0A3C,0x0000}, 0x0A5A},
+            {{0x0A1C,0x0A3C,0x0000}, 0x0A5B},
+            {{0x0A2B,0x0A3C,0x0000}, 0x0A5E},
+            {{0x0000,0x0000,0x0000}, 0x0000}};
+
+static void ContextualShape_Gurmukhi(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+{
+    int cCount = cChars;
+    WCHAR *input;
+
+    if (*pcGlyphs != cChars)
+    {
+        ERR("Number of Glyphs and Chars need to match at the beginning\n");
+        return;
+    }
+
+    input = HeapAlloc(GetProcessHeap(), 0, cChars * sizeof(WCHAR));
+    memcpy(input, pwcChars, cChars * sizeof(WCHAR));
+
+    /* Step 1: Compose Consonents */
+    ComposeConsonants(hdc, input, &cCount, Gurmukhi_consonants);
+    TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
+
+    /* Step 2: Reorder within Syllables */
+    Indic_ReorderCharacters( input, cCount, gurmukhi_lex, Reorder_Like_Bengali);
+    TRACE("reordered string %s\n",debugstr_wn(input,cCount));
+    GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
+    *pcGlyphs = cCount;
+
+    HeapFree(GetProcessHeap(),0,input);
+}
+
 static void ShapeCharGlyphProp_Default( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS* psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD* pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP* pGlyphProp)
 {
     int i,k;
@@ -2351,6 +2461,11 @@ static void ShapeCharGlyphProp_Devanagari( HDC hdc, ScriptCache *psc, SCRIPT_ANA
 static void ShapeCharGlyphProp_Bengali( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp )
 {
     ShapeCharGlyphProp_BaseIndic(hdc, psc, psa, pwcChars, cChars, pwGlyphs, cGlyphs, pwLogClust, pCharProp, pGlyphProp, bengali_lex);
+}
+
+static void ShapeCharGlyphProp_Gurmukhi( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp )
+{
+    ShapeCharGlyphProp_BaseIndic(hdc, psc, psa, pwcChars, cChars, pwGlyphs, cGlyphs, pwLogClust, pCharProp, pGlyphProp, gurmukhi_lex);
 }
 
 void SHAPE_CharGlyphProp(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp)

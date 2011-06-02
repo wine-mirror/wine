@@ -128,6 +128,7 @@ static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
 #define syrc_tag MS_MAKE_TAG('s','y','r','c')
 #define deva_tag MS_MAKE_TAG('d','e','v','a')
 #define beng_tag MS_MAKE_TAG('b','e','n','g')
+#define guru_tag MS_MAKE_TAG('g','u','r','u')
 
 static void test_ScriptItemize( void )
 {
@@ -219,6 +220,12 @@ static void test_ScriptItemize( void )
     static const itemTest t121[2] = {{{0,0,0,0,0},0,0,0,0,beng_tag},{{0,0,0,0,0},5,0,0,0,-1}};
     static const itemTest t122[2] = {{{0,0,0,0,0},0,0,0,2,beng_tag},{{0,0,0,0,0},5,0,0,0,-1}};
 
+    /* Gurmukhi */
+    static const WCHAR test13[] = {0x0a17, 0x0a41, 0x0a30, 0x0a2e, 0x0a41, 0x0a16, 0x0a40};
+    static const itemTest t131[2] = {{{0,0,0,0,0},0,0,0,0,guru_tag},{{0,0,0,0,0},7,0,0,0,-1}};
+    static const itemTest t132[2] = {{{0,0,0,0,0},0,0,0,2,guru_tag},{{0,0,0,0,0},7,0,0,0,-1}};
+
+
     SCRIPT_ITEM items[15];
     SCRIPT_CONTROL  Control;
     SCRIPT_STATE    State;
@@ -263,6 +270,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test10,4,NULL,NULL,1,t101,FALSE,0);
     test_items_ok(test11,8,NULL,NULL,1,t111,FALSE,0);
     test_items_ok(test12,5,NULL,NULL,1,t121,FALSE,0);
+    test_items_ok(test13,7,NULL,NULL,1,t131,FALSE,0);
 
     State.uBidiLevel = 0;
     test_items_ok(test1,4,&Control,&State,1,t11,FALSE,0);
@@ -281,6 +289,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test10,4,&Control,&State,1,t101,FALSE,0);
     test_items_ok(test11,8,&Control,&State,1,t111,FALSE,0);
     test_items_ok(test12,5,&Control,&State,1,t121,FALSE,0);
+    test_items_ok(test13,7,&Control,&State,1,t131,FALSE,0);
 
     State.uBidiLevel = 1;
     test_items_ok(test1,4,&Control,&State,1,t12,FALSE,0);
@@ -299,6 +308,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test10,4,&Control,&State,1,t101,FALSE,0);
     test_items_ok(test11,8,&Control,&State,1,t112,FALSE,0);
     test_items_ok(test12,5,&Control,&State,1,t122,FALSE,0);
+    test_items_ok(test13,7,&Control,&State,1,t132,FALSE,0);
 
     State.uBidiLevel = 1;
     Control.fMergeNeutralItems = TRUE;
@@ -318,6 +328,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test10,4,&Control,&State,1,t101,FALSE,0);
     test_items_ok(test11,8,&Control,&State,1,t112,FALSE,0);
     test_items_ok(test12,5,&Control,&State,1,t122,FALSE,0);
+    test_items_ok(test13,7,&Control,&State,1,t132,FALSE,0);
 }
 
 static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
