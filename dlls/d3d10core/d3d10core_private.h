@@ -227,7 +227,7 @@ HRESULT d3d10_depthstencil_state_init(struct d3d10_depthstencil_state *state) DE
 /* ID3D10RasterizerState */
 struct d3d10_rasterizer_state
 {
-    const struct ID3D10RasterizerStateVtbl *vtbl;
+    ID3D10RasterizerState ID3D10RasterizerState_iface;
     LONG refcount;
 };
 

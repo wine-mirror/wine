@@ -256,6 +256,11 @@ HRESULT d3d10_depthstencil_state_init(struct d3d10_depthstencil_state *state)
     return S_OK;
 }
 
+static inline struct d3d10_rasterizer_state *impl_from_ID3D10RasterizerState(ID3D10RasterizerState *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_rasterizer_state, ID3D10RasterizerState_iface);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE d3d10_rasterizer_state_QueryInterface(ID3D10RasterizerState *iface,
@@ -280,7 +285,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_rasterizer_state_QueryInterface(ID3D10Ras
 
 static ULONG STDMETHODCALLTYPE d3d10_rasterizer_state_AddRef(ID3D10RasterizerState *iface)
 {
-    struct d3d10_rasterizer_state *This = (struct d3d10_rasterizer_state *)iface;
+    struct d3d10_rasterizer_state *This = impl_from_ID3D10RasterizerState(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u.\n", This, refcount);
@@ -290,7 +295,7 @@ static ULONG STDMETHODCALLTYPE d3d10_rasterizer_state_AddRef(ID3D10RasterizerSta
 
 static ULONG STDMETHODCALLTYPE d3d10_rasterizer_state_Release(ID3D10RasterizerState *iface)
 {
-    struct d3d10_rasterizer_state *This = (struct d3d10_rasterizer_state *)iface;
+    struct d3d10_rasterizer_state *This = impl_from_ID3D10RasterizerState(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", This, refcount);
@@ -361,7 +366,7 @@ static const struct ID3D10RasterizerStateVtbl d3d10_rasterizer_state_vtbl =
 
 HRESULT d3d10_rasterizer_state_init(struct d3d10_rasterizer_state *state)
 {
-    state->vtbl = &d3d10_rasterizer_state_vtbl;
+    state->ID3D10RasterizerState_iface.lpVtbl = &d3d10_rasterizer_state_vtbl;
     state->refcount = 1;
 
     return S_OK;

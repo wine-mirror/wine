@@ -1026,7 +1026,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRasterizerState(ID3D10Device
     }
 
     TRACE("Created rasterizer state %p.\n", object);
-    *rasterizer_state = (ID3D10RasterizerState *)object;
+    *rasterizer_state = &object->ID3D10RasterizerState_iface;
 
     return S_OK;
 }
