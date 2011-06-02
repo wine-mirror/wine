@@ -65,6 +65,8 @@
 #define Script_Oriya_Numeric 35
 #define Script_Tamil 36
 #define Script_Tamil_Numeric 37
+#define Script_Telugu 38
+#define Script_Telugu_Numeric 39
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)

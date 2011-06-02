@@ -50,7 +50,7 @@ static void ContextualShape_Gurmukhi(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
 static void ContextualShape_Gujarati(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-
+static void ContextualShape_Telugu(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 
 typedef VOID (*ShapeCharGlyphPropProc)( HDC , ScriptCache*, SCRIPT_ANALYSIS*, const WCHAR*, const INT, const WORD*, const INT, WORD*, SCRIPT_CHARPROP*, SCRIPT_GLYPHPROP*);
 
@@ -65,6 +65,7 @@ static void ShapeCharGlyphProp_Gurmukhi( HDC hdc, ScriptCache *psc, SCRIPT_ANALY
 static void ShapeCharGlyphProp_Gujarati( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 static void ShapeCharGlyphProp_Oriya( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 static void ShapeCharGlyphProp_Tamil( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
+static void ShapeCharGlyphProp_Telugu( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 
 extern const unsigned short wine_shaping_table[];
 extern const unsigned short wine_shaping_forms[LAST_ARABIC_CHAR - FIRST_ARABIC_CHAR + 1][4];
@@ -588,6 +589,46 @@ static OPENTYPE_FEATURE_RECORD tamil_features[] =
     { MS_MAKE_TAG('c','a','l','t'), 1},
 };
 
+static const char* required_telugu_features[] =
+{
+    "nukt",
+    "akhn",
+    "rphf",
+    "pref",
+    "half",
+    "pstf",
+    "cjct",
+    "pres",
+    "abvs",
+    "blws",
+    "psts",
+    "haln",
+    "calt",
+    NULL
+};
+
+static OPENTYPE_FEATURE_RECORD telugu_features[] =
+{
+    /* Localized forms */
+    { MS_MAKE_TAG('l','o','c','l'), 1},
+    /* Base forms */
+    { MS_MAKE_TAG('n','u','k','t'), 1},
+    { MS_MAKE_TAG('a','k','h','n'), 1},
+    { MS_MAKE_TAG('r','p','h','f'), 1},
+    { MS_MAKE_TAG('p','r','e','f'), 1},
+    { MS_MAKE_TAG('b','l','w','f'), 1},
+    { MS_MAKE_TAG('h','a','l','f'), 1},
+    { MS_MAKE_TAG('p','s','t','f'), 1},
+    { MS_MAKE_TAG('c','j','c','t'), 1},
+    /* Presentation forms */
+    { MS_MAKE_TAG('p','r','e','s'), 1},
+    { MS_MAKE_TAG('a','b','v','s'), 1},
+    { MS_MAKE_TAG('b','l','w','s'), 1},
+    { MS_MAKE_TAG('p','s','t','s'), 1},
+    { MS_MAKE_TAG('h','a','l','n'), 1},
+    { MS_MAKE_TAG('c','a','l','t'), 1},
+};
+
 typedef struct ScriptShapeDataTag {
     TEXTRANGE_PROPERTIES   defaultTextRange;
     const char**           requiredFeatures;
@@ -637,6 +678,8 @@ static const ScriptShapeData ShapingData[] =
     {{ oriya_features, 13}, required_oriya_features, "orya", "ory2", ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
     {{ tamil_features, 12}, required_tamil_features, "taml", "tam2", ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
     {{ tamil_features, 12}, required_tamil_features, "taml", "tam2", ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
+    {{ telugu_features, 15}, required_telugu_features, "telu", "tel2", ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
+    {{ telugu_features, 15}, required_telugu_features, "telu", "tel2", ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
@@ -2360,6 +2403,61 @@ static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     HeapFree(GetProcessHeap(),0,input);
 }
 
+static int telugu_lex(WCHAR c)
+{
+    switch (c)
+    {
+        case 0x0C4D: return lex_Halant;
+        case 0x0C55: return lex_Mantra_above;
+        case 0x0C56: return lex_Mantra_below;
+        case 0x200C: return lex_ZWNJ;
+        case 0x200D: return lex_ZWJ;
+        default:
+            if (c>=0x0C01 && c<=0x0C03) return lex_Mantra_post;
+            else if (c>=0x0C05 && c<=0x0C14) return lex_Vowel;
+            else if (c>=0x0C15 && c<=0x0C39) return lex_Consonant;
+            else if (c>=0x0C3E && c<=0x0C40) return lex_Mantra_above;
+            else if (c>=0x0C41 && c<=0x0C44) return lex_Mantra_post;
+            else if (c>=0x0C46 && c<=0x0C47) return lex_Mantra_above;
+            else if (c>=0x0C4A && c<=0x0C4C) return lex_Mantra_above;
+            else if (c>=0x0C58 && c<=0x0C59) return lex_Consonant;
+            else if (c>=0x0C60 && c<=0x0C61) return lex_Vowel;
+            else if (c>=0x0C62 && c<=0x0C63) return lex_Mantra_below;
+            else return lex_Generic;
+    }
+}
+
+static const VowelComponents Telugu_vowels[] = {
+            {0x0C48, {0x0C46,0x0C56,0x0000}},
+            {0x0000, {0x0000,0x0000,0x0000}}};
+
+static void ContextualShape_Telugu(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+{
+    int cCount = cChars;
+    WCHAR *input;
+
+    if (*pcGlyphs != cChars)
+    {
+        ERR("Number of Glyphs and Chars need to match at the beginning\n");
+        return;
+    }
+
+    input = HeapAlloc(GetProcessHeap(), 0, (cChars*2) * sizeof(WCHAR));
+    memcpy(input, pwcChars, cChars * sizeof(WCHAR));
+
+    /* Step 1: Decompose Vowels */
+    DecomposeVowels(hdc, input,  &cCount, Telugu_vowels);
+    TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
+
+    /* Step 2: Reorder within Syllables */
+    Indic_ReorderCharacters( input, cCount, telugu_lex, Reorder_Like_Bengali);
+    TRACE("reordered string %s\n",debugstr_wn(input,cCount));
+    GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
+    *pcGlyphs = cCount;
+
+    HeapFree(GetProcessHeap(),0,input);
+}
+
 static void ShapeCharGlyphProp_Default( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS* psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD* pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP* pGlyphProp)
 {
     int i,k;
@@ -2746,6 +2844,11 @@ static void ShapeCharGlyphProp_Oriya( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS
 static void ShapeCharGlyphProp_Tamil( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp )
 {
     ShapeCharGlyphProp_BaseIndic(hdc, psc, psa, pwcChars, cChars, pwGlyphs, cGlyphs, pwLogClust, pCharProp, pGlyphProp, tamil_lex);
+}
+
+static void ShapeCharGlyphProp_Telugu( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp )
+{
+    ShapeCharGlyphProp_BaseIndic(hdc, psc, psa, pwcChars, cChars, pwGlyphs, cGlyphs, pwLogClust, pCharProp, pGlyphProp, telugu_lex);
 }
 
 void SHAPE_CharGlyphProp(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp)
