@@ -85,6 +85,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Gurmukhi,   0xa00,  0xa7f,  Script_Gurmukhi_Numeric, 0},
     /* Gujarati: U+0A80–U+0AFF*/
     { Script_Gujarati,   0xa80,  0xaff,  Script_Gujarati_Numeric, 0},
+    /* Oriya: U+0B00–U+0B7F */
+    { Script_Oriya,      0xb00,  0xb7f,  Script_Oriya_Numeric, 0},
     /* Sinhala: U+0D80–U+0DFF */
     { Script_Sinhala,   0xd80,  0xdff,  0, 0},
     /* Thai: U+0E00–U+0E7F */
@@ -243,6 +245,12 @@ static const scriptData scriptInformation[] = {
     {{Script_Gujarati_Currency, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_GUJARATI, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('g','u','j','r')},
+    {{Script_Oriya, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_ORIYA, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 0, 0},
+     MS_MAKE_TAG('o','r','y','a')},
+    {{Script_Oriya_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_ORIYA, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('o','r','y','a')},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -263,7 +271,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[26].props, &scriptInformation[27].props,
     &scriptInformation[28].props, &scriptInformation[29].props,
     &scriptInformation[30].props, &scriptInformation[31].props,
-    &scriptInformation[32].props, &scriptInformation[33].props
+    &scriptInformation[32].props, &scriptInformation[33].props,
+    &scriptInformation[34].props, &scriptInformation[35].props
 };
 
 typedef struct {

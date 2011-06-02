@@ -61,6 +61,8 @@
 #define Script_Gujarati 31
 #define Script_Gujarati_Numeric 32
 #define Script_Gujarati_Currency 33
+#define Script_Oriya 34
+#define Script_Oriya_Numeric 35
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
