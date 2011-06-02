@@ -1620,6 +1620,38 @@ void WINAPI NdrServerCall2(PRPC_MESSAGE pRpcMsg)
     NdrStubCall2(NULL, NULL, pRpcMsg, &dwPhase);
 }
 
+/***********************************************************************
+ *            NdrClientCall [RPCRT4.@]
+ */
+CLIENT_CALL_RETURN WINAPIV NdrClientCall( PMIDL_STUB_DESC desc, PFORMAT_STRING format, ... )
+{
+    __ms_va_list args;
+    CLIENT_CALL_RETURN ret;
+
+    __ms_va_start( args, format );
+    ret = NdrClientCall2( desc, format, va_arg( args, unsigned char * ));
+    __ms_va_end( args );
+    return ret;
+}
+
+/***********************************************************************
+ *            NdrStubCall [RPCRT4.@]
+ */
+LONG WINAPI NdrStubCall( struct IRpcStubBuffer *This, struct IRpcChannelBuffer *channel,
+                         PRPC_MESSAGE msg, DWORD *phase )
+{
+    return NdrStubCall2( This, channel, msg, phase );
+}
+
+/***********************************************************************
+ *            NdrServerCall [RPCRT4.@]
+ */
+void WINAPI NdrServerCall( PRPC_MESSAGE msg )
+{
+    DWORD phase;
+    NdrStubCall( NULL, NULL, msg, &phase );
+}
+
 struct async_call_data
 {
     MIDL_STUB_MESSAGE *pStubMsg;
