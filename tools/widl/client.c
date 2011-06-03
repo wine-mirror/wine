@@ -107,8 +107,10 @@ static void write_function_stub( const type_t *iface, const var_t *func,
         fprintf(client, "{\n");
         indent++;
         if (has_ret) print_client( "%s", "CLIENT_CALL_RETURN _RetVal;\n\n" );
-        print_client( "%sNdrClientCall( &%s_StubDesc, &__MIDL_ProcFormatString.Format[%u], ",
-                      has_ret ? "_RetVal = " : "", iface->name, proc_offset );
+        print_client( "%s%s( &%s_StubDesc, &__MIDL_ProcFormatString.Format[%u], ",
+                      has_ret ? "_RetVal = " : "",
+                      stub_mode == MODE_Oif ? "NdrClientCall2" : "NdrClientCall",
+                      iface->name, proc_offset );
         if (args)
             fprintf( client, "(unsigned char *)&%s );\n",
                      LIST_ENTRY( list_head(args), const var_t, entry )->name );
@@ -383,7 +385,7 @@ static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
     print_client("0,\n");
     print_client("__MIDL_TypeFormatString.Format,\n");
     print_client("1, /* -error bounds_check flag */\n");
-    print_client("0x10001, /* Ndr library version */\n");
+    print_client("0x%x, /* Ndr library version */\n", stub_mode == MODE_Oif ? 0x50002 : 0x10001);
     print_client("0,\n");
     print_client("0x50100a4, /* MIDL Version 5.1.164 */\n");
     print_client("0,\n");
