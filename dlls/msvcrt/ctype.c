@@ -345,7 +345,7 @@ int CDECL MSVCRT__toupper_l(int c, MSVCRT__locale_t locale)
         locinfo = locale->locinfo;
 
     if(c < 256)
-        return locinfo->pcumap[c];
+        return locinfo->pcumap[(unsigned char)c];
 
     if(locinfo->pctype[(c>>8)&255] & MSVCRT__LEADBYTE)
     {
@@ -400,7 +400,7 @@ int CDECL MSVCRT__tolower_l(int c, MSVCRT__locale_t locale)
         locinfo = locale->locinfo;
 
     if(c < 256)
-        return locinfo->pclmap[c];
+        return locinfo->pclmap[(unsigned char)c];
 
     if(locinfo->pctype[(c>>8)&255] & MSVCRT__LEADBYTE)
     {

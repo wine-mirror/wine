@@ -80,6 +80,7 @@ static int (__cdecl *p_wcslwr_s)(wchar_t*,size_t);
 static errno_t (__cdecl *p_mbsupr_s)(unsigned char *str, size_t numberOfElements);
 static errno_t (__cdecl *p_mbslwr_s)(unsigned char *str, size_t numberOfElements);
 static int (__cdecl *p_wctob)(wint_t);
+static int (__cdecl *p_tolower)(int);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
@@ -1326,6 +1327,7 @@ static void test_mbstowcs(void)
     ok(!memcmp(mOut, mHiragana, sizeof(mHiragana)), "mOut = %s\n", mOut);
 
     if(!pmbstowcs_s || !pwcstombs_s) {
+        setlocale(LC_ALL, "C");
         win_skip("mbstowcs_s or wcstombs_s not available\n");
         return;
     }
@@ -1359,6 +1361,7 @@ static void test_mbstowcs(void)
     ok(ret == 5, "wcstombs_s did not return 5\n");
 
     if(!pwcsrtombs) {
+        setlocale(LC_ALL, "C");
         win_skip("wcsrtombs not available\n");
         return;
     }
@@ -1376,6 +1379,8 @@ static void test_mbstowcs(void)
     ok(ret == 4, "wcsrtombs did not return 4\n");
     ok(pwstr == NULL, "pwstr != NULL\n");
     ok(!memcmp(mOut, mSimple, sizeof(mSimple)), "mOut = %s\n", mOut);
+
+    setlocale(LC_ALL, "C");
 }
 
 static void test_gcvt(void)
@@ -1854,7 +1859,6 @@ static void test__mbslwr_s(void)
     ok(!memcmp(buffer, "abcdefgh\0IJKLMNOP", sizeof("abcdefgh\0IJKLMNOP")),
        "Expected the output buffer to be \"abcdefgh\\0IJKLMNOP\", got \"%s\"\n",
        buffer);
-
 }
 
 static void test__ultoa_s(void)
@@ -1969,6 +1973,41 @@ static void test_wctob(void)
     ok(ret == (int)(char)0xe0, "ret = %x\n", ret);
 }
 
+static void test_tolower(void)
+{
+    int ret;
+
+    ret = p_tolower(0x41);
+    ok(ret == 0x61, "ret = %x\n", ret);
+
+    ret = p_tolower(0xF4);
+    ok(ret == 0xF4, "ret = %x\n", ret);
+
+    ret = p_tolower((char)0xF4);
+    ok(ret==0xF4/*Vista+*/ || ret==(char)0xF4, "ret = %x\n", ret);
+
+    /* is it using different locale (CP_ACP) for negative values?? */
+    /* current implementation matches msvcr90 behaviour */
+    ret = p_tolower((char)0xD0);
+    todo_wine ok(ret==0xF0/*Vista+*/ || ret==(char)0xD0, "ret = %x\n", ret);
+
+    ret = p_tolower(0xD0);
+    ok(ret == 0xD0, "ret = %x\n", ret);
+
+    if(!setlocale(LC_ALL, "us")) {
+        win_skip("skipping tolower tests that depends on locale\n");
+        return;
+    }
+
+    ret = p_tolower((char)0xD0);
+    ok(ret == 0xF0, "ret = %x\n", ret);
+
+    ret = p_tolower(0xD0);
+    ok(ret == 0xF0, "ret = %x\n", ret);
+
+    setlocale(LC_ALL, "C");
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -2005,6 +2044,7 @@ START_TEST(string)
     p_mbsupr_s = (void*)GetProcAddress(hMsvcrt, "_mbsupr_s");
     p_mbslwr_s = (void*)GetProcAddress(hMsvcrt, "_mbslwr_s");
     p_wctob = (void*)GetProcAddress(hMsvcrt, "wctob");
+    p_tolower = (void*)GetProcAddress(hMsvcrt, "tolower");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -2047,7 +2087,6 @@ START_TEST(string)
     test__wcslwr_s();
     test__mbsupr_s();
     test__mbslwr_s();
-
-    /* This test is changing locale */
     test_wctob();
+    test_tolower();
 }

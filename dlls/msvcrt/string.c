@@ -79,7 +79,7 @@ int CDECL _strlwr_s_l(char *str, MSVCRT_size_t len, MSVCRT__locale_t locale)
 
     while (*str)
     {
-        *str = MSVCRT__tolower_l(*str, locale);
+        *str = MSVCRT__tolower_l((unsigned char)*str, locale);
         str++;
     }
 
@@ -140,7 +140,7 @@ int CDECL _strupr_s_l(char *str, MSVCRT_size_t len, MSVCRT__locale_t locale)
 
     while (*str)
     {
-        *str = MSVCRT__toupper_l(*str, locale);
+        *str = MSVCRT__toupper_l((unsigned char)*str, locale);
         str++;
     }
 
