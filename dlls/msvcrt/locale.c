@@ -826,10 +826,17 @@ MSVCRT__locale_t MSVCRT__create_locale(int category, const char *locale)
 
     }
 
-    LCMapStringA(lcid[MSVCRT_LC_CTYPE], LCMAP_LOWERCASE, buf, 256,
-            (char*)loc->locinfo->pclmap, 256);
-    LCMapStringA(lcid[MSVCRT_LC_CTYPE], LCMAP_UPPERCASE, buf, 256,
-            (char*)loc->locinfo->pcumap, 256);
+    if(lcid[MSVCRT_LC_CTYPE]) {
+        LCMapStringA(lcid[MSVCRT_LC_CTYPE], LCMAP_LOWERCASE, buf, 256,
+                (char*)loc->locinfo->pclmap, 256);
+        LCMapStringA(lcid[MSVCRT_LC_CTYPE], LCMAP_UPPERCASE, buf, 256,
+                (char*)loc->locinfo->pcumap, 256);
+    } else {
+        for(i=0; i<256; i++) {
+            loc->locinfo->pclmap[i] = (i>='A' && i<='Z' ? i-'A'+'a' : i);
+            loc->locinfo->pcumap[i] = (i>='a' && i<='z' ? i-'a'+'A' : i);
+        }
+    }
 
     loc->mbcinfo->refcount = 1;
     loc->mbcinfo->mbcodepage = loc->locinfo->lc_id[MSVCRT_LC_CTYPE].wCodePage;
