@@ -69,6 +69,19 @@ enum type_context
     TYPE_CONTEXT_CONTAINER_NO_POINTERS,
 };
 
+/* parameter flags in Oif mode */
+static const unsigned short MustSize = 0x0001;
+static const unsigned short MustFree = 0x0002;
+static const unsigned short IsPipe = 0x0004;
+static const unsigned short IsIn = 0x0008;
+static const unsigned short IsOut = 0x0010;
+static const unsigned short IsReturn = 0x0020;
+static const unsigned short IsBasetype = 0x0040;
+static const unsigned short IsByValue = 0x0080;
+static const unsigned short IsSimpleRef = 0x0100;
+/* static const unsigned short IsDontCallFreeInst = 0x0200; */
+/* static const unsigned short SaveForAsyncFinish = 0x0400; */
+
 static unsigned int field_memsize(const type_t *type, unsigned int *offset);
 static unsigned int fields_memsize(const var_list_t *fields, unsigned int *align);
 static unsigned int type_memsize_and_alignment(const type_t *t, unsigned int *align);
@@ -79,6 +92,10 @@ static const var_t *find_array_or_string_in_struct(const type_t *type);
 static unsigned int write_string_tfs(FILE *file, const attr_list_t *attrs,
                                type_t *type, int toplevel_param,
                                const char *name, unsigned int *typestring_offset);
+static unsigned int get_required_buffer_size_type( const type_t *type, const char *name,
+                                                   const attr_list_t *attrs, int toplevel_param,
+                                                   unsigned int *alignment );
+static unsigned int get_function_buffer_size( const var_t *func, enum pass pass );
 
 static const char *string_of_type(unsigned char type)
 {
@@ -906,10 +923,229 @@ int decl_indirect(const type_t *t)
             type_get_type(t) != TYPE_ARRAY);
 }
 
-static unsigned int write_procformatstring_type(FILE *file, int indent,
-                                                const type_t *type,
-                                                const attr_list_t *attrs,
-                                                int is_return, int is_interpreted)
+static unsigned char get_parameter_fc( const type_t *type, const attr_list_t *attrs, int is_return,
+                                       unsigned short *flags, unsigned int *stack_size,
+                                       unsigned int *typestring_offset )
+{
+    unsigned int alignment, server_size = 0, buffer_size = 0;
+    unsigned char fc = 0;
+    int is_byval;
+    int is_in = is_attr(attrs, ATTR_IN);
+    int is_out = is_attr(attrs, ATTR_OUT);
+
+    if (is_return) is_out = TRUE;
+    else if (!is_in && !is_out) is_in = TRUE;
+
+    *flags = 0;
+    *stack_size = get_stack_size( type, attrs, &is_byval );
+    *typestring_offset = type->typestring_offset;
+
+    if (is_in)     *flags |= IsIn;
+    if (is_out)    *flags |= IsOut;
+    if (is_return) *flags |= IsReturn;
+
+    if (!is_string_type( attrs, type ))
+        buffer_size = get_required_buffer_size_type( type, NULL, attrs, TRUE, &alignment );
+
+    switch (typegen_detect_type( type, attrs, TDT_ALL_TYPES ))
+    {
+    case TGT_BASIC:
+        *flags |= IsBasetype;
+        fc = get_basic_fc_signed( type );
+        if (fc == RPC_FC_BIND_PRIMITIVE)
+        {
+            buffer_size = 4;  /* actually 0 but avoids setting MustSize */
+            fc = RPC_FC_LONG;
+        }
+        break;
+    case TGT_ENUM:
+        *flags |= IsBasetype;
+        fc = get_enum_fc( type );
+        break;
+    case TGT_RANGE:
+        *flags |= IsByValue;
+        break;
+    case TGT_STRUCT:
+    case TGT_UNION:
+    case TGT_USER_TYPE:
+        *flags |= MustFree | (is_byval ? IsByValue : IsSimpleRef);
+        break;
+    case TGT_IFACE_POINTER:
+        *flags |= MustFree;
+        break;
+    case TGT_ARRAY:
+        *flags |= MustFree;
+        if (type_array_is_decl_as_ptr(type) && type->details.array.ptr_tfsoff &&
+            get_pointer_fc( type, attrs, !is_return ) == RPC_FC_RP)
+            *flags |= IsSimpleRef;
+        break;
+    case TGT_STRING:
+        *flags |= MustFree;
+        if (is_declptr( type ) && get_pointer_fc( type, attrs, !is_return ) == RPC_FC_RP)
+        {
+            /* skip over pointer description straight to string description */
+            if (is_conformant_array( type )) typestring_offset += 4;
+            else typestring_offset += 2;
+            *flags |= IsSimpleRef;
+        }
+        break;
+    case TGT_CTXT_HANDLE_POINTER:
+        *flags |= IsSimpleRef;
+        /* fall through */
+    case TGT_CTXT_HANDLE:
+        buffer_size = 20;
+        break;
+    case TGT_POINTER:
+        if (get_pointer_fc( type, attrs, !is_return ) == RPC_FC_RP)
+        {
+            const type_t *ref = type_pointer_get_ref( type );
+
+            if (!is_string_type( attrs, ref ))
+                buffer_size = get_required_buffer_size_type( ref, NULL, NULL, TRUE, &alignment );
+
+            switch (typegen_detect_type( ref, NULL, TDT_ALL_TYPES ))
+            {
+            case TGT_BASIC:
+                *flags |= IsSimpleRef | IsBasetype;
+                fc = get_basic_fc( ref );
+                if (!is_in && is_out) server_size = pointer_size;
+                break;
+            case TGT_ENUM:
+                if ((fc = get_enum_fc( ref )) == RPC_FC_ENUM32)
+                {
+                    *flags |= IsSimpleRef | IsBasetype;
+                    if (!is_in && is_out) server_size = pointer_size;
+                }
+                else
+                {
+                    server_size = pointer_size;
+                }
+                break;
+            case TGT_UNION:
+            case TGT_USER_TYPE:
+            case TGT_RANGE:
+                *flags |= IsSimpleRef | MustFree;
+                *typestring_offset = ref->typestring_offset;
+                if (!is_in && is_out) server_size = type_memsize( ref );
+                break;
+            case TGT_STRING:
+            case TGT_POINTER:
+            case TGT_ARRAY:
+            case TGT_CTXT_HANDLE:
+            case TGT_CTXT_HANDLE_POINTER:
+                *flags |= MustFree;
+                server_size = pointer_size;
+                break;
+            case TGT_IFACE_POINTER:
+                *flags |= MustFree;
+                if (is_in && is_out) server_size = pointer_size;
+                break;
+            case TGT_STRUCT:
+                *flags |= IsSimpleRef | MustFree;
+                *typestring_offset = ref->typestring_offset;
+                switch (get_struct_fc(ref))
+                {
+                case RPC_FC_STRUCT:
+                case RPC_FC_PSTRUCT:
+                case RPC_FC_BOGUS_STRUCT:
+                    if (!is_in && is_out) server_size = type_memsize( ref );
+                    break;
+                default:
+                    break;
+                }
+                break;
+            case TGT_INVALID:
+                assert(0);
+            }
+        }
+        else  /* not ref pointer */
+        {
+            *flags |= MustFree;
+        }
+        break;
+    case TGT_INVALID:
+        assert(0);
+    }
+
+    if (!buffer_size) *flags |= MustSize;
+
+    if (server_size)
+    {
+        server_size = (server_size + 7) / 8;
+        if (server_size < 8) *flags |= server_size << 13;
+    }
+    return fc;
+}
+
+static unsigned char get_func_oi2_flags( const var_t *func )
+{
+    const var_t *var;
+    var_list_t *args = type_get_function_args( func->type );
+    type_t *ret_type = type_function_get_rettype( func->type );
+    unsigned char oi2_flags = 0x40;  /* HasExtensions */
+    unsigned short flags;
+    unsigned int stack_size, typestring_offset;
+
+    if (args) LIST_FOR_EACH_ENTRY( var, args, const var_t, entry )
+    {
+        get_parameter_fc( var->type, var->attrs, 0, &flags, &stack_size, &typestring_offset );
+        if (flags & MustSize)
+        {
+            if (flags & IsIn) oi2_flags |= 0x02; /* ClientMustSize */
+            if (flags & IsOut) oi2_flags |= 0x01;  /* ServerMustSize */
+        }
+    }
+
+    if (!is_void( ret_type ))
+    {
+        oi2_flags |= 0x04;  /* HasRet */
+        get_parameter_fc( ret_type, NULL, 1, &flags, &stack_size, &typestring_offset );
+        if (flags & MustSize) oi2_flags |= 0x01;  /* ServerMustSize */
+    }
+    return oi2_flags;
+}
+
+static unsigned int write_new_procformatstring_type(FILE *file, int indent,
+                                                    const type_t *type,
+                                                    const attr_list_t *attrs,
+                                                    int is_return, unsigned int *stack_offset)
+{
+    char buffer[64];
+    unsigned int stack_size, typestring_offset;
+    unsigned short flags;
+    unsigned char fc = get_parameter_fc( type, attrs, is_return, &flags, &stack_size, &typestring_offset );
+
+    strcpy( buffer, "/* flags:" );
+    if (flags & MustSize) strcat( buffer, " must size," );
+    if (flags & MustFree) strcat( buffer, " must free," );
+    if (flags & IsPipe) strcat( buffer, " pipe," );
+    if (flags & IsIn) strcat( buffer, " in," );
+    if (flags & IsOut) strcat( buffer, " out," );
+    if (flags & IsReturn) strcat( buffer, " return," );
+    if (flags & IsBasetype) strcat( buffer, " base type," );
+    if (flags & IsByValue) strcat( buffer, " by value," );
+    if (flags & IsSimpleRef) strcat( buffer, " simple ref," );
+    if (flags >> 13) sprintf( buffer + strlen(buffer), " srv size=%u,", (flags >> 13) * 8 );
+    strcpy( buffer + strlen( buffer ) - 1, " */" );
+    print_file( file, indent, "NdrFcShort(0x%hx),\t%s\n", flags, buffer );
+    print_file( file, indent, "NdrFcShort(0x%hx),	/* stack offset = %hu */\n",
+                *stack_offset, *stack_offset );
+    if (flags & IsBasetype)
+    {
+        print_file( file, indent, "0x%02x,	/* %s */\n", fc, string_of_type(fc) );
+        print_file( file, indent, "0x0,\n" );
+    }
+    else
+        print_file( file, indent, "NdrFcShort(0x%x),	/* type offset = %u */\n",
+                    typestring_offset, typestring_offset );
+    *stack_offset += max( stack_size, pointer_size );
+    return 6;
+}
+
+static unsigned int write_old_procformatstring_type(FILE *file, int indent,
+                                                    const type_t *type,
+                                                    const attr_list_t *attrs,
+                                                    int is_return, int is_interpreted)
 {
     unsigned int size;
 
@@ -994,11 +1230,14 @@ int is_interpreted_func( const type_t *iface, const var_t *func )
             break;
         }
     }
-    /* unions passed by value are not supported */
-    if (args) LIST_FOR_EACH_ENTRY( var, args, const var_t, entry )
-                  if (type_get_type( var->type ) == TYPE_UNION ||
-                      type_get_type( var->type ) == TYPE_ENCAPSULATED_UNION)
-                      return 0;
+    /* unions passed by value are not supported in Oi mode */
+    if (stub_mode != MODE_Oif && args)
+        LIST_FOR_EACH_ENTRY( var, args, const var_t, entry )
+        {
+            if (type_get_type( var->type ) == TYPE_UNION ||
+                type_get_type( var->type ) == TYPE_ENCAPSULATED_UNION)
+                return 0;
+        }
 
     if ((str = get_attrp( func->attrs, ATTR_OPTIMIZE ))) return !strcmp( str, "i" );
     if ((str = get_attrp( iface->attrs, ATTR_OPTIMIZE ))) return !strcmp( str, "i" );
@@ -1016,6 +1255,7 @@ static void write_proc_func_header( FILE *file, int indent, const type_t *iface,
     const var_t *handle_var = get_func_handle_var( iface, func, &explicit_fc, &implicit_fc );
     unsigned char oi_flags = RPC_FC_PROC_OIF_RPCFLAGS | RPC_FC_PROC_OIF_NEWINIT;
     unsigned int rpc_flags = get_rpc_flags( func->attrs );
+    unsigned int nb_args = 0;
     unsigned int stack_size = 0;
     unsigned short param_num = 0;
     unsigned short handle_stack_offset = 0;
@@ -1025,6 +1265,7 @@ static void write_proc_func_header( FILE *file, int indent, const type_t *iface,
     if (is_object( iface ))
     {
         oi_flags |= RPC_FC_PROC_OIF_OBJECT;
+        if (stub_mode == MODE_Oif) oi_flags |= RPC_FC_PROC_OIF_OBJ_V2;
         stack_size += pointer_size;
     }
 
@@ -1037,8 +1278,13 @@ static void write_proc_func_header( FILE *file, int indent, const type_t *iface,
         }
         stack_size += get_stack_size( var->type, var->attrs, NULL );
         param_num++;
+        nb_args++;
     }
-    if (!is_void( type_function_get_rettype( func->type ))) stack_size += pointer_size;
+    if (!is_void( type_function_get_rettype( func->type )))
+    {
+        stack_size += pointer_size;
+        nb_args++;
+    }
 
     print_file( file, 0, "/* %u (procedure %s::%s) */\n", *offset, iface->name, func->name );
     print_file( file, indent, "0x%02x,\t/* %s */\n", implicit_fc,
@@ -1049,38 +1295,67 @@ static void write_proc_func_header( FILE *file, int indent, const type_t *iface,
     print_file( file, indent, "NdrFcShort(0x%hx),\t/* stack size = %hu */\n", stack_size, stack_size );
     *offset += 10;
 
-    if (implicit_fc) return;
-
-    switch (explicit_fc)
+    if (!implicit_fc)
     {
-    case RPC_FC_BIND_PRIMITIVE:
-        handle_flags = 0;
-        print_file( file, indent, "0x%02x,\t/* %s */\n", explicit_fc, string_of_type(explicit_fc) );
-        print_file( file, indent, "0x%02x,\n", handle_flags );
-        print_file( file, indent, "NdrFcShort(0x%hx),\t/* stack offset = %hu */\n",
-                    handle_stack_offset, handle_stack_offset );
-        *offset += 4;
-        break;
-    case RPC_FC_BIND_GENERIC:
-        handle_flags = type_memsize( handle_var->type );
-        print_file( file, indent, "0x%02x,\t/* %s */\n", explicit_fc, string_of_type(explicit_fc) );
-        print_file( file, indent, "0x%02x,\n", handle_flags );
-        print_file( file, indent, "NdrFcShort(0x%hx),\t/* stack offset = %hu */\n",
-                    handle_stack_offset, handle_stack_offset );
-        print_file( file, indent, "0x%02x,\n", get_generic_handle_offset( handle_var->type ) );
-        print_file( file, indent, "0x%x,\t/* FC_PAD */\n", RPC_FC_PAD);
-        *offset += 6;
-        break;
-    case RPC_FC_BIND_CONTEXT:
-        handle_flags = get_contexthandle_flags( iface, handle_var->attrs, handle_var->type );
-        print_file( file, indent, "0x%02x,\t/* %s */\n", explicit_fc, string_of_type(explicit_fc) );
-        print_file( file, indent, "0x%02x,\n", handle_flags );
-        print_file( file, indent, "NdrFcShort(0x%hx),\t/* stack offset = %hu */\n",
-                    handle_stack_offset, handle_stack_offset );
-        print_file( file, indent, "0x%02x,\n", get_context_handle_offset( handle_var->type ) );
-        print_file( file, indent, "0x%02x,\t/* param %hu */\n", handle_param_num, handle_param_num );
-        *offset += 6;
-        break;
+        switch (explicit_fc)
+        {
+        case RPC_FC_BIND_PRIMITIVE:
+            handle_flags = 0;
+            print_file( file, indent, "0x%02x,\t/* %s */\n", explicit_fc, string_of_type(explicit_fc) );
+            print_file( file, indent, "0x%02x,\n", handle_flags );
+            print_file( file, indent, "NdrFcShort(0x%hx),\t/* stack offset = %hu */\n",
+                        handle_stack_offset, handle_stack_offset );
+            *offset += 4;
+            break;
+        case RPC_FC_BIND_GENERIC:
+            handle_flags = type_memsize( handle_var->type );
+            print_file( file, indent, "0x%02x,\t/* %s */\n", explicit_fc, string_of_type(explicit_fc) );
+            print_file( file, indent, "0x%02x,\n", handle_flags );
+            print_file( file, indent, "NdrFcShort(0x%hx),\t/* stack offset = %hu */\n",
+                        handle_stack_offset, handle_stack_offset );
+            print_file( file, indent, "0x%02x,\n", get_generic_handle_offset( handle_var->type ) );
+            print_file( file, indent, "0x%x,\t/* FC_PAD */\n", RPC_FC_PAD);
+            *offset += 6;
+            break;
+        case RPC_FC_BIND_CONTEXT:
+            handle_flags = get_contexthandle_flags( iface, handle_var->attrs, handle_var->type );
+            print_file( file, indent, "0x%02x,\t/* %s */\n", explicit_fc, string_of_type(explicit_fc) );
+            print_file( file, indent, "0x%02x,\n", handle_flags );
+            print_file( file, indent, "NdrFcShort(0x%hx),\t/* stack offset = %hu */\n",
+                        handle_stack_offset, handle_stack_offset );
+            print_file( file, indent, "0x%02x,\n", get_context_handle_offset( handle_var->type ) );
+            print_file( file, indent, "0x%02x,\t/* param %hu */\n", handle_param_num, handle_param_num );
+            *offset += 6;
+            break;
+        }
+    }
+
+    if (stub_mode == MODE_Oif)
+    {
+        unsigned char oi2_flags = get_func_oi2_flags( func );
+        unsigned char ext_flags = 0;
+        unsigned int size;
+
+        if (is_attr( func->attrs, ATTR_NOTIFY )) ext_flags |= 0x08;  /* HasNotify */
+        if (is_attr( func->attrs, ATTR_NOTIFYFLAG )) ext_flags |= 0x10;  /* HasNotify2 */
+
+        size = get_function_buffer_size( func, PASS_IN );
+        print_file( file, indent, "NdrFcShort(0x%x),\t/* client buffer = %hu */\n", size, size );
+        size = get_function_buffer_size( func, PASS_OUT );
+        print_file( file, indent, "NdrFcShort(0x%x),\t/* server buffer = %hu */\n", size, size );
+        print_file( file, indent, "0x%02x,\n", oi2_flags );
+        print_file( file, indent, "0x%02x,\t/* %u params */\n", nb_args, nb_args );
+        print_file( file, indent, "0x%02x,\n", pointer_size == 8 ? 10 : 8 );
+        print_file( file, indent, "0x%02x,\n", ext_flags );
+        print_file( file, indent, "NdrFcShort(0x0),\n" );  /* server corr hint */
+        print_file( file, indent, "NdrFcShort(0x0),\n" );  /* client corr hint */
+        print_file( file, indent, "NdrFcShort(0x0),\n" );  /* FIXME: notify index */
+        *offset += 14;
+        if (pointer_size == 8)
+        {
+            print_file( file, indent, "NdrFcShort(0x0),\n" );  /* floating point mask */
+            *offset += 2;
+        }
     }
 }
 
@@ -1088,7 +1363,9 @@ static void write_procformatstring_func( FILE *file, int indent, const type_t *i
                                          const var_t *func, unsigned int *offset,
                                          unsigned short num_proc )
 {
+    unsigned int stack_offset = is_object( iface ) ? pointer_size : 0;
     int is_interpreted = is_interpreted_func( iface, func );
+    int is_new_style = is_interpreted && (stub_mode == MODE_Oif);
 
     if (is_interpreted) write_proc_func_header( file, indent, iface, func, offset, num_proc );
 
@@ -1099,24 +1376,35 @@ static void write_procformatstring_func( FILE *file, int indent, const type_t *i
         LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
         {
             print_file( file, 0, "/* %u (parameter %s) */\n", *offset, var->name );
-            *offset += write_procformatstring_type(file, indent, var->type, var->attrs,
-                                                   FALSE, is_interpreted);
+            if (is_new_style)
+                *offset += write_new_procformatstring_type(file, indent, var->type, var->attrs,
+                                                           FALSE, &stack_offset);
+            else
+                *offset += write_old_procformatstring_type(file, indent, var->type, var->attrs,
+                                                           FALSE, is_interpreted);
         }
     }
 
     /* emit return value data */
     if (is_void(type_function_get_rettype(func->type)))
     {
-        print_file(file, 0, "/* %u (void) */\n", *offset);
-        print_file(file, indent, "0x5b,    /* FC_END */\n");
-        print_file(file, indent, "0x5c,    /* FC_PAD */\n");
-        *offset += 2;
+        if (!is_new_style)
+        {
+            print_file(file, 0, "/* %u (void) */\n", *offset);
+            print_file(file, indent, "0x5b,    /* FC_END */\n");
+            print_file(file, indent, "0x5c,    /* FC_PAD */\n");
+            *offset += 2;
+        }
     }
     else
     {
         print_file( file, 0, "/* %u (return value) */\n", *offset );
-        *offset += write_procformatstring_type(file, indent, type_function_get_rettype(func->type),
-                                               NULL, TRUE, is_interpreted);
+        if (is_new_style)
+            *offset += write_new_procformatstring_type(file, indent, type_function_get_rettype(func->type),
+                                                       NULL, TRUE, &stack_offset);
+        else
+            *offset += write_old_procformatstring_type(file, indent, type_function_get_rettype(func->type),
+                                                       NULL, TRUE, is_interpreted);
     }
 }
 
