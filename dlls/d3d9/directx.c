@@ -449,7 +449,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3D9Impl_CreateDevice(IDirect3D9Ex
         return E_OUTOFMEMORY;
     }
 
-    hr = device_init(object, This->WineD3D, adapter, device_type, focus_window, flags, parameters, NULL);
+    hr = device_init(object, This, This->WineD3D, adapter, device_type, focus_window, flags, parameters, NULL);
     if (FAILED(hr))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);
@@ -507,7 +507,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3D9ExImpl_CreateDeviceEx(IDirect3
         return E_OUTOFMEMORY;
     }
 
-    hr = device_init(object, d3d9->WineD3D, adapter, device_type, focus_window, flags, parameters, mode);
+    hr = device_init(object, d3d9, d3d9->WineD3D, adapter, device_type, focus_window, flags, parameters, mode);
     if (FAILED(hr))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);

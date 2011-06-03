@@ -265,6 +265,8 @@ static ULONG WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_Release(IDirect3DDevi
       wined3d_device_decref(This->wined3d_device);
       wined3d_mutex_unlock();
 
+      IDirect3D9_Release(This->d3d_parent);
+
       HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -317,8 +319,6 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetDirect3D(IDirect3DDevice9Ex *iface
         IDirect3D9 **ppD3D9)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
-    struct wined3d *wined3d;
-    HRESULT hr = D3D_OK;
 
     TRACE("iface %p, d3d9 %p.\n", iface, ppD3D9);
 
@@ -326,23 +326,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetDirect3D(IDirect3DDevice9Ex *iface
         return D3DERR_INVALIDCALL;
     }
 
-    wined3d_mutex_lock();
-    hr = wined3d_device_get_wined3d(This->wined3d_device, &wined3d);
-    if (hr == D3D_OK && wined3d)
-    {
-        *ppD3D9 = wined3d_get_parent(wined3d);
-        IDirect3D9_AddRef(*ppD3D9);
-        wined3d_decref(wined3d);
-    }
-    else
-    {
-        FIXME("Call to IWineD3DDevice_GetDirect3D failed\n");
-        *ppD3D9 = NULL;
-    }
-    TRACE("(%p) returning %p\n", This, *ppD3D9);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return IDirect3D9Ex_QueryInterface(This->d3d_parent, &IID_IDirect3D9, (void **)ppD3D9);
 }
 
 static HRESULT WINAPI IDirect3DDevice9Impl_GetDeviceCaps(IDirect3DDevice9Ex *iface, D3DCAPS9 *pCaps)
@@ -3347,7 +3331,7 @@ static void setup_fpu(void)
 #endif
 }
 
-HRESULT device_init(IDirect3DDevice9Impl *device, struct wined3d *wined3d, UINT adapter, D3DDEVTYPE device_type,
+HRESULT device_init(IDirect3DDevice9Impl *device, IDirect3D9Impl *parent, struct wined3d *wined3d, UINT adapter, D3DDEVTYPE device_type,
         HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters, D3DDISPLAYMODEEX *mode)
 {
     WINED3DPRESENT_PARAMETERS *wined3d_parameters;
@@ -3482,6 +3466,9 @@ HRESULT device_init(IDirect3DDevice9Impl *device, struct wined3d *wined3d, UINT 
         wined3d_mutex_unlock();
         return E_OUTOFMEMORY;
     }
+
+    device->d3d_parent = &parent->IDirect3D9Ex_iface;
+    IDirect3D9_AddRef(device->d3d_parent);
 
     return D3D_OK;
 }

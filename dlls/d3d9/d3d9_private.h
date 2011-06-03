@@ -166,6 +166,7 @@ typedef struct IDirect3DDevice9Impl
     struct wined3d_device_parent device_parent;
     LONG ref;
     struct wined3d_device *wined3d_device;
+    IDirect3D9Ex *d3d_parent;
     /* Avoids recursion with nested ReleaseRef to 0 */
     BOOL                          inDestruction;
 
@@ -175,7 +176,7 @@ typedef struct IDirect3DDevice9Impl
     BOOL                          notreset;
 } IDirect3DDevice9Impl;
 
-HRESULT device_init(IDirect3DDevice9Impl *device, struct wined3d *wined3d, UINT adapter, D3DDEVTYPE device_type,
+HRESULT device_init(IDirect3DDevice9Impl *device, IDirect3D9Impl *parent, struct wined3d *wined3d, UINT adapter, D3DDEVTYPE device_type,
         HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters, D3DDISPLAYMODEEX *mode) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
