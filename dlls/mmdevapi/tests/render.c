@@ -371,6 +371,8 @@ static void test_references(void)
             0, pwfx, NULL);
     ok(hr == S_OK, "Initialize failed: %08x\n", hr);
 
+    CoTaskMemFree(pwfx);
+
     hr = IAudioClient_GetService(ac, &IID_IAudioStreamVolume, (void**)&asv);
     ok(hr == S_OK, "GetService failed: %08x\n", hr);
 
@@ -467,7 +469,7 @@ static void test_padding(void)
     hr = IAudioClient_GetService(ac, &IID_IAudioRenderClient, (void**)&arc);
     ok(hr == S_OK, "GetService failed: %08x\n", hr);
 
-    psize = (defp / 10000000.) * pwfx->nSamplesPerSec * pwfx->nBlockAlign;
+    psize = (defp / 10000000.) * pwfx->nSamplesPerSec * 10;
 
     written = 0;
     hr = IAudioClient_GetCurrentPadding(ac, &pad);
@@ -487,7 +489,7 @@ static void test_padding(void)
     ok(hr == S_OK, "GetCurrentPadding failed: %08x\n", hr);
     ok(pad == written, "GetCurrentPadding returned %u, should be %u\n", pad, written);
 
-    psize = (minp / 10000000.) * pwfx->nSamplesPerSec * pwfx->nBlockAlign;
+    psize = (minp / 10000000.) * pwfx->nSamplesPerSec * 10;
 
     hr = IAudioRenderClient_GetBuffer(arc, psize, &buf);
     ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
@@ -644,6 +646,8 @@ static void test_clock(void)
     hr = IAudioClock_GetPosition(acl, &pos, NULL);
     ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
     ok(pos >= last, "Position should have been further along...\n");
+
+    CoTaskMemFree(pwfx);
 
     IAudioClock_Release(acl);
     IAudioClient_Release(ac);
