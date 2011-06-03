@@ -180,7 +180,7 @@ struct d3d10_effect_anonymous_shader
 extern const struct ID3D10EffectVtbl d3d10_effect_vtbl DECLSPEC_HIDDEN;
 struct d3d10_effect
 {
-    const struct ID3D10EffectVtbl *vtbl;
+    ID3D10Effect ID3D10Effect_iface;
     LONG refcount;
 
     ID3D10Device *device;

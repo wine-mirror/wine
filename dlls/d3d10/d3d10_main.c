@@ -222,7 +222,7 @@ HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT fl
         return E_OUTOFMEMORY;
     }
 
-    object->vtbl = &d3d10_effect_vtbl;
+    object->ID3D10Effect_iface.lpVtbl = &d3d10_effect_vtbl;
     object->refcount = 1;
     ID3D10Device_AddRef(device);
     object->device = device;
@@ -231,11 +231,11 @@ HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT fl
     if (FAILED(hr))
     {
         ERR("Failed to parse effect\n");
-        IUnknown_Release((IUnknown *)object);
+        IUnknown_Release(&object->ID3D10Effect_iface);
         return hr;
     }
 
-    *effect = (ID3D10Effect *)object;
+    *effect = &object->ID3D10Effect_iface;
 
     TRACE("Created ID3D10Effect %p\n", object);
 

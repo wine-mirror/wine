@@ -897,7 +897,7 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
     enum d3d10_effect_object_operation operation;
     HRESULT hr;
     struct d3d10_effect *effect = o->pass->technique->effect;
-    ID3D10Effect *e = (ID3D10Effect *)effect;
+    ID3D10Effect *e = &effect->ID3D10Effect_iface;
 
     read_dword(ptr, &o->type);
     TRACE("Effect object is of type %#x.\n", o->type);
@@ -1885,6 +1885,11 @@ static void d3d10_effect_local_buffer_destroy(struct d3d10_effect_variable *l)
 
 /* IUnknown methods */
 
+static inline struct d3d10_effect *impl_from_ID3D10Effect(ID3D10Effect *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_effect, ID3D10Effect_iface);
+}
+
 static HRESULT STDMETHODCALLTYPE d3d10_effect_QueryInterface(ID3D10Effect *iface, REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
@@ -1905,7 +1910,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_QueryInterface(ID3D10Effect *iface
 
 static ULONG STDMETHODCALLTYPE d3d10_effect_AddRef(ID3D10Effect *iface)
 {
-    struct d3d10_effect *This = (struct d3d10_effect *)iface;
+    struct d3d10_effect *This = impl_from_ID3D10Effect(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -1915,7 +1920,7 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_AddRef(ID3D10Effect *iface)
 
 static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
 {
-    struct d3d10_effect *This = (struct d3d10_effect *)iface;
+    struct d3d10_effect *This = impl_from_ID3D10Effect(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -1990,7 +1995,7 @@ static BOOL STDMETHODCALLTYPE d3d10_effect_IsPool(ID3D10Effect *iface)
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_GetDevice(ID3D10Effect *iface, ID3D10Device **device)
 {
-    struct d3d10_effect *This = (struct d3d10_effect *)iface;
+    struct d3d10_effect *This = impl_from_ID3D10Effect(iface);
 
     TRACE("iface %p, device %p\n", iface, device);
 
@@ -2010,7 +2015,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_GetDesc(ID3D10Effect *iface, D3D10
 static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetConstantBufferByIndex(ID3D10Effect *iface,
         UINT index)
 {
-    struct d3d10_effect *This = (struct d3d10_effect *)iface;
+    struct d3d10_effect *This = impl_from_ID3D10Effect(iface);
     struct d3d10_effect_variable *l;
 
     TRACE("iface %p, index %u\n", iface, index);
@@ -2031,7 +2036,7 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetCon
 static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetConstantBufferByName(ID3D10Effect *iface,
         LPCSTR name)
 {
-    struct d3d10_effect *This = (struct d3d10_effect *)iface;
+    struct d3d10_effect *This = impl_from_ID3D10Effect(iface);
     unsigned int i;
 
     TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
@@ -2054,7 +2059,7 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetCon
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableByIndex(ID3D10Effect *iface, UINT index)
 {
-    struct d3d10_effect *This = (struct d3d10_effect *)iface;
+    struct d3d10_effect *This = impl_from_ID3D10Effect(iface);
     unsigned int i;
 
     TRACE("iface %p, index %u\n", iface, index);
@@ -2088,7 +2093,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableByName(ID3D10Effect *iface, LPCSTR name)
 {
-    struct d3d10_effect *This = (struct d3d10_effect *)iface;
+    struct d3d10_effect *This = impl_from_ID3D10Effect(iface);
     unsigned int i;
 
     TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
@@ -2135,7 +2140,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableBySemantic(ID3D10Effect *iface,
         LPCSTR semantic)
 {
-    struct d3d10_effect *This = (struct d3d10_effect *)iface;
+    struct d3d10_effect *This = impl_from_ID3D10Effect(iface);
     unsigned int i;
 
     TRACE("iface %p, semantic %s\n", iface, debugstr_a(semantic));
@@ -2182,7 +2187,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
 static struct ID3D10EffectTechnique * STDMETHODCALLTYPE d3d10_effect_GetTechniqueByIndex(ID3D10Effect *iface,
         UINT index)
 {
-    struct d3d10_effect *This = (struct d3d10_effect *)iface;
+    struct d3d10_effect *This = impl_from_ID3D10Effect(iface);
     struct d3d10_effect_technique *t;
 
     TRACE("iface %p, index %u\n", iface, index);
@@ -2203,7 +2208,7 @@ static struct ID3D10EffectTechnique * STDMETHODCALLTYPE d3d10_effect_GetTechniqu
 static struct ID3D10EffectTechnique * STDMETHODCALLTYPE d3d10_effect_GetTechniqueByName(ID3D10Effect *iface,
         LPCSTR name)
 {
-    struct d3d10_effect *This = (struct d3d10_effect *)iface;
+    struct d3d10_effect *This = impl_from_ID3D10Effect(iface);
     unsigned int i;
 
     TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
