@@ -434,7 +434,7 @@ static ULONG WINAPI Protocol_Release(IInternetProtocol *iface)
 static void test_switch_fail(void)
 {
     IInternetProtocolSink *binding_sink;
-    PROTOCOLDATA protocoldata;
+    PROTOCOLDATA protocoldata = {0};
     HRESULT hres;
 
     static BOOL tested_switch_fail;
@@ -455,7 +455,7 @@ static void test_switch_fail(void)
 
 static DWORD WINAPI thread_proc(PVOID arg)
 {
-    PROTOCOLDATA protocoldata;
+    PROTOCOLDATA protocoldata = {0};
     HRESULT hres;
 
     if(!no_callback) {
