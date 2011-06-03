@@ -343,6 +343,7 @@ static void test_refcount(void)
     HRESULT                      hr;
     HWND                         hwnd               = NULL;
     IDirect3D8                  *pD3d               = NULL;
+    IDirect3D8                  *pD3d2              = NULL;
     IDirect3DDevice8            *pDevice            = NULL;
     IDirect3DVertexBuffer8      *pVertexBuffer      = NULL;
     IDirect3DIndexBuffer8       *pIndexBuffer       = NULL;
@@ -381,6 +382,8 @@ static void test_refcount(void)
     ok(hwnd != NULL, "Failed to create window\n");
     if (!pD3d || !hwnd) goto cleanup;
 
+    CHECK_REFCOUNT( pD3d, 1 );
+
     IDirect3D8_GetAdapterDisplayMode( pD3d, D3DADAPTER_DEFAULT, &d3ddm );
     ZeroMemory( &d3dpp, sizeof(d3dpp) );
     d3dpp.Windowed         = TRUE;
@@ -400,6 +403,15 @@ static void test_refcount(void)
 
     refcount = get_refcount( (IUnknown *)pDevice );
     ok(refcount == 1, "Invalid device RefCount %d\n", refcount);
+
+    CHECK_REFCOUNT( pD3d, 2 );
+
+    hr = IDirect3DDevice8_GetDirect3D(pDevice, &pD3d2);
+    CHECK_CALL( hr, "GetDirect3D", pDevice, refcount );
+
+    ok(pD3d2 == pD3d, "Expected IDirect3D8 pointers to be equal\n");
+    CHECK_REFCOUNT( pD3d, 3 );
+    CHECK_RELEASE_REFCOUNT( pD3d, 2 );
 
     /**
      * Check refcount of implicit surfaces. Findings:

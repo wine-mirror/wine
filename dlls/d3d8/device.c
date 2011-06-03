@@ -301,6 +301,7 @@ static ULONG WINAPI IDirect3DDevice8Impl_Release(IDirect3DDevice8 *iface)
 
     if (ref == 0) {
         unsigned i;
+        IDirect3D8 *parent = This->d3d_parent;
 
         TRACE("Releasing wined3d device %p.\n", This->wined3d_device);
 
@@ -320,6 +321,8 @@ static ULONG WINAPI IDirect3DDevice8Impl_Release(IDirect3DDevice8 *iface)
         HeapFree(GetProcessHeap(), 0, This);
 
         wined3d_mutex_unlock();
+
+        IDirect3D8_Release(parent);
     }
     return ref;
 }
@@ -373,8 +376,6 @@ static HRESULT WINAPI IDirect3DDevice8Impl_ResourceManagerDiscardBytes(IDirect3D
 static HRESULT WINAPI IDirect3DDevice8Impl_GetDirect3D(IDirect3DDevice8 *iface, IDirect3D8 **ppD3D8)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    struct wined3d *wined3d;
-    HRESULT hr;
 
     TRACE("iface %p, d3d8 %p.\n", iface, ppD3D8);
 
@@ -382,24 +383,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetDirect3D(IDirect3DDevice8 *iface, 
         return D3DERR_INVALIDCALL;
     }
 
-    wined3d_mutex_lock();
-    hr = wined3d_device_get_wined3d(This->wined3d_device, &wined3d);
-    if (SUCCEEDED(hr) && wined3d)
-    {
-        *ppD3D8 = wined3d_get_parent(wined3d);
-        IDirect3D8_AddRef(*ppD3D8);
-        wined3d_decref(wined3d);
-    }
-    else
-    {
-        FIXME("Call to IWineD3DDevice_GetDirect3D failed\n");
-        *ppD3D8 = NULL;
-    }
-    wined3d_mutex_unlock();
-
-    TRACE("(%p) returning %p\n",This , *ppD3D8);
-
-    return hr;
+    return IDirect3D8_QueryInterface(This->d3d_parent, &IID_IDirect3D8, (void **)ppD3D8);
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_GetDeviceCaps(IDirect3DDevice8 *iface, D3DCAPS8 *pCaps)
@@ -3095,7 +3079,7 @@ static void setup_fpu(void)
 #endif
 }
 
-HRESULT device_init(IDirect3DDevice8Impl *device, struct wined3d *wined3d, UINT adapter,
+HRESULT device_init(IDirect3DDevice8Impl *device, IDirect3D8Impl *parent, struct wined3d *wined3d, UINT adapter,
         D3DDEVTYPE device_type, HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters)
 {
     WINED3DPRESENT_PARAMETERS wined3d_parameters;
@@ -3208,6 +3192,9 @@ HRESULT device_init(IDirect3DDevice8Impl *device, struct wined3d *wined3d, UINT 
         hr = E_OUTOFMEMORY;
         goto err;
     }
+
+    device->d3d_parent = &parent->IDirect3D8_iface;
+    IDirect3D8_AddRef(device->d3d_parent);
 
     return D3D_OK;
 

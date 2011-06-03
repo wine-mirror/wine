@@ -368,7 +368,7 @@ static HRESULT WINAPI IDirect3D8Impl_CreateDevice(IDirect3D8 *iface, UINT adapte
         return E_OUTOFMEMORY;
     }
 
-    hr = device_init(object, This->WineD3D, adapter, device_type, focus_window, flags, parameters);
+    hr = device_init(object, This, This->WineD3D, adapter, device_type, focus_window, flags, parameters);
     if (FAILED(hr))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);

@@ -177,7 +177,8 @@ struct IDirect3DDevice8Impl
     IDirect3DDevice8        IDirect3DDevice8_iface;
     struct wined3d_device_parent device_parent;
     LONG                    ref;
-    struct wined3d_device *wined3d_device;
+    struct wined3d_device  *wined3d_device;
+    IDirect3D8             *d3d_parent;
     struct                  d3d8_handle_table handle_table;
 
     /* FVF management */
@@ -189,7 +190,7 @@ struct IDirect3DDevice8Impl
     BOOL lost;
 };
 
-HRESULT device_init(IDirect3DDevice8Impl *device, struct wined3d *wined3d, UINT adapter,
+HRESULT device_init(IDirect3DDevice8Impl *device, IDirect3D8Impl *parent, struct wined3d *wined3d, UINT adapter,
         D3DDEVTYPE device_type, HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters) DECLSPEC_HIDDEN;
 
 /* ---------------- */
