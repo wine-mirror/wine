@@ -194,7 +194,7 @@ static int string_width(const CHAR *s) {
 typedef struct {
     RECT rc;
     DWORD fStyle;
-    INT cx;
+    UINT cx;
 } rbband_result_t;
 
 typedef struct {
@@ -225,7 +225,7 @@ static void rbsize_add_row(rbsize_result_t *rbsr, int rowHeight) {
     rbsr->nRows++;
 }
 
-static void rbsize_add_band(rbsize_result_t *rbsr, int left, int top, int right, int bottom, DWORD fStyle, INT cx)
+static void rbsize_add_band(rbsize_result_t *rbsr, int left, int top, int right, int bottom, DWORD fStyle, UINT cx)
 {
     SetRect(&(rbsr->bands[rbsr->nBands].rc), left, top, right, bottom);
     rbsr->bands[rbsr->nBands].fStyle = fStyle;
@@ -810,7 +810,7 @@ static const rbresize_test_result_t resize_results[] = {
     {{-2, 0, 674, 24}, 0, FALSE},
 };
 
-static int resize_numtests = 0;
+static DWORD resize_numtests = 0;
 
 #define comment(fmt, arg1)
 #define check_client() { \
@@ -894,7 +894,7 @@ static void expect_band_content_(int line, HWND hRebar, UINT uBand, INT fStyle, 
     COLORREF clrBack, LPCSTR lpText, int iImage, HWND hwndChild,
     INT cxMinChild, INT cyMinChild, INT cx, HBITMAP hbmBack, INT wID,
     INT cyChild, INT cyMaxChild, INT cyIntegral, INT cxIdeal, LPARAM lParam,
-    INT cxHeader, INT cxHeader_broken)
+    UINT cxHeader, UINT cxHeader_broken)
 {
     CHAR buf[MAX_PATH] = "abc";
     REBARBANDINFOA rb;
