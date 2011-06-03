@@ -12895,6 +12895,131 @@ static void test_SetParent(void)
     flush_sequence();
 }
 
+static const struct message WmKeyReleaseOnly[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 0x41, 0x80000001 },
+    { WM_KEYUP, sent|wparam|lparam, 0x41, 0x80000001 },
+    { 0 }
+};
+static const struct message WmKeyPressNormal[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 0x41, 0x1 },
+    { WM_KEYDOWN, sent|wparam|lparam, 0x41, 0x1 },
+    { 0 }
+};
+static const struct message WmKeyPressRepeat[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 0x41, 0x40000001 },
+    { WM_KEYDOWN, sent|wparam|lparam, 0x41, 0x40000001 },
+    { 0 }
+};
+static const struct message WmKeyReleaseNormal[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 0x41, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, 0x41, 0xc0000001 },
+    { 0 }
+};
+
+static void test_keyflags(void)
+{
+    HWND test_window;
+    SHORT key_state;
+    BYTE keyboard_state[256];
+    MSG msg;
+
+    test_window = CreateWindowEx(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                           100, 100, 200, 200, 0, 0, 0, NULL);
+
+    flush_sequence();
+
+    /* keyup without a keydown */
+    keybd_event(0x41, 0, KEYEVENTF_KEYUP, 0);
+    while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
+        DispatchMessage(&msg);
+    ok_sequence(WmKeyReleaseOnly, "key release only", TRUE);
+
+    key_state = GetAsyncKeyState(0x41);
+    ok((key_state & 0x8000) == 0, "unexpected key state %x\n", key_state);
+
+    key_state = GetKeyState(0x41);
+    ok((key_state & 0x8000) == 0, "unexpected key state %x\n", key_state);
+
+    /* keydown */
+    keybd_event(0x41, 0, 0, 0);
+    while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
+        DispatchMessage(&msg);
+    ok_sequence(WmKeyPressNormal, "key press only", FALSE);
+
+    key_state = GetAsyncKeyState(0x41);
+    ok((key_state & 0x8000) == 0x8000, "unexpected key state %x\n", key_state);
+
+    key_state = GetKeyState(0x41);
+    ok((key_state & 0x8000) == 0x8000, "unexpected key state %x\n", key_state);
+
+    /* keydown repeat */
+    keybd_event(0x41, 0, 0, 0);
+    while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
+        DispatchMessage(&msg);
+    ok_sequence(WmKeyPressRepeat, "key press repeat", FALSE);
+
+    key_state = GetAsyncKeyState(0x41);
+    ok((key_state & 0x8000) == 0x8000, "unexpected key state %x\n", key_state);
+
+    key_state = GetKeyState(0x41);
+    ok((key_state & 0x8000) == 0x8000, "unexpected key state %x\n", key_state);
+
+    /* keyup */
+    keybd_event(0x41, 0, KEYEVENTF_KEYUP, 0);
+    while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
+        DispatchMessage(&msg);
+    ok_sequence(WmKeyReleaseNormal, "key release repeat", FALSE);
+
+    key_state = GetAsyncKeyState(0x41);
+    ok((key_state & 0x8000) == 0, "unexpected key state %x\n", key_state);
+
+    key_state = GetKeyState(0x41);
+    ok((key_state & 0x8000) == 0, "unexpected key state %x\n", key_state);
+
+    /* set the key state in this thread */
+    GetKeyboardState(keyboard_state);
+    keyboard_state[0x41] = 0x80;
+    SetKeyboardState(keyboard_state);
+
+    key_state = GetAsyncKeyState(0x41);
+    ok((key_state & 0x8000) == 0, "unexpected key state %x\n", key_state);
+
+    /* keydown */
+    keybd_event(0x41, 0, 0, 0);
+    while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
+        DispatchMessage(&msg);
+    ok_sequence(WmKeyPressRepeat, "key press after setkeyboardstate", TRUE);
+
+    key_state = GetAsyncKeyState(0x41);
+    ok((key_state & 0x8000) == 0x8000, "unexpected key state %x\n", key_state);
+
+    key_state = GetKeyState(0x41);
+    ok((key_state & 0x8000) == 0x8000, "unexpected key state %x\n", key_state);
+
+    /* clear the key state in this thread */
+    GetKeyboardState(keyboard_state);
+    keyboard_state[0x41] = 0;
+    SetKeyboardState(keyboard_state);
+
+    key_state = GetAsyncKeyState(0x41);
+    ok((key_state & 0x8000) == 0x8000, "unexpected key state %x\n", key_state);
+
+    /* keyup */
+    keybd_event(0x41, 0, KEYEVENTF_KEYUP, 0);
+    while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
+        DispatchMessage(&msg);
+    ok_sequence(WmKeyReleaseOnly, "key release after setkeyboardstate", TRUE);
+
+    key_state = GetAsyncKeyState(0x41);
+    ok((key_state & 0x8000) == 0, "unexpected key state %x\n", key_state);
+
+    key_state = GetKeyState(0x41);
+    ok((key_state & 0x8000) == 0, "unexpected key state %x\n", key_state);
+
+    DestroyWindow(test_window);
+    flush_sequence();
+}
+
 static const struct message WmHotkeyPressLWIN[] = {
     { WM_KEYDOWN, kbd_hook|wparam|lparam, VK_LWIN, LLKHF_INJECTED },
     { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_LWIN, 1 },
@@ -13248,6 +13373,7 @@ START_TEST(msg)
     test_paintingloop();
     test_defwinproc();
     test_clipboard_viewers();
+    test_keyflags();
     test_hotkey();
     /* keep it the last test, under Windows it tends to break the tests
      * which rely on active/foreground windows being correct.
