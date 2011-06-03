@@ -1550,7 +1550,7 @@ static void test_UDP(void)
     }
 }
 
-static void WINAPI do_getservbyname( HANDLE *starttest )
+static DWORD WINAPI do_getservbyname( void *param )
 {
     struct {
         const char *name;
@@ -1558,6 +1558,7 @@ static void WINAPI do_getservbyname( HANDLE *starttest )
         int port;
     } serv[2] = { {"domain", "udp", 53}, {"telnet", "tcp", 23} };
 
+    HANDLE *starttest = param;
     int i, j;
     struct servent *pserv[2];
 
@@ -1579,6 +1580,8 @@ static void WINAPI do_getservbyname( HANDLE *starttest )
 
         ok ( pserv[0] == pserv[1], "getservbyname: winsock resized servent buffer when not necessary\n" );
     }
+
+    return 0;
 }
 
 static void test_getservbyname(void)
@@ -1591,7 +1594,7 @@ static void test_getservbyname(void)
 
     /* create threads */
     for ( i = 0; i < NUM_THREADS; i++ ) {
-        thread[i] = CreateThread ( NULL, 0, (LPTHREAD_START_ROUTINE) &do_getservbyname, &starttest, 0, &thread_id[i] );
+        thread[i] = CreateThread ( NULL, 0, do_getservbyname, &starttest, 0, &thread_id[i] );
     }
 
     /* signal threads to start */
@@ -2235,8 +2238,9 @@ static void test_WSAStringToAddressW(void)
 
 }
 
-static VOID WINAPI SelectReadThread(select_thread_params *par)
+static DWORD WINAPI SelectReadThread(void *param)
 {
+    select_thread_params *par = param;
     fd_set readfds;
     int ret;
     struct sockaddr_in addr;
@@ -2256,6 +2260,8 @@ static VOID WINAPI SelectReadThread(select_thread_params *par)
     SetEvent(server_ready);
     ret = select(par->s+1, &readfds, NULL, NULL, &select_timeout);
     par->ReadKilled = (ret == 1);
+
+    return 0;
 }
 
 static void test_errors(void)
@@ -2344,7 +2350,7 @@ static void test_select(void)
     thread_params.s = fdRead;
     thread_params.ReadKilled = FALSE;
     server_ready = CreateEventA(NULL, TRUE, FALSE, NULL);
-    thread_handle = CreateThread (NULL, 0, (LPTHREAD_START_ROUTINE) &SelectReadThread, &thread_params, 0, &id );
+    thread_handle = CreateThread (NULL, 0, SelectReadThread, &thread_params, 0, &id );
     ok ( (thread_handle != NULL), "CreateThread failed unexpectedly: %d\n", GetLastError());
 
     WaitForSingleObject (server_ready, INFINITE);
@@ -2396,8 +2402,9 @@ static void test_select(void)
     ok ( !FD_ISSET(fdRead, &exceptfds), "FD should not be set\n");
 }
 
-static DWORD WINAPI AcceptKillThread(select_thread_params *par)
+static DWORD WINAPI AcceptKillThread(void *param)
 {
+    select_thread_params *par = param;
     struct sockaddr_in address;
     int len = sizeof(address);
     SOCKET client_socket;
@@ -2482,8 +2489,7 @@ static void test_accept(void)
 
     thread_params.s = server_socket;
     thread_params.ReadKilled = FALSE;
-    thread_handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) AcceptKillThread,
-        &thread_params, 0, &id);
+    thread_handle = CreateThread(NULL, 0, AcceptKillThread, &thread_params, 0, &id);
     if (thread_handle == NULL)
     {
         trace("error creating thread: %d\n", GetLastError());
