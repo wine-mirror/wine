@@ -59,7 +59,7 @@ static const struct ID3D10EffectTypeVtbl d3d10_effect_type_vtbl;
 
 /* null objects - needed for invalid calls */
 static struct d3d10_effect_technique null_technique = {&d3d10_effect_technique_vtbl};
-static struct d3d10_effect_pass null_pass = {&d3d10_effect_pass_vtbl};
+static struct d3d10_effect_pass null_pass = {{&d3d10_effect_pass_vtbl}};
 static struct d3d10_effect_type null_type = {{&d3d10_effect_type_vtbl}};
 static struct d3d10_effect_variable null_local_buffer = {(const ID3D10EffectVariableVtbl *)&d3d10_effect_constant_buffer_vtbl,
         &null_local_buffer, &null_type};
@@ -1128,7 +1128,7 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
     {
         struct d3d10_effect_pass *p = &t->passes[i];
 
-        p->vtbl = &d3d10_effect_pass_vtbl;
+        p->ID3D10EffectPass_iface.lpVtbl = &d3d10_effect_pass_vtbl;
         p->technique = t;
 
         hr = parse_fx10_pass(p, ptr, data);
@@ -2355,14 +2355,14 @@ static struct ID3D10EffectPass * STDMETHODCALLTYPE d3d10_effect_technique_GetPas
     if (index >= This->pass_count)
     {
         WARN("Invalid index specified\n");
-        return (ID3D10EffectPass *)&null_pass;
+        return &null_pass.ID3D10EffectPass_iface;
     }
 
     p = &This->passes[index];
 
     TRACE("Returning pass %p, %s.\n", p, debugstr_a(p->name));
 
-    return (ID3D10EffectPass *)p;
+    return &p->ID3D10EffectPass_iface;
 }
 
 static struct ID3D10EffectPass * STDMETHODCALLTYPE d3d10_effect_technique_GetPassByName(ID3D10EffectTechnique *iface,
@@ -2381,13 +2381,13 @@ static struct ID3D10EffectPass * STDMETHODCALLTYPE d3d10_effect_technique_GetPas
         if (!strcmp(p->name, name))
         {
             TRACE("Returning pass %p\n", p);
-            return (ID3D10EffectPass *)p;
+            return &p->ID3D10EffectPass_iface;
         }
     }
 
     WARN("Invalid name specified\n");
 
-    return (ID3D10EffectPass *)&null_pass;
+    return &null_pass.ID3D10EffectPass_iface;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_technique_ComputeStateBlockMask(ID3D10EffectTechnique *iface,
@@ -2412,16 +2412,24 @@ static const struct ID3D10EffectTechniqueVtbl d3d10_effect_technique_vtbl =
 
 /* ID3D10EffectPass methods */
 
-static BOOL STDMETHODCALLTYPE d3d10_effect_pass_IsValid(ID3D10EffectPass *iface)
+static inline struct d3d10_effect_pass *impl_from_ID3D10EffectPass(ID3D10EffectPass *iface)
 {
-    TRACE("iface %p\n", iface);
-
-    return (struct d3d10_effect_pass *)iface != &null_pass;
+    return CONTAINING_RECORD(iface, struct d3d10_effect_pass, ID3D10EffectPass_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *iface, D3D10_PASS_DESC *desc)
+static BOOL STDMETHODCALLTYPE d3d10_effect_pass_IsValid(ID3D10EffectPass *iface)
 {
-    struct d3d10_effect_pass *This = (struct d3d10_effect_pass *)iface;
+    struct d3d10_effect_pass *This = impl_from_ID3D10EffectPass(iface);
+
+    TRACE("iface %p\n", iface);
+
+    return This != &null_pass;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *iface,
+        D3D10_PASS_DESC *desc)
+{
+    struct d3d10_effect_pass *This = impl_from_ID3D10EffectPass(iface);
     unsigned int i;
 
     FIXME("iface %p, desc %p partial stub!\n", iface, desc);
@@ -2459,7 +2467,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *ifa
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetVertexShaderDesc(ID3D10EffectPass *iface,
         D3D10_PASS_SHADER_DESC *desc)
 {
-    struct d3d10_effect_pass *This = (struct d3d10_effect_pass *)iface;
+    struct d3d10_effect_pass *This = impl_from_ID3D10EffectPass(iface);
     unsigned int i;
 
     TRACE("iface %p, desc %p\n", iface, desc);
@@ -2498,7 +2506,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetVertexShaderDesc(ID3D10Eff
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetGeometryShaderDesc(ID3D10EffectPass *iface,
         D3D10_PASS_SHADER_DESC *desc)
 {
-    struct d3d10_effect_pass *This = (struct d3d10_effect_pass *)iface;
+    struct d3d10_effect_pass *This = impl_from_ID3D10EffectPass(iface);
     unsigned int i;
 
     TRACE("iface %p, desc %p\n", iface, desc);
@@ -2537,7 +2545,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetGeometryShaderDesc(ID3D10E
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetPixelShaderDesc(ID3D10EffectPass *iface,
         D3D10_PASS_SHADER_DESC *desc)
 {
-    struct d3d10_effect_pass *This = (struct d3d10_effect_pass *)iface;
+    struct d3d10_effect_pass *This = impl_from_ID3D10EffectPass(iface);
     unsigned int i;
 
     TRACE("iface %p, desc %p\n", iface, desc);
@@ -2576,7 +2584,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetPixelShaderDesc(ID3D10Effe
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_pass_GetAnnotationByIndex(ID3D10EffectPass *iface,
         UINT index)
 {
-    struct d3d10_effect_pass *This = (struct d3d10_effect_pass *)iface;
+    struct d3d10_effect_pass *This = impl_from_ID3D10EffectPass(iface);
     struct d3d10_effect_variable *a;
 
     TRACE("iface %p, index %u\n", iface, index);
@@ -2597,7 +2605,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_pass_GetAnno
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_pass_GetAnnotationByName(ID3D10EffectPass *iface,
         LPCSTR name)
 {
-    struct d3d10_effect_pass *This = (struct d3d10_effect_pass *)iface;
+    struct d3d10_effect_pass *This = impl_from_ID3D10EffectPass(iface);
     unsigned int i;
 
     TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
@@ -2619,7 +2627,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_pass_GetAnno
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_Apply(ID3D10EffectPass *iface, UINT flags)
 {
-    struct d3d10_effect_pass *This = (struct d3d10_effect_pass *)iface;
+    struct d3d10_effect_pass *This = impl_from_ID3D10EffectPass(iface);
     HRESULT hr = S_OK;
     unsigned int i;
 

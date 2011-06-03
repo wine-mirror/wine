@@ -146,7 +146,7 @@ struct d3d10_effect_variable
 /* ID3D10EffectPass */
 struct d3d10_effect_pass
 {
-    const struct ID3D10EffectPassVtbl *vtbl;
+    ID3D10EffectPass ID3D10EffectPass_iface;
 
     struct d3d10_effect_technique *technique;
     char *name;
