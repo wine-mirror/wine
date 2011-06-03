@@ -256,18 +256,24 @@ static BOOL get_zone_for_scheme(HKEY key, LPCWSTR schema, DWORD *zone)
 
     /* See if the key contains a value for the scheme first. */
     res = RegQueryValueExW(key, schema, NULL, &type, (BYTE*)zone, &size);
-    if(type != REG_DWORD)
+    if(res == ERROR_SUCCESS) {
+        if(type == REG_DWORD)
+            return TRUE;
         WARN("Unexpected value type %d for value %s, expected REG_DWORD\n", type, debugstr_w(schema));
-
-    if(res != ERROR_SUCCESS || type != REG_DWORD) {
-        /* Try to get the zone for the wildcard scheme. */
-        size = sizeof(DWORD);
-        res = RegQueryValueExW(key, wildcardW, NULL, &type, (BYTE*)zone, &size);
-        if(type != REG_DWORD)
-            WARN("Unexpected value type %d for value %s, expected REG_DWORD\n", type, debugstr_w(wildcardW));
     }
 
-    return res == ERROR_SUCCESS && type == REG_DWORD;
+    /* Try to get the zone for the wildcard scheme. */
+    size = sizeof(DWORD);
+    res = RegQueryValueExW(key, wildcardW, NULL, &type, (BYTE*)zone, &size);
+    if(res != ERROR_SUCCESS)
+        return FALSE;
+
+    if(type != REG_DWORD) {
+        WARN("Unexpected value type %d for value %s, expected REG_DWORD\n", type, debugstr_w(wildcardW));
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /********************************************************************
