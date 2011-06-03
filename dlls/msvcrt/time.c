@@ -401,7 +401,7 @@ struct MSVCRT_tm* CDECL MSVCRT_gmtime(const MSVCRT___time32_t* secs)
 /**********************************************************************
  *		_strdate (MSVCRT.@)
  */
-char* CDECL _strdate(char* date)
+char* CDECL MSVCRT__strdate(char* date)
 {
   static const char format[] = "MM'/'dd'/'yy";
 
@@ -428,14 +428,14 @@ int CDECL _strdate_s(char* date, MSVCRT_size_t size)
         return MSVCRT_ERANGE;
     }
 
-    _strdate(date);
+    MSVCRT__strdate(date);
     return 0;
 }
 
 /**********************************************************************
  *		_wstrdate (MSVCRT.@)
  */
-MSVCRT_wchar_t* CDECL _wstrdate(MSVCRT_wchar_t* date)
+MSVCRT_wchar_t* CDECL MSVCRT__wstrdate(MSVCRT_wchar_t* date)
 {
   static const WCHAR format[] = { 'M','M','\'','/','\'','d','d','\'','/','\'','y','y',0 };
 
@@ -462,14 +462,14 @@ int CDECL _wstrdate_s(MSVCRT_wchar_t* date, MSVCRT_size_t size)
         return MSVCRT_ERANGE;
     }
 
-    _wstrdate(date);
+    MSVCRT__wstrdate(date);
     return 0;
 }
 
 /*********************************************************************
  *		_strtime (MSVCRT.@)
  */
-char* CDECL _strtime(char* time)
+char* CDECL MSVCRT__strtime(char* time)
 {
   static const char format[] = "HH':'mm':'ss";
 
@@ -496,14 +496,14 @@ int CDECL _strtime_s(char* time, MSVCRT_size_t size)
         return MSVCRT_ERANGE;
     }
 
-    _strtime(time);
+    MSVCRT__strtime(time);
     return 0;
 }
 
 /*********************************************************************
  *		_wstrtime (MSVCRT.@)
  */
-MSVCRT_wchar_t* CDECL _wstrtime(MSVCRT_wchar_t* time)
+MSVCRT_wchar_t* CDECL MSVCRT__wstrtime(MSVCRT_wchar_t* time)
 {
   static const WCHAR format[] = { 'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0 };
 
@@ -530,7 +530,7 @@ int CDECL _wstrtime_s(MSVCRT_wchar_t* time, MSVCRT_size_t size)
         return MSVCRT_ERANGE;
     }
 
-    _wstrtime(time);
+    MSVCRT__wstrtime(time);
     return 0;
 }
 

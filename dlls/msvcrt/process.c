@@ -83,7 +83,7 @@ static void msvcrt_search_executable(const MSVCRT_wchar_t *name, MSVCRT_wchar_t 
     extension = 0;
   }
 
-  if (!use_path || !(env = _wgetenv(path))) return;
+  if (!use_path || !(env = MSVCRT__wgetenv(path))) return;
 
   /* now try search path */
   do
@@ -601,7 +601,7 @@ MSVCRT_intptr_t CDECL _execlpe(const char* name, const char* arg0, ...)
  */
 MSVCRT_intptr_t CDECL _wexecv(const MSVCRT_wchar_t* name, MSVCRT_wchar_t* const* argv)
 {
-  return _wspawnve(MSVCRT__P_OVERLAY, name, (const MSVCRT_wchar_t* const*) argv, NULL);
+  return MSVCRT__wspawnve(MSVCRT__P_OVERLAY, name, (const MSVCRT_wchar_t* const*) argv, NULL);
 }
 
 /*********************************************************************
@@ -622,7 +622,7 @@ MSVCRT_intptr_t CDECL _execv(const char* name, char* const* argv)
  */
 MSVCRT_intptr_t CDECL _wexecve(const MSVCRT_wchar_t* name, MSVCRT_wchar_t* const* argv, const MSVCRT_wchar_t* const* envv)
 {
-  return _wspawnve(MSVCRT__P_OVERLAY, name, (const MSVCRT_wchar_t* const*) argv, envv);
+  return MSVCRT__wspawnve(MSVCRT__P_OVERLAY, name, (const MSVCRT_wchar_t* const*) argv, envv);
 }
 
 /*********************************************************************
@@ -643,7 +643,7 @@ MSVCRT_intptr_t CDECL MSVCRT__execve(const char* name, char* const* argv, const 
  */
 MSVCRT_intptr_t CDECL _wexecvpe(const MSVCRT_wchar_t* name, MSVCRT_wchar_t* const* argv, const MSVCRT_wchar_t* const* envv)
 {
-  return _wspawnvpe(MSVCRT__P_OVERLAY, name, (const MSVCRT_wchar_t* const*) argv, envv);
+  return MSVCRT__wspawnvpe(MSVCRT__P_OVERLAY, name, (const MSVCRT_wchar_t* const*) argv, envv);
 }
 
 /*********************************************************************
@@ -918,7 +918,7 @@ MSVCRT_intptr_t CDECL MSVCRT__spawnve(int flags, const char* name, const char* c
  *
  * Unicode version of _spawnve
  */
-MSVCRT_intptr_t CDECL _wspawnve(int flags, const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* const* argv,
+MSVCRT_intptr_t CDECL MSVCRT__wspawnve(int flags, const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* const* argv,
                                 const MSVCRT_wchar_t* const* envv)
 {
   MSVCRT_wchar_t *args, *envs;
@@ -952,7 +952,7 @@ MSVCRT_intptr_t CDECL _spawnv(int flags, const char* name, const char* const* ar
  */
 MSVCRT_intptr_t CDECL _wspawnv(int flags, const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* const* argv)
 {
-  return _wspawnve(flags, name, argv, NULL);
+  return MSVCRT__wspawnve(flags, name, argv, NULL);
 }
 
 /*********************************************************************
@@ -985,7 +985,7 @@ MSVCRT_intptr_t CDECL MSVCRT__spawnvpe(int flags, const char* name, const char* 
  *
  * Unicode version of _spawnvpe
  */
-MSVCRT_intptr_t CDECL _wspawnvpe(int flags, const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* const* argv,
+MSVCRT_intptr_t CDECL MSVCRT__wspawnvpe(int flags, const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* const* argv,
                                  const MSVCRT_wchar_t* const* envv)
 {
   MSVCRT_wchar_t *args, *envs;
@@ -1019,7 +1019,7 @@ MSVCRT_intptr_t CDECL _spawnvp(int flags, const char* name, const char* const* a
  */
 MSVCRT_intptr_t CDECL _wspawnvp(int flags, const MSVCRT_wchar_t* name, const MSVCRT_wchar_t* const* argv)
 {
-  return _wspawnvpe(flags, name, argv, NULL);
+  return MSVCRT__wspawnvpe(flags, name, argv, NULL);
 }
 
 /*********************************************************************

@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 /*********************************************************************
  *		_beep (MSVCRT.@)
  */
-void CDECL _beep( unsigned int freq, unsigned int duration)
+void CDECL MSVCRT__beep( unsigned int freq, unsigned int duration)
 {
     TRACE(":Freq %d, Duration %d\n",freq,duration);
     Beep(freq, duration);
@@ -265,7 +265,7 @@ unsigned int CDECL _get_output_format(void)
 /*********************************************************************
  * _resetstkoflw (MSVCRT.@)
  */
-int CDECL _resetstkoflw(void)
+int CDECL MSVCRT__resetstkoflw(void)
 {
     int stack_addr;
 

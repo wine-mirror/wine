@@ -203,7 +203,7 @@ MSVCRT_wchar_t*** CDECL __p___wargv(void) { return &MSVCRT___wargv; }
 /*********************************************************************
  *		__p__environ (MSVCRT.@)
  */
-char*** CDECL __p__environ(void)
+char*** CDECL MSVCRT___p__environ(void)
 {
   return &MSVCRT__environ;
 }
@@ -211,7 +211,7 @@ char*** CDECL __p__environ(void)
 /*********************************************************************
  *		__p__wenviron (MSVCRT.@)
  */
-MSVCRT_wchar_t*** CDECL __p__wenviron(void)
+MSVCRT_wchar_t*** CDECL MSVCRT___p__wenviron(void)
 {
   return &MSVCRT__wenviron;
 }
@@ -276,7 +276,7 @@ void msvcrt_init_args(void)
 {
   OSVERSIONINFOW osvi;
 
-  MSVCRT__acmdln = _strdup( GetCommandLineA() );
+  MSVCRT__acmdln = MSVCRT__strdup( GetCommandLineA() );
   MSVCRT__wcmdln = msvcrt_wstrdupa(MSVCRT__acmdln);
   MSVCRT___argc = __wine_main_argc;
   MSVCRT___argv = __wine_main_argv;

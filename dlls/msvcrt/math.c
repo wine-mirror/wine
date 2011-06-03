@@ -577,7 +577,7 @@ double CDECL _CItanh(void)
 /*********************************************************************
  *		_fpclass (MSVCRT.@)
  */
-int CDECL _fpclass(double num)
+int CDECL MSVCRT__fpclass(double num)
 {
 #if defined(HAVE_FPCLASS) || defined(fpclass)
   switch (fpclass( num ))
@@ -711,7 +711,7 @@ __int64 CDECL _abs64( __int64 n )
 /*********************************************************************
  *		_logb (MSVCRT.@)
  */
-double CDECL _logb(double num)
+double CDECL MSVCRT__logb(double num)
 {
   if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   return logb(num);
@@ -738,7 +738,7 @@ double CDECL _hypot(double x, double y)
 /*********************************************************************
  *      _hypotf (MSVCRT.@)
  */
-float CDECL _hypotf(float x, float y)
+float CDECL MSVCRT__hypotf(float x, float y)
 {
   /* FIXME: errno handling */
   return hypotf( x, y );
@@ -940,7 +940,7 @@ double CDECL MSVCRT__cabs(struct MSVCRT__complex num)
 /*********************************************************************
  *		_chgsign (MSVCRT.@)
  */
-double CDECL _chgsign(double num)
+double CDECL MSVCRT__chgsign(double num)
 {
   /* FIXME: +-infinity,Nan not tested */
   return -num;
@@ -1140,7 +1140,7 @@ int CDECL _controlfp_s(unsigned int *cur, unsigned int newval, unsigned int mask
 /*********************************************************************
  *		_copysign (MSVCRT.@)
  */
-double CDECL _copysign(double num, double sign)
+double CDECL MSVCRT__copysign(double num, double sign)
 {
   /* FIXME: Behaviour for Nan/Inf? */
   if (sign < 0.0)
@@ -1151,7 +1151,7 @@ double CDECL _copysign(double num, double sign)
 /*********************************************************************
  *		_finite (MSVCRT.@)
  */
-int CDECL _finite(double num)
+int CDECL MSVCRT__finite(double num)
 {
   return (finite(num)?1:0); /* See comment for _isnan() */
 }
@@ -1177,7 +1177,7 @@ void CDECL _fpreset(void)
 /*********************************************************************
  *		_isnan (MSVCRT.@)
  */
-INT CDECL _isnan(double num)
+INT CDECL MSVCRT__isnan(double num)
 {
   /* Some implementations return -1 for true(glibc), msvcrt/crtdll return 1.
    * Do the same, as the result may be used in calculations
@@ -1188,7 +1188,7 @@ INT CDECL _isnan(double num)
 /*********************************************************************
  *		_j0 (MSVCRT.@)
  */
-double CDECL _j0(double num)
+double CDECL MSVCRT__j0(double num)
 {
   /* FIXME: errno handling */
   return j0(num);
@@ -1197,16 +1197,16 @@ double CDECL _j0(double num)
 /*********************************************************************
  *		_j1 (MSVCRT.@)
  */
-double CDECL _j1(double num)
+double CDECL MSVCRT__j1(double num)
 {
   /* FIXME: errno handling */
   return j1(num);
 }
 
 /*********************************************************************
- *		jn (MSVCRT.@)
+ *		_jn (MSVCRT.@)
  */
-double CDECL _jn(int n, double num)
+double CDECL MSVCRT__jn(int n, double num)
 {
   /* FIXME: errno handling */
   return jn(n, num);
@@ -1215,12 +1215,12 @@ double CDECL _jn(int n, double num)
 /*********************************************************************
  *		_y0 (MSVCRT.@)
  */
-double CDECL _y0(double num)
+double CDECL MSVCRT__y0(double num)
 {
   double retval;
   if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   retval  = y0(num);
-  if (_fpclass(retval) == MSVCRT__FPCLASS_NINF)
+  if (MSVCRT__fpclass(retval) == MSVCRT__FPCLASS_NINF)
   {
     *MSVCRT__errno() = MSVCRT_EDOM;
     retval = sqrt(-1);
@@ -1231,12 +1231,12 @@ double CDECL _y0(double num)
 /*********************************************************************
  *		_y1 (MSVCRT.@)
  */
-double CDECL _y1(double num)
+double CDECL MSVCRT__y1(double num)
 {
   double retval;
   if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   retval  = y1(num);
-  if (_fpclass(retval) == MSVCRT__FPCLASS_NINF)
+  if (MSVCRT__fpclass(retval) == MSVCRT__FPCLASS_NINF)
   {
     *MSVCRT__errno() = MSVCRT_EDOM;
     retval = sqrt(-1);
@@ -1247,12 +1247,12 @@ double CDECL _y1(double num)
 /*********************************************************************
  *		_yn (MSVCRT.@)
  */
-double CDECL _yn(int order, double num)
+double CDECL MSVCRT__yn(int order, double num)
 {
   double retval;
   if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   retval  = yn(order,num);
-  if (_fpclass(retval) == MSVCRT__FPCLASS_NINF)
+  if (MSVCRT__fpclass(retval) == MSVCRT__FPCLASS_NINF)
   {
     *MSVCRT__errno() = MSVCRT_EDOM;
     retval = sqrt(-1);
@@ -1263,7 +1263,7 @@ double CDECL _yn(int order, double num)
 /*********************************************************************
  *		_nextafter (MSVCRT.@)
  */
-double CDECL _nextafter(double num, double next)
+double CDECL MSVCRT__nextafter(double num, double next)
 {
   double retval;
   if (!finite(num) || !finite(next)) *MSVCRT__errno() = MSVCRT_EDOM;

@@ -291,7 +291,7 @@ int CDECL strerror_s(char *buffer, MSVCRT_size_t numberOfElements, int errnum)
 /**********************************************************************
  *		_strerror	(MSVCRT.@)
  */
-char* CDECL _strerror(const char* str)
+char* CDECL MSVCRT__strerror(const char* str)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     int err;
@@ -345,7 +345,7 @@ int CDECL _wcserror_s(MSVCRT_wchar_t* buffer, MSVCRT_size_t nc, int err)
 /*********************************************************************
  *		_wcserror (MSVCRT.@)
  */
-MSVCRT_wchar_t* CDECL _wcserror(int err)
+MSVCRT_wchar_t* CDECL MSVCRT__wcserror(int err)
 {
     thread_data_t *data = msvcrt_get_thread_data();
 
@@ -392,7 +392,7 @@ int CDECL __wcserror_s(MSVCRT_wchar_t* buffer, MSVCRT_size_t nc, const MSVCRT_wc
 /**********************************************************************
  *		__wcserror	(MSVCRT.@)
  */
-MSVCRT_wchar_t* CDECL __wcserror(const MSVCRT_wchar_t* str)
+MSVCRT_wchar_t* CDECL MSVCRT___wcserror(const MSVCRT_wchar_t* str)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     int err;

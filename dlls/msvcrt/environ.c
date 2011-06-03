@@ -50,7 +50,7 @@ char * CDECL MSVCRT_getenv(const char *name)
 /*********************************************************************
  *		_wgetenv (MSVCRT.@)
  */
-MSVCRT_wchar_t * CDECL _wgetenv(const MSVCRT_wchar_t *name)
+MSVCRT_wchar_t * CDECL MSVCRT__wgetenv(const MSVCRT_wchar_t *name)
 {
     MSVCRT_wchar_t **environ;
     unsigned int length=strlenW(name);
@@ -247,7 +247,7 @@ int CDECL _wdupenv_s(MSVCRT_wchar_t **buffer, MSVCRT_size_t *numberOfElements,
     MSVCRT_size_t       sz;
 
     if (!MSVCRT_CHECK_PMT(buffer != NULL) || !MSVCRT_CHECK_PMT(varname) ||
-        !(e = _wgetenv(varname)))
+        !(e = MSVCRT__wgetenv(varname)))
     {
         return *MSVCRT__errno() = MSVCRT_EINVAL;
     }
@@ -303,7 +303,7 @@ int CDECL _wgetenv_s(MSVCRT_size_t *pReturnValue, MSVCRT_wchar_t *buffer, MSVCRT
     {
         return *MSVCRT__errno() = MSVCRT_EINVAL;
     }
-    if (!(e = _wgetenv(varname)))
+    if (!(e = MSVCRT__wgetenv(varname)))
     {
         *pReturnValue = 0;
         return *MSVCRT__errno() = MSVCRT_EINVAL;

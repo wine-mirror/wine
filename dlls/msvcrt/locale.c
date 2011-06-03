@@ -769,7 +769,7 @@ MSVCRT__locale_t MSVCRT__create_locale(int category, const char *locale)
             return NULL;
         }
     } else
-        loc->locinfo->lc_category[MSVCRT_LC_COLLATE].locale = _strdup("C");
+        loc->locinfo->lc_category[MSVCRT_LC_COLLATE].locale = MSVCRT__strdup("C");
 
     if(lcid[MSVCRT_LC_CTYPE] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_CTYPE)) {
         CPINFO cp;
@@ -815,7 +815,7 @@ MSVCRT__locale_t MSVCRT__create_locale(int category, const char *locale)
         loc->locinfo->lc_clike = 1;
         loc->locinfo->mb_cur_max = 1;
         loc->locinfo->pctype = MSVCRT__ctype+1;
-        loc->locinfo->lc_category[MSVCRT_LC_CTYPE].locale = _strdup("C");
+        loc->locinfo->lc_category[MSVCRT_LC_CTYPE].locale = MSVCRT__strdup("C");
     }
 
     for(i=0; i<256; i++) {
@@ -1025,7 +1025,7 @@ MSVCRT__locale_t MSVCRT__create_locale(int category, const char *locale)
         loc->locinfo->lconv->p_sign_posn = 127;
         loc->locinfo->lconv->n_sign_posn = 127;
 
-        loc->locinfo->lc_category[MSVCRT_LC_MONETARY].locale = _strdup("C");
+        loc->locinfo->lc_category[MSVCRT_LC_MONETARY].locale = MSVCRT__strdup("C");
     }
 
     if(lcid[MSVCRT_LC_NUMERIC] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_NUMERIC)) {
@@ -1092,7 +1092,7 @@ MSVCRT__locale_t MSVCRT__create_locale(int category, const char *locale)
         loc->locinfo->lconv->thousands_sep[0] = '\0';
         loc->locinfo->lconv->grouping[0] = '\0';
 
-        loc->locinfo->lc_category[MSVCRT_LC_NUMERIC].locale = _strdup("C");
+        loc->locinfo->lc_category[MSVCRT_LC_NUMERIC].locale = MSVCRT__strdup("C");
     }
 
     if(lcid[MSVCRT_LC_TIME] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_TIME)) {
@@ -1101,7 +1101,7 @@ MSVCRT__locale_t MSVCRT__create_locale(int category, const char *locale)
             return NULL;
         }
     } else
-        loc->locinfo->lc_category[MSVCRT_LC_TIME].locale = _strdup("C");
+        loc->locinfo->lc_category[MSVCRT_LC_TIME].locale = MSVCRT__strdup("C");
 
     return loc;
 }

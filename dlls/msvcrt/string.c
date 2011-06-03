@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
  *		_mbsdup (MSVCRT.@)
  *		_strdup (MSVCRT.@)
  */
-char* CDECL _strdup(const char* str)
+char* CDECL MSVCRT__strdup(const char* str)
 {
     if(str)
     {
@@ -106,7 +106,7 @@ char* CDECL _strlwr_l(char *str, MSVCRT__locale_t locale)
 /*********************************************************************
  *		_strlwr (MSVCRT.@)
  */
-char* CDECL _strlwr(char *str)
+char* CDECL MSVCRT__strlwr(char *str)
 {
     _strlwr_s_l(str, -1, NULL);
     return str;
@@ -158,7 +158,7 @@ int CDECL _strupr_s(char *str, MSVCRT_size_t len)
 /*********************************************************************
  *              _strupr_l (MSVCRT.@)
  */
-char* CDECL _strupr_l(char *str, MSVCRT__locale_t locale)
+char* CDECL MSVCRT__strupr_l(char *str, MSVCRT__locale_t locale)
 {
     _strupr_s_l(str, -1, locale);
     return str;
@@ -167,7 +167,7 @@ char* CDECL _strupr_l(char *str, MSVCRT__locale_t locale)
 /*********************************************************************
  *              _strupr (MSVCRT.@)
  */
-char* CDECL _strupr(char *str)
+char* CDECL MSVCRT__strupr(char *str)
 {
     _strupr_s_l(str, -1, NULL);
     return str;
@@ -187,7 +187,7 @@ char* CDECL MSVCRT__strnset(char* str, int value, MSVCRT_size_t len)
 /*********************************************************************
  *		_strrev (MSVCRT.@)
  */
-char* CDECL _strrev(char* str)
+char* CDECL MSVCRT__strrev(char* str)
 {
   char * p1;
   char * p2;
