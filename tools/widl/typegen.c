@@ -206,6 +206,28 @@ unsigned char get_basic_fc(const type_t *type)
     return 0;
 }
 
+static unsigned char get_basic_fc_signed(const type_t *type)
+{
+    switch (type_basic_get_type(type))
+    {
+    case TYPE_BASIC_INT8: return RPC_FC_SMALL;
+    case TYPE_BASIC_INT16: return RPC_FC_SHORT;
+    case TYPE_BASIC_INT32: return RPC_FC_LONG;
+    case TYPE_BASIC_INT64: return RPC_FC_HYPER;
+    case TYPE_BASIC_INT: return RPC_FC_LONG;
+    case TYPE_BASIC_INT3264: return RPC_FC_INT3264;
+    case TYPE_BASIC_BYTE: return RPC_FC_BYTE;
+    case TYPE_BASIC_CHAR: return RPC_FC_CHAR;
+    case TYPE_BASIC_WCHAR: return RPC_FC_WCHAR;
+    case TYPE_BASIC_HYPER: return RPC_FC_HYPER;
+    case TYPE_BASIC_FLOAT: return RPC_FC_FLOAT;
+    case TYPE_BASIC_DOUBLE: return RPC_FC_DOUBLE;
+    case TYPE_BASIC_ERROR_STATUS_T: return RPC_FC_ERROR_STATUS_T;
+    case TYPE_BASIC_HANDLE: return RPC_FC_BIND_PRIMITIVE;
+    }
+    return 0;
+}
+
 static inline unsigned int clamp_align(unsigned int align)
 {
     unsigned int packing = (pointer_size == 4) ? win32_packing : win64_packing;
@@ -912,7 +934,7 @@ static unsigned int write_procformatstring_type(FILE *file, int indent,
         }
         else
         {
-            fc = get_basic_fc(type);
+            fc = get_basic_fc_signed(type);
 
             if (fc == RPC_FC_BIND_PRIMITIVE)
                 fc = RPC_FC_IGNORE;
@@ -926,7 +948,9 @@ static unsigned int write_procformatstring_type(FILE *file, int indent,
     {
         unsigned short offset = type->typestring_offset;
 
-        if (is_interpreted && is_array(type) && type_array_is_decl_as_ptr(type))
+        if (is_interpreted && is_array(type) &&
+            type_array_is_decl_as_ptr(type) &&
+            type->details.array.ptr_tfsoff)
             offset = type->details.array.ptr_tfsoff;
 
         if (is_return)
@@ -1163,32 +1187,16 @@ void write_procformatstring_offsets( FILE *file, const type_t *iface )
     print_file( file, indent,  "};\n\n" );
 }
 
-static int write_base_type(FILE *file, const type_t *type, int convert_to_signed_type, unsigned int *typestring_offset)
+static int write_base_type(FILE *file, const type_t *type, unsigned int *typestring_offset)
 {
     unsigned char fc;
 
     if (type_get_type(type) == TYPE_BASIC)
-        fc = get_basic_fc(type);
+        fc = get_basic_fc_signed(type);
     else if (type_get_type(type) == TYPE_ENUM)
         fc = get_enum_fc(type);
     else
         return 0;
-
-    if (convert_to_signed_type)
-    {
-        switch(fc)
-        {
-        case RPC_FC_USMALL:
-            fc = RPC_FC_SMALL;
-            break;
-        case RPC_FC_USHORT:
-            fc = RPC_FC_SHORT;
-            break;
-        case RPC_FC_ULONG:
-            fc = RPC_FC_LONG;
-            break;
-        }
-    }
 
     print_file(file, 2, "0x%02x,\t/* %s */\n", fc, string_of_type(fc));
     *typestring_offset += 1;
@@ -1967,7 +1975,7 @@ static void write_member_type(FILE *file, const type_t *cont,
         print_file(file, 2, "0x%x,\t/* %s */\n", fc, string_of_type(fc));
         *tfsoff += 1;
     }
-    else if (!write_base_type(file, type, TRUE, tfsoff))
+    else if (!write_base_type(file, type, tfsoff))
         error("Unsupported member type %d\n", type_get_type(type));
 }
 
@@ -2927,7 +2935,8 @@ static unsigned int write_union_tfs(FILE *file, const attr_list_t *attrs,
 
         if (type_get_type(st) == TYPE_BASIC)
         {
-            switch (get_basic_fc(st))
+            fc = get_basic_fc(st);
+            switch (fc)
             {
             case RPC_FC_CHAR:
             case RPC_FC_SMALL:
@@ -2938,7 +2947,6 @@ static unsigned int write_union_tfs(FILE *file, const attr_list_t *attrs,
             case RPC_FC_USHORT:
             case RPC_FC_LONG:
             case RPC_FC_ULONG:
-                fc = get_basic_fc(st);
                 break;
             default:
                 fc = 0;
@@ -2963,7 +2971,8 @@ static unsigned int write_union_tfs(FILE *file, const attr_list_t *attrs,
 
         if (type_get_type(st) == TYPE_BASIC)
         {
-            switch (get_basic_fc(st))
+            fc = get_basic_fc(st);
+            switch (fc)
             {
             case RPC_FC_CHAR:
             case RPC_FC_SMALL:
@@ -2974,7 +2983,6 @@ static unsigned int write_union_tfs(FILE *file, const attr_list_t *attrs,
             case RPC_FC_ULONG:
             case RPC_FC_ENUM16:
             case RPC_FC_ENUM32:
-                fc = get_basic_fc(st);
                 break;
             default:
                 fc = 0;
