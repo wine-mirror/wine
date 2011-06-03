@@ -160,7 +160,7 @@ struct d3d10_effect_pass
 /* ID3D10EffectTechnique */
 struct d3d10_effect_technique
 {
-    const struct ID3D10EffectTechniqueVtbl *vtbl;
+    ID3D10EffectTechnique ID3D10EffectTechnique_iface;
 
     struct d3d10_effect *effect;
     char *name;
