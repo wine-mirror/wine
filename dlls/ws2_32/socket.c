@@ -5825,7 +5825,7 @@ INT WINAPI WSCDeinstallProvider(LPGUID lpProviderId, LPINT lpErrno)
  *              WSAAccept                        (WS2_32.26)
  */
 SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
-               LPCONDITIONPROC lpfnCondition, DWORD dwCallbackData)
+               LPCONDITIONPROC lpfnCondition, DWORD_PTR dwCallbackData)
 {
 
        int ret = 0, size = 0;
@@ -5835,7 +5835,7 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
        SOCKET cs;
        SOCKADDR src_addr, dst_addr;
 
-       TRACE("Socket %04lx, sockaddr %p, addrlen %p, fnCondition %p, dwCallbackData %d\n",
+       TRACE("Socket %04lx, sockaddr %p, addrlen %p, fnCondition %p, dwCallbackData %ld\n",
                s, addr, addrlen, lpfnCondition, dwCallbackData);
 
 

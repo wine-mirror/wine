@@ -2467,7 +2467,7 @@ static void test_accept(void)
     ret = connect(connector, (struct sockaddr*)&address, sizeof(address));
     ok(ret == 0, "connecting to accepting socket failed, error %d\n", WSAGetLastError());
 
-    accepted = WSAAccept(server_socket, NULL, NULL, (LPCONDITIONPROC) AlwaysDeferConditionFunc, 0);
+    accepted = WSAAccept(server_socket, NULL, NULL, AlwaysDeferConditionFunc, 0);
     ok(accepted == INVALID_SOCKET && WSAGetLastError() == WSATRY_AGAIN, "Failed to defer connection, %d\n", WSAGetLastError());
 
     accepted = accept(server_socket, NULL, 0);
