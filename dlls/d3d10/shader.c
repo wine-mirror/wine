@@ -27,6 +27,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 
 /* IUnknown methods */
 
+static inline struct d3d10_shader_reflection *impl_from_ID3D10ShaderReflection(ID3D10ShaderReflection *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_shader_reflection, ID3D10ShaderReflection_iface);
+}
+
 static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_QueryInterface(ID3D10ShaderReflection *iface, REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
@@ -47,7 +52,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_QueryInterface(ID3D10Sh
 
 static ULONG STDMETHODCALLTYPE d3d10_shader_reflection_AddRef(ID3D10ShaderReflection *iface)
 {
-    struct d3d10_shader_reflection *This = (struct d3d10_shader_reflection *)iface;
+    struct d3d10_shader_reflection *This = impl_from_ID3D10ShaderReflection(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -57,7 +62,7 @@ static ULONG STDMETHODCALLTYPE d3d10_shader_reflection_AddRef(ID3D10ShaderReflec
 
 static ULONG STDMETHODCALLTYPE d3d10_shader_reflection_Release(ID3D10ShaderReflection *iface)
 {
-    struct d3d10_shader_reflection *This = (struct d3d10_shader_reflection *)iface;
+    struct d3d10_shader_reflection *This = impl_from_ID3D10ShaderReflection(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);

@@ -217,7 +217,7 @@ struct d3d10_effect
 extern const struct ID3D10ShaderReflectionVtbl d3d10_shader_reflection_vtbl DECLSPEC_HIDDEN;
 struct d3d10_shader_reflection
 {
-    const struct ID3D10ShaderReflectionVtbl *vtbl;
+    ID3D10ShaderReflection ID3D10ShaderReflection_iface;
     LONG refcount;
 };
 

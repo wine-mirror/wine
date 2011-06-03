@@ -276,10 +276,10 @@ HRESULT WINAPI D3D10ReflectShader(const void *data, SIZE_T data_size, ID3D10Shad
         return E_OUTOFMEMORY;
     }
 
-    object->vtbl = &d3d10_shader_reflection_vtbl;
+    object->ID3D10ShaderReflection_iface.lpVtbl = &d3d10_shader_reflection_vtbl;
     object->refcount = 1;
 
-    *reflector = (ID3D10ShaderReflection *)object;
+    *reflector = &object->ID3D10ShaderReflection_iface;
 
     TRACE("Created ID3D10ShaderReflection %p\n", object);
 
