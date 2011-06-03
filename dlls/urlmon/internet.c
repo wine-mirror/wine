@@ -549,39 +549,34 @@ static HRESULT set_internet_feature(INTERNETFEATURELIST feature, DWORD flags, BO
 
 static BOOL get_feature_from_reg(HKEY feature_control, LPCWSTR feature_name, LPCWSTR process_name, BOOL *enabled)
 {
-    BOOL ret = FALSE;
+    DWORD type, value, size;
     HKEY feature;
     DWORD res;
 
     static const WCHAR wildcardW[] = {'*',0};
 
     res = RegOpenKeyW(feature_control, feature_name, &feature);
-    if(res == ERROR_SUCCESS) {
-        DWORD type, value, size;
+    if(res != ERROR_SUCCESS)
+        return FALSE;
 
+    size = sizeof(DWORD);
+    res = RegQueryValueExW(feature, process_name, NULL, &type, (BYTE*)&value, &size);
+    if(res != ERROR_SUCCESS || type != REG_DWORD) {
         size = sizeof(DWORD);
-        res = RegQueryValueExW(feature, process_name, NULL, &type, (BYTE*)&value, &size);
-        if(type != REG_DWORD)
-            WARN("Unexpected registry value type %d (expected REG_DWORD) for %s\n", type, debugstr_w(process_name));
-
-        if(res == ERROR_SUCCESS && type == REG_DWORD) {
-            *enabled = value == 1;
-            ret = TRUE;
-        } else {
-            size = sizeof(DWORD);
-            res = RegQueryValueExW(feature, wildcardW, NULL, &type, (BYTE*)&value, &size);
-            if(type != REG_DWORD)
-                WARN("Unexpected registry value type %d (expected REG_DWORD) for %s\n", type, debugstr_w(wildcardW));
-
-            if(res == ERROR_SUCCESS && type == REG_DWORD) {
-                *enabled = value == 1;
-                ret = TRUE;
-            }
-        }
-        RegCloseKey(feature);
+        res = RegQueryValueExW(feature, wildcardW, NULL, &type, (BYTE*)&value, &size);
     }
 
-    return ret;
+    RegCloseKey(feature);
+    if(res != ERROR_SUCCESS)
+        return FALSE;
+
+    if(type != REG_DWORD) {
+        WARN("Unexpected registry value type %d (expected REG_DWORD) for %s\n", type, debugstr_w(wildcardW));
+        return FALSE;
+    }
+
+    *enabled = value == 1;
+    return TRUE;
 }
 
 /* Assumes 'process_features_cs' is held. */
