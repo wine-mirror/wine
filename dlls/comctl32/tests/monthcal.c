@@ -581,9 +581,9 @@ static void test_color(void)
 
     /* invalid color index */
     color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TRAILINGTEXT + 1, 0);
-    expect(-1, color);
+    expect(~0u, color);
     prev = SendMessage(hwnd, MCM_SETCOLOR, MCSC_TRAILINGTEXT + 1, RGB(255,255,255));
-    expect(-1, prev);
+    expect(~0u, prev);
 
     color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_BACKGROUND, 0);
     prev = SendMessage(hwnd, MCM_SETCOLOR, MCSC_BACKGROUND, RGB(0,0,0));
@@ -920,11 +920,11 @@ static void test_hittest(void)
     res = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
     expect(0, mchit.pt.x);
     expect(0, mchit.pt.y);
-    expect(-1, res);
+    expect(~0u, res);
     expect(0, mchit.uHit);
     /* test with invalid pointer */
     res = SendMessage(hwnd, MCM_HITTEST, 0, 0);
-    expect(-1, res);
+    expect(~0u, res);
 
     /* resize control to display single Calendar */
     res = SendMessage(hwnd, MCM_GETMINREQRECT, 0, (LPARAM)&r);
@@ -1655,7 +1655,7 @@ static void test_hittest_v6(void)
     mchit.iRow = -1;
     mchit.iCol = -1;
     ret = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
-    if (ret == -1)
+    if (ret == ~0u)
     {
         win_skip("Only MCHITTESTINFO_V1 supported\n");
         DestroyWindow(hwnd);
