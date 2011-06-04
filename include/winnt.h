@@ -777,6 +777,7 @@ typedef enum _HEAP_INFORMATION_CLASS {
 #define PF_COMPARE_EXCHANGE128			14
 #define PF_COMPARE64_EXCHANGE128		15
 #define PF_CHANNELS_ENABLED			16
+#define PF_XSAVE_ENABLED			17
 
 
 /* Execution state flags */
