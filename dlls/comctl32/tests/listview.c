@@ -662,7 +662,7 @@ static void test_lvm_hittest_(HWND hwnd, INT x, INT y, INT item, UINT flags, UIN
                               BOOL todo_item, BOOL todo_flags, int line)
 {
     LVHITTESTINFO lpht;
-    DWORD ret;
+    INT ret;
 
     lpht.pt.x = x;
     lpht.pt.y = y;
@@ -705,7 +705,7 @@ static void test_lvm_subitemhittest_(HWND hwnd, INT x, INT y, INT item, INT subi
                                      BOOL todo_item, BOOL todo_subitem, BOOL todo_flags, int line)
 {
     LVHITTESTINFO lpht;
-    DWORD ret;
+    INT ret;
 
     lpht.pt.x = x;
     lpht.pt.y = y;
@@ -748,7 +748,7 @@ static void test_lvm_subitemhittest_(HWND hwnd, INT x, INT y, INT item, INT subi
 static void test_images(void)
 {
     HWND hwnd;
-    DWORD r;
+    INT r;
     LVITEM item;
     HIMAGELIST himl;
     HBITMAP hbmp;
@@ -1018,7 +1018,7 @@ static void test_checkboxes(void)
 static void insert_column(HWND hwnd, int idx)
 {
     LVCOLUMN column;
-    DWORD rc;
+    INT rc;
 
     memset(&column, 0xcc, sizeof(column));
     column.mask = LVCF_SUBITEM;
@@ -1033,7 +1033,7 @@ static void insert_item(HWND hwnd, int idx)
     static CHAR text[] = "foo";
 
     LVITEMA item;
-    DWORD rc;
+    INT rc;
 
     memset(&item, 0xcc, sizeof (item));
     item.mask = LVIF_TEXT;
@@ -1701,7 +1701,7 @@ static void test_icon_spacing(void)
 
     HWND hwnd;
     WORD w, h;
-    DWORD r;
+    INT r;
 
     hwnd = create_listview_control(LVS_ICON);
     ok(hwnd != NULL, "failed to create a listview window\n");
@@ -2017,7 +2017,7 @@ static void test_multiselect(void)
     } select_task;
 
     HWND hwnd;
-    DWORD r;
+    INT r;
     int i,j,item_count,selected_count;
     static const int items=5;
     BYTE kstate[256];
@@ -2393,7 +2393,7 @@ static void test_sorting(void)
 {
     HWND hwnd;
     LVITEMA item = {0};
-    DWORD r;
+    INT r;
     LONG_PTR style;
     static CHAR names[][5] = {"A", "B", "C", "D", "0"};
     CHAR buff[10];
@@ -3633,7 +3633,7 @@ static void test_editbox(void)
     static CHAR buffer[25];
     HWND hwnd, hwndedit, hwndedit2, header;
     LVITEMA item;
-    DWORD r;
+    INT r;
 
     hwnd = create_listview_control(LVS_EDITLABELS | LVS_REPORT);
     ok(hwnd != NULL, "failed to create a listview window\n");
@@ -4128,7 +4128,7 @@ static void test_canceleditlabel(void)
 static void test_mapidindex(void)
 {
     HWND hwnd;
-    DWORD ret;
+    INT ret;
 
     /* LVM_MAPINDEXTOID unsupported with LVS_OWNERDATA */
     hwnd = create_listview_control(LVS_OWNERDATA | LVS_REPORT);
@@ -4250,7 +4250,7 @@ todo_wine {
 static void test_getcolumnwidth(void)
 {
     HWND hwnd;
-    DWORD ret;
+    INT ret;
     DWORD_PTR style;
     LVCOLUMNA col;
     LVITEMA itema;
@@ -4442,7 +4442,7 @@ static void test_finditem(void)
     LVFINDINFOA fi;
     static char f[5];
     HWND hwnd;
-    DWORD r;
+    INT r;
 
     hwnd = create_listview_control(LVS_REPORT);
     insert_item(hwnd, 0);
