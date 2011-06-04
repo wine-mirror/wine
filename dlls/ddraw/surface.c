@@ -146,23 +146,26 @@ static HRESULT WINAPI ddraw_surface3_QueryInterface(IDirectDrawSurface3 *iface, 
 
 static HRESULT WINAPI ddraw_gamma_control_QueryInterface(IDirectDrawGammaControl *iface, REFIID riid, void **object)
 {
+    IDirectDrawSurfaceImpl *This = surface_from_gamma_control(iface);
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
-    return ddraw_surface7_QueryInterface((IDirectDrawSurface7 *)surface_from_gamma_control(iface), riid, object);
+    return ddraw_surface7_QueryInterface((IDirectDrawSurface7 *)This, riid, object);
 }
 
 static HRESULT WINAPI d3d_texture2_QueryInterface(IDirect3DTexture2 *iface, REFIID riid, void **object)
 {
+    IDirectDrawSurfaceImpl *This = surface_from_texture2(iface);
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
-    return ddraw_surface7_QueryInterface((IDirectDrawSurface7 *)surface_from_texture2(iface), riid, object);
+    return ddraw_surface7_QueryInterface((IDirectDrawSurface7 *)This, riid, object);
 }
 
 static HRESULT WINAPI d3d_texture1_QueryInterface(IDirect3DTexture *iface, REFIID riid, void **object)
 {
+    IDirectDrawSurfaceImpl *This = surface_from_texture1(iface);
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
-    return ddraw_surface7_QueryInterface((IDirectDrawSurface7 *)surface_from_texture1(iface), riid, object);
+    return ddraw_surface7_QueryInterface((IDirectDrawSurface7 *)This, riid, object);
 }
 
 /*****************************************************************************
@@ -204,23 +207,26 @@ static ULONG WINAPI ddraw_surface3_AddRef(IDirectDrawSurface3 *iface)
 
 static ULONG WINAPI ddraw_gamma_control_AddRef(IDirectDrawGammaControl *iface)
 {
+    IDirectDrawSurfaceImpl *This = surface_from_gamma_control(iface);
     TRACE("iface %p.\n", iface);
 
-    return ddraw_surface7_AddRef((IDirectDrawSurface7 *)surface_from_gamma_control(iface));
+    return ddraw_surface7_AddRef((IDirectDrawSurface7 *)This);
 }
 
 static ULONG WINAPI d3d_texture2_AddRef(IDirect3DTexture2 *iface)
 {
+    IDirectDrawSurfaceImpl *This = surface_from_texture2(iface);
     TRACE("iface %p.\n", iface);
 
-    return ddraw_surface7_AddRef((IDirectDrawSurface7 *)surface_from_texture2(iface));
+    return ddraw_surface7_AddRef((IDirectDrawSurface7 *)This);
 }
 
 static ULONG WINAPI d3d_texture1_AddRef(IDirect3DTexture *iface)
 {
+    IDirectDrawSurfaceImpl *This = surface_from_texture1(iface);
     TRACE("iface %p.\n", iface);
 
-    return ddraw_surface7_AddRef((IDirectDrawSurface7 *)surface_from_texture1(iface));
+    return ddraw_surface7_AddRef((IDirectDrawSurface7 *)This);
 }
 
 /*****************************************************************************
@@ -411,23 +417,26 @@ static ULONG WINAPI ddraw_surface3_Release(IDirectDrawSurface3 *iface)
 
 static ULONG WINAPI ddraw_gamma_control_Release(IDirectDrawGammaControl *iface)
 {
+    IDirectDrawSurfaceImpl *This = surface_from_gamma_control(iface);
     TRACE("iface %p.\n", iface);
 
-    return ddraw_surface7_Release((IDirectDrawSurface7 *)surface_from_gamma_control(iface));
+    return ddraw_surface7_Release((IDirectDrawSurface7 *)This);
 }
 
 static ULONG WINAPI d3d_texture2_Release(IDirect3DTexture2 *iface)
 {
+    IDirectDrawSurfaceImpl *This = surface_from_texture2(iface);
     TRACE("iface %p.\n", iface);
 
-    return ddraw_surface7_Release((IDirectDrawSurface7 *)surface_from_texture2(iface));
+    return ddraw_surface7_Release((IDirectDrawSurface7 *)This);
 }
 
 static ULONG WINAPI d3d_texture1_Release(IDirect3DTexture *iface)
 {
+    IDirectDrawSurfaceImpl *This = surface_from_texture1(iface);
     TRACE("iface %p.\n", iface);
 
-    return ddraw_surface7_Release((IDirectDrawSurface7 *)surface_from_texture1(iface));
+    return ddraw_surface7_Release((IDirectDrawSurface7 *)This);
 }
 
 /*****************************************************************************
