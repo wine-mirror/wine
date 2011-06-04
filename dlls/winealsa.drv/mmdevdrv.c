@@ -1217,16 +1217,15 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
 
     if(!pwfx)
         return E_POINTER;
+    *pwfx = NULL;
 
-    *pwfx = HeapAlloc(GetProcessHeap(), 0, sizeof(WAVEFORMATEXTENSIBLE));
-    if(!*pwfx)
+    fmt = CoTaskMemAlloc(sizeof(WAVEFORMATEXTENSIBLE));
+    if(!fmt)
         return E_OUTOFMEMORY;
-
-    fmt = (WAVEFORMATEXTENSIBLE*)*pwfx;
 
     formats = HeapAlloc(GetProcessHeap(), 0, snd_pcm_format_mask_sizeof());
     if(!formats){
-        HeapFree(GetProcessHeap(), 0, *pwfx);
+        CoTaskMemFree(fmt);
         return E_OUTOFMEMORY;
     }
 
@@ -1310,11 +1309,12 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
     fmt->Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
 
     dump_fmt((WAVEFORMATEX*)fmt);
+    *pwfx = (WAVEFORMATEX*)fmt;
 
 exit:
     LeaveCriticalSection(&This->lock);
     if(FAILED(hr))
-        HeapFree(GetProcessHeap(), 0, *pwfx);
+        CoTaskMemFree(fmt);
     HeapFree(GetProcessHeap(), 0, formats);
 
     return hr;
