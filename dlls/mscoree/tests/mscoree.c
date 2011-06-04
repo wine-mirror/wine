@@ -274,7 +274,6 @@ static void test_createconfigstream(void)
     WCHAR nonexistent[] = {'n', 'o', 'n', 'e', 'x', 'i', 's', 't', '.', 'x', 'm', 'l', 0};
     WCHAR path[MAX_PATH];
     HRESULT hr;
-    ULONG ret;
     char buffer[256] = {0};
 
     if (!pCreateConfigStream)
@@ -308,14 +307,37 @@ static void test_createconfigstream(void)
     if (stream)
     {
         DWORD count;
+        LARGE_INTEGER pos;
+        ULARGE_INTEGER size;
+        IStream *stream2 = NULL;
 
-        hr = IStream_Read(stream, &buffer, strlen(xmldata), &count);
+        hr = IStream_Read(stream, buffer, strlen(xmldata), &count);
         ok(hr == S_OK, "IStream_Read failed, hr=%x\n", hr);
         ok(count == strlen(xmldata), "wrong count: %u\n", count);
         ok(!strcmp(buffer, xmldata), "Strings do not match\n");
 
-        ret = IStream_Release(stream);
-        ok(!ret, "ret=%d\n", ret);
+        hr = IStream_Write(stream, xmldata, strlen(xmldata), &count);
+        ok(hr == E_FAIL, "IStream_Write returned hr=%x\n", hr);
+
+        pos.QuadPart = strlen(xmldata);
+        hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
+        ok(hr == E_NOTIMPL, "IStream_Seek returned hr=%x\n", hr);
+
+        size.QuadPart = strlen(xmldata);
+        hr = IStream_SetSize(stream, size);
+        ok(hr == E_NOTIMPL, "IStream_SetSize returned hr=%x\n", hr);
+
+        hr = IStream_Clone(stream, &stream2);
+        ok(hr == E_NOTIMPL, "IStream_Clone returned hr=%x\n", hr);
+
+        hr = IStream_Commit(stream, STGC_DEFAULT);
+        ok(hr == E_NOTIMPL, "IStream_Commit returned hr=%x\n", hr);
+
+        hr = IStream_Revert(stream);
+        ok(hr == E_NOTIMPL, "IStream_Revert returned hr=%x\n", hr);
+
+        hr = IStream_Release(stream);
+        ok(hr == S_OK, "IStream_Release returned hr=%x\n", hr);
     }
     DeleteFileW(file);
 }
