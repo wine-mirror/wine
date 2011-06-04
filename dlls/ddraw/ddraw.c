@@ -3045,7 +3045,7 @@ static HRESULT ddraw_create_gdi_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSur
  *
  *****************************************************************************/
 static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
-        IDirectDrawSurface7 **Surf, IUnknown *UnkOuter)
+        IDirectDrawSurfaceImpl **Surf, IUnknown *UnkOuter)
 {
     IDirectDrawSurfaceImpl *object = NULL;
     HRESULT hr;
@@ -3310,7 +3310,7 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
     }
     object->is_complex_root = TRUE;
 
-    *Surf = (IDirectDrawSurface7 *)object;
+    *Surf = object;
 
     /* Create Additional surfaces if necessary
      * This applies to Primary surfaces which have a back buffer count
@@ -3434,6 +3434,8 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface, DDSURFACEDESC2 *
         IDirectDrawSurface7 **surface, IUnknown *outer_unknown)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw7(iface);
+    IDirectDrawSurfaceImpl *impl;
+    HRESULT hr;
 
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
             iface, surface_desc, surface, outer_unknown);
@@ -3456,7 +3458,16 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface, DDSURFACEDESC2 *
         return DDERR_INVALIDCAPS;
     }
 
-    return CreateSurface(This, surface_desc, surface, outer_unknown);
+    hr = CreateSurface(This, surface_desc, &impl, outer_unknown);
+    if (FAILED(hr))
+    {
+        *surface = NULL;
+        return hr;
+    }
+
+    *surface = (IDirectDrawSurface7 *)impl;
+
+    return hr;
 }
 
 static HRESULT WINAPI ddraw4_CreateSurface(IDirectDraw4 *iface,
@@ -3487,15 +3498,18 @@ static HRESULT WINAPI ddraw4_CreateSurface(IDirectDraw4 *iface,
         return DDERR_INVALIDCAPS;
     }
 
-    hr = CreateSurface(This, surface_desc, (IDirectDrawSurface7 **)surface, outer_unknown);
-    impl = (IDirectDrawSurfaceImpl *)*surface;
-    if (SUCCEEDED(hr) && impl)
+    hr = CreateSurface(This, surface_desc, &impl, outer_unknown);
+    if (FAILED(hr))
     {
-        ddraw_set_surface_version(impl, 4);
-        IDirectDraw7_Release(&This->IDirectDraw7_iface);
-        IDirectDraw4_AddRef(iface);
-        impl->ifaceToRelease = (IUnknown *)iface;
+        *surface = NULL;
+        return hr;
     }
+
+    *surface = (IDirectDrawSurface4 *)impl;
+    ddraw_set_surface_version(impl, 4);
+    IDirectDraw7_Release(&This->IDirectDraw7_iface);
+    IDirectDraw4_AddRef(iface);
+    impl->ifaceToRelease = (IUnknown *)iface;
 
     return hr;
 }
@@ -3504,7 +3518,6 @@ static HRESULT WINAPI ddraw3_CreateSurface(IDirectDraw3 *iface, DDSURFACEDESC *s
         IDirectDrawSurface **surface, IUnknown *outer_unknown)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw3(iface);
-    IDirectDrawSurface7 *surface7;
     IDirectDrawSurfaceImpl *impl;
     HRESULT hr;
 
@@ -3529,14 +3542,13 @@ static HRESULT WINAPI ddraw3_CreateSurface(IDirectDraw3 *iface, DDSURFACEDESC *s
         return DDERR_INVALIDCAPS;
     }
 
-    hr = CreateSurface(This, (DDSURFACEDESC2 *)surface_desc, &surface7, outer_unknown);
+    hr = CreateSurface(This, (DDSURFACEDESC2 *)surface_desc, &impl, outer_unknown);
     if (FAILED(hr))
     {
         *surface = NULL;
         return hr;
     }
 
-    impl = (IDirectDrawSurfaceImpl *)surface7;
     *surface = (IDirectDrawSurface *)&impl->IDirectDrawSurface3_iface;
     ddraw_set_surface_version(impl, 3);
     IDirectDraw7_Release(&This->IDirectDraw7_iface);
@@ -3550,7 +3562,6 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
         DDSURFACEDESC *surface_desc, IDirectDrawSurface **surface, IUnknown *outer_unknown)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw2(iface);
-    IDirectDrawSurface7 *surface7;
     IDirectDrawSurfaceImpl *impl;
     HRESULT hr;
 
@@ -3575,14 +3586,13 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
         return DDERR_INVALIDCAPS;
     }
 
-    hr = CreateSurface(This, (DDSURFACEDESC2 *)surface_desc, &surface7, outer_unknown);
+    hr = CreateSurface(This, (DDSURFACEDESC2 *)surface_desc, &impl, outer_unknown);
     if (FAILED(hr))
     {
         *surface = NULL;
         return hr;
     }
 
-    impl = (IDirectDrawSurfaceImpl *)surface7;
     *surface = (IDirectDrawSurface *)&impl->IDirectDrawSurface3_iface;
     ddraw_set_surface_version(impl, 2);
     IDirectDraw7_Release(&This->IDirectDraw7_iface);
@@ -3595,7 +3605,6 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
         DDSURFACEDESC *surface_desc, IDirectDrawSurface **surface, IUnknown *outer_unknown)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw(iface);
-    IDirectDrawSurface7 *surface7;
     IDirectDrawSurfaceImpl *impl;
     HRESULT hr;
 
@@ -3611,14 +3620,13 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
     /* Remove front buffer flag, this causes failure in v7, and its added to normal
      * primaries anyway. */
     surface_desc->ddsCaps.dwCaps &= ~DDSCAPS_FRONTBUFFER;
-    hr = CreateSurface(This, (DDSURFACEDESC2 *)surface_desc, &surface7, outer_unknown);
+    hr = CreateSurface(This, (DDSURFACEDESC2 *)surface_desc, &impl, outer_unknown);
     if (FAILED(hr))
     {
         *surface = NULL;
         return hr;
     }
 
-    impl = (IDirectDrawSurfaceImpl *)surface7;
     *surface = (IDirectDrawSurface *)&impl->IDirectDrawSurface3_iface;
     ddraw_set_surface_version(impl, 1);
     IDirectDraw7_Release(&This->IDirectDraw7_iface);
