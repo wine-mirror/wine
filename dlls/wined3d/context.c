@@ -1143,22 +1143,10 @@ static void context_enter(struct wined3d_context *context)
     }
 }
 
-/*****************************************************************************
- * Context_MarkStateDirty
- *
- * Marks a state in a context dirty. Only one context, opposed to
- * device_invalidate_state(), which marks the state dirty in all
- * contexts
- *
- * Params:
- *  context: Context to mark the state dirty in
- *  state: State to mark dirty
- *  StateTable: Pointer to the state table in use(for state grouping)
- *
- *****************************************************************************/
-static void Context_MarkStateDirty(struct wined3d_context *context, DWORD state, const struct StateEntry *StateTable)
+static void context_invalidate_state(struct wined3d_context *context,
+        DWORD state, const struct StateEntry *state_table)
 {
-    DWORD rep = StateTable[state].representative;
+    DWORD rep = state_table[state].representative;
     DWORD idx;
     BYTE shift;
 
@@ -1461,7 +1449,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     for (state = 0; state <= STATE_HIGHEST; ++state)
     {
         if (device->StateTable[state].representative)
-            Context_MarkStateDirty(ret, state, device->StateTable);
+            context_invalidate_state(ret, state, device->StateTable);
     }
 
     ret->swapchain = swapchain;
@@ -1757,11 +1745,11 @@ static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *
     device->shader_backend->shader_select(context, FALSE, FALSE);
     LEAVE_GL();
 
-    Context_MarkStateDirty(context, STATE_VSHADER, StateTable);
-    Context_MarkStateDirty(context, STATE_PIXELSHADER, StateTable);
+    context_invalidate_state(context, STATE_VSHADER, StateTable);
+    context_invalidate_state(context, STATE_PIXELSHADER, StateTable);
 
     /* Call ENTER_GL() once for all gl calls below. In theory we should not call
-     * helper functions in between gl calls. This function is full of Context_MarkStateDirty
+     * helper functions in between gl calls. This function is full of context_invalidate_state
      * which can safely be called from here, we only lock once instead locking/unlocking
      * after each GL call.
      */
@@ -1799,10 +1787,9 @@ static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *
 
         if (sampler != WINED3D_UNMAPPED_STAGE)
         {
-            if (sampler < MAX_TEXTURES) {
-                Context_MarkStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP), StateTable);
-            }
-            Context_MarkStateDirty(context, STATE_SAMPLER(sampler), StateTable);
+            if (sampler < MAX_TEXTURES)
+                context_invalidate_state(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP), StateTable);
+            context_invalidate_state(context, STATE_SAMPLER(sampler), StateTable);
         }
     }
     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
@@ -1842,54 +1829,55 @@ static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *
 
     if (sampler != WINED3D_UNMAPPED_STAGE)
     {
-        if (sampler < MAX_TEXTURES) {
-            Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_TEXTURE0 + sampler), StateTable);
-            Context_MarkStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP), StateTable);
+        if (sampler < MAX_TEXTURES)
+        {
+            context_invalidate_state(context, STATE_TRANSFORM(WINED3DTS_TEXTURE0 + sampler), StateTable);
+            context_invalidate_state(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP), StateTable);
         }
-        Context_MarkStateDirty(context, STATE_SAMPLER(sampler), StateTable);
+        context_invalidate_state(context, STATE_SAMPLER(sampler), StateTable);
     }
 
     /* Other misc states */
     glDisable(GL_ALPHA_TEST);
     checkGLcall("glDisable(GL_ALPHA_TEST)");
-    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHATESTENABLE), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_ALPHATESTENABLE), StateTable);
     glDisable(GL_LIGHTING);
     checkGLcall("glDisable GL_LIGHTING");
-    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_LIGHTING), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_LIGHTING), StateTable);
     glDisable(GL_DEPTH_TEST);
     checkGLcall("glDisable GL_DEPTH_TEST");
-    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ZENABLE), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_ZENABLE), StateTable);
     glDisableWINE(GL_FOG);
     checkGLcall("glDisable GL_FOG");
-    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_FOGENABLE), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_FOGENABLE), StateTable);
     glDisable(GL_BLEND);
     checkGLcall("glDisable GL_BLEND");
-    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
     glDisable(GL_CULL_FACE);
     checkGLcall("glDisable GL_CULL_FACE");
-    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_CULLMODE), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_CULLMODE), StateTable);
     glDisable(GL_STENCIL_TEST);
     checkGLcall("glDisable GL_STENCIL_TEST");
-    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_STENCILENABLE), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_STENCILENABLE), StateTable);
     glDisable(GL_SCISSOR_TEST);
     checkGLcall("glDisable GL_SCISSOR_TEST");
-    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE), StateTable);
     if (gl_info->supported[ARB_POINT_SPRITE])
     {
         glDisable(GL_POINT_SPRITE_ARB);
         checkGLcall("glDisable GL_POINT_SPRITE_ARB");
-        Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_POINTSPRITEENABLE), StateTable);
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_POINTSPRITEENABLE), StateTable);
     }
     glColorMask(GL_TRUE, GL_TRUE,GL_TRUE,GL_TRUE);
     checkGLcall("glColorMask");
-    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE), StateTable);
-    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1), StateTable);
-    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2), StateTable);
-    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3), StateTable);
     if (gl_info->supported[EXT_SECONDARY_COLOR])
     {
         glDisable(GL_COLOR_SUM_EXT);
-        Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_SPECULARENABLE), StateTable);
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_SPECULARENABLE), StateTable);
         checkGLcall("glDisable(GL_COLOR_SUM_EXT)");
     }
 
@@ -1898,10 +1886,10 @@ static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *
     checkGLcall("glMatrixMode(GL_MODELVIEW)");
     glLoadIdentity();
     checkGLcall("glLoadIdentity()");
-    Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), StateTable);
+    context_invalidate_state(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), StateTable);
 
     context->last_was_rhw = TRUE;
-    Context_MarkStateDirty(context, STATE_VDECL, StateTable); /* because of last_was_rhw = TRUE */
+    context_invalidate_state(context, STATE_VDECL, StateTable); /* because of last_was_rhw = TRUE */
 
     glDisable(GL_CLIP_PLANE0); checkGLcall("glDisable(clip plane 0)");
     glDisable(GL_CLIP_PLANE1); checkGLcall("glDisable(clip plane 1)");
@@ -1909,7 +1897,7 @@ static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *
     glDisable(GL_CLIP_PLANE3); checkGLcall("glDisable(clip plane 3)");
     glDisable(GL_CLIP_PLANE4); checkGLcall("glDisable(clip plane 4)");
     glDisable(GL_CLIP_PLANE5); checkGLcall("glDisable(clip plane 5)");
-    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_CLIPPING), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_CLIPPING), StateTable);
 
     set_blit_dimension(width, height);
     device->frag_pipe->enable_extension(FALSE);
@@ -1917,8 +1905,8 @@ static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *
     LEAVE_GL();
 
     context->blit_w = width; context->blit_h = height;
-    Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);
-    Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
+    context_invalidate_state(context, STATE_VIEWPORT, StateTable);
+    context_invalidate_state(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
 }
 
 /* Do not call while under the GL lock. */
@@ -2037,11 +2025,11 @@ static inline void context_set_render_offscreen(struct wined3d_context *context,
 {
     if (context->render_offscreen == offscreen) return;
 
-    Context_MarkStateDirty(context, STATE_POINTSPRITECOORDORIGIN, StateTable);
-    Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
-    Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);
-    Context_MarkStateDirty(context, STATE_SCISSORRECT, StateTable);
-    Context_MarkStateDirty(context, STATE_FRONTFACE, StateTable);
+    context_invalidate_state(context, STATE_POINTSPRITECOORDORIGIN, StateTable);
+    context_invalidate_state(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
+    context_invalidate_state(context, STATE_VIEWPORT, StateTable);
+    context_invalidate_state(context, STATE_SCISSORRECT, StateTable);
+    context_invalidate_state(context, STATE_FRONTFACE, StateTable);
     context->render_offscreen = offscreen;
 }
 
@@ -2213,9 +2201,9 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
     LEAVE_GL();
 
     context->last_was_blit = FALSE;
-    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), state_table);
-    Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE), state_table);
-    Context_MarkStateDirty(context, STATE_SCISSORRECT, state_table);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), state_table);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE), state_table);
+    context_invalidate_state(context, STATE_SCISSORRECT, state_table);
 
     return TRUE;
 }
@@ -2309,7 +2297,7 @@ static void context_setup_target(struct wined3d_device *device,
      * the alpha blend state changes with different render target formats. */
     if (!context->current_rt)
     {
-        Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
     }
     else
     {
@@ -2321,14 +2309,11 @@ static void context_setup_target(struct wined3d_device *device,
             /* Disable blending when the alpha mask has changed and when a format doesn't support blending. */
             if ((old->alpha_mask && !new->alpha_mask) || (!old->alpha_mask && new->alpha_mask)
                     || !(new->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
-            {
-                Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
-            }
+                context_invalidate_state(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
+
             /* Update sRGB writing when switching between formats that do/do not support sRGB writing */
             if ((old->flags & WINED3DFMT_FLAG_SRGB_WRITE) != (new->flags & WINED3DFMT_FLAG_SRGB_WRITE))
-            {
-                Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_SRGBWRITEENABLE), StateTable);
-            }
+                context_invalidate_state(context, STATE_RENDER(WINED3DRS_SRGBWRITEENABLE), StateTable);
         }
 
         /* When switching away from an offscreen render target, and we're not
