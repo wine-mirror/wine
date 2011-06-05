@@ -147,10 +147,8 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, const struc
         goto fail;
     }
 
-    if(This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
-    {
-        IWineD3DDeviceImpl_MarkStateDirty(This->resource.device, STATE_INDEXBUFFER);
-    }
+    if (This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
+        device_invalidate_state(This->resource.device, STATE_INDEXBUFFER);
     GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
     error = glGetError();
     if (error != GL_NO_ERROR)
@@ -513,9 +511,7 @@ BYTE *buffer_get_sysmem(struct wined3d_buffer *This, const struct wined3d_gl_inf
     This->resource.allocatedMemory = (BYTE *)(((ULONG_PTR)This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
 
     if (This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
-    {
-        IWineD3DDeviceImpl_MarkStateDirty(This->resource.device, STATE_INDEXBUFFER);
-    }
+        device_invalidate_state(This->resource.device, STATE_INDEXBUFFER);
 
     ENTER_GL();
     GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
@@ -833,7 +829,7 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
              * is not valid any longer. Dirtify the stream source to force a
              * reload. This happens only once per changed vertexbuffer and
              * should occur rather rarely. */
-            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
+            device_invalidate_state(device, STATE_STREAMSRC);
             return;
         }
 
@@ -864,7 +860,7 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
                 FIXME("Too many full buffer conversions, stopping converting.\n");
                 buffer_unload(&buffer->resource);
                 buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
-                IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
+                device_invalidate_state(device, STATE_STREAMSRC);
                 return;
             }
         }
@@ -879,7 +875,7 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
     }
 
     if (buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_INDEXBUFFER);
+        device_invalidate_state(device, STATE_INDEXBUFFER);
 
     if (!buffer->conversion_map)
     {
@@ -1044,7 +1040,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
                 const struct wined3d_gl_info *gl_info;
 
                 if (buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
-                    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_INDEXBUFFER);
+                    device_invalidate_state(device, STATE_INDEXBUFFER);
 
                 context = context_acquire(device, NULL);
                 gl_info = context->gl_info;
@@ -1148,9 +1144,7 @@ void CDECL wined3d_buffer_unmap(struct wined3d_buffer *buffer)
         struct wined3d_context *context;
 
         if (buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
-        {
-            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_INDEXBUFFER);
-        }
+            device_invalidate_state(device, STATE_INDEXBUFFER);
 
         context = context_acquire(device, NULL);
         gl_info = context->gl_info;

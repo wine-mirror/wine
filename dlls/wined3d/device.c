@@ -714,10 +714,10 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
         if (context->gl_info->supported[EXT_STENCIL_TWO_SIDE])
         {
             glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
-            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_TWOSIDEDSTENCILMODE));
+            device_invalidate_state(device, STATE_RENDER(WINED3DRS_TWOSIDEDSTENCILMODE));
         }
         glStencilMask(~0U);
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_STENCILWRITEMASK));
+        device_invalidate_state(device, STATE_RENDER(WINED3DRS_STENCILWRITEMASK));
         glClearStencil(stencil);
         checkGLcall("glClearStencil");
         clear_mask = clear_mask | GL_STENCIL_BUFFER_BIT;
@@ -737,7 +737,7 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
         surface_modify_location(depth_stencil, SFLAG_INDRAWABLE, TRUE);
 
         glDepthMask(GL_TRUE);
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
+        device_invalidate_state(device, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
         glClearDepth(depth);
         checkGLcall("glClearDepth");
         clear_mask = clear_mask | GL_DEPTH_BUFFER_BIT;
@@ -751,10 +751,10 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
         }
 
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
+        device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
+        device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
+        device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
+        device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
         glClearColor(color->r, color->g, color->b, color->a);
         checkGLcall("glClearColor");
         clear_mask = clear_mask | GL_COLOR_BUFFER_BIT;
@@ -1722,7 +1722,7 @@ HRESULT CDECL wined3d_device_set_stream_source(struct wined3d_device *device, UI
         wined3d_buffer_decref(prev_buffer);
     }
 
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
+    device_invalidate_state(device, STATE_STREAMSRC);
 
     return WINED3D_OK;
 }
@@ -1786,7 +1786,7 @@ HRESULT CDECL wined3d_device_set_stream_source_freq(struct wined3d_device *devic
     device->updateStateBlock->changed.streamFreq |= 1 << stream_idx;
 
     if (stream->frequency != old_freq || stream->flags != old_flags)
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
+        device_invalidate_state(device, STATE_STREAMSRC);
 
     return WINED3D_OK;
 }
@@ -1844,7 +1844,7 @@ HRESULT CDECL wined3d_device_set_transform(struct wined3d_device *device,
         device->view_ident = !memcmp(matrix, identity, 16 * sizeof(float));
 
     if (d3dts < WINED3DTS_WORLDMATRIX(device->adapter->gl_info.limits.blends))
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_TRANSFORM(d3dts));
+        device_invalidate_state(device, STATE_TRANSFORM(d3dts));
 
     return WINED3D_OK;
 
@@ -2036,7 +2036,7 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device, UINT light
 
     /* Update the live definitions if the light is currently assigned a glIndex. */
     if (object->glIndex != -1 && !device->isRecordingState)
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_ACTIVELIGHT(object->glIndex));
+        device_invalidate_state(device, STATE_ACTIVELIGHT(object->glIndex));
 
     return WINED3D_OK;
 }
@@ -2110,7 +2110,7 @@ HRESULT CDECL wined3d_device_set_light_enable(struct wined3d_device *device, UIN
         if (light_info->glIndex != -1)
         {
             if (!device->isRecordingState)
-                IWineD3DDeviceImpl_MarkStateDirty(device, STATE_ACTIVELIGHT(light_info->glIndex));
+                device_invalidate_state(device, STATE_ACTIVELIGHT(light_info->glIndex));
 
             device->updateStateBlock->state.lights[light_info->glIndex] = NULL;
             light_info->glIndex = -1;
@@ -2156,7 +2156,7 @@ HRESULT CDECL wined3d_device_set_light_enable(struct wined3d_device *device, UIN
 
             /* i == light_info->glIndex */
             if (!device->isRecordingState)
-                IWineD3DDeviceImpl_MarkStateDirty(device, STATE_ACTIVELIGHT(i));
+                device_invalidate_state(device, STATE_ACTIVELIGHT(i));
         }
     }
 
@@ -2223,7 +2223,7 @@ HRESULT CDECL wined3d_device_set_clip_plane(struct wined3d_device *device, UINT 
         return WINED3D_OK;
     }
 
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_CLIPPLANE(plane_idx));
+    device_invalidate_state(device, STATE_CLIPPLANE(plane_idx));
 
     return WINED3D_OK;
 }
@@ -2287,7 +2287,7 @@ HRESULT CDECL wined3d_device_set_material(struct wined3d_device *device, const W
         return WINED3D_OK;
     }
 
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_MATERIAL);
+    device_invalidate_state(device, STATE_MATERIAL);
 
     return WINED3D_OK;
 }
@@ -2342,7 +2342,7 @@ HRESULT CDECL wined3d_device_set_index_buffer(struct wined3d_device *device,
 
     if (prev_buffer != buffer)
     {
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_INDEXBUFFER);
+        device_invalidate_state(device, STATE_INDEXBUFFER);
         if (buffer)
         {
             InterlockedIncrement(&buffer->bind_count);
@@ -2392,7 +2392,7 @@ HRESULT CDECL wined3d_device_set_base_vertex_index(struct wined3d_device *device
     }
 
     /* The base vertex index affects the stream sources */
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
+    device_invalidate_state(device, STATE_STREAMSRC);
 
     return WINED3D_OK;
 }
@@ -2420,7 +2420,7 @@ HRESULT CDECL wined3d_device_set_viewport(struct wined3d_device *device, const W
         return WINED3D_OK;
     }
 
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_VIEWPORT);
+    device_invalidate_state(device, STATE_VIEWPORT);
 
     return WINED3D_OK;
 }
@@ -2455,7 +2455,7 @@ HRESULT CDECL wined3d_device_set_render_state(struct wined3d_device *device,
     if (value == old_value)
         TRACE("Application is setting the old value over, nothing to do.\n");
     else
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(state));
+        device_invalidate_state(device, STATE_RENDER(state));
 
     return WINED3D_OK;
 }
@@ -2505,7 +2505,7 @@ HRESULT CDECL wined3d_device_set_sampler_state(struct wined3d_device *device,
         return WINED3D_OK;
     }
 
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(sampler_idx));
+    device_invalidate_state(device, STATE_SAMPLER(sampler_idx));
 
     return WINED3D_OK;
 }
@@ -2550,7 +2550,7 @@ HRESULT CDECL wined3d_device_set_scissor_rect(struct wined3d_device *device, con
         return WINED3D_OK;
     }
 
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SCISSORRECT);
+    device_invalidate_state(device, STATE_SCISSORRECT);
 
     return WINED3D_OK;
 }
@@ -2592,7 +2592,7 @@ HRESULT CDECL wined3d_device_set_vertex_declaration(struct wined3d_device *devic
         return WINED3D_OK;
     }
 
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_VDECL);
+    device_invalidate_state(device, STATE_VDECL);
     return WINED3D_OK;
 }
 
@@ -2638,7 +2638,7 @@ HRESULT CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, st
     if (prev)
         wined3d_shader_decref(prev);
 
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_VSHADER);
+    device_invalidate_state(device, STATE_VSHADER);
 
     return WINED3D_OK;
 }
@@ -2677,7 +2677,7 @@ HRESULT CDECL wined3d_device_set_vs_consts_b(struct wined3d_device *device,
         device->updateStateBlock->changed.vertexShaderConstantsB |= (1 << i);
 
     if (!device->isRecordingState)
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_VERTEXSHADERCONSTANT);
+        device_invalidate_state(device, STATE_VERTEXSHADERCONSTANT);
 
     return WINED3D_OK;
 }
@@ -2720,7 +2720,7 @@ HRESULT CDECL wined3d_device_set_vs_consts_i(struct wined3d_device *device,
         device->updateStateBlock->changed.vertexShaderConstantsI |= (1 << i);
 
     if (!device->isRecordingState)
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_VERTEXSHADERCONSTANT);
+        device_invalidate_state(device, STATE_VERTEXSHADERCONSTANT);
 
     return WINED3D_OK;
 }
@@ -2768,7 +2768,7 @@ HRESULT CDECL wined3d_device_set_vs_consts_f(struct wined3d_device *device,
     if (!device->isRecordingState)
     {
         device->shader_backend->shader_update_float_vertex_constants(device, start_register, vector4f_count);
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_VERTEXSHADERCONSTANT);
+        device_invalidate_state(device, STATE_VERTEXSHADERCONSTANT);
     }
 
     memset(device->updateStateBlock->changed.vertexShaderConstantsF + start_register, 1,
@@ -2799,7 +2799,7 @@ static inline void markTextureStagesDirty(struct wined3d_device *device, DWORD s
 
     for (i = 0; i <= WINED3D_HIGHEST_TEXTURE_STATE; ++i)
     {
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_TEXTURESTAGE(stage, i));
+        device_invalidate_state(device, STATE_TEXTURESTAGE(stage, i));
     }
 }
 
@@ -2872,7 +2872,7 @@ static void device_map_fixed_function_samplers(struct wined3d_device *device, co
             if (device->texUnitMap[i] != i)
             {
                 device_map_stage(device, i, i);
-                IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(i));
+                device_invalidate_state(device, STATE_SAMPLER(i));
                 markTextureStagesDirty(device, i);
             }
         }
@@ -2888,7 +2888,7 @@ static void device_map_fixed_function_samplers(struct wined3d_device *device, co
         if (device->texUnitMap[i] != tex)
         {
             device_map_stage(device, i, tex);
-            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(i));
+            device_invalidate_state(device, STATE_SAMPLER(i));
             markTextureStagesDirty(device, i);
         }
 
@@ -2907,7 +2907,7 @@ static void device_map_psamplers(struct wined3d_device *device, const struct win
         if (sampler_type[i] && device->texUnitMap[i] != i)
         {
             device_map_stage(device, i, i);
-            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(i));
+            device_invalidate_state(device, STATE_SAMPLER(i));
             if (i < gl_info->limits.texture_stages)
             {
                 markTextureStagesDirty(device, i);
@@ -2971,7 +2971,7 @@ static void device_map_vsamplers(struct wined3d_device *device, BOOL ps, const s
                 if (device_unit_free_for_vs(device, pshader_sampler_type, vshader_sampler_type, start))
                 {
                     device_map_stage(device, vsampler_idx, start);
-                    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(vsampler_idx));
+                    device_invalidate_state(device, STATE_SAMPLER(vsampler_idx));
 
                     --start;
                     break;
@@ -3035,7 +3035,7 @@ HRESULT CDECL wined3d_device_set_pixel_shader(struct wined3d_device *device, str
     if (prev)
         wined3d_shader_decref(prev);
 
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_PIXELSHADER);
+    device_invalidate_state(device, STATE_PIXELSHADER);
 
     return WINED3D_OK;
 }
@@ -3074,7 +3074,7 @@ HRESULT CDECL wined3d_device_set_ps_consts_b(struct wined3d_device *device,
         device->updateStateBlock->changed.pixelShaderConstantsB |= (1 << i);
 
     if (!device->isRecordingState)
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_PIXELSHADERCONSTANT);
+        device_invalidate_state(device, STATE_PIXELSHADERCONSTANT);
 
     return WINED3D_OK;
 }
@@ -3117,7 +3117,7 @@ HRESULT CDECL wined3d_device_set_ps_consts_i(struct wined3d_device *device,
         device->updateStateBlock->changed.pixelShaderConstantsI |= (1 << i);
 
     if (!device->isRecordingState)
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_PIXELSHADERCONSTANT);
+        device_invalidate_state(device, STATE_PIXELSHADERCONSTANT);
 
     return WINED3D_OK;
 }
@@ -3166,7 +3166,7 @@ HRESULT CDECL wined3d_device_set_ps_consts_f(struct wined3d_device *device,
     if (!device->isRecordingState)
     {
         device->shader_backend->shader_update_float_pixel_constants(device, start_register, vector4f_count);
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_PIXELSHADERCONSTANT);
+        device_invalidate_state(device, STATE_PIXELSHADERCONSTANT);
     }
 
     memset(device->updateStateBlock->changed.pixelShaderConstantsF + start_register, 1,
@@ -3660,7 +3660,7 @@ HRESULT CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *devi
             for (i = stage + 1; i < device->stateBlock->state.lowest_disabled_stage; ++i)
             {
                 TRACE("Additionally dirtifying stage %u.\n", i);
-                IWineD3DDeviceImpl_MarkStateDirty(device, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP));
+                device_invalidate_state(device, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP));
             }
             device->stateBlock->state.lowest_disabled_stage = stage;
             TRACE("New lowest disabled: %u.\n", stage);
@@ -3680,14 +3680,14 @@ HRESULT CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *devi
                 if (device->updateStateBlock->state.texture_states[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE)
                     break;
                 TRACE("Additionally dirtifying stage %u due to enable.\n", i);
-                IWineD3DDeviceImpl_MarkStateDirty(device, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP));
+                device_invalidate_state(device, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP));
             }
             device->stateBlock->state.lowest_disabled_stage = i;
             TRACE("New lowest disabled: %u.\n", i);
         }
     }
 
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_TEXTURESTAGE(stage, state));
+    device_invalidate_state(device, STATE_TEXTURESTAGE(stage, state));
 
     return WINED3D_OK;
 }
@@ -3766,15 +3766,15 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
         wined3d_texture_incref(texture);
 
         if (!prev || texture->target != prev->target)
-            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_PIXELSHADER);
+            device_invalidate_state(device, STATE_PIXELSHADER);
 
         if (!prev && stage < gl_info->limits.texture_stages)
         {
             /* The source arguments for color and alpha ops have different
              * meanings when a NULL texture is bound, so the COLOROP and
              * ALPHAOP have to be dirtified. */
-            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_TEXTURESTAGE(stage, WINED3DTSS_COLOROP));
-            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_TEXTURESTAGE(stage, WINED3DTSS_ALPHAOP));
+            device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3DTSS_COLOROP));
+            device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3DTSS_ALPHAOP));
         }
 
         if (bind_count == 1)
@@ -3789,8 +3789,8 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
 
         if (!texture && stage < gl_info->limits.texture_stages)
         {
-            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_TEXTURESTAGE(stage, WINED3DTSS_COLOROP));
-            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_TEXTURESTAGE(stage, WINED3DTSS_ALPHAOP));
+            device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3DTSS_COLOROP));
+            device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3DTSS_ALPHAOP));
         }
 
         if (bind_count && prev->sampler == stage)
@@ -3812,7 +3812,7 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
         }
     }
 
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(stage));
+    device_invalidate_state(device, STATE_SAMPLER(stage));
 
     return WINED3D_OK;
 }
@@ -4084,14 +4084,14 @@ HRESULT CDECL wined3d_device_draw_primitive(struct wined3d_device *device, UINT 
     /* The index buffer is not needed here, but restore it, otherwise it is hell to keep track of */
     if (device->stateBlock->state.user_stream)
     {
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_INDEXBUFFER);
+        device_invalidate_state(device, STATE_INDEXBUFFER);
         device->stateBlock->state.user_stream = FALSE;
     }
 
     if (device->stateBlock->state.load_base_vertex_index)
     {
         device->stateBlock->state.load_base_vertex_index = 0;
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
+        device_invalidate_state(device, STATE_STREAMSRC);
     }
 
     /* Account for the loading offset due to index buffers. Instead of
@@ -4127,7 +4127,7 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *devic
 
     if (device->stateBlock->state.user_stream)
     {
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_INDEXBUFFER);
+        device_invalidate_state(device, STATE_INDEXBUFFER);
         device->stateBlock->state.user_stream = FALSE;
     }
     vbo = index_buffer->buffer_object;
@@ -4140,7 +4140,7 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *devic
     if (device->stateBlock->state.load_base_vertex_index != device->stateBlock->state.base_vertex_index)
     {
         device->stateBlock->state.load_base_vertex_index = device->stateBlock->state.base_vertex_index;
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
+        device_invalidate_state(device, STATE_STREAMSRC);
     }
 
     drawPrimitive(device, index_count, start_idx, index_size,
@@ -4176,7 +4176,7 @@ HRESULT CDECL wined3d_device_draw_primitive_up(struct wined3d_device *device, UI
     device->stateBlock->state.load_base_vertex_index = 0;
 
     /* TODO: Only mark dirty if drawing from a different UP address */
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
+    device_invalidate_state(device, STATE_STREAMSRC);
 
     drawPrimitive(device, vertex_count, 0, 0, NULL);
 
@@ -4225,8 +4225,8 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive_up(struct wined3d_device *de
     device->stateBlock->state.base_vertex_index = 0;
     device->stateBlock->state.load_base_vertex_index = 0;
     /* Mark the state dirty until we have nicer tracking of the stream source pointers */
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_VDECL);
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_INDEXBUFFER);
+    device_invalidate_state(device, STATE_VDECL);
+    device_invalidate_state(device, STATE_INDEXBUFFER);
 
     drawPrimitive(device, index_count, 0, index_size, index_data);
 
@@ -4252,8 +4252,8 @@ HRESULT CDECL wined3d_device_draw_primitive_strided(struct wined3d_device *devic
     /* Mark the state dirty until we have nicer tracking. It's fine to change
      * baseVertexIndex because that call is only called by ddraw which does
      * not need that value. */
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_VDECL);
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_INDEXBUFFER);
+    device_invalidate_state(device, STATE_VDECL);
+    device_invalidate_state(device, STATE_INDEXBUFFER);
     device->stateBlock->state.base_vertex_index = 0;
     device->up_strided = strided_data;
     drawPrimitive(device, vertex_count, 0, 0, NULL);
@@ -4271,8 +4271,8 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive_strided(struct wined3d_devic
      * its fine to change baseVertexIndex because that call is only called by ddraw which does not need
      * that value.
      */
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_VDECL);
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_INDEXBUFFER);
+    device_invalidate_state(device, STATE_VDECL);
+    device_invalidate_state(device, STATE_INDEXBUFFER);
     device->stateBlock->state.user_stream = TRUE;
     device->stateBlock->state.base_vertex_index = 0;
     device->up_strided = strided_data;
@@ -4509,9 +4509,7 @@ static void dirtify_p8_texture_samplers(struct wined3d_device *device)
         struct wined3d_texture *texture = device->stateBlock->state.textures[i];
         if (texture && (texture->resource.format->id == WINED3DFMT_P8_UINT
                 || texture->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM))
-        {
-            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(i));
-        }
+            device_invalidate_state(device, STATE_SAMPLER(i));
     }
 }
 
@@ -4854,9 +4852,7 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
     surface_modify_location(dst_surface, SFLAG_INTEXTURE, TRUE);
     sampler = device->rev_tex_unit_map[0];
     if (sampler != WINED3D_UNMAPPED_STAGE)
-    {
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(sampler));
-    }
+        device_invalidate_state(device, STATE_SAMPLER(sampler));
 
     return WINED3D_OK;
 }
@@ -5122,13 +5118,13 @@ HRESULT CDECL wined3d_device_set_render_target(struct wined3d_device *device,
         device->stateBlock->state.viewport.Y      = 0;
         device->stateBlock->state.viewport.MaxZ   = 1.0f;
         device->stateBlock->state.viewport.MinZ   = 0.0f;
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_VIEWPORT);
+        device_invalidate_state(device, STATE_VIEWPORT);
 
         device->stateBlock->state.scissor_rect.top = 0;
         device->stateBlock->state.scissor_rect.left = 0;
         device->stateBlock->state.scissor_rect.right = device->stateBlock->state.viewport.Width;
         device->stateBlock->state.scissor_rect.bottom = device->stateBlock->state.viewport.Height;
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SCISSORRECT);
+        device_invalidate_state(device, STATE_SCISSORRECT);
     }
 
     return WINED3D_OK;
@@ -5171,14 +5167,14 @@ HRESULT CDECL wined3d_device_set_depth_stencil(struct wined3d_device *device, st
     if (!prev != !depth_stencil)
     {
         /* Swapping NULL / non NULL depth stencil affects the depth and tests */
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_ZENABLE));
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_STENCILENABLE));
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_STENCILWRITEMASK));
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_DEPTHBIAS));
+        device_invalidate_state(device, STATE_RENDER(WINED3DRS_ZENABLE));
+        device_invalidate_state(device, STATE_RENDER(WINED3DRS_STENCILENABLE));
+        device_invalidate_state(device, STATE_RENDER(WINED3DRS_STENCILWRITEMASK));
+        device_invalidate_state(device, STATE_RENDER(WINED3DRS_DEPTHBIAS));
     }
     else if (prev && prev->resource.format->depth_size != depth_stencil->resource.format->depth_size)
     {
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_DEPTHBIAS));
+        device_invalidate_state(device, STATE_RENDER(WINED3DRS_DEPTHBIAS));
     }
 
     return WINED3D_OK;
@@ -5270,9 +5266,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
             checkGLcall("glActiveTextureARB");
             sampler = device->rev_tex_unit_map[0];
             if (sampler != WINED3D_UNMAPPED_STAGE)
-            {
-                IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(sampler));
-            }
+                device_invalidate_state(device, STATE_SAMPLER(sampler));
             /* Create a new cursor texture */
             glGenTextures(1, &device->cursorTexture);
             checkGLcall("glGenTextures");
@@ -5414,7 +5408,7 @@ HRESULT CDECL wined3d_device_evict_managed_resources(struct wined3d_device *devi
 
     wined3d_device_enum_resources(device, evict_managed_resource, NULL);
     /* Invalidate stream sources, the buffer(s) may have been evicted. */
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
+    device_invalidate_state(device, STATE_STREAMSRC);
 
     return WINED3D_OK;
 }
@@ -6177,7 +6171,7 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
 }
 
 
-void IWineD3DDeviceImpl_MarkStateDirty(struct wined3d_device *device, DWORD state)
+void device_invalidate_state(struct wined3d_device *device, DWORD state)
 {
     DWORD rep = device->StateTable[state].representative;
     struct wined3d_context *context;

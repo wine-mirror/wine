@@ -53,9 +53,7 @@ static void volume_bind_and_dirtify(struct wined3d_volume *volume, const struct 
     }
 
     if (active_sampler != WINED3D_UNMAPPED_STAGE)
-    {
-        IWineD3DDeviceImpl_MarkStateDirty(volume->resource.device, STATE_SAMPLER(active_sampler));
-    }
+        device_invalidate_state(volume->resource.device, STATE_SAMPLER(active_sampler));
 
     container->texture_ops->texture_bind(container, gl_info, FALSE);
 }

@@ -311,13 +311,13 @@ static void swapchain_blit(struct wined3d_swapchain *swapchain,
         context_set_draw_buffer(context, GL_BACK);
 
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
+        device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
+        device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
+        device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
+        device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
 
         glDisable(GL_SCISSOR_TEST);
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+        device_invalidate_state(device, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
 
         /* Note that the texture is upside down */
         gl_info->fbo_ops.glBlitFramebuffer(src_rect->left, src_rect->top, src_rect->right, src_rect->bottom,

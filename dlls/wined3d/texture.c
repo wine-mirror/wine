@@ -521,7 +521,7 @@ DWORD CDECL wined3d_texture_set_lod(struct wined3d_texture *texture, DWORD lod)
         texture->texture_rgb.states[WINED3DTEXSTA_MAXMIPLEVEL] = ~0U;
         texture->texture_srgb.states[WINED3DTEXSTA_MAXMIPLEVEL] = ~0U;
         if (texture->bind_count)
-            IWineD3DDeviceImpl_MarkStateDirty(texture->resource.device, STATE_SAMPLER(texture->sampler));
+            device_invalidate_state(texture->resource.device, STATE_SAMPLER(texture->sampler));
     }
 
     return old;

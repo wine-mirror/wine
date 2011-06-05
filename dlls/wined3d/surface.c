@@ -608,9 +608,7 @@ static void surface_bind_and_dirtify(struct wined3d_surface *surface,
     active_sampler = device->rev_tex_unit_map[active_texture - GL_TEXTURE0_ARB];
 
     if (active_sampler != WINED3D_UNMAPPED_STAGE)
-    {
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(active_sampler));
-    }
+        device_invalidate_state(device, STATE_SAMPLER(active_sampler));
     surface_bind(surface, gl_info, srgb);
 }
 
@@ -1147,21 +1145,21 @@ static void wined3d_surface_depth_blt_fbo(struct wined3d_device *device, struct 
     if (gl_mask & GL_DEPTH_BUFFER_BIT)
     {
         glDepthMask(GL_TRUE);
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
+        device_invalidate_state(device, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
     }
     if (gl_mask & GL_STENCIL_BUFFER_BIT)
     {
         if (context->gl_info->supported[EXT_STENCIL_TWO_SIDE])
         {
             glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
-            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_TWOSIDEDSTENCILMODE));
+            device_invalidate_state(device, STATE_RENDER(WINED3DRS_TWOSIDEDSTENCILMODE));
         }
         glStencilMask(~0U);
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_STENCILWRITEMASK));
+        device_invalidate_state(device, STATE_RENDER(WINED3DRS_STENCILWRITEMASK));
     }
 
     glDisable(GL_SCISSOR_TEST);
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+    device_invalidate_state(device, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
 
     gl_info->fbo_ops.glBlitFramebuffer(src_rect->left, src_rect->top, src_rect->right, src_rect->bottom,
             dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, gl_mask, GL_NEAREST);
@@ -5100,13 +5098,13 @@ static void surface_blt_fbo(struct wined3d_device *device, const WINED3DTEXTUREF
     context_check_fbo_status(context, GL_DRAW_FRAMEBUFFER);
 
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
+    device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
+    device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
+    device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
+    device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
 
     glDisable(GL_SCISSOR_TEST);
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+    device_invalidate_state(device, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
 
     gl_info->fbo_ops.glBlitFramebuffer(src_rect.left, src_rect.top, src_rect.right, src_rect.bottom,
             dst_rect.left, dst_rect.top, dst_rect.right, dst_rect.bottom, GL_COLOR_BUFFER_BIT, gl_filter);

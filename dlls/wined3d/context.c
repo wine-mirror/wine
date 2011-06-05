@@ -154,7 +154,7 @@ static void context_apply_attachment_filter_states(const struct wined3d_context 
         if (texture->bind_count)
         {
             WARN("Render targets should not be bound to a sampler\n");
-            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(texture->sampler));
+            device_invalidate_state(device, STATE_SAMPLER(texture->sampler));
         }
 
         if (update_minfilter || update_magfilter)
@@ -1147,7 +1147,7 @@ static void context_enter(struct wined3d_context *context)
  * Context_MarkStateDirty
  *
  * Marks a state in a context dirty. Only one context, opposed to
- * IWineD3DDeviceImpl_MarkStateDirty, which marks the state dirty in all
+ * device_invalidate_state(), which marks the state dirty in all
  * contexts
  *
  * Params:
