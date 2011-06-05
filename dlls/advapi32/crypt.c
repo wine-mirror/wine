@@ -1420,11 +1420,6 @@ BOOL WINAPI CryptGenKey (HCRYPTPROV hProv, ALG_ID Algid, DWORD dwFlags, HCRYPTKE
 
 	TRACE("(0x%lx, %d, %08x, %p)\n", hProv, Algid, dwFlags, phKey);
 
-	if (!prov)
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
 	if (!phKey || !prov || prov->dwMagic != MAGIC_CRYPTPROV)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
