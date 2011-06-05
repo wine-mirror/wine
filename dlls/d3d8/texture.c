@@ -192,16 +192,9 @@ static void WINAPI IDirect3DTexture8Impl_PreLoad(IDirect3DTexture8 *iface)
 
 static D3DRESOURCETYPE WINAPI IDirect3DTexture8Impl_GetType(IDirect3DTexture8 *iface)
 {
-    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
-    D3DRESOURCETYPE type;
-
     TRACE("iface %p.\n", iface);
 
-    wined3d_mutex_lock();
-    type = wined3d_texture_get_type(This->wined3d_texture);
-    wined3d_mutex_unlock();
-
-    return type;
+    return D3DRTYPE_TEXTURE;
 }
 
 /* IDirect3DTexture8 IDirect3DBaseTexture8 Interface follow: */

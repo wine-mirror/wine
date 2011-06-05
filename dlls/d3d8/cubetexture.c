@@ -194,16 +194,9 @@ static void WINAPI IDirect3DCubeTexture8Impl_PreLoad(IDirect3DCubeTexture8 *ifac
 
 static D3DRESOURCETYPE WINAPI IDirect3DCubeTexture8Impl_GetType(IDirect3DCubeTexture8 *iface)
 {
-    IDirect3DCubeTexture8Impl *This = impl_from_IDirect3DCubeTexture8(iface);
-    D3DRESOURCETYPE type;
-
     TRACE("iface %p.\n", iface);
 
-    wined3d_mutex_lock();
-    type = wined3d_texture_get_type(This->wined3d_texture);
-    wined3d_mutex_unlock();
-
-    return type;
+    return D3DRTYPE_CUBETEXTURE;
 }
 
 /* IDirect3DCubeTexture8 IDirect3DBaseTexture8 Interface follow: */
