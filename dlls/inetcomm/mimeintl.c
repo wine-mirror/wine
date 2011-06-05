@@ -49,7 +49,7 @@ typedef struct
 
 typedef struct
 {
-    const IMimeInternationalVtbl *lpVtbl;
+    IMimeInternational IMimeInternational_iface;
     LONG refs;
     CRITICAL_SECTION cs;
 
@@ -58,9 +58,9 @@ typedef struct
     HCHARSET default_charset;
 } internat_impl;
 
-static inline internat_impl *impl_from_IMimeInternational( IMimeInternational *iface )
+static inline internat_impl *impl_from_IMimeInternational(IMimeInternational *iface)
 {
-    return (internat_impl *)((char*)iface - FIELD_OFFSET(internat_impl, lpVtbl));
+    return CONTAINING_RECORD(iface, internat_impl, IMimeInternational_iface);
 }
 
 static inline HRESULT get_mlang(IMultiLanguage **ml)
@@ -524,7 +524,7 @@ static internat_impl *global_internat;
 HRESULT MimeInternational_Construct(IMimeInternational **internat)
 {
     global_internat = HeapAlloc(GetProcessHeap(), 0, sizeof(*global_internat));
-    global_internat->lpVtbl = &mime_internat_vtbl;
+    global_internat->IMimeInternational_iface.lpVtbl = &mime_internat_vtbl;
     global_internat->refs = 0;
     InitializeCriticalSection(&global_internat->cs);
 
@@ -532,7 +532,7 @@ HRESULT MimeInternational_Construct(IMimeInternational **internat)
     global_internat->next_charset_handle = 0;
     global_internat->default_charset = NULL;
 
-    *internat = (IMimeInternational*)&global_internat->lpVtbl;
+    *internat = &global_internat->IMimeInternational_iface;
 
     IMimeInternational_AddRef(*internat);
     return S_OK;
@@ -542,7 +542,7 @@ HRESULT WINAPI MimeOleGetInternat(IMimeInternational **internat)
 {
     TRACE("(%p)\n", internat);
 
-    *internat = (IMimeInternational *)&global_internat->lpVtbl;
+    *internat = &global_internat->IMimeInternational_iface;
     IMimeInternational_AddRef(*internat);
     return S_OK;
 }
