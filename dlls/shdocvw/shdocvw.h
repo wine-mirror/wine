@@ -100,7 +100,7 @@ typedef struct _IDocHostContainerVtbl
 
 struct DocHost {
     IOleClientSite      IOleClientSite_iface;
-    IOleInPlaceSite     IOleInPlaceSite_iface;
+    IOleInPlaceSiteEx   IOleInPlaceSiteEx_iface;
     IDocHostUIHandler2  IDocHostUIHandler2_iface;
     IOleDocumentSite    IOleDocumentSite_iface;
     IOleControlSite     IOleControlSite_iface;
@@ -165,7 +165,7 @@ struct WebBrowser {
 
     IOleClientSite *client;
     IOleContainer *container;
-    IOleInPlaceSite *inplace;
+    IOleInPlaceSiteEx *inplace;
 
     /* window context */
 
