@@ -893,7 +893,8 @@ static void image_list_init(HIMAGELIST himl)
 {
     HBITMAP hbm;
     char comment[16];
-    INT n = 1, i;
+    INT n = 1;
+    DWORD i;
     static const struct test_data
     {
         BYTE grey;
@@ -1757,15 +1758,15 @@ static void test_iconsize(void)
     ok(!ret, "got %d\n", ret);
 
     /* doesn't touch return pointers */
-    cx = 0xdeadbeef;
+    cx = 0x1abe11ed;
     ret = ImageList_GetIconSize(himl, &cx, NULL);
     ok(!ret, "got %d\n", ret);
-    ok(cx == 0xdeadbeef, "got %d\n", cx);
+    ok(cx == 0x1abe11ed, "got %d\n", cx);
 
-    cy = 0xdeadbeef;
+    cy = 0x1abe11ed;
     ret = ImageList_GetIconSize(himl, NULL, &cy);
     ok(!ret, "got %d\n", ret);
-    ok(cy == 0xdeadbeef, "got %d\n", cy);
+    ok(cy == 0x1abe11ed, "got %d\n", cy);
 
     ImageList_Destroy(himl);
 }
