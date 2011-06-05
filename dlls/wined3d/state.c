@@ -486,7 +486,6 @@ static void state_alpha(DWORD state, struct wined3d_stateblock *stateblock, stru
 
 static void state_clipping(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_state *state = &stateblock->state;
     DWORD enable  = 0xFFFFFFFF;
     DWORD disable = 0x00000000;
@@ -520,23 +519,11 @@ static void state_clipping(DWORD state_id, struct wined3d_stateblock *stateblock
     {
         enable = state->render_states[WINED3DRS_CLIPPLANEENABLE];
         disable = ~state->render_states[WINED3DRS_CLIPPLANEENABLE];
-        if (gl_info->supported[ARB_DEPTH_CLAMP])
-        {
-            glDisable(GL_DEPTH_CLAMP);
-            checkGLcall("glDisable(GL_DEPTH_CLAMP)");
-        }
-    } else {
+    }
+    else
+    {
         disable = 0xffffffff;
         enable  = 0x00;
-        if (gl_info->supported[ARB_DEPTH_CLAMP])
-        {
-            glEnable(GL_DEPTH_CLAMP);
-            checkGLcall("glEnable(GL_DEPTH_CLAMP)");
-        }
-        else
-        {
-            FIXME("Clipping disabled, but ARB_depth_clamp isn't supported.\n");
-        }
     }
 
     if (enable & WINED3DCLIPPLANE0)  { glEnable(GL_CLIP_PLANE0);  checkGLcall("glEnable(clip plane 0)"); }

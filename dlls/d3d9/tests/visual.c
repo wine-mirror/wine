@@ -10613,15 +10613,15 @@ static void depth_clamp_test(IDirect3DDevice9 *device)
     if (caps.PrimitiveMiscCaps & D3DPMISCCAPS_CLIPTLVERTS)
     {
         color = getPixelColor(device, 75, 75);
-        todo_wine ok(color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
+        ok(color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
         color = getPixelColor(device, 150, 150);
-        todo_wine ok(color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
+        ok(color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
         color = getPixelColor(device, 320, 240);
-        todo_wine ok(color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
+        ok(color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
         color = getPixelColor(device, 320, 330);
-        todo_wine ok(color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
+        ok(color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
         color = getPixelColor(device, 320, 330);
-        todo_wine ok(color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
+        ok(color_match(color, 0x0000ff00, 1), "color 0x%08x.\n", color);
     }
     else
     {
