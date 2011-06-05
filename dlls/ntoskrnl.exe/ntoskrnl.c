@@ -1628,6 +1628,16 @@ NTSTATUS WINAPI PsLookupProcessByProcessId(HANDLE processid, PEPROCESS *process)
     return STATUS_NOT_IMPLEMENTED;
 }
 
+
+/*****************************************************
+ *           IoSetThreadHardErrorMode  (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI IoSetThreadHardErrorMode(BOOLEAN EnableHardErrors)
+{
+    FIXME("stub\n");
+    return FALSE;
+}
+
 /*****************************************************
  *           DllMain
  */

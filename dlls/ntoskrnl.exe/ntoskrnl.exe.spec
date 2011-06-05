@@ -456,7 +456,7 @@
 @ stub IoSetShareAccess
 @ stub IoSetStartIoAttributes
 @ stub IoSetSystemPartition
-@ stub IoSetThreadHardErrorMode
+@ stdcall IoSetThreadHardErrorMode(long)
 @ stub IoSetTopLevelIrp
 @ stub IoStartNextPacket
 @ stub IoStartNextPacketByKey
