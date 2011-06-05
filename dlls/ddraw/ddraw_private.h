@@ -152,7 +152,7 @@ extern WINED3DSURFTYPE DefaultSurfaceType DECLSPEC_HIDDEN;
 struct IDirectDrawSurfaceImpl
 {
     /* IUnknown fields */
-    const IDirectDrawSurface7Vtbl *lpVtbl;
+    IDirectDrawSurface7 IDirectDrawSurface7_iface;
     IDirectDrawSurface3 IDirectDrawSurface3_iface;
     const IDirectDrawGammaControlVtbl *IDirectDrawGammaControl_vtbl;
     const IDirect3DTexture2Vtbl *IDirect3DTexture2_vtbl;
@@ -227,7 +227,7 @@ static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface3(IDirectDrawS
 
 static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface7(IDirectDrawSurface7 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, lpVtbl);
+    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface7_iface);
 }
 
 IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface) DECLSPEC_HIDDEN;

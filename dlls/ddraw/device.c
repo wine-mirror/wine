@@ -359,8 +359,8 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
         /* Release the render target and the WineD3D render target
          * (See IDirect3D7::CreateDevice for more comments on this)
          */
-        IDirectDrawSurface7_Release((IDirectDrawSurface7 *)This->target);
-        IDirectDrawSurface7_Release((IDirectDrawSurface7 *)This->ddraw->d3d_target);
+        IDirectDrawSurface7_Release(&This->target->IDirectDrawSurface7_iface);
+        IDirectDrawSurface7_Release(&This->ddraw->d3d_target->IDirectDrawSurface7_iface);
         TRACE("Target release done\n");
 
         This->ddraw->d3ddevice = NULL;
@@ -1855,7 +1855,7 @@ IDirect3DDeviceImpl_7_SetRenderTarget(IDirect3DDevice7 *iface,
         return hr;
     }
     IDirectDrawSurface7_AddRef(NewTarget);
-    IDirectDrawSurface7_Release((IDirectDrawSurface7 *)This->target);
+    IDirectDrawSurface7_Release(&This->target->IDirectDrawSurface7_iface);
     This->target = Target;
     IDirect3DDeviceImpl_UpdateDepthStencil(This);
     LeaveCriticalSection(&ddraw_cs);
@@ -1893,7 +1893,8 @@ static HRESULT WINAPI IDirect3DDeviceImpl_3_SetRenderTarget(IDirect3DDevice3 *if
 
     TRACE("iface %p, target %p, flags %#x.\n", iface, NewRenderTarget, Flags);
 
-    return IDirect3DDevice7_SetRenderTarget((IDirect3DDevice7 *)This, (IDirectDrawSurface7 *)Target, Flags);
+    return IDirect3DDevice7_SetRenderTarget((IDirect3DDevice7 *)This,
+            Target ? &Target->IDirectDrawSurface7_iface : NULL, Flags);
 }
 
 static HRESULT WINAPI IDirect3DDeviceImpl_2_SetRenderTarget(IDirect3DDevice2 *iface,
@@ -1904,7 +1905,8 @@ static HRESULT WINAPI IDirect3DDeviceImpl_2_SetRenderTarget(IDirect3DDevice2 *if
 
     TRACE("iface %p, target %p, flags %#x.\n", iface, NewRenderTarget, Flags);
 
-    return IDirect3DDevice7_SetRenderTarget((IDirect3DDevice7 *)This, (IDirectDrawSurface7 *)Target, Flags);
+    return IDirect3DDevice7_SetRenderTarget((IDirect3DDevice7 *)This,
+            Target ? &Target->IDirectDrawSurface7_iface : NULL, Flags);
 }
 
 /*****************************************************************************
@@ -1936,7 +1938,7 @@ IDirect3DDeviceImpl_7_GetRenderTarget(IDirect3DDevice7 *iface,
         return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    *RenderTarget = (IDirectDrawSurface7 *)This->target;
+    *RenderTarget = &This->target->IDirectDrawSurface7_iface;
     IDirectDrawSurface7_AddRef(*RenderTarget);
 
     LeaveCriticalSection(&ddraw_cs);
@@ -4584,7 +4586,7 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
     if (This->legacyTextureBlending)
         IDirect3DDevice3_GetRenderState(iface, D3DRENDERSTATE_TEXTUREMAPBLEND, &texmapblend);
 
-    hr = IDirect3DDevice7_SetTexture((IDirect3DDevice7 *)This, Stage, (IDirectDrawSurface7 *)tex);
+    hr = IDirect3DDevice7_SetTexture((IDirect3DDevice7 *)This, Stage, &tex->IDirectDrawSurface7_iface);
 
     if (This->legacyTextureBlending && texmapblend == D3DTBLEND_MODULATE)
     {
@@ -5876,24 +5878,24 @@ static BOOL is_mip_level_subset(IDirectDrawSurfaceImpl *dest,
 
             ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
             ddsd.ddsCaps.dwCaps2 = DDSCAPS2_MIPMAPSUBLEVEL;
-            IDirectDrawSurface7_GetAttachedSurface((IDirectDrawSurface7 *)dest_level, &ddsd.ddsCaps, &temp);
+            IDirectDrawSurface7_GetAttachedSurface(&dest_level->IDirectDrawSurface7_iface, &ddsd.ddsCaps, &temp);
 
-            if (dest_level != dest) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)dest_level);
+            if (dest_level != dest) IDirectDrawSurface7_Release(&dest_level->IDirectDrawSurface7_iface);
 
             dest_level = unsafe_impl_from_IDirectDrawSurface7(temp);
         }
 
         ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
         ddsd.ddsCaps.dwCaps2 = DDSCAPS2_MIPMAPSUBLEVEL;
-        IDirectDrawSurface7_GetAttachedSurface((IDirectDrawSurface7 *)src_level, &ddsd.ddsCaps, &temp);
+        IDirectDrawSurface7_GetAttachedSurface(&src_level->IDirectDrawSurface7_iface, &ddsd.ddsCaps, &temp);
 
-        if (src_level != src) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)src_level);
+        if (src_level != src) IDirectDrawSurface7_Release(&src_level->IDirectDrawSurface7_iface);
 
         src_level = unsafe_impl_from_IDirectDrawSurface7(temp);
     }
 
-    if (src_level && src_level != src) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)src_level);
-    if (dest_level && dest_level != dest) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)dest_level);
+    if (src_level && src_level != src) IDirectDrawSurface7_Release(&src_level->IDirectDrawSurface7_iface);
+    if (dest_level && dest_level != dest) IDirectDrawSurface7_Release(&dest_level->IDirectDrawSurface7_iface);
 
     return !dest_level && levelFound;
 }
@@ -5917,8 +5919,8 @@ static void copy_mipmap_chain(IDirect3DDeviceImpl *device,
     BOOL palette_missing = FALSE;
 
     /* Copy palette, if possible. */
-    IDirectDrawSurface7_GetPalette((IDirectDrawSurface7 *)src, &pal_src);
-    IDirectDrawSurface7_GetPalette((IDirectDrawSurface7 *)dest, &pal);
+    IDirectDrawSurface7_GetPalette(&src->IDirectDrawSurface7_iface, &pal_src);
+    IDirectDrawSurface7_GetPalette(&dest->IDirectDrawSurface7_iface, &pal);
 
     if (pal_src != NULL && pal != NULL)
     {
@@ -5940,11 +5942,11 @@ static void copy_mipmap_chain(IDirect3DDeviceImpl *device,
     /* Copy colorkeys, if present. */
     for (ckeyflag = DDCKEY_DESTBLT; ckeyflag <= DDCKEY_SRCOVERLAY; ckeyflag <<= 1)
     {
-        hr = IDirectDrawSurface7_GetColorKey((IDirectDrawSurface7 *)src, ckeyflag, &ddckey);
+        hr = IDirectDrawSurface7_GetColorKey(&src->IDirectDrawSurface7_iface, ckeyflag, &ddckey);
 
         if (SUCCEEDED(hr))
         {
-            IDirectDrawSurface7_SetColorKey((IDirectDrawSurface7 *)dest, ckeyflag, &ddckey);
+            IDirectDrawSurface7_SetColorKey(&dest->IDirectDrawSurface7_iface, ckeyflag, &ddckey);
         }
     }
 
@@ -5977,18 +5979,18 @@ static void copy_mipmap_chain(IDirect3DDeviceImpl *device,
 
             ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
             ddsd.ddsCaps.dwCaps2 = DDSCAPS2_MIPMAPSUBLEVEL;
-            IDirectDrawSurface7_GetAttachedSurface((IDirectDrawSurface7 *)dest_level, &ddsd.ddsCaps, &temp);
+            IDirectDrawSurface7_GetAttachedSurface(&dest_level->IDirectDrawSurface7_iface, &ddsd.ddsCaps, &temp);
 
-            if (dest_level != dest) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)dest_level);
+            if (dest_level != dest) IDirectDrawSurface7_Release(&dest_level->IDirectDrawSurface7_iface);
 
             dest_level = unsafe_impl_from_IDirectDrawSurface7(temp);
         }
 
         ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
         ddsd.ddsCaps.dwCaps2 = DDSCAPS2_MIPMAPSUBLEVEL;
-        IDirectDrawSurface7_GetAttachedSurface((IDirectDrawSurface7 *)src_level, &ddsd.ddsCaps, &temp);
+        IDirectDrawSurface7_GetAttachedSurface(&src_level->IDirectDrawSurface7_iface, &ddsd.ddsCaps, &temp);
 
-        if (src_level != src) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)src_level);
+        if (src_level != src) IDirectDrawSurface7_Release(&src_level->IDirectDrawSurface7_iface);
 
         src_level = unsafe_impl_from_IDirectDrawSurface7(temp);
 
@@ -6001,8 +6003,8 @@ static void copy_mipmap_chain(IDirect3DDeviceImpl *device,
         rect.bottom = (rect.bottom + 1) / 2;
     }
 
-    if (src_level && src_level != src) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)src_level);
-    if (dest_level && dest_level != dest) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)dest_level);
+    if (src_level && src_level != src) IDirectDrawSurface7_Release(&src_level->IDirectDrawSurface7_iface);
+    if (dest_level && dest_level != dest) IDirectDrawSurface7_Release(&dest_level->IDirectDrawSurface7_iface);
 }
 
 /*****************************************************************************
@@ -6136,15 +6138,15 @@ IDirect3DDeviceImpl_7_Load(IDirect3DDevice7 *iface,
                     {
                         ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
                         ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | (src_face_flag << 1);
-                        IDirectDrawSurface7_GetAttachedSurface((IDirectDrawSurface7 *)src, &ddsd.ddsCaps, &temp);
+                        IDirectDrawSurface7_GetAttachedSurface(&src->IDirectDrawSurface7_iface, &ddsd.ddsCaps, &temp);
 
-                        if (src_face != src) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)src_face);
+                        if (src_face != src) IDirectDrawSurface7_Release(&src_face->IDirectDrawSurface7_iface);
 
                         src_face = unsafe_impl_from_IDirectDrawSurface7(temp);
                     }
                     else
                     {
-                        if (src_face != src) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)src_face);
+                        if (src_face != src) IDirectDrawSurface7_Release(&src_face->IDirectDrawSurface7_iface);
 
                         src_face = NULL;
                     }
@@ -6154,15 +6156,15 @@ IDirect3DDeviceImpl_7_Load(IDirect3DDevice7 *iface,
                 {
                     ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
                     ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | (dest_face_flag << 1);
-                    IDirectDrawSurface7_GetAttachedSurface((IDirectDrawSurface7 *)dest, &ddsd.ddsCaps, &temp);
+                    IDirectDrawSurface7_GetAttachedSurface(&dest->IDirectDrawSurface7_iface, &ddsd.ddsCaps, &temp);
 
-                    if (dest_face != dest) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)dest_face);
+                    if (dest_face != dest) IDirectDrawSurface7_Release(&dest_face->IDirectDrawSurface7_iface);
 
                     dest_face = unsafe_impl_from_IDirectDrawSurface7(temp);
                 }
                 else
                 {
-                    if (dest_face != dest) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)dest_face);
+                    if (dest_face != dest) IDirectDrawSurface7_Release(&dest_face->IDirectDrawSurface7_iface);
 
                     dest_face = NULL;
                 }
@@ -6754,7 +6756,7 @@ IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *This)
     IDirectDrawSurfaceImpl *dsi;
     static DDSCAPS2 depthcaps = { DDSCAPS_ZBUFFER, 0, 0, 0 };
 
-    IDirectDrawSurface7_GetAttachedSurface((IDirectDrawSurface7 *)This->target, &depthcaps, &depthStencil);
+    IDirectDrawSurface7_GetAttachedSurface(&This->target->IDirectDrawSurface7_iface, &depthcaps, &depthStencil);
     if(!depthStencil)
     {
         TRACE("Setting wined3d depth stencil to NULL\n");
@@ -6829,8 +6831,8 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDi
      *
      * In most cases, those surfaces are the same anyway, but this will simply
      * add another ref which is released when the device is destroyed. */
-    IDirectDrawSurface7_AddRef((IDirectDrawSurface7 *)target);
-    IDirectDrawSurface7_AddRef((IDirectDrawSurface7 *)ddraw->d3d_target);
+    IDirectDrawSurface7_AddRef(&target->IDirectDrawSurface7_iface);
+    IDirectDrawSurface7_AddRef(&ddraw->d3d_target->IDirectDrawSurface7_iface);
 
     ddraw->d3ddevice = device;
 
