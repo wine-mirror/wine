@@ -1155,12 +1155,11 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
 
     if(!pwfx)
         return E_POINTER;
+    *pwfx = NULL;
 
-    *pwfx = HeapAlloc(GetProcessHeap(), 0, sizeof(WAVEFORMATEXTENSIBLE));
-    if(!*pwfx)
+    fmt = CoTaskMemAlloc(sizeof(WAVEFORMATEXTENSIBLE));
+    if(!fmt)
         return E_OUTOFMEMORY;
-
-    fmt = (WAVEFORMATEXTENSIBLE*)*pwfx;
 
     fmt->Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
 
@@ -1170,21 +1169,21 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
 
     sc = AudioObjectGetPropertyDataSize(This->adevid, &addr, 0, NULL, &size);
     if(sc != noErr){
-        HeapFree(GetProcessHeap(), 0, fmt);
+        CoTaskMemFree(fmt);
         WARN("Unable to get size for _StreamConfiguration property: %lx\n", sc);
         return E_FAIL;
     }
 
     buffers = HeapAlloc(GetProcessHeap(), 0, size);
     if(!buffers){
-        HeapFree(GetProcessHeap(), 0, fmt);
+        CoTaskMemFree(fmt);
         return E_OUTOFMEMORY;
     }
 
     sc = AudioObjectGetPropertyData(This->adevid, &addr, 0, NULL,
             &size, buffers);
     if(sc != noErr){
-        HeapFree(GetProcessHeap(), 0, fmt);
+        CoTaskMemFree(fmt);
         HeapFree(GetProcessHeap(), 0, buffers);
         WARN("Unable to get _StreamConfiguration property: %lx\n", sc);
         return E_FAIL;
@@ -1202,7 +1201,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
     size = sizeof(Float64);
     sc = AudioObjectGetPropertyData(This->adevid, &addr, 0, NULL, &size, &rate);
     if(sc != noErr){
-        HeapFree(GetProcessHeap(), 0, fmt);
+        CoTaskMemFree(fmt);
         WARN("Unable to get _NominalSampleRate property: %lx\n", sc);
         return E_FAIL;
     }
@@ -1221,6 +1220,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
     fmt->Samples.wValidBitsPerSample = fmt->Format.wBitsPerSample;
     fmt->Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
 
+    *pwfx = (WAVEFORMATEX*)fmt;
     dump_fmt(*pwfx);
 
     return S_OK;
