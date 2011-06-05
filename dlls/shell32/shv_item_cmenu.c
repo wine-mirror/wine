@@ -267,13 +267,8 @@ static HRESULT WINAPI ISvItemCm_fnQueryContextMenu(
 *  for folders only
 */
 
-static void DoOpenExplore(
-	IContextMenu2 *iface,
-	HWND hwnd,
-	LPCSTR verb)
+static void DoOpenExplore(ItemCmImpl *This, HWND hwnd, LPCSTR verb)
 {
-	ItemCmImpl *This = (ItemCmImpl *)iface;
-
 	UINT i, bFolderFound = FALSE;
 	LPITEMIDLIST	pidlFQ;
 	SHELLEXECUTEINFOA	sei;
@@ -309,12 +304,8 @@ static void DoOpenExplore(
 /**************************************************************************
 * DoRename
 */
-static void DoRename(
-	IContextMenu2 *iface,
-	HWND hwnd)
+static void DoRename(ItemCmImpl *This, HWND hwnd)
 {
-	ItemCmImpl *This = (ItemCmImpl *)iface;
-
 	LPSHELLBROWSER	lpSB;
 	LPSHELLVIEW	lpSV;
 
@@ -338,9 +329,8 @@ static void DoRename(
  *
  * deletes the currently selected items
  */
-static void DoDelete(IContextMenu2 *iface)
+static void DoDelete(ItemCmImpl *This)
 {
-	ItemCmImpl *This = (ItemCmImpl *)iface;
 	ISFHelper * psfhlp;
 
 	IShellFolder_QueryInterface(This->pSFParent, &IID_ISFHelper, (LPVOID*)&psfhlp);
@@ -356,13 +346,8 @@ static void DoDelete(IContextMenu2 *iface)
  *
  * copies the currently selected items into the clipboard
  */
-static BOOL DoCopyOrCut(
-	IContextMenu2 *iface,
-	HWND hwnd,
-	BOOL bCut)
+static BOOL DoCopyOrCut(ItemCmImpl *This, HWND hwnd, BOOL bCut)
 {
-	ItemCmImpl *This = (ItemCmImpl *)iface;
-
 	LPSHELLBROWSER	lpSB;
 	LPSHELLVIEW	lpSV;
 	LPDATAOBJECT    lpDo;
@@ -402,9 +387,8 @@ static BOOL Properties_AddPropSheetCallback(HPROPSHEETPAGE hpage, LPARAM lparam)
 /**************************************************************************
  * DoOpenProperties
  */
-static void DoOpenProperties(IContextMenu2 *iface, HWND hwnd)
+static void DoOpenProperties(ItemCmImpl *This, HWND hwnd)
 {
-	ItemCmImpl *This = (ItemCmImpl *)iface;
 	static const UINT MAX_PROP_PAGES = 99;
 	static const WCHAR wszFolder[] = {'F','o','l','d','e','r', 0};
 	static const WCHAR wszFiletypeAll[] = {'*',0};
@@ -534,31 +518,31 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
         {
         case FCIDM_SHVIEW_EXPLORE:
             TRACE("Verb FCIDM_SHVIEW_EXPLORE\n");
-            DoOpenExplore(iface, lpcmi->hwnd, "explore");
+            DoOpenExplore(This, lpcmi->hwnd, "explore");
             break;
         case FCIDM_SHVIEW_OPEN:
             TRACE("Verb FCIDM_SHVIEW_OPEN\n");
-            DoOpenExplore(iface, lpcmi->hwnd, "open");
+            DoOpenExplore(This, lpcmi->hwnd, "open");
             break;
         case FCIDM_SHVIEW_RENAME:
             TRACE("Verb FCIDM_SHVIEW_RENAME\n");
-            DoRename(iface, lpcmi->hwnd);
+            DoRename(This, lpcmi->hwnd);
             break;
         case FCIDM_SHVIEW_DELETE:
             TRACE("Verb FCIDM_SHVIEW_DELETE\n");
-            DoDelete(iface);
+            DoDelete(This);
             break;
         case FCIDM_SHVIEW_COPY:
             TRACE("Verb FCIDM_SHVIEW_COPY\n");
-            DoCopyOrCut(iface, lpcmi->hwnd, FALSE);
+            DoCopyOrCut(This, lpcmi->hwnd, FALSE);
             break;
         case FCIDM_SHVIEW_CUT:
             TRACE("Verb FCIDM_SHVIEW_CUT\n");
-            DoCopyOrCut(iface, lpcmi->hwnd, TRUE);
+            DoCopyOrCut(This, lpcmi->hwnd, TRUE);
             break;
         case FCIDM_SHVIEW_PROPERTIES:
             TRACE("Verb FCIDM_SHVIEW_PROPERTIES\n");
-            DoOpenProperties(iface, lpcmi->hwnd);
+            DoOpenProperties(This, lpcmi->hwnd);
             break;
         default:
             FIXME("Unhandled Verb %xl\n",LOWORD(lpcmi->lpVerb));
@@ -569,9 +553,9 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
     {
         TRACE("Verb is %s\n",debugstr_a(lpcmi->lpVerb));
         if (strcmp(lpcmi->lpVerb,"delete")==0)
-            DoDelete(iface);
+            DoDelete(This);
         else if (strcmp(lpcmi->lpVerb,"properties")==0)
-            DoOpenProperties(iface, lpcmi->hwnd);
+            DoOpenProperties(This, lpcmi->hwnd);
         else {
             FIXME("Unhandled string verb %s\n",debugstr_a(lpcmi->lpVerb));
             return E_FAIL;
