@@ -145,8 +145,24 @@ NET_API_STATUS WINAPI NetLocalGroupGetInfo(
     DWORD level,
     LPBYTE* bufptr)
 {
-    FIXME("(%s %s %d %p) stub!\n", debugstr_w(servername),
+    static const WCHAR commentW[]={'N','o',' ','c','o','m','m','e','n','t',0};
+    LOCALGROUP_INFO_1* info;
+    DWORD size;
+
+    FIXME("(%s %s %d %p) semi-stub!\n", debugstr_w(servername),
           debugstr_w(groupname), level, bufptr);
+
+    size = sizeof(*info) + sizeof(WCHAR) * (lstrlenW(groupname)+1) + sizeof(commentW);
+    NetApiBufferAllocate(size, (LPVOID*)&info);
+
+    info->lgrpi1_name = (LPWSTR)(info + 1);
+    lstrcpyW(info->lgrpi1_name, groupname);
+
+    info->lgrpi1_comment = info->lgrpi1_name + lstrlenW(groupname) + 1;
+    lstrcpyW(info->lgrpi1_comment, commentW);
+
+    *bufptr = (LPBYTE)info;
+
     return NERR_Success;
 }
 
