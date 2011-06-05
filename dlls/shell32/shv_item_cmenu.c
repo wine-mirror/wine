@@ -46,7 +46,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 *  IContextMenu Implementation
 */
 typedef struct
-{	const IContextMenu2Vtbl *lpVtbl;
+{
+        IContextMenu2   IContextMenu2_iface;
 	LONG		ref;
 	IShellFolder*	pSFParent;
 	LPITEMIDLIST	pidl;		/* root pidl */
@@ -54,6 +55,11 @@ typedef struct
 	UINT		cidl;
 	BOOL		bAllValues;
 } ItemCmImpl;
+
+static inline ItemCmImpl *impl_from_IContextMenu2(IContextMenu2 *iface)
+{
+    return CONTAINING_RECORD(iface, ItemCmImpl, IContextMenu2_iface);
+}
 
 
 static const IContextMenu2Vtbl cmvt;
@@ -86,7 +92,7 @@ IContextMenu2 *ISvItemCm_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST pidl
 	UINT  u;
 
 	cm = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ItemCmImpl));
-	cm->lpVtbl = &cmvt;
+	cm->IContextMenu2_iface.lpVtbl = &cmvt;
 	cm->ref = 1;
 	cm->pidl = ILClone(pidl);
 	cm->pSFParent = pSFParent;
@@ -104,7 +110,7 @@ IContextMenu2 *ISvItemCm_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST pidl
 
 	TRACE("(%p)->()\n",cm);
 
-	return (IContextMenu2*)cm;
+	return &cm->IContextMenu2_iface;
 }
 
 /**************************************************************************
@@ -112,7 +118,7 @@ IContextMenu2 *ISvItemCm_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST pidl
 */
 static HRESULT WINAPI ISvItemCm_fnQueryInterface(IContextMenu2 *iface, REFIID riid, LPVOID *ppvObj)
 {
-	ItemCmImpl *This = (ItemCmImpl *)iface;
+	ItemCmImpl *This = impl_from_IContextMenu2(iface);
 
 	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
@@ -144,7 +150,7 @@ static HRESULT WINAPI ISvItemCm_fnQueryInterface(IContextMenu2 *iface, REFIID ri
 */
 static ULONG WINAPI ISvItemCm_fnAddRef(IContextMenu2 *iface)
 {
-	ItemCmImpl *This = (ItemCmImpl *)iface;
+	ItemCmImpl *This = impl_from_IContextMenu2(iface);
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
 	TRACE("(%p)->(count=%u)\n", This, refCount - 1);
@@ -157,7 +163,7 @@ static ULONG WINAPI ISvItemCm_fnAddRef(IContextMenu2 *iface)
 */
 static ULONG WINAPI ISvItemCm_fnRelease(IContextMenu2 *iface)
 {
-	ItemCmImpl *This = (ItemCmImpl *)iface;
+	ItemCmImpl *This = impl_from_IContextMenu2(iface);
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
 	TRACE("(%p)->(count=%i)\n", This, refCount + 1);
@@ -217,7 +223,7 @@ static HRESULT WINAPI ISvItemCm_fnQueryContextMenu(
 	UINT idCmdLast,
 	UINT uFlags)
 {
-	ItemCmImpl *This = (ItemCmImpl *)iface;
+	ItemCmImpl *This = impl_from_IContextMenu2(iface);
 	INT uIDMax;
 
 	TRACE("(%p)->(hmenu=%p indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",This, hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
@@ -499,7 +505,7 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
 	IContextMenu2 *iface,
 	LPCMINVOKECOMMANDINFO lpcmi)
 {
-    ItemCmImpl *This = (ItemCmImpl *)iface;
+    ItemCmImpl *This = impl_from_IContextMenu2(iface);
 
     if (lpcmi->cbSize != sizeof(CMINVOKECOMMANDINFO))
         FIXME("Is an EX structure\n");
@@ -575,7 +581,7 @@ static HRESULT WINAPI ISvItemCm_fnGetCommandString(
 	LPSTR lpszName,
 	UINT uMaxNameLen)
 {
-	ItemCmImpl *This = (ItemCmImpl *)iface;
+	ItemCmImpl *This = impl_from_IContextMenu2(iface);
 
 	HRESULT  hr = E_INVALIDARG;
 
@@ -630,7 +636,7 @@ static HRESULT WINAPI ISvItemCm_fnHandleMenuMsg(
 	WPARAM wParam,
 	LPARAM lParam)
 {
-	ItemCmImpl *This = (ItemCmImpl *)iface;
+	ItemCmImpl *This = impl_from_IContextMenu2(iface);
 
 	TRACE("(%p)->(msg=%x wp=%lx lp=%lx)\n",This, uMsg, wParam, lParam);
 
