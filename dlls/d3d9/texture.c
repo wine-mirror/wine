@@ -192,16 +192,9 @@ static void WINAPI IDirect3DTexture9Impl_PreLoad(IDirect3DTexture9 *iface)
 
 static D3DRESOURCETYPE WINAPI IDirect3DTexture9Impl_GetType(IDirect3DTexture9 *iface)
 {
-    IDirect3DTexture9Impl *This = impl_from_IDirect3DTexture9(iface);
-    HRESULT ret;
-
     TRACE("iface %p.\n", iface);
 
-    wined3d_mutex_lock();
-    ret = wined3d_texture_get_type(This->wined3d_texture);
-    wined3d_mutex_unlock();
-
-    return ret;
+    return D3DRTYPE_TEXTURE;
 }
 
 /* IDirect3DTexture9 IDirect3DBaseTexture9 Interface follow: */
