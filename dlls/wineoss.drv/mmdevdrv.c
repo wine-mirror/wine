@@ -1025,12 +1025,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
 
     if(!pwfx)
         return E_POINTER;
-
-    *pwfx = HeapAlloc(GetProcessHeap(), 0, sizeof(WAVEFORMATEXTENSIBLE));
-    if(!*pwfx)
-        return E_OUTOFMEMORY;
-
-    fmt = (WAVEFORMATEXTENSIBLE*)*pwfx;
+    *pwfx = NULL;
 
     if(This->dataflow == eRender)
         formats = This->ai.oformats;
@@ -1038,6 +1033,10 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
         formats = This->ai.iformats;
     else
         return E_UNEXPECTED;
+
+    fmt = CoTaskMemAlloc(sizeof(WAVEFORMATEXTENSIBLE));
+    if(!fmt)
+        return E_OUTOFMEMORY;
 
     fmt->Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
     if(formats & AFMT_S16_LE){
@@ -1059,6 +1058,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
         fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
     }else{
         ERR("Didn't recognize any available OSS formats: %x\n", formats);
+        CoTaskMemFree(fmt);
         return E_FAIL;
     }
 
@@ -1074,6 +1074,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
     fmt->Samples.wValidBitsPerSample = fmt->Format.wBitsPerSample;
     fmt->Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
 
+    *pwfx = (WAVEFORMATEX*)fmt;
     dump_fmt(*pwfx);
 
     return S_OK;
