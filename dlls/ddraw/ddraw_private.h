@@ -226,6 +226,7 @@ static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface3(IDirectDrawS
 }
 
 IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface) DECLSPEC_HIDDEN;
+IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface7(IDirectDrawSurface7 *iface) DECLSPEC_HIDDEN;
 
 /* Get the number of bytes per pixel for a given surface */
 #define PFGET_BPP(pf) (pf.dwFlags&DDPF_PALETTEINDEXED8?1:((pf.dwRGBBitCount+7)/8))

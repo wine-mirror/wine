@@ -4163,7 +4163,7 @@ static HRESULT WINAPI ddraw1_CreatePalette(IDirectDraw *iface, DWORD flags,
 static HRESULT WINAPI ddraw7_DuplicateSurface(IDirectDraw7 *iface,
         IDirectDrawSurface7 *Src, IDirectDrawSurface7 **Dest)
 {
-    IDirectDrawSurfaceImpl *Surf = (IDirectDrawSurfaceImpl *)Src;
+    IDirectDrawSurfaceImpl *Surf = unsafe_impl_from_IDirectDrawSurface7(Src);
 
     FIXME("iface %p, src %p, dst %p partial stub!\n", iface, Src, Dest);
 
@@ -4733,7 +4733,7 @@ static HRESULT WINAPI d3d1_FindDevice(IDirect3D *iface, D3DFINDDEVICESEARCH *fds
 static HRESULT WINAPI d3d7_CreateDevice(IDirect3D7 *iface, REFCLSID riid,
         IDirectDrawSurface7 *surface, IDirect3DDevice7 **device)
 {
-    IDirectDrawSurfaceImpl *target = (IDirectDrawSurfaceImpl *)surface;
+    IDirectDrawSurfaceImpl *target = unsafe_impl_from_IDirectDrawSurface7(surface);
     IDirectDrawImpl *This = impl_from_IDirect3D7(iface);
     IDirect3DDeviceImpl *object;
     HRESULT hr;
@@ -5714,7 +5714,7 @@ static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *
     {
         IDirectDrawSurface7 *attached;
         IDirectDrawSurface7_GetAttachedSurface((IDirectDrawSurface7 *)ddraw->tex_root, &searchcaps, &attached);
-        surf = (IDirectDrawSurfaceImpl *)attached;
+        surf = unsafe_impl_from_IDirectDrawSurface7(attached);
         IDirectDrawSurface7_Release(attached);
     }
     if (!surf) ERR("root search surface not found\n");

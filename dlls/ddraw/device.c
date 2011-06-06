@@ -1832,7 +1832,7 @@ IDirect3DDeviceImpl_7_SetRenderTarget(IDirect3DDevice7 *iface,
                                       DWORD Flags)
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
-    IDirectDrawSurfaceImpl *Target = (IDirectDrawSurfaceImpl *)NewTarget;
+    IDirectDrawSurfaceImpl *Target = unsafe_impl_from_IDirectDrawSurface7(NewTarget);
     HRESULT hr;
 
     TRACE("iface %p, target %p, flags %#x.\n", iface, NewTarget, Flags);
@@ -1900,7 +1900,7 @@ static HRESULT WINAPI IDirect3DDeviceImpl_2_SetRenderTarget(IDirect3DDevice2 *if
         IDirectDrawSurface *NewRenderTarget, DWORD Flags)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
-    IDirectDrawSurfaceImpl *Target = (IDirectDrawSurfaceImpl *)NewRenderTarget;
+    IDirectDrawSurfaceImpl *Target = unsafe_impl_from_IDirectDrawSurface3((IDirectDrawSurface3 *)NewRenderTarget);
 
     TRACE("iface %p, target %p, flags %#x.\n", iface, NewRenderTarget, Flags);
 
@@ -4517,7 +4517,7 @@ IDirect3DDeviceImpl_7_SetTexture(IDirect3DDevice7 *iface,
                                  IDirectDrawSurface7 *Texture)
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
-    IDirectDrawSurfaceImpl *surf = (IDirectDrawSurfaceImpl *)Texture;
+    IDirectDrawSurfaceImpl *surf = unsafe_impl_from_IDirectDrawSurface7(Texture);
     HRESULT hr;
 
     TRACE("iface %p, stage %u, texture %p.\n", iface, Stage, Texture);
@@ -5526,7 +5526,7 @@ static HRESULT
 IDirect3DDeviceImpl_7_PreLoad(IDirect3DDevice7 *iface,
                               IDirectDrawSurface7 *Texture)
 {
-    IDirectDrawSurfaceImpl *surf = (IDirectDrawSurfaceImpl *)Texture;
+    IDirectDrawSurfaceImpl *surf = unsafe_impl_from_IDirectDrawSurface7(Texture);
 
     TRACE("iface %p, texture %p.\n", iface, Texture);
 
@@ -5866,7 +5866,7 @@ static BOOL is_mip_level_subset(IDirectDrawSurfaceImpl *dest,
 
             if (dest_level != dest) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)dest_level);
 
-            dest_level = (IDirectDrawSurfaceImpl *)temp;
+            dest_level = unsafe_impl_from_IDirectDrawSurface7(temp);
         }
 
         ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
@@ -5875,7 +5875,7 @@ static BOOL is_mip_level_subset(IDirectDrawSurfaceImpl *dest,
 
         if (src_level != src) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)src_level);
 
-        src_level = (IDirectDrawSurfaceImpl *)temp;
+        src_level = unsafe_impl_from_IDirectDrawSurface7(temp);
     }
 
     if (src_level && src_level != src) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)src_level);
@@ -5967,7 +5967,7 @@ static void copy_mipmap_chain(IDirect3DDeviceImpl *device,
 
             if (dest_level != dest) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)dest_level);
 
-            dest_level = (IDirectDrawSurfaceImpl *)temp;
+            dest_level = unsafe_impl_from_IDirectDrawSurface7(temp);
         }
 
         ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
@@ -5976,7 +5976,7 @@ static void copy_mipmap_chain(IDirect3DDeviceImpl *device,
 
         if (src_level != src) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)src_level);
 
-        src_level = (IDirectDrawSurfaceImpl *)temp;
+        src_level = unsafe_impl_from_IDirectDrawSurface7(temp);
 
         point.x /= 2;
         point.y /= 2;
@@ -6025,8 +6025,8 @@ IDirect3DDeviceImpl_7_Load(IDirect3DDevice7 *iface,
                            DWORD Flags)
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
-    IDirectDrawSurfaceImpl *dest = (IDirectDrawSurfaceImpl *)DestTex;
-    IDirectDrawSurfaceImpl *src = (IDirectDrawSurfaceImpl *)SrcTex;
+    IDirectDrawSurfaceImpl *dest = unsafe_impl_from_IDirectDrawSurface7(DestTex);
+    IDirectDrawSurfaceImpl *src = unsafe_impl_from_IDirectDrawSurface7(SrcTex);
     POINT destpoint;
     RECT srcrect;
 
@@ -6126,7 +6126,7 @@ IDirect3DDeviceImpl_7_Load(IDirect3DDevice7 *iface,
 
                         if (src_face != src) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)src_face);
 
-                        src_face = (IDirectDrawSurfaceImpl *)temp;
+                        src_face = unsafe_impl_from_IDirectDrawSurface7(temp);
                     }
                     else
                     {
@@ -6144,7 +6144,7 @@ IDirect3DDeviceImpl_7_Load(IDirect3DDevice7 *iface,
 
                     if (dest_face != dest) IDirectDrawSurface7_Release((IDirectDrawSurface7 *)dest_face);
 
-                    dest_face = (IDirectDrawSurfaceImpl *)temp;
+                    dest_face = unsafe_impl_from_IDirectDrawSurface7(temp);
                 }
                 else
                 {
