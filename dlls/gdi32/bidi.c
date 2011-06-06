@@ -359,6 +359,7 @@ BOOL BIDI_Reorder(
     WORD *chartype;
     BYTE *levels;
     unsigned i, done, glyph_i;
+    BOOL is_complex;
 
     int maxItems;
     int nItems;
@@ -404,11 +405,20 @@ BOOL BIDI_Reorder(
     if (lpOutString)
         memcpy(lpOutString, lpString, uCount * sizeof(WCHAR));
 
+    is_complex = FALSE;
+    for (i = 0; i < uCount && !is_complex; i++)
+    {
+        if ((lpString[i] >= 0x900 && lpString[i] <= 0xfff) ||
+            (lpString[i] >= 0x1cd0 && lpString[i] <= 0x1cff) ||
+            (lpString[i] >= 0xa840 && lpString[i] <= 0xa8ff))
+            is_complex = TRUE;
+    }
+
     /* Verify reordering will be required */
     if ((WINE_GCPW_FORCE_RTL == (dwWineGCP_Flags&WINE_GCPW_DIR_MASK)) ||
         ((dwWineGCP_Flags&WINE_GCPW_DIR_MASK) == WINE_GCPW_LOOSE_RTL))
         State.uBidiLevel = 1;
-    else
+    else if (!is_complex)
     {
         done = 1;
         classify(lpString, chartype, uCount);
