@@ -18,10 +18,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
 #include <stdio.h>
 #include <float.h>
 #include "wine/test.h"
 #include "d3dx9.h"
+
+/* Set the WINETEST_DEBUG environment variable to be greater than 1 for verbose
+ * function call traces of ID3DXAllocateHierarchy callbacks. */
+#define TRACECALLBACK if(winetest_debug > 1) trace
 
 #define admitted_error 0.0001f
 
@@ -46,6 +51,29 @@ static BOOL compare(FLOAT u, FLOAT v)
 static BOOL compare_vec3(D3DXVECTOR3 u, D3DXVECTOR3 v)
 {
     return ( compare(u.x, v.x) && compare(u.y, v.y) && compare(u.z, v.z) );
+}
+
+#define check_floats(got, exp, dim) check_floats_(__LINE__, "", got, exp, dim)
+static void check_floats_(int line, const char *prefix, const float *got, const float *exp, int dim)
+{
+    int i;
+    char exp_buffer[256] = "";
+    char got_buffer[256] = "";
+    char *exp_buffer_ptr = exp_buffer;
+    char *got_buffer_ptr = got_buffer;
+    BOOL equal = TRUE;
+
+    for (i = 0; i < dim; i++) {
+        if (i) {
+            exp_buffer_ptr += sprintf(exp_buffer_ptr, ", ");
+            got_buffer_ptr += sprintf(got_buffer_ptr, ", ");
+        }
+        equal = equal && compare(*exp, *got);
+        exp_buffer_ptr += sprintf(exp_buffer_ptr, "%g", *exp);
+        got_buffer_ptr += sprintf(got_buffer_ptr, "%g", *got);
+        exp++, got++;
+    }
+    ok_(__FILE__,line)(equal, "%sExpected (%s), got (%s)", prefix, exp_buffer, got_buffer);
 }
 
 struct vertex
@@ -1368,6 +1396,539 @@ static void D3DXCreateMeshFVFTest(void)
     IDirect3DDevice9_Release(device);
     IDirect3D9_Release(d3d);
     DestroyWindow(wnd);
+}
+
+#define check_vertex_buffer(mesh, vertices, num_vertices, fvf) \
+    check_vertex_buffer_(__LINE__, mesh, vertices, num_vertices, fvf)
+static void check_vertex_buffer_(int line, ID3DXMesh *mesh, const void *vertices, DWORD num_vertices, DWORD fvf)
+{
+    DWORD mesh_num_vertices = mesh->lpVtbl->GetNumVertices(mesh);
+    DWORD mesh_fvf = mesh->lpVtbl->GetFVF(mesh);
+    const void *mesh_vertices;
+    HRESULT hr;
+
+    ok_(__FILE__,line)(fvf == mesh_fvf, "expected FVF %x, got %x\n", fvf, mesh_fvf);
+    ok_(__FILE__,line)(num_vertices == mesh_num_vertices,
+       "Expected %u vertices, got %u\n", num_vertices, mesh_num_vertices);
+
+    hr = mesh->lpVtbl->LockVertexBuffer(mesh, D3DLOCK_READONLY, (void**)&mesh_vertices);
+    ok_(__FILE__,line)(hr == D3D_OK, "LockVertexBuffer returned %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    if (FAILED(hr))
+        return;
+
+    if (mesh_fvf == fvf) {
+        DWORD vertex_size = D3DXGetFVFVertexSize(fvf);
+        int i;
+        for (i = 0; i < min(num_vertices, mesh_num_vertices); i++)
+        {
+            const FLOAT *exp_float = vertices;
+            const FLOAT *got_float = mesh_vertices;
+            DWORD texcount;
+            DWORD pos_dim = 0;
+            int j;
+            BOOL last_beta_dword = FALSE;
+            char prefix[128];
+
+            switch (fvf & D3DFVF_POSITION_MASK) {
+                case D3DFVF_XYZ: pos_dim = 3; break;
+                case D3DFVF_XYZRHW: pos_dim = 4; break;
+                case D3DFVF_XYZB1:
+                case D3DFVF_XYZB2:
+                case D3DFVF_XYZB3:
+                case D3DFVF_XYZB4:
+                case D3DFVF_XYZB5:
+                    pos_dim = (fvf & D3DFVF_POSITION_MASK) - D3DFVF_XYZB1 + 1;
+                    if (fvf & (D3DFVF_LASTBETA_UBYTE4 | D3DFVF_LASTBETA_D3DCOLOR))
+                    {
+                        pos_dim--;
+                        last_beta_dword = TRUE;
+                    }
+                    break;
+                case D3DFVF_XYZW: pos_dim = 4; break;
+            }
+            sprintf(prefix, "vertex[%u] position, ", i);
+            check_floats_(line, prefix, got_float, exp_float, pos_dim);
+            exp_float += pos_dim;
+            got_float += pos_dim;
+
+            if (last_beta_dword) {
+                ok_(__FILE__,line)(*(DWORD*)exp_float == *(DWORD*)got_float,
+                    "Vertex[%u]: Expected last beta %08x, got %08x\n", i, *(DWORD*)exp_float, *(DWORD*)got_float);
+                exp_float++;
+                got_float++;
+            }
+
+            if (fvf & D3DFVF_NORMAL) {
+                sprintf(prefix, "vertex[%u] normal, ", i);
+                check_floats_(line, prefix, got_float, exp_float, 3);
+                exp_float += 3;
+                got_float += 3;
+            }
+            if (fvf & D3DFVF_PSIZE) {
+                ok_(__FILE__,line)(compare(*exp_float, *got_float),
+                        "Vertex[%u]: Expected psize %g, got %g\n", i, *exp_float, *got_float);
+                exp_float++;
+                got_float++;
+            }
+            if (fvf & D3DFVF_DIFFUSE) {
+                ok_(__FILE__,line)(*(DWORD*)exp_float == *(DWORD*)got_float,
+                    "Vertex[%u]: Expected diffuse %08x, got %08x\n", i, *(DWORD*)exp_float, *(DWORD*)got_float);
+                exp_float++;
+                got_float++;
+            }
+            if (fvf & D3DFVF_SPECULAR) {
+                ok_(__FILE__,line)(*(DWORD*)exp_float == *(DWORD*)got_float,
+                    "Vertex[%u]: Expected specular %08x, got %08x\n", i, *(DWORD*)exp_float, *(DWORD*)got_float);
+                exp_float++;
+                got_float++;
+            }
+
+            texcount = (fvf & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
+            for (j = 0; j < texcount; j++) {
+                DWORD dim = (((fvf >> (16 + 2 * j)) + 1) & 0x03) + 1;
+                sprintf(prefix, "vertex[%u] texture, ", i);
+                check_floats_(line, prefix, got_float, exp_float, dim);
+                exp_float += dim;
+                got_float += dim;
+            }
+
+            vertices = (BYTE*)vertices + vertex_size;
+            mesh_vertices = (BYTE*)mesh_vertices + vertex_size;
+        }
+    }
+
+    mesh->lpVtbl->UnlockVertexBuffer(mesh);
+}
+
+#define check_index_buffer(mesh, indices, num_indices, index_size) \
+    check_index_buffer_(__LINE__, mesh, indices, num_indices, index_size)
+static void check_index_buffer_(int line, ID3DXMesh *mesh, const void *indices, DWORD num_indices, DWORD index_size)
+{
+    DWORD mesh_index_size = (mesh->lpVtbl->GetOptions(mesh) & D3DXMESH_32BIT) ? 4 : 2;
+    DWORD mesh_num_indices = mesh->lpVtbl->GetNumFaces(mesh) * 3;
+    const void *mesh_indices;
+    HRESULT hr;
+    DWORD i;
+
+    ok_(__FILE__,line)(index_size == mesh_index_size,
+        "Expected index size %u, got %u\n", index_size, mesh_index_size);
+    ok_(__FILE__,line)(num_indices == mesh_num_indices,
+        "Expected %u indices, got %u\n", num_indices, mesh_num_indices);
+
+    hr = mesh->lpVtbl->LockIndexBuffer(mesh, D3DLOCK_READONLY, (void**)&mesh_indices);
+    ok_(__FILE__,line)(hr == D3D_OK, "LockIndexBuffer returned %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    if (FAILED(hr))
+        return;
+
+    if (mesh_index_size == index_size) {
+        for (i = 0; i < min(num_indices, mesh_num_indices); i++)
+        {
+            if (index_size == 4)
+                ok_(__FILE__,line)(*(DWORD*)indices == *(DWORD*)mesh_indices,
+                    "Index[%u]: expected %u, got %u\n", i, *(DWORD*)indices, *(DWORD*)mesh_indices);
+            else
+                ok_(__FILE__,line)(*(WORD*)indices == *(WORD*)mesh_indices,
+                    "Index[%u]: expected %u, got %u\n", i, *(WORD*)indices, *(WORD*)mesh_indices);
+            indices = (BYTE*)indices + index_size;
+            mesh_indices = (BYTE*)mesh_indices + index_size;
+        }
+    }
+    mesh->lpVtbl->UnlockIndexBuffer(mesh);
+}
+
+#define check_matrix(got, expected) check_matrix_(__LINE__, got, expected)
+static void check_matrix_(int line, const D3DXMATRIX *got, const D3DXMATRIX *expected)
+{
+    int i, j;
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < 4; j++) {
+            ok_(__FILE__,line)(compare(U(*expected).m[i][j], U(*got).m[i][j]),
+                    "matrix[%u][%u]: expected %g, got %g\n",
+                    i, j, U(*expected).m[i][j], U(*got).m[i][j]);
+        }
+    }
+}
+
+#define check_generated_adjacency(mesh, got, epsilon) check_generated_adjacency_(__LINE__, mesh, got, epsilon)
+static void check_generated_adjacency_(int line, ID3DXMesh *mesh, const DWORD *got, FLOAT epsilon)
+{
+    DWORD *expected;
+    DWORD num_faces = mesh->lpVtbl->GetNumFaces(mesh);
+    HRESULT hr;
+
+    expected = HeapAlloc(GetProcessHeap(), 0, num_faces * sizeof(DWORD) * 3);
+    if (!expected) {
+        skip_(__FILE__, line)("Out of memory\n");
+        return;
+    }
+    hr = mesh->lpVtbl->GenerateAdjacency(mesh, epsilon, expected);
+    ok_(__FILE__, line)(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        int i;
+        for (i = 0; i < num_faces; i++)
+        {
+            ok_(__FILE__, line)(expected[i * 3] == got[i * 3] &&
+                    expected[i * 3 + 1] == got[i * 3 + 1] &&
+                    expected[i * 3 + 2] == got[i * 3 + 2],
+                    "Face %u adjacencies: Expected (%u, %u, %u), got (%u, %u, %u)\n", i,
+                    expected[i * 3], expected[i * 3 + 1], expected[i * 3 + 2],
+                    got[i * 3], got[i * 3 + 1], got[i * 3 + 2]);
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, expected);
+}
+
+static LPSTR strdupA(LPCSTR p)
+{
+    LPSTR ret;
+    if (!p) return NULL;
+    ret = HeapAlloc(GetProcessHeap(), 0, strlen(p) + 1);
+    if (ret) strcpy(ret, p);
+    return ret;
+}
+
+static CALLBACK HRESULT ID3DXAllocateHierarchyImpl_DestroyFrame(ID3DXAllocateHierarchy *iface, LPD3DXFRAME frame)
+{
+    TRACECALLBACK("ID3DXAllocateHierarchyImpl_DestroyFrame(%p, %p)\n", iface, frame);
+    if (frame) {
+        HeapFree(GetProcessHeap(), 0, frame->Name);
+        HeapFree(GetProcessHeap(), 0, frame);
+    }
+    return D3D_OK;
+}
+
+static CALLBACK HRESULT ID3DXAllocateHierarchyImpl_CreateFrame(ID3DXAllocateHierarchy *iface, LPCSTR name, LPD3DXFRAME *new_frame)
+{
+    LPD3DXFRAME frame;
+
+    TRACECALLBACK("ID3DXAllocateHierarchyImpl_CreateFrame(%p, '%s', %p)\n", iface, name, new_frame);
+    frame = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*frame));
+    if (!frame)
+        return E_OUTOFMEMORY;
+    if (name) {
+        frame->Name = strdupA(name);
+        if (!frame->Name) {
+            HeapFree(GetProcessHeap(), 0, frame);
+            return E_OUTOFMEMORY;
+        }
+    }
+    *new_frame = frame;
+    return D3D_OK;
+}
+
+static HRESULT destroy_mesh_container(LPD3DXMESHCONTAINER mesh_container)
+{
+    int i;
+
+    if (!mesh_container)
+        return D3D_OK;
+    HeapFree(GetProcessHeap(), 0, mesh_container->Name);
+    if (U(mesh_container->MeshData).pMesh)
+        IUnknown_Release(U(mesh_container->MeshData).pMesh);
+    if (mesh_container->pMaterials) {
+        for (i = 0; i < mesh_container->NumMaterials; i++)
+            HeapFree(GetProcessHeap(), 0, mesh_container->pMaterials[i].pTextureFilename);
+        HeapFree(GetProcessHeap(), 0, mesh_container->pMaterials);
+    }
+    if (mesh_container->pEffects) {
+        for (i = 0; i < mesh_container->NumMaterials; i++) {
+            HeapFree(GetProcessHeap(), 0, mesh_container->pEffects[i].pEffectFilename);
+            if (mesh_container->pEffects[i].pDefaults) {
+                int j;
+                for (j = 0; j < mesh_container->pEffects[i].NumDefaults; j++) {
+                    HeapFree(GetProcessHeap(), 0, mesh_container->pEffects[i].pDefaults[j].pParamName);
+                    HeapFree(GetProcessHeap(), 0, mesh_container->pEffects[i].pDefaults[j].pValue);
+                }
+                HeapFree(GetProcessHeap(), 0, mesh_container->pEffects[i].pDefaults);
+            }
+        }
+        HeapFree(GetProcessHeap(), 0, mesh_container->pEffects);
+    }
+    HeapFree(GetProcessHeap(), 0, mesh_container->pAdjacency);
+    if (mesh_container->pSkinInfo)
+        IUnknown_Release(mesh_container->pSkinInfo);
+    HeapFree(GetProcessHeap(), 0, mesh_container);
+    return D3D_OK;
+}
+
+static CALLBACK HRESULT ID3DXAllocateHierarchyImpl_DestroyMeshContainer(ID3DXAllocateHierarchy *iface, LPD3DXMESHCONTAINER mesh_container)
+{
+    TRACECALLBACK("ID3DXAllocateHierarchyImpl_DestroyMeshContainer(%p, %p)\n", iface, mesh_container);
+    return destroy_mesh_container(mesh_container);
+}
+
+static CALLBACK HRESULT ID3DXAllocateHierarchyImpl_CreateMeshContainer(ID3DXAllocateHierarchy *iface,
+        LPCSTR name, CONST D3DXMESHDATA *mesh_data, CONST D3DXMATERIAL *materials,
+        CONST D3DXEFFECTINSTANCE *effects, DWORD num_materials, CONST DWORD *adjacency,
+        LPD3DXSKININFO skin_info, LPD3DXMESHCONTAINER *new_mesh_container)
+{
+    LPD3DXMESHCONTAINER mesh_container = NULL;
+    int i;
+
+    TRACECALLBACK("ID3DXAllocateHierarchyImpl_CreateMeshContainer(%p, '%s', %u, %p, %p, %p, %d, %p, %p, %p)\n",
+            iface, name, mesh_data->Type, U(*mesh_data).pMesh, materials, effects,
+            num_materials, adjacency, skin_info, *new_mesh_container);
+
+    mesh_container = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*mesh_container));
+    if (!mesh_container)
+        return E_OUTOFMEMORY;
+
+    if (name) {
+        mesh_container->Name = strdupA(name);
+        if (!mesh_container->Name)
+            goto error;
+    }
+
+    mesh_container->NumMaterials = num_materials;
+    if (num_materials) {
+        mesh_container->pMaterials = HeapAlloc(GetProcessHeap(), 0, num_materials * sizeof(*materials));
+        if (!mesh_container->pMaterials)
+            goto error;
+
+        memcpy(mesh_container->pMaterials, materials, num_materials * sizeof(*materials));
+        for (i = 0; i < num_materials; i++)
+            mesh_container->pMaterials[i].pTextureFilename = NULL;
+        for (i = 0; i < num_materials; i++) {
+            if (materials[i].pTextureFilename) {
+                mesh_container->pMaterials[i].pTextureFilename = strdupA(materials[i].pTextureFilename);
+                if (!mesh_container->pMaterials[i].pTextureFilename)
+                    goto error;
+            }
+        }
+
+        mesh_container->pEffects = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, num_materials * sizeof(*effects));
+        if (!mesh_container->pEffects)
+            goto error;
+        for (i = 0; i < num_materials; i++) {
+            int j;
+            const D3DXEFFECTINSTANCE *effect_src = &effects[i];
+            D3DXEFFECTINSTANCE *effect_dest = &mesh_container->pEffects[i];
+
+            if (effect_src->pEffectFilename) {
+                effect_dest->pEffectFilename = strdupA(effect_src->pEffectFilename);
+                if (!effect_dest->pEffectFilename)
+                    goto error;
+            }
+            effect_dest->pDefaults = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                    effect_src->NumDefaults * sizeof(*effect_src->pDefaults));
+            if (!effect_dest->pDefaults)
+                goto error;
+            effect_dest->NumDefaults = effect_src->NumDefaults;
+            for (j = 0; j < effect_src->NumDefaults; j++) {
+                const D3DXEFFECTDEFAULT *default_src = &effect_src->pDefaults[j];
+                D3DXEFFECTDEFAULT *default_dest = &effect_dest->pDefaults[j];
+
+                if (default_src->pParamName) {
+                    default_dest->pParamName = strdupA(default_src->pParamName);
+                    if (!default_dest->pParamName)
+                        goto error;
+                }
+                default_dest->NumBytes = default_src->NumBytes;
+                default_dest->Type = default_src->Type;
+                default_dest->pValue = HeapAlloc(GetProcessHeap(), 0, default_src->NumBytes);
+                memcpy(default_dest->pValue, default_src->pValue, default_src->NumBytes);
+            }
+        }
+    }
+
+    ok(adjacency != NULL, "Expected non-NULL adjacency, got NULL\n");
+    if (adjacency) {
+        if (mesh_data->Type == D3DXMESHTYPE_MESH || mesh_data->Type == D3DXMESHTYPE_PMESH) {
+            ID3DXBaseMesh *basemesh = (ID3DXBaseMesh*)U(*mesh_data).pMesh;
+            DWORD num_faces = basemesh->lpVtbl->GetNumFaces(basemesh);
+            size_t size = num_faces * sizeof(DWORD) * 3;
+            mesh_container->pAdjacency = HeapAlloc(GetProcessHeap(), 0, size);
+            if (!mesh_container->pAdjacency)
+                goto error;
+            memcpy(mesh_container->pAdjacency, adjacency, size);
+        } else {
+            ok(mesh_data->Type == D3DXMESHTYPE_PATCHMESH, "Unknown mesh type %u\n", mesh_data->Type);
+            if (mesh_data->Type == D3DXMESHTYPE_PATCHMESH)
+                trace("FIXME: copying adjacency data for patch mesh not implemented");
+        }
+    }
+
+    memcpy(&mesh_container->MeshData, mesh_data, sizeof(*mesh_data));
+    if (U(*mesh_data).pMesh)
+        IUnknown_AddRef(U(*mesh_data).pMesh);
+    if (skin_info) {
+        mesh_container->pSkinInfo = skin_info;
+        skin_info->lpVtbl->AddRef(skin_info);
+    }
+    *new_mesh_container = mesh_container;
+
+    return S_OK;
+error:
+    destroy_mesh_container(mesh_container);
+    return E_OUTOFMEMORY;
+}
+
+static ID3DXAllocateHierarchyVtbl ID3DXAllocateHierarchyImpl_Vtbl = {
+    ID3DXAllocateHierarchyImpl_CreateFrame,
+    ID3DXAllocateHierarchyImpl_CreateMeshContainer,
+    ID3DXAllocateHierarchyImpl_DestroyFrame,
+    ID3DXAllocateHierarchyImpl_DestroyMeshContainer,
+};
+static ID3DXAllocateHierarchy alloc_hier = { &ID3DXAllocateHierarchyImpl_Vtbl };
+
+static void D3DXLoadMeshTest(void)
+{
+    static const char empty_xfile[] = "xof 0303txt 0032";
+    /*________________________*/
+    static const char simple_xfile[] =
+        "xof 0303txt 0032"
+        "Mesh {"
+            "3;"
+            "0.0; 0.0; 0.0;,"
+            "0.0; 1.0; 0.0;,"
+            "1.0; 1.0; 0.0;;"
+            "1;"
+            "3; 0, 1, 2;;"
+        "}";
+    static const WORD simple_index_buffer[] = {0, 1, 2};
+    static const D3DXVECTOR3 simple_vertex_buffer[] = {
+        {0.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {1.0, 1.0, 0.0}
+    };
+    const DWORD simple_fvf = D3DFVF_XYZ;
+    static const char framed_xfile[] =
+        "xof 0303txt 0032"
+        "Frame {"
+            "Mesh { 3; 0.0; 0.0; 0.0;, 0.0; 1.0; 0.0;, 1.0; 1.0; 0.0;; 1; 3; 0, 1, 2;; }"
+            "FrameTransformMatrix {" /* translation (0.0, 0.0, 2.0) */
+              "1.0, 0.0, 0.0, 0.0,"
+              "0.0, 1.0, 0.0, 0.0,"
+              "0.0, 0.0, 1.0, 0.0,"
+              "0.0, 0.0, 2.0, 1.0;;"
+            "}"
+            "Mesh { 3; 0.0; 0.0; 0.0;, 0.0; 1.0; 0.0;, 2.0; 1.0; 0.0;; 1; 3; 0, 1, 2;; }"
+            "FrameTransformMatrix {" /* translation (0.0, 0.0, 3.0) */
+              "1.0, 0.0, 0.0, 0.0,"
+              "0.0, 1.0, 0.0, 0.0,"
+              "0.0, 0.0, 1.0, 0.0,"
+              "0.0, 0.0, 3.0, 1.0;;"
+            "}"
+            "Mesh { 3; 0.0; 0.0; 0.0;, 0.0; 1.0; 0.0;, 3.0; 1.0; 0.0;; 1; 3; 0, 1, 2;; }"
+        "}";
+    static const WORD framed_index_buffer[] = { 0, 1, 2 };
+    static const D3DXVECTOR3 framed_vertex_buffers[3][3] = {
+        {{0.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {1.0, 1.0, 0.0}},
+        {{0.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {2.0, 1.0, 0.0}},
+        {{0.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {3.0, 1.0, 0.0}},
+    };
+    const DWORD framed_fvf = D3DFVF_XYZ;
+    /*________________________*/
+    HRESULT hr;
+    HWND wnd = NULL;
+    IDirect3D9 *d3d = NULL;
+    IDirect3DDevice9 *device = NULL;
+    D3DPRESENT_PARAMETERS d3dpp;
+    ID3DXMesh *mesh = NULL;
+    D3DXFRAME *frame_hier = NULL;
+    D3DXMATRIX transform;
+
+    wnd = CreateWindow("static", "d3dx9_test", WS_POPUP, 0, 0, 1000, 1000, NULL, NULL, NULL, NULL);
+    if (!wnd)
+    {
+        skip("Couldn't create application window\n");
+        return;
+    }
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    if (!d3d)
+    {
+        skip("Couldn't create IDirect3D9 object\n");
+        goto cleanup;
+    }
+
+    ZeroMemory(&d3dpp, sizeof(d3dpp));
+    d3dpp.Windowed = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &device);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
+        goto cleanup;
+    }
+
+    hr = D3DXLoadMeshHierarchyFromXInMemory(NULL, sizeof(simple_xfile) - 1,
+            D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+    hr = D3DXLoadMeshHierarchyFromXInMemory(simple_xfile, 0,
+            D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+    hr = D3DXLoadMeshHierarchyFromXInMemory(simple_xfile, sizeof(simple_xfile) - 1,
+            D3DXMESH_MANAGED, NULL, &alloc_hier, NULL, &frame_hier, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+    hr = D3DXLoadMeshHierarchyFromXInMemory(simple_xfile, sizeof(simple_xfile) - 1,
+            D3DXMESH_MANAGED, device, NULL, NULL, &frame_hier, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+    hr = D3DXLoadMeshHierarchyFromXInMemory(empty_xfile, sizeof(empty_xfile) - 1,
+            D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, NULL);
+    ok(hr == E_FAIL, "Expected E_FAIL, got %#x\n", hr);
+
+    hr = D3DXLoadMeshHierarchyFromXInMemory(simple_xfile, sizeof(simple_xfile) - 1,
+            D3DXMESH_MANAGED, device, &alloc_hier, NULL, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+    hr = D3DXLoadMeshHierarchyFromXInMemory(simple_xfile, sizeof(simple_xfile) - 1,
+            D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, NULL);
+    ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    if (SUCCEEDED(hr)) {
+        D3DXMESHCONTAINER *container = frame_hier->pMeshContainer;
+
+        ok(frame_hier->Name == NULL, "Expected NULL, got '%s'\n", frame_hier->Name);
+        D3DXMatrixIdentity(&transform);
+        check_matrix(&frame_hier->TransformationMatrix, &transform);
+
+        ok(!strcmp(container->Name, ""), "Expected '', got '%s'\n", container->Name);
+        ok(container->MeshData.Type == D3DXMESHTYPE_MESH, "Expected %d, got %d\n",
+           D3DXMESHTYPE_MESH, container->MeshData.Type);
+        mesh = U(container->MeshData).pMesh;
+        check_vertex_buffer(mesh, simple_vertex_buffer, ARRAY_SIZE(simple_vertex_buffer), simple_fvf);
+        check_index_buffer(mesh, simple_index_buffer, ARRAY_SIZE(simple_index_buffer), sizeof(*simple_index_buffer));
+        check_generated_adjacency(mesh, container->pAdjacency, 0.0f);
+        hr = D3DXFrameDestroy(frame_hier, &alloc_hier);
+        ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+        frame_hier = NULL;
+    }
+
+    hr = D3DXLoadMeshHierarchyFromXInMemory(framed_xfile, sizeof(framed_xfile) - 1,
+            D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, NULL);
+    ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    if (SUCCEEDED(hr)) {
+        D3DXMESHCONTAINER *container = frame_hier->pMeshContainer;
+        int i;
+
+        ok(!strcmp(frame_hier->Name, ""), "Expected '', got '%s'\n", frame_hier->Name);
+        /* last frame transform replaces the first */
+        D3DXMatrixIdentity(&transform);
+        U(transform).m[3][2] = 3.0;
+        check_matrix(&frame_hier->TransformationMatrix, &transform);
+
+        for (i = 0; i < 3; i++) {
+            ok(!strcmp(container->Name, ""), "Expected '', got '%s'\n", container->Name);
+            ok(container->MeshData.Type == D3DXMESHTYPE_MESH, "Expected %d, got %d\n",
+               D3DXMESHTYPE_MESH, container->MeshData.Type);
+            mesh = U(container->MeshData).pMesh;
+            check_vertex_buffer(mesh, framed_vertex_buffers[i], ARRAY_SIZE(framed_vertex_buffers[0]), framed_fvf);
+            check_index_buffer(mesh, framed_index_buffer, ARRAY_SIZE(framed_index_buffer), sizeof(*framed_index_buffer));
+            check_generated_adjacency(mesh, container->pAdjacency, 0.0f);
+            container = container->pNextMeshContainer;
+        }
+        ok(container == NULL, "Expected NULL, got %p\n", container);
+        hr = D3DXFrameDestroy(frame_hier, &alloc_hier);
+        ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+        frame_hier = NULL;
+    }
+
+cleanup:
+    if (device) IDirect3DDevice9_Release(device);
+    if (d3d) IDirect3D9_Release(d3d);
+    if (wnd) DestroyWindow(wnd);
 }
 
 static void D3DXCreateBoxTest(void)
@@ -3314,6 +3875,7 @@ START_TEST(mesh)
     D3DXIntersectTriTest();
     D3DXCreateMeshTest();
     D3DXCreateMeshFVFTest();
+    D3DXLoadMeshTest();
     D3DXCreateBoxTest();
     D3DXCreateSphereTest();
     D3DXCreateCylinderTest();
