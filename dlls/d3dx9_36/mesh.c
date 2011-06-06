@@ -1833,6 +1833,8 @@ struct mesh_data {
 
     D3DXVECTOR2 *tex_coords;
 
+    DWORD *vertex_colors;
+
     DWORD num_materials;
     D3DXMATERIAL *materials;
     DWORD *material_indices;
@@ -2100,6 +2102,73 @@ truncated_data_error:
     return E_FAIL;
 }
 
+static HRESULT parse_vertex_colors(IDirectXFileData *filedata, struct mesh_data *mesh)
+{
+    HRESULT hr;
+    DWORD data_size;
+    BYTE *data;
+    DWORD num_colors;
+    int i;
+
+    HeapFree(GetProcessHeap(), 0, mesh->vertex_colors);
+    mesh->vertex_colors = NULL;
+
+    hr = IDirectXFileData_GetData(filedata, NULL, &data_size, (void**)&data);
+    if (FAILED(hr)) return hr;
+
+    /* template IndexedColor {
+     *     DWORD index;
+     *     ColorRGBA indexColor;
+     * }
+     * template MeshVertexColors {
+     *     DWORD nVertexColors;
+     *     array IndexedColor vertexColors[nVertexColors];
+     * }
+     */
+
+    if (data_size < sizeof(DWORD))
+        goto truncated_data_error;
+    num_colors = *(DWORD*)data;
+    data += sizeof(DWORD);
+    if (data_size < sizeof(DWORD) + num_colors * (sizeof(DWORD) + sizeof(D3DCOLORVALUE)))
+        goto truncated_data_error;
+
+    mesh->vertex_colors = HeapAlloc(GetProcessHeap(), 0, mesh->num_vertices * sizeof(DWORD));
+    if (!mesh->vertex_colors)
+        return E_OUTOFMEMORY;
+
+    for (i = 0; i < mesh->num_vertices; i++)
+        mesh->vertex_colors[i] = D3DCOLOR_ARGB(0, 0xff, 0xff, 0xff);
+    for (i = 0; i < num_colors; i++)
+    {
+        D3DCOLORVALUE color;
+        DWORD index = *(DWORD*)data;
+        data += sizeof(DWORD);
+        if (index >= mesh->num_vertices) {
+            WARN("vertex color %u references undefined vertex %u (only %u vertices)\n",
+                 i, index, mesh->num_vertices);
+            return E_FAIL;
+        }
+        memcpy(&color, data, sizeof(color));
+        data += sizeof(color);
+        color.r = fminf(1.0f, fmaxf(0.0f, color.r));
+        color.g = fminf(1.0f, fmaxf(0.0f, color.g));
+        color.b = fminf(1.0f, fmaxf(0.0f, color.b));
+        color.a = fminf(1.0f, fmaxf(0.0f, color.a));
+        mesh->vertex_colors[index] = D3DCOLOR_ARGB((BYTE)(color.a * 255.0f + 0.5f),
+                                                   (BYTE)(color.r * 255.0f + 0.5f),
+                                                   (BYTE)(color.g * 255.0f + 0.5f),
+                                                   (BYTE)(color.b * 255.0f + 0.5f));
+    }
+
+    mesh->fvf |= D3DFVF_DIFFUSE;
+
+    return D3D_OK;
+truncated_data_error:
+    WARN("truncated data (%u bytes)\n", data_size);
+    return E_FAIL;
+}
+
 static HRESULT parse_normals(IDirectXFileData *filedata, struct mesh_data *mesh)
 {
     HRESULT hr;
@@ -2289,8 +2358,7 @@ static HRESULT parse_mesh(IDirectXFileData *filedata, struct mesh_data *mesh_dat
         if (IsEqualGUID(type, &TID_D3DRMMeshNormals)) {
             hr = parse_normals(child, mesh_data);
         } else if (IsEqualGUID(type, &TID_D3DRMMeshVertexColors)) {
-            FIXME("Mesh vertex color loading not implemented.\n");
-            hr = E_NOTIMPL;
+            hr = parse_vertex_colors(child, mesh_data);
         } else if (IsEqualGUID(type, &TID_D3DRMMeshTextureCoords)) {
             hr = parse_texture_coords(child, mesh_data);
         } else if (IsEqualGUID(type, &TID_D3DRMMeshMaterialList) &&
@@ -2514,6 +2582,10 @@ static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
                 *(D3DXVECTOR3*)out_ptr = mesh_data.normals[duplications[i].normal_index];
             out_ptr += sizeof(D3DXVECTOR3);
         }
+        if (mesh_data.fvf & D3DFVF_DIFFUSE) {
+            *(DWORD*)out_ptr = mesh_data.vertex_colors[i];
+            out_ptr += sizeof(DWORD);
+        }
         if (mesh_data.fvf & D3DFVF_TEX1) {
             *(D3DXVECTOR2*)out_ptr = mesh_data.tex_coords[i];
             out_ptr += sizeof(D3DXVECTOR2);
@@ -2647,6 +2719,7 @@ cleanup:
     HeapFree(GetProcessHeap(), 0, mesh_data.normal_indices);
     destroy_materials(&mesh_data);
     HeapFree(GetProcessHeap(), 0, mesh_data.tex_coords);
+    HeapFree(GetProcessHeap(), 0, mesh_data.vertex_colors);
     HeapFree(GetProcessHeap(), 0, duplications);
     return hr;
 }
