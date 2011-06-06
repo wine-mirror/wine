@@ -30,6 +30,8 @@
 #include "winuser.h"
 #include "d3dx9.h"
 
+#define ARRAY_SIZE(array) (sizeof(array)/sizeof(*array))
+
 /* for internal use */
 typedef enum _FormatType {
     FORMAT_ARGB,   /* unsigned */

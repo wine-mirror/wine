@@ -27,6 +27,7 @@
 
 #define COBJMACROS
 #define NONAMELESSUNION
+#include <assert.h>
 #include "windef.h"
 #include "wingdi.h"
 #include "d3dx9.h"
@@ -2267,6 +2268,103 @@ truncated_data_error:
     return E_FAIL;
 }
 
+static HRESULT generate_effects(ID3DXBuffer *materials, DWORD num_materials,
+                                ID3DXBuffer **effects)
+{
+    HRESULT hr;
+    D3DXEFFECTINSTANCE *effect_ptr;
+    BYTE *out_ptr;
+    const D3DXMATERIAL *material_ptr = ID3DXBuffer_GetBufferPointer(materials);
+    static const struct {
+        const char *param_name;
+        DWORD name_size;
+        DWORD num_bytes;
+        DWORD value_offset;
+    } material_effects[] = {
+#define EFFECT_TABLE_ENTRY(str, field) \
+    {str, sizeof(str), sizeof(material_ptr->MatD3D.field), offsetof(D3DXMATERIAL, MatD3D.field)}
+        EFFECT_TABLE_ENTRY("Diffuse", Diffuse),
+        EFFECT_TABLE_ENTRY("Power", Power),
+        EFFECT_TABLE_ENTRY("Specular", Specular),
+        EFFECT_TABLE_ENTRY("Emissive", Emissive),
+        EFFECT_TABLE_ENTRY("Ambient", Ambient),
+#undef EFFECT_TABLE_ENTRY
+    };
+    static const char texture_paramname[] = "Texture0@Name";
+    DWORD buffer_size;
+    int i;
+
+    /* effects buffer layout:
+     *
+     * D3DXEFFECTINSTANCE effects[num_materials];
+     * for (effect in effects)
+     * {
+     *     D3DXEFFECTDEFAULT defaults[effect.NumDefaults];
+     *     for (default in defaults)
+     *     {
+     *         *default.pParamName;
+     *         *default.pValue;
+     *     }
+     * }
+     */
+    buffer_size = sizeof(D3DXEFFECTINSTANCE);
+    buffer_size += sizeof(D3DXEFFECTDEFAULT) * ARRAY_SIZE(material_effects);
+    for (i = 0; i < ARRAY_SIZE(material_effects); i++) {
+        buffer_size += material_effects[i].name_size;
+        buffer_size += material_effects[i].num_bytes;
+    }
+    buffer_size *= num_materials;
+    for (i = 0; i < num_materials; i++) {
+        if (material_ptr[i].pTextureFilename) {
+            buffer_size += sizeof(D3DXEFFECTDEFAULT);
+            buffer_size += sizeof(texture_paramname);
+            buffer_size += strlen(material_ptr[i].pTextureFilename) + 1;
+        }
+    }
+
+    hr = D3DXCreateBuffer(buffer_size, effects);
+    if (FAILED(hr)) return hr;
+    effect_ptr = ID3DXBuffer_GetBufferPointer(*effects);
+    out_ptr = (BYTE*)(effect_ptr + num_materials);
+
+    for (i = 0; i < num_materials; i++)
+    {
+        int j;
+        D3DXEFFECTDEFAULT *defaults = (D3DXEFFECTDEFAULT*)out_ptr;
+
+        effect_ptr->pDefaults = defaults;
+        effect_ptr->NumDefaults = material_ptr->pTextureFilename ? 6 : 5;
+        out_ptr = (BYTE*)(effect_ptr->pDefaults + effect_ptr->NumDefaults);
+
+        for (j = 0; j < ARRAY_SIZE(material_effects); j++)
+        {
+            defaults->pParamName = (LPSTR)out_ptr;
+            strcpy(defaults->pParamName, material_effects[j].param_name);
+            defaults->pValue = defaults->pParamName + material_effects[j].name_size;
+            defaults->Type = D3DXEDT_FLOATS;
+            defaults->NumBytes = material_effects[j].num_bytes;
+            memcpy(defaults->pValue, (BYTE*)material_ptr + material_effects[j].value_offset, defaults->NumBytes);
+            out_ptr = (BYTE*)defaults->pValue + defaults->NumBytes;
+            defaults++;
+        }
+
+        if (material_ptr->pTextureFilename) {
+            defaults->pParamName = (LPSTR)out_ptr;
+            strcpy(defaults->pParamName, texture_paramname);
+            defaults->pValue = defaults->pParamName + sizeof(texture_paramname);
+            defaults->Type = D3DXEDT_STRING;
+            defaults->NumBytes = strlen(material_ptr->pTextureFilename) + 1;
+            strcpy(defaults->pValue, material_ptr->pTextureFilename);
+            out_ptr = (BYTE*)defaults->pValue + defaults->NumBytes;
+        }
+        material_ptr++;
+        effect_ptr++;
+    }
+    assert(out_ptr - (BYTE*)ID3DXBuffer_GetBufferPointer(*effects) == buffer_size);
+
+    return D3D_OK;
+}
+
 /* change to D3DXLoadSkinMeshFromXof when ID3DXFileData is implemented */
 static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
                                        DWORD options,
@@ -2285,6 +2383,7 @@ static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
     ID3DXMesh *d3dxmesh = NULL;
     ID3DXBuffer *adjacency = NULL;
     ID3DXBuffer *materials = NULL;
+    ID3DXBuffer *effects = NULL;
     struct vertex_duplication {
         DWORD normal_index;
         struct list entry;
@@ -2434,7 +2533,7 @@ static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
         if (FAILED(hr)) goto cleanup;
     }
 
-    if (mesh_data.num_materials && materials_out) {
+    if (mesh_data.num_materials && (materials_out || effects_out)) {
         DWORD buffer_size = mesh_data.num_materials * sizeof(D3DXMATERIAL);
         char *strings_out_ptr;
         D3DXMATERIAL *materials_ptr;
@@ -2460,9 +2559,13 @@ static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
     }
 
     if (mesh_data.num_materials && effects_out) {
-        FIXME("Effect instance generation not supported.\n");
-        hr = E_NOTIMPL;
-        goto cleanup;
+        hr = generate_effects(materials, mesh_data.num_materials, &effects);
+        if (FAILED(hr)) goto cleanup;
+
+        if (!materials_out) {
+            ID3DXBuffer_Release(materials);
+            materials = NULL;
+        }
     }
 
     if (adjacency_out) {
@@ -2476,7 +2579,7 @@ static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
     if (adjacency_out) *adjacency_out = adjacency;
     if (num_materials_out) *num_materials_out = mesh_data.num_materials;
     if (materials_out) *materials_out = materials;
-    if (effects_out) *effects_out = NULL;
+    if (effects_out) *effects_out = effects;
     if (skin_info_out) *skin_info_out = NULL;
 
     hr = D3D_OK;
@@ -2485,6 +2588,7 @@ cleanup:
         if (d3dxmesh) IUnknown_Release(d3dxmesh);
         if (adjacency) ID3DXBuffer_Release(adjacency);
         if (materials) ID3DXBuffer_Release(materials);
+        if (effects) ID3DXBuffer_Release(effects);
     }
     HeapFree(GetProcessHeap(), 0, mesh_data.vertices);
     HeapFree(GetProcessHeap(), 0, mesh_data.num_tri_per_face);
