@@ -419,6 +419,9 @@ sub process_source_file($)
 
     if ($parse_state == 4) # Reading in the function definition
     {
+      # This file is used by the DLL - Make sure we get our contributors right
+      push (@{$spec_files{$comment->{DLL_NAME}}[0]->{SOURCES}},$comment->{FILE});
+
       push (@{$comment->{PROTOTYPE}},$_);
       # Strip comments from the line before checking for ')'
       my $stripped_line = $_;
@@ -680,9 +683,6 @@ sub process_comment($)
   # Mark the function as documented
   $spec_details->{NUM_DOCS}++;
   @$export[$EXPORT_FLAGS] |= $FLAG_DOCUMENTED;
-
-  # This file is used by the DLL - Make sure we get our contributors right
-  push (@{$spec_details->{SOURCES}},$comment->{FILE});
 
   # If we have parameter comments in the prototype, extract them
   my @parameter_comments;
