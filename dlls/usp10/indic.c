@@ -52,10 +52,10 @@ static void debug_output_string(LPCWSTR str, int cChar, lexical_function f)
                 case lex_Halant: TRACE("H"); break;
                 case lex_ZWNJ: TRACE("Zwnj"); break;
                 case lex_ZWJ: TRACE("Zwj"); break;
-                case lex_Mantra_post: TRACE("Mp");break;
-                case lex_Mantra_above: TRACE("Ma");break;
-                case lex_Mantra_below: TRACE("Mb");break;
-                case lex_Mantra_pre: TRACE("Mm");break;
+                case lex_Matra_post: TRACE("Mp");break;
+                case lex_Matra_above: TRACE("Ma");break;
+                case lex_Matra_below: TRACE("Mb");break;
+                case lex_Matra_pre: TRACE("Mm");break;
                 case lex_Modifier: TRACE("Sm"); break;
                 case lex_Vedic: TRACE("Vd"); break;
                 case lex_Anudatta: TRACE("A"); break;
@@ -73,10 +73,10 @@ static inline BOOL is_consonant( int type )
     return (type == lex_Ra || type == lex_Consonant);
 }
 
-static inline BOOL is_mantra( int type )
+static inline BOOL is_matra( int type )
 {
-    return (type == lex_Mantra_above || type == lex_Mantra_below ||
-            type == lex_Mantra_pre || type == lex_Mantra_post);
+    return (type == lex_Matra_above || type == lex_Matra_below ||
+            type == lex_Matra_pre || type == lex_Matra_post);
 }
 
 static inline BOOL is_joiner( int type )
@@ -142,7 +142,7 @@ static INT parse_consonant_syllable(LPCWSTR input, INT cChar, INT start,
     }
     else if (next < cChar)
     {
-        while((next < cChar) && is_mantra( lex(input[next]) ))
+        while((next < cChar) && is_matra( lex(input[next]) ))
             next++;
         if ((next < cChar) && lex(input[next]) == lex_Nukta)
             next++;
@@ -168,9 +168,9 @@ static INT parse_vowel_syllable(LPCWSTR input, INT cChar, INT start,
     else if ((next < cChar) && lex(input[next])==lex_ZWJ && is_consonant( lex(input[next+1]) ))
         next+=2;
 
-    if (is_mantra( lex(input[next]) ))
+    if (is_matra( lex(input[next]) ))
     {
-        while((next < cChar) && is_mantra( lex(input[next]) ))
+        while((next < cChar) && is_matra( lex(input[next]) ))
             next++;
         if ((next < cChar) && lex(input[next]) == lex_Nukta)
             next++;

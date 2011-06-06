@@ -95,7 +95,7 @@ typedef struct {
     OPENTYPE_TAG userLang;
 } ScriptCache;
 
-enum {lex_Halant, lex_Composed_Vowel, lex_Mantra_post, lex_Mantra_pre, lex_Mantra_above, lex_Mantra_below, lex_ZWJ, lex_ZWNJ, lex_NBSP, lex_Modifier, lex_Vowel, lex_Consonant, lex_Generic, lex_Ra, lex_Vedic, lex_Anudatta, lex_Nukta};
+enum {lex_Halant, lex_Composed_Vowel, lex_Matra_post, lex_Matra_pre, lex_Matra_above, lex_Matra_below, lex_ZWJ, lex_ZWNJ, lex_NBSP, lex_Modifier, lex_Vowel, lex_Consonant, lex_Generic, lex_Ra, lex_Vedic, lex_Anudatta, lex_Nukta};
 
 typedef int (*lexical_function)(WCHAR c);
 typedef void (*reorder_function)(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lex);
