@@ -969,12 +969,12 @@ static INT GSUB_apply_ChainContextSubst(const GSUB_LookupList* lookup, const GSU
         if (GET_BE_WORD(ccsf1->SubstFormat) == 1)
         {
             FIXME("  TODO: subtype 1 (Simple context glyph substitution)\n");
-            return -1;
+            continue;
         }
         else if (GET_BE_WORD(ccsf1->SubstFormat) == 2)
         {
             FIXME("  TODO: subtype 2 (Class-based Chaining Context Glyph Substitution)\n");
-            return -1;
+            continue;
         }
         else if (GET_BE_WORD(ccsf1->SubstFormat) == 3)
         {
@@ -997,7 +997,7 @@ static INT GSUB_apply_ChainContextSubst(const GSUB_LookupList* lookup, const GSU
                     break;
             }
             if (k != GET_BE_WORD(ccsf3_1->BacktrackGlyphCount))
-                return -1;
+                continue;
             TRACE("Matched Backtrack\n");
 
             ccsf3_2 = (const GSUB_ChainContextSubstFormat3_2 *)(((LPBYTE)ccsf1)+sizeof(GSUB_ChainContextSubstFormat3_1) + (sizeof(WORD) * (GET_BE_WORD(ccsf3_1->BacktrackGlyphCount)-1)));
@@ -1010,7 +1010,7 @@ static INT GSUB_apply_ChainContextSubst(const GSUB_LookupList* lookup, const GSU
                     break;
             }
             if (k != indexGlyphs)
-                return -1;
+                continue;
             TRACE("Matched IndexGlyphs\n");
 
             ccsf3_3 = (const GSUB_ChainContextSubstFormat3_3 *)(((LPBYTE)ccsf3_2)+sizeof(GSUB_ChainContextSubstFormat3_2) + (sizeof(WORD) * (GET_BE_WORD(ccsf3_2->InputGlyphCount)-1)));
@@ -1022,7 +1022,7 @@ static INT GSUB_apply_ChainContextSubst(const GSUB_LookupList* lookup, const GSU
                     break;
             }
             if (k != GET_BE_WORD(ccsf3_3->LookaheadGlyphCount))
-                return -1;
+                continue;
             TRACE("Matched LookAhead\n");
 
             ccsf3_4 = (const GSUB_ChainContextSubstFormat3_4 *)(((LPBYTE)ccsf3_3)+sizeof(GSUB_ChainContextSubstFormat3_3) + (sizeof(WORD) * (GET_BE_WORD(ccsf3_3->LookaheadGlyphCount)-1)));
@@ -1037,7 +1037,7 @@ static INT GSUB_apply_ChainContextSubst(const GSUB_LookupList* lookup, const GSU
                 if (newIndex == -1)
                 {
                     ERR("Chain failed to generate a glyph\n");
-                    return -1;
+                    continue;
                 }
             }
             return newIndex + 1;
