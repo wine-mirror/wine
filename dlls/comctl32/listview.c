@@ -9608,6 +9608,7 @@ static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
 {
     INT nOldScrollPos, nNewScrollPos;
     SCROLLINFO scrollInfo;
+    BOOL is_an_icon;
 
     TRACE("(nScrollCode=%d(%s), nScrollDiff=%d)\n", nScrollCode, 
 	debugscrollcode(nScrollCode), nScrollDiff);
@@ -9616,6 +9617,8 @@ static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
 
     scrollInfo.cbSize = sizeof(SCROLLINFO);
     scrollInfo.fMask = SIF_PAGE | SIF_POS | SIF_RANGE | SIF_TRACKPOS;
+
+    is_an_icon = ((infoPtr->uView == LV_VIEW_ICON) || (infoPtr->uView == LV_VIEW_SMALLICON));
 
     if (!GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo)) return 1;
 
@@ -9627,11 +9630,11 @@ static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
         break;
 
     case SB_LINELEFT:
-	nScrollDiff = -1;
+	nScrollDiff = (is_an_icon) ? -LISTVIEW_SCROLL_ICON_LINE_SIZE : -1;
         break;
 
     case SB_LINERIGHT:
-	nScrollDiff = 1;
+	nScrollDiff = (is_an_icon) ? LISTVIEW_SCROLL_ICON_LINE_SIZE : 1;
         break;
 
     case SB_PAGELEFT:
