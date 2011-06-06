@@ -1788,6 +1788,22 @@ static int XRenderErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
     return 1;
 }
 
+/********************************************************************
+ *                   is_dib_with_colortable
+ *
+ * Return TRUE if physdev is backed by a dibsection with <= 8 bits per pixel
+ */
+static inline BOOL is_dib_with_colortable( X11DRV_PDEVICE *physDev )
+{
+    DIBSECTION dib;
+
+    if( physDev->bitmap && GetObjectW( physDev->bitmap->hbitmap, sizeof(dib), &dib ) == sizeof(dib) &&
+        dib.dsBmih.biBitCount <= 8 )
+        return TRUE;
+
+    return FALSE;
+}
+
 /***********************************************************************
  *   X11DRV_XRender_ExtTextOut
  */
@@ -1803,16 +1819,12 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     HRGN saved_region = 0;
     BOOL disable_antialias = FALSE;
     AA_Type aa_type = AA_None;
-    DIBSECTION bmp;
     unsigned int idx;
     const WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(physDev->depth, physDev->color_shifts);
     Picture tile_pict = 0;
 
-    /* Do we need to disable antialiasing because of palette mode? */
-    if( !physDev->bitmap || GetObjectW( physDev->bitmap->hbitmap, sizeof(bmp), &bmp ) != sizeof(bmp) ) {
-        TRACE("bitmap is not a DIB\n");
-    }
-    else if (bmp.dsBmih.biBitCount <= 8) {
+    if(is_dib_with_colortable( physDev ))
+    {
         TRACE("Disabling antialiasing\n");
         disable_antialias = TRUE;
     }
