@@ -153,6 +153,7 @@ struct IDirectDrawSurfaceImpl
 {
     /* IUnknown fields */
     IDirectDrawSurface7 IDirectDrawSurface7_iface;
+    IDirectDrawSurface4 IDirectDrawSurface4_iface;
     IDirectDrawSurface3 IDirectDrawSurface3_iface;
     const IDirectDrawGammaControlVtbl *IDirectDrawGammaControl_vtbl;
     const IDirect3DTexture2Vtbl *IDirect3DTexture2_vtbl;
@@ -223,6 +224,11 @@ static inline IDirectDrawSurfaceImpl *surface_from_texture2(IDirect3DTexture2 *i
 static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface)
 {
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface3_iface);
+}
+
+static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface4(IDirectDrawSurface4 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface4_iface);
 }
 
 static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface7(IDirectDrawSurface7 *iface)

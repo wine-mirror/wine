@@ -2050,7 +2050,7 @@ static HRESULT WINAPI ddraw4_GetGDISurface(IDirectDraw4 *iface, IDirectDrawSurfa
         return hr;
     }
     surface_impl = impl_from_IDirectDrawSurface7(surface7);
-    *surface = (IDirectDrawSurface4 *)surface_impl;
+    *surface = &surface_impl->IDirectDrawSurface4_iface;
 
     return hr;
 }
@@ -3561,7 +3561,7 @@ static HRESULT WINAPI ddraw4_CreateSurface(IDirectDraw4 *iface,
         return hr;
     }
 
-    *surface = (IDirectDrawSurface4 *)impl;
+    *surface = &impl->IDirectDrawSurface4_iface;
     ddraw_set_surface_version(impl, 4);
     IDirectDraw7_Release(&This->IDirectDraw7_iface);
     IDirectDraw4_AddRef(iface);
@@ -4257,7 +4257,7 @@ static HRESULT WINAPI ddraw4_DuplicateSurface(IDirectDraw4 *iface, IDirectDrawSu
         return hr;
     }
     dst_impl = impl_from_IDirectDrawSurface7(dst7);
-    *dst = (IDirectDrawSurface4 *)dst_impl;
+    *dst = &dst_impl->IDirectDrawSurface4_iface;
 
     return hr;
 }
