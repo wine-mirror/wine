@@ -1960,14 +1960,15 @@ static HRESULT WINAPI IDirect3DDeviceImpl_2_GetRenderTarget(IDirect3DDevice2 *if
         IDirectDrawSurface **RenderTarget)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
+    IDirectDrawSurfaceImpl *RenderTargetImpl;
     HRESULT hr;
 
     TRACE("iface %p, target %p.\n", iface, RenderTarget);
 
     hr = IDirect3DDevice7_GetRenderTarget((IDirect3DDevice7 *)This, (IDirectDrawSurface7 **)RenderTarget);
     if(hr != D3D_OK) return hr;
-    *RenderTarget = *RenderTarget ?
-            (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)*RenderTarget)->IDirectDrawSurface3_iface : NULL;
+    RenderTargetImpl = (IDirectDrawSurfaceImpl *)RenderTarget;
+    *RenderTarget = (IDirectDrawSurface *)&RenderTargetImpl->IDirectDrawSurface3_iface;
     return D3D_OK;
 }
 
@@ -4483,12 +4484,14 @@ static HRESULT WINAPI IDirect3DDeviceImpl_3_GetTexture(IDirect3DDevice3 *iface, 
 {
     HRESULT ret;
     IDirectDrawSurface7 *ret_val;
+    IDirectDrawSurfaceImpl *ret_val_impl;
 
     TRACE("iface %p, stage %u, texture %p.\n", iface, Stage, Texture2);
 
     ret = IDirect3DDevice7_GetTexture((IDirect3DDevice7 *)device_from_device3(iface), Stage, &ret_val);
 
-    *Texture2 = ret_val ? (IDirect3DTexture2 *)&((IDirectDrawSurfaceImpl *)ret_val)->IDirect3DTexture2_vtbl : NULL;
+    ret_val_impl = unsafe_impl_from_IDirectDrawSurface7(ret_val);
+    *Texture2 = ret_val_impl ? (IDirect3DTexture2 *)&ret_val_impl->IDirect3DTexture2_vtbl : NULL;
 
     TRACE("Returning texture %p.\n", *Texture2);
 

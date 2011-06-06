@@ -553,6 +553,7 @@ static HRESULT WINAPI ddraw_surface3_GetAttachedSurface(IDirectDrawSurface3 *ifa
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     IDirectDrawSurface7 *attachment7;
+    IDirectDrawSurfaceImpl *attachment_impl;
     DDSCAPS2 caps2;
     HRESULT hr;
 
@@ -565,9 +566,13 @@ static HRESULT WINAPI ddraw_surface3_GetAttachedSurface(IDirectDrawSurface3 *ifa
 
     hr = ddraw_surface7_GetAttachedSurface((IDirectDrawSurface7 *)This,
             &caps2, &attachment7);
-    if (FAILED(hr)) *attachment = NULL;
-    else *attachment = attachment7 ?
-            &((IDirectDrawSurfaceImpl *)attachment7)->IDirectDrawSurface3_iface : NULL;
+    if (FAILED(hr))
+    {
+        *attachment = NULL;
+        return hr;
+    }
+    attachment_impl = (IDirectDrawSurfaceImpl *)attachment7;
+    *attachment = &attachment_impl->IDirectDrawSurface3_iface;
 
     return hr;
 }
@@ -1559,9 +1564,10 @@ struct callback_info
 
 static HRESULT CALLBACK EnumCallback(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *surface_desc, void *context)
 {
+    IDirectDrawSurfaceImpl *surface_impl = (IDirectDrawSurfaceImpl *)surface;
     const struct callback_info *info = context;
 
-    return info->callback((IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)surface)->IDirectDrawSurface3_iface,
+    return info->callback((IDirectDrawSurface *)&surface_impl->IDirectDrawSurface3_iface,
             (DDSURFACEDESC *)surface_desc, info->context);
 }
 

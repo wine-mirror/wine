@@ -2047,12 +2047,19 @@ static HRESULT WINAPI ddraw3_GetGDISurface(IDirectDraw3 *iface, IDirectDrawSurfa
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw3(iface);
     IDirectDrawSurface7 *surface7;
+    IDirectDrawSurfaceImpl *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, surface %p.\n", iface, surface);
 
     hr = ddraw7_GetGDISurface(&This->IDirectDraw7_iface, &surface7);
-    *surface = surface7 ? (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)surface7)->IDirectDrawSurface3_iface : NULL;
+    if (FAILED(hr))
+    {
+        *surface = NULL;
+        return hr;
+    }
+    surface_impl = (IDirectDrawSurfaceImpl *)surface7;
+    *surface = (IDirectDrawSurface *)&surface_impl->IDirectDrawSurface3_iface;
 
     return hr;
 }
@@ -2061,12 +2068,19 @@ static HRESULT WINAPI ddraw2_GetGDISurface(IDirectDraw2 *iface, IDirectDrawSurfa
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw2(iface);
     IDirectDrawSurface7 *surface7;
+    IDirectDrawSurfaceImpl *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, surface %p.\n", iface, surface);
 
     hr = ddraw7_GetGDISurface(&This->IDirectDraw7_iface, &surface7);
-    *surface = surface7 ? (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)surface7)->IDirectDrawSurface3_iface : NULL;
+    if (FAILED(hr))
+    {
+        *surface = NULL;
+        return hr;
+    }
+    surface_impl = (IDirectDrawSurfaceImpl *)surface7;
+    *surface = (IDirectDrawSurface *)&surface_impl->IDirectDrawSurface3_iface;
 
     return hr;
 }
@@ -2075,12 +2089,19 @@ static HRESULT WINAPI ddraw1_GetGDISurface(IDirectDraw *iface, IDirectDrawSurfac
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw(iface);
     IDirectDrawSurface7 *surface7;
+    IDirectDrawSurfaceImpl *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, surface %p.\n", iface, surface);
 
     hr = ddraw7_GetGDISurface(&This->IDirectDraw7_iface, &surface7);
-    *surface = surface7 ? (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)surface7)->IDirectDrawSurface3_iface : NULL;
+    if (FAILED(hr))
+    {
+        *surface = NULL;
+        return hr;
+    }
+    surface_impl = (IDirectDrawSurfaceImpl *)surface7;
+    *surface = (IDirectDrawSurface *)&surface_impl->IDirectDrawSurface3_iface;
 
     return hr;
 }
@@ -2438,6 +2459,7 @@ static HRESULT WINAPI ddraw4_GetSurfaceFromDC(IDirectDraw4 *iface, HDC dc,
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     IDirectDrawSurface7 *surface7;
+    IDirectDrawSurfaceImpl *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, dc %p, surface %p.\n", iface, dc, surface);
@@ -2445,7 +2467,14 @@ static HRESULT WINAPI ddraw4_GetSurfaceFromDC(IDirectDraw4 *iface, HDC dc,
     if (!surface) return E_INVALIDARG;
 
     hr = ddraw7_GetSurfaceFromDC(&This->IDirectDraw7_iface, dc, &surface7);
-    *surface = surface7 ? (IDirectDrawSurface4 *)&((IDirectDrawSurfaceImpl *)surface7)->IDirectDrawSurface3_iface : NULL;
+    if (FAILED(hr))
+    {
+        *surface = NULL;
+        return hr;
+    }
+    surface_impl = (IDirectDrawSurfaceImpl *)surface7;
+    /* Tests say this is true */
+    *surface = (IDirectDrawSurface4 *)&surface_impl->IDirectDrawSurface3_iface;
 
     return hr;
 }
@@ -3756,9 +3785,10 @@ struct surfacescallback_context
 static HRESULT CALLBACK EnumSurfacesCallbackThunk(IDirectDrawSurface7 *surface,
         DDSURFACEDESC2 *surface_desc, void *context)
 {
+    IDirectDrawSurfaceImpl *surface_impl = (IDirectDrawSurfaceImpl *)surface;
     struct surfacescallback_context *cbcontext = context;
 
-    return cbcontext->func((IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)surface)->IDirectDrawSurface3_iface,
+    return cbcontext->func((IDirectDrawSurface *)&surface_impl->IDirectDrawSurface3_iface,
             (DDSURFACEDESC *)surface_desc, cbcontext->context);
 }
 
@@ -4199,13 +4229,15 @@ static HRESULT WINAPI ddraw3_DuplicateSurface(IDirectDraw3 *iface, IDirectDrawSu
     IDirectDrawImpl *This = impl_from_IDirectDraw3(iface);
     IDirectDrawSurfaceImpl *src_impl = unsafe_impl_from_IDirectDrawSurface3((IDirectDrawSurface3 *)src);
     IDirectDrawSurface7 *dst7;
+    IDirectDrawSurfaceImpl *dst_impl;
     HRESULT hr;
 
     TRACE("iface %p, src %p, dst %p.\n", iface, src, dst);
     hr = ddraw7_DuplicateSurface(&This->IDirectDraw7_iface, (IDirectDrawSurface7 *)src_impl, &dst7);
     if (FAILED(hr))
         return hr;
-    *dst = (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)dst7)->IDirectDrawSurface3_iface;
+    dst_impl = (IDirectDrawSurfaceImpl *)dst7;
+    *dst = (IDirectDrawSurface *)&dst_impl->IDirectDrawSurface3_iface;
     return hr;
 }
 
@@ -4215,13 +4247,15 @@ static HRESULT WINAPI ddraw2_DuplicateSurface(IDirectDraw2 *iface,
     IDirectDrawImpl *This = impl_from_IDirectDraw2(iface);
     IDirectDrawSurfaceImpl *src_impl = unsafe_impl_from_IDirectDrawSurface3((IDirectDrawSurface3 *)src);
     IDirectDrawSurface7 *dst7;
+    IDirectDrawSurfaceImpl *dst_impl;
     HRESULT hr;
 
     TRACE("iface %p, src %p, dst %p.\n", iface, src, dst);
     hr = ddraw7_DuplicateSurface(&This->IDirectDraw7_iface, (IDirectDrawSurface7 *)src_impl, &dst7);
     if (FAILED(hr))
         return hr;
-    *dst = (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)dst7)->IDirectDrawSurface3_iface;
+    dst_impl = (IDirectDrawSurfaceImpl *)dst7;
+    *dst = (IDirectDrawSurface *)&dst_impl->IDirectDrawSurface3_iface;
     return hr;
 }
 
@@ -4231,13 +4265,15 @@ static HRESULT WINAPI ddraw1_DuplicateSurface(IDirectDraw *iface, IDirectDrawSur
     IDirectDrawImpl *This = impl_from_IDirectDraw(iface);
     IDirectDrawSurfaceImpl *src_impl = unsafe_impl_from_IDirectDrawSurface3((IDirectDrawSurface3 *)src);
     IDirectDrawSurface7 *dst7;
+    IDirectDrawSurfaceImpl *dst_impl;
     HRESULT hr;
 
     TRACE("iface %p, src %p, dst %p.\n", iface, src, dst);
     hr = ddraw7_DuplicateSurface(&This->IDirectDraw7_iface, (IDirectDrawSurface7 *)src_impl, &dst7);
     if (FAILED(hr))
         return hr;
-    *dst = (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)dst7)->IDirectDrawSurface3_iface;
+    dst_impl = (IDirectDrawSurfaceImpl *)dst7;
+    *dst = (IDirectDrawSurface *)&dst_impl->IDirectDrawSurface3_iface;
     return hr;
 }
 
