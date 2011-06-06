@@ -2724,6 +2724,66 @@ cleanup:
     return hr;
 }
 
+HRESULT WINAPI D3DXLoadMeshHierarchyFromXA(LPCSTR filename,
+                                           DWORD options,
+                                           LPDIRECT3DDEVICE9 device,
+                                           LPD3DXALLOCATEHIERARCHY alloc_hier,
+                                           LPD3DXLOADUSERDATA load_user_data,
+                                           LPD3DXFRAME *frame_hierarchy,
+                                           LPD3DXANIMATIONCONTROLLER *anim_controller)
+{
+    HRESULT hr;
+    int len;
+    LPWSTR filenameW;
+
+    TRACE("(%s, %x, %p, %p, %p, %p, %p)\n", debugstr_a(filename), options,
+          device, alloc_hier, load_user_data, frame_hierarchy, anim_controller);
+
+    if (!filename)
+        return D3DERR_INVALIDCALL;
+
+    len = MultiByteToWideChar(CP_ACP, 0, filename, -1, NULL, 0);
+    filenameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!filenameW) return E_OUTOFMEMORY;
+    MultiByteToWideChar(CP_ACP, 0, filename, -1, filenameW, len);
+
+    hr = D3DXLoadMeshHierarchyFromXW(filenameW, options, device,
+            alloc_hier, load_user_data, frame_hierarchy, anim_controller);
+    HeapFree(GetProcessHeap(), 0, filenameW);
+
+    return hr;
+}
+
+HRESULT WINAPI D3DXLoadMeshHierarchyFromXW(LPCWSTR filename,
+                                           DWORD options,
+                                           LPDIRECT3DDEVICE9 device,
+                                           LPD3DXALLOCATEHIERARCHY alloc_hier,
+                                           LPD3DXLOADUSERDATA load_user_data,
+                                           LPD3DXFRAME *frame_hierarchy,
+                                           LPD3DXANIMATIONCONTROLLER *anim_controller)
+{
+    HRESULT hr;
+    DWORD size;
+    LPVOID buffer;
+
+    TRACE("(%s, %x, %p, %p, %p, %p, %p)\n", debugstr_w(filename), options,
+          device, alloc_hier, load_user_data, frame_hierarchy, anim_controller);
+
+    if (!filename)
+        return D3DERR_INVALIDCALL;
+
+    hr = map_view_of_file(filename, &buffer, &size);
+    if (FAILED(hr))
+        return D3DXERR_INVALIDDATA;
+
+    hr = D3DXLoadMeshHierarchyFromXInMemory(buffer, size, options, device,
+            alloc_hier, load_user_data, frame_hierarchy, anim_controller);
+
+    UnmapViewOfFile(buffer);
+
+    return hr;
+}
+
 static HRESULT filedata_get_name(IDirectXFileData *filedata, char **name)
 {
     HRESULT hr;
