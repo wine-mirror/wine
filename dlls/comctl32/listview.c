@@ -1497,6 +1497,37 @@ static BOOL iterator_visibleitems(ITERATOR *i, const LISTVIEW_INFO *infoPtr, HDC
     return TRUE;
 }
 
+/* Remove common elements from two iterators */
+/* Passed iterators have to point on the first elements */
+static BOOL iterator_remove_common_items(ITERATOR *iter1, ITERATOR *iter2)
+{
+    iterator_next(iter1);
+    iterator_next(iter2);
+
+    while(1) {
+        if(iter1->nItem==-1 || iter2->nItem==-1)
+            break;
+
+        if(iter1->nItem == iter2->nItem) {
+            int delete = iter1->nItem;
+
+            iterator_prev(iter1);
+            iterator_prev(iter2);
+            ranges_delitem(iter1->ranges, delete);
+            ranges_delitem(iter2->ranges, delete);
+            iterator_next(iter1);
+            iterator_next(iter2);
+        } else if(iter1->nItem > iter2->nItem)
+            iterator_next(iter2);
+        else
+            iterator_next(iter1);
+    }
+
+    iter1->nItem = iter1->range.lower = iter1->range.upper = -1;
+    iter2->nItem = iter2->range.lower = iter2->range.upper = -1;
+    return TRUE;
+}
+
 /******** Misc helper functions ************************************/
 
 static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg,
@@ -3733,7 +3764,7 @@ static void LISTVIEW_MarqueeHighlight(LISTVIEW_INFO *infoPtr, const POINT *coord
 {
     BOOL controlDown = FALSE;
     LVITEMW item;
-    ITERATOR i;
+    ITERATOR old_elems, new_elems;
     RECT rect;
 
     if (coords_offs->x > infoPtr->marqueeOrigin.x)
@@ -3776,54 +3807,55 @@ static void LISTVIEW_MarqueeHighlight(LISTVIEW_INFO *infoPtr, const POINT *coord
     if ((scroll & SCROLL_DOWN) && (coords_orig->y >= infoPtr->rcList.bottom))
         LISTVIEW_Scroll(infoPtr, 0, (coords_orig->y - infoPtr->rcList.bottom));
 
-    /* Invert the items in the old marquee rectangle */
-    iterator_frameditems_absolute(&i, infoPtr, &infoPtr->marqueeRect);
-
-    while (iterator_next(&i))
-    {
-        if (i.nItem > -1)
-        {
-            if (LISTVIEW_GetItemState(infoPtr, i.nItem, LVIS_SELECTED) == LVIS_SELECTED)
-                item.state = 0;
-            else
-                item.state = LVIS_SELECTED;
-
-            item.stateMask = LVIS_SELECTED;
-
-            LISTVIEW_SetItemState(infoPtr, i.nItem, &item);
-        }
-    }
-
-    iterator_destroy(&i);
+    iterator_frameditems_absolute(&old_elems, infoPtr, &infoPtr->marqueeRect);
 
     CopyRect(&infoPtr->marqueeRect, &rect);
 
     CopyRect(&infoPtr->marqueeDrawRect, &rect);
     OffsetRect(&infoPtr->marqueeDrawRect, offset->x, offset->y);
 
-    /* Iterate over the items within our marquee rectangle */
-    iterator_frameditems_absolute(&i, infoPtr, &infoPtr->marqueeRect);
+    iterator_frameditems_absolute(&new_elems, infoPtr, &infoPtr->marqueeRect);
+    iterator_remove_common_items(&old_elems, &new_elems);
 
-    if (GetKeyState(VK_CONTROL) & 0x8000)
-        controlDown = TRUE;
-
-    while (iterator_next(&i))
+    /* Iterate over no longer selected items */
+    while (iterator_next(&old_elems))
     {
-        if (i.nItem > -1)
+        if (old_elems.nItem > -1)
         {
-            /* If CTRL is pressed, invert. If not, always select the item. */
-            if ((controlDown) && (LISTVIEW_GetItemState(infoPtr, i.nItem, LVIS_SELECTED)))
+            if (LISTVIEW_GetItemState(infoPtr, old_elems.nItem, LVIS_SELECTED) == LVIS_SELECTED)
                 item.state = 0;
             else
                 item.state = LVIS_SELECTED;
 
             item.stateMask = LVIS_SELECTED;
 
-            LISTVIEW_SetItemState(infoPtr, i.nItem, &item);
+            LISTVIEW_SetItemState(infoPtr, old_elems.nItem, &item);
         }
     }
+    iterator_destroy(&old_elems);
 
-    iterator_destroy(&i);
+
+    /* Iterate over newly selected items */
+    if (GetKeyState(VK_CONTROL) & 0x8000)
+        controlDown = TRUE;
+
+    while (iterator_next(&new_elems))
+    {
+        if (new_elems.nItem > -1)
+        {
+            /* If CTRL is pressed, invert. If not, always select the item. */
+            if ((controlDown) && (LISTVIEW_GetItemState(infoPtr, new_elems.nItem, LVIS_SELECTED)))
+                item.state = 0;
+            else
+                item.state = LVIS_SELECTED;
+
+            item.stateMask = LVIS_SELECTED;
+
+            LISTVIEW_SetItemState(infoPtr, new_elems.nItem, &item);
+        }
+    }
+    iterator_destroy(&new_elems);
+
     LISTVIEW_InvalidateRect(infoPtr, &rect);
 }
 
