@@ -547,7 +547,7 @@ static HRESULT WINAPI MMDevice_Activate(IMMDevice *iface, REFIID riid, DWORD cls
     else if (IsEqualIID(riid, &IID_IAudioSessionManager)
              || IsEqualIID(riid, &IID_IAudioSessionManager2))
     {
-        FIXME("IID_IAudioSessionManager unsupported\n");
+        hr = drvs.pGetAudioSessionManager(This->flow, (IAudioSessionManager2**)ppv);
     }
     else if (IsEqualIID(riid, &IID_IBaseFilter))
     {

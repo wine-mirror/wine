@@ -1213,6 +1213,110 @@ static void test_volume_dependence(void)
     IAudioClient_Release(ac);
 }
 
+static void test_session_creation(void)
+{
+    IMMDevice *cap_dev;
+    IAudioClient *ac;
+    IAudioSessionManager *sesm;
+    ISimpleAudioVolume *sav;
+    GUID session_guid;
+    float vol;
+    HRESULT hr;
+    WAVEFORMATEX *fmt;
+
+    CoCreateGuid(&session_guid);
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioSessionManager,
+            CLSCTX_INPROC_SERVER, NULL, (void**)&sesm);
+    ok(hr == S_OK, "Activate failed: %08x\n", hr);
+
+    hr = IAudioSessionManager_GetSimpleAudioVolume(sesm, &session_guid,
+            FALSE, &sav);
+    ok(hr == S_OK, "GetSimpleAudioVolume failed: %08x\n", hr);
+
+    hr = ISimpleAudioVolume_SetMasterVolume(sav, 0.6f, NULL);
+    ok(hr == S_OK, "SetMasterVolume failed: %08x\n", hr);
+
+    /* Release completely to show session persistence */
+    ISimpleAudioVolume_Release(sav);
+    IAudioSessionManager_Release(sesm);
+
+    /* test if we can create a capture audioclient in the session we just
+     * created from a SessionManager derived from a render device */
+    hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(mme, eCapture,
+            eMultimedia, &cap_dev);
+    if(hr == S_OK){
+        WAVEFORMATEX *cap_pwfx;
+        IAudioClient *cap_ac;
+        ISimpleAudioVolume *cap_sav;
+        IAudioSessionManager *cap_sesm;
+
+        hr = IMMDevice_Activate(cap_dev, &IID_IAudioSessionManager,
+                CLSCTX_INPROC_SERVER, NULL, (void**)&cap_sesm);
+        ok(hr == S_OK, "Activate failed: %08x\n", hr);
+
+        hr = IAudioSessionManager_GetSimpleAudioVolume(cap_sesm, &session_guid,
+                FALSE, &cap_sav);
+        ok(hr == S_OK, "GetSimpleAudioVolume failed: %08x\n", hr);
+
+        vol = 0.5f;
+        hr = ISimpleAudioVolume_GetMasterVolume(cap_sav, &vol);
+        ok(hr == S_OK, "GetMasterVolume failed: %08x\n", hr);
+        ok(vol == 1.f, "Got wrong volume: %f\n", vol);
+
+        ISimpleAudioVolume_Release(cap_sav);
+        IAudioSessionManager_Release(cap_sesm);
+
+        hr = IMMDevice_Activate(cap_dev, &IID_IAudioClient,
+                CLSCTX_INPROC_SERVER, NULL, (void**)&cap_ac);
+        ok(hr == S_OK, "Activate failed: %08x\n", hr);
+
+        hr = IAudioClient_GetMixFormat(cap_ac, &cap_pwfx);
+        ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
+
+        hr = IAudioClient_Initialize(cap_ac, AUDCLNT_SHAREMODE_SHARED,
+                0, 5000000, 0, cap_pwfx, &session_guid);
+        ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+
+        hr = IAudioClient_GetService(cap_ac, &IID_ISimpleAudioVolume,
+                (void**)&cap_sav);
+        ok(hr == S_OK, "GetService failed: %08x\n", hr);
+
+        vol = 0.5f;
+        hr = ISimpleAudioVolume_GetMasterVolume(cap_sav, &vol);
+        ok(hr == S_OK, "GetMasterVolume failed: %08x\n", hr);
+        ok(vol == 1.f, "Got wrong volume: %f\n", vol);
+
+        CoTaskMemFree(cap_pwfx);
+        ISimpleAudioVolume_Release(cap_sav);
+        IAudioClient_Release(cap_ac);
+        IMMDevice_Release(cap_dev);
+    }
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+
+    hr = IAudioClient_GetMixFormat(ac, &fmt);
+    ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED,
+            AUDCLNT_STREAMFLAGS_NOPERSIST, 5000000, 0, fmt, &session_guid);
+    ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+
+    hr = IAudioClient_GetService(ac, &IID_ISimpleAudioVolume, (void**)&sav);
+    ok(hr == S_OK, "GetService failed: %08x\n", hr);
+
+    vol = 0.5f;
+    hr = ISimpleAudioVolume_GetMasterVolume(sav, &vol);
+    ok(hr == S_OK, "GetMasterVolume failed: %08x\n", hr);
+    ok(fabs(vol - 0.6f) < 0.05f, "Got wrong volume: %f\n", vol);
+
+    CoTaskMemFree(fmt);
+    ISimpleAudioVolume_Release(sav);
+    IAudioClient_Release(ac);
+}
+
 START_TEST(render)
 {
     HRESULT hr;
@@ -1246,6 +1350,7 @@ START_TEST(render)
     test_channelvolume();
     test_simplevolume();
     test_volume_dependence();
+    test_session_creation();
 
     IMMDevice_Release(dev);
 

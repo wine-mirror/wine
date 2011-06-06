@@ -75,6 +75,7 @@ static BOOL load_driver(const WCHAR *name)
         if(!drvs.p##n) { FreeLibrary(drvs.module); return FALSE; } } while(0)
     LDFC(GetEndpointIDs);
     LDFC(GetAudioEndpoint);
+    LDFC(GetAudioSessionManager);
 #undef LDFC
 
     TRACE("Successfully loaded %s\n", wine_dbgstr_w(driver_module));
