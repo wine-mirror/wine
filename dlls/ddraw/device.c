@@ -1889,7 +1889,7 @@ static HRESULT WINAPI IDirect3DDeviceImpl_3_SetRenderTarget(IDirect3DDevice3 *if
         IDirectDrawSurface4 *NewRenderTarget, DWORD Flags)
 {
     IDirect3DDeviceImpl *This = device_from_device3(iface);
-    IDirectDrawSurfaceImpl *Target = (IDirectDrawSurfaceImpl *)NewRenderTarget;
+    IDirectDrawSurfaceImpl *Target = unsafe_impl_from_IDirectDrawSurface4(NewRenderTarget);
 
     TRACE("iface %p, target %p, flags %#x.\n", iface, NewRenderTarget, Flags);
 

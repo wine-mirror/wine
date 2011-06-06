@@ -4243,7 +4243,7 @@ static HRESULT WINAPI ddraw4_DuplicateSurface(IDirectDraw4 *iface, IDirectDrawSu
         IDirectDrawSurface4 **dst)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
-    IDirectDrawSurfaceImpl *src_impl = (IDirectDrawSurfaceImpl *)src;
+    IDirectDrawSurfaceImpl *src_impl = unsafe_impl_from_IDirectDrawSurface4(src);
     IDirectDrawSurface7 *dst7;
     IDirectDrawSurfaceImpl *dst_impl;
     HRESULT hr;
@@ -4879,7 +4879,7 @@ static HRESULT WINAPI d3d3_CreateDevice(IDirect3D3 *iface, REFCLSID riid,
         IDirectDrawSurface4 *surface, IDirect3DDevice3 **device, IUnknown *outer_unknown)
 {
     IDirectDrawImpl *This = impl_from_IDirect3D3(iface);
-    IDirectDrawSurfaceImpl *surface_impl = (IDirectDrawSurfaceImpl *)surface;
+    IDirectDrawSurfaceImpl *surface_impl = unsafe_impl_from_IDirectDrawSurface4(surface);
     HRESULT hr;
 
     TRACE("iface %p, riid %s, surface %p, device %p, outer_unknown %p.\n",
