@@ -2162,7 +2162,7 @@ static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
         }
     }
 
-    hr = D3DXCreateMeshFVF(mesh_data.num_tri_faces, total_vertices, D3DXMESH_MANAGED, mesh_data.fvf, device, &d3dxmesh);
+    hr = D3DXCreateMeshFVF(mesh_data.num_tri_faces, total_vertices, options, mesh_data.fvf, device, &d3dxmesh);
     if (FAILED(hr)) goto cleanup;
 
     hr = d3dxmesh->lpVtbl->LockVertexBuffer(d3dxmesh, D3DLOCK_DISCARD, &vertices);
