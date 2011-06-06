@@ -7838,10 +7838,8 @@ static BOOL LISTVIEW_RedrawItems(const LISTVIEW_INFO *infoPtr, INT nFirst, INT n
  *  is passed, then the scroll will be 0.  (per MSDN 7/2002)
  *
  *  For:  (per experimentation with native control and CSpy ListView)
- *     LV_VIEW_ICON       dy=1 = 1 pixel  (vertical only)
- *                        dx ignored
- *     LV_VIEW_SMALLICON  dy=1 = 1 pixel  (vertical only)
- *                        dx ignored
+ *     LV_VIEW_ICON       scrolling in any direction is allowed
+ *     LV_VIEW_SMALLICON  scrolling in any direction is allowed
  *     LV_VIEW_LIST       dx=1 = 1 column (horizontal only)
  *                           but will only scroll 1 column per message
  *                           no matter what the value.
@@ -7861,7 +7859,6 @@ static BOOL LISTVIEW_Scroll(LISTVIEW_INFO *infoPtr, INT dx, INT dy)
     	if (dy != 0) return FALSE;
 	break;
     default: /* icon */
-	dx = 0;
 	break;
     }	
 
