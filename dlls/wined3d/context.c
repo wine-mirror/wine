@@ -1321,6 +1321,17 @@ static int WineD3D_ChoosePixelFormat(struct wined3d_device *device, HDC hdc,
     return iPixelFormat;
 }
 
+static inline DWORD generate_rt_mask(GLenum buffer)
+{
+    /* Should take care of all the GL_FRONT/GL_BACK/GL_AUXi/GL_NONE... cases */
+    return buffer ? (1 << 31) | buffer : 0;
+}
+
+static inline DWORD generate_rt_mask_from_surface(struct wined3d_surface *target)
+{
+    return (1 << 31) | surface_get_gl_buffer(target);
+}
+
 /* Do not call while under the GL lock. */
 struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         struct wined3d_surface *target, const struct wined3d_format *ds_format)
@@ -1457,7 +1468,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     ret->tid = GetCurrentThreadId();
 
     ret->render_offscreen = surface_is_offscreen(target);
-    ret->draw_buffer_dirty = TRUE;
+    ret->draw_buffers_mask = generate_rt_mask(GL_BACK);
     ret->valid = 1;
 
     ret->glCtx = ctx;
@@ -2017,7 +2028,7 @@ void context_set_draw_buffer(struct wined3d_context *context, GLenum buffer)
 {
     glDrawBuffer(buffer);
     checkGLcall("glDrawBuffer()");
-    context->draw_buffer_dirty = TRUE;
+    context->draw_buffers_mask = generate_rt_mask(buffer);
 }
 
 static inline void context_set_render_offscreen(struct wined3d_context *context, const struct StateEntry *StateTable,
@@ -2075,6 +2086,8 @@ static void context_validate_onscreen_formats(struct wined3d_device *device,
 /* Context activation is done by the caller. */
 void context_apply_blit_state(struct wined3d_context *context, struct wined3d_device *device)
 {
+    DWORD rt_mask;
+
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         context_validate_onscreen_formats(device, context, NULL);
@@ -2086,23 +2099,26 @@ void context_apply_blit_state(struct wined3d_context *context, struct wined3d_de
             ENTER_GL();
             context_apply_fbo_state_blit(context, GL_FRAMEBUFFER, context->current_rt, NULL, SFLAG_INTEXTURE);
             LEAVE_GL();
+            rt_mask = 1;
         }
         else
         {
             ENTER_GL();
             context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
             LEAVE_GL();
+            rt_mask = generate_rt_mask_from_surface(context->current_rt);
         }
-
-        context->draw_buffer_dirty = TRUE;
+    }
+    else
+    {
+        rt_mask = generate_rt_mask_from_surface(context->current_rt);
     }
 
     ENTER_GL();
-    if (context->draw_buffer_dirty)
+    if (rt_mask != context->draw_buffers_mask)
     {
         context_apply_draw_buffers(context, 1, &context->current_rt);
-        if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
-            context->draw_buffer_dirty = FALSE;
+        context->draw_buffers_mask = rt_mask;
     }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
@@ -2168,19 +2184,22 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
         else
         {
             context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL, SFLAG_INDRAWABLE);
-            rt_mask = 1;
+            rt_mask = generate_rt_mask_from_surface(rts[0]);
         }
 
         LEAVE_GL();
     }
     else
     {
-        rt_mask = 1;
+        rt_mask = generate_rt_mask_from_surface(rts[0]);
     }
 
     ENTER_GL();
-    context_apply_draw_buffers(context, rt_mask, rts);
-    context->draw_buffer_dirty = TRUE;
+    if (rt_mask != context->draw_buffers_mask)
+    {
+        context_apply_draw_buffers(context, rt_mask, rts);
+        context->draw_buffers_mask = rt_mask;
+    }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
@@ -2214,6 +2233,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
     const struct StateEntry *state_table = device->StateTable;
     const struct wined3d_fb_state *fb = &device->fb;
     unsigned int i;
+    DWORD rt_mask;
 
     if (!context_validate_rt_config(context->gl_info->limits.buffers,
             fb->render_targets, fb->depth_stencil))
@@ -2236,26 +2256,31 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
             ENTER_GL();
             context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL, SFLAG_INDRAWABLE);
             LEAVE_GL();
+            rt_mask = generate_rt_mask_from_surface(fb->render_targets[0]);
         }
         else
         {
+            const struct wined3d_shader *ps = device->stateBlock->state.pixel_shader;
+
             ENTER_GL();
             context_apply_fbo_state(context, GL_FRAMEBUFFER, fb->render_targets, fb->depth_stencil, SFLAG_INTEXTURE);
             glReadBuffer(GL_NONE);
             checkGLcall("glReadBuffer");
             LEAVE_GL();
+            rt_mask = ps ? ps->reg_maps.rt_mask : 1;
+            rt_mask &= device->valid_rt_mask;
         }
+    }
+    else
+    {
+        rt_mask = generate_rt_mask_from_surface(fb->render_targets[0]);
     }
 
     ENTER_GL();
-    if (context->draw_buffer_dirty)
+    if (context->draw_buffers_mask != rt_mask)
     {
-        const struct wined3d_shader *ps = device->stateBlock->state.pixel_shader;
-        DWORD rt_mask = ps ? ps->reg_maps.rt_mask : 1;
-
-        rt_mask &= device->valid_rt_mask;
         context_apply_draw_buffers(context, rt_mask, fb->render_targets);
-        context->draw_buffer_dirty = FALSE;
+        context->draw_buffers_mask = rt_mask;
     }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
@@ -2334,7 +2359,6 @@ static void context_setup_target(struct wined3d_device *device,
         }
     }
 
-    context->draw_buffer_dirty = TRUE;
     context->current_rt = target;
     context_set_render_offscreen(context, StateTable, render_offscreen);
 }

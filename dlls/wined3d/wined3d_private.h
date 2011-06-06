@@ -1053,7 +1053,6 @@ struct wined3d_context
 
     /* Stores some information about the context state for optimization */
     WORD render_offscreen : 1;
-    WORD draw_buffer_dirty : 1;
     WORD last_was_rhw : 1;              /* true iff last draw_primitive was in xyzrhw mode */
     WORD last_was_pshader : 1;
     WORD last_was_vshader : 1;
@@ -1067,6 +1066,7 @@ struct wined3d_context
     WORD current : 1;
     WORD destroyed : 1;
     WORD valid : 1;
+    WORD padding : 1;
     BYTE texShaderBumpMap;              /* MAX_TEXTURES, 8 */
     BYTE lastWasPow2Texture;            /* MAX_TEXTURES, 8 */
     DWORD                   numbered_array_mask;
@@ -1098,6 +1098,7 @@ struct wined3d_context
     BOOL rebind_fbo;
     struct wined3d_surface **blit_targets;
     GLenum *draw_buffers;
+    DWORD draw_buffers_mask; /* Enabled draw buffers, 31 max. */
 
     /* Queries */
     GLuint *free_occlusion_queries;
