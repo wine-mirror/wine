@@ -24,6 +24,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
+static inline struct dxgi_swapchain *impl_from_IDXGISwapChain(IDXGISwapChain *iface)
+{
+    return CONTAINING_RECORD(iface, struct dxgi_swapchain, IDXGISwapChain_iface);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_QueryInterface(IDXGISwapChain *iface, REFIID riid, void **object)
@@ -48,7 +53,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_QueryInterface(IDXGISwapChain *i
 
 static ULONG STDMETHODCALLTYPE dxgi_swapchain_AddRef(IDXGISwapChain *iface)
 {
-    struct dxgi_swapchain *This = (struct dxgi_swapchain *)iface;
+    struct dxgi_swapchain *This = impl_from_IDXGISwapChain(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -61,7 +66,7 @@ static ULONG STDMETHODCALLTYPE dxgi_swapchain_AddRef(IDXGISwapChain *iface)
 
 static ULONG STDMETHODCALLTYPE dxgi_swapchain_Release(IDXGISwapChain *iface)
 {
-    struct dxgi_swapchain *This = (struct dxgi_swapchain *)iface;
+    struct dxgi_swapchain *This = impl_from_IDXGISwapChain(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -130,7 +135,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDevice(IDXGISwapChain *iface,
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_Present(IDXGISwapChain *iface, UINT sync_interval, UINT flags)
 {
-    struct dxgi_swapchain *This = (struct dxgi_swapchain *)iface;
+    struct dxgi_swapchain *This = impl_from_IDXGISwapChain(iface);
 
     TRACE("iface %p, sync_interval %u, flags %#x\n", iface, sync_interval, flags);
 
@@ -143,7 +148,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_Present(IDXGISwapChain *iface, U
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetBuffer(IDXGISwapChain *iface,
         UINT buffer_idx, REFIID riid, void **surface)
 {
-    struct dxgi_swapchain *This = (struct dxgi_swapchain *)iface;
+    struct dxgi_swapchain *This = impl_from_IDXGISwapChain(iface);
     struct wined3d_surface *backbuffer;
     IUnknown *parent;
     HRESULT hr;
@@ -271,7 +276,7 @@ HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device
 {
     HRESULT hr;
 
-    swapchain->vtbl = &dxgi_swapchain_vtbl;
+    swapchain->IDXGISwapChain_iface.lpVtbl = &dxgi_swapchain_vtbl;
     swapchain->refcount = 1;
 
     hr = wined3d_swapchain_create(device->wined3d_device, present_parameters,

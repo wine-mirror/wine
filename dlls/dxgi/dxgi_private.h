@@ -124,7 +124,7 @@ HRESULT dxgi_adapter_init(struct dxgi_adapter *adapter, IWineDXGIFactory *parent
 /* IDXGISwapChain */
 struct dxgi_swapchain
 {
-    const struct IDXGISwapChainVtbl *vtbl;
+    IDXGISwapChain IDXGISwapChain_iface;
     LONG refcount;
     struct wined3d_swapchain *wined3d_swapchain;
 };
