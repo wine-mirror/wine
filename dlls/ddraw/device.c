@@ -6751,7 +6751,7 @@ IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *This)
         return WINED3DZB_FALSE;
     }
 
-    dsi = (IDirectDrawSurfaceImpl *)depthStencil;
+    dsi = impl_from_IDirectDrawSurface7(depthStencil);
     TRACE("Setting wined3d depth stencil to %p (wined3d %p)\n", dsi, dsi->wined3d_surface);
     wined3d_device_set_depth_stencil(This->wined3d_device, dsi->wined3d_surface);
 
