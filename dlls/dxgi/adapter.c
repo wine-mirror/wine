@@ -228,7 +228,7 @@ HRESULT dxgi_adapter_init(struct dxgi_adapter *adapter, IWineDXGIFactory *parent
         return E_OUTOFMEMORY;
     }
     dxgi_output_init(output, adapter);
-    adapter->output = (IDXGIOutput *)output;
+    adapter->output = &output->IDXGIOutput_iface;
 
     return S_OK;
 }

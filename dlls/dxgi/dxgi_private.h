@@ -102,7 +102,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
 /* IDXGIOutput */
 struct dxgi_output
 {
-    const struct IDXGIOutputVtbl *vtbl;
+    IDXGIOutput IDXGIOutput_iface;
     LONG refcount;
     struct dxgi_adapter *adapter;
 };

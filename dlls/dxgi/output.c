@@ -23,6 +23,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
+static inline struct dxgi_output *impl_from_IDXGIOutput(IDXGIOutput *iface)
+{
+    return CONTAINING_RECORD(iface, struct dxgi_output, IDXGIOutput_iface);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE dxgi_output_QueryInterface(IDXGIOutput *iface, REFIID riid, void **object)
@@ -46,7 +51,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_QueryInterface(IDXGIOutput *iface, 
 
 static ULONG STDMETHODCALLTYPE dxgi_output_AddRef(IDXGIOutput *iface)
 {
-    struct dxgi_output *This = (struct dxgi_output *)iface;
+    struct dxgi_output *This = impl_from_IDXGIOutput(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u.\n", This, refcount);
@@ -56,7 +61,7 @@ static ULONG STDMETHODCALLTYPE dxgi_output_AddRef(IDXGIOutput *iface)
 
 static ULONG STDMETHODCALLTYPE dxgi_output_Release(IDXGIOutput *iface)
 {
-    struct dxgi_output *This = (struct dxgi_output *)iface;
+    struct dxgi_output *This = impl_from_IDXGIOutput(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", This, refcount);
@@ -98,7 +103,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetPrivateData(IDXGIOutput *iface,
 static HRESULT STDMETHODCALLTYPE dxgi_output_GetParent(IDXGIOutput *iface,
         REFIID riid, void **parent)
 {
-    struct dxgi_output *This = (struct dxgi_output *)iface;
+    struct dxgi_output *This = impl_from_IDXGIOutput(iface);
 
     TRACE("iface %p, riid %s, parent %p.\n", iface, debugstr_guid(riid), parent);
 
@@ -117,7 +122,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc(IDXGIOutput *iface, DXGI_OU
 static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *iface,
         DXGI_FORMAT format, UINT flags, UINT *mode_count, DXGI_MODE_DESC *desc)
 {
-    struct dxgi_output *This = (struct dxgi_output *)iface;
+    struct dxgi_output *This = impl_from_IDXGIOutput(iface);
     enum wined3d_format_id wined3d_format;
     struct wined3d *wined3d;
     UINT i;
@@ -279,7 +284,7 @@ static const struct IDXGIOutputVtbl dxgi_output_vtbl =
 
 void dxgi_output_init(struct dxgi_output *output, struct dxgi_adapter *adapter)
 {
-    output->vtbl = &dxgi_output_vtbl;
+    output->IDXGIOutput_iface.lpVtbl = &dxgi_output_vtbl;
     output->refcount = 1;
     output->adapter = adapter;
 }
