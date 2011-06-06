@@ -1829,6 +1829,10 @@ struct mesh_data {
     DWORD num_normals;
     D3DXVECTOR3 *normals;
     DWORD *normal_indices;
+
+    DWORD num_materials;
+    D3DXMATERIAL *materials;
+    DWORD *material_indices;
 };
 
 static HRESULT get_next_child(IDirectXFileData *filedata, IDirectXFileData **child, const GUID **type)
@@ -1860,6 +1864,192 @@ static HRESULT get_next_child(IDirectXFileData *filedata, IDirectXFileData **chi
     }
 
     return hr;
+}
+
+static HRESULT parse_texture_filename(IDirectXFileData *filedata, LPSTR *filename_out)
+{
+    HRESULT hr;
+    DWORD data_size;
+    BYTE *data;
+    char *filename_in;
+    char *filename = NULL;
+
+    /* template TextureFilename {
+     *     STRING filename;
+     * }
+     */
+
+    HeapFree(GetProcessHeap(), 0, *filename_out);
+    *filename_out = NULL;
+
+    hr = IDirectXFileData_GetData(filedata, NULL, &data_size, (void**)&data);
+    if (FAILED(hr)) return hr;
+
+    if (data_size < sizeof(LPSTR)) {
+        WARN("truncated data (%u bytes)\n", data_size);
+        return E_FAIL;
+    }
+    filename_in = *(LPSTR*)data;
+
+    filename = HeapAlloc(GetProcessHeap(), 0, strlen(filename_in) + 1);
+    if (!filename) return E_OUTOFMEMORY;
+
+    strcpy(filename, filename_in);
+    *filename_out = filename;
+
+    return D3D_OK;
+}
+
+static HRESULT parse_material(IDirectXFileData *filedata, D3DXMATERIAL *material)
+{
+    HRESULT hr;
+    DWORD data_size;
+    BYTE *data;
+    const GUID *type;
+    IDirectXFileData *child;
+
+    material->pTextureFilename = NULL;
+
+    hr = IDirectXFileData_GetData(filedata, NULL, &data_size, (void**)&data);
+    if (FAILED(hr)) return hr;
+
+    /*
+     * template ColorRGBA {
+     *     FLOAT red;
+     *     FLOAT green;
+     *     FLOAT blue;
+     *     FLOAT alpha;
+     * }
+     * template ColorRGB {
+     *     FLOAT red;
+     *     FLOAT green;
+     *     FLOAT blue;
+     * }
+     * template Material {
+     *     ColorRGBA faceColor;
+     *     FLOAT power;
+     *     ColorRGB specularColor;
+     *     ColorRGB emissiveColor;
+     *     [ ... ]
+     * }
+     */
+    if (data_size != sizeof(FLOAT) * 11) {
+        WARN("incorrect data size (%u bytes)\n", data_size);
+        return E_FAIL;
+    }
+
+    memcpy(&material->MatD3D.Diffuse, data, sizeof(D3DCOLORVALUE));
+    data += sizeof(D3DCOLORVALUE);
+    material->MatD3D.Power = *(FLOAT*)data;
+    data += sizeof(FLOAT);
+    memcpy(&material->MatD3D.Specular, data, sizeof(FLOAT) * 3);
+    material->MatD3D.Specular.a = 1.0f;
+    data += 3 * sizeof(FLOAT);
+    memcpy(&material->MatD3D.Emissive, data, sizeof(FLOAT) * 3);
+    material->MatD3D.Emissive.a = 1.0f;
+    material->MatD3D.Ambient.r = 0.0f;
+    material->MatD3D.Ambient.g = 0.0f;
+    material->MatD3D.Ambient.b = 0.0f;
+    material->MatD3D.Ambient.a = 1.0f;
+
+    while (SUCCEEDED(hr = get_next_child(filedata, &child, &type)))
+    {
+        if (IsEqualGUID(type, &TID_D3DRMTextureFilename)) {
+            hr = parse_texture_filename(child, &material->pTextureFilename);
+            if (FAILED(hr)) break;
+        }
+    }
+    return hr == DXFILEERR_NOMOREOBJECTS ? D3D_OK : hr;
+}
+
+static void destroy_materials(struct mesh_data *mesh)
+{
+    int i;
+    for (i = 0; i < mesh->num_materials; i++)
+        HeapFree(GetProcessHeap(), 0, mesh->materials[i].pTextureFilename);
+    HeapFree(GetProcessHeap(), 0, mesh->materials);
+    HeapFree(GetProcessHeap(), 0, mesh->material_indices);
+    mesh->num_materials = 0;
+    mesh->materials = NULL;
+    mesh->material_indices = NULL;
+}
+
+static HRESULT parse_material_list(IDirectXFileData *filedata, struct mesh_data *mesh)
+{
+    HRESULT hr;
+    DWORD data_size;
+    DWORD *data, *in_ptr;
+    const GUID *type;
+    IDirectXFileData *child;
+    DWORD num_materials;
+    int i;
+
+    destroy_materials(mesh);
+
+    hr = IDirectXFileData_GetData(filedata, NULL, &data_size, (void**)&data);
+    if (FAILED(hr)) return hr;
+
+    /* template MeshMaterialList {
+     *     DWORD nMaterials;
+     *     DWORD nFaceIndexes;
+     *     array DWORD faceIndexes[nFaceIndexes];
+     *     [ Material ]
+     * }
+     */
+
+    in_ptr = data;
+
+    if (data_size < sizeof(DWORD))
+        goto truncated_data_error;
+    num_materials = *in_ptr++;
+    if (!num_materials)
+        return D3D_OK;
+
+    if (data_size < 2 * sizeof(DWORD))
+        goto truncated_data_error;
+    if (*in_ptr++ != mesh->num_poly_faces) {
+        WARN("number of material face indices (%u) doesn't match number of faces (%u)\n",
+             *(in_ptr - 1), mesh->num_poly_faces);
+        return E_FAIL;
+    }
+    if (data_size < 2 * sizeof(DWORD) + mesh->num_poly_faces * sizeof(DWORD))
+        goto truncated_data_error;
+    for (i = 0; i < mesh->num_poly_faces; i++) {
+        if (*in_ptr++ >= num_materials) {
+            WARN("face %u: reference to undefined material %u (only %u materials)\n",
+                 i, *(in_ptr - 1), num_materials);
+            return E_FAIL;
+        }
+    }
+
+    mesh->materials = HeapAlloc(GetProcessHeap(), 0, num_materials * sizeof(*mesh->materials));
+    mesh->material_indices = HeapAlloc(GetProcessHeap(), 0, mesh->num_poly_faces * sizeof(*mesh->material_indices));
+    if (!mesh->materials || !mesh->material_indices)
+        return E_OUTOFMEMORY;
+    memcpy(mesh->material_indices, data + 2, mesh->num_poly_faces * sizeof(DWORD));
+
+    while (SUCCEEDED(hr = get_next_child(filedata, &child, &type)))
+    {
+        if (IsEqualGUID(type, &TID_D3DRMMaterial)) {
+            if (mesh->num_materials >= num_materials) {
+                WARN("more materials defined than declared\n");
+                return E_FAIL;
+            }
+            hr = parse_material(child, &mesh->materials[mesh->num_materials++]);
+            if (FAILED(hr)) break;
+        }
+    }
+    if (hr != DXFILEERR_NOMOREOBJECTS)
+        return hr;
+    if (num_materials != mesh->num_materials) {
+        WARN("only %u of %u materials defined\n", num_materials, mesh->num_materials);
+        return E_FAIL;
+    }
+
+    return D3D_OK;
+truncated_data_error:
+    WARN("truncated data (%u bytes)\n", data_size);
+    return E_FAIL;
 }
 
 static HRESULT parse_normals(IDirectXFileData *filedata, struct mesh_data *mesh)
@@ -2059,8 +2249,7 @@ static HRESULT parse_mesh(IDirectXFileData *filedata, struct mesh_data *mesh_dat
         } else if (IsEqualGUID(type, &TID_D3DRMMeshMaterialList) &&
                    (provide_flags & PROVIDE_MATERIALS))
         {
-            FIXME("Mesh material list loading not implemented.\n");
-            hr = E_NOTIMPL;
+            hr = parse_material_list(child, mesh_data);
         } else if (provide_flags & PROVIDE_SKININFO) {
             if (IsEqualGUID(type, &DXFILEOBJ_XSkinMeshHeader)) {
                 FIXME("Skin mesh loading not implemented.\n");
@@ -2095,6 +2284,7 @@ static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
     DWORD total_vertices;
     ID3DXMesh *d3dxmesh = NULL;
     ID3DXBuffer *adjacency = NULL;
+    ID3DXBuffer *materials = NULL;
     struct vertex_duplication {
         DWORD normal_index;
         struct list entry;
@@ -2226,6 +2416,55 @@ static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
 #undef FILL_INDEX_BUFFER
     d3dxmesh->lpVtbl->UnlockIndexBuffer(d3dxmesh);
 
+    if (mesh_data.material_indices) {
+        DWORD *attrib_buffer = NULL;
+        hr = d3dxmesh->lpVtbl->LockAttributeBuffer(d3dxmesh, D3DLOCK_DISCARD, &attrib_buffer);
+        if (FAILED(hr)) goto cleanup;
+        for (i = 0; i < mesh_data.num_poly_faces; i++)
+        {
+            DWORD count = mesh_data.num_tri_per_face[i];
+            while (count--)
+                *attrib_buffer++ = mesh_data.material_indices[i];
+        }
+        d3dxmesh->lpVtbl->UnlockAttributeBuffer(d3dxmesh);
+
+        hr = d3dxmesh->lpVtbl->OptimizeInplace(d3dxmesh,
+                D3DXMESHOPT_ATTRSORT | D3DXMESHOPT_IGNOREVERTS | D3DXMESHOPT_DONOTSPLIT,
+                NULL, NULL, NULL, NULL);
+        if (FAILED(hr)) goto cleanup;
+    }
+
+    if (mesh_data.num_materials && materials_out) {
+        DWORD buffer_size = mesh_data.num_materials * sizeof(D3DXMATERIAL);
+        char *strings_out_ptr;
+        D3DXMATERIAL *materials_ptr;
+
+        for (i = 0; i < mesh_data.num_materials; i++) {
+            if (mesh_data.materials[i].pTextureFilename)
+                buffer_size += strlen(mesh_data.materials[i].pTextureFilename) + 1;
+        }
+
+        hr = D3DXCreateBuffer(buffer_size, &materials);
+        if (FAILED(hr)) goto cleanup;
+
+        materials_ptr = ID3DXBuffer_GetBufferPointer(materials);
+        memcpy(materials_ptr, mesh_data.materials, mesh_data.num_materials * sizeof(D3DXMATERIAL));
+        strings_out_ptr = (char*)(materials_ptr + mesh_data.num_materials);
+        for (i = 0; i < mesh_data.num_materials; i++) {
+            if (materials_ptr[i].pTextureFilename) {
+                strcpy(strings_out_ptr, mesh_data.materials[i].pTextureFilename);
+                materials_ptr[i].pTextureFilename = strings_out_ptr;
+                strings_out_ptr += strlen(mesh_data.materials[i].pTextureFilename) + 1;
+            }
+        }
+    }
+
+    if (mesh_data.num_materials && effects_out) {
+        FIXME("Effect instance generation not supported.\n");
+        hr = E_NOTIMPL;
+        goto cleanup;
+    }
+
     if (adjacency_out) {
         hr = D3DXCreateBuffer(mesh_data.num_tri_faces * 3 * sizeof(DWORD), &adjacency);
         if (FAILED(hr)) goto cleanup;
@@ -2235,8 +2474,8 @@ static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
 
     *mesh_out = d3dxmesh;
     if (adjacency_out) *adjacency_out = adjacency;
-    if (num_materials_out) *num_materials_out = 0;
-    if (materials_out) *materials_out = NULL;
+    if (num_materials_out) *num_materials_out = mesh_data.num_materials;
+    if (materials_out) *materials_out = materials;
     if (effects_out) *effects_out = NULL;
     if (skin_info_out) *skin_info_out = NULL;
 
@@ -2245,12 +2484,14 @@ cleanup:
     if (FAILED(hr)) {
         if (d3dxmesh) IUnknown_Release(d3dxmesh);
         if (adjacency) ID3DXBuffer_Release(adjacency);
+        if (materials) ID3DXBuffer_Release(materials);
     }
     HeapFree(GetProcessHeap(), 0, mesh_data.vertices);
     HeapFree(GetProcessHeap(), 0, mesh_data.num_tri_per_face);
     HeapFree(GetProcessHeap(), 0, mesh_data.indices);
     HeapFree(GetProcessHeap(), 0, mesh_data.normals);
     HeapFree(GetProcessHeap(), 0, mesh_data.normal_indices);
+    destroy_materials(&mesh_data);
     HeapFree(GetProcessHeap(), 0, duplications);
     return hr;
 }
