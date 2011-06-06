@@ -1207,10 +1207,8 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
     }
     fmt->Format.nSamplesPerSec = rate;
 
-    /* CoreAudio doesn't seem to give a device format preference, so just
-     * choose a common format... */
-    fmt->Format.wBitsPerSample = 16;
-    fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+    fmt->Format.wBitsPerSample = 32;
+    fmt->SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
 
     fmt->Format.nBlockAlign = (fmt->Format.wBitsPerSample *
             fmt->Format.nChannels) / 8;
