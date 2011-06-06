@@ -1549,6 +1549,40 @@ static void check_matrix_(int line, const D3DXMATRIX *got, const D3DXMATRIX *exp
     }
 }
 
+static void check_colorvalue_(int line, const char *prefix, const D3DCOLORVALUE got, const D3DCOLORVALUE expected)
+{
+    ok_(__FILE__,line)(expected.r == got.r && expected.g == got.g && expected.b == got.b && expected.a == got.a,
+            "%sExpected (%g, %g, %g, %g), got (%g, %g, %g, %g)\n", prefix,
+            expected.r, expected.g, expected.b, expected.a, got.r, got.g, got.b, got.a);
+}
+
+#define check_materials(got, got_count, expected, expected_count) \
+    check_materials_(__LINE__, got, got_count, expected, expected_count)
+static void check_materials_(int line, const D3DXMATERIAL *got, DWORD got_count, const D3DXMATERIAL *expected, DWORD expected_count)
+{
+    int i;
+    ok_(__FILE__,line)(expected_count == got_count, "Expected %u materials, got %u\n", expected_count, got_count);
+    if (!expected) {
+        ok_(__FILE__,line)(got == NULL, "Expected NULL material ptr, got %p\n", got);
+        return;
+    }
+    for (i = 0; i < min(expected_count, got_count); i++)
+    {
+        if (!expected[i].pTextureFilename)
+            ok_(__FILE__,line)(got[i].pTextureFilename == NULL,
+                    "Expected NULL pTextureFilename, got %p\n", got[i].pTextureFilename);
+        else
+            ok_(__FILE__,line)(!strcmp(expected[i].pTextureFilename, got[i].pTextureFilename),
+                    "Expected '%s' for pTextureFilename, got '%s'\n", expected[i].pTextureFilename, got[i].pTextureFilename);
+        check_colorvalue_(line, "Diffuse: ", got[i].MatD3D.Diffuse, expected[i].MatD3D.Diffuse);
+        check_colorvalue_(line, "Ambient: ", got[i].MatD3D.Ambient, expected[i].MatD3D.Ambient);
+        check_colorvalue_(line, "Specular: ", got[i].MatD3D.Specular, expected[i].MatD3D.Specular);
+        check_colorvalue_(line, "Emissive: ", got[i].MatD3D.Emissive, expected[i].MatD3D.Emissive);
+        ok_(__FILE__,line)(expected[i].MatD3D.Power == got[i].MatD3D.Power,
+                "Power: Expected %g, got %g\n", expected[i].MatD3D.Power, got[i].MatD3D.Power);
+    }
+}
+
 #define check_generated_adjacency(mesh, got, epsilon) check_generated_adjacency_(__LINE__, mesh, got, epsilon)
 static void check_generated_adjacency_(int line, ID3DXMesh *mesh, const DWORD *got, FLOAT epsilon)
 {
@@ -1577,6 +1611,82 @@ static void check_generated_adjacency_(int line, ID3DXMesh *mesh, const DWORD *g
         }
     }
     HeapFree(GetProcessHeap(), 0, expected);
+}
+
+#define check_generated_effects(materials, num_materials, effects) \
+    check_generated_effects_(__LINE__, materials, num_materials, effects)
+static void check_generated_effects_(int line, const D3DXMATERIAL *materials, DWORD num_materials, const D3DXEFFECTINSTANCE *effects)
+{
+    int i;
+    static const struct {
+        const char *name;
+        DWORD name_size;
+        DWORD num_bytes;
+        DWORD value_offset;
+    } params[] = {
+#define EFFECT_TABLE_ENTRY(str, field) \
+    {str, sizeof(str), sizeof(materials->MatD3D.field), offsetof(D3DXMATERIAL, MatD3D.field)}
+        EFFECT_TABLE_ENTRY("Diffuse", Diffuse),
+        EFFECT_TABLE_ENTRY("Power", Power),
+        EFFECT_TABLE_ENTRY("Specular", Specular),
+        EFFECT_TABLE_ENTRY("Emissive", Emissive),
+        EFFECT_TABLE_ENTRY("Ambient", Ambient),
+#undef EFFECT_TABLE_ENTRY
+    };
+
+    if (!num_materials) {
+        ok_(__FILE__, line)(effects == NULL, "Expected NULL effects, got %p\n", effects);
+        return;
+    }
+    for (i = 0; i < num_materials; i++)
+    {
+        int j;
+        DWORD expected_num_defaults = ARRAY_SIZE(params) + (materials[i].pTextureFilename ? 1 : 0);
+
+        ok_(__FILE__,line)(expected_num_defaults == effects[i].NumDefaults,
+                "effect[%u] NumDefaults: Expected %u, got %u\n", i,
+                expected_num_defaults, effects[i].NumDefaults);
+        for (j = 0; j < min(ARRAY_SIZE(params), effects[i].NumDefaults); j++)
+        {
+            int k;
+            D3DXEFFECTDEFAULT *got_param = &effects[i].pDefaults[j];
+            ok_(__FILE__,line)(!strcmp(params[j].name, got_param->pParamName),
+               "effect[%u].pDefaults[%u].pParamName: Expected '%s', got '%s'\n", i, j,
+               params[j].name, got_param->pParamName);
+            ok_(__FILE__,line)(D3DXEDT_FLOATS == got_param->Type,
+               "effect[%u].pDefaults[%u].Type: Expected %u, got %u\n", i, j,
+               D3DXEDT_FLOATS, got_param->Type);
+            ok_(__FILE__,line)(params[j].num_bytes == got_param->NumBytes,
+               "effect[%u].pDefaults[%u].NumBytes: Expected %u, got %u\n", i, j,
+               params[j].num_bytes, got_param->NumBytes);
+            for (k = 0; k < min(params[j].num_bytes, got_param->NumBytes) / 4; k++)
+            {
+                FLOAT expected = ((FLOAT*)((BYTE*)&materials[i] + params[j].value_offset))[k];
+                FLOAT got = ((FLOAT*)got_param->pValue)[k];
+                ok_(__FILE__,line)(compare(expected, got),
+                   "effect[%u].pDefaults[%u] float value %u: Expected %g, got %g\n", i, j, k, expected, got);
+            }
+        }
+        if (effects[i].NumDefaults > ARRAY_SIZE(params)) {
+            D3DXEFFECTDEFAULT *got_param = &effects[i].pDefaults[j];
+            static const char *expected_name = "Texture0@Name";
+
+            ok_(__FILE__,line)(!strcmp(expected_name, got_param->pParamName),
+               "effect[%u].pDefaults[%u].pParamName: Expected '%s', got '%s'\n", i, j,
+               expected_name, got_param->pParamName);
+            ok_(__FILE__,line)(D3DXEDT_STRING == got_param->Type,
+               "effect[%u].pDefaults[%u].Type: Expected %u, got %u\n", i, j,
+               D3DXEDT_STRING, got_param->Type);
+            if (materials[i].pTextureFilename) {
+                ok_(__FILE__,line)(strlen(materials[i].pTextureFilename) + 1 == got_param->NumBytes,
+                   "effect[%u] texture filename length: Expected %u, got %u\n", i,
+                   (DWORD)strlen(materials[i].pTextureFilename) + 1, got_param->NumBytes);
+                ok_(__FILE__,line)(!strcmp(materials[i].pTextureFilename, got_param->pValue),
+                   "effect[%u] texture filename: Expected '%s', got '%s'\n", i,
+                   materials[i].pTextureFilename, (char*)got_param->pValue);
+            }
+        }
+    }
 }
 
 static LPSTR strdupA(LPCSTR p)
@@ -1818,6 +1928,140 @@ static void D3DXLoadMeshTest(void)
     };
     const DWORD framed_fvf = D3DFVF_XYZ;
     /*________________________*/
+    static const char box_xfile[] =
+        "xof 0303txt 0032"
+        "Mesh {"
+            "8;" /* DWORD nVertices; */
+            /* array Vector vertices[nVertices]; */
+            "0.0; 0.0; 0.0;,"
+            "0.0; 0.0; 1.0;,"
+            "0.0; 1.0; 0.0;,"
+            "0.0; 1.0; 1.0;,"
+            "1.0; 0.0; 0.0;,"
+            "1.0; 0.0; 1.0;,"
+            "1.0; 1.0; 0.0;,"
+            "1.0; 1.0; 1.0;;"
+            "6;" /* DWORD nFaces; */
+            /* array MeshFace faces[nFaces]; */
+            "4; 0, 1, 3, 2;," /* (left side) */
+            "4; 2, 3, 7, 6;," /* (top side) */
+            "4; 6, 7, 5, 4;," /* (right side) */
+            "4; 1, 0, 4, 5;," /* (bottom side) */
+            "4; 1, 5, 7, 3;," /* (back side) */
+            "4; 0, 2, 6, 4;;" /* (front side) */
+            "MeshNormals {"
+              "6;" /* DWORD nNormals; */
+              /* array Vector normals[nNormals]; */
+              "-1.0; 0.0; 0.0;,"
+              "0.0; 1.0; 0.0;,"
+              "1.0; 0.0; 0.0;,"
+              "0.0; -1.0; 0.0;,"
+              "0.0; 0.0; 1.0;,"
+              "0.0; 0.0; -1.0;;"
+              "6;" /* DWORD nFaceNormals; */
+              /* array MeshFace faceNormals[nFaceNormals]; */
+              "4; 0, 0, 0, 0;,"
+              "4; 1, 1, 1, 1;,"
+              "4; 2, 2, 2, 2;,"
+              "4; 3, 3, 3, 3;,"
+              "4; 4, 4, 4, 4;,"
+              "4; 5, 5, 5, 5;;"
+            "}"
+            "MeshMaterialList materials {"
+              "2;" /* DWORD nMaterials; */
+              "6;" /* DWORD nFaceIndexes; */
+              /* array DWORD faceIndexes[nFaceIndexes]; */
+              "0, 0, 0, 1, 1, 1;;"
+              "Material {"
+                /* ColorRGBA faceColor; */
+                "0.0; 0.0; 1.0; 1.0;;"
+                /* FLOAT power; */
+                "0.5;"
+                /* ColorRGB specularColor; */
+                "1.0; 1.0; 1.0;;"
+                /* ColorRGB emissiveColor; */
+                "0.0; 0.0; 0.0;;"
+              "}"
+              "Material {"
+                /* ColorRGBA faceColor; */
+                "1.0; 1.0; 1.0; 1.0;;"
+                /* FLOAT power; */
+                "1.0;"
+                /* ColorRGB specularColor; */
+                "1.0; 1.0; 1.0;;"
+                /* ColorRGB emissiveColor; */
+                "0.0; 0.0; 0.0;;"
+                "TextureFilename { \"texture.jpg\"; }"
+              "}"
+            "}"
+          "}";
+    static const WORD box_index_buffer[] = {
+        0, 1, 3,
+        0, 3, 2,
+        8, 9, 7,
+        8, 7, 6,
+        10, 11, 5,
+        10, 5, 4,
+        12, 13, 14,
+        12, 14, 15,
+        16, 17, 18,
+        16, 18, 19,
+        20, 21, 22,
+        20, 22, 23,
+    };
+    static const struct {
+        D3DXVECTOR3 position;
+        D3DXVECTOR3 normal;
+    } box_vertex_buffer[] = {
+        {{0.0, 0.0, 0.0}, {-1.0, 0.0, 0.0}},
+        {{0.0, 0.0, 1.0}, {-1.0, 0.0, 0.0}},
+        {{0.0, 1.0, 0.0}, {-1.0, 0.0, 0.0}},
+        {{0.0, 1.0, 1.0}, {-1.0, 0.0, 0.0}},
+        {{1.0, 0.0, 0.0}, {1.0, 0.0, 0.0}},
+        {{1.0, 0.0, 1.0}, {1.0, 0.0, 0.0}},
+        {{1.0, 1.0, 0.0}, {0.0, 1.0, 0.0}},
+        {{1.0, 1.0, 1.0}, {0.0, 1.0, 0.0}},
+        {{0.0, 1.0, 0.0}, {0.0, 1.0, 0.0}},
+        {{0.0, 1.0, 1.0}, {0.0, 1.0, 0.0}},
+        {{1.0, 1.0, 0.0}, {1.0, 0.0, 0.0}},
+        {{1.0, 1.0, 1.0}, {1.0, 0.0, 0.0}},
+        {{0.0, 0.0, 1.0}, {0.0, -1.0, 0.0}},
+        {{0.0, 0.0, 0.0}, {0.0, -1.0, 0.0}},
+        {{1.0, 0.0, 0.0}, {0.0, -1.0, 0.0}},
+        {{1.0, 0.0, 1.0}, {0.0, -1.0, 0.0}},
+        {{0.0, 0.0, 1.0}, {0.0, 0.0, 1.0}},
+        {{1.0, 0.0, 1.0}, {0.0, 0.0, 1.0}},
+        {{1.0, 1.0, 1.0}, {0.0, 0.0, 1.0}},
+        {{0.0, 1.0, 1.0}, {0.0, 0.0, 1.0}},
+        {{0.0, 0.0, 0.0}, {0.0, 0.0, -1.0}},
+        {{0.0, 1.0, 0.0}, {0.0, 0.0, -1.0}},
+        {{1.0, 1.0, 0.0}, {0.0, 0.0, -1.0}},
+        {{1.0, 0.0, 0.0}, {0.0, 0.0, -1.0}},
+    };
+    static const D3DXMATERIAL box_materials[] = {
+        {
+            {
+                {0.0, 0.0, 1.0, 1.0}, /* Diffuse */
+                {0.0, 0.0, 0.0, 1.0}, /* Ambient */
+                {1.0, 1.0, 1.0, 1.0}, /* Specular */
+                {0.0, 0.0, 0.0, 1.0}, /* Emissive */
+                0.5, /* Power */
+            },
+            NULL, /* pTextureFilename */
+        },
+        {
+            {
+                {1.0, 1.0, 1.0, 1.0}, /* Diffuse */
+                {0.0, 0.0, 0.0, 1.0}, /* Ambient */
+                {1.0, 1.0, 1.0, 1.0}, /* Specular */
+                {0.0, 0.0, 0.0, 1.0}, /* Emissive */
+                1.0, /* Power */
+            },
+            (char *)"texture.jpg", /* pTextureFilename */
+        },
+    };
+    const DWORD box_fvf = D3DFVF_XYZ | D3DFVF_NORMAL;
+    /*________________________*/
     HRESULT hr;
     HWND wnd = NULL;
     IDirect3D9 *d3d = NULL;
@@ -1890,6 +2134,32 @@ static void D3DXLoadMeshTest(void)
         mesh = U(container->MeshData).pMesh;
         check_vertex_buffer(mesh, simple_vertex_buffer, ARRAY_SIZE(simple_vertex_buffer), simple_fvf);
         check_index_buffer(mesh, simple_index_buffer, ARRAY_SIZE(simple_index_buffer), sizeof(*simple_index_buffer));
+        check_materials(container->pMaterials, container->NumMaterials, NULL, 0);
+        check_generated_effects(container->pMaterials, container->NumMaterials, container->pEffects);
+        check_generated_adjacency(mesh, container->pAdjacency, 0.0f);
+        hr = D3DXFrameDestroy(frame_hier, &alloc_hier);
+        ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+        frame_hier = NULL;
+    }
+
+    hr = D3DXLoadMeshHierarchyFromXInMemory(box_xfile, sizeof(box_xfile) - 1,
+            D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, NULL);
+    ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    if (SUCCEEDED(hr)) {
+        D3DXMESHCONTAINER *container = frame_hier->pMeshContainer;
+
+        ok(frame_hier->Name == NULL, "Expected NULL, got '%s'\n", frame_hier->Name);
+        D3DXMatrixIdentity(&transform);
+        check_matrix(&frame_hier->TransformationMatrix, &transform);
+
+        ok(!strcmp(container->Name, ""), "Expected '', got '%s'\n", container->Name);
+        ok(container->MeshData.Type == D3DXMESHTYPE_MESH, "Expected %d, got %d\n",
+           D3DXMESHTYPE_MESH, container->MeshData.Type);
+        mesh = U(container->MeshData).pMesh;
+        check_vertex_buffer(mesh, box_vertex_buffer, ARRAY_SIZE(box_vertex_buffer), box_fvf);
+        check_index_buffer(mesh, box_index_buffer, ARRAY_SIZE(box_index_buffer), sizeof(*box_index_buffer));
+        check_materials(container->pMaterials, container->NumMaterials, box_materials, ARRAY_SIZE(box_materials));
+        check_generated_effects(container->pMaterials, container->NumMaterials, container->pEffects);
         check_generated_adjacency(mesh, container->pAdjacency, 0.0f);
         hr = D3DXFrameDestroy(frame_hier, &alloc_hier);
         ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
@@ -1916,6 +2186,8 @@ static void D3DXLoadMeshTest(void)
             mesh = U(container->MeshData).pMesh;
             check_vertex_buffer(mesh, framed_vertex_buffers[i], ARRAY_SIZE(framed_vertex_buffers[0]), framed_fvf);
             check_index_buffer(mesh, framed_index_buffer, ARRAY_SIZE(framed_index_buffer), sizeof(*framed_index_buffer));
+            check_materials(container->pMaterials, container->NumMaterials, NULL, 0);
+            check_generated_effects(container->pMaterials, container->NumMaterials, container->pEffects);
             check_generated_adjacency(mesh, container->pAdjacency, 0.0f);
             container = container->pNextMeshContainer;
         }
