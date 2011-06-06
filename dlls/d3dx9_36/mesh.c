@@ -1831,6 +1831,8 @@ struct mesh_data {
     D3DXVECTOR3 *normals;
     DWORD *normal_indices;
 
+    D3DXVECTOR2 *tex_coords;
+
     DWORD num_materials;
     D3DXMATERIAL *materials;
     DWORD *material_indices;
@@ -2053,6 +2055,51 @@ truncated_data_error:
     return E_FAIL;
 }
 
+static HRESULT parse_texture_coords(IDirectXFileData *filedata, struct mesh_data *mesh)
+{
+    HRESULT hr;
+    DWORD data_size;
+    BYTE *data;
+
+    HeapFree(GetProcessHeap(), 0, mesh->tex_coords);
+    mesh->tex_coords = NULL;
+
+    hr = IDirectXFileData_GetData(filedata, NULL, &data_size, (void**)&data);
+    if (FAILED(hr)) return hr;
+
+    /* template Coords2d {
+     *     FLOAT u;
+     *     FLOAT v;
+     * }
+     * template MeshTextureCoords {
+     *     DWORD nTextureCoords;
+     *     array Coords2d textureCoords[nTextureCoords];
+     * }
+     */
+
+    if (data_size < sizeof(DWORD))
+        goto truncated_data_error;
+    if (*(DWORD*)data != mesh->num_vertices) {
+        WARN("number of texture coordinates (%u) doesn't match number of vertices (%u)\n",
+             *(DWORD*)data, mesh->num_vertices);
+        return E_FAIL;
+    }
+    data += sizeof(DWORD);
+    if (data_size < sizeof(DWORD) + mesh->num_vertices * sizeof(*mesh->tex_coords))
+        goto truncated_data_error;
+
+    mesh->tex_coords = HeapAlloc(GetProcessHeap(), 0, mesh->num_vertices * sizeof(*mesh->tex_coords));
+    if (!mesh->tex_coords) return E_OUTOFMEMORY;
+    memcpy(mesh->tex_coords, data, mesh->num_vertices * sizeof(*mesh->tex_coords));
+
+    mesh->fvf |= D3DFVF_TEX1;
+
+    return D3D_OK;
+truncated_data_error:
+    WARN("truncated data (%u bytes)\n", data_size);
+    return E_FAIL;
+}
+
 static HRESULT parse_normals(IDirectXFileData *filedata, struct mesh_data *mesh)
 {
     HRESULT hr;
@@ -2245,8 +2292,7 @@ static HRESULT parse_mesh(IDirectXFileData *filedata, struct mesh_data *mesh_dat
             FIXME("Mesh vertex color loading not implemented.\n");
             hr = E_NOTIMPL;
         } else if (IsEqualGUID(type, &TID_D3DRMMeshTextureCoords)) {
-            FIXME("Mesh texture coordinate loading not implemented.\n");
-            hr = E_NOTIMPL;
+            hr = parse_texture_coords(child, mesh_data);
         } else if (IsEqualGUID(type, &TID_D3DRMMeshMaterialList) &&
                    (provide_flags & PROVIDE_MATERIALS))
         {
@@ -2468,6 +2514,10 @@ static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
                 *(D3DXVECTOR3*)out_ptr = mesh_data.normals[duplications[i].normal_index];
             out_ptr += sizeof(D3DXVECTOR3);
         }
+        if (mesh_data.fvf & D3DFVF_TEX1) {
+            *(D3DXVECTOR2*)out_ptr = mesh_data.tex_coords[i];
+            out_ptr += sizeof(D3DXVECTOR2);
+        }
     }
     if (mesh_data.fvf & D3DFVF_NORMAL) {
         DWORD vertex_size = D3DXGetFVFVertexSize(mesh_data.fvf);
@@ -2596,6 +2646,7 @@ cleanup:
     HeapFree(GetProcessHeap(), 0, mesh_data.normals);
     HeapFree(GetProcessHeap(), 0, mesh_data.normal_indices);
     destroy_materials(&mesh_data);
+    HeapFree(GetProcessHeap(), 0, mesh_data.tex_coords);
     HeapFree(GetProcessHeap(), 0, duplications);
     return hr;
 }
