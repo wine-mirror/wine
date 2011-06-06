@@ -142,6 +142,14 @@ enum BufferStates {
     LOCKED_WRAPPED /* public buffer piece is in tmp_buffer */
 };
 
+typedef struct _SessionMgr {
+    IAudioSessionManager2 IAudioSessionManager2_iface;
+
+    LONG ref;
+
+    EDataFlow flow;
+} SessionMgr;
+
 static HANDLE g_timer_q;
 
 static CRITICAL_SECTION g_sessions_lock;
@@ -159,6 +167,7 @@ static const IAudioClockVtbl AudioClock_Vtbl;
 static const IAudioClock2Vtbl AudioClock2_Vtbl;
 static const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl;
 static const IChannelAudioVolumeVtbl ChannelAudioVolume_Vtbl;
+static const IAudioSessionManager2Vtbl AudioSessionManager2_Vtbl;
 
 static inline ACImpl *impl_from_IAudioClient(IAudioClient *iface)
 {
@@ -203,6 +212,11 @@ static inline ACImpl *impl_from_IAudioClock2(IAudioClock2 *iface)
 static inline ACImpl *impl_from_IAudioStreamVolume(IAudioStreamVolume *iface)
 {
     return CONTAINING_RECORD(iface, ACImpl, IAudioStreamVolume_iface);
+}
+
+static inline SessionMgr *impl_from_IAudioSessionManager2(IAudioSessionManager2 *iface)
+{
+    return CONTAINING_RECORD(iface, SessionMgr, IAudioSessionManager2_iface);
 }
 
 BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
@@ -438,12 +452,6 @@ static ULONG WINAPI AudioClient_Release(IAudioClient *iface)
         if(This->initted){
             EnterCriticalSection(&g_sessions_lock);
             list_remove(&This->entry);
-            if(list_empty(&This->session->clients)){
-                list_remove(&This->session->entry);
-                DeleteCriticalSection(&This->session->lock);
-                HeapFree(GetProcessHeap(), 0, This->session->channel_vols);
-                HeapFree(GetProcessHeap(), 0, This->session);
-            }
             LeaveCriticalSection(&g_sessions_lock);
         }
         HeapFree(GetProcessHeap(), 0, This->vols);
@@ -646,8 +654,21 @@ static HRESULT setup_oss_device(ACImpl *This, const WAVEFORMATEX *fmt,
     return ret;
 }
 
+static void session_init_vols(AudioSession *session, UINT channels)
+{
+    session->channel_vols = HeapAlloc(GetProcessHeap(), 0,
+            sizeof(float) * channels);
+    if(!session->channel_vols)
+        return;
+
+    session->channel_count = channels;
+
+    for(; channels > 0; --channels)
+        session->channel_vols[channels - 1] = 1.f;
+}
+
 static AudioSession *create_session(const GUID *guid, EDataFlow flow,
-        int num_channels)
+        UINT num_channels)
 {
     AudioSession *ret;
 
@@ -665,20 +686,50 @@ static AudioSession *create_session(const GUID *guid, EDataFlow flow,
 
     InitializeCriticalSection(&ret->lock);
 
-    ret->channel_count = num_channels;
-    ret->channel_vols = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(float) * num_channels);
-    if(!ret->channel_vols){
-        HeapFree(GetProcessHeap(), 0, ret);
-        return NULL;
-    }
-
-    for(; num_channels > 0; --num_channels)
-        ret->channel_vols[num_channels - 1] = 1.f;
+    if(num_channels > 0)
+        session_init_vols(ret, num_channels);
 
     ret->master_vol = 1.f;
 
     return ret;
+}
+
+/* if channels == 0, then this will return or create a session with
+ * matching dataflow and GUID. otherwise, channels must also match */
+static HRESULT get_audio_session(const GUID *sessionguid,
+        EDataFlow flow, UINT channels, AudioSession **out)
+{
+    AudioSession *session;
+
+    if(!sessionguid || IsEqualGUID(sessionguid, &GUID_NULL)){
+        *out = create_session(&GUID_NULL, flow, channels);
+        if(!*out)
+            return E_OUTOFMEMORY;
+
+        return S_OK;
+    }
+
+    *out = NULL;
+    LIST_FOR_EACH_ENTRY(session, &g_sessions, AudioSession, entry){
+        if(IsEqualGUID(sessionguid, &session->guid) &&
+                session->dataflow == flow){
+            if(session->channel_count > 0){
+                if(channels > 0 && session->channel_count != channels)
+                    return E_INVALIDARG;
+            }else if(channels > 0)
+                session_init_vols(session, channels);
+            *out = session;
+            break;
+        }
+    }
+
+    if(!*out){
+        *out = create_session(sessionguid, flow, channels);
+        if(!*out)
+            return E_OUTOFMEMORY;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
@@ -778,50 +829,16 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
 
     EnterCriticalSection(&g_sessions_lock);
 
-    if(!sessionguid || IsEqualGUID(sessionguid, &GUID_NULL)){
-        This->session = create_session(&GUID_NULL, This->dataflow,
-                fmt->nChannels);
-        if(!This->session){
-            LeaveCriticalSection(&g_sessions_lock);
-            HeapFree(GetProcessHeap(), 0, This->vols);
-            This->vols = NULL;
-            CoTaskMemFree(This->fmt);
-            This->fmt = NULL;
-            LeaveCriticalSection(&This->lock);
-            return E_OUTOFMEMORY;
-        }
-    }else{
-        AudioSession *session;
-
-        LIST_FOR_EACH_ENTRY(session, &g_sessions, AudioSession, entry){
-            if(IsEqualGUID(sessionguid, &session->guid) &&
-                    This->dataflow == session->dataflow){
-                if(session->channel_count != fmt->nChannels){
-                    LeaveCriticalSection(&g_sessions_lock);
-                    HeapFree(GetProcessHeap(), 0, This->vols);
-                    This->vols = NULL;
-                    CoTaskMemFree(This->fmt);
-                    This->fmt = NULL;
-                    LeaveCriticalSection(&This->lock);
-                    return E_INVALIDARG;
-                }
-                This->session = session;
-            }
-        }
-
-        if(!This->session){
-            This->session = create_session(sessionguid, This->dataflow,
-                    fmt->nChannels);
-            if(!This->session){
-                LeaveCriticalSection(&g_sessions_lock);
-                HeapFree(GetProcessHeap(), 0, This->vols);
-                This->vols = NULL;
-                CoTaskMemFree(This->fmt);
-                This->fmt = NULL;
-                LeaveCriticalSection(&This->lock);
-                return E_OUTOFMEMORY;
-            }
-        }
+    hr = get_audio_session(sessionguid, This->dataflow, fmt->nChannels,
+            &This->session);
+    if(FAILED(hr)){
+        LeaveCriticalSection(&g_sessions_lock);
+        HeapFree(GetProcessHeap(), 0, This->vols);
+        This->vols = NULL;
+        CoTaskMemFree(This->fmt);
+        This->fmt = NULL;
+        LeaveCriticalSection(&This->lock);
+        return hr;
     }
 
     list_add_tail(&This->session->clients, &This->entry);
@@ -1931,8 +1948,10 @@ static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client)
     ret->IChannelAudioVolume_iface.lpVtbl = &ChannelAudioVolume_Vtbl;
 
     ret->client = client;
-    ret->session = client->session;
-    AudioClient_AddRef(&client->IAudioClient_iface);
+    if(client){
+        ret->session = client->session;
+        AudioClient_AddRef(&client->IAudioClient_iface);
+    }
 
     return ret;
 }
@@ -1975,10 +1994,12 @@ static ULONG WINAPI AudioSessionControl_Release(IAudioSessionControl2 *iface)
     ref = InterlockedDecrement(&This->ref);
     TRACE("(%p) Refcount now %u\n", This, ref);
     if(!ref){
-        EnterCriticalSection(&This->client->lock);
-        This->client->session_wrapper = NULL;
-        LeaveCriticalSection(&This->client->lock);
-        AudioClient_Release(&This->client->IAudioClient_iface);
+        if(This->client){
+            EnterCriticalSection(&This->client->lock);
+            This->client->session_wrapper = NULL;
+            LeaveCriticalSection(&This->client->lock);
+            AudioClient_Release(&This->client->IAudioClient_iface);
+        }
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -2684,3 +2705,173 @@ static const IChannelAudioVolumeVtbl ChannelAudioVolume_Vtbl =
     ChannelAudioVolume_SetAllVolumes,
     ChannelAudioVolume_GetAllVolumes
 };
+
+HRESULT WINAPI AudioSessionManager_QueryInterface(IAudioSessionManager2 *iface,
+        REFIID riid, void **ppv)
+{
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
+
+    if(!ppv)
+        return E_POINTER;
+    *ppv = NULL;
+
+    if(IsEqualIID(riid, &IID_IUnknown) ||
+            IsEqualIID(riid, &IID_IAudioSessionManager) ||
+            IsEqualIID(riid, &IID_IAudioSessionManager2))
+        *ppv = iface;
+    if(*ppv){
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    WARN("Unknown interface %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+ULONG WINAPI AudioSessionManager_AddRef(IAudioSessionManager2 *iface)
+{
+    SessionMgr *This = impl_from_IAudioSessionManager2(iface);
+    ULONG ref;
+    ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p) Refcount now %u\n", This, ref);
+    return ref;
+}
+
+ULONG WINAPI AudioSessionManager_Release(IAudioSessionManager2 *iface)
+{
+    SessionMgr *This = impl_from_IAudioSessionManager2(iface);
+    ULONG ref;
+    ref = InterlockedDecrement(&This->ref);
+    TRACE("(%p) Refcount now %u\n", This, ref);
+    if(!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+    return ref;
+}
+
+HRESULT WINAPI AudioSessionManager_GetAudioSessionControl(
+        IAudioSessionManager2 *iface, const GUID *session_guid, DWORD flags,
+        IAudioSessionControl **out)
+{
+    SessionMgr *This = impl_from_IAudioSessionManager2(iface);
+    AudioSession *session;
+    AudioSessionWrapper *wrapper;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s, %x, %p)\n", This, debugstr_guid(session_guid),
+            flags, out);
+
+    hr = get_audio_session(session_guid, This->flow, 0, &session);
+    if(FAILED(hr))
+        return hr;
+
+    wrapper = AudioSessionWrapper_Create(NULL);
+    if(!wrapper)
+        return E_OUTOFMEMORY;
+
+    wrapper->session = session;
+
+    *out = (IAudioSessionControl*)&wrapper->IAudioSessionControl2_iface;
+
+    return S_OK;
+}
+
+HRESULT WINAPI AudioSessionManager_GetSimpleAudioVolume(
+        IAudioSessionManager2 *iface, const GUID *session_guid, DWORD flags,
+        ISimpleAudioVolume **out)
+{
+    SessionMgr *This = impl_from_IAudioSessionManager2(iface);
+    AudioSession *session;
+    AudioSessionWrapper *wrapper;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s, %x, %p)\n", This, debugstr_guid(session_guid),
+            flags, out);
+
+    hr = get_audio_session(session_guid, This->flow, 0, &session);
+    if(FAILED(hr))
+        return hr;
+
+    wrapper = AudioSessionWrapper_Create(NULL);
+    if(!wrapper)
+        return E_OUTOFMEMORY;
+
+    wrapper->session = session;
+
+    *out = &wrapper->ISimpleAudioVolume_iface;
+
+    return S_OK;
+}
+
+HRESULT WINAPI AudioSessionManager_GetSessionEnumerator(
+        IAudioSessionManager2 *iface, IAudioSessionEnumerator **out)
+{
+    SessionMgr *This = impl_from_IAudioSessionManager2(iface);
+    FIXME("(%p)->(%p) - stub\n", This, out);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI AudioSessionManager_RegisterSessionNotification(
+        IAudioSessionManager2 *iface, IAudioSessionNotification *notification)
+{
+    SessionMgr *This = impl_from_IAudioSessionManager2(iface);
+    FIXME("(%p)->(%p) - stub\n", This, notification);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI AudioSessionManager_UnregisterSessionNotification(
+        IAudioSessionManager2 *iface, IAudioSessionNotification *notification)
+{
+    SessionMgr *This = impl_from_IAudioSessionManager2(iface);
+    FIXME("(%p)->(%p) - stub\n", This, notification);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI AudioSessionManager_RegisterDuckNotification(
+        IAudioSessionManager2 *iface, const WCHAR *session_id,
+        IAudioVolumeDuckNotification *notification)
+{
+    SessionMgr *This = impl_from_IAudioSessionManager2(iface);
+    FIXME("(%p)->(%p) - stub\n", This, notification);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI AudioSessionManager_UnregisterDuckNotification(
+        IAudioSessionManager2 *iface,
+        IAudioVolumeDuckNotification *notification)
+{
+    SessionMgr *This = impl_from_IAudioSessionManager2(iface);
+    FIXME("(%p)->(%p) - stub\n", This, notification);
+    return E_NOTIMPL;
+}
+
+static const IAudioSessionManager2Vtbl AudioSessionManager2_Vtbl =
+{
+    AudioSessionManager_QueryInterface,
+    AudioSessionManager_AddRef,
+    AudioSessionManager_Release,
+    AudioSessionManager_GetAudioSessionControl,
+    AudioSessionManager_GetSimpleAudioVolume,
+    AudioSessionManager_GetSessionEnumerator,
+    AudioSessionManager_RegisterSessionNotification,
+    AudioSessionManager_UnregisterSessionNotification,
+    AudioSessionManager_RegisterDuckNotification,
+    AudioSessionManager_UnregisterDuckNotification
+};
+
+HRESULT WINAPI AUDDRV_GetAudioSessionManager(EDataFlow dataflow,
+        IAudioSessionManager2 **out)
+{
+    SessionMgr *This;
+
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SessionMgr));
+    if(!*out)
+        return E_OUTOFMEMORY;
+
+    This->IAudioSessionManager2_iface.lpVtbl = &AudioSessionManager2_Vtbl;
+    This->flow = dataflow;
+    This->ref = 1;
+
+    *out = &This->IAudioSessionManager2_iface;
+
+    return S_OK;
+}
