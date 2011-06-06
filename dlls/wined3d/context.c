@@ -1973,6 +1973,16 @@ static struct wined3d_context *FindContext(struct wined3d_device *device, struct
     return context;
 }
 
+static inline BOOL is_rt_mask_onscreen(DWORD rt_mask)
+{
+    return rt_mask & (1 << 31);
+}
+
+static inline GLenum draw_buffer_from_rt_mask(DWORD rt_mask)
+{
+    return rt_mask & ~(1 << 31);
+}
+
 /* Context activation and GL locking are done by the caller. */
 static void context_apply_draw_buffers(struct wined3d_context *context, DWORD rt_mask, struct wined3d_surface **rts)
 {
@@ -1981,9 +1991,9 @@ static void context_apply_draw_buffers(struct wined3d_context *context, DWORD rt
         glDrawBuffer(GL_NONE);
         checkGLcall("glDrawBuffer()");
     }
-    else if (!surface_is_offscreen(rts[0]))
+    else if (is_rt_mask_onscreen(rt_mask))
     {
-        glDrawBuffer(surface_get_gl_buffer(rts[0]));
+        glDrawBuffer(draw_buffer_from_rt_mask(rt_mask));
         checkGLcall("glDrawBuffer()");
     }
     else
@@ -2017,7 +2027,7 @@ static void context_apply_draw_buffers(struct wined3d_context *context, DWORD rt
         }
         else
         {
-            glDrawBuffer(rts[0]->resource.device->offscreenBuffer);
+            glDrawBuffer(draw_buffer_from_rt_mask(rt_mask));
             checkGLcall("glDrawBuffer()");
         }
     }
