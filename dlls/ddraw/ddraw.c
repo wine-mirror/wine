@@ -2037,10 +2037,22 @@ static HRESULT WINAPI ddraw7_GetGDISurface(IDirectDraw7 *iface, IDirectDrawSurfa
 static HRESULT WINAPI ddraw4_GetGDISurface(IDirectDraw4 *iface, IDirectDrawSurface4 **surface)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
+    IDirectDrawSurface7 *surface7;
+    IDirectDrawSurfaceImpl *surface_impl;
+    HRESULT hr;
 
     TRACE("iface %p, surface %p.\n", iface, surface);
 
-    return ddraw7_GetGDISurface(&This->IDirectDraw7_iface, (IDirectDrawSurface7 **)surface);
+    hr = ddraw7_GetGDISurface(&This->IDirectDraw7_iface, &surface7);
+    if (FAILED(hr))
+    {
+        *surface = NULL;
+        return hr;
+    }
+    surface_impl = impl_from_IDirectDrawSurface7(surface7);
+    *surface = (IDirectDrawSurface4 *)surface_impl;
+
+    return hr;
 }
 
 static HRESULT WINAPI ddraw3_GetGDISurface(IDirectDraw3 *iface, IDirectDrawSurface **surface)
@@ -2483,10 +2495,25 @@ static HRESULT WINAPI ddraw3_GetSurfaceFromDC(IDirectDraw3 *iface, HDC dc,
         IDirectDrawSurface **surface)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw3(iface);
+    IDirectDrawSurface7 *surface7;
+    IDirectDrawSurfaceImpl *surface_impl;
+    HRESULT hr;
 
     TRACE("iface %p, dc %p, surface %p.\n", iface, dc, surface);
 
-    return ddraw7_GetSurfaceFromDC(&This->IDirectDraw7_iface, dc, (IDirectDrawSurface7 **)surface);
+    if (!surface) return E_INVALIDARG;
+
+    hr = ddraw7_GetSurfaceFromDC(&This->IDirectDraw7_iface, dc, &surface7);
+    if (FAILED(hr))
+    {
+        *surface = NULL;
+        return hr;
+    }
+
+    surface_impl = impl_from_IDirectDrawSurface7(surface7);
+    *surface = (IDirectDrawSurface *)&surface_impl->IDirectDrawSurface3_iface;
+
+    return hr;
 }
 
 /*****************************************************************************
@@ -4216,11 +4243,23 @@ static HRESULT WINAPI ddraw4_DuplicateSurface(IDirectDraw4 *iface, IDirectDrawSu
         IDirectDrawSurface4 **dst)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
+    IDirectDrawSurfaceImpl *src_impl = (IDirectDrawSurfaceImpl *)src;
+    IDirectDrawSurface7 *dst7;
+    IDirectDrawSurfaceImpl *dst_impl;
+    HRESULT hr;
 
     TRACE("iface %p, src %p, dst %p.\n", iface, src, dst);
+    hr = ddraw7_DuplicateSurface(&This->IDirectDraw7_iface,
+            (IDirectDrawSurface7 *)src_impl, &dst7);
+    if (FAILED(hr))
+    {
+        *dst = NULL;
+        return hr;
+    }
+    dst_impl = impl_from_IDirectDrawSurface7(dst7);
+    *dst = (IDirectDrawSurface4 *)dst_impl;
 
-    return ddraw7_DuplicateSurface(&This->IDirectDraw7_iface, (IDirectDrawSurface7 *)src,
-            (IDirectDrawSurface7 **)dst);
+    return hr;
 }
 
 static HRESULT WINAPI ddraw3_DuplicateSurface(IDirectDraw3 *iface, IDirectDrawSurface *src,
@@ -5849,6 +5888,7 @@ static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_pa
         DWORD multisample_quality, BOOL discard, struct wined3d_surface **surface)
 {
     struct IDirectDrawImpl *ddraw = ddraw_from_device_parent(device_parent);
+    IDirectDrawSurface7 *ddraw7;
     IDirectDrawSurfaceImpl *ddraw_surface;
     DDSURFACEDESC2 ddsd;
     HRESULT hr;
@@ -5877,8 +5917,7 @@ static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_pa
     }
 
     ddraw->depthstencil = TRUE;
-    hr = IDirectDraw7_CreateSurface(&ddraw->IDirectDraw7_iface, &ddsd,
-            (IDirectDrawSurface7 **)&ddraw_surface, NULL);
+    hr = IDirectDraw7_CreateSurface(&ddraw->IDirectDraw7_iface, &ddsd, &ddraw7, NULL);
     ddraw->depthstencil = FALSE;
     if (FAILED(hr))
     {
@@ -5886,6 +5925,7 @@ static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_pa
         return hr;
     }
 
+    ddraw_surface = impl_from_IDirectDrawSurface7(ddraw7);
     *surface = ddraw_surface->wined3d_surface;
     wined3d_surface_incref(*surface);
     IDirectDrawSurface7_Release((IDirectDrawSurface7 *)ddraw_surface);

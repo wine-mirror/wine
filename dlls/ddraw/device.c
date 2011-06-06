@@ -1947,12 +1947,19 @@ static HRESULT WINAPI IDirect3DDeviceImpl_3_GetRenderTarget(IDirect3DDevice3 *if
         IDirectDrawSurface4 **RenderTarget)
 {
     IDirect3DDeviceImpl *This = device_from_device3(iface);
+    IDirectDrawSurface7 *RenderTarget7;
+    IDirectDrawSurfaceImpl *RenderTargetImpl;
     HRESULT hr;
 
     TRACE("iface %p, target %p.\n", iface, RenderTarget);
 
-    hr = IDirect3DDevice7_GetRenderTarget((IDirect3DDevice7 *)This, (IDirectDrawSurface7 **)RenderTarget);
+    if(!RenderTarget)
+        return DDERR_INVALIDPARAMS;
+
+    hr = IDirect3DDevice7_GetRenderTarget((IDirect3DDevice7 *)This, &RenderTarget7);
     if(hr != D3D_OK) return hr;
+    RenderTargetImpl = impl_from_IDirectDrawSurface7(RenderTarget7);
+    *RenderTarget = (IDirectDrawSurface4 *)RenderTargetImpl;
     return D3D_OK;
 }
 
@@ -1960,14 +1967,18 @@ static HRESULT WINAPI IDirect3DDeviceImpl_2_GetRenderTarget(IDirect3DDevice2 *if
         IDirectDrawSurface **RenderTarget)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
+    IDirectDrawSurface7 *RenderTarget7;
     IDirectDrawSurfaceImpl *RenderTargetImpl;
     HRESULT hr;
 
     TRACE("iface %p, target %p.\n", iface, RenderTarget);
 
-    hr = IDirect3DDevice7_GetRenderTarget((IDirect3DDevice7 *)This, (IDirectDrawSurface7 **)RenderTarget);
+    if(!RenderTarget)
+        return DDERR_INVALIDPARAMS;
+
+    hr = IDirect3DDevice7_GetRenderTarget((IDirect3DDevice7 *)This, &RenderTarget7);
     if(hr != D3D_OK) return hr;
-    RenderTargetImpl = (IDirectDrawSurfaceImpl *)RenderTarget;
+    RenderTargetImpl = impl_from_IDirectDrawSurface7(RenderTarget7);
     *RenderTarget = (IDirectDrawSurface *)&RenderTargetImpl->IDirectDrawSurface3_iface;
     return D3D_OK;
 }
