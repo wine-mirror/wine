@@ -2936,9 +2936,6 @@ static BOOL wined3d_check_pixel_format_color(const struct wined3d_gl_info *gl_in
 {
     BYTE redSize, greenSize, blueSize, alphaSize, colorBits;
 
-    if(!cfg)
-        return FALSE;
-
     /* Float formats need FBOs. If FBOs are used this function isn't called */
     if (format->flags & WINED3DFMT_FLAG_FLOAT) return FALSE;
 
