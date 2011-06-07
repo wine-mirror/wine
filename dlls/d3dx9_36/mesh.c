@@ -3066,6 +3066,98 @@ HRESULT WINAPI D3DXFrameDestroy(LPD3DXFRAME frame, LPD3DXALLOCATEHIERARCHY alloc
     return D3D_OK;
 }
 
+HRESULT WINAPI D3DXLoadMeshFromXA(LPCSTR filename,
+                                  DWORD options,
+                                  LPDIRECT3DDEVICE9 device,
+                                  LPD3DXBUFFER *adjacency,
+                                  LPD3DXBUFFER *materials,
+                                  LPD3DXBUFFER *effect_instances,
+                                  DWORD *num_materials,
+                                  LPD3DXMESH *mesh)
+{
+    HRESULT hr;
+    int len;
+    LPWSTR filenameW;
+
+    TRACE("(%s, %x, %p, %p, %p, %p, %p, %p)\n", debugstr_a(filename), options,
+          device, adjacency, materials, effect_instances, num_materials, mesh);
+
+    if (!filename)
+        return D3DERR_INVALIDCALL;
+
+    len = MultiByteToWideChar(CP_ACP, 0, filename, -1, NULL, 0);
+    filenameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!filenameW) return E_OUTOFMEMORY;
+    MultiByteToWideChar(CP_ACP, 0, filename, -1, filenameW, len);
+
+    hr = D3DXLoadMeshFromXW(filenameW, options, device, adjacency, materials,
+                            effect_instances, num_materials, mesh);
+    HeapFree(GetProcessHeap(), 0, filenameW);
+
+    return hr;
+}
+
+HRESULT WINAPI D3DXLoadMeshFromXW(LPCWSTR filename,
+                                  DWORD options,
+                                  LPDIRECT3DDEVICE9 device,
+                                  LPD3DXBUFFER *adjacency,
+                                  LPD3DXBUFFER *materials,
+                                  LPD3DXBUFFER *effect_instances,
+                                  DWORD *num_materials,
+                                  LPD3DXMESH *mesh)
+{
+    HRESULT hr;
+    DWORD size;
+    LPVOID buffer;
+
+    TRACE("(%s, %x, %p, %p, %p, %p, %p, %p)\n", debugstr_w(filename), options,
+          device, adjacency, materials, effect_instances, num_materials, mesh);
+
+    if (!filename)
+        return D3DERR_INVALIDCALL;
+
+    hr = map_view_of_file(filename, &buffer, &size);
+    if (FAILED(hr))
+        return D3DXERR_INVALIDDATA;
+
+    hr = D3DXLoadMeshFromXInMemory(buffer, size, options, device, adjacency,
+            materials, effect_instances, num_materials, mesh);
+
+    UnmapViewOfFile(buffer);
+
+    return hr;
+}
+
+HRESULT WINAPI D3DXLoadMeshFromXResource(HMODULE module,
+                                         LPCSTR name,
+                                         LPCSTR type,
+                                         DWORD options,
+                                         LPDIRECT3DDEVICE9 device,
+                                         LPD3DXBUFFER *adjacency,
+                                         LPD3DXBUFFER *materials,
+                                         LPD3DXBUFFER *effect_instances,
+                                         DWORD *num_materials,
+                                         LPD3DXMESH *mesh)
+{
+    HRESULT hr;
+    HRSRC resinfo;
+    DWORD size;
+    LPVOID buffer;
+
+    TRACE("(%p, %s, %s, %x, %p, %p, %p, %p, %p, %p)\n",
+          module, debugstr_a(name), debugstr_a(type), options, device,
+          adjacency, materials, effect_instances, num_materials, mesh);
+
+    resinfo = FindResourceA(module, name, type);
+    if (!resinfo) return D3DXERR_INVALIDDATA;
+
+    hr = load_resource_into_memory(module, resinfo, &buffer, &size);
+    if (!FAILED(hr)) return D3DXERR_INVALIDDATA;
+
+    return D3DXLoadMeshFromXInMemory(buffer, size, options, device, adjacency,
+            materials, effect_instances, num_materials, mesh);
+}
+
 struct mesh_container
 {
     struct list entry;
