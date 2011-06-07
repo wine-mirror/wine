@@ -1281,16 +1281,18 @@ static VOID *load_gdef_table(HDC hdc)
     return GDEF_Table;
 }
 
-static void GDEF_UpdateGlyphProps(HDC hdc, const WORD *pwGlyphs, const WORD cGlyphs, WORD* pwLogClust, SCRIPT_GLYPHPROP *pGlyphProp)
+static void GDEF_UpdateGlyphProps(HDC hdc, ScriptCache *psc, const WORD *pwGlyphs, const WORD cGlyphs, WORD* pwLogClust, SCRIPT_GLYPHPROP *pGlyphProp)
 {
-    VOID* header = load_gdef_table(hdc);
     int i;
+
+    if (!psc->GDEF_Table)
+        psc->GDEF_Table = load_gdef_table(hdc);
 
     for (i = 0; i < cGlyphs; i++)
     {
         WORD class;
 
-        class = GDEF_get_glyph_class(header, pwGlyphs[i]);
+        class = GDEF_get_glyph_class(psc->GDEF_Table, pwGlyphs[i]);
 
         switch (class)
         {
@@ -1322,8 +1324,6 @@ static void GDEF_UpdateGlyphProps(HDC hdc, const WORD *pwGlyphs, const WORD cGly
                 pGlyphProp[i].sva.fZeroWidth = 0;
         }
     }
-
-    HeapFree(GetProcessHeap(), 0, header);
 }
 
 static void UpdateClustersFromGlyphProp(const int cGlyphs, const int cChars, WORD* pwLogClust, SCRIPT_GLYPHPROP *pGlyphProp)
@@ -2656,7 +2656,7 @@ static void ShapeCharGlyphProp_Default( HDC hdc, ScriptCache* psc, SCRIPT_ANALYS
             pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_CHARACTER;
     }
 
-    GDEF_UpdateGlyphProps(hdc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
+    GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
 }
 
@@ -2770,7 +2770,7 @@ static void ShapeCharGlyphProp_Arabic( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
             pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
     }
 
-    GDEF_UpdateGlyphProps(hdc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
+    GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
     HeapFree(GetProcessHeap(),0,spaces);
 }
@@ -2838,7 +2838,7 @@ static void ShapeCharGlyphProp_Thai( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     }
 
     HeapFree(GetProcessHeap(),0,spaces);
-    GDEF_UpdateGlyphProps(hdc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
+    GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
 
     /* Do not allow justification between marks and their base */
@@ -2881,7 +2881,7 @@ static void ShapeCharGlyphProp_None( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS*
         else
             pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
     }
-    GDEF_UpdateGlyphProps(hdc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
+    GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
 }
 
@@ -2917,7 +2917,7 @@ static void ShapeCharGlyphProp_Tibet( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS
         else
             pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
     }
-    GDEF_UpdateGlyphProps(hdc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
+    GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
 
     /* Tibeten script does not set sva.fDiacritic or sva.fZeroWidth */

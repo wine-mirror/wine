@@ -88,6 +88,7 @@ typedef struct {
     WORD *glyphs[GLYPH_MAX / GLYPH_BLOCK_SIZE];
     ABC *widths[GLYPH_MAX / GLYPH_BLOCK_SIZE];
     LPVOID GSUB_Table;
+    LPVOID GDEF_Table;
     INT feature_count;
     LoadedFeature *features;
 
