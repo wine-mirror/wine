@@ -1882,6 +1882,47 @@ static ID3DXAllocateHierarchyVtbl ID3DXAllocateHierarchyImpl_Vtbl = {
 };
 static ID3DXAllocateHierarchy alloc_hier = { &ID3DXAllocateHierarchyImpl_Vtbl };
 
+#define test_LoadMeshFromX(device, xfile_str, vertex_array, fvf, index_array, materials_array, check_adjacency) \
+    test_LoadMeshFromX_(__LINE__, device, xfile_str, sizeof(xfile_str) - 1, vertex_array, ARRAY_SIZE(vertex_array), fvf, \
+            index_array, ARRAY_SIZE(index_array), sizeof(*index_array), materials_array, ARRAY_SIZE(materials_array), \
+            check_adjacency);
+static void test_LoadMeshFromX_(int line, IDirect3DDevice9 *device, const char *xfile_str, size_t xfile_strlen,
+        const void *vertices, DWORD num_vertices, DWORD fvf, const void *indices, DWORD num_indices, size_t index_size,
+        const D3DXMATERIAL *expected_materials, DWORD expected_num_materials, BOOL check_adjacency)
+{
+    HRESULT hr;
+    ID3DXBuffer *materials = NULL;
+    ID3DXBuffer *effects = NULL;
+    ID3DXBuffer *adjacency = NULL;
+    ID3DXMesh *mesh = NULL;
+    DWORD num_materials = 0;
+
+    /* Adjacency is not checked when the X file contains multiple meshes,
+     * since calling GenerateAdjacency on the merged mesh is not equivalent
+     * to calling GenerateAdjacency on the individual meshes and then merging
+     * the adjacency data. */
+    hr = D3DXLoadMeshFromXInMemory(xfile_str, xfile_strlen, D3DXMESH_MANAGED, device,
+            check_adjacency ? &adjacency : NULL, &materials, &effects, &num_materials, &mesh);
+    ok_(__FILE__,line)(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    if (SUCCEEDED(hr)) {
+        D3DXMATERIAL *materials_ptr = materials ? ID3DXBuffer_GetBufferPointer(materials) : NULL;
+        D3DXEFFECTINSTANCE *effects_ptr = effects ? ID3DXBuffer_GetBufferPointer(effects) : NULL;
+        DWORD *adjacency_ptr = check_adjacency ? ID3DXBuffer_GetBufferPointer(adjacency) : NULL;
+
+        check_vertex_buffer_(line, mesh, vertices, num_vertices, fvf);
+        check_index_buffer_(line, mesh, indices, num_indices, index_size);
+        check_materials_(line, materials_ptr, num_materials, expected_materials, expected_num_materials);
+        check_generated_effects_(line, materials_ptr, num_materials, effects_ptr);
+        if (check_adjacency)
+            check_generated_adjacency_(line, mesh, adjacency_ptr, 0.0f);
+
+        if (materials) ID3DXBuffer_Release(materials);
+        if (effects) ID3DXBuffer_Release(effects);
+        if (adjacency) ID3DXBuffer_Release(adjacency);
+        IUnknown_Release(mesh);
+    }
+}
+
 static void D3DXLoadMeshTest(void)
 {
     static const char empty_xfile[] = "xof 0303txt 0032";
@@ -1925,6 +1966,13 @@ static void D3DXLoadMeshTest(void)
         {{0.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {1.0, 1.0, 0.0}},
         {{0.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {2.0, 1.0, 0.0}},
         {{0.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {3.0, 1.0, 0.0}},
+    };
+    static const WORD merged_index_buffer[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+    /* frame transforms accumulates for D3DXLoadMeshFromX */
+    static const D3DXVECTOR3 merged_vertex_buffer[] = {
+        {0.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {1.0, 1.0, 0.0},
+        {0.0, 0.0, 2.0}, {0.0, 1.0, 2.0}, {2.0, 1.0, 2.0},
+        {0.0, 0.0, 5.0}, {0.0, 1.0, 5.0}, {3.0, 1.0, 5.0},
     };
     const DWORD framed_fvf = D3DFVF_XYZ;
     /*________________________*/
@@ -2088,6 +2136,18 @@ static void D3DXLoadMeshTest(void)
     };
     const DWORD box_fvf = D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_DIFFUSE | D3DFVF_TEX1;
     /*________________________*/
+    static const D3DXMATERIAL default_materials[] = {
+        {
+            {
+                {0.5, 0.5, 0.5, 0.0}, /* Diffuse */
+                {0.0, 0.0, 0.0, 0.0}, /* Ambient */
+                {0.5, 0.5, 0.5, 0.0}, /* Specular */
+                {0.0, 0.0, 0.0, 0.0}, /* Emissive */
+                0.0, /* Power */
+            },
+            NULL, /* pTextureFilename */
+        }
+    };
     HRESULT hr;
     HWND wnd = NULL;
     IDirect3D9 *d3d = NULL;
@@ -2222,6 +2282,41 @@ static void D3DXLoadMeshTest(void)
         ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
         frame_hier = NULL;
     }
+
+
+    hr = D3DXLoadMeshFromXInMemory(NULL, 0, D3DXMESH_MANAGED,
+                                   device, NULL, NULL, NULL, NULL, &mesh);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+    hr = D3DXLoadMeshFromXInMemory(NULL, sizeof(simple_xfile) - 1, D3DXMESH_MANAGED,
+                                   device, NULL, NULL, NULL, NULL, &mesh);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+    hr = D3DXLoadMeshFromXInMemory(simple_xfile, 0, D3DXMESH_MANAGED,
+                                   device, NULL, NULL, NULL, NULL, &mesh);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+    hr = D3DXLoadMeshFromXInMemory(simple_xfile, sizeof(simple_xfile) - 1, D3DXMESH_MANAGED,
+                                   device, NULL, NULL, NULL, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+    hr = D3DXLoadMeshFromXInMemory(simple_xfile, sizeof(simple_xfile) - 1, D3DXMESH_MANAGED,
+                                   NULL, NULL, NULL, NULL, NULL, &mesh);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+    hr = D3DXLoadMeshFromXInMemory(empty_xfile, sizeof(empty_xfile) - 1, D3DXMESH_MANAGED,
+                                   device, NULL, NULL, NULL, NULL, &mesh);
+    ok(hr == E_FAIL, "Expected E_FAIL, got %#x\n", hr);
+
+    hr = D3DXLoadMeshFromXInMemory(simple_xfile, sizeof(simple_xfile) - 1, D3DXMESH_MANAGED,
+                                   device, NULL, NULL, NULL, NULL, &mesh);
+    ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(mesh);
+
+    test_LoadMeshFromX(device, simple_xfile, simple_vertex_buffer, simple_fvf, simple_index_buffer, default_materials, TRUE);
+    test_LoadMeshFromX(device, box_xfile, box_vertex_buffer, box_fvf, box_index_buffer, box_materials, TRUE);
+    test_LoadMeshFromX(device, framed_xfile, merged_vertex_buffer, framed_fvf, merged_index_buffer, default_materials, FALSE);
 
 cleanup:
     if (device) IDirect3DDevice9_Release(device);
