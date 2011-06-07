@@ -2931,7 +2931,7 @@ HRESULT CDECL wined3d_get_adapter_identifier(const struct wined3d *wined3d,
     return WINED3D_OK;
 }
 
-static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const struct wined3d_gl_info *gl_info,
+static BOOL wined3d_check_pixel_format_color(const struct wined3d_gl_info *gl_info,
         const struct wined3d_pixel_format *cfg, const struct wined3d_format *format)
 {
     BYTE redSize, greenSize, blueSize, alphaSize, colorBits;
@@ -3038,13 +3038,11 @@ HRESULT CDECL wined3d_check_depth_stencil_match(const struct wined3d *wined3d,
         cfg_count = adapter->nCfgs;
         for (i = 0; i < cfg_count; ++i)
         {
-            if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info, &cfgs[i], rt_format))
+            if (wined3d_check_pixel_format_color(&adapter->gl_info, &cfgs[i], rt_format)
+                    && wined3d_check_pixel_format_depth(&adapter->gl_info, &cfgs[i], ds_format))
             {
-                if (wined3d_check_pixel_format_depth(&adapter->gl_info, &cfgs[i], ds_format))
-                {
-                    TRACE_(d3d_caps)("Formats match.\n");
-                    return WINED3D_OK;
-                }
+                TRACE_(d3d_caps)("Formats match.\n");
+                return WINED3D_OK;
             }
         }
     }
@@ -3185,11 +3183,9 @@ static BOOL CheckDepthStencilCapability(const struct wined3d_adapter *adapter,
         for (it = 0; it < adapter->nCfgs; ++it)
         {
             const struct wined3d_pixel_format *cfg = &adapter->cfgs[it];
-            if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info, cfg, display_format))
-            {
-                if (wined3d_check_pixel_format_depth(&adapter->gl_info, cfg, ds_format))
-                    return TRUE;
-            }
+            if (wined3d_check_pixel_format_color(&adapter->gl_info, cfg, display_format)
+                    && wined3d_check_pixel_format_depth(&adapter->gl_info, cfg, ds_format))
+                return TRUE;
         }
     }
 
@@ -3231,8 +3227,8 @@ static BOOL CheckRenderTargetCapability(const struct wined3d_adapter *adapter,
          * drawable (not offscreen; e.g. Nvidia offers R5G6B5 for pbuffers even when X is running at 24bit) */
         for (it = 0; it < adapter->nCfgs; ++it)
         {
-            if (cfgs[it].windowDrawable && IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info,
-                    &cfgs[it], check_format))
+            if (cfgs[it].windowDrawable
+                    && wined3d_check_pixel_format_color(&adapter->gl_info, &cfgs[it], check_format))
             {
                 TRACE_(d3d_caps)("Pixel format %d is compatible with format %s.\n",
                         cfgs[it].iPixelFormat, debug_d3dformat(check_format->id));
