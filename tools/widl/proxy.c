@@ -73,7 +73,7 @@ static void write_stubdesc(int expr_eval_routines)
   print_proxy( "{0}, 0, 0, %s, 0,\n", expr_eval_routines ? "ExprEvalRoutines" : "0");
   print_proxy( "__MIDL_TypeFormatString.Format,\n");
   print_proxy( "1, /* -error bounds_check flag */\n");
-  print_proxy( "0x10001, /* Ndr library version */\n");
+  print_proxy( "0x%x, /* Ndr library version */\n", stub_mode == MODE_Oif ? 0x50002 : 0x10001);
   print_proxy( "0,\n");
   print_proxy( "0x50100a4, /* MIDL Version 5.1.164 */\n");
   print_proxy( "0,\n");
@@ -100,6 +100,7 @@ static void init_proxy(const statement_list_t *stmts)
   print_proxy( "#endif /* __REDQ_RPCPROXY_H_VERSION__ */\n");
   print_proxy( "\n");
   print_proxy( "#define __midl_proxy\n");
+  if (stub_mode == MODE_Oif) print_proxy( "#define USE_STUBLESS_PROXY\n");
   print_proxy( "#include \"objbase.h\"\n");
   print_proxy( "#include \"rpcproxy.h\"\n");
   print_proxy( "#ifndef __RPCPROXY_H_VERSION__\n");
@@ -271,6 +272,7 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
   indent = 0;
   if (is_interpreted_func( iface, func ))
   {
+      if (stub_mode == MODE_Oif && !is_callas( func->attrs )) return;
       write_type_decl_left(proxy, type_function_get_rettype(func->type));
       print_proxy( " %s %s_%s_Proxy(\n", callconv, iface->name, get_name(func));
       write_args(proxy, args, iface->name, 1, TRUE);
@@ -278,8 +280,10 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
       print_proxy( "{\n");
       indent++;
       if (has_ret) print_proxy( "%s", "CLIENT_CALL_RETURN _RetVal;\n\n" );
-      print_proxy( "%sNdrClientCall( &Object_StubDesc, &__MIDL_ProcFormatString.Format[%u], ",
-                   has_ret ? "_RetVal = " : "", proc_offset );
+      print_proxy( "%s%s( &Object_StubDesc, &__MIDL_ProcFormatString.Format[%u], ",
+                   has_ret ? "_RetVal = " : "",
+                   stub_mode == MODE_Oif ? "NdrClientCall2" : "NdrClientCall",
+                   proc_offset );
       fprintf( proxy, "(unsigned char *)&This );\n" );
       if (has_ret)
       {
@@ -575,12 +579,24 @@ static int write_proxy_methods(type_t *iface, int skip)
   STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface)) {
     const var_t *func = stmt->u.var;
     if (!is_callas(func->attrs)) {
-      if (i != func->type->details.function->idx )
-        error("widl internal error: method index mismatch\n");
-      if (i) fprintf(proxy, ",\n");
-      if (skip || (is_local(func->attrs) && !get_callas_source(iface, func)))
-           print_proxy( "0  /* %s_%s_Proxy */", iface->name, get_name(func));
-      else print_proxy( "%s_%s_Proxy", iface->name, get_name(func));
+      int missing = 0;
+      const char * fname = get_name(func);
+      if (is_local(func->attrs)) {
+        const statement_t * callas_source = get_callas_source(iface, func);
+        if(!callas_source)
+          missing = 1;
+        else
+          fname = get_name(callas_source->u.var);
+      }
+      if (skip || missing) print_proxy( "0,  /* %s::%s */\n", iface->name, get_name(func));
+      else if (is_interpreted_func( iface, func ))
+      {
+          if (!is_local( func->attrs ) && type_iface_get_inherit(iface))
+              print_proxy( "(void *)-1,  /* %s::%s */\n", iface->name, get_name(func));
+          else
+              print_proxy( "%s_%s_Proxy,\n", iface->name, fname);
+      }
+      else print_proxy( "%s_%s_Proxy,\n", iface->name, get_name(func));
       i++;
     }
   }
@@ -611,7 +627,8 @@ static int write_stub_methods(type_t *iface, int skip)
       }
       if (i) fprintf(proxy,",\n");
       if (skip || missing) print_proxy("STUB_FORWARDING_FUNCTION");
-      else if (is_interpreted_func( iface, func )) print_proxy( "(PRPC_STUB_FUNCTION)NdrStubCall" );
+      else if (is_interpreted_func( iface, func ))
+          print_proxy( "(PRPC_STUB_FUNCTION)%s", stub_mode == MODE_Oif ? "NdrStubCall2" : "NdrStubCall" );
       else print_proxy( "%s_%s_Stub", iface->name, fname);
       i++;
     }
@@ -646,7 +663,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   const statement_t *stmt;
   int first_func = 1;
   int needs_stub_thunks = 0;
-  int needs_inline_stubs = need_inline_stubs( iface );
+  int needs_inline_stubs = need_inline_stubs( iface ) || need_delegation( iface );
 
   STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface)) {
     var_t *func = stmt->u.var;
@@ -687,6 +704,22 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
 
   write_procformatstring_offsets( proxy, iface );
 
+  /* proxy info */
+  if (stub_mode == MODE_Oif)
+  {
+      print_proxy( "static const MIDL_STUBLESS_PROXY_INFO %s_ProxyInfo =\n", iface->name );
+      print_proxy( "{\n" );
+      indent++;
+      print_proxy( "&Object_StubDesc,\n" );
+      print_proxy( "__MIDL_ProcFormatString.Format,\n" );
+      print_proxy( "&%s_FormatStringOffsetTable[-3],\n", iface->name );
+      print_proxy( "0,\n" );
+      print_proxy( "0,\n" );
+      print_proxy( "0\n" );
+      indent--;
+      print_proxy( "};\n\n" );
+  }
+
   /* proxy vtable */
   print_proxy( "static %sCINTERFACE_PROXY_VTABLE(%d) _%sProxyVtbl =\n",
                need_delegation_indirect(iface) ? "" : "const ", count, iface->name);
@@ -694,13 +727,13 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   indent++;
   print_proxy( "{\n");
   indent++;
+  if (stub_mode == MODE_Oif) print_proxy( "&%s_ProxyInfo,\n", iface->name );
   print_proxy( "&IID_%s,\n", iface->name);
   indent--;
   print_proxy( "},\n");
   print_proxy( "{\n");
   indent++;
   write_proxy_methods(iface, FALSE);
-  fprintf(proxy, "\n");
   indent--;
   print_proxy( "}\n");
   indent--;
@@ -999,7 +1032,7 @@ static void write_proxy_routines(const statement_list_t *stmts)
   else fprintf(proxy, "    0,\n");
   fprintf(proxy, "    _%s_IID_Lookup,\n", file_id);
   fprintf(proxy, "    %d,\n", count);
-  fprintf(proxy, "    1,\n");
+  fprintf(proxy, "    %d,\n", stub_mode == MODE_Oif ? 2 : 1);
   fprintf(proxy, "    0,\n");
   fprintf(proxy, "    0,\n");
   fprintf(proxy, "    0,\n");
