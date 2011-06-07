@@ -441,13 +441,170 @@ static HRESULT WINAPI ID3DXMeshImpl_ConvertPointRepsToAdjacency(ID3DXMesh *iface
     return E_NOTIMPL;
 }
 
+/* ConvertAdjacencyToPointReps helper function.
+ *
+ * Goes around the edges of each face and replaces the vertices in any adjacent
+ * face's edge with its own vertices(if its vertices have a lower index). This
+ * way as few as possible low index vertices are shared among the faces. The
+ * re-ordered index buffer is stored in new_indices.
+ *
+ * The vertices in a point representation must be ordered sequentially, e.g.
+ * index 5 holds the index of the vertex that replaces vertex 5, i.e. if
+ * vertex 5 is replaced by vertex 3 then index 5 would contain 3. If no vertex
+ * replaces it, then it contains the same number as the index itself, e.g.
+ * index 5 would contain 5. */
+static HRESULT propagate_face_vertices(CONST DWORD *adjacency, DWORD *point_reps,
+                                    CONST DWORD *indices, DWORD *new_indices,
+                                    CONST DWORD face, CONST DWORD numfaces)
+{
+    const unsigned int VERTS_PER_FACE = 3;
+    DWORD edge, opp_edge;
+    DWORD face_base = VERTS_PER_FACE * face;
+
+    for (edge = 0; edge < VERTS_PER_FACE; edge++)
+    {
+        DWORD adj_face = adjacency[face_base + edge];
+        DWORD adj_face_base;
+        DWORD i,j;
+        if (adj_face == -1) /* No adjacent face. */
+            continue;
+        else if (adj_face >= numfaces)
+        {
+            /* This throws exception on Windows */
+            WARN("Index out of bounds. Got %d expected less than %d.\n",
+                adj_face, numfaces);
+            return D3DERR_INVALIDCALL;
+        }
+        adj_face_base = 3 * adj_face;
+
+        /* Find opposite edge in adjacent face. */
+        for (opp_edge = 0; opp_edge < VERTS_PER_FACE; opp_edge++)
+        {
+            DWORD opp_edge_index = adj_face_base + opp_edge;
+            if (adjacency[opp_edge_index] == face)
+                break; /* Found opposite edge. */
+        }
+
+        /* Replaces vertices in opposite edge with vertices from current edge. */
+        for (i = 0, j = 1; i < 2 && (j+1) > 0; i++, j--)
+        {
+            DWORD from = face_base + (edge + j) % VERTS_PER_FACE;
+            DWORD to = adj_face_base + (opp_edge + i) % VERTS_PER_FACE;
+
+            /* Propagate lowest index. */
+            if (new_indices[to] > new_indices[from])
+            {
+                new_indices[to] = new_indices[from];
+                point_reps[indices[to]] = new_indices[from];
+            }
+        }
+    }
+
+    return D3D_OK;
+}
+
 static HRESULT WINAPI ID3DXMeshImpl_ConvertAdjacencyToPointReps(ID3DXMesh *iface, CONST DWORD *adjacency, DWORD *point_reps)
 {
+    HRESULT hr;
+    DWORD face;
+    DWORD i;
+    DWORD *indices = NULL;
+    WORD *indices_16bit = NULL;
+    DWORD *new_indices = NULL;
+    const unsigned int VERTS_PER_FACE = 3;
+
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
-    FIXME("(%p)->(%p,%p): stub\n", This, adjacency, point_reps);
+    TRACE("(%p)->(%p,%p)\n", This, adjacency, point_reps);
 
-    return E_NOTIMPL;
+    if (!adjacency)
+    {
+        WARN("NULL adjacency.\n");
+        hr = D3DERR_INVALIDCALL;
+        goto cleanup;
+    }
+
+    if (!point_reps)
+    {
+        WARN("NULL point_reps.\n");
+        hr = D3DERR_INVALIDCALL;
+        goto cleanup;
+    }
+
+    /* Should never happen as CreateMesh does not allow meshes with 0 faces */
+    if (This->numfaces == 0)
+    {
+        ERR("Number of faces was zero.");
+        hr = D3DERR_INVALIDCALL;
+        goto cleanup;
+    }
+
+    new_indices = HeapAlloc(GetProcessHeap(), 0, VERTS_PER_FACE * This->numfaces * sizeof(*indices));
+    if (!new_indices)
+    {
+        hr = E_OUTOFMEMORY;
+        goto cleanup;
+    }
+
+    if (This->options & D3DXMESH_32BIT)
+    {
+        hr = iface->lpVtbl->LockIndexBuffer(iface, D3DLOCK_READONLY, (void**)&indices);
+        if (FAILED(hr)) goto cleanup;
+        memcpy(new_indices, indices, VERTS_PER_FACE * This->numfaces * sizeof(*indices));
+    }
+    else
+    {
+        /* Make a widening copy of indices_16bit into indices and new_indices
+         * in order to re-use the helper function */
+        hr = iface->lpVtbl->LockIndexBuffer(iface, D3DLOCK_READONLY, (void**)&indices_16bit);
+        if (FAILED(hr)) goto cleanup;
+        indices = HeapAlloc(GetProcessHeap(), 0, VERTS_PER_FACE * This->numfaces * sizeof(*indices));
+        if (!indices)
+        {
+            hr = E_OUTOFMEMORY;
+            goto cleanup;
+        }
+        for (i = 0; i < VERTS_PER_FACE * This->numfaces; i++)
+        {
+            new_indices[i] = indices_16bit[i];
+            indices[i] = indices_16bit[i];
+        }
+    }
+
+    /* Vertices are ordered sequentially in the point representation. */
+    for (i = 0; i < This->numvertices; i++)
+    {
+        point_reps[i] = i;
+    }
+
+    /* Propagate vertices with low indices so as few vertices as possible
+     * are used in the mesh.
+     */
+    for (face = 0; face < This->numfaces; face++)
+    {
+        hr = propagate_face_vertices(adjacency, point_reps, indices, new_indices, face, This->numfaces);
+        if (FAILED(hr)) goto cleanup;
+    }
+    /* Go in opposite direction to catch all face orderings */
+    for (face = This->numfaces - 1; face + 1 > 0; face--)
+    {
+        hr = propagate_face_vertices(adjacency, point_reps, indices, new_indices, face, This->numfaces);
+        if (FAILED(hr)) goto cleanup;
+    }
+
+    hr = D3D_OK;
+cleanup:
+    if (This->options & D3DXMESH_32BIT)
+    {
+        if (indices) iface->lpVtbl->UnlockIndexBuffer(iface);
+    }
+    else
+    {
+        if (indices_16bit) iface->lpVtbl->UnlockIndexBuffer(iface);
+        HeapFree(GetProcessHeap(), 0, indices);
+    }
+    HeapFree(GetProcessHeap(), 0, new_indices);
+    return hr;
 }
 
 struct vertex_metadata {

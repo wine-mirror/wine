@@ -5386,16 +5386,16 @@ static void test_convert_adjacency_to_point_reps(void)
         /* Convert adjacency to point representation */
         memset(point_reps, -1, tc[i].num_vertices * sizeof(*point_reps));
         hr = mesh->lpVtbl->ConvertAdjacencyToPointReps(mesh, tc[i].adjacency, point_reps);
-        todo_wine ok(hr == D3D_OK, "ConvertAdjacencyToPointReps failed case %d. "
+        ok(hr == D3D_OK, "ConvertAdjacencyToPointReps failed case %d. "
            "Got %x expected D3D_OK\n", i, hr);
 
         /* Check point representation */
         for (j = 0; j < tc[i].num_vertices; j++)
         {
-            todo_wine ok(point_reps[j] == tc[i].exp_point_reps[j],
-                         "Unexpected point representation at (%d, %d)."
-                         " Got %d expected %d\n",
-                         i, j, point_reps[j], tc[i].exp_point_reps[j]);
+            ok(point_reps[j] == tc[i].exp_point_reps[j],
+               "Unexpected point representation at (%d, %d)."
+               " Got %d expected %d\n",
+               i, j, point_reps[j], tc[i].exp_point_reps[j]);
         }
 
         HeapFree(GetProcessHeap(), 0, point_reps);
@@ -5406,11 +5406,11 @@ static void test_convert_adjacency_to_point_reps(void)
 
     /* NULL checks */
     hr = mesh_null_check->lpVtbl->ConvertAdjacencyToPointReps(mesh_null_check, tc[0].adjacency, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "ConvertAdjacencyToPointReps point_reps NULL. "
-                 "Got %x expected D3DERR_INVALIDCALL\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "ConvertAdjacencyToPointReps point_reps NULL. "
+       "Got %x expected D3DERR_INVALIDCALL\n", hr);
     hr = mesh_null_check->lpVtbl->ConvertAdjacencyToPointReps(mesh_null_check, NULL, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "ConvertAdjacencyToPointReps adjacency and point_reps NULL. "
-                 "Got %x expected D3DERR_INVALIDCALL\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "ConvertAdjacencyToPointReps adjacency and point_reps NULL. "
+       "Got %x expected D3DERR_INVALIDCALL\n", hr);
 
 cleanup:
     if (mesh_null_check)
