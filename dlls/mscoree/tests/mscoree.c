@@ -287,7 +287,8 @@ static void test_createconfigstream(void)
 
     hr = pCreateConfigStream(NULL, &stream);
     todo_wine ok(hr == E_FAIL ||
-                 broken(hr == HRESULT_FROM_WIN32(ERROR_PROC_NOT_FOUND)), /* some WinXP, Win2K3 and Win7 */
+                 broken(hr == HRESULT_FROM_WIN32(ERROR_PROC_NOT_FOUND)) || /* some WinXP, Win2K3 and Win7 */
+                 broken(hr == S_OK && !stream), /* some Win2K3 */
                  "CreateConfigStream returned %x\n", hr);
 
     hr = pCreateConfigStream(path, NULL);
