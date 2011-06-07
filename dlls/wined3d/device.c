@@ -4337,8 +4337,8 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
     }
 
     /* Verify that the source and destination textures are the same type. */
-    type = wined3d_texture_get_type(src_texture);
-    if (wined3d_texture_get_type(dst_texture) != type)
+    type = src_texture->resource.resourceType;
+    if (dst_texture->resource.resourceType != type)
     {
         WARN("Source and destination have different types, returning WINED3DERR_INVALIDCALL.\n");
         return WINED3DERR_INVALIDCALL;

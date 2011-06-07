@@ -268,7 +268,6 @@
 @ cdecl wined3d_texture_get_priority(ptr)
 @ cdecl wined3d_texture_get_private_data(ptr ptr ptr ptr)
 @ cdecl wined3d_texture_get_sub_resource(ptr long)
-@ cdecl wined3d_texture_get_type(ptr)
 @ cdecl wined3d_texture_incref(ptr)
 @ cdecl wined3d_texture_preload(ptr)
 @ cdecl wined3d_texture_set_autogen_filter_type(ptr long)

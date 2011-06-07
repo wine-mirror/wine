@@ -483,13 +483,6 @@ void CDECL wined3d_texture_preload(struct wined3d_texture *texture)
     texture->texture_ops->texture_preload(texture, SRGB_ANY);
 }
 
-WINED3DRESOURCETYPE CDECL wined3d_texture_get_type(const struct wined3d_texture *texture)
-{
-    TRACE("texture %p.\n", texture);
-
-    return texture->resource.resourceType;
-}
-
 void * CDECL wined3d_texture_get_parent(const struct wined3d_texture *texture)
 {
     TRACE("texture %p.\n", texture);

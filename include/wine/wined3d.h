@@ -2504,7 +2504,6 @@ HRESULT __cdecl wined3d_texture_get_private_data(const struct wined3d_texture *t
         REFGUID guid, void *data, DWORD *data_size);
 struct wined3d_resource * __cdecl wined3d_texture_get_sub_resource(struct wined3d_texture *texture,
         UINT sub_resource_idx);
-WINED3DRESOURCETYPE __cdecl wined3d_texture_get_type(const struct wined3d_texture *texture);
 ULONG __cdecl wined3d_texture_incref(struct wined3d_texture *texture);
 void __cdecl wined3d_texture_preload(struct wined3d_texture *texture);
 HRESULT __cdecl wined3d_texture_set_autogen_filter_type(struct wined3d_texture *texture,
