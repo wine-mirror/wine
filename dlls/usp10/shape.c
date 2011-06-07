@@ -2335,9 +2335,9 @@ static int oriya_lex(WCHAR c)
         case 0x0B3F:
         case 0x0B56: return lex_Matra_above;
         case 0x0B3E:
+        case 0x0B57:
         case 0x0B40: return lex_Matra_post;
-        case 0x0B47:
-        case 0x0B57: return lex_Matra_pre;
+        case 0x0B47: return lex_Matra_pre;
         case 0x0B4D: return lex_Halant;
         case 0x200C: return lex_ZWNJ;
         case 0x200D: return lex_ZWJ;
