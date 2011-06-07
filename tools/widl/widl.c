@@ -483,8 +483,6 @@ void write_id_data(const statement_list_t *stmts)
 
 int main(int argc,char *argv[])
 {
-  extern char* optarg;
-  extern int   optind;
   int optc;
   int ret = 0;
   int opti = 0;
