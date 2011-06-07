@@ -1040,7 +1040,7 @@ static INT GSUB_apply_ChainContextSubst(const GSUB_LookupList* lookup, const GSU
                     continue;
                 }
             }
-            return newIndex + 1;
+            return newIndex;
         }
     }
     return -1;
