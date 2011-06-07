@@ -92,7 +92,7 @@
 @ stub _PfAddGlobalFilterToInterface@8
 @ stub _PfBindInterfaceToIPAddress@12
 @ stub _PfBindInterfaceToIndex@16
-@ stub _PfCreateInterface@24
+@ stdcall _PfCreateInterface@24(long long long long long ptr) PfCreateInterface
 @ stub _PfDeleteInterface@4
 @ stub _PfDeleteLog@0
 @ stub _PfGetInterfaceStatistics@16

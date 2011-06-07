@@ -55,6 +55,7 @@
 #include "ifenum.h"
 #include "ipstats.h"
 #include "ipifcons.h"
+#include "fltdefs.h"
 
 #include "wine/debug.h"
 
@@ -2255,4 +2256,14 @@ DWORD WINAPI UnenableRouter(OVERLAPPED * pOverlapped, LPDWORD lpdwEnableCount)
      could map EACCESS to ERROR_ACCESS_DENIED, I suppose
    */
   return ERROR_NOT_SUPPORTED;
+}
+
+/******************************************************************
+ *    PfCreateInterface (IPHLPAPI.@)
+ */
+DWORD WINAPI PfCreateInterface(DWORD dwName, PFFORWARD_ACTION inAction, PFFORWARD_ACTION outAction,
+        BOOL bUseLog, BOOL bMustBeUnique, INTERFACE_HANDLE *ppInterface)
+{
+    FIXME("(%d %d %d %x %x %p) stub\n", dwName, inAction, outAction, bUseLog, bMustBeUnique, ppInterface);
+    return ERROR_CALL_NOT_IMPLEMENTED;
 }
