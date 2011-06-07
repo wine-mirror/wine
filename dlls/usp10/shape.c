@@ -1322,6 +1322,8 @@ static void GDEF_UpdateGlyphProps(HDC hdc, const WORD *pwGlyphs, const WORD cGly
                 pGlyphProp[i].sva.fZeroWidth = 0;
         }
     }
+
+    HeapFree(GetProcessHeap(), 0, header);
 }
 
 static void UpdateClustersFromGlyphProp(const int cGlyphs, const int cChars, WORD* pwLogClust, SCRIPT_GLYPHPROP *pGlyphProp)
