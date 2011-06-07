@@ -2968,7 +2968,7 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const struct wined
     return FALSE;
 }
 
-static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const struct wined3d_gl_info *gl_info,
+static BOOL wined3d_check_pixel_format_depth(const struct wined3d_gl_info *gl_info,
         const struct wined3d_pixel_format *cfg, const struct wined3d_format *format)
 {
     BYTE depthSize, stencilSize;
@@ -3043,7 +3043,7 @@ HRESULT CDECL wined3d_check_depth_stencil_match(const struct wined3d *wined3d,
         {
             if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info, &cfgs[i], rt_format))
             {
-                if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&adapter->gl_info, &cfgs[i], ds_format))
+                if (wined3d_check_pixel_format_depth(&adapter->gl_info, &cfgs[i], ds_format))
                 {
                     TRACE_(d3d_caps)("Formats match.\n");
                     return WINED3D_OK;
@@ -3104,7 +3104,7 @@ HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3
             if(cfgs[i].numSamples != multisample_type)
                 continue;
 
-            if (!IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&adapter->gl_info, &cfgs[i], format))
+            if (!wined3d_check_pixel_format_depth(&adapter->gl_info, &cfgs[i], format))
                 continue;
 
             TRACE("Found pixel format %u to support multisample_type %#x for format %s.\n",
@@ -3190,10 +3190,8 @@ static BOOL CheckDepthStencilCapability(const struct wined3d_adapter *adapter,
             const struct wined3d_pixel_format *cfg = &adapter->cfgs[it];
             if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info, cfg, display_format))
             {
-                if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&adapter->gl_info, cfg, ds_format))
-                {
+                if (wined3d_check_pixel_format_depth(&adapter->gl_info, cfg, ds_format))
                     return TRUE;
-                }
             }
         }
     }
