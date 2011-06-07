@@ -2073,43 +2073,60 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
     UINT i;
     struct wined3d_surface **rts = fb->render_targets;
 
-    if (!context_validate_rt_config(rt_count, rts, fb->depth_stencil))
-        return FALSE;
-
-
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    if (isStateDirty(context, STATE_FRAMEBUFFER) || fb != &device->fb
+            || rt_count != device->adapter->gl_info.limits.buffers)
     {
-        context_validate_onscreen_formats(device, context, fb->depth_stencil);
+        if (!context_validate_rt_config(rt_count, fb->render_targets, fb->depth_stencil))
+            return FALSE;
 
-        ENTER_GL();
-
-        if (!rt_count || surface_is_offscreen(rts[0]))
+        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
         {
-            for (i = 0; i < rt_count; ++i)
+            context_validate_onscreen_formats(device, context, fb->depth_stencil);
+
+            ENTER_GL();
+
+            if (!rt_count || surface_is_offscreen(fb->render_targets[0]))
             {
-                context->blit_targets[i] = rts[i];
-                if (rts[i] && rts[i]->resource.format->id != WINED3DFMT_NULL)
-                    rt_mask |= (1 << i);
+                for (i = 0; i < rt_count; ++i)
+                {
+                    context->blit_targets[i] = rts[i];
+                    if (rts[i] && rts[i]->resource.format->id != WINED3DFMT_NULL)
+                        rt_mask |= (1 << i);
+                }
+                while (i < context->gl_info->limits.buffers)
+                {
+                    context->blit_targets[i] = NULL;
+                    ++i;
+                }
+                context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets, fb->depth_stencil, SFLAG_INTEXTURE);
+                glReadBuffer(GL_NONE);
+                checkGLcall("glReadBuffer");
             }
-            while (i < context->gl_info->limits.buffers)
+            else
             {
-                context->blit_targets[i] = NULL;
-                ++i;
+                context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL, SFLAG_INDRAWABLE);
+                rt_mask = context_generate_rt_mask_from_surface(fb->render_targets[0]);
             }
-            context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets, fb->depth_stencil, SFLAG_INTEXTURE);
-            glReadBuffer(GL_NONE);
-            checkGLcall("glReadBuffer");
+
+            LEAVE_GL();
+
+            /* If the framebuffer is not the device's fb the device's fb has to be reapplied
+             * next draw. Otherwise we could mark the framebuffer state clean here, once the
+             * state management allows this */
+            context_invalidate_state(context, STATE_FRAMEBUFFER, device->StateTable);
         }
         else
         {
-            context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL, SFLAG_INDRAWABLE);
-            rt_mask = context_generate_rt_mask_from_surface(rts[0]);
+            rt_mask = context_generate_rt_mask_no_fbo(device, rts[0]);
         }
-
-        LEAVE_GL();
-
-        /* TODO: This is not necessary if the framebuffer is the device's current framebuffer */
-        context_invalidate_state(context, STATE_FRAMEBUFFER, device->StateTable);
+    }
+    else if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
+        && (!rt_count || surface_is_offscreen(fb->render_targets[0])))
+    {
+        for (i = 0; i < rt_count; ++i)
+        {
+            if (rts[i] && rts[i]->resource.format->id != WINED3DFMT_NULL) rt_mask |= (1 << i);
+        }
     }
     else
     {
@@ -2121,6 +2138,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
     {
         context_apply_draw_buffers(context, rt_mask);
         context->draw_buffers_mask = rt_mask;
+        context_invalidate_state(context, STATE_FRAMEBUFFER, device->StateTable);
     }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
