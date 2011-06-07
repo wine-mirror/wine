@@ -522,12 +522,12 @@ void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
             {
             case PROXY_CALCSIZE:
                 if (pParam->param_direction == RPC_FC_IN_PARAM ||
-                    pParam->param_direction & RPC_FC_IN_OUT_PARAM)
+                    pParam->param_direction == RPC_FC_IN_OUT_PARAM)
                     call_buffer_sizer(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
                 break;
             case PROXY_MARSHAL:
                 if (pParam->param_direction == RPC_FC_IN_PARAM ||
-                    pParam->param_direction & RPC_FC_IN_OUT_PARAM)
+                    pParam->param_direction == RPC_FC_IN_OUT_PARAM)
                     call_marshaller(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
                 break;
             case PROXY_UNMARSHAL:
