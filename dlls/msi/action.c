@@ -3188,10 +3188,27 @@ static void ACTION_RefCountComponent( MSIPACKAGE* package, MSICOMPONENT *comp )
         ACTION_WriteSharedDLLsCount( comp->FullKeypath, comp->RefCount );
 }
 
+static WCHAR *build_full_keypath( MSIPACKAGE *package, MSICOMPONENT *comp )
+{
+    if (comp->assembly)
+    {
+        const WCHAR prefixW[] = {'<','\\',0};
+        DWORD len = strlenW( prefixW ) + strlenW( comp->assembly->display_name );
+        WCHAR *keypath = msi_alloc( (len + 1) * sizeof(WCHAR) );
+
+        if (keypath)
+        {
+            strcpyW( keypath, prefixW );
+            strcatW( keypath, comp->assembly->display_name );
+        }
+        return keypath;
+    }
+    return resolve_keypath( package, comp );
+}
+
 static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
 {
-    WCHAR squished_pc[GUID_SIZE];
-    WCHAR squished_cc[GUID_SIZE];
+    WCHAR squished_pc[GUID_SIZE], squished_cc[GUID_SIZE];
     UINT rc;
     MSICOMPONENT *comp;
     HKEY hkey;
@@ -3205,41 +3222,27 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
     {
-        MSIRECORD * uirow;
+        MSIRECORD *uirow;
+        INSTALLSTATE action;
 
         msi_ui_progress( package, 2, 0, 0, 0 );
         if (!comp->ComponentId)
             continue;
 
-        squash_guid(comp->ComponentId,squished_cc);
-
-        msi_free(comp->FullKeypath);
-        if (comp->assembly)
-        {
-            const WCHAR prefixW[] = {'<','\\',0};
-            DWORD len = strlenW( prefixW ) + strlenW( comp->assembly->display_name );
-
-            comp->FullKeypath = msi_alloc( (len + 1) * sizeof(WCHAR) );
-            if (comp->FullKeypath)
-            {
-                strcpyW( comp->FullKeypath, prefixW );
-                strcatW( comp->FullKeypath, comp->assembly->display_name );
-            }
-        }
-        else comp->FullKeypath = resolve_keypath( package, comp );
+        squash_guid( comp->ComponentId, squished_cc );
+        msi_free( comp->FullKeypath );
+        comp->FullKeypath = build_full_keypath( package, comp );
 
         ACTION_RefCountComponent( package, comp );
 
-        comp->Action = msi_get_component_action( package, comp );
-        TRACE("Component %s (%s), Keypath=%s, RefCount=%u Action=%u\n",
-                            debugstr_w(comp->Component),
-                            debugstr_w(squished_cc),
-                            debugstr_w(comp->FullKeypath),
-                            comp->RefCount,
-                            comp->Action);
+        if (package->need_rollback) action = comp->Installed;
+        else action = comp->ActionRequest;
 
-        if (comp->Action == INSTALLSTATE_LOCAL ||
-            comp->Action == INSTALLSTATE_SOURCE)
+        TRACE("Component %s (%s), Keypath=%s, RefCount=%u Action=%u\n",
+                            debugstr_w(comp->Component), debugstr_w(squished_cc),
+                            debugstr_w(comp->FullKeypath), comp->RefCount, action);
+
+        if (action == INSTALLSTATE_LOCAL || action == INSTALLSTATE_SOURCE)
         {
             if (package->Context == MSIINSTALLCONTEXT_MACHINE)
                 rc = MSIREG_OpenUserDataComponentKey(comp->ComponentId, szLocalSid, &hkey, TRUE);
@@ -3258,8 +3261,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
 
                 msi_reg_set_val_str(hkey, szPermKey, comp->FullKeypath);
             }
-
-            if (comp->Action == INSTALLSTATE_LOCAL)
+            if (action == INSTALLSTATE_LOCAL)
                 msi_reg_set_val_str(hkey, squished_pc, comp->FullKeypath);
             else
             {
@@ -3299,7 +3301,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
             }
             RegCloseKey(hkey);
         }
-        else if (comp->Action == INSTALLSTATE_ABSENT)
+        else if (action == INSTALLSTATE_ABSENT)
         {
             if (package->Context == MSIINSTALLCONTEXT_MACHINE)
                 MSIREG_DeleteUserDataComponentKey(comp->ComponentId, szLocalSid);
