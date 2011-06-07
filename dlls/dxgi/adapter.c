@@ -24,6 +24,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
+static inline struct dxgi_adapter *impl_from_IWineDXGIAdapter(IWineDXGIAdapter *iface)
+{
+    return CONTAINING_RECORD(iface, struct dxgi_adapter, IWineDXGIAdapter_iface);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_QueryInterface(IWineDXGIAdapter *iface, REFIID riid, void **object)
@@ -48,7 +53,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_QueryInterface(IWineDXGIAdapter *i
 
 static ULONG STDMETHODCALLTYPE dxgi_adapter_AddRef(IWineDXGIAdapter *iface)
 {
-    struct dxgi_adapter *This = (struct dxgi_adapter *)iface;
+    struct dxgi_adapter *This = impl_from_IWineDXGIAdapter(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -58,7 +63,7 @@ static ULONG STDMETHODCALLTYPE dxgi_adapter_AddRef(IWineDXGIAdapter *iface)
 
 static ULONG STDMETHODCALLTYPE dxgi_adapter_Release(IWineDXGIAdapter *iface)
 {
-    struct dxgi_adapter *This = (struct dxgi_adapter *)iface;
+    struct dxgi_adapter *This = impl_from_IWineDXGIAdapter(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -100,7 +105,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetPrivateData(IWineDXGIAdapter *i
 
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetParent(IWineDXGIAdapter *iface, REFIID riid, void **parent)
 {
-    struct dxgi_adapter *This = (struct dxgi_adapter *)iface;
+    struct dxgi_adapter *This = impl_from_IWineDXGIAdapter(iface);
 
     TRACE("iface %p, riid %s, parent %p\n", iface, debugstr_guid(riid), parent);
 
@@ -112,7 +117,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetParent(IWineDXGIAdapter *iface,
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_EnumOutputs(IWineDXGIAdapter *iface,
         UINT output_idx, IDXGIOutput **output)
 {
-    struct dxgi_adapter *This = (struct dxgi_adapter *)iface;
+    struct dxgi_adapter *This = impl_from_IWineDXGIAdapter(iface);
 
     TRACE("iface %p, output_idx %u, output %p.\n", iface, output_idx, output);
 
@@ -132,7 +137,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_EnumOutputs(IWineDXGIAdapter *ifac
 
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc(IWineDXGIAdapter *iface, DXGI_ADAPTER_DESC *desc)
 {
-    struct dxgi_adapter *This = (struct dxgi_adapter *)iface;
+    struct dxgi_adapter *This = impl_from_IWineDXGIAdapter(iface);
     WINED3DADAPTER_IDENTIFIER adapter_id;
     char description[128];
     struct wined3d *wined3d;
@@ -187,7 +192,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_CheckInterfaceSupport(IWineDXGIAda
 
 static UINT STDMETHODCALLTYPE dxgi_adapter_get_ordinal(IWineDXGIAdapter *iface)
 {
-    struct dxgi_adapter *This = (struct dxgi_adapter *)iface;
+    struct dxgi_adapter *This = impl_from_IWineDXGIAdapter(iface);
 
     TRACE("iface %p, returning %u\n", iface, This->ordinal);
 
@@ -217,7 +222,7 @@ HRESULT dxgi_adapter_init(struct dxgi_adapter *adapter, IWineDXGIFactory *parent
 {
     struct dxgi_output *output;
 
-    adapter->vtbl = &dxgi_adapter_vtbl;
+    adapter->IWineDXGIAdapter_iface.lpVtbl = &dxgi_adapter_vtbl;
     adapter->parent = parent;
     adapter->refcount = 1;
     adapter->ordinal = ordinal;

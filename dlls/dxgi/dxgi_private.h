@@ -112,7 +112,7 @@ void dxgi_output_init(struct dxgi_output *output, struct dxgi_adapter *adapter) 
 /* IDXGIAdapter */
 struct dxgi_adapter
 {
-    const struct IWineDXGIAdapterVtbl *vtbl;
+    IWineDXGIAdapter IWineDXGIAdapter_iface;
     IWineDXGIFactory *parent;
     LONG refcount;
     UINT ordinal;
