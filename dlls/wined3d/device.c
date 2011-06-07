@@ -910,7 +910,7 @@ HRESULT CDECL wined3d_device_get_swapchain(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-static void IWineD3DDeviceImpl_LoadLogo(struct wined3d_device *device, const char *filename)
+static void device_load_logo(struct wined3d_device *device, const char *filename)
 {
     HBITMAP hbm;
     BITMAP bm;
@@ -1317,7 +1317,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     device->d3d_initialized = TRUE;
 
     if (wined3d_settings.logo)
-        IWineD3DDeviceImpl_LoadLogo(device, wined3d_settings.logo);
+        device_load_logo(device, wined3d_settings.logo);
     device->highest_dirty_ps_const = 0;
     device->highest_dirty_vs_const = 0;
     return WINED3D_OK;
