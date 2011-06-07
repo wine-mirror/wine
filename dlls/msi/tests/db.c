@@ -754,6 +754,19 @@ static void test_viewmodify(void)
     r = run_query( hdb, 0, query );
     ok(r == ERROR_SUCCESS, "query failed\n");
 
+    query = "CREATE TABLE `_Validation` ( "
+            "`Table` CHAR(32) NOT NULL, `Column` CHAR(32) NOT NULL, "
+            "`Nullable` CHAR(4) NOT NULL, `MinValue` INT, `MaxValue` INT, "
+            "`KeyTable` CHAR(255), `KeyColumn` SHORT, `Category` CHAR(32), "
+            "`Set` CHAR(255), `Description` CHAR(255) PRIMARY KEY `Table`, `Column`)";
+    r = run_query( hdb, 0, query );
+    ok(r == ERROR_SUCCESS, "query failed\n");
+
+    query = "INSERT INTO `_Validation` ( `Table`, `Column`, `Nullable` ) "
+            "VALUES('phone', 'id', 'N')";
+    r = run_query( hdb, 0, query );
+    ok(r == ERROR_SUCCESS, "query failed\n");
+
     /* check what the error function reports without doing anything */
     sz = 0;
     /* passing NULL as the 3rd param make function to crash on older platforms */
@@ -808,6 +821,13 @@ static void test_viewmodify(void)
     r = MsiViewModify(hview, -1, hrec );
     ok(r == ERROR_INVALID_DATA, "MsiViewModify failed\n");
 
+    sz = sizeof buffer;
+    buffer[0] = 'x';
+    err = MsiViewGetError( hview, buffer, &sz );
+    ok(err == MSIDBERROR_NOERROR, "MsiViewGetError return\n");
+    ok(buffer[0] == 0, "buffer not cleared\n");
+    ok(sz == 0, "size not zero\n");
+
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
 
@@ -825,6 +845,20 @@ static void test_viewmodify(void)
     ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
     r = MsiViewModify(hview, MSIMODIFY_INSERT_TEMPORARY, hrec );
     ok(r == ERROR_SUCCESS, "MsiViewModify failed\n");
+
+    /* validate it */
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+
+    r = MsiViewModify(hview, MSIMODIFY_VALIDATE_NEW, hrec );
+    ok(r == ERROR_INVALID_DATA, "MsiViewModify failed %u\n", r);
+
+    sz = sizeof buffer;
+    buffer[0] = 'x';
+    err = MsiViewGetError( hview, buffer, &sz );
+    ok(err == MSIDBERROR_DUPLICATEKEY, "MsiViewGetError returned %u\n", err);
+    ok(!strcmp(buffer, "id"), "expected \"id\" c, got \"%s\"\n", buffer);
+    ok(sz == 2, "size not 2\n");
 
     /* insert the same thing again */
     r = MsiViewExecute(hview, 0);

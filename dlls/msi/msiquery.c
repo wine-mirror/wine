@@ -650,66 +650,66 @@ UINT WINAPI MsiViewModify( MSIHANDLE hView, MSIMODIFY eModifyMode,
     return r;
 }
 
-MSIDBERROR WINAPI MsiViewGetErrorW( MSIHANDLE handle, LPWSTR szColumnNameBuffer,
-                              LPDWORD pcchBuf )
+MSIDBERROR WINAPI MsiViewGetErrorW( MSIHANDLE handle, LPWSTR buffer, LPDWORD buflen )
 {
-    MSIQUERY *query = NULL;
-    static const WCHAR szError[] = { 0 };
-    MSIDBERROR r = MSIDBERROR_NOERROR;
+    MSIQUERY *query;
+    const WCHAR *column;
+    MSIDBERROR r;
     DWORD len;
 
-    FIXME("%d %p %p - returns empty error string\n",
-          handle, szColumnNameBuffer, pcchBuf );
+    TRACE("%u %p %p\n", handle, buffer, buflen);
 
-    if( !pcchBuf )
+    if (!buflen)
         return MSIDBERROR_INVALIDARG;
 
     query = msihandle2msiinfo( handle, MSIHANDLETYPE_VIEW );
     if( !query )
         return MSIDBERROR_INVALIDARG;
 
-    len = strlenW( szError );
-    if( szColumnNameBuffer )
+    if ((r = query->view->error)) column = query->view->error_column;
+    else column = szEmpty;
+
+    len = strlenW( column );
+    if (buffer)
     {
-        if( *pcchBuf > len )
-            lstrcpyW( szColumnNameBuffer, szError );
+        if (*buflen > len)
+            strcpyW( buffer, column );
         else
             r = MSIDBERROR_MOREDATA;
     }
-    *pcchBuf = len;
-
+    *buflen = len;
     msiobj_release( &query->hdr );
     return r;
 }
 
-MSIDBERROR WINAPI MsiViewGetErrorA( MSIHANDLE handle, LPSTR szColumnNameBuffer,
-                              LPDWORD pcchBuf )
+MSIDBERROR WINAPI MsiViewGetErrorA( MSIHANDLE handle, LPSTR buffer, LPDWORD buflen )
 {
-    static const CHAR szError[] = { 0 };
-    MSIQUERY *query = NULL;
-    MSIDBERROR r = MSIDBERROR_NOERROR;
+    MSIQUERY *query;
+    const WCHAR *column;
+    MSIDBERROR r;
     DWORD len;
 
-    FIXME("%d %p %p - returns empty error string\n",
-          handle, szColumnNameBuffer, pcchBuf );
+    TRACE("%u %p %p\n", handle, buffer, buflen);
 
-    if( !pcchBuf )
+    if (!buflen)
         return MSIDBERROR_INVALIDARG;
 
     query = msihandle2msiinfo( handle, MSIHANDLETYPE_VIEW );
-    if( !query )
+    if (!query)
         return MSIDBERROR_INVALIDARG;
 
-    len = strlen( szError );
-    if( szColumnNameBuffer )
+    if ((r = query->view->error)) column = query->view->error_column;
+    else column = szEmpty;
+
+    len = WideCharToMultiByte( CP_ACP, 0, column, -1, NULL, 0, NULL, NULL );
+    if (buffer)
     {
-        if( *pcchBuf > len )
-            lstrcpyA( szColumnNameBuffer, szError );
+        if (*buflen >= len)
+            WideCharToMultiByte( CP_ACP, 0, column, -1, buffer, *buflen, NULL, NULL );
         else
             r = MSIDBERROR_MOREDATA;
     }
-    *pcchBuf = len;
-
+    *buflen = len - 1;
     msiobj_release( &query->hdr );
     return r;
 }

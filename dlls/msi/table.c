@@ -1579,9 +1579,9 @@ static UINT TABLE_get_column_info( struct tagMSIVIEW *view,
     return ERROR_SUCCESS;
 }
 
-static UINT msi_table_find_row( MSITABLEVIEW *tv, MSIRECORD *rec, UINT *row );
+static UINT msi_table_find_row( MSITABLEVIEW *tv, MSIRECORD *rec, UINT *row, UINT *column );
 
-static UINT table_validate_new( MSITABLEVIEW *tv, MSIRECORD *rec )
+static UINT table_validate_new( MSITABLEVIEW *tv, MSIRECORD *rec, UINT *column )
 {
     UINT r, row, i;
 
@@ -1599,7 +1599,10 @@ static UINT table_validate_new( MSITABLEVIEW *tv, MSIRECORD *rec )
 
             str = MSI_RecordGetString( rec, i+1 );
             if (str == NULL || str[0] == 0)
+            {
+                if (column) *column = i;
                 return ERROR_INVALID_DATA;
+            }
         }
         else
         {
@@ -1607,12 +1610,15 @@ static UINT table_validate_new( MSITABLEVIEW *tv, MSIRECORD *rec )
 
             n = MSI_RecordGetInteger( rec, i+1 );
             if (n == MSI_NULL_INTEGER)
+            {
+                if (column) *column = i;
                 return ERROR_INVALID_DATA;
+            }
         }
     }
 
     /* check there's no duplicate keys */
-    r = msi_table_find_row( tv, rec, &row );
+    r = msi_table_find_row( tv, rec, &row, column );
     if (r == ERROR_SUCCESS)
         return ERROR_FUNCTION_FAILED;
 
@@ -1685,7 +1691,7 @@ static UINT TABLE_insert_row( struct tagMSIVIEW *view, MSIRECORD *rec, UINT row,
     TRACE("%p %p %s\n", tv, rec, temporary ? "TRUE" : "FALSE" );
 
     /* check that the key is unique - can we find a matching row? */
-    r = table_validate_new( tv, rec );
+    r = table_validate_new( tv, rec, NULL );
     if( r != ERROR_SUCCESS )
         return ERROR_FUNCTION_FAILED;
 
@@ -1760,7 +1766,7 @@ static UINT msi_table_update(struct tagMSIVIEW *view, MSIRECORD *rec, UINT row)
     if (!tv->table)
         return ERROR_INVALID_PARAMETER;
 
-    r = msi_table_find_row(tv, rec, &new_row);
+    r = msi_table_find_row(tv, rec, &new_row, NULL);
     if (r != ERROR_SUCCESS)
     {
         ERR("can't find row to modify\n");
@@ -1785,7 +1791,7 @@ static UINT msi_table_assign(struct tagMSIVIEW *view, MSIRECORD *rec)
     if (!tv->table)
         return ERROR_INVALID_PARAMETER;
 
-    r = msi_table_find_row(tv, rec, &row);
+    r = msi_table_find_row(tv, rec, &row, NULL);
     if (r == ERROR_SUCCESS)
         return TABLE_set_row(view, row, rec, (1 << tv->num_cols) - 1);
     else
@@ -1797,7 +1803,7 @@ static UINT modify_delete_row( struct tagMSIVIEW *view, MSIRECORD *rec )
     MSITABLEVIEW *tv = (MSITABLEVIEW *)view;
     UINT row, r;
 
-    r = msi_table_find_row(tv, rec, &row);
+    r = msi_table_find_row(tv, rec, &row, NULL);
     if (r != ERROR_SUCCESS)
         return r;
 
@@ -1828,7 +1834,7 @@ static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
                           MSIRECORD *rec, UINT row)
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
-    UINT r;
+    UINT r, column;
 
     TRACE("%p %d %p\n", view, eModifyMode, rec );
 
@@ -1838,18 +1844,24 @@ static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
         r = modify_delete_row( view, rec );
         break;
     case MSIMODIFY_VALIDATE_NEW:
-        r = table_validate_new( tv, rec );
+        r = table_validate_new( tv, rec, &column );
+        if (r != ERROR_SUCCESS)
+        {
+            tv->view.error = MSIDBERROR_DUPLICATEKEY;
+            tv->view.error_column = tv->columns[column].colname;
+            r = ERROR_INVALID_DATA;
+        }
         break;
 
     case MSIMODIFY_INSERT:
-        r = table_validate_new( tv, rec );
+        r = table_validate_new( tv, rec, NULL );
         if (r != ERROR_SUCCESS)
             break;
         r = TABLE_insert_row( view, rec, -1, FALSE );
         break;
 
     case MSIMODIFY_INSERT_TEMPORARY:
-        r = table_validate_new( tv, rec );
+        r = table_validate_new( tv, rec, NULL );
         if (r != ERROR_SUCCESS)
             break;
         r = TABLE_insert_row( view, rec, -1, TRUE );
@@ -2017,7 +2029,7 @@ static UINT TABLE_remove_column(struct tagMSIVIEW *view, LPCWSTR table, UINT num
     if (r != ERROR_SUCCESS)
         return r;
 
-    r = msi_table_find_row((MSITABLEVIEW *)columns, rec, &row);
+    r = msi_table_find_row((MSITABLEVIEW *)columns, rec, &row, NULL);
     if (r != ERROR_SUCCESS)
         goto done;
 
@@ -2294,7 +2306,7 @@ static UINT TABLE_drop(struct tagMSIVIEW *view)
     if (r != ERROR_SUCCESS)
         return r;
 
-    r = msi_table_find_row((MSITABLEVIEW *)tables, rec, &row);
+    r = msi_table_find_row((MSITABLEVIEW *)tables, rec, &row, NULL);
     if (r != ERROR_SUCCESS)
         goto done;
 
@@ -2660,7 +2672,7 @@ static UINT* msi_record_to_row( const MSITABLEVIEW *tv, MSIRECORD *rec )
     return data;
 }
 
-static UINT msi_row_matches( MSITABLEVIEW *tv, UINT row, const UINT *data )
+static UINT msi_row_matches( MSITABLEVIEW *tv, UINT row, const UINT *data, UINT *column )
 {
     UINT i, r, x, ret = ERROR_FUNCTION_FAILED;
 
@@ -2683,14 +2695,13 @@ static UINT msi_row_matches( MSITABLEVIEW *tv, UINT row, const UINT *data )
             ret = ERROR_FUNCTION_FAILED;
             break;
         }
-
+        if (column) *column = i;
         ret = ERROR_SUCCESS;
     }
-
     return ret;
 }
 
-static UINT msi_table_find_row( MSITABLEVIEW *tv, MSIRECORD *rec, UINT *row )
+static UINT msi_table_find_row( MSITABLEVIEW *tv, MSIRECORD *rec, UINT *row, UINT *column )
 {
     UINT i, r = ERROR_FUNCTION_FAILED, *data;
 
@@ -2699,7 +2710,7 @@ static UINT msi_table_find_row( MSITABLEVIEW *tv, MSIRECORD *rec, UINT *row )
         return r;
     for( i = 0; i < tv->table->row_count; i++ )
     {
-        r = msi_row_matches( tv, i, data );
+        r = msi_row_matches( tv, i, data, column );
         if( r == ERROR_SUCCESS )
         {
             *row = i;
@@ -2844,7 +2855,7 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
 
             if (TRACE_ON(msidb)) dump_record( rec );
 
-            r = msi_table_find_row( tv, rec, &row );
+            r = msi_table_find_row( tv, rec, &row, NULL );
             if (r == ERROR_SUCCESS)
             {
                 if (!mask)

@@ -325,6 +325,8 @@ struct tagMSIVIEW
 {
     MSIOBJECTHDR hdr;
     const MSIVIEWOPS *ops;
+    MSIDBERROR error;
+    const WCHAR *error_column;
 };
 
 struct msi_dialog_tag;
