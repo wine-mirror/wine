@@ -899,38 +899,6 @@ static UINT msi_dialog_control_event( MSIRECORD *rec, LPVOID param )
     return ERROR_SUCCESS;
 }
 
-struct rec_list
-{
-    struct list entry;
-    MSIRECORD *rec;
-};
-
-static UINT add_rec_to_list( MSIRECORD *rec, LPVOID param )
-{
-    struct rec_list *add_rec;
-    struct list *records = param;
-
-    msiobj_addref( &rec->hdr );
-
-    add_rec = msi_alloc( sizeof( *add_rec ) );
-    if (!add_rec)
-    {
-        msiobj_release( &rec->hdr );
-        return ERROR_OUTOFMEMORY;
-    }
-
-    add_rec->rec = rec;
-    list_add_tail( records, &add_rec->entry );
-    return ERROR_SUCCESS;
-}
-
-static inline void remove_rec_from_list( struct rec_list *rec_entry )
-{
-    msiobj_release( &rec_entry->rec->hdr );
-    list_remove( &rec_entry->entry );
-    msi_free( rec_entry );
-}
-
 static UINT msi_dialog_button_handler( msi_dialog *dialog, msi_control *control, WPARAM param )
 {
     static const WCHAR query[] = {
@@ -940,14 +908,10 @@ static UINT msi_dialog_button_handler( msi_dialog *dialog, msi_control *control,
       '`','C','o','n','t','r','o','l','_','`',' ','=',' ','\'','%','s','\'',' ',
       'O','R','D','E','R',' ','B','Y',' ','`','O','r','d','e','r','i','n','g','`',0};
     MSIQUERY *view = NULL;
-    struct rec_list *rec_entry, *next;
-    struct list events;
     UINT r;
 
     if (HIWORD(param) != BN_CLICKED)
         return ERROR_SUCCESS;
-
-    list_init( &events );
 
     r = MSI_OpenQuery( dialog->package->db, &view, query, dialog->name, control->name );
     if (r != ERROR_SUCCESS)
@@ -956,41 +920,8 @@ static UINT msi_dialog_button_handler( msi_dialog *dialog, msi_control *control,
         return 0;
     }
 
-    r = MSI_IterateRecords( view, 0, add_rec_to_list, &events );
+    r = MSI_IterateRecords( view, 0, msi_dialog_control_event, dialog );
     msiobj_release( &view->hdr );
-    if (r != ERROR_SUCCESS)
-        goto done;
-
-    /* handle all SetProperty events first */
-    LIST_FOR_EACH_ENTRY_SAFE( rec_entry, next, &events, struct rec_list, entry )
-    {
-        LPCWSTR event = MSI_RecordGetString( rec_entry->rec, 3 );
-
-        if (event[0] != '[')
-            continue;
-
-        r = msi_dialog_control_event( rec_entry->rec, dialog );
-        remove_rec_from_list( rec_entry );
-
-        if (r != ERROR_SUCCESS)
-            goto done;
-    }
-
-    /* handle all other events */
-    LIST_FOR_EACH_ENTRY_SAFE( rec_entry, next, &events, struct rec_list, entry )
-    {
-        r = msi_dialog_control_event( rec_entry->rec, dialog );
-        remove_rec_from_list( rec_entry );
-
-        if (r != ERROR_SUCCESS)
-            goto done;
-    }
-
-done:
-    LIST_FOR_EACH_ENTRY_SAFE( rec_entry, next, &events, struct rec_list, entry )
-    {
-        remove_rec_from_list( rec_entry );
-    }
     return r;
 }
 
