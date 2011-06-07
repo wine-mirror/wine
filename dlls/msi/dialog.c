@@ -153,7 +153,24 @@ static const WCHAR szProperty[] = {'P','r','o','p','e','r','t','y',0};
 static DWORD uiThreadId;
 static HWND hMsiHiddenWindow;
 
-static LPWSTR msi_get_window_text( HWND hwnd );
+static LPWSTR msi_get_window_text( HWND hwnd )
+{
+    UINT sz, r;
+    LPWSTR buf;
+
+    sz = 0x20;
+    buf = msi_alloc( sz*sizeof(WCHAR) );
+    while ( buf )
+    {
+        r = GetWindowTextW( hwnd, buf, sz );
+        if ( r < (sz - 1) )
+            break;
+        sz *= 2;
+        buf = msi_realloc( buf, sz*sizeof(WCHAR) );
+    }
+
+    return buf;
+}
 
 static INT msi_dialog_scale_unit( msi_dialog *dialog, INT val )
 {
@@ -2043,25 +2060,6 @@ struct msi_pathedit_info
     msi_control *control;
     WNDPROC oldproc;
 };
-
-static LPWSTR msi_get_window_text( HWND hwnd )
-{
-    UINT sz, r;
-    LPWSTR buf;
-
-    sz = 0x20;
-    buf = msi_alloc( sz*sizeof(WCHAR) );
-    while ( buf )
-    {
-        r = GetWindowTextW( hwnd, buf, sz );
-        if ( r < (sz - 1) )
-            break;
-        sz *= 2;
-        buf = msi_realloc( buf, sz*sizeof(WCHAR) );
-    }
-
-    return buf;
-}
 
 static void msi_dialog_update_pathedit( msi_dialog *dialog, msi_control *control )
 {
