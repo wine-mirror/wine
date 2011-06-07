@@ -334,7 +334,7 @@
 # stub _chvalidator_l(ptr long long)
 @ cdecl _clearfp()
 @ cdecl _close(long) MSVCRT__close
-@ cdecl MSVCRT__commit(long)
+@ cdecl _commit(long) MSVCRT__commit
 @ extern _commode MSVCRT__commode
 @ cdecl _control87(long long)
 @ cdecl _controlfp(long long)
@@ -1167,7 +1167,7 @@
 @ cdecl _wrmdir(wstr) MSVCRT__wrmdir
 @ varargs _wscanf_l(wstr ptr) MSVCRT__wscanf_l
 @ varargs _wscanf_s_l(wstr ptr) MSVCRT__wscanf_s_l
-@ cdecl MSVCRT__wsearchenv(wstr wstr ptr)
+@ cdecl _wsearchenv(wstr wstr ptr) MSVCRT__wsearchenv
 @ cdecl _wsearchenv_s(wstr wstr ptr long)
 @ cdecl _wsetlocale(long wstr) MSVCRT__wsetlocale
 @ varargs _wsopen(wstr long long) MSVCRT__wsopen
@@ -1177,7 +1177,7 @@
 @ varargs _wspawnlp(long wstr wstr)
 @ varargs _wspawnlpe(long wstr wstr)
 @ cdecl _wspawnv(long wstr ptr)
-@ cdecl MSVCRT__wspawnve(long wstr ptr ptr)
+@ cdecl _wspawnve(long wstr ptr ptr) MSVCRT__wspawnve
 @ cdecl _wspawnvp(long wstr ptr)
 @ cdecl _wspawnvpe(long wstr ptr ptr) MSVCRT__wspawnvpe
 @ cdecl _wsplitpath(wstr ptr ptr ptr ptr)
