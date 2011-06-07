@@ -2210,10 +2210,10 @@ static int gurmukhi_lex(WCHAR c)
 {
     switch (c)
     {
-        case 0x0A2f: return lex_Consonant;
         case 0x0A30:
         case 0x0A35:
-        case 0x0A39: return lex_Ra;
+        case 0x0A39:
+        case 0x0A2f: return lex_Consonant;
         case 0x0A3C: return lex_Nukta;
         case 0x0A3F: return lex_Matra_pre;
         case 0x0A03:
