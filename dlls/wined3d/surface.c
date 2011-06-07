@@ -3993,6 +3993,7 @@ static void read_from_framebuffer_texture(struct wined3d_surface *surface, BOOL 
      */
     context = context_acquire(device, surface);
     gl_info = context->gl_info;
+    device_invalidate_state(device, STATE_FRAMEBUFFER);
 
     surface_prepare_texture(surface, gl_info, srgb);
     surface_bind_and_dirtify(surface, gl_info, srgb);
@@ -5104,6 +5105,7 @@ static void surface_blt_fbo(struct wined3d_device *device, const WINED3DTEXTUREF
         context_set_draw_buffer(context, GL_COLOR_ATTACHMENT0);
     }
     context_check_fbo_status(context, GL_DRAW_FRAMEBUFFER);
+    device_invalidate_state(device, STATE_FRAMEBUFFER);
 
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));

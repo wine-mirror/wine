@@ -5129,6 +5129,8 @@ HRESULT CDECL wined3d_device_set_render_target(struct wined3d_device *device,
         device_invalidate_state(device, STATE_SCISSORRECT);
     }
 
+    device_invalidate_state(device, STATE_FRAMEBUFFER);
+
     return WINED3D_OK;
 }
 
@@ -5178,6 +5180,8 @@ HRESULT CDECL wined3d_device_set_depth_stencil(struct wined3d_device *device, st
     {
         device_invalidate_state(device, STATE_RENDER(WINED3DRS_DEPTHBIAS));
     }
+
+    device_invalidate_state(device, STATE_FRAMEBUFFER);
 
     return WINED3D_OK;
 }

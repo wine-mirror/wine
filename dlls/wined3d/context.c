@@ -2061,6 +2061,7 @@ void context_apply_blit_state(struct wined3d_context *context, struct wined3d_de
     LEAVE_GL();
 
     SetupForBlit(device, context);
+    context_invalidate_state(context, STATE_FRAMEBUFFER, device->StateTable);
 }
 
 static BOOL context_validate_rt_config(UINT rt_count,
@@ -2122,6 +2123,9 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
         }
 
         LEAVE_GL();
+
+        /* TODO: This is not necessary if the rts are the device's current targets */
+        context_invalidate_state(context, STATE_FRAMEBUFFER, device->StateTable);
     }
     else
     {
@@ -2264,9 +2268,6 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
         context->isStateDirty[idx] &= ~(1 << shift);
         state_table[rep].apply(rep, device->stateBlock, context);
     }
-
-    /* FIXME */
-    state_table[STATE_FRAMEBUFFER].apply(STATE_FRAMEBUFFER, device->stateBlock, context);
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {

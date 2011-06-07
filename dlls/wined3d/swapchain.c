@@ -309,6 +309,7 @@ static void swapchain_blit(struct wined3d_swapchain *swapchain,
 
         context_bind_fbo(context, GL_DRAW_FRAMEBUFFER, NULL);
         context_set_draw_buffer(context, GL_BACK);
+        device_invalidate_state(device, STATE_FRAMEBUFFER);
 
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
