@@ -1001,14 +1001,17 @@ static DWORD calc_arg_size(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
             FIXME("Unhandled conformant description\n");
         break;
     case RPC_FC_CARRAY:
+    case RPC_FC_CVARRAY:
         size = *(const WORD*)(pFormat + 2);
         ComputeConformance(pStubMsg, NULL, pFormat + 4, 0);
         size *= pStubMsg->MaxCount;
         break;
     case RPC_FC_SMFARRAY:
+    case RPC_FC_SMVARRAY:
         size = *(const WORD*)(pFormat + 2);
         break;
     case RPC_FC_LGFARRAY:
+    case RPC_FC_LGVARRAY:
         size = *(const DWORD*)(pFormat + 2);
         break;
     case RPC_FC_BOGUS_ARRAY:
