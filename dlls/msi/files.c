@@ -1271,9 +1271,6 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         VS_FIXEDFILEINFO *ver;
         MSICOMPONENT *comp = file->Component;
 
-        if ( file->state == msifs_installed )
-            ERR("removing installed file %s\n", debugstr_w(file->TargetPath));
-
         comp->Action = msi_get_component_action( package, comp );
         if (comp->Action != INSTALLSTATE_ABSENT || comp->Installed == INSTALLSTATE_SOURCE)
             continue;
@@ -1298,6 +1295,9 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
             }
             msi_free( ver );
         }
+
+        if (file->state == msifs_installed)
+            WARN("removing installed file %s\n", debugstr_w(file->TargetPath));
 
         TRACE("removing %s\n", debugstr_w(file->File) );
 
