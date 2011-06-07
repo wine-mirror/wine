@@ -50,31 +50,6 @@ typedef struct tagMSIRUNNINGACTION
     LPWSTR name;
 } MSIRUNNINGACTION;
 
-static UINT HANDLE_CustomType1(MSIPACKAGE *package, LPCWSTR source,
-                               LPCWSTR target, const INT type, LPCWSTR action);
-static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
-                               LPCWSTR target, const INT type, LPCWSTR action);
-static UINT HANDLE_CustomType17(MSIPACKAGE *package, LPCWSTR source,
-                                LPCWSTR target, const INT type, LPCWSTR action);
-static UINT HANDLE_CustomType18(MSIPACKAGE *package, LPCWSTR source,
-                                LPCWSTR target, const INT type, LPCWSTR action);
-static UINT HANDLE_CustomType19(MSIPACKAGE *package, LPCWSTR source,
-                                LPCWSTR target, const INT type, LPCWSTR action);
-static UINT HANDLE_CustomType23(MSIPACKAGE *package, LPCWSTR source,
-                                LPCWSTR target, const INT type, LPCWSTR action);
-static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
-                                LPCWSTR target, const INT type, LPCWSTR action);
-static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
-                                LPCWSTR target, const INT type, LPCWSTR action);
-static UINT HANDLE_CustomType37_38(MSIPACKAGE *package, LPCWSTR source,
-                                LPCWSTR target, const INT type, LPCWSTR action);
-static UINT HANDLE_CustomType5_6(MSIPACKAGE *package, LPCWSTR source,
-                                LPCWSTR target, const INT type, LPCWSTR action);
-static UINT HANDLE_CustomType21_22(MSIPACKAGE *package, LPCWSTR source,
-                                LPCWSTR target, const INT type, LPCWSTR action);
-static UINT HANDLE_CustomType53_54(MSIPACKAGE *package, LPCWSTR source,
-                                LPCWSTR target, const INT type, LPCWSTR action);
-
 typedef UINT (WINAPI *MsiCustomActionEntryPoint)( MSIHANDLE );
 
 static CRITICAL_SECTION msi_custom_action_cs;
@@ -228,185 +203,6 @@ static void set_deferred_action_props(MSIPACKAGE *package, LPWSTR deferred_data)
     end = strchrW(beg, ']');
     *end = '\0';
     msi_set_property(package->db, szProductCode, beg);
-}
-
-UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL execute)
-{
-    UINT rc = ERROR_SUCCESS;
-    MSIRECORD * row = 0;
-    static const WCHAR ExecSeqQuery[] =
-    {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-     '`','C','u','s','t','o' ,'m','A','c','t','i','o','n','`',
-     ' ','W','H','E','R','E',' ','`','A','c','t','i' ,'o','n','`',' ',
-     '=',' ','\'','%','s','\'',0};
-    UINT type;
-    LPCWSTR source, target;
-    LPWSTR ptr, deferred_data = NULL;
-    LPWSTR action_copy = strdupW(action);
-    WCHAR *deformated=NULL;
-
-    /* deferred action: [properties]Action */
-    if ((ptr = strrchrW(action_copy, ']')))
-    {
-        deferred_data = action_copy;
-        action = ptr + 1;
-    }
-
-    row = MSI_QueryGetRecord( package->db, ExecSeqQuery, action );
-    if (!row)
-    {
-        msi_free(action_copy);
-        return ERROR_CALL_NOT_IMPLEMENTED;
-    }
-
-    type = MSI_RecordGetInteger(row,2);
-
-    source = MSI_RecordGetString(row,3);
-    target = MSI_RecordGetString(row,4);
-
-    TRACE("Handling custom action %s (%x %s %s)\n",debugstr_w(action),type,
-          debugstr_w(source), debugstr_w(target));
-
-    /* handle some of the deferred actions */
-    if (type & msidbCustomActionTypeTSAware)
-        FIXME("msidbCustomActionTypeTSAware not handled\n");
-
-    if (type & msidbCustomActionTypeInScript)
-    {
-        if (type & msidbCustomActionTypeNoImpersonate)
-            WARN("msidbCustomActionTypeNoImpersonate not handled\n");
-
-        if (!execute)
-        {
-            LPWSTR actiondata = msi_dup_property(package->db, action);
-            LPWSTR usersid = msi_dup_property(package->db, szUserSID);
-            LPWSTR prodcode = msi_dup_property(package->db, szProductCode);
-            LPWSTR deferred = msi_get_deferred_action(action, actiondata, usersid, prodcode);
-
-            if (type & msidbCustomActionTypeCommit)
-            {
-                TRACE("Deferring commit action\n");
-                msi_schedule_action(package, COMMIT_SCRIPT, deferred);
-            }
-            else if (type & msidbCustomActionTypeRollback)
-            {
-                TRACE("Deferring rollback action\n");
-                msi_schedule_action(package, ROLLBACK_SCRIPT, deferred);
-            }
-            else
-            {
-                TRACE("Deferring action\n");
-                msi_schedule_action(package, INSTALL_SCRIPT, deferred);
-            }
-
-            rc = ERROR_SUCCESS;
-            msi_free(actiondata);
-            msi_free(usersid);
-            msi_free(prodcode);
-            msi_free(deferred);
-            goto end;
-        }
-        else
-        {
-            LPWSTR actiondata = msi_dup_property( package->db, action );
-
-            if (type & msidbCustomActionTypeInScript)
-                package->scheduled_action_running = TRUE;
-
-            if (type & msidbCustomActionTypeCommit)
-                package->commit_action_running = TRUE;
-
-            if (type & msidbCustomActionTypeRollback)
-                package->rollback_action_running = TRUE;
-
-            if (deferred_data)
-                set_deferred_action_props(package, deferred_data);
-            else if (actiondata)
-                msi_set_property(package->db, szCustomActionData, actiondata);
-            else
-                msi_set_property(package->db, szCustomActionData, szEmpty);
-
-            msi_free(actiondata);
-        }
-    }
-    else if (!check_execution_scheduling_options(package,action,type))
-    {
-        rc = ERROR_SUCCESS;
-        goto end;
-    }
-
-    switch (type & CUSTOM_ACTION_TYPE_MASK)
-    {
-        case 1: /* DLL file stored in a Binary table stream */
-            rc = HANDLE_CustomType1(package,source,target,type,action);
-            break;
-        case 2: /* EXE file stored in a Binary table stream */
-            rc = HANDLE_CustomType2(package,source,target,type,action);
-            break;
-        case 18: /*EXE file installed with package */
-            rc = HANDLE_CustomType18(package,source,target,type,action);
-            break;
-        case 19: /* Error that halts install */
-            rc = HANDLE_CustomType19(package,source,target,type,action);
-            break;
-        case 17:
-            rc = HANDLE_CustomType17(package,source,target,type,action);
-            break;
-        case 23: /* installs another package in the source tree */
-            deformat_string(package,target,&deformated);
-            rc = HANDLE_CustomType23(package,source,deformated,type,action);
-            msi_free(deformated);
-            break;
-        case 50: /*EXE file specified by a property value */
-            rc = HANDLE_CustomType50(package,source,target,type,action);
-            break;
-        case 34: /*EXE to be run in specified directory */
-            rc = HANDLE_CustomType34(package,source,target,type,action);
-            break;
-        case 35: /* Directory set with formatted text. */
-            deformat_string(package,target,&deformated);
-            MSI_SetTargetPathW(package, source, deformated);
-            msi_free(deformated);
-            break;
-        case 51: /* Property set with formatted text. */
-            if (!source)
-                break;
-
-            deformat_string(package,target,&deformated);
-            rc = msi_set_property( package->db, source, deformated );
-            if (rc == ERROR_SUCCESS && !strcmpW( source, szSourceDir ))
-                msi_reset_folders( package, TRUE );
-            msi_free(deformated);
-            break;
-	case 37: /* JScript/VBScript text stored in target column. */
-	case 38:
-	    rc = HANDLE_CustomType37_38(package,source,target,type,action);
-	    break;
-	case 5:
-	case 6: /* JScript/VBScript file stored in a Binary table stream. */
-	    rc = HANDLE_CustomType5_6(package,source,target,type,action);
-	    break;
-	case 21: /* JScript/VBScript file installed with the product. */
-	case 22:
-	    rc = HANDLE_CustomType21_22(package,source,target,type,action);
-	    break;
-	case 53: /* JScript/VBScript text specified by a property value. */
-	case 54:
-	    rc = HANDLE_CustomType53_54(package,source,target,type,action);
-	    break;
-        default:
-            FIXME("UNHANDLED ACTION TYPE %i (%s %s)\n",
-             type & CUSTOM_ACTION_TYPE_MASK, debugstr_w(source),
-             debugstr_w(target));
-    }
-
-end:
-    package->scheduled_action_running = FALSE;
-    package->commit_action_running = FALSE;
-    package->rollback_action_running = FALSE;
-    msi_free(action_copy);
-    msiobj_release(&row->hdr);
-    return rc;
 }
 
 static MSIBINARY *create_temp_binary( MSIPACKAGE *package, LPCWSTR source, BOOL dll )
@@ -1343,6 +1139,185 @@ static UINT HANDLE_CustomType53_54(MSIPACKAGE *package, LPCWSTR source,
     r = wait_thread_handle( info );
     release_custom_action_data( info );
     return r;
+}
+
+UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL execute)
+{
+    UINT rc = ERROR_SUCCESS;
+    MSIRECORD * row = 0;
+    static const WCHAR ExecSeqQuery[] =
+    {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+     '`','C','u','s','t','o' ,'m','A','c','t','i','o','n','`',
+     ' ','W','H','E','R','E',' ','`','A','c','t','i' ,'o','n','`',' ',
+     '=',' ','\'','%','s','\'',0};
+    UINT type;
+    LPCWSTR source, target;
+    LPWSTR ptr, deferred_data = NULL;
+    LPWSTR action_copy = strdupW(action);
+    WCHAR *deformated=NULL;
+
+    /* deferred action: [properties]Action */
+    if ((ptr = strrchrW(action_copy, ']')))
+    {
+        deferred_data = action_copy;
+        action = ptr + 1;
+    }
+
+    row = MSI_QueryGetRecord( package->db, ExecSeqQuery, action );
+    if (!row)
+    {
+        msi_free(action_copy);
+        return ERROR_CALL_NOT_IMPLEMENTED;
+    }
+
+    type = MSI_RecordGetInteger(row,2);
+
+    source = MSI_RecordGetString(row,3);
+    target = MSI_RecordGetString(row,4);
+
+    TRACE("Handling custom action %s (%x %s %s)\n",debugstr_w(action),type,
+          debugstr_w(source), debugstr_w(target));
+
+    /* handle some of the deferred actions */
+    if (type & msidbCustomActionTypeTSAware)
+        FIXME("msidbCustomActionTypeTSAware not handled\n");
+
+    if (type & msidbCustomActionTypeInScript)
+    {
+        if (type & msidbCustomActionTypeNoImpersonate)
+            WARN("msidbCustomActionTypeNoImpersonate not handled\n");
+
+        if (!execute)
+        {
+            LPWSTR actiondata = msi_dup_property(package->db, action);
+            LPWSTR usersid = msi_dup_property(package->db, szUserSID);
+            LPWSTR prodcode = msi_dup_property(package->db, szProductCode);
+            LPWSTR deferred = msi_get_deferred_action(action, actiondata, usersid, prodcode);
+
+            if (type & msidbCustomActionTypeCommit)
+            {
+                TRACE("Deferring commit action\n");
+                msi_schedule_action(package, COMMIT_SCRIPT, deferred);
+            }
+            else if (type & msidbCustomActionTypeRollback)
+            {
+                TRACE("Deferring rollback action\n");
+                msi_schedule_action(package, ROLLBACK_SCRIPT, deferred);
+            }
+            else
+            {
+                TRACE("Deferring action\n");
+                msi_schedule_action(package, INSTALL_SCRIPT, deferred);
+            }
+
+            rc = ERROR_SUCCESS;
+            msi_free(actiondata);
+            msi_free(usersid);
+            msi_free(prodcode);
+            msi_free(deferred);
+            goto end;
+        }
+        else
+        {
+            LPWSTR actiondata = msi_dup_property( package->db, action );
+
+            if (type & msidbCustomActionTypeInScript)
+                package->scheduled_action_running = TRUE;
+
+            if (type & msidbCustomActionTypeCommit)
+                package->commit_action_running = TRUE;
+
+            if (type & msidbCustomActionTypeRollback)
+                package->rollback_action_running = TRUE;
+
+            if (deferred_data)
+                set_deferred_action_props(package, deferred_data);
+            else if (actiondata)
+                msi_set_property(package->db, szCustomActionData, actiondata);
+            else
+                msi_set_property(package->db, szCustomActionData, szEmpty);
+
+            msi_free(actiondata);
+        }
+    }
+    else if (!check_execution_scheduling_options(package,action,type))
+    {
+        rc = ERROR_SUCCESS;
+        goto end;
+    }
+
+    switch (type & CUSTOM_ACTION_TYPE_MASK)
+    {
+        case 1: /* DLL file stored in a Binary table stream */
+            rc = HANDLE_CustomType1(package,source,target,type,action);
+            break;
+        case 2: /* EXE file stored in a Binary table stream */
+            rc = HANDLE_CustomType2(package,source,target,type,action);
+            break;
+        case 18: /*EXE file installed with package */
+            rc = HANDLE_CustomType18(package,source,target,type,action);
+            break;
+        case 19: /* Error that halts install */
+            rc = HANDLE_CustomType19(package,source,target,type,action);
+            break;
+        case 17:
+            rc = HANDLE_CustomType17(package,source,target,type,action);
+            break;
+        case 23: /* installs another package in the source tree */
+            deformat_string(package,target,&deformated);
+            rc = HANDLE_CustomType23(package,source,deformated,type,action);
+            msi_free(deformated);
+            break;
+        case 50: /*EXE file specified by a property value */
+            rc = HANDLE_CustomType50(package,source,target,type,action);
+            break;
+        case 34: /*EXE to be run in specified directory */
+            rc = HANDLE_CustomType34(package,source,target,type,action);
+            break;
+        case 35: /* Directory set with formatted text. */
+            deformat_string(package,target,&deformated);
+            MSI_SetTargetPathW(package, source, deformated);
+            msi_free(deformated);
+            break;
+        case 51: /* Property set with formatted text. */
+            if (!source)
+                break;
+
+            deformat_string(package,target,&deformated);
+            rc = msi_set_property( package->db, source, deformated );
+            if (rc == ERROR_SUCCESS && !strcmpW( source, szSourceDir ))
+                msi_reset_folders( package, TRUE );
+            msi_free(deformated);
+            break;
+	case 37: /* JScript/VBScript text stored in target column. */
+	case 38:
+	    rc = HANDLE_CustomType37_38(package,source,target,type,action);
+	    break;
+	case 5:
+	case 6: /* JScript/VBScript file stored in a Binary table stream. */
+	    rc = HANDLE_CustomType5_6(package,source,target,type,action);
+	    break;
+	case 21: /* JScript/VBScript file installed with the product. */
+	case 22:
+	    rc = HANDLE_CustomType21_22(package,source,target,type,action);
+	    break;
+	case 53: /* JScript/VBScript text specified by a property value. */
+	case 54:
+	    rc = HANDLE_CustomType53_54(package,source,target,type,action);
+	    break;
+        default:
+            FIXME("UNHANDLED ACTION TYPE %i (%s %s)\n",
+             type & CUSTOM_ACTION_TYPE_MASK, debugstr_w(source),
+             debugstr_w(target));
+    }
+
+end:
+    package->scheduled_action_running = FALSE;
+    package->commit_action_running = FALSE;
+    package->rollback_action_running = FALSE;
+    msi_free(action_copy);
+    msiobj_release(&row->hdr);
+    return rc;
 }
 
 void ACTION_FinishCustomActions(const MSIPACKAGE* package)
