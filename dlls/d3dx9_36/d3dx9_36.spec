@@ -169,7 +169,7 @@
 @ stub D3DXIntersectSubset(ptr long ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall D3DXIntersectTri(ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stub D3DXLoadMeshFromXA(ptr long ptr ptr ptr ptr ptr ptr)
-@ stub D3DXLoadMeshFromXInMemory(ptr long long ptr ptr ptr ptr ptr ptr)
+@ stdcall D3DXLoadMeshFromXInMemory(ptr long long ptr ptr ptr ptr ptr ptr)
 @ stub D3DXLoadMeshFromXResource(long ptr ptr long ptr ptr ptr ptr ptr ptr)
 @ stub D3DXLoadMeshFromXW(ptr long ptr ptr ptr ptr ptr ptr)
 @ stub D3DXLoadMeshFromXof(ptr long ptr ptr ptr ptr ptr ptr)

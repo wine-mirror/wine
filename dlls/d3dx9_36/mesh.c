@@ -3065,6 +3065,307 @@ HRESULT WINAPI D3DXFrameDestroy(LPD3DXFRAME frame, LPD3DXALLOCATEHIERARCHY alloc
     return D3D_OK;
 }
 
+struct mesh_container
+{
+    struct list entry;
+    ID3DXMesh *mesh;
+    DWORD num_materials;
+    D3DXMATRIX transform;
+};
+
+static HRESULT parse_frame(IDirectXFileData *filedata,
+                           DWORD options,
+                           LPDIRECT3DDEVICE9 device,
+                           const D3DXMATRIX *parent_transform,
+                           struct list *container_list)
+{
+    HRESULT hr;
+    D3DXMATRIX transform = *parent_transform;
+    IDirectXFileData *child;
+    const GUID *type;
+
+    while (SUCCEEDED(hr = get_next_child(filedata, &child, &type)))
+    {
+        if (IsEqualGUID(type, &TID_D3DRMMesh)) {
+            struct mesh_container *container = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*container));
+            if (!container)  {
+                hr = E_OUTOFMEMORY;
+                break;
+            }
+            list_add_tail(container_list, &container->entry);
+            container->transform = transform;
+
+            hr = load_skin_mesh_from_xof(child, options, device, NULL, NULL,
+                    NULL, &container->num_materials, NULL, &container->mesh);
+        } else if (IsEqualGUID(type, &TID_D3DRMFrameTransformMatrix)) {
+            D3DXMATRIX new_transform;
+            hr = parse_transform_matrix(child, &new_transform);
+            D3DXMatrixMultiply(&transform, &transform, &new_transform);
+        } else if (IsEqualGUID(type, &TID_D3DRMFrame)) {
+            hr = parse_frame(child, options, device, &transform, container_list);
+        }
+        if (FAILED(hr)) break;
+    }
+    return hr == DXFILEERR_NOMOREOBJECTS ? D3D_OK : hr;
+}
+
+HRESULT WINAPI D3DXLoadMeshFromXInMemory(LPCVOID memory,
+                                         DWORD memory_size,
+                                         DWORD options,
+                                         LPDIRECT3DDEVICE9 device,
+                                         LPD3DXBUFFER *adjacency_out,
+                                         LPD3DXBUFFER *materials_out,
+                                         LPD3DXBUFFER *effects_out,
+                                         DWORD *num_materials_out,
+                                         LPD3DXMESH *mesh_out)
+{
+    HRESULT hr;
+    IDirectXFile *dxfile = NULL;
+    IDirectXFileEnumObject *enumobj = NULL;
+    IDirectXFileData *filedata = NULL;
+    DXFILELOADMEMORY source;
+    struct list container_list = LIST_INIT(container_list);
+    struct mesh_container *container_ptr, *next_container_ptr;
+    DWORD num_materials;
+    DWORD num_faces, num_vertices;
+    D3DXMATRIX identity;
+    int i;
+    DWORD fvf;
+    ID3DXMesh *concat_mesh = NULL;
+    D3DVERTEXELEMENT9 concat_decl[MAX_FVF_DECL_SIZE];
+    BYTE *concat_vertices = NULL;
+    void *concat_indices = NULL;
+    DWORD index_offset;
+    DWORD concat_vertex_size;
+
+    TRACE("(%p, %u, %x, %p, %p, %p, %p, %p, %p)\n", memory, memory_size, options,
+          device, adjacency_out, materials_out, effects_out, num_materials_out, mesh_out);
+
+    if (!memory || !memory_size || !device || !mesh_out)
+        return D3DERR_INVALIDCALL;
+    if (adjacency_out || materials_out || effects_out)
+    {
+        if (adjacency_out) FIXME("Support for returning adjacency data not implemented\n");
+        if (materials_out) FIXME("Support for returning materials not implemented\n");
+        if (effects_out) FIXME("Support for returning effects not implemented\n");
+        return E_NOTIMPL;
+    }
+
+    hr = DirectXFileCreate(&dxfile);
+    if (FAILED(hr)) goto cleanup;
+
+    hr = IDirectXFile_RegisterTemplates(dxfile, D3DRM_XTEMPLATES, D3DRM_XTEMPLATE_BYTES);
+    if (FAILED(hr)) goto cleanup;
+
+    source.lpMemory = (void*)memory;
+    source.dSize = memory_size;
+    hr = IDirectXFile_CreateEnumObject(dxfile, &source, DXFILELOAD_FROMMEMORY, &enumobj);
+    if (FAILED(hr)) goto cleanup;
+
+    D3DXMatrixIdentity(&identity);
+
+    while (SUCCEEDED(hr = IDirectXFileEnumObject_GetNextDataObject(enumobj, &filedata)))
+    {
+        const GUID *guid = NULL;
+
+        hr = IDirectXFileData_GetType(filedata, &guid);
+        if (SUCCEEDED(hr)) {
+            if (IsEqualGUID(guid, &TID_D3DRMMesh)) {
+                container_ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*container_ptr));
+                if (!container_ptr) {
+                    hr = E_OUTOFMEMORY;
+                    goto cleanup;
+                }
+                list_add_tail(&container_list, &container_ptr->entry);
+                D3DXMatrixIdentity(&container_ptr->transform);
+
+                hr = load_skin_mesh_from_xof(filedata, options, device, NULL, NULL,
+                        NULL, &container_ptr->num_materials, NULL, &container_ptr->mesh);
+            } else if (IsEqualGUID(guid, &TID_D3DRMFrame)) {
+                hr = parse_frame(filedata, options, device, &identity, &container_list);
+            }
+            if (FAILED(hr)) goto cleanup;
+        }
+        IDirectXFileData_Release(filedata);
+        filedata = NULL;
+        if (FAILED(hr))
+            goto cleanup;
+    }
+    if (hr != DXFILEERR_NOMOREOBJECTS)
+        goto cleanup;
+
+    IDirectXFileEnumObject_Release(enumobj);
+    enumobj = NULL;
+    IDirectXFile_Release(dxfile);
+    dxfile = NULL;
+
+    if (list_empty(&container_list)) {
+        hr = E_FAIL;
+        goto cleanup;
+    }
+
+    fvf = D3DFVF_XYZ;
+    num_faces = 0;
+    num_vertices = 0;
+    num_materials = 0;
+    LIST_FOR_EACH_ENTRY(container_ptr, &container_list, struct mesh_container, entry)
+    {
+        ID3DXMesh *mesh = container_ptr->mesh;
+        fvf |= mesh->lpVtbl->GetFVF(mesh);
+        num_faces += mesh->lpVtbl->GetNumFaces(mesh);
+        num_vertices += mesh->lpVtbl->GetNumVertices(mesh);
+        num_materials += container_ptr->num_materials;
+    }
+
+    hr = D3DXCreateMeshFVF(num_faces, num_vertices, options, fvf, device, &concat_mesh);
+    if (FAILED(hr)) goto cleanup;
+
+    hr = concat_mesh->lpVtbl->GetDeclaration(concat_mesh, concat_decl);
+    if (FAILED(hr)) goto cleanup;
+
+    concat_vertex_size = D3DXGetDeclVertexSize(concat_decl, 0);
+
+    hr = concat_mesh->lpVtbl->LockVertexBuffer(concat_mesh, D3DLOCK_DISCARD, (void**)&concat_vertices);
+    if (FAILED(hr)) goto cleanup;
+
+    LIST_FOR_EACH_ENTRY(container_ptr, &container_list, struct mesh_container, entry)
+    {
+        D3DVERTEXELEMENT9 mesh_decl[MAX_FVF_DECL_SIZE];
+        ID3DXMesh *mesh = container_ptr->mesh;
+        DWORD num_mesh_vertices = mesh->lpVtbl->GetNumVertices(mesh);
+        DWORD mesh_vertex_size;
+        const BYTE *mesh_vertices;
+
+        hr = mesh->lpVtbl->GetDeclaration(mesh, mesh_decl);
+        if (FAILED(hr)) goto cleanup;
+
+        mesh_vertex_size = D3DXGetDeclVertexSize(mesh_decl, 0);
+
+        hr = mesh->lpVtbl->LockVertexBuffer(mesh, D3DLOCK_READONLY, (void**)&mesh_vertices);
+        if (FAILED(hr)) goto cleanup;
+
+        for (i = 0; i < num_mesh_vertices; i++) {
+            int j;
+            int k = 1;
+
+            D3DXVec3TransformCoord((D3DXVECTOR3*)concat_vertices,
+                                   (D3DXVECTOR3*)mesh_vertices,
+                                   &container_ptr->transform);
+            for (j = 1; concat_decl[j].Stream != 0xff; j++)
+            {
+                if (concat_decl[j].Usage == mesh_decl[k].Usage &&
+                    concat_decl[j].UsageIndex == mesh_decl[k].UsageIndex)
+                {
+                    if (concat_decl[j].Usage == D3DDECLUSAGE_NORMAL) {
+                        D3DXVec3TransformCoord((D3DXVECTOR3*)(concat_vertices + concat_decl[j].Offset),
+                                               (D3DXVECTOR3*)(mesh_vertices + mesh_decl[k].Offset),
+                                               &container_ptr->transform);
+                    } else {
+                        memcpy(concat_vertices + concat_decl[j].Offset,
+                               mesh_vertices + mesh_decl[k].Offset,
+                               d3dx_decltype_size[mesh_decl[k].Type]);
+                    }
+                    k++;
+                }
+            }
+            mesh_vertices += mesh_vertex_size;
+            concat_vertices += concat_vertex_size;
+        }
+
+        mesh->lpVtbl->UnlockVertexBuffer(mesh);
+    }
+
+    concat_mesh->lpVtbl->UnlockVertexBuffer(concat_mesh);
+    concat_vertices = NULL;
+
+    hr = concat_mesh->lpVtbl->LockIndexBuffer(concat_mesh, D3DLOCK_DISCARD, &concat_indices);
+    if (FAILED(hr)) goto cleanup;
+
+    index_offset = 0;
+    LIST_FOR_EACH_ENTRY(container_ptr, &container_list, struct mesh_container, entry)
+    {
+        ID3DXMesh *mesh = container_ptr->mesh;
+        const void *mesh_indices;
+        DWORD num_mesh_faces = mesh->lpVtbl->GetNumFaces(mesh);
+        int i;
+
+        hr = mesh->lpVtbl->LockIndexBuffer(mesh, D3DLOCK_READONLY, (void**)&mesh_indices);
+        if (FAILED(hr)) goto cleanup;
+
+        if (options & D3DXMESH_32BIT) {
+            DWORD *dest = concat_indices;
+            const DWORD *src = mesh_indices;
+            for (i = 0; i < num_mesh_faces * 3; i++)
+                *dest++ = index_offset + *src++;
+            concat_indices = dest;
+        } else {
+            WORD *dest = concat_indices;
+            const WORD *src = mesh_indices;
+            for (i = 0; i < num_mesh_faces * 3; i++)
+                *dest++ = index_offset + *src++;
+            concat_indices = dest;
+        }
+        mesh->lpVtbl->UnlockIndexBuffer(mesh);
+
+        index_offset += num_mesh_faces * 3;
+    }
+
+    concat_mesh->lpVtbl->UnlockIndexBuffer(concat_mesh);
+    concat_indices = NULL;
+
+    if (num_materials) {
+        DWORD *concat_attrib_buffer = NULL;
+        DWORD offset = 0;
+
+        hr = concat_mesh->lpVtbl->LockAttributeBuffer(concat_mesh, D3DLOCK_DISCARD, &concat_attrib_buffer);
+        if (FAILED(hr)) goto cleanup;
+
+        LIST_FOR_EACH_ENTRY(container_ptr, &container_list, struct mesh_container, entry)
+        {
+            ID3DXMesh *mesh = container_ptr->mesh;
+            const DWORD *mesh_attrib_buffer = NULL;
+            DWORD count = mesh->lpVtbl->GetNumFaces(mesh);
+
+            hr = mesh->lpVtbl->LockAttributeBuffer(mesh, D3DLOCK_READONLY, (DWORD**)&mesh_attrib_buffer);
+            if (FAILED(hr)) {
+                concat_mesh->lpVtbl->UnlockAttributeBuffer(concat_mesh);
+                goto cleanup;
+            }
+
+            while (count--)
+                *concat_attrib_buffer++ = offset + *mesh_attrib_buffer++;
+
+            mesh->lpVtbl->UnlockAttributeBuffer(mesh);
+            offset += container_ptr->num_materials;
+        }
+        concat_mesh->lpVtbl->UnlockAttributeBuffer(concat_mesh);
+    }
+
+    /* generated default material */
+    if (!num_materials)
+        num_materials = 1;
+
+    *mesh_out = concat_mesh;
+    if (num_materials_out) *num_materials_out = num_materials;
+
+    hr = D3D_OK;
+cleanup:
+    if (concat_indices) concat_mesh->lpVtbl->UnlockIndexBuffer(concat_mesh);
+    if (concat_vertices) concat_mesh->lpVtbl->UnlockVertexBuffer(concat_mesh);
+    if (filedata) IDirectXFileData_Release(filedata);
+    if (enumobj) IDirectXFileEnumObject_Release(enumobj);
+    if (dxfile) IDirectXFile_Release(dxfile);
+    if (FAILED(hr)) {
+        if (concat_mesh) IUnknown_Release(concat_mesh);
+    }
+    LIST_FOR_EACH_ENTRY_SAFE(container_ptr, next_container_ptr, &container_list, struct mesh_container, entry)
+    {
+        if (container_ptr->mesh) IUnknown_Release(container_ptr->mesh);
+        HeapFree(GetProcessHeap(), 0, container_ptr);
+    }
+    return hr;
+}
+
 HRESULT WINAPI D3DXCreateBox(LPDIRECT3DDEVICE9 device, FLOAT width, FLOAT height,
                              FLOAT depth, LPD3DXMESH* mesh, LPD3DXBUFFER* adjacency)
 {
