@@ -521,6 +521,8 @@ const char *debugstr_variant(const VARIANT *v)
         return wine_dbg_sprintf("{VT_BSTR: %s}", debugstr_w(V_BSTR(v)));
     case VT_DISPATCH:
         return wine_dbg_sprintf("{VT_DISPATCH: %p}", V_DISPATCH(v));
+    case VT_ERROR:
+        return wine_dbg_sprintf("{VT_ERROR: %08x}", V_ERROR(v));
     case VT_BOOL:
         return wine_dbg_sprintf("{VT_BOOL: %x}", V_BOOL(v));
     case VT_UINT:
