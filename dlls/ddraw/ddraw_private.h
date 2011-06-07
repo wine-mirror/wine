@@ -415,7 +415,7 @@ void d3d_light_init(IDirect3DLightImpl *light, IDirectDrawImpl *ddraw) DECLSPEC_
 struct IDirect3DMaterialImpl
 {
     const IDirect3DMaterial3Vtbl *lpVtbl;
-    const IDirect3DMaterial2Vtbl *IDirect3DMaterial2_vtbl;
+    IDirect3DMaterial2 IDirect3DMaterial2_iface;
     const IDirect3DMaterialVtbl *IDirect3DMaterial_vtbl;
     LONG  ref;
 
