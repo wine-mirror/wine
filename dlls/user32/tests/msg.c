@@ -13107,7 +13107,6 @@ static void test_hotkey(void)
 
         if (ret == TRUE)
         {
-            ok(GetLastError() == 0xdeadbeef, "unexpected error %d\n", GetLastError());
             break;
         }
         else
@@ -13197,10 +13196,8 @@ static void test_hotkey(void)
     ok(ret == TRUE, "expected TRUE, got %i, err=%d\n", ret, GetLastError());
 
     /* Unregister hotkey properly */
-    SetLastError(0xdeadbeef);
     ret = UnregisterHotKey(test_window, 5);
-    ok(ret == TRUE, "expected TRUE, got %i\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "unexpected error %d\n", GetLastError());
+    ok(ret == TRUE, "expected TRUE, got %i, err=%d\n", ret, GetLastError());
 
     /* Unregister hotkey again */
     SetLastError(0xdeadbeef);
@@ -13209,10 +13206,8 @@ static void test_hotkey(void)
     ok(GetLastError() == ERROR_HOTKEY_NOT_REGISTERED, "unexpected error %d\n", GetLastError());
 
     /* Register thread hotkey */
-    SetLastError(0xdeadbeef);
     ret = RegisterHotKey(NULL, 5, MOD_WIN, hotkey_letter);
-    ok(ret == TRUE, "expected TRUE, got %i\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "unexpected error %d\n", GetLastError());
+    ok(ret == TRUE, "expected TRUE, got %i, err=%d\n", ret, GetLastError());
 
     /* Inject the appropriate key sequence */
     keybd_event(VK_LWIN, 0, 0, 0);
@@ -13265,10 +13260,8 @@ static void test_hotkey(void)
     ok_sequence(WmHotkeyReleaseLWIN, "thread hotkey release LWIN", FALSE);
 
     /* Unregister thread hotkey */
-    SetLastError(0xdeadbeef);
     ret = UnregisterHotKey(NULL, 5);
-    ok(ret == TRUE, "expected TRUE, got %i\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "unexpected error %d\n", GetLastError());
+    ok(ret == TRUE, "expected TRUE, got %i, err=%d\n", ret, GetLastError());
 
     UnhookWindowsHookEx(hKBD_hook);
     hKBD_hook = NULL;
