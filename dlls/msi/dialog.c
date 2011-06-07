@@ -44,7 +44,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
-
 extern HINSTANCE msi_hInstance;
 
 struct msi_control_tag;
@@ -113,11 +112,8 @@ typedef struct
     LPWSTR      propval;
 } radio_button_group_descr;
 
-static const WCHAR szMsiDialogClass[] = {
-    'M','s','i','D','i','a','l','o','g','C','l','o','s','e','C','l','a','s','s',0
-};
-static const WCHAR szMsiHiddenWindow[] = {
-    'M','s','i','H','i','d','d','e','n','W','i','n','d','o','w',0 };
+static const WCHAR szMsiDialogClass[] = { 'M','s','i','D','i','a','l','o','g','C','l','o','s','e','C','l','a','s','s',0 };
+static const WCHAR szMsiHiddenWindow[] = { 'M','s','i','H','i','d','d','e','n','W','i','n','d','o','w',0 };
 static const WCHAR szStatic[] = { 'S','t','a','t','i','c',0 };
 static const WCHAR szButton[] = { 'B','U','T','T','O','N', 0 };
 static const WCHAR szButtonData[] = { 'M','S','I','D','A','T','A',0 };
@@ -127,21 +123,16 @@ static const WCHAR szPushButton[] = { 'P','u','s','h','B','u','t','t','o','n',0 
 static const WCHAR szLine[] = { 'L','i','n','e',0 };
 static const WCHAR szBitmap[] = { 'B','i','t','m','a','p',0 };
 static const WCHAR szCheckBox[] = { 'C','h','e','c','k','B','o','x',0 };
-static const WCHAR szScrollableText[] = {
-    'S','c','r','o','l','l','a','b','l','e','T','e','x','t',0 };
+static const WCHAR szScrollableText[] = { 'S','c','r','o','l','l','a','b','l','e','T','e','x','t',0 };
 static const WCHAR szComboBox[] = { 'C','o','m','b','o','B','o','x',0 };
 static const WCHAR szEdit[] = { 'E','d','i','t',0 };
 static const WCHAR szMaskedEdit[] = { 'M','a','s','k','e','d','E','d','i','t',0 };
 static const WCHAR szPathEdit[] = { 'P','a','t','h','E','d','i','t',0 };
-static const WCHAR szProgressBar[] = {
-     'P','r','o','g','r','e','s','s','B','a','r',0 };
-static const WCHAR szSetProgress[] = {
-    'S','e','t','P','r','o','g','r','e','s','s',0 };
-static const WCHAR szRadioButtonGroup[] = { 
-    'R','a','d','i','o','B','u','t','t','o','n','G','r','o','u','p',0 };
+static const WCHAR szProgressBar[] = { 'P','r','o','g','r','e','s','s','B','a','r',0 };
+static const WCHAR szSetProgress[] = { 'S','e','t','P','r','o','g','r','e','s','s',0 };
+static const WCHAR szRadioButtonGroup[] = { 'R','a','d','i','o','B','u','t','t','o','n','G','r','o','u','p',0 };
 static const WCHAR szIcon[] = { 'I','c','o','n',0 };
-static const WCHAR szSelectionTree[] = {
-    'S','e','l','e','c','t','i','o','n','T','r','e','e',0 };
+static const WCHAR szSelectionTree[] = { 'S','e','l','e','c','t','i','o','n','T','r','e','e',0 };
 static const WCHAR szGroupBox[] = { 'G','r','o','u','p','B','o','x',0 };
 static const WCHAR szListBox[] = { 'L','i','s','t','B','o','x',0 };
 static const WCHAR szDirectoryCombo[] = { 'D','i','r','e','c','t','o','r','y','C','o','m','b','o',0 };
@@ -151,15 +142,6 @@ static const WCHAR szVolumeSelectCombo[] = { 'V','o','l','u','m','e','S','e','l'
 static const WCHAR szSelectionDescription[] = {'S','e','l','e','c','t','i','o','n','D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR szSelectionPath[] = {'S','e','l','e','c','t','i','o','n','P','a','t','h',0};
 static const WCHAR szProperty[] = {'P','r','o','p','e','r','t','y',0};
-
-static UINT msi_dialog_checkbox_handler( msi_dialog *, msi_control *, WPARAM );
-static void msi_dialog_checkbox_sync_state( msi_dialog *, msi_control * );
-static UINT msi_dialog_button_handler( msi_dialog *, msi_control *, WPARAM );
-static UINT msi_dialog_edit_handler( msi_dialog *, msi_control *, WPARAM );
-static UINT msi_dialog_radiogroup_handler( msi_dialog *, msi_control *, WPARAM );
-static UINT msi_dialog_evaluate_control_conditions( msi_dialog *dialog );
-static LRESULT WINAPI MSIRadioGroup_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-static MSIFEATURE *msi_seltree_get_selected_feature( msi_control *control );
 
 /* dialog sequencing */
 
@@ -517,7 +499,6 @@ static LPWSTR msi_create_tmp_path(void)
     return path;
 }
 
-
 static HANDLE msi_load_image( MSIDATABASE *db, LPCWSTR name, UINT type,
                               UINT cx, UINT cy, UINT flags )
 {
@@ -587,6 +568,32 @@ static void msi_dialog_set_property( MSIPACKAGE *package, LPCWSTR property, LPCW
     UINT r = msi_set_property( package->db, property, value );
     if (r == ERROR_SUCCESS && !strcmpW( property, szSourceDir ))
         msi_reset_folders( package, TRUE );
+}
+
+static MSIFEATURE *msi_seltree_feature_from_item( HWND hwnd, HTREEITEM hItem )
+{
+    TVITEMW tvi;
+
+    /* get the feature from the item */
+    memset( &tvi, 0, sizeof tvi );
+    tvi.hItem = hItem;
+    tvi.mask = TVIF_PARAM | TVIF_HANDLE;
+    SendMessageW( hwnd, TVM_GETITEMW, 0, (LPARAM)&tvi );
+    return (MSIFEATURE *)tvi.lParam;
+}
+
+struct msi_selection_tree_info
+{
+    msi_dialog *dialog;
+    HWND hwnd;
+    WNDPROC oldproc;
+    HTREEITEM selected;
+};
+
+static MSIFEATURE *msi_seltree_get_selected_feature( msi_control *control )
+{
+    struct msi_selection_tree_info *info = GetPropW( control->hwnd, szButtonData );
+    return msi_seltree_feature_from_item( control->hwnd, info->selected );
 }
 
 /* called from the Control Event subscription code */
@@ -831,6 +838,162 @@ static WCHAR *msi_get_binary_name( MSIPACKAGE *package, MSIRECORD *rec )
     return p;
 }
 
+static UINT msi_dialog_set_property_event( msi_dialog *dialog, LPCWSTR event, LPCWSTR arg )
+{
+    static const WCHAR szNullArg[] = {'{','}',0};
+    LPWSTR p, prop, arg_fmt = NULL;
+    UINT len;
+
+    len = strlenW( event );
+    prop = msi_alloc( len * sizeof(WCHAR) );
+    strcpyW( prop, &event[1] );
+    p = strchrW( prop, ']' );
+    if (p && (p[1] == 0 || p[1] == ' '))
+    {
+        *p = 0;
+        if (strcmpW( szNullArg, arg ))
+            deformat_string( dialog->package, arg, &arg_fmt );
+        msi_dialog_set_property( dialog->package, prop, arg_fmt );
+        msi_dialog_update_controls( dialog, prop );
+        msi_free( arg_fmt );
+    }
+    else ERR("Badly formatted property string - what happens?\n");
+    msi_free( prop );
+    return ERROR_SUCCESS;
+}
+
+static UINT msi_dialog_send_event( msi_dialog *dialog, LPCWSTR event, LPCWSTR arg )
+{
+    LPWSTR event_fmt = NULL, arg_fmt = NULL;
+
+    TRACE("Sending control event %s %s\n", debugstr_w(event), debugstr_w(arg));
+
+    deformat_string( dialog->package, event, &event_fmt );
+    deformat_string( dialog->package, arg, &arg_fmt );
+
+    dialog->event_handler( dialog->package, event_fmt, arg_fmt, dialog );
+
+    msi_free( event_fmt );
+    msi_free( arg_fmt );
+
+    return ERROR_SUCCESS;
+}
+
+static UINT msi_dialog_control_event( MSIRECORD *rec, LPVOID param )
+{
+    msi_dialog *dialog = param;
+    LPCWSTR condition, event, arg;
+    UINT r;
+
+    condition = MSI_RecordGetString( rec, 5 );
+    r = MSI_EvaluateConditionW( dialog->package, condition );
+    if (r == MSICONDITION_TRUE || r == MSICONDITION_NONE)
+    {
+        event = MSI_RecordGetString( rec, 3 );
+        arg = MSI_RecordGetString( rec, 4 );
+        if (event[0] == '[')
+            msi_dialog_set_property_event( dialog, event, arg );
+        else
+            msi_dialog_send_event( dialog, event, arg );
+    }
+    return ERROR_SUCCESS;
+}
+
+struct rec_list
+{
+    struct list entry;
+    MSIRECORD *rec;
+};
+
+static UINT add_rec_to_list( MSIRECORD *rec, LPVOID param )
+{
+    struct rec_list *add_rec;
+    struct list *records = param;
+
+    msiobj_addref( &rec->hdr );
+
+    add_rec = msi_alloc( sizeof( *add_rec ) );
+    if (!add_rec)
+    {
+        msiobj_release( &rec->hdr );
+        return ERROR_OUTOFMEMORY;
+    }
+
+    add_rec->rec = rec;
+    list_add_tail( records, &add_rec->entry );
+    return ERROR_SUCCESS;
+}
+
+static inline void remove_rec_from_list( struct rec_list *rec_entry )
+{
+    msiobj_release( &rec_entry->rec->hdr );
+    list_remove( &rec_entry->entry );
+    msi_free( rec_entry );
+}
+
+static UINT msi_dialog_button_handler( msi_dialog *dialog, msi_control *control, WPARAM param )
+{
+    static const WCHAR query[] = {
+      'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+      'C','o','n','t','r','o','l','E','v','e','n','t',' ','W','H','E','R','E',' ',
+      '`','D','i','a','l','o','g','_','`',' ','=',' ','\'','%','s','\'',' ','A','N','D',' ',
+      '`','C','o','n','t','r','o','l','_','`',' ','=',' ','\'','%','s','\'',' ',
+      'O','R','D','E','R',' ','B','Y',' ','`','O','r','d','e','r','i','n','g','`',0};
+    MSIQUERY *view = NULL;
+    struct rec_list *rec_entry, *next;
+    struct list events;
+    UINT r;
+
+    if (HIWORD(param) != BN_CLICKED)
+        return ERROR_SUCCESS;
+
+    list_init( &events );
+
+    r = MSI_OpenQuery( dialog->package->db, &view, query, dialog->name, control->name );
+    if (r != ERROR_SUCCESS)
+    {
+        ERR("query failed\n");
+        return 0;
+    }
+
+    r = MSI_IterateRecords( view, 0, add_rec_to_list, &events );
+    msiobj_release( &view->hdr );
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    /* handle all SetProperty events first */
+    LIST_FOR_EACH_ENTRY_SAFE( rec_entry, next, &events, struct rec_list, entry )
+    {
+        LPCWSTR event = MSI_RecordGetString( rec_entry->rec, 3 );
+
+        if (event[0] != '[')
+            continue;
+
+        r = msi_dialog_control_event( rec_entry->rec, dialog );
+        remove_rec_from_list( rec_entry );
+
+        if (r != ERROR_SUCCESS)
+            goto done;
+    }
+
+    /* handle all other events */
+    LIST_FOR_EACH_ENTRY_SAFE( rec_entry, next, &events, struct rec_list, entry )
+    {
+        r = msi_dialog_control_event( rec_entry->rec, dialog );
+        remove_rec_from_list( rec_entry );
+
+        if (r != ERROR_SUCCESS)
+            goto done;
+    }
+
+done:
+    LIST_FOR_EACH_ENTRY_SAFE( rec_entry, next, &events, struct rec_list, entry )
+    {
+        remove_rec_from_list( rec_entry );
+    }
+    return r;
+}
+
 static UINT msi_dialog_button_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
@@ -903,6 +1066,59 @@ static LPWSTR msi_get_checkbox_value( msi_dialog *dialog, LPCWSTR prop )
     return ret;
 }
 
+static UINT msi_dialog_get_checkbox_state( msi_dialog *dialog, msi_control *control )
+{
+    WCHAR state[2] = {0};
+    DWORD sz = 2;
+
+    msi_get_property( dialog->package->db, control->property, state, &sz );
+    return state[0] ? 1 : 0;
+}
+
+static void msi_dialog_set_checkbox_state( msi_dialog *dialog, msi_control *control, UINT state )
+{
+    static const WCHAR szState[] = {'1',0};
+    LPCWSTR val;
+
+    /* if uncheck then the property is set to NULL */
+    if (!state)
+    {
+        msi_dialog_set_property( dialog->package, control->property, NULL );
+        return;
+    }
+
+    /* check for a custom state */
+    if (control->value && control->value[0])
+        val = control->value;
+    else
+        val = szState;
+
+    msi_dialog_set_property( dialog->package, control->property, val );
+}
+
+static void msi_dialog_checkbox_sync_state( msi_dialog *dialog, msi_control *control )
+{
+    UINT state = msi_dialog_get_checkbox_state( dialog, control );
+    SendMessageW( control->hwnd, BM_SETCHECK, state ? BST_CHECKED : BST_UNCHECKED, 0 );
+}
+
+static UINT msi_dialog_checkbox_handler( msi_dialog *dialog, msi_control *control, WPARAM param )
+{
+    UINT state;
+
+    if (HIWORD(param) != BN_CLICKED)
+        return ERROR_SUCCESS;
+
+    TRACE("clicked checkbox %s, set %s\n", debugstr_w(control->name), debugstr_w(control->property));
+
+    state = msi_dialog_get_checkbox_state( dialog, control );
+    state = state ? 0 : 1;
+    msi_dialog_set_checkbox_state( dialog, control, state );
+    msi_dialog_checkbox_sync_state( dialog, control );
+
+    return msi_dialog_button_handler( dialog, control, param );
+}
+
 static UINT msi_dialog_checkbox_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
@@ -910,20 +1126,17 @@ static UINT msi_dialog_checkbox_control( msi_dialog *dialog, MSIRECORD *rec )
 
     TRACE("%p %p\n", dialog, rec);
 
-    control = msi_dialog_add_control( dialog, rec, szButton,
-                                BS_CHECKBOX | BS_MULTILINE | WS_TABSTOP );
+    control = msi_dialog_add_control( dialog, rec, szButton, BS_CHECKBOX | BS_MULTILINE | WS_TABSTOP );
     control->handler = msi_dialog_checkbox_handler;
     control->update = msi_dialog_checkbox_sync_state;
     prop = MSI_RecordGetString( rec, 9 );
-    if( prop )
+    if (prop)
     {
         control->property = strdupW( prop );
         control->value = msi_get_checkbox_value( dialog, prop );
-        TRACE("control %s value %s\n", debugstr_w(control->property),
-              debugstr_w(control->value));
+        TRACE("control %s value %s\n", debugstr_w(control->property), debugstr_w(control->value));
     }
     msi_dialog_checkbox_sync_state( dialog, control );
-
     return ERROR_SUCCESS;
 }
 
@@ -1322,8 +1535,67 @@ static UINT msi_combobox_add_items( struct msi_combobox_info *info, LPCWSTR prop
     return r;
 }
 
-static UINT msi_dialog_combobox_handler( msi_dialog *dialog,
-                                         msi_control *control, WPARAM param )
+static UINT msi_dialog_set_control_condition( MSIRECORD *rec, LPVOID param )
+{
+    static const WCHAR szHide[] = {'H','i','d','e',0};
+    static const WCHAR szShow[] = {'S','h','o','w',0};
+    static const WCHAR szDisable[] = {'D','i','s','a','b','l','e',0};
+    static const WCHAR szEnable[] = {'E','n','a','b','l','e',0};
+    static const WCHAR szDefault[] = {'D','e','f','a','u','l','t',0};
+    msi_dialog *dialog = param;
+    msi_control *control;
+    LPCWSTR name, action, condition;
+    UINT r;
+
+    name = MSI_RecordGetString( rec, 2 );
+    action = MSI_RecordGetString( rec, 3 );
+    condition = MSI_RecordGetString( rec, 4 );
+    r = MSI_EvaluateConditionW( dialog->package, condition );
+    control = msi_dialog_find_control( dialog, name );
+    if (r == MSICONDITION_TRUE && control)
+    {
+        TRACE("%s control %s\n", debugstr_w(action), debugstr_w(name));
+
+        /* FIXME: case sensitive? */
+        if (!strcmpW( action, szHide ))
+            ShowWindow(control->hwnd, SW_HIDE);
+        else if (!strcmpW( action, szShow ))
+            ShowWindow(control->hwnd, SW_SHOW);
+        else if (!strcmpW( action, szDisable ))
+            EnableWindow(control->hwnd, FALSE);
+        else if (!strcmpW( action, szEnable ))
+            EnableWindow(control->hwnd, TRUE);
+        else if (!strcmpW( action, szDefault ))
+            SetFocus(control->hwnd);
+        else
+            FIXME("Unhandled action %s\n", debugstr_w(action));
+    }
+    return ERROR_SUCCESS;
+}
+
+static UINT msi_dialog_evaluate_control_conditions( msi_dialog *dialog )
+{
+    static const WCHAR query[] = {
+      'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'C','o','n','t','r','o','l','C','o','n','d','i','t','i','o','n',' ',
+      'W','H','E','R','E',' ','`','D','i','a','l','o','g','_','`',' ','=',' ','\'','%','s','\'',0};
+    UINT r;
+    MSIQUERY *view = NULL;
+    MSIPACKAGE *package = dialog->package;
+
+    TRACE("%p %s\n", dialog, debugstr_w(dialog->name));
+
+    /* query the Control table for all the elements of the control */
+    r = MSI_OpenQuery( package->db, &view, query, dialog->name );
+    if (r != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    r = MSI_IterateRecords( view, 0, msi_dialog_set_control_condition, dialog );
+    msiobj_release( &view->hdr );
+    return r;
+}
+
+static UINT msi_dialog_combobox_handler( msi_dialog *dialog, msi_control *control, WPARAM param )
 {
     struct msi_combobox_info *info;
     int index;
@@ -1348,8 +1620,7 @@ static UINT msi_dialog_combobox_handler( msi_dialog *dialog,
     return ERROR_SUCCESS;
 }
 
-static void msi_dialog_combobox_update( msi_dialog *dialog,
-                msi_control *control )
+static void msi_dialog_combobox_update( msi_dialog *dialog, msi_control *control )
 {
     struct msi_combobox_info *info;
     LPWSTR value, tmp;
@@ -1430,6 +1701,22 @@ static UINT msi_dialog_combo_control( msi_dialog *dialog, MSIRECORD *rec )
         msi_combobox_add_items( info, control->property );
 
     msi_dialog_combobox_update( dialog, control );
+
+    return ERROR_SUCCESS;
+}
+
+static UINT msi_dialog_edit_handler( msi_dialog *dialog, msi_control *control, WPARAM param )
+{
+    LPWSTR buf;
+
+    if (HIWORD(param) != EN_CHANGE)
+        return ERROR_SUCCESS;
+
+    TRACE("edit %s contents changed, set %s\n", debugstr_w(control->name), debugstr_w(control->property));
+
+    buf = msi_get_window_text( control->hwnd );
+    msi_dialog_set_property( dialog->package, control->property, buf );
+    msi_free( buf );
 
     return ERROR_SUCCESS;
 }
@@ -1964,6 +2251,18 @@ static UINT msi_dialog_pathedit_control( msi_dialog *dialog, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
+static UINT msi_dialog_radiogroup_handler( msi_dialog *dialog, msi_control *control, WPARAM param )
+{
+    if (HIWORD(param) != BN_CLICKED)
+        return ERROR_SUCCESS;
+
+    TRACE("clicked radio button %s, set %s\n", debugstr_w(control->name), debugstr_w(control->property));
+
+    msi_dialog_set_property( dialog->package, control->property, control->name );
+
+    return msi_dialog_button_handler( dialog, control, param );
+}
+
 /* radio buttons are a bit different from normal controls */
 static UINT msi_dialog_create_radiobutton( MSIRECORD *rec, LPVOID param )
 {
@@ -1995,6 +2294,31 @@ static UINT msi_dialog_create_radiobutton( MSIRECORD *rec, LPVOID param )
         control->property = strdupW( prop );
 
     return ERROR_SUCCESS;
+}
+
+static BOOL CALLBACK msi_radioground_child_enum( HWND hWnd, LPARAM lParam )
+{
+    EnableWindow( hWnd, lParam );
+    return TRUE;
+}
+
+static LRESULT WINAPI MSIRadioGroup_WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    WNDPROC oldproc = (WNDPROC)GetPropW( hWnd, szButtonData );
+    LRESULT r;
+
+    TRACE("hWnd %p msg %04x wParam 0x%08lx lParam 0x%08lx\n", hWnd, msg, wParam, lParam);
+
+    if (msg == WM_COMMAND) /* Forward notifications to dialog */
+        SendMessageW( GetParent( hWnd ), msg, wParam, lParam );
+
+    r = CallWindowProcW( oldproc, hWnd, msg, wParam, lParam );
+
+    /* make sure the radio buttons show as disabled if the parent is disabled */
+    if (msg == WM_ENABLE)
+        EnumChildWindows( hWnd, msi_radioground_child_enum, wParam );
+
+    return r;
 }
 
 static UINT msi_dialog_radiogroup_control( msi_dialog *dialog, MSIRECORD *rec )
@@ -2057,16 +2381,6 @@ static UINT msi_dialog_radiogroup_control( msi_dialog *dialog, MSIRECORD *rec )
     return r;
 }
 
-/******************** Selection Tree ***************************************/
-
-struct msi_selection_tree_info
-{
-    msi_dialog *dialog;
-    HWND hwnd;
-    WNDPROC oldproc;
-    HTREEITEM selected;
-};
-
 static void
 msi_seltree_sync_item_state( HWND hwnd, MSIFEATURE *feature, HTREEITEM hItem )
 {
@@ -2105,20 +2419,6 @@ msi_seltree_popup_menu( HWND hwnd, INT x, INT y )
                         x, y, 0, hwnd, NULL );
     DestroyMenu( hMenu );
     return r;
-}
-
-static MSIFEATURE *
-msi_seltree_feature_from_item( HWND hwnd, HTREEITEM hItem )
-{
-    TVITEMW tvi;
-
-    /* get the feature from the item */
-    memset( &tvi, 0, sizeof tvi );
-    tvi.hItem = hItem;
-    tvi.mask = TVIF_PARAM | TVIF_HANDLE;
-    SendMessageW( hwnd, TVM_GETITEMW, 0, (LPARAM) &tvi );
-
-    return (MSIFEATURE*) tvi.lParam;
 }
 
 static void
@@ -2202,12 +2502,6 @@ msi_seltree_menu( HWND hwnd, HTREEITEM hItem )
     }
 
     return 0;
-}
-
-static MSIFEATURE *msi_seltree_get_selected_feature( msi_control *control )
-{
-    struct msi_selection_tree_info *info = GetPropW(control->hwnd, szButtonData);
-    return msi_seltree_feature_from_item( control->hwnd, info->selected );
 }
 
 static LRESULT WINAPI
@@ -3137,71 +3431,6 @@ static UINT msi_dialog_fill_controls( msi_dialog *dialog )
     return r;
 }
 
-static UINT msi_dialog_set_control_condition( MSIRECORD *rec, LPVOID param )
-{
-    static const WCHAR szHide[] = { 'H','i','d','e',0 };
-    static const WCHAR szShow[] = { 'S','h','o','w',0 };
-    static const WCHAR szDisable[] = { 'D','i','s','a','b','l','e',0 };
-    static const WCHAR szEnable[] = { 'E','n','a','b','l','e',0 };
-    static const WCHAR szDefault[] = { 'D','e','f','a','u','l','t',0 };
-    msi_dialog *dialog = param;
-    msi_control *control;
-    LPCWSTR name, action, condition;
-    UINT r;
-
-    name = MSI_RecordGetString( rec, 2 );
-    action = MSI_RecordGetString( rec, 3 );
-    condition = MSI_RecordGetString( rec, 4 );
-    r = MSI_EvaluateConditionW( dialog->package, condition );
-    control = msi_dialog_find_control( dialog, name );
-    if( r == MSICONDITION_TRUE && control )
-    {
-        TRACE("%s control %s\n", debugstr_w(action), debugstr_w(name));
-
-        /* FIXME: case sensitive? */
-        if (!strcmpW( action, szHide ))
-            ShowWindow(control->hwnd, SW_HIDE);
-        else if (!strcmpW( action, szShow ))
-            ShowWindow(control->hwnd, SW_SHOW);
-        else if (!strcmpW( action, szDisable ))
-            EnableWindow(control->hwnd, FALSE);
-        else if (!strcmpW( action, szEnable ))
-            EnableWindow(control->hwnd, TRUE);
-        else if (!strcmpW( action, szDefault ))
-            SetFocus(control->hwnd);
-        else
-            FIXME("Unhandled action %s\n", debugstr_w(action));
-    }
-
-    return ERROR_SUCCESS;
-}
-
-static UINT msi_dialog_evaluate_control_conditions( msi_dialog *dialog )
-{
-    static const WCHAR query[] = {
-      'S','E','L','E','C','T',' ','*',' ',
-      'F','R','O','M',' ',
-        'C','o','n','t','r','o','l','C','o','n','d','i','t','i','o','n',' ',
-      'W','H','E','R','E',' ',
-        '`','D','i','a','l','o','g','_','`',' ','=',' ','\'','%','s','\'',0
-    };
-    UINT r;
-    MSIQUERY *view = NULL;
-    MSIPACKAGE *package = dialog->package;
-
-    TRACE("%p %s\n", dialog, debugstr_w(dialog->name) );
-
-    /* query the Control table for all the elements of the control */
-    r = MSI_OpenQuery( package->db, &view, query, dialog->name );
-    if( r != ERROR_SUCCESS )
-        return ERROR_SUCCESS;
-
-    r = MSI_IterateRecords( view, 0, msi_dialog_set_control_condition, dialog );
-    msiobj_release( &view->hdr );
-
-    return r;
-}
-
 UINT msi_dialog_reset( msi_dialog *dialog )
 {
     /* FIXME: should restore the original values of any properties we changed */
@@ -3398,263 +3627,6 @@ static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
     return 0;
 }
 
-static UINT msi_dialog_send_event( msi_dialog *dialog, LPCWSTR event, LPCWSTR arg )
-{
-    LPWSTR event_fmt = NULL, arg_fmt = NULL;
-
-    TRACE("Sending control event %s %s\n", debugstr_w(event), debugstr_w(arg));
-
-    deformat_string( dialog->package, event, &event_fmt );
-    deformat_string( dialog->package, arg, &arg_fmt );
-
-    dialog->event_handler( dialog->package, event_fmt, arg_fmt, dialog );
-
-    msi_free( event_fmt );
-    msi_free( arg_fmt );
-
-    return ERROR_SUCCESS;
-}
-
-static UINT msi_dialog_set_property_event( msi_dialog *dialog, LPCWSTR event, LPCWSTR arg )
-{
-    static const WCHAR szNullArg[] = { '{','}',0 };
-    LPWSTR p, prop, arg_fmt = NULL;
-    UINT len;
-
-    len = strlenW(event);
-    prop = msi_alloc( len*sizeof(WCHAR));
-    strcpyW( prop, &event[1] );
-    p = strchrW( prop, ']' );
-    if( p && (p[1] == 0 || p[1] == ' ') )
-    {
-        *p = 0;
-        if( strcmpW( szNullArg, arg ) )
-            deformat_string( dialog->package, arg, &arg_fmt );
-        msi_dialog_set_property( dialog->package, prop, arg_fmt );
-        msi_dialog_update_controls( dialog, prop );
-        msi_free( arg_fmt );
-    }
-    else
-        ERR("Badly formatted property string - what happens?\n");
-    msi_free( prop );
-    return ERROR_SUCCESS;
-}
-
-static UINT msi_dialog_control_event( MSIRECORD *rec, LPVOID param )
-{
-    msi_dialog *dialog = param;
-    LPCWSTR condition, event, arg;
-    UINT r;
-
-    condition = MSI_RecordGetString( rec, 5 );
-    r = MSI_EvaluateConditionW( dialog->package, condition );
-    if( r == MSICONDITION_TRUE || r == MSICONDITION_NONE )
-    {
-        event = MSI_RecordGetString( rec, 3 );
-        arg = MSI_RecordGetString( rec, 4 );
-        if( event[0] == '[' )
-            msi_dialog_set_property_event( dialog, event, arg );
-        else
-            msi_dialog_send_event( dialog, event, arg );
-    }
-
-    return ERROR_SUCCESS;
-}
-
-struct rec_list
-{
-    struct list entry;
-    MSIRECORD *rec;
-};
-
-static UINT add_rec_to_list( MSIRECORD *rec, LPVOID param )
-{
-    struct rec_list *add_rec;
-    struct list *records = param;
-
-    msiobj_addref( &rec->hdr );
-
-    add_rec = msi_alloc( sizeof( *add_rec ) );
-    if (!add_rec)
-    {
-        msiobj_release( &rec->hdr );
-        return ERROR_OUTOFMEMORY;
-    }
-
-    add_rec->rec = rec;
-    list_add_tail( records, &add_rec->entry );
-    return ERROR_SUCCESS;
-}
-
-static inline void remove_rec_from_list( struct rec_list *rec_entry )
-{
-    msiobj_release( &rec_entry->rec->hdr );
-    list_remove( &rec_entry->entry );
-    msi_free( rec_entry );
-}
-
-static UINT msi_dialog_button_handler( msi_dialog *dialog,
-                                       msi_control *control, WPARAM param )
-{
-    static const WCHAR query[] = {
-      'S','E','L','E','C','T',' ','*',' ',
-      'F','R','O','M',' ','C','o','n','t','r','o','l','E','v','e','n','t',' ',
-      'W','H','E','R','E',' ',
-         '`','D','i','a','l','o','g','_','`',' ','=',' ','\'','%','s','\'',' ',
-      'A','N','D',' ',
-         '`','C','o','n','t','r','o','l','_','`',' ','=',' ','\'','%','s','\'',' ',
-      'O','R','D','E','R',' ','B','Y',' ','`','O','r','d','e','r','i','n','g','`',0
-    };
-    MSIQUERY *view = NULL;
-    struct rec_list *rec_entry, *next;
-    struct list events;
-    UINT r;
-
-    if( HIWORD(param) != BN_CLICKED )
-        return ERROR_SUCCESS;
-
-    list_init( &events );
-
-    r = MSI_OpenQuery( dialog->package->db, &view, query,
-                       dialog->name, control->name );
-    if( r != ERROR_SUCCESS )
-    {
-        ERR("query failed\n");
-        return 0;
-    }
-
-    r = MSI_IterateRecords( view, 0, add_rec_to_list, &events );
-    msiobj_release( &view->hdr );
-    if (r != ERROR_SUCCESS)
-        goto done;
-
-    /* handle all SetProperty events first */
-    LIST_FOR_EACH_ENTRY_SAFE( rec_entry, next, &events, struct rec_list, entry )
-    {
-        LPCWSTR event = MSI_RecordGetString( rec_entry->rec, 3 );
-
-        if ( event[0] != '[' )
-            continue;
-
-        r = msi_dialog_control_event( rec_entry->rec, dialog );
-        remove_rec_from_list( rec_entry );
-
-        if ( r != ERROR_SUCCESS )
-            goto done;
-    }    
-
-    /* handle all other events */
-    LIST_FOR_EACH_ENTRY_SAFE( rec_entry, next, &events, struct rec_list, entry )
-    {
-        r = msi_dialog_control_event( rec_entry->rec, dialog );
-        remove_rec_from_list( rec_entry );
-
-        if ( r != ERROR_SUCCESS )
-            goto done;
-    }
-
-done:
-    LIST_FOR_EACH_ENTRY_SAFE( rec_entry, next, &events, struct rec_list, entry )
-    {
-        remove_rec_from_list( rec_entry );
-    }
-
-    return r;
-}
-
-static UINT msi_dialog_get_checkbox_state( msi_dialog *dialog,
-                msi_control *control )
-{
-    WCHAR state[2] = { 0 };
-    DWORD sz = 2;
-
-    msi_get_property( dialog->package->db, control->property, state, &sz );
-    return state[0] ? 1 : 0;
-}
-
-static void msi_dialog_set_checkbox_state( msi_dialog *dialog,
-                msi_control *control, UINT state )
-{
-    static const WCHAR szState[] = { '1', 0 };
-    LPCWSTR val;
-
-    /* if uncheck then the property is set to NULL */
-    if (!state)
-    {
-        msi_dialog_set_property( dialog->package, control->property, NULL );
-        return;
-    }
-
-    /* check for a custom state */
-    if (control->value && control->value[0])
-        val = control->value;
-    else
-        val = szState;
-
-    msi_dialog_set_property( dialog->package, control->property, val );
-}
-
-static void msi_dialog_checkbox_sync_state( msi_dialog *dialog,
-                msi_control *control )
-{
-    UINT state;
-
-    state = msi_dialog_get_checkbox_state( dialog, control );
-    SendMessageW( control->hwnd, BM_SETCHECK,
-                  state ? BST_CHECKED : BST_UNCHECKED, 0 );
-}
-
-static UINT msi_dialog_checkbox_handler( msi_dialog *dialog,
-                msi_control *control, WPARAM param )
-{
-    UINT state;
-
-    if( HIWORD(param) != BN_CLICKED )
-        return ERROR_SUCCESS;
-
-    TRACE("clicked checkbox %s, set %s\n", debugstr_w(control->name),
-          debugstr_w(control->property));
-
-    state = msi_dialog_get_checkbox_state( dialog, control );
-    state = state ? 0 : 1;
-    msi_dialog_set_checkbox_state( dialog, control, state );
-    msi_dialog_checkbox_sync_state( dialog, control );
-
-    return msi_dialog_button_handler( dialog, control, param );
-}
-
-static UINT msi_dialog_edit_handler( msi_dialog *dialog,
-                msi_control *control, WPARAM param )
-{
-    LPWSTR buf;
-
-    if( HIWORD(param) != EN_CHANGE )
-        return ERROR_SUCCESS;
-
-    TRACE("edit %s contents changed, set %s\n", debugstr_w(control->name),
-          debugstr_w(control->property));
-
-    buf = msi_get_window_text( control->hwnd );
-    msi_dialog_set_property( dialog->package, control->property, buf );
-    msi_free( buf );
-
-    return ERROR_SUCCESS;
-}
-
-static UINT msi_dialog_radiogroup_handler( msi_dialog *dialog,
-                msi_control *control, WPARAM param )
-{
-    if( HIWORD(param) != BN_CLICKED )
-        return ERROR_SUCCESS;
-
-    TRACE("clicked radio button %s, set %s\n", debugstr_w(control->name),
-          debugstr_w(control->property));
-
-    msi_dialog_set_property( dialog->package, control->property, control->name );
-
-    return msi_dialog_button_handler( dialog, control, param );
-}
-
 static LRESULT msi_dialog_oncommand( msi_dialog *dialog, WPARAM param, HWND hwnd )
 {
     msi_control *control = NULL;
@@ -3750,31 +3722,6 @@ static LRESULT WINAPI MSIDialog_WndProc( HWND hwnd, UINT msg,
         return msi_dialog_onnotify( dialog, lParam );
     }
     return DefWindowProcW(hwnd, msg, wParam, lParam);
-}
-
-static BOOL CALLBACK msi_radioground_child_enum( HWND hWnd, LPARAM lParam )
-{
-    EnableWindow( hWnd, lParam );
-    return TRUE;
-}
-
-static LRESULT WINAPI MSIRadioGroup_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    WNDPROC oldproc = (WNDPROC) GetPropW(hWnd, szButtonData);
-    LRESULT r;
-
-    TRACE("hWnd %p msg %04x wParam 0x%08lx lParam 0x%08lx\n", hWnd, msg, wParam, lParam);
-
-    if (msg == WM_COMMAND) /* Forward notifications to dialog */
-        SendMessageW(GetParent(hWnd), msg, wParam, lParam);
-
-    r = CallWindowProcW(oldproc, hWnd, msg, wParam, lParam);
-
-    /* make sure the radio buttons show as disabled if the parent is disabled */
-    if (msg == WM_ENABLE)
-        EnumChildWindows( hWnd, msi_radioground_child_enum, wParam );
-
-    return r;
 }
 
 static LRESULT WINAPI MSIHiddenWindowProc( HWND hwnd, UINT msg,
