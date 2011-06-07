@@ -4644,7 +4644,7 @@ static HRESULT WINAPI d3d1_CreateMaterial(IDirect3D *iface, IDirect3DMaterial **
     TRACE("iface %p, material %p, outer_unknown %p.\n", iface, material, outer_unknown);
 
     hr = d3d3_CreateMaterial(&This->IDirect3D3_iface, &material3, outer_unknown);
-    *material = material3 ? (IDirect3DMaterial *)&((IDirect3DMaterialImpl *)material3)->IDirect3DMaterial_vtbl : NULL;
+    *material = material3 ? &((IDirect3DMaterialImpl *)material3)->IDirect3DMaterial_iface : NULL;
 
     TRACE("Returning material %p.\n", *material);
 

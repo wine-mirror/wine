@@ -416,7 +416,7 @@ struct IDirect3DMaterialImpl
 {
     const IDirect3DMaterial3Vtbl *lpVtbl;
     IDirect3DMaterial2 IDirect3DMaterial2_iface;
-    const IDirect3DMaterialVtbl *IDirect3DMaterial_vtbl;
+    IDirect3DMaterial IDirect3DMaterial_iface;
     LONG  ref;
 
     /* IDirect3DMaterial2 fields */
