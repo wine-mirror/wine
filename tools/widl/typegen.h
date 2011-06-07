@@ -75,6 +75,7 @@ unsigned int get_size_procformatstring(const statement_list_t *stmts, type_pred_
 unsigned int get_size_typeformatstring(const statement_list_t *stmts, type_pred_t pred);
 void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char *local_var_prefix );
 void declare_stub_args( FILE *file, int indent, const var_t *func );
+void write_func_param_struct( FILE *file, const type_t *iface, const type_t *func, const char *var_name );
 int write_expr_eval_routines(FILE *file, const char *iface);
 void write_expr_eval_routine_list(FILE *file, const char *iface);
 void write_user_quad_list(FILE *file);

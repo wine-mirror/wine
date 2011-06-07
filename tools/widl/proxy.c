@@ -513,6 +513,31 @@ static void gen_stub(type_t *iface, const var_t *func, const char *cas,
   print_proxy("\n");
 }
 
+static void gen_stub_thunk( type_t *iface, const var_t *func, unsigned int proc_offset )
+{
+    int has_ret = !is_void( type_function_get_rettype( func->type ));
+    const var_t *arg, *callas = is_callas( func->attrs );
+    const var_list_t *args = type_get_function_args( func->type );
+
+    indent = 0;
+    print_proxy( "void __RPC_API %s_%s_Thunk( PMIDL_STUB_MESSAGE pStubMsg )\n",
+                 iface->name, get_name(func) );
+    print_proxy( "{\n");
+    indent++;
+    write_func_param_struct( proxy, iface, func->type, "pParamStruct" );
+    print_proxy( "%s%s_%s_Stub( pParamStruct->This",
+                 has_ret ? "pParamStruct->_RetVal = " : "", iface->name, callas->name );
+    indent++;
+    if (args) LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
+    {
+        fprintf( proxy, ",\n%*spParamStruct->%s", 4 * indent, "", arg->name );
+    }
+    fprintf( proxy, " );\n" );
+    indent--;
+    indent--;
+    print_proxy( "}\n\n");
+}
+
 int count_methods(const type_t *iface)
 {
     const statement_t *stmt;
@@ -594,11 +619,33 @@ static int write_stub_methods(type_t *iface, int skip)
   return i;
 }
 
+static void write_thunk_methods( type_t *iface )
+{
+    const statement_t *stmt;
+    int i = 0;
+
+    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
+    {
+        var_t *func = stmt->u.var;
+        const var_t *cas = is_callas(func->attrs);
+
+        if (is_local( func->attrs )) continue;
+        if (i) fprintf(proxy, ",\n");
+        if (cas && is_interpreted_func( iface, func ))
+            print_proxy( "%s_%s_Thunk", iface->name, func->name );
+        else
+            print_proxy( "0" );
+        i++;
+    }
+    fputc( '\n', proxy );
+}
+
 static void write_proxy(type_t *iface, unsigned int *proc_offset)
 {
   int count;
   const statement_t *stmt;
   int first_func = 1;
+  int needs_stub_thunks = 0;
   int needs_inline_stubs = need_inline_stubs( iface );
 
   STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface)) {
@@ -627,6 +674,11 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
       func->procstring_offset = *proc_offset;
       gen_proxy(iface, func, idx, *proc_offset);
       gen_stub(iface, func, cname, *proc_offset);
+      if (cas && is_interpreted_func( iface, func ))
+      {
+          needs_stub_thunks = 1;
+          gen_stub_thunk(iface, func, *proc_offset);
+      }
       *proc_offset += get_size_procformatstring_func( iface, func );
     }
   }
@@ -654,6 +706,17 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   indent--;
   print_proxy( "};\n\n");
 
+  /* stub thunk table */
+  if (needs_stub_thunks)
+  {
+      print_proxy( "static const STUB_THUNK %s_StubThunkTable[] =\n", iface->name);
+      print_proxy( "{\n");
+      indent++;
+      write_thunk_methods( iface );
+      indent--;
+      print_proxy( "};\n\n");
+  }
+
   /* server info */
   print_proxy( "static const MIDL_SERVER_INFO %s_ServerInfo =\n", iface->name );
   print_proxy( "{\n" );
@@ -662,7 +725,10 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   print_proxy( "0,\n" );
   print_proxy( "__MIDL_ProcFormatString.Format,\n" );
   print_proxy( "&%s_FormatStringOffsetTable[-3],\n", iface->name );
-  print_proxy( "0,\n" );
+  if (needs_stub_thunks)
+      print_proxy( "&%s_StubThunkTable[-3],\n", iface->name );
+  else
+      print_proxy( "0,\n" );
   print_proxy( "0,\n" );
   print_proxy( "0,\n" );
   print_proxy( "0\n" );

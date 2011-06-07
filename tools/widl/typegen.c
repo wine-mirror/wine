@@ -4632,6 +4632,36 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
 }
 
 
+void write_func_param_struct( FILE *file, const type_t *iface, const type_t *func, const char *var_name )
+{
+    const var_list_t *args = type_get_function_args( func );
+    const var_t *arg;
+
+    print_file(file, 1, "struct _PARAM_STRUCT\n" );
+    print_file(file, 1, "{\n" );
+    if (is_object( iface )) print_file(file, 2, "%s *This;\n", iface->name );
+
+    if (args) LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
+    {
+        print_file(file, 2, "%s", "");
+        write_type_left( file, (type_t *)arg->type, TRUE );
+        if (needs_space_after( arg->type )) fputc( ' ', file );
+        if (is_array( arg->type ) && !type_array_is_decl_as_ptr( arg->type )) fputc( '*', file );
+        /* FIXME: should check for large args being passed by pointer */
+        if (is_array( arg->type ) || is_ptr( arg->type ) || type_memsize( arg->type ) == pointer_size)
+            fprintf( file, "%s;\n", arg->name );
+        else
+            fprintf( file, "%s DECLSPEC_ALIGN(%u);\n", arg->name, pointer_size );
+    }
+    if (!is_void( type_function_get_rettype( func )))
+    {
+        print_file(file, 2, "%s", "");
+        write_type_decl( file, type_function_get_rettype( func ), "_RetVal" );
+        fprintf( file, ";\n" );
+    }
+    print_file(file, 1, "} *%s = (struct _PARAM_STRUCT *)pStubMsg->StackTop;\n\n", var_name );
+}
+
 int write_expr_eval_routines(FILE *file, const char *iface)
 {
     static const char *var_name = "pS";
@@ -4650,26 +4680,7 @@ int write_expr_eval_routines(FILE *file, const char *iface)
         print_file(file, 0, "{\n");
         if (type_get_type( eval->cont_type ) == TYPE_FUNCTION)
         {
-            const var_list_t *args = type_get_function_args( eval->cont_type );
-            const var_t *arg;
-
-            print_file(file, 1, "struct _PARAM_STRUCT\n" );
-            print_file(file, 1, "{\n" );
-            if (is_object( eval->iface )) print_file(file, 2, "%s *This;\n", eval->iface->name );
-
-            if (args) LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
-            {
-                print_file(file, 2, "%s", "");
-                write_type_left( file, (type_t *)arg->type, TRUE );
-                if (needs_space_after( arg->type )) fputc( ' ', file );
-                if (is_array( arg->type ) && !type_array_is_decl_as_ptr( arg->type )) fputc( '*', file );
-                /* FIXME: should check for large args being passed by pointer */
-                if (is_array( arg->type ) || is_ptr( arg->type ) || type_memsize( arg->type ) == pointer_size)
-                    fprintf( file, "%s;\n", arg->name );
-                else
-                    fprintf( file, "%s DECLSPEC_ALIGN(%u);\n", arg->name, pointer_size );
-            }
-            print_file(file, 1, "} *pS = (struct _PARAM_STRUCT *)pStubMsg->StackTop;\n" );
+            write_func_param_struct( file, eval->iface, eval->cont_type, "pS" );
         }
         else
         {
