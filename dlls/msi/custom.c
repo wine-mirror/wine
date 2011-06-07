@@ -972,55 +972,39 @@ static UINT HANDLE_CustomType1(MSIPACKAGE *package, LPCWSTR source,
     return r;
 }
 
-static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
-                               LPCWSTR target, const INT type, LPCWSTR action)
+static HANDLE execute_command( const WCHAR *exe, WCHAR *arg, const WCHAR *dir )
 {
     STARTUPINFOW si;
     PROCESS_INFORMATION info;
-    BOOL rc;
-    INT len;
-    WCHAR *deformated = NULL;
-    WCHAR *cmd;
-    static const WCHAR spc[] = {' ',0};
-    MSIBINARY *binary;
-    UINT r;
+    BOOL ret;
 
-    memset(&si,0,sizeof(STARTUPINFOW));
-
-    if (!(binary = get_temp_binary( package, source, FALSE )))
-        return ERROR_FUNCTION_FAILED;
-
-    deformat_string(package,target,&deformated);
-
-    len = strlenW( binary->tmpfile ) + 2;
-    if (deformated)
-        len += strlenW(deformated);
-
-    cmd = msi_alloc(sizeof(WCHAR)*len);
-
-    strcpyW( cmd, binary->tmpfile );
-    if (deformated)
+    memset( &si, 0, sizeof(STARTUPINFOW) );
+    ret = CreateProcessW( exe, arg, NULL, NULL, FALSE, 0, NULL, dir, &si, &info );
+    if (!ret)
     {
-        strcatW(cmd,spc);
-        strcatW(cmd,deformated);
-        msi_free(deformated);
-    }
-
-    TRACE("executing exe %s\n", debugstr_w(cmd));
-
-    rc = CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL, szCRoot, &si, &info);
-    msi_free(cmd);
-
-    if ( !rc )
-    {
-        ERR("Unable to execute command %s\n", debugstr_w(cmd));
-        return ERROR_SUCCESS;
+        WARN("unable to execute command %u\n", GetLastError());
+        return INVALID_HANDLE_VALUE;
     }
     CloseHandle( info.hThread );
+    return info.hProcess;
+}
 
-    r = wait_process_handle(package, type, info.hProcess, action);
+static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
+                               LPCWSTR target, const INT type, LPCWSTR action)
+{
+    MSIBINARY *binary;
+    HANDLE handle;
+    WCHAR *arg;
 
-    return r;
+    if (!(binary = get_temp_binary( package, source, FALSE ))) return ERROR_FUNCTION_FAILED;
+
+    deformat_string( package, target, &arg );
+    TRACE("exe %s arg %s\n", debugstr_w(binary->tmpfile), debugstr_w(arg));
+
+    handle = execute_command( binary->tmpfile, arg, szCRoot );
+    msi_free( arg );
+    if (handle == INVALID_HANDLE_VALUE) return ERROR_SUCCESS;
+    return wait_process_handle( package, type, handle, action );
 }
 
 static UINT HANDLE_CustomType17(MSIPACKAGE *package, LPCWSTR source,
@@ -1049,53 +1033,19 @@ static UINT HANDLE_CustomType17(MSIPACKAGE *package, LPCWSTR source,
 static UINT HANDLE_CustomType18(MSIPACKAGE *package, LPCWSTR source,
                                 LPCWSTR target, const INT type, LPCWSTR action)
 {
-    STARTUPINFOW si;
-    PROCESS_INFORMATION info;
-    BOOL rc;
-    WCHAR *deformated;
-    WCHAR *cmd;
-    INT len;
-    static const WCHAR spc[] = {' ',0};
     MSIFILE *file;
+    HANDLE handle;
+    WCHAR *arg;
 
-    memset(&si,0,sizeof(STARTUPINFOW));
+    if (!(file = msi_get_loaded_file( package, source ))) return ERROR_FUNCTION_FAILED;
 
-    file = msi_get_loaded_file(package, source);
-    if( !file )
-        return ERROR_FUNCTION_FAILED;
+    deformat_string( package, target, &arg );
+    TRACE("exe %s arg %s\n", debugstr_w(file->TargetPath), debugstr_w(arg));
 
-    len = lstrlenW( file->TargetPath );
-
-    deformat_string(package,target,&deformated);
-    if (deformated)
-        len += strlenW(deformated);
-    len += 2;
-
-    cmd = msi_alloc(len * sizeof(WCHAR));
-
-    lstrcpyW( cmd, file->TargetPath);
-    if (deformated)
-    {
-        strcatW(cmd, spc);
-        strcatW(cmd, deformated);
-
-        msi_free(deformated);
-    }
-
-    TRACE("executing exe %s\n", debugstr_w(cmd));
-
-    rc = CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL, szCRoot, &si, &info);
-
-    if ( !rc )
-    {
-        ERR("Unable to execute command %s\n", debugstr_w(cmd));
-        msi_free(cmd);
-        return ERROR_SUCCESS;
-    }
-    msi_free(cmd);
-    CloseHandle( info.hThread );
-
-    return wait_process_handle(package, type, info.hProcess, action);
+    handle = execute_command( file->TargetPath, arg, szCRoot );
+    msi_free( arg );
+    if (handle == INVALID_HANDLE_VALUE) return ERROR_SUCCESS;
+    return wait_process_handle( package, type, handle, action );
 }
 
 static UINT HANDLE_CustomType19(MSIPACKAGE *package, LPCWSTR source,
@@ -1132,90 +1082,39 @@ static UINT HANDLE_CustomType19(MSIPACKAGE *package, LPCWSTR source,
 static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
                                 LPCWSTR target, const INT type, LPCWSTR action)
 {
-    STARTUPINFOW si;
-    PROCESS_INFORMATION info;
-    WCHAR *prop;
-    BOOL rc;
-    WCHAR *deformated;
-    WCHAR *cmd;
-    INT len;
-    static const WCHAR spc[] = {' ',0};
+    WCHAR *exe, *arg;
+    HANDLE handle;
 
-    memset(&si,0,sizeof(STARTUPINFOW));
-    memset(&info,0,sizeof(PROCESS_INFORMATION));
+    if (!(exe = msi_dup_property( package->db, source ))) return ERROR_SUCCESS;
 
-    prop = msi_dup_property( package->db, source );
-    if (!prop)
-        return ERROR_SUCCESS;
+    deformat_string( package, target, &arg );
+    TRACE("exe %s arg %s\n", debugstr_w(exe), debugstr_w(arg));
 
-    deformat_string(package,target,&deformated);
-    len = strlenW(prop) + 2;
-    if (deformated)
-         len += strlenW(deformated);
-
-    cmd = msi_alloc(sizeof(WCHAR)*len);
-
-    strcpyW(cmd,prop);
-    if (deformated)
-    {
-        strcatW(cmd,spc);
-        strcatW(cmd,deformated);
-
-        msi_free(deformated);
-    }
-    msi_free(prop);
-
-    TRACE("executing exe %s\n", debugstr_w(cmd));
-
-    rc = CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL, szCRoot, &si, &info);
-
-    if ( !rc )
-    {
-        ERR("Unable to execute command %s\n", debugstr_w(cmd));
-        msi_free(cmd);
-        return ERROR_SUCCESS;
-    }
-    msi_free(cmd);
-
-    CloseHandle( info.hThread );
-
-    return wait_process_handle(package, type, info.hProcess, action);
+    handle = execute_command( exe, arg, szCRoot );
+    msi_free( arg );
+    if (handle == INVALID_HANDLE_VALUE) return ERROR_SUCCESS;
+    return wait_process_handle( package, type, handle, action );
 }
 
 static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
                                 LPCWSTR target, const INT type, LPCWSTR action)
 {
-    LPWSTR filename;
     const WCHAR *workingdir;
-    STARTUPINFOW si;
-    PROCESS_INFORMATION info;
-    BOOL rc;
-
-    memset(&si, 0, sizeof(STARTUPINFOW));
+    HANDLE handle;
+    WCHAR *cmd;
 
     workingdir = msi_get_target_folder( package, source );
     if (!workingdir) return ERROR_FUNCTION_FAILED;
 
-    deformat_string(package, target, &filename);
-    if (!filename) return ERROR_FUNCTION_FAILED;
+    deformat_string( package, target, &cmd );
+    if (!cmd) return ERROR_FUNCTION_FAILED;
 
-    TRACE("executing exe %s with working directory %s\n",
-          debugstr_w(filename), debugstr_w(workingdir));
+    TRACE("cmd %s dir %s\n", debugstr_w(cmd), debugstr_w(workingdir));
 
-    rc = CreateProcessW(NULL, filename, NULL, NULL, FALSE, 0, NULL,
-                        workingdir, &si, &info);
-
-    if ( !rc )
-    {
-        ERR("Unable to execute command %s with working directory %s\n",
-            debugstr_w(filename), debugstr_w(workingdir));
-        msi_free(filename);
-        return ERROR_SUCCESS;
-    }
-    msi_free(filename);
-    CloseHandle( info.hThread );
-
-    return wait_process_handle(package, type, info.hProcess, action);
+    handle = execute_command( NULL, cmd, workingdir );
+    msi_free( cmd );
+    if (handle == INVALID_HANDLE_VALUE) return ERROR_SUCCESS;
+    return wait_process_handle( package, type, handle, action );
 }
 
 static DWORD ACTION_CallScript( const GUID *guid )
