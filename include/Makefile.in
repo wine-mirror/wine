@@ -266,6 +266,7 @@ SRCDIR_INCLUDES = \
 	exdispid.h \
 	fci.h \
 	fdi.h \
+	fltdefs.h \
 	gdiplus.h \
 	gdipluscolor.h \
 	gdipluscolormatrix.h \
