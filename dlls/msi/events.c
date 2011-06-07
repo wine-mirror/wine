@@ -35,8 +35,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
 typedef UINT (*EVENTHANDLER)(MSIPACKAGE*,LPCWSTR,msi_dialog *);
 
-struct _events {
-    LPCSTR event;
+struct control_events
+{
+    const WCHAR *event;
     EVENTHANDLER handler;
 };
 
@@ -395,49 +396,58 @@ static UINT ControlEvent_ValidateProductID(MSIPACKAGE *package, LPCWSTR argument
     return ret;
 }
 
-static const struct _events Events[] = {
-    { "EndDialog",ControlEvent_EndDialog },
-    { "NewDialog",ControlEvent_NewDialog },
-    { "SpawnDialog",ControlEvent_SpawnDialog },
-    { "SpawnWaitDialog",ControlEvent_SpawnWaitDialog },
-    { "DoAction",ControlEvent_DoAction },
-    { "AddLocal",ControlEvent_AddLocal },
-    { "Remove",ControlEvent_Remove },
-    { "AddSource",ControlEvent_AddSource },
-    { "SetTargetPath",ControlEvent_SetTargetPath },
-    { "Reset",ControlEvent_Reset },
-    { "SetInstallLevel",ControlEvent_SetInstallLevel },
-    { "DirectoryListUp",ControlEvent_DirectoryListUp },
-    { "SelectionBrowse",ControlEvent_SpawnDialog },
-    { "ReinstallMode",ControlEvent_ReinstallMode },
-    { "Reinstall",ControlEvent_Reinstall },
-    { "ValidateProductID",ControlEvent_ValidateProductID },
-    { NULL,NULL },
+static const WCHAR end_dialogW[] = {'E','n','d','D','i','a','l','o','g',0};
+static const WCHAR new_dialogW[] = {'N','e','w','D','i','a','l','o','g',0};
+static const WCHAR spawn_dialogW[] = {'S','p','a','w','n','D','i','a','l','o','g',0};
+static const WCHAR spawn_wait_dialogW[] = {'S','p','a','w','n','W','a','i','t','D','i','a','l','o','g',0};
+static const WCHAR do_actionW[] = {'D','o','A','c','t','i','o','n',0};
+static const WCHAR add_localW[] = {'A','d','d','L','o','c','a','l',0};
+static const WCHAR removeW[] = {'R','e','m','o','v','e',0};
+static const WCHAR add_sourceW[] = {'A','d','d','S','o','u','r','c','e',0};
+static const WCHAR set_target_pathW[] = {'S','e','t','T','a','r','g','e','t','P','a','t','h',0};
+static const WCHAR resetW[] = {'R','e','s','e','t',0};
+static const WCHAR set_install_levelW[] = {'S','e','t','I','n','s','t','a','l','l','L','e','v','e','l',0};
+static const WCHAR directory_list_upW[] = {'D','i','r','e','c','t','o','r','y','L','i','s','t','U','p',0};
+static const WCHAR selection_browseW[] = {'S','e','l','e','c','t','i','o','n','B','r','o','w','s','e',0};
+static const WCHAR reinstall_modeW[] = {'R','e','i','n','s','t','a','l','l','M','o','d','e',0};
+static const WCHAR reinstallW[] = {'R','e','i','n','s','t','a','l','l',0};
+static const WCHAR validate_product_idW[] = {'V','a','l','i','d','a','t','e','P','r','o','d','u','c','t','I','D',0};
+
+static const struct control_events control_events[] =
+{
+    { end_dialogW, ControlEvent_EndDialog },
+    { new_dialogW, ControlEvent_NewDialog },
+    { spawn_dialogW, ControlEvent_SpawnDialog },
+    { spawn_wait_dialogW, ControlEvent_SpawnWaitDialog },
+    { do_actionW, ControlEvent_DoAction },
+    { add_localW, ControlEvent_AddLocal },
+    { removeW, ControlEvent_Remove },
+    { add_sourceW, ControlEvent_AddSource },
+    { set_target_pathW, ControlEvent_SetTargetPath },
+    { resetW, ControlEvent_Reset },
+    { set_install_levelW, ControlEvent_SetInstallLevel },
+    { directory_list_upW, ControlEvent_DirectoryListUp },
+    { selection_browseW, ControlEvent_SpawnDialog },
+    { reinstall_modeW, ControlEvent_ReinstallMode },
+    { reinstallW, ControlEvent_Reinstall },
+    { validate_product_idW, ControlEvent_ValidateProductID },
+    { NULL, NULL }
 };
 
-UINT ControlEvent_HandleControlEvent(MSIPACKAGE *package, LPCWSTR event,
-                                     LPCWSTR argument, msi_dialog* dialog)
+UINT ControlEvent_HandleControlEvent( MSIPACKAGE *package, LPCWSTR event,
+                                      LPCWSTR argument, msi_dialog *dialog )
 {
-    int i = 0;
-    UINT rc = ERROR_SUCCESS;
+    unsigned int i;
 
-    TRACE("Handling Control Event %s\n",debugstr_w(event));
-    if (!event)
-        return rc;
+    TRACE("handling control event %s\n", debugstr_w(event));
 
-    while( Events[i].event != NULL)
+    if (!event) return ERROR_SUCCESS;
+
+    for (i = 0; control_events[i].event; i++)
     {
-        LPWSTR wevent = strdupAtoW(Events[i].event);
-        if (!strcmpW( wevent, event ))
-        {
-            msi_free(wevent);
-            rc = Events[i].handler(package,argument,dialog);
-            return rc;
-        }
-        msi_free(wevent);
-        i++;
+        if (!strcmpW( control_events[i].event, event ))
+            return control_events[i].handler( package, argument, dialog );
     }
-    FIXME("unhandled control event %s arg(%s)\n",
-          debugstr_w(event), debugstr_w(argument));
-    return rc;
+    FIXME("unhandled control event %s arg(%s)\n", debugstr_w(event), debugstr_w(argument));
+    return ERROR_SUCCESS;
 }
