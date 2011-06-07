@@ -3182,8 +3182,9 @@ static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
     if (!gl_info->supported[ARB_SHADER_TEXTURE_LOD] && !gl_info->supported[EXT_GPU_SHADER4]
             && shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type))
     {
-        /* The GLSL spec claims the Lod sampling functions are only supported in vertex shaders.
-         * However, they seem to work just fine in fragment shaders as well. */
+        /* Plain GLSL only supports Lod sampling functions in vertex shaders.
+         * However, the NVIDIA drivers allow them in fragment shaders as well,
+         * even without the appropriate extension. */
         WARN("Using %s in fragment shader.\n", sample_function.name);
     }
     shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, swizzle, NULL, NULL, lod_param.param_str,
@@ -3993,7 +3994,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
 
     shader_addline(buffer, "#version 120\n");
 
-    if (gl_info->supported[ARB_SHADER_TEXTURE_LOD] && reg_maps->usestexldd)
+    if (gl_info->supported[ARB_SHADER_TEXTURE_LOD])
     {
         shader_addline(buffer, "#extension GL_ARB_shader_texture_lod : enable\n");
     }
