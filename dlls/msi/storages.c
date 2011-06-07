@@ -557,7 +557,7 @@ UINT STORAGES_CreateView(MSIDATABASE *db, MSIVIEW **view)
 
     TRACE("(%p, %p)\n", db, view);
 
-    sv = msi_alloc(sizeof(MSISTORAGESVIEW));
+    sv = msi_alloc_zero( sizeof(MSISTORAGESVIEW) );
     if (!sv)
         return ERROR_FUNCTION_FAILED;
 

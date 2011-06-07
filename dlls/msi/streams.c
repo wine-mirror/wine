@@ -566,7 +566,7 @@ UINT STREAMS_CreateView(MSIDATABASE *db, MSIVIEW **view)
 
     TRACE("(%p, %p)\n", db, view);
 
-    sv = msi_alloc(sizeof(MSISTREAMSVIEW));
+    sv = msi_alloc_zero( sizeof(MSISTREAMSVIEW) );
     if (!sv)
         return ERROR_FUNCTION_FAILED;
 
