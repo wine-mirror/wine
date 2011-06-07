@@ -24,6 +24,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
+static inline struct dxgi_factory *impl_from_IWineDXGIFactory(IWineDXGIFactory *iface)
+{
+    return CONTAINING_RECORD(iface, struct dxgi_factory, IWineDXGIFactory_iface);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_QueryInterface(IWineDXGIFactory *iface, REFIID riid, void **object)
@@ -48,7 +53,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_QueryInterface(IWineDXGIFactory *i
 
 static ULONG STDMETHODCALLTYPE dxgi_factory_AddRef(IWineDXGIFactory *iface)
 {
-    struct dxgi_factory *This = (struct dxgi_factory *)iface;
+    struct dxgi_factory *This = impl_from_IWineDXGIFactory(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -58,7 +63,7 @@ static ULONG STDMETHODCALLTYPE dxgi_factory_AddRef(IWineDXGIFactory *iface)
 
 static ULONG STDMETHODCALLTYPE dxgi_factory_Release(IWineDXGIFactory *iface)
 {
-    struct dxgi_factory *This = (struct dxgi_factory *)iface;
+    struct dxgi_factory *This = impl_from_IWineDXGIFactory(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -122,7 +127,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_GetParent(IWineDXGIFactory *iface,
 static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters(IWineDXGIFactory *iface,
         UINT adapter_idx, IDXGIAdapter **adapter)
 {
-    struct dxgi_factory *This = (struct dxgi_factory *)iface;
+    struct dxgi_factory *This = impl_from_IWineDXGIFactory(iface);
 
     TRACE("iface %p, adapter_idx %u, adapter %p\n", iface, adapter_idx, adapter);
 
@@ -258,7 +263,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSoftwareAdapter(IWineDXGIFac
 
 static struct wined3d * STDMETHODCALLTYPE dxgi_factory_get_wined3d(IWineDXGIFactory *iface)
 {
-    struct dxgi_factory *This = (struct dxgi_factory *)iface;
+    struct dxgi_factory *This = impl_from_IWineDXGIFactory(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -294,7 +299,7 @@ HRESULT dxgi_factory_init(struct dxgi_factory *factory)
     HRESULT hr;
     UINT i;
 
-    factory->vtbl = &dxgi_factory_vtbl;
+    factory->IWineDXGIFactory_iface.lpVtbl = &dxgi_factory_vtbl;
     factory->refcount = 1;
 
     EnterCriticalSection(&dxgi_cs);
@@ -332,7 +337,7 @@ HRESULT dxgi_factory_init(struct dxgi_factory *factory)
             goto fail;
         }
 
-        hr = dxgi_adapter_init(adapter, (IWineDXGIFactory *)factory, i);
+        hr = dxgi_adapter_init(adapter, &factory->IWineDXGIFactory_iface, i);
         if (FAILED(hr))
         {
             UINT j;

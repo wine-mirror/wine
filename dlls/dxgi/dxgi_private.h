@@ -77,7 +77,7 @@ enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format) DECLSP
 /* IDXGIFactory */
 struct dxgi_factory
 {
-    const struct IWineDXGIFactoryVtbl *vtbl;
+    IWineDXGIFactory IWineDXGIFactory_iface;
     LONG refcount;
     struct wined3d *wined3d;
     UINT adapter_count;
