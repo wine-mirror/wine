@@ -42,7 +42,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_inner_QueryInterface(IUnknown *ifa
             || IsEqualGUID(riid, &IID_IDXGIObject)
             || IsEqualGUID(riid, &IID_IUnknown))
     {
-        IUnknown_AddRef((IUnknown *)This);
+        IDXGISurface_AddRef(&This->IDXGISurface_iface);
         *object = This;
         return S_OK;
     }
@@ -79,25 +79,31 @@ static ULONG STDMETHODCALLTYPE dxgi_surface_inner_Release(IUnknown *iface)
     return refcount;
 }
 
+static inline struct dxgi_surface *impl_from_IDXGISurface(IDXGISurface *iface)
+{
+    return CONTAINING_RECORD(iface, struct dxgi_surface, IDXGISurface_iface);
+}
+
 /* IUnknown methods */
 
-static HRESULT STDMETHODCALLTYPE dxgi_surface_QueryInterface(IDXGISurface *iface, REFIID riid, void **object)
+static HRESULT STDMETHODCALLTYPE dxgi_surface_QueryInterface(IDXGISurface *iface, REFIID riid,
+        void **object)
 {
-    struct dxgi_surface *This = (struct dxgi_surface *)iface;
+    struct dxgi_surface *This = impl_from_IDXGISurface(iface);
     TRACE("Forwarding to outer IUnknown\n");
     return IUnknown_QueryInterface(This->outer_unknown, riid, object);
 }
 
 static ULONG STDMETHODCALLTYPE dxgi_surface_AddRef(IDXGISurface *iface)
 {
-    struct dxgi_surface *This = (struct dxgi_surface *)iface;
+    struct dxgi_surface *This = impl_from_IDXGISurface(iface);
     TRACE("Forwarding to outer IUnknown\n");
     return IUnknown_AddRef(This->outer_unknown);
 }
 
 static ULONG STDMETHODCALLTYPE dxgi_surface_Release(IDXGISurface *iface)
 {
-    struct dxgi_surface *This = (struct dxgi_surface *)iface;
+    struct dxgi_surface *This = impl_from_IDXGISurface(iface);
     TRACE("Forwarding to outer IUnknown\n");
     return IUnknown_Release(This->outer_unknown);
 }
@@ -130,7 +136,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_GetPrivateData(IDXGISurface *iface
 
 static HRESULT STDMETHODCALLTYPE dxgi_surface_GetParent(IDXGISurface *iface, REFIID riid, void **parent)
 {
-    struct dxgi_surface *This = (struct dxgi_surface *)iface;
+    struct dxgi_surface *This = impl_from_IDXGISurface(iface);
 
     TRACE("iface %p, riid %s, parent %p.\n", iface, debugstr_guid(riid), parent);
 
@@ -141,7 +147,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_GetParent(IDXGISurface *iface, REF
 
 static HRESULT STDMETHODCALLTYPE dxgi_surface_GetDevice(IDXGISurface *iface, REFIID riid, void **device)
 {
-    struct dxgi_surface *This = (struct dxgi_surface *)iface;
+    struct dxgi_surface *This = impl_from_IDXGISurface(iface);
 
     TRACE("iface %p, riid %s, device %p.\n", iface, debugstr_guid(riid), device);
 
@@ -199,7 +205,7 @@ static const struct IUnknownVtbl dxgi_surface_inner_unknown_vtbl =
 
 HRESULT dxgi_surface_init(struct dxgi_surface *surface, IDXGIDevice *device, IUnknown *outer)
 {
-    surface->vtbl = &dxgi_surface_vtbl;
+    surface->IDXGISurface_iface.lpVtbl = &dxgi_surface_vtbl;
     surface->inner_unknown_vtbl = &dxgi_surface_inner_unknown_vtbl;
     surface->refcount = 1;
     surface->outer_unknown = outer ? outer : (IUnknown *)&surface->inner_unknown_vtbl;

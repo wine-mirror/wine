@@ -135,7 +135,7 @@ HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device
 /* IDXGISurface */
 struct dxgi_surface
 {
-    const struct IDXGISurfaceVtbl *vtbl;
+    IDXGISurface IDXGISurface_iface;
     const struct IUnknownVtbl *inner_unknown_vtbl;
     IUnknown *outer_unknown;
     LONG refcount;
