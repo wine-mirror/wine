@@ -2974,9 +2974,6 @@ static BOOL wined3d_check_pixel_format_depth(const struct wined3d_gl_info *gl_in
     BYTE depthSize, stencilSize;
     BOOL lockable = FALSE;
 
-    if(!cfg)
-        return FALSE;
-
     if (!getDepthStencilBits(format, &depthSize, &stencilSize))
     {
         ERR("Unable to check compatibility for format %s.\n", debug_d3dformat(format->id));
