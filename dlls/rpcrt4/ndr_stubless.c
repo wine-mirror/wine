@@ -412,26 +412,23 @@ static unsigned int type_stack_size(unsigned char fc)
     case RPC_FC_CHAR:
     case RPC_FC_SMALL:
     case RPC_FC_USMALL:
-        return sizeof(char);
     case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
-        return sizeof(short);
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
+    case RPC_FC_INT3264:
+    case RPC_FC_UINT3264:
     case RPC_FC_ENUM16:
     case RPC_FC_ENUM32:
-        return sizeof(int);
     case RPC_FC_FLOAT:
-        return sizeof(float);
+    case RPC_FC_ERROR_STATUS_T:
+    case RPC_FC_IGNORE:
+        return sizeof(void *);
     case RPC_FC_DOUBLE:
         return sizeof(double);
     case RPC_FC_HYPER:
         return sizeof(ULONGLONG);
-    case RPC_FC_ERROR_STATUS_T:
-        return sizeof(error_status_t);
-    case RPC_FC_IGNORE:
-        return sizeof(void *);
     default:
         ERR("invalid base type 0x%x\n", fc);
         RpcRaiseException(RPC_S_INTERNAL_ERROR);
@@ -463,7 +460,7 @@ void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
     /* current format string offset */
     int current_offset = 0;
     /* current stack offset */
-    unsigned short current_stack_offset = 0;
+    unsigned short current_stack_offset = object_proc ? sizeof(void *) : 0;
     /* counter */
     unsigned short i;
 
@@ -475,19 +472,15 @@ void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
     {
         const NDR_PARAM_OI_BASETYPE *pParam =
             (const NDR_PARAM_OI_BASETYPE *)&pFormat[current_offset];
-        /* note: current_stack_offset starts after the This pointer
-         * if present, so adjust this */
-        unsigned short current_stack_offset_adjusted = current_stack_offset +
-            (object_proc ? sizeof(void *) : 0);
-        unsigned char * pArg = ARG_FROM_OFFSET(args, current_stack_offset_adjusted);
+        unsigned char * pArg = ARG_FROM_OFFSET(args, current_stack_offset);
 
         /* no more parameters; exit loop */
-        if (current_stack_offset_adjusted >= stack_size)
+        if (current_stack_offset >= stack_size)
             break;
 
         TRACE("param[%d]: old format\n", i);
         TRACE("\tparam_direction: 0x%x\n", pParam->param_direction);
-        TRACE("\tstack_offset: 0x%x\n", current_stack_offset_adjusted);
+        TRACE("\tstack_offset: 0x%x\n", current_stack_offset);
         TRACE("\tmemory addr (before): %p\n", pArg);
 
         if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE ||
@@ -567,10 +560,9 @@ void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
                 RpcRaiseException(RPC_S_INTERNAL_ERROR);
             }
 
-            current_stack_offset += pParamOther->stack_size * sizeof(INT);
+            current_stack_offset += pParamOther->stack_size * sizeof(void *);
             current_offset += sizeof(NDR_PARAM_OI_OTHER);
         }
-        TRACE("\tmemory addr (after): %p\n", pArg);
     }
 }
 
@@ -1242,7 +1234,7 @@ static LONG_PTR *stub_do_old_args(MIDL_STUB_MESSAGE *pStubMsg,
     /* current format string offset */
     int current_offset = 0;
     /* current stack offset */
-    unsigned short current_stack_offset = 0;
+    unsigned short current_stack_offset = object ? sizeof(void *) : 0;
     /* location to put retval into */
     LONG_PTR *retval_ptr = NULL;
 
@@ -1250,19 +1242,15 @@ static LONG_PTR *stub_do_old_args(MIDL_STUB_MESSAGE *pStubMsg,
     {
         const NDR_PARAM_OI_BASETYPE *pParam =
         (const NDR_PARAM_OI_BASETYPE *)&pFormat[current_offset];
-        /* note: current_stack_offset starts after the This pointer
-         * if present, so adjust this */
-        unsigned short current_stack_offset_adjusted = current_stack_offset +
-            (object ? sizeof(void *) : 0);
-        unsigned char *pArg = args + current_stack_offset_adjusted;
+        unsigned char *pArg = args + current_stack_offset;
 
         /* no more parameters; exit loop */
-        if (current_stack_offset_adjusted >= stack_size)
+        if (current_stack_offset >= stack_size)
             break;
 
         TRACE("param[%d]: old format\n", i);
         TRACE("\tparam_direction: 0x%x\n", pParam->param_direction);
-        TRACE("\tstack_offset: 0x%x\n", current_stack_offset_adjusted);
+        TRACE("\tstack_offset: 0x%x\n", current_stack_offset);
 
         if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE ||
             pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
@@ -1372,7 +1360,7 @@ static LONG_PTR *stub_do_old_args(MIDL_STUB_MESSAGE *pStubMsg,
                     RpcRaiseException(RPC_S_INTERNAL_ERROR);
             }
 
-            current_stack_offset += pParamOther->stack_size * sizeof(INT);
+            current_stack_offset += pParamOther->stack_size * sizeof(void *);
             current_offset += sizeof(NDR_PARAM_OI_OTHER);
         }
     }
