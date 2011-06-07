@@ -5707,7 +5707,14 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
             bind_target = GL_TEXTURE_2D;
         }
         glBindTexture(bind_target, device->depth_blt_texture);
-        glCopyTexImage2D(bind_target, surface->texture_level, surface->resource.format->glInternal, 0, 0, w, h, 0);
+        /* We use GL_DEPTH_COMPONENT instead of the surface's specific
+         * internal format, because the internal format might include stencil
+         * data. In principle we should copy stencil data as well, but unless
+         * the driver supports stencil export it's hard to do, and doesn't
+         * seem to be needed in practice. If the hardware doesn't support
+         * writing stencil data, the glCopyTexImage2D() call might trigger
+         * software fallbacks. */
+        glCopyTexImage2D(bind_target, 0, GL_DEPTH_COMPONENT, 0, 0, w, h, 0);
         glTexParameteri(bind_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(bind_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(bind_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
