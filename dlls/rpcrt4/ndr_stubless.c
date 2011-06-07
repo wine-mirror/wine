@@ -438,6 +438,23 @@ static unsigned int type_stack_size(unsigned char fc)
     }
 }
 
+static BOOL is_by_value( PFORMAT_STRING format )
+{
+    switch (*format)
+    {
+    case RPC_FC_USER_MARSHAL:
+    case RPC_FC_STRUCT:
+    case RPC_FC_PSTRUCT:
+    case RPC_FC_CSTRUCT:
+    case RPC_FC_CPSTRUCT:
+    case RPC_FC_CVSTRUCT:
+    case RPC_FC_BOGUS_STRUCT:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
 void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
     PFORMAT_STRING pFormat, int phase, unsigned char *args,
     unsigned short stack_size,
@@ -510,11 +527,9 @@ void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
         }
         else
         {
-            const NDR_PARAM_OI_OTHER *pParamOther = 
-                (const NDR_PARAM_OI_OTHER *)&pFormat[current_offset];
-
-            const unsigned char *pTypeFormat =
-                &pStubMsg->StubDesc->pFormatTypes[pParamOther->type_offset];
+            const NDR_PARAM_OI_OTHER *pParamOther = (const NDR_PARAM_OI_OTHER *)&pFormat[current_offset];
+            const unsigned char *pTypeFormat = &pStubMsg->StubDesc->pFormatTypes[pParamOther->type_offset];
+            const BOOL by_value = is_by_value( pTypeFormat );
 
             TRACE("\tcomplex type 0x%02x\n", *pTypeFormat);
 
@@ -523,17 +538,28 @@ void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
             case PROXY_CALCSIZE:
                 if (pParam->param_direction == RPC_FC_IN_PARAM ||
                     pParam->param_direction == RPC_FC_IN_OUT_PARAM)
-                    call_buffer_sizer(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
+                {
+                    if (!by_value) pArg = *(unsigned char **)pArg;
+                    call_buffer_sizer(pStubMsg, pArg, pTypeFormat);
+                }
                 break;
             case PROXY_MARSHAL:
                 if (pParam->param_direction == RPC_FC_IN_PARAM ||
                     pParam->param_direction == RPC_FC_IN_OUT_PARAM)
-                    call_marshaller(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
+                {
+                    if (!by_value) pArg = *(unsigned char **)pArg;
+                    call_marshaller(pStubMsg, pArg, pTypeFormat);
+                }
                 break;
             case PROXY_UNMARSHAL:
                 if (pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
                     pParam->param_direction == RPC_FC_OUT_PARAM)
-                    call_unmarshaller(pStubMsg, (unsigned char **)pArg, pTypeFormat, 0);
+                {
+                    if (by_value)
+                        call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
+                    else
+                        call_unmarshaller(pStubMsg, (unsigned char **)pArg, pTypeFormat, 0);
+                }
                 else if (pParam->param_direction == RPC_FC_RETURN_PARAM)
                     call_unmarshaller(pStubMsg, (unsigned char **)pRetVal, pTypeFormat, 0);
                 break;
@@ -1283,6 +1309,7 @@ static LONG_PTR *stub_do_old_args(MIDL_STUB_MESSAGE *pStubMsg,
 
             const unsigned char * pTypeFormat =
                 &pStubMsg->StubDesc->pFormatTypes[pParamOther->type_offset];
+            const BOOL by_value = is_by_value( pTypeFormat );
 
             TRACE("\tcomplex type 0x%02x\n", *pTypeFormat);
 
@@ -1295,17 +1322,23 @@ static LONG_PTR *stub_do_old_args(MIDL_STUB_MESSAGE *pStubMsg,
                     if (pParam->param_direction == RPC_FC_OUT_PARAM ||
                         pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
                         pParam->param_direction == RPC_FC_RETURN_PARAM)
-                        call_marshaller(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
+                    {
+                        if (!by_value) pArg = *(unsigned char **)pArg;
+                        call_marshaller(pStubMsg, pArg, pTypeFormat);
+                    }
                     break;
                 case STUBLESS_FREE:
                     if (pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
                         pParam->param_direction == RPC_FC_IN_PARAM)
-                        call_freer(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
-                    else if (pParam->param_direction == RPC_FC_OUT_PARAM)
+                    {
+                        if (!by_value) pArg = *(unsigned char **)pArg;
+                        call_freer(pStubMsg, pArg, pTypeFormat);
+                    }
+                    else if (pParam->param_direction == RPC_FC_OUT_PARAM && !by_value)
                         pStubMsg->pfnFree(*(void **)pArg);
                     break;
                 case STUBLESS_INITOUT:
-                    if (pParam->param_direction == RPC_FC_OUT_PARAM)
+                    if (pParam->param_direction == RPC_FC_OUT_PARAM && !by_value)
                     {
                         DWORD size = calc_arg_size(pStubMsg, pTypeFormat);
 
@@ -1319,13 +1352,21 @@ static LONG_PTR *stub_do_old_args(MIDL_STUB_MESSAGE *pStubMsg,
                 case STUBLESS_UNMARSHAL:
                     if (pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
                         pParam->param_direction == RPC_FC_IN_PARAM)
-                        call_unmarshaller(pStubMsg, (unsigned char **)pArg, pTypeFormat, 0);
+                    {
+                        if (by_value)
+                            call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
+                        else
+                            call_unmarshaller(pStubMsg, (unsigned char **)pArg, pTypeFormat, 0);
+                    }
                     break;
                 case STUBLESS_CALCSIZE:
                     if (pParam->param_direction == RPC_FC_OUT_PARAM ||
                         pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
                         pParam->param_direction == RPC_FC_RETURN_PARAM)
-                        call_buffer_sizer(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
+                    {
+                        if (!by_value) pArg = *(unsigned char **)pArg;
+                        call_buffer_sizer(pStubMsg, pArg, pTypeFormat);
+                    }
                     break;
                 default:
                     RpcRaiseException(RPC_S_INTERNAL_ERROR);
