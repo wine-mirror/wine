@@ -89,7 +89,7 @@ HRESULT dxgi_factory_init(struct dxgi_factory *factory) DECLSPEC_HIDDEN;
 /* IDXGIDevice */
 struct dxgi_device
 {
-    const struct IWineDXGIDeviceVtbl *vtbl;
+    IWineDXGIDevice IWineDXGIDevice_iface;
     IUnknown *child_layer;
     LONG refcount;
     struct wined3d_device *wined3d_device;

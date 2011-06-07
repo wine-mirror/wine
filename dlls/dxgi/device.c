@@ -24,11 +24,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
+static inline struct dxgi_device *impl_from_IWineDXGIDevice(IWineDXGIDevice *iface)
+{
+    return CONTAINING_RECORD(iface, struct dxgi_device, IWineDXGIDevice_iface);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_QueryInterface(IWineDXGIDevice *iface, REFIID riid, void **object)
 {
-    struct dxgi_device *This = (struct dxgi_device *)iface;
+    struct dxgi_device *This = impl_from_IWineDXGIDevice(iface);
 
     TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
 
@@ -56,7 +61,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_QueryInterface(IWineDXGIDevice *ifa
 
 static ULONG STDMETHODCALLTYPE dxgi_device_AddRef(IWineDXGIDevice *iface)
 {
-    struct dxgi_device *This = (struct dxgi_device *)iface;
+    struct dxgi_device *This = impl_from_IWineDXGIDevice(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -66,7 +71,7 @@ static ULONG STDMETHODCALLTYPE dxgi_device_AddRef(IWineDXGIDevice *iface)
 
 static ULONG STDMETHODCALLTYPE dxgi_device_Release(IWineDXGIDevice *iface)
 {
-    struct dxgi_device *This = (struct dxgi_device *)iface;
+    struct dxgi_device *This = impl_from_IWineDXGIDevice(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -134,7 +139,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetParent(IWineDXGIDevice *iface, R
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_GetAdapter(IWineDXGIDevice *iface, IDXGIAdapter **adapter)
 {
-    struct dxgi_device *This = (struct dxgi_device *)iface;
+    struct dxgi_device *This = impl_from_IWineDXGIDevice(iface);
     WINED3DDEVICE_CREATION_PARAMETERS create_parameters;
     HRESULT hr;
 
@@ -244,7 +249,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetGPUThreadPriority(IWineDXGIDevic
 
 static struct wined3d_device * STDMETHODCALLTYPE dxgi_device_get_wined3d_device(IWineDXGIDevice *iface)
 {
-    struct dxgi_device *This = (struct dxgi_device *)iface;
+    struct dxgi_device *This = impl_from_IWineDXGIDevice(iface);
 
     TRACE("iface %p\n", iface);
 
@@ -287,6 +292,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *ifa
 static HRESULT STDMETHODCALLTYPE dxgi_device_create_swapchain(IWineDXGIDevice *iface,
         WINED3DPRESENT_PARAMETERS *present_parameters, struct wined3d_swapchain **wined3d_swapchain)
 {
+    struct dxgi_device *This = impl_from_IWineDXGIDevice(iface);
     struct dxgi_swapchain *object;
     HRESULT hr;
 
@@ -300,7 +306,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_swapchain(IWineDXGIDevice *i
         return E_OUTOFMEMORY;
     }
 
-    hr = dxgi_swapchain_init(object, (struct dxgi_device *)iface, present_parameters);
+    hr = dxgi_swapchain_init(object, This, present_parameters);
     if (FAILED(hr))
     {
         WARN("Failed to initialize swapchain, hr %#x.\n", hr);
@@ -348,7 +354,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     void *layer_base;
     HRESULT hr;
 
-    device->vtbl = &dxgi_device_vtbl;
+    device->IWineDXGIDevice_iface.lpVtbl = &dxgi_device_vtbl;
     device->refcount = 1;
 
     layer_base = device + 1;
@@ -381,7 +387,8 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     adapter_ordinal = IWineDXGIAdapter_get_ordinal(wine_adapter);
     IWineDXGIAdapter_Release(wine_adapter);
 
-    hr = IUnknown_QueryInterface((IUnknown *)device, &IID_IWineDXGIDeviceParent, (void **)&dxgi_device_parent);
+    hr = IWineDXGIDevice_QueryInterface(&device->IWineDXGIDevice_iface, &IID_IWineDXGIDeviceParent,
+            (void **)&dxgi_device_parent);
     if (FAILED(hr))
     {
         ERR("DXGI device should implement IWineD3DDeviceParent.\n");
