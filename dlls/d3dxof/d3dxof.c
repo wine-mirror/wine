@@ -33,18 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dxof);
 
-#define MAKEFOUR(a,b,c,d) ((DWORD)a + ((DWORD)b << 8) + ((DWORD)c << 16) + ((DWORD)d << 24))
-#define XOFFILE_FORMAT_MAGIC         MAKEFOUR('x','o','f',' ')
-#define XOFFILE_FORMAT_VERSION_302   MAKEFOUR('0','3','0','2')
-#define XOFFILE_FORMAT_VERSION_303   MAKEFOUR('0','3','0','3')
-#define XOFFILE_FORMAT_BINARY        MAKEFOUR('b','i','n',' ')
-#define XOFFILE_FORMAT_TEXT          MAKEFOUR('t','x','t',' ')
-#define XOFFILE_FORMAT_BINARY_MSZIP  MAKEFOUR('b','z','i','p')
-#define XOFFILE_FORMAT_TEXT_MSZIP    MAKEFOUR('t','z','i','p')
-#define XOFFILE_FORMAT_COMPRESSED    MAKEFOUR('c','m','p',' ')
-#define XOFFILE_FORMAT_FLOAT_BITS_32 MAKEFOUR('0','0','3','2')
-#define XOFFILE_FORMAT_FLOAT_BITS_64 MAKEFOUR('0','0','6','4')
-
 static const struct IDirectXFileVtbl IDirectXFile_Vtbl;
 static const struct IDirectXFileBinaryVtbl IDirectXFileBinary_Vtbl;
 static const struct IDirectXFileDataVtbl IDirectXFileData_Vtbl;
@@ -56,15 +44,6 @@ static const struct IDirectXFileSaveObjectVtbl IDirectXFileSaveObject_Vtbl;
 static HRESULT IDirectXFileDataReferenceImpl_Create(IDirectXFileDataReferenceImpl** ppObj);
 static HRESULT IDirectXFileEnumObjectImpl_Create(IDirectXFileEnumObjectImpl** ppObj);
 static HRESULT IDirectXFileSaveObjectImpl_Create(IDirectXFileSaveObjectImpl** ppObj);
-
-/* FOURCC to string conversion for debug messages */
-static const char *debugstr_fourcc(DWORD fourcc)
-{
-    if (!fourcc) return "'null'";
-    return wine_dbg_sprintf ("\'%c%c%c%c\'",
-		(char)(fourcc), (char)(fourcc >> 8),
-        (char)(fourcc >> 16), (char)(fourcc >> 24));
-}
 
 HRESULT IDirectXFileImpl_Create(IUnknown* pUnkOuter, LPVOID* ppObj)
 {
@@ -140,10 +119,6 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   IDirectXFileImpl *This = impl_from_IDirectXFile(iface);
   IDirectXFileEnumObjectImpl* object;
   HRESULT hr;
-  DWORD* header;
-  LPBYTE mapped_memory = NULL;
-  LPBYTE decomp_buffer = NULL;
-  DWORD decomp_size = 0;
   LPBYTE file_buffer;
   DWORD file_size;
 
@@ -154,6 +129,10 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
 
   /* Only lowest 4 bits are relevant in DXFILELOADOPTIONS */
   dwLoadOptions &= 0xF;
+
+  hr = IDirectXFileEnumObjectImpl_Create(&object);
+  if (FAILED(hr))
+    return hr;
 
   if (dwLoadOptions == DXFILELOAD_FROMFILE)
   {
@@ -171,22 +150,21 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
     file_size = GetFileSize(hFile, NULL);
 
     file_mapping = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+    CloseHandle(hFile);
     if (!file_mapping)
     {
-      CloseHandle(hFile);
       hr = DXFILEERR_BADFILETYPE;
       goto error;
     }
 
-    mapped_memory = MapViewOfFile(file_mapping, FILE_MAP_READ, 0, 0, 0);
+    object->mapped_memory = MapViewOfFile(file_mapping, FILE_MAP_READ, 0, 0, 0);
     CloseHandle(file_mapping);
-    CloseHandle(hFile);
-    if (!mapped_memory)
+    if (!object->mapped_memory)
     {
       hr = DXFILEERR_BADFILETYPE;
       goto error;
     }
-    file_buffer = mapped_memory;
+    file_buffer = object->mapped_memory;
   }
   else if (dwLoadOptions == DXFILELOAD_FROMRESOURCE)
   {
@@ -235,107 +213,17 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
     goto error;
   }
 
-  header = (DWORD*)file_buffer;
-
-  if (TRACE_ON(d3dxof))
-  {
-    char string[17];
-    memcpy(string, header, 16);
-    string[16] = 0;
-    TRACE("header = '%s'\n", string);
-  }
-
-  if (file_size < 16)
-  {
-    hr = DXFILEERR_BADFILETYPE;
-    goto error;
-  }
-
-  if (header[0] != XOFFILE_FORMAT_MAGIC)
-  {
-    hr = DXFILEERR_BADFILETYPE;
-    goto error;
-  }
-
-  if ((header[1] != XOFFILE_FORMAT_VERSION_302) && (header[1] != XOFFILE_FORMAT_VERSION_303))
-  {
-    hr = DXFILEERR_BADFILEVERSION;
-    goto error;
-  }
-
-  if ((header[2] != XOFFILE_FORMAT_BINARY) && (header[2] != XOFFILE_FORMAT_TEXT) &&
-      (header[2] != XOFFILE_FORMAT_BINARY_MSZIP) && (header[2] != XOFFILE_FORMAT_TEXT_MSZIP))
-  {
-    WARN("File type %s unknown\n", debugstr_fourcc(header[2]));
-    hr = DXFILEERR_BADFILETYPE;
-    goto error;
-  }
-
-  if ((header[2] == XOFFILE_FORMAT_BINARY_MSZIP) || (header[2] == XOFFILE_FORMAT_TEXT_MSZIP))
-  {
-    int err;
-    DWORD comp_size;
-
-    /*  0-15 -> xfile header, 16-17 -> decompressed size w/ header, 18-19 -> null,
-       20-21 -> decompressed size w/o header, 22-23 -> size of MSZIP compressed data,
-       24-xx -> compressed MSZIP data */
-    decomp_size = ((WORD*)file_buffer)[10];
-    comp_size = ((WORD*)file_buffer)[11];
-
-    TRACE("Compressed format %s detected: compressed_size = %x, decompressed_size = %x\n",
-        debugstr_fourcc(header[2]), comp_size, decomp_size);
-
-    decomp_buffer = HeapAlloc(GetProcessHeap(), 0, decomp_size);
-    if (!decomp_buffer)
-    {
-        ERR("Out of memory\n");
-        hr = DXFILEERR_BADALLOC;
-        goto error;
-    }
-    err = mszip_decompress(comp_size, decomp_size, (char*)file_buffer + 24, (char*)decomp_buffer);
-    if (err)
-    {
-        WARN("Error while decomrpessing mszip archive %d\n", err);
-        hr = DXFILEERR_BADALLOC;
-        goto error;
-    }
-  }
-
-  if ((header[3] != XOFFILE_FORMAT_FLOAT_BITS_32) && (header[3] != XOFFILE_FORMAT_FLOAT_BITS_64))
-  {
-    hr = DXFILEERR_BADFILEFLOATSIZE;
-    goto error;
-  }
-
-  TRACE("Header is correct\n");
-
-  hr = IDirectXFileEnumObjectImpl_Create(&object);
-  if (FAILED(hr))
-    goto error;
-
-  object->mapped_memory = mapped_memory;
-  object->decomp_buffer = decomp_buffer;
-  object->pDirectXFile = This;
-  object->buf.pdxf = This;
-  object->buf.txt = (header[2] == XOFFILE_FORMAT_TEXT) || (header[2] == XOFFILE_FORMAT_TEXT_MSZIP);
-  object->buf.token_present = FALSE;
-
   TRACE("File size is %d bytes\n", file_size);
 
-  if (decomp_size)
-  {
-    /* Use decompressed data */
-    object->buf.buffer = decomp_buffer;
-    object->buf.rem_bytes = decomp_size;
-  }
-  else
-  {
-    /* Go to data after header */
-    object->buf.buffer = file_buffer + 16;
-    object->buf.rem_bytes = file_size - 16;
-  }
+  object->pDirectXFile = This;
 
-  *ppEnumObj = &object->IDirectXFileEnumObject_iface;
+  object->buf.pdxf = This;
+  object->buf.token_present = FALSE;
+  object->buf.buffer = file_buffer;
+  object->buf.rem_bytes = file_size;
+  hr = parse_header(&object->buf, &object->decomp_buffer);
+  if (FAILED(hr))
+    goto error;
 
   while (object->buf.rem_bytes && is_template_available(&object->buf))
   {
@@ -361,12 +249,12 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
       DPRINTF("%s - %s\n", This->xtemplates[i].name, debugstr_guid(&This->xtemplates[i].class_id));
   }
 
+  *ppEnumObj = &object->IDirectXFileEnumObject_iface;
+
   return DXFILE_OK;
 
 error:
-  if (mapped_memory)
-    UnmapViewOfFile(mapped_memory);
-  HeapFree(GetProcessHeap(), 0, decomp_buffer);
+  IDirectXFileEnumObject_Release(&object->IDirectXFileEnumObject_iface);
   *ppEnumObj = NULL;
 
   return hr;
@@ -392,10 +280,9 @@ static HRESULT WINAPI IDirectXFileImpl_CreateSaveObject(IDirectXFile* iface, LPC
 static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LPVOID pvData, DWORD cbSize)
 {
   IDirectXFileImpl *This = impl_from_IDirectXFile(iface);
-  DWORD token_header;
   parse_buffer buf;
+  HRESULT hr;
   LPBYTE decomp_buffer = NULL;
-  DWORD decomp_size = 0;
 
   buf.buffer = pvData;
   buf.rem_bytes = cbSize;
@@ -408,87 +295,17 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
   if (!pvData)
     return DXFILEERR_BADVALUE;
 
-  if (cbSize < 16)
-    return DXFILEERR_BADFILETYPE;
-
-  if (TRACE_ON(d3dxof))
-  {
-    char string[17];
-    memcpy(string, pvData, 16);
-    string[16] = 0;
-    TRACE("header = '%s'\n", string);
-  }
-
-  read_bytes(&buf, &token_header, 4);
-
-  if (token_header != XOFFILE_FORMAT_MAGIC)
-    return DXFILEERR_BADFILETYPE;
-
-  read_bytes(&buf, &token_header, 4);
-
-  if ((token_header != XOFFILE_FORMAT_VERSION_302) && (token_header != XOFFILE_FORMAT_VERSION_303))
-    return DXFILEERR_BADFILEVERSION;
-
-  read_bytes(&buf, &token_header, 4);
-
-  if ((token_header != XOFFILE_FORMAT_BINARY) && (token_header != XOFFILE_FORMAT_TEXT) &&
-      (token_header != XOFFILE_FORMAT_BINARY_MSZIP) && (token_header != XOFFILE_FORMAT_TEXT_MSZIP))
-  {
-    WARN("File type %s unknown\n", debugstr_fourcc(token_header));
-    return DXFILEERR_BADFILETYPE;
-  }
-
-  if ((token_header == XOFFILE_FORMAT_BINARY_MSZIP) || (token_header == XOFFILE_FORMAT_TEXT_MSZIP))
-  {
-    int err;
-    DWORD comp_size;
-
-    /*  0-15 -> xfile header, 16-17 -> decompressed size w/ header, 18-19 -> null,
-       20-21 -> decompressed size w/o header, 22-23 -> size of MSZIP compressed data,
-       24-xx -> compressed MSZIP data */
-    decomp_size = ((WORD*)pvData)[10];
-    comp_size = ((WORD*)pvData)[11];
-
-    TRACE("Compressed format %s detected: compressed_size = %x, decompressed_size = %x\n",
-        debugstr_fourcc(token_header), comp_size, decomp_size);
-
-    decomp_buffer = HeapAlloc(GetProcessHeap(), 0, decomp_size);
-    if (!decomp_buffer)
-    {
-        ERR("Out of memory\n");
-        return DXFILEERR_BADALLOC;
-    }
-    err = mszip_decompress(comp_size, decomp_size, (char*)pvData + 24, (char*)decomp_buffer);
-    if (err)
-    {
-        WARN("Error while decomrpessing mszip archive %d\n", err);
-        HeapFree(GetProcessHeap(), 0, decomp_buffer);
-        return DXFILEERR_BADALLOC;
-    }
-  }
-
-  if ((token_header == XOFFILE_FORMAT_TEXT) || (token_header == XOFFILE_FORMAT_TEXT_MSZIP))
-    buf.txt = TRUE;
-
-  read_bytes(&buf, &token_header, 4);
-
-  if ((token_header != XOFFILE_FORMAT_FLOAT_BITS_32) && (token_header != XOFFILE_FORMAT_FLOAT_BITS_64))
-    return DXFILEERR_BADFILEFLOATSIZE;
-
-  TRACE("Header is correct\n");
-
-  if (decomp_size)
-  {
-    buf.buffer = decomp_buffer;
-    buf.rem_bytes = decomp_size;
-  }
+  hr = parse_header(&buf, &decomp_buffer);
+  if (FAILED(hr))
+    goto cleanup;
 
   while (buf.rem_bytes && is_template_available(&buf))
   {
     if (!parse_template(&buf))
     {
       WARN("Template is not correct\n");
-      return DXFILEERR_BADVALUE;
+      hr = DXFILEERR_BADVALUE;
+      goto cleanup;
     }
     else
     {
@@ -506,9 +323,10 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
       DPRINTF("%s - %s\n", This->xtemplates[i].name, debugstr_guid(&This->xtemplates[i].class_id));
   }
 
+  hr = DXFILE_OK;
+cleanup:
   HeapFree(GetProcessHeap(), 0, decomp_buffer);
-
-  return DXFILE_OK;
+  return hr;
 }
 
 static const IDirectXFileVtbl IDirectXFile_Vtbl =

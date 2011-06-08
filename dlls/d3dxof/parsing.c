@@ -36,6 +36,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dxof_parsing);
 
+#define MAKEFOUR(a,b,c,d) ((DWORD)a + ((DWORD)b << 8) + ((DWORD)c << 16) + ((DWORD)d << 24))
+#define XOFFILE_FORMAT_MAGIC         MAKEFOUR('x','o','f',' ')
+#define XOFFILE_FORMAT_VERSION_302   MAKEFOUR('0','3','0','2')
+#define XOFFILE_FORMAT_VERSION_303   MAKEFOUR('0','3','0','3')
+#define XOFFILE_FORMAT_BINARY        MAKEFOUR('b','i','n',' ')
+#define XOFFILE_FORMAT_TEXT          MAKEFOUR('t','x','t',' ')
+#define XOFFILE_FORMAT_BINARY_MSZIP  MAKEFOUR('b','z','i','p')
+#define XOFFILE_FORMAT_TEXT_MSZIP    MAKEFOUR('t','z','i','p')
+#define XOFFILE_FORMAT_COMPRESSED    MAKEFOUR('c','m','p',' ')
+#define XOFFILE_FORMAT_FLOAT_BITS_32 MAKEFOUR('0','0','3','2')
+#define XOFFILE_FORMAT_FLOAT_BITS_64 MAKEFOUR('0','0','6','4')
+
 #define TOKEN_NAME         1
 #define TOKEN_STRING       2
 #define TOKEN_INTEGER      3
@@ -69,6 +81,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dxof_parsing);
 #define TOKEN_ARRAY       52
 
 #define CLSIDFMT "<%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X>"
+
+/* FOURCC to string conversion for debug messages */
+static const char *debugstr_fourcc(DWORD fourcc)
+{
+    if (!fourcc) return "'null'";
+    return wine_dbg_sprintf ("\'%c%c%c%c\'",
+        (char)(fourcc), (char)(fourcc >> 8),
+        (char)(fourcc >> 16), (char)(fourcc >> 24));
+}
 
 static const char* get_primitive_string(WORD token)
 {
@@ -159,6 +180,86 @@ static void rewind_bytes(parse_buffer * buf, DWORD size)
 {
   buf->buffer -= size;
   buf->rem_bytes += size;
+}
+
+HRESULT parse_header(parse_buffer * buf, BYTE ** decomp_buffer_ptr)
+{
+  /* X File common header:
+   *  0-3  -> Magic Number (format identifier)
+   *  4-7  -> Format Version
+   *  8-11 -> Format Type (text or binary, decompressed or compressed)
+   * 12-15 -> Float Size (32 or 64 bits) */
+  DWORD header[4];
+
+  if (!read_bytes(buf, header, sizeof(header)))
+    return DXFILEERR_BADFILETYPE;
+
+  if (TRACE_ON(d3dxof_parsing))
+  {
+    char string[17];
+    memcpy(string, header, 16);
+    string[16] = 0;
+    TRACE("header = '%s'\n", string);
+  }
+
+  if (header[0] != XOFFILE_FORMAT_MAGIC)
+    return DXFILEERR_BADFILETYPE;
+
+  if (header[1] != XOFFILE_FORMAT_VERSION_302 && header[1] != XOFFILE_FORMAT_VERSION_303)
+    return DXFILEERR_BADFILEVERSION;
+
+  if (header[2] != XOFFILE_FORMAT_BINARY && header[2] != XOFFILE_FORMAT_TEXT &&
+      header[2] != XOFFILE_FORMAT_BINARY_MSZIP && header[2] != XOFFILE_FORMAT_TEXT_MSZIP)
+  {
+    WARN("File type %s unknown\n", debugstr_fourcc(header[2]));
+    return DXFILEERR_BADFILETYPE;
+  }
+
+  if (header[3] != XOFFILE_FORMAT_FLOAT_BITS_32 && header[3] != XOFFILE_FORMAT_FLOAT_BITS_64)
+    return DXFILEERR_BADFILEFLOATSIZE;
+
+  buf->txt = header[2] == XOFFILE_FORMAT_TEXT || header[2] == XOFFILE_FORMAT_TEXT_MSZIP;
+
+  if (header[2] == XOFFILE_FORMAT_BINARY_MSZIP || header[2] == XOFFILE_FORMAT_TEXT_MSZIP)
+  {
+    /* Extended header for compressed data:
+     * 16-17 -> decompressed size w/ header,  18-19 -> null,
+     * 20-21 -> decompressed size w/o header, 22-23 -> size of MSZIP compressed data,
+     * 24-xx -> compressed MSZIP data */
+    int err;
+    WORD decomp_size;
+    WORD comp_size;
+    LPBYTE decomp_buffer;
+
+    buf->rem_bytes -= sizeof(WORD) * 2;
+    buf->buffer += sizeof(WORD) * 2;
+    read_bytes(buf, &decomp_size, sizeof(decomp_size));
+    read_bytes(buf, &comp_size, sizeof(comp_size));
+
+    TRACE("Compressed format %s detected: compressed_size = %x, decompressed_size = %x\n",
+        debugstr_fourcc(header[2]), comp_size, decomp_size);
+
+    decomp_buffer = HeapAlloc(GetProcessHeap(), 0, decomp_size);
+    if (!decomp_buffer)
+    {
+        ERR("Out of memory\n");
+        return DXFILEERR_BADALLOC;
+    }
+    err = mszip_decompress(comp_size, decomp_size, (char*)buf->buffer, (char*)decomp_buffer);
+    if (err)
+    {
+        WARN("Error while decompressing mszip archive %d\n", err);
+        HeapFree(GetProcessHeap(), 0, decomp_buffer);
+        return DXFILEERR_BADALLOC;
+    }
+    /* Use decompressed data */
+    buf->buffer = *decomp_buffer_ptr = decomp_buffer;
+    buf->rem_bytes = decomp_size;
+  }
+
+  TRACE("Header is correct\n");
+
+  return S_OK;
 }
 
 static void dump_TOKEN(WORD token)
