@@ -4611,7 +4611,7 @@ static HRESULT WINAPI d3d3_CreateMaterial(IDirect3D3 *iface, IDirect3DMaterial3 
     }
 
     TRACE("Created material %p.\n", object);
-    *material = (IDirect3DMaterial3 *)object;
+    *material = &object->IDirect3DMaterial3_iface;
 
     return D3D_OK;
 }
