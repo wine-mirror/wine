@@ -1230,14 +1230,26 @@ int is_interpreted_func( const type_t *iface, const var_t *func )
             break;
         }
     }
-    /* unions passed by value are not supported in Oi mode */
     if (get_stub_mode() != MODE_Oif && args)
+    {
         LIST_FOR_EACH_ENTRY( var, args, const var_t, entry )
-        {
-            if (type_get_type( var->type ) == TYPE_UNION ||
-                type_get_type( var->type ) == TYPE_ENCAPSULATED_UNION)
-                return 0;
-        }
+            switch (type_get_type( var->type ))
+            {
+            case TYPE_BASIC:
+                switch (type_basic_get_type( var->type ))
+                {
+                /* floating point arguments are not supported in Oi mode */
+                case TYPE_BASIC_FLOAT:  return 0;
+                case TYPE_BASIC_DOUBLE: return 0;
+                default: break;
+                }
+                break;
+            /* unions passed by value are not supported in Oi mode */
+            case TYPE_UNION: return 0;
+            case TYPE_ENCAPSULATED_UNION: return 0;
+            default: break;
+            }
+    }
 
     if ((str = get_attrp( func->attrs, ATTR_OPTIMIZE ))) return !strcmp( str, "i" );
     if ((str = get_attrp( iface->attrs, ATTR_OPTIMIZE ))) return !strcmp( str, "i" );
