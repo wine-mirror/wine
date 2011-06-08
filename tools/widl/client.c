@@ -107,15 +107,25 @@ static void write_function_stub( const type_t *iface, const var_t *func,
         fprintf(client, "{\n");
         indent++;
         if (has_ret) print_client( "%s", "CLIENT_CALL_RETURN _RetVal;\n\n" );
-        print_client( "%s%s( &%s_StubDesc, &__MIDL_ProcFormatString.Format[%u], ",
+        print_client( "%s%s( &%s_StubDesc, &__MIDL_ProcFormatString.Format[%u]",
                       has_ret ? "_RetVal = " : "",
                       stub_mode == MODE_Oif ? "NdrClientCall2" : "NdrClientCall",
                       iface->name, proc_offset );
         if (args)
-            fprintf( client, "(unsigned char *)&%s );\n",
-                     LIST_ENTRY( list_head(args), const var_t, entry )->name );
-        else
-            fprintf( client, "(unsigned char *)0 );\n" );
+        {
+            const var_t *arg;
+            if (pointer_size == 8)
+            {
+                LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
+                    fprintf( client, ",\n%*s%s", 4 * indent + 16, "", arg->name );
+            }
+            else
+            {
+                arg = LIST_ENTRY( list_head(args), const var_t, entry );
+                fprintf( client, ", &%s", arg->name );
+            }
+        }
+        fprintf( client, " );\n" );
         if (has_ret)
         {
             print_client( "return (" );
