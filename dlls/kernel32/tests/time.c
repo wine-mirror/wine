@@ -25,6 +25,8 @@
 
 static BOOL (WINAPI *pTzSpecificLocalTimeToSystemTime)(LPTIME_ZONE_INFORMATION, LPSYSTEMTIME, LPSYSTEMTIME);
 static BOOL (WINAPI *pSystemTimeToTzSpecificLocalTime)(LPTIME_ZONE_INFORMATION, LPSYSTEMTIME, LPSYSTEMTIME);
+static int (WINAPI *pGetCalendarInfoA)(LCID,CALID,CALTYPE,LPSTR,int,LPDWORD);
+static int (WINAPI *pGetCalendarInfoW)(LCID,CALID,CALTYPE,LPWSTR,int,LPDWORD);
 
 #define SECSPERMIN         60
 #define SECSPERDAY        86400
@@ -637,11 +639,69 @@ static void test_FileTimeToDosDateTime(void)
        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 }
 
+static void test_GetCalendarInfo(void)
+{
+    char bufferA[20];
+    WCHAR bufferW[20];
+    DWORD val1, val2;
+    int ret;
+
+    if (!pGetCalendarInfoA || !pGetCalendarInfoW)
+    {
+        trace( "GetCalendarInfo missing\n" );
+        return;
+    }
+
+    ret = pGetCalendarInfoA( 0x0409, CAL_GREGORIAN, CAL_ITWODIGITYEARMAX | CAL_RETURN_NUMBER,
+                             NULL, 0, &val1 );
+    ok( ret, "GetCalendarInfoA failed err %u\n", GetLastError() );
+    ok( ret == sizeof(val1), "wrong size %u\n", ret );
+    ok( val1 >= 2000 && val1 < 2100, "wrong value %u\n", val1 );
+
+    ret = pGetCalendarInfoW( 0x0409, CAL_GREGORIAN, CAL_ITWODIGITYEARMAX | CAL_RETURN_NUMBER,
+                             NULL, 0, &val2 );
+    ok( ret, "GetCalendarInfoW failed err %u\n", GetLastError() );
+    ok( ret == sizeof(val2)/sizeof(WCHAR), "wrong size %u\n", ret );
+    ok( val1 == val2, "A/W mismatch %u/%u\n", val1, val2 );
+
+    ret = pGetCalendarInfoA( 0x0409, CAL_GREGORIAN, CAL_ITWODIGITYEARMAX, bufferA, sizeof(bufferA), NULL );
+    ok( ret, "GetCalendarInfoA failed err %u\n", GetLastError() );
+    ok( ret == 5, "wrong size %u\n", ret );
+    ok( atoi( bufferA ) == val1, "wrong value %s/%u\n", bufferA, val1 );
+
+    ret = pGetCalendarInfoW( 0x0409, CAL_GREGORIAN, CAL_ITWODIGITYEARMAX, bufferW, sizeof(bufferW), NULL );
+    ok( ret, "GetCalendarInfoW failed err %u\n", GetLastError() );
+    ok( ret == 5, "wrong size %u\n", ret );
+    memset( bufferA, 0x55, sizeof(bufferA) );
+    WideCharToMultiByte( CP_ACP, 0, bufferW, -1, bufferA, sizeof(bufferA), NULL, NULL );
+    ok( atoi( bufferA ) == val1, "wrong value %s/%u\n", bufferA, val1 );
+
+    ret = pGetCalendarInfoA( 0x0409, CAL_GREGORIAN, CAL_ITWODIGITYEARMAX | CAL_RETURN_NUMBER,
+                             NULL, 0, NULL );
+    ok( !ret, "GetCalendarInfoA succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    ret = pGetCalendarInfoA( 0x0409, CAL_GREGORIAN, CAL_ITWODIGITYEARMAX, NULL, 0, NULL );
+    ok( ret, "GetCalendarInfoA failed err %u\n", GetLastError() );
+    ok( ret == 5, "wrong size %u\n", ret );
+
+    ret = pGetCalendarInfoW( 0x0409, CAL_GREGORIAN, CAL_ITWODIGITYEARMAX | CAL_RETURN_NUMBER,
+                             NULL, 0, NULL );
+    ok( !ret, "GetCalendarInfoW succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    ret = pGetCalendarInfoW( 0x0409, CAL_GREGORIAN, CAL_ITWODIGITYEARMAX, NULL, 0, NULL );
+    ok( ret, "GetCalendarInfoW failed err %u\n", GetLastError() );
+    ok( ret == 5, "wrong size %u\n", ret );
+}
+
 START_TEST(time)
 {
     HMODULE hKernel = GetModuleHandle("kernel32");
     pTzSpecificLocalTimeToSystemTime = (void *)GetProcAddress(hKernel, "TzSpecificLocalTimeToSystemTime");
     pSystemTimeToTzSpecificLocalTime = (void *)GetProcAddress( hKernel, "SystemTimeToTzSpecificLocalTime");
+    pGetCalendarInfoA = (void *)GetProcAddress(hKernel, "GetCalendarInfoA");
+    pGetCalendarInfoW = (void *)GetProcAddress(hKernel, "GetCalendarInfoW");
 
     test_conversions();
     test_invalid_arg();
@@ -650,4 +710,5 @@ START_TEST(time)
     test_FileTimeToLocalFileTime();
     test_TzSpecificLocalTimeToSystemTime();
     test_FileTimeToDosDateTime();
+    test_GetCalendarInfo();
 }

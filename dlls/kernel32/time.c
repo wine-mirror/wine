@@ -618,6 +618,8 @@ int WINAPI GetCalendarInfoA(LCID lcid, CALID Calendar, CALTYPE CalType,
     ret = GetCalendarInfoW(lcid, Calendar, CalType, lpCalDataW, cchData, lpValue);
     if(ret && lpCalDataW && lpCalData)
       WideCharToMultiByte(CP_ACP, 0, lpCalDataW, cchData, lpCalData, cchData, NULL, NULL);
+    else if (CalType & CAL_RETURN_NUMBER)
+        ret *= sizeof(WCHAR);
     HeapFree(GetProcessHeap(), 0, lpCalDataW);
 
     return ret;
@@ -636,6 +638,11 @@ int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
 	FIXME("flag CAL_USE_CP_ACP used, not fully implemented\n");
 
     if (CalType & CAL_RETURN_NUMBER) {
+        if (!lpValue)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
 	if (lpCalData != NULL)
 	    WARN("lpCalData not NULL (%p) when it should!\n", lpCalData);
 	if (cchData != 0)
@@ -747,7 +754,25 @@ int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
 	case CAL_SYEARMONTH:
 	    return GetLocaleInfoW(Locale, LOCALE_SYEARMONTH, lpCalData, cchData);
 	case CAL_ITWODIGITYEARMAX:
-	    if (lpValue) *lpValue = CALINFO_MAX_YEAR;
+            if (CalType & CAL_RETURN_NUMBER)
+            {
+                *lpValue = CALINFO_MAX_YEAR;
+                return sizeof(DWORD) / sizeof(WCHAR);
+            }
+            else
+            {
+                static const WCHAR fmtW[] = {'%','u',0};
+                WCHAR buffer[10];
+                int ret = snprintfW( buffer, 10, fmtW, CALINFO_MAX_YEAR  ) + 1;
+                if (!lpCalData) return ret;
+                if (ret <= cchData)
+                {
+                    strcpyW( lpCalData, buffer );
+                    return ret;
+                }
+                SetLastError( ERROR_INSUFFICIENT_BUFFER );
+                return 0;
+            }
 	    break;
 	default:
             FIXME("Unknown caltype %d\n",CalType & 0xffff);
