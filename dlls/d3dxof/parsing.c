@@ -125,7 +125,7 @@ static const char* get_primitive_string(WORD token)
   return NULL;
 }
 
-void dump_template(xtemplate* templates_array, xtemplate* ptemplate)
+static void dump_template(xtemplate* templates_array, xtemplate* ptemplate)
 {
   int j, k;
   GUID* clsid;
@@ -858,7 +858,7 @@ static WORD check_TOKEN(parse_buffer * buf)
   return buf->current_token;
 }
 
-BOOL is_template_available(parse_buffer * buf)
+static BOOL is_template_available(parse_buffer * buf)
 {
   return check_TOKEN(buf) == TOKEN_TEMPLATE;
 }
@@ -1076,7 +1076,7 @@ static void go_to_next_definition(parse_buffer * buf)
   }
 }
 
-BOOL parse_template(parse_buffer * buf)
+static BOOL parse_template(parse_buffer * buf)
 {
   if (get_TOKEN(buf) != TOKEN_TEMPLATE)
     return FALSE;
@@ -1101,6 +1101,25 @@ BOOL parse_template(parse_buffer * buf)
   TRACE("%d - %s - %s\n", buf->pdxf->nb_xtemplates, buf->pdxf->xtemplates[buf->pdxf->nb_xtemplates].name, debugstr_guid(&buf->pdxf->xtemplates[buf->pdxf->nb_xtemplates].class_id));
   buf->pdxf->nb_xtemplates++;
 
+  return TRUE;
+}
+
+BOOL parse_templates(parse_buffer * buf)
+{
+  while (buf->rem_bytes && is_template_available(buf))
+  {
+    if (!parse_template(buf))
+    {
+      WARN("Template is not correct\n");
+      return FALSE;
+    }
+    else
+    {
+      TRACE("Template successfully parsed:\n");
+      if (TRACE_ON(d3dxof_parsing))
+        dump_template(buf->pdxf->xtemplates, &buf->pdxf->xtemplates[buf->pdxf->nb_xtemplates - 1]);
+    }
+  }
   return TRUE;
 }
 
