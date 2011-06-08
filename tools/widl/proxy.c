@@ -850,6 +850,23 @@ int need_inline_stubs(const type_t *iface)
     STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
     {
         const var_t *func = stmt->u.var;
+        if (is_local( func->attrs )) continue;
+        if (!is_interpreted_func( iface, func )) return 1;
+    }
+    return 0;
+}
+
+static int need_proxy_and_inline_stubs(const type_t *iface)
+{
+    const statement_t *stmt;
+
+    if (!need_proxy( iface )) return 0;
+    if (get_stub_mode() == MODE_Os) return 1;
+
+    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
+    {
+        const var_t *func = stmt->u.var;
+        if (is_local( func->attrs )) continue;
         if (!is_interpreted_func( iface, func )) return 1;
     }
     return 0;
@@ -942,7 +959,7 @@ static void write_proxy_routines(const statement_list_t *stmts)
   print_proxy( "#include \"%s\"\n", header_name);
   print_proxy( "\n");
 
-  if (need_inline_stubs_file( stmts ))
+  if (does_any_iface(stmts, need_proxy_and_inline_stubs))
   {
       write_exceptions( proxy );
       print_proxy( "\n");
