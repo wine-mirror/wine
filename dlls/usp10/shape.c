@@ -466,8 +466,8 @@ static OPENTYPE_FEATURE_RECORD bengali_features[] =
     { MS_MAKE_TAG('a','k','h','n'), 1},
     { MS_MAKE_TAG('r','p','h','f'), 1},
     { MS_MAKE_TAG('b','l','w','f'), 1},
-    { MS_MAKE_TAG('h','a','l','f'), 1},
     { MS_MAKE_TAG('p','s','t','f'), 1},
+    { MS_MAKE_TAG('h','a','l','f'), 1},
     { MS_MAKE_TAG('v','a','t','u'), 1},
     { MS_MAKE_TAG('c','j','c','t'), 1},
     /* Presentation forms */
@@ -508,8 +508,8 @@ static OPENTYPE_FEATURE_RECORD gurmukhi_features[] =
     { MS_MAKE_TAG('a','k','h','n'), 1},
     { MS_MAKE_TAG('r','p','h','f'), 1},
     { MS_MAKE_TAG('b','l','w','f'), 1},
-    { MS_MAKE_TAG('h','a','l','f'), 1},
     { MS_MAKE_TAG('p','s','t','f'), 1},
+    { MS_MAKE_TAG('h','a','l','f'), 1},
     { MS_MAKE_TAG('v','a','t','u'), 1},
     { MS_MAKE_TAG('c','j','c','t'), 1},
     /* Presentation forms */
@@ -621,8 +621,8 @@ static OPENTYPE_FEATURE_RECORD telugu_features[] =
     { MS_MAKE_TAG('r','p','h','f'), 1},
     { MS_MAKE_TAG('p','r','e','f'), 1},
     { MS_MAKE_TAG('b','l','w','f'), 1},
-    { MS_MAKE_TAG('h','a','l','f'), 1},
     { MS_MAKE_TAG('p','s','t','f'), 1},
+    { MS_MAKE_TAG('h','a','l','f'), 1},
     { MS_MAKE_TAG('c','j','c','t'), 1},
     /* Presentation forms */
     { MS_MAKE_TAG('p','r','e','s'), 1},
