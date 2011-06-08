@@ -471,7 +471,6 @@ static OPENTYPE_FEATURE_RECORD bengali_features[] =
     { MS_MAKE_TAG('v','a','t','u'), 1},
     { MS_MAKE_TAG('c','j','c','t'), 1},
     /* Presentation forms */
-    { MS_MAKE_TAG('i','n','i','t'), 1},
     { MS_MAKE_TAG('p','r','e','s'), 1},
     { MS_MAKE_TAG('a','b','v','s'), 1},
     { MS_MAKE_TAG('b','l','w','s'), 1},
@@ -2203,6 +2202,19 @@ static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
+
+    /* Step 3: Initial form is only applied to the beginning of words */
+    for (cCount = cCount - 1 ; cCount >= 0; cCount --)
+    {
+        if (cCount == 0 || input[cCount] == 0x0020) /* space */
+        {
+            int index = cCount;
+            int gCount = 1;
+            if (index > 0) index++;
+
+            apply_GSUB_feature_to_glyph(hdc, psa, psc, &pwOutGlyphs[index], 0, 1, &gCount, "init");
+        }
+    }
 
     HeapFree(GetProcessHeap(),0,input);
 }
