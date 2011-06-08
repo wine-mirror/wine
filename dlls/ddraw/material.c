@@ -507,11 +507,19 @@ static const struct IDirect3DMaterialVtbl d3d_material1_vtbl =
     IDirect3DMaterialImpl_Unreserve
 };
 
-void d3d_material_init(IDirect3DMaterialImpl *material, IDirectDrawImpl *ddraw)
+IDirect3DMaterialImpl *d3d_material_create(IDirectDrawImpl *ddraw)
 {
+    IDirect3DMaterialImpl *material;
+
+    material = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*material));
+    if (!material)
+        return NULL;
+
     material->lpVtbl = &d3d_material3_vtbl;
     material->IDirect3DMaterial2_iface.lpVtbl = &d3d_material2_vtbl;
     material->IDirect3DMaterial_iface.lpVtbl = &d3d_material1_vtbl;
     material->ref = 1;
     material->ddraw = ddraw;
+
+    return material;
 }

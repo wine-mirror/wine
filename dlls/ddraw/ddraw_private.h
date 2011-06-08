@@ -429,7 +429,7 @@ struct IDirect3DMaterialImpl
 
 /* Helper functions */
 void material_activate(IDirect3DMaterialImpl* This) DECLSPEC_HIDDEN;
-void d3d_material_init(IDirect3DMaterialImpl *material, IDirectDrawImpl *ddraw) DECLSPEC_HIDDEN;
+IDirect3DMaterialImpl *d3d_material_create(IDirectDrawImpl *ddraw) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirect3DViewport - Wraps to D3D7

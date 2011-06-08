@@ -4603,14 +4603,12 @@ static HRESULT WINAPI d3d3_CreateMaterial(IDirect3D3 *iface, IDirect3DMaterial3 
 
     if (outer_unknown) return CLASS_E_NOAGGREGATION;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    object = d3d_material_create(This);
     if (!object)
     {
         ERR("Failed to allocate material memory.\n");
         return DDERR_OUTOFMEMORY;
     }
-
-    d3d_material_init(object, This);
 
     TRACE("Created material %p.\n", object);
     *material = (IDirect3DMaterial3 *)object;
