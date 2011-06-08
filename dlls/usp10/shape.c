@@ -2036,6 +2036,7 @@ static const VowelComponents Sinhala_vowels[] = {
 static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     int cCount = cChars;
+    int i;
     WCHAR *input;
 
     if (*pcGlyphs != cChars)
@@ -2057,7 +2058,15 @@ static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     Indic_ReorderCharacters( input, cCount, sinhala_lex, Reorder_Like_Sinhala);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
 
-    /* Step 3:  Get glyphs */
+    /* Step 3:  Strip dangling joiners */
+    for (i = 0; i < cCount; i++)
+    {
+        if ((input[i] == 0x200D || input[i] == 0x200C) &&
+            (i == 0 || input[i-1] == 0x0020 || i == cCount-1 || input[i+1] == 0x0020))
+            input[i] = 0x0020;
+    }
+
+    /* Step 4:  Get glyphs */
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
