@@ -111,7 +111,7 @@ int do_win32 = 1;
 int do_win64 = 1;
 int win32_packing = 8;
 int win64_packing = 8;
-enum stub_mode stub_mode = MODE_Os;
+static enum stub_mode stub_mode = MODE_Os;
 
 char *input_name;
 char *header_name;
@@ -175,6 +175,13 @@ static const struct option long_options[] = {
 };
 
 static void rm_tempfile(void);
+
+enum stub_mode get_stub_mode(void)
+{
+    /* old-style interpreted stubs are not supported on 64-bit */
+    if (stub_mode == MODE_Oi && pointer_size == 8) return MODE_Oif;
+    return stub_mode;
+}
 
 static char *make_token(const char *name)
 {

@@ -1231,7 +1231,7 @@ int is_interpreted_func( const type_t *iface, const var_t *func )
         }
     }
     /* unions passed by value are not supported in Oi mode */
-    if (stub_mode != MODE_Oif && args)
+    if (get_stub_mode() != MODE_Oif && args)
         LIST_FOR_EACH_ENTRY( var, args, const var_t, entry )
         {
             if (type_get_type( var->type ) == TYPE_UNION ||
@@ -1241,7 +1241,7 @@ int is_interpreted_func( const type_t *iface, const var_t *func )
 
     if ((str = get_attrp( func->attrs, ATTR_OPTIMIZE ))) return !strcmp( str, "i" );
     if ((str = get_attrp( iface->attrs, ATTR_OPTIMIZE ))) return !strcmp( str, "i" );
-    return (stub_mode != MODE_Os);
+    return (get_stub_mode() != MODE_Os);
 }
 
 static void write_proc_func_header( FILE *file, int indent, const type_t *iface,
@@ -1265,7 +1265,7 @@ static void write_proc_func_header( FILE *file, int indent, const type_t *iface,
     if (is_object( iface ))
     {
         oi_flags |= RPC_FC_PROC_OIF_OBJECT;
-        if (stub_mode == MODE_Oif) oi_flags |= RPC_FC_PROC_OIF_OBJ_V2;
+        if (get_stub_mode() == MODE_Oif) oi_flags |= RPC_FC_PROC_OIF_OBJ_V2;
         stack_size += pointer_size;
     }
 
@@ -1330,7 +1330,7 @@ static void write_proc_func_header( FILE *file, int indent, const type_t *iface,
         }
     }
 
-    if (stub_mode == MODE_Oif)
+    if (get_stub_mode() == MODE_Oif)
     {
         unsigned char oi2_flags = get_func_oi2_flags( func );
         unsigned char ext_flags = 0;
@@ -1382,7 +1382,7 @@ static void write_procformatstring_func( FILE *file, int indent, const type_t *i
 {
     unsigned int stack_offset = is_object( iface ) ? pointer_size : 0;
     int is_interpreted = is_interpreted_func( iface, func );
-    int is_new_style = is_interpreted && (stub_mode == MODE_Oif);
+    int is_new_style = is_interpreted && (get_stub_mode() == MODE_Oif);
 
     if (is_interpreted) write_proc_func_header( file, indent, iface, func, offset, num_proc );
 

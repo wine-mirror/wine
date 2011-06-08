@@ -78,7 +78,7 @@ enum stub_mode
     MODE_Oi,  /* old-style interpreted stubs */
     MODE_Oif  /* new-style fully interpreted stubs */
 };
-extern enum stub_mode stub_mode;
+extern enum stub_mode get_stub_mode(void);
 
 extern void write_header(const statement_list_t *stmts);
 extern void write_id_data(const statement_list_t *stmts);

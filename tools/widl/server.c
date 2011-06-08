@@ -270,7 +270,7 @@ static void write_dispatchtable(type_t *iface)
     {
         var_t *func = stmt->u.var;
         if (is_interpreted_func( iface, func ))
-            print_server("%s,\n", stub_mode == MODE_Oif ? "NdrServerCall2" : "NdrServerCall");
+            print_server("%s,\n", get_stub_mode() == MODE_Oif ? "NdrServerCall2" : "NdrServerCall");
         else
             print_server("%s_%s,\n", iface->name, get_name(func));
         method_count++;
@@ -354,7 +354,7 @@ static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
     print_server("0,\n");
     print_server("__MIDL_TypeFormatString.Format,\n");
     print_server("1, /* -error bounds_check flag */\n");
-    print_server("0x%x, /* Ndr library version */\n", stub_mode == MODE_Oif ? 0x50002 : 0x10001);
+    print_server("0x%x, /* Ndr library version */\n", get_stub_mode() == MODE_Oif ? 0x50002 : 0x10001);
     print_server("0,\n");
     print_server("0x50100a4, /* MIDL Version 5.1.164 */\n");
     print_server("0,\n");
