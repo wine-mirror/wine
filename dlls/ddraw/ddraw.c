@@ -4616,37 +4616,46 @@ static HRESULT WINAPI d3d3_CreateMaterial(IDirect3D3 *iface, IDirect3DMaterial3 
     return D3D_OK;
 }
 
-static HRESULT WINAPI d3d2_CreateMaterial(IDirect3D2 *iface, IDirect3DMaterial2 **material, IUnknown *outer_unknown)
+static HRESULT WINAPI d3d2_CreateMaterial(IDirect3D2 *iface, IDirect3DMaterial2 **material,
+        IUnknown *outer_unknown)
 {
     IDirectDrawImpl *This = impl_from_IDirect3D2(iface);
-    IDirect3DMaterial3 *material3;
-    HRESULT hr;
+    IDirect3DMaterialImpl *object;
 
     TRACE("iface %p, material %p, outer_unknown %p.\n", iface, material, outer_unknown);
 
-    hr = d3d3_CreateMaterial(&This->IDirect3D3_iface, &material3, outer_unknown);
-    *material = material3 ? &((IDirect3DMaterialImpl *)material3)->IDirect3DMaterial2_iface : NULL;
+    object = d3d_material_create(This);
+    if (!object)
+    {
+        ERR("Failed to allocate material memory.\n");
+        return DDERR_OUTOFMEMORY;
+    }
 
-    TRACE("Returning material %p.\n", *material);
+    TRACE("Created material %p.\n", object);
+    *material = &object->IDirect3DMaterial2_iface;
 
-    return hr;
+    return D3D_OK;
 }
 
-static HRESULT WINAPI d3d1_CreateMaterial(IDirect3D *iface, IDirect3DMaterial **material, IUnknown *outer_unknown)
+static HRESULT WINAPI d3d1_CreateMaterial(IDirect3D *iface, IDirect3DMaterial **material,
+        IUnknown *outer_unknown)
 {
-    IDirect3DMaterial3 *material3;
-    HRESULT hr;
-
     IDirectDrawImpl *This = impl_from_IDirect3D(iface);
+    IDirect3DMaterialImpl *object;
 
     TRACE("iface %p, material %p, outer_unknown %p.\n", iface, material, outer_unknown);
 
-    hr = d3d3_CreateMaterial(&This->IDirect3D3_iface, &material3, outer_unknown);
-    *material = material3 ? &((IDirect3DMaterialImpl *)material3)->IDirect3DMaterial_iface : NULL;
+    object = d3d_material_create(This);
+    if (!object)
+    {
+        ERR("Failed to allocate material memory.\n");
+        return DDERR_OUTOFMEMORY;
+    }
 
-    TRACE("Returning material %p.\n", *material);
+    TRACE("Created material %p.\n", object);
+    *material = &object->IDirect3DMaterial_iface;
 
-    return hr;
+    return D3D_OK;
 }
 
 /*****************************************************************************
