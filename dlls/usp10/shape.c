@@ -1806,6 +1806,8 @@ static void DecomposeVowels(HDC hdc, WCHAR *pwOutChars, INT *pcChars, const Vowe
             if (pwOutChars[cWalk] == vowels[i].base)
             {
                 ReplaceInsertChars(hdc, cWalk, pcChars, pwOutChars, vowels[i].parts);
+                if (vowels[i].parts[1]) cWalk++;
+                if (vowels[i].parts[2]) cWalk++;
                 break;
             }
         }
@@ -2007,7 +2009,7 @@ static int sinhala_lex(WCHAR c)
         case 0x0DD9:
         case 0x0DDB: return lex_Matra_pre;
         case 0x0DDA:
-        case 0x0DDC: return lex_Composed_Vowel;
+        case 0x0DDC: return lex_Matra_post;
         case 0x200D: return lex_ZWJ;
         case 0x200C: return lex_ZWNJ;
         case 0x00A0: return lex_NBSP;
@@ -2018,17 +2020,17 @@ static int sinhala_lex(WCHAR c)
             else if (c>=0x0DD0 && c <=0x0DD1) return lex_Matra_post;
             else if (c>=0x0DD2 && c <=0x0DD3) return lex_Matra_above;
             else if (c>=0x0DD4 && c <=0x0DD6) return lex_Matra_below;
-            else if (c>=0x0DDD && c <=0x0DDE) return lex_Composed_Vowel;
+            else if (c>=0x0DDD && c <=0x0DDE) return lex_Matra_post;
             else if (c>=0x0DF2 && c <=0x0DF3) return lex_Matra_post;
             else return lex_Generic;
     }
 }
 
 static const VowelComponents Sinhala_vowels[] = {
-            {0x0DDA, {0x0DD9,0x0DCA,0x0}},
-            {0x0DDC, {0x0DD9,0x0DCF,0x0}},
-            {0x0DDD, {0x0DD9,0x0DCF,0x0DCA}},
-            {0x0DDE, {0x0DD9,0x0DDF,0x0}},
+            {0x0DDA, {0x0DD9,0x0DDA,0x0}},
+            {0x0DDC, {0x0DD9,0x0DDC,0x0}},
+            {0x0DDD, {0x0DD9,0x0DDD,0x0}},
+            {0x0DDE, {0x0DD9,0x0DDE,0x0}},
             {0x0000, {0x0000,0x0000,0x0}}};
 
 static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
