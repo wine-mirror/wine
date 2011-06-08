@@ -1353,7 +1353,24 @@ static void write_proc_func_header( FILE *file, int indent, const type_t *iface,
         *offset += 14;
         if (pointer_size == 8)
         {
-            print_file( file, indent, "NdrFcShort(0x0),\n" );  /* floating point mask */
+            unsigned short pos = 0, fpu_mask = 0;
+
+            if (is_object( iface )) pos += 2;
+            if (args) LIST_FOR_EACH_ENTRY( var, args, var_t, entry )
+            {
+                if (type_get_type( var->type ) == TYPE_BASIC)
+                {
+                    switch (type_basic_get_type( var->type ))
+                    {
+                    case TYPE_BASIC_FLOAT:  fpu_mask |= 1 << pos; break;
+                    case TYPE_BASIC_DOUBLE: fpu_mask |= 2 << pos; break;
+                    default: break;
+                    }
+                }
+                pos += 2;
+                if (pos >= 16) break;
+            }
+            print_file( file, indent, "NdrFcShort(0x%x),\n", fpu_mask );  /* floating point mask */
             *offset += 2;
         }
     }
