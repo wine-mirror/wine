@@ -146,11 +146,7 @@ typedef struct {
 typedef struct {
     IDirectXFileEnumObject IDirectXFileEnumObject_iface;
     LONG ref;
-    DXFILELOADOPTIONS source;
-    HANDLE hFile;
-    HANDLE file_mapping;
-    LPBYTE buffer;
-    HGLOBAL resource_data;
+    LPBYTE mapped_memory;
     LPBYTE decomp_buffer;
     parse_buffer buf;
     IDirectXFileImpl* pDirectXFile;

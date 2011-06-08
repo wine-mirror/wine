@@ -141,16 +141,11 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   IDirectXFileEnumObjectImpl* object;
   HRESULT hr;
   DWORD* header;
-  HANDLE hFile = INVALID_HANDLE_VALUE;
-  HANDLE file_mapping = 0;
-  LPBYTE buffer = NULL;
-  HGLOBAL resource_data = 0;
+  LPBYTE mapped_memory = NULL;
   LPBYTE decomp_buffer = NULL;
   DWORD decomp_size = 0;
   LPBYTE file_buffer;
   DWORD file_size;
-
-  LPDXFILELOADMEMORY lpdxflm = NULL;
 
   TRACE("(%p/%p)->(%p,%x,%p)\n", This, iface, pvSource, dwLoadOptions, ppEnumObj);
 
@@ -162,6 +157,8 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
 
   if (dwLoadOptions == DXFILELOAD_FROMFILE)
   {
+    HANDLE hFile, file_mapping;
+
     TRACE("Open source file '%s'\n", (char*)pvSource);
 
     hFile = CreateFileA(pvSource, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
@@ -176,21 +173,25 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
     file_mapping = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
     if (!file_mapping)
     {
+      CloseHandle(hFile);
       hr = DXFILEERR_BADFILETYPE;
       goto error;
     }
 
-    buffer = MapViewOfFile(file_mapping, FILE_MAP_READ, 0, 0, 0);
-    if (!buffer)
+    mapped_memory = MapViewOfFile(file_mapping, FILE_MAP_READ, 0, 0, 0);
+    CloseHandle(file_mapping);
+    CloseHandle(hFile);
+    if (!mapped_memory)
     {
       hr = DXFILEERR_BADFILETYPE;
       goto error;
     }
-    file_buffer = buffer;
+    file_buffer = mapped_memory;
   }
   else if (dwLoadOptions == DXFILELOAD_FROMRESOURCE)
   {
     HRSRC resource_info;
+    HGLOBAL resource_data;
     LPDXFILELOADRESOURCE lpdxflr = pvSource;
 
     TRACE("Source in resource (module = %p, name = %s, type = %s\n", lpdxflr->hModule, debugstr_a(lpdxflr->lpName), debugstr_a(lpdxflr->lpType));
@@ -220,7 +221,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   }
   else if (dwLoadOptions == DXFILELOAD_FROMMEMORY)
   {
-    lpdxflm = pvSource;
+    LPDXFILELOADMEMORY lpdxflm = pvSource;
 
     TRACE("Source in memory at %p with size %d\n", lpdxflm->lpMemory, lpdxflm->dSize);
 
@@ -312,10 +313,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   if (FAILED(hr))
     goto error;
 
-  object->source = dwLoadOptions;
-  object->hFile = hFile;
-  object->file_mapping = file_mapping;
-  object->buffer = buffer;
+  object->mapped_memory = mapped_memory;
   object->decomp_buffer = decomp_buffer;
   object->pDirectXFile = This;
   object->buf.pdxf = This;
@@ -366,14 +364,8 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   return DXFILE_OK;
 
 error:
-  if (buffer)
-    UnmapViewOfFile(buffer);
-  if (file_mapping)
-    CloseHandle(file_mapping);
-  if (hFile != INVALID_HANDLE_VALUE)
-    CloseHandle(hFile);
-  if (resource_data)
-    FreeResource(resource_data);
+  if (mapped_memory)
+    UnmapViewOfFile(mapped_memory);
   HeapFree(GetProcessHeap(), 0, decomp_buffer);
   *ppEnumObj = NULL;
 
@@ -1134,14 +1126,8 @@ static ULONG WINAPI IDirectXFileEnumObjectImpl_Release(IDirectXFileEnumObject* i
     int i;
     for (i = 0; i < This->nb_xobjects; i++)
       IDirectXFileData_Release(This->pRefObjects[i]);
-    if (This->source == DXFILELOAD_FROMFILE)
-    {
-      UnmapViewOfFile(This->buffer);
-      CloseHandle(This->file_mapping);
-      CloseHandle(This->hFile);
-    }
-    else if (This->source == DXFILELOAD_FROMRESOURCE)
-      FreeResource(This->resource_data);
+    if (This->mapped_memory)
+      UnmapViewOfFile(This->mapped_memory);
     HeapFree(GetProcessHeap(), 0, This->decomp_buffer);
     HeapFree(GetProcessHeap(), 0, This);
   }
