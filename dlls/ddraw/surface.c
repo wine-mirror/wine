@@ -31,10 +31,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-static inline IDirectDrawSurfaceImpl *surface_from_gamma_control(IDirectDrawGammaControl *iface)
+static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawGammaControl(IDirectDrawGammaControl *iface)
 {
-    return (IDirectDrawSurfaceImpl *)((char*)iface
-            - FIELD_OFFSET(IDirectDrawSurfaceImpl, IDirectDrawGammaControl_vtbl));
+    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawGammaControl_iface);
 }
 
 /*****************************************************************************
@@ -98,7 +97,7 @@ static HRESULT WINAPI ddraw_surface7_QueryInterface(IDirectDrawSurface7 *iface, 
     else if( IsEqualGUID(riid, &IID_IDirectDrawGammaControl) )
     {
         IUnknown_AddRef(iface);
-        *obj = &This->IDirectDrawGammaControl_vtbl;
+        *obj = &This->IDirectDrawGammaControl_iface;
         TRACE("(%p) returning IDirectDrawGammaControl interface at %p\n", This, *obj);
         return S_OK;
     }
@@ -159,9 +158,11 @@ static HRESULT WINAPI ddraw_surface3_QueryInterface(IDirectDrawSurface3 *iface, 
     return ddraw_surface7_QueryInterface(&This->IDirectDrawSurface7_iface, riid, object);
 }
 
-static HRESULT WINAPI ddraw_gamma_control_QueryInterface(IDirectDrawGammaControl *iface, REFIID riid, void **object)
+static HRESULT WINAPI ddraw_gamma_control_QueryInterface(IDirectDrawGammaControl *iface,
+        REFIID riid, void **object)
 {
-    IDirectDrawSurfaceImpl *This = surface_from_gamma_control(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawGammaControl(iface);
+
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
     return ddraw_surface7_QueryInterface(&This->IDirectDrawSurface7_iface, riid, object);
@@ -230,7 +231,8 @@ static ULONG WINAPI ddraw_surface3_AddRef(IDirectDrawSurface3 *iface)
 
 static ULONG WINAPI ddraw_gamma_control_AddRef(IDirectDrawGammaControl *iface)
 {
-    IDirectDrawSurfaceImpl *This = surface_from_gamma_control(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawGammaControl(iface);
+
     TRACE("iface %p.\n", iface);
 
     return ddraw_surface7_AddRef(&This->IDirectDrawSurface7_iface);
@@ -448,7 +450,8 @@ static ULONG WINAPI ddraw_surface3_Release(IDirectDrawSurface3 *iface)
 
 static ULONG WINAPI ddraw_gamma_control_Release(IDirectDrawGammaControl *iface)
 {
-    IDirectDrawSurfaceImpl *This = surface_from_gamma_control(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawGammaControl(iface);
+
     TRACE("iface %p.\n", iface);
 
     return ddraw_surface7_Release(&This->IDirectDrawSurface7_iface);
@@ -3410,7 +3413,7 @@ static HRESULT WINAPI ddraw_surface3_SetPalette(IDirectDrawSurface3 *iface, IDir
 static HRESULT WINAPI ddraw_gamma_control_GetGammaRamp(IDirectDrawGammaControl *iface,
         DWORD flags, DDGAMMARAMP *gamma_ramp)
 {
-    IDirectDrawSurfaceImpl *surface = surface_from_gamma_control(iface);
+    IDirectDrawSurfaceImpl *surface = impl_from_IDirectDrawGammaControl(iface);
 
     TRACE("iface %p, flags %#x, gamma_ramp %p.\n", iface, flags, gamma_ramp);
 
@@ -3452,7 +3455,7 @@ static HRESULT WINAPI ddraw_gamma_control_GetGammaRamp(IDirectDrawGammaControl *
 static HRESULT WINAPI ddraw_gamma_control_SetGammaRamp(IDirectDrawGammaControl *iface,
         DWORD flags, DDGAMMARAMP *gamma_ramp)
 {
-    IDirectDrawSurfaceImpl *surface = surface_from_gamma_control(iface);
+    IDirectDrawSurfaceImpl *surface = impl_from_IDirectDrawGammaControl(iface);
 
     TRACE("iface %p, flags %#x, gamma_ramp %p.\n", iface, flags, gamma_ramp);
 
@@ -4135,7 +4138,7 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     surface->IDirectDrawSurface7_iface.lpVtbl = &ddraw_surface7_vtbl;
     surface->IDirectDrawSurface4_iface.lpVtbl = &ddraw_surface4_vtbl;
     surface->IDirectDrawSurface3_iface.lpVtbl = &ddraw_surface3_vtbl;
-    surface->IDirectDrawGammaControl_vtbl = &ddraw_gamma_control_vtbl;
+    surface->IDirectDrawGammaControl_iface.lpVtbl = &ddraw_gamma_control_vtbl;
     surface->IDirect3DTexture2_vtbl = &d3d_texture2_vtbl;
     surface->IDirect3DTexture_vtbl = &d3d_texture1_vtbl;
     surface->ref = 1;

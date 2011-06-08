@@ -155,7 +155,7 @@ struct IDirectDrawSurfaceImpl
     IDirectDrawSurface7 IDirectDrawSurface7_iface;
     IDirectDrawSurface4 IDirectDrawSurface4_iface;
     IDirectDrawSurface3 IDirectDrawSurface3_iface;
-    const IDirectDrawGammaControlVtbl *IDirectDrawGammaControl_vtbl;
+    IDirectDrawGammaControl IDirectDrawGammaControl_iface;
     const IDirect3DTexture2Vtbl *IDirect3DTexture2_vtbl;
     const IDirect3DTextureVtbl *IDirect3DTexture_vtbl;
 
