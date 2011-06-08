@@ -1858,17 +1858,16 @@ static void Reorder_Ra_follows_base(LPWSTR pwChar, INT start, INT main, INT end,
     }
 }
 
-static void Reorder_Ra_follows_matra_post(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lexical)
+static void Reorder_Ra_follows_matra(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lexical)
 {
     if (start != main && end > start+1 && lexical(pwChar[start]) == lex_Ra && lexical(pwChar[start+1]) == lex_Halant)
     {
         int j,loc;
         WORD Ra = pwChar[start];
         WORD H = pwChar[start+1];
-        for (loc = main; loc > end; loc++)
-            if (lexical(pwChar[loc]) == lex_Matra_post)
+        for (loc = end; loc > main; loc--)
+            if (lexical(pwChar[loc]) == lex_Matra_post || lexical(pwChar[loc]) == lex_Matra_below)
                 break;
-        if (loc == end) loc = main;
 
         TRACE("Doing reorder of Ra to %i\n",loc);
         for (j = start; j < loc-1; j++)
@@ -1958,7 +1957,7 @@ static void Reorder_Like_Devanagari(LPWSTR pwChar, INT start, INT main, INT end,
     main = Indic_FindBaseConsonant(pwChar, start, main, end, lexical);
     if (lexical(pwChar[main]) == lex_Vowel) return;
 
-    Reorder_Ra_follows_matra_post(pwChar, start, main, end, lexical);
+    Reorder_Ra_follows_matra(pwChar, start, main, end, lexical);
     Reorder_Matra_precede_syllable(pwChar, start, main, end, lexical);
 }
 
@@ -1994,7 +1993,7 @@ static void Reorder_Like_Malayalam(LPWSTR pwChar, INT start, INT main, INT end, 
     main = Indic_FindBaseConsonant(pwChar, start, main, end, lexical);
     if (lexical(pwChar[main]) == lex_Vowel) return;
 
-    Reorder_Ra_follows_matra_post(pwChar, start, main, end, lexical);
+    Reorder_Ra_follows_matra(pwChar, start, main, end, lexical);
     Reorder_Matra_precede_base(pwChar, start, main, end, lexical);
 }
 
