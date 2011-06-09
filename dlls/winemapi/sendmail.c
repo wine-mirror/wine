@@ -87,11 +87,12 @@ ULONG WINAPI MAPISendMail(LHANDLE session, ULONG_PTR uiparam,
         }
 
         address = message->lpRecips[i].lpszAddress;
-        if (!strncasecmp(address, smtp, sizeof(smtp) - 1))
-            address += sizeof(smtp) - 1;
 
         if (address)
         {
+            if (!strncasecmp(address, smtp, sizeof(smtp) - 1))
+                address += sizeof(smtp) - 1;
+
             switch (message->lpRecips[i].ulRecipClass)
             {
                 case MAPI_ORIG:
@@ -172,11 +173,12 @@ ULONG WINAPI MAPISendMail(LHANDLE session, ULONG_PTR uiparam,
     for (i = 0; i < message->nRecipCount; i++)
     {
         address = message->lpRecips[i].lpszAddress;
-        if (!strncasecmp(address, smtp, sizeof(smtp) - 1))
-            address += sizeof(smtp) - 1;
 
         if (address)
         {
+            if (!strncasecmp(address, smtp, sizeof(smtp) - 1))
+                address += sizeof(smtp) - 1;
+
             switch (message->lpRecips[i].ulRecipClass)
             {
                 case MAPI_TO:
