@@ -106,6 +106,41 @@ s_sum(int x, int y)
   return x + y;
 }
 
+signed char s_sum_char(signed char x, signed char y)
+{
+    return x + y;
+}
+
+short s_sum_short(short x, short y)
+{
+    return x + y;
+}
+
+int s_sum_float(float x, float y)
+{
+    return x + y;
+}
+
+int s_sum_double_int(int x, double y)
+{
+    return x + y;
+}
+
+hyper s_sum_hyper(hyper x, hyper y)
+{
+    return x + y;
+}
+
+int s_sum_hyper_int(hyper x, hyper y)
+{
+    return x + y;
+}
+
+int s_sum_char_hyper(signed char x, hyper y)
+{
+    return x + y;
+}
+
 void
 s_square_out(int x, int *y)
 {
@@ -825,6 +860,7 @@ basic_tests(void)
   short h;
   char c;
   int x;
+  hyper y;
   str_struct_t ss = {string};
   wstr_struct_t ws = {wstring};
   str_t str;
@@ -834,7 +870,22 @@ basic_tests(void)
   ok(int_return() == INT_CODE, "RPC int_return\n");
 
   ok(square(7) == 49, "RPC square\n");
-  ok(sum(23, -4) == 19, "RPC sum\n");
+  x = sum(23, -4);
+  ok(x == 19, "RPC sum got %d\n", x);
+  c = sum_char(-23, 50);
+  ok(c == 27, "RPC sum_char got %d\n", (int)c);
+  h = sum_short(1122, -344);
+  ok(h == 778, "RPC sum_short got %d\n", (int)h);
+  x = sum_float(123.45, -32.2);
+  ok(x == 91, "RPC sum_float got %d\n", x);
+  x = sum_double_int(-78, 148.46);
+  ok(x == 70, "RPC sum_double_int got %d\n", x);
+  y = sum_hyper((hyper)0x12345678 << 16, (hyper)0x33557799 << 16);
+  ok(y == (hyper)0x4589ce11 << 16, "RPC hyper got %x%08x\n", (DWORD)(y >> 32), (DWORD)y);
+  x = sum_hyper_int((hyper)0x24242424 << 16, -((hyper)0x24241212 << 16));
+  ok(x == 0x12120000, "RPC hyper_int got 0x%x\n", x);
+  x = sum_char_hyper( 12, ((hyper)0x42424242 << 32) | 0x33334444 );
+  ok(x == 0x33334450, "RPC char_hyper got 0x%x\n", x);
 
   x = 0;
   square_out(11, &x);

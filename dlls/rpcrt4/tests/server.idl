@@ -31,9 +31,7 @@ typedef int fnprintf(const char *format, ...);
 
 [
   uuid(00000000-4114-0704-2301-000000000000),
-#ifndef __midl
   implicit_handle(handle_t IServer_IfHandle)
-#endif
 ]
 interface IServer
 {
@@ -81,6 +79,13 @@ cpp_quote("#endif")
   int int_return(void);
   int square(int x);
   int sum(int x, int y);
+  signed char sum_char(signed char x, signed char y);
+  short sum_short(short x, short y);
+  int sum_float(float x, float y);
+  int sum_double_int(int x, double y);
+  hyper sum_hyper(hyper x, hyper y);
+  int sum_hyper_int(hyper x, hyper y);
+  int sum_char_hyper(signed char x, hyper y);
   void square_out(int x, [out] int *y);
   void square_ref([in, out] int *x);
   int str_length([string] const char *s);
