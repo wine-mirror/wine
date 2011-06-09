@@ -1163,7 +1163,7 @@ SetupDiCreateDeviceInfoListExW(const GUID *ClassGuid,
     TRACE("%s %p %s %p\n", debugstr_guid(ClassGuid), hwndParent,
       debugstr_w(MachineName), Reserved);
 
-    if (MachineName != NULL)
+    if (MachineName && *MachineName)
     {
         FIXME("remote support is not implemented\n");
         SetLastError(ERROR_INVALID_MACHINENAME);
@@ -2371,7 +2371,7 @@ HDEVINFO WINAPI SetupDiGetClassDevsExW(
         set = SetupDiCreateDeviceInfoListExW(class, parent, machine, reserved);
     if (set)
     {
-        if (machine)
+        if (machine && *machine)
             FIXME("%s: unimplemented for remote machines\n",
                     debugstr_w(machine));
         else if (flags & DIGCF_DEVICEINTERFACE)
@@ -3562,7 +3562,7 @@ HKEY WINAPI SetupDiOpenClassRegKeyExW(
     LPCWSTR lpKeyName;
     LONG l;
 
-    if (MachineName != NULL)
+    if (MachineName && *MachineName)
     {
         FIXME("Remote access not supported yet!\n");
         return INVALID_HANDLE_VALUE;

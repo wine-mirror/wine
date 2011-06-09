@@ -261,6 +261,7 @@ static void test_SetupDiCreateDeviceInfoListEx(void)
     DWORD error;
     static CHAR notnull[] = "NotNull";
     static const WCHAR machine[] = { 'd','u','m','m','y',0 };
+    static const WCHAR empty[] = { 0 };
 
     SetLastError(0xdeadbeef);
     /* create empty DeviceInfoList, but set Reserved to a value, which is not NULL */
@@ -285,6 +286,14 @@ static void test_SetupDiCreateDeviceInfoListEx(void)
 
     /* create empty DeviceInfoList */
     devlist = pSetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, NULL);
+    ok(devlist && devlist != INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %d (expected != %p)\n", devlist, error, INVALID_HANDLE_VALUE);
+
+    /* destroy DeviceInfoList */
+    ret = pSetupDiDestroyDeviceInfoList(devlist);
+    ok(ret, "SetupDiDestroyDeviceInfoList failed : %d\n", error);
+
+    /* create empty DeviceInfoList with empty machine name */
+    devlist = pSetupDiCreateDeviceInfoListExW(NULL, NULL, empty, NULL);
     ok(devlist && devlist != INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %d (expected != %p)\n", devlist, error, INVALID_HANDLE_VALUE);
 
     /* destroy DeviceInfoList */
