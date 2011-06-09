@@ -80,6 +80,8 @@ int write_expr_eval_routines(FILE *file, const char *iface);
 void write_expr_eval_routine_list(FILE *file, const char *iface);
 void write_user_quad_list(FILE *file);
 void write_endpoints( FILE *f, const char *prefix, const str_list_t *list );
+void write_client_call_routine( FILE *file, const type_t *iface, const var_t *func,
+                                const char *prefix, unsigned int proc_offset );
 void write_exceptions( FILE *file );
 unsigned int type_memsize(const type_t *t);
 int decl_indirect(const type_t *t);

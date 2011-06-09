@@ -4806,6 +4806,48 @@ error:
     error("Invalid endpoint syntax '%s'\n", endpoint->str);
 }
 
+void write_client_call_routine( FILE *file, const type_t *iface, const var_t *func,
+                                const char *prefix, unsigned int proc_offset )
+{
+    type_t *rettype = type_function_get_rettype( func->type );
+    int has_ret = !is_void( rettype );
+    const var_list_t *args = type_get_function_args( func->type );
+    const var_t *arg;
+    int len;
+
+    print_file( file, 0, "{\n");
+    if (has_ret) print_file( file, 1, "%s", "CLIENT_CALL_RETURN _RetVal;\n\n" );
+    len = fprintf( file, "    %s%s( ",
+                   has_ret ? "_RetVal = " : "",
+                   get_stub_mode() == MODE_Oif ? "NdrClientCall2" : "NdrClientCall" );
+    fprintf( file, "&%s_StubDesc,", prefix );
+    fprintf( file, "\n%*s&__MIDL_ProcFormatString.Format[%u]", len, "", proc_offset );
+    if (pointer_size == 8)
+    {
+        if (is_object( iface )) fprintf( file, ",\n%*sThis", len, "" );
+        if (args)
+            LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
+                fprintf( file, ",\n%*s%s", len, "", arg->name );
+    }
+    else
+    {
+        if (is_object( iface )) fprintf( file, ",\n%*s&This", len, "" );
+        else if (args)
+        {
+            arg = LIST_ENTRY( list_head(args), const var_t, entry );
+            fprintf( file, ",\n%*s&%s", len, "", arg->name );
+        }
+    }
+    fprintf( file, " );\n" );
+    if (has_ret)
+    {
+        print_file( file, 1, "return (" );
+        write_type_decl_left(file, rettype);
+        fprintf( file, ")%s;\n", pointer_size == 8 ? "_RetVal.Simple" : "*(LONG_PTR *)&_RetVal" );
+    }
+    print_file( file, 0, "}\n\n");
+}
+
 void write_exceptions( FILE *file )
 {
     fprintf( file, "#ifndef USE_COMPILER_EXCEPTIONS\n");

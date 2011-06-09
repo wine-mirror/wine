@@ -97,43 +97,13 @@ static void write_function_stub( const type_t *iface, const var_t *func,
     unsigned char explicit_fc, implicit_fc;
     int has_full_pointer = is_full_pointer_function(func);
     type_t *rettype = type_function_get_rettype(func->type);
-    const var_list_t *args = type_get_function_args(func->type);
     const var_t *handle_var = get_func_handle_var( iface, func, &explicit_fc, &implicit_fc );
     int has_ret = !is_void(rettype);
 
     if (is_interpreted_func( iface, func ))
     {
         write_client_func_decl( iface, func );
-        fprintf(client, "{\n");
-        indent++;
-        if (has_ret) print_client( "%s", "CLIENT_CALL_RETURN _RetVal;\n\n" );
-        print_client( "%s%s( &%s_StubDesc, &__MIDL_ProcFormatString.Format[%u]",
-                      has_ret ? "_RetVal = " : "",
-                      get_stub_mode() == MODE_Oif ? "NdrClientCall2" : "NdrClientCall",
-                      iface->name, proc_offset );
-        if (args)
-        {
-            const var_t *arg;
-            if (pointer_size == 8)
-            {
-                LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
-                    fprintf( client, ",\n%*s%s", 4 * indent + 16, "", arg->name );
-            }
-            else
-            {
-                arg = LIST_ENTRY( list_head(args), const var_t, entry );
-                fprintf( client, ", &%s", arg->name );
-            }
-        }
-        fprintf( client, " );\n" );
-        if (has_ret)
-        {
-            print_client( "return (" );
-            write_type_decl_left(client, rettype);
-            fprintf( client, ")*(LONG_PTR *)&_RetVal;\n" );
-        }
-        indent--;
-        print_client( "}\n\n");
+        write_client_call_routine( client, iface, func, iface->name, proc_offset );
         return;
     }
 

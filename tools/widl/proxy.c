@@ -266,31 +266,7 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
       print_proxy( " %s %s_%s_Proxy(\n", callconv, iface->name, get_name(func));
       write_args(proxy, args, iface->name, 1, TRUE);
       print_proxy( ")\n");
-      print_proxy( "{\n");
-      indent++;
-      if (has_ret) print_proxy( "%s", "CLIENT_CALL_RETURN _RetVal;\n\n" );
-      print_proxy( "%s%s( &Object_StubDesc, &__MIDL_ProcFormatString.Format[%u],",
-                   has_ret ? "_RetVal = " : "",
-                   get_stub_mode() == MODE_Oif ? "NdrClientCall2" : "NdrClientCall",
-                   proc_offset );
-      if (pointer_size == 8)
-      {
-          const var_t *arg;
-          fprintf( proxy, "\n%*sThis", 4 * indent + 16, "" );
-          if (args)
-              LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
-                  fprintf( proxy, ",\n%*s%s", 4 * indent + 16, "", arg->name );
-      }
-      else fprintf( proxy, " &This" );
-      fprintf( proxy, " );\n" );
-      if (has_ret)
-      {
-          print_proxy( "return (" );
-          write_type_decl_left(proxy, rettype);
-          fprintf( proxy, ")*(LONG_PTR *)&_RetVal;\n" );
-      }
-      indent--;
-      print_proxy( "}\n\n");
+      write_client_call_routine( proxy, iface, func, "Object", proc_offset );
       return;
   }
   print_proxy( "static void __finally_%s_%s_Proxy( struct __proxy_frame *__frame )\n",
