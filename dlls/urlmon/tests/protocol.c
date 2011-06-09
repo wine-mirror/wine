@@ -152,6 +152,7 @@ static PROTOCOLDATA protocoldata, *pdata, continue_protdata;
 static DWORD prot_read, pi, filter_state, http_post_test, thread_id;
 static BOOL security_problem, test_async_req, impl_protex;
 static BOOL async_read_pending, mimefilter_test, direct_read, wait_for_switch, emulate_prot, short_read, test_abort;
+static BOOL empty_file;
 
 enum {
     STATE_CONNECTING,
@@ -593,7 +594,7 @@ static void call_continue(PROTOCOLDATA *protocol_data)
     case STATE_STARTDOWNLOADING:
         if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST) {
             SET_EXPECT(OnResponse);
-            if(tested_protocol == HTTPS_TEST || test_redirect || test_abort)
+            if(tested_protocol == HTTPS_TEST || test_redirect || test_abort || empty_file)
                 SET_EXPECT(ReportProgress_ACCEPTRANGES);
             SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
             if(bindf & BINDF_NEEDFILE)
@@ -624,9 +625,9 @@ static void call_continue(PROTOCOLDATA *protocol_data)
             state = STATE_DOWNLOADING;
             if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST) {
                 CHECK_CALLED(OnResponse);
-                if(tested_protocol == HTTPS_TEST)
+                if(tested_protocol == HTTPS_TEST || empty_file)
                     CHECK_CALLED(ReportProgress_ACCEPTRANGES);
-                else if(test_redirect)
+                else if(test_redirect || test_abort)
                     CLEAR_CALLED(ReportProgress_ACCEPTRANGES);
                 CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
                 if(bindf & BINDF_NEEDFILE)
@@ -705,6 +706,8 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
                 ok(lstrlenW(text_plain) <= lstrlenW(szStatusText) &&
                    !memcmp(szStatusText, text_plain, lstrlenW(text_plain)*sizeof(WCHAR)),
                    "szStatusText != text/plain\n");
+            else if(empty_file)
+                ok(!strcmp_wa(szStatusText, "application/javascript"), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
             else if(!mimefilter_test)
                 ok(lstrlenW(text_htmlW) <= lstrlenW(szStatusText) &&
                    !memcmp(szStatusText, text_htmlW, lstrlenW(text_htmlW)*sizeof(WCHAR)),
@@ -755,7 +758,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         CHECK_EXPECT(ReportProgress_VERIFIEDMIMETYPEAVAILABLE);
         ok(szStatusText != NULL, "szStatusText == NULL\n");
         if(szStatusText)
-            ok(!lstrcmpW(szStatusText, text_htmlW), "szStatusText != text/html\n");
+            ok(!strcmp_wa(szStatusText, "text/html"), "szStatusText != text/html\n");
         break;
     case BINDSTATUS_PROTOCOLCLASSID:
         CHECK_EXPECT(ReportProgress_PROTOCOLCLASSID);
@@ -896,14 +899,25 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
         }
     }else if(!binding_test && (tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST
             || tested_protocol == FTP_TEST)) {
-        if(!(grfBSCF & BSCF_LASTDATANOTIFICATION) || (grfBSCF & BSCF_DATAFULLYAVAILABLE))
+        if(empty_file)
+            CHECK_EXPECT2(ReportData);
+        else if(!(grfBSCF & BSCF_LASTDATANOTIFICATION) || (grfBSCF & BSCF_DATAFULLYAVAILABLE))
             CHECK_EXPECT(ReportData);
         else if (http_post_test)
             ok(ulProgress == 13, "Read %u bytes instead of 13\n", ulProgress);
 
-        ok(ulProgress, "ulProgress == 0\n");
+        if(empty_file) {
+            ok(!ulProgress, "ulProgress = %d\n", ulProgress);
+            ok(!ulProgressMax, "ulProgressMax = %d\n", ulProgressMax);
+        }else {
+            ok(ulProgress, "ulProgress == 0\n");
+        }
 
-        if(first_data_notif) {
+        if(empty_file) {
+            ok(grfBSCF == (BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION),
+               "grcfBSCF = %08x\n", grfBSCF);
+            first_data_notif = FALSE;
+        }else if(first_data_notif) {
             ok(grfBSCF == BSCF_FIRSTDATANOTIFICATION
                || grfBSCF == (BSCF_LASTDATANOTIFICATION|BSCF_DATAFULLYAVAILABLE),
                "grcfBSCF = %08x\n", grfBSCF);
@@ -2169,6 +2183,7 @@ static IClassFactory mimefilter_cf = { &MimeFilterCFVtbl };
 #define TEST_ASYNCREQ    0x0200
 #define TEST_USEIURI     0x0400
 #define TEST_IMPLPROTEX  0x0800
+#define TEST_EMPTY       0x1000
 
 static void register_filter(BOOL do_register)
 {
@@ -2220,6 +2235,7 @@ static void init_test(int prot, DWORD flags)
     test_redirect = (flags & TEST_REDIRECT) != 0;
     test_abort = (flags & TEST_ABORT) != 0;
     impl_protex = (flags & TEST_IMPLPROTEX) != 0;
+    empty_file = (flags & TEST_EMPTY) != 0;
 
     register_filter(mimefilter_test);
 }
@@ -2872,6 +2888,9 @@ static void test_http_protocol(void)
     static const WCHAR winetest_url[] =
         {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/',
          't','e','s','t','s','/','d','a','t','a','.','p','h','p',0};
+    static const WCHAR empty_url[] =
+        {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/',
+         't','e','s','t','s','/','e','m','p','t','y','.','j','s',0};
 
     trace("Testing http protocol (not from urlmon)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
@@ -2899,6 +2918,9 @@ static void test_http_protocol(void)
     trace("Testing http protocol (redirected)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON;
     test_http_protocol_url(redirect_url, HTTP_TEST, TEST_REDIRECT, TYMED_NULL);
+
+    trace("Testing http protocol empty file...\n");
+    test_http_protocol_url(empty_url, HTTP_TEST, TEST_EMPTY, TYMED_NULL);
 
     trace("Testing http protocol abort...\n");
     test_http_protocol_url(winetest_url, HTTP_TEST, TEST_ABORT, TYMED_NULL);
