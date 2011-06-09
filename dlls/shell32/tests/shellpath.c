@@ -885,11 +885,13 @@ if (0) { /* crashes */
 
 static void test_knownFolders(void)
 {
+    static const WCHAR sWindows[] = {'W','i','n','d','o','w','s',0};
     HRESULT hr;
     IKnownFolderManager *mgr = NULL;
     IKnownFolder *folder = NULL;
     KNOWNFOLDERID folderId;
     KF_CATEGORY cat = 0;
+    KNOWNFOLDER_DEFINITION kfDefinition;
     int csidl;
     LPWSTR folderPath;
     KF_REDIRECTION_CAPABILITIES redirectionCapabilities = 1;
@@ -942,6 +944,20 @@ static void test_knownFolders(void)
             hr = IKnownFolder_SetPath(folder, 0, sWinDir);
             todo_wine
             ok(hr == E_INVALIDARG, "unexpected value from SetPath: 0x%08x\n", hr);
+
+            hr = IKnownFolder_GetFolderDefinition(folder, &kfDefinition);
+            todo_wine
+            ok(hr == S_OK, "failed to get folder definition: 0x%08x\n", hr);
+            if(SUCCEEDED(hr))
+            {
+                todo_wine
+                ok(kfDefinition.category==KF_CATEGORY_FIXED, "invalid folder category: 0x%08x\n", kfDefinition.category);
+                todo_wine
+                ok(lstrcmpW(kfDefinition.pszName, sWindows)==0, "invalid folder name: %s\n", wine_dbgstr_w(kfDefinition.pszName));
+                todo_wine
+                ok(kfDefinition.dwAttributes==0, "invalid folder attributes: %d\n", kfDefinition.dwAttributes);
+                FreeKnownFolderDefinitionFields(&kfDefinition);
+            }
 
             hr = IKnownFolder_Release(folder);
             ok(hr == S_OK, "failed to release KnownFolder instance: 0x%08x\n", hr);
