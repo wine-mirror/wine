@@ -1662,10 +1662,29 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetIntArray(ID3DXBaseEffect *iface, D3
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetIntArray(ID3DXBaseEffect *iface, D3DXHANDLE parameter, INT *n, UINT count)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
 
-    FIXME("iface %p, parameter %p, n %p, count %u stub\n", This, parameter, n, count);
+    TRACE("iface %p, parameter %p, n %p, count %u\n", This, parameter, n, count);
 
-    return E_NOTIMPL;
+    if (!param) param = get_parameter_by_name(This, NULL, parameter);
+
+    if (n && param && (param->class == D3DXPC_SCALAR
+            || param->class == D3DXPC_VECTOR
+            || param->class == D3DXPC_MATRIX_ROWS
+            || param->class == D3DXPC_MATRIX_COLUMNS))
+    {
+        UINT i, size = min(count, param->bytes / sizeof(DWORD));
+
+        for (i = 0; i < size; ++i)
+        {
+            n[i] = get_int(param->type, (DWORD *)param->data + i);
+        }
+        return D3D_OK;
+    }
+
+    WARN("Invalid argument specified\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_SetFloat(ID3DXBaseEffect *iface, D3DXHANDLE parameter, FLOAT f)
