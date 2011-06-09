@@ -191,14 +191,14 @@ static PFORMAT_STRING client_get_handle(
                 }
                 else
                     context_handle = *(NDR_CCONTEXT *)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
-                if ((pDesc->flags & NDR_CONTEXT_HANDLE_CANNOT_BE_NULL) &&
-                    !context_handle)
+
+                if (context_handle) *phBinding = NDRCContextBinding(context_handle);
+                else if (pDesc->flags & NDR_CONTEXT_HANDLE_CANNOT_BE_NULL)
                 {
                     ERR("null context handle isn't allowed\n");
                     RpcRaiseException(RPC_X_SS_IN_NULL_CONTEXT);
                     return NULL;
                 }
-                *phBinding = NDRCContextBinding(context_handle);
                 /* FIXME: should we store this structure in stubMsg.pContext? */
                 return pFormat + sizeof(NDR_EHD_CONTEXT);
             }
