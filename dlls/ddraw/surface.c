@@ -4421,6 +4421,13 @@ IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface2(IDirectDrawSurface2
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface2_iface);
 }
 
+IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface(IDirectDrawSurface *iface)
+{
+    if (!iface) return NULL;
+    assert(iface->lpVtbl == (struct IDirectDrawSurfaceVtbl *)&ddraw_surface3_vtbl);
+    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface3_iface);
+}
+
 static void STDMETHODCALLTYPE ddraw_surface_wined3d_object_destroyed(void *parent)
 {
     IDirectDrawSurfaceImpl *surface = parent;

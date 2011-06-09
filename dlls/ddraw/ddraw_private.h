@@ -242,6 +242,7 @@ static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface7(IDirectDrawS
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface7_iface);
 }
 
+IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface(IDirectDrawSurface *iface) DECLSPEC_HIDDEN;
 IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface2(IDirectDrawSurface2 *iface) DECLSPEC_HIDDEN;
 IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface) DECLSPEC_HIDDEN;
 IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface4(IDirectDrawSurface4 *iface) DECLSPEC_HIDDEN;

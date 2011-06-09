@@ -4266,7 +4266,7 @@ static HRESULT WINAPI ddraw3_DuplicateSurface(IDirectDraw3 *iface, IDirectDrawSu
         IDirectDrawSurface **dst)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw3(iface);
-    IDirectDrawSurfaceImpl *src_impl = unsafe_impl_from_IDirectDrawSurface3((IDirectDrawSurface3 *)src);
+    IDirectDrawSurfaceImpl *src_impl = unsafe_impl_from_IDirectDrawSurface(src);
     IDirectDrawSurface7 *dst7;
     IDirectDrawSurfaceImpl *dst_impl;
     HRESULT hr;
@@ -4286,7 +4286,7 @@ static HRESULT WINAPI ddraw2_DuplicateSurface(IDirectDraw2 *iface,
         IDirectDrawSurface *src, IDirectDrawSurface **dst)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw2(iface);
-    IDirectDrawSurfaceImpl *src_impl = unsafe_impl_from_IDirectDrawSurface3((IDirectDrawSurface3 *)src);
+    IDirectDrawSurfaceImpl *src_impl = unsafe_impl_from_IDirectDrawSurface(src);
     IDirectDrawSurface7 *dst7;
     IDirectDrawSurfaceImpl *dst_impl;
     HRESULT hr;
@@ -4306,7 +4306,7 @@ static HRESULT WINAPI ddraw1_DuplicateSurface(IDirectDraw *iface, IDirectDrawSur
         IDirectDrawSurface **dst)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw(iface);
-    IDirectDrawSurfaceImpl *src_impl = unsafe_impl_from_IDirectDrawSurface3((IDirectDrawSurface3 *)src);
+    IDirectDrawSurfaceImpl *src_impl = unsafe_impl_from_IDirectDrawSurface(src);
     IDirectDrawSurface7 *dst7;
     IDirectDrawSurfaceImpl *dst_impl;
     HRESULT hr;
@@ -4906,7 +4906,7 @@ static HRESULT WINAPI d3d2_CreateDevice(IDirect3D2 *iface, REFCLSID riid,
         IDirectDrawSurface *surface, IDirect3DDevice2 **device)
 {
     IDirectDrawImpl *This = impl_from_IDirect3D2(iface);
-    IDirectDrawSurfaceImpl *surface_impl = unsafe_impl_from_IDirectDrawSurface3((IDirectDrawSurface3 *)surface);
+    IDirectDrawSurfaceImpl *surface_impl = unsafe_impl_from_IDirectDrawSurface(surface);
     HRESULT hr;
 
     TRACE("iface %p, riid %s, surface %p, device %p.\n",
