@@ -2199,6 +2199,9 @@ static void surface_upload_data(struct wined3d_surface *surface, const struct wi
         data = NULL;
     }
 
+    /* Make sure the correct pitch is used */
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+
     if (format->flags & WINED3DFMT_FLAG_COMPRESSED)
     {
         TRACE("Calling glCompressedTexSubImage2DARB.\n");
@@ -2215,6 +2218,9 @@ static void surface_upload_data(struct wined3d_surface *surface, const struct wi
                 0, 0, width, height, format->glFormat, format->glType, data);
         checkGLcall("glTexSubImage2D");
     }
+
+    /* Restore the default pitch */
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
     if (surface->flags & SFLAG_PBO)
     {
@@ -6159,18 +6165,8 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const
                 mem = surface->resource.allocatedMemory;
             }
 
-            /* Make sure the correct pitch is used */
-            ENTER_GL();
-            glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-            LEAVE_GL();
-
             if (mem || (surface->flags & SFLAG_PBO))
                 surface_upload_data(surface, gl_info, &format, srgb, mem);
-
-            /* Restore the default pitch */
-            ENTER_GL();
-            glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-            LEAVE_GL();
 
             if (context) context_release(context);
 
