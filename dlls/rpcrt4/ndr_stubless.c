@@ -315,7 +315,10 @@ static void client_do_args(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
                 &pParam->type_format_char;
 
             if (pParam->param_attributes.IsSimpleRef)
+            {
                 pArg = *(unsigned char **)pArg;
+                if (!pArg) RpcRaiseException(RPC_X_NULL_REF_POINTER);
+            }
 
             TRACE("\tbase type: 0x%02x\n", *pTypeFormat);
 
