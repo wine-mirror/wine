@@ -155,6 +155,7 @@ struct IDirectDrawSurfaceImpl
     IDirectDrawSurface7 IDirectDrawSurface7_iface;
     IDirectDrawSurface4 IDirectDrawSurface4_iface;
     IDirectDrawSurface3 IDirectDrawSurface3_iface;
+    IDirectDrawSurface2 IDirectDrawSurface2_iface;
     IDirectDrawGammaControl IDirectDrawGammaControl_iface;
     const IDirect3DTexture2Vtbl *IDirect3DTexture2_vtbl;
     const IDirect3DTextureVtbl *IDirect3DTexture_vtbl;
@@ -221,6 +222,11 @@ static inline IDirectDrawSurfaceImpl *surface_from_texture2(IDirect3DTexture2 *i
     return (IDirectDrawSurfaceImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawSurfaceImpl, IDirect3DTexture2_vtbl));
 }
 
+static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface2(IDirectDrawSurface2 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface2_iface);
+}
+
 static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface)
 {
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface3_iface);
@@ -236,6 +242,7 @@ static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface7(IDirectDrawS
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface7_iface);
 }
 
+IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface2(IDirectDrawSurface2 *iface) DECLSPEC_HIDDEN;
 IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface) DECLSPEC_HIDDEN;
 IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface4(IDirectDrawSurface4 *iface) DECLSPEC_HIDDEN;
 IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface7(IDirectDrawSurface7 *iface) DECLSPEC_HIDDEN;
