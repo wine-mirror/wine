@@ -984,8 +984,8 @@ static unsigned char get_parameter_fc( const type_t *type, const attr_list_t *at
         if (is_declptr( type ) && get_pointer_fc( type, attrs, !is_return ) == RPC_FC_RP)
         {
             /* skip over pointer description straight to string description */
-            if (is_conformant_array( type )) typestring_offset += 4;
-            else typestring_offset += 2;
+            if (is_conformant_array( type )) *typestring_offset += 4;
+            else *typestring_offset += 2;
             *flags |= IsSimpleRef;
         }
         break;
