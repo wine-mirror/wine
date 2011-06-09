@@ -502,7 +502,8 @@ static void gen_stub_thunk( type_t *iface, const var_t *func, unsigned int proc_
                  iface->name, get_name(func) );
     print_proxy( "{\n");
     indent++;
-    write_func_param_struct( proxy, iface, func->type, "pParamStruct" );
+    write_func_param_struct( proxy, iface, func->type,
+                             "*pParamStruct = (struct _PARAM_STRUCT *)pStubMsg->StackTop", has_ret );
     print_proxy( "%s%s_%s_Stub( pParamStruct->This",
                  has_ret ? "pParamStruct->_RetVal = " : "", iface->name, callas->name );
     indent++;

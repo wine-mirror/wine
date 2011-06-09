@@ -4661,8 +4661,10 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
 }
 
 
-void write_func_param_struct( FILE *file, const type_t *iface, const type_t *func, const char *var_name )
+void write_func_param_struct( FILE *file, const type_t *iface, const type_t *func,
+                              const char *var_decl, int add_retval )
 {
+    type_t *rettype = type_function_get_rettype( func );
     const var_list_t *args = type_get_function_args( func );
     const var_t *arg;
 
@@ -4682,13 +4684,16 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
         else
             fprintf( file, "%s DECLSPEC_ALIGN(%u);\n", arg->name, pointer_size );
     }
-    if (!is_void( type_function_get_rettype( func )))
+    if (add_retval && !is_void( rettype ))
     {
         print_file(file, 2, "%s", "");
-        write_type_decl( file, type_function_get_rettype( func ), "_RetVal" );
-        fprintf( file, ";\n" );
+        write_type_decl( file, rettype, "_RetVal" );
+        if (is_array( rettype ) || is_ptr( rettype ) || type_memsize( rettype ) == pointer_size)
+            fprintf( file, ";\n" );
+        else
+            fprintf( file, " DECLSPEC_ALIGN(%u);\n", pointer_size );
     }
-    print_file(file, 1, "} *%s = (struct _PARAM_STRUCT *)pStubMsg->StackTop;\n\n", var_name );
+    print_file(file, 1, "} %s;\n\n", var_decl );
 }
 
 int write_expr_eval_routines(FILE *file, const char *iface)
@@ -4709,7 +4714,8 @@ int write_expr_eval_routines(FILE *file, const char *iface)
         print_file(file, 0, "{\n");
         if (type_get_type( eval->cont_type ) == TYPE_FUNCTION)
         {
-            write_func_param_struct( file, eval->iface, eval->cont_type, "pS" );
+            write_func_param_struct( file, eval->iface, eval->cont_type,
+                                     "*pS = (struct _PARAM_STRUCT *)pStubMsg->StackTop", FALSE );
         }
         else
         {
@@ -4813,16 +4819,33 @@ void write_client_call_routine( FILE *file, const type_t *iface, const var_t *fu
     int has_ret = !is_void( rettype );
     const var_list_t *args = type_get_function_args( func->type );
     const var_t *arg;
-    int len;
+    int len, needs_params = 0;
+
+    /* we need a param structure if we have more than one arg */
+    if (pointer_size == 4 && args) needs_params = is_object( iface ) || list_count( args ) > 1;
 
     print_file( file, 0, "{\n");
-    if (has_ret) print_file( file, 1, "%s", "CLIENT_CALL_RETURN _RetVal;\n\n" );
+    if (needs_params)
+    {
+        if (has_ret) print_file( file, 1, "%s", "CLIENT_CALL_RETURN _RetVal;\n" );
+        write_func_param_struct( file, iface, func->type, "__params", FALSE );
+        if (is_object( iface )) print_file( file, 1, "__params.This = This;\n" );
+        if (args)
+            LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
+                print_file( file, 1, "__params.%s = %s;\n", arg->name, arg->name );
+    }
+    else if (has_ret) print_file( file, 1, "%s", "CLIENT_CALL_RETURN _RetVal;\n\n" );
+
     len = fprintf( file, "    %s%s( ",
                    has_ret ? "_RetVal = " : "",
                    get_stub_mode() == MODE_Oif ? "NdrClientCall2" : "NdrClientCall" );
     fprintf( file, "&%s_StubDesc,", prefix );
     fprintf( file, "\n%*s&__MIDL_ProcFormatString.Format[%u]", len, "", proc_offset );
-    if (pointer_size == 8)
+    if (needs_params)
+    {
+        fprintf( file, ",\n%*s&__params", len, "" );
+    }
+    else if (pointer_size == 8)
     {
         if (is_object( iface )) fprintf( file, ",\n%*sThis", len, "" );
         if (args)
