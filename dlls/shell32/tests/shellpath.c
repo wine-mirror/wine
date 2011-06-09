@@ -887,8 +887,15 @@ static void test_knownFolders(void)
 {
     HRESULT hr;
     IKnownFolderManager *mgr = NULL;
+    IKnownFolder *folder = NULL;
     KNOWNFOLDERID folderId;
+    KF_CATEGORY cat = 0;
     int csidl;
+    LPWSTR folderPath;
+    KF_REDIRECTION_CAPABILITIES redirectionCapabilities = 1;
+    WCHAR sWinDir[MAX_PATH];
+
+    GetWindowsDirectoryW( sWinDir, MAX_PATH );
 
     CoInitialize(NULL);
 
@@ -907,6 +914,38 @@ static void test_knownFolders(void)
         hr = IKnownFolderManager_FolderIdToCsidl(mgr, &FOLDERID_Windows, &csidl);
         ok(hr == S_OK, "failed to convert CSIDL to KNOWNFOLDERID: 0x%08x\n", hr);
         ok(csidl == CSIDL_WINDOWS, "invalid CSIDL returned\n");
+
+        hr = IKnownFolderManager_GetFolder(mgr, &FOLDERID_Windows, &folder);
+        ok(hr == S_OK, "failed to get known folder: 0x%08x\n", hr);
+        if(SUCCEEDED(hr))
+        {
+            hr = IKnownFolder_GetCategory(folder, &cat);
+            todo_wine
+            ok(hr == S_OK, "failed to get folder category: 0x%08x\n", hr);
+            todo_wine
+            ok(cat==KF_CATEGORY_FIXED, "invalid folder category: %d\n", cat);
+
+            hr = IKnownFolder_GetId(folder, &folderId);
+            ok(hr == S_OK, "failed to get folder id: 0x%08x\n", hr);
+            ok(IsEqualGUID(&folderId, &FOLDERID_Windows)==TRUE, "invalid KNOWNFOLDERID returned\n");
+
+            hr = IKnownFolder_GetPath(folder, 0, &folderPath);
+            ok(lstrcmpiW(sWinDir, folderPath)==0, "invalid path returned: \"%s\", expected: \"%s\"\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sWinDir));
+            CoTaskMemFree(folderPath);
+
+            hr = IKnownFolder_GetRedirectionCapabilities(folder, &redirectionCapabilities);
+            todo_wine
+            ok(hr == S_OK, "failed to get redirection capabilities: 0x%08x\n", hr);
+            todo_wine
+            ok(redirectionCapabilities==0, "invalid redirection capabilities returned: %d\n", redirectionCapabilities);
+
+            hr = IKnownFolder_SetPath(folder, 0, sWinDir);
+            todo_wine
+            ok(hr == E_INVALIDARG, "unexpected value from SetPath: 0x%08x\n", hr);
+
+            hr = IKnownFolder_Release(folder);
+            ok(hr == S_OK, "failed to release KnownFolder instance: 0x%08x\n", hr);
+        }
 
         hr = IKnownFolderManager_Release(mgr);
         ok(hr == S_OK, "failed to release KnownFolderManager instance: 0x%08x\n", hr);
