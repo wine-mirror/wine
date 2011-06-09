@@ -195,23 +195,25 @@ static UINT copy_install_file(MSIPACKAGE *package, MSIFILE *file, LPWSTR source)
     }
     if (gle == ERROR_SHARING_VIOLATION || gle == ERROR_USER_MAPPED_FILE)
     {
-        WCHAR tmpfileW[MAX_PATH], *pathW, *p;
+        WCHAR *tmpfileW, *pathW, *p;
         DWORD len;
 
         TRACE("file in use, scheduling rename operation\n");
 
-        GetTempFileNameW(szBackSlash, szMsi, 0, tmpfileW);
-        len = strlenW(file->TargetPath) + strlenW(tmpfileW) + 1;
-        if (!(pathW = msi_alloc(len * sizeof(WCHAR))))
-            return ERROR_OUTOFMEMORY;
-
-        strcpyW(pathW, file->TargetPath);
+        if (!(pathW = strdupW( file->TargetPath ))) return ERROR_OUTOFMEMORY;
         if ((p = strrchrW(pathW, '\\'))) *p = 0;
-        strcatW(pathW, tmpfileW);
+        len = strlenW( pathW ) + 16;
+        if (!(tmpfileW = msi_alloc(len * sizeof(WCHAR))))
+        {
+            msi_free( pathW );
+            return ERROR_OUTOFMEMORY;
+        }
+        if (!GetTempFileNameW( pathW, szMsi, 0, tmpfileW )) tmpfileW[0] = 0;
+        msi_free( pathW );
 
-        if (CopyFileW(source, pathW, FALSE) &&
+        if (CopyFileW(source, tmpfileW, FALSE) &&
             MoveFileExW(file->TargetPath, NULL, MOVEFILE_DELAY_UNTIL_REBOOT) &&
-            MoveFileExW(pathW, file->TargetPath, MOVEFILE_DELAY_UNTIL_REBOOT))
+            MoveFileExW(tmpfileW, file->TargetPath, MOVEFILE_DELAY_UNTIL_REBOOT))
         {
             file->state = msifs_installed;
             package->need_reboot = 1;
@@ -221,8 +223,9 @@ static UINT copy_install_file(MSIPACKAGE *package, MSIFILE *file, LPWSTR source)
         {
             gle = GetLastError();
             WARN("failed to schedule rename operation: %d)\n", gle);
+            DeleteFileW( tmpfileW );
         }
-        msi_free(pathW);
+        msi_free(tmpfileW);
     }
 
     return gle;

@@ -458,32 +458,36 @@ static INT_PTR cabinet_copy_file(FDINOTIFICATIONTYPE fdint,
         }
         if (err == ERROR_SHARING_VIOLATION || err == ERROR_USER_MAPPED_FILE)
         {
-            WCHAR tmpfileW[MAX_PATH], *tmppathW, *p;
+            WCHAR *tmpfileW, *tmppathW, *p;
             DWORD len;
 
             TRACE("file in use, scheduling rename operation\n");
 
-            GetTempFileNameW(szBackSlash, szMsi, 0, tmpfileW);
-            len = strlenW(path) + strlenW(tmpfileW) + 1;
-            if (!(tmppathW = msi_alloc(len * sizeof(WCHAR))))
-                return ERROR_OUTOFMEMORY;
-
-            strcpyW(tmppathW, path);
+            if (!(tmppathW = strdupW( path ))) return ERROR_OUTOFMEMORY;
             if ((p = strrchrW(tmppathW, '\\'))) *p = 0;
-            strcatW(tmppathW, tmpfileW);
+            len = strlenW( tmppathW ) + 16;
+            if (!(tmpfileW = msi_alloc(len * sizeof(WCHAR))))
+            {
+                msi_free( tmppathW );
+                return ERROR_OUTOFMEMORY;
+            }
+            if (!GetTempFileNameW(tmppathW, szMsi, 0, tmpfileW)) tmpfileW[0] = 0;
+            msi_free( tmppathW );
 
-            handle = CreateFileW(tmppathW, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, attrs, NULL);
+            handle = CreateFileW(tmpfileW, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, attrs, NULL);
 
             if (handle != INVALID_HANDLE_VALUE &&
                 MoveFileExW(path, NULL, MOVEFILE_DELAY_UNTIL_REBOOT) &&
-                MoveFileExW(tmppathW, path, MOVEFILE_DELAY_UNTIL_REBOOT))
+                MoveFileExW(tmpfileW, path, MOVEFILE_DELAY_UNTIL_REBOOT))
             {
                 data->package->need_reboot = 1;
             }
             else
+            {
                 WARN("failed to schedule rename operation %s (error %d)\n", debugstr_w(path), GetLastError());
-
-            msi_free(tmppathW);
+                DeleteFileW( tmpfileW );
+            }
+            msi_free(tmpfileW);
         }
         else
             WARN("failed to create %s (error %d)\n", debugstr_w(path), err);
