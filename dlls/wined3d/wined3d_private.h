@@ -894,6 +894,12 @@ enum wined3d_ffp_emit_idx
     WINED3D_FFP_EMIT_COUNT = 17
 };
 
+struct wined3d_bo_address
+{
+    GLuint buffer_object;
+    const BYTE *addr;
+};
+
 struct wined3d_stream_info_element
 {
     const struct wined3d_format *format;
