@@ -1486,13 +1486,14 @@ EnumServicesStatusA( SC_HANDLE hmngr, DWORD type, DWORD state, LPENUM_SERVICE_ST
     TRACE("%p 0x%x 0x%x %p %u %p %p %p\n", hmngr, type, state, services, size, needed,
           returned, resume_handle);
 
-    if (size && !(servicesW = HeapAlloc( GetProcessHeap(), 0, 2 * size )))
+    sz = max( 2 * size, sizeof(*servicesW) );
+    if (!(servicesW = HeapAlloc( GetProcessHeap(), 0, sz )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
     }
 
-    ret = EnumServicesStatusW( hmngr, type, state, servicesW, 2 * size, needed, returned, resume_handle );
+    ret = EnumServicesStatusW( hmngr, type, state, servicesW, sz, needed, returned, resume_handle );
     if (!ret) goto done;
 
     p = (char *)services + *returned * sizeof(ENUM_SERVICE_STATUSA);
@@ -1532,6 +1533,7 @@ EnumServicesStatusW( SC_HANDLE hmngr, DWORD type, DWORD state, LPENUM_SERVICE_ST
                      LPDWORD resume_handle )
 {
     DWORD err, i;
+    ENUM_SERVICE_STATUSW dummy_status;
 
     TRACE("%p 0x%x 0x%x %p %u %p %p %p\n", hmngr, type, state, services, size, needed,
           returned, resume_handle);
@@ -1543,6 +1545,13 @@ EnumServicesStatusW( SC_HANDLE hmngr, DWORD type, DWORD state, LPENUM_SERVICE_ST
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
+    }
+
+    /* make sure we pass a valid pointer */
+    if (!services || size < sizeof(*services))
+    {
+        services = &dummy_status;
+        size = sizeof(dummy_status);
     }
 
     __TRY
@@ -1591,7 +1600,8 @@ EnumServicesStatusExA( SC_HANDLE hmngr, SC_ENUM_TYPE level, DWORD type, DWORD st
     TRACE("%p %u 0x%x 0x%x %p %u %p %p %p %s\n", hmngr, level, type, state, buffer,
           size, needed, returned, resume_handle, debugstr_a(group));
 
-    if (size && !(servicesW = HeapAlloc( GetProcessHeap(), 0, 2 * size )))
+    sz = max( 2 * size, sizeof(*servicesW) );
+    if (!(servicesW = HeapAlloc( GetProcessHeap(), 0, sz )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
@@ -1608,7 +1618,7 @@ EnumServicesStatusExA( SC_HANDLE hmngr, SC_ENUM_TYPE level, DWORD type, DWORD st
         MultiByteToWideChar( CP_ACP, 0, group, -1, groupW, len * sizeof(WCHAR) );
     }
 
-    ret = EnumServicesStatusExW( hmngr, level, type, state, (BYTE *)servicesW, 2 * size,
+    ret = EnumServicesStatusExW( hmngr, level, type, state, (BYTE *)servicesW, sz,
                                  needed, returned, resume_handle, groupW );
     if (!ret) goto done;
 
@@ -1650,6 +1660,7 @@ EnumServicesStatusExW( SC_HANDLE hmngr, SC_ENUM_TYPE level, DWORD type, DWORD st
                        LPDWORD resume_handle, LPCWSTR group )
 {
     DWORD err, i;
+    ENUM_SERVICE_STATUS_PROCESSW dummy_status;
     ENUM_SERVICE_STATUS_PROCESSW *services = (ENUM_SERVICE_STATUS_PROCESSW *)buffer;
 
     TRACE("%p %u 0x%x 0x%x %p %u %p %p %p %s\n", hmngr, level, type, state, buffer,
@@ -1667,6 +1678,13 @@ EnumServicesStatusExW( SC_HANDLE hmngr, SC_ENUM_TYPE level, DWORD type, DWORD st
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
+    }
+
+    /* make sure we pass a valid buffer pointer */
+    if (!services || size < sizeof(*services))
+    {
+        buffer = (BYTE *)&dummy_status;
+        size = sizeof(dummy_status);
     }
 
     __TRY
