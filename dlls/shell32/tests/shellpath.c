@@ -883,6 +883,37 @@ if (0) { /* crashes */
     ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
 }
 
+static void test_knownFolders(void)
+{
+    HRESULT hr;
+    IKnownFolderManager *mgr = NULL;
+    KNOWNFOLDERID folderId;
+    int csidl;
+
+    CoInitialize(NULL);
+
+    hr = CoCreateInstance(&CLSID_KnownFolderManager, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IKnownFolderManager, (LPVOID*)&mgr);
+    if(hr == REGDB_E_CLASSNOTREG)
+        win_skip("IKnownFolderManager unavailable\n");
+    else
+    {
+        ok(hr == S_OK, "failed to create KnownFolderManager instance: 0x%08x\n", hr);
+
+        hr = IKnownFolderManager_FolderIdFromCsidl(mgr, CSIDL_WINDOWS, &folderId);
+        ok(hr == S_OK, "failed to convert CSIDL to KNOWNFOLDERID: 0x%08x\n", hr);
+        ok(IsEqualGUID(&folderId, &FOLDERID_Windows)==TRUE, "invalid KNOWNFOLDERID returned\n");
+
+        hr = IKnownFolderManager_FolderIdToCsidl(mgr, &FOLDERID_Windows, &csidl);
+        ok(hr == S_OK, "failed to convert CSIDL to KNOWNFOLDERID: 0x%08x\n", hr);
+        ok(csidl == CSIDL_WINDOWS, "invalid CSIDL returned\n");
+
+        hr = IKnownFolderManager_Release(mgr);
+        ok(hr == S_OK, "failed to release KnownFolderManager instance: 0x%08x\n", hr);
+    }
+    CoUninitialize();
+}
+
 START_TEST(shellpath)
 {
     if (!init()) return;
@@ -909,5 +940,6 @@ START_TEST(shellpath)
         testSystemDir();
         test_NonExistentPath();
         test_SHGetFolderPathEx();
+        test_knownFolders();
     }
 }
