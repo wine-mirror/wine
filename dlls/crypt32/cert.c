@@ -1516,7 +1516,36 @@ static BOOL compare_cert_by_name_str(PCCERT_CONTEXT pCertContext,
     return ret;
 }
 
-static PCCERT_CONTEXT find_cert_by_name_str(HCERTSTORE store, DWORD dwType,
+static PCCERT_CONTEXT find_cert_by_name_str_a(HCERTSTORE store, DWORD dwType,
+ DWORD dwFlags, const void *pvPara, PCCERT_CONTEXT prev)
+{
+    PCCERT_CONTEXT found = NULL;
+
+    TRACE("%s\n", debugstr_a(pvPara));
+
+    if (pvPara)
+    {
+        int len = MultiByteToWideChar(CP_ACP, 0, pvPara, -1, NULL, 0);
+        LPWSTR str = CryptMemAlloc(len * sizeof(WCHAR));
+
+        if (str)
+        {
+            LPWSTR ptr;
+
+            MultiByteToWideChar(CP_ACP, 0, pvPara, -1, str, len);
+            for (ptr = str; *ptr; ptr++)
+                *ptr = tolowerW(*ptr);
+            found = cert_compare_certs_in_store(store, prev,
+             compare_cert_by_name_str, dwType, dwFlags, str);
+            CryptMemFree(str);
+        }
+    }
+    else
+        found = find_cert_any(store, dwType, dwFlags, NULL, prev);
+    return found;
+}
+
+static PCCERT_CONTEXT find_cert_by_name_str_w(HCERTSTORE store, DWORD dwType,
  DWORD dwFlags, const void *pvPara, PCCERT_CONTEXT prev)
 {
     PCCERT_CONTEXT found = NULL;
@@ -1574,8 +1603,11 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
     case CERT_COMPARE_PUBLIC_KEY:
         compare = compare_cert_by_public_key;
         break;
+    case CERT_COMPARE_NAME_STR_A:
+        find = find_cert_by_name_str_a;
+        break;
     case CERT_COMPARE_NAME_STR_W:
-        find = find_cert_by_name_str;
+        find = find_cert_by_name_str_w;
         break;
     case CERT_COMPARE_SUBJECT_CERT:
         compare = compare_cert_by_subject_cert;
