@@ -47,9 +47,9 @@ HRESULT CALLBACK IDispatchEx_InvokeEx_Proxy(IDispatchEx* This, DISPID id, LCID l
     HRESULT hr;
     VARIANT result;
     EXCEPINFO excep_info;
-    UINT byref_args, arg;
+    UINT byref_args, arg, dummy_idx;
     VARIANT dummy_arg, *ref_arg = &dummy_arg, *copy_arg, *orig_arg = NULL;
-    UINT *ref_idx = NULL;
+    UINT *ref_idx = &dummy_idx;
     DWORD dword_flags = wFlags & 0xf;
 
     TRACE("(%p)->(%08x, %04x, %04x, %p, %p, %p, %p)\n", This, id, lcid, wFlags,
