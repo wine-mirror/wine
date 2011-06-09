@@ -408,6 +408,7 @@ struct IDirect3DLightImpl
 void light_activate(IDirect3DLightImpl *light) DECLSPEC_HIDDEN;
 void light_deactivate(IDirect3DLightImpl *light) DECLSPEC_HIDDEN;
 void d3d_light_init(IDirect3DLightImpl *light, IDirectDrawImpl *ddraw) DECLSPEC_HIDDEN;
+IDirect3DLightImpl *unsafe_impl_from_IDirect3DLight(IDirect3DLight *iface) DECLSPEC_HIDDEN;
 
 /******************************************************************************
  * IDirect3DMaterial implementation structure - Wraps to D3D7

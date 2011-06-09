@@ -715,12 +715,11 @@ static HRESULT WINAPI IDirect3DViewportImpl_Clear(IDirect3DViewport3 *iface,
  *  DDERR_INVALIDPARAMS if there are 8 lights or more
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirect3DViewportImpl_AddLight(IDirect3DViewport3 *iface,
-                               IDirect3DLight *lpDirect3DLight)
+static HRESULT WINAPI IDirect3DViewportImpl_AddLight(IDirect3DViewport3 *iface,
+        IDirect3DLight *lpDirect3DLight)
 {
     IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
-    IDirect3DLightImpl *lpDirect3DLightImpl = (IDirect3DLightImpl *)lpDirect3DLight;
+    IDirect3DLightImpl *lpDirect3DLightImpl = unsafe_impl_from_IDirect3DLight(lpDirect3DLight);
     DWORD i = 0;
     DWORD map = This->map_lights;
 
@@ -771,12 +770,11 @@ IDirect3DViewportImpl_AddLight(IDirect3DViewport3 *iface,
  *  DDERR_INVALIDPARAMS if the light wasn't found
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirect3DViewportImpl_DeleteLight(IDirect3DViewport3 *iface,
-                                  IDirect3DLight *lpDirect3DLight)
+static HRESULT WINAPI IDirect3DViewportImpl_DeleteLight(IDirect3DViewport3 *iface,
+        IDirect3DLight *lpDirect3DLight)
 {
     IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
-    IDirect3DLightImpl *l = (IDirect3DLightImpl *)lpDirect3DLight;
+    IDirect3DLightImpl *l = unsafe_impl_from_IDirect3DLight(lpDirect3DLight);
 
     TRACE("iface %p, light %p.\n", iface, lpDirect3DLight);
 
@@ -814,14 +812,11 @@ IDirect3DViewportImpl_DeleteLight(IDirect3DViewport3 *iface,
  *  D3D_OK, because it's a stub
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirect3DViewportImpl_NextLight(IDirect3DViewport3 *iface,
-                                IDirect3DLight *lpDirect3DLight,
-                                IDirect3DLight **lplpDirect3DLight,
-                                DWORD dwFlags)
+static HRESULT WINAPI IDirect3DViewportImpl_NextLight(IDirect3DViewport3 *iface,
+        IDirect3DLight *lpDirect3DLight, IDirect3DLight **lplpDirect3DLight, DWORD dwFlags)
 {
     IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
-    IDirect3DLightImpl *l = (IDirect3DLightImpl *)lpDirect3DLight;
+    IDirect3DLightImpl *l = unsafe_impl_from_IDirect3DLight(lpDirect3DLight);
     struct list *entry;
     HRESULT hr;
 

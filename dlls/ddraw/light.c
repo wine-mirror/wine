@@ -281,3 +281,12 @@ void d3d_light_init(IDirect3DLightImpl *light, IDirectDrawImpl *ddraw)
     light->ref = 1;
     light->ddraw = ddraw;
 }
+
+IDirect3DLightImpl *unsafe_impl_from_IDirect3DLight(IDirect3DLight *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d_light_vtbl);
+
+    return impl_from_IDirect3DLight(iface);
+}
