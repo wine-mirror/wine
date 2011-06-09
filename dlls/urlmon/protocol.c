@@ -286,12 +286,15 @@ HRESULT protocol_start(Protocol *protocol, IInternetProtocol *prot, IUri *uri,
 
 HRESULT protocol_continue(Protocol *protocol, PROTOCOLDATA *data)
 {
+    BOOL is_start;
     HRESULT hres;
 
     if (!data) {
         WARN("Expected pProtocolData to be non-NULL\n");
         return S_OK;
     }
+
+    is_start = data->pData == (LPVOID)BINDSTATUS_DOWNLOADINGDATA;
 
     if(!protocol->request) {
         WARN("Expected request to be non-NULL\n");
@@ -312,7 +315,7 @@ HRESULT protocol_continue(Protocol *protocol, PROTOCOLDATA *data)
     if(protocol->post_stream)
         return write_post_stream(protocol);
 
-    if(data->pData == (LPVOID)BINDSTATUS_DOWNLOADINGDATA) {
+    if(is_start) {
         hres = protocol->vtbl->start_downloading(protocol);
         if(FAILED(hres)) {
             protocol_close_connection(protocol);
@@ -344,6 +347,16 @@ HRESULT protocol_continue(Protocol *protocol, PROTOCOLDATA *data)
         protocol->flags &= ~FLAG_REQUEST_COMPLETE;
         res = InternetQueryDataAvailable(protocol->request, &protocol->available_bytes, 0, 0);
         if(res) {
+            if(!protocol->available_bytes) {
+                if(is_start) {
+                    TRACE("empty file\n");
+                    all_data_read(protocol);
+                }else {
+                    WARN("unexpected end of file?\n");
+                    report_result(protocol, INET_E_DOWNLOAD_FAILURE);
+                }
+                return S_OK;
+            }
             protocol->flags |= FLAG_REQUEST_COMPLETE;
             report_data(protocol);
         }else if(GetLastError() != ERROR_IO_PENDING) {
