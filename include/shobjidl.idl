@@ -3058,6 +3058,19 @@ interface IKnownFolderManager : IUnknown
         [out, string] LPWSTR *ppszError);
 }
 
+/* function for releasing structure returned from IKnownFolder::GetFolderDefinition */
+cpp_quote("static inline void FreeKnownFolderDefinitionFields(KNOWNFOLDER_DEFINITION *pKFD)")
+cpp_quote("{")
+cpp_quote("    CoTaskMemFree(pKFD->pszName);")
+cpp_quote("    CoTaskMemFree(pKFD->pszDescription);")
+cpp_quote("    CoTaskMemFree(pKFD->pszRelativePath);")
+cpp_quote("    CoTaskMemFree(pKFD->pszParsingName);")
+cpp_quote("    CoTaskMemFree(pKFD->pszTooltip);")
+cpp_quote("    CoTaskMemFree(pKFD->pszLocalizedName);")
+cpp_quote("    CoTaskMemFree(pKFD->pszIcon);")
+cpp_quote("    CoTaskMemFree(pKFD->pszSecurity);")
+cpp_quote("}")
+
 /*****************************************************************************
  * ShellObjects typelibrary
  */
