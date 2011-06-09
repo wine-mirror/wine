@@ -1172,21 +1172,32 @@ BOOL WINAPI QueryServiceStatusEx(SC_HANDLE hService, SC_STATUS_TYPE InfoLevel,
 
     TRACE("%p %d %p %d %p\n", hService, InfoLevel, lpBuffer, cbBufSize, pcbBytesNeeded);
 
-    __TRY
+    if (InfoLevel != SC_STATUS_PROCESS_INFO)
     {
-        err = svcctl_QueryServiceStatusEx(hService, InfoLevel, lpBuffer, cbBufSize, pcbBytesNeeded);
+        err = ERROR_INVALID_LEVEL;
     }
-    __EXCEPT(rpc_filter)
+    else if (cbBufSize < sizeof(SERVICE_STATUS_PROCESS))
     {
-        err = map_exception_code(GetExceptionCode());
+        *pcbBytesNeeded = sizeof(SERVICE_STATUS_PROCESS);
+        err = ERROR_INSUFFICIENT_BUFFER;
     }
-    __ENDTRY
+    else
+    {
+        __TRY
+        {
+            err = svcctl_QueryServiceStatusEx(hService, InfoLevel, lpBuffer, cbBufSize, pcbBytesNeeded);
+        }
+        __EXCEPT(rpc_filter)
+        {
+            err = map_exception_code(GetExceptionCode());
+        }
+        __ENDTRY
+    }
     if (err != ERROR_SUCCESS)
     {
         SetLastError(err);
         return FALSE;
     }
-
     return TRUE;
 }
 

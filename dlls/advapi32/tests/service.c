@@ -956,7 +956,6 @@ static void test_query_svc(void)
     SetLastError(0xdeadbeef);
     ret = pQueryServiceStatusEx(NULL, 1, NULL, 0, NULL);
     ok(!ret, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_INVALID_LEVEL,
        "Expected ERROR_INVALID_LEVEL, got %d\n", GetLastError());
 
@@ -966,8 +965,8 @@ static void test_query_svc(void)
 
     /* Only info level is correct. It looks like the buffer/size is checked second */
     SetLastError(0xdeadbeef);
-    ret = pQueryServiceStatusEx(NULL, 0, NULL, 0, &needed);
-    /* NT4 and Wine check the handle first */
+    ret = pQueryServiceStatusEx(NULL, SC_STATUS_PROCESS_INFO, NULL, 0, &needed);
+    /* NT4 checks the handle first */
     if (GetLastError() != ERROR_INVALID_HANDLE)
     {
         ok(!ret, "Expected failure\n");
@@ -981,7 +980,7 @@ static void test_query_svc(void)
     statusproc = HeapAlloc(GetProcessHeap(), 0, sizeof(SERVICE_STATUS_PROCESS));
     bufsize = needed;
     SetLastError(0xdeadbeef);
-    ret = pQueryServiceStatusEx(NULL, 0, (BYTE*)statusproc, bufsize, &needed);
+    ret = pQueryServiceStatusEx(NULL, SC_STATUS_PROCESS_INFO, (BYTE*)statusproc, bufsize, &needed);
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE,
        "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
@@ -989,25 +988,22 @@ static void test_query_svc(void)
 
     /* Correct handle and info level */
     SetLastError(0xdeadbeef);
-    ret = pQueryServiceStatusEx(svc_handle, 0, NULL, 0, &needed);
+    ret = pQueryServiceStatusEx(svc_handle, SC_STATUS_PROCESS_INFO, NULL, 0, &needed);
     /* NT4 doesn't return the needed size */
     if (GetLastError() != ERROR_INVALID_PARAMETER)
     {
         ok(!ret, "Expected failure\n");
-        todo_wine
-        {
         ok(needed == sizeof(SERVICE_STATUS_PROCESS),
            "Needed buffersize is wrong : %d\n", needed);
         ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
            "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
-        }
     }
 
     /* All parameters are OK but we don't have enough rights */
     statusproc = HeapAlloc(GetProcessHeap(), 0, sizeof(SERVICE_STATUS_PROCESS));
     bufsize = sizeof(SERVICE_STATUS_PROCESS);
     SetLastError(0xdeadbeef);
-    ret = pQueryServiceStatusEx(svc_handle, 0, (BYTE*)statusproc, bufsize, &needed);
+    ret = pQueryServiceStatusEx(svc_handle, SC_STATUS_PROCESS_INFO, (BYTE*)statusproc, bufsize, &needed);
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_ACCESS_DENIED,
        "Expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
@@ -1021,7 +1017,7 @@ static void test_query_svc(void)
     statusproc = HeapAlloc(GetProcessHeap(), 0, sizeof(SERVICE_STATUS_PROCESS));
     bufsize = sizeof(SERVICE_STATUS_PROCESS);
     SetLastError(0xdeadbeef);
-    ret = pQueryServiceStatusEx(svc_handle, 0, (BYTE*)statusproc, bufsize, &needed);
+    ret = pQueryServiceStatusEx(svc_handle, SC_STATUS_PROCESS_INFO, (BYTE*)statusproc, bufsize, &needed);
     ok(ret, "Expected success, got error %u\n", GetLastError());
     if (statusproc->dwCurrentState == SERVICE_RUNNING)
         ok(statusproc->dwProcessId != 0,
