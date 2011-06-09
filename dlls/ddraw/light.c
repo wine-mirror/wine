@@ -91,9 +91,10 @@ void light_deactivate(IDirect3DLightImpl *light)
     }
 }
 
-/*****************************************************************************
- * IUnknown Methods.
- *****************************************************************************/
+static inline IDirect3DLightImpl *impl_from_IDirect3DLight(IDirect3DLight *iface)
+{
+    return CONTAINING_RECORD(iface, IDirect3DLightImpl, IDirect3DLight_iface);
+}
 
 /*****************************************************************************
  * IDirect3DLight::QueryInterface
@@ -116,19 +117,9 @@ static HRESULT WINAPI IDirect3DLightImpl_QueryInterface(IDirect3DLight *iface, R
     return E_NOINTERFACE;
 }
 
-/*****************************************************************************
- * IDirect3DLight::AddRef
- *
- * Increases the refcount by 1
- *
- * Returns:
- *  The new refcount
- *
- *****************************************************************************/
-static ULONG WINAPI
-IDirect3DLightImpl_AddRef(IDirect3DLight *iface)
+static ULONG WINAPI IDirect3DLightImpl_AddRef(IDirect3DLight *iface)
 {
-    IDirect3DLightImpl *This = (IDirect3DLightImpl *)iface;
+    IDirect3DLightImpl *This = impl_from_IDirect3DLight(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("%p increasing refcount to %u.\n", This, ref);
@@ -136,20 +127,9 @@ IDirect3DLightImpl_AddRef(IDirect3DLight *iface)
     return ref;
 }
 
-/*****************************************************************************
- * IDirect3DLight::Release
- *
- * Reduces the refcount by one. If the refcount falls to 0, the object
- * is destroyed
- *
- * Returns:
- *  The new refcount
- *
- *****************************************************************************/
-static ULONG WINAPI
-IDirect3DLightImpl_Release(IDirect3DLight *iface)
+static ULONG WINAPI IDirect3DLightImpl_Release(IDirect3DLight *iface)
 {
-    IDirect3DLightImpl *This = (IDirect3DLightImpl *)iface;
+    IDirect3DLightImpl *This = impl_from_IDirect3DLight(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p decreasing refcount to %u.\n", This, ref);
@@ -207,12 +187,10 @@ static const float zero_value[] = {
     0.0, 0.0, 0.0, 0.0
 };
 
-static HRESULT WINAPI
-IDirect3DLightImpl_SetLight(IDirect3DLight *iface,
-                            D3DLIGHT *lpLight)
+static HRESULT WINAPI IDirect3DLightImpl_SetLight(IDirect3DLight *iface, D3DLIGHT *lpLight)
 {
-    IDirect3DLightImpl *This = (IDirect3DLightImpl *)iface;
-    LPD3DLIGHT7 light7 = &(This->light7);
+    IDirect3DLightImpl *This = impl_from_IDirect3DLight(iface);
+    LPD3DLIGHT7 light7 = &This->light7;
 
     TRACE("iface %p, light %p.\n", iface, lpLight);
 
@@ -266,11 +244,9 @@ IDirect3DLightImpl_SetLight(IDirect3DLight *iface,
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if Light is NULL
  *****************************************************************************/
-static HRESULT WINAPI
-IDirect3DLightImpl_GetLight(IDirect3DLight *iface,
-                            D3DLIGHT *lpLight)
+static HRESULT WINAPI IDirect3DLightImpl_GetLight(IDirect3DLight *iface, D3DLIGHT *lpLight)
 {
-    IDirect3DLightImpl *This = (IDirect3DLightImpl *)iface;
+    IDirect3DLightImpl *This = impl_from_IDirect3DLight(iface);
 
     TRACE("iface %p, light %p.\n", iface, lpLight);
 
@@ -301,7 +277,7 @@ static const struct IDirect3DLightVtbl d3d_light_vtbl =
 
 void d3d_light_init(IDirect3DLightImpl *light, IDirectDrawImpl *ddraw)
 {
-    light->lpVtbl = &d3d_light_vtbl;
+    light->IDirect3DLight_iface.lpVtbl = &d3d_light_vtbl;
     light->ref = 1;
     light->ddraw = ddraw;
 }

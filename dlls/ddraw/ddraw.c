@@ -4550,7 +4550,7 @@ static HRESULT WINAPI d3d3_CreateLight(IDirect3D3 *iface, IDirect3DLight **light
     d3d_light_init(object, This);
 
     TRACE("Created light %p.\n", object);
-    *light = (IDirect3DLight *)object;
+    *light = &object->IDirect3DLight_iface;
 
     return D3D_OK;
 }

@@ -387,7 +387,7 @@ struct object_creation_info
  ******************************************************************************/
 struct IDirect3DLightImpl
 {
-    const IDirect3DLightVtbl *lpVtbl;
+    IDirect3DLight IDirect3DLight_iface;
     LONG ref;
 
     /* IDirect3DLight fields */
