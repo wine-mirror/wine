@@ -796,7 +796,7 @@ static void quirk_no_np2(struct wined3d_gl_info *gl_info)
      *  Note that wine_normalized_texrect can't be used in this case because internally it uses ARB_tex_npot,
      *  triggering the software fallback. There is not much we can do here apart from disabling the
      *  software-emulated extension and reenable ARB_tex_rect (which was previously disabled
-     *  in IWineD3DImpl_FillGLCaps).
+     *  in wined3d_adapter_init_gl_caps).
      *  This fixup removes performance problems on both the FX 5900 and FX 5700 (e.g. for framebuffer
      *  post-processing effects in the game "Max Payne 2").
      *  The behaviour can be verified through a simple test app attached in bugreport #14724. */
@@ -2110,7 +2110,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info, DWORD gl_version)
 }
 
 /* Context activation is done by the caller. */
-static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
+static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
 {
     struct wined3d_driver_info *driver_info = &adapter->driver_info;
     struct wined3d_gl_info *gl_info = &adapter->gl_info;
@@ -5155,7 +5155,7 @@ static BOOL InitAdapters(struct wined3d *wined3d)
             goto nogl_adapter;
         }
 
-        ret = IWineD3DImpl_FillGLCaps(adapter);
+        ret = wined3d_adapter_init_gl_caps(adapter);
         if(!ret) {
             ERR("Failed to initialize gl caps for default adapter\n");
             WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
