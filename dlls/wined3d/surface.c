@@ -6165,8 +6165,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const
                 mem = surface->resource.allocatedMemory;
             }
 
-            if (mem || (surface->flags & SFLAG_PBO))
-                surface_upload_data(surface, gl_info, &format, srgb, mem);
+            surface_upload_data(surface, gl_info, &format, srgb, mem);
 
             if (context) context_release(context);
 
