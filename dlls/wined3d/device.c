@@ -4282,7 +4282,7 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive_strided(struct wined3d_devic
 }
 
 /* This is a helper function for UpdateTexture, there is no UpdateVolume method in D3D. */
-static HRESULT IWineD3DDeviceImpl_UpdateVolume(struct wined3d_device *device,
+static HRESULT device_update_volume(struct wined3d_device *device,
         struct wined3d_volume *src_volume, struct wined3d_volume *dst_volume)
 {
     WINED3DLOCKED_BOX src;
@@ -4400,12 +4400,12 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
         {
             for (i = 0; i < level_count; ++i)
             {
-                hr = IWineD3DDeviceImpl_UpdateVolume(device,
+                hr = device_update_volume(device,
                         volume_from_resource(wined3d_texture_get_sub_resource(src_texture, i)),
                         volume_from_resource(wined3d_texture_get_sub_resource(dst_texture, i)));
                 if (FAILED(hr))
                 {
-                    WARN("IWineD3DDeviceImpl_UpdateVolume failed, hr %#x.\n", hr);
+                    WARN("Failed to update volume, hr %#x.\n", hr);
                     return hr;
                 }
             }
