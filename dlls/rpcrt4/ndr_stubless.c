@@ -1078,10 +1078,6 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
 
             TRACE("\tbase type: 0x%02x\n", *pTypeFormat);
 
-            /* make a note of the address of the return value parameter for later */
-            if (pParam->param_attributes.IsReturn)
-                retval_ptr = (LONG_PTR *)pArg;
-
             switch (phase)
             {
                 case STUBLESS_MARSHAL:
@@ -1222,6 +1218,9 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
             current_offset += sizeof(NDR_PARAM_OIF_OTHER);
         }
         TRACE("\tmemory addr (after): %p -> %p\n", pArg, *(unsigned char **)pArg);
+
+        /* make a note of the address of the return value parameter for later */
+        if (pParam->param_attributes.IsReturn) retval_ptr = (LONG_PTR *)pArg;
     }
 
     return retval_ptr;
