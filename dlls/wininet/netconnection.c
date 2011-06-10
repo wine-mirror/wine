@@ -333,12 +333,8 @@ static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
             cert = (X509 *)psk_value(chain, i);
             if ((context = X509_to_cert_context(cert)))
             {
-                if (i == 0)
-                    ret = CertAddCertificateContextToStore(store, context,
-                        CERT_STORE_ADD_ALWAYS, &endCert);
-                else
-                    ret = CertAddCertificateContextToStore(store, context,
-                        CERT_STORE_ADD_ALWAYS, NULL);
+                ret = CertAddCertificateContextToStore(store, context,
+                        CERT_STORE_ADD_ALWAYS, i ? NULL : &endCert);
                 CertFreeCertificateContext(context);
             }
         }
