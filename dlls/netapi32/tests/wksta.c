@@ -31,6 +31,7 @@
 #include "lmerr.h"
 #include "lmwksta.h"
 #include "lmapibuf.h"
+#include "lmjoin.h"
 
 static NET_API_STATUS (WINAPI *pNetApiBufferFree)(LPVOID)=NULL;
 static NET_API_STATUS (WINAPI *pNetApiBufferSize)(LPVOID,LPDWORD)=NULL;
@@ -38,6 +39,7 @@ static NET_API_STATUS (WINAPI *pNetpGetComputerName)(LPWSTR*)=NULL;
 static NET_API_STATUS (WINAPI *pNetWkstaUserGetInfo)(LPWSTR,DWORD,PBYTE*)=NULL;
 static NET_API_STATUS (WINAPI *pNetWkstaTransportEnum)(LPWSTR,DWORD,LPBYTE*,
  DWORD,LPDWORD,LPDWORD,LPDWORD)=NULL;
+static NET_API_STATUS (WINAPI *pNetGetJoinInformation)(LPCWSTR,LPWSTR*,PNETSETUP_JOIN_STATUS);
 
 static WCHAR user_name[UNLEN + 1];
 static WCHAR computer_name[MAX_COMPUTERNAME_LENGTH + 1];
@@ -179,6 +181,28 @@ static void run_wkstatransportenum_tests(void)
     }
 }
 
+static void run_wkstajoininfo_tests(void)
+{
+    NET_API_STATUS ret;
+    LPWSTR buffer = NULL;
+    NETSETUP_JOIN_STATUS buffertype = 0xdada;
+    /* NT4 doesn't have this function */
+    if (!pNetGetJoinInformation) {
+        win_skip("NetGetJoinInformation not available\n");
+        return;
+    }
+
+    ret = pNetGetJoinInformation(NULL, NULL, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "NetJoinGetInformation returned unexpected 0x%08x\n", ret);
+    ok(buffertype == 0xdada, "buffertype set to unexpected value %d\n", buffertype);
+
+    ret = pNetGetJoinInformation(NULL, &buffer, &buffertype);
+    ok(ret == NERR_Success, "NetJoinGetInformation returned unexpected 0x%08x\n", ret);
+    ok(buffertype != 0xdada && buffertype != NetSetupUnknownStatus, "buffertype set to unexpected value %d\n", buffertype);
+    trace("workstation joined to %s with status %d\n", wine_dbgstr_w(buffer), buffertype);
+    pNetApiBufferFree(buffer);
+}
+
 START_TEST(wksta)
 {
     HMODULE hnetapi32=LoadLibraryA("netapi32.dll");
@@ -188,6 +212,7 @@ START_TEST(wksta)
     pNetpGetComputerName=(void*)GetProcAddress(hnetapi32,"NetpGetComputerName");
     pNetWkstaUserGetInfo=(void*)GetProcAddress(hnetapi32,"NetWkstaUserGetInfo");
     pNetWkstaTransportEnum=(void*)GetProcAddress(hnetapi32,"NetWkstaTransportEnum");
+    pNetGetJoinInformation=(void*)GetProcAddress(hnetapi32,"NetGetJoinInformation");
 
     /* These functions were introduced with NT. It's safe to assume that
      * if one is not available, none are.
@@ -205,6 +230,7 @@ START_TEST(wksta)
             win_skip("Function NetpGetComputerName not available\n");
         run_wkstausergetinfo_tests();
         run_wkstatransportenum_tests();
+        run_wkstajoininfo_tests();
     }
 
     FreeLibrary(hnetapi32);
