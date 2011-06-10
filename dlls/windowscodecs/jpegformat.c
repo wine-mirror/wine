@@ -711,6 +711,8 @@ typedef struct JpegEncoder {
     int initialized;
     int frame_count;
     int frame_initialized;
+    int started_compress;
+    UINT width, height;
     IStream *stream;
     CRITICAL_SECTION lock;
     BYTE dest_buffer[1024];
@@ -834,8 +836,23 @@ static HRESULT WINAPI JpegEncoder_Frame_Initialize(IWICBitmapFrameEncode *iface,
 static HRESULT WINAPI JpegEncoder_Frame_SetSize(IWICBitmapFrameEncode *iface,
     UINT uiWidth, UINT uiHeight)
 {
-    FIXME("(%p,%u,%u): stub\n", iface, uiWidth, uiHeight);
-    return E_NOTIMPL;
+    JpegEncoder *This = impl_from_IWICBitmapFrameEncode(iface);
+    TRACE("(%p,%u,%u)\n", iface, uiWidth, uiHeight);
+
+    EnterCriticalSection(&This->lock);
+
+    if (!This->frame_initialized || This->started_compress)
+    {
+        LeaveCriticalSection(&This->lock);
+        return WINCODEC_ERR_WRONGSTATE;
+    }
+
+    This->width = uiWidth;
+    This->height = uiHeight;
+
+    LeaveCriticalSection(&This->lock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI JpegEncoder_Frame_SetResolution(IWICBitmapFrameEncode *iface,
@@ -1154,6 +1171,8 @@ HRESULT JpegEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->initialized = 0;
     This->frame_count = 0;
     This->frame_initialized = 0;
+    This->started_compress = 0;
+    This->width = This->height = 0;
     This->stream = NULL;
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JpegEncoder.lock");
