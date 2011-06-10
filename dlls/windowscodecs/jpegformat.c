@@ -710,6 +710,7 @@ typedef struct JpegEncoder {
     struct jpeg_destination_mgr dest_mgr;
     int initialized;
     int frame_count;
+    int frame_initialized;
     IStream *stream;
     CRITICAL_SECTION lock;
     BYTE dest_buffer[1024];
@@ -812,8 +813,22 @@ static ULONG WINAPI JpegEncoder_Frame_Release(IWICBitmapFrameEncode *iface)
 static HRESULT WINAPI JpegEncoder_Frame_Initialize(IWICBitmapFrameEncode *iface,
     IPropertyBag2 *pIEncoderOptions)
 {
-    FIXME("(%p,%p): stub\n", iface, pIEncoderOptions);
-    return E_NOTIMPL;
+    JpegEncoder *This = impl_from_IWICBitmapFrameEncode(iface);
+    TRACE("(%p,%p)\n", iface, pIEncoderOptions);
+
+    EnterCriticalSection(&This->lock);
+
+    if (This->frame_initialized)
+    {
+        LeaveCriticalSection(&This->lock);
+        return WINCODEC_ERR_WRONGSTATE;
+    }
+
+    This->frame_initialized = TRUE;
+
+    LeaveCriticalSection(&This->lock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI JpegEncoder_Frame_SetSize(IWICBitmapFrameEncode *iface,
@@ -1138,6 +1153,7 @@ HRESULT JpegEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->ref = 1;
     This->initialized = 0;
     This->frame_count = 0;
+    This->frame_initialized = 0;
     This->stream = NULL;
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JpegEncoder.lock");
