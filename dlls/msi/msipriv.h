@@ -776,6 +776,8 @@ extern UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine, 
 extern UINT msi_schedule_action( MSIPACKAGE *package, UINT script, const WCHAR *action ) DECLSPEC_HIDDEN;
 extern INSTALLSTATE msi_get_component_action( MSIPACKAGE *package, MSICOMPONENT *comp ) DECLSPEC_HIDDEN;
 extern INSTALLSTATE msi_get_feature_action( MSIPACKAGE *package, MSIFEATURE *feature ) DECLSPEC_HIDDEN;
+extern UINT msi_load_all_components( MSIPACKAGE *package ) DECLSPEC_HIDDEN;
+extern UINT msi_load_all_features( MSIPACKAGE *package ) DECLSPEC_HIDDEN;
 
 /* record internals */
 extern void MSI_CloseRecord( MSIOBJECTHDR * ) DECLSPEC_HIDDEN;

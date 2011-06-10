@@ -6386,6 +6386,89 @@ static void test_upgrade_code(void)
     DeleteFile(msifile);
 }
 
+static void test_MsiGetFeatureInfo(void)
+{
+    UINT r;
+    MSIHANDLE package;
+    char title[32], help[32], path[MAX_PATH];
+    DWORD attrs, title_len, help_len;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+    create_database( msifile, tables, sizeof(tables) / sizeof(tables[0]) );
+
+    strcpy( path, CURR_DIR );
+    strcat( path, "\\" );
+    strcat( path, msifile );
+
+    r = MsiOpenPackage( path, &package );
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFileA( msifile );
+        return;
+    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiGetFeatureInfoA( 0, NULL, NULL, NULL, NULL, NULL, NULL );
+    ok(r == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", r);
+
+    r = MsiGetFeatureInfoA( package, NULL, NULL, NULL, NULL, NULL, NULL );
+    ok(r == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", r);
+
+    r = MsiGetFeatureInfoA( package, "", NULL, NULL, NULL, NULL, NULL );
+    ok(r == ERROR_UNKNOWN_FEATURE, "expected ERROR_UNKNOWN_FEATURE, got %u\n", r);
+
+    r = MsiGetFeatureInfoA( package, "One", NULL, NULL, NULL, NULL, NULL );
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiGetFeatureInfoA( 0, "One", NULL, NULL, NULL, NULL, NULL );
+    ok(r == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %u\n", r);
+
+    title_len = help_len = 0;
+    r = MsiGetFeatureInfoA( package, "One", NULL, NULL, &title_len, NULL, &help_len );
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+    ok(title_len == 3, "expected 3, got %u\n", title_len);
+    ok(help_len == 15, "expected 15, got %u\n", help_len);
+
+    title[0] = help[0] = 0;
+    title_len = help_len = 0;
+    r = MsiGetFeatureInfoA( package, "One", NULL, title, &title_len, help, &help_len );
+    ok(r == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %u\n", r);
+    ok(title_len == 3, "expected 3, got %u\n", title_len);
+    ok(help_len == 15, "expected 15, got %u\n", help_len);
+
+    attrs = 0;
+    title[0] = help[0] = 0;
+    title_len = sizeof(title);
+    help_len = sizeof(help);
+    r = MsiGetFeatureInfoA( package, "One", &attrs, title, &title_len, help, &help_len );
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+    ok(attrs == INSTALLFEATUREATTRIBUTE_FAVORLOCAL, "expected INSTALLFEATUREATTRIBUTE_FAVORLOCAL, got %u\n", attrs);
+    ok(title_len == 3, "expected 3, got %u\n", title_len);
+    ok(help_len == 15, "expected 15, got %u\n", help_len);
+    ok(!strcmp(title, "One"), "expected \"One\", got \"%s\"\n", title);
+    ok(!strcmp(help, "The One Feature"), "expected \"The One Feature\", got \"%s\"\n", help);
+
+    attrs = 0;
+    title[0] = help[0] = 0;
+    title_len = sizeof(title);
+    help_len = sizeof(help);
+    r = MsiGetFeatureInfoA( package, "feature", &attrs, title, &title_len, help, &help_len );
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+    ok(attrs == INSTALLFEATUREATTRIBUTE_FAVORLOCAL, "expected INSTALLFEATUREATTRIBUTE_FAVORLOCAL, got %u\n", attrs);
+    ok(!title_len, "expected 0, got %u\n", title_len);
+    ok(!help_len, "expected 0, got %u\n", help_len);
+    ok(!title[0], "expected \"\", got \"%s\"\n", title);
+    ok(!help[0], "expected \"\", got \"%s\"\n", help);
+
+    MsiCloseHandle( package );
+    DeleteFileA( msifile );
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -6475,6 +6558,7 @@ START_TEST(install)
     test_package_validation();
     test_command_line_parsing();
     test_upgrade_code();
+    test_MsiGetFeatureInfo();
 
     DeleteFileA(log_file);
 

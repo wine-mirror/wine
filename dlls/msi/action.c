@@ -999,7 +999,7 @@ static UINT load_component( MSIRECORD *row, LPVOID param )
     return ERROR_SUCCESS;
 }
 
-static UINT load_all_components( MSIPACKAGE *package )
+UINT msi_load_all_components( MSIPACKAGE *package )
 {
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R', 'O','M',' ', 
@@ -1161,7 +1161,7 @@ static UINT find_feature_children(MSIRECORD * row, LPVOID param)
     return ERROR_SUCCESS;
 }
 
-static UINT load_all_features( MSIPACKAGE *package )
+UINT msi_load_all_features( MSIPACKAGE *package )
 {
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
@@ -1550,8 +1550,8 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     msi_set_property( package->db, szRootDrive, szCRoot );
 
     load_all_folders( package );
-    load_all_components( package );
-    load_all_features( package );
+    msi_load_all_components( package );
+    msi_load_all_features( package );
     load_all_files( package );
     load_all_patches( package );
     load_all_media( package );

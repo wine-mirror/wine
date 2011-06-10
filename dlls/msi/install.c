@@ -1255,6 +1255,126 @@ UINT WINAPI MsiGetFeatureCostW(MSIHANDLE hInstall, LPCWSTR szFeature,
 }
 
 /***********************************************************************
+* MsiGetFeatureInfoA   (MSI.@)
+*/
+UINT WINAPI MsiGetFeatureInfoA( MSIHANDLE handle, LPCSTR feature, LPDWORD attrs,
+                                LPSTR title, LPDWORD title_len, LPSTR help, LPDWORD help_len )
+{
+    UINT r;
+    WCHAR *titleW = NULL, *helpW = NULL, *featureW = NULL;
+
+    TRACE("%u, %s, %p, %p, %p, %p, %p\n", handle, debugstr_a(feature), attrs, title,
+          title_len, help, help_len);
+
+    if (feature && !(featureW = strdupAtoW( feature ))) return ERROR_OUTOFMEMORY;
+
+    if (title && title_len && !(titleW = msi_alloc( *title_len * sizeof(WCHAR) )))
+    {
+        msi_free( featureW );
+        return ERROR_OUTOFMEMORY;
+    }
+    if (help && help_len && !(helpW = msi_alloc( *help_len * sizeof(WCHAR) )))
+    {
+        msi_free( featureW );
+        msi_free( titleW );
+        return ERROR_OUTOFMEMORY;
+    }
+    r = MsiGetFeatureInfoW( handle, featureW, attrs, titleW, title_len, helpW, help_len );
+    if (r == ERROR_SUCCESS)
+    {
+        if (titleW) WideCharToMultiByte( CP_ACP, 0, titleW, -1, title, *title_len + 1, NULL, NULL );
+        if (helpW) WideCharToMultiByte( CP_ACP, 0, helpW, -1, help, *help_len + 1, NULL, NULL );
+    }
+    msi_free( titleW );
+    msi_free( helpW );
+    msi_free( featureW );
+    return r;
+}
+
+static DWORD map_feature_attributes( DWORD attrs )
+{
+    DWORD ret = 0;
+
+    if (attrs == msidbFeatureAttributesFavorLocal)            ret |= INSTALLFEATUREATTRIBUTE_FAVORLOCAL;
+    if (attrs & msidbFeatureAttributesFavorSource)            ret |= INSTALLFEATUREATTRIBUTE_FAVORSOURCE;
+    if (attrs & msidbFeatureAttributesFollowParent)           ret |= INSTALLFEATUREATTRIBUTE_FOLLOWPARENT;
+    if (attrs & msidbFeatureAttributesFavorAdvertise)         ret |= INSTALLFEATUREATTRIBUTE_FAVORADVERTISE;
+    if (attrs & msidbFeatureAttributesDisallowAdvertise)      ret |= INSTALLFEATUREATTRIBUTE_DISALLOWADVERTISE;
+    if (attrs & msidbFeatureAttributesNoUnsupportedAdvertise) ret |= INSTALLFEATUREATTRIBUTE_NOUNSUPPORTEDADVERTISE;
+    return ret;
+}
+
+static UINT MSI_GetFeatureInfo( MSIPACKAGE *package, LPCWSTR name, LPDWORD attrs,
+                                LPWSTR title, LPDWORD title_len, LPWSTR help, LPDWORD help_len )
+{
+    UINT r = ERROR_SUCCESS;
+    MSIFEATURE *feature = msi_get_loaded_feature( package, name );
+    int len;
+
+    if (!feature) return ERROR_UNKNOWN_FEATURE;
+    if (attrs) *attrs = map_feature_attributes( feature->Attributes );
+    if (title_len)
+    {
+        if (feature->Title) len = strlenW( feature->Title );
+        else len = 0;
+        if (*title_len <= len)
+        {
+            *title_len = len;
+            if (title) r = ERROR_MORE_DATA;
+        }
+        else if (title)
+        {
+            if (feature->Title) strcpyW( title, feature->Title );
+            else *title = 0;
+            *title_len = len;
+        }
+    }
+    if (help_len)
+    {
+        if (feature->Description) len = strlenW( feature->Description );
+        else len = 0;
+        if (*help_len <= len)
+        {
+            *help_len = len;
+            if (help) r = ERROR_MORE_DATA;
+        }
+        else if (help)
+        {
+            if (feature->Description) strcpyW( help, feature->Description );
+            else *help = 0;
+            *help_len = len;
+        }
+    }
+    return r;
+}
+
+/***********************************************************************
+* MsiGetFeatureInfoW   (MSI.@)
+*/
+UINT WINAPI MsiGetFeatureInfoW( MSIHANDLE handle, LPCWSTR feature, LPDWORD attrs,
+                                LPWSTR title, LPDWORD title_len, LPWSTR help, LPDWORD help_len )
+{
+    UINT r;
+    MSIPACKAGE *package;
+
+    TRACE("%u, %s, %p, %p, %p, %p, %p\n", handle, debugstr_w(feature), attrs, title,
+          title_len, help, help_len);
+
+    if (!feature) return ERROR_INVALID_PARAMETER;
+
+    if (!(package = msihandle2msiinfo( handle, MSIHANDLETYPE_PACKAGE )))
+        return ERROR_INVALID_HANDLE;
+
+    /* features may not have been loaded yet */
+    msi_load_all_components( package );
+    msi_load_all_features( package );
+
+    r = MSI_GetFeatureInfo( package, feature, attrs, title, title_len, help, help_len );
+    msiobj_release( &package->hdr );
+    return r;
+}
+
+/***********************************************************************
  * MsiSetComponentStateA (MSI.@)
  */
 UINT WINAPI MsiSetComponentStateA(MSIHANDLE hInstall, LPCSTR szComponent,

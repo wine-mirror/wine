@@ -48,8 +48,8 @@
 52 stdcall MsiGetDatabaseState(long)
 53 stdcall MsiGetFeatureCostA(long str long long ptr)
 54 stdcall MsiGetFeatureCostW(long wstr long long ptr)
-55 stub MsiGetFeatureInfoA
-56 stub MsiGetFeatureInfoW
+55 stdcall MsiGetFeatureInfoA(long str ptr ptr ptr ptr ptr)
+56 stdcall MsiGetFeatureInfoW(long wstr ptr ptr ptr ptr ptr)
 57 stdcall MsiGetFeatureStateA(long str ptr ptr)
 58 stdcall MsiGetFeatureStateW(long wstr ptr ptr)
 59 stdcall MsiGetFeatureUsageA(str str ptr ptr)
