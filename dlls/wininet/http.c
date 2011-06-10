@@ -2346,6 +2346,8 @@ static DWORD netconn_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
     if(size && req->netconn) {
         if(NETCON_recv(req->netconn, buf, size, read_mode == READMODE_SYNC ? MSG_WAITALL : 0, &len) != ERROR_SUCCESS)
             len = 0;
+        if(!len)
+            netconn_stream->content_length = netconn_stream->content_read;
     }
 
     netconn_stream->content_read += *read = len;
