@@ -584,10 +584,16 @@ NET_API_STATUS NET_API_FUNCTION NetGetJoinInformation(
     LPWSTR *Name,
     PNETSETUP_JOIN_STATUS type)
 {
-    FIXME("Stub %s %p %p\n", wine_dbgstr_w(Server), Name, type);
+    static const WCHAR workgroupW[] = {'W','o','r','k','g','r','o','u','p',0};
 
-    *Name = NULL;
-    *type = NetSetupUnknownStatus;
+    FIXME("Semi-stub %s %p %p\n", wine_dbgstr_w(Server), Name, type);
+
+    if (!Name || !type)
+        return ERROR_INVALID_PARAMETER;
+
+    NetApiBufferAllocate(sizeof(workgroupW), (LPVOID *)Name);
+    lstrcpyW(*Name, workgroupW);
+    *type = NetSetupWorkgroupName;
 
     return NERR_Success;
 }
