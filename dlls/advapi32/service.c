@@ -1514,6 +1514,7 @@ EnumServicesStatusA( SC_HANDLE hmngr, DWORD type, DWORD state, LPENUM_SERVICE_ST
             p += sz;
             n -= sz;
         }
+        else services[i].lpDisplayName = NULL;
         services[i].ServiceStatus = servicesW[i].ServiceStatus;
     }
 
@@ -1640,6 +1641,7 @@ EnumServicesStatusExA( SC_HANDLE hmngr, SC_ENUM_TYPE level, DWORD type, DWORD st
             p += sz;
             n -= sz;
         }
+        else services[i].lpDisplayName = NULL;
         services[i].ServiceStatusProcess = servicesW[i].ServiceStatusProcess;
     }
 
