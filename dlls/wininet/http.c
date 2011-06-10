@@ -2660,7 +2660,7 @@ static void HTTP_ReceiveRequestData(http_request_t *req, BOOL first_notif)
     }
 
     if(res == ERROR_SUCCESS)
-        send_request_complete(req, (DWORD_PTR)req->hdr.hInternet, avail);
+        send_request_complete(req, req->session->hdr.dwInternalFlags & INET_OPENURL ? (DWORD_PTR)req->hdr.hInternet : 1, avail);
     else
         send_request_complete(req, 0, res);
 }
@@ -4805,10 +4805,15 @@ lend:
 
     if (request->session->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        if (res == ERROR_SUCCESS && request->contentLength && request->bytesWritten == request->bytesToWrite)
-            HTTP_ReceiveRequestData(request, TRUE);
-        else
-            send_request_complete(request, res == ERROR_SUCCESS ? (DWORD_PTR)request->hdr.hInternet : 0, res);
+        if (res == ERROR_SUCCESS) {
+            if(request->contentLength && request->bytesWritten == request->bytesToWrite)
+                HTTP_ReceiveRequestData(request, TRUE);
+            else
+                send_request_complete(request,
+                        request->session->hdr.dwInternalFlags & INET_OPENURL ? (DWORD_PTR)request->hdr.hInternet : 1, 0);
+        }else {
+                send_request_complete(request, 0, res);
+        }
     }
 
     TRACE("<--\n");
@@ -4902,7 +4907,7 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
     if (res == ERROR_SUCCESS && request->contentLength)
         HTTP_ReceiveRequestData(request, TRUE);
     else
-        send_request_complete(request, res == ERROR_SUCCESS ? (DWORD_PTR)request->hdr.hInternet : 0, res);
+        send_request_complete(request, res == ERROR_SUCCESS, res);
 
     return res;
 }
