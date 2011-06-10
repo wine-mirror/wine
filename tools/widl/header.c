@@ -994,10 +994,10 @@ static void write_function_proto(FILE *header, const type_t *iface, const var_t 
 {
   const char *callconv = get_attrp(fun->type->attrs, ATTR_CALLCONV);
 
+  if (!callconv) callconv = "__cdecl";
   /* FIXME: do we need to handle call_as? */
   write_type_decl_left(header, type_function_get_rettype(fun->type));
-  fprintf(header, " ");
-  if (callconv) fprintf(header, "%s ", callconv);
+  fprintf(header, " %s ", callconv);
   fprintf(header, "%s%s(\n", prefix, get_name(fun));
   if (type_get_function_args(fun->type))
     write_args(header, type_get_function_args(fun->type), iface->name, 0, TRUE);

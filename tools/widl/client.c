@@ -78,9 +78,9 @@ static void write_client_func_decl( const type_t *iface, const var_t *func )
     const var_list_t *args = type_get_function_args(func->type);
     type_t *rettype = type_function_get_rettype(func->type);
 
+    if (!callconv) callconv = "__cdecl";
     write_type_decl_left(client, rettype);
-    if (needs_space_after(rettype)) fprintf(client, " ");
-    if (callconv) fprintf(client, "%s ", callconv);
+    fprintf(client, " %s ", callconv);
     fprintf(client, "%s%s(\n", prefix_client, get_name(func));
     indent++;
     if (args)

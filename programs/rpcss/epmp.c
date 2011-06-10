@@ -89,11 +89,11 @@ void __RPC_USER ept_lookup_handle_t_rundown(ept_lookup_handle_t entry_handle)
     WINE_FIXME("%p\n", entry_handle);
 }
 
-void ept_insert(handle_t h,
-                unsigned32 num_ents,
-                ept_entry_t entries[],
-                boolean32 replace,
-                error_status_t *status)
+void __cdecl ept_insert(handle_t h,
+                        unsigned32 num_ents,
+                        ept_entry_t entries[],
+                        boolean32 replace,
+                        error_status_t *status)
 {
     unsigned32 i;
     RPC_STATUS rpc_status;
@@ -139,10 +139,10 @@ void ept_insert(handle_t h,
     LeaveCriticalSection(&csEpm);
 }
 
-void ept_delete(handle_t h,
-                unsigned32 num_ents,
-                ept_entry_t entries[],
-                error_status_t *status)
+void __cdecl ept_delete(handle_t h,
+                        unsigned32 num_ents,
+                        ept_entry_t entries[],
+                        error_status_t *status)
 {
     unsigned32 i;
     RPC_STATUS rpc_status;
@@ -180,30 +180,30 @@ void ept_delete(handle_t h,
     LeaveCriticalSection(&csEpm);
 }
 
-void ept_lookup(handle_t h,
-                unsigned32 inquiry_type,
-                uuid_p_t object,
-                rpc_if_id_p_t interface_id,
-                unsigned32 vers_option,
-                ept_lookup_handle_t *entry_handle,
-                unsigned32 max_ents,
-                unsigned32 *num_ents,
-                ept_entry_t entries[],
-                error_status_t *status)
+void __cdecl ept_lookup(handle_t h,
+                        unsigned32 inquiry_type,
+                        uuid_p_t object,
+                        rpc_if_id_p_t interface_id,
+                        unsigned32 vers_option,
+                        ept_lookup_handle_t *entry_handle,
+                        unsigned32 max_ents,
+                        unsigned32 *num_ents,
+                        ept_entry_t entries[],
+                        error_status_t *status)
 {
     WINE_FIXME("(%p, %p, %p): stub\n", h, entry_handle, status);
 
     *status = EPT_S_CANT_PERFORM_OP;
 }
 
-void ept_map(handle_t h,
-             uuid_p_t object,
-             twr_p_t map_tower,
-             ept_lookup_handle_t *entry_handle,
-             unsigned32 max_towers,
-             unsigned32 *num_towers,
-             twr_p_t *towers,
-             error_status_t *status)
+void __cdecl ept_map(handle_t h,
+                     uuid_p_t object,
+                     twr_p_t map_tower,
+                     ept_lookup_handle_t *entry_handle,
+                     unsigned32 max_towers,
+                     unsigned32 *num_towers,
+                     twr_p_t *towers,
+                     error_status_t *status)
 {
     RPC_STATUS rpc_status;
     RPC_SYNTAX_IDENTIFIER iface, syntax;
@@ -254,29 +254,29 @@ void ept_map(handle_t h,
     LeaveCriticalSection(&csEpm);
 }
 
-void ept_lookup_handle_free(handle_t h,
-                            ept_lookup_handle_t *entry_handle,
-                            error_status_t *status)
+void __cdecl ept_lookup_handle_free(handle_t h,
+                                    ept_lookup_handle_t *entry_handle,
+                                    error_status_t *status)
 {
     WINE_FIXME("(%p, %p, %p): stub\n", h, entry_handle, status);
 
     *status = EPT_S_CANT_PERFORM_OP;
 }
 
-void ept_inq_object(handle_t h,
-                    GUID *ept_object,
-                    error_status_t *status)
+void __cdecl ept_inq_object(handle_t h,
+                            GUID *ept_object,
+                            error_status_t *status)
 {
     WINE_FIXME("(%p, %p, %p): stub\n", h, ept_object, status);
 
     *status = EPT_S_CANT_PERFORM_OP;
 }
 
-void ept_mgmt_delete(handle_t h,
-                     boolean32 object_speced,
-                     uuid_p_t object,
-                     twr_p_t tower,
-                     error_status_t *status)
+void __cdecl ept_mgmt_delete(handle_t h,
+                             boolean32 object_speced,
+                             uuid_p_t object,
+                             twr_p_t tower,
+                             error_status_t *status)
 {
     WINE_FIXME("(%p, %d, %p, %p, %p): stub\n", h, object_speced, object, tower, status);
 

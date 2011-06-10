@@ -147,7 +147,7 @@ static DWORD validate_service_handle(SC_RPC_HANDLE handle, DWORD needed_access, 
     return err;
 }
 
-DWORD svcctl_OpenSCManagerW(
+DWORD __cdecl svcctl_OpenSCManagerW(
     MACHINE_HANDLEW MachineName, /* Note: this parameter is ignored */
     LPCWSTR DatabaseName,
     DWORD dwAccessMask,
@@ -204,7 +204,7 @@ static void SC_RPC_HANDLE_destroy(SC_RPC_HANDLE handle)
     }
 }
 
-DWORD svcctl_GetServiceDisplayNameW(
+DWORD __cdecl svcctl_GetServiceDisplayNameW(
     SC_RPC_HANDLE hSCManager,
     LPCWSTR lpServiceName,
     WCHAR *lpBuffer,
@@ -250,7 +250,7 @@ DWORD svcctl_GetServiceDisplayNameW(
     return err;
 }
 
-DWORD svcctl_GetServiceKeyNameW(
+DWORD __cdecl svcctl_GetServiceKeyNameW(
     SC_RPC_HANDLE hSCManager,
     LPCWSTR lpServiceDisplayName,
     WCHAR *lpBuffer,
@@ -315,7 +315,7 @@ static DWORD create_handle_for_service(struct service_entry *entry, DWORD dwDesi
     return ERROR_SUCCESS;
 }
 
-DWORD svcctl_OpenServiceW(
+DWORD __cdecl svcctl_OpenServiceW(
     SC_RPC_HANDLE hSCManager,
     LPCWSTR lpServiceName,
     DWORD dwDesiredAccess,
@@ -416,7 +416,7 @@ static DWORD parse_dependencies(const WCHAR *dependencies, struct service_entry 
     return ERROR_SUCCESS;
 }
 
-DWORD svcctl_CreateServiceW(
+DWORD __cdecl svcctl_CreateServiceW(
     SC_RPC_HANDLE hSCManager,
     LPCWSTR lpServiceName,
     LPCWSTR lpDisplayName,
@@ -510,7 +510,7 @@ DWORD svcctl_CreateServiceW(
     return create_handle_for_service(entry, dwDesiredAccess, phService);
 }
 
-DWORD svcctl_DeleteService(
+DWORD __cdecl svcctl_DeleteService(
     SC_RPC_HANDLE hService)
 {
     struct sc_service_handle *service;
@@ -533,7 +533,7 @@ DWORD svcctl_DeleteService(
     return err;
 }
 
-DWORD svcctl_QueryServiceConfigW(
+DWORD __cdecl svcctl_QueryServiceConfigW(
         SC_RPC_HANDLE hService,
         QUERY_SERVICE_CONFIGW *config)
 {
@@ -560,7 +560,7 @@ DWORD svcctl_QueryServiceConfigW(
     return ERROR_SUCCESS;
 }
 
-DWORD svcctl_ChangeServiceConfigW(
+DWORD __cdecl svcctl_ChangeServiceConfigW(
         SC_RPC_HANDLE hService,
         DWORD dwServiceType,
         DWORD dwStartType,
@@ -673,7 +673,7 @@ DWORD svcctl_ChangeServiceConfigW(
     return err;
 }
 
-DWORD svcctl_SetServiceStatus(
+DWORD __cdecl svcctl_SetServiceStatus(
     SC_RPC_HANDLE hServiceStatus,
     LPSERVICE_STATUS lpServiceStatus)
 {
@@ -703,7 +703,7 @@ DWORD svcctl_SetServiceStatus(
     return ERROR_SUCCESS;
 }
 
-DWORD svcctl_ChangeServiceConfig2W( SC_RPC_HANDLE hService, DWORD level, SERVICE_CONFIG2W *config )
+DWORD __cdecl svcctl_ChangeServiceConfig2W( SC_RPC_HANDLE hService, DWORD level, SERVICE_CONFIG2W *config )
 {
     struct sc_service_handle *service;
     DWORD err;
@@ -745,8 +745,8 @@ DWORD svcctl_ChangeServiceConfig2W( SC_RPC_HANDLE hService, DWORD level, SERVICE
     return err;
 }
 
-DWORD svcctl_QueryServiceConfig2W( SC_RPC_HANDLE hService, DWORD level,
-                                   BYTE *buffer, DWORD size, LPDWORD needed )
+DWORD __cdecl svcctl_QueryServiceConfig2W( SC_RPC_HANDLE hService, DWORD level,
+                                           BYTE *buffer, DWORD size, LPDWORD needed )
 {
     struct sc_service_handle *service;
     DWORD err;
@@ -789,7 +789,7 @@ DWORD svcctl_QueryServiceConfig2W( SC_RPC_HANDLE hService, DWORD level,
     return err;
 }
 
-DWORD svcctl_QueryServiceStatusEx(
+DWORD __cdecl svcctl_QueryServiceStatusEx(
     SC_RPC_HANDLE hService,
     SC_STATUS_TYPE InfoLevel,
     BYTE *lpBuffer,
@@ -948,7 +948,7 @@ static BOOL service_send_control(struct service_entry *service, HANDLE pipe, DWO
     return r;
 }
 
-DWORD svcctl_StartServiceW(
+DWORD __cdecl svcctl_StartServiceW(
     SC_RPC_HANDLE hService,
     DWORD dwNumServiceArgs,
     LPCWSTR *lpServiceArgVectors)
@@ -966,7 +966,7 @@ DWORD svcctl_StartServiceW(
     return err;
 }
 
-DWORD svcctl_ControlService(
+DWORD __cdecl svcctl_ControlService(
     SC_RPC_HANDLE hService,
     DWORD dwControl,
     SERVICE_STATUS *lpServiceStatus)
@@ -1080,7 +1080,7 @@ DWORD svcctl_ControlService(
     }
 }
 
-DWORD svcctl_CloseServiceHandle(
+DWORD __cdecl svcctl_CloseServiceHandle(
     SC_RPC_HANDLE *handle)
 {
     WINE_TRACE("(&%p)\n", *handle);
@@ -1103,7 +1103,7 @@ void __RPC_USER SC_RPC_LOCK_rundown(SC_RPC_LOCK hLock)
     SC_RPC_LOCK_destroy(hLock);
 }
 
-DWORD svcctl_LockServiceDatabase(
+DWORD __cdecl svcctl_LockServiceDatabase(
     SC_RPC_HANDLE hSCManager,
     SC_RPC_LOCK *phLock)
 {
@@ -1133,7 +1133,7 @@ DWORD svcctl_LockServiceDatabase(
     return ERROR_SUCCESS;
 }
 
-DWORD svcctl_UnlockServiceDatabase(
+DWORD __cdecl svcctl_UnlockServiceDatabase(
     SC_RPC_LOCK *phLock)
 {
     WINE_TRACE("(&%p)\n", *phLock);
@@ -1166,7 +1166,7 @@ static BOOL map_state(DWORD state, DWORD mask)
     return FALSE;
 }
 
-DWORD svcctl_EnumServicesStatusW(
+DWORD __cdecl svcctl_EnumServicesStatusW(
     SC_RPC_HANDLE hmngr,
     DWORD type,
     DWORD state,
@@ -1260,7 +1260,7 @@ static BOOL match_group(const WCHAR *g1, const WCHAR *g2)
     return FALSE;
 }
 
-DWORD svcctl_EnumServicesStatusExW(
+DWORD __cdecl svcctl_EnumServicesStatusExW(
     SC_RPC_HANDLE hmngr,
     DWORD type,
     DWORD state,
@@ -1345,164 +1345,141 @@ DWORD svcctl_EnumServicesStatusExW(
     return ERROR_SUCCESS;
 }
 
-DWORD svcctl_QueryServiceObjectSecurity(
-    void)
+DWORD __cdecl svcctl_QueryServiceObjectSecurity(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_SetServiceObjectSecurity(
-    void)
+DWORD __cdecl svcctl_SetServiceObjectSecurity(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_QueryServiceStatus(
-    void)
-{
-    WINE_FIXME("\n");
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
-
-DWORD svcctl_NotifyBootConfigStatus(
-    void)
-{
-    WINE_FIXME("\n");
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
-DWORD svcctl_SCSetServiceBitsW(
-    void)
+DWORD __cdecl svcctl_QueryServiceStatus(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
 
-DWORD svcctl_EnumDependentServicesW(
-    void)
+DWORD __cdecl svcctl_NotifyBootConfigStatus(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_QueryServiceLockStatusW(
-    void)
+DWORD __cdecl svcctl_SCSetServiceBitsW(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_SCSetServiceBitsA(
-    void)
+
+DWORD __cdecl svcctl_EnumDependentServicesW(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_ChangeServiceConfigA(
-    void)
+DWORD __cdecl svcctl_QueryServiceLockStatusW(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_CreateServiceA(
-    void)
+DWORD __cdecl svcctl_SCSetServiceBitsA(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_EnumDependentServicesA(
-    void)
+DWORD __cdecl svcctl_ChangeServiceConfigA(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_EnumServicesStatusA(
-    void)
+DWORD __cdecl svcctl_CreateServiceA(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_OpenSCManagerA(
-    void)
+DWORD __cdecl svcctl_EnumDependentServicesA(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_OpenServiceA(
-    void)
+DWORD __cdecl svcctl_EnumServicesStatusA(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_QueryServiceConfigA(
-    void)
+DWORD __cdecl svcctl_OpenSCManagerA(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_QueryServiceLockStatusA(
-    void)
+DWORD __cdecl svcctl_OpenServiceA(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_StartServiceA(
-    void)
+DWORD __cdecl svcctl_QueryServiceConfigA(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_GetServiceDisplayNameA(
-    void)
+DWORD __cdecl svcctl_QueryServiceLockStatusA(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_GetServiceKeyNameA(
-    void)
+DWORD __cdecl svcctl_StartServiceA(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_GetCurrentGroupStateW(
-    void)
+DWORD __cdecl svcctl_GetServiceDisplayNameA(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_EnumServiceGroupW(
-    void)
+DWORD __cdecl svcctl_GetServiceKeyNameA(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_ChangeServiceConfig2A(
-    void)
+DWORD __cdecl svcctl_GetCurrentGroupStateW(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD svcctl_QueryServiceConfig2A(
-    void)
+DWORD __cdecl svcctl_EnumServiceGroupW(void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD __cdecl svcctl_ChangeServiceConfig2A(void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD __cdecl svcctl_QueryServiceConfig2A(void)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;
