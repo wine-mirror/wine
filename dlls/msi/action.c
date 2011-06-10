@@ -1081,22 +1081,6 @@ static UINT iterate_load_featurecomponents(MSIRECORD *row, LPVOID param)
     return ERROR_SUCCESS;
 }
 
-static MSIFEATURE *find_feature_by_name( MSIPACKAGE *package, LPCWSTR name )
-{
-    MSIFEATURE *feature;
-
-    if ( !name )
-        return NULL;
-
-    LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
-    {
-        if ( !strcmpW( feature->Feature, name ) )
-            return feature;
-    }
-
-    return NULL;
-}
-
 static UINT load_feature(MSIRECORD * row, LPVOID param)
 {
     MSIPACKAGE* package = param;
@@ -1159,17 +1143,17 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
 
 static UINT find_feature_children(MSIRECORD * row, LPVOID param)
 {
-    MSIPACKAGE* package = param;
+    MSIPACKAGE *package = param;
     MSIFEATURE *parent, *child;
 
-    child = find_feature_by_name( package, MSI_RecordGetString( row, 1 ) );
+    child = msi_get_loaded_feature( package, MSI_RecordGetString( row, 1 ) );
     if (!child)
         return ERROR_FUNCTION_FAILED;
 
     if (!child->Feature_Parent)
         return ERROR_SUCCESS;
 
-    parent = find_feature_by_name( package, child->Feature_Parent );
+    parent = msi_get_loaded_feature( package, child->Feature_Parent );
     if (!parent)
         return ERROR_FUNCTION_FAILED;
 
