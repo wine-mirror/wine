@@ -2627,10 +2627,20 @@ static DWORD set_content_length(http_request_t *request, DWORD status_code)
     return ERROR_SUCCESS;
 }
 
-static void HTTP_ReceiveRequestData(http_request_t *req, BOOL first_notif)
+static void send_request_complete(http_request_t *req, DWORD_PTR result, DWORD error)
 {
     INTERNET_ASYNC_RESULT iar;
-    DWORD res, read = 0;
+
+    iar.dwResult = result;
+    iar.dwError = error;
+
+    INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_REQUEST_COMPLETE, &iar,
+            sizeof(INTERNET_ASYNC_RESULT));
+}
+
+static void HTTP_ReceiveRequestData(http_request_t *req, BOOL first_notif)
+{
+    DWORD res, read = 0, avail = 0;
     read_mode_t mode;
 
     TRACE("%p\n", req);
@@ -2639,13 +2649,8 @@ static void HTTP_ReceiveRequestData(http_request_t *req, BOOL first_notif)
 
     mode = first_notif && req->read_size ? READMODE_NOBLOCK : READMODE_ASYNC;
     res = refill_read_buffer(req, mode, &read);
-    if(res == ERROR_SUCCESS) {
-        iar.dwResult = (DWORD_PTR)req->hdr.hInternet;
-        iar.dwError = first_notif ? 0 : get_avail_data(req);
-    }else {
-        iar.dwResult = 0;
-        iar.dwError = res;
-    }
+    if(res == ERROR_SUCCESS && !first_notif)
+        avail = get_avail_data(req);
 
     LeaveCriticalSection( &req->read_section );
 
@@ -2654,8 +2659,10 @@ static void HTTP_ReceiveRequestData(http_request_t *req, BOOL first_notif)
         http_release_netconn(req, FALSE);
     }
 
-    INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_REQUEST_COMPLETE, &iar,
-                          sizeof(INTERNET_ASYNC_RESULT));
+    if(res == ERROR_SUCCESS)
+        send_request_complete(req, (DWORD_PTR)req->hdr.hInternet, avail);
+    else
+        send_request_complete(req, 0, res);
 }
 
 /* read data from the http connection (the read section must be held) */
@@ -2725,7 +2732,6 @@ static void HTTPREQ_AsyncReadFileExAProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_INTERNETREADFILEEXA const *data = &workRequest->u.InternetReadFileExA;
     http_request_t *req = (http_request_t*)workRequest->hdr;
-    INTERNET_ASYNC_RESULT iar;
     DWORD res;
 
     TRACE("INTERNETREADFILEEXA %p\n", workRequest->hdr);
@@ -2733,12 +2739,7 @@ static void HTTPREQ_AsyncReadFileExAProc(WORKREQUEST *workRequest)
     res = HTTPREQ_Read(req, data->lpBuffersOut->lpvBuffer,
             data->lpBuffersOut->dwBufferLength, &data->lpBuffersOut->dwBufferLength, TRUE);
 
-    iar.dwResult = res == ERROR_SUCCESS;
-    iar.dwError = res;
-
-    INTERNET_SendCallback(&req->hdr, req->hdr.dwContext,
-                          INTERNET_STATUS_REQUEST_COMPLETE, &iar,
-                          sizeof(INTERNET_ASYNC_RESULT));
+    send_request_complete(req, res == ERROR_SUCCESS, res);
 }
 
 static DWORD HTTPREQ_ReadFileExA(object_header_t *hdr, INTERNET_BUFFERSA *buffers,
@@ -2832,7 +2833,6 @@ static void HTTPREQ_AsyncReadFileExWProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_INTERNETREADFILEEXW const *data = &workRequest->u.InternetReadFileExW;
     http_request_t *req = (http_request_t*)workRequest->hdr;
-    INTERNET_ASYNC_RESULT iar;
     DWORD res;
 
     TRACE("INTERNETREADFILEEXW %p\n", workRequest->hdr);
@@ -2840,12 +2840,7 @@ static void HTTPREQ_AsyncReadFileExWProc(WORKREQUEST *workRequest)
     res = HTTPREQ_Read(req, data->lpBuffersOut->lpvBuffer,
             data->lpBuffersOut->dwBufferLength, &data->lpBuffersOut->dwBufferLength, TRUE);
 
-    iar.dwResult = res == ERROR_SUCCESS;
-    iar.dwError = res;
-
-    INTERNET_SendCallback(&req->hdr, req->hdr.dwContext,
-                          INTERNET_STATUS_REQUEST_COMPLETE, &iar,
-                          sizeof(INTERNET_ASYNC_RESULT));
+    send_request_complete(req, res == ERROR_SUCCESS, res);
 }
 
 static DWORD HTTPREQ_ReadFileExW(object_header_t *hdr, INTERNET_BUFFERSW *buffers,
@@ -4539,7 +4534,6 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
     LPWSTR requestString = NULL;
     INT responseLen;
     BOOL loop_next;
-    INTERNET_ASYNC_RESULT iar;
     static const WCHAR szPost[] = { 'P','O','S','T',0 };
     static const WCHAR szContentLength[] =
         { 'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' ','%','l','i','\r','\n',0 };
@@ -4814,14 +4808,7 @@ lend:
         if (res == ERROR_SUCCESS && request->contentLength && request->bytesWritten == request->bytesToWrite)
             HTTP_ReceiveRequestData(request, TRUE);
         else
-        {
-            iar.dwResult = (res==ERROR_SUCCESS ? (DWORD_PTR)request->hdr.hInternet : 0);
-            iar.dwError = res;
-
-            INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
-                                  INTERNET_STATUS_REQUEST_COMPLETE, &iar,
-                                  sizeof(INTERNET_ASYNC_RESULT));
-        }
+            send_request_complete(request, res == ERROR_SUCCESS ? (DWORD_PTR)request->hdr.hInternet : 0, res);
     }
 
     TRACE("<--\n");
@@ -4912,15 +4899,10 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
         }
     }
 
-    if (res == ERROR_SUCCESS && request->contentLength) {
+    if (res == ERROR_SUCCESS && request->contentLength)
         HTTP_ReceiveRequestData(request, TRUE);
-    }else {
-        INTERNET_ASYNC_RESULT iar = {0, res};
-
-        INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
-                              INTERNET_STATUS_REQUEST_COMPLETE, &iar,
-                              sizeof(INTERNET_ASYNC_RESULT));
-    }
+    else
+        send_request_complete(request, res == ERROR_SUCCESS ? (DWORD_PTR)request->hdr.hInternet : 0, res);
 
     return res;
 }
@@ -4975,7 +4957,7 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
     http_request_t *request;
     DWORD res;
 
-    TRACE("-->\n");
+    TRACE("%p %p %x %lx -->\n", hRequest, lpBuffersOut, dwFlags, dwContext);
 
     if (lpBuffersOut)
     {
