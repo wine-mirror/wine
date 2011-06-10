@@ -103,6 +103,7 @@ static int expect[MAX_INTERNET_STATUS], optional[MAX_INTERNET_STATUS],
 static const char *status_string[MAX_INTERNET_STATUS];
 
 static HANDLE hCompleteEvent, conn_close_event;
+static DWORD req_error;
 
 #define TESTF_REDIRECT      0x01
 #define TESTF_COMPRESSED    0x02
@@ -291,6 +292,7 @@ static VOID WINAPI callback(
             trace("%04x:Callback %p 0x%lx INTERNET_STATUS_REQUEST_COMPLETE {%ld,%d} %d\n",
                 GetCurrentThreadId(), hInternet, dwContext,
                 iar->dwResult,iar->dwError,dwStatusInformationLength);
+            req_error = iar->dwError;
             SetEvent(hCompleteEvent);
             break;
         }
@@ -448,8 +450,10 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
            "Synchronous HttpSendRequest returning 0, error %u\n", GetLastError());
     trace("HttpSendRequestA <--\n");
 
-    if (flags & INTERNET_FLAG_ASYNC)
+    if (flags & INTERNET_FLAG_ASYNC) {
         WaitForSingleObject(hCompleteEvent, INFINITE);
+        ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
+    }
     HeapFree(GetProcessHeap(), 0, post_data);
 
     if(test->flags & TESTF_ALLOW_COOKIE) {
@@ -550,6 +554,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
                     ok(!length, "InternetQueryDataAvailable returned ERROR_IO_PENDING and %u length\n", length);
                 WaitForSingleObject(hCompleteEvent, INFINITE);
                 CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+                ok(req_error, "req_error = 0\n");
                 continue;
             }else {
                 ok(0, "InternetQueryDataAvailable failed: %u\n", GetLastError());
@@ -788,8 +793,10 @@ static void InternetReadFileExA_test(int flags)
            "Synchronous HttpSendRequest returning 0, error %u\n", GetLastError());
     trace("HttpSendRequestA <--\n");
 
-    if (!rc && (GetLastError() == ERROR_IO_PENDING))
+    if (!rc && (GetLastError() == ERROR_IO_PENDING)) {
         WaitForSingleObject(hCompleteEvent, INFINITE);
+        ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
+    }
 
     if (first_connection_to_test_url)
     {
@@ -880,6 +887,7 @@ static void InternetReadFileExA_test(int flags)
                 WaitForSingleObject(hCompleteEvent, INFINITE);
                 CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
                 CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
+                ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
             }
             else
             {
@@ -2166,6 +2174,7 @@ static void test_no_content(int port)
     ok(!res && (GetLastError() == ERROR_IO_PENDING),
        "Asynchronous HttpSendRequest NOT returning 0 with error ERROR_IO_PENDING\n");
     WaitForSingleObject(hCompleteEvent, INFINITE);
+    ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
 
     CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
@@ -2223,6 +2232,7 @@ static void test_conn_close(int port)
     ok(!res && (GetLastError() == ERROR_IO_PENDING),
        "Asynchronous HttpSendRequest NOT returning 0 with error ERROR_IO_PENDING\n");
     WaitForSingleObject(hCompleteEvent, INFINITE);
+    ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
 
     CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
@@ -2252,6 +2262,7 @@ static void test_conn_close(int port)
     SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
     SetEvent(conn_close_event);
     WaitForSingleObject(hCompleteEvent, INFINITE);
+    ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
     CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
     CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
