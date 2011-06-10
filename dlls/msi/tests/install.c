@@ -6469,6 +6469,88 @@ static void test_MsiGetFeatureInfo(void)
     DeleteFileA( msifile );
 }
 
+static void test_MsiSetFeatureAttributes(void)
+{
+    UINT r;
+    DWORD attrs;
+    char path[MAX_PATH];
+    MSIHANDLE package;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+    create_database( msifile, tables, sizeof(tables) / sizeof(tables[0]) );
+
+    strcpy( path, CURR_DIR );
+    strcat( path, "\\" );
+    strcat( path, msifile );
+
+    r = MsiOpenPackage( path, &package );
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFileA( msifile );
+        return;
+    }
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiSetFeatureAttributesA( package, "One", INSTALLFEATUREATTRIBUTE_FAVORLOCAL );
+    ok(r == ERROR_FUNCTION_FAILED, "Expected ERROR_FUNCTION_FAILED, got %u\n", r);
+
+    r = MsiDoAction( package, "CostInitialize" );
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiSetFeatureAttributesA( 0, "One", INSTALLFEATUREATTRIBUTE_FAVORLOCAL );
+    ok(r == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %u\n", r);
+
+    r = MsiSetFeatureAttributesA( package, "", INSTALLFEATUREATTRIBUTE_FAVORLOCAL );
+    ok(r == ERROR_UNKNOWN_FEATURE, "expected ERROR_UNKNOWN_FEATURE, got %u\n", r);
+
+    r = MsiSetFeatureAttributesA( package, NULL, INSTALLFEATUREATTRIBUTE_FAVORLOCAL );
+    ok(r == ERROR_UNKNOWN_FEATURE, "expected ERROR_UNKNOWN_FEATURE, got %u\n", r);
+
+    r = MsiSetFeatureAttributesA( package, "One", 0 );
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+
+    attrs = 0xdeadbeef;
+    r = MsiGetFeatureInfoA( package, "One", &attrs, NULL, NULL, NULL, NULL );
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+    ok(attrs == INSTALLFEATUREATTRIBUTE_FAVORLOCAL,
+       "expected INSTALLFEATUREATTRIBUTE_FAVORLOCAL, got 0x%08x\n", attrs);
+
+    r = MsiSetFeatureAttributesA( package, "One", INSTALLFEATUREATTRIBUTE_FAVORLOCAL );
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+
+    attrs = 0;
+    r = MsiGetFeatureInfoA( package, "One", &attrs, NULL, NULL, NULL, NULL );
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+    ok(attrs == INSTALLFEATUREATTRIBUTE_FAVORLOCAL,
+       "expected INSTALLFEATUREATTRIBUTE_FAVORLOCAL, got 0x%08x\n", attrs);
+
+    r = MsiDoAction( package, "FileCost" );
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiSetFeatureAttributesA( package, "One", INSTALLFEATUREATTRIBUTE_FAVORSOURCE );
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+
+    attrs = 0;
+    r = MsiGetFeatureInfoA( package, "One", &attrs, NULL, NULL, NULL, NULL );
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+    ok(attrs == INSTALLFEATUREATTRIBUTE_FAVORSOURCE,
+       "expected INSTALLFEATUREATTRIBUTE_FAVORSOURCE, got 0x%08x\n", attrs);
+
+    r = MsiDoAction( package, "CostFinalize" );
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiSetFeatureAttributesA( package, "One", INSTALLFEATUREATTRIBUTE_FAVORLOCAL );
+    ok(r == ERROR_FUNCTION_FAILED, "expected ERROR_FUNCTION_FAILED, got %u\n", r);
+
+    MsiCloseHandle( package );
+    DeleteFileA( msifile );
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -6559,6 +6641,7 @@ START_TEST(install)
     test_command_line_parsing();
     test_upgrade_code();
     test_MsiGetFeatureInfo();
+    test_MsiSetFeatureAttributes();
 
     DeleteFileA(log_file);
 

@@ -199,8 +199,8 @@
 203 stdcall MsiProvideQualifiedComponentExW(wstr wstr long wstr long long ptr ptr)
 204 stdcall MsiEnumRelatedProductsA(str long long ptr)
 205 stdcall MsiEnumRelatedProductsW(wstr long long ptr)
-206 stub MsiSetFeatureAttributesA
-207 stub MsiSetFeatureAttributesW
+206 stdcall MsiSetFeatureAttributesA(long str long)
+207 stdcall MsiSetFeatureAttributesW(long wstr long)
 208 stdcall MsiSourceListClearAllA(str str long)
 209 stdcall MsiSourceListClearAllW(wstr wstr long)
 210 stdcall MsiSourceListAddSourceA(str str long str)

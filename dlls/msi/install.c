@@ -1028,6 +1028,70 @@ UINT WINAPI MsiSetFeatureStateW(MSIHANDLE hInstall, LPCWSTR szFeature,
 }
 
 /***********************************************************************
+* MsiSetFeatureAttributesA   (MSI.@)
+*/
+UINT WINAPI MsiSetFeatureAttributesA( MSIHANDLE handle, LPCSTR feature, DWORD attrs )
+{
+    UINT r;
+    WCHAR *featureW = NULL;
+
+    TRACE("%u, %s, 0x%08x\n", handle, debugstr_a(feature), attrs);
+
+    if (feature && !(featureW = strdupAtoW( feature ))) return ERROR_OUTOFMEMORY;
+
+    r = MsiSetFeatureAttributesW( handle, featureW, attrs );
+    msi_free( featureW );
+    return r;
+}
+
+static DWORD unmap_feature_attributes( DWORD attrs )
+{
+    DWORD ret = 0;
+
+    if (attrs & INSTALLFEATUREATTRIBUTE_FAVORLOCAL)             ret = msidbFeatureAttributesFavorLocal;
+    if (attrs & INSTALLFEATUREATTRIBUTE_FAVORSOURCE)            ret |= msidbFeatureAttributesFavorSource;
+    if (attrs & INSTALLFEATUREATTRIBUTE_FOLLOWPARENT)           ret |= msidbFeatureAttributesFollowParent;
+    if (attrs & INSTALLFEATUREATTRIBUTE_FAVORADVERTISE)         ret |= msidbFeatureAttributesFavorAdvertise;
+    if (attrs & INSTALLFEATUREATTRIBUTE_DISALLOWADVERTISE)      ret |= msidbFeatureAttributesDisallowAdvertise;
+    if (attrs & INSTALLFEATUREATTRIBUTE_NOUNSUPPORTEDADVERTISE) ret |= msidbFeatureAttributesNoUnsupportedAdvertise;
+    return ret;
+}
+
+/***********************************************************************
+* MsiSetFeatureAttributesW   (MSI.@)
+*/
+UINT WINAPI MsiSetFeatureAttributesW( MSIHANDLE handle, LPCWSTR name, DWORD attrs )
+{
+    MSIPACKAGE *package;
+    MSIFEATURE *feature;
+    WCHAR *costing;
+
+    TRACE("%u, %s, 0x%08x\n", handle, debugstr_w(name), attrs);
+
+    if (!name || !name[0]) return ERROR_UNKNOWN_FEATURE;
+
+    if (!(package = msihandle2msiinfo( handle, MSIHANDLETYPE_PACKAGE )))
+        return ERROR_INVALID_HANDLE;
+
+    costing = msi_dup_property( package->db, szCostingComplete );
+    if (!costing || !strcmpW( costing, szOne ))
+    {
+        msi_free( costing );
+        msiobj_release( &package->hdr );
+        return ERROR_FUNCTION_FAILED;
+    }
+    msi_free( costing );
+    if (!(feature = msi_get_loaded_feature( package, name )))
+    {
+        msiobj_release( &package->hdr );
+        return ERROR_UNKNOWN_FEATURE;
+    }
+    feature->Attributes = unmap_feature_attributes( attrs );
+    msiobj_release( &package->hdr );
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
 * MsiGetFeatureStateA   (MSI.@)
 */
 UINT WINAPI MsiGetFeatureStateA(MSIHANDLE hInstall, LPCSTR szFeature,
@@ -1036,12 +1100,10 @@ UINT WINAPI MsiGetFeatureStateA(MSIHANDLE hInstall, LPCSTR szFeature,
     LPWSTR szwFeature = NULL;
     UINT rc;
     
-    szwFeature = strdupAtoW(szFeature);
+    if (szFeature && !(szwFeature = strdupAtoW(szFeature))) return ERROR_OUTOFMEMORY;
 
-    rc = MsiGetFeatureStateW(hInstall,szwFeature,piInstalled, piAction);
-
+    rc = MsiGetFeatureStateW(hInstall, szwFeature, piInstalled, piAction);
     msi_free( szwFeature);
-
     return rc;
 }
 
