@@ -3937,6 +3937,8 @@ static void test_WSARecv(void)
     DWORD dwret;
     BOOL bret;
 
+    memset(&ov, 0, sizeof(ov));
+
     tcp_socketpair(&src, &dest);
     if (src == INVALID_SOCKET || dest == INVALID_SOCKET)
     {
@@ -3948,7 +3950,6 @@ static void test_WSARecv(void)
     bufs.buf = buf;
     flags = 0;
 
-    memset(&ov, 0, sizeof(ov));
     ov.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
     ok(ov.hEvent != NULL, "could not create event object, errno = %d\n", GetLastError());
     if (!ov.hEvent)
