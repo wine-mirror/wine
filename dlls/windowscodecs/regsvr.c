@@ -937,6 +937,15 @@ static struct regsvr_encoder const encoder_list[] = {
 	".bmp,.dib,.rle",
 	bmp_encode_formats
     },
+    {   &CLSID_WICJpegEncoder,
+	"The Wine Project",
+	"JPEG Encoder",
+	"1.0.0.0",
+	&GUID_VendorMicrosoft,
+	"image/jpeg",
+	".jpg;.jpeg;.jfif",
+	jpeg_formats
+    },
     {   &CLSID_WICPngEncoder,
 	"The Wine Project",
 	"PNG Encoder",

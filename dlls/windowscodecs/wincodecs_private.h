@@ -37,6 +37,7 @@ extern HRESULT DibDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void**
 extern HRESULT GifDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID riid, void** ppv) DECLSPEC_HIDDEN;
 extern HRESULT IcoDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
 extern HRESULT JpegDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
+extern HRESULT JpegEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
 extern HRESULT TiffDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
 extern HRESULT TiffEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
 extern HRESULT IcnsEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
