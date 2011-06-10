@@ -977,3 +977,24 @@ UINT WINAPI MsiSummaryInfoPersist( MSIHANDLE handle )
     msiobj_release( &si->hdr );
     return ret;
 }
+
+UINT WINAPI MsiCreateTransformSummaryInfoA( MSIHANDLE db, MSIHANDLE db_ref, LPCSTR transform, int error, int validation )
+{
+    UINT r;
+    WCHAR *transformW = NULL;
+
+    TRACE("%u, %u, %s, %d, %d\n", db, db_ref, debugstr_a(transform), error, validation);
+
+    if (transform && !(transformW = strdupAtoW( transform )))
+        return ERROR_OUTOFMEMORY;
+
+    r = MsiCreateTransformSummaryInfoW( db, db_ref, transformW, error, validation );
+    msi_free( transformW );
+    return r;
+}
+
+UINT WINAPI MsiCreateTransformSummaryInfoW( MSIHANDLE db, MSIHANDLE db_ref, LPCWSTR transform, int error, int validation )
+{
+    FIXME("%u, %u, %s, %d, %d\n", db, db_ref, debugstr_w(transform), error, validation);
+    return ERROR_FUNCTION_FAILED;
+}

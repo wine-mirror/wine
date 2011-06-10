@@ -178,8 +178,8 @@
 182 stdcall -private DllGetVersion(ptr)
 183 stub MsiGetProductCodeFromPackageCodeA
 184 stub MsiGetProductCodeFromPackageCodeW
-185 stub MsiCreateTransformSummaryInfoA
-186 stub MsiCreateTransformSummaryInfoW
+185 stdcall MsiCreateTransformSummaryInfoA(long long str long long)
+186 stdcall MsiCreateTransformSummaryInfoW(long long wstr long long)
 187 stub MsiQueryFeatureStateFromDescriptorA
 188 stub MsiQueryFeatureStateFromDescriptorW
 189 stdcall MsiConfigureProductExA(str long long str)
