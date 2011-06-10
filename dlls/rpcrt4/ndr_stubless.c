@@ -332,11 +332,8 @@ static void client_do_args(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
             case PROXY_UNMARSHAL:
                 if (pParam->param_attributes.IsOut)
                 {
-                    if (pParam->param_attributes.IsReturn)
-                        call_unmarshaller(pStubMsg, &pRetVal, pTypeFormat, 0);
-                    else
-                        call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
-                    TRACE("pRetVal = %p\n", pRetVal);
+                    if (pParam->param_attributes.IsReturn) pArg = pRetVal;
+                    call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
                 }
                 break;
             default:
@@ -386,9 +383,8 @@ static void client_do_args(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
             case PROXY_UNMARSHAL:
                 if (pParam->param_attributes.IsOut)
                 {
-                    if (pParam->param_attributes.IsReturn)
-                        call_unmarshaller(pStubMsg, &pRetVal, pTypeFormat, 0);
-                    else if (pParam->param_attributes.IsByValue)
+                    if (pParam->param_attributes.IsReturn) pArg = pRetVal;
+                    if (pParam->param_attributes.IsByValue)
                         call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
                     else
                         call_unmarshaller(pStubMsg, (unsigned char **)pArg, pTypeFormat, 0);
