@@ -55,6 +55,7 @@ static const struct {
     {"GL_ARB_depth_clamp",                  ARB_DEPTH_CLAMP,                0                           },
     {"GL_ARB_depth_texture",                ARB_DEPTH_TEXTURE,              0                           },
     {"GL_ARB_draw_buffers",                 ARB_DRAW_BUFFERS,               0                           },
+    {"GL_ARB_draw_elements_base_vertex",    ARB_DRAW_ELEMENTS_BASE_VERTEX,  0                           },
     {"GL_ARB_fragment_program",             ARB_FRAGMENT_PROGRAM,           0                           },
     {"GL_ARB_fragment_shader",              ARB_FRAGMENT_SHADER,            0                           },
     {"GL_ARB_framebuffer_object",           ARB_FRAMEBUFFER_OBJECT,         0                           },

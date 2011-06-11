@@ -1738,6 +1738,7 @@ typedef enum wined3d_gl_extension
     ARB_DEPTH_CLAMP,
     ARB_DEPTH_TEXTURE,
     ARB_DRAW_BUFFERS,
+    ARB_DRAW_ELEMENTS_BASE_VERTEX,
     ARB_FRAGMENT_PROGRAM,
     ARB_FRAGMENT_SHADER,
     ARB_FRAMEBUFFER_OBJECT,
@@ -1964,6 +1965,19 @@ typedef void (WINE_GLAPI *PGLFNCLAMPCOLORARBPROC)(GLenum target, GLenum clamp);
 #define GL_DRAW_BUFFER15_ARB                                0x8834
 #endif
 typedef void (WINE_GLAPI *PGLFNDRAWBUFFERSARBPROC)(GLsizei n, const GLenum *bufs);
+
+/* GL_ARB_draw_elements_base_vertex */
+#ifndef GL_ARB_draw_elements_base_vertex
+#define GL_ARB_draw_elements_base_vertex 1
+typedef void (WINE_GLAPI *PGLFNDRAWELEMENTSBASEVERTEXPROC)(GLenum mode, GLsizei count, GLenum type,
+        const GLvoid *indices, GLint basevertex);
+typedef void (WINE_GLAPI *PGLFNDRAWRANGEELEMENTSBASEVERTEXPROC)(GLenum mode, GLuint start, GLuint end,
+         GLsizei count, GLenum type, const GLvoid *indices, GLint basevertex);
+typedef void (WINE_GLAPI *PGLFNDRAWELEMENTSINSTANCEDBASEVERTEXPROC)(GLenum mode, GLsizei count,
+         GLenum type, const GLvoid *indices, GLsizei primcount, GLint basevertex);
+typedef void (WINE_GLAPI *PGLFNMULTIDRAWELEMENTSBASEVERTEXPROC)(GLenum mode, GLsizei *count, GLenum type,
+         const GLvoid **indices, GLsizei primcount, GLint *basevertex);
+#endif
 
 /* GL_ARB_fragment_program */
 #ifndef GL_ARB_fragment_program
@@ -3789,6 +3803,15 @@ typedef BOOL (WINAPI *WINED3D_PFNWGLSWAPINTERVALEXTPROC)(int interval);
     /* GL_ARB_draw_buffers */ \
     USE_GL_FUNC(PGLFNDRAWBUFFERSARBPROC, \
             glDrawBuffersARB,                           ARB_DRAW_BUFFERS,               NULL) \
+    /* GL_ARB_draw_elements_base_vertex */ \
+    USE_GL_FUNC(PGLFNDRAWELEMENTSBASEVERTEXPROC, \
+            glDrawElementsBaseVertex,                   ARB_DRAW_ELEMENTS_BASE_VERTEX,  NULL) \
+    USE_GL_FUNC(PGLFNDRAWRANGEELEMENTSBASEVERTEXPROC, \
+            glDrawRangeElementsBaseVertex,              ARB_DRAW_ELEMENTS_BASE_VERTEX,  NULL) \
+    USE_GL_FUNC(PGLFNDRAWELEMENTSINSTANCEDBASEVERTEXPROC, \
+            glDrawElementsInstancedBaseVertex,          ARB_DRAW_ELEMENTS_BASE_VERTEX,  NULL) \
+    USE_GL_FUNC(PGLFNMULTIDRAWELEMENTSBASEVERTEXPROC, \
+            glMultiDrawElementsBaseVertex,              ARB_DRAW_ELEMENTS_BASE_VERTEX,  NULL) \
     /* GL_ARB_framebuffer_object */ \
     USE_GL_FUNC(PGLFNGLISRENDERBUFFERPROC, \
             glIsRenderbuffer,                           ARB_FRAMEBUFFER_OBJECT,         NULL) \
