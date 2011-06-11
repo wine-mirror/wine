@@ -1360,7 +1360,7 @@ event_handler(AuServer* aud, AuEvent* ev, AuEventHandlerRec* hnd)
                                      nas_state(event->prev_state),
                                      nas_state(event->cur_state),
                                      nas_reason(event->reason),
-                                     event->num_bytes, wwo->freeBytes);
+                                     (long)event->num_bytes, wwo->freeBytes);
 
                      if (event->cur_state ==  AuStatePause && event->reason != AuReasonUser) {
                         wwo->freeBytes += event->num_bytes;
