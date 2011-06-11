@@ -89,13 +89,13 @@ static void request_complete(Protocol *protocol, INTERNET_ASYNC_RESULT *ar)
         }
 
         if(protocol->flags & FLAG_FIRST_CONTINUE_COMPLETE)
-            data.pData = (LPVOID)BINDSTATUS_ENDDOWNLOADCOMPONENTS;
+            data.pData = UlongToPtr(BINDSTATUS_ENDDOWNLOADCOMPONENTS);
         else
-            data.pData = (LPVOID)BINDSTATUS_DOWNLOADINGDATA;
+            data.pData = UlongToPtr(BINDSTATUS_DOWNLOADINGDATA);
 
     }else {
         protocol->flags |= FLAG_ERROR;
-        data.pData = (LPVOID)ar->dwError;
+        data.pData = UlongToPtr(ar->dwError);
     }
 
     if (protocol->bindf & BINDF_FROMURLMON)
@@ -294,7 +294,7 @@ HRESULT protocol_continue(Protocol *protocol, PROTOCOLDATA *data)
         return S_OK;
     }
 
-    is_start = data->pData == (LPVOID)BINDSTATUS_DOWNLOADINGDATA;
+    is_start = data->pData == UlongToPtr(BINDSTATUS_DOWNLOADINGDATA);
 
     if(!protocol->request) {
         WARN("Expected request to be non-NULL\n");
@@ -308,7 +308,7 @@ HRESULT protocol_continue(Protocol *protocol, PROTOCOLDATA *data)
 
     if(protocol->flags & FLAG_ERROR) {
         protocol->flags &= ~FLAG_ERROR;
-        protocol->vtbl->on_error(protocol, (DWORD)data->pData);
+        protocol->vtbl->on_error(protocol, PtrToUlong(data->pData));
         return S_OK;
     }
 
@@ -338,7 +338,7 @@ HRESULT protocol_continue(Protocol *protocol, PROTOCOLDATA *data)
         protocol->flags |= FLAG_FIRST_CONTINUE_COMPLETE;
     }
 
-    if(data->pData >= (LPVOID)BINDSTATUS_DOWNLOADINGDATA && !protocol->available_bytes) {
+    if(data->pData >= UlongToPtr(BINDSTATUS_DOWNLOADINGDATA) && !protocol->available_bytes) {
         BOOL res;
 
         /* InternetQueryDataAvailable may immediately fork and perform its asynchronous
