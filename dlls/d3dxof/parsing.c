@@ -166,7 +166,7 @@ static void dump_template(xtemplate* templates_array, xtemplate* ptemplate)
   DPRINTF("}\n");
 }
 
-BOOL read_bytes(parse_buffer * buf, LPVOID data, DWORD size)
+static BOOL read_bytes(parse_buffer * buf, LPVOID data, DWORD size)
 {
   if (buf->rem_bytes < size)
     return FALSE;
