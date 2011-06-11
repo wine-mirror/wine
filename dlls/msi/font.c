@@ -216,13 +216,13 @@ static UINT ITERATE_RegisterFonts(MSIRECORD *row, LPVOID param)
     file = msi_get_loaded_file( package, filename );
     if (!file)
     {
-        WARN("unable to find file %s\n", debugstr_w(file->File));
+        WARN("unable to find file %s\n", debugstr_w(filename));
         return ERROR_SUCCESS;
     }
     comp = msi_get_loaded_component( package, file->Component->Component );
     if (!comp)
     {
-        WARN("unable to find component %s\n", debugstr_w(comp->Component));
+        WARN("unable to find component %s\n", debugstr_w(file->Component->Component));
         return ERROR_SUCCESS;
     }
     comp->Action = msi_get_component_action( package, comp );
@@ -301,13 +301,13 @@ static UINT ITERATE_UnregisterFonts( MSIRECORD *row, LPVOID param )
     file = msi_get_loaded_file( package, filename );
     if (!file)
     {
-        WARN("unable to find file %s\n", debugstr_w(file->File));
+        WARN("unable to find file %s\n", debugstr_w(filename));
         return ERROR_SUCCESS;
     }
     comp = msi_get_loaded_component( package, file->Component->Component );
     if (!comp)
     {
-        WARN("unable to find component %s\n", debugstr_w(comp->Component));
+        WARN("unable to find component %s\n", debugstr_w(file->Component->Component));
         return ERROR_SUCCESS;
     }
     comp->Action = msi_get_component_action( package, comp );
