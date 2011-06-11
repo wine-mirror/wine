@@ -1516,6 +1516,11 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetValue(ID3DXBaseEffect *iface, D3DXH
     TRACE("iface %p, parameter %p, data %p, bytes %u\n", This, parameter, data, bytes);
 
     if (!param) param = get_parameter_by_name(This, NULL, parameter);
+    if (!param)
+    {
+        WARN("Invalid parameter %p specified\n", parameter);
+        return D3DERR_INVALIDCALL;
+    }
 
     /* samplers don't touch data */
     if (param->class == D3DXPC_OBJECT && (param->type == D3DXPT_SAMPLER
@@ -1526,7 +1531,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetValue(ID3DXBaseEffect *iface, D3DXH
         return E_FAIL;
     }
 
-    if (data && param && param->bytes <= bytes)
+    if (data && param->bytes <= bytes)
     {
         TRACE("Type %s\n", debug_d3dxparameter_type(param->type));
 
