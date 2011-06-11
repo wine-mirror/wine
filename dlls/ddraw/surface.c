@@ -31,6 +31,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
+static IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface2(IDirectDrawSurface2 *iface);
+static IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface);
+
 static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawGammaControl(IDirectDrawGammaControl *iface)
 {
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawGammaControl_iface);
@@ -4813,14 +4816,14 @@ IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface4(IDirectDrawSurface4
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface4_iface);
 }
 
-IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface)
+static IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface)
 {
     if (!iface) return NULL;
     assert(iface->lpVtbl == &ddraw_surface3_vtbl);
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface3_iface);
 }
 
-IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface2(IDirectDrawSurface2 *iface)
+static IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface2(IDirectDrawSurface2 *iface)
 {
     if (!iface) return NULL;
     assert(iface->lpVtbl == &ddraw_surface2_vtbl);
