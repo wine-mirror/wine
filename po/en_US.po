@@ -8401,6 +8401,10 @@ msgstr "DirectX Diagnostic Tool"
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 
+#: explorer.rc:28
+msgid "Wine Explorer"
+msgstr "Wine Explorer"
+
 #: hostname.rc:27
 msgid "Usage: hostname\n"
 msgstr "Usage: hostname\n"

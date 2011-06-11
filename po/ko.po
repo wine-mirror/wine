@@ -8371,6 +8371,11 @@ msgstr "다이렉트엑스 진단 도구"
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr "사용법: dxdiag [/whql:off | /whql:on] [/t 파일이름 | /x 파일이름]"
 
+#: explorer.rc:28
+#, fuzzy
+msgid "Wine Explorer"
+msgstr "Wine 인터넷 익스폴로어r"
+
 #: hostname.rc:27
 msgid "Usage: hostname\n"
 msgstr "사용법:hostname\n"

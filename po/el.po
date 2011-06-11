@@ -8132,6 +8132,10 @@ msgstr ""
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr ""
 
+#: explorer.rc:28
+msgid "Wine Explorer"
+msgstr ""
+
 #: hostname.rc:27
 msgid "Usage: hostname\n"
 msgstr ""

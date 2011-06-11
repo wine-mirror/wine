@@ -15473,7 +15473,7 @@ wine_fn_config_program control enable_control install
 wine_fn_config_program dxdiag enable_dxdiag install,po
 wine_fn_config_program eject enable_eject install
 wine_fn_config_program expand enable_expand install
-wine_fn_config_program explorer enable_explorer install
+wine_fn_config_program explorer enable_explorer install,po
 wine_fn_config_program extrac32 enable_extrac32 install
 wine_fn_config_program hh enable_hh install
 wine_fn_config_program hostname enable_hostname install,po
