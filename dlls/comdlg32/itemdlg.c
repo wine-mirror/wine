@@ -993,7 +993,7 @@ static LRESULT ctrl_container_on_create(HWND hwnd, CREATESTRUCTW *crs)
 static LRESULT ctrl_container_on_wm_destroy(FileDialogImpl *This)
 {
     customctrl *cur1, *cur2;
-    TRACE("%p", This);
+    TRACE("%p\n", This);
 
     LIST_FOR_EACH_ENTRY_SAFE(cur1, cur2, &This->cctrls, customctrl, entry)
     {
