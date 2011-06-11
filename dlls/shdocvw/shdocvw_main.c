@@ -210,6 +210,17 @@ DWORD WINAPI RunInstallUninstallStubs(void)
 }
 
 /***********************************************************************
+ *              @ (SHDOCVW.130)
+ *
+ * Called by Emerge Desktop (alternative Windows Shell).
+ */
+DWORD WINAPI RunInstallUninstallStubs2(void)
+{
+    FIXME("(), stub!\n");
+    return 0x0deadbee;
+}
+
+/***********************************************************************
  *              SetQueryNetSessionCount (SHDOCVW.@)
  */
 DWORD WINAPI SetQueryNetSessionCount(DWORD arg)
