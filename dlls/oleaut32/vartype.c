@@ -1655,7 +1655,7 @@ HRESULT WINAPI VarI4FromBool(VARIANT_BOOL boolIn, LONG *piOut)
 /************************************************************************
  * VarI4FromI1 (OLEAUT32.209)
  *
- * Convert a VT_I4 to a VT_I4.
+ * Convert a VT_I1 to a VT_I4.
  *
  * PARAMS
  *  cIn     [I] Source
