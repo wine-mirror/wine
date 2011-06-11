@@ -160,6 +160,36 @@ static void register_explorer_window_class(void)
     RegisterClassExW(&window_class);
 }
 
+static IShellFolder* get_starting_shell_folder(parameters_struct* params)
+{
+    IShellFolder* desktop,*folder;
+    LPITEMIDLIST root_pidl;
+    HRESULT hres;
+
+    SHGetDesktopFolder(&desktop);
+    if(!params->root || (strlenW(params->root)==0))
+    {
+        return desktop;
+    }
+    hres = IShellFolder_ParseDisplayName(desktop,NULL,NULL,
+                                         params->root,NULL,
+                                         &root_pidl,NULL);
+
+    if(FAILED(hres))
+    {
+        return desktop;
+    }
+    hres = IShellFolder_BindToObject(desktop,root_pidl,NULL,
+                                     &IID_IShellFolder,
+                                     (void**)&folder);
+    if(FAILED(hres))
+    {
+        return desktop;
+    }
+    IShellFolder_Release(desktop);
+    return folder;
+}
+
 static int copy_path_string(LPWSTR target, LPWSTR source)
 {
     INT i = 0;
@@ -290,7 +320,7 @@ int WINAPI wWinMain(HINSTANCE hinstance,
         ExitProcess(EXIT_FAILURE);
     }
     register_explorer_window_class();
-    SHGetDesktopFolder(&folder);
+    folder = get_starting_shell_folder(&parameters);
     make_explorer_window(folder);
     IShellFolder_Release(folder);
     while(GetMessageW( &msg, NULL, 0, 0 ) != 0)
