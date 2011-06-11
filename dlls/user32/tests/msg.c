@@ -13054,6 +13054,7 @@ static LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam
     {
         KBDLLHOOKSTRUCT *kdbhookstruct = (KBDLLHOOKSTRUCT*)lParam;
 
+        msg.hwnd = 0;
         msg.message = wParam;
         msg.flags = kbd_hook|wparam|lparam;
         msg.wParam = kdbhookstruct->vkCode;
