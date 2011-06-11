@@ -1855,7 +1855,7 @@ static CALLBACK HRESULT ID3DXAllocateHierarchyImpl_CreateMeshContainer(ID3DXAllo
         } else {
             ok(mesh_data->Type == D3DXMESHTYPE_PATCHMESH, "Unknown mesh type %u\n", mesh_data->Type);
             if (mesh_data->Type == D3DXMESHTYPE_PATCHMESH)
-                trace("FIXME: copying adjacency data for patch mesh not implemented");
+                trace("FIXME: copying adjacency data for patch mesh not implemented\n");
         }
     }
 
