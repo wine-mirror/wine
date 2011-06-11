@@ -520,7 +520,7 @@ static VOID WINAPI oob_server ( server_params *par )
     ok ( atmark == 0, "oob_server (%x): not at the OOB mark: %i\n", id, atmark );
 
     /* Receive the rest of the out-of-band data and check atmark state */
-    n_recvd = do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, n_expected, par->buflen );
+    do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, n_expected, par->buflen );
 
     ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
     ok ( atmark == 0, "oob_server (%x): not at the OOB mark: %i\n", id, atmark );
