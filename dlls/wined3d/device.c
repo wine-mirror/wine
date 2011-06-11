@@ -4231,8 +4231,8 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive_up(struct wined3d_device *de
         device->stateBlock->state.load_base_vertex_index = 0;
         device_invalidate_state(device, STATE_BASEVERTEXINDEX);
     }
-    /* Mark the state dirty until we have nicer tracking of the stream source pointers */
-    device_invalidate_state(device, STATE_VDECL);
+    /* Invalidate the state until we have nicer tracking of the stream source pointers */
+    device_invalidate_state(device, STATE_STREAMSRC);
     device_invalidate_state(device, STATE_INDEXBUFFER);
 
     drawPrimitive(device, index_count, 0, index_size, index_data);
