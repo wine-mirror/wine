@@ -2391,10 +2391,6 @@ HRESULT CDECL wined3d_device_set_base_vertex_index(struct wined3d_device *device
         TRACE("Recording... not performing anything\n");
         return WINED3D_OK;
     }
-
-    /* The base vertex index affects the stream sources */
-    device_invalidate_state(device, STATE_STREAMSRC);
-
     return WINED3D_OK;
 }
 
@@ -4092,7 +4088,7 @@ HRESULT CDECL wined3d_device_draw_primitive(struct wined3d_device *device, UINT 
     if (device->stateBlock->state.load_base_vertex_index)
     {
         device->stateBlock->state.load_base_vertex_index = 0;
-        device_invalidate_state(device, STATE_STREAMSRC);
+        device_invalidate_state(device, STATE_BASEVERTEXINDEX);
     }
 
     /* Account for the loading offset due to index buffers. Instead of
@@ -4106,6 +4102,7 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *devic
     struct wined3d_buffer *index_buffer;
     UINT index_size = 2;
     GLuint vbo;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     TRACE("device %p, start_idx %u, index_count %u.\n", device, start_idx, index_count);
 
@@ -4138,10 +4135,11 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *devic
     else
         index_size = 4;
 
-    if (device->stateBlock->state.load_base_vertex_index != device->stateBlock->state.base_vertex_index)
+    if (!gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX] &&
+        device->stateBlock->state.load_base_vertex_index != device->stateBlock->state.base_vertex_index)
     {
         device->stateBlock->state.load_base_vertex_index = device->stateBlock->state.base_vertex_index;
-        device_invalidate_state(device, STATE_STREAMSRC);
+        device_invalidate_state(device, STATE_BASEVERTEXINDEX);
     }
 
     drawPrimitive(device, index_count, start_idx, index_size,
@@ -4174,7 +4172,11 @@ HRESULT CDECL wined3d_device_draw_primitive_up(struct wined3d_device *device, UI
     stream->offset = 0;
     stream->stride = stream_stride;
     device->stateBlock->state.user_stream = TRUE;
-    device->stateBlock->state.load_base_vertex_index = 0;
+    if (device->stateBlock->state.load_base_vertex_index)
+    {
+        device->stateBlock->state.load_base_vertex_index = 0;
+        device_invalidate_state(device, STATE_BASEVERTEXINDEX);
+    }
 
     /* TODO: Only mark dirty if drawing from a different UP address */
     device_invalidate_state(device, STATE_STREAMSRC);
@@ -4224,7 +4226,11 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive_up(struct wined3d_device *de
 
     /* Set to 0 as per msdn. Do it now due to the stream source loading during drawPrimitive */
     device->stateBlock->state.base_vertex_index = 0;
-    device->stateBlock->state.load_base_vertex_index = 0;
+    if (device->stateBlock->state.load_base_vertex_index)
+    {
+        device->stateBlock->state.load_base_vertex_index = 0;
+        device_invalidate_state(device, STATE_BASEVERTEXINDEX);
+    }
     /* Mark the state dirty until we have nicer tracking of the stream source pointers */
     device_invalidate_state(device, STATE_VDECL);
     device_invalidate_state(device, STATE_INDEXBUFFER);

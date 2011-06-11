@@ -33,14 +33,24 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_draw);
 #include <math.h>
 
 /* GL locking is done by the caller */
-static void drawStridedFast(GLenum primitive_type, UINT count, UINT idx_size, const void *idx_data, UINT start_idx)
+static void drawStridedFast(const struct wined3d_gl_info *gl_info, GLenum primitive_type, UINT count, UINT idx_size,
+        const void *idx_data, UINT start_idx, INT base_vertex_index)
 {
     if (idx_size)
     {
-        glDrawElements(primitive_type, count,
-                idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
-                (const char *)idx_data + (idx_size * start_idx));
-        checkGLcall("glDrawElements");
+        GLenum idxtype = idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
+        if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
+        {
+            GL_EXTCALL(glDrawElementsBaseVertex(primitive_type, count, idxtype,
+                    (const char *)idx_data + (idx_size * start_idx), base_vertex_index));
+            checkGLcall("glDrawElementsBaseVertex");
+        }
+        else
+        {
+            glDrawElements(primitive_type, count,
+                    idxtype, (const char *)idx_data + (idx_size * start_idx));
+            checkGLcall("glDrawElements");
+        }
     }
     else
     {
@@ -469,11 +479,12 @@ static void drawStridedSlowVs(const struct wined3d_gl_info *gl_info, const struc
 /* GL locking is done by the caller */
 static void drawStridedInstanced(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state,
         const struct wined3d_stream_info *si, UINT numberOfVertices, GLenum glPrimitiveType,
-        const void *idxData, UINT idxSize, UINT startIdx)
+        const void *idxData, UINT idxSize, UINT startIdx, UINT base_vertex_index)
 {
     UINT numInstances = 0, i;
     int numInstancedAttribs = 0, j;
     UINT instancedData[sizeof(si->elements) / sizeof(*si->elements) /* 16 */];
+    GLenum idxtype = idxSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
 
     if (!idxSize)
     {
@@ -530,9 +541,18 @@ static void drawStridedInstanced(const struct wined3d_gl_info *gl_info, const st
             send_attribute(gl_info, si->elements[instancedData[j]].format->id, instancedData[j], ptr);
         }
 
-        glDrawElements(glPrimitiveType, numberOfVertices, idxSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
-                    (const char *)idxData+(idxSize * startIdx));
-        checkGLcall("glDrawElements");
+        if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
+        {
+            GL_EXTCALL(glDrawElementsBaseVertex(glPrimitiveType, numberOfVertices, idxtype,
+                        (const char *)idxData+(idxSize * startIdx), base_vertex_index));
+            checkGLcall("glDrawElementsBaseVertex");
+        }
+        else
+        {
+            glDrawElements(glPrimitiveType, numberOfVertices, idxtype,
+                        (const char *)idxData+(idxSize * startIdx));
+            checkGLcall("glDrawElements");
+        }
     }
 }
 
@@ -646,6 +666,7 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
     ENTER_GL();
     {
         GLenum glPrimType = state->gl_primitive_type;
+        INT base_vertex_index = state->base_vertex_index;
         BOOL emulation = FALSE;
         const struct wined3d_stream_info *stream_info = &device->strided_streams;
         struct wined3d_stream_info stridedlcl;
@@ -711,11 +732,11 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
         {
             /* Instancing emulation with mixing immediate mode and arrays */
             drawStridedInstanced(context->gl_info, state, stream_info,
-                    index_count, glPrimType, idxData, idxSize, StartIdx);
+                    index_count, glPrimType, idxData, idxSize, StartIdx, base_vertex_index);
         }
         else
         {
-            drawStridedFast(glPrimType, index_count, idxSize, idxData, StartIdx);
+            drawStridedFast(context->gl_info, glPrimType, index_count, idxSize, idxData, StartIdx, base_vertex_index);
         }
     }
 
