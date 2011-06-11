@@ -1872,12 +1872,13 @@ HRESULT CDECL wined3d_device_multiply_transform(struct wined3d_device *device,
      * below means it will be recorded in a state block change, but it
      * works regardless where it is recorded.
      * If this is found to be wrong, change to StateBlock. */
+    if (state > HIGHEST_TRANSFORMSTATE)
+    {
+        WARN("Unhandled transform state %#x.\n", state);
+        return WINED3D_OK;
+    }
 
-    if (state <= HIGHEST_TRANSFORMSTATE)
-        mat = &device->updateStateBlock->state.transforms[state];
-    else
-        FIXME("Unhandled transform state %#x.\n", state);
-
+    mat = &device->updateStateBlock->state.transforms[state];
     multiply_matrix(&temp, mat, matrix);
 
     /* Apply change via set transform - will reapply to eg. lights this way. */
