@@ -420,6 +420,7 @@ sub process_source_file($)
     if ($parse_state == 4) # Reading in the function definition
     {
       # This file is used by the DLL - Make sure we get our contributors right
+      @{$spec_files{$comment->{DLL_NAME}}[0]->{CURRENT_EXTRA}} = ();
       push (@{$spec_files{$comment->{DLL_NAME}}[0]->{SOURCES}},$comment->{FILE});
 
       push (@{$comment->{PROTOTYPE}},$_);
