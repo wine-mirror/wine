@@ -204,9 +204,10 @@ wine_fn_config_makefile ()
     ac_dir=$[1]
     ac_enable=$[2]
     ac_flags=$[3]
+    ac_rules=$[4]
     AS_VAR_IF([$ac_enable],[no],[return 0])
 
-    wine_fn_all_dir_rules $ac_dir Make.rules
+    wine_fn_all_dir_rules $ac_dir ${ac_rules:-Make.rules}
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "all: $ac_dir
 .PHONY: $ac_dir
@@ -241,15 +242,9 @@ wine_fn_config_lib ()
     ac_name=$[1]
     ac_flags=$[2]
     ac_dir=dlls/$ac_name
-    wine_fn_all_dir_rules $ac_dir dlls/Makeimplib.rules
-    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"all __builddeps__: $ac_dir
-$ac_dir: $ac_dir/Makefile tools/widl tools/winebuild tools/winegcc include dummy
-	@cd $ac_dir && \$(MAKE)
-install install-dev:: $ac_dir
-	@cd $ac_dir && \$(MAKE) install
-uninstall:: $ac_dir/Makefile
-	@cd $ac_dir && \$(MAKE) uninstall"
+    wine_fn_config_makefile $ac_dir enable_$ac_name $ac_flags,install-dev dlls/Makeimplib.rules
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS "__builddeps__: $ac_dir"
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS "$ac_dir: tools/widl tools/winebuild tools/winegcc include"
 }
 
 wine_fn_config_dll ()
