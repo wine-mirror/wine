@@ -203,6 +203,7 @@ wine_fn_config_makefile ()
 {
     ac_dir=$[1]
     ac_enable=$[2]
+    ac_flags=$[3]
     AS_VAR_IF([$ac_enable],[no],[return 0])
 
     wine_fn_all_dir_rules $ac_dir Make.rules
@@ -224,6 +225,7 @@ uninstall:: $ac_dir/Makefile
 wine_fn_config_lib ()
 {
     ac_name=$[1]
+    ac_flags=$[2]
     ac_dir=dlls/$ac_name
     wine_fn_all_dir_rules $ac_dir dlls/Makeimplib.rules
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
@@ -390,6 +392,7 @@ wine_fn_config_test ()
 {
     ac_dir=$[1]
     ac_name=$[2]
+    ac_flags=$[3]
     wine_fn_append_file ALL_TEST_RESOURCES $ac_name.res
     wine_fn_all_dir_rules $ac_dir Maketest.rules
 
@@ -419,6 +422,7 @@ $ac_dir/__crosstest__: $ac_dir/Makefile __builddeps__ dummy
 wine_fn_config_tool ()
 {
     ac_dir=$[1]
+    ac_flags=$[2]
     AS_VAR_IF([enable_tools],[no],[return 0])
 
     wine_fn_all_dir_rules $ac_dir Make.rules
@@ -517,11 +521,11 @@ AC_CONFIG_FILES([$1])])
 
 dnl **** Create a makefile from config.status ****
 dnl
-dnl Usage: WINE_CONFIG_MAKEFILE(file,enable)
+dnl Usage: WINE_CONFIG_MAKEFILE(file,enable,flags)
 dnl
 AC_DEFUN([WINE_CONFIG_MAKEFILE],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
 AS_VAR_PUSHDEF([ac_enable],m4_default([$2],[enable_]$1))dnl
-wine_fn_config_makefile [$1] ac_enable[]dnl
+wine_fn_config_makefile [$1] ac_enable [$3]dnl
 AS_VAR_POPDEF([ac_enable])])
 
 dnl **** Create a dll makefile from config.status ****
@@ -544,28 +548,28 @@ AS_VAR_POPDEF([ac_enable])])
 
 dnl **** Create a test makefile from config.status ****
 dnl
-dnl Usage: WINE_CONFIG_TEST(dir)
+dnl Usage: WINE_CONFIG_TEST(dir,flags)
 dnl
 AC_DEFUN([WINE_CONFIG_TEST],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
 m4_pushdef([ac_suffix],m4_if(m4_substr([$1],0,9),[programs/],[.exe_test],[_test]))dnl
 m4_pushdef([ac_name],[m4_bpatsubst([$1],[.*/\(.*\)/tests$],[\1])])dnl
-wine_fn_config_test $1 ac_name[]ac_suffix[]dnl
+wine_fn_config_test $1 ac_name[]ac_suffix [$2]dnl
 m4_popdef([ac_suffix])dnl
 m4_popdef([ac_name])])
 
 dnl **** Create a static lib makefile from config.status ****
 dnl
-dnl Usage: WINE_CONFIG_LIB(name)
+dnl Usage: WINE_CONFIG_LIB(name,flags)
 dnl
 AC_DEFUN([WINE_CONFIG_LIB],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-wine_fn_config_lib $1])
+wine_fn_config_lib [$1] [$2]])
 
 dnl **** Create a tool makefile from config.status ****
 dnl
-dnl Usage: WINE_CONFIG_TOOL(name)
+dnl Usage: WINE_CONFIG_TOOL(name,flags)
 dnl
 AC_DEFUN([WINE_CONFIG_TOOL],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-wine_fn_config_tool $1])
+wine_fn_config_tool [$1] [$2]])
 
 dnl **** Add a message to the list displayed at the end ****
 dnl
