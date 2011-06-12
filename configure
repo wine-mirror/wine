@@ -14578,15 +14578,29 @@ fi
 "all: $ac_dir
 .PHONY: $ac_dir
 $ac_dir: $ac_dir/Makefile dummy
-	@cd $ac_dir && \$(MAKE)
-install:: $ac_dir
+	@cd $ac_dir && \$(MAKE)"
+
+    wine_fn_has_flag install-lib $ac_flags || wine_fn_has_flag install-dev $ac_flags || return
+
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"install:: $ac_dir
 	@cd $ac_dir && \$(MAKE) install
-install-lib:: $ac_dir
-	@cd $ac_dir && \$(MAKE) install-lib
-install-dev:: $ac_dir
-	@cd $ac_dir && \$(MAKE) install-dev
 uninstall:: $ac_dir/Makefile
 	@cd $ac_dir && \$(MAKE) uninstall"
+
+    if wine_fn_has_flag install-lib $ac_flags
+    then
+        wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"install-lib:: $ac_dir
+	@cd $ac_dir && \$(MAKE) install-lib"
+    fi
+
+    if wine_fn_has_flag install-dev $ac_flags
+    then
+        wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"install-dev:: $ac_dir
+	@cd $ac_dir && \$(MAKE) install-dev"
+    fi
 }
 
 wine_fn_config_lib ()
@@ -15416,7 +15430,7 @@ wine_fn_config_dll winemapi enable_winemapi
 wine_fn_config_dll winemp3.acm enable_winemp3_acm
 wine_fn_config_dll winenas.drv enable_winenas_drv
 wine_fn_config_dll wineoss.drv enable_wineoss_drv
-wine_fn_config_dll wineps.drv enable_wineps_drv
+wine_fn_config_dll wineps.drv enable_wineps_drv install-lib
 wine_fn_config_dll wineps16.drv16 enable_win16
 wine_fn_config_dll wineqtdecoder enable_wineqtdecoder
 wine_fn_config_dll winequartz.drv enable_winequartz_drv
@@ -15463,12 +15477,12 @@ wine_fn_config_dll xinput9_1_0 enable_xinput9_1_0
 wine_fn_config_dll xmllite enable_xmllite
 wine_fn_config_test dlls/xmllite/tests xmllite_test
 wine_fn_config_makefile documentation enable_documentation
-wine_fn_config_makefile fonts enable_fonts
-wine_fn_config_makefile include enable_include
+wine_fn_config_makefile fonts enable_fonts install-lib
+wine_fn_config_makefile include enable_include install-dev
 wine_fn_config_makefile libs/port enable_libs_port
-wine_fn_config_makefile libs/wine enable_libs_wine
+wine_fn_config_makefile libs/wine enable_libs_wine install-dev,install-lib
 wine_fn_config_makefile libs/wpp enable_libs_wpp
-wine_fn_config_makefile loader enable_loader
+wine_fn_config_makefile loader enable_loader install-lib
 wine_fn_config_program aspnet_regiis enable_aspnet_regiis install
 wine_fn_config_program attrib enable_attrib install
 wine_fn_config_program cabarc enable_cabarc install
@@ -15544,8 +15558,8 @@ wine_fn_config_program write enable_write install,po
 wine_fn_config_program wscript enable_wscript install
 wine_fn_config_test programs/wscript/tests wscript.exe_test
 wine_fn_config_program xcopy enable_xcopy install,po
-wine_fn_config_makefile server enable_server
-wine_fn_config_tool tools
+wine_fn_config_makefile server enable_server install-lib
+wine_fn_config_tool tools install-dev,install-lib
 wine_fn_config_tool tools/widl
 wine_fn_config_tool tools/winebuild
 wine_fn_config_tool tools/winedump

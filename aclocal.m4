@@ -211,15 +211,29 @@ wine_fn_config_makefile ()
 "all: $ac_dir
 .PHONY: $ac_dir
 $ac_dir: $ac_dir/Makefile dummy
-	@cd $ac_dir && \$(MAKE)
-install:: $ac_dir
+	@cd $ac_dir && \$(MAKE)"
+
+    wine_fn_has_flag install-lib $ac_flags || wine_fn_has_flag install-dev $ac_flags || return
+
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"install:: $ac_dir
 	@cd $ac_dir && \$(MAKE) install
-install-lib:: $ac_dir
-	@cd $ac_dir && \$(MAKE) install-lib
-install-dev:: $ac_dir
-	@cd $ac_dir && \$(MAKE) install-dev
 uninstall:: $ac_dir/Makefile
 	@cd $ac_dir && \$(MAKE) uninstall"
+
+    if wine_fn_has_flag install-lib $ac_flags
+    then
+        wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"install-lib:: $ac_dir
+	@cd $ac_dir && \$(MAKE) install-lib"
+    fi
+
+    if wine_fn_has_flag install-dev $ac_flags
+    then
+        wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"install-dev:: $ac_dir
+	@cd $ac_dir && \$(MAKE) install-dev"
+    fi
 }
 
 wine_fn_config_lib ()

@@ -327,6 +327,11 @@ sub parse_makefile($)
             push @{$make{"=flags"}}, "staticimplib" if $var eq "IMPLIB_SRCS";
             next;
         }
+        if (/(install-lib|install-dev)\s*:/)
+        {
+            push @{$make{"=flags"}}, $1;
+            next;
+        }
         if (/^\s*(TOPSRCDIR|TOPOBJDIR|SRCDIR|VPATH)\s*=\s*(.*)/)
         {
             die "Variable $1 in $file.in is obsolete";
