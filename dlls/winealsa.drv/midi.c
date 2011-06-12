@@ -362,13 +362,16 @@ static DWORD WINAPI midRecThread(LPVOID arg)
                     toSend = 0xFC;
                     break;
                 case SND_SEQ_EVENT_SONGPOS:
-                    toSend = (((ev->data.control.value >> 7) & 0x7f) << 16) | ((ev->data.control.value & 0x7f) << 8) | 0xF2;
+                    toSend = (((ev->data.control.value >> 7) & 0x7f) << 16) | ((ev->data.control.value & 0x7f) << 8) | MIDI_CMD_COMMON_SONG_POS;
                     break;
                 case SND_SEQ_EVENT_SONGSEL:
-                  toSend = ((ev->data.control.value & 0x7f) << 8) | 0xF3;
+                  toSend = ((ev->data.control.value & 0x7f) << 8) | MIDI_CMD_COMMON_SONG_SELECT;
                     break;
                 case SND_SEQ_EVENT_RESET:
                     toSend = 0xFF;
+                    break;
+                case SND_SEQ_EVENT_QFRAME:
+                  toSend = ((ev->data.control.value & 0x7f) << 8) | MIDI_CMD_COMMON_MTC_QUARTER;
                     break;
 		case SND_SEQ_EVENT_SYSEX:
 		    {
@@ -864,7 +867,6 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		switch (evt & 0x0F) {
 		case 0x00:	/* System Exclusive, don't do it on modData,
 				 * should require modLongData*/
-		case 0x01:	/* Undefined */
 		case 0x04:	/* Undefined. */
 		case 0x05:	/* Undefined. */
 		case 0x07:	/* End of Exclusive. */
@@ -890,6 +892,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 			snd_seq_ev_set_sysex(&event, sizeof(reset_sysex_seq), reset_sysex_seq);
 		    }
 		    break;
+		case 0x01:	/* MTC Quarter frame */
 		case 0x03:	/* Song Select. */
 		    {
 			BYTE buf[2];
