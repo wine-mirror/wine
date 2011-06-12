@@ -3803,11 +3803,27 @@ static BOOL ddraw_match_surface_desc(const DDSURFACEDESC2 *requested, const DDSU
 #undef DDENUMSURFACES_SEARCHTYPE
 #undef DDENUMSURFACES_MATCHTYPE
 
+struct surfacescallback2_context
+{
+    LPDDENUMSURFACESCALLBACK2 func;
+    void *context;
+};
+
 struct surfacescallback_context
 {
     LPDDENUMSURFACESCALLBACK func;
     void *context;
 };
+
+static HRESULT CALLBACK EnumSurfacesCallback2Thunk(IDirectDrawSurface7 *surface,
+        DDSURFACEDESC2 *surface_desc, void *context)
+{
+    IDirectDrawSurfaceImpl *surface_impl = impl_from_IDirectDrawSurface7(surface);
+    struct surfacescallback2_context *cbcontext = context;
+
+    return cbcontext->func(&surface_impl->IDirectDrawSurface4_iface,
+            surface_desc, cbcontext->context);
+}
 
 static HRESULT CALLBACK EnumSurfacesCallbackThunk(IDirectDrawSurface7 *surface,
         DDSURFACEDESC2 *surface_desc, void *context)
@@ -3890,12 +3906,16 @@ static HRESULT WINAPI ddraw4_EnumSurfaces(IDirectDraw4 *iface, DWORD flags,
         DDSURFACEDESC2 *surface_desc, void *context, LPDDENUMSURFACESCALLBACK2 callback)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
+    struct surfacescallback2_context cbcontext;
 
     TRACE("iface %p, flags %#x, surface_desc %p, context %p, callback %p.\n",
             iface, flags, surface_desc, context, callback);
 
-    return ddraw7_EnumSurfaces(&This->IDirectDraw7_iface, flags, surface_desc, context,
-            (LPDDENUMSURFACESCALLBACK7)callback);
+    cbcontext.func = callback;
+    cbcontext.context = context;
+
+    return ddraw7_EnumSurfaces(&This->IDirectDraw7_iface, flags, (DDSURFACEDESC2 *)surface_desc,
+            &cbcontext, EnumSurfacesCallback2Thunk);
 }
 
 static HRESULT WINAPI ddraw3_EnumSurfaces(IDirectDraw3 *iface, DWORD flags,
