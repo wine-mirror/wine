@@ -439,28 +439,10 @@ wine_fn_config_tool ()
     ac_flags=$[2]
     AS_VAR_IF([enable_tools],[no],[return 0])
 
-    wine_fn_all_dir_rules $ac_dir Make.rules
+    wine_fn_config_makefile $ac_dir enable_tools $ac_flags
 
-    case $ac_dir in
-      dnl tools directory has both install-lib and install-dev
-      tools) wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"install:: $ac_dir
-	@cd $ac_dir && \$(MAKE) install
-install-lib:: $ac_dir
-	@cd $ac_dir && \$(MAKE) install-lib
-install-dev:: $ac_dir
-	@cd $ac_dir && \$(MAKE) install-dev" ;;
-      *)     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"install install-dev:: $ac_dir
-	@cd $ac_dir && \$(MAKE) install" ;;
-    esac
-    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"uninstall:: $ac_dir/Makefile
-	@cd $ac_dir && \$(MAKE) uninstall
-all __tooldeps__: $ac_dir
-.PHONY: $ac_dir
-$ac_dir: $ac_dir/Makefile libs/port dummy
-	@cd $ac_dir && \$(MAKE)"
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS "__tooldeps__: $ac_dir"
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS "$ac_dir: libs/port"
     case $ac_dir in
       tools/winebuild) wine_fn_append_rule ALL_MAKEFILE_DEPENDS "\$(WINEBUILD): $ac_dir" ;;
     esac

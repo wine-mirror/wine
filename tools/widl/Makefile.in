@@ -30,7 +30,7 @@ all: $(PROGRAMS)
 widl$(EXEEXT): $(OBJS) $(LIBWPP)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWPP) $(LIBPORT) $(LDFLAGS)
 
-install:: $(PROGRAMS) $(DESTDIR)$(bindir)
+install install-dev:: $(PROGRAMS) $(DESTDIR)$(bindir)
 	$(INSTALL_PROGRAM) widl$(EXEEXT) $(DESTDIR)$(bindir)/widl$(EXEEXT)
 
 uninstall::

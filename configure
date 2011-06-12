@@ -14817,27 +14817,10 @@ wine_fn_config_tool ()
   return 0
 fi
 
-    wine_fn_all_dir_rules $ac_dir Make.rules
+    wine_fn_config_makefile $ac_dir enable_tools $ac_flags
 
-    case $ac_dir in
-            tools) wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"install:: $ac_dir
-	@cd $ac_dir && \$(MAKE) install
-install-lib:: $ac_dir
-	@cd $ac_dir && \$(MAKE) install-lib
-install-dev:: $ac_dir
-	@cd $ac_dir && \$(MAKE) install-dev" ;;
-      *)     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"install install-dev:: $ac_dir
-	@cd $ac_dir && \$(MAKE) install" ;;
-    esac
-    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"uninstall:: $ac_dir/Makefile
-	@cd $ac_dir && \$(MAKE) uninstall
-all __tooldeps__: $ac_dir
-.PHONY: $ac_dir
-$ac_dir: $ac_dir/Makefile libs/port dummy
-	@cd $ac_dir && \$(MAKE)"
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS "__tooldeps__: $ac_dir"
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS "$ac_dir: libs/port"
     case $ac_dir in
       tools/winebuild) wine_fn_append_rule ALL_MAKEFILE_DEPENDS "\$(WINEBUILD): $ac_dir" ;;
     esac
@@ -15560,12 +15543,12 @@ wine_fn_config_test programs/wscript/tests wscript.exe_test
 wine_fn_config_program xcopy enable_xcopy install,po
 wine_fn_config_makefile server enable_server install-lib
 wine_fn_config_tool tools install-dev,install-lib
-wine_fn_config_tool tools/widl
-wine_fn_config_tool tools/winebuild
-wine_fn_config_tool tools/winedump
-wine_fn_config_tool tools/winegcc
-wine_fn_config_tool tools/wmc
-wine_fn_config_tool tools/wrc
+wine_fn_config_tool tools/widl install-dev
+wine_fn_config_tool tools/winebuild install-dev
+wine_fn_config_tool tools/winedump install-dev
+wine_fn_config_tool tools/winegcc install-dev
+wine_fn_config_tool tools/wmc install-dev
+wine_fn_config_tool tools/wrc install-dev
 
 LINGUAS="\
 ar \

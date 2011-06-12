@@ -3011,12 +3011,12 @@ WINE_CONFIG_TEST(programs/wscript/tests)
 WINE_CONFIG_PROGRAM(xcopy,,[install,po])
 WINE_CONFIG_MAKEFILE([server],,[install-lib])
 WINE_CONFIG_TOOL(tools,[install-dev,install-lib])
-WINE_CONFIG_TOOL(tools/widl)
-WINE_CONFIG_TOOL(tools/winebuild)
-WINE_CONFIG_TOOL(tools/winedump)
-WINE_CONFIG_TOOL(tools/winegcc)
-WINE_CONFIG_TOOL(tools/wmc)
-WINE_CONFIG_TOOL(tools/wrc)
+WINE_CONFIG_TOOL(tools/widl,[install-dev])
+WINE_CONFIG_TOOL(tools/winebuild,[install-dev])
+WINE_CONFIG_TOOL(tools/winedump,[install-dev])
+WINE_CONFIG_TOOL(tools/winegcc,[install-dev])
+WINE_CONFIG_TOOL(tools/wmc,[install-dev])
+WINE_CONFIG_TOOL(tools/wrc,[install-dev])
 
 AC_SUBST([LINGUAS],["\
 ar \
