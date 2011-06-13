@@ -820,6 +820,12 @@ SIZE_T WINAPI GlobalSize(HGLOBAL hmem)
    if(ISPOINTER(hmem))
    {
       retval=HeapSize(GetProcessHeap(), 0, hmem);
+
+      if (retval == (DWORD)-1) /* It might be a GMEM_MOVEABLE data pointer */
+      {
+          retval = HeapSize(GetProcessHeap(), 0, (char*)(hmem) - HGLOBAL_STORAGE);
+          if (retval != (DWORD)-1) retval -= HGLOBAL_STORAGE;
+      }
    }
    else
    {

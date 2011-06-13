@@ -85,7 +85,7 @@ static void test_heap(void)
     UINT    flags;
     HGLOBAL gbl;
     HGLOBAL hsecond;
-    SIZE_T  size;
+    SIZE_T  size, size2;
 
     /* Heap*() functions */
     mem = HeapAlloc(GetProcessHeap(), 0, 0);
@@ -403,6 +403,36 @@ static void test_heap(void)
         "MAGIC_DEAD)\n", mem, GetLastError(), GetLastError());
 
     GlobalFree(gbl);
+
+    /* trying to get size from data pointer (GMEM_MOVEABLE) */
+    gbl = GlobalAlloc(GMEM_MOVEABLE, 0x123);
+    ok(gbl != NULL, "returned NULL\n");
+    mem = GlobalLock(gbl);
+    ok(mem != NULL, "returned NULL.\n");
+    ok(gbl != mem, "unexpectedly equal.\n");
+
+    size = GlobalSize(gbl);
+    size2 = GlobalSize(mem);
+    ok(size == 0x123, "got %lu\n", size);
+    ok(size2 == 0x123, "got %lu\n", size2);
+
+    GlobalFree(gbl);
+
+    /* trying to get size from data pointer (GMEM_FIXED) */
+    gbl = GlobalAlloc(GMEM_FIXED, 0x123);
+    ok(gbl != NULL, "returned NULL\n");
+    mem = GlobalLock(gbl);
+    ok(mem != NULL, "returned NULL.\n");
+    ok(gbl == mem, "got %p, %p.\n", gbl, mem);
+
+    size = GlobalSize(gbl);
+    ok(size == 0x123, "got %lu\n", size);
+
+    GlobalFree(gbl);
+
+    size = GlobalSize((void *)0xdeadbee0);
+    ok(size == 0, "got %lu\n", size);
+
 }
 
 static void test_obsolete_flags(void)
