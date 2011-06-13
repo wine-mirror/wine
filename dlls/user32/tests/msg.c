@@ -13078,6 +13078,22 @@ static const struct message WmHotkeyReleaseLWIN[] = {
     { WM_KEYUP, sent|wparam|lparam, VK_LWIN, 0xc0000001 },
     { 0 }
 };
+static const struct message WmHotkeyCombined[] = {
+    { WM_KEYDOWN, kbd_hook|wparam|lparam, VK_LWIN, LLKHF_INJECTED },
+    { WM_KEYDOWN, kbd_hook|lparam, 0, LLKHF_INJECTED },
+    { WM_KEYUP, kbd_hook|lparam, 0, LLKHF_INJECTED|LLKHF_UP },
+    { WM_KEYUP, kbd_hook|wparam|lparam, VK_LWIN, LLKHF_INJECTED|LLKHF_UP },
+    { WM_APP, sent, 0, 0 },
+    { WM_HOTKEY, sent|wparam, 5 },
+    { WM_APP+1, sent, 0, 0 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_LWIN, 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_LWIN, 1 },
+    { HCBT_KEYSKIPPED, hook|optional, 0, 0x80000001 },
+    { WM_KEYUP, sent, 0, 0x80000001 }, /* lparam not checked so the sequence isn't a todo */
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_LWIN, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_LWIN, 0xc0000001 },
+    { 0 }
+};
 
 static int hotkey_letter;
 
@@ -13222,6 +13238,24 @@ static void test_hotkey(void)
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         DispatchMessage(&msg);
     ok_sequence(WmHotkeyReleaseLWIN, "window hotkey release LWIN", FALSE);
+
+    /* Send and process all messages at once */
+    PostMessage(test_window, WM_APP, 0, 0);
+    keybd_event(VK_LWIN, 0, 0, 0);
+    keybd_event(hotkey_letter, 0, 0, 0);
+    keybd_event(hotkey_letter, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
+
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+    {
+        if (msg.message == WM_HOTKEY)
+        {
+            ok(msg.hwnd == test_window, "unexpected hwnd %p\n", msg.hwnd);
+            ok(msg.lParam == MAKELPARAM(MOD_WIN, hotkey_letter), "unexpected WM_HOTKEY lparam %lx\n", msg.lParam);
+        }
+        DispatchMessage(&msg);
+    }
+    ok_sequence(WmHotkeyCombined, "window hotkey combined", FALSE);
 
     /* Register same hwnd/id with different key combination */
     ret = RegisterHotKey(test_window, 5, 0, hotkey_letter);
