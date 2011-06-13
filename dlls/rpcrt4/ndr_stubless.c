@@ -565,7 +565,7 @@ void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
     }
 }
 
-CLIENT_CALL_RETURN WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat, ...)
+LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat, void **stack_top )
 {
     /* pointer to start of stack where arguments start */
     RPC_MESSAGE rpcMsg;
@@ -594,7 +594,6 @@ CLIENT_CALL_RETURN WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STR
     PFORMAT_STRING pHandleFormat;
     /* correlation cache */
     ULONG_PTR NdrCorrCache[256];
-    __ms_va_list args;
 
     TRACE("pStubDesc %p, pFormat %p, ...\n", pStubDesc, pFormat);
 
@@ -623,7 +622,7 @@ CLIENT_CALL_RETURN WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STR
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
     {
         /* object is always the first argument */
-        This = **(void *const **)(&pFormat+1);
+        This = stack_top[0];
         NdrProxyInitialize(This, &rpcMsg, &stubMsg, pStubDesc, procedure_number);
     }
     else
@@ -632,11 +631,7 @@ CLIENT_CALL_RETURN WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STR
     TRACE("Oi_flags = 0x%02x\n", pProcHeader->Oi_flags);
     TRACE("MIDL stub version = 0x%x\n", pStubDesc->MIDLVersion);
 
-    /* needed for conformance of top-level objects */
-    __ms_va_start( args, pFormat );
-    stubMsg.StackTop = va_arg( args, unsigned char * );
-    __ms_va_end( args );
-
+    stubMsg.StackTop = (unsigned char *)stack_top;
     pHandleFormat = pFormat;
 
     /* we only need a handle if this isn't an object method */
@@ -915,8 +910,23 @@ CLIENT_CALL_RETURN WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STR
 
 done:
     TRACE("RetVal = 0x%lx\n", RetVal);
-    return *(CLIENT_CALL_RETURN *)&RetVal;
+    return RetVal;
 }
+
+/***********************************************************************
+ *            NdrClientCall2 [RPCRT4.@]
+ */
+CLIENT_CALL_RETURN WINAPIV NdrClientCall2( PMIDL_STUB_DESC desc, PFORMAT_STRING format, ... )
+{
+    __ms_va_list args;
+    LONG_PTR ret;
+
+    __ms_va_start( args, format );
+    ret = ndr_client_call( desc, format, va_arg( args, void ** ));
+    __ms_va_end( args );
+    return *(CLIENT_CALL_RETURN *)&ret;
+}
+
 
 /* Calls a function with the specified arguments, restoring the stack
  * properly afterwards as we don't know the calling convention of the
@@ -1648,20 +1658,6 @@ void WINAPI NdrServerCall2(PRPC_MESSAGE pRpcMsg)
 {
     DWORD dwPhase;
     NdrStubCall2(NULL, NULL, pRpcMsg, &dwPhase);
-}
-
-/***********************************************************************
- *            NdrClientCall [RPCRT4.@]
- */
-CLIENT_CALL_RETURN WINAPIV NdrClientCall( PMIDL_STUB_DESC desc, PFORMAT_STRING format, ... )
-{
-    __ms_va_list args;
-    CLIENT_CALL_RETURN ret;
-
-    __ms_va_start( args, format );
-    ret = NdrClientCall2( desc, format, va_arg( args, unsigned char * ));
-    __ms_va_end( args );
-    return ret;
 }
 
 /***********************************************************************

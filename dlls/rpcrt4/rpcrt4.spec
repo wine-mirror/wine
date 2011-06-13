@@ -127,7 +127,7 @@
 @ stdcall NdrCStdStubBuffer_Release(ptr ptr)
 @ stdcall NdrClearOutParameters(ptr ptr ptr)
 @ varargs NdrClientCall2(ptr ptr)
-@ varargs NdrClientCall(ptr ptr)
+@ varargs -arch=i386 NdrClientCall(ptr ptr) NdrClientCall2
 @ stdcall NdrClientContextMarshall(ptr ptr long)
 @ stdcall NdrClientContextUnmarshall(ptr ptr ptr)
 @ stub NdrClientInitialize

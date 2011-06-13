@@ -37,6 +37,7 @@
 
 #include "cpsf.h"
 #include "ndr_misc.h"
+#include "ndr_stubless.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -95,19 +96,20 @@ __ASM_GLOBAL_FUNC(call_stubless_func,
                   "addl %edx,%esp\n\t"
                   "jmp *%ecx" );
 
-CLIENT_CALL_RETURN WINAPI ObjectStubless(DWORD *args)
+LONG_PTR WINAPI ObjectStubless(void **args)
 {
-    DWORD index = args[0];
+    DWORD index = (DWORD)args[0];
     void **iface = (void **)args[2];
     const void **vtbl = (const void **)*iface;
     const MIDL_STUBLESS_PROXY_INFO *stubless = *(const MIDL_STUBLESS_PROXY_INFO **)(vtbl - 2);
     const PFORMAT_STRING fs = stubless->ProcFormatString + stubless->FormatStringOffset[index];
+    DWORD arg_size = *(const WORD*)(fs + 8);
 
     /* store bytes to remove from stack */
-    args[0] = *(const WORD*)(fs + 8);
-    TRACE("(%p)->(%d)([%d bytes]) ret=%08x\n", iface, index, args[0], args[1]);
+    args[0] = (void *)arg_size;
+    TRACE("(%p)->(%d)([%d bytes]) ret=%p\n", iface, index, arg_size, args[1]);
 
-    return NdrClientCall2(stubless->pStubDesc, fs, args + 2);
+    return ndr_client_call(stubless->pStubDesc, fs, args + 2);
 }
 
 #define BLOCK_SIZE 1024
