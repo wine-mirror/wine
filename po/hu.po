@@ -6231,9 +6231,9 @@ msgstr "&Beillesztés"
 msgid "Create Shor&tcut"
 msgstr "Parancsi&kon létrehozása"
 
-#: shdoclc.rc:50
-msgid "Add to &Favorites"
-msgstr "Hozzáa&dás a kedvencekhez"
+#: shdoclc.rc:50 shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
+msgid "Add to &Favorites..."
+msgstr "Hozzáa&dás a kedvencekhez..."
 
 #: shdoclc.rc:51
 msgid "&View Source"
@@ -6323,10 +6323,6 @@ msgstr "M&ásolás"
 #: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
 msgid "Copy Shor&tcut"
 msgstr "Parancs&ikon másolása"
-
-#: shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
-msgid "Add to &Favorites..."
-msgstr "Hozzáa&dás a kedvencekhez..."
 
 #: shdoclc.rc:85 shdoclc.rc:141 shdoclc.rc:171 shdoclc.rc:198
 msgid "P&roperties"

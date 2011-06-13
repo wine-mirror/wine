@@ -6104,9 +6104,9 @@ msgstr "ה&דבקה"
 msgid "Create Shor&tcut"
 msgstr "יצירת קיצו&ר דרך"
 
-#: shdoclc.rc:50
-msgid "Add to &Favorites"
-msgstr "הוספה למו&עדפים"
+#: shdoclc.rc:50 shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
+msgid "Add to &Favorites..."
+msgstr "הוספה למו&עדפים..."
 
 #: shdoclc.rc:51
 msgid "&View Source"
@@ -6186,10 +6186,6 @@ msgstr "ה&עתקה"
 #: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
 msgid "Copy Shor&tcut"
 msgstr "העתקת קיצור ה&דרך"
-
-#: shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
-msgid "Add to &Favorites..."
-msgstr "הוספה למו&עדפים..."
 
 #: shdoclc.rc:85 shdoclc.rc:141 shdoclc.rc:171 shdoclc.rc:198
 msgid "P&roperties"

@@ -6208,9 +6208,9 @@ msgstr ""
 msgid "Create Shor&tcut"
 msgstr "K&ısayol Oluştur"
 
-#: shdoclc.rc:50
-msgid "Add to &Favorites"
-msgstr "Sık Kullanılanlara Ekle"
+#: shdoclc.rc:50 shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
+msgid "Add to &Favorites..."
+msgstr "Sık Ku&llanılanlara Ekle..."
 
 #: shdoclc.rc:51
 msgid "&View Source"
@@ -6305,10 +6305,6 @@ msgstr ""
 #: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
 msgid "Copy Shor&tcut"
 msgstr "&Kısayol Kopyala"
-
-#: shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
-msgid "Add to &Favorites..."
-msgstr "Sık Ku&llanılanlara Ekle..."
 
 #: shdoclc.rc:85 shdoclc.rc:141 shdoclc.rc:171 shdoclc.rc:198
 msgid "P&roperties"

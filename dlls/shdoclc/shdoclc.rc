@@ -47,7 +47,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "&Paste",                 IDM_PASTE
         MENUITEM SEPARATOR
         MENUITEM "Create Shor&tcut",       IDM_CREATESHORTCUT
-        MENUITEM "Add to &Favorites",      IDM_ADDFAVORITES
+        MENUITEM "Add to &Favorites...",   IDM_ADDFAVORITES
         MENUITEM "&View Source",           IDM_VIEWSOURCE
         MENUITEM SEPARATOR
         MENUITEM "&Encoding",              IDM_LANGUAGE

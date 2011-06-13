@@ -5781,8 +5781,8 @@ msgstr "&Enganxar"
 msgid "Create Shor&tcut"
 msgstr ""
 
-#: shdoclc.rc:50
-msgid "Add to &Favorites"
+#: shdoclc.rc:50 shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
+msgid "Add to &Favorites..."
 msgstr ""
 
 #: shdoclc.rc:51
@@ -5862,10 +5862,6 @@ msgstr "&Copiar"
 
 #: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
 msgid "Copy Shor&tcut"
-msgstr ""
-
-#: shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
-msgid "Add to &Favorites..."
 msgstr ""
 
 #: shdoclc.rc:85 shdoclc.rc:141 shdoclc.rc:171 shdoclc.rc:198

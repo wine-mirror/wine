@@ -6037,9 +6037,9 @@ msgstr "L&iitä"
 msgid "Create Shor&tcut"
 msgstr "Luo &Pikakuvake"
 
-#: shdoclc.rc:50
-msgid "Add to &Favorites"
-msgstr "Lisää S&uosikkeihin"
+#: shdoclc.rc:50 shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
+msgid "Add to &Favorites..."
+msgstr "Lis&ää Suosikkeihin..."
 
 #: shdoclc.rc:51
 msgid "&View Source"
@@ -6129,10 +6129,6 @@ msgstr ""
 #: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
 msgid "Copy Shor&tcut"
 msgstr "Kopioi Pikakuvak&e"
-
-#: shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
-msgid "Add to &Favorites..."
-msgstr "Lis&ää Suosikkeihin..."
 
 #: shdoclc.rc:85 shdoclc.rc:141 shdoclc.rc:171 shdoclc.rc:198
 msgid "P&roperties"

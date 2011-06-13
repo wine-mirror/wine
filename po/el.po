@@ -5905,9 +5905,9 @@ msgstr ""
 msgid "Create Shor&tcut"
 msgstr ""
 
-#: shdoclc.rc:50
+#: shdoclc.rc:50 shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
 #, fuzzy
-msgid "Add to &Favorites"
+msgid "Add to &Favorites..."
 msgstr "Α&γαπημένα"
 
 #: shdoclc.rc:51
@@ -5988,11 +5988,6 @@ msgstr ""
 #: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
 msgid "Copy Shor&tcut"
 msgstr ""
-
-#: shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
-#, fuzzy
-msgid "Add to &Favorites..."
-msgstr "Α&γαπημένα"
 
 #: shdoclc.rc:85 shdoclc.rc:141 shdoclc.rc:171 shdoclc.rc:198
 msgid "P&roperties"
