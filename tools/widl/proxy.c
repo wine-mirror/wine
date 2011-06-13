@@ -543,6 +543,36 @@ static const statement_t * get_callas_source(const type_t * iface, const var_t *
   return NULL;
 }
 
+static void write_proxy_procformatstring_offsets( const type_t *iface, int skip )
+{
+    const statement_t *stmt;
+
+    if (type_iface_get_inherit(iface))
+        write_proxy_procformatstring_offsets( type_iface_get_inherit(iface), need_delegation(iface));
+    else
+        return;
+
+    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
+    {
+        const var_t *func = stmt->u.var;
+        int missing = 0;
+
+        if (is_callas(func->attrs)) continue;
+        if (is_local(func->attrs))
+        {
+            const statement_t * callas_source = get_callas_source(iface, func);
+            if (!callas_source)
+                missing = 1;
+            else
+                func = callas_source->u.var;
+        }
+        if (skip || missing)
+            print_proxy( "(unsigned short)-1,  /* %s::%s */\n", iface->name, get_name(func));
+        else
+            print_proxy( "%u,  /* %s::%s */\n", func->procstring_offset, iface->name, get_name(func));
+    }
+}
+
 static int write_proxy_methods(type_t *iface, int skip)
 {
   const statement_t *stmt;
@@ -667,7 +697,12 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
 
   count = count_methods(iface);
 
-  write_procformatstring_offsets( proxy, iface );
+  print_proxy( "static const unsigned short %s_FormatStringOffsetTable[] =\n", iface->name );
+  print_proxy( "{\n" );
+  indent++;
+  write_proxy_procformatstring_offsets( iface, 0 );
+  indent--;
+  print_proxy( "};\n\n" );
 
   /* proxy info */
   if (get_stub_mode() == MODE_Oif)
