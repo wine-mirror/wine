@@ -142,9 +142,8 @@ int cant_be_null(const var_t *v)
 
 static int need_delegation(const type_t *iface)
 {
-    return type_iface_get_inherit(iface) &&
-           type_iface_get_inherit(type_iface_get_inherit(iface)) &&
-           type_iface_get_inherit(iface)->ignore;
+    const type_t *parent = type_iface_get_inherit( iface );
+    return parent && type_iface_get_inherit(parent) && (parent->ignore || is_local( parent->attrs ));
 }
 
 static int get_delegation_indirect(const type_t *iface, const type_t ** delegate_to)
@@ -944,7 +943,7 @@ static void write_proxy_routines(const statement_list_t *stmts)
   int expr_eval_routines;
   unsigned int proc_offset = 0;
   char *file_id = proxy_token;
-  int i, count, have_baseiid;
+  int i, count, have_baseiid = 0;
   type_t **interfaces;
   const type_t * delegate_to;
 
@@ -1021,7 +1020,10 @@ static void write_proxy_routines(const statement_list_t *stmts)
   fprintf(proxy, "};\n");
   fprintf(proxy, "\n");
 
-  if ((have_baseiid = does_any_iface(stmts, need_delegation_indirect)))
+  for (i = 0; i < count; i++)
+      if ((have_baseiid = get_delegation_indirect( interfaces[i], NULL ))) break;
+
+  if (have_baseiid)
   {
       fprintf(proxy, "static const IID * _%s_BaseIIDList[] =\n", file_id);
       fprintf(proxy, "{\n");
