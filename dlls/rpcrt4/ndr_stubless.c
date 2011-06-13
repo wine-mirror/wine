@@ -913,6 +913,21 @@ done:
     return RetVal;
 }
 
+#ifdef __x86_64__
+
+__ASM_GLOBAL_FUNC( NdrClientCall2,
+                   "movq %r8,0x18(%rsp)\n\t"
+                   "movq %r9,0x20(%rsp)\n\t"
+                   "leaq 0x18(%rsp),%r8\n\t"
+                   "subq $0x28,%rsp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
+                   "call " __ASM_NAME("ndr_client_call") "\n\t"
+                   "addq $0x28,%rsp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -0x28\n\t")
+                   "ret" );
+
+#else  /* __x86_64__ */
+
 /***********************************************************************
  *            NdrClientCall2 [RPCRT4.@]
  */
@@ -927,6 +942,7 @@ CLIENT_CALL_RETURN WINAPIV NdrClientCall2( PMIDL_STUB_DESC desc, PFORMAT_STRING 
     return *(CLIENT_CALL_RETURN *)&ret;
 }
 
+#endif  /* __x86_64__ */
 
 /* Calls a function with the specified arguments, restoring the stack
  * properly afterwards as we don't know the calling convention of the
