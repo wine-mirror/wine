@@ -55,7 +55,6 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Pr&int",                 IDM_PRINT
         MENUITEM "&Refresh",               _IDM_REFRESH
         MENUITEM SEPARATOR
-        MENUITEM SEPARATOR
         MENUITEM "&Properties",            IDM_PROPERTIES
     }
 
@@ -81,7 +80,6 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM "Add to &Favorites...",     IDM_ADDFAVORITES
         MENUITEM SEPARATOR
-        MENUITEM SEPARATOR
         MENUITEM "P&roperties",              IDM_PROPERTIES
     }
 
@@ -93,7 +91,6 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "&Copy",       IDM_COPY
         MENUITEM "&Paste",      IDM_PASTE
         MENUITEM "&Delete",     IDM_DELETE
-        MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "Select &All", IDM_SELECTALL
     }
@@ -107,7 +104,6 @@ IDR_BROWSE_CONTEXT_MENU MENU
             MENUITEM "&Column",       IDM_COLUMNSELECT
             MENUITEM "&Table",        IDM_TABLESELECT
         }
-        MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "&Cell Properties",  IDM_CELLPROPERTIES
         MENUITEM "&Table Properties", IDM_TABLEPROPERTIES
@@ -137,7 +133,6 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM "Add to &Favorites...", IDM_ADDFAVORITES
         MENUITEM SEPARATOR
-        MENUITEM SEPARATOR
         MENUITEM "P&roperties",          IDM_PROPERTIES
     }
 
@@ -164,7 +159,6 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "&Paste",                   IDM_PASTE
         MENUITEM SEPARATOR
         MENUITEM "Add to &Favorites...",     IDM_ADDFAVORITES
-        MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "Play",                     IDM_DYNSRCPLAY
         MENUITEM "Stop",                     IDM_DYNSRCSTOP
@@ -193,7 +187,6 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Play",                     IDM_IMGARTPLAY
         MENUITEM "Stop",                     IDM_IMGARTSTOP
         MENUITEM "Rewind",                   IDM_IMGARTREWIND
-        MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "P&roperties",              IDM_PROPERTIES
     }

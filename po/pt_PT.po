@@ -2218,7 +2218,7 @@ msgstr "Mostrar"
 msgid "Hide"
 msgstr "Esconder"
 
-#: hhctrl.rc:41 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
+#: hhctrl.rc:41 shdoclc.rc:164 shdoclc.rc:188 shdocvw.rc:65
 #, fuzzy
 msgid "Stop"
 msgstr ""
@@ -6122,7 +6122,7 @@ msgstr "&Copiar fundo"
 msgid "Set as &Desktop Item"
 msgstr "Definir como &item do Ambiente de Trabalho"
 
-#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:62
+#: shdoclc.rc:46 shdoclc.rc:95 shdoclc.rc:117 user32.rc:62
 #, fuzzy
 msgid "Select &All"
 msgstr ""
@@ -6131,8 +6131,8 @@ msgstr ""
 "#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
 "Seleccionar &Tudo"
 
-#: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 user32.rc:59 wineconsole.rc:30 wordpad.rc:103
+#: shdoclc.rc:47 shdoclc.rc:79 shdoclc.rc:92 shdoclc.rc:132 shdoclc.rc:159
+#: shdoclc.rc:183 user32.rc:59 wineconsole.rc:30 wordpad.rc:103
 msgid "&Paste"
 msgstr "Co&lar"
 
@@ -6140,7 +6140,7 @@ msgstr "Co&lar"
 msgid "Create Shor&tcut"
 msgstr "Criar ata&lho"
 
-#: shdoclc.rc:50 shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
+#: shdoclc.rc:50 shdoclc.rc:81 shdoclc.rc:134 shdoclc.rc:161 shdoclc.rc:185
 msgid "Add to &Favorites..."
 msgstr "Adicionar aos &Favoritos..."
 
@@ -6156,59 +6156,59 @@ msgstr "Co&dificação"
 msgid "Pr&int"
 msgstr "I&mprimir"
 
-#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:58 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
 msgstr "&Propriedades"
 
-#: shdoclc.rc:62
+#: shdoclc.rc:61
 msgid "Image"
 msgstr "Imagem"
 
-#: shdoclc.rc:64 shdoclc.rc:151 shdoclc.rc:176
+#: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
 msgstr "&Abrir Ligação"
 
-#: shdoclc.rc:65 shdoclc.rc:152 shdoclc.rc:177
+#: shdoclc.rc:64 shdoclc.rc:147 shdoclc.rc:171
 msgid "Open Link in &New Window"
 msgstr "A&brir Ligação numa Nova Janela"
 
-#: shdoclc.rc:66 shdoclc.rc:130 shdoclc.rc:153 shdoclc.rc:178
+#: shdoclc.rc:65 shdoclc.rc:126 shdoclc.rc:148 shdoclc.rc:172
 msgid "Save Target &As..."
 msgstr "&Guardar Ligação como..."
 
-#: shdoclc.rc:67 shdoclc.rc:131 shdoclc.rc:154 shdoclc.rc:179
+#: shdoclc.rc:66 shdoclc.rc:127 shdoclc.rc:149 shdoclc.rc:173
 msgid "&Print Target"
 msgstr "I&mprimir Ligação"
 
-#: shdoclc.rc:69 shdoclc.rc:156 shdoclc.rc:181
+#: shdoclc.rc:68 shdoclc.rc:151 shdoclc.rc:175
 msgid "S&how Picture"
 msgstr "Mos&trar imagem"
 
-#: shdoclc.rc:70 shdoclc.rc:182
+#: shdoclc.rc:69 shdoclc.rc:176
 msgid "&Save Picture As..."
 msgstr "G&uardar imagem como..."
 
-#: shdoclc.rc:71
+#: shdoclc.rc:70
 msgid "&E-mail Picture..."
 msgstr "En&viar imagem..."
 
-#: shdoclc.rc:72
+#: shdoclc.rc:71
 msgid "Pr&int Picture..."
 msgstr "Imprimir imag&em..."
 
-#: shdoclc.rc:73
+#: shdoclc.rc:72
 msgid "&Go to My Pictures"
 msgstr "I&r para minhas imagens"
 
-#: shdoclc.rc:74 shdoclc.rc:158 shdoclc.rc:183
+#: shdoclc.rc:73 shdoclc.rc:153 shdoclc.rc:177
 msgid "Set as Back&ground"
 msgstr "&Definir como fundo"
 
-#: shdoclc.rc:75 shdoclc.rc:159 shdoclc.rc:184
+#: shdoclc.rc:74 shdoclc.rc:154 shdoclc.rc:178
 msgid "Set as &Desktop Item..."
 msgstr "Definir como &item do Ambiente de Trabalho..."
 
-#: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
+#: shdoclc.rc:76 shdoclc.rc:90 shdoclc.rc:114 shdoclc.rc:156 shdoclc.rc:180
 #: user32.rc:57 wordpad.rc:101
 #, fuzzy
 msgid "Cu&t"
@@ -6218,25 +6218,25 @@ msgstr ""
 "#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
 "&Recortar"
 
-#: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 user32.rc:58 wineconsole.rc:29 winhlp32.rc:37
+#: shdoclc.rc:77 shdoclc.rc:91 shdoclc.rc:115 shdoclc.rc:130 shdoclc.rc:157
+#: shdoclc.rc:181 shell32.rc:87 user32.rc:58 wineconsole.rc:29 winhlp32.rc:37
 #: wordpad.rc:102
 msgid "&Copy"
 msgstr "&Copiar"
 
-#: shdoclc.rc:79 shdoclc.rc:135 shdoclc.rc:163 shdoclc.rc:188
+#: shdoclc.rc:78 shdoclc.rc:131 shdoclc.rc:158 shdoclc.rc:182
 msgid "Copy Shor&tcut"
 msgstr "Copiar atal&ho"
 
-#: shdoclc.rc:85 shdoclc.rc:141 shdoclc.rc:171 shdoclc.rc:198
+#: shdoclc.rc:83 shdoclc.rc:136 shdoclc.rc:165 shdoclc.rc:191
 msgid "P&roperties"
 msgstr "&Propriedades"
 
-#: shdoclc.rc:88
+#: shdoclc.rc:86
 msgid "Control"
 msgstr "Controlo"
 
-#: shdoclc.rc:90 user32.rc:55
+#: shdoclc.rc:88 user32.rc:55
 #, fuzzy
 msgid "&Undo"
 msgstr ""
@@ -6245,59 +6245,59 @@ msgstr ""
 "#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
 "&Voltar"
 
-#: shdoclc.rc:95 shell32.rc:90 user32.rc:60
+#: shdoclc.rc:93 shell32.rc:90 user32.rc:60
 msgid "&Delete"
 msgstr "&Limpar"
 
-#: shdoclc.rc:101
+#: shdoclc.rc:98
 msgid "Table"
 msgstr "Tabela"
 
-#: shdoclc.rc:103 shell32.rc:82
+#: shdoclc.rc:100 shell32.rc:82
 msgid "&Select"
 msgstr "&Seleccionar"
 
-#: shdoclc.rc:105
+#: shdoclc.rc:102
 msgid "&Cell"
 msgstr "&Célula"
 
-#: shdoclc.rc:106
+#: shdoclc.rc:103
 msgid "&Row"
 msgstr "&Linha"
 
-#: shdoclc.rc:107
+#: shdoclc.rc:104
 msgid "&Column"
 msgstr "C&oluna"
 
-#: shdoclc.rc:108
+#: shdoclc.rc:105
 msgid "&Table"
 msgstr "&Tabela"
 
-#: shdoclc.rc:112
+#: shdoclc.rc:108
 msgid "&Cell Properties"
 msgstr "Propriedades da &célula"
 
-#: shdoclc.rc:113
+#: shdoclc.rc:109
 msgid "&Table Properties"
 msgstr "Propriedades da &tabela"
 
-#: shdoclc.rc:116
+#: shdoclc.rc:112
 msgid "1DSite Select"
 msgstr "1DSite Select"
 
-#: shdoclc.rc:120 shell32.rc:61
+#: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
 msgstr "Co&lar"
 
-#: shdoclc.rc:122
+#: shdoclc.rc:118
 msgid "&Print"
 msgstr "&Imprimir"
 
-#: shdoclc.rc:126
+#: shdoclc.rc:122
 msgid "Anchor"
 msgstr "Âncora"
 
-#: shdoclc.rc:128 shell32.rc:84
+#: shdoclc.rc:124 shell32.rc:84
 #, fuzzy
 msgid "&Open"
 msgstr ""
@@ -6306,159 +6306,159 @@ msgstr ""
 "#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
 "&Abrir..."
 
-#: shdoclc.rc:129
+#: shdoclc.rc:125
 msgid "Open in &New Window"
 msgstr "A&brir numa nova janela"
 
-#: shdoclc.rc:133
+#: shdoclc.rc:129
 msgid "Cut"
 msgstr "&Cortar"
 
-#: shdoclc.rc:144
+#: shdoclc.rc:139
 msgid "Context Unknown"
 msgstr "Contexto Desconhecido"
 
-#: shdoclc.rc:149
+#: shdoclc.rc:144
 msgid "DYNSRC Image"
 msgstr "Imagem DYNSRC"
 
-#: shdoclc.rc:157
+#: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "G&uardar vídeo como..."
 
-#: shdoclc.rc:169 shdoclc.rc:193
+#: shdoclc.rc:163 shdoclc.rc:187
 msgid "Play"
 msgstr "I&niciar"
 
-#: shdoclc.rc:174
+#: shdoclc.rc:168
 msgid "ART Image"
 msgstr "Imagem ART"
 
-#: shdoclc.rc:195
+#: shdoclc.rc:189
 msgid "Rewind"
 msgstr "&Recomeçar"
 
-#: shdoclc.rc:201
+#: shdoclc.rc:194
 msgid "Debug"
 msgstr "Debug"
 
-#: shdoclc.rc:203
+#: shdoclc.rc:196
 msgid "Trace Tags"
 msgstr "Trace Tags"
 
-#: shdoclc.rc:204
+#: shdoclc.rc:197
 msgid "Resource Failures"
 msgstr "Resource Failures"
 
-#: shdoclc.rc:205
+#: shdoclc.rc:198
 msgid "Dump Tracking Info"
 msgstr "Dump Tracking Info"
 
-#: shdoclc.rc:206
+#: shdoclc.rc:199
 msgid "Debug Break"
 msgstr "Debug Break"
 
-#: shdoclc.rc:207
+#: shdoclc.rc:200
 msgid "Debug View"
 msgstr "Debug View"
 
-#: shdoclc.rc:208
+#: shdoclc.rc:201
 msgid "Dump Tree"
 msgstr "Dump Tree"
 
-#: shdoclc.rc:209
+#: shdoclc.rc:202
 msgid "Dump Lines"
 msgstr "Dump Lines"
 
-#: shdoclc.rc:210
+#: shdoclc.rc:203
 msgid "Dump DisplayTree"
 msgstr "Dump DisplayTree"
 
-#: shdoclc.rc:211
+#: shdoclc.rc:204
 msgid "Dump FormatCaches"
 msgstr "Dump FormatCaches"
 
-#: shdoclc.rc:212
+#: shdoclc.rc:205
 msgid "Dump LayoutRects"
 msgstr "Dump LayoutRects"
 
-#: shdoclc.rc:213
+#: shdoclc.rc:206
 msgid "Memory Monitor"
 msgstr "Memory Monitor"
 
-#: shdoclc.rc:214
+#: shdoclc.rc:207
 msgid "Performance Meters"
 msgstr "Performance Meters"
 
-#: shdoclc.rc:215
+#: shdoclc.rc:208
 msgid "Save HTML"
 msgstr "Save HTML"
 
-#: shdoclc.rc:217
+#: shdoclc.rc:210
 msgid "&Browse View"
 msgstr "&Browse View"
 
-#: shdoclc.rc:218
+#: shdoclc.rc:211
 msgid "&Edit View"
 msgstr "&Edit View"
 
-#: shdoclc.rc:221
+#: shdoclc.rc:214
 msgid "Vertical Scrollbar"
 msgstr "Scrollbar Vertical"
 
-#: shdoclc.rc:223 shdoclc.rc:237
+#: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "Scroll aqui"
 
-#: shdoclc.rc:225
+#: shdoclc.rc:218
 msgid "Top"
 msgstr "Topo"
 
-#: shdoclc.rc:226
+#: shdoclc.rc:219
 msgid "Bottom"
 msgstr "Fundo"
 
-#: shdoclc.rc:228
+#: shdoclc.rc:221
 msgid "Page Up"
 msgstr "Página acima"
 
-#: shdoclc.rc:229
+#: shdoclc.rc:222
 msgid "Page Down"
 msgstr "Página baixo"
 
-#: shdoclc.rc:231
+#: shdoclc.rc:224
 msgid "Scroll Up"
 msgstr "Scroll cima"
 
-#: shdoclc.rc:232
+#: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "Scroll baixo"
 
-#: shdoclc.rc:235
+#: shdoclc.rc:228
 msgid "Horizontal Scrollbar"
 msgstr "Horizontal Scrollbar"
 
-#: shdoclc.rc:239
+#: shdoclc.rc:232
 msgid "Left Edge"
 msgstr "Canto esquerdo"
 
-#: shdoclc.rc:240
+#: shdoclc.rc:233
 msgid "Right Edge"
 msgstr "Canto direito"
 
-#: shdoclc.rc:242
+#: shdoclc.rc:235
 msgid "Page Left"
 msgstr "Página esquerda"
 
-#: shdoclc.rc:243
+#: shdoclc.rc:236
 msgid "Page Right"
 msgstr "Página direita"
 
-#: shdoclc.rc:245
+#: shdoclc.rc:238
 msgid "Scroll Left"
 msgstr "Scroll esquerda"
 
-#: shdoclc.rc:246
+#: shdoclc.rc:239
 msgid "Scroll Right"
 msgstr "Scroll direita"
 
