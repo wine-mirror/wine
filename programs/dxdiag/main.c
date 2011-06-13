@@ -25,71 +25,128 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 
+struct command_line_info
+{
+    WCHAR outfile[MAX_PATH];
+    BOOL whql_check;
+};
+
+static void usage(void)
+{
+    WINE_FIXME("Usage message box is not implemented\n");
+    ExitProcess(0);
+}
+
+static BOOL process_file_name(const WCHAR *cmdline, WCHAR *filename, size_t filename_len)
+{
+    const WCHAR *endptr;
+    size_t len;
+
+    /* Skip any intervening spaces. */
+    while (*cmdline == ' ')
+        cmdline++;
+
+    /* Ignore filename quoting, if any. */
+    if (*cmdline == '"' && (endptr = strrchrW(cmdline, '"')))
+    {
+        /* Reject a string with only one quote. */
+        if (cmdline == endptr)
+            return FALSE;
+
+        cmdline++;
+    }
+    else
+        endptr = cmdline + strlenW(cmdline);
+
+    len = endptr - cmdline;
+    if (len == 0 || len >= filename_len)
+        return FALSE;
+
+    memcpy(filename, cmdline, len * sizeof(WCHAR));
+    filename[len] = '\0';
+
+    return TRUE;
+}
+
 /*
-    Process options [/WHQL:ON|OFF][/X outfile][/T outfile]
+    Process options [/WHQL:ON|OFF][/X outfile|/T outfile]
     Returns TRUE if options were present, FALSE otherwise
-    FIXME: Native behavior seems to be:
     Only one of /X and /T is allowed, /WHQL must come before /X and /T,
-    quotes are optional around the filename, even if it contains spaces.
+    and the rest of the command line after /X or /T is interpreted as a
+    filename. If a non-option portion of the command line is encountered,
+    dxdiag assumes that the string is a filename for the /T option.
+
+    Native does not interpret quotes, but quotes are parsed here because of how
+    Wine handles the command line.
 */
 
-static BOOL ProcessCommandLine(const WCHAR *s)
+static BOOL process_command_line(const WCHAR *cmdline, struct command_line_info *info)
 {
-    WCHAR outfile[MAX_PATH+1];
-    int opt_t = FALSE;
-    int opt_x = FALSE;
-    int opt_help = FALSE;
-    int opt_given = FALSE;
-    int want_arg = FALSE;
+    static const WCHAR whql_colonW[] = {'w','h','q','l',':',0};
+    static const WCHAR offW[] = {'o','f','f',0};
+    static const WCHAR onW[] = {'o','n',0};
 
-    outfile[0] = 0;
-    while (*s) {
+    info->whql_check = FALSE;
+
+    while (*cmdline)
+    {
         /* Skip whitespace before arg */
-        while (*s == ' ')
-            s++;
-        /* Check for option */
-        if (*s != '-' && *s != '/')
-            return FALSE;
-        s++;
-        switch (*s++) {
+        while (*cmdline == ' ')
+            cmdline++;
+
+        /* If no option is specified, treat the command line as a filename. */
+        if (*cmdline != '-' && *cmdline != '/')
+            return process_file_name(cmdline, info->outfile, sizeof(info->outfile)/sizeof(WCHAR));
+
+        cmdline++;
+
+        switch (*cmdline)
+        {
         case 'T':
-        case 't': opt_t = TRUE; want_arg = TRUE; opt_given = TRUE; break;
+        case 't':
+            return process_file_name(cmdline + 1, info->outfile, sizeof(info->outfile)/sizeof(WCHAR));
         case 'X':
-        case 'x': opt_x = TRUE; want_arg = TRUE; opt_given = TRUE; break;
+        case 'x':
+            return process_file_name(cmdline + 1, info->outfile, sizeof(info->outfile)/sizeof(WCHAR));
         case 'W':
         case 'w':
-            opt_given = TRUE;
-            while (isalphaW(*s) || *s == ':')
-                s++;
+            if (strncmpiW(cmdline, whql_colonW, 5))
+                return FALSE;
+
+            cmdline += 5;
+
+            if (!strncmpiW(cmdline, offW, 3))
+            {
+                info->whql_check = FALSE;
+                cmdline += 2;
+            }
+            else if (!strncmpiW(cmdline, onW, 2))
+            {
+                info->whql_check = TRUE;
+                cmdline++;
+            }
+            else
+                return FALSE;
+
             break;
-        default: opt_help = TRUE; opt_given = TRUE; break;
+        default:
+            return FALSE;
         }
-        /* Skip any spaces before next option or filename */
-        while (*s == ' ')
-            s++;
-        if (want_arg) {
-            int i;
-            if (*s == '"')
-                s++;
-            for (i=0; i < MAX_PATH && *s && *s != '"'; i++, s++)
-                outfile[i] = *s;
-            outfile[i] = 0;
-            break;
-        }
+
+        cmdline++;
     }
-    if (opt_help)
-        WINE_FIXME("help unimplemented\n");
-    if (opt_t)
-        WINE_FIXME("/t unimplemented\n");
-    if (opt_x)
-        WINE_FIXME("/x unimplemented\n");
-    return opt_given;
+
+    return TRUE;
 }
 
 int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cmdshow)
 {
-    if (ProcessCommandLine(cmdline))
-        return 0;
+    struct command_line_info info;
+
+    if (!process_command_line(cmdline, &info))
+        usage();
+
+    WINE_TRACE("WHQL check: %s\n", info.whql_check ? "TRUE" : "FALSE");
 
     return 0;
 }
