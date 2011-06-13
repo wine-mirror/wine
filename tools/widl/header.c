@@ -39,7 +39,7 @@
 static int indentation = 0;
 static int is_object_interface = 0;
 user_type_list_t user_type_list = LIST_INIT(user_type_list);
-static context_handle_list_t context_handle_list = LIST_INIT(context_handle_list);
+context_handle_list_t context_handle_list = LIST_INIT(context_handle_list);
 generic_handle_list_t generic_handle_list = LIST_INIT(generic_handle_list);
 
 static void write_type_def_or_decl(FILE *f, type_t *t, int field, const char *name);

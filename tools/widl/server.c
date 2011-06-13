@@ -307,6 +307,26 @@ static void write_routinetable(type_t *iface)
 }
 
 
+static void write_rundown_routines(void)
+{
+    context_handle_t *ch;
+    int count = list_count( &context_handle_list );
+
+    if (!count) return;
+    print_server( "static const NDR_RUNDOWN RundownRoutines[] =\n" );
+    print_server( "{\n" );
+    indent++;
+    LIST_FOR_EACH_ENTRY( ch, &context_handle_list, context_handle_t, entry )
+    {
+        print_server( "%s_rundown", ch->name );
+        if (--count) fputc( ',', server );
+        fputc( '\n', server );
+    }
+    indent--;
+    print_server( "};\n\n" );
+}
+
+
 static void write_serverinfo(type_t *iface)
 {
     print_server( "static const MIDL_SERVER_INFO %s_ServerInfo =\n", iface->name );
@@ -345,7 +365,10 @@ static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
     print_server("0,\n");
     indent--;
     print_server("},\n");
-    print_server("0,\n");
+    if (!list_empty( &context_handle_list ))
+        print_server("RundownRoutines,\n");
+    else
+        print_server("0,\n");
     print_server("0,\n");
     if (expr_eval_routines)
         print_server("ExprEvalRoutines,\n");
@@ -505,6 +528,7 @@ static void write_server_routines(const statement_list_t *stmts)
     if (expr_eval_routines)
         write_expr_eval_routine_list(server, server_token);
     write_user_quad_list(server);
+    write_rundown_routines();
 
     write_server_stmts(stmts, expr_eval_routines, &proc_offset);
 
