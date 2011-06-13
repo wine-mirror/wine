@@ -285,8 +285,8 @@ static void client_free_handle(
 }
 
 static void client_do_args(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
-    int phase, unsigned char *args, unsigned short number_of_params,
-    unsigned char *pRetVal)
+                           int phase, unsigned char *args, void **fpu_args,
+                           unsigned short number_of_params, unsigned char *pRetVal)
 {
     /* current format string offset */
     int current_offset = 0;
@@ -314,6 +314,14 @@ static void client_do_args(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
             const unsigned char * pTypeFormat =
                 &pParam->type_format_char;
 
+#ifdef __x86_64__  /* floats are passed as doubles through varargs functions */
+            float f;
+            if (*pTypeFormat == RPC_FC_FLOAT && !pParam->param_attributes.IsSimpleRef && !fpu_args)
+            {
+                f = *(double *)pArg;
+                pArg = (unsigned char *)&f;
+            }
+#endif
             if (pParam->param_attributes.IsSimpleRef)
             {
                 pArg = *(unsigned char **)pArg;
@@ -565,7 +573,8 @@ void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
     }
 }
 
-LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat, void **stack_top )
+LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat,
+                                void **stack_top, void **fpu_stack )
 {
     /* pointer to start of stack where arguments start */
     RPC_MESSAGE rpcMsg;
@@ -652,16 +661,28 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         number_of_params = pOIFHeader->number_of_params;
 
         pFormat += sizeof(NDR_PROC_PARTIAL_OIF_HEADER);
-    }
 
-    TRACE("Oif_flags = "); dump_INTERPRETER_OPT_FLAGS(Oif_flags);
+        TRACE("Oif_flags = "); dump_INTERPRETER_OPT_FLAGS(Oif_flags);
 
-    if (Oif_flags.HasExtensions)
-    {
-        const NDR_PROC_HEADER_EXTS *pExtensions =
-            (const NDR_PROC_HEADER_EXTS *)pFormat;
-        ext_flags = pExtensions->Flags2;
-        pFormat += pExtensions->Size;
+        if (Oif_flags.HasExtensions)
+        {
+            const NDR_PROC_HEADER_EXTS *pExtensions = (const NDR_PROC_HEADER_EXTS *)pFormat;
+            ext_flags = pExtensions->Flags2;
+            pFormat += pExtensions->Size;
+#ifdef __x86_64__
+            if (pExtensions->Size > sizeof(*pExtensions) && fpu_stack)
+            {
+                int i;
+                unsigned short fpu_mask = *(unsigned short *)(pExtensions + 1);
+                for (i = 0; i < 4; i++, fpu_mask >>= 2)
+                    switch (fpu_mask & 3)
+                    {
+                    case 1: *(float *)&stack_top[i] = *(float *)&fpu_stack[i]; break;
+                    case 2: *(double *)&stack_top[i] = *(double *)&fpu_stack[i]; break;
+                    }
+            }
+#endif
+        }
     }
 
     stubMsg.BufferLength = 0;
@@ -766,7 +787,7 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                 case PROXY_MARSHAL:
                 case PROXY_UNMARSHAL:
                     if (bV2Format)
-                        client_do_args(&stubMsg, pFormat, phase, stubMsg.StackTop,
+                        client_do_args(&stubMsg, pFormat, phase, stubMsg.StackTop, fpu_stack,
                             number_of_params, (unsigned char *)&RetVal);
                     else
                         client_do_args_old_format(&stubMsg, pFormat, phase,
@@ -870,7 +891,7 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
             case PROXY_MARSHAL:
             case PROXY_UNMARSHAL:
                 if (bV2Format)
-                    client_do_args(&stubMsg, pFormat, phase, stubMsg.StackTop,
+                    client_do_args(&stubMsg, pFormat, phase, stubMsg.StackTop, fpu_stack,
                         number_of_params, (unsigned char *)&RetVal);
                 else
                     client_do_args_old_format(&stubMsg, pFormat, phase,
@@ -919,6 +940,7 @@ __ASM_GLOBAL_FUNC( NdrClientCall2,
                    "movq %r8,0x18(%rsp)\n\t"
                    "movq %r9,0x20(%rsp)\n\t"
                    "leaq 0x18(%rsp),%r8\n\t"
+                   "xorq %r9,%r9\n\t"
                    "subq $0x28,%rsp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
                    "call " __ASM_NAME("ndr_client_call") "\n\t"
@@ -937,7 +959,7 @@ CLIENT_CALL_RETURN WINAPIV NdrClientCall2( PMIDL_STUB_DESC desc, PFORMAT_STRING 
     LONG_PTR ret;
 
     __ms_va_start( args, format );
-    ret = ndr_client_call( desc, format, va_arg( args, void ** ));
+    ret = ndr_client_call( desc, format, va_arg( args, void ** ), NULL );
     __ms_va_end( args );
     return *(CLIENT_CALL_RETURN *)&ret;
 }
@@ -1947,7 +1969,7 @@ CLIENT_CALL_RETURN WINAPIV NdrAsyncClientCall(PMIDL_STUB_DESC pStubDesc,
         case PROXY_CALCSIZE:
         case PROXY_MARSHAL:
             if (bV2Format)
-                client_do_args(pStubMsg, pFormat, phase, pStubMsg->StackTop,
+                client_do_args(pStubMsg, pFormat, phase, pStubMsg->StackTop, NULL,
                     async_call_data->number_of_params, NULL);
             else
                 client_do_args_old_format(pStubMsg, pFormat, phase,
@@ -2032,7 +2054,7 @@ RPC_STATUS NdrpCompleteAsyncClientCall(RPC_ASYNC_STATE *pAsync, void *Reply)
         case PROXY_UNMARSHAL:
             if (bV2Format)
                 client_do_args(pStubMsg, async_call_data->pParamFormat, phase, pStubMsg->StackTop,
-                    async_call_data->number_of_params, Reply);
+                               NULL, async_call_data->number_of_params, Reply);
             else
                 client_do_args_old_format(pStubMsg, async_call_data->pParamFormat, phase,
                     pStubMsg->StackTop, async_call_data->stack_size, Reply, FALSE, FALSE);

@@ -131,11 +131,15 @@ __ASM_GLOBAL_FUNC(call_stubless_func,
                   "movzwq (%rdx,%r10,2),%rdx\n\t" /* FormatStringOffset[index] */
                   "addq 8(%rcx),%rdx\n\t"         /* info->ProcFormatString + offset */
                   "movq (%rcx),%rcx\n\t"          /* info->pStubDesc */
-                  "subq $0x28,%rsp\n\t"
-                  __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
+                  "subq $0x38,%rsp\n\t"
+                  __ASM_CFI(".cfi_adjust_cfa_offset 0x38\n\t")
+                  "movq %xmm1,0x20(%rsp)\n\t"
+                  "movq %xmm2,0x28(%rsp)\n\t"
+                  "movq %xmm3,0x30(%rsp)\n\t"
+                  "leaq 0x18(%rsp),%r9\n\t"       /* fpu_args */
                   "call " __ASM_NAME("ndr_client_call") "\n\t"
-                  "addq $0x28,%rsp\n\t"
-                  __ASM_CFI(".cfi_adjust_cfa_offset -0x28\n\t")
+                  "addq $0x38,%rsp\n\t"
+                  __ASM_CFI(".cfi_adjust_cfa_offset -0x38\n\t")
                   "ret" );
 
 #include "pshpack1.h"
