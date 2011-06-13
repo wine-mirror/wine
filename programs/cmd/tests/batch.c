@@ -142,7 +142,6 @@ static const char *compare_line(const char *out_line, const char *out_end, const
     const char *err = NULL;
 
     static const char pwd_cmd[] = {'@','p','w','d','@'};
-    static const char todo_space_cmd[] = {'@','t','o','d','o','_','s','p','a','c','e','@'};
     static const char space_cmd[] = {'@','s','p','a','c','e','@'};
     static const char or_broken_cmd[] = {'@','o','r','_','b','r','o','k','e','n','@'};
 
@@ -159,13 +158,6 @@ static const char *compare_line(const char *out_line, const char *out_end, const
                     out_ptr += workdir_len;
                     continue;
                 }
-            }else if(exp_ptr+sizeof(todo_space_cmd) <= exp_end
-                    && !memcmp(exp_ptr, todo_space_cmd, sizeof(todo_space_cmd))) {
-                exp_ptr += sizeof(todo_space_cmd);
-                todo_wine ok(*out_ptr == ' ', "expected space\n");
-                if(out_ptr < out_end && *out_ptr == ' ')
-                    out_ptr++;
-                continue;
             }else if(exp_ptr+sizeof(space_cmd) <= exp_end
                     && !memcmp(exp_ptr, space_cmd, sizeof(space_cmd))) {
                 exp_ptr += sizeof(space_cmd);
