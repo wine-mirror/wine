@@ -7712,6 +7712,37 @@ static LRESULT WINAPI PaintLoopProcA(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
     return DefWindowProcA(hWnd,msg,wParam,lParam);
 }
 
+static LRESULT WINAPI HotkeyMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static LONG defwndproc_counter = 0;
+    LRESULT ret;
+    struct recvd_message msg;
+
+    if (ignore_message( message )) return 0;
+
+    if ((message >= WM_KEYFIRST && message <= WM_KEYLAST) ||
+        message == WM_HOTKEY || message >= WM_APP)
+    {
+        msg.hwnd = hwnd;
+        msg.message = message;
+        msg.flags = sent|wparam|lparam;
+        if (defwndproc_counter) msg.flags |= defwinproc;
+        msg.wParam = wParam;
+        msg.lParam = lParam;
+        msg.descr = "HotkeyMsgCheckProcA";
+        add_message(&msg);
+    }
+
+    defwndproc_counter++;
+    ret = DefWindowProcA(hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    if (message == WM_APP)
+        PostMessageA(hwnd, WM_APP+1, 0, 0);
+
+    return ret;
+}
+
 static BOOL RegisterWindowClasses(void)
 {
     WNDCLASSA cls;
@@ -7727,6 +7758,10 @@ static BOOL RegisterWindowClasses(void)
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "TestWindowClass";
+    if(!RegisterClassA(&cls)) return FALSE;
+
+    cls.lpfnWndProc = HotkeyMsgCheckProcA;
+    cls.lpszClassName = "HotkeyWindowClass";
     if(!RegisterClassA(&cls)) return FALSE;
 
     cls.lpfnWndProc = ShowWindowProcA;
@@ -13090,7 +13125,7 @@ static void test_hotkey(void)
         return;
     }
 
-    test_window = CreateWindowEx(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+    test_window = CreateWindowEx(0, "HotkeyWindowClass", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                            100, 100, 200, 200, 0, 0, 0, NULL);
 
     flush_sequence();
@@ -13159,14 +13194,12 @@ static void test_hotkey(void)
 
     /* Inject the appropriate key sequence */
     keybd_event(VK_LWIN, 0, 0, 0);
-    while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE) ||
-           PeekMessage(&msg, NULL, WM_HOTKEY, WM_HOTKEY, PM_REMOVE))
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         DispatchMessage(&msg);
     ok_sequence(WmHotkeyPressLWIN, "window hotkey press LWIN", FALSE);
 
     keybd_event(hotkey_letter, 0, 0, 0);
-    while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE) ||
-           PeekMessage(&msg, NULL, WM_HOTKEY, WM_HOTKEY, PM_REMOVE))
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
     {
         if (msg.message == WM_HOTKEY)
         {
@@ -13181,14 +13214,12 @@ static void test_hotkey(void)
     ok((key_state & 0x8000) == 0x8000, "unexpected key state %x\n", key_state);
 
     keybd_event(hotkey_letter, 0, KEYEVENTF_KEYUP, 0);
-    while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE) ||
-           PeekMessage(&msg, NULL, WM_HOTKEY, WM_HOTKEY, PM_REMOVE))
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         DispatchMessage(&msg);
     ok_sequence(WmHotkeyRelease, "window hotkey release", FALSE);
 
     keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
-    while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE) ||
-           PeekMessage(&msg, NULL, WM_HOTKEY, WM_HOTKEY, PM_REMOVE))
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         DispatchMessage(&msg);
     ok_sequence(WmHotkeyReleaseLWIN, "window hotkey release LWIN", FALSE);
 
@@ -13212,8 +13243,7 @@ static void test_hotkey(void)
 
     /* Inject the appropriate key sequence */
     keybd_event(VK_LWIN, 0, 0, 0);
-    while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE) ||
-           PeekMessage(&msg, NULL, WM_HOTKEY, WM_HOTKEY, PM_REMOVE))
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
     {
         ok(msg.hwnd != NULL, "unexpected thread message %x\n", msg.message);
         DispatchMessage(&msg);
@@ -13221,8 +13251,7 @@ static void test_hotkey(void)
     ok_sequence(WmHotkeyPressLWIN, "thread hotkey press LWIN", FALSE);
 
     keybd_event(hotkey_letter, 0, 0, 0);
-    while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE) ||
-           PeekMessage(&msg, NULL, WM_HOTKEY, WM_HOTKEY, PM_REMOVE))
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
     {
         if (msg.message == WM_HOTKEY)
         {
@@ -13243,8 +13272,7 @@ static void test_hotkey(void)
     ok_sequence(WmHotkeyPress, "thread hotkey press", FALSE);
 
     keybd_event(hotkey_letter, 0, KEYEVENTF_KEYUP, 0);
-    while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE) ||
-           PeekMessage(&msg, NULL, WM_HOTKEY, WM_HOTKEY, PM_REMOVE))
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
     {
         ok(msg.hwnd != NULL, "unexpected thread message %x\n", msg.message);
         DispatchMessage(&msg);
@@ -13252,8 +13280,7 @@ static void test_hotkey(void)
     ok_sequence(WmHotkeyRelease, "thread hotkey release", FALSE);
 
     keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
-    while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE) ||
-           PeekMessage(&msg, NULL, WM_HOTKEY, WM_HOTKEY, PM_REMOVE))
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
     {
         ok(msg.hwnd != NULL, "unexpected thread message %x\n", msg.message);
         DispatchMessage(&msg);
