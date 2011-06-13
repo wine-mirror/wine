@@ -963,6 +963,19 @@ static void test_knownFolders(void)
             ok(hr == S_OK, "failed to release KnownFolder instance: 0x%08x\n", hr);
         }
 
+        hr = IKnownFolderManager_GetFolderByName(mgr, sWindows, &folder);
+        todo_wine
+        ok(hr == S_OK, "failed to get known folder: 0x%08x\n", hr);
+        if(SUCCEEDED(hr))
+        {
+            hr = IKnownFolder_GetId(folder, &folderId);
+            ok(hr == S_OK, "failed to get folder id: 0x%08x\n", hr);
+            ok(IsEqualGUID(&folderId, &FOLDERID_Windows)==TRUE, "invalid KNOWNFOLDERID returned\n");
+
+            hr = IKnownFolder_Release(folder);
+            ok(hr == S_OK, "failed to release KnownFolder instance: 0x%08x\n", hr);
+        }
+
         hr = IKnownFolderManager_Release(mgr);
         ok(hr == S_OK, "failed to release KnownFolderManager instance: 0x%08x\n", hr);
     }
