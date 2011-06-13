@@ -630,25 +630,28 @@ static int write_stub_methods(type_t *iface, int skip)
   return i;
 }
 
-static void write_thunk_methods( type_t *iface )
+static void write_thunk_methods( type_t *iface, int skip )
 {
     const statement_t *stmt;
-    int i = 0;
+
+    if (type_iface_get_inherit( iface ))
+        write_thunk_methods( type_iface_get_inherit(iface), need_delegation(iface) );
+    else
+        return; /* skip IUnknown */
 
     STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
     {
         var_t *func = stmt->u.var;
-        const var_t *cas = is_callas(func->attrs);
+        const statement_t * callas_source = NULL;
 
-        if (is_local( func->attrs )) continue;
-        if (i) fprintf(proxy, ",\n");
-        if (cas && is_interpreted_func( iface, func ))
-            print_proxy( "%s_%s_Thunk", iface->name, func->name );
+        if (is_callas(func->attrs)) continue;
+        if (is_local(func->attrs)) callas_source = get_callas_source(iface, func);
+
+        if (!skip && callas_source && is_interpreted_func( iface, func ))
+            print_proxy( "%s_%s_Thunk,\n", iface->name, get_name(callas_source->u.var) );
         else
-            print_proxy( "0" );
-        i++;
+            print_proxy( "0, /* %s::%s */\n", iface->name, get_name(func) );
     }
-    fputc( '\n', proxy );
 }
 
 static void write_proxy(type_t *iface, unsigned int *proc_offset)
@@ -744,7 +747,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
       print_proxy( "static const STUB_THUNK %s_StubThunkTable[] =\n", iface->name);
       print_proxy( "{\n");
       indent++;
-      write_thunk_methods( iface );
+      write_thunk_methods( iface, 0 );
       indent--;
       print_proxy( "};\n\n");
   }
