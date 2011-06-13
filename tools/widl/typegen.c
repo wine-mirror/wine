@@ -991,6 +991,7 @@ static unsigned char get_parameter_fc( const type_t *type, const attr_list_t *at
         break;
     case TGT_CTXT_HANDLE_POINTER:
         *flags |= IsSimpleRef;
+        *typestring_offset += 4;
         /* fall through */
     case TGT_CTXT_HANDLE:
         buffer_size = 20;
