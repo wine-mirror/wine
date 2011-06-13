@@ -554,24 +554,14 @@ static int write_proxy_methods(type_t *iface, int skip)
   STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface)) {
     const var_t *func = stmt->u.var;
     if (!is_callas(func->attrs)) {
-      int missing = 0;
-      const char * fname = get_name(func);
-      if (is_local(func->attrs)) {
-        const statement_t * callas_source = get_callas_source(iface, func);
-        if(!callas_source)
-          missing = 1;
-        else
-          fname = get_name(callas_source->u.var);
-      }
-      if (skip || missing) print_proxy( "0,  /* %s::%s */\n", iface->name, get_name(func));
-      else if (is_interpreted_func( iface, func ))
-      {
-          if (!is_local( func->attrs ) && type_iface_get_inherit(iface))
-              print_proxy( "(void *)-1,  /* %s::%s */\n", iface->name, get_name(func));
-          else
-              print_proxy( "%s_%s_Proxy,\n", iface->name, fname);
-      }
-      else print_proxy( "%s_%s_Proxy,\n", iface->name, get_name(func));
+      if (skip || (is_local(func->attrs) && !get_callas_source(iface, func)))
+          print_proxy( "0,  /* %s::%s */\n", iface->name, get_name(func));
+      else if (is_interpreted_func( iface, func ) &&
+               !is_local( func->attrs ) &&
+               type_iface_get_inherit(iface))
+          print_proxy( "(void *)-1,  /* %s::%s */\n", iface->name, get_name(func));
+      else
+          print_proxy( "%s_%s_Proxy,\n", iface->name, get_name(func));
       i++;
     }
   }
