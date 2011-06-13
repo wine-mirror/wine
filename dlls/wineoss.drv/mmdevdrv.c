@@ -74,7 +74,7 @@ typedef struct _AudioSession {
     GUID guid;
     struct list clients;
 
-    EDataFlow dataflow;
+    IMMDevice *device;
 
     float master_vol;
     UINT32 channel_count;
@@ -147,7 +147,7 @@ typedef struct _SessionMgr {
 
     LONG ref;
 
-    EDataFlow flow;
+    IMMDevice *device;
 } SessionMgr;
 
 static HANDLE g_timer_q;
@@ -656,18 +656,26 @@ static HRESULT setup_oss_device(ACImpl *This, const WAVEFORMATEX *fmt,
 
 static void session_init_vols(AudioSession *session, UINT channels)
 {
-    session->channel_vols = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(float) * channels);
-    if(!session->channel_vols)
-        return;
+    if(session->channel_count < channels){
+        UINT i;
 
-    session->channel_count = channels;
+        if(session->channel_vols)
+            session->channel_vols = HeapReAlloc(GetProcessHeap(), 0,
+                    session->channel_vols, sizeof(float) * channels);
+        else
+            session->channel_vols = HeapAlloc(GetProcessHeap(), 0,
+                    sizeof(float) * channels);
+        if(!session->channel_vols)
+            return;
 
-    for(; channels > 0; --channels)
-        session->channel_vols[channels - 1] = 1.f;
+        for(i = session->channel_count; i < channels; ++i)
+            session->channel_vols[i] = 1.f;
+
+        session->channel_count = channels;
+    }
 }
 
-static AudioSession *create_session(const GUID *guid, EDataFlow flow,
+static AudioSession *create_session(const GUID *guid, IMMDevice *device,
         UINT num_channels)
 {
     AudioSession *ret;
@@ -678,7 +686,7 @@ static AudioSession *create_session(const GUID *guid, EDataFlow flow,
 
     memcpy(&ret->guid, guid, sizeof(GUID));
 
-    ret->dataflow = flow;
+    ret->device = device;
 
     list_init(&ret->clients);
 
@@ -686,8 +694,7 @@ static AudioSession *create_session(const GUID *guid, EDataFlow flow,
 
     InitializeCriticalSection(&ret->lock);
 
-    if(num_channels > 0)
-        session_init_vols(ret, num_channels);
+    session_init_vols(ret, num_channels);
 
     ret->master_vol = 1.f;
 
@@ -697,12 +704,12 @@ static AudioSession *create_session(const GUID *guid, EDataFlow flow,
 /* if channels == 0, then this will return or create a session with
  * matching dataflow and GUID. otherwise, channels must also match */
 static HRESULT get_audio_session(const GUID *sessionguid,
-        EDataFlow flow, UINT channels, AudioSession **out)
+        IMMDevice *device, UINT channels, AudioSession **out)
 {
     AudioSession *session;
 
     if(!sessionguid || IsEqualGUID(sessionguid, &GUID_NULL)){
-        *out = create_session(&GUID_NULL, flow, channels);
+        *out = create_session(&GUID_NULL, device, channels);
         if(!*out)
             return E_OUTOFMEMORY;
 
@@ -711,20 +718,16 @@ static HRESULT get_audio_session(const GUID *sessionguid,
 
     *out = NULL;
     LIST_FOR_EACH_ENTRY(session, &g_sessions, AudioSession, entry){
-        if(IsEqualGUID(sessionguid, &session->guid) &&
-                session->dataflow == flow){
-            if(session->channel_count > 0){
-                if(channels > 0 && session->channel_count != channels)
-                    return E_INVALIDARG;
-            }else if(channels > 0)
-                session_init_vols(session, channels);
+        if(session->device == device &&
+                IsEqualGUID(sessionguid, &session->guid)){
+            session_init_vols(session, channels);
             *out = session;
             break;
         }
     }
 
     if(!*out){
-        *out = create_session(sessionguid, flow, channels);
+        *out = create_session(sessionguid, device, channels);
         if(!*out)
             return E_OUTOFMEMORY;
     }
@@ -829,7 +832,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
 
     EnterCriticalSection(&g_sessions_lock);
 
-    hr = get_audio_session(sessionguid, This->dataflow, fmt->nChannels,
+    hr = get_audio_session(sessionguid, This->parent, fmt->nChannels,
             &This->session);
     if(FAILED(hr)){
         LeaveCriticalSection(&g_sessions_lock);
@@ -2761,7 +2764,7 @@ HRESULT WINAPI AudioSessionManager_GetAudioSessionControl(
     TRACE("(%p)->(%s, %x, %p)\n", This, debugstr_guid(session_guid),
             flags, out);
 
-    hr = get_audio_session(session_guid, This->flow, 0, &session);
+    hr = get_audio_session(session_guid, This->device, 0, &session);
     if(FAILED(hr))
         return hr;
 
@@ -2788,7 +2791,7 @@ HRESULT WINAPI AudioSessionManager_GetSimpleAudioVolume(
     TRACE("(%p)->(%s, %x, %p)\n", This, debugstr_guid(session_guid),
             flags, out);
 
-    hr = get_audio_session(session_guid, This->flow, 0, &session);
+    hr = get_audio_session(session_guid, This->device, 0, &session);
     if(FAILED(hr))
         return hr;
 
@@ -2859,17 +2862,17 @@ static const IAudioSessionManager2Vtbl AudioSessionManager2_Vtbl =
     AudioSessionManager_UnregisterDuckNotification
 };
 
-HRESULT WINAPI AUDDRV_GetAudioSessionManager(EDataFlow dataflow,
+HRESULT WINAPI AUDDRV_GetAudioSessionManager(IMMDevice *device,
         IAudioSessionManager2 **out)
 {
     SessionMgr *This;
 
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SessionMgr));
-    if(!*out)
+    if(!This)
         return E_OUTOFMEMORY;
 
     This->IAudioSessionManager2_iface.lpVtbl = &AudioSessionManager2_Vtbl;
-    This->flow = dataflow;
+    This->device = device;
     This->ref = 1;
 
     *out = &This->IAudioSessionManager2_iface;

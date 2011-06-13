@@ -37,7 +37,7 @@ typedef struct _DriverFuncs {
             void ***keys, UINT *num, UINT *default_index);
     HRESULT WINAPI (*pGetAudioEndpoint)(void *key, IMMDevice *dev,
             EDataFlow dataflow, IAudioClient **out);
-    HRESULT WINAPI (*pGetAudioSessionManager)(EDataFlow flow,
+    HRESULT WINAPI (*pGetAudioSessionManager)(IMMDevice *device,
             IAudioSessionManager2 **out);
 } DriverFuncs;
 
