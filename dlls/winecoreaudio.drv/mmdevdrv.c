@@ -604,6 +604,8 @@ static HRESULT ca_get_audiodesc(AudioStreamBasicDescription *desc,
 {
     const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)fmt;
 
+    desc->mFormatFlags = 0;
+
     if(fmt->wFormatTag == WAVE_FORMAT_PCM ||
             (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
              IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))){
