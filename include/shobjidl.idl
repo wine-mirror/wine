@@ -3071,6 +3071,55 @@ cpp_quote("    CoTaskMemFree(pKFD->pszIcon);")
 cpp_quote("    CoTaskMemFree(pKFD->pszSecurity);")
 cpp_quote("}")
 
+typedef [v1_enum] enum ASSOCIATIONLEVEL {
+    AL_MACHINE,
+    AL_EFFECTIVE,
+    AL_USER
+} ASSOCIATIONLEVEL;
+
+typedef [v1_enum] enum ASSOCIATIONTYPE {
+    AT_FILEEXTENSION,
+    AT_URLPROTOCOL,
+    AT_STARTMENUCLIENT,
+    AT_MIMETYPE
+} ASSOCIATIONTYPE;
+
+[
+    object,
+    uuid(4e530b0a-e611-4c77-a3ac-9031d022281b),
+    pointer_default(unique)
+]
+interface IApplicationAssociationRegistration : IUnknown
+{
+    HRESULT QueryCurrentDefault(
+        [in, string] LPCWSTR pszQuery,
+        [in] ASSOCIATIONTYPE atQueryType,
+        [in] ASSOCIATIONLEVEL alQueryLevel,
+        [out, string] LPWSTR *ppszAssociation);
+
+    HRESULT QueryAppIsDefault(
+        [in, string] LPCWSTR pszQuery,
+        [in] ASSOCIATIONTYPE atQueryType,
+        [in] ASSOCIATIONLEVEL alQueryLevel,
+        [in, string] LPCWSTR pszAppRegistryName,
+        [out] BOOL *pfDefault);
+
+    HRESULT QueryAppIsDefaultAll(
+        [in] ASSOCIATIONLEVEL alQueryLevel,
+        [in, string] LPCWSTR pszAppRegistryName,
+        [out] BOOL* pfDefault);
+
+    HRESULT SetAppAsDefault(
+        [in, string] LPCWSTR pszAppRegistryName,
+        [in, string] LPCWSTR pszSet,
+        [in] ASSOCIATIONTYPE atSetType);
+
+    HRESULT SetAppAsDefaultAll(
+        [in, string] LPCWSTR pszAppRegistryName);
+
+    HRESULT ClearUserAssociations();
+}
+
 /*****************************************************************************
  * ShellObjects typelibrary
  */
