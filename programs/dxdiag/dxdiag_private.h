@@ -26,6 +26,12 @@
 #define STRING_DXDIAG_TOOL      101
 #define STRING_USAGE            102
 
+/* Information collection definitions. */
+struct dxdiag_information;
+
+struct dxdiag_information *collect_dxdiag_information(BOOL whql_check);
+void free_dxdiag_information(struct dxdiag_information *dxdiag_info);
+
 /* Output backend definitions. */
 enum output_type
 {
@@ -50,4 +56,4 @@ static inline const char *debugstr_output_type(enum output_type type)
 }
 
 const WCHAR *get_output_extension(enum output_type type);
-BOOL output_dxdiag_information(const WCHAR *filename, enum output_type type);
+BOOL output_dxdiag_information(struct dxdiag_information *dxdiag_info, const WCHAR *filename, enum output_type type);

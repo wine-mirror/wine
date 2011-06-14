@@ -1,5 +1,5 @@
 /*
- * DxDiag file information output
+ * DxDiag information collection
  *
  * Copyright 2011 Andrew Nguyen
  *
@@ -18,38 +18,19 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <assert.h>
-
 #include "wine/debug.h"
 
 #include "dxdiag_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 
-static struct output_backend
+void free_dxdiag_information(struct dxdiag_information *system_info)
 {
-    const WCHAR filename_ext[5];
-} output_backends[] =
-{
-    /* OUTPUT_TEXT */
-    {
-        {'.','t','x','t',0},
-    },
-    /* OUTPUT_XML */
-    {
-        {'.','x','m','l',0},
-    },
-};
-
-const WCHAR *get_output_extension(enum output_type type)
-{
-    assert(type > OUTPUT_NONE && type <= sizeof(output_backends)/sizeof(output_backends[0]));
-
-    return output_backends[type - 1].filename_ext;
+    /* Do nothing for now. */
 }
 
-BOOL output_dxdiag_information(struct dxdiag_information *dxdiag_info, const WCHAR *filename, enum output_type type)
+struct dxdiag_information *collect_dxdiag_information(BOOL whql_check)
 {
-    WINE_FIXME("File information output is not implemented\n");
-    return FALSE;
+    WINE_FIXME("DxDiag information collection is not implemented\n");
+    return NULL;
 }

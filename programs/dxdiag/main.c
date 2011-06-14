@@ -174,6 +174,7 @@ static BOOL process_command_line(const WCHAR *cmdline, struct command_line_info 
 int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cmdshow)
 {
     struct command_line_info info;
+    struct dxdiag_information *dxdiag_info;
 
     hInstance = hInst;
 
@@ -185,10 +186,19 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
     if (info.output_type != OUTPUT_NONE)
         WINE_TRACE("Output filename: %s\n", debugstr_output_type(info.output_type));
 
+    dxdiag_info = collect_dxdiag_information(info.whql_check);
+    if (!dxdiag_info)
+    {
+        WINE_ERR("DxDiag information collection failed\n");
+        return 1;
+    }
+
     if (info.output_type != OUTPUT_NONE)
-        output_dxdiag_information(info.outfile, info.output_type);
+        output_dxdiag_information(dxdiag_info, info.outfile, info.output_type);
     else
         WINE_FIXME("Information dialog is not implemented\n");
+
+    free_dxdiag_information(dxdiag_info);
 
     return 0;
 }

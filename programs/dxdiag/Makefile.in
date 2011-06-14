@@ -4,6 +4,7 @@ APPMODE   = -mwindows -municode
 IMPORTS   = user32
 
 C_SRCS = \
+	information.c \
 	main.c \
 	output.c
 
