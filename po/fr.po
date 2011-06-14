@@ -8474,6 +8474,14 @@ msgstr "Plus ? "
 msgid "The input line is too long.\n"
 msgstr "La ligne d'entrée est trop longue.\n"
 
+#: dxdiag.rc:27
+msgid "DirectX Diagnostic Tool"
+msgstr ""
+
+#: dxdiag.rc:28
+msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
+msgstr ""
+
 #: hostname.rc:27
 msgid "Usage: hostname\n"
 msgstr "Usage : hostname\n"

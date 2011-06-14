@@ -1,5 +1,5 @@
 /*
- * Private definitions for the DirectX Diagnostic Tool
+ * Resources for the DirectX Diagnostic Tool
  *
  * Copyright 2011 Andrew Nguyen
  *
@@ -18,36 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <windef.h>
+#include "dxdiag_private.h"
 
-/* Resource definitions. */
-#define MAX_STRING_LEN          1024
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
-#define STRING_DXDIAG_TOOL      101
-#define STRING_USAGE            102
-
-/* Output backend definitions. */
-enum output_type
+STRINGTABLE
 {
-    OUTPUT_NONE,
-    OUTPUT_TEXT,
-    OUTPUT_XML,
-};
-
-static inline const char *debugstr_output_type(enum output_type type)
-{
-    switch (type)
-    {
-    case OUTPUT_NONE:
-        return "(none)";
-    case OUTPUT_TEXT:
-        return "Plain-text output";
-    case OUTPUT_XML:
-        return "XML output";
-    default:
-        return "(unknown)";
-    }
+    STRING_DXDIAG_TOOL, "DirectX Diagnostic Tool"
+    STRING_USAGE, "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 }
-
-const WCHAR *get_output_extension(enum output_type type);
-BOOL output_dxdiag_information(const WCHAR *filename, enum output_type type);

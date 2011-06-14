@@ -8518,6 +8518,14 @@ msgstr ""
 msgid "The input line is too long.\n"
 msgstr ""
 
+#: dxdiag.rc:27
+msgid "DirectX Diagnostic Tool"
+msgstr ""
+
+#: dxdiag.rc:28
+msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
+msgstr ""
+
 #: hostname.rc:27
 msgid "Usage: hostname\n"
 msgstr ""

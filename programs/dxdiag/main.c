@@ -27,6 +27,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 
+HINSTANCE hInstance;
+
 struct command_line_info
 {
     WCHAR outfile[MAX_PATH];
@@ -36,7 +38,14 @@ struct command_line_info
 
 static void usage(void)
 {
-    WINE_FIXME("Usage message box is not implemented\n");
+    WCHAR title[MAX_STRING_LEN];
+    WCHAR usage[MAX_STRING_LEN];
+
+    LoadStringW(hInstance, STRING_DXDIAG_TOOL, title, sizeof(title)/sizeof(WCHAR));
+    LoadStringW(hInstance, STRING_USAGE, usage, sizeof(usage)/sizeof(WCHAR));
+
+    MessageBoxW(NULL, usage, title, MB_OK | MB_ICONWARNING);
+
     ExitProcess(0);
 }
 
@@ -165,6 +174,8 @@ static BOOL process_command_line(const WCHAR *cmdline, struct command_line_info 
 int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cmdshow)
 {
     struct command_line_info info;
+
+    hInstance = hInst;
 
     if (!process_command_line(cmdline, &info))
         usage();
