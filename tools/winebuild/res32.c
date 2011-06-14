@@ -626,6 +626,7 @@ void output_res_o_file( DLLSPEC *spec )
     unsigned int i;
     char *res_file = NULL;
     int fd;
+    struct strarray *args;
 
     if (!spec->nb_resources) fatal_error( "--resources mode needs at least one resource file as input\n" );
     if (!output_file_name) fatal_error( "No output file name specified\n" );
@@ -681,12 +682,10 @@ void output_res_o_file( DLLSPEC *spec )
     close( fd );
     free( output_buffer );
 
-    if (res_file)
-    {
-        struct strarray *args = strarray_init();
-        strarray_add( args, find_tool( "windres", NULL ), "-i", res_file, "-o", output_file_name, NULL );
-        spawn( args );
-        strarray_free( args );
-    }
+    args = strarray_init();
+    strarray_add( args, find_tool( "windres", NULL ), "-i", res_file, "-o", output_file_name, NULL );
+    spawn( args );
+    strarray_free( args );
+
     output_file_name = NULL;  /* so we don't try to assemble it */
 }
