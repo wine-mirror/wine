@@ -59,17 +59,8 @@ static void check_pointers(const var_t *func)
         return;
 
     LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
-    {
-        if (is_var_ptr(var) && cant_be_null(var))
-        {
-            print_client("if (!%s)\n", var->name);
-            print_client("{\n");
-            indent++;
-            print_client("RpcRaiseException(RPC_X_NULL_REF_POINTER);\n");
-            indent--;
-            print_client("}\n\n");
-        }
-    }
+        if (cant_be_null(var))
+            print_client("if (!%s) RpcRaiseException(RPC_X_NULL_REF_POINTER);\n", var->name);
 }
 
 static void write_client_func_decl( const type_t *iface, const var_t *func )

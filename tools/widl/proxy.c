@@ -120,16 +120,13 @@ static void clear_output_vars( const var_list_t *args )
   }
 }
 
-int is_var_ptr(const var_t *v)
-{
-  return is_ptr(v->type);
-}
-
 int cant_be_null(const var_t *v)
 {
     switch (typegen_detect_type(v->type, v->attrs, TDT_IGNORE_STRINGS))
     {
     case TGT_ARRAY:
+        if (!type_array_is_decl_as_ptr( v->type )) return 0;
+        /* fall through */
     case TGT_POINTER:
         return (get_pointer_fc(v->type, v->attrs, TRUE) == RPC_FC_RP);
     case TGT_CTXT_HANDLE_POINTER:
@@ -170,14 +167,8 @@ static void proxy_check_pointers( const var_list_t *args )
 
   if (!args) return;
   LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
-  {
-    if (is_var_ptr(arg) && cant_be_null(arg)) {
-        print_proxy( "if(!%s)\n", arg->name );
-        indent++;
-        print_proxy( "RpcRaiseException(RPC_X_NULL_REF_POINTER);\n");
-        indent--;
-    }
-  }
+      if (cant_be_null(arg))
+          print_proxy( "if (!%s) RpcRaiseException(RPC_X_NULL_REF_POINTER);\n", arg->name );
 }
 
 static void free_variable( const var_t *arg, const char *local_var_prefix )
