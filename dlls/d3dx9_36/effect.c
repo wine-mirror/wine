@@ -85,6 +85,11 @@ enum SHADER_CONSTANT_TYPE
     SCT_PSINT,
 };
 
+enum STATE_TYPE
+{
+    ST_CONSTANT,
+};
+
 struct d3dx_parameter
 {
     char *name;
@@ -108,7 +113,7 @@ struct d3dx_state
 {
     UINT operation;
     UINT index;
-
+    enum STATE_TYPE type;
     D3DXHANDLE parameter;
 };
 
@@ -176,7 +181,7 @@ static struct d3dx_parameter *get_parameter_by_name(struct ID3DXBaseEffectImpl *
         struct d3dx_parameter *parameter, LPCSTR name);
 static struct d3dx_parameter *get_parameter_annotation_by_name(struct d3dx_parameter *parameter, LPCSTR name);
 static HRESULT d3dx9_parse_state(struct d3dx_state *state, const char *data, const char **ptr, D3DXHANDLE *objects);
-static void free_parameter(D3DXHANDLE handle, BOOL element, BOOL child);
+static void free_parameter_state(D3DXHANDLE handle, BOOL element, BOOL child, enum STATE_TYPE st);
 
 static const struct
 {
@@ -552,7 +557,7 @@ static struct d3dx_parameter *is_valid_parameter(struct ID3DXBaseEffectImpl *bas
 
 static void free_state(struct d3dx_state *state)
 {
-    free_parameter(state->parameter, FALSE, FALSE);
+    free_parameter_state(state->parameter, FALSE, FALSE, state->type);
 }
 
 static void free_sampler(struct d3dx_sampler *sampler)
@@ -568,10 +573,16 @@ static void free_sampler(struct d3dx_sampler *sampler)
 
 static void free_parameter(D3DXHANDLE handle, BOOL element, BOOL child)
 {
+    free_parameter_state(handle, element, child, ST_CONSTANT);
+}
+
+static void free_parameter_state(D3DXHANDLE handle, BOOL element, BOOL child, enum STATE_TYPE st)
+{
     unsigned int i;
     struct d3dx_parameter *param = get_parameter_struct(handle);
 
-    TRACE("Free parameter %p, name %s, child %s\n", param, param->name, child ? "yes" : "no");
+    TRACE("Free parameter %p, name %s, type %s, child %s, state_type %x\n", param, param->name,
+            debug_d3dxparameter_type(param->type), child ? "yes" : "no", st);
 
     if (!param)
     {
@@ -617,7 +628,14 @@ static void free_parameter(D3DXHANDLE handle, BOOL element, BOOL child)
             case D3DXPT_TEXTURECUBE:
             case D3DXPT_PIXELSHADER:
             case D3DXPT_VERTEXSHADER:
-                if (*(IUnknown **)param->data) IUnknown_Release(*(IUnknown **)param->data);
+                if (st == ST_CONSTANT)
+                {
+                    if (*(IUnknown **)param->data) IUnknown_Release(*(IUnknown **)param->data);
+                }
+                else
+                {
+                    HeapFree(GetProcessHeap(), 0, *(LPSTR *)param->data);
+                }
                 if (!child) HeapFree(GetProcessHeap(), 0, param->data);
                 break;
 
@@ -626,7 +644,14 @@ static void free_parameter(D3DXHANDLE handle, BOOL element, BOOL child)
             case D3DXPT_SAMPLER2D:
             case D3DXPT_SAMPLER3D:
             case D3DXPT_SAMPLERCUBE:
-                free_sampler((struct d3dx_sampler *)param->data);
+                if (st == ST_CONSTANT)
+                {
+                    free_sampler((struct d3dx_sampler *)param->data);
+                }
+                else
+                {
+                    HeapFree(GetProcessHeap(), 0, *(LPSTR *)param->data);
+                }
                 /* samplers have always own data, so free that */
                 HeapFree(GetProcessHeap(), 0, param->data);
                 break;
@@ -640,6 +665,10 @@ static void free_parameter(D3DXHANDLE handle, BOOL element, BOOL child)
     {
         if (!child)
         {
+            if (st != ST_CONSTANT)
+            {
+                HeapFree(GetProcessHeap(), 0, *(LPSTR *)param->data);
+            }
             HeapFree(GetProcessHeap(), 0, param->data);
         }
     }
@@ -4263,6 +4292,8 @@ static HRESULT d3dx9_parse_state(struct d3dx_state *state, const char *data, con
         return E_OUTOFMEMORY;
     }
 
+    state->type = ST_CONSTANT;
+
     read_dword(ptr, &state->operation);
     TRACE("Operation: %#x (%s)\n", state->operation, state_table[state->operation].name);
 
@@ -4615,13 +4646,112 @@ err_out:
     return hr;
 }
 
+static HRESULT d3dx9_parse_resource(struct ID3DXBaseEffectImpl *base, const char *data, const char **ptr)
+{
+    DWORD technique_index;
+    DWORD index, state_index, usage;
+    struct d3dx_state *state;
+    struct d3dx_parameter *param;
+    HRESULT hr;
+
+    read_dword(ptr, &technique_index);
+    TRACE("techn: %u\n", technique_index);
+
+    read_dword(ptr, &index);
+    TRACE("index: %u\n", index);
+
+    skip_dword_unknown(ptr, 1);
+
+    read_dword(ptr, &state_index);
+    TRACE("state: %u\n", state_index);
+
+    read_dword(ptr, &usage);
+    TRACE("usage: %u\n", usage);
+
+    if (technique_index == 0xffffffff)
+    {
+        struct d3dx_parameter *parameter;
+        struct d3dx_sampler *sampler;
+
+        if (index >= base->parameter_count)
+        {
+            FIXME("Index out of bounds: index %u >= parameter_count %u\n", index, base->parameter_count);
+            return E_FAIL;
+        }
+
+        parameter = get_parameter_struct(base->parameter_handles[index]);
+        sampler = parameter->data;
+        if (state_index >= sampler->state_count)
+        {
+            FIXME("Index out of bounds: state_index %u >= state_count %u\n", state_index, sampler->state_count);
+            return E_FAIL;
+        }
+
+        state = &sampler->states[state_index];
+    }
+    else
+    {
+        struct d3dx_technique *technique;
+        struct d3dx_pass *pass;
+
+        if (technique_index >= base->technique_count)
+        {
+            FIXME("Index out of bounds: technique_index %u >= technique_count %u\n", technique_index, base->technique_count);
+            return E_FAIL;
+        }
+
+        technique = get_technique_struct(base->technique_handles[technique_index]);
+        if (index >= technique->pass_count)
+        {
+            FIXME("Index out of bounds: index %u >= pass_count %u\n", index, technique->pass_count);
+            return E_FAIL;
+        }
+
+        pass = get_pass_struct(technique->pass_handles[index]);
+        if (state_index >= pass->state_count)
+        {
+            FIXME("Index out of bounds: state_index %u >= state_count %u\n", state_index, pass->state_count);
+            return E_FAIL;
+        }
+
+        state = &pass->states[state_index];
+    }
+
+    param = get_parameter_struct(state->parameter);
+
+    switch (usage)
+    {
+        case 0:
+            TRACE("usage 0: type %s\n", debug_d3dxparameter_type(param->type));
+            switch (param->type)
+            {
+                case D3DXPT_VERTEXSHADER:
+                case D3DXPT_PIXELSHADER:
+                    state->type = ST_CONSTANT;
+                    hr = d3dx9_parse_data(param, ptr, base->effect->device);
+                    break;
+
+                default:
+                    FIXME("Unhandled type %s\n", debug_d3dxparameter_type(param->type));
+                    break;
+            }
+            break;
+
+        default:
+            FIXME("Unknown usage %x\n", usage);
+            break;
+    }
+
+    return hr;
+}
+
 static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *data, UINT data_size, DWORD start)
 {
     const char *ptr = data + start;
     D3DXHANDLE *parameter_handles = NULL;
     D3DXHANDLE *technique_handles = NULL;
     D3DXHANDLE *objects = NULL;
-    UINT stringcount, objectcount;
+    UINT stringcount, objectcount, resourcecount;
     HRESULT hr;
     UINT i;
 
@@ -4710,10 +4840,15 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
         }
     }
 
+    /* needed for further parsing */
+    base->technique_handles = technique_handles;
+    base->parameter_handles = parameter_handles;
+
     read_dword(&ptr, &stringcount);
     TRACE("String count: %u\n", stringcount);
 
-    skip_dword_unknown(&ptr, 1);
+    read_dword(&ptr, &resourcecount);
+    TRACE("Resource count: %u\n", resourcecount);
 
     for (i = 0; i < stringcount; ++i)
     {
@@ -4733,10 +4868,19 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, objects);
+    for (i = 0; i < resourcecount; ++i)
+    {
+        TRACE("parse resource %u\n", i);
 
-    base->technique_handles = technique_handles;
-    base->parameter_handles = parameter_handles;
+        hr = d3dx9_parse_resource(base, data, &ptr);
+        if (hr != D3D_OK)
+        {
+            WARN("Failed to parse data\n");
+            goto err_out;
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, objects);
 
     return D3D_OK;
 
@@ -4759,6 +4903,9 @@ err_out:
         }
         HeapFree(GetProcessHeap(), 0, parameter_handles);
     }
+
+    base->technique_handles = NULL;
+    base->parameter_handles = NULL;
 
     HeapFree(GetProcessHeap(), 0, objects);
 
