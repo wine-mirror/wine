@@ -3,6 +3,7 @@ MODULE    = dxdiag.exe
 APPMODE   = -mwindows -municode
 
 C_SRCS = \
-	main.c
+	main.c \
+	output.c
 
 @MAKE_PROG_RULES@

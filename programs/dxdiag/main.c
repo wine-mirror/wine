@@ -23,11 +23,14 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
+#include "dxdiag_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 
 struct command_line_info
 {
     WCHAR outfile[MAX_PATH];
+    enum output_type output_type;
     BOOL whql_check;
 };
 
@@ -37,7 +40,7 @@ static void usage(void)
     ExitProcess(0);
 }
 
-static BOOL process_file_name(const WCHAR *cmdline, WCHAR *filename, size_t filename_len)
+static BOOL process_file_name(const WCHAR *cmdline, enum output_type output_type, WCHAR *filename, size_t filename_len)
 {
     const WCHAR *endptr;
     size_t len;
@@ -65,6 +68,17 @@ static BOOL process_file_name(const WCHAR *cmdline, WCHAR *filename, size_t file
     memcpy(filename, cmdline, len * sizeof(WCHAR));
     filename[len] = '\0';
 
+    /* Append an extension appropriate for the output type if the filename does not have one. */
+    if (!(endptr = strrchrW(filename, '.')))
+    {
+        const WCHAR *filename_ext = get_output_extension(output_type);
+
+        if (len + strlenW(filename_ext) >= filename_len)
+            return FALSE;
+
+        strcatW(filename, filename_ext);
+    }
+
     return TRUE;
 }
 
@@ -87,6 +101,7 @@ static BOOL process_command_line(const WCHAR *cmdline, struct command_line_info 
     static const WCHAR onW[] = {'o','n',0};
 
     info->whql_check = FALSE;
+    info->output_type = OUTPUT_NONE;
 
     while (*cmdline)
     {
@@ -96,7 +111,11 @@ static BOOL process_command_line(const WCHAR *cmdline, struct command_line_info 
 
         /* If no option is specified, treat the command line as a filename. */
         if (*cmdline != '-' && *cmdline != '/')
-            return process_file_name(cmdline, info->outfile, sizeof(info->outfile)/sizeof(WCHAR));
+        {
+            info->output_type = OUTPUT_TEXT;
+            return process_file_name(cmdline, OUTPUT_TEXT, info->outfile,
+                                     sizeof(info->outfile)/sizeof(WCHAR));
+        }
 
         cmdline++;
 
@@ -104,10 +123,14 @@ static BOOL process_command_line(const WCHAR *cmdline, struct command_line_info 
         {
         case 'T':
         case 't':
-            return process_file_name(cmdline + 1, info->outfile, sizeof(info->outfile)/sizeof(WCHAR));
+            info->output_type = OUTPUT_TEXT;
+            return process_file_name(cmdline + 1, OUTPUT_TEXT, info->outfile,
+                                     sizeof(info->outfile)/sizeof(WCHAR));
         case 'X':
         case 'x':
-            return process_file_name(cmdline + 1, info->outfile, sizeof(info->outfile)/sizeof(WCHAR));
+            info->output_type = OUTPUT_XML;
+            return process_file_name(cmdline + 1, OUTPUT_XML, info->outfile,
+                                     sizeof(info->outfile)/sizeof(WCHAR));
         case 'W':
         case 'w':
             if (strncmpiW(cmdline, whql_colonW, 5))
@@ -147,6 +170,14 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
         usage();
 
     WINE_TRACE("WHQL check: %s\n", info.whql_check ? "TRUE" : "FALSE");
+    WINE_TRACE("Output type: %d\n", info.output_type);
+    if (info.output_type != OUTPUT_NONE)
+        WINE_TRACE("Output filename: %s\n", debugstr_output_type(info.output_type));
+
+    if (info.output_type != OUTPUT_NONE)
+        output_dxdiag_information(info.outfile, info.output_type);
+    else
+        WINE_FIXME("Information dialog is not implemented\n");
 
     return 0;
 }
