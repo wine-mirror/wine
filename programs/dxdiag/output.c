@@ -18,8 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define WIN32_LEAN_AND_MEAN
+#define COBJMACROS
+#include <initguid.h>
 #include <windows.h>
+#include <msxml2.h>
 #include <assert.h>
 #include <stdio.h>
 
@@ -32,6 +34,26 @@ WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 
 static char output_buffer[1024];
 static const char crlf[2] = "\r\n";
+
+static const WCHAR DxDiag[] = {'D','x','D','i','a','g',0};
+
+static const WCHAR SystemInformation[] = {'S','y','s','t','e','m','I','n','f','o','r','m','a','t','i','o','n',0};
+static const WCHAR Time[] = {'T','i','m','e',0};
+static const WCHAR MachineName[] = {'M','a','c','h','i','n','e','N','a','m','e',0};
+static const WCHAR OperatingSystem[] = {'O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
+static const WCHAR Language[] = {'L','a','n','g','u','a','g','e',0};
+static const WCHAR SystemManufacturer[] = {'S','y','s','t','e','m','M','a','n','u','f','a','c','t','u','r','e','r',0};
+static const WCHAR SystemModel[] = {'S','y','s','t','e','m','M','o','d','e','l',0};
+static const WCHAR BIOS[] = {'B','I','O','S',0};
+static const WCHAR Processor[] = {'P','r','o','c','e','s','s','o','r',0};
+static const WCHAR Memory[] = {'M','e','m','o','r','y',0};
+static const WCHAR PageFile[] = {'P','a','g','e','F','i','l','e',0};
+static const WCHAR WindowsDir[] = {'W','i','n','d','o','w','s','D','i','r',0};
+static const WCHAR DirectXVersion[] = {'D','i','r','e','c','t','X','V','e','r','s','i','o','n',0};
+static const WCHAR DXSetupParameters[] = {'D','X','S','e','t','u','p','P','a','r','a','m','e','t','e','r','s',0};
+static const WCHAR DxDiagVersion[] = {'D','x','D','i','a','g','V','e','r','s','i','o','n',0};
+static const WCHAR DxDiagUnicode[] = {'D','x','D','i','a','g','U','n','i','c','o','d','e',0};
+static const WCHAR DxDiag64Bit[] = {'D','x','D','i','a','g','6','4','B','i','t',0};
 
 static BOOL output_text_header(HANDLE hFile, const char *caption)
 {
@@ -148,9 +170,169 @@ static BOOL output_text_information(struct dxdiag_information *dxdiag_info, cons
     return FALSE;
 }
 
+static IXMLDOMElement *xml_create_element(IXMLDOMDocument *xmldoc, const WCHAR *name)
+{
+    BSTR bstr = SysAllocString(name);
+    IXMLDOMElement *ret;
+    HRESULT hr;
+
+    if (!bstr)
+        return NULL;
+
+    hr = IXMLDOMDocument_createElement(xmldoc, bstr, &ret);
+    SysFreeString(bstr);
+
+    return SUCCEEDED(hr) ? ret : NULL;
+}
+
+static HRESULT xml_put_element_text(IXMLDOMElement *element, const WCHAR *text)
+{
+    BSTR bstr = SysAllocString(text);
+    HRESULT hr;
+
+    if (!bstr)
+        return E_OUTOFMEMORY;
+
+    hr = IXMLDOMElement_put_text(element, bstr);
+    SysFreeString(bstr);
+
+    return hr;
+}
+
+static HRESULT save_xml_document(IXMLDOMDocument *xmldoc, const WCHAR *filename)
+{
+    BSTR bstr = SysAllocString(filename);
+    VARIANT destVar;
+    HRESULT hr;
+
+    if (!bstr)
+        return E_OUTOFMEMORY;
+
+    V_VT(&destVar) = VT_BSTR;
+    V_BSTR(&destVar) = bstr;
+
+    hr = IXMLDOMDocument_save(xmldoc, destVar);
+    VariantClear(&destVar);
+
+    return hr;
+}
+
 static BOOL output_xml_information(struct dxdiag_information *dxdiag_info, const WCHAR *filename)
 {
-    WINE_FIXME("XML information output is not implemented\n");
+    static const WCHAR zeroW[] = {'0',0};
+    static const WCHAR oneW[] = {'1',0};
+
+    const struct information_block
+    {
+        const WCHAR *tag_name;
+        struct information_field
+        {
+            const WCHAR *tag_name;
+            const WCHAR *value;
+        } fields[50];
+    } output_table[] =
+    {
+        {SystemInformation,
+            {
+                {Time, dxdiag_info->system_info.szTimeEnglish},
+                {MachineName, dxdiag_info->system_info.szMachineNameEnglish},
+                {OperatingSystem, dxdiag_info->system_info.szOSExLongEnglish},
+                {Language, dxdiag_info->system_info.szLanguagesEnglish},
+                {SystemManufacturer, dxdiag_info->system_info.szSystemManufacturerEnglish},
+                {SystemModel, dxdiag_info->system_info.szSystemManufacturerEnglish},
+                {BIOS, dxdiag_info->system_info.szSystemManufacturerEnglish},
+                {Processor, dxdiag_info->system_info.szProcessorEnglish},
+                {Memory, dxdiag_info->system_info.szPhysicalMemoryEnglish},
+                {PageFile, dxdiag_info->system_info.szPageFileEnglish},
+                {WindowsDir, dxdiag_info->system_info.szWindowsDir},
+                {DirectXVersion, dxdiag_info->system_info.szDirectXVersionLongEnglish},
+                {DXSetupParameters, dxdiag_info->system_info.szSetupParamEnglish},
+                {DxDiagVersion, dxdiag_info->system_info.szDxDiagVersion},
+                {DxDiagUnicode, oneW},
+                {DxDiag64Bit, dxdiag_info->system_info.win64 ? oneW : zeroW},
+                {NULL, NULL},
+            }
+        },
+    };
+
+    IXMLDOMDocument *xmldoc = NULL;
+    IXMLDOMElement *dxdiag_element = NULL;
+    HRESULT hr;
+    size_t i;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IXMLDOMDocument, (void **)&xmldoc);
+    if (FAILED(hr))
+    {
+        WINE_ERR("IXMLDOMDocument instance creation failed with 0x%08x\n", hr);
+        goto error;
+    }
+
+    if (!(dxdiag_element = xml_create_element(xmldoc, DxDiag)))
+        goto error;
+
+    hr = IXMLDOMDocument_appendChild(xmldoc, (IXMLDOMNode *)dxdiag_element, NULL);
+    if (FAILED(hr))
+        goto error;
+
+    for (i = 0; i < sizeof(output_table)/sizeof(output_table[0]); i++)
+    {
+        IXMLDOMElement *info_element = xml_create_element(xmldoc, output_table[i].tag_name);
+        const struct information_field *fields = output_table[i].fields;
+        unsigned int j = 0;
+
+        if (!info_element)
+            goto error;
+
+        hr = IXMLDOMElement_appendChild(dxdiag_element, (IXMLDOMNode *)info_element, NULL);
+        if (FAILED(hr))
+        {
+            IXMLDOMElement_Release(info_element);
+            goto error;
+        }
+
+        for (j = 0; fields[j].tag_name; j++)
+        {
+            IXMLDOMElement *field_element = xml_create_element(xmldoc, fields[j].tag_name);
+
+            if (!field_element)
+            {
+                IXMLDOMElement_Release(info_element);
+                goto error;
+            }
+
+            hr = xml_put_element_text(field_element, fields[j].value);
+            if (FAILED(hr))
+            {
+                IXMLDOMElement_Release(field_element);
+                IXMLDOMElement_Release(info_element);
+                goto error;
+            }
+
+            hr = IXMLDOMElement_appendChild(info_element, (IXMLDOMNode *)field_element, NULL);
+            if (FAILED(hr))
+            {
+                IXMLDOMElement_Release(field_element);
+                IXMLDOMElement_Release(info_element);
+                goto error;
+            }
+
+            IXMLDOMElement_Release(field_element);
+        }
+
+        IXMLDOMElement_Release(info_element);
+    }
+
+    hr = save_xml_document(xmldoc, filename);
+    if (FAILED(hr))
+        goto error;
+
+    IXMLDOMElement_Release(dxdiag_element);
+    IXMLDOMDocument_Release(xmldoc);
+    return TRUE;
+error:
+    if (dxdiag_element) IXMLDOMElement_Release(dxdiag_element);
+    if (xmldoc) IXMLDOMDocument_Release(xmldoc);
     return FALSE;
 }
 
