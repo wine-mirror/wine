@@ -496,6 +496,7 @@ static ULONG WINAPI AudioClient_Release(IAudioClient *iface)
         }
         HeapFree(GetProcessHeap(), 0, This->vols);
         HeapFree(GetProcessHeap(), 0, This->local_buffer);
+        HeapFree(GetProcessHeap(), 0, This->tmp_buffer);
         HeapFree(GetProcessHeap(), 0, This->hw_params);
         CoTaskMemFree(This->fmt);
         HeapFree(GetProcessHeap(), 0, This);
@@ -897,7 +898,7 @@ exit:
             This->local_buffer = NULL;
         }
         if(This->fmt){
-            HeapFree(GetProcessHeap(), 0, This->fmt);
+            CoTaskMemFree(This->fmt);
             This->fmt = NULL;
         }
         if(This->vols){
