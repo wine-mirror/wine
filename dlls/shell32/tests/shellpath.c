@@ -95,6 +95,7 @@ static int (WINAPI *pSHFileOperationA)(LPSHFILEOPSTRUCTA);
 static HRESULT (WINAPI *pSHGetMalloc)(LPMALLOC *);
 static UINT (WINAPI *pGetSystemWow64DirectoryA)(LPSTR,UINT);
 static HRESULT (WINAPI *pSHGetKnownFolderPath)(REFKNOWNFOLDERID, DWORD, HANDLE, PWSTR *);
+static HRESULT (WINAPI *pSHSetKnownFolderPath)(REFKNOWNFOLDERID, DWORD, HANDLE, PWSTR);
 static HRESULT (WINAPI *pSHGetFolderPathEx)(REFKNOWNFOLDERID, DWORD, HANDLE, LPWSTR, DWORD);
 
 static DLLVERSIONINFO shellVersion = { 0 };
@@ -194,6 +195,7 @@ static void loadShell32(void)
     GET_PROC(SHGetFolderPathEx)
     GET_PROC(SHGetFolderLocation)
     GET_PROC(SHGetKnownFolderPath)
+    GET_PROC(SHSetKnownFolderPath)
     GET_PROC(SHGetSpecialFolderPathA)
     GET_PROC(SHGetSpecialFolderLocation)
     GET_PROC(ILFindLastID)
@@ -1213,6 +1215,28 @@ static void test_knownFolders(void)
                     todo_wine
                     ok(lstrcmpiW(folderPath, sExamplePath)==0, "invalid known folder path retreived: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
                     CoTaskMemFree(folderPath);
+
+                    /* check shell utility functions */
+                    if(!pSHGetKnownFolderPath || !pSHSetKnownFolderPath)
+                        todo_wine
+                        win_skip("cannot get SHGet/SetKnownFolderPath routines\n");
+                    else
+                    {
+                        /* check shell utility functions */
+                        /* try to get current known folder path */
+                        hr = pSHGetKnownFolderPath(&newFolderId, 0, NULL, &folderPath);
+                        ok(hr==S_OK, "cannot get known folder path: hr=0x%0x\n", hr);
+                        ok(lstrcmpW(folderPath, sExamplePath)==0, "invalid path returned: %s\n", wine_dbgstr_w(folderPath));
+
+                        /* set it to new value */
+                        hr = pSHSetKnownFolderPath(&newFolderId, 0, NULL, sExample2Path);
+                        ok(hr==S_OK, "cannot set known folder path: hr=0x%0x\n", hr);
+
+                        /* check if it changed */
+                        hr = pSHGetKnownFolderPath(&newFolderId, 0, NULL, &folderPath);
+                        ok(hr==S_OK, "cannot get known folder path: hr=0x%0x\n", hr);
+                        ok(lstrcmpW(folderPath, sExample2Path)==0, "invalid path returned: %s\n", wine_dbgstr_w(folderPath));
+                    }
 
                     hr = IKnownFolder_Release(folder);
                     ok(hr == S_OK, "failed to release KnownFolder instance: 0x%08x\n", hr);
