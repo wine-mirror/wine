@@ -5126,12 +5126,16 @@ static HRESULT WINAPI d3d3_EnumZBufferFormats(IDirect3D3 *iface, REFCLSID device
  *****************************************************************************/
 static HRESULT WINAPI d3d7_EvictManagedTextures(IDirect3D7 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    IDirectDrawImpl *This = impl_from_IDirect3D7(iface);
+    HRESULT hr;
+    TRACE("iface %p!\n", iface);
 
-    /* TODO: Just enumerate resources using IWineD3DDevice_EnumResources(),
-     * then unload surfaces / textures. */
+    EnterCriticalSection(&ddraw_cs);
+    if (!This->d3d_initialized) hr = D3D_OK;
+    else hr = wined3d_device_evict_managed_resources(This->wined3d_device);
+    LeaveCriticalSection(&ddraw_cs);
 
-    return D3D_OK;
+    return hr;
 }
 
 static HRESULT WINAPI d3d3_EvictManagedTextures(IDirect3D3 *iface)
