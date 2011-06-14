@@ -43,6 +43,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 
+static const WCHAR szEmpty[] = {0};
+
 static HRESULT build_information_tree(IDxDiagContainerImpl_Container **pinfo_root);
 static void free_information_tree(IDxDiagContainerImpl_Container *node);
 
@@ -570,6 +572,14 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
     static const WCHAR szPageFileEnglish[] = {'s','z','P','a','g','e','F','i','l','e','E','n','g','l','i','s','h',0};
     static const WCHAR szMachineNameLocalized[] = {'s','z','M','a','c','h','i','n','e','N','a','m','e','L','o','c','a','l','i','z','e','d',0};
     static const WCHAR szMachineNameEnglish[] = {'s','z','M','a','c','h','i','n','e','N','a','m','e','E','n','g','l','i','s','h',0};
+    static const WCHAR szSystemManufacturerEnglish[] = {'s','z','S','y','s','t','e','m','M','a','n','u','f','a','c','t','u','r','e','r','E','n','g','l','i','s','h',0};
+    static const WCHAR szSystemModelEnglish[] = {'s','z','S','y','s','t','e','m','M','o','d','e','l','E','n','g','l','i','s','h',0};
+    static const WCHAR szBIOSEnglish[] = {'s','z','B','I','O','S','E','n','g','l','i','s','h',0};
+    static const WCHAR szProcessorEnglish[] = {'s','z','P','r','o','c','e','s','s','o','r','E','n','g','l','i','s','h',0};
+    static const WCHAR szSetupParamEnglish[] = {'s','z','S','e','t','u','p','P','a','r','a','m','E','n','g','l','i','s','h',0};
+    static const WCHAR szDxDiagVersion[] = {'s','z','D','x','D','i','a','g','V','e','r','s','i','o','n',0};
+
+    static const WCHAR notpresentW[] = {'N','o','t',' ','p','r','e','s','e','n','t',0};
 
     static const WCHAR pagefile_fmtW[] = {'%','u','M','B',' ','u','s','e','d',',',' ','%','u','M','B',' ','a','v','a','i','l','a','b','l','e',0};
     static const WCHAR physmem_fmtW[] = {'%','u','M','B',' ','R','A','M',0};
@@ -689,6 +699,30 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
     if (FAILED(hr))
         return hr;
 
+    hr = add_bstr_property(node, szSystemManufacturerEnglish, szEmpty);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_bstr_property(node, szSystemModelEnglish, szEmpty);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_bstr_property(node, szBIOSEnglish, szEmpty);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_bstr_property(node, szProcessorEnglish, szEmpty);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_bstr_property(node, szSetupParamEnglish, notpresentW);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_bstr_property(node, szDxDiagVersion, szEmpty);
+    if (FAILED(hr))
+        return hr;
+
     hr = fill_language_information(node);
     if (FAILED(hr))
         return hr;
@@ -720,7 +754,6 @@ static HRESULT build_displaydevices_tree(IDxDiagContainerImpl_Container *node)
     static const WCHAR szDisplayMemoryEnglish[] = {'s','z','D','i','s','p','l','a','y','M','e','m','o','r','y','E','n','g','l','i','s','h',0};
 
     static const WCHAR szAdapterID[] = {'0',0};
-    static const WCHAR szEmpty[] = {0};
 
     IDxDiagContainerImpl_Container *display_adapter;
     HRESULT hr;
