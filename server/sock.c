@@ -777,7 +777,7 @@ static int accept_into_socket( struct sock *sock, struct sock *acceptsock )
     acceptsock->family  = sock->family;
     acceptsock->wparam  = 0;
     acceptsock->deferred = NULL;
-    if (acceptsock->fd) release_object( acceptsock->fd );
+    release_object( acceptsock->fd );
     acceptsock->fd = newfd;
 
     clear_error();
