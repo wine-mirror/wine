@@ -482,7 +482,7 @@ static int EnumEnums(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
         AddToStrW(wszText, wszSpace);
         AddToStrW(wszText, bstrName);
         AddToStrW(wszText, wszAfter);
-        if (bstrName) AddToTLDataStrW(tld, bstrName);
+        AddToTLDataStrW(tld, bstrName);
         AddToTLDataStrW(tld, wszAfter);
 	if (i<cVars-1)
             AddToTLDataStrW(tld, wszComa);
