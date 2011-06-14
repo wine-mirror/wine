@@ -1039,6 +1039,7 @@ static void test_knownFolders(void)
 {
     static const WCHAR sWindows[] = {'W','i','n','d','o','w','s',0};
     static const WCHAR sExample[] = {'E','x','a','m','p','l','e',0};
+    static const WCHAR sExample2[] = {'E','x','a','m','p','l','e','2',0};
     static const KNOWNFOLDERID newFolderId = {0x01234567, 0x89AB, 0xCDEF, {0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x01} };
     HRESULT hr;
     IKnownFolderManager *mgr = NULL;
@@ -1050,13 +1051,16 @@ static void test_knownFolders(void)
     UINT nCount = 0;
     LPWSTR folderPath;
     KF_REDIRECTION_CAPABILITIES redirectionCapabilities = 1;
-    WCHAR sWinDir[MAX_PATH], sExamplePath[MAX_PATH];
+    WCHAR sWinDir[MAX_PATH], sExamplePath[MAX_PATH], sExample2Path[MAX_PATH];
     BOOL bRes;
 
     GetWindowsDirectoryW( sWinDir, MAX_PATH );
 
     GetTempPathW(sizeof(sExamplePath)/sizeof(sExamplePath[0]), sExamplePath);
     lstrcatW(sExamplePath, sExample);
+
+    GetTempPathW(sizeof(sExample2Path)/sizeof(sExample2Path[0]), sExample2Path);
+    lstrcatW(sExample2Path, sExample2);
 
     CoInitialize(NULL);
 
@@ -1145,6 +1149,8 @@ static void test_knownFolders(void)
         /* test of registering new known folders */
         bRes = CreateDirectoryW(sExamplePath, NULL);
         ok(bRes, "cannot create example directory: %s\n", wine_dbgstr_w(sExamplePath));
+        bRes = CreateDirectoryW(sExample2Path, NULL);
+        ok(bRes, "cannot create example directory: %s\n", wine_dbgstr_w(sExamplePath));
 
         ZeroMemory(&kfDefinition, sizeof(kfDefinition));
         kfDefinition.category = KF_CATEGORY_PERUSER;
@@ -1182,6 +1188,32 @@ static void test_knownFolders(void)
                     ok(lstrcmpiW(folderPath, sExamplePath)==0, "invalid known folder path retreived: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
                     CoTaskMemFree(folderPath);
 
+                    /* try to set new path for folder */
+                    hr = IKnownFolder_SetPath(folder, 0, sExample2Path);
+                    todo_wine
+                    ok(hr == S_OK, "setting path failed: 0x%0x\n", hr);
+
+                    /* verify modified path */
+                    hr = IKnownFolder_GetPath(folder, 0, &folderPath);
+                    todo_wine
+                    ok(hr == S_OK, "failed to get path from known folder: 0x%08x\n", hr);
+                    todo_wine
+                    ok(lstrcmpiW(folderPath, sExample2Path)==0, "invalid known folder path retreived: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
+                    CoTaskMemFree(folderPath);
+
+                    /* set again to first path, but use another way */
+                    hr = IKnownFolderManager_Redirect(mgr, &newFolderId, NULL, 0, sExamplePath, 0, NULL, NULL);
+                    todo_wine
+                    ok(hr == S_OK, "redirection failed: 0x%08x\n", hr);
+
+                    /* again verify modified path */
+                    hr = IKnownFolder_GetPath(folder, 0, &folderPath);
+                    todo_wine
+                    ok(hr == S_OK, "failed to get path from known folder: 0x%08x\n", hr);
+                    todo_wine
+                    ok(lstrcmpiW(folderPath, sExamplePath)==0, "invalid known folder path retreived: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
+                    CoTaskMemFree(folderPath);
+
                     hr = IKnownFolder_Release(folder);
                     ok(hr == S_OK, "failed to release KnownFolder instance: 0x%08x\n", hr);
                 }
@@ -1194,6 +1226,7 @@ static void test_knownFolders(void)
         FreeKnownFolderDefinitionFields(&kfDefinition);
 
         RemoveDirectoryW(sExamplePath);
+        RemoveDirectoryW(sExample2Path);
 
         hr = IKnownFolderManager_Release(mgr);
         ok(hr == S_OK, "failed to release KnownFolderManager instance: 0x%08x\n", hr);
