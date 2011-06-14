@@ -3099,7 +3099,6 @@ HRESULT CDECL wined3d_surface_set_format(struct wined3d_surface *surface, enum w
     surface->resource.size = wined3d_format_calculate_size(format, surface->resource.device->surface_alignment,
             surface->pow2Width, surface->pow2Height);
     surface->flags |= (WINED3DFMT_D16_LOCKABLE == format_id) ? SFLAG_LOCKABLE : 0;
-    surface->flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
     surface->resource.format = format;
 
     TRACE("size %u, byte_count %u\n", surface->resource.size, format->byte_count);
