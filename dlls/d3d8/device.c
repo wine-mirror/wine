@@ -364,7 +364,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_ResourceManagerDiscardBytes(IDirect3D
     HRESULT hr;
 
     TRACE("iface %p, byte_count %u.\n", iface, Bytes);
-    FIXME("Byte count ignored.\n");
+    if (Bytes) FIXME("Byte count ignored.\n");
 
     wined3d_mutex_lock();
     hr = wined3d_device_evict_managed_resources(This->wined3d_device);
