@@ -50,19 +50,6 @@ static void print_client( const char *format, ... )
     va_end(va);
 }
 
-
-static void check_pointers(const var_t *func)
-{
-    const var_t *var;
-
-    if (!type_get_function_args(func->type))
-        return;
-
-    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
-        if (cant_be_null(var))
-            print_client("if (!%s) RpcRaiseException(RPC_X_NULL_REF_POINTER);\n", var->name);
-}
-
 static void write_client_func_decl( const type_t *iface, const var_t *func )
 {
     const char *callconv = get_attrp(func->type->attrs, ATTR_CALLCONV);
@@ -173,7 +160,7 @@ static void write_function_stub( const type_t *iface, const var_t *func,
         write_full_pointer_init(client, indent, func, FALSE);
 
     /* check pointers */
-    check_pointers(func);
+    write_pointer_checks( client, indent, func );
 
     print_client("RpcTryFinally\n");
     print_client("{\n");

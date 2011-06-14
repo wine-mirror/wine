@@ -373,6 +373,23 @@ enum typegen_type typegen_detect_type(const type_t *type, const attr_list_t *att
     return TGT_INVALID;
 }
 
+static int cant_be_null(const var_t *v)
+{
+    switch (typegen_detect_type(v->type, v->attrs, TDT_IGNORE_STRINGS))
+    {
+    case TGT_ARRAY:
+        if (!type_array_is_decl_as_ptr( v->type )) return 0;
+        /* fall through */
+    case TGT_POINTER:
+        return (get_pointer_fc(v->type, v->attrs, TRUE) == RPC_FC_RP);
+    case TGT_CTXT_HANDLE_POINTER:
+        return TRUE;
+    default:
+        return 0;
+    }
+
+}
+
 static int get_padding(const var_list_t *fields)
 {
     unsigned short offset = 0;
@@ -4718,6 +4735,18 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
     print_file(file, 1, "} %s;\n", var_decl );
     if (needs_packing) print_file( file, 0, "#include <poppack.h>\n" );
     print_file( file, 0, "\n" );
+}
+
+void write_pointer_checks( FILE *file, int indent, const var_t *func )
+{
+    const var_list_t *args = type_get_function_args( func->type );
+    const var_t *var;
+
+    if (!args) return;
+
+    LIST_FOR_EACH_ENTRY( var, args, const var_t, entry )
+        if (cant_be_null( var ))
+            print_file( file, indent, "if (!%s) RpcRaiseException(RPC_X_NULL_REF_POINTER);\n", var->name );
 }
 
 int write_expr_eval_routines(FILE *file, const char *iface)

@@ -77,6 +77,7 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
 void declare_stub_args( FILE *file, int indent, const var_t *func );
 void write_func_param_struct( FILE *file, const type_t *iface, const type_t *func,
                               const char *var_decl, int add_retval );
+void write_pointer_checks( FILE *file, int indent, const var_t *func );
 int write_expr_eval_routines(FILE *file, const char *iface);
 void write_expr_eval_routine_list(FILE *file, const char *iface);
 void write_user_quad_list(FILE *file);

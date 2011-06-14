@@ -120,23 +120,6 @@ static void clear_output_vars( const var_list_t *args )
   }
 }
 
-int cant_be_null(const var_t *v)
-{
-    switch (typegen_detect_type(v->type, v->attrs, TDT_IGNORE_STRINGS))
-    {
-    case TGT_ARRAY:
-        if (!type_array_is_decl_as_ptr( v->type )) return 0;
-        /* fall through */
-    case TGT_POINTER:
-        return (get_pointer_fc(v->type, v->attrs, TRUE) == RPC_FC_RP);
-    case TGT_CTXT_HANDLE_POINTER:
-        return TRUE;
-    default:
-        return 0;
-    }
-
-}
-
 static int need_delegation(const type_t *iface)
 {
     const type_t *parent = type_iface_get_inherit( iface );
@@ -159,16 +142,6 @@ static int get_delegation_indirect(const type_t *iface, const type_t ** delegate
 static int need_delegation_indirect(const type_t *iface)
 {
   return get_delegation_indirect(iface, NULL);
-}
-
-static void proxy_check_pointers( const var_list_t *args )
-{
-  const var_t *arg;
-
-  if (!args) return;
-  LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
-      if (cant_be_null(arg))
-          print_proxy( "if (!%s) RpcRaiseException(RPC_X_NULL_REF_POINTER);\n", arg->name );
 }
 
 static void free_variable( const var_t *arg, const char *local_var_prefix )
@@ -303,7 +276,7 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
   print_proxy( "{\n" );
   indent++;
   print_proxy( "NdrProxyInitialize(This, &_RpcMessage, &__frame->_StubMsg, &Object_StubDesc, %d);\n", idx);
-  proxy_check_pointers( type_get_function_args(func->type) );
+  write_pointer_checks( proxy, indent, func );
 
   print_proxy( "RpcTryFinally\n" );
   print_proxy( "{\n" );
