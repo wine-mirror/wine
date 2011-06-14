@@ -4736,13 +4736,12 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
     const struct wined3d_format *dst_format;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
-    const unsigned char *data;
-    UINT update_w, update_h;
-    CONVERT_TYPES convert;
-    UINT src_w, src_h;
-    UINT dst_x, dst_y;
-    DWORD sampler;
+    struct wined3d_bo_address data;
     struct wined3d_format format;
+    CONVERT_TYPES convert;
+    DWORD sampler;
+    POINT p;
+    RECT r;
 
     TRACE("device %p, src_surface %p, src_rect %s, dst_surface %p, dst_point %s.\n",
             device, src_surface, wine_dbgstr_rect(src_rect),
@@ -4764,8 +4763,12 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
         return WINED3DERR_INVALIDCALL;
     }
 
-    dst_x = dst_point ? dst_point->x : 0;
-    dst_y = dst_point ? dst_point->y : 0;
+    if (!dst_point)
+    {
+        p.x = 0;
+        p.y = 0;
+        dst_point = &p;
+    }
 
     /* This call loads the OpenGL surface directly, instead of copying the
      * surface to the destination's sysmem copy. If surface conversion is
@@ -4773,7 +4776,7 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
      * loading. */
     d3dfmt_get_conv(dst_surface, FALSE, TRUE, &format, &convert);
     if (convert != NO_CONVERSION || format.convert)
-        return wined3d_surface_bltfast(dst_surface, dst_x, dst_y, src_surface, src_rect, 0);
+        return wined3d_surface_bltfast(dst_surface, dst_point->x, dst_point->y, src_surface, src_rect, 0);
 
     context = context_acquire(device, NULL);
     gl_info = context->gl_info;
@@ -4787,73 +4790,24 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
     surface_internal_preload(dst_surface, SRGB_RGB);
     surface_bind(dst_surface, gl_info, FALSE);
 
-    src_w = src_surface->resource.width;
-    src_h = src_surface->resource.height;
-    update_w = src_rect ? src_rect->right - src_rect->left : src_w;
-    update_h = src_rect ? src_rect->bottom - src_rect->top : src_h;
-
-    data = src_surface->resource.allocatedMemory;
-    if (!data) ERR("Source surface has no allocated memory, but should be a sysmem surface.\n");
-
-    ENTER_GL();
-
-    if (dst_format->flags & WINED3DFMT_FLAG_COMPRESSED)
+    if (!src_rect)
     {
-        UINT row_length = wined3d_format_calculate_size(src_format, 1, update_w, 1);
-        UINT row_count = (update_h + src_format->block_height - 1) / src_format->block_height;
-        UINT src_pitch = wined3d_format_calculate_size(src_format, 1, src_w, 1);
-
-        if (src_rect)
-        {
-            data += (src_rect->top / src_format->block_height) * src_pitch;
-            data += (src_rect->left / src_format->block_width) * src_format->block_byte_count;
-        }
-
-        TRACE("glCompressedTexSubImage2DARB, target %#x, level %d, x %d, y %d, w %d, h %d, "
-                "format %#x, image_size %#x, data %p.\n", dst_surface->texture_target, dst_surface->texture_level,
-                dst_x, dst_y, update_w, update_h, dst_format->glFormat, row_count * row_length, data);
-
-        if (row_length == src_pitch)
-        {
-            GL_EXTCALL(glCompressedTexSubImage2DARB(dst_surface->texture_target, dst_surface->texture_level,
-                    dst_x, dst_y, update_w, update_h, dst_format->glInternal, row_count * row_length, data));
-        }
-        else
-        {
-            UINT row, y;
-
-            /* glCompressedTexSubImage2DARB() ignores pixel store state, so we
-             * can't use the unpack row length like below. */
-            for (row = 0, y = dst_y; row < row_count; ++row)
-            {
-                GL_EXTCALL(glCompressedTexSubImage2DARB(dst_surface->texture_target, dst_surface->texture_level,
-                        dst_x, y, update_w, src_format->block_height, dst_format->glInternal, row_length, data));
-                y += src_format->block_height;
-                data += src_pitch;
-            }
-        }
-        checkGLcall("glCompressedTexSubImage2DARB");
-    }
-    else
-    {
-        if (src_rect)
-        {
-            data += src_rect->top * src_w * src_format->byte_count;
-            data += src_rect->left * src_format->byte_count;
-        }
-
-        TRACE("glTexSubImage2D, target %#x, level %d, x %d, y %d, w %d, h %d, format %#x, type %#x, data %p.\n",
-                dst_surface->texture_target, dst_surface->texture_level, dst_x, dst_y,
-                update_w, update_h, dst_format->glFormat, dst_format->glType, data);
-
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, src_w);
-        glTexSubImage2D(dst_surface->texture_target, dst_surface->texture_level, dst_x, dst_y,
-                update_w, update_h, dst_format->glFormat, dst_format->glType, data);
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-        checkGLcall("glTexSubImage2D");
+        r.left = 0;
+        r.top = 0;
+        r.right = src_surface->resource.width;
+        r.bottom = src_surface->resource.height;
+        src_rect = &r;
     }
 
-    LEAVE_GL();
+    data.buffer_object = 0;
+    data.addr = src_surface->resource.allocatedMemory;
+
+    if (!data.addr)
+        ERR("Source surface has no allocated memory, but should be a sysmem surface.\n");
+
+    surface_upload_data(dst_surface, gl_info, src_format, src_rect,
+            src_surface->resource.width, dst_point, FALSE, &data);
+
     context_release(context);
 
     surface_modify_location(dst_surface, SFLAG_INTEXTURE, TRUE);

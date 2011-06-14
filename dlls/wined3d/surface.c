@@ -2161,32 +2161,19 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
 /* This call just uploads data, the caller is responsible for binding the
  * correct texture. */
 /* Context activation is done by the caller. */
-static void surface_upload_data(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
-        const struct wined3d_format *format, BOOL srgb, const struct wined3d_bo_address *data)
+void surface_upload_data(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
+        const struct wined3d_format *format, const RECT *src_rect, UINT src_w, const POINT *dst_point,
+        BOOL srgb, const struct wined3d_bo_address *data)
 {
-    GLsizei width = surface->resource.width;
-    GLsizei height = surface->resource.height;
-    GLenum internal;
+    UINT update_w = src_rect->right - src_rect->left;
+    UINT update_h = src_rect->bottom - src_rect->top;
 
-    if (srgb)
-    {
-        internal = format->glGammaInternal;
-    }
-    else if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET && surface_is_offscreen(surface))
-    {
-        internal = format->rtInternal;
-    }
-    else
-    {
-        internal = format->glInternal;
-    }
+    TRACE("surface %p, gl_info %p, format %s, src_rect %s, src_w %u, dst_point %p, srgb %#x, data {%#x:%p}.\n",
+            surface, gl_info, debug_d3dformat(format->id), wine_dbgstr_rect(src_rect), src_w,
+            wine_dbgstr_point(dst_point), srgb, data->buffer_object, data->addr);
 
-    TRACE("surface %p, internal %#x, width %d, height %d, format %#x, type %#x, data {%#x:%p}.\n",
-            surface, internal, width, height, format->glFormat, format->glType, data->buffer_object, data->addr);
-    TRACE("target %#x, level %u, resource size %u.\n",
-            surface->texture_target, surface->texture_level, surface->resource.size);
-
-    if (format->heightscale != 1.0f && format->heightscale != 0.0f) height *= format->heightscale;
+    if (format->heightscale != 1.0f && format->heightscale != 0.0f)
+        update_h *= format->heightscale;
 
     ENTER_GL();
 
@@ -2196,28 +2183,66 @@ static void surface_upload_data(struct wined3d_surface *surface, const struct wi
         checkGLcall("glBindBufferARB");
     }
 
-    /* Make sure the correct pitch is used */
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-
     if (format->flags & WINED3DFMT_FLAG_COMPRESSED)
     {
-        TRACE("Calling glCompressedTexSubImage2DARB.\n");
+        UINT row_length = wined3d_format_calculate_size(format, 1, update_w, 1);
+        UINT row_count = (update_h + format->block_height - 1) / format->block_height;
+        UINT src_pitch = wined3d_format_calculate_size(format, 1, src_w, 1);
+        const BYTE *addr = data->addr;
+        GLenum internal;
 
-        GL_EXTCALL(glCompressedTexSubImage2DARB(surface->texture_target, surface->texture_level,
-                0, 0, width, height, internal, surface->resource.size, data->addr));
+        addr += (src_rect->top / format->block_height) * src_pitch;
+        addr += (src_rect->left / format->block_width) * format->block_byte_count;
+
+        if (srgb)
+            internal = format->glGammaInternal;
+        else if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET && surface_is_offscreen(surface))
+            internal = format->rtInternal;
+        else
+            internal = format->glInternal;
+
+        TRACE("glCompressedTexSubImage2DARB, target %#x, level %d, x %d, y %d, w %d, h %d, "
+                "format %#x, image_size %#x, addr %p.\n", surface->texture_target, surface->texture_level,
+                dst_point->x, dst_point->y, update_w, update_h, internal, row_count * row_length, addr);
+
+        if (row_length == src_pitch)
+        {
+            GL_EXTCALL(glCompressedTexSubImage2DARB(surface->texture_target, surface->texture_level,
+                    dst_point->x, dst_point->y, update_w, update_h, internal, row_count * row_length, addr));
+        }
+        else
+        {
+            UINT row, y;
+
+            /* glCompressedTexSubImage2DARB() ignores pixel store state, so we
+             * can't use the unpack row length like below. */
+            for (row = 0, y = dst_point->y; row < row_count; ++row)
+            {
+                GL_EXTCALL(glCompressedTexSubImage2DARB(surface->texture_target, surface->texture_level,
+                        dst_point->x, y, update_w, format->block_height, internal, row_length, addr));
+                y += format->block_height;
+                addr += src_pitch;
+            }
+        }
         checkGLcall("glCompressedTexSubImage2DARB");
     }
     else
     {
-        TRACE("Calling glTexSubImage2D.\n");
+        const BYTE *addr = data->addr;
 
-        glTexSubImage2D(surface->texture_target, surface->texture_level,
-                0, 0, width, height, format->glFormat, format->glType, data->addr);
+        addr += src_rect->top * src_w * format->byte_count;
+        addr += src_rect->left * format->byte_count;
+
+        TRACE("glTexSubImage2D, target %#x, level %d, x %d, y %d, w %d, h %d, format %#x, type %#x, addr %p.\n",
+                surface->texture_target, surface->texture_level, dst_point->x, dst_point->y,
+                update_w, update_h, format->glFormat, format->glType, addr);
+
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, src_w);
+        glTexSubImage2D(surface->texture_target, surface->texture_level, dst_point->x, dst_point->y,
+                update_w, update_h, format->glFormat, format->glType, addr);
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
         checkGLcall("glTexSubImage2D");
     }
-
-    /* Restore the default pitch */
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
     if (data->buffer_object)
     {
@@ -6067,9 +6092,11 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const
         else
         {
             /* Upload from system memory */
+            RECT src_rect = {0, 0, surface->resource.width, surface->resource.height};
             BOOL srgb = flag == SFLAG_INSRGBTEX;
             struct wined3d_context *context = NULL;
             struct wined3d_bo_address data;
+            POINT dst_point = {0, 0};
 
             d3dfmt_get_conv(surface, TRUE /* We need color keying */,
                     TRUE /* We will use textures */, &format, &convert);
@@ -6165,7 +6192,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const
 
             data.buffer_object = surface->flags & SFLAG_PBO ? surface->pbo : 0;
             data.addr = mem;
-            surface_upload_data(surface, gl_info, &format, srgb, &data);
+            surface_upload_data(surface, gl_info, &format, &src_rect, width, &dst_point, srgb, &data);
 
             if (context) context_release(context);
 
