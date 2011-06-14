@@ -2572,6 +2572,7 @@ static void check_remoting_args(const var_t *func)
                         type_array_get_conformance(type)->type != EXPR_VOID) break;
                     if (!type_array_has_conformance(type) && type_array_get_dim(type)) break;
                 }
+                if (is_attr( arg->attrs, ATTR_IN )) break;
                 error_loc_info(&arg->loc_info, "out parameter \'%s\' of function \'%s\' cannot be an unsized string\n", arg->name, funcname);
                 break;
             case TGT_INVALID:
