@@ -3030,8 +3030,9 @@ static void test_send(void)
         goto end;
 
     bytes_sent = 0;
+    WSASetLastError(12345);
     ret = WSASend(dst, &buf, 1, &bytes_sent, 0, &ov, NULL);
-    ok((ret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING) || broken(bytes_sent == buflen),
+    ok((ret == SOCKET_ERROR && WSAGetLastError() == ERROR_IO_PENDING) || broken(bytes_sent == buflen),
        "Failed to start overlapped send %d - %d - %d/%d\n", ret, WSAGetLastError(), bytes_sent, buflen);
 
     /* don't check for completion yet, we may need to drain the buffer while still sending */
@@ -3063,6 +3064,16 @@ static void test_send(void)
         ok((bret && bytes_sent == buflen) || broken(!bret && GetLastError() == ERROR_IO_INCOMPLETE) /* win9x */,
            "Got %d instead of %d (%d - %d)\n", bytes_sent, buflen, bret, GetLastError());
     }
+
+    WSASetLastError(12345);
+    ret = WSASend(INVALID_SOCKET, &buf, 1, NULL, 0, &ov, NULL);
+    ok(ret == SOCKET_ERROR && WSAGetLastError() == WSAENOTSOCK,
+       "WSASend failed %d - %d\n", ret, WSAGetLastError());
+
+    WSASetLastError(12345);
+    ret = WSASend(dst, &buf, 1, NULL, 0, &ov, NULL);
+    ok(ret == SOCKET_ERROR && WSAGetLastError() == ERROR_IO_PENDING,
+       "Failed to start overlapped send %d - %d\n", ret, WSAGetLastError());
 
 end:
     if (src != INVALID_SOCKET)
@@ -3903,6 +3914,7 @@ static void test_WSASendTo(void)
     char buf[12] = "hello world";
     WSABUF data_buf;
     DWORD bytesSent;
+    int ret;
 
     addr.sin_family = AF_INET;
     addr.sin_port = htons(139);
@@ -3914,6 +3926,16 @@ static void test_WSASendTo(void)
         ok(0, "socket() failed error: %d\n", WSAGetLastError());
         return;
     }
+
+    WSASetLastError(12345);
+    ret = WSASendTo(INVALID_SOCKET, &data_buf, 1, NULL, 0, (struct sockaddr*)&addr, sizeof(addr), NULL, NULL);
+    ok(ret == SOCKET_ERROR && WSAGetLastError() == WSAENOTSOCK,
+       "WSASendTo() failed: %d/%d\n", ret, WSAGetLastError());
+
+    WSASetLastError(12345);
+    ret = WSASendTo(s, &data_buf, 1, NULL, 0, (struct sockaddr*)&addr, sizeof(addr), NULL, NULL);
+    ok(ret == SOCKET_ERROR && WSAGetLastError() == WSAEFAULT,
+       "WSASendTo() failed: %d/%d\n", ret, WSAGetLastError());
 
     WSASetLastError(12345);
     if(WSASendTo(s, &data_buf, 1, &bytesSent, 0, (struct sockaddr*)&addr, sizeof(addr), NULL, NULL)) {

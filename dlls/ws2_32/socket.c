@@ -3790,9 +3790,10 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 {
     unsigned int i, options;
     int n, fd, err;
-    struct ws2_async *wsa;
+    struct ws2_async *wsa = NULL;
     int totalLength = 0;
     ULONG_PTR cvalue = (lpOverlapped && ((ULONG_PTR)lpOverlapped->hEvent & 1) == 0) ? (ULONG_PTR)lpOverlapped : 0;
+    DWORD bytes_sent;
 
     TRACE("socket %04lx, wsabuf %p, nbufs %d, flags %d, to %p, tolen %d, ovl %p, func %p\n",
           s, lpBuffers, dwBufferCount, dwFlags,
@@ -3803,6 +3804,11 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
     if ( fd == -1 ) return SOCKET_ERROR;
 
+    if (!lpOverlapped && !lpNumberOfBytesSent)
+    {
+        err = WSAEFAULT;
+        goto error;
+    }
     if (!(wsa = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET(struct ws2_async, iovec[dwBufferCount]) )))
     {
         err = WSAEFAULT;
@@ -3822,12 +3828,6 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         wsa->iovec[i].iov_base = lpBuffers[i].buf;
         wsa->iovec[i].iov_len  = lpBuffers[i].len;
         totalLength += lpBuffers[i].len;
-    }
-
-    if (!lpNumberOfBytesSent)
-    {
-        err = WSAEFAULT;
-        goto error;
     }
 
     for (;;)
@@ -3881,7 +3881,7 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
         iosb->u.Status = STATUS_SUCCESS;
         iosb->Information = n;
-        *lpNumberOfBytesSent = n;
+        if (lpNumberOfBytesSent) *lpNumberOfBytesSent = n;
         if (!wsa->completion_func)
         {
             if (cvalue) WS_AddCompletion( s, cvalue, STATUS_SUCCESS, n );
@@ -3900,7 +3900,7 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
          * sending blocks until the entire buffer is sent. */
         DWORD timeout_start = GetTickCount();
 
-        *lpNumberOfBytesSent = n == -1 ? 0 : n;
+        bytes_sent = n == -1 ? 0 : n;
 
         while (wsa->first_iovec < wsa->n_iovecs)
         {
@@ -3930,7 +3930,7 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             }
 
             if (n >= 0)
-                *lpNumberOfBytesSent += n;
+                bytes_sent += n;
         }
     }
     else  /* non-blocking */
@@ -3942,11 +3942,12 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             err = WSAEWOULDBLOCK;
             goto error;
         }
-        *lpNumberOfBytesSent = n;
+        bytes_sent = n;
     }
 
-    TRACE(" -> %i bytes\n", *lpNumberOfBytesSent);
+    TRACE(" -> %i bytes\n", bytes_sent);
 
+    if (lpNumberOfBytesSent) *lpNumberOfBytesSent = bytes_sent;
     HeapFree( GetProcessHeap(), 0, wsa );
     release_sock_fd( s, fd );
     WSASetLastError(0);
