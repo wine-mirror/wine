@@ -10918,7 +10918,7 @@ if test "x$ac_cv_lib_asound_snd_pcm_hw_params_get_access_mask" = xyes; then :
 int
 main ()
 {
-int ret = snd_pcm_hw_params_get_access_mask(NULL, NULL)
+snd_pcm_hw_params_get_access_mask(NULL, NULL)
   ;
   return 0;
 }
@@ -13700,12 +13700,12 @@ main ()
     struct hostent *result;
     char *buf=0;
     int bufsize=0;
-    int res,errnr;
+    int errnr;
     char *addr=0;
     int addrlen=0;
     int addrtype=0;
-    res=gethostbyname_r(name,&he,buf,bufsize,&result,&errnr);
-    res=gethostbyaddr_r(addr, addrlen, addrtype,&he,buf,bufsize,&result,&errnr);
+    gethostbyname_r(name,&he,buf,bufsize,&result,&errnr);
+    gethostbyaddr_r(addr, addrlen, addrtype,&he,buf,bufsize,&result,&errnr);
 
   ;
   return 0;
@@ -14281,7 +14281,7 @@ else
 int
 main ()
 {
-float f = 0.0; int i=isinf(f)
+float f = 0.0; return isinf(f)
   ;
   return 0;
 }
@@ -14314,7 +14314,7 @@ else
 int
 main ()
 {
-float f = 0.0; int i=isnan(f)
+float f = 0.0; return isnan(f)
   ;
   return 0;
 }

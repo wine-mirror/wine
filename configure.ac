@@ -1515,7 +1515,7 @@ then
 #include <alsa/asoundlib.h>
 #elif defined(HAVE_SYS_ASOUNDLIB_H)
 #include <sys/asoundlib.h>
-#endif]], [[int ret = snd_pcm_hw_params_get_access_mask(NULL, NULL)]])],
+#endif]], [[snd_pcm_hw_params_get_access_mask(NULL, NULL)]])],
                         [ALSALIBS="-lasound"])])
 fi
 
@@ -2150,12 +2150,12 @@ AC_CACHE_CHECK([whether we can use re-entrant gethostbyname_r Linux style],
     struct hostent *result;
     char *buf=0;
     int bufsize=0;
-    int res,errnr;
+    int errnr;
     char *addr=0;
     int addrlen=0;
     int addrtype=0;
-    res=gethostbyname_r(name,&he,buf,bufsize,&result,&errnr);
-    res=gethostbyaddr_r(addr, addrlen, addrtype,&he,buf,bufsize,&result,&errnr);
+    gethostbyname_r(name,&he,buf,bufsize,&result,&errnr);
+    gethostbyaddr_r(addr, addrlen, addrtype,&he,buf,bufsize,&result,&errnr);
     ]])],[wine_cv_linux_gethostbyname_r_6=yes],[wine_cv_linux_gethostbyname_r_6=no
 	])
    )
@@ -2328,7 +2328,7 @@ fi
 
 dnl Check for isinf
 AC_CACHE_CHECK([for isinf], ac_cv_have_isinf,
-               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[float f = 0.0; int i=isinf(f)]])],[ac_cv_have_isinf="yes"],[ac_cv_have_isinf="no"]))
+               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[float f = 0.0; return isinf(f)]])],[ac_cv_have_isinf="yes"],[ac_cv_have_isinf="no"]))
 if test "$ac_cv_have_isinf" = "yes"
 then
     AC_DEFINE(HAVE_ISINF, 1, [Define to 1 if you have the `isinf' function.])
@@ -2336,7 +2336,7 @@ fi
 
 dnl Check for isnan
 AC_CACHE_CHECK([for isnan], ac_cv_have_isnan,
-               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[float f = 0.0; int i=isnan(f)]])],[ac_cv_have_isnan="yes"],[ac_cv_have_isnan="no"]))
+               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[float f = 0.0; return isnan(f)]])],[ac_cv_have_isnan="yes"],[ac_cv_have_isnan="no"]))
 if test "$ac_cv_have_isnan" = "yes"
 then
     AC_DEFINE(HAVE_ISNAN, 1, [Define to 1 if you have the `isnan' function.])
