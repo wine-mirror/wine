@@ -883,16 +883,169 @@ if (0) { /* crashes */
     ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
 }
 
+/* Standard CSIDL values (and their flags) uses only two less-significant bytes */
+#define NO_CSIDL 0x10000
+#define CSIDL_TODO_WINE 0x20000
+#define KNOWN_FOLDER(id, csidl) \
+    { &id, # id, csidl, # csidl, __LINE__ }
+
+struct knownFolderDef {
+    const KNOWNFOLDERID *folderId;
+    const char *sFolderId;
+    const int csidl;
+    const char *sCsidl;
+    const int line;
+};
+
+static const struct knownFolderDef known_folders[] = {
+    KNOWN_FOLDER(FOLDERID_AddNewPrograms,         NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_AddNewPrograms,         NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_AdminTools,             CSIDL_ADMINTOOLS),
+    KNOWN_FOLDER(FOLDERID_AppUpdates,             NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_CDBurning,              CSIDL_CDBURN_AREA),
+    KNOWN_FOLDER(FOLDERID_ChangeRemovePrograms,   NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_CommonAdminTools,       CSIDL_COMMON_ADMINTOOLS),
+    KNOWN_FOLDER(FOLDERID_CommonOEMLinks,         CSIDL_COMMON_OEM_LINKS),
+    KNOWN_FOLDER(FOLDERID_CommonPrograms,         CSIDL_COMMON_PROGRAMS),
+    KNOWN_FOLDER(FOLDERID_CommonStartMenu,        CSIDL_COMMON_STARTMENU),
+    KNOWN_FOLDER(FOLDERID_CommonStartup,          CSIDL_COMMON_STARTUP),
+    KNOWN_FOLDER(FOLDERID_CommonTemplates,        CSIDL_COMMON_TEMPLATES),
+    KNOWN_FOLDER(FOLDERID_ComputerFolder,         CSIDL_DRIVES),
+    KNOWN_FOLDER(FOLDERID_ConflictFolder,         NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_ConnectionsFolder,      CSIDL_CONNECTIONS),
+    KNOWN_FOLDER(FOLDERID_Contacts,               NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_ControlPanelFolder,     CSIDL_CONTROLS),
+    KNOWN_FOLDER(FOLDERID_Cookies,                CSIDL_COOKIES),
+    KNOWN_FOLDER(FOLDERID_Desktop,                CSIDL_DESKTOP),
+    KNOWN_FOLDER(FOLDERID_DeviceMetadataStore,    NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_Documents,              CSIDL_MYDOCUMENTS | CSIDL_TODO_WINE),
+    KNOWN_FOLDER(FOLDERID_DocumentsLibrary,       NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_Downloads,              NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_Favorites,              CSIDL_FAVORITES),
+    KNOWN_FOLDER(FOLDERID_Fonts,                  CSIDL_FONTS),
+    KNOWN_FOLDER(FOLDERID_Games,                  NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_GameTasks,              NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_History,                CSIDL_HISTORY),
+    KNOWN_FOLDER(FOLDERID_HomeGroup,              NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_ImplicitAppShortcuts,   NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_InternetCache,          CSIDL_INTERNET_CACHE),
+    KNOWN_FOLDER(FOLDERID_InternetFolder,         CSIDL_INTERNET),
+    KNOWN_FOLDER(FOLDERID_Libraries,              NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_Links,                  NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_LocalAppData,           CSIDL_LOCAL_APPDATA),
+    KNOWN_FOLDER(FOLDERID_LocalAppDataLow,        NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_LocalizedResourcesDir,  CSIDL_RESOURCES_LOCALIZED),
+    KNOWN_FOLDER(FOLDERID_Music,                  CSIDL_MYMUSIC),
+    KNOWN_FOLDER(FOLDERID_MusicLibrary,           NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_NetHood,                CSIDL_NETHOOD),
+    KNOWN_FOLDER(FOLDERID_NetworkFolder,          CSIDL_NETWORK),
+    KNOWN_FOLDER(FOLDERID_OriginalImages,         NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_PhotoAlbums,            NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_Pictures,               CSIDL_MYPICTURES),
+    KNOWN_FOLDER(FOLDERID_PicturesLibrary,        NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_Playlists,              NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_PrintersFolder,         CSIDL_PRINTERS),
+    KNOWN_FOLDER(FOLDERID_PrintHood,              CSIDL_PRINTHOOD),
+    KNOWN_FOLDER(FOLDERID_Profile,                CSIDL_PROFILE),
+    KNOWN_FOLDER(FOLDERID_ProgramData,            CSIDL_COMMON_APPDATA),
+    KNOWN_FOLDER(FOLDERID_ProgramFiles,           CSIDL_PROGRAM_FILES),
+    KNOWN_FOLDER(FOLDERID_ProgramFilesCommon,     CSIDL_PROGRAM_FILES_COMMON),
+    KNOWN_FOLDER(FOLDERID_ProgramFilesCommonX86,  NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_ProgramFilesX86,        CSIDL_PROGRAM_FILESX86),
+    KNOWN_FOLDER(FOLDERID_Programs,               CSIDL_PROGRAMS),
+    KNOWN_FOLDER(FOLDERID_Public,                 NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_PublicDesktop,          CSIDL_COMMON_DESKTOPDIRECTORY),
+    KNOWN_FOLDER(FOLDERID_PublicDocuments,        CSIDL_COMMON_DOCUMENTS),
+    KNOWN_FOLDER(FOLDERID_PublicDownloads,        NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_PublicGameTasks,        NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_PublicLibraries,        NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_PublicMusic,            CSIDL_COMMON_MUSIC),
+    KNOWN_FOLDER(FOLDERID_PublicPictures,         CSIDL_COMMON_PICTURES),
+    KNOWN_FOLDER(FOLDERID_PublicRingtones,        NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_PublicVideos,           CSIDL_COMMON_VIDEO),
+    KNOWN_FOLDER(FOLDERID_QuickLaunch,            NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_Recent,                 CSIDL_RECENT),
+    KNOWN_FOLDER(FOLDERID_RecordedTVLibrary,      NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_RecycleBinFolder,       CSIDL_BITBUCKET),
+    KNOWN_FOLDER(FOLDERID_ResourceDir,            CSIDL_RESOURCES),
+    KNOWN_FOLDER(FOLDERID_Ringtones,              NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_RoamingAppData,         CSIDL_APPDATA),
+    KNOWN_FOLDER(FOLDERID_SampleMusic,            NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_SamplePictures,         NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_SamplePlaylists,        NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_SampleVideos,           NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_SavedGames,             NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_SavedSearches,          NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_SEARCH_CSC,             NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_SearchHome,             NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_SEARCH_MAPI,            NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_SendTo,                 CSIDL_SENDTO),
+    KNOWN_FOLDER(FOLDERID_SidebarDefaultParts,    NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_SidebarParts,           NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_StartMenu,              CSIDL_STARTMENU),
+    KNOWN_FOLDER(FOLDERID_Startup,                CSIDL_STARTUP),
+    KNOWN_FOLDER(FOLDERID_SyncManagerFolder,      NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_SyncResultsFolder,      NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_SyncSetupFolder,        NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_System,                 CSIDL_SYSTEM),
+    KNOWN_FOLDER(FOLDERID_SystemX86,              CSIDL_SYSTEMX86),
+    KNOWN_FOLDER(FOLDERID_Templates,              CSIDL_TEMPLATES),
+    KNOWN_FOLDER(FOLDERID_UserPinned,             NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_UserProfiles,           NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_UserProgramFiles,       NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_UserProgramFilesCommon, NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_UsersFiles,             NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_UsersLibraries,         NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_Videos,                 CSIDL_MYVIDEO),
+    KNOWN_FOLDER(FOLDERID_VideosLibrary,          NO_CSIDL),
+    KNOWN_FOLDER(FOLDERID_Windows,                CSIDL_WINDOWS),
+    { NULL, NULL, 0, NULL }
+};
+#undef KNOWN_FOLDER
+
+static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId)
+{
+    HRESULT hr;
+    const struct knownFolderDef *known_folder = &known_folders[0];
+    int csidl, expectedCsidl;
+
+    while(known_folder->folderId != NULL)
+    {
+        if(IsEqualGUID(known_folder->folderId, folderId))
+        {
+            /* verify CSIDL */
+            if(known_folder->csidl != NO_CSIDL)
+            {
+                expectedCsidl = known_folder->csidl & (~CSIDL_TODO_WINE);
+
+                hr = IKnownFolderManager_FolderIdToCsidl(mgr, folderId, &csidl);
+                ok_(__FILE__, known_folder->line)(hr == S_OK, "cannot retrieve CSIDL for folder %s\n", known_folder->sFolderId);
+
+                if(known_folder->csidl & CSIDL_TODO_WINE)
+                    todo_wine ok_(__FILE__, known_folder->line)(csidl == expectedCsidl, "invalid CSIDL retrieved for folder %s. %d (%s) expected, but %d found\n", known_folder->sFolderId, expectedCsidl, known_folder->sCsidl, csidl);
+                else
+                    ok_(__FILE__, known_folder->line)(csidl == expectedCsidl, "invalid CSIDL retrieved for folder %s. %d (%s) expected, but %d found\n", known_folder->sFolderId, expectedCsidl, known_folder->sCsidl, csidl);
+            }
+
+            break;
+        }
+        known_folder++;
+    }
+}
+#undef NO_CSIDL
+#undef CSIDL_TODO_WINE
+
 static void test_knownFolders(void)
 {
     static const WCHAR sWindows[] = {'W','i','n','d','o','w','s',0};
     HRESULT hr;
     IKnownFolderManager *mgr = NULL;
     IKnownFolder *folder = NULL;
-    KNOWNFOLDERID folderId;
+    KNOWNFOLDERID folderId, *folders;
     KF_CATEGORY cat = 0;
     KNOWNFOLDER_DEFINITION kfDefinition;
-    int csidl;
+    int csidl, i;
+    UINT nCount = 0;
     LPWSTR folderPath;
     KF_REDIRECTION_CAPABILITIES redirectionCapabilities = 1;
     WCHAR sWinDir[MAX_PATH];
@@ -975,6 +1128,13 @@ static void test_knownFolders(void)
             hr = IKnownFolder_Release(folder);
             ok(hr == S_OK, "failed to release KnownFolder instance: 0x%08x\n", hr);
         }
+
+        hr = IKnownFolderManager_GetFolderIds(mgr, &folders, &nCount);
+        ok(hr == S_OK, "failed to get known folders: 0x%08x\n", hr);
+        for(i=0;i<nCount;++i)
+            check_known_folder(mgr, &folders[i]);
+
+        CoTaskMemFree(folders);
 
         hr = IKnownFolderManager_Release(mgr);
         ok(hr == S_OK, "failed to release KnownFolderManager instance: 0x%08x\n", hr);
