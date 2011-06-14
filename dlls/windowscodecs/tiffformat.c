@@ -347,12 +347,10 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
             else
                 switch(extra_samples[0])
                 {
-                case 0: /* Unspecified data */
-                    decode_info->format = &GUID_WICPixelFormat32bppBGR;
-                    break;
                 case 1: /* Associated (pre-multiplied) alpha data */
                     decode_info->format = &GUID_WICPixelFormat32bppPBGRA;
                     break;
+                case 0: /* Unspecified data */
                 case 2: /* Unassociated alpha data */
                     decode_info->format = &GUID_WICPixelFormat32bppBGRA;
                     break;
@@ -367,13 +365,10 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
             else
                 switch(extra_samples[0])
                 {
-                case 0: /* Unspecified data */
-                    /* decode_info->format = &GUID_WICPixelFormat64bppRGB; */
-                    FIXME("64-bit RGB is unsupported\n");
-                    return E_FAIL;
                 case 1: /* Associated (pre-multiplied) alpha data */
                     decode_info->format = &GUID_WICPixelFormat64bppPRGBA;
                     break;
+                case 0: /* Unspecified data */
                 case 2: /* Unassociated alpha data */
                     decode_info->format = &GUID_WICPixelFormat64bppRGBA;
                     break;
