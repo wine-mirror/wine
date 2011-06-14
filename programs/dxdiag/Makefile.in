@@ -1,7 +1,7 @@
 EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 MODULE    = dxdiag.exe
 APPMODE   = -mwindows -municode
-IMPORTS   = user32
+IMPORTS   = dxguid ole32 oleaut32 user32
 
 C_SRCS = \
 	information.c \

@@ -20,6 +20,8 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <dxdiag.h>
+
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -186,10 +188,13 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
     if (info.output_type != OUTPUT_NONE)
         WINE_TRACE("Output filename: %s\n", debugstr_output_type(info.output_type));
 
+    CoInitialize(NULL);
+
     dxdiag_info = collect_dxdiag_information(info.whql_check);
     if (!dxdiag_info)
     {
         WINE_ERR("DxDiag information collection failed\n");
+        CoUninitialize();
         return 1;
     }
 
@@ -200,5 +205,6 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
 
     free_dxdiag_information(dxdiag_info);
 
+    CoUninitialize();
     return 0;
 }

@@ -27,7 +27,33 @@
 #define STRING_USAGE            102
 
 /* Information collection definitions. */
-struct dxdiag_information;
+struct system_information
+{
+    WCHAR *szTimeEnglish;
+    WCHAR *szTimeLocalized;
+    WCHAR *szMachineNameEnglish;
+    WCHAR *szOSExLongEnglish;
+    WCHAR *szOSExLocalized;
+    WCHAR *szLanguagesEnglish;
+    WCHAR *szLanguagesLocalized;
+    WCHAR *szSystemManufacturerEnglish;
+    WCHAR *szSystemModelEnglish;
+    WCHAR *szBIOSEnglish;
+    WCHAR *szProcessorEnglish;
+    WCHAR *szPhysicalMemoryEnglish;
+    WCHAR *szPageFileEnglish;
+    WCHAR *szPageFileLocalized;
+    WCHAR *szWindowsDir;
+    WCHAR *szDirectXVersionLongEnglish;
+    WCHAR *szSetupParamEnglish;
+    WCHAR *szDxDiagVersion;
+    BOOL win64;
+};
+
+struct dxdiag_information
+{
+    struct system_information system_info;
+};
 
 struct dxdiag_information *collect_dxdiag_information(BOOL whql_check);
 void free_dxdiag_information(struct dxdiag_information *dxdiag_info);
