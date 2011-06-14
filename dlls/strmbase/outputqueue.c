@@ -130,8 +130,7 @@ HRESULT WINAPI OutputQueue_Destroy(OutputQueue *pOutputQueue)
     DeleteCriticalSection(&pOutputQueue->csQueue);
     CloseHandle(pOutputQueue->hProcessQueue);
 
-    if (pOutputQueue->SampleList)
-        HeapFree(GetProcessHeap(),0,pOutputQueue->SampleList);
+    HeapFree(GetProcessHeap(),0,pOutputQueue->SampleList);
 
     IPin_Release((IPin*)pOutputQueue->pInputPin);
     HeapFree(GetProcessHeap(),0,pOutputQueue);
