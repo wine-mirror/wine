@@ -3482,7 +3482,7 @@ static HRESULT WINAPI ddraw_surface7_BltFast(IDirectDrawSurface7 *iface, DWORD d
 
     EnterCriticalSection(&ddraw_cs);
     hr = wined3d_surface_bltfast(This->wined3d_surface, dstx, dsty,
-            src ? src->wined3d_surface : NULL, rsrc, trans);
+            src->wined3d_surface, rsrc, trans);
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
     {
