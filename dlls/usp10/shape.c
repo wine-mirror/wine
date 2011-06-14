@@ -1026,20 +1026,24 @@ static INT GSUB_apply_ChainContextSubst(const GSUB_LookupList* lookup, const GSU
 
             ccsf3_4 = (const GSUB_ChainContextSubstFormat3_4 *)(((LPBYTE)ccsf3_3)+sizeof(GSUB_ChainContextSubstFormat3_3) + (sizeof(WORD) * (GET_BE_WORD(ccsf3_3->LookaheadGlyphCount)-1)));
 
-            for (k = 0; k < GET_BE_WORD(ccsf3_4->SubstCount); k++)
+            if (GET_BE_WORD(ccsf3_4->SubstCount))
             {
-                int lookupIndex = GET_BE_WORD(ccsf3_4->SubstLookupRecord[k].LookupListIndex);
-                int SequenceIndex = GET_BE_WORD(ccsf3_4->SubstLookupRecord[k].SequenceIndex) * write_dir;
-
-                TRACE("SUBST: %i -> %i %i\n",k, SequenceIndex, lookupIndex);
-                newIndex = GSUB_apply_lookup(lookup, lookupIndex, glyphs, glyph_index + SequenceIndex, write_dir, glyph_count);
-                if (newIndex == -1)
+                for (k = 0; k < GET_BE_WORD(ccsf3_4->SubstCount); k++)
                 {
-                    ERR("Chain failed to generate a glyph\n");
-                    continue;
+                    int lookupIndex = GET_BE_WORD(ccsf3_4->SubstLookupRecord[k].LookupListIndex);
+                    int SequenceIndex = GET_BE_WORD(ccsf3_4->SubstLookupRecord[k].SequenceIndex) * write_dir;
+
+                    TRACE("SUBST: %i -> %i %i\n",k, SequenceIndex, lookupIndex);
+                    newIndex = GSUB_apply_lookup(lookup, lookupIndex, glyphs, glyph_index + SequenceIndex, write_dir, glyph_count);
+                    if (newIndex == -1)
+                    {
+                        ERR("Chain failed to generate a glyph\n");
+                        continue;
+                    }
                 }
+                return newIndex;
             }
-            return newIndex;
+            else return GSUB_E_NOGLYPH;
         }
     }
     return -1;
