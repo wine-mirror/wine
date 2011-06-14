@@ -146,17 +146,3 @@ HRESULT __RPC_STUB IBinding_GetBindResult_Stub(IBinding* This,
     FIXME("stub\n");
     return E_NOTIMPL;
 }
-
-HRESULT STDMETHODCALLTYPE IWindowForBindingUI_GetWindow_Proxy(
-        IWindowForBindingUI* This, REFGUID rguidReason, HWND *phwnd)
-{
-    FIXME("stub\n");
-    return E_NOTIMPL;
-}
-
-void __RPC_STUB IWindowForBindingUI_GetWindow_Stub(IRpcStubBuffer* This,
-        IRpcChannelBuffer* pRpcChannelBuffer, PRPC_MESSAGE pRpcMessage,
-        DWORD* pdwStubPhase)
-{
-    FIXME("stub\n");
-}
