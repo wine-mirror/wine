@@ -2910,7 +2910,7 @@ UINT WINAPI GetDoubleClickTime(void)
 /*************************************************************************
  *		GetSysColor (USER32.@)
  */
-COLORREF WINAPI GetSysColor( INT nIndex )
+COLORREF WINAPI DECLSPEC_HOTPATCH GetSysColor( INT nIndex )
 {
     if (nIndex >= 0 && nIndex < NUM_SYS_COLORS)
         return SysColors[nIndex];
@@ -3025,7 +3025,7 @@ DWORD_PTR WINAPI SetSysColorsTemp( const COLORREF *pPens, const HBRUSH *pBrushes
 /***********************************************************************
  *		GetSysColorBrush (USER32.@)
  */
-HBRUSH WINAPI GetSysColorBrush( INT index )
+HBRUSH WINAPI DECLSPEC_HOTPATCH GetSysColorBrush( INT index )
 {
     if (0 <= index && index < NUM_SYS_COLORS) return SysColorBrushes[index];
     WARN("Unknown index(%d)\n", index );

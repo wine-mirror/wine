@@ -28,6 +28,8 @@
  * If you discover missing features, or bugs, please note them below.
  */
 
+#include "config.h"
+
 #include <stdarg.h>
 
 #include "windef.h"
@@ -1611,7 +1613,7 @@ LRESULT ScrollBarWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
  *  (corresponding to the 76 different positions of the window on
  *  the text), and info->nPage=25.
  */
-INT WINAPI SetScrollInfo(HWND hwnd, INT nBar, const SCROLLINFO *info, BOOL bRedraw)
+INT WINAPI DECLSPEC_HOTPATCH SetScrollInfo(HWND hwnd, INT nBar, const SCROLLINFO *info, BOOL bRedraw)
 {
     TRACE("hwnd=%p nBar=%d info=%p, bRedraw=%d\n", hwnd, nBar, info, bRedraw);
 
@@ -1781,7 +1783,7 @@ done:
  *  ( if nBar is SB_CTL, GetScrollInfo returns TRUE even if nothing
  *  is filled)
  */
-BOOL WINAPI GetScrollInfo(HWND hwnd, INT nBar, LPSCROLLINFO info)
+BOOL WINAPI DECLSPEC_HOTPATCH GetScrollInfo(HWND hwnd, INT nBar, LPSCROLLINFO info)
 {
     TRACE("hwnd=%p nBar=%d info=%p\n", hwnd, nBar, info);
 
@@ -1840,7 +1842,7 @@ BOOL WINAPI GetScrollBarInfo(HWND hwnd, LONG idObject, LPSCROLLBARINFO info)
  *    Note the ambiguity when 0 is returned.  Use GetLastError
  *    to make sure there was an error (and to know which one).
  */
-INT WINAPI SetScrollPos( HWND hwnd, INT nBar, INT nPos, BOOL bRedraw)
+INT WINAPI DECLSPEC_HOTPATCH SetScrollPos( HWND hwnd, INT nBar, INT nPos, BOOL bRedraw)
 {
     SCROLLINFO info;
     SCROLLBAR_INFO *infoPtr;
@@ -1873,7 +1875,7 @@ INT WINAPI SetScrollPos( HWND hwnd, INT nBar, INT nPos, BOOL bRedraw)
  *    There is ambiguity when 0 is returned.  Use GetLastError
  *    to make sure there was an error (and to know which one).
  */
-INT WINAPI GetScrollPos(HWND hwnd, INT nBar)
+INT WINAPI DECLSPEC_HOTPATCH GetScrollPos(HWND hwnd, INT nBar)
 {
     TRACE("hwnd=%p nBar=%d\n", hwnd, nBar);
 
@@ -1903,7 +1905,7 @@ INT WINAPI GetScrollPos(HWND hwnd, INT nBar)
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL WINAPI SetScrollRange(HWND hwnd, INT nBar, INT minVal, INT maxVal, BOOL bRedraw)
+BOOL WINAPI DECLSPEC_HOTPATCH SetScrollRange(HWND hwnd, INT nBar, INT minVal, INT maxVal, BOOL bRedraw)
 {
     SCROLLINFO info;
  
@@ -1932,7 +1934,7 @@ BOOL WINAPI SetScrollRange(HWND hwnd, INT nBar, INT minVal, INT maxVal, BOOL bRe
  * RETURNS
  *    TRUE if values is filled
  */
-BOOL WINAPI GetScrollRange(HWND hwnd, INT nBar, LPINT lpMin, LPINT lpMax)
+BOOL WINAPI DECLSPEC_HOTPATCH GetScrollRange(HWND hwnd, INT nBar, LPINT lpMin, LPINT lpMax)
 {
     TRACE("hwnd=%p nBar=%d lpMin=%p lpMax=%p\n", hwnd, nBar, lpMin, lpMax);
 
@@ -2004,7 +2006,7 @@ static BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar, BOOL fShowH, BOOL fShowV 
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL WINAPI ShowScrollBar(HWND hwnd, INT nBar, BOOL fShow)
+BOOL WINAPI DECLSPEC_HOTPATCH ShowScrollBar(HWND hwnd, INT nBar, BOOL fShow)
 {
     if ( !hwnd )
         return FALSE;
@@ -2020,7 +2022,7 @@ BOOL WINAPI ShowScrollBar(HWND hwnd, INT nBar, BOOL fShow)
  *
  * Enables or disables the scroll bars.
  */
-BOOL WINAPI EnableScrollBar( HWND hwnd, UINT nBar, UINT flags )
+BOOL WINAPI DECLSPEC_HOTPATCH EnableScrollBar( HWND hwnd, UINT nBar, UINT flags )
 {
     BOOL bFineWithMe;
     SCROLLBAR_INFO *infoPtr;
