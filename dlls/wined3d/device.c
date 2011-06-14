@@ -4741,6 +4741,7 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
     UINT update_w, update_h;
     CONVERT_TYPES convert;
     UINT dst_w, dst_h;
+    UINT src_w, src_h;
     DWORD sampler;
     POINT p;
     RECT r;
@@ -4792,6 +4793,9 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
         return WINED3DERR_INVALIDCALL;
     }
 
+    src_w = src_surface->resource.width;
+    src_h = src_surface->resource.height;
+
     dst_w = dst_surface->resource.width;
     dst_h = dst_surface->resource.height;
 
@@ -4802,6 +4806,14 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
             || update_h > dst_h || dst_point->y > dst_h - update_h)
     {
         WARN("Destination out of bounds.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    /* NPOT block sizes would be silly. */
+    if ((update_w & (src_format->block_width - 1) || update_h & (src_format->block_height - 1))
+            && (src_w != update_w || dst_w != update_w || src_h != update_h || dst_h != update_h))
+    {
+        WARN("Update rect not block-aligned.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -4831,8 +4843,7 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
     if (!data.addr)
         ERR("Source surface has no allocated memory, but should be a sysmem surface.\n");
 
-    surface_upload_data(dst_surface, gl_info, src_format, src_rect,
-            src_surface->resource.width, dst_point, FALSE, &data);
+    surface_upload_data(dst_surface, gl_info, src_format, src_rect, src_w, dst_point, FALSE, &data);
 
     context_release(context);
 
