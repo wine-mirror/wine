@@ -59,3 +59,11 @@ BOOLEAN WINAPI WinStationQueryInformationW( HANDLE server, ULONG logon_id, WINST
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
+
+BOOL WINAPI WinStationGetProcessSid( PVOID a, HANDLE server, DWORD process_id, PFILETIME process_start_time,
+                                     PBYTE process_user_sid, PDWORD sid_size)
+{
+    FIXME( "(%p, %p, %d, %p, %p, %p): stub\n", a, server, process_id, process_start_time, process_user_sid, sid_size);
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
