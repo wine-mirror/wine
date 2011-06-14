@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-04-29 09:22+0100\n"
+"PO-Revision-Date: 2011-06-14 19:58+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -8476,11 +8476,11 @@ msgstr "La ligne d'entrée est trop longue.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
-msgstr ""
+msgstr "Outil de diagnostic DirectX"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
-msgstr ""
+msgstr "Usage : dxdiag [/whql:off | /whql:on] [/t fichier | /x fichier]"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
