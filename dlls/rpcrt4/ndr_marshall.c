@@ -590,6 +590,8 @@ PFORMAT_STRING ComputeConformanceOrVariance(
   case RPC_FC_CALLBACK:
   {
     unsigned char *old_stack_top = pStubMsg->StackTop;
+    ULONG_PTR max_count, old_max_count = pStubMsg->MaxCount;
+
     pStubMsg->StackTop = ptr;
 
     /* ofs is index into StubDesc->apfnExprEval */
@@ -599,7 +601,9 @@ PFORMAT_STRING ComputeConformanceOrVariance(
     pStubMsg->StackTop = old_stack_top;
 
     /* the callback function always stores the computed value in MaxCount */
-    *pCount = pStubMsg->MaxCount;
+    max_count = pStubMsg->MaxCount;
+    pStubMsg->MaxCount = old_max_count;
+    *pCount = max_count;
     goto finish_conf;
   }
   default:
