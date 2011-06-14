@@ -768,14 +768,65 @@ static UINT HANDLE_CustomType1(MSIPACKAGE *package, LPCWSTR source,
     return r;
 }
 
-static HANDLE execute_command( const WCHAR *exe, WCHAR *arg, const WCHAR *dir )
+static HANDLE execute_command( const WCHAR *app, WCHAR *arg, const WCHAR *dir )
 {
+    static const WCHAR dotexeW[] = {'.','e','x','e',0};
     STARTUPINFOW si;
     PROCESS_INFORMATION info;
+    WCHAR *exe = NULL, *cmd = NULL, *p;
     BOOL ret;
 
+    if (app)
+    {
+        int len_arg = 0;
+        DWORD len_exe;
+
+        if (!(exe = msi_alloc( MAX_PATH * sizeof(WCHAR) ))) return INVALID_HANDLE_VALUE;
+        len_exe = SearchPathW( NULL, app, dotexeW, MAX_PATH, exe, NULL );
+        if (len_exe >= MAX_PATH)
+        {
+            msi_free( exe );
+            if (!(exe = msi_alloc( len_exe * sizeof(WCHAR) ))) return INVALID_HANDLE_VALUE;
+            len_exe = SearchPathW( NULL, app, dotexeW, len_exe, exe, NULL );
+        }
+        if (!len_exe)
+        {
+            WARN("can't find executable %u\n", GetLastError());
+            msi_free( exe );
+            return INVALID_HANDLE_VALUE;
+        }
+
+        if (arg) len_arg = strlenW( arg );
+        if (!(cmd = msi_alloc( (len_exe + len_arg + 4) * sizeof(WCHAR) )))
+        {
+            msi_free( exe );
+            return INVALID_HANDLE_VALUE;
+        }
+        p = cmd;
+        if (strchrW( exe, ' ' ))
+        {
+            *p++ = '\"';
+            memcpy( p, exe, len_exe * sizeof(WCHAR) );
+            p += len_exe;
+            *p++ = '\"';
+            *p = 0;
+        }
+        else
+        {
+            strcpyW( p, exe );
+            p += len_exe;
+        }
+        if (arg)
+        {
+            *p++ = ' ';
+            memcpy( p, arg, len_arg * sizeof(WCHAR) );
+            p[len_arg] = 0;
+        }
+    }
     memset( &si, 0, sizeof(STARTUPINFOW) );
-    ret = CreateProcessW( exe, arg, NULL, NULL, FALSE, 0, NULL, dir, &si, &info );
+    ret = CreateProcessW( exe, exe ? cmd : arg, NULL, NULL, FALSE, 0, NULL, dir, &si, &info );
+    msi_free( cmd );
+    msi_free( exe );
     if (!ret)
     {
         WARN("unable to execute command %u\n", GetLastError());
