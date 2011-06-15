@@ -2473,17 +2473,12 @@ char WINAPI SHStripMneumonicA(LPCSTR lpszStr)
   if ((lpszIter = StrChrA(lpszStr, '&')))
   {
     lpszTmp = CharNextA(lpszIter);
-    if (lpszTmp && *lpszTmp)
+    if (*lpszTmp)
     {
       if (*lpszTmp != '&')
         ch =  *lpszTmp;
 
-      while (lpszIter && *lpszIter)
-      {
-        lpszTmp = CharNextA(lpszIter);
-        *lpszIter = *lpszTmp;
-        lpszIter = lpszTmp;
-      }
+      memmove( lpszIter, lpszTmp, strlen(lpszTmp) + 1 );
     }
   }
 
@@ -2507,17 +2502,12 @@ WCHAR WINAPI SHStripMneumonicW(LPCWSTR lpszStr)
   if ((lpszIter = StrChrW(lpszStr, '&')))
   {
     lpszTmp = lpszIter + 1;
-    if (lpszTmp && *lpszTmp)
+    if (*lpszTmp)
     {
       if (*lpszTmp != '&')
         ch =  *lpszTmp;
 
-      while (lpszIter && *lpszIter)
-      {
-        lpszTmp = lpszIter + 1;
-        *lpszIter = *lpszTmp;
-        lpszIter = lpszTmp;
-      }
+      memmove( lpszIter, lpszTmp, (strlenW(lpszTmp) + 1) * sizeof(WCHAR) );
     }
   }
 
