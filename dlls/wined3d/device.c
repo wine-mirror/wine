@@ -4786,8 +4786,8 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
         r.bottom = src_surface->resource.height;
         src_rect = &r;
     }
-    else if (src_rect->left < 0 || src_rect->left >= r.right
-            || src_rect->top < 0 || src_rect->top >= r.bottom)
+    else if (src_rect->left < 0 || src_rect->left >= src_rect->right
+            || src_rect->top < 0 || src_rect->top >= src_rect->bottom)
     {
         WARN("Invalid source rectangle.\n");
         return WINED3DERR_INVALIDCALL;
