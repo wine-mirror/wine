@@ -25,10 +25,17 @@
 #include "oleauto.h"
 #include "wine/test.h"
 
+struct property_test
+{
+    const WCHAR *prop;
+    VARTYPE vt;
+};
+
 static IDxDiagProvider *pddp;
 static IDxDiagContainer *pddc;
 
 static const WCHAR DxDiag_SystemInfo[] = {'D','x','D','i','a','g','_','S','y','s','t','e','m','I','n','f','o',0};
+static const WCHAR DxDiag_DisplayDevices[] = {'D','x','D','i','a','g','_','D','i','s','p','l','a','y','D','e','v','i','c','e','s',0};
 
 /* Based on debugstr_variant in dlls/jscript/jsutils.c. */
 static const char *debugstr_variant(const VARIANT *var)
@@ -703,7 +710,6 @@ cleanup:
 
 static void test_root_children(void)
 {
-    static const WCHAR DxDiag_DisplayDevices[] = {'D','x','D','i','a','g','_','D','i','s','p','l','a','y','D','e','v','i','c','e','s',0};
     static const WCHAR DxDiag_DirectSound[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','S','o','u','n','d',0};
     static const WCHAR DxDiag_DirectMusic[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','M','u','s','i','c',0};
     static const WCHAR DxDiag_DirectInput[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','I','n','p','u','t',0};
@@ -777,6 +783,45 @@ cleanup:
     IDxDiagProvider_Release(pddp);
 }
 
+static void test_container_properties(IDxDiagContainer *container, const struct property_test *property_tests, size_t len)
+{
+    HRESULT hr;
+
+    /* Check that the container has no properties if there are no properties to examine. */
+    if (len == 0)
+    {
+        DWORD prop_count;
+
+        hr = IDxDiagContainer_GetNumberOfProps(container, &prop_count);
+        ok(hr == S_OK, "Expected IDxDiagContainer::GetNumberOfProps to return S_OK, got 0x%08x\n", hr);
+        if (hr == S_OK)
+            ok(prop_count == 0, "Expected container property count to be zero, got %u\n", prop_count);
+    }
+    else
+    {
+        VARIANT var;
+        int i;
+
+        VariantInit(&var);
+
+        /* Examine the variant types of obtained property values. */
+        for (i = 0; i < len; i++)
+        {
+            hr = IDxDiagContainer_GetProp(container, property_tests[i].prop, &var);
+            ok(hr == S_OK, "[%d] Expected IDxDiagContainer::GetProp to return S_OK for %s, got 0x%08x\n",
+               i, wine_dbgstr_w(property_tests[i].prop), hr);
+
+            if (hr == S_OK)
+            {
+                ok(V_VT(&var) == property_tests[i].vt,
+                   "[%d] Expected variant type %d, got %d\n", i, property_tests[i].vt, V_VT(&var));
+                trace("%s = %s\n", wine_dbgstr_w(property_tests[i].prop), debugstr_variant(&var));
+                VariantClear(&var);
+            }
+        }
+    }
+}
+
 static void test_DxDiag_SystemInfo(void)
 {
     static const WCHAR dwOSMajorVersion[] = {'d','w','O','S','M','a','j','o','r','V','e','r','s','i','o','n',0};
@@ -812,11 +857,7 @@ static void test_DxDiag_SystemInfo(void)
     static const WCHAR szOSExEnglish[] = {'s','z','O','S','E','x','E','n','g','l','i','s','h',0};
     static const WCHAR szOSExLongEnglish[] = {'s','z','O','S','E','x','L','o','n','g','E','n','g','l','i','s','h',0};
 
-    static const struct
-    {
-        const WCHAR *prop;
-        VARTYPE vt;
-    } property_tests[] =
+    static const struct property_test property_tests[] =
     {
         {dwOSMajorVersion, VT_UI4},
         {dwOSMinorVersion, VT_UI4},
@@ -852,8 +893,8 @@ static void test_DxDiag_SystemInfo(void)
         {szOSExLongEnglish, VT_BSTR},
     };
 
+    IDxDiagContainer *container;
     HRESULT hr;
-    IDxDiagContainer *child = NULL;
 
     if (!create_root_IDxDiagContainer())
     {
@@ -861,33 +902,98 @@ static void test_DxDiag_SystemInfo(void)
         return;
     }
 
-    hr = IDxDiagContainer_GetChildContainer(pddc, DxDiag_SystemInfo, &child);
+    hr = IDxDiagContainer_GetChildContainer(pddc, DxDiag_SystemInfo, &container);
     ok(hr == S_OK, "Expected IDxDiagContainer::GetChildContainer to return S_OK, got 0x%08x\n", hr);
 
     if (hr == S_OK)
     {
-        int i;
-        VARIANT var;
+        trace("Testing container DxDiag_SystemInfo\n");
+        test_container_properties(container, property_tests, sizeof(property_tests)/sizeof(property_tests[0]));
+        IDxDiagContainer_Release(container);
+    }
 
-        VariantInit(&var);
+    IDxDiagContainer_Release(pddc);
+    IDxDiagProvider_Release(pddp);
+}
 
-        /* Examine the variant types of obtained property values. */
-        for (i = 0; i < sizeof(property_tests)/sizeof(property_tests[0]); i++)
+static void test_DxDiag_DisplayDevices(void)
+{
+    static const WCHAR szDescription[] = {'s','z','D','e','s','c','r','i','p','t','i','o','n',0};
+    static const WCHAR szDeviceName[] = {'s','z','D','e','v','i','c','e','N','a','m','e',0};
+    static const WCHAR szKeyDeviceID[] = {'s','z','K','e','y','D','e','v','i','c','e','I','D',0};
+    static const WCHAR szKeyDeviceKey[] = {'s','z','K','e','y','D','e','v','i','c','e','K','e','y',0};
+    static const WCHAR szVendorId[] = {'s','z','V','e','n','d','o','r','I','d',0};
+    static const WCHAR szDeviceId[] = {'s','z','D','e','v','i','c','e','I','d',0};
+    static const WCHAR szDeviceIdentifier[] = {'s','z','D','e','v','i','c','e','I','d','e','n','t','i','f','i','e','r',0};
+    static const WCHAR dwWidth[] = {'d','w','W','i','d','t','h',0};
+    static const WCHAR dwHeight[] = {'d','w','H','e','i','g','h','t',0};
+    static const WCHAR dwBpp[] = {'d','w','B','p','p',0};
+    static const WCHAR szDisplayMemoryLocalized[] = {'s','z','D','i','s','p','l','a','y','M','e','m','o','r','y','L','o','c','a','l','i','z','e','d',0};
+    static const WCHAR szDisplayMemoryEnglish[] = {'s','z','D','i','s','p','l','a','y','M','e','m','o','r','y','E','n','g','l','i','s','h',0};
+
+    static const struct property_test property_tests[] =
+    {
+        {szDescription, VT_BSTR},
+        {szDeviceName, VT_BSTR},
+        {szKeyDeviceID, VT_BSTR},
+        {szKeyDeviceKey, VT_BSTR},
+        {szVendorId, VT_BSTR},
+        {szDeviceId, VT_BSTR},
+        {szDeviceIdentifier, VT_BSTR},
+        {dwWidth, VT_UI4},
+        {dwHeight, VT_UI4},
+        {dwBpp, VT_UI4},
+        {szDisplayMemoryLocalized, VT_BSTR},
+        {szDisplayMemoryEnglish, VT_BSTR},
+    };
+
+    IDxDiagContainer *display_cont = NULL;
+    DWORD count, i;
+    HRESULT hr;
+
+    if (!create_root_IDxDiagContainer())
+    {
+        skip("Unable to create the root IDxDiagContainer\n");
+        return;
+    }
+
+    hr = IDxDiagContainer_GetChildContainer(pddc, DxDiag_DisplayDevices, &display_cont);
+    ok(hr == S_OK, "Expected IDxDiagContainer::GetChildContainer to return S_OK, got 0x%08x\n", hr);
+
+    if (hr != S_OK)
+        goto cleanup;
+
+    hr = IDxDiagContainer_GetNumberOfProps(display_cont, &count);
+    ok(hr == S_OK, "Expected IDxDiagContainer::GetNumberOfProps to return S_OK, got 0x%08x\n", hr);
+    if (hr == S_OK)
+        ok(count == 0, "Expected count to be 0, got %u\n", count);
+
+    hr = IDxDiagContainer_GetNumberOfChildContainers(display_cont, &count);
+    ok(hr == S_OK, "Expected IDxDiagContainer::GetNumberOfChildContainers to return S_OK, got 0x%08x\n", hr);
+
+    if (hr != S_OK)
+        goto cleanup;
+
+    for (i = 0; i < count; i++)
+    {
+        WCHAR child_container[256];
+        IDxDiagContainer *child;
+
+        hr = IDxDiagContainer_EnumChildContainerNames(display_cont, i, child_container, sizeof(child_container)/sizeof(WCHAR));
+        ok(hr == S_OK, "Expected IDxDiagContainer::EnumChildContainerNames to return S_OK, got 0x%08x\n", hr);
+
+        hr = IDxDiagContainer_GetChildContainer(display_cont, child_container, &child);
+        ok(hr == S_OK, "Expected IDxDiagContainer::GetChildContainer to return S_OK, got 0x%08x\n", hr);
+
+        if (hr == S_OK)
         {
-            hr = IDxDiagContainer_GetProp(child, property_tests[i].prop, &var);
-            ok(hr == S_OK, "[%d] Expected IDxDiagContainer::GetProp to return S_OK, got 0x%08x\n", i, hr);
-
-            if (hr == S_OK)
-            {
-                ok(V_VT(&var) == property_tests[i].vt,
-                   "[%d] Expected variant type %d, got %d\n", i, property_tests[i].vt, V_VT(&var));
-                trace("%s = %s\n", wine_dbgstr_w(property_tests[i].prop), debugstr_variant(&var));
-                VariantClear(&var);
-            }
+            trace("Testing container %s\n", wine_dbgstr_w(child_container));
+            test_container_properties(child, property_tests, sizeof(property_tests)/sizeof(property_tests[0]));
         }
     }
 
-    IDxDiagContainer_Release(child);
+cleanup:
+    if (display_cont) IDxDiagContainer_Release(display_cont);
     IDxDiagContainer_Release(pddc);
     IDxDiagProvider_Release(pddp);
 }
@@ -905,5 +1011,6 @@ START_TEST(container)
 
     test_root_children();
     test_DxDiag_SystemInfo();
+    test_DxDiag_DisplayDevices();
     CoUninitialize();
 }
