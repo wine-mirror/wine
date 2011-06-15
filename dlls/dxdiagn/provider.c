@@ -171,37 +171,6 @@ HRESULT DXDiag_CreateDXDiagProvider(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, R
   return IDxDiagProviderImpl_QueryInterface ((PDXDIAGPROVIDER)provider, riid, ppobj);
 }
 
-static void get_display_device_id(WCHAR *szIdentifierBuffer)
-{
-    static const WCHAR szNA[] = {'n','/','a',0};
-
-    HRESULT hr = E_FAIL;
-
-    HMODULE                 d3d9_handle;
-    IDirect3D9             *(WINAPI *pDirect3DCreate9)(UINT) = NULL;
-    IDirect3D9             *pD3d = NULL;
-    D3DADAPTER_IDENTIFIER9  adapter_ident;
-
-    /* Retrieves the display device identifier from the d3d9 implementation. */
-    d3d9_handle = LoadLibraryA("d3d9.dll");
-    if(d3d9_handle)
-        pDirect3DCreate9 = (void *)GetProcAddress(d3d9_handle, "Direct3DCreate9");
-    if(pDirect3DCreate9)
-        pD3d = pDirect3DCreate9(D3D_SDK_VERSION);
-    if(pD3d)
-        hr = IDirect3D9_GetAdapterIdentifier(pD3d, D3DADAPTER_DEFAULT, 0, &adapter_ident);
-    if(SUCCEEDED(hr)) {
-        StringFromGUID2(&adapter_ident.DeviceIdentifier, szIdentifierBuffer, 39);
-    } else {
-        memcpy(szIdentifierBuffer, szNA, sizeof(szNA));
-    }
-
-    if (pD3d)
-        IDirect3D9_Release(pD3d);
-    if (d3d9_handle)
-        FreeLibrary(d3d9_handle);
-}
-
 static void free_property_information(IDxDiagContainerImpl_Property *prop)
 {
     VariantClear(&prop->vProp);
@@ -977,9 +946,7 @@ static HRESULT fill_display_information_fallback(IDxDiagContainerImpl_Container 
         }
     }
 
-    get_display_device_id(buffer);
-
-    hr = add_bstr_property(display_adapter, szDeviceIdentifier, buffer);
+    hr = add_bstr_property(display_adapter, szDeviceIdentifier, szEmpty);
     if (FAILED(hr))
         goto cleanup;
 
