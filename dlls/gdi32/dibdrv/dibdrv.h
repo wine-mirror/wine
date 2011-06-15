@@ -62,6 +62,7 @@ extern void free_dib_info(dib_info *dib, BOOL free_bits) DECLSPEC_HIDDEN;
 extern void free_pattern_brush(dibdrv_physdev *pdev) DECLSPEC_HIDDEN;
 extern void copy_dib_color_info(dib_info *dst, const dib_info *src) DECLSPEC_HIDDEN;
 extern BOOL convert_dib(dib_info *dst, const dib_info *src) DECLSPEC_HIDDEN;
+extern DWORD get_fg_color(dibdrv_physdev *pdev, COLORREF color) DECLSPEC_HIDDEN;
 
 static inline BOOL defer_pen(dibdrv_physdev *pdev)
 {

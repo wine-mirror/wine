@@ -92,6 +92,36 @@ void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor)
     *xor = (color & rop2_xor_array[rop-1][0]) | ((~color) & rop2_xor_array[rop-1][1]);
 }
 
+/******************************************************************
+ *                   get_fg_color
+ */
+DWORD get_fg_color( dibdrv_physdev *pdev, COLORREF fg )
+{
+    if(pdev->dib.bit_count != 1)
+        return pdev->dib.funcs->colorref_to_pixel( &pdev->dib, fg );
+
+    FIXME("bit count == 1\n");
+    return 0;
+}
+
+/***************************************************************************
+ *                get_pen_bkgnd_masks
+ */
+static inline void get_pen_bkgnd_masks(const dibdrv_physdev *pdev, DWORD *and, DWORD *xor)
+{
+    if(pdev->dib.bit_count != 1 || GetBkMode(pdev->dev.hdc) == TRANSPARENT)
+    {
+        *and = pdev->bkgnd_and;
+        *xor = pdev->bkgnd_xor;
+    }
+    else
+    {
+        FIXME("bit count == 1\n");
+        *and = ~0u;
+        *xor = 0u;
+    }
+}
+
 static inline void order_end_points(int *s, int *e)
 {
     if(*s > *e)
@@ -579,8 +609,7 @@ static inline void get_dash_colors(const dibdrv_physdev *pdev, DWORD *and, DWORD
     }
     else /* space */
     {
-        *and = pdev->bkgnd_and;
-        *xor = pdev->bkgnd_xor;
+        get_pen_bkgnd_masks( pdev, and, xor );
     }
 }
 
@@ -869,7 +898,7 @@ HPEN CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
         logpen.lopnColor = GetDCPenColor( dev->hdc );
 
     pdev->pen_colorref = logpen.lopnColor;
-    pdev->pen_color = pdev->dib.funcs->colorref_to_pixel(&pdev->dib, logpen.lopnColor);
+    pdev->pen_color = get_fg_color( pdev, pdev->pen_colorref );
     calc_and_xor_masks(GetROP2(dev->hdc), pdev->pen_color, &pdev->pen_and, &pdev->pen_xor);
 
     pdev->pen_pattern = dash_patterns[PS_SOLID];
@@ -921,7 +950,7 @@ COLORREF CDECL dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
     if (GetCurrentObject(dev->hdc, OBJ_PEN) == GetStockObject( DC_PEN ))
     {
         pdev->pen_colorref = color;
-        pdev->pen_color = pdev->dib.funcs->colorref_to_pixel(&pdev->dib, color);
+        pdev->pen_color = get_fg_color( pdev, pdev->pen_colorref );
         calc_and_xor_masks(GetROP2(dev->hdc), pdev->pen_color, &pdev->pen_and, &pdev->pen_xor);
     }
 
@@ -1105,7 +1134,7 @@ HBRUSH CDECL dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
     {
     case BS_SOLID:
         pdev->brush_colorref = logbrush.lbColor;
-        pdev->brush_color = pdev->dib.funcs->colorref_to_pixel(&pdev->dib, logbrush.lbColor);
+        pdev->brush_color = get_fg_color( pdev, pdev->brush_colorref );
         calc_and_xor_masks(GetROP2(dev->hdc), pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
         pdev->brush_rects = solid_brush;
         pdev->defer &= ~DEFER_BRUSH;
@@ -1156,7 +1185,7 @@ COLORREF CDECL dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
     if (GetCurrentObject(dev->hdc, OBJ_BRUSH) == GetStockObject( DC_BRUSH ))
     {
         pdev->brush_colorref = color;
-        pdev->brush_color = pdev->dib.funcs->colorref_to_pixel(&pdev->dib, color);
+        pdev->brush_color = get_fg_color( pdev, pdev->brush_colorref );
         calc_and_xor_masks(GetROP2(dev->hdc), pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
     }
 

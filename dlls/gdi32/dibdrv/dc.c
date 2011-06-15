@@ -262,6 +262,20 @@ BOOL convert_dib(dib_info *dst, const dib_info *src)
     return ret;
 }
 
+static void update_fg_colors( dibdrv_physdev *pdev )
+{
+    pdev->pen_color   = get_fg_color( pdev, pdev->pen_colorref );
+    pdev->brush_color = get_fg_color( pdev, pdev->brush_colorref );
+}
+
+static void update_masks( dibdrv_physdev *pdev, INT rop )
+{
+    calc_and_xor_masks( rop, pdev->pen_color, &pdev->pen_and, &pdev->pen_xor );
+    update_brush_rop( pdev, rop );
+    if( GetBkMode( pdev->dev.hdc ) == OPAQUE )
+        calc_and_xor_masks( rop, pdev->bkgnd_color, &pdev->bkgnd_and, &pdev->bkgnd_xor );
+}
+
 /***********************************************************************
  *           dibdrv_DeleteDC
  */
@@ -357,14 +371,6 @@ static void CDECL dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip
     return next->funcs->pSetDeviceClipping( next, vis_rgn, clip_rgn);
 }
 
-static void update_masks( dibdrv_physdev *pdev, INT rop )
-{
-    calc_and_xor_masks( rop, pdev->pen_color, &pdev->pen_and, &pdev->pen_xor );
-    update_brush_rop( pdev, rop );
-    if( GetBkMode( pdev->dev.hdc ) == OPAQUE )
-        calc_and_xor_masks( rop, pdev->bkgnd_color, &pdev->bkgnd_and, &pdev->bkgnd_xor );
-}
-
 /***********************************************************************
  *           dibdrv_SetDIBColorTable
  */
@@ -379,9 +385,8 @@ static UINT CDECL dibdrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, co
         if( pos + count > pdev->dib.color_table_size ) count = pdev->dib.color_table_size - pos;
         memcpy( pdev->dib.color_table + pos, colors, count * sizeof(RGBQUAD) );
 
-        pdev->pen_color   = pdev->dib.funcs->colorref_to_pixel( &pdev->dib, pdev->pen_colorref );
-        pdev->brush_color = pdev->dib.funcs->colorref_to_pixel( &pdev->dib, pdev->brush_colorref );
         pdev->bkgnd_color = pdev->dib.funcs->colorref_to_pixel( &pdev->dib, GetBkColor( dev->hdc ) );
+        update_fg_colors( pdev );
 
         update_masks( pdev, GetROP2( dev->hdc ) );
     }
