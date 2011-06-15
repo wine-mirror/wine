@@ -375,7 +375,6 @@ static const char* required_syriac_features[] =
 static OPENTYPE_FEATURE_RECORD sinhala_features[] =
 {
     /* Base forms */
-    { MS_MAKE_TAG('a','k','h','n'), 1},
     { MS_MAKE_TAG('r','p','h','f'), 1},
     { MS_MAKE_TAG('v','a','t','u'), 1},
     { MS_MAKE_TAG('p','s','t','f'), 1},
@@ -420,11 +419,7 @@ static const char* required_devanagari_features[] =
 
 static OPENTYPE_FEATURE_RECORD devanagari_features[] =
 {
-    /* Localized forms */
-    { MS_MAKE_TAG('l','o','c','l'), 1},
     /* Base forms */
-    { MS_MAKE_TAG('n','u','k','t'), 1},
-    { MS_MAKE_TAG('a','k','h','n'), 1},
     { MS_MAKE_TAG('r','p','h','f'), 1},
     { MS_MAKE_TAG('r','k','r','f'), 1},
     { MS_MAKE_TAG('b','l','w','f'), 1},
@@ -459,11 +454,7 @@ static const char* required_bengali_features[] =
 
 static OPENTYPE_FEATURE_RECORD bengali_features[] =
 {
-    /* Localized forms */
-    { MS_MAKE_TAG('l','o','c','l'), 1},
     /* Base forms */
-    { MS_MAKE_TAG('n','u','k','t'), 1},
-    { MS_MAKE_TAG('a','k','h','n'), 1},
     { MS_MAKE_TAG('r','p','h','f'), 1},
     { MS_MAKE_TAG('b','l','w','f'), 1},
     { MS_MAKE_TAG('p','s','t','f'), 1},
@@ -500,11 +491,7 @@ static const char* required_gurmukhi_features[] =
 
 static OPENTYPE_FEATURE_RECORD gurmukhi_features[] =
 {
-    /* Localized forms */
-    { MS_MAKE_TAG('l','o','c','l'), 1},
     /* Base forms */
-    { MS_MAKE_TAG('n','u','k','t'), 1},
-    { MS_MAKE_TAG('a','k','h','n'), 1},
     { MS_MAKE_TAG('r','p','h','f'), 1},
     { MS_MAKE_TAG('b','l','w','f'), 1},
     { MS_MAKE_TAG('p','s','t','f'), 1},
@@ -539,11 +526,7 @@ static const char* required_oriya_features[] =
 
 static OPENTYPE_FEATURE_RECORD oriya_features[] =
 {
-    /* Localized forms */
-    { MS_MAKE_TAG('l','o','c','l'), 1},
     /* Base forms */
-    { MS_MAKE_TAG('n','u','k','t'), 1},
-    { MS_MAKE_TAG('a','k','h','n'), 1},
     { MS_MAKE_TAG('r','p','h','f'), 1},
     { MS_MAKE_TAG('b','l','w','f'), 1},
     { MS_MAKE_TAG('p','s','t','f'), 1},
@@ -575,11 +558,7 @@ static const char* required_tamil_features[] =
 
 static OPENTYPE_FEATURE_RECORD tamil_features[] =
 {
-    /* Localized forms */
-    { MS_MAKE_TAG('l','o','c','l'), 1},
     /* Base forms */
-    { MS_MAKE_TAG('n','u','k','t'), 1},
-    { MS_MAKE_TAG('a','k','h','n'), 1},
     { MS_MAKE_TAG('r','p','h','f'), 1},
     { MS_MAKE_TAG('p','r','e','f'), 1},
     { MS_MAKE_TAG('h','a','l','f'), 1},
@@ -612,11 +591,7 @@ static const char* required_telugu_features[] =
 
 static OPENTYPE_FEATURE_RECORD telugu_features[] =
 {
-    /* Localized forms */
-    { MS_MAKE_TAG('l','o','c','l'), 1},
     /* Base forms */
-    { MS_MAKE_TAG('n','u','k','t'), 1},
-    { MS_MAKE_TAG('a','k','h','n'), 1},
     { MS_MAKE_TAG('r','p','h','f'), 1},
     { MS_MAKE_TAG('p','r','e','f'), 1},
     { MS_MAKE_TAG('b','l','w','f'), 1},
@@ -660,7 +635,7 @@ static const ScriptShapeData ShapingData[] =
     {{ standard_features, 2}, NULL, "cyrl", "", NULL, NULL},
     {{ standard_features, 2}, NULL, "armn", "", NULL, NULL},
     {{ standard_features, 2}, NULL, "geor", "", NULL, NULL},
-    {{ sinhala_features, 7}, NULL, "sinh", "", ContextualShape_Sinhala, NULL},
+    {{ sinhala_features, 6}, NULL, "sinh", "", ContextualShape_Sinhala, NULL},
     {{ tibetan_features, 2}, NULL, "tibt", "", NULL, ShapeCharGlyphProp_Tibet},
     {{ tibetan_features, 2}, NULL, "tibt", "", NULL, ShapeCharGlyphProp_Tibet},
     {{ tibetan_features, 2}, NULL, "phag", "", ContextualShape_Phags_pa, ShapeCharGlyphProp_Thai},
@@ -668,25 +643,25 @@ static const ScriptShapeData ShapingData[] =
     {{ thai_features, 1}, NULL, "thai", "", NULL, ShapeCharGlyphProp_Thai},
     {{ thai_features, 1}, required_lao_features, "lao", "", NULL, ShapeCharGlyphProp_Thai},
     {{ thai_features, 1}, required_lao_features, "lao", "", NULL, ShapeCharGlyphProp_Thai},
-    {{ devanagari_features, 15}, required_devanagari_features, "deva", "dev2", ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
-    {{ devanagari_features, 15}, required_devanagari_features, "deva", "dev2", ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
-    {{ bengali_features, 16}, required_bengali_features, "beng", "bng2", ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
-    {{ bengali_features, 16}, required_bengali_features, "beng", "bng2", ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
-    {{ gurmukhi_features, 15}, required_gurmukhi_features, "guru", "gur2", ContextualShape_Gurmukhi, ShapeCharGlyphProp_Gurmukhi},
-    {{ gurmukhi_features, 15}, required_gurmukhi_features, "guru", "gur2", ContextualShape_Gurmukhi, ShapeCharGlyphProp_Gurmukhi},
-    {{ devanagari_features, 15}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
-    {{ devanagari_features, 15}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
-    {{ devanagari_features, 15}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
-    {{ oriya_features, 13}, required_oriya_features, "orya", "ory2", ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
-    {{ oriya_features, 13}, required_oriya_features, "orya", "ory2", ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
-    {{ tamil_features, 12}, required_tamil_features, "taml", "tam2", ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
-    {{ tamil_features, 12}, required_tamil_features, "taml", "tam2", ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
-    {{ telugu_features, 15}, required_telugu_features, "telu", "tel2", ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
-    {{ telugu_features, 15}, required_telugu_features, "telu", "tel2", ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
-    {{ telugu_features, 15}, required_telugu_features, "knda", "knd2", ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
-    {{ telugu_features, 15}, required_telugu_features, "knda", "knd2", ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
-    {{ telugu_features, 15}, required_telugu_features, "mlym", "mlm2", ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
-    {{ telugu_features, 15}, required_telugu_features, "mlym", "mlm2", ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
+    {{ devanagari_features, 12}, required_devanagari_features, "deva", "dev2", ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
+    {{ devanagari_features, 12}, required_devanagari_features, "deva", "dev2", ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
+    {{ bengali_features, 12}, required_bengali_features, "beng", "bng2", ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
+    {{ bengali_features, 12}, required_bengali_features, "beng", "bng2", ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
+    {{ gurmukhi_features, 12}, required_gurmukhi_features, "guru", "gur2", ContextualShape_Gurmukhi, ShapeCharGlyphProp_Gurmukhi},
+    {{ gurmukhi_features, 12}, required_gurmukhi_features, "guru", "gur2", ContextualShape_Gurmukhi, ShapeCharGlyphProp_Gurmukhi},
+    {{ devanagari_features, 12}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
+    {{ devanagari_features, 12}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
+    {{ devanagari_features, 12}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
+    {{ oriya_features, 10}, required_oriya_features, "orya", "ory2", ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
+    {{ oriya_features, 10}, required_oriya_features, "orya", "ory2", ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
+    {{ tamil_features, 9}, required_tamil_features, "taml", "tam2", ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
+    {{ tamil_features, 9}, required_tamil_features, "taml", "tam2", ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
+    {{ telugu_features, 12}, required_telugu_features, "telu", "tel2", ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
+    {{ telugu_features, 12}, required_telugu_features, "telu", "tel2", ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
+    {{ telugu_features, 12}, required_telugu_features, "knda", "knd2", ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
+    {{ telugu_features, 12}, required_telugu_features, "knda", "knd2", ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
+    {{ telugu_features, 12}, required_telugu_features, "mlym", "mlm2", ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
+    {{ telugu_features, 12}, required_telugu_features, "mlym", "mlm2", ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
@@ -2020,6 +1995,78 @@ static void Reorder_Like_Malayalam(LPWSTR pwChar, IndicSyllable *s, lexical_func
     Reorder_Matra_precede_base(pwChar, s, lexical);
 }
 
+static inline void shift_syllable_glyph_indexs(IndicSyllable *glyph_index, INT index, INT shift)
+{
+    if (shift == 0)
+        return;
+
+    if (glyph_index->start > index)
+        glyph_index->start += shift;
+    if (glyph_index->base > index)
+        glyph_index->base+= shift;
+    if (glyph_index->end > index)
+        glyph_index->end+= shift;
+}
+
+static void Apply_Indic_BasicForm(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwChars, INT cChars, IndicSyllable *syllable, WORD *pwOutGlyphs, INT* pcGlyphs, WORD *pwLogClust, lexical_function lexical, IndicSyllable *glyph_index, const GSUB_Feature *feature )
+{
+    int index = glyph_index->start;
+
+    if (!feature)
+        return;
+
+    while(index <= glyph_index->end)
+    {
+            INT nextIndex;
+            INT prevCount = *pcGlyphs;
+            nextIndex = GSUB_apply_feature(psc->GSUB_Table, feature, pwOutGlyphs, index, 1, pcGlyphs);
+            if (nextIndex > GSUB_E_NOGLYPH)
+            {
+                UpdateClusters(nextIndex, *pcGlyphs - prevCount, 1, cChars, pwLogClust);
+                shift_syllable_glyph_indexs(glyph_index,index,*pcGlyphs - prevCount);
+                index = nextIndex;
+            }
+            else
+                index++;
+    }
+}
+
+static void ShapeIndicSyllables(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwChars, INT cChars, IndicSyllable *syllables, INT syllable_count, WORD *pwOutGlyphs, INT* pcGlyphs, WORD *pwLogClust, lexical_function lexical)
+{
+    int c;
+    int overall_shift = 0;
+    const GSUB_Feature *locl = load_GSUB_feature(hdc, psa, psc, "locl");
+    const GSUB_Feature *nukt = load_GSUB_feature(hdc, psa, psc, "nukt");
+    const GSUB_Feature *akhn = load_GSUB_feature(hdc, psa, psc, "akhn");
+    IndicSyllable glyph_indexs;
+
+    for (c = 0; c < syllable_count; c++)
+    {
+        int old_end;
+        memcpy(&glyph_indexs, &syllables[c], sizeof(IndicSyllable));
+        shift_syllable_glyph_indexs(&glyph_indexs, -1, overall_shift);
+        old_end = glyph_indexs.end;
+
+        if (locl)
+        {
+            TRACE("applying feature locl\n");
+            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, locl);
+        }
+        if (nukt)
+        {
+            TRACE("applying feature nukt\n");
+            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, nukt);
+        }
+        if (akhn)
+        {
+            TRACE("applying feature akhn\n");
+            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, akhn);
+        }
+
+        overall_shift += glyph_indexs.end - old_end;
+    }
+}
+
 static int sinhala_lex(WCHAR c)
 {
     switch (c)
@@ -2090,9 +2137,10 @@ static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
             input[i] = 0x0020;
     }
 
-    /* Step 4:  Get glyphs */
+    /* Step 4: Base Form application to syllables */
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, sinhala_lex);
 
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
@@ -2169,6 +2217,9 @@ static void ContextualShape_Devanagari(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
+
+    /* Step 3: Base Form application to syllables */
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, devanagari_lex);
 
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
@@ -2257,6 +2308,9 @@ static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
         }
     }
 
+    /* Step 4: Base Form application to syllables */
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, bengali_lex);
+
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
 }
@@ -2325,6 +2379,9 @@ static void ContextualShape_Gurmukhi(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
+    /* Step 3: Base Form application to syllables */
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, gurmukhi_lex);
+
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
 }
@@ -2376,6 +2433,9 @@ static void ContextualShape_Gujarati(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
+
+    /* Step 2: Base Form application to syllables */
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, gujarati_lex);
 
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
@@ -2455,6 +2515,9 @@ static void ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
+    /* Step 3: Base Form application to syllables */
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, oriya_lex);
+
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
 }
@@ -2514,6 +2577,9 @@ static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
+    /* Step 3: Base Form application to syllables */
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, tamil_lex);
+
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
 }
@@ -2571,6 +2637,9 @@ static void ContextualShape_Telugu(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
+
+    /* Step 3: Base Form application to syllables */
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, telugu_lex);
 
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
@@ -2636,6 +2705,9 @@ static void ContextualShape_Kannada(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
+    /* Step 3: Base Form application to syllables */
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, kannada_lex);
+
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
 }
@@ -2692,6 +2764,9 @@ static void ContextualShape_Malayalam(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
+
+    /* Step 3: Base Form application to syllables */
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, malayalam_lex);
 
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
