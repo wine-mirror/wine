@@ -2631,7 +2631,7 @@ static int telugu_lex(WCHAR c)
         case 0x200C: return lex_ZWNJ;
         case 0x200D: return lex_ZWJ;
         default:
-            if (c>=0x0C01 && c<=0x0C03) return lex_Matra_post;
+            if (c>=0x0C01 && c<=0x0C03) return lex_Modifier;
             else if (c>=0x0C05 && c<=0x0C14) return lex_Vowel;
             else if (c>=0x0C15 && c<=0x0C39) return lex_Consonant;
             else if (c>=0x0C3E && c<=0x0C40) return lex_Matra_above;
