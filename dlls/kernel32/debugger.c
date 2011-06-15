@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -363,15 +364,15 @@ void WINAPI OutputDebugStringW( LPCWSTR str )
  *
  *  Raises an exception so that a debugger (if attached)
  *  can take some action.
- *
- * PARAMS
- *
- * RETURNS
  */
+#if defined(__i386__) || defined(__x86_64__)
+__ASM_STDCALL_FUNC( DebugBreak, 0, "int $3; ret" )
+#else
 void WINAPI DebugBreak(void)
 {
     DbgBreakPoint();
 }
+#endif
 
 /***********************************************************************
  *           DebugBreakProcess   (KERNEL32.@)
