@@ -526,11 +526,22 @@ static const struct IDirect3DVertexBufferVtbl d3d_vertex_buffer1_vtbl =
     IDirect3DVertexBufferImpl_1_Optimize
 };
 
-HRESULT d3d_vertex_buffer_init(IDirect3DVertexBufferImpl *buffer,
-        IDirectDrawImpl *ddraw, D3DVERTEXBUFFERDESC *desc)
+HRESULT d3d_vertex_buffer_create(IDirect3DVertexBufferImpl **vertex_buf, IDirectDrawImpl *ddraw,
+        D3DVERTEXBUFFERDESC *desc)
 {
+    IDirect3DVertexBufferImpl *buffer;
     DWORD usage;
-    HRESULT hr;
+    HRESULT hr = D3D_OK;
+
+    TRACE("Vertex buffer description:\n");
+    TRACE("    dwSize %u\n", desc->dwSize);
+    TRACE("    dwCaps %#x\n", desc->dwCaps);
+    TRACE("    FVF %#x\n", desc->dwFVF);
+    TRACE("    dwNumVertices %u\n", desc->dwNumVertices);
+
+    buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*buffer));
+    if (!buffer)
+        return DDERR_OUTOFMEMORY;
 
     buffer->lpVtbl = &d3d_vertex_buffer7_vtbl;
     buffer->IDirect3DVertexBuffer_vtbl = &d3d_vertex_buffer1_vtbl;
@@ -552,12 +563,9 @@ HRESULT d3d_vertex_buffer_init(IDirect3DVertexBufferImpl *buffer,
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d vertex buffer, hr %#x.\n", hr);
-        LeaveCriticalSection(&ddraw_cs);
-
         if (hr == WINED3DERR_INVALIDCALL)
-            return DDERR_INVALIDPARAMS;
-        else
-            return hr;
+            hr = DDERR_INVALIDPARAMS;
+        goto end;
     }
 
     buffer->wineD3DVertexDeclaration = ddraw_find_decl(ddraw, desc->dwFVF);
@@ -565,13 +573,17 @@ HRESULT d3d_vertex_buffer_init(IDirect3DVertexBufferImpl *buffer,
     {
         ERR("Failed to find vertex declaration for fvf %#x.\n", desc->dwFVF);
         wined3d_buffer_decref(buffer->wineD3DVertexBuffer);
-        LeaveCriticalSection(&ddraw_cs);
-
-        return DDERR_INVALIDPARAMS;
+        hr = DDERR_INVALIDPARAMS;
+        goto end;
     }
     wined3d_vertex_declaration_incref(buffer->wineD3DVertexDeclaration);
 
+end:
     LeaveCriticalSection(&ddraw_cs);
+    if (hr == D3D_OK)
+        *vertex_buf = buffer;
+    else
+        HeapFree(GetProcessHeap(), 0, buffer);
 
-    return D3D_OK;
+    return hr;
 }

@@ -4952,32 +4952,16 @@ static HRESULT WINAPI d3d7_CreateVertexBuffer(IDirect3D7 *iface, D3DVERTEXBUFFER
 
     if (!vertex_buffer || !desc) return DDERR_INVALIDPARAMS;
 
-    TRACE("Vertex buffer description:\n");
-    TRACE("    dwSize %u\n", desc->dwSize);
-    TRACE("    dwCaps %#x\n", desc->dwCaps);
-    TRACE("    FVF %#x\n", desc->dwFVF);
-    TRACE("    dwNumVertices %u\n", desc->dwNumVertices);
-
-    /* Now create the vertex buffer */
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    hr = d3d_vertex_buffer_create(&object, This, desc);
+    if (hr == D3D_OK)
     {
-        ERR("Failed to allocate vertex buffer memory.\n");
-        return DDERR_OUTOFMEMORY;
+        TRACE("Created vertex buffer %p.\n", object);
+        *vertex_buffer = (IDirect3DVertexBuffer7 *)object;
     }
+    else
+        WARN("Failed to create vertex buffer, hr %#x.\n", hr);
 
-    hr = d3d_vertex_buffer_init(object, This, desc);
-    if (FAILED(hr))
-    {
-        WARN("Failed to initialize vertex buffer, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
-    }
-
-    TRACE("Created vertex buffer %p.\n", object);
-    *vertex_buffer = (IDirect3DVertexBuffer7 *)object;
-
-    return D3D_OK;
+    return hr;
 }
 
 static HRESULT WINAPI d3d3_CreateVertexBuffer(IDirect3D3 *iface, D3DVERTEXBUFFERDESC *desc,

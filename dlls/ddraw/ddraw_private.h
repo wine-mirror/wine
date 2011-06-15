@@ -534,8 +534,8 @@ struct IDirect3DVertexBufferImpl
     DWORD                fvf;
 };
 
-HRESULT d3d_vertex_buffer_init(IDirect3DVertexBufferImpl *buffer,
-        IDirectDrawImpl *ddraw, D3DVERTEXBUFFERDESC *desc) DECLSPEC_HIDDEN;
+HRESULT d3d_vertex_buffer_create(IDirect3DVertexBufferImpl **vertex_buf, IDirectDrawImpl *ddraw,
+        D3DVERTEXBUFFERDESC *desc) DECLSPEC_HIDDEN;
 
 static inline IDirect3DVertexBufferImpl *vb_from_vb1(IDirect3DVertexBuffer *iface)
 {
