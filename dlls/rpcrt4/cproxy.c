@@ -71,46 +71,42 @@ static inline StdProxyImpl *impl_from_proxy_obj( void *iface )
 
 #ifdef __i386__
 
-#include "pshpack1.h"
-
-struct thunk {
-  BYTE mov_eax;
-  DWORD index;
-  BYTE jmp;
-  LONG handler;
-};
-
-#include "poppack.h"
-
 extern void call_stubless_func(void);
 __ASM_GLOBAL_FUNC(call_stubless_func,
-                  "pushl %eax\n\t"  /* method index */
+                  "movl 4(%esp),%ecx\n\t"         /* This pointer */
+                  "movl (%ecx),%ecx\n\t"          /* This->lpVtbl */
+                  "movl -8(%ecx),%ecx\n\t"        /* MIDL_STUBLESS_PROXY_INFO */
+                  "movl 8(%ecx),%edx\n\t"         /* info->FormatStringOffset */
+                  "movzwl (%edx,%eax,2),%edx\n\t" /* FormatStringOffset[index] */
+                  "addl 4(%ecx),%edx\n\t"         /* info->ProcFormatString + offset */
+                  "movzwl 8(%edx),%eax\n\t"       /* arguments size */
+                  "pushl %eax\n\t"
                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                  "pushl %esp\n\t"  /* pointer to index */
+                  "leal 8(%esp),%eax\n\t"         /* &This */
+                  "pushl %eax\n\t"
                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                  "call " __ASM_NAME("ObjectStubless") __ASM_STDCALL(4) "\n\t"
-                  __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
-                  "popl %edx\n\t"  /* args size */
+                  "pushl %edx\n\t"                /* format string */
+                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                  "pushl (%ecx)\n\t"              /* info->pStubDesc */
+                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                  "call " __ASM_NAME("ndr_client_call") "\n\t"
+                  "leal 12(%esp),%esp\n\t"
+                  __ASM_CFI(".cfi_adjust_cfa_offset -12\n\t")
+                  "popl %edx\n\t"                 /* arguments size */
                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                   "movl (%esp),%ecx\n\t"  /* return address */
                   "addl %edx,%esp\n\t"
                   "jmp *%ecx" );
 
-LONG_PTR WINAPI ObjectStubless(void **args)
+#include "pshpack1.h"
+struct thunk
 {
-    DWORD index = (DWORD)args[0];
-    void **iface = (void **)args[2];
-    const void **vtbl = (const void **)*iface;
-    const MIDL_STUBLESS_PROXY_INFO *stubless = *(const MIDL_STUBLESS_PROXY_INFO **)(vtbl - 2);
-    const PFORMAT_STRING fs = stubless->ProcFormatString + stubless->FormatStringOffset[index];
-    DWORD arg_size = *(const WORD*)(fs + 8);
-
-    /* store bytes to remove from stack */
-    args[0] = (void *)arg_size;
-    TRACE("(%p)->(%d)([%d bytes]) ret=%p\n", iface, index, arg_size, args[1]);
-
-    return ndr_client_call(stubless->pStubDesc, fs, args + 2);
-}
+  BYTE mov_eax;
+  DWORD index;
+  BYTE jmp;
+  LONG handler;
+};
+#include "poppack.h"
 
 static inline void init_thunk( struct thunk *thunk, unsigned int index )
 {
