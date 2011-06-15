@@ -4968,17 +4968,25 @@ static HRESULT WINAPI d3d3_CreateVertexBuffer(IDirect3D3 *iface, D3DVERTEXBUFFER
         IDirect3DVertexBuffer **vertex_buffer, DWORD flags, IUnknown *outer_unknown)
 {
     IDirectDrawImpl *This = impl_from_IDirect3D3(iface);
+    IDirect3DVertexBufferImpl *object;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, vertex_buffer %p, flags %#x, outer_unknown %p.\n",
             iface, desc, vertex_buffer, flags, outer_unknown);
 
-    if (outer_unknown) return CLASS_E_NOAGGREGATION;
+    if (outer_unknown)
+        return CLASS_E_NOAGGREGATION;
+    if (!vertex_buffer || !desc)
+        return DDERR_INVALIDPARAMS;
 
-    hr = d3d7_CreateVertexBuffer(&This->IDirect3D7_iface, desc,
-            (IDirect3DVertexBuffer7 **)vertex_buffer, flags);
-    if (*vertex_buffer)
-        *vertex_buffer = (IDirect3DVertexBuffer *)&((IDirect3DVertexBufferImpl *)*vertex_buffer)->IDirect3DVertexBuffer_vtbl;
+    hr = d3d_vertex_buffer_create(&object, This, desc);
+    if (hr == D3D_OK)
+    {
+        TRACE("Created vertex buffer %p.\n", object);
+        *vertex_buffer = (IDirect3DVertexBuffer *)object;
+    }
+    else
+        WARN("Failed to create vertex buffer, hr %#x.\n", hr);
 
     return hr;
 }
