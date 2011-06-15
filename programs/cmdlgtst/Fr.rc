@@ -37,30 +37,30 @@ CmdlgtstMenu MENU
 
  POPUP "&Commdlg"
  {
-  MENUITEM "&Ouvrir", CM_U_OPEN
-  MENUITEM "&Enregistrer", CM_U_SAVE
+  MENUITEM "&Ouvrir...", CM_U_OPEN
+  MENUITEM "&Enregistrer sous...", CM_U_SAVE
   MENUITEM SEPARATOR
-  MENUITEM "&Couleur", CM_U_COLOR
-  MENUITEM "&Police", CM_U_FONT
+  MENUITEM "&Couleur...", CM_U_COLOR
+  MENUITEM "&Police...", CM_U_FONT
   MENUITEM SEPARATOR
-  MENUITEM "&Rechercher", CM_U_FIND
-  MENUITEM "Remp&lacer", CM_U_REPLACE
+  MENUITEM "&Rechercher...", CM_U_FIND
+  MENUITEM "Remp&lacer...", CM_U_REPLACE
   MENUITEM SEPARATOR
-  MENUITEM "&Imprimer", CM_U_PRINT
-  MENUITEM "Mise en pa&ge", CM_U_PAGESETUP
+  MENUITEM "&Imprimer...", CM_U_PRINT
+  MENUITEM "Mise en pa&ge...", CM_U_PAGESETUP
  }
 
  POPUP "&Indicateurs"
  {
-  MENUITEM "&Fichier", CM_F_FILE
+  MENUITEM "&Fichier...", CM_F_FILE
   MENUITEM SEPARATOR
-  MENUITEM "&Couleur", CM_F_COLOR
-  MENUITEM "&Police", CM_F_FONT
+  MENUITEM "&Couleur...", CM_F_COLOR
+  MENUITEM "&Police...", CM_F_FONT
   MENUITEM SEPARATOR
-  MENUITEM "Rechercher/&Remplacer", CM_F_FINDREPLACE
+  MENUITEM "Rechercher/&Remplacer...", CM_F_FINDREPLACE
   MENUITEM SEPARATOR
-  MENUITEM "&Imprimer", CM_F_PRINT
-  MENUITEM "Mise en pa&ge", CM_F_PAGESETUP
+  MENUITEM "&Imprimer...", CM_F_PRINT
+  MENUITEM "Mise en pa&ge...", CM_F_PAGESETUP
  }
 
  POPUP "&Aide"
