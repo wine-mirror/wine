@@ -519,8 +519,7 @@ HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *execute_buffer,
  *****************************************************************************/
 struct IDirect3DVertexBufferImpl
 {
-    /*** IUnknown Methods ***/
-    const IDirect3DVertexBuffer7Vtbl *lpVtbl;
+    IDirect3DVertexBuffer7 IDirect3DVertexBuffer7_iface;
     IDirect3DVertexBuffer IDirect3DVertexBuffer_iface;
     LONG ref;
 

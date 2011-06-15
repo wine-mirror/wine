@@ -4132,7 +4132,7 @@ static HRESULT WINAPI IDirect3DDeviceImpl_3_DrawPrimitiveVB(IDirect3DDevice3 *if
             iface, PrimitiveType, D3DVertexBuf, StartVertex, NumVertices, Flags);
 
     return IDirect3DDevice7_DrawPrimitiveVB((IDirect3DDevice7 *)device_from_device3(iface),
-            PrimitiveType, (IDirect3DVertexBuffer7 *)vb, StartVertex, NumVertices, Flags);
+            PrimitiveType, &vb->IDirect3DVertexBuffer7_iface, StartVertex, NumVertices, Flags);
 }
 
 
@@ -4294,7 +4294,8 @@ static HRESULT WINAPI IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB(IDirect3DDevi
             iface, PrimitiveType, D3DVertexBuf, Indices, IndexCount, Flags);
 
     return IDirect3DDevice7_DrawIndexedPrimitiveVB((IDirect3DDevice7 *)device_from_device3(iface),
-            PrimitiveType, (IDirect3DVertexBuffer7 *)vb, 0, IndexCount, Indices, IndexCount, Flags);
+            PrimitiveType, &vb->IDirect3DVertexBuffer7_iface, 0, IndexCount, Indices, IndexCount,
+            Flags);
 }
 
 /*****************************************************************************
