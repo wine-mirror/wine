@@ -897,7 +897,7 @@ cleanup:
     return hr;
 }
 
-static HRESULT build_displaydevices_tree(IDxDiagContainerImpl_Container *node)
+static HRESULT fill_display_information_fallback(IDxDiagContainerImpl_Container *node)
 {
     static const WCHAR szAdapterID[] = {'0',0};
 
@@ -909,11 +909,6 @@ static HRESULT build_displaydevices_tree(IDxDiagContainerImpl_Container *node)
     DDSURFACEDESC2 surface_descr;
     DWORD tmp;
     WCHAR buffer[256];
-
-    /* Try to use Direct3D to obtain the required information first. */
-    hr = fill_display_information_d3d(node);
-    if (hr != E_FAIL)
-        return hr;
 
     display_adapter = allocate_information_node(szAdapterID);
     if (!display_adapter)
@@ -933,8 +928,8 @@ static HRESULT build_displaydevices_tree(IDxDiagContainerImpl_Container *node)
             return hr;
     }
 
-    /* For now, silently ignore a failure from DirectDrawCreateEx. */
-    hr = DirectDrawCreateEx(NULL, (LPVOID *)&pDirectDraw, &IID_IDirectDraw7, NULL);
+    /* Silently ignore a failure from DirectDrawCreateEx. */
+    hr = DirectDrawCreateEx(NULL, (void **)&pDirectDraw, &IID_IDirectDraw7, NULL);
     if (FAILED(hr))
         return S_OK;
 
@@ -945,7 +940,7 @@ static HRESULT build_displaydevices_tree(IDxDiagContainerImpl_Container *node)
     {
         static const WCHAR mem_fmt[] = {'%','.','1','f',' ','M','B',0};
 
-        snprintfW(buffer, sizeof(buffer)/sizeof(buffer[0]), mem_fmt, ((float)tmp) / 1000000.0);
+        snprintfW(buffer, sizeof(buffer)/sizeof(buffer[0]), mem_fmt, tmp / 1000000.0f);
 
         hr = add_bstr_property(display_adapter, szDisplayMemoryLocalized, buffer);
         if (FAILED(hr))
@@ -1008,6 +1003,18 @@ static HRESULT build_displaydevices_tree(IDxDiagContainerImpl_Container *node)
 cleanup:
     IDirectDraw7_Release(pDirectDraw);
     return hr;
+}
+
+static HRESULT build_displaydevices_tree(IDxDiagContainerImpl_Container *node)
+{
+    HRESULT hr;
+
+    /* Try to use Direct3D to obtain the required information first. */
+    hr = fill_display_information_d3d(node);
+    if (hr != E_FAIL)
+        return hr;
+
+    return fill_display_information_fallback(node);
 }
 
 static HRESULT build_directsound_tree(IDxDiagContainerImpl_Container *node)
