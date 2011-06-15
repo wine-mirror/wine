@@ -212,11 +212,13 @@ static INT Indic_process_next_syllable( LPCWSTR input, INT cChar, INT start, INT
     return parse_consonant_syllable(input, cChar, start, main, next, lex);
 }
 
-void Indic_ReorderCharacters( LPWSTR input, int cChar, lexical_function lex, reorder_function reorder_f)
+void Indic_ReorderCharacters( LPWSTR input, int cChar, IndicSyllable **syllables, int *syllable_count, lexical_function lex, reorder_function reorder_f)
 {
     int index = 0;
     int next = 0;
     int center = 0;
+
+    *syllable_count = 0;
 
     if (!lex || ! reorder_f)
     {
@@ -233,8 +235,16 @@ void Indic_ReorderCharacters( LPWSTR input, int cChar, lexical_function lex, reo
         next = Indic_process_next_syllable(input, cChar, 0, &center, index, lex);
         if (next != -1)
         {
-            reorder_f(input, index, center, next-1, lex);
+            if (*syllable_count)
+                *syllables = HeapReAlloc(GetProcessHeap(),0,*syllables, sizeof(IndicSyllable)*(*syllable_count+1));
+            else
+                *syllables = HeapAlloc(GetProcessHeap(),0,sizeof(IndicSyllable));
+            (*syllables)[*syllable_count].start = index;
+            (*syllables)[*syllable_count].base = center;
+            (*syllables)[*syllable_count].end = next-1;
+            reorder_f(input, &(*syllables)[*syllable_count], lex);
             index = next;
+            *syllable_count = (*syllable_count)+1;
         }
         else if (index < cChar)
         {
@@ -250,21 +260,21 @@ void Indic_ReorderCharacters( LPWSTR input, int cChar, lexical_function lex, reo
                 }
         }
     }
-    TRACE("Processed %i of %i characters\n",index,cChar);
+    TRACE("Processed %i of %i characters into %i syllables\n",index,cChar,*syllable_count);
 }
 
-int Indic_FindBaseConsonant(LPWSTR input, INT start, INT main, INT end, lexical_function lex)
+int Indic_FindBaseConsonant(LPWSTR input, IndicSyllable *s, lexical_function lex)
 {
     int i;
     /* try to find a base consonant */
-    if (!is_consonant( lex(input[main]) ))
+    if (!is_consonant( lex(input[s->base]) ))
     {
-        for (i = end; i >= start; i--)
+        for (i = s->end; i >= s->start; i--)
             if (is_consonant( lex(input[i]) ))
             {
-                main = i;
+                s->base = i;
                 break;
             }
     }
-    return main;
+    return s->base;
 }

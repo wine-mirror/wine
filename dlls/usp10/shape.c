@@ -1847,159 +1847,169 @@ static void ComposeConsonants(HDC hdc, WCHAR *pwOutChars, INT *pcChars, const Co
     }
 }
 
-static void Reorder_Ra_follows_base(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lexical)
+static void Reorder_Ra_follows_base(LPWSTR pwChar, IndicSyllable *s, lexical_function lexical)
 {
-    if (start != main && end > start+1 && lexical(pwChar[start]) == lex_Ra && lexical(pwChar[start+1]) == lex_Halant)
+    if (s->start != s->base && s->end > s->start+1 && lexical(pwChar[s->start]) == lex_Ra && lexical(pwChar[s->start+1]) == lex_Halant)
     {
         int j;
-        WORD Ra = pwChar[start];
-        WORD H = pwChar[start+1];
+        WORD Ra = pwChar[s->start];
+        WORD H = pwChar[s->start+1];
 
-        TRACE("Doing reorder of Ra to %i\n",main);
-        for (j = start; j < main-1; j++)
+        TRACE("Doing reorder of Ra to %i\n",s->base);
+        for (j = s->start; j < s->base-1; j++)
             pwChar[j] = pwChar[j+2];
-        pwChar[main-1] = Ra;
-        pwChar[main] = H;
+        pwChar[s->base-1] = Ra;
+        pwChar[s->base] = H;
+
+        s->base -= 2;
     }
 }
 
-static void Reorder_Ra_follows_matra(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lexical)
+static void Reorder_Ra_follows_matra(LPWSTR pwChar, IndicSyllable *s, lexical_function lexical)
 {
-    if (start != main && end > start+1 && lexical(pwChar[start]) == lex_Ra && lexical(pwChar[start+1]) == lex_Halant)
+    if (s->start != s->base && s->end > s->start+1 && lexical(pwChar[s->start]) == lex_Ra && lexical(pwChar[s->start+1]) == lex_Halant)
     {
         int j,loc;
-        WORD Ra = pwChar[start];
-        WORD H = pwChar[start+1];
-        for (loc = end; loc > main; loc--)
+        WORD Ra = pwChar[s->start];
+        WORD H = pwChar[s->start+1];
+        for (loc = s->end; loc > s->base; loc--)
             if (lexical(pwChar[loc]) == lex_Matra_post || lexical(pwChar[loc]) == lex_Matra_below)
                 break;
 
         TRACE("Doing reorder of Ra to %i\n",loc);
-        for (j = start; j < loc-1; j++)
+        for (j = s->start; j < loc-1; j++)
             pwChar[j] = pwChar[j+2];
         pwChar[loc-1] = Ra;
         pwChar[loc] = H;
+
+        s->base -= 2;
     }
 }
 
-static void Reorder_Ra_follows_syllable(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lexical)
+static void Reorder_Ra_follows_syllable(LPWSTR pwChar, IndicSyllable *s, lexical_function lexical)
 {
-    if (start != main && end > start+1 && lexical(pwChar[start]) == lex_Ra && lexical(pwChar[start+1]) == lex_Halant)
+    if (s->start != s->base && s->end > s->start+1 && lexical(pwChar[s->start]) == lex_Ra && lexical(pwChar[s->start+1]) == lex_Halant)
     {
         int j;
-        WORD Ra = pwChar[start];
-        WORD H = pwChar[start+1];
+        WORD Ra = pwChar[s->start];
+        WORD H = pwChar[s->start+1];
 
-        TRACE("Doing reorder of Ra to %i\n",end-1);
-        for (j = start; j < end-1; j++)
+        TRACE("Doing reorder of Ra to %i\n",s->end-1);
+        for (j = s->start; j < s->end-1; j++)
             pwChar[j] = pwChar[j+2];
-        pwChar[end-1] = Ra;
-        pwChar[end] = H;
+        pwChar[s->end-1] = Ra;
+        pwChar[s->end] = H;
+
+        s->base -= 2;
     }
 }
 
-static void Reorder_Matra_precede_base(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lexical)
+static void Reorder_Matra_precede_base(LPWSTR pwChar, IndicSyllable *s, lexical_function lexical)
 {
     int i;
 
     /* reorder Matras */
-    if (end > main)
+    if (s->end > s->base)
     {
-        for (i = 1; i <= end-main; i++)
+        for (i = 1; i <= s->end-s->base; i++)
         {
-            if (lexical(pwChar[main+i]) == lex_Matra_pre)
+            if (lexical(pwChar[s->base+i]) == lex_Matra_pre)
             {
                 int j;
-                WCHAR c = pwChar[main+i];
-                TRACE("Doing reorder of %x %x\n",c,pwChar[main]);
-                for (j = main+i; j > main; j--)
+                WCHAR c = pwChar[s->base+i];
+                TRACE("Doing reorder of %x %x\n",c,pwChar[s->base]);
+                for (j = s->base+i; j > s->base; j--)
                     pwChar[j] = pwChar[j-1];
-                pwChar[main] = c;
+                pwChar[s->base] = c;
+
+                s->base ++;
             }
         }
     }
 }
 
-static void Reorder_Matra_precede_syllable(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lexical)
+static void Reorder_Matra_precede_syllable(LPWSTR pwChar, IndicSyllable *s, lexical_function lexical)
 {
     int i;
 
     /* reorder Matras */
-    if (end > main)
+    if (s->end > s->base)
     {
-        for (i = 1; i <= end-main; i++)
+        for (i = 1; i <= s->end-s->base; i++)
         {
-            if (lexical(pwChar[main+i]) == lex_Matra_pre)
+            if (lexical(pwChar[s->base+i]) == lex_Matra_pre)
             {
                 int j;
-                WCHAR c = pwChar[main+i];
-                TRACE("Doing reorder of %x to %i\n",c,start);
-                for (j = main+i; j > start; j--)
+                WCHAR c = pwChar[s->base+i];
+                TRACE("Doing reorder of %x to %i\n",c,s->start);
+                for (j = s->base+i; j > s->start; j--)
                     pwChar[j] = pwChar[j-1];
-                pwChar[start] = c;
+                pwChar[s->start] = c;
+
+                s->base ++;
             }
         }
     }
 }
 
-static void Reorder_Like_Sinhala(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lexical)
+static void Reorder_Like_Sinhala(LPWSTR pwChar, IndicSyllable *s, lexical_function lexical)
 {
-    TRACE("Syllable (%i..%i..%i)\n",start,main,end);
-    if (start == main && main == end)  return;
+    TRACE("Syllable (%i..%i..%i)\n",s->start,s->base,s->end);
+    if (s->start == s->base && s->base == s->end)  return;
 
-    main = Indic_FindBaseConsonant(pwChar, start, main, end, lexical);
-    if (lexical(pwChar[main]) == lex_Vowel) return;
+    Indic_FindBaseConsonant(pwChar, s, lexical);
+    if (lexical(pwChar[s->base]) == lex_Vowel) return;
 
-    Reorder_Ra_follows_base(pwChar, start, main, end, lexical);
-    Reorder_Matra_precede_base(pwChar, start, main, end, lexical);
+    Reorder_Ra_follows_base(pwChar, s, lexical);
+    Reorder_Matra_precede_base(pwChar, s, lexical);
 }
 
-static void Reorder_Like_Devanagari(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lexical)
+static void Reorder_Like_Devanagari(LPWSTR pwChar, IndicSyllable *s, lexical_function lexical)
 {
-    TRACE("Syllable (%i..%i..%i)\n",start,main,end);
-    if (start == main && main == end)  return;
+    TRACE("Syllable (%i..%i..%i)\n",s->start,s->base,s->end);
+    if (s->start == s->base && s->base == s->end)  return;
 
-    main = Indic_FindBaseConsonant(pwChar, start, main, end, lexical);
-    if (lexical(pwChar[main]) == lex_Vowel) return;
+    Indic_FindBaseConsonant(pwChar, s, lexical);
+    if (lexical(pwChar[s->base]) == lex_Vowel) return;
 
-    Reorder_Ra_follows_matra(pwChar, start, main, end, lexical);
-    Reorder_Matra_precede_syllable(pwChar, start, main, end, lexical);
+    Reorder_Ra_follows_matra(pwChar, s, lexical);
+    Reorder_Matra_precede_syllable(pwChar, s, lexical);
 }
 
-static void Reorder_Like_Bengali(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lexical)
+static void Reorder_Like_Bengali(LPWSTR pwChar, IndicSyllable *s, lexical_function lexical)
 {
-    TRACE("Syllable (%i..%i..%i)\n",start,main,end);
-    if (start == main && main == end)  return;
+    TRACE("Syllable (%i..%i..%i)\n",s->start,s->base,s->end);
+    if (s->start == s->base && s->base == s->end)  return;
 
-    main = Indic_FindBaseConsonant(pwChar, start, main, end, lexical);
-    if (lexical(pwChar[main]) == lex_Vowel) return;
+    Indic_FindBaseConsonant(pwChar, s, lexical);
+    if (lexical(pwChar[s->base]) == lex_Vowel) return;
 
-    Reorder_Ra_follows_base(pwChar, start, main, end, lexical);
-    Reorder_Matra_precede_syllable(pwChar, start, main, end, lexical);
+    Reorder_Ra_follows_base(pwChar, s, lexical);
+    Reorder_Matra_precede_syllable(pwChar, s, lexical);
 }
 
-static void Reorder_Like_Kannada(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lexical)
+static void Reorder_Like_Kannada(LPWSTR pwChar, IndicSyllable *s, lexical_function lexical)
 {
-    TRACE("Syllable (%i..%i..%i)\n",start,main,end);
-    if (start == main && main == end)  return;
+    TRACE("Syllable (%i..%i..%i)\n",s->start,s->base,s->end);
+    if (s->start == s->base && s->base == s->end)  return;
 
-    main = Indic_FindBaseConsonant(pwChar, start, main, end, lexical);
-    if (lexical(pwChar[main]) == lex_Vowel) return;
+    Indic_FindBaseConsonant(pwChar, s, lexical);
+    if (lexical(pwChar[s->base]) == lex_Vowel) return;
 
-    Reorder_Ra_follows_syllable(pwChar, start, main, end, lexical);
-    Reorder_Matra_precede_syllable(pwChar, start, main, end, lexical);
+    Reorder_Ra_follows_syllable(pwChar, s, lexical);
+    Reorder_Matra_precede_syllable(pwChar, s, lexical);
 }
 
-static void Reorder_Like_Malayalam(LPWSTR pwChar, INT start, INT main, INT end, lexical_function lexical)
+static void Reorder_Like_Malayalam(LPWSTR pwChar, IndicSyllable *s, lexical_function lexical)
 {
-    TRACE("Syllable (%i..%i..%i)\n",start,main,end);
-    if (start == main && main == end)  return;
+    TRACE("Syllable (%i..%i..%i)\n",s->start,s->base,s->end);
+    if (s->start == s->base && s->base == s->end)  return;
 
-    main = Indic_FindBaseConsonant(pwChar, start, main, end, lexical);
-    if (lexical(pwChar[main]) == lex_Vowel) return;
+    Indic_FindBaseConsonant(pwChar, s, lexical);
+    if (lexical(pwChar[s->base]) == lex_Vowel) return;
 
-    Reorder_Ra_follows_matra(pwChar, start, main, end, lexical);
-    Reorder_Matra_precede_base(pwChar, start, main, end, lexical);
+    Reorder_Ra_follows_matra(pwChar, s, lexical);
+    Reorder_Matra_precede_base(pwChar, s, lexical);
 }
 
 static int sinhala_lex(WCHAR c)
@@ -2042,6 +2052,8 @@ static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     int cCount = cChars;
     int i;
     WCHAR *input;
+    IndicSyllable *syllables = NULL;
+    int syllable_count = 0;
 
     if (*pcGlyphs != cChars)
     {
@@ -2059,7 +2071,7 @@ static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     TRACE("New double vowel expanded string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2:  Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, sinhala_lex, Reorder_Like_Sinhala);
+    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, sinhala_lex, Reorder_Like_Sinhala);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
 
     /* Step 3:  Strip dangling joiners */
@@ -2075,6 +2087,7 @@ static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     *pcGlyphs = cCount;
 
     HeapFree(GetProcessHeap(),0,input);
+    HeapFree(GetProcessHeap(),0,syllables);
 }
 
 static int devanagari_lex(WCHAR c)
@@ -2127,6 +2140,8 @@ static void ContextualShape_Devanagari(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
 {
     int cCount = cChars;
     WCHAR *input;
+    IndicSyllable *syllables = NULL;
+    int syllable_count = 0;
 
     if (*pcGlyphs != cChars)
     {
@@ -2142,12 +2157,13 @@ static void ContextualShape_Devanagari(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, devanagari_lex, Reorder_Like_Devanagari);
+    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, devanagari_lex, Reorder_Like_Devanagari);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     HeapFree(GetProcessHeap(),0,input);
+    HeapFree(GetProcessHeap(),0,syllables);
 }
 
 static int bengali_lex(WCHAR c)
@@ -2197,6 +2213,8 @@ static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
 {
     int cCount = cChars;
     WCHAR *input;
+    IndicSyllable *syllables = NULL;
+    int syllable_count = 0;
 
     if (*pcGlyphs != cChars)
     {
@@ -2213,7 +2231,7 @@ static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, bengali_lex, Reorder_Like_Bengali);
+    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, bengali_lex, Reorder_Like_Bengali);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
@@ -2232,6 +2250,7 @@ static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     }
 
     HeapFree(GetProcessHeap(),0,input);
+    HeapFree(GetProcessHeap(),0,syllables);
 }
 
 static int gurmukhi_lex(WCHAR c)
@@ -2276,6 +2295,8 @@ static void ContextualShape_Gurmukhi(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
 {
     int cCount = cChars;
     WCHAR *input;
+    IndicSyllable *syllables = NULL;
+    int syllable_count = 0;
 
     if (*pcGlyphs != cChars)
     {
@@ -2291,12 +2312,13 @@ static void ContextualShape_Gurmukhi(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, gurmukhi_lex, Reorder_Like_Bengali);
+    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, gurmukhi_lex, Reorder_Like_Bengali);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     HeapFree(GetProcessHeap(),0,input);
+    HeapFree(GetProcessHeap(),0,syllables);
 }
 
 static int gujarati_lex(WCHAR c)
@@ -2329,6 +2351,8 @@ static void ContextualShape_Gujarati(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
 {
     int cCount = cChars;
     WCHAR *input;
+    IndicSyllable *syllables = NULL;
+    int syllable_count = 0;
 
     if (*pcGlyphs != cChars)
     {
@@ -2340,12 +2364,13 @@ static void ContextualShape_Gujarati(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, gujarati_lex, Reorder_Like_Devanagari);
+    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, gujarati_lex, Reorder_Like_Devanagari);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     HeapFree(GetProcessHeap(),0,input);
+    HeapFree(GetProcessHeap(),0,syllables);
 }
 
 static int oriya_lex(WCHAR c)
@@ -2399,6 +2424,8 @@ static void ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
 {
     int cCount = cChars;
     WCHAR *input;
+    IndicSyllable *syllables = NULL;
+    int syllable_count = 0;
 
     if (*pcGlyphs != cChars)
     {
@@ -2415,12 +2442,13 @@ static void ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, oriya_lex, Reorder_Like_Bengali);
+    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, oriya_lex, Reorder_Like_Bengali);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     HeapFree(GetProcessHeap(),0,input);
+    HeapFree(GetProcessHeap(),0,syllables);
 }
 
 static int tamil_lex(WCHAR c)
@@ -2455,6 +2483,8 @@ static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
 {
     int cCount = cChars;
     WCHAR *input;
+    IndicSyllable *syllables = NULL;
+    int syllable_count = 0;
 
     if (*pcGlyphs != cChars)
     {
@@ -2471,12 +2501,13 @@ static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, tamil_lex, Reorder_Like_Sinhala);
+    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, tamil_lex, Reorder_Like_Sinhala);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     HeapFree(GetProcessHeap(),0,input);
+    HeapFree(GetProcessHeap(),0,syllables);
 }
 
 static int telugu_lex(WCHAR c)
@@ -2511,6 +2542,8 @@ static void ContextualShape_Telugu(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
 {
     int cCount = cChars;
     WCHAR *input;
+    IndicSyllable *syllables = NULL;
+    int syllable_count = 0;
 
     if (*pcGlyphs != cChars)
     {
@@ -2526,12 +2559,13 @@ static void ContextualShape_Telugu(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, telugu_lex, Reorder_Like_Bengali);
+    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, telugu_lex, Reorder_Like_Bengali);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     HeapFree(GetProcessHeap(),0,input);
+    HeapFree(GetProcessHeap(),0,syllables);
 }
 
 static int kannada_lex(WCHAR c)
@@ -2572,6 +2606,8 @@ static void ContextualShape_Kannada(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
 {
     int cCount = cChars;
     WCHAR *input;
+    IndicSyllable *syllables = NULL;
+    int syllable_count = 0;
 
     if (*pcGlyphs != cChars)
     {
@@ -2587,12 +2623,13 @@ static void ContextualShape_Kannada(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, kannada_lex, Reorder_Like_Kannada);
+    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, kannada_lex, Reorder_Like_Kannada);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     HeapFree(GetProcessHeap(),0,input);
+    HeapFree(GetProcessHeap(),0,syllables);
 }
 
 static int malayalam_lex(WCHAR c)
@@ -2626,6 +2663,8 @@ static void ContextualShape_Malayalam(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS
 {
     int cCount = cChars;
     WCHAR *input;
+    IndicSyllable *syllables = NULL;
+    int syllable_count = 0;
 
     if (*pcGlyphs != cChars)
     {
@@ -2641,12 +2680,13 @@ static void ContextualShape_Malayalam(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, malayalam_lex, Reorder_Like_Malayalam);
+    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, malayalam_lex, Reorder_Like_Malayalam);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     HeapFree(GetProcessHeap(),0,input);
+    HeapFree(GetProcessHeap(),0,syllables);
 }
 
 static void ShapeCharGlyphProp_Default( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS* psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD* pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP* pGlyphProp)
