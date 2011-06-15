@@ -1227,6 +1227,24 @@ static VOID *load_gsub_table(HDC hdc)
     return GSUB_Table;
 }
 
+INT SHAPE_does_GSUB_feature_apply_to_chars(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, const WCHAR *chars, INT write_dir, INT count, const char* feature)
+{
+    WORD *glyphs;
+    INT glyph_count = count;
+    INT rc;
+
+    glyphs = HeapAlloc(GetProcessHeap(),0,sizeof(WORD)*(count*2));
+    GetGlyphIndicesW(hdc, chars, count, glyphs, 0);
+    rc = apply_GSUB_feature_to_glyph(hdc, psa, psc, glyphs, 0, write_dir, &glyph_count, feature);
+    if (rc > GSUB_E_NOGLYPH)
+        rc = count - glyph_count;
+    else
+        rc = 0;
+
+    HeapFree(GetProcessHeap(),0,glyphs);
+    return rc;
+}
+
 static WORD GDEF_get_glyph_class(const GDEF_Header *header, WORD glyph)
 {
     int offset;
@@ -2061,7 +2079,7 @@ static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     TRACE("New double vowel expanded string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2:  Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, sinhala_lex, Reorder_Like_Sinhala);
+    Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, sinhala_lex, Reorder_Like_Sinhala);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
 
     /* Step 3:  Strip dangling joiners */
@@ -2147,7 +2165,7 @@ static void ContextualShape_Devanagari(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, devanagari_lex, Reorder_Like_Devanagari);
+    Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, devanagari_lex, Reorder_Like_Devanagari);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
@@ -2221,7 +2239,7 @@ static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, bengali_lex, Reorder_Like_Bengali);
+    Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, bengali_lex, Reorder_Like_Bengali);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
@@ -2302,7 +2320,7 @@ static void ContextualShape_Gurmukhi(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, gurmukhi_lex, Reorder_Like_Bengali);
+    Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, gurmukhi_lex, Reorder_Like_Bengali);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
@@ -2354,7 +2372,7 @@ static void ContextualShape_Gujarati(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, gujarati_lex, Reorder_Like_Devanagari);
+    Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, gujarati_lex, Reorder_Like_Devanagari);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
@@ -2432,7 +2450,7 @@ static void ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, oriya_lex, Reorder_Like_Bengali);
+    Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, oriya_lex, Reorder_Like_Bengali);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
@@ -2491,7 +2509,7 @@ static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, tamil_lex, Reorder_Like_Sinhala);
+    Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, tamil_lex, Reorder_Like_Sinhala);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
@@ -2549,7 +2567,7 @@ static void ContextualShape_Telugu(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, telugu_lex, Reorder_Like_Bengali);
+    Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, telugu_lex, Reorder_Like_Bengali);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
@@ -2613,7 +2631,7 @@ static void ContextualShape_Kannada(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, kannada_lex, Reorder_Like_Kannada);
+    Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, kannada_lex, Reorder_Like_Kannada);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
@@ -2670,7 +2688,7 @@ static void ContextualShape_Malayalam(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
-    Indic_ReorderCharacters( input, cCount, &syllables, &syllable_count, malayalam_lex, Reorder_Like_Malayalam);
+    Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, malayalam_lex, Reorder_Like_Malayalam);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;

@@ -212,9 +212,43 @@ static INT Indic_process_next_syllable( LPCWSTR input, INT cChar, INT start, INT
     return parse_consonant_syllable(input, cChar, start, main, next, lex);
 }
 
-static int FindBaseConsonant(LPWSTR input, IndicSyllable *s, lexical_function lex)
+static BOOL Consonent_is_post_base_form(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPWSTR pwChar, IndicSyllable *s, lexical_function lexical)
+{
+    if (is_consonant(lexical(pwChar[s->base])) && s->base > s->start && lexical(pwChar[s->base-1]) == lex_Halant)
+        return (SHAPE_does_GSUB_feature_apply_to_chars(hdc, psa, psc, &pwChar[s->base-1], 1, 2, "pstf") > 0);
+    return FALSE;
+}
+
+static BOOL Consonent_is_below_base_form(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPWSTR pwChar, IndicSyllable *s, lexical_function lexical)
+{
+    if (is_consonant(lexical(pwChar[s->base])) && s->base > s->start && lexical(pwChar[s->base-1]) == lex_Halant)
+        return (SHAPE_does_GSUB_feature_apply_to_chars(hdc, psa, psc, &pwChar[s->base-1], 1, 2, "blwf") > 0);
+    return FALSE;
+}
+
+static BOOL Consonent_is_pre_base_form(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPWSTR pwChar, IndicSyllable *s, lexical_function lexical)
+{
+    if (is_consonant(lexical(pwChar[s->base])) && s->base > s->start && lexical(pwChar[s->base-1]) == lex_Halant)
+        return (SHAPE_does_GSUB_feature_apply_to_chars(hdc, psa, psc, &pwChar[s->base-1], 1, 2, "pref") > 0);
+    return FALSE;
+}
+
+static BOOL Consonent_is_ralf(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPWSTR pwChar, IndicSyllable *s, lexical_function lexical)
+{
+    if ((lexical(pwChar[s->start])==lex_Ra) && s->end > s->start && lexical(pwChar[s->start+1]) == lex_Halant)
+        return (SHAPE_does_GSUB_feature_apply_to_chars(hdc, psa, psc, &pwChar[s->start], 1, 2, "rphf") > 0);
+    return FALSE;
+}
+
+static int FindBaseConsonant(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPWSTR input, IndicSyllable *s, lexical_function lex)
 {
     int i;
+    int start = s->start;
+
+    /* remove ralf from consideration */
+    if (Consonent_is_ralf(hdc, psa, psc, input, s, lex))
+        s->start+=2;
+
     /* try to find a base consonant */
     if (!is_consonant( lex(input[s->base]) ))
     {
@@ -225,10 +259,23 @@ static int FindBaseConsonant(LPWSTR input, IndicSyllable *s, lexical_function le
                 break;
             }
     }
+
+    while (Consonent_is_below_base_form(hdc, psa, psc, input, s, lex) || Consonent_is_post_base_form(hdc, psa, psc, input, s, lex) || Consonent_is_pre_base_form(hdc, psa, psc, input, s, lex))
+    {
+        for (i = s->base-1; i >= s->start; i--)
+            if (is_consonant( lex(input[i]) ))
+            {
+                s->base = i;
+                break;
+            }
+    }
+
+    s->start = start;
+
     return s->base;
 }
 
-void Indic_ReorderCharacters( LPWSTR input, int cChar, IndicSyllable **syllables, int *syllable_count, lexical_function lex, reorder_function reorder_f)
+void Indic_ReorderCharacters( HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPWSTR input, int cChar, IndicSyllable **syllables, int *syllable_count, lexical_function lex, reorder_function reorder_f)
 {
     int index = 0;
     int next = 0;
@@ -258,7 +305,7 @@ void Indic_ReorderCharacters( LPWSTR input, int cChar, IndicSyllable **syllables
             (*syllables)[*syllable_count].start = index;
             (*syllables)[*syllable_count].base = center;
             (*syllables)[*syllable_count].end = next-1;
-            FindBaseConsonant(input, &(*syllables)[*syllable_count], lex);
+            FindBaseConsonant(hdc, psa, psc, input, &(*syllables)[*syllable_count], lex);
             reorder_f(input, &(*syllables)[*syllable_count], lex);
             index = next;
             *syllable_count = (*syllable_count)+1;
