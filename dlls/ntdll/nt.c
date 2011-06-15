@@ -990,11 +990,12 @@ void fill_cpu_info(void)
                 continue;
             }
 
-            /* 2.1 method */
-            if (!strcasecmp(line, "cpu family"))
+            /* 2.1 and ARM method */
+            if (!strcasecmp(line, "cpu family") || !strcasecmp(line, "CPU architecture"))
             {
                 if (isdigit(value[0]))
                 {
+                    value[1] = '\0'; /* Make sure we only get one character */
                     cached_sci.Level = atoi(value);
                 }
                 continue;
