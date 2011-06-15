@@ -4927,25 +4927,9 @@ static BOOL shader_glsl_dirty_const(void)
 
 static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *caps)
 {
-    /* NVIDIA GeForce 6 / 7 or ATI R4xx / R5xx cards with GLSL support
-     * support SM3, but older NVIDIA / ATI models with GLSL support only
-     * support SM2. In case of NVIDIA we can detect SM3 support based on the
-     * version of NV_vertex_program / NV_fragment_program. For other cards we
-     * try to detect SM3 based on the maximum number of native fragment
-     * program instructions. PS2.0 requires at least 96 instructions, 2.0a/b
-     * goes up to 512. Assume that if the number of instructions is 512 or
-     * less we have to do with SM2 hardware. NOTE: SM3 requires 512 or more
-     * instructions but ATI and NVIDIA offer more than that (1024 vs 4096) on
-     * their most basic SM3 hardware.
-     *
-     * ARB_shader_texture_lod is a requirement for SM3 (texldd). Ideally we'd
-     * make this a hard requirement, but the extension is still somewhat new,
-     * and relatively few SM3 shaders actually depend on it. For the moment
-     * just use it to enable SM3 (20110423). */
-    if ((gl_info->supported[NV_VERTEX_PROGRAM3] && gl_info->supported[NV_FRAGMENT_PROGRAM2])
-            || gl_info->limits.arb_ps_instructions > 512
-            || gl_info->supported[ARB_SHADER_TEXTURE_LOD]
-            || gl_info->supported[EXT_GPU_SHADER4])
+    /* ARB_shader_texture_lod or EXT_gpu_shader4 is required for the SM3
+     * texldd and texldl instructions. */
+    if (gl_info->supported[ARB_SHADER_TEXTURE_LOD] || gl_info->supported[EXT_GPU_SHADER4])
     {
         caps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
         caps->PixelShaderVersion = WINED3DPS_VERSION(3,0);
