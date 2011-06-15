@@ -5579,7 +5579,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
 
 /* GL locking is done by the caller */
 static void surface_depth_blt(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
-        GLuint texture, GLsizei w, GLsizei h, GLenum target)
+        GLuint texture, GLint x, GLint y, GLsizei w, GLsizei h, GLenum target)
 {
     struct wined3d_device *device = surface->resource.device;
     GLint compare_mode = GL_NONE;
@@ -5598,7 +5598,7 @@ static void surface_depth_blt(struct wined3d_surface *surface, const struct wine
     glDepthFunc(GL_ALWAYS);
     glDepthMask(GL_TRUE);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    glViewport(0, surface->pow2Height - h, w, h);
+    glViewport(x, y, w, h);
 
     SetRect(&rect, 0, h, w, 0);
     surface_get_blt_info(target, &rect, surface->pow2Width, surface->pow2Height, &info);
@@ -5773,7 +5773,7 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
         context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, surface, FALSE);
 
         /* Do the actual blit */
-        surface_depth_blt(surface, gl_info, device->depth_blt_texture, w, h, bind_target);
+        surface_depth_blt(surface, gl_info, device->depth_blt_texture, 0, 0, w, h, bind_target);
         checkGLcall("depth_blt");
 
         if (context->current_fbo) context_bind_fbo(context, GL_FRAMEBUFFER, &context->current_fbo->id);
@@ -5791,7 +5791,7 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
 
         context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
         surface_depth_blt(surface, gl_info, surface->texture_name,
-                w, h, surface->texture_target);
+                0, surface->pow2Height - h, w, h, surface->texture_target);
         checkGLcall("depth_blt");
 
         if (context->current_fbo) context_bind_fbo(context, GL_FRAMEBUFFER, &context->current_fbo->id);
