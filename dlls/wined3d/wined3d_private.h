@@ -816,7 +816,7 @@ extern int num_lock DECLSPEC_HIDDEN;
 #define checkGLcall(A)                                              \
 do {                                                                \
     GLint err;                                                      \
-    if(!__WINE_IS_DEBUG_ON(_FIXME, __wine_dbch___default)) break;   \
+    if (!__WINE_IS_DEBUG_ON(_ERR, __wine_dbch___default)) break;    \
     err = glGetError();                                             \
     if (err == GL_NO_ERROR) {                                       \
        TRACE("%s call ok %s / %d\n", A, __FILE__, __LINE__);        \
