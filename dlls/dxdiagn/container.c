@@ -222,10 +222,7 @@ static HRESULT WINAPI IDxDiagContainerImpl_GetProp(PDXDIAGCONTAINER iface, LPCWS
   LIST_FOR_EACH_ENTRY(p, &This->cont->properties, IDxDiagContainerImpl_Property, entry)
   {
     if (0 == lstrcmpW(p->propName, pwszPropName)) {
-      HRESULT hr = VariantClear(pvarProp);
-      if (hr == DISP_E_ARRAYISLOCKED || hr == DISP_E_BADVARTYPE)
-        VariantInit(pvarProp);
-
+      VariantInit(pvarProp);
       return VariantCopy(pvarProp, &p->vProp);
     }
   }

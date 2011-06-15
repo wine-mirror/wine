@@ -568,6 +568,7 @@ static void test_GetProp(void)
     VARIANT var;
     SAFEARRAY *sa;
     SAFEARRAYBOUND bound;
+    ULONG ref;
     static const WCHAR emptyW[] = {0};
     static const WCHAR testW[] = {'t','e','s','t',0};
 
@@ -680,8 +681,21 @@ static void test_GetProp(void)
     ok(hr == S_OK, "Expected SafeArrayUnlock to return S_OK, got 0x%08x\n", hr);
     hr = SafeArrayDestroy(sa);
     ok(hr == S_OK, "Expected SafeArrayDestroy to return S_OK, got 0x%08x\n", hr);
-    IDxDiagContainer_Release(child);
 
+    /* Determine whether GetProp calls VariantClear on the passed variant. */
+    V_VT(&var) = VT_UNKNOWN;
+    V_UNKNOWN(&var) = (IUnknown *)child;
+    IDxDiagContainer_AddRef(child);
+
+    hr = IDxDiagContainer_GetProp(child, property, &var);
+    ok(hr == S_OK, "Expected IDxDiagContainer::GetProp to return S_OK, got 0x%08x\n", hr);
+    ok(V_VT(&var) != VT_UNKNOWN, "Expected the variant to be modified\n");
+
+    IDxDiagContainer_AddRef(child);
+    ref = IDxDiagContainer_Release(child);
+    ok(ref == 2, "Expected reference count to be 2, got %u\n", ref);
+
+    IDxDiagContainer_Release(child);
 cleanup:
     IDxDiagContainer_Release(pddc);
     IDxDiagProvider_Release(pddp);
