@@ -212,6 +212,22 @@ static INT Indic_process_next_syllable( LPCWSTR input, INT cChar, INT start, INT
     return parse_consonant_syllable(input, cChar, start, main, next, lex);
 }
 
+static int FindBaseConsonant(LPWSTR input, IndicSyllable *s, lexical_function lex)
+{
+    int i;
+    /* try to find a base consonant */
+    if (!is_consonant( lex(input[s->base]) ))
+    {
+        for (i = s->end; i >= s->start; i--)
+            if (is_consonant( lex(input[i]) ))
+            {
+                s->base = i;
+                break;
+            }
+    }
+    return s->base;
+}
+
 void Indic_ReorderCharacters( LPWSTR input, int cChar, IndicSyllable **syllables, int *syllable_count, lexical_function lex, reorder_function reorder_f)
 {
     int index = 0;
@@ -242,6 +258,7 @@ void Indic_ReorderCharacters( LPWSTR input, int cChar, IndicSyllable **syllables
             (*syllables)[*syllable_count].start = index;
             (*syllables)[*syllable_count].base = center;
             (*syllables)[*syllable_count].end = next-1;
+            FindBaseConsonant(input, &(*syllables)[*syllable_count], lex);
             reorder_f(input, &(*syllables)[*syllable_count], lex);
             index = next;
             *syllable_count = (*syllable_count)+1;
@@ -261,20 +278,4 @@ void Indic_ReorderCharacters( LPWSTR input, int cChar, IndicSyllable **syllables
         }
     }
     TRACE("Processed %i of %i characters into %i syllables\n",index,cChar,*syllable_count);
-}
-
-int Indic_FindBaseConsonant(LPWSTR input, IndicSyllable *s, lexical_function lex)
-{
-    int i;
-    /* try to find a base consonant */
-    if (!is_consonant( lex(input[s->base]) ))
-    {
-        for (i = s->end; i >= s->start; i--)
-            if (is_consonant( lex(input[i]) ))
-            {
-                s->base = i;
-                break;
-            }
-    }
-    return s->base;
 }

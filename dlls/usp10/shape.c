@@ -1956,8 +1956,6 @@ static void Reorder_Like_Sinhala(LPWSTR pwChar, IndicSyllable *s, lexical_functi
 {
     TRACE("Syllable (%i..%i..%i)\n",s->start,s->base,s->end);
     if (s->start == s->base && s->base == s->end)  return;
-
-    Indic_FindBaseConsonant(pwChar, s, lexical);
     if (lexical(pwChar[s->base]) == lex_Vowel) return;
 
     Reorder_Ra_follows_base(pwChar, s, lexical);
@@ -1968,8 +1966,6 @@ static void Reorder_Like_Devanagari(LPWSTR pwChar, IndicSyllable *s, lexical_fun
 {
     TRACE("Syllable (%i..%i..%i)\n",s->start,s->base,s->end);
     if (s->start == s->base && s->base == s->end)  return;
-
-    Indic_FindBaseConsonant(pwChar, s, lexical);
     if (lexical(pwChar[s->base]) == lex_Vowel) return;
 
     Reorder_Ra_follows_matra(pwChar, s, lexical);
@@ -1980,8 +1976,6 @@ static void Reorder_Like_Bengali(LPWSTR pwChar, IndicSyllable *s, lexical_functi
 {
     TRACE("Syllable (%i..%i..%i)\n",s->start,s->base,s->end);
     if (s->start == s->base && s->base == s->end)  return;
-
-    Indic_FindBaseConsonant(pwChar, s, lexical);
     if (lexical(pwChar[s->base]) == lex_Vowel) return;
 
     Reorder_Ra_follows_base(pwChar, s, lexical);
@@ -1992,8 +1986,6 @@ static void Reorder_Like_Kannada(LPWSTR pwChar, IndicSyllable *s, lexical_functi
 {
     TRACE("Syllable (%i..%i..%i)\n",s->start,s->base,s->end);
     if (s->start == s->base && s->base == s->end)  return;
-
-    Indic_FindBaseConsonant(pwChar, s, lexical);
     if (lexical(pwChar[s->base]) == lex_Vowel) return;
 
     Reorder_Ra_follows_syllable(pwChar, s, lexical);
@@ -2004,8 +1996,6 @@ static void Reorder_Like_Malayalam(LPWSTR pwChar, IndicSyllable *s, lexical_func
 {
     TRACE("Syllable (%i..%i..%i)\n",s->start,s->base,s->end);
     if (s->start == s->base && s->base == s->end)  return;
-
-    Indic_FindBaseConsonant(pwChar, s, lexical);
     if (lexical(pwChar[s->base]) == lex_Vowel) return;
 
     Reorder_Ra_follows_matra(pwChar, s, lexical);
