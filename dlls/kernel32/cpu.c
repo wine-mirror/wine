@@ -157,6 +157,13 @@ VOID WINAPI GetSystemInfo(
     case PROCESSOR_ARCHITECTURE_AMD64:
         si->dwProcessorType = PROCESSOR_AMD_X8664;
         break;
+    case PROCESSOR_ARCHITECTURE_ARM:
+        switch (sci.Level)
+        {
+        case 4:  si->dwProcessorType = PROCESSOR_ARM_7TDMI;     break;
+        default: si->dwProcessorType = PROCESSOR_ARM920;
+        }
+        break;
     default:
         FIXME("Unknown processor architecture %x\n", sci.Architecture);
         si->dwProcessorType = 0;
