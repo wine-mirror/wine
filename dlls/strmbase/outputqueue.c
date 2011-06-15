@@ -171,10 +171,10 @@ HRESULT WINAPI OutputQueue_ReceiveMultiple(OutputQueue *pOutputQueue, IMediaSamp
             list_add_tail(pOutputQueue->SampleList, &qev->entry);
             (*nSamplesProcessed)++;
         }
-        LeaveCriticalSection(&pOutputQueue->csQueue);
 
         if (!pOutputQueue->bBatchExact || list_count(pOutputQueue->SampleList) >= pOutputQueue->lBatchSize)
             SetEvent(pOutputQueue->hProcessQueue);
+        LeaveCriticalSection(&pOutputQueue->csQueue);
     }
     return hr;
 }
@@ -190,7 +190,7 @@ VOID WINAPI OutputQueue_SendAnyway(OutputQueue *pOutputQueue)
     if (pOutputQueue->hThread)
     {
         EnterCriticalSection(&pOutputQueue->csQueue);
-        if (list_count(pOutputQueue->SampleList) > 0)
+        if (!list_empty(pOutputQueue->SampleList))
         {
             pOutputQueue->bSendAnyway = TRUE;
             SetEvent(pOutputQueue->hProcessQueue);
@@ -235,14 +235,14 @@ DWORD WINAPI OutputQueueImpl_ThreadProc(OutputQueue *pOutputQueue)
     do
     {
         EnterCriticalSection(&pOutputQueue->csQueue);
-        if (list_count(pOutputQueue->SampleList) > 0 &&
+        if (!list_empty(pOutputQueue->SampleList) &&
             (!pOutputQueue->bBatchExact ||
             list_count(pOutputQueue->SampleList) >= pOutputQueue->lBatchSize ||
             pOutputQueue->bSendAnyway
             )
            )
         {
-            while (list_count(pOutputQueue->SampleList) > 0)
+            while (!list_empty(pOutputQueue->SampleList))
             {
                 IMediaSample **ppSamples;
                 LONG nSamples;
@@ -278,28 +278,25 @@ DWORD WINAPI OutputQueueImpl_ThreadProc(OutputQueue *pOutputQueue)
                 HeapFree(GetProcessHeap(),0,ppSamples);
 
                 /* Process Non-Samples */
-                if (list_count(pOutputQueue->SampleList) > 0)
+                LIST_FOR_EACH_SAFE(cursor, cursor2, pOutputQueue->SampleList)
                 {
-                    LIST_FOR_EACH_SAFE(cursor, cursor2, pOutputQueue->SampleList)
+                    QueuedEvent *qev = LIST_ENTRY(cursor, QueuedEvent, entry);
+                    if (qev->type == EOS_PACKET)
                     {
-                        QueuedEvent *qev = LIST_ENTRY(cursor, QueuedEvent, entry);
-                        if (qev->type == EOS_PACKET)
+                        IPin* ppin = NULL;
+                        IPin_ConnectedTo((IPin*)pOutputQueue->pInputPin, &ppin);
+                        if (ppin)
                         {
-                            IPin* ppin = NULL;
-                            IPin_ConnectedTo((IPin*)pOutputQueue->pInputPin, &ppin);
-                            if (ppin)
-                            {
-                                IPin_EndOfStream(ppin);
-                                IPin_Release(ppin);
-                            }
+                            IPin_EndOfStream(ppin);
+                            IPin_Release(ppin);
                         }
-                        else if (qev->type == SAMPLE_PACKET)
-                            break;
-                        else
-                            FIXME("Unhandled Event type %i\n",qev->type);
-                        list_remove(cursor);
-                        HeapFree(GetProcessHeap(),0,qev);
                     }
+                    else if (qev->type == SAMPLE_PACKET)
+                        break;
+                    else
+                        FIXME("Unhandled Event type %i\n",qev->type);
+                    list_remove(cursor);
+                    HeapFree(GetProcessHeap(),0,qev);
                 }
             }
             pOutputQueue->bSendAnyway = FALSE;
