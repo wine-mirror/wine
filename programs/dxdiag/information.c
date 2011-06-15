@@ -29,6 +29,31 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 
+static const WCHAR szTimeEnglish[] = {'s','z','T','i','m','e','E','n','g','l','i','s','h',0};
+static const WCHAR szTimeLocalized[] = {'s','z','T','i','m','e','L','o','c','a','l','i','z','e','d',0};
+static const WCHAR szMachineNameEnglish[] = {'s','z','M','a','c','h','i','n','e','N','a','m','e','E','n','g','l','i','s','h',0};
+static const WCHAR szOSExLongEnglish[] = {'s','z','O','S','E','x','L','o','n','g','E','n','g','l','i','s','h',0};
+static const WCHAR szOSExLocalized[] = {'s','z','O','S','E','x','L','o','c','a','l','i','z','e','d',0};
+static const WCHAR szLanguagesEnglish[] = {'s','z','L','a','n','g','u','a','g','e','s','E','n','g','l','i','s','h',0};
+static const WCHAR szLanguagesLocalized[] = {'s','z','L','a','n','g','u','a','g','e','s','L','o','c','a','l','i','z','e','d',0};
+static const WCHAR szSystemManufacturerEnglish[] = {'s','z','S','y','s','t','e','m','M','a','n','u','f','a','c','t','u','r','e','r','E','n','g','l','i','s','h',0};
+static const WCHAR szSystemModelEnglish[] = {'s','z','S','y','s','t','e','m','M','o','d','e','l','E','n','g','l','i','s','h',0};
+static const WCHAR szBIOSEnglish[] = {'s','z','B','I','O','S','E','n','g','l','i','s','h',0};
+static const WCHAR szProcessorEnglish[] = {'s','z','P','r','o','c','e','s','s','o','r','E','n','g','l','i','s','h',0};
+static const WCHAR szPhysicalMemoryEnglish[] = {'s','z','P','h','y','s','i','c','a','l','M','e','m','o','r','y','E','n','g','l','i','s','h',0};
+static const WCHAR szPageFileEnglish[] = {'s','z','P','a','g','e','F','i','l','e','E','n','g','l','i','s','h',0};
+static const WCHAR szPageFileLocalized[] = {'s','z','P','a','g','e','F','i','l','e','L','o','c','a','l','i','z','e','d',0};
+static const WCHAR szWindowsDir[] = {'s','z','W','i','n','d','o','w','s','D','i','r',0};
+static const WCHAR szDirectXVersionLongEnglish[] = {'s','z','D','i','r','e','c','t','X','V','e','r','s','i','o','n','L','o','n','g','E','n','g','l','i','s','h',0};
+static const WCHAR szSetupParamEnglish[] = {'s','z','S','e','t','u','p','P','a','r','a','m','E','n','g','l','i','s','h',0};
+static const WCHAR szDxDiagVersion[] = {'s','z','D','x','D','i','a','g','V','e','r','s','i','o','n',0};
+
+struct property_list
+{
+    const WCHAR *property_name;
+    WCHAR **output;
+};
+
 static BOOL property_to_string(IDxDiagContainer *container, const WCHAR *property, WCHAR **output)
 {
     VARIANT var;
@@ -60,81 +85,76 @@ static BOOL property_to_string(IDxDiagContainer *container, const WCHAR *propert
 static void free_system_information(struct dxdiag_information *dxdiag_info)
 {
     struct system_information *system_info = &dxdiag_info->system_info;
-    size_t i;
-    WCHAR *strings[] =
-    {
-        system_info->szTimeEnglish,
-        system_info->szTimeLocalized,
-        system_info->szMachineNameEnglish,
-        system_info->szOSExLongEnglish,
-        system_info->szOSExLocalized,
-        system_info->szLanguagesEnglish,
-        system_info->szLanguagesLocalized,
-        system_info->szSystemManufacturerEnglish,
-        system_info->szSystemModelEnglish,
-        system_info->szBIOSEnglish,
-        system_info->szProcessorEnglish,
-        system_info->szPhysicalMemoryEnglish,
-        system_info->szPageFileEnglish,
-        system_info->szPageFileLocalized,
-        system_info->szWindowsDir,
-        system_info->szDirectXVersionLongEnglish,
-        system_info->szSetupParamEnglish,
-        system_info->szDxDiagVersion,
-    };
 
-    for (i = 0; i < sizeof(strings)/sizeof(strings[0]); i++)
-        HeapFree(GetProcessHeap(), 0, strings[i]);
+    HeapFree(GetProcessHeap(), 0, system_info->szTimeEnglish);
+    HeapFree(GetProcessHeap(), 0, system_info->szTimeLocalized);
+    HeapFree(GetProcessHeap(), 0, system_info->szMachineNameEnglish);
+    HeapFree(GetProcessHeap(), 0, system_info->szOSExLongEnglish);
+    HeapFree(GetProcessHeap(), 0, system_info->szOSExLocalized);
+    HeapFree(GetProcessHeap(), 0, system_info->szLanguagesEnglish);
+    HeapFree(GetProcessHeap(), 0, system_info->szLanguagesLocalized);
+    HeapFree(GetProcessHeap(), 0, system_info->szSystemManufacturerEnglish);
+    HeapFree(GetProcessHeap(), 0, system_info->szSystemModelEnglish);
+    HeapFree(GetProcessHeap(), 0, system_info->szBIOSEnglish);
+    HeapFree(GetProcessHeap(), 0, system_info->szProcessorEnglish);
+    HeapFree(GetProcessHeap(), 0, system_info->szPhysicalMemoryEnglish);
+    HeapFree(GetProcessHeap(), 0, system_info->szPageFileEnglish);
+    HeapFree(GetProcessHeap(), 0, system_info->szPageFileLocalized);
+    HeapFree(GetProcessHeap(), 0, system_info->szWindowsDir);
+    HeapFree(GetProcessHeap(), 0, system_info->szDirectXVersionLongEnglish);
+    HeapFree(GetProcessHeap(), 0, system_info->szSetupParamEnglish);
+    HeapFree(GetProcessHeap(), 0, system_info->szDxDiagVersion);
+}
+
+static inline void fill_system_property_list(struct dxdiag_information *dxdiag_info, struct property_list *list)
+{
+    struct system_information *system_info = &dxdiag_info->system_info;
+
+    list[0].property_name = szTimeEnglish;
+    list[0].output = &system_info->szTimeEnglish;
+    list[1].property_name = szTimeLocalized;
+    list[1].output = &system_info->szTimeLocalized;
+    list[2].property_name = szMachineNameEnglish;
+    list[2].output = &system_info->szMachineNameEnglish;
+    list[3].property_name = szOSExLongEnglish;
+    list[3].output = &system_info->szOSExLongEnglish;
+    list[4].property_name = szOSExLocalized;
+    list[4].output = &system_info->szOSExLocalized;
+    list[5].property_name = szLanguagesEnglish;
+    list[5].output = &system_info->szLanguagesEnglish;
+    list[6].property_name = szLanguagesLocalized;
+    list[6].output = &system_info->szLanguagesLocalized;
+    list[7].property_name = szSystemManufacturerEnglish;
+    list[7].output = &system_info->szSystemManufacturerEnglish;
+    list[8].property_name = szSystemModelEnglish;
+    list[8].output = &system_info->szSystemModelEnglish;
+    list[9].property_name = szBIOSEnglish;
+    list[9].output = &system_info->szBIOSEnglish;
+    list[10].property_name = szProcessorEnglish;
+    list[10].output = &system_info->szProcessorEnglish;
+    list[11].property_name = szPhysicalMemoryEnglish;
+    list[11].output = &system_info->szPhysicalMemoryEnglish;
+    list[12].property_name = szPageFileEnglish;
+    list[12].output = &system_info->szPageFileEnglish;
+    list[13].property_name = szPageFileLocalized;
+    list[13].output = &system_info->szPageFileLocalized;
+    list[14].property_name = szWindowsDir;
+    list[14].output = &system_info->szWindowsDir;
+    list[15].property_name = szDirectXVersionLongEnglish;
+    list[15].output = &system_info->szDirectXVersionLongEnglish;
+    list[16].property_name = szSetupParamEnglish;
+    list[16].output = &system_info->szSetupParamEnglish;
+    list[17].property_name = szDxDiagVersion;
+    list[17].output = &system_info->szDxDiagVersion;
 }
 
 static BOOL fill_system_information(IDxDiagContainer *container, struct dxdiag_information *dxdiag_info)
 {
-    static const WCHAR szTimeEnglish[] = {'s','z','T','i','m','e','E','n','g','l','i','s','h',0};
-    static const WCHAR szTimeLocalized[] = {'s','z','T','i','m','e','L','o','c','a','l','i','z','e','d',0};
-    static const WCHAR szMachineNameEnglish[] = {'s','z','M','a','c','h','i','n','e','N','a','m','e','E','n','g','l','i','s','h',0};
-    static const WCHAR szOSExLongEnglish[] = {'s','z','O','S','E','x','L','o','n','g','E','n','g','l','i','s','h',0};
-    static const WCHAR szOSExLocalized[] = {'s','z','O','S','E','x','L','o','c','a','l','i','z','e','d',0};
-    static const WCHAR szLanguagesEnglish[] = {'s','z','L','a','n','g','u','a','g','e','s','E','n','g','l','i','s','h',0};
-    static const WCHAR szLanguagesLocalized[] = {'s','z','L','a','n','g','u','a','g','e','s','L','o','c','a','l','i','z','e','d',0};
-    static const WCHAR szSystemManufacturerEnglish[] = {'s','z','S','y','s','t','e','m','M','a','n','u','f','a','c','t','u','r','e','r','E','n','g','l','i','s','h',0};
-    static const WCHAR szSystemModelEnglish[] = {'s','z','S','y','s','t','e','m','M','o','d','e','l','E','n','g','l','i','s','h',0};
-    static const WCHAR szBIOSEnglish[] = {'s','z','B','I','O','S','E','n','g','l','i','s','h',0};
-    static const WCHAR szProcessorEnglish[] = {'s','z','P','r','o','c','e','s','s','o','r','E','n','g','l','i','s','h',0};
-    static const WCHAR szPhysicalMemoryEnglish[] = {'s','z','P','h','y','s','i','c','a','l','M','e','m','o','r','y','E','n','g','l','i','s','h',0};
-    static const WCHAR szPageFileEnglish[] = {'s','z','P','a','g','e','F','i','l','e','E','n','g','l','i','s','h',0};
-    static const WCHAR szPageFileLocalized[] = {'s','z','P','a','g','e','F','i','l','e','L','o','c','a','l','i','z','e','d',0};
-    static const WCHAR szWindowsDir[] = {'s','z','W','i','n','d','o','w','s','D','i','r',0};
-    static const WCHAR szDirectXVersionLongEnglish[] = {'s','z','D','i','r','e','c','t','X','V','e','r','s','i','o','n','L','o','n','g','E','n','g','l','i','s','h',0};
-    static const WCHAR szSetupParamEnglish[] = {'s','z','S','e','t','u','p','P','a','r','a','m','E','n','g','l','i','s','h',0};
-    static const WCHAR szDxDiagVersion[] = {'s','z','D','x','D','i','a','g','V','e','r','s','i','o','n',0};
-
     struct system_information *system_info = &dxdiag_info->system_info;
     size_t i;
-    const struct
-    {
-        const WCHAR *property_name;
-        WCHAR **output;
-    } property_list[] =
-    {
-        {szTimeEnglish, &system_info->szTimeEnglish},
-        {szTimeLocalized, &system_info->szTimeLocalized},
-        {szMachineNameEnglish, &system_info->szMachineNameEnglish},
-        {szOSExLongEnglish, &system_info->szOSExLongEnglish},
-        {szOSExLocalized, &system_info->szOSExLocalized},
-        {szLanguagesEnglish, &system_info->szLanguagesEnglish},
-        {szLanguagesLocalized, &system_info->szLanguagesLocalized},
-        {szSystemManufacturerEnglish, &system_info->szSystemManufacturerEnglish},
-        {szSystemModelEnglish, &system_info->szSystemModelEnglish},
-        {szBIOSEnglish, &system_info->szBIOSEnglish},
-        {szProcessorEnglish, &system_info->szProcessorEnglish},
-        {szPhysicalMemoryEnglish, &system_info->szPhysicalMemoryEnglish},
-        {szPageFileEnglish, &system_info->szPageFileEnglish},
-        {szPageFileLocalized, &system_info->szPageFileLocalized},
-        {szWindowsDir, &system_info->szWindowsDir},
-        {szDirectXVersionLongEnglish, &system_info->szDirectXVersionLongEnglish},
-        {szSetupParamEnglish, &system_info->szSetupParamEnglish},
-        {szDxDiagVersion, &system_info->szDxDiagVersion},
-    };
+    struct property_list property_list[18];
+
+    fill_system_property_list(dxdiag_info, property_list);
 
     for (i = 0; i < sizeof(property_list)/sizeof(property_list[0]); i++)
     {
@@ -184,7 +204,7 @@ struct dxdiag_information *collect_dxdiag_information(BOOL whql_check)
     IDxDiagProvider *pddp = NULL;
     IDxDiagContainer *root = NULL;
     struct dxdiag_information *ret = NULL;
-    DXDIAG_INIT_PARAMS params = {sizeof(DXDIAG_INIT_PARAMS), DXDIAG_DX9_SDK_VERSION, whql_check};
+    DXDIAG_INIT_PARAMS params = {sizeof(DXDIAG_INIT_PARAMS), DXDIAG_DX9_SDK_VERSION};
     HRESULT hr;
     size_t i;
 
@@ -197,6 +217,7 @@ struct dxdiag_information *collect_dxdiag_information(BOOL whql_check)
         goto error;
     }
 
+    params.bAllowWHQLChecks = whql_check;
     hr = IDxDiagProvider_Initialize(pddp, &params);
     if (FAILED(hr))
         goto error;
