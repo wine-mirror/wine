@@ -415,9 +415,6 @@ static const char* required_devanagari_features[] =
 
 static OPENTYPE_FEATURE_RECORD devanagari_features[] =
 {
-    /* Base forms */
-    { MS_MAKE_TAG('c','j','c','t'), 1},
-    /* Presentation forms */
     { MS_MAKE_TAG('p','r','e','s'), 1},
     { MS_MAKE_TAG('a','b','v','s'), 1},
     { MS_MAKE_TAG('b','l','w','s'), 1},
@@ -445,9 +442,6 @@ static const char* required_bengali_features[] =
 
 static OPENTYPE_FEATURE_RECORD bengali_features[] =
 {
-    /* Base forms */
-    { MS_MAKE_TAG('c','j','c','t'), 1},
-    /* Presentation forms */
     { MS_MAKE_TAG('p','r','e','s'), 1},
     { MS_MAKE_TAG('a','b','v','s'), 1},
     { MS_MAKE_TAG('b','l','w','s'), 1},
@@ -477,9 +471,6 @@ static const char* required_gurmukhi_features[] =
 
 static OPENTYPE_FEATURE_RECORD gurmukhi_features[] =
 {
-    /* Base forms */
-    { MS_MAKE_TAG('c','j','c','t'), 1},
-    /* Presentation forms */
     { MS_MAKE_TAG('p','r','e','s'), 1},
     { MS_MAKE_TAG('a','b','v','s'), 1},
     { MS_MAKE_TAG('b','l','w','s'), 1},
@@ -507,9 +498,6 @@ static const char* required_oriya_features[] =
 
 static OPENTYPE_FEATURE_RECORD oriya_features[] =
 {
-    /* Base forms */
-    { MS_MAKE_TAG('c','j','c','t'), 1},
-    /* Presentation forms */
     { MS_MAKE_TAG('p','r','e','s'), 1},
     { MS_MAKE_TAG('a','b','v','s'), 1},
     { MS_MAKE_TAG('b','l','w','s'), 1},
@@ -536,7 +524,6 @@ static const char* required_tamil_features[] =
 
 static OPENTYPE_FEATURE_RECORD tamil_features[] =
 {
-    /* Presentation forms */
     { MS_MAKE_TAG('p','r','e','s'), 1},
     { MS_MAKE_TAG('a','b','v','s'), 1},
     { MS_MAKE_TAG('b','l','w','s'), 1},
@@ -565,9 +552,6 @@ static const char* required_telugu_features[] =
 
 static OPENTYPE_FEATURE_RECORD telugu_features[] =
 {
-    /* Base forms */
-    { MS_MAKE_TAG('c','j','c','t'), 1},
-    /* Presentation forms */
     { MS_MAKE_TAG('p','r','e','s'), 1},
     { MS_MAKE_TAG('a','b','v','s'), 1},
     { MS_MAKE_TAG('b','l','w','s'), 1},
@@ -612,25 +596,25 @@ static const ScriptShapeData ShapingData[] =
     {{ thai_features, 1}, NULL, "thai", "", NULL, ShapeCharGlyphProp_Thai},
     {{ thai_features, 1}, required_lao_features, "lao", "", NULL, ShapeCharGlyphProp_Thai},
     {{ thai_features, 1}, required_lao_features, "lao", "", NULL, ShapeCharGlyphProp_Thai},
-    {{ devanagari_features, 7}, required_devanagari_features, "deva", "dev2", ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
-    {{ devanagari_features, 7}, required_devanagari_features, "deva", "dev2", ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
-    {{ bengali_features, 7}, required_bengali_features, "beng", "bng2", ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
-    {{ bengali_features, 7}, required_bengali_features, "beng", "bng2", ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
-    {{ gurmukhi_features, 7}, required_gurmukhi_features, "guru", "gur2", ContextualShape_Gurmukhi, ShapeCharGlyphProp_Gurmukhi},
-    {{ gurmukhi_features, 7}, required_gurmukhi_features, "guru", "gur2", ContextualShape_Gurmukhi, ShapeCharGlyphProp_Gurmukhi},
-    {{ devanagari_features, 7}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
-    {{ devanagari_features, 7}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
-    {{ devanagari_features, 7}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
-    {{ oriya_features, 7}, required_oriya_features, "orya", "ory2", ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
-    {{ oriya_features, 7}, required_oriya_features, "orya", "ory2", ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
+    {{ devanagari_features, 6}, required_devanagari_features, "deva", "dev2", ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
+    {{ devanagari_features, 6}, required_devanagari_features, "deva", "dev2", ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
+    {{ bengali_features, 6}, required_bengali_features, "beng", "bng2", ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
+    {{ bengali_features, 6}, required_bengali_features, "beng", "bng2", ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
+    {{ gurmukhi_features, 6}, required_gurmukhi_features, "guru", "gur2", ContextualShape_Gurmukhi, ShapeCharGlyphProp_Gurmukhi},
+    {{ gurmukhi_features, 6}, required_gurmukhi_features, "guru", "gur2", ContextualShape_Gurmukhi, ShapeCharGlyphProp_Gurmukhi},
+    {{ devanagari_features, 6}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
+    {{ devanagari_features, 6}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
+    {{ devanagari_features, 6}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
+    {{ oriya_features, 6}, required_oriya_features, "orya", "ory2", ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
+    {{ oriya_features, 6}, required_oriya_features, "orya", "ory2", ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
     {{ tamil_features, 6}, required_tamil_features, "taml", "tam2", ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
     {{ tamil_features, 6}, required_tamil_features, "taml", "tam2", ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
-    {{ telugu_features, 7}, required_telugu_features, "telu", "tel2", ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
-    {{ telugu_features, 7}, required_telugu_features, "telu", "tel2", ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
-    {{ telugu_features, 7}, required_telugu_features, "knda", "knd2", ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
-    {{ telugu_features, 7}, required_telugu_features, "knda", "knd2", ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
-    {{ telugu_features, 7}, required_telugu_features, "mlym", "mlm2", ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
-    {{ telugu_features, 7}, required_telugu_features, "mlym", "mlm2", ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
+    {{ telugu_features, 6}, required_telugu_features, "telu", "tel2", ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
+    {{ telugu_features, 6}, required_telugu_features, "telu", "tel2", ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
+    {{ telugu_features, 6}, required_telugu_features, "knda", "knd2", ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
+    {{ telugu_features, 6}, required_telugu_features, "knda", "knd2", ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
+    {{ telugu_features, 6}, required_telugu_features, "mlym", "mlm2", ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
+    {{ telugu_features, 6}, required_telugu_features, "mlym", "mlm2", ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
@@ -2108,6 +2092,7 @@ static void ShapeIndicSyllables(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa,
     const GSUB_Feature *rkrf = load_GSUB_feature(hdc, psa, psc, "rkrf");
     const GSUB_Feature *pstf = load_GSUB_feature(hdc, psa, psc, "pstf");
     const GSUB_Feature *vatu = load_GSUB_feature(hdc, psa, psc, "vatu");
+    const GSUB_Feature *cjct = load_GSUB_feature(hdc, psa, psc, "cjct");
     BOOL rphf = (load_GSUB_feature(hdc, psa, psc, "rphf") != NULL);
     BOOL pref = (load_GSUB_feature(hdc, psa, psc, "pref") != NULL);
     BOOL blwf = (load_GSUB_feature(hdc, psa, psc, "blwf") != NULL);
@@ -2158,6 +2143,11 @@ static void ShapeIndicSyllables(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa,
         {
             TRACE("applying feature vatu\n");
             Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, vatu);
+        }
+        if (cjct)
+        {
+            TRACE("applying feature cjct\n");
+            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, cjct);
         }
 
         overall_shift += glyph_indexs.end - old_end;
