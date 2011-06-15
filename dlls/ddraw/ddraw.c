@@ -4983,7 +4983,7 @@ static HRESULT WINAPI d3d3_CreateVertexBuffer(IDirect3D3 *iface, D3DVERTEXBUFFER
     if (hr == D3D_OK)
     {
         TRACE("Created vertex buffer %p.\n", object);
-        *vertex_buffer = (IDirect3DVertexBuffer *)object;
+        *vertex_buffer = &object->IDirect3DVertexBuffer_iface;
     }
     else
         WARN("Failed to create vertex buffer, hr %#x.\n", hr);

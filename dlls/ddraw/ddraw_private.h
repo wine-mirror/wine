@@ -521,8 +521,8 @@ struct IDirect3DVertexBufferImpl
 {
     /*** IUnknown Methods ***/
     const IDirect3DVertexBuffer7Vtbl *lpVtbl;
-    const IDirect3DVertexBufferVtbl *IDirect3DVertexBuffer_vtbl;
-    LONG                 ref;
+    IDirect3DVertexBuffer IDirect3DVertexBuffer_iface;
+    LONG ref;
 
     /*** WineD3D and ddraw links ***/
     struct wined3d_buffer *wineD3DVertexBuffer;
@@ -538,12 +538,6 @@ HRESULT d3d_vertex_buffer_create(IDirect3DVertexBufferImpl **vertex_buf, IDirect
         D3DVERTEXBUFFERDESC *desc) DECLSPEC_HIDDEN;
 IDirect3DVertexBufferImpl *unsafe_impl_from_IDirect3DVertexBuffer(IDirect3DVertexBuffer *iface) DECLSPEC_HIDDEN;
 IDirect3DVertexBufferImpl *unsafe_impl_from_IDirect3DVertexBuffer7(IDirect3DVertexBuffer7 *iface) DECLSPEC_HIDDEN;
-
-static inline IDirect3DVertexBufferImpl *vb_from_vb1(IDirect3DVertexBuffer *iface)
-{
-    return (IDirect3DVertexBufferImpl *)((char*)iface
-            - FIELD_OFFSET(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer_vtbl));
-}
 
 /*****************************************************************************
  * Helper functions from utils.c
