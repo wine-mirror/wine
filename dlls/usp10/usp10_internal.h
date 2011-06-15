@@ -99,6 +99,7 @@ typedef struct {
 typedef struct {
     INT start;
     INT base;
+    INT ralf;
     INT end;
 } IndicSyllable;
 
