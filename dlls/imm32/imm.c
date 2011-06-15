@@ -1923,7 +1923,15 @@ BOOL WINAPI ImmIsUIMessageW(
         (msg == WM_MSIME_RECONVERT) ||
         (msg == WM_MSIME_QUERYPOSITION) ||
         (msg == WM_MSIME_DOCUMENTFEED))
+    {
+        if (!IMM_GetThreadData()->hwndDefault)
+            ImmGetDefaultIMEWnd(NULL);
+
+        if (hWndIME == NULL)
+            PostMessageW(IMM_GetThreadData()->hwndDefault, msg, wParam, lParam);
+
         rc = TRUE;
+    }
     return rc;
 }
 
