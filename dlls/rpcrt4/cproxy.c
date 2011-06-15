@@ -69,7 +69,7 @@ static inline StdProxyImpl *impl_from_proxy_obj( void *iface )
     return CONTAINING_RECORD(iface, StdProxyImpl, PVtbl);
 }
 
-#if defined(__i386__)
+#ifdef __i386__
 
 #include "pshpack1.h"
 
@@ -112,6 +112,30 @@ LONG_PTR WINAPI ObjectStubless(void **args)
     return ndr_client_call(stubless->pStubDesc, fs, args + 2);
 }
 
+static inline void init_thunk( struct thunk *thunk, unsigned int index )
+{
+    thunk->mov_eax = 0xb8; /* movl $n,%eax */
+    thunk->index   = index;
+    thunk->jmp     = 0xe9; /* jmp */
+    thunk->handler = (char *)call_stubless_func - (char *)(&thunk->handler + 1);
+}
+
+#else  /* __i386__ */
+
+#warning You must implement stubless proxies for your CPU
+
+struct thunk
+{
+  DWORD index;
+};
+
+static inline void init_thunk( struct thunk *thunk, unsigned int index )
+{
+    thunk->index = index;
+}
+
+#endif  /* __i386__ */
+
 #define BLOCK_SIZE 1024
 #define MAX_BLOCKS 64  /* 64k methods should be enough for anybody */
 
@@ -126,13 +150,7 @@ static const struct thunk *allocate_block( unsigned int num )
                           MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE );
     if (!block) return NULL;
 
-    for (i = 0; i < BLOCK_SIZE; i++)
-    {
-        block[i].mov_eax = 0xb8; /* movl $n,%eax */
-        block[i].index   = BLOCK_SIZE * num + i + 3;
-        block[i].jmp     = 0xe9; /* jmp */
-        block[i].handler = (char *)call_stubless_func - (char *)(&block[i].handler + 1);
-    }
+    for (i = 0; i < BLOCK_SIZE; i++) init_thunk( &block[i], BLOCK_SIZE * num + i + 3 );
     VirtualProtect( block, BLOCK_SIZE * sizeof(*block), PAGE_EXECUTE_READ, NULL );
     prev = InterlockedCompareExchangePointer( (void **)&method_blocks[num], block, NULL );
     if (prev) /* someone beat us to it */
@@ -162,16 +180,6 @@ static BOOL fill_stubless_table( IUnknownVtbl *vtbl, DWORD num )
     }
     return TRUE;
 }
-
-#else  /* __i386__ */
-
-static BOOL fill_stubless_table( IUnknownVtbl *vtbl, DWORD num )
-{
-    ERR("stubless proxies are not supported on this architecture\n");
-    return FALSE;
-}
-
-#endif  /* __i386__ */
 
 HRESULT StdProxy_Construct(REFIID riid,
                            LPUNKNOWN pUnkOuter,
