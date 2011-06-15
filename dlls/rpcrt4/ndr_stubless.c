@@ -1773,8 +1773,7 @@ struct async_call_data
     ULONG_PTR NdrCorrCache[256];
 };
 
-CLIENT_CALL_RETURN WINAPIV NdrAsyncClientCall(PMIDL_STUB_DESC pStubDesc,
-  PFORMAT_STRING pFormat, ...)
+LONG_PTR CDECL ndr_async_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat, void **stack_top )
 {
     /* pointer to start of stack where arguments start */
     PRPC_MESSAGE pRpcMsg;
@@ -1793,8 +1792,6 @@ CLIENT_CALL_RETURN WINAPIV NdrAsyncClientCall(PMIDL_STUB_DESC pStubDesc,
     const NDR_PROC_HEADER * pProcHeader = (const NDR_PROC_HEADER *)&pFormat[0];
     /* -Oif or -Oicf generated format */
     BOOL bV2Format = FALSE;
-    LONG_PTR RetVal;
-    __ms_va_list args;
 
     TRACE("pStubDesc %p, pFormat %p, ...\n", pStubDesc, pFormat);
 
@@ -1847,9 +1844,7 @@ CLIENT_CALL_RETURN WINAPIV NdrAsyncClientCall(PMIDL_STUB_DESC pStubDesc,
 
     /* needed for conformance of top-level objects */
     pStubMsg->StackTop = I_RpcAllocate(async_call_data->stack_size);
-    __ms_va_start( args, pFormat );
-    memcpy(pStubMsg->StackTop, va_arg( args, unsigned char * ), async_call_data->stack_size);
-    __ms_va_end( args );
+    memcpy(pStubMsg->StackTop, stack_top, async_call_data->stack_size);
 
     pAsync = *(RPC_ASYNC_STATE **)pStubMsg->StackTop;
     pAsync->StubInfo = async_call_data;
@@ -1984,8 +1979,7 @@ CLIENT_CALL_RETURN WINAPIV NdrAsyncClientCall(PMIDL_STUB_DESC pStubDesc,
 
 done:
     TRACE("returning 0\n");
-    RetVal = 0;
-    return *(CLIENT_CALL_RETURN *)&RetVal;
+    return 0;
 }
 
 RPC_STATUS NdrpCompleteAsyncClientCall(RPC_ASYNC_STATE *pAsync, void *Reply)
@@ -2086,6 +2080,37 @@ cleanup:
     TRACE("-- 0x%x\n", status);
     return status;
 }
+
+#ifdef __x86_64__
+
+__ASM_GLOBAL_FUNC( NdrAsyncClientCall,
+                   "movq %r8,0x18(%rsp)\n\t"
+                   "movq %r9,0x20(%rsp)\n\t"
+                   "leaq 0x18(%rsp),%r8\n\t"
+                   "subq $0x28,%rsp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
+                   "call " __ASM_NAME("ndr_async_client_call") "\n\t"
+                   "addq $0x28,%rsp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -0x28\n\t")
+                   "ret" );
+
+#else  /* __x86_64__ */
+
+/***********************************************************************
+ *            NdrAsyncClientCall [RPCRT4.@]
+ */
+CLIENT_CALL_RETURN WINAPIV NdrAsyncClientCall( PMIDL_STUB_DESC desc, PFORMAT_STRING format, ... )
+{
+    __ms_va_list args;
+    LONG_PTR ret;
+
+    __ms_va_start( args, format );
+    ret = ndr_async_client_call( desc, format, va_arg( args, void ** ));
+    __ms_va_end( args );
+    return *(CLIENT_CALL_RETURN *)&ret;
+}
+
+#endif  /* __x86_64__ */
 
 RPCRTAPI LONG RPC_ENTRY NdrAsyncStubCall(struct IRpcStubBuffer* pThis,
     struct IRpcChannelBuffer* pChannel, PRPC_MESSAGE pRpcMsg,
