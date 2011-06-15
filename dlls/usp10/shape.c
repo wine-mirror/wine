@@ -421,7 +421,6 @@ static OPENTYPE_FEATURE_RECORD devanagari_features[] =
 {
     /* Base forms */
     { MS_MAKE_TAG('r','p','h','f'), 1},
-    { MS_MAKE_TAG('r','k','r','f'), 1},
     { MS_MAKE_TAG('b','l','w','f'), 1},
     { MS_MAKE_TAG('h','a','l','f'), 1},
     { MS_MAKE_TAG('v','a','t','u'), 1},
@@ -643,15 +642,15 @@ static const ScriptShapeData ShapingData[] =
     {{ thai_features, 1}, NULL, "thai", "", NULL, ShapeCharGlyphProp_Thai},
     {{ thai_features, 1}, required_lao_features, "lao", "", NULL, ShapeCharGlyphProp_Thai},
     {{ thai_features, 1}, required_lao_features, "lao", "", NULL, ShapeCharGlyphProp_Thai},
-    {{ devanagari_features, 12}, required_devanagari_features, "deva", "dev2", ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
-    {{ devanagari_features, 12}, required_devanagari_features, "deva", "dev2", ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
+    {{ devanagari_features, 11}, required_devanagari_features, "deva", "dev2", ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
+    {{ devanagari_features, 11}, required_devanagari_features, "deva", "dev2", ContextualShape_Devanagari, ShapeCharGlyphProp_Devanagari},
     {{ bengali_features, 12}, required_bengali_features, "beng", "bng2", ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
     {{ bengali_features, 12}, required_bengali_features, "beng", "bng2", ContextualShape_Bengali, ShapeCharGlyphProp_Bengali},
     {{ gurmukhi_features, 12}, required_gurmukhi_features, "guru", "gur2", ContextualShape_Gurmukhi, ShapeCharGlyphProp_Gurmukhi},
     {{ gurmukhi_features, 12}, required_gurmukhi_features, "guru", "gur2", ContextualShape_Gurmukhi, ShapeCharGlyphProp_Gurmukhi},
-    {{ devanagari_features, 12}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
-    {{ devanagari_features, 12}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
-    {{ devanagari_features, 12}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
+    {{ devanagari_features, 11}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
+    {{ devanagari_features, 11}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
+    {{ devanagari_features, 11}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
     {{ oriya_features, 10}, required_oriya_features, "orya", "ory2", ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
     {{ oriya_features, 10}, required_oriya_features, "orya", "ory2", ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
     {{ tamil_features, 9}, required_tamil_features, "taml", "tam2", ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
@@ -2038,6 +2037,7 @@ static void ShapeIndicSyllables(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa,
     const GSUB_Feature *locl = load_GSUB_feature(hdc, psa, psc, "locl");
     const GSUB_Feature *nukt = load_GSUB_feature(hdc, psa, psc, "nukt");
     const GSUB_Feature *akhn = load_GSUB_feature(hdc, psa, psc, "akhn");
+    const GSUB_Feature *rkrf = load_GSUB_feature(hdc, psa, psc, "rkrf");
     IndicSyllable glyph_indexs;
 
     for (c = 0; c < syllable_count; c++)
@@ -2061,6 +2061,11 @@ static void ShapeIndicSyllables(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa,
         {
             TRACE("applying feature akhn\n");
             Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, akhn);
+        }
+        if (rkrf)
+        {
+            TRACE("applying feature rkrf\n");
+            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, rkrf);
         }
 
         overall_shift += glyph_indexs.end - old_end;
