@@ -847,6 +847,27 @@ static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
         break;
     }
 
+    case 1:
+    {
+        BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top), *src_pixel;
+        for(y = src_rect->top; y < src_rect->bottom; y++)
+        {
+            dst_pixel = dst_start;
+            src_pixel = src_start;
+            for(x = src_rect->left; x < src_rect->right; x++)
+            {
+                RGBQUAD rgb;
+                src_val = (*src_pixel & pixel_masks_1[x % 8]) ? 1 : 0;
+                if((x % 8) == 7) src_pixel++;
+                rgb = src->color_table[src_val];
+                *dst_pixel++ = rgb.rgbRed << 16 | rgb.rgbGreen << 8 | rgb.rgbBlue;
+            }
+            dst_start += dst->stride / 4;
+            src_start += src->stride;
+        }
+        break;
+    }
+
     default:
         FIXME("Unsupported conversion: %d -> 8888\n", src->bit_count);
         return FALSE;
@@ -993,6 +1014,29 @@ static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
         break;
     }
 
+    case 1:
+    {
+        BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top), *src_pixel;
+        for(y = src_rect->top; y < src_rect->bottom; y++)
+        {
+            dst_pixel = dst_start;
+            src_pixel = src_start;
+            for(x = src_rect->left; x < src_rect->right; x++)
+            {
+                RGBQUAD rgb;
+                src_val = (*src_pixel & pixel_masks_1[x % 8]) ? 1 : 0;
+                if((x % 8) == 7) src_pixel++;
+                rgb = src->color_table[src_val];
+                *dst_pixel++ = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
+                               put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
+                               put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
+            }
+            dst_start += dst->stride / 4;
+            src_start += src->stride;
+        }
+        break;
+    }
+
     default:
         FIXME("Unsupported conversion: %d -> 32\n", src->bit_count);
         return FALSE;
@@ -1121,6 +1165,29 @@ static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
                 else
                     src_val = (*src_pixel >> 4) & 0xf;
                 if(src_val >= src->color_table_size) src_val = src->color_table_size - 1;
+                rgb = src->color_table[src_val];
+                *dst_pixel++ = rgb.rgbBlue;
+                *dst_pixel++ = rgb.rgbGreen;
+                *dst_pixel++ = rgb.rgbRed;
+            }
+            dst_start += dst->stride;
+            src_start += src->stride;
+        }
+        break;
+    }
+
+    case 1:
+    {
+        BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top), *src_pixel;
+        for(y = src_rect->top; y < src_rect->bottom; y++)
+        {
+            dst_pixel = dst_start;
+            src_pixel = src_start;
+            for(x = src_rect->left; x < src_rect->right; x++)
+            {
+                RGBQUAD rgb;
+                src_val = (*src_pixel & pixel_masks_1[x % 8]) ? 1 : 0;
+                if((x % 8) == 7) src_pixel++;
                 rgb = src->color_table[src_val];
                 *dst_pixel++ = rgb.rgbBlue;
                 *dst_pixel++ = rgb.rgbGreen;
@@ -1276,6 +1343,29 @@ static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
         break;
     }
 
+    case 1:
+    {
+        BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top), *src_pixel;
+        for(y = src_rect->top; y < src_rect->bottom; y++)
+        {
+            dst_pixel = dst_start;
+            src_pixel = src_start;
+            for(x = src_rect->left; x < src_rect->right; x++)
+            {
+                RGBQUAD rgb;
+                src_val = (*src_pixel & pixel_masks_1[x % 8]) ? 1 : 0;
+                if((x % 8) == 7) src_pixel++;
+                rgb = src->color_table[src_val];
+                *dst_pixel++ = ((rgb.rgbRed   << 7) & 0x7c00) |
+                               ((rgb.rgbGreen << 2) & 0x03e0) |
+                               ((rgb.rgbBlue  >> 3) & 0x001f);
+            }
+            dst_start += dst->stride / 2;
+            src_start += src->stride;
+        }
+        break;
+    }
+
     default:
         FIXME("Unsupported conversion: %d -> 555\n", src->bit_count);
         return FALSE;
@@ -1412,6 +1502,29 @@ static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                 else
                     src_val = (*src_pixel >> 4) & 0xf;
                 if(src_val >= src->color_table_size) src_val = src->color_table_size - 1;
+                rgb = src->color_table[src_val];
+                *dst_pixel++ = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
+                               put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
+                               put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
+            }
+            dst_start += dst->stride / 2;
+            src_start += src->stride;
+        }
+        break;
+    }
+
+    case 1:
+    {
+        BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top), *src_pixel;
+        for(y = src_rect->top; y < src_rect->bottom; y++)
+        {
+            dst_pixel = dst_start;
+            src_pixel = src_start;
+            for(x = src_rect->left; x < src_rect->right; x++)
+            {
+                RGBQUAD rgb;
+                src_val = (*src_pixel & pixel_masks_1[x % 8]) ? 1 : 0;
+                if((x % 8) == 7) src_pixel++;
                 rgb = src->color_table[src_val];
                 *dst_pixel++ = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
                                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
@@ -1583,6 +1696,27 @@ static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                 else
                     src_val = (*src_pixel >> 4) & 0xf;
                 if(src_val >= src->color_table_size) src_val = src->color_table_size - 1;
+                rgb = src->color_table[src_val];
+                *dst_pixel++ = colorref_to_pixel_colortable(dst, RGB(rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue));
+            }
+            dst_start += dst->stride;
+            src_start += src->stride;
+        }
+        break;
+    }
+
+    case 1:
+    {
+        BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top), *src_pixel;
+        for(y = src_rect->top; y < src_rect->bottom; y++)
+        {
+            dst_pixel = dst_start;
+            src_pixel = src_start;
+            for(x = src_rect->left; x < src_rect->right; x++)
+            {
+                RGBQUAD rgb;
+                src_val = (*src_pixel & pixel_masks_1[x % 8]) ? 1 : 0;
+                if((x % 8) == 7) src_pixel++;
                 rgb = src->color_table[src_val];
                 *dst_pixel++ = colorref_to_pixel_colortable(dst, RGB(rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue));
             }
@@ -1790,6 +1924,34 @@ static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
         break;
     }
 
+    case 1:
+    {
+        BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top), *src_pixel;
+        for(y = src_rect->top; y < src_rect->bottom; y++)
+        {
+            dst_pixel = dst_start;
+            src_pixel = src_start;
+            for(x = src_rect->left; x < src_rect->right; x++)
+            {
+                RGBQUAD rgb;
+                src_val = (*src_pixel & pixel_masks_1[x % 8]) ? 1 : 0;
+                if((x % 8) == 7) src_pixel++;
+                rgb = src->color_table[src_val];
+                dst_val = colorref_to_pixel_colortable(dst, RGB(rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue));
+                if((x - src_rect->left) & 1)
+                {
+                    *dst_pixel = (dst_val & 0x0f) | (*dst_pixel & 0xf0);
+                    dst_pixel++;
+                }
+                else
+                    *dst_pixel = (dst_val << 4) & 0xf0;
+            }
+            dst_start += dst->stride;
+            src_start += src->stride;
+        }
+        break;
+    }
+
     default:
         FIXME("Unsupported conversion: %d -> 4\n", src->bit_count);
         return FALSE;
@@ -1966,6 +2128,41 @@ static BOOL convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                 else
                     src_val = (*src_pixel >> 4) & 0xf;
                 if(src_val >= src->color_table_size) src_val = src->color_table_size - 1;
+                rgb = src->color_table[src_val];
+                dst_val = colorref_to_pixel_colortable(dst, RGB(rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue)) ? 0xff : 0;
+
+                if(bit_pos == 0) *dst_pixel = 0;
+                *dst_pixel = (*dst_pixel & ~pixel_masks_1[bit_pos]) | (dst_val & pixel_masks_1[bit_pos]);
+
+                if(++bit_pos == 8)
+                {
+                    dst_pixel++;
+                    bit_pos = 0;
+                }
+            }
+            dst_start += dst->stride;
+            src_start += src->stride;
+        }
+        break;
+    }
+
+    /* Note that while MSDN states that a 1 bpp dib brush -> mono dc
+       uses text/bkgnd colours instead of the dib's colour table, this
+       doesn't appear to be the case for a dc backed by a
+       dibsection. */
+
+    case 1:
+    {
+        BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top), *src_pixel;
+        for(y = src_rect->top; y < src_rect->bottom; y++)
+        {
+            dst_pixel = dst_start;
+            src_pixel = src_start;
+            for(x = src_rect->left, bit_pos = 0; x < src_rect->right; x++)
+            {
+                RGBQUAD rgb;
+                src_val = (*src_pixel & pixel_masks_1[x % 8]) ? 1 : 0;
+                if((x % 8) == 7) src_pixel++;
                 rgb = src->color_table[src_val];
                 dst_val = colorref_to_pixel_colortable(dst, RGB(rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue)) ? 0xff : 0;
 
