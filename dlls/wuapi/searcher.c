@@ -217,6 +217,74 @@ static HRESULT WINAPI update_searcher_EndSearch(
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI update_searcher_EscapeString(
+    IUpdateSearcher *This,
+    BSTR unescaped,
+    BSTR *retval )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI update_searcher_QueryHistory(
+    IUpdateSearcher *This,
+    LONG startIndex,
+    LONG count,
+    IUpdateHistoryEntryCollection **retval )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI update_searcher_Search(
+    IUpdateSearcher *This,
+    BSTR criteria,
+    ISearchResult **retval )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI update_searcher_get_Online(
+    IUpdateSearcher *This,
+    VARIANT_BOOL *retval )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI update_searcher_put_Online(
+    IUpdateSearcher *This,
+    VARIANT_BOOL value )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI update_searcher_GetTotalHistoryCount(
+    IUpdateSearcher *This,
+    LONG *retval )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI update_searcher_get_ServiceID(
+    IUpdateSearcher *This,
+    BSTR *retval )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI update_searcher_put_ServiceID(
+    IUpdateSearcher *This,
+    BSTR value )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static const struct IUpdateSearcherVtbl update_searcher_vtbl =
 {
     update_searcher_QueryInterface,
@@ -235,7 +303,15 @@ static const struct IUpdateSearcherVtbl update_searcher_vtbl =
     update_searcher_get_ServerSelection,
     update_searcher_put_ServerSelection,
     update_searcher_BeginSearch,
-    update_searcher_EndSearch
+    update_searcher_EndSearch,
+    update_searcher_EscapeString,
+    update_searcher_QueryHistory,
+    update_searcher_Search,
+    update_searcher_get_Online,
+    update_searcher_put_Online,
+    update_searcher_GetTotalHistoryCount,
+    update_searcher_get_ServiceID,
+    update_searcher_put_ServiceID
 };
 
 HRESULT UpdateSearcher_create( IUnknown *pUnkOuter, LPVOID *ppObj )
