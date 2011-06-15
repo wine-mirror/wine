@@ -1771,15 +1771,14 @@ static void test_verify_signature(void) {
     ok(result, "%08x\n", GetLastError());
     if (!result) return;
 
-    result = CryptVerifySignature(hHash, abSignatureMD2NoOID, 128, hPubSignKey, NULL, CRYPT_NOHASHOID);
+    /* It seems that CPVerifySignature doesn't care about the OID at all. */
+    result = CryptVerifySignature(hHash, abSignatureMD2NoOID, 128, hPubSignKey, NULL, 0);
     ok(result, "%08x\n", GetLastError());
     if (!result) return;
 
-    /* Next test fails on WinXP SP2. It seems that CPVerifySignature doesn't care about 
-     * the OID at all. */
-    /*result = CryptVerifySignature(hHash, abSignatureMD2NoOID, 128, hPubSignKey, NULL, 0);
-    ok(!result && GetLastError()==NTE_BAD_SIGNATURE, "%08lx\n", GetLastError());
-    if (result) return;*/
+    result = CryptVerifySignature(hHash, abSignatureMD2NoOID, 128, hPubSignKey, NULL, CRYPT_NOHASHOID);
+    ok(result, "%08x\n", GetLastError());
+    if (!result) return;
 
     CryptDestroyHash(hHash);
 
@@ -1792,6 +1791,10 @@ static void test_verify_signature(void) {
     if (!result) return;
 
     result = CryptVerifySignature(hHash, abSignatureMD4, 128, hPubSignKey, NULL, 0);
+    ok(result, "%08x\n", GetLastError());
+    if (!result) return;
+
+    result = CryptVerifySignature(hHash, abSignatureMD4NoOID, 128, hPubSignKey, NULL, 0);
     ok(result, "%08x\n", GetLastError());
     if (!result) return;
 
@@ -1813,6 +1816,10 @@ static void test_verify_signature(void) {
     ok(result, "%08x\n", GetLastError());
     if (!result) return;
 
+    result = CryptVerifySignature(hHash, abSignatureMD5NoOID, 128, hPubSignKey, NULL, 0);
+    ok(result, "%08x\n", GetLastError());
+    if (!result) return;
+
     result = CryptVerifySignature(hHash, abSignatureMD5NoOID, 128, hPubSignKey, NULL, CRYPT_NOHASHOID);
     ok(result, "%08x\n", GetLastError());
     if (!result) return;
@@ -1828,6 +1835,10 @@ static void test_verify_signature(void) {
     if (!result) return;
 
     result = CryptVerifySignature(hHash, abSignatureSHA, 128, hPubSignKey, NULL, 0);
+    ok(result, "%08x\n", GetLastError());
+    if (!result) return;
+
+    result = CryptVerifySignature(hHash, abSignatureSHANoOID, 128, hPubSignKey, NULL, 0);
     ok(result, "%08x\n", GetLastError());
     if (!result) return;
 

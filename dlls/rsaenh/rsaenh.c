@@ -4472,16 +4472,21 @@ BOOL WINAPI RSAENH_CPVerifySignature(HCRYPTPROV hProv, HCRYPTHASH hHash, CONST B
         goto cleanup;
     }
 
-    if (!build_hash_signature(pbConstructed, dwSigLen, aiAlgid, abHashValue, dwHashLen, dwFlags)) {
+    if (build_hash_signature(pbConstructed, dwSigLen, aiAlgid, abHashValue, dwHashLen, dwFlags) &&
+        !memcmp(pbDecrypted, pbConstructed, dwSigLen)) {
+        res = TRUE;
         goto cleanup;
     }
 
-    if (memcmp(pbDecrypted, pbConstructed, dwSigLen)) {
-        SetLastError(NTE_BAD_SIGNATURE);
+    if (!(dwFlags & CRYPT_NOHASHOID) &&
+        build_hash_signature(pbConstructed, dwSigLen, aiAlgid, abHashValue, dwHashLen, dwFlags|CRYPT_NOHASHOID) &&
+        !memcmp(pbDecrypted, pbConstructed, dwSigLen)) {
+        res = TRUE;
         goto cleanup;
     }
-    
-    res = TRUE;
+
+    SetLastError(NTE_BAD_SIGNATURE);
+
 cleanup:
     HeapFree(GetProcessHeap(), 0, pbConstructed);
     HeapFree(GetProcessHeap(), 0, pbDecrypted);
