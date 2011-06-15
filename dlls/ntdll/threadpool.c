@@ -577,7 +577,7 @@ static void queue_remove_timer(struct queue_timer *t)
         NtSetEvent(t->event, NULL);
     RtlFreeHeap(GetProcessHeap(), 0, t);
 
-    if (q->quit && list_count(&q->timers) == 0)
+    if (q->quit && list_empty(&q->timers))
         NtSetEvent(q->event, NULL);
 }
 
@@ -725,7 +725,7 @@ static void WINAPI timer_queue_thread_proc(LPVOID p)
                timer got put at the head of the list so we need to adjust
                our timeout.  */
             RtlEnterCriticalSection(&q->cs);
-            if (q->quit && list_count(&q->timers) == 0)
+            if (q->quit && list_empty(&q->timers))
                 done = TRUE;
             RtlLeaveCriticalSection(&q->cs);
         }
