@@ -1472,13 +1472,15 @@ static void CALLBACK alsa_push_buffer_data(void *user, BOOLEAN timer)
 
     EnterCriticalSection(&This->lock);
 
-    if(This->dataflow == eRender && This->held_frames)
-        alsa_write_data(This);
-    else if(This->dataflow == eCapture)
-        alsa_read_data(This);
+    if(This->started){
+        if(This->dataflow == eRender && This->held_frames)
+            alsa_write_data(This);
+        else if(This->dataflow == eCapture)
+            alsa_read_data(This);
 
-    if(This->event)
-        SetEvent(This->event);
+        if(This->event)
+            SetEvent(This->event);
+    }
 
     LeaveCriticalSection(&This->lock);
 }
@@ -1567,6 +1569,8 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
 {
     ACImpl *This = impl_from_IAudioClient(iface);
     int err;
+    HANDLE event;
+    BOOL wait;
 
     TRACE("(%p)\n", This);
 
@@ -1582,7 +1586,11 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
         return S_FALSE;
     }
 
-    DeleteTimerQueueTimer(g_timer_q, This->timer, INVALID_HANDLE_VALUE);
+    event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    wait = !DeleteTimerQueueTimer(g_timer_q, This->timer, event);
+    if(wait)
+        WARN("DeleteTimerQueueTimer error %u\n", GetLastError());
+    wait = wait && GetLastError() == ERROR_IO_PENDING;
 
     if((err = snd_pcm_drop(This->pcm_handle)) < 0){
         LeaveCriticalSection(&This->lock);
@@ -1599,6 +1607,10 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
     This->started = FALSE;
 
     LeaveCriticalSection(&This->lock);
+
+    if(event && wait)
+        WaitForSingleObject(event, INFINITE);
+    CloseHandle(event);
 
     return S_OK;
 }
