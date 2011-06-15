@@ -52,6 +52,7 @@ extern const primitive_funcs funcs_555  DECLSPEC_HIDDEN;
 extern const primitive_funcs funcs_16   DECLSPEC_HIDDEN;
 extern const primitive_funcs funcs_8    DECLSPEC_HIDDEN;
 extern const primitive_funcs funcs_4    DECLSPEC_HIDDEN;
+extern const primitive_funcs funcs_1    DECLSPEC_HIDDEN;
 extern const primitive_funcs funcs_null DECLSPEC_HIDDEN;
 
 extern void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor) DECLSPEC_HIDDEN;

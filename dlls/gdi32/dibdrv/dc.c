@@ -126,6 +126,10 @@ static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
         dib->funcs = &funcs_4;
         break;
 
+    case 1:
+        dib->funcs = &funcs_1;
+        break;
+
     default:
         TRACE("bpp %d not supported, will forward to graphics driver.\n", dib->bit_count);
         return FALSE;
@@ -335,6 +339,8 @@ static COLORREF CDECL dibdrv_SetBkColor( PHYSDEV dev, COLORREF color )
         pdev->bkgnd_and = ~0u;
         pdev->bkgnd_xor = 0;
     }
+
+    update_fg_colors( pdev ); /* Only needed in the 1 bpp case */
 
     return next->funcs->pSetBkColor( next, color );
 }

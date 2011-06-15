@@ -92,20 +92,59 @@ void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor)
     *xor = (color & rop2_xor_array[rop-1][0]) | ((~color) & rop2_xor_array[rop-1][1]);
 }
 
+static inline RGBQUAD rgbquad_from_colorref(COLORREF c)
+{
+    RGBQUAD ret;
+
+    ret.rgbRed      = GetRValue(c);
+    ret.rgbGreen    = GetGValue(c);
+    ret.rgbBlue     = GetBValue(c);
+    ret.rgbReserved = 0;
+    return ret;
+}
+
+static inline BOOL rgbquad_equal(const RGBQUAD *a, const RGBQUAD *b)
+{
+    if(a->rgbRed   == b->rgbRed   &&
+       a->rgbGreen == b->rgbGreen &&
+       a->rgbBlue  == b->rgbBlue)
+        return TRUE;
+    return FALSE;
+}
+
 /******************************************************************
  *                   get_fg_color
+ *
+ * 1 bit bitmaps map the fg/bg colors as follows:
+ * If the fg colorref exactly matches one of the color table entries then
+ * that entry is the fg color and the other is the bg.
+ * Otherwise the bg color is mapped to the closest entry in the table and
+ * the fg takes the other one.
  */
 DWORD get_fg_color( dibdrv_physdev *pdev, COLORREF fg )
 {
+    RGBQUAD fg_quad;
+
     if(pdev->dib.bit_count != 1)
         return pdev->dib.funcs->colorref_to_pixel( &pdev->dib, fg );
 
-    FIXME("bit count == 1\n");
-    return 0;
+    fg_quad = rgbquad_from_colorref( fg );
+    if(rgbquad_equal(&fg_quad, pdev->dib.color_table))
+        return 0;
+    if(rgbquad_equal(&fg_quad, pdev->dib.color_table + 1))
+        return 1;
+
+    if(fg == GetBkColor(pdev->dev.hdc)) return pdev->bkgnd_color;
+    else return pdev->bkgnd_color ? 0 : 1;
 }
 
 /***************************************************************************
  *                get_pen_bkgnd_masks
+ *
+ * Returns the pre-calculated bkgnd color masks unless the dib is 1 bpp.
+ * In this case since there are several fg sources (pen, brush, text)
+ * this makes pdev->bkgnd_color unusable.  So here we take the inverse
+ * of the relevant fg color (which is always set up correctly).
  */
 static inline void get_pen_bkgnd_masks(const dibdrv_physdev *pdev, DWORD *and, DWORD *xor)
 {
@@ -116,9 +155,9 @@ static inline void get_pen_bkgnd_masks(const dibdrv_physdev *pdev, DWORD *and, D
     }
     else
     {
-        FIXME("bit count == 1\n");
-        *and = ~0u;
-        *xor = 0u;
+        DWORD color = ~pdev->pen_color;
+        if(pdev->pen_colorref == GetBkColor(pdev->dev.hdc)) color = pdev->pen_color;
+        calc_and_xor_masks( GetROP2(pdev->dev.hdc), color, and, xor );
     }
 }
 

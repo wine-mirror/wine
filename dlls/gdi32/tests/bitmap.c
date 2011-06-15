@@ -976,10 +976,9 @@ static void test_mono_dibsection(void)
 
     /* black border, white interior */
     Rectangle(memdc, 0, 0, 10, 10);
-todo_wine {
     ok(ds_bits[0] == 0xff, "out_bits %02x\n", ds_bits[0]);
     ok(ds_bits[4] == 0x80, "out_bits %02x\n", ds_bits[4]);
- }
+
     /* SetDIBitsToDevice with an inverted bmi -> inverted dib section */
 
     memset(bits, 0, sizeof(bits));
