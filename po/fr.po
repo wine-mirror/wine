@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-06-14 19:58+0100\n"
+"PO-Revision-Date: 2011-06-15 21:15+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -189,7 +189,7 @@ msgstr "Disques locaux"
 
 #: comdlg32.rc:43
 msgid "File not found"
-msgstr "Fichier non trouvé"
+msgstr "Fichier introuvable"
 
 #: comdlg32.rc:44
 msgid "Please verify that the correct file name was given"
@@ -6404,9 +6404,8 @@ msgid "E&xit"
 msgstr "&Quitter"
 
 #: shell32.rc:115
-#, fuzzy
 msgid "&About Control Panel"
-msgstr "À &propos du panneau de configuration..."
+msgstr "À &propos du panneau de configuration"
 
 #: shell32.rc:123 shell32.rc:127 winefile.rc:113
 msgid "Size"
