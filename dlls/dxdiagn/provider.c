@@ -60,6 +60,12 @@ static const WCHAR dwHeight[] = {'d','w','H','e','i','g','h','t',0};
 static const WCHAR dwBpp[] = {'d','w','B','p','p',0};
 static const WCHAR szDisplayMemoryLocalized[] = {'s','z','D','i','s','p','l','a','y','M','e','m','o','r','y','L','o','c','a','l','i','z','e','d',0};
 static const WCHAR szDisplayMemoryEnglish[] = {'s','z','D','i','s','p','l','a','y','M','e','m','o','r','y','E','n','g','l','i','s','h',0};
+static const WCHAR szDriverName[] = {'s','z','D','r','i','v','e','r','N','a','m','e',0};
+static const WCHAR szDriverVersion[] = {'s','z','D','r','i','v','e','r','V','e','r','s','i','o','n',0};
+static const WCHAR szSubSysId[] = {'s','z','S','u','b','S','y','s','I','d',0};
+static const WCHAR szRevisionId[] = {'s','z','R','e','v','i','s','i','o','n','I','d',0};
+static const WCHAR dwRefreshRate[] = {'d','w','R','e','f','r','e','s','h','R','a','t','e',0};
+static const WCHAR szManufacturer[] = {'s','z','M','a','n','u','f','a','c','t','u','r','e','r',0};
 
 /* IDxDiagProvider IUnknown parts follow: */
 static HRESULT WINAPI IDxDiagProviderImpl_QueryInterface(PDXDIAGPROVIDER iface, REFIID riid, LPVOID *ppobj)
@@ -756,6 +762,35 @@ static BOOL get_texture_memory(GUID *adapter, DWORD *available_mem)
     return FALSE;
 }
 
+static const WCHAR *vendor_id_to_manufacturer_string(DWORD vendor_id)
+{
+    static const WCHAR atiW[] = {'A','T','I',' ','T','e','c','h','n','o','l','o','g','i','e','s',' ','I','n','c','.',0};
+    static const WCHAR nvidiaW[] = {'N','V','I','D','I','A',0};
+    static const WCHAR intelW[] = {'I','n','t','e','l',' ','C','o','r','p','o','r','a','t','i','o','n',0};
+    static const WCHAR unknownW[] = {'U','n','k','n','o','w','n',0};
+
+    /* Enumeration copied from dlls/wined3d/wined3d_private.h and slightly modified. */
+    enum pci_vendor
+    {
+        HW_VENDOR_AMD = 0x1002,
+        HW_VENDOR_NVIDIA = 0x10de,
+        HW_VENDOR_INTEL = 0x8086,
+    };
+
+    switch (vendor_id)
+    {
+    case HW_VENDOR_AMD:
+        return atiW;
+    case HW_VENDOR_NVIDIA:
+        return nvidiaW;
+    case HW_VENDOR_INTEL:
+        return intelW;
+    default:
+        FIXME("Unknown PCI vendor ID 0x%04x\n", vendor_id);
+        return unknownW;
+    }
+}
+
 static HRESULT fill_display_information_d3d(IDxDiagContainerImpl_Container *node)
 {
     IDxDiagContainerImpl_Container *display_adapter;
@@ -772,7 +807,9 @@ static HRESULT fill_display_information_d3d(IDxDiagContainerImpl_Container *node
     for (index = 0; index < count; index++)
     {
         static const WCHAR adapterid_fmtW[] = {'%','u',0};
+        static const WCHAR driverversion_fmtW[] = {'%','u','.','%','u','.','%','0','4','u','.','%','0','4','u',0};
         static const WCHAR id_fmtW[] = {'0','x','%','0','4','x',0};
+        static const WCHAR subsysid_fmtW[] = {'0','x','%','0','8','x',0};
         static const WCHAR mem_fmt[] = {'%','.','1','f',' ','M','B',0};
 
         D3DADAPTER_IDENTIFIER9 adapter_info;
@@ -792,13 +829,15 @@ static HRESULT fill_display_information_d3d(IDxDiagContainerImpl_Container *node
         hr = IDirect3D9_GetAdapterIdentifier(pDirect3D9, index, 0, &adapter_info);
         if (SUCCEEDED(hr))
         {
-            WCHAR devicenameW[sizeof(adapter_info.DeviceName)];
+            WCHAR driverW[sizeof(adapter_info.Driver)];
             WCHAR descriptionW[sizeof(adapter_info.Description)];
+            WCHAR devicenameW[sizeof(adapter_info.DeviceName)];
 
-            MultiByteToWideChar(CP_ACP, 0, adapter_info.DeviceName, -1, devicenameW, sizeof(devicenameW)/sizeof(WCHAR));
+            MultiByteToWideChar(CP_ACP, 0, adapter_info.Driver, -1, driverW, sizeof(driverW)/sizeof(WCHAR));
             MultiByteToWideChar(CP_ACP, 0, adapter_info.Description, -1, descriptionW, sizeof(descriptionW)/sizeof(WCHAR));
+            MultiByteToWideChar(CP_ACP, 0, adapter_info.DeviceName, -1, devicenameW, sizeof(devicenameW)/sizeof(WCHAR));
 
-            hr = add_bstr_property(display_adapter, szDeviceName, devicenameW);
+            hr = add_bstr_property(display_adapter, szDriverName, driverW);
             if (FAILED(hr))
                 goto cleanup;
 
@@ -806,8 +845,15 @@ static HRESULT fill_display_information_d3d(IDxDiagContainerImpl_Container *node
             if (FAILED(hr))
                 goto cleanup;
 
-            StringFromGUID2(&adapter_info.DeviceIdentifier, buffer, 39);
-            hr = add_bstr_property(display_adapter, szDeviceIdentifier, buffer);
+            hr = add_bstr_property(display_adapter, szDeviceName, devicenameW);
+            if (FAILED(hr))
+                goto cleanup;
+
+            snprintfW(buffer, sizeof(buffer)/sizeof(WCHAR), driverversion_fmtW,
+                      HIWORD(adapter_info.DriverVersion.u.HighPart), LOWORD(adapter_info.DriverVersion.u.HighPart),
+                      HIWORD(adapter_info.DriverVersion.u.LowPart), LOWORD(adapter_info.DriverVersion.u.LowPart));
+
+            hr = add_bstr_property(display_adapter, szDriverVersion, buffer);
             if (FAILED(hr))
                 goto cleanup;
 
@@ -820,6 +866,25 @@ static HRESULT fill_display_information_d3d(IDxDiagContainerImpl_Container *node
             hr = add_bstr_property(display_adapter, szDeviceId, buffer);
             if (FAILED(hr))
                 goto cleanup;
+
+            snprintfW(buffer, sizeof(buffer)/sizeof(WCHAR), subsysid_fmtW, adapter_info.SubSysId);
+            hr = add_bstr_property(display_adapter, szSubSysId, buffer);
+            if (FAILED(hr))
+                goto cleanup;
+
+            snprintfW(buffer, sizeof(buffer)/sizeof(WCHAR), id_fmtW, adapter_info.Revision);
+            hr = add_bstr_property(display_adapter, szRevisionId, buffer);
+            if (FAILED(hr))
+                goto cleanup;
+
+            StringFromGUID2(&adapter_info.DeviceIdentifier, buffer, 39);
+            hr = add_bstr_property(display_adapter, szDeviceIdentifier, buffer);
+            if (FAILED(hr))
+                goto cleanup;
+
+            hr = add_bstr_property(display_adapter, szManufacturer, vendor_id_to_manufacturer_string(adapter_info.VendorId));
+            if (FAILED(hr))
+                goto cleanup;
         }
 
         hr = IDirect3D9_GetAdapterDisplayMode(pDirect3D9, index, &adapter_mode);
@@ -830,6 +895,10 @@ static HRESULT fill_display_information_d3d(IDxDiagContainerImpl_Container *node
                 goto cleanup;
 
             hr = add_ui4_property(display_adapter, dwHeight, adapter_mode.Height);
+            if (FAILED(hr))
+                goto cleanup;
+
+            hr = add_ui4_property(display_adapter, dwRefreshRate, adapter_mode.RefreshRate);
             if (FAILED(hr))
                 goto cleanup;
 
@@ -869,6 +938,10 @@ cleanup:
 static HRESULT fill_display_information_fallback(IDxDiagContainerImpl_Container *node)
 {
     static const WCHAR szAdapterID[] = {'0',0};
+    static const WCHAR *empty_properties[] = {szDeviceIdentifier, szVendorId, szDeviceId,
+                                              szKeyDeviceKey, szKeyDeviceID, szDriverName,
+                                              szDriverVersion, szSubSysId, szRevisionId,
+                                              szManufacturer};
 
     IDxDiagContainerImpl_Container *display_adapter;
     HRESULT hr;
@@ -946,25 +1019,16 @@ static HRESULT fill_display_information_fallback(IDxDiagContainerImpl_Container 
         }
     }
 
-    hr = add_bstr_property(display_adapter, szDeviceIdentifier, szEmpty);
+    hr = add_ui4_property(display_adapter, dwRefreshRate, 60);
     if (FAILED(hr))
         goto cleanup;
 
-    hr = add_bstr_property(display_adapter, szVendorId, szEmpty);
-    if (FAILED(hr))
-        goto cleanup;
-
-    hr = add_bstr_property(display_adapter, szDeviceId, szEmpty);
-    if (FAILED(hr))
-        goto cleanup;
-
-    hr = add_bstr_property(display_adapter, szKeyDeviceKey, szEmpty);
-    if (FAILED(hr))
-        goto cleanup;
-
-    hr = add_bstr_property(display_adapter, szKeyDeviceID, szEmpty);
-    if (FAILED(hr))
-        goto cleanup;
+    for (tmp = 0; tmp < sizeof(empty_properties)/sizeof(empty_properties[0]); tmp++)
+    {
+        hr = add_bstr_property(display_adapter, empty_properties[tmp], szEmpty);
+        if (FAILED(hr))
+            goto cleanup;
+    }
 
     hr = S_OK;
 cleanup:

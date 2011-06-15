@@ -930,6 +930,12 @@ static void test_DxDiag_DisplayDevices(void)
     static const WCHAR dwBpp[] = {'d','w','B','p','p',0};
     static const WCHAR szDisplayMemoryLocalized[] = {'s','z','D','i','s','p','l','a','y','M','e','m','o','r','y','L','o','c','a','l','i','z','e','d',0};
     static const WCHAR szDisplayMemoryEnglish[] = {'s','z','D','i','s','p','l','a','y','M','e','m','o','r','y','E','n','g','l','i','s','h',0};
+    static const WCHAR szDriverName[] = {'s','z','D','r','i','v','e','r','N','a','m','e',0};
+    static const WCHAR szDriverVersion[] = {'s','z','D','r','i','v','e','r','V','e','r','s','i','o','n',0};
+    static const WCHAR szSubSysId[] = {'s','z','S','u','b','S','y','s','I','d',0};
+    static const WCHAR szRevisionId[] = {'s','z','R','e','v','i','s','i','o','n','I','d',0};
+    static const WCHAR dwRefreshRate[] = {'d','w','R','e','f','r','e','s','h','R','a','t','e',0};
+    static const WCHAR szManufacturer[] = {'s','z','M','a','n','u','f','a','c','t','u','r','e','r',0};
 
     static const struct property_test property_tests[] =
     {
@@ -945,6 +951,12 @@ static void test_DxDiag_DisplayDevices(void)
         {dwBpp, VT_UI4},
         {szDisplayMemoryLocalized, VT_BSTR},
         {szDisplayMemoryEnglish, VT_BSTR},
+        {szDriverName, VT_BSTR},
+        {szDriverVersion, VT_BSTR},
+        {szSubSysId, VT_BSTR},
+        {szRevisionId, VT_BSTR},
+        {dwRefreshRate, VT_UI4},
+        {szManufacturer, VT_BSTR},
     };
 
     IDxDiagContainer *display_cont = NULL;
