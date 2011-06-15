@@ -4733,12 +4733,14 @@ static HRESULT d3dx9_parse_resource(struct ID3DXBaseEffectImpl *base, const char
 
                 default:
                     FIXME("Unhandled type %s\n", debug_d3dxparameter_type(param->type));
+                    hr=E_FAIL;
                     break;
             }
             break;
 
         default:
             FIXME("Unknown usage %x\n", usage);
+            hr=E_FAIL;
             break;
     }
 
