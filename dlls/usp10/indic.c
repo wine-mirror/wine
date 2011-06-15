@@ -68,11 +68,6 @@ static void debug_output_string(LPCWSTR str, int cChar, lexical_function f)
     }
 }
 
-static inline BOOL is_consonant( int type )
-{
-    return (type == lex_Ra || type == lex_Consonant);
-}
-
 static inline BOOL is_matra( int type )
 {
     return (type == lex_Matra_above || type == lex_Matra_below ||
