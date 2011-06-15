@@ -116,6 +116,53 @@ static inline void init_thunk( struct thunk *thunk, unsigned int index )
     thunk->handler = (char *)call_stubless_func - (char *)(&thunk->handler + 1);
 }
 
+#elif defined(__x86_64__)
+
+extern void call_stubless_func(void);
+__ASM_GLOBAL_FUNC(call_stubless_func,
+                  "movq %rcx,0x8(%rsp)\n\t"
+                  "movq %rdx,0x10(%rsp)\n\t"
+                  "movq %r8,0x18(%rsp)\n\t"
+                  "movq %r9,0x20(%rsp)\n\t"
+                  "leaq 0x8(%rsp),%r8\n\t"        /* &This */
+                  "movq (%rcx),%rcx\n\t"          /* This->lpVtbl */
+                  "movq -0x10(%rcx),%rcx\n\t"     /* MIDL_STUBLESS_PROXY_INFO */
+                  "movq 0x10(%rcx),%rdx\n\t"      /* info->FormatStringOffset */
+                  "movzwq (%rdx,%r10,2),%rdx\n\t" /* FormatStringOffset[index] */
+                  "addq 8(%rcx),%rdx\n\t"         /* info->ProcFormatString + offset */
+                  "movq (%rcx),%rcx\n\t"          /* info->pStubDesc */
+                  "subq $0x28,%rsp\n\t"
+                  __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
+                  "call " __ASM_NAME("ndr_client_call") "\n\t"
+                  "addq $0x28,%rsp\n\t"
+                  __ASM_CFI(".cfi_adjust_cfa_offset -0x28\n\t")
+                  "ret" );
+
+#include "pshpack1.h"
+struct thunk
+{
+    BYTE mov_r10[3];
+    DWORD index;
+    BYTE mov_rax[2];
+    void *call_stubless;
+    BYTE jmp_rax[2];
+};
+#include "poppack.h"
+
+static const struct thunk thunk_template =
+{
+    { 0x49, 0xc7, 0xc2 }, 0,  /* movq $index,%r10 */
+    { 0x48, 0xb8 }, 0,        /* movq $call_stubless_func,%rax */
+    { 0xff, 0xe0 }            /* jmp *%rax */
+};
+
+static inline void init_thunk( struct thunk *thunk, unsigned int index )
+{
+    *thunk = thunk_template;
+    thunk->index = index;
+    thunk->call_stubless = call_stubless_func;
+}
+
 #else  /* __i386__ */
 
 #warning You must implement stubless proxies for your CPU
