@@ -6290,7 +6290,7 @@ msgstr ""
 
 #: shell32.rc:115
 #, fuzzy
-msgid "&About Control Panel..."
+msgid "&About Control Panel"
 msgstr "ਘੜੀ ਬਾਰੇ(&A)..."
 
 #: shell32.rc:123 shell32.rc:127 winefile.rc:113

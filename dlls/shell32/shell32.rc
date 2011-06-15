@@ -112,7 +112,7 @@ BEGIN
 
     POPUP "&Help"
     BEGIN
-        MENUITEM "&About Control Panel...", IDM_CPANEL_ABOUT
+        MENUITEM "&About Control Panel", IDM_CPANEL_ABOUT
     END
 END
 

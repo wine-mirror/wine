@@ -6395,7 +6395,8 @@ msgid "E&xit"
 msgstr "Za&kończ"
 
 #: shell32.rc:115
-msgid "&About Control Panel..."
+#, fuzzy
+msgid "&About Control Panel"
 msgstr "Panel sterowania - i&nformacje"
 
 #: shell32.rc:123 shell32.rc:127 winefile.rc:113

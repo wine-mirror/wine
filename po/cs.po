@@ -6611,7 +6611,8 @@ msgid "E&xit"
 msgstr "&Konec"
 
 #: shell32.rc:115
-msgid "&About Control Panel..."
+#, fuzzy
+msgid "&About Control Panel"
 msgstr "&About Control Panel..."
 
 #: shell32.rc:123 shell32.rc:127 winefile.rc:113

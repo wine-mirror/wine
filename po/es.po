@@ -6771,7 +6771,8 @@ msgid "E&xit"
 msgstr "S&alir"
 
 #: shell32.rc:115
-msgid "&About Control Panel..."
+#, fuzzy
+msgid "&About Control Panel"
 msgstr "&Acerca de Panel de Control..."
 
 #: shell32.rc:123 shell32.rc:127 winefile.rc:113

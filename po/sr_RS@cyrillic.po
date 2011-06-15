@@ -6651,7 +6651,8 @@ msgid "E&xit"
 msgstr "&Излаз"
 
 #: shell32.rc:115
-msgid "&About Control Panel..."
+#, fuzzy
+msgid "&About Control Panel"
 msgstr "&О управљачком панелу..."
 
 #: shell32.rc:123 shell32.rc:127 winefile.rc:113

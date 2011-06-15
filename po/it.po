@@ -6681,7 +6681,8 @@ msgstr ""
 "&Esci"
 
 #: shell32.rc:115
-msgid "&About Control Panel..."
+#, fuzzy
+msgid "&About Control Panel"
 msgstr "&Riguardo al pannello di controllo..."
 
 #: shell32.rc:123 shell32.rc:127 winefile.rc:113

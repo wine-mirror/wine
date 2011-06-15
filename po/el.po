@@ -6409,7 +6409,7 @@ msgid "E&xit"
 msgstr ""
 
 #: shell32.rc:115
-msgid "&About Control Panel..."
+msgid "&About Control Panel"
 msgstr ""
 
 #: shell32.rc:123 shell32.rc:127 winefile.rc:113
