@@ -12128,6 +12128,193 @@ static void unbound_sampler_test(IDirect3DDevice9 *device)
     IDirect3DPixelShader9_Release(ps);
 }
 
+static void update_surface_test(IDirect3DDevice9 *device)
+{
+    static const BYTE blocks[][8] =
+    {
+        {0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00}, /* White */
+        {0x00, 0xf8, 0x00, 0xf8, 0x00, 0x00, 0x00, 0x00}, /* Red */
+        {0xe0, 0xff, 0xe0, 0xff, 0x00, 0x00, 0x00, 0x00}, /* Yellow */
+        {0xe0, 0x07, 0xe0, 0x07, 0x00, 0x00, 0x00, 0x00}, /* Green */
+        {0xff, 0x07, 0xff, 0x07, 0x00, 0x00, 0x00, 0x00}, /* Cyan */
+        {0x1f, 0x00, 0x1f, 0x00, 0x00, 0x00, 0x00, 0x00}, /* Blue */
+        {0x1f, 0xf8, 0x1f, 0xf8, 0x00, 0x00, 0x00, 0x00}, /* Magenta */
+    };
+    static const struct
+    {
+        UINT x, y;
+        D3DCOLOR color;
+    }
+    expected_colors[] =
+    {
+        { 18, 240, D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0xff)},
+        { 57, 240, D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0xff)},
+        {109, 240, D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0xff)},
+        {184, 240, D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0x00)},
+        {290, 240, D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0x00)},
+        {440, 240, D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0x00)},
+        {584, 240, D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0xff)},
+    };
+    static const struct
+    {
+        float x, y, z, w;
+        float u, v;
+    }
+    tri[] =
+    {
+        {  0.0f, 480.0f, 0.0f,  1.0f,   0.0f, 0.0f},
+        {  0.0f,   0.0f, 0.0f,  1.0f,   0.0f, 1.0f},
+        {640.0f, 240.0f, 0.0f, 10.0f, 100.0f, 0.5f},
+    };
+    static const RECT rect_2x2 = {0, 0, 2, 2};
+    static const struct
+    {
+        UINT src_level;
+        UINT dst_level;
+        const RECT *r;
+        HRESULT hr;
+    }
+    block_size_tests[] =
+    {
+        {1, 0, NULL,      D3D_OK},
+        {0, 1, NULL,      D3DERR_INVALIDCALL},
+        {5, 4, NULL,      D3DERR_INVALIDCALL},
+        {4, 5, NULL,      D3DERR_INVALIDCALL},
+        {4, 5, &rect_2x2, D3DERR_INVALIDCALL},
+        {5, 5, &rect_2x2, D3D_OK},
+    };
+
+    IDirect3DSurface9 *src_surface, *dst_surface;
+    IDirect3DTexture9 *src_tex, *dst_tex;
+    IDirect3D9 *d3d;
+    UINT count, i;
+    HRESULT hr;
+
+    hr = IDirect3DDevice9_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "GetDirect3D failed, hr %#x.\n", hr);
+
+    hr = IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, 0, D3DRTYPE_TEXTURE, D3DFMT_DXT1);
+    IDirect3D9_Release(d3d);
+    if (FAILED(hr))
+    {
+        skip("DXT1 not supported, skipping test.\n");
+        return;
+    }
+
+    IDirect3D9_Release(d3d);
+
+    hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, 0, D3DFMT_DXT1, D3DPOOL_SYSTEMMEM, &src_tex, NULL);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, 0, D3DFMT_DXT1, D3DPOOL_DEFAULT, &dst_tex, NULL);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    count = IDirect3DTexture9_GetLevelCount(src_tex);
+    ok(count == 7, "Got level count %u, expected 7.\n", count);
+
+    for (i = 0; i < count; ++i)
+    {
+        UINT row_count, block_count, x, y;
+        D3DSURFACE_DESC desc;
+        BYTE *row, *block;
+        D3DLOCKED_RECT r;
+
+        hr = IDirect3DTexture9_GetLevelDesc(src_tex, i, &desc);
+        ok(SUCCEEDED(hr), "Failed to get level desc, hr %#x.\n", hr);
+
+        hr = IDirect3DTexture9_LockRect(src_tex, i, &r, NULL, 0);
+        ok(SUCCEEDED(hr), "Failed to lock texture, hr %#x.\n", hr);
+
+        row_count = ((desc.Height + 3) & ~3) / 4;
+        block_count = ((desc.Width + 3) & ~3) / 4;
+        row = r.pBits;
+
+        for (y = 0; y < row_count; ++y)
+        {
+            block = row;
+            for (x = 0; x < block_count; ++x)
+            {
+                memcpy(block, blocks[i], sizeof(blocks[i]));
+                block += sizeof(blocks[i]);
+            }
+            row += r.Pitch;
+        }
+
+        hr = IDirect3DTexture9_UnlockRect(src_tex, i);
+        ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x.\n", hr);
+    }
+
+    for (i = 0; i < sizeof(block_size_tests) / sizeof(*block_size_tests); ++i)
+    {
+        hr = IDirect3DTexture9_GetSurfaceLevel(src_tex, block_size_tests[i].src_level, &src_surface);
+        ok(SUCCEEDED(hr), "Failed to get texture surface, hr %#x.\n", hr);
+        hr = IDirect3DTexture9_GetSurfaceLevel(dst_tex, block_size_tests[i].dst_level, &dst_surface);
+        ok(SUCCEEDED(hr), "Failed to get texture surface, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_UpdateSurface(device, src_surface, block_size_tests[i].r, dst_surface, NULL);
+        ok(hr == block_size_tests[i].hr, "Update surface returned %#x for test %u, expected %#x.\n",
+                hr, i, block_size_tests[i].hr);
+
+        IDirect3DSurface9_Release(dst_surface);
+        IDirect3DSurface9_Release(src_surface);
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        hr = IDirect3DTexture9_GetSurfaceLevel(src_tex, i, &src_surface);
+        ok(SUCCEEDED(hr), "Failed to get texture surface, hr %#x.\n", hr);
+        hr = IDirect3DTexture9_GetSurfaceLevel(dst_tex, i, &dst_surface);
+        ok(SUCCEEDED(hr), "Failed to get texture surface, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_UpdateSurface(device, src_surface, NULL, dst_surface, NULL);
+        ok(SUCCEEDED(hr), "Failed to update surface at level %u, hr %#x.\n", i, hr);
+
+        IDirect3DSurface9_Release(dst_surface);
+        IDirect3DSurface9_Release(src_surface);
+    }
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "SetSamplerState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZRHW | D3DFVF_TEX1);
+    ok(SUCCEEDED(hr), "SetFVF failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)dst_tex);
+    ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff000000, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, 1, tri, sizeof(*tri));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
+    {
+        D3DCOLOR color = getPixelColor(device, expected_colors[i].x, expected_colors[i].y);
+        ok(color_match(color, expected_colors[i].color, 0),
+                "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
+                expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
+    }
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed, hr %#x.\n", hr);
+    IDirect3DTexture9_Release(dst_tex);
+    IDirect3DTexture9_Release(src_tex);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -12301,6 +12488,7 @@ START_TEST(visual)
     depth_bounds_test(device_ptr);
     srgbwrite_format_test(device_ptr);
     clip_planes_test(device_ptr);
+    update_surface_test(device_ptr);
 
 cleanup:
     if(device_ptr) {
