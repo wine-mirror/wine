@@ -277,6 +277,41 @@ static const char *sha1_graphics_4[] =
     NULL
 };
 
+static const char *sha1_graphics_1[] =
+{
+    "23366004515f3bc46796ea505d748f8d0f97fbe1",
+    "ad674a4104c6a1eacaee8f20effdfe31775b4409",
+    "a7cc69f957d7b533a0a330859a143d701daac73c",
+    "a955bf088c5edb129289ce65caace48ec95632e4",
+    "5316d3c558c254479883133cf58cd07ab521d3f0",
+    "fcbfdb5d60716ea05f2d1896fae7a6e7a8249d35",
+    "2c140b39cc8d21358fded8959cd655f03d7f0f89",
+    "121423a38b4ac4743bd516e0a7e88a3863796313",
+    "7c17635c6c7f62dbf8fd4773d0c503358553d2c7",
+    "21d5d9e47bb07de2cf7bc99b7725390d03a6cde6",
+    "f69ee65ea25676429a28eea79b5b9cb9206b8d01",
+    "39ff81f77ef4ee772367ed1a63785987c060126e",
+    "4c686508a994ca4c7a0a73b8c0fe52423c180d9c",
+    "b0cc1f5e244ae0c0835a9866a46abdfcd56d1cb1",
+    "7ddf19df5bbdf4475b6ec1bc042425e382502864",
+    "144c9a846e5e37ac6efd5ed3a97ec231479e8fca",
+    "c5ffc59048bf786b5646ad6226cd8633965de9ef",
+    "400a21caa01e015096ee1afcf1b54e7f8ec515bd",
+    "0ff4b49797e30e3555aab45219adf449a9a560ff",
+    "144c9a846e5e37ac6efd5ed3a97ec231479e8fca",
+    "b85463875f755b85f1464b1b6275912bcbad6c9f",
+    "a4964d8bbf80fe785f906bc0f7c5b113242a58fc",
+    "a5d204cc7342d40b765ca042f8668e22601c4ff9",
+    "adb2818f6d3845dd140bc0f9abdbaa89d2a8c3de",
+    "0a76e0121facb103857130bc6e12185ad77fc3fa",
+    "13cc63972aee4f6ae27091a8af18de01f1d3a5da",
+    "3bb745ccb08402ce6fac6ee26fb8d7aad2dba27e",
+    "d1e6091caa4482d3142df3b958606c41ebf4698e",
+    "07c1116d8286fb665a1005de220eadc3d5999aaf",
+    "4afb0649488f6e6f7d3a2b8bf438d82f2c88f4d1",
+    NULL
+};
+
 static inline DWORD get_stride(BITMAPINFO *bmi)
 {
     return ((bmi->bmiHeader.biBitCount * bmi->bmiHeader.biWidth + 31) >> 3) & ~3;
@@ -321,9 +356,11 @@ static char *hash_dib(BITMAPINFO *bmi, void *bits)
     return buf;
 }
 
-static void compare_hash(BITMAPINFO *bmi, BYTE *bits, const char ***sha1, const char *info)
+static void compare_hash_broken_todo(BITMAPINFO *bmi, BYTE *bits, const char ***sha1, const char *info, int num_broken, BOOL todo)
 {
     char *hash = hash_dib(bmi, bits);
+    BOOL ok_cond;
+    int i;
 
     if(!hash)
     {
@@ -331,15 +368,35 @@ static void compare_hash(BITMAPINFO *bmi, BYTE *bits, const char ***sha1, const 
         return;
     }
 
-    if(**sha1)
+    for(i = 0; i <= num_broken; i++)
     {
-        ok(!strcmp(hash, **sha1), "%d: %s: expected hash %s got %s\n",
-           bmi->bmiHeader.biBitCount, info, **sha1, hash);
-        (*sha1)++;
+        if((*sha1)[i] == NULL)
+        {
+            ok((*sha1)[i] != NULL, "missing hash, got \"%s\",\n", hash);
+            return;
+        }
     }
-    else ok(**sha1 != NULL, "missing hash, got \"%s\",\n", hash);
+
+    ok_cond = !strcmp(hash, **sha1);
+
+    for(i = 1; i <= num_broken; i++)
+        ok_cond = ok_cond || broken( !strcmp(hash, (*sha1)[i]) );
+
+    if(todo)
+        todo_wine ok( ok_cond, "%d: %s: expected hash %s got %s\n",
+                      bmi->bmiHeader.biBitCount, info, **sha1, hash );
+    else
+        ok( ok_cond, "%d: %s: expected hash %s got %s\n",
+            bmi->bmiHeader.biBitCount, info, **sha1, hash );
+
+    *sha1 += num_broken + 1;
 
     HeapFree(GetProcessHeap(), 0, hash);
+}
+
+static void compare_hash(BITMAPINFO *bmi, BYTE *bits, const char ***sha1, const char *info)
+{
+    compare_hash_broken_todo(bmi, bits, sha1, info, 0, FALSE);
 }
 
 static const RECT bias_check[] =
@@ -458,6 +515,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     BYTE dib_brush_buf[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD) + 16 * 16 * sizeof(DWORD)]; /* Enough for 16 x 16 at 32 bpp */
     BITMAPINFO *brush_bi = (BITMAPINFO*)dib_brush_buf;
     BYTE *brush_bits;
+    BOOL dib_is_1bpp = (bmi->bmiHeader.biBitCount == 1);
 
     memset(bits, 0xcc, dib_size);
     compare_hash(bmi, bits, sha1, "empty");
@@ -654,7 +712,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash(bmi, bits, sha1, "top-down 8888 dib brush patblt");
+    compare_hash_broken_todo(bmi, bits, sha1, "top-down 8888 dib brush patblt", dib_is_1bpp ? 1 : 0, dib_is_1bpp);
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
@@ -684,7 +742,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash(bmi, bits, sha1, "bottom-up 8888 dib brush patblt");
+    compare_hash_broken_todo(bmi, bits, sha1, "bottom-up 8888 dib brush patblt", dib_is_1bpp ? 1 : 0, dib_is_1bpp);
     memset(bits, 0xcc, dib_size);
 
     /* 24 bpp dib pattern brush */
@@ -711,7 +769,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash(bmi, bits, sha1, "top-down 24 bpp brush patblt");
+    compare_hash_broken_todo(bmi, bits, sha1, "top-down 24 bpp brush patblt", dib_is_1bpp ? 1 : 0, dib_is_1bpp);
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
@@ -741,7 +799,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash(bmi, bits, sha1, "top-down 555 dib brush patblt");
+    compare_hash_broken_todo(bmi, bits, sha1, "top-down 555 dib brush patblt", dib_is_1bpp ? 1 : 0, dib_is_1bpp);
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
@@ -781,7 +839,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash(bmi, bits, sha1, "top-down 8 bpp dib brush patblt");
+    compare_hash_broken_todo(bmi, bits, sha1, "top-down 8 bpp dib brush patblt", dib_is_1bpp ? 1 : 0, dib_is_1bpp);
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
@@ -806,7 +864,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash(bmi, bits, sha1, "top-down 4 bpp dib brush patblt");
+    compare_hash_broken_todo(bmi, bits, sha1, "top-down 4 bpp dib brush patblt", dib_is_1bpp ? 1 : 0, dib_is_1bpp);
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
@@ -1057,6 +1115,29 @@ todo_wine
     orig_bm = SelectObject(mem_dc, dib);
 
     sha1 = sha1_graphics_4;
+    draw_graphics(mem_dc, bmi, bits, &sha1);
+
+    SelectObject(mem_dc, orig_bm);
+    DeleteObject(dib);
+
+    /* 1 */
+    trace("1\n");
+    bmi->bmiHeader.biBitCount = 1;
+    bmi->bmiHeader.biClrUsed = 2;
+
+    bmi->bmiColors[0].rgbRed = 0x00;
+    bmi->bmiColors[0].rgbGreen = 0x01;
+    bmi->bmiColors[0].rgbBlue = 0xff;
+    bmi->bmiColors[1].rgbRed = 0xff;
+    bmi->bmiColors[1].rgbGreen = 0x00;
+    bmi->bmiColors[1].rgbBlue = 0x00;
+
+    dib = CreateDIBSection(0, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(dib != NULL, "ret NULL\n");
+
+    orig_bm = SelectObject(mem_dc, dib);
+
+    sha1 = sha1_graphics_1;
     draw_graphics(mem_dc, bmi, bits, &sha1);
 
     SelectObject(mem_dc, orig_bm);
