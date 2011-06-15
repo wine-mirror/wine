@@ -289,18 +289,12 @@ static HRESULT WINAPI IDirect3DVertexBufferImpl_1_Unlock(IDirect3DVertexBuffer *
  *  DDERR_INVALIDPARAMS If D3DVOP_TRANSFORM wasn't passed
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirect3DVertexBufferImpl_ProcessVertices(IDirect3DVertexBuffer7 *iface,
-                                          DWORD VertexOp,
-                                          DWORD DestIndex,
-                                          DWORD Count,
-                                          IDirect3DVertexBuffer7 *SrcBuffer,
-                                          DWORD SrcIndex,
-                                          IDirect3DDevice7 *D3DDevice,
-                                          DWORD Flags)
+static HRESULT WINAPI IDirect3DVertexBufferImpl_ProcessVertices(IDirect3DVertexBuffer7 *iface,
+        DWORD VertexOp, DWORD DestIndex, DWORD Count, IDirect3DVertexBuffer7 *SrcBuffer,
+        DWORD SrcIndex, IDirect3DDevice7 *D3DDevice, DWORD Flags)
 {
     IDirect3DVertexBufferImpl *This = (IDirect3DVertexBufferImpl *)iface;
-    IDirect3DVertexBufferImpl *Src = (IDirect3DVertexBufferImpl *)SrcBuffer;
+    IDirect3DVertexBufferImpl *Src = unsafe_impl_from_IDirect3DVertexBuffer7(SrcBuffer);
     IDirect3DDeviceImpl *D3D = (IDirect3DDeviceImpl *)D3DDevice;
     BOOL oldClip, doClip;
     HRESULT hr;
@@ -347,7 +341,7 @@ static HRESULT WINAPI IDirect3DVertexBufferImpl_1_ProcessVertices(IDirect3DVerte
         DWORD VertexOp, DWORD DestIndex, DWORD Count, IDirect3DVertexBuffer *SrcBuffer,
         DWORD SrcIndex, IDirect3DDevice3 *D3DDevice, DWORD Flags)
 {
-    IDirect3DVertexBufferImpl *Src = SrcBuffer ? vb_from_vb1(SrcBuffer) : NULL;
+    IDirect3DVertexBufferImpl *Src = unsafe_impl_from_IDirect3DVertexBuffer(SrcBuffer);
     IDirect3DDeviceImpl *D3D = D3DDevice ? device_from_device3(D3DDevice) : NULL;
 
     TRACE("iface %p, vertex_op %#x, dst_idx %u, count %u, src_buffer %p, src_idx %u, device %p, flags %#x.\n",
@@ -586,4 +580,22 @@ end:
         HeapFree(GetProcessHeap(), 0, buffer);
 
     return hr;
+}
+
+IDirect3DVertexBufferImpl *unsafe_impl_from_IDirect3DVertexBuffer(IDirect3DVertexBuffer *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d_vertex_buffer1_vtbl);
+
+    return vb_from_vb1(iface);
+}
+
+IDirect3DVertexBufferImpl *unsafe_impl_from_IDirect3DVertexBuffer7(IDirect3DVertexBuffer7 *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d_vertex_buffer7_vtbl);
+
+    return (IDirect3DVertexBufferImpl *)iface;
 }

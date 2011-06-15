@@ -4053,7 +4053,7 @@ IDirect3DDeviceImpl_7_DrawPrimitiveVB(IDirect3DDevice7 *iface,
                                       DWORD Flags)
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
-    IDirect3DVertexBufferImpl *vb = (IDirect3DVertexBufferImpl *)D3DVertexBuf;
+    IDirect3DVertexBufferImpl *vb = unsafe_impl_from_IDirect3DVertexBuffer7(D3DVertexBuf);
     HRESULT hr;
     DWORD stride;
 
@@ -4126,7 +4126,7 @@ static HRESULT WINAPI IDirect3DDeviceImpl_3_DrawPrimitiveVB(IDirect3DDevice3 *if
         D3DPRIMITIVETYPE PrimitiveType, IDirect3DVertexBuffer *D3DVertexBuf, DWORD StartVertex,
         DWORD NumVertices, DWORD Flags)
 {
-    IDirect3DVertexBufferImpl *vb = D3DVertexBuf ? vb_from_vb1(D3DVertexBuf) : NULL;
+    IDirect3DVertexBufferImpl *vb = unsafe_impl_from_IDirect3DVertexBuffer(D3DVertexBuf);
 
     TRACE("iface %p, primitive_type %#x, vb %p, start_vertex %u, vertex_count %u, flags %#x.\n",
             iface, PrimitiveType, D3DVertexBuf, StartVertex, NumVertices, Flags);
@@ -4164,7 +4164,7 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
                                              DWORD Flags)
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
-    IDirect3DVertexBufferImpl *vb = (IDirect3DVertexBufferImpl *)D3DVertexBuf;
+    IDirect3DVertexBufferImpl *vb = unsafe_impl_from_IDirect3DVertexBuffer7(D3DVertexBuf);
     DWORD stride = get_flexible_vertex_size(vb->fvf);
     struct wined3d_resource *wined3d_resource;
     struct wined3d_resource_desc desc;
@@ -4288,13 +4288,13 @@ static HRESULT WINAPI IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB(IDirect3DDevi
         D3DPRIMITIVETYPE PrimitiveType, IDirect3DVertexBuffer *D3DVertexBuf, WORD *Indices,
         DWORD IndexCount, DWORD Flags)
 {
-    IDirect3DVertexBufferImpl *VB = vb_from_vb1(D3DVertexBuf);
+    IDirect3DVertexBufferImpl *vb = unsafe_impl_from_IDirect3DVertexBuffer(D3DVertexBuf);
 
     TRACE("iface %p, primitive_type %#x, vb %p, indices %p, index_count %u, flags %#x.\n",
             iface, PrimitiveType, D3DVertexBuf, Indices, IndexCount, Flags);
 
     return IDirect3DDevice7_DrawIndexedPrimitiveVB((IDirect3DDevice7 *)device_from_device3(iface),
-            PrimitiveType, (IDirect3DVertexBuffer7 *)VB, 0, IndexCount, Indices, IndexCount, Flags);
+            PrimitiveType, (IDirect3DVertexBuffer7 *)vb, 0, IndexCount, Indices, IndexCount, Flags);
 }
 
 /*****************************************************************************
