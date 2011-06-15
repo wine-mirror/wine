@@ -8364,11 +8364,11 @@ msgstr "이 출력 줄은 너무 깁니다.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
-msgstr ""
+msgstr "다이렉트엑스 진단 도구"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
-msgstr ""
+msgstr "사용법: dxdiag [/whql:off | /whql:on] [/t 파일이름 | /x 파일이름]"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
