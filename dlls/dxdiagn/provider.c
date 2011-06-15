@@ -48,6 +48,19 @@ static const WCHAR szEmpty[] = {0};
 static HRESULT build_information_tree(IDxDiagContainerImpl_Container **pinfo_root);
 static void free_information_tree(IDxDiagContainerImpl_Container *node);
 
+static const WCHAR szDescription[] = {'s','z','D','e','s','c','r','i','p','t','i','o','n',0};
+static const WCHAR szDeviceName[] = {'s','z','D','e','v','i','c','e','N','a','m','e',0};
+static const WCHAR szKeyDeviceID[] = {'s','z','K','e','y','D','e','v','i','c','e','I','D',0};
+static const WCHAR szKeyDeviceKey[] = {'s','z','K','e','y','D','e','v','i','c','e','K','e','y',0};
+static const WCHAR szVendorId[] = {'s','z','V','e','n','d','o','r','I','d',0};
+static const WCHAR szDeviceId[] = {'s','z','D','e','v','i','c','e','I','d',0};
+static const WCHAR szDeviceIdentifier[] = {'s','z','D','e','v','i','c','e','I','d','e','n','t','i','f','i','e','r',0};
+static const WCHAR dwWidth[] = {'d','w','W','i','d','t','h',0};
+static const WCHAR dwHeight[] = {'d','w','H','e','i','g','h','t',0};
+static const WCHAR dwBpp[] = {'d','w','B','p','p',0};
+static const WCHAR szDisplayMemoryLocalized[] = {'s','z','D','i','s','p','l','a','y','M','e','m','o','r','y','L','o','c','a','l','i','z','e','d',0};
+static const WCHAR szDisplayMemoryEnglish[] = {'s','z','D','i','s','p','l','a','y','M','e','m','o','r','y','E','n','g','l','i','s','h',0};
+
 /* IDxDiagProvider IUnknown parts follow: */
 static HRESULT WINAPI IDxDiagProviderImpl_QueryInterface(PDXDIAGPROVIDER iface, REFIID riid, LPVOID *ppobj)
 {
@@ -738,21 +751,154 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
     return S_OK;
 }
 
+/* The logic from pixelformat_for_depth() in dlls/wined3d/utils.c is reversed. */
+static DWORD depth_for_pixelformat(D3DFORMAT format)
+{
+    switch (format)
+    {
+    case D3DFMT_P8: return 8;
+    case D3DFMT_X1R5G5B5: return 15;
+    case D3DFMT_R5G6B5: return 16;
+    /* This case will fail to distinguish an original bpp of 24. */
+    case D3DFMT_X8R8G8B8: return 32;
+    default:
+        FIXME("Unknown D3DFORMAT %d, returning 32 bpp\n", format);
+        return 32;
+    }
+}
+
+static BOOL get_texture_memory(GUID *adapter, DWORD *available_mem)
+{
+    IDirectDraw7 *pDirectDraw;
+    HRESULT hr;
+    DDSCAPS2 dd_caps;
+
+    hr = DirectDrawCreateEx(adapter, (void **)&pDirectDraw, &IID_IDirectDraw7, NULL);
+    if (SUCCEEDED(hr))
+    {
+        dd_caps.dwCaps = DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
+        dd_caps.dwCaps2 = dd_caps.dwCaps3 = dd_caps.dwCaps4 = 0;
+        hr = IDirectDraw7_GetAvailableVidMem(pDirectDraw, &dd_caps, available_mem, NULL);
+        IDirectDraw7_Release(pDirectDraw);
+        if (SUCCEEDED(hr))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+static HRESULT fill_display_information_d3d(IDxDiagContainerImpl_Container *node)
+{
+    IDxDiagContainerImpl_Container *display_adapter;
+    HRESULT hr;
+    IDirect3D9 *pDirect3D9;
+    WCHAR buffer[256];
+    UINT index, count;
+
+    pDirect3D9 = Direct3DCreate9(D3D_SDK_VERSION);
+    if (!pDirect3D9)
+        return E_FAIL;
+
+    count = IDirect3D9_GetAdapterCount(pDirect3D9);
+    for (index = 0; index < count; index++)
+    {
+        static const WCHAR adapterid_fmtW[] = {'%','u',0};
+        static const WCHAR id_fmtW[] = {'0','x','%','0','4','x',0};
+        static const WCHAR mem_fmt[] = {'%','.','1','f',' ','M','B',0};
+
+        D3DADAPTER_IDENTIFIER9 adapter_info;
+        D3DDISPLAYMODE adapter_mode;
+        DWORD available_mem = 0;
+
+        snprintfW(buffer, sizeof(buffer)/sizeof(WCHAR), adapterid_fmtW, index);
+        display_adapter = allocate_information_node(buffer);
+        if (!display_adapter)
+        {
+            hr = E_OUTOFMEMORY;
+            goto cleanup;
+        }
+
+        add_subcontainer(node, display_adapter);
+
+        hr = IDirect3D9_GetAdapterIdentifier(pDirect3D9, index, 0, &adapter_info);
+        if (SUCCEEDED(hr))
+        {
+            WCHAR devicenameW[sizeof(adapter_info.DeviceName)];
+            WCHAR descriptionW[sizeof(adapter_info.Description)];
+
+            MultiByteToWideChar(CP_ACP, 0, adapter_info.DeviceName, -1, devicenameW, sizeof(devicenameW)/sizeof(WCHAR));
+            MultiByteToWideChar(CP_ACP, 0, adapter_info.Description, -1, descriptionW, sizeof(descriptionW)/sizeof(WCHAR));
+
+            hr = add_bstr_property(display_adapter, szDeviceName, devicenameW);
+            if (FAILED(hr))
+                goto cleanup;
+
+            hr = add_bstr_property(display_adapter, szDescription, descriptionW);
+            if (FAILED(hr))
+                goto cleanup;
+
+            StringFromGUID2(&adapter_info.DeviceIdentifier, buffer, 39);
+            hr = add_bstr_property(display_adapter, szDeviceIdentifier, buffer);
+            if (FAILED(hr))
+                goto cleanup;
+
+            snprintfW(buffer, sizeof(buffer)/sizeof(WCHAR), id_fmtW, adapter_info.VendorId);
+            hr = add_bstr_property(display_adapter, szVendorId, buffer);
+            if (FAILED(hr))
+                goto cleanup;
+
+            snprintfW(buffer, sizeof(buffer)/sizeof(WCHAR), id_fmtW, adapter_info.DeviceId);
+            hr = add_bstr_property(display_adapter, szDeviceId, buffer);
+            if (FAILED(hr))
+                goto cleanup;
+        }
+
+        hr = IDirect3D9_GetAdapterDisplayMode(pDirect3D9, index, &adapter_mode);
+        if (SUCCEEDED(hr))
+        {
+            hr = add_ui4_property(display_adapter, dwWidth, adapter_mode.Width);
+            if (FAILED(hr))
+                goto cleanup;
+
+            hr = add_ui4_property(display_adapter, dwHeight, adapter_mode.Height);
+            if (FAILED(hr))
+                goto cleanup;
+
+            hr = add_ui4_property(display_adapter, dwBpp, depth_for_pixelformat(adapter_mode.Format));
+            if (FAILED(hr))
+                goto cleanup;
+        }
+
+        hr = add_bstr_property(display_adapter, szKeyDeviceKey, szEmpty);
+        if (FAILED(hr))
+            goto cleanup;
+
+        hr = add_bstr_property(display_adapter, szKeyDeviceID, szEmpty);
+        if (FAILED(hr))
+            goto cleanup;
+
+        if (!get_texture_memory(&adapter_info.DeviceIdentifier, &available_mem))
+            WARN("get_texture_memory helper failed\n");
+
+        snprintfW(buffer, sizeof(buffer)/sizeof(buffer[0]), mem_fmt, available_mem / 1000000.0f);
+
+        hr = add_bstr_property(display_adapter, szDisplayMemoryLocalized, buffer);
+        if (FAILED(hr))
+            goto cleanup;
+
+        hr = add_bstr_property(display_adapter, szDisplayMemoryEnglish, buffer);
+        if (FAILED(hr))
+            goto cleanup;
+    }
+
+    hr = S_OK;
+cleanup:
+    IDirect3D9_Release(pDirect3D9);
+    return hr;
+}
+
 static HRESULT build_displaydevices_tree(IDxDiagContainerImpl_Container *node)
 {
-    static const WCHAR szDescription[] = {'s','z','D','e','s','c','r','i','p','t','i','o','n',0};
-    static const WCHAR szDeviceName[] = {'s','z','D','e','v','i','c','e','N','a','m','e',0};
-    static const WCHAR szKeyDeviceID[] = {'s','z','K','e','y','D','e','v','i','c','e','I','D',0};
-    static const WCHAR szKeyDeviceKey[] = {'s','z','K','e','y','D','e','v','i','c','e','K','e','y',0};
-    static const WCHAR szVendorId[] = {'s','z','V','e','n','d','o','r','I','d',0};
-    static const WCHAR szDeviceId[] = {'s','z','D','e','v','i','c','e','I','d',0};
-    static const WCHAR szDeviceIdentifier[] = {'s','z','D','e','v','i','c','e','I','d','e','n','t','i','f','i','e','r',0};
-    static const WCHAR dwWidth[] = {'d','w','W','i','d','t','h',0};
-    static const WCHAR dwHeight[] = {'d','w','H','e','i','g','h','t',0};
-    static const WCHAR dwBpp[] = {'d','w','B','p','p',0};
-    static const WCHAR szDisplayMemoryLocalized[] = {'s','z','D','i','s','p','l','a','y','M','e','m','o','r','y','L','o','c','a','l','i','z','e','d',0};
-    static const WCHAR szDisplayMemoryEnglish[] = {'s','z','D','i','s','p','l','a','y','M','e','m','o','r','y','E','n','g','l','i','s','h',0};
-
     static const WCHAR szAdapterID[] = {'0',0};
 
     IDxDiagContainerImpl_Container *display_adapter;
@@ -763,6 +909,11 @@ static HRESULT build_displaydevices_tree(IDxDiagContainerImpl_Container *node)
     DDSURFACEDESC2 surface_descr;
     DWORD tmp;
     WCHAR buffer[256];
+
+    /* Try to use Direct3D to obtain the required information first. */
+    hr = fill_display_information_d3d(node);
+    if (hr != E_FAIL)
+        return hr;
 
     display_adapter = allocate_information_node(szAdapterID);
     if (!display_adapter)
