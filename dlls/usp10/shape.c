@@ -545,8 +545,6 @@ static const char* required_tamil_features[] =
 
 static OPENTYPE_FEATURE_RECORD tamil_features[] =
 {
-    /* Base forms */
-    { MS_MAKE_TAG('p','r','e','f'), 1},
     /* Presentation forms */
     { MS_MAKE_TAG('p','r','e','s'), 1},
     { MS_MAKE_TAG('a','b','v','s'), 1},
@@ -577,7 +575,6 @@ static const char* required_telugu_features[] =
 static OPENTYPE_FEATURE_RECORD telugu_features[] =
 {
     /* Base forms */
-    { MS_MAKE_TAG('p','r','e','f'), 1},
     { MS_MAKE_TAG('p','s','t','f'), 1},
     { MS_MAKE_TAG('c','j','c','t'), 1},
     /* Presentation forms */
@@ -636,14 +633,14 @@ static const ScriptShapeData ShapingData[] =
     {{ devanagari_features, 8}, required_devanagari_features, "gujr", "gjr2", ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
     {{ oriya_features, 8}, required_oriya_features, "orya", "ory2", ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
     {{ oriya_features, 8}, required_oriya_features, "orya", "ory2", ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
-    {{ tamil_features, 7}, required_tamil_features, "taml", "tam2", ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
-    {{ tamil_features, 7}, required_tamil_features, "taml", "tam2", ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
-    {{ telugu_features, 9}, required_telugu_features, "telu", "tel2", ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
-    {{ telugu_features, 9}, required_telugu_features, "telu", "tel2", ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
-    {{ telugu_features, 9}, required_telugu_features, "knda", "knd2", ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
-    {{ telugu_features, 9}, required_telugu_features, "knda", "knd2", ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
-    {{ telugu_features, 9}, required_telugu_features, "mlym", "mlm2", ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
-    {{ telugu_features, 9}, required_telugu_features, "mlym", "mlm2", ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
+    {{ tamil_features, 6}, required_tamil_features, "taml", "tam2", ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
+    {{ tamil_features, 6}, required_tamil_features, "taml", "tam2", ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
+    {{ telugu_features, 8}, required_telugu_features, "telu", "tel2", ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
+    {{ telugu_features, 8}, required_telugu_features, "telu", "tel2", ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
+    {{ telugu_features, 8}, required_telugu_features, "knda", "knd2", ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
+    {{ telugu_features, 8}, required_telugu_features, "knda", "knd2", ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
+    {{ telugu_features, 8}, required_telugu_features, "mlym", "mlm2", ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
+    {{ telugu_features, 8}, required_telugu_features, "mlym", "mlm2", ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
@@ -2120,6 +2117,7 @@ static void ShapeIndicSyllables(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa,
     const GSUB_Feature *akhn = load_GSUB_feature(hdc, psa, psc, "akhn");
     const GSUB_Feature *rkrf = load_GSUB_feature(hdc, psa, psc, "rkrf");
     BOOL rphf = (load_GSUB_feature(hdc, psa, psc, "rphf") != NULL);
+    BOOL pref = (load_GSUB_feature(hdc, psa, psc, "pref") != NULL);
     BOOL blwf = (load_GSUB_feature(hdc, psa, psc, "blwf") != NULL);
     BOOL half = (load_GSUB_feature(hdc, psa, psc, "half") != NULL);
     IndicSyllable glyph_indexs;
@@ -2153,6 +2151,8 @@ static void ShapeIndicSyllables(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa,
             TRACE("applying feature rkrf\n");
             Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, rkrf);
         }
+        if (pref)
+            Apply_Indic_PostBase(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, "pref");
         if (blwf)
             Apply_Indic_PostBase(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, "blwf");
         if (half)
