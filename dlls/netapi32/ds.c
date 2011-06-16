@@ -58,6 +58,12 @@ DWORD WINAPI DsGetSiteNameW(LPCWSTR ComputerName, LPWSTR *SiteName)
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+DWORD WINAPI DsGetSiteNameA(LPCSTR ComputerName, LPSTR *SiteName)
+{
+    FIXME("(%s, %p): stub\n", debugstr_a(ComputerName), SiteName);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 /************************************************************
  *  DsRoleFreeMemory (NETAPI32.@)
  *

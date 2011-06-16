@@ -9,8 +9,8 @@
 @ stub DsGetDcOpen
 @ stub DsGetDcSiteCoverage
 @ stub DsGetForestTrustInformationW
-@ stub DsGetSiteNameA # (str str)
-@ stdcall DsGetSiteNameW(wstr wstr)
+@ stdcall DsGetSiteNameA(str ptr)
+@ stdcall DsGetSiteNameW(wstr ptr)
 @ stub DsMergeForestTrustInformationW
 @ stdcall DsRoleFreeMemory(ptr)
 @ stdcall DsRoleGetPrimaryDomainInformation(wstr long ptr)
