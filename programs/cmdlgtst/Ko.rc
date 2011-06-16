@@ -3,7 +3,7 @@
  * Korean Language Support
  *
  * Copyright (c) 1999 Eric Williams.
- * Copyright 2005,2007,2010 YunSong Hwang
+ * Copyright 2005,2007,2010,2011 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -35,30 +35,30 @@ CmdlgtstMenu MENU
 
  POPUP "공통 대화상자(&C)"
  {
-  MENUITEM "열기(&O)", CM_U_OPEN
-  MENUITEM "저장(&S)", CM_U_SAVE
+  MENUITEM "열기(&O)...", CM_U_OPEN
+  MENUITEM "다른 이름으로 저장(&S)...", CM_U_SAVE
   MENUITEM SEPARATOR
-  MENUITEM "색상(&C)", CM_U_COLOR
-  MENUITEM "글꼴(&F)", CM_U_FONT
+  MENUITEM "색상(&C)...", CM_U_COLOR
+  MENUITEM "글꼴(&F)...", CM_U_FONT
   MENUITEM SEPARATOR
-  MENUITEM "텍스트 찾기(&T)", CM_U_FIND
-  MENUITEM "텍스트 바꾸기(&R)", CM_U_REPLACE
+  MENUITEM "텍스트 찾기(&T)...", CM_U_FIND
+  MENUITEM "텍스트 바꾸기(&R)...", CM_U_REPLACE
   MENUITEM SEPARATOR
-  MENUITEM "인쇄(&R)", CM_U_PRINT
-  MENUITEM "인쇄 설정(&G)", CM_U_PAGESETUP
+  MENUITEM "인쇄(&R)...", CM_U_PRINT
+  MENUITEM "인쇄 설정(&G)...", CM_U_PAGESETUP
  }
 
  POPUP "플래그(&L)"
  {
-  MENUITEM "파일(&E)", CM_F_FILE
+  MENUITEM "파일(&E)...", CM_F_FILE
   MENUITEM SEPARATOR
-  MENUITEM "색상(&C)", CM_F_COLOR
-  MENUITEM "글꼴(&F)", CM_F_FONT
+  MENUITEM "색상(&C)...", CM_F_COLOR
+  MENUITEM "글꼴(&F)...", CM_F_FONT
   MENUITEM SEPARATOR
-  MENUITEM "찾기/바꾸기(&R)", CM_F_FINDREPLACE
+  MENUITEM "찾기/바꾸기(&R)...", CM_F_FINDREPLACE
   MENUITEM SEPARATOR
-  MENUITEM "인쇄(&R)", CM_F_PRINT
-  MENUITEM "인쇄 설정(&G)", CM_F_PAGESETUP
+  MENUITEM "인쇄(&R)...", CM_F_PRINT
+  MENUITEM "인쇄 설정(&G)...", CM_F_PAGESETUP
  }
 
  POPUP "도움말(&H)"
@@ -247,7 +247,7 @@ CAPTION "정보"
 FONT 9, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "확인", IDOK, 72, 96, 50, 14
- LTEXT "공통 대화상자 테스트 지그 액서사이저, 버젼 1.20", -1, 13, 36, 168, 12
+ LTEXT "공통 대화상자 테스트 지그 액서사이저, 버젼 1.20", -1, 13, 36, 168, 15
  LTEXT "(c) 1999-2000, Eric Williams.  Rights are as granted under the WINE license.  코드를 숨기기 않는다면... 나누자!", -1, 18, 60, 157, 24
  ICON "AboutIcon", -1, 84, 12, 18, 20
 }
