@@ -176,18 +176,18 @@ void * CDECL wined3d_volume_get_parent(const struct wined3d_volume *volume)
 HRESULT CDECL wined3d_volume_set_private_data(struct wined3d_volume *volume,
         REFGUID guid, const void *data, DWORD data_size, DWORD flags)
 {
-    return resource_set_private_data(&volume->resource, guid, data, data_size, flags);
+    return wined3d_resource_set_private_data(&volume->resource, guid, data, data_size, flags);
 }
 
 HRESULT CDECL wined3d_volume_get_private_data(const struct wined3d_volume *volume,
         REFGUID guid, void *data, DWORD *data_size)
 {
-    return resource_get_private_data(&volume->resource, guid, data, data_size);
+    return wined3d_resource_get_private_data(&volume->resource, guid, data, data_size);
 }
 
 HRESULT CDECL wined3d_volume_free_private_data(struct wined3d_volume *volume, REFGUID guid)
 {
-    return resource_free_private_data(&volume->resource, guid);
+    return wined3d_resource_free_private_data(&volume->resource, guid);
 }
 
 DWORD CDECL wined3d_volume_set_priority(struct wined3d_volume *volume, DWORD priority)

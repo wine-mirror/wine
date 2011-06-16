@@ -158,7 +158,7 @@ void resource_cleanup(struct wined3d_resource *resource)
     LIST_FOR_EACH_SAFE(e1, e2, &resource->privateData)
     {
         data = LIST_ENTRY(e1, struct private_data, entry);
-        hr = resource_free_private_data(resource, &data->tag);
+        hr = wined3d_resource_free_private_data(resource, &data->tag);
         if (FAILED(hr))
             ERR("Failed to free private data when destroying resource %p, hr = %#x.\n", resource, hr);
     }
@@ -195,7 +195,7 @@ static struct private_data *resource_find_private_data(const struct wined3d_reso
     return NULL;
 }
 
-HRESULT resource_set_private_data(struct wined3d_resource *resource, REFGUID guid,
+HRESULT CDECL wined3d_resource_set_private_data(struct wined3d_resource *resource, REFGUID guid,
         const void *data, DWORD data_size, DWORD flags)
 {
     struct private_data *d;
@@ -203,7 +203,7 @@ HRESULT resource_set_private_data(struct wined3d_resource *resource, REFGUID gui
     TRACE("resource %p, riid %s, data %p, data_size %u, flags %#x.\n",
             resource, debugstr_guid(guid), data, data_size, flags);
 
-    resource_free_private_data(resource, guid);
+    wined3d_resource_free_private_data(resource, guid);
 
     d = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*d));
     if (!d) return E_OUTOFMEMORY;
@@ -239,7 +239,8 @@ HRESULT resource_set_private_data(struct wined3d_resource *resource, REFGUID gui
     return WINED3D_OK;
 }
 
-HRESULT resource_get_private_data(const struct wined3d_resource *resource, REFGUID guid, void *data, DWORD *data_size)
+HRESULT CDECL wined3d_resource_get_private_data(const struct wined3d_resource *resource, REFGUID guid,
+        void *data, DWORD *data_size)
 {
     const struct private_data *d;
 
@@ -273,7 +274,7 @@ HRESULT resource_get_private_data(const struct wined3d_resource *resource, REFGU
 
     return WINED3D_OK;
 }
-HRESULT resource_free_private_data(struct wined3d_resource *resource, REFGUID guid)
+HRESULT CDECL wined3d_resource_free_private_data(struct wined3d_resource *resource, REFGUID guid)
 {
     struct private_data *data;
 

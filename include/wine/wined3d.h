@@ -2375,9 +2375,14 @@ WINED3DQUERYTYPE __cdecl wined3d_query_get_type(const struct wined3d_query *quer
 ULONG __cdecl wined3d_query_incref(struct wined3d_query *query);
 HRESULT __cdecl wined3d_query_issue(struct wined3d_query *query, DWORD flags);
 
+HRESULT __cdecl wined3d_resource_free_private_data(struct wined3d_resource *resource, REFGUID guid);
 void __cdecl wined3d_resource_get_desc(const struct wined3d_resource *resource,
         struct wined3d_resource_desc *desc);
 void * __cdecl wined3d_resource_get_parent(const struct wined3d_resource *resource);
+HRESULT __cdecl wined3d_resource_get_private_data(const struct wined3d_resource *resource,
+        REFGUID guid, void *data, DWORD *data_size);
+HRESULT __cdecl wined3d_resource_set_private_data(struct wined3d_resource *resource,
+        REFGUID guid, const void *data, DWORD data_size, DWORD flags);
 
 HRESULT __cdecl wined3d_rendertarget_view_create(struct wined3d_resource *resource,
         void *parent, struct wined3d_rendertarget_view **rendertarget_view);

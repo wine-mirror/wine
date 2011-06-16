@@ -2707,18 +2707,18 @@ ULONG CDECL wined3d_surface_decref(struct wined3d_surface *surface)
 HRESULT CDECL wined3d_surface_set_private_data(struct wined3d_surface *surface,
         REFGUID riid, const void *data, DWORD data_size, DWORD flags)
 {
-    return resource_set_private_data(&surface->resource, riid, data, data_size, flags);
+    return wined3d_resource_set_private_data(&surface->resource, riid, data, data_size, flags);
 }
 
 HRESULT CDECL wined3d_surface_get_private_data(const struct wined3d_surface *surface,
         REFGUID guid, void *data, DWORD *data_size)
 {
-    return resource_get_private_data(&surface->resource, guid, data, data_size);
+    return wined3d_resource_get_private_data(&surface->resource, guid, data, data_size);
 }
 
 HRESULT CDECL wined3d_surface_free_private_data(struct wined3d_surface *surface, REFGUID refguid)
 {
-    return resource_free_private_data(&surface->resource, refguid);
+    return wined3d_resource_free_private_data(&surface->resource, refguid);
 }
 
 DWORD CDECL wined3d_surface_set_priority(struct wined3d_surface *surface, DWORD priority)

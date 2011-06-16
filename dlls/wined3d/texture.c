@@ -453,18 +453,18 @@ ULONG CDECL wined3d_texture_decref(struct wined3d_texture *texture)
 HRESULT CDECL wined3d_texture_set_private_data(struct wined3d_texture *texture,
         REFGUID guid, const void *data, DWORD data_size, DWORD flags)
 {
-    return resource_set_private_data(&texture->resource, guid, data, data_size, flags);
+    return wined3d_resource_set_private_data(&texture->resource, guid, data, data_size, flags);
 }
 
 HRESULT CDECL wined3d_texture_get_private_data(const struct wined3d_texture *texture,
         REFGUID guid, void *data, DWORD *data_size)
 {
-    return resource_get_private_data(&texture->resource, guid, data, data_size);
+    return wined3d_resource_get_private_data(&texture->resource, guid, data, data_size);
 }
 
 HRESULT CDECL wined3d_texture_free_private_data(struct wined3d_texture *texture, REFGUID guid)
 {
-    return resource_free_private_data(&texture->resource, guid);
+    return wined3d_resource_free_private_data(&texture->resource, guid);
 }
 
 DWORD CDECL wined3d_texture_set_priority(struct wined3d_texture *texture, DWORD priority)

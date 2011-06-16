@@ -1850,10 +1850,7 @@ struct wined3d_resource
 };
 
 void resource_cleanup(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
-HRESULT resource_free_private_data(struct wined3d_resource *resource, REFGUID guid) DECLSPEC_HIDDEN;
 DWORD resource_get_priority(const struct wined3d_resource *resource) DECLSPEC_HIDDEN;
-HRESULT resource_get_private_data(const struct wined3d_resource *resource, REFGUID guid,
-        void *data, DWORD *data_size) DECLSPEC_HIDDEN;
 HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *device,
         WINED3DRESOURCETYPE resource_type, const struct wined3d_format *format,
         WINED3DMULTISAMPLE_TYPE multisample_type, UINT multisample_quality,
@@ -1861,8 +1858,6 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
         void *parent, const struct wined3d_parent_ops *parent_ops,
         const struct wined3d_resource_ops *resource_ops) DECLSPEC_HIDDEN;
 DWORD resource_set_priority(struct wined3d_resource *resource, DWORD priority) DECLSPEC_HIDDEN;
-HRESULT resource_set_private_data(struct wined3d_resource *resource, REFGUID guid,
-        const void *data, DWORD data_size, DWORD flags) DECLSPEC_HIDDEN;
 void resource_unload(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 
 /* Tests show that the start address of resources is 32 byte aligned */

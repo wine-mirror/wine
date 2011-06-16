@@ -23,6 +23,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
+static inline IDirect3DVertexBuffer9Impl *impl_from_IDirect3DVertexBuffer9(IDirect3DVertexBuffer9 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirect3DVertexBuffer9Impl, lpVtbl);
+}
+
 static HRESULT WINAPI d3d9_vertexbuffer_QueryInterface(IDirect3DVertexBuffer9 *iface, REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
@@ -97,14 +102,16 @@ static HRESULT WINAPI d3d9_vertexbuffer_GetDevice(IDirect3DVertexBuffer9 *iface,
 static HRESULT WINAPI d3d9_vertexbuffer_SetPrivateData(IDirect3DVertexBuffer9 *iface,
         REFGUID guid, const void *data, DWORD data_size, DWORD flags)
 {
+    IDirect3DVertexBuffer9Impl *buffer = impl_from_IDirect3DVertexBuffer9(iface);
+    struct wined3d_resource *resource;
     HRESULT hr;
 
     TRACE("iface %p, guid %s, data %p, data_size %u, flags %#x.\n",
             iface, debugstr_guid(guid), data, data_size, flags);
 
     wined3d_mutex_lock();
-    hr = wined3d_buffer_set_private_data(((IDirect3DVertexBuffer9Impl *)iface)->wineD3DVertexBuffer,
-            guid, data, data_size, flags);
+    resource = wined3d_buffer_get_resource(buffer->wineD3DVertexBuffer);
+    hr = wined3d_resource_set_private_data(resource, guid, data, data_size, flags);
     wined3d_mutex_unlock();
 
     return hr;
@@ -113,14 +120,16 @@ static HRESULT WINAPI d3d9_vertexbuffer_SetPrivateData(IDirect3DVertexBuffer9 *i
 static HRESULT WINAPI d3d9_vertexbuffer_GetPrivateData(IDirect3DVertexBuffer9 *iface,
         REFGUID guid, void *data, DWORD *data_size)
 {
+    IDirect3DVertexBuffer9Impl *buffer = impl_from_IDirect3DVertexBuffer9(iface);
+    struct wined3d_resource *resource;
     HRESULT hr;
 
     TRACE("iface %p, guid %s, data %p, data_size %p.\n",
             iface, debugstr_guid(guid), data, data_size);
 
     wined3d_mutex_lock();
-    hr = wined3d_buffer_get_private_data(((IDirect3DVertexBuffer9Impl *)iface)->wineD3DVertexBuffer,
-            guid, data, data_size);
+    resource = wined3d_buffer_get_resource(buffer->wineD3DVertexBuffer);
+    hr = wined3d_resource_get_private_data(resource, guid, data, data_size);
     wined3d_mutex_unlock();
 
     return hr;
@@ -128,12 +137,15 @@ static HRESULT WINAPI d3d9_vertexbuffer_GetPrivateData(IDirect3DVertexBuffer9 *i
 
 static HRESULT WINAPI d3d9_vertexbuffer_FreePrivateData(IDirect3DVertexBuffer9 *iface, REFGUID guid)
 {
+    IDirect3DVertexBuffer9Impl *buffer = impl_from_IDirect3DVertexBuffer9(iface);
+    struct wined3d_resource *resource;
     HRESULT hr;
 
     TRACE("iface %p, guid %s.\n", iface, debugstr_guid(guid));
 
     wined3d_mutex_lock();
-    hr = wined3d_buffer_free_private_data(((IDirect3DVertexBuffer9Impl *)iface)->wineD3DVertexBuffer, guid);
+    resource = wined3d_buffer_get_resource(buffer->wineD3DVertexBuffer);
+    hr = wined3d_resource_free_private_data(resource, guid);
     wined3d_mutex_unlock();
 
     return hr;

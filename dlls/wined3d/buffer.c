@@ -588,18 +588,18 @@ void * CDECL wined3d_buffer_get_parent(const struct wined3d_buffer *buffer)
 HRESULT CDECL wined3d_buffer_set_private_data(struct wined3d_buffer *buffer,
         REFGUID guid, const void *data, DWORD data_size, DWORD flags)
 {
-    return resource_set_private_data(&buffer->resource, guid, data, data_size, flags);
+    return wined3d_resource_set_private_data(&buffer->resource, guid, data, data_size, flags);
 }
 
 HRESULT CDECL wined3d_buffer_get_private_data(const struct wined3d_buffer *buffer,
         REFGUID guid, void *data, DWORD *data_size)
 {
-    return resource_get_private_data(&buffer->resource, guid, data, data_size);
+    return wined3d_resource_get_private_data(&buffer->resource, guid, data, data_size);
 }
 
 HRESULT CDECL wined3d_buffer_free_private_data(struct wined3d_buffer *buffer, REFGUID guid)
 {
-    return resource_free_private_data(&buffer->resource, guid);
+    return wined3d_resource_free_private_data(&buffer->resource, guid);
 }
 
 DWORD CDECL wined3d_buffer_set_priority(struct wined3d_buffer *buffer, DWORD priority)
