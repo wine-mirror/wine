@@ -1785,6 +1785,7 @@ static void Reorder_Ra_follows_matra(LPWSTR pwChar, IndicSyllable *s, lexical_fu
         s->ralf = loc-1;
         s->base -= 2;
         if (s->blwf >= 0) s->blwf -= 2;
+        if (s->pref >= 0) s->pref -= 2;
     }
 }
 
@@ -1805,6 +1806,7 @@ static void Reorder_Ra_follows_syllable(LPWSTR pwChar, IndicSyllable *s, lexical
         s->ralf = s->end-1;
         s->base -= 2;
         if (s->blwf >= 0) s->blwf -= 2;
+        if (s->pref >= 0) s->pref -= 2;
     }
 }
 
@@ -1828,6 +1830,7 @@ static void Reorder_Matra_precede_base(LPWSTR pwChar, IndicSyllable *s, lexical_
 
                 if (s->ralf >= s->base) s->ralf++;
                 if (s->blwf >= s->base) s->blwf++;
+                if (s->pref >= s->base) s->pref++;
                 s->base ++;
             }
         }
@@ -1854,6 +1857,7 @@ static void Reorder_Matra_precede_syllable(LPWSTR pwChar, IndicSyllable *s, lexi
 
                 if (s->ralf >= 0) s->ralf++;
                 if (s->blwf >= 0) s->blwf++;
+                if (s->pref >= 0) s->pref++;
                 s->base ++;
             }
         }
@@ -1904,6 +1908,19 @@ static void SecondReorder_Matra_precede_base(LPWSTR pwChar, IndicSyllable *s, WO
                 glyphs[g->base-1] = og;
             }
         }
+    }
+}
+
+static void SecondReorder_Pref_precede_base(LPWSTR pwChar, IndicSyllable *s, WORD *glyphs, IndicSyllable *g, lexical_function lexical)
+{
+    if (s->pref >= 0 && g->pref > g->base)
+    {
+        int j;
+        WCHAR og = glyphs[g->pref];
+        TRACE("Doing reorder of pref from %i to %i\n",g->pref,g->base);
+        for (j = g->pref; j > g->base; j--)
+            glyphs[j] = glyphs[j-1];
+        glyphs[g->base] = og;
     }
 }
 
@@ -1965,6 +1982,7 @@ static void SecondReorder_Like_Tamil(LPWSTR pwChar, IndicSyllable *s, WORD* pwGl
     if (lexical(pwChar[s->base]) == lex_Vowel) return;
 
     SecondReorder_Matra_precede_base(pwChar, s, pwGlyphs, g, lexical);
+    SecondReorder_Pref_precede_base(pwChar, s, pwGlyphs, g, lexical);
 }
 
 
@@ -1983,6 +2001,8 @@ static inline void shift_syllable_glyph_indexs(IndicSyllable *glyph_index, INT i
         glyph_index->ralf+= shift;
     if (glyph_index->blwf > index)
         glyph_index->blwf+= shift;
+    if (glyph_index->pref > index)
+        glyph_index->pref+= shift;
 }
 
 static void Apply_Indic_BasicForm(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwChars, INT cChars, IndicSyllable *syllable, WORD *pwOutGlyphs, INT* pcGlyphs, WORD *pwLogClust, lexical_function lexical, IndicSyllable *glyph_index, const GSUB_Feature *feature )
