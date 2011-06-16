@@ -2635,12 +2635,13 @@ static int telugu_lex(WCHAR c)
             else if (c>=0x0C05 && c<=0x0C14) return lex_Vowel;
             else if (c>=0x0C15 && c<=0x0C39) return lex_Consonant;
             else if (c>=0x0C3E && c<=0x0C40) return lex_Matra_above;
-            else if (c>=0x0C41 && c<=0x0C44) return lex_Matra_post;
+            else if (c>=0x0C41 && c<=0x0C42) return lex_Matra_post;
+            else if (c>=0x0C43 && c<=0x0C44) return lex_Modifier;
             else if (c>=0x0C46 && c<=0x0C47) return lex_Matra_above;
             else if (c>=0x0C4A && c<=0x0C4C) return lex_Matra_above;
             else if (c>=0x0C58 && c<=0x0C59) return lex_Consonant;
             else if (c>=0x0C60 && c<=0x0C61) return lex_Vowel;
-            else if (c>=0x0C62 && c<=0x0C63) return lex_Matra_below;
+            else if (c>=0x0C62 && c<=0x0C63) return lex_Modifier;
             else return lex_Generic;
     }
 }
