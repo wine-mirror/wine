@@ -886,6 +886,12 @@ DECL_HANDLER(new_process)
         return;
     }
 
+    if (!req->info_size)  /* create an orphaned process */
+    {
+        create_process( socket_fd, NULL, 0 );
+        return;
+    }
+
     /* build the startup info for a new process */
     if (!(info = alloc_object( &startup_info_ops ))) return;
     info->exe_file = NULL;
