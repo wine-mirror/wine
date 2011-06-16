@@ -516,12 +516,13 @@ static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
         int button_idx = 0;
         int pov_idx = 0;
         int slider_idx = 0;
+        int inst_id;
         CFIndex idx, cnt = CFArrayGetCount( gElementCFArrayRef );
 
         for ( idx = 0; idx < cnt; idx++ )
         {
             IOHIDValueRef valueRef;
-            int val;
+            int val, oldVal, newVal;
             IOHIDElementRef tIOHIDElementRef = ( IOHIDElementRef ) CFArrayGetValueAtIndex( gElementCFArrayRef, idx );
             int eleType = IOHIDElementGetType( tIOHIDElementRef );
 
@@ -532,7 +533,14 @@ static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
                     {
                         IOHIDDeviceGetValue(tIOHIDDeviceRef, tIOHIDElementRef, &valueRef);
                         val = IOHIDValueGetIntegerValue(valueRef);
-                        device->generic.js.rgbButtons[button_idx] = val ? 0x80 : 0x00;
+                        newVal = val ? 0x80 : 0x0;
+                        oldVal = device->generic.js.rgbButtons[button_idx];
+                        device->generic.js.rgbButtons[button_idx] = newVal;
+                        if (oldVal != newVal)
+                        {
+                            inst_id = DIDFT_MAKEINSTANCE(button_idx) | DIDFT_PSHBUTTON;
+                            queue_event(iface,inst_id,newVal,GetCurrentTime(),device->generic.base.dinput->evsequence++);
+                        }
                         button_idx ++;
                     }
                     break;
@@ -545,10 +553,17 @@ static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
                         {
                             IOHIDDeviceGetValue(tIOHIDDeviceRef, tIOHIDElementRef, &valueRef);
                             val = IOHIDValueGetIntegerValue(valueRef);
+                            oldVal = device->generic.js.rgdwPOV[pov_idx];
                             if (val >= 8)
-                                device->generic.js.rgdwPOV[pov_idx] = -1;
+                                newVal = -1;
                             else
-                                device->generic.js.rgdwPOV[pov_idx] = val * 4500;
+                                newVal = val * 4500;
+                            device->generic.js.rgdwPOV[pov_idx] = newVal;
+                            if (oldVal != newVal)
+                            {
+                                inst_id = DIDFT_MAKEINSTANCE(pov_idx) | DIDFT_POV;
+                                queue_event(iface,inst_id,newVal,GetCurrentTime(),device->generic.base.dinput->evsequence++);
+                            }
                             pov_idx ++;
                             break;
                         }
@@ -560,33 +575,57 @@ static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
                         case kHIDUsage_GD_Rz:
                         case kHIDUsage_GD_Slider:
                         {
+                            int wine_obj = -1;
+
                             IOHIDDeviceGetValue(tIOHIDDeviceRef, tIOHIDElementRef, &valueRef);
                             val = IOHIDValueGetIntegerValue(valueRef);
+                            newVal = joystick_map_axis(&device->generic.props[idx], val);
                             switch (usage)
                             {
                             case kHIDUsage_GD_X:
-                                device->generic.js.lX = joystick_map_axis(&device->generic.props[idx], val);
+                                wine_obj = 0;
+                                oldVal = device->generic.js.lX;
+                                device->generic.js.lX = newVal;
                                 break;
                             case kHIDUsage_GD_Y:
-                                device->generic.js.lY = joystick_map_axis(&device->generic.props[idx], val);
+                                wine_obj = 1;
+                                oldVal = device->generic.js.lY;
+                                device->generic.js.lY = newVal;
                                 break;
                             case kHIDUsage_GD_Z:
-                                device->generic.js.lZ = joystick_map_axis(&device->generic.props[idx], val);
+                                wine_obj = 2;
+                                oldVal = device->generic.js.lZ;
+                                device->generic.js.lZ = newVal;
                                 break;
                             case kHIDUsage_GD_Rx:
-                                device->generic.js.lRx = joystick_map_axis(&device->generic.props[idx], val);
+                                wine_obj = 3;
+                                oldVal = device->generic.js.lRx;
+                                device->generic.js.lRx = newVal;
                                 break;
                             case kHIDUsage_GD_Ry:
-                                device->generic.js.lRy = joystick_map_axis(&device->generic.props[idx], val);
+                                wine_obj = 4;
+                                oldVal = device->generic.js.lRy;
+                                device->generic.js.lRy = newVal;
                                 break;
                             case kHIDUsage_GD_Rz:
-                                device->generic.js.lRz = joystick_map_axis(&device->generic.props[idx], val);
+                                wine_obj = 5;
+                                oldVal = device->generic.js.lRz;
+                                device->generic.js.lRz = newVal;
                                 break;
                             case kHIDUsage_GD_Slider:
-                                device->generic.js.rglSlider[slider_idx] = joystick_map_axis(&device->generic.props[idx], val);
+                                wine_obj = 6 + slider_idx;
+                                oldVal = device->generic.js.rglSlider[slider_idx];
+                                device->generic.js.rglSlider[slider_idx] = newVal;
                                 slider_idx ++;
                                 break;
                             }
+                            if ((wine_obj != -1) &&
+                                 (oldVal != newVal))
+                            {
+                                inst_id = DIDFT_MAKEINSTANCE(wine_obj) | DIDFT_ABSAXIS;
+                                queue_event(iface,inst_id,newVal,GetCurrentTime(),device->generic.base.dinput->evsequence++);
+                            }
+
                             break;
                         }
                         default:
