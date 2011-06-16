@@ -2958,7 +2958,7 @@ static DWORD WINAPI drain_socket_thread(LPVOID arg)
                 fd_set readset;
                 FD_ZERO(&readset);
                 FD_SET(sock, &readset);
-                select(0, &readset, NULL, NULL, NULL);
+                select(sock+1, &readset, NULL, NULL, NULL);
                 while (drain_pause)
                     Sleep(100);
             }
