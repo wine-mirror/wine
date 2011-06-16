@@ -4834,7 +4834,7 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
     LEAVE_GL();
 
     /* Make sure the surface is loaded and up to date */
-    surface_internal_preload(dst_surface, SRGB_RGB);
+    surface_load_location(dst_surface, SFLAG_INTEXTURE, NULL);
     surface_bind(dst_surface, gl_info, FALSE);
 
     data.buffer_object = 0;
