@@ -233,8 +233,10 @@ HRESULT parse_header(parse_buffer * buf, BYTE ** decomp_buffer_ptr)
 
     buf->rem_bytes -= sizeof(WORD) * 2;
     buf->buffer += sizeof(WORD) * 2;
-    read_bytes(buf, &decomp_size, sizeof(decomp_size));
-    read_bytes(buf, &comp_size, sizeof(comp_size));
+    if (!read_bytes(buf, &decomp_size, sizeof(decomp_size)))
+      return DXFILEERR_BADFILETYPE;
+    if (!read_bytes(buf, &comp_size, sizeof(comp_size)))
+      return DXFILEERR_BADFILETYPE;
 
     TRACE("Compressed format %s detected: compressed_size = %x, decompressed_size = %x\n",
         debugstr_fourcc(header[2]), comp_size, decomp_size);
@@ -1049,7 +1051,8 @@ static void go_to_next_definition(parse_buffer * buf)
   char c;
   while (buf->rem_bytes)
   {
-    read_bytes(buf, &c, 1);
+    if (!read_bytes(buf, &c, 1))
+      return;
     if ((c == '#') || (c == '/'))
     {
       /* Handle comment (# or //) */
