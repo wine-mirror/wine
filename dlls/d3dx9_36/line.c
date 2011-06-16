@@ -27,6 +27,8 @@ static const struct ID3DXLineVtbl ID3DXLine_Vtbl;
 typedef struct ID3DXLineImpl {
     ID3DXLine ID3DXLine_iface;
     LONG ref;
+
+    IDirect3DDevice9 *device;
 } ID3DXLineImpl;
 
 static inline ID3DXLineImpl *impl_from_ID3DXLine(ID3DXLine *iface)
@@ -71,7 +73,10 @@ static ULONG WINAPI ID3DXLineImpl_Release(ID3DXLine* iface)
     TRACE("(%p)->(): Release from %u\n", This, ref + 1);
 
     if (!ref)
+    {
+        IDirect3DDevice9_Release(This->device);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -81,9 +86,14 @@ static HRESULT WINAPI ID3DXLineImpl_GetDevice(ID3DXLine* iface, LPDIRECT3DDEVICE
 {
     ID3DXLineImpl *This = impl_from_ID3DXLine(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, device);
+    TRACE ("(%p)->(%p): relay\n", This, device);
 
-    return E_NOTIMPL;
+    if (device == NULL) return D3DERR_INVALIDCALL;
+
+    *device = This->device;
+    IDirect3DDevice9_AddRef(This->device);
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXLineImpl_Begin(ID3DXLine* iface)
@@ -274,6 +284,8 @@ HRESULT WINAPI D3DXCreateLine(LPDIRECT3DDEVICE9 device, LPD3DXLINE* line)
 
     object->ID3DXLine_iface.lpVtbl = &ID3DXLine_Vtbl;
     object->ref = 1;
+    object->device = device;
+    IDirect3DDevice9_AddRef(device);
 
     *line = &object->ID3DXLine_iface;
 
