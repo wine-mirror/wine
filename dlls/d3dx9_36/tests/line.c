@@ -23,6 +23,8 @@ static void test_create_line(IDirect3DDevice9* device)
 {
     HRESULT hr;
     LPD3DXLINE line = NULL;
+    LPDIRECT3DDEVICE9 return_device;
+    ULONG ref;
 
     hr = D3DXCreateLine(NULL, &line);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
@@ -33,8 +35,23 @@ static void test_create_line(IDirect3DDevice9* device)
     hr = D3DXCreateLine(device, &line);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
 
-    if (line)
-        ID3DXLine_Release(line);
+    if (FAILED(hr))
+    {
+        return;
+    }
+
+    hr = ID3DXLine_GetDevice(line, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = ID3DXLine_GetDevice(line, &return_device);
+    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(return_device == device, "Expected line device %p, got %p\n", device, return_device);
+
+    ref = IDirect3DDevice9_Release(return_device);
+    ok(ref == 2, "Got %x references to device %p, expected 2\n", ref, return_device);
+
+    ref = ID3DXLine_Release(line);
+    ok(ref == 0, "Got %x references to line %p, expected 0\n", ref, line);
 }
 
 START_TEST(line)
