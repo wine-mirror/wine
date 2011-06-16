@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: N/A\n"
+"PO-Revision-Date: 2011-06-16 13:52-0500\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "Language: Chinese (PRC)\n"
@@ -8273,7 +8273,7 @@ msgstr ""
 
 #: cmd.rc:266
 msgid "%s: File Not Found\n"
-msgstr "找不到文件"
+msgstr "找不到文件\n"
 
 #: cmd.rc:267
 msgid "No help available for %s\n"

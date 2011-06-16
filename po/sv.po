@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-04-18 22:15+02:00\n"
+"PO-Revision-Date: 2011-06-16 13:51-0500\n"
 "Last-Translator: Anders Jonsson <anders.jonsson@norsjonet.se>\n"
 "Language-Team: none\n"
 "Language: Swedish\n"
@@ -4548,7 +4548,7 @@ msgstr "Installationspaketet är ogiltigt\n"
 
 #: winerror.mc:2826
 msgid "Installer user interface failed\n"
-msgstr "Användargränssnittet för installationsprogrammet misslyckades"
+msgstr "Användargränssnittet för installationsprogrammet misslyckades\n"
 
 #: winerror.mc:2831
 msgid "Failed to open installation log file\n"

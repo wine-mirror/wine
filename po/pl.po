@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-04-28 19:00+0100\n"
+"PO-Revision-Date: 2011-06-16 13:50-0500\n"
 "Last-Translator: Łukasz Wojniłowicz\n"
 "Language-Team: none\n"
 "Language: Polish\n"
@@ -3314,7 +3314,7 @@ msgstr "Różne konto usługi\n"
 
 #: winerror.mc:1276
 msgid "Driver failure cannot be detected\n"
-msgstr "Nie można wykryć niepowodzenia sterownika"
+msgstr "Nie można wykryć niepowodzenia sterownikai\n"
 
 #: winerror.mc:1281
 msgid "Process abort cannot be detected\n"
@@ -3806,7 +3806,7 @@ msgstr "Wykonaj operację nawet gdy nic się nie zmieniło\n"
 
 #: winerror.mc:1896
 msgid "The user profile is invalid\n"
-msgstr "Profil użytkownika jest niepoprawny."
+msgstr "Profil użytkownika jest niepoprawny.\n"
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server\n"
@@ -4538,7 +4538,7 @@ msgstr "Instalacja już jest uruchomiona\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open\n"
-msgstr "Niepowodzenie przy otwieraniu paczki instalacyjnej"
+msgstr "Niepowodzenie przy otwieraniu paczki instalacyjnej\n"
 
 #: winerror.mc:2821
 msgid "Installation package is invalid\n"
@@ -4558,7 +4558,7 @@ msgstr "Język instalacji niewspierany\n"
 
 #: winerror.mc:2841
 msgid "Installation transform failed to apply\n"
-msgstr "Nieudane zastosowanie transformacji instalacji"
+msgstr "Nieudane zastosowanie transformacji instalacji\n"
 
 #: winerror.mc:2846
 msgid "Installation package rejected\n"
@@ -4570,7 +4570,7 @@ msgstr "Funkcja nie mogła być wywołana\n"
 
 #: winerror.mc:2856
 msgid "Function failed\n"
-msgstr "Funkcja zakończyła niepowodzeniem"
+msgstr "Funkcja zakończyła niepowodzeniem\n"
 
 #: winerror.mc:2861
 msgid "Invalid table\n"
@@ -5218,7 +5218,7 @@ msgstr "Symbol potoku RPC zamknięty\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe\n"
-msgstr "Błąd dyscypliny na symbolu potoku RPC"
+msgstr "Błąd dyscypliny na symbolu potoku RPC\n"
 
 #: winerror.mc:3676
 msgid "No data on RPC pipe\n"
