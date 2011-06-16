@@ -2597,8 +2597,6 @@ static int oriya_lex(WCHAR c)
             if (c>=0x0B01 && c<=0x0B03) return lex_Modifier;
             else if (c>=0x0B05 && c<=0x0B14) return lex_Vowel;
             else if (c>=0x0B15 && c<=0x0B39) return lex_Consonant;
-            else if (c>=0x0B2C && c<=0x0B2E) return lex_Consonant;
-            else if (c>=0x0B32 && c<=0x0B33) return lex_Consonant;
             else if (c>=0x0B41 && c<=0x0B44) return lex_Matra_below;
             else if (c>=0x0B48 && c<=0x0B4C) return lex_Composed_Vowel;
             else if (c>=0x0B5C && c<=0x0B5D) return lex_Consonant;
