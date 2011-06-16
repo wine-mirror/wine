@@ -673,7 +673,7 @@ static void output_import_thunk( const char *name, const char *table, int pos )
     case CPU_ARM:
         output( "\tldr IP,[PC,#0]\n");
         output( "\tmov PC,PC\n");
-        output( "\t%s %s\n", get_asm_ptr_keyword(), table );
+        output( "\t.long %s\n", table );
         output( "\tldr PC,[IP,#%d]\n", pos);
         break;
     case CPU_POWERPC:
@@ -989,7 +989,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         output( "\tmov LR,PC\n");
         output( "\tadd LR,LR,#8\n");
         output( "\tldr PC,[PC,#-4]\n");
-        output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name("__wine_spec_delay_load") );
+        output( "\t.long %s\n", asm_name("__wine_spec_delay_load") );
         output( "\tmov IP,r0\n");
         output( "\tldmfd  SP!, {r4-r10,FP,LR}\n" );
         output( "\tldmfd  SP!, {r0-r3}\n" );
@@ -1084,7 +1084,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
                 output( "\tmov r0, r1\n" );
                 output( "\tadd r0, #%d\n", j );
                 output( "\tldr PC,[PC,#-4]\n");
-                output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name("__wine_delay_load_asm") );
+                output( "\t.long %s\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_POWERPC:
                 switch(target_platform)
