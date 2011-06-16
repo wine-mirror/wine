@@ -473,13 +473,13 @@ static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
 
 	/* To make string as short as above */
 	lstrcpynA(name, sane_devlist[i]->vendor, sizeof(name)-1);
-	if (self->Manufacturer && *self->Manufacturer && strcmp(name, self->Manufacturer))
+	if (*self->Manufacturer && strcmp(name, self->Manufacturer))
 	    continue;
 	lstrcpynA(name, sane_devlist[i]->model, sizeof(name)-1);
-	if (self->ProductFamily && *self->ProductFamily && strcmp(name, self->ProductFamily))
+	if (*self->ProductFamily && strcmp(name, self->ProductFamily))
 	    continue;
         copy_sane_short_name(sane_devlist[i]->name, name, sizeof(name) - 1);
-	if (self->ProductName && *self->ProductName && strcmp(name, self->ProductName))
+	if (*self->ProductName && strcmp(name, self->ProductName))
 	    continue;
 	break;
     }
