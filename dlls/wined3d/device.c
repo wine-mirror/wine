@@ -4833,8 +4833,13 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
     checkGLcall("glActiveTextureARB");
     LEAVE_GL();
 
-    /* Make sure the surface is loaded and up to date */
-    surface_load_location(dst_surface, SFLAG_INTEXTURE, NULL);
+    /* Only load the surface for partial updates. For newly allocated texture
+     * the texture wouldn't be the current location, and we'd upload zeroes
+     * just to overwrite them again. */
+    if (update_w == dst_w && update_h == dst_h)
+        surface_prepare_texture(dst_surface, gl_info, FALSE);
+    else
+        surface_load_location(dst_surface, SFLAG_INTEXTURE, NULL);
     surface_bind(dst_surface, gl_info, FALSE);
 
     data.buffer_object = 0;
