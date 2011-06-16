@@ -2150,18 +2150,13 @@ HRESULT __cdecl wined3d_buffer_create_ib(struct wined3d_device *device, UINT len
 HRESULT __cdecl wined3d_buffer_create_vb(struct wined3d_device *device, UINT length, DWORD usage, WINED3DPOOL pool,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_buffer **buffer);
 ULONG __cdecl wined3d_buffer_decref(struct wined3d_buffer *buffer);
-HRESULT __cdecl wined3d_buffer_free_private_data(struct wined3d_buffer *buffer, REFGUID guid);
 void * __cdecl wined3d_buffer_get_parent(const struct wined3d_buffer *buffer);
 DWORD __cdecl wined3d_buffer_get_priority(const struct wined3d_buffer *buffer);
-HRESULT __cdecl wined3d_buffer_get_private_data(const struct wined3d_buffer *buffer,
-        REFGUID guid, void *data, DWORD *data_size);
 struct wined3d_resource * __cdecl wined3d_buffer_get_resource(struct wined3d_buffer *buffer);
 ULONG __cdecl wined3d_buffer_incref(struct wined3d_buffer *buffer);
 HRESULT __cdecl wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UINT size, BYTE **data, DWORD flags);
 void  __cdecl wined3d_buffer_preload(struct wined3d_buffer *buffer);
 DWORD __cdecl wined3d_buffer_set_priority(struct wined3d_buffer *buffer, DWORD new_priority);
-HRESULT __cdecl wined3d_buffer_set_private_data(struct wined3d_buffer *buffer,
-        REFGUID guid, const void *data, DWORD data_size, DWORD flags);
 void __cdecl wined3d_buffer_unmap(struct wined3d_buffer *buffer);
 
 struct wined3d_clipper * __cdecl wined3d_clipper_create(void);
