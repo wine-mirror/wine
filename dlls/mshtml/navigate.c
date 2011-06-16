@@ -689,6 +689,8 @@ HRESULT start_binding(HTMLWindow *window, HTMLDocumentNode *doc, BSCallback *bsc
     IStream *str = NULL;
     HRESULT hres;
 
+    TRACE("(%p %p %p %p)\n", window, doc, bscallback, bctx);
+
     bscallback->doc = doc;
 
     /* NOTE: IE7 calls IsSystemMoniker here*/
@@ -1001,11 +1003,6 @@ static void on_stop_nsrequest(nsChannelBSC *This, HRESULT result)
         request_result = NS_ERROR_FAILURE;
     }
 
-    if(!This->bsc.readed && SUCCEEDED(result)) {
-        TRACE("No data read! Calling OnStartRequest\n");
-        on_start_nsrequest(This);
-    }
-
     if(This->nslistener) {
         nsres = nsIStreamListener_OnStopRequest(This->nslistener,
                  (nsIRequest*)&This->nschannel->nsIHttpChannel_iface, This->nscontext,
@@ -1269,6 +1266,11 @@ static void stop_request_proc(task_t *_task)
 static HRESULT async_stop_request(nsChannelBSC *This)
 {
     stop_request_task_t *task;
+
+    if(!This->bsc.readed) {
+        TRACE("No data read, calling OnStartRequest\n");
+        on_start_nsrequest(This);
+    }
 
     task = heap_alloc(sizeof(*task));
     if(!task)
