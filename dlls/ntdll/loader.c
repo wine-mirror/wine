@@ -1753,16 +1753,16 @@ static NTSTATUS find_actctx_dll( LPCWSTR libname, LPWSTR *fullname )
         }
     }
 
-    needed = (windows_dir.Length + sizeof(winsxsW) + info->ulAssemblyDirectoryNameLength +
-              nameW.Length + 2*sizeof(WCHAR));
+    needed = (strlenW(user_shared_data->NtSystemRoot) * sizeof(WCHAR) +
+              sizeof(winsxsW) + info->ulAssemblyDirectoryNameLength + nameW.Length + 2*sizeof(WCHAR));
 
     if (!(*fullname = p = RtlAllocateHeap( GetProcessHeap(), 0, needed )))
     {
         status = STATUS_NO_MEMORY;
         goto done;
     }
-    memcpy( p, windows_dir.Buffer, windows_dir.Length );
-    p += windows_dir.Length / sizeof(WCHAR);
+    strcpyW( p, user_shared_data->NtSystemRoot );
+    p += strlenW(p);
     memcpy( p, winsxsW, sizeof(winsxsW) );
     p += sizeof(winsxsW) / sizeof(WCHAR);
     memcpy( p, info->lpAssemblyDirectoryName, info->ulAssemblyDirectoryNameLength );
@@ -2812,8 +2812,8 @@ void CDECL __wine_init_windows_dir( const WCHAR *windir, const WCHAR *sysdir )
     PLIST_ENTRY mark, entry;
     LPWSTR buffer, p;
 
-    DIR_init_windows_dir( windir, sysdir );
     strcpyW( user_shared_data->NtSystemRoot, windir );
+    DIR_init_windows_dir( windir, sysdir );
 
     /* prepend the system dir to the name of the already created modules */
     mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;

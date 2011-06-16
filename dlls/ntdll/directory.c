@@ -77,6 +77,7 @@
 #include "windef.h"
 #include "winnt.h"
 #include "winternl.h"
+#include "ddk/wdm.h"
 #include "ntdll_misc.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
@@ -161,7 +162,6 @@ static int show_dot_files = -1;
 /* at some point we may want to allow Winelib apps to set this */
 static const int is_case_sensitive = FALSE;
 
-UNICODE_STRING windows_dir = { 0, 0, NULL };  /* windows directory */
 UNICODE_STRING system_dir = { 0, 0, NULL };  /* system directory */
 
 static struct file_identity curdir;
@@ -2282,16 +2282,16 @@ static void init_redirects(void)
     struct stat st;
     unsigned int i;
 
-    if (!RtlDosPathNameToNtPathName_U( windows_dir.Buffer, &nt_name, NULL, NULL ))
+    if (!RtlDosPathNameToNtPathName_U( user_shared_data->NtSystemRoot, &nt_name, NULL, NULL ))
     {
-        ERR( "can't convert %s\n", debugstr_us(&windows_dir) );
+        ERR( "can't convert %s\n", debugstr_w(user_shared_data->NtSystemRoot) );
         return;
     }
     status = wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN_IF, FALSE );
     RtlFreeUnicodeString( &nt_name );
     if (status)
     {
-        ERR( "cannot open %s (%x)\n", debugstr_us(&windows_dir), status );
+        ERR( "cannot open %s (%x)\n", debugstr_w(user_shared_data->NtSystemRoot), status );
         return;
     }
     if (!stat( unix_name.Buffer, &st ))
@@ -2389,7 +2389,6 @@ void DIR_init_windows_dir( const WCHAR *win, const WCHAR *sys )
 {
     /* FIXME: should probably store paths as NT file names */
 
-    RtlCreateUnicodeString( &windows_dir, win );
     RtlCreateUnicodeString( &system_dir, sys );
 
 #ifndef _WIN64

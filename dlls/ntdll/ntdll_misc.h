@@ -107,7 +107,6 @@ extern FARPROC SNOOP_GetProcAddress( HMODULE hmod, const IMAGE_EXPORT_DIRECTORY 
                                      FARPROC origfun, DWORD ordinal, const WCHAR *user ) DECLSPEC_HIDDEN;
 extern void RELAY_SetupDLL( HMODULE hmod ) DECLSPEC_HIDDEN;
 extern void SNOOP_SetupDLL( HMODULE hmod ) DECLSPEC_HIDDEN;
-extern UNICODE_STRING windows_dir DECLSPEC_HIDDEN;
 extern UNICODE_STRING system_dir DECLSPEC_HIDDEN;
 
 typedef LONG (WINAPI *PUNHANDLED_EXCEPTION_FILTER)(PEXCEPTION_POINTERS);
