@@ -1767,9 +1767,10 @@ static void Reorder_Ra_follows_matra(LPWSTR pwChar, IndicSyllable *s, lexical_fu
     if (s->ralf >= 0)
     {
         int j,loc;
+        int stop = (s->blwf >=0)? s->blwf+1 : s->base;
         WORD Ra = pwChar[s->start];
         WORD H = pwChar[s->start+1];
-        for (loc = s->end; loc > s->base; loc--)
+        for (loc = s->end; loc > stop; loc--)
             if (lexical(pwChar[loc]) == lex_Matra_post || lexical(pwChar[loc]) == lex_Matra_below)
                 break;
 
@@ -1781,6 +1782,7 @@ static void Reorder_Ra_follows_matra(LPWSTR pwChar, IndicSyllable *s, lexical_fu
 
         s->ralf = loc-1;
         s->base -= 2;
+        if (s->blwf >= 0) s->blwf -= 2;
     }
 }
 
@@ -1800,6 +1802,7 @@ static void Reorder_Ra_follows_syllable(LPWSTR pwChar, IndicSyllable *s, lexical
 
         s->ralf = s->end-1;
         s->base -= 2;
+        if (s->blwf >= 0) s->blwf -= 2;
     }
 }
 
@@ -1822,6 +1825,7 @@ static void Reorder_Matra_precede_base(LPWSTR pwChar, IndicSyllable *s, lexical_
                 pwChar[s->base] = c;
 
                 if (s->ralf >= s->base) s->ralf++;
+                if (s->blwf >= s->base) s->blwf++;
                 s->base ++;
             }
         }
@@ -1847,6 +1851,7 @@ static void Reorder_Matra_precede_syllable(LPWSTR pwChar, IndicSyllable *s, lexi
                 pwChar[s->start] = c;
 
                 if (s->ralf >= 0) s->ralf++;
+                if (s->blwf >= 0) s->blwf++;
                 s->base ++;
             }
         }
@@ -1916,6 +1921,8 @@ static inline void shift_syllable_glyph_indexs(IndicSyllable *glyph_index, INT i
         glyph_index->end+= shift;
     if (glyph_index->ralf > index)
         glyph_index->ralf+= shift;
+    if (glyph_index->blwf > index)
+        glyph_index->blwf+= shift;
 }
 
 static void Apply_Indic_BasicForm(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwChars, INT cChars, IndicSyllable *syllable, WORD *pwOutGlyphs, INT* pcGlyphs, WORD *pwLogClust, lexical_function lexical, IndicSyllable *glyph_index, const GSUB_Feature *feature )
@@ -2014,7 +2021,10 @@ static void Apply_Indic_PostBase(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa
 
     count = syllable->end - syllable->base;
 
-    g_offset = 0;
+    if (syllable->ralf >= syllable->base)
+        g_offset = -1;
+    else
+        g_offset = 0;
     index = find_halant_consonant(&pwChars[syllable->base], 0, count, lexical);
 
     while (index >= 0)

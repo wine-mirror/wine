@@ -100,6 +100,7 @@ typedef struct {
     INT start;
     INT base;
     INT ralf;
+    INT blwf;
     INT end;
 } IndicSyllable;
 
