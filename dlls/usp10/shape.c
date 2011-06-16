@@ -309,6 +309,8 @@ typedef struct tagConsonantComponents
     WCHAR output;
 } ConsonantComponents;
 
+typedef void (*second_reorder_function)(LPWSTR pwChar, IndicSyllable *syllable,WORD* pwGlyphs, IndicSyllable* glyph_index, lexical_function lex);
+
 /* the orders of joined_forms and contextual_features need to line up */
 static const char* contextual_features[] =
 {
@@ -1858,6 +1860,30 @@ static void Reorder_Matra_precede_syllable(LPWSTR pwChar, IndicSyllable *s, lexi
     }
 }
 
+static void SecondReorder_Blwf_follows_matra(LPWSTR pwChar, IndicSyllable *s, WORD *glyphs, IndicSyllable *g, lexical_function lexical)
+{
+    if (s->blwf >= 0 && g->blwf > g->base)
+    {
+        int j,loc;
+        int g_offset;
+        for (loc = s->end; loc > s->blwf; loc--)
+            if (lexical(pwChar[loc]) == lex_Matra_below || lexical(pwChar[loc]) == lex_Matra_above || lexical(pwChar[loc]) == lex_Matra_post)
+                break;
+
+        g_offset = (loc - s->blwf) - 1;
+
+        if (loc != s->blwf)
+        {
+            WORD blwf = glyphs[g->blwf];
+            TRACE("Doing reorder of Below-base to %i (glyph offset %i)\n",loc,g_offset);
+            /* do not care about the pwChar array anymore, just the glyphs */
+            for (j = 0; j < g_offset; j++)
+                glyphs[g->blwf + j] = glyphs[g->blwf + j + 1];
+            glyphs[g->blwf + g_offset] = blwf;
+        }
+    }
+}
+
 static void Reorder_Like_Sinhala(LPWSTR pwChar, IndicSyllable *s, lexical_function lexical)
 {
     TRACE("Syllable (%i..%i..%i)\n",s->start,s->base,s->end);
@@ -1906,6 +1932,16 @@ static void Reorder_Like_Malayalam(LPWSTR pwChar, IndicSyllable *s, lexical_func
 
     Reorder_Ra_follows_matra(pwChar, s, lexical);
     Reorder_Matra_precede_base(pwChar, s, lexical);
+}
+
+static void SecondReorder_Like_Telugu(LPWSTR pwChar, IndicSyllable *s, WORD* pwGlyphs, IndicSyllable *g, lexical_function lexical)
+{
+    TRACE("Syllable (%i..%i..%i)\n",s->start,s->base,s->end);
+    TRACE("Glyphs (%i..%i..%i)\n",g->start,g->base,g->end);
+    if (s->start == s->base && s->base == s->end)  return;
+    if (lexical(pwChar[s->base]) == lex_Vowel) return;
+
+    SecondReorder_Blwf_follows_matra(pwChar, s, pwGlyphs, g, lexical);
 }
 
 static inline void shift_syllable_glyph_indexs(IndicSyllable *glyph_index, INT index, INT shift)
@@ -2042,7 +2078,7 @@ static void Apply_Indic_PostBase(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa
     }
 }
 
-static void ShapeIndicSyllables(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwChars, INT cChars, IndicSyllable *syllables, INT syllable_count, WORD *pwOutGlyphs, INT* pcGlyphs, WORD *pwLogClust, lexical_function lexical)
+static void ShapeIndicSyllables(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwChars, INT cChars, IndicSyllable *syllables, INT syllable_count, WORD *pwOutGlyphs, INT* pcGlyphs, WORD *pwLogClust, lexical_function lexical, second_reorder_function second_reorder)
 {
     int c;
     int overall_shift = 0;
@@ -2081,6 +2117,7 @@ static void ShapeIndicSyllables(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa,
             TRACE("applying feature akhn\n");
             Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, akhn);
         }
+
         if (rphf)
             Apply_Indic_Rphf(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs);
         if (rkrf)
@@ -2109,6 +2146,9 @@ static void ShapeIndicSyllables(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa,
             TRACE("applying feature cjct\n");
             Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, cjct);
         }
+
+        if (second_reorder)
+            second_reorder(pwChars, &syllables[c], pwOutGlyphs, &glyph_indexs, lexical);
 
         overall_shift += glyph_indexs.end - old_end;
     }
@@ -2187,7 +2227,7 @@ static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     /* Step 4: Base Form application to syllables */
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
-    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, sinhala_lex);
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, sinhala_lex, NULL);
 
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
@@ -2266,7 +2306,7 @@ static void ContextualShape_Devanagari(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
     *pcGlyphs = cCount;
 
     /* Step 3: Base Form application to syllables */
-    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, devanagari_lex);
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, devanagari_lex, NULL);
 
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
@@ -2356,7 +2396,7 @@ static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     }
 
     /* Step 4: Base Form application to syllables */
-    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, bengali_lex);
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, bengali_lex, NULL);
 
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
@@ -2427,7 +2467,7 @@ static void ContextualShape_Gurmukhi(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     *pcGlyphs = cCount;
 
     /* Step 3: Base Form application to syllables */
-    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, gurmukhi_lex);
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, gurmukhi_lex, NULL);
 
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
@@ -2482,7 +2522,7 @@ static void ContextualShape_Gujarati(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     *pcGlyphs = cCount;
 
     /* Step 2: Base Form application to syllables */
-    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, gujarati_lex);
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, gujarati_lex, NULL);
 
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
@@ -2563,7 +2603,7 @@ static void ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     *pcGlyphs = cCount;
 
     /* Step 3: Base Form application to syllables */
-    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, oriya_lex);
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, oriya_lex, NULL);
 
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
@@ -2625,7 +2665,7 @@ static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     *pcGlyphs = cCount;
 
     /* Step 3: Base Form application to syllables */
-    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, tamil_lex);
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, tamil_lex, NULL);
 
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
@@ -2687,7 +2727,7 @@ static void ContextualShape_Telugu(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
     *pcGlyphs = cCount;
 
     /* Step 3: Base Form application to syllables */
-    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, telugu_lex);
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, telugu_lex, SecondReorder_Like_Telugu);
 
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
@@ -2754,7 +2794,7 @@ static void ContextualShape_Kannada(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     *pcGlyphs = cCount;
 
     /* Step 3: Base Form application to syllables */
-    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, kannada_lex);
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, kannada_lex, SecondReorder_Like_Telugu);
 
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
@@ -2814,7 +2854,7 @@ static void ContextualShape_Malayalam(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS
     *pcGlyphs = cCount;
 
     /* Step 3: Base Form application to syllables */
-    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, malayalam_lex);
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, malayalam_lex, NULL);
 
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
