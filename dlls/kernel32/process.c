@@ -1786,6 +1786,85 @@ static BOOL terminate_main_thread(void)
 #endif
 
 /***********************************************************************
+ *           exec_loader
+ */
+static pid_t exec_loader( LPCWSTR cmd_line, unsigned int flags, int socketfd,
+                          int stdin_fd, int stdout_fd, const char *unixdir, char *winedebug,
+                          const struct binary_info *binary_info, int exec_only )
+{
+    pid_t pid;
+    char *wineloader = NULL;
+    const char *loader = NULL;
+    char **argv;
+
+    argv = build_argv( cmd_line, 1 );
+
+    if (!is_win64 ^ !(binary_info->flags & BINARY_FLAG_64BIT))
+        loader = get_alternate_loader( &wineloader );
+
+    if (exec_only || !(pid = fork()))  /* child */
+    {
+        char preloader_reserve[64], socket_env[64];
+
+        if (flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS))
+        {
+            if (!(pid = fork()))
+            {
+                int fd = open( "/dev/null", O_RDWR );
+                setsid();
+                /* close stdin and stdout */
+                if (fd != -1)
+                {
+                    dup2( fd, 0 );
+                    dup2( fd, 1 );
+                    close( fd );
+                }
+            }
+            else if (pid != -1) _exit(0);  /* parent */
+        }
+        else
+        {
+            if (stdin_fd != -1) dup2( stdin_fd, 0 );
+            if (stdout_fd != -1) dup2( stdout_fd, 1 );
+        }
+
+        if (stdin_fd != -1) close( stdin_fd );
+        if (stdout_fd != -1) close( stdout_fd );
+
+        /* Reset signals that we previously set to SIG_IGN */
+        signal( SIGPIPE, SIG_DFL );
+        signal( SIGCHLD, SIG_DFL );
+
+        sprintf( socket_env, "WINESERVERSOCKET=%u", socketfd );
+        sprintf( preloader_reserve, "WINEPRELOADRESERVE=%lx-%lx",
+                 (unsigned long)binary_info->res_start, (unsigned long)binary_info->res_end );
+
+        putenv( preloader_reserve );
+        putenv( socket_env );
+        if (winedebug) putenv( winedebug );
+        if (wineloader) putenv( wineloader );
+        if (unixdir) chdir(unixdir);
+
+        if (argv)
+        {
+            do
+            {
+                wine_exec_wine_binary( loader, argv, getenv("WINELOADER") );
+            }
+#ifdef __APPLE__
+            while (errno == ENOTSUP && exec_only && terminate_main_thread());
+#else
+            while (0);
+#endif
+        }
+        _exit(1);
+    }
+    HeapFree( GetProcessHeap(), 0, wineloader );
+    HeapFree( GetProcessHeap(), 0, argv );
+    return pid;
+}
+
+/***********************************************************************
  *           create_process
  *
  * Create a new process. If hFile is a valid handle we have an exe
@@ -1801,9 +1880,6 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     HANDLE process_info;
     WCHAR *env_end;
     char *winedebug = NULL;
-    char *wineloader = NULL;
-    const char *loader = NULL;
-    char **argv;
     startup_info_t *startup_info;
     DWORD startup_info_size;
     int socketfd[2], stdin_fd = -1, stdout_fd = -1;
@@ -1817,12 +1893,42 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         return FALSE;
     }
 
+    /* create the socket for the new process */
+
+    if (socketpair( PF_UNIX, SOCK_STREAM, 0, socketfd ) == -1)
+    {
+        SetLastError( ERROR_TOO_MANY_OPEN_FILES );
+        return FALSE;
+    }
+
+    if (exec_only)  /* things are much simpler in this case */
+    {
+        wine_server_send_fd( socketfd[1] );
+        close( socketfd[1] );
+        SERVER_START_REQ( new_process )
+        {
+            req->create_flags   = flags;
+            req->socket_fd      = socketfd[1];
+            req->exe_file       = wine_server_obj_handle( hFile );
+            ret = !wine_server_call_err( req );
+        }
+        SERVER_END_REQ;
+
+        if (ret) exec_loader( cmd_line, flags, socketfd[0], stdin_fd, stdout_fd, unixdir,
+                              winedebug, binary_info, TRUE );
+
+        close( socketfd[0] );
+        return FALSE;
+    }
+
     RtlAcquirePebLock();
 
     if (!(startup_info = create_startup_info( filename, cmd_line, cur_dir, env, flags, startup,
                                               &startup_info_size )))
     {
         RtlReleasePebLock();
+        close( socketfd[0] );
+        close( socketfd[1] );
         return FALSE;
     }
     if (!env) env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
@@ -1840,16 +1946,6 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     }
     env_end++;
 
-    /* create the socket for the new process */
-
-    if (socketpair( PF_UNIX, SOCK_STREAM, 0, socketfd ) == -1)
-    {
-        RtlReleasePebLock();
-        HeapFree( GetProcessHeap(), 0, winedebug );
-        HeapFree( GetProcessHeap(), 0, startup_info );
-        SetLastError( ERROR_TOO_MANY_OPEN_FILES );
-        return FALSE;
-    }
     wine_server_send_fd( socketfd[1] );
     close( socketfd[1] );
 
@@ -1901,77 +1997,14 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     HeapFree( GetProcessHeap(), 0, startup_info );
 
     /* create the child process */
-    argv = build_argv( cmd_line, 1 );
 
-    if (!is_win64 ^ !(binary_info->flags & BINARY_FLAG_64BIT))
-        loader = get_alternate_loader( &wineloader );
-
-    if (exec_only || !(pid = fork()))  /* child */
-    {
-        char preloader_reserve[64], socket_env[64];
-
-        if (flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS))
-        {
-            if (!(pid = fork()))
-            {
-                int fd = open( "/dev/null", O_RDWR );
-                setsid();
-                /* close stdin and stdout */
-                if (fd != -1)
-                {
-                    dup2( fd, 0 );
-                    dup2( fd, 1 );
-                    close( fd );
-                }
-            }
-            else if (pid != -1) _exit(0);  /* parent */
-        }
-        else
-        {
-            if (stdin_fd != -1) dup2( stdin_fd, 0 );
-            if (stdout_fd != -1) dup2( stdout_fd, 1 );
-        }
-
-        if (stdin_fd != -1) close( stdin_fd );
-        if (stdout_fd != -1) close( stdout_fd );
-
-        /* Reset signals that we previously set to SIG_IGN */
-        signal( SIGPIPE, SIG_DFL );
-        signal( SIGCHLD, SIG_DFL );
-
-        sprintf( socket_env, "WINESERVERSOCKET=%u", socketfd[0] );
-        sprintf( preloader_reserve, "WINEPRELOADRESERVE=%lx-%lx",
-                 (unsigned long)binary_info->res_start, (unsigned long)binary_info->res_end );
-
-        putenv( preloader_reserve );
-        putenv( socket_env );
-        if (winedebug) putenv( winedebug );
-        if (wineloader) putenv( wineloader );
-        if (unixdir) chdir(unixdir);
-
-        if (argv)
-        {
-            do
-            {
-                wine_exec_wine_binary( loader, argv, getenv("WINELOADER") );
-            }
-#ifdef __APPLE__
-            while (errno == ENOTSUP && exec_only && terminate_main_thread());
-#else
-            while (0);
-#endif
-        }
-        _exit(1);
-    }
-
-    /* this is the parent */
+    pid = exec_loader( cmd_line, flags, socketfd[0], stdin_fd, stdout_fd, unixdir,
+                       winedebug, binary_info, FALSE );
 
     if (stdin_fd != -1) close( stdin_fd );
     if (stdout_fd != -1) close( stdout_fd );
     close( socketfd[0] );
-    HeapFree( GetProcessHeap(), 0, argv );
     HeapFree( GetProcessHeap(), 0, winedebug );
-    HeapFree( GetProcessHeap(), 0, wineloader );
     if (pid == -1)
     {
         FILE_SetDosError();
