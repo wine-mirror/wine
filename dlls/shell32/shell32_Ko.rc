@@ -1,6 +1,6 @@
 /*
  * Copyright 1998 Juergen Schmied
- * Copyright 2006, 2007,2010 YunSong Hwang
+ * Copyright 2006, 2007,2010,2011 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -76,7 +76,7 @@ CAPTION " %s 정보"
 FONT 10, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "확인", IDOK, 153, 133, 60, 12, WS_TABSTOP
- PUSHBUTTON "Wine 라이센스(&l)...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
+ PUSHBUTTON "Wine 라이센스(&l)", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
  LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", stc1, 10, 10, 30, 30
  LTEXT "", IDC_ABOUT_STATIC_TEXT1, 42, 10, 170, 10
