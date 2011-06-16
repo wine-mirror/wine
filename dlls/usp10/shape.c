@@ -1884,6 +1884,29 @@ static void SecondReorder_Blwf_follows_matra(LPWSTR pwChar, IndicSyllable *s, WO
     }
 }
 
+static void SecondReorder_Matra_precede_base(LPWSTR pwChar, IndicSyllable *s, WORD *glyphs, IndicSyllable *g, lexical_function lexical)
+{
+    int i;
+
+    /* reorder previously moved Matras to correct position*/
+    for (i = s->start; i < s->base; i++)
+    {
+        if (lexical(pwChar[i]) == lex_Matra_pre)
+        {
+            int j;
+            int g_start = g->start + i - s->start;
+            if (g_start < g->base -1 )
+            {
+                WCHAR og = glyphs[g_start];
+                TRACE("Doing reorder of matra from %i to %i\n",g_start,g->base);
+                for (j = g_start; j < g->base-1; j++)
+                    glyphs[j] = glyphs[j+1];
+                glyphs[g->base-1] = og;
+            }
+        }
+    }
+}
+
 static void Reorder_Like_Sinhala(LPWSTR pwChar, IndicSyllable *s, lexical_function lexical)
 {
     TRACE("Syllable (%i..%i..%i)\n",s->start,s->base,s->end);
@@ -1924,16 +1947,6 @@ static void Reorder_Like_Kannada(LPWSTR pwChar, IndicSyllable *s, lexical_functi
     Reorder_Matra_precede_syllable(pwChar, s, lexical);
 }
 
-static void Reorder_Like_Malayalam(LPWSTR pwChar, IndicSyllable *s, lexical_function lexical)
-{
-    TRACE("Syllable (%i..%i..%i)\n",s->start,s->base,s->end);
-    if (s->start == s->base && s->base == s->end)  return;
-    if (lexical(pwChar[s->base]) == lex_Vowel) return;
-
-    Reorder_Ra_follows_matra(pwChar, s, lexical);
-    Reorder_Matra_precede_base(pwChar, s, lexical);
-}
-
 static void SecondReorder_Like_Telugu(LPWSTR pwChar, IndicSyllable *s, WORD* pwGlyphs, IndicSyllable *g, lexical_function lexical)
 {
     TRACE("Syllable (%i..%i..%i)\n",s->start,s->base,s->end);
@@ -1943,6 +1956,17 @@ static void SecondReorder_Like_Telugu(LPWSTR pwChar, IndicSyllable *s, WORD* pwG
 
     SecondReorder_Blwf_follows_matra(pwChar, s, pwGlyphs, g, lexical);
 }
+
+static void SecondReorder_Like_Tamil(LPWSTR pwChar, IndicSyllable *s, WORD* pwGlyphs, IndicSyllable *g, lexical_function lexical)
+{
+    TRACE("Syllable (%i..%i..%i)\n",s->start,s->base,s->end);
+    TRACE("Glyphs (%i..%i..%i)\n",g->start,g->base,g->end);
+    if (s->start == s->base && s->base == s->end)  return;
+    if (lexical(pwChar[s->base]) == lex_Vowel) return;
+
+    SecondReorder_Matra_precede_base(pwChar, s, pwGlyphs, g, lexical);
+}
+
 
 static inline void shift_syllable_glyph_indexs(IndicSyllable *glyph_index, INT index, INT shift)
 {
@@ -2659,13 +2683,13 @@ static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
-    Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, tamil_lex, Reorder_Like_Sinhala);
+    Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, tamil_lex, Reorder_Like_Bengali);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     /* Step 3: Base Form application to syllables */
-    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, tamil_lex, NULL);
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, tamil_lex, SecondReorder_Like_Tamil);
 
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
@@ -2848,13 +2872,13 @@ static void ContextualShape_Malayalam(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
-    Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, malayalam_lex, Reorder_Like_Malayalam);
+    Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, malayalam_lex, Reorder_Like_Devanagari);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
     GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     /* Step 3: Base Form application to syllables */
-    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, malayalam_lex, NULL);
+    ShapeIndicSyllables(hdc, psc, psa, input, cCount, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, malayalam_lex, SecondReorder_Like_Tamil);
 
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
