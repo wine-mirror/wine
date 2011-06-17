@@ -1405,6 +1405,7 @@ static int send_hook_ll_message( struct desktop *desktop, struct message *hardwa
 
     if (!(hook_thread = get_first_global_hook( id ))) return 0;
     if (!(queue = hook_thread->queue)) return 0;
+    if (is_queue_hung( queue )) return 0;
 
     if (!(msg = mem_alloc( sizeof(*msg) ))) return 0;
 
