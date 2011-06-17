@@ -85,6 +85,20 @@ typedef struct
   ULONG Stats[1];
 } RPC_STATS_VECTOR;
 
+typedef struct _RPC_PROTSEQ_VECTORA
+{
+  unsigned int Count;
+  unsigned char *Protseq[1];
+} RPC_PROTSEQ_VECTORA;
+
+typedef struct _RPC_PROTSEQ_VECTORW
+{
+  unsigned int count;
+  unsigned short *Protseq[1];
+} RPC_PROTSEQ_VECTORW;
+
+DECL_WINELIB_TYPE_AW(RPC_PROTSEQ_VECTOR)
+
 typedef I_RPC_HANDLE *RPC_EP_INQ_HANDLE;
 
 #define RPC_C_EP_ALL_ELTS 0
