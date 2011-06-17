@@ -6192,7 +6192,7 @@ msgstr "오른쪽으로 스크롤"
 
 #: shdoclc.rc:25
 msgid "Wine Internet Explorer"
-msgstr "Wine 인터넷 익스폴로어r"
+msgstr "Wine 인터넷 익스폴로어"
 
 #: shdoclc.rc:30
 msgid "&w&bPage &p"
@@ -6377,9 +6377,8 @@ msgid "E&xit"
 msgstr "끝내기(&X)"
 
 #: shell32.rc:115
-#, fuzzy
 msgid "&About Control Panel"
-msgstr "제어판 정보(&A)..."
+msgstr "제어판 정보(&A)"
 
 #: shell32.rc:123 shell32.rc:127 winefile.rc:113
 msgid "Size"
@@ -8372,9 +8371,8 @@ msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr "사용법: dxdiag [/whql:off | /whql:on] [/t 파일이름 | /x 파일이름]"
 
 #: explorer.rc:28
-#, fuzzy
 msgid "Wine Explorer"
-msgstr "Wine 인터넷 익스폴로어r"
+msgstr "Wine 탐색기"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
