@@ -112,13 +112,15 @@ static HRESULT WINAPI IDirect3DCubeTexture9Impl_SetPrivateData(IDirect3DCubeText
         REFGUID refguid, const void *pData, DWORD SizeOfData, DWORD Flags)
 {
     IDirect3DCubeTexture9Impl *This = impl_from_IDirect3DCubeTexture9(iface);
+    struct wined3d_resource *resource;
     HRESULT hr;
 
     TRACE("iface %p, guid %s, data %p, data_size %u, flags %#x.\n",
             iface, debugstr_guid(refguid), pData, SizeOfData, Flags);
 
     wined3d_mutex_lock();
-    hr = wined3d_texture_set_private_data(This->wined3d_texture, refguid, pData, SizeOfData, Flags);
+    resource = wined3d_texture_get_resource(This->wined3d_texture);
+    hr = wined3d_resource_set_private_data(resource, refguid, pData, SizeOfData, Flags);
     wined3d_mutex_unlock();
 
     return hr;
@@ -128,13 +130,15 @@ static HRESULT WINAPI IDirect3DCubeTexture9Impl_GetPrivateData(IDirect3DCubeText
         REFGUID refguid, void *pData, DWORD *pSizeOfData)
 {
     IDirect3DCubeTexture9Impl *This = impl_from_IDirect3DCubeTexture9(iface);
+    struct wined3d_resource *resource;
     HRESULT hr;
 
     TRACE("iface %p, guid %s, data %p, data_size %p.\n",
             iface, debugstr_guid(refguid), pData, pSizeOfData);
 
     wined3d_mutex_lock();
-    hr = wined3d_texture_get_private_data(This->wined3d_texture, refguid, pData, pSizeOfData);
+    resource = wined3d_texture_get_resource(This->wined3d_texture);
+    hr = wined3d_resource_get_private_data(resource, refguid, pData, pSizeOfData);
     wined3d_mutex_unlock();
 
     return hr;
@@ -144,12 +148,14 @@ static HRESULT WINAPI IDirect3DCubeTexture9Impl_FreePrivateData(IDirect3DCubeTex
         REFGUID refguid)
 {
     IDirect3DCubeTexture9Impl *This = impl_from_IDirect3DCubeTexture9(iface);
+    struct wined3d_resource *resource;
     HRESULT hr;
 
     TRACE("iface %p, guid %s.\n", iface, debugstr_guid(refguid));
 
     wined3d_mutex_lock();
-    hr = wined3d_texture_free_private_data(This->wined3d_texture, refguid);
+    resource = wined3d_texture_get_resource(This->wined3d_texture);
+    hr = wined3d_resource_free_private_data(resource, refguid);
     wined3d_mutex_unlock();
 
     return hr;

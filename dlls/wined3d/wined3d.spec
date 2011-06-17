@@ -267,6 +267,7 @@
 @ cdecl wined3d_texture_get_parent(ptr)
 @ cdecl wined3d_texture_get_priority(ptr)
 @ cdecl wined3d_texture_get_private_data(ptr ptr ptr ptr)
+@ cdecl wined3d_texture_get_resource(ptr)
 @ cdecl wined3d_texture_get_sub_resource(ptr long)
 @ cdecl wined3d_texture_incref(ptr)
 @ cdecl wined3d_texture_preload(ptr)

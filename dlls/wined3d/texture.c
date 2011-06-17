@@ -450,6 +450,13 @@ ULONG CDECL wined3d_texture_decref(struct wined3d_texture *texture)
     return refcount;
 }
 
+struct wined3d_resource * CDECL wined3d_texture_get_resource(struct wined3d_texture *texture)
+{
+    TRACE("texture %p.\n", texture);
+
+    return &texture->resource;
+}
+
 HRESULT CDECL wined3d_texture_set_private_data(struct wined3d_texture *texture,
         REFGUID guid, const void *data, DWORD data_size, DWORD flags)
 {

@@ -2504,6 +2504,7 @@ void * __cdecl wined3d_texture_get_parent(const struct wined3d_texture *texture)
 DWORD __cdecl wined3d_texture_get_priority(const struct wined3d_texture *texture);
 HRESULT __cdecl wined3d_texture_get_private_data(const struct wined3d_texture *texture,
         REFGUID guid, void *data, DWORD *data_size);
+struct wined3d_resource * __cdecl wined3d_texture_get_resource(struct wined3d_texture *texture);
 struct wined3d_resource * __cdecl wined3d_texture_get_sub_resource(struct wined3d_texture *texture,
         UINT sub_resource_idx);
 ULONG __cdecl wined3d_texture_incref(struct wined3d_texture *texture);
