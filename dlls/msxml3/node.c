@@ -858,7 +858,7 @@ BSTR EnsureCorrectEOL(BSTR sInput)
     if(nNum > 0)
     {
         int nPlace = 0;
-        sNew = SysAllocStringLen(NULL, nLen + nNum+1);
+        sNew = SysAllocStringLen(NULL, nLen + nNum);
         for(i=0; i < nLen; i++)
         {
             if(sInput[i] == '\n')
