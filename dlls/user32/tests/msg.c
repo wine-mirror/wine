@@ -7717,6 +7717,7 @@ static LRESULT WINAPI HotkeyMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
     static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct recvd_message msg;
+    DWORD queue_status;
 
     if (ignore_message( message )) return 0;
 
@@ -7738,7 +7739,18 @@ static LRESULT WINAPI HotkeyMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
     defwndproc_counter--;
 
     if (message == WM_APP)
+    {
+        queue_status = GetQueueStatus(QS_HOTKEY);
+        ok((queue_status & (QS_HOTKEY << 16)) == QS_HOTKEY << 16, "expected QS_HOTKEY << 16 set, got %x\n", queue_status);
+        queue_status = GetQueueStatus(QS_POSTMESSAGE);
+        ok((queue_status & (QS_POSTMESSAGE << 16)) == QS_POSTMESSAGE << 16, "expected QS_POSTMESSAGE << 16 set, got %x\n", queue_status);
         PostMessageA(hwnd, WM_APP+1, 0, 0);
+    }
+    else if (message == WM_APP+1)
+    {
+        queue_status = GetQueueStatus(QS_HOTKEY);
+        ok((queue_status & (QS_HOTKEY << 16)) == 0, "expected QS_HOTKEY << 16 cleared, got %x\n", queue_status);
+    }
 
     return ret;
 }
@@ -13151,6 +13163,7 @@ static void test_hotkey(void)
     HWND test_window, taskbar_window;
     BOOL ret;
     MSG msg;
+    DWORD queue_status;
     SHORT key_state;
 
     SetLastError(0xdeadbeef);
@@ -13238,6 +13251,8 @@ static void test_hotkey(void)
     ok_sequence(WmHotkeyPressLWIN, "window hotkey press LWIN", FALSE);
 
     keybd_event(hotkey_letter, 0, 0, 0);
+    queue_status = GetQueueStatus(QS_HOTKEY);
+    ok((queue_status & (QS_HOTKEY << 16)) == QS_HOTKEY << 16, "expected QS_HOTKEY << 16 set, got %x\n", queue_status);
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
     {
         if (msg.message == WM_HOTKEY)
@@ -13248,6 +13263,9 @@ static void test_hotkey(void)
         DispatchMessage(&msg);
     }
     ok_sequence(WmHotkeyPress, "window hotkey press", FALSE);
+
+    queue_status = GetQueueStatus(QS_HOTKEY);
+    ok((queue_status & (QS_HOTKEY << 16)) == 0, "expected QS_HOTKEY << 16 cleared, got %x\n", queue_status);
 
     key_state = GetAsyncKeyState(hotkey_letter);
     ok((key_state & 0x8000) == 0x8000, "unexpected key state %x\n", key_state);
@@ -13261,6 +13279,16 @@ static void test_hotkey(void)
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         DispatchMessage(&msg);
     ok_sequence(WmHotkeyReleaseLWIN, "window hotkey release LWIN", FALSE);
+
+    /* normal posted WM_HOTKEY messages set QS_HOTKEY */
+    PostMessage(test_window, WM_HOTKEY, 0, 0);
+    queue_status = GetQueueStatus(QS_HOTKEY);
+    ok((queue_status & (QS_HOTKEY << 16)) == QS_HOTKEY << 16, "expected QS_HOTKEY << 16 set, got %x\n", queue_status);
+    queue_status = GetQueueStatus(QS_POSTMESSAGE);
+    ok((queue_status & (QS_POSTMESSAGE << 16)) == QS_POSTMESSAGE << 16, "expected QS_POSTMESSAGE << 16 set, got %x\n", queue_status);
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        DispatchMessage(&msg);
+    flush_sequence();
 
     /* Send and process all messages at once */
     PostMessage(test_window, WM_APP, 0, 0);
