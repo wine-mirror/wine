@@ -60,6 +60,16 @@ static CRITICAL_SECTION_DEBUG wined3d_cs_debug =
 };
 static CRITICAL_SECTION wined3d_cs = {&wined3d_cs_debug, -1, 0, 0, 0, 0};
 
+static CRITICAL_SECTION wined3d_wndproc_cs;
+static CRITICAL_SECTION_DEBUG wined3d_wndproc_cs_debug =
+{
+    0, 0, &wined3d_wndproc_cs,
+    {&wined3d_wndproc_cs_debug.ProcessLocksList,
+    &wined3d_wndproc_cs_debug.ProcessLocksList},
+    0, 0, {(DWORD_PTR)(__FILE__ ": wined3d_wndproc_cs")}
+};
+static CRITICAL_SECTION wined3d_wndproc_cs = {&wined3d_wndproc_cs_debug, -1, 0, 0, 0, 0};
+
 /* When updating default value here, make sure to update winecfg as well,
  * where appropriate. */
 struct wined3d_settings wined3d_settings =
@@ -381,6 +391,16 @@ void WINAPI wined3d_mutex_unlock(void)
     LeaveCriticalSection(&wined3d_cs);
 }
 
+static void wined3d_wndproc_mutex_lock(void)
+{
+    EnterCriticalSection(&wined3d_wndproc_cs);
+}
+
+static void wined3d_wndproc_mutex_unlock(void)
+{
+    LeaveCriticalSection(&wined3d_wndproc_cs);
+}
+
 static struct wined3d_wndproc *wined3d_find_wndproc(HWND window)
 {
     unsigned int i;
@@ -403,12 +423,12 @@ static LRESULT CALLBACK wined3d_wndproc(HWND window, UINT message, WPARAM wparam
     BOOL unicode;
     WNDPROC proc;
 
-    wined3d_mutex_lock();
+    wined3d_wndproc_mutex_lock();
     entry = wined3d_find_wndproc(window);
 
     if (!entry)
     {
-        wined3d_mutex_unlock();
+        wined3d_wndproc_mutex_unlock();
         ERR("Window %p is not registered with wined3d.\n", window);
         return DefWindowProcW(window, message, wparam, lparam);
     }
@@ -416,7 +436,7 @@ static LRESULT CALLBACK wined3d_wndproc(HWND window, UINT message, WPARAM wparam
     device = entry->device;
     unicode = entry->unicode;
     proc = entry->proc;
-    wined3d_mutex_unlock();
+    wined3d_wndproc_mutex_unlock();
 
     return device_process_message(device, window, unicode, message, wparam, lparam, proc);
 }
@@ -425,11 +445,11 @@ BOOL wined3d_register_window(HWND window, struct wined3d_device *device)
 {
     struct wined3d_wndproc *entry;
 
-    wined3d_mutex_lock();
+    wined3d_wndproc_mutex_lock();
 
     if (wined3d_find_wndproc(window))
     {
-        wined3d_mutex_unlock();
+        wined3d_wndproc_mutex_unlock();
         WARN("Window %p is already registered with wined3d.\n", window);
         return TRUE;
     }
@@ -444,7 +464,7 @@ BOOL wined3d_register_window(HWND window, struct wined3d_device *device)
 
         if (!new_entries)
         {
-            wined3d_mutex_unlock();
+            wined3d_wndproc_mutex_unlock();
             ERR("Failed to grow table.\n");
             return FALSE;
         }
@@ -465,7 +485,7 @@ BOOL wined3d_register_window(HWND window, struct wined3d_device *device)
         entry->proc = (WNDPROC)SetWindowLongPtrA(window, GWLP_WNDPROC, (LONG_PTR)wined3d_wndproc);
     entry->device = device;
 
-    wined3d_mutex_unlock();
+    wined3d_wndproc_mutex_unlock();
 
     return TRUE;
 }
@@ -475,11 +495,11 @@ void wined3d_unregister_window(HWND window)
     struct wined3d_wndproc *entry, *last;
     LONG_PTR proc;
 
-    wined3d_mutex_lock();
+    wined3d_wndproc_mutex_lock();
 
     if (!(entry = wined3d_find_wndproc(window)))
     {
-        wined3d_mutex_unlock();
+        wined3d_wndproc_mutex_unlock();
         ERR("Window %p is not registered with wined3d.\n", window);
         return;
     }
@@ -489,7 +509,7 @@ void wined3d_unregister_window(HWND window)
         proc = GetWindowLongPtrW(window, GWLP_WNDPROC);
         if (proc != (LONG_PTR)wined3d_wndproc)
         {
-            wined3d_mutex_unlock();
+            wined3d_wndproc_mutex_unlock();
             WARN("Not unregistering window %p, window proc %#lx doesn't match wined3d window proc %p.\n",
                     window, proc, wined3d_wndproc);
             return;
@@ -502,7 +522,7 @@ void wined3d_unregister_window(HWND window)
         proc = GetWindowLongPtrA(window, GWLP_WNDPROC);
         if (proc != (LONG_PTR)wined3d_wndproc)
         {
-            wined3d_mutex_unlock();
+            wined3d_wndproc_mutex_unlock();
             WARN("Not unregistering window %p, window proc %#lx doesn't match wined3d window proc %p.\n",
                     window, proc, wined3d_wndproc);
             return;
@@ -514,7 +534,7 @@ void wined3d_unregister_window(HWND window)
     last = &wndproc_table.entries[--wndproc_table.count];
     if (entry != last) *entry = *last;
 
-    wined3d_mutex_unlock();
+    wined3d_wndproc_mutex_unlock();
 }
 
 /* At process attach */
