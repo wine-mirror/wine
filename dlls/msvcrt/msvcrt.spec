@@ -236,7 +236,7 @@
 @ stub __p__mbcasemap()
 @ cdecl __p__mbctype()
 @ cdecl __p__osver()
-@ cdecl __p__pctype() MSVCRT___pctype_func
+@ cdecl __p__pctype() MSVCRT___p__pctype
 @ cdecl __p__pgmptr()
 @ stub __p__pwctype()
 @ cdecl __p__timezone() MSVCRT___p__timezone

@@ -59,6 +59,14 @@ WORD MSVCRT__ctype [257] = {
 unsigned short *MSVCRT__pctype = NULL;
 
 /*********************************************************************
+ *		__p__pctype (MSVCRT.@)
+ */
+unsigned short** CDECL MSVCRT___p__pctype(void)
+{
+    return &get_locinfo()->pctype;
+}
+
+/*********************************************************************
  *		__pctype_func (MSVCRT.@)
  */
 const unsigned short* CDECL MSVCRT___pctype_func(void)
