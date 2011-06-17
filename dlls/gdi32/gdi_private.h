@@ -109,6 +109,18 @@ typedef struct
     BOOL mark;
 } dash_pos;
 
+typedef struct
+{
+    DWORD and;
+    DWORD xor;
+} rop_mask;
+
+typedef struct
+{
+    void *and;
+    void *xor;
+} rop_mask_bits;
+
 typedef struct dibdrv_physdev
 {
     struct gdi_physdev dev;
@@ -126,6 +138,7 @@ typedef struct dibdrv_physdev
 
     /* brush */
     UINT brush_style;
+    UINT brush_hatch;
     INT brush_rop;   /* PatBlt, for example, can override the DC's rop2 */
     COLORREF brush_colorref;
     DWORD brush_color, brush_and, brush_xor;

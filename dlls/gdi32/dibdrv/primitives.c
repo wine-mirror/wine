@@ -2194,12 +2194,241 @@ static BOOL convert_to_null(dib_info *dst, const dib_info *src, const RECT *src_
     return FALSE;
 }
 
+static BOOL create_rop_masks_32(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
+{
+    BYTE *hatch_start = hatch->bits, *hatch_ptr;
+    DWORD mask_start = 0, mask_offset;
+    DWORD *and_bits = bits->and, *xor_bits = bits->xor;
+    int x, y;
+
+    for(y = 0; y < hatch->height; y++)
+    {
+        hatch_ptr = hatch_start;
+        mask_offset = mask_start;
+        for(x = 0; x < hatch->width; x++)
+        {
+            if(*hatch_ptr & pixel_masks_1[x % 8])
+            {
+                and_bits[mask_offset] = fg->and;
+                xor_bits[mask_offset] = fg->xor;
+            }
+            else
+            {
+                and_bits[mask_offset] = bg->and;
+                xor_bits[mask_offset] = bg->xor;
+            }
+            if(x % 8 == 7) hatch_ptr++;
+            mask_offset++;
+        }
+        hatch_start += hatch->stride;
+        mask_start += dib->stride / 4;
+    }
+
+    return TRUE;
+}
+
+static BOOL create_rop_masks_24(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
+{
+    BYTE *hatch_start = hatch->bits, *hatch_ptr;
+    DWORD mask_start = 0, mask_offset;
+    BYTE *and_bits = bits->and, *xor_bits = bits->xor;
+    int x, y;
+
+    for(y = 0; y < hatch->height; y++)
+    {
+        hatch_ptr = hatch_start;
+        mask_offset = mask_start;
+        for(x = 0; x < hatch->width; x++)
+        {
+            if(*hatch_ptr & pixel_masks_1[x % 8])
+            {
+                and_bits[mask_offset]   =  fg->and        & 0xff;
+                xor_bits[mask_offset++] =  fg->xor        & 0xff;
+                and_bits[mask_offset]   = (fg->and >>  8) & 0xff;
+                xor_bits[mask_offset++] = (fg->xor >>  8) & 0xff;
+                and_bits[mask_offset]   = (fg->and >> 16) & 0xff;
+                xor_bits[mask_offset++] = (fg->xor >> 16) & 0xff;
+            }
+            else
+            {
+                and_bits[mask_offset]   =  bg->and        & 0xff;
+                xor_bits[mask_offset++] =  bg->xor        & 0xff;
+                and_bits[mask_offset]   = (bg->and >>  8) & 0xff;
+                xor_bits[mask_offset++] = (bg->xor >>  8) & 0xff;
+                and_bits[mask_offset]   = (bg->and >> 16) & 0xff;
+                xor_bits[mask_offset++] = (bg->xor >> 16) & 0xff;
+            }
+            if(x % 8 == 7) hatch_ptr++;
+        }
+        hatch_start += hatch->stride;
+        mask_start += dib->stride;
+    }
+
+    return TRUE;
+}
+
+static BOOL create_rop_masks_16(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
+{
+    BYTE *hatch_start = hatch->bits, *hatch_ptr;
+    DWORD mask_start = 0, mask_offset;
+    WORD *and_bits = bits->and, *xor_bits = bits->xor;
+    int x, y;
+
+    for(y = 0; y < hatch->height; y++)
+    {
+        hatch_ptr = hatch_start;
+        mask_offset = mask_start;
+        for(x = 0; x < hatch->width; x++)
+        {
+            if(*hatch_ptr & pixel_masks_1[x % 8])
+            {
+                and_bits[mask_offset] = fg->and;
+                xor_bits[mask_offset] = fg->xor;
+            }
+            else
+            {
+                and_bits[mask_offset] = bg->and;
+                xor_bits[mask_offset] = bg->xor;
+            }
+            if(x % 8 == 7) hatch_ptr++;
+            mask_offset++;
+        }
+        hatch_start += hatch->stride;
+        mask_start += dib->stride / 2;
+    }
+
+    return TRUE;
+}
+
+static BOOL create_rop_masks_8(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
+{
+    BYTE *hatch_start = hatch->bits, *hatch_ptr;
+    DWORD mask_start = 0, mask_offset;
+    BYTE *and_bits = bits->and, *xor_bits = bits->xor;
+    int x, y;
+
+    for(y = 0; y < hatch->height; y++)
+    {
+        hatch_ptr = hatch_start;
+        mask_offset = mask_start;
+        for(x = 0; x < hatch->width; x++)
+        {
+            if(*hatch_ptr & pixel_masks_1[x % 8])
+            {
+                and_bits[mask_offset] = fg->and;
+                xor_bits[mask_offset] = fg->xor;
+            }
+            else
+            {
+                and_bits[mask_offset] = bg->and;
+                xor_bits[mask_offset] = bg->xor;
+            }
+            if(x % 8 == 7) hatch_ptr++;
+            mask_offset++;
+        }
+        hatch_start += hatch->stride;
+        mask_start += dib->stride;
+    }
+
+    return TRUE;
+}
+
+static BOOL create_rop_masks_4(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
+{
+    BYTE *hatch_start = hatch->bits, *hatch_ptr;
+    DWORD mask_start = 0, mask_offset;
+    BYTE *and_bits = bits->and, *xor_bits = bits->xor;
+    const rop_mask *rop_mask;
+    int x, y;
+
+    for(y = 0; y < hatch->height; y++)
+    {
+        hatch_ptr = hatch_start;
+        mask_offset = mask_start;
+        for(x = 0; x < hatch->width; x++)
+        {
+            if(*hatch_ptr & pixel_masks_1[x % 8])
+                rop_mask = fg;
+            else
+                rop_mask = bg;
+
+            if(x & 1)
+            {
+                and_bits[mask_offset] = (rop_mask->and & 0x0f) | (and_bits[mask_offset] & 0xf0);
+                xor_bits[mask_offset] = (rop_mask->xor & 0x0f) | (xor_bits[mask_offset] & 0xf0);
+                mask_offset++;
+            }
+            else
+            {
+                and_bits[mask_offset] = (rop_mask->and << 4) & 0xf0;
+                xor_bits[mask_offset] = (rop_mask->xor << 4) & 0xf0;
+            }
+
+            if(x % 8 == 7) hatch_ptr++;
+        }
+        hatch_start += hatch->stride;
+        mask_start += dib->stride;
+    }
+
+    return TRUE;
+}
+
+static BOOL create_rop_masks_1(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
+{
+    BYTE *hatch_start = hatch->bits, *hatch_ptr;
+    DWORD mask_start = 0, mask_offset;
+    BYTE *and_bits = bits->and, *xor_bits = bits->xor;
+    rop_mask rop_mask;
+    int x, y, bit_pos;
+
+    for(y = 0; y < hatch->height; y++)
+    {
+        hatch_ptr = hatch_start;
+        mask_offset = mask_start;
+        for(x = 0, bit_pos = 0; x < hatch->width; x++)
+        {
+            if(*hatch_ptr & pixel_masks_1[x % 8])
+            {
+                rop_mask.and = (fg->and & 1) ? 0xff : 0;
+                rop_mask.xor = (fg->xor & 1) ? 0xff : 0;
+            }
+            else
+            {
+                rop_mask.and = (bg->and & 1) ? 0xff : 0;
+                rop_mask.xor = (bg->xor & 1) ? 0xff : 0;
+            }
+
+            if(bit_pos == 0) and_bits[mask_offset] = xor_bits[mask_offset] = 0;
+
+            and_bits[mask_offset] = (rop_mask.and & pixel_masks_1[bit_pos]) | (and_bits[mask_offset] & ~pixel_masks_1[bit_pos]);
+            xor_bits[mask_offset] = (rop_mask.xor & pixel_masks_1[bit_pos]) | (xor_bits[mask_offset] & ~pixel_masks_1[bit_pos]);
+
+            if(++bit_pos == 8)
+            {
+                mask_offset++;
+                hatch_ptr++;
+                bit_pos = 0;
+            }
+        }
+        hatch_start += hatch->stride;
+        mask_start += dib->stride;
+    }
+
+    return TRUE;
+}
+
+static BOOL create_rop_masks_null(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
+{
+    return FALSE;
+}
+
 const primitive_funcs funcs_8888 =
 {
     solid_rects_32,
     pattern_rects_32,
     colorref_to_pixel_888,
-    convert_to_8888
+    convert_to_8888,
+    create_rop_masks_32
 };
 
 const primitive_funcs funcs_32 =
@@ -2207,7 +2436,8 @@ const primitive_funcs funcs_32 =
     solid_rects_32,
     pattern_rects_32,
     colorref_to_pixel_masks,
-    convert_to_32
+    convert_to_32,
+    create_rop_masks_32
 };
 
 const primitive_funcs funcs_24 =
@@ -2215,7 +2445,8 @@ const primitive_funcs funcs_24 =
     solid_rects_24,
     pattern_rects_24,
     colorref_to_pixel_888,
-    convert_to_24
+    convert_to_24,
+    create_rop_masks_24
 };
 
 const primitive_funcs funcs_555 =
@@ -2223,7 +2454,8 @@ const primitive_funcs funcs_555 =
     solid_rects_16,
     pattern_rects_16,
     colorref_to_pixel_555,
-    convert_to_555
+    convert_to_555,
+    create_rop_masks_16
 };
 
 const primitive_funcs funcs_16 =
@@ -2231,7 +2463,8 @@ const primitive_funcs funcs_16 =
     solid_rects_16,
     pattern_rects_16,
     colorref_to_pixel_masks,
-    convert_to_16
+    convert_to_16,
+    create_rop_masks_16
 };
 
 const primitive_funcs funcs_8 =
@@ -2239,7 +2472,8 @@ const primitive_funcs funcs_8 =
     solid_rects_8,
     pattern_rects_8,
     colorref_to_pixel_colortable,
-    convert_to_8
+    convert_to_8,
+    create_rop_masks_8
 };
 
 const primitive_funcs funcs_4 =
@@ -2247,7 +2481,8 @@ const primitive_funcs funcs_4 =
     solid_rects_4,
     pattern_rects_4,
     colorref_to_pixel_colortable,
-    convert_to_4
+    convert_to_4,
+    create_rop_masks_4
 };
 
 const primitive_funcs funcs_1 =
@@ -2255,7 +2490,8 @@ const primitive_funcs funcs_1 =
     solid_rects_1,
     pattern_rects_1,
     colorref_to_pixel_colortable,
-    convert_to_1
+    convert_to_1,
+    create_rop_masks_1
 };
 
 const primitive_funcs funcs_null =
@@ -2263,5 +2499,6 @@ const primitive_funcs funcs_null =
     solid_rects_null,
     pattern_rects_null,
     colorref_to_pixel_null,
-    convert_to_null
+    convert_to_null,
+    create_rop_masks_null
 };

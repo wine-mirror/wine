@@ -161,6 +161,28 @@ static inline void get_pen_bkgnd_masks(const dibdrv_physdev *pdev, DWORD *and, D
     }
 }
 
+static inline void get_brush_bkgnd_masks(const dibdrv_physdev *pdev, DWORD *and, DWORD *xor)
+{
+    if(GetBkMode(pdev->dev.hdc) == TRANSPARENT)
+    {
+        *and = pdev->bkgnd_and;
+        *xor = pdev->bkgnd_xor;
+    }
+    else
+    {
+        DWORD color = pdev->bkgnd_color;
+
+        if(pdev->dib.bit_count == 1)
+        {
+            if(pdev->brush_colorref == GetBkColor(pdev->dev.hdc))
+                color = pdev->brush_color;
+            else
+                color = ~pdev->brush_color;
+        }
+        calc_and_xor_masks( pdev->brush_rop, color, and, xor );
+    }
+}
+
 static inline void order_end_points(int *s, int *e)
 {
     if(*s > *e)
@@ -1083,6 +1105,63 @@ static BOOL create_pattern_brush_bits(dibdrv_physdev *pdev)
     return TRUE;
 }
 
+static const DWORD hatches[6][8] =
+{
+    { 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00 }, /* HS_HORIZONTAL */
+    { 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08 }, /* HS_VERTICAL   */
+    { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 }, /* HS_FDIAGONAL  */
+    { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 }, /* HS_BDIAGONAL  */
+    { 0x08, 0x08, 0x08, 0xff, 0x08, 0x08, 0x08, 0x08 }, /* HS_CROSS      */
+    { 0x81, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x81 }  /* HS_DIAGCROSS  */
+};
+
+static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev)
+{
+    dib_info hatch;
+    rop_mask fg_mask, bg_mask;
+    rop_mask_bits mask_bits;
+    DWORD size;
+    BOOL ret;
+
+    assert(pdev->brush_and_bits == NULL);
+    assert(pdev->brush_xor_bits == NULL);
+
+    /* Just initialise brush_dib with the color / sizing info.  We don't
+       need the bits as we'll calculate the rop masks straight from
+       the hatch patterns. */
+
+    copy_dib_color_info(&pdev->brush_dib, &pdev->dib);
+    pdev->brush_dib.width  = 8;
+    pdev->brush_dib.height = 8;
+    pdev->brush_dib.stride = ((pdev->brush_dib.width * pdev->brush_dib.bit_count + 31) >> 3) & ~3;
+
+    size = pdev->brush_dib.height * pdev->brush_dib.stride;
+
+    mask_bits.and = pdev->brush_and_bits = HeapAlloc(GetProcessHeap(), 0, size);
+    mask_bits.xor = pdev->brush_xor_bits = HeapAlloc(GetProcessHeap(), 0, size);
+
+    if(!mask_bits.and || !mask_bits.xor)
+    {
+        ERR("Failed to create pattern brush bits\n");
+        free_pattern_brush_bits( pdev );
+        return FALSE;
+    }
+
+    hatch.bit_count = 1;
+    hatch.height = hatch.width = 8;
+    hatch.stride = 4;
+    hatch.bits = (void *) hatches[pdev->brush_hatch];
+
+    fg_mask.and = pdev->brush_and;
+    fg_mask.xor = pdev->brush_xor;
+    get_brush_bkgnd_masks( pdev, &bg_mask.and, &bg_mask.xor );
+
+    ret = pdev->brush_dib.funcs->create_rop_masks( &pdev->brush_dib, &hatch, &fg_mask, &bg_mask, &mask_bits );
+    if(!ret) free_pattern_brush_bits( pdev );
+
+    return ret;
+}
+
 /**********************************************************************
  *             pattern_brush
  *
@@ -1096,8 +1175,24 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, int num, RECT *rects)
     POINT origin;
 
     if(pdev->brush_and_bits == NULL)
-        if(!create_pattern_brush_bits(pdev))
+    {
+        switch(pdev->brush_style)
+        {
+        case BS_DIBPATTERN:
+            if(!create_pattern_brush_bits(pdev))
+                return FALSE;
+            break;
+
+        case BS_HATCHED:
+            if(!create_hatch_brush_bits(pdev))
+                return FALSE;
+            break;
+
+        default:
+            ERR("Unexpected brush style %d\n", pdev->brush_style);
             return FALSE;
+        }
+    }
 
     GetBrushOrgEx(pdev->dev.hdc, &origin);
 
@@ -1142,7 +1237,7 @@ static BOOL null_brush(dibdrv_physdev *pdev, int num, RECT *rects)
 void update_brush_rop( dibdrv_physdev *pdev, INT rop )
 {
     pdev->brush_rop = rop;
-    if(pdev->brush_style == BS_SOLID)
+    if(pdev->brush_style == BS_SOLID || pdev->brush_style == BS_HATCHED)
         calc_and_xor_masks(rop, pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
     free_pattern_brush_bits( pdev );
 }
@@ -1203,6 +1298,18 @@ HBRUSH CDECL dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
             free_dib_info(&orig_dib, FALSE);
         }
         GlobalUnlock((HGLOBAL)logbrush.lbHatch);
+        break;
+    }
+
+    case BS_HATCHED:
+    {
+        if(logbrush.lbHatch > HS_DIAGCROSS) return 0;
+        pdev->brush_hatch = logbrush.lbHatch;
+        pdev->brush_colorref = logbrush.lbColor;
+        pdev->brush_color = get_fg_color( pdev, pdev->brush_colorref );
+        calc_and_xor_masks(GetROP2(dev->hdc), pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
+        pdev->brush_rects = pattern_brush;
+        pdev->defer &= ~DEFER_BRUSH;
         break;
     }
 
