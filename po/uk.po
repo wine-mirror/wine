@@ -65,14 +65,12 @@ msgid "All files (*.*)"
 msgstr "Всі файли (*.*)"
 
 #: appwiz.rc:42
-#, fuzzy
 msgid "&Remove"
-msgstr "&Видалити..."
+msgstr "&Видалити"
 
 #: appwiz.rc:43
-#, fuzzy
 msgid "&Modify/Remove"
-msgstr "&Змінити/Видалити..."
+msgstr "&Змінити/Видалити"
 
 #: appwiz.rc:48
 msgid "Downloading..."
@@ -131,7 +129,6 @@ msgid "Separator"
 msgstr "Роздільник"
 
 #: comctl32.rc:44 progman.rc:78
-#, fuzzy
 msgctxt "hotkey"
 msgid "None"
 msgstr "Немає"
@@ -357,9 +354,8 @@ msgstr ""
 "Введіть їх наново."
 
 #: comdlg32.rc:74
-#, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "Значення Числа Копій не може бути порожнім."
+msgstr "Поле 'Кількість копій' не може бути порожнім."
 
 #: comdlg32.rc:76
 msgid ""
@@ -686,9 +682,8 @@ msgid "Unstructured Address"
 msgstr "Неструктурована адреса"
 
 #: crypt32.rc:51
-#, fuzzy
 msgid "S/MIME Capabilities"
-msgstr "Можливості SMIME"
+msgstr "Можливості S/MIME"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
@@ -1243,7 +1238,6 @@ msgid "Path Length Constraint="
 msgstr "Обмеження довжини шляху="
 
 #: crypt32.rc:198
-#, fuzzy
 msgctxt "path length"
 msgid "None"
 msgstr "Немає"
@@ -1438,7 +1432,7 @@ msgstr "Визначник"
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr ""
+msgstr "Посилання на Повідомлення"
 
 #: cryptdlg.rc:35
 msgid "Organization="
@@ -2034,7 +2028,7 @@ msgstr "Параметри"
 
 #: hhctrl.rc:70
 msgid "S&ync"
-msgstr ""
+msgstr "Син&х"
 
 #: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:86
 msgid "&Back"
@@ -2045,7 +2039,6 @@ msgid "&Forward"
 msgstr "В&перед"
 
 #: hhctrl.rc:73
-#, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
 msgstr "&Додому"
@@ -2107,7 +2100,6 @@ msgid "Back"
 msgstr "Назад"
 
 #: hhctrl.rc:44
-#, fuzzy
 msgctxt "table of contents"
 msgid "Home"
 msgstr "Додому"
@@ -2189,36 +2181,32 @@ msgid "Configure Wine Internet Browser and related settings"
 msgstr "Налаштувати Wine Internet Browser та пов'язані параметри"
 
 #: inetcpl.rc:30
-#, fuzzy
 msgid "Security settings for zone: "
-msgstr "Зберегти &налаштування при виході"
+msgstr "Параметри безпеки для зони: "
 
 #: inetcpl.rc:31
-#, fuzzy
 msgid "Custom"
-msgstr "Налаштування"
+msgstr "Користувацькі"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr ""
+msgstr "Дуже Низько"
 
 #: inetcpl.rc:33
-#, fuzzy
 msgid "Low"
-msgstr "&Низька"
+msgstr "Низька"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr ""
+msgstr "Середній"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "Збільшений"
 
 #: inetcpl.rc:36
-#, fuzzy
 msgid "High"
-msgstr "&Висока"
+msgstr "Висока"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -2654,11 +2642,11 @@ msgstr "Буфер переповнений\n"
 
 #: winerror.mc:441
 msgid "No more search handles\n"
-msgstr "No more search handles\n"
+msgstr "Більше немає пошукових рукояток\n"
 
 #: winerror.mc:446
 msgid "Invalid target handle\n"
-msgstr "Invalid target handle\n"
+msgstr "Невірна цільова рукоятка\n"
 
 #: winerror.mc:451
 msgid "Invalid IOCTL\n"
@@ -2714,7 +2702,7 @@ msgstr "Дочірній процес не завершений\n"
 
 #: winerror.mc:516
 msgid "Invalid use of direct access handle\n"
-msgstr "Invalid use of direct access handle\n"
+msgstr "Неправильне використання рукоятки прямого доступу\n"
 
 #: winerror.mc:521
 msgid "Negative seek\n"
@@ -2966,7 +2954,7 @@ msgstr "Невірний номер сигналу\n"
 
 #: winerror.mc:836
 msgid "Error setting signal handler\n"
-msgstr "Error setting signal handler\n"
+msgstr "Помилка встановлення обробника сигналів\n"
 
 #: winerror.mc:841
 msgid "Segment locked\n"
@@ -3062,7 +3050,7 @@ msgstr "Read/WriteProcessMemory partially completed\n"
 
 #: winerror.mc:956
 msgid "The oplock wasn't granted\n"
-msgstr ""
+msgstr "Оп. блокування не отримане\n"
 
 #: winerror.mc:961
 msgid "Invalid oplock message received\n"
@@ -3509,17 +3497,16 @@ msgid "DLL not found\n"
 msgstr "DLL не знайдена\n"
 
 #: winerror.mc:1516
-#, fuzzy
 msgid "Out of user handles\n"
-msgstr "Out of user handles\n"
+msgstr "Недостатньо користувацьких рукояток\n"
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls\n"
-msgstr ""
+msgstr "Повідомлення може бути використане лише в синхронних викликах\n"
 
 #: winerror.mc:1526
 msgid "The source element is empty\n"
-msgstr ""
+msgstr "Початковий елемент порожній\n"
 
 #: winerror.mc:1531
 msgid "The destination element is full\n"
@@ -3531,7 +3518,7 @@ msgstr "Адреса елемента невірна\n"
 
 #: winerror.mc:1541
 msgid "The magazine is not present\n"
-msgstr ""
+msgstr "Журнал відсутній\n"
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization\n"
@@ -3566,9 +3553,8 @@ msgid "Point not found\n"
 msgstr "Точка не знайдена\n"
 
 #: winerror.mc:1586
-#, fuzzy
 msgid "No running tracking service\n"
-msgstr "No running tracking service\n"
+msgstr "Служба слідкування не працює\n"
 
 #: winerror.mc:1591
 msgid "No such volume ID\n"
@@ -3576,15 +3562,15 @@ msgstr "Немає такого ID тому\n"
 
 #: winerror.mc:1596
 msgid "Unable to remove the file to be replaced\n"
-msgstr ""
+msgstr "Не вдалось видалити файл для заміни\n"
 
 #: winerror.mc:1601
 msgid "Unable to move the replacement file into place\n"
-msgstr ""
+msgstr "Не вдалось помістити файл на місце замінюваного\n"
 
 #: winerror.mc:1606
 msgid "Moving the replacement file failed\n"
-msgstr ""
+msgstr "Перенести файл для заміни не вдалось\n"
 
 #: winerror.mc:1611
 msgid "The journal is being deleted\n"
@@ -3596,11 +3582,11 @@ msgstr "Журнал не активний\n"
 
 #: winerror.mc:1621
 msgid "Potential matching file found\n"
-msgstr ""
+msgstr "Знайдений потенційний відповідний файл\n"
 
 #: winerror.mc:1626
 msgid "The journal entry was deleted\n"
-msgstr ""
+msgstr "Запис журналу був видалений\n"
 
 #: winerror.mc:1631
 msgid "Invalid device name\n"
@@ -4204,19 +4190,19 @@ msgstr "Взаємне завірення не вдалось\n"
 
 #: winerror.mc:2391
 msgid "Time skew between client and server\n"
-msgstr ""
+msgstr "На клієнті і сервері різний час\n"
 
 #: winerror.mc:2396
 msgid "Invalid window handle\n"
-msgstr "Invalid window handle\n"
+msgstr "Невірна рукоятка вікна\n"
 
 #: winerror.mc:2401
 msgid "Invalid menu handle\n"
-msgstr "Invalid menu handle\n"
+msgstr "Невірна рукоятка меню\n"
 
 #: winerror.mc:2406
 msgid "Invalid cursor handle\n"
-msgstr "Invalid cursor handle\n"
+msgstr "Невірна рукоятка курсора\n"
 
 #: winerror.mc:2411
 msgid "Invalid accelerator table handle\n"
@@ -4224,11 +4210,11 @@ msgstr "Invalid accelerator table handle\n"
 
 #: winerror.mc:2416
 msgid "Invalid hook handle\n"
-msgstr "Invalid hook handle\n"
+msgstr "Невірна рукоятка гачка\n"
 
 #: winerror.mc:2421
 msgid "Invalid DWP handle\n"
-msgstr "Invalid DWP handle\n"
+msgstr "Невірна рукоятка DWP\n"
 
 #: winerror.mc:2426
 msgid "Can't create top-level child window\n"
@@ -4260,11 +4246,11 @@ msgstr "Class has open windows\n"
 
 #: winerror.mc:2461
 msgid "Invalid index\n"
-msgstr "Invalid index\n"
+msgstr "Невірний індекс\n"
 
 #: winerror.mc:2466
 msgid "Invalid icon handle\n"
-msgstr "Invalid icon handle\n"
+msgstr "Невірна рукоятка іконки\n"
 
 #: winerror.mc:2471
 msgid "Private dialog index\n"
@@ -4372,7 +4358,7 @@ msgstr "Екран вже заблокований\n"
 
 #: winerror.mc:2601
 msgid "Window handles have different parents\n"
-msgstr "Window handles have different parents\n"
+msgstr "Віконні рукоятки мають різних предків\n"
 
 #: winerror.mc:2606
 msgid "Not a child window\n"
@@ -4435,27 +4421,24 @@ msgid "Menu item not found\n"
 msgstr "Елемент меню не знайдений\n"
 
 #: winerror.mc:2681
-#, fuzzy
 msgid "Invalid keyboard handle\n"
-msgstr "Invalid keyboard handle\n"
+msgstr "Невірна рукоятка клавіатури\n"
 
 #: winerror.mc:2686
-#, fuzzy
 msgid "Hook type not allowed\n"
-msgstr "Hook type not allowed\n"
+msgstr "Недозволений тип гачка\n"
 
 #: winerror.mc:2691
 msgid "Interactive window station required\n"
-msgstr ""
+msgstr "Необхідна інтерактивна віконна станція\n"
 
 #: winerror.mc:2696
 msgid "Timeout\n"
 msgstr "Тайм-аут\n"
 
 #: winerror.mc:2701
-#, fuzzy
 msgid "Invalid monitor handle\n"
-msgstr "Invalid monitor handle\n"
+msgstr "Невірна рукоятка монітору\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt\n"
@@ -4506,9 +4489,8 @@ msgid "Unknown property\n"
 msgstr "Невідома властивість\n"
 
 #: winerror.mc:2766
-#, fuzzy
 msgid "Invalid handle state\n"
-msgstr "Invalid handle state\n"
+msgstr "Невірний стан рукоятки\n"
 
 #: winerror.mc:2771
 msgid "Bad configuration\n"
@@ -4548,7 +4530,7 @@ msgstr "Встановлення вже почалось\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open\n"
-msgstr ""
+msgstr "Не вдалось відкрити встановлювальний пакунок\n"
 
 #: winerror.mc:2821
 msgid "Installation package is invalid\n"
@@ -4556,11 +4538,11 @@ msgstr "Пакет встановлення помилковий\n"
 
 #: winerror.mc:2826
 msgid "Installer user interface failed\n"
-msgstr ""
+msgstr "Збій користувацького інтерфейсу встановлювача\n"
 
 #: winerror.mc:2831
 msgid "Failed to open installation log file\n"
-msgstr ""
+msgstr "Не вдалось відкрити файл звіту встановлення\n"
 
 #: winerror.mc:2836
 msgid "Installation language not supported\n"
@@ -4568,7 +4550,7 @@ msgstr "Мова встановлення не підтримується\n"
 
 #: winerror.mc:2841
 msgid "Installation transform failed to apply\n"
-msgstr ""
+msgstr "Не вдалось застосувати перетворення встановлення\n"
 
 #: winerror.mc:2846
 msgid "Installation package rejected\n"
@@ -4632,11 +4614,11 @@ msgstr "Невірний командний рядок\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed\n"
-msgstr ""
+msgstr "Віддалене встановлення не дозволене\n"
 
 #: winerror.mc:2926
 msgid "Reboot initiated after successful install\n"
-msgstr ""
+msgstr "Перезавантаження розпочато після успішного встановлення\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding\n"
@@ -5207,37 +5189,32 @@ msgid "Invalid driver\n"
 msgstr "Невірний драйвер\n"
 
 #: winerror.mc:3646
-#, fuzzy
 msgid "Invalid object resolver set\n"
-msgstr "Невірний об'єкт\n"
+msgstr "Невірний набір арбітрів об'єкту\n"
 
 #: winerror.mc:3651
 msgid "Incomplete RPC send\n"
 msgstr "Неповне відсилання RPC\n"
 
 #: winerror.mc:3656
-#, fuzzy
 msgid "Invalid asynchronous RPC handle\n"
-msgstr "Invalid asynchronous RPC handle\n"
+msgstr "Помилковий асинхронний гачок RPC\n"
 
 #: winerror.mc:3661
-#, fuzzy
 msgid "Invalid asynchronous RPC call\n"
-msgstr "Invalid asynchronous RPC call\n"
+msgstr "Помилковий асинхронний виклик RPC\n"
 
 #: winerror.mc:3666
-#, fuzzy
 msgid "RPC pipe closed\n"
-msgstr "RPC pipe closed\n"
+msgstr "RPC-пайп закрито\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe\n"
-msgstr ""
+msgstr "Дисциплінарна помилка на RPC-пайпі\n"
 
 #: winerror.mc:3676
-#, fuzzy
 msgid "No data on RPC pipe\n"
-msgstr "No data on RPC pipe\n"
+msgstr "На RPC-пайпі відсутні дані\n"
 
 #: winerror.mc:3681
 msgid "No site name available\n"
@@ -5245,7 +5222,7 @@ msgstr "Ім'я сайту недоступне\n"
 
 #: winerror.mc:3686
 msgid "The file cannot be accessed\n"
-msgstr ""
+msgstr "Немає доступу до файлу\n"
 
 #: winerror.mc:3691
 msgid "The filename cannot be resolved\n"
@@ -5352,7 +5329,6 @@ msgid "insert disk %s"
 msgstr "вставте диск %s"
 
 #: msi.rc:30
-#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -5401,8 +5377,8 @@ msgstr ""
 "Повідомити продукт:\n"
 "\t/j[u|m] package [/t transform] [/g languageid]\n"
 "Застосувати виправлення:\n"
-"\t/p patchpackage [властивість]\n"
-"\t/p patchpackage /a package [властивість]\n"
+"\t/p patch_package [властивість]\n"
+"\t/p patch_package /a package [властивість]\n"
 "Log та UI Модифікатори для вищезгаданих команд:\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
@@ -6263,9 +6239,8 @@ msgid "Pr&int..."
 msgstr "&Друк..."
 
 #: shdocvw.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
-msgstr "Попередній пе&регляд..."
+msgstr "Попередній пе&регляд"
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6303,12 +6278,10 @@ msgid "&Help"
 msgstr "&Довідка"
 
 #: shdocvw.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "&Про Оглядач Інтернету..."
+msgstr "&Про Оглядач Інтернету"
 
 #: shdocvw.rc:67
-#, fuzzy
 msgctxt "home page"
 msgid "Home"
 msgstr "Додому"
@@ -6410,9 +6383,8 @@ msgid "E&xit"
 msgstr "В&ихід"
 
 #: shell32.rc:115
-#, fuzzy
 msgid "&About Control Panel"
-msgstr "&Про панель керування..."
+msgstr "&Про панель керування"
 
 #: shell32.rc:123 shell32.rc:127 winefile.rc:113
 msgid "Size"
@@ -6850,13 +6822,12 @@ msgid "&About Wine"
 msgstr "&Про Wine"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl-F4"
-msgstr "&Закрити\tAlt-F4"
+msgstr "&Закрити\tCtrl-F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl-F6"
-msgstr ""
+msgstr "Нас&тупний\tCtrl-F6"
 
 #: user32.rc:68 regedit.rc:176 winefile.rc:100
 msgid "Error"
@@ -6872,7 +6843,7 @@ msgstr "Підключення по локальній мережі"
 
 #: wininet.rc:26
 msgid "The certificate is issued by an unknown or untrusted publisher."
-msgstr ""
+msgstr "Сертифікат виданий невідомим або недовіреним видавцем."
 
 #: wininet.rc:27
 msgid "The date on the certificate is invalid."
@@ -6948,12 +6919,11 @@ msgid "An invalid parameter was passed to a system function."
 msgstr "До системної функції передано неправильний параметр."
 
 #: winmm.rc:42
-#, fuzzy
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
 msgstr ""
-"Указаний формат не підтримується, або його неможливо перетворити. "
+"Вказаний формат не підтримується, або його неможливо перетворити. "
 "Скористайтеся функцією Capabilities, щоб одержати список форматів, які "
 "підтримуються"
 
@@ -7143,13 +7113,12 @@ msgid "Cannot use 'all' as the device name with the specified command."
 msgstr "Неможливо використовувати 'all' як ім'я пристрою для вказаної команди."
 
 #: winmm.rc:77
-#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
 msgstr ""
 "Сталося декілька помилок на різних пристроях. Щоб визначити джерело помилок, "
-"виконайте окремо кожну команду для кожного пристрою"
+"виконайте окремо кожну команду для кожного пристрою."
 
 #: winmm.rc:78
 msgid "Cannot determine the device type from the given filename extension."
@@ -7770,9 +7739,8 @@ msgid "&Always on Top"
 msgstr "&Завжди зверху"
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
-msgstr "&Про Годинник..."
+msgstr "&Про Годинник"
 
 #: clock.rc:48
 msgid "Clock"
@@ -8056,9 +8024,8 @@ msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "REN <ім'я_файлу> це коротка версія RENAME. Вона переіменовує файл.\n"
 
 #: cmd.rc:158
-#, fuzzy
 msgid "RENAME <filename> renames a file.\n"
-msgstr "RENAME <ім'я_файлу> переіменовує файл\n"
+msgstr "RENAME <ім'я_файлу> переіменовує файл.\n"
 
 #: cmd.rc:160
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
@@ -8153,9 +8120,8 @@ msgstr ""
 "Прапор перевірки не має функцій в Wine.\n"
 
 #: cmd.rc:204
-#, fuzzy
 msgid "VER displays the version of cmd you are running.\n"
-msgstr "VER відображає версію запущеного cmd\n"
+msgstr "VER відображає версію запущеного cmd.\n"
 
 #: cmd.rc:206
 msgid "VOL shows the volume label of a disk device.\n"
@@ -8187,6 +8153,10 @@ msgid ""
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
+"CHOICE відображує текст і чекає, поки Користувач\n"
+"натисне дозволену Кнопку зі списку таблиці вибору.\n"
+"CHOICE переважно використовується для побудови меню вибору в пакетному "
+"файлі.\n"
 
 #: cmd.rc:222
 msgid ""
@@ -8420,31 +8390,32 @@ msgstr "Введений рядок задовгий.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
-msgstr ""
+msgstr "Утиліта Діагностики DirectX"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr ""
+"Використання: dxdiag [/whql:off | /whql:on] [/t ім'я_файлу | /x ім'я_файлу]"
 
 #: explorer.rc:28
-#, fuzzy
 msgid "Wine Explorer"
 msgstr "Оглядач Інтернету Wine"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr ""
+msgstr "Використання: ім'я_хосту\n"
 
 #: hostname.rc:28
-#, fuzzy
 msgid "Error: Invalid option '%c'.\n"
-msgstr "Помилка: неправильне ім'я ключа\n"
+msgstr "Помилка: невірний параметр '%c'.\n"
 
 #: hostname.rc:29
 msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
 msgstr ""
+"Помилка: Встановлення імені системного хосту є неможливим з hostname-"
+"утиліти.\n"
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
@@ -8676,9 +8647,8 @@ msgid "&Replace...\tCtrl+H"
 msgstr "За&мінити...\tCtrl+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
-#, fuzzy
 msgid "&Contents\tF1"
-msgstr "&Зміст"
+msgstr "&Зміст\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
@@ -8801,9 +8771,8 @@ msgid "&View TypeLib..."
 msgstr "П&ерегляд TypeLib..."
 
 #: oleview.rc:32
-#, fuzzy
 msgid "&System Configuration"
-msgstr "&Конфігураця системи..."
+msgstr "&Конфігурація Системи"
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
@@ -9088,18 +9057,16 @@ msgid "&Copy...\tF8"
 msgstr "&Копіювати...\tF8"
 
 #: progman.rc:35
-#, fuzzy
 msgid "&Properties\tAlt+Enter"
-msgstr "Властивос&ті...\tAlt+Enter"
+msgstr "Властивос&ті\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
 msgstr "&Виконати..."
 
 #: progman.rc:39
-#, fuzzy
 msgid "E&xit Windows"
-msgstr "Ви&хід..."
+msgstr "Ви&йти з Windows"
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
@@ -9134,9 +9101,8 @@ msgid "&Arrange Icons"
 msgstr "&Впорядкувати значки"
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "Диспетчер програм"
+msgstr "&Про Диспетчер програм"
 
 #: progman.rc:60
 msgid "Program Manager"
@@ -9268,9 +9234,8 @@ msgid "&Export Registry File..."
 msgstr "&Експортувати файл реєстру..."
 
 #: regedit.rc:42 regedit.rc:87
-#, fuzzy
 msgid "&Modify..."
-msgstr "&Змінити"
+msgstr "&Змінити..."
 
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
@@ -9293,9 +9258,8 @@ msgid "&Multi String Value"
 msgstr "&Багаторядкове значення"
 
 #: regedit.rc:52 regedit.rc:103
-#, fuzzy
 msgid "&Expandable String Value"
-msgstr "&Рядкове значення"
+msgstr "&Розширюване Рядкове значення"
 
 #: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
@@ -9330,9 +9294,8 @@ msgid "&About Registry Editor"
 msgstr "&Про Редактор реєстру"
 
 #: regedit.rc:88
-#, fuzzy
 msgid "Modify Binary Data..."
-msgstr "Змінити двійкові дані"
+msgstr "Змінити двійкові дані..."
 
 #: regedit.rc:109
 msgid "&Export..."
@@ -10260,9 +10223,8 @@ msgid "Regular Metafile Viewer"
 msgstr "Переглядач звичайних метафайлів"
 
 #: winecfg.rc:32
-#, fuzzy
 msgid "Configure..."
-msgstr "Налаштувати"
+msgstr "Налаштувати..."
 
 #: winecfg.rc:39
 msgid "Libraries"
@@ -10397,15 +10359,13 @@ msgid "Hardware"
 msgstr "Апаратні"
 
 #: winecfg.rc:76
-#, fuzzy
 msgctxt "vertex shader mode"
 msgid "None"
 msgstr "Немає"
 
 #: winecfg.rc:81
-#, fuzzy
 msgid "Autodetect..."
-msgstr "Автовизначення"
+msgstr "Автовизначення..."
 
 #: winecfg.rc:82
 msgid "Local hard disk"
@@ -10424,16 +10384,15 @@ msgid "CD-ROM"
 msgstr "CD-ROM"
 
 #: winecfg.rc:86
-#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
 "Each drive must have a letter, from A to Z, so you cannot have more than 26."
 msgstr ""
-"Більше неможна додати диск.\n"
+"Більше не можна додати диск.\n"
 "\n"
-"Кожен диск має мати букву від A до Z, тому більше ніж 26 дисків не "
-"допускається"
+"Кожен диск має мати букву від A до Z, тому не можна мати більше ніж 26 "
+"дисків."
 
 #: winecfg.rc:87
 msgid "System drive"
@@ -10811,9 +10770,8 @@ msgid "Re&name..."
 msgstr "Пере&йменувати..."
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Propert&ies\tAlt+Enter"
-msgstr "Властивос&ті...\tAlt+Enter"
+msgstr "Властивос&ті\tAlt+Enter"
 
 #: winefile.rc:33
 msgid "&Run..."
@@ -10832,9 +10790,8 @@ msgid "&Disk"
 msgstr "&Диск"
 
 #: winefile.rc:45
-#, fuzzy
 msgid "Connect &Network Drive..."
-msgstr "&Підключити мережний диск"
+msgstr "&Підключити мережний диск..."
 
 #: winefile.rc:46
 msgid "&Disconnect Network Drive"
@@ -10865,9 +10822,8 @@ msgid "Sort by &Date"
 msgstr "Сортувати за  д&атою"
 
 #: winefile.rc:60
-#, fuzzy
 msgid "Filter by&..."
-msgstr "Сортувати за &..."
+msgstr "Фільтрувати за&..."
 
 #: winefile.rc:67
 msgid "&Drivebar"
@@ -10890,9 +10846,8 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Вікна зліва &направо\tCtrl+F4"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File"
-msgstr "&Про Winefile..."
+msgstr "&Про Wine File"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10956,7 +10911,7 @@ msgstr "%s з %s вільно"
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "&Гра"
 
 #: winemine.rc:35
 msgid "&New\tF2"
@@ -10964,7 +10919,7 @@ msgstr "&Нова\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "&Знаки Питання"
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -10983,14 +10938,12 @@ msgid "&Custom..."
 msgstr "&Свої параметри..."
 
 #: winemine.rc:44
-#, fuzzy
 msgid "&Fastest Times"
-msgstr "&Кращий час..."
+msgstr "&Кращі Часи"
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "&Про Wine"
+msgstr "&Про WineMine"
 
 #: winemine.rc:27
 msgid "WineMine"
@@ -11037,7 +10990,6 @@ msgid "Large"
 msgstr "Великий"
 
 #: winhlp32.rc:54
-#, fuzzy
 msgid "&Help on help\tF1"
 msgstr "&Використання Довідки\tF1"
 
@@ -11131,11 +11083,11 @@ msgstr "&Формат символів"
 
 #: wordpad.rc:61
 msgid "&Def. char format"
-msgstr ""
+msgstr "Формат &символів за замовч."
 
 #: wordpad.rc:62
 msgid "Paragrap&h format"
-msgstr ""
+msgstr "Формат а&бзацу"
 
 #: wordpad.rc:63
 msgid "&Get text"
@@ -11143,7 +11095,7 @@ msgstr "&Взяти текст"
 
 #: wordpad.rc:69
 msgid "&Formatbar"
-msgstr ""
+msgstr "Панель &Форматування"
 
 #: wordpad.rc:70
 msgid "&Ruler"
@@ -11171,7 +11123,7 @@ msgstr "Фор&мат"
 
 #: wordpad.rc:82 wordpad.rc:105
 msgid "&Bullet points"
-msgstr ""
+msgstr "&Маркери"
 
 #: wordpad.rc:83 wordpad.rc:106
 msgid "&Paragraph..."
@@ -11190,7 +11142,6 @@ msgid "&System\tCtrl+1"
 msgstr "&Система\tCtrl+1"
 
 #: wordpad.rc:88
-#, fuzzy
 msgid "&Pale yellow\tCtrl+2"
 msgstr "&Блідо-жовтий\tCtrl+2"
 
