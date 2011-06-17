@@ -35,6 +35,8 @@
 #include "htmlevent.h"
 #include "htmlstyle.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
+
 static const WCHAR aW[]        = {'A',0};
 static const WCHAR bodyW[]     = {'B','O','D','Y',0};
 static const WCHAR embedW[]    = {'E','M','B','E','D',0};
@@ -96,6 +98,65 @@ static const tag_desc_t *get_tag_desc(const WCHAR *tag_name)
     return NULL;
 }
 
+static HRESULT replace_node_by_html(nsIDOMHTMLDocument *nsdoc, nsIDOMNode *nsnode, const WCHAR *html)
+{
+    nsIDOMDocumentFragment *nsfragment;
+    nsIDOMDocumentRange *nsdocrange;
+    nsIDOMNSRange *nsrange;
+    nsIDOMNode *nsparent;
+    nsIDOMRange *range;
+    nsAString html_str;
+    nsresult nsres;
+    HRESULT hres = S_OK;
+
+    nsres = nsIDOMHTMLDocument_QueryInterface(nsdoc, &IID_nsIDOMDocumentRange, (void**)&nsdocrange);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    nsres = nsIDOMDocumentRange_CreateRange(nsdocrange, &range);
+    nsIDOMDocumentRange_Release(nsdocrange);
+    if(NS_FAILED(nsres)) {
+        ERR("CreateRange failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMRange_QueryInterface(range, &IID_nsIDOMNSRange, (void**)&nsrange);
+    nsIDOMRange_Release(range);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMNSRange: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsAString_InitDepend(&html_str, html);
+    nsIDOMNSRange_CreateContextualFragment(nsrange, &html_str, &nsfragment);
+    nsIDOMNSRange_Release(nsrange);
+    nsAString_Finish(&html_str);
+    if(NS_FAILED(nsres)) {
+        ERR("CreateContextualFragment failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMNode_GetParentNode(nsnode, &nsparent);
+    if(NS_SUCCEEDED(nsres) && nsparent) {
+        nsIDOMNode *nstmp;
+
+        nsres = nsIDOMNode_ReplaceChild(nsparent, (nsIDOMNode*)nsfragment, nsnode, &nstmp);
+        nsIDOMNode_Release(nsparent);
+        if(NS_FAILED(nsres)) {
+            ERR("ReplaceChild failed: %08x\n", nsres);
+            hres = E_FAIL;
+        }else if(nstmp) {
+            nsIDOMNode_Release(nstmp);
+        }
+    }else {
+        ERR("GetParentNode failed: %08x\n", nsres);
+        hres = E_FAIL;
+    }
+
+    nsIDOMDocumentFragment_Release(nsfragment);
+    return hres;
+}
+
 typedef struct
 {
     DispatchEx dispex;
@@ -110,9 +171,6 @@ static inline HTMLFiltersCollection *impl_from_IHTMLFiltersCollection(IHTMLFilte
 }
 
 static IHTMLFiltersCollection *HTMLFiltersCollection_Create(void);
-
-
-WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static inline HTMLElement *impl_from_IHTMLElement(IHTMLElement *iface)
 {
@@ -1086,63 +1144,10 @@ static HRESULT WINAPI HTMLElement_get_innerText(IHTMLElement *iface, BSTR *p)
 static HRESULT WINAPI HTMLElement_put_outerHTML(IHTMLElement *iface, BSTR v)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    nsIDOMDocumentFragment *nsfragment;
-    nsIDOMDocumentRange *nsdocrange;
-    nsIDOMNSRange *nsrange;
-    nsIDOMNode *nsparent;
-    nsIDOMRange *range;
-    nsAString html_str;
-    nsresult nsres;
-    HRESULT hres = S_OK;
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    nsres = nsIDOMHTMLDocument_QueryInterface(This->node.doc->nsdoc, &IID_nsIDOMDocumentRange, (void**)&nsdocrange);
-    if(NS_FAILED(nsres))
-        return E_FAIL;
-
-    nsres = nsIDOMDocumentRange_CreateRange(nsdocrange, &range);
-    nsIDOMDocumentRange_Release(nsdocrange);
-    if(NS_FAILED(nsres)) {
-        ERR("CreateRange failed: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    nsres = nsIDOMRange_QueryInterface(range, &IID_nsIDOMNSRange, (void**)&nsrange);
-    nsIDOMRange_Release(range);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMNSRange: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    nsAString_InitDepend(&html_str, v);
-    nsIDOMNSRange_CreateContextualFragment(nsrange, &html_str, &nsfragment);
-    nsIDOMNSRange_Release(nsrange);
-    nsAString_Finish(&html_str);
-    if(NS_FAILED(nsres)) {
-        ERR("CreateContextualFragment failed: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    nsres = nsIDOMNode_GetParentNode(This->node.nsnode, &nsparent);
-    if(NS_SUCCEEDED(nsres) && nsparent) {
-        nsIDOMNode *nstmp;
-
-        nsres = nsIDOMNode_ReplaceChild(nsparent, (nsIDOMNode*)nsfragment, This->node.nsnode, &nstmp);
-        nsIDOMNode_Release(nsparent);
-        if(NS_FAILED(nsres)) {
-            ERR("ReplaceChild failed: %08x\n", nsres);
-            hres = E_FAIL;
-        }else if(nstmp) {
-            nsIDOMNode_Release(nstmp);
-        }
-    }else {
-        ERR("GetParentNode failed: %08x\n", nsres);
-        hres = E_FAIL;
-    }
-
-    nsIDOMDocumentFragment_Release(nsfragment);
-    return hres;
+    return replace_node_by_html(This->node.doc->nsdoc, This->node.nsnode, v);
 }
 
 static HRESULT WINAPI HTMLElement_get_outerHTML(IHTMLElement *iface, BSTR *p)
