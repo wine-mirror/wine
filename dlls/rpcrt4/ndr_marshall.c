@@ -536,7 +536,7 @@ PFORMAT_STRING ComputeConformanceOrVariance(
   BYTE dtype = pFormat[0] & 0xf;
   short ofs = *(const short *)&pFormat[2];
   LPVOID ptr = NULL;
-  DWORD data = 0;
+  ULONG_PTR data = 0;
 
   if (!IsConformanceOrVariancePresent(pFormat)) {
     /* null descriptor */
@@ -565,7 +565,7 @@ PFORMAT_STRING ComputeConformanceOrVariance(
     break;
   case RPC_FC_CONSTANT_CONFORMANCE:
     data = ofs | ((DWORD)pFormat[1] << 16);
-    TRACE("constant conformance, val=%d\n", data);
+    TRACE("constant conformance, val=%ld\n", data);
     *pCount = data;
     goto finish_conf;
   case RPC_FC_TOP_LEVEL_MULTID_CONFORMANCE:
@@ -630,11 +630,14 @@ PFORMAT_STRING ComputeConformanceOrVariance(
   case RPC_FC_USMALL:
     data = *(UCHAR*)ptr;
     break;
+  case RPC_FC_HYPER:
+    data = *(ULONGLONG *)ptr;
+    break;
   default:
     FIXME("unknown conformance data type %x\n", dtype);
     goto done_conf_grab;
   }
-  TRACE("dereferenced data type %x at %p, got %d\n", dtype, ptr, data);
+  TRACE("dereferenced data type %x at %p, got %ld\n", dtype, ptr, data);
 
 done_conf_grab:
   switch (pFormat[1]) {
