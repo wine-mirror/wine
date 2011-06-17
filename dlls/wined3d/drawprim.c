@@ -75,7 +75,7 @@ static void drawStridedSlow(struct wined3d_device *device, const struct wined3d_
     UINT vx_index;
     const struct wined3d_state *state = &device->stateBlock->state;
     const struct wined3d_stream_state *streams = state->streams;
-    LONG SkipnStrides = startIdx + state->load_base_vertex_index;
+    LONG SkipnStrides = startIdx;
     BOOL pixelShader = use_ps(state);
     BOOL specular_fog = FALSE;
     const BYTE *texCoords[WINED3DDP_MAXTEXCOORD];
@@ -230,9 +230,9 @@ static void drawStridedSlow(struct wined3d_device *device, const struct wined3d_
         {
             /* Indexed so work out the number of strides to skip */
             if (idxSize == 2)
-                SkipnStrides = pIdxBufS[startIdx + vx_index] + state->load_base_vertex_index;
+                SkipnStrides = pIdxBufS[startIdx + vx_index] + state->base_vertex_index;
             else
-                SkipnStrides = pIdxBufL[startIdx + vx_index] + state->load_base_vertex_index;
+                SkipnStrides = pIdxBufL[startIdx + vx_index] + state->base_vertex_index;
         }
 
         tmp_tex_mask = tex_mask;
