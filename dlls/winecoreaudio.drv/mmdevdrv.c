@@ -2289,7 +2289,6 @@ static const IAudioSessionControl2Vtbl AudioSessionControl2_Vtbl =
 /* index == -1 means set all channels, otherwise sets only the given channel */
 static HRESULT ca_setvol(ACImpl *This, UINT32 index)
 {
-    AudioObjectPropertyAddress addr;
     float level;
     OSStatus sc;
 
@@ -2308,14 +2307,9 @@ static HRESULT ca_setvol(ACImpl *This, UINT32 index)
     level = This->session->master_vol * This->session->channel_vols[index] *
         This->vols[index];
 
-    addr.mScope = This->scope;
-    addr.mSelector = kAudioDevicePropertyVolumeScalar;
-    addr.mElement = index + 1;
-
-    sc = AudioObjectSetPropertyData(This->adevid, &addr, 0, NULL,
-            sizeof(float), &level);
+    sc = AudioQueueSetParameter(This->aqueue, kAudioQueueParam_Volume, level);
     if(sc != noErr){
-        WARN("Setting _VolumeScalar property failed: %lx\n", sc);
+        WARN("Setting _Volume property failed: %lx\n", sc);
         return E_FAIL;
     }
 
@@ -2514,6 +2508,7 @@ static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
 
     This->vols[index] = level;
 
+    WARN("AudioQueue doesn't support per-channel volume control\n");
     ret = ca_setvol(This, index);
 
     OSSpinLockUnlock(&This->lock);
@@ -2675,6 +2670,7 @@ static HRESULT WINAPI ChannelAudioVolume_SetChannelVolume(
 
     session->channel_vols[index] = level;
 
+    WARN("AudioQueue doesn't support per-channel volume control\n");
     ret = ca_session_setvol(session, index);
 
     LeaveCriticalSection(&session->lock);
