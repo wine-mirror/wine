@@ -824,6 +824,9 @@ HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
 {
     MMDevEnumImpl *This = MMDevEnumerator;
 
+    if(!drvs.pGetAudioEndpoint)
+        return AUDCLNT_E_SERVICE_NOT_RUNNING;
+
     if (!This)
     {
         This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
