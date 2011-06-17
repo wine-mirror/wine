@@ -213,7 +213,7 @@ static Bool filter_event( Display *display, XEvent *event, char *arg )
     case KeyRelease:
     case KeymapNotify:
     case MappingNotify:
-        return (mask & QS_KEY) != 0;
+        return (mask & (QS_KEY|QS_HOTKEY)) != 0;
     case ButtonPress:
     case ButtonRelease:
         return (mask & QS_MOUSEBUTTON) != 0;
