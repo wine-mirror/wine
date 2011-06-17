@@ -101,6 +101,8 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "e2a8eef4aeda3a0f6c950075acba38f1f9e0814d",
     "8b66f14d51ecdeea12bc993302bb9b7d3ec085a1",
     "7da9dd3d40d44d92deb9883fb7110443c2d5769a",
+    "e358efb1c11172e40855de620bdb8a8e545cd790",
+    "9e0c2596c6ecb4f1bc97b18ec3ca493d37626608",
     NULL
 };
 
@@ -131,6 +133,8 @@ static const char *sha1_graphics_a8b8g8r8[] =
     "4851c5b7d5bc18590e787c0c218a592ef504e738",
     "9aa506e3df33e0d5298755aa4144e10eb4b5adcf",
     "abdf003699364fe45fab7dc61e67c606d0063b40",
+    "89abaadff4e68c738cf9251c51e3609564843381",
+    "f6aa3f907f620b9f3493f03cb3b4b292df3a9545",
     NULL
 };
 
@@ -161,6 +165,8 @@ static const char *sha1_graphics_24[] =
     "b4df692ac70a5f9f303270df4641ab014c6cbf46",
     "8bc3128ba47891366fd7b02fde7ca19100e64b9f",
     "e649e00efe7fea1eb8b17f7867fe089e5270c44b",
+    "a0bffbbfb0adf6f188479c88da04e25d76ab4822",
+    "92a1ab214dd8027c407814420449119466c92840",
     NULL
 };
 
@@ -191,6 +197,8 @@ static const char *sha1_graphics_r5g5b5[] =
     "3a50ce21b3563a604b4fc9f247a30f5a981f1ba6",
     "d7d97e28ed316f6596c737eb83baa5948d86b673",
     "ecc2991277d7314f55b00e0f284ae3703aeef81e",
+    "656bf3b7121bcd620a0a3ad488f0d66604824577",
+    "d7d8493b5fa7a3a8323d6ac84245093a79f052c1",
     NULL
 };
 
@@ -221,6 +229,8 @@ static const char *sha1_graphics_r4g4b4[] =
     "d591232bbc2592462c819a9486750f64180518fd",
     "0e183a4c30b3da345129cffe33fe0fc593d8666b",
     "f14d9a4bd8a365b7c8f068a0dad481b6eb2b178b",
+    "8933450132bf949ba4bc28626968425b5ed2867d",
+    "9928a8f28a66c00069a124f7171b248817005763",
     NULL
 };
 
@@ -251,6 +261,8 @@ static const char *sha1_graphics_8[] =
     "1f13ea0034db4b0ffa4ddcff9664fd892058f9cd",
     "3caf512cfddfd463d0750cfe3cadb58548eb2ae8",
     "4e5e7d5fd64818b2b3d3e793c88f603b699d2f0f",
+    "c4efce8f7ed2d380ea5dc6fe1ef8448a27827532",
+    "bdc0a354635b879871077c5b712570e469863c99",
     NULL
 };
 
@@ -281,6 +293,8 @@ static const char *sha1_graphics_4[] =
     "39c16648cf6c261be71a33cec41867f28e119b94",
     "26ad5116562e7b58c76a26eaf521e2e40899e944",
     "1bcc54eaf8e3c2b7c59ecccb23c240181d7ba8b8",
+    "4f827ca6927f15191588456f985bf29d2a3b3c24",
+    "e7de769c3d12ea9dd223bef4881c578823bec67e",
     NULL
 };
 
@@ -318,6 +332,8 @@ static const char *sha1_graphics_1[] =
     "d1e6091caa4482d3142df3b958606c41ebf4698e",
     "07c1116d8286fb665a1005de220eadc3d5999aaf",
     "4afb0649488f6e6f7d3a2b8bf438d82f2c88f4d1",
+    "f2fe295317e795a88edd0b2c52618b8cb0e7f2ce",
+    "ffc78c075d4be66806f6c59180772d5eed963dc0",
     NULL
 };
 
@@ -519,8 +535,8 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 {
     DWORD dib_size = get_dib_size(bmi);
     HPEN solid_pen, dashed_pen, orig_pen;
-    HBRUSH solid_brush, dib_brush, orig_brush;
-    INT i, y;
+    HBRUSH solid_brush, dib_brush, hatch_brush, orig_brush;
+    INT i, y, hatch_style;
     HRGN hrgn, hrgn2;
     BYTE dib_brush_buf[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD) + 16 * 16 * sizeof(DWORD)]; /* Enough for 16 x 16 at 32 bpp */
     BITMAPINFO *brush_bi = (BITMAPINFO*)dib_brush_buf;
@@ -956,6 +972,28 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
         pSetLayout(hdc, LAYOUT_LTR);
     }
+
+    for(i = 0, y = 10; i < 256; i++)
+    {
+        BOOL ret;
+
+        if(!rop_uses_src(rop3[i]))
+        {
+            for(hatch_style = HS_HORIZONTAL; hatch_style <= HS_DIAGCROSS; hatch_style++)
+            {
+                hatch_brush = CreateHatchBrush(hatch_style, RGB(0xff, 0, 0));
+                SelectObject(hdc, hatch_brush);
+                ret = PatBlt(hdc, 10 + i + 30 * hatch_style, y, 20, 20, rop3[i]);
+                ok(ret, "got FALSE for %x\n", rop3[i]);
+                SelectObject(hdc, orig_brush);
+                DeleteObject(hatch_brush);
+            }
+            y += 25;
+        }
+    }
+
+    compare_hash_broken_todo(bmi, bits, sha1, "hatch brushes", 1, FALSE); /* nt4 is different */
+    memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
     SelectObject(hdc, orig_pen);
