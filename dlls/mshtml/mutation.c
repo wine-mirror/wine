@@ -44,14 +44,12 @@ static const IID NS_ICONTENTUTILS_CID =
 
 static nsIContentUtils *content_utils;
 
-static BOOL handle_insert_comment(HTMLDocumentNode *doc, const PRUnichar *comment)
+static PRUnichar *handle_insert_comment(HTMLDocumentNode *doc, const PRUnichar *comment)
 {
-    DWORD len;
     int majorv = 0, minorv = 0;
     const PRUnichar *ptr, *end;
-    nsAString nsstr;
     PRUnichar *buf;
-    nsresult nsres;
+    DWORD len;
 
     enum {
         CMP_EQ,
@@ -64,7 +62,7 @@ static BOOL handle_insert_comment(HTMLDocumentNode *doc, const PRUnichar *commen
     static const PRUnichar endifW[] = {'<','!','[','e','n','d','i','f',']'};
 
     if(comment[0] != '[' || comment[1] != 'i' || comment[2] != 'f')
-        return FALSE;
+        return NULL;
 
     ptr = comment+3;
     while(isspaceW(*ptr))
@@ -89,28 +87,28 @@ static BOOL handle_insert_comment(HTMLDocumentNode *doc, const PRUnichar *commen
     }
 
     if(!isspaceW(*ptr++))
-        return FALSE;
+        return NULL;
     while(isspaceW(*ptr))
         ptr++;
 
     if(ptr[0] != 'I' || ptr[1] != 'E')
-        return FALSE;
+        return NULL;
 
     ptr +=2;
     if(!isspaceW(*ptr++))
-        return FALSE;
+        return NULL;
     while(isspaceW(*ptr))
         ptr++;
 
     if(!isdigitW(*ptr))
-        return FALSE;
+        return NULL;
     while(isdigitW(*ptr))
         majorv = majorv*10 + (*ptr++ - '0');
 
     if(*ptr == '.') {
         ptr++;
         if(!isdigitW(*ptr))
-            return FALSE;
+            return NULL;
         while(isdigitW(*ptr))
             minorv = minorv*10 + (*ptr++ - '0');
     }
@@ -118,74 +116,64 @@ static BOOL handle_insert_comment(HTMLDocumentNode *doc, const PRUnichar *commen
     while(isspaceW(*ptr))
         ptr++;
     if(ptr[0] != ']' || ptr[1] != '>')
-        return FALSE;
+        return NULL;
     ptr += 2;
 
     len = strlenW(ptr);
     if(len < sizeof(endifW)/sizeof(WCHAR))
-        return FALSE;
+        return NULL;
 
     end = ptr + len-sizeof(endifW)/sizeof(WCHAR);
     if(memcmp(end, endifW, sizeof(endifW)))
-        return FALSE;
+        return NULL;
 
     switch(cmpt) {
     case CMP_EQ:
         if(majorv == IE_MAJOR_VERSION && minorv == IE_MINOR_VERSION)
             break;
-        return FALSE;
+        return NULL;
     case CMP_LT:
         if(majorv > IE_MAJOR_VERSION)
             break;
         if(majorv == IE_MAJOR_VERSION && minorv > IE_MINOR_VERSION)
             break;
-        return FALSE;
+        return NULL;
     case CMP_LTE:
         if(majorv > IE_MAJOR_VERSION)
             break;
         if(majorv == IE_MAJOR_VERSION && minorv >= IE_MINOR_VERSION)
             break;
-        return FALSE;
+        return NULL;
     case CMP_GT:
         if(majorv < IE_MAJOR_VERSION)
             break;
         if(majorv == IE_MAJOR_VERSION && minorv < IE_MINOR_VERSION)
             break;
-        return FALSE;
+        return NULL;
     case CMP_GTE:
         if(majorv < IE_MAJOR_VERSION)
             break;
         if(majorv == IE_MAJOR_VERSION && minorv <= IE_MINOR_VERSION)
             break;
-        return FALSE;
+        return NULL;
     }
 
     buf = heap_alloc((end-ptr+1)*sizeof(WCHAR));
     if(!buf)
-        return FALSE;
+        return NULL;
 
     memcpy(buf, ptr, (end-ptr)*sizeof(WCHAR));
     buf[end-ptr] = 0;
-    nsAString_InitDepend(&nsstr, buf);
 
-    /* FIXME: Find better way to insert HTML to document. */
-    nsres = nsIDOMHTMLDocument_Write(doc->nsdoc, &nsstr);
-    nsAString_Finish(&nsstr);
-    heap_free(buf);
-    if(NS_FAILED(nsres)) {
-        ERR("Write failed: %08x\n", nsres);
-        return FALSE;
-    }
-
-    return TRUE;
+    return buf;
 }
 
 static nsresult run_insert_comment(HTMLDocumentNode *doc, nsISupports *comment_iface, nsISupports *arg2)
 {
     const PRUnichar *comment;
     nsIDOMComment *nscomment;
+    PRUnichar *replace_html;
     nsAString comment_str;
-    BOOL remove_comment;
     nsresult nsres;
 
     nsres = nsISupports_QueryInterface(comment_iface, &IID_nsIDOMComment, (void**)&nscomment);
@@ -200,32 +188,21 @@ static nsresult run_insert_comment(HTMLDocumentNode *doc, nsISupports *comment_i
         return nsres;
 
     nsAString_GetData(&comment_str, &comment);
-    remove_comment = handle_insert_comment(doc, comment);
+    replace_html = handle_insert_comment(doc, comment);
     nsAString_Finish(&comment_str);
 
-    if(remove_comment) {
-        nsIDOMNode *nsparent, *tmp;
-        nsAString magic_str;
+    if(replace_html) {
+        HRESULT hres;
 
-        static const PRUnichar remove_comment_magicW[] =
-            {'#','!','w','i','n','e', 'r','e','m','o','v','e','!','#',0};
-
-        nsAString_InitDepend(&magic_str, remove_comment_magicW);
-        nsres = nsIDOMComment_SetData(nscomment, &magic_str);
-        nsAString_Finish(&magic_str);
-        if(NS_FAILED(nsres))
-            ERR("SetData failed: %08x\n", nsres);
-
-        nsIDOMComment_GetParentNode(nscomment, &nsparent);
-        if(nsparent) {
-            nsIDOMNode_RemoveChild(nsparent, (nsIDOMNode*)nscomment, &tmp);
-            nsIDOMNode_Release(nsparent);
-            nsIDOMNode_Release(tmp);
-        }
+        hres = replace_node_by_html(doc->nsdoc, (nsIDOMNode*)nscomment, replace_html);
+        heap_free(replace_html);
+        if(FAILED(hres))
+            nsres = NS_ERROR_FAILURE;
     }
 
+
     nsIDOMComment_Release(nscomment);
-    return NS_OK;
+    return nsres;
 }
 
 static nsresult run_bind_to_tree(HTMLDocumentNode *doc, nsISupports *nsiface, nsISupports *arg2)

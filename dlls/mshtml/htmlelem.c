@@ -98,7 +98,7 @@ static const tag_desc_t *get_tag_desc(const WCHAR *tag_name)
     return NULL;
 }
 
-static HRESULT replace_node_by_html(nsIDOMHTMLDocument *nsdoc, nsIDOMNode *nsnode, const WCHAR *html)
+HRESULT replace_node_by_html(nsIDOMHTMLDocument *nsdoc, nsIDOMNode *nsnode, const WCHAR *html)
 {
     nsIDOMDocumentFragment *nsfragment;
     nsIDOMDocumentRange *nsdocrange;
