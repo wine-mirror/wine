@@ -1146,12 +1146,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
         goto exit;
     }
 
-    if(fmt->nSamplesPerSec < min || fmt->nSamplesPerSec > max ||
-            (fmt->nSamplesPerSec != 48000 &&
-            fmt->nSamplesPerSec != 44100 &&
-            fmt->nSamplesPerSec != 22050 &&
-            fmt->nSamplesPerSec != 11025 &&
-            fmt->nSamplesPerSec != 8000)){
+    if(fmt->nSamplesPerSec < min || fmt->nSamplesPerSec > max){
         hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
         goto exit;
     }
