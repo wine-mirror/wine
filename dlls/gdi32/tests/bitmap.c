@@ -354,7 +354,9 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
     ok(ds.dsBmih.biHeight == abs(bmih->biHeight), "%d != %d\n", ds.dsBmih.biHeight, abs(bmih->biHeight));
     ok(ds.dsBmih.biPlanes == bmih->biPlanes, "%u != %u\n", ds.dsBmih.biPlanes, bmih->biPlanes);
     ok(ds.dsBmih.biBitCount == bmih->biBitCount, "%u != %u\n", ds.dsBmih.biBitCount, bmih->biBitCount);
-    ok(ds.dsBmih.biCompression == bmih->biCompression, "%u != %u\n", ds.dsBmih.biCompression, bmih->biCompression);
+    ok(ds.dsBmih.biCompression == bmih->biCompression ||
+       ((bmih->biBitCount == 32) && broken(ds.dsBmih.biCompression == BI_BITFIELDS)), /* nt4 sp1 and 2 */
+       "%u != %u\n", ds.dsBmih.biCompression, bmih->biCompression);
     ok(ds.dsBmih.biSizeImage == bmih->biSizeImage, "%u != %u\n", ds.dsBmih.biSizeImage, bmih->biSizeImage);
     ok(ds.dsBmih.biXPelsPerMeter == bmih->biXPelsPerMeter, "%d != %d\n", ds.dsBmih.biXPelsPerMeter, bmih->biXPelsPerMeter);
     ok(ds.dsBmih.biYPelsPerMeter == bmih->biYPelsPerMeter, "%d != %d\n", ds.dsBmih.biYPelsPerMeter, bmih->biYPelsPerMeter);
@@ -1786,7 +1788,7 @@ static void test_GetDIBits_BI_BITFIELDS(void)
     if (dibinfo->bmiHeader.biBitCount > 8)
     {
         ok( dibinfo->bmiHeader.biCompression == BI_BITFIELDS,
-            "compression is %u\n", dibinfo->bmiHeader.biCompression );
+            "compression is %u (%d bpp)\n", dibinfo->bmiHeader.biCompression, dibinfo->bmiHeader.biBitCount );
 
         ok( !bitmasks[0], "red mask is set\n" );
         ok( !bitmasks[1], "green mask is set\n" );
