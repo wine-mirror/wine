@@ -1986,7 +1986,7 @@ static inline GLenum draw_buffer_from_rt_mask(DWORD rt_mask)
 }
 
 /* Context activation and GL locking are done by the caller. */
-static void context_apply_draw_buffers(struct wined3d_context *context, DWORD rt_mask, struct wined3d_surface **rts)
+static void context_apply_draw_buffers(struct wined3d_context *context, DWORD rt_mask)
 {
     if (!rt_mask)
     {
@@ -2007,7 +2007,7 @@ static void context_apply_draw_buffers(struct wined3d_context *context, DWORD rt
 
             while (rt_mask)
             {
-                if ((rt_mask & 1) && rts[i] && rts[i]->resource.format->id != WINED3DFMT_NULL)
+                if (rt_mask & 1)
                     context->draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
                 else
                     context->draw_buffers[i] = GL_NONE;
@@ -2120,7 +2120,10 @@ void context_apply_blit_state(struct wined3d_context *context, struct wined3d_de
             ENTER_GL();
             context_apply_fbo_state_blit(context, GL_FRAMEBUFFER, context->current_rt, NULL, SFLAG_INTEXTURE);
             LEAVE_GL();
-            rt_mask = 1;
+            if (context->current_rt && context->current_rt->resource.format->id != WINED3DFMT_NULL)
+                rt_mask = 1;
+            else
+                rt_mask = 0;
         }
         else
         {
@@ -2138,7 +2141,7 @@ void context_apply_blit_state(struct wined3d_context *context, struct wined3d_de
     ENTER_GL();
     if (rt_mask != context->draw_buffers_mask)
     {
-        context_apply_draw_buffers(context, rt_mask, &context->current_rt);
+        context_apply_draw_buffers(context, rt_mask);
         context->draw_buffers_mask = rt_mask;
     }
 
@@ -2191,7 +2194,8 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
             for (i = 0; i < rt_count; ++i)
             {
                 context->blit_targets[i] = rts[i];
-                rt_mask |= (1 << i);
+                if (rts[i] && rts[i]->resource.format->id != WINED3DFMT_NULL)
+                    rt_mask |= (1 << i);
             }
             while (i < context->gl_info->limits.buffers)
             {
@@ -2218,7 +2222,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
     ENTER_GL();
     if (rt_mask != context->draw_buffers_mask)
     {
-        context_apply_draw_buffers(context, rt_mask, rts);
+        context_apply_draw_buffers(context, rt_mask);
         context->draw_buffers_mask = rt_mask;
     }
 
@@ -2282,6 +2286,8 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
         else
         {
             const struct wined3d_shader *ps = device->stateBlock->state.pixel_shader;
+            DWORD rt_mask_bits;
+            struct wined3d_surface **rts = fb->render_targets;
 
             ENTER_GL();
             context_apply_fbo_state(context, GL_FRAMEBUFFER, fb->render_targets, fb->depth_stencil, SFLAG_INTEXTURE);
@@ -2290,6 +2296,16 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
             LEAVE_GL();
             rt_mask = ps ? ps->reg_maps.rt_mask : 1;
             rt_mask &= device->valid_rt_mask;
+            rt_mask_bits = rt_mask;
+            i = 0;
+            while (rt_mask_bits)
+            {
+                rt_mask_bits &= ~(1 << i);
+                if (!rts[i] || rts[i]->resource.format->id == WINED3DFMT_NULL)
+                    rt_mask &= ~(1 << i);
+
+                i++;
+            }
         }
     }
     else
@@ -2300,7 +2316,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
     ENTER_GL();
     if (context->draw_buffers_mask != rt_mask)
     {
-        context_apply_draw_buffers(context, rt_mask, fb->render_targets);
+        context_apply_draw_buffers(context, rt_mask);
         context->draw_buffers_mask = rt_mask;
     }
 
