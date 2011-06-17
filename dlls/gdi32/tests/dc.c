@@ -497,7 +497,7 @@ todo_wine
 static void test_boundsrect_invalid(void)
 {
     HDC hdc;
-    RECT rect, expect;
+    RECT rect, expect, set_rect;
     UINT ret;
 
     hdc = GetDC(NULL);
@@ -518,8 +518,8 @@ static void test_boundsrect_invalid(void)
     else
     {
         /* Test parameter handling order. */
-        SetRect(&rect, 0, 0, 50, 50);
-        ret = SetBoundsRect(hdc, &rect, DCB_SET);
+        SetRect(&set_rect, 10, 20, 40, 50);
+        ret = SetBoundsRect(hdc, &set_rect, DCB_SET);
         ok(ret & DCB_RESET,
            "Expected return flag DCB_RESET to be set, got %u\n", ret);
 
@@ -533,7 +533,8 @@ static void test_boundsrect_invalid(void)
             ok(ret == DCB_RESET,
                "Expected GetBoundsRect to return DCB_RESET, got %u\n", ret);
             SetRect(&expect, 0, 0, 0, 0);
-            ok(EqualRect(&rect, &expect),
+            ok(EqualRect(&rect, &expect) ||
+               broken(EqualRect(&rect, &set_rect)), /* nt4 sp1-5 */
                "Expected output rectangle (0,0)-(0,0), got (%d,%d)-(%d,%d)\n",
                rect.left, rect.top, rect.right, rect.bottom);
        }
