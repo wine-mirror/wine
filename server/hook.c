@@ -207,8 +207,8 @@ static inline int run_hook_in_current_thread( struct hook *hook )
     if ((hook->flags & WINEVENT_SKIPOWNPROCESS) && hook->process == current->process) return 0;
     if (hook->thread && hook->thread != current) return 0;
     if ((hook->flags & WINEVENT_SKIPOWNTHREAD) && hook->thread == current) return 0;
-    /* don't run low-level hooks in debugged processes */
-    if (run_hook_in_owner_thread( hook ) && hook->owner->process->debugger) return 0;
+    /* don't run low-level hooks in processes suspended for debugging */
+    if (run_hook_in_owner_thread( hook ) && hook->owner->process->suspend) return 0;
     return 1;
 }
 
