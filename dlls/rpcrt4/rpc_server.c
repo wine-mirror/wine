@@ -825,6 +825,24 @@ static RPC_STATUS RPCRT4_use_protseq(RpcServerProtseq* ps, const char *endpoint)
 }
 
 /***********************************************************************
+ *             RpcNetworkInqProtseqsA (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcNetworkInqProtseqsA( RPC_PROTSEQ_VECTORA* ProtSeqVector )
+{
+    FIXME("(%p): stub\n", ProtSeqVector);
+    return RPC_S_NO_PROTSEQS_REGISTERED;
+}
+
+/***********************************************************************
+ *             RpcNetworkInqProtseqsW (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcNetworkInqProtseqsW( RPC_PROTSEQ_VECTORW* ProtSeqVector )
+{
+    FIXME("(%p): stub\n", ProtSeqVector);
+    return RPC_S_NO_PROTSEQS_REGISTERED;
+}
+
+/***********************************************************************
  *             RpcServerInqBindings (RPCRT4.@)
  */
 RPC_STATUS WINAPI RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector )

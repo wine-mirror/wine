@@ -409,8 +409,8 @@
 @ stdcall RpcMgmtStatsVectorFree(ptr)
 @ stdcall RpcMgmtStopServerListening(ptr)
 @ stdcall RpcMgmtWaitServerListen()
-@ stub RpcNetworkInqProtseqsA
-@ stub RpcNetworkInqProtseqsW
+@ stdcall RpcNetworkInqProtseqsA(ptr)
+@ stdcall RpcNetworkInqProtseqsW(ptr)
 @ stdcall RpcNetworkIsProtseqValidA(ptr)
 @ stdcall RpcNetworkIsProtseqValidW(ptr)
 @ stub RpcNsBindingInqEntryNameA
