@@ -672,9 +672,8 @@ static void output_import_thunk( const char *name, const char *table, int pos )
         break;
     case CPU_ARM:
         output( "\tldr IP,[PC,#0]\n");
-        output( "\tmov PC,PC\n");
-        output( "\t.long %s\n", table );
         output( "\tldr PC,[IP,#%d]\n", pos);
+        output( "\t.long %s\n", table );
         break;
     case CPU_POWERPC:
         output( "\tmr %s, %s\n", ppc_reg(0), ppc_reg(31) );
