@@ -556,7 +556,7 @@ static void test_boundsrect_invalid(void)
         ok(ret == 0, "Expected SetBoundsRect to return 0, got %u\n", ret);
     }
 
-    DeleteDC(hdc);
+    ReleaseDC(NULL, hdc);
 }
 
 static void test_desktop_colorres(void)
@@ -595,7 +595,7 @@ static void test_desktop_colorres(void)
         }
     }
 
-    DeleteDC(hdc);
+    ReleaseDC(NULL, hdc);
 }
 
 START_TEST(dc)
