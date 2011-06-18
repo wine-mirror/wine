@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 Aurimas Fišeras <aurimas@gmail.com>
+ * Copyright 2009-2011 Aurimas Fišeras <aurimas@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -75,7 +75,7 @@ CAPTION "Apie %s"
 FONT 10, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "Gerai", IDOK, 153, 133, 60, 12, WS_TABSTOP
- PUSHBUTTON "Wine &licencija...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
+ PUSHBUTTON "Wine &licencija", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
  LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", stc1, 10, 10, 30, 30
  LTEXT "", IDC_ABOUT_STATIC_TEXT1, 42, 10, 170, 10
