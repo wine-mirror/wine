@@ -15,9 +15,11 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-import "oaidl.idl";
-import "ocidl.idl";
-import "dxgiformat.h";
+
+#ifndef __dxgitype_h__
+#define __dxgitype_h__
+
+#include "dxgiformat.h"
 
 typedef struct DXGI_SAMPLE_DESC {
     UINT Count;
@@ -78,3 +80,5 @@ typedef struct DXGI_GAMMA_CONTROL {
     DXGI_RGB Offset;
     DXGI_RGB GammaCurve[1025];
 } DXGI_GAMMA_CONTROL;
+
+#endif

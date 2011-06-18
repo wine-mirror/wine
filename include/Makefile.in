@@ -32,7 +32,6 @@ PUBLIC_IDL_H_SRCS = \
 	docobjectservice.idl \
 	downloadmgr.idl \
 	dxgi.idl \
-	dxgitype.idl \
 	endpointvolume.idl \
 	exdisp.idl \
 	fusion.idl \
@@ -257,6 +256,7 @@ SRCDIR_INCLUDES = \
 	dxerr9.h \
 	dxfile.h \
 	dxgiformat.h \
+	dxgitype.h \
 	dyngraph.idl \
 	errorrep.h \
 	errors.h \

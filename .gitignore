@@ -171,7 +171,6 @@ include/docobj.h
 include/docobjectservice.h
 include/downloadmgr.h
 include/dxgi.h
-include/dxgitype.h
 include/endpointvolume.h
 include/exdisp.h
 include/fusion.h
