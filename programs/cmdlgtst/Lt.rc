@@ -2,7 +2,7 @@
  * Common Dialog Test Jig Exerciser
  * Lithuanian Language Support
  *
- * Copyright 2009 Aurimas Fišeras <aurimas@gmail.com>
+ * Copyright 2009-2011 Aurimas Fišeras <aurimas@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -35,30 +35,30 @@ CmdlgtstMenu MENU
 
  POPUP "&Commdlg"
  {
-  MENUITEM "&Atverti",            CM_U_OPEN
-  MENUITEM "&Išsaugoti",          CM_U_SAVE
+  MENUITEM "&Atverti...",            CM_U_OPEN
+  MENUITEM "&Išsaugoti kaip...",          CM_U_SAVE
   MENUITEM SEPARATOR
-  MENUITEM "&Spalva",             CM_U_COLOR
-  MENUITEM "&Šriftas",            CM_U_FONT
+  MENUITEM "&Spalva...",             CM_U_COLOR
+  MENUITEM "&Šriftas...",            CM_U_FONT
   MENUITEM SEPARATOR
-  MENUITEM "Ieškoti &teksto",     CM_U_FIND
-  MENUITEM "Pa&keisti tekstą",    CM_U_REPLACE
+  MENUITEM "Ieškoti &teksto...",     CM_U_FIND
+  MENUITEM "Pa&keisti tekstą...",    CM_U_REPLACE
   MENUITEM SEPARATOR
-  MENUITEM "S&pausdinti",         CM_U_PRINT
-  MENUITEM "Puslapio &nuostatos", CM_U_PAGESETUP
+  MENUITEM "S&pausdinti...",         CM_U_PRINT
+  MENUITEM "Puslapio &nuostatos...", CM_U_PAGESETUP
  }
 
  POPUP "Ž&ymos bitai"
  {
-  MENUITEM "&Failas",             CM_F_FILE
+  MENUITEM "&Failas...",             CM_F_FILE
   MENUITEM SEPARATOR
-  MENUITEM "&Spalva",             CM_F_COLOR
-  MENUITEM "&Šriftas",            CM_F_FONT
+  MENUITEM "&Spalva...",             CM_F_COLOR
+  MENUITEM "&Šriftas...",            CM_F_FONT
   MENUITEM SEPARATOR
-  MENUITEM "&Ieškoti/pakeisti",   CM_F_FINDREPLACE
+  MENUITEM "&Ieškoti/pakeisti...",   CM_F_FINDREPLACE
   MENUITEM SEPARATOR
-  MENUITEM "S&pausdinti",         CM_F_PRINT
-  MENUITEM "Puslapio &nuostatos", CM_F_PAGESETUP
+  MENUITEM "S&pausdinti...",         CM_F_PRINT
+  MENUITEM "Puslapio &nuostatos...", CM_F_PAGESETUP
  }
 
  POPUP "&Žinynas"
