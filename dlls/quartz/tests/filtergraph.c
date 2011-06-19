@@ -22,6 +22,7 @@
 #include <assert.h>
 
 #define COBJMACROS
+#define CONST_VTABLE
 
 #include "wine/test.h"
 #include "dshow.h"
@@ -526,14 +527,19 @@ static void Copy_PinInfo(PIN_INFO * pDest, const PIN_INFO * pSrc)
 
 typedef struct ITestPinImpl
 {
-	const struct IPinVtbl * lpVtbl;
-	LONG refCount;
-	LPCRITICAL_SECTION pCritSec;
-	PIN_INFO pinInfo;
-	IPin * pConnectedTo;
-	AM_MEDIA_TYPE mtCurrent;
-	LPVOID pUserData;
+    IPin IPin_iface;
+    LONG refCount;
+    LPCRITICAL_SECTION pCritSec;
+    PIN_INFO pinInfo;
+    IPin * pConnectedTo;
+    AM_MEDIA_TYPE mtCurrent;
+    LPVOID pUserData;
 } ITestPinImpl;
+
+static inline ITestPinImpl *impl_from_IPin(IPin *iface)
+{
+    return CONTAINING_RECORD(iface, ITestPinImpl, IPin_iface);
+}
 
 static HRESULT WINAPI  TestFilter_Pin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
@@ -555,20 +561,19 @@ static HRESULT WINAPI  TestFilter_Pin_QueryInterface(IPin * iface, REFIID riid, 
 
 static ULONG WINAPI TestFilter_Pin_AddRef(IPin * iface)
 {
-    ITestPinImpl *This = (ITestPinImpl *)iface;
+    ITestPinImpl *This = impl_from_IPin(iface);
     ULONG refCount = InterlockedIncrement(&This->refCount);
     return refCount;
 }
 
 static ULONG WINAPI TestFilter_Pin_Release(IPin * iface)
 {
-    ITestPinImpl *This = (ITestPinImpl *)iface;
+    ITestPinImpl *This = impl_from_IPin(iface);
     ULONG refCount = InterlockedDecrement(&This->refCount);
 
     if (!refCount)
     {
         FreeMediaType(&This->mtCurrent);
-        This->lpVtbl = NULL;
         CoTaskMemFree(This);
         return 0;
     }
@@ -583,7 +588,7 @@ static HRESULT WINAPI TestFilter_InputPin_Connect(IPin * iface, IPin * pConnecto
 
 static HRESULT WINAPI TestFilter_InputPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
-    ITestPinImpl *This = (ITestPinImpl *)iface;
+    ITestPinImpl *This = impl_from_IPin(iface);
     PIN_DIRECTION pindirReceive;
     HRESULT hr = S_OK;
 
@@ -621,7 +626,7 @@ static HRESULT WINAPI TestFilter_InputPin_ReceiveConnection(IPin * iface, IPin *
 static HRESULT WINAPI TestFilter_Pin_Disconnect(IPin * iface)
 {
     HRESULT hr;
-    ITestPinImpl *This = (ITestPinImpl *)iface;
+    ITestPinImpl *This = impl_from_IPin(iface);
 
     EnterCriticalSection(This->pCritSec);
     {
@@ -642,7 +647,7 @@ static HRESULT WINAPI TestFilter_Pin_Disconnect(IPin * iface)
 static HRESULT WINAPI TestFilter_Pin_ConnectedTo(IPin * iface, IPin ** ppPin)
 {
     HRESULT hr;
-    ITestPinImpl *This = (ITestPinImpl *)iface;
+    ITestPinImpl *This = impl_from_IPin(iface);
 
     EnterCriticalSection(This->pCritSec);
     {
@@ -666,7 +671,7 @@ static HRESULT WINAPI TestFilter_Pin_ConnectedTo(IPin * iface, IPin ** ppPin)
 static HRESULT WINAPI TestFilter_Pin_ConnectionMediaType(IPin * iface, AM_MEDIA_TYPE * pmt)
 {
     HRESULT hr;
-    ITestPinImpl *This = (ITestPinImpl *)iface;
+    ITestPinImpl *This = impl_from_IPin(iface);
 
     EnterCriticalSection(This->pCritSec);
     {
@@ -688,7 +693,7 @@ static HRESULT WINAPI TestFilter_Pin_ConnectionMediaType(IPin * iface, AM_MEDIA_
 
 static HRESULT WINAPI TestFilter_Pin_QueryPinInfo(IPin * iface, PIN_INFO * pInfo)
 {
-    ITestPinImpl *This = (ITestPinImpl *)iface;
+    ITestPinImpl *This = impl_from_IPin(iface);
 
     Copy_PinInfo(pInfo, &This->pinInfo);
     IBaseFilter_AddRef(pInfo->pFilter);
@@ -698,7 +703,7 @@ static HRESULT WINAPI TestFilter_Pin_QueryPinInfo(IPin * iface, PIN_INFO * pInfo
 
 static HRESULT WINAPI TestFilter_Pin_QueryDirection(IPin * iface, PIN_DIRECTION * pPinDir)
 {
-    ITestPinImpl *This = (ITestPinImpl *)iface;
+    ITestPinImpl *This = impl_from_IPin(iface);
 
     *pPinDir = This->pinInfo.dir;
 
@@ -712,7 +717,7 @@ static HRESULT WINAPI TestFilter_Pin_QueryId(IPin * iface, LPWSTR * Id)
 
 static HRESULT WINAPI TestFilter_Pin_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt)
 {
-    ITestPinImpl *This = (ITestPinImpl *)iface;
+    ITestPinImpl *This = impl_from_IPin(iface);
 
     if (IsEqualIID(&pmt->majortype, &This->mtCurrent.majortype) && (IsEqualIID(&pmt->subtype, &This->mtCurrent.subtype) ||
                                                                     IsEqualIID(&GUID_NULL, &This->mtCurrent.subtype)))
@@ -723,7 +728,7 @@ static HRESULT WINAPI TestFilter_Pin_QueryAccept(IPin * iface, const AM_MEDIA_TY
 
 static HRESULT WINAPI TestFilter_Pin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
 {
-    ITestPinImpl *This = (ITestPinImpl *)iface;
+    ITestPinImpl *This = impl_from_IPin(iface);
 
     return IEnumMediaTypesImpl_Construct(&This->mtCurrent, 1, ppEnum);
 }
@@ -781,15 +786,15 @@ static HRESULT WINAPI TestFilter_OutputPin_ReceiveConnection(IPin * iface, IPin 
 }
 
 /* Private helper function */
-static HRESULT TestFilter_OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
+static HRESULT TestFilter_OutputPin_ConnectSpecific(ITestPinImpl * This, IPin * pReceivePin,
+        const AM_MEDIA_TYPE * pmt)
 {
-    ITestPinImpl *This = (ITestPinImpl *)iface;
     HRESULT hr;
 
     This->pConnectedTo = pReceivePin;
     IPin_AddRef(pReceivePin);
 
-    hr = IPin_ReceiveConnection(pReceivePin, iface, pmt);
+    hr = IPin_ReceiveConnection(pReceivePin, &This->IPin_iface, pmt);
 
     if (FAILED(hr))
     {
@@ -802,7 +807,7 @@ static HRESULT TestFilter_OutputPin_ConnectSpecific(IPin * iface, IPin * pReceiv
 
 static HRESULT WINAPI TestFilter_OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
-    ITestPinImpl *This = (ITestPinImpl *)iface;
+    ITestPinImpl *This = impl_from_IPin(iface);
     HRESULT hr;
 
     EnterCriticalSection(This->pCritSec);
@@ -810,11 +815,11 @@ static HRESULT WINAPI TestFilter_OutputPin_Connect(IPin * iface, IPin * pReceive
         /* if we have been a specific type to connect with, then we can either connect
          * with that or fail. We cannot choose different AM_MEDIA_TYPE */
         if (pmt && !IsEqualGUID(&pmt->majortype, &GUID_NULL) && !IsEqualGUID(&pmt->subtype, &GUID_NULL))
-            hr = TestFilter_OutputPin_ConnectSpecific(iface, pReceivePin, pmt);
+            hr = TestFilter_OutputPin_ConnectSpecific(This, pReceivePin, pmt);
         else
         {
             if (( !pmt || CompareMediaTypes(pmt, &This->mtCurrent, TRUE) ) &&
-                (TestFilter_OutputPin_ConnectSpecific(iface, pReceivePin, &This->mtCurrent) == S_OK))
+                (TestFilter_OutputPin_ConnectSpecific(This, pReceivePin, &This->mtCurrent) == S_OK))
                         hr = S_OK;
             else hr = VFW_E_NO_ACCEPTABLE_TYPES;
         } /* if negotiate media type */
@@ -864,9 +869,9 @@ static HRESULT TestFilter_Pin_Construct(const IPinVtbl *Pin_Vtbl, const PIN_INFO
     Copy_PinInfo(&pPinImpl->pinInfo, pPinInfo);
     pPinImpl->mtCurrent = *pinmt;
 
-    pPinImpl->lpVtbl = Pin_Vtbl;
+    pPinImpl->IPin_iface.lpVtbl = Pin_Vtbl;
 
-    *ppPin = (IPin *)pPinImpl;
+    *ppPin = &pPinImpl->IPin_iface;
     return S_OK;
 }
 
