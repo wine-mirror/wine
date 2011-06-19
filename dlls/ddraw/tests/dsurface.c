@@ -1080,15 +1080,15 @@ static void IFaceRefCount(void)
 
     IDirectDrawSurface_QueryInterface(surf, &IID_IDirectDrawSurface2, (void **) &surf2);
     ref = getRefcount((IUnknown *) surf);
-    todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref); /* Check the ref count is one */
+    ok(ref == 1, "Refcount is %u, expected 1\n", ref); /* Check the ref count is one */
     ref = getRefcount((IUnknown *) surf2);
-    todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref); /* This should also be one */
+    ok(ref == 1, "Refcount is %u, expected 1\n", ref); /* This should also be one */
 
     IDirectDrawSurface_QueryInterface(surf, &IID_IDirectDrawSurface2, (void **) &surf2a);
     ref = getRefcount((IUnknown *) surf2);
-    todo_wine ok(ref == 2, "Refcount is %u, expected 2\n", ref);   /* Surf2's refcount should be 2 now, but surf should be 1 */
+    ok(ref == 2, "Refcount is %u, expected 2\n", ref);   /* Surf2's refcount should be 2 now, but surf should be 1 */
     ref = getRefcount((IUnknown *) surf);
-    todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
+    ok(ref == 1, "Refcount is %u, expected 1\n", ref);
 
     IDirectDrawSurface_QueryInterface(surf, &IID_IDirectDrawSurface3, (void **) &surf3);
     ref = getRefcount((IUnknown *) surf3);
@@ -1142,10 +1142,10 @@ static void IFaceRefCount(void)
     }
 
     ref = IDirectDrawSurface2_Release(surf2); /* Release one of the 2 surf2 interfaces */
-    todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
+    ok(ref == 1, "Refcount is %u, expected 1\n", ref);
 
     ref = IDirectDrawSurface2_Release(surf2a); /* Release the other */
-    todo_wine ok(ref == 0, "Refcount is %u, expected 0\n", ref);
+    ok(ref == 0, "Refcount is %u, expected 0\n", ref);
 
     ref = IDirectDrawSurface3_Release(surf3);
     todo_wine ok(ref == 0, "Refcount is %u, expected 0\n", ref);

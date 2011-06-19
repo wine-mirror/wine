@@ -97,7 +97,7 @@ static HRESULT WINAPI ddraw_surface7_QueryInterface(IDirectDrawSurface7 *iface, 
     }
     else if (IsEqualGUID(riid, &IID_IDirectDrawSurface2))
     {
-        IUnknown_AddRef(iface);
+        IDirectDrawSurface2_AddRef(&This->IDirectDrawSurface2_iface);
         *obj = &This->IDirectDrawSurface2_iface;
         TRACE("(%p) returning IDirectDrawSurface2 interface at %p\n", This, *obj);
         return S_OK;
@@ -274,9 +274,16 @@ static ULONG WINAPI ddraw_surface3_AddRef(IDirectDrawSurface3 *iface)
 static ULONG WINAPI ddraw_surface2_AddRef(IDirectDrawSurface2 *iface)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface2(iface);
-    TRACE("iface %p.\n", iface);
+    ULONG refcount = InterlockedIncrement(&This->ref2);
 
-    return ddraw_surface7_AddRef(&This->IDirectDrawSurface7_iface);
+    TRACE("iface %p increasing refcount to %u.\n", iface, refcount);
+
+    if (refcount == 1)
+    {
+        ddraw_surface_add_iface(This);
+    }
+
+    return refcount;
 }
 
 static ULONG WINAPI ddraw_surface1_AddRef(IDirectDrawSurface *iface)
@@ -335,7 +342,7 @@ void ddraw_surface_destroy(IDirectDrawSurfaceImpl *This)
          * because the 2nd surface was addref()ed when the app
          * called GetAttachedSurface
          */
-        WARN("(%p): Destroying surface with refount %d\n", This, This->ref);
+        WARN("(%p): Destroying surface with refcounts %d 2: %d\n", This, This->ref, This->ref2);
     }
 
     if (This->wined3d_surface)
@@ -522,9 +529,16 @@ static ULONG WINAPI ddraw_surface3_Release(IDirectDrawSurface3 *iface)
 static ULONG WINAPI ddraw_surface2_Release(IDirectDrawSurface2 *iface)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface2(iface);
-    TRACE("iface %p.\n", iface);
+    ULONG refcount = InterlockedDecrement(&This->ref2);
 
-    return ddraw_surface7_Release(&This->IDirectDrawSurface7_iface);
+    TRACE("iface %p decreasing refcount to %u.\n", iface, refcount);
+
+    if (refcount == 0)
+    {
+        ddraw_surface_release_iface(This);
+    }
+
+    return refcount;
 }
 
 static ULONG WINAPI ddraw_surface1_Release(IDirectDrawSurface *iface)
@@ -755,6 +769,8 @@ static HRESULT WINAPI ddraw_surface2_GetAttachedSurface(IDirectDrawSurface2 *ifa
     }
     attachment_impl = impl_from_IDirectDrawSurface7(attachment7);
     *attachment = &attachment_impl->IDirectDrawSurface2_iface;
+    ddraw_surface2_AddRef(*attachment);
+    ddraw_surface7_Release(attachment7);
 
     return hr;
 }

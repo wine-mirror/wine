@@ -161,7 +161,7 @@ struct IDirectDrawSurfaceImpl
     const IDirect3DTexture2Vtbl *IDirect3DTexture2_vtbl;
     const IDirect3DTextureVtbl *IDirect3DTexture_vtbl;
 
-    LONG                     ref, iface_count;
+    LONG                     ref, ref2, iface_count;
     IUnknown                *ifaceToRelease;
 
     int                     version;
