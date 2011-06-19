@@ -28,6 +28,19 @@
 #include "dshow.h"
 #include "control.h"
 
+typedef struct TestFilterImpl
+{
+    IBaseFilter IBaseFilter_iface;
+
+    LONG refCount;
+    CRITICAL_SECTION csFilter;
+    FILTER_STATE state;
+    FILTER_INFO filterInfo;
+    CLSID clsid;
+    IPin **ppPins;
+    UINT nPins;
+} TestFilterImpl;
+
 #define FILE_LEN 9
 static const char avifileA[FILE_LEN] = "test.avi";
 static const char mpegfileA[FILE_LEN] = "test.mpg";
@@ -882,14 +895,14 @@ static HRESULT TestFilter_Pin_Construct(const IPinVtbl *Pin_Vtbl, const PIN_INFO
 
 /* IEnumPins implementation */
 
-typedef HRESULT (* FNOBTAINPIN)(IBaseFilter *iface, ULONG pos, IPin **pin, DWORD *lastsynctick);
+typedef HRESULT (* FNOBTAINPIN)(TestFilterImpl *tf, ULONG pos, IPin **pin, DWORD *lastsynctick);
 
 typedef struct IEnumPinsImpl
 {
     IEnumPins IEnumPins_iface;
     LONG refCount;
     ULONG uIndex;
-    IBaseFilter *base;
+    TestFilterImpl *base;
     FNOBTAINPIN receive_pin;
     DWORD synctime;
 } IEnumPinsImpl;
@@ -901,7 +914,7 @@ static inline IEnumPinsImpl *impl_from_IEnumPins(IEnumPins *iface)
     return CONTAINING_RECORD(iface, IEnumPinsImpl, IEnumPins_iface);
 }
 
-static HRESULT IEnumPinsImpl_Construct(IEnumPins ** ppEnum, FNOBTAINPIN receive_pin, IBaseFilter *base)
+static HRESULT createenumpins(IEnumPins ** ppEnum, FNOBTAINPIN receive_pin, TestFilterImpl *base)
 {
     IEnumPinsImpl * pEnumPins;
 
@@ -919,7 +932,7 @@ static HRESULT IEnumPinsImpl_Construct(IEnumPins ** ppEnum, FNOBTAINPIN receive_
     pEnumPins->uIndex = 0;
     pEnumPins->receive_pin = receive_pin;
     pEnumPins->base = base;
-    IBaseFilter_AddRef(base);
+    IBaseFilter_AddRef(&base->IBaseFilter_iface);
     *ppEnum = &pEnumPins->IEnumPins_iface;
 
     receive_pin(base, ~0, NULL, &pEnumPins->synctime);
@@ -960,7 +973,7 @@ static ULONG WINAPI IEnumPinsImpl_Release(IEnumPins * iface)
 
     if (!refCount)
     {
-        IBaseFilter_Release(This->base);
+        IBaseFilter_Release(&This->base->IBaseFilter_iface);
         CoTaskMemFree(This);
         return 0;
     }
@@ -1042,7 +1055,7 @@ static HRESULT WINAPI IEnumPinsImpl_Clone(IEnumPins * iface, IEnumPins ** ppEnum
     HRESULT hr;
     IEnumPinsImpl *This = impl_from_IEnumPins(iface);
 
-    hr = IEnumPinsImpl_Construct(ppEnum, This->receive_pin, This->base);
+    hr = createenumpins(ppEnum, This->receive_pin, This->base);
     if (FAILED(hr))
         return hr;
     return IEnumPins_Skip(*ppEnum, This->uIndex);
@@ -1067,19 +1080,6 @@ typedef struct TestFilterPinData
 PIN_DIRECTION pinDir;
 const GUID *mediasubtype;
 } TestFilterPinData;
-
-typedef struct TestFilterImpl
-{
-    IBaseFilter IBaseFilter_iface;
-
-    LONG refCount;
-    CRITICAL_SECTION csFilter;
-    FILTER_STATE state;
-    FILTER_INFO filterInfo;
-    CLSID clsid;
-    IPin ** ppPins;
-    UINT nPins;
-} TestFilterImpl;
 
 static const IBaseFilterVtbl TestFilter_Vtbl;
 
@@ -1285,24 +1285,24 @@ static HRESULT WINAPI TestFilter_GetSyncSource(IBaseFilter * iface, IReferenceCl
 
 /** IBaseFilter implementation **/
 
-static HRESULT TestFilter_GetPin(IBaseFilter *iface, ULONG pos, IPin **pin, DWORD *lastsynctick)
+static HRESULT getpin_callback(TestFilterImpl *tf, ULONG pos, IPin **pin, DWORD *lastsynctick)
 {
-    TestFilterImpl *This = (TestFilterImpl *)iface;
-
     /* Our pins are static, not changing so setting static tick count is ok */
     *lastsynctick = 0;
 
-    if (pos >= This->nPins)
+    if (pos >= tf->nPins)
         return S_FALSE;
 
-    *pin = This->ppPins[pos];
+    *pin = tf->ppPins[pos];
     IPin_AddRef(*pin);
     return S_OK;
 }
 
 static HRESULT WINAPI TestFilter_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
 {
-    return IEnumPinsImpl_Construct(ppEnum, TestFilter_GetPin, iface);
+    TestFilterImpl *This = impl_from_IBaseFilter(iface);
+
+    return createenumpins(ppEnum, getpin_callback, This);
 }
 
 static HRESULT WINAPI TestFilter_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
