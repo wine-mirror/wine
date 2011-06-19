@@ -25,7 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 /********************************************************************/
 
 typedef struct {
-  HANDLE is_ready, thread;
+  HANDLE thread;
   MSVCRT__beginthread_start_routine_t start_address;
   void *arglist;
 } _beginthread_trampoline_t;
@@ -61,19 +61,12 @@ thread_data_t *msvcrt_get_thread_data(void)
  */
 static DWORD CALLBACK _beginthread_trampoline(LPVOID arg)
 {
-    _beginthread_trampoline_t local_trampoline, *trampoline = arg;
+    _beginthread_trampoline_t local_trampoline;
     thread_data_t *data = msvcrt_get_thread_data();
 
-    if(!DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(),
-            &trampoline->thread, 0, TRUE, DUPLICATE_SAME_ACCESS)) {
-        trampoline->thread = NULL;
-        SetEvent(&trampoline->is_ready);
-        return 0;
-    }
-
-    memcpy(&local_trampoline, trampoline, sizeof(local_trampoline));
+    memcpy(&local_trampoline,arg,sizeof(local_trampoline));
     data->handle = local_trampoline.thread;
-    SetEvent(trampoline->is_ready);
+    MSVCRT_free(arg);
 
     local_trampoline.start_address(local_trampoline.arglist);
     return 0;
@@ -87,35 +80,36 @@ MSVCRT_uintptr_t CDECL _beginthread(
   unsigned int stack_size, /* [in] Stack size for new thread or 0 */
   void *arglist)           /* [in] Argument list to be passed to new thread or NULL */
 {
-  _beginthread_trampoline_t trampoline;
+  _beginthread_trampoline_t* trampoline;
   HANDLE thread;
 
   TRACE("(%p, %d, %p)\n", start_address, stack_size, arglist);
 
-  trampoline.is_ready = CreateEventW(NULL, FALSE, FALSE, NULL);
-  if(!trampoline.is_ready) {
+  trampoline = MSVCRT_malloc(sizeof(*trampoline));
+  if(!trampoline) {
       *MSVCRT__errno() = MSVCRT_EAGAIN;
       return -1;
   }
-  trampoline.start_address = start_address;
-  trampoline.arglist = arglist;
 
   thread = CreateThread(NULL, stack_size, _beginthread_trampoline,
-          &trampoline, 0, NULL);
+          trampoline, CREATE_SUSPENDED, NULL);
   if(!thread) {
+      MSVCRT_free(trampoline);
       *MSVCRT__errno() = MSVCRT_EAGAIN;
       return -1;
   }
-  CloseHandle(thread);
 
-  WaitForSingleObject(trampoline.is_ready, INFINITE);
-  CloseHandle(trampoline.is_ready);
+  trampoline->thread = thread;
+  trampoline->start_address = start_address;
+  trampoline->arglist = arglist;
 
-  if(!trampoline.thread) {
+  if(ResumeThread(thread) == -1) {
+      MSVCRT_free(trampoline);
       *MSVCRT__errno() = MSVCRT_EAGAIN;
       return -1;
   }
-  return (MSVCRT_uintptr_t)trampoline.thread;
+
+  return (MSVCRT_uintptr_t)thread;
 }
 
 /*********************************************************************
