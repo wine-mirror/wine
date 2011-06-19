@@ -215,6 +215,22 @@ static HRESULT WINAPI d3d_texture1_QueryInterface(IDirect3DTexture *iface, REFII
     return ddraw_surface7_QueryInterface(&This->IDirectDrawSurface7_iface, riid, object);
 }
 
+static void ddraw_surface_add_iface(IDirectDrawSurfaceImpl *This)
+{
+    ULONG iface_count = InterlockedIncrement(&This->iface_count);
+    TRACE("%p increasing iface count to %u.\n", This, iface_count);
+
+    if (iface_count == 1)
+    {
+        EnterCriticalSection(&ddraw_cs);
+        if (This->wined3d_surface)
+            wined3d_surface_incref(This->wined3d_surface);
+        if (This->wined3d_texture)
+            wined3d_texture_incref(This->wined3d_texture);
+        LeaveCriticalSection(&ddraw_cs);
+    }
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::AddRef
  *
@@ -227,21 +243,16 @@ static HRESULT WINAPI d3d_texture1_QueryInterface(IDirect3DTexture *iface, REFII
 static ULONG WINAPI ddraw_surface7_AddRef(IDirectDrawSurface7 *iface)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface7(iface);
-    ULONG refCount = InterlockedIncrement(&This->ref);
+    ULONG refcount = InterlockedIncrement(&This->ref);
 
-    TRACE("%p increasing refcount to %u.\n", This, refCount);
+    TRACE("iface %p increasing refcount to %u.\n", iface, refcount);
 
-    if (refCount == 1)
+    if (refcount == 1)
     {
-        EnterCriticalSection(&ddraw_cs);
-        if (This->wined3d_surface)
-            wined3d_surface_incref(This->wined3d_surface);
-        if (This->wined3d_texture)
-            wined3d_texture_incref(This->wined3d_texture);
-        LeaveCriticalSection(&ddraw_cs);
+        ddraw_surface_add_iface(This);
     }
 
-    return refCount;
+    return refcount;
 }
 
 static ULONG WINAPI ddraw_surface4_AddRef(IDirectDrawSurface4 *iface)
@@ -317,8 +328,8 @@ void ddraw_surface_destroy(IDirectDrawSurfaceImpl *This)
 {
     TRACE("surface %p.\n", This);
 
-    /* Check the refcount and give a warning */
-    if(This->ref > 1)
+    /* Check the iface count and give a warning */
+    if(This->iface_count > 1)
     {
         /* This can happen when a complex surface is destroyed,
          * because the 2nd surface was addref()ed when the app
@@ -423,6 +434,31 @@ static void ddraw_surface_cleanup(IDirectDrawSurfaceImpl *surface)
         IUnknown_Release(ifaceToRelease);
 }
 
+static void ddraw_surface_release_iface(IDirectDrawSurfaceImpl *This)
+{
+    ULONG iface_count = InterlockedDecrement(&This->iface_count);
+    TRACE("%p decreasing iface count to %u.\n", This, iface_count);
+
+    if (iface_count == 0)
+    {
+        /* Complex attached surfaces are destroyed implicitly when the root is released */
+        EnterCriticalSection(&ddraw_cs);
+        if(!This->is_complex_root)
+        {
+            WARN("(%p) Attempt to destroy a surface that is not a complex root\n", This);
+            LeaveCriticalSection(&ddraw_cs);
+            return;
+        }
+        if (This->wined3d_texture) /* If it's a texture, destroy the wined3d texture. */
+            wined3d_texture_decref(This->wined3d_texture);
+        else
+            ddraw_surface_cleanup(This);
+        LeaveCriticalSection(&ddraw_cs);
+    }
+
+    return;
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::Release
  *
@@ -455,28 +491,16 @@ static void ddraw_surface_cleanup(IDirectDrawSurfaceImpl *surface)
 static ULONG WINAPI ddraw_surface7_Release(IDirectDrawSurface7 *iface)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface7(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    ULONG refcount = InterlockedDecrement(&This->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", This, ref);
+    TRACE("iface %p decreasing refcount to %u.\n", iface, refcount);
 
-    if (ref == 0)
+    if (refcount == 0)
     {
-        /* Complex attached surfaces are destroyed implicitly when the root is released */
-        EnterCriticalSection(&ddraw_cs);
-        if(!This->is_complex_root)
-        {
-            WARN("(%p) Attempt to destroy a surface that is not a complex root\n", This);
-            LeaveCriticalSection(&ddraw_cs);
-            return ref;
-        }
-        if (This->wined3d_texture) /* If it's a texture, destroy the wined3d texture. */
-            wined3d_texture_decref(This->wined3d_texture);
-        else
-            ddraw_surface_cleanup(This);
-        LeaveCriticalSection(&ddraw_cs);
+        ddraw_surface_release_iface(This);
     }
 
-    return ref;
+    return refcount;
 }
 
 static ULONG WINAPI ddraw_surface4_Release(IDirectDrawSurface4 *iface)
@@ -5005,6 +5029,7 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     surface->IDirect3DTexture2_vtbl = &d3d_texture2_vtbl;
     surface->IDirect3DTexture_vtbl = &d3d_texture1_vtbl;
     surface->ref = 1;
+    surface->iface_count = 1;
     surface->version = version;
     surface->ddraw = ddraw;
 
