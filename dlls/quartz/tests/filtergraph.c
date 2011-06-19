@@ -365,7 +365,7 @@ static void DeleteMediaType(AM_MEDIA_TYPE * pMediaType)
 
 typedef struct IEnumMediaTypesImpl
 {
-    const IEnumMediaTypesVtbl * lpVtbl;
+    IEnumMediaTypes IEnumMediaTypes_iface;
     LONG refCount;
     AM_MEDIA_TYPE *pMediaTypes;
     ULONG cMediaTypes;
@@ -373,6 +373,11 @@ typedef struct IEnumMediaTypesImpl
 } IEnumMediaTypesImpl;
 
 static const struct IEnumMediaTypesVtbl IEnumMediaTypesImpl_Vtbl;
+
+static inline IEnumMediaTypesImpl *impl_from_IEnumMediaTypes(IEnumMediaTypes *iface)
+{
+    return CONTAINING_RECORD(iface, IEnumMediaTypesImpl, IEnumMediaTypes_iface);
+}
 
 static HRESULT IEnumMediaTypesImpl_Construct(const AM_MEDIA_TYPE * pMediaTypes, ULONG cMediaTypes, IEnumMediaTypes ** ppEnum)
 {
@@ -384,7 +389,7 @@ static HRESULT IEnumMediaTypesImpl_Construct(const AM_MEDIA_TYPE * pMediaTypes, 
         *ppEnum = NULL;
         return E_OUTOFMEMORY;
     }
-    pEnumMediaTypes->lpVtbl = &IEnumMediaTypesImpl_Vtbl;
+    pEnumMediaTypes->IEnumMediaTypes_iface.lpVtbl = &IEnumMediaTypesImpl_Vtbl;
     pEnumMediaTypes->refCount = 1;
     pEnumMediaTypes->uIndex = 0;
     pEnumMediaTypes->cMediaTypes = cMediaTypes;
@@ -397,7 +402,7 @@ static HRESULT IEnumMediaTypesImpl_Construct(const AM_MEDIA_TYPE * pMediaTypes, 
            CoTaskMemFree(pEnumMediaTypes->pMediaTypes);
            return E_OUTOFMEMORY;
         }
-    *ppEnum = (IEnumMediaTypes *)(&pEnumMediaTypes->lpVtbl);
+    *ppEnum = &pEnumMediaTypes->IEnumMediaTypes_iface;
     return S_OK;
 }
 
@@ -421,7 +426,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_QueryInterface(IEnumMediaTypes * iface
 
 static ULONG WINAPI IEnumMediaTypesImpl_AddRef(IEnumMediaTypes * iface)
 {
-    IEnumMediaTypesImpl *This = (IEnumMediaTypesImpl *)iface;
+    IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
     ULONG refCount = InterlockedIncrement(&This->refCount);
 
     return refCount;
@@ -429,7 +434,7 @@ static ULONG WINAPI IEnumMediaTypesImpl_AddRef(IEnumMediaTypes * iface)
 
 static ULONG WINAPI IEnumMediaTypesImpl_Release(IEnumMediaTypes * iface)
 {
-    IEnumMediaTypesImpl *This = (IEnumMediaTypesImpl *)iface;
+    IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
     ULONG refCount = InterlockedDecrement(&This->refCount);
 
     if (!refCount)
@@ -446,7 +451,7 @@ static ULONG WINAPI IEnumMediaTypesImpl_Release(IEnumMediaTypes * iface)
 static HRESULT WINAPI IEnumMediaTypesImpl_Next(IEnumMediaTypes * iface, ULONG cMediaTypes, AM_MEDIA_TYPE ** ppMediaTypes, ULONG * pcFetched)
 {
     ULONG cFetched;
-    IEnumMediaTypesImpl *This = (IEnumMediaTypesImpl *)iface;
+    IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
 
     cFetched = min(This->cMediaTypes, This->uIndex + cMediaTypes) - This->uIndex;
 
@@ -475,7 +480,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Next(IEnumMediaTypes * iface, ULONG cM
 
 static HRESULT WINAPI IEnumMediaTypesImpl_Skip(IEnumMediaTypes * iface, ULONG cMediaTypes)
 {
-    IEnumMediaTypesImpl *This = (IEnumMediaTypesImpl *)iface;
+    IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
 
     if (This->uIndex + cMediaTypes < This->cMediaTypes)
     {
@@ -487,7 +492,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Skip(IEnumMediaTypes * iface, ULONG cM
 
 static HRESULT WINAPI IEnumMediaTypesImpl_Reset(IEnumMediaTypes * iface)
 {
-    IEnumMediaTypesImpl *This = (IEnumMediaTypesImpl *)iface;
+    IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
 
     This->uIndex = 0;
     return S_OK;
@@ -496,7 +501,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Reset(IEnumMediaTypes * iface)
 static HRESULT WINAPI IEnumMediaTypesImpl_Clone(IEnumMediaTypes * iface, IEnumMediaTypes ** ppEnum)
 {
     HRESULT hr;
-    IEnumMediaTypesImpl *This = (IEnumMediaTypesImpl *)iface;
+    IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
 
     hr = IEnumMediaTypesImpl_Construct(This->pMediaTypes, This->cMediaTypes, ppEnum);
     if (FAILED(hr))
@@ -881,7 +886,7 @@ typedef HRESULT (* FNOBTAINPIN)(IBaseFilter *iface, ULONG pos, IPin **pin, DWORD
 
 typedef struct IEnumPinsImpl
 {
-    const IEnumPinsVtbl * lpVtbl;
+    IEnumPins IEnumPins_iface;
     LONG refCount;
     ULONG uIndex;
     IBaseFilter *base;
@@ -890,6 +895,11 @@ typedef struct IEnumPinsImpl
 } IEnumPinsImpl;
 
 static const struct IEnumPinsVtbl IEnumPinsImpl_Vtbl;
+
+static inline IEnumPinsImpl *impl_from_IEnumPins(IEnumPins *iface)
+{
+    return CONTAINING_RECORD(iface, IEnumPinsImpl, IEnumPins_iface);
+}
 
 static HRESULT IEnumPinsImpl_Construct(IEnumPins ** ppEnum, FNOBTAINPIN receive_pin, IBaseFilter *base)
 {
@@ -904,13 +914,13 @@ static HRESULT IEnumPinsImpl_Construct(IEnumPins ** ppEnum, FNOBTAINPIN receive_
         *ppEnum = NULL;
         return E_OUTOFMEMORY;
     }
-    pEnumPins->lpVtbl = &IEnumPinsImpl_Vtbl;
+    pEnumPins->IEnumPins_iface.lpVtbl = &IEnumPinsImpl_Vtbl;
     pEnumPins->refCount = 1;
     pEnumPins->uIndex = 0;
     pEnumPins->receive_pin = receive_pin;
     pEnumPins->base = base;
     IBaseFilter_AddRef(base);
-    *ppEnum = (IEnumPins *)(&pEnumPins->lpVtbl);
+    *ppEnum = &pEnumPins->IEnumPins_iface;
 
     receive_pin(base, ~0, NULL, &pEnumPins->synctime);
 
@@ -937,7 +947,7 @@ static HRESULT WINAPI IEnumPinsImpl_QueryInterface(IEnumPins * iface, REFIID rii
 
 static ULONG WINAPI IEnumPinsImpl_AddRef(IEnumPins * iface)
 {
-    IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
+    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
     ULONG refCount = InterlockedIncrement(&This->refCount);
 
     return refCount;
@@ -945,7 +955,7 @@ static ULONG WINAPI IEnumPinsImpl_AddRef(IEnumPins * iface)
 
 static ULONG WINAPI IEnumPinsImpl_Release(IEnumPins * iface)
 {
-    IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
+    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
     ULONG refCount = InterlockedDecrement(&This->refCount);
 
     if (!refCount)
@@ -960,7 +970,7 @@ static ULONG WINAPI IEnumPinsImpl_Release(IEnumPins * iface)
 
 static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin ** ppPins, ULONG * pcFetched)
 {
-    IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
+    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
     DWORD synctime = This->synctime;
     HRESULT hr = S_OK;
     ULONG i = 0;
@@ -999,7 +1009,7 @@ static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin **
 
 static HRESULT WINAPI IEnumPinsImpl_Skip(IEnumPins * iface, ULONG cPins)
 {
-    IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
+    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
     DWORD synctime = This->synctime;
     HRESULT hr;
     IPin *pin = NULL;
@@ -1019,7 +1029,7 @@ static HRESULT WINAPI IEnumPinsImpl_Skip(IEnumPins * iface, ULONG cPins)
 
 static HRESULT WINAPI IEnumPinsImpl_Reset(IEnumPins * iface)
 {
-    IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
+    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
 
     This->receive_pin(This->base, ~0, NULL, &This->synctime);
 
@@ -1030,7 +1040,7 @@ static HRESULT WINAPI IEnumPinsImpl_Reset(IEnumPins * iface)
 static HRESULT WINAPI IEnumPinsImpl_Clone(IEnumPins * iface, IEnumPins ** ppEnum)
 {
     HRESULT hr;
-    IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
+    IEnumPinsImpl *This = impl_from_IEnumPins(iface);
 
     hr = IEnumPinsImpl_Construct(ppEnum, This->receive_pin, This->base);
     if (FAILED(hr))
@@ -1060,7 +1070,7 @@ const GUID *mediasubtype;
 
 typedef struct TestFilterImpl
 {
-    const IBaseFilterVtbl * lpVtbl;
+    IBaseFilter IBaseFilter_iface;
 
     LONG refCount;
     CRITICAL_SECTION csFilter;
@@ -1072,6 +1082,11 @@ typedef struct TestFilterImpl
 } TestFilterImpl;
 
 static const IBaseFilterVtbl TestFilter_Vtbl;
+
+static inline TestFilterImpl *impl_from_IBaseFilter(IBaseFilter *iface)
+{
+    return CONTAINING_RECORD(iface, TestFilterImpl, IBaseFilter_iface);
+}
 
 static HRESULT TestFilter_Create(const CLSID* pClsid, const TestFilterPinData *pinData, LPVOID * ppv)
 {
@@ -1087,7 +1102,7 @@ static HRESULT TestFilter_Create(const CLSID* pClsid, const TestFilterPinData *p
     if (!pTestFilter) return E_OUTOFMEMORY;
 
     pTestFilter->clsid = *pClsid;
-    pTestFilter->lpVtbl = &TestFilter_Vtbl;
+    pTestFilter->IBaseFilter_iface.lpVtbl = &TestFilter_Vtbl;
     pTestFilter->refCount = 1;
     InitializeCriticalSection(&pTestFilter->csFilter);
     pTestFilter->state = State_Stopped;
@@ -1113,7 +1128,7 @@ static HRESULT TestFilter_Create(const CLSID* pClsid, const TestFilterPinData *p
         mt.subtype = *pinData[i].mediasubtype;
 
         pinInfo.dir = pinData[i].pinDir;
-        pinInfo.pFilter = (IBaseFilter *)pTestFilter;
+        pinInfo.pFilter = &pTestFilter->IBaseFilter_iface;
         if (pinInfo.dir == PINDIR_INPUT)
         {
             lstrcpynW(pinInfo.achName, wcsInputPinName, sizeof(pinInfo.achName) / sizeof(pinInfo.achName[0]));
@@ -1152,7 +1167,7 @@ static HRESULT TestFilter_Create(const CLSID* pClsid, const TestFilterPinData *p
 
 static HRESULT WINAPI TestFilter_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
-    TestFilterImpl *This = (TestFilterImpl *)iface;
+    TestFilterImpl *This = impl_from_IBaseFilter(iface);
 
     *ppv = NULL;
 
@@ -1176,7 +1191,7 @@ static HRESULT WINAPI TestFilter_QueryInterface(IBaseFilter * iface, REFIID riid
 
 static ULONG WINAPI TestFilter_AddRef(IBaseFilter * iface)
 {
-    TestFilterImpl *This = (TestFilterImpl *)iface;
+    TestFilterImpl *This = impl_from_IBaseFilter(iface);
     ULONG refCount = InterlockedIncrement(&This->refCount);
 
     return refCount;
@@ -1184,7 +1199,7 @@ static ULONG WINAPI TestFilter_AddRef(IBaseFilter * iface)
 
 static ULONG WINAPI TestFilter_Release(IBaseFilter * iface)
 {
-    TestFilterImpl *This = (TestFilterImpl *)iface;
+    TestFilterImpl *This = impl_from_IBaseFilter(iface);
     ULONG refCount = InterlockedDecrement(&This->refCount);
 
     if (!refCount)
@@ -1206,7 +1221,6 @@ static ULONG WINAPI TestFilter_Release(IBaseFilter * iface)
         }
 
         CoTaskMemFree(This->ppPins);
-        This->lpVtbl = NULL;
 
         DeleteCriticalSection(&This->csFilter);
 
@@ -1221,7 +1235,7 @@ static ULONG WINAPI TestFilter_Release(IBaseFilter * iface)
 
 static HRESULT WINAPI TestFilter_GetClassID(IBaseFilter * iface, CLSID * pClsid)
 {
-    TestFilterImpl *This = (TestFilterImpl *)iface;
+    TestFilterImpl *This = impl_from_IBaseFilter(iface);
 
     *pClsid = This->clsid;
 
@@ -1247,7 +1261,7 @@ static HRESULT WINAPI TestFilter_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 
 static HRESULT WINAPI TestFilter_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
 {
-    TestFilterImpl *This = (TestFilterImpl *)iface;
+    TestFilterImpl *This = impl_from_IBaseFilter(iface);
 
     EnterCriticalSection(&This->csFilter);
     {
@@ -1297,7 +1311,7 @@ static HRESULT WINAPI TestFilter_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin *
 
 static HRESULT WINAPI TestFilter_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo)
 {
-    TestFilterImpl *This = (TestFilterImpl *)iface;
+    TestFilterImpl *This = impl_from_IBaseFilter(iface);
 
     lstrcpyW(pInfo->achName, This->filterInfo.achName);
     pInfo->pGraph = This->filterInfo.pGraph;
@@ -1311,7 +1325,7 @@ static HRESULT WINAPI TestFilter_QueryFilterInfo(IBaseFilter * iface, FILTER_INF
 static HRESULT WINAPI TestFilter_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName)
 {
     HRESULT hr = S_OK;
-    TestFilterImpl *This = (TestFilterImpl *)iface;
+    TestFilterImpl *This = impl_from_IBaseFilter(iface);
 
     EnterCriticalSection(&This->csFilter);
     {
