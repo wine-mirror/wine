@@ -3124,3 +3124,39 @@ RPC_STATUS WINAPI RpcNetworkIsProtseqValidA(RPC_CSTR protseq)
   }
   return RPC_S_OUT_OF_MEMORY;
 }
+
+/***********************************************************************
+ *             RpcProtseqVectorFreeA (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcProtseqVectorFreeA(RPC_PROTSEQ_VECTORA **protseqs)
+{
+  TRACE("(%p)\n", protseqs);
+
+  if (*protseqs)
+  {
+    int i;
+    for (i = 0; i < (*protseqs)->Count; i++)
+      HeapFree(GetProcessHeap(), 0, (*protseqs)->Protseq[i]);
+    HeapFree(GetProcessHeap(), 0, *protseqs);
+    *protseqs = NULL;
+  }
+  return RPC_S_OK;
+}
+
+/***********************************************************************
+ *             RpcProtseqVectorFreeW (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcProtseqVectorFreeW(RPC_PROTSEQ_VECTORW **protseqs)
+{
+  TRACE("(%p)\n", protseqs);
+
+  if (*protseqs)
+  {
+    int i;
+    for (i = 0; i < (*protseqs)->Count; i++)
+      HeapFree(GetProcessHeap(), 0, (*protseqs)->Protseq[i]);
+    HeapFree(GetProcessHeap(), 0, *protseqs);
+    *protseqs = NULL;
+  }
+  return RPC_S_OK;
+}

@@ -418,8 +418,8 @@
 @ stub RpcObjectInqType
 @ stub RpcObjectSetInqFn
 @ stdcall RpcObjectSetType(ptr ptr)
-@ stub RpcProtseqVectorFreeA
-@ stub RpcProtseqVectorFreeW
+@ stdcall RpcProtseqVectorFreeA(ptr)
+@ stdcall RpcProtseqVectorFreeW(ptr)
 @ stdcall RpcRaiseException(long)
 @ stub RpcRegisterAsyncInfo
 @ stdcall RpcRevertToSelf()
