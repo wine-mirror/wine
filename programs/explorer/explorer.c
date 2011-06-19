@@ -116,7 +116,7 @@ static void do_exit(int code)
     ExitProcess(code);
 }
 
-LRESULT CALLBACK explorer_wnd_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK explorer_wnd_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     explorer_info *info
         = (explorer_info*)GetWindowLongPtrW(hwnd,EXPLORER_INFO_INDEX);
