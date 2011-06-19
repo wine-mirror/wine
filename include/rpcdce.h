@@ -93,7 +93,7 @@ typedef struct _RPC_PROTSEQ_VECTORA
 
 typedef struct _RPC_PROTSEQ_VECTORW
 {
-  unsigned int count;
+  unsigned int Count;
   unsigned short *Protseq[1];
 } RPC_PROTSEQ_VECTORW;
 
