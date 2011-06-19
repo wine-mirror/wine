@@ -1354,10 +1354,15 @@ static const IBaseFilterVtbl TestFilter_Vtbl =
 
 typedef struct TestClassFactoryImpl
 {
-    IClassFactoryVtbl *lpVtbl;
+    IClassFactory IClassFactory_iface;
     const TestFilterPinData *filterPinData;
     const CLSID *clsid;
 } TestClassFactoryImpl;
+
+static inline TestClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, TestClassFactoryImpl, IClassFactory_iface);
+}
 
 static HRESULT WINAPI Test_IClassFactory_QueryInterface(
     LPCLASSFACTORY iface,
@@ -1394,7 +1399,7 @@ static HRESULT WINAPI Test_IClassFactory_CreateInstance(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    TestClassFactoryImpl *This = (TestClassFactoryImpl *)iface;
+    TestClassFactoryImpl *This = impl_from_IClassFactory(iface);
     HRESULT hr;
     IUnknown *punk = NULL;
 
@@ -1522,9 +1527,18 @@ static void test_render_filter_priority(void)
             { PINDIR_INPUT,  &mediasubtype2 },
             { 0, 0 }
         };
-    TestClassFactoryImpl Filter1ClassFactory = { &TestClassFactory_Vtbl, PinData2, &CLSID_TestFilter2 };
-    TestClassFactoryImpl Filter2ClassFactory = { &TestClassFactory_Vtbl, PinData4, &CLSID_TestFilter3 };
-    TestClassFactoryImpl Filter3ClassFactory = { &TestClassFactory_Vtbl, PinData5, &CLSID_TestFilter4 };
+    TestClassFactoryImpl Filter1ClassFactory = {
+            { &TestClassFactory_Vtbl },
+            PinData2, &CLSID_TestFilter2
+        };
+    TestClassFactoryImpl Filter2ClassFactory = {
+            { &TestClassFactory_Vtbl },
+            PinData4, &CLSID_TestFilter3
+        };
+    TestClassFactoryImpl Filter3ClassFactory = {
+            { &TestClassFactory_Vtbl },
+            PinData5, &CLSID_TestFilter4
+        };
     char ConnectedFilterName1[MAX_FILTER_NAME];
     char ConnectedFilterName2[MAX_FILTER_NAME];
     REGFILTER2 rgf2;
@@ -1760,16 +1774,19 @@ static void test_render_filter_priority(void)
     ok(hr == S_OK, "IFilterGraph2_AddFilter failed with %08x\n", hr);
 
     /* Register our filters with COM and with Filtermapper. */
-    hr = CoRegisterClassObject(Filter1ClassFactory.clsid, (IUnknown *)&Filter1ClassFactory,
-                               CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &cookie1);
+    hr = CoRegisterClassObject(Filter1ClassFactory.clsid,
+            (IUnknown *)&Filter1ClassFactory.IClassFactory_iface, CLSCTX_INPROC_SERVER,
+            REGCLS_MULTIPLEUSE, &cookie1);
     ok(hr == S_OK, "CoRegisterClassObject failed with %08x\n", hr);
     if (FAILED(hr)) goto out;
-    hr = CoRegisterClassObject(Filter2ClassFactory.clsid, (IUnknown *)&Filter2ClassFactory,
-                               CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &cookie2);
+    hr = CoRegisterClassObject(Filter2ClassFactory.clsid,
+            (IUnknown *)&Filter2ClassFactory.IClassFactory_iface, CLSCTX_INPROC_SERVER,
+            REGCLS_MULTIPLEUSE, &cookie2);
     ok(hr == S_OK, "CoRegisterClassObject failed with %08x\n", hr);
     if (FAILED(hr)) goto out;
-    hr = CoRegisterClassObject(Filter3ClassFactory.clsid, (IUnknown *)&Filter3ClassFactory,
-                               CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &cookie3);
+    hr = CoRegisterClassObject(Filter3ClassFactory.clsid,
+            (IUnknown *)&Filter3ClassFactory.IClassFactory_iface, CLSCTX_INPROC_SERVER,
+            REGCLS_MULTIPLEUSE, &cookie3);
     ok(hr == S_OK, "CoRegisterClassObject failed with %08x\n", hr);
     if (FAILED(hr)) goto out;
 
