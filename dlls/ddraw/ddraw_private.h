@@ -358,8 +358,7 @@ static inline IDirect3DDeviceImpl *device_from_device3(IDirect3DDevice3 *iface)
  *****************************************************************************/
 struct IDirectDrawClipperImpl
 {
-    /* IUnknown fields */
-    const IDirectDrawClipperVtbl *lpVtbl;
+    IDirectDrawClipper IDirectDrawClipper_iface;
     LONG ref;
 
     struct wined3d_clipper *wineD3DClipper;

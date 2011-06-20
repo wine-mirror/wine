@@ -3997,7 +3997,7 @@ DirectDrawCreateClipper(DWORD Flags,
     }
 
     TRACE("Created clipper %p.\n", object);
-    *Clipper = (IDirectDrawClipper *) object;
+    *Clipper = &object->IDirectDrawClipper_iface;
     LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }

@@ -3645,7 +3645,7 @@ static HRESULT WINAPI ddraw_surface7_SetClipper(IDirectDrawSurface7 *iface, IDir
     if (Clipper != NULL)
         IDirectDrawClipper_AddRef(Clipper);
     if(oldClipper)
-        IDirectDrawClipper_Release((IDirectDrawClipper *)oldClipper);
+        IDirectDrawClipper_Release(&oldClipper->IDirectDrawClipper_iface);
 
     hr = wined3d_surface_set_clipper(This->wined3d_surface,
             This->clipper ? This->clipper->wineD3DClipper : NULL);
