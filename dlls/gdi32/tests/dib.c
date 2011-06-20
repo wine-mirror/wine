@@ -317,18 +317,24 @@ static const char *sha1_graphics_1[] =
     "7ddf19df5bbdf4475b6ec1bc042425e382502864",
     "144c9a846e5e37ac6efd5ed3a97ec231479e8fca",
     "c5ffc59048bf786b5646ad6226cd8633965de9ef",
+    "40fadc2d24c713b04ff96f7dc26e70e85f26c55e",
     "400a21caa01e015096ee1afcf1b54e7f8ec515bd",
     "0ff4b49797e30e3555aab45219adf449a9a560ff",
+    "280327328ca940c212ce24fe72e0b00014072767",
     "144c9a846e5e37ac6efd5ed3a97ec231479e8fca",
     "b85463875f755b85f1464b1b6275912bcbad6c9f",
+    "816f200969feecc788b61dfeecf05b1790984401",
     "a4964d8bbf80fe785f906bc0f7c5b113242a58fc",
     "a5d204cc7342d40b765ca042f8668e22601c4ff9",
     "adb2818f6d3845dd140bc0f9abdbaa89d2a8c3de",
     "0a76e0121facb103857130bc6e12185ad77fc3fa",
+    "02aede714773d654d0fc2f640afaa133ec718ad5",
     "13cc63972aee4f6ae27091a8af18de01f1d3a5da",
     "3bb745ccb08402ce6fac6ee26fb8d7aad2dba27e",
+    "b26699f62661e16a1dc452d24c88ce363a1f2998",
     "4d95c3d1e170f004c80aa8c52feafb8e0e90760e",
     "c14832e69ec3585c15987b3d69d5007236fa9814",
+    "e44ea620b0c47125a34193537ab9d219a52ad028",
     "d1e6091caa4482d3142df3b958606c41ebf4698e",
     "07c1116d8286fb665a1005de220eadc3d5999aaf",
     "4afb0649488f6e6f7d3a2b8bf438d82f2c88f4d1",
@@ -738,7 +744,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash_broken_todo(bmi, bits, sha1, "top-down 8888 dib brush patblt", dib_is_1bpp ? 1 : 0, dib_is_1bpp);
+    compare_hash_broken_todo(bmi, bits, sha1, "top-down 8888 dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
@@ -768,7 +774,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash_broken_todo(bmi, bits, sha1, "bottom-up 8888 dib brush patblt", dib_is_1bpp ? 1 : 0, dib_is_1bpp);
+    compare_hash_broken_todo(bmi, bits, sha1, "bottom-up 8888 dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
@@ -798,7 +804,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash_broken_todo(bmi, bits, sha1, "top-down 24 bpp brush patblt", dib_is_1bpp ? 1 : 0, dib_is_1bpp);
+    compare_hash_broken_todo(bmi, bits, sha1, "top-down 24 bpp brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
@@ -868,7 +874,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash_broken_todo(bmi, bits, sha1, "top-down 8 bpp dib brush patblt", dib_is_1bpp ? 1 : 0, dib_is_1bpp);
+    compare_hash_broken_todo(bmi, bits, sha1, "top-down 8 bpp dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
@@ -893,7 +899,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash_broken_todo(bmi, bits, sha1, "top-down 4 bpp dib brush patblt", dib_is_1bpp ? 1 : 0, dib_is_1bpp);
+    compare_hash_broken_todo(bmi, bits, sha1, "top-down 4 bpp dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
@@ -922,7 +928,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         }
     }
 
-    compare_hash_broken_todo(bmi, bits, sha1, "top-down 1 bpp dib brush patblt", dib_is_1bpp ? 1 : 0, dib_is_1bpp);
+    compare_hash_broken_todo(bmi, bits, sha1, "top-down 1 bpp dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
