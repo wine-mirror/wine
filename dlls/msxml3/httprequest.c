@@ -666,7 +666,7 @@ static HRESULT WINAPI httprequest_open(IXMLHTTPRequest *iface, BSTR method, BSTR
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
     HRESULT hr;
-    VARIANT str;
+    VARIANT str, is_async;
 
     TRACE("(%p)->(%s %s %s)\n", This, debugstr_w(method), debugstr_w(url),
         debugstr_variant(&async));
@@ -700,8 +700,9 @@ static HRESULT WINAPI httprequest_open(IXMLHTTPRequest *iface, BSTR method, BSTR
 
     This->url = SysAllocString(url);
 
-    hr = VariantChangeType(&async, &async, 0, VT_BOOL);
-    This->async = hr == S_OK && V_BOOL(&async) == VARIANT_TRUE;
+    VariantInit(&is_async);
+    hr = VariantChangeType(&is_async, &async, 0, VT_BOOL);
+    This->async = hr == S_OK && V_BOOL(&is_async) == VARIANT_TRUE;
 
     VariantInit(&str);
     hr = VariantChangeType(&str, &user, 0, VT_BSTR);

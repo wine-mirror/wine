@@ -761,21 +761,24 @@ static HRESULT WINAPI domelem_put_nodeTypedValue(
     VARIANT value)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    VARIANT type;
+    XDR_DT dt;
     HRESULT hr;
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&value));
 
+    dt = element_get_dt(get_element(This));
     /* for untyped node coerce to BSTR and set */
-    if (IXMLDOMElement_get_dataType(iface, &type) == S_FALSE)
+    if (dt == DT_INVALID)
     {
         if (V_VT(&value) != VT_BSTR)
         {
-            hr = VariantChangeType(&value, &value, 0, VT_BSTR);
+            VARIANT content;
+            VariantInit(&content);
+            hr = VariantChangeType(&content, &value, 0, VT_BSTR);
             if (hr == S_OK)
             {
-                hr = node_set_content(&This->node, V_BSTR(&value));
-                VariantClear(&value);
+                hr = node_set_content(&This->node, V_BSTR(&content));
+                VariantClear(&content);
             }
         }
         else
@@ -783,8 +786,7 @@ static HRESULT WINAPI domelem_put_nodeTypedValue(
     }
     else
     {
-        FIXME("not implemented for typed nodes. type %s\n", debugstr_w(V_BSTR(&value)));
-        VariantClear(&type);
+        FIXME("not implemented for dt:%s\n", dt_to_str(dt));
         return E_NOTIMPL;
     }
 
