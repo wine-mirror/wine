@@ -1666,16 +1666,20 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient *iface, REFIID riid,
             LeaveCriticalSection(&This->lock);
             return AUDCLNT_E_WRONG_ENDPOINT_TYPE;
         }
+        IAudioRenderClient_AddRef(&This->IAudioRenderClient_iface);
         *ppv = &This->IAudioRenderClient_iface;
     }else if(IsEqualIID(riid, &IID_IAudioCaptureClient)){
         if(This->dataflow != eCapture){
             LeaveCriticalSection(&This->lock);
             return AUDCLNT_E_WRONG_ENDPOINT_TYPE;
         }
+        IAudioCaptureClient_AddRef(&This->IAudioCaptureClient_iface);
         *ppv = &This->IAudioCaptureClient_iface;
     }else if(IsEqualIID(riid, &IID_IAudioClock)){
+        IAudioClock_AddRef(&This->IAudioClock_iface);
         *ppv = &This->IAudioClock_iface;
     }else if(IsEqualIID(riid, &IID_IAudioStreamVolume)){
+        IAudioStreamVolume_AddRef(&This->IAudioStreamVolume_iface);
         *ppv = &This->IAudioStreamVolume_iface;
     }else if(IsEqualIID(riid, &IID_IAudioSessionControl)){
         if(!This->session_wrapper){
@@ -1684,7 +1688,8 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient *iface, REFIID riid,
                 LeaveCriticalSection(&This->lock);
                 return E_OUTOFMEMORY;
             }
-        }
+        }else
+            IAudioSessionControl2_AddRef(&This->session_wrapper->IAudioSessionControl2_iface);
 
         *ppv = &This->session_wrapper->IAudioSessionControl2_iface;
     }else if(IsEqualIID(riid, &IID_IChannelAudioVolume)){
@@ -1694,7 +1699,8 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient *iface, REFIID riid,
                 LeaveCriticalSection(&This->lock);
                 return E_OUTOFMEMORY;
             }
-        }
+        }else
+            IChannelAudioVolume_AddRef(&This->session_wrapper->IChannelAudioVolume_iface);
 
         *ppv = &This->session_wrapper->IChannelAudioVolume_iface;
     }else if(IsEqualIID(riid, &IID_ISimpleAudioVolume)){
@@ -1704,13 +1710,13 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient *iface, REFIID riid,
                 LeaveCriticalSection(&This->lock);
                 return E_OUTOFMEMORY;
             }
-        }
+        }else
+            ISimpleAudioVolume_AddRef(&This->session_wrapper->ISimpleAudioVolume_iface);
 
         *ppv = &This->session_wrapper->ISimpleAudioVolume_iface;
     }
 
     if(*ppv){
-        IUnknown_AddRef((IUnknown*)*ppv);
         LeaveCriticalSection(&This->lock);
         return S_OK;
     }
@@ -2244,6 +2250,8 @@ static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client)
     ret->IAudioSessionControl2_iface.lpVtbl = &AudioSessionControl2_Vtbl;
     ret->ISimpleAudioVolume_iface.lpVtbl = &SimpleAudioVolume_Vtbl;
     ret->IChannelAudioVolume_iface.lpVtbl = &ChannelAudioVolume_Vtbl;
+
+    ret->ref = 1;
 
     ret->client = client;
     if(client){
