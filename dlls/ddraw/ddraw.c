@@ -2074,6 +2074,8 @@ static HRESULT WINAPI ddraw3_GetGDISurface(IDirectDraw3 *iface, IDirectDrawSurfa
     }
     surface_impl = impl_from_IDirectDrawSurface7(surface7);
     *surface = &surface_impl->IDirectDrawSurface_iface;
+    IDirectDrawSurface_AddRef(*surface);
+    IDirectDrawSurface7_Release(surface7);
 
     return hr;
 }
@@ -2095,6 +2097,8 @@ static HRESULT WINAPI ddraw2_GetGDISurface(IDirectDraw2 *iface, IDirectDrawSurfa
     }
     surface_impl = impl_from_IDirectDrawSurface7(surface7);
     *surface = &surface_impl->IDirectDrawSurface_iface;
+    IDirectDrawSurface_AddRef(*surface);
+    IDirectDrawSurface7_Release(surface7);
 
     return hr;
 }
@@ -2116,6 +2120,8 @@ static HRESULT WINAPI ddraw1_GetGDISurface(IDirectDraw *iface, IDirectDrawSurfac
     }
     surface_impl = impl_from_IDirectDrawSurface7(surface7);
     *surface = &surface_impl->IDirectDrawSurface_iface;
+    IDirectDrawSurface_AddRef(*surface);
+    IDirectDrawSurface7_Release(surface7);
 
     return hr;
 }
@@ -2489,6 +2495,8 @@ static HRESULT WINAPI ddraw4_GetSurfaceFromDC(IDirectDraw4 *iface, HDC dc,
     surface_impl = impl_from_IDirectDrawSurface7(surface7);
     /* Tests say this is true */
     *surface = (IDirectDrawSurface4 *)&surface_impl->IDirectDrawSurface_iface;
+    IDirectDrawSurface_AddRef(&surface_impl->IDirectDrawSurface_iface);
+    IDirectDrawSurface7_Release(surface7);
 
     return hr;
 }
@@ -2514,6 +2522,8 @@ static HRESULT WINAPI ddraw3_GetSurfaceFromDC(IDirectDraw3 *iface, HDC dc,
 
     surface_impl = impl_from_IDirectDrawSurface7(surface7);
     *surface = &surface_impl->IDirectDrawSurface_iface;
+    IDirectDrawSurface_AddRef(*surface);
+    IDirectDrawSurface7_Release(surface7);
 
     return hr;
 }
@@ -3824,6 +3834,9 @@ static HRESULT CALLBACK EnumSurfacesCallbackThunk(IDirectDrawSurface7 *surface,
     IDirectDrawSurfaceImpl *surface_impl = impl_from_IDirectDrawSurface7(surface);
     struct surfacescallback_context *cbcontext = context;
 
+    IDirectDrawSurface_AddRef(&surface_impl->IDirectDrawSurface_iface);
+    IDirectDrawSurface7_Release(surface);
+
     return cbcontext->func(&surface_impl->IDirectDrawSurface_iface,
             (DDSURFACEDESC *)surface_desc, cbcontext->context);
 }
@@ -4293,6 +4306,8 @@ static HRESULT WINAPI ddraw3_DuplicateSurface(IDirectDraw3 *iface, IDirectDrawSu
         return hr;
     dst_impl = impl_from_IDirectDrawSurface7(dst7);
     *dst = &dst_impl->IDirectDrawSurface_iface;
+    IDirectDrawSurface_AddRef(*dst);
+    IDirectDrawSurface7_Release(dst7);
 
     return hr;
 }
@@ -4313,6 +4328,8 @@ static HRESULT WINAPI ddraw2_DuplicateSurface(IDirectDraw2 *iface,
         return hr;
     dst_impl = impl_from_IDirectDrawSurface7(dst7);
     *dst = &dst_impl->IDirectDrawSurface_iface;
+    IDirectDrawSurface_AddRef(*dst);
+    IDirectDrawSurface7_Release(dst7);
 
     return hr;
 }
@@ -4333,6 +4350,8 @@ static HRESULT WINAPI ddraw1_DuplicateSurface(IDirectDraw *iface, IDirectDrawSur
         return hr;
     dst_impl = impl_from_IDirectDrawSurface7(dst7);
     *dst = &dst_impl->IDirectDrawSurface_iface;
+    IDirectDrawSurface_AddRef(*dst);
+    IDirectDrawSurface7_Release(dst7);
 
     return hr;
 }

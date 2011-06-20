@@ -1992,6 +1992,8 @@ static HRESULT WINAPI IDirect3DDeviceImpl_2_GetRenderTarget(IDirect3DDevice2 *if
     if(hr != D3D_OK) return hr;
     RenderTargetImpl = impl_from_IDirectDrawSurface7(RenderTarget7);
     *RenderTarget = &RenderTargetImpl->IDirectDrawSurface_iface;
+    IDirectDrawSurface_AddRef(*RenderTarget);
+    IDirectDrawSurface7_Release(RenderTarget7);
     return D3D_OK;
 }
 

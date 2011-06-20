@@ -1100,11 +1100,11 @@ static void IFaceRefCount(void)
 
     IDirectDrawSurface_QueryInterface(surf, &IID_IDirectDrawSurface7, (void **) &surf7a);
     ref = getRefcount((IUnknown *) surf7a);
-    todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
+    ok(ref == 1, "Refcount is %u, expected 1\n", ref);
 
     IDirectDrawSurface_QueryInterface(surf, &IID_IDirectDrawSurface7, (void **) &surf7b);
     ref = getRefcount((IUnknown *) surf7b);
-    todo_wine ok(ref == 2, "Refcount is %u, expected 2\n", ref);
+    ok(ref == 2, "Refcount is %u, expected 2\n", ref);
 
     /* IDirect3DTexture interface (unlike the others) alters the original IDirectDrawSurface ref count */
     ret = IDirectDrawSurface_QueryInterface(surf, &IID_IDirect3DTexture, (void **) &tex);
@@ -1135,7 +1135,7 @@ static void IFaceRefCount(void)
         ref = IDirect3DTexture_Release(tex); /* Release the texture */
         todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
         ref = getRefcount((IUnknown *) surf);
-        todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
+        ok(ref == 1, "Refcount is %u, expected 1\n", ref);
 
         ref = IDirectDrawGammaControl_Release(gamma); /* Release the gamma control */
         todo_wine ok(ref == 0, "Refcount is %u, expected 0\n", ref);
@@ -1154,10 +1154,10 @@ static void IFaceRefCount(void)
     ok(ref == 0, "Refcount is %u, expected 0\n", ref);
 
     ref = IDirectDrawSurface7_Release(surf7a);
-    todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
+    ok(ref == 1, "Refcount is %u, expected 1\n", ref);
 
     ref = IDirectDrawSurface7_Release(surf7b);
-    todo_wine ok(ref == 0, "Refcount is %u, expected 0\n", ref);
+    ok(ref == 0, "Refcount is %u, expected 0\n", ref);
 
     ref = IDirectDrawSurface_Release(surf);
     ok(ref == 0, "Refcount is %u, expected 0\n", ref);
