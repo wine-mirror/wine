@@ -1092,7 +1092,7 @@ static void IFaceRefCount(void)
 
     IDirectDrawSurface_QueryInterface(surf, &IID_IDirectDrawSurface3, (void **) &surf3);
     ref = getRefcount((IUnknown *) surf3);
-    todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
+    ok(ref == 1, "Refcount is %u, expected 1\n", ref);
 
     IDirectDrawSurface_QueryInterface(surf, &IID_IDirectDrawSurface4, (void **) &surf4);
     ref = getRefcount((IUnknown *) surf4);
@@ -1148,7 +1148,7 @@ static void IFaceRefCount(void)
     ok(ref == 0, "Refcount is %u, expected 0\n", ref);
 
     ref = IDirectDrawSurface3_Release(surf3);
-    todo_wine ok(ref == 0, "Refcount is %u, expected 0\n", ref);
+    ok(ref == 0, "Refcount is %u, expected 0\n", ref);
 
     ref = IDirectDrawSurface4_Release(surf4);
     todo_wine ok(ref == 0, "Refcount is %u, expected 0\n", ref);
