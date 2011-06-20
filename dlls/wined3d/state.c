@@ -5726,6 +5726,7 @@ static void validate_state_table(struct StateEntry *state_table)
         STATE_SCISSORRECT,
         STATE_FRONTFACE,
         STATE_POINTSPRITECOORDORIGIN,
+        STATE_BASEVERTEXINDEX,
     };
     unsigned int i, current;
 
