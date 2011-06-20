@@ -1306,7 +1306,6 @@ static HRESULT ddraw_surface_attach_surface(IDirectDrawSurfaceImpl *This, IDirec
         IDirect3DDeviceImpl_UpdateDepthStencil(This->ddraw->d3ddevice);
     }
 
-    ddraw_surface7_AddRef(&Surf->IDirectDrawSurface7_iface);
     LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
@@ -1315,6 +1314,7 @@ static HRESULT WINAPI ddraw_surface7_AddAttachedSurface(IDirectDrawSurface7 *ifa
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface7(iface);
     IDirectDrawSurfaceImpl *Surf = unsafe_impl_from_IDirectDrawSurface7(Attach);
+    HRESULT hr;
 
     TRACE("iface %p, attachment %p.\n", iface, Attach);
 
@@ -1327,23 +1327,38 @@ static HRESULT WINAPI ddraw_surface7_AddAttachedSurface(IDirectDrawSurface7 *ifa
         return DDERR_CANNOTATTACHSURFACE;
     }
 
-    return ddraw_surface_attach_surface(This, Surf);
+    hr = ddraw_surface_attach_surface(This, Surf);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+    ddraw_surface7_AddRef(Attach);
+    return hr;
 }
 
 static HRESULT WINAPI ddraw_surface4_AddAttachedSurface(IDirectDrawSurface4 *iface, IDirectDrawSurface4 *attachment)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface4(iface);
     IDirectDrawSurfaceImpl *attachment_impl = unsafe_impl_from_IDirectDrawSurface4(attachment);
+    HRESULT hr;
 
     TRACE("iface %p, attachment %p.\n", iface, attachment);
 
-    return ddraw_surface7_AddAttachedSurface(&This->IDirectDrawSurface7_iface,
+    hr = ddraw_surface7_AddAttachedSurface(&This->IDirectDrawSurface7_iface,
             attachment_impl ? &attachment_impl->IDirectDrawSurface7_iface : NULL);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+    ddraw_surface4_AddRef(attachment);
+    ddraw_surface7_Release(&attachment_impl->IDirectDrawSurface7_iface);
+    return hr;
 }
 static HRESULT WINAPI ddraw_surface3_AddAttachedSurface(IDirectDrawSurface3 *iface, IDirectDrawSurface3 *attachment)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     IDirectDrawSurfaceImpl *attach_impl = unsafe_impl_from_IDirectDrawSurface3(attachment);
+    HRESULT hr;
 
     TRACE("iface %p, attachment %p.\n", iface, attachment);
 
@@ -1375,29 +1390,51 @@ static HRESULT WINAPI ddraw_surface3_AddAttachedSurface(IDirectDrawSurface3 *ifa
         return DDERR_CANNOTATTACHSURFACE;
     }
 
-    return ddraw_surface_attach_surface(This, attach_impl);
+    hr = ddraw_surface_attach_surface(This, attach_impl);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+    ddraw_surface3_AddRef(attachment);
+    return hr;
 }
 
 static HRESULT WINAPI ddraw_surface2_AddAttachedSurface(IDirectDrawSurface2 *iface, IDirectDrawSurface2 *attachment)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface2(iface);
     IDirectDrawSurfaceImpl *attachment_impl = unsafe_impl_from_IDirectDrawSurface2(attachment);
+    HRESULT hr;
 
     TRACE("iface %p, attachment %p.\n", iface, attachment);
 
-    return ddraw_surface3_AddAttachedSurface(&This->IDirectDrawSurface3_iface,
+    hr = ddraw_surface3_AddAttachedSurface(&This->IDirectDrawSurface3_iface,
             attachment_impl ? &attachment_impl->IDirectDrawSurface3_iface : NULL);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+    ddraw_surface2_AddRef(attachment);
+    ddraw_surface3_Release(&attachment_impl->IDirectDrawSurface3_iface);
+    return hr;
 }
 
 static HRESULT WINAPI ddraw_surface1_AddAttachedSurface(IDirectDrawSurface *iface, IDirectDrawSurface *attachment)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface(iface);
     IDirectDrawSurfaceImpl *attachment_impl = unsafe_impl_from_IDirectDrawSurface(attachment);
+    HRESULT hr;
 
     TRACE("iface %p, attachment %p.\n", iface, attachment);
 
-    return ddraw_surface3_AddAttachedSurface(&This->IDirectDrawSurface3_iface,
+    hr = ddraw_surface3_AddAttachedSurface(&This->IDirectDrawSurface3_iface,
             attachment_impl ? &attachment_impl->IDirectDrawSurface3_iface : NULL);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+    ddraw_surface1_AddRef(attachment);
+    ddraw_surface3_Release(&attachment_impl->IDirectDrawSurface3_iface);
+    return hr;
 }
 
 /*****************************************************************************
