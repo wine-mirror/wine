@@ -2711,7 +2711,7 @@ static HRESULT ddraw_recreate_surfaces(IDirectDrawImpl *This)
  *
  *****************************************************************************/
 static HRESULT ddraw_create_surface(IDirectDrawImpl *This, DDSURFACEDESC2 *pDDSD,
-        IDirectDrawSurfaceImpl **ppSurf, UINT level)
+        IDirectDrawSurfaceImpl **ppSurf, UINT level, UINT version)
 {
     WINED3DSURFTYPE ImplType = This->ImplType;
     HRESULT hr;
@@ -2788,7 +2788,7 @@ static HRESULT ddraw_create_surface(IDirectDrawImpl *This, DDSURFACEDESC2 *pDDSD
         return DDERR_OUTOFVIDEOMEMORY;
     }
 
-    hr = ddraw_surface_init(*ppSurf, This, pDDSD, level, ImplType);
+    hr = ddraw_surface_init(*ppSurf, This, pDDSD, level, ImplType, version);
     if (FAILED(hr))
     {
         WARN("Failed to initialize surface, hr %#x.\n", hr);
@@ -2823,7 +2823,7 @@ CreateAdditionalSurfaces(IDirectDrawImpl *This,
                          IDirectDrawSurfaceImpl *root,
                          UINT count,
                          DDSURFACEDESC2 DDSD,
-                         BOOL CubeFaceRoot)
+                         BOOL CubeFaceRoot, UINT version)
 {
     UINT i, j, level = 0;
     HRESULT hr;
@@ -2850,7 +2850,7 @@ CreateAdditionalSurfaces(IDirectDrawImpl *This,
         }
         CubeFaceRoot = FALSE;
 
-        hr = ddraw_create_surface(This, &DDSD, &object2, level);
+        hr = ddraw_create_surface(This, &DDSD, &object2, level, version);
         if(hr != DD_OK)
         {
             return hr;
@@ -2872,25 +2872,6 @@ CreateAdditionalSurfaces(IDirectDrawImpl *This,
         DDSD.ddsCaps.dwCaps &= ~DDSCAPS_BACKBUFFER;
     }
     return DD_OK;
-}
-
-/* Must set all attached surfaces (e.g. mipmaps) versions as well */
-static void ddraw_set_surface_version(IDirectDrawSurfaceImpl *surface, UINT version)
-{
-    unsigned int i;
-
-    TRACE("surface %p, version %u -> %u.\n", surface, surface->version, version);
-
-    surface->version = version;
-    for (i = 0; i < MAX_COMPLEX_ATTACHED; ++i)
-    {
-        if (!surface->complex_array[i]) break;
-        ddraw_set_surface_version(surface->complex_array[i], version);
-    }
-    while ((surface = surface->next_attached))
-    {
-        ddraw_set_surface_version(surface, version);
-    }
 }
 
 /*****************************************************************************
@@ -3101,7 +3082,7 @@ static HRESULT ddraw_create_gdi_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSur
  *
  *****************************************************************************/
 static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
-        IDirectDrawSurfaceImpl **Surf, IUnknown *UnkOuter)
+        IDirectDrawSurfaceImpl **Surf, IUnknown *UnkOuter, UINT version)
 {
     IDirectDrawSurfaceImpl *object = NULL;
     HRESULT hr;
@@ -3357,7 +3338,7 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
     }
 
     /* Create the first surface */
-    hr = ddraw_create_surface(ddraw, &desc2, &object, 0);
+    hr = ddraw_create_surface(ddraw, &desc2, &object, 0, version);
     if (FAILED(hr))
     {
         WARN("ddraw_create_surface failed, hr %#x.\n", hr);
@@ -3386,28 +3367,39 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
     {
         desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_ALLFACES;
         desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_NEGATIVEZ;
-        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE);
+        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE, version);
         desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_NEGATIVEZ;
         desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_POSITIVEZ;
-        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE);
+        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE, version);
         desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_POSITIVEZ;
         desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_NEGATIVEY;
-        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE);
+        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE, version);
         desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_NEGATIVEY;
         desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_POSITIVEY;
-        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE);
+        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE, version);
         desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_POSITIVEY;
         desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_NEGATIVEX;
-        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE);
+        hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces + 1, desc2, TRUE, version);
         desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_NEGATIVEX;
         desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_POSITIVEX;
     }
 
-    hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces, desc2, FALSE);
+    hr |= CreateAdditionalSurfaces(ddraw, object, extra_surfaces, desc2, FALSE, version);
     if(hr != DD_OK)
     {
         /* This destroys and possibly created surfaces too */
-        IDirectDrawSurface7_Release(&object->IDirectDrawSurface7_iface);
+        if (version == 7)
+        {
+            IDirectDrawSurface7_Release(&object->IDirectDrawSurface7_iface);
+        }
+        else if (version == 4)
+        {
+            IDirectDrawSurface4_Release(&object->IDirectDrawSurface4_iface);
+        }
+        else
+        {
+            IDirectDrawSurface_Release(&object->IDirectDrawSurface_iface);
+        }
         LeaveCriticalSection(&ddraw_cs);
         return hr;
     }
@@ -3514,7 +3506,7 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface, DDSURFACEDESC2 *
         return DDERR_INVALIDCAPS;
     }
 
-    hr = CreateSurface(This, surface_desc, &impl, outer_unknown);
+    hr = CreateSurface(This, surface_desc, &impl, outer_unknown, 7);
     if (FAILED(hr))
     {
         *surface = NULL;
@@ -3554,7 +3546,7 @@ static HRESULT WINAPI ddraw4_CreateSurface(IDirectDraw4 *iface,
         return DDERR_INVALIDCAPS;
     }
 
-    hr = CreateSurface(This, surface_desc, &impl, outer_unknown);
+    hr = CreateSurface(This, surface_desc, &impl, outer_unknown, 4);
     if (FAILED(hr))
     {
         *surface = NULL;
@@ -3562,7 +3554,6 @@ static HRESULT WINAPI ddraw4_CreateSurface(IDirectDraw4 *iface,
     }
 
     *surface = &impl->IDirectDrawSurface4_iface;
-    ddraw_set_surface_version(impl, 4);
     IDirectDraw7_Release(&This->IDirectDraw7_iface);
     IDirectDraw4_AddRef(iface);
     impl->ifaceToRelease = (IUnknown *)iface;
@@ -3598,7 +3589,7 @@ static HRESULT WINAPI ddraw3_CreateSurface(IDirectDraw3 *iface, DDSURFACEDESC *s
         return DDERR_INVALIDCAPS;
     }
 
-    hr = CreateSurface(This, (DDSURFACEDESC2 *)surface_desc, &impl, outer_unknown);
+    hr = CreateSurface(This, (DDSURFACEDESC2 *)surface_desc, &impl, outer_unknown, 3);
     if (FAILED(hr))
     {
         *surface = NULL;
@@ -3606,7 +3597,6 @@ static HRESULT WINAPI ddraw3_CreateSurface(IDirectDraw3 *iface, DDSURFACEDESC *s
     }
 
     *surface = &impl->IDirectDrawSurface_iface;
-    ddraw_set_surface_version(impl, 3);
     IDirectDraw7_Release(&This->IDirectDraw7_iface);
     IDirectDraw3_AddRef(iface);
     impl->ifaceToRelease = (IUnknown *)iface;
@@ -3642,7 +3632,7 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
         return DDERR_INVALIDCAPS;
     }
 
-    hr = CreateSurface(This, (DDSURFACEDESC2 *)surface_desc, &impl, outer_unknown);
+    hr = CreateSurface(This, (DDSURFACEDESC2 *)surface_desc, &impl, outer_unknown, 2);
     if (FAILED(hr))
     {
         *surface = NULL;
@@ -3650,7 +3640,6 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
     }
 
     *surface = &impl->IDirectDrawSurface_iface;
-    ddraw_set_surface_version(impl, 2);
     IDirectDraw7_Release(&This->IDirectDraw7_iface);
     impl->ifaceToRelease = NULL;
 
@@ -3676,7 +3665,7 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
     /* Remove front buffer flag, this causes failure in v7, and its added to normal
      * primaries anyway. */
     surface_desc->ddsCaps.dwCaps &= ~DDSCAPS_FRONTBUFFER;
-    hr = CreateSurface(This, (DDSURFACEDESC2 *)surface_desc, &impl, outer_unknown);
+    hr = CreateSurface(This, (DDSURFACEDESC2 *)surface_desc, &impl, outer_unknown, 1);
     if (FAILED(hr))
     {
         *surface = NULL;
@@ -3684,7 +3673,6 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
     }
 
     *surface = &impl->IDirectDrawSurface_iface;
-    ddraw_set_surface_version(impl, 1);
     IDirectDraw7_Release(&This->IDirectDraw7_iface);
     impl->ifaceToRelease = NULL;
 

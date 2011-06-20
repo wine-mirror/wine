@@ -4931,7 +4931,7 @@ HRESULT ddraw_surface_create_texture(IDirectDrawSurfaceImpl *surface)
 }
 
 HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddraw,
-        DDSURFACEDESC2 *desc, UINT mip_level, WINED3DSURFTYPE surface_type)
+        DDSURFACEDESC2 *desc, UINT mip_level, WINED3DSURFTYPE surface_type, UINT version)
 {
     struct wined3d_resource_desc wined3d_desc;
     struct wined3d_resource *wined3d_resource;
@@ -5005,7 +5005,7 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     surface->IDirect3DTexture2_vtbl = &d3d_texture2_vtbl;
     surface->IDirect3DTexture_vtbl = &d3d_texture1_vtbl;
     surface->ref = 1;
-    surface->version = 7;
+    surface->version = version;
     surface->ddraw = ddraw;
 
     copy_to_surfacedesc2(&surface->surface_desc, desc);
