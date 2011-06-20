@@ -4810,8 +4810,9 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
     }
 
     /* NPOT block sizes would be silly. */
-    if ((update_w & (src_format->block_width - 1) || update_h & (src_format->block_height - 1))
-            && (src_w != update_w || dst_w != update_w || src_h != update_h || dst_h != update_h))
+    if ((src_format->flags & WINED3DFMT_FLAG_COMPRESSED)
+            && ((update_w & (src_format->block_width - 1) || update_h & (src_format->block_height - 1))
+            && (src_w != update_w || dst_w != update_w || src_h != update_h || dst_h != update_h)))
     {
         WARN("Update rect not block-aligned.\n");
         return WINED3DERR_INVALIDCALL;
