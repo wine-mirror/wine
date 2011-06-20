@@ -1220,9 +1220,10 @@ BOOL CDECL X11DRV_SetCursorPos( INT x, INT y )
     struct x11drv_thread_data *data = x11drv_init_thread_data();
 
     wine_tsx11_lock();
-    data->warp_serial = NextRequest( data->display );
     XWarpPointer( data->display, root_window, root_window, 0, 0, 0, 0,
                   x - virtual_screen_rect.left, y - virtual_screen_rect.top );
+    data->warp_serial = NextRequest( data->display );
+    XNoOp( data->display );
     XFlush( data->display ); /* avoids bad mouse lag in games that do their own mouse warping */
     wine_tsx11_unlock();
     TRACE( "warped to %d,%d serial %lu\n", x, y, data->warp_serial );
@@ -1431,14 +1432,12 @@ static void X11DRV_RawMotion( XGenericEventCookie *xev )
 
     if (thread_data->warp_serial)
     {
-        long diff = xev->serial - thread_data->warp_serial;
-
-        if (diff >= 0) thread_data->warp_serial = 0;  /* we caught up now */
-        if (diff <= 0)  /* <= 0 because we also want to ignore the first event after the warp request */
+        if ((long)(xev->serial - thread_data->warp_serial) < 0)
         {
             TRACE( "pos %d,%d old serial %lu, ignoring\n", input.u.mi.dx, input.u.mi.dy, xev->serial );
             return;
         }
+        thread_data->warp_serial = 0;  /* we caught up now */
     }
 
     TRACE( "pos %d,%d\n", input.u.mi.dx, input.u.mi.dy );
