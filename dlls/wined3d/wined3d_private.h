@@ -1803,7 +1803,7 @@ void device_switch_onscreen_ds(struct wined3d_device *device, struct wined3d_con
         struct wined3d_surface *depth_stencil) DECLSPEC_HIDDEN;
 void device_update_stream_info(struct wined3d_device *device, const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 void device_update_tex_unit_map(struct wined3d_device *device) DECLSPEC_HIDDEN;
-void device_invalidate_state(struct wined3d_device *device, DWORD state) DECLSPEC_HIDDEN;
+void device_invalidate_state(const struct wined3d_device *device, DWORD state) DECLSPEC_HIDDEN;
 
 static inline BOOL isStateDirty(struct wined3d_context *context, DWORD state)
 {

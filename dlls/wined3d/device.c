@@ -6175,7 +6175,7 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
 }
 
 
-void device_invalidate_state(struct wined3d_device *device, DWORD state)
+void device_invalidate_state(const struct wined3d_device *device, DWORD state)
 {
     DWORD rep = device->StateTable[state].representative;
     struct wined3d_context *context;
