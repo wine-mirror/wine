@@ -6859,7 +6859,7 @@ static void test_save(void)
     IXMLDOMDocument *doc, *doc2;
     IXMLDOMElement *root;
     VARIANT file, vDoc;
-    BSTR sOrig, sNew;
+    BSTR sOrig, sNew, filename;
     char buffer[100];
     DWORD read = 0;
     HANDLE hfile;
@@ -6905,6 +6905,25 @@ static void test_save(void)
     /* save to path */
     V_VT(&file) = VT_BSTR;
     V_BSTR(&file) = _bstr_("test.xml");
+
+    hr = IXMLDOMDocument_save(doc, file);
+    EXPECT_HR(hr, S_OK);
+
+    hfile = CreateFileA("test.xml", GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+    ok(hfile != INVALID_HANDLE_VALUE, "Could not open file: %u\n", GetLastError());
+    if(hfile == INVALID_HANDLE_VALUE) return;
+
+    ReadFile(hfile, buffer, sizeof(buffer), &read, NULL);
+    ok(read != 0, "could not read file\n");
+    ok(buffer[0] != '<' || buffer[1] != '?', "File contains processing instruction\n");
+
+    CloseHandle(hfile);
+    DeleteFile("test.xml");
+
+    /* save to path VT_BSTR | VT_BYREF */
+    filename = _bstr_("test.xml");
+    V_VT(&file) = VT_BSTR | VT_BYREF;
+    V_BSTRREF(&file) = &filename;
 
     hr = IXMLDOMDocument_save(doc, file);
     EXPECT_HR(hr, S_OK);

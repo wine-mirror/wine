@@ -2423,70 +2423,74 @@ static HRESULT WINAPI domdoc_save(
     xmlNodePtr xmldecl;
     HRESULT ret = S_OK;
 
-    TRACE("(%p)->(var(vt %d, %s))\n", This, V_VT(&destination),
-          V_VT(&destination) == VT_BSTR ? debugstr_w(V_BSTR(&destination)) : NULL);
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&destination));
 
-    if(V_VT(&destination) != VT_BSTR && V_VT(&destination) != VT_UNKNOWN)
+    switch (V_VT(&destination))
     {
-        FIXME("Unhandled vt %d\n", V_VT(&destination));
-        return S_FALSE;
-    }
-
-    if(V_VT(&destination) == VT_UNKNOWN)
-    {
-        IUnknown *pUnk = V_UNKNOWN(&destination);
-        IXMLDOMDocument2 *document;
-        IStream *stream;
-
-        ret = IUnknown_QueryInterface(pUnk, &IID_IXMLDOMDocument3, (void**)&document);
-        if(ret == S_OK)
+    case VT_UNKNOWN:
         {
-            VARIANT_BOOL success;
-            BSTR xml;
+            IUnknown *pUnk = V_UNKNOWN(&destination);
+            IXMLDOMDocument2 *document;
+            IStream *stream;
 
-            ret = IXMLDOMDocument3_get_xml(iface, &xml);
+            ret = IUnknown_QueryInterface(pUnk, &IID_IXMLDOMDocument3, (void**)&document);
             if(ret == S_OK)
             {
-                ret = IXMLDOMDocument3_loadXML(document, xml, &success);
-                SysFreeString(xml);
+                VARIANT_BOOL success;
+                BSTR xml;
+
+                ret = IXMLDOMDocument3_get_xml(iface, &xml);
+                if(ret == S_OK)
+                {
+                    ret = IXMLDOMDocument3_loadXML(document, xml, &success);
+                    SysFreeString(xml);
+                }
+
+                IXMLDOMDocument3_Release(document);
+                return ret;
             }
 
-            IXMLDOMDocument3_Release(document);
-            return ret;
-        }
-
-        ret = IUnknown_QueryInterface(pUnk, &IID_IStream, (void**)&stream);
-        if(ret == S_OK)
-        {
-            ctx = xmlSaveToIO(domdoc_stream_save_writecallback,
-                domdoc_stream_save_closecallback, stream, NULL, XML_SAVE_NO_DECL);
-
-            if(!ctx)
+            ret = IUnknown_QueryInterface(pUnk, &IID_IStream, (void**)&stream);
+            if(ret == S_OK)
             {
-                IStream_Release(stream);
+                ctx = xmlSaveToIO(domdoc_stream_save_writecallback,
+                    domdoc_stream_save_closecallback, stream, NULL, XML_SAVE_NO_DECL);
+
+                if(!ctx)
+                {
+                    IStream_Release(stream);
+                    return E_FAIL;
+                }
+            }
+        }
+        break;
+
+    case VT_BSTR:
+    case VT_BSTR | VT_BYREF:
+        {
+            /* save with file path */
+            HANDLE handle = CreateFileW( (V_VT(&destination) & VT_BYREF)? *V_BSTRREF(&destination) : V_BSTR(&destination),
+                                         GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+            if( handle == INVALID_HANDLE_VALUE )
+            {
+                WARN("failed to create file\n");
+                return E_FAIL;
+            }
+
+            /* disable top XML declaration */
+            ctx = xmlSaveToIO(domdoc_save_writecallback, domdoc_save_closecallback,
+                              handle, NULL, XML_SAVE_NO_DECL);
+            if (!ctx)
+            {
+                CloseHandle(handle);
                 return E_FAIL;
             }
         }
-    }
-    else
-    {
-        /* save with file path */
-        HANDLE handle = CreateFileW( V_BSTR(&destination), GENERIC_WRITE, 0,
-                                    NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
-        if( handle == INVALID_HANDLE_VALUE )
-        {
-            WARN("failed to create file\n");
-            return E_FAIL;
-        }
+        break;
 
-        /* disable top XML declaration */
-        ctx = xmlSaveToIO(domdoc_save_writecallback, domdoc_save_closecallback,
-                          handle, NULL, XML_SAVE_NO_DECL);
-        if (!ctx)
-        {
-            CloseHandle(handle);
-            return E_FAIL;
-        }
+    default:
+        FIXME("Unhandled VARIANT: %s\n", debugstr_variant(&destination));
+        return S_FALSE;
     }
 
     xmldecl = xmldoc_unlink_xmldecl(get_doc(This));
