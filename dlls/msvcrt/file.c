@@ -1477,10 +1477,15 @@ int CDECL _futime64(int fd, struct MSVCRT___utimbuf64 *t)
  */
 int CDECL _futime32(int fd, struct MSVCRT___utimbuf32 *t)
 {
-    struct MSVCRT___utimbuf64 t64;
-    t64.actime = t->actime;
-    t64.modtime = t->modtime;
-    return _futime64( fd, &t64 );
+    if (t)
+    {
+        struct MSVCRT___utimbuf64 t64;
+        t64.actime = t->actime;
+        t64.modtime = t->modtime;
+        return _futime64( fd, &t64 );
+    }
+    else
+        return _futime64( fd, NULL );
 }
 
 /*********************************************************************
@@ -2402,10 +2407,15 @@ int CDECL _utime64(const char* path, struct MSVCRT___utimbuf64 *t)
  */
 int CDECL _utime32(const char* path, struct MSVCRT___utimbuf32 *t)
 {
-    struct MSVCRT___utimbuf64 t64;
-    t64.actime = t->actime;
-    t64.modtime = t->modtime;
-    return _utime64( path, &t64 );
+    if (t)
+    {
+        struct MSVCRT___utimbuf64 t64;
+        t64.actime = t->actime;
+        t64.modtime = t->modtime;
+        return _utime64( path, &t64 );
+    }
+    else
+        return _utime64( path, NULL );
 }
 
 /*********************************************************************
@@ -2444,10 +2454,15 @@ int CDECL _wutime64(const MSVCRT_wchar_t* path, struct MSVCRT___utimbuf64 *t)
  */
 int CDECL _wutime32(const MSVCRT_wchar_t* path, struct MSVCRT___utimbuf32 *t)
 {
-    struct MSVCRT___utimbuf64 t64;
-    t64.actime = t->actime;
-    t64.modtime = t->modtime;
-    return _wutime64( path, &t64 );
+    if (t)
+    {
+        struct MSVCRT___utimbuf64 t64;
+        t64.actime = t->actime;
+        t64.modtime = t->modtime;
+        return _wutime64( path, &t64 );
+    }
+    else
+        return _wutime64( path, NULL );
 }
 
 /*********************************************************************
