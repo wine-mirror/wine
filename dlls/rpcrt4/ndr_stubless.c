@@ -1241,18 +1241,18 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
                         else
                             call_freer(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
                     }
-
-                    if (pParam->param_attributes.IsOut &&
-                        !pParam->param_attributes.IsIn &&
-                        !pParam->param_attributes.IsByValue &&
-                        !pParam->param_attributes.ServerAllocSize)
+                    else if (pParam->param_attributes.ServerAllocSize)
+                    {
+                        HeapFree(GetProcessHeap(), 0, *(void **)pArg);
+                    }
+                    else if (pParam->param_attributes.IsOut &&
+                             !pParam->param_attributes.IsIn &&
+                             !pParam->param_attributes.IsByValue)
                     {
                         if (*pTypeFormat != RPC_FC_BIND_CONTEXT)
                             pStubMsg->pfnFree(*(void **)pArg);
                     }
 
-                    if (pParam->param_attributes.ServerAllocSize)
-                        HeapFree(GetProcessHeap(), 0, *(void **)pArg);
                     break;
                 case STUBLESS_INITOUT:
                     if (!pParam->param_attributes.IsIn &&
