@@ -66,6 +66,8 @@ static pthread_key_t teb_key;
  */
 #ifdef linux
 
+typedef ucontext_t SIGCONTEXT;
+
 /* All Registers access - only for local access */
 # define REG_sig(reg_name, context) ((context)->uc_mcontext.reg_name)
 # define REGn_sig(reg_num, context) ((context)->uc_mcontext.arm_r##reg_num)
@@ -75,11 +77,25 @@ static pthread_key_t teb_key;
 # define LR_sig(context)            REG_sig(arm_lr, context)    /* Link register */
 # define PC_sig(context)            REG_sig(arm_pc, context)    /* Program counter */
 # define CPSR_sig(context)          REG_sig(arm_cpsr, context)  /* Current State Register */
-# define IP_sig(context)            REG_sig(arm_ip, context)    /* Program counter (2?) */
+# define IP_sig(context)            REG_sig(arm_ip, context)    /* Intra-Procedure-call scratch register */
 # define FP_sig(context)            REG_sig(arm_fp, context)    /* Frame pointer */
+
+/* Exceptions */
+# define ERROR_sig(context)         REG_sig(error_code, context)
+# define FAULT_sig(context)         REG_sig(fault_address, context)
+# define TRAP_sig(context)          REG_sig(trap_no, context)
 
 #endif /* linux */
 
+enum arm_trap_code
+{
+    TRAP_ARM_UNKNOWN    = -1,  /* Unknown fault (TRAP_sig not defined) */
+    TRAP_ARM_PRIVINFLT  =  6,  /* Invalid opcode exception */
+    TRAP_ARM_PAGEFLT    = 14,  /* Page fault */
+    TRAP_ARM_ALIGNFLT   = 17,  /* Alignment check exception */
+};
+
+typedef void (WINAPI *raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
 typedef int (*wine_signal_handler)(unsigned int sig);
 
 static wine_signal_handler handlers[256];
@@ -206,11 +222,25 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 4,
  *
  * Set the new CPU context.
  */
-void set_cpu_context( const CONTEXT *context )
-{
-    FIXME("not implemented\n");
-    return;
-}
+/* FIXME: What about the CPSR? */
+__ASM_GLOBAL_FUNC( set_cpu_context,
+                   "mov IP, r0\n\t"
+                   "ldr r0,  [IP, #0x4]\n\t"  /* context->R0 */
+                   "ldr r1,  [IP, #0x8]\n\t"  /* context->R1 */
+                   "ldr r2,  [IP, #0xc]\n\t"  /* context->R2 */
+                   "ldr r3,  [IP, #0x10]\n\t" /* context->R3 */
+                   "ldr r4,  [IP, #0x14]\n\t" /* context->R4 */
+                   "ldr r5,  [IP, #0x18]\n\t" /* context->R5 */
+                   "ldr r6,  [IP, #0x1c]\n\t" /* context->R6 */
+                   "ldr r7,  [IP, #0x20]\n\t" /* context->R7 */
+                   "ldr r8,  [IP, #0x24]\n\t" /* context->R8 */
+                   "ldr r9,  [IP, #0x28]\n\t" /* context->R9 */
+                   "ldr r10, [IP, #0x2c]\n\t" /* context->R10 */
+                   "ldr r11, [IP, #0x30]\n\t" /* context->Fp */
+                   "ldr SP,  [IP, #0x38]\n\t" /* context->Sp */
+                   "ldr LR,  [IP, #0x3c]\n\t" /* context->Lr */
+                   "ldr PC,  [IP, #0x40]\n\t" /* context->Pc */
+                   )
 
 
 /***********************************************************************
@@ -326,6 +356,63 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
     return STATUS_SUCCESS;
 }
 
+/***********************************************************************
+ *           setup_exception_record
+ *
+ * Setup the exception record and context on the thread stack.
+ */
+static EXCEPTION_RECORD *setup_exception_record( SIGCONTEXT *sigcontext, void *stack_ptr, raise_func func )
+{
+    struct stack_layout
+    {
+        CONTEXT           context;
+        EXCEPTION_RECORD  rec;
+    } *stack = stack_ptr;
+    DWORD exception_code = 0;
+
+    stack--;  /* push the stack_layout structure */
+
+    stack->rec.ExceptionRecord  = NULL;
+    stack->rec.ExceptionCode    = exception_code;
+    stack->rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+    stack->rec.ExceptionAddress = (LPVOID)PC_sig(sigcontext);
+    stack->rec.NumberParameters = 0;
+
+    save_context( &stack->context, sigcontext );
+
+    /* now modify the sigcontext to return to the raise function */
+    SP_sig(sigcontext) = (DWORD)stack;
+    PC_sig(sigcontext) = (DWORD)func;
+    REGn_sig(0, sigcontext) = (DWORD)&stack->rec;  /* first arg for raise_func */
+    REGn_sig(1, sigcontext) = (DWORD)&stack->context; /* second arg for raise_func */
+
+
+    return &stack->rec;
+}
+
+/**********************************************************************
+ *		raise_segv_exception
+ */
+static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    NTSTATUS status;
+
+    switch(rec->ExceptionCode)
+    {
+    case EXCEPTION_ACCESS_VIOLATION:
+        if (rec->NumberParameters == 2)
+        {
+            if (!(rec->ExceptionCode = virtual_handle_fault( (void *)rec->ExceptionInformation[1],
+                                                             rec->ExceptionInformation[0] )))
+                goto done;
+        }
+        break;
+    }
+    status = NtRaiseException( rec, context, TRUE );
+    if (status) raise_status( status, rec );
+done:
+    set_cpu_context( context );
+}
 
 /**********************************************************************
  *           call_stack_handlers
@@ -453,27 +540,47 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
  */
 static void segv_handler( int signal, siginfo_t *info, void *ucontext )
 {
-    EXCEPTION_RECORD rec;
-    CONTEXT context;
-    NTSTATUS status;
+    EXCEPTION_RECORD *rec;
+    SIGCONTEXT *context = ucontext;
+    void *stack = (void *) (SP_sig(context) & ~3);
 
-    rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
+    /* check for page fault inside the thread stack */
+    if (TRAP_sig(context) == TRAP_ARM_PAGEFLT &&
+        (char *)info->si_addr >= (char *)NtCurrentTeb()->DeallocationStack &&
+        (char *)info->si_addr < (char *)NtCurrentTeb()->Tib.StackBase &&
+        virtual_handle_stack_fault( info->si_addr ))
+    {
+        /* check if this was the last guard page */
+        if ((char *)info->si_addr < (char *)NtCurrentTeb()->DeallocationStack + 2*4096)
+        {
+            rec = setup_exception_record( context, stack, raise_segv_exception );
+            rec->ExceptionCode = EXCEPTION_STACK_OVERFLOW;
+        }
+        return;
+    }
 
-    /* we want the page-fault case to be fast */
-    if ( info->si_code == SEGV_ACCERR )
-        if (!(rec.ExceptionCode = virtual_handle_fault( info->si_addr, 0 ))) return;
+    rec = setup_exception_record( context, stack, raise_segv_exception );
+    if (rec->ExceptionCode == EXCEPTION_STACK_OVERFLOW) return;
 
-    save_context( &context, ucontext );
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    rec.ExceptionAddress = (LPVOID)context.Pc;
-    rec.NumberParameters = 2;
-    rec.ExceptionInformation[0] = 0;  /* FIXME: read/write access ? */
-    rec.ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
-
-    status = raise_exception( &rec, &context, TRUE );
-    if (status) raise_status( status, &rec );
-    restore_context( &context, ucontext );
+    switch(TRAP_sig(context))
+    {
+    case TRAP_ARM_PRIVINFLT:   /* Invalid opcode exception */
+        rec->ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+        break;
+    case TRAP_ARM_PAGEFLT:  /* Page fault */
+        rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
+        rec->NumberParameters = 2;
+        rec->ExceptionInformation[0] = (ERROR_sig(context) & 0x800) != 0;
+        rec->ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
+        break;
+    case TRAP_ARM_ALIGNFLT:  /* Alignment check exception */
+        rec->ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
+        break;
+    default:
+        WINE_ERR( "Got unexpected trap %ld\n", TRAP_sig(context) );
+        rec->ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+        break;
+    }
 }
 
 /**********************************************************************
