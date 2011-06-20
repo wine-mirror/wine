@@ -329,7 +329,7 @@ static ULONG WINAPI d3d_texture2_AddRef(IDirect3DTexture2 *iface)
     IDirectDrawSurfaceImpl *This = surface_from_texture2(iface);
     TRACE("iface %p.\n", iface);
 
-    return ddraw_surface7_AddRef(&This->IDirectDrawSurface7_iface);
+    return ddraw_surface1_AddRef(&This->IDirectDrawSurface_iface);
 }
 
 static ULONG WINAPI d3d_texture1_AddRef(IDirect3DTexture *iface)
@@ -337,7 +337,7 @@ static ULONG WINAPI d3d_texture1_AddRef(IDirect3DTexture *iface)
     IDirectDrawSurfaceImpl *This = surface_from_texture1(iface);
     TRACE("iface %p.\n", iface);
 
-    return ddraw_surface7_AddRef(&This->IDirectDrawSurface7_iface);
+    return ddraw_surface1_AddRef(&This->IDirectDrawSurface_iface);
 }
 
 /*****************************************************************************
@@ -606,7 +606,7 @@ static ULONG WINAPI d3d_texture2_Release(IDirect3DTexture2 *iface)
     IDirectDrawSurfaceImpl *This = surface_from_texture2(iface);
     TRACE("iface %p.\n", iface);
 
-    return ddraw_surface7_Release(&This->IDirectDrawSurface7_iface);
+    return ddraw_surface1_Release(&This->IDirectDrawSurface_iface);
 }
 
 static ULONG WINAPI d3d_texture1_Release(IDirect3DTexture *iface)
@@ -614,7 +614,7 @@ static ULONG WINAPI d3d_texture1_Release(IDirect3DTexture *iface)
     IDirectDrawSurfaceImpl *This = surface_from_texture1(iface);
     TRACE("iface %p.\n", iface);
 
-    return ddraw_surface7_Release(&This->IDirectDrawSurface7_iface);
+    return ddraw_surface1_Release(&This->IDirectDrawSurface_iface);
 }
 
 /*****************************************************************************

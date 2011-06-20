@@ -1111,29 +1111,29 @@ static void IFaceRefCount(void)
     if (SUCCEEDED(ret))
     {
         ref = getRefcount((IUnknown *) tex);
-        todo_wine ok(ref == 2, "Refcount is %u, expected 2\n", ref);
+        ok(ref == 2, "Refcount is %u, expected 2\n", ref);
         ref = getRefcount((IUnknown *) surf);
-        todo_wine ok(ref == 2, "Refcount is %u, expected 2\n", ref);
+        ok(ref == 2, "Refcount is %u, expected 2\n", ref);
 
         IDirectDrawSurface_QueryInterface(surf, &IID_IDirect3DTexture2, (void **) &tex2);
         ref = getRefcount((IUnknown *) tex);
-        todo_wine ok(ref == 3, "Refcount is %u, expected 3\n", ref);
+        ok(ref == 3, "Refcount is %u, expected 3\n", ref);
         ref = getRefcount((IUnknown *) tex2);
-        todo_wine ok(ref == 3, "Refcount is %u, expected 3\n", ref);
+        ok(ref == 3, "Refcount is %u, expected 3\n", ref);
         ref = getRefcount((IUnknown *) surf);
-        todo_wine ok(ref == 3, "Refcount is %u, expected 3\n", ref);
+        ok(ref == 3, "Refcount is %u, expected 3\n", ref);
 
         IDirectDrawSurface_QueryInterface(surf, &IID_IDirectDrawGammaControl, (void **) &gamma);
         ref = getRefcount((IUnknown *) gamma);
         todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
 
         ref = IDirect3DTexture2_Release(tex2); /* Release the texture */
-        todo_wine ok(ref == 2, "Refcount is %u, expected 2\n", ref);
+        ok(ref == 2, "Refcount is %u, expected 2\n", ref);
         ref = getRefcount((IUnknown *) surf);
-        todo_wine ok(ref == 2, "Refcount is %u, expected 2\n", ref);
+        ok(ref == 2, "Refcount is %u, expected 2\n", ref);
 
         ref = IDirect3DTexture_Release(tex); /* Release the texture */
-        todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
+        ok(ref == 1, "Refcount is %u, expected 1\n", ref);
         ref = getRefcount((IUnknown *) surf);
         ok(ref == 1, "Refcount is %u, expected 1\n", ref);
 
