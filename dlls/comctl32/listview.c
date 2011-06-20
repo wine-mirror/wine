@@ -4374,6 +4374,9 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem, BOOL is
     if (!lpLVItem || lpLVItem->iItem < 0 || lpLVItem->iItem >= infoPtr->nItemCount)
 	return FALSE;
 
+    /* Invalidate old item area */
+    LISTVIEW_InvalidateItem(infoPtr, lpLVItem->iItem);
+
     /* For efficiency, we transform the lpLVItem->pszText to Unicode here */
     if ((lpLVItem->mask & LVIF_TEXT) && is_text(lpLVItem->pszText))
     {
