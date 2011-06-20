@@ -4189,19 +4189,18 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
         if (phase == PHASE_FREE || pass == PASS_RETURN ||
             pointer_type != RPC_FC_RP)
         {
-            if (pointer_type == RPC_FC_RP && phase == PHASE_FREE &&
+            /* strings returned are assumed to be global and hence don't
+             * need freeing */
+            if (is_declptr(type) && !(phase == PHASE_FREE && pass == PASS_RETURN))
+                print_phase_function(file, indent, "Pointer", local_var_prefix,
+                                     phase, var, start_offset);
+            else if (pointer_type == RPC_FC_RP && phase == PHASE_FREE &&
                 !in_attr && is_conformant_array(type))
             {
                 print_file(file, indent, "if (%s%s)\n", local_var_prefix, var->name);
                 indent++;
                 print_file(file, indent, "__frame->_StubMsg.pfnFree(%s%s);\n", local_var_prefix, var->name);
             }
-            /* strings returned are assumed to be global and hence don't
-             * need freeing */
-            else if (is_declptr(type) &&
-                     !(phase == PHASE_FREE && pass == PASS_RETURN))
-                print_phase_function(file, indent, "Pointer", local_var_prefix,
-                                     phase, var, start_offset);
         }
         else
         {
@@ -4257,7 +4256,7 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
         }
 
         if (pointer_type != RPC_FC_RP) array_type = "Pointer";
-        print_phase_function(file, indent, array_type, local_var_prefix, phase, var, start_offset);
+
         if (phase == PHASE_FREE && pointer_type == RPC_FC_RP)
         {
             /* these are all unmarshalled by allocating memory */
@@ -4266,11 +4265,20 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
                 ((tc == RPC_FC_SMVARRAY || tc == RPC_FC_LGVARRAY) && in_attr) ||
                 (tc == RPC_FC_CARRAY && !in_attr))
             {
+                if (type_array_is_decl_as_ptr(type) && type->details.array.ptr_tfsoff)
+                {
+                    print_phase_function(file, indent, "Pointer", local_var_prefix, phase, var,
+                                         type->details.array.ptr_tfsoff);
+                    break;
+                }
+                print_phase_function(file, indent, array_type, local_var_prefix, phase, var, start_offset);
                 print_file(file, indent, "if (%s%s)\n", local_var_prefix, var->name);
                 indent++;
                 print_file(file, indent, "__frame->_StubMsg.pfnFree(%s%s);\n", local_var_prefix, var->name);
+                break;
             }
         }
+        print_phase_function(file, indent, array_type, local_var_prefix, phase, var, start_offset);
         break;
     }
     case TGT_BASIC:
