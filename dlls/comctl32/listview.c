@@ -4996,6 +4996,9 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc, const RECT *prcEra
 
         SelectObject(hdc, hbmp);
         SelectObject(hdc, infoPtr->hFont);
+
+        if(GetClipBox(hdcOrig, &rcClient))
+            IntersectClipRect(hdc, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom);
     } else {
         /* Save dc values we're gonna trash while drawing
          * FIXME: Should be done in LISTVIEW_DrawItem() */
