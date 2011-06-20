@@ -9130,9 +9130,7 @@ static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare,
     /* I believe nHotItem should be left alone, see LISTVIEW_ShiftIndices */
 
     /* refresh the display */
-    if (infoPtr->uView != LV_VIEW_ICON && infoPtr->uView != LV_VIEW_SMALLICON)
-	LISTVIEW_InvalidateList(infoPtr);
-
+    LISTVIEW_InvalidateList(infoPtr);
     return TRUE;
 }
 
