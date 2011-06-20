@@ -735,8 +735,6 @@ BOOL netconn_send( netconn_t *conn, const void *msg, size_t len, int flags, int 
 
 BOOL netconn_recv( netconn_t *conn, void *buf, size_t len, int flags, int *recvd )
 {
-    int ret;
-
     *recvd = 0;
     if (!netconn_connected( conn )) return FALSE;
     if (!len) return TRUE;
@@ -744,6 +742,8 @@ BOOL netconn_recv( netconn_t *conn, void *buf, size_t len, int flags, int *recvd
     if (conn->secure)
     {
 #ifdef SONAME_LIBSSL
+        int ret;
+
         if (flags & ~(MSG_PEEK | MSG_WAITALL))
             FIXME("SSL_read does not support the following flags: %08x\n", flags);
 
