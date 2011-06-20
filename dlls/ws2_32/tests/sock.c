@@ -1139,6 +1139,23 @@ static void test_set_getsockopt(void)
                  lingval.l_onoff, lingval.l_linger,
                  linger_testvals[i].l_onoff, linger_testvals[i].l_linger);
     }
+
+    size =  sizeof(lingval);
+    err = setsockopt(s, SOL_SOCKET, SO_LINGER, NULL, size);
+    ok(err == SOCKET_ERROR && WSAGetLastError() == WSAEFAULT,
+       "got %d with %d (expected SOCKET_ERROR with WSAEFAULT)\n", err, WSAGetLastError());
+    err = setsockopt(s, SOL_SOCKET, SO_LINGER, NULL, 0);
+    ok(err == SOCKET_ERROR && WSAGetLastError() == WSAEFAULT,
+       "got %d with %d (expected SOCKET_ERROR with WSAEFAULT)\n", err, WSAGetLastError());
+
+    size =  sizeof(BOOL);
+    err = setsockopt(s, SOL_SOCKET, SO_DONTLINGER, NULL, size);
+    ok(err == SOCKET_ERROR && WSAGetLastError() == WSAEFAULT,
+       "got %d with %d (expected SOCKET_ERROR with WSAEFAULT)\n", err, WSAGetLastError());
+    err = setsockopt(s, SOL_SOCKET, SO_DONTLINGER, NULL, 0);
+    ok(err == SOCKET_ERROR && WSAGetLastError() == WSAEFAULT,
+       "got %d with %d (expected SOCKET_ERROR with WSAEFAULT)\n", err, WSAGetLastError());
+
     /* Test for erroneously passing a value instead of a pointer as optval */
     size = sizeof(char);
     err = setsockopt(s, SOL_SOCKET, SO_DONTROUTE, (char *)1, size);

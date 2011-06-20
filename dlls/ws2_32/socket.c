@@ -4026,6 +4026,11 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
          * setsockopt follow below that.*/
 
         case WS_SO_DONTLINGER:
+            if (!optval)
+            {
+                SetLastError(WSAEFAULT);
+                return SOCKET_ERROR;
+            }
             linger.l_onoff  = *((const int*)optval) ? 0: 1;
             linger.l_linger = 0;
             level = SOL_SOCKET;
@@ -4035,10 +4040,13 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             break;
 
         case WS_SO_LINGER:
+            if (!optval)
+            {
+                SetLastError(WSAEFAULT);
+                return SOCKET_ERROR;
+            }
             linger.l_onoff  = ((LINGER*)optval)->l_onoff;
             linger.l_linger  = ((LINGER*)optval)->l_linger;
-            /* FIXME: what is documented behavior if SO_LINGER optval
-               is null?? */
             level = SOL_SOCKET;
             optname = SO_LINGER;
             optval = (char*)&linger;
