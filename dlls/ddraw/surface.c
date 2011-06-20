@@ -3624,26 +3624,28 @@ static HRESULT WINAPI ddraw_surface1_GetClipper(IDirectDrawSurface *iface, IDire
  *  DD_OK on success
  *
  *****************************************************************************/
-static HRESULT WINAPI ddraw_surface7_SetClipper(IDirectDrawSurface7 *iface, IDirectDrawClipper *Clipper)
+static HRESULT WINAPI ddraw_surface7_SetClipper(IDirectDrawSurface7 *iface,
+        IDirectDrawClipper *iclipper)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface7(iface);
+    IDirectDrawClipperImpl *clipper = unsafe_impl_from_IDirectDrawClipper(iclipper);
     IDirectDrawClipperImpl *oldClipper = This->clipper;
     HWND clipWindow;
     HRESULT hr;
 
-    TRACE("iface %p, clipper %p.\n", iface, Clipper);
+    TRACE("iface %p, clipper %p.\n", iface, iclipper);
 
     EnterCriticalSection(&ddraw_cs);
-    if ((IDirectDrawClipperImpl *)Clipper == This->clipper)
+    if (clipper == This->clipper)
     {
         LeaveCriticalSection(&ddraw_cs);
         return DD_OK;
     }
 
-    This->clipper = (IDirectDrawClipperImpl *)Clipper;
+    This->clipper = clipper;
 
-    if (Clipper != NULL)
-        IDirectDrawClipper_AddRef(Clipper);
+    if (clipper != NULL)
+        IDirectDrawClipper_AddRef(iclipper);
     if(oldClipper)
         IDirectDrawClipper_Release(&oldClipper->IDirectDrawClipper_iface);
 
@@ -3653,8 +3655,8 @@ static HRESULT WINAPI ddraw_surface7_SetClipper(IDirectDrawSurface7 *iface, IDir
     if (This->wined3d_swapchain)
     {
         clipWindow = NULL;
-        if(Clipper) {
-            IDirectDrawClipper_GetHWnd(Clipper, &clipWindow);
+        if(clipper) {
+            IDirectDrawClipper_GetHWnd(iclipper, &clipWindow);
         }
 
         if (clipWindow)

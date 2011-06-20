@@ -308,3 +308,12 @@ HRESULT ddraw_clipper_init(IDirectDrawClipperImpl *clipper)
 
     return DD_OK;
 }
+
+IDirectDrawClipperImpl *unsafe_impl_from_IDirectDrawClipper(IDirectDrawClipper *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &ddraw_clipper_vtbl);
+
+    return impl_from_IDirectDrawClipper(iface);
+}

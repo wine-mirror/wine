@@ -366,6 +366,7 @@ struct IDirectDrawClipperImpl
 };
 
 HRESULT ddraw_clipper_init(IDirectDrawClipperImpl *clipper) DECLSPEC_HIDDEN;
+IDirectDrawClipperImpl *unsafe_impl_from_IDirectDrawClipper(IDirectDrawClipper *iface) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirectDrawPalette implementation structure
