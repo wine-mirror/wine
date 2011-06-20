@@ -285,7 +285,6 @@ struct ps_signature
 struct arb_pshader_private {
     struct arb_ps_compiled_shader   *gl_shaders;
     UINT                            num_gl_shaders, shader_array_size;
-    BOOL                            has_signature_idx;
     DWORD                           input_signature_idx;
     DWORD                           clipplane_emulation;
     BOOL                            clamp_consts;
@@ -4277,7 +4276,6 @@ static struct arb_ps_compiled_shader *find_arb_pshader(struct wined3d_shader *sh
         else
             shader_data->input_signature_idx = find_input_signature(priv, shader->input_signature);
 
-        shader_data->has_signature_idx = TRUE;
         TRACE("Shader got assigned input signature index %u\n", shader_data->input_signature_idx);
 
         if (!device->vs_clipping)
