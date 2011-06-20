@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-05-25 20:04+0900\n"
+"PO-Revision-Date: 2011-06-20 22:04+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -6384,7 +6384,6 @@ msgid "E&xit"
 msgstr "終了(&X)"
 
 #: shell32.rc:115
-#, fuzzy
 msgid "&About Control Panel"
 msgstr "バージョン情報(&A)..."
 
@@ -8393,16 +8392,15 @@ msgstr "入力行が長すぎます。\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
-msgstr ""
+msgstr "DirectX 診断ツール"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
-msgstr ""
+msgstr "使い方: dxdiag [/whql:off | /whql:on] [/t ファイル名 | /x ファイル名]"
 
 #: explorer.rc:28
-#, fuzzy
 msgid "Wine Explorer"
-msgstr "Wine インターネット エクスプローラ"
+msgstr "Wine エクスプローラ"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
