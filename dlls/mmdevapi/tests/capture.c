@@ -556,16 +556,16 @@ static void test_simplevolume(void)
 
     mute = TRUE;
     hr = ISimpleAudioVolume_GetMute(sav, &mute);
-    todo_wine ok(hr == S_OK, "GetMute failed: %08x\n", hr);
-    todo_wine ok(mute == FALSE, "Session is already muted\n");
+    ok(hr == S_OK, "GetMute failed: %08x\n", hr);
+    ok(mute == FALSE, "Session is already muted\n");
 
     hr = ISimpleAudioVolume_SetMute(sav, TRUE, NULL);
-    todo_wine ok(hr == S_OK, "SetMute failed: %08x\n", hr);
+    ok(hr == S_OK, "SetMute failed: %08x\n", hr);
 
     mute = FALSE;
     hr = ISimpleAudioVolume_GetMute(sav, &mute);
-    todo_wine ok(hr == S_OK, "GetMute failed: %08x\n", hr);
-    todo_wine ok(mute == TRUE, "Session should have been muted\n");
+    ok(hr == S_OK, "GetMute failed: %08x\n", hr);
+    ok(mute == TRUE, "Session should have been muted\n");
 
     hr = ISimpleAudioVolume_GetMasterVolume(sav, &vol);
     ok(hr == S_OK, "GetMasterVolume failed: %08x\n", hr);
@@ -576,11 +576,11 @@ static void test_simplevolume(void)
 
     mute = FALSE;
     hr = ISimpleAudioVolume_GetMute(sav, &mute);
-    todo_wine ok(hr == S_OK, "GetMute failed: %08x\n", hr);
-    todo_wine ok(mute == TRUE, "Session should have been muted\n");
+    ok(hr == S_OK, "GetMute failed: %08x\n", hr);
+    ok(mute == TRUE, "Session should have been muted\n");
 
     hr = ISimpleAudioVolume_SetMute(sav, FALSE, NULL);
-    todo_wine ok(hr == S_OK, "SetMute failed: %08x\n", hr);
+    ok(hr == S_OK, "SetMute failed: %08x\n", hr);
 
     ISimpleAudioVolume_Release(sav);
     IAudioClient_Release(ac);

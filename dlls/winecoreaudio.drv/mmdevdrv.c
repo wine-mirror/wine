@@ -82,6 +82,7 @@ typedef struct _AudioSession {
     float master_vol;
     UINT32 channel_count;
     float *channel_vols;
+    BOOL mute;
 
     CRITICAL_SECTION lock;
 
@@ -2314,8 +2315,11 @@ static HRESULT ca_setvol(ACImpl *This, UINT32 index)
         return ret;
     }
 
-    level = This->session->master_vol * This->session->channel_vols[index] *
-        This->vols[index];
+    if(This->session->mute)
+        level = 0;
+    else
+        level = This->session->master_vol *
+            This->session->channel_vols[index] * This->vols[index];
 
     sc = AudioQueueSetParameter(This->aqueue, kAudioQueueParam_Volume, level);
     if(sc != noErr){
@@ -2422,9 +2426,20 @@ static HRESULT WINAPI SimpleAudioVolume_SetMute(ISimpleAudioVolume *iface,
     AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
     AudioSession *session = This->session;
 
-    FIXME("(%p)->(%u, %p) - stub\n", session, mute, context);
+    TRACE("(%p)->(%u, %p)\n", session, mute, context);
 
-    return E_NOTIMPL;
+    if(context)
+        FIXME("Notifications not supported yet\n");
+
+    EnterCriticalSection(&session->lock);
+
+    session->mute = mute;
+
+    ca_session_setvol(session, -1);
+
+    LeaveCriticalSection(&session->lock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SimpleAudioVolume_GetMute(ISimpleAudioVolume *iface,
@@ -2433,12 +2448,14 @@ static HRESULT WINAPI SimpleAudioVolume_GetMute(ISimpleAudioVolume *iface,
     AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
     AudioSession *session = This->session;
 
-    FIXME("(%p)->(%p) - stub\n", session, mute);
+    TRACE("(%p)->(%p)\n", session, mute);
 
     if(!mute)
         return NULL_PTR_ERR;
 
-    return E_NOTIMPL;
+    *mute = session->mute;
+
+    return S_OK;
 }
 
 static const ISimpleAudioVolumeVtbl SimpleAudioVolume_Vtbl  =

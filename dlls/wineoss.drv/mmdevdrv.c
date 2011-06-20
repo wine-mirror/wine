@@ -79,6 +79,7 @@ typedef struct _AudioSession {
     float master_vol;
     UINT32 channel_count;
     float *channel_vols;
+    BOOL mute;
 
     CRITICAL_SECTION lock;
 
@@ -1105,6 +1106,18 @@ static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient *iface,
     return S_OK;
 }
 
+static void oss_silence_buffer(ACImpl *This, BYTE *buf, UINT32 frames)
+{
+    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)This->fmt;
+    if((This->fmt->wFormatTag == WAVE_FORMAT_PCM ||
+            (This->fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))) &&
+            This->fmt->wBitsPerSample == 8)
+        memset(buf, 128, frames * This->fmt->nBlockAlign);
+    else
+        memset(buf, 0, frames * This->fmt->nBlockAlign);
+}
+
 static void oss_write_data(ACImpl *This)
 {
     ssize_t written;
@@ -1117,6 +1130,9 @@ static void oss_write_data(ACImpl *This)
         to_write = This->bufsize_frames - This->lcl_offs_frames;
     else
         to_write = This->held_frames;
+
+    if(This->session->mute)
+        oss_silence_buffer(This, buf, to_write);
 
     written = write(This->fd, buf, to_write * This->fmt->nBlockAlign);
     if(written < 0){
@@ -1137,6 +1153,10 @@ static void oss_write_data(ACImpl *This)
 
     if(This->held_frames){
         /* wrapped and have some data back at the start to write */
+
+        if(This->session->mute)
+            oss_silence_buffer(This, This->local_buffer, This->held_frames);
+
         written = write(This->fd, This->local_buffer,
                 This->held_frames * This->fmt->nBlockAlign);
         if(written < 0){
@@ -1192,7 +1212,7 @@ static void CALLBACK oss_period_callback(void *user, BOOLEAN timer)
 
     EnterCriticalSection(&This->lock);
 
-    if(This->dataflow == eRender)
+    if(This->dataflow == eRender && This->held_frames)
         oss_write_data(This);
     else if(This->dataflow == eCapture)
         oss_read_data(This);
@@ -1599,16 +1619,8 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
     else
         buffer = This->tmp_buffer;
 
-    if(flags & AUDCLNT_BUFFERFLAGS_SILENT){
-        WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)This->fmt;
-        if((This->fmt->wFormatTag == WAVE_FORMAT_PCM ||
-                (This->fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-                 IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))) &&
-                This->fmt->wBitsPerSample == 8)
-            memset(buffer, 128, written_frames * This->fmt->nBlockAlign);
-        else
-            memset(buffer, 0, written_frames * This->fmt->nBlockAlign);
-    }
+    if(flags & AUDCLNT_BUFFERFLAGS_SILENT)
+        oss_silence_buffer(This, buffer, written_frames);
 
     if(This->held_frames){
         if(This->buf_state == LOCKED_WRAPPED)
@@ -1618,6 +1630,9 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
     }else{
         ssize_t w_bytes;
         UINT32 w_frames;
+
+        if(This->session->mute)
+            oss_silence_buffer(This, buffer, written_frames);
 
         w_bytes = write(This->fd, buffer,
                 written_frames * This->fmt->nBlockAlign);
@@ -2369,9 +2384,29 @@ static HRESULT WINAPI SimpleAudioVolume_SetMute(ISimpleAudioVolume *iface,
     AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
     AudioSession *session = This->session;
 
-    FIXME("(%p)->(%u, %p) - stub\n", session, mute, context);
+    TRACE("(%p)->(%u, %p)\n", session, mute, context);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&session->lock);
+
+    if(!mute && session->mute){
+        ACImpl *client;
+
+        session->mute = mute;
+
+        LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry){
+            EnterCriticalSection(&client->lock);
+            if(ioctl(client->fd, SNDCTL_DSP_SKIP) < 0)
+                WARN("Error calling DSP_SKIP: %d (%s)\n", errno,
+                        strerror(errno));
+            oss_write_data(client);
+            LeaveCriticalSection(&client->lock);
+        }
+    }else
+        session->mute = mute;
+
+    LeaveCriticalSection(&session->lock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SimpleAudioVolume_GetMute(ISimpleAudioVolume *iface,
@@ -2380,12 +2415,14 @@ static HRESULT WINAPI SimpleAudioVolume_GetMute(ISimpleAudioVolume *iface,
     AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
     AudioSession *session = This->session;
 
-    FIXME("(%p)->(%p) - stub\n", session, mute);
+    TRACE("(%p)->(%p)\n", session, mute);
 
     if(!mute)
         return NULL_PTR_ERR;
 
-    return E_NOTIMPL;
+    *mute = This->session->mute;
+
+    return S_OK;
 }
 
 static const ISimpleAudioVolumeVtbl SimpleAudioVolume_Vtbl  =

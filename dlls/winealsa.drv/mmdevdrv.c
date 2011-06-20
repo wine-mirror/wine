@@ -65,6 +65,7 @@ typedef struct _AudioSession {
     float master_vol;
     UINT32 channel_count;
     float *channel_vols;
+    BOOL mute;
 
     CRITICAL_SECTION lock;
 
@@ -95,6 +96,7 @@ struct ACImpl {
     snd_pcm_t *pcm_handle;
     snd_pcm_uframes_t period_alsa, bufsize_alsa;
     snd_pcm_hw_params_t *hw_params; /* does not hold state between calls */
+    snd_pcm_format_t alsa_format;
 
     IMMDevice *parent;
 
@@ -739,6 +741,8 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         goto exit;
     }
 
+    This->alsa_format = format;
+
     rate = fmt->nSamplesPerSec;
     if((err = snd_pcm_hw_params_set_rate_near(This->pcm_handle, This->hw_params,
                 &rate, NULL)) < 0){
@@ -1338,9 +1342,17 @@ static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient *iface,
 }
 
 static snd_pcm_sframes_t alsa_write_best_effort(snd_pcm_t *handle, BYTE *buf,
-        snd_pcm_uframes_t frames)
+        snd_pcm_uframes_t frames, ACImpl *This)
 {
     snd_pcm_sframes_t written;
+
+    if(This->session->mute){
+        int err;
+        if((err = snd_pcm_format_set_silence(This->alsa_format, buf,
+                        frames * This->fmt->nChannels)) < 0)
+            WARN("Setting buffer to silence failed: %d (%s)\n", err,
+                    snd_strerror(err));
+    }
 
     written = snd_pcm_writei(handle, buf, frames);
     if(written < 0){
@@ -1377,7 +1389,7 @@ static void alsa_write_data(ACImpl *This)
     else
         to_write = This->held_frames;
 
-    written = alsa_write_best_effort(This->pcm_handle, buf, to_write);
+    written = alsa_write_best_effort(This->pcm_handle, buf, to_write, This);
     if(written < 0){
         WARN("Couldn't write: %ld (%s)\n", written, snd_strerror(written));
         return;
@@ -1395,7 +1407,7 @@ static void alsa_write_data(ACImpl *This)
     if(This->held_frames){
         /* wrapped and have some data back at the start to write */
         written = alsa_write_best_effort(This->pcm_handle, This->local_buffer,
-                This->held_frames);
+                This->held_frames, This);
         if(written < 0){
             WARN("Couldn't write: %ld (%s)\n", written, snd_strerror(written));
             return;
@@ -1433,6 +1445,15 @@ static void alsa_read_data(ACImpl *This)
             WARN("read failed: %ld (%s)\n", nread, snd_strerror(nread));
             return;
         }
+    }
+
+    if(This->session->mute){
+        int err;
+        if((err = snd_pcm_format_set_silence(This->alsa_format,
+                        This->local_buffer + pos * This->fmt->nBlockAlign,
+                        nread)) < 0)
+            WARN("Setting buffer to silence failed: %d (%s)\n", err,
+                    snd_strerror(err));
     }
 
     This->held_frames += nread;
@@ -1901,7 +1922,7 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         snd_pcm_sframes_t written;
 
         written = alsa_write_best_effort(This->pcm_handle, buffer,
-                written_frames);
+                written_frames, This);
         if(written < 0){
             LeaveCriticalSection(&This->lock);
             WARN("write failed: %ld (%s)\n", written, snd_strerror(written));
@@ -2580,9 +2601,14 @@ static HRESULT WINAPI SimpleAudioVolume_SetMute(ISimpleAudioVolume *iface,
     AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
     AudioSession *session = This->session;
 
-    FIXME("(%p)->(%u, %p) - stub\n", session, mute, context);
+    TRACE("(%p)->(%u, %p)\n", session, mute, context);
 
-    return E_NOTIMPL;
+    if(context)
+        FIXME("Notifications not supported yet\n");
+
+    session->mute = mute;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SimpleAudioVolume_GetMute(ISimpleAudioVolume *iface,
@@ -2591,12 +2617,14 @@ static HRESULT WINAPI SimpleAudioVolume_GetMute(ISimpleAudioVolume *iface,
     AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
     AudioSession *session = This->session;
 
-    FIXME("(%p)->(%p) - stub\n", session, mute);
+    TRACE("(%p)->(%p)\n", session, mute);
 
     if(!mute)
         return NULL_PTR_ERR;
 
-    return E_NOTIMPL;
+    *mute = session->mute;
+
+    return S_OK;
 }
 
 static const ISimpleAudioVolumeVtbl SimpleAudioVolume_Vtbl  =
