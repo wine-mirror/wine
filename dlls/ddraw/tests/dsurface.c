@@ -1053,6 +1053,7 @@ static void IFaceRefCount(void)
     HRESULT ret;
     IDirectDrawSurface2 *surf2;
     IDirectDrawSurface2 *surf2a;
+    IDirectDrawSurface3 *surf3;
     IDirectDrawSurface4 *surf4;
     IDirectDrawSurface7 *surf7a;
     IDirectDrawSurface7 *surf7b;
@@ -1087,6 +1088,10 @@ static void IFaceRefCount(void)
     ref = getRefcount((IUnknown *) surf2);
     todo_wine ok(ref == 2, "Refcount is %u, expected 2\n", ref);   /* Surf2's refcount should be 2 now, but surf should be 1 */
     ref = getRefcount((IUnknown *) surf);
+    todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
+
+    IDirectDrawSurface_QueryInterface(surf, &IID_IDirectDrawSurface3, (void **) &surf3);
+    ref = getRefcount((IUnknown *) surf3);
     todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
 
     IDirectDrawSurface_QueryInterface(surf, &IID_IDirectDrawSurface4, (void **) &surf4);
@@ -1140,6 +1145,9 @@ static void IFaceRefCount(void)
     todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
 
     ref = IDirectDrawSurface2_Release(surf2a); /* Release the other */
+    todo_wine ok(ref == 0, "Refcount is %u, expected 0\n", ref);
+
+    ref = IDirectDrawSurface3_Release(surf3);
     todo_wine ok(ref == 0, "Refcount is %u, expected 0\n", ref);
 
     ref = IDirectDrawSurface4_Release(surf4);
@@ -3080,6 +3088,7 @@ static void GetDCTest(void)
     IDirectDraw4 *dd4;
     IDirectDraw7 *dd7;
     HDC dc;
+    ULONG ref;
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
@@ -3125,6 +3134,11 @@ static void GetDCTest(void)
     hr = IDirectDrawSurface4_QueryInterface(surf4, &IID_IDirectDrawSurface, (void **)&surf);
     ok(SUCCEEDED(hr), "QueryInterface failed, hr %#x.\n", hr);
 
+    ref = getRefcount((IUnknown *) surf);
+    todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
+    ref = getRefcount((IUnknown *) surf4);
+    todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
+
     hr = IDirectDrawSurface4_GetDC(surf4, &dc);
     ok(SUCCEEDED(hr), "GetDC failed, hr %#x.\n", hr);
 
@@ -3134,6 +3148,13 @@ static void GetDCTest(void)
     hr = IDirectDraw4_GetSurfaceFromDC(dd4, dc, (IDirectDrawSurface4 **)&tmp);
     ok(SUCCEEDED(hr), "GetSurfaceFromDC failed, hr %#x.\n", hr);
     ok(tmp == surf, "Expected surface %p, got %p.\n\n", surf, tmp);
+
+    ref = getRefcount((IUnknown *) surf);
+    todo_wine ok(ref == 2, "Refcount is %u, expected 2\n", ref);
+    ref = getRefcount((IUnknown *) tmp);
+    todo_wine ok(ref == 2, "Refcount is %u, expected 2\n", ref);
+    ref = getRefcount((IUnknown *) surf4);
+    todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
 
     hr = IDirectDrawSurface4_ReleaseDC(surf4, dc);
     ok(SUCCEEDED(hr), "ReleaseDC failed, hr %#x.\n", hr);
