@@ -923,6 +923,9 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
         format->byte_count = formats[i].bpp;
         format->depth_size = formats[i].depthSize;
         format->stencil_size = formats[i].stencilSize;
+        format->block_width = 1;
+        format->block_height = 1;
+        format->block_byte_count = formats[i].bpp;
     }
 
     for (i = 0; i < (sizeof(format_base_flags) / sizeof(*format_base_flags)); ++i)
