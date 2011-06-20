@@ -656,10 +656,10 @@ int sock_get_error( int err )
  */
 DWORD NETCON_secure_connect(netconn_t *connection, LPWSTR hostname)
 {
-    void *ssl_s;
     DWORD res = ERROR_NOT_SUPPORTED;
-
 #ifdef SONAME_LIBSSL
+    void *ssl_s;
+
     /* can't connect if we are already connected */
     if (connection->ssl_s)
     {
