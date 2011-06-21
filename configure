@@ -15373,6 +15373,7 @@ wine_fn_config_test dlls/usp10/tests usp10_test
 wine_fn_config_lib uuid
 wine_fn_config_dll uxtheme enable_uxtheme implib
 wine_fn_config_test dlls/uxtheme/tests uxtheme_test
+wine_fn_config_dll vbscript enable_vbscript
 wine_fn_config_dll vcomp enable_vcomp
 wine_fn_config_dll vdhcp.vxd enable_win16
 wine_fn_config_dll vdmdbg enable_vdmdbg implib

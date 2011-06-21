@@ -1,0 +1,6 @@
+MODULE    = vbscript.dll
+
+C_SRCS = \
+	vbscript_main.c
+
+@MAKE_DLL_RULES@
