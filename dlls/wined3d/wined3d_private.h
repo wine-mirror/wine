@@ -1805,7 +1805,7 @@ void device_update_stream_info(struct wined3d_device *device, const struct wined
 void device_update_tex_unit_map(struct wined3d_device *device) DECLSPEC_HIDDEN;
 void device_invalidate_state(const struct wined3d_device *device, DWORD state) DECLSPEC_HIDDEN;
 
-static inline BOOL isStateDirty(struct wined3d_context *context, DWORD state)
+static inline BOOL isStateDirty(const struct wined3d_context *context, DWORD state)
 {
     DWORD idx = state / (sizeof(*context->isStateDirty) * CHAR_BIT);
     BYTE shift = state & ((sizeof(*context->isStateDirty) * CHAR_BIT) - 1);
