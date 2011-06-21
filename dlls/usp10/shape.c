@@ -2097,7 +2097,6 @@ static void Apply_Indic_PostBase(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa
 {
     INT index, nextIndex;
     INT count, g_offset;
-    INT prevCount = *pcGlyphs;
 
     count = syllable->end - syllable->base;
 
@@ -2109,12 +2108,13 @@ static void Apply_Indic_PostBase(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa
 
     while (index >= 0)
     {
+        INT prevCount = *pcGlyphs;
         nextIndex = apply_GSUB_feature_to_glyph(hdc, psa, psc, pwOutGlyphs, index+glyph_index->base+g_offset, 1, pcGlyphs, feat);
         if (nextIndex > GSUB_E_NOGLYPH)
         {
             UpdateClusters(nextIndex, *pcGlyphs - prevCount, 1, cChars, pwLogClust);
+            shift_syllable_glyph_indexs(glyph_index,index+glyph_index->start+g_offset, (*pcGlyphs - prevCount));
             g_offset += (*pcGlyphs - prevCount);
-            shift_syllable_glyph_indexs(glyph_index,index+glyph_index->start, g_offset);
         }
 
         index+=2;
