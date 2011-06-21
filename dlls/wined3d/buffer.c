@@ -1070,6 +1070,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
                         TRACE("Dynamic buffer, dropping VBO\n");
                         buffer_unload(&buffer->resource);
                         buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
+                        device_invalidate_state(device, STATE_STREAMSRC);
                     }
                     else
                     {
