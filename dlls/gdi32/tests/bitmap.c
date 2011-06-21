@@ -1874,7 +1874,8 @@ static void test_GetDIBits_BI_BITFIELDS(void)
     ok(ret == 1, "GetDIBits failed\n");
     ok( dibinfo->bmiHeader.biBitCount == 32, "wrong bit count %u\n", dibinfo->bmiHeader.biBitCount );
 
-    ok( dibinfo->bmiHeader.biCompression == BI_BITFIELDS,
+    ok( dibinfo->bmiHeader.biCompression == BI_BITFIELDS ||
+        broken( dibinfo->bmiHeader.biCompression == BI_RGB ), /* nt4 sp3 */
         "compression is %u\n", dibinfo->bmiHeader.biCompression );
     ok( !bitmasks[0], "red mask is set\n" );
     ok( !bitmasks[1], "green mask is set\n" );
@@ -1884,9 +1885,15 @@ static void test_GetDIBits_BI_BITFIELDS(void)
     ret = GetDIBits(hdc, hbm, 0, 1, bits, dibinfo, DIB_RGB_COLORS);
     ok(ret == 1, "GetDIBits failed\n");
     ok( dibinfo->bmiHeader.biBitCount == 32, "wrong bit count %u\n", dibinfo->bmiHeader.biBitCount );
-    ok( bitmasks[0] == 0xff0000, "wrong red mask %08x\n", bitmasks[0] );
-    ok( bitmasks[1] == 0x00ff00, "wrong green mask %08x\n", bitmasks[1] );
-    ok( bitmasks[2] == 0x0000ff, "wrong blue mask %08x\n", bitmasks[2] );
+    ok( dibinfo->bmiHeader.biCompression == BI_BITFIELDS ||
+        broken( dibinfo->bmiHeader.biCompression == BI_RGB ), /* nt4 sp3 */
+        "compression is %u\n", dibinfo->bmiHeader.biCompression );
+    if (dibinfo->bmiHeader.biCompression == BI_BITFIELDS)
+    {
+        ok( bitmasks[0] == 0xff0000, "wrong red mask %08x\n", bitmasks[0] );
+        ok( bitmasks[1] == 0x00ff00, "wrong green mask %08x\n", bitmasks[1] );
+        ok( bitmasks[2] == 0x0000ff, "wrong blue mask %08x\n", bitmasks[2] );
+    }
     ok( dibinfo->bmiHeader.biSizeImage != 0xdeadbeef, "size image not set\n" );
 
     DeleteObject(hbm);
