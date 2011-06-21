@@ -90,6 +90,7 @@ DEFINE_EXPECT(invoke_func);
 #define DISPID_GLOBAL_PROPGETFUNC   0x100d
 #define DISPID_GLOBAL_OBJECT_FLAG   0x100e
 #define DISPID_GLOBAL_ISWIN64       0x100f
+#define DISPID_GLOBAL_PUREDISP      0x1010
 
 #define DISPID_TESTOBJ_PROP         0x2000
 #define DISPID_TESTOBJ_ONLYDISPID   0x2001
@@ -324,6 +325,29 @@ static IDispatchExVtbl testObjVtbl = {
 
 static IDispatchEx testObj = { &testObjVtbl };
 
+static HRESULT WINAPI pureDisp_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDispatch)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static IDispatchExVtbl pureDispVtbl = {
+    pureDisp_QueryInterface,
+    DispatchEx_AddRef,
+    DispatchEx_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke
+};
+
+static IDispatchEx pureDisp = { &pureDispVtbl };
+
 static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     if(!strcmp_wa(bstrName, "ok")) {
@@ -414,6 +438,12 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
     if(!strcmp_wa(bstrName, "isWin64")) {
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_ISWIN64;
+        return S_OK;
+    }
+
+    if(!strcmp_wa(bstrName, "pureDisp")) {
+        test_grfdex(grfdex, fdexNameCaseSensitive);
+        *pid = DISPID_GLOBAL_PUREDISP;
         return S_OK;
     }
 
@@ -564,6 +594,21 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
         V_VT(pvarRes) = VT_DISPATCH;
         V_DISPATCH(pvarRes) = (IDispatch*)&testObj;
+        return S_OK;
+
+    case DISPID_GLOBAL_PUREDISP:
+        ok(wFlags == INVOKE_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgvarg, "rgvarg != NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+
+        V_VT(pvarRes) = VT_DISPATCH;
+        V_DISPATCH(pvarRes) = (IDispatch*)&pureDisp;
         return S_OK;
 
     case DISPID_GLOBAL_NULL_BSTR:

@@ -205,6 +205,9 @@ for(var iter in null)
 for(var iter in false)
     ok(false, "unexpected forin call, test = " + iter);
 
+for(var iter in pureDisp)
+    ok(false, "unexpected forin call in pureDisp object");
+
 tmp = 0;
 if(true)
     tmp = 1;

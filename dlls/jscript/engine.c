@@ -884,8 +884,9 @@ HRESULT forin_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_
     hres = IDispatch_QueryInterface(V_DISPATCH(&val), &IID_IDispatchEx, (void**)&in_obj);
     IDispatch_Release(V_DISPATCH(&val));
     if(FAILED(hres)) {
-        FIXME("Object doesn't support IDispatchEx\n");
-        return E_NOTIMPL;
+        TRACE("Object doesn't support IDispatchEx\n");
+        V_VT(ret) = VT_EMPTY;
+        return S_OK;
     }
 
     V_VT(&retv) = VT_EMPTY;
