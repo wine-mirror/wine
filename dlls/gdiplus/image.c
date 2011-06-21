@@ -2027,7 +2027,21 @@ GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
         DeleteDC(((GpBitmap*)image)->hdc);
         DeleteObject(((GpBitmap*)image)->hbitmap);
     }
-    else if (image->type != ImageTypeMetafile)
+    else if (image->type == ImageTypeMetafile)
+    {
+        GpMetafile *metafile = (GpMetafile*)image;
+        GdipFree(metafile->comment_data);
+        DeleteEnhMetaFile(CloseEnhMetaFile(metafile->record_dc));
+        DeleteEnhMetaFile(metafile->hemf);
+        if (metafile->record_graphics)
+        {
+            WARN("metafile closed while recording\n");
+            /* not sure what to do here; for now just prevent the graphics from functioning or using this object */
+            metafile->record_graphics->image = NULL;
+            metafile->record_graphics->busy = TRUE;
+        }
+    }
+    else
     {
         WARN("invalid image: %p\n", image);
         return ObjectBusy;

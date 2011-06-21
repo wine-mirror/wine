@@ -307,6 +307,10 @@ GpStatus METAFILE_GraphicsDeleted(GpMetafile* metafile)
     metafile->hemf = CloseEnhMetaFile(metafile->record_dc);
     metafile->record_dc = NULL;
 
+    GdipFree(metafile->comment_data);
+    metafile->comment_data = NULL;
+    metafile->comment_data_size = 0;
+
     return stat;
 }
 
