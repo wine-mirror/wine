@@ -980,24 +980,59 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetVectorArray(ID3DXConstantTable *
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrix(ID3DXConstantTable* iface, LPDIRECT3DDEVICE9 device,
-                                                       D3DXHANDLE constant, CONST D3DXMATRIX* matrix)
+static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrix(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
+                                                       D3DXHANDLE constant, CONST D3DXMATRIX *matrix)
 {
     ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
-    FIXME("(%p)->(%p, %p, %p): stub\n", This, device, constant, matrix);
+    TRACE("(%p)->(%p, %p, %p)\n", This, device, constant, matrix);
 
-    return E_NOTIMPL;
+    return ID3DXConstantTable_SetMatrixArray(iface, device, constant, matrix, 1);
 }
 
-static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixArray(ID3DXConstantTable* iface, LPDIRECT3DDEVICE9 device,
-                                                            D3DXHANDLE constant, CONST D3DXMATRIX* matrix, UINT count)
+static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixArray(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 device,
+                                                            D3DXHANDLE constant, CONST D3DXMATRIX *matrix, UINT count)
 {
     ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
 
-    FIXME("(%p)->(%p, %p, %p, %d): stub\n", This, device, constant, matrix, count);
+    D3DXCONSTANT_DESC desc;
+    HRESULT hr;
+    UINT i, desc_count = 1;
+    D3DXMATRIX temp;
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p, %p, %p, %d)\n", This, device, constant, matrix, count);
+
+    hr = ID3DXConstantTable_GetConstantDesc(iface, constant, &desc, &desc_count);
+    if (FAILED(hr))
+    {
+        TRACE("ID3DXConstantTable_GetConstantDesc failed: %08x", hr);
+        return D3DERR_INVALIDCALL;
+    }
+
+    switch (desc.RegisterSet)
+    {
+        case D3DXRS_FLOAT4:
+            /* i * 4 + 3 is the last register we set. The conditional makes sure that we don't access
+               registers we're not supposed to */
+            for (i = 0; i < count && i * 4 + 3 < desc.RegisterCount; i++)
+            {
+                if (desc.Class == D3DXPC_MATRIX_ROWS)
+                    temp = matrix[i];
+                else
+                    D3DXMatrixTranspose(&temp, &matrix[i]);
+
+                if (is_vertex_shader(This->desc.Version))
+                    IDirect3DDevice9_SetVertexShaderConstantF(device, desc.RegisterIndex + i * 4, &temp._11, 4);
+                else
+                    IDirect3DDevice9_SetPixelShaderConstantF(device, desc.RegisterIndex + i * 4, &temp._11, 4);
+            }
+            break;
+        default:
+            FIXME("Handle other register sets\n");
+            return E_NOTIMPL;
+    }
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixPointerArray(ID3DXConstantTable* iface, LPDIRECT3DDEVICE9 device,
