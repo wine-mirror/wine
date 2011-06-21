@@ -27,6 +27,7 @@ C_SRCS = \
 	htmlframe.c \
 	htmlframebase.c \
 	htmlgeneric.c \
+	htmlhead.c \
 	htmliframe.c \
 	htmlimg.c \
 	htmlinput.c \

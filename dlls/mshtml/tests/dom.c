@@ -281,6 +281,13 @@ static const IID * const frame_iids[] = {
     NULL
 };
 
+static const IID * const head_iids[] = {
+    ELEM_IFACES,
+    &IID_IHTMLHeadElement,
+    &IID_IConnectionPointContainer,
+    NULL
+};
+
 static const IID * const object_iids[] = {
     ELEM_IFACES,
     &IID_IHTMLObjectElement,
@@ -361,7 +368,7 @@ typedef struct {
 static const elem_type_info_t elem_type_infos[] = {
     {"",          none_iids,        NULL},
     {"HTML",      elem_iids,        NULL},
-    {"HEAD",      elem_iids,        NULL},
+    {"HEAD",      head_iids,        NULL},
     {"TITLE",     elem_iids,        NULL},
     {"BODY",      body_iids,        &DIID_DispHTMLBody},
     {"A",         anchor_iids,      &DIID_DispHTMLAnchorElement},

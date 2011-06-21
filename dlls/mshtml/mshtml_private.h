@@ -779,6 +779,7 @@ HRESULT HTMLBodyElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement*
 HRESULT HTMLEmbedElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLFormElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLFrameElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
+HRESULT HTMLHeadElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLIFrame_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLStyleElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLImgElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;

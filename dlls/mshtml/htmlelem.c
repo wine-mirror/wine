@@ -42,6 +42,7 @@ static const WCHAR bodyW[]     = {'B','O','D','Y',0};
 static const WCHAR embedW[]    = {'E','M','B','E','D',0};
 static const WCHAR formW[]     = {'F','O','R','M',0};
 static const WCHAR frameW[]    = {'F','R','A','M','E',0};
+static const WCHAR headW[]     = {'H','E','A','D',0};
 static const WCHAR iframeW[]   = {'I','F','R','A','M','E',0};
 static const WCHAR imgW[]      = {'I','M','G',0};
 static const WCHAR inputW[]    = {'I','N','P','U','T',0};
@@ -65,6 +66,7 @@ static const tag_desc_t tag_descs[] = {
     {embedW,     HTMLEmbedElement_Create},
     {formW,      HTMLFormElement_Create},
     {frameW,     HTMLFrameElement_Create},
+    {headW,      HTMLHeadElement_Create},
     {iframeW,    HTMLIFrame_Create},
     {imgW,       HTMLImgElement_Create},
     {inputW,     HTMLInputElement_Create},
