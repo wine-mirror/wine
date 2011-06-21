@@ -2029,8 +2029,7 @@ static void context_apply_draw_buffers(struct wined3d_context *context, DWORD rt
         }
         else
         {
-            glDrawBuffer(draw_buffer_from_rt_mask(rt_mask));
-            checkGLcall("glDrawBuffer()");
+            ERR("Unexpected draw buffers mask with backbuffer ORM.\n");
         }
     }
 }
@@ -2095,6 +2094,16 @@ static void context_validate_onscreen_formats(struct wined3d_device *device,
     context_set_render_offscreen(context, device->StateTable, TRUE);
 }
 
+static DWORD generate_rt_mask_no_fbo(struct wined3d_device *device, struct wined3d_surface *rt)
+{
+    if (!rt || rt->resource.format->id == WINED3DFMT_NULL)
+        return 0;
+    else if (rt->container.type == WINED3D_CONTAINER_SWAPCHAIN)
+        return generate_rt_mask_from_surface(rt);
+    else
+        return generate_rt_mask(device->offscreenBuffer);
+}
+
 /* Context activation is done by the caller. */
 void context_apply_blit_state(struct wined3d_context *context, struct wined3d_device *device)
 {
@@ -2123,7 +2132,7 @@ void context_apply_blit_state(struct wined3d_context *context, struct wined3d_de
     }
     else
     {
-        rt_mask = generate_rt_mask_from_surface(context->current_rt);
+        rt_mask = generate_rt_mask_no_fbo(device, context->current_rt);
     }
 
     ENTER_GL();
@@ -2203,7 +2212,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
     }
     else
     {
-        rt_mask = generate_rt_mask_from_surface(rts[0]);
+        rt_mask = generate_rt_mask_no_fbo(device, rts[0]);
     }
 
     ENTER_GL();
@@ -2285,7 +2294,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
     }
     else
     {
-        rt_mask = generate_rt_mask_from_surface(fb->render_targets[0]);
+        rt_mask = generate_rt_mask_no_fbo(device, fb->render_targets[0]);
     }
 
     ENTER_GL();
