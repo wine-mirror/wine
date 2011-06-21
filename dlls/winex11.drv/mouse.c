@@ -258,7 +258,7 @@ static void enable_xinput2(void)
     XIDeviceInfo *devices;
     XIEventMask mask;
     unsigned char mask_bits[XIMaskLen(XI_LASTEVENT)];
-    int i, count;
+    int i, j, count;
 
     if (!xinput2_available) return;
 
@@ -281,6 +281,20 @@ static void enable_xinput2(void)
     for (i = 0; i < count; ++i)
     {
         if (devices[i].use != XIMasterPointer) continue;
+        for (j = 0; j < devices[i].num_classes; j++)
+        {
+            XIValuatorClassInfo *class = (XIValuatorClassInfo *)devices[i].classes[j];
+
+            if (devices[i].classes[j]->type != XIValuatorClass) continue;
+            if (class->number != 0 && class->number != 1) continue;
+            if (class->mode == XIModeAbsolute)
+            {
+                TRACE( "Device %u (%s) class %u num %u %f,%f res %u is absolute, not enabling XInput2\n",
+                       devices[i].deviceid, debugstr_a(devices[i].name),
+                       j, class->number, class->min, class->max, class->resolution );
+                goto done;
+            }
+        }
         TRACE( "Using %u (%s) as core pointer\n",
                devices[i].deviceid, debugstr_a(devices[i].name) );
         xinput2_core_pointer = devices[i].deviceid;
@@ -304,6 +318,7 @@ static void enable_xinput2(void)
         }
     }
 
+done:
     pXIFreeDeviceInfo( devices );
     wine_tsx11_unlock();
 #endif
