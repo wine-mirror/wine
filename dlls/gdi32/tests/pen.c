@@ -81,7 +81,11 @@ static void test_logpen(void)
         lp.lopnColor = pen[i].color;
         SetLastError(0xdeadbeef);
         hpen = CreatePenIndirect(&lp);
-        ok(hpen != 0, "CreatePen error %d\n", GetLastError());
+        if(hpen == 0 && GetLastError() == ERROR_INVALID_PARAMETER)
+        {
+            win_skip("No support for pen style %u (%d)\n", pen[i].style, i);
+            continue;
+        }
 
         obj_type = GetObjectType(hpen);
         ok(obj_type == OBJ_PEN, "wrong object type %u\n", obj_type);
