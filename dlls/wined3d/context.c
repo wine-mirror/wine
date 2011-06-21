@@ -2129,7 +2129,7 @@ void context_apply_blit_state(struct wined3d_context *context, struct wined3d_de
     ENTER_GL();
     if (rt_mask != context->draw_buffers_mask)
     {
-        context_apply_draw_buffers(context, 1, &context->current_rt);
+        context_apply_draw_buffers(context, rt_mask, &context->current_rt);
         context->draw_buffers_mask = rt_mask;
     }
 
