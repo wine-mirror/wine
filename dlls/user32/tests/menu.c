@@ -169,6 +169,8 @@ static LRESULT WINAPI menu_ownerdraw_wnd_proc(HWND hwnd, UINT msg,
                 if( winetest_debug)
                     trace("WM_MEASUREITEM received data %lx size %dx%d\n",
                             pmis->itemData, pmis->itemWidth, pmis->itemHeight);
+                ok( !wparam, "wrong wparam %lx\n", wparam );
+                ok( pmis->CtlType == ODT_MENU, "wrong type %x\n", pmis->CtlType );
                 MOD_odheight = pmis->itemHeight;
                 pmis->itemWidth = MODsizes[pmis->itemData].cx;
                 pmis->itemHeight = MODsizes[pmis->itemData].cy;
@@ -197,6 +199,8 @@ static LRESULT WINAPI menu_ownerdraw_wnd_proc(HWND hwnd, UINT msg,
                             pdis->rcItem.right,pdis->rcItem.bottom );
                     SelectObject( pdis->hDC, oldpen);
                 }
+                ok( !wparam, "wrong wparam %lx\n", wparam );
+                ok( pdis->CtlType == ODT_MENU, "wrong type %x\n", pdis->CtlType );
                 /* calculate widths of some menu texts */
                 if( ! MOD_txtsizes[0].size.cx)
                     for(i = 0; MOD_txtsizes[i].text; i++) {

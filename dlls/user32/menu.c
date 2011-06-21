@@ -822,7 +822,7 @@ static void MENU_GetBitmapItemSize( MENUITEM *lpitem, SIZE *size,
             measItem.itemWidth = lpitem->rect.right - lpitem->rect.left;
             measItem.itemHeight = lpitem->rect.bottom - lpitem->rect.top;
             measItem.itemData = lpitem->dwItemData;
-            SendMessageW( hwndOwner, WM_MEASUREITEM, lpitem->wID, (LPARAM)&measItem);
+            SendMessageW( hwndOwner, WM_MEASUREITEM, 0, (LPARAM)&measItem);
             size->cx = measItem.itemWidth;
             size->cy = measItem.itemHeight;
             return;
