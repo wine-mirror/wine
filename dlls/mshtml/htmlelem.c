@@ -53,6 +53,7 @@ static const WCHAR selectW[]   = {'S','E','L','E','C','T',0};
 static const WCHAR styleW[]    = {'S','T','Y','L','E',0};
 static const WCHAR tableW[]    = {'T','A','B','L','E',0};
 static const WCHAR textareaW[] = {'T','E','X','T','A','R','E','A',0};
+static const WCHAR title_tagW[]= {'T','I','T','L','E',0};
 static const WCHAR trW[]       = {'T','R',0};
 
 typedef struct {
@@ -77,6 +78,7 @@ static const tag_desc_t tag_descs[] = {
     {styleW,     HTMLStyleElement_Create},
     {tableW,     HTMLTable_Create},
     {textareaW,  HTMLTextAreaElement_Create},
+    {title_tagW, HTMLTitleElement_Create},
     {trW,        HTMLTableRow_Create}
 };
 

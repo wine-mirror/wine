@@ -288,6 +288,13 @@ static const IID * const head_iids[] = {
     NULL
 };
 
+static const IID * const title_iids[] = {
+    ELEM_IFACES,
+    &IID_IHTMLTitleElement,
+    &IID_IConnectionPointContainer,
+    NULL
+};
+
 static const IID * const object_iids[] = {
     ELEM_IFACES,
     &IID_IHTMLObjectElement,
@@ -369,7 +376,7 @@ static const elem_type_info_t elem_type_infos[] = {
     {"",          none_iids,        NULL},
     {"HTML",      elem_iids,        NULL},
     {"HEAD",      head_iids,        &DIID_DispHTMLHeadElement},
-    {"TITLE",     elem_iids,        NULL},
+    {"TITLE",     title_iids,       NULL},
     {"BODY",      body_iids,        &DIID_DispHTMLBody},
     {"A",         anchor_iids,      &DIID_DispHTMLAnchorElement},
     {"INPUT",     input_iids,       &DIID_DispHTMLInputElement},
