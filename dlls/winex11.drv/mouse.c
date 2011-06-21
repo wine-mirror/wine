@@ -417,7 +417,7 @@ static BOOL grab_clipping_window( const RECT *clip, BOOL only_with_xinput )
     if (msg_hwnd) XUnmapWindow( data->display, clip_window );
     XMoveResizeWindow( data->display, clip_window,
                        clip->left - virtual_screen_rect.left, clip->top - virtual_screen_rect.top,
-                       clip->right - clip->left, clip->bottom - clip->top );
+                       max( 1, clip->right - clip->left ), max( 1, clip->bottom - clip->top ) );
     XMapWindow( data->display, clip_window );
 
     /* if the rectangle is shrinking we may get a pointer warp */

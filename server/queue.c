@@ -359,12 +359,22 @@ static void set_cursor_pos( struct desktop *desktop, int x, int y )
 /* set the cursor clip rectangle */
 static void set_clip_rectangle( struct desktop *desktop, const rectangle_t *rect )
 {
-    rectangle_t top_rect, new_rect;
+    rectangle_t top_rect;
     int x, y;
 
     get_top_window_rectangle( desktop, &top_rect );
-    if (!rect || !intersect_rect( &new_rect, &top_rect, rect )) new_rect = top_rect;
-    desktop->cursor.clip = new_rect;
+    if (rect)
+    {
+        rectangle_t new_rect = *rect;
+        if (new_rect.left   < top_rect.left)   new_rect.left   = top_rect.left;
+        if (new_rect.right  > top_rect.right)  new_rect.right  = top_rect.right;
+        if (new_rect.top    < top_rect.top)    new_rect.top    = top_rect.top;
+        if (new_rect.bottom > top_rect.bottom) new_rect.bottom = top_rect.bottom;
+        if (new_rect.left > new_rect.right || new_rect.top > new_rect.bottom) new_rect = top_rect;
+        desktop->cursor.clip = new_rect;
+    }
+    else desktop->cursor.clip = top_rect;
+
     if (desktop->cursor.clip_msg)
         post_desktop_message( desktop, desktop->cursor.clip_msg, rect != NULL, 0 );
 
@@ -2861,7 +2871,7 @@ DECL_HANDLER(set_cursor)
     {
         set_cursor_pos( input->desktop, req->x, req->y );
     }
-    if (req->flags & SET_CURSOR_CLIP)
+    if (req->flags & (SET_CURSOR_CLIP | SET_CURSOR_NOCLIP))
     {
         struct desktop *desktop = input->desktop;
 
@@ -2869,7 +2879,7 @@ DECL_HANDLER(set_cursor)
         if (req->clip_msg && get_top_window_owner(desktop) == current->process)
             desktop->cursor.clip_msg = req->clip_msg;
 
-        set_clip_rectangle( desktop, &req->clip );
+        set_clip_rectangle( desktop, (req->flags & SET_CURSOR_NOCLIP) ? NULL : &req->clip );
     }
 
     reply->new_x       = input->desktop->cursor.x;

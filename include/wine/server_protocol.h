@@ -4849,6 +4849,7 @@ struct set_cursor_reply
 #define SET_CURSOR_COUNT  0x02
 #define SET_CURSOR_POS    0x04
 #define SET_CURSOR_CLIP   0x08
+#define SET_CURSOR_NOCLIP 0x10
 
 
 
@@ -5634,6 +5635,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 424
+#define SERVER_PROTOCOL_VERSION 425
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -1722,17 +1722,21 @@ BOOL WINAPI DECLSPEC_HOTPATCH ClipCursor( const RECT *rect )
 
     TRACE( "Clipping to %s\n", wine_dbgstr_rect(rect) );
 
+    if (rect && (rect->left > rect->right || rect->top > rect->bottom)) return FALSE;
+
     SERVER_START_REQ( set_cursor )
     {
-        req->flags    = SET_CURSOR_CLIP;
         req->clip_msg = WM_WINE_CLIPCURSOR;
         if (rect)
         {
+            req->flags       = SET_CURSOR_CLIP;
             req->clip.left   = rect->left;
             req->clip.top    = rect->top;
             req->clip.right  = rect->right;
             req->clip.bottom = rect->bottom;
         }
+        else req->flags = SET_CURSOR_NOCLIP;
+
         if ((ret = !wine_server_call( req )))
         {
             new_rect.left   = reply->new_clip.left;

@@ -3351,6 +3351,7 @@ enum coords_relative
 #define SET_CURSOR_COUNT  0x02
 #define SET_CURSOR_POS    0x04
 #define SET_CURSOR_CLIP   0x08
+#define SET_CURSOR_NOCLIP 0x10
 
 
 /* Retrieve the suspended context of a thread */
