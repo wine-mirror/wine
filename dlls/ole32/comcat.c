@@ -36,11 +36,21 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+static const ICatRegisterVtbl COMCAT_ICatRegister_Vtbl;
+static const ICatInformationVtbl COMCAT_ICatInformation_Vtbl;
+
 typedef struct
 {
-    const ICatRegisterVtbl *lpVtbl;
-    const ICatInformationVtbl *infVtbl;
+    ICatRegister ICatRegister_iface;
+    ICatInformation ICatInformation_iface;
 } ComCatMgrImpl;
+
+/* static ComCatMgr instance */
+static ComCatMgrImpl COMCAT_ComCatMgr =
+{
+    { &COMCAT_ICatRegister_Vtbl },
+    { &COMCAT_ICatInformation_Vtbl }
+};
 
 struct class_categories {
     LPCWSTR impl_strings;
@@ -61,12 +71,6 @@ static const WCHAR impl_keyname[] = {
 static const WCHAR req_keyname[] = {
     'R','e','q','u','i','r','e','d',' ','C','a','t','e','g','o','r','i','e','s',0 };
 static const WCHAR clsid_keyname[] = { 'C','L','S','I','D',0 };
-
-
-static inline ComCatMgrImpl *impl_from_ICatInformation( ICatInformation *iface )
-{
-    return (ComCatMgrImpl *)((char*)iface - FIELD_OFFSET(ComCatMgrImpl, infVtbl));
-}
 
 
 /**********************************************************************
@@ -279,20 +283,19 @@ static HRESULT WINAPI COMCAT_ICatRegister_QueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    ComCatMgrImpl *This = (ComCatMgrImpl *)iface;
     TRACE("%s\n",debugstr_guid(riid));
 
     if (ppvObj == NULL) return E_POINTER;
 
     if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_ICatRegister)) {
 	*ppvObj = iface;
-	IUnknown_AddRef(iface);
+        ICatRegister_AddRef(iface);
 	return S_OK;
     }
 
     if (IsEqualGUID(riid, &IID_ICatInformation)) {
-	*ppvObj = &This->infVtbl;
-	IUnknown_AddRef(iface);
+        *ppvObj = &COMCAT_ComCatMgr.ICatInformation_iface;
+        ICatRegister_AddRef(iface);
 	return S_OK;
     }
 
@@ -462,8 +465,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_QueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    ComCatMgrImpl *This = impl_from_ICatInformation( iface );
-    return IUnknown_QueryInterface((LPUNKNOWN)This, riid, ppvObj);
+    return ICatRegister_QueryInterface(&COMCAT_ComCatMgr.ICatRegister_iface, riid, ppvObj);
 }
 
 /**********************************************************************
@@ -471,8 +473,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_QueryInterface(
  */
 static ULONG WINAPI COMCAT_ICatInformation_AddRef(LPCATINFORMATION iface)
 {
-    ComCatMgrImpl *This = impl_from_ICatInformation( iface );
-    return IUnknown_AddRef((LPUNKNOWN)This);
+    return ICatRegister_AddRef(&COMCAT_ComCatMgr.ICatRegister_iface);
 }
 
 /**********************************************************************
@@ -480,8 +481,7 @@ static ULONG WINAPI COMCAT_ICatInformation_AddRef(LPCATINFORMATION iface)
  */
 static ULONG WINAPI COMCAT_ICatInformation_Release(LPCATINFORMATION iface)
 {
-    ComCatMgrImpl *This = impl_from_ICatInformation( iface );
-    return IUnknown_Release((LPUNKNOWN)This);
+    return ICatRegister_Release(&COMCAT_ComCatMgr.ICatRegister_iface);
 }
 
 /**********************************************************************
@@ -705,15 +705,6 @@ static const ICatInformationVtbl COMCAT_ICatInformation_Vtbl =
 };
 
 /**********************************************************************
- * static ComCatMgr instance
- */
-static ComCatMgrImpl COMCAT_ComCatMgr =
-{
-    &COMCAT_ICatRegister_Vtbl,
-    &COMCAT_ICatInformation_Vtbl
-};
-
-/**********************************************************************
  * COMCAT_IClassFactory_QueryInterface (also IUnknown)
  */
 static HRESULT WINAPI COMCAT_IClassFactory_QueryInterface(
@@ -769,7 +760,7 @@ static HRESULT WINAPI COMCAT_IClassFactory_CreateInstance(
     /* Don't support aggregation (Windows doesn't) */
     if (pUnkOuter != NULL) return CLASS_E_NOAGGREGATION;
 
-    res = IUnknown_QueryInterface((LPUNKNOWN)&COMCAT_ComCatMgr, riid, ppvObj);
+    res = ICatRegister_QueryInterface(&COMCAT_ComCatMgr.ICatRegister_iface, riid, ppvObj);
     if (SUCCEEDED(res)) {
 	return res;
     }
