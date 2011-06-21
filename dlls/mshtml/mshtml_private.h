@@ -101,6 +101,7 @@ typedef struct event_target_t event_target_t;
     XDIID(DispHTMLTable) \
     XDIID(DispHTMLTableRow) \
     XDIID(DispHTMLTextAreaElement) \
+    XDIID(DispHTMLTitleElement) \
     XDIID(DispHTMLUnknownElement) \
     XDIID(DispHTMLWindow2) \
     XDIID(HTMLDocumentEvents) \
@@ -158,6 +159,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLTableRow) \
     XIID(IHTMLTextAreaElement) \
     XIID(IHTMLTextContainer) \
+    XIID(IHTMLTitleElement) \
     XIID(IHTMLUniqueName) \
     XIID(IHTMLWindow2) \
     XIID(IHTMLWindow3) \

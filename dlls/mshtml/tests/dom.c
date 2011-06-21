@@ -376,7 +376,7 @@ static const elem_type_info_t elem_type_infos[] = {
     {"",          none_iids,        NULL},
     {"HTML",      elem_iids,        NULL},
     {"HEAD",      head_iids,        &DIID_DispHTMLHeadElement},
-    {"TITLE",     title_iids,       NULL},
+    {"TITLE",     title_iids,       &DIID_DispHTMLTitleElement},
     {"BODY",      body_iids,        &DIID_DispHTMLBody},
     {"A",         anchor_iids,      &DIID_DispHTMLAnchorElement},
     {"INPUT",     input_iids,       &DIID_DispHTMLInputElement},
