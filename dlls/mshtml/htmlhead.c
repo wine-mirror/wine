@@ -159,6 +159,18 @@ static const NodeImplVtbl HTMLHeadElementImplVtbl = {
     HTMLElement_clone
 };
 
+static const tid_t HTMLHeadElement_iface_tids[] = {
+    HTMLELEMENT_TIDS,
+    IHTMLHeadElement_tid,
+    0
+};
+static dispex_static_data_t HTMLHeadElement_dispex = {
+    NULL,
+    DispHTMLHeadElement_tid,
+    NULL,
+    HTMLHeadElement_iface_tids
+};
+
 HRESULT HTMLHeadElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
     HTMLHeadElement *ret;
@@ -170,7 +182,7 @@ HRESULT HTMLHeadElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
     ret->IHTMLHeadElement_iface.lpVtbl = &HTMLHeadElementVtbl;
     ret->element.node.vtbl = &HTMLHeadElementImplVtbl;
 
-    HTMLElement_Init(&ret->element, doc, nselem, NULL);
+    HTMLElement_Init(&ret->element, doc, nselem, &HTMLHeadElement_dispex);
 
     *elem = &ret->element;
     return S_OK;

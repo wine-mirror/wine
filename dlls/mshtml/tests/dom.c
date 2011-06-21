@@ -368,7 +368,7 @@ typedef struct {
 static const elem_type_info_t elem_type_infos[] = {
     {"",          none_iids,        NULL},
     {"HTML",      elem_iids,        NULL},
-    {"HEAD",      head_iids,        NULL},
+    {"HEAD",      head_iids,        &DIID_DispHTMLHeadElement},
     {"TITLE",     elem_iids,        NULL},
     {"BODY",      body_iids,        &DIID_DispHTMLBody},
     {"A",         anchor_iids,      &DIID_DispHTMLAnchorElement},

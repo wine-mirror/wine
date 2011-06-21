@@ -84,6 +84,7 @@ typedef struct event_target_t event_target_t;
     XDIID(DispHTMLFormElement) \
     XDIID(DispHTMLGenericElement) \
     XDIID(DispHTMLFrameElement) \
+    XDIID(DispHTMLHeadElement) \
     XDIID(DispHTMLIFrame) \
     XDIID(DispHTMLImg) \
     XDIID(DispHTMLInputElement) \
@@ -133,6 +134,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLFrameBase2) \
     XIID(IHTMLFrameElement3) \
     XIID(IHTMLGenericElement) \
+    XIID(IHTMLHeadElement) \
     XIID(IHTMLIFrameElement) \
     XIID(IHTMLImageElementFactory) \
     XIID(IHTMLImgElement) \
