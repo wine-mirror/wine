@@ -1982,6 +1982,7 @@ testException(function() {(new Number(3)).toString(1);}, "E_INVALID_CALL_ARG");
 testException(function() {not_existing_variable.something();}, "E_UNDEFINED");
 testException(function() {date();}, "E_NOT_FUNC");
 testException(function() {arr();}, "E_NOT_FUNC");
+testException(function() {(new Object) instanceof (new Object);}, "E_NOT_FUNC");
 testException(function() {eval("nonexistingfunc()")}, "E_OBJECT_EXPECTED");
 testException(function() {(new Object()) instanceof 3;}, "E_NOT_FUNC");
 testException(function() {(new Object()) instanceof null;}, "E_NOT_FUNC");

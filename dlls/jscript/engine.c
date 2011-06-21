@@ -2001,15 +2001,14 @@ static HRESULT instanceof_eval(script_ctx_t *ctx, VARIANT *inst, VARIANT *objv, 
 
     obj = iface_to_jsdisp((IUnknown*)V_DISPATCH(objv));
     if(!obj) {
-        FIXME("throw TypeError\n");
+        FIXME("non-jsdisp objects not supported\n");
         return E_FAIL;
     }
 
     if(is_class(obj, JSCLASS_FUNCTION)) {
         hres = jsdisp_propget_name(obj, prototypeW, &var, ei, NULL/*FIXME*/);
     }else {
-        FIXME("throw TypeError\n");
-        hres = E_FAIL;
+        hres = throw_type_error(ctx, ei, JS_E_FUNCTION_EXPECTED, NULL);
     }
     jsdisp_release(obj);
     if(FAILED(hres))
