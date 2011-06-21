@@ -2096,19 +2096,21 @@ static inline INT find_halant_consonant(WCHAR* pwChars, INT index, INT end, lexi
 static void Apply_Indic_PostBase(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwChars, INT cChars, IndicSyllable *syllable, WORD *pwOutGlyphs, INT* pcGlyphs, WORD *pwLogClust, lexical_function lexical, IndicSyllable *glyph_index, const char* feat)
 {
     INT index, nextIndex;
-    INT count, g_offset;
+    INT count, g_offset=0;
+    INT ralf = syllable->ralf;
 
     count = syllable->end - syllable->base;
 
-    if (syllable->ralf >= syllable->base)
-        g_offset = -1;
-    else
-        g_offset = 0;
     index = find_halant_consonant(&pwChars[syllable->base], 0, count, lexical);
 
     while (index >= 0)
     {
         INT prevCount = *pcGlyphs;
+        if (ralf >=0 && ralf < index)
+        {
+            g_offset--;
+            ralf = -1;
+        }
         nextIndex = apply_GSUB_feature_to_glyph(hdc, psa, psc, pwOutGlyphs, index+glyph_index->base+g_offset, 1, pcGlyphs, feat);
         if (nextIndex > GSUB_E_NOGLYPH)
         {
