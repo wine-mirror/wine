@@ -1957,13 +1957,15 @@ static HRESULT WINAPI ddraw_surface7_SetPrivateData(IDirectDrawSurface7 *iface,
         REFGUID tag, void *Data, DWORD Size, DWORD Flags)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface7(iface);
+    struct wined3d_resource *resource;
     HRESULT hr;
 
     TRACE("iface %p, tag %s, data %p, data_size %u, flags %#x.\n",
             iface, debugstr_guid(tag), Data, Size, Flags);
 
     EnterCriticalSection(&ddraw_cs);
-    hr = wined3d_surface_set_private_data(This->wined3d_surface, tag, Data, Size, Flags);
+    resource = wined3d_surface_get_resource(This->wined3d_surface);
+    hr = wined3d_resource_set_private_data(resource, tag, Data, Size, Flags);
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
     {
@@ -2001,6 +2003,7 @@ static HRESULT WINAPI ddraw_surface4_SetPrivateData(IDirectDrawSurface4 *iface,
 static HRESULT WINAPI ddraw_surface7_GetPrivateData(IDirectDrawSurface7 *iface, REFGUID tag, void *Data, DWORD *Size)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface7(iface);
+    struct wined3d_resource *resource;
     HRESULT hr;
 
     TRACE("iface %p, tag %s, data %p, data_size %p.\n",
@@ -2010,7 +2013,8 @@ static HRESULT WINAPI ddraw_surface7_GetPrivateData(IDirectDrawSurface7 *iface, 
         return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    hr = wined3d_surface_get_private_data(This->wined3d_surface, tag, Data, Size);
+    resource = wined3d_surface_get_resource(This->wined3d_surface);
+    hr = wined3d_resource_get_private_data(resource, tag, Data, Size);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -2040,12 +2044,14 @@ static HRESULT WINAPI ddraw_surface4_GetPrivateData(IDirectDrawSurface4 *iface, 
 static HRESULT WINAPI ddraw_surface7_FreePrivateData(IDirectDrawSurface7 *iface, REFGUID tag)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface7(iface);
+    struct wined3d_resource *resource;
     HRESULT hr;
 
     TRACE("iface %p, tag %s.\n", iface, debugstr_guid(tag));
 
     EnterCriticalSection(&ddraw_cs);
-    hr = wined3d_surface_free_private_data(This->wined3d_surface, tag);
+    resource = wined3d_surface_get_resource(This->wined3d_surface);
+    hr = wined3d_resource_free_private_data(resource, tag);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }

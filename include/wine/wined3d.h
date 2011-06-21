@@ -2421,7 +2421,6 @@ HRESULT __cdecl wined3d_surface_create(struct wined3d_device *device, UINT width
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_surface **surface);
 ULONG __cdecl wined3d_surface_decref(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_flip(struct wined3d_surface *surface, struct wined3d_surface *override, DWORD flags);
-HRESULT __cdecl wined3d_surface_free_private_data(struct wined3d_surface *surface, REFGUID guid);
 HRESULT __cdecl wined3d_surface_get_blt_status(const struct wined3d_surface *surface, DWORD flags);
 struct wined3d_clipper * __cdecl wined3d_surface_get_clipper(const struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_get_flip_status(const struct wined3d_surface *surface, DWORD flags);
@@ -2430,8 +2429,6 @@ struct wined3d_palette * __cdecl wined3d_surface_get_palette(const struct wined3
 void * __cdecl wined3d_surface_get_parent(const struct wined3d_surface *surface);
 DWORD __cdecl wined3d_surface_get_pitch(const struct wined3d_surface *surface);
 DWORD __cdecl wined3d_surface_get_priority(const struct wined3d_surface *surface);
-HRESULT __cdecl wined3d_surface_get_private_data(const struct wined3d_surface *surface,
-        REFGUID guid, void *data, DWORD *data_size);
 struct wined3d_resource * __cdecl wined3d_surface_get_resource(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc);
 ULONG __cdecl wined3d_surface_incref(struct wined3d_surface *surface);
@@ -2449,8 +2446,6 @@ HRESULT __cdecl wined3d_surface_set_mem(struct wined3d_surface *surface, void *m
 HRESULT __cdecl wined3d_surface_set_overlay_position(struct wined3d_surface *surface, LONG x, LONG y);
 HRESULT __cdecl wined3d_surface_set_palette(struct wined3d_surface *surface, struct wined3d_palette *palette);
 DWORD __cdecl wined3d_surface_set_priority(struct wined3d_surface *surface, DWORD new_priority);
-HRESULT __cdecl wined3d_surface_set_private_data(struct wined3d_surface *surface,
-        REFGUID guid, const void *data, DWORD data_size, DWORD flags);
 HRESULT __cdecl wined3d_surface_unmap(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_update_overlay(struct wined3d_surface *surface, const RECT *src_rect,
         struct wined3d_surface *dst_surface, const RECT *dst_rect, DWORD flags, const WINEDDOVERLAYFX *fx);
