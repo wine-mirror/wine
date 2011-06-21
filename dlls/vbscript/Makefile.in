@@ -3,4 +3,8 @@ MODULE    = vbscript.dll
 C_SRCS = \
 	vbscript_main.c
 
+RC_SRCS = vbscript.rc
+
+IDL_R_SRCS = vbscript_classes.idl
+
 @MAKE_DLL_RULES@

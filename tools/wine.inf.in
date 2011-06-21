@@ -2558,6 +2558,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,shdocvw.dll,1
 11,,sti.dll,1
 11,,urlmon.dll,1
+11,,vbscript.dll,1
 11,,wbemprox.dll,1
 11,,wiaservc.dll,1
 11,,windowscodecs.dll,1
