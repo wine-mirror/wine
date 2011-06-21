@@ -3816,7 +3816,7 @@ static void MENU_mnu2mnuii( UINT flags, UINT_PTR id, LPCWSTR str,
         pmii->dwTypeData = (LPWSTR)str;
     } else if( flags & MFT_BITMAP){
         pmii->fMask |= MIIM_BITMAP | MIIM_STRING;
-        pmii->hbmpItem = ULongToHandle(LOWORD(str));
+        pmii->hbmpItem = (HBITMAP)str;
     }
     if( flags & MF_OWNERDRAW){
         pmii->fMask |= MIIM_DATA;

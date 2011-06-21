@@ -404,6 +404,7 @@ static void test_menu_ownerdraw(void)
     int i,j,k;
     BOOL ret;
     HMENU hmenu;
+    MENUITEMINFO mii;
     LONG leftcol;
     HWND hwnd = CreateWindowEx(0, MAKEINTATOM(atomMenuCheckClass), NULL,
                                WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200,
@@ -462,6 +463,18 @@ static void test_menu_ownerdraw(void)
     ok( MOD_rc[0].bottom - MOD_rc[0].top == MOD_SIZE,
             "Height is incorrect. Got %d expected %d\n",
             MOD_rc[0].bottom - MOD_rc[0].top, MOD_SIZE);
+
+    /* test owner-drawn callback bitmap */
+    ModifyMenu( hmenu, 1, MF_BYPOSITION | MFT_BITMAP, 1, (LPCSTR)HBMMENU_CALLBACK );
+    mii.cbSize = sizeof(mii);
+    mii.fMask = MIIM_BITMAP | MIIM_FTYPE | MIIM_ID;
+    if (GetMenuItemInfoA( hmenu, 1, TRUE, &mii ))
+    {
+        ok( mii.fType == MFT_BITMAP, "wrong type %x\n", mii.fType );
+        ok( mii.wID == 1, "wrong id %x\n", mii.wID );
+        ok( mii.hbmpItem == HBMMENU_CALLBACK, "wrong data %p\n", mii.hbmpItem );
+    }
+    TrackPopupMenu( hmenu, TPM_RETURNCMD, 100,100, 0, hwnd, NULL);
 
     /* test width/height of an ownerdraw menu bar as well */
     ret = DestroyMenu(hmenu);
