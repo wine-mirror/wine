@@ -23,6 +23,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
+static inline IDirect3DSurface8Impl *impl_from_IDirect3DSurface8(IDirect3DSurface8 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirect3DSurface8Impl, lpVtbl);
+}
+
 /* IDirect3DSurface8 IUnknown parts follow: */
 static HRESULT WINAPI IDirect3DSurface8Impl_QueryInterface(LPDIRECT3DSURFACE8 iface, REFIID riid, LPVOID *ppobj) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
@@ -131,42 +136,53 @@ static HRESULT WINAPI IDirect3DSurface8Impl_GetDevice(IDirect3DSurface8 *iface, 
     return D3D_OK;
 }
 
-static HRESULT WINAPI IDirect3DSurface8Impl_SetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid, CONST void *pData, DWORD SizeOfData, DWORD Flags) {
-    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
+static HRESULT WINAPI IDirect3DSurface8Impl_SetPrivateData(IDirect3DSurface8 *iface, REFGUID guid,
+        const void *data, DWORD data_size, DWORD flags)
+{
+    IDirect3DSurface8Impl *surface = impl_from_IDirect3DSurface8(iface);
+    struct wined3d_resource *resource;
     HRESULT hr;
 
     TRACE("iface %p, guid %s, data %p, data_size %u, flags %#x.\n",
-            iface, debugstr_guid(refguid), pData, SizeOfData, Flags);
+            iface, debugstr_guid(guid), data, data_size, flags);
 
     wined3d_mutex_lock();
-    hr = wined3d_surface_set_private_data(This->wined3d_surface, refguid, pData, SizeOfData, Flags);
+    resource = wined3d_surface_get_resource(surface->wined3d_surface);
+    hr = wined3d_resource_set_private_data(resource, guid, data, data_size, flags);
     wined3d_mutex_unlock();
 
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DSurface8Impl_GetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid, void *pData, DWORD *pSizeOfData) {
-    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
+static HRESULT WINAPI IDirect3DSurface8Impl_GetPrivateData(IDirect3DSurface8 *iface, REFGUID guid,
+        void *data, DWORD *data_size)
+{
+    IDirect3DSurface8Impl *surface = impl_from_IDirect3DSurface8(iface);
+    struct wined3d_resource *resource;
     HRESULT hr;
 
     TRACE("iface %p, guid %s, data %p, data_size %p.\n",
-            iface, debugstr_guid(refguid), pData, pSizeOfData);
+            iface, debugstr_guid(guid), data, data_size);
 
     wined3d_mutex_lock();
-    hr = wined3d_surface_get_private_data(This->wined3d_surface, refguid, pData, pSizeOfData);
+    resource = wined3d_surface_get_resource(surface->wined3d_surface);
+    hr = wined3d_resource_get_private_data(resource, guid, data, data_size);
     wined3d_mutex_unlock();
 
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DSurface8Impl_FreePrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid) {
-    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
+static HRESULT WINAPI IDirect3DSurface8Impl_FreePrivateData(IDirect3DSurface8 *iface, REFGUID guid)
+{
+    IDirect3DSurface8Impl *surface = impl_from_IDirect3DSurface8(iface);
+    struct wined3d_resource *resource;
     HRESULT hr;
 
-    TRACE("iface %p, guid %s.\n", iface, debugstr_guid(refguid));
+    TRACE("iface %p, guid %s.\n", iface, debugstr_guid(guid));
 
     wined3d_mutex_lock();
-    hr = wined3d_surface_free_private_data(This->wined3d_surface, refguid);
+    resource = wined3d_surface_get_resource(surface->wined3d_surface);
+    hr = wined3d_resource_free_private_data(resource, guid);
     wined3d_mutex_unlock();
 
     return hr;
