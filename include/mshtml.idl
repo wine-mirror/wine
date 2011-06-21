@@ -9187,6 +9187,68 @@ methods:
 }
 
 /*****************************************************************************
+ *    IHTMLHeadElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f81d-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLHeadElement : IDispatch
+{
+    [propput, id(DISPID_IHTMLHEADELEMENT_PROFILE), displaybind, bindable]
+    HRESULT profile([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLHEADELEMENT_PROFILE), displaybind, bindable]
+    HRESULT profile([retval, out] BSTR *p);
+}
+
+/*****************************************************************************
+ *    IHTMLHeadElement2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3051042f-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLHeadElement2 : IDispatch
+{
+    [propput, id(DISPID_IHTMLHEADELEMENT2_IE8_PROFILE), displaybind, bindable]
+    HRESULT profile([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLHEADELEMENT2_IE8_PROFILE), displaybind, bindable]
+    HRESULT profile([retval, out] BSTR *p);
+}
+
+/*****************************************************************************
+ *    DispHTMLHeadElement interface
+ */
+[
+    hidden,
+    uuid(3050f561-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLHeadElement
+{
+properties:
+methods:
+    WINE_HTMLELEMENT_DISPINTERFACE_DECL;
+
+    [propput, id(DISPID_IHTMLHEADELEMENT_PROFILE), displaybind, bindable]
+    void profile(BSTR v);
+
+    [propget, id(DISPID_IHTMLHEADELEMENT_PROFILE), displaybind, bindable]
+    BSTR profile();
+
+    [propput, id(DISPID_IHTMLHEADELEMENT2_IE8_PROFILE), displaybind, bindable]
+    void ie8_profile(BSTR v);
+
+    [propget, id(DISPID_IHTMLHEADELEMENT2_IE8_PROFILE), displaybind, bindable]
+    BSTR ie8_profile();
+}
+
+/*****************************************************************************
  *    DispHTMLUnknownElement interface
  */
 [
