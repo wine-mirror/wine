@@ -193,3 +193,11 @@ typedef struct
 {
     struct locale__Locimp *ptr;
 } locale;
+
+/* class _Lockit */
+typedef struct {
+    int locktype;
+} _Lockit;
+
+void init_lockit(void);
+void free_lockit(void);

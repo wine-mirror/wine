@@ -1078,10 +1078,10 @@
 @ stub -arch=win64 ??0_Locinfo@std@@QEAA@HPEBD@Z
 @ stub -arch=win32 ??0_Locinfo@std@@QAE@PBD@Z
 @ stub -arch=win64 ??0_Locinfo@std@@QEAA@PEBD@Z
-@ stub -arch=win32 ??0_Lockit@std@@QAE@H@Z
-@ stub -arch=win64 ??0_Lockit@std@@QEAA@H@Z
-@ stub -arch=win32 ??0_Lockit@std@@QAE@XZ
-@ stub -arch=win64 ??0_Lockit@std@@QEAA@XZ
+@ thiscall -arch=win32 ??0_Lockit@std@@QAE@H@Z(ptr long) _Lockit_ctor_locktype
+@ cdecl -arch=win64 ??0_Lockit@std@@QEAA@H@Z(ptr long) _Lockit_ctor_locktype
+@ thiscall -arch=win32 ??0_Lockit@std@@QAE@XZ(ptr) _Lockit_ctor
+@ cdecl -arch=win64 ??0_Lockit@std@@QEAA@XZ(ptr) _Lockit_ctor
 @ thiscall -arch=win32 ??0_Mutex@std@@QAE@XZ(ptr) mutex_ctor
 @ cdecl -arch=win64 ??0_Mutex@std@@QEAA@XZ(ptr) mutex_ctor
 @ stub -arch=win32 ??0_Timevec@std@@QAE@ABV01@@Z
@@ -1316,8 +1316,8 @@
 @ cdecl -arch=win64 ??1_Locimp@locale@std@@MEAA@XZ(ptr) locale__Locimp_dtor
 @ stub -arch=win32 ??1_Locinfo@std@@QAE@XZ
 @ stub -arch=win64 ??1_Locinfo@std@@QEAA@XZ
-@ stub -arch=win32 ??1_Lockit@std@@QAE@XZ
-@ stub -arch=win64 ??1_Lockit@std@@QEAA@XZ
+@ thiscall -arch=win32 ??1_Lockit@std@@QAE@XZ(ptr) _Lockit_dtor
+@ cdecl -arch=win64 ??1_Lockit@std@@QEAA@XZ(ptr) _Lockit_dtor
 @ thiscall -arch=win32 ??1_Mutex@std@@QAE@XZ(ptr) mutex_dtor
 @ cdecl -arch=win64 ??1_Mutex@std@@QEAA@XZ(ptr) mutex_dtor
 @ stub -arch=win32 ??1_Timevec@std@@QAE@XZ
@@ -2599,14 +2599,14 @@
 @ stub -arch=win64 ?_Lock@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAAXXZ
 @ thiscall -arch=win32 ?_Lock@_Mutex@std@@QAEXXZ(ptr) mutex_lock
 @ cdecl -arch=win64 ?_Lock@_Mutex@std@@QEAAXXZ(ptr) mutex_lock
-@ stub -arch=win32 ?_Lockit_ctor@_Lockit@std@@CAXPAV12@@Z
-@ stub -arch=win64 ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@@Z
-@ stub -arch=win32 ?_Lockit_ctor@_Lockit@std@@CAXPAV12@H@Z
-@ stub -arch=win64 ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@H@Z
-@ stub ?_Lockit_ctor@_Lockit@std@@SAXH@Z
-@ stub -arch=win32 ?_Lockit_dtor@_Lockit@std@@CAXPAV12@@Z
-@ stub -arch=win64 ?_Lockit_dtor@_Lockit@std@@CAXPEAV12@@Z
-@ stub ?_Lockit_dtor@_Lockit@std@@SAXH@Z
+@ cdecl -arch=win32 ?_Lockit_ctor@_Lockit@std@@CAXPAV12@@Z(ptr) _Lockit__Lockit_ctor
+@ cdecl -arch=win64 ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@@Z(ptr) _Lockit__Lockit_ctor
+@ cdecl -arch=win32 ?_Lockit_ctor@_Lockit@std@@CAXPAV12@H@Z(ptr long) _Lockit__Lockit_ctor_locktype
+@ cdecl -arch=win64 ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@H@Z(ptr long) _Lockit__Lockit_ctor_locktype
+@ cdecl ?_Lockit_ctor@_Lockit@std@@SAXH@Z(long) _Lockit_init
+@ cdecl -arch=win32 ?_Lockit_dtor@_Lockit@std@@CAXPAV12@@Z(ptr) _Lockit__Lockit_dtor
+@ cdecl -arch=win64 ?_Lockit_dtor@_Lockit@std@@CAXPEAV12@@Z(ptr) _Lockit__Lockit_dtor
+@ cdecl ?_Lockit_dtor@_Lockit@std@@SAXH@Z(long) _Lockit_free
 @ stub -arch=win32 ?_MP_Add@tr1@std@@YAXQA_K_K@Z
 @ stub -arch=win64 ?_MP_Add@tr1@std@@YAXQEA_K_K@Z
 @ stub -arch=win32 ?_MP_Get@tr1@std@@YA_KQA_K@Z
