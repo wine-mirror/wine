@@ -102,8 +102,8 @@ static const D3DXCONSTANT_DESC ctab_basic_expected[] = {
 static const DWORD ctab_matrices[] = {
     0xfffe0300,                                                             /* vs_3_0                       */
     0x0032fffe, FCC_CTAB,                                                   /* CTAB comment                 */
-    0x0000001c, 0x000000b0, 0xfffe0300, 0x00000003, 0x0000001c, 0x20008100, /* Header                       */
-    0x000000a8,
+    0x0000001c, 0x000000b4, 0xfffe0300, 0x00000003, 0x0000001c, 0x20008100, /* Header                       */
+    0x000000ac,
     0x00000058, 0x00070002, 0x00000001, 0x00000064, 0x00000000,             /* Constant 1 desc (fmatrix3x1) */
     0x00000074, 0x00000002, 0x00000004, 0x00000080, 0x00000000,             /* Constant 2 desc (fmatrix4x4) */
     0x00000090, 0x00040002, 0x00000003, 0x0000009c, 0x00000000,             /* Constant 3 desc (imatrix2x3) */
@@ -156,6 +156,29 @@ static const D3DXCONSTANT_DESC ctab_arrays_expected[] = {
     {"barray",    D3DXRS_FLOAT4, 14, 2, D3DXPC_SCALAR,      D3DXPT_BOOL,  1, 1, 2, 0,   8, 0},
     {"bvecarray", D3DXRS_FLOAT4, 16, 2, D3DXPC_VECTOR,      D3DXPT_BOOL,  1, 3, 3, 0,  36, 0},
     {"ivecarray", D3DXRS_FLOAT4, 18, 1, D3DXPC_VECTOR,      D3DXPT_INT,   1, 4, 1, 0,  16, 0}};
+
+static const DWORD ctab_samplers[] = {
+    0xfffe0300,                                                             /* vs_3_0                        */
+    0x0032fffe, FCC_CTAB,                                                   /* CTAB comment                  */
+    0x0000001c, 0x000000b4, 0xfffe0300, 0x00000003, 0x0000001c, 0x20008100, /* Header                        */
+    0x000000ac,
+    0x00000058, 0x00020002, 0x00000001, 0x00000064, 0x00000000,             /* Constant 1 desc (notsampler)  */
+    0x00000074, 0x00000003, 0x00000001, 0x00000080, 0x00000000,             /* Constant 2 desc (sampler1)    */
+    0x00000090, 0x00030003, 0x00000001, 0x0000009c, 0x00000000,             /* Constant 3 desc (sampler2)    */
+    0x73746f6e, 0x6c706d61, 0xab007265,                                     /* Constant 1 name               */
+    0x00030001, 0x00040001, 0x00000001, 0x00000000,                         /* Constant 1 type desc          */
+    0x706d6173, 0x3172656c, 0xababab00,                                     /* Constant 2 name               */
+    0x000c0004, 0x00010001, 0x00000001, 0x00000000,                         /* Constant 2 type desc          */
+    0x706d6173, 0x3272656c, 0xababab00,                                     /* Constant 3 name               */
+    0x000d0004, 0x00010001, 0x00000001, 0x00000000,                         /* Constant 3 type desc          */
+    0x335f7376, 0xab00305f,                                                 /* Target name string            */
+    0x656e6957, 0x6f727020, 0x7463656a, 0xababab00,                         /* Creator name string           */
+    0x0000ffff};                                                            /* END                           */
+
+static const D3DXCONSTANT_DESC ctab_samplers_expected[] = {
+    {"sampler1",   D3DXRS_SAMPLER, 0, 1, D3DXPC_OBJECT, D3DXPT_SAMPLER2D, 1, 1, 1, 0, 4,  0},
+    {"sampler2",   D3DXRS_SAMPLER, 3, 1, D3DXPC_OBJECT, D3DXPT_SAMPLER3D, 1, 1, 1, 0, 4,  0},
+    {"notsampler", D3DXRS_FLOAT4,  2, 1, D3DXPC_VECTOR, D3DXPT_FLOAT,     1, 4, 1, 0, 16, 0}};
 
 static void test_get_shader_size(void)
 {
@@ -370,8 +393,10 @@ static void test_constant_table(const char *test_name, const DWORD *ctable_fn,
 
         const_handle = ID3DXConstantTable_GetConstantByName(ctable, NULL, expected->Name);
 
-        ID3DXConstantTable_GetConstantDesc(ctable, const_handle, &actual, &pCount);
-        ok(pCount == 1, "Got more or less descriptions: %d\n", pCount);
+        res = ID3DXConstantTable_GetConstantDesc(ctable, const_handle, &actual, &pCount);
+        ok(SUCCEEDED(res), "%s in %s: ID3DXConstantTable_GetConstantDesc returned %08x\n", expected->Name,
+                test_name, res);
+        ok(pCount == 1, "%s in %s: Got more or less descriptions: %d\n", expected->Name, test_name, pCount);
 
         ok(strcmp(actual.Name, expected->Name) == 0,
            "%s in %s: Got different names: Got %s, expected %s\n", expected->Name,
@@ -418,6 +443,8 @@ static void test_constant_tables(void)
             sizeof(ctab_matrices_expected)/sizeof(*ctab_matrices_expected));
     test_constant_table("test_arrays", ctab_arrays, ctab_arrays_expected,
             sizeof(ctab_arrays_expected)/sizeof(*ctab_arrays_expected));
+    test_constant_table("test_samplers", ctab_samplers, ctab_samplers_expected,
+            sizeof(ctab_samplers_expected)/sizeof(*ctab_samplers_expected));
 }
 
 static void test_setting_basic_table(IDirect3DDevice9 *device)
@@ -645,6 +672,36 @@ static void test_setting_constants(void)
     if (wnd) DestroyWindow(wnd);
 }
 
+static void test_get_sampler_index(void)
+{
+    ID3DXConstantTable *ctable;
+
+    HRESULT res;
+    UINT index;
+
+    ULONG refcnt;
+
+    res = D3DXGetShaderConstantTable(ctab_samplers, &ctable);
+    ok(res == D3D_OK, "D3DXGetShaderConstantTable failed on ctab_samplers: got %08x\n", res);
+
+    index = ID3DXConstantTable_GetSamplerIndex(ctable, "sampler1");
+    ok(index == 0, "ID3DXConstantTable_GetSamplerIndex returned wrong index: Got %d, expected 0\n", index);
+
+    index = ID3DXConstantTable_GetSamplerIndex(ctable, "sampler2");
+    ok(index == 3, "ID3DXConstantTable_GetSamplerIndex returned wrong index: Got %d, expected 3\n", index);
+
+    index = ID3DXConstantTable_GetSamplerIndex(ctable, "nonexistent");
+    ok(index == -1, "ID3DXConstantTable_GetSamplerIndex found non-existent sampler: Got %d\n",
+            index);
+
+    index = ID3DXConstantTable_GetSamplerIndex(ctable, "notsampler");
+    ok(index == -1, "ID3DXConstantTable_GetSamplerIndex succeeded on non-sampler constant: Got %d\n",
+            index);
+
+    refcnt = ID3DXConstantTable_Release(ctable);
+    ok(refcnt == 0, "The ID3DXConstantTable reference count was %u, should be 0\n", refcnt);
+}
+
 START_TEST(shader)
 {
     test_get_shader_size();
@@ -653,4 +710,5 @@ START_TEST(shader)
     test_get_shader_constant_table_ex();
     test_constant_tables();
     test_setting_constants();
+    test_get_sampler_index();
 }
