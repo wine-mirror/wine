@@ -2036,7 +2036,7 @@ static void Apply_Indic_BasicForm(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
 static inline INT find_consonant_halant(WCHAR* pwChars, INT index, INT end, lexical_function lexical)
 {
     int i = 0;
-    while (i + index < end - 1 && !(lexical(pwChars[index+i]) == lex_Consonant && (lexical(pwChars[index+i+1]) == lex_Halant || (index + i < end - 2 && lexical(pwChars[index+i+1]) == lex_Nukta && lexical(pwChars[index+i+2] == lex_Halant)))))
+    while (i + index < end - 1 && !(is_consonant(lexical(pwChars[index+i])) && (lexical(pwChars[index+i+1]) == lex_Halant || (index + i < end - 2 && lexical(pwChars[index+i+1]) == lex_Nukta && lexical(pwChars[index+i+2] == lex_Halant)))))
         i++;
     if (index + i <= end-1)
         return index + i;
@@ -2044,7 +2044,7 @@ static inline INT find_consonant_halant(WCHAR* pwChars, INT index, INT end, lexi
         return -1;
 }
 
-static void Apply_Indic_Half(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwChars, INT cChars, IndicSyllable *syllable, WORD *pwOutGlyphs, INT* pcGlyphs, WORD *pwLogClust, lexical_function lexical, IndicSyllable *glyph_index)
+static void Apply_Indic_PreBase(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwChars, INT cChars, IndicSyllable *syllable, WORD *pwOutGlyphs, INT* pcGlyphs, WORD *pwLogClust, lexical_function lexical, IndicSyllable *glyph_index, const char* feature)
 {
     INT index, nextIndex;
     INT count,g_offset;
@@ -2056,7 +2056,7 @@ static void Apply_Indic_Half(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WC
     index = find_consonant_halant(&pwChars[syllable->start], 0, count, lexical);
     while (index >= 0 && index < (glyph_index->base - glyph_index->start))
     {
-        nextIndex = apply_GSUB_feature_to_glyph(hdc, psa, psc, pwOutGlyphs, index+glyph_index->start+g_offset, 1, pcGlyphs, "half");
+        nextIndex = apply_GSUB_feature_to_glyph(hdc, psa, psc, pwOutGlyphs, index+glyph_index->start+g_offset, 1, pcGlyphs, feature);
         if (nextIndex > GSUB_E_NOGLYPH)
         {
             UpdateClusters(nextIndex, *pcGlyphs - prevCount, 1, cChars, pwLogClust);
@@ -2193,9 +2193,15 @@ static void ShapeIndicSyllables(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa,
         if (pref)
             Apply_Indic_PostBase(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, modern, "pref");
         if (blwf)
+        {
+            if (!modern)
+                Apply_Indic_PreBase(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, "blwf");
+
             Apply_Indic_PostBase(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, modern, "blwf");
+
+        }
         if (half)
-            Apply_Indic_Half(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs);
+            Apply_Indic_PreBase(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, "half");
         if (pstf)
         {
             TRACE("applying feature pstf\n");
