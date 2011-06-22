@@ -1318,7 +1318,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
     /* oPos, oFog and oPts in D3D */
     static const char * const hwrastout_reg_names[] = {"OUT[10]", "OUT[11].x", "OUT[11].y"};
 
-    struct wined3d_shader *shader = ins->ctx->shader;
+    const struct wined3d_shader *shader = ins->ctx->shader;
     const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
@@ -2842,8 +2842,8 @@ static void shader_glsl_sgn(const struct wined3d_shader_instruction *ins)
 static void shader_glsl_loop(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_shader_loop_state *loop_state = ins->ctx->loop_state;
+    const struct wined3d_shader *shader = ins->ctx->shader;
     glsl_src_param_t src1_param;
-    struct wined3d_shader *shader = ins->ctx->shader;
     const DWORD *control_values = NULL;
     const local_constant *constant;
 
@@ -2926,7 +2926,7 @@ static void shader_glsl_end(const struct wined3d_shader_instruction *ins)
 
 static void shader_glsl_rep(const struct wined3d_shader_instruction *ins)
 {
-    struct wined3d_shader *shader = ins->ctx->shader;
+    const struct wined3d_shader *shader = ins->ctx->shader;
     struct wined3d_shader_loop_state *loop_state = ins->ctx->loop_state;
     glsl_src_param_t src0_param;
     const DWORD *control_values = NULL;
@@ -3036,7 +3036,7 @@ static void shader_glsl_ret(const struct wined3d_shader_instruction *ins)
  ********************************************/
 static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
 {
-    struct wined3d_shader *shader = ins->ctx->shader;
+    const struct wined3d_shader *shader = ins->ctx->shader;
     struct wined3d_device *device = shader->device;
     DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
             ins->ctx->reg_maps->shader_version.minor);
@@ -3126,7 +3126,7 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
 
 static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
 {
-    struct wined3d_shader *shader = ins->ctx->shader;
+    const struct wined3d_shader *shader = ins->ctx->shader;
     struct wined3d_device *device = shader->device;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     glsl_sample_function_t sample_function;
@@ -3159,7 +3159,7 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
 
 static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
 {
-    struct wined3d_shader *shader = ins->ctx->shader;
+    const struct wined3d_shader *shader = ins->ctx->shader;
     struct wined3d_device *device = shader->device;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     glsl_sample_function_t sample_function;

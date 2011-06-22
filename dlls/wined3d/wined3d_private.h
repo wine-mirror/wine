@@ -583,7 +583,7 @@ struct wined3d_shader_loop_state
 
 struct wined3d_shader_context
 {
-    struct wined3d_shader *shader;
+    const struct wined3d_shader *shader;
     const struct wined3d_gl_info *gl_info;
     const struct wined3d_shader_reg_maps *reg_maps;
     struct wined3d_shader_buffer *buffer;
