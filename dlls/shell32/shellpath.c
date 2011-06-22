@@ -3477,8 +3477,17 @@ static HRESULT WINAPI foldermanager_UnregisterFolder(
     IKnownFolderManager *iface,
     REFKNOWNFOLDERID rfid)
 {
-    FIXME("%p\n", rfid);
-    return E_NOTIMPL;
+    HRESULT hr;
+    LPWSTR registryPath = NULL;
+    TRACE("(%p, %s)\n", iface, debugstr_guid(rfid));
+
+    hr = get_known_folder_registry_path(rfid, &registryPath);
+
+    if(SUCCEEDED(hr))
+        hr = HRESULT_FROM_WIN32(RegDeleteKeyW(HKEY_LOCAL_MACHINE, registryPath));
+
+    HeapFree(GetProcessHeap(), 0, registryPath);
+    return hr;
 }
 
 static HRESULT WINAPI foldermanager_FindFolderFromPath(

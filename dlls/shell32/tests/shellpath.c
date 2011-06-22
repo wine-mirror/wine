@@ -1242,7 +1242,6 @@ static void test_knownFolders(void)
                 }
 
                 hr = IKnownFolderManager_UnregisterFolder(mgr, &newFolderId);
-                todo_wine
                 ok(hr == S_OK, "failed to unregister folder: 0x%08x\n", hr);
             }
         }
