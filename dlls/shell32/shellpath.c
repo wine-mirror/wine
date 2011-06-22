@@ -816,6 +816,7 @@ static const WCHAR AllUsersProfileValueW[] = {'A','l','l','U','s','e','r','s','P
 static const WCHAR szSHFolders[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l','o','r','e','r','\\','S','h','e','l','l',' ','F','o','l','d','e','r','s','\0'};
 static const WCHAR szSHUserFolders[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l','o','r','e','r','\\','U','s','e','r',' ','S','h','e','l','l',' ','F','o','l','d','e','r','s','\0'};
 static const WCHAR szDefaultProfileDirW[] = {'u','s','e','r','s',0};
+static const WCHAR szKnownFolderDescriptions[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l','o','r','e','r','\\','F','o','l','d','e','r','D','e','s','c','r','i','p','t','i','o','n','s','\0'};
 static const WCHAR AllUsersW[] = {'P','u','b','l','i','c',0};
 
 typedef enum _CSIDL_Type {
@@ -3075,6 +3076,45 @@ HRESULT WINAPI SHGetFolderPathEx(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE toke
     return hr;
 }
 
+/* constant values used by known folder functions */
+static const WCHAR szCategory[] = {'C','a','t','e','g','o','r','y',0};
+static const WCHAR szName[] = {'N','a','m','e',0};
+
+/*
+ * Internal function to convert known folder identifier to path of registry key
+ * associated with known folder.
+ *
+ * Parameters:
+ *  rfid            [I] pointer to known folder identifier
+ *  lpPath          [O] place to store string address. String should be
+ *                      later freed using HeapFree(GetProcessHeap(),0, ... )
+ */
+static HRESULT get_known_folder_registry_path(REFKNOWNFOLDERID rfid, LPWSTR *lpPath)
+{
+    static const WCHAR sBackslash[] = {'\\',0};
+    HRESULT hr = S_OK;
+    int length;
+    WCHAR sGuid[50];
+
+    TRACE("(%s, %p)\n", debugstr_guid(rfid), lpPath);
+
+    StringFromGUID2(rfid, sGuid, sizeof(sGuid)/sizeof(sGuid[0]));
+
+    length = lstrlenW(szKnownFolderDescriptions)+51;
+    *lpPath = HeapAlloc(GetProcessHeap(), 0, length*sizeof(WCHAR));
+    if(!(*lpPath))
+        hr = E_OUTOFMEMORY;
+
+    if(SUCCEEDED(hr))
+    {
+        lstrcpyW(*lpPath, szKnownFolderDescriptions);
+        lstrcatW(*lpPath, sBackslash);
+        lstrcatW(*lpPath, sGuid);
+    }
+
+    return hr;
+}
+
 struct knownfolder
 {
     const struct IKnownFolderVtbl *vtbl;
@@ -3403,8 +3443,34 @@ static HRESULT WINAPI foldermanager_RegisterFolder(
     REFKNOWNFOLDERID rfid,
     KNOWNFOLDER_DEFINITION const *pKFD)
 {
-    FIXME("%p, %p\n", rfid, pKFD);
-    return E_NOTIMPL;
+    HRESULT hr;
+    HKEY hKey = NULL;
+    DWORD dwDisp;
+    LPWSTR registryPath = NULL;
+    TRACE("(%p, %s, %p)\n", iface, debugstr_guid(rfid), pKFD);
+
+    hr = get_known_folder_registry_path(rfid, &registryPath);
+    TRACE("registry path: %s\n", debugstr_w(registryPath));
+
+    if(SUCCEEDED(hr))
+        hr = HRESULT_FROM_WIN32(RegCreateKeyExW(HKEY_LOCAL_MACHINE, registryPath, 0, NULL, 0, KEY_WRITE, 0, &hKey, &dwDisp));
+
+    if(SUCCEEDED(hr))
+    {
+        if(dwDisp == REG_OPENED_EXISTING_KEY)
+            hr = E_FAIL;
+
+        if(SUCCEEDED(hr))
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szCategory, 0, REG_DWORD, (LPBYTE)&pKFD->category, sizeof(pKFD->category)));
+
+        if(SUCCEEDED(hr))
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szName, 0, REG_SZ, (LPBYTE)pKFD->pszName, (lstrlenW(pKFD->pszName)+1)*sizeof(WCHAR) ));
+
+        RegCloseKey(hKey);
+    }
+
+    HeapFree(GetProcessHeap(), 0, registryPath);
+    return hr;
 }
 
 static HRESULT WINAPI foldermanager_UnregisterFolder(

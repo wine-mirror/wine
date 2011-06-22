@@ -1168,7 +1168,6 @@ static void test_knownFolders(void)
             win_skip("No permissions required to register custom known folder\n");
         else
         {
-            todo_wine
             ok(hr == S_OK, "failed to register known folder: 0x%08x\n", hr);
             if(SUCCEEDED(hr))
             {
