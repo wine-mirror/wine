@@ -500,24 +500,30 @@ void CDECL MSVCP__String_base_Xinvarg(void)
 /* ?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2_KB */
 const MSVCP_size_t MSVCP_basic_string_char_npos = -1;
 
-/* Internal: basic_string_char_ptr - return pointer to stored string */
-static char* basic_string_char_ptr(basic_string_char *this)
+/* ?_Myptr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAEPADXZ */
+/* ?_Myptr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IEAAPEADXZ */
+DEFINE_THISCALL_WRAPPER(basic_string_char_ptr, 4)
+char* __thiscall basic_string_char_ptr(basic_string_char *this)
 {
     if(this->res == BUF_SIZE_CHAR-1)
         return this->data.buf;
     return this->data.ptr;
 }
 
-/* Internal: basic_string_char_const_ptr - returns const pointer to stored string */
-static const char* basic_string_char_const_ptr(const basic_string_char *this)
+/* ?_Myptr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IBEPBDXZ */
+/* ?_Myptr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IEBAPEBDXZ */
+DEFINE_THISCALL_WRAPPER(basic_string_char_const_ptr, 4)
+const char* __thiscall basic_string_char_const_ptr(const basic_string_char *this)
 {
     if(this->res == BUF_SIZE_CHAR-1)
         return this->data.buf;
     return this->data.ptr;
 }
 
-/* Internal: basic_string_char_eos - sets string length, puts '\0' on the end */
-static void basic_string_char_eos(basic_string_char *this, MSVCP_size_t len)
+/* ?_Eos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAEXI@Z */
+/* ?_Eos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IEAAX_K@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_char_eos, 8)
+void __thiscall basic_string_char_eos(basic_string_char *this, MSVCP_size_t len)
 {
     static const char nullbyte = '\0';
 
@@ -525,8 +531,10 @@ static void basic_string_char_eos(basic_string_char *this, MSVCP_size_t len)
     MSVCP_char_traits_char_assign(basic_string_char_ptr(this)+len, &nullbyte);
 }
 
-/* Internal: basic_string_char_inside - checks if given pointer points inside stored string */
-static MSVCP_bool basic_string_char_inside(
+/* ?_Inside@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAE_NPBD@Z */
+/* ?_Inside@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IEAA_NPEBD@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_char_inside, 8)
+MSVCP_bool __thiscall basic_string_char_inside(
         basic_string_char *this, const char *ptr)
 {
     char *cstr = basic_string_char_ptr(this);
@@ -534,9 +542,10 @@ static MSVCP_bool basic_string_char_inside(
     return (ptr<cstr || ptr>=cstr+this->size) ? FALSE : TRUE;
 }
 
-/* Internal: basic_string_char_tidy - initialize basic_string buffer, deallocates data */
-/* Caution: new_size have to be smaller than BUF_SIZE_CHAR */
-static void basic_string_char_tidy(basic_string_char *this,
+/* ?_Tidy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAEX_NI@Z */
+/* ?_Tidy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IEAAX_N_K@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_char_tidy, 12)
+void __thiscall basic_string_char_tidy(basic_string_char *this,
         MSVCP_bool built, MSVCP_size_t new_size)
 {
     if(built && BUF_SIZE_CHAR<=this->res) {
@@ -551,8 +560,10 @@ static void basic_string_char_tidy(basic_string_char *this,
     basic_string_char_eos(this, new_size);
 }
 
-/* Internal: basic_string_char_grow - changes size of internal buffer */
-static MSVCP_bool basic_string_char_grow(
+/* ?_Grow@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAE_NI_N@Z */
+/* ?_Grow@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IEAA_N_K_N@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_char_grow, 12)
+MSVCP_bool __thiscall basic_string_char_grow(
         basic_string_char *this, MSVCP_size_t new_size, MSVCP_bool trim)
 {
     if(this->res < new_size) {
@@ -1320,24 +1331,30 @@ void __thiscall MSVCP_basic_string_char_clear(basic_string_char *this)
 /* ?npos@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@2_KB */
 const MSVCP_size_t MSVCP_basic_string_wchar_npos = -1;
 
-/* Internal: basic_string_wchar_ptr - return pointer to stored string */
-static wchar_t* basic_string_wchar_ptr(basic_string_wchar *this)
+/* ?_Myptr@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IAEPA_WXZ */
+/* ?_Myptr@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IEAAPEA_WXZ */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_ptr, 4)
+wchar_t* __thiscall basic_string_wchar_ptr(basic_string_wchar *this)
 {
     if(this->res == BUF_SIZE_WCHAR-1)
         return this->data.buf;
     return this->data.ptr;
 }
 
-/* Internal: basic_string_wchar_const_ptr - returns const pointer to stored string */
-static const wchar_t* basic_string_wchar_const_ptr(const basic_string_wchar *this)
+/* ?_Myptr@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IBEPB_WXZ */
+/* ?_Myptr@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IEBAPEB_WXZ */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_const_ptr, 4)
+const wchar_t* __thiscall basic_string_wchar_const_ptr(const basic_string_wchar *this)
 {
     if(this->res == BUF_SIZE_WCHAR-1)
         return this->data.buf;
     return this->data.ptr;
 }
 
-/* Internal: basic_string_wchar_eos - sets string length, puts '\0' on the end */
-static void basic_string_wchar_eos(basic_string_wchar *this, MSVCP_size_t len)
+/* ?_Eos@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IAEXI@Z */
+/* ?_Eos@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IEAAX_K@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_eos, 8)
+void __thiscall basic_string_wchar_eos(basic_string_wchar *this, MSVCP_size_t len)
 {
     static const wchar_t nullbyte_w = '\0';
 
@@ -1345,8 +1362,10 @@ static void basic_string_wchar_eos(basic_string_wchar *this, MSVCP_size_t len)
     MSVCP_char_traits_wchar_assign(basic_string_wchar_ptr(this)+len, &nullbyte_w);
 }
 
-/* Internal: basic_string_char_inside - checks if given pointer points inside stored string */
-static MSVCP_bool basic_string_wchar_inside(
+/* ?_Inside@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IAE_NPB_W@Z */
+/* ?_Inside@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IEAA_NPEB_W@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_inside, 8)
+MSVCP_bool __thiscall basic_string_wchar_inside(
         basic_string_wchar *this, const wchar_t *ptr)
 {
     wchar_t *cstr = basic_string_wchar_ptr(this);
@@ -1354,9 +1373,10 @@ static MSVCP_bool basic_string_wchar_inside(
     return (ptr<cstr || ptr>=cstr+this->size) ? FALSE : TRUE;
 }
 
-/* Internal: basic_string_char_tidy - initialize basic_string buffer, deallocates data */
-/* Caution: new_size have to be smaller than BUF_SIZE_WCHAR */
-static void basic_string_wchar_tidy(basic_string_wchar *this,
+/* ?_Tidy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IAEX_NI@Z */
+/* ?_Tidy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IEAAX_N_K@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_tidy, 12)
+void __thiscall basic_string_wchar_tidy(basic_string_wchar *this,
         MSVCP_bool built, MSVCP_size_t new_size)
 {
     if(built && BUF_SIZE_WCHAR<=this->res) {
@@ -1371,8 +1391,10 @@ static void basic_string_wchar_tidy(basic_string_wchar *this,
     basic_string_wchar_eos(this, new_size);
 }
 
-/* Internal: basic_string_wchar_grow - changes size of internal buffer */
-static MSVCP_bool basic_string_wchar_grow(
+/* ?_Grow@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IAE_NI_N@Z */
+/* ?_Grow@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IEAA_N_K_N@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_grow, 12)
+MSVCP_bool __thiscall basic_string_wchar_grow(
         basic_string_wchar *this, MSVCP_size_t new_size, MSVCP_bool trim)
 {
     if(this->res < new_size) {
