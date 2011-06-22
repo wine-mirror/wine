@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 struct bone
 {
+    char *name;
     DWORD num_influences;
     DWORD *vertices;
     FLOAT *weights;
@@ -83,6 +84,7 @@ static ULONG WINAPI ID3DXSkinInfoImpl_Release(ID3DXSkinInfo *iface)
     if (ref == 0) {
         int i;
         for (i = 0; i < This->num_bones; i++) {
+            HeapFree(GetProcessHeap(), 0, This->bones[i].name);
             HeapFree(GetProcessHeap(), 0, This->bones[i].vertices);
             HeapFree(GetProcessHeap(), 0, This->bones[i].weights);
         }
@@ -237,19 +239,35 @@ static FLOAT WINAPI ID3DXSkinInfoImpl_GetMinBoneInfluence(ID3DXSkinInfo *iface)
 static HRESULT WINAPI ID3DXSkinInfoImpl_SetBoneName(ID3DXSkinInfo *iface, DWORD bone_num, LPCSTR name)
 {
     ID3DXSkinInfoImpl *This = impl_from_ID3DXSkinInfo(iface);
+    char *new_name;
+    size_t size;
 
-    FIXME("(%p, %u, %s): stub\n", This, bone_num, debugstr_a(name));
+    TRACE("(%p, %u, %s)\n", This, bone_num, debugstr_a(name));
 
-    return E_NOTIMPL;
+    if (bone_num >= This->num_bones || !name)
+        return D3DERR_INVALIDCALL;
+
+    size = strlen(name) + 1;
+    new_name = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!new_name)
+        return E_OUTOFMEMORY;
+    memcpy(new_name, name, size);
+    HeapFree(GetProcessHeap(), 0, This->bones[bone_num].name);
+    This->bones[bone_num].name = new_name;
+
+    return D3D_OK;
 }
 
 static LPCSTR WINAPI ID3DXSkinInfoImpl_GetBoneName(ID3DXSkinInfo *iface, DWORD bone_num)
 {
     ID3DXSkinInfoImpl *This = impl_from_ID3DXSkinInfo(iface);
 
-    FIXME("(%p, %u): stub\n", This, bone_num);
+    TRACE("(%p, %u)\n", This, bone_num);
 
-    return NULL;
+    if (bone_num >= This->num_bones)
+        return NULL;
+
+    return This->bones[bone_num].name;
 }
 
 static HRESULT WINAPI ID3DXSkinInfoImpl_SetBoneOffsetMatrix(ID3DXSkinInfo *iface, DWORD bone_num, CONST D3DXMATRIX *bone_transform)
