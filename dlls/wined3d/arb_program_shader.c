@@ -3863,7 +3863,7 @@ static int compare_sig(const struct wined3d_shader_signature_element *sig1, cons
         if(sig1[i].sysval_semantic != sig2[i].sysval_semantic) return sig1[i].sysval_semantic < sig2[i].sysval_semantic ? -1 : 1;
         if(sig1[i].component_type  != sig2[i].component_type)  return sig1[i].component_type  < sig2[i].component_type  ? -1 : 1;
         if(sig1[i].register_idx    != sig2[i].register_idx)    return sig1[i].register_idx    < sig2[i].register_idx    ? -1 : 1;
-        if(sig1[i].mask            != sig2->mask)              return sig1[i].mask            < sig2[i].mask            ? -1 : 1;
+        if(sig1[i].mask            != sig2[i].mask)            return sig1[i].mask            < sig2[i].mask            ? -1 : 1;
     }
     return 0;
 }
