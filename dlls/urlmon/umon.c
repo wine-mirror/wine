@@ -37,7 +37,7 @@ typedef struct {
 
     LONG ref;
 
-    LPOLESTR URLName; /* URL string identified by this URLmoniker */
+    BSTR URLName;
 } URLMoniker;
 
 static inline URLMoniker *impl_from_IMoniker(IMoniker *iface)
@@ -98,7 +98,7 @@ static ULONG WINAPI URLMoniker_Release(IMoniker *iface)
     TRACE("(%p) ref=%u\n",This, refCount);
 
     if (!refCount) {
-        heap_free(This->URLName);
+        SysFreeString(This->URLName);
         heap_free(This);
 
         URLMON_UnlockModule();
@@ -153,13 +153,12 @@ static HRESULT WINAPI URLMoniker_Load(IMoniker* iface,IStream* pStm)
     res = IStream_Read(pStm, &size, sizeof(ULONG), &got);
     if(SUCCEEDED(res)) {
         if(got == sizeof(ULONG)) {
-            heap_free(This->URLName);
-            This->URLName = heap_alloc(size);
+            SysFreeString(This->URLName);
+            This->URLName = SysAllocStringLen(NULL, size/sizeof(WCHAR));
             if(!This->URLName)
                 res = E_OUTOFMEMORY;
             else {
                 res = IStream_Read(pStm, This->URLName, size, NULL);
-                This->URLName[size/sizeof(WCHAR) - 1] = 0;
             }
         }
         else
@@ -180,7 +179,7 @@ static HRESULT WINAPI URLMoniker_Save(IMoniker *iface, IStream* pStm, BOOL fClea
     if(!pStm)
         return E_INVALIDARG;
 
-    size = (strlenW(This->URLName) + 1)*sizeof(WCHAR);
+    size = (SysStringLen(This->URLName) + 1)*sizeof(WCHAR);
     res=IStream_Write(pStm,&size,sizeof(ULONG),NULL);
     if(SUCCEEDED(res))
         res=IStream_Write(pStm,This->URLName,size,NULL);
@@ -198,7 +197,7 @@ static HRESULT WINAPI URLMoniker_GetSizeMax(IMoniker* iface, ULARGE_INTEGER *pcb
     if(!pcbSize)
         return E_INVALIDARG;
 
-    pcbSize->QuadPart = sizeof(ULONG) + ((strlenW(This->URLName)+1) * sizeof(WCHAR));
+    pcbSize->QuadPart = sizeof(ULONG) + ((SysStringLen(This->URLName)+1) * sizeof(WCHAR));
     return S_OK;
 }
 
@@ -409,7 +408,7 @@ static HRESULT WINAPI URLMoniker_GetDisplayName(IMoniker *iface, IBindCtx *pbc, 
     /* FIXME: If this is a partial URL, try and get a URL moniker from SZ_URLCONTEXT in the bind context,
         then look at pmkToLeft to try and complete the URL
     */
-    len = lstrlenW(This->URLName)+1;
+    len = SysStringLen(This->URLName)+1;
     *ppszDisplayName = CoTaskMemAlloc(len*sizeof(WCHAR));
     if(!*ppszDisplayName)
         return E_OUTOFMEMORY;
@@ -523,29 +522,25 @@ static URLMoniker *alloc_moniker(void)
 
 static HRESULT URLMoniker_Init(URLMoniker *This, LPCOLESTR lpszLeftURLName, LPCOLESTR lpszURLName)
 {
+    WCHAR url[INTERNET_MAX_URL_LENGTH];
     HRESULT hres;
     DWORD sizeStr = 0;
 
     TRACE("(%p,%s,%s)\n",This,debugstr_w(lpszLeftURLName),debugstr_w(lpszURLName));
 
-    This->URLName = heap_alloc(INTERNET_MAX_URL_LENGTH*sizeof(WCHAR));
-
     if(lpszLeftURLName)
         hres = CoInternetCombineUrl(lpszLeftURLName, lpszURLName, URL_FILE_USE_PATHURL,
-                This->URLName, INTERNET_MAX_URL_LENGTH, &sizeStr, 0);
+                url, INTERNET_MAX_URL_LENGTH, &sizeStr, 0);
     else
         hres = CoInternetParseUrl(lpszURLName, PARSE_CANONICALIZE, URL_FILE_USE_PATHURL,
-                This->URLName, INTERNET_MAX_URL_LENGTH, &sizeStr, 0);
+                url, INTERNET_MAX_URL_LENGTH, &sizeStr, 0);
 
-    if(FAILED(hres)) {
-        heap_free(This->URLName);
+    if(FAILED(hres))
         return hres;
-    }
+
+    This->URLName = SysAllocString(url);
 
     URLMON_LockModule();
-
-    if(sizeStr != INTERNET_MAX_URL_LENGTH)
-        This->URLName = heap_realloc(This->URLName, (sizeStr+1)*sizeof(WCHAR));
 
     TRACE("URLName = %s\n", debugstr_w(This->URLName));
 
