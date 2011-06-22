@@ -560,6 +560,15 @@ void __thiscall basic_string_char_tidy(basic_string_char *this,
     basic_string_char_eos(this, new_size);
 }
 
+/* Exported only from msvcp60/70 */
+/* ?_Tidy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEX_N@Z */
+/* ?_Tidy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEAAX_N@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_char_tidy_built, 8)
+void __thiscall basic_string_char_tidy_built(basic_string_char *this, MSVCP_bool built)
+{
+    return basic_string_char_tidy(this, built, 0);
+}
+
 /* ?_Grow@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAE_NI_N@Z */
 /* ?_Grow@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IEAA_N_K_N@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_char_grow, 12)

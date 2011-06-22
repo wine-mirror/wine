@@ -5810,3 +5810,7 @@
 @ stub towctrans
 @ stub wctrans
 @ stub wctype
+
+#Functions not exported in native dll:
+@ thiscall -arch=win32 ?_Tidy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEX_N@Z(ptr long) basic_string_char_tidy_built
+@ cdecl -arch=win64 ?_Tidy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEAAX_N@Z(ptr long) basic_string_char_tidy_built
