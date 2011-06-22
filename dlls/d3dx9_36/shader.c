@@ -748,13 +748,23 @@ static HRESULT WINAPI ID3DXConstantTableImpl_GetConstantDesc(ID3DXConstantTable*
     return D3D_OK;
 }
 
-static UINT WINAPI ID3DXConstantTableImpl_GetSamplerIndex(LPD3DXCONSTANTTABLE iface, D3DXHANDLE constant)
+static UINT WINAPI ID3DXConstantTableImpl_GetSamplerIndex(ID3DXConstantTable *iface, D3DXHANDLE constant)
 {
     ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
+    D3DXCONSTANT_DESC desc;
+    UINT count = 1;
+    HRESULT res;
 
-    FIXME("(%p)->(%p): stub\n", This, constant);
+    TRACE("(%p)->(%p)\n", This, constant);
 
-    return (UINT)-1;
+    res = ID3DXConstantTable_GetConstantDesc(iface, constant, &desc, &count);
+    if (FAILED(res))
+        return (UINT)-1;
+
+    if (desc.RegisterSet != D3DXRS_SAMPLER)
+        return (UINT)-1;
+
+    return desc.RegisterIndex;
 }
 
 static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstant(ID3DXConstantTable* iface, D3DXHANDLE constant, UINT index)
@@ -1225,10 +1235,15 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD* byte_code,
         if (hr != D3D_OK)
             goto error;
 
-        if (constant_info[i].RegisterSet != D3DXRS_FLOAT4)
-            FIXME("Don't know how to calculate Bytes for non D3DXRS_FLOAT4 constants\n");
+        if (constant_info[i].RegisterSet != D3DXRS_FLOAT4 &&
+                constant_info[i].RegisterSet != D3DXRS_SAMPLER)
+            FIXME("Don't know how to calculate Bytes for constants of type %d\n",
+                    constant_info[i].RegisterSet);
 
-        /* D3DXRS_FLOAT4 has a base size of 4 (not taking into account dimensions and element count) */
+        /*
+         * D3DXRS_FLOAT4 and D3DXRS_SAMPLER have a base size of 4
+         * (not taking into account dimensions and element count)
+         */
         object->constants[i].desc.Bytes = 4;
 
         /* Take into account dimensions and elements */
