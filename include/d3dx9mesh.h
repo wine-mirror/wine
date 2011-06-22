@@ -515,7 +515,7 @@ DECLARE_INTERFACE_(ID3DXSkinInfo, IUnknown)
     STDMETHOD(FindBoneVertexInfluenceIndex)(THIS_ DWORD bone_num, DWORD vertex_num, DWORD* influence_index) PURE;
     STDMETHOD(GetMaxFaceInfluences)(THIS_ LPDIRECT3DINDEXBUFFER9 index_buffer, DWORD num_faces, DWORD* max_face_influences) PURE;
     STDMETHOD(SetMinBoneInfluence)(THIS_ FLOAT min_influence) PURE;
-    STDMETHOD_(DWORD, GetMinBoneInfluence)(THIS) PURE;
+    STDMETHOD_(FLOAT, GetMinBoneInfluence)(THIS) PURE;
     STDMETHOD(SetBoneName)(THIS_ DWORD bone, LPCSTR name) PURE;
     STDMETHOD_(LPCSTR, GetBoneName)(THIS_ DWORD bone) PURE;
     STDMETHOD(SetBoneOffsetMatrix)(THIS_ DWORD bone, CONST D3DXMATRIX* bone_transform) PURE;
