@@ -126,13 +126,15 @@ static HRESULT WINAPI IDirect3DVolume9Impl_SetPrivateData(IDirect3DVolume9 *ifac
         const void *pData, DWORD SizeOfData, DWORD Flags)
 {
     IDirect3DVolume9Impl *This = impl_from_IDirect3DVolume9(iface);
+    struct wined3d_resource *resource;
     HRESULT hr;
 
     TRACE("iface %p, guid %s, data %p, data_size %u, flags %#x.\n",
             iface, debugstr_guid(refguid), pData, SizeOfData, Flags);
 
     wined3d_mutex_lock();
-    hr = wined3d_volume_set_private_data(This->wined3d_volume, refguid, pData, SizeOfData, Flags);
+    resource = wined3d_volume_get_resource(This->wined3d_volume);
+    hr = wined3d_resource_set_private_data(resource, refguid, pData, SizeOfData, Flags);
     wined3d_mutex_unlock();
 
     return hr;
@@ -142,13 +144,15 @@ static HRESULT WINAPI IDirect3DVolume9Impl_GetPrivateData(IDirect3DVolume9 *ifac
         void *pData, DWORD *pSizeOfData)
 {
     IDirect3DVolume9Impl *This = impl_from_IDirect3DVolume9(iface);
+    struct wined3d_resource *resource;
     HRESULT hr;
 
     TRACE("iface %p, guid %s, data %p, data_size %p.\n",
             iface, debugstr_guid(refguid), pData, pSizeOfData);
 
     wined3d_mutex_lock();
-    hr = wined3d_volume_get_private_data(This->wined3d_volume, refguid, pData, pSizeOfData);
+    resource = wined3d_volume_get_resource(This->wined3d_volume);
+    hr = wined3d_resource_get_private_data(resource, refguid, pData, pSizeOfData);
     wined3d_mutex_unlock();
 
     return hr;
@@ -157,12 +161,14 @@ static HRESULT WINAPI IDirect3DVolume9Impl_GetPrivateData(IDirect3DVolume9 *ifac
 static HRESULT WINAPI IDirect3DVolume9Impl_FreePrivateData(IDirect3DVolume9 *iface, REFGUID refguid)
 {
     IDirect3DVolume9Impl *This = impl_from_IDirect3DVolume9(iface);
+    struct wined3d_resource *resource;
     HRESULT hr;
 
     TRACE("iface %p, guid %s.\n", iface, debugstr_guid(refguid));
 
     wined3d_mutex_lock();
-    hr = wined3d_volume_free_private_data(This->wined3d_volume, refguid);
+    resource = wined3d_volume_get_resource(This->wined3d_volume);
+    hr = wined3d_resource_free_private_data(resource, refguid);
     wined3d_mutex_unlock();
 
     return hr;
