@@ -75,7 +75,7 @@ static const DWORD shader_with_ctab_constants[] = {
 
 static const DWORD ctab_basic[] = {
     0xfffe0300,                                                             /* vs_3_0                       */
-    0x00fcfffe, FCC_CTAB,                                                   /* CTAB comment                 */
+    0x0040fffe, FCC_CTAB,                                                   /* CTAB comment                 */
     0x0000001c, 0x000000ec, 0xfffe0300, 0x00000005, 0x0000001c, 0x20008100, /* Header                       */
     0x000000e4,
     0x00000080, 0x00060002, 0x00000001, 0x00000084, 0x00000000,             /* Constant 1 desc (f)          */
@@ -101,7 +101,7 @@ static const D3DXCONSTANT_DESC ctab_basic_expected[] = {
 
 static const DWORD ctab_matrices[] = {
     0xfffe0300,                                                             /* vs_3_0                       */
-    0x00c8fffe, FCC_CTAB,                                                   /* CTAB comment                 */
+    0x0032fffe, FCC_CTAB,                                                   /* CTAB comment                 */
     0x0000001c, 0x000000b0, 0xfffe0300, 0x00000003, 0x0000001c, 0x20008100, /* Header                       */
     0x000000a8,
     0x00000058, 0x00070002, 0x00000001, 0x00000064, 0x00000000,             /* Constant 1 desc (fmatrix3x1) */
@@ -124,7 +124,7 @@ static const D3DXCONSTANT_DESC ctab_matrices_expected[] = {
 
 static const DWORD ctab_arrays[] = {
     0xfffe0300,                                                             /* vs_3_0                       */
-    0x0148fffe, FCC_CTAB,                                                   /* CTAB comment                 */
+    0x0052fffe, FCC_CTAB,                                                   /* CTAB comment                 */
     0x0000001c, 0x0000013c, 0xfffe0300, 0x00000006, 0x0000001c, 0x20008100, /* Header                       */
     0x00000134,
     0x00000094, 0x000E0002, 0x00000002, 0x0000009c, 0x00000000,             /* Constant 1 desc (barray)     */
