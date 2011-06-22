@@ -277,11 +277,11 @@ static inline void reserve_area( void *addr, void *end )
         wine_mmap_add_reserved_area( addr, size );
         return;
     }
-    if (size > granularity_mask + 1)
+    size = (size / 2) & ~granularity_mask;
+    if (size)
     {
-        size_t new_size = (size / 2) & ~granularity_mask;
-        reserve_area( addr, (char *)addr + new_size );
-        reserve_area( (char *)addr + new_size, end );
+        reserve_area( addr, (char *)addr + size );
+        reserve_area( (char *)addr + size, end );
     }
 #endif
 }
