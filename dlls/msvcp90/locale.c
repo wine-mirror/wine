@@ -156,7 +156,7 @@ locale_facet* __thiscall locale_facet__Decref(locale_facet *this)
 
 /* ?_Getcat@facet@locale@std@@SAIPAPBV123@PBV23@@Z */
 /* ?_Getcat@facet@locale@std@@SA_KPEAPEBV123@PEBV23@@Z */
-MSVCP_size_t __cdecl locale_facet__Getcat(const locale_facet **facet, const /*locale*/void *loc)
+MSVCP_size_t __cdecl locale_facet__Getcat(const locale_facet **facet, const locale *loc)
 {
     FIXME("(%p %p) stub\n", facet, loc);
     return 0;
@@ -250,7 +250,7 @@ locale__Locimp** __cdecl locale__Locimp__Clocptr_func(void)
 
 /* ?_Makeloc@_Locimp@locale@std@@CAPAV123@ABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makeloc@_Locimp@locale@std@@CAPEAV123@AEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
-locale__Locimp* __cdecl locale__Locimp__Makeloc(const /*_Locinfo*/void *locinfo, category cat, locale__Locimp *locimp, const /*locale*/void *loc)
+locale__Locimp* __cdecl locale__Locimp__Makeloc(const /*_Locinfo*/void *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {
     FIXME("(%p %d %p %p) stub\n", locinfo, cat, locimp, loc);
     return NULL;
@@ -258,21 +258,21 @@ locale__Locimp* __cdecl locale__Locimp__Makeloc(const /*_Locinfo*/void *locinfo,
 
 /* ?_Makeushloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makeushloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
-void __cdecl locale__Locimp__Makeushloc(const /*_Locinfo*/void *locinfo, category cat, locale__Locimp *locimp, const /*locale*/void *loc)
+void __cdecl locale__Locimp__Makeushloc(const /*_Locinfo*/void *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {
     FIXME("(%p %d %p %p) stub\n", locinfo, cat, locimp, loc);
 }
 
 /* ?_Makewloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makewloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
-void __cdecl locale__Locimp__Makewloc(const /*_Locinfo*/void *locinfo, category cat, locale__Locimp *locimp, const /*locale*/void *loc)
+void __cdecl locale__Locimp__Makewloc(const /*_Locinfo*/void *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {
     FIXME("(%p %d %p %p) stub\n", locinfo, cat, locimp, loc);
 }
 
 /* ?_Makexloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makexloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
-void __cdecl locale__Locimp__Makexloc(const /*_Locinfo*/void *locinfo, category cat, locale__Locimp *locimp, const /*locale*/void *loc)
+void __cdecl locale__Locimp__Makexloc(const /*_Locinfo*/void *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {
     FIXME("(%p %d %p %p) stub\n", locinfo, cat, locimp, loc);
 }
@@ -281,3 +281,180 @@ void __cdecl locale__Locimp__Makexloc(const /*_Locinfo*/void *locinfo, category 
 const vtable_ptr MSVCP_locale__Locimp_vtable[] = {
     (vtable_ptr)THISCALL_NAME(MSVCP_locale__Locimp_vector_dtor)
 };
+
+/* ??0locale@std@@AAE@PAV_Locimp@01@@Z */
+/* ??0locale@std@@AEAA@PEAV_Locimp@01@@Z */
+DEFINE_THISCALL_WRAPPER(locale_ctor_locimp, 8)
+locale* __thiscall locale_ctor_locimp(locale *this, locale__Locimp *locimp)
+{
+    FIXME("(%p %p) stub\n", this, locimp);
+    return NULL;
+}
+
+/* ??0locale@std@@QAE@ABV01@0H@Z */
+/* ??0locale@std@@QEAA@AEBV01@0H@Z */
+DEFINE_THISCALL_WRAPPER(locale_ctor_locale_locale, 16)
+locale* __thiscall locale_ctor_locale_locale(locale *this, const locale *loc, const locale *other, category cat)
+{
+    FIXME("(%p %p %p %d) stub\n", this, loc, other, cat);
+    return NULL;
+}
+
+/* ??0locale@std@@QAE@ABV01@@Z */
+/* ??0locale@std@@QEAA@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(locale_copy_ctor, 8)
+locale* __thiscall locale_copy_ctor(locale *this, const locale *copy)
+{
+    FIXME("(%p %p) stub\n", this, copy);
+    return NULL;
+}
+
+/* ??0locale@std@@QAE@ABV01@PBDH@Z */
+/* ??0locale@std@@QEAA@AEBV01@PEBDH@Z */
+DEFINE_THISCALL_WRAPPER(locale_ctor_locale_cstr, 16)
+locale* __thiscall locale_ctor_locale_cstr(locale *this, const locale *loc, const char *locname, category cat)
+{
+    FIXME("(%p %p %s %d) stub\n", this, loc, locname, cat);
+    return NULL;
+}
+
+/* ??0locale@std@@QAE@PBDH@Z */
+/* ??0locale@std@@QEAA@PEBDH@Z */
+DEFINE_THISCALL_WRAPPER(locale_ctor_cstr, 12)
+locale* __thiscall locale_ctor_cstr(locale *this, const char *locname, category cat)
+{
+    FIXME("(%p %s %d) stub\n", this, locname, cat);
+    return NULL;
+}
+
+/* ??0locale@std@@QAE@W4_Uninitialized@1@@Z */
+/* ??0locale@std@@QEAA@W4_Uninitialized@1@@Z */
+DEFINE_THISCALL_WRAPPER(locale_ctor_uninitialized, 8)
+locale* __thiscall locale_ctor_uninitialized(locale *this, int uninitialized)
+{
+    FIXME("(%p %d) stub\n", this, uninitialized);
+    return NULL;
+}
+
+/* ??0locale@std@@QAE@XZ */
+/* ??0locale@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(locale_ctor, 4)
+locale* __thiscall locale_ctor(locale *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ??1locale@std@@QAE@XZ */
+/* ??1locale@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(locale_dtor, 4)
+void __thiscall locale_dtor(locale *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_locale_vector_dtor, 8)
+locale* __thiscall MSVCP_locale_vector_dtor(locale *this, unsigned int flags)
+{
+    TRACE("(%p %x) stub\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            locale_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        locale_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ??4locale@std@@QAEAAV01@ABV01@@Z */
+/* ??4locale@std@@QEAAAEAV01@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(locale_operator_assign, 8)
+locale* __thiscall locale_operator_assign(locale *this, const locale *loc)
+{
+    FIXME("(%p %p) stub\n", this, loc);
+    return NULL;
+}
+
+/* ??8locale@std@@QBE_NABV01@@Z */
+/* ??8locale@std@@QEBA_NAEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(locale_operator_equal, 8)
+MSVCP_bool __thiscall locale_operator_equal(const locale *this, const locale *loc)
+{
+    FIXME("(%p %p) stub\n", this, loc);
+    return 0;
+}
+
+/* ??9locale@std@@QBE_NABV01@@Z */
+/* ??9locale@std@@QEBA_NAEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(locale_operator_not_equal, 8)
+MSVCP_bool __thiscall locale_operator_not_equal(const locale *this, locale const *loc)
+{
+    FIXME("(%p %p) stub\n", this, loc);
+    return 0;
+}
+
+/* ?_Addfac@locale@std@@QAEAAV12@PAVfacet@12@II@Z */
+/* ?_Addfac@locale@std@@QEAAAEAV12@PEAVfacet@12@_K1@Z */
+DEFINE_THISCALL_WRAPPER(locale__Addfac, 16)
+locale* __thiscall locale__Addfac(locale *this, locale_facet *facet, MSVCP_size_t id, MSVCP_size_t catmask)
+{
+    FIXME("(%p %p %lu %lu) stub\n", this, facet, id, catmask);
+    return NULL;
+}
+
+/* ?_Getfacet@locale@std@@QBEPBVfacet@12@I@Z */
+/* ?_Getfacet@locale@std@@QEBAPEBVfacet@12@_K@Z */
+DEFINE_THISCALL_WRAPPER(locale__Getfacet, 8)
+const locale_facet* __thiscall locale__Getfacet(const locale *this, MSVCP_size_t id)
+{
+    FIXME("(%p %lu) stub\n", this, id);
+    return NULL;
+}
+
+/* ?_Init@locale@std@@CAPAV_Locimp@12@XZ */
+/* ?_Init@locale@std@@CAPEAV_Locimp@12@XZ */
+locale__Locimp* __cdecl locale__Init(void)
+{
+    FIXME("stub\n");
+    return NULL;
+}
+
+/* ?_Getgloballocale@locale@std@@CAPAV_Locimp@12@XZ */
+/* ?_Getgloballocale@locale@std@@CAPEAV_Locimp@12@XZ */
+locale__Locimp* __cdecl locale__Getgloballocale(void)
+{
+    FIXME("stub\n");
+    return NULL;
+}
+
+/* ?_Setgloballocale@locale@std@@CAXPAX@Z */
+/* ?_Setgloballocale@locale@std@@CAXPEAX@Z */
+void __cdecl locale__Setgloballocale(void *locimp)
+{
+    FIXME("(%p) stub\n", locimp);
+}
+
+/* ?classic@locale@std@@SAABV12@XZ */
+/* ?classic@locale@std@@SAAEBV12@XZ */
+const locale* __cdecl locale_classic(void)
+{
+    FIXME("stub\n");
+    return NULL;
+}
+
+/* ?name@locale@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+/* ?name@locale@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+DEFINE_THISCALL_WRAPPER_RETPTR(locale_name, 4)
+basic_string_char __thiscall locale_name(const locale *this)
+{
+    basic_string_char ret = { 0 }; /* FIXME */
+    FIXME( "(%p) stub\n", this);
+    return ret;
+}

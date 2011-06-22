@@ -42,12 +42,23 @@ extern void (__cdecl *MSVCRT_operator_delete)(void*);
                       "pushl %ecx\n\t" \
                       "pushl %eax\n\t" \
                       "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
+
+#define DEFINE_THISCALL_WRAPPER_RETPTR(func,args) \
+    extern void THISCALL(func)(void); \
+    __ASM_GLOBAL_FUNC(__thiscall_ ## func, \
+                      "popl %eax\n\t" \
+                      "popl %edx\n\t" \
+                      "pushl %ecx\n\t" \
+                      "pushl %edx\n\t" \
+                      "pushl %eax\n\t" \
+                      "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
 #else /* __i386__ */
 
 #define THISCALL(func) func
 #define THISCALL_NAME(func) __ASM_NAME(#func)
 #define __thiscall __cdecl
 #define DEFINE_THISCALL_WRAPPER(func,args) /* nothing */
+#define DEFINE_THISCALL_WRAPPER_RETPTR(func,args)  /* nothing */
 
 #endif /* __i386__ */
 
@@ -180,5 +191,5 @@ void __stdcall MSVCP_allocator_wchar_deallocate(void*, wchar_t*, MSVCP_size_t);
 /* class locale */
 typedef struct
 {
-    /*_Lockimp*/void *ptr;
+    struct locale__Locimp *ptr;
 } locale;

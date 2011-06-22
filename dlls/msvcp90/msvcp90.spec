@@ -1104,20 +1104,20 @@
 @ cdecl -arch=win64 ??0ios_base@std@@IEAA@XZ(ptr) ios_base_ctor
 @ thiscall -arch=win32 ??0ios_base@std@@QAE@ABV01@@Z(ptr ptr) ios_base_copy_ctor
 @ cdecl -arch=win64 ??0ios_base@std@@QEAA@AEBV01@@Z(ptr ptr) ios_base_copy_ctor
-@ stub -arch=win32 ??0locale@std@@AAE@PAV_Locimp@01@@Z
-@ stub -arch=win64 ??0locale@std@@AEAA@PEAV_Locimp@01@@Z
-@ stub -arch=win32 ??0locale@std@@QAE@ABV01@0H@Z
-@ stub -arch=win64 ??0locale@std@@QEAA@AEBV01@0H@Z
-@ stub -arch=win32 ??0locale@std@@QAE@ABV01@@Z
-@ stub -arch=win64 ??0locale@std@@QEAA@AEBV01@@Z
-@ stub -arch=win32 ??0locale@std@@QAE@ABV01@PBDH@Z
-@ stub -arch=win64 ??0locale@std@@QEAA@AEBV01@PEBDH@Z
-@ stub -arch=win32 ??0locale@std@@QAE@PBDH@Z
-@ stub -arch=win64 ??0locale@std@@QEAA@PEBDH@Z
-@ stub -arch=win32 ??0locale@std@@QAE@W4_Uninitialized@1@@Z
-@ stub -arch=win64 ??0locale@std@@QEAA@W4_Uninitialized@1@@Z
-@ stub -arch=win32 ??0locale@std@@QAE@XZ
-@ stub -arch=win64 ??0locale@std@@QEAA@XZ
+@ thiscall -arch=win32 ??0locale@std@@AAE@PAV_Locimp@01@@Z(ptr ptr) locale_ctor_locimp
+@ cdecl -arch=win64 ??0locale@std@@AEAA@PEAV_Locimp@01@@Z(ptr ptr) locale_ctor_locimp
+@ thiscall -arch=win32 ??0locale@std@@QAE@ABV01@0H@Z(ptr ptr ptr long) locale_ctor_locale_locale
+@ cdecl -arch=win64 ??0locale@std@@QEAA@AEBV01@0H@Z(ptr ptr ptr long) locale_ctor_locale_locale
+@ thiscall -arch=win32 ??0locale@std@@QAE@ABV01@@Z(ptr ptr) locale_copy_ctor
+@ cdecl -arch=win64 ??0locale@std@@QEAA@AEBV01@@Z(ptr ptr) locale_copy_ctor
+@ thiscall -arch=win32 ??0locale@std@@QAE@ABV01@PBDH@Z(ptr ptr str long) locale_ctor_locale_cstr
+@ cdecl -arch=win64 ??0locale@std@@QEAA@AEBV01@PEBDH@Z(ptr ptr str long) locale_ctor_locale_cstr
+@ thiscall -arch=win32 ??0locale@std@@QAE@PBDH@Z(ptr str long) locale_ctor_cstr
+@ cdecl -arch=win64 ??0locale@std@@QEAA@PEBDH@Z(ptr str long) locale_ctor_cstr
+@ thiscall -arch=win32 ??0locale@std@@QAE@W4_Uninitialized@1@@Z(ptr long) locale_ctor_uninitialized
+@ cdecl -arch=win64 ??0locale@std@@QEAA@W4_Uninitialized@1@@Z(ptr long) locale_ctor_uninitialized
+@ thiscall -arch=win32 ??0locale@std@@QAE@XZ(ptr) locale_ctor
+@ cdecl -arch=win64 ??0locale@std@@QEAA@XZ(ptr) locale_ctor
 @ stub -arch=win32 ??0messages_base@std@@QAE@I@Z
 @ stub -arch=win64 ??0messages_base@std@@QEAA@_K@Z
 @ stub -arch=win32 ??0money_base@std@@QAE@I@Z
@@ -1334,8 +1334,8 @@
 @ cdecl -arch=win64 ??1facet@locale@std@@UEAA@XZ(ptr) locale_facet_dtor
 @ thiscall -arch=win32 ??1ios_base@std@@UAE@XZ(ptr) ios_base_dtor
 @ cdecl -arch=win64 ??1ios_base@std@@UEAA@XZ(ptr) ios_base_dtor
-@ stub -arch=win32 ??1locale@std@@QAE@XZ
-@ stub -arch=win64 ??1locale@std@@QEAA@XZ
+@ thiscall -arch=win32 ??1locale@std@@QAE@XZ(ptr) locale_dtor
+@ cdecl -arch=win64 ??1locale@std@@QEAA@XZ(ptr) locale_dtor
 @ stub -arch=win32 ??1messages_base@std@@UAE@XZ
 @ stub -arch=win64 ??1messages_base@std@@UEAA@XZ
 @ stub -arch=win32 ??1money_base@std@@UAE@XZ
@@ -1470,8 +1470,8 @@
 @ stub -arch=win64 ??4_Winit@std@@QEAAAEAV01@AEBV01@@Z
 @ thiscall -arch=win32 ??4ios_base@std@@QAEAAV01@ABV01@@Z(ptr ptr) ios_base_assign
 @ cdecl -arch=win64 ??4ios_base@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) ios_base_assign
-@ stub -arch=win32 ??4locale@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4locale@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4locale@std@@QAEAAV01@ABV01@@Z(ptr ptr) locale_operator_assign
+@ cdecl -arch=win64 ??4locale@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) locale_operator_assign
 @ stub -arch=win32 ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAF@Z
 @ stub -arch=win64 ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAF@Z
 @ stub -arch=win32 ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAG@Z
@@ -1678,10 +1678,10 @@
 @ stub -arch=win64 ??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@_N@Z
 @ thiscall -arch=win32 ??7ios_base@std@@QBE_NXZ(ptr) ios_base_op_succ
 @ cdecl -arch=win64 ??7ios_base@std@@QEBA_NXZ(ptr) ios_base_op_succ
-@ stub -arch=win32 ??8locale@std@@QBE_NABV01@@Z
-@ stub -arch=win64 ??8locale@std@@QEBA_NAEBV01@@Z
-@ stub -arch=win32 ??9locale@std@@QBE_NABV01@@Z
-@ stub -arch=win64 ??9locale@std@@QEBA_NAEBV01@@Z
+@ thiscall -arch=win32 ??8locale@std@@QBE_NABV01@@Z(ptr ptr) locale_operator_equal
+@ cdecl -arch=win64 ??8locale@std@@QEBA_NAEBV01@@Z(ptr ptr) locale_operator_equal
+@ thiscall -arch=win32 ??9locale@std@@QBE_NABV01@@Z(ptr ptr) locale_operator_not_equal
+@ cdecl -arch=win64 ??9locale@std@@QEBA_NAEBV01@@Z(ptr ptr) locale_operator_not_equal
 @ thiscall -arch=win32 ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAADI@Z(ptr long) MSVCP_basic_string_char_at
 @ stub -arch=win64 ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEADU_Size_type_nosscl@01@@Z
 @ stub -arch=win32 ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAADU_Size_type_nosscl@01@@Z
@@ -2101,8 +2101,8 @@
 @ stub -arch=win64 ?_Addcats@_Locinfo@std@@QEAAAEAV12@HPEBD@Z
 @ thiscall -arch=win32 ?_Addfac@_Locimp@locale@std@@AAEXPAVfacet@23@I@Z(ptr ptr long) locale__Locimp__Addfac
 @ cdecl -arch=win64 ?_Addfac@_Locimp@locale@std@@AEAAXPEAVfacet@23@_K@Z(ptr ptr long) locale__Locimp__Addfac
-@ stub -arch=win32 ?_Addfac@locale@std@@QAEAAV12@PAVfacet@12@II@Z
-@ stub -arch=win64 ?_Addfac@locale@std@@QEAAAEAV12@PEAVfacet@12@_K1@Z
+@ thiscall -arch=win32 ?_Addfac@locale@std@@QAEAAV12@PAVfacet@12@II@Z(ptr ptr long long) locale__Addfac
+@ cdecl -arch=win64 ?_Addfac@locale@std@@QEAAAEAV12@PEAVfacet@12@_K1@Z(ptr ptr long long) locale__Addfac
 @ cdecl -arch=win32 ?_Addstd@ios_base@std@@SAXPAV12@@Z(ptr) ios_base_Addstd
 @ cdecl -arch=win64 ?_Addstd@ios_base@std@@SAXPEAV12@@Z(ptr) ios_base_Addstd
 @ stub ?_Atexit@@YAXP6AXXZ@Z
@@ -2311,8 +2311,8 @@
 @ stub -arch=win64 ?_Getdateorder@_Locinfo@std@@QEBAHXZ
 @ stub -arch=win32 ?_Getdays@_Locinfo@std@@QBEPBDXZ
 @ stub -arch=win64 ?_Getdays@_Locinfo@std@@QEBAPEBDXZ
-@ stub -arch=win32 ?_Getfacet@locale@std@@QBEPBVfacet@12@I@Z
-@ stub -arch=win64 ?_Getfacet@locale@std@@QEBAPEBVfacet@12@_K@Z
+@ thiscall -arch=win32 ?_Getfacet@locale@std@@QBEPBVfacet@12@I@Z(ptr long) locale__Getfacet
+@ cdecl -arch=win64 ?_Getfacet@locale@std@@QEBAPEBVfacet@12@_K@Z(ptr long) locale__Getfacet
 @ stub -arch=win32 ?_Getfalse@_Locinfo@std@@QBEPBDXZ
 @ stub -arch=win64 ?_Getfalse@_Locinfo@std@@QEBAPEBDXZ
 @ stub -arch=win32 ?_Getffld@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1ABVlocale@2@@Z
@@ -2327,8 +2327,8 @@
 @ stub -arch=win64 ?_Getffldx@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@AEBAHPEADAEAV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@1AEAVios_base@2@PEAH@Z
 @ stub -arch=win32 ?_Getffldx@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@1AAVios_base@2@PAH@Z
 @ stub -arch=win64 ?_Getffldx@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBAHPEADAEAV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@1AEAVios_base@2@PEAH@Z
-@ stub -arch=win32 ?_Getgloballocale@locale@std@@CAPAV_Locimp@12@XZ
-@ stub -arch=win64 ?_Getgloballocale@locale@std@@CAPEAV_Locimp@12@XZ
+@ cdecl -arch=win32 ?_Getgloballocale@locale@std@@CAPAV_Locimp@12@XZ(long) locale__Getgloballocale
+@ cdecl -arch=win64 ?_Getgloballocale@locale@std@@CAPEAV_Locimp@12@XZ(long) locale__Getgloballocale
 @ stub -arch=win32 ?_Getifld@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1HABVlocale@2@@Z
 @ stub -arch=win64 ?_Getifld@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAHPEADAEAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1HAEBVlocale@2@@Z
 @ stub -arch=win32 ?_Getifld@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@1HABVlocale@2@@Z
@@ -2526,8 +2526,8 @@
 @ stub -arch=win64 ?_Init@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IEAAXAEBV_Locinfo@2@@Z
 @ thiscall -arch=win32 ?_Init@ios_base@std@@IAEXXZ(ptr) ios_base_Init
 @ cdecl -arch=win64 ?_Init@ios_base@std@@IEAAXXZ(ptr) ios_base_Init
-@ stub -arch=win32 ?_Init@locale@std@@CAPAV_Locimp@12@XZ
-@ stub -arch=win64 ?_Init@locale@std@@CAPEAV_Locimp@12@XZ
+@ cdecl -arch=win32 ?_Init@locale@std@@CAPAV_Locimp@12@XZ(long) locale__Init
+@ cdecl -arch=win64 ?_Init@locale@std@@CAPEAV_Locimp@12@XZ(long) locale__Init
 @ stub -arch=win32 ?_Init@strstreambuf@std@@IAEXHPAD0H@Z
 @ stub -arch=win64 ?_Init@strstreambuf@std@@IEAAX_JPEAD1H@Z
 # extern ?_Init_cnt@Init@ios_base@std@@0HA
@@ -2780,8 +2780,8 @@
 # extern -arch=win64 ?_Root2@?CA@???$_Fabs@M@std@@YAMAEBV?$complex@M@1@PEAH@Z@4MB
 # extern -arch=win32 ?_Root2@?CA@???$_Fabs@N@std@@YANABV?$complex@N@1@PAH@Z@4NB
 # extern -arch=win64 ?_Root2@?CA@???$_Fabs@N@std@@YANAEBV?$complex@N@1@PEAH@Z@4NB
-@ stub -arch=win32 ?_Setgloballocale@locale@std@@CAXPAX@Z
-@ stub -arch=win64 ?_Setgloballocale@locale@std@@CAXPEAX@Z
+@ cdecl -arch=win32 ?_Setgloballocale@locale@std@@CAXPAX@Z(ptr) locale__Setgloballocale
+@ cdecl -arch=win64 ?_Setgloballocale@locale@std@@CAXPEAX@Z(ptr) locale__Setgloballocale
 @ stub -arch=win32 ?_Sgetn_s@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHPADIH@Z
 @ stub -arch=win64 ?_Sgetn_s@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA_JPEAD_K_J@Z
 @ stub -arch=win32 ?_Sgetn_s@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEHPAGIH@Z
@@ -3055,8 +3055,8 @@
 @ cdecl -arch=win64 ?capacity@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ(ptr) MSVCP_basic_string_wchar_capacity
 # extern ?cerr@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A
 # extern ?cin@std@@3V?$basic_istream@DU?$char_traits@D@std@@@1@A
-@ stub -arch=win32 ?classic@locale@std@@SAABV12@XZ
-@ stub -arch=win64 ?classic@locale@std@@SAAEBV12@XZ
+@ cdecl -arch=win32 ?classic@locale@std@@SAABV12@XZ(long) locale_classic
+@ cdecl -arch=win64 ?classic@locale@std@@SAAEBV12@XZ(long) locale_classic
 @ stub -arch=win32 ?classic_table@?$ctype@D@std@@KAPBFXZ
 @ stub -arch=win64 ?classic_table@?$ctype@D@std@@KAPEBFXZ
 @ thiscall -arch=win32 ?clear@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEXH_N@Z(ptr long long) basic_ios_char_clear_reraise
@@ -4551,8 +4551,8 @@
 @ cdecl -arch=win64 ?move@?$char_traits@G@std@@SAPEAGPEAGPEBG_K@Z(ptr ptr long) MSVCP_char_traits_short_move
 @ cdecl -arch=win32 ?move@?$char_traits@_W@std@@SAPA_WPA_WPB_WI@Z(ptr ptr long) MSVCP_char_traits_wchar_move
 @ cdecl -arch=win64 ?move@?$char_traits@_W@std@@SAPEA_WPEA_WPEB_W_K@Z(ptr ptr long) MSVCP_char_traits_wchar_move
-@ stub -arch=win32 ?name@locale@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win64 ?name@locale@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
+@ thiscall -arch=win32 ?name@locale@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) locale_name
+@ cdecl -arch=win64 ?name@locale@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) locale_name
 @ thiscall -arch=win32 ?narrow@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEDDD@Z(ptr long long) basic_ios_char_narrow
 @ cdecl -arch=win64 ?narrow@?$basic_ios@DU?$char_traits@D@std@@@std@@QEBADDD@Z(ptr long long) basic_ios_char_narrow
 @ stub -arch=win32 ?narrow@?$basic_ios@GU?$char_traits@G@std@@@std@@QBEDGD@Z
