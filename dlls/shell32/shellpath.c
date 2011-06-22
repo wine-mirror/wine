@@ -3079,6 +3079,7 @@ HRESULT WINAPI SHGetFolderPathEx(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE toke
 /* constant values used by known folder functions */
 static const WCHAR szCategory[] = {'C','a','t','e','g','o','r','y',0};
 static const WCHAR szName[] = {'N','a','m','e',0};
+static const WCHAR szRelativePath[] = {'R','e','l','a','t','i','v','e','P','a','t','h',0};
 
 /*
  * Internal function to convert known folder identifier to path of registry key
@@ -3120,6 +3121,7 @@ struct knownfolder
     const struct IKnownFolderVtbl *vtbl;
     LONG refs;
     KNOWNFOLDERID id;
+    LPWSTR registryPath;
 };
 
 static inline struct knownfolder *impl_from_IKnownFolder( IKnownFolder *iface )
@@ -3142,6 +3144,7 @@ static ULONG WINAPI knownfolder_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", knownfolder);
+        HeapFree( GetProcessHeap(), 0, knownfolder->registryPath);
         HeapFree( GetProcessHeap(), 0, knownfolder );
     }
     return refs;
@@ -3175,11 +3178,32 @@ static HRESULT knownfolder_set_id(
     const KNOWNFOLDERID *kfid)
 {
     struct knownfolder *knownfolder = impl_from_IKnownFolder( iface );
+    HKEY hKey;
+    HRESULT hr;
 
     TRACE("%s\n", debugstr_guid(kfid));
 
     knownfolder->id = *kfid;
-    return S_OK;
+
+    /* check is it registry-registered folder */
+    hr = get_known_folder_registry_path(kfid, &knownfolder->registryPath);
+    if(SUCCEEDED(hr))
+        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, 0, 0, &hKey));
+
+    if(SUCCEEDED(hr))
+    {
+        hr = S_OK;
+        RegCloseKey(hKey);
+    }
+    else
+    {
+        /* This known folder is not registered. To mark it, we set registryPath to NULL */
+        HeapFree(GetProcessHeap(), 0, knownfolder->registryPath);
+        knownfolder->registryPath = NULL;
+        hr = S_OK;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI knownfolder_GetId(
@@ -3218,9 +3242,30 @@ static HRESULT WINAPI knownfolder_GetPath(
     LPWSTR *ppszPath)
 {
     struct knownfolder *knownfolder = impl_from_IKnownFolder( iface );
+    DWORD dwSize, dwType;
+    HRESULT hr;
 
-    TRACE("0x%08x, %p\n", dwFlags, ppszPath);
-    return SHGetKnownFolderPath( &knownfolder->id, dwFlags, NULL, ppszPath );
+    TRACE("(%p, 0x%08x, %p)\n", knownfolder, dwFlags, ppszPath);
+
+    /* if this is registry-registered known folder, get path from registry */
+    if(knownfolder->registryPath)
+    {
+        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, szRelativePath, RRF_RT_REG_SZ, &dwType, NULL, &dwSize));
+
+        if(SUCCEEDED(hr))
+        {
+            *ppszPath = CoTaskMemAlloc(dwSize);
+            if(!*ppszPath) hr = E_OUTOFMEMORY;
+        }
+
+        if(SUCCEEDED(hr))
+            hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, szRelativePath, RRF_RT_REG_SZ, &dwType, *ppszPath, &dwSize));
+    }
+    /* in other case, use older way */
+    else
+        hr = SHGetKnownFolderPath( &knownfolder->id, dwFlags, NULL, ppszPath );
+
+    return hr;
 }
 
 static HRESULT WINAPI knownfolder_SetPath(
@@ -3291,6 +3336,7 @@ static HRESULT knownfolder_create( void **ppv )
     kf->vtbl = &knownfolder_vtbl;
     kf->refs = 1;
     memset( &kf->id, 0, sizeof(kf->id) );
+    kf->registryPath = NULL;
 
     *ppv = &kf->vtbl;
 
@@ -3479,6 +3525,9 @@ static HRESULT WINAPI foldermanager_RegisterFolder(
 
         if(SUCCEEDED(hr))
             hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szName, 0, REG_SZ, (LPBYTE)pKFD->pszName, (lstrlenW(pKFD->pszName)+1)*sizeof(WCHAR) ));
+
+        if(SUCCEEDED(hr) && pKFD->category != KF_CATEGORY_VIRTUAL)
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szRelativePath, 0, REG_SZ, (LPBYTE)pKFD->pszRelativePath, (lstrlenW(pKFD->pszRelativePath)+1)*sizeof(WCHAR) ));
 
         RegCloseKey(hKey);
     }
