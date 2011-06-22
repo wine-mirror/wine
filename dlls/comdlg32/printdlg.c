@@ -616,8 +616,8 @@ static BOOL PRINTDLG_SetUpPaperComboBoxA(HWND hDlg,
     int     NrOfEntries;
     char*   Names;
     WORD*   Words;
-    DWORD   Sel;
-    WORD    oldWord = 0;
+    DWORD   Sel, old_Sel;
+    WORD    oldWord = 0, newWord = 0; /* DMPAPER_ and DMBIN_ start at 1 */
     int     NamesSize;
     int     fwCapability_Names;
     int     fwCapability_Words;
@@ -633,25 +633,13 @@ static BOOL PRINTDLG_SetUpPaperComboBoxA(HWND hDlg,
          */
         oldWord = SendDlgItemMessageA(hDlg, nIDComboBox, CB_GETITEMDATA,
                                       Sel, 0);
-        if (dm) {
-            if (nIDComboBox == cmb2)
-                dm->u1.s1.dmPaperSize = oldWord;
-            else
-                dm->u1.s1.dmDefaultSource = oldWord;
-        }
+        if(oldWord >= DMPAPER_USER) /* DMPAPER_USER == DMBIN_USER */
+            oldWord = 0; /* There's no point in trying to keep custom
+                            paper / bin sizes across printers */
     }
-    else {
-        /* we enter here only when the Print setup dialog is initially
-         * opened. In this case the settings are restored from when
-         * the dialog was last closed.
-         */
-        if (dm) {
-            if (nIDComboBox == cmb2)
-                oldWord = dm->u1.s1.dmPaperSize;
-            else
-                oldWord = dm->u1.s1.dmDefaultSource;
-        }
-    }
+
+    if (dm)
+        newWord = (nIDComboBox == cmb2) ? dm->u1.s1.dmPaperSize : dm->u1.s1.dmDefaultSource;
 
     if (nIDComboBox == cmb2) {
          NamesSize          = 64;
@@ -695,16 +683,32 @@ static BOOL PRINTDLG_SetUpPaperComboBoxA(HWND hDlg,
 			    Words[i]);
     }
 
-    /* Look for old selection - can't do this is previous loop since
-       item order will change as more items are added */
+    /* Look for old selection or the new default.
+       Can't do this is previous loop since item order will change as more items are added */
     Sel = 0;
+    old_Sel = NrOfEntries;
     for (i = 0; i < NrOfEntries; i++) {
         if(SendDlgItemMessageA(hDlg, nIDComboBox, CB_GETITEMDATA, i, 0) ==
 	   oldWord) {
-	    Sel = i;
+	    old_Sel = i;
 	    break;
 	}
+        if(SendDlgItemMessageA(hDlg, nIDComboBox, CB_GETITEMDATA, i, 0) == newWord)
+	    Sel = i;
     }
+
+    if(old_Sel < NrOfEntries)
+    {
+        if (dm)
+        {
+            if(nIDComboBox == cmb2)
+                dm->u1.s1.dmPaperSize = oldWord;
+            else
+                dm->u1.s1.dmDefaultSource = oldWord;
+        }
+        Sel = old_Sel;
+    }
+
     SendDlgItemMessageA(hDlg, nIDComboBox, CB_SETCURSEL, Sel, 0);
 
     HeapFree(GetProcessHeap(),0,Words);
@@ -722,8 +726,8 @@ static BOOL PRINTDLG_SetUpPaperComboBoxW(HWND hDlg,
     int     NrOfEntries;
     WCHAR*  Names;
     WORD*   Words;
-    DWORD   Sel;
-    WORD    oldWord = 0;
+    DWORD   Sel, old_Sel;
+    WORD    oldWord = 0, newWord = 0; /* DMPAPER_ and DMBIN_ start at 1 */
     int     NamesSize;
     int     fwCapability_Names;
     int     fwCapability_Words;
@@ -739,25 +743,14 @@ static BOOL PRINTDLG_SetUpPaperComboBoxW(HWND hDlg,
          */
         oldWord = SendDlgItemMessageW(hDlg, nIDComboBox, CB_GETITEMDATA,
                                       Sel, 0);
-        if (dm) {
-            if (nIDComboBox == cmb2)
-                dm->u1.s1.dmPaperSize = oldWord;
-            else
-                dm->u1.s1.dmDefaultSource = oldWord;
-        }
+
+        if(oldWord >= DMPAPER_USER) /* DMPAPER_USER == DMBIN_USER */
+            oldWord = 0; /* There's no point in trying to keep custom
+                            paper / bin sizes across printers */
     }
-    else {
-        /* we enter here only when the Print setup dialog is initially
-         * opened. In this case the settings are restored from when
-         * the dialog was last closed.
-         */
-        if (dm) {
-            if (nIDComboBox == cmb2)
-                oldWord = dm->u1.s1.dmPaperSize;
-            else
-                oldWord = dm->u1.s1.dmDefaultSource;
-        }
-    }
+
+    if (dm)
+        newWord = (nIDComboBox == cmb2) ? dm->u1.s1.dmPaperSize : dm->u1.s1.dmDefaultSource;
 
     if (nIDComboBox == cmb2) {
          NamesSize          = 64;
@@ -801,16 +794,32 @@ static BOOL PRINTDLG_SetUpPaperComboBoxW(HWND hDlg,
 			    Words[i]);
     }
 
-    /* Look for old selection - can't do this is previous loop since
-       item order will change as more items are added */
+    /* Look for old selection or the new default.
+       Can't do this is previous loop since item order will change as more items are added */
     Sel = 0;
+    old_Sel = NrOfEntries;
     for (i = 0; i < NrOfEntries; i++) {
         if(SendDlgItemMessageW(hDlg, nIDComboBox, CB_GETITEMDATA, i, 0) ==
 	   oldWord) {
-	    Sel = i;
+	    old_Sel = i;
 	    break;
 	}
+        if(SendDlgItemMessageA(hDlg, nIDComboBox, CB_GETITEMDATA, i, 0) == newWord)
+            Sel = i;
     }
+
+    if(old_Sel < NrOfEntries)
+    {
+        if (dm)
+        {
+            if(nIDComboBox == cmb2)
+                dm->u1.s1.dmPaperSize = oldWord;
+            else
+                dm->u1.s1.dmDefaultSource = oldWord;
+        }
+        Sel = old_Sel;
+    }
+
     SendDlgItemMessageW(hDlg, nIDComboBox, CB_SETCURSEL, Sel, 0);
 
     HeapFree(GetProcessHeap(),0,Words);
