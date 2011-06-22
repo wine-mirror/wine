@@ -1172,14 +1172,11 @@ static void test_knownFolders(void)
             if(SUCCEEDED(hr))
             {
                 hr = IKnownFolderManager_GetFolder(mgr, &newFolderId, &folder);
-                todo_wine
                 ok(hr == S_OK, "failed to get known folder: 0x%08x\n", hr);
                 if(SUCCEEDED(hr))
                 {
                     hr = IKnownFolder_GetId(folder, &folderId);
-                    todo_wine
                     ok(hr == S_OK, "failed to get folder id: 0x%08x\n", hr);
-                    todo_wine
                     ok(IsEqualGUID(&folderId, &newFolderId)==TRUE, "invalid KNOWNFOLDERID returned\n");
 
                     hr = IKnownFolder_GetPath(folder, 0, &folderPath);

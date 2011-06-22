@@ -3400,11 +3400,25 @@ static HRESULT WINAPI foldermanager_GetFolderIds(
 static BOOL is_knownfolder( struct foldermanager *fm, const KNOWNFOLDERID *id )
 {
     UINT i;
+    HRESULT hr;
+    LPWSTR registryPath = NULL;
+    HKEY hKey;
 
+    /* TODO: move all entries from "CSIDL_Data" static array to registry known folder descriptions */
     for (i = 0; i < fm->num_ids; i++)
         if (IsEqualGUID( &fm->ids[i], id )) return TRUE;
 
-    return FALSE;
+    hr = get_known_folder_registry_path(id, &registryPath);
+    if(SUCCEEDED(hr))
+        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE, registryPath, 0, 0, &hKey));
+
+    if(SUCCEEDED(hr))
+    {
+        hr = S_OK;
+        RegCloseKey(hKey);
+    }
+
+    return hr == S_OK;
 }
 
 static HRESULT WINAPI foldermanager_GetFolder(
