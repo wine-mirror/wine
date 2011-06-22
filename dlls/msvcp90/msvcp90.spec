@@ -1096,8 +1096,8 @@
 @ stub -arch=win64 ??0codecvt_base@std@@QEAA@_K@Z
 @ stub -arch=win32 ??0ctype_base@std@@QAE@I@Z
 @ stub -arch=win64 ??0ctype_base@std@@QEAA@_K@Z
-@ stub -arch=win32 ??0facet@locale@std@@IAE@I@Z
-@ stub -arch=win64 ??0facet@locale@std@@IEAA@_K@Z
+@ thiscall -arch=win32 ??0facet@locale@std@@IAE@I@Z(ptr long) locale_facet_ctor_refs
+@ cdecl -arch=win64 ??0facet@locale@std@@IEAA@_K@Z(ptr long) locale_facet_ctor_refs
 @ stub -arch=win32 ??0id@locale@std@@QAE@I@Z
 @ stub -arch=win64 ??0id@locale@std@@QEAA@_K@Z
 @ thiscall -arch=win32 ??0ios_base@std@@IAE@XZ(ptr) ios_base_ctor
@@ -1330,8 +1330,8 @@
 @ stub -arch=win64 ??1codecvt_base@std@@UEAA@XZ
 @ stub -arch=win32 ??1ctype_base@std@@UAE@XZ
 @ stub -arch=win64 ??1ctype_base@std@@UEAA@XZ
-@ stub -arch=win32 ??1facet@locale@std@@UAE@XZ
-@ stub -arch=win64 ??1facet@locale@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1facet@locale@std@@UAE@XZ(ptr) locale_facet_dtor
+@ cdecl -arch=win64 ??1facet@locale@std@@UEAA@XZ(ptr) locale_facet_dtor
 @ thiscall -arch=win32 ??1ios_base@std@@UAE@XZ(ptr) ios_base_dtor
 @ cdecl -arch=win64 ??1ios_base@std@@UEAA@XZ(ptr) ios_base_dtor
 @ stub -arch=win32 ??1locale@std@@QAE@XZ
@@ -1392,8 +1392,8 @@
 @ stub -arch=win64 ??4?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAAAEAV01@G@Z
 @ stub -arch=win32 ??4?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV01@PBG@Z
 @ stub -arch=win64 ??4?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAAAEAV01@PEBG@Z
-@ thiscall -arch=win32 ??4?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV01@ABV01@@Z(ptr ptr) MSVCP_basic_string_char_assign
-@ cdecl -arch=win64 ??4?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_basic_string_char_assign
+@ thiscall -arch=win32 ??4?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV01@ABV01@@Z(ptr ptr) MSVCP_basic_string_wchar_assign
+@ cdecl -arch=win64 ??4?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_basic_string_wchar_assign
 @ stub -arch=win32 ??4?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV01@PB_W@Z
 @ stub -arch=win64 ??4?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV01@PEB_W@Z
 @ stub -arch=win32 ??4?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV01@_W@Z
@@ -2085,8 +2085,8 @@
 @ stub -arch=win64 ??_Fcodecvt_base@std@@QEAAXXZ
 @ stub -arch=win32 ??_Fctype_base@std@@QAEXXZ
 @ stub -arch=win64 ??_Fctype_base@std@@QEAAXXZ
-@ stub -arch=win32 ??_Ffacet@locale@std@@QAEXXZ
-@ stub -arch=win64 ??_Ffacet@locale@std@@QEAAXXZ
+@ thiscall -arch=win32 ??_Ffacet@locale@std@@QAEXXZ(ptr) locale_facet_ctor
+@ cdecl -arch=win64 ??_Ffacet@locale@std@@QEAAXXZ(ptr) locale_facet_ctor
 @ stub -arch=win32 ??_Fid@locale@std@@QAEXXZ
 @ stub -arch=win64 ??_Fid@locale@std@@QEAAXXZ
 @ stub -arch=win32 ??_Fmessages_base@std@@QAEXXZ
@@ -2158,8 +2158,8 @@
 @ stub -arch=win64 ?_Cout_func@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ
 @ stub -arch=win32 ?_Debug_message@std@@YAXPBD0@Z
 @ stub -arch=win64 ?_Debug_message@std@@YAXPEBD0@Z
-@ stub -arch=win32 ?_Decref@facet@locale@std@@QAEPAV123@XZ
-@ stub -arch=win64 ?_Decref@facet@locale@std@@QEAAPEAV123@XZ
+@ thiscall -arch=win32 ?_Decref@facet@locale@std@@QAEPAV123@XZ(ptr) locale_facet__Decref
+@ cdecl -arch=win64 ?_Decref@facet@locale@std@@QEAAPEAV123@XZ(ptr) locale_facet__Decref
 @ stub -arch=win32 ?_Do_narrow_s@?$ctype@D@std@@MBEPBDPBD0DPADI@Z
 @ stub -arch=win64 ?_Do_narrow_s@?$ctype@D@std@@MEBAPEBDPEBD0DPEAD_K@Z
 @ stub -arch=win32 ?_Do_narrow_s@?$ctype@G@std@@MBEPBGPBG0DPADI@Z
@@ -2299,8 +2299,8 @@
 @ stub -arch=win64 ?_Getcat@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z
 @ stub -arch=win32 ?_Getcat@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z
 @ stub -arch=win64 ?_Getcat@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z
-@ stub -arch=win32 ?_Getcat@facet@locale@std@@SAIPAPBV123@PBV23@@Z
-@ stub -arch=win64 ?_Getcat@facet@locale@std@@SA_KPEAPEBV123@PEBV23@@Z
+@ cdecl -arch=win32 ?_Getcat@facet@locale@std@@SAIPAPBV123@PBV23@@Z(ptr ptr) locale_facet__Getcat
+@ cdecl -arch=win64 ?_Getcat@facet@locale@std@@SA_KPEAPEBV123@PEBV23@@Z(ptr ptr) locale_facet__Getcat
 @ stub -arch=win32 ?_Getcoll@_Locinfo@std@@QBE?AU_Collvec@@XZ
 @ stub -arch=win64 ?_Getcoll@_Locinfo@std@@QEBA?AU_Collvec@@XZ
 @ stub -arch=win32 ?_Getctype@_Locinfo@std@@QBE?AU_Ctypevec@@XZ
@@ -2420,8 +2420,8 @@
 @ stub -arch=win64 ?_Ifmt@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@AEBAPEADPEADPEBDH@Z
 @ stub -arch=win32 ?_Ifmt@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABAPADPADPBDH@Z
 @ stub -arch=win64 ?_Ifmt@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBAPEADPEADPEBDH@Z
-@ stub -arch=win32 ?_Incref@facet@locale@std@@QAEXXZ
-@ stub -arch=win64 ?_Incref@facet@locale@std@@QEAAXXZ
+@ thiscall -arch=win32 ?_Incref@facet@locale@std@@QAEXXZ(ptr) locale_facet__Incref
+@ cdecl -arch=win64 ?_Incref@facet@locale@std@@QEAAXXZ(ptr) locale_facet__Incref
 @ extern ?_Index@ios_base@std@@0HA ios_base_Index
 @ cdecl -arch=win32 ?_Index_func@ios_base@std@@CAAAHXZ() ios_base_Index_func
 @ cdecl -arch=win64 ?_Index_func@ios_base@std@@CAAEAHXZ() ios_base_Index_func
@@ -3735,7 +3735,7 @@
 @ cdecl ?eof@?$char_traits@G@std@@SAGXZ() MSVCP_char_traits_short_eof
 @ cdecl ?eof@?$char_traits@_W@std@@SAGXZ() MSVCP_char_traits_wchar_eof
 @ thiscall -arch=win32 ?eof@ios_base@std@@QBE_NXZ(ptr) ios_base_eof
-@ thiscall -arch=win64 ?eof@ios_base@std@@QEBA_NXZ(ptr) ios_base_eof
+@ cdecl -arch=win64 ?eof@ios_base@std@@QEBA_NXZ(ptr) ios_base_eof
 @ stub -arch=win32 ?epptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ
 @ stub -arch=win64 ?epptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEBAPEADXZ
 @ stub -arch=win32 ?epptr@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IBEPAGXZ
