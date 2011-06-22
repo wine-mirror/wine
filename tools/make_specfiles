@@ -214,7 +214,7 @@ sub update_spec_file($)
         {
             my $callconv = $parent{callconv} ne "stub" ? $parent{callconv} :
                            $parent{spec} =~ /msvc/ ? "cdecl" : "stdcall";  # hack
-            $_ = sprintf "@ %s %s%s", $callconv, $flags, $func;
+            $_ = sprintf "$descr{ordinal} %s %s%s", $callconv, $flags, $func;
 
             if ($parent{target} =~ /$group_head\./)  # use the same forward as parent if possible
             {
@@ -227,7 +227,7 @@ sub update_spec_file($)
         }
         else
         {
-            $_ = sprintf "@ stub %s%s", $flags, $func;
+            $_ = sprintf "$descr{ordinal} stub %s%s", $flags, $func;
         }
         $_ .= $descr{comment} || "";
 
