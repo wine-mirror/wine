@@ -1923,7 +1923,7 @@ static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *
 }
 
 /* Do not call while under the GL lock. */
-static struct wined3d_context *FindContext(struct wined3d_device *device, struct wined3d_surface *target)
+static struct wined3d_context *FindContext(const struct wined3d_device *device, const struct wined3d_surface *target)
 {
     struct wined3d_context *current_context = context_get_current();
     struct wined3d_context *context;
