@@ -2615,7 +2615,7 @@ msgstr "Preveč semaforjev\n"
 
 #: winerror.mc:381
 msgid "Exclusive semaphore already owned\n"
-msgstr "Izključen semafor je ža "
+msgstr "Izključen semafor je ža\n"
 
 #: winerror.mc:386
 msgid "Semaphore is set\n"
@@ -2936,7 +2936,7 @@ msgstr "Samodejni odseki podatkov presegajo 64k\n"
 
 #: winerror.mc:791
 msgid "Ring 2 segment must be movable\n"
-msgstr "Odsek obroč 2 mora biti premakljiv"
+msgstr "Odsek obroč 2 mora biti premakljiv\n"
 
 #: winerror.mc:796
 msgid "Relocation chain exceeds segment limit in %1\n"
@@ -2986,7 +2986,6 @@ msgstr "Preveč modulov\n"
 msgid "Nesting LoadModule calls not allowed\n"
 msgstr ""
 "Klici gnezdenega modula nalaganja niso dovoljeni\n"
-" "
 
 #: winerror.mc:856
 msgid "Machine type mismatch\n"
@@ -3064,7 +3063,6 @@ msgstr "Klicatelj ne sme biti lastnik mutexa\n"
 msgid "Too many posts to semaphore\n"
 msgstr ""
 "Preveč objav na semaforju\n"
-" "
 
 #: winerror.mc:951
 msgid "Read/WriteProcessMemory partially completed\n"
@@ -3148,7 +3146,7 @@ msgstr "Neveljavna datoteka\n"
 
 #: winerror.mc:1051
 msgid "Cannot run full-screen\n"
-msgstr "Ni mogoče poganjati v celozaslonskem načinu"
+msgstr "Ni mogoče poganjati v celozaslonskem načinu\n"
 
 #: winerror.mc:1056
 msgid "Nonexistent token\n"
@@ -3428,7 +3426,7 @@ msgstr "Zaporedni V/I je končan\n"
 
 #: winerror.mc:1401
 msgid "Serial I/O counter timeout\n"
-msgstr "Zakasnitev zaporednega števca V/I"
+msgstr "Zakasnitev zaporednega števca V/I\n"
 
 #: winerror.mc:1406
 msgid "Floppy ID address mark not found\n"
@@ -3520,7 +3518,7 @@ msgstr "DLL-ja ni mogoče najti\n"
 
 #: winerror.mc:1516
 msgid "Out of user handles\n"
-msgstr "Ročnikov uporabnikov je zmanjkalo"
+msgstr "Ročnikov uporabnikov je zmanjkalo\n"
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls\n"
@@ -4276,7 +4274,7 @@ msgstr "Neveljaven ročnik ikone\n"
 
 #: winerror.mc:2471
 msgid "Private dialog index\n"
-msgstr "Kazalo zasebnega pogovornega okna"
+msgstr "Kazalo zasebnega pogovornega okna\n"
 
 #: winerror.mc:2476
 #, fuzzy
@@ -4466,7 +4464,7 @@ msgstr "Zakasnitev\n"
 
 #: winerror.mc:2701
 msgid "Invalid monitor handle\n"
-msgstr "Neveljaven ročnik zaslona"
+msgstr "Neveljaven ročnik zaslona\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt\n"
@@ -4883,7 +4881,7 @@ msgstr "Vnosa ni mogoče najti\n"
 
 #: winerror.mc:3226
 msgid "Name service unavailable\n"
-msgstr "Ime storitve ni na voljo"
+msgstr "Ime storitve ni na voljo\n"
 
 #: winerror.mc:3231
 msgid "Invalid network address family\n"
@@ -5062,19 +5060,16 @@ msgstr "Ni več vezav\n"
 msgid "Can't logon with interdomain trust account\n"
 msgstr ""
 "Ni se mogoče prijaviti z računom meddomenskega zaupanja\n"
-" "
 
 #: winerror.mc:3451
 msgid "Can't logon with workstation trust account\n"
 msgstr ""
 "Ni se mogoče prijaviti z računom zaupanja delovne postaja\n"
-" "
 
 #: winerror.mc:3456
 msgid "Can't logon with server trust account\n"
 msgstr ""
 "Ni se mogoče prijaviti z računom zaupanja strežnika\n"
-" "
 
 #: winerror.mc:3461
 msgid "Domain trust information inconsistent\n"
@@ -6808,7 +6803,7 @@ msgstr ""
 "Kopijo Splošnega Javnega Dovoljenja GNU (angleško: GNU General Public "
 "License) bi morali prejeti skupaj s programom, v kolikor pa je niste, pišite "
 "na naslov Free Software Foundation, Inc.,59 Temple Place - Suite 330, "
-"Boston, MA 02111-1307, USA in zahtevajte kopijo.\n"
+"Boston, MA 02111-1307, USA in zahtevajte kopijo."
 
 #: shell32.rc:246
 msgid "Wine License"
@@ -8174,7 +8169,7 @@ msgstr "VER prikaže različico cmd\n"
 
 #: cmd.rc:206
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "VOL pokaže oznako nosilca diskovne napreve"
+msgstr "VOL pokaže oznako nosilca diskovne napreve.\n"
 
 #: cmd.rc:209
 msgid ""
