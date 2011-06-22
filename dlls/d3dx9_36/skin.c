@@ -26,6 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 struct bone
 {
     char *name;
+    D3DXMATRIX transform;
     DWORD num_influences;
     DWORD *vertices;
     FLOAT *weights;
@@ -274,18 +275,25 @@ static HRESULT WINAPI ID3DXSkinInfoImpl_SetBoneOffsetMatrix(ID3DXSkinInfo *iface
 {
     ID3DXSkinInfoImpl *This = impl_from_ID3DXSkinInfo(iface);
 
-    FIXME("(%p, %u, %p): stub\n", This, bone_num, bone_transform);
+    TRACE("(%p, %u, %p)\n", This, bone_num, bone_transform);
 
-    return E_NOTIMPL;
+    if (bone_num >= This->num_bones || !bone_transform)
+        return D3DERR_INVALIDCALL;
+
+    This->bones[bone_num].transform = *bone_transform;
+    return D3D_OK;
 }
 
 static LPD3DXMATRIX WINAPI ID3DXSkinInfoImpl_GetBoneOffsetMatrix(ID3DXSkinInfo *iface, DWORD bone_num)
 {
     ID3DXSkinInfoImpl *This = impl_from_ID3DXSkinInfo(iface);
 
-    FIXME("(%p, %u): stub\n", This, bone_num);
+    TRACE("(%p, %u)\n", This, bone_num);
 
-    return NULL;
+    if (bone_num >= This->num_bones)
+        return NULL;
+
+    return &This->bones[bone_num].transform;
 }
 
 static HRESULT WINAPI ID3DXSkinInfoImpl_Clone(ID3DXSkinInfo *iface, LPD3DXSKININFO *skin_info)
