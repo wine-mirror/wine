@@ -2,6 +2,7 @@ TESTDLL   = xmllite.dll
 IMPORTS   = ole32
 
 C_SRCS = \
-	reader.c
+	reader.c \
+	writer.c
 
 @MAKE_TEST_RULES@
