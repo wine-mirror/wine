@@ -45,8 +45,8 @@ DEFINE_GUID(IID__AppDomain, 0x05f696dc,0x2b29,0x3663,0xad,0x8b,0xc4,0x38,0x9c,0x
 
 struct RuntimeHost
 {
-    const struct ICorRuntimeHostVtbl *lpVtbl;
-    const struct ICLRRuntimeHostVtbl *lpCLRHostVtbl;
+    ICorRuntimeHost ICorRuntimeHost_iface;
+    ICLRRuntimeHost ICLRRuntimeHost_iface;
     const CLRRuntimeInfo *version;
     loaded_mono *mono;
     struct list domains;
@@ -207,12 +207,12 @@ static HRESULT RuntimeHost_GetIUnknownForDomain(RuntimeHost *This, MonoDomain *d
 
 static inline RuntimeHost *impl_from_ICLRRuntimeHost( ICLRRuntimeHost *iface )
 {
-    return (RuntimeHost *)((char*)iface - FIELD_OFFSET(RuntimeHost, lpCLRHostVtbl));
+    return CONTAINING_RECORD(iface, RuntimeHost, ICLRRuntimeHost_iface);
 }
 
 static inline RuntimeHost *impl_from_ICorRuntimeHost( ICorRuntimeHost *iface )
 {
-    return (RuntimeHost *)((char*)iface - FIELD_OFFSET(RuntimeHost, lpVtbl));
+    return CONTAINING_RECORD(iface, RuntimeHost, ICorRuntimeHost_iface);
 }
 
 /*** IUnknown methods ***/
@@ -476,13 +476,13 @@ static HRESULT WINAPI CLRRuntimeHost_QueryInterface(ICLRRuntimeHost* iface,
 static ULONG WINAPI CLRRuntimeHost_AddRef(ICLRRuntimeHost* iface)
 {
     RuntimeHost *This = impl_from_ICLRRuntimeHost( iface );
-    return IUnknown_AddRef((IUnknown*)&This->lpVtbl);
+    return ICorRuntimeHost_AddRef(&This->ICorRuntimeHost_iface);
 }
 
 static ULONG WINAPI CLRRuntimeHost_Release(ICLRRuntimeHost* iface)
 {
     RuntimeHost *This = impl_from_ICLRRuntimeHost( iface );
-    return IUnknown_Release((IUnknown*)&This->lpVtbl);
+    return ICorRuntimeHost_Release(&This->ICorRuntimeHost_iface);
 }
 
 static HRESULT WINAPI CLRRuntimeHost_Start(ICLRRuntimeHost* iface)
@@ -794,8 +794,8 @@ HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,
     if ( !This )
         return E_OUTOFMEMORY;
 
-    This->lpVtbl = &corruntimehost_vtbl;
-    This->lpCLRHostVtbl = &CLRHostVtbl;
+    This->ICorRuntimeHost_iface.lpVtbl = &corruntimehost_vtbl;
+    This->ICLRRuntimeHost_iface.lpVtbl = &CLRHostVtbl;
     This->ref = 1;
     This->version = runtime_version;
     This->mono = loaded_mono;
@@ -816,12 +816,12 @@ HRESULT RuntimeHost_GetInterface(RuntimeHost *This, REFCLSID clsid, REFIID riid,
 
     if (IsEqualGUID(clsid, &CLSID_CorRuntimeHost))
     {
-        unk = (IUnknown*)&This->lpVtbl;
+        unk = (IUnknown*)&This->ICorRuntimeHost_iface;
         IUnknown_AddRef(unk);
     }
     else if (IsEqualGUID(clsid, &CLSID_CLRRuntimeHost))
     {
-        unk = (IUnknown*)&This->lpCLRHostVtbl;
+        unk = (IUnknown*)&This->ICLRRuntimeHost_iface;
         IUnknown_AddRef(unk);
     }
     else if (IsEqualGUID(clsid, &CLSID_CorMetaDataDispenser) ||
