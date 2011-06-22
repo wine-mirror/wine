@@ -425,16 +425,16 @@
 @ stub -arch=win64 ??0?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAA@_K@Z
 @ stub -arch=win32 ??0Init@ios_base@std@@QAE@XZ
 @ stub -arch=win64 ??0Init@ios_base@std@@QEAA@XZ
-@ stub -arch=win32 ??0_Locimp@locale@std@@AAE@ABV012@@Z
-@ stub -arch=win64 ??0_Locimp@locale@std@@AEAA@AEBV012@@Z
+@ thiscall -arch=win32 ??0_Locimp@locale@std@@AAE@ABV012@@Z(ptr ptr) msvcp90.??0_Locimp@locale@std@@AAE@ABV012@@Z
+@ cdecl -arch=win64 ??0_Locimp@locale@std@@AEAA@AEBV012@@Z(ptr ptr) msvcp90.??0_Locimp@locale@std@@AEAA@AEBV012@@Z
 @ stub -arch=win32 ??0_Locinfo@std@@QAE@HPBD@Z
 @ stub -arch=win64 ??0_Locinfo@std@@QEAA@HPEBD@Z
 @ stub -arch=win32 ??0_Locinfo@std@@QAE@PBD@Z
 @ stub -arch=win64 ??0_Locinfo@std@@QEAA@PEBD@Z
-@ stub -arch=win32 ??0_Lockit@std@@QAE@H@Z
-@ stub -arch=win64 ??0_Lockit@std@@QEAA@H@Z
-@ stub -arch=win32 ??0_Lockit@std@@QAE@XZ
-@ stub -arch=win64 ??0_Lockit@std@@QEAA@XZ
+@ thiscall -arch=win32 ??0_Lockit@std@@QAE@H@Z(ptr long) msvcp90.??0_Lockit@std@@QAE@H@Z
+@ cdecl -arch=win64 ??0_Lockit@std@@QEAA@H@Z(ptr long) msvcp90.??0_Lockit@std@@QEAA@H@Z
+@ thiscall -arch=win32 ??0_Lockit@std@@QAE@XZ(ptr) msvcp90.??0_Lockit@std@@QAE@XZ
+@ cdecl -arch=win64 ??0_Lockit@std@@QEAA@XZ(ptr) msvcp90.??0_Lockit@std@@QEAA@XZ
 @ stub -arch=win32 ??0_Timevec@std@@QAE@ABV01@@Z
 @ stub -arch=win64 ??0_Timevec@std@@QEAA@AEBV01@@Z
 @ stub -arch=win32 ??0_Timevec@std@@QAE@PAX@Z
@@ -459,28 +459,28 @@
 @ stub -arch=win64 ??0codecvt_base@std@@QEAA@_K@Z
 @ stub -arch=win32 ??0ctype_base@std@@QAE@I@Z
 @ stub -arch=win64 ??0ctype_base@std@@QEAA@_K@Z
-@ stub -arch=win32 ??0facet@locale@std@@IAE@I@Z
-@ stub -arch=win64 ??0facet@locale@std@@IEAA@_K@Z
-@ stub -arch=win32 ??0id@locale@std@@QAE@I@Z
-@ stub -arch=win64 ??0id@locale@std@@QEAA@_K@Z
+@ thiscall -arch=win32 ??0facet@locale@std@@IAE@I@Z(ptr long) msvcp90.??0facet@locale@std@@IAE@I@Z
+@ cdecl -arch=win64 ??0facet@locale@std@@IEAA@_K@Z(ptr long) msvcp90.??0facet@locale@std@@IEAA@_K@Z
+@ thiscall -arch=win32 ??0id@locale@std@@QAE@I@Z(ptr long) msvcp90.??0id@locale@std@@QAE@I@Z
+@ cdecl -arch=win64 ??0id@locale@std@@QEAA@_K@Z(ptr long) msvcp90.??0id@locale@std@@QEAA@_K@Z
 @ thiscall -arch=win32 ??0ios_base@std@@IAE@XZ(ptr) msvcp90.??0ios_base@std@@IAE@XZ
 @ cdecl -arch=win64 ??0ios_base@std@@IEAA@XZ(ptr) msvcp90.??0ios_base@std@@IEAA@XZ
 @ thiscall -arch=win32 ??0ios_base@std@@QAE@ABV01@@Z(ptr ptr) msvcp90.??0ios_base@std@@QAE@ABV01@@Z
 @ cdecl -arch=win64 ??0ios_base@std@@QEAA@AEBV01@@Z(ptr ptr) msvcp90.??0ios_base@std@@QEAA@AEBV01@@Z
-@ stub -arch=win32 ??0locale@std@@AAE@PAV_Locimp@01@@Z
-@ stub -arch=win64 ??0locale@std@@AEAA@PEAV_Locimp@01@@Z
-@ stub -arch=win32 ??0locale@std@@QAE@ABV01@0H@Z
-@ stub -arch=win64 ??0locale@std@@QEAA@AEBV01@0H@Z
-@ stub -arch=win32 ??0locale@std@@QAE@ABV01@@Z
-@ stub -arch=win64 ??0locale@std@@QEAA@AEBV01@@Z
-@ stub -arch=win32 ??0locale@std@@QAE@ABV01@PBDH@Z
-@ stub -arch=win64 ??0locale@std@@QEAA@AEBV01@PEBDH@Z
-@ stub -arch=win32 ??0locale@std@@QAE@PBDH@Z
-@ stub -arch=win64 ??0locale@std@@QEAA@PEBDH@Z
-@ stub -arch=win32 ??0locale@std@@QAE@W4_Uninitialized@1@@Z
-@ stub -arch=win64 ??0locale@std@@QEAA@W4_Uninitialized@1@@Z
-@ stub -arch=win32 ??0locale@std@@QAE@XZ
-@ stub -arch=win64 ??0locale@std@@QEAA@XZ
+@ thiscall -arch=win32 ??0locale@std@@AAE@PAV_Locimp@01@@Z(ptr ptr) msvcp90.??0locale@std@@AAE@PAV_Locimp@01@@Z
+@ cdecl -arch=win64 ??0locale@std@@AEAA@PEAV_Locimp@01@@Z(ptr ptr) msvcp90.??0locale@std@@AEAA@PEAV_Locimp@01@@Z
+@ thiscall -arch=win32 ??0locale@std@@QAE@ABV01@0H@Z(ptr ptr ptr long) msvcp90.??0locale@std@@QAE@ABV01@0H@Z
+@ cdecl -arch=win64 ??0locale@std@@QEAA@AEBV01@0H@Z(ptr ptr ptr long) msvcp90.??0locale@std@@QEAA@AEBV01@0H@Z
+@ thiscall -arch=win32 ??0locale@std@@QAE@ABV01@@Z(ptr ptr) msvcp90.??0locale@std@@QAE@ABV01@@Z
+@ cdecl -arch=win64 ??0locale@std@@QEAA@AEBV01@@Z(ptr ptr) msvcp90.??0locale@std@@QEAA@AEBV01@@Z
+@ thiscall -arch=win32 ??0locale@std@@QAE@ABV01@PBDH@Z(ptr ptr str long) msvcp90.??0locale@std@@QAE@ABV01@PBDH@Z
+@ cdecl -arch=win64 ??0locale@std@@QEAA@AEBV01@PEBDH@Z(ptr ptr str long) msvcp90.??0locale@std@@QEAA@AEBV01@PEBDH@Z
+@ thiscall -arch=win32 ??0locale@std@@QAE@PBDH@Z(ptr str long) msvcp90.??0locale@std@@QAE@PBDH@Z
+@ cdecl -arch=win64 ??0locale@std@@QEAA@PEBDH@Z(ptr str long) msvcp90.??0locale@std@@QEAA@PEBDH@Z
+@ thiscall -arch=win32 ??0locale@std@@QAE@W4_Uninitialized@1@@Z(ptr long) msvcp90.??0locale@std@@QAE@W4_Uninitialized@1@@Z
+@ cdecl -arch=win64 ??0locale@std@@QEAA@W4_Uninitialized@1@@Z(ptr long) msvcp90.??0locale@std@@QEAA@W4_Uninitialized@1@@Z
+@ thiscall -arch=win32 ??0locale@std@@QAE@XZ(ptr) msvcp90.??0locale@std@@QAE@XZ
+@ cdecl -arch=win64 ??0locale@std@@QEAA@XZ(ptr) msvcp90.??0locale@std@@QEAA@XZ
 @ stub -arch=win32 ??0messages_base@std@@QAE@I@Z
 @ stub -arch=win64 ??0messages_base@std@@QEAA@_K@Z
 @ stub -arch=win32 ??0money_base@std@@QAE@I@Z
@@ -663,8 +663,8 @@
 @ stub -arch=win64 ??1Init@ios_base@std@@QEAA@XZ
 @ stub -arch=win32 ??1_Locinfo@std@@QAE@XZ
 @ stub -arch=win64 ??1_Locinfo@std@@QEAA@XZ
-@ stub -arch=win32 ??1_Lockit@std@@QAE@XZ
-@ stub -arch=win64 ??1_Lockit@std@@QEAA@XZ
+@ thiscall -arch=win32 ??1_Lockit@std@@QAE@XZ(ptr) msvcp90.??1_Lockit@std@@QAE@XZ
+@ cdecl -arch=win64 ??1_Lockit@std@@QEAA@XZ(ptr) msvcp90.??1_Lockit@std@@QEAA@XZ
 @ stub -arch=win32 ??1_Timevec@std@@QAE@XZ
 @ stub -arch=win64 ??1_Timevec@std@@QEAA@XZ
 @ stub -arch=win32 ??1_UShinit@std@@QAE@XZ
@@ -681,14 +681,14 @@
 @ stub -arch=win64 ??1codecvt_base@std@@UEAA@XZ
 @ stub -arch=win32 ??1ctype_base@std@@UAE@XZ
 @ stub -arch=win64 ??1ctype_base@std@@UEAA@XZ
-@ stub -arch=win32 ??1facet@locale@std@@UAE@XZ
-@ stub -arch=win64 ??1facet@locale@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1facet@locale@std@@UAE@XZ(ptr) msvcp90.??1facet@locale@std@@UAE@XZ
+@ cdecl -arch=win64 ??1facet@locale@std@@UEAA@XZ(ptr) msvcp90.??1facet@locale@std@@UEAA@XZ
 @ thiscall -arch=win32 ??1ios_base@std@@UAE@XZ(ptr) msvcp90.??1ios_base@std@@UAE@XZ
 @ cdecl -arch=win64 ??1ios_base@std@@UEAA@XZ(ptr) msvcp90.??1ios_base@std@@UEAA@XZ
 @ stub -arch=win32 ??1istrstream@std@@UAE@XZ
 @ stub -arch=win64 ??1istrstream@std@@UEAA@XZ
-@ stub -arch=win32 ??1locale@std@@QAE@XZ
-@ stub -arch=win64 ??1locale@std@@QEAA@XZ
+@ thiscall -arch=win32 ??1locale@std@@QAE@XZ(ptr) msvcp90.??1locale@std@@QAE@XZ
+@ cdecl -arch=win64 ??1locale@std@@QEAA@XZ(ptr) msvcp90.??1locale@std@@QEAA@XZ
 @ stub -arch=win32 ??1messages_base@std@@UAE@XZ
 @ stub -arch=win64 ??1messages_base@std@@UEAA@XZ
 @ stub -arch=win32 ??1money_base@std@@UAE@XZ
@@ -819,8 +819,8 @@
 @ stub -arch=win64 ??4bad_typeid@std@@QEAAAEAV01@AEBV01@@Z
 @ thiscall -arch=win32 ??4ios_base@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcp90.??4ios_base@std@@QAEAAV01@ABV01@@Z
 @ cdecl -arch=win64 ??4ios_base@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcp90.??4ios_base@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4locale@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4locale@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4locale@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcp90.??4locale@std@@QAEAAV01@ABV01@@Z
+@ cdecl -arch=win64 ??4locale@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcp90.??4locale@std@@QEAAAEAV01@AEBV01@@Z
 @ stub -arch=win32 ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAF@Z
 @ stub -arch=win64 ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAF@Z
 @ stub -arch=win32 ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAG@Z
@@ -1103,8 +1103,8 @@
 @ stub -arch=win32 ??6std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@0@AAV10@_W@Z
 @ thiscall -arch=win32 ??7ios_base@std@@QBE_NXZ(ptr) msvcp90.??7ios_base@std@@QBE_NXZ
 @ cdecl -arch=win64 ??7ios_base@std@@QEBA_NXZ(ptr) msvcp90.??7ios_base@std@@QEBA_NXZ
-@ stub -arch=win32 ??8locale@std@@QBE_NABV01@@Z
-@ stub -arch=win64 ??8locale@std@@QEBA_NAEBV01@@Z
+@ thiscall -arch=win32 ??8locale@std@@QBE_NABV01@@Z(ptr ptr) msvcp90.??8locale@std@@QBE_NABV01@@Z
+@ cdecl -arch=win64 ??8locale@std@@QEBA_NAEBV01@@Z(ptr ptr) msvcp90.??8locale@std@@QEBA_NAEBV01@@Z
 @ stub -arch=win32 ??8std@@YA_NABMABV?$complex@M@0@@Z
 @ stub -arch=win64 ??8std@@YA_NAEBMAEBV?$complex@M@0@@Z
 @ stub -arch=win32 ??8std@@YA_NABNABV?$complex@N@0@@Z
@@ -1136,8 +1136,8 @@
 @ stub -arch=win32 ??8std@@YA_NPBDABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z
 @ stub -arch=win32 ??8std@@YA_NPBGABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z
 @ stub -arch=win32 ??8std@@YA_NPB_WABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z
-@ stub -arch=win32 ??9locale@std@@QBE_NABV01@@Z
-@ stub -arch=win64 ??9locale@std@@QEBA_NAEBV01@@Z
+@ thiscall -arch=win32 ??9locale@std@@QBE_NABV01@@Z(ptr ptr) msvcp90.??9locale@std@@QBE_NABV01@@Z
+@ cdecl -arch=win64 ??9locale@std@@QEBA_NAEBV01@@Z(ptr ptr) msvcp90.??9locale@std@@QEBA_NAEBV01@@Z
 @ stub -arch=win32 ??9std@@YA_NABMABV?$complex@M@0@@Z
 @ stub -arch=win64 ??9std@@YA_NAEBMAEBV?$complex@M@0@@Z
 @ stub -arch=win32 ??9std@@YA_NABNABV?$complex@N@0@@Z
@@ -1183,8 +1183,8 @@
 @ cdecl -arch=win64 ??A?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEA_W_K@Z(ptr long) msvcp90.??A?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEA_W_K@Z
 @ thiscall -arch=win32 ??A?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEAB_WI@Z(ptr long) msvcp90.??A?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEAB_WI@Z
 @ cdecl -arch=win64 ??A?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAAEB_W_K@Z(ptr long) msvcp90.??A?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAAEB_W_K@Z
-@ stub -arch=win32 ??Bid@locale@std@@QAEIXZ
-@ stub -arch=win64 ??Bid@locale@std@@QEAA_KXZ
+@ thiscall -arch=win32 ??Bid@locale@std@@QAEIXZ(ptr) msvcp90.??Bid@locale@std@@QAEIXZ
+@ cdecl -arch=win64 ??Bid@locale@std@@QEAA_KXZ(ptr) msvcp90.??Bid@locale@std@@QEAA_KXZ
 @ thiscall -arch=win32 ??Bios_base@std@@QBEPAXXZ(ptr) msvcp90.??Bios_base@std@@QBEPAXXZ
 @ cdecl -arch=win64 ??Bios_base@std@@QEBAPEAXXZ(ptr) msvcp90.??Bios_base@std@@QEBAPEAXXZ
 @ stub -arch=win32 ??Dstd@@YA?AV?$complex@M@0@ABMABV10@@Z
@@ -1735,10 +1735,10 @@
 @ stub -arch=win64 ??_Fcodecvt_base@std@@QEAAXXZ
 @ stub -arch=win32 ??_Fctype_base@std@@QAEXXZ
 @ stub -arch=win64 ??_Fctype_base@std@@QEAAXXZ
-@ stub -arch=win32 ??_Ffacet@locale@std@@QAEXXZ
-@ stub -arch=win64 ??_Ffacet@locale@std@@QEAAXXZ
-@ stub -arch=win32 ??_Fid@locale@std@@QAEXXZ
-@ stub -arch=win64 ??_Fid@locale@std@@QEAAXXZ
+@ thiscall -arch=win32 ??_Ffacet@locale@std@@QAEXXZ(ptr) msvcp90.??_Ffacet@locale@std@@QAEXXZ
+@ cdecl -arch=win64 ??_Ffacet@locale@std@@QEAAXXZ(ptr) msvcp90.??_Ffacet@locale@std@@QEAAXXZ
+@ thiscall -arch=win32 ??_Fid@locale@std@@QAEXXZ(ptr) msvcp90.??_Fid@locale@std@@QAEXXZ
+@ cdecl -arch=win64 ??_Fid@locale@std@@QEAAXXZ(ptr) msvcp90.??_Fid@locale@std@@QEAAXXZ
 @ stub -arch=win32 ??_Fmessages_base@std@@QAEXXZ
 @ stub -arch=win64 ??_Fmessages_base@std@@QEAAXXZ
 @ stub -arch=win32 ??_Fmoney_base@std@@QAEXXZ
@@ -1747,10 +1747,10 @@
 @ stub -arch=win64 ??_Ftime_base@std@@QEAAXXZ
 @ stub -arch=win32 ?_Addcats@_Locinfo@std@@QAEAAV12@HPBD@Z
 @ stub -arch=win64 ?_Addcats@_Locinfo@std@@QEAAAEAV12@HPEBD@Z
-@ stub -arch=win32 ?_Addfac@_Locimp@locale@std@@AAEXPAVfacet@23@I@Z
-@ stub -arch=win64 ?_Addfac@_Locimp@locale@std@@AEAAXPEAVfacet@23@_K@Z
-@ stub -arch=win32 ?_Addfac@locale@std@@QAEAAV12@PAVfacet@12@II@Z
-@ stub -arch=win64 ?_Addfac@locale@std@@QEAAAEAV12@PEAVfacet@12@_K1@Z
+@ thiscall -arch=win32 ?_Addfac@_Locimp@locale@std@@AAEXPAVfacet@23@I@Z(ptr ptr long) msvcp90.?_Addfac@_Locimp@locale@std@@AAEXPAVfacet@23@I@Z
+@ cdecl -arch=win64 ?_Addfac@_Locimp@locale@std@@AEAAXPEAVfacet@23@_K@Z(ptr ptr long) msvcp90.?_Addfac@_Locimp@locale@std@@AEAAXPEAVfacet@23@_K@Z
+@ thiscall -arch=win32 ?_Addfac@locale@std@@QAEAAV12@PAVfacet@12@II@Z(ptr ptr long long) msvcp90.?_Addfac@locale@std@@QAEAAV12@PAVfacet@12@II@Z
+@ cdecl -arch=win64 ?_Addfac@locale@std@@QEAAAEAV12@PEAVfacet@12@_K1@Z(ptr ptr long long) msvcp90.?_Addfac@locale@std@@QEAAAEAV12@PEAVfacet@12@_K1@Z
 @ stub -arch=win32 ?_Addstd@ios_base@std@@QAEXXZ
 @ stub -arch=win64 ?_Addstd@ios_base@std@@QEAAXXZ
 @ extern -arch=win32 ?_BADOFF@std@@3JB msvcp90.?_BADOFF@std@@3JB
@@ -1763,8 +1763,8 @@
 # extern -arch=win32 ?_Cl@?5??log@std@@YA?AV?$complex@M@2@ABV32@@Z@4MB
 # extern -arch=win32 ?_Cl@?5??log@std@@YA?AV?$complex@N@2@ABV32@@Z@4NB
 # extern -arch=win32 ?_Cl@?5??log@std@@YA?AV?$complex@O@2@ABV32@@Z@4OB
-# extern -arch=win32 ?_Clocptr@_Locimp@locale@std@@0PAV123@A
-# extern -arch=win64 ?_Clocptr@_Locimp@locale@std@@0PEAV123@EA
+@ extern -arch=win32 ?_Clocptr@_Locimp@locale@std@@0PAV123@A msvcp90.?_Clocptr@_Locimp@locale@std@@0PAV123@A
+@ extern -arch=win64 ?_Clocptr@_Locimp@locale@std@@0PEAV123@EA msvcp90.?_Clocptr@_Locimp@locale@std@@0PEAV123@EA
 # extern -arch=win32 ?_Cm@?5??log@std@@YA?AV?$complex@M@2@ABV32@@Z@4MB
 # extern -arch=win32 ?_Cm@?5??log@std@@YA?AV?$complex@N@2@ABV32@@Z@4NB
 # extern -arch=win32 ?_Cm@?5??log@std@@YA?AV?$complex@O@2@ABV32@@Z@4OB
@@ -1774,8 +1774,8 @@
 @ stub ?_Cosh@?$_Ctraits@M@std@@SAMMM@Z
 @ stub ?_Cosh@?$_Ctraits@N@std@@SANNN@Z
 @ stub ?_Cosh@?$_Ctraits@O@std@@SAOOO@Z
-@ stub -arch=win32 ?_Decref@facet@locale@std@@QAEPAV123@XZ
-@ stub -arch=win64 ?_Decref@facet@locale@std@@QEAAPEAV123@XZ
+@ thiscall -arch=win32 ?_Decref@facet@locale@std@@QAEPAV123@XZ(ptr) msvcp90.?_Decref@facet@locale@std@@QAEPAV123@XZ
+@ cdecl -arch=win64 ?_Decref@facet@locale@std@@QEAAPEAV123@XZ(ptr) msvcp90.?_Decref@facet@locale@std@@QEAAPEAV123@XZ
 @ stub -arch=win32 ?_Doraise@bad_cast@std@@MBEXXZ
 @ stub -arch=win64 ?_Doraise@bad_cast@std@@MEBAXXZ
 @ stub -arch=win32 ?_Doraise@bad_typeid@std@@MBEXXZ
@@ -1905,8 +1905,8 @@
 @ stub -arch=win64 ?_Getdateorder@_Locinfo@std@@QEBAHXZ
 @ stub -arch=win32 ?_Getdays@_Locinfo@std@@QBEPBDXZ
 @ stub -arch=win64 ?_Getdays@_Locinfo@std@@QEBAPEBDXZ
-@ stub -arch=win32 ?_Getfacet@locale@std@@QBEPBVfacet@12@I@Z
-@ stub -arch=win64 ?_Getfacet@locale@std@@QEBAPEBVfacet@12@_K@Z
+@ thiscall -arch=win32 ?_Getfacet@locale@std@@QBEPBVfacet@12@I@Z(ptr long) msvcp90.?_Getfacet@locale@std@@QBEPBVfacet@12@I@Z
+@ cdecl -arch=win64 ?_Getfacet@locale@std@@QEBAPEBVfacet@12@_K@Z(ptr long) msvcp90.?_Getfacet@locale@std@@QEBAPEBVfacet@12@_K@Z
 @ stub -arch=win32 ?_Getfalse@_Locinfo@std@@QBEPBDXZ
 @ stub -arch=win64 ?_Getfalse@_Locinfo@std@@QEBAPEBDXZ
 @ stub -arch=win32 ?_Getffld@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@CAHPADAAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@1ABVlocale@2@@Z
@@ -1967,12 +1967,12 @@
 @ stub -arch=win32 ?_Grow@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AAE_NI_N@Z
 @ stub -arch=win64 ?_Grow@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AEAA_N_K_N@Z
 @ stub -arch=win32 ?_Grow@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@AAE_NI_N@Z
-# extern ?_Id_cnt@id@locale@std@@0HA
+@ extern ?_Id_cnt@id@locale@std@@0HA msvcp90.?_Id_cnt@id@locale@std@@0HA
 @ stub -arch=win32 ?_Ifmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@KAPADPADPBDH@Z
 @ stub -arch=win32 ?_Ifmt@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@KAPADPADPBDH@Z
 @ stub -arch=win32 ?_Ifmt@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@KAPADPADPBDH@Z
-@ stub -arch=win32 ?_Incref@facet@locale@std@@QAEXXZ
-@ stub -arch=win64 ?_Incref@facet@locale@std@@QEAAXXZ
+@ thiscall -arch=win32 ?_Incref@facet@locale@std@@QAEXXZ(ptr) msvcp90.?_Incref@facet@locale@std@@QAEXXZ
+@ cdecl -arch=win64 ?_Incref@facet@locale@std@@QEAAXXZ(ptr) msvcp90.?_Incref@facet@locale@std@@QEAAXXZ
 @ extern ?_Index@ios_base@std@@0HA msvcp90.?_Index@ios_base@std@@0HA
 @ stub ?_Infv@?$_Ctraits@M@std@@SAMM@Z
 @ stub ?_Infv@?$_Ctraits@N@std@@SANN@Z
@@ -2075,8 +2075,8 @@
 @ stub -arch=win64 ?_Init@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IEAAXAEBV_Locinfo@2@@Z
 @ thiscall -arch=win32 ?_Init@ios_base@std@@IAEXXZ(ptr) msvcp90.?_Init@ios_base@std@@IAEXXZ
 @ cdecl -arch=win64 ?_Init@ios_base@std@@IEAAXXZ(ptr) msvcp90.?_Init@ios_base@std@@IEAAXXZ
-@ stub -arch=win32 ?_Init@locale@std@@CAPAV_Locimp@12@XZ
-@ stub -arch=win64 ?_Init@locale@std@@CAPEAV_Locimp@12@XZ
+@ cdecl -arch=win32 ?_Init@locale@std@@CAPAV_Locimp@12@XZ(long) msvcp90.?_Init@locale@std@@CAPAV_Locimp@12@XZ
+@ cdecl -arch=win64 ?_Init@locale@std@@CAPEAV_Locimp@12@XZ(long) msvcp90.?_Init@locale@std@@CAPEAV_Locimp@12@XZ
 @ stub -arch=win32 ?_Init@strstreambuf@std@@IAEXHPAD0H@Z
 @ stub -arch=win64 ?_Init@strstreambuf@std@@IEAAX_JPEAD1H@Z
 # extern ?_Init_cnt@Init@ios_base@std@@0HA
@@ -2216,8 +2216,8 @@
 @ stub -arch=win64 ?_Tidy@?$_Mpunct@G@std@@AEAAXXZ
 @ stub -arch=win32 ?_Tidy@?$_Mpunct@_W@std@@AAEXXZ
 @ stub -arch=win64 ?_Tidy@?$_Mpunct@_W@std@@AEAAXXZ
-@ stub -arch=win32 ?_Tidy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEX_N@Z
-@ stub -arch=win64 ?_Tidy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEAAX_N@Z
+@ thiscall -arch=win32 ?_Tidy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEX_N@Z(ptr long) msvcp90.?_Tidy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEX_N@Z
+@ cdecl -arch=win64 ?_Tidy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEAAX_N@Z(ptr long) msvcp90.?_Tidy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEAAX_N@Z
 @ stub -arch=win32 ?_Tidy@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AAEX_N@Z
 @ stub -arch=win64 ?_Tidy@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AEAAX_N@Z
 @ stub -arch=win32 ?_Tidy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@AAEX_N@Z
@@ -2406,8 +2406,8 @@
 @ cdecl -arch=win64 ?capacity@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ(ptr) msvcp90.?capacity@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ
 # extern ?cerr@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A
 # extern ?cin@std@@3V?$basic_istream@DU?$char_traits@D@std@@@1@A
-@ stub -arch=win32 ?classic@locale@std@@SAABV12@XZ
-@ stub -arch=win64 ?classic@locale@std@@SAAEBV12@XZ
+@ cdecl -arch=win32 ?classic@locale@std@@SAABV12@XZ(long) msvcp90.?classic@locale@std@@SAABV12@XZ
+@ cdecl -arch=win64 ?classic@locale@std@@SAAEBV12@XZ(long) msvcp90.?classic@locale@std@@SAAEBV12@XZ
 @ stub -arch=win32 ?classic_table@?$ctype@D@std@@KAPBFXZ
 @ stub -arch=win64 ?classic_table@?$ctype@D@std@@KAPEBFXZ
 @ thiscall -arch=win32 ?clear@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEXH_N@Z(ptr long long) msvcp90.?clear@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEXH_N@Z
@@ -3102,7 +3102,7 @@
 @ cdecl ?eof@?$char_traits@G@std@@SAGXZ() msvcp90.?eof@?$char_traits@G@std@@SAGXZ
 @ cdecl ?eof@?$char_traits@_W@std@@SAGXZ() msvcp90.?eof@?$char_traits@_W@std@@SAGXZ
 @ thiscall -arch=win32 ?eof@ios_base@std@@QBE_NXZ(ptr) msvcp90.?eof@ios_base@std@@QBE_NXZ
-@ thiscall -arch=win64 ?eof@ios_base@std@@QEBA_NXZ(ptr) msvcp90.?eof@ios_base@std@@QEBA_NXZ
+@ cdecl -arch=win64 ?eof@ios_base@std@@QEBA_NXZ(ptr) msvcp90.?eof@ios_base@std@@QEBA_NXZ
 @ stub -arch=win32 ?epptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ
 @ stub -arch=win64 ?epptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEBAPEADXZ
 @ stub -arch=win32 ?epptr@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IBEPAGXZ
@@ -3238,14 +3238,14 @@
 @ stub -arch=win64 ?find_first_not_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K@Z
 @ stub -arch=win32 ?find_first_not_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEI_WI@Z
 @ stub -arch=win64 ?find_first_not_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_K_W_K@Z
-@ stub -arch=win32 ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIABV12@I@Z
-@ stub -arch=win64 ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KAEBV12@_K@Z
-@ stub -arch=win32 ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIDI@Z
-@ stub -arch=win64 ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KD_K@Z
-@ stub -arch=win32 ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDI@Z
-@ stub -arch=win64 ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z
-@ stub -arch=win32 ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z
-@ stub -arch=win64 ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K@Z
+@ thiscall -arch=win32 ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIABV12@I@Z(ptr ptr long) msvcp90.?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIABV12@I@Z
+@ cdecl -arch=win64 ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KAEBV12@_K@Z(ptr ptr long) msvcp90.?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KAEBV12@_K@Z
+@ thiscall -arch=win32 ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIDI@Z(ptr long long) msvcp90.?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIDI@Z
+@ cdecl -arch=win64 ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KD_K@Z(ptr long long) msvcp90.?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KD_K@Z
+@ thiscall -arch=win32 ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDI@Z(ptr str long) msvcp90.?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDI@Z
+@ cdecl -arch=win64 ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z(ptr str long long) msvcp90.?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z
+@ thiscall -arch=win32 ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z(ptr str long long) msvcp90.?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z
+@ cdecl -arch=win64 ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K@Z(ptr str long) msvcp90.?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K@Z
 @ stub -arch=win32 ?find_first_of@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIABV12@I@Z
 @ stub -arch=win64 ?find_first_of@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KAEBV12@_K@Z
 @ stub -arch=win32 ?find_first_of@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIGI@Z
@@ -3254,14 +3254,14 @@
 @ stub -arch=win64 ?find_first_of@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KPEBG_K1@Z
 @ stub -arch=win32 ?find_first_of@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIPBGII@Z
 @ stub -arch=win64 ?find_first_of@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KPEBG_K@Z
-@ stub -arch=win32 ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIABV12@I@Z
-@ stub -arch=win64 ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KAEBV12@_K@Z
-@ stub -arch=win32 ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WI@Z
-@ stub -arch=win64 ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K1@Z
-@ stub -arch=win32 ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WII@Z
-@ stub -arch=win64 ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K@Z
-@ stub -arch=win32 ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEI_WI@Z
-@ stub -arch=win64 ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_K_W_K@Z
+@ thiscall -arch=win32 ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIABV12@I@Z(ptr ptr long) msvcp90.?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIABV12@I@Z
+@ cdecl -arch=win64 ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KAEBV12@_K@Z(ptr ptr long) msvcp90.?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KAEBV12@_K@Z
+@ thiscall -arch=win32 ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WI@Z(ptr ptr long) msvcp90.?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WI@Z
+@ cdecl -arch=win64 ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K1@Z(ptr ptr long long) msvcp90.?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K1@Z
+@ thiscall -arch=win32 ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WII@Z(ptr ptr long long) msvcp90.?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WII@Z
+@ cdecl -arch=win64 ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K@Z(ptr ptr long) msvcp90.?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K@Z
+@ thiscall -arch=win32 ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEI_WI@Z(ptr long long) msvcp90.?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEI_WI@Z
+@ cdecl -arch=win64 ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_K_W_K@Z(ptr long long) msvcp90.?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_K_W_K@Z
 @ stub -arch=win32 ?find_last_not_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIABV12@I@Z
 @ stub -arch=win64 ?find_last_not_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KAEBV12@_K@Z
 @ stub -arch=win32 ?find_last_not_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIDI@Z
@@ -3286,14 +3286,14 @@
 @ stub -arch=win64 ?find_last_not_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K@Z
 @ stub -arch=win32 ?find_last_not_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEI_WI@Z
 @ stub -arch=win64 ?find_last_not_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_K_W_K@Z
-@ stub -arch=win32 ?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIABV12@I@Z
-@ stub -arch=win64 ?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KAEBV12@_K@Z
-@ stub -arch=win32 ?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIDI@Z
-@ stub -arch=win64 ?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KD_K@Z
-@ stub -arch=win32 ?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDI@Z
-@ stub -arch=win64 ?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z
-@ stub -arch=win32 ?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z
-@ stub -arch=win64 ?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K@Z
+@ thiscall -arch=win32 ?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIABV12@I@Z(ptr ptr long) msvcp90.?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIABV12@I@Z
+@ cdecl -arch=win64 ?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KAEBV12@_K@Z(ptr ptr long) msvcp90.?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KAEBV12@_K@Z
+@ thiscall -arch=win32 ?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIDI@Z(ptr long long) msvcp90.?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIDI@Z
+@ cdecl -arch=win64 ?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KD_K@Z(ptr long long) msvcp90.?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KD_K@Z
+@ thiscall -arch=win32 ?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDI@Z(ptr str long) msvcp90.?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDI@Z
+@ cdecl -arch=win64 ?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z(ptr str long long) msvcp90.?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z
+@ thiscall -arch=win32 ?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z(ptr str long long) msvcp90.?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z
+@ cdecl -arch=win64 ?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K@Z(ptr str long) msvcp90.?find_last_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K@Z
 @ stub -arch=win32 ?find_last_of@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIABV12@I@Z
 @ stub -arch=win64 ?find_last_of@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KAEBV12@_K@Z
 @ stub -arch=win32 ?find_last_of@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIGI@Z
@@ -3302,14 +3302,14 @@
 @ stub -arch=win64 ?find_last_of@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KPEBG_K1@Z
 @ stub -arch=win32 ?find_last_of@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIPBGII@Z
 @ stub -arch=win64 ?find_last_of@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KPEBG_K@Z
-@ stub -arch=win32 ?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIABV12@I@Z
-@ stub -arch=win64 ?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KAEBV12@_K@Z
-@ stub -arch=win32 ?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WI@Z
-@ stub -arch=win64 ?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K1@Z
-@ stub -arch=win32 ?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WII@Z
-@ stub -arch=win64 ?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K@Z
-@ stub -arch=win32 ?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEI_WI@Z
-@ stub -arch=win64 ?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_K_W_K@Z
+@ thiscall -arch=win32 ?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIABV12@I@Z(ptr ptr long) msvcp90.?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIABV12@I@Z
+@ cdecl -arch=win64 ?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KAEBV12@_K@Z(ptr ptr long) msvcp90.?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KAEBV12@_K@Z
+@ thiscall -arch=win32 ?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WI@Z(ptr ptr long) msvcp90.?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WI@Z
+@ cdecl -arch=win64 ?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K1@Z(ptr ptr long long) msvcp90.?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K1@Z
+@ thiscall -arch=win32 ?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WII@Z(ptr ptr long long) msvcp90.?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WII@Z
+@ cdecl -arch=win64 ?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K@Z(ptr ptr long) msvcp90.?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K@Z
+@ thiscall -arch=win32 ?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEI_WI@Z(ptr long long) msvcp90.?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEI_WI@Z
+@ cdecl -arch=win64 ?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_K_W_K@Z(ptr long long) msvcp90.?find_last_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_K_W_K@Z
 @ thiscall -arch=win32 ?flags@ios_base@std@@QAEHH@Z(ptr long) msvcp90.?flags@ios_base@std@@QAEHH@Z
 @ cdecl -arch=win64 ?flags@ios_base@std@@QEAAHH@Z(ptr long) msvcp90.?flags@ios_base@std@@QEAAHH@Z
 @ thiscall -arch=win32 ?flags@ios_base@std@@QBEHXZ(ptr) msvcp90.?flags@ios_base@std@@QBEHXZ
@@ -3923,8 +3923,8 @@
 @ cdecl -arch=win64 ?move@?$char_traits@G@std@@SAPEAGPEAGPEBG_K@Z(ptr ptr long) msvcp90.?move@?$char_traits@G@std@@SAPEAGPEAGPEBG_K@Z
 @ cdecl -arch=win32 ?move@?$char_traits@_W@std@@SAPA_WPA_WPB_WI@Z(ptr ptr long) msvcp90.?move@?$char_traits@_W@std@@SAPA_WPA_WPB_WI@Z
 @ cdecl -arch=win64 ?move@?$char_traits@_W@std@@SAPEA_WPEA_WPEB_W_K@Z(ptr ptr long) msvcp90.?move@?$char_traits@_W@std@@SAPEA_WPEA_WPEB_W_K@Z
-@ stub -arch=win32 ?name@locale@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win64 ?name@locale@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
+@ thiscall -arch=win32 ?name@locale@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) msvcp90.?name@locale@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
+@ cdecl -arch=win64 ?name@locale@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) msvcp90.?name@locale@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ thiscall -arch=win32 ?narrow@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEDDD@Z(ptr long long) msvcp90.?narrow@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEDDD@Z
 @ cdecl -arch=win64 ?narrow@?$basic_ios@DU?$char_traits@D@std@@@std@@QEBADDD@Z(ptr long long) msvcp90.?narrow@?$basic_ios@DU?$char_traits@D@std@@@std@@QEBADDD@Z
 @ stub -arch=win32 ?narrow@?$basic_ios@GU?$char_traits@G@std@@@std@@QBEDGD@Z
