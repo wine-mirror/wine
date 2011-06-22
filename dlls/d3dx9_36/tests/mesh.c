@@ -4676,6 +4676,234 @@ cleanup:
     free_test_context(test_context);
 }
 
+static void test_create_skin_info(void)
+{
+    HRESULT hr;
+    ID3DXSkinInfo *skininfo = NULL;
+    D3DVERTEXELEMENT9 empty_declaration[] = { D3DDECL_END() };
+    D3DVERTEXELEMENT9 declaration_out[MAX_FVF_DECL_SIZE];
+    const D3DVERTEXELEMENT9 declaration_with_nonzero_stream[] = {
+        {1, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+        D3DDECL_END()
+    };
+
+    hr = D3DXCreateSkinInfo(0, empty_declaration, 0, &skininfo);
+    ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    if (skininfo) IUnknown_Release(skininfo);
+    skininfo = NULL;
+
+    hr = D3DXCreateSkinInfo(1, NULL, 1, &skininfo);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+    hr = D3DXCreateSkinInfo(1, declaration_with_nonzero_stream, 1, &skininfo);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+    hr = D3DXCreateSkinInfoFVF(1, 0, 1, &skininfo);
+    ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    if (skininfo) {
+        DWORD dword_result;
+        FLOAT flt_result;
+        LPCSTR string_result;
+        D3DXMATRIX *transform;
+        D3DXMATRIX identity_matrix;
+
+        /* test initial values */
+        hr = skininfo->lpVtbl->GetDeclaration(skininfo, declaration_out);
+        ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+        if (SUCCEEDED(hr))
+            compare_elements(declaration_out, empty_declaration, __LINE__, 0);
+
+        dword_result = skininfo->lpVtbl->GetNumBones(skininfo);
+        ok(dword_result == 1, "Expected 1, got %u\n", dword_result);
+
+        flt_result = skininfo->lpVtbl->GetMinBoneInfluence(skininfo);
+        ok(flt_result == 0.0f, "Expected 0.0, got %g\n", flt_result);
+
+        string_result = skininfo->lpVtbl->GetBoneName(skininfo, 0);
+        ok(string_result == NULL, "Expected NULL, got %p\n", string_result);
+
+        dword_result = skininfo->lpVtbl->GetFVF(skininfo);
+        ok(dword_result == 0, "Expected 0, got %u\n", dword_result);
+
+        dword_result = skininfo->lpVtbl->GetNumBoneInfluences(skininfo, 0);
+        ok(dword_result == 0, "Expected 0, got %u\n", dword_result);
+
+        dword_result = skininfo->lpVtbl->GetNumBoneInfluences(skininfo, 1);
+        ok(dword_result == 0, "Expected 0, got %u\n", dword_result);
+
+        transform = skininfo->lpVtbl->GetBoneOffsetMatrix(skininfo, -1);
+        ok(transform == NULL, "Expected NULL, got %p\n", transform);
+
+        {
+            /* test [GS]etBoneOffsetMatrix */
+            hr = skininfo->lpVtbl->SetBoneOffsetMatrix(skininfo, 1, &identity_matrix);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+            hr = skininfo->lpVtbl->SetBoneOffsetMatrix(skininfo, 0, NULL);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+            D3DXMatrixIdentity(&identity_matrix);
+            hr = skininfo->lpVtbl->SetBoneOffsetMatrix(skininfo, 0, &identity_matrix);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+
+            transform = skininfo->lpVtbl->GetBoneOffsetMatrix(skininfo, 0);
+            check_matrix(transform, &identity_matrix);
+        }
+
+        {
+            /* test [GS]etBoneName */
+            const char *name_in = "testBoneName";
+            const char *string_result2;
+
+            hr = skininfo->lpVtbl->SetBoneName(skininfo, 1, name_in);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+            hr = skininfo->lpVtbl->SetBoneName(skininfo, 0, NULL);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+            hr = skininfo->lpVtbl->SetBoneName(skininfo, 0, name_in);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+
+            string_result = skininfo->lpVtbl->GetBoneName(skininfo, 0);
+            ok(string_result != NULL, "Expected non-NULL string, got %p\n", string_result);
+            ok(!strcmp(string_result, name_in), "Expected '%s', got '%s'\n", name_in, string_result);
+
+            string_result2 = skininfo->lpVtbl->GetBoneName(skininfo, 0);
+            ok(string_result == string_result2, "Expected %p, got %p\n", string_result, string_result2);
+
+            string_result = skininfo->lpVtbl->GetBoneName(skininfo, 1);
+            ok(string_result == NULL, "Expected NULL, got %p\n", string_result);
+        }
+
+        {
+            /* test [GS]etBoneInfluence */
+            DWORD vertices[2];
+            FLOAT weights[2];
+            int i;
+            DWORD num_influences;
+            DWORD exp_vertices[2];
+            FLOAT exp_weights[2];
+
+            /* vertex and weight arrays untouched when num_influences is 0 */
+            vertices[0] = 0xdeadbeef;
+            weights[0] = FLT_MAX;
+            hr = skininfo->lpVtbl->GetBoneInfluence(skininfo, 0, vertices, weights);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            ok(vertices[0] == 0xdeadbeef, "expected 0xdeadbeef, got %#x\n", vertices[0]);
+            ok(weights[0] == FLT_MAX, "expected %g, got %g\n", FLT_MAX, weights[0]);
+
+            hr = skininfo->lpVtbl->GetBoneInfluence(skininfo, 1, vertices, weights);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+            hr = skininfo->lpVtbl->GetBoneInfluence(skininfo, 0, NULL, NULL);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+            hr = skininfo->lpVtbl->GetBoneInfluence(skininfo, 0, vertices, NULL);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+
+            hr = skininfo->lpVtbl->GetBoneInfluence(skininfo, 0, NULL, weights);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+
+            /* no vertex or weight value checking */
+            exp_vertices[0] = 0;
+            exp_vertices[1] = 0x87654321;
+            exp_weights[0] = 0.5;
+            exp_weights[1] = FP_NAN;
+            num_influences = 2;
+
+            hr = skininfo->lpVtbl->SetBoneInfluence(skininfo, 1, num_influences, vertices, weights);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+            hr = skininfo->lpVtbl->SetBoneInfluence(skininfo, 0, num_influences, NULL, weights);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+            hr = skininfo->lpVtbl->SetBoneInfluence(skininfo, 0, num_influences, vertices, NULL);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+            hr = skininfo->lpVtbl->SetBoneInfluence(skininfo, 0, num_influences, NULL, NULL);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+            hr = skininfo->lpVtbl->SetBoneInfluence(skininfo, 0, num_influences, exp_vertices, exp_weights);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+
+            memset(vertices, 0, sizeof(vertices));
+            memset(weights, 0, sizeof(weights));
+            hr = skininfo->lpVtbl->GetBoneInfluence(skininfo, 0, vertices, weights);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            for (i = 0; i < num_influences; i++) {
+                ok(exp_vertices[i] == vertices[i],
+                   "influence[%d]: expected vertex %u, got %u\n", i, exp_vertices[i], vertices[i]);
+                ok(exp_weights[i] == weights[i],
+                   "influence[%d]: expected weights %g, got %g\n", i, exp_weights[i], weights[i]);
+            }
+
+            /* vertices and weights aren't returned after setting num_influences to 0 */
+            memset(vertices, 0, sizeof(vertices));
+            memset(weights, 0, sizeof(weights));
+            hr = skininfo->lpVtbl->SetBoneInfluence(skininfo, 0, 0, vertices, weights);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+
+            vertices[0] = 0xdeadbeef;
+            weights[0] = FLT_MAX;
+            hr = skininfo->lpVtbl->GetBoneInfluence(skininfo, 0, vertices, weights);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            ok(vertices[0] == 0xdeadbeef, "expected vertex 0xdeadbeef, got %u\n", vertices[0]);
+            ok(weights[0] == FLT_MAX, "expected weight %g, got %g\n", FLT_MAX, weights[0]);
+        }
+
+        {
+            /* test [GS]etFVF and [GS]etDeclaration */
+            D3DVERTEXELEMENT9 declaration_in[MAX_FVF_DECL_SIZE];
+            DWORD fvf = D3DFVF_XYZ;
+            DWORD got_fvf;
+
+            hr = skininfo->lpVtbl->SetDeclaration(skininfo, NULL);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+            hr = skininfo->lpVtbl->SetDeclaration(skininfo, declaration_with_nonzero_stream);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+            hr = skininfo->lpVtbl->SetFVF(skininfo, 0);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+
+            hr = D3DXDeclaratorFromFVF(fvf, declaration_in);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            hr = skininfo->lpVtbl->SetDeclaration(skininfo, declaration_in);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            got_fvf = skininfo->lpVtbl->GetFVF(skininfo);
+            ok(fvf == got_fvf, "Expected %#x, got %#x\n", fvf, got_fvf);
+            hr = skininfo->lpVtbl->GetDeclaration(skininfo, declaration_out);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            compare_elements(declaration_out, declaration_in, __LINE__, 0);
+
+            hr = skininfo->lpVtbl->SetDeclaration(skininfo, empty_declaration);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            got_fvf = skininfo->lpVtbl->GetFVF(skininfo);
+            ok(got_fvf == 0, "Expected 0, got %#x\n", got_fvf);
+            hr = skininfo->lpVtbl->GetDeclaration(skininfo, declaration_out);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            compare_elements(declaration_out, empty_declaration, __LINE__, 0);
+
+            hr = skininfo->lpVtbl->SetFVF(skininfo, fvf);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            got_fvf = skininfo->lpVtbl->GetFVF(skininfo);
+            ok(fvf == got_fvf, "Expected %#x, got %#x\n", fvf, got_fvf);
+            hr = skininfo->lpVtbl->GetDeclaration(skininfo, declaration_out);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            compare_elements(declaration_out, declaration_in, __LINE__, 0);
+        }
+    }
+    if (skininfo) IUnknown_Release(skininfo);
+    skininfo = NULL;
+
+    hr = D3DXCreateSkinInfoFVF(1, D3DFVF_XYZ, 1, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+    hr = D3DXCreateSkinInfo(1, NULL, 1, &skininfo);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+}
+
 START_TEST(mesh)
 {
     D3DXBoundProbeTest();
@@ -4695,4 +4923,5 @@ START_TEST(mesh)
     test_fvf_decl_conversion();
     D3DXGenerateAdjacencyTest();
     test_update_semantics();
+    test_create_skin_info();
 }
