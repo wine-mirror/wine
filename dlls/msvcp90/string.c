@@ -1101,6 +1101,55 @@ MSVCP_size_t __thiscall MSVCP_basic_string_char_find_ch(
     return MSVCP_basic_string_char_find_cstr_substr(this, &ch, pos, 1);
 }
 
+/* ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z */
+/* ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_find_first_of_cstr_substr, 16)
+MSVCP_size_t __thiscall MSVCP_basic_string_char_find_first_of_cstr_substr(
+        const basic_string_char *this, const char *find, MSVCP_size_t off, MSVCP_size_t len)
+{
+    const char *p, *end;
+
+    TRACE("%p %p %lu %lu\n", this, find, off, len);
+
+    if(len>0 && off<this->size) {
+        end = basic_string_char_const_ptr(this)+this->size;
+        for(p=basic_string_char_const_ptr(this)+off; p<end; p++)
+            if(MSVCP_char_traits_char_find(find, len, p))
+                return p-basic_string_char_const_ptr(this);
+    }
+
+    return MSVCP_basic_string_char_npos;
+}
+
+/* ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIABV12@I@Z */
+/* ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KAEBV12@_K@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_find_first_of, 12)
+MSVCP_size_t __thiscall MSVCP_basic_string_char_find_first_of(
+        const basic_string_char *this, const basic_string_char *find, MSVCP_size_t off)
+{
+    return MSVCP_basic_string_char_find_first_of_cstr_substr(this,
+            basic_string_char_const_ptr(find), off, find->size);
+}
+
+/* ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDI@Z */
+/* ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_find_first_of_cstr, 12)
+MSVCP_size_t __thiscall MSVCP_basic_string_char_find_first_of_cstr(
+        const basic_string_char *this, const char *find, MSVCP_size_t off)
+{
+    return MSVCP_basic_string_char_find_first_of_cstr_substr(
+            this, find, off, MSVCP_char_traits_char_length(find));
+}
+
+/* ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIDI@Z */
+/* ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KD_K@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_find_first_of_ch, 12)
+MSVCP_size_t __thiscall MSVCP_basic_string_char_find_first_of_ch(
+        const basic_string_char *this, char ch, MSVCP_size_t off)
+{
+    return MSVCP_basic_string_char_find_first_of_cstr_substr(this, &ch, off, 1);
+}
+
 /* ?at@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAADI@Z */
 /* ?at@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAD_K@Z */
 /* ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAADI@Z */
@@ -1767,6 +1816,55 @@ MSVCP_size_t __thiscall MSVCP_basic_string_wchar_find_ch(
         const basic_string_wchar *this, wchar_t ch, MSVCP_size_t pos)
 {
     return MSVCP_basic_string_wchar_find_cstr_substr(this, &ch, pos, 1);
+}
+
+/* ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WII@Z */
+/* ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K1@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_find_first_of_cstr_substr, 16)
+MSVCP_size_t __thiscall MSVCP_basic_string_wchar_find_first_of_cstr_substr(
+        const basic_string_wchar *this, const wchar_t *find, MSVCP_size_t off, MSVCP_size_t len)
+{
+    const wchar_t *p, *end;
+
+    TRACE("%p %p %lu %lu\n", this, find, off, len);
+
+    if(len>0 && off<this->size) {
+        end = basic_string_wchar_const_ptr(this)+this->size;
+        for(p=basic_string_wchar_const_ptr(this)+off; p<end; p++)
+            if(MSVCP_char_traits_wchar_find(find, len, p))
+                return p-basic_string_wchar_const_ptr(this);
+    }
+
+    return MSVCP_basic_string_wchar_npos;
+}
+
+/* ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIABV12@I@Z */
+/* ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KAEBV12@_K@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_find_first_of, 12)
+MSVCP_size_t __thiscall MSVCP_basic_string_wchar_find_first_of(
+        const basic_string_wchar *this, const basic_string_wchar *find, MSVCP_size_t off)
+{
+    return MSVCP_basic_string_wchar_find_first_of_cstr_substr(this,
+            basic_string_wchar_const_ptr(find), off, find->size);
+}
+
+/* ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WI@Z */
+/* ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_find_first_of_cstr, 12)
+MSVCP_size_t __thiscall MSVCP_basic_string_wchar_find_first_of_cstr(
+        const basic_string_wchar *this, const wchar_t *find, MSVCP_size_t off)
+{
+    return MSVCP_basic_string_wchar_find_first_of_cstr_substr(
+            this, find, off, MSVCP_char_traits_wchar_length(find));
+}
+
+/* ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEI_WI@Z */
+/* ?find_first_of@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_K_W_K@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_find_first_of_ch, 12)
+MSVCP_size_t __thiscall MSVCP_basic_string_wchar_find_first_of_ch(
+        const basic_string_wchar *this, wchar_t ch, MSVCP_size_t off)
+{
+    return MSVCP_basic_string_wchar_find_first_of_cstr_substr(this, &ch, off, 1);
 }
 
 /* ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAA_WI@Z */
