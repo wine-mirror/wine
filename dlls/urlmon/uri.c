@@ -857,35 +857,35 @@ static void compute_elision_location(const ipv6_address *address, const USHORT v
  * characters inside of the URI string.
  */
 static BSTR pre_process_uri(LPCWSTR uri) {
-    BSTR ret;
+    const WCHAR *start, *end, *ptr;
+    WCHAR *ptr2;
     DWORD len;
-    const WCHAR *start, *end;
-    WCHAR *buf, *ptr;
-
-    len = lstrlenW(uri);
+    BSTR ret;
 
     start = uri;
     /* Skip leading controls and whitespace. */
-    while(iscntrlW(*start) || isspaceW(*start)) ++start;
+    while(*start && (iscntrlW(*start) || isspaceW(*start))) ++start;
 
-    end = uri+len-1;
-    if(start == end)
-        /* URI consisted only of control/whitespace. */
-        ret = SysAllocStringLen(NULL, 0);
-    else {
-        while(iscntrlW(*end) || isspaceW(*end)) --end;
+    /* URI consisted only of control/whitespace. */
+    if(!*start)
+        return SysAllocStringLen(NULL, 0);
 
-        buf = heap_alloc(((end+1)-start)*sizeof(WCHAR));
-        if(!buf)
-            return NULL;
+    end = start + strlenW(start);
+    while(--end > start && (iscntrlW(*end) || isspaceW(*end)));
 
-        for(ptr = buf; start < end+1; ++start) {
-            if(!iscntrlW(*start))
-                *ptr++ = *start;
-        }
+    len = ++end - start;
+    for(ptr = start; ptr < end; ptr++) {
+        if(iscntrlW(*ptr))
+            len--;
+    }
 
-        ret = SysAllocStringLen(buf, ptr-buf);
-        heap_free(buf);
+    ret = SysAllocStringLen(NULL, len);
+    if(!ret)
+        return NULL;
+
+    for(ptr = start, ptr2=ret; ptr < end; ptr++) {
+        if(!iscntrlW(*ptr))
+            *ptr2++ = *ptr;
     }
 
     return ret;
@@ -5096,7 +5096,7 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
     if(!ppURI)
         return E_INVALIDARG;
 
-    if(!pwzURI || !*pwzURI) {
+    if(!pwzURI) {
         *ppURI = NULL;
         return E_INVALIDARG;
     }

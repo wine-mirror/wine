@@ -4139,7 +4139,58 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_MK,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
-    }
+    },
+    {   "", Uri_CREATE_ALLOW_RELATIVE, S_OK, FALSE,
+        {
+            {"",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_OK,FALSE},
+            {"",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   " \t ", Uri_CREATE_ALLOW_RELATIVE, S_OK, FALSE,
+        {
+            {"",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_OK,FALSE},
+            {"",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+
 };
 
 typedef struct _invalid_uri {
