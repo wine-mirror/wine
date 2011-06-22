@@ -1098,8 +1098,8 @@
 @ stub -arch=win64 ??0ctype_base@std@@QEAA@_K@Z
 @ thiscall -arch=win32 ??0facet@locale@std@@IAE@I@Z(ptr long) locale_facet_ctor_refs
 @ cdecl -arch=win64 ??0facet@locale@std@@IEAA@_K@Z(ptr long) locale_facet_ctor_refs
-@ stub -arch=win32 ??0id@locale@std@@QAE@I@Z
-@ stub -arch=win64 ??0id@locale@std@@QEAA@_K@Z
+@ thiscall -arch=win32 ??0id@locale@std@@QAE@I@Z(ptr long) locale_id_ctor_id
+@ cdecl -arch=win64 ??0id@locale@std@@QEAA@_K@Z(ptr long) locale_id_ctor_id
 @ thiscall -arch=win32 ??0ios_base@std@@IAE@XZ(ptr) ios_base_ctor
 @ cdecl -arch=win64 ??0ios_base@std@@IEAA@XZ(ptr) ios_base_ctor
 @ thiscall -arch=win32 ??0ios_base@std@@QAE@ABV01@@Z(ptr ptr) ios_base_copy_ctor
@@ -1706,8 +1706,8 @@
 @ stub -arch=win64 ??A?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAAEB_WU_Size_type_nosscl@01@@Z
 @ stub -arch=win32 ??A?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEAB_WU_Size_type_nosscl@01@@Z
 @ cdecl -arch=win64 ??A?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAAEB_W_K@Z(ptr long) MSVCP_basic_string_wchar_const_at
-@ stub -arch=win32 ??Bid@locale@std@@QAEIXZ
-@ stub -arch=win64 ??Bid@locale@std@@QEAA_KXZ
+@ thiscall -arch=win32 ??Bid@locale@std@@QAEIXZ(ptr) locale_id_operator_size_t
+@ cdecl -arch=win64 ??Bid@locale@std@@QEAA_KXZ(ptr) locale_id_operator_size_t
 @ thiscall -arch=win32 ??Bios_base@std@@QBEPAXXZ(ptr) ios_base_op_fail
 @ cdecl -arch=win64 ??Bios_base@std@@QEBAPEAXXZ(ptr) ios_base_op_fail
 @ stub -arch=win32 ??X?$complex@M@std@@QAEAAV01@ABM@Z
@@ -2087,8 +2087,8 @@
 @ stub -arch=win64 ??_Fctype_base@std@@QEAAXXZ
 @ thiscall -arch=win32 ??_Ffacet@locale@std@@QAEXXZ(ptr) locale_facet_ctor
 @ cdecl -arch=win64 ??_Ffacet@locale@std@@QEAAXXZ(ptr) locale_facet_ctor
-@ stub -arch=win32 ??_Fid@locale@std@@QAEXXZ
-@ stub -arch=win64 ??_Fid@locale@std@@QEAAXXZ
+@ thiscall -arch=win32 ??_Fid@locale@std@@QAEXXZ(ptr) locale_id_ctor
+@ cdecl -arch=win64 ??_Fid@locale@std@@QEAAXXZ(ptr) locale_id_ctor
 @ stub -arch=win32 ??_Fmessages_base@std@@QAEXXZ
 @ stub -arch=win64 ??_Fmessages_base@std@@QEAAXXZ
 @ stub -arch=win32 ??_Fmoney_base@std@@QAEXXZ
@@ -2401,9 +2401,9 @@
 @ stub -arch=win64 ?_Hexdig@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@AEBAHGGGG@Z
 @ stub -arch=win32 ?_Hexdig@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABEH_W000@Z
 @ stub -arch=win64 ?_Hexdig@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBAH_W000@Z
-# extern ?_Id_cnt@id@locale@std@@0HA
-@ stub -arch=win32 ?_Id_cnt_func@id@locale@std@@CAAAHXZ
-@ stub -arch=win64 ?_Id_cnt_func@id@locale@std@@CAAEAHXZ
+@ extern ?_Id_cnt@id@locale@std@@0HA locale_id__Id_cnt
+@ cdecl -arch=win32 ?_Id_cnt_func@id@locale@std@@CAAAHXZ(long) locale_id__Id_cnt_func
+@ cdecl -arch=win64 ?_Id_cnt_func@id@locale@std@@CAAEAHXZ(long) locale_id__Id_cnt_func
 @ stub -arch=win32 ?_Id_func@?$codecvt@GDH@std@@SAAAVid@locale@2@XZ
 @ stub -arch=win64 ?_Id_func@?$codecvt@GDH@std@@SAAEAVid@locale@2@XZ
 @ stub -arch=win32 ?_Id_func@?$codecvt@_WDH@std@@SAAAVid@locale@2@XZ

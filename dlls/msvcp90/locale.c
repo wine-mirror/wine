@@ -26,12 +26,54 @@
 #include "wine/debug.h"
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp90);
 
+typedef struct _locale_id {
+    MSVCP_size_t id;
+} locale_id;
+
 typedef struct _locale_facet {
     const vtable_ptr *vtable;
     MSVCP_size_t refs;
 } locale_facet;
 
+/* ?_Id_cnt@id@locale@std@@0HA */
+int locale_id__Id_cnt = 0;
+
 static const vtable_ptr MSVCP_locale_facet_vtable[];
+
+/* ??0id@locale@std@@QAE@I@Z */
+/* ??0id@locale@std@@QEAA@_K@Z */
+DEFINE_THISCALL_WRAPPER(locale_id_ctor_id, 8)
+locale_id* __thiscall locale_id_ctor_id(locale_id *this, MSVCP_size_t id)
+{
+    FIXME("(%p %lu) stub\n", this, id);
+    return NULL;
+}
+
+/* ??_Fid@locale@std@@QAEXXZ */
+/* ??_Fid@locale@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(locale_id_ctor, 4)
+locale_id* __thiscall locale_id_ctor(locale_id *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ??Bid@locale@std@@QAEIXZ */
+/* ??Bid@locale@std@@QEAA_KXZ */
+DEFINE_THISCALL_WRAPPER(locale_id_operator_size_t, 4)
+MSVCP_size_t __thiscall locale_id_operator_size_t(locale_id *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?_Id_cnt_func@id@locale@std@@CAAAHXZ */
+/* ?_Id_cnt_func@id@locale@std@@CAAEAHXZ */
+int* __cdecl locale_id__Id_cnt_func(void)
+{
+    FIXME("stub\n");
+    return NULL;
+}
 
 /* ??_Ffacet@locale@std@@QAEXXZ */
 /* ??_Ffacet@locale@std@@QEAAXXZ */
