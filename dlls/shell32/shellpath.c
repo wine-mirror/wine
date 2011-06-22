@@ -3170,7 +3170,7 @@ static HRESULT WINAPI knownfolder_QueryInterface(
     return S_OK;
 }
 
-static HRESULT knowfolder_set_id(
+static HRESULT knownfolder_set_id(
     IKnownFolder *iface,
     const KNOWNFOLDERID *kfid)
 {
@@ -3438,7 +3438,7 @@ static HRESULT WINAPI foldermanager_GetFolder(
     }
     hr = knownfolder_create( (void **)ppkf );
     if (SUCCEEDED( hr ))
-        hr = knowfolder_set_id( *ppkf, rfid );
+        hr = knownfolder_set_id( *ppkf, rfid );
 
     return hr;
 }
