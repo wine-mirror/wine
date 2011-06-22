@@ -169,14 +169,14 @@
 @ stdcall D3DXIntersect(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) d3dx9_36.D3DXIntersect
 @ stdcall D3DXIntersectSubset(ptr long ptr ptr ptr ptr ptr ptr ptr ptr ptr) d3dx9_36.D3DXIntersectSubset
 @ stdcall D3DXIntersectTri(ptr ptr ptr ptr ptr ptr ptr ptr) d3dx9_36.D3DXIntersectTri
-@ stdcall D3DXLoadMeshFromXA(ptr long ptr ptr ptr ptr ptr ptr) d3dx9_36.D3DXLoadMeshFromXA
+@ stdcall D3DXLoadMeshFromXA(str long ptr ptr ptr ptr ptr ptr) d3dx9_36.D3DXLoadMeshFromXA
 @ stdcall D3DXLoadMeshFromXInMemory(ptr long long ptr ptr ptr ptr ptr ptr) d3dx9_36.D3DXLoadMeshFromXInMemory
-@ stdcall D3DXLoadMeshFromXResource(long ptr ptr long ptr ptr ptr ptr ptr ptr) d3dx9_36.D3DXLoadMeshFromXResource
-@ stdcall D3DXLoadMeshFromXW(ptr long ptr ptr ptr ptr ptr ptr) d3dx9_36.D3DXLoadMeshFromXW
+@ stdcall D3DXLoadMeshFromXResource(long str str long ptr ptr ptr ptr ptr ptr) d3dx9_36.D3DXLoadMeshFromXResource
+@ stdcall D3DXLoadMeshFromXW(wstr long ptr ptr ptr ptr ptr ptr) d3dx9_36.D3DXLoadMeshFromXW
 @ stdcall D3DXLoadMeshFromXof(ptr long ptr ptr ptr ptr ptr ptr) d3dx9_36.D3DXLoadMeshFromXof
-@ stdcall D3DXLoadMeshHierarchyFromXA(ptr long ptr ptr ptr ptr ptr) d3dx9_36.D3DXLoadMeshHierarchyFromXA
+@ stdcall D3DXLoadMeshHierarchyFromXA(str long ptr ptr ptr ptr ptr) d3dx9_36.D3DXLoadMeshHierarchyFromXA
 @ stdcall D3DXLoadMeshHierarchyFromXInMemory(ptr long long ptr ptr ptr ptr ptr) d3dx9_36.D3DXLoadMeshHierarchyFromXInMemory
-@ stdcall D3DXLoadMeshHierarchyFromXW(ptr long ptr ptr ptr ptr ptr) d3dx9_36.D3DXLoadMeshHierarchyFromXW
+@ stdcall D3DXLoadMeshHierarchyFromXW(wstr long ptr ptr ptr ptr ptr) d3dx9_36.D3DXLoadMeshHierarchyFromXW
 @ stdcall D3DXLoadPatchMeshFromXof(ptr long ptr ptr ptr long ptr) d3dx9_36.D3DXLoadPatchMeshFromXof
 @ stdcall D3DXLoadPRTBufferFromFileA(ptr ptr) d3dx9_36.D3DXLoadPRTBufferFromFileA
 @ stdcall D3DXLoadPRTBufferFromFileW(ptr ptr) d3dx9_36.D3DXLoadPRTBufferFromFileW
