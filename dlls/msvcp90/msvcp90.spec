@@ -1068,10 +1068,10 @@
 @ stub -arch=win64 ??0Init@ios_base@std@@QEAA@XZ
 @ stub -arch=win32 ??0_Init_locks@std@@QAE@XZ
 @ stub -arch=win64 ??0_Init_locks@std@@QEAA@XZ
-@ stub -arch=win32 ??0_Locimp@locale@std@@AAE@ABV012@@Z
-@ stub -arch=win64 ??0_Locimp@locale@std@@AEAA@AEBV012@@Z
-@ stub -arch=win32 ??0_Locimp@locale@std@@AAE@_N@Z
-@ stub -arch=win64 ??0_Locimp@locale@std@@AEAA@_N@Z
+@ thiscall -arch=win32 ??0_Locimp@locale@std@@AAE@ABV012@@Z(ptr ptr) locale__Locimp_copy_ctor
+@ cdecl -arch=win64 ??0_Locimp@locale@std@@AEAA@AEBV012@@Z(ptr ptr) locale__Locimp_copy_ctor
+@ thiscall -arch=win32 ??0_Locimp@locale@std@@AAE@_N@Z(ptr long) locale__Locimp_ctor_transparent
+@ cdecl -arch=win64 ??0_Locimp@locale@std@@AEAA@_N@Z(ptr long) locale__Locimp_ctor_transparent
 @ stub -arch=win32 ??0_Locinfo@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
 @ stub -arch=win64 ??0_Locinfo@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
 @ stub -arch=win32 ??0_Locinfo@std@@QAE@HPBD@Z
@@ -1312,8 +1312,8 @@
 @ stub -arch=win64 ??1Init@ios_base@std@@QEAA@XZ
 @ stub -arch=win32 ??1_Init_locks@std@@QAE@XZ
 @ stub -arch=win64 ??1_Init_locks@std@@QEAA@XZ
-@ stub -arch=win32 ??1_Locimp@locale@std@@MAE@XZ
-@ stub -arch=win64 ??1_Locimp@locale@std@@MEAA@XZ
+@ thiscall -arch=win32 ??1_Locimp@locale@std@@MAE@XZ(ptr) locale__Locimp_dtor
+@ cdecl -arch=win64 ??1_Locimp@locale@std@@MEAA@XZ(ptr) locale__Locimp_dtor
 @ stub -arch=win32 ??1_Locinfo@std@@QAE@XZ
 @ stub -arch=win64 ??1_Locinfo@std@@QEAA@XZ
 @ stub -arch=win32 ??1_Lockit@std@@QAE@XZ
@@ -1857,7 +1857,7 @@
 # extern ??_7?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@
 # extern ??_7?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@
 # extern ??_7?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@
-# extern ??_7_Locimp@locale@std@@6B@
+@ extern ??_7_Locimp@locale@std@@6B@ MSVCP_locale__Locimp_vtable
 # extern ??_7codecvt_base@std@@6B@
 # extern ??_7ctype_base@std@@6B@
 @ extern ??_7ios_base@std@@6B@ MSVCP_ios_base_vtable
@@ -2075,8 +2075,8 @@
 @ stub -arch=win64 ??_F?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEAAXXZ
 @ stub -arch=win32 ??_F?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QAEXXZ
 @ stub -arch=win64 ??_F?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAAXXZ
-@ stub -arch=win32 ??_F_Locimp@locale@std@@QAEXXZ
-@ stub -arch=win64 ??_F_Locimp@locale@std@@QEAAXXZ
+@ thiscall -arch=win32 ??_F_Locimp@locale@std@@QAEXXZ(ptr) locale__Locimp_ctor
+@ cdecl -arch=win64 ??_F_Locimp@locale@std@@QEAAXXZ(ptr) locale__Locimp_ctor
 @ stub -arch=win32 ??_F_Locinfo@std@@QAEXXZ
 @ stub -arch=win64 ??_F_Locinfo@std@@QEAAXXZ
 @ stub -arch=win32 ??_F_Timevec@std@@QAEXXZ
@@ -2099,8 +2099,8 @@
 @ stub -arch=win64 ??_Ftime_base@std@@QEAAXXZ
 @ stub -arch=win32 ?_Addcats@_Locinfo@std@@QAEAAV12@HPBD@Z
 @ stub -arch=win64 ?_Addcats@_Locinfo@std@@QEAAAEAV12@HPEBD@Z
-@ stub -arch=win32 ?_Addfac@_Locimp@locale@std@@AAEXPAVfacet@23@I@Z
-@ stub -arch=win64 ?_Addfac@_Locimp@locale@std@@AEAAXPEAVfacet@23@_K@Z
+@ thiscall -arch=win32 ?_Addfac@_Locimp@locale@std@@AAEXPAVfacet@23@I@Z(ptr ptr long) locale__Locimp__Addfac
+@ cdecl -arch=win64 ?_Addfac@_Locimp@locale@std@@AEAAXPEAVfacet@23@_K@Z(ptr ptr long) locale__Locimp__Addfac
 @ stub -arch=win32 ?_Addfac@locale@std@@QAEAAV12@PAVfacet@12@II@Z
 @ stub -arch=win64 ?_Addfac@locale@std@@QEAAAEAV12@PEAVfacet@12@_K1@Z
 @ cdecl -arch=win32 ?_Addstd@ios_base@std@@SAXPAV12@@Z(ptr) ios_base_Addstd
@@ -2125,10 +2125,10 @@
 # extern -arch=win64 ?_Cl@?5???$log@M@std@@YA?AV?$complex@M@1@AEBV21@@Z@4MB
 # extern -arch=win32 ?_Cl@?5???$log@N@std@@YA?AV?$complex@N@1@ABV21@@Z@4NB
 # extern -arch=win64 ?_Cl@?5???$log@N@std@@YA?AV?$complex@N@1@AEBV21@@Z@4NB
-# extern -arch=win32 ?_Clocptr@_Locimp@locale@std@@0PAV123@A
-# extern -arch=win64 ?_Clocptr@_Locimp@locale@std@@0PEAV123@EA
-@ stub -arch=win32 ?_Clocptr_func@_Locimp@locale@std@@CAAAPAV123@XZ
-@ stub -arch=win64 ?_Clocptr_func@_Locimp@locale@std@@CAAEAPEAV123@XZ
+@ extern -arch=win32 ?_Clocptr@_Locimp@locale@std@@0PAV123@A locale__Locimp__Clocptr
+@ extern -arch=win64 ?_Clocptr@_Locimp@locale@std@@0PEAV123@EA locale__Locimp__Clocptr
+@ cdecl -arch=win32 ?_Clocptr_func@_Locimp@locale@std@@CAAAPAV123@XZ(long) locale__Locimp__Clocptr_func
+@ cdecl -arch=win64 ?_Clocptr_func@_Locimp@locale@std@@CAAEAPEAV123@XZ(long) locale__Locimp__Clocptr_func
 @ stub -arch=win32 ?_Clog_func@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ
 @ stub -arch=win64 ?_Clog_func@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ
 @ stub -arch=win64 ?_Cm@?5???$log@M@std@@YA?AV?$complex@M@1@AEBV21@@Z@4MB
@@ -2575,12 +2575,12 @@
 @ stub ?_Isnan@?$_Ctraits@M@std@@SA_NM@Z
 @ stub ?_Isnan@?$_Ctraits@N@std@@SA_NN@Z
 @ stub ?_Isnan@?$_Ctraits@O@std@@SA_NO@Z
-@ stub -arch=win32 ?_Locimp_Addfac@_Locimp@locale@std@@CAXPAV123@PAVfacet@23@I@Z
-@ stub -arch=win64 ?_Locimp_Addfac@_Locimp@locale@std@@CAXPEAV123@PEAVfacet@23@_K@Z
-@ stub -arch=win32 ?_Locimp_ctor@_Locimp@locale@std@@CAXPAV123@ABV123@@Z
-@ stub -arch=win64 ?_Locimp_ctor@_Locimp@locale@std@@CAXPEAV123@AEBV123@@Z
-@ stub -arch=win32 ?_Locimp_dtor@_Locimp@locale@std@@CAXPAV123@@Z
-@ stub -arch=win64 ?_Locimp_dtor@_Locimp@locale@std@@CAXPEAV123@@Z
+@ cdecl -arch=win32 ?_Locimp_Addfac@_Locimp@locale@std@@CAXPAV123@PAVfacet@23@I@Z(ptr ptr long) locale__Locimp__Locimp_Addfac
+@ cdecl -arch=win64 ?_Locimp_Addfac@_Locimp@locale@std@@CAXPEAV123@PEAVfacet@23@_K@Z(ptr ptr long) locale__Locimp__Locimp_Addfac
+@ cdecl -arch=win32 ?_Locimp_ctor@_Locimp@locale@std@@CAXPAV123@ABV123@@Z(ptr ptr) locale__Locimp_copy_ctor
+@ cdecl -arch=win64 ?_Locimp_ctor@_Locimp@locale@std@@CAXPEAV123@AEBV123@@Z(ptr ptr) locale__Locimp_copy_ctor
+@ cdecl -arch=win32 ?_Locimp_dtor@_Locimp@locale@std@@CAXPAV123@@Z(ptr) locale__Locimp_dtor
+@ cdecl -arch=win64 ?_Locimp_dtor@_Locimp@locale@std@@CAXPEAV123@@Z(ptr) locale__Locimp_dtor
 @ stub -arch=win32 ?_Locinfo_Addcats@_Locinfo@std@@SAAAV12@PAV12@HPBD@Z
 @ stub -arch=win64 ?_Locinfo_Addcats@_Locinfo@std@@SAAEAV12@PEAV12@HPEBD@Z
 @ stub -arch=win32 ?_Locinfo_ctor@_Locinfo@std@@SAXPAV12@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z
@@ -2615,14 +2615,14 @@
 @ stub -arch=win64 ?_MP_Mul@tr1@std@@YAXQEA_K_K1@Z
 @ stub -arch=win32 ?_MP_Rem@tr1@std@@YAXQA_K_K@Z
 @ stub -arch=win64 ?_MP_Rem@tr1@std@@YAXQEA_K_K@Z
-@ stub -arch=win32 ?_Makeloc@_Locimp@locale@std@@CAPAV123@ABV_Locinfo@3@HPAV123@PBV23@@Z
-@ stub -arch=win64 ?_Makeloc@_Locimp@locale@std@@CAPEAV123@AEBV_Locinfo@3@HPEAV123@PEBV23@@Z
-@ stub -arch=win32 ?_Makeushloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z
-@ stub -arch=win64 ?_Makeushloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z
-@ stub -arch=win32 ?_Makewloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z
-@ stub -arch=win64 ?_Makewloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z
-@ stub -arch=win32 ?_Makexloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z
-@ stub -arch=win64 ?_Makexloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z
+@ cdecl -arch=win32 ?_Makeloc@_Locimp@locale@std@@CAPAV123@ABV_Locinfo@3@HPAV123@PBV23@@Z(ptr long ptr ptr) locale__Locimp__Makeloc
+@ cdecl -arch=win64 ?_Makeloc@_Locimp@locale@std@@CAPEAV123@AEBV_Locinfo@3@HPEAV123@PEBV23@@Z(ptr long ptr ptr) locale__Locimp__Makeloc
+@ cdecl -arch=win32 ?_Makeushloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z(ptr long ptr ptr) locale__Locimp__Makeushloc
+@ cdecl -arch=win64 ?_Makeushloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z(ptr long ptr ptr) locale__Locimp__Makeushloc
+@ cdecl -arch=win32 ?_Makewloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z(ptr long ptr ptr) locale__Locimp__Makewloc
+@ cdecl -arch=win64 ?_Makewloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z(ptr long ptr ptr) locale__Locimp__Makewloc
+@ cdecl -arch=win32 ?_Makexloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z(ptr long ptr ptr) locale__Locimp__Makexloc
+@ cdecl -arch=win64 ?_Makexloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z(ptr long ptr ptr) locale__Locimp__Makexloc
 @ stub -arch=win32 ?_Makpat@?$_Mpunct@D@std@@AAEXAAUpattern@money_base@2@III@Z
 @ stub -arch=win64 ?_Makpat@?$_Mpunct@D@std@@AEAAXAEAUpattern@money_base@2@III@Z
 @ stub -arch=win32 ?_Makpat@?$_Mpunct@G@std@@AAEXAAUpattern@money_base@2@III@Z
