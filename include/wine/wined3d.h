@@ -2520,20 +2520,15 @@ HRESULT __cdecl wined3d_volume_create(struct wined3d_device *device, UINT width,
         DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_volume **volume);
 ULONG __cdecl wined3d_volume_decref(struct wined3d_volume *volume);
-HRESULT __cdecl wined3d_volume_free_private_data(struct wined3d_volume *volume, REFGUID guid);
 struct wined3d_volume * __cdecl wined3d_volume_from_resource(struct wined3d_resource *resource);
 void * __cdecl wined3d_volume_get_parent(const struct wined3d_volume *volume);
 DWORD __cdecl wined3d_volume_get_priority(const struct wined3d_volume *volume);
-HRESULT __cdecl wined3d_volume_get_private_data(const struct wined3d_volume *volume,
-        REFGUID guid, void *data, DWORD *data_size);
 struct wined3d_resource * __cdecl wined3d_volume_get_resource(struct wined3d_volume *volume);
 ULONG __cdecl wined3d_volume_incref(struct wined3d_volume *volume);
 HRESULT __cdecl wined3d_volume_map(struct wined3d_volume *volume,
         WINED3DLOCKED_BOX *locked_box, const WINED3DBOX *box, DWORD flags);
 void __cdecl wined3d_volume_preload(struct wined3d_volume *volume);
 DWORD __cdecl wined3d_volume_set_priority(struct wined3d_volume *volume, DWORD new_priority);
-HRESULT __cdecl wined3d_volume_set_private_data(struct wined3d_volume *volume,
-        REFGUID guid, const void *data, DWORD data_size, DWORD flags);
 HRESULT __cdecl wined3d_volume_unmap(struct wined3d_volume *volume);
 
 #endif /* __WINE_WINED3D_H */
