@@ -23,6 +23,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
+struct bone
+{
+    DWORD num_influences;
+    DWORD *vertices;
+    FLOAT *weights;
+};
+
 typedef struct ID3DXSkinInfoImpl
 {
     ID3DXSkinInfo ID3DXSkinInfo_iface;
@@ -32,6 +39,7 @@ typedef struct ID3DXSkinInfoImpl
     D3DVERTEXELEMENT9 vertex_declaration[MAX_FVF_DECL_SIZE];
     DWORD num_vertices;
     DWORD num_bones;
+    struct bone *bones;
 } ID3DXSkinInfoImpl;
 
 static inline struct ID3DXSkinInfoImpl *impl_from_ID3DXSkinInfo(ID3DXSkinInfo *iface)
@@ -73,6 +81,12 @@ static ULONG WINAPI ID3DXSkinInfoImpl_Release(ID3DXSkinInfo *iface)
     TRACE("%p decreasing refcount to %u\n", This, ref);
 
     if (ref == 0) {
+        int i;
+        for (i = 0; i < This->num_bones; i++) {
+            HeapFree(GetProcessHeap(), 0, This->bones[i].vertices);
+            HeapFree(GetProcessHeap(), 0, This->bones[i].weights);
+        }
+        HeapFree(GetProcessHeap(), 0, This->bones);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -82,10 +96,35 @@ static ULONG WINAPI ID3DXSkinInfoImpl_Release(ID3DXSkinInfo *iface)
 static HRESULT WINAPI ID3DXSkinInfoImpl_SetBoneInfluence(ID3DXSkinInfo *iface, DWORD bone_num, DWORD num_influences, CONST DWORD *vertices, CONST FLOAT *weights)
 {
     ID3DXSkinInfoImpl *This = impl_from_ID3DXSkinInfo(iface);
+    struct bone *bone;
+    DWORD *new_vertices = NULL;
+    FLOAT *new_weights = NULL;
 
-    FIXME("(%p, %u, %u, %p, %p): stub\n", This, bone_num, num_influences, vertices, weights);
+    TRACE("(%p, %u, %u, %p, %p)\n", This, bone_num, num_influences, vertices, weights);
 
-    return E_NOTIMPL;
+    if (bone_num >= This->num_bones || !vertices || !weights)
+        return D3DERR_INVALIDCALL;
+
+    if (num_influences) {
+        new_vertices = HeapAlloc(GetProcessHeap(), 0, num_influences * sizeof(*vertices));
+        if (!new_vertices)
+            return E_OUTOFMEMORY;
+        new_weights = HeapAlloc(GetProcessHeap(), 0, num_influences * sizeof(*weights));
+        if (!new_weights) {
+            HeapFree(GetProcessHeap(), 0, new_vertices);
+            return E_OUTOFMEMORY;
+        }
+        memcpy(new_vertices, vertices, num_influences * sizeof(*vertices));
+        memcpy(new_weights, weights, num_influences * sizeof(*weights));
+    }
+    bone = &This->bones[bone_num];
+    bone->num_influences = num_influences;
+    HeapFree(GetProcessHeap(), 0, bone->vertices);
+    HeapFree(GetProcessHeap(), 0, bone->weights);
+    bone->vertices = new_vertices;
+    bone->weights = new_weights;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXSkinInfoImpl_SetBoneVertexInfluence(ID3DXSkinInfo *iface, DWORD bone_num, DWORD influence_num, float weight)
@@ -101,18 +140,33 @@ static DWORD WINAPI ID3DXSkinInfoImpl_GetNumBoneInfluences(ID3DXSkinInfo *iface,
 {
     ID3DXSkinInfoImpl *This = impl_from_ID3DXSkinInfo(iface);
 
-    FIXME("(%p, %u): stub\n", This, bone_num);
+    TRACE("(%p, %u)\n", This, bone_num);
 
-    return 0;
+    if (bone_num >= This->num_bones)
+        return 0;
+
+    return This->bones[bone_num].num_influences;
 }
 
 static HRESULT WINAPI ID3DXSkinInfoImpl_GetBoneInfluence(ID3DXSkinInfo *iface, DWORD bone_num, DWORD *vertices, FLOAT *weights)
 {
     ID3DXSkinInfoImpl *This = impl_from_ID3DXSkinInfo(iface);
+    struct bone *bone;
 
-    FIXME("(%p, %u, %p, %p): stub\n", This, bone_num, vertices, weights);
+    TRACE("(%p, %u, %p, %p)\n", This, bone_num, vertices, weights);
 
-    return E_NOTIMPL;
+    if (bone_num >= This->num_bones || !vertices)
+        return D3DERR_INVALIDCALL;
+
+    bone = &This->bones[bone_num];
+    if (!bone->num_influences)
+        return D3D_OK;
+
+    memcpy(vertices, bone->vertices, bone->num_influences * sizeof(*vertices));
+    if (weights)
+        memcpy(weights, bone->weights, bone->num_influences * sizeof(*weights));
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXSkinInfoImpl_GetBoneVertexInfluence(ID3DXSkinInfo *iface, DWORD bone_num,
@@ -391,15 +445,22 @@ HRESULT WINAPI D3DXCreateSkinInfo(DWORD num_vertices, CONST D3DVERTEXELEMENT9 *d
     object->vertex_declaration[0] = empty_declaration;
     object->fvf = 0;
 
-    hr = ID3DXSkinInfoImpl_SetDeclaration(&object->ID3DXSkinInfo_iface, declaration);
-    if (FAILED(hr)) {
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
+    object->bones = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, num_bones * sizeof(*object->bones));
+    if (!object->bones) {
+        hr = E_OUTOFMEMORY;
+        goto error;
     }
+
+    hr = ID3DXSkinInfoImpl_SetDeclaration(&object->ID3DXSkinInfo_iface, declaration);
+    if (FAILED(hr)) goto error;
 
     *skin_info = &object->ID3DXSkinInfo_iface;
 
     return D3D_OK;
+error:
+    HeapFree(GetProcessHeap(), 0, object->bones);
+    HeapFree(GetProcessHeap(), 0, object);
+    return hr;
 }
 
 HRESULT WINAPI D3DXCreateSkinInfoFVF(DWORD num_vertices, DWORD fvf, DWORD num_bones, LPD3DXSKININFO *skin_info)
