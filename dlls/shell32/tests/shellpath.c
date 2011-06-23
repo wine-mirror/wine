@@ -1175,6 +1175,12 @@ static void test_knownFolders(void)
                 ok(hr == S_OK, "failed to get known folder: 0x%08x\n", hr);
                 if(SUCCEEDED(hr))
                 {
+                    hr = IKnownFolder_GetCategory(folder, &cat);
+                    todo_wine
+                    ok(hr == S_OK, "failed to get folder category: hr=0x%0x\n", hr);
+                    todo_wine
+                    ok(cat == KF_CATEGORY_PERUSER, "invalid category returned: %d, while %d (KF_CATEGORY_PERUSER) expected\n", cat, KF_CATEGORY_PERUSER);
+
                     hr = IKnownFolder_GetId(folder, &folderId);
                     ok(hr == S_OK, "failed to get folder id: 0x%08x\n", hr);
                     ok(IsEqualGUID(&folderId, &newFolderId)==TRUE, "invalid KNOWNFOLDERID returned\n");
