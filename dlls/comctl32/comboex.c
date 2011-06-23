@@ -1120,10 +1120,10 @@ static LRESULT COMBOEX_Command (COMBOEX_INFO *infoPtr, WPARAM wParam)
     switch (command)
     {
     case CBN_DROPDOWN:
-	SetFocus (infoPtr->hwndCombo);
-	ShowWindow (infoPtr->hwndEdit, SW_HIDE);
-	return SendMessageW (parent, WM_COMMAND, wParam, (LPARAM)infoPtr->hwndSelf);
-
+        SetFocus (infoPtr->hwndCombo);
+        ShowWindow (infoPtr->hwndEdit, SW_HIDE);
+        infoPtr->flags |= WCBE_ACTEDIT;
+        return SendMessageW (parent, WM_COMMAND, wParam, (LPARAM)infoPtr->hwndSelf);
     case CBN_CLOSEUP:
 	SendMessageW (parent, WM_COMMAND, wParam, (LPARAM)infoPtr->hwndSelf);
 	/*

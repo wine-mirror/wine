@@ -42,6 +42,8 @@ static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR
 #define MAX_CHARS 100
 static char *textBuffer = NULL;
 
+static BOOL received_end_edit = FALSE;
+
 static HWND createComboEx(DWORD style) {
    return CreateWindowExA(0, WC_COMBOBOXEXA, NULL, style, 0, 0, 300, 300,
             hComboExParentWnd, NULL, hMainHinst, NULL);
@@ -341,6 +343,7 @@ static void test_WM_LBUTTONDOWN(void)
     ok(idx == 4 ||
        broken(idx == -1), /* win98 */
        "Current Selection: expected %d, got %d\n", 4, idx);
+    ok(received_end_edit, "Expected to receive a CBEN_ENDEDIT message\n");
 
     DestroyWindow(hComboEx);
 }
@@ -427,6 +430,30 @@ static void test_WM_WINDOWPOSCHANGING(void)
     ok(ret, "DestroyWindow failed\n");
 }
 
+static LRESULT ComboExTestOnNotify(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    NMHDR *hdr = (NMHDR*)lParam;
+    switch(hdr->code){
+    case CBEN_ENDEDITA:
+        {
+            NMCBEENDEDITA *edit_info = (NMCBEENDEDITA*)hdr;
+            if(edit_info->iWhy==CBENF_DROPDOWN){
+                received_end_edit = TRUE;
+            }
+            break;
+        }
+    case CBEN_ENDEDITW:
+        {
+            NMCBEENDEDITW *edit_info = (NMCBEENDEDITW*)hdr;
+            if(edit_info->iWhy==CBENF_DROPDOWN){
+                received_end_edit = TRUE;
+            }
+            break;
+        }
+    }
+    return 0;
+}
+
 static LRESULT CALLBACK ComboExTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg) {
@@ -434,7 +461,8 @@ static LRESULT CALLBACK ComboExTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, L
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
-  
+    case WM_NOTIFY:
+        return ComboExTestOnNotify(hWnd,msg,wParam,lParam);
     default:
         return DefWindowProcA(hWnd, msg, wParam, lParam);
     }
