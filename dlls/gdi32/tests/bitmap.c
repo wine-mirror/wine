@@ -33,6 +33,7 @@
 #include "wine/test.h"
 
 static BOOL (WINAPI *pGdiAlphaBlend)(HDC,int,int,int,int,HDC,int,int,int,int,BLENDFUNCTION);
+static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
 
 #define expect_eq(expr, value, type, format) { type ret = (expr); ok((value) == ret, #expr " expected " format " got " format "\n", value, ret); }
 
@@ -3080,12 +3081,80 @@ static void test_GetDIBits_top_down(int bpp)
     DeleteObject(bmptb);
 }
 
+static void test_GetSetDIBits_rtl(void)
+{
+    HDC hdc, hdc_mem;
+    HBITMAP bitmap, orig_bitmap;
+    BITMAPINFO info;
+    int ret;
+    DWORD bits_1[8 * 8], bits_2[8 * 8];
+
+    if(!pSetLayout)
+    {
+        win_skip("Don't have SetLayout\n");
+        return;
+    }
+
+    hdc = GetDC( NULL );
+    hdc_mem = CreateCompatibleDC( hdc );
+    pSetLayout( hdc_mem, LAYOUT_LTR );
+
+    bitmap = CreateCompatibleBitmap( hdc, 8, 8 );
+    orig_bitmap = SelectObject( hdc_mem, bitmap );
+    SetPixel( hdc_mem, 0, 0, RGB(0xff, 0, 0) );
+    SelectObject( hdc_mem, orig_bitmap );
+
+    info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    info.bmiHeader.biWidth = 8;
+    info.bmiHeader.biHeight = 8;
+    info.bmiHeader.biPlanes = 1;
+    info.bmiHeader.biBitCount = 32;
+    info.bmiHeader.biCompression = BI_RGB;
+
+    /* First show that GetDIBits ignores the layout mode. */
+
+    ret = GetDIBits( hdc_mem, bitmap, 0, 8, bits_1, &info, DIB_RGB_COLORS );
+    ok(ret == 8, "got %d\n", ret);
+    ok(bits_1[56] == 0xff0000, "got %08x\n", bits_1[56]); /* check we have a red pixel */
+
+    pSetLayout( hdc_mem, LAYOUT_RTL );
+
+    ret = GetDIBits( hdc_mem, bitmap, 0, 8, bits_2, &info, DIB_RGB_COLORS );
+    ok(ret == 8, "got %d\n", ret);
+
+    ok(!memcmp( bits_1, bits_2, sizeof(bits_1) ), "bits differ\n");
+
+    /* Now to show that SetDIBits also ignores the mode, we perform a SetDIBits
+       followed by a GetDIBits and show that the bits remain unchanged. */
+
+    pSetLayout( hdc_mem, LAYOUT_LTR );
+
+    ret = SetDIBits( hdc_mem, bitmap, 0, 8, bits_1, &info, DIB_RGB_COLORS );
+    ok(ret == 8, "got %d\n", ret);
+    ret = GetDIBits( hdc_mem, bitmap, 0, 8, bits_2, &info, DIB_RGB_COLORS );
+    ok(ret == 8, "got %d\n", ret);
+    ok(!memcmp( bits_1, bits_2, sizeof(bits_1) ), "bits differ\n");
+
+    pSetLayout( hdc_mem, LAYOUT_RTL );
+
+    ret = SetDIBits( hdc_mem, bitmap, 0, 8, bits_1, &info, DIB_RGB_COLORS );
+    ok(ret == 8, "got %d\n", ret);
+    ret = GetDIBits( hdc_mem, bitmap, 0, 8, bits_2, &info, DIB_RGB_COLORS );
+    ok(ret == 8, "got %d\n", ret);
+    ok(!memcmp( bits_1, bits_2, sizeof(bits_1) ), "bits differ\n");
+
+    DeleteObject( bitmap );
+    DeleteDC( hdc_mem );
+    ReleaseDC( NULL, hdc );
+}
+
 START_TEST(bitmap)
 {
     HMODULE hdll;
 
     hdll = GetModuleHandle("gdi32.dll");
     pGdiAlphaBlend = (void*)GetProcAddress(hdll, "GdiAlphaBlend");
+    pSetLayout     = (void*)GetProcAddress(hdll, "SetLayout");
 
     test_createdibitmap();
     test_dibsections();
@@ -3112,4 +3181,5 @@ START_TEST(bitmap)
     test_GetDIBits_top_down(16);
     test_GetDIBits_top_down(24);
     test_GetDIBits_top_down(32);
+    test_GetSetDIBits_rtl();
 }
