@@ -638,6 +638,58 @@ HRESULT WINAPI CreateURLMonikerEx(IMoniker *pmkContext, LPCWSTR szURL, IMoniker 
     return S_OK;
 }
 
+/***********************************************************************
+ *           CreateURLMonikerEx2 (URLMON.@)
+ */
+HRESULT WINAPI CreateURLMonikerEx2(IMoniker *pmkContext, IUri *pUri, IMoniker **ppmk, DWORD dwFlags)
+{
+    IUri *context_uri = NULL, *uri;
+    IUriContainer *uri_container;
+    URLMoniker *ret;
+    HRESULT hres;
+
+    TRACE("(%p %p %p %x)\n", pmkContext, pUri, ppmk, dwFlags);
+
+    if (ppmk)
+        *ppmk = NULL;
+
+    if (!pUri || !ppmk)
+        return E_INVALIDARG;
+
+    if(dwFlags > sizeof(create_flags_map)/sizeof(*create_flags_map)) {
+        FIXME("Unsupported flags %x\n", dwFlags);
+        return E_INVALIDARG;
+    }
+
+    if(pmkContext) {
+        hres = IMoniker_QueryInterface(pmkContext, &IID_IUriContainer, (void**)&uri_container);
+        if(SUCCEEDED(hres)) {
+            hres = IUriContainer_GetIUri(uri_container, &context_uri);
+            if(FAILED(hres))
+                context_uri = NULL;
+            IUriContainer_Release(uri_container);
+        }
+    }
+
+    if(context_uri) {
+        hres = CoInternetCombineIUri(context_uri, pUri, combine_flags_map[dwFlags], &uri, 0);
+        IUri_Release(context_uri);
+        if(FAILED(hres))
+            return hres;
+    }else {
+        uri = pUri;
+        IUri_AddRef(uri);
+    }
+
+    hres = create_moniker(uri, &ret);
+    IUri_Release(uri);
+    if(FAILED(hres))
+        return hres;
+
+    *ppmk = &ret->IMoniker_iface;
+    return S_OK;
+}
+
 /**********************************************************************
  *           CreateURLMoniker (URLMON.@)
  *
