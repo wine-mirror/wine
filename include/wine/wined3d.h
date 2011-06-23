@@ -1235,6 +1235,8 @@ enum wined3d_sysval_semantic
 #define WINED3DDEVCAPS_RTPATCHHANDLEZERO                        0x00800000
 #define WINED3DDEVCAPS_NPATCHES                                 0x01000000
 
+#define WINED3D_PALETTE_PER_SURFACE                             0x00000001
+
 /* dwDDFX */
 /* arithmetic stretching along y axis */
 #define WINEDDBLTFX_ARITHSTRETCHY                               0x00000001
@@ -2125,7 +2127,7 @@ HRESULT __cdecl wined3d_check_device_multisample_type(const struct wined3d *wine
 HRESULT __cdecl wined3d_check_device_type(const struct wined3d *wined3d, UINT adapter_idx,
         WINED3DDEVTYPE device_type, enum wined3d_format_id display_format_id,
         enum wined3d_format_id backbuffer_format_id, BOOL windowed);
-struct wined3d * __cdecl wined3d_create(UINT dxVersion, void *parent);
+struct wined3d * __cdecl wined3d_create(UINT dxVersion, DWORD flags, void *parent);
 ULONG __cdecl wined3d_decref(struct wined3d *wined3d);
 HRESULT __cdecl wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_format_id format_id, UINT mode_idx, WINED3DDISPLAYMODE *mode);

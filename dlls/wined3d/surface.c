@@ -4260,10 +4260,8 @@ void d3dfmt_p8_init_palette(struct wined3d_surface *surface, BYTE table[256][4],
 
     if (!pal)
     {
-        UINT dxVersion = device->wined3d->dxVersion;
-
         /* In DirectDraw the palette is a property of the surface, there are no such things as device palettes. */
-        if (dxVersion <= 7)
+        if (device->wined3d->flags & WINED3D_PALETTE_PER_SURFACE)
         {
             ERR("This code should never get entered for DirectDraw!, expect problems\n");
             if (index_in_alpha)

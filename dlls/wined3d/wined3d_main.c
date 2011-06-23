@@ -88,7 +88,7 @@ struct wined3d_settings wined3d_settings =
 };
 
 /* Do not call while under the GL lock. */
-struct wined3d * CDECL wined3d_create(UINT version, void *parent)
+struct wined3d * CDECL wined3d_create(UINT version, DWORD flags, void *parent)
 {
     struct wined3d *object;
     HRESULT hr;
@@ -100,7 +100,7 @@ struct wined3d * CDECL wined3d_create(UINT version, void *parent)
         return NULL;
     }
 
-    hr = wined3d_init(object, version, parent);
+    hr = wined3d_init(object, version, flags, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize wined3d object, hr %#x.\n", hr);

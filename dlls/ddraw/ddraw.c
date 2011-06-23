@@ -6034,7 +6034,7 @@ HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type)
     ddraw->orig_width = GetSystemMetrics(SM_CXSCREEN);
     ddraw->orig_height = GetSystemMetrics(SM_CYSCREEN);
 
-    ddraw->wineD3D = wined3d_create(7, &ddraw->IDirectDraw7_iface);
+    ddraw->wineD3D = wined3d_create(7, WINED3D_PALETTE_PER_SURFACE, &ddraw->IDirectDraw7_iface);
     if (!ddraw->wineD3D)
     {
         WARN("Failed to create a wined3d object.\n");

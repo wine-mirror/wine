@@ -5370,11 +5370,12 @@ const struct wined3d_parent_ops wined3d_null_parent_ops =
 };
 
 /* Do not call while under the GL lock. */
-HRESULT wined3d_init(struct wined3d *wined3d, UINT version, void *parent)
+HRESULT wined3d_init(struct wined3d *wined3d, UINT version, DWORD flags, void *parent)
 {
     wined3d->dxVersion = version;
     wined3d->ref = 1;
     wined3d->parent = parent;
+    wined3d->flags = flags;
 
     if (!InitAdapters(wined3d))
     {

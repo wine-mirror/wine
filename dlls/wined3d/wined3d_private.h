@@ -1634,12 +1634,13 @@ struct wined3d
 {
     LONG ref;
     void *parent;
+    DWORD flags;
     UINT dxVersion;
     UINT adapter_count;
     struct wined3d_adapter adapters[1];
 };
 
-HRESULT wined3d_init(struct wined3d *wined3d, UINT version, void *parent) DECLSPEC_HIDDEN;
+HRESULT wined3d_init(struct wined3d *wined3d, UINT version, DWORD flags, void *parent) DECLSPEC_HIDDEN;
 BOOL wined3d_register_window(HWND window, struct wined3d_device *device) DECLSPEC_HIDDEN;
 void wined3d_unregister_window(HWND window) DECLSPEC_HIDDEN;
 
