@@ -126,7 +126,7 @@ HRESULT nsuri_to_url(LPCWSTR nsuri, BOOL ret_empty, BSTR *ret)
     return S_OK;
 }
 
-static BOOL exec_shldocvw_67(HTMLDocumentObj *doc, LPCWSTR url)
+static BOOL exec_shldocvw_67(HTMLDocumentObj *doc, BSTR url)
 {
     IOleCommandTarget *cmdtrg = NULL;
     HRESULT hres;
@@ -136,13 +136,12 @@ static BOOL exec_shldocvw_67(HTMLDocumentObj *doc, LPCWSTR url)
         VARIANT varUrl, varRes;
 
         V_VT(&varUrl) = VT_BSTR;
-        V_BSTR(&varUrl) = SysAllocString(url);
+        V_BSTR(&varUrl) = url;
         V_VT(&varRes) = VT_BOOL;
 
         hres = IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 67, 0, &varUrl, &varRes);
 
         IOleCommandTarget_Release(cmdtrg);
-        SysFreeString(V_BSTR(&varUrl));
 
         if(SUCCEEDED(hres) && !V_BOOL(&varRes)) {
             TRACE("got VARIANT_FALSE, do not load\n");
@@ -153,11 +152,10 @@ static BOOL exec_shldocvw_67(HTMLDocumentObj *doc, LPCWSTR url)
     return TRUE;
 }
 
-static BOOL before_async_open(nsChannel *channel, NSContainer *container)
+static nsresult before_async_open(nsChannel *channel, NSContainer *container, BOOL *cancel)
 {
     HTMLDocumentObj *doc = container->doc;
     DWORD hlnf = 0;
-    BOOL cancel;
     HRESULT hres;
 
     if(!doc) {
@@ -169,14 +167,31 @@ static BOOL before_async_open(nsChannel *channel, NSContainer *container)
         doc = container_iter->doc;
     }
 
-    if(!doc->client)
-        return TRUE;
+    if(!doc->client) {
+        *cancel = TRUE;
+        return NS_OK;
+    }
 
-    if(!hlnf && !exec_shldocvw_67(doc, channel->uri->wine_url))
-        return FALSE;
+    if(!hlnf) {
+        BSTR display_uri;
+        BOOL b;
 
-    hres = hlink_frame_navigate(&doc->basedoc, channel->uri->wine_url, channel, hlnf, &cancel);
-    return FAILED(hres) || cancel;
+        hres = IUri_GetDisplayUri(channel->uri->uri, &display_uri);
+        if(FAILED(hres))
+            return NS_ERROR_FAILURE;
+
+        b = !exec_shldocvw_67(doc, display_uri);
+        SysFreeString(display_uri);
+        if(b) {
+            *cancel = FALSE;
+            return NS_OK;
+        }
+    }
+
+    hres = hlink_frame_navigate(&doc->basedoc, channel->uri->wine_url, channel, hlnf, cancel);
+    if(FAILED(hres))
+        *cancel = TRUE;
+    return NS_OK;
 }
 
 HRESULT load_nsuri(HTMLWindow *window, nsWineURI *uri, nsChannelBSC *channelbsc, DWORD flags)
@@ -948,7 +963,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
     HTMLWindow *window = NULL;
-    BOOL open = TRUE;
+    BOOL cancel = FALSE;
     nsresult nsres = NS_OK;
 
     TRACE("(%p)->(%p %p) opening %s\n", This, aListener, aContext, debugstr_w(This->uri->wine_url));
@@ -967,7 +982,9 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
             if(This->uri->container->doc)
                 FIXME("nscontainer->doc = %p\n", This->uri->container->doc);
 
-            b = before_async_open(This, This->uri->container);
+            nsres = before_async_open(This, This->uri->container, &b);
+            if(NS_FAILED(nsres))
+                return nsres;
             if(b)
                 FIXME("Navigation not cancelled\n");
             return NS_ERROR_UNEXPECTED;
@@ -1003,17 +1020,17 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
                 This->content_type = heap_strdupWtoA(window->doc_obj->mime);
             }
 
-            open = FALSE;
+            cancel = TRUE;
         }else {
-            open = !before_async_open(This, window->doc_obj->nscontainer);
-            if(!open) {
+            nsres = before_async_open(This, window->doc_obj->nscontainer, &cancel);
+            if(NS_SUCCEEDED(nsres)  && cancel) {
                 TRACE("canceled\n");
                 nsres = NS_ERROR_UNEXPECTED;
             }
         }
     }
 
-    if(open)
+    if(!cancel)
         nsres = async_open(This, window, This->uri->is_doc_uri, aListener, aContext);
 
     if(NS_SUCCEEDED(nsres) && This->load_group) {
