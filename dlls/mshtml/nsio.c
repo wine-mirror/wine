@@ -69,6 +69,32 @@ struct  nsWineURI {
     BOOL is_doc_uri;
 };
 
+static BOOL ensure_uri(nsWineURI *This)
+{
+    HRESULT hres;
+
+    if(This->uri)
+        return TRUE;
+
+    if(This->uri_builder) {
+        hres = IUriBuilder_CreateUriSimple(This->uri_builder, 0, 0, &This->uri);
+        if(FAILED(hres)) {
+            WARN("CreateUriSimple failed: %08x\n", hres);
+            return FALSE;
+        }
+
+        return TRUE;
+    }
+
+    hres = CreateUri(This->wine_url, 0, 0, &This->uri);
+    if(FAILED(hres)) {
+        WARN("CreateUri failed: %08x\n", hres);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 static nsresult create_uri(nsIURI*,HTMLWindow*,NSContainer*,nsWineURI**);
 
 static const char *debugstr_nsacstr(const nsACString *nsstr)
@@ -886,7 +912,7 @@ static nsresult async_open(nsChannel *This, HTMLWindow *window, BOOL is_doc_chan
     IMoniker *mon = NULL;
     HRESULT hres;
 
-    hres = CreateURLMoniker(NULL, This->uri->wine_url, &mon);
+    hres = CreateURLMonikerEx2(NULL, This->uri->uri, &mon, 0);
     if(FAILED(hres)) {
         WARN("CreateURLMoniker failed: %08x\n", hres);
         return NS_ERROR_UNEXPECTED;
@@ -926,6 +952,9 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     nsresult nsres = NS_OK;
 
     TRACE("(%p)->(%p %p) opening %s\n", This, aListener, aContext, debugstr_w(This->uri->wine_url));
+
+    if(!ensure_uri(This->uri))
+        return NS_ERROR_FAILURE;
 
     if(This->uri->is_doc_uri) {
         window = get_channel_window(This);
@@ -1500,31 +1529,6 @@ static const nsIHttpChannelInternalVtbl nsHttpChannelInternalVtbl = {
     nsHttpChannelInternal_SetChannelIsForDownload
 };
 
-static BOOL ensure_uri(nsWineURI *This)
-{
-    HRESULT hres;
-
-    if(This->uri)
-        return TRUE;
-
-    if(This->uri_builder) {
-        hres = IUriBuilder_CreateUriSimple(This->uri_builder, 0, 0, &This->uri);
-        if(FAILED(hres)) {
-            WARN("CreateUriSimple failed: %08x\n", hres);
-            return FALSE;
-        }
-
-        return TRUE;
-    }
-
-    hres = CreateUri(This->wine_url, 0, 0, &This->uri);
-    if(FAILED(hres)) {
-        WARN("CreateUri failed: %08x\n", hres);
-        return FALSE;
-    }
-
-    return TRUE;
-}
 
 static void invalidate_uri(nsWineURI *This)
 {
