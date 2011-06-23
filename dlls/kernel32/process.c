@@ -3783,3 +3783,33 @@ HRESULT WINAPI RegisterApplicationRecoveryCallback(APPLICATION_RECOVERY_CALLBACK
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return E_FAIL;
 }
+
+/**********************************************************************
+ *           GetNumaHighestNodeNumber     (KERNEL32.@)
+ */
+BOOL WINAPI GetNumaHighestNodeNumber(PULONG highestnode)
+{
+    FIXME("(%p): stub\n", highestnode);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/**********************************************************************
+ *           GetNumaNodeProcessorMask     (KERNEL32.@)
+ */
+BOOL WINAPI GetNumaNodeProcessorMask(UCHAR node, PULONGLONG mask)
+{
+    FIXME("(%c %p): stub\n", node, mask);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/**********************************************************************
+ *           GetNumaAvailableMemoryNode     (KERNEL32.@)
+ */
+BOOL WINAPI GetNumaAvailableMemoryNode(UCHAR node, PULONGLONG available_bytes)
+{
+    FIXME("(%c %p): stub\n", node, available_bytes);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}

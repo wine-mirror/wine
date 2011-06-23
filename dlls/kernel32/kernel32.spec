@@ -568,9 +568,9 @@
 @ stub GetNextVDMCommand
 @ stub GetNlsSectionName
 # @ stub GetNumaAvailableMemory
-# @ stub GetNumaAvailableMemoryNode
-# @ stub GetNumaHighestNodeNumber
-# @ stub GetNumaNodeProcessorMask
+@ stdcall GetNumaAvailableMemoryNode(long ptr)
+@ stdcall GetNumaHighestNodeNumber(ptr)
+@ stdcall GetNumaNodeProcessorMask(long ptr)
 # @ stub GetNumaProcessorMap
 # @ stub GetNumaProcessorNode
 @ stdcall GetNumberFormatA(long long str ptr ptr long)
