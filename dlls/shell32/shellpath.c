@@ -3222,8 +3222,20 @@ static HRESULT WINAPI knownfolder_GetCategory(
     IKnownFolder *iface,
     KF_CATEGORY *pCategory)
 {
-    FIXME("%p\n", pCategory);
-    return E_NOTIMPL;
+    struct knownfolder *knownfolder = impl_from_IKnownFolder(iface);
+    HRESULT hr = S_OK;
+    DWORD dwSize, dwType;
+
+    TRACE("%p, %p\n", knownfolder, pCategory);
+
+    /* we can not get category for folder which is not registered */
+    if(!knownfolder->registryPath)
+        hr = E_FAIL;
+
+    if(SUCCEEDED(hr))
+        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, szCategory, RRF_RT_DWORD, &dwType, pCategory, &dwSize));
+
+    return hr;
 }
 
 static HRESULT WINAPI knownfolder_GetShellItem(
