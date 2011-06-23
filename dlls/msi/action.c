@@ -2565,7 +2565,7 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     BOOL check_first = FALSE;
     UINT rc;
 
-    msi_ui_progress( package, 2, 0, 0, 0 );
+    msi_ui_progress( package, 2, REG_PROGRESS_VALUE, 0, 0 );
 
     component = MSI_RecordGetString(row, 6);
     comp = msi_get_loaded_component(package,component);
@@ -2679,9 +2679,6 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
-    /* increment progress bar each time action data is sent */
-    msi_ui_progress( package, 1, REG_PROGRESS_VALUE, 1, 0 );
-
     rc = MSI_IterateRecords(view, NULL, ITERATE_WriteRegistryValues, package);
     msiobj_release(&view->hdr);
     return rc;
@@ -2734,7 +2731,7 @@ static UINT ITERATE_RemoveRegistryValuesOnUninstall( MSIRECORD *row, LPVOID para
     UINT size;
     INT root;
 
-    msi_ui_progress( package, 2, 0, 0, 0 );
+    msi_ui_progress( package, 2, REG_PROGRESS_VALUE, 0, 0 );
 
     component = MSI_RecordGetString( row, 6 );
     comp = msi_get_loaded_component( package, component );
@@ -2783,7 +2780,6 @@ static UINT ITERATE_RemoveRegistryValuesOnUninstall( MSIRECORD *row, LPVOID para
     uirow = MSI_CreateRecord( 2 );
     MSI_RecordSetStringW( uirow, 1, ui_key_str );
     MSI_RecordSetStringW( uirow, 2, deformated_name );
-
     msi_ui_actiondata( package, szRemoveRegistryValues, uirow );
     msiobj_release( &uirow->hdr );
 
@@ -2803,8 +2799,6 @@ static UINT ITERATE_RemoveRegistryValuesOnInstall( MSIRECORD *row, LPVOID param 
     HKEY hkey_root;
     UINT size;
     INT root;
-
-    msi_ui_progress( package, 2, 0, 0, 0 );
 
     component = MSI_RecordGetString( row, 5 );
     comp = msi_get_loaded_component( package, component );
@@ -2850,7 +2844,6 @@ static UINT ITERATE_RemoveRegistryValuesOnInstall( MSIRECORD *row, LPVOID param 
     uirow = MSI_CreateRecord( 2 );
     MSI_RecordSetStringW( uirow, 1, ui_key_str );
     MSI_RecordSetStringW( uirow, 2, deformated_name );
-
     msi_ui_actiondata( package, szRemoveRegistryValues, uirow );
     msiobj_release( &uirow->hdr );
 
@@ -2869,9 +2862,6 @@ static UINT ACTION_RemoveRegistryValues( MSIPACKAGE *package )
     static const WCHAR remove_registry_query[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','R','e','m','o','v','e','R','e','g','i','s','t','r','y','`',0 };
-
-    /* increment progress bar each time action data is sent */
-    msi_ui_progress( package, 1, REG_PROGRESS_VALUE, 1, 0 );
 
     rc = MSI_DatabaseOpenViewW( package->db, registry_query, &view );
     if (rc == ERROR_SUCCESS)
@@ -2905,8 +2895,7 @@ static UINT ACTION_InstallInitialize(MSIPACKAGE *package)
 static UINT ACTION_InstallValidate(MSIPACKAGE *package)
 {
     MSICOMPONENT *comp;
-    DWORD progress = 0;
-    DWORD total = 0;
+    DWORD total = 0, count = 0;
     static const WCHAR q1[]=
         {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
          '`','R','e','g','i','s','t','r','y','`',0};
@@ -2920,11 +2909,10 @@ static UINT ACTION_InstallValidate(MSIPACKAGE *package)
     rc = MSI_DatabaseOpenViewW(package->db, q1, &view);
     if (rc == ERROR_SUCCESS)
     {
-        MSI_IterateRecords( view, &progress, NULL, package );
+        MSI_IterateRecords( view, &count, NULL, package );
         msiobj_release( &view->hdr );
-        total += progress * REG_PROGRESS_VALUE;
+        total += count * REG_PROGRESS_VALUE;
     }
-
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
         total += COMPONENT_PROGRESS_VALUE;
 
@@ -3200,8 +3188,6 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
     TRACE("\n");
 
     squash_guid(package->ProductCode,squished_pc);
-    msi_ui_progress( package, 1, COMPONENT_PROGRESS_VALUE, 1, 0 );
-
     msi_set_sourcedir_props(package, FALSE);
 
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
@@ -3209,7 +3195,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
         MSIRECORD *uirow;
         INSTALLSTATE action;
 
-        msi_ui_progress( package, 2, 0, 0, 0 );
+        msi_ui_progress( package, 2, COMPONENT_PROGRESS_VALUE, 0, 0 );
         if (!comp->ComponentId)
             continue;
 

@@ -261,11 +261,9 @@ static BOOL installfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
             TRACE("unknown file in cabinet (%s)\n", debugstr_w(file));
             return FALSE;
         }
-
         if (f->disk_id != disk_id || (f->state != msifs_missing && f->state != msifs_overwrite))
             return FALSE;
 
-        msi_file_update_ui(package, f, szInstallFiles);
         if (!f->Component->assembly || f->Component->assembly->application)
         {
             msi_create_directory(package, f->Component->Directory);
@@ -317,14 +315,13 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     UINT rc = ERROR_SUCCESS;
     MSIFILE *file;
 
-    /* increment progress bar each time action data is sent */
-    msi_ui_progress( package, 1, 1, 0, 0 );
-
     schedule_install_files(package);
     mi = msi_alloc_zero( sizeof(MSIMEDIAINFO) );
 
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
+        msi_file_update_ui( package, file, szInstallFiles );
+
         rc = msi_load_media_info( package, file->Sequence, mi );
         if (rc != ERROR_SUCCESS)
         {
@@ -368,7 +365,6 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
 
             TRACE("copying %s to %s\n", debugstr_w(source), debugstr_w(file->TargetPath));
 
-            msi_file_update_ui(package, file, szInstallFiles);
             if (!file->Component->assembly || file->Component->assembly->application)
             {
                 msi_create_directory(package, file->Component->Directory);
@@ -455,9 +451,6 @@ static BOOL patchfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
             TRACE("unknown file in cabinet (%s)\n", debugstr_w(file));
             return FALSE;
         }
-
-        msi_file_update_ui(package, p->File, szPatchFiles);
-
         GetTempFileNameW(temp_folder, NULL, 0, patch_path);
 
         *path = strdupW(patch_path);
@@ -498,9 +491,6 @@ UINT ACTION_PatchFiles( MSIPACKAGE *package )
     BOOL mspatcha_loaded = FALSE;
 
     TRACE("%p\n", package);
-
-    /* increment progress bar each time action data is sent */
-    msi_ui_progress( package, 1, 1, 0, 0 );
 
     mi = msi_alloc_zero( sizeof(MSIMEDIAINFO) );
 
@@ -1273,6 +1263,8 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         VS_FIXEDFILEINFO *ver;
         MSICOMPONENT *comp = file->Component;
 
+        msi_file_update_ui( package, file, szRemoveFiles );
+
         comp->Action = msi_get_component_action( package, comp );
         if (comp->Action != INSTALLSTATE_ABSENT || comp->Installed == INSTALLSTATE_SOURCE)
             continue;
@@ -1324,8 +1316,6 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         MSI_RecordSetStringW( uirow, 9, comp->Directory );
         msi_ui_actiondata( package, szRemoveFiles, uirow );
         msiobj_release( &uirow->hdr );
-        /* FIXME: call msi_ui_progress here? */
     }
-
     return ERROR_SUCCESS;
 }
