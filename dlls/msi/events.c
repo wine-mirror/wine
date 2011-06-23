@@ -254,9 +254,19 @@ VOID ControlEvent_SubscribeToEvent( MSIPACKAGE *package, msi_dialog *dialog,
 {
     struct subscriber *sub;
 
-    sub = msi_alloc(sizeof (*sub));
-    if( !sub )
-        return;
+    TRACE("event %s control %s attribute %s\n", debugstr_w(event), debugstr_w(control), debugstr_w(attribute));
+
+    LIST_FOR_EACH_ENTRY( sub, &package->subscriptions, struct subscriber, entry )
+    {
+        if (!strcmpiW( sub->event, event ) &&
+            !strcmpiW( sub->control, control ) &&
+            !strcmpiW( sub->attribute, attribute ))
+        {
+            TRACE("already subscribed\n");
+            return;
+        };
+    }
+    if (!(sub = msi_alloc( sizeof(*sub) ))) return;
     sub->dialog = dialog;
     sub->event = strdupW(event);
     sub->control = strdupW(control);
@@ -264,17 +274,15 @@ VOID ControlEvent_SubscribeToEvent( MSIPACKAGE *package, msi_dialog *dialog,
     list_add_tail( &package->subscriptions, &sub->entry );
 }
 
-VOID ControlEvent_FireSubscribedEvent( MSIPACKAGE *package, LPCWSTR event, 
-                                       MSIRECORD *rec )
+VOID ControlEvent_FireSubscribedEvent( MSIPACKAGE *package, LPCWSTR event, MSIRECORD *rec )
 {
     struct subscriber *sub;
 
-    TRACE("Firing Event %s\n",debugstr_w(event));
+    TRACE("Firing event %s\n", debugstr_w(event));
 
     LIST_FOR_EACH_ENTRY( sub, &package->subscriptions, struct subscriber, entry )
     {
-        if (strcmpiW( sub->event, event ))
-            continue;
+        if (strcmpiW( sub->event, event )) continue;
         msi_dialog_handle_event( sub->dialog, sub->control, sub->attribute, rec );
     }
 }
