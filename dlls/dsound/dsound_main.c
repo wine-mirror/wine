@@ -353,13 +353,15 @@ HRESULT WINAPI DirectSoundEnumerateW(
 	return DSERR_INVALIDPARAM;
     }
 
+    setup_dsound_options();
+
     devs = waveOutGetNumDevs();
     if (devs > 0) {
 	if (GetDeviceID(&DSDEVID_DefaultPlayback, &guid) == DS_OK) {
             static const WCHAR empty[] = { 0 };
 	    for (wod = 0; wod < devs; ++wod) {
                 if (IsEqualGUID( &guid, &DSOUND_renderer_guids[wod] ) ) {
-                    err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
+                    err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,ds_hw_accel));
                     if (err == DS_OK) {
                         TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
                               "Primary Sound Driver",desc.szDrvname,lpContext);
@@ -374,7 +376,7 @@ HRESULT WINAPI DirectSoundEnumerateW(
     }
 
     for (wod = 0; wod < devs; ++wod) {
-        err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
+        err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,ds_hw_accel));
 	if (err == DS_OK) {
             TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
                   debugstr_guid(&DSOUND_renderer_guids[wod]),desc.szDesc,desc.szDrvname,lpContext);
@@ -455,12 +457,14 @@ DirectSoundCaptureEnumerateW(
         return DSERR_INVALIDPARAM;
     }
 
+    setup_dsound_options();
+
     devs = waveInGetNumDevs();
     if (devs > 0) {
 	if (GetDeviceID(&DSDEVID_DefaultCapture, &guid) == DS_OK) {
 	    for (wid = 0; wid < devs; ++wid) {
                 if (IsEqualGUID( &guid, &DSOUND_capture_guids[wid] ) ) {
-                    err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
+                    err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,ds_hw_accel));
                     if (err == DS_OK) {
                         TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
                               "Primary Sound Capture Driver",desc.szDrvname,lpContext);
@@ -479,7 +483,7 @@ DirectSoundCaptureEnumerateW(
     }
 
     for (wid = 0; wid < devs; ++wid) {
-        err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
+        err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,ds_hw_accel));
 	if (err == DS_OK) {
             TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
                   debugstr_guid(&DSOUND_capture_guids[wid]),desc.szDesc,desc.szDrvname,lpContext);

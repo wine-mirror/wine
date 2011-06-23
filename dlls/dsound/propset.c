@@ -226,6 +226,8 @@ static HRESULT DSPROPERTY_DescriptionW(
         }
     }
 
+    setup_dsound_options();
+
     GetDeviceID(&ppd->DeviceId, &dev_guid);
 
     wodn = waveOutGetNumDevs();
@@ -250,9 +252,9 @@ static HRESULT DSPROPERTY_DescriptionW(
     }
 
     if (ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_RENDER)
-        err = waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0);
+        err = waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,ds_hw_accel);
     else
-        err = waveInMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0);
+        err = waveInMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,ds_hw_accel);
 
     if (err != MMSYSERR_NOERROR)
     {
