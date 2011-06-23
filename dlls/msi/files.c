@@ -153,7 +153,6 @@ static void schedule_install_files(MSIPACKAGE *package)
             TRACE("not overwriting %s\n", debugstr_w(file->TargetPath));
             file->state = msifs_skipped;
         }
-        msi_ui_progress( package, 2, file->FileSize, 0, 0 );
     }
 }
 
