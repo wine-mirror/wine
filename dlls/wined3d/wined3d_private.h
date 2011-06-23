@@ -2110,7 +2110,7 @@ HRESULT surface_color_fill(struct wined3d_surface *s, const RECT *rect, const WI
 GLenum surface_get_gl_buffer(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 BOOL surface_init_sysmem(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 void surface_internal_preload(struct wined3d_surface *surface, enum WINED3DSRGB srgb) DECLSPEC_HIDDEN;
-BOOL surface_is_offscreen(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
+BOOL surface_is_offscreen(const struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 HRESULT surface_load(struct wined3d_surface *surface, BOOL srgb) DECLSPEC_HIDDEN;
 void surface_load_ds_location(struct wined3d_surface *surface,
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;

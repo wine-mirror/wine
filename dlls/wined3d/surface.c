@@ -6207,7 +6207,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const
     return WINED3D_OK;
 }
 
-BOOL surface_is_offscreen(struct wined3d_surface *surface)
+BOOL surface_is_offscreen(const struct wined3d_surface *surface)
 {
     struct wined3d_swapchain *swapchain = surface->container.u.swapchain;
 
