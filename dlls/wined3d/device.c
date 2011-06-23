@@ -6102,7 +6102,7 @@ HRESULT CDECL wined3d_device_get_surface_from_dc(struct wined3d_device *device,
 
 HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
         UINT adapter_idx, WINED3DDEVTYPE device_type, HWND focus_window, DWORD flags,
-        struct wined3d_device_parent *device_parent)
+        BYTE surface_alignment, struct wined3d_device_parent *device_parent)
 {
     struct wined3d_adapter *adapter = &wined3d->adapters[adapter_idx];
     const struct fragment_pipeline *fragment_pipeline;
@@ -6119,8 +6119,7 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
     device->device_parent = device_parent;
     list_init(&device->resources);
     list_init(&device->shaders);
-
-    device->surface_alignment = wined3d->dxVersion == 7 ? DDRAW_PITCH_ALIGNMENT : D3D8_PITCH_ALIGNMENT;
+    device->surface_alignment = surface_alignment;
 
     /* Get the initial screen setup for ddraw. */
     hr = wined3d_get_adapter_display_mode(wined3d, adapter_idx, &mode);

@@ -4841,7 +4841,8 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
 }
 
 HRESULT CDECL wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx, WINED3DDEVTYPE device_type,
-        HWND focus_window, DWORD flags, struct wined3d_device_parent *device_parent, struct wined3d_device **device)
+        HWND focus_window, DWORD flags, BYTE surface_alignment, struct wined3d_device_parent *device_parent,
+        struct wined3d_device **device)
 {
     struct wined3d_device *object;
     HRESULT hr;
@@ -4861,7 +4862,8 @@ HRESULT CDECL wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx, W
         return E_OUTOFMEMORY;
     }
 
-    hr = device_init(object, wined3d, adapter_idx, device_type, focus_window, flags, device_parent);
+    hr = device_init(object, wined3d, adapter_idx, device_type,
+            focus_window, flags, surface_alignment, device_parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);

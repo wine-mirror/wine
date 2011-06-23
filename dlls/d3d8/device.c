@@ -3100,7 +3100,7 @@ HRESULT device_init(IDirect3DDevice8Impl *device, IDirect3D8Impl *parent, struct
     if (!(flags & D3DCREATE_FPU_PRESERVE)) setup_fpu();
 
     wined3d_mutex_lock();
-    hr = wined3d_device_create(wined3d, adapter, device_type, focus_window, flags,
+    hr = wined3d_device_create(wined3d, adapter, device_type, focus_window, flags, 4,
             &device->device_parent, &device->wined3d_device);
     if (FAILED(hr))
     {

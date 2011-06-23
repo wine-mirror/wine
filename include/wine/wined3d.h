@@ -2179,7 +2179,7 @@ void __cdecl wined3d_device_clear_rendertarget_view(struct wined3d_device *devic
 HRESULT __cdecl wined3d_device_color_fill(struct wined3d_device *device, struct wined3d_surface *surface,
         const RECT *rect, const WINED3DCOLORVALUE *color);
 HRESULT __cdecl wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx,
-        WINED3DDEVTYPE device_type, HWND focus_window, DWORD behaviour_flags,
+        WINED3DDEVTYPE device_type, HWND focus_window, DWORD behaviour_flags, BYTE surface_alignment,
         struct wined3d_device_parent *device_parent, struct wined3d_device **device);
 ULONG __cdecl wined3d_device_decref(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_delete_patch(struct wined3d_device *device, UINT handle);

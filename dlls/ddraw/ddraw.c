@@ -6042,7 +6042,7 @@ HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type)
     }
 
     hr = wined3d_device_create(ddraw->wineD3D, WINED3DADAPTER_DEFAULT, device_type,
-            NULL, 0, &ddraw->device_parent, &ddraw->wined3d_device);
+            NULL, 0, 8, &ddraw->device_parent, &ddraw->wined3d_device);
     if (FAILED(hr))
     {
         WARN("Failed to create a wined3d device, hr %#x.\n", hr);
