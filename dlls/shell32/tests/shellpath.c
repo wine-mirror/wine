@@ -1190,13 +1190,11 @@ static void test_knownFolders(void)
 
                     /* try to set new path for folder */
                     hr = IKnownFolder_SetPath(folder, 0, sExample2Path);
-                    todo_wine
                     ok(hr == S_OK, "setting path failed: 0x%0x\n", hr);
 
                     /* verify modified path */
                     hr = IKnownFolder_GetPath(folder, 0, &folderPath);
                     ok(hr == S_OK, "failed to get path from known folder: 0x%08x\n", hr);
-                    todo_wine
                     ok(lstrcmpiW(folderPath, sExample2Path)==0, "invalid known folder path retreived: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
                     CoTaskMemFree(folderPath);
 
@@ -1208,6 +1206,7 @@ static void test_knownFolders(void)
                     /* again verify modified path */
                     hr = IKnownFolder_GetPath(folder, 0, &folderPath);
                     ok(hr == S_OK, "failed to get path from known folder: 0x%08x\n", hr);
+                    todo_wine
                     ok(lstrcmpiW(folderPath, sExamplePath)==0, "invalid known folder path retreived: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
                     CoTaskMemFree(folderPath);
 
