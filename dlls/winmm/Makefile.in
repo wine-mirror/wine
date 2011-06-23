@@ -11,6 +11,7 @@ C_SRCS = \
 	mmio.c \
 	playsound.c \
 	time.c \
+	waveform.c \
 	winmm.c
 
 RC_SRCS = \
