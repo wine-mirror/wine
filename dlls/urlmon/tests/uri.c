@@ -71,6 +71,8 @@ static HRESULT (WINAPI *pCoInternetCombineIUri)(IUri*,IUri*,DWORD,IUri**,DWORD_P
 static HRESULT (WINAPI *pCoInternetGetSession)(DWORD,IInternetSession**,DWORD);
 static HRESULT (WINAPI *pCoInternetCombineUrlEx)(IUri*,LPCWSTR,DWORD,IUri**,DWORD_PTR);
 static HRESULT (WINAPI *pCoInternetParseIUri)(IUri*,PARSEACTION,DWORD,LPWSTR,DWORD,DWORD*,DWORD_PTR);
+static HRESULT (WINAPI *pCreateURLMonikerEx)(IMoniker*,LPCWSTR,IMoniker**,DWORD);
+static HRESULT (WINAPI *pCreateURLMonikerEx2)(IMoniker*,IUri*,IMoniker**,DWORD);
 
 static const WCHAR http_urlW[] = { 'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q',
         '.','o','r','g','/',0};
@@ -10078,6 +10080,199 @@ static void test_CoInternetParseIUri_Pluggable(void) {
     if(uri) IUri_Release(uri);
 }
 
+typedef struct {
+    const char *url;
+    DWORD uri_flags;
+    const char *base_url;
+    DWORD base_uri_flags;
+    const char *legacy_url;
+    const char *uniform_url;
+    const char *no_canon_url;
+    const char *uri_url;
+} create_urlmon_test_t;
+
+static const create_urlmon_test_t create_urlmon_tests[] = {
+    {
+        "http://www.winehq.org",Uri_CREATE_NO_CANONICALIZE,
+        NULL,0,
+        "http://www.winehq.org/",
+        "http://www.winehq.org/",
+        "http://www.winehq.org",
+        "http://www.winehq.org"
+    },
+    {
+        "file://c:\\dir\\file.txt",Uri_CREATE_NO_CANONICALIZE,
+        NULL,0,
+        "file://c:\\dir\\file.txt",
+        "file:///c:/dir/file.txt",
+        "file:///c:/dir/file.txt",
+        "file:///c:/dir/file.txt"
+    },
+    {
+        "file://c:\\dir\\file.txt",Uri_CREATE_FILE_USE_DOS_PATH,
+        NULL,0,
+        "file://c:\\dir\\file.txt",
+        "file:///c:/dir/file.txt",
+        "file:///c:/dir/file.txt",
+        "file://c:\\dir\\file.txt"
+    },
+    {
+        "dat%61",Uri_CREATE_ALLOW_RELATIVE,
+        "http://www.winehq.org",0,
+        "http://www.winehq.org/data",
+        "http://www.winehq.org/data",
+        "http://www.winehq.org:80/data",
+    },
+    {
+        "file.txt",Uri_CREATE_ALLOW_RELATIVE,
+        "file://c:\\dir\\x.txt",Uri_CREATE_NO_CANONICALIZE,
+        "file://c:\\dir\\file.txt",
+        "file:///c:/dir/file.txt",
+        "file:///c:/dir/file.txt",
+    },
+    {
+        "",Uri_CREATE_ALLOW_RELATIVE,
+        NULL,0,
+        "",
+        "",
+        "",
+        ""
+    },
+    {
+        "test",Uri_CREATE_ALLOW_RELATIVE,
+        NULL,0,
+        "test",
+        "test",
+        "test",
+        "test"
+    },
+    {
+        "c:\\dir\\file.txt",Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME,
+        NULL,0,
+        "file://c:\\dir\\file.txt",
+        "file:///c:/dir/file.txt",
+        "file:///c:/dir/file.txt",
+        "file:///c:/dir/file.txt",
+    }
+};
+
+#define test_urlmon_display_name(a,b) _test_urlmon_display_name(__LINE__,a,b)
+static void _test_urlmon_display_name(unsigned line, IMoniker *mon, const char *exurl)
+{
+    WCHAR *display_name;
+    HRESULT hres;
+
+    hres = IMoniker_GetDisplayName(mon, NULL, NULL, &display_name);
+    ok_(__FILE__,line)(hres == S_OK, "GetDisplayName failed: %08x\n", hres);
+    ok_(__FILE__,line)(!strcmp_aw(exurl, display_name), "unexpected display name: %s, expected %s\n",
+            wine_dbgstr_w(display_name), exurl);
+
+    CoTaskMemFree(display_name);
+}
+
+#define test_display_uri(a,b) _test_display_uri(__LINE__,a,b)
+static void _test_display_uri(unsigned line, IMoniker *mon, const char *exurl)
+{
+    IUriContainer *uri_container;
+    IUri *uri;
+    BSTR display_uri;
+    HRESULT hres;
+
+    hres = IMoniker_QueryInterface(mon, &IID_IUriContainer, (void**)&uri_container);
+    ok(hres == S_OK, "Could not get IUriContainer iface: %08x\n", hres);
+
+    uri = NULL;
+    hres = IUriContainer_GetIUri(uri_container, &uri);
+    IUriContainer_Release(uri_container);
+    ok(hres == S_OK, "GetIUri failed: %08x\n", hres);
+    ok(uri != NULL, "uri == NULL\n");
+
+    hres = IUri_GetDisplayUri(uri, &display_uri);
+    IUri_Release(uri);
+    ok(hres == S_OK, "GetDisplayUri failed: %08x\n", hres);
+    ok_(__FILE__,line)(!strcmp_aw(exurl, display_uri), "unexpected display uri: %s, expected %s\n",
+            wine_dbgstr_w(display_uri), exurl);
+    SysFreeString(display_uri);
+}
+
+static void test_CreateURLMoniker(void)
+{
+    const create_urlmon_test_t *test;
+    IMoniker *mon, *base_mon;
+    WCHAR *url, *base_url;
+    IUri *uri, *base_uri;
+    HRESULT hres;
+
+    for(test = create_urlmon_tests; test < create_urlmon_tests + sizeof(create_urlmon_tests)/sizeof(*create_urlmon_tests); test++) {
+        url = a2w(test->url);
+        base_url = a2w(test->base_url);
+
+        if(base_url) {
+            hres = pCreateUri(base_url, test->base_uri_flags, 0, &base_uri);
+            ok(hres == S_OK, "CreateUri failed: %08x\n", hres);
+
+            hres = pCreateURLMonikerEx2(NULL, base_uri, &base_mon, URL_MK_NO_CANONICALIZE);
+            ok(hres == S_OK, "CreateURLMonikerEx2 failed: %08x\n", hres);
+        }else {
+            base_uri = NULL;
+            base_mon = NULL;
+        }
+
+        hres = CreateURLMoniker(base_mon, url, &mon);
+        ok(hres == S_OK, "CreateURLMoniker failed: %08x\n", hres);
+        test_urlmon_display_name(mon, test->legacy_url);
+        test_display_uri(mon, test->legacy_url);
+        IMoniker_Release(mon);
+
+        hres = pCreateURLMonikerEx(base_mon, url, &mon, URL_MK_LEGACY);
+        ok(hres == S_OK, "CreateURLMoniker failed: %08x\n", hres);
+        test_urlmon_display_name(mon, test->legacy_url);
+        test_display_uri(mon, test->legacy_url);
+        IMoniker_Release(mon);
+
+        hres = pCreateURLMonikerEx(base_mon, url, &mon, URL_MK_UNIFORM);
+        ok(hres == S_OK, "CreateURLMoniker failed: %08x\n", hres);
+        test_urlmon_display_name(mon, test->uniform_url);
+        test_display_uri(mon, test->uniform_url);
+        IMoniker_Release(mon);
+
+        hres = pCreateURLMonikerEx(base_mon, url, &mon, URL_MK_NO_CANONICALIZE);
+        ok(hres == S_OK, "CreateURLMoniker failed: %08x\n", hres);
+        test_urlmon_display_name(mon, test->no_canon_url);
+        test_display_uri(mon, test->no_canon_url);
+        IMoniker_Release(mon);
+
+        hres = pCreateUri(url, test->uri_flags, 0, &uri);
+        ok(hres == S_OK, "CreateUri failed: %08x\n", hres);
+
+        hres = pCreateURLMonikerEx2(base_mon, uri, &mon, URL_MK_LEGACY);
+        ok(hres == S_OK, "CreateURLMonikerEx2 failed: %08x\n", hres);
+        test_urlmon_display_name(mon, base_url ? test->legacy_url : test->uri_url);
+        test_display_uri(mon, base_url ? test->legacy_url : test->uri_url);
+        IMoniker_Release(mon);
+
+        hres = pCreateURLMonikerEx2(base_mon, uri, &mon, URL_MK_UNIFORM);
+        ok(hres == S_OK, "CreateURLMonikerEx2 failed: %08x\n", hres);
+        test_urlmon_display_name(mon, base_url ? test->uniform_url : test->uri_url);
+        test_display_uri(mon, base_url ? test->uniform_url : test->uri_url);
+        IMoniker_Release(mon);
+
+        hres = pCreateURLMonikerEx2(base_mon, uri, &mon, URL_MK_NO_CANONICALIZE);
+        ok(hres == S_OK, "CreateURLMonikerEx2 failed: %08x\n", hres);
+        test_urlmon_display_name(mon, base_url ? test->no_canon_url : test->uri_url);
+        test_display_uri(mon, base_url ? test->no_canon_url : test->uri_url);
+        IMoniker_Release(mon);
+
+        IUri_Release(uri);
+        heap_free(url);
+        heap_free(base_url);
+        if(base_uri)
+            IUri_Release(base_uri);
+        if(base_mon)
+            IMoniker_Release(base_mon);
+    }
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
@@ -10089,6 +10284,8 @@ START_TEST(uri) {
     pCoInternetCombineIUri = (void*) GetProcAddress(hurlmon, "CoInternetCombineIUri");
     pCoInternetCombineUrlEx = (void*) GetProcAddress(hurlmon, "CoInternetCombineUrlEx");
     pCoInternetParseIUri = (void*) GetProcAddress(hurlmon, "CoInternetParseIUri");
+    pCreateURLMonikerEx = (void*) GetProcAddress(hurlmon, "CreateURLMonikerEx");
+    pCreateURLMonikerEx2 = (void*) GetProcAddress(hurlmon, "CreateURLMonikerEx2");
 
     if(!pCreateUri) {
         win_skip("CreateUri is not present, skipping tests.\n");
@@ -10186,6 +10383,9 @@ START_TEST(uri) {
 
     trace("test CoInternetParseIUri pluggable...\n");
     test_CoInternetParseIUri_Pluggable();
+
+    trace("test CreateURLMoniker...\n");
+    test_CreateURLMoniker();
 
     unregister_protocols();
 }
