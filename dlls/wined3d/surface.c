@@ -2412,9 +2412,9 @@ void surface_set_compatible_renderbuffer(struct wined3d_surface *surface, struct
     checkGLcall("set_compatible_renderbuffer");
 }
 
-GLenum surface_get_gl_buffer(struct wined3d_surface *surface)
+GLenum surface_get_gl_buffer(const struct wined3d_surface *surface)
 {
-    struct wined3d_swapchain *swapchain = surface->container.u.swapchain;
+    const struct wined3d_swapchain *swapchain = surface->container.u.swapchain;
 
     TRACE("surface %p.\n", surface);
 
