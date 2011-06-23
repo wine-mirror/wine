@@ -984,10 +984,13 @@ UINT WINAPI GetKeyboardLayoutList(INT nBuff, HKL *layouts)
 BOOL WINAPI RegisterHotKey(HWND hwnd,INT id,UINT modifiers,UINT vk)
 {
     BOOL ret;
+    int replaced=0;
 
     TRACE_(keyboard)("(%p,%d,0x%08x,%X)\n",hwnd,id,modifiers,vk);
 
-    /* FIXME: Register hotkey with user driver. */
+    if ((hwnd == NULL || WIN_IsCurrentThread(hwnd)) &&
+        !USER_Driver->pRegisterHotKey(hwnd, modifiers, vk))
+        return FALSE;
 
     SERVER_START_REQ( register_hotkey )
     {
@@ -995,11 +998,17 @@ BOOL WINAPI RegisterHotKey(HWND hwnd,INT id,UINT modifiers,UINT vk)
         req->id = id;
         req->flags = modifiers;
         req->vkey = vk;
-        ret = !wine_server_call_err( req );
+        if ((ret = !wine_server_call_err( req )))
+        {
+            replaced = reply->replaced;
+            modifiers = reply->flags;
+            vk = reply->vkey;
+        }
     }
     SERVER_END_REQ;
 
-    /* FIXME: Unregister new or replaced hotkey with user driver if necessary. */
+    if (ret && replaced)
+        USER_Driver->pUnregisterHotKey(hwnd, modifiers, vk);
 
     return ret;
 }
@@ -1010,6 +1019,7 @@ BOOL WINAPI RegisterHotKey(HWND hwnd,INT id,UINT modifiers,UINT vk)
 BOOL WINAPI UnregisterHotKey(HWND hwnd,INT id)
 {
     BOOL ret;
+    UINT modifiers, vk;
 
     TRACE_(keyboard)("(%p,%d)\n",hwnd,id);
 
@@ -1017,11 +1027,16 @@ BOOL WINAPI UnregisterHotKey(HWND hwnd,INT id)
     {
         req->window = wine_server_user_handle( hwnd );
         req->id = id;
-        ret = !wine_server_call_err( req );
+        if ((ret = !wine_server_call_err( req )))
+        {
+            modifiers = reply->flags;
+            vk = reply->vkey;
+        }
     }
     SERVER_END_REQ;
 
-    /* FIXME: Unregister hotkey with user driver if necessary. */
+    if (ret)
+        USER_Driver->pUnregisterHotKey(hwnd, modifiers, vk);
 
     return ret;
 }

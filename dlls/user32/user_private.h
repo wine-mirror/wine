@@ -62,8 +62,10 @@ typedef struct tagUSER_DRIVER {
     BOOL   (CDECL *pGetKeyboardLayoutName)(LPWSTR);
     HKL    (CDECL *pLoadKeyboardLayout)(LPCWSTR, UINT);
     UINT   (CDECL *pMapVirtualKeyEx)(UINT, UINT, HKL);
+    BOOL   (CDECL *pRegisterHotKey)(HWND, UINT, UINT);
     INT    (CDECL *pToUnicodeEx)(UINT, UINT, const BYTE *, LPWSTR, int, UINT, HKL);
     BOOL   (CDECL *pUnloadKeyboardLayout)(HKL);
+    void   (CDECL *pUnregisterHotKey)(HWND, UINT, UINT);
     SHORT  (CDECL *pVkKeyScanEx)(WCHAR, HKL);
     /* cursor/icon functions */
     void   (CDECL *pCreateCursorIcon)(HCURSOR);
