@@ -66,6 +66,7 @@ struct msi_control_tag
     HMODULE hDll;
     float progress_current;
     float progress_max;
+    BOOL  progress_backwards;
     DWORD attributes;
     WCHAR name[1];
 };
@@ -431,6 +432,7 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
     control->type = strdupW( MSI_RecordGetString( rec, 3 ) );
     control->progress_current = 0;
     control->progress_max = 100;
+    control->progress_backwards = FALSE;
 
     x = MSI_RecordGetInteger( rec, 4 );
     y = MSI_RecordGetInteger( rec, 5 );
@@ -635,28 +637,47 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
     }
     else if( !strcmpW( attribute, szProgress ) )
     {
-        DWORD func, val;
+        DWORD func, val1, val2;
 
-        func = MSI_RecordGetInteger( rec , 1 );
-        val = MSI_RecordGetInteger( rec , 2 );
+        func = MSI_RecordGetInteger( rec, 1 );
+        val1 = MSI_RecordGetInteger( rec, 2 );
+        val2 = MSI_RecordGetInteger( rec, 3 );
 
-        TRACE("progress: func %u, val %u\n", func, val);
+        TRACE("progress: func %u val1 %u val2 %u\n", func, val1, val2);
 
         switch (func)
         {
         case 0: /* init */
-            ctrl->progress_max = val;
-            ctrl->progress_current = 0;
-            SendMessageW(ctrl->hwnd, PBM_SETRANGE, 0, MAKELPARAM(0,100));
-            SendMessageW(ctrl->hwnd, PBM_SETPOS, 0, 0);
+            SendMessageW( ctrl->hwnd, PBM_SETRANGE, 0, MAKELPARAM(0,100) );
+            if (val2)
+            {
+                ctrl->progress_max = val1 ? val1 : 100;
+                ctrl->progress_current = val1;
+                ctrl->progress_backwards = TRUE;
+                SendMessageW( ctrl->hwnd, PBM_SETPOS, 100, 0 );
+            }
+            else
+            {
+                ctrl->progress_max = val1 ? val1 : 100;
+                ctrl->progress_current = 0;
+                ctrl->progress_backwards = FALSE;
+                SendMessageW( ctrl->hwnd, PBM_SETPOS, 0, 0 );
+            }
             break;
         case 1: /* FIXME: not sure what this is supposed to do */
             break;
         case 2: /* move */
-            ctrl->progress_current += val;
-            if (ctrl->progress_current > ctrl->progress_max)
-                ctrl->progress_current = ctrl->progress_max;
-            SendMessageW(ctrl->hwnd, PBM_SETPOS, MulDiv(100, ctrl->progress_current, ctrl->progress_max), 0);
+            if (ctrl->progress_backwards)
+            {
+                if (val1 >= ctrl->progress_current) ctrl->progress_current -= val1;
+                else ctrl->progress_current = 0;
+            }
+            else
+            {
+                if (ctrl->progress_current + val1 < ctrl->progress_max) ctrl->progress_current += val1;
+                else ctrl->progress_current = ctrl->progress_max;
+            }
+            SendMessageW( ctrl->hwnd, PBM_SETPOS, MulDiv(100, ctrl->progress_current, ctrl->progress_max), 0 );
             break;
         default:
             FIXME("Unknown progress message %u\n", func);
@@ -1128,6 +1149,7 @@ static UINT msi_dialog_line_control( msi_dialog *dialog, MSIRECORD *rec )
     control->type = strdupW( MSI_RecordGetString( rec, 3 ) );
     control->progress_current = 0;
     control->progress_max = 100;
+    control->progress_backwards = FALSE;
 
     x = MSI_RecordGetInteger( rec, 4 );
     y = MSI_RecordGetInteger( rec, 5 );
