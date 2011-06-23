@@ -3160,3 +3160,68 @@ RPC_STATUS WINAPI RpcProtseqVectorFreeW(RPC_PROTSEQ_VECTORW **protseqs)
   }
   return RPC_S_OK;
 }
+
+/***********************************************************************
+ *             RpcNetworkInqProtseqsW (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcNetworkInqProtseqsW( RPC_PROTSEQ_VECTORW** protseqs )
+{
+  RPC_PROTSEQ_VECTORW *pvector;
+  int i = 0;
+  RPC_STATUS status = RPC_S_OUT_OF_MEMORY;
+
+  TRACE("(%p)\n", protseqs);
+
+  *protseqs = HeapAlloc(GetProcessHeap(), 0, sizeof(RPC_PROTSEQ_VECTORW)+(sizeof(unsigned short*)*ARRAYSIZE(protseq_list)));
+  if (!*protseqs)
+    goto end;
+  pvector = *protseqs;
+  pvector->Count = 0;
+  for (i = 0; i < ARRAYSIZE(protseq_list); i++)
+  {
+    pvector->Protseq[i] = HeapAlloc(GetProcessHeap(), 0, (strlen(protseq_list[i].name)+1)*sizeof(unsigned short));
+    if (pvector->Protseq[i] == NULL)
+      goto end;
+    MultiByteToWideChar(CP_ACP, 0, (CHAR*)protseq_list[i].name, -1,
+      (WCHAR*)pvector->Protseq[i], strlen(protseq_list[i].name) + 1);
+    pvector->Count++;
+  }
+  status = RPC_S_OK;
+
+end:
+  if (status != RPC_S_OK)
+    RpcProtseqVectorFreeW(protseqs);
+  return status;
+}
+
+/***********************************************************************
+ *             RpcNetworkInqProtseqsA (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcNetworkInqProtseqsA(RPC_PROTSEQ_VECTORA** protseqs)
+{
+  RPC_PROTSEQ_VECTORA *pvector;
+  int i = 0;
+  RPC_STATUS status = RPC_S_OUT_OF_MEMORY;
+
+  TRACE("(%p)\n", protseqs);
+
+  *protseqs = HeapAlloc(GetProcessHeap(), 0, sizeof(RPC_PROTSEQ_VECTORW)+(sizeof(unsigned char*)*ARRAYSIZE(protseq_list)));
+  if (!*protseqs)
+    goto end;
+  pvector = *protseqs;
+  pvector->Count = 0;
+  for (i = 0; i < ARRAYSIZE(protseq_list); i++)
+  {
+    pvector->Protseq[i] = HeapAlloc(GetProcessHeap(), 0, strlen(protseq_list[i].name)+1);
+    if (pvector->Protseq[i] == NULL)
+      goto end;
+    strcpy((char*)pvector->Protseq[i], protseq_list[i].name);
+    pvector->Count++;
+  }
+  status = RPC_S_OK;
+
+end:
+  if (status != RPC_S_OK)
+    RpcProtseqVectorFreeA(protseqs);
+  return status;
+}

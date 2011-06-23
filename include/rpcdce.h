@@ -562,6 +562,12 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 #define RpcNetworkIsProtseqValid WINELIB_NAME_AW(RpcNetworkIsProtseqValid)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcNetworkInqProtseqsA( RPC_PROTSEQ_VECTORA** protseqs );
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcNetworkInqProtseqsW( RPC_PROTSEQ_VECTORW** protseqs );
+#define RpcNetworkInqProtseqs WINELIB_NAME_AW(RpcNetworkInqProtseqs)
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcProtseqVectorFreeA( RPC_PROTSEQ_VECTORA** protseqs );
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcProtseqVectorFreeW( RPC_PROTSEQ_VECTORW** protseqs );
