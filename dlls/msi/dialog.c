@@ -637,7 +637,7 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
     }
     else if( !strcmpW( attribute, szProgress ) )
     {
-        DWORD func, val1, val2;
+        DWORD func, val1, val2, units;
 
         func = MSI_RecordGetInteger( rec, 1 );
         val1 = MSI_RecordGetInteger( rec, 2 );
@@ -649,16 +649,17 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
         {
         case 0: /* init */
             SendMessageW( ctrl->hwnd, PBM_SETRANGE, 0, MAKELPARAM(0,100) );
+            units = val1 / 512;
             if (val2)
             {
-                ctrl->progress_max = val1 ? val1 : 100;
-                ctrl->progress_current = val1;
+                ctrl->progress_max = units ? units : 100;
+                ctrl->progress_current = units;
                 ctrl->progress_backwards = TRUE;
                 SendMessageW( ctrl->hwnd, PBM_SETPOS, 100, 0 );
             }
             else
             {
-                ctrl->progress_max = val1 ? val1 : 100;
+                ctrl->progress_max = units ? units : 100;
                 ctrl->progress_current = 0;
                 ctrl->progress_backwards = FALSE;
                 SendMessageW( ctrl->hwnd, PBM_SETPOS, 0, 0 );
@@ -667,14 +668,15 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
         case 1: /* FIXME: not sure what this is supposed to do */
             break;
         case 2: /* move */
+            units = val1 / 512;
             if (ctrl->progress_backwards)
             {
-                if (val1 >= ctrl->progress_current) ctrl->progress_current -= val1;
+                if (units >= ctrl->progress_current) ctrl->progress_current -= units;
                 else ctrl->progress_current = 0;
             }
             else
             {
-                if (ctrl->progress_current + val1 < ctrl->progress_max) ctrl->progress_current += val1;
+                if (ctrl->progress_current + units < ctrl->progress_max) ctrl->progress_current += units;
                 else ctrl->progress_current = ctrl->progress_max;
             }
             SendMessageW( ctrl->hwnd, PBM_SETPOS, MulDiv(100, ctrl->progress_current, ctrl->progress_max), 0 );
