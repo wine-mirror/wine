@@ -494,10 +494,16 @@ static HRESULT WINAPI UriContainer_GetIUri(IUriContainer *iface, IUri **ppIUri)
 {
     URLMoniker *This = impl_from_IUriContainer(iface);
 
-    FIXME("(%p)->(%p)\n", This, ppIUri);
+    TRACE("(%p)->(%p)\n", This, ppIUri);
 
-    *ppIUri = NULL;
-    return S_FALSE;
+    if(!This->uri) {
+        *ppIUri = NULL;
+        return S_FALSE;
+    }
+
+    IUri_AddRef(This->uri);
+    *ppIUri = This->uri;
+    return S_OK;
 }
 
 static const IUriContainerVtbl UriContainerVtbl = {
