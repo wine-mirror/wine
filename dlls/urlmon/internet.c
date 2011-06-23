@@ -693,3 +693,13 @@ HRESULT WINAPI CoInternetIsFeatureEnabled(INTERNETFEATURELIST FeatureEntry, DWOR
     TRACE("(%d, %08x)\n", FeatureEntry, dwFlags);
     return get_internet_feature(FeatureEntry, dwFlags);
 }
+
+/***********************************************************************
+ *             CoInternetIsFeatureEnabledForUrl (URLMON.@)
+ */
+HRESULT WINAPI CoInternetIsFeatureEnabledForUrl(INTERNETFEATURELIST FeatureEntry, DWORD dwFlags, LPCWSTR szURL,
+        IInternetSecurityManager *pSecMgr)
+{
+    FIXME("(%d %08x %s %p)\n", FeatureEntry, dwFlags, debugstr_w(szURL), pSecMgr);
+    return E_NOTIMPL;
+}

@@ -21,6 +21,7 @@
 @ stdcall CoInternetGetSecurityUrlEx(ptr ptr long long)
 @ stdcall CoInternetGetSession(long ptr long)
 @ stdcall CoInternetIsFeatureEnabled(long long)
+@ stdcall CoInternetIsFeatureEnabledForUrl(long long wstr ptr)
 @ stdcall CoInternetParseUrl(wstr long long wstr long ptr long)
 @ stdcall CoInternetParseIUri(ptr long long wstr long ptr long)
 @ stdcall CoInternetQueryInfo(ptr long long ptr long ptr long)
