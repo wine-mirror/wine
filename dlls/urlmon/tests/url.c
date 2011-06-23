@@ -3582,6 +3582,8 @@ static void test_StdURLMoniker(void)
 {
     IMoniker *mon, *async_mon;
     LPOLESTR display_name;
+    IBindCtx *bctx;
+    IUnknown *unk;
     HRESULT hres;
 
     hres = CoCreateInstance(&IID_IInternet, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -3613,6 +3615,16 @@ static void test_StdURLMoniker(void)
 
       IUriContainer_Release(uri_container);
     }
+
+    SET_EXPECT(QueryInterface_IServiceProvider);
+    hres = CreateAsyncBindCtx(0, (IBindStatusCallback*)&bsc, NULL, &bctx);
+    ok(hres == S_OK, "CreateAsyncBindCtx failed: %08x\n\n", hres);
+    CHECK_CALLED(QueryInterface_IServiceProvider);
+
+    unk = (void*)0xdeadbeef;
+    hres = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&unk);
+    ok(hres == MK_E_SYNTAX, "BindToStorage failed: %08x, expected MK_E_SYNTAX\n", hres);
+    ok(!unk, "unk = %p\n", unk);
 
     IMoniker_Release(mon);
 }

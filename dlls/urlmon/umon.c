@@ -252,8 +252,6 @@ static HRESULT WINAPI URLMoniker_BindToStorage(IMoniker* iface, IBindCtx* pbc,
         IMoniker* pmkToLeft, REFIID riid, void **ppvObject)
 {
     URLMoniker *This = impl_from_IMoniker(iface);
-    IUri *uri;
-    HRESULT hres;
 
     TRACE("(%p)->(%p %p %s %p)\n", This, pbc, pmkToLeft, debugstr_guid(riid), ppvObject);
 
@@ -264,14 +262,10 @@ static HRESULT WINAPI URLMoniker_BindToStorage(IMoniker* iface, IBindCtx* pbc,
     if(pmkToLeft)
         FIXME("Unsupported pmkToLeft\n");
 
-    hres = CreateUri(This->URLName, Uri_CREATE_FILE_USE_DOS_PATH, 0, &uri);
-    if(FAILED(hres))
-        return hres;
+    if(!This->uri)
+        return MK_E_SYNTAX;
 
-    hres = bind_to_storage(uri, pbc, riid, ppvObject);
-
-    IUri_Release(uri);
-    return hres;
+    return bind_to_storage(This->uri, pbc, riid, ppvObject);
 }
 
 static HRESULT WINAPI URLMoniker_Reduce(IMoniker *iface, IBindCtx *pbc,
