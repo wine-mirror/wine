@@ -1696,6 +1696,11 @@ HRESULT      WINAPI ILLoadFromStream(LPSTREAM,LPITEMIDLIST*);
 BOOL         WINAPI ILRemoveLastID(LPITEMIDLIST);
 HRESULT      WINAPI ILSaveToStream(LPSTREAM,LPCITEMIDLIST);
 
+static inline BOOL ILIsEmpty(LPCITEMIDLIST pidl)
+{
+    return !(pidl && pidl->mkid.cb);
+}
+
 
 #include <poppack.h>
 
