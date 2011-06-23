@@ -139,9 +139,12 @@ static HRESULT WINAPI URLMoniker_IsDirty(IMoniker *iface)
 static HRESULT WINAPI URLMoniker_Load(IMoniker* iface,IStream* pStm)
 {
     URLMoniker *This = impl_from_IMoniker(iface);
-    HRESULT res;
+    WCHAR *new_uri_str;
+    IUri *new_uri;
+    BSTR new_url;
     ULONG size;
     ULONG got;
+    HRESULT hres;
 
     TRACE("(%p,%p)\n",This,pStm);
 
@@ -153,22 +156,37 @@ static HRESULT WINAPI URLMoniker_Load(IMoniker* iface,IStream* pStm)
      *  Writes a ULONG containing length of unicode string, followed
      *  by that many unicode characters
      */
-    res = IStream_Read(pStm, &size, sizeof(ULONG), &got);
-    if(SUCCEEDED(res)) {
-        if(got == sizeof(ULONG)) {
-            SysFreeString(This->URLName);
-            This->URLName = SysAllocStringLen(NULL, size/sizeof(WCHAR));
-            if(!This->URLName)
-                res = E_OUTOFMEMORY;
-            else {
-                res = IStream_Read(pStm, This->URLName, size, NULL);
-            }
-        }
-        else
-            res = E_FAIL;
+    hres = IStream_Read(pStm, &size, sizeof(ULONG), &got);
+    if(FAILED(hres))
+        return hres;
+    if(got != sizeof(ULONG))
+        return E_FAIL;
+
+    new_uri_str = heap_alloc(size+sizeof(WCHAR));
+    if(!new_uri_str)
+        return E_OUTOFMEMORY;
+
+    hres = IStream_Read(pStm, new_uri_str, size, NULL);
+    new_uri_str[size/sizeof(WCHAR)] = 0;
+    if(SUCCEEDED(hres))
+        hres = CreateUri(new_uri_str, 0, 0, &new_uri);
+    heap_free(new_uri_str);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IUri_GetDisplayUri(new_uri, &new_url);
+    if(FAILED(hres)) {
+        IUri_Release(new_uri);
+        return hres;
     }
 
-    return res;
+    SysFreeString(This->URLName);
+    if(This->uri)
+        IUri_Release(This->uri);
+
+    This->uri = new_uri;
+    This->URLName = new_url;
+    return S_OK;
 }
 
 static HRESULT WINAPI URLMoniker_Save(IMoniker *iface, IStream* pStm, BOOL fClearDirty)
