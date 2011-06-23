@@ -555,6 +555,18 @@ HRESULT StdURLMoniker_Construct(IUnknown *outer, void **ppv)
     return S_OK;
 }
 
+static const DWORD create_flags_map[3] = {
+    Uri_CREATE_FILE_USE_DOS_PATH,  /* URL_MK_LEGACY */
+    0,                             /* URL_MK_UNIFORM */
+    Uri_CREATE_NO_CANONICALIZE     /* URL_MK_NO_CANONICALIZE */
+};
+
+static const DWORD combine_flags_map[3] = {
+    URL_FILE_USE_PATHURL,  /* URL_MK_LEGACY */
+    0,                     /* URL_MK_UNIFORM */
+    URL_DONT_SIMPLIFY      /* URL_MK_NO_CANONICALIZE */
+};
+
 /***********************************************************************
  *           CreateURLMonikerEx (URLMON.@)
  *
@@ -585,8 +597,10 @@ HRESULT WINAPI CreateURLMonikerEx(IMoniker *pmkContext, LPCWSTR szURL, IMoniker 
     if (!szURL || !ppmk)
         return E_INVALIDARG;
 
-    if(dwFlags != URL_MK_LEGACY)
+    if(dwFlags > sizeof(create_flags_map)/sizeof(*create_flags_map)) {
         FIXME("Unsupported flags %x\n", dwFlags);
+        return E_INVALIDARG;
+    }
 
     if(pmkContext) {
         IUriContainer *uri_container;
@@ -601,10 +615,10 @@ HRESULT WINAPI CreateURLMonikerEx(IMoniker *pmkContext, LPCWSTR szURL, IMoniker 
     }
 
     if(base_uri) {
-        hres = CoInternetCombineUrlEx(base_uri, szURL, URL_FILE_USE_PATHURL, &uri, 0);
+        hres = CoInternetCombineUrlEx(base_uri, szURL, combine_flags_map[dwFlags], &uri, 0);
         IUri_Release(base_uri);
     }else {
-        hres = CreateUri(szURL, Uri_CREATE_FILE_USE_DOS_PATH|Uri_CREATE_ALLOW_RELATIVE|Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, 0, &uri);
+        hres = CreateUri(szURL, Uri_CREATE_ALLOW_RELATIVE|Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME|create_flags_map[dwFlags], 0, &uri);
     }
     if(FAILED(hres))
         return hres;
