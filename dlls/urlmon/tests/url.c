@@ -3626,6 +3626,11 @@ static void test_StdURLMoniker(void)
     ok(hres == MK_E_SYNTAX, "BindToStorage failed: %08x, expected MK_E_SYNTAX\n", hres);
     ok(!unk, "unk = %p\n", unk);
 
+    unk = (void*)0xdeadbeef;
+    hres = IMoniker_BindToObject(mon, bctx, NULL, &IID_IUnknown, (void**)&unk);
+    ok(hres == MK_E_SYNTAX, "BindToStorage failed: %08x, expected MK_E_SYNTAX\n", hres);
+    ok(!unk, "unk = %p\n", unk);
+
     IMoniker_Release(mon);
 }
 

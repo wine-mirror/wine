@@ -227,7 +227,6 @@ static HRESULT WINAPI URLMoniker_BindToObject(IMoniker *iface, IBindCtx* pbc, IM
 {
     URLMoniker *This = impl_from_IMoniker(iface);
     IRunningObjectTable *obj_tbl;
-    IUri *uri;
     HRESULT hres;
 
     TRACE("(%p)->(%p,%p,%s,%p): stub\n", This, pbc, pmkToLeft, debugstr_guid(riid), ppv);
@@ -238,14 +237,12 @@ static HRESULT WINAPI URLMoniker_BindToObject(IMoniker *iface, IBindCtx* pbc, IM
         IRunningObjectTable_Release(obj_tbl);
     }
 
-    hres = CreateUri(This->URLName, Uri_CREATE_FILE_USE_DOS_PATH, 0, &uri);
-    if(FAILED(hres))
-        return hres;
+    if(!This->uri) {
+        *ppv = NULL;
+        return MK_E_SYNTAX;
+    }
 
-    hres = bind_to_object(iface, uri, pbc, riid, ppv);
-
-    IUri_Release(uri);
-    return hres;
+    return bind_to_object(&This->IMoniker_iface, This->uri, pbc, riid, ppv);
 }
 
 static HRESULT WINAPI URLMoniker_BindToStorage(IMoniker* iface, IBindCtx* pbc,
