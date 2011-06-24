@@ -365,6 +365,7 @@ typedef struct _DDSCAPS {
 #define DDSCAPS2_DONOTPERSIST           0x00040000
 /* indicates surface is part of a stereo flipping chain */
 #define DDSCAPS2_STEREOSURFACELEFT      0x00080000
+#define DDSCAPS2_VOLUME                 0x00200000
 
 typedef struct _DDSCAPS2 {
 	DWORD	dwCaps;	/* capabilities of surface wanted */
