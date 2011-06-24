@@ -593,9 +593,9 @@ BOOL WINAPI User32InitializeImmEntryTable(LPVOID ptr)
  * WINNLSGetIMEHotkey [USER32.@]
  *
  */
-UINT WINAPI WINNLSGetIMEHotkey(HWND hUnknown1)
+UINT WINAPI WINNLSGetIMEHotkey(HWND hwnd)
 {
-    FIXME("hUnknown1 %p: stub!\n", hUnknown1);
+    FIXME("hwnd %p: stub!\n", hwnd);
     return 0; /* unknown */
 }
 
@@ -603,9 +603,9 @@ UINT WINAPI WINNLSGetIMEHotkey(HWND hUnknown1)
  * WINNLSEnableIME [USER32.@]
  *
  */
-BOOL WINAPI WINNLSEnableIME(HWND hUnknown1, BOOL bUnknown2)
+BOOL WINAPI WINNLSEnableIME(HWND hwnd, BOOL enable)
 {
-    FIXME("hUnknown1 %p bUnknown2 %d: stub!\n", hUnknown1, bUnknown2);
+    FIXME("hwnd %p enable %d: stub!\n", hwnd, enable);
     return TRUE; /* success (?) */
 }
 
@@ -613,9 +613,9 @@ BOOL WINAPI WINNLSEnableIME(HWND hUnknown1, BOOL bUnknown2)
  * WINNLSGetEnableStatus [USER32.@]
  *
  */
-BOOL WINAPI WINNLSGetEnableStatus(HWND hUnknown1)
+BOOL WINAPI WINNLSGetEnableStatus(HWND hwnd)
 {
-    FIXME("hUnknown1 %p: stub!\n", hUnknown1);
+    FIXME("hwnd %p: stub!\n", hwnd);
     return TRUE; /* success (?) */
 }
 
@@ -623,9 +623,9 @@ BOOL WINAPI WINNLSGetEnableStatus(HWND hUnknown1)
  * SendIMEMessageExA [USER32.@]
  *
  */
-LRESULT WINAPI SendIMEMessageExA(HWND p1, LPARAM p2)
+LRESULT WINAPI SendIMEMessageExA(HWND hwnd, LPARAM lparam)
 {
-  FIXME("(%p,%lx): stub\n", p1, p2);
+  FIXME("(%p,%lx): stub\n", hwnd, lparam);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return 0;
 }
@@ -634,9 +634,9 @@ LRESULT WINAPI SendIMEMessageExA(HWND p1, LPARAM p2)
  * SendIMEMessageExW [USER32.@]
  *
  */
-LRESULT WINAPI SendIMEMessageExW(HWND p1, LPARAM p2)
+LRESULT WINAPI SendIMEMessageExW(HWND hwnd, LPARAM lparam)
 {
-  FIXME("(%p,%lx): stub\n", p1, p2);
+  FIXME("(%p,%lx): stub\n", hwnd, lparam);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return 0;
 }
