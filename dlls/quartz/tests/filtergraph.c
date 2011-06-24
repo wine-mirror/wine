@@ -1872,7 +1872,14 @@ static void test_render_filter_priority(void)
 
 START_TEST(filtergraph)
 {
+    HRESULT hr;
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IGraphBuilder, (LPVOID*)&pgraph);
+    if (FAILED(hr)) {
+        skip("Creating filtergraph returned %08x, skipping tests\n", hr);
+        return;
+    }
     test_render_run(avifile);
     test_render_run(mpegfile);
     test_graph_builder();
