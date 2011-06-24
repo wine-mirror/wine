@@ -939,3 +939,18 @@ HRESULT WINAPI D3DXLoadSurfaceFromSurface(LPDIRECT3DSURFACE9 pDestSurface,
     IDirect3DSurface9_UnlockRect(pSrcSurface);
     return hr;
 }
+
+
+HRESULT WINAPI D3DXSaveSurfaceToFileA(LPCSTR pDestFile, D3DXIMAGE_FILEFORMAT DestFormat,
+        LPDIRECT3DSURFACE9 pSrcSurface, const PALETTEENTRY* pSrcPalette, const RECT* pSrcRect)
+{
+    FIXME("(%p, %d, %p, %p, %p): stub\n", pDestFile, DestFormat, pSrcSurface, pSrcPalette, pSrcRect);
+    return D3DERR_INVALIDCALL;
+}
+
+HRESULT WINAPI D3DXSaveSurfaceToFileW(LPCWSTR pDestFile, D3DXIMAGE_FILEFORMAT DestFormat,
+        LPDIRECT3DSURFACE9 pSrcSurface, const PALETTEENTRY* pSrcPalette, const RECT* pSrcRect)
+{
+    FIXME("(%p, %d, %p, %p, %p): stub\n", pDestFile, DestFormat, pSrcSurface, pSrcPalette, pSrcRect);
+    return D3DERR_INVALIDCALL;
+}
