@@ -1029,6 +1029,16 @@ HRESULT WINAPI D3DXFillTexture(LPDIRECT3DTEXTURE9 texture,
     return D3D_OK;
 }
 
+HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemoryEx(LPDIRECT3DDEVICE9 pDevice, LPCVOID pSrcData, UINT SrcDataSize,
+        UINT Size, UINT MipLevels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, DWORD Filter, DWORD MipFilter, D3DCOLOR ColorKey,
+        D3DXIMAGE_INFO *pSrcInfo, PALETTEENTRY *pPalette, LPDIRECT3DCUBETEXTURE9 *ppCubeTexture)
+{
+    FIXME("(%p, %p, %u, %u, %u, %#x, %#x, %#x, %#x, %#x, %#x, %p, %p, %p): stub\n", pDevice, pSrcData, SrcDataSize, Size, MipLevels,
+            Usage, Format, Pool, Filter, MipFilter, ColorKey, pSrcInfo, pPalette, ppCubeTexture);
+
+    return E_NOTIMPL;
+}
+
 enum cube_coord
 {
     XCOORD = 0,
