@@ -2048,20 +2048,20 @@ static void Apply_Indic_PreBase(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa,
 {
     INT index, nextIndex;
     INT count,g_offset;
-    INT prevCount = *pcGlyphs;
 
     count = syllable->base - syllable->start;
 
     g_offset = 0;
     index = find_consonant_halant(&pwChars[syllable->start], 0, count, lexical);
-    while (index >= 0 && index < (glyph_index->base - glyph_index->start))
+    while (index >= 0 && index + g_offset < (glyph_index->base - glyph_index->start))
     {
+        INT prevCount = *pcGlyphs;
         nextIndex = apply_GSUB_feature_to_glyph(hdc, psa, psc, pwOutGlyphs, index+glyph_index->start+g_offset, 1, pcGlyphs, feature);
         if (nextIndex > GSUB_E_NOGLYPH)
         {
             UpdateClusters(nextIndex, *pcGlyphs - prevCount, 1, cChars, pwLogClust);
+            shift_syllable_glyph_indexs(glyph_index, index + glyph_index->start + g_offset, (*pcGlyphs - prevCount));
             g_offset += (*pcGlyphs - prevCount);
-            shift_syllable_glyph_indexs(glyph_index, index + glyph_index->start, g_offset);
         }
 
         index+=2;
