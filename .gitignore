@@ -243,6 +243,7 @@ include/wine/itss.h
 include/wine/svcctl.h
 include/wine/winedxgi.h
 include/winsxs.h
+include/wpcapi.h
 include/wtypes.h
 include/wuapi.h
 include/xmllite.h

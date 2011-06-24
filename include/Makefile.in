@@ -99,6 +99,7 @@ PUBLIC_IDL_H_SRCS = \
 	wine/itss.idl \
 	wine/svcctl.idl \
 	winsxs.idl \
+	wpcapi.idl \
 	wtypes.idl \
 	wuapi.idl \
 	xmllite.idl
