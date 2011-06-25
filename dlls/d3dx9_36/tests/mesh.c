@@ -4809,7 +4809,7 @@ static void test_create_skin_info(void)
             exp_vertices[0] = 0;
             exp_vertices[1] = 0x87654321;
             exp_weights[0] = 0.5;
-            exp_weights[1] = 0.0f / 0.0f;
+            exp_weights[1] = 0.0f / 0.0f; /* NAN */
             num_influences = 2;
 
             hr = skininfo->lpVtbl->SetBoneInfluence(skininfo, 1, num_influences, vertices, weights);
@@ -4834,7 +4834,7 @@ static void test_create_skin_info(void)
             for (i = 0; i < num_influences; i++) {
                 ok(exp_vertices[i] == vertices[i],
                    "influence[%d]: expected vertex %u, got %u\n", i, exp_vertices[i], vertices[i]);
-                ok(exp_weights[i] == weights[i],
+                ok((isnan(exp_weights[i]) && isnan(weights[i])) || exp_weights[i] == weights[i],
                    "influence[%d]: expected weights %g, got %g\n", i, exp_weights[i], weights[i]);
             }
 
