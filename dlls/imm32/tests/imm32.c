@@ -28,6 +28,7 @@
 #define NUMELEMS(array) (sizeof((array))/sizeof((array)[0]))
 
 static BOOL (WINAPI *pImmAssociateContextEx)(HWND,HIMC,DWORD);
+static BOOL (WINAPI *pImmIsUIMessageA)(HWND,UINT,WPARAM,LPARAM);
 
 /*
  * msgspy - record and analyse message traces sent to a certain window
@@ -156,6 +157,7 @@ static BOOL init(void) {
 
     hmod = GetModuleHandleA("imm32.dll");
     pImmAssociateContextEx = (void*)GetProcAddress(hmod, "ImmAssociateContextEx");
+    pImmIsUIMessageA = (void*)GetProcAddress(hmod, "ImmIsUIMessageA");
 
     wc.cbSize        = sizeof(WNDCLASSEX);
     wc.style         = 0;
@@ -507,6 +509,54 @@ static void test_ImmThreads(void)
     todo_wine ok(himc == NULL, "Should not be able to get himc from other process window\n");
 }
 
+static void test_ImmIsUIMessage(void)
+{
+    struct test
+    {
+        UINT msg;
+        BOOL ret;
+    };
+
+    static const struct test tests[] =
+    {
+        { WM_MOUSEMOVE,            FALSE },
+        { WM_IME_STARTCOMPOSITION, TRUE  },
+        { WM_IME_ENDCOMPOSITION,   TRUE  },
+        { WM_IME_COMPOSITION,      TRUE  },
+        { WM_IME_SETCONTEXT,       TRUE  },
+        { WM_IME_NOTIFY,           TRUE  },
+        { WM_IME_CONTROL,          FALSE },
+        { WM_IME_COMPOSITIONFULL,  TRUE  },
+        { WM_IME_SELECT,           TRUE  },
+        { WM_IME_CHAR,             FALSE },
+        { 0x287 /* FIXME */,       TRUE  },
+        { WM_IME_REQUEST,          FALSE },
+        { WM_IME_KEYDOWN,          FALSE },
+        { WM_IME_KEYUP,            FALSE },
+        { 0, FALSE } /* mark the end */
+    };
+
+    const struct test *test;
+    BOOL ret;
+
+    if (!pImmIsUIMessageA) return;
+
+    for (test = tests; test->msg; test++)
+    {
+        msg_spy_flush_msgs();
+        ret = pImmIsUIMessageA(NULL, test->msg, 0, 0);
+        ok(ret == test->ret, "ImmIsUIMessageA returned %x for %x\n", ret, test->msg);
+        ok(!msg_spy_find_msg(test->msg), "Windows does not send 0x%x for NULL hwnd\n", test->msg);
+
+        ret = pImmIsUIMessageA(hwnd, test->msg, 0, 0);
+        ok(ret == test->ret, "ImmIsUIMessageA returned %x for %x\n", ret, test->msg);
+        if (ret)
+            ok(msg_spy_find_msg(test->msg) != NULL, "Windows does send 0x%x\n", test->msg);
+        else
+            ok(!msg_spy_find_msg(test->msg), "Windows does not send 0x%x\n", test->msg);
+    }
+}
+
 START_TEST(imm32) {
     if (init())
     {
@@ -516,6 +566,7 @@ START_TEST(imm32) {
         test_ImmIME();
         test_ImmAssociateContextEx();
         test_ImmThreads();
+        test_ImmIsUIMessage();
     }
     cleanup();
 }
