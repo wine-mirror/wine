@@ -567,7 +567,7 @@ static void test_setting_arrays_table(IDirect3DDevice9 *device)
             "The in-bounds elements of the array were not set, out={%f, %f, %f, %f}, should be {%f, %f, %f, %f}\n",
             out[0], out[4], out[8], out[12], farray[0], farray[1], farray[2], farray[3]);
     ok(out[16] == 0.0f && out[20] == 0.0f && out[24] == 0.0f && out[28] == 0.0f,
-            "The excess elements of the array were set, out={%f, %f, %f, %f}, should be all 0.0f",
+            "The excess elements of the array were set, out={%f, %f, %f, %f}, should be all 0.0f\n",
             out[16], out[20], out[24], out[28]);
 
     /* ivecarray takes up only 1 register, but a matrix takes up 4, so no elements should be set */
