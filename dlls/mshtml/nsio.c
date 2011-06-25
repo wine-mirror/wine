@@ -1925,9 +1925,6 @@ static nsresult NSAPI nsURI_GetPort(nsIURL *iface, PRInt32 *aPort)
 
     TRACE("(%p)->(%p)\n", This, aPort);
 
-    if(This->nsuri)
-        return nsIURI_GetPort(This->nsuri, aPort);
-
     if(!ensure_uri(This))
         return NS_ERROR_UNEXPECTED;
 
@@ -1944,16 +1941,15 @@ static nsresult NSAPI nsURI_GetPort(nsIURL *iface, PRInt32 *aPort)
 static nsresult NSAPI nsURI_SetPort(nsIURL *iface, PRInt32 aPort)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
+    HRESULT hres;
 
     TRACE("(%p)->(%d)\n", This, aPort);
 
-    if(This->nsuri) {
-        invalidate_uri(This);
-        return nsIURI_SetPort(This->nsuri, aPort);
-    }
+    if(!ensure_uri_builder(This))
+        return NS_ERROR_UNEXPECTED;
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    hres = IUriBuilder_SetPort(This->uri_builder, aPort != -1, aPort);
+    return SUCCEEDED(hres) ? NS_OK : NS_ERROR_FAILURE;
 }
 
 static nsresult NSAPI nsURI_GetPath(nsIURL *iface, nsACString *aPath)
