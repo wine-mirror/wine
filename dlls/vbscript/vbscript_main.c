@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
 static HINSTANCE vbscript_hinstance;
 
-HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppv)
+static HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppv)
 {
     FIXME("(%p %s %p)\n", pUnkOuter, debugstr_guid(riid), ppv);
     return E_NOINTERFACE;
