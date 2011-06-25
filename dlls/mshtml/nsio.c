@@ -95,7 +95,7 @@ static BOOL ensure_uri(nsWineURI *This)
     return TRUE;
 }
 
-static nsresult create_uri(nsIURI*,HTMLWindow*,NSContainer*,nsWineURI**);
+static nsresult create_nsuri(IUri*,nsIURI*,HTMLWindow*,NSContainer*,nsWineURI**);
 
 static const char *debugstr_nsacstr(const nsACString *nsstr)
 {
@@ -2111,14 +2111,12 @@ static nsresult NSAPI nsURI_Clone(nsIURL *iface, nsIURI **_retval)
         }
     }
 
-    nsres = create_uri(nsuri, This->window_ref ? This->window_ref->window : NULL, This->container, &wine_uri);
+    nsres = create_nsuri(This->uri, nsuri, This->window_ref ? This->window_ref->window : NULL, This->container, &wine_uri);
     if(NS_FAILED(nsres)) {
-        WARN("create_uri failed: %08x\n", nsres);
+        WARN("create_nsuri failed: %08x\n", nsres);
         return nsres;
     }
 
-    wine_uri->uri = This->uri;
-    IUri_AddRef(wine_uri->uri);
     sync_wine_url(wine_uri);
 
     *_retval = (nsIURI*)&wine_uri->nsIURL_iface;
@@ -2515,7 +2513,7 @@ static const nsIURLVtbl nsURLVtbl = {
     nsURL_GetRelativeSpec
 };
 
-static nsresult create_uri(nsIURI *nsuri, HTMLWindow *window, NSContainer *container, nsWineURI **_retval)
+static nsresult create_nsuri(IUri *iuri, nsIURI *nsuri, HTMLWindow *window, NSContainer *container, nsWineURI **_retval)
 {
     nsWineURI *ret = heap_alloc_zero(sizeof(nsWineURI));
 
@@ -2525,6 +2523,9 @@ static nsresult create_uri(nsIURI *nsuri, HTMLWindow *window, NSContainer *conta
 
     set_uri_nscontainer(ret, container);
     set_uri_window(ret, window);
+
+    IUri_AddRef(iuri);
+    ret->uri = iuri;
 
     if(nsuri)
         nsIURI_QueryInterface(nsuri, &IID_nsIURL, (void**)&ret->nsurl);
@@ -2537,9 +2538,16 @@ static nsresult create_uri(nsIURI *nsuri, HTMLWindow *window, NSContainer *conta
 HRESULT create_doc_uri(HTMLWindow *window, WCHAR *url, nsWineURI **ret)
 {
     nsWineURI *uri;
+    IUri *iuri;
     nsresult nsres;
+    HRESULT hres;
 
-    nsres = create_uri(NULL, window, window->doc_obj->nscontainer, &uri);
+    hres = CreateUri(url, 0, 0, &iuri);
+    if(FAILED(hres))
+        return hres;
+
+    nsres = create_nsuri(iuri, NULL, window, window->doc_obj->nscontainer, &uri);
+    IUri_Release(iuri);
     if(NS_FAILED(nsres))
         return E_FAIL;
 
@@ -2586,22 +2594,24 @@ HRESULT create_redirect_nschannel(const WCHAR *url, nsChannel *orig_channel, nsC
     HTMLWindow *window = NULL;
     nsChannel *channel;
     nsWineURI *uri;
+    IUri *iuri;
     nsresult nsres;
     HRESULT hres;
 
+    hres = CreateUri(url, 0, 0, &iuri);
+    if(FAILED(hres))
+        return hres;
+
     if(orig_channel->uri->window_ref)
         window = orig_channel->uri->window_ref->window;
-    nsres = create_uri(NULL, window, NULL, &uri);
+    nsres = create_nsuri(iuri, NULL, window, NULL, &uri);
+    IUri_Release(iuri);
     if(NS_FAILED(nsres))
         return E_FAIL;
 
-    hres = CreateUri(url, 0, 0, &uri->uri);
-    if(SUCCEEDED(hres))
-        nsres = create_nschannel(uri, &channel);
     sync_wine_url(uri);
+    nsres = create_nschannel(uri, &channel);
     nsIURL_Release(&uri->nsIURL_iface);
-    if(FAILED(hres))
-        return hres;
     if(NS_FAILED(nsres))
         return E_FAIL;
 
@@ -2918,13 +2928,12 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
         return nsres;
     }
 
-    nsres = create_uri(uri, window, NULL, &wine_uri);
+    nsres = create_nsuri(urlmon_uri, uri, window, NULL, &wine_uri);
+    IUri_Release(urlmon_uri);
     if(base_wine_uri)
         nsIURI_Release(&base_wine_uri->nsIURL_iface);
     if(NS_FAILED(nsres))
         return nsres;
-
-    wine_uri->uri = urlmon_uri;
 
     sync_wine_url(wine_uri);
     *_retval = (nsIURI*)wine_uri;
