@@ -20,6 +20,9 @@
 
 #include "config.h"
 #include "wine/port.h"
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "windef.h"
@@ -1032,9 +1035,9 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixArray(ID3DXConstantTable *
                     D3DXMatrixTranspose(&temp, &matrix[i]);
 
                 if (is_vertex_shader(This->desc.Version))
-                    IDirect3DDevice9_SetVertexShaderConstantF(device, desc.RegisterIndex + i * 4, &temp._11, 4);
+                    IDirect3DDevice9_SetVertexShaderConstantF(device, desc.RegisterIndex + i * 4, &temp.u.s._11, 4);
                 else
-                    IDirect3DDevice9_SetPixelShaderConstantF(device, desc.RegisterIndex + i * 4, &temp._11, 4);
+                    IDirect3DDevice9_SetPixelShaderConstantF(device, desc.RegisterIndex + i * 4, &temp.u.s._11, 4);
             }
             break;
         default:

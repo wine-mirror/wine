@@ -487,18 +487,18 @@ static void test_setting_basic_table(IDirect3DDevice9 *device)
 
     /* Get constants back and validate */
     IDirect3DDevice9_GetVertexShaderConstantF(device, 0, out, 4);
-    ok(out[0] == mvp._11 && out[4] == mvp._12 && out[8] == mvp._13 && out[12] == mvp._14,
+    ok(out[0] == S(U(mvp))._11 && out[4] == S(U(mvp))._12 && out[8] == S(U(mvp))._13 && out[12] == S(U(mvp))._14,
             "The first row of mvp was not set correctly, got {%f, %f, %f, %f}, should be {%f, %f, %f, %f}\n",
-            out[0], out[4], out[8], out[12], mvp._11, mvp._12, mvp._13, mvp._14);
-    ok(out[1] == mvp._21 && out[5] == mvp._22 && out[9] == mvp._23 && out[13] == mvp._24,
+            out[0], out[4], out[8], out[12], S(U(mvp))._11, S(U(mvp))._12, S(U(mvp))._13, S(U(mvp))._14);
+    ok(out[1] == S(U(mvp))._21 && out[5] == S(U(mvp))._22 && out[9] == S(U(mvp))._23 && out[13] == S(U(mvp))._24,
             "The second row of mvp was not set correctly, got {%f, %f, %f, %f}, should be {%f, %f, %f, %f}\n",
-            out[1], out[5], out[9], out[13], mvp._21, mvp._22, mvp._23, mvp._24);
-    ok(out[2] == mvp._31 && out[6] == mvp._32 && out[10] == mvp._33 && out[14] == mvp._34,
+            out[1], out[5], out[9], out[13], S(U(mvp))._21, S(U(mvp))._22, S(U(mvp))._23, S(U(mvp))._24);
+    ok(out[2] == S(U(mvp))._31 && out[6] == S(U(mvp))._32 && out[10] == S(U(mvp))._33 && out[14] == S(U(mvp))._34,
             "The third row of mvp was not set correctly, got {%f, %f, %f, %f}, should be {%f, %f, %f, %f}\n",
-            out[2], out[6], out[10], out[14], mvp._31, mvp._32, mvp._33, mvp._34);
-    ok(out[3] == mvp._41 && out[7] == mvp._42 && out[11] == mvp._43 && out[15] == mvp._44,
+            out[2], out[6], out[10], out[14], S(U(mvp))._31, S(U(mvp))._32, S(U(mvp))._33, S(U(mvp))._34);
+    ok(out[3] == S(U(mvp))._41 && out[7] == S(U(mvp))._42 && out[11] == S(U(mvp))._43 && out[15] == S(U(mvp))._44,
             "The fourth row of mvp was not set correctly, got {%f, %f, %f, %f}, should be {%f, %f, %f, %f}\n",
-            out[3], out[7], out[11], out[15], mvp._41, mvp._42, mvp._43, mvp._44);
+            out[3], out[7], out[11], out[15], S(U(mvp))._41, S(U(mvp))._42, S(U(mvp))._43, S(U(mvp))._44);
 
     IDirect3DDevice9_GetVertexShaderConstantF(device, 4, out, 1);
     ok(out[0] == (float)i && out[1] == 0.0f && out[2] == 0.0f && out[3] == 0.0f,
@@ -612,12 +612,12 @@ static void test_setting_arrays_table(IDirect3DDevice9 *device)
 
     IDirect3DDevice9_GetVertexShaderConstantF(device, 0, out, 8);
     /* Just check a few elements in each matrix to make sure fmtxarray was set row-major */
-    ok(out[0] == fmtxarray[0]._11 && out[1] == fmtxarray[0]._12 && out[2] == fmtxarray[0]._13 && out[3] == fmtxarray[0]._14,
+    ok(out[0] == S(U(fmtxarray[0]))._11 && out[1] == S(U(fmtxarray[0]))._12 && out[2] == S(U(fmtxarray[0]))._13 && out[3] == S(U(fmtxarray[0]))._14,
            "The variable fmtxarray was not set row-major, out={%f, %f, %f, %f}, should be {%f, %f, %f, %f}\n",
-           out[0], out[1], out[2], out[3], fmtxarray[0]._11, fmtxarray[0]._12, fmtxarray[0]._13, fmtxarray[0]._14);
-    ok(out[16] == fmtxarray[1]._11 && out[17] == fmtxarray[1]._12 && out[18] == fmtxarray[1]._13 && out[19] == fmtxarray[1]._14,
+           out[0], out[1], out[2], out[3], S(U(fmtxarray[0]))._11, S(U(fmtxarray[0]))._12, S(U(fmtxarray[0]))._13, S(U(fmtxarray[0]))._14);
+    ok(out[16] == S(U(fmtxarray[1]))._11 && out[17] == S(U(fmtxarray[1]))._12 && out[18] == S(U(fmtxarray[1]))._13 && out[19] == S(U(fmtxarray[1]))._14,
            "The variable fmtxarray was not set row-major, out={%f, %f, %f, %f}, should be {%f, %f, %f, %f}\n",
-           out[16], out[17], out[18], out[19], fmtxarray[1]._11, fmtxarray[1]._12, fmtxarray[1]._13, fmtxarray[1]._14);
+           out[16], out[17], out[18], out[19], S(U(fmtxarray[1]))._11, S(U(fmtxarray[1]))._12, S(U(fmtxarray[1]))._13, S(U(fmtxarray[1]))._14);
 
     refcnt = ID3DXConstantTable_Release(ctable);
     ok(refcnt == 0, "The constant table reference count was %u, should be 0\n", refcnt);
