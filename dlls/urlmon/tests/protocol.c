@@ -2447,6 +2447,24 @@ static void test_file_protocol_url(LPCWSTR url)
 
         IUri_Release(uri);
         IInternetProtocolEx_Release(protocolex);
+
+        hres = pCreateUri(url, 0, 0, &uri);
+        ok(hres == S_OK, "CreateUri failed: %08x\n", hres);
+
+        hres = IClassFactory_CreateInstance(factory, NULL, &IID_IInternetProtocolEx, (void**)&protocolex);
+        ok(hres == S_OK, "Could not get IInternetProtocolEx: %08x\n", hres);
+
+        if(file_protocol_start(NULL, NULL, protocolex, uri, TRUE)) {
+            hres = IInternetProtocolEx_Read(protocolex, buf, 2, &cb);
+            ok(hres == S_OK, "Read failed: %08x\n", hres);
+            hres = IInternetProtocolEx_LockRequest(protocolex, 0);
+            ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
+            hres = IInternetProtocolEx_UnlockRequest(protocolex);
+            ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
+        }
+
+        IUri_Release(uri);
+        IInternetProtocolEx_Release(protocolex);
     }else {
         win_skip("Skipping file protocol StartEx tests\n");
     }
