@@ -833,7 +833,7 @@ static HRESULT set_float_array(ID3DXConstantTable *iface, LPDIRECT3DDEVICE9 devi
     hr = ID3DXConstantTable_GetConstantDesc(iface, constant, &desc, &desc_count);
     if (FAILED(hr))
     {
-        TRACE("ID3DXConstantTable_GetConstantDesc failed: %08x", hr);
+        TRACE("ID3DXConstantTable_GetConstantDesc failed: %08x\n", hr);
         return D3DERR_INVALIDCALL;
     }
 
@@ -971,7 +971,7 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetVectorArray(ID3DXConstantTable *
     hr = ID3DXConstantTable_GetConstantDesc(iface, constant, &desc, &desc_count);
     if (FAILED(hr))
     {
-        TRACE("ID3DXConstantTable_GetConstantDesc failed: %08x", hr);
+        TRACE("ID3DXConstantTable_GetConstantDesc failed: %08x\n", hr);
         return D3DERR_INVALIDCALL;
     }
 
@@ -1018,7 +1018,7 @@ static HRESULT WINAPI ID3DXConstantTableImpl_SetMatrixArray(ID3DXConstantTable *
     hr = ID3DXConstantTable_GetConstantDesc(iface, constant, &desc, &desc_count);
     if (FAILED(hr))
     {
-        TRACE("ID3DXConstantTable_GetConstantDesc failed: %08x", hr);
+        TRACE("ID3DXConstantTable_GetConstantDesc failed: %08x\n", hr);
         return D3DERR_INVALIDCALL;
     }
 
