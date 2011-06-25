@@ -1289,7 +1289,7 @@ static LRESULT ShellView_OnCommand(IShellViewImpl * This,DWORD dwCmdID, DWORD dw
 	    CheckToolbar(This);
 	    break;
 
-	  /* the menu-ID's for sorting are 0x30... see shrec.rc */
+	  /* the menu-ID's for sorting are 0x30... see shell32.rc */
 	  case 0x30:
 	  case 0x31:
 	  case 0x32:
