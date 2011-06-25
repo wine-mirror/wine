@@ -334,7 +334,7 @@ static BOOL register_activex(void)
 
     hres = CoRegisterClassObject(&CLSID_TestObj, (IUnknown *)&testobj_cf,
             CLSCTX_SERVER, REGCLS_MULTIPLEUSE, &regid);
-    ok(hres == S_OK, "Could not register screipt engine: %08x\n", hres);
+    ok(hres == S_OK, "Could not register script engine: %08x\n", hres);
     return TRUE;
 }
 

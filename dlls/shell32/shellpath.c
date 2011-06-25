@@ -3228,7 +3228,7 @@ static HRESULT WINAPI knownfolder_GetCategory(
 
     TRACE("%p, %p\n", knownfolder, pCategory);
 
-    /* we can not get category for folder which is not registered */
+    /* we cannot get a category for a folder which is not registered */
     if(!knownfolder->registryPath)
         hr = E_FAIL;
 

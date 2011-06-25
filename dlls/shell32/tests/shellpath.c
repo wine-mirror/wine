@@ -1185,7 +1185,7 @@ static void test_knownFolders(void)
 
                     hr = IKnownFolder_GetPath(folder, 0, &folderPath);
                     ok(hr == S_OK, "failed to get path from known folder: 0x%08x\n", hr);
-                    ok(lstrcmpiW(folderPath, sExamplePath)==0, "invalid known folder path retreived: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
+                    ok(lstrcmpiW(folderPath, sExamplePath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
                     CoTaskMemFree(folderPath);
 
                     /* try to set new path for folder */
@@ -1195,7 +1195,7 @@ static void test_knownFolders(void)
                     /* verify modified path */
                     hr = IKnownFolder_GetPath(folder, 0, &folderPath);
                     ok(hr == S_OK, "failed to get path from known folder: 0x%08x\n", hr);
-                    ok(lstrcmpiW(folderPath, sExample2Path)==0, "invalid known folder path retreived: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
+                    ok(lstrcmpiW(folderPath, sExample2Path)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
                     CoTaskMemFree(folderPath);
 
                     /* set again to first path, but use another way */
@@ -1207,7 +1207,7 @@ static void test_knownFolders(void)
                     hr = IKnownFolder_GetPath(folder, 0, &folderPath);
                     ok(hr == S_OK, "failed to get path from known folder: 0x%08x\n", hr);
                     todo_wine
-                    ok(lstrcmpiW(folderPath, sExamplePath)==0, "invalid known folder path retreived: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
+                    ok(lstrcmpiW(folderPath, sExamplePath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
                     CoTaskMemFree(folderPath);
 
                     /* check shell utility functions */

@@ -630,7 +630,7 @@ static HRESULT WINAPI ID3DXMeshImpl_UpdateSemantics(ID3DXMesh *iface, D3DVERTEXE
     vertex_declaration_size = D3DXGetDeclVertexSize(declaration, declaration[0].Stream);
     if (vertex_declaration_size != This->vertex_declaration_size)
     {
-        WARN("Invalid declaration. New vertex size does not match the orginal vertex size.\n");
+        WARN("Invalid declaration. New vertex size does not match the original vertex size.\n");
         return D3DERR_INVALIDCALL;
     }
 

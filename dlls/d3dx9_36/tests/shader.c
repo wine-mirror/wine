@@ -691,7 +691,7 @@ static void test_get_sampler_index(void)
     ok(index == 3, "ID3DXConstantTable_GetSamplerIndex returned wrong index: Got %d, expected 3\n", index);
 
     index = ID3DXConstantTable_GetSamplerIndex(ctable, "nonexistent");
-    ok(index == -1, "ID3DXConstantTable_GetSamplerIndex found non-existent sampler: Got %d\n",
+    ok(index == -1, "ID3DXConstantTable_GetSamplerIndex found nonexistent sampler: Got %d\n",
             index);
 
     index = ID3DXConstantTable_GetSamplerIndex(ctable, "notsampler");

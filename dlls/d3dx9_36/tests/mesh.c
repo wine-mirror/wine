@@ -99,7 +99,7 @@ struct test_context
 
 /* Initializes a test context struct. Use it to initialize DirectX.
  *
- * Returns NULL if an error occured.
+ * Returns NULL if an error occurred.
  */
 static struct test_context *new_test_context(void)
 {
