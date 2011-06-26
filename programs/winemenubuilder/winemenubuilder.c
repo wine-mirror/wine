@@ -409,7 +409,7 @@ static HRESULT convert_to_native_icon(IStream *icoFile, int *indeces, int numInd
     hr = SHCreateStreamOnFileW(dosOutputFileName, STGM_CREATE | STGM_WRITE, &outputFile);
     if (FAILED(hr))
     {
-        WINE_ERR("error 0x%08X creating output file\n", hr);
+        WINE_ERR("error 0x%08X creating output file %s\n", hr, wine_dbgstr_w(dosOutputFileName));
         goto end;
     }
     hr = IWICBitmapEncoder_Initialize(encoder, outputFile, GENERIC_WRITE);
