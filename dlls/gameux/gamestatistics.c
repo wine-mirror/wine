@@ -819,11 +819,12 @@ static HRESULT WINAPI GameStatisticsImpl_GetCategoryTitle(
 
     TRACE("%p, %d, %p\n", This, categoryIndex, pTitle);
 
+    if(!pTitle)
+        return E_INVALIDARG;
     *pTitle = NULL;
 
-    if(!pTitle || categoryIndex >= MAX_CATEGORIES)
+    if (categoryIndex >= MAX_CATEGORIES)
         hr = E_INVALIDARG;
-
 
     if(SUCCEEDED(hr))
     {
