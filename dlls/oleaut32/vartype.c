@@ -4562,6 +4562,7 @@ HRESULT WINAPI VarDecAdd(const DECIMAL* pDecLeft, const DECIMAL* pDecRight, DECI
     /* Our decimals now have the same scale, we can add them as 96 bit integers */
     ULONG overflow = 0;
     BYTE sign = DECIMAL_POS;
+    int cmp;
 
     /* Correct for the sign of the result */
     if (DEC_SIGN(pDecLeft) && DEC_SIGN(pDecRight))
@@ -4572,7 +4573,7 @@ HRESULT WINAPI VarDecAdd(const DECIMAL* pDecLeft, const DECIMAL* pDecRight, DECI
     }
     else if (DEC_SIGN(pDecLeft) && !DEC_SIGN(pDecRight))
     {
-      int cmp = VARIANT_DecCmp(pDecLeft, pDecRight);
+      cmp = VARIANT_DecCmp(pDecLeft, pDecRight);
 
       /* -x + y : Negative if x > y */
       if (cmp > 0)
@@ -4593,7 +4594,7 @@ VarDecAdd_AsInvertedNegative:
     }
     else if (!DEC_SIGN(pDecLeft) && DEC_SIGN(pDecRight))
     {
-      int cmp = VARIANT_DecCmp(pDecLeft, pDecRight);
+      cmp = VARIANT_DecCmp(pDecLeft, pDecRight);
 
       /* x + -y : Negative if x <= y */
       if (cmp <= 0)
