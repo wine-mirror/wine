@@ -863,7 +863,7 @@ static HRESULT WINAPI ddraw_surface7_Lock(IDirectDrawSurface7 *iface,
     if(DDSD->dwSize != sizeof(DDSURFACEDESC) &&
        DDSD->dwSize != sizeof(DDSURFACEDESC2))
     {
-        WARN("Invalid structure size %d, returning DDERR_INVALIDPARAMS\n", DDERR_INVALIDPARAMS);
+        WARN("Invalid structure size %d, returning DDERR_INVALIDPARAMS\n", DDSD->dwSize);
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDPARAMS;
     }
