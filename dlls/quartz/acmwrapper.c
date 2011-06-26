@@ -230,8 +230,7 @@ error:
         ash.pbSrc += ash.cbSrcLengthUsed;
         ash.cbSrcLength -= ash.cbSrcLengthUsed;
 
-        if (pOutSample)
-            IMediaSample_Release(pOutSample);
+        IMediaSample_Release(pOutSample);
         pOutSample = NULL;
 
     }
