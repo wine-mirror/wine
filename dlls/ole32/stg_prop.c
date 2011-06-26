@@ -720,8 +720,8 @@ static HRESULT WINAPI IPropertyStorage_fnReadPropertyNames(
 
             hr = S_OK;
             rglpwstrName[i] = CoTaskMemAlloc((len + 1) * sizeof(WCHAR));
-            if (rglpwstrName)
-                memcpy(rglpwstrName, name, (len + 1) * sizeof(WCHAR));
+            if (rglpwstrName[i])
+                memcpy(rglpwstrName[i], name, (len + 1) * sizeof(WCHAR));
             else
                 hr = STG_E_INSUFFICIENTMEMORY;
         }
