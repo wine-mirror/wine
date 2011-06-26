@@ -149,7 +149,7 @@ static int CALLBACK create_new_folder_callback(HWND hwnd, UINT uMsg,
  */
 static void test_click_make_new_folder_button(void)
 {
-    HRESULT resCoInit;
+    HRESULT resCoInit, hr;
     BROWSEINFO bi;
     LPITEMIDLIST pidl = NULL;
     LPITEMIDLIST test_folder_pidl;
@@ -202,7 +202,12 @@ static void test_click_make_new_folder_button(void)
     /* Use test folder as the root folder for dialog box */
     MultiByteToWideChar(CP_UTF8, 0, test_folder_path, MAX_PATH,
         test_folder_pathW, MAX_PATH);
-    SHGetDesktopFolder(&test_folder_object);
+    hr = SHGetDesktopFolder(&test_folder_object);
+    ok (SUCCEEDED(hr), "SHGetDesktopFolder failed with hr 0x%08x\n", hr);
+    if (!SUCCEEDED(hr)) {
+        skip("SHGetDesktopFolder failed - skipping\n");
+        return;
+    }
     test_folder_object->lpVtbl->ParseDisplayName(test_folder_object, NULL, NULL,
         test_folder_pathW, 0UL, &test_folder_pidl, 0UL);
     bi.pidlRoot = test_folder_pidl;
@@ -243,8 +248,7 @@ static void test_click_make_new_folder_button(void)
         CoTaskMemFree(pidl);
     if (test_folder_pidl)
         CoTaskMemFree(test_folder_pidl);
-    if (test_folder_object)
-        test_folder_object->lpVtbl->Release(test_folder_object);
+    test_folder_object->lpVtbl->Release(test_folder_object);
 
     CoUninitialize();
 }
@@ -300,7 +304,7 @@ static int CALLBACK selection_callback(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 
 static void test_selection(void)
 {
-    HRESULT resCoInit;
+    HRESULT resCoInit, hr;
     BROWSEINFO bi;
     LPITEMIDLIST pidl = NULL;
     IShellFolder *desktop_object;
@@ -325,7 +329,12 @@ static void test_selection(void)
     bi.lpszTitle = (LPTSTR) title;
     bi.lpfn = selection_callback;
 
-    SHGetDesktopFolder(&desktop_object);
+    hr = SHGetDesktopFolder(&desktop_object);
+    ok (SUCCEEDED(hr), "SHGetDesktopFolder failed with hr 0x%08x\n", hr);
+    if (!SUCCEEDED(hr)) {
+        skip("SHGetDesktopFolder failed - skipping\n");
+        return;
+    }
     desktop_object->lpVtbl->ParseDisplayName(desktop_object, NULL, NULL,
         selected_folderW, 0UL, &selected_folder_pidl, 0UL);
     bi.pidlRoot = selected_folder_pidl;
@@ -343,6 +352,8 @@ static void test_selection(void)
 
     if (pidl)
         CoTaskMemFree(pidl);
+
+    desktop_object->lpVtbl->Release(desktop_object);
 
     CoUninitialize();
 }
