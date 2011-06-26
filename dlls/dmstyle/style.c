@@ -730,11 +730,11 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePatternList (LPPERSIST
       TRACE_(dmfile)(": Pattern chunk\n");
       /** alloc new motif entry */
       pNewMotif = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_STYLE_MOTIF));
-      list_add_tail (&This->Motifs, &pNewMotif->entry);
       if (NULL == pNewMotif) {
 	ERR(": no more memory\n");
 	return  E_OUTOFMEMORY;
       }
+      list_add_tail (&This->Motifs, &pNewMotif->entry);
 
       IStream_Read (pStm, &pNewMotif->pattern, Chunk.dwSize, NULL);
       /** TODO trace pattern */
