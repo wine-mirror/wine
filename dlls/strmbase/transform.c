@@ -222,10 +222,11 @@ HRESULT TransformFilter_Construct(const IBaseFilterVtbl *pVtbl, LONG filter_size
     assert(filter_size >= sizeof(TransformFilter));
 
     pTf = CoTaskMemAlloc(filter_size);
-    ZeroMemory(pTf, filter_size);
 
     if (!pTf)
         return E_OUTOFMEMORY;
+
+    ZeroMemory(pTf, filter_size);
 
     if (SUCCEEDED(TransformFilter_Init(pVtbl, pClsid, pFuncsTable, pTf)))
     {
