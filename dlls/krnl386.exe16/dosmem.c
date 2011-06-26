@@ -480,7 +480,7 @@ LPVOID DOSMEM_AllocBlock(UINT size, UINT16* pseg)
     curr = DOSMEM_root_block;
     if (!(psp = DOSVM_psp)) psp = MCB_PSP_DOS;
 
-    *pseg = 0;
+    if (pseg) *pseg = 0;
 
     TRACE( "(%04xh)\n", size );
 

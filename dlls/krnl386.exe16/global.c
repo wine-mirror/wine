@@ -362,7 +362,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
             newptr = 0;
         else
         {
-            newptr = DOSMEM_AllocBlock( size, 0 );
+            newptr = DOSMEM_AllocBlock( size, NULL );
             if (newptr)
             {
                 memcpy( newptr, ptr, oldsize );
