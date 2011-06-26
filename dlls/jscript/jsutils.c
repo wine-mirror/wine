@@ -41,6 +41,8 @@ const char *debugstr_variant(const VARIANT *v)
         return "{VT_NULL}";
     case VT_I4:
         return wine_dbg_sprintf("{VT_I4: %d}", V_I4(v));
+    case VT_UI4:
+        return wine_dbg_sprintf("{VT_UI4: %u}", V_UI4(v));
     case VT_R8:
         return wine_dbg_sprintf("{VT_R8: %lf}", V_R8(v));
     case VT_BSTR:
