@@ -516,9 +516,7 @@ UINT WINAPI MsiGetSummaryInformationW( MSIHANDLE hDatabase,
         msiobj_release( &si->hdr );
     }
 
-    if( db )
-        msiobj_release( &db->hdr );
-
+    msiobj_release( &db->hdr );
     return ret;
 }
 
