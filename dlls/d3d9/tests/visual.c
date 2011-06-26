@@ -11618,11 +11618,8 @@ static void clip_planes_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, original_rt);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderTarget failed, hr=%08x\n", hr);
     IDirect3DSurface9_Release(original_rt);
-    if (offscreen)
-    {
-        IDirect3DSurface9_Release(offscreen_surface);
-        IDirect3DTexture9_Release(offscreen);
-    }
+    IDirect3DSurface9_Release(offscreen_surface);
+    IDirect3DTexture9_Release(offscreen);
 }
 
 static void fp_special_test(IDirect3DDevice9 *device)
