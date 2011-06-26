@@ -283,7 +283,7 @@ static LPWSTR msi_dialog_get_style( LPCWSTR p, LPCWSTR *rest )
                 return NULL;
     }
 
-    if (!p || !q)
+    if (!q)
         return NULL;
 
     *rest = ++q;
