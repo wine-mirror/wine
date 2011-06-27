@@ -1125,7 +1125,7 @@ static void IFaceRefCount(void)
 
         IDirectDrawSurface_QueryInterface(surf, &IID_IDirectDrawGammaControl, (void **) &gamma);
         ref = getRefcount((IUnknown *) gamma);
-        todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
+        ok(ref == 1, "Refcount is %u, expected 1\n", ref);
 
         ref = IDirect3DTexture2_Release(tex2); /* Release the texture */
         ok(ref == 2, "Refcount is %u, expected 2\n", ref);
@@ -1138,7 +1138,7 @@ static void IFaceRefCount(void)
         ok(ref == 1, "Refcount is %u, expected 1\n", ref);
 
         ref = IDirectDrawGammaControl_Release(gamma); /* Release the gamma control */
-        todo_wine ok(ref == 0, "Refcount is %u, expected 0\n", ref);
+        ok(ref == 0, "Refcount is %u, expected 0\n", ref);
     }
 
     ref = IDirectDrawSurface2_Release(surf2); /* Release one of the 2 surf2 interfaces */

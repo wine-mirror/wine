@@ -111,7 +111,7 @@ static HRESULT WINAPI ddraw_surface7_QueryInterface(IDirectDrawSurface7 *iface, 
     }
     else if( IsEqualGUID(riid, &IID_IDirectDrawGammaControl) )
     {
-        IUnknown_AddRef(iface);
+        IDirectDrawGammaControl_AddRef(&This->IDirectDrawGammaControl_iface);
         *obj = &This->IDirectDrawGammaControl_iface;
         TRACE("(%p) returning IDirectDrawGammaControl interface at %p\n", This, *obj);
         return S_OK;
@@ -318,10 +318,16 @@ static ULONG WINAPI ddraw_surface1_AddRef(IDirectDrawSurface *iface)
 static ULONG WINAPI ddraw_gamma_control_AddRef(IDirectDrawGammaControl *iface)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawGammaControl(iface);
+    ULONG refcount = InterlockedIncrement(&This->gamma_count);
 
-    TRACE("iface %p.\n", iface);
+    TRACE("iface %p increasing refcount to %u.\n", iface, refcount);
 
-    return ddraw_surface7_AddRef(&This->IDirectDrawSurface7_iface);
+    if (refcount == 1)
+    {
+        ddraw_surface_add_iface(This);
+    }
+
+    return refcount;
 }
 
 static ULONG WINAPI d3d_texture2_AddRef(IDirect3DTexture2 *iface)
@@ -595,10 +601,16 @@ static ULONG WINAPI ddraw_surface1_Release(IDirectDrawSurface *iface)
 static ULONG WINAPI ddraw_gamma_control_Release(IDirectDrawGammaControl *iface)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawGammaControl(iface);
+    ULONG refcount = InterlockedDecrement(&This->gamma_count);
 
-    TRACE("iface %p.\n", iface);
+    TRACE("iface %p decreasing refcount to %u.\n", iface, refcount);
 
-    return ddraw_surface7_Release(&This->IDirectDrawSurface7_iface);
+    if (refcount == 0)
+    {
+        ddraw_surface_release_iface(This);
+    }
+
+    return refcount;
 }
 
 static ULONG WINAPI d3d_texture2_Release(IDirect3DTexture2 *iface)
