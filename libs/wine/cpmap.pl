@@ -115,6 +115,49 @@ my %ctype =
     "defin"  => 0x0200
 );
 
+my %indic_types =
+(
+    "Other"    => 0x0000,
+    "Bindu"    => 0x0001,
+    "Visarga"  => 0x0002,
+    "Avagraha" => 0x0003,
+    "Nukta"    => 0x0004,
+    "Virama"   => 0x0005,
+    "Vowel_Independent"  => 0x0006,
+    "Vowel_Dependent"  => 0x0007,
+    "Vowel"  => 0x0008,
+    "Consonant_Placeholder"  => 0x0009,
+    "Consonant"  => 0x000a,
+    "Consonant_Dead"  => 0x000b,
+    "Consonant_Repha"  => 0x000c,
+    "Consonant_Subjoined"  => 0x000d,
+    "Consonant_Medial"  => 0x000e,
+    "Consonant_Final"  => 0x000f,
+    "Consonant_Head_Letter"  => 0x0010,
+    "Modifying_Letter"  => 0x0011,
+    "Tone_Letter"  => 0x0012,
+    "Tone_Mark"  => 0x0013,
+    "Register_Shifter"  => 0x0014
+);
+
+my %matra_types =
+(
+    "Right"    => 0x01,
+    "Left"  => 0x02,
+    "Visual_Order_Left" => 0x03,
+    "Left_And_Right"    => 0x04,
+    "Top"   => 0x05,
+    "Bottom"  => 0x06,
+    "Top_And_Bottom"  => 0x07,
+    "Top_And_Right"  => 0x08,
+    "Top_And_Left"  => 0x09,
+    "Top_And_Left_And_Right"  => 0x0a,
+    "Bottom_And_Right"  => 0x0b,
+    "Top_And_Bottom_And_Right"  => 0x0c,
+    "Overstruck"  => 0x0d,
+    "Invisible"  => 0x0e
+);
+
 my %break_types =
 (
     "BK"  => 0x0001,
@@ -1002,6 +1045,87 @@ sub get_lb_ranges()
 }
 
 ################################################################
+# dump the Indic Syllabic Category table
+sub dump_indic($)
+{
+    my $filename = shift;
+    my @indic_table = ($indic_types{'Other'}) x 65536;;
+
+    my $INPUT = open_data_file "$UNIDATA/IndicSyllabicCategory.txt";
+    while (<$INPUT>)
+    {
+        next if /^\#/;  # skip comments
+        next if /^\s*$/;  # skip empty lines
+        next if /\x1a/;  # skip ^Z
+        if (/^\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z_]+)\s*#/)
+        {
+            my $type = $2;
+            die "unknown indic $type" unless defined $indic_types{$type};
+            if (hex $1 < 65536)
+            {
+                $indic_table[hex $1] = $indic_types{$type};
+            }
+            next;
+        }
+        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([A-Za-z_]+)\s*#/)
+        {
+            my $type = $3;
+            die "unknown indic $type" unless defined $indic_types{$type};
+            if (hex $1 < 65536 and hex $2 < 6536)
+            {
+                foreach my $i (hex $1 .. hex $2)
+                {
+                    $indic_table[$i] = $indic_types{$type};
+                }
+            }
+            next;
+        }
+        die "malformed line $_";
+    }
+    close $INPUT;
+
+    $INPUT = open_data_file "$UNIDATA/IndicMatraCategory.txt";
+    while (<$INPUT>)
+    {
+        next if /^\#/;  # skip comments
+        next if /^\s*$/;  # skip empty lines
+        next if /\x1a/;  # skip ^Z
+        if (/^\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z]+)\s*#/)
+        {
+            my $type = $2;
+            die "unknown matra $type" unless defined $matra_types{$type};
+            $indic_table[hex $1] += $matra_types{$type} << 8;
+            next;
+        }
+        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([A-Za-z_]+)\s*#/)
+        {
+            my $type = $3;
+            die "unknown matra $type" unless defined $matra_types{$type};
+            foreach my $i (hex $1 .. hex $2)
+            {
+                $indic_table[$i] += $matra_types{$type} << 8;
+            }
+            next;
+        }
+        die "malformed line $_";
+    }
+    close $INPUT;
+
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    print "Building $filename\n";
+    print OUTPUT "/* Unicode Indic Syllabic Category */\n";
+    print OUTPUT "/* generated from $UNIDATA/IndicSyllabicCategory.txt */\n";
+    print OUTPUT "/*       and from $UNIDATA/IndicMatraCategory.txt */\n";
+    print OUTPUT "/* DO NOT EDIT!! */\n\n";
+    print OUTPUT "#include \"wine/unicode.h\"\n\n";
+
+    dump_simple_mapping( "indic_syllabic_table", @indic_table);
+
+    close OUTPUT;
+    save_file($filename);
+}
+
+################################################################
 # dump the Line Break Properties table
 sub dump_linebreak($)
 {
@@ -1734,6 +1858,7 @@ DUMP_CTYPE_TABLES( "wctype.c" );
 dump_mirroring( "../../dlls/usp10/mirror.c" );
 dump_shaping( "../../dlls/usp10/shaping.c" );
 dump_linebreak( "../../dlls/usp10/linebreak.c" );
+dump_indic( "../../dlls/usp10/indicsyllable.c" );
 dump_intl_nls("../../tools/l_intl.nls");
 
 foreach my $file (@allfiles) { HANDLE_FILE( @{$file} ); }

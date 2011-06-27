@@ -71,6 +71,7 @@ static void ShapeCharGlyphProp_Telugu( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
 static void ShapeCharGlyphProp_Kannada( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 static void ShapeCharGlyphProp_Malayalam( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp );
 
+extern const unsigned short indic_syllabic_table[];
 extern const unsigned short wine_shaping_table[];
 extern const unsigned short wine_shaping_forms[LAST_ARABIC_CHAR - FIRST_ARABIC_CHAR + 1][4];
 
@@ -2225,31 +2226,68 @@ static void ShapeIndicSyllables(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa,
     }
 }
 
+static inline int unicode_lex(WCHAR c)
+{
+    int type;
+
+    if (!c) return lex_Generic;
+    if (c == 0x200D) return lex_ZWJ;
+    if (c == 0x200C) return lex_ZWNJ;
+    if (c == 0x00A0) return lex_NBSP;
+
+    type = indic_syllabic_table[indic_syllabic_table[c >> 8] + (c & 0xff)];
+
+    if ((type & 0x00ff) != 0x0007)  type = type & 0x00ff;
+
+    switch( type )
+    {
+        case 0x0d07: /* Unknown */
+        case 0x0e07: /* Unknwon */
+        default: return lex_Generic;
+        case 0x0001:
+        case 0x0002:
+        case 0x0011:
+        case 0x0012:
+        case 0x0013:
+        case 0x0014: return lex_Modifier;
+        case 0x0003:
+        case 0x0009:
+        case 0x000a:
+        case 0x000b:
+        case 0x000d:
+        case 0x000e:
+        case 0x000f:
+        case 0x0010: return lex_Consonant;
+        case 0x0004: return lex_Nukta;
+        case 0x0005: return lex_Halant;
+        case 0x0006:
+        case 0x0008: return lex_Vowel;
+        case 0x0007:
+        case 0x0107: return lex_Matra_post;
+        case 0x0207:
+        case 0x0307: return lex_Matra_pre;
+        case 0x0807:
+        case 0x0907:
+        case 0x0a07:
+        case 0x0b07:
+        case 0x0c07:
+        case 0x0407: return lex_Composed_Vowel;
+        case 0x0507: return lex_Matra_above;
+        case 0x0607: return lex_Matra_below;
+        case 0x000c: return lex_Ra;
+    };
+}
+
 static int sinhala_lex(WCHAR c)
 {
     switch (c)
     {
-        case 0x0DCA: return lex_Halant;
-        case 0x0DCF:
-        case 0x0DDF:
-        case 0x0DD8: return lex_Matra_post;
-        case 0x0DD9:
-        case 0x0DDB: return lex_Matra_pre;
         case 0x0DDA:
-        case 0x0DDC: return lex_Matra_post;
-        case 0x200D: return lex_ZWJ;
-        case 0x200C: return lex_ZWNJ;
-        case 0x00A0: return lex_NBSP;
+        case 0x0DDD:
+        case 0x0DDC:
+        case 0x0DDE: return lex_Matra_post;
         default:
-            if (c>=0x0D82 && c <=0x0D83) return lex_Modifier;
-            else if (c>=0x0D85 && c <=0x0D96) return lex_Vowel;
-            else if (c>=0x0D96 && c <=0x0DC6) return lex_Consonant;
-            else if (c>=0x0DD0 && c <=0x0DD1) return lex_Matra_post;
-            else if (c>=0x0DD2 && c <=0x0DD3) return lex_Matra_above;
-            else if (c>=0x0DD4 && c <=0x0DD6) return lex_Matra_below;
-            else if (c>=0x0DDD && c <=0x0DDE) return lex_Matra_post;
-            else if (c>=0x0DF2 && c <=0x0DF3) return lex_Matra_post;
-            else return lex_Generic;
+            return unicode_lex(c);
     }
 }
 
@@ -2308,32 +2346,9 @@ static int devanagari_lex(WCHAR c)
 {
     switch (c)
     {
-        case 0x0951:
-        case 0x0952:
-        case 0x0903: return lex_Modifier;
         case 0x0930: return lex_Ra;
-        case 0x093C: return lex_Nukta;
-        case 0x0940:
-        case 0x093E: return lex_Matra_post;
-        case 0x093F: return lex_Matra_pre;
-        case 0x094D: return lex_Halant;
-        case 0x0972: return lex_Vowel;
-        case 0x200C: return lex_ZWNJ;
-        case 0x200D: return lex_ZWJ;
         default:
-            if (c>=0x0901 && c<=0x0902) return lex_Matra_above;
-            else if (c>=0x0904 && c<=0x0914) return lex_Vowel;
-            else if (c>=0x0915 && c<=0x0939) return lex_Consonant;
-            else if (c>=0x0941 && c<=0x0944) return lex_Matra_below;
-            else if (c>=0x0945 && c<=0x0948) return lex_Matra_above;
-            else if (c>=0x0949 && c<=0x094C) return lex_Matra_post;
-            else if (c>=0x0953 && c<=0x0954) return lex_Modifier;
-            else if (c>=0x0958 && c<=0x095F) return lex_Consonant;
-            else if (c>=0x0960 && c<=0x0961) return lex_Vowel;
-            else if (c>=0x0962 && c<=0x0963) return lex_Matra_below;
-            else if (c>=0x097B && c<=0x097C) return lex_Consonant;
-            else if (c>=0x097E && c<=0x097F) return lex_Consonant;
-            else return lex_Generic;
+            return unicode_lex(c);
     }
 }
 
@@ -2388,30 +2403,9 @@ static int bengali_lex(WCHAR c)
 {
     switch (c)
     {
-        case 0x0981: return lex_Modifier;
-        case 0x09AC:
-        case 0x09AF:
-        case 0x09CE: return lex_Consonant;
         case 0x09B0: return lex_Ra;
-        case 0x09BC: return lex_Nukta;
-        case 0x09BF: return lex_Matra_pre;
-        case 0x09D7:
-        case 0x09BE:
-        case 0x09C0: return lex_Matra_post;
-        case 0x09CD: return lex_Halant;
-        case 0x200C: return lex_ZWNJ;
-        case 0x200D: return lex_ZWJ;
         default:
-            if (c>=0x0982 && c<=0x0983) return lex_Matra_post;
-            else if (c>=0x0985 && c<=0x0994) return lex_Vowel;
-            else if (c>=0x0995 && c<=0x09B9) return lex_Consonant;
-            else if (c>=0x09C1 && c<=0x09C4) return lex_Matra_below;
-            else if (c>=0x09C7 && c<=0x09C8) return lex_Matra_pre;
-            else if (c>=0x09DC && c<=0x09DF) return lex_Consonant;
-            else if (c>=0x09E0 && c<=0x09E1) return lex_Vowel;
-            else if (c>=0x09E2 && c<=0x09E3) return lex_Matra_below;
-            else if (c>=0x09F0 && c<=0x09F1) return lex_Consonant;
-            else return lex_Generic;
+            return unicode_lex(c);
     }
 }
 
@@ -2477,31 +2471,7 @@ static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
 
 static int gurmukhi_lex(WCHAR c)
 {
-    switch (c)
-    {
-        case 0x0A30:
-        case 0x0A35:
-        case 0x0A39:
-        case 0x0A2f: return lex_Consonant;
-        case 0x0A3C: return lex_Nukta;
-        case 0x0A3F: return lex_Matra_pre;
-        case 0x0A03:
-        case 0x0A3E:
-        case 0x0A40: return lex_Matra_post;
-        case 0x0A4D: return lex_Halant;
-        case 0x0A70:
-        case 0x0A71: return lex_Modifier;
-        case 0x200C: return lex_ZWNJ;
-        case 0x200D: return lex_ZWJ;
-        default:
-            if (c>=0x0A01 && c<=0x0A02) return lex_Modifier;
-            else if (c>=0x0A05 && c<=0x0A14) return lex_Vowel;
-            else if (c>=0x0A15 && c<=0x0A38) return lex_Consonant;
-            else if (c>=0x0A41 && c<=0x0A42) return lex_Matra_below;
-            else if (c>=0x0A47 && c<=0x0A4C) return lex_Matra_above;
-            else if (c>=0x0A59 && c<=0x0A5E) return lex_Consonant;
-            else return lex_Generic;
-    }
+    return unicode_lex(c);
 }
 
 static const ConsonantComponents Gurmukhi_consonants[] = {
@@ -2551,25 +2521,9 @@ static int gujarati_lex(WCHAR c)
 {
     switch (c)
     {
-        case 0x0A83: return lex_Modifier;
         case 0x0AB0: return lex_Ra;
-        case 0x0ABC: return lex_Nukta;
-        case 0x0ABF: return lex_Matra_pre;
-        case 0x0ABE:
-        case 0x0AC0: return lex_Matra_post;
-        case 0x0ACD: return lex_Halant;
-        case 0x200C: return lex_ZWNJ;
-        case 0x200D: return lex_ZWJ;
         default:
-            if (c>=0x0A81 && c<=0x0A82) return lex_Modifier;
-            else if (c>=0x0A85 && c<=0x0A94) return lex_Vowel;
-            else if (c>=0x0A95 && c<=0x0AB9) return lex_Consonant;
-            else if (c>=0x0AC1 && c<=0x0AC4) return lex_Matra_below;
-            else if (c>=0x0AC5 && c<=0x0AC8) return lex_Matra_above;
-            else if (c>=0x0AC9 && c<=0x0ACC) return lex_Matra_post;
-            else if (c>=0x0AE0 && c<=0x0AE1) return lex_Vowel;
-            else if (c>=0x0AE2 && c<=0x0AE3) return lex_Matra_below;
-            else return lex_Generic;
+            return unicode_lex(c);
     }
 }
 
@@ -2607,33 +2561,9 @@ static int oriya_lex(WCHAR c)
 {
     switch (c)
     {
-        case 0x0B24:
-        case 0x0B28:
-        case 0x0B2F:
-        case 0x0B5F:
-        case 0x0B71:
-        case 0x0B33: return lex_Consonant;
         case 0x0B30: return lex_Ra;
-        case 0x0B3C: return lex_Nukta;
-        case 0x0B3F:
-        case 0x0B56: return lex_Matra_above;
-        case 0x0B3E:
-        case 0x0B57:
-        case 0x0B40: return lex_Matra_post;
-        case 0x0B47: return lex_Matra_pre;
-        case 0x0B4D: return lex_Halant;
-        case 0x200C: return lex_ZWNJ;
-        case 0x200D: return lex_ZWJ;
         default:
-            if (c>=0x0B01 && c<=0x0B03) return lex_Modifier;
-            else if (c>=0x0B05 && c<=0x0B14) return lex_Vowel;
-            else if (c>=0x0B15 && c<=0x0B39) return lex_Consonant;
-            else if (c>=0x0B41 && c<=0x0B44) return lex_Matra_below;
-            else if (c>=0x0B48 && c<=0x0B4C) return lex_Composed_Vowel;
-            else if (c>=0x0B5C && c<=0x0B5D) return lex_Consonant;
-            else if (c>=0x0B60 && c<=0x0B61) return lex_Vowel;
-            else if (c>=0x0B62 && c<=0x0B63) return lex_Matra_below;
-            else return lex_Generic;
+            return unicode_lex(c);
     }
 }
 
@@ -2685,20 +2615,7 @@ static void ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
 
 static int tamil_lex(WCHAR c)
 {
-    switch (c)
-    {
-        case 0x0BC0: return lex_Matra_above;
-        case 0x0BCD: return lex_Halant;
-        case 0x0BD7: return lex_Matra_post;
-        case 0x200C: return lex_ZWNJ;
-        case 0x200D: return lex_ZWJ;
-        default:
-            if (c>=0x0B95 && c<=0x0BB9) return lex_Consonant;
-            else if (c>=0x0BBE && c<=0x0BBF) return lex_Matra_post;
-            else if (c>=0x0BC1 && c<=0x0BC2) return lex_Matra_below;
-            else if (c>=0x0BC6 && c<=0x0BC8) return lex_Matra_pre;
-            else return lex_Generic;
-    }
+    return unicode_lex(c);
 }
 
 static const VowelComponents Tamil_vowels[] = {
@@ -2750,24 +2667,10 @@ static int telugu_lex(WCHAR c)
 {
     switch (c)
     {
-        case 0x0C4D: return lex_Halant;
-        case 0x0C55: return lex_Matra_above;
-        case 0x0C56: return lex_Matra_below;
-        case 0x200C: return lex_ZWNJ;
-        case 0x200D: return lex_ZWJ;
+        case 0x0C43:
+        case 0x0C44: return lex_Modifier;
         default:
-            if (c>=0x0C01 && c<=0x0C03) return lex_Modifier;
-            else if (c>=0x0C05 && c<=0x0C14) return lex_Vowel;
-            else if (c>=0x0C15 && c<=0x0C39) return lex_Consonant;
-            else if (c>=0x0C3E && c<=0x0C40) return lex_Matra_above;
-            else if (c>=0x0C41 && c<=0x0C42) return lex_Matra_post;
-            else if (c>=0x0C43 && c<=0x0C44) return lex_Modifier;
-            else if (c>=0x0C46 && c<=0x0C47) return lex_Matra_above;
-            else if (c>=0x0C4A && c<=0x0C4C) return lex_Matra_above;
-            else if (c>=0x0C58 && c<=0x0C59) return lex_Consonant;
-            else if (c>=0x0C60 && c<=0x0C61) return lex_Vowel;
-            else if (c>=0x0C62 && c<=0x0C63) return lex_Modifier;
-            else return lex_Generic;
+            return unicode_lex(c);
     }
 }
 
@@ -2814,24 +2717,8 @@ static int kannada_lex(WCHAR c)
     switch (c)
     {
         case 0x0CB0: return lex_Ra;
-        case 0x0CBC: return lex_Nukta;
-        case 0x0CBE: return lex_Matra_post;
-        case 0x0CBF: return lex_Matra_above;
-        case 0x0CC6: return lex_Matra_above;
-        case 0x0CCC: return lex_Matra_above;
-        case 0x0CCD: return lex_Halant;
-        case 0x0CCE: return lex_Consonant;
-        case 0x200C: return lex_ZWNJ;
-        case 0x200D: return lex_ZWJ;
         default:
-            if (c>=0x0C82 && c<=0x0C83) return lex_Modifier;
-            else if (c>=0x0C85 && c<=0x0C94) return lex_Vowel;
-            else if (c>=0x0C95 && c<=0x0CB9) return lex_Consonant;
-            else if (c>=0x0CC1 && c<=0x0CC4) return lex_Matra_post;
-            else if (c>=0x0CD5 && c<=0x0CD6) return lex_Modifier;
-            else if (c>=0x0CE0 && c<=0x0CE1) return lex_Vowel;
-            else if (c>=0x0CE2 && c<=0x0CE3) return lex_Matra_below;
-            else return lex_Generic;
+            return unicode_lex(c);
     }
 }
 
@@ -2879,23 +2766,7 @@ static void ContextualShape_Kannada(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
 
 static int malayalam_lex(WCHAR c)
 {
-    switch (c)
-    {
-        case 0x0D35: return lex_Consonant;
-        case 0x0D4D: return lex_Halant;
-        case 0x0D57: return lex_Matra_post;
-        case 0x200C: return lex_ZWNJ;
-        case 0x200D: return lex_ZWJ;
-        default:
-            if (c>=0x0D02 && c<=0x0D03) return lex_Modifier;
-            else if (c>=0x0D05 && c<=0x0D14) return lex_Vowel;
-            else if (c>=0x0D15 && c<=0x0D39) return lex_Consonant;
-            else if (c>=0x0D3E && c<=0x0D44) return lex_Matra_post;
-            else if (c>=0x0D46 && c<=0x0D48) return lex_Matra_pre;
-            else if (c>=0x0D60 && c<=0x0D61) return lex_Vowel;
-            else if (c>=0x0D62 && c<=0x0D63) return lex_Matra_below;
-            else return lex_Generic;
-    }
+    return unicode_lex(c);
 }
 
 static const VowelComponents Malayalam_vowels[] = {
