@@ -2756,13 +2756,13 @@ static HRESULT WINAPI ID3DXEffectImpl_SetTechnique(ID3DXEffect* iface, D3DXHANDL
     return E_NOTIMPL;
 }
 
-static D3DXHANDLE WINAPI ID3DXEffectImpl_GetCurrentTechnique(ID3DXEffect* iface)
+static D3DXHANDLE WINAPI ID3DXEffectImpl_GetCurrentTechnique(ID3DXEffect *iface)
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
 
-    FIXME("(%p)->(): stub\n", This);
+    TRACE("iface %p\n", This);
 
-    return NULL;
+    return This->active_technique;
 }
 
 static HRESULT WINAPI ID3DXEffectImpl_ValidateTechnique(ID3DXEffect* iface, D3DXHANDLE technique)
