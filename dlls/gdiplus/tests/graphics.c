@@ -2834,6 +2834,8 @@ static void test_string_functions(void)
     GpRegion *regions[4] = {0};
     BOOL region_isempty[4];
     int i;
+    PointF position;
+    GpMatrix *identity;
 
     ok(hdc != NULL, "Expected HDC to be initialized\n");
     status = GdipCreateFromHDC(hdc, &graphics);
@@ -3033,6 +3035,81 @@ static void test_string_functions(void)
     for (i=0; i<4; i++)
         GdipDeleteRegion(regions[i]);
 
+    GdipCreateMatrix(&identity);
+
+    position.X = 0;
+    position.Y = 0;
+
+    rc.X = 0;
+    rc.Y = 0;
+    rc.Width = 0;
+    rc.Height = 0;
+    status = GdipMeasureDriverString(NULL, teststring, 6, font, &position,
+        DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance,
+        identity, &rc);
+    todo_wine expect(InvalidParameter, status);
+
+    status = GdipMeasureDriverString(graphics, NULL, 6, font, &position,
+        DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance,
+        identity, &rc);
+    todo_wine expect(InvalidParameter, status);
+
+    status = GdipMeasureDriverString(graphics, teststring, 6, NULL, &position,
+        DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance,
+        identity, &rc);
+    todo_wine expect(InvalidParameter, status);
+
+    status = GdipMeasureDriverString(graphics, teststring, 6, font, NULL,
+        DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance,
+        identity, &rc);
+    todo_wine expect(InvalidParameter, status);
+
+    status = GdipMeasureDriverString(graphics, teststring, 6, font, &position,
+        0x100, identity, &rc);
+    todo_wine expect(Ok, status);
+
+    status = GdipMeasureDriverString(graphics, teststring, 6, font, &position,
+        DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance,
+        NULL, &rc);
+    todo_wine expect(Ok, status);
+
+    status = GdipMeasureDriverString(graphics, teststring, 6, font, &position,
+        DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance,
+        identity, NULL);
+    todo_wine expect(InvalidParameter, status);
+
+    rc.X = 0;
+    rc.Y = 0;
+    rc.Width = 0;
+    rc.Height = 0;
+    status = GdipMeasureDriverString(graphics, teststring, 6, font, &position,
+        DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance,
+        identity, &rc);
+    todo_wine expect(Ok, status);
+
+    expectf(rc.X, 0.0);
+    todo_wine ok(rc.Y < 0.0, "unexpected Y %0.2f\n", rc.Y);
+    todo_wine ok(rc.Width > 0.0, "unexpected Width %0.2f\n", rc.Width);
+    todo_wine ok(rc.Height > 0.0, "unexpected Y %0.2f\n", rc.Y);
+
+    char_width = rc.Width;
+    char_height = rc.Height;
+
+    rc.X = 0;
+    rc.Y = 0;
+    rc.Width = 0;
+    rc.Height = 0;
+    status = GdipMeasureDriverString(graphics, teststring, 4, font, &position,
+        DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance,
+        identity, &rc);
+    todo_wine expect(Ok, status);
+
+    expectf(rc.X, 0.0);
+    todo_wine ok(rc.Y < 0.0, "unexpected Y %0.2f\n", rc.Y);
+    todo_wine ok(rc.Width < char_width, "got Width %0.2f, expecting less than %0.2f\n", rc.Width, char_width);
+    expectf(rc.Height, char_height);
+
+    GdipDeleteMatrix(identity);
     GdipDeleteStringFormat(format);
     GdipDeleteBrush(brush);
     GdipDeleteFont(font);
