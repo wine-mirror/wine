@@ -449,7 +449,7 @@ static void ddraw_surface_cleanup(IDirectDrawSurfaceImpl *surface)
         IUnknown_Release(ifaceToRelease);
 }
 
-static void ddraw_surface_release_iface(IDirectDrawSurfaceImpl *This)
+ULONG ddraw_surface_release_iface(IDirectDrawSurfaceImpl *This)
 {
     ULONG iface_count = InterlockedDecrement(&This->iface_count);
     TRACE("%p decreasing iface count to %u.\n", This, iface_count);
@@ -462,7 +462,7 @@ static void ddraw_surface_release_iface(IDirectDrawSurfaceImpl *This)
         {
             WARN("(%p) Attempt to destroy a surface that is not a complex root\n", This);
             LeaveCriticalSection(&ddraw_cs);
-            return;
+            return iface_count;
         }
         if (This->wined3d_texture) /* If it's a texture, destroy the wined3d texture. */
             wined3d_texture_decref(This->wined3d_texture);
@@ -471,7 +471,7 @@ static void ddraw_surface_release_iface(IDirectDrawSurfaceImpl *This)
         LeaveCriticalSection(&ddraw_cs);
     }
 
-    return;
+    return iface_count;
 }
 
 /*****************************************************************************

@@ -212,6 +212,7 @@ HRESULT ddraw_surface_create_texture(IDirectDrawSurfaceImpl *surface) DECLSPEC_H
 void ddraw_surface_destroy(IDirectDrawSurfaceImpl *surface) DECLSPEC_HIDDEN;
 HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddraw,
         DDSURFACEDESC2 *desc, UINT mip_level, WINED3DSURFTYPE surface_type, UINT version) DECLSPEC_HIDDEN;
+ULONG ddraw_surface_release_iface(IDirectDrawSurfaceImpl *This) DECLSPEC_HIDDEN;
 
 static inline IDirectDrawSurfaceImpl *surface_from_texture1(IDirect3DTexture *iface)
 {

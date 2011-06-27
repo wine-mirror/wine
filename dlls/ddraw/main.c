@@ -752,7 +752,7 @@ DestroyCallback(IDirectDrawSurface7 *surf,
                 void *context)
 {
     IDirectDrawSurfaceImpl *Impl = impl_from_IDirectDrawSurface7(surf);
-    ULONG ref, ref3, ref2;
+    ULONG ref, ref3, ref2, iface_count;
 
     ref = IDirectDrawSurface7_Release(surf);  /* For the EnumSurfaces */
     IDirectDrawSurface3_AddRef(&Impl->IDirectDrawSurface3_iface);
@@ -769,9 +769,8 @@ DestroyCallback(IDirectDrawSurface7 *surf,
         return DDENUMRET_OK;
 
     /* Destroy the surface */
-    while (ref) ref = IDirectDrawSurface7_Release(surf);
-    while (ref3) ref3 = IDirectDrawSurface3_Release(&Impl->IDirectDrawSurface3_iface);
-    while (ref2) ref2 = IDirectDrawSurface2_Release(&Impl->IDirectDrawSurface2_iface);
+    iface_count = ddraw_surface_release_iface(Impl);
+    while (iface_count) iface_count = ddraw_surface_release_iface(Impl);
 
     return DDENUMRET_OK;
 }
