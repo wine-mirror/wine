@@ -246,18 +246,26 @@ static BOOL BUTTON_Paint(HTHEME theme, HWND hwnd, HDC hParamDC)
     DWORD dwStyle = GetWindowLongW(hwnd, GWL_STYLE);
     DWORD dwStyleEx = GetWindowLongW(hwnd, GWL_EXSTYLE);
     UINT dtFlags = get_drawtext_flags(dwStyle, dwStyleEx);
-    ButtonState drawState = IsWindowEnabled(hwnd) ? STATE_NORMAL : STATE_DISABLED;
+    int state = (int)SendMessageW(hwnd, BM_GETSTATE, 0, 0);
+    ButtonState drawState;
     pfThemedPaint paint = btnThemedPaintFunc[ dwStyle & BUTTON_TYPE ];
 
-    if (paint)
-    {
-        hDC = hParamDC ? hParamDC : BeginPaint(hwnd, &ps);
-        paint(theme, hwnd, hDC, drawState, dtFlags);
-        if (!hParamDC) EndPaint(hwnd, &ps);
-        return TRUE;
-    }
+    if(!paint)
+        return FALSE;
 
-    return FALSE; /* Delegate drawing to the non-themed code. */
+    if(IsWindowEnabled(hwnd))
+    {
+        if(state & BST_PUSHED) drawState = STATE_PRESSED;
+        else if(state & BST_HOT) drawState = STATE_HOT;
+        else if(state & BST_FOCUS) drawState = STATE_DEFAULTED;
+        else drawState = STATE_NORMAL;
+    }
+    else drawState = STATE_DISABLED;
+
+    hDC = hParamDC ? hParamDC : BeginPaint(hwnd, &ps);
+    paint(theme, hwnd, hDC, drawState, dtFlags);
+    if (!hParamDC) EndPaint(hwnd, &ps);
+    return TRUE;
 }
 
 /**********************************************************************
