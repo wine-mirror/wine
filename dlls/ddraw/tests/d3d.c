@@ -3260,10 +3260,11 @@ static void ComputeSphereVisibility(void)
 static void SetRenderTargetTest(void)
 {
     HRESULT hr;
-    IDirectDrawSurface7 *newrt, *failrt, *oldrt;
+    IDirectDrawSurface7 *newrt, *failrt, *oldrt, *temprt;
     D3DVIEWPORT7 vp;
     DDSURFACEDESC2 ddsd, ddsd2;
     DWORD stateblock;
+    ULONG refcount;
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
@@ -3307,11 +3308,34 @@ static void SetRenderTargetTest(void)
     hr = IDirect3DDevice7_GetRenderTarget(lpD3DDevice, &oldrt);
     ok(hr == DD_OK, "IDirect3DDevice7_GetRenderTarget failed, hr=0x%08x\n", hr);
 
+    refcount = getRefcount((IUnknown*) oldrt);
+    todo_wine ok(refcount == 3, "Refcount should be 3, returned is %d\n", refcount);
+
+    refcount = getRefcount((IUnknown*) failrt);
+    ok(refcount == 1, "Refcount should be 1, returned is %d\n", refcount);
+
     hr = IDirect3DDevice7_SetRenderTarget(lpD3DDevice, failrt, 0);
     ok(hr != D3D_OK, "IDirect3DDevice7_SetRenderTarget succeeded\n");
 
+    refcount = getRefcount((IUnknown*) oldrt);
+    todo_wine ok(refcount == 2, "Refcount should be 2, returned is %d\n", refcount);
+
+    refcount = getRefcount((IUnknown*) failrt);
+    ok(refcount == 2, "Refcount should be 2, returned is %d\n", refcount);
+
+    hr = IDirect3DDevice7_GetRenderTarget(lpD3DDevice, &temprt);
+    ok(hr == DD_OK, "IDirect3DDevice7_GetRenderTarget failed, hr=0x%08x\n", hr);
+    ok(failrt == temprt, "Wrong iface returned\n");
+
+    refcount = getRefcount((IUnknown*) failrt);
+    ok(refcount == 3, "Refcount should be 3, returned is %d\n", refcount);
+
     hr = IDirect3DDevice7_SetRenderTarget(lpD3DDevice, newrt, 0);
     ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderTarget failed, hr=0x%08x\n", hr);
+
+    refcount = getRefcount((IUnknown*) failrt);
+    ok(refcount == 2, "Refcount should be 2, returned is %d\n", refcount);
+
     memset(&vp, 0xff, sizeof(vp));
     hr = IDirect3DDevice7_GetViewport(lpD3DDevice, &vp);
     ok(hr == D3D_OK, "IDirect3DDevice7_GetViewport failed, hr=0x%08x\n", hr);
@@ -3376,6 +3400,7 @@ static void SetRenderTargetTest(void)
 
     IDirectDrawSurface7_Release(oldrt);
     IDirectDrawSurface7_Release(newrt);
+    IDirectDrawSurface7_Release(failrt);
     IDirectDrawSurface7_Release(failrt);
 }
 

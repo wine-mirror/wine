@@ -1826,16 +1826,9 @@ static HRESULT WINAPI IDirect3DDeviceImpl_2_GetCurrentViewport(IDirect3DDevice2 
  *  D3D_OK on success, for details see IWineD3DDevice::SetRenderTarget
  *
  *****************************************************************************/
-static HRESULT
-IDirect3DDeviceImpl_7_SetRenderTarget(IDirect3DDevice7 *iface,
-                                      IDirectDrawSurface7 *NewTarget,
-                                      DWORD Flags)
+static HRESULT d3d_device_set_render_target(IDirect3DDeviceImpl *This, IDirectDrawSurfaceImpl *Target)
 {
-    IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
-    IDirectDrawSurfaceImpl *Target = unsafe_impl_from_IDirectDrawSurface7(NewTarget);
     HRESULT hr;
-
-    TRACE("iface %p, target %p, flags %#x.\n", iface, NewTarget, Flags);
 
     EnterCriticalSection(&ddraw_cs);
     /* Flags: Not used */
@@ -1846,7 +1839,7 @@ IDirect3DDeviceImpl_7_SetRenderTarget(IDirect3DDevice7 *iface,
         LeaveCriticalSection(&ddraw_cs);
         return D3D_OK;
     }
-
+    This->target = Target;
     hr = wined3d_device_set_render_target(This->wined3d_device, 0,
             Target ? Target->wined3d_surface : NULL, FALSE);
     if(hr != D3D_OK)
@@ -1854,12 +1847,25 @@ IDirect3DDeviceImpl_7_SetRenderTarget(IDirect3DDevice7 *iface,
         LeaveCriticalSection(&ddraw_cs);
         return hr;
     }
-    IDirectDrawSurface7_AddRef(NewTarget);
-    IDirectDrawSurface7_Release(&This->target->IDirectDrawSurface7_iface);
-    This->target = Target;
     IDirect3DDeviceImpl_UpdateDepthStencil(This);
     LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;
+}
+
+static HRESULT
+IDirect3DDeviceImpl_7_SetRenderTarget(IDirect3DDevice7 *iface,
+                                      IDirectDrawSurface7 *NewTarget,
+                                      DWORD Flags)
+{
+    IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
+    IDirectDrawSurfaceImpl *Target = unsafe_impl_from_IDirectDrawSurface7(NewTarget);
+
+    TRACE("iface %p, target %p, flags %#x.\n", iface, NewTarget, Flags);
+    /* Flags: Not used */
+
+    IDirectDrawSurface7_AddRef(NewTarget);
+    IDirectDrawSurface7_Release(&This->target->IDirectDrawSurface7_iface);
+    return d3d_device_set_render_target(This, Target);
 }
 
 static HRESULT WINAPI
@@ -1893,8 +1899,9 @@ static HRESULT WINAPI IDirect3DDeviceImpl_3_SetRenderTarget(IDirect3DDevice3 *if
 
     TRACE("iface %p, target %p, flags %#x.\n", iface, NewRenderTarget, Flags);
 
-    return IDirect3DDevice7_SetRenderTarget((IDirect3DDevice7 *)This,
-            Target ? &Target->IDirectDrawSurface7_iface : NULL, Flags);
+    IDirectDrawSurface4_AddRef(NewRenderTarget);
+    IDirectDrawSurface4_Release(&This->target->IDirectDrawSurface4_iface);
+    return d3d_device_set_render_target(This, Target);
 }
 
 static HRESULT WINAPI IDirect3DDeviceImpl_2_SetRenderTarget(IDirect3DDevice2 *iface,
@@ -1905,8 +1912,9 @@ static HRESULT WINAPI IDirect3DDeviceImpl_2_SetRenderTarget(IDirect3DDevice2 *if
 
     TRACE("iface %p, target %p, flags %#x.\n", iface, NewRenderTarget, Flags);
 
-    return IDirect3DDevice7_SetRenderTarget((IDirect3DDevice7 *)This,
-            Target ? &Target->IDirectDrawSurface7_iface : NULL, Flags);
+    IDirectDrawSurface_AddRef(NewRenderTarget);
+    IDirectDrawSurface_Release(&This->target->IDirectDrawSurface_iface);
+    return d3d_device_set_render_target(This, Target);
 }
 
 /*****************************************************************************
