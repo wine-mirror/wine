@@ -456,7 +456,7 @@ static const RGBQUAD DefLogPaletteQuads[20] = { /* Copy of Default Logical Palet
     { 0xf0, 0xfb, 0xff, 0x00 },
     { 0xa4, 0xa0, 0xa0, 0x00 },
     { 0x80, 0x80, 0x80, 0x00 },
-    { 0x00, 0x00, 0xf0, 0x00 },
+    { 0x00, 0x00, 0xff, 0x00 },
     { 0x00, 0xff, 0x00, 0x00 },
     { 0x00, 0xff, 0xff, 0x00 },
     { 0xff, 0x00, 0x00, 0x00 },
@@ -639,24 +639,15 @@ INT WINAPI GetDIBits(
                 break;
 
             case 8:
-            {
-                INT r, g, b;
-                RGBQUAD *color;
-
                 memcpy(rgbQuads, DefLogPaletteQuads, 10 * sizeof(RGBQUAD));
                 memcpy(rgbQuads + 246, DefLogPaletteQuads + 10, 10 * sizeof(RGBQUAD));
-                color = rgbQuads + 10;
-                for(r = 0; r <= 5; r++) /* FIXME */
-                    for(g = 0; g <= 5; g++)
-                        for(b = 0; b <= 5; b++) {
-                            color->rgbRed =   (r * 0xff) / 5;
-                            color->rgbGreen = (g * 0xff) / 5;
-                            color->rgbBlue =  (b * 0xff) / 5;
-                            color->rgbReserved = 0;
-                            color++;
-                        }
-            }
-
+                for (i = 10; i < 246; i++)
+                {
+                    rgbQuads[i].rgbRed      = (i & 0x07) << 5;
+                    rgbQuads[i].rgbGreen    = (i & 0x38) << 2;
+                    rgbQuads[i].rgbBlue     =  i & 0xc0;
+                    rgbQuads[i].rgbReserved = 0;
+                }
             }
         }
 
