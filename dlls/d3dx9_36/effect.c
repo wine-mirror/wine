@@ -166,6 +166,7 @@ struct ID3DXEffectImpl
     LPDIRECT3DDEVICE9 device;
     LPD3DXEFFECTPOOL pool;
     D3DXHANDLE active_technique;
+    D3DXHANDLE active_pass;
 
     ID3DXBaseEffect *base_effect;
 };
@@ -2819,13 +2820,25 @@ static HRESULT WINAPI ID3DXEffectImpl_Begin(ID3DXEffect *iface, UINT *passes, DW
     return D3DERR_INVALIDCALL;
 }
 
-static HRESULT WINAPI ID3DXEffectImpl_BeginPass(ID3DXEffect* iface, UINT pass)
+static HRESULT WINAPI ID3DXEffectImpl_BeginPass(ID3DXEffect *iface, UINT pass)
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
+    struct d3dx_technique *technique = get_technique_struct(This->active_technique);
 
-    FIXME("(%p)->(%u): stub\n", This, pass);
+    TRACE("iface %p, pass %u\n", This, pass);
 
-    return E_NOTIMPL;
+    if (technique && pass < technique->pass_count && !This->active_pass)
+    {
+        This->active_pass = technique->pass_handles[pass];
+
+        FIXME("No states applied, yet!\n");
+
+        return D3D_OK;
+    }
+
+    WARN("Invalid argument supplied.\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXEffectImpl_CommitChanges(ID3DXEffect* iface)
@@ -5012,6 +5025,7 @@ static HRESULT d3dx9_effect_init(struct ID3DXEffectImpl *effect, LPDIRECT3DDEVIC
     if (object->technique_handles)
     {
         effect->active_technique = object->technique_handles[0];
+        effect->active_pass = NULL;
     }
 
     return D3D_OK;
