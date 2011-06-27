@@ -51,7 +51,7 @@ int locale_id__Id_cnt = 0;
 
 /* ?_Clocptr@_Locimp@locale@std@@0PAV123@A */
 /* ?_Clocptr@_Locimp@locale@std@@0PEAV123@EA */
-locale__Locimp *locale__Locimp__Clocptr;
+locale__Locimp *locale__Locimp__Clocptr = NULL;
 
 static const vtable_ptr MSVCP_locale_facet_vtable[];
 
