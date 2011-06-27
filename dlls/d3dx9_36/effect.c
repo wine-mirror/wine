@@ -165,6 +165,7 @@ struct ID3DXEffectImpl
     LPD3DXEFFECTSTATEMANAGER manager;
     LPDIRECT3DDEVICE9 device;
     LPD3DXEFFECTPOOL pool;
+    D3DXHANDLE active_technique;
 
     ID3DXBaseEffect *base_effect;
 };
@@ -2790,13 +2791,32 @@ static BOOL WINAPI ID3DXEffectImpl_IsParameterUsed(ID3DXEffect* iface, D3DXHANDL
     return FALSE;
 }
 
-static HRESULT WINAPI ID3DXEffectImpl_Begin(ID3DXEffect* iface, UINT *passes, DWORD flags)
+static HRESULT WINAPI ID3DXEffectImpl_Begin(ID3DXEffect *iface, UINT *passes, DWORD flags)
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
+    struct d3dx_technique *technique = get_technique_struct(This->active_technique);
 
-    FIXME("(%p)->(%p, %#x): stub\n", This, passes, flags);
+    FIXME("iface %p, passes %p, flags %#x partial stub\n", This, passes, flags);
 
-    return E_NOTIMPL;
+    if (passes && technique)
+    {
+        if (This->manager || flags & D3DXFX_DONOTSAVESTATE)
+        {
+            TRACE("State capturing disabled.\n");
+        }
+        else
+        {
+            FIXME("State capturing not supported, yet!\n");
+        }
+
+        *passes = technique->pass_count;
+
+        return D3D_OK;
+    }
+
+    WARN("Invalid argument supplied.\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXEffectImpl_BeginPass(ID3DXEffect* iface, UINT pass)
@@ -4987,6 +5007,12 @@ static HRESULT d3dx9_effect_init(struct ID3DXEffectImpl *effect, LPDIRECT3DDEVIC
     }
 
     effect->base_effect = &object->ID3DXBaseEffect_iface;
+
+    /* initialize defaults - check because of unsupported ascii effects */
+    if (object->technique_handles)
+    {
+        effect->active_technique = object->technique_handles[0];
+    }
 
     return D3D_OK;
 
