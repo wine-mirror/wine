@@ -353,16 +353,8 @@ void Indic_ReorderCharacters( HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, L
         }
         else if (index < cChar)
         {
-            int i;
             TRACE("Processing failed at %i\n",index);
-            for (i = index; i < cChar; i++)
-                if (lex(input[i])==lex_Generic)
-                {
-                    TRACE("Restart processing at %i\n",i);
-                    next = i;
-                    index = i;
-                    break;
-                }
+            next = ++index;
         }
     }
     TRACE("Processed %i of %i characters into %i syllables\n",index,cChar,*syllable_count);
