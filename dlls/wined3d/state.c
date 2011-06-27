@@ -4468,6 +4468,7 @@ static void streamsrc(DWORD state, struct wined3d_stateblock *stateblock, struct
     BOOL load_numbered = use_vs(&stateblock->state) && !device->useDrawStridedSlow;
     BOOL load_named = !use_vs(&stateblock->state) && !device->useDrawStridedSlow;
 
+    if (isStateDirty(context, STATE_VDECL)) return;
     if (context->numberedArraysLoaded && !load_numbered)
     {
         unloadNumberedArrays(context);
@@ -4492,6 +4493,12 @@ static void streamsrc(DWORD state, struct wined3d_stateblock *stateblock, struct
         loadVertexData(context, stateblock, &device->strided_streams);
         context->namedArraysLoaded = TRUE;
     }
+}
+
+static void vdecl_miscpart(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+{
+    if (isStateDirty(context, STATE_STREAMSRC)) return;
+    streamsrc(state, stateblock, context);
 }
 
 static void vertexdeclaration(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
@@ -4884,8 +4891,8 @@ const struct StateEntryTemplate misc_state_template[] = {
     { STATE_RENDER(WINED3DRS_DESTBLENDALPHA),             { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_DESTBLENDALPHA),             { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_BLENDOPALPHA),               { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_STREAMSRC,                                    { STATE_VDECL,                                        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_VDECL,                                        { STATE_VDECL,                                        streamsrc           }, WINED3D_GL_EXT_NONE             },
+    { STATE_STREAMSRC,                                    { STATE_STREAMSRC,                                    streamsrc           }, WINED3D_GL_EXT_NONE             },
+    { STATE_VDECL,                                        { STATE_VDECL,                                        vdecl_miscpart      }, WINED3D_GL_EXT_NONE             },
     { STATE_FRONTFACE,                                    { STATE_FRONTFACE,                                    frontface           }, WINED3D_GL_EXT_NONE             },
     { STATE_SCISSORRECT,                                  { STATE_SCISSORRECT,                                  scissorrect         }, WINED3D_GL_EXT_NONE             },
     { STATE_POINTSPRITECOORDORIGIN,                       { STATE_POINTSPRITECOORDORIGIN,                       psorigin            }, WINED3D_GL_VERSION_2_0          },
@@ -5063,7 +5070,7 @@ const struct StateEntryTemplate misc_state_template[] = {
     { STATE_SAMPLER(18), /* Vertex sampler 2 */           { STATE_SAMPLER(18),                                  sampler             }, WINED3D_GL_EXT_NONE             },
     { STATE_SAMPLER(19), /* Vertex sampler 3 */           { STATE_SAMPLER(19),                                  sampler             }, WINED3D_GL_EXT_NONE             },
     { STATE_BASEVERTEXINDEX,                              { STATE_BASEVERTEXINDEX,                              state_nop,          }, ARB_DRAW_ELEMENTS_BASE_VERTEX   },
-    { STATE_BASEVERTEXINDEX,                              { STATE_VDECL,                                        NULL,               }, WINED3D_GL_EXT_NONE             },
+    { STATE_BASEVERTEXINDEX,                              { STATE_STREAMSRC,                                    NULL,               }, WINED3D_GL_EXT_NONE             },
     {0 /* Terminate */,                                   { 0,                                                  0                   }, WINED3D_GL_EXT_NONE             },
 };
 

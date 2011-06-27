@@ -2178,7 +2178,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
      * updating a resource location. */
     device_update_tex_unit_map(device);
     device_preload_textures(device);
-    if (isStateDirty(context, STATE_VDECL))
+    if (isStateDirty(context, STATE_VDECL) || isStateDirty(context, STATE_STREAMSRC))
         device_update_stream_info(device, context->gl_info);
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
