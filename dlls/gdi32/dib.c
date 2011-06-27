@@ -441,26 +441,6 @@ static const RGBQUAD EGAColorsQuads[16] = {
     { 0xff, 0xff, 0xff, 0x00 }
 };
 
-static const RGBTRIPLE EGAColorsTriples[16] = {
-/* rgbBlue, rgbGreen, rgbRed */
-    { 0x00, 0x00, 0x00 },
-    { 0x00, 0x00, 0x80 },
-    { 0x00, 0x80, 0x00 },
-    { 0x00, 0x80, 0x80 },
-    { 0x80, 0x00, 0x00 },
-    { 0x80, 0x00, 0x80 },
-    { 0x80, 0x80, 0x00 },
-    { 0x80, 0x80, 0x80 },
-    { 0xc0, 0xc0, 0xc0 },
-    { 0x00, 0x00, 0xff },
-    { 0x00, 0xff, 0x00 },
-    { 0x00, 0xff, 0xff },
-    { 0xff, 0x00, 0x00 } ,
-    { 0xff, 0x00, 0xff },
-    { 0xff, 0xff, 0x00 },
-    { 0xff, 0xff, 0xff }
-};
-
 static const RGBQUAD DefLogPaletteQuads[20] = { /* Copy of Default Logical Palette */
 /* rgbBlue, rgbGreen, rgbRed, rgbReserved */
     { 0x00, 0x00, 0x00, 0x00 },
@@ -484,31 +464,6 @@ static const RGBQUAD DefLogPaletteQuads[20] = { /* Copy of Default Logical Palet
     { 0xff, 0xff, 0x00, 0x00 },
     { 0xff, 0xff, 0xff, 0x00 }
 };
-
-static const RGBTRIPLE DefLogPaletteTriples[20] = { /* Copy of Default Logical Palette */
-/* rgbBlue, rgbGreen, rgbRed */
-    { 0x00, 0x00, 0x00 },
-    { 0x00, 0x00, 0x80 },
-    { 0x00, 0x80, 0x00 },
-    { 0x00, 0x80, 0x80 },
-    { 0x80, 0x00, 0x00 },
-    { 0x80, 0x00, 0x80 },
-    { 0x80, 0x80, 0x00 },
-    { 0xc0, 0xc0, 0xc0 },
-    { 0xc0, 0xdc, 0xc0 },
-    { 0xf0, 0xca, 0xa6 },
-    { 0xf0, 0xfb, 0xff },
-    { 0xa4, 0xa0, 0xa0 },
-    { 0x80, 0x80, 0x80 },
-    { 0x00, 0x00, 0xf0 },
-    { 0x00, 0xff, 0x00 },
-    { 0x00, 0xff, 0xff },
-    { 0xff, 0x00, 0x00 },
-    { 0xff, 0x00, 0xff },
-    { 0xff, 0xff, 0x00 },
-    { 0xff, 0xff, 0xff}
-};
-
 
 /******************************************************************************
  * GetDIBits [GDI32.@]
@@ -538,8 +493,8 @@ INT WINAPI GetDIBits(
     WORD planes, bpp;
     DWORD compr, size;
     void* colorPtr;
-    RGBTRIPLE* rgbTriples;
-    RGBQUAD* rgbQuads;
+    RGBQUAD quad_buf[256];
+    RGBQUAD* rgbQuads = quad_buf;
 
     if (!info) return 0;
 
@@ -563,8 +518,7 @@ INT WINAPI GetDIBits(
     }
 
     colorPtr = (LPBYTE) info + (WORD) info->bmiHeader.biSize;
-    rgbTriples = colorPtr;
-    rgbQuads = colorPtr;
+    if(!core_header) rgbQuads = colorPtr;
 
     /* Transfer color info */
 
@@ -621,146 +575,104 @@ INT WINAPI GetDIBits(
     case 1:
     case 4:
     case 8:
+    {
+        unsigned int colors = 1 << bpp;
+
         if (!core_header) info->bmiHeader.biClrUsed = 0;
 
-	/* If the bitmap object already has a dib section at the
-	   same color depth then get the color map from it */
-	if (bmp->dib && bmp->dib->dsBm.bmBitsPixel == bpp) {
-            if(coloruse == DIB_RGB_COLORS) {
-                unsigned int colors = min( bmp->nb_colors, 1 << bpp );
+        if (coloruse == DIB_PAL_COLORS)
+        {
+            WORD *index = colorPtr;
+            for (i = 0; i < colors; i++, index++)
+                *index = i;
 
-                if (core_header)
-                {
-                    /* Convert the color table (RGBQUAD to RGBTRIPLE) */
-                    RGBTRIPLE* index = rgbTriples;
+            break;
+        }
 
-                    for (i=0; i < colors; i++, index++)
-                    {
-                        index->rgbtRed   = bmp->color_table[i].rgbRed;
-                        index->rgbtGreen = bmp->color_table[i].rgbGreen;
-                        index->rgbtBlue  = bmp->color_table[i].rgbBlue;
-                    }
-                }
-                else
-                {
-                    if (colors != 1 << bpp) info->bmiHeader.biClrUsed = colors;
-                    memcpy(colorPtr, bmp->color_table, colors * sizeof(RGBQUAD));
-                }
+        /* If the bitmap object already has a dib section at the
+           same color depth then get the color map from it */
+
+        if (bmp->dib && bmp->dib->dsBm.bmBitsPixel == bpp)
+        {
+            colors = min( colors, bmp->nb_colors );
+
+            if (!core_header && colors != 1 << bpp) info->bmiHeader.biClrUsed = colors;
+
+            memcpy(rgbQuads, bmp->color_table, colors * sizeof(RGBQUAD));
+        }
+
+        /* For color DDBs in native depth (mono DDBs always have a black/white palette):
+           Generate the color map from the selected palette */
+
+        else if (bpp > 1 && bpp == bmp->bitmap.bmBitsPixel)
+        {
+            PALETTEENTRY palEntry[256];
+
+            memset( palEntry, 0, sizeof(palEntry) );
+            if (!GetPaletteEntries( dc->hPalette, 0, colors, palEntry ))
+            {
+                release_dc_ptr( dc );
+                GDI_ReleaseObj( hbitmap );
+                return 0;
             }
-            else {
-                WORD *index = colorPtr;
-                for(i = 0; i < 1 << info->bmiHeader.biBitCount; i++, index++)
-                    *index = i;
+            for (i = 0; i < colors; i++)
+            {
+                rgbQuads[i].rgbRed      = palEntry[i].peRed;
+                rgbQuads[i].rgbGreen    = palEntry[i].peGreen;
+                rgbQuads[i].rgbBlue     = palEntry[i].peBlue;
+                rgbQuads[i].rgbReserved = 0;
             }
         }
-        else {
-            if (coloruse == DIB_PAL_COLORS) {
-                for (i = 0; i < (1 << bpp); i++)
-                    ((WORD *)colorPtr)[i] = (WORD)i;
+        else
+        {
+            switch (bpp)
+            {
+            case 1:
+                rgbQuads[0].rgbRed = rgbQuads[0].rgbGreen = rgbQuads[0].rgbBlue = 0;
+                rgbQuads[0].rgbReserved = 0;
+                rgbQuads[1].rgbRed = rgbQuads[1].rgbGreen = rgbQuads[1].rgbBlue = 0xff;
+                rgbQuads[1].rgbReserved = 0;
+                break;
+
+            case 4:
+                memcpy(rgbQuads, EGAColorsQuads, sizeof(EGAColorsQuads));
+                break;
+
+            case 8:
+            {
+                INT r, g, b;
+                RGBQUAD *color;
+
+                memcpy(rgbQuads, DefLogPaletteQuads, 10 * sizeof(RGBQUAD));
+                memcpy(rgbQuads + 246, DefLogPaletteQuads + 10, 10 * sizeof(RGBQUAD));
+                color = rgbQuads + 10;
+                for(r = 0; r <= 5; r++) /* FIXME */
+                    for(g = 0; g <= 5; g++)
+                        for(b = 0; b <= 5; b++) {
+                            color->rgbRed =   (r * 0xff) / 5;
+                            color->rgbGreen = (g * 0xff) / 5;
+                            color->rgbBlue =  (b * 0xff) / 5;
+                            color->rgbReserved = 0;
+                            color++;
+                        }
             }
-            else if(bpp > 1 && bpp == bmp->bitmap.bmBitsPixel) {
-                /* For color DDBs in native depth (mono DDBs always have
-                   a black/white palette):
-                   Generate the color map from the selected palette */
-                PALETTEENTRY palEntry[256];
 
-                memset( palEntry, 0, sizeof(palEntry) );
-                if (!GetPaletteEntries( dc->hPalette, 0, 1 << bmp->bitmap.bmBitsPixel, palEntry ))
-                {
-                    release_dc_ptr( dc );
-                    GDI_ReleaseObj( hbitmap );
-                    return 0;
-                }
-                for (i = 0; i < (1 << bmp->bitmap.bmBitsPixel); i++) {
-                    if (core_header)
-                    {
-                        rgbTriples[i].rgbtRed   = palEntry[i].peRed;
-                        rgbTriples[i].rgbtGreen = palEntry[i].peGreen;
-                        rgbTriples[i].rgbtBlue  = palEntry[i].peBlue;
-                    }
-                    else
-                    {
-                        rgbQuads[i].rgbRed      = palEntry[i].peRed;
-                        rgbQuads[i].rgbGreen    = palEntry[i].peGreen;
-                        rgbQuads[i].rgbBlue     = palEntry[i].peBlue;
-                        rgbQuads[i].rgbReserved = 0;
-                    }
-                }
-            } else {
-                switch (bpp) {
-                case 1:
-                    if (core_header)
-                    {
-                        rgbTriples[0].rgbtRed = rgbTriples[0].rgbtGreen =
-                            rgbTriples[0].rgbtBlue = 0;
-                        rgbTriples[1].rgbtRed = rgbTriples[1].rgbtGreen =
-                            rgbTriples[1].rgbtBlue = 0xff;
-                    }
-                    else
-                    {    
-                        rgbQuads[0].rgbRed = rgbQuads[0].rgbGreen =
-                            rgbQuads[0].rgbBlue = 0;
-                        rgbQuads[0].rgbReserved = 0;
-                        rgbQuads[1].rgbRed = rgbQuads[1].rgbGreen =
-                            rgbQuads[1].rgbBlue = 0xff;
-                        rgbQuads[1].rgbReserved = 0;
-                    }
-                    break;
-
-                case 4:
-                    if (core_header)
-                        memcpy(colorPtr, EGAColorsTriples, sizeof(EGAColorsTriples));
-                    else
-                        memcpy(colorPtr, EGAColorsQuads, sizeof(EGAColorsQuads));
-
-                    break;
-
-                case 8:
-                    {
-                        if (core_header)
-                        {
-                            INT r, g, b;
-                            RGBTRIPLE *color;
-
-                            memcpy(rgbTriples, DefLogPaletteTriples,
-                                       10 * sizeof(RGBTRIPLE));
-                            memcpy(rgbTriples + 246, DefLogPaletteTriples + 10,
-                                       10 * sizeof(RGBTRIPLE));
-                            color = rgbTriples + 10;
-                            for(r = 0; r <= 5; r++) /* FIXME */
-                                for(g = 0; g <= 5; g++)
-                                    for(b = 0; b <= 5; b++) {
-                                        color->rgbtRed =   (r * 0xff) / 5;
-                                        color->rgbtGreen = (g * 0xff) / 5;
-                                        color->rgbtBlue =  (b * 0xff) / 5;
-                                        color++;
-                                    }
-                        }
-                        else
-                        {
-                            INT r, g, b;
-                            RGBQUAD *color;
-
-                            memcpy(rgbQuads, DefLogPaletteQuads,
-                                       10 * sizeof(RGBQUAD));
-                            memcpy(rgbQuads + 246, DefLogPaletteQuads + 10,
-                                   10 * sizeof(RGBQUAD));
-                            color = rgbQuads + 10;
-                            for(r = 0; r <= 5; r++) /* FIXME */
-                                for(g = 0; g <= 5; g++)
-                                    for(b = 0; b <= 5; b++) {
-                                        color->rgbRed =   (r * 0xff) / 5;
-                                        color->rgbGreen = (g * 0xff) / 5;
-                                        color->rgbBlue =  (b * 0xff) / 5;
-                                        color->rgbReserved = 0;
-                                        color++;
-                                    }
-                        }
-                    }
-                }
             }
         }
+
+        if(core_header)
+        {
+            RGBTRIPLE *triple = (RGBTRIPLE *)colorPtr;
+            for (i = 0; i < colors; i++)
+            {
+                triple[i].rgbtRed   = rgbQuads[i].rgbRed;
+                triple[i].rgbtGreen = rgbQuads[i].rgbGreen;
+                triple[i].rgbtBlue  = rgbQuads[i].rgbBlue;
+            }
+        }
+
         break;
+    }
 
     case 15:
         if (info->bmiHeader.biCompression == BI_BITFIELDS)
