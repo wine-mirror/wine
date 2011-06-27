@@ -1745,9 +1745,9 @@ struct wined3d_device
     struct WineD3DRectPatch *currentPatch;
 };
 
-HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count, struct wined3d_surface **rts,
-        struct wined3d_surface *depth_stencil, UINT rect_count, const RECT *rects, const RECT *draw_rect,
-        DWORD flags, const WINED3DCOLORVALUE *color, float depth, DWORD stencil) DECLSPEC_HIDDEN;
+HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count, const struct wined3d_fb_state *fb,
+        UINT rect_count, const RECT *rects, const RECT *draw_rect, DWORD flags,
+        const WINED3DCOLORVALUE *color, float depth, DWORD stencil) DECLSPEC_HIDDEN;
 BOOL device_context_add(struct wined3d_device *device, struct wined3d_context *context) DECLSPEC_HIDDEN;
 void device_context_remove(struct wined3d_device *device, struct wined3d_context *context) DECLSPEC_HIDDEN;
 void device_get_draw_rect(struct wined3d_device *device, RECT *rect) DECLSPEC_HIDDEN;

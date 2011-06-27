@@ -649,12 +649,12 @@ static void prepare_ds_clear(struct wined3d_surface *ds, struct wined3d_context 
 }
 
 /* Do not call while under the GL lock. */
-HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count, struct wined3d_surface **rts,
-        struct wined3d_surface *depth_stencil, UINT rect_count, const RECT *rects, const RECT *draw_rect,
-        DWORD flags, const WINED3DCOLORVALUE *color, float depth, DWORD stencil)
+HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count, const struct wined3d_fb_state *fb,
+        UINT rect_count, const RECT *rects, const RECT *draw_rect, DWORD flags, const WINED3DCOLORVALUE *color,
+        float depth, DWORD stencil)
 {
     const RECT *clear_rect = (rect_count > 0 && rects) ? (const RECT *)rects : NULL;
-    struct wined3d_surface *target = rt_count ? rts[0] : NULL;
+    struct wined3d_surface *target = rt_count ? fb->render_targets[0] : NULL;
     UINT drawable_width, drawable_height;
     struct wined3d_context *context;
     GLbitfield clear_mask = 0;
@@ -673,7 +673,7 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
     {
         for (i = 0; i < rt_count; ++i)
         {
-            if (rts[i]) surface_load_location(rts[i], SFLAG_INDRAWABLE, NULL);
+            if (fb->render_targets[i]) surface_load_location(fb->render_targets[i], SFLAG_INDRAWABLE, NULL);
         }
     }
 
@@ -685,7 +685,7 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
         return WINED3D_OK;
     }
 
-    if (!context_apply_clear_state(context, device, rt_count, rts, depth_stencil))
+    if (!context_apply_clear_state(context, device, rt_count, fb->render_targets, fb->depth_stencil))
     {
         context_release(context);
         WARN("Failed to apply clear state, skipping clear.\n");
@@ -700,8 +700,8 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
     else
     {
         render_offscreen = TRUE;
-        drawable_width = depth_stencil->pow2Width;
-        drawable_height = depth_stencil->pow2Height;
+        drawable_width = fb->depth_stencil->pow2Width;
+        drawable_height = fb->depth_stencil->pow2Height;
     }
 
     ENTER_GL();
@@ -725,14 +725,14 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
     {
         DWORD location = render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
 
-        if (location == SFLAG_DS_ONSCREEN && depth_stencil != device->onscreen_depth_stencil)
+        if (location == SFLAG_DS_ONSCREEN && fb->depth_stencil != device->onscreen_depth_stencil)
         {
             LEAVE_GL();
-            device_switch_onscreen_ds(device, context, depth_stencil);
+            device_switch_onscreen_ds(device, context, fb->depth_stencil);
             ENTER_GL();
         }
-        prepare_ds_clear(depth_stencil, context, location, draw_rect, rect_count, clear_rect);
-        surface_modify_location(depth_stencil, SFLAG_INDRAWABLE, TRUE);
+        prepare_ds_clear(fb->depth_stencil, context, location, draw_rect, rect_count, clear_rect);
+        surface_modify_location(fb->depth_stencil, SFLAG_INDRAWABLE, TRUE);
 
         glDepthMask(GL_TRUE);
         device_invalidate_state(device, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
@@ -745,7 +745,7 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
     {
         for (i = 0; i < rt_count; ++i)
         {
-            if (rts[i]) surface_modify_location(rts[i], SFLAG_INDRAWABLE, TRUE);
+            if (fb->render_targets[i]) surface_modify_location(fb->render_targets[i], SFLAG_INDRAWABLE, TRUE);
         }
 
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -4043,7 +4043,7 @@ HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_cou
     device_get_draw_rect(device, &draw_rect);
 
     return device_clear_render_targets(device, device->adapter->gl_info.limits.buffers,
-            device->fb.render_targets, device->fb.depth_stencil, rect_count, rects,
+            &device->fb, rect_count, rects,
             &draw_rect, flags, &c, depth, stencil);
 }
 
