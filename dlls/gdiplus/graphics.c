@@ -5624,8 +5624,112 @@ GpStatus WINGDIPAPI GdipMeasureDriverString(GpGraphics *graphics, GDIPCONST UINT
                                             GDIPCONST GpFont *font, GDIPCONST PointF *positions,
                                             INT flags, GDIPCONST GpMatrix *matrix, RectF *boundingBox)
 {
-    FIXME("(%p %p %d %p %p %d %p %p): stub\n", graphics, text, length, font, positions, flags, matrix, boundingBox);
-    return NotImplemented;
+    static const INT unsupported_flags = ~(DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance);
+    HFONT hfont;
+    HDC hdc;
+    REAL min_x, min_y, max_x, max_y, x, y;
+    int i;
+    TEXTMETRICW textmetric;
+    const WORD *glyph_indices;
+    WORD *dynamic_glyph_indices=NULL;
+    REAL rel_width, rel_height, ascent, descent;
+    GpPointF pt[3];
+
+    TRACE("(%p %p %d %p %p %d %p %p)\n", graphics, text, length, font, positions, flags, matrix, boundingBox);
+
+    if (!graphics || !text || !font || !positions || !boundingBox)
+        return InvalidParameter;
+
+    if (length == -1)
+        length = strlenW(text);
+
+    if (length == 0)
+    {
+        boundingBox->X = 0.0;
+        boundingBox->Y = 0.0;
+        boundingBox->Width = 0.0;
+        boundingBox->Height = 0.0;
+    }
+
+    if (flags & unsupported_flags)
+        FIXME("Ignoring flags %x\n", flags & unsupported_flags);
+
+    if (matrix)
+        FIXME("Ignoring matrix\n");
+
+    get_font_hfont(graphics, font, &hfont);
+
+    hdc = CreateCompatibleDC(0);
+    SelectObject(hdc, hfont);
+
+    GetTextMetricsW(hdc, &textmetric);
+
+    pt[0].X = 0.0;
+    pt[0].Y = 0.0;
+    pt[1].X = 1.0;
+    pt[1].Y = 0.0;
+    pt[2].X = 0.0;
+    pt[2].Y = 1.0;
+    GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, pt, 3);
+    rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
+                     (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
+    rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
+                      (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
+
+    if (flags & DriverStringOptionsCmapLookup)
+    {
+        glyph_indices = dynamic_glyph_indices = GdipAlloc(sizeof(WORD) * length);
+        if (!glyph_indices)
+        {
+            DeleteDC(hdc);
+            DeleteObject(hfont);
+            return OutOfMemory;
+        }
+
+        GetGlyphIndicesW(hdc, text, length, dynamic_glyph_indices, 0);
+    }
+    else
+        glyph_indices = text;
+
+    min_x = max_x = x = positions[0].X;
+    min_y = max_y = y = positions[0].Y;
+
+    ascent = textmetric.tmAscent / rel_height;
+    descent = textmetric.tmDescent / rel_height;
+
+    for (i=0; i<length; i++)
+    {
+        int char_width;
+        ABC abc;
+
+        if (!(flags & DriverStringOptionsRealizedAdvance))
+        {
+            x = positions[i].X;
+            y = positions[i].Y;
+        }
+
+        GetCharABCWidthsW(hdc, glyph_indices[i], glyph_indices[i], &abc);
+        char_width = abc.abcA + abc.abcB + abc.abcB;
+
+        if (min_y > y - ascent) min_y = y - ascent;
+        if (max_y < y + descent) max_y = y + descent;
+        if (min_x > x) min_x = x;
+
+        x += char_width / rel_width;
+
+        if (max_x < x) max_x = x;
+    }
+
+    GdipFree(dynamic_glyph_indices);
+    DeleteDC(hdc);
+    DeleteObject(hfont);
+
+    boundingBox->X = min_x;
+    boundingBox->Y = min_y;
+    boundingBox->Width = max_x - min_x;
+    boundingBox->Height = max_y - min_y;
+
+    return Ok;
 }
 
 static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT16 *text, INT length,
