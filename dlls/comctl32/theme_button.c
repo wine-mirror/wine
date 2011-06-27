@@ -317,6 +317,37 @@ LRESULT CALLBACK THEMING_ButtonSubclassProc(HWND hwnd, UINT msg,
                                 RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW);
         return THEMING_CallOriginalClass(hwnd, msg, wParam, lParam);
 
+    case WM_MOUSEMOVE:
+    {
+        TRACKMOUSEEVENT mouse_event;
+        mouse_event.cbSize = sizeof(TRACKMOUSEEVENT);
+        mouse_event.dwFlags = TME_QUERY;
+        if(!TrackMouseEvent(&mouse_event) || !(mouse_event.dwFlags&(TME_HOVER|TME_LEAVE)))
+        {
+            mouse_event.dwFlags = TME_HOVER|TME_LEAVE;
+            mouse_event.hwndTrack = hwnd;
+            mouse_event.dwHoverTime = 1;
+            TrackMouseEvent(&mouse_event);
+        }
+        break;
+    }
+
+    case WM_MOUSEHOVER:
+    {
+        int state = (int)SendMessageW(hwnd, BM_GETSTATE, 0, 0);
+        SetWindowLongW(hwnd, 0, state|BST_HOT);
+        InvalidateRect(hwnd, NULL, FALSE);
+        break;
+    }
+
+    case WM_MOUSELEAVE:
+    {
+        int state = (int)SendMessageW(hwnd, BM_GETSTATE, 0, 0);
+        SetWindowLongW(hwnd, 0, state&(~BST_HOT));
+        InvalidateRect(hwnd, NULL, FALSE);
+        break;
+    }
+
     default:
 	/* Call old proc */
 	return THEMING_CallOriginalClass(hwnd, msg, wParam, lParam);
