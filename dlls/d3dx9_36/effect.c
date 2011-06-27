@@ -2747,13 +2747,36 @@ static HRESULT WINAPI ID3DXEffectImpl_GetPool(ID3DXEffect *iface, LPD3DXEFFECTPO
     return S_OK;
 }
 
-static HRESULT WINAPI ID3DXEffectImpl_SetTechnique(ID3DXEffect* iface, D3DXHANDLE technique)
+static HRESULT WINAPI ID3DXEffectImpl_SetTechnique(ID3DXEffect *iface, D3DXHANDLE technique)
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
+    struct ID3DXBaseEffectImpl *base = impl_from_ID3DXBaseEffect(This->base_effect);
+    struct d3dx_technique *tech = is_valid_technique(base, technique);
 
-    FIXME("(%p)->(%p): stub\n", This, technique);
+    TRACE("iface %p, technique %p\n", This, technique);
 
-    return E_NOTIMPL;
+    if (!tech) tech = get_technique_struct(iface->lpVtbl->GetTechniqueByName(iface, technique));
+
+    if (tech)
+    {
+        UINT i;
+
+        for (i = 0; i < base->technique_count; ++i)
+        {
+            struct d3dx_technique *t = get_technique_struct(base->technique_handles[i]);
+
+            if (tech == t)
+            {
+                This->active_technique = get_technique_handle(t);
+                TRACE("Technique %u (%p)\n", i, tech);
+                return D3D_OK;
+            }
+        }
+    }
+
+    WARN("Invalid argument supplied.\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static D3DXHANDLE WINAPI ID3DXEffectImpl_GetCurrentTechnique(ID3DXEffect *iface)
