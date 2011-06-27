@@ -337,7 +337,7 @@ state_table[] =
     {SC_LIGHT, LT_AMBIENT, "LightAmbient"},
     {SC_LIGHT, LT_POSITION, "LightPosition"},
     {SC_LIGHT, LT_DIRECTION, "LightDirection"},
-    {SC_LIGHT, LT_RANGE, "LighRange"},
+    {SC_LIGHT, LT_RANGE, "LightRange"},
     {SC_LIGHT, LT_FALLOFF, "LightFallOff"},
     {SC_LIGHT, LT_ATTENUATION0, "LightAttenuation0"},
     {SC_LIGHT, LT_ATTENUATION1, "LightAttenuation1"},
