@@ -3070,10 +3070,15 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetImplTypeCustData(
  */
 static HRESULT WINAPI ICreateTypeInfo2_fnSetHelpStringContext(
         ICreateTypeInfo2* iface,   /* [I] The typeinfo on which to set the help string context. */
-        ULONG dwHelpStringContext) /* [I] The help string context. */
+        ULONG helpcontext) /* [I] The help string context. */
 {
-    FIXME("(%p,%d), stub!\n", iface, dwHelpStringContext);
-    return E_OUTOFMEMORY;
+    ICreateTypeInfo2Impl *This = impl_from_ICreateTypeInfo2(iface);
+
+    TRACE("(%p, %d)\n", iface, helpcontext);
+
+    This->typelib->typelib_header.helpcontext = helpcontext;
+
+    return S_OK;
 }
 
 /******************************************************************************
