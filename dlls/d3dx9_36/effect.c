@@ -2873,13 +2873,21 @@ static HRESULT WINAPI ID3DXEffectImpl_CommitChanges(ID3DXEffect* iface)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ID3DXEffectImpl_EndPass(ID3DXEffect* iface)
+static HRESULT WINAPI ID3DXEffectImpl_EndPass(ID3DXEffect *iface)
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
 
-    FIXME("(%p)->(): stub\n", This);
+    TRACE("iface %p\n", This);
 
-    return E_NOTIMPL;
+    if (This->active_pass)
+    {
+         This->active_pass = NULL;
+         return D3D_OK;
+    }
+
+    WARN("Invalid call.\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXEffectImpl_End(ID3DXEffect* iface)
