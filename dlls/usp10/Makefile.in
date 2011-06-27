@@ -4,7 +4,9 @@ IMPORTS   = gdi32
 
 C_SRCS = \
 	bidi.c \
+	breaking.c \
 	indic.c \
+	linebreak.c \
 	mirror.c \
 	shape.c \
 	shaping.c \

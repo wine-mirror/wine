@@ -115,6 +115,47 @@ my %ctype =
     "defin"  => 0x0200
 );
 
+my %break_types =
+(
+    "BK"  => 0x0001,
+    "CR"  => 0x0002,
+    "LF"  => 0x0003,
+    "CM"  => 0x0004,
+    "SG"  => 0x0005,
+    "GL"  => 0x0006,
+    "CB"  => 0x0007,
+    "SP"  => 0x0008,
+    "ZW"  => 0x0009,
+    "NL"  => 0x000a,
+    "WJ"  => 0x000b,
+    "JL"  => 0x000c,
+    "JV"  => 0x000d,
+    "JT"  => 0x000e,
+    "H2"  => 0x000f,
+    "H3"  => 0x0010,
+    "XX"  => 0x0011,
+    "OP"  => 0x0012,
+    "CL"  => 0x0013,
+    "CP"  => 0x0014,
+    "QU"  => 0x0015,
+    "NS"  => 0x0016,
+    "EX"  => 0x0017,
+    "SY"  => 0x0018,
+    "IS"  => 0x0019,
+    "PR"  => 0x001a,
+    "PO"  => 0x001b,
+    "NU"  => 0x001c,
+    "AL"  => 0x001d,
+    "ID"  => 0x001e,
+    "IN"  => 0x001f,
+    "HY"  => 0x0020,
+    "BB"  => 0x0021,
+    "BA"  => 0x0022,
+    "SA"  => 0x0023,
+    "AI"  => 0x0024,
+    "B2"  => 0x0025
+);
+
 my %categories =
 (
     "Lu" => $ctype{"defin"}|$ctype{"alpha"}|$ctype{"upper"}, # Letter, Uppercase
@@ -960,6 +1001,54 @@ sub get_lb_ranges()
     return @ranges;
 }
 
+################################################################
+# dump the Line Break Properties table
+sub dump_linebreak($)
+{
+    my $filename = shift;
+    my @break_table = ($break_types{'XX'}) x 65536;;
+    my $next_group = 0;
+
+    my $INPUT = open_data_file "$UNIDATA/LineBreak.txt";
+    while (<$INPUT>)
+    {
+        next if /^\#/;  # skip comments
+        next if /^\s*$/;  # skip empty lines
+        next if /\x1a/;  # skip ^Z
+        if (/^\s*([0-9a-fA-F]+)\s*;\s*([0-9A-Z][0-9A-Z])+\s*/)
+        {
+            my $type = $2;
+            die "unknown breaktype $type" unless defined $break_types{$type};
+            $break_table[hex $1] = $break_types{$type};
+            next;
+        }
+        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([0-9A-Z][0-9A-Z])+\s*/)
+        {
+            my $type = $3;
+            die "unknown breaktype $type" unless defined $break_types{$type};
+            foreach my $i (hex $1 .. hex $2)
+            {
+                $break_table[$i] = $break_types{$type};
+            }
+            next;
+        }
+        die "malformed line $_";
+    }
+    close $INPUT;
+
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    print "Building $filename\n";
+    print OUTPUT "/* Unicode Line Break Properties */\n";
+    print OUTPUT "/* generated from $UNIDATA/LineBreak.txt */\n";
+    print OUTPUT "/* DO NOT EDIT!! */\n\n";
+    print OUTPUT "#include \"wine/unicode.h\"\n\n";
+
+    dump_simple_mapping( "wine_linebreak_table", @break_table);
+
+    close OUTPUT;
+    save_file($filename);
+}
+
 
 ################################################################
 # dump the BiDi mirroring table
@@ -1644,6 +1733,7 @@ DUMP_COMPOSE_TABLES( "compose.c" );
 DUMP_CTYPE_TABLES( "wctype.c" );
 dump_mirroring( "../../dlls/usp10/mirror.c" );
 dump_shaping( "../../dlls/usp10/shaping.c" );
+dump_linebreak( "../../dlls/usp10/linebreak.c" );
 dump_intl_nls("../../tools/l_intl.nls");
 
 foreach my $file (@allfiles) { HANDLE_FILE( @{$file} ); }

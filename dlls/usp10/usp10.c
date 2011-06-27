@@ -1512,26 +1512,12 @@ HRESULT WINAPI ScriptXtoCP(int iX,
  */
 HRESULT WINAPI ScriptBreak(const WCHAR *chars, int count, const SCRIPT_ANALYSIS *sa, SCRIPT_LOGATTR *la)
 {
-    int i;
-
     TRACE("(%s, %d, %p, %p)\n", debugstr_wn(chars, count), count, sa, la);
 
     if (!la) return S_FALSE;
 
-    for (i = 0; i < count; i++)
-    {
-        memset(&la[i], 0, sizeof(SCRIPT_LOGATTR));
+    BREAK_line(chars, count, sa, la);
 
-        /* FIXME: set the other flags */
-        la[i].fWhiteSpace = (chars[i] == ' ');
-        la[i].fCharStop = 1;
-
-        if (i > 0 && la[i - 1].fWhiteSpace)
-        {
-            la[i].fSoftBreak = 1;
-            la[i].fWordStop = 1;
-        }
-    }
     return S_OK;
 }
 
