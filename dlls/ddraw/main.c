@@ -752,14 +752,17 @@ DestroyCallback(IDirectDrawSurface7 *surf,
                 void *context)
 {
     IDirectDrawSurfaceImpl *Impl = impl_from_IDirectDrawSurface7(surf);
-    ULONG ref, ref3, ref2, iface_count;
+    ULONG ref, ref4, ref3, ref2, iface_count;
 
     ref = IDirectDrawSurface7_Release(surf);  /* For the EnumSurfaces */
+    IDirectDrawSurface4_AddRef(&Impl->IDirectDrawSurface4_iface);
+    ref4 = IDirectDrawSurface4_Release(&Impl->IDirectDrawSurface4_iface);
     IDirectDrawSurface3_AddRef(&Impl->IDirectDrawSurface3_iface);
     ref3 = IDirectDrawSurface3_Release(&Impl->IDirectDrawSurface3_iface);
     IDirectDrawSurface2_AddRef(&Impl->IDirectDrawSurface2_iface);
     ref2 = IDirectDrawSurface2_Release(&Impl->IDirectDrawSurface2_iface);
-    WARN("Surface %p has an reference counts of %d 3: %d 2: %d\n", Impl, ref, ref3, ref2);
+    WARN("Surface %p has an reference counts of %u 4: %u 3: %u 2: %u\n",
+            Impl, ref, ref4, ref3, ref2);
 
     /* Skip surfaces which are attached somewhere or which are
      * part of a complex compound. They will get released when destroying

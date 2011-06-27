@@ -1096,7 +1096,7 @@ static void IFaceRefCount(void)
 
     IDirectDrawSurface_QueryInterface(surf, &IID_IDirectDrawSurface4, (void **) &surf4);
     ref = getRefcount((IUnknown *) surf4);
-    todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
+    ok(ref == 1, "Refcount is %u, expected 1\n", ref);
 
     IDirectDrawSurface_QueryInterface(surf, &IID_IDirectDrawSurface7, (void **) &surf7a);
     ref = getRefcount((IUnknown *) surf7a);
@@ -1151,7 +1151,7 @@ static void IFaceRefCount(void)
     ok(ref == 0, "Refcount is %u, expected 0\n", ref);
 
     ref = IDirectDrawSurface4_Release(surf4);
-    todo_wine ok(ref == 0, "Refcount is %u, expected 0\n", ref);
+    ok(ref == 0, "Refcount is %u, expected 0\n", ref);
 
     ref = IDirectDrawSurface7_Release(surf7a);
     todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
@@ -3135,9 +3135,9 @@ static void GetDCTest(void)
     ok(SUCCEEDED(hr), "QueryInterface failed, hr %#x.\n", hr);
 
     ref = getRefcount((IUnknown *) surf);
-    todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
+    ok(ref == 1, "Refcount is %u, expected 1\n", ref);
     ref = getRefcount((IUnknown *) surf4);
-    todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
+    ok(ref == 1, "Refcount is %u, expected 1\n", ref);
 
     hr = IDirectDrawSurface4_GetDC(surf4, &dc);
     ok(SUCCEEDED(hr), "GetDC failed, hr %#x.\n", hr);
@@ -3150,11 +3150,11 @@ static void GetDCTest(void)
     ok(tmp == surf, "Expected surface %p, got %p.\n\n", surf, tmp);
 
     ref = getRefcount((IUnknown *) surf);
-    todo_wine ok(ref == 2, "Refcount is %u, expected 2\n", ref);
+    ok(ref == 2, "Refcount is %u, expected 2\n", ref);
     ref = getRefcount((IUnknown *) tmp);
-    todo_wine ok(ref == 2, "Refcount is %u, expected 2\n", ref);
+    ok(ref == 2, "Refcount is %u, expected 2\n", ref);
     ref = getRefcount((IUnknown *) surf4);
-    todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
+    ok(ref == 1, "Refcount is %u, expected 1\n", ref);
 
     hr = IDirectDrawSurface4_ReleaseDC(surf4, dc);
     ok(SUCCEEDED(hr), "ReleaseDC failed, hr %#x.\n", hr);
