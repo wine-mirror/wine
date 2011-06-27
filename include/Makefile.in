@@ -503,6 +503,7 @@ SRCDIR_INCLUDES = \
 	vfw.h \
 	vfwmsgs.h \
 	vmrender.idl \
+	vsstyle.h \
 	werapi.h \
 	wfext.h \
 	wia.h \
