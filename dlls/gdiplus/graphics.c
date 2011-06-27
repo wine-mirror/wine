@@ -4608,9 +4608,9 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
 }
 
 struct draw_string_args {
-    POINT drawbase;
-    UINT drawflags;
-    REAL ang_cos, ang_sin;
+    GpGraphics *graphics;
+    GDIPCONST GpBrush *brush;
+    REAL x, y, rel_width, rel_height, ascent;
 };
 
 static GpStatus draw_string_callback(HDC hdc,
@@ -4619,14 +4619,14 @@ static GpStatus draw_string_callback(HDC hdc,
     INT lineno, const RectF *bounds, void *user_data)
 {
     struct draw_string_args *args = user_data;
-    RECT drawcoord;
+    PointF position;
 
-    drawcoord.left = drawcoord.right = args->drawbase.x + roundr(args->ang_sin * bounds->Y);
-    drawcoord.top = drawcoord.bottom = args->drawbase.y + roundr(args->ang_cos * bounds->Y);
+    position.X = args->x + bounds->X / args->rel_width;
+    position.Y = args->y + bounds->Y / args->rel_height + args->ascent;
 
-    DrawTextW(hdc, string + index, length, &drawcoord, args->drawflags);
-
-    return Ok;
+    return GdipDrawDriverString(args->graphics, &string[index], length, font,
+        args->brush, &position,
+        DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance, NULL);
 }
 
 GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string,
@@ -4637,10 +4637,12 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     HFONT gdifont;
     GpPointF pt[3], rectcpy[4];
     POINT corners[4];
-    REAL angle, rel_width, rel_height;
+    REAL rel_width, rel_height;
     INT offsety = 0, save_state;
     struct draw_string_args args;
     RectF scaled_rect;
+    HDC hdc, temp_hdc=NULL;
+    TEXTMETRICW textmetric;
 
     TRACE("(%p, %s, %i, %p, %s, %p, %p)\n", graphics, debugstr_wn(string, length),
         length, font, debugstr_rectf(rect), format, brush);
@@ -4648,15 +4650,13 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     if(!graphics || !string || !font || !brush || !rect)
         return InvalidParameter;
 
-    if((brush->bt != BrushTypeSolidColor)){
-        FIXME("not implemented for given parameters\n");
-        return NotImplemented;
-    }
-
-    if(!graphics->hdc)
+    if(graphics->hdc)
     {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
+        hdc = graphics->hdc;
+    }
+    else
+    {
+        hdc = temp_hdc = CreateCompatibleDC(0);
     }
 
     if(format){
@@ -4675,9 +4675,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
         }
     }
 
-    save_state = SaveDC(graphics->hdc);
-    SetBkMode(graphics->hdc, TRANSPARENT);
-    SetTextColor(graphics->hdc, brush->lb.lbColor);
+    save_state = SaveDC(hdc);
 
     pt[0].X = 0.0;
     pt[0].Y = 0.0;
@@ -4686,9 +4684,6 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     pt[2].X = 0.0;
     pt[2].Y = 1.0;
     GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, pt, 3);
-    angle = -gdiplus_atan2((pt[1].Y - pt[0].Y), (pt[1].X - pt[0].X));
-    args.ang_cos = cos(angle);
-    args.ang_sin = sin(angle);
     rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
                      (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
     rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
@@ -4709,38 +4704,30 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     {
         /* FIXME: If only the width or only the height is 0, we should probably still clip */
         rgn = CreatePolygonRgn(corners, 4, ALTERNATE);
-        SelectClipRgn(graphics->hdc, rgn);
+        SelectClipRgn(hdc, rgn);
     }
 
     get_font_hfont(graphics, font, &gdifont);
-    SelectObject(graphics->hdc, gdifont);
+    SelectObject(hdc, gdifont);
 
-    if (!format || format->align == StringAlignmentNear)
-    {
-        args.drawbase.x = corners[0].x;
-        args.drawbase.y = corners[0].y;
-        args.drawflags = DT_NOCLIP | DT_EXPANDTABS;
-    }
-    else if (format->align == StringAlignmentCenter)
-    {
-        args.drawbase.x = (corners[0].x + corners[1].x)/2;
-        args.drawbase.y = (corners[0].y + corners[1].y)/2;
-        args.drawflags = DT_NOCLIP | DT_EXPANDTABS | DT_CENTER;
-    }
-    else /* (format->align == StringAlignmentFar) */
-    {
-        args.drawbase.x = corners[1].x;
-        args.drawbase.y = corners[1].y;
-        args.drawflags = DT_NOCLIP | DT_EXPANDTABS | DT_RIGHT;
-    }
+    args.graphics = graphics;
+    args.brush = brush;
 
-    gdip_format_string(graphics->hdc, string, length, font, &scaled_rect, format,
+    args.rel_width = rel_width;
+    args.rel_height = rel_height;
+
+    GetTextMetricsW(hdc, &textmetric);
+    args.ascent = textmetric.tmAscent / rel_height;
+
+    gdip_format_string(hdc, string, length, font, &scaled_rect, format,
         draw_string_callback, &args);
 
     DeleteObject(rgn);
     DeleteObject(gdifont);
 
-    RestoreDC(graphics->hdc, save_state);
+    RestoreDC(hdc, save_state);
+
+    DeleteDC(temp_hdc);
 
     return Ok;
 }
