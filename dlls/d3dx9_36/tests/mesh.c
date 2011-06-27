@@ -5923,28 +5923,28 @@ static void test_convert_point_reps_to_adjacency(void)
         /* Convert point representation to adjacency*/
         memset(adjacency, -2, VERTS_PER_FACE * tc[i].num_faces * sizeof(*adjacency));
         hr = mesh->lpVtbl->ConvertPointRepsToAdjacency(mesh, tc[i].point_reps, adjacency);
-        todo_wine ok(hr == D3D_OK, "ConvertPointRepsToAdjacency failed case %d. "
-                     "Got %x expected D3D_OK\n", i, hr);
+        ok(hr == D3D_OK, "ConvertPointRepsToAdjacency failed case %d. "
+           "Got %x expected D3D_OK\n", i, hr);
         /* Check adjacency */
         for (j = 0; j < VERTS_PER_FACE * tc[i].num_faces; j++)
         {
-            todo_wine ok(adjacency[j] == tc[i].exp_adjacency[j],
-                         "Unexpected adjacency information at (%d, %d)."
-                         " Got %d expected %d\n",
-                         i, j, adjacency[j], tc[i].exp_adjacency[j]);
+            ok(adjacency[j] == tc[i].exp_adjacency[j],
+               "Unexpected adjacency information at (%d, %d)."
+               " Got %d expected %d\n",
+               i, j, adjacency[j], tc[i].exp_adjacency[j]);
         }
 
         /* NULL point representation is considered identity. */
         memset(adjacency, -2, VERTS_PER_FACE * tc[i].num_faces * sizeof(*adjacency));
         hr = mesh_null_check->lpVtbl->ConvertPointRepsToAdjacency(mesh, NULL, adjacency);
-        todo_wine ok(hr == D3D_OK, "ConvertPointRepsToAdjacency NULL point_reps. "
+        ok(hr == D3D_OK, "ConvertPointRepsToAdjacency NULL point_reps. "
                      "Got %x expected D3D_OK\n", hr);
         for (j = 0; j < VERTS_PER_FACE * tc[i].num_faces; j++)
         {
-            todo_wine ok(adjacency[j] == tc[i].exp_id_adjacency[j],
-                         "Unexpected adjacency information (id) at (%d, %d)."
-                         " Got %d expected %d\n",
-                         i, j, adjacency[j], tc[i].exp_id_adjacency[j]);
+            ok(adjacency[j] == tc[i].exp_id_adjacency[j],
+               "Unexpected adjacency information (id) at (%d, %d)."
+               " Got %d expected %d\n",
+               i, j, adjacency[j], tc[i].exp_id_adjacency[j]);
         }
 
         HeapFree(GetProcessHeap(), 0, adjacency);
@@ -5954,11 +5954,11 @@ static void test_convert_point_reps_to_adjacency(void)
 
     /* NULL checks */
     hr = mesh_null_check->lpVtbl->ConvertPointRepsToAdjacency(mesh_null_check, tc[0].point_reps, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "ConvertPointRepsToAdjacency NULL adjacency. "
-                 "Got %x expected D3DERR_INVALIDCALL\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "ConvertPointRepsToAdjacency NULL adjacency. "
+       "Got %x expected D3DERR_INVALIDCALL\n", hr);
     hr = mesh_null_check->lpVtbl->ConvertPointRepsToAdjacency(mesh_null_check, NULL, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "ConvertPointRepsToAdjacency NULL point_reps and adjacency. "
-                 "Got %x expected D3DERR_INVALIDCALL\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "ConvertPointRepsToAdjacency NULL point_reps and adjacency. "
+       "Got %x expected D3DERR_INVALIDCALL\n", hr);
 
 cleanup:
     if (mesh_null_check)

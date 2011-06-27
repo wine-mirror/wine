@@ -432,13 +432,186 @@ static HRESULT WINAPI ID3DXMeshImpl_GetAttributeTable(ID3DXMesh *iface, D3DXATTR
     return D3D_OK;
 }
 
+struct edge_face
+{
+    struct list entry;
+    DWORD v2;
+    DWORD face;
+};
+
+struct edge_face_map
+{
+    struct list *lists;
+    struct edge_face *entries;
+};
+
+/* Builds up a map of which face a new edge belongs to. That way the adjacency
+ * of another edge can be looked up. An edge has an adjacent face if there
+ * is an edge going in the opposite direction in the map. For example if the
+ * edge (v1, v2) belongs to face 4, and there is a mapping (v2, v1)->7, then
+ * face 4 and 7 are adjacent.
+ *
+ * Each edge might have been replaced with another edge, or none at all. There
+ * is at most one edge to face mapping, i.e. an edge can only belong to one
+ * face.
+ */
+static HRESULT init_edge_face_map(struct edge_face_map *edge_face_map, CONST DWORD *index_buffer, CONST DWORD *point_reps, CONST DWORD num_faces)
+{
+    DWORD face, edge;
+    DWORD i;
+
+    edge_face_map->lists = HeapAlloc(GetProcessHeap(), 0, 3 * num_faces * sizeof(*edge_face_map->lists));
+    if (!edge_face_map->lists) return E_OUTOFMEMORY;
+
+    edge_face_map->entries = HeapAlloc(GetProcessHeap(), 0, 3 * num_faces * sizeof(*edge_face_map->entries));
+    if (!edge_face_map->entries) return E_OUTOFMEMORY;
+
+
+    /* Initialize all lists */
+    for (i = 0; i < 3 * num_faces; i++)
+    {
+        list_init(&edge_face_map->lists[i]);
+    }
+    /* Build edge face mapping */
+    for (face = 0; face < num_faces; face++)
+    {
+        for (edge = 0; edge < 3; edge++)
+        {
+            DWORD v1 = index_buffer[3*face + edge];
+            DWORD v2 = index_buffer[3*face + (edge+1)%3];
+            DWORD new_v1 = point_reps[v1]; /* What v1 has been replaced with */
+            DWORD new_v2 = point_reps[v2];
+
+            if (v1 != v2) /* Only map non-collapsed edges */
+            {
+                i = 3*face + edge;
+                edge_face_map->entries[i].v2 = new_v2;
+                edge_face_map->entries[i].face = face;
+                list_add_head(&edge_face_map->lists[new_v1], &edge_face_map->entries[i].entry);
+            }
+        }
+    }
+
+    return D3D_OK;
+}
+
+static DWORD find_adjacent_face(struct edge_face_map *edge_face_map, DWORD vertex1, DWORD vertex2, CONST DWORD num_faces)
+{
+    struct edge_face *edge_face_ptr;
+
+    LIST_FOR_EACH_ENTRY(edge_face_ptr, &edge_face_map->lists[vertex2], struct edge_face, entry)
+    {
+        if (edge_face_ptr->v2 == vertex1)
+            return edge_face_ptr->face;
+    }
+
+    return -1;
+}
+
+static DWORD *generate_identity_point_reps(DWORD num_vertices)
+{
+        DWORD *id_point_reps;
+        DWORD i;
+
+        id_point_reps = HeapAlloc(GetProcessHeap(), 0, num_vertices * sizeof(*id_point_reps));
+        if (!id_point_reps)
+            return NULL;
+
+        for (i = 0; i < num_vertices; i++)
+        {
+            id_point_reps[i] = i;
+        }
+
+        return id_point_reps;
+}
+
 static HRESULT WINAPI ID3DXMeshImpl_ConvertPointRepsToAdjacency(ID3DXMesh *iface, CONST DWORD *point_reps, DWORD *adjacency)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    HRESULT hr;
+    DWORD num_faces = iface->lpVtbl->GetNumFaces(iface);
+    DWORD num_vertices = iface->lpVtbl->GetNumVertices(iface);
+    DWORD options = iface->lpVtbl->GetOptions(iface);
+    BOOL indices_are_16_bit = !(options & D3DXMESH_32BIT);
+    DWORD *ib = NULL;
+    void *ib_ptr = NULL;
+    DWORD face;
+    DWORD edge;
+    struct edge_face_map edge_face_map = {0};
+    CONST DWORD *point_reps_ptr = NULL;
+    DWORD *id_point_reps = NULL;
 
-    FIXME("(%p)->(%p,%p): stub\n", This, point_reps, adjacency);
+    TRACE("(%p)->(%p,%p)\n", This, point_reps, adjacency);
 
-    return E_NOTIMPL;
+    if (!adjacency) return D3DERR_INVALIDCALL;
+
+    if (!point_reps) /* Identity point reps */
+    {
+        id_point_reps = generate_identity_point_reps(num_vertices);
+        if (!id_point_reps)
+        {
+            hr = E_OUTOFMEMORY;
+            goto cleanup;
+        }
+
+        point_reps_ptr = id_point_reps;
+    }
+    else
+    {
+        point_reps_ptr = point_reps;
+    }
+
+    hr = iface->lpVtbl->LockIndexBuffer(iface, D3DLOCK_READONLY, &ib_ptr);
+    if (FAILED(hr)) goto cleanup;
+
+    if (indices_are_16_bit)
+    {
+        /* Widen 16 bit to 32 bit */
+        DWORD i;
+        WORD *ib_16bit = ib_ptr;
+        ib = HeapAlloc(GetProcessHeap(), 0, 3 * num_faces * sizeof(DWORD));
+        if (!ib)
+        {
+            hr = E_OUTOFMEMORY;
+            goto cleanup;
+        }
+        for (i = 0; i < 3 * num_faces; i++)
+        {
+            ib[i] = ib_16bit[i];
+        }
+    }
+    else
+    {
+        ib = ib_ptr;
+    }
+
+    hr = init_edge_face_map(&edge_face_map, ib, point_reps_ptr, num_faces);
+    if (FAILED(hr)) goto cleanup;
+
+    /* Create adjacency */
+    for (face = 0; face < num_faces; face++)
+    {
+        for (edge = 0; edge < 3; edge++)
+        {
+            DWORD v1 = ib[3*face + edge];
+            DWORD v2 = ib[3*face + (edge+1)%3];
+            DWORD new_v1 = point_reps_ptr[v1];
+            DWORD new_v2 = point_reps_ptr[v2];
+            DWORD adj_face;
+
+            adj_face = find_adjacent_face(&edge_face_map, new_v1, new_v2, num_faces);
+            adjacency[3*face + edge] = adj_face;
+        }
+    }
+
+    hr = D3D_OK;
+cleanup:
+    HeapFree(GetProcessHeap(), 0, id_point_reps);
+    if (indices_are_16_bit) HeapFree(GetProcessHeap(), 0, ib);
+    HeapFree(GetProcessHeap(), 0, edge_face_map.lists);
+    HeapFree(GetProcessHeap(), 0, edge_face_map.entries);
+    if(ib_ptr) iface->lpVtbl->UnlockIndexBuffer(iface);
+    return hr;
 }
 
 /* ConvertAdjacencyToPointReps helper function.
