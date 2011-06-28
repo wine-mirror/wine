@@ -325,6 +325,7 @@ static char *convert_msgid_ascii( const lanmsg_t *msg, int error_on_invalid_char
             fprintf( stderr, "%s:%d: ", msg->file, msg->line );
             error( "Invalid character %04x in source string\n", msg->msg[i] );
         }
+        free( buffer );
         return NULL;
     }
     buffer[i] = 0;

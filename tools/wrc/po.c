@@ -332,6 +332,7 @@ static char *convert_msgid_ascii( const string_t *str, int error_on_invalid_char
             print_location( &newstr->loc );
             error( "Invalid character %04x in source string\n", newstr->str.wstr[i] );
         }
+        free( buffer);
         free_string( newstr );
         return NULL;
     }
@@ -940,7 +941,11 @@ void add_translations( const char *po_dir )
     new_top = new_tail = NULL;
 
     name = strmake( "%s/LINGUAS", po_dir );
-    if (!(f = fopen( name, "r" ))) return;
+    if (!(f = fopen( name, "r" )))
+    {
+        free( name );
+        return;
+    }
     free( name );
     while (fgets( buffer, sizeof(buffer), f ))
     {
