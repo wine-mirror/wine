@@ -585,10 +585,11 @@ typedef struct
 #define DD_STRUCT_COPY_BYSIZE_(to,from,from_size)                 \
     do {                                                          \
         DWORD __size = (to)->dwSize;                              \
-        DWORD __copysize = min(__size, from_size);                \
+        DWORD __resetsize = min(__size, sizeof(*to));             \
+        DWORD __copysize = min(__resetsize, from_size);           \
         assert(to != from);                                       \
         memcpy(to, from, __copysize);                             \
-        memset((char*)(to) + __copysize, 0, __size - __copysize); \
+        memset((char*)(to) + __copysize, 0, __resetsize - __copysize); \
         (to)->dwSize = __size; /* restore size */                 \
     } while (0)
 
