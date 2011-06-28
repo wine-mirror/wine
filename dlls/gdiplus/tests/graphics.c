@@ -3087,7 +3087,7 @@ static void test_string_functions(void)
         identity, &rc);
     todo_wine expect(Ok, status);
 
-    expectf(rc.X, 0.0);
+    expectf(0.0, rc.X);
     todo_wine ok(rc.Y < 0.0, "unexpected Y %0.2f\n", rc.Y);
     todo_wine ok(rc.Width > 0.0, "unexpected Width %0.2f\n", rc.Width);
     todo_wine ok(rc.Height > 0.0, "unexpected Y %0.2f\n", rc.Y);
@@ -3104,10 +3104,10 @@ static void test_string_functions(void)
         identity, &rc);
     todo_wine expect(Ok, status);
 
-    expectf(rc.X, 0.0);
+    expectf(0.0, rc.X);
     todo_wine ok(rc.Y < 0.0, "unexpected Y %0.2f\n", rc.Y);
     todo_wine ok(rc.Width < char_width, "got Width %0.2f, expecting less than %0.2f\n", rc.Width, char_width);
-    expectf(rc.Height, char_height);
+    expectf(char_height, rc.Height);
 
     GdipDeleteMatrix(identity);
     GdipDeleteStringFormat(format);
