@@ -1225,7 +1225,7 @@ static void test_itemedit(void)
     r = TreeView_SelectItem(hTree, NULL);
     expect(TRUE, r);
     /* alter text */
-    strncpy(buff, "x", sizeof(buff)/sizeof(CHAR));
+    strcpy(buff, "x");
     r = SendMessage(edit, WM_SETTEXT, 0, (LPARAM)buff);
     expect(TRUE, r);
     r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
