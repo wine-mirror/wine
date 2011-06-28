@@ -610,6 +610,49 @@ todo_wine
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
     ok(dst == 10, "got %08x\n", dst);
 
+    /* */
+    dst_len = dst = 0x1234;
+    *(WORD*)src = 0x4321;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_UI2, DBTYPE_UI2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(dst == 0x4321, "got %08x\n", dst);
+
+    dst_len = dst = 0x1234;
+    *(DWORD*)src = 0xabcd1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_UI4, DBTYPE_UI2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+todo_wine
+    ok(hr == DB_E_DATAOVERFLOW, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_E_DATAOVERFLOW, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(dst == 0x1234, "got %08x\n", dst);
+
+    dst_len = dst = 0x1234;
+    *(DWORD*)src = 0x1234abcd;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_UI4, DBTYPE_UI2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+todo_wine
+    ok(hr == DB_E_DATAOVERFLOW, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_E_DATAOVERFLOW, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(dst == 0x1234, "got %08x\n", dst);
+
+    dst_len = dst = 0x1234;
+    *(DWORD*)src = 0x4321;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_UI4, DBTYPE_UI2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(dst == 0x4321, "got %08x\n", dst);
+
+    dst_len = dst = 0x1234;
+    memcpy(src, ten, sizeof(ten));
+    hr = IDataConvert_DataConvert(convert, DBTYPE_WSTR, DBTYPE_UI2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, DBDATACONVERT_LENGTHFROMNTS);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(dst == 10, "got %08x\n", dst);
+
     IDataConvert_Release(convert);
 }
 

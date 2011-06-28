@@ -533,6 +533,31 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         }
         break;
     }
+    case DBTYPE_UI2:
+    {
+        WORD *d = dst;
+        switch(src_type)
+        {
+        case DBTYPE_EMPTY:       *d = 0; hr = S_OK;                              break;
+        case DBTYPE_I2:          hr = VarUI2FromI2(*(signed short*)src, d);      break;
+        case DBTYPE_I4:          hr = VarUI2FromI4(*(signed int*)src, d);        break;
+        case DBTYPE_R4:          hr = VarUI2FromR4(*(FLOAT*)src, d);             break;
+        case DBTYPE_R8:          hr = VarUI2FromR8(*(double*)src, d);            break;
+        case DBTYPE_CY:          hr = VarUI2FromCy(*(CY*)src, d);                break;
+        case DBTYPE_DATE:        hr = VarUI2FromDate(*(DATE*)src, d);            break;
+        case DBTYPE_BSTR:        hr = VarUI2FromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
+        case DBTYPE_BOOL:        hr = VarUI2FromBool(*(VARIANT_BOOL*)src, d);    break;
+        case DBTYPE_DECIMAL:     hr = VarUI2FromDec((DECIMAL*)src, d);           break;
+        case DBTYPE_I1:          hr = VarUI2FromI1(*(signed char*)src, d);       break;
+        case DBTYPE_UI1:         hr = VarUI2FromUI1(*(BYTE*)src, d);             break;
+        case DBTYPE_UI2:         *d = *(WORD*)src; hr = S_OK;                     break;
+        case DBTYPE_UI4:         hr = VarUI2FromUI4(*(DWORD*)src, d);            break;
+        case DBTYPE_I8:          hr = VarUI2FromI8(*(LONGLONG*)src, d);          break;
+        case DBTYPE_UI8:         hr = VarUI2FromUI8(*(ULONGLONG*)src, d);        break;
+        default: FIXME("Unimplemented conversion %04x -> UI2\n", src_type); return E_NOTIMPL;
+        }
+        break;
+    }
 
     case DBTYPE_UI4:
     {
