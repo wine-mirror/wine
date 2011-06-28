@@ -2944,8 +2944,8 @@ static HRESULT WINAPI ID3DXEffectImpl_SetStateManager(ID3DXEffect *iface, LPD3DX
 
     TRACE("iface %p, manager %p\n", This, manager);
 
-    if (This->manager) IUnknown_Release(This->manager);
     if (manager) IUnknown_AddRef(manager);
+    if (This->manager) IUnknown_Release(This->manager);    
 
     This->manager = manager;
 
