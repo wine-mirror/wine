@@ -2827,6 +2827,7 @@ static void test_string_functions(void)
     HDC hdc = GetDC( hwnd );
     const WCHAR fontname[] = {'T','a','h','o','m','a',0};
     const WCHAR teststring[] = {'M','M',' ','M','\n','M',0};
+    const WCHAR teststring2[] = {'j',0};
     REAL char_width, char_height;
     INT codepointsfitted, linesfilled;
     GpStringFormat *format;
@@ -3108,6 +3109,20 @@ static void test_string_functions(void)
     todo_wine ok(rc.Y < 0.0, "unexpected Y %0.2f\n", rc.Y);
     todo_wine ok(rc.Width < char_width, "got Width %0.2f, expecting less than %0.2f\n", rc.Width, char_width);
     expectf(char_height, rc.Height);
+
+    rc.X = 0;
+    rc.Y = 0;
+    rc.Width = 0;
+    rc.Height = 0;
+    status = GdipMeasureDriverString(graphics, teststring2, 1, font, &position,
+        DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance,
+        identity, &rc);
+    todo_wine expect(Ok, status);
+
+    expectf(rc.X, 0.0);
+    todo_wine ok(rc.Y < 0.0, "unexpected Y %0.2f\n", rc.Y);
+    todo_wine ok(rc.Width > 0, "unexpected Width %0.2f\n", rc.Width);
+    expectf(rc.Height, char_height);
 
     GdipDeleteMatrix(identity);
     GdipDeleteStringFormat(format);
