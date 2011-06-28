@@ -27,13 +27,58 @@
 #include "initguid.h"
 #include "dinput.h"
 
-static BOOL CALLBACK enum_by_semantics(
+struct enum_data {
+    LPDIRECTINPUT8 pDI;
+    LPDIACTIONFORMAT lpdiaf;
+    LPDIRECTINPUTDEVICE8 keyboard;
+    LPDIRECTINPUTDEVICE8 mouse;
+    int ndevices;
+};
+
+/* Dummy GUID */
+static const GUID ACTION_MAPPING_GUID = { 0x1, 0x2, 0x3, { 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb } };
+
+static DIACTION actionMapping[]=
+{
+  /* axis */
+  { 0, 0x01008A01 /* DIAXIS_DRIVINGR_STEER */ , 0, { "Steer" } },
+  /* button */
+  { 1, 0x01000C01 /* DIBUTTON_DRIVINGR_SHIFTUP */ , 0, { "Upshift" } },
+  /* keyboard key */
+  { 2, DIKEYBOARD_SPACE , 0, { "Missile" } },
+  /* mouse button */
+  { 3, DIMOUSE_BUTTON0 , 0, { "Select" } }
+};
+
+static BOOL CALLBACK enumeration_callback(
     LPCDIDEVICEINSTANCE lpddi,
     LPDIRECTINPUTDEVICE8 lpdid,
     DWORD dwFlags,
     DWORD dwRemaining,
     LPVOID pvRef)
 {
+    struct enum_data *data = pvRef;
+    if (!data) return DIENUM_CONTINUE;
+
+    data->ndevices++;
+
+    /* collect the mouse and keyboard */
+    if (IsEqualGUID(&lpddi->guidInstance, &GUID_SysKeyboard))
+    {
+        IDirectInputDevice_AddRef(lpdid);
+        data->keyboard = lpdid;
+
+        todo_wine ok (dwFlags & DIEDBS_MAPPEDPRI1, "Keyboard should be mapped as pri1 dwFlags=%08x\n", dwFlags);
+    }
+
+    if (IsEqualGUID(&lpddi->guidInstance, &GUID_SysMouse))
+    {
+        IDirectInputDevice_AddRef(lpdid);
+        data->mouse = lpdid;
+
+        todo_wine ok (dwFlags & DIEDBS_MAPPEDPRI1, "Mouse should be mapped as pri1 dwFlags=%08x\n", dwFlags);
+    }
+
     return DIENUM_CONTINUE;
 }
 
@@ -44,17 +89,7 @@ static void test_action_mapping(void)
     HINSTANCE hinst = GetModuleHandle(NULL);
     LPDIRECTINPUT8 pDI = NULL;
     DIACTIONFORMAT af;
-    /* Dummy GUID */
-    const GUID ACTION_MAPPING_GUID = { 0x1, 0x2, 0x3, { 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb } };
-
-    DIACTION actionMapping[]=
-    {
-      /* axis */
-      { 0, 0x01008A01 /* DIAXIS_DRIVINGR_STEER */ , 0, { "Steer" } },
-
-      /* button */
-      { 1, 0x01000C01 /* DIBUTTON_DRIVINGR_SHIFTUP */ , 0, { "Upshift" } }
-    };
+    struct enum_data data = {pDI, &af, NULL, NULL, 0};
 
     hr = CoCreateInstance(&CLSID_DirectInput8, 0, 1, &IID_IDirectInput8A, (LPVOID*)&pDI);
     if (hr == DIERR_OLDDIRECTINPUTVERSION ||
@@ -85,18 +120,16 @@ static void test_action_mapping(void)
     af.guidActionMap = ACTION_MAPPING_GUID;
     af.dwGenre = 0x01000000; /* DIVIRTUAL_DRIVING_RACE */
 
-    hr = IDirectInput8_EnumDevicesBySemantics(pDI,0, &af,
-        enum_by_semantics, 0, 0);
-
-    ok(SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%08x\n",hr);
+    hr = IDirectInput8_EnumDevicesBySemantics(pDI, 0, &af, enumeration_callback, &data, 0);
+    ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%08x\n", hr);
+    todo_wine ok (data.ndevices > 0, "EnumDevicesBySemantics did not call the callback hr=%08x\n", hr);
+    todo_wine ok (data.keyboard != NULL, "EnumDevicesBySemantics should enumerate the keyboard\n");
+    todo_wine ok (data.mouse != NULL, "EnumDevicesBySemantics should enumerate the mouse\n");
 
     /* The call fails with a zeroed GUID */
     memset(&af.guidActionMap, 0, sizeof(GUID));
-    hr = IDirectInput8_EnumDevicesBySemantics(pDI,0, &af,
-        enum_by_semantics, 0, 0);
-
+    hr = IDirectInput8_EnumDevicesBySemantics(pDI, 0, &af, enumeration_callback, 0, 0);
     todo_wine ok(FAILED(hr), "EnumDevicesBySemantics succeeded with invalid GUID hr=%08x\n", hr);
-
 }
 
 START_TEST(device)
