@@ -29,6 +29,8 @@
 
 #include <wine/debug.h>
 
+static const WCHAR wshNameW[] = {'W','i','n','d','o','w','s',' ','S','c','r','i','p','t',' ','H','o','s','t',0};
+
 WINE_DEFAULT_DEBUG_CHANNEL(wscript);
 
 static HRESULT WINAPI Host_QueryInterface(IHost *iface, REFIID riid, void **ppv)
@@ -94,8 +96,11 @@ static HRESULT WINAPI Host_Invoke(IHost *iface, DISPID dispIdMember, REFIID riid
 
 static HRESULT WINAPI Host_get_Name(IHost *iface, BSTR *out_Name)
 {
-    WINE_FIXME("(%p)\n", out_Name);
-    return E_NOTIMPL;
+    WINE_TRACE("(%p)\n", out_Name);
+
+    if(!(*out_Name = SysAllocString(wshNameW)))
+	return E_OUTOFMEMORY;
+    return S_OK;
 }
 
 static HRESULT WINAPI Host_get_Application(IHost *iface, IDispatch **out_Dispatch)
