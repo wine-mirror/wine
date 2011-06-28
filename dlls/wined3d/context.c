@@ -1984,7 +1984,7 @@ static BOOL match_depth_stencil_format(const struct wined3d_format *existing,
 
 /* The caller provides a context */
 static void context_validate_onscreen_formats(struct wined3d_device *device,
-        struct wined3d_context *context, struct wined3d_surface *depth_stencil)
+        struct wined3d_context *context, const struct wined3d_surface *depth_stencil)
 {
     /* Onscreen surfaces are always in a swapchain */
     struct wined3d_swapchain *swapchain = context->current_rt->container.u.swapchain;
