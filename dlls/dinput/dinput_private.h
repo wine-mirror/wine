@@ -66,4 +66,7 @@ extern void _dump_diactionformatA(LPDIACTIONFORMATA) DECLSPEC_HIDDEN;
 
 #define IS_DIPROP(x)    (((ULONG_PTR)(x) >> 16) == 0)
 
+#define DIKEYBOARD_MASK    0x81000000
+#define DIMOUSE_MASK       0x82000000
+
 #endif /* __WINE_DLLS_DINPUT_DINPUT_PRIVATE_H */

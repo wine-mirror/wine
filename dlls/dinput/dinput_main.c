@@ -681,8 +681,13 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
 )
 {
     IDirectInputImpl *This = impl_from_IDirectInput8A( iface );
+    DIDEVICEINSTANCEA didevi;
+    LPDIRECTINPUTDEVICE8A lpdid;
+    BOOL ret;
+    DWORD callbackFlags = 0;
+    int i;
 
-    FIXME("(this=%p,%s,%p,%p,%p,%04x): stub\n", This, ptszUserName, lpdiActionFormat,
+    FIXME("(this=%p,%s,%p,%p,%p,%04x): semi-stub\n", This, ptszUserName, lpdiActionFormat,
           lpCallback, pvRef, dwFlags);
 #define X(x) if (dwFlags & x) FIXME("\tdwFlags |= "#x"\n");
 	X(DIEDBSFL_ATTACHEDONLY)
@@ -695,6 +700,32 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
 
     _dump_diactionformatA(lpdiActionFormat);
 
+    didevi.dwSize = sizeof(didevi);
+
+    /* enum the keyboard first */
+    IDirectInput_CreateDevice(iface, &GUID_SysKeyboard, &lpdid, NULL);
+    IDirectInputDevice_GetDeviceInfo(lpdid, &didevi);
+    /* if there's any DIKEYBOARD action, keyboard is priority 1*/
+    for(i=0; i < lpdiActionFormat->dwActionSize; i++)
+        if ((lpdiActionFormat->rgoAction[i].dwSemantic & DIKEYBOARD_MASK) == DIKEYBOARD_MASK)
+            callbackFlags |= DIEDBS_MAPPEDPRI1;
+
+    ret = lpCallback(&didevi, lpdid, callbackFlags, 1, pvRef);
+
+    if (ret == DIENUM_STOP) return DI_OK;
+
+    callbackFlags = 0;
+
+    /* and then the mouse */
+    IDirectInput_CreateDevice(iface, &GUID_SysMouse, &lpdid, NULL);
+    IDirectInputDevice_GetDeviceInfo(lpdid, &didevi);
+    /* same as above, but for the mouse */
+    for(i=0; i < lpdiActionFormat->dwActionSize; i++)
+        if ((lpdiActionFormat->rgoAction[i].dwSemantic & DIMOUSE_MASK) == DIMOUSE_MASK)
+            callbackFlags |= DIEDBS_MAPPEDPRI1;
+
+    lpCallback(&didevi, lpdid, callbackFlags, 0, pvRef);
+
     return DI_OK;
 }
 
@@ -704,11 +735,43 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
       LPVOID pvRef, DWORD dwFlags
 )
 {
-      IDirectInputImpl *This = impl_from_IDirectInput8W( iface );
+    IDirectInputImpl *This = impl_from_IDirectInput8W(iface);
+    DIDEVICEINSTANCEW didevi;
+    LPDIRECTINPUTDEVICE8W lpdid;
+    BOOL ret;
+    DWORD callbackFlags = 0;
+    int i;
 
-      FIXME("(this=%p,%s,%p,%p,%p,%04x): stub\n", This, debugstr_w(ptszUserName), lpdiActionFormat,
-            lpCallback, pvRef, dwFlags);
-      return 0;
+    FIXME("(this=%p,%s,%p,%p,%p,%04x): semi-stub\n", This, debugstr_w(ptszUserName), lpdiActionFormat,
+          lpCallback, pvRef, dwFlags);
+
+    didevi.dwSize = sizeof(didevi);
+
+    /* enum the keyboard first */
+    IDirectInput_CreateDevice(iface, &GUID_SysKeyboard, &lpdid, NULL);
+    IDirectInputDevice_GetDeviceInfo(lpdid, &didevi);
+    /* if there's any DIKEYBOARD action, keyboard is priority 1*/
+    for(i=0; i < lpdiActionFormat->dwActionSize; i++)
+        if ((lpdiActionFormat->rgoAction[i].dwSemantic & DIKEYBOARD_MASK) == DIKEYBOARD_MASK)
+            callbackFlags |= DIEDBS_MAPPEDPRI1;
+
+    ret = lpCallback(&didevi, lpdid, callbackFlags, 1, pvRef);
+
+    if (ret == DIENUM_STOP) return DI_OK;
+
+    callbackFlags = 0;
+
+    /* and then the mouse */
+    IDirectInput_CreateDevice(iface, &GUID_SysMouse, &lpdid, NULL);
+    IDirectInputDevice_GetDeviceInfo(lpdid, &didevi);
+    /* same as above, but for the mouse */
+    for(i=0; i < lpdiActionFormat->dwActionSize; i++)
+        if ((lpdiActionFormat->rgoAction[i].dwSemantic & DIMOUSE_MASK) == DIMOUSE_MASK)
+            callbackFlags |= DIEDBS_MAPPEDPRI1;
+
+    lpCallback(&didevi, lpdid, callbackFlags, 0, pvRef);
+
+    return DI_OK;
 }
 
 static HRESULT WINAPI IDirectInput8AImpl_ConfigureDevices(

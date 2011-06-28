@@ -68,7 +68,7 @@ static BOOL CALLBACK enumeration_callback(
         IDirectInputDevice_AddRef(lpdid);
         data->keyboard = lpdid;
 
-        todo_wine ok (dwFlags & DIEDBS_MAPPEDPRI1, "Keyboard should be mapped as pri1 dwFlags=%08x\n", dwFlags);
+        ok (dwFlags & DIEDBS_MAPPEDPRI1, "Keyboard should be mapped as pri1 dwFlags=%08x\n", dwFlags);
     }
 
     if (IsEqualGUID(&lpddi->guidInstance, &GUID_SysMouse))
@@ -76,7 +76,7 @@ static BOOL CALLBACK enumeration_callback(
         IDirectInputDevice_AddRef(lpdid);
         data->mouse = lpdid;
 
-        todo_wine ok (dwFlags & DIEDBS_MAPPEDPRI1, "Mouse should be mapped as pri1 dwFlags=%08x\n", dwFlags);
+        ok (dwFlags & DIEDBS_MAPPEDPRI1, "Mouse should be mapped as pri1 dwFlags=%08x\n", dwFlags);
     }
 
     return DIENUM_CONTINUE;
@@ -122,9 +122,9 @@ static void test_action_mapping(void)
 
     hr = IDirectInput8_EnumDevicesBySemantics(pDI, 0, &af, enumeration_callback, &data, 0);
     ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%08x\n", hr);
-    todo_wine ok (data.ndevices > 0, "EnumDevicesBySemantics did not call the callback hr=%08x\n", hr);
-    todo_wine ok (data.keyboard != NULL, "EnumDevicesBySemantics should enumerate the keyboard\n");
-    todo_wine ok (data.mouse != NULL, "EnumDevicesBySemantics should enumerate the mouse\n");
+    ok (data.ndevices > 0, "EnumDevicesBySemantics did not call the callback hr=%08x\n", hr);
+    ok (data.keyboard != NULL, "EnumDevicesBySemantics should enumerate the keyboard\n");
+    ok (data.mouse != NULL, "EnumDevicesBySemantics should enumerate the mouse\n");
 
     /* The call fails with a zeroed GUID */
     memset(&af.guidActionMap, 0, sizeof(GUID));
