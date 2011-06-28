@@ -165,7 +165,7 @@ static BOOL CALLBACK enumeration_callback(
 
     hr = IDirectInputDevice_GetProperty(lpdid, DIPROP_BUFFERSIZE, &dp.diph);
     ok (SUCCEEDED(hr), "GetProperty failed hr=%08x\n", hr);
-    todo_wine ok (dp.dwData == data->lpdiaf->dwBufferSize, "SetActionMap must set the buffer, buffersize=%d\n", dp.dwData);
+    ok (dp.dwData == data->lpdiaf->dwBufferSize, "SetActionMap must set the buffer, buffersize=%d\n", dp.dwData);
 
     /* SetActionMap has set the data format so now it should work */
     hr = IDirectInputDevice8_Acquire(lpdid);

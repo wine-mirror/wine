@@ -254,6 +254,60 @@ void _dump_diactionformatA(LPDIACTIONFORMATA lpdiActionFormat) {
     }
 }
 
+void _copy_diactionformatAtoW(LPDIACTIONFORMATW to, LPDIACTIONFORMATA from)
+{
+    int i;
+
+    to->dwSize = sizeof(DIACTIONFORMATW);
+    to->dwActionSize = sizeof(DIACTIONW);
+    to->dwDataSize = from->dwDataSize;
+    to->dwNumActions = from->dwNumActions;
+    to->guidActionMap = from->guidActionMap;
+    to->dwGenre = from->dwGenre;
+    to->dwBufferSize = from->dwBufferSize;
+    to->lAxisMin = from->lAxisMin;
+    to->lAxisMax = from->lAxisMax;
+    to->dwCRC = from->dwCRC;
+    to->ftTimeStamp = from->ftTimeStamp;
+
+    for (i=0; i < to->dwNumActions; i++)
+    {
+        to->rgoAction[i].uAppData = from->rgoAction[i].uAppData;
+        to->rgoAction[i].dwSemantic = from->rgoAction[i].dwSemantic;
+        to->rgoAction[i].dwFlags = from->rgoAction[i].dwFlags;
+        to->rgoAction[i].guidInstance = from->rgoAction[i].guidInstance;
+        to->rgoAction[i].dwObjID = from->rgoAction[i].dwObjID;
+        to->rgoAction[i].dwHow = from->rgoAction[i].dwHow;
+    }
+}
+
+void _copy_diactionformatWtoA(LPDIACTIONFORMATA to, LPDIACTIONFORMATW from)
+{
+    int i;
+
+    to->dwSize = sizeof(DIACTIONFORMATA);
+    to->dwActionSize = sizeof(DIACTIONA);
+    to->dwDataSize = from->dwDataSize;
+    to->dwNumActions = from->dwNumActions;
+    to->guidActionMap = from->guidActionMap;
+    to->dwGenre = from->dwGenre;
+    to->dwBufferSize = from->dwBufferSize;
+    to->lAxisMin = from->lAxisMin;
+    to->lAxisMax = from->lAxisMax;
+    to->dwCRC = from->dwCRC;
+    to->ftTimeStamp = from->ftTimeStamp;
+
+    for (i=0; i < to->dwNumActions; i++)
+    {
+        to->rgoAction[i].uAppData = from->rgoAction[i].uAppData;
+        to->rgoAction[i].dwSemantic = from->rgoAction[i].dwSemantic;
+        to->rgoAction[i].dwFlags = from->rgoAction[i].dwFlags;
+        to->rgoAction[i].guidInstance = from->rgoAction[i].guidInstance;
+        to->rgoAction[i].dwObjID = from->rgoAction[i].dwObjID;
+        to->rgoAction[i].dwHow = from->rgoAction[i].dwHow;
+    }
+}
+
 /******************************************************************************
  *	IDirectInputA_EnumDevices
  */

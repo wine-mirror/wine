@@ -1391,9 +1391,20 @@ HRESULT WINAPI IDirectInputDevice8AImpl_SetActionMap(LPDIRECTINPUTDEVICE8A iface
 						     LPCSTR lpszUserName,
 						     DWORD dwFlags)
 {
-    FIXME("(%p)->(%p,%s,%08x): stub !\n", iface, lpdiaf, lpszUserName, dwFlags);
-    
-    return DI_OK;
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
+    DIACTIONFORMATW diafW;
+    HRESULT hr;
+
+    FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, lpszUserName, dwFlags);
+
+    diafW.rgoAction = HeapAlloc(GetProcessHeap(), 0, sizeof(DIACTIONW)*lpdiaf->dwNumActions);
+    _copy_diactionformatAtoW(&diafW, lpdiaf);
+
+    hr = IDirectInputDevice8WImpl_SetActionMap(&This->IDirectInputDevice8W_iface, &diafW, NULL, dwFlags);
+
+    HeapFree(GetProcessHeap(), 0, diafW.rgoAction);
+
+    return hr;
 }
 
 HRESULT WINAPI IDirectInputDevice8WImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
@@ -1401,8 +1412,22 @@ HRESULT WINAPI IDirectInputDevice8WImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface
 						     LPCWSTR lpszUserName,
 						     DWORD dwFlags)
 {
-    FIXME("(%p)->(%p,%s,%08x): stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
-    
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    DIPROPDWORD dp;
+
+    FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
+
+    if (This->acquired) return DIERR_ACQUIRED;
+
+    if (lpdiaf->dwBufferSize > 0)
+    {
+        dp.diph.dwSize = sizeof(DIPROPDWORD);
+        dp.dwData = lpdiaf->dwBufferSize;
+        dp.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+        dp.diph.dwHow = DIPH_DEVICE;
+        IDirectInputDevice8_SetProperty(iface, DIPROP_BUFFERSIZE, &dp.diph);
+    }
+
     return DI_OK;
 }
 
