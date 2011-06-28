@@ -1501,6 +1501,39 @@ static BOOL iterator_visibleitems(ITERATOR *i, const LISTVIEW_INFO *infoPtr, HDC
 /* Passed iterators have to point on the first elements */
 static BOOL iterator_remove_common_items(ITERATOR *iter1, ITERATOR *iter2)
 {
+    if(!iter1->ranges || !iter2->ranges) {
+        int lower, upper;
+
+        if(iter1->ranges || iter2->ranges ||
+                (iter1->range.lower<iter2->range.lower && iter1->range.upper>iter2->range.upper) ||
+                (iter1->range.lower>iter2->range.lower && iter1->range.upper<iter2->range.upper)) {
+            ERR("result is not a one range iterator\n");
+            return FALSE;
+        }
+
+        if(iter1->range.lower==-1 || iter2->range.lower==-1)
+            return TRUE;
+
+        lower = iter1->range.lower;
+        upper = iter1->range.upper;
+
+        if(lower < iter2->range.lower)
+            iter1->range.upper = iter2->range.lower;
+        else if(upper > iter2->range.upper)
+            iter1->range.lower = iter2->range.upper;
+        else
+            iter1->range.lower = iter1->range.upper = -1;
+
+        if(iter2->range.lower < lower)
+            iter2->range.upper = lower;
+        else if(iter2->range.upper > upper)
+            iter2->range.lower = upper;
+        else
+            iter2->range.lower = iter2->range.upper = -1;
+
+        return TRUE;
+    }
+
     iterator_next(iter1);
     iterator_next(iter2);
 
