@@ -484,28 +484,59 @@ static void state_alpha(DWORD state, struct wined3d_stateblock *stateblock, stru
     }
 }
 
+static void shaderconstant(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+{
+    const struct wined3d_state *state = &stateblock->state;
+    struct wined3d_device *device = stateblock->device;
+
+    /* Vertex and pixel shader states will call a shader upload, don't do anything as long one of them
+     * has an update pending
+     */
+    if(isStateDirty(context, STATE_VDECL) ||
+       isStateDirty(context, STATE_PIXELSHADER)) {
+       return;
+    }
+
+    device->shader_backend->shader_load_constants(context, use_ps(state), use_vs(state));
+}
+
 static void state_clipping(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_state *state = &stateblock->state;
     DWORD enable  = 0xFFFFFFFF;
     DWORD disable = 0x00000000;
 
-    if (!stateblock->device->vs_clipping && use_vs(state))
+    if (use_vs(state))
     {
-        /* The spec says that opengl clipping planes are disabled when using shaders. Direct3D planes aren't,
-         * so that is an issue. The MacOS ATI driver keeps clipping planes activated with shaders in some
-         * conditions I got sick of tracking down. The shader state handler disables all clip planes because
-         * of that - don't do anything here and keep them disabled
-         */
-        if (state->render_states[WINED3DRS_CLIPPLANEENABLE])
+        const struct wined3d_device *device = stateblock->device;
+
+        if (!device->vs_clipping)
         {
-            static BOOL warned = FALSE;
-            if(!warned) {
-                FIXME("Clipping not supported with vertex shaders\n");
-                warned = TRUE;
+            /* The spec says that opengl clipping planes are disabled when using shaders. Direct3D planes aren't,
+             * so that is an issue. The MacOS ATI driver keeps clipping planes activated with shaders in some
+             * conditions I got sick of tracking down. The shader state handler disables all clip planes because
+             * of that - don't do anything here and keep them disabled
+             */
+            if (state->render_states[WINED3DRS_CLIPPLANEENABLE])
+            {
+                static BOOL warned = FALSE;
+                if(!warned) {
+                    FIXME("Clipping not supported with vertex shaders\n");
+                    warned = TRUE;
+                }
+            }
+            return;
+        }
+
+        /* glEnable(GL_CLIP_PLANEx) doesn't apply to vertex shaders. The enabled / disabled planes are
+         * hardcoded into the shader. Update the shader to update the enabled clipplanes */
+        if (!isStateDirty(context, device->StateTable[STATE_VSHADER].representative))
+        {
+            device->shader_backend->shader_select(context, use_ps(state), TRUE);
+            if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT)) {
+                shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock, context);
             }
         }
-        return;
     }
 
     /* TODO: Keep track of previously enabled clipplanes to avoid unnecessary resetting
@@ -3458,22 +3489,6 @@ static void tex_coordindex(DWORD state, struct wined3d_stateblock *stateblock, s
         unloadTexCoords(gl_info);
         loadTexCoords(gl_info, stateblock, &stateblock->device->strided_streams, &curVBO);
     }
-}
-
-static void shaderconstant(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
-{
-    const struct wined3d_state *state = &stateblock->state;
-    struct wined3d_device *device = stateblock->device;
-
-    /* Vertex and pixel shader states will call a shader upload, don't do anything as long one of them
-     * has an update pending
-     */
-    if(isStateDirty(context, STATE_VDECL) ||
-       isStateDirty(context, STATE_PIXELSHADER)) {
-       return;
-    }
-
-    device->shader_backend->shader_load_constants(context, use_ps(state), use_vs(state));
 }
 
 static void tex_bumpenvlscale(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
