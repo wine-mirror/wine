@@ -167,7 +167,7 @@ static IShellFolder* get_starting_shell_folder(parameters_struct* params)
     HRESULT hres;
 
     SHGetDesktopFolder(&desktop);
-    if(!params->root || (strlenW(params->root)==0))
+    if (!params->root[0])
     {
         return desktop;
     }
