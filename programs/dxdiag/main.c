@@ -80,7 +80,7 @@ static BOOL process_file_name(const WCHAR *cmdline, enum output_type output_type
     filename[len] = '\0';
 
     /* Append an extension appropriate for the output type if the filename does not have one. */
-    if (!(endptr = strrchrW(filename, '.')))
+    if (!strrchrW(filename, '.'))
     {
         const WCHAR *filename_ext = get_output_extension(output_type);
 
