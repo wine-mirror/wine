@@ -2064,7 +2064,7 @@ void context_apply_blit_state(struct wined3d_context *context, struct wined3d_de
 }
 
 static BOOL context_validate_rt_config(UINT rt_count,
-        struct wined3d_surface **rts, struct wined3d_surface *ds)
+        struct wined3d_surface * const *rts, const struct wined3d_surface *ds)
 {
     unsigned int i;
 
