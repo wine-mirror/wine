@@ -1617,7 +1617,7 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
 
     msg->type      = MSG_HARDWARE;
     msg->win       = get_user_full_handle( win );
-    msg->lparam    = (input->kbd.scan << 16) | 1; /* repeat count */
+    msg->lparam    = (input->kbd.scan << 16) | 1u; /* repeat count */
     msg->time      = input->kbd.time;
     msg->result    = NULL;
     msg->data      = msg_data;
