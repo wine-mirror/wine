@@ -26,5 +26,6 @@ ok(typeof(WScript) === "object", "typeof(WScript) = " + typeof(WScript));
 ok(typeof(WSH) === "object", "typeof(WSH) = " + typeof(WSH));
 ok(WScript === WSH, "WScript !== WSH");
 ok(WScript.Name === "Windows Script Host", "WScript.Name = " + WScript.Name);
+ok(typeof(WScript.Version) === "string", "typeof(WScript.Version) = " + typeof(WScript.Version));
 
 winetest.reportSuccess();
