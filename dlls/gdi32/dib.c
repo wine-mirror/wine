@@ -415,32 +415,6 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *col
     return result;
 }
 
-/* FIXME the following two structs should be combined with __sysPalTemplate in
-   objects/color.c - this should happen after de-X11-ing both of these
-   files.
-   NB. RGBQUAD and PALETTEENTRY have different orderings of red, green
-   and blue - sigh */
-
-static const RGBQUAD EGAColorsQuads[16] = {
-/* rgbBlue, rgbGreen, rgbRed, rgbReserved */
-    { 0x00, 0x00, 0x00, 0x00 },
-    { 0x00, 0x00, 0x80, 0x00 },
-    { 0x00, 0x80, 0x00, 0x00 },
-    { 0x00, 0x80, 0x80, 0x00 },
-    { 0x80, 0x00, 0x00, 0x00 },
-    { 0x80, 0x00, 0x80, 0x00 },
-    { 0x80, 0x80, 0x00, 0x00 },
-    { 0x80, 0x80, 0x80, 0x00 },
-    { 0xc0, 0xc0, 0xc0, 0x00 },
-    { 0x00, 0x00, 0xff, 0x00 },
-    { 0x00, 0xff, 0x00, 0x00 },
-    { 0x00, 0xff, 0xff, 0x00 },
-    { 0xff, 0x00, 0x00, 0x00 },
-    { 0xff, 0x00, 0xff, 0x00 },
-    { 0xff, 0xff, 0x00, 0x00 },
-    { 0xff, 0xff, 0xff, 0x00 }
-};
-
 static const RGBQUAD DefLogPaletteQuads[20] = { /* Copy of Default Logical Palette */
 /* rgbBlue, rgbGreen, rgbRed, rgbReserved */
     { 0x00, 0x00, 0x00, 0x00 },
@@ -635,7 +609,12 @@ INT WINAPI GetDIBits(
                 break;
 
             case 4:
-                memcpy(rgbQuads, EGAColorsQuads, sizeof(EGAColorsQuads));
+                /* The EGA palette is the first and last 8 colours of the default palette
+                   with the innermost pair swapped */
+                memcpy(rgbQuads,     DefLogPaletteQuads,      7 * sizeof(RGBQUAD));
+                memcpy(rgbQuads + 7, DefLogPaletteQuads + 12, 1 * sizeof(RGBQUAD));
+                memcpy(rgbQuads + 8, DefLogPaletteQuads +  7, 1 * sizeof(RGBQUAD));
+                memcpy(rgbQuads + 9, DefLogPaletteQuads + 13, 7 * sizeof(RGBQUAD));
                 break;
 
             case 8:

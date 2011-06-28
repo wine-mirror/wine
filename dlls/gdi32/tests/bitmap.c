@@ -1534,7 +1534,7 @@ static void test_GetDIBits(void)
     BYTE buf[1024];
     char bi_buf[sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * 256];
     BITMAPINFO *bi = (BITMAPINFO *)bi_buf;
-    PALETTEENTRY pal_ents[32];
+    PALETTEENTRY pal_ents[20];
 
     hdc = GetDC(0);
 
@@ -1723,6 +1723,44 @@ todo_wine
     for (i = 2; i < 256; i++)
         ok(((WORD*)bi->bmiColors)[i] == 0xAAAA, "Color %d is %d\n", i, ((WORD*)bi->bmiColors)[i]);
 
+    /* retrieve 4-bit DIB data */
+    memset(bi, 0, sizeof(*bi));
+    bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bi->bmiHeader.biWidth = bm.bmWidth;
+    bi->bmiHeader.biHeight = bm.bmHeight;
+    bi->bmiHeader.biPlanes = 1;
+    bi->bmiHeader.biBitCount = 4;
+    bi->bmiHeader.biCompression = BI_RGB;
+    bi->bmiHeader.biSizeImage = 0;
+    memset(bi->bmiColors, 0xAA, sizeof(RGBQUAD) * 256);
+    memset(buf, 0xAA, sizeof(buf));
+    SetLastError(0xdeadbeef);
+    lines = GetDIBits(hdc, hbmp, 0, bm.bmHeight, buf, bi, DIB_RGB_COLORS);
+    ok(lines == bm.bmHeight, "GetDIBits copied %d lines of %d, error %u\n",
+       lines, bm.bmHeight, GetLastError());
+
+    GetPaletteEntries( GetStockObject(DEFAULT_PALETTE), 0, 20, pal_ents );
+
+    for (i = 0; i < 16; i++)
+    {
+        RGBQUAD expect;
+        int entry = i < 8 ? i : i + 4;
+
+        if(entry == 7) entry = 12;
+        else if(entry == 12) entry = 7;
+
+        expect.rgbRed   = pal_ents[entry].peRed;
+        expect.rgbGreen = pal_ents[entry].peGreen;
+        expect.rgbBlue  = pal_ents[entry].peBlue;
+        expect.rgbReserved = 0;
+
+        ok(!memcmp(bi->bmiColors + i, &expect, sizeof(expect)),
+           "expected bmiColors[%d] %x %x %x %x - got %x %x %x %x\n", i,
+           expect.rgbRed, expect.rgbGreen, expect.rgbBlue, expect.rgbReserved,
+           bi->bmiColors[i].rgbRed, bi->bmiColors[i].rgbGreen,
+           bi->bmiColors[i].rgbBlue, bi->bmiColors[i].rgbReserved);
+    }
+
     /* retrieve 8-bit DIB data */
     memset(bi, 0, sizeof(*bi));
     bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -1739,7 +1777,7 @@ todo_wine
     ok(lines == bm.bmHeight, "GetDIBits copied %d lines of %d, error %u\n",
        lines, bm.bmHeight, GetLastError());
 
-    GetPaletteEntries( GetStockObject(DEFAULT_PALETTE), 0, 32, pal_ents );
+    GetPaletteEntries( GetStockObject(DEFAULT_PALETTE), 0, 20, pal_ents );
 
     for (i = 0; i < 256; i++)
     {
