@@ -157,8 +157,8 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
     WORD                val16;
     DWORD               val32;
     BOOL                do_switch;
-    unsigned            deltapc;
 #ifdef __i386__
+    unsigned            deltapc;
     CONTEXT             _context;
 #endif
 
@@ -174,6 +174,7 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
           wine_dbgstr_longlong(curr_count),
           (void*)(DWORD_PTR)curr_switch, (void*)(DWORD_PTR)next_switch);
 
+#ifdef __i386__
     /* if we're at first call (which doesn't actually unwind, it just computes ReturnPC,
      * or if we're doing the first real unwind (count == 1), then we can directly use
      * eip. otherwise, eip is *after* the insn that actually made the call to
@@ -184,7 +185,6 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
      */
     deltapc = curr_count <= 1 ? 0 : 1;
 
-#ifdef __i386__
     if (!context)
     {
         /* setup a pseudo context for the rest of the code (esp. unwinding) */
