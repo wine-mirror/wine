@@ -155,6 +155,7 @@ LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
     struct list *ptr;
     LONG ret = EXCEPTION_CONTINUE_SEARCH;
     EXCEPTION_POINTERS except_ptrs;
+    PVECTORED_EXCEPTION_HANDLER func;
     VECTORED_HANDLER *handler, *to_free = NULL;
 
     except_ptrs.ExceptionRecord = rec;
@@ -166,14 +167,15 @@ LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
     {
         handler = LIST_ENTRY( ptr, VECTORED_HANDLER, entry );
         handler->count++;
+        func = RtlDecodePointer( handler->func );
         RtlLeaveCriticalSection( &vectored_handlers_section );
         RtlFreeHeap( GetProcessHeap(), 0, to_free );
         to_free = NULL;
 
         TRACE( "calling handler at %p code=%x flags=%x\n",
-               handler->func, rec->ExceptionCode, rec->ExceptionFlags );
-        ret = handler->func( &except_ptrs );
-        TRACE( "handler at %p returned %x\n", handler->func, ret );
+               func, rec->ExceptionCode, rec->ExceptionFlags );
+        ret = func( &except_ptrs );
+        TRACE( "handler at %p returned %x\n", func, ret );
 
         RtlEnterCriticalSection( &vectored_handlers_section );
         ptr = list_next( &vectored_handlers, ptr );
@@ -226,7 +228,7 @@ PVOID WINAPI RtlAddVectoredExceptionHandler( ULONG first, PVECTORED_EXCEPTION_HA
     VECTORED_HANDLER *handler = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*handler) );
     if (handler)
     {
-        handler->func = func;
+        handler->func = RtlEncodePointer( func );
         handler->count = 1;
         RtlEnterCriticalSection( &vectored_handlers_section );
         if (first) list_add_head( &vectored_handlers, &handler->entry );
