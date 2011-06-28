@@ -1164,6 +1164,17 @@ static struct wined3d_context *swapchain_create_context(struct wined3d_swapchain
     return ctx;
 }
 
+void swapchain_destroy_contexts(struct wined3d_swapchain *swapchain)
+{
+    unsigned int i;
+
+    for (i = 0; i < swapchain->num_contexts; ++i)
+    {
+        context_destroy(swapchain->device, swapchain->context[i]);
+    }
+    swapchain->num_contexts = 0;
+}
+
 struct wined3d_context *swapchain_get_context(struct wined3d_swapchain *swapchain)
 {
     DWORD tid = GetCurrentThreadId();
