@@ -2003,7 +2003,7 @@ static void context_validate_onscreen_formats(struct wined3d_device *device,
     context_set_render_offscreen(context, device->StateTable, TRUE);
 }
 
-static DWORD generate_rt_mask_no_fbo(struct wined3d_device *device, struct wined3d_surface *rt)
+static DWORD generate_rt_mask_no_fbo(const struct wined3d_device *device, const struct wined3d_surface *rt)
 {
     if (!rt || rt->resource.format->id == WINED3DFMT_NULL)
         return 0;
