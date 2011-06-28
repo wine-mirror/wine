@@ -1238,7 +1238,7 @@ static inline DWORD generate_rt_mask(GLenum buffer)
     return buffer ? (1 << 31) | buffer : 0;
 }
 
-static inline DWORD generate_rt_mask_from_surface(struct wined3d_surface *target)
+static inline DWORD generate_rt_mask_from_surface(const struct wined3d_surface *target)
 {
     return (1 << 31) | surface_get_gl_buffer(target);
 }
