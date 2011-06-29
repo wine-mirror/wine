@@ -282,7 +282,7 @@ done:
     return SUCCEEDED(hr);
 }
 
-static LPCWSTR skip_schema(LPCWSTR url)
+LPCWSTR skip_schema(LPCWSTR url)
 {
     static const WCHAR its_schema[] = {'i','t','s',':'};
     static const WCHAR msits_schema[] = {'m','s','-','i','t','s',':'};

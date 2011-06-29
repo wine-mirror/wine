@@ -98,9 +98,41 @@ static const char *command_to_string(UINT command)
 #undef X
 }
 
-static BOOL resolve_filename(const WCHAR *filename, WCHAR *fullname, DWORD buflen)
+static BOOL resolve_filename(const WCHAR *filename, WCHAR *fullname, DWORD buflen, const WCHAR **index, const WCHAR **window)
 {
+    const WCHAR *extra;
+    WCHAR chm_file[MAX_PATH];
+
     static const WCHAR helpW[] = {'\\','h','e','l','p','\\',0};
+    static const WCHAR delimW[] = {':',':',0};
+    static const WCHAR delim2W[] = {'>',0};
+
+    filename = skip_schema(filename);
+
+    /* the format is "helpFile[::/index][>window]" */
+    if (index) *index = NULL;
+    if (window) *window = NULL;
+
+    extra = strstrW(filename, delim2W);
+    if (extra)
+    {
+        memcpy(chm_file, filename, (extra-filename)*sizeof(WCHAR));
+        chm_file[extra-filename] = 0;
+        filename = chm_file;
+        if (window)
+            *window = strdupW(extra+1);
+    }
+
+    extra = strstrW(filename, delimW);
+    if (extra)
+    {
+        if (filename != chm_file);
+            memcpy(chm_file, filename, (extra-filename)*sizeof(WCHAR));
+        chm_file[extra-filename] = 0;
+        filename = chm_file;
+        if (index)
+            *index = strdupW(extra+2);
+    }
 
     GetFullPathNameW(filename, buflen, fullname, NULL);
     if (GetFileAttributesW(fullname) == INVALID_FILE_ATTRIBUTES)
@@ -128,27 +160,16 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
     case HH_DISPLAY_TOPIC:
     case HH_DISPLAY_TOC:
     case HH_DISPLAY_SEARCH:{
-        static const WCHAR delimW[] = {':',':',0};
         HHInfo *info;
         BOOL res;
-        WCHAR chm_file[MAX_PATH];
-        const WCHAR *index;
+        const WCHAR *index = NULL;
 
         FIXME("Not all HH cases handled correctly\n");
 
         if (!filename)
             return NULL;
 
-        index = strstrW(filename, delimW);
-        if (index)
-        {
-            memcpy(chm_file, filename, (index-filename)*sizeof(WCHAR));
-            chm_file[index-filename] = 0;
-            filename = chm_file;
-            index += 2; /* advance beyond "::" for calling NavigateToChm() later */
-        }
-
-        if (!resolve_filename(filename, fullname, MAX_PATH))
+        if (!resolve_filename(filename, fullname, MAX_PATH, &index, NULL))
         {
             WARN("can't find %s\n", debugstr_w(filename));
             return 0;
@@ -162,6 +183,10 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
             index = info->WinType.pszFile;
 
         res = NavigateToChm(info, info->pCHMInfo->szFile, index);
+
+        if (index != info->WinType.pszFile)
+            heap_free((WCHAR*)index);
+
         if(!res)
         {
             ReleaseHelpViewer(info);
@@ -176,7 +201,7 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         if (!filename)
             return NULL;
 
-        if (!resolve_filename(filename, fullname, MAX_PATH))
+        if (!resolve_filename(filename, fullname, MAX_PATH, NULL, NULL))
         {
             WARN("can't find %s\n", debugstr_w(filename));
             return 0;

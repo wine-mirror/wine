@@ -189,6 +189,8 @@ BOOL NavigateToChm(HHInfo*,LPCWSTR,LPCWSTR) DECLSPEC_HIDDEN;
 void InitSearch(HHInfo *info, const char *needle) DECLSPEC_HIDDEN;
 void ReleaseSearch(HHInfo *info) DECLSPEC_HIDDEN;
 
+LPCWSTR skip_schema(LPCWSTR url) DECLSPEC_HIDDEN;
+
 /* memory allocation functions */
 
 static inline void * __WINE_ALLOC_SIZE(1) heap_alloc(size_t len)
