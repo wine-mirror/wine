@@ -6997,9 +6997,11 @@ static void test_Namespaces(void)
     BSTR str;
     static  const CHAR szNamespacesXML[] =
 "<?xml version=\"1.0\"?>\n"
-"<root xmlns:WEB='http://www.winehq.org'>\n"
-"<WEB:Site version=\"1.0\" />\n"
-"</root>";
+"<XMI xmi.version=\"1.1\" xmlns:Model=\"http://omg.org/mof.Model/1.3\">"
+"  <XMI.content>"
+"    <Model:Package name=\"WinePackage\" />"
+"  </XMI.content>"
+"</XMI>";
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
@@ -7008,7 +7010,7 @@ static void test_Namespaces(void)
     ok(hr == S_OK, "ret %08x\n", hr );
     ok(bSucc == VARIANT_TRUE, "Expected VARIANT_TRUE got VARIANT_FALSE\n");
 
-    hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root"), &pNode );
+    hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("//XMI.content"), &pNode );
     ok(hr == S_OK, "ret %08x\n", hr );
     if(hr == S_OK)
     {
@@ -7023,7 +7025,12 @@ static void test_Namespaces(void)
 
         hr = IXMLDOMNode_get_prefix(pNode2, &str);
         ok( hr == S_OK, "ret %08x\n", hr );
-        ok( !lstrcmpW( str, _bstr_("WEB")), "incorrect prefix string\n");
+        ok( !lstrcmpW( str, _bstr_("Model")), "incorrect prefix string\n");
+        SysFreeString(str);
+
+        hr = IXMLDOMNode_get_nodeName(pNode2, &str);
+        ok( hr == S_OK, "ret %08x\n", hr );
+        todo_wine ok( !lstrcmpW( str, _bstr_("Model:Package")), "incorrect nodeName string\n");
         SysFreeString(str);
 
         /* Test get_namespaceURI */
@@ -7033,7 +7040,7 @@ static void test_Namespaces(void)
 
         hr = IXMLDOMNode_get_namespaceURI(pNode2, &str);
         ok( hr == S_OK, "ret %08x\n", hr );
-        ok( !lstrcmpW( str, _bstr_("http://www.winehq.org")), "incorrect namespaceURI string\n");
+        ok( !lstrcmpW( str, _bstr_("http://omg.org/mof.Model/1.3")), "incorrect namespaceURI string\n");
         SysFreeString(str);
 
         IXMLDOMNode_Release(pNode2);
