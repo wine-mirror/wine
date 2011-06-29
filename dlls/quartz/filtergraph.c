@@ -1903,9 +1903,8 @@ static HRESULT WINAPI SendGetState(IBaseFilter *pFilter, DWORD_PTR data)
 }
 
 
-static HRESULT SendFilterMessage(IMediaControl *iface, fnFoundFilter FoundFilter, DWORD_PTR data)
+static HRESULT SendFilterMessage(IFilterGraphImpl *This, fnFoundFilter FoundFilter, DWORD_PTR data)
 {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
     int i;
     IBaseFilter* pfilter;
     IEnumPins* pEnum;
@@ -1913,7 +1912,8 @@ static HRESULT SendFilterMessage(IMediaControl *iface, fnFoundFilter FoundFilter
     IPin* pPin;
     DWORD dummy;
     PIN_DIRECTION dir;
-    TRACE("(%p/%p)->()\n", This, iface);
+
+    TRACE("(%p)->()\n", This);
 
     /* Explorer the graph from source filters to renderers, determine renderers
      * number and run filters from renderers to source filters */
@@ -1985,7 +1985,7 @@ static HRESULT WINAPI MediaControl_Run(IMediaControl *iface) {
     }
     else This->start_time = 0;
 
-    SendFilterMessage(iface, SendRun, (DWORD_PTR)&This->start_time);
+    SendFilterMessage(This, SendRun, (DWORD_PTR)&This->start_time);
     This->state = State_Running;
 out:
     LeaveCriticalSection(&This->cs);
@@ -2005,7 +2005,7 @@ static HRESULT WINAPI MediaControl_Pause(IMediaControl *iface) {
     else
         This->pause_time = -1;
 
-    SendFilterMessage(iface, SendPause, 0);
+    SendFilterMessage(This, SendPause, 0);
     This->state = State_Paused;
 out:
     LeaveCriticalSection(&This->cs);
@@ -2019,8 +2019,8 @@ static HRESULT WINAPI MediaControl_Stop(IMediaControl *iface) {
     if (This->state == State_Stopped) return S_OK;
 
     EnterCriticalSection(&This->cs);
-    if (This->state == State_Running) SendFilterMessage(iface, SendPause, 0);
-    SendFilterMessage(iface, SendStop, 0);
+    if (This->state == State_Running) SendFilterMessage(This, SendPause, 0);
+    SendFilterMessage(This, SendStop, 0);
     This->state = State_Stopped;
     LeaveCriticalSection(&This->cs);
     return S_OK;
@@ -2053,7 +2053,7 @@ static HRESULT WINAPI MediaControl_GetState(IMediaControl *iface,
         end = 0;
     }
     if (end)
-        SendFilterMessage(iface, SendGetState, end);
+        SendFilterMessage(This, SendGetState, end);
 
     LeaveCriticalSection(&This->cs);
 
