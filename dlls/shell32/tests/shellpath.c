@@ -1042,19 +1042,23 @@ static void test_knownFolders(void)
     static const WCHAR sWindows[] = {'W','i','n','d','o','w','s',0};
     static const WCHAR sExample[] = {'E','x','a','m','p','l','e',0};
     static const WCHAR sExample2[] = {'E','x','a','m','p','l','e','2',0};
+    static const WCHAR sSubFolder[] = {'S','u','b','F','o','l','d','e','r',0};
+    static const WCHAR sBackslash[] = {'\\',0};
     static const KNOWNFOLDERID newFolderId = {0x01234567, 0x89AB, 0xCDEF, {0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x01} };
+    static const KNOWNFOLDERID subFolderId = {0xFEDCBA98, 0x7654, 0x3210, {0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF} };
     HRESULT hr;
     IKnownFolderManager *mgr = NULL;
-    IKnownFolder *folder = NULL;
+    IKnownFolder *folder = NULL, *subFolder = NULL;
     KNOWNFOLDERID folderId, *folders;
     KF_CATEGORY cat = 0;
-    KNOWNFOLDER_DEFINITION kfDefinition;
+    KNOWNFOLDER_DEFINITION kfDefinition, kfSubDefinition;
     int csidl, i;
     UINT nCount = 0;
-    LPWSTR folderPath;
+    LPWSTR folderPath, errorMsg;
     KF_REDIRECTION_CAPABILITIES redirectionCapabilities = 1;
-    WCHAR sWinDir[MAX_PATH], sExamplePath[MAX_PATH], sExample2Path[MAX_PATH];
+    WCHAR sWinDir[MAX_PATH], sExamplePath[MAX_PATH], sExample2Path[MAX_PATH], sSubFolderPath[MAX_PATH], sSubFolder2Path[MAX_PATH];
     BOOL bRes;
+    DWORD dwAttributes;
 
     GetWindowsDirectoryW( sWinDir, MAX_PATH );
 
@@ -1063,6 +1067,14 @@ static void test_knownFolders(void)
 
     GetTempPathW(sizeof(sExample2Path)/sizeof(sExample2Path[0]), sExample2Path);
     lstrcatW(sExample2Path, sExample2);
+
+    lstrcpyW(sSubFolderPath, sExamplePath);
+    lstrcatW(sSubFolderPath, sBackslash);
+    lstrcatW(sSubFolderPath, sSubFolder);
+
+    lstrcpyW(sSubFolder2Path, sExample2Path);
+    lstrcatW(sSubFolder2Path, sBackslash);
+    lstrcatW(sSubFolder2Path, sSubFolder);
 
     CoInitialize(NULL);
 
@@ -1152,7 +1164,9 @@ static void test_knownFolders(void)
         bRes = CreateDirectoryW(sExamplePath, NULL);
         ok(bRes, "cannot create example directory: %s\n", wine_dbgstr_w(sExamplePath));
         bRes = CreateDirectoryW(sExample2Path, NULL);
-        ok(bRes, "cannot create example directory: %s\n", wine_dbgstr_w(sExamplePath));
+        ok(bRes, "cannot create example directory: %s\n", wine_dbgstr_w(sExample2Path));
+        bRes = CreateDirectoryW(sSubFolderPath, NULL);
+        ok(bRes, "cannot create example directory: %s\n", wine_dbgstr_w(sSubFolderPath));
 
         ZeroMemory(&kfDefinition, sizeof(kfDefinition));
         kfDefinition.category = KF_CATEGORY_PERUSER;
@@ -1183,54 +1197,285 @@ static void test_knownFolders(void)
                     ok(hr == S_OK, "failed to get folder id: 0x%08x\n", hr);
                     ok(IsEqualGUID(&folderId, &newFolderId)==TRUE, "invalid KNOWNFOLDERID returned\n");
 
+                    /* current path should be Temp\Example */
                     hr = IKnownFolder_GetPath(folder, 0, &folderPath);
                     ok(hr == S_OK, "failed to get path from known folder: 0x%08x\n", hr);
                     ok(lstrcmpiW(folderPath, sExamplePath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
                     CoTaskMemFree(folderPath);
 
-                    /* try to set new path for folder */
-                    hr = IKnownFolder_SetPath(folder, 0, sExample2Path);
-                    ok(hr == S_OK, "setting path failed: 0x%0x\n", hr);
+                    /* register sub-folder and mark it as child of Example folder */
+                    ZeroMemory(&kfSubDefinition, sizeof(kfSubDefinition));
+                    kfSubDefinition.category = KF_CATEGORY_PERUSER;
+                    kfSubDefinition.pszName = CoTaskMemAlloc(sizeof(sSubFolder));
+                    lstrcpyW(kfSubDefinition.pszName, sSubFolder);
+                    kfSubDefinition.pszDescription = CoTaskMemAlloc(sizeof(sSubFolder));
+                    lstrcpyW(kfSubDefinition.pszDescription, sSubFolder);
+                    kfSubDefinition.pszRelativePath = CoTaskMemAlloc(sizeof(sSubFolder));
+                    lstrcpyW(kfSubDefinition.pszRelativePath, sSubFolder);
+                    kfSubDefinition.fidParent = newFolderId;
 
-                    /* verify modified path */
-                    hr = IKnownFolder_GetPath(folder, 0, &folderPath);
-                    ok(hr == S_OK, "failed to get path from known folder: 0x%08x\n", hr);
-                    ok(lstrcmpiW(folderPath, sExample2Path)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
-                    CoTaskMemFree(folderPath);
-
-                    /* set again to first path, but use another way */
-                    hr = IKnownFolderManager_Redirect(mgr, &newFolderId, NULL, 0, sExamplePath, 0, NULL, NULL);
-                    todo_wine
-                    ok(hr == S_OK, "redirection failed: 0x%08x\n", hr);
-
-                    /* again verify modified path */
-                    hr = IKnownFolder_GetPath(folder, 0, &folderPath);
-                    ok(hr == S_OK, "failed to get path from known folder: 0x%08x\n", hr);
-                    todo_wine
-                    ok(lstrcmpiW(folderPath, sExamplePath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
-                    CoTaskMemFree(folderPath);
-
-                    /* check shell utility functions */
-                    if(!pSHGetKnownFolderPath || !pSHSetKnownFolderPath)
-                        todo_wine
-                        win_skip("cannot get SHGet/SetKnownFolderPath routines\n");
-                    else
+                    hr = IKnownFolderManager_RegisterFolder(mgr, &subFolderId, &kfSubDefinition);
+                    ok(hr == S_OK, "failed to register known folder: 0x%08x\n", hr);
+                    if(SUCCEEDED(hr))
                     {
-                        /* check shell utility functions */
-                        /* try to get current known folder path */
-                        hr = pSHGetKnownFolderPath(&newFolderId, 0, NULL, &folderPath);
-                        ok(hr==S_OK, "cannot get known folder path: hr=0x%0x\n", hr);
-                        ok(lstrcmpW(folderPath, sExamplePath)==0, "invalid path returned: %s\n", wine_dbgstr_w(folderPath));
 
-                        /* set it to new value */
-                        hr = pSHSetKnownFolderPath(&newFolderId, 0, NULL, sExample2Path);
-                        ok(hr==S_OK, "cannot set known folder path: hr=0x%0x\n", hr);
+                        hr = IKnownFolderManager_GetFolder(mgr, &subFolderId, &subFolder);
+                        ok(hr == S_OK, "failed to get known folder: 0x%08x\n", hr);
+                        if(SUCCEEDED(hr))
+                        {
+                            /* check sub folder path */
+                            hr = IKnownFolder_GetPath(subFolder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            todo_wine
+                            ok(lstrcmpiW(folderPath, sSubFolderPath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sSubFolderPath));
+                            CoTaskMemFree(folderPath);
 
-                        /* check if it changed */
-                        hr = pSHGetKnownFolderPath(&newFolderId, 0, NULL, &folderPath);
-                        ok(hr==S_OK, "cannot get known folder path: hr=0x%0x\n", hr);
-                        ok(lstrcmpW(folderPath, sExample2Path)==0, "invalid path returned: %s\n", wine_dbgstr_w(folderPath));
+
+                            /* try to redirect Example to Temp\Example2  */
+                            hr = IKnownFolderManager_Redirect(mgr, &newFolderId, NULL, 0, sExample2Path, 0, NULL, &errorMsg);
+                            todo_wine
+                            ok(hr == S_OK, "failed to redirect known folder: 0x%08x, errorMsg: %s\n", hr, wine_dbgstr_w(errorMsg));
+
+                            /* verify */
+                            hr = IKnownFolder_GetPath(folder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            todo_wine
+                            ok(lstrcmpiW(folderPath, sExample2Path)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExample2Path));
+                            CoTaskMemFree(folderPath);
+
+                            /* verify sub folder - it should fail now, as we redirected it's parent folder, but we have no sub folder in new location */
+                            hr = IKnownFolder_GetPath(subFolder, 0, &folderPath);
+                            todo_wine
+                            ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "unexpected value from GetPath(): 0x%08x\n", hr);
+                            todo_wine
+                            ok(folderPath==NULL, "invalid known folder path retrieved: \"%s\" when NULL pointer was expected\n", wine_dbgstr_w(folderPath));
+                            CoTaskMemFree(folderPath);
+
+
+                            /* set Example path to original. Using SetPath() is valid here, as it also uses redirection internally */
+                            hr = IKnownFolder_SetPath(folder, 0, sExamplePath);
+                            ok(hr == S_OK, "SetPath() failed: 0x%08x\n", hr);
+
+                            /* verify */
+                            hr = IKnownFolder_GetPath(folder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            ok(lstrcmpiW(folderPath, sExamplePath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
+                            CoTaskMemFree(folderPath);
+
+
+                            /* create sub folder in Temp\Example2 */
+                            bRes = CreateDirectoryW(sSubFolder2Path, NULL);
+                            ok(bRes, "cannot create example directory: %s\n", wine_dbgstr_w(sSubFolder2Path));
+
+                            /* again perform that same redirection */
+                            hr = IKnownFolderManager_Redirect(mgr, &newFolderId, NULL, 0, sExample2Path, 0, NULL, &errorMsg);
+                            todo_wine
+                            ok(hr == S_OK, "failed to redirect known folder: 0x%08x, errorMsg: %s\n", hr, wine_dbgstr_w(errorMsg));
+
+                            /* verify sub folder. It should succeed now, as the required sub folder exists */
+                            hr = IKnownFolder_GetPath(subFolder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            todo_wine
+                            ok(lstrcmpiW(folderPath, sSubFolder2Path)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sSubFolder2Path));
+                            CoTaskMemFree(folderPath);
+
+                            /* remove newly created directory */
+                            RemoveDirectoryW(sSubFolder2Path);
+
+                            /* verify sub folder. It still succeedes, so Windows does not check folder presence each time */
+                            hr = IKnownFolder_GetPath(subFolder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            todo_wine
+                            ok(lstrcmpiW(folderPath, sSubFolder2Path)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sSubFolder2Path));
+                            CoTaskMemFree(folderPath);
+
+
+                            /* set Example path to original */
+                            hr = IKnownFolder_SetPath(folder, 0, sExamplePath);
+                            ok(hr == S_OK, "SetPath() failed: 0x%08x\n", hr);
+
+                            /* verify */
+                            hr = IKnownFolder_GetPath(folder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            ok(lstrcmpiW(folderPath, sExamplePath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
+                            CoTaskMemFree(folderPath);
+
+                            /* verify sub folder */
+                            hr = IKnownFolder_GetPath(subFolder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            todo_wine
+                            ok(lstrcmpiW(folderPath, sSubFolderPath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sSubFolderPath));
+                            CoTaskMemFree(folderPath);
+
+
+                            /* create sub folder in Temp\Example2 */
+                            bRes = CreateDirectoryW(sSubFolder2Path, NULL);
+                            ok(bRes, "cannot create example directory: %s\n", wine_dbgstr_w(sSubFolder2Path));
+
+                            /* do that same redirection, but try to exclude sub-folder */
+                            hr = IKnownFolderManager_Redirect(mgr, &newFolderId, NULL, 0, sExample2Path, 1, &subFolderId, &errorMsg);
+                            todo_wine
+                            ok(hr == S_OK, "failed to redirect known folder: 0x%08x, errorMsg: %s\n", hr, wine_dbgstr_w(errorMsg));
+
+                            /* verify */
+                            hr = IKnownFolder_GetPath(folder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            todo_wine
+                            ok(lstrcmpiW(folderPath, sExample2Path)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExample2Path));
+                            CoTaskMemFree(folderPath);
+
+                            /* verify sub folder. Unexpectedly, this path was also changed. So, exclusion seems to be ignored (Windows bug)? This test however will let us know, if this behavior is changed */
+                            hr = IKnownFolder_GetPath(subFolder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            todo_wine
+                            ok(lstrcmpiW(folderPath, sSubFolder2Path)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sSubFolder2Path));
+                            CoTaskMemFree(folderPath);
+
+                            /* remove newly created directory */
+                            RemoveDirectoryW(sSubFolder2Path);
+
+
+                            /* set Example path to original */
+                            hr = IKnownFolder_SetPath(folder, 0, sExamplePath);
+                            ok(hr == S_OK, "SetPath() failed: 0x%08x\n", hr);
+
+                            /* verify */
+                            hr = IKnownFolder_GetPath(folder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            ok(lstrcmpiW(folderPath, sExamplePath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
+                            CoTaskMemFree(folderPath);
+
+                            /* verify sub folder */
+                            hr = IKnownFolder_GetPath(subFolder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            todo_wine
+                            ok(lstrcmpiW(folderPath, sSubFolderPath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sSubFolderPath));
+                            CoTaskMemFree(folderPath);
+
+
+                            /* do that same redirection again, but set it to copy content. It should also copy the sub folder, so checking it would succeed now */
+                            hr = IKnownFolderManager_Redirect(mgr, &newFolderId, NULL, KF_REDIRECT_COPY_CONTENTS, sExample2Path, 0, NULL, &errorMsg);
+                            todo_wine
+                            ok(hr == S_OK, "failed to redirect known folder: 0x%08x, errorMsg: %s\n", hr, wine_dbgstr_w(errorMsg));
+
+                            /* verify */
+                            hr = IKnownFolder_GetPath(folder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            todo_wine
+                            ok(lstrcmpiW(folderPath, sExample2Path)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExample2Path));
+                            CoTaskMemFree(folderPath);
+
+                            /* verify sub folder */
+                            hr = IKnownFolder_GetPath(subFolder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            todo_wine
+                            ok(lstrcmpiW(folderPath, sSubFolder2Path)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sSubFolder2Path));
+                            CoTaskMemFree(folderPath);
+
+                            /* remove copied directory */
+                            RemoveDirectoryW(sSubFolder2Path);
+
+
+                            /* set Example path to original */
+                            hr = IKnownFolder_SetPath(folder, 0, sExamplePath);
+                            ok(hr == S_OK, "SetPath() failed: 0x%08x\n", hr);
+
+                            /* verify */
+                            hr = IKnownFolder_GetPath(folder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            ok(lstrcmpiW(folderPath, sExamplePath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
+                            CoTaskMemFree(folderPath);
+
+                            /* verify sub folder */
+                            hr = IKnownFolder_GetPath(subFolder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            todo_wine
+                            ok(lstrcmpiW(folderPath, sSubFolderPath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sSubFolderPath));
+                            CoTaskMemFree(folderPath);
+
+
+                            /* redirect again, set it to copy content and remove originals */
+                            hr = IKnownFolderManager_Redirect(mgr, &newFolderId, NULL, KF_REDIRECT_COPY_CONTENTS | KF_REDIRECT_DEL_SOURCE_CONTENTS, sExample2Path, 0, NULL, &errorMsg);
+                            todo_wine
+                            ok(hr == S_OK, "failed to redirect known folder: 0x%08x, errorMsg: %s\n", hr, wine_dbgstr_w(errorMsg));
+
+                            /* verify */
+                            hr = IKnownFolder_GetPath(folder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            todo_wine
+                            ok(lstrcmpiW(folderPath, sExample2Path)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExample2Path));
+                            CoTaskMemFree(folderPath);
+
+                            /* verify sub folder */
+                            hr = IKnownFolder_GetPath(subFolder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            todo_wine
+                            ok(lstrcmpiW(folderPath, sSubFolder2Path)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sSubFolder2Path));
+                            CoTaskMemFree(folderPath);
+
+                            /* check if original directory was really removed */
+                            dwAttributes = GetFileAttributesW(sExamplePath);
+                            todo_wine
+                            ok(dwAttributes==INVALID_FILE_ATTRIBUTES, "directory should not exist, but has attributes: 0x%08x\n", dwAttributes );
+
+
+                            /* redirect (with copy) to original path */
+                            hr = IKnownFolderManager_Redirect(mgr, &newFolderId, NULL, KF_REDIRECT_COPY_CONTENTS,  sExamplePath, 0, NULL, &errorMsg);
+                            todo_wine
+                            ok(hr == S_OK, "failed to redirect known folder: 0x%08x, errorMsg: %s\n", hr, wine_dbgstr_w(errorMsg));
+
+                            /* verify */
+                            hr = IKnownFolder_GetPath(folder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            ok(lstrcmpiW(folderPath, sExamplePath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExamplePath));
+                            CoTaskMemFree(folderPath);
+
+                            /* verify sub folder */
+                            hr = IKnownFolder_GetPath(subFolder, 0, &folderPath);
+                            ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
+                            todo_wine
+                            ok(lstrcmpiW(folderPath, sSubFolderPath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sSubFolderPath));
+                            CoTaskMemFree(folderPath);
+
+                            /* check shell utility functions */
+                            if(!pSHGetKnownFolderPath || !pSHSetKnownFolderPath)
+                                todo_wine
+                                win_skip("cannot get SHGet/SetKnownFolderPath routines\n");
+                            else
+                            {
+                                /* try to get current known folder path */
+                                hr = pSHGetKnownFolderPath(&newFolderId, 0, NULL, &folderPath);
+                                todo_wine
+                                ok(hr==S_OK, "cannot get known folder path: hr=0x%0x\n", hr);
+                                todo_wine
+                                ok(lstrcmpW(folderPath, sExamplePath)==0, "invalid path returned: %s\n", wine_dbgstr_w(folderPath));
+
+                                /* set it to new value */
+                                hr = pSHSetKnownFolderPath(&newFolderId, 0, NULL, sExample2Path);
+                                todo_wine
+                                ok(hr==S_OK, "cannot set known folder path: hr=0x%0x\n", hr);
+
+                                /* check if it changed */
+                                hr = pSHGetKnownFolderPath(&newFolderId, 0, NULL, &folderPath);
+                                todo_wine
+                                ok(hr==S_OK, "cannot get known folder path: hr=0x%0x\n", hr);
+                                todo_wine
+                                ok(lstrcmpW(folderPath, sExample2Path)==0, "invalid path returned: %s\n", wine_dbgstr_w(folderPath));
+
+                                /* set it back */
+                                hr = pSHSetKnownFolderPath(&newFolderId, 0, NULL, sExamplePath);
+                                todo_wine
+                                ok(hr==S_OK, "cannot set known folder path: hr=0x%0x\n", hr);
+                            }
+
+                            IKnownFolder_Release(subFolder);
+                        }
+
+                        hr = IKnownFolderManager_UnregisterFolder(mgr, &subFolderId);
+                        ok(hr == S_OK, "failed to unregister folder: 0x%08x\n", hr);
                     }
+
+                    FreeKnownFolderDefinitionFields(&kfSubDefinition);
 
                     hr = IKnownFolder_Release(folder);
                     ok(hr == S_OK, "failed to release KnownFolder instance: 0x%08x\n", hr);
@@ -1242,6 +1487,8 @@ static void test_knownFolders(void)
         }
         FreeKnownFolderDefinitionFields(&kfDefinition);
 
+        RemoveDirectoryW(sSubFolder2Path);
+        RemoveDirectoryW(sSubFolderPath);
         RemoveDirectoryW(sExamplePath);
         RemoveDirectoryW(sExample2Path);
 
