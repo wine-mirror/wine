@@ -41,6 +41,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
+BOOLEAN KdDebuggerEnabled = FALSE;
+
 extern LONG CALLBACK vectored_handler( EXCEPTION_POINTERS *ptrs );
 
 KSYSTEM_TIME KeTickCount = { 0, 0, 0 };

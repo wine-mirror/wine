@@ -495,7 +495,7 @@
 @ stub IoWriteOperationCount
 @ stub IoWritePartitionTableEx
 @ stub IoWriteTransferCount
-@ stub KdDebuggerEnabled
+@ extern KdDebuggerEnabled
 @ stub KdDebuggerNotPresent
 @ stub KdDisableDebugger
 @ stub KdEnableDebugger
