@@ -563,8 +563,8 @@ void context_free_event_query(struct wined3d_event_query *query)
 
 typedef void (context_fbo_entry_func_t)(struct wined3d_context *context, struct fbo_entry *entry);
 
-static void context_enum_surface_fbo_entries(struct wined3d_device *device,
-        struct wined3d_surface *surface, context_fbo_entry_func_t *callback)
+static void context_enum_surface_fbo_entries(const struct wined3d_device *device,
+        const struct wined3d_surface *surface, context_fbo_entry_func_t *callback)
 {
     UINT i;
 
