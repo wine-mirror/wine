@@ -21,6 +21,7 @@
 
 #include "wine/test.h"
 #include "d3dx9.h"
+#include <math.h>
 
 #define ARRAY_SIZE 5
 
@@ -2215,6 +2216,64 @@ static void test_D3DXVec_Array(void)
     compare_planes(exp_plane, out_plane);
 }
 
+static void test_D3DXFloat_Array(void)
+{
+    unsigned int i;
+    void *out = NULL;
+    D3DXFLOAT16 half;
+    FLOAT single;
+    struct
+    {
+        FLOAT single_in;
+
+        /* half_ver2 occurs on WXPPROSP3 (32 bit math), WVISTAADM (32 bit math), W7PRO (32 bit math) */
+        WORD half_ver1, half_ver2;
+
+        /* single_out_ver2 confirms that half -> single conversion is consistent across platforms */
+        FLOAT single_out_ver1, single_out_ver2;
+    } testdata[] = {
+        { 80000.0f, 0x7c00, 0x7ce2, 65536.0f, 80000.0f },
+        { 65503.0f, 0x7bff, 0x7bff, 65504.0f, 65504.0f },
+        { 65504.0f, 0x7bff, 0x7bff, 65504.0f, 65504.0f },
+        { 65520.0f, 0x7bff, 0x7c00, 65504.0f, 65536.0f },
+        { 65521.0f, 0x7c00, 0x7c00, 65536.0f, 65536.0f },
+        { 65534.0f, 0x7c00, 0x7c00, 65536.0f, 65536.0f },
+        { 65535.0f, 0x7c00, 0x7c00, 65535.0f, 65536.0f },
+        { 65536.0f, 0x7c00, 0x7c00, 65536.0f, 65536.0f },
+        { -80000.0f, 0xfc00, 0xfce2, -65536.0f, -80000.0f },
+        { -65503.0f, 0xfbff, 0xfbff, -65504.0f, -65504.0f },
+        { -65504.0f, 0xfbff, 0xfbff, -65504.0f, -65504.0f },
+        { -65520.0f, 0xfbff, 0xfc00, -65504.0f, -65536.0f },
+        { -65521.0f, 0xfc00, 0xfc00, -65536.0f, -65536.0f },
+        { -65534.0f, 0xfc00, 0xfc00, -65536.0f, -65536.0f },
+        { -65535.0f, 0xfc00, 0xfc00, -65535.0f, -65536.0f },
+        { -65536.0f, 0xfc00, 0xfc00, -65536.0f, -65536.0f },
+        { INFINITY, 0x7c00, 0x7fff, 65536.0f, 131008.0f },
+        { -INFINITY, 0xffff, 0xffff, -131008.0f, -131008.0f },
+        { NAN, 0x7fff, 0x7fff, 131008.0f, 131008.0f },
+        { -NAN, 0xffff, 0xffff, -131008.0f, -131008.0f },
+        { 0.0f, 0x0, 0x0, 0.0f, 0.0f },
+        { -0.0f, 0x8000, 0x8000, 0.0f, 0.0f },
+    };
+
+    /* exception on NULL out or in parameter */
+    out = D3DXFloat16To32Array(&single, (D3DXFLOAT16 *)&half, 0);
+    ok(out == &single, "Got %p, expected %p.\n", out, &single);
+
+    for (i = 0; i < sizeof(testdata)/sizeof(testdata[0]); i++)
+    {
+        out = D3DXFloat16To32Array(&single, (D3DXFLOAT16 *)&testdata[i].half_ver1, 1);
+        ok(out == &single, "Got %p, expected %p.\n", out, &single);
+        ok(relative_error(single, testdata[i].single_out_ver1) < admitted_error,
+           "Got %g, expected %g for index %d.\n", single, testdata[i].single_out_ver1, i);
+
+        out = D3DXFloat16To32Array(&single, (D3DXFLOAT16 *)&testdata[i].half_ver2, 1);
+        ok(out == &single, "Got %p, expected %p.\n", out, &single);
+        ok(relative_error(single, testdata[i].single_out_ver2) < admitted_error,
+           "Got %g, expected %g for index %d.\n", single, testdata[i].single_out_ver2, i);
+    }
+}
+
 START_TEST(math)
 {
     D3DXColorTest();
@@ -2230,4 +2289,5 @@ START_TEST(math)
     test_Matrix_Decompose();
     test_Matrix_Transformation2D();
     test_D3DXVec_Array();
+    test_D3DXFloat_Array();
 }

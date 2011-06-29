@@ -1769,3 +1769,35 @@ D3DXVECTOR4* WINAPI D3DXVec4TransformArray(D3DXVECTOR4* out, UINT outstride, CON
     }
     return out;
 }
+
+/* Native d3dx9's D3DXFloat16to32Array lacks support for NaN and Inf. Specifically, e = 16 is treated as a
+ * regular number - e.g., 0x7fff is converted to 131008.0 and 0xffff to -131008.0. */
+static inline float float_16_to_32(const unsigned short in)
+{
+    const unsigned short s = (in & 0x8000);
+    const unsigned short e = (in & 0x7C00) >> 10;
+    const unsigned short m = in & 0x3FF;
+    const float sgn = (s ? -1.0f : 1.0f);
+
+    if (e == 0)
+    {
+        if (m == 0) return sgn * 0.0f; /* +0.0 or -0.0 */
+        else return sgn * powf(2, -14.0f) * (m / 1024.0f);
+    }
+    else
+    {
+        return sgn * powf(2, e - 15.0f) * (1.0f + (m / 1024.0f));
+    }
+}
+
+FLOAT *WINAPI D3DXFloat16To32Array(FLOAT *pout, CONST D3DXFLOAT16 *pin, UINT n)
+{
+    unsigned int i;
+
+    for (i = 0; i < n; ++i)
+    {
+        pout[i] = float_16_to_32(pin[i].value);
+    }
+
+    return pout;
+}
