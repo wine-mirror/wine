@@ -19,12 +19,53 @@
 #include "wine/test.h"
 #include "d3dx9.h"
 
+#define admitted_error 0.0001f
+
+#define relative_error(exp, out) ((exp == 0.0f) ? fabs(exp - out) : (fabs(1.0f - out/ exp) ))
+
+static inline BOOL compare_matrix(const D3DXMATRIX *m1, const D3DXMATRIX *m2)
+{
+    int i, j;
+
+    for (i = 0; i < 4; ++i)
+    {
+        for (j = 0; j < 4; ++j)
+        {
+            if (relative_error(U(*m1).m[i][j], U(*m2).m[i][j]) > admitted_error)
+                return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+#define expect_mat(expectedmat, gotmat) \
+do { \
+    const D3DXMATRIX *__m1 = (expectedmat); \
+    const D3DXMATRIX *__m2 = (gotmat); \
+    ok(compare_matrix(__m1, __m2), "Expected matrix=\n(%f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f\n)\n\n" \
+            "Got matrix=\n(%f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f)\n", \
+            U(*__m1).m[0][0], U(*__m1).m[0][1], U(*__m1).m[0][2], U(*__m1).m[0][3], \
+            U(*__m1).m[1][0], U(*__m1).m[1][1], U(*__m1).m[1][2], U(*__m1).m[1][3], \
+            U(*__m1).m[2][0], U(*__m1).m[2][1], U(*__m1).m[2][2], U(*__m1).m[2][3], \
+            U(*__m1).m[3][0], U(*__m1).m[3][1], U(*__m1).m[3][2], U(*__m1).m[3][3], \
+            U(*__m2).m[0][0], U(*__m2).m[0][1], U(*__m2).m[0][2], U(*__m2).m[0][3], \
+            U(*__m2).m[1][0], U(*__m2).m[1][1], U(*__m2).m[1][2], U(*__m2).m[1][3], \
+            U(*__m2).m[2][0], U(*__m2).m[2][1], U(*__m2).m[2][2], U(*__m2).m[2][3], \
+            U(*__m2).m[3][0], U(*__m2).m[3][1], U(*__m2).m[3][2], U(*__m2).m[3][3]); \
+} while(0)
+
 static void test_create_line(IDirect3DDevice9* device)
 {
     HRESULT hr;
     LPD3DXLINE line = NULL;
     LPDIRECT3DDEVICE9 return_device;
+    D3DXMATRIX world, identity, result;
+    FLOAT r11, r12, r13, r14;
     ULONG ref;
+
+    /* Arbitrary values for matrix tests. */
+    r11 = 0.1421; r12 = 0.2114; r13 = 0.8027; r14 = 0.4587;
 
     hr = D3DXCreateLine(NULL, &line);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
@@ -46,6 +87,27 @@ static void test_create_line(IDirect3DDevice9* device)
     hr = ID3DXLine_GetDevice(line, &return_device);
     ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
     ok(return_device == device, "Expected line device %p, got %p\n", device, return_device);
+
+    D3DXMatrixIdentity(&world);
+    D3DXMatrixIdentity(&identity);
+    world._11 = r11; world._12 = r12; world._13 = r13; world._14 = r14;
+
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, &world);
+    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+
+    hr = ID3DXLine_Begin(line);
+    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+
+    hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLD, &result);
+    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    expect_mat(&identity, &result);
+
+    hr = ID3DXLine_End(line);
+    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+
+    hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLD, &result);
+    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    expect_mat(&world, &result);
 
     ref = IDirect3DDevice9_Release(return_device);
     ok(ref == 2, "Got %x references to device %p, expected 2\n", ref, return_device);
