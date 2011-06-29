@@ -162,7 +162,7 @@ typedef struct _IFilterGraphImpl {
     IMediaFilter IMediaFilter_iface;
     IMediaEventSink IMediaEventSink_iface;
     IGraphConfig IGraphConfig_iface;
-    const IMediaPositionVtbl *IMediaPosition_vtbl;
+    IMediaPosition IMediaPosition_iface;
     const IUnknownVtbl * IInner_vtbl;
     /* IAMGraphStreams */
     /* IAMStats */
@@ -262,7 +262,7 @@ static HRESULT WINAPI FilterGraphInner_QueryInterface(IUnknown * iface,
         *ppvObj = &This->IGraphConfig_iface;
         TRACE("   returning IGraphConfig interface (%p)\n", *ppvObj);
     } else if (IsEqualGUID(&IID_IMediaPosition, riid)) {
-        *ppvObj = &(This->IMediaPosition_vtbl);
+        *ppvObj = &This->IMediaPosition_iface;
         TRACE("   returning IMediaPosition interface (%p)\n", *ppvObj);
     } else if (IsEqualGUID(&IID_IFilterMapper, riid)) {
         TRACE("   requesting IFilterMapper interface from aggregated filtermapper (%p)\n", *ppvObj);
@@ -2570,9 +2570,9 @@ static const IMediaSeekingVtbl IMediaSeeking_VTable =
     MediaSeeking_GetPreroll
 };
 
-static inline IFilterGraphImpl *impl_from_IMediaPosition( IMediaPosition *iface )
+static inline IFilterGraphImpl *impl_from_IMediaPosition(IMediaPosition *iface)
 {
-    return (IFilterGraphImpl *)((char*)iface - FIELD_OFFSET(IFilterGraphImpl, IMediaPosition_vtbl));
+    return CONTAINING_RECORD(iface, IFilterGraphImpl, IMediaPosition_iface);
 }
 
 /*** IUnknown methods ***/
@@ -5459,7 +5459,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     fimpl->IMediaFilter_iface.lpVtbl = &IMediaFilter_VTable;
     fimpl->IMediaEventSink_iface.lpVtbl = &IMediaEventSink_VTable;
     fimpl->IGraphConfig_iface.lpVtbl = &IGraphConfig_VTable;
-    fimpl->IMediaPosition_vtbl = &IMediaPosition_VTable;
+    fimpl->IMediaPosition_iface.lpVtbl = &IMediaPosition_VTable;
     fimpl->ref = 1;
     fimpl->ppFiltersInGraph = NULL;
     fimpl->pFilterNames = NULL;
