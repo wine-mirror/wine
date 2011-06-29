@@ -155,7 +155,7 @@ typedef struct _IFilterGraphImpl {
     IFilterGraph2 IFilterGraph2_iface;
     IMediaControl IMediaControl_iface;
     IMediaSeeking IMediaSeeking_iface;
-    const IBasicAudioVtbl *IBasicAudio_vtbl;
+    IBasicAudio IBasicAudio_iface;
     const IBasicVideo2Vtbl *IBasicVideo_vtbl;
     const IVideoWindowVtbl *IVideoWindow_vtbl;
     const IMediaEventExVtbl *IMediaEventEx_vtbl;
@@ -238,7 +238,7 @@ static HRESULT WINAPI FilterGraphInner_QueryInterface(IUnknown * iface,
         *ppvObj = &This->IMediaSeeking_iface;
         TRACE("   returning IMediaSeeking interface (%p)\n", *ppvObj);
     } else if (IsEqualGUID(&IID_IBasicAudio, riid)) {
-        *ppvObj = &(This->IBasicAudio_vtbl);
+        *ppvObj = &This->IBasicAudio_iface;
         TRACE("   returning IBasicAudio interface (%p)\n", *ppvObj);
     } else if (IsEqualGUID(&IID_IBasicVideo, riid) ||
                IsEqualGUID(&IID_IBasicVideo2, riid)) {
@@ -2767,27 +2767,32 @@ static HRESULT GetTargetInterface(IFilterGraphImpl* pGraph, REFIID riid, LPVOID*
     return hr;
 }
 
-/*** IUnknown methods ***/
-static HRESULT WINAPI BasicAudio_QueryInterface(IBasicAudio *iface,
-						REFIID riid,
-						LPVOID*ppvObj) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
+static inline IFilterGraphImpl *impl_from_IBasicAudio(IBasicAudio *iface)
+{
+    return CONTAINING_RECORD(iface, IFilterGraphImpl, IBasicAudio_iface);
+}
+
+static HRESULT WINAPI BasicAudio_QueryInterface(IBasicAudio *iface, REFIID riid, void **ppvObj)
+{
+    IFilterGraphImpl *This = impl_from_IBasicAudio(iface);
 
     TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
 
     return Filtergraph_QueryInterface(This, riid, ppvObj);
 }
 
-static ULONG WINAPI BasicAudio_AddRef(IBasicAudio *iface) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
+static ULONG WINAPI BasicAudio_AddRef(IBasicAudio *iface)
+{
+    IFilterGraphImpl *This = impl_from_IBasicAudio(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
 
     return Filtergraph_AddRef(This);
 }
 
-static ULONG WINAPI BasicAudio_Release(IBasicAudio *iface) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
+static ULONG WINAPI BasicAudio_Release(IBasicAudio *iface)
+{
+    IFilterGraphImpl *This = impl_from_IBasicAudio(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -2795,9 +2800,9 @@ static ULONG WINAPI BasicAudio_Release(IBasicAudio *iface) {
 }
 
 /*** IDispatch methods ***/
-static HRESULT WINAPI BasicAudio_GetTypeInfoCount(IBasicAudio *iface,
-						  UINT*pctinfo) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
+static HRESULT WINAPI BasicAudio_GetTypeInfoCount(IBasicAudio *iface, UINT *pctinfo)
+{
+    IFilterGraphImpl *This = impl_from_IBasicAudio(iface);
     IBasicAudio* pBasicAudio;
     HRESULT hr;
 
@@ -2815,11 +2820,10 @@ static HRESULT WINAPI BasicAudio_GetTypeInfoCount(IBasicAudio *iface,
     return hr;
 }
 
-static HRESULT WINAPI BasicAudio_GetTypeInfo(IBasicAudio *iface,
-					     UINT iTInfo,
-					     LCID lcid,
-					     ITypeInfo**ppTInfo) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
+static HRESULT WINAPI BasicAudio_GetTypeInfo(IBasicAudio *iface, UINT iTInfo, LCID lcid,
+        ITypeInfo **ppTInfo)
+{
+    IFilterGraphImpl *This = impl_from_IBasicAudio(iface);
     IBasicAudio* pBasicAudio;
     HRESULT hr;
 
@@ -2837,13 +2841,10 @@ static HRESULT WINAPI BasicAudio_GetTypeInfo(IBasicAudio *iface,
     return hr;
 }
 
-static HRESULT WINAPI BasicAudio_GetIDsOfNames(IBasicAudio *iface,
-					       REFIID riid,
-					       LPOLESTR*rgszNames,
-					       UINT cNames,
-					       LCID lcid,
-					       DISPID*rgDispId) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
+static HRESULT WINAPI BasicAudio_GetIDsOfNames(IBasicAudio *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    IFilterGraphImpl *This = impl_from_IBasicAudio(iface);
     IBasicAudio* pBasicAudio;
     HRESULT hr;
 
@@ -2861,16 +2862,11 @@ static HRESULT WINAPI BasicAudio_GetIDsOfNames(IBasicAudio *iface,
     return hr;
 }
 
-static HRESULT WINAPI BasicAudio_Invoke(IBasicAudio *iface,
-					DISPID dispIdMember,
-					REFIID riid,
-					LCID lcid,
-					WORD wFlags,
-					DISPPARAMS*pDispParams,
-					VARIANT*pVarResult,
-					EXCEPINFO*pExepInfo,
-					UINT*puArgErr) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
+static HRESULT WINAPI BasicAudio_Invoke(IBasicAudio *iface, DISPID dispIdMember, REFIID riid,
+        LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExepInfo,
+        UINT *puArgErr)
+{
+    IFilterGraphImpl *This = impl_from_IBasicAudio(iface);
     IBasicAudio* pBasicAudio;
     HRESULT hr;
 
@@ -2889,9 +2885,9 @@ static HRESULT WINAPI BasicAudio_Invoke(IBasicAudio *iface,
 }
 
 /*** IBasicAudio methods ***/
-static HRESULT WINAPI BasicAudio_put_Volume(IBasicAudio *iface,
-                                            LONG lVolume) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
+static HRESULT WINAPI BasicAudio_put_Volume(IBasicAudio *iface, LONG lVolume)
+{
+    IFilterGraphImpl *This = impl_from_IBasicAudio(iface);
     IBasicAudio* pBasicAudio;
     HRESULT hr;
 
@@ -2909,9 +2905,9 @@ static HRESULT WINAPI BasicAudio_put_Volume(IBasicAudio *iface,
     return hr;
 }
 
-static HRESULT WINAPI BasicAudio_get_Volume(IBasicAudio *iface,
-                                            LONG *plVolume) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
+static HRESULT WINAPI BasicAudio_get_Volume(IBasicAudio *iface, LONG *plVolume)
+{
+    IFilterGraphImpl *This = impl_from_IBasicAudio(iface);
     IBasicAudio* pBasicAudio;
     HRESULT hr;
 
@@ -2929,9 +2925,9 @@ static HRESULT WINAPI BasicAudio_get_Volume(IBasicAudio *iface,
     return hr;
 }
 
-static HRESULT WINAPI BasicAudio_put_Balance(IBasicAudio *iface,
-                                             LONG lBalance) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
+static HRESULT WINAPI BasicAudio_put_Balance(IBasicAudio *iface, LONG lBalance)
+{
+    IFilterGraphImpl *This = impl_from_IBasicAudio(iface);
     IBasicAudio* pBasicAudio;
     HRESULT hr;
 
@@ -2949,9 +2945,9 @@ static HRESULT WINAPI BasicAudio_put_Balance(IBasicAudio *iface,
     return hr;
 }
 
-static HRESULT WINAPI BasicAudio_get_Balance(IBasicAudio *iface,
-                                             LONG *plBalance) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IBasicAudio_vtbl, iface);
+static HRESULT WINAPI BasicAudio_get_Balance(IBasicAudio *iface, LONG *plBalance)
+{
+    IFilterGraphImpl *This = impl_from_IBasicAudio(iface);
     IBasicAudio* pBasicAudio;
     HRESULT hr;
 
@@ -5479,7 +5475,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     fimpl->IFilterGraph2_iface.lpVtbl = &IFilterGraph2_VTable;
     fimpl->IMediaControl_iface.lpVtbl = &IMediaControl_VTable;
     fimpl->IMediaSeeking_iface.lpVtbl = &IMediaSeeking_VTable;
-    fimpl->IBasicAudio_vtbl = &IBasicAudio_VTable;
+    fimpl->IBasicAudio_iface.lpVtbl = &IBasicAudio_VTable;
     fimpl->IBasicVideo_vtbl = &IBasicVideo_VTable;
     fimpl->IVideoWindow_vtbl = &IVideoWindow_VTable;
     fimpl->IMediaEventEx_vtbl = &IMediaEventEx_VTable;
