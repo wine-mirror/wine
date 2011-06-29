@@ -118,3 +118,5 @@ interface ID3D10Device1 : ID3D10Device
 
     D3D10_FEATURE_LEVEL1 GetFeatureLevel();
 }
+
+const UINT D3D10_1_SDK_VERSION = 0x20;
