@@ -268,7 +268,7 @@ void context_check_fbo_status(struct wined3d_context *context, GLenum target)
     }
 }
 
-static struct fbo_entry *context_create_fbo_entry(struct wined3d_context *context,
+static struct fbo_entry *context_create_fbo_entry(const struct wined3d_context *context,
         struct wined3d_surface **render_targets, struct wined3d_surface *depth_stencil, DWORD location)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
