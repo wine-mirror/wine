@@ -459,6 +459,16 @@ typedef enum D3D10_USAGE {
     D3D10_USAGE_STAGING,
 } D3D10_USAGE;
 
+typedef enum D3D10_BIND_FLAG {
+    D3D10_BIND_VERTEX_BUFFER   = 0x1,
+    D3D10_BIND_INDEX_BUFFER    = 0x2,
+    D3D10_BIND_CONSTANT_BUFFER = 0x4,
+    D3D10_BIND_SHADER_RESOURCE = 0x8,
+    D3D10_BIND_STREAM_OUTPUT   = 0x10,
+    D3D10_BIND_RENDER_TARGET   = 0x20,
+    D3D10_BIND_DEPTH_STENCIL   = 0x40
+} D3D10_BIND_FLAG;
+
 typedef struct D3D10_BUFFER_DESC {
     UINT ByteWidth;
     D3D10_USAGE Usage;
@@ -466,6 +476,24 @@ typedef struct D3D10_BUFFER_DESC {
     UINT CPUAccessFlags;
     UINT MiscFlags;
 } D3D10_BUFFER_DESC;
+
+cpp_quote("#if !defined(D3D10_NO_HELPERS) && defined(__cplusplus)")
+cpp_quote("struct CD3D10_BUFFER_DESC : public D3D10_BUFFER_DESC {")
+cpp_quote("    CD3D10_BUFFER_DESC() {}" )
+cpp_quote("    explicit CD3D10_BUFFER_DESC(const D3D10_BUFFER_DESC &o) : D3D10_BUFFER_DESC(o) {}")
+cpp_quote("    explicit CD3D10_BUFFER_DESC(UINT byteWidth, UINT bindFlags, D3D10_USAGE usage = D3D10_USAGE_DEFAULT, UINT cpuaccessFlags = 0, UINT miscFlags = 0 ) {")
+cpp_quote("        ByteWidth = byteWidth;")
+cpp_quote("        Usage = usage;")
+cpp_quote("        BindFlags = bindFlags;")
+cpp_quote("        CPUAccessFlags = cpuaccessFlags;")
+cpp_quote("        MiscFlags = miscFlags;")
+cpp_quote("    }")
+cpp_quote("    ~CD3D10_BUFFER_DESC() {}")
+cpp_quote("    operator const D3D10_BUFFER_DESC&() const {")
+cpp_quote("        return *this;")
+cpp_quote("    }")
+cpp_quote("};")
+cpp_quote("#endif")
 
 typedef enum D3D10_MAP {
     D3D10_MAP_READ = 1,
@@ -498,6 +526,38 @@ typedef struct D3D10_TEXTURE2D_DESC {
     UINT CPUAccessFlags;
     UINT MiscFlags;
 } D3D10_TEXTURE2D_DESC;
+
+cpp_quote("#if !defined(D3D10_NO_HELPERS) && defined(__cplusplus)")
+cpp_quote("struct CD3D10_TEXTURE2D_DESC : public D3D10_TEXTURE2D_DESC {")
+cpp_quote("    CD3D10_TEXTURE2D_DESC() {}" )
+cpp_quote("    explicit CD3D10_TEXTURE2D_DESC(const D3D10_TEXTURE2D_DESC &o) : D3D10_TEXTURE2D_DESC(o) {}")
+cpp_quote("    explicit CD3D10_TEXTURE2D_DESC(DXGI_FORMAT format, UINT width, UINT height,")
+cpp_quote("            UINT arraySize = 1,")
+cpp_quote("            UINT mipLevels = 0,")
+cpp_quote("            UINT bindFlags = D3D10_BIND_SHADER_RESOURCE,")
+cpp_quote("            D3D10_USAGE usage = D3D10_USAGE_DEFAULT,")
+cpp_quote("            UINT cpuaccessFlags = 0,")
+cpp_quote("            UINT sampleCount = 1,")
+cpp_quote("            UINT sampleQuality = 0,")
+cpp_quote("            UINT miscFlags = 0) {")
+cpp_quote("        Width = width;" )
+cpp_quote("        Height = height;" )
+cpp_quote("        MipLevels = mipLevels;" )
+cpp_quote("        ArraySize = arraySize;" )
+cpp_quote("        Format = format;" )
+cpp_quote("        SampleDesc.Count = sampleCount;" )
+cpp_quote("        SampleDesc.Quality = sampleQuality;" )
+cpp_quote("        Usage = usage;" )
+cpp_quote("        BindFlags = bindFlags;" )
+cpp_quote("        CPUAccessFlags = cpuaccessFlags;" )
+cpp_quote("        MiscFlags = miscFlags;" )
+cpp_quote("    }")
+cpp_quote("    ~CD3D10_TEXTURE2D_DESC() {}")
+cpp_quote("    operator const D3D10_TEXTURE2D_DESC&() const {")
+cpp_quote("        return *this;")
+cpp_quote("    }")
+cpp_quote("};")
+cpp_quote("#endif")
 
 typedef struct D3D10_TEXTURE3D_DESC {
     UINT Width;
@@ -776,16 +836,6 @@ typedef struct D3D10_MAPPED_TEXTURE3D {
     UINT RowPitch;
     UINT DepthPitch;
 } D3D10_MAPPED_TEXTURE3D;
-
-typedef enum D3D10_BIND_FLAG {
-    D3D10_BIND_VERTEX_BUFFER   = 0x1,
-    D3D10_BIND_INDEX_BUFFER    = 0x2,
-    D3D10_BIND_CONSTANT_BUFFER = 0x4,
-    D3D10_BIND_SHADER_RESOURCE = 0x8,
-    D3D10_BIND_STREAM_OUTPUT   = 0x10,
-    D3D10_BIND_RENDER_TARGET   = 0x20,
-    D3D10_BIND_DEPTH_STENCIL   = 0x40
-} D3D10_BIND_FLAG;
 
 typedef enum D3D10_CPU_ACCESS_FLAG {
     D3D10_CPU_ACCESS_WRITE = 0x10000,
