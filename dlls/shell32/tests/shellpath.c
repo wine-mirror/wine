@@ -1232,7 +1232,6 @@ static void test_knownFolders(void)
 
                             /* try to redirect Example to Temp\Example2  */
                             hr = IKnownFolderManager_Redirect(mgr, &newFolderId, NULL, 0, sExample2Path, 0, NULL, &errorMsg);
-                            todo_wine
                             ok(hr == S_OK, "failed to redirect known folder: 0x%08x, errorMsg: %s\n", hr, wine_dbgstr_w(errorMsg));
 
                             /* verify */
@@ -1268,7 +1267,6 @@ static void test_knownFolders(void)
 
                             /* again perform that same redirection */
                             hr = IKnownFolderManager_Redirect(mgr, &newFolderId, NULL, 0, sExample2Path, 0, NULL, &errorMsg);
-                            todo_wine
                             ok(hr == S_OK, "failed to redirect known folder: 0x%08x, errorMsg: %s\n", hr, wine_dbgstr_w(errorMsg));
 
                             /* verify sub folder. It should succeed now, as the required sub folder exists */
@@ -1312,7 +1310,6 @@ static void test_knownFolders(void)
 
                             /* do that same redirection, but try to exclude sub-folder */
                             hr = IKnownFolderManager_Redirect(mgr, &newFolderId, NULL, 0, sExample2Path, 1, &subFolderId, &errorMsg);
-                            todo_wine
                             ok(hr == S_OK, "failed to redirect known folder: 0x%08x, errorMsg: %s\n", hr, wine_dbgstr_w(errorMsg));
 
                             /* verify */
@@ -1352,7 +1349,6 @@ static void test_knownFolders(void)
 
                             /* do that same redirection again, but set it to copy content. It should also copy the sub folder, so checking it would succeed now */
                             hr = IKnownFolderManager_Redirect(mgr, &newFolderId, NULL, KF_REDIRECT_COPY_CONTENTS, sExample2Path, 0, NULL, &errorMsg);
-                            todo_wine
                             ok(hr == S_OK, "failed to redirect known folder: 0x%08x, errorMsg: %s\n", hr, wine_dbgstr_w(errorMsg));
 
                             /* verify */
@@ -1392,7 +1388,6 @@ static void test_knownFolders(void)
 
                             /* redirect again, set it to copy content and remove originals */
                             hr = IKnownFolderManager_Redirect(mgr, &newFolderId, NULL, KF_REDIRECT_COPY_CONTENTS | KF_REDIRECT_DEL_SOURCE_CONTENTS, sExample2Path, 0, NULL, &errorMsg);
-                            todo_wine
                             ok(hr == S_OK, "failed to redirect known folder: 0x%08x, errorMsg: %s\n", hr, wine_dbgstr_w(errorMsg));
 
                             /* verify */
@@ -1417,7 +1412,6 @@ static void test_knownFolders(void)
 
                             /* redirect (with copy) to original path */
                             hr = IKnownFolderManager_Redirect(mgr, &newFolderId, NULL, KF_REDIRECT_COPY_CONTENTS,  sExamplePath, 0, NULL, &errorMsg);
-                            todo_wine
                             ok(hr == S_OK, "failed to redirect known folder: 0x%08x, errorMsg: %s\n", hr, wine_dbgstr_w(errorMsg));
 
                             /* verify */

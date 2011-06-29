@@ -817,6 +817,7 @@ static const WCHAR szSHFolders[] = {'S','o','f','t','w','a','r','e','\\','M','i'
 static const WCHAR szSHUserFolders[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l','o','r','e','r','\\','U','s','e','r',' ','S','h','e','l','l',' ','F','o','l','d','e','r','s','\0'};
 static const WCHAR szDefaultProfileDirW[] = {'u','s','e','r','s',0};
 static const WCHAR szKnownFolderDescriptions[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l','o','r','e','r','\\','F','o','l','d','e','r','D','e','s','c','r','i','p','t','i','o','n','s','\0'};
+static const WCHAR szKnownFolderRedirections[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l','o','r','e','r','\\','U','s','e','r',' ','S','h','e','l','l',' ','F','o','l','d','e','r','s',0};
 static const WCHAR AllUsersW[] = {'P','u','b','l','i','c',0};
 
 typedef enum _CSIDL_Type {
@@ -3124,6 +3125,88 @@ static HRESULT get_known_folder_registry_path(
     return hr;
 }
 
+/*
+ * Internal function to get place where folder redirection information are stored.
+ *
+ * Parameters:
+ *  rfid            [I] pointer to known folder identifier (may be NULL)
+ *  rootKey         [O] root key where the redirection information are stored
+ *                      It can be HKLM for COMMON folders, and HKCU for PERUSER folders.
+ *                      However, besides root key, path is always that same, and is stored
+ *                      as "szKnownFolderRedirections" constant
+ */
+static HRESULT WINAPI get_known_folder_redirection_place(
+    REFKNOWNFOLDERID rfid,
+    HKEY *rootKey)
+{
+    HRESULT hr;
+    LPWSTR lpRegistryPath = NULL;
+    KF_CATEGORY category;
+    DWORD dwSize;
+
+    /* first, get known folder's category */
+    hr = get_known_folder_registry_path(rfid, NULL, &lpRegistryPath);
+
+    if(SUCCEEDED(hr))
+    {
+        dwSize = sizeof(category);
+        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, lpRegistryPath, szCategory, RRF_RT_DWORD, NULL, &category, &dwSize));
+    }
+
+    if(SUCCEEDED(hr))
+    {
+        if(category == KF_CATEGORY_COMMON)
+        {
+            *rootKey = HKEY_LOCAL_MACHINE;
+            hr = S_OK;
+        }
+        else if(category == KF_CATEGORY_PERUSER)
+        {
+            *rootKey = HKEY_CURRENT_USER;
+            hr = S_OK;
+        }
+        else
+            hr = E_FAIL;
+    }
+
+    HeapFree(GetProcessHeap(), 0, lpRegistryPath);
+    return hr;
+}
+
+static HRESULT WINAPI redirect_known_folder(
+    REFKNOWNFOLDERID rfid,
+    HWND hwnd,
+    KF_REDIRECT_FLAGS flags,
+    LPCWSTR pszTargetPath,
+    UINT cFolders,
+    KNOWNFOLDERID const *pExclusion,
+    LPWSTR *ppszError)
+{
+    HRESULT hr;
+    HKEY rootKey = HKEY_LOCAL_MACHINE, hKey;
+    WCHAR sGuid[39];
+    TRACE("(%s, %p, 0x%08x, %s, %d, %p, %p)\n", debugstr_guid(rfid), hwnd, flags, debugstr_w(pszTargetPath), cFolders, pExclusion, ppszError);
+
+    /* get path to redirection storage */
+    hr = get_known_folder_redirection_place(rfid, &rootKey);
+
+    /* write redirection information */
+    if(SUCCEEDED(hr))
+        hr = HRESULT_FROM_WIN32(RegCreateKeyExW(rootKey, szKnownFolderRedirections, 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL));
+
+    if(SUCCEEDED(hr))
+    {
+        StringFromGUID2(rfid, sGuid, sizeof(sGuid)/sizeof(sGuid[0]));
+
+        hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, sGuid, 0, REG_SZ, (LPBYTE)pszTargetPath, (lstrlenW(pszTargetPath)+1)*sizeof(WCHAR)));
+
+        RegCloseKey(hKey);
+    }
+
+    return hr;
+}
+
+
 struct knownfolder
 {
     const struct IKnownFolderVtbl *vtbl;
@@ -3681,9 +3764,7 @@ static HRESULT WINAPI foldermanager_Redirect(
     KNOWNFOLDERID const *pExclusion,
     LPWSTR *ppszError)
 {
-    FIXME("%p, %p, 0x%08x, %s, %u, %p, %p\n", rfid, hwnd, flags,
-          debugstr_w(pszTargetPath), cFolders, pExclusion, ppszError);
-    return E_NOTIMPL;
+    return redirect_known_folder(rfid, hwnd, flags, pszTargetPath, cFolders, pExclusion, ppszError);
 }
 
 static const struct IKnownFolderManagerVtbl foldermanager_vtbl =
