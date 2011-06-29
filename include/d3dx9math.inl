@@ -851,6 +851,37 @@ inline BOOL D3DXCOLOR::operator != (CONST D3DXCOLOR& col) const
     return r != col.r || g != col.g || b != col.b || a != col.a;
 }
 
+inline D3DXFLOAT16::D3DXFLOAT16()
+{
+}
+
+inline D3DXFLOAT16::D3DXFLOAT16(FLOAT f)
+{
+    D3DXFloat32To16Array(this, &f, 1);
+}
+
+inline D3DXFLOAT16::D3DXFLOAT16(CONST D3DXFLOAT16 &f)
+{
+    value = f.value;
+}
+
+inline D3DXFLOAT16::operator FLOAT ()
+{
+    FLOAT f;
+    D3DXFloat16To32Array(&f, this, 1);
+    return f;
+}
+
+inline BOOL D3DXFLOAT16::operator == (CONST D3DXFLOAT16 &f) const
+{
+    return value == f.value;
+}
+
+inline BOOL D3DXFLOAT16::operator != (CONST D3DXFLOAT16 &f) const
+{
+    return value != f.value;
+}
+
 #endif /* __cplusplus */
 
 /*_______________D3DXCOLOR_____________________*/

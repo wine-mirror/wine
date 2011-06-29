@@ -261,6 +261,21 @@ typedef struct D3DXCOLOR
     FLOAT r, g, b, a;
 } D3DXCOLOR, *LPD3DXCOLOR;
 
+typedef struct D3DXFLOAT16
+{
+#ifdef __cplusplus
+    D3DXFLOAT16();
+    D3DXFLOAT16(FLOAT f);
+    D3DXFLOAT16(CONST D3DXFLOAT16 &f);
+
+    operator FLOAT ();
+
+    BOOL operator == (CONST D3DXFLOAT16 &) const;
+    BOOL operator != (CONST D3DXFLOAT16 &) const;
+#endif /* __cplusplus */
+    WORD value;
+} D3DXFLOAT16, *LPD3DXFLOAT16;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -356,6 +371,9 @@ D3DXVECTOR4* WINAPI D3DXVec4Hermite(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv1, C
 D3DXVECTOR4* WINAPI D3DXVec4Normalize(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv);
 D3DXVECTOR4* WINAPI D3DXVec4Transform(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv, CONST D3DXMATRIX *pm);
 D3DXVECTOR4* WINAPI D3DXVec4TransformArray(D3DXVECTOR4 *pout, UINT outstride, CONST D3DXVECTOR4 *pv, UINT vstride, CONST D3DXMATRIX *pm, UINT n);
+
+D3DXFLOAT16 *WINAPI D3DXFloat32To16Array(D3DXFLOAT16 *pout, CONST FLOAT *pin, UINT n);
+FLOAT *WINAPI D3DXFloat16To32Array(FLOAT *pout, CONST D3DXFLOAT16 *pin, UINT n);
 
 #ifdef __cplusplus
 }
