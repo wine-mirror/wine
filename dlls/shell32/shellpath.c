@@ -3340,6 +3340,7 @@ static HRESULT WINAPI knownfolder_GetShellItem(
 }
 
 static HRESULT get_known_folder_path(
+    LPWSTR sFolderId,
     LPWSTR registryPath,
     LPWSTR *ppszPath)
 {
@@ -3348,9 +3349,12 @@ static HRESULT get_known_folder_path(
     DWORD dwSize, dwType;
     WCHAR path[MAX_PATH] = {0};
     WCHAR parentGuid[39];
+    KF_CATEGORY category;
     LPWSTR parentRegistryPath, parentPath;
+    HKEY hRedirectionRootKey = NULL;
 
     TRACE("(%s, %p)\n", debugstr_w(registryPath), ppszPath);
+    *ppszPath = NULL;
 
     /* check if folder has parent */
     dwSize = sizeof(parentGuid);
@@ -3362,7 +3366,7 @@ static HRESULT get_known_folder_path(
         /* get parent's known folder path (recursive) */
         get_known_folder_registry_path(NULL, parentGuid, &parentRegistryPath);
 
-        hr = get_known_folder_path(parentRegistryPath, &parentPath);
+        hr = get_known_folder_path(parentGuid, parentRegistryPath, &parentPath);
 
         lstrcatW(path, parentPath);
         lstrcatW(path, sBackslash);
@@ -3371,20 +3375,51 @@ static HRESULT get_known_folder_path(
         HeapFree(GetProcessHeap(), 0, parentPath);
     }
 
-    /* read the relative path from registry */
+    /* check, if folder was redirected */
     if(SUCCEEDED(hr))
-        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, registryPath, szRelativePath, RRF_RT_REG_SZ, &dwType, NULL, &dwSize));
+        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, registryPath, szCategory, RRF_RT_REG_DWORD, NULL, &category, &dwSize));
 
     if(SUCCEEDED(hr))
     {
-        *ppszPath = CoTaskMemAlloc(dwSize+(lstrlenW(path)+1)*sizeof(WCHAR));
-        if(!*ppszPath) hr = E_OUTOFMEMORY;
-    }
+        if(category == KF_CATEGORY_COMMON)
+            hRedirectionRootKey = HKEY_LOCAL_MACHINE;
+        else if(category == KF_CATEGORY_PERUSER)
+            hRedirectionRootKey = HKEY_CURRENT_USER;
 
-    if(SUCCEEDED(hr))
-    {
-        lstrcpyW(*ppszPath, path);
-        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, registryPath, szRelativePath, RRF_RT_REG_SZ, &dwType, *ppszPath + lstrlenW(path), &dwSize));
+        if(hRedirectionRootKey)
+        {
+            hr = HRESULT_FROM_WIN32(RegGetValueW(hRedirectionRootKey, szKnownFolderRedirections, sFolderId, RRF_RT_REG_SZ, NULL, NULL, &dwSize));
+
+            if(SUCCEEDED(hr))
+            {
+                *ppszPath = CoTaskMemAlloc(dwSize+(lstrlenW(path)+1)*sizeof(WCHAR));
+                if(!*ppszPath) hr = E_OUTOFMEMORY;
+            }
+
+            if(SUCCEEDED(hr))
+            {
+                lstrcpyW(*ppszPath, path);
+                hr = HRESULT_FROM_WIN32(RegGetValueW(hRedirectionRootKey, szKnownFolderRedirections, sFolderId, RRF_RT_REG_SZ, NULL, *ppszPath + lstrlenW(path), &dwSize));
+            }
+        }
+
+        if(!*ppszPath)
+        {
+            /* no redirection, use previous way - read the relative path from folder definition */
+            hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, registryPath, szRelativePath, RRF_RT_REG_SZ, &dwType, NULL, &dwSize));
+
+            if(SUCCEEDED(hr))
+            {
+                *ppszPath = CoTaskMemAlloc(dwSize+(lstrlenW(path)+1)*sizeof(WCHAR));
+                if(!*ppszPath) hr = E_OUTOFMEMORY;
+            }
+
+            if(SUCCEEDED(hr))
+            {
+                lstrcpyW(*ppszPath, path);
+                hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, registryPath, szRelativePath, RRF_RT_REG_SZ, &dwType, *ppszPath + lstrlenW(path), &dwSize));
+            }
+        }
     }
 
     TRACE("returning path: %s\n", debugstr_w(*ppszPath));
@@ -3398,13 +3433,16 @@ static HRESULT WINAPI knownfolder_GetPath(
 {
     struct knownfolder *knownfolder = impl_from_IKnownFolder( iface );
     HRESULT hr;
+    WCHAR sGuid[39];
 
     TRACE("(%p, 0x%08x, %p)\n", knownfolder, dwFlags, ppszPath);
 
     /* if this is registry-registered known folder, get path from registry */
     if(knownfolder->registryPath)
     {
-        hr = get_known_folder_path(knownfolder->registryPath, ppszPath);
+        StringFromGUID2(&knownfolder->id, sGuid, sizeof(sGuid)/sizeof(sGuid[0]));
+
+        hr = get_known_folder_path(sGuid, knownfolder->registryPath, ppszPath);
     }
     /* in other case, use older way */
     else
