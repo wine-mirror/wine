@@ -3315,7 +3315,8 @@ static HRESULT WINAPI knownfolder_GetCategory(
 {
     struct knownfolder *knownfolder = impl_from_IKnownFolder(iface);
     HRESULT hr = S_OK;
-    DWORD dwSize, dwType;
+    DWORD dwSize = sizeof(DWORD);
+    DWORD dwType;
 
     TRACE("%p, %p\n", knownfolder, pCategory);
 
