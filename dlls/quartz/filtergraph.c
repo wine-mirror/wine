@@ -158,7 +158,7 @@ typedef struct _IFilterGraphImpl {
     IBasicAudio IBasicAudio_iface;
     IBasicVideo2 IBasicVideo2_iface;
     IVideoWindow IVideoWindow_iface;
-    const IMediaEventExVtbl *IMediaEventEx_vtbl;
+    IMediaEventEx IMediaEventEx_iface;
     const IMediaFilterVtbl *IMediaFilter_vtbl;
     const IMediaEventSinkVtbl *IMediaEventSink_vtbl;
     const IGraphConfigVtbl *IGraphConfig_vtbl;
@@ -249,7 +249,7 @@ static HRESULT WINAPI FilterGraphInner_QueryInterface(IUnknown * iface,
         TRACE("   returning IVideoWindow interface (%p)\n", *ppvObj);
     } else if (IsEqualGUID(&IID_IMediaEvent, riid) ||
 	   IsEqualGUID(&IID_IMediaEventEx, riid)) {
-        *ppvObj = &(This->IMediaEventEx_vtbl);
+        *ppvObj = &This->IMediaEventEx_iface;
         TRACE("   returning IMediaEvent(Ex) interface (%p)\n", *ppvObj);
     } else if (IsEqualGUID(&IID_IMediaFilter, riid) ||
           IsEqualGUID(&IID_IPersist, riid)) {
@@ -4767,28 +4767,32 @@ static const IVideoWindowVtbl IVideoWindow_VTable =
     VideoWindow_IsCursorHidden
 };
 
+static inline IFilterGraphImpl *impl_from_IMediaEventEx(IMediaEventEx *iface)
+{
+    return CONTAINING_RECORD(iface, IFilterGraphImpl, IMediaEventEx_iface);
+}
 
-/*** IUnknown methods ***/
-static HRESULT WINAPI MediaEvent_QueryInterface(IMediaEventEx *iface,
-						REFIID riid,
-						LPVOID*ppvObj) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
+static HRESULT WINAPI MediaEvent_QueryInterface(IMediaEventEx *iface, REFIID riid, void **ppvObj)
+{
+    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
 
     return Filtergraph_QueryInterface(This, riid, ppvObj);
 }
 
-static ULONG WINAPI MediaEvent_AddRef(IMediaEventEx *iface) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
+static ULONG WINAPI MediaEvent_AddRef(IMediaEventEx *iface)
+{
+    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
 
     return Filtergraph_AddRef(This);
 }
 
-static ULONG WINAPI MediaEvent_Release(IMediaEventEx *iface) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
+static ULONG WINAPI MediaEvent_Release(IMediaEventEx *iface)
+{
+    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -4796,49 +4800,40 @@ static ULONG WINAPI MediaEvent_Release(IMediaEventEx *iface) {
 }
 
 /*** IDispatch methods ***/
-static HRESULT WINAPI MediaEvent_GetTypeInfoCount(IMediaEventEx *iface,
-						  UINT*pctinfo) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
+static HRESULT WINAPI MediaEvent_GetTypeInfoCount(IMediaEventEx *iface, UINT *pctinfo)
+{
+    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pctinfo);
 
     return S_OK;
 }
 
-static HRESULT WINAPI MediaEvent_GetTypeInfo(IMediaEventEx *iface,
-					     UINT iTInfo,
-					     LCID lcid,
-					     ITypeInfo**ppTInfo) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
+static HRESULT WINAPI MediaEvent_GetTypeInfo(IMediaEventEx *iface, UINT iTInfo, LCID lcid,
+        ITypeInfo **ppTInfo)
+{
+    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%d, %d, %p): stub !!!\n", This, iface, iTInfo, lcid, ppTInfo);
 
     return S_OK;
 }
 
-static HRESULT WINAPI MediaEvent_GetIDsOfNames(IMediaEventEx *iface,
-					       REFIID riid,
-					       LPOLESTR*rgszNames,
-					       UINT cNames,
-					       LCID lcid,
-					       DISPID*rgDispId) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
+static HRESULT WINAPI MediaEvent_GetIDsOfNames(IMediaEventEx *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%s (%p), %p, %d, %d, %p): stub !!!\n", This, iface, debugstr_guid(riid), riid, rgszNames, cNames, lcid, rgDispId);
 
     return S_OK;
 }
 
-static HRESULT WINAPI MediaEvent_Invoke(IMediaEventEx *iface,
-					DISPID dispIdMember,
-					REFIID riid,
-					LCID lcid,
-					WORD wFlags,
-					DISPPARAMS*pDispParams,
-					VARIANT*pVarResult,
-					EXCEPINFO*pExepInfo,
-					UINT*puArgErr) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
+static HRESULT WINAPI MediaEvent_Invoke(IMediaEventEx *iface, DISPID dispIdMember, REFIID riid,
+        LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExepInfo,
+        UINT *puArgErr)
+{
+    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%d, %s (%p), %d, %04x, %p, %p, %p, %p): stub !!!\n", This, iface, dispIdMember, debugstr_guid(riid), riid, lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
 
@@ -4846,9 +4841,9 @@ static HRESULT WINAPI MediaEvent_Invoke(IMediaEventEx *iface,
 }
 
 /*** IMediaEvent methods ***/
-static HRESULT WINAPI MediaEvent_GetEventHandle(IMediaEventEx *iface,
-						OAEVENT *hEvent) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
+static HRESULT WINAPI MediaEvent_GetEventHandle(IMediaEventEx *iface, OAEVENT *hEvent)
+{
+    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, hEvent);
 
@@ -4857,12 +4852,10 @@ static HRESULT WINAPI MediaEvent_GetEventHandle(IMediaEventEx *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI MediaEvent_GetEvent(IMediaEventEx *iface,
-                                          LONG *lEventCode,
-					  LONG_PTR *lParam1,
-					  LONG_PTR *lParam2,
-                                          LONG msTimeout) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
+static HRESULT WINAPI MediaEvent_GetEvent(IMediaEventEx *iface, LONG *lEventCode, LONG_PTR *lParam1,
+        LONG_PTR *lParam2, LONG msTimeout)
+{
+    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
     Event evt;
 
     TRACE("(%p/%p)->(%p, %p, %p, %d)\n", This, iface, lEventCode, lParam1, lParam2, msTimeout);
@@ -4879,10 +4872,10 @@ static HRESULT WINAPI MediaEvent_GetEvent(IMediaEventEx *iface,
     return E_ABORT;
 }
 
-static HRESULT WINAPI MediaEvent_WaitForCompletion(IMediaEventEx *iface,
-                                                   LONG msTimeout,
-                                                   LONG *pEvCode) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
+static HRESULT WINAPI MediaEvent_WaitForCompletion(IMediaEventEx *iface, LONG msTimeout,
+        LONG *pEvCode)
+{
+    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%d, %p)\n", This, iface, msTimeout, pEvCode);
 
@@ -4899,9 +4892,9 @@ static HRESULT WINAPI MediaEvent_WaitForCompletion(IMediaEventEx *iface,
     return E_ABORT;
 }
 
-static HRESULT WINAPI MediaEvent_CancelDefaultHandling(IMediaEventEx *iface,
-                                                       LONG lEvCode) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
+static HRESULT WINAPI MediaEvent_CancelDefaultHandling(IMediaEventEx *iface, LONG lEvCode)
+{
+    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%d)\n", This, iface, lEvCode);
 
@@ -4917,9 +4910,9 @@ static HRESULT WINAPI MediaEvent_CancelDefaultHandling(IMediaEventEx *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI MediaEvent_RestoreDefaultHandling(IMediaEventEx *iface,
-                                                        LONG lEvCode) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
+static HRESULT WINAPI MediaEvent_RestoreDefaultHandling(IMediaEventEx *iface, LONG lEvCode)
+{
+    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%d)\n", This, iface, lEvCode);
 
@@ -4935,11 +4928,10 @@ static HRESULT WINAPI MediaEvent_RestoreDefaultHandling(IMediaEventEx *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI MediaEvent_FreeEventParams(IMediaEventEx *iface,
-                                                 LONG lEvCode,
-						 LONG_PTR lParam1,
-						 LONG_PTR lParam2) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
+static HRESULT WINAPI MediaEvent_FreeEventParams(IMediaEventEx *iface, LONG lEvCode,
+        LONG_PTR lParam1, LONG_PTR lParam2)
+{
+    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%d, %08lx, %08lx): stub !!!\n", This, iface, lEvCode, lParam1, lParam2);
 
@@ -4947,11 +4939,10 @@ static HRESULT WINAPI MediaEvent_FreeEventParams(IMediaEventEx *iface,
 }
 
 /*** IMediaEventEx methods ***/
-static HRESULT WINAPI MediaEvent_SetNotifyWindow(IMediaEventEx *iface,
-						 OAHWND hwnd,
-                                                 LONG lMsg,
-						 LONG_PTR lInstanceData) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
+static HRESULT WINAPI MediaEvent_SetNotifyWindow(IMediaEventEx *iface, OAHWND hwnd, LONG lMsg,
+        LONG_PTR lInstanceData)
+{
+    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%08lx, %d, %08lx)\n", This, iface, hwnd, lMsg, lInstanceData);
 
@@ -4962,9 +4953,9 @@ static HRESULT WINAPI MediaEvent_SetNotifyWindow(IMediaEventEx *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI MediaEvent_SetNotifyFlags(IMediaEventEx *iface,
-                                                LONG lNoNotifyFlags) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
+static HRESULT WINAPI MediaEvent_SetNotifyFlags(IMediaEventEx *iface, LONG lNoNotifyFlags)
+{
+    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%d)\n", This, iface, lNoNotifyFlags);
 
@@ -4976,9 +4967,9 @@ static HRESULT WINAPI MediaEvent_SetNotifyFlags(IMediaEventEx *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI MediaEvent_GetNotifyFlags(IMediaEventEx *iface,
-                                                LONG *lplNoNotifyFlags) {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaEventEx_vtbl, iface);
+static HRESULT WINAPI MediaEvent_GetNotifyFlags(IMediaEventEx *iface, LONG *lplNoNotifyFlags)
+{
+    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, lplNoNotifyFlags);
 
@@ -5458,7 +5449,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     fimpl->IBasicAudio_iface.lpVtbl = &IBasicAudio_VTable;
     fimpl->IBasicVideo2_iface.lpVtbl = &IBasicVideo_VTable;
     fimpl->IVideoWindow_iface.lpVtbl = &IVideoWindow_VTable;
-    fimpl->IMediaEventEx_vtbl = &IMediaEventEx_VTable;
+    fimpl->IMediaEventEx_iface.lpVtbl = &IMediaEventEx_VTable;
     fimpl->IMediaFilter_vtbl = &IMediaFilter_VTable;
     fimpl->IMediaEventSink_vtbl = &IMediaEventSink_VTable;
     fimpl->IGraphConfig_vtbl = &IGraphConfig_VTable;
