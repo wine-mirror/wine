@@ -1243,7 +1243,7 @@ void context_resource_unloaded(const struct wined3d_device *device,
 BOOL context_set_current(struct wined3d_context *ctx) DECLSPEC_HIDDEN;
 void context_set_draw_buffer(struct wined3d_context *context, GLenum buffer) DECLSPEC_HIDDEN;
 void context_set_tls_idx(DWORD idx) DECLSPEC_HIDDEN;
-void context_surface_update(struct wined3d_context *context, struct wined3d_surface *surface) DECLSPEC_HIDDEN;
+void context_surface_update(struct wined3d_context *context, const struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 
 /* Macros for doing basic GPU detection based on opengl capabilities */
 #define WINE_D3D6_CAPABLE(gl_info) (gl_info->supported[ARB_MULTITEXTURE])

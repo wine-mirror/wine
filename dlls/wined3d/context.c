@@ -641,7 +641,7 @@ void context_resource_unloaded(const struct wined3d_device *device,
     }
 }
 
-void context_surface_update(struct wined3d_context *context, struct wined3d_surface *surface)
+void context_surface_update(struct wined3d_context *context, const struct wined3d_surface *surface)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct fbo_entry *entry = context->current_fbo;
