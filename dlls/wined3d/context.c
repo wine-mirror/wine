@@ -219,7 +219,7 @@ static void context_attach_surface_fbo(const struct wined3d_context *context,
 }
 
 /* GL locking is done by the caller */
-void context_check_fbo_status(struct wined3d_context *context, GLenum target)
+void context_check_fbo_status(const struct wined3d_context *context, GLenum target)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLenum status;
@@ -233,7 +233,7 @@ void context_check_fbo_status(struct wined3d_context *context, GLenum target)
     }
     else
     {
-        struct wined3d_surface *attachment;
+        const struct wined3d_surface *attachment;
         unsigned int i;
 
         FIXME("FBO status %s (%#x)\n", debug_fbostatus(status), status);
