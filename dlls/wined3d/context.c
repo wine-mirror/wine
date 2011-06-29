@@ -112,7 +112,7 @@ static void context_destroy_fbo(struct wined3d_context *context, GLuint *fbo)
 }
 
 /* GL locking is done by the caller */
-void context_attach_depth_stencil_fbo(struct wined3d_context *context,
+void context_attach_depth_stencil_fbo(const struct wined3d_context *context,
         GLenum fbo_target, struct wined3d_surface *depth_stencil, BOOL use_render_buffer)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;

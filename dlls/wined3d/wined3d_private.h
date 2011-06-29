@@ -1224,7 +1224,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
 BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_device *device) DECLSPEC_HIDDEN;
 void context_apply_fbo_state_blit(struct wined3d_context *context, GLenum target,
         struct wined3d_surface *render_target, struct wined3d_surface *depth_stencil, DWORD location) DECLSPEC_HIDDEN;
-void context_attach_depth_stencil_fbo(struct wined3d_context *context,
+void context_attach_depth_stencil_fbo(const struct wined3d_context *context,
         GLenum fbo_target, struct wined3d_surface *depth_stencil, BOOL use_render_buffer) DECLSPEC_HIDDEN;
 void context_bind_fbo(struct wined3d_context *context, GLenum target, GLuint *fbo) DECLSPEC_HIDDEN;
 void context_check_fbo_status(struct wined3d_context *context, GLenum target) DECLSPEC_HIDDEN;
