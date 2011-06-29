@@ -44,10 +44,11 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 #define WINED3D_GLSL_SAMPLE_LOD         0x4
 #define WINED3D_GLSL_SAMPLE_GRAD        0x8
 
-typedef struct {
+struct glsl_dst_param
+{
     char reg_name[150];
     char mask_str[6];
-} glsl_dst_param_t;
+};
 
 typedef struct {
     char reg_name[150];
@@ -1600,7 +1601,7 @@ static void shader_glsl_add_src_param(const struct wined3d_shader_instruction *i
  * Also, return the actual register name and swizzle in case the
  * caller needs this information as well. */
 static DWORD shader_glsl_add_dst_param(const struct wined3d_shader_instruction *ins,
-        const struct wined3d_shader_dst_param *wined3d_dst, glsl_dst_param_t *glsl_dst)
+        const struct wined3d_shader_dst_param *wined3d_dst, struct glsl_dst_param *glsl_dst)
 {
     BOOL is_color = FALSE;
 
@@ -1615,7 +1616,7 @@ static DWORD shader_glsl_add_dst_param(const struct wined3d_shader_instruction *
 static DWORD shader_glsl_append_dst_ext(struct wined3d_shader_buffer *buffer,
         const struct wined3d_shader_instruction *ins, const struct wined3d_shader_dst_param *dst)
 {
-    glsl_dst_param_t glsl_dst;
+    struct glsl_dst_param glsl_dst;
     DWORD mask;
 
     mask = shader_glsl_add_dst_param(ins, dst, &glsl_dst);
@@ -1633,7 +1634,7 @@ static DWORD shader_glsl_append_dst(struct wined3d_shader_buffer *buffer, const 
 /** Process GLSL instruction modifiers */
 static void shader_glsl_add_instruction_modifiers(const struct wined3d_shader_instruction *ins)
 {
-    glsl_dst_param_t dst_param;
+    struct glsl_dst_param dst_param;
     DWORD modifiers;
 
     if (!ins->dst_count) return;
@@ -1964,7 +1965,7 @@ static void shader_glsl_color_correction(const struct wined3d_shader_instruction
 {
     struct wined3d_shader_dst_param dst;
     unsigned int mask_size, remaining;
-    glsl_dst_param_t dst_param;
+    struct glsl_dst_param dst_param;
     char arguments[256];
     DWORD mask;
 
@@ -3306,7 +3307,7 @@ static void shader_glsl_texdp3(const struct wined3d_shader_instruction *ins)
  * Calculate the depth as dst.x / dst.y   */
 static void shader_glsl_texdepth(const struct wined3d_shader_instruction *ins)
 {
-    glsl_dst_param_t dst_param;
+    struct glsl_dst_param dst_param;
 
     shader_glsl_add_dst_param(ins, &ins->dst[0], &dst_param);
 
@@ -3532,7 +3533,7 @@ static void shader_glsl_texbem(const struct wined3d_shader_instruction *ins)
     if (ins->handler_idx == WINED3DSIH_TEXBEML)
     {
         glsl_src_param_t luminance_param;
-        glsl_dst_param_t dst_param;
+        struct glsl_dst_param dst_param;
 
         shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_2, &luminance_param);
         shader_glsl_add_dst_param(ins, &ins->dst[0], &dst_param);
@@ -3606,7 +3607,7 @@ static void shader_glsl_texreg2rgb(const struct wined3d_shader_instruction *ins)
  * If any of the first 3 components are < 0, discard this pixel */
 static void shader_glsl_texkill(const struct wined3d_shader_instruction *ins)
 {
-    glsl_dst_param_t dst_param;
+    struct glsl_dst_param dst_param;
 
     /* The argument is a destination parameter, and no writemasks are allowed */
     shader_glsl_add_dst_param(ins, &ins->dst[0], &dst_param);
