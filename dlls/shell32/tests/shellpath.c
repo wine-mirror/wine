@@ -1226,7 +1226,6 @@ static void test_knownFolders(void)
                             /* check sub folder path */
                             hr = IKnownFolder_GetPath(subFolder, 0, &folderPath);
                             ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
-                            todo_wine
                             ok(lstrcmpiW(folderPath, sSubFolderPath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sSubFolderPath));
                             CoTaskMemFree(folderPath);
 
@@ -1303,7 +1302,6 @@ static void test_knownFolders(void)
                             /* verify sub folder */
                             hr = IKnownFolder_GetPath(subFolder, 0, &folderPath);
                             ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
-                            todo_wine
                             ok(lstrcmpiW(folderPath, sSubFolderPath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sSubFolderPath));
                             CoTaskMemFree(folderPath);
 
@@ -1348,7 +1346,6 @@ static void test_knownFolders(void)
                             /* verify sub folder */
                             hr = IKnownFolder_GetPath(subFolder, 0, &folderPath);
                             ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
-                            todo_wine
                             ok(lstrcmpiW(folderPath, sSubFolderPath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sSubFolderPath));
                             CoTaskMemFree(folderPath);
 
@@ -1389,7 +1386,6 @@ static void test_knownFolders(void)
                             /* verify sub folder */
                             hr = IKnownFolder_GetPath(subFolder, 0, &folderPath);
                             ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
-                            todo_wine
                             ok(lstrcmpiW(folderPath, sSubFolderPath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sSubFolderPath));
                             CoTaskMemFree(folderPath);
 
@@ -1433,7 +1429,6 @@ static void test_knownFolders(void)
                             /* verify sub folder */
                             hr = IKnownFolder_GetPath(subFolder, 0, &folderPath);
                             ok(hr == S_OK, "failed to get known folder path: 0x%08x\n", hr);
-                            todo_wine
                             ok(lstrcmpiW(folderPath, sSubFolderPath)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sSubFolderPath));
                             CoTaskMemFree(folderPath);
 

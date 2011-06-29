@@ -3087,20 +3087,27 @@ static const WCHAR szParentFolder[] = {'P','a','r','e','n','t','F','o','l','d','
  * associated with known folder.
  *
  * Parameters:
- *  rfid            [I] pointer to known folder identifier
+ *  rfid            [I] pointer to known folder identifier (may be NULL)
+ *  lpStringGuid    [I] string with known folder identifier (used when rfid is NULL)
  *  lpPath          [O] place to store string address. String should be
  *                      later freed using HeapFree(GetProcessHeap(),0, ... )
  */
-static HRESULT get_known_folder_registry_path(REFKNOWNFOLDERID rfid, LPWSTR *lpPath)
+static HRESULT get_known_folder_registry_path(
+    REFKNOWNFOLDERID rfid,
+    LPWSTR lpStringGuid,
+    LPWSTR *lpPath)
 {
     static const WCHAR sBackslash[] = {'\\',0};
     HRESULT hr = S_OK;
     int length;
     WCHAR sGuid[50];
 
-    TRACE("(%s, %p)\n", debugstr_guid(rfid), lpPath);
+    TRACE("(%s, %s, %p)\n", debugstr_guid(rfid), debugstr_w(lpStringGuid), lpPath);
 
-    StringFromGUID2(rfid, sGuid, sizeof(sGuid)/sizeof(sGuid[0]));
+    if(rfid)
+        StringFromGUID2(rfid, sGuid, sizeof(sGuid)/sizeof(sGuid[0]));
+    else
+        lstrcpyW(sGuid, lpStringGuid);
 
     length = lstrlenW(szKnownFolderDescriptions)+51;
     *lpPath = HeapAlloc(GetProcessHeap(), 0, length*sizeof(WCHAR));
@@ -3187,7 +3194,7 @@ static HRESULT knownfolder_set_id(
     knownfolder->id = *kfid;
 
     /* check is it registry-registered folder */
-    hr = get_known_folder_registry_path(kfid, &knownfolder->registryPath);
+    hr = get_known_folder_registry_path(kfid, NULL, &knownfolder->registryPath);
     if(SUCCEEDED(hr))
         hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, 0, 0, &hKey));
 
@@ -3249,13 +3256,64 @@ static HRESULT WINAPI knownfolder_GetShellItem(
     return E_NOTIMPL;
 }
 
+static HRESULT get_known_folder_path(
+    LPWSTR registryPath,
+    LPWSTR *ppszPath)
+{
+    static const WCHAR sBackslash[] = {'\\',0};
+    HRESULT hr;
+    DWORD dwSize, dwType;
+    WCHAR path[MAX_PATH] = {0};
+    WCHAR parentGuid[39];
+    LPWSTR parentRegistryPath, parentPath;
+
+    TRACE("(%s, %p)\n", debugstr_w(registryPath), ppszPath);
+
+    /* check if folder has parent */
+    dwSize = sizeof(parentGuid);
+    hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, registryPath, szParentFolder, RRF_RT_REG_SZ, &dwType, parentGuid, &dwSize));
+    if(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) hr = S_FALSE;
+
+    if(hr == S_OK)
+    {
+        /* get parent's known folder path (recursive) */
+        get_known_folder_registry_path(NULL, parentGuid, &parentRegistryPath);
+
+        hr = get_known_folder_path(parentRegistryPath, &parentPath);
+
+        lstrcatW(path, parentPath);
+        lstrcatW(path, sBackslash);
+
+        HeapFree(GetProcessHeap(), 0, parentRegistryPath);
+        HeapFree(GetProcessHeap(), 0, parentPath);
+    }
+
+    /* read the relative path from registry */
+    if(SUCCEEDED(hr))
+        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, registryPath, szRelativePath, RRF_RT_REG_SZ, &dwType, NULL, &dwSize));
+
+    if(SUCCEEDED(hr))
+    {
+        *ppszPath = CoTaskMemAlloc(dwSize+(lstrlenW(path)+1)*sizeof(WCHAR));
+        if(!*ppszPath) hr = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hr))
+    {
+        lstrcpyW(*ppszPath, path);
+        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, registryPath, szRelativePath, RRF_RT_REG_SZ, &dwType, *ppszPath + lstrlenW(path), &dwSize));
+    }
+
+    TRACE("returning path: %s\n", debugstr_w(*ppszPath));
+    return hr;
+}
+
 static HRESULT WINAPI knownfolder_GetPath(
     IKnownFolder *iface,
     DWORD dwFlags,
     LPWSTR *ppszPath)
 {
     struct knownfolder *knownfolder = impl_from_IKnownFolder( iface );
-    DWORD dwSize, dwType;
     HRESULT hr;
 
     TRACE("(%p, 0x%08x, %p)\n", knownfolder, dwFlags, ppszPath);
@@ -3263,16 +3321,7 @@ static HRESULT WINAPI knownfolder_GetPath(
     /* if this is registry-registered known folder, get path from registry */
     if(knownfolder->registryPath)
     {
-        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, szRelativePath, RRF_RT_REG_SZ, &dwType, NULL, &dwSize));
-
-        if(SUCCEEDED(hr))
-        {
-            *ppszPath = CoTaskMemAlloc(dwSize);
-            if(!*ppszPath) hr = E_OUTOFMEMORY;
-        }
-
-        if(SUCCEEDED(hr))
-            hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, szRelativePath, RRF_RT_REG_SZ, &dwType, *ppszPath, &dwSize));
+        hr = get_known_folder_path(knownfolder->registryPath, ppszPath);
     }
     /* in other case, use older way */
     else
@@ -3495,7 +3544,7 @@ static BOOL is_knownfolder( struct foldermanager *fm, const KNOWNFOLDERID *id )
     for (i = 0; i < fm->num_ids; i++)
         if (IsEqualGUID( &fm->ids[i], id )) return TRUE;
 
-    hr = get_known_folder_registry_path(id, &registryPath);
+    hr = get_known_folder_registry_path(id, NULL, &registryPath);
     if(SUCCEEDED(hr))
         hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE, registryPath, 0, 0, &hKey));
 
@@ -3550,7 +3599,7 @@ static HRESULT WINAPI foldermanager_RegisterFolder(
     LPWSTR registryPath = NULL;
     TRACE("(%p, %s, %p)\n", iface, debugstr_guid(rfid), pKFD);
 
-    hr = get_known_folder_registry_path(rfid, &registryPath);
+    hr = get_known_folder_registry_path(rfid, NULL, &registryPath);
     TRACE("registry path: %s\n", debugstr_w(registryPath));
 
     if(SUCCEEDED(hr))
@@ -3594,7 +3643,7 @@ static HRESULT WINAPI foldermanager_UnregisterFolder(
     LPWSTR registryPath = NULL;
     TRACE("(%p, %s)\n", iface, debugstr_guid(rfid));
 
-    hr = get_known_folder_registry_path(rfid, &registryPath);
+    hr = get_known_folder_registry_path(rfid, NULL, &registryPath);
 
     if(SUCCEEDED(hr))
         hr = HRESULT_FROM_WIN32(RegDeleteKeyW(HKEY_LOCAL_MACHINE, registryPath));
