@@ -159,7 +159,7 @@ typedef struct _IFilterGraphImpl {
     IBasicVideo2 IBasicVideo2_iface;
     IVideoWindow IVideoWindow_iface;
     IMediaEventEx IMediaEventEx_iface;
-    const IMediaFilterVtbl *IMediaFilter_vtbl;
+    IMediaFilter IMediaFilter_iface;
     const IMediaEventSinkVtbl *IMediaEventSink_vtbl;
     const IGraphConfigVtbl *IGraphConfig_vtbl;
     const IMediaPositionVtbl *IMediaPosition_vtbl;
@@ -253,7 +253,7 @@ static HRESULT WINAPI FilterGraphInner_QueryInterface(IUnknown * iface,
         TRACE("   returning IMediaEvent(Ex) interface (%p)\n", *ppvObj);
     } else if (IsEqualGUID(&IID_IMediaFilter, riid) ||
           IsEqualGUID(&IID_IPersist, riid)) {
-        *ppvObj = &(This->IMediaFilter_vtbl);
+        *ppvObj = &This->IMediaFilter_iface;
         TRACE("   returning IMediaFilter interface (%p)\n", *ppvObj);
     } else if (IsEqualGUID(&IID_IMediaEventSink, riid)) {
         *ppvObj = &(This->IMediaEventSink_vtbl);
@@ -492,7 +492,7 @@ static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface, IBaseFilte
 
             if (This->defaultclock && This->refClockProvider == pFilter)
             {
-                IMediaFilter_SetSyncSource((IMediaFilter*)&This->IMediaFilter_vtbl, NULL);
+                IMediaFilter_SetSyncSource(&This->IMediaFilter_iface, NULL);
                 This->defaultclock = 1;
             }
 
@@ -801,7 +801,7 @@ static HRESULT WINAPI FilterGraph2_SetDefaultSyncSource(IFilterGraph2 *iface)
 
     if (SUCCEEDED(hr))
     {
-        hr = IMediaFilter_SetSyncSource((IMediaFilter*)&(This->IMediaFilter_vtbl), pClock);
+        hr = IMediaFilter_SetSyncSource(&This->IMediaFilter_iface, pClock);
         This->defaultclock = TRUE;
         IReferenceClock_Release(pClock);
     }
@@ -5003,23 +5003,28 @@ static const IMediaEventExVtbl IMediaEventEx_VTable =
 };
 
 
-static HRESULT WINAPI MediaFilter_QueryInterface(IMediaFilter *iface, REFIID riid, LPVOID *ppv)
+static inline IFilterGraphImpl *impl_from_IMediaFilter(IMediaFilter *iface)
 {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaFilter_vtbl, iface);
+    return CONTAINING_RECORD(iface, IFilterGraphImpl, IMediaFilter_iface);
+}
+
+static HRESULT WINAPI MediaFilter_QueryInterface(IMediaFilter *iface, REFIID riid, void **ppv)
+{
+    IFilterGraphImpl *This = impl_from_IMediaFilter(iface);
 
     return Filtergraph_QueryInterface(This, riid, ppv);
 }
 
 static ULONG WINAPI MediaFilter_AddRef(IMediaFilter *iface)
 {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaFilter_vtbl, iface);
+    IFilterGraphImpl *This = impl_from_IMediaFilter(iface);
 
     return Filtergraph_AddRef(This);
 }
 
 static ULONG WINAPI MediaFilter_Release(IMediaFilter *iface)
 {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaFilter_vtbl, iface);
+    IFilterGraphImpl *This = impl_from_IMediaFilter(iface);
 
     return Filtergraph_Release(This);
 }
@@ -5033,34 +5038,40 @@ static HRESULT WINAPI MediaFilter_GetClassID(IMediaFilter *iface, CLSID * pClass
 
 static HRESULT WINAPI MediaFilter_Stop(IMediaFilter *iface)
 {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaFilter_vtbl, iface);
+    IFilterGraphImpl *This = impl_from_IMediaFilter(iface);
+
     return MediaControl_Stop(&This->IMediaControl_iface);
 }
 
 static HRESULT WINAPI MediaFilter_Pause(IMediaFilter *iface)
 {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaFilter_vtbl, iface);
+    IFilterGraphImpl *This = impl_from_IMediaFilter(iface);
+
     return MediaControl_Pause(&This->IMediaControl_iface);
 }
 
 static HRESULT WINAPI MediaFilter_Run(IMediaFilter *iface, REFERENCE_TIME tStart)
 {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaFilter_vtbl, iface);
+    IFilterGraphImpl *This = impl_from_IMediaFilter(iface);
+
     if (tStart)
         FIXME("Run called with non-null tStart: %x%08x\n",
               (int)(tStart>>32), (int)tStart);
+
     return MediaControl_Run(&This->IMediaControl_iface);
 }
 
-static HRESULT WINAPI MediaFilter_GetState(IMediaFilter *iface, DWORD dwMsTimeout, FILTER_STATE * pState)
+static HRESULT WINAPI MediaFilter_GetState(IMediaFilter *iface, DWORD dwMsTimeout,
+        FILTER_STATE *pState)
 {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaFilter_vtbl, iface);
+    IFilterGraphImpl *This = impl_from_IMediaFilter(iface);
+
     return MediaControl_GetState(&This->IMediaControl_iface, dwMsTimeout, (OAFilterState*)pState);
 }
 
 static HRESULT WINAPI MediaFilter_SetSyncSource(IMediaFilter *iface, IReferenceClock *pClock)
 {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaFilter_vtbl, iface);
+    IFilterGraphImpl *This = impl_from_IMediaFilter(iface);
     HRESULT hr = S_OK;
     int i;
 
@@ -5110,7 +5121,7 @@ static HRESULT WINAPI MediaFilter_SetSyncSource(IMediaFilter *iface, IReferenceC
 
 static HRESULT WINAPI MediaFilter_GetSyncSource(IMediaFilter *iface, IReferenceClock **ppClock)
 {
-    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaFilter_vtbl, iface);
+    IFilterGraphImpl *This = impl_from_IMediaFilter(iface);
 
     TRACE("(%p/%p)->(%p)\n", iface, This, ppClock);
 
@@ -5450,7 +5461,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     fimpl->IBasicVideo2_iface.lpVtbl = &IBasicVideo_VTable;
     fimpl->IVideoWindow_iface.lpVtbl = &IVideoWindow_VTable;
     fimpl->IMediaEventEx_iface.lpVtbl = &IMediaEventEx_VTable;
-    fimpl->IMediaFilter_vtbl = &IMediaFilter_VTable;
+    fimpl->IMediaFilter_iface.lpVtbl = &IMediaFilter_VTable;
     fimpl->IMediaEventSink_vtbl = &IMediaEventSink_VTable;
     fimpl->IGraphConfig_vtbl = &IGraphConfig_VTable;
     fimpl->IMediaPosition_vtbl = &IMediaPosition_VTable;
