@@ -3080,6 +3080,7 @@ HRESULT WINAPI SHGetFolderPathEx(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE toke
 static const WCHAR szCategory[] = {'C','a','t','e','g','o','r','y',0};
 static const WCHAR szName[] = {'N','a','m','e',0};
 static const WCHAR szRelativePath[] = {'R','e','l','a','t','i','v','e','P','a','t','h',0};
+static const WCHAR szParentFolder[] = {'P','a','r','e','n','t','F','o','l','d','e','r',0};
 
 /*
  * Internal function to convert known folder identifier to path of registry key
@@ -3565,6 +3566,15 @@ static HRESULT WINAPI foldermanager_RegisterFolder(
 
         if(SUCCEEDED(hr))
             hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szName, 0, REG_SZ, (LPBYTE)pKFD->pszName, (lstrlenW(pKFD->pszName)+1)*sizeof(WCHAR) ));
+
+        if(SUCCEEDED(hr) && !IsEqualGUID(&pKFD->fidParent, &GUID_NULL))
+        {
+            WCHAR sParentGuid[39];
+            StringFromGUID2(&pKFD->fidParent, sParentGuid, sizeof(sParentGuid)/sizeof(sParentGuid[0]));
+
+            /* this known folder has parent folder */
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szParentFolder, 0, REG_SZ, (LPBYTE)sParentGuid, sizeof(sParentGuid)));
+        }
 
         if(SUCCEEDED(hr) && pKFD->category != KF_CATEGORY_VIRTUAL)
             hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szRelativePath, 0, REG_SZ, (LPBYTE)pKFD->pszRelativePath, (lstrlenW(pKFD->pszRelativePath)+1)*sizeof(WCHAR) ));
