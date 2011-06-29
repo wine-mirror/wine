@@ -2118,9 +2118,10 @@ static void TAB_DrawItem(const TAB_INFO *infoPtr, HDC  hdc, INT  iItem)
               partIndex += 4;
           /* The part also differs on the position of a tab on a line.
            * "Visually" determining the position works well enough. */
+          GetClientRect(infoPtr->hwnd, &r1);
           if(selectedRect.left == 0)
               partIndex += 1;
-          if(selectedRect.right == clRight)
+          if(selectedRect.right == r1.right)
               partIndex += 2;
 
           if (iItem == infoPtr->iSelected)
