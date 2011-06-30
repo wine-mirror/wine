@@ -1212,42 +1212,29 @@ done:
     return ret;
 }
 
-static BOOL has_persistent_dir( MSIPACKAGE *package, MSICOMPONENT *comp )
+static void remove_folder( MSIFOLDER *folder )
 {
-    MSIQUERY *view;
-    UINT r = ERROR_FUNCTION_FAILED;
+    FolderList *fl;
 
-    static const WCHAR query[] = {
-        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-        '`','C','r','e','a','t','e','F','o','l','d','e','r','`',' ','W','H','E','R','E',' ',
-        '`','C','o','m','p','o','n','e','n','t','_','`',' ','=','\'','%','s','\'',' ','A','N','D',' ',
-        '`','D','i','r','e','c','t','o','r','y','_','`',' ','=','\'','%','s','\'',0};
-
-    if (!MSI_OpenQuery( package->db, &view, query, comp->Component, comp->Directory ))
+    LIST_FOR_EACH_ENTRY( fl, &folder->children, FolderList, entry )
     {
-        if (!MSI_ViewExecute( view, NULL ))
-        {
-            MSIRECORD *rec;
-            if (!(r = MSI_ViewFetch( view, &rec )))
-            {
-                TRACE("directory %s is persistent\n", debugstr_w(comp->Directory));
-                msiobj_release( &rec->hdr );
-            }
-        }
-        msiobj_release( &view->hdr );
+        remove_folder( fl->folder );
     }
-    return (r == ERROR_SUCCESS);
+    if (!folder->persistent && folder->State != FOLDER_STATE_REMOVED)
+    {
+        if (RemoveDirectoryW( folder->ResolvedTarget )) folder->State = FOLDER_STATE_REMOVED;
+    }
 }
 
 UINT ACTION_RemoveFiles( MSIPACKAGE *package )
 {
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','R','e','m','o','v','e','F','i','l','e','`',0};
     MSIQUERY *view;
+    MSICOMPONENT *comp;
     MSIFILE *file;
     UINT r;
-
-    static const WCHAR query[] = {
-        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-        '`','R','e','m','o','v','e','F','i','l','e','`',0};
 
     r = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (r == ERROR_SUCCESS)
@@ -1259,10 +1246,9 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
         MSIRECORD *uirow;
-        LPWSTR dir, p;
         VS_FIXEDFILEINFO *ver;
-        MSICOMPONENT *comp = file->Component;
 
+        comp = file->Component;
         msi_file_update_ui( package, file, szRemoveFiles );
 
         comp->Action = msi_get_component_action( package, comp );
@@ -1300,15 +1286,6 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         {
             WARN("failed to delete %s (%u)\n",  debugstr_w(file->TargetPath), GetLastError());
         }
-        else if (!has_persistent_dir( package, comp ))
-        {
-            if ((dir = strdupW( file->TargetPath )))
-            {
-                if ((p = strrchrW( dir, '\\' ))) *p = 0;
-                RemoveDirectoryW( dir );
-                msi_free( dir );
-            }
-        }
         file->state = msifs_missing;
 
         uirow = MSI_CreateRecord( 9 );
@@ -1316,6 +1293,23 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         MSI_RecordSetStringW( uirow, 9, comp->Directory );
         msi_ui_actiondata( package, szRemoveFiles, uirow );
         msiobj_release( &uirow->hdr );
+    }
+    LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
+    {
+        MSIFOLDER *folder;
+
+        comp->Action = msi_get_component_action( package, comp );
+        if (comp->Action != INSTALLSTATE_ABSENT) continue;
+
+        if (comp->assembly && !comp->assembly->application) continue;
+
+        if (comp->Attributes & msidbComponentAttributesPermanent)
+        {
+            TRACE("permanent component, not removing directory\n");
+            continue;
+        }
+        folder = msi_get_loaded_folder( package, comp->Directory );
+        remove_folder( folder );
     }
     return ERROR_SUCCESS;
 }

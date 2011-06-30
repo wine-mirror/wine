@@ -878,7 +878,7 @@ static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
 
     folder = msi_get_loaded_folder( package, dir );
     if (folder->State == FOLDER_STATE_UNINITIALIZED) msi_create_full_path( full_path );
-    folder->State = FOLDER_STATE_CREATED_PERSISTENT;
+    folder->State = FOLDER_STATE_CREATED;
     return ERROR_SUCCESS;
 }
 
@@ -1438,6 +1438,32 @@ static UINT load_all_patches(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
+static UINT load_folder_persistence( MSIPACKAGE *package, MSIFOLDER *folder )
+{
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','C','r','e','a','t','e','F','o','l','d','e','r','`',' ','W','H','E','R','E',' ',
+        '`','D','i','r','e','c','t','o','r','y','_','`',' ','=','\'','%','s','\'',0};
+    MSIQUERY *view;
+
+    folder->persistent = FALSE;
+    if (!MSI_OpenQuery( package->db, &view, query, folder->Directory ))
+    {
+        if (!MSI_ViewExecute( view, NULL ))
+        {
+            MSIRECORD *rec;
+            if (!MSI_ViewFetch( view, &rec ))
+            {
+                TRACE("directory %s is persistent\n", debugstr_w(folder->Directory));
+                folder->persistent = TRUE;
+                msiobj_release( &rec->hdr );
+            }
+        }
+        msiobj_release( &view->hdr );
+    }
+    return ERROR_SUCCESS;
+}
+
 static UINT load_folder( MSIRECORD *row, LPVOID param )
 {
     MSIPACKAGE *package = param;
@@ -1487,6 +1513,8 @@ static UINT load_folder( MSIRECORD *row, LPVOID param )
     TRACE("TargetDefault = %s\n",debugstr_w( folder->TargetDefault ));
     TRACE("SourceLong = %s\n", debugstr_w( folder->SourceLongPath ));
     TRACE("SourceShort = %s\n", debugstr_w( folder->SourceShortPath ));
+
+    load_folder_persistence( package, folder );
 
     list_add_tail( &package->folders, &folder->entry );
     return ERROR_SUCCESS;

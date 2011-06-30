@@ -508,10 +508,10 @@ typedef struct tagMSIFOLDER
     LPWSTR TargetDefault;
     LPWSTR SourceLongPath;
     LPWSTR SourceShortPath;
-
     LPWSTR ResolvedTarget;
     LPWSTR ResolvedSource;
     enum folder_state State;
+    BOOL persistent;
     INT Cost;
     INT Space;
 } MSIFOLDER;
