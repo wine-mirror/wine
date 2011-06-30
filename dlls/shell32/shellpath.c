@@ -3435,6 +3435,7 @@ static HRESULT WINAPI knownfolder_GetPath(
     struct knownfolder *knownfolder = impl_from_IKnownFolder( iface );
     HRESULT hr;
     WCHAR sGuid[39];
+    DWORD dwAttributes;
 
     TRACE("(%p, 0x%08x, %p)\n", knownfolder, dwFlags, ppszPath);
 
@@ -3448,6 +3449,16 @@ static HRESULT WINAPI knownfolder_GetPath(
     /* in other case, use older way */
     else
         hr = SHGetKnownFolderPath( &knownfolder->id, dwFlags, NULL, ppszPath );
+
+    /* check if known folder really exists */
+    dwAttributes = GetFileAttributesW(*ppszPath);
+    if(dwAttributes == INVALID_FILE_ATTRIBUTES || !(dwAttributes & FILE_ATTRIBUTE_DIRECTORY) )
+    {
+        TRACE("directory %s not found\n", debugstr_w(*ppszPath));
+        CoTaskMemFree(*ppszPath);
+        *ppszPath = NULL;
+        hr = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+    }
 
     return hr;
 }
