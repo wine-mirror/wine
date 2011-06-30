@@ -235,6 +235,7 @@ static void lighting_test(IDirect3DDevice9 *device)
     DWORD color;
     D3DMATERIAL9 material, old_material;
     DWORD cop, carg;
+    DWORD old_colorwrite;
 
     float mat[16] = { 1.0f, 0.0f, 0.0f, 0.0f,
                       0.0f, 1.0f, 0.0f, 0.0f,
@@ -297,6 +298,8 @@ static void lighting_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CULLMODE, D3DCULL_NONE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with %08x\n", hr);
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_COLORWRITEENABLE, &old_colorwrite);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with %08x\n", hr);
 
@@ -420,6 +423,8 @@ static void lighting_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_COLORWRITEENABLE, old_colorwrite);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with %08x\n", hr);
     hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, carg);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState returned %08x\n", hr);
     hr = IDirect3DDevice9_SetMaterial(device, &old_material);
@@ -8759,7 +8764,7 @@ static void multiple_rendertargets_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_GetRenderTargetData(device, surf1, readback);
     ok(SUCCEEDED(hr), "GetRenderTargetData failed, hr %#x.\n", hr);
     color = getPixelColorFromSurface(readback, 8, 8);
-    ok(color_match(color, D3DCOLOR_ARGB(0xff, 0x00, 0xff, 0x00), 0),
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0x00), 0),
             "Expected color 0xff00ff00, got 0x%08x.\n", color);
     hr = IDirect3DDevice9_GetRenderTargetData(device, surf2, readback);
     ok(SUCCEEDED(hr), "GetRenderTargetData failed, hr %#x.\n", hr);
@@ -12112,7 +12117,7 @@ static void unbound_sampler_test(IDirect3DDevice9 *device)
     }
 
     color = getPixelColorFromSurface(rt, 32, 32);
-    todo_wine ok(color == 0x56000000, "Unbound sampler color is %#x.\n", color);
+    todo_wine ok(color == 0xff000000, "Unbound sampler color is %#x.\n", color);
 
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, old_rt);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderTarget failed, hr %#x.\n", hr);
