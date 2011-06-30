@@ -1283,3 +1283,9 @@ HRESULT WINAPI SHGetLocalizedName(LPCWSTR path, LPWSTR module, UINT size, INT *r
     FIXME("%s %p %u %p: stub\n", debugstr_w(path), module, size, res);
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI SetCurrentProcessExplicitAppUserModelID(PCWSTR appid)
+{
+    FIXME("%s: stub\n", debugstr_w(appid));
+    return E_NOTIMPL;
+}
