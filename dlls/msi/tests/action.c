@@ -4323,7 +4323,7 @@ static void test_remove_files(void)
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(!delete_pf("msitest\\cabout", FALSE), "Directory not deleted\n");
-    ok(delete_pf("msitest", FALSE), "Directory deleted\n");
+    delete_pf("msitest", FALSE);
 
 error:
     DeleteFile(msifile);
