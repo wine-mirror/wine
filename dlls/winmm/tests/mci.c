@@ -1271,9 +1271,12 @@ START_TEST(mci)
     test_mciParser(hwnd);
     test_openCloseWAVE(hwnd);
     test_recordWAVE(hwnd);
-    test_playWAVE(hwnd);
-    test_asyncWAVE(hwnd);
-    test_AutoOpenWAVE(hwnd);
+    if(waveOutGetNumDevs()){
+        test_playWAVE(hwnd);
+        test_asyncWAVE(hwnd);
+        test_AutoOpenWAVE(hwnd);
+    }else
+        skip("No output devices available, skipping all output tests\n");
     /* Win9X hangs when exiting with something still open. */
     err = mciSendString("close all", NULL, 0, hwnd);
     ok(!err,"final close all returned %s\n", dbg_mcierr(err));
