@@ -1232,13 +1232,13 @@ static int WineD3D_ChoosePixelFormat(struct wined3d_device *device, HDC hdc,
     return iPixelFormat;
 }
 
-static inline DWORD generate_rt_mask(GLenum buffer)
+static inline DWORD context_generate_rt_mask(GLenum buffer)
 {
     /* Should take care of all the GL_FRONT/GL_BACK/GL_AUXi/GL_NONE... cases */
     return buffer ? (1 << 31) | buffer : 0;
 }
 
-static inline DWORD generate_rt_mask_from_surface(const struct wined3d_surface *target)
+static inline DWORD context_generate_rt_mask_from_surface(const struct wined3d_surface *target)
 {
     return (1 << 31) | surface_get_gl_buffer(target);
 }
@@ -1379,7 +1379,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     ret->tid = GetCurrentThreadId();
 
     ret->render_offscreen = surface_is_offscreen(target);
-    ret->draw_buffers_mask = generate_rt_mask(GL_BACK);
+    ret->draw_buffers_mask = context_generate_rt_mask(GL_BACK);
     ret->valid = 1;
 
     ret->glCtx = ctx;
@@ -1948,7 +1948,7 @@ void context_set_draw_buffer(struct wined3d_context *context, GLenum buffer)
 {
     glDrawBuffer(buffer);
     checkGLcall("glDrawBuffer()");
-    context->draw_buffers_mask = generate_rt_mask(buffer);
+    context->draw_buffers_mask = context_generate_rt_mask(buffer);
 }
 
 static inline void context_set_render_offscreen(struct wined3d_context *context, const struct StateEntry *StateTable,
@@ -2003,14 +2003,14 @@ static void context_validate_onscreen_formats(struct wined3d_device *device,
     context_set_render_offscreen(context, device->StateTable, TRUE);
 }
 
-static DWORD generate_rt_mask_no_fbo(const struct wined3d_device *device, const struct wined3d_surface *rt)
+static DWORD context_generate_rt_mask_no_fbo(const struct wined3d_device *device, const struct wined3d_surface *rt)
 {
     if (!rt || rt->resource.format->id == WINED3DFMT_NULL)
         return 0;
     else if (rt->container.type == WINED3D_CONTAINER_SWAPCHAIN)
-        return generate_rt_mask_from_surface(rt);
+        return context_generate_rt_mask_from_surface(rt);
     else
-        return generate_rt_mask(device->offscreenBuffer);
+        return context_generate_rt_mask(device->offscreenBuffer);
 }
 
 /* Context activation is done by the caller. */
@@ -2039,12 +2039,12 @@ void context_apply_blit_state(struct wined3d_context *context, struct wined3d_de
             ENTER_GL();
             context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
             LEAVE_GL();
-            rt_mask = generate_rt_mask_from_surface(context->current_rt);
+            rt_mask = context_generate_rt_mask_from_surface(context->current_rt);
         }
     }
     else
     {
-        rt_mask = generate_rt_mask_no_fbo(device, context->current_rt);
+        rt_mask = context_generate_rt_mask_no_fbo(device, context->current_rt);
     }
 
     ENTER_GL();
@@ -2118,14 +2118,14 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
         else
         {
             context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL, SFLAG_INDRAWABLE);
-            rt_mask = generate_rt_mask_from_surface(rts[0]);
+            rt_mask = context_generate_rt_mask_from_surface(rts[0]);
         }
 
         LEAVE_GL();
     }
     else
     {
-        rt_mask = generate_rt_mask_no_fbo(device, rts[0]);
+        rt_mask = context_generate_rt_mask_no_fbo(device, rts[0]);
     }
 
     ENTER_GL();
@@ -2190,7 +2190,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
             ENTER_GL();
             context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL, SFLAG_INDRAWABLE);
             LEAVE_GL();
-            rt_mask = generate_rt_mask_from_surface(fb->render_targets[0]);
+            rt_mask = context_generate_rt_mask_from_surface(fb->render_targets[0]);
         }
         else
         {
@@ -2219,7 +2219,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
     }
     else
     {
-        rt_mask = generate_rt_mask_no_fbo(device, fb->render_targets[0]);
+        rt_mask = context_generate_rt_mask_no_fbo(device, fb->render_targets[0]);
     }
 
     ENTER_GL();
