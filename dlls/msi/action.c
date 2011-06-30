@@ -877,8 +877,8 @@ static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
     TRACE("folder is %s\n", debugstr_w(full_path));
 
     folder = msi_get_loaded_folder( package, dir );
-    if (folder->State == 0) msi_create_full_path( full_path );
-    folder->State = 3;
+    if (folder->State == FOLDER_STATE_UNINITIALIZED) msi_create_full_path( full_path );
+    folder->State = FOLDER_STATE_CREATED_PERSISTENT;
     return ERROR_SUCCESS;
 }
 
@@ -946,7 +946,7 @@ static UINT ITERATE_RemoveFolders( MSIRECORD *row, LPVOID param )
 
     RemoveDirectoryW( full_path );
     folder = msi_get_loaded_folder( package, dir );
-    folder->State = 0;
+    folder->State = FOLDER_STATE_REMOVED;
     return ERROR_SUCCESS;
 }
 

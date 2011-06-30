@@ -239,10 +239,10 @@ static UINT msi_create_directory( MSIPACKAGE *package, const WCHAR *dir )
     if (!install_path) return ERROR_FUNCTION_FAILED;
 
     folder = msi_get_loaded_folder( package, dir );
-    if (folder->State == 0)
+    if (folder->State == FOLDER_STATE_UNINITIALIZED)
     {
         msi_create_full_path( install_path );
-        folder->State = 2;
+        folder->State = FOLDER_STATE_CREATED;
     }
     return ERROR_SUCCESS;
 }

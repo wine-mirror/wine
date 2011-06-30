@@ -490,6 +490,15 @@ typedef struct tagFeatureList
     MSIFEATURE *feature;
 } FeatureList;
 
+enum folder_state
+{
+    FOLDER_STATE_UNINITIALIZED,
+    FOLDER_STATE_EXISTS,
+    FOLDER_STATE_CREATED,
+    FOLDER_STATE_CREATED_PERSISTENT,
+    FOLDER_STATE_REMOVED
+};
+
 typedef struct tagMSIFOLDER
 {
     struct list entry;
@@ -502,13 +511,9 @@ typedef struct tagMSIFOLDER
 
     LPWSTR ResolvedTarget;
     LPWSTR ResolvedSource;
-    INT   State;
-        /* 0 = uninitialized */
-        /* 1 = existing */
-        /* 2 = created remove if empty */
-        /* 3 = created persist if empty */
-    INT   Cost;
-    INT   Space;
+    enum folder_state State;
+    INT Cost;
+    INT Space;
 } MSIFOLDER;
 
 typedef struct tagFolderList
