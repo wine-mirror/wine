@@ -2491,12 +2491,10 @@ static void test_register_product(void)
 {
     UINT r;
     LONG res;
-    HKEY hkey;
-    HKEY props, usage;
+    HKEY hkey, props, usage;
     LPSTR usersid;
-    char date[MAX_PATH];
-    char temp[MAX_PATH];
-    char keypath[MAX_PATH];
+    char date[MAX_PATH], temp[MAX_PATH], keypath[MAX_PATH], path[MAX_PATH];
+    DWORD size, type;
     REGSAM access = KEY_ALL_ACCESS;
 
     static const CHAR uninstall[] = "Software\\Microsoft\\Windows\\CurrentVersion"
@@ -2594,7 +2592,11 @@ static void test_register_product(void)
     res = RegOpenKeyExA(hkey, "InstallProperties", 0, access, &props);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
+    size = sizeof(path);
+    RegQueryValueExA(props, "LocalPackage", NULL, &type, (LPBYTE)path, &size);
+    DeleteFileA(path);
     RegDeleteValueA(props, "LocalPackage"); /* LocalPackage is nondeterministic */
+
     CHECK_DEL_REG_STR(props, "DisplayName", "MSITEST");
     CHECK_DEL_REG_STR(props, "DisplayVersion", "1.1.1");
     CHECK_DEL_REG_STR(props, "InstallDate", date);
@@ -2701,7 +2703,11 @@ static void test_register_product(void)
     res = RegOpenKeyExA(hkey, "InstallProperties", 0, access, &props);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
+    size = sizeof(path);
+    RegQueryValueExA(props, "LocalPackage", NULL, &type, (LPBYTE)path, &size);
+    DeleteFileA(path);
     RegDeleteValueA(props, "LocalPackage"); /* LocalPackage is nondeterministic */
+
     CHECK_DEL_REG_STR(props, "DisplayName", "MSITEST");
     CHECK_DEL_REG_STR(props, "DisplayVersion", "1.1.1");
     CHECK_DEL_REG_STR(props, "InstallDate", date);
