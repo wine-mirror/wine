@@ -228,7 +228,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
 }
 
 /***********************************************************************
- *		DllRegisterServer (MSI.@)
+ *  DllRegisterServer (MSI.@)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
@@ -236,7 +236,7 @@ HRESULT WINAPI DllRegisterServer(void)
 }
 
 /***********************************************************************
- *		DllUnregisterServer (MSI.@)
+ *  DllUnregisterServer (MSI.@)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {

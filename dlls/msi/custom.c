@@ -522,22 +522,22 @@ static UINT get_action_info( const GUID *guid, INT *type, MSIHANDLE *handle,
 #ifdef __i386__
 extern UINT CUSTOMPROC_wrapper( MsiCustomActionEntryPoint proc, MSIHANDLE handle );
 __ASM_GLOBAL_FUNC( CUSTOMPROC_wrapper,
-	"pushl %ebp\n\t"
-	__ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-	__ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
-	"movl %esp,%ebp\n\t"
-	__ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
-	"pushl 12(%ebp)\n\t"
-	"movl 8(%ebp),%eax\n\t"
-	"call *%eax\n\t"
-	"leave\n\t"
-	__ASM_CFI(".cfi_def_cfa %esp,4\n\t")
-	__ASM_CFI(".cfi_same_value %ebp\n\t")
-	"ret" )
+    "pushl %ebp\n\t"
+    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+    "movl %esp,%ebp\n\t"
+    __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+    "pushl 12(%ebp)\n\t"
+    "movl 8(%ebp),%eax\n\t"
+    "call *%eax\n\t"
+    "leave\n\t"
+    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+    __ASM_CFI(".cfi_same_value %ebp\n\t")
+    "ret" )
 #else
 static inline UINT CUSTOMPROC_wrapper( MsiCustomActionEntryPoint proc, MSIHANDLE handle )
 {
-	return proc(handle);
+    return proc(handle);
 }
 #endif
 
@@ -1078,12 +1078,10 @@ static UINT HANDLE_CustomType5_6(MSIPACKAGE *package, LPCWSTR source,
         return ERROR_FUNCTION_FAILED;
 
     r = MSI_RecordReadStream(row, 2, NULL, &sz);
-    if (r != ERROR_SUCCESS)
-	return r;
+    if (r != ERROR_SUCCESS) return r;
 
-    buffer = msi_alloc(sizeof(CHAR)*(sz+1));
-    if (!buffer)
-	return ERROR_FUNCTION_FAILED;
+    buffer = msi_alloc( sz + 1 );
+    if (!buffer) return ERROR_FUNCTION_FAILED;
 
     r = MSI_RecordReadStream(row, 2, buffer, &sz);
     if (r != ERROR_SUCCESS)
@@ -1124,36 +1122,32 @@ static UINT HANDLE_CustomType21_22(MSIPACKAGE *package, LPCWSTR source,
     file = msi_get_loaded_file(package, source);
     if (!file)
     {
-	ERR("invalid file key %s\n", debugstr_w(source));
-	return ERROR_FUNCTION_FAILED;
+        ERR("invalid file key %s\n", debugstr_w(source));
+        return ERROR_FUNCTION_FAILED;
     }
 
     hFile = CreateFileW(file->TargetPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-    if (hFile == INVALID_HANDLE_VALUE)
-	return ERROR_FUNCTION_FAILED;
+    if (hFile == INVALID_HANDLE_VALUE) return ERROR_FUNCTION_FAILED;
 
     sz = GetFileSize(hFile, &szHighWord);
     if (sz == INVALID_FILE_SIZE || szHighWord != 0)
     {
-	CloseHandle(hFile);
-	return ERROR_FUNCTION_FAILED;
+        CloseHandle(hFile);
+        return ERROR_FUNCTION_FAILED;
     }
-
-    buffer = msi_alloc(sizeof(CHAR)*(sz+1));
+    buffer = msi_alloc( sz + 1 );
     if (!buffer)
     {
-	CloseHandle(hFile);
-	return ERROR_FUNCTION_FAILED;
+        CloseHandle(hFile);
+        return ERROR_FUNCTION_FAILED;
     }
-
     bRet = ReadFile(hFile, buffer, sz, &read, NULL);
     CloseHandle(hFile);
     if (!bRet)
     {
-	r = ERROR_FUNCTION_FAILED;
+        r = ERROR_FUNCTION_FAILED;
         goto done;
     }
-
     buffer[read] = 0;
     bufferw = strdupAtoW(buffer);
     if (!bufferw)
@@ -1161,7 +1155,6 @@ static UINT HANDLE_CustomType21_22(MSIPACKAGE *package, LPCWSTR source,
         r = ERROR_FUNCTION_FAILED;
         goto done;
     }
-
     info = do_msidbCustomActionTypeScript( package, type, bufferw, target, action );
     r = wait_thread_handle( info );
     release_custom_action_data( info );
@@ -1182,8 +1175,7 @@ static UINT HANDLE_CustomType53_54(MSIPACKAGE *package, LPCWSTR source,
     TRACE("%s %s\n", debugstr_w(source), debugstr_w(target));
 
     prop = msi_dup_property( package->db, source );
-    if (!prop)
-	return ERROR_SUCCESS;
+    if (!prop) return ERROR_SUCCESS;
 
     info = do_msidbCustomActionTypeScript( package, type, prop, NULL, action );
     msi_free(prop);
@@ -1340,26 +1332,25 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
                 msi_reset_folders( package, TRUE );
             msi_free(deformated);
             break;
-	case 37: /* JScript/VBScript text stored in target column. */
-	case 38:
-	    rc = HANDLE_CustomType37_38(package,source,target,type,action);
-	    break;
-	case 5:
-	case 6: /* JScript/VBScript file stored in a Binary table stream. */
-	    rc = HANDLE_CustomType5_6(package,source,target,type,action);
-	    break;
-	case 21: /* JScript/VBScript file installed with the product. */
-	case 22:
-	    rc = HANDLE_CustomType21_22(package,source,target,type,action);
-	    break;
-	case 53: /* JScript/VBScript text specified by a property value. */
-	case 54:
-	    rc = HANDLE_CustomType53_54(package,source,target,type,action);
-	    break;
-        default:
-            FIXME("UNHANDLED ACTION TYPE %i (%s %s)\n",
-             type & CUSTOM_ACTION_TYPE_MASK, debugstr_w(source),
-             debugstr_w(target));
+    case 37: /* JScript/VBScript text stored in target column. */
+    case 38:
+        rc = HANDLE_CustomType37_38(package,source,target,type,action);
+        break;
+    case 5:
+    case 6: /* JScript/VBScript file stored in a Binary table stream. */
+        rc = HANDLE_CustomType5_6(package,source,target,type,action);
+        break;
+    case 21: /* JScript/VBScript file installed with the product. */
+    case 22:
+        rc = HANDLE_CustomType21_22(package,source,target,type,action);
+        break;
+    case 53: /* JScript/VBScript text specified by a property value. */
+    case 54:
+        rc = HANDLE_CustomType53_54(package,source,target,type,action);
+        break;
+    default:
+        FIXME("unhandled action type %u (%s %s)\n", type & CUSTOM_ACTION_TYPE_MASK,
+              debugstr_w(source), debugstr_w(target));
     }
 
 end:

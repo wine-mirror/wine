@@ -2244,8 +2244,7 @@ LANGID WINAPI MsiLoadStringW( MSIHANDLE handle, UINT id, LPWSTR lpBuffer,
     if( !p )
         return 0;
 
-    for (i = 0; i < (id&0xf); i++)
-	p += *p + 1;
+    for (i = 0; i < (id & 0xf); i++) p += *p + 1;
     len = *p;
 
     if( nBufferMax <= len )
@@ -2255,7 +2254,6 @@ LANGID WINAPI MsiLoadStringW( MSIHANDLE handle, UINT id, LPWSTR lpBuffer,
     lpBuffer[ len ] = 0;
 
     TRACE("found -> %s\n", debugstr_w(lpBuffer));
-
     return lang;
 }
 

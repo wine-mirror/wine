@@ -1251,9 +1251,7 @@ static void msi_scrolltext_add_text( msi_control *control, LPCWSTR text )
 
 static UINT msi_dialog_scrolltext_control( msi_dialog *dialog, MSIRECORD *rec )
 {
-    static const WCHAR szRichEdit20W[] = {
-    	'R','i','c','h','E','d','i','t','2','0','W',0
-    };
+    static const WCHAR szRichEdit20W[] = {'R','i','c','h','E','d','i','t','2','0','W',0};
     struct msi_scrolltext_info *info;
     msi_control *control;
     HMODULE hRichedit;
