@@ -4915,32 +4915,23 @@ static UINT ACTION_InstallExecute(MSIPACKAGE *package)
     return execute_script(package,INSTALL_SCRIPT);
 }
 
-static UINT msi_unpublish_product(MSIPACKAGE *package, WCHAR *remove)
+static UINT msi_unpublish_product( MSIPACKAGE *package, const WCHAR *remove )
 {
+    static const WCHAR szUpgradeCode[] = {'U','p','g','r','a','d','e','C','o','d','e',0};
     WCHAR *upgrade, **features;
     BOOL full_uninstall = TRUE;
     MSIFEATURE *feature;
     MSIPATCHINFO *patch;
+    UINT i;
 
-    static const WCHAR szUpgradeCode[] =
-        {'U','p','g','r','a','d','e','C','o','d','e',0};
-
-    features = msi_split_string(remove, ',');
-    if (!features)
+    LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
-        ERR("REMOVE feature list is empty!\n");
-        return ERROR_FUNCTION_FAILED;
+        if (feature->Action == INSTALLSTATE_LOCAL) full_uninstall = FALSE;
     }
-
-    if (!strcmpW( features[0], szAll ))
-        full_uninstall = TRUE;
-    else
+    features = msi_split_string( remove, ',' );
+    for (i = 0; features && features[i]; i++)
     {
-        LIST_FOR_EACH_ENTRY(feature, &package->features, MSIFEATURE, entry)
-        {
-            if (feature->Action != INSTALLSTATE_ABSENT)
-                full_uninstall = FALSE;
-        }
+        if (!strcmpW( features[i], szAll )) full_uninstall = TRUE;
     }
     msi_free(features);
 
@@ -4991,9 +4982,7 @@ static UINT ACTION_InstallFinalize(MSIPACKAGE *package)
         return rc;
 
     remove = msi_dup_property(package->db, szRemove);
-    if (remove)
-        rc = msi_unpublish_product(package, remove);
-
+    rc = msi_unpublish_product(package, remove);
     msi_free(remove);
     return rc;
 }
