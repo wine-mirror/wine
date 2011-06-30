@@ -12117,7 +12117,7 @@ static void unbound_sampler_test(IDirect3DDevice9 *device)
     }
 
     color = getPixelColorFromSurface(rt, 32, 32);
-    todo_wine ok(color == 0xff000000, "Unbound sampler color is %#x.\n", color);
+    ok(color == 0xff000000, "Unbound sampler color is %#x.\n", color);
 
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, old_rt);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderTarget failed, hr %#x.\n", hr);

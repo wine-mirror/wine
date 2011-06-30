@@ -958,11 +958,10 @@ static void create_dummy_textures(struct wined3d_device *device)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     unsigned int i;
-    /* Under DirectX you can have texture stage operations even if no texture is
-    bound, whereas opengl will only do texture operations when a valid texture is
-    bound. We emulate this by creating dummy textures and binding them to each
-    texture stage, but disable all stages by default. Hence if a stage is enabled
-    then the default texture will kick in until replaced by a SetTexture call     */
+    /* Under DirectX you can sample even if no texture is bound, whereas
+     * OpenGL will only allow that when a valid texture is bound.
+     * We emulate this by creating dummy textures and binding them
+     * to each texture stage when the currently set D3D texture is NULL. */
     ENTER_GL();
 
     if (gl_info->supported[APPLE_CLIENT_STORAGE])
@@ -974,7 +973,7 @@ static void create_dummy_textures(struct wined3d_device *device)
 
     for (i = 0; i < gl_info->limits.textures; ++i)
     {
-        GLubyte white = 255;
+        DWORD color = 0x000000ff;
 
         /* Make appropriate texture active */
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
@@ -990,7 +989,7 @@ static void create_dummy_textures(struct wined3d_device *device)
         glBindTexture(GL_TEXTURE_2D, device->dummyTextureName[i]);
         checkGLcall("glBindTexture");
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 1, 1, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, &white);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &color);
         checkGLcall("glTexImage2D");
     }
 
