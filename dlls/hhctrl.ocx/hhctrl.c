@@ -126,7 +126,7 @@ static BOOL resolve_filename(const WCHAR *filename, WCHAR *fullname, DWORD bufle
     extra = strstrW(filename, delimW);
     if (extra)
     {
-        if (filename != chm_file);
+        if (filename != chm_file)
             memcpy(chm_file, filename, (extra-filename)*sizeof(WCHAR));
         chm_file[extra-filename] = 0;
         filename = chm_file;
