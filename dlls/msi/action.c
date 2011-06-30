@@ -4088,13 +4088,18 @@ static UINT msi_publish_patches( MSIPACKAGE *package )
         if (r != ERROR_SUCCESS)
             goto done;
 
-        res = RegSetValueExW( patch_key, szLocalPackage, 0, REG_SZ,
-                              (const BYTE *)patch->localfile,
-                              (strlenW(patch->localfile) + 1) * sizeof(WCHAR) );
+        res = RegSetValueExW( patch_key, szLocalPackage, 0, REG_SZ, (const BYTE *)patch->localfile,
+                              (strlenW( patch->localfile ) + 1) * sizeof(WCHAR) );
         RegCloseKey( patch_key );
         if (res != ERROR_SUCCESS)
             goto done;
 
+        if (patch->filename && !CopyFileW( patch->filename, patch->localfile, FALSE ))
+        {
+            res = GetLastError();
+            ERR("Unable to copy patch package %d\n", res);
+            goto done;
+        }
         res = RegCreateKeyExW( product_patches_key, patch_squashed, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &patch_key, NULL );
         if (res != ERROR_SUCCESS)
             goto done;
@@ -4898,14 +4903,22 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         return rc;
 
-    rc = MSIREG_OpenInstallProps(package->ProductCode, package->Context,
-                                 NULL, &props, TRUE);
+    rc = MSIREG_OpenInstallProps(package->ProductCode, package->Context, NULL, &props, TRUE);
     if (rc != ERROR_SUCCESS)
         goto done;
 
-    msi_reg_set_val_str( props, INSTALLPROPERTY_LOCALPACKAGEW, package->db->localfile );
-    msi_free( package->db->localfile );
-    package->db->localfile = NULL;
+    if (!msi_get_property_int( package->db, szInstalled, 0 ))
+    {
+        msi_reg_set_val_str( props, INSTALLPROPERTY_LOCALPACKAGEW, package->localfile );
+        if (!CopyFileW( package->PackagePath, package->localfile, FALSE ))
+        {
+            rc = GetLastError();
+            ERR("Unable to copy package %u\n", rc);
+            goto done;
+        }
+    }
+    msi_free( package->localfile );
+    package->localfile = NULL;
 
     rc = msi_publish_install_properties(package, hkey);
     if (rc != ERROR_SUCCESS)
@@ -4986,7 +4999,13 @@ static UINT msi_unpublish_product( MSIPACKAGE *package, const WCHAR *remove )
     LIST_FOR_EACH_ENTRY(patch, &package->patches, MSIPATCHINFO, entry)
     {
         MSIREG_DeleteUserDataPatchKey(patch->patchcode, package->Context);
+        /* FIXME: remove local patch package if this is the last product */
     }
+
+    TRACE("removing local package %s\n", debugstr_w(package->localfile));
+    DeleteFileW( package->localfile );
+    msi_free( package->localfile );
+    package->localfile = NULL;
 
     return ERROR_SUCCESS;
 }
@@ -7435,6 +7454,15 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     msi_adjust_privilege_properties( package );
     msi_set_context( package );
 
+    if (msi_get_property_int( package->db, szInstalled, 0 ))
+    {
+        HKEY hkey;
+        DeleteFileW( package->localfile );
+        msi_free( package->localfile );
+        MSIREG_OpenInstallProps( package->ProductCode, package->Context, NULL, &hkey, FALSE );
+        package->localfile = msi_reg_get_val_str( hkey, INSTALLPROPERTY_LOCALPACKAGEW );
+        RegCloseKey( hkey );
+    }
     if (msi_get_property_int( package->db, szDisableRollback, 0 ))
     {
         TRACE("disabling rollback\n");

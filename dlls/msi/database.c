@@ -257,11 +257,6 @@ static VOID MSI_CloseDatabase( MSIOBJECTHDR *arg )
         DeleteFileW( db->deletefile );
         msi_free( db->deletefile );
     }
-    if (db->localfile)
-    {
-        DeleteFileW( db->localfile );
-        msi_free( db->localfile );
-    }
 }
 
 static HRESULT db_initialize( IStorage *stg, const GUID *clsid )

@@ -630,16 +630,9 @@ static UINT msi_apply_patch_package( MSIPACKAGE *package, const WCHAR *file )
     if ( r != ERROR_SUCCESS )
         goto done;
 
-    TRACE("copying to local package %s\n", debugstr_w(localfile));
-
-    if (!CopyFileW( file, localfile, FALSE ))
-    {
-        ERR("Unable to copy package (%s -> %s) (error %u)\n",
-            debugstr_w(file), debugstr_w(localfile), GetLastError());
-        r = GetLastError();
-        goto done;
-    }
-    patch->localfile = strdupW( localfile );
+    r = ERROR_OUTOFMEMORY;
+    if (!(patch->filename = strdupW( file ))) goto done;
+    if (!(patch->localfile = strdupW( localfile ))) goto done;
 
     r = msi_apply_patch_db( package, patch_db, patch );
     if (r != ERROR_SUCCESS) WARN("patch failed to apply %u\n", r);
@@ -649,9 +642,9 @@ done:
     msiobj_release( &patch_db->hdr );
     if (patch && r != ERROR_SUCCESS)
     {
-        if (patch->localfile) DeleteFileW( patch->localfile );
         msi_free( patch->patchcode );
         msi_free( patch->transforms );
+        msi_free( patch->filename );
         msi_free( patch->localfile );
         msi_free( patch );
     }
@@ -715,5 +708,61 @@ UINT msi_apply_transforms( MSIPACKAGE *package )
     }
     msi_free( xforms );
     msi_free( xform_list );
+    return r;
+}
+
+UINT msi_apply_registered_patch( MSIPACKAGE *package, LPCWSTR patch_code )
+{
+    UINT r;
+    DWORD len;
+    WCHAR patch_file[MAX_PATH];
+    MSIDATABASE *patch_db;
+    MSIPATCHINFO *patch_info;
+    MSISUMMARYINFO *si;
+
+    len = sizeof(patch_file) / sizeof(WCHAR);
+    r = MsiGetPatchInfoExW( patch_code, package->ProductCode, NULL, package->Context,
+                            INSTALLPROPERTY_LOCALPACKAGEW, patch_file, &len );
+    if (r != ERROR_SUCCESS)
+    {
+        ERR("failed to get patch filename %u\n", r);
+        return r;
+    }
+    r = MSI_OpenDatabaseW( patch_file, MSIDBOPEN_READONLY + MSIDBOPEN_PATCHFILE, &patch_db );
+    if (r != ERROR_SUCCESS)
+    {
+        ERR("failed to open patch database %s\n", debugstr_w( patch_file ));
+        return r;
+    }
+    si = MSI_GetSummaryInformationW( patch_db->storage, 0 );
+    if (!si)
+    {
+        msiobj_release( &patch_db->hdr );
+        return ERROR_FUNCTION_FAILED;
+    }
+    r = msi_parse_patch_summary( si, &patch_info );
+    msiobj_release( &si->hdr );
+    if (r != ERROR_SUCCESS)
+    {
+        ERR("failed to parse patch summary %u\n", r);
+        msiobj_release( &patch_db->hdr );
+        return r;
+    }
+    patch_info->localfile = strdupW( patch_file );
+    if (!patch_info->localfile)
+    {
+        msiobj_release( &patch_db->hdr );
+        return ERROR_OUTOFMEMORY;
+    }
+    r = msi_apply_patch_db( package, patch_db, patch_info );
+    msiobj_release( &patch_db->hdr );
+    if (r != ERROR_SUCCESS)
+    {
+        ERR("failed to apply patch %u\n", r);
+        msi_free( patch_info->patchcode );
+        msi_free( patch_info->transforms );
+        msi_free( patch_info->localfile );
+        msi_free( patch_info );
+    }
     return r;
 }

@@ -86,7 +86,6 @@ typedef struct tagMSIDATABASE
     UINT bytes_per_strref;
     LPWSTR path;
     LPWSTR deletefile;
-    LPWSTR localfile;
     LPCWSTR mode;
     UINT media_transform_offset;
     UINT media_transform_disk_id;
@@ -172,6 +171,7 @@ typedef struct tagMSIPATCHINFO
     struct list entry;
     LPWSTR patchcode;
     LPWSTR transforms;
+    LPWSTR filename;
     LPWSTR localfile;
     MSIPATCHSTATE state;
 } MSIPATCHINFO;
@@ -383,6 +383,7 @@ typedef struct tagMSIPACKAGE
     LPWSTR BaseURL;
     LPWSTR PackagePath;
     LPWSTR ProductCode;
+    LPWSTR localfile;
 
     UINT CurrentInstallState;
     msi_dialog *dialog;
@@ -770,6 +771,7 @@ extern UINT msi_check_patch_applicable( MSIPACKAGE *package, MSISUMMARYINFO *si 
 extern UINT msi_parse_patch_summary( MSISUMMARYINFO *si, MSIPATCHINFO **patch ) DECLSPEC_HIDDEN;
 extern UINT msi_apply_patch_db( MSIPACKAGE *package, MSIDATABASE *patch_db, MSIPATCHINFO *patch ) DECLSPEC_HIDDEN;
 extern UINT msi_apply_patches( MSIPACKAGE *package ) DECLSPEC_HIDDEN;
+extern UINT msi_apply_registered_patch( MSIPACKAGE *package, LPCWSTR patch_code ) DECLSPEC_HIDDEN;
 
 /* action internals */
 extern UINT MSI_InstallPackage( MSIPACKAGE *, LPCWSTR, LPCWSTR ) DECLSPEC_HIDDEN;

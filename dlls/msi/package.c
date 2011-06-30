@@ -157,8 +157,6 @@ static void free_package_structures( MSIPACKAGE *package )
     INT i;
     struct list *item, *cursor;
 
-    TRACE("Freeing package action data\n");
-
     LIST_FOR_EACH_SAFE( item, cursor, &package->features )
     {
         MSIFEATURE *feature = LIST_ENTRY( item, MSIFEATURE, entry );
@@ -303,6 +301,7 @@ static void free_package_structures( MSIPACKAGE *package )
         msi_free( patch->patchcode );
         msi_free( patch->transforms );
         msi_free( patch->localfile );
+        msi_free( patch->filename );
         msi_free( patch );
     }
 
@@ -358,6 +357,12 @@ static void MSI_FreePackage( MSIOBJECTHDR *arg)
     for (i = 0; i < CLR_VERSION_MAX; i++)
         if (package->cache_net[i]) IAssemblyCache_Release( package->cache_net[i] );
     if (package->cache_sxs) IAssemblyCache_Release( package->cache_sxs );
+
+    if (package->localfile)
+    {
+        DeleteFileW( package->localfile );
+        msi_free( package->localfile );
+    }
 }
 
 static UINT create_temp_property_table(MSIPACKAGE *package)
@@ -1291,67 +1296,6 @@ UINT msi_get_local_package_name( LPWSTR path, LPCWSTR suffix )
     return ERROR_SUCCESS;
 }
 
-static UINT apply_registered_patch( MSIPACKAGE *package, LPCWSTR patch_code )
-{
-    UINT r;
-    DWORD len;
-    WCHAR patch_file[MAX_PATH];
-    MSIDATABASE *patch_db;
-    MSIPATCHINFO *patch_info;
-    MSISUMMARYINFO *si;
-
-    len = sizeof(patch_file) / sizeof(WCHAR);
-    r = MsiGetPatchInfoExW( patch_code, package->ProductCode, NULL, package->Context,
-                            INSTALLPROPERTY_LOCALPACKAGEW, patch_file, &len );
-    if (r != ERROR_SUCCESS)
-    {
-        ERR("failed to get patch filename %u\n", r);
-        return r;
-    }
-
-    r = MSI_OpenDatabaseW( patch_file, MSIDBOPEN_READONLY + MSIDBOPEN_PATCHFILE, &patch_db );
-    if (r != ERROR_SUCCESS)
-    {
-        ERR("failed to open patch database %s\n", debugstr_w( patch_file ));
-        return r;
-    }
-
-    si = MSI_GetSummaryInformationW( patch_db->storage, 0 );
-    if (!si)
-    {
-        msiobj_release( &patch_db->hdr );
-        return ERROR_FUNCTION_FAILED;
-    }
-
-    r = msi_parse_patch_summary( si, &patch_info );
-    msiobj_release( &si->hdr );
-    if (r != ERROR_SUCCESS)
-    {
-        ERR("failed to parse patch summary %u\n", r);
-        msiobj_release( &patch_db->hdr );
-        return r;
-    }
-
-    patch_info->localfile = strdupW( patch_file );
-    if (!patch_info->localfile)
-    {
-        msiobj_release( &patch_db->hdr );
-        return ERROR_OUTOFMEMORY;
-    }
-
-    r = msi_apply_patch_db( package, patch_db, patch_info );
-    msiobj_release( &patch_db->hdr );
-    if (r != ERROR_SUCCESS)
-    {
-        ERR("failed to apply patch %u\n", r);
-        msi_free( patch_info->patchcode );
-        msi_free( patch_info->transforms );
-        msi_free( patch_info->localfile );
-        msi_free( patch_info );
-    }
-    return r;
-}
-
 static UINT msi_parse_summary( MSISUMMARYINFO *si, MSIPACKAGE *package )
 {
     WCHAR *template, *p, *q;
@@ -1531,20 +1475,6 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 
             file = temppath;
         }
-
-        r = msi_get_local_package_name( localfile, dotmsi );
-        if (r != ERROR_SUCCESS)
-            return r;
-
-        TRACE("Copying to local package %s\n", debugstr_w(localfile));
-
-        if (!CopyFileW( file, localfile, FALSE ))
-        {
-            ERR("Unable to copy package (%s -> %s) (error %u)\n",
-                debugstr_w(file), debugstr_w(localfile), GetLastError());
-            return GetLastError();
-        }
-
         TRACE("Opening relocated package %s\n", debugstr_w( file ));
 
         /* transforms that add binary streams require that we open the database
@@ -1562,9 +1492,11 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 
             return r;
         }
-
-        db->localfile = strdupW( localfile );
     }
+
+    r = msi_get_local_package_name( localfile, dotmsi );
+    if (r != ERROR_SUCCESS)
+        return r;
 
     package = MSI_CreatePackage( db, base_url );
     msi_free( base_url );
@@ -1576,9 +1508,8 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 
         return ERROR_INSTALL_PACKAGE_INVALID;
     }
-
-    if( file != szPackage )
-        msi_track_tempfile( package, file );
+    if (file != szPackage) msi_track_tempfile( package, file );
+    package->localfile = strdupW( localfile );
 
     si = MSI_GetSummaryInformationW( db->storage, 0 );
     if (!si)
@@ -1629,7 +1560,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 
         TRACE("found registered patch %s\n", debugstr_w(patch_code));
 
-        r = apply_registered_patch( package, patch_code );
+        r = msi_apply_registered_patch( package, patch_code );
         if (r != ERROR_SUCCESS)
         {
             ERR("registered patch failed to apply %u\n", r);
