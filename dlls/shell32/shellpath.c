@@ -3459,8 +3459,6 @@ static HRESULT WINAPI knownfolder_SetPath(
 {
     struct knownfolder *knownfolder = impl_from_IKnownFolder( iface );
     HRESULT hr = S_OK;
-    HKEY hKey;
-    WCHAR szPath[MAX_PATH];
 
     TRACE("(%p, 0x%08x, %p)\n", knownfolder, dwFlags, debugstr_w(pszPath));
 
@@ -3469,22 +3467,7 @@ static HRESULT WINAPI knownfolder_SetPath(
         hr = E_FAIL;
 
     if(SUCCEEDED(hr))
-    {
-        if(dwFlags & KF_FLAG_DONT_UNEXPAND)
-            lstrcpyW(szPath, pszPath);
-        else
-            hr = ( ExpandEnvironmentStringsW(pszPath, szPath, sizeof(szPath)/sizeof(szPath[0]))!=0 ? S_OK : HRESULT_FROM_WIN32(GetLastError()));
-    }
-
-    if(SUCCEEDED(hr))
-        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, 0, KEY_SET_VALUE, &hKey));
-
-    if(SUCCEEDED(hr))
-    {
-        hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szRelativePath, 0, REG_SZ, (LPBYTE)pszPath, (lstrlenW(pszPath)+1)*sizeof(WCHAR)));
-
-        RegCloseKey(hKey);
-    }
+        hr = redirect_known_folder(&knownfolder->id, NULL, 0, pszPath, 0, NULL, NULL);
 
     return hr;
 }
