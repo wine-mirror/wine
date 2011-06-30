@@ -6350,6 +6350,18 @@ static void test_command_line_parsing(void)
     r = MsiInstallProductA(msifile, cmd);
     ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
 
+    cmd = "P=\"\"\"one\"\"\" Q=\"two\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    cmd = "P=\"one \"\"two\"\"\" Q=\"three\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    cmd = "P=\"\"\"one\"\" two\" Q=\"three\"";
+    r = MsiInstallProductA(msifile, cmd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
     DeleteFile(msifile);
     RemoveDirectory("msitest");
 }
