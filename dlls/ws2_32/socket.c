@@ -157,7 +157,7 @@
 #endif
 
 
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)  || defined(__DragonFly__)
 # define sipx_network    sipx_addr.x_net
 # define sipx_node       sipx_addr.x_host.c_host
 #endif  /* __FreeBSD__ */
