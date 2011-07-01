@@ -204,6 +204,7 @@ include/msxml6.h
 include/netcon.h
 include/netfw.h
 include/oaidl.h
+include/objectarray.h
 include/objidl.h
 include/objsafe.h
 include/ocidl.h

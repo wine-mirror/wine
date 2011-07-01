@@ -64,6 +64,7 @@ PUBLIC_IDL_H_SRCS = \
 	netcon.idl \
 	netfw.idl \
 	oaidl.idl \
+	objectarray.idl \
 	objidl.idl \
 	objsafe.idl \
 	ocidl.idl \
