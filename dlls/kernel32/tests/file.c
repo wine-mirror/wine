@@ -1768,21 +1768,10 @@ static BOOL create_fake_dll( LPCSTR filename )
     return ret;
 }
 
-static int is_sharing_compatible( DWORD access1, DWORD sharing1, DWORD access2, DWORD sharing2, BOOL is_win9x )
+static int is_sharing_compatible( DWORD access1, DWORD sharing1, DWORD access2, DWORD sharing2 )
 {
-    if (!is_win9x)
-    {
-        if (!access1) sharing1 = FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE;
-        if (!access2) sharing2 = FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE;
-    }
-    else
-    {
-        access1 &= ~DELETE;
-        if (!access1) access1 = GENERIC_READ;
-
-        access2 &= ~DELETE;
-        if (!access2) access2 = GENERIC_READ;
-    }
+    if (!access1) sharing1 = FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE;
+    if (!access2) sharing2 = FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE;
 
     if ((access1 & GENERIC_READ) && !(sharing2 & FILE_SHARE_READ)) return 0;
     if ((access1 & GENERIC_WRITE) && !(sharing2 & FILE_SHARE_WRITE)) return 0;
@@ -1816,7 +1805,6 @@ static void test_file_sharing(void)
     int a1, s1, a2, s2;
     int ret;
     HANDLE h, h2;
-    BOOL is_win9x = FALSE;
 
     /* make sure the file exists */
     if (!create_fake_dll( filename ))
@@ -1824,16 +1812,11 @@ static void test_file_sharing(void)
         ok(0, "couldn't create file \"%s\" (err=%d)\n", filename, GetLastError());
         return;
     }
-    is_win9x = GetFileAttributesW(filenameW) == INVALID_FILE_ATTRIBUTES;
 
     for (a1 = 0; a1 < sizeof(access_modes)/sizeof(access_modes[0]); a1++)
     {
         for (s1 = 0; s1 < sizeof(sharing_modes)/sizeof(sharing_modes[0]); s1++)
         {
-            /* Win9x doesn't support FILE_SHARE_DELETE */
-            if (is_win9x && (sharing_modes[s1] & FILE_SHARE_DELETE))
-                continue;
-
             SetLastError(0xdeadbeef);
             h = CreateFileA( filename, access_modes[a1], sharing_modes[s1],
                              NULL, OPEN_EXISTING, 0, 0 );
@@ -1846,24 +1829,18 @@ static void test_file_sharing(void)
             {
                 for (s2 = 0; s2 < sizeof(sharing_modes)/sizeof(sharing_modes[0]); s2++)
                 {
-                    /* Win9x doesn't support FILE_SHARE_DELETE */
-                    if (is_win9x && (sharing_modes[s2] & FILE_SHARE_DELETE))
-                        continue;
-
                     SetLastError(0xdeadbeef);
                     h2 = CreateFileA( filename, access_modes[a2], sharing_modes[s2],
                                       NULL, OPEN_EXISTING, 0, 0 );
                     ret = GetLastError();
                     if (is_sharing_compatible( access_modes[a1], sharing_modes[s1],
-                                               access_modes[a2], sharing_modes[s2], is_win9x ))
+                                               access_modes[a2], sharing_modes[s2] ))
                     {
                         ok( h2 != INVALID_HANDLE_VALUE,
                             "open failed for modes %x/%x/%x/%x\n",
                             access_modes[a1], sharing_modes[s1],
                             access_modes[a2], sharing_modes[s2] );
-                        ok( ret == 0xdeadbeef /* Win9x */ ||
-                            ret == 0, /* XP */
-                             "wrong error code %d\n", ret );
+                        ok( ret == 0, "wrong error code %d\n", ret );
                     }
                     else
                     {
@@ -1902,10 +1879,6 @@ static void test_file_sharing(void)
         {
             for (s2 = 0; s2 < sizeof(sharing_modes)/sizeof(sharing_modes[0]); s2++)
             {
-                /* Win9x doesn't support FILE_SHARE_DELETE */
-                if (is_win9x && (sharing_modes[s2] & FILE_SHARE_DELETE))
-                    continue;
-
                 SetLastError(0xdeadbeef);
                 h2 = CreateFileA( filename, access_modes[a2], sharing_modes[s2],
                                   NULL, OPEN_EXISTING, 0, 0 );
@@ -1913,10 +1886,9 @@ static void test_file_sharing(void)
                 ret = GetLastError();
                 if (h2 == INVALID_HANDLE_VALUE)
                 {
-                    if (is_sharing_map_compatible(mapping_modes[a1], access_modes[a2], sharing_modes[s2]))
-                        ok( is_win9x, /* there's no sharing at all with a mapping on win9x */
-                            "open failed for modes map %x/%x/%x\n",
-                            mapping_modes[a1], access_modes[a2], sharing_modes[s2] );
+                    ok( !is_sharing_map_compatible(mapping_modes[a1], access_modes[a2], sharing_modes[s2]),
+                        "open failed for modes map %x/%x/%x\n",
+                        mapping_modes[a1], access_modes[a2], sharing_modes[s2] );
                     ok( ret == ERROR_SHARING_VIOLATION,
                         "wrong error code %d\n", ret );
                 }
@@ -1939,7 +1911,7 @@ static void test_file_sharing(void)
         h2 = CreateFileA( filename, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
                           NULL, CREATE_ALWAYS, 0, 0 );
         ret = GetLastError();
-        if ((mapping_modes[a1] & SEC_IMAGE) || is_win9x)
+        if (mapping_modes[a1] & SEC_IMAGE)
         {
             ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %x\n", mapping_modes[a1] );
             ok( ret == ERROR_SHARING_VIOLATION, "wrong error code %d for %x\n", ret, mapping_modes[a1] );
@@ -1956,12 +1928,7 @@ static void test_file_sharing(void)
         h2 = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
                           NULL, OPEN_EXISTING, FILE_FLAG_DELETE_ON_CLOSE, 0 );
         ret = GetLastError();
-        if (is_win9x)
-        {
-            ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %x\n", mapping_modes[a1] );
-            ok( ret == ERROR_SHARING_VIOLATION, "wrong error code %d for %x\n", ret, mapping_modes[a1] );
-        }
-        else if (mapping_modes[a1] & SEC_IMAGE)
+        if (mapping_modes[a1] & SEC_IMAGE)
         {
             ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %x\n", mapping_modes[a1] );
             ok( ret == ERROR_ACCESS_DENIED, "wrong error code %d for %x\n", ret, mapping_modes[a1] );
