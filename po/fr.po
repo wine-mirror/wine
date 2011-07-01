@@ -8483,9 +8483,8 @@ msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr "Usage : dxdiag [/whql:off | /whql:on] [/t fichier | /x fichier]"
 
 #: explorer.rc:28
-#, fuzzy
 msgid "Wine Explorer"
-msgstr "Internet Explorer de Wine"
+msgstr "Explorateur de Wine"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
@@ -9969,12 +9968,10 @@ msgid "Tiles the windows vertically on the desktop"
 msgstr "Arrange les fenêtres verticalement sur le bureau"
 
 #: taskmgr.rc:207
-#, fuzzy
 msgid "Minimizes the windows"
 msgstr "Réduit les fenêtres"
 
 #: taskmgr.rc:208
-#, fuzzy
 msgid "Maximizes the windows"
 msgstr "Agrandit les fenêtres"
 
