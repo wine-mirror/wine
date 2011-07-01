@@ -88,6 +88,7 @@ enum SHADER_CONSTANT_TYPE
 enum STATE_TYPE
 {
     ST_CONSTANT,
+    ST_PARAMETER,
     ST_FXLC,
 };
 
@@ -4739,7 +4740,7 @@ static HRESULT d3dx9_parse_resource(struct ID3DXBaseEffectImpl *base, const char
     DWORD index, state_index, usage;
     struct d3dx_state *state;
     struct d3dx_parameter *param;
-    HRESULT hr;
+    HRESULT hr = E_FAIL;
 
     read_dword(ptr, &technique_index);
     TRACE("techn: %u\n", technique_index);
@@ -4828,14 +4829,21 @@ static HRESULT d3dx9_parse_resource(struct ID3DXBaseEffectImpl *base, const char
 
                 default:
                     FIXME("Unhandled type %s\n", debug_d3dxparameter_type(param->type));
-                    hr=E_FAIL;
                     break;
+            }
+            break;
+
+        case 1:
+            state->type = ST_PARAMETER;
+            hr = d3dx9_copy_data(param->data, ptr);
+            if (hr == D3D_OK)
+            {
+                TRACE("Mapping to parameter %s\n", *(char **)param->data);
             }
             break;
 
         default:
             FIXME("Unknown usage %x\n", usage);
-            hr=E_FAIL;
             break;
     }
 
