@@ -88,6 +88,7 @@ enum SHADER_CONSTANT_TYPE
 enum STATE_TYPE
 {
     ST_CONSTANT,
+    ST_FXLC,
 };
 
 struct d3dx_parameter
@@ -4021,6 +4022,28 @@ static HRESULT d3dx9_parse_name(char **name, const char *ptr)
     return D3D_OK;
 }
 
+static HRESULT d3dx9_copy_data(char **str, const char **ptr)
+{
+    DWORD size;
+
+    read_dword(ptr, &size);
+    TRACE("Data size: %#x\n", size);
+
+    *str = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!*str)
+    {
+        ERR("Failed to allocate name memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    TRACE("Data: %s.\n", debugstr_an(*ptr, size));
+    memcpy(*str, *ptr, size);
+
+    *ptr += ((size + 3) & ~3);
+
+    return D3D_OK;
+}
+
 static HRESULT d3dx9_parse_data(struct d3dx_parameter *param, const char **ptr, LPDIRECT3DDEVICE9 device)
 {
     DWORD size;
@@ -4793,6 +4816,14 @@ static HRESULT d3dx9_parse_resource(struct ID3DXBaseEffectImpl *base, const char
                 case D3DXPT_PIXELSHADER:
                     state->type = ST_CONSTANT;
                     hr = d3dx9_parse_data(param, ptr, base->effect->device);
+                    break;
+
+                case D3DXPT_BOOL:
+                case D3DXPT_INT:
+                case D3DXPT_FLOAT:
+                case D3DXPT_STRING:
+                    state->type = ST_FXLC;
+                    hr = d3dx9_copy_data(param->data, ptr);
                     break;
 
                 default:
