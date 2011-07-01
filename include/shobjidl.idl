@@ -31,6 +31,7 @@ import "propidl.idl";
 import "msxml.idl";
 import "wtypes.idl";
 import "propsys.idl";
+import "objectarray.idl";
 /* FIXME: import "structuredquery.idl"; */
 
 cpp_quote("/* FIXME: #include <sherrors.h> */")
@@ -1871,6 +1872,130 @@ interface ITaskbarList2 : ITaskbarList
         [in] BOOL fullscreen);
 }
 
+cpp_quote("#ifdef MIDL_PASS")
+typedef IUnknown* HIMAGELIST;
+cpp_quote("#endif")
+
+typedef [v1_enum] enum THUMBBUTTONFLAGS {
+    THBF_ENABLED         = 0x0000,
+    THBF_DISABLED        = 0x0001,
+    THBF_DISMISSONCLICK  = 0x0002,
+    THBF_NOBACKGROUND    = 0x0004,
+    THBF_HIDDEN          = 0x0008,
+    THBF_NONINTERACTIVE  = 0x0010
+} THUMBBUTTONFLAGS;
+
+cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(THUMBBUTTONFLAGS)")
+
+typedef [v1_enum] enum THUMBBUTTONMASK {
+    THB_BITMAP   = 0x0001,
+    THB_ICON     = 0x0002,
+    THB_TOOLTIP  = 0x0004,
+    THB_FLAGS    = 0x0008
+} THUMBBUTTONMASK;
+
+cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(THUMBBUTTONMASK)")
+
+cpp_quote("#include <pshpack8.h>")
+typedef struct THUMBBUTTON {
+    THUMBBUTTONMASK dwMask;
+    UINT iId;
+    UINT iBitmap;
+    HICON hIcon;
+    WCHAR szTip[260];
+    THUMBBUTTONFLAGS dwFlags;
+} THUMBBUTTON, *LPTHUMBBUTTON;
+cpp_quote("#include <poppack.h>")
+
+[
+    uuid(ea1afb91-9e28-4b86-90e9-9e9f8a5eefaf),
+    object
+]
+interface ITaskbarList3 : ITaskbarList2
+{
+    typedef [v1_enum] enum TBPFLAG {
+        TBPF_NOPROGRESS     = 0x0000,
+        TBPF_INDETERMINATE  = 0x0001,
+        TBPF_NORMAL         = 0x0002,
+        TBPF_ERROR          = 0x0004,
+        TBPF_PAUSED         = 0x0008
+    } TBPFLAG;
+
+    cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(TBPFLAG)")
+
+    HRESULT SetProgressValue(
+            [in] HWND hwnd,
+            [in] ULONGLONG ullCompleted,
+            [in] ULONGLONG ullTotal);
+
+    HRESULT SetProgressState(
+            [in] HWND hwnd,
+            [in] TBPFLAG tbpFlags);
+
+    HRESULT RegisterTab(
+            [in] HWND hwndTab,
+            [in] HWND hwndMDI);
+
+    HRESULT UnregisterTab([in] HWND hwndTab);
+
+    HRESULT SetTabOrder(
+            [in] HWND hwndTab,
+            [in] HWND hwndInsertBefore);
+
+    HRESULT SetTabActive(
+            [in] HWND hwndTab,
+            [in] HWND hwndMDI,
+            [in] DWORD dwReserved);
+
+    HRESULT ThumbBarAddButtons(
+            [in] HWND hwnd,
+            [in] UINT cButtons,
+            [in, size_is(cButtons)] LPTHUMBBUTTON pButton);
+
+    HRESULT ThumbBarUpdateButtons(
+            [in] HWND hwnd,
+            [in] UINT cButtons,
+            [in, size_is(cButtons)] LPTHUMBBUTTON pButton);
+
+    HRESULT ThumbBarSetImageList(
+            [in] HWND hwnd,
+            [in] HIMAGELIST himl);
+
+    HRESULT SetOverlayIcon(
+            [in] HWND hwnd,
+            [in] HICON hIcon,
+            [in, unique, string] LPCWSTR pszDescription);
+
+    HRESULT SetThumbnailTooltip(
+            [in] HWND hwnd,
+            [in, unique, string] LPCWSTR pszTip);
+
+    HRESULT SetThumbnailClip(
+            [in] HWND hwnd,
+            [in] RECT *prcClip);
+}
+
+[
+    uuid(c43dc798-95d1-4bea-9030-bb99e2983a1a),
+    object
+]
+interface ITaskbarList4 : ITaskbarList3
+{
+    typedef [v1_enum] enum STPFLAG {
+        STPF_NONE                       = 0x0000,
+        STPF_USEAPPTHUMBNAILALWAYS      = 0x0001,
+        STPF_USEAPPTHUMBNAILWHENACTIVE  = 0x0002,
+        STPF_USEAPPPEEKALWAYS           = 0x0004,
+        STPF_USEAPPPEEKWHENACTIVE       = 0x0008
+    } STPFLAG;
+
+    cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(STPFLAG)")
+
+    HRESULT SetTabProperties(
+            [in] HWND hwndTab,
+            [in] STPFLAG stpFlags);
+}
+
 /*****************************************************************************
  *    IAutoCompleteDropDown interface
  */
@@ -2326,10 +2451,6 @@ interface INameSpaceTreeControlEvents : IUnknown
         [out] int *piDefaultIcon,
         [out] int *piOpenIcon);
 }
-
-cpp_quote("#ifdef MIDL_PASS")
-typedef IUnknown *HIMAGELIST;
-cpp_quote("#endif")
 
 /*****************************************************************************
  * INameSpaceTreeControlCustomDraw interface
@@ -3135,6 +3256,41 @@ interface IApplicationAssociationRegistration : IUnknown
         [in, string] LPCWSTR pszAppRegistryName);
 
     HRESULT ClearUserAssociations();
+}
+
+[
+    uuid(6332debf-87b5-4670-90c0-5e57b408a49e),
+    object,
+    pointer_default(unique)
+]
+interface ICustomDestinationList : IUnknown
+{
+    typedef [v1_enum] enum KNOWNDESTCATEGORY {
+        KDC_FREQUENT = 1,
+        KDC_RECENT
+    } KNOWNDESTCATEGORY;
+
+    HRESULT SetAppID([in, string] LPCWSTR pszAppID);
+
+    HRESULT BeginList(
+            [out] UINT *pcMinSlots,
+            [in] REFIID riid,
+            [out, iid_is(riid)] void **ppv);
+
+    HRESULT AppendCategory(
+            [in, string] LPCWSTR pszCategory,
+            [in] IObjectArray *poa);
+
+    HRESULT AppendKnownCategory([in] KNOWNDESTCATEGORY category);
+    HRESULT AddUserTasks([in] IObjectArray *poa);
+    HRESULT CommitList();
+
+    HRESULT GetRemovedDestinations(
+            [in] REFIID riid,
+            [out, iid_is(riid)] void **ppv);
+
+    HRESULT DeleteList([in, unique, string] LPCWSTR pszAppID);
+    HRESULT AbortList();
 }
 
 /*****************************************************************************
