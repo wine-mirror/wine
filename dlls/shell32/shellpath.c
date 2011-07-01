@@ -3135,7 +3135,7 @@ static HRESULT get_known_folder_registry_path(
  *                      However, besides root key, path is always that same, and is stored
  *                      as "szKnownFolderRedirections" constant
  */
-static HRESULT WINAPI get_known_folder_redirection_place(
+static HRESULT get_known_folder_redirection_place(
     REFKNOWNFOLDERID rfid,
     HKEY *rootKey)
 {
@@ -3173,7 +3173,7 @@ static HRESULT WINAPI get_known_folder_redirection_place(
     return hr;
 }
 
-static HRESULT WINAPI redirect_known_folder(
+static HRESULT redirect_known_folder(
     REFKNOWNFOLDERID rfid,
     HWND hwnd,
     KF_REDIRECT_FLAGS flags,
