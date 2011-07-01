@@ -1476,6 +1476,11 @@ static void fd_destroy( struct object *obj )
 static unsigned int check_sharing( struct fd *fd, unsigned int access, unsigned int sharing,
                                    unsigned int open_flags, unsigned int options )
 {
+    /* only a few access bits are meaningful wrt sharing */
+    const unsigned int read_access = FILE_READ_DATA | FILE_EXECUTE;
+    const unsigned int write_access = FILE_WRITE_DATA | FILE_APPEND_DATA;
+    const unsigned int all_access = read_access | write_access | DELETE;
+
     unsigned int existing_sharing = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
     unsigned int existing_access = 0;
     struct list *ptr;
@@ -1489,25 +1494,26 @@ static unsigned int check_sharing( struct fd *fd, unsigned int access, unsigned 
         if (fd_ptr != fd)
         {
             /* if access mode is 0, sharing mode is ignored */
-            if (fd_ptr->access) existing_sharing &= fd_ptr->sharing;
-            existing_access  |= fd_ptr->access;
+            if (fd_ptr->access & all_access) existing_sharing &= fd_ptr->sharing;
+            existing_access |= fd_ptr->access;
         }
     }
 
-    if (((access & FILE_UNIX_READ_ACCESS) && !(existing_sharing & FILE_SHARE_READ)) ||
-        ((access & FILE_UNIX_WRITE_ACCESS) && !(existing_sharing & FILE_SHARE_WRITE)) ||
+    if (((access & read_access) && !(existing_sharing & FILE_SHARE_READ)) ||
+        ((access & write_access) && !(existing_sharing & FILE_SHARE_WRITE)) ||
         ((access & DELETE) && !(existing_sharing & FILE_SHARE_DELETE)))
         return STATUS_SHARING_VIOLATION;
     if (((existing_access & FILE_MAPPING_WRITE) && !(sharing & FILE_SHARE_WRITE)) ||
-        ((existing_access & FILE_MAPPING_IMAGE) && (access & FILE_UNIX_WRITE_ACCESS)))
+        ((existing_access & FILE_MAPPING_IMAGE) && (access & FILE_WRITE_DATA)))
         return STATUS_SHARING_VIOLATION;
     if ((existing_access & FILE_MAPPING_IMAGE) && (options & FILE_DELETE_ON_CLOSE))
         return STATUS_CANNOT_DELETE;
     if ((existing_access & FILE_MAPPING_ACCESS) && (open_flags & O_TRUNC))
         return STATUS_USER_MAPPED_FILE;
-    if (!access) return 0;  /* if access mode is 0, sharing mode is ignored (except for mappings) */
-    if (((existing_access & FILE_UNIX_READ_ACCESS) && !(sharing & FILE_SHARE_READ)) ||
-        ((existing_access & FILE_UNIX_WRITE_ACCESS) && !(sharing & FILE_SHARE_WRITE)) ||
+    if (!(access & all_access))
+        return 0;  /* if access mode is 0, sharing mode is ignored (except for mappings) */
+    if (((existing_access & read_access) && !(sharing & FILE_SHARE_READ)) ||
+        ((existing_access & write_access) && !(sharing & FILE_SHARE_WRITE)) ||
         ((existing_access & DELETE) && !(sharing & FILE_SHARE_DELETE)))
         return STATUS_SHARING_VIOLATION;
     return 0;
