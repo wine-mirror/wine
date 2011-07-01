@@ -1768,16 +1768,30 @@ static BOOL create_fake_dll( LPCSTR filename )
     return ret;
 }
 
+static unsigned int map_file_access( unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= FILE_GENERIC_READ;
+    if (access & GENERIC_WRITE)   access |= FILE_GENERIC_WRITE;
+    if (access & GENERIC_EXECUTE) access |= FILE_GENERIC_EXECUTE;
+    if (access & GENERIC_ALL)     access |= FILE_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
+
 static int is_sharing_compatible( DWORD access1, DWORD sharing1, DWORD access2, DWORD sharing2 )
 {
+    access1 = map_file_access( access1 );
+    access2 = map_file_access( access2 );
+    access1 &= FILE_READ_DATA | FILE_WRITE_DATA | FILE_APPEND_DATA | FILE_EXECUTE | DELETE;
+    access2 &= FILE_READ_DATA | FILE_WRITE_DATA | FILE_APPEND_DATA | FILE_EXECUTE | DELETE;
+
     if (!access1) sharing1 = FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE;
     if (!access2) sharing2 = FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE;
 
-    if ((access1 & GENERIC_READ) && !(sharing2 & FILE_SHARE_READ)) return 0;
-    if ((access1 & GENERIC_WRITE) && !(sharing2 & FILE_SHARE_WRITE)) return 0;
+    if ((access1 & (FILE_READ_DATA|FILE_EXECUTE)) && !(sharing2 & FILE_SHARE_READ)) return 0;
+    if ((access1 & (FILE_WRITE_DATA|FILE_APPEND_DATA)) && !(sharing2 & FILE_SHARE_WRITE)) return 0;
     if ((access1 & DELETE) && !(sharing2 & FILE_SHARE_DELETE)) return 0;
-    if ((access2 & GENERIC_READ) && !(sharing1 & FILE_SHARE_READ)) return 0;
-    if ((access2 & GENERIC_WRITE) && !(sharing1 & FILE_SHARE_WRITE)) return 0;
+    if ((access2 & (FILE_READ_DATA|FILE_EXECUTE)) && !(sharing1 & FILE_SHARE_READ)) return 0;
+    if ((access2 & (FILE_WRITE_DATA|FILE_APPEND_DATA)) && !(sharing1 & FILE_SHARE_WRITE)) return 0;
     if ((access2 & DELETE) && !(sharing1 & FILE_SHARE_DELETE)) return 0;
     return 1;
 }
@@ -1786,7 +1800,8 @@ static int is_sharing_map_compatible( DWORD map_access, DWORD access2, DWORD sha
 {
     if ((map_access == PAGE_READWRITE || map_access == PAGE_EXECUTE_READWRITE) &&
         !(sharing2 & FILE_SHARE_WRITE)) return 0;
-    if ((map_access & SEC_IMAGE) && (access2 & GENERIC_WRITE)) return 0;
+    access2 = map_file_access( access2 );
+    if ((map_access & SEC_IMAGE) && (access2 & FILE_WRITE_DATA)) return 0;
     return 1;
 }
 
@@ -1794,7 +1809,12 @@ static void test_file_sharing(void)
 {
     static const DWORD access_modes[] =
         { 0, GENERIC_READ, GENERIC_WRITE, GENERIC_READ|GENERIC_WRITE,
-          DELETE, GENERIC_READ|DELETE, GENERIC_WRITE|DELETE, GENERIC_READ|GENERIC_WRITE|DELETE };
+          DELETE, GENERIC_READ|DELETE, GENERIC_WRITE|DELETE, GENERIC_READ|GENERIC_WRITE|DELETE,
+          GENERIC_EXECUTE, GENERIC_EXECUTE | DELETE,
+          FILE_READ_DATA, FILE_WRITE_DATA, FILE_APPEND_DATA, FILE_READ_EA, FILE_WRITE_EA,
+          FILE_READ_DATA | FILE_EXECUTE, FILE_WRITE_DATA | FILE_EXECUTE, FILE_APPEND_DATA | FILE_EXECUTE,
+          FILE_READ_EA | FILE_EXECUTE, FILE_WRITE_EA | FILE_EXECUTE, FILE_EXECUTE,
+          FILE_DELETE_CHILD, FILE_READ_ATTRIBUTES, FILE_WRITE_ATTRIBUTES };
     static const DWORD sharing_modes[] =
         { 0, FILE_SHARE_READ,
           FILE_SHARE_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
