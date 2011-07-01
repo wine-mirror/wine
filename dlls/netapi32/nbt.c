@@ -577,7 +577,7 @@ static UCHAR NetBTinetResolve(const UCHAR name[NCBNAMSZ],
                         (*cacheEntry)->numAddresses = i;
                         for (i = 0; i < (*cacheEntry)->numAddresses; i++)
                             (*cacheEntry)->addresses[i] =
-                             (DWORD)host->h_addr_list[i];
+                             *(DWORD*)host->h_addr_list[i];
                     }
                     else
                         ret = NRC_OSRESNOTAV;
