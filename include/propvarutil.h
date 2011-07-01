@@ -38,4 +38,35 @@ typedef int PROPVAR_CHANGE_FLAGS;
 HRESULT WINAPI PropVariantChangeType(PROPVARIANT *ppropvarDest, REFPROPVARIANT propvarSrc,
                                      PROPVAR_CHANGE_FLAGS flags, VARTYPE vt);
 
+
+#ifdef __cplusplus
+
+HRESULT InitPropVariantFromBoolean(BOOL fVal, PROPVARIANT *ppropvar);
+HRESULT InitPropVariantFromString(PCWSTR psz, PROPVARIANT *ppropvar);
+
+#ifndef NO_PROPVAR_INLINES
+
+HRESULT inline InitPropVariantFromBoolean(BOOL fVal, PROPVARIANT *ppropvar)
+{
+    ppropvar->vt = VT_BOOL;
+    ppropvar->boolVal = fVal ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
+}
+
+HRESULT inline InitPropVariantFromString(PCWSTR psz, PROPVARIANT *ppropvar)
+{
+    HRESULT hres;
+
+    hres = SHStrDupW(psz, &ppropvar->pwszVal);
+    if(SUCCEEDED(hres))
+        ppropvar->vt = VT_LPWSTR;
+    else
+        PropVariantInit(ppropvar);
+
+    return hres;
+}
+
+#endif
+#endif
+
 #endif /* __WINE_PROPVARUTIL_H */
