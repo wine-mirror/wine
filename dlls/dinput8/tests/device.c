@@ -72,7 +72,7 @@ static void test_device_input(
     DWORD data_size = 1;
 
     hr = IDirectInputDevice8_Acquire(lpdid);
-    todo_wine ok (SUCCEEDED(hr), "Failed to acquire device hr=%08x\n", hr);
+    ok (SUCCEEDED(hr), "Failed to acquire device hr=%08x\n", hr);
 
     if (event_type == INPUT_KEYBOARD)
         keybd_event( event, 0, 0, 0);
@@ -179,11 +179,11 @@ static BOOL CALLBACK enumeration_callback(
 
     /* SetActionMap has set the data format so now it should work */
     hr = IDirectInputDevice8_Acquire(lpdid);
-    todo_wine ok (SUCCEEDED(hr), "Acquire failed hr=%08x\n", hr);
+    ok (SUCCEEDED(hr), "Acquire failed hr=%08x\n", hr);
 
     /* SetActionMap should not work on an acquired device */
     hr = IDirectInputDevice8_SetActionMap(lpdid, data->lpdiaf, NULL, 0);
-    todo_wine ok (hr == DIERR_ACQUIRED, "SetActionMap succeeded with an acquired device hr=%08x\n", hr);
+    ok (hr == DIERR_ACQUIRED, "SetActionMap succeeded with an acquired device hr=%08x\n", hr);
 
     return DIENUM_CONTINUE;
 }
@@ -249,7 +249,7 @@ static void test_action_mapping(void)
         ok (hr == DI_NOEFFECT, "BuildActionMap should have no effect with no actions hr=%08x\n", hr);
 
         hr = IDirectInputDevice8_SetActionMap(data.keyboard, data.lpdiaf, NULL, 0);
-        todo_wine ok (hr == DI_NOEFFECT, "SetActionMap should have no effect with no actions to map hr=%08x\n", hr);
+        ok (hr == DI_NOEFFECT, "SetActionMap should have no effect with no actions to map hr=%08x\n", hr);
 
         af.dwDataSize = 4 * sizeof(actionMapping) / sizeof(actionMapping[0]);
         af.dwNumActions = sizeof(actionMapping) / sizeof(actionMapping[0]);

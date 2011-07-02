@@ -71,6 +71,9 @@ struct IDirectInputDeviceImpl
     BOOL                        overflow;    /* return DI_BUFFEROVERFLOW in 'GetDeviceData' */
 
     DataFormat                  data_format; /* user data format and wine to user format converter */
+
+    /* Action mapping */
+    int                         num_actions; /* number of actions mapped */
 };
 
 extern BOOL get_app_key(HKEY*, HKEY*) DECLSPEC_HIDDEN;

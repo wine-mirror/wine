@@ -1440,12 +1440,9 @@ HRESULT WINAPI IDirectInputDevice8WImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface
 						     LPCWSTR lpszUserName,
 						     DWORD dwFlags)
 {
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
     DIPROPDWORD dp;
 
     FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
-
-    if (This->acquired) return DIERR_ACQUIRED;
 
     if (lpdiaf->dwBufferSize > 0)
     {

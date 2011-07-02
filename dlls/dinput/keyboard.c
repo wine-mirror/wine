@@ -578,6 +578,75 @@ static HRESULT WINAPI SysKeyboardAImpl_BuildActionMap(LPDIRECTINPUTDEVICE8A ifac
     return hr;
 }
 
+static HRESULT WINAPI SysKeyboardWImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
+                                                    LPDIACTIONFORMATW lpdiaf,
+                                                    LPCWSTR lpszUserName,
+                                                    DWORD dwFlags)
+{
+    SysKeyboardImpl *This = impl_from_IDirectInputDevice8W(iface);
+    DIDATAFORMAT data_format;
+    DIOBJECTDATAFORMAT *obj_df = NULL;
+    int i, action = 0, num_actions = 0;
+
+    if (This->base.acquired) return DIERR_ACQUIRED;
+
+    data_format.dwSize = sizeof(data_format);
+    data_format.dwObjSize = sizeof(DIOBJECTDATAFORMAT);
+    data_format.dwFlags = DIDF_ABSAXIS;
+    data_format.dwDataSize = lpdiaf->dwDataSize;
+
+    /* count the actions */
+    for (i=0; i < lpdiaf->dwNumActions; i++)
+        if (IsEqualGUID(&This->base.guid, &lpdiaf->rgoAction[i].guidInstance))
+            num_actions++;
+
+    if (num_actions == 0) return DI_NOEFFECT;
+
+    This->base.num_actions = num_actions;
+
+    /* Construct the dataformat and actionmap */
+    obj_df = HeapAlloc(GetProcessHeap(), 0, sizeof(DIOBJECTDATAFORMAT)*num_actions);
+    data_format.rgodf = (LPDIOBJECTDATAFORMAT)obj_df;
+    data_format.dwNumObjs = num_actions;
+
+    for (i = 0; i < lpdiaf->dwNumActions; i++)
+    {
+        if (IsEqualGUID(&This->base.guid, &lpdiaf->rgoAction[i].guidInstance))
+        {
+            int instance = DIDFT_GETINSTANCE(lpdiaf->rgoAction[i].dwObjID);
+            memcpy(&obj_df[action], &c_dfDIKeyboard.rgodf[instance], c_dfDIKeyboard.dwObjSize);
+
+            obj_df[action].dwOfs = action;
+            action++;
+        }
+    }
+
+    IDirectInputDevice8_SetDataFormat(iface, &data_format);
+
+    HeapFree(GetProcessHeap(), 0, obj_df);
+
+    return IDirectInputDevice8WImpl_SetActionMap(iface, lpdiaf, lpszUserName, dwFlags);
+}
+
+static HRESULT WINAPI SysKeyboardAImpl_SetActionMap(LPDIRECTINPUTDEVICE8A iface,
+                                                    LPDIACTIONFORMATA lpdiaf,
+                                                    LPCSTR lpszUserName,
+                                                    DWORD dwFlags)
+{
+    SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
+    DIACTIONFORMATW diafW;
+    HRESULT hr;
+
+    diafW.rgoAction = HeapAlloc(GetProcessHeap(), 0, sizeof(DIACTIONW)*lpdiaf->dwNumActions);
+    _copy_diactionformatAtoW(&diafW, lpdiaf);
+
+    hr = SysKeyboardWImpl_SetActionMap(&This->base.IDirectInputDevice8W_iface, &diafW, NULL, dwFlags);
+
+    HeapFree(GetProcessHeap(), 0, diafW.rgoAction);
+
+    return hr;
+}
+
 static const IDirectInputDevice8AVtbl SysKeyboardAvt =
 {
     IDirectInputDevice2AImpl_QueryInterface,
@@ -610,7 +679,7 @@ static const IDirectInputDevice8AVtbl SysKeyboardAvt =
     IDirectInputDevice7AImpl_EnumEffectsInFile,
     IDirectInputDevice7AImpl_WriteEffectToFile,
     SysKeyboardAImpl_BuildActionMap,
-    IDirectInputDevice8AImpl_SetActionMap,
+    SysKeyboardAImpl_SetActionMap,
     IDirectInputDevice8AImpl_GetImageInfo
 };
 
@@ -646,6 +715,6 @@ static const IDirectInputDevice8WVtbl SysKeyboardWvt =
     IDirectInputDevice7WImpl_EnumEffectsInFile,
     IDirectInputDevice7WImpl_WriteEffectToFile,
     SysKeyboardWImpl_BuildActionMap,
-    IDirectInputDevice8WImpl_SetActionMap,
+    SysKeyboardWImpl_SetActionMap,
     IDirectInputDevice8WImpl_GetImageInfo
 };
