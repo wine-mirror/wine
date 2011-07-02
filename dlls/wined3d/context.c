@@ -2083,19 +2083,20 @@ static BOOL context_validate_rt_config(UINT rt_count,
 
 /* Context activation is done by the caller. */
 BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_device *device,
-        UINT rt_count, struct wined3d_surface **rts, struct wined3d_surface *depth_stencil)
+        UINT rt_count, const struct wined3d_fb_state *fb)
 {
     const struct StateEntry *state_table = device->StateTable;
     DWORD rt_mask = 0;
     UINT i;
+    struct wined3d_surface **rts = fb->render_targets;
 
-    if (!context_validate_rt_config(rt_count, rts, depth_stencil))
+    if (!context_validate_rt_config(rt_count, rts, fb->depth_stencil))
         return FALSE;
 
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        context_validate_onscreen_formats(device, context, depth_stencil);
+        context_validate_onscreen_formats(device, context, fb->depth_stencil);
 
         ENTER_GL();
 
@@ -2112,7 +2113,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
                 context->blit_targets[i] = NULL;
                 ++i;
             }
-            context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets, depth_stencil, SFLAG_INTEXTURE);
+            context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets, fb->depth_stencil, SFLAG_INTEXTURE);
             glReadBuffer(GL_NONE);
             checkGLcall("glReadBuffer");
         }
@@ -2124,7 +2125,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
 
         LEAVE_GL();
 
-        /* TODO: This is not necessary if the rts are the device's current targets */
+        /* TODO: This is not necessary if the framebuffer is the device's current framebuffer */
         context_invalidate_state(context, STATE_FRAMEBUFFER, device->StateTable);
     }
     else

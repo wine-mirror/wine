@@ -685,7 +685,7 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
         return WINED3D_OK;
     }
 
-    if (!context_apply_clear_state(context, device, rt_count, fb->render_targets, fb->depth_stencil))
+    if (!context_apply_clear_state(context, device, rt_count, fb))
     {
         context_release(context);
         WARN("Failed to apply clear state, skipping clear.\n");

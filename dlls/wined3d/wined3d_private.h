@@ -1130,6 +1130,12 @@ struct wined3d_context
     GLuint                  dummy_arbfp_prog;
 };
 
+struct wined3d_fb_state
+{
+    struct wined3d_surface **render_targets;
+    struct wined3d_surface *depth_stencil;
+};
+
 typedef void (*APPLYSTATEFUNC)(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *ctx);
 
 struct StateEntry
@@ -1223,7 +1229,7 @@ void context_alloc_occlusion_query(struct wined3d_context *context,
         struct wined3d_occlusion_query *query) DECLSPEC_HIDDEN;
 void context_apply_blit_state(struct wined3d_context *context, struct wined3d_device *device) DECLSPEC_HIDDEN;
 BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_device *device,
-        UINT rt_count, struct wined3d_surface **rts, struct wined3d_surface *depth_stencil) DECLSPEC_HIDDEN;
+        UINT rt_count, const struct wined3d_fb_state *fb) DECLSPEC_HIDDEN;
 BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_device *device) DECLSPEC_HIDDEN;
 void context_apply_fbo_state_blit(struct wined3d_context *context, GLenum target,
         struct wined3d_surface *render_target, struct wined3d_surface *depth_stencil, DWORD location) DECLSPEC_HIDDEN;
@@ -1612,12 +1618,6 @@ void wined3d_unregister_window(HWND window) DECLSPEC_HIDDEN;
 
 /* Multithreaded flag. Removed from the public header to signal that IWineD3D::CreateDevice ignores it */
 #define WINED3DCREATE_MULTITHREADED 0x00000004
-
-struct wined3d_fb_state
-{
-    struct wined3d_surface **render_targets;
-    struct wined3d_surface *depth_stencil;
-};
 
 struct wined3d_device
 {
