@@ -529,7 +529,7 @@
 @ cdecl _get_osplatform(ptr) msvcrt._get_osplatform
 @ stub _get_osver
 @ cdecl _get_output_format() msvcrt._get_output_format
-@ stub _get_pgmptr
+@ cdecl _get_pgmptr(ptr) msvcrt._get_pgmptr
 @ cdecl _get_printf_count_output() msvcrt._get_printf_count_output
 @ stub _get_purecall_handler
 @ cdecl _get_sbh_threshold() msvcrt._get_sbh_threshold
@@ -540,7 +540,7 @@
 @ stub _get_winmajor
 @ stub _get_winminor
 @ stub _get_winver
-@ stub _get_wpgmptr
+@ cdecl _get_wpgmptr(ptr) msvcrt._get_wpgmptr
 @ cdecl _getch() msvcrt._getch
 @ stub _getch_nolock
 @ cdecl _getche() msvcrt._getche

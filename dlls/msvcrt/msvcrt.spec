@@ -480,13 +480,13 @@
 @ cdecl _get_osplatform(ptr) MSVCRT__get_osplatform
 # stub _get_osver(ptr)
 @ cdecl _get_output_format()
-# stub _get_pgmptr(ptr)
+@ cdecl _get_pgmptr(ptr)
 @ cdecl _get_sbh_threshold()
 # stub _get_wenviron(ptr)
 # stub _get_winmajor(ptr)
 # stub _get_winminor(ptr)
 # stub _get_winver(ptr)
-# stub _get_wpgmptr(ptr)
+@ cdecl _get_wpgmptr(ptr)
 @ cdecl _get_terminate() MSVCRT__get_terminate
 @ cdecl _get_tzname(ptr str long long) MSVCRT__get_tzname
 @ cdecl _get_unexpected() MSVCRT__get_unexpected

@@ -519,7 +519,7 @@
 @ cdecl _get_invalid_parameter_handler() msvcrt._get_invalid_parameter_handler
 @ cdecl _get_osfhandle(long) msvcrt._get_osfhandle
 @ cdecl _get_output_format() msvcrt._get_output_format
-@ stub _get_pgmptr
+@ cdecl _get_pgmptr(ptr) msvcrt._get_pgmptr
 @ cdecl _get_printf_count_output() msvcrt._get_printf_count_output
 @ stub _get_purecall_handler
 @ cdecl _get_sbh_threshold() msvcrt._get_sbh_threshold
@@ -527,7 +527,7 @@
 @ stub _get_timezone
 @ cdecl _get_tzname(ptr str long long) msvcrt._get_tzname
 @ cdecl _get_unexpected() msvcrt._get_unexpected
-@ stub _get_wpgmptr
+@ cdecl _get_wpgmptr(ptr) msvcrt._get_wpgmptr
 @ stub _getc_nolock
 @ cdecl _getch() msvcrt._getch
 @ stub _getch_nolock

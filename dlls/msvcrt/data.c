@@ -156,6 +156,36 @@ char** CDECL __p__pgmptr(void) { return &MSVCRT__pgmptr; }
 WCHAR** CDECL __p__wpgmptr(void) { return &MSVCRT__wpgmptr; }
 
 /***********************************************************************
+ *              _get_pgmptr (MSVCRT.@)
+ */
+int CDECL _get_pgmptr(char** p)
+{
+  if (!MSVCRT_CHECK_PMT(p))
+  {
+    *MSVCRT__errno() = MSVCRT_EINVAL;
+    return MSVCRT_EINVAL;
+  }
+
+  *p = MSVCRT__pgmptr;
+  return 0;
+}
+
+/***********************************************************************
+ *              _get_wpgmptr (MSVCRT.@)
+ */
+int CDECL _get_wpgmptr(WCHAR** p)
+{
+  if (!MSVCRT_CHECK_PMT(p))
+  {
+    *MSVCRT__errno() = MSVCRT_EINVAL;
+    return MSVCRT_EINVAL;
+  }
+
+  *p = MSVCRT__wpgmptr;
+  return 0;
+}
+
+/***********************************************************************
  *		__p__fmode (MSVCRT.@)
  */
 unsigned int* CDECL __p__fmode(void) { return &MSVCRT__fmode; }
