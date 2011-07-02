@@ -2249,6 +2249,8 @@ const char *debug_d3dstate(DWORD state)
         return "STATE_POINTSPRITECOORDORIGIN";
     if (STATE_IS_BASEVERTEXINDEX(state))
         return "STATE_BASEVERTEXINDEX";
+    if (STATE_IS_FRAMEBUFFER(state))
+        return "STATE_FRAMEBUFFER";
 
     return wine_dbg_sprintf("UNKNOWN_STATE(%#x)", state);
 }

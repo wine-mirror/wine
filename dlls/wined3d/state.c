@@ -5098,6 +5098,8 @@ const struct StateEntryTemplate misc_state_template[] = {
     { STATE_SAMPLER(19), /* Vertex sampler 3 */           { STATE_SAMPLER(19),                                  sampler             }, WINED3D_GL_EXT_NONE             },
     { STATE_BASEVERTEXINDEX,                              { STATE_BASEVERTEXINDEX,                              state_nop,          }, ARB_DRAW_ELEMENTS_BASE_VERTEX   },
     { STATE_BASEVERTEXINDEX,                              { STATE_STREAMSRC,                                    NULL,               }, WINED3D_GL_EXT_NONE             },
+    { STATE_FRAMEBUFFER,                                  { STATE_FRAMEBUFFER,                                  context_state_fb    }, WINED3D_GL_EXT_NONE             },
+    { STATE_PIXELSHADER,                                  { STATE_PIXELSHADER,                                  context_state_drawbuf},WINED3D_GL_EXT_NONE             },
     {0 /* Terminate */,                                   { 0,                                                  0                   }, WINED3D_GL_EXT_NONE             },
 };
 
@@ -5761,6 +5763,7 @@ static void validate_state_table(struct StateEntry *state_table)
         STATE_FRONTFACE,
         STATE_POINTSPRITECOORDORIGIN,
         STATE_BASEVERTEXINDEX,
+        STATE_FRAMEBUFFER
     };
     unsigned int i, current;
 

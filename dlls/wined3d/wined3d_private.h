@@ -998,7 +998,10 @@ extern glMultiTexCoordFunc multi_texcoord_funcs[WINED3D_FFP_EMIT_COUNT] DECLSPEC
 #define STATE_BASEVERTEXINDEX  (STATE_POINTSPRITECOORDORIGIN + 1)
 #define STATE_IS_BASEVERTEXINDEX(a) ((a) == STATE_BASEVERTEXINDEX)
 
-#define STATE_HIGHEST (STATE_BASEVERTEXINDEX)
+#define STATE_FRAMEBUFFER (STATE_BASEVERTEXINDEX + 1)
+#define STATE_IS_FRAMEBUFFER(a) ((a) == STATE_FRAMEBUFFER)
+
+#define STATE_HIGHEST (STATE_FRAMEBUFFER)
 
 enum fogsource {
     FOGSOURCE_FFP,
@@ -1243,6 +1246,10 @@ void context_resource_unloaded(const struct wined3d_device *device,
 BOOL context_set_current(struct wined3d_context *ctx) DECLSPEC_HIDDEN;
 void context_set_draw_buffer(struct wined3d_context *context, GLenum buffer) DECLSPEC_HIDDEN;
 void context_set_tls_idx(DWORD idx) DECLSPEC_HIDDEN;
+void context_state_drawbuf(DWORD state, struct wined3d_stateblock *stateblock,
+        struct wined3d_context *context) DECLSPEC_HIDDEN;
+void context_state_fb(DWORD state, struct wined3d_stateblock *stateblock,
+        struct wined3d_context *context) DECLSPEC_HIDDEN;
 void context_surface_update(struct wined3d_context *context, const struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
