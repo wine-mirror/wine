@@ -65,7 +65,7 @@ GetUserNameA( LPSTR lpszName, LPDWORD lpSize )
 
     ret = GetUserNameW( buffer, &sizeW );
     if (ret)
-        WideCharToMultiByte( CP_ACP, 0, buffer, -1, lpszName, *lpSize, NULL, NULL );
+        *lpSize = WideCharToMultiByte( CP_ACP, 0, buffer, -1, lpszName, *lpSize, NULL, NULL );
     else
         *lpSize = sizeW;
 
