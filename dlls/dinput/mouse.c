@@ -773,6 +773,57 @@ static HRESULT WINAPI SysMouseWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface, L
     return DI_OK;
 }
 
+static HRESULT WINAPI SysMouseWImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W iface,
+                                                   LPDIACTIONFORMATW lpdiaf,
+                                                   LPCWSTR lpszUserName,
+                                                   DWORD dwFlags)
+{
+    SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
+    int i, has_actions = 0;
+
+    for (i=0; i < lpdiaf->dwNumActions; i++)
+    {
+        if ((lpdiaf->rgoAction[i].dwSemantic & DIMOUSE_MASK) == DIMOUSE_MASK)
+        {
+            DWORD obj_id = semantic_to_obj_id(&This->base, lpdiaf->rgoAction[i].dwSemantic);
+
+            lpdiaf->rgoAction[i].dwObjID = obj_id;
+            lpdiaf->rgoAction[i].guidInstance = This->base.guid;
+            lpdiaf->rgoAction[i].dwHow = DIAH_DEFAULT;
+            has_actions = 1;
+        }
+        else if (!(dwFlags & DIDBAM_PRESERVE))
+        {
+            /* we must clear action data belonging to other devices */
+            memset(&lpdiaf->rgoAction[i].guidInstance, 0, sizeof(GUID));
+            lpdiaf->rgoAction[i].dwHow = DIAH_UNMAPPED;
+        }
+    }
+
+    if (!has_actions) return DI_NOEFFECT;
+
+    return IDirectInputDevice8WImpl_BuildActionMap(iface, lpdiaf, lpszUserName, dwFlags);
+}
+
+static HRESULT WINAPI SysMouseAImpl_BuildActionMap(LPDIRECTINPUTDEVICE8A iface,
+                                                   LPDIACTIONFORMATA lpdiaf,
+                                                   LPCSTR lpszUserName,
+                                                   DWORD dwFlags)
+{
+    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
+    DIACTIONFORMATW diafW;
+    HRESULT hr;
+
+    diafW.rgoAction = HeapAlloc(GetProcessHeap(), 0, sizeof(DIACTIONW)*lpdiaf->dwNumActions);
+    _copy_diactionformatAtoW(&diafW, lpdiaf);
+
+    hr = SysMouseWImpl_BuildActionMap(&This->base.IDirectInputDevice8W_iface, &diafW, NULL, dwFlags);
+
+    _copy_diactionformatWtoA(lpdiaf, &diafW);
+    HeapFree(GetProcessHeap(), 0, diafW.rgoAction);
+
+    return hr;
+}
 
 static const IDirectInputDevice8AVtbl SysMouseAvt =
 {
@@ -805,7 +856,7 @@ static const IDirectInputDevice8AVtbl SysMouseAvt =
     IDirectInputDevice2AImpl_SendDeviceData,
     IDirectInputDevice7AImpl_EnumEffectsInFile,
     IDirectInputDevice7AImpl_WriteEffectToFile,
-    IDirectInputDevice8AImpl_BuildActionMap,
+    SysMouseAImpl_BuildActionMap,
     IDirectInputDevice8AImpl_SetActionMap,
     IDirectInputDevice8AImpl_GetImageInfo
 };
@@ -841,7 +892,7 @@ static const IDirectInputDevice8WVtbl SysMouseWvt =
     IDirectInputDevice2WImpl_SendDeviceData,
     IDirectInputDevice7WImpl_EnumEffectsInFile,
     IDirectInputDevice7WImpl_WriteEffectToFile,
-    IDirectInputDevice8WImpl_BuildActionMap,
+    SysMouseWImpl_BuildActionMap,
     IDirectInputDevice8WImpl_SetActionMap,
     IDirectInputDevice8WImpl_GetImageInfo
 };

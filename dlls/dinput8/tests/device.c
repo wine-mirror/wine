@@ -118,10 +118,10 @@ static void test_build_action_map(
     how = actions[action_index].dwHow;
     assigned_to = actions[action_index].guidInstance;
 
-    todo_wine ok (how == DIAH_USERCONFIG || how == DIAH_DEFAULT, "Action was not set dwHow=%08x\n", how);
-    todo_wine ok (instance == expected_inst, "Action not mapped correctly instance=%08x expected=%08x\n", instance, expected_inst);
-    todo_wine ok (type == expected_type, "Action type not mapped correctly type=%08x expected=%08x\n", type, expected_type);
-    todo_wine ok (IsEqualGUID(&assigned_to, &ddi.guidInstance), "Action and device GUID do not match action=%d\n", action_index);
+    ok (how == DIAH_USERCONFIG || how == DIAH_DEFAULT, "Action was not set dwHow=%08x\n", how);
+    ok (instance == expected_inst, "Action not mapped correctly instance=%08x expected=%08x\n", instance, expected_inst);
+    ok (type == expected_type, "Action type not mapped correctly type=%08x expected=%08x\n", type, expected_type);
+    ok (IsEqualGUID(&assigned_to, &ddi.guidInstance), "Action and device GUID do not match action=%d\n", action_index);
 }
 
 static BOOL CALLBACK enumeration_callback(
@@ -246,7 +246,7 @@ static void test_action_mapping(void)
         af.dwNumActions = DITEST_KEYBOARDSPACE;
 
         hr = IDirectInputDevice8_BuildActionMap(data.keyboard, data.lpdiaf, NULL, DIDBAM_INITIALIZE);
-        todo_wine ok (hr == DI_NOEFFECT, "BuildActionMap should have no effect with no actions hr=%08x\n", hr);
+        ok (hr == DI_NOEFFECT, "BuildActionMap should have no effect with no actions hr=%08x\n", hr);
 
         hr = IDirectInputDevice8_SetActionMap(data.keyboard, data.lpdiaf, NULL, 0);
         todo_wine ok (hr == DI_NOEFFECT, "SetActionMap should have no effect with no actions to map hr=%08x\n", hr);

@@ -547,6 +547,34 @@ int find_property(const DataFormat *df, LPCDIPROPHEADER ph)
     return -1;
 }
 
+DWORD semantic_to_obj_id(IDirectInputDeviceImpl* This, DWORD dwSemantic)
+{
+    DWORD type = (0x0000ff00 & dwSemantic) >> 8;
+    DWORD offset = 0x000000ff & dwSemantic;
+    DWORD obj_instance = 0;
+    DWORD found = 0;
+    int i;
+
+    for (i = 0; i < This->data_format.wine_df->dwNumObjs; i++)
+    {
+        LPDIOBJECTDATAFORMAT odf = dataformat_to_odf(This->data_format.wine_df, i);
+
+        if (odf->dwOfs == offset)
+        {
+            obj_instance = DIDFT_GETINSTANCE(odf->dwType);
+            found = 1;
+            break;
+        }
+    }
+
+    if (!found) return 0;
+
+    if (type & DIDFT_AXIS)   type = DIDFT_RELAXIS;
+    if (type & DIDFT_BUTTON) type = DIDFT_PSHBUTTON;
+
+    return type | (0x0000ff00 & (obj_instance << 8));
+}
+
 /******************************************************************************
  *	queue_event - add new event to the ring queue
  */
@@ -1359,7 +1387,7 @@ HRESULT WINAPI IDirectInputDevice8AImpl_BuildActionMap(LPDIRECTINPUTDEVICE8A ifa
 						       LPCSTR lpszUserName,
 						       DWORD dwFlags)
 {
-    FIXME("(%p)->(%p,%s,%08x): stub !\n", iface, lpdiaf, lpszUserName, dwFlags);
+    FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, lpszUserName, dwFlags);
 #define X(x) if (dwFlags & x) FIXME("\tdwFlags =|"#x"\n");
 	X(DIDBAM_DEFAULT)
 	X(DIDBAM_PRESERVE)
@@ -1375,7 +1403,7 @@ HRESULT WINAPI IDirectInputDevice8WImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W ifa
 						       LPCWSTR lpszUserName,
 						       DWORD dwFlags)
 {
-    FIXME("(%p)->(%p,%s,%08x): stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
+    FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
 #define X(x) if (dwFlags & x) FIXME("\tdwFlags =|"#x"\n");
 	X(DIDBAM_DEFAULT)
 	X(DIDBAM_PRESERVE)

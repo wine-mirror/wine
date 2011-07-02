@@ -114,6 +114,8 @@ extern void _dump_OBJECTINSTANCEW(const DIDEVICEOBJECTINSTANCEW *ddoi)  DECLSPEC
 extern void _dump_DIDATAFORMAT(const DIDATAFORMAT *df)  DECLSPEC_HIDDEN;
 extern const char *_dump_dinput_GUID(const GUID *guid)  DECLSPEC_HIDDEN;
 
+extern DWORD semantic_to_obj_id(IDirectInputDeviceImpl* This, DWORD dwSemantic)  DECLSPEC_HIDDEN;
+
 /* And the stubs */
 extern HRESULT WINAPI IDirectInputDevice2AImpl_Acquire(LPDIRECTINPUTDEVICE8A iface) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI IDirectInputDevice2WImpl_Acquire(LPDIRECTINPUTDEVICE8W iface) DECLSPEC_HIDDEN;
