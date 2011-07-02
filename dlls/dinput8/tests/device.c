@@ -43,6 +43,7 @@ enum {
     DITEST_BUTTON,
     DITEST_KEYBOARDSPACE,
     DITEST_MOUSEBUTTON0,
+    DITEST_YAXIS
 };
 
 static DIACTION actionMapping[]=
@@ -54,12 +55,15 @@ static DIACTION actionMapping[]=
   /* keyboard key */
   { 2, DIKEYBOARD_SPACE , 0, { "Missile" } },
   /* mouse button */
-  { 3, DIMOUSE_BUTTON0 , 0, { "Select" } }
+  { 3, DIMOUSE_BUTTON0, 0, { "Select" } },
+  /* mouse axis */
+  { 4, DIMOUSE_YAXIS, 0, { "Y Axis" } }
 };
 
-static void test_keyboard_input(
+static void test_device_input(
     LPDIRECTINPUTDEVICE8 lpdid,
-    DWORD key,
+    DWORD event_type,
+    DWORD event,
     DWORD expected
 )
 {
@@ -70,7 +74,11 @@ static void test_keyboard_input(
     hr = IDirectInputDevice8_Acquire(lpdid);
     todo_wine ok (SUCCEEDED(hr), "Failed to acquire device hr=%08x\n", hr);
 
-    keybd_event( key, 0, 0, 0);
+    if (event_type == INPUT_KEYBOARD)
+        keybd_event( event, 0, 0, 0);
+
+    if (event_type == INPUT_MOUSE)
+        mouse_event( event, 0, 0, 0, 0);
 
     IDirectInputDevice8_Poll(lpdid);
     hr = IDirectInputDevice8_GetDeviceData(lpdid, sizeof(obj_data), &obj_data, &data_size, 0);
@@ -81,7 +89,6 @@ static void test_keyboard_input(
         return;
     }
 
-    ok (data_size == 1, "GetDeviceData did not read any event\n");
     todo_wine ok (obj_data.uAppData == expected, "Retrieval of action failed uAppData=%lu expected=%d\n", obj_data.uAppData, expected);
 }
 
@@ -89,12 +96,13 @@ static void test_build_action_map(
     LPDIRECTINPUTDEVICE8 lpdid,
     LPDIACTIONFORMAT lpdiaf,
     int action_index,
-    DWORD obj_expected
+    DWORD expected_type,
+    DWORD expected_inst
 )
 {
     HRESULT hr;
     DIACTION *actions;
-    DWORD obj_instance, how;
+    DWORD instance, type, how;
     GUID assigned_to;
     DIDEVICEINSTANCEA ddi;
 
@@ -105,12 +113,14 @@ static void test_build_action_map(
     ok (SUCCEEDED(hr), "BuildActionMap failed hr=%08x\n", hr);
 
     actions = lpdiaf->rgoAction;
-    obj_instance = DIDFT_GETINSTANCE(actions[action_index].dwObjID);
+    instance = DIDFT_GETINSTANCE(actions[action_index].dwObjID);
+    type = DIDFT_GETTYPE(actions[action_index].dwObjID);
     how = actions[action_index].dwHow;
     assigned_to = actions[action_index].guidInstance;
 
     todo_wine ok (how == DIAH_USERCONFIG || how == DIAH_DEFAULT, "Action was not set dwHow=%08x\n", how);
-    todo_wine ok (obj_instance == obj_expected, "Action not mapped correctly instance=%08x expected=%08x\n", obj_instance, obj_expected);
+    todo_wine ok (instance == expected_inst, "Action not mapped correctly instance=%08x expected=%08x\n", instance, expected_inst);
+    todo_wine ok (type == expected_type, "Action type not mapped correctly type=%08x expected=%08x\n", type, expected_type);
     todo_wine ok (IsEqualGUID(&assigned_to, &ddi.guidInstance), "Action and device GUID do not match action=%d\n", action_index);
 }
 
@@ -226,9 +236,9 @@ static void test_action_mapping(void)
     if (data.keyboard != NULL)
     {
         /* Test keyboard BuildActionMap */
-        test_build_action_map(data.keyboard, data.lpdiaf, DITEST_KEYBOARDSPACE, DIK_SPACE);
+        test_build_action_map(data.keyboard, data.lpdiaf, DITEST_KEYBOARDSPACE, DIDFT_PSHBUTTON, DIK_SPACE);
         /* Test keyboard input */
-        test_keyboard_input(data.keyboard, VK_SPACE, 2);
+        test_device_input(data.keyboard, INPUT_KEYBOARD, VK_SPACE, 2);
 
         /* Test BuildActionMap with no suitable actions for a device */
         IDirectInputDevice_Unacquire(data.keyboard);
@@ -243,6 +253,15 @@ static void test_action_mapping(void)
 
         af.dwDataSize = 4 * sizeof(actionMapping) / sizeof(actionMapping[0]);
         af.dwNumActions = sizeof(actionMapping) / sizeof(actionMapping[0]);
+    }
+
+    if (data.mouse != NULL)
+    {
+        /* Test mouse BuildActionMap */
+        test_build_action_map(data.mouse, data.lpdiaf, DITEST_MOUSEBUTTON0, DIDFT_PSHBUTTON, 0x03);
+        test_build_action_map(data.mouse, data.lpdiaf, DITEST_YAXIS, DIDFT_RELAXIS, 0x01);
+
+        test_device_input(data.mouse, INPUT_MOUSE, MOUSEEVENTF_LEFTDOWN, 3);
     }
 
     /* The call fails with a zeroed GUID */
