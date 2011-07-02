@@ -47,6 +47,12 @@ typedef struct
     LPDIDATAFORMAT              user_df;     /* user defined data format */
 } DataFormat;
 
+typedef struct
+{
+    unsigned int offset;
+    UINT_PTR uAppData;
+} ActionMap;
+
 /* Device implementation */
 typedef struct IDirectInputDeviceImpl IDirectInputDeviceImpl;
 struct IDirectInputDeviceImpl
@@ -74,6 +80,7 @@ struct IDirectInputDeviceImpl
 
     /* Action mapping */
     int                         num_actions; /* number of actions mapped */
+    ActionMap                  *action_map;  /* array of mappings */
 };
 
 extern BOOL get_app_key(HKEY*, HKEY*) DECLSPEC_HIDDEN;

@@ -609,6 +609,8 @@ static HRESULT WINAPI SysKeyboardWImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
     data_format.rgodf = (LPDIOBJECTDATAFORMAT)obj_df;
     data_format.dwNumObjs = num_actions;
 
+    This->base.action_map = HeapAlloc(GetProcessHeap(), 0, sizeof(ActionMap)*num_actions);
+
     for (i = 0; i < lpdiaf->dwNumActions; i++)
     {
         if (IsEqualGUID(&This->base.guid, &lpdiaf->rgoAction[i].guidInstance))
@@ -616,6 +618,8 @@ static HRESULT WINAPI SysKeyboardWImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
             int instance = DIDFT_GETINSTANCE(lpdiaf->rgoAction[i].dwObjID);
             memcpy(&obj_df[action], &c_dfDIKeyboard.rgodf[instance], c_dfDIKeyboard.dwObjSize);
 
+            This->base.action_map[action].uAppData = lpdiaf->rgoAction[i].uAppData;
+            This->base.action_map[action].offset = action;
             obj_df[action].dwOfs = action;
             action++;
         }

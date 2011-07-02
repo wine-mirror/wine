@@ -834,6 +834,7 @@ static HRESULT WINAPI SysMouseWImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
     DIDATAFORMAT data_format;
     DIOBJECTDATAFORMAT *obj_df = NULL;
     int i, action = 0, num_actions = 0;
+    unsigned int offset = 0;
 
     if (This->base.acquired) return DIERR_ACQUIRED;
 
@@ -856,15 +857,18 @@ static HRESULT WINAPI SysMouseWImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
     data_format.rgodf = (LPDIOBJECTDATAFORMAT)obj_df;
     data_format.dwNumObjs = num_actions;
 
+    This->base.action_map = HeapAlloc(GetProcessHeap(), 0, sizeof(ActionMap)*num_actions);
+
     for (i = 0; i < lpdiaf->dwNumActions; i++)
     {
-        unsigned int offset = 0;
 
         if (IsEqualGUID(&This->base.guid, &lpdiaf->rgoAction[i].guidInstance))
         {
             int instance = DIDFT_GETINSTANCE(lpdiaf->rgoAction[i].dwObjID);
             memcpy(&obj_df[action], &c_dfDIMouse.rgodf[instance], c_dfDIMouse.dwObjSize);
 
+            This->base.action_map[action].uAppData = lpdiaf->rgoAction[i].uAppData;
+            This->base.action_map[action].offset = offset;
             obj_df[action].dwOfs = offset;
             offset += (obj_df[action].dwType & DIDFT_BUTTON) ? 1 : 4;
 

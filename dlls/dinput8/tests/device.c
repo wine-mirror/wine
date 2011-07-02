@@ -89,7 +89,7 @@ static void test_device_input(
         return;
     }
 
-    todo_wine ok (obj_data.uAppData == expected, "Retrieval of action failed uAppData=%lu expected=%d\n", obj_data.uAppData, expected);
+    ok (obj_data.uAppData == expected, "Retrieval of action failed uAppData=%lu expected=%d\n", obj_data.uAppData, expected);
 }
 
 static void test_build_action_map(

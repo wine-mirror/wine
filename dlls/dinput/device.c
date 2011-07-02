@@ -604,6 +604,22 @@ void queue_event(LPDIRECTINPUTDEVICE8A iface, int inst_id, DWORD data, DWORD tim
     This->data_queue[This->queue_head].dwData      = data;
     This->data_queue[This->queue_head].dwTimeStamp = time;
     This->data_queue[This->queue_head].dwSequence  = seq;
+
+    /* Set uAppData by means of action mapping */
+    if (This->num_actions > 0)
+    {
+        int i;
+        for (i=0; i < This->num_actions; i++)
+        {
+            if (This->action_map[i].offset == ofs)
+            {
+                TRACE("Offset %d mapped to uAppData %lu\n", ofs, This->action_map[i].uAppData);
+                This->data_queue[This->queue_head].uAppData = This->action_map[i].uAppData;
+                break;
+            }
+        }
+    }
+
     This->queue_head = next_pos;
     /* Send event if asked */
 }
@@ -782,6 +798,9 @@ ULONG WINAPI IDirectInputDevice2WImpl_Release(LPDIRECTINPUTDEVICE8W iface)
     HeapFree(GetProcessHeap(), 0, This->data_format.wine_df->rgodf);
     HeapFree(GetProcessHeap(), 0, This->data_format.wine_df);
     release_DataFormat(&This->data_format);
+
+    /* Free action mapping */
+    HeapFree(GetProcessHeap(), 0, This->action_map);
 
     EnterCriticalSection( &This->dinput->crit );
     list_remove( &This->entry );
