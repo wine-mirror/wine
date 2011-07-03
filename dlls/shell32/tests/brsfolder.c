@@ -216,7 +216,7 @@ static void test_click_make_new_folder_button(void)
     pidl = SHBrowseForFolder(&bi);
 
     number_of_folders = get_number_of_folders(test_folder_path);
-    todo_wine ok(number_of_folders == 1 || broken(number_of_folders == 0) /* W95, W98 */,
+    ok(number_of_folders == 1 || broken(number_of_folders == 0) /* W95, W98 */,
         "Clicking \"Make New Folder\" button did not result in a new folder.\n");
 
     /* There should be a new folder foo inside the test folder */
