@@ -1,6 +1,4 @@
 /*
- * IWineD3DQuery implementation
- *
  * Copyright 2005 Oliver Stieber
  * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
  * Copyright 2009-2010 Henri Verbeet for CodeWeavers.

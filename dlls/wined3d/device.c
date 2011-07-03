@@ -1,6 +1,4 @@
 /*
- * IWineD3DDevice implementation
- *
  * Copyright 2002 Lionel Ulmer
  * Copyright 2002-2005 Jason Edmeades
  * Copyright 2003-2004 Raphael Junqueira
@@ -4377,7 +4375,7 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
                 hr = wined3d_device_update_surface(device, src_surface, NULL, dst_surface, NULL);
                 if (FAILED(hr))
                 {
-                    WARN("IWineD3DDevice_UpdateSurface failed, hr %#x.\n", hr);
+                    WARN("Failed to update surface, hr %#x.\n", hr);
                     return hr;
                 }
             }
@@ -4396,7 +4394,7 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
                 hr = wined3d_device_update_surface(device, src_surface, NULL, dst_surface, NULL);
                 if (FAILED(hr))
                 {
-                    WARN("IWineD3DDevice_UpdateSurface failed, hr %#x.\n", hr);
+                    WARN("Failed to update surface, hr %#x.\n", hr);
                     return hr;
                 }
             }

@@ -351,9 +351,8 @@ static void swapchain_blit(struct wined3d_swapchain *swapchain,
         ENTER_GL();
         context_bind_fbo(context2, GL_FRAMEBUFFER, NULL);
 
-        /* Set up the texture. The surface is not in a IWineD3D*Texture container,
-         * so there are no d3d texture settings to dirtify
-         */
+        /* Set up the texture. The surface is not in a wined3d_texture
+         * container, so there are no D3D texture settings to dirtify. */
         device->blitter->set_shader(device->blit_priv, context2->gl_info, backbuffer);
         glTexParameteri(backbuffer->texture_target, GL_TEXTURE_MIN_FILTER, gl_filter);
         glTexParameteri(backbuffer->texture_target, GL_TEXTURE_MAG_FILTER, gl_filter);
@@ -693,7 +692,7 @@ void x11_copy_to_screen(struct wined3d_swapchain *swapchain, const RECT *rect)
     if (front->clipper)
     {
         RECT xrc;
-        HWND hwnd = ((IWineD3DClipperImpl *)front->clipper)->hWnd;
+        HWND hwnd = front->clipper->hWnd;
         if (hwnd && GetClientRect(hwnd,&xrc))
         {
             OffsetRect(&xrc, offset.x, offset.y);

@@ -1,6 +1,4 @@
 /*
- * IWineD3D implementation
- *
  * Copyright 2002-2004 Jason Edmeades
  * Copyright 2003-2004 Raphael Junqueira
  * Copyright 2004 Christian Costa
@@ -411,10 +409,6 @@ ULONG CDECL wined3d_decref(struct wined3d *wined3d)
 
     return refcount;
 }
-
-/**********************************************************
- * IWineD3D parts follows
- **********************************************************/
 
 /* GL locking is done by the caller */
 static inline BOOL test_arb_vs_offset_limit(const struct wined3d_gl_info *gl_info)

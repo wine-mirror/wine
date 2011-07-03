@@ -119,7 +119,7 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, const struc
 {
     GLenum error, gl_usage;
 
-    TRACE("Creating an OpenGL vertex buffer object for IWineD3DVertexBuffer %p Usage(%s)\n",
+    TRACE("Creating an OpenGL vertex buffer object for wined3d_buffer %p with usage %s.\n",
             This, debug_d3dusage(This->resource.usage));
 
     ENTER_GL();
@@ -131,12 +131,11 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, const struc
     */
     while (glGetError() != GL_NO_ERROR);
 
-    /* Basically the FVF parameter passed to CreateVertexBuffer is no good
-     * It is the FVF set with IWineD3DDevice::SetFVF or the Vertex Declaration set with
-     * IWineD3DDevice::SetVertexDeclaration that decides how the vertices in the buffer
-     * look like. This means that on each DrawPrimitive call the vertex buffer has to be verified
-     * to check if the rhw and color values are in the correct format.
-     */
+    /* Basically the FVF parameter passed to CreateVertexBuffer is no good.
+     * The vertex declaration from the device determines how the data in the
+     * buffer is interpreted. This means that on each draw call the buffer has
+     * to be verified to check if the rhw and color values are in the correct
+     * format. */
 
     GL_EXTCALL(glGenBuffersARB(1, &This->buffer_object));
     error = glGetError();

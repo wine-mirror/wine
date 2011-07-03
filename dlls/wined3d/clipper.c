@@ -1,5 +1,4 @@
-/* IWineD3DClipper implementation
- *
+/*
  * Copyright 2000 (c) Marcus Meissner
  * Copyright 2000 (c) TransGaming Technologies Inc.
  * Copyright 2006 (c) Stefan Dösinger

@@ -5281,8 +5281,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
          * This path will only be entered for d3d7 and ddraw apps, because d3d8/9 offer no way to blit TO the front buffer
          */
 
-        /* Check rects - IWineD3DDevice_Present doesn't handle them */
-        while(1)
+        /* Check rects - wined3d_swapchain_present() doesn't handle them. */
+        for (;;)
         {
             TRACE("Looking if a Present can be done...\n");
             /* Source Rectangle must be full surface */

@@ -1,6 +1,4 @@
 /*
- * IWineD3DResource Implementation
- *
  * Copyright 2002-2004 Jason Edmeades
  * Copyright 2003-2004 Raphael Junqueira
  * Copyright 2004 Christian Costa
