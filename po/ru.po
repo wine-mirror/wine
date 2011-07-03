@@ -66,14 +66,12 @@ msgid "All files (*.*)"
 msgstr "Все файлы (*.*)"
 
 #: appwiz.rc:42
-#, fuzzy
 msgid "&Remove"
-msgstr "&Удалить..."
+msgstr "&Удалить"
 
 #: appwiz.rc:43
-#, fuzzy
 msgid "&Modify/Remove"
-msgstr "&Изменить/Удалить..."
+msgstr "&Изменить/Удалить"
 
 #: appwiz.rc:48
 msgid "Downloading..."
@@ -358,9 +356,8 @@ msgstr ""
 "Введите их заново"
 
 #: comdlg32.rc:74
-#, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "Значение Числа Копий не может быть пустым"
+msgstr "Число копий не может быть пустым"
 
 #: comdlg32.rc:76
 msgid ""
@@ -686,9 +683,8 @@ msgid "Unstructured Address"
 msgstr "Неструктурированный адрес"
 
 #: crypt32.rc:51
-#, fuzzy
 msgid "S/MIME Capabilities"
-msgstr "Возможности SMIME"
+msgstr "Возможности S/MIME"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
@@ -6246,9 +6242,8 @@ msgid "Pr&int..."
 msgstr "Пе&чать..."
 
 #: shdocvw.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
-msgstr "Пред&варительный просмотр..."
+msgstr "Пред&варительный просмотр"
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6286,9 +6281,8 @@ msgid "&Help"
 msgstr "&Справка"
 
 #: shdocvw.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "&О программе..."
+msgstr "&О программе Internet Explorer"
 
 #: shdocvw.rc:67
 #, fuzzy
@@ -6393,9 +6387,8 @@ msgid "E&xit"
 msgstr "В&ыйти"
 
 #: shell32.rc:115
-#, fuzzy
 msgid "&About Control Panel"
-msgstr "&О Панели Управления..."
+msgstr "&О Панели Управления"
 
 #: shell32.rc:123 shell32.rc:127 winefile.rc:113
 msgid "Size"
@@ -6832,13 +6825,12 @@ msgid "&About Wine"
 msgstr "&О Wine"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl-F4"
-msgstr "&Закрыть\tAlt-F4"
+msgstr "&Закрыть\tCtrl-F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl-F6"
-msgstr ""
+msgstr "С&ледующее\tCtrl-F6"
 
 #: user32.rc:68 regedit.rc:176 winefile.rc:100
 msgid "Error"
@@ -8410,11 +8402,13 @@ msgstr "Введённая команда слишком длинная.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
-msgstr ""
+msgstr "Утилита диагностики DirectX"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr ""
+"Использование: dxdiag [/whql:off | /whql:on] [/t <имя файла> | /x <имя "
+"файла>]"
 
 #: explorer.rc:28
 #, fuzzy
@@ -8423,18 +8417,17 @@ msgstr "Wine Internet Explorer"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr ""
+msgstr "Использование: hostname\n"
 
 #: hostname.rc:28
-#, fuzzy
 msgid "Error: Invalid option '%c'.\n"
-msgstr "Ошибка: неправильное имя раздела\n"
+msgstr "Ошибка: неверная опция '%c'.\n"
 
 #: hostname.rc:29
 msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
-msgstr ""
+msgstr "Ошибка: с помощью hostname невозможно измененить имя машины.\n"
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
@@ -8793,9 +8786,8 @@ msgid "&View TypeLib..."
 msgstr "&Просмотр TypeLib..."
 
 #: oleview.rc:32
-#, fuzzy
 msgid "&System Configuration"
-msgstr "&Конфигурация системы..."
+msgstr "&Конфигурация системы"
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
@@ -9080,18 +9072,16 @@ msgid "&Copy...\tF8"
 msgstr "&Копировать...\tF8"
 
 #: progman.rc:35
-#, fuzzy
 msgid "&Properties\tAlt+Enter"
-msgstr "Свойства...\tAlt+Enter"
+msgstr "&Свойства\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
 msgstr "&Запустить..."
 
 #: progman.rc:39
-#, fuzzy
 msgid "E&xit Windows"
-msgstr "Вы&ход из Wine..."
+msgstr "Вы&ход из Windows"
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
@@ -9259,9 +9249,8 @@ msgid "&Export Registry File..."
 msgstr "&Экспортировать файл реестра..."
 
 #: regedit.rc:42 regedit.rc:87
-#, fuzzy
 msgid "&Modify..."
-msgstr "&Изменить"
+msgstr "&Изменить..."
 
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
@@ -9320,9 +9309,8 @@ msgid "&About Registry Editor"
 msgstr "&О редакторе реестра"
 
 #: regedit.rc:88
-#, fuzzy
 msgid "Modify Binary Data..."
-msgstr "Изменить &двоичные данные"
+msgstr "Изменить &двоичные данные..."
 
 #: regedit.rc:109
 msgid "&Export..."
@@ -10248,9 +10236,8 @@ msgid "Regular Metafile Viewer"
 msgstr "Просмотрщик обычных метафайлов"
 
 #: winecfg.rc:32
-#, fuzzy
 msgid "Configure..."
-msgstr "Настроить"
+msgstr "Настроить..."
 
 #: winecfg.rc:39
 msgid "Libraries"
@@ -10391,9 +10378,8 @@ msgid "None"
 msgstr "Нет"
 
 #: winecfg.rc:81
-#, fuzzy
 msgid "Autodetect..."
-msgstr "Автоопределение"
+msgstr "Автоопределение..."
 
 #: winecfg.rc:82
 msgid "Local hard disk"
@@ -10801,9 +10787,8 @@ msgid "Re&name..."
 msgstr "Переименовать..."
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Propert&ies\tAlt+Enter"
-msgstr "Свойства...\tAlt+Enter"
+msgstr "&Свойства\tAlt+Enter"
 
 #: winefile.rc:33
 msgid "&Run..."
@@ -10822,9 +10807,8 @@ msgid "&Disk"
 msgstr "&Диск"
 
 #: winefile.rc:45
-#, fuzzy
 msgid "Connect &Network Drive..."
-msgstr "Подклю&чить сетевой диск"
+msgstr "Подклю&чить сетевой диск..."
 
 #: winefile.rc:46
 msgid "&Disconnect Network Drive"
