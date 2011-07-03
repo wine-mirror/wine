@@ -1004,7 +1004,7 @@ static void MONTHCAL_PaintLeadTrailMonths(const MONTHCAL_INFO *infoPtr, HDC hdc,
 static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps, INT calIdx)
 {
   const SYSTEMTIME *date = &infoPtr->calendars[calIdx].month;
-  INT prev_month, i, j, length;
+  INT i, j, length;
   RECT r, fill_bk_rect;
   SYSTEMTIME st;
   WCHAR buf[80];
@@ -1025,9 +1025,6 @@ static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const 
   LineTo(hdc, infoPtr->calendars[calIdx].days.right - 3,
               infoPtr->calendars[calIdx].title.bottom + infoPtr->textHeight + 1);
   SelectObject(hdc, old_pen);
-
-  prev_month = date->wMonth - 1;
-  if (prev_month == 0) prev_month = 12;
 
   infoPtr->calendars[calIdx].wdays.left = infoPtr->calendars[calIdx].days.left =
       infoPtr->calendars[calIdx].weeknums.right;
