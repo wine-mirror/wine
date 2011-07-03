@@ -114,7 +114,7 @@ static int get_next_line(void)
 
 static const char * GetToken( int allow_eol )
 {
-    char *p = ParseNext;
+    char *p;
     char *token = TokenBuffer;
 
     for (;;)

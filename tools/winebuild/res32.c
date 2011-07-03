@@ -188,7 +188,6 @@ static void dump_res_data( const struct resource *res )
         size -= 4;
     }
     output( "0x%08x\n", get_dword() );
-    size -= 4;
     assert( input_buffer_pos == input_buffer_size );
 }
 
