@@ -2987,7 +2987,7 @@ DWORD_PTR WINAPI SetSysColorsTemp( const COLORREF *pPens, const HBRUSH *pBrushes
         LPVOID p = pOldCol;
         *(DWORD *)p = n; p = (char*)p + sizeof(DWORD);
         memcpy(p, SysColorPens, n*sizeof(HPEN)); p = (char*)p + n*sizeof(HPEN);
-        memcpy(p, SysColorBrushes, n*sizeof(HBRUSH)); p = (char*)p + n*sizeof(HBRUSH);
+        memcpy(p, SysColorBrushes, n*sizeof(HBRUSH));
 
         for (i=0; i < n; i++)
         {
