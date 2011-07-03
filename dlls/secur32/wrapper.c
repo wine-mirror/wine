@@ -793,7 +793,6 @@ SECURITY_STATUS WINAPI QuerySecurityPackageInfoW(SEC_WCHAR *pszPackageName,
             {
                 (*ppPackageInfo)->Comment = nextString;
                 lstrcpynW(nextString, package->infoW.Comment, commentLen);
-                nextString += commentLen;
             }
             else
                 (*ppPackageInfo)->Comment = NULL;

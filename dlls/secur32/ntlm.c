@@ -1255,7 +1255,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
             }
         }
         pOutput->pBuffers[0].cbBuffer = 0;
-        ret = SEC_E_OK;
 
         TRACE("Getting negotiated flags\n");
         lstrcpynA(buffer, "GF", max_len - 1);
