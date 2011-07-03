@@ -222,14 +222,14 @@ static void test_click_make_new_folder_button(void)
     /* There should be a new folder foo inside the test folder */
     strcpy(new_folder_path, test_folder_path);
     strcat(new_folder_path, new_folder_name);
-    todo_wine ok(does_folder_or_file_exist(new_folder_path)
+    ok(does_folder_or_file_exist(new_folder_path)
         || broken(!does_folder_or_file_exist(new_folder_path)) /* W95, W98, XP, W2K3 */,
         "The new folder did not get the name %s\n", new_folder_name);
 
     /* Dialog should return a pidl pointing to the new folder */
     ok(SHGetPathFromIDListA(pidl, new_folder_pidl_path),
         "SHGetPathFromIDList failed for new folder.\n");
-    todo_wine ok(strcmp(new_folder_path, new_folder_pidl_path) == 0
+    ok(strcmp(new_folder_path, new_folder_pidl_path) == 0
         || broken(strcmp(new_folder_path, new_folder_pidl_path) != 0) /* earlier than Vista */,
         "SHBrowseForFolder did not return the pidl for the new folder. "
         "Expected '%s' got '%s'\n", new_folder_path, new_folder_pidl_path);

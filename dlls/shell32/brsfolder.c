@@ -574,6 +574,46 @@ static HRESULT BrsFolder_Treeview_Changed( browse_info *info, NMTREEVIEWW *pnmtv
     return 0;
 }
 
+static LRESULT BrsFolder_Treeview_Rename(browse_info *info, NMTVDISPINFOW *pnmtv)
+{
+    LPTV_ITEMDATA item_data;
+    WCHAR old_path[MAX_PATH], new_path[MAX_PATH], *p;
+    NMTREEVIEWW nmtv;
+    TVITEMW item;
+
+    if(!pnmtv->item.pszText)
+        return 0;
+
+    item.mask = TVIF_HANDLE|TVIF_PARAM;
+    item.hItem = (HTREEITEM)SendMessageW(info->hwndTreeView, TVM_GETNEXTITEM, TVGN_CARET, 0);
+    SendMessageW(info->hwndTreeView, TVM_GETITEMW, 0, (LPARAM)&item);
+    item_data = (LPTV_ITEMDATA)item.lParam;
+
+    SHGetPathFromIDListW(item_data->lpifq, old_path);
+    if(!(p = strrchrW(old_path, '\\')))
+        return 0;
+    p = new_path+(p-old_path+1);
+    memcpy(new_path, old_path, (p-new_path)*sizeof(WCHAR));
+    strcpyW(p, pnmtv->item.pszText);
+
+    if(!MoveFileW(old_path, new_path))
+        return 0;
+
+    SHFree(item_data->lpifq);
+    SHFree(item_data->lpi);
+    item_data->lpifq = SHSimpleIDListFromPathW(new_path);
+    IShellFolder_ParseDisplayName(item_data->lpsfParent, NULL, NULL,
+            pnmtv->item.pszText, NULL, &item_data->lpi, NULL);
+
+    item.mask = TVIF_HANDLE|TVIF_TEXT;
+    item.pszText = pnmtv->item.pszText;
+    SendMessageW(info->hwndTreeView, TVM_SETITEMW, 0, (LPARAM)&item);
+
+    nmtv.itemNew.lParam = item.lParam;
+    BrsFolder_Treeview_Changed(info, &nmtv);
+    return 0;
+}
+
 static LRESULT BrsFolder_OnNotify( browse_info *info, UINT CtlID, LPNMHDR lpnmh )
 {
     NMTREEVIEWW *pnmtv = (NMTREEVIEWW *)lpnmh;
@@ -596,6 +636,10 @@ static LRESULT BrsFolder_OnNotify( browse_info *info, UINT CtlID, LPNMHDR lpnmh 
     case TVN_SELCHANGEDA:
     case TVN_SELCHANGEDW:
         return BrsFolder_Treeview_Changed( info, pnmtv );
+
+    case TVN_ENDLABELEDITA:
+    case TVN_ENDLABELEDITW:
+        return BrsFolder_Treeview_Rename( info, (LPNMTVDISPINFOW)pnmtv );
 
     default:
         WARN("unhandled (%d)\n", pnmtv->hdr.code);
@@ -680,8 +724,9 @@ static BOOL BrsFolder_OnCreate( HWND hWnd, browse_info *info )
 
 static HRESULT BrsFolder_Rename(browse_info *info, HTREEITEM rename)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    SendMessageW(info->hwndTreeView, TVM_SELECTITEM, TVGN_CARET, (LPARAM)rename);
+    SendMessageW(info->hwndTreeView, TVM_EDITLABELW, 0, (LPARAM)rename);
+    return S_OK;
 }
 
 static HRESULT BrsFolder_NewFolder(browse_info *info)
