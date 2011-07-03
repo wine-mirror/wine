@@ -954,22 +954,28 @@ if (0) { /* crashes under XP */
        "expected ERROR_NOACCESS, got %d\n", GetLastError());
 
     wcx.cbSize = 0;
+    wcx.lpfnWndProc = NULL;
     SetLastError(0xdeadbeef);
     ret = GetClassInfoExA(0, "static", &wcx);
     ok(ret, "GetClassInfoExA() error %d\n", GetLastError());
     ok(wcx.cbSize == 0, "expected 0, got %u\n", wcx.cbSize);
+    ok(wcx.lpfnWndProc != NULL, "got null proc\n");
 
     wcx.cbSize = sizeof(wcx) - 1;
+    wcx.lpfnWndProc = NULL;
     SetLastError(0xdeadbeef);
     ret = GetClassInfoExA(0, "static", &wcx);
     ok(ret, "GetClassInfoExA() error %d\n", GetLastError());
     ok(wcx.cbSize == sizeof(wcx) - 1, "expected sizeof(wcx)-1, got %u\n", wcx.cbSize);
+    ok(wcx.lpfnWndProc != NULL, "got null proc\n");
 
     wcx.cbSize = sizeof(wcx) + 1;
+    wcx.lpfnWndProc = NULL;
     SetLastError(0xdeadbeef);
     ret = GetClassInfoExA(0, "static", &wcx);
     ok(ret, "GetClassInfoExA() error %d\n", GetLastError());
     ok(wcx.cbSize == sizeof(wcx) + 1, "expected sizeof(wcx)+1, got %u\n", wcx.cbSize);
+    ok(wcx.lpfnWndProc != NULL, "got null proc\n");
 }
 
 START_TEST(class)
