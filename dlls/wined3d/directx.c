@@ -1398,14 +1398,35 @@ static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_s
     return HW_VENDOR_NVIDIA;
 }
 
+static UINT d3d_level_from_gl_info(const struct wined3d_gl_info *gl_info)
+{
+    UINT level = 0;
 
+    if (gl_info->supported[ARB_MULTITEXTURE])
+        level = 6;
+    if (gl_info->supported[ARB_TEXTURE_COMPRESSION]
+            && gl_info->supported[ARB_TEXTURE_CUBE_MAP]
+            && gl_info->supported[ARB_TEXTURE_ENV_DOT3])
+        level = 7;
+    if (level == 7 && gl_info->supported[ARB_MULTISAMPLE]
+            && gl_info->supported[ARB_TEXTURE_BORDER_CLAMP])
+        level = 8;
+    if (level == 8 && gl_info->supported[ARB_FRAGMENT_PROGRAM]
+            && gl_info->supported[ARB_VERTEX_SHADER])
+        level = 9;
+    if (level == 9 && gl_info->supported[EXT_GPU_SHADER4])
+        level = 10;
+
+    return level;
+}
 
 static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl_info *gl_info,
         const char *gl_renderer)
 {
+    UINT d3d_level = d3d_level_from_gl_info(gl_info);
     unsigned int i;
 
-    if (WINE_D3D10_CAPABLE(gl_info))
+    if (d3d_level >= 10)
     {
         static const struct
         {
@@ -1480,7 +1501,7 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
     /* Both the GeforceFX, 6xxx and 7xxx series support D3D9. The last two types have more
      * shader capabilities, so we use the shader capabilities to distinguish between FX and 6xxx/7xxx.
      */
-    if (WINE_D3D9_CAPABLE(gl_info) && gl_info->supported[NV_VERTEX_PROGRAM3])
+    if (d3d_level >= 9 && gl_info->supported[NV_VERTEX_PROGRAM3])
     {
         static const struct
         {
@@ -1514,7 +1535,7 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
         return CARD_NVIDIA_GEFORCE_6200; /* Geforce 6100/6150/6200/7300/7400/7500 */
     }
 
-    if (WINE_D3D9_CAPABLE(gl_info))
+    if (d3d_level >= 9)
     {
         /* GeforceFX - highend */
         if (strstr(gl_renderer, "5800")
@@ -1538,7 +1559,7 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
         return CARD_NVIDIA_GEFORCEFX_5200; /* GeforceFX 5100/5200/5250/5300/5500 */
     }
 
-    if (WINE_D3D8_CAPABLE(gl_info))
+    if (d3d_level >= 8)
     {
         if (strstr(gl_renderer, "GeForce4 Ti") || strstr(gl_renderer, "Quadro4"))
         {
@@ -1548,7 +1569,7 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
         return CARD_NVIDIA_GEFORCE3; /* Geforce3 standard/Ti200/Ti500, Quadro DCC */
     }
 
-    if (WINE_D3D7_CAPABLE(gl_info))
+    if (d3d_level >= 7)
     {
         if (strstr(gl_renderer, "GeForce4 MX"))
         {
@@ -1579,11 +1600,13 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
 static enum wined3d_pci_device select_card_amd_binary(const struct wined3d_gl_info *gl_info,
         const char *gl_renderer)
 {
+    UINT d3d_level = d3d_level_from_gl_info(gl_info);
+
     /* See http://developer.amd.com/drivers/pc_vendor_id/Pages/default.aspx
      *
      * Beware: renderer string do not match exact card model,
      * eg HD 4800 is returned for multiple cards, even for RV790 based ones. */
-    if (WINE_D3D10_CAPABLE(gl_info))
+    if (d3d_level >= 10)
     {
         unsigned int i;
 
@@ -1648,7 +1671,7 @@ static enum wined3d_pci_device select_card_amd_binary(const struct wined3d_gl_in
         return CARD_AMD_RADEON_HD3200;
     }
 
-    if (WINE_D3D8_CAPABLE(gl_info))
+    if (d3d_level >= 9)
     {
         /* Radeon R5xx */
         if (strstr(gl_renderer, "X1600")
@@ -1687,15 +1710,11 @@ static enum wined3d_pci_device select_card_amd_binary(const struct wined3d_gl_in
         return CARD_AMD_RADEON_9500; /* Radeon 9500/9550/9600/9700/9800/X300/X550/X600 */
     }
 
-    if (WINE_D3D8_CAPABLE(gl_info))
-    {
+    if (d3d_level >= 8)
         return CARD_AMD_RADEON_8500; /* Radeon 8500/9000/9100/9200/9300 */
-    }
 
-    if (WINE_D3D7_CAPABLE(gl_info))
-    {
+    if (d3d_level >= 7)
         return CARD_AMD_RADEON_7200; /* Radeon 7000/7100/7200/7500 */
-    }
 
     return CARD_AMD_RAGE_128PRO;
 }
@@ -1728,6 +1747,7 @@ static enum wined3d_pci_device select_card_intel(const struct wined3d_gl_info *g
 static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info *gl_info,
         const char *gl_renderer)
 {
+    UINT d3d_level;
     unsigned int i;
 
     /* See http://developer.amd.com/drivers/pc_vendor_id/Pages/default.aspx
@@ -1817,7 +1837,8 @@ static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info
         }
     }
 
-    if (WINE_D3D9_CAPABLE(gl_info))
+    d3d_level = d3d_level_from_gl_info(gl_info);
+    if (d3d_level >= 9)
     {
         static const struct
         {
@@ -1853,15 +1874,11 @@ static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info
         }
     }
 
-    if (WINE_D3D8_CAPABLE(gl_info))
-    {
+    if (d3d_level >= 8)
         return CARD_AMD_RADEON_8500; /* Radeon 8500/9000/9100/9200/9300 */
-    }
 
-    if (WINE_D3D7_CAPABLE(gl_info))
-    {
+    if (d3d_level >= 7)
         return CARD_AMD_RADEON_7200; /* Radeon 7000/7100/7200/7500 */
-    }
 
     return CARD_AMD_RAGE_128PRO;
 }
@@ -1869,6 +1886,8 @@ static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info
 static enum wined3d_pci_device select_card_nvidia_mesa(const struct wined3d_gl_info *gl_info,
         const char *gl_renderer)
 {
+    UINT d3d_level;
+
     if (strstr(gl_renderer, "Gallium"))
     {
         unsigned int i;
@@ -1944,10 +1963,16 @@ static enum wined3d_pci_device select_card_nvidia_mesa(const struct wined3d_gl_i
     }
 
     FIXME_(d3d_caps)("Unknown renderer %s.\n", debugstr_a(gl_renderer));
-    if (WINE_D3D9_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCEFX_5600;
-    if (WINE_D3D8_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCE3;
-    if (WINE_D3D7_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCE;
-    if (WINE_D3D6_CAPABLE(gl_info)) return CARD_NVIDIA_RIVA_TNT;
+
+    d3d_level = d3d_level_from_gl_info(gl_info);
+    if (d3d_level >= 9)
+        return CARD_NVIDIA_GEFORCEFX_5600;
+    if (d3d_level >= 8)
+        return CARD_NVIDIA_GEFORCE3;
+    if (d3d_level >= 7)
+        return CARD_NVIDIA_GEFORCE;
+    if (d3d_level >= 6)
+        return CARD_NVIDIA_RIVA_TNT;
     return CARD_NVIDIA_RIVA_128;
 }
 
@@ -1977,6 +2002,8 @@ static const struct vendor_card_selection vendor_card_select_table[] =
 static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
         enum wined3d_gl_vendor *gl_vendor, enum wined3d_pci_vendor *card_vendor)
 {
+    UINT d3d_level;
+
     /* Above is a list of Nvidia and ATI GPUs. Both vendors have dozens of
      * different GPUs with roughly the same features. In most cases GPUs from a
      * certain family differ in clockspeeds, the amount of video memory and the
@@ -2050,10 +2077,15 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
      * for Nvidia was because the hardware and drivers they make are of good quality. This makes
      * them a good generic choice. */
     *card_vendor = HW_VENDOR_NVIDIA;
-    if (WINE_D3D9_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCEFX_5600;
-    if (WINE_D3D8_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCE3;
-    if (WINE_D3D7_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCE;
-    if (WINE_D3D6_CAPABLE(gl_info)) return CARD_NVIDIA_RIVA_TNT;
+    d3d_level = d3d_level_from_gl_info(gl_info);
+    if (d3d_level >= 9)
+        return CARD_NVIDIA_GEFORCEFX_5600;
+    if (d3d_level >= 8)
+        return CARD_NVIDIA_GEFORCE3;
+    if (d3d_level >= 7)
+        return CARD_NVIDIA_GEFORCE;
+    if (d3d_level >= 6)
+        return CARD_NVIDIA_RIVA_TNT;
     return CARD_NVIDIA_RIVA_128;
 }
 
