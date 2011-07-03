@@ -249,7 +249,7 @@ struct wined3d_format_texture_info
     GLint gl_type;
     unsigned int conv_byte_count;
     unsigned int flags;
-    GL_SupportedExt extension;
+    enum wined3d_gl_extension extension;
     void (*convert)(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height);
 };
 

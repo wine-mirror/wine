@@ -1139,7 +1139,7 @@ struct StateEntryTemplate
 {
     DWORD state;
     struct StateEntry content;
-    GL_SupportedExt extension;
+    enum wined3d_gl_extension extension;
 };
 
 struct fragment_caps

@@ -72,11 +72,14 @@ enum wined3d_gl_vendor
 static const GUID IID_D3DDEVICE_D3DUID = { 0xaeb2cdd4, 0x6e41, 0x43ea, { 0x94,0x1c,0x83,0x61,0xcc,0x76,0x07,0x81 } };
 
 /* Extension detection */
-static const struct {
+static const struct
+{
     const char *extension_string;
-    GL_SupportedExt extension;
+    enum wined3d_gl_extension extension;
     DWORD version;
-} EXTENSION_MAP[] = {
+}
+EXTENSION_MAP[] =
+{
     /* APPLE */
     {"GL_APPLE_client_storage",             APPLE_CLIENT_STORAGE,           0                           },
     {"GL_APPLE_fence",                      APPLE_FENCE,                    0                           },
@@ -446,7 +449,7 @@ static inline BOOL test_arb_vs_offset_limit(const struct wined3d_gl_info *gl_inf
     return ret;
 }
 
-static DWORD ver_for_ext(GL_SupportedExt ext)
+static DWORD ver_for_ext(enum wined3d_gl_extension ext)
 {
     unsigned int i;
     for (i = 0; i < (sizeof(EXTENSION_MAP) / sizeof(*EXTENSION_MAP)); ++i) {

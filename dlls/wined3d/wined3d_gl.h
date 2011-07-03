@@ -1721,7 +1721,7 @@ BOOL (WINAPI *pwglShareLists)(HGLRC, HGLRC) DECLSPEC_HIDDEN;
     USE_WGL_FUNC(wglShareLists)
 
 /* OpenGL extensions. */
-typedef enum wined3d_gl_extension
+enum wined3d_gl_extension
 {
     WINED3D_GL_EXT_NONE,
 
@@ -1845,7 +1845,7 @@ typedef enum wined3d_gl_extension
     WINED3D_GL_VERSION_2_0,
 
     WINED3D_GL_EXT_COUNT,
-} GL_SupportedExt;
+};
 
 /* GL_APPLE_client_storage */
 #ifndef GL_APPLE_client_storage
