@@ -3391,8 +3391,6 @@ static void DP_CopySessionDesc( LPDPSESSIONDESC2 lpSessionDest,
       lstrcpyA( (LPSTR)lpStartOfFreeSpace,
                 lpSessionDest->u2.lpszPasswordA );
       lpSessionDest->u2.lpszPasswordA = (LPSTR)lpStartOfFreeSpace;
-      lpStartOfFreeSpace +=
-        lstrlenA( lpSessionDest->u2.lpszPasswordA ) + 1;
     }
   }
   else /* UNICODE */
@@ -3411,8 +3409,6 @@ static void DP_CopySessionDesc( LPDPSESSIONDESC2 lpSessionDest,
       lstrcpyW( (LPWSTR)lpStartOfFreeSpace,
                 lpSessionDest->u2.lpszPassword );
       lpSessionDest->u2.lpszPassword = (LPWSTR)lpStartOfFreeSpace;
-      lpStartOfFreeSpace += sizeof(WCHAR) *
-        ( lstrlenW( lpSessionDest->u2.lpszPassword ) + 1 );
     }
   }
 }
@@ -4593,8 +4589,6 @@ static HRESULT DP_SendEx
       ( DP_FindPlayer( This, idTo ) != NULL )
     )
   {
-    bValidDestination = TRUE;
-
     /* Have the service provider send this message */
     /* FIXME: Could optimize for local interface sends */
     return DP_SP_SendEx( This, dwFlags, lpData, dwDataSize, dwPriority,
