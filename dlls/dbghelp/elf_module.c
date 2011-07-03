@@ -991,7 +991,6 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
                     WARN("Couldn't correctly read stabs\n");
                 ret = ret || lret;
             }
-            else lret = FALSE;
             image_unmap_section(&stab_sect);
             image_unmap_section(&stabstr_sect);
         }
