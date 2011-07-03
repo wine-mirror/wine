@@ -70,11 +70,12 @@ static void nvts_activate_dimensions(const struct wined3d_state *state, DWORD st
     }
 }
 
-typedef struct {
+struct tex_op_args
+{
     GLenum input[3];
     GLenum mapping[3];
     GLenum component_usage[3];
-} tex_op_args;
+};
 
 static GLenum d3dta_to_combiner_input(DWORD d3dta, DWORD stage, INT texture_idx) {
     switch (d3dta) {
@@ -134,7 +135,7 @@ static void get_src_and_opr_nvrc(DWORD stage, DWORD arg, BOOL is_alpha, GLenum* 
 void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state, BOOL is_alpha,
         int stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3, INT texture_idx, DWORD dst)
 {
-    tex_op_args tex_op_args = {{0}, {0}, {0}};
+    struct tex_op_args tex_op_args = {{0}, {0}, {0}};
     GLenum portion = is_alpha ? GL_ALPHA : GL_RGB;
     GLenum target = GL_COMBINER0_NV + stage;
     GLenum output;
