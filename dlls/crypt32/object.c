@@ -1111,7 +1111,6 @@ static BOOL WINAPI CRYPT_FormatBasicConstraints2(DWORD dwCertEncodingType,
             strcpyW(str, pathLengthHeader);
             str += strlenW(pathLengthHeader);
             strcpyW(str, pathLength);
-            str += strlenW(pathLength);
         }
         LocalFree(info);
     }
@@ -2468,7 +2467,6 @@ static BOOL WINAPI CRYPT_FormatSpcFinancialCriteria(DWORD dwCertEncodingType,
             else
             {
                 strcpyW(str, notAvailable);
-                str += strlenW(notAvailable);
             }
         }
     }

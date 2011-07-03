@@ -1841,7 +1841,6 @@ static BOOL WINAPI CRYPT_AsnEncodePolicyQualifierUserNotice(
         CERT_NAME_VALUE displayTextValue;
         DWORD cItem = 0;
 
-        ret = TRUE;
         if (notice->pNoticeReference)
         {
             items[cItem].encodeFunc = CRYPT_AsnEncodeNoticeReference;

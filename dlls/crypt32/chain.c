@@ -3302,7 +3302,6 @@ static BOOL match_dns_to_subject_dn(PCCERT_CONTEXT cert, LPCWSTR server_name)
         {
             LPCWSTR ptr = server_name;
 
-            matches = TRUE;
             do {
                 LPCWSTR dot = strchrW(ptr, '.'), end;
                 /* 254 is the maximum DNS label length, see RFC 1035 */

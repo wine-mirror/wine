@@ -234,7 +234,6 @@ static BOOL BinaryToBase64A(const BYTE *pbBinary,
             strcpy(ptr, trailer);
             ptr += strlen(ptr);
             strcpy(ptr, sep);
-            ptr += strlen(sep);
         }
         *pcchString = charsNeeded - 1;
     }
@@ -429,7 +428,6 @@ static BOOL BinaryToBase64W(const BYTE *pbBinary,
             strcpyW(ptr, trailer);
             ptr += strlenW(ptr);
             strcpyW(ptr, sep);
-            ptr += strlenW(sep);
         }
         *pcchString = charsNeeded - 1;
     }
