@@ -32,6 +32,44 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
 
 #define WINE_DEFAULT_VIDMEM (64 * 1024 * 1024)
 
+/* The driver names reflect the lowest GPU supported
+ * by a certain driver, so DRIVER_AMD_R300 supports
+ * R3xx, R4xx and R5xx GPUs. */
+enum wined3d_display_driver
+{
+    DRIVER_AMD_RAGE_128PRO,
+    DRIVER_AMD_R100,
+    DRIVER_AMD_R300,
+    DRIVER_AMD_R600,
+    DRIVER_INTEL_GMA800,
+    DRIVER_INTEL_GMA900,
+    DRIVER_INTEL_GMA950,
+    DRIVER_INTEL_GMA3000,
+    DRIVER_NVIDIA_TNT,
+    DRIVER_NVIDIA_GEFORCE2MX,
+    DRIVER_NVIDIA_GEFORCEFX,
+    DRIVER_NVIDIA_GEFORCE6,
+    DRIVER_UNKNOWN
+};
+
+enum wined3d_driver_model
+{
+    DRIVER_MODEL_WIN9X,
+    DRIVER_MODEL_NT40,
+    DRIVER_MODEL_NT5X,
+    DRIVER_MODEL_NT6X
+};
+
+enum wined3d_gl_vendor
+{
+    GL_VENDOR_UNKNOWN,
+    GL_VENDOR_APPLE,
+    GL_VENDOR_FGLRX,
+    GL_VENDOR_INTEL,
+    GL_VENDOR_MESA,
+    GL_VENDOR_NVIDIA,
+};
+
 /* The d3d device ID */
 static const GUID IID_D3DDEVICE_D3DUID = { 0xaeb2cdd4, 0x6e41, 0x43ea, { 0x94,0x1c,0x83,0x61,0xcc,0x76,0x07,0x81 } };
 

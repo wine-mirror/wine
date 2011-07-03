@@ -1279,45 +1279,6 @@ struct wined3d_pixel_format
     int numSamples;
 };
 
-/* The driver names reflect the lowest GPU supported
- * by a certain driver, so DRIVER_AMD_R300 supports
- * R3xx, R4xx and R5xx GPUs. */
-enum wined3d_display_driver
-{
-    DRIVER_AMD_RAGE_128PRO,
-    DRIVER_AMD_R100,
-    DRIVER_AMD_R300,
-    DRIVER_AMD_R600,
-    DRIVER_INTEL_GMA800,
-    DRIVER_INTEL_GMA900,
-    DRIVER_INTEL_GMA950,
-    DRIVER_INTEL_GMA3000,
-    DRIVER_NVIDIA_TNT,
-    DRIVER_NVIDIA_GEFORCE2MX,
-    DRIVER_NVIDIA_GEFORCEFX,
-    DRIVER_NVIDIA_GEFORCE6,
-    DRIVER_UNKNOWN
-};
-
-enum wined3d_driver_model
-{
-    DRIVER_MODEL_WIN9X,
-    DRIVER_MODEL_NT40,
-    DRIVER_MODEL_NT5X,
-    DRIVER_MODEL_NT6X
-};
-
-enum wined3d_gl_vendor
-{
-    GL_VENDOR_UNKNOWN,
-    GL_VENDOR_APPLE,
-    GL_VENDOR_FGLRX,
-    GL_VENDOR_INTEL,
-    GL_VENDOR_MESA,
-    GL_VENDOR_NVIDIA,
-};
-
-
 enum wined3d_pci_vendor
 {
     HW_VENDOR_SOFTWARE                 = 0x0000,
