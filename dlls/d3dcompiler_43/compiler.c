@@ -359,7 +359,7 @@ static HRESULT preprocess_shader(const void *data, SIZE_T data_size,
             int size;
             ID3DBlob *buffer;
 
-            TRACE("Preprocessor messages:\n%s", wpp_messages);
+            TRACE("Preprocessor messages:\n%s", debugstr_a(wpp_messages));
 
             if (error_messages)
             {
