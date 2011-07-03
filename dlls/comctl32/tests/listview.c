@@ -777,6 +777,8 @@ static void test_images(void)
     ok(r == 0, "should return zero\n");
 
     r = SendMessage(hwnd, LVM_SETICONSPACING, 0, MAKELONG(100,50));
+    ok(r != 0, "got 0\n");
+
     /* returns dimensions */
 
     r = SendMessage(hwnd, LVM_GETITEMCOUNT, 0, 0);
@@ -3856,7 +3858,7 @@ static void test_notifyformat(void)
        CCM_SETUNICODEFORMAT == LVM_SETUNICODEFORMAT */
     r = SendMessage(hwnd, LVM_GETUNICODEFORMAT, 0, 0);
     expect(0, r);
-    r = SendMessage(hwnd, WM_NOTIFYFORMAT, 0, NF_QUERY);
+    SendMessage(hwnd, WM_NOTIFYFORMAT, 0, NF_QUERY);
     /* set */
     r = SendMessage(hwnd, LVM_SETUNICODEFORMAT, 1, 0);
     expect(0, r);
@@ -4405,6 +4407,8 @@ static void test_approximate_viewrect(void)
     expect(MAKELONG(77,827), ret);
 
     ret = SendMessage(hwnd, LVM_SETICONSPACING, 0, MAKELPARAM(50, 50));
+    ok(ret != 0, "got 0\n");
+
     ret = SendMessage(hwnd, LVM_APPROXIMATEVIEWRECT, 11, MAKELPARAM(100,100));
     expect(MAKELONG(102,302), ret);
 
