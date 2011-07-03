@@ -1889,7 +1889,6 @@ BOOL WINAPI ImmIsUIMessageA(
             (msg == WM_IME_NOTIFY) ||
             (msg == WM_IME_COMPOSITIONFULL) ||
             (msg == WM_IME_SELECT) ||
-            (msg == WM_IME_SELECT) ||
             (msg == 0x287 /* FIXME: WM_IME_SYSTEM */) ||
             (msg == WM_MSIME_RECONVERTOPTIONS) ||
             (msg == WM_MSIME_MOUSE) ||
@@ -1919,7 +1918,6 @@ BOOL WINAPI ImmIsUIMessageW(
             (msg == WM_IME_SETCONTEXT) ||
             (msg == WM_IME_NOTIFY) ||
             (msg == WM_IME_COMPOSITIONFULL) ||
-            (msg == WM_IME_SELECT) ||
             (msg == WM_IME_SELECT) ||
             (msg == 0x287 /* FIXME: WM_IME_SYSTEM */) ||
             (msg == WM_MSIME_RECONVERTOPTIONS) ||
