@@ -3777,8 +3777,6 @@ static GLuint shader_arb_generate_pshader(struct wined3d_shader *shader,
             shader_addline(buffer, "PARAM np2fixup[%u] = { program.env[%u..%u] };\n",
                            fixup->super.num_consts, fixup->offset, fixup->super.num_consts + fixup->offset - 1);
         }
-
-        next_local += fixup->super.num_consts;
     }
 
     if (shader_priv->clipplane_emulation != ~0U && args->clip)
