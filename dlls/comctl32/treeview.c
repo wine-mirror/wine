@@ -3026,7 +3026,7 @@ TREEVIEW_CountChildren(const TREEVIEW_ITEM *item)
 static HDPA
 TREEVIEW_BuildChildDPA(const TREEVIEW_ITEM *item)
 {
-    HTREEITEM child = item->firstChild;
+    HTREEITEM child;
 
     HDPA list = DPA_Create(8);
     if (list == 0) return NULL;
