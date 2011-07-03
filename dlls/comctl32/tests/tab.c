@@ -286,6 +286,11 @@ static const struct message delete_focus_seq[] = {
     { 0 }
 };
 
+static const struct message rbuttonup_seq[] = {
+    { WM_RBUTTONUP, sent|wparam|lparam, 0, 0 },
+    { WM_CONTEXTMENU, sent|defwinproc },
+    { 0 }
+};
 
 static HWND
 create_tabcontrol (DWORD style, DWORD mask)
@@ -1407,6 +1412,22 @@ static void test_TCS_OWNERDRAWFIXED(void)
     DestroyWindow(hTab);
 }
 
+static void test_WM_CONTEXTMENU(void)
+{
+    HWND hTab;
+
+    hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE, 4);
+    ok(hTab != NULL, "Failed to create tab control\n");
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    SendMessageA(hTab, WM_RBUTTONUP, 0, 0);
+
+    ok_sequence(sequences, TAB_SEQ_INDEX, rbuttonup_seq, "WM_RBUTTONUP response sequence", FALSE);
+
+    DestroyWindow(hTab);
+}
+
 START_TEST(tab)
 {
     LOGFONTA logfont;
@@ -1443,6 +1464,7 @@ START_TEST(tab)
     test_removeimage();
     test_TCM_SETITEMEXTRA();
     test_TCS_OWNERDRAWFIXED();
+    test_WM_CONTEXTMENU();
 
     DestroyWindow(parent_wnd);
 }
