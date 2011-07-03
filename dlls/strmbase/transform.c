@@ -560,7 +560,7 @@ static const IPinVtbl TransformFilter_OutputPin_Vtbl =
     BasePinImpl_NewSegment
 };
 
-HRESULT WINAPI TransformFilter_QualityControlImpl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm) {
+static HRESULT WINAPI TransformFilter_QualityControlImpl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm) {
     QualityControlImpl *qc = (QualityControlImpl*)iface;
     TransformFilter *This = (TransformFilter *)qc->self;
 
