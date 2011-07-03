@@ -1,5 +1,6 @@
 /*
  * Copyright 2009 Henri Verbeet for CodeWeavers
+ * Copyright 2011 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,23 +28,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 struct taskbar_list
 {
-    ITaskbarList2 ITaskbarList2_iface;
+    ITaskbarList4 ITaskbarList4_iface;
     LONG refcount;
 };
 
-static inline struct taskbar_list *impl_from_ITaskbarList2(ITaskbarList2 *iface)
+static inline struct taskbar_list *impl_from_ITaskbarList4(ITaskbarList4 *iface)
 {
-    return CONTAINING_RECORD(iface, struct taskbar_list, ITaskbarList2_iface);
+    return CONTAINING_RECORD(iface, struct taskbar_list, ITaskbarList4_iface);
 }
 
 /* IUnknown methods */
 
-static HRESULT STDMETHODCALLTYPE taskbar_list_QueryInterface(ITaskbarList2 *iface, REFIID riid, void **object)
+static HRESULT STDMETHODCALLTYPE taskbar_list_QueryInterface(ITaskbarList4 *iface, REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
 
     if (IsEqualGUID(riid, &IID_ITaskbarList) ||
         IsEqualGUID(riid, &IID_ITaskbarList2) ||
+        IsEqualGUID(riid, &IID_ITaskbarList3) ||
+        IsEqualGUID(riid, &IID_ITaskbarList4) ||
         IsEqualGUID(riid, &IID_IUnknown))
     {
         IUnknown_AddRef(iface);
@@ -57,9 +60,9 @@ static HRESULT STDMETHODCALLTYPE taskbar_list_QueryInterface(ITaskbarList2 *ifac
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE taskbar_list_AddRef(ITaskbarList2 *iface)
+static ULONG STDMETHODCALLTYPE taskbar_list_AddRef(ITaskbarList4 *iface)
 {
-    struct taskbar_list *This = impl_from_ITaskbarList2(iface);
+    struct taskbar_list *This = impl_from_ITaskbarList4(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -67,9 +70,9 @@ static ULONG STDMETHODCALLTYPE taskbar_list_AddRef(ITaskbarList2 *iface)
     return refcount;
 }
 
-static ULONG STDMETHODCALLTYPE taskbar_list_Release(ITaskbarList2 *iface)
+static ULONG STDMETHODCALLTYPE taskbar_list_Release(ITaskbarList4 *iface)
 {
-    struct taskbar_list *This = impl_from_ITaskbarList2(iface);
+    struct taskbar_list *This = impl_from_ITaskbarList4(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -85,35 +88,35 @@ static ULONG STDMETHODCALLTYPE taskbar_list_Release(ITaskbarList2 *iface)
 
 /* ITaskbarList methods */
 
-static HRESULT STDMETHODCALLTYPE taskbar_list_HrInit(ITaskbarList2 *iface)
+static HRESULT STDMETHODCALLTYPE taskbar_list_HrInit(ITaskbarList4 *iface)
 {
     TRACE("iface %p\n", iface);
 
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE taskbar_list_AddTab(ITaskbarList2 *iface, HWND hwnd)
+static HRESULT STDMETHODCALLTYPE taskbar_list_AddTab(ITaskbarList4 *iface, HWND hwnd)
 {
     FIXME("iface %p, hwnd %p stub!\n", iface, hwnd);
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE taskbar_list_DeleteTab(ITaskbarList2 *iface, HWND hwnd)
+static HRESULT STDMETHODCALLTYPE taskbar_list_DeleteTab(ITaskbarList4 *iface, HWND hwnd)
 {
     FIXME("iface %p, hwnd %p stub!\n", iface, hwnd);
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE taskbar_list_ActivateTab(ITaskbarList2 *iface, HWND hwnd)
+static HRESULT STDMETHODCALLTYPE taskbar_list_ActivateTab(ITaskbarList4 *iface, HWND hwnd)
 {
     FIXME("iface %p, hwnd %p stub!\n", iface, hwnd);
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE taskbar_list_SetActiveAlt(ITaskbarList2 *iface, HWND hwnd)
+static HRESULT STDMETHODCALLTYPE taskbar_list_SetActiveAlt(ITaskbarList4 *iface, HWND hwnd)
 {
     FIXME("iface %p, hwnd %p stub!\n", iface, hwnd);
 
@@ -122,7 +125,7 @@ static HRESULT STDMETHODCALLTYPE taskbar_list_SetActiveAlt(ITaskbarList2 *iface,
 
 /* ITaskbarList2 method */
 
-static HRESULT STDMETHODCALLTYPE taskbar_list_MarkFullscreenWindow(ITaskbarList2 *iface,
+static HRESULT STDMETHODCALLTYPE taskbar_list_MarkFullscreenWindow(ITaskbarList4 *iface,
                                                                    HWND hwnd,
                                                                    BOOL fullscreen)
 {
@@ -131,7 +134,131 @@ static HRESULT STDMETHODCALLTYPE taskbar_list_MarkFullscreenWindow(ITaskbarList2
     return E_NOTIMPL;
 }
 
-static const struct ITaskbarList2Vtbl taskbar_list_vtbl =
+/* ITaskbarList3 methods */
+
+static HRESULT STDMETHODCALLTYPE taskbar_list_SetProgressValue(ITaskbarList4 *iface,
+                                                               HWND hwnd,
+                                                               ULONGLONG ullCompleted,
+                                                               ULONGLONG ullTotal)
+{
+    FIXME("iface %p, hwnd %p, ullCompleted %s, ullTotal %s stub!\n", iface, hwnd,
+          wine_dbgstr_longlong(ullCompleted), wine_dbgstr_longlong(ullTotal));
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE taskbar_list_SetProgressState(ITaskbarList4 *iface,
+                                                               HWND hwnd,
+                                                               TBPFLAG tbpFlags)
+{
+    FIXME("iface %p, hwnd %p, flags %x stub!\n", iface, hwnd, tbpFlags);
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE taskbar_list_RegisterTab(ITaskbarList4 *iface, HWND hwndTab, HWND hwndMDI)
+{
+    FIXME("iface %p, hwndTab %p, hwndMDI %p stub!\n", iface, hwndTab, hwndMDI);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE taskbar_list_UnregisterTab(ITaskbarList4 *iface, HWND hwndTab)
+{
+    FIXME("iface %p, hwndTab %p stub!\n", iface, hwndTab);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE taskbar_list_SetTabOrder(ITaskbarList4 *iface,
+                                                          HWND hwndTab,
+                                                          HWND hwndInsertBefore)
+{
+    FIXME("iface %p, hwndTab %p, hwndInsertBefore %p stub!\n", iface, hwndTab, hwndInsertBefore);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE taskbar_list_SetTabActive(ITaskbarList4 *iface,
+                                                          HWND hwndTab,
+                                                          HWND hwndMDI,
+                                                          DWORD dwReserved)
+{
+    FIXME("iface %p, hwndTab %p, hwndMDI %p, dwReserved %x stub!\n", iface, hwndTab, hwndMDI, dwReserved);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE taskbar_list_ThumbBarAddButtons(ITaskbarList4 *iface,
+                                                                 HWND hwnd,
+                                                                 UINT cButtons,
+                                                                 LPTHUMBBUTTON pButton)
+{
+    FIXME("iface %p, hwnd %p, cButtons %u, pButton %p stub!\n", iface, hwnd, cButtons, pButton);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE taskbar_list_ThumbBarUpdateButtons(ITaskbarList4 *iface,
+                                                                   HWND hwnd,
+                                                                   UINT cButtons,
+                                                                   LPTHUMBBUTTON pButton)
+{
+    FIXME("iface %p, hwnd %p, cButtons %u, pButton %p stub!\n", iface, hwnd, cButtons, pButton);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE taskbar_list_ThumbBarSetImageList(ITaskbarList4 *iface,
+                                                                   HWND hwnd,
+                                                                   HIMAGELIST himl)
+{
+    FIXME("iface %p, hwnd %p, himl %p stub!\n", iface, hwnd, himl);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE taskbar_list_SetOverlayIcon(ITaskbarList4 *iface,
+                                                             HWND hwnd,
+                                                             HICON hIcon,
+                                                             LPCWSTR pszDescription)
+{
+    FIXME("iface %p, hwnd %p, hIcon %p, pszDescription %s stub!\n", iface, hwnd, hIcon,
+          debugstr_w(pszDescription));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE taskbar_list_SetThumbnailTooltip(ITaskbarList4 *iface,
+                                                                  HWND hwnd,
+                                                                  LPCWSTR pszTip)
+{
+    FIXME("iface %p, hwnd %p, pszTip %s stub!\n", iface, hwnd, debugstr_w(pszTip));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE taskbar_list_SetThumbnailClip(ITaskbarList4 *iface,
+                                                               HWND hwnd,
+                                                               RECT *prcClip)
+{
+    FIXME("iface %p, hwnd %p, prcClip %s stub!\n", iface, hwnd, wine_dbgstr_rect(prcClip));
+
+    return E_NOTIMPL;
+}
+
+/* ITaskbarList4 method */
+
+static HRESULT STDMETHODCALLTYPE taskbar_list_SetTabProperties(ITaskbarList4 *iface,
+                                                               HWND hwndTab,
+                                                               STPFLAG stpFlags)
+{
+    FIXME("iface %p, hwndTab %p, stpFlags %u stub!\n", iface, hwndTab, stpFlags);
+
+    return E_NOTIMPL;
+}
+
+static const struct ITaskbarList4Vtbl taskbar_list_vtbl =
 {
     /* IUnknown methods */
     taskbar_list_QueryInterface,
@@ -145,6 +272,21 @@ static const struct ITaskbarList2Vtbl taskbar_list_vtbl =
     taskbar_list_SetActiveAlt,
     /* ITaskbarList2 method */
     taskbar_list_MarkFullscreenWindow,
+    /* ITaskbarList3 methods */
+    taskbar_list_SetProgressValue,
+    taskbar_list_SetProgressState,
+    taskbar_list_RegisterTab,
+    taskbar_list_UnregisterTab,
+    taskbar_list_SetTabOrder,
+    taskbar_list_SetTabActive,
+    taskbar_list_ThumbBarAddButtons,
+    taskbar_list_ThumbBarUpdateButtons,
+    taskbar_list_ThumbBarSetImageList,
+    taskbar_list_SetOverlayIcon,
+    taskbar_list_SetThumbnailTooltip,
+    taskbar_list_SetThumbnailClip,
+    /* ITaskbarList4 method */
+    taskbar_list_SetTabProperties,
 };
 
 HRESULT TaskbarList_Create(IUnknown *outer, REFIID riid, void **taskbar_list)
@@ -169,12 +311,12 @@ HRESULT TaskbarList_Create(IUnknown *outer, REFIID riid, void **taskbar_list)
         return E_OUTOFMEMORY;
     }
 
-    object->ITaskbarList2_iface.lpVtbl = &taskbar_list_vtbl;
+    object->ITaskbarList4_iface.lpVtbl = &taskbar_list_vtbl;
     object->refcount = 0;
 
-    TRACE("Created ITaskbarList2 %p\n", object);
+    TRACE("Created ITaskbarList4 %p\n", object);
 
-    hr = ITaskbarList2_QueryInterface(&object->ITaskbarList2_iface, riid, taskbar_list);
+    hr = ITaskbarList4_QueryInterface(&object->ITaskbarList4_iface, riid, taskbar_list);
     if (FAILED(hr))
     {
         HeapFree(GetProcessHeap(), 0, object);
