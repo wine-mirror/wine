@@ -25,6 +25,8 @@
 #define NONAMELESSUNION
 
 #include "config.h"
+#include "wine/port.h"
+
 #include "windef.h"
 #include "wingdi.h"
 #include "d3dx9_36_private.h"
@@ -1768,6 +1770,103 @@ D3DXVECTOR4* WINAPI D3DXVec4TransformArray(D3DXVECTOR4* out, UINT outstride, CON
             matrix);
     }
     return out;
+}
+
+static inline unsigned short float_32_to_16(const float in)
+{
+    int exp = 0, origexp;
+    float tmp = fabs(in);
+    int sign = signbit(in);
+    unsigned int mantissa;
+    unsigned short ret;
+
+    /* Deal with special numbers */
+    if (isinf(in)) return (sign ? 0xffff : 0x7fff);
+    if (isnan(in)) return (sign ? 0xffff : 0x7fff);
+    if (in == 0.0f) return (sign ? 0x8000 : 0x0000);
+
+    if (tmp < powf(2, 10))
+    {
+        do
+        {
+            tmp *= 2.0f;
+            exp--;
+        } while (tmp < powf(2, 10));
+    }
+    else if (tmp >= powf(2, 11))
+    {
+        do
+        {
+            tmp /= 2.0f;
+            exp++;
+        } while (tmp >= powf(2, 11));
+    }
+
+    exp += 10;  /* Normalize the mantissa */
+    exp += 15;  /* Exponent is encoded with excess 15 */
+
+    origexp = exp;
+
+    mantissa = (unsigned int) tmp;
+    if ((tmp - mantissa == 0.5f && mantissa % 2 == 1) || /* round half to even */
+        (tmp - mantissa > 0.5f))
+    {
+        mantissa++; /* round to nearest, away from zero */
+    }
+    if (mantissa == 2048)
+    {
+        mantissa = 1024;
+        exp++;
+    }
+
+    if (exp > 31)
+    {
+        /* too big */
+        ret = 0x7fff; /* INF */
+    }
+    else if (exp <= 0)
+    {
+        unsigned int rounding = 0;
+
+        /* Denormalized half float */
+
+        /* return 0x0000 (=0.0) for numbers too small to represent in half floats */
+        if (exp < -11)
+            return (sign ? 0x8000 : 0x0000);
+
+        exp = origexp;
+
+        /* the 13 extra bits from single precision are used for rounding */
+        mantissa = (unsigned int)(tmp * powf(2, 13));
+        mantissa >>= 1 - exp; /* denormalize */
+
+        mantissa -= ~(mantissa >> 13) & 1; /* round half to even */
+        /* remove 13 least significant bits to get half float precision */
+        mantissa >>= 12;
+        rounding = mantissa & 1;
+        mantissa >>= 1;
+
+        ret = mantissa + rounding;
+    }
+    else
+    {
+        ret = (exp << 10) | (mantissa & 0x3ff);
+    }
+
+    ret |= ((sign ? 1 : 0) << 15); /* Add the sign */
+    return ret;
+}
+
+D3DXFLOAT16 *WINAPI D3DXFloat32To16Array(D3DXFLOAT16 *pout, CONST FLOAT *pin, UINT n)
+{
+    unsigned int i;
+
+    for (i = 0; i < n; ++i)
+    {
+        pout[i].value = float_32_to_16(pin[i]);
+    }
+
+    return pout;
 }
 
 /* Native d3dx9's D3DXFloat16to32Array lacks support for NaN and Inf. Specifically, e = 16 is treated as a

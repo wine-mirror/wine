@@ -2257,11 +2257,20 @@ static void test_D3DXFloat_Array(void)
     };
 
     /* exception on NULL out or in parameter */
+    out = D3DXFloat32To16Array(&half, &single, 0);
+    ok(out == &half, "Got %p, expected %p.\n", out, &half);
+
     out = D3DXFloat16To32Array(&single, (D3DXFLOAT16 *)&half, 0);
     ok(out == &single, "Got %p, expected %p.\n", out, &single);
 
     for (i = 0; i < sizeof(testdata)/sizeof(testdata[0]); i++)
     {
+        out = D3DXFloat32To16Array(&half, &testdata[i].single_in, 1);
+        ok(out == &half, "Got %p, expected %p.\n", out, &half);
+        ok(half.value == testdata[i].half_ver1 || half.value == testdata[i].half_ver2,
+           "Got %x, expected %x or %x for index %d.\n", half.value, testdata[i].half_ver1,
+           testdata[i].half_ver2, i);
+
         out = D3DXFloat16To32Array(&single, (D3DXFLOAT16 *)&testdata[i].half_ver1, 1);
         ok(out == &single, "Got %p, expected %p.\n", out, &single);
         ok(relative_error(single, testdata[i].single_out_ver1) < admitted_error,

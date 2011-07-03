@@ -131,7 +131,7 @@
 @ stdcall D3DXFilterTexture(ptr ptr long long)
 @ stdcall D3DXFindShaderComment(ptr long ptr ptr)
 @ stdcall D3DXFloat16To32Array(ptr ptr long)
-@ stub D3DXFloat32To16Array(ptr ptr long)
+@ stdcall D3DXFloat32To16Array(ptr ptr long)
 @ stub D3DXFrameAppendChild(ptr ptr)
 @ stub D3DXFrameCalculateBoundingSphere(ptr ptr ptr)
 @ stdcall D3DXFrameDestroy(ptr ptr)
