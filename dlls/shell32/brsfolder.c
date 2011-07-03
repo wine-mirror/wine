@@ -556,10 +556,15 @@ static LRESULT BrsFolder_Treeview_Expand( browse_info *info, NMTREEVIEWW *pnmtv 
 static HRESULT BrsFolder_Treeview_Changed( browse_info *info, NMTREEVIEWW *pnmtv )
 {
     LPTV_ITEMDATA lptvid = (LPTV_ITEMDATA) pnmtv->itemNew.lParam;
+    WCHAR name[MAX_PATH];
 
     lptvid = (LPTV_ITEMDATA) pnmtv->itemNew.lParam;
     ILFree(info->pidlRet);
     info->pidlRet = ILClone(lptvid->lpifq);
+
+    if (GetName(lptvid->lpsfParent, lptvid->lpi, SHGDN_NORMAL, name))
+            SetWindowTextW( GetDlgItem(info->hWnd, IDD_FOLDERTEXT), name );
+
     browsefolder_callback( info->lpBrowseInfo, info->hWnd, BFFM_SELCHANGED,
                            (LPARAM)info->pidlRet );
     BrsFolder_CheckValidSelection( info, lptvid );
