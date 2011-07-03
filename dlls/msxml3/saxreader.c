@@ -1998,7 +1998,6 @@ static HRESULT internal_parse(
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&varInput));
 
-    hr = S_OK;
     switch(V_VT(&varInput))
     {
         case VT_BSTR:

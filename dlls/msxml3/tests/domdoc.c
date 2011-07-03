@@ -5553,6 +5553,7 @@ static void test_cloneNode(void )
     hr = IXMLDOMNode_get_attributes(node_clone, &mapAttr);
     ok(hr == S_OK, "ret %08x\n", hr );
     hr = IXMLDOMNamedNodeMap_get_length(mapAttr, &attr_cnt1);
+    ok(hr == S_OK, "ret %08x\n", hr );
     ok(attr_cnt1 == 3, "Attribute count should be 3 (%d)\n", attr_cnt1);
     IXMLDOMNamedNodeMap_Release(mapAttr);
 
@@ -9746,6 +9747,7 @@ static void test_get_attributes(void)
 
     str = SysAllocString( szComplete4 );
     hr = IXMLDOMDocument_loadXML(doc, str, &b);
+    ok(hr == S_OK, "got %08x\n", hr);
     SysFreeString(str);
 
     hr = IXMLDOMDocument_get_attributes(doc, NULL);
