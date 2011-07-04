@@ -17,6 +17,7 @@
  */
 
 #include "config.h"
+#include <assert.h>
 #include "d3d8_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
@@ -570,4 +571,13 @@ HRESULT indexbuffer_init(IDirect3DIndexBuffer8Impl *buffer, IDirect3DDevice8Impl
     IUnknown_AddRef(buffer->parentDevice);
 
     return D3D_OK;
+}
+
+IDirect3DIndexBuffer8Impl *unsafe_impl_from_IDirect3DIndexBuffer8(IDirect3DIndexBuffer8 *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d8_indexbuffer_vtbl);
+
+    return impl_from_IDirect3DIndexBuffer8(iface);
 }

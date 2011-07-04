@@ -2367,8 +2367,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetIndices(IDirect3DDevice8 *iface,
         IDirect3DIndexBuffer8 *pIndexData, UINT baseVertexIndex)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
+    IDirect3DIndexBuffer8Impl *ib = unsafe_impl_from_IDirect3DIndexBuffer8(pIndexData);
     HRESULT hr;
-    IDirect3DIndexBuffer8Impl *ib = (IDirect3DIndexBuffer8Impl *)pIndexData;
 
     TRACE("iface %p, buffer %p, base_vertex_idx %u.\n", iface, pIndexData, baseVertexIndex);
 
