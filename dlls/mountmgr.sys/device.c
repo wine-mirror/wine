@@ -938,9 +938,13 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
         break;
     }
     default:
-        FIXME( "unsupported ioctl %x\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
+    {
+        ULONG code = irpsp->Parameters.DeviceIoControl.IoControlCode;
+        FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
+              code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
         irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
         break;
+    }
     }
 
     LeaveCriticalSection( &device_section );
