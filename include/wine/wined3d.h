@@ -1236,6 +1236,7 @@ enum wined3d_sysval_semantic
 #define WINED3DDEVCAPS_NPATCHES                                 0x01000000
 
 #define WINED3D_PALETTE_PER_SURFACE                             0x00000001
+#define WINED3D_LEGACY_DEPTH_BIAS                               0x00000002
 
 /* dwDDFX */
 /* arithmetic stretching along y axis */

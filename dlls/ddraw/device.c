@@ -2261,12 +2261,8 @@ static HRESULT WINAPI IDirect3DDeviceImpl_2_End(IDirect3DDevice2 *iface, DWORD d
  *  DDERR_INVALIDPARAMS if Value == NULL
  *
  *****************************************************************************/
-static const float zbias_factor = -0.000005f;
-
-static HRESULT
-IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
-                                     D3DRENDERSTATETYPE RenderStateType,
-                                     DWORD *Value)
+static HRESULT IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
+        D3DRENDERSTATETYPE RenderStateType, DWORD *Value)
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
     HRESULT hr;
@@ -2383,18 +2379,8 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
             break;
 
         case D3DRENDERSTATE_ZBIAS:
-        {
-            union
-            {
-                DWORD d;
-                float f;
-            } wined3d_value;
-
-            hr = wined3d_device_get_render_state(This->wined3d_device, WINED3DRS_DEPTHBIAS, &wined3d_value.d);
-            if (SUCCEEDED(hr))
-                *Value = wined3d_value.f / zbias_factor;
+            hr = wined3d_device_get_render_state(This->wined3d_device, WINED3DRS_DEPTHBIAS, Value);
             break;
-        }
 
         default:
             if (RenderStateType >= D3DRENDERSTATE_STIPPLEPATTERN00
@@ -2703,16 +2689,8 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
             break;
 
         case D3DRENDERSTATE_ZBIAS:
-        {
-            union
-            {
-                DWORD d;
-                float f;
-            } wined3d_value;
-            wined3d_value.f = Value * zbias_factor;
-            hr = wined3d_device_set_render_state(This->wined3d_device, WINED3DRS_DEPTHBIAS, wined3d_value.d);
+            hr = wined3d_device_set_render_state(This->wined3d_device, WINED3DRS_DEPTHBIAS, Value);
             break;
-        }
 
         default:
             if (RenderStateType >= D3DRENDERSTATE_STIPPLEPATTERN00

@@ -1706,7 +1706,8 @@ static void state_depthbias(DWORD state, struct wined3d_stateblock *stateblock, 
     if (stateblock->state.render_states[WINED3DRS_SLOPESCALEDEPTHBIAS]
             || stateblock->state.render_states[WINED3DRS_DEPTHBIAS])
     {
-        struct wined3d_surface *depth = stateblock->device->fb.depth_stencil;
+        const struct wined3d_device *device = stateblock->device;
+        const struct wined3d_surface *depth = device->fb.depth_stencil;
         float scale;
 
         union
@@ -1721,23 +1722,34 @@ static void state_depthbias(DWORD state, struct wined3d_stateblock *stateblock, 
         glEnable(GL_POLYGON_OFFSET_FILL);
         checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL)");
 
-        if (depth)
+        if (device->wined3d->flags & WINED3D_LEGACY_DEPTH_BIAS)
         {
-            const struct wined3d_format *fmt = depth->resource.format;
-            scale = powf(2, fmt->depth_size) - 1;
-            TRACE("Depth format %s, using depthbias scale of %f\n",
-                  debug_d3dformat(fmt->id), scale);
+            float bias = -(float)const_bias.d;
+            glPolygonOffset(bias, bias);
+            checkGLcall("glPolygonOffset");
         }
         else
         {
-            /* The context manager will reapply this state on a depth stencil change */
-            TRACE("No depth stencil, using depthbias scale of 0.0\n");
-            scale = 0;
-        }
+            if (depth)
+            {
+                const struct wined3d_format *fmt = depth->resource.format;
+                scale = powf(2, fmt->depth_size) - 1;
+                TRACE("Depth format %s, using depthbias scale of %.8e.\n",
+                      debug_d3dformat(fmt->id), scale);
+            }
+            else
+            {
+                /* The context manager will reapply this state on a depth stencil change */
+                TRACE("No depth stencil, using depthbias scale of 0.0.\n");
+                scale = 0.0f;
+            }
 
-        glPolygonOffset(scale_bias.f, const_bias.f * scale);
-        checkGLcall("glPolygonOffset(...)");
-    } else {
+            glPolygonOffset(scale_bias.f, const_bias.f * scale);
+            checkGLcall("glPolygonOffset(...)");
+        }
+    }
+    else
+    {
         glDisable(GL_POLYGON_OFFSET_FILL);
         checkGLcall("glDisable(GL_POLYGON_OFFSET_FILL)");
     }

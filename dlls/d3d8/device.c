@@ -1445,22 +1445,11 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetClipPlane(IDirect3DDevice8 *iface,
     return hr;
 }
 
-/* This factor is the result of a trial-and-error search. Both ZBIAS and DEPTHBIAS require
- * guesswork by design. d3d9 apps usually use a DEPTHBIAS of -0.00002(Mass Effect 2, WoW).
- * d3d8 apps(Final Fantasy XI) set ZBIAS to 15 and still expect the depth test to sort
- * objects properly. */
-static const float zbias_factor = -0.000005f;
-
 static HRESULT WINAPI IDirect3DDevice8Impl_SetRenderState(IDirect3DDevice8 *iface,
         D3DRENDERSTATETYPE State, DWORD Value)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
     HRESULT hr;
-    union
-    {
-        DWORD d;
-        float f;
-    } wined3d_value;
 
     TRACE("iface %p, state %#x, value %#x.\n", iface, State, Value);
 
@@ -1468,8 +1457,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetRenderState(IDirect3DDevice8 *ifac
     switch (State)
     {
         case D3DRS_ZBIAS:
-            wined3d_value.f = Value * zbias_factor;
-            hr = wined3d_device_set_render_state(This->wined3d_device, WINED3DRS_DEPTHBIAS, wined3d_value.d);
+            hr = wined3d_device_set_render_state(This->wined3d_device, WINED3DRS_DEPTHBIAS, Value);
             break;
 
         default:
@@ -1485,11 +1473,6 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetRenderState(IDirect3DDevice8 *ifac
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
     HRESULT hr;
-    union
-    {
-        DWORD d;
-        float f;
-    } wined3d_value;
 
     TRACE("iface %p, state %#x, value %p.\n", iface, State, pValue);
 
@@ -1497,8 +1480,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetRenderState(IDirect3DDevice8 *ifac
     switch (State)
     {
         case D3DRS_ZBIAS:
-            hr = wined3d_device_get_render_state(This->wined3d_device, WINED3DRS_DEPTHBIAS, &wined3d_value.d);
-            if (SUCCEEDED(hr)) *pValue = (DWORD)(wined3d_value.f / zbias_factor);
+            hr = wined3d_device_get_render_state(This->wined3d_device, WINED3DRS_DEPTHBIAS, pValue);
             break;
 
         default:
