@@ -240,9 +240,8 @@ HRESULT swapchain_init(IDirect3DSwapChain8Impl *swapchain, IDirect3DDevice8Impl 
  */
 struct IDirect3DSurface8Impl
 {
-    /* IUnknown fields */
-    const IDirect3DSurface8Vtbl *lpVtbl;
-    LONG                         ref;
+    IDirect3DSurface8 IDirect3DSurface8_iface;
+    LONG ref;
     struct wined3d_surface *wined3d_surface;
     IDirect3DDevice8 *parentDevice;
 

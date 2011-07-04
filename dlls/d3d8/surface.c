@@ -26,12 +26,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
 static inline IDirect3DSurface8Impl *impl_from_IDirect3DSurface8(IDirect3DSurface8 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirect3DSurface8Impl, lpVtbl);
+    return CONTAINING_RECORD(iface, IDirect3DSurface8Impl, IDirect3DSurface8_iface);
 }
 
 /* IDirect3DSurface8 IUnknown parts follow: */
-static HRESULT WINAPI IDirect3DSurface8Impl_QueryInterface(LPDIRECT3DSURFACE8 iface, REFIID riid, LPVOID *ppobj) {
-    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
+static HRESULT WINAPI IDirect3DSurface8Impl_QueryInterface(IDirect3DSurface8 *iface, REFIID riid,
+        void **ppobj)
+{
+    IDirect3DSurface8Impl *This = impl_from_IDirect3DSurface8(iface);
 
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), ppobj);
 
@@ -48,8 +50,9 @@ static HRESULT WINAPI IDirect3DSurface8Impl_QueryInterface(LPDIRECT3DSURFACE8 if
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirect3DSurface8Impl_AddRef(LPDIRECT3DSURFACE8 iface) {
-    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
+static ULONG WINAPI IDirect3DSurface8Impl_AddRef(IDirect3DSurface8 *iface)
+{
+    IDirect3DSurface8Impl *This = impl_from_IDirect3DSurface8(iface);
 
     TRACE("iface %p.\n", iface);
 
@@ -75,8 +78,9 @@ static ULONG WINAPI IDirect3DSurface8Impl_AddRef(LPDIRECT3DSURFACE8 iface) {
     }
 }
 
-static ULONG WINAPI IDirect3DSurface8Impl_Release(LPDIRECT3DSURFACE8 iface) {
-    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
+static ULONG WINAPI IDirect3DSurface8Impl_Release(IDirect3DSurface8 *iface)
+{
+    IDirect3DSurface8Impl *This = impl_from_IDirect3DSurface8(iface);
 
     TRACE("iface %p.\n", iface);
 
@@ -106,9 +110,10 @@ static ULONG WINAPI IDirect3DSurface8Impl_Release(LPDIRECT3DSURFACE8 iface) {
 }
 
 /* IDirect3DSurface8 IDirect3DResource8 Interface follow: */
-static HRESULT WINAPI IDirect3DSurface8Impl_GetDevice(IDirect3DSurface8 *iface, IDirect3DDevice8 **device)
+static HRESULT WINAPI IDirect3DSurface8Impl_GetDevice(IDirect3DSurface8 *iface,
+        IDirect3DDevice8 **device)
 {
-    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
+    IDirect3DSurface8Impl *This = impl_from_IDirect3DSurface8(iface);
 
     TRACE("iface %p, device %p.\n", iface, device);
 
@@ -190,8 +195,10 @@ static HRESULT WINAPI IDirect3DSurface8Impl_FreePrivateData(IDirect3DSurface8 *i
 }
 
 /* IDirect3DSurface8 Interface follow: */
-static HRESULT WINAPI IDirect3DSurface8Impl_GetContainer(LPDIRECT3DSURFACE8 iface, REFIID riid, void **ppContainer) {
-    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
+static HRESULT WINAPI IDirect3DSurface8Impl_GetContainer(IDirect3DSurface8 *iface, REFIID riid,
+        void **ppContainer)
+{
+    IDirect3DSurface8Impl *This = impl_from_IDirect3DSurface8(iface);
     HRESULT res;
 
     TRACE("iface %p, riid %s, container %p.\n", iface, debugstr_guid(riid), ppContainer);
@@ -206,7 +213,7 @@ static HRESULT WINAPI IDirect3DSurface8Impl_GetContainer(LPDIRECT3DSURFACE8 ifac
 
 static HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(IDirect3DSurface8 *iface, D3DSURFACE_DESC *desc)
 {
-    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
+    IDirect3DSurface8Impl *This = impl_from_IDirect3DSurface8(iface);
     struct wined3d_resource_desc wined3d_desc;
     struct wined3d_resource *wined3d_resource;
 
@@ -229,8 +236,10 @@ static HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(IDirect3DSurface8 *iface, D3
     return D3D_OK;
 }
 
-static HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKED_RECT *pLockedRect, CONST RECT *pRect, DWORD Flags) {
-    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
+static HRESULT WINAPI IDirect3DSurface8Impl_LockRect(IDirect3DSurface8 *iface,
+        D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags)
+{
+    IDirect3DSurface8Impl *This = impl_from_IDirect3DSurface8(iface);
     HRESULT hr;
 
     TRACE("iface %p, locked_rect %p, rect %p, flags %#x.\n", iface, pLockedRect, pRect, Flags);
@@ -259,8 +268,9 @@ static HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
-    IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
+static HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(IDirect3DSurface8 *iface)
+{
+    IDirect3DSurface8Impl *This = impl_from_IDirect3DSurface8(iface);
     HRESULT hr;
 
     TRACE("iface %p.\n", iface);
@@ -310,7 +320,7 @@ HRESULT surface_init(IDirect3DSurface8Impl *surface, IDirect3DDevice8Impl *devic
 {
     HRESULT hr;
 
-    surface->lpVtbl = &Direct3DSurface8_Vtbl;
+    surface->IDirect3DSurface8_iface.lpVtbl = &Direct3DSurface8_Vtbl;
     surface->ref = 1;
 
     /* FIXME: Check MAX bounds of MultisampleQuality. */
