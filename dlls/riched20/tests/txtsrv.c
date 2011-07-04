@@ -35,6 +35,24 @@
 #include <limits.h>
 
 static HMODULE hmoduleRichEdit;
+static IID *pIID_ITextServices;
+static IID *pIID_ITextHost;
+static IID *pIID_ITextHost2;
+
+static const char *debugstr_guid(REFIID riid)
+{
+    static char buf[50];
+
+    if(!riid)
+        return "(null)";
+
+    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
+            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
+            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
+
+    return buf;
+}
 
 /* Define C Macros for ITextServices calls. */
 
@@ -90,7 +108,7 @@ static HRESULT WINAPI ITextHostImpl_QueryInterface(ITextHost *iface,
 {
     ITextHostTestImpl *This = impl_from_ITextHost(iface);
 
-    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_ITextHost)) {
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, pIID_ITextHost)) {
         *ppvObject = This;
         ITextHost_AddRef((ITextHost *)*ppvObject);
         return S_OK;
@@ -624,7 +642,7 @@ static BOOL init_texthost(void)
         return FALSE;
     }
 
-    result = IUnknown_QueryInterface(init, &IID_ITextServices,
+    result = IUnknown_QueryInterface(init, pIID_ITextServices,
                                      (void **)&txtserv);
     ok((result == S_OK) && (txtserv != NULL), "Querying interface failed (result = %x, txtserv = %p)\n", result, txtserv);
     IUnknown_Release(init);
@@ -780,6 +798,21 @@ static void test_TxDraw(void)
 
 }
 
+DEFINE_GUID(expected_iid_itextservices, 0x8d33f740, 0xcf58, 0x11ce, 0xa8, 0x9d, 0x00, 0xaa, 0x00, 0x6c, 0xad, 0xc5);
+DEFINE_GUID(expected_iid_itexthost, 0x13e670f4,0x1a5a,0x11cf,0xab,0xeb,0x00,0xaa,0x00,0xb6,0x5e,0xa1);
+DEFINE_GUID(expected_iid_itexthost2, 0x13e670f5,0x1a5a,0x11cf,0xab,0xeb,0x00,0xaa,0x00,0xb6,0x5e,0xa1);
+
+static void test_IIDs(void)
+{
+    ok(IsEqualIID(pIID_ITextServices, &expected_iid_itextservices),
+       "unexpected value for IID_ITextServices: %s\n", debugstr_guid(pIID_ITextServices));
+    todo_wine ok(IsEqualIID(pIID_ITextHost, &expected_iid_itexthost),
+       "unexpected value for IID_ITextHost: %s\n", debugstr_guid(pIID_ITextHost));
+    todo_wine ok(IsEqualIID(pIID_ITextHost2, &expected_iid_itexthost2),
+       "unexpected value for IID_ITextHost2: %s\n", debugstr_guid(pIID_ITextHost2));
+}
+
+
 START_TEST( txtsrv )
 {
     setup_thiscall_wrappers();
@@ -788,6 +821,11 @@ START_TEST( txtsrv )
      * RICHED20.DLL, so the linker doesn't actually link to it. */
     hmoduleRichEdit = LoadLibrary("RICHED20.DLL");
     ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
+
+    pIID_ITextServices = (IID*)GetProcAddress(hmoduleRichEdit, "IID_ITextServices");
+    pIID_ITextHost = (IID*)GetProcAddress(hmoduleRichEdit, "IID_ITextHost");
+    pIID_ITextHost2 = (IID*)GetProcAddress(hmoduleRichEdit, "IID_ITextHost2");
+    test_IIDs();
 
     if (init_texthost())
     {
