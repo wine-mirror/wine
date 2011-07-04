@@ -806,9 +806,9 @@ static void test_IIDs(void)
 {
     ok(IsEqualIID(pIID_ITextServices, &expected_iid_itextservices),
        "unexpected value for IID_ITextServices: %s\n", debugstr_guid(pIID_ITextServices));
-    todo_wine ok(IsEqualIID(pIID_ITextHost, &expected_iid_itexthost),
+    ok(IsEqualIID(pIID_ITextHost, &expected_iid_itexthost),
        "unexpected value for IID_ITextHost: %s\n", debugstr_guid(pIID_ITextHost));
-    todo_wine ok(IsEqualIID(pIID_ITextHost2, &expected_iid_itexthost2),
+    ok(IsEqualIID(pIID_ITextHost2, &expected_iid_itexthost2),
        "unexpected value for IID_ITextHost2: %s\n", debugstr_guid(pIID_ITextHost2));
 }
 
