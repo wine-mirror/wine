@@ -6213,17 +6213,26 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const
         return WINED3DERR_DEVICELOST;
     }
 
-    if (flag == SFLAG_INSYSMEM)
-        surface_load_sysmem(surface, gl_info, rect);
-    else if (flag == SFLAG_INDRAWABLE)
+    switch (flag)
     {
-        if (FAILED(hr = surface_load_drawable(surface, gl_info, rect)))
-            return hr;
-    }
-    else /* if(flag & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)) */
-    {
-        if (FAILED(hr = surface_load_texture(surface, gl_info, rect, flag == SFLAG_INSRGBTEX)))
-            return hr;
+        case SFLAG_INSYSMEM:
+            surface_load_sysmem(surface, gl_info, rect);
+            break;
+
+        case SFLAG_INDRAWABLE:
+            if (FAILED(hr = surface_load_drawable(surface, gl_info, rect)))
+                return hr;
+            break;
+
+        case SFLAG_INTEXTURE:
+        case SFLAG_INSRGBTEX:
+            if (FAILED(hr = surface_load_texture(surface, gl_info, rect, flag == SFLAG_INSRGBTEX)))
+                return hr;
+            break;
+
+        default:
+            ERR("Don't know how to handle location %#x.\n", flag);
+            break;
     }
 
     if (!rect)
