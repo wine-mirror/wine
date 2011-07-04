@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include <assert.h>
 #include "d3d8_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
@@ -334,4 +335,13 @@ HRESULT surface_init(IDirect3DSurface8Impl *surface, IDirect3DDevice8Impl *devic
     IUnknown_AddRef(surface->parentDevice);
 
     return D3D_OK;
+}
+
+IDirect3DSurface8Impl *unsafe_impl_from_IDirect3DSurface8(IDirect3DSurface8 *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &Direct3DSurface8_Vtbl);
+
+    return impl_from_IDirect3DSurface8(iface);
 }

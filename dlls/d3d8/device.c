@@ -451,7 +451,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetCursorProperties(IDirect3DDevice8 
         UINT XHotSpot, UINT YHotSpot, IDirect3DSurface8 *pCursorBitmap)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IDirect3DSurface8Impl *pSurface = (IDirect3DSurface8Impl*)pCursorBitmap;
+    IDirect3DSurface8Impl *pSurface = unsafe_impl_from_IDirect3DSurface8(pCursorBitmap);
     HRESULT hr;
 
     TRACE("iface %p, hotspot_x %u, hotspot_y %u, bitmap %p.\n",
@@ -965,8 +965,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(IDirect3DDevice8 *iface,
         IDirect3DSurface8 *pSourceSurface, const RECT *pSourceRects, UINT cRects,
         IDirect3DSurface8 *pDestinationSurface, const POINT *pDestPoints)
 {
-    IDirect3DSurface8Impl *Source = (IDirect3DSurface8Impl *) pSourceSurface;
-    IDirect3DSurface8Impl *Dest = (IDirect3DSurface8Impl *) pDestinationSurface;
+    IDirect3DSurface8Impl *Source = unsafe_impl_from_IDirect3DSurface8(pSourceSurface);
+    IDirect3DSurface8Impl *Dest = unsafe_impl_from_IDirect3DSurface8(pDestinationSurface);
     enum wined3d_format_id srcFormat, destFormat;
     struct wined3d_resource_desc wined3d_desc;
     struct wined3d_resource *wined3d_resource;
@@ -1053,7 +1053,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetFrontBuffer(IDirect3DDevice8 *ifac
         IDirect3DSurface8 *pDestSurface)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IDirect3DSurface8Impl *destSurface = (IDirect3DSurface8Impl *)pDestSurface;
+    IDirect3DSurface8Impl *destSurface = unsafe_impl_from_IDirect3DSurface8(pDestSurface);
     HRESULT hr;
 
     TRACE("iface %p, dst_surface %p.\n", iface, pDestSurface);
@@ -1074,8 +1074,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetRenderTarget(IDirect3DDevice8 *ifa
         IDirect3DSurface8 *pRenderTarget, IDirect3DSurface8 *pNewZStencil)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IDirect3DSurface8Impl *pSurface = (IDirect3DSurface8Impl *)pRenderTarget;
-    IDirect3DSurface8Impl *pZSurface = (IDirect3DSurface8Impl *)pNewZStencil;
+    IDirect3DSurface8Impl *pSurface = unsafe_impl_from_IDirect3DSurface8(pRenderTarget);
+    IDirect3DSurface8Impl *pZSurface = unsafe_impl_from_IDirect3DSurface8(pNewZStencil);
     struct wined3d_surface *original_ds = NULL;
     HRESULT hr;
 
