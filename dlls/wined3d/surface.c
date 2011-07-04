@@ -5906,6 +5906,96 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
             wined3d_surface_get_pitch(surface));
 }
 
+static HRESULT surface_load_drawable(struct wined3d_surface *surface,
+        const struct wined3d_gl_info *gl_info, const RECT *rect)
+{
+    struct wined3d_device *device = surface->resource.device;
+    struct wined3d_format format;
+    CONVERT_TYPES convert;
+    UINT byte_count;
+    BYTE *mem;
+
+    if (wined3d_settings.rendertargetlock_mode == RTL_READTEX)
+        surface_load_location(surface, SFLAG_INTEXTURE, NULL);
+
+    if (surface->flags & SFLAG_INTEXTURE)
+    {
+        RECT r;
+
+        surface_get_rect(surface, rect, &r);
+        surface_blt_to_drawable(device, WINED3DTEXF_POINT, FALSE, surface, &r, surface, &r);
+
+        return WINED3D_OK;
+    }
+
+    if ((surface->flags & SFLAG_LOCATIONS) == SFLAG_INSRGBTEX)
+    {
+        /* This needs colorspace conversion from sRGB to RGB. We take the slow
+         * path through sysmem. */
+        surface_load_location(surface, SFLAG_INSYSMEM, rect);
+    }
+
+    d3dfmt_get_conv(surface, FALSE, FALSE, &format, &convert);
+
+    /* Don't use PBOs for converted surfaces. During PBO conversion we look at
+     * SFLAG_CONVERTED but it isn't set (yet) in all cases where it is getting
+     * called. */
+    if ((convert != NO_CONVERSION) && (surface->flags & SFLAG_PBO))
+    {
+        struct wined3d_context *context = NULL;
+
+        TRACE("Removing the pbo attached to surface %p.\n", surface);
+
+        if (!device->isInDraw)
+            context = context_acquire(device, NULL);
+
+        surface_remove_pbo(surface, gl_info);
+
+        if (context)
+            context_release(context);
+    }
+
+    if ((convert != NO_CONVERSION) && surface->resource.allocatedMemory)
+    {
+        UINT height = surface->resource.height;
+        UINT width = surface->resource.width;
+        UINT src_pitch, dst_pitch;
+
+        byte_count = format.conv_byte_count;
+        src_pitch = wined3d_surface_get_pitch(surface);
+
+        /* Stick to the alignment for the converted surface too, makes it
+         * easier to load the surface. */
+        dst_pitch = width * byte_count;
+        dst_pitch = (dst_pitch + device->surface_alignment - 1) & ~(device->surface_alignment - 1);
+
+        if (!(mem = HeapAlloc(GetProcessHeap(), 0, dst_pitch * height)))
+        {
+            ERR("Out of memory (%u).\n", dst_pitch * height);
+            return E_OUTOFMEMORY;
+        }
+
+        d3dfmt_convert_surface(surface->resource.allocatedMemory, mem,
+                src_pitch, width, height, dst_pitch, convert, surface);
+
+        surface->flags |= SFLAG_CONVERTED;
+    }
+    else
+    {
+        surface->flags &= ~SFLAG_CONVERTED;
+        mem = surface->resource.allocatedMemory;
+        byte_count = format.byte_count;
+    }
+
+    flush_to_framebuffer_drawpixels(surface, rect, format.glFormat, format.glType, byte_count, mem);
+
+    /* Don't delete PBO memory. */
+    if ((mem != surface->resource.allocatedMemory) && !(surface->flags & SFLAG_PBO))
+        HeapFree(GetProcessHeap(), 0, mem);
+
+    return WINED3D_OK;
+}
+
 HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const RECT *rect)
 {
     struct wined3d_device *device = surface->resource.device;
@@ -5916,6 +6006,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const
     int width, pitch, outpitch;
     BYTE *mem;
     BOOL in_fbo = FALSE;
+    HRESULT hr;
 
     TRACE("surface %p, location %s, rect %s.\n", surface, debug_surflocation(flag), wine_dbgstr_rect(rect));
 
@@ -5981,80 +6072,8 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const
         surface_load_sysmem(surface, gl_info, rect);
     else if (flag == SFLAG_INDRAWABLE)
     {
-        if (wined3d_settings.rendertargetlock_mode == RTL_READTEX)
-            surface_load_location(surface, SFLAG_INTEXTURE, NULL);
-
-        if (surface->flags & SFLAG_INTEXTURE)
-        {
-            RECT r;
-
-            surface_get_rect(surface, rect, &r);
-            surface_blt_to_drawable(device, WINED3DTEXF_POINT, FALSE, surface, &r, surface, &r);
-        }
-        else
-        {
-            int byte_count;
-            if ((surface->flags & SFLAG_LOCATIONS) == SFLAG_INSRGBTEX)
-            {
-                /* This needs a shader to convert the srgb data sampled from the GL texture into RGB
-                 * values, otherwise we get incorrect values in the target. For now go the slow way
-                 * via a system memory copy
-                 */
-                surface_load_location(surface, SFLAG_INSYSMEM, rect);
-            }
-
-            d3dfmt_get_conv(surface, FALSE /* We need color keying */,
-                    FALSE /* We won't use textures */, &format, &convert);
-
-            /* The width is in 'length' not in bytes */
-            width = surface->resource.width;
-            pitch = wined3d_surface_get_pitch(surface);
-
-            /* Don't use PBOs for converted surfaces. During PBO conversion we look at SFLAG_CONVERTED
-             * but it isn't set (yet) in all cases it is getting called. */
-            if ((convert != NO_CONVERSION) && (surface->flags & SFLAG_PBO))
-            {
-                struct wined3d_context *context = NULL;
-
-                TRACE("Removing the pbo attached to surface %p.\n", surface);
-
-                if (!device->isInDraw) context = context_acquire(device, NULL);
-                surface_remove_pbo(surface, gl_info);
-                if (context) context_release(context);
-            }
-
-            if ((convert != NO_CONVERSION) && surface->resource.allocatedMemory)
-            {
-                int height = surface->resource.height;
-                byte_count = format.conv_byte_count;
-
-                /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
-                outpitch = width * byte_count;
-                outpitch = (outpitch + device->surface_alignment - 1) & ~(device->surface_alignment - 1);
-
-                mem = HeapAlloc(GetProcessHeap(), 0, outpitch * height);
-                if(!mem) {
-                    ERR("Out of memory %d, %d!\n", outpitch, height);
-                    return WINED3DERR_OUTOFVIDEOMEMORY;
-                }
-                d3dfmt_convert_surface(surface->resource.allocatedMemory, mem, pitch,
-                        width, height, outpitch, convert, surface);
-
-                surface->flags |= SFLAG_CONVERTED;
-            }
-            else
-            {
-                surface->flags &= ~SFLAG_CONVERTED;
-                mem = surface->resource.allocatedMemory;
-                byte_count = format.byte_count;
-            }
-
-            flush_to_framebuffer_drawpixels(surface, rect, format.glFormat, format.glType, byte_count, mem);
-
-            /* Don't delete PBO memory */
-            if ((mem != surface->resource.allocatedMemory) && !(surface->flags & SFLAG_PBO))
-                HeapFree(GetProcessHeap(), 0, mem);
-        }
+        if (FAILED(hr = surface_load_drawable(surface, gl_info, rect)))
+            return hr;
     }
     else /* if(flag & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)) */
     {
