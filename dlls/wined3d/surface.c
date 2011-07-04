@@ -5878,6 +5878,34 @@ static DWORD resource_access_from_location(DWORD location)
     }
 }
 
+static void surface_load_sysmem(struct wined3d_surface *surface,
+        const struct wined3d_gl_info *gl_info, const RECT *rect)
+{
+    surface_prepare_system_memory(surface);
+
+    /* Download the surface to system memory. */
+    if (surface->flags & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX))
+    {
+        struct wined3d_device *device = surface->resource.device;
+        struct wined3d_context *context = NULL;
+
+        if (!device->isInDraw)
+            context = context_acquire(device, NULL);
+
+        surface_bind_and_dirtify(surface, gl_info, !(surface->flags & SFLAG_INTEXTURE));
+        surface_download_data(surface, gl_info);
+
+        if (context)
+            context_release(context);
+
+        return;
+    }
+
+    /* Note: It might be faster to download into a texture first. */
+    read_from_framebuffer(surface, rect, surface->resource.allocatedMemory,
+            wined3d_surface_get_pitch(surface));
+}
+
 HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const RECT *rect)
 {
     struct wined3d_device *device = surface->resource.device;
@@ -5950,28 +5978,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const
     }
 
     if (flag == SFLAG_INSYSMEM)
-    {
-        surface_prepare_system_memory(surface);
-
-        /* Download the surface to system memory */
-        if (surface->flags & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX))
-        {
-            struct wined3d_context *context = NULL;
-
-            if (!device->isInDraw) context = context_acquire(device, NULL);
-
-            surface_bind_and_dirtify(surface, gl_info, !(surface->flags & SFLAG_INTEXTURE));
-            surface_download_data(surface, gl_info);
-
-            if (context) context_release(context);
-        }
-        else
-        {
-            /* Note: It might be faster to download into a texture first. */
-            read_from_framebuffer(surface, rect, surface->resource.allocatedMemory,
-                    wined3d_surface_get_pitch(surface));
-        }
-    }
+        surface_load_sysmem(surface, gl_info, rect);
     else if (flag == SFLAG_INDRAWABLE)
     {
         if (wined3d_settings.rendertargetlock_mode == RTL_READTEX)
