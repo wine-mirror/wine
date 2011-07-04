@@ -31,11 +31,14 @@
 #include <windows.h>
 #include <shobjidl.h>
 #include <shlobj.h>
-
+#include <commoncontrols.h>
+#include <commctrl.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 
 #define EXPLORER_INFO_INDEX 0
+
+#define NAV_TOOLBAR_HEIGHT 30
 
 #define DEFAULT_WIDTH 640
 #define DEFAULT_HEIGHT 480
@@ -54,16 +57,28 @@ typedef struct parametersTAG {
 typedef struct
 {
     IExplorerBrowser *browser;
+    HWND main_window;
+    INT rebar_height;
 } explorer_info;
+
+enum
+{
+    BACK_BUTTON,FORWARD_BUTTON,UP_BUTTON
+};
 
 static void make_explorer_window(IShellFolder* startFolder)
 {
     RECT explorerRect;
-    HWND window;
+    HWND rebar,nav_toolbar;
     FOLDERSETTINGS fs;
     explorer_info *info;
     HRESULT hres;
     WCHAR explorer_title[100];
+    TBADDBITMAP bitmap_info;
+    TBBUTTON nav_buttons[3];
+    int hist_offset,view_offset;
+    REBARBANDINFOW band_info;
+    memset(nav_buttons,0,sizeof(nav_buttons));
     LoadStringW(explorer_hInstance,IDS_EXPLORER_TITLE,explorer_title,
                 sizeof(explorer_title)/sizeof(WCHAR));
     info = HeapAlloc(GetProcessHeap(),0,sizeof(explorer_info));
@@ -80,10 +95,12 @@ static void make_explorer_window(IShellFolder* startFolder)
         HeapFree(GetProcessHeap(),0,info);
         return;
     }
+    info->rebar_height=0;
+    info->main_window
+        = CreateWindowW(EXPLORER_CLASS,explorer_title,WS_OVERLAPPEDWINDOW,
+                        CW_USEDEFAULT,CW_USEDEFAULT,DEFAULT_WIDTH,
+                        DEFAULT_HEIGHT,NULL,NULL,explorer_hInstance,NULL);
 
-    window = CreateWindowW(EXPLORER_CLASS,explorer_title,WS_OVERLAPPEDWINDOW,
-                           CW_USEDEFAULT,CW_USEDEFAULT,DEFAULT_WIDTH,
-                           DEFAULT_HEIGHT,NULL,NULL,explorer_hInstance,NULL);
     fs.ViewMode = FVM_DETAILS;
     fs.fFlags = FWF_AUTOARRANGE;
     explorerRect.left = 0;
@@ -91,20 +108,60 @@ static void make_explorer_window(IShellFolder* startFolder)
     explorerRect.right = DEFAULT_WIDTH;
     explorerRect.bottom = DEFAULT_HEIGHT;
 
-    IExplorerBrowser_Initialize(info->browser,window,&explorerRect,&fs);
+    IExplorerBrowser_Initialize(info->browser,info->main_window,&explorerRect,&fs);
     IExplorerBrowser_SetOptions(info->browser,EBO_SHOWFRAMES);
-    SetWindowLongPtrW(window,EXPLORER_INFO_INDEX,(LONG_PTR)info);
+    SetWindowLongPtrW(info->main_window,EXPLORER_INFO_INDEX,(LONG)info);
+
+    /*setup navbar*/
+    rebar = CreateWindowExW(WS_EX_TOOLWINDOW,REBARCLASSNAMEW,NULL,
+                            WS_CHILD|WS_VISIBLE|RBS_VARHEIGHT|CCS_TOP|CCS_NODIVIDER,
+                            0,0,0,0,info->main_window,NULL,explorer_hInstance,NULL);
+    nav_toolbar
+        = CreateWindowExW(TBSTYLE_EX_MIXEDBUTTONS,TOOLBARCLASSNAMEW,NULL,
+                          WS_CHILD|WS_VISIBLE|TBSTYLE_FLAT,0,0,0,0,rebar,NULL,
+                          explorer_hInstance,NULL);
+
+    bitmap_info.hInst = HINST_COMMCTRL;
+    bitmap_info.nID = IDB_HIST_LARGE_COLOR;
+    hist_offset= SendMessageW(nav_toolbar,TB_ADDBITMAP,0,(LPARAM)&bitmap_info);
+    bitmap_info.nID = IDB_VIEW_LARGE_COLOR;
+    view_offset= SendMessageW(nav_toolbar,TB_ADDBITMAP,0,(LPARAM)&bitmap_info);
+
+    nav_buttons[0].iBitmap=hist_offset+HIST_BACK;
+    nav_buttons[0].idCommand=BACK_BUTTON;
+    nav_buttons[0].fsState=TBSTATE_ENABLED;
+    nav_buttons[0].fsStyle=BTNS_BUTTON|BTNS_AUTOSIZE;
+    nav_buttons[1].iBitmap=hist_offset+HIST_FORWARD;
+    nav_buttons[1].idCommand=FORWARD_BUTTON;
+    nav_buttons[1].fsState=TBSTATE_ENABLED;
+    nav_buttons[1].fsStyle=BTNS_BUTTON|BTNS_AUTOSIZE;
+    nav_buttons[2].iBitmap=view_offset+VIEW_PARENTFOLDER;
+    nav_buttons[2].idCommand=UP_BUTTON;
+    nav_buttons[2].fsState=TBSTATE_ENABLED;
+    nav_buttons[2].fsStyle=BTNS_BUTTON|BTNS_AUTOSIZE;
+    SendMessageW(nav_toolbar,TB_BUTTONSTRUCTSIZE,sizeof(TBBUTTON),0);
+    SendMessageW(nav_toolbar,TB_ADDBUTTONSW,sizeof(nav_buttons)/sizeof(TBBUTTON),(LPARAM)nav_buttons);
+
+    band_info.cbSize = sizeof(band_info);
+    band_info.fMask = RBBIM_STYLE|RBBIM_CHILD|RBBIM_CHILDSIZE|RBBIM_SIZE;
+    band_info.hwndChild = nav_toolbar;
+    band_info.fStyle=RBBS_GRIPPERALWAYS|RBBS_CHILDEDGE;
+    band_info.cyChild=NAV_TOOLBAR_HEIGHT;
+    band_info.cx=0;
+    band_info.cyMinChild=NAV_TOOLBAR_HEIGHT;
+    band_info.cxMinChild=0;
+    SendMessageW(rebar,RB_INSERTBANDW,-1,(LPARAM)&band_info);
     IExplorerBrowser_BrowseToObject(info->browser,(IUnknown*)startFolder,
                                     SBSP_ABSOLUTE);
-    ShowWindow(window,SW_SHOWDEFAULT);
-    UpdateWindow(window);
+    ShowWindow(info->main_window,SW_SHOWDEFAULT);
+    UpdateWindow(info->main_window);
 }
 
 static void update_window_size(explorer_info *info, int height, int width)
 {
     RECT new_rect;
     new_rect.left = 0;
-    new_rect.top = 0;
+    new_rect.top = info->rebar_height;
     new_rect.right = width;
     new_rect.bottom = height;
     IExplorerBrowser_SetRect(info->browser,NULL,new_rect);
@@ -116,12 +173,40 @@ static void do_exit(int code)
     ExitProcess(code);
 }
 
+static LRESULT update_rebar_size(explorer_info* info,NMRBAUTOSIZE *size_info)
+{
+    RECT new_rect;
+    RECT window_rect;
+    info->rebar_height = size_info->rcTarget.bottom-size_info->rcTarget.top;
+    GetWindowRect(info->main_window,&window_rect);
+    new_rect.left = 0;
+    new_rect.top = info->rebar_height;
+    new_rect.right = window_rect.right-window_rect.left;
+    new_rect.bottom = window_rect.bottom-window_rect.top;
+    IExplorerBrowser_SetRect(info->browser,NULL,new_rect);
+    return 0;
+}
+
+static LRESULT explorer_on_notify(explorer_info* info,NMHDR* notification)
+{
+    WINE_TRACE("code=%i\n",notification->code);
+    switch(notification->code)
+    {
+    case RBN_AUTOSIZE:
+        return update_rebar_size(info,(NMRBAUTOSIZE*)notification);
+    default:
+        break;
+    }
+    return 0;
+}
+
 static LRESULT CALLBACK explorer_wnd_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     explorer_info *info
         = (explorer_info*)GetWindowLongPtrW(hwnd,EXPLORER_INFO_INDEX);
     IExplorerBrowser *browser = NULL;
 
+    WINE_TRACE("(hwnd=%p,uMsg=%u,wParam=%lx,lParam=%lx)\n",hwnd,uMsg,wParam,lParam);
     if(info)
         browser = info->browser;
     switch(uMsg)
@@ -133,6 +218,25 @@ static LRESULT CALLBACK explorer_wnd_proc(HWND hwnd, UINT uMsg, WPARAM wParam, L
         break;
     case WM_QUIT:
         do_exit(wParam);
+    case WM_NOTIFY:
+        return explorer_on_notify(info,(NMHDR*)lParam);
+    case WM_COMMAND:
+        if(HIWORD(wParam)==BN_CLICKED)
+        {
+            switch(LOWORD(wParam))
+            {
+            case BACK_BUTTON:
+                IExplorerBrowser_BrowseToObject(browser,NULL,SBSP_NAVIGATEBACK);
+                break;
+            case FORWARD_BUTTON:
+                IExplorerBrowser_BrowseToObject(browser,NULL,SBSP_NAVIGATEFORWARD);
+                break;
+            case UP_BUTTON:
+                IExplorerBrowser_BrowseToObject(browser,NULL,SBSP_PARENT);
+                break;
+            }
+        }
+        break;
     case WM_SIZE:
         update_window_size(info,HIWORD(lParam),LOWORD(lParam));
         break;
@@ -153,7 +257,7 @@ static void register_explorer_window_class(void)
     window_class.hInstance = explorer_hInstance;
     window_class.hIcon = NULL;
     window_class.hCursor = NULL;
-    window_class.hbrBackground = NULL;
+    window_class.hbrBackground = (HBRUSH)COLOR_BACKGROUND;
     window_class.lpszMenuName = NULL;
     window_class.lpszClassName = EXPLORER_CLASS;
     window_class.hIconSm = NULL;
@@ -309,6 +413,7 @@ int WINAPI wWinMain(HINSTANCE hinstance,
     HRESULT hres;
     MSG msg;
     IShellFolder *folder;
+    INITCOMMONCONTROLSEX init_info;
 
     memset(&parameters,0,sizeof(parameters));
     explorer_hInstance = hinstance;
@@ -317,6 +422,13 @@ int WINAPI wWinMain(HINSTANCE hinstance,
     if(!SUCCEEDED(hres))
     {
         WINE_ERR("Could not initialize COM\n");
+        ExitProcess(EXIT_FAILURE);
+    }
+    init_info.dwSize = sizeof(INITCOMMONCONTROLSEX);
+    init_info.dwICC = ICC_BAR_CLASSES | ICC_COOL_CLASSES;
+    if(!InitCommonControlsEx(&init_info))
+    {
+        WINE_ERR("Could not initialize Comctl\n");
         ExitProcess(EXIT_FAILURE);
     }
     register_explorer_window_class();
