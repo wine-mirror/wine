@@ -1855,8 +1855,6 @@ interface ITaskbarList : IUnknown
         [in] HWND hwnd);
 }
 
-cpp_quote("EXTERN_C const CLSID CLSID_TaskbarList;")
-
 /*****************************************************************************
  *    ITaskbarList2 interface
  */
@@ -3341,5 +3339,44 @@ library ShellObjects
     coclass KnownFolderManager
     {
         interface IKnownFolderManager;
+    }
+
+    [
+        uuid(591209c7-767b-42b2-9fba-44ee4615f2c7)
+    ]
+    coclass ApplicationAssociationRegistration
+    {
+        interface IApplicationAssociationRegistration;
+    }
+
+    [
+         uuid(00021401-0000-0000-c000-000000000046)
+    ]
+    coclass ShellLink
+    {
+        interface IShellLinkW;
+    }
+
+    [
+        uuid(56fdf344-fd6d-11d0-958a-006097c9a090)
+    ]
+    coclass TaskbarList
+    {
+        interface ITaskbarList4;
+    }
+
+    [
+        uuid(77f10cf0-3db5-4966-b520-b7c54fd35ed6)
+    ]
+    coclass DestinationList {
+        interface ICustomDestinationList;
+    }
+
+    [
+        uuid(2d3468c1-36a7-43b6-ac24-d3f02fd9607a)
+    ]
+    coclass EnumerableObjectCollection
+    {
+        interface IEnumObjects;
     }
 }
