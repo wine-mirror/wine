@@ -1087,25 +1087,26 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetRenderTarget(IDirect3DDevice8 *ifa
     {
         struct wined3d_resource_desc ds_desc, rt_desc;
         struct wined3d_resource *wined3d_resource;
-        IDirect3DSurface8 *orig_rt = NULL;
+        struct wined3d_surface *original_rt = NULL;
 
         /* If no render target is passed in check the size against the current RT */
         if (!pRenderTarget)
         {
-            hr = IDirect3DDevice8_GetRenderTarget(iface, &orig_rt);
-            if (FAILED(hr))
+            hr = wined3d_device_get_render_target(This->wined3d_device, 0, &original_rt);
+            if (FAILED(hr) || !original_rt)
             {
                 wined3d_mutex_unlock();
                 return hr;
             }
-            pSurface = (IDirect3DSurface8Impl *)orig_rt;
+            wined3d_resource = wined3d_surface_get_resource(original_rt);
+            wined3d_surface_decref(original_rt);
         }
+        else
+            wined3d_resource = wined3d_surface_get_resource(pSurface->wined3d_surface);
+        wined3d_resource_get_desc(wined3d_resource, &rt_desc);
 
         wined3d_resource = wined3d_surface_get_resource(pZSurface->wined3d_surface);
         wined3d_resource_get_desc(wined3d_resource, &ds_desc);
-        wined3d_resource = wined3d_surface_get_resource(pSurface->wined3d_surface);
-        wined3d_resource_get_desc(wined3d_resource, &rt_desc);
-        if (orig_rt) IDirect3DSurface8_Release(orig_rt);
 
         if (ds_desc.width < rt_desc.width || ds_desc.height < rt_desc.height)
         {
