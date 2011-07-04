@@ -2427,7 +2427,7 @@ static HRESULT WINAPI AudioSessionControl_GetGroupingParam(
 }
 
 static HRESULT WINAPI AudioSessionControl_SetGroupingParam(
-        IAudioSessionControl2 *iface, GUID *group, const GUID *session)
+        IAudioSessionControl2 *iface, const GUID *group, const GUID *session)
 {
     AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
 

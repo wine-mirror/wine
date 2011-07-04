@@ -115,7 +115,7 @@ interface IAudioSessionControl : IUnknown
         [out] GUID *pRetVal
     );
     HRESULT SetGroupingParam(
-        [in] GUID *Override,
+        [in] LPCGUID Override,
         [unique,in] LPCGUID EventContext
     );
     HRESULT RegisterAudioSessionNotification(
