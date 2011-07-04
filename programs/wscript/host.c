@@ -29,6 +29,8 @@
 
 #include <wine/debug.h>
 
+#define BUILDVERSION 16535
+
 static const WCHAR wshNameW[] = {'W','i','n','d','o','w','s',' ','S','c','r','i','p','t',' ','H','o','s','t',0};
 static const WCHAR wshVersionW[] = {'5','.','8'};
 
@@ -169,8 +171,10 @@ static HRESULT WINAPI Host_get_Version(IHost *iface, BSTR *out_Version)
 
 static HRESULT WINAPI Host_get_BuildVersion(IHost *iface, int *out_Build)
 {
-    WINE_FIXME("(%p)\n", out_Build);
-    return E_NOTIMPL;
+    WINE_TRACE("(%p)\n", out_Build);
+
+    *out_Build = BUILDVERSION;
+    return S_OK;
 }
 
 static HRESULT WINAPI Host_get_Timeout(IHost *iface, LONG *out_Timeout)
