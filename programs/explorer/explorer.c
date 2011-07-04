@@ -62,6 +62,7 @@ typedef struct
     HWND main_window,path_box;
     INT rebar_height;
     LPCITEMIDLIST pidl;
+    IImageList *icon_list;
 } explorer_info;
 
 enum
@@ -101,11 +102,153 @@ static ULONG WINAPI IExplorerBrowserEventsImpl_fnRelease(IExplorerBrowserEvents 
     return ref;
 }
 
+static BOOL create_combobox_item(IShellFolder *folder, LPCITEMIDLIST pidl, IImageList *icon_list, COMBOBOXEXITEMW *item)
+{
+    STRRET strret;
+    HRESULT hres;
+    IExtractIconW *extract_icon;
+    UINT reserved;
+    WCHAR icon_file[MAX_PATH];
+    INT icon_index;
+    UINT icon_flags;
+    HICON icon;
+    strret.uType=STRRET_WSTR;
+    hres = IShellFolder_GetDisplayNameOf(folder,pidl,SHGDN_FORADDRESSBAR,&strret);
+    if(FAILED(hres))
+    {
+        WINE_WARN("Could not get name for pidl\n");
+        return FALSE;
+    }
+    switch(strret.uType)
+    {
+    case STRRET_WSTR:
+        item->pszText = strret.pOleStr;
+        break;
+    default:
+        WINE_FIXME("Unimplemented STRRET type:%u\n",strret.uType);
+        break;
+    }
+    hres = IShellFolder_GetUIObjectOf(folder,NULL,1,&pidl,&IID_IExtractIconW,
+                                      &reserved,(void**)&extract_icon);
+    if(SUCCEEDED(hres))
+    {
+        item->mask |= CBEIF_IMAGE;
+        IExtractIconW_GetIconLocation(extract_icon,GIL_FORSHELL,icon_file,
+                                      sizeof(icon_file)/sizeof(WCHAR),
+                                      &icon_index,&icon_flags);
+        IExtractIconW_Extract(extract_icon,icon_file,icon_index,NULL,&icon,20);
+        item->iImage = ImageList_AddIcon((HIMAGELIST)icon_list,icon);
+    }
+    else
+    {
+        item->mask &= ~CBEIF_IMAGE;
+        WINE_WARN("Could not get an icon for %s\n",wine_dbgstr_w(item->pszText));
+    }
+    return TRUE;
+}
+
 static void update_path_box(explorer_info *info)
 {
-    WCHAR path[MAX_PATH];
-    SHGetPathFromIDListW(info->pidl,path);
-    SetWindowTextW(info->path_box,path);
+    COMBOBOXEXITEMW item;
+    COMBOBOXEXITEMW main_item;
+    IShellFolder *desktop;
+    IPersistFolder2 *persist;
+    LPITEMIDLIST desktop_pidl;
+    IEnumIDList *ids;
+
+    ImageList_Remove((HIMAGELIST)info->icon_list,-1);
+    SendMessageW(info->path_box,CB_RESETCONTENT,0,0);
+    SHGetDesktopFolder(&desktop);
+    IShellFolder_QueryInterface(desktop,&IID_IPersistFolder2,(void**)&persist);
+    IPersistFolder2_GetCurFolder(persist,&desktop_pidl);
+    IPersistFolder2_Release(persist);
+    persist = NULL;
+    /*Add Desktop*/
+    item.iItem = -1;
+    item.mask = CBEIF_TEXT | CBEIF_INDENT | CBEIF_LPARAM;
+    item.iIndent = 0;
+    create_combobox_item(desktop,desktop_pidl,info->icon_list,&item);
+    item.lParam = (LPARAM)desktop_pidl;
+    SendMessageW(info->path_box,CBEM_INSERTITEMW,0,(LPARAM)&item);
+    if(ILIsEqual(info->pidl,desktop_pidl))
+        main_item = item;
+    else
+        CoTaskMemFree(item.pszText);
+    /*Add all direct subfolders of Desktop*/
+    if(SUCCEEDED(IShellFolder_EnumObjects(desktop,NULL,SHCONTF_FOLDERS,&ids))
+       && ids!=NULL)
+    {
+        LPITEMIDLIST curr_pidl;
+        HRESULT hres;
+
+        item.iIndent = 1;
+        while(1)
+        {
+            hres = IEnumIDList_Next(ids,1,&curr_pidl,NULL);
+            if(FAILED(hres) || hres == S_FALSE)
+                break;
+            if(!create_combobox_item(desktop,curr_pidl,info->icon_list,&item))
+                WINE_WARN("Could not create a combobox item\n");
+            else
+            {
+                LPITEMIDLIST full_pidl = ILCombine(desktop_pidl,curr_pidl);
+                item.lParam = (LPARAM)full_pidl;
+                SendMessageW(info->path_box,CBEM_INSERTITEMW,0,(LPARAM)&item);
+                if(ILIsEqual(full_pidl,info->pidl))
+                    main_item = item;
+                else if(ILIsParent(full_pidl,info->pidl,FALSE))
+                {
+                    /*add all parents of the pidl passed in*/
+                    LPITEMIDLIST next_pidl = ILFindChild(full_pidl,info->pidl);
+                    IShellFolder *curr_folder = NULL, *temp;
+                    hres = IShellFolder_BindToObject(desktop,curr_pidl,NULL,
+                                                     &IID_IShellFolder,
+                                                     (void**)&curr_folder);
+                    if(FAILED(hres))
+                        WINE_WARN("Could not get an IShellFolder\n");
+                    while(!ILIsEmpty(next_pidl))
+                    {
+                        LPITEMIDLIST first = ILCloneFirst(next_pidl);
+                        CoTaskMemFree(item.pszText);
+                        if(!create_combobox_item(curr_folder,first,
+                                                 info->icon_list,&item))
+                        {
+                            WINE_WARN("Could not create a combobox item\n");
+                            break;
+                        }
+                        ++item.iIndent;
+                        full_pidl = ILCombine(full_pidl,first);
+                        item.lParam = (LPARAM)full_pidl;
+                        SendMessageW(info->path_box,CBEM_INSERTITEMW,0,(LPARAM)&item);
+                        temp=NULL;
+                        hres = IShellFolder_BindToObject(curr_folder,first,NULL,
+                                                         &IID_IShellFolder,
+                                                         (void**)&temp);
+                        if(FAILED(hres))
+                        {
+                            WINE_WARN("Could not get an IShellFolder\n");
+                            break;
+                        }
+                        IShellFolder_Release(curr_folder);
+                        curr_folder = temp;
+
+                        ILFree(first);
+                        next_pidl = ILGetNext(next_pidl);
+                    }
+                    memcpy(&main_item,&item,sizeof(item));
+                    if(curr_folder)
+                        IShellFolder_Release(curr_folder);
+                    item.iIndent = 1;
+                }
+                else
+                    CoTaskMemFree(item.pszText);
+            }
+        }
+    }
+    else
+        WINE_WARN("Could not enumerate the desktop\n");
+    SendMessageW(info->path_box,CBEM_SETITEMW,0,(LPARAM)&main_item);
+    CoTaskMemFree(main_item.pszText);
 }
 
 static HRESULT WINAPI IExplorerBrowserEventsImpl_fnOnNavigationComplete(IExplorerBrowserEvents *iface, PCIDLIST_ABSOLUTE pidl)
@@ -148,6 +291,8 @@ static IExplorerBrowserEvents *make_explorer_events(explorer_info *info)
         = HeapAlloc(GetProcessHeap(), 0, sizeof(IExplorerBrowserEventsImpl));
     ret->IExplorerBrowserEvents_iface.lpVtbl = &vt_IExplorerBrowserEvents;
     ret->info = info;
+    SHGetImageList(SHIL_SMALL,&IID_IImageList,(void**)&(ret->info->icon_list));
+    SendMessageW(info->path_box,CBEM_SETIMAGELIST,0,(LPARAM)ret->info->icon_list);
     IExplorerBrowserEvents_AddRef(&ret->IExplorerBrowserEvents_iface);
     return &ret->IExplorerBrowserEvents_iface;
 }
@@ -287,6 +432,12 @@ static LRESULT explorer_on_end_edit(explorer_info *info,NMCBEENDEDITW *edit_info
     WINE_TRACE("iWhy=%x\n",edit_info->iWhy);
     switch(edit_info->iWhy)
     {
+    case CBENF_DROPDOWN:
+        if(edit_info->iNewSelection!=CB_ERR)
+            pidl = (LPITEMIDLIST)SendMessageW(edit_info->hdr.hwndFrom,
+                                              CB_GETITEMDATA,
+                                              edit_info->iNewSelection,0);
+        break;
     case CBENF_RETURN:
         {
             WCHAR path[MAX_PATH];
@@ -330,8 +481,36 @@ static LRESULT explorer_on_notify(explorer_info* info,NMHDR* notification)
     WINE_TRACE("code=%i\n",notification->code);
     switch(notification->code)
     {
+    case CBEN_BEGINEDIT:
+        {
+            WCHAR path[MAX_PATH];
+            HWND edit_ctrl = (HWND)SendMessageW(notification->hwndFrom,
+                                                CBEM_GETEDITCONTROL,0,0);
+            SHGetPathFromIDListW(info->pidl,path);
+            SetWindowTextW(edit_ctrl,path);
+            break;
+        }
+    case CBEN_ENDEDITA:
+        {
+            NMCBEENDEDITA *edit_info_a = (NMCBEENDEDITA*)notification;
+            NMCBEENDEDITW edit_info_w;
+            edit_info_w.hdr = edit_info_a->hdr;
+            edit_info_w.fChanged = edit_info_a->fChanged;
+            edit_info_w.iNewSelection = edit_info_a->iNewSelection;
+            MultiByteToWideChar(CP_ACP,0,edit_info_a->szText,-1,
+                                edit_info_w.szText,CBEMAXSTRLEN);
+            edit_info_w.iWhy = edit_info_a->iWhy;
+            return explorer_on_end_edit(info,&edit_info_w);
+        }
     case CBEN_ENDEDITW:
         return explorer_on_end_edit(info,(NMCBEENDEDITW*)notification);
+    case CBEN_DELETEITEM:
+        {
+            NMCOMBOBOXEXW *entry = (NMCOMBOBOXEXW*)notification;
+            if(entry->ceItem.lParam)
+                ILFree((LPITEMIDLIST)entry->ceItem.lParam);
+            break;
+        }
     case RBN_AUTOSIZE:
         return update_rebar_size(info,(NMRBAUTOSIZE*)notification);
     default:
