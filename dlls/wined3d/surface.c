@@ -5996,15 +5996,161 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
     return WINED3D_OK;
 }
 
+static HRESULT surface_load_texture(struct wined3d_surface *surface,
+        const struct wined3d_gl_info *gl_info, const RECT *rect, BOOL srgb)
+{
+    const DWORD attach_flags = WINED3DFMT_FLAG_FBO_ATTACHABLE | WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB;
+    RECT src_rect = {0, 0, surface->resource.width, surface->resource.height};
+    struct wined3d_device *device = surface->resource.device;
+    struct wined3d_context *context = NULL;
+    UINT width, src_pitch, dst_pitch;
+    struct wined3d_bo_address data;
+    struct wined3d_format format;
+    POINT dst_point = {0, 0};
+    CONVERT_TYPES convert;
+    BYTE *mem;
+
+    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
+            && surface_is_offscreen(surface)
+            && (surface->flags & SFLAG_INDRAWABLE))
+    {
+        read_from_framebuffer_texture(surface, srgb);
+
+        return WINED3D_OK;
+    }
+
+    if (surface->flags & (SFLAG_INSRGBTEX | SFLAG_INTEXTURE)
+            && (surface->resource.format->flags & attach_flags) == attach_flags
+            && fbo_blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
+                NULL, surface->resource.usage, surface->resource.pool, surface->resource.format,
+                NULL, surface->resource.usage, surface->resource.pool, surface->resource.format))
+    {
+        if (srgb)
+            surface_blt_fbo(device, WINED3DTEXF_POINT, surface, SFLAG_INTEXTURE,
+                    &src_rect, surface, SFLAG_INSRGBTEX, &src_rect);
+        else
+            surface_blt_fbo(device, WINED3DTEXF_POINT, surface, SFLAG_INSRGBTEX,
+                    &src_rect, surface, SFLAG_INTEXTURE, &src_rect);
+
+        return WINED3D_OK;
+    }
+
+    /* Upload from system memory */
+
+    d3dfmt_get_conv(surface, TRUE /* We need color keying */,
+            TRUE /* We will use textures */, &format, &convert);
+
+    if (srgb)
+    {
+        if ((surface->flags & (SFLAG_INTEXTURE | SFLAG_INSYSMEM)) == SFLAG_INTEXTURE)
+        {
+            /* Performance warning... */
+            FIXME("Downloading RGB surface %p to reload it as sRGB.\n", surface);
+            surface_load_location(surface, SFLAG_INSYSMEM, rect);
+        }
+    }
+    else
+    {
+        if ((surface->flags & (SFLAG_INSRGBTEX | SFLAG_INSYSMEM)) == SFLAG_INSRGBTEX)
+        {
+            /* Performance warning... */
+            FIXME("Downloading sRGB surface %p to reload it as RGB.\n", surface);
+            surface_load_location(surface, SFLAG_INSYSMEM, rect);
+        }
+    }
+
+    if (!(surface->flags & SFLAG_INSYSMEM))
+    {
+        WARN("Trying to load a texture from sysmem, but SFLAG_INSYSMEM is not set.\n");
+        /* Lets hope we get it from somewhere... */
+        surface_load_location(surface, SFLAG_INSYSMEM, rect);
+    }
+
+    if (!device->isInDraw)
+        context = context_acquire(device, NULL);
+
+    surface_prepare_texture(surface, gl_info, srgb);
+    surface_bind_and_dirtify(surface, gl_info, srgb);
+
+    if (surface->CKeyFlags & WINEDDSD_CKSRCBLT)
+    {
+        surface->flags |= SFLAG_GLCKEY;
+        surface->glCKey = surface->SrcBltCKey;
+    }
+    else surface->flags &= ~SFLAG_GLCKEY;
+
+    width = surface->resource.width;
+    src_pitch = wined3d_surface_get_pitch(surface);
+
+    /* Don't use PBOs for converted surfaces. During PBO conversion we look at
+     * SFLAG_CONVERTED but it isn't set (yet) in all cases it is getting
+     * called. */
+    if ((convert != NO_CONVERSION || format.convert) && (surface->flags & SFLAG_PBO))
+    {
+        TRACE("Removing the pbo attached to surface %p.\n", surface);
+        surface_remove_pbo(surface, gl_info);
+    }
+
+    if (format.convert)
+    {
+        /* This code is entered for texture formats which need a fixup. */
+        UINT height = surface->resource.height;
+
+        /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
+        dst_pitch = width * format.conv_byte_count;
+        dst_pitch = (dst_pitch + device->surface_alignment - 1) & ~(device->surface_alignment - 1);
+
+        if (!(mem = HeapAlloc(GetProcessHeap(), 0, dst_pitch * height)))
+        {
+            ERR("Out of memory (%u).\n", dst_pitch * height);
+            if (context)
+                context_release(context);
+            return E_OUTOFMEMORY;
+        }
+        format.convert(surface->resource.allocatedMemory, mem, src_pitch, width, height);
+    }
+    else if (convert != NO_CONVERSION && surface->resource.allocatedMemory)
+    {
+        /* This code is only entered for color keying fixups */
+        UINT height = surface->resource.height;
+
+        /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
+        dst_pitch = width * format.conv_byte_count;
+        dst_pitch = (dst_pitch + device->surface_alignment - 1) & ~(device->surface_alignment - 1);
+
+        if (!(mem = HeapAlloc(GetProcessHeap(), 0, dst_pitch * height)))
+        {
+            ERR("Out of memory (%u).\n", dst_pitch * height);
+            if (context)
+                context_release(context);
+            return E_OUTOFMEMORY;
+        }
+        d3dfmt_convert_surface(surface->resource.allocatedMemory, mem, src_pitch,
+                width, height, dst_pitch, convert, surface);
+    }
+    else
+    {
+        mem = surface->resource.allocatedMemory;
+    }
+
+    data.buffer_object = surface->flags & SFLAG_PBO ? surface->pbo : 0;
+    data.addr = mem;
+    surface_upload_data(surface, gl_info, &format, &src_rect, width, &dst_point, srgb, &data);
+
+    if (context)
+        context_release(context);
+
+    /* Don't delete PBO memory. */
+    if ((mem != surface->resource.allocatedMemory) && !(surface->flags & SFLAG_PBO))
+        HeapFree(GetProcessHeap(), 0, mem);
+
+    return WINED3D_OK;
+}
+
 HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const RECT *rect)
 {
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    BOOL drawable_read_ok = surface_is_offscreen(surface);
-    struct wined3d_format format;
-    CONVERT_TYPES convert;
-    int width, pitch, outpitch;
-    BYTE *mem;
     BOOL in_fbo = FALSE;
     HRESULT hr;
 
@@ -6033,7 +6179,6 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const
             /* With ORM_FBO, SFLAG_INTEXTURE and SFLAG_INDRAWABLE are the same for offscreen targets.
              * Prefer SFLAG_INTEXTURE. */
             if (flag == SFLAG_INDRAWABLE) flag = SFLAG_INTEXTURE;
-            drawable_read_ok = FALSE;
             in_fbo = TRUE;
         }
         else
@@ -6077,135 +6222,8 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const
     }
     else /* if(flag & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)) */
     {
-        const DWORD attach_flags = WINED3DFMT_FLAG_FBO_ATTACHABLE | WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB;
-
-        if (drawable_read_ok && (surface->flags & SFLAG_INDRAWABLE))
-        {
-            read_from_framebuffer_texture(surface, flag == SFLAG_INSRGBTEX);
-        }
-        else if (surface->flags & (SFLAG_INSRGBTEX | SFLAG_INTEXTURE)
-                && (surface->resource.format->flags & attach_flags) == attach_flags
-                && fbo_blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
-                        NULL, surface->resource.usage, surface->resource.pool, surface->resource.format,
-                        NULL, surface->resource.usage, surface->resource.pool, surface->resource.format))
-        {
-            DWORD src_location = flag == SFLAG_INSRGBTEX ? SFLAG_INTEXTURE : SFLAG_INSRGBTEX;
-            RECT rect = {0, 0, surface->resource.width, surface->resource.height};
-
-            surface_blt_fbo(surface->resource.device, WINED3DTEXF_POINT,
-                    surface, src_location, &rect, surface, flag, &rect);
-        }
-        else
-        {
-            /* Upload from system memory */
-            RECT src_rect = {0, 0, surface->resource.width, surface->resource.height};
-            BOOL srgb = flag == SFLAG_INSRGBTEX;
-            struct wined3d_context *context = NULL;
-            struct wined3d_bo_address data;
-            POINT dst_point = {0, 0};
-
-            d3dfmt_get_conv(surface, TRUE /* We need color keying */,
-                    TRUE /* We will use textures */, &format, &convert);
-
-            if (srgb)
-            {
-                if ((surface->flags & (SFLAG_INTEXTURE | SFLAG_INSYSMEM)) == SFLAG_INTEXTURE)
-                {
-                    /* Performance warning... */
-                    FIXME("Downloading RGB surface %p to reload it as sRGB.\n", surface);
-                    surface_load_location(surface, SFLAG_INSYSMEM, rect);
-                }
-            }
-            else
-            {
-                if ((surface->flags & (SFLAG_INSRGBTEX | SFLAG_INSYSMEM)) == SFLAG_INSRGBTEX)
-                {
-                    /* Performance warning... */
-                    FIXME("Downloading sRGB surface %p to reload it as RGB.\n", surface);
-                    surface_load_location(surface, SFLAG_INSYSMEM, rect);
-                }
-            }
-            if (!(surface->flags & SFLAG_INSYSMEM))
-            {
-                WARN("Trying to load a texture from sysmem, but SFLAG_INSYSMEM is not set.\n");
-                /* Lets hope we get it from somewhere... */
-                surface_load_location(surface, SFLAG_INSYSMEM, rect);
-            }
-
-            if (!device->isInDraw) context = context_acquire(device, NULL);
-
-            surface_prepare_texture(surface, gl_info, srgb);
-            surface_bind_and_dirtify(surface, gl_info, srgb);
-
-            if (surface->CKeyFlags & WINEDDSD_CKSRCBLT)
-            {
-                surface->flags |= SFLAG_GLCKEY;
-                surface->glCKey = surface->SrcBltCKey;
-            }
-            else surface->flags &= ~SFLAG_GLCKEY;
-
-            /* The width is in 'length' not in bytes */
-            width = surface->resource.width;
-            pitch = wined3d_surface_get_pitch(surface);
-
-            /* Don't use PBOs for converted surfaces. During PBO conversion we look at SFLAG_CONVERTED
-             * but it isn't set (yet) in all cases it is getting called. */
-            if ((convert != NO_CONVERSION || format.convert) && (surface->flags & SFLAG_PBO))
-            {
-                TRACE("Removing the pbo attached to surface %p.\n", surface);
-                surface_remove_pbo(surface, gl_info);
-            }
-
-            if (format.convert)
-            {
-                /* This code is entered for texture formats which need a fixup. */
-                UINT height = surface->resource.height;
-
-                /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
-                outpitch = width * format.conv_byte_count;
-                outpitch = (outpitch + device->surface_alignment - 1) & ~(device->surface_alignment - 1);
-
-                mem = HeapAlloc(GetProcessHeap(), 0, outpitch * height);
-                if(!mem) {
-                    ERR("Out of memory %d, %d!\n", outpitch, height);
-                    if (context) context_release(context);
-                    return WINED3DERR_OUTOFVIDEOMEMORY;
-                }
-                format.convert(surface->resource.allocatedMemory, mem, pitch, width, height);
-            }
-            else if (convert != NO_CONVERSION && surface->resource.allocatedMemory)
-            {
-                /* This code is only entered for color keying fixups */
-                UINT height = surface->resource.height;
-
-                /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
-                outpitch = width * format.conv_byte_count;
-                outpitch = (outpitch + device->surface_alignment - 1) & ~(device->surface_alignment - 1);
-
-                mem = HeapAlloc(GetProcessHeap(), 0, outpitch * height);
-                if(!mem) {
-                    ERR("Out of memory %d, %d!\n", outpitch, height);
-                    if (context) context_release(context);
-                    return WINED3DERR_OUTOFVIDEOMEMORY;
-                }
-                d3dfmt_convert_surface(surface->resource.allocatedMemory, mem, pitch,
-                        width, height, outpitch, convert, surface);
-            }
-            else
-            {
-                mem = surface->resource.allocatedMemory;
-            }
-
-            data.buffer_object = surface->flags & SFLAG_PBO ? surface->pbo : 0;
-            data.addr = mem;
-            surface_upload_data(surface, gl_info, &format, &src_rect, width, &dst_point, srgb, &data);
-
-            if (context) context_release(context);
-
-            /* Don't delete PBO memory */
-            if ((mem != surface->resource.allocatedMemory) && !(surface->flags & SFLAG_PBO))
-                HeapFree(GetProcessHeap(), 0, mem);
-        }
+        if (FAILED(hr = surface_load_texture(surface, gl_info, rect, flag == SFLAG_INSRGBTEX)))
+            return hr;
     }
 
     if (!rect)
