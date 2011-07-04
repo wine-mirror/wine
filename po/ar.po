@@ -8089,6 +8089,11 @@ msgstr ""
 msgid "Wine Explorer"
 msgstr ""
 
+#: explorer.rc:29
+#, fuzzy
+msgid "Location:"
+msgstr "معلومات"
+
 #: hostname.rc:27
 msgid "Usage: hostname\n"
 msgstr ""

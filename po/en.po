@@ -8313,6 +8313,11 @@ msgstr ""
 msgid "Wine Explorer"
 msgstr "Wine Explorer"
 
+#: explorer.rc:29
+#, fuzzy
+msgid "Location:"
+msgstr "Location"
+
 #: hostname.rc:27
 msgid "Usage: hostname\n"
 msgstr ""

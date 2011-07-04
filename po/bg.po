@@ -8266,6 +8266,11 @@ msgstr ""
 msgid "Wine Explorer"
 msgstr "&Разгледай"
 
+#: explorer.rc:29
+#, fuzzy
+msgid "Location:"
+msgstr "LAN връзка"
+
 #: hostname.rc:27
 msgid "Usage: hostname\n"
 msgstr ""

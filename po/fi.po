@@ -8338,6 +8338,11 @@ msgstr ""
 msgid "Wine Explorer"
 msgstr "&Selaa"
 
+#: explorer.rc:29
+#, fuzzy
+msgid "Location:"
+msgstr "Sijainti"
+
 #: hostname.rc:27
 msgid "Usage: hostname\n"
 msgstr ""

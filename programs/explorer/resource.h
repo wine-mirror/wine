@@ -22,5 +22,6 @@
 #define __WINE_EXPLORER_RESOURCE_H
 
 #define IDS_EXPLORER_TITLE 1
+#define IDS_PATHBOX_LABEL 2
 
 #endif

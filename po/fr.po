@@ -8486,6 +8486,11 @@ msgstr "Usage : dxdiag [/whql:off | /whql:on] [/t fichier | /x fichier]"
 msgid "Wine Explorer"
 msgstr "Explorateur de Wine"
 
+#: explorer.rc:29
+#, fuzzy
+msgid "Location:"
+msgstr "Emplacement"
+
 #: hostname.rc:27
 msgid "Usage: hostname\n"
 msgstr "Usage : hostname\n"

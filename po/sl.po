@@ -2984,8 +2984,7 @@ msgstr "Preveč modulov\n"
 
 #: winerror.mc:851
 msgid "Nesting LoadModule calls not allowed\n"
-msgstr ""
-"Klici gnezdenega modula nalaganja niso dovoljeni\n"
+msgstr "Klici gnezdenega modula nalaganja niso dovoljeni\n"
 
 #: winerror.mc:856
 msgid "Machine type mismatch\n"
@@ -3061,8 +3060,7 @@ msgstr "Klicatelj ne sme biti lastnik mutexa\n"
 
 #: winerror.mc:946
 msgid "Too many posts to semaphore\n"
-msgstr ""
-"Preveč objav na semaforju\n"
+msgstr "Preveč objav na semaforju\n"
 
 #: winerror.mc:951
 msgid "Read/WriteProcessMemory partially completed\n"
@@ -5058,18 +5056,15 @@ msgstr "Ni več vezav\n"
 
 #: winerror.mc:3446
 msgid "Can't logon with interdomain trust account\n"
-msgstr ""
-"Ni se mogoče prijaviti z računom meddomenskega zaupanja\n"
+msgstr "Ni se mogoče prijaviti z računom meddomenskega zaupanja\n"
 
 #: winerror.mc:3451
 msgid "Can't logon with workstation trust account\n"
-msgstr ""
-"Ni se mogoče prijaviti z računom zaupanja delovne postaja\n"
+msgstr "Ni se mogoče prijaviti z računom zaupanja delovne postaja\n"
 
 #: winerror.mc:3456
 msgid "Can't logon with server trust account\n"
-msgstr ""
-"Ni se mogoče prijaviti z računom zaupanja strežnika\n"
+msgstr "Ni se mogoče prijaviti z računom zaupanja strežnika\n"
 
 #: winerror.mc:3461
 msgid "Domain trust information inconsistent\n"
@@ -8448,6 +8443,11 @@ msgstr ""
 #, fuzzy
 msgid "Wine Explorer"
 msgstr "Wine Internet Explorer"
+
+#: explorer.rc:29
+#, fuzzy
+msgid "Location:"
+msgstr "Mesto"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"

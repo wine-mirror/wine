@@ -8752,6 +8752,11 @@ msgstr ""
 msgid "Wine Explorer"
 msgstr "Explorador de Internet Wine"
 
+#: explorer.rc:29
+#, fuzzy
+msgid "Location:"
+msgstr "Localização"
+
 #: hostname.rc:27
 msgid "Usage: hostname\n"
 msgstr ""

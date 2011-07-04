@@ -39,12 +39,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 #define EXPLORER_INFO_INDEX 0
 
 #define NAV_TOOLBAR_HEIGHT 30
+#define PATHBOX_HEIGHT 24
 
 #define DEFAULT_WIDTH 640
 #define DEFAULT_HEIGHT 480
 
 
 static const WCHAR EXPLORER_CLASS[] = {'W','I','N','E','_','E','X','P','L','O','R','E','R','\0'};
+static const WCHAR PATH_BOX_NAME[] = {'\0'};
 
 HINSTANCE explorer_hInstance;
 
@@ -57,8 +59,9 @@ typedef struct parametersTAG {
 typedef struct
 {
     IExplorerBrowser *browser;
-    HWND main_window;
+    HWND main_window,path_box;
     INT rebar_height;
+    LPCITEMIDLIST pidl;
 } explorer_info;
 
 enum
@@ -66,14 +69,100 @@ enum
     BACK_BUTTON,FORWARD_BUTTON,UP_BUTTON
 };
 
+typedef struct
+{
+    IExplorerBrowserEvents IExplorerBrowserEvents_iface;
+    explorer_info* info;
+    LONG ref;
+} IExplorerBrowserEventsImpl;
+
+static IExplorerBrowserEventsImpl *impl_from_IExplorerBrowserEvents(IExplorerBrowserEvents *iface)
+{
+    return CONTAINING_RECORD(iface, IExplorerBrowserEventsImpl, IExplorerBrowserEvents_iface);
+}
+
+static HRESULT WINAPI IExplorerBrowserEventsImpl_fnQueryInterface(IExplorerBrowserEvents *iface, REFIID riid, void **ppvObject)
+{
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IExplorerBrowserEventsImpl_fnAddRef(IExplorerBrowserEvents *iface)
+{
+    IExplorerBrowserEventsImpl *This = impl_from_IExplorerBrowserEvents(iface);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI IExplorerBrowserEventsImpl_fnRelease(IExplorerBrowserEvents *iface)
+{
+    IExplorerBrowserEventsImpl *This = impl_from_IExplorerBrowserEvents(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+    if(!ref)
+        HeapFree(GetProcessHeap(),0,This);
+    return ref;
+}
+
+static void update_path_box(explorer_info *info)
+{
+    WCHAR path[MAX_PATH];
+    SHGetPathFromIDListW(info->pidl,path);
+    SetWindowTextW(info->path_box,path);
+}
+
+static HRESULT WINAPI IExplorerBrowserEventsImpl_fnOnNavigationComplete(IExplorerBrowserEvents *iface, PCIDLIST_ABSOLUTE pidl)
+{
+    IExplorerBrowserEventsImpl *This = impl_from_IExplorerBrowserEvents(iface);
+    This->info->pidl = pidl;
+    update_path_box(This->info);
+    return S_OK;
+}
+
+static HRESULT WINAPI IExplorerBrowserEventsImpl_fnOnNavigationFailed(IExplorerBrowserEvents *iface, PCIDLIST_ABSOLUTE pidl)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI IExplorerBrowserEventsImpl_fnOnNavigationPending(IExplorerBrowserEvents *iface, PCIDLIST_ABSOLUTE pidl)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI IExplorerBrowserEventsImpl_fnOnViewCreated(IExplorerBrowserEvents *iface, IShellView *psv)
+{
+    return S_OK;
+}
+
+static IExplorerBrowserEventsVtbl vt_IExplorerBrowserEvents =
+{
+    IExplorerBrowserEventsImpl_fnQueryInterface,
+    IExplorerBrowserEventsImpl_fnAddRef,
+    IExplorerBrowserEventsImpl_fnRelease,
+    IExplorerBrowserEventsImpl_fnOnNavigationPending,
+    IExplorerBrowserEventsImpl_fnOnViewCreated,
+    IExplorerBrowserEventsImpl_fnOnNavigationComplete,
+    IExplorerBrowserEventsImpl_fnOnNavigationFailed
+};
+
+static IExplorerBrowserEvents *make_explorer_events(explorer_info *info)
+{
+    IExplorerBrowserEventsImpl *ret
+        = HeapAlloc(GetProcessHeap(), 0, sizeof(IExplorerBrowserEventsImpl));
+    ret->IExplorerBrowserEvents_iface.lpVtbl = &vt_IExplorerBrowserEvents;
+    ret->info = info;
+    IExplorerBrowserEvents_AddRef(&ret->IExplorerBrowserEvents_iface);
+    return &ret->IExplorerBrowserEvents_iface;
+}
+
 static void make_explorer_window(IShellFolder* startFolder)
 {
     RECT explorerRect;
     HWND rebar,nav_toolbar;
     FOLDERSETTINGS fs;
+    IExplorerBrowserEvents *events;
     explorer_info *info;
     HRESULT hres;
+    DWORD cookie;
     WCHAR explorer_title[100];
+    WCHAR pathbox_label[50];
     TBADDBITMAP bitmap_info;
     TBBUTTON nav_buttons[3];
     int hist_offset,view_offset;
@@ -81,6 +170,8 @@ static void make_explorer_window(IShellFolder* startFolder)
     memset(nav_buttons,0,sizeof(nav_buttons));
     LoadStringW(explorer_hInstance,IDS_EXPLORER_TITLE,explorer_title,
                 sizeof(explorer_title)/sizeof(WCHAR));
+    LoadStringW(explorer_hInstance,IDS_PATHBOX_LABEL,pathbox_label,
+                sizeof(pathbox_label)/sizeof(WCHAR));
     info = HeapAlloc(GetProcessHeap(),0,sizeof(explorer_info));
     if(!info)
     {
@@ -151,10 +242,26 @@ static void make_explorer_window(IShellFolder* startFolder)
     band_info.cyMinChild=NAV_TOOLBAR_HEIGHT;
     band_info.cxMinChild=0;
     SendMessageW(rebar,RB_INSERTBANDW,-1,(LPARAM)&band_info);
+    info->path_box = CreateWindowW(WC_COMBOBOXEXW,PATH_BOX_NAME,
+                                   WS_CHILD | WS_VISIBLE | CBS_DROPDOWN,
+                                   0,0,DEFAULT_WIDTH,PATHBOX_HEIGHT,rebar,NULL,
+                                   explorer_hInstance,NULL);
+    band_info.cyChild=PATHBOX_HEIGHT;
+    band_info.cx=0;
+    band_info.cyMinChild=PATHBOX_HEIGHT;
+    band_info.cxMinChild=0;
+    band_info.fMask|=RBBIM_TEXT;
+    band_info.lpText=pathbox_label;
+    band_info.fStyle|=RBBS_BREAK;
+    band_info.hwndChild=info->path_box;
+    SendMessageW(rebar,RB_INSERTBANDW,-1,(LPARAM)&band_info);
+    events = make_explorer_events(info);
+    IExplorerBrowser_Advise(info->browser,events,&cookie);
     IExplorerBrowser_BrowseToObject(info->browser,(IUnknown*)startFolder,
                                     SBSP_ABSOLUTE);
     ShowWindow(info->main_window,SW_SHOWDEFAULT);
     UpdateWindow(info->main_window);
+    IExplorerBrowserEvents_Release(events);
 }
 
 static void update_window_size(explorer_info *info, int height, int width)
@@ -171,6 +278,37 @@ static void do_exit(int code)
 {
     OleUninitialize();
     ExitProcess(code);
+}
+
+static LRESULT explorer_on_end_edit(explorer_info *info,NMCBEENDEDITW *edit_info)
+{
+    LPITEMIDLIST pidl = NULL;
+
+    WINE_TRACE("iWhy=%x\n",edit_info->iWhy);
+    switch(edit_info->iWhy)
+    {
+    case CBENF_RETURN:
+        {
+            WCHAR path[MAX_PATH];
+            HWND edit_ctrl = (HWND)SendMessageW(edit_info->hdr.hwndFrom,
+                                                CBEM_GETEDITCONTROL,0,0);
+            *((WORD*)path)=MAX_PATH;
+            SendMessageW(edit_ctrl,EM_GETLINE,0,(LPARAM)path);
+            pidl = ILCreateFromPathW(path);
+            break;
+        }
+    case CBENF_ESCAPE:
+        /*make sure the that the path box resets*/
+        update_path_box(info);
+        return 0;
+    default:
+        return 0;
+    }
+    if(pidl)
+        IExplorerBrowser_BrowseToIDList(info->browser,pidl,SBSP_ABSOLUTE);
+    if(edit_info->iWhy==CBENF_RETURN)
+        ILFree(pidl);
+    return 0;
 }
 
 static LRESULT update_rebar_size(explorer_info* info,NMRBAUTOSIZE *size_info)
@@ -192,6 +330,8 @@ static LRESULT explorer_on_notify(explorer_info* info,NMHDR* notification)
     WINE_TRACE("code=%i\n",notification->code);
     switch(notification->code)
     {
+    case CBEN_ENDEDITW:
+        return explorer_on_end_edit(info,(NMCBEENDEDITW*)notification);
     case RBN_AUTOSIZE:
         return update_rebar_size(info,(NMRBAUTOSIZE*)notification);
     default:
@@ -425,7 +565,7 @@ int WINAPI wWinMain(HINSTANCE hinstance,
         ExitProcess(EXIT_FAILURE);
     }
     init_info.dwSize = sizeof(INITCOMMONCONTROLSEX);
-    init_info.dwICC = ICC_BAR_CLASSES | ICC_COOL_CLASSES;
+    init_info.dwICC = ICC_USEREX_CLASSES | ICC_BAR_CLASSES | ICC_COOL_CLASSES;
     if(!InitCommonControlsEx(&init_info))
     {
         WINE_ERR("Could not initialize Comctl\n");

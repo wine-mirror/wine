@@ -8374,6 +8374,11 @@ msgstr "사용법: dxdiag [/whql:off | /whql:on] [/t 파일이름 | /x 파일이
 msgid "Wine Explorer"
 msgstr "Wine 탐색기"
 
+#: explorer.rc:29
+#, fuzzy
+msgid "Location:"
+msgstr "랜 연결"
+
 #: hostname.rc:27
 msgid "Usage: hostname\n"
 msgstr "사용법:hostname\n"
