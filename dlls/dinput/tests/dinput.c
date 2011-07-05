@@ -27,6 +27,28 @@
 
 HINSTANCE hInstance;
 
+enum directinput_versions
+{
+    DIRECTINPUT_VERSION_300 = 0x0300,
+    DIRECTINPUT_VERSION_500 = 0x0500,
+    DIRECTINPUT_VERSION_50A = 0x050A,
+    DIRECTINPUT_VERSION_5B2 = 0x05B2,
+    DIRECTINPUT_VERSION_602 = 0x0602,
+    DIRECTINPUT_VERSION_61A = 0x061A,
+    DIRECTINPUT_VERSION_700 = 0x0700,
+};
+
+static const DWORD directinput_version_list[] =
+{
+    DIRECTINPUT_VERSION_300,
+    DIRECTINPUT_VERSION_500,
+    DIRECTINPUT_VERSION_50A,
+    DIRECTINPUT_VERSION_5B2,
+    DIRECTINPUT_VERSION_602,
+    DIRECTINPUT_VERSION_61A,
+    DIRECTINPUT_VERSION_700,
+};
+
 static void test_QueryInterface(void)
 {
     static const REFIID iid_list[] = {&IID_IUnknown, &IID_IDirectInputA, &IID_IDirectInputW,
@@ -107,6 +129,49 @@ static void test_QueryInterface(void)
     IDirectInput_Release(pDI);
 }
 
+static void test_Initialize(void)
+{
+    IDirectInputA *pDI;
+    HRESULT hr;
+    int i;
+
+    hr = CoCreateInstance(&CLSID_DirectInput, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectInputA, (void **)&pDI);
+    if (FAILED(hr))
+    {
+        win_skip("Failed to instantiate a IDirectInputA instance: 0x%08x\n", hr);
+        return;
+    }
+
+    hr = IDirectInput_Initialize(pDI, NULL, 0);
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInput_Initialize returned 0x%08x\n", hr);
+
+    hr = IDirectInput_Initialize(pDI, NULL, DIRECTINPUT_VERSION);
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInput_Initialize returned 0x%08x\n", hr);
+
+    hr = IDirectInput_Initialize(pDI, hInstance, 0);
+    ok(hr == DIERR_NOTINITIALIZED, "IDirectInput_Initialize returned 0x%08x\n", hr);
+
+    /* Invalid DirectInput versions less than 0x0700 yield DIERR_BETADIRECTINPUTVERSION. */
+    hr = IDirectInput_Initialize(pDI, hInstance, 0x0123);
+    ok(hr == DIERR_BETADIRECTINPUTVERSION, "IDirectInput_Initialize returned 0x%08x\n", hr);
+
+    /* Invalid DirectInput versions greater than 0x0700 yield DIERR_BETADIRECTINPUTVERSION. */
+    hr = IDirectInput_Initialize(pDI, hInstance, 0xcafe);
+    ok(hr == DIERR_OLDDIRECTINPUTVERSION, "IDirectInput_Initialize returned 0x%08x\n", hr);
+
+    for (i = 0; i < sizeof(directinput_version_list)/sizeof(directinput_version_list[0]); i++)
+    {
+        hr = IDirectInput_Initialize(pDI, hInstance, directinput_version_list[i]);
+        ok(hr == DI_OK, "IDirectInput_Initialize returned 0x%08x\n", hr);
+    }
+
+    /* Parameters are still validated after successful initialization. */
+    hr = IDirectInput_Initialize(pDI, hInstance, 0);
+    ok(hr == DIERR_NOTINITIALIZED, "IDirectInput_Initialize returned 0x%08x\n", hr);
+
+    IDirectInput_Release(pDI);
+}
+
 static void test_RunControlPanel(void)
 {
     IDirectInputA *pDI;
@@ -146,6 +211,7 @@ START_TEST(dinput)
 
     CoInitialize(NULL);
     test_QueryInterface();
+    test_Initialize();
     test_RunControlPanel();
     CoUninitialize();
 }

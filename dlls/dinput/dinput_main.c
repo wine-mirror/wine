@@ -472,14 +472,35 @@ static HRESULT WINAPI IDirectInputWImpl_QueryInterface(LPDIRECTINPUT7W iface, RE
     return IDirectInputAImpl_QueryInterface( &This->IDirectInput7A_iface, riid, ppobj );
 }
 
-static HRESULT WINAPI IDirectInputAImpl_Initialize(LPDIRECTINPUT7A iface, HINSTANCE hinst, DWORD x) {
-	TRACE("(this=%p,%p,%x)\n",iface, hinst, x);
-	
-	/* Initialize can return: DIERR_BETADIRECTINPUTVERSION, DIERR_OLDDIRECTINPUTVERSION and DI_OK.
-	 * Since we already initialized the device, return DI_OK. In the past we returned DIERR_ALREADYINITIALIZED
-	 * which broke applications like Tomb Raider Legend because it isn't a legal return value.
-	 */
-	return DI_OK;
+enum directinput_versions
+{
+    DIRECTINPUT_VERSION_300 = 0x0300,
+    DIRECTINPUT_VERSION_500 = 0x0500,
+    DIRECTINPUT_VERSION_50A = 0x050A,
+    DIRECTINPUT_VERSION_5B2 = 0x05B2,
+    DIRECTINPUT_VERSION_602 = 0x0602,
+    DIRECTINPUT_VERSION_61A = 0x061A,
+    DIRECTINPUT_VERSION_700 = 0x0700,
+};
+
+static HRESULT WINAPI IDirectInputAImpl_Initialize(LPDIRECTINPUT7A iface, HINSTANCE hinst, DWORD version)
+{
+    TRACE("(%p)->(%p, 0x%04x)\n", iface, hinst, version);
+
+    if (!hinst)
+        return DIERR_INVALIDPARAM;
+    else if (version == 0)
+        return DIERR_NOTINITIALIZED;
+    /* We need to accept version 8, even though native rejects it. */
+    else if (version > DIRECTINPUT_VERSION_700 && version != DIRECTINPUT_VERSION)
+        return DIERR_OLDDIRECTINPUTVERSION;
+    else if (version != DIRECTINPUT_VERSION_300 && version != DIRECTINPUT_VERSION_500 &&
+             version != DIRECTINPUT_VERSION_50A && version != DIRECTINPUT_VERSION_5B2 &&
+             version != DIRECTINPUT_VERSION_602 && version != DIRECTINPUT_VERSION_61A &&
+             version != DIRECTINPUT_VERSION_700 && version != DIRECTINPUT_VERSION)
+        return DIERR_BETADIRECTINPUTVERSION;
+
+    return DI_OK;
 }
 
 static HRESULT WINAPI IDirectInputWImpl_Initialize(LPDIRECTINPUT7W iface, HINSTANCE hinst, DWORD x)
