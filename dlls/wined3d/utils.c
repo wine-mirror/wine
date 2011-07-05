@@ -2749,7 +2749,8 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) {
     return size;
 }
 
-void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_settings *settings, BOOL ignore_textype)
+void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_state *state,
+        struct ffp_frag_settings *settings, BOOL ignore_textype)
 {
 #define ARG1 0x01
 #define ARG2 0x02
@@ -2786,8 +2787,7 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
     unsigned int i;
     DWORD ttff;
     DWORD cop, aop, carg0, carg1, carg2, aarg0, aarg1, aarg2;
-    struct wined3d_device *device = stateblock->device;
-    struct wined3d_surface *rt = device->fb.render_targets[0];
+    const struct wined3d_surface *rt = device->fb.render_targets[0];
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     for (i = 0; i < gl_info->limits.texture_stages; ++i)
@@ -2795,7 +2795,7 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
         const struct wined3d_texture *texture;
 
         settings->op[i].padding = 0;
-        if (stateblock->state.texture_states[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE)
+        if (state->texture_states[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE)
         {
             settings->op[i].cop = WINED3DTOP_DISABLE;
             settings->op[i].aop = WINED3DTOP_DISABLE;
@@ -2809,7 +2809,7 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
             break;
         }
 
-        if ((texture = stateblock->state.textures[i]))
+        if ((texture = state->textures[i]))
         {
             settings->op[i].color_fixup = texture->resource.format->color_fixup;
             if (ignore_textype)
@@ -2842,14 +2842,14 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
             settings->op[i].tex_type = tex_1d;
         }
 
-        cop = stateblock->state.texture_states[i][WINED3DTSS_COLOROP];
-        aop = stateblock->state.texture_states[i][WINED3DTSS_ALPHAOP];
+        cop = state->texture_states[i][WINED3DTSS_COLOROP];
+        aop = state->texture_states[i][WINED3DTSS_ALPHAOP];
 
-        carg1 = (args[cop] & ARG1) ? stateblock->state.texture_states[i][WINED3DTSS_COLORARG1] : ARG_UNUSED;
-        carg2 = (args[cop] & ARG2) ? stateblock->state.texture_states[i][WINED3DTSS_COLORARG2] : ARG_UNUSED;
-        carg0 = (args[cop] & ARG0) ? stateblock->state.texture_states[i][WINED3DTSS_COLORARG0] : ARG_UNUSED;
+        carg1 = (args[cop] & ARG1) ? state->texture_states[i][WINED3DTSS_COLORARG1] : ARG_UNUSED;
+        carg2 = (args[cop] & ARG2) ? state->texture_states[i][WINED3DTSS_COLORARG2] : ARG_UNUSED;
+        carg0 = (args[cop] & ARG0) ? state->texture_states[i][WINED3DTSS_COLORARG0] : ARG_UNUSED;
 
-        if (is_invalid_op(&stateblock->state, i, cop, carg1, carg2, carg0))
+        if (is_invalid_op(state, i, cop, carg1, carg2, carg0))
         {
             carg0 = ARG_UNUSED;
             carg2 = ARG_UNUSED;
@@ -2868,16 +2868,16 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
         }
         else
         {
-            aarg1 = (args[aop] & ARG1) ? stateblock->state.texture_states[i][WINED3DTSS_ALPHAARG1] : ARG_UNUSED;
-            aarg2 = (args[aop] & ARG2) ? stateblock->state.texture_states[i][WINED3DTSS_ALPHAARG2] : ARG_UNUSED;
-            aarg0 = (args[aop] & ARG0) ? stateblock->state.texture_states[i][WINED3DTSS_ALPHAARG0] : ARG_UNUSED;
+            aarg1 = (args[aop] & ARG1) ? state->texture_states[i][WINED3DTSS_ALPHAARG1] : ARG_UNUSED;
+            aarg2 = (args[aop] & ARG2) ? state->texture_states[i][WINED3DTSS_ALPHAARG2] : ARG_UNUSED;
+            aarg0 = (args[aop] & ARG0) ? state->texture_states[i][WINED3DTSS_ALPHAARG0] : ARG_UNUSED;
         }
 
-        if (!i && stateblock->state.textures[0] && stateblock->state.render_states[WINED3DRS_COLORKEYENABLE])
+        if (!i && state->textures[0] && state->render_states[WINED3DRS_COLORKEYENABLE])
         {
             GLenum texture_dimensions;
 
-            texture = stateblock->state.textures[0];
+            texture = state->textures[0];
             texture_dimensions = texture->target;
 
             if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
@@ -2893,7 +2893,7 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
                     }
                     else if (aop == WINED3DTOP_SELECTARG1 && aarg1 != WINED3DTA_TEXTURE)
                     {
-                        if (stateblock->state.render_states[WINED3DRS_ALPHABLENDENABLE])
+                        if (state->render_states[WINED3DRS_ALPHABLENDENABLE])
                         {
                             aarg2 = WINED3DTA_TEXTURE;
                             aop = WINED3DTOP_MODULATE;
@@ -2902,7 +2902,7 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
                     }
                     else if (aop == WINED3DTOP_SELECTARG2 && aarg2 != WINED3DTA_TEXTURE)
                     {
-                        if (stateblock->state.render_states[WINED3DRS_ALPHABLENDENABLE])
+                        if (state->render_states[WINED3DRS_ALPHABLENDENABLE])
                         {
                             aarg1 = WINED3DTA_TEXTURE;
                             aop = WINED3DTOP_MODULATE;
@@ -2913,7 +2913,7 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
             }
         }
 
-        if (is_invalid_op(&stateblock->state, i, aop, aarg1, aarg2, aarg0))
+        if (is_invalid_op(state, i, aop, aarg1, aarg2, aarg0))
         {
                aarg0 = ARG_UNUSED;
                aarg2 = ARG_UNUSED;
@@ -2924,7 +2924,7 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
         if (carg1 == WINED3DTA_TEXTURE || carg2 == WINED3DTA_TEXTURE || carg0 == WINED3DTA_TEXTURE
                 || aarg1 == WINED3DTA_TEXTURE || aarg2 == WINED3DTA_TEXTURE || aarg0 == WINED3DTA_TEXTURE)
         {
-            ttff = stateblock->state.texture_states[i][WINED3DTSS_TEXTURETRANSFORMFLAGS];
+            ttff = state->texture_states[i][WINED3DTSS_TEXTURETRANSFORMFLAGS];
             if (ttff == (WINED3DTTFF_PROJECTED | WINED3DTTFF_COUNT3))
             {
                 settings->op[i].projected = proj_count3;
@@ -2946,12 +2946,10 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
         settings->op[i].aarg1 = aarg1;
         settings->op[i].aarg2 = aarg2;
 
-        if (stateblock->state.texture_states[i][WINED3DTSS_RESULTARG] == WINED3DTA_TEMP)
-        {
+        if (state->texture_states[i][WINED3DTSS_RESULTARG] == WINED3DTA_TEMP)
             settings->op[i].dst = tempreg;
-        } else {
+        else
             settings->op[i].dst = resultreg;
-        }
     }
 
     /* Clear unsupported stages */
@@ -2959,19 +2957,19 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
         memset(&settings->op[i], 0xff, sizeof(settings->op[i]));
     }
 
-    if (!stateblock->state.render_states[WINED3DRS_FOGENABLE])
+    if (!state->render_states[WINED3DRS_FOGENABLE])
     {
         settings->fog = FOG_OFF;
     }
-    else if (stateblock->state.render_states[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
+    else if (state->render_states[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
     {
-        if (use_vs(&stateblock->state) || stateblock->state.vertex_declaration->position_transformed)
+        if (use_vs(state) || state->vertex_declaration->position_transformed)
         {
             settings->fog = FOG_LINEAR;
         }
         else
         {
-            switch (stateblock->state.render_states[WINED3DRS_FOGVERTEXMODE])
+            switch (state->render_states[WINED3DRS_FOGVERTEXMODE])
             {
                 case WINED3DFOG_NONE:
                 case WINED3DFOG_LINEAR:
@@ -2988,7 +2986,7 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
     }
     else
     {
-        switch (stateblock->state.render_states[WINED3DRS_FOGTABLEMODE])
+        switch (state->render_states[WINED3DRS_FOGTABLEMODE])
         {
             case WINED3DFOG_LINEAR:
                 settings->fog = FOG_LINEAR;
@@ -3001,15 +2999,15 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
                 break;
         }
     }
-    if (stateblock->state.render_states[WINED3DRS_SRGBWRITEENABLE]
+    if (state->render_states[WINED3DRS_SRGBWRITEENABLE]
             && rt->resource.format->flags & WINED3DFMT_FLAG_SRGB_WRITE)
     {
         settings->sRGB_write = 1;
     } else {
         settings->sRGB_write = 0;
     }
-    if (device->vs_clipping || !use_vs(&stateblock->state) || !stateblock->state.render_states[WINED3DRS_CLIPPING]
-            || !stateblock->state.render_states[WINED3DRS_CLIPPLANEENABLE])
+    if (device->vs_clipping || !use_vs(state) || !state->render_states[WINED3DRS_CLIPPING]
+            || !state->render_states[WINED3DRS_CLIPPLANEENABLE])
     {
         /* No need to emulate clipplanes if GL supports native vertex shader clipping or if
          * the fixed function vertex pipeline is used(which always supports clipplanes), or

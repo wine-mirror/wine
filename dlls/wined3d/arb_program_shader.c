@@ -6257,9 +6257,11 @@ static void fragment_prog_arbfp(DWORD state_id, struct wined3d_stateblock *state
         return;
     }
 
-    if(!use_pshader) {
-        /* Find or create a shader implementing the fixed function pipeline settings, then activate it */
-        gen_ffp_frag_op(stateblock, &settings, FALSE);
+    if (!use_pshader)
+    {
+        /* Find or create a shader implementing the fixed function pipeline
+         * settings, then activate it. */
+        gen_ffp_frag_op(device, state, &settings, FALSE);
         desc = (const struct arbfp_ffp_desc *)find_ffp_frag_shader(&priv->fragment_shaders, &settings);
         if(!desc) {
             struct arbfp_ffp_desc *new_desc = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_desc));
