@@ -1082,7 +1082,7 @@ static void test_menu_iteminfo( void )
   void *txt, *init, *empty, *string;
   HBITMAP hbm = CreateBitmap(1,1,1,1,NULL);
   char stringA[0x80];
-  HMENU hmenu, submenu=CreateMenu();
+  HMENU hmenu, submenu;
   HBITMAP dummy_hbm = (HBITMAP)(ULONG_PTR)0xdeadbeef;
 
   do {

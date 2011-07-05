@@ -2063,8 +2063,8 @@ static INT EDIT_PaintText(EDITSTATE *es, HDC dc, INT x, INT y, INT line, INT col
  */
 static void EDIT_PaintLine(EDITSTATE *es, HDC dc, INT line, BOOL rev)
 {
-	INT s = es->selection_start;
-	INT e = es->selection_end;
+	INT s;
+	INT e;
 	INT li;
 	INT ll;
 	INT x;
