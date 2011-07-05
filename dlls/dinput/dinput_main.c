@@ -510,9 +510,22 @@ static HRESULT WINAPI IDirectInputAImpl_RunControlPanel(LPDIRECTINPUT7A iface,
 							HWND hwndOwner,
 							DWORD dwFlags)
 {
+    WCHAR control_exeW[] = {'c','o','n','t','r','o','l','.','e','x','e',0};
+    STARTUPINFOW si = {0};
+    PROCESS_INFORMATION pi;
+
     IDirectInputImpl *This = impl_from_IDirectInput7A( iface );
 
-    FIXME( "(%p)->(%p,%08x): stub\n", This, hwndOwner, dwFlags );
+    TRACE( "(%p)->(%p, %08x)\n", This, hwndOwner, dwFlags );
+
+    if (hwndOwner && !IsWindow(hwndOwner))
+        return E_HANDLE;
+
+    if (dwFlags)
+        return DIERR_INVALIDPARAM;
+
+    if (!CreateProcessW(NULL, control_exeW, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+        return HRESULT_FROM_WIN32(GetLastError());
 
     return DI_OK;
 }
