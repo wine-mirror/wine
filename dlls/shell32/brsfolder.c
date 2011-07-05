@@ -561,7 +561,6 @@ static HRESULT BrsFolder_Treeview_Changed( browse_info *info, NMTREEVIEWW *pnmtv
     LPTV_ITEMDATA lptvid = (LPTV_ITEMDATA) pnmtv->itemNew.lParam;
     WCHAR name[MAX_PATH];
 
-    lptvid = (LPTV_ITEMDATA) pnmtv->itemNew.lParam;
     ILFree(info->pidlRet);
     info->pidlRet = ILClone(lptvid->lpifq);
 
