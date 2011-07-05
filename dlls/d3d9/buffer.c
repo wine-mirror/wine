@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include <assert.h>
 #include "d3d9_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
@@ -572,4 +573,13 @@ HRESULT indexbuffer_init(IDirect3DIndexBuffer9Impl *buffer, IDirect3DDevice9Impl
     IDirect3DDevice9Ex_AddRef(buffer->parentDevice);
 
     return D3D_OK;
+}
+
+IDirect3DIndexBuffer9Impl *unsafe_impl_from_IDirect3DIndexBuffer9(IDirect3DIndexBuffer9 *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d9_indexbuffer_vtbl);
+
+    return impl_from_IDirect3DIndexBuffer9(iface);
 }

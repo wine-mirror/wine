@@ -283,6 +283,7 @@ typedef struct IDirect3DIndexBuffer9Impl
 
 HRESULT indexbuffer_init(IDirect3DIndexBuffer9Impl *buffer, IDirect3DDevice9Impl *device,
         UINT size, DWORD usage, D3DFORMAT format, D3DPOOL pool) DECLSPEC_HIDDEN;
+IDirect3DIndexBuffer9Impl *unsafe_impl_from_IDirect3DIndexBuffer9(IDirect3DIndexBuffer9 *iface) DECLSPEC_HIDDEN;
 
 /* --------------------- */
 /* IDirect3DBaseTexture9 */
