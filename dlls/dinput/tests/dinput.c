@@ -168,6 +168,83 @@ static void test_CreateDevice(void)
     IDirectInput_Release(pDI);
 }
 
+struct enum_devices_test
+{
+    unsigned int device_count;
+    BOOL return_value;
+};
+
+static BOOL CALLBACK enum_devices_callback(const DIDEVICEINSTANCEA *instance, void *context)
+{
+    struct enum_devices_test *enum_test = context;
+
+    enum_test->device_count++;
+    return enum_test->return_value;
+}
+
+static void test_EnumDevices(void)
+{
+    IDirectInputA *pDI;
+    HRESULT hr;
+    struct enum_devices_test enum_test, enum_test_return;
+
+    hr = DirectInputCreateA(hInstance, DIRECTINPUT_VERSION, &pDI, NULL);
+    if (FAILED(hr))
+    {
+        win_skip("Failed to instantiate a IDirectInputA instance: 0x%08x\n", hr);
+        return;
+    }
+
+    hr = IDirectInput_EnumDevices(pDI, 0, NULL, NULL, 0);
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInput_EnumDevices returned 0x%08x\n", hr);
+
+    hr = IDirectInput_EnumDevices(pDI, 0, NULL, NULL, ~0u);
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInput_EnumDevices returned 0x%08x\n", hr);
+
+    /* Test crashes on Wine. */
+    if (0)
+    {
+        hr = IDirectInput_EnumDevices(pDI, 0, enum_devices_callback, NULL, ~0u);
+        ok(hr == DIERR_INVALIDPARAM, "IDirectInput_EnumDevices returned 0x%08x\n", hr);
+    }
+
+    hr = IDirectInput_EnumDevices(pDI, 0xdeadbeef, NULL, NULL, 0);
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInput_EnumDevices returned 0x%08x\n", hr);
+
+    hr = IDirectInput_EnumDevices(pDI, 0xdeadbeef, NULL, NULL, ~0u);
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInput_EnumDevices returned 0x%08x\n", hr);
+
+    hr = IDirectInput_EnumDevices(pDI, 0xdeadbeef, enum_devices_callback, NULL, 0);
+    todo_wine
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInput_EnumDevices returned 0x%08x\n", hr);
+
+    hr = IDirectInput_EnumDevices(pDI, 0xdeadbeef, enum_devices_callback, NULL, ~0u);
+    todo_wine
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInput_EnumDevices returned 0x%08x\n", hr);
+
+    enum_test.device_count = 0;
+    enum_test.return_value = DIENUM_CONTINUE;
+    hr = IDirectInput_EnumDevices(pDI, 0, enum_devices_callback, &enum_test, 0);
+    ok(hr == DI_OK, "IDirectInput_EnumDevices returned 0x%08x\n", hr);
+    ok(enum_test.device_count != 0, "Device count is %u\n", enum_test.device_count);
+
+    /* Enumeration only stops with an explicit DIENUM_STOP. */
+    enum_test_return.device_count = 0;
+    enum_test_return.return_value = 42;
+    hr = IDirectInput_EnumDevices(pDI, 0, enum_devices_callback, &enum_test_return, 0);
+    ok(hr == DI_OK, "IDirectInput_EnumDevices returned 0x%08x\n", hr);
+    ok(enum_test_return.device_count == enum_test.device_count,
+       "Device count is %u vs. %u\n", enum_test_return.device_count, enum_test.device_count);
+
+    enum_test.device_count = 0;
+    enum_test.return_value = DIENUM_STOP;
+    hr = IDirectInput_EnumDevices(pDI, 0, enum_devices_callback, &enum_test, 0);
+    ok(hr == DI_OK, "IDirectInput_EnumDevices returned 0x%08x\n", hr);
+    ok(enum_test.device_count == 1, "Device count is %u\n", enum_test.device_count);
+
+    IDirectInput_Release(pDI);
+}
+
 static void test_Initialize(void)
 {
     IDirectInputA *pDI;
@@ -251,6 +328,7 @@ START_TEST(dinput)
     CoInitialize(NULL);
     test_QueryInterface();
     test_CreateDevice();
+    test_EnumDevices();
     test_Initialize();
     test_RunControlPanel();
     CoUninitialize();

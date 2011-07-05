@@ -325,6 +325,9 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
 	  lpCallback, pvRef, dwFlags);
     _dump_EnumDevices_dwFlags(dwFlags);
 
+    if (!lpCallback)
+        return DIERR_INVALIDPARAM;
+
     for (i = 0; i < NB_DINPUT_DEVICES; i++) {
         if (!dinput_devices[i]->enum_deviceA) continue;
         for (j = 0, r = -1; r != 0; j++) {
@@ -355,6 +358,9 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
 	  This, dwDevType, _dump_DIDEVTYPE_value(dwDevType),
 	  lpCallback, pvRef, dwFlags);
     _dump_EnumDevices_dwFlags(dwFlags);
+
+    if (!lpCallback)
+        return DIERR_INVALIDPARAM;
 
     for (i = 0; i < NB_DINPUT_DEVICES; i++) {
         if (!dinput_devices[i]->enum_deviceW) continue;
