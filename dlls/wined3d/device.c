@@ -5538,6 +5538,11 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
         device->depth_blt_rb_w = 0;
         device->depth_blt_rb_h = 0;
     }
+    if (device->cursorTexture)
+    {
+        glDeleteTextures(1, &device->cursorTexture);
+        device->cursorTexture = 0;
+    }
     LEAVE_GL();
 
     device->blitter->free_private(device);
