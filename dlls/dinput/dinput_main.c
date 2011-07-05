@@ -581,61 +581,48 @@ static HRESULT WINAPI IDirectInput2WImpl_FindDevice(LPDIRECTINPUT7W iface, REFGU
     return DI_OK;
 }
 
-static HRESULT WINAPI IDirectInput7AImpl_CreateDeviceEx(LPDIRECTINPUT7A iface, REFGUID rguid,
-							REFIID riid, LPVOID* pvOut, LPUNKNOWN lpUnknownOuter)
+static HRESULT create_device(IDirectInputImpl *This, REFGUID rguid, REFIID riid, LPVOID *pvOut, BOOL unicode)
 {
-  IDirectInputImpl *This = impl_from_IDirectInput7A( iface );
-  HRESULT ret_value = DIERR_DEVICENOTREG;
-  unsigned int i;
+    unsigned int i;
 
-  TRACE("(%p)->(%s, %s, %p, %p)\n", This, debugstr_guid(rguid), debugstr_guid(riid), pvOut, lpUnknownOuter);
+    if (pvOut)
+        *pvOut = NULL;
 
-  if (!rguid || !pvOut) return E_POINTER;
+    if (!rguid || !pvOut)
+        return E_POINTER;
 
-  /* Loop on all the devices to see if anyone matches the given GUID */
-  for (i = 0; i < NB_DINPUT_DEVICES; i++) {
-    HRESULT ret;
+    /* Loop on all the devices to see if anyone matches the given GUID */
+    for (i = 0; i < NB_DINPUT_DEVICES; i++)
+    {
+        HRESULT ret;
 
-    if (!dinput_devices[i]->create_device) continue;
-    if ((ret = dinput_devices[i]->create_device(This, rguid, riid, pvOut, 0)) == DI_OK)
-      return DI_OK;
+        if (!dinput_devices[i]->create_device) continue;
+        if ((ret = dinput_devices[i]->create_device(This, rguid, riid, pvOut, unicode)) == DI_OK)
+            return DI_OK;
+    }
 
-    if (ret == DIERR_NOINTERFACE)
-      ret_value = DIERR_NOINTERFACE;
-  }
-
-  if (ret_value == DIERR_NOINTERFACE)
-  {
     WARN("invalid device GUID %s\n", debugstr_guid(rguid));
-  }
+    return DIERR_DEVICENOTREG;
+}
 
-  return ret_value;
+static HRESULT WINAPI IDirectInput7AImpl_CreateDeviceEx(LPDIRECTINPUT7A iface, REFGUID rguid,
+                                                        REFIID riid, LPVOID* pvOut, LPUNKNOWN lpUnknownOuter)
+{
+    IDirectInputImpl *This = impl_from_IDirectInput7A( iface );
+
+    TRACE("(%p)->(%s, %s, %p, %p)\n", This, debugstr_guid(rguid), debugstr_guid(riid), pvOut, lpUnknownOuter);
+
+    return create_device(This, rguid, riid, pvOut, FALSE);
 }
 
 static HRESULT WINAPI IDirectInput7WImpl_CreateDeviceEx(LPDIRECTINPUT7W iface, REFGUID rguid,
-							REFIID riid, LPVOID* pvOut, LPUNKNOWN lpUnknownOuter)
+                                                        REFIID riid, LPVOID* pvOut, LPUNKNOWN lpUnknownOuter)
 {
-  IDirectInputImpl *This = impl_from_IDirectInput7W( iface );
-  HRESULT ret_value = DIERR_DEVICENOTREG;
-  unsigned int i;
+    IDirectInputImpl *This = impl_from_IDirectInput7W( iface );
 
-  TRACE("(%p)->(%s, %s, %p, %p)\n", This, debugstr_guid(rguid), debugstr_guid(riid), pvOut, lpUnknownOuter);
+    TRACE("(%p)->(%s, %s, %p, %p)\n", This, debugstr_guid(rguid), debugstr_guid(riid), pvOut, lpUnknownOuter);
 
-  if (!rguid || !pvOut) return E_POINTER;
-
-  /* Loop on all the devices to see if anyone matches the given GUID */
-  for (i = 0; i < NB_DINPUT_DEVICES; i++) {
-    HRESULT ret;
-
-    if (!dinput_devices[i]->create_device) continue;
-    if ((ret = dinput_devices[i]->create_device(This, rguid, riid, pvOut, 1)) == DI_OK)
-      return DI_OK;
-
-    if (ret == DIERR_NOINTERFACE)
-      ret_value = DIERR_NOINTERFACE;
-  }
-
-  return ret_value;
+    return create_device(This, rguid, riid, pvOut, TRUE);
 }
 
 static HRESULT WINAPI IDirectInputAImpl_CreateDevice(LPDIRECTINPUT7A iface, REFGUID rguid,

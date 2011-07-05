@@ -129,6 +129,45 @@ static void test_QueryInterface(void)
     IDirectInput_Release(pDI);
 }
 
+static void test_CreateDevice(void)
+{
+    IDirectInputA *pDI;
+    HRESULT hr;
+    IDirectInputDeviceA *pDID;
+
+    hr = DirectInputCreateA(hInstance, DIRECTINPUT_VERSION, &pDI, NULL);
+    if (FAILED(hr))
+    {
+        win_skip("Failed to instantiate a IDirectInputA instance: 0x%08x\n", hr);
+        return;
+    }
+
+    hr = IDirectInput_CreateDevice(pDI, NULL, NULL, NULL);
+    ok(hr == E_POINTER, "IDirectInput_CreateDevice returned 0x%08x\n", hr);
+
+    pDID = (void *)0xdeadbeef;
+    hr = IDirectInput_CreateDevice(pDI, NULL, &pDID, NULL);
+    ok(hr == E_POINTER, "IDirectInput_CreateDevice returned 0x%08x\n", hr);
+    ok(pDID == NULL, "Output interface pointer is %p\n", pDID);
+
+    hr = IDirectInput_CreateDevice(pDI, &GUID_Unknown, NULL, NULL);
+    ok(hr == E_POINTER, "IDirectInput_CreateDevice returned 0x%08x\n", hr);
+
+    pDID = (void *)0xdeadbeef;
+    hr = IDirectInput_CreateDevice(pDI, &GUID_Unknown, &pDID, NULL);
+    ok(hr == DIERR_DEVICENOTREG, "IDirectInput_CreateDevice returned 0x%08x\n", hr);
+    ok(pDID == NULL, "Output interface pointer is %p\n", pDID);
+
+    hr = IDirectInput_CreateDevice(pDI, &GUID_SysMouse, NULL, NULL);
+    ok(hr == E_POINTER, "IDirectInput_CreateDevice returned 0x%08x\n", hr);
+
+    hr = IDirectInput_CreateDevice(pDI, &GUID_SysMouse, &pDID, NULL);
+    ok(hr == DI_OK, "IDirectInput_CreateDevice returned 0x%08x\n", hr);
+
+    IDirectInputDevice_Release(pDID);
+    IDirectInput_Release(pDI);
+}
+
 static void test_Initialize(void)
 {
     IDirectInputA *pDI;
@@ -211,6 +250,7 @@ START_TEST(dinput)
 
     CoInitialize(NULL);
     test_QueryInterface();
+    test_CreateDevice();
     test_Initialize();
     test_RunControlPanel();
     CoUninitialize();
