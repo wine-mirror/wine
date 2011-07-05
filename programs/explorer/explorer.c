@@ -346,7 +346,7 @@ static void make_explorer_window(IShellFolder* startFolder)
 
     IExplorerBrowser_Initialize(info->browser,info->main_window,&explorerRect,&fs);
     IExplorerBrowser_SetOptions(info->browser,EBO_SHOWFRAMES);
-    SetWindowLongPtrW(info->main_window,EXPLORER_INFO_INDEX,(LONG)info);
+    SetWindowLongPtrW(info->main_window,EXPLORER_INFO_INDEX,(LONG_PTR)info);
 
     /*setup navbar*/
     rebar = CreateWindowExW(WS_EX_TOOLWINDOW,REBARCLASSNAMEW,NULL,
