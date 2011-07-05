@@ -65,97 +65,43 @@ static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
 
 /* Emulate a __thiscall */
 #ifdef __i386__
-#ifdef _MSC_VER
-static inline void* do_call_func1(void *func, void *_this)
+
+#include "pshpack1.h"
+struct thiscall_thunk
 {
-    volatile void* retval = 0;
-    __asm
-    {
-        push ecx
-            mov ecx, _this
-            call func
-            mov retval, eax
-            pop ecx
-    }
-    return (void*)retval;
+    BYTE pop_eax;    /* popl  %eax (ret addr) */
+    BYTE pop_edx;    /* popl  %edx (func) */
+    BYTE pop_ecx;    /* popl  %ecx (this) */
+    BYTE push_eax;   /* pushl %eax */
+    WORD jmp_edx;    /* jmp  *%edx */
+};
+#include "poppack.h"
+
+static void * (WINAPI *call_thiscall_func1)( void *func, void *this );
+static void * (WINAPI *call_thiscall_func2)( void *func, void *this, const void *a );
+static void * (WINAPI *call_thiscall_func3)( void *func, void *this, const void *a, const void *b );
+
+static void init_thiscall_thunk(void)
+{
+    struct thiscall_thunk *thunk = VirtualAlloc( NULL, sizeof(*thunk),
+                                                 MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+    thunk->pop_eax  = 0x58;   /* popl  %eax */
+    thunk->pop_edx  = 0x5a;   /* popl  %edx */
+    thunk->pop_ecx  = 0x59;   /* popl  %ecx */
+    thunk->push_eax = 0x50;   /* pushl %eax */
+    thunk->jmp_edx  = 0xe2ff; /* jmp  *%edx */
+    call_thiscall_func1 = (void *)thunk;
+    call_thiscall_func2 = (void *)thunk;
+    call_thiscall_func3 = (void *)thunk;
 }
 
-static inline void* do_call_func2(void *func, void *_this, const void *arg)
-{
-    volatile void* retval = 0;
-    __asm
-    {
-        push ecx
-        push arg
-        mov ecx, _this
-        call func
-        mov retval, eax
-        pop ecx
-    }
-    return (void*)retval;
-}
-
-static inline void* do_call_func3(void *func, void *_this,
-        const void *arg1, const void *arg2)
-{
-    volatile void* retval = 0;
-    __asm
-    {
-        push ecx
-        push arg1
-        push arg2
-        mov ecx, _this
-        call func
-        mov retval, eax
-        pop ecx
-    }
-    return (void*)retval;
-}
-#else
-static void* do_call_func1(void *func, void *_this)
-{
-        void *ret, *dummy;
-        __asm__ __volatile__ (
-                "call *%2"
-                : "=a" (ret), "=c" (dummy)
-                : "g" (func), "1" (_this)
-                : "edx", "memory"
-                );
-        return ret;
-}
-
-static void* do_call_func2(void *func, void *_this, const void *arg)
-{
-    void *ret, *dummy;
-    __asm__ __volatile__ (
-            "pushl %3\n\tcall *%2"
-            : "=a" (ret), "=c" (dummy)
-            : "r" (func), "r" (arg), "1" (_this)
-            : "edx", "memory"
-            );
-    return ret;
-}
-
-static void* do_call_func3(void *func, void *_this,
-        const void *arg1, const void *arg2)
-{
-    void *ret, *dummy;
-    __asm__ __volatile__ (
-            "pushl %4\n\tpushl %3\n\tcall *%2"
-            : "=a" (ret), "=c" (dummy)
-            : "r" (func), "r" (arg1), "r" (arg2), "1" (_this)
-            : "edx", "memory"
-            );
-    return ret;
-}
-#endif
-
-#define call_func1(func,_this)   do_call_func1(func,_this)
-#define call_func2(func,_this,a) do_call_func2(func,_this,(const void*)a)
-#define call_func3(func,_this,a,b) do_call_func3(func,_this,(const void*)a,(const void*)b)
+#define call_func1(func,_this) call_thiscall_func1(func,_this)
+#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)a)
+#define call_func3(func,_this,a,b) call_thiscall_func3(func,_this,(const void*)a,(const void*)b)
 
 #else
 
+#define init_thiscall_thunk()
 #define call_func1(func,_this) func(_this)
 #define call_func2(func,_this,a) func(_this,a)
 #define call_func3(func,_this,a,b) func(_this,a,b)
@@ -217,6 +163,7 @@ static BOOL init(void)
         SET(p_char_max_size, "?max_size@?$allocator@D@std@@QBEIXZ");
     }
 
+    init_thiscall_thunk();
     return TRUE;
 }
 
