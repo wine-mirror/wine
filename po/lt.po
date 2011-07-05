@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-06-18 15:20+0300\n"
+"PO-Revision-Date: 2011-07-13 22:17+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -6377,7 +6377,7 @@ msgstr "&Atkurti"
 
 #: shell32.rc:83
 msgid "&Erase"
-msgstr ""
+msgstr "&Išvalyti"
 
 #: shell32.rc:95
 msgid "E&xplore"
@@ -6762,44 +6762,40 @@ msgid "There is no Windows program configured to open this type of file."
 msgstr "Jokia Windows programa nėra sukonfigūruota atidaryti šio tipo failų."
 
 #: shell32.rc:255
-#, fuzzy
 msgid "Are you sure you wish to permanently delete '%1'?"
-msgstr "Ar tikrai norite pašalinti „%1“?"
+msgstr "Ar tikrai norite negrįžtamai pašalinti „%1“?"
 
 #: shell32.rc:256
-#, fuzzy
 msgid "Are you sure you wish to permanently delete these %1 items?"
-msgstr "Ar tikrai norite pašalinti šiuos %1 elementus?"
+msgstr "Ar tikrai norite negrįžtamai pašalinti šiuos %1 elementus?"
 
 #: shell32.rc:257
-#, fuzzy
 msgid "Confirm deletion"
-msgstr "Patvirtinti failo šalinimą"
+msgstr "Patvirtinti šalinimą"
 
 #: shell32.rc:258
-#, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"Failas jau egzistuoja.\n"
+"Failas jau egzistuoja adresu %1.\n"
+"\n"
 "Ar norite jį pakeisti?"
 
 #: shell32.rc:259
-#, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"Failas jau egzistuoja.\n"
+"Aplankas jau egzistuoja adresu %1.\n"
+"\n"
 "Ar norite jį pakeisti?"
 
 #: shell32.rc:260
-#, fuzzy
 msgid "Confirm overwrite"
-msgstr "Patvirtinti failo perrašymą"
+msgstr "Patvirtinti perrašymą"
 
 #: shell32.rc:277
 msgid ""
@@ -8465,9 +8461,8 @@ msgid "Wine Explorer"
 msgstr "Wine naršyklė"
 
 #: explorer.rc:29
-#, fuzzy
 msgid "Location:"
-msgstr "Vieta"
+msgstr "Vieta:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
@@ -9565,7 +9560,6 @@ msgid "Exports selected branch of the registry to a text file"
 msgstr "Eksportuoja pasirinktą registro šaką į tekstinį failą"
 
 #: start.rc:46
-#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9604,10 +9598,10 @@ msgstr ""
 "/Unix        Naudoti Unix failo vardą ir paleisti failą kaip windows "
 "naršyklėje.\n"
 "/L           Parodyti galutinio naudotojo licenciją.\n"
+"/?           Parodyti šį pranešimą ir išeiti.\n"
 "\n"
 "start.exe versija 0.2 (C) 2003, Dan Kegel\n"
-"Start pateikiama BE JOKIŲ GARANTIJŲ; detales rasite paleidę su /L "
-"parametru.\n"
+"Start pateikiama BE JOKIŲ GARANTIJŲ; detales rasite paleidę su /L parametru.\n"
 "Ši programa yra laisva programinė įranga; galite ją platinti\n"
 "tam tikromis sąlygomis; paleiskite „start /L“ išsamiai informacijai gauti.\n"
 
