@@ -901,7 +901,6 @@ struct knownFolderDef {
 
 static const struct knownFolderDef known_folders[] = {
     KNOWN_FOLDER(FOLDERID_AddNewPrograms,         NO_CSIDL),
-    KNOWN_FOLDER(FOLDERID_AddNewPrograms,         NO_CSIDL),
     KNOWN_FOLDER(FOLDERID_AdminTools,             CSIDL_ADMINTOOLS),
     KNOWN_FOLDER(FOLDERID_AppUpdates,             NO_CSIDL),
     KNOWN_FOLDER(FOLDERID_CDBurning,              CSIDL_CDBURN_AREA),
