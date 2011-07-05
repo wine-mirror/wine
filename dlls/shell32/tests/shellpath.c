@@ -1397,7 +1397,6 @@ static void test_knownFolders(void)
 
                             /* check if original directory was really removed */
                             dwAttributes = GetFileAttributesW(sExamplePath);
-                            todo_wine
                             ok(dwAttributes==INVALID_FILE_ATTRIBUTES, "directory should not exist, but has attributes: 0x%08x\n", dwAttributes );
 
 

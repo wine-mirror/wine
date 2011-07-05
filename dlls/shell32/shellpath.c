@@ -3232,12 +3232,30 @@ static HRESULT redirect_known_folder(
         lstrcpyW(dstPath, pszTargetPath);
 
         ZeroMemory(&fileOp, sizeof(fileOp));
-        fileOp.wFunc = FO_COPY;
+
+        if(flags & KF_REDIRECT_DEL_SOURCE_CONTENTS)
+            fileOp.wFunc = FO_MOVE;
+        else
+            fileOp.wFunc = FO_COPY;
+
         fileOp.pFrom = srcPath;
         fileOp.pTo = dstPath;
         fileOp.fFlags = FOF_NO_UI;
 
         hr = (SHFileOperationW(&fileOp)==0 ? S_OK : E_FAIL);
+
+        if(flags & KF_REDIRECT_DEL_SOURCE_CONTENTS)
+        {
+            ZeroMemory(srcPath, sizeof(srcPath));
+            lstrcpyW(srcPath, lpSrcPath);
+
+            ZeroMemory(&fileOp, sizeof(fileOp));
+            fileOp.wFunc = FO_DELETE;
+            fileOp.pFrom = srcPath;
+            fileOp.fFlags = FOF_NO_UI;
+
+            hr = (SHFileOperationW(&fileOp)==0 ? S_OK : E_FAIL);
+        }
     }
 
     CoTaskMemFree(lpSrcPath);
