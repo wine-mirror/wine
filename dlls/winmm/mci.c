@@ -1870,7 +1870,7 @@ static DWORD MCI_WriteString(LPWSTR lpDstStr, DWORD dstSize, LPCWSTR lpSrcStr)
 static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParms)
 {
     DWORD		ret = MCIERR_INVALID_DEVICE_ID, cnt = 0;
-    WCHAR		buf[2048], *s = buf, *p;
+    WCHAR		buf[2048], *s, *p;
     LPWINE_MCIDRIVER	wmd;
     HKEY		hKey;
 
