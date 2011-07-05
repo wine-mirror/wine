@@ -125,7 +125,7 @@ BOOL WINAPI VNBT_DeviceIoControl(DWORD dwIoControlCode,
                 error = GetAdaptersInfo(adapterInfo, &size);
                 if (NO_ERROR == error)
                 {
-                    PIP_ADAPTER_INFO ptr = adapterInfo;
+                    PIP_ADAPTER_INFO ptr;
 
                     for (ptr = adapterInfo; ptr && info->numEntries <
                              MAX_NBT_ENTRIES; ptr = ptr->Next)
