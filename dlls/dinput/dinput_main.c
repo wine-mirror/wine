@@ -421,6 +421,9 @@ static HRESULT WINAPI IDirectInputAImpl_QueryInterface(LPDIRECTINPUT7A iface, RE
 
     TRACE( "(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppobj );
 
+    if (!riid || !ppobj)
+        return E_POINTER;
+
     if (IsEqualGUID( &IID_IUnknown, riid ) ||
         IsEqualGUID( &IID_IDirectInputA,  riid ) ||
         IsEqualGUID( &IID_IDirectInput2A, riid ) ||
@@ -459,7 +462,8 @@ static HRESULT WINAPI IDirectInputAImpl_QueryInterface(LPDIRECTINPUT7A iface, RE
     }
 
     FIXME( "Unsupported interface: %s\n", debugstr_guid(riid));
-    return E_FAIL;
+    *ppobj = NULL;
+    return E_NOINTERFACE;
 }
 
 static HRESULT WINAPI IDirectInputWImpl_QueryInterface(LPDIRECTINPUT7W iface, REFIID riid, LPVOID *ppobj)

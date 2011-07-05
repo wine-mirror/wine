@@ -23,7 +23,6 @@
 
 #include "wine/test.h"
 #include "windef.h"
-#include "initguid.h"
 #include "dinput.h"
 
 static const DIOBJECTDATAFORMAT obj_data_format[] = {
