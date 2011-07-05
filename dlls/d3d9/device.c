@@ -2598,7 +2598,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreatePixelShader(IDirect3DDevice9Ex 
     }
 
     TRACE("Created pixel shader %p.\n", object);
-    *shader = (IDirect3DPixelShader9 *)object;
+    *shader = &object->IDirect3DPixelShader9_iface;
 
     return D3D_OK;
 }

@@ -153,7 +153,7 @@ HRESULT vertexshader_init(IDirect3DVertexShader9Impl *shader, IDirect3DDevice9Im
 
 static inline IDirect3DPixelShader9Impl *impl_from_IDirect3DPixelShader9(IDirect3DPixelShader9 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirect3DPixelShader9Impl, lpVtbl);
+    return CONTAINING_RECORD(iface, IDirect3DPixelShader9Impl, IDirect3DPixelShader9_iface);
 }
 
 static HRESULT WINAPI d3d9_pixelshader_QueryInterface(IDirect3DPixelShader9 *iface, REFIID riid, void **object)
@@ -176,7 +176,7 @@ static HRESULT WINAPI d3d9_pixelshader_QueryInterface(IDirect3DPixelShader9 *ifa
 
 static ULONG WINAPI d3d9_pixelshader_AddRef(IDirect3DPixelShader9 *iface)
 {
-    IDirect3DPixelShader9Impl *shader = (IDirect3DPixelShader9Impl *)iface;
+    IDirect3DPixelShader9Impl *shader = impl_from_IDirect3DPixelShader9(iface);
     ULONG refcount = InterlockedIncrement(&shader->ref);
 
     TRACE("%p increasing refcount to %u.\n", iface, refcount);
@@ -194,7 +194,7 @@ static ULONG WINAPI d3d9_pixelshader_AddRef(IDirect3DPixelShader9 *iface)
 
 static ULONG WINAPI d3d9_pixelshader_Release(IDirect3DPixelShader9 *iface)
 {
-    IDirect3DPixelShader9Impl *shader = (IDirect3DPixelShader9Impl *)iface;
+    IDirect3DPixelShader9Impl *shader = impl_from_IDirect3DPixelShader9(iface);
     ULONG refcount = InterlockedDecrement(&shader->ref);
 
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
@@ -214,11 +214,14 @@ static ULONG WINAPI d3d9_pixelshader_Release(IDirect3DPixelShader9 *iface)
     return refcount;
 }
 
-static HRESULT WINAPI d3d9_pixelshader_GetDevice(IDirect3DPixelShader9 *iface, IDirect3DDevice9 **device)
+static HRESULT WINAPI d3d9_pixelshader_GetDevice(IDirect3DPixelShader9 *iface,
+        IDirect3DDevice9 **device)
 {
+    IDirect3DPixelShader9Impl *shader = impl_from_IDirect3DPixelShader9(iface);
+
     TRACE("iface %p, device %p.\n", iface, device);
 
-    *device = (IDirect3DDevice9 *)((IDirect3DPixelShader9Impl *)iface)->parentDevice;
+    *device = (IDirect3DDevice9 *)shader->parentDevice;
     IDirect3DDevice9_AddRef(*device);
 
     TRACE("Returning device %p.\n", *device);
@@ -226,14 +229,16 @@ static HRESULT WINAPI d3d9_pixelshader_GetDevice(IDirect3DPixelShader9 *iface, I
     return D3D_OK;
 }
 
-static HRESULT WINAPI d3d9_pixelshader_GetFunction(IDirect3DPixelShader9 *iface, void *data, UINT *data_size)
+static HRESULT WINAPI d3d9_pixelshader_GetFunction(IDirect3DPixelShader9 *iface, void *data,
+        UINT *data_size)
 {
+    IDirect3DPixelShader9Impl *shader = impl_from_IDirect3DPixelShader9(iface);
     HRESULT hr;
 
     TRACE("iface %p, data %p, data_size %p.\n", iface, data, data_size);
 
     wined3d_mutex_lock();
-    hr = wined3d_shader_get_byte_code(((IDirect3DPixelShader9Impl *)iface)->wined3d_shader, data, data_size);
+    hr = wined3d_shader_get_byte_code(shader->wined3d_shader, data, data_size);
     wined3d_mutex_unlock();
 
     return hr;
@@ -265,7 +270,7 @@ HRESULT pixelshader_init(IDirect3DPixelShader9Impl *shader, IDirect3DDevice9Impl
     HRESULT hr;
 
     shader->ref = 1;
-    shader->lpVtbl = &d3d9_pixelshader_vtbl;
+    shader->IDirect3DPixelShader9_iface.lpVtbl = &d3d9_pixelshader_vtbl;
 
     wined3d_mutex_lock();
     hr = wined3d_shader_create_ps(device->wined3d_device, byte_code, NULL, shader,
