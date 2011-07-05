@@ -33,18 +33,16 @@
 #ifdef INITGUID
 #ifdef __cplusplus
 #define DEFINE_PROPERTYKEY(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8, pid) \
-        EXTERN_C const PROPERTYKEY name DECLSPEC_HIDDEN DECLSPEC_SELECTANY; \
-        EXTERN_C const PROPERTYKEY name = \
+        EXTERN_C const PROPERTYKEY DECLSPEC_SELECTANY name DECLSPEC_HIDDEN = \
         { { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }, pid }
 #else
 #define DEFINE_PROPERTYKEY(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8, pid) \
-        const PROPERTYKEY name DECLSPEC_HIDDEN DECLSPEC_SELECTANY; \
-        const PROPERTYKEY name = \
+        const PROPERTYKEY DECLSPEC_SELECTANY name DECLSPEC_HIDDEN = \
         { { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }, pid }
 #endif
 #else
 #define DEFINE_PROPERTYKEY(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8, pid) \
-    EXTERN_C const PROPERTYKEY name DECLSPEC_HIDDEN DECLSPEC_SELECTANY
+    EXTERN_C const PROPERTYKEY name DECLSPEC_HIDDEN
 #endif
 
 #ifndef IsEqualPropertyKey
