@@ -4943,12 +4943,10 @@ HRESULT CDECL wined3d_device_draw_rect_patch(struct wined3d_device *device, UINT
         }
     }
 
-    device->currentPatch = patch;
     old_primitive_type = device->stateBlock->state.gl_primitive_type;
     device->stateBlock->state.gl_primitive_type = GL_TRIANGLES;
     wined3d_device_draw_primitive_strided(device, patch->numSegs[0] * patch->numSegs[1] * 2 * 3, &patch->strided);
     device->stateBlock->state.gl_primitive_type = old_primitive_type;
-    device->currentPatch = NULL;
 
     /* Destroy uncached patches */
     if (!handle)

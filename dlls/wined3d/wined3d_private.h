@@ -1742,7 +1742,6 @@ struct wined3d_device
 #define PATCHMAP_SIZE 43
 #define PATCHMAP_HASHFUNC(x) ((x) % PATCHMAP_SIZE) /* Primitive and simple function */
     struct list             patches[PATCHMAP_SIZE];
-    struct WineD3DRectPatch *currentPatch;
 };
 
 HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count, const struct wined3d_fb_state *fb,
