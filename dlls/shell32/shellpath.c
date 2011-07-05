@@ -3173,6 +3173,8 @@ static HRESULT get_known_folder_redirection_place(
     return hr;
 }
 
+static HRESULT get_known_folder_path_by_id(REFKNOWNFOLDERID folderId, LPWSTR lpRegistryPath, DWORD dwFlags, LPWSTR *ppszPath);
+
 static HRESULT redirect_known_folder(
     REFKNOWNFOLDERID rfid,
     HWND hwnd,
@@ -3185,10 +3187,19 @@ static HRESULT redirect_known_folder(
     HRESULT hr;
     HKEY rootKey = HKEY_LOCAL_MACHINE, hKey;
     WCHAR sGuid[39];
+    LPWSTR lpRegistryPath = NULL, lpSrcPath = NULL;
     TRACE("(%s, %p, 0x%08x, %s, %d, %p, %p)\n", debugstr_guid(rfid), hwnd, flags, debugstr_w(pszTargetPath), cFolders, pExclusion, ppszError);
 
+    hr = get_known_folder_registry_path(rfid, NULL, &lpRegistryPath);
+
+    if(SUCCEEDED(hr))
+        hr = get_known_folder_path_by_id(rfid, lpRegistryPath, 0, &lpSrcPath);
+
+    HeapFree(GetProcessHeap(), 0, lpRegistryPath);
+
     /* get path to redirection storage */
-    hr = get_known_folder_redirection_place(rfid, &rootKey);
+    if(SUCCEEDED(hr))
+        hr = get_known_folder_redirection_place(rfid, &rootKey);
 
     /* write redirection information */
     if(SUCCEEDED(hr))
@@ -3202,6 +3213,34 @@ static HRESULT redirect_known_folder(
 
         RegCloseKey(hKey);
     }
+
+    /* make sure destination path exists */
+    SHCreateDirectory(NULL, pszTargetPath);
+
+    /* copy content if required */
+    if(SUCCEEDED(hr) && (flags & KF_REDIRECT_COPY_CONTENTS) )
+    {
+        static const WCHAR sWildcard[] = {'\\','*',0};
+        WCHAR srcPath[MAX_PATH+1], dstPath[MAX_PATH+1];
+        SHFILEOPSTRUCTW fileOp;
+
+        ZeroMemory(srcPath, sizeof(srcPath));
+        lstrcpyW(srcPath, lpSrcPath);
+        lstrcatW(srcPath, sWildcard);
+
+        ZeroMemory(dstPath, sizeof(dstPath));
+        lstrcpyW(dstPath, pszTargetPath);
+
+        ZeroMemory(&fileOp, sizeof(fileOp));
+        fileOp.wFunc = FO_COPY;
+        fileOp.pFrom = srcPath;
+        fileOp.pTo = dstPath;
+        fileOp.fFlags = FOF_NO_UI;
+
+        hr = (SHFileOperationW(&fileOp)==0 ? S_OK : E_FAIL);
+    }
+
+    CoTaskMemFree(lpSrcPath);
 
     return hr;
 }
@@ -3427,28 +3466,28 @@ static HRESULT get_known_folder_path(
     return hr;
 }
 
-static HRESULT WINAPI knownfolder_GetPath(
-    IKnownFolder *iface,
+static HRESULT get_known_folder_path_by_id(
+    REFKNOWNFOLDERID folderId,
+    LPWSTR lpRegistryPath,
     DWORD dwFlags,
     LPWSTR *ppszPath)
 {
-    struct knownfolder *knownfolder = impl_from_IKnownFolder( iface );
     HRESULT hr;
     WCHAR sGuid[39];
     DWORD dwAttributes;
 
-    TRACE("(%p, 0x%08x, %p)\n", knownfolder, dwFlags, ppszPath);
+    TRACE("(%s, %s, 0x%08x, %p)\n", debugstr_guid(folderId), debugstr_w(lpRegistryPath), dwFlags, ppszPath);
 
     /* if this is registry-registered known folder, get path from registry */
-    if(knownfolder->registryPath)
+    if(lpRegistryPath)
     {
-        StringFromGUID2(&knownfolder->id, sGuid, sizeof(sGuid)/sizeof(sGuid[0]));
+        StringFromGUID2(folderId, sGuid, sizeof(sGuid)/sizeof(sGuid[0]));
 
-        hr = get_known_folder_path(sGuid, knownfolder->registryPath, ppszPath);
+        hr = get_known_folder_path(sGuid, lpRegistryPath, ppszPath);
     }
     /* in other case, use older way */
     else
-        hr = SHGetKnownFolderPath( &knownfolder->id, dwFlags, NULL, ppszPath );
+        hr = SHGetKnownFolderPath( folderId, dwFlags, NULL, ppszPath );
 
     /* check if known folder really exists */
     dwAttributes = GetFileAttributesW(*ppszPath);
@@ -3461,6 +3500,17 @@ static HRESULT WINAPI knownfolder_GetPath(
     }
 
     return hr;
+}
+
+static HRESULT WINAPI knownfolder_GetPath(
+    IKnownFolder *iface,
+    DWORD dwFlags,
+    LPWSTR *ppszPath)
+{
+    struct knownfolder *knownfolder = impl_from_IKnownFolder( iface );
+    TRACE("(%p, 0x%08x, %p)\n", knownfolder, dwFlags, ppszPath);
+
+    return get_known_folder_path_by_id(&knownfolder->id, knownfolder->registryPath, dwFlags, ppszPath);
 }
 
 static HRESULT WINAPI knownfolder_SetPath(
