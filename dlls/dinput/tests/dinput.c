@@ -245,6 +245,32 @@ static void test_EnumDevices(void)
     IDirectInput_Release(pDI);
 }
 
+static void test_GetDeviceStatus(void)
+{
+    IDirectInputA *pDI;
+    HRESULT hr;
+
+    hr = DirectInputCreateA(hInstance, DIRECTINPUT_VERSION, &pDI, NULL);
+    if (FAILED(hr))
+    {
+        win_skip("Failed to instantiate a IDirectInputA instance: 0x%08x\n", hr);
+        return;
+    }
+
+    hr = IDirectInput_GetDeviceStatus(pDI, NULL);
+    todo_wine
+    ok(hr == E_POINTER, "IDirectInput_GetDeviceStatus returned 0x%08x\n", hr);
+
+    hr = IDirectInput_GetDeviceStatus(pDI, &GUID_Unknown);
+    todo_wine
+    ok(hr == DIERR_DEVICENOTREG, "IDirectInput_GetDeviceStatus returned 0x%08x\n", hr);
+
+    hr = IDirectInput_GetDeviceStatus(pDI, &GUID_SysMouse);
+    ok(hr == DI_OK, "IDirectInput_GetDeviceStatus returned 0x%08x\n", hr);
+
+    IDirectInput_Release(pDI);
+}
+
 static void test_Initialize(void)
 {
     IDirectInputA *pDI;
@@ -329,6 +355,7 @@ START_TEST(dinput)
     test_QueryInterface();
     test_CreateDevice();
     test_EnumDevices();
+    test_GetDeviceStatus();
     test_Initialize();
     test_RunControlPanel();
     CoUninitialize();
