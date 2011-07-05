@@ -1178,7 +1178,7 @@ static int (*sortFunctions[])(const void* arg1, const void* arg2) = {
 
 static void SortDirectory(Entry* dir, SORT_ORDER sortOrder)
 {
-	Entry* entry = dir->down;
+	Entry* entry;
 	Entry** array, **p;
 	int len;
 
