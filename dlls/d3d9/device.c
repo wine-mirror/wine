@@ -2607,13 +2607,14 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShader(IDirect3DDevice9Ex *if
         IDirect3DPixelShader9 *shader)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
+    IDirect3DPixelShader9Impl *shader_obj = unsafe_impl_from_IDirect3DPixelShader9(shader);
     HRESULT hr;
 
     TRACE("iface %p, shader %p.\n", iface, shader);
 
     wined3d_mutex_lock();
     hr = wined3d_device_set_pixel_shader(This->wined3d_device,
-            shader ? ((IDirect3DPixelShader9Impl *)shader)->wined3d_shader : NULL);
+            shader_obj ? shader_obj->wined3d_shader : NULL);
     wined3d_mutex_unlock();
 
     return hr;

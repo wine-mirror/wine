@@ -437,6 +437,7 @@ typedef struct IDirect3DPixelShader9Impl {
 
 HRESULT pixelshader_init(IDirect3DPixelShader9Impl *shader,
         IDirect3DDevice9Impl *device, const DWORD *byte_code) DECLSPEC_HIDDEN;
+IDirect3DPixelShader9Impl *unsafe_impl_from_IDirect3DPixelShader9(IDirect3DPixelShader9 *iface) DECLSPEC_HIDDEN;
 
 /* --------------- */
 /* IDirect3DQuery9 */

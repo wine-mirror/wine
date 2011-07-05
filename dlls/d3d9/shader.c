@@ -18,6 +18,7 @@
  */
 
 #include "config.h"
+#include <assert.h>
 #include "d3d9_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
@@ -150,6 +151,11 @@ HRESULT vertexshader_init(IDirect3DVertexShader9Impl *shader, IDirect3DDevice9Im
     return D3D_OK;
 }
 
+static inline IDirect3DPixelShader9Impl *impl_from_IDirect3DPixelShader9(IDirect3DPixelShader9 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirect3DPixelShader9Impl, lpVtbl);
+}
+
 static HRESULT WINAPI d3d9_pixelshader_QueryInterface(IDirect3DPixelShader9 *iface, REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
@@ -275,4 +281,13 @@ HRESULT pixelshader_init(IDirect3DPixelShader9Impl *shader, IDirect3DDevice9Impl
     IDirect3DDevice9Ex_AddRef(shader->parentDevice);
 
     return D3D_OK;
+}
+
+IDirect3DPixelShader9Impl *unsafe_impl_from_IDirect3DPixelShader9(IDirect3DPixelShader9 *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d9_pixelshader_vtbl);
+
+    return impl_from_IDirect3DPixelShader9(iface);
 }
