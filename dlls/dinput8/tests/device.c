@@ -24,7 +24,6 @@
 
 #include "wine/test.h"
 #include "windef.h"
-#include "initguid.h"
 #include "dinput.h"
 
 struct enum_data {

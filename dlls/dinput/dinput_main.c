@@ -554,8 +554,7 @@ static HRESULT WINAPI IDirectInputAImpl_Initialize(LPDIRECTINPUT7A iface, HINSTA
         return DIERR_INVALIDPARAM;
     else if (version == 0)
         return DIERR_NOTINITIALIZED;
-    /* We need to accept version 8, even though native rejects it. */
-    else if (version > DIRECTINPUT_VERSION_700 && version != DIRECTINPUT_VERSION)
+    else if (version > DIRECTINPUT_VERSION_700)
         return DIERR_OLDDIRECTINPUTVERSION;
     else if (version != DIRECTINPUT_VERSION_300 && version != DIRECTINPUT_VERSION_500 &&
              version != DIRECTINPUT_VERSION_50A && version != DIRECTINPUT_VERSION_5B2 &&
@@ -801,16 +800,28 @@ static HRESULT WINAPI IDirectInput8WImpl_RunControlPanel(LPDIRECTINPUT8W iface, 
     return IDirectInputAImpl_RunControlPanel( &This->IDirectInput7A_iface, hwndOwner, dwFlags );
 }
 
-static HRESULT WINAPI IDirectInput8AImpl_Initialize(LPDIRECTINPUT8A iface, HINSTANCE hinst, DWORD x)
+static HRESULT WINAPI IDirectInput8AImpl_Initialize(LPDIRECTINPUT8A iface, HINSTANCE hinst, DWORD version)
 {
     IDirectInputImpl *This = impl_from_IDirectInput8A( iface );
-    return IDirectInputAImpl_Initialize( &This->IDirectInput7A_iface, hinst, x );
+
+    TRACE("(%p)->(%p, 0x%04x)\n", iface, hinst, version);
+
+    if (!hinst)
+        return DIERR_INVALIDPARAM;
+    else if (version == 0)
+        return DIERR_NOTINITIALIZED;
+    else if (version < DIRECTINPUT_VERSION)
+        return DIERR_BETADIRECTINPUTVERSION;
+    else if (version > DIRECTINPUT_VERSION)
+        return DIERR_OLDDIRECTINPUTVERSION;
+
+    return initialize_directinput_instance(This, version);
 }
 
-static HRESULT WINAPI IDirectInput8WImpl_Initialize(LPDIRECTINPUT8W iface, HINSTANCE hinst, DWORD x)
+static HRESULT WINAPI IDirectInput8WImpl_Initialize(LPDIRECTINPUT8W iface, HINSTANCE hinst, DWORD version)
 {
     IDirectInputImpl *This = impl_from_IDirectInput8W( iface );
-    return IDirectInputAImpl_Initialize( &This->IDirectInput7A_iface, hinst, x );
+    return IDirectInput8AImpl_Initialize( &This->IDirectInput8A_iface, hinst, version );
 }
 
 static HRESULT WINAPI IDirectInput8AImpl_FindDevice(LPDIRECTINPUT8A iface, REFGUID rguid, LPCSTR pszName, LPGUID pguidInstance)
@@ -1048,9 +1059,7 @@ static HRESULT WINAPI DICF_CreateInstance(
 	     IsEqualGUID( &IID_IDirectInput2A, riid ) ||
 	     IsEqualGUID( &IID_IDirectInput2W, riid ) ||
 	     IsEqualGUID( &IID_IDirectInput7A, riid ) ||
-	     IsEqualGUID( &IID_IDirectInput7W, riid ) ||
-	     IsEqualGUID( &IID_IDirectInput8A, riid ) ||
-	     IsEqualGUID( &IID_IDirectInput8W, riid ) ) {
+	     IsEqualGUID( &IID_IDirectInput7W, riid ) ) {
 		return create_directinput_instance(riid, ppobj, NULL);
 	}
 
