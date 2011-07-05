@@ -49,6 +49,8 @@ static const DWORD directinput_version_list[] =
     DIRECTINPUT_VERSION_700,
 };
 
+static HRESULT WINAPI (*pDirectInputCreateEx)(HINSTANCE, DWORD, REFIID, LPVOID *, LPUNKNOWN);
+
 static BOOL CALLBACK dummy_callback(const DIDEVICEINSTANCEA *instance, void *context)
 {
     ok(0, "Callback was invoked with parameters (%p, %p)\n", instance, context);
@@ -152,6 +154,118 @@ static void test_preinitialization(void)
     ok(hr == E_HANDLE, "IDirectInput_RunControlPanel returned 0x%08x\n", hr);
 
     IDirectInput_Release(pDI);
+}
+
+static void test_DirectInputCreateEx(void)
+{
+    static const struct
+    {
+        BOOL hinst;
+        DWORD dwVersion;
+        REFIID riid;
+        BOOL ppdi;
+        HRESULT expected_hr;
+        IUnknown *expected_ppdi;
+    } invalid_param_list[] =
+    {
+        {FALSE, 0,                       &IID_IUnknown,  FALSE, DIERR_NOINTERFACE},
+        {FALSE, 0,                       &IID_IUnknown,  TRUE,  DIERR_NOINTERFACE, (void *)0xdeadbeef},
+        {FALSE, 0,                       &IID_IDirectInputA, FALSE, E_POINTER},
+        {FALSE, 0,                       &IID_IDirectInputA, TRUE,  DIERR_INVALIDPARAM, NULL},
+        {FALSE, DIRECTINPUT_VERSION,     &IID_IUnknown,  FALSE, DIERR_NOINTERFACE},
+        {FALSE, DIRECTINPUT_VERSION,     &IID_IUnknown,  TRUE,  DIERR_NOINTERFACE, (void *)0xdeadbeef},
+        {FALSE, DIRECTINPUT_VERSION,     &IID_IDirectInputA, FALSE, E_POINTER},
+        {FALSE, DIRECTINPUT_VERSION,     &IID_IDirectInputA, TRUE,  DIERR_INVALIDPARAM, NULL},
+        {FALSE, DIRECTINPUT_VERSION - 1, &IID_IUnknown,  FALSE, DIERR_NOINTERFACE},
+        {FALSE, DIRECTINPUT_VERSION - 1, &IID_IUnknown,  TRUE,  DIERR_NOINTERFACE, (void *)0xdeadbeef},
+        {FALSE, DIRECTINPUT_VERSION - 1, &IID_IDirectInputA, FALSE, E_POINTER},
+        {FALSE, DIRECTINPUT_VERSION - 1, &IID_IDirectInputA, TRUE,  DIERR_INVALIDPARAM, NULL},
+        {FALSE, DIRECTINPUT_VERSION + 1, &IID_IUnknown,  FALSE, DIERR_NOINTERFACE},
+        {FALSE, DIRECTINPUT_VERSION + 1, &IID_IUnknown,  TRUE,  DIERR_NOINTERFACE, (void *)0xdeadbeef},
+        {FALSE, DIRECTINPUT_VERSION + 1, &IID_IDirectInputA, FALSE, E_POINTER},
+        {FALSE, DIRECTINPUT_VERSION + 1, &IID_IDirectInputA, TRUE,  DIERR_INVALIDPARAM, NULL},
+        {TRUE,  0,                       &IID_IUnknown,  FALSE, DIERR_NOINTERFACE},
+        {TRUE,  0,                       &IID_IUnknown,  TRUE,  DIERR_NOINTERFACE, (void *)0xdeadbeef},
+        {TRUE,  0,                       &IID_IDirectInputA, FALSE, E_POINTER},
+        {TRUE,  0,                       &IID_IDirectInputA, TRUE,  DIERR_NOTINITIALIZED, NULL},
+        {TRUE,  DIRECTINPUT_VERSION,     &IID_IUnknown,  FALSE, DIERR_NOINTERFACE},
+        {TRUE,  DIRECTINPUT_VERSION,     &IID_IUnknown,  TRUE,  DIERR_NOINTERFACE, (void *)0xdeadbeef},
+        {TRUE,  DIRECTINPUT_VERSION,     &IID_IDirectInputA, FALSE, E_POINTER},
+        {TRUE,  DIRECTINPUT_VERSION - 1, &IID_IUnknown,  FALSE, DIERR_NOINTERFACE},
+        {TRUE,  DIRECTINPUT_VERSION - 1, &IID_IUnknown,  TRUE,  DIERR_NOINTERFACE, (void *)0xdeadbeef},
+        {TRUE,  DIRECTINPUT_VERSION - 1, &IID_IDirectInputA, FALSE, E_POINTER},
+        {TRUE,  DIRECTINPUT_VERSION - 1, &IID_IDirectInputA, TRUE,  DIERR_BETADIRECTINPUTVERSION, NULL},
+        {TRUE,  DIRECTINPUT_VERSION + 1, &IID_IUnknown,  FALSE, DIERR_NOINTERFACE},
+        {TRUE,  DIRECTINPUT_VERSION + 1, &IID_IUnknown,  TRUE,  DIERR_NOINTERFACE, (void *)0xdeadbeef},
+        {TRUE,  DIRECTINPUT_VERSION + 1, &IID_IDirectInputA, FALSE, E_POINTER},
+        {TRUE,  DIRECTINPUT_VERSION + 1, &IID_IDirectInputA, TRUE,  DIERR_OLDDIRECTINPUTVERSION, NULL},
+    };
+
+    static const REFIID no_interface_list[] = {&IID_IUnknown, &IID_IDirectInput8A,
+                                               &IID_IDirectInput8W, &IID_IDirectInputDeviceA,
+                                               &IID_IDirectInputDeviceW, &IID_IDirectInputDevice2A,
+                                               &IID_IDirectInputDevice2W, &IID_IDirectInputDevice7A,
+                                               &IID_IDirectInputDevice7W, &IID_IDirectInputDevice8A,
+                                               &IID_IDirectInputDevice8W, &IID_IDirectInputEffect};
+
+    static const REFIID iid_list[] = {&IID_IDirectInputA, &IID_IDirectInputW,
+                                      &IID_IDirectInput2A, &IID_IDirectInput2W,
+                                      &IID_IDirectInput7A, &IID_IDirectInput7W};
+
+    int i, j;
+    IUnknown *pUnk;
+    HRESULT hr;
+
+    if (!pDirectInputCreateEx)
+    {
+        win_skip("DirectInputCreateEx is not available\n");
+        return;
+    }
+
+    for (i = 0; i < sizeof(invalid_param_list)/sizeof(invalid_param_list[0]); i++)
+    {
+        if (invalid_param_list[i].ppdi) pUnk = (void *)0xdeadbeef;
+        hr = pDirectInputCreateEx(invalid_param_list[i].hinst ? hInstance : NULL,
+                                  invalid_param_list[i].dwVersion,
+                                  invalid_param_list[i].riid,
+                                  invalid_param_list[i].ppdi ? (void **)&pUnk : NULL,
+                                  NULL);
+        ok(hr == invalid_param_list[i].expected_hr, "[%d] DirectInputCreateEx returned 0x%08x\n", i, hr);
+        if (invalid_param_list[i].ppdi)
+            ok(pUnk == invalid_param_list[i].expected_ppdi, "[%d] Output interface pointer is %p\n", i, pUnk);
+    }
+
+    for (i = 0; i < sizeof(no_interface_list)/sizeof(no_interface_list[0]); i++)
+    {
+        pUnk = (void *)0xdeadbeef;
+        hr = pDirectInputCreateEx(hInstance, DIRECTINPUT_VERSION, no_interface_list[i], (void **)&pUnk, NULL);
+        ok(hr == DIERR_NOINTERFACE, "[%d] DirectInputCreateEx returned 0x%08x\n", i, hr);
+        ok(pUnk == (void *)0xdeadbeef, "[%d] Output interface pointer is %p\n", i, pUnk);
+    }
+
+    for (i = 0; i < sizeof(iid_list)/sizeof(iid_list[0]); i++)
+    {
+        pUnk = NULL;
+        hr = pDirectInputCreateEx(hInstance, DIRECTINPUT_VERSION, iid_list[i], (void **)&pUnk, NULL);
+        ok(hr == DI_OK, "[%d] DirectInputCreateEx returned 0x%08x\n", i, hr);
+        ok(pUnk != NULL, "[%d] Output interface pointer is NULL\n", i);
+        if (pUnk)
+            IUnknown_Release(pUnk);
+    }
+
+    /* Examine combinations of requested interfaces and version numbers. */
+    for (i = 0; i < sizeof(directinput_version_list)/sizeof(directinput_version_list[0]); i++)
+    {
+        for (j = 0; j < sizeof(iid_list)/sizeof(iid_list[0]); j++)
+        {
+            pUnk = NULL;
+            hr = pDirectInputCreateEx(hInstance, directinput_version_list[i], iid_list[j], (void **)&pUnk, NULL);
+            ok(hr == DI_OK, "[%d/%d] DirectInputCreateEx returned 0x%08x\n", i, j, hr);
+            ok(pUnk != NULL, "[%d] Output interface pointer is NULL\n", i);
+            if (pUnk)
+                IUnknown_Release(pUnk);
+        }
+    }
 }
 
 static void test_QueryInterface(void)
@@ -454,10 +568,15 @@ static void test_RunControlPanel(void)
 
 START_TEST(dinput)
 {
+    HMODULE dinput_mod = GetModuleHandleA("dinput.dll");
+
     hInstance = GetModuleHandleA(NULL);
+
+    pDirectInputCreateEx = (void *)GetProcAddress(dinput_mod, "DirectInputCreateEx");
 
     CoInitialize(NULL);
     test_preinitialization();
+    test_DirectInputCreateEx();
     test_QueryInterface();
     test_CreateDevice();
     test_EnumDevices();

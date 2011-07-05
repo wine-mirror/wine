@@ -154,22 +154,19 @@ HRESULT WINAPI DirectInputCreateEx(
 
     TRACE("(%p,%04x,%s,%p,%p)\n", hinst, dwVersion, debugstr_guid(riid), ppDI, punkOuter);
 
-    if (IsEqualGUID( &IID_IUnknown,       riid ) ||
-        IsEqualGUID( &IID_IDirectInputA,  riid ) ||
+    if (IsEqualGUID( &IID_IDirectInputA,  riid ) ||
         IsEqualGUID( &IID_IDirectInput2A, riid ) ||
         IsEqualGUID( &IID_IDirectInput7A, riid ) ||
         IsEqualGUID( &IID_IDirectInputW,  riid ) ||
         IsEqualGUID( &IID_IDirectInput2W, riid ) ||
-        IsEqualGUID( &IID_IDirectInput7W, riid ) ||
-        IsEqualGUID( &IID_IDirectInput8A, riid ) ||
-        IsEqualGUID( &IID_IDirectInput8W, riid ))
+        IsEqualGUID( &IID_IDirectInput7W, riid ))
     {
         hr = create_directinput_instance(riid, ppDI, &This);
         if (FAILED(hr))
             return hr;
     }
     else
-        return DIERR_OLDDIRECTINPUTVERSION;
+        return DIERR_NOINTERFACE;
 
     hr = IDirectInput_Initialize( &This->IDirectInput7A_iface, hinst, dwVersion );
     if (FAILED(hr))
