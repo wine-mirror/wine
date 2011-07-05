@@ -713,58 +713,36 @@ static BOOL context_set_gl_context(struct wined3d_context *ctx)
 
     if (!pwglMakeCurrent(ctx->hdc, ctx->glCtx))
     {
+        HDC dc;
+
         WARN("Failed to make GL context %p current on device context %p, last error %#x.\n",
                 ctx->glCtx, ctx->hdc, GetLastError());
         ctx->valid = 0;
         WARN("Trying fallback to the backup window.\n");
 
-        if (!swapchain->backup_dc)
+        if (!(dc = swapchain_get_backup_dc(swapchain)))
         {
-            TRACE("Creating the backup window for swapchain %p.\n", swapchain);
-            swapchain->backup_wnd = CreateWindowA(WINED3D_OPENGL_WINDOW_CLASS_NAME, "WineD3D fake window",
-                    WS_OVERLAPPEDWINDOW, 10, 10, 10, 10, NULL, NULL, NULL, NULL);
-            if (!swapchain->backup_wnd)
-            {
-                ERR("Failed to create a window.\n");
-                goto fail;
-            }
-            swapchain->backup_dc = GetDC(swapchain->backup_wnd);
-            if (!swapchain->backup_dc)
-            {
-                ERR("Failed to get a DC.\n");
-                goto fail;
-            }
-            if (!context_set_pixel_format(ctx->gl_info, swapchain->backup_dc, ctx->pixel_format))
-            {
-                ERR("Failed to set pixel format %d on device context %p.\n",
-                        ctx->pixel_format, swapchain->backup_dc);
-                goto fail;
-            }
+            context_set_current(NULL);
+            return FALSE;
         }
 
-        if (!pwglMakeCurrent(swapchain->backup_dc, ctx->glCtx))
+        if (!context_set_pixel_format(ctx->gl_info, dc, ctx->pixel_format))
+        {
+            ERR("Failed to set pixel format %d on device context %p.\n",
+                    ctx->pixel_format, dc);
+            context_set_current(NULL);
+            return FALSE;
+        }
+
+        if (!pwglMakeCurrent(dc, ctx->glCtx))
         {
             ERR("Fallback to backup window (dc %p) failed too, last error %#x.\n",
-                    swapchain->backup_dc, GetLastError());
+                    dc, GetLastError());
             context_set_current(NULL);
             return FALSE;
         }
     }
     return TRUE;
-
-fail:
-    if (swapchain->backup_dc)
-    {
-        ReleaseDC(swapchain->backup_wnd, swapchain->backup_dc);
-        swapchain->backup_dc = NULL;
-    }
-    if (swapchain->backup_wnd)
-    {
-        DestroyWindow(swapchain->backup_wnd);
-        swapchain->backup_wnd = NULL;
-    }
-    context_set_current(NULL);
-    return FALSE;
 }
 
 static void context_restore_gl_context(HDC dc, HGLRC gl_ctx)
@@ -1272,8 +1250,13 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
 
     if (!(hdc = GetDC(swapchain->win_handle)))
     {
-        ERR("Failed to retrieve a device context.\n");
-        goto out;
+        WARN("Failed to retireve device context, trying swapchain backup.\n");
+
+        if (!(hdc = swapchain_get_backup_dc(swapchain)))
+        {
+            ERR("Failed to retrieve a device context.\n");
+            goto out;
+        }
     }
 
     color_format = target->resource.format;

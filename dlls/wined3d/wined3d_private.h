@@ -2455,6 +2455,7 @@ void x11_copy_to_screen(struct wined3d_swapchain *swapchain, const RECT *rect) D
 
 struct wined3d_context *swapchain_get_context(struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 void swapchain_destroy_contexts(struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
+HDC swapchain_get_backup_dc(struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 
 #define DEFAULT_REFRESH_RATE 0
 

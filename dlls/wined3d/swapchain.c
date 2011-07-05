@@ -1197,3 +1197,28 @@ void get_drawable_size_swapchain(struct wined3d_context *context, UINT *width, U
     *width = context->current_rt->resource.width;
     *height = context->current_rt->resource.height;
 }
+
+HDC swapchain_get_backup_dc(struct wined3d_swapchain *swapchain)
+{
+    if (!swapchain->backup_dc)
+    {
+        TRACE("Creating the backup window for swapchain %p.\n", swapchain);
+
+        if (!(swapchain->backup_wnd = CreateWindowA(WINED3D_OPENGL_WINDOW_CLASS_NAME, "WineD3D fake window",
+                WS_OVERLAPPEDWINDOW, 10, 10, 10, 10, NULL, NULL, NULL, NULL)))
+        {
+            ERR("Failed to create a window.\n");
+            return NULL;
+        }
+
+        if (!(swapchain->backup_dc = GetDC(swapchain->backup_wnd)))
+        {
+            ERR("Failed to get a DC.\n");
+            DestroyWindow(swapchain->backup_wnd);
+            swapchain->backup_wnd = NULL;
+            return NULL;
+        }
+    }
+
+    return swapchain->backup_dc;
+}
