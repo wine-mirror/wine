@@ -586,7 +586,7 @@ static int check_wait( struct thread *thread )
 {
     int i, signaled;
     struct thread_wait *wait = thread->wait;
-    struct wait_queue_entry *entry = wait->queues;
+    struct wait_queue_entry *entry;
 
     assert( wait );
 

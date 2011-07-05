@@ -126,7 +126,7 @@ static void handle_table_dump( struct object *obj, int verbose )
 {
     int i;
     struct handle_table *table = (struct handle_table *)obj;
-    struct handle_entry *entry = table->entries;
+    struct handle_entry *entry;
 
     assert( obj->ops == &handle_table_ops );
 
