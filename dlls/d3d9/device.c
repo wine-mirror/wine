@@ -885,7 +885,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateIndexBuffer(IDirect3DDevice9Ex 
     }
 
     TRACE("Created index buffer %p.\n", object);
-    *buffer = (IDirect3DIndexBuffer9 *)object;
+    *buffer = &object->IDirect3DIndexBuffer9_iface;
 
     return D3D_OK;
 }

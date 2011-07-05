@@ -272,10 +272,8 @@ HRESULT vertexbuffer_init(IDirect3DVertexBuffer9Impl *buffer, IDirect3DDevice9Im
  */
 typedef struct IDirect3DIndexBuffer9Impl
 {
-    /* IUnknown fields */
-    const IDirect3DIndexBuffer9Vtbl *lpVtbl;
-    LONG                    ref;
-
+    IDirect3DIndexBuffer9 IDirect3DIndexBuffer9_iface;
+    LONG ref;
     struct wined3d_buffer *wineD3DIndexBuffer;
     IDirect3DDevice9Ex *parentDevice;
     enum wined3d_format_id format;
