@@ -639,7 +639,7 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
             else
                 SetRectEmpty(&current_rect);
 
-            device_get_draw_rect(device, &draw_rect);
+            wined3d_get_draw_rect(state, &draw_rect);
 
             IntersectRect(&r, &draw_rect, &current_rect);
             if (!EqualRect(&r, &draw_rect))

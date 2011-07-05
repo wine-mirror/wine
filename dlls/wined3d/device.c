@@ -557,19 +557,6 @@ void device_context_remove(struct wined3d_device *device, struct wined3d_context
     device->contexts = new_array;
 }
 
-void device_get_draw_rect(struct wined3d_device *device, RECT *rect)
-{
-    struct wined3d_stateblock *stateblock = device->stateBlock;
-    WINED3DVIEWPORT *vp = &stateblock->state.viewport;
-
-    SetRect(rect, vp->X, vp->Y, vp->X + vp->Width, vp->Y + vp->Height);
-
-    if (stateblock->state.render_states[WINED3DRS_SCISSORTESTENABLE])
-    {
-        IntersectRect(rect, rect, &stateblock->state.scissor_rect);
-    }
-}
-
 /* Do not call while under the GL lock. */
 void device_switch_onscreen_ds(struct wined3d_device *device,
         struct wined3d_context *context, struct wined3d_surface *depth_stencil)
@@ -4040,7 +4027,7 @@ HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_cou
         }
     }
 
-    device_get_draw_rect(device, &draw_rect);
+    wined3d_get_draw_rect(&device->stateBlock->state, &draw_rect);
 
     return device_clear_render_targets(device, device->adapter->gl_info.limits.buffers,
             &device->fb, rect_count, rects,

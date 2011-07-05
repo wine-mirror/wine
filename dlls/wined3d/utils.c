@@ -3246,3 +3246,13 @@ const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *g
 
     return NULL;
 }
+
+void wined3d_get_draw_rect(const struct wined3d_state *state, RECT *rect)
+{
+    const WINED3DVIEWPORT *vp = &state->viewport;
+
+    SetRect(rect, vp->X, vp->Y, vp->X + vp->Width, vp->Y + vp->Height);
+
+    if (state->render_states[WINED3DRS_SCISSORTESTENABLE])
+        IntersectRect(rect, rect, &state->scissor_rect);
+}
