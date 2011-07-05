@@ -6149,18 +6149,18 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     return WINED3D_OK;
 }
 
-HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const RECT *rect)
+HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, const RECT *rect)
 {
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     BOOL in_fbo = FALSE;
     HRESULT hr;
 
-    TRACE("surface %p, location %s, rect %s.\n", surface, debug_surflocation(flag), wine_dbgstr_rect(rect));
+    TRACE("surface %p, location %s, rect %s.\n", surface, debug_surflocation(location), wine_dbgstr_rect(rect));
 
     if (surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
     {
-        if (flag == SFLAG_INTEXTURE)
+        if (location == SFLAG_INTEXTURE)
         {
             struct wined3d_context *context = context_acquire(device, NULL);
             surface_load_ds_location(surface, context, SFLAG_DS_OFFSCREEN);
@@ -6169,7 +6169,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const
         }
         else
         {
-            FIXME("Unimplemented location %s for depth/stencil buffers.\n", debug_surflocation(flag));
+            FIXME("Unimplemented location %s for depth/stencil buffers.\n", debug_surflocation(location));
             return WINED3DERR_INVALIDCALL;
         }
     }
@@ -6178,9 +6178,10 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const
     {
         if (surface_is_offscreen(surface))
         {
-            /* With ORM_FBO, SFLAG_INTEXTURE and SFLAG_INDRAWABLE are the same for offscreen targets.
-             * Prefer SFLAG_INTEXTURE. */
-            if (flag == SFLAG_INDRAWABLE) flag = SFLAG_INTEXTURE;
+            /* With ORM_FBO, SFLAG_INTEXTURE and SFLAG_INDRAWABLE are the same
+             * for offscreen targets. Prefer SFLAG_INTEXTURE. */
+            if (location == SFLAG_INDRAWABLE)
+                location = SFLAG_INTEXTURE;
             in_fbo = TRUE;
         }
         else
@@ -6189,20 +6190,18 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const
         }
     }
 
-    if (flag == SFLAG_INSRGBTEX && gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
-    {
-        flag = SFLAG_INTEXTURE;
-    }
+    if (location == SFLAG_INSRGBTEX && gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+        location = SFLAG_INTEXTURE;
 
-    if (surface->flags & flag)
+    if (surface->flags & location)
     {
-        TRACE("Location already up to date\n");
+        TRACE("Location already up to date.\n");
         return WINED3D_OK;
     }
 
     if (WARN_ON(d3d_surface))
     {
-        DWORD required_access = resource_access_from_location(flag);
+        DWORD required_access = resource_access_from_location(location);
         if ((surface->resource.access_flags & required_access) != required_access)
             WARN("Operation requires %#x access, but surface only has %#x.\n",
                     required_access, surface->resource.access_flags);
@@ -6215,7 +6214,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const
         return WINED3DERR_DEVICELOST;
     }
 
-    switch (flag)
+    switch (location)
     {
         case SFLAG_INSYSMEM:
             surface_load_sysmem(surface, gl_info, rect);
@@ -6228,20 +6227,20 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const
 
         case SFLAG_INTEXTURE:
         case SFLAG_INSRGBTEX:
-            if (FAILED(hr = surface_load_texture(surface, gl_info, rect, flag == SFLAG_INSRGBTEX)))
+            if (FAILED(hr = surface_load_texture(surface, gl_info, rect, location == SFLAG_INSRGBTEX)))
                 return hr;
             break;
 
         default:
-            ERR("Don't know how to handle location %#x.\n", flag);
+            ERR("Don't know how to handle location %#x.\n", location);
             break;
     }
 
     if (!rect)
     {
-        surface->flags |= flag;
+        surface->flags |= location;
 
-        if (flag != SFLAG_INSYSMEM && (surface->flags & SFLAG_INSYSMEM))
+        if (location != SFLAG_INSYSMEM && (surface->flags & SFLAG_INSYSMEM))
             surface_evict_sysmem(surface);
     }
 
