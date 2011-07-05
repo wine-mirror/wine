@@ -727,7 +727,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GS
     gst_pad_set_event_function(mypad, event_sink);
     gst_pad_set_bufferalloc_function(mypad, request_buffer_sink);
     gst_pad_set_acceptcaps_function(mypad, accept_caps_sink);
-    gst_pad_set_acceptcaps_function(mypad, setcaps_sink);
+    gst_pad_set_setcaps_function(mypad, setcaps_sink);
 
     if (!strcmp(typename, "audio/x-raw-int") ||
         !strcmp(typename, "audio/x-raw-float")) {
