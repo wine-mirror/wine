@@ -3785,6 +3785,7 @@ static HRESULT validate_path(const UriBuilder *builder, parse_data *data, DWORD 
         static const WCHAR nullW[] = {0};
         ptr = nullW;
         check_len = FALSE;
+        expected_len = -1;
     }
 
     component = ptr;
@@ -3798,7 +3799,7 @@ static HRESULT validate_path(const UriBuilder *builder, parse_data *data, DWORD 
 
     if(!valid || (check_len && expected_len != data->path_len)) {
         TRACE("(%p %p %x): Invalid path component %s.\n", builder, data, flags,
-            debugstr_wn(component, check_len ? expected_len : -1) );
+            debugstr_wn(component, expected_len) );
         return INET_E_INVALID_URL;
     }
 
