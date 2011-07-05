@@ -127,7 +127,17 @@ static HRESULT WINAPI DI8CF_CreateInstance(LPCLASSFACTORY iface,LPUNKNOWN pOuter
 
     TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
     if( IsEqualGUID( &IID_IDirectInput8A, riid ) || IsEqualGUID( &IID_IDirectInput8W, riid ) || IsEqualGUID( &IID_IUnknown, riid )) {
-        return DirectInputCreateEx(0, DIRECTINPUT_VERSION, riid, ppobj, pOuter);
+        IDirectInputA *ppDI;
+        HRESULT hr;
+
+        hr = CoCreateInstance(&CLSID_DirectInput, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectInputA, (void **)&ppDI);
+        if (FAILED(hr))
+            return hr;
+
+        hr = IDirectInput_QueryInterface(ppDI, riid, ppobj);
+        IDirectInput_Release(ppDI);
+
+        return hr;
     }
 
     ERR("(%p,%p,%s,%p) Interface not found!\n",This,pOuter,debugstr_guid(riid),ppobj);    

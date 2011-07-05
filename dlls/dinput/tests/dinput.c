@@ -49,6 +49,111 @@ static const DWORD directinput_version_list[] =
     DIRECTINPUT_VERSION_700,
 };
 
+static BOOL CALLBACK dummy_callback(const DIDEVICEINSTANCEA *instance, void *context)
+{
+    ok(0, "Callback was invoked with parameters (%p, %p)\n", instance, context);
+    return DIENUM_STOP;
+}
+
+static void test_preinitialization(void)
+{
+    static const struct
+    {
+        REFGUID rguid;
+        BOOL pdev;
+        HRESULT expected_hr;
+    } create_device_tests[] =
+    {
+        {NULL, FALSE, E_POINTER},
+        {NULL, TRUE, E_POINTER},
+        {&GUID_Unknown, FALSE, E_POINTER},
+        {&GUID_Unknown, TRUE, DIERR_NOTINITIALIZED},
+        {&GUID_SysMouse, FALSE, E_POINTER},
+        {&GUID_SysMouse, TRUE, DIERR_NOTINITIALIZED},
+    };
+
+    static const struct
+    {
+        DWORD dwDevType;
+        LPDIENUMDEVICESCALLBACKA lpCallback;
+        DWORD dwFlags;
+        HRESULT expected_hr;
+        int todo;
+    } enum_devices_tests[] =
+    {
+        {0, NULL, 0, DIERR_INVALIDPARAM},
+        {0, NULL, ~0u, DIERR_INVALIDPARAM},
+        {0, dummy_callback, 0, DIERR_NOTINITIALIZED},
+        {0, dummy_callback, ~0u, DIERR_INVALIDPARAM, 1},
+        {0xdeadbeef, NULL, 0, DIERR_INVALIDPARAM},
+        {0xdeadbeef, NULL, ~0u, DIERR_INVALIDPARAM},
+        {0xdeadbeef, dummy_callback, 0, DIERR_INVALIDPARAM, 1},
+        {0xdeadbeef, dummy_callback, ~0u, DIERR_INVALIDPARAM, 1},
+    };
+
+    IDirectInputA *pDI;
+    HRESULT hr;
+    int i;
+    IDirectInputDeviceA *pDID;
+
+    hr = CoCreateInstance(&CLSID_DirectInput, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectInputA, (void **)&pDI);
+    if (FAILED(hr))
+    {
+        skip("Failed to instantiate a IDirectInputA instance: 0x%08x\n", hr);
+        return;
+    }
+
+    for (i = 0; i < sizeof(create_device_tests)/sizeof(create_device_tests[0]); i++)
+    {
+        if (create_device_tests[i].pdev) pDID = (void *)0xdeadbeef;
+        hr = IDirectInput_CreateDevice(pDI, create_device_tests[i].rguid,
+                                            create_device_tests[i].pdev ? &pDID : NULL,
+                                            NULL);
+        ok(hr == create_device_tests[i].expected_hr, "[%d] IDirectInput_CreateDevice returned 0x%08x\n", i, hr);
+        if (create_device_tests[i].pdev)
+            ok(pDID == NULL, "[%d] Output interface pointer is %p\n", i, pDID);
+    }
+
+    for (i = 0; i < sizeof(enum_devices_tests)/sizeof(enum_devices_tests[0]); i++)
+    {
+        hr = IDirectInput_EnumDevices(pDI, enum_devices_tests[i].dwDevType,
+                                           enum_devices_tests[i].lpCallback,
+                                           NULL,
+                                           enum_devices_tests[i].dwFlags);
+        if (enum_devices_tests[i].todo)
+        {
+            todo_wine
+            ok(hr == enum_devices_tests[i].expected_hr, "[%d] IDirectInput_EnumDevice returned 0x%08x\n", i, hr);
+        }
+        else
+            ok(hr == enum_devices_tests[i].expected_hr, "[%d] IDirectInput_EnumDevice returned 0x%08x\n", i, hr);
+    }
+
+    hr = IDirectInput_GetDeviceStatus(pDI, NULL);
+    todo_wine
+    ok(hr == E_POINTER, "IDirectInput_GetDeviceStatus returned 0x%08x\n", hr);
+
+    hr = IDirectInput_GetDeviceStatus(pDI, &GUID_Unknown);
+    ok(hr == DIERR_NOTINITIALIZED, "IDirectInput_GetDeviceStatus returned 0x%08x\n", hr);
+
+    hr = IDirectInput_GetDeviceStatus(pDI, &GUID_SysMouse);
+    ok(hr == DIERR_NOTINITIALIZED, "IDirectInput_GetDeviceStatus returned 0x%08x\n", hr);
+
+    hr = IDirectInput_RunControlPanel(pDI, NULL, 0);
+    ok(hr == DIERR_NOTINITIALIZED, "IDirectInput_RunControlPanel returned 0x%08x\n", hr);
+
+    hr = IDirectInput_RunControlPanel(pDI, NULL, ~0u);
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInput_RunControlPanel returned 0x%08x\n", hr);
+
+    hr = IDirectInput_RunControlPanel(pDI, (HWND)0xdeadbeef, 0);
+    ok(hr == E_HANDLE, "IDirectInput_RunControlPanel returned 0x%08x\n", hr);
+
+    hr = IDirectInput_RunControlPanel(pDI, (HWND)0xdeadbeef, ~0u);
+    ok(hr == E_HANDLE, "IDirectInput_RunControlPanel returned 0x%08x\n", hr);
+
+    IDirectInput_Release(pDI);
+}
+
 static void test_QueryInterface(void)
 {
     static const REFIID iid_list[] = {&IID_IUnknown, &IID_IDirectInputA, &IID_IDirectInputW,
@@ -352,6 +457,7 @@ START_TEST(dinput)
     hInstance = GetModuleHandleA(NULL);
 
     CoInitialize(NULL);
+    test_preinitialization();
     test_QueryInterface();
     test_CreateDevice();
     test_EnumDevices();

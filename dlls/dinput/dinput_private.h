@@ -37,6 +37,7 @@ struct IDirectInputImpl
 
     LONG                        ref;
 
+    BOOL                        initialized;
     CRITICAL_SECTION            crit;
     struct list                 entry;          /* entry into list of all IDirectInputs */
 

@@ -115,14 +115,42 @@ static BOOL check_hook_thread(void);
 static CRITICAL_SECTION dinput_hook_crit;
 static struct list direct_input_list = LIST_INIT( direct_input_list );
 
+static HRESULT initialize_directinput_instance(IDirectInputImpl *This, DWORD dwVersion);
+static void uninitialize_directinput_instance(IDirectInputImpl *This);
+
+static HRESULT create_directinput_instance(REFIID riid, LPVOID *ppDI, IDirectInputImpl **out)
+{
+    IDirectInputImpl *This = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectInputImpl) );
+    HRESULT hr;
+
+    if (!This)
+        return E_OUTOFMEMORY;
+
+    This->IDirectInput7A_iface.lpVtbl = &ddi7avt;
+    This->IDirectInput7W_iface.lpVtbl = &ddi7wvt;
+    This->IDirectInput8A_iface.lpVtbl = &ddi8avt;
+    This->IDirectInput8W_iface.lpVtbl = &ddi8wvt;
+
+    hr = IDirectInput_QueryInterface( &This->IDirectInput7A_iface, riid, ppDI );
+    if (FAILED(hr))
+    {
+        HeapFree( GetProcessHeap(), 0, This );
+        return hr;
+    }
+
+    if (out) *out = This;
+    return DI_OK;
+}
+
 /******************************************************************************
  *	DirectInputCreateEx (DINPUT.@)
  */
 HRESULT WINAPI DirectInputCreateEx(
 	HINSTANCE hinst, DWORD dwVersion, REFIID riid, LPVOID *ppDI,
-	LPUNKNOWN punkOuter) 
+	LPUNKNOWN punkOuter)
 {
-    IDirectInputImpl* This;
+    IDirectInputImpl *This;
+    HRESULT hr;
 
     TRACE("(%p,%04x,%s,%p,%p)\n", hinst, dwVersion, debugstr_guid(riid), ppDI, punkOuter);
 
@@ -136,37 +164,21 @@ HRESULT WINAPI DirectInputCreateEx(
         IsEqualGUID( &IID_IDirectInput8A, riid ) ||
         IsEqualGUID( &IID_IDirectInput8W, riid ))
     {
-        if (!(This = HeapAlloc( GetProcessHeap(), 0, sizeof(IDirectInputImpl) )))
-            return DIERR_OUTOFMEMORY;
+        hr = create_directinput_instance(riid, ppDI, &This);
+        if (FAILED(hr))
+            return hr;
     }
     else
         return DIERR_OLDDIRECTINPUTVERSION;
 
-    This->IDirectInput7A_iface.lpVtbl = &ddi7avt;
-    This->IDirectInput7W_iface.lpVtbl = &ddi7wvt;
-    This->IDirectInput8A_iface.lpVtbl = &ddi8avt;
-    This->IDirectInput8W_iface.lpVtbl = &ddi8wvt;
-    This->ref         = 0;
-    This->dwVersion   = dwVersion;
-    This->evsequence  = 1;
-
-    InitializeCriticalSection(&This->crit);
-    This->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectInputImpl*->crit");
-
-    list_init( &This->devices_list );
-
-    /* Add self to the list of the IDirectInputs */
-    EnterCriticalSection( &dinput_hook_crit );
-    list_add_head( &direct_input_list, &This->entry );
-    LeaveCriticalSection( &dinput_hook_crit );
-
-    if (!check_hook_thread())
+    hr = IDirectInput_Initialize( &This->IDirectInput7A_iface, hinst, dwVersion );
+    if (FAILED(hr))
     {
-        IUnknown_Release( &This->IDirectInput7A_iface );
-        return DIERR_GENERIC;
+        IDirectInput_Release( &This->IDirectInput7A_iface );
+        *ppDI = NULL;
+        return hr;
     }
 
-    IDirectInput_QueryInterface( &This->IDirectInput7A_iface, riid, ppDI );
     return DI_OK;
 }
 
@@ -328,6 +340,9 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
     if (!lpCallback)
         return DIERR_INVALIDPARAM;
 
+    if (!This->initialized)
+        return DIERR_NOTINITIALIZED;
+
     for (i = 0; i < NB_DINPUT_DEVICES; i++) {
         if (!dinput_devices[i]->enum_deviceA) continue;
         for (j = 0, r = -1; r != 0; j++) {
@@ -361,6 +376,9 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
 
     if (!lpCallback)
         return DIERR_INVALIDPARAM;
+
+    if (!This->initialized)
+        return DIERR_NOTINITIALIZED;
 
     for (i = 0; i < NB_DINPUT_DEVICES; i++) {
         if (!dinput_devices[i]->enum_deviceW) continue;
@@ -399,20 +417,13 @@ static ULONG WINAPI IDirectInputAImpl_Release(LPDIRECTINPUT7A iface)
 
     TRACE( "(%p) releasing from %d\n", This, ref + 1 );
 
-    if (ref) return ref;
+    if (ref == 0)
+    {
+        uninitialize_directinput_instance( This );
+        HeapFree( GetProcessHeap(), 0, This );
+    }
 
-    /* Remove self from the list of the IDirectInputs */
-    EnterCriticalSection( &dinput_hook_crit );
-    list_remove( &This->entry );
-    LeaveCriticalSection( &dinput_hook_crit );
-
-    check_hook_thread();
-
-    This->crit.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection( &This->crit );
-    HeapFree( GetProcessHeap(), 0, This );
-
-    return 0;
+    return ref;
 }
 
 static ULONG WINAPI IDirectInputWImpl_Release(LPDIRECTINPUT7W iface)
@@ -478,6 +489,53 @@ static HRESULT WINAPI IDirectInputWImpl_QueryInterface(LPDIRECTINPUT7W iface, RE
     return IDirectInputAImpl_QueryInterface( &This->IDirectInput7A_iface, riid, ppobj );
 }
 
+static HRESULT initialize_directinput_instance(IDirectInputImpl *This, DWORD dwVersion)
+{
+    if (!This->initialized)
+    {
+        This->dwVersion = dwVersion;
+        This->evsequence = 1;
+
+        InitializeCriticalSection( &This->crit );
+        This->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectInputImpl*->crit");
+
+        list_init( &This->devices_list );
+
+        /* Add self to the list of the IDirectInputs */
+        EnterCriticalSection( &dinput_hook_crit );
+        list_add_head( &direct_input_list, &This->entry );
+        LeaveCriticalSection( &dinput_hook_crit );
+
+        This->initialized = TRUE;
+
+        if (!check_hook_thread())
+        {
+            uninitialize_directinput_instance( This );
+            return DIERR_GENERIC;
+        }
+    }
+
+    return DI_OK;
+}
+
+static void uninitialize_directinput_instance(IDirectInputImpl *This)
+{
+    if (This->initialized)
+    {
+        /* Remove self from the list of the IDirectInputs */
+        EnterCriticalSection( &dinput_hook_crit );
+        list_remove( &This->entry );
+        LeaveCriticalSection( &dinput_hook_crit );
+
+        check_hook_thread();
+
+        This->crit.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection( &This->crit );
+
+        This->initialized = FALSE;
+    }
+}
+
 enum directinput_versions
 {
     DIRECTINPUT_VERSION_300 = 0x0300,
@@ -491,6 +549,8 @@ enum directinput_versions
 
 static HRESULT WINAPI IDirectInputAImpl_Initialize(LPDIRECTINPUT7A iface, HINSTANCE hinst, DWORD version)
 {
+    IDirectInputImpl *This = impl_from_IDirectInput7A( iface );
+
     TRACE("(%p)->(%p, 0x%04x)\n", iface, hinst, version);
 
     if (!hinst)
@@ -506,7 +566,7 @@ static HRESULT WINAPI IDirectInputAImpl_Initialize(LPDIRECTINPUT7A iface, HINSTA
              version != DIRECTINPUT_VERSION_700 && version != DIRECTINPUT_VERSION)
         return DIERR_BETADIRECTINPUTVERSION;
 
-    return DI_OK;
+    return initialize_directinput_instance(This, version);
 }
 
 static HRESULT WINAPI IDirectInputWImpl_Initialize(LPDIRECTINPUT7W iface, HINSTANCE hinst, DWORD x)
@@ -522,6 +582,9 @@ static HRESULT WINAPI IDirectInputAImpl_GetDeviceStatus(LPDIRECTINPUT7A iface, R
     LPDIRECTINPUTDEVICEA device;
 
     TRACE( "(%p)->(%s)\n", This, debugstr_guid(rguid) );
+
+    if (!This->initialized)
+        return DIERR_NOTINITIALIZED;
 
     hr = IDirectInput_CreateDevice( iface, rguid, &device, NULL );
     if (hr != DI_OK) return DI_NOTATTACHED;
@@ -554,6 +617,9 @@ static HRESULT WINAPI IDirectInputAImpl_RunControlPanel(LPDIRECTINPUT7A iface,
 
     if (dwFlags)
         return DIERR_INVALIDPARAM;
+
+    if (!This->initialized)
+        return DIERR_NOTINITIALIZED;
 
     if (!CreateProcessW(NULL, control_exeW, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
         return HRESULT_FROM_WIN32(GetLastError());
@@ -596,6 +662,9 @@ static HRESULT create_device(IDirectInputImpl *This, REFGUID rguid, REFIID riid,
 
     if (!rguid || !pvOut)
         return E_POINTER;
+
+    if (!This->initialized)
+        return DIERR_NOTINITIALIZED;
 
     /* Loop on all the devices to see if anyone matches the given GUID */
     for (i = 0; i < NB_DINPUT_DEVICES; i++)
@@ -985,8 +1054,7 @@ static HRESULT WINAPI DICF_CreateInstance(
 	     IsEqualGUID( &IID_IDirectInput7W, riid ) ||
 	     IsEqualGUID( &IID_IDirectInput8A, riid ) ||
 	     IsEqualGUID( &IID_IDirectInput8W, riid ) ) {
-		/* FIXME: reuse already created dinput if present? */
-		return DirectInputCreateEx(0,0,riid,ppobj,pOuter);
+		return create_directinput_instance(riid, ppobj, NULL);
 	}
 
 	FIXME("(%p,%p,%s,%p) Interface not found!\n",This,pOuter,debugstr_guid(riid),ppobj);	
