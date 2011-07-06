@@ -2298,13 +2298,14 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShader(IDirect3DDevice9Ex *i
         IDirect3DVertexShader9 *shader)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
+    IDirect3DVertexShader9Impl *shader_obj = unsafe_impl_from_IDirect3DVertexShader9(shader);
     HRESULT hr;
 
     TRACE("iface %p, shader %p.\n", iface, shader);
 
     wined3d_mutex_lock();
     hr =  wined3d_device_set_vertex_shader(This->wined3d_device,
-            shader ? ((IDirect3DVertexShader9Impl *)shader)->wined3d_shader : NULL);
+            shader_obj ? shader_obj->wined3d_shader : NULL);
     wined3d_mutex_unlock();
 
     return hr;

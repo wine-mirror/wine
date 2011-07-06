@@ -416,6 +416,7 @@ typedef struct IDirect3DVertexShader9Impl {
 
 HRESULT vertexshader_init(IDirect3DVertexShader9Impl *shader,
         IDirect3DDevice9Impl *device, const DWORD *byte_code) DECLSPEC_HIDDEN;
+IDirect3DVertexShader9Impl *unsafe_impl_from_IDirect3DVertexShader9(IDirect3DVertexShader9 *iface) DECLSPEC_HIDDEN;
 
 #define D3D9_MAX_VERTEX_SHADER_CONSTANTF 256
 #define D3D9_MAX_SIMULTANEOUS_RENDERTARGETS 4

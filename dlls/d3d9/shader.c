@@ -23,6 +23,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
+static inline IDirect3DVertexShader9Impl *impl_from_IDirect3DVertexShader9(IDirect3DVertexShader9 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirect3DVertexShader9Impl, lpVtbl);
+}
+
 static HRESULT WINAPI d3d9_vertexshader_QueryInterface(IDirect3DVertexShader9 *iface, REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
@@ -149,6 +154,15 @@ HRESULT vertexshader_init(IDirect3DVertexShader9Impl *shader, IDirect3DDevice9Im
     IDirect3DDevice9Ex_AddRef(shader->parentDevice);
 
     return D3D_OK;
+}
+
+IDirect3DVertexShader9Impl *unsafe_impl_from_IDirect3DVertexShader9(IDirect3DVertexShader9 *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d9_vertexshader_vtbl);
+
+    return impl_from_IDirect3DVertexShader9(iface);
 }
 
 static inline IDirect3DPixelShader9Impl *impl_from_IDirect3DPixelShader9(IDirect3DPixelShader9 *iface)
