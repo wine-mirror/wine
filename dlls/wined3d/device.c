@@ -6185,16 +6185,16 @@ void device_invalidate_state(const struct wined3d_device *device, DWORD state)
     }
 }
 
-void get_drawable_size_fbo(struct wined3d_context *context, UINT *width, UINT *height)
+void get_drawable_size_fbo(const struct wined3d_context *context, UINT *width, UINT *height)
 {
     /* The drawable size of a fbo target is the opengl texture size, which is the power of two size. */
     *width = context->current_rt->pow2Width;
     *height = context->current_rt->pow2Height;
 }
 
-void get_drawable_size_backbuffer(struct wined3d_context *context, UINT *width, UINT *height)
+void get_drawable_size_backbuffer(const struct wined3d_context *context, UINT *width, UINT *height)
 {
-    struct wined3d_swapchain *swapchain = context->swapchain;
+    const struct wined3d_swapchain *swapchain = context->swapchain;
     /* The drawable size of a backbuffer / aux buffer offscreen target is the size of the
      * current context's drawable, which is the size of the back buffer of the swapchain
      * the active context belongs to. */

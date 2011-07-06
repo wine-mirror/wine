@@ -2011,7 +2011,7 @@ struct wined3d_surface
     UINT                      pow2Height;
 
     /* A method to retrieve the drawable size. Not in the Vtable to make it changeable */
-    void (*get_drawable_size)(struct wined3d_context *context, UINT *width, UINT *height);
+    void (*get_drawable_size)(const struct wined3d_context *context, UINT *width, UINT *height);
 
     /* PBO */
     GLuint                    pbo;
@@ -2090,9 +2090,9 @@ void surface_upload_data(struct wined3d_surface *surface, const struct wined3d_g
         const struct wined3d_format *format, const RECT *src_rect, UINT src_w, const POINT *dst_point,
         BOOL srgb, const struct wined3d_bo_address *data) DECLSPEC_HIDDEN;
 
-void get_drawable_size_swapchain(struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
-void get_drawable_size_backbuffer(struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
-void get_drawable_size_fbo(struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
+void get_drawable_size_swapchain(const struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
+void get_drawable_size_backbuffer(const struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
+void get_drawable_size_fbo(const struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
 
 void draw_textured_quad(struct wined3d_surface *src_surface, const RECT *src_rect,
                         const RECT *dst_rect, WINED3DTEXTUREFILTERTYPE Filter) DECLSPEC_HIDDEN;
