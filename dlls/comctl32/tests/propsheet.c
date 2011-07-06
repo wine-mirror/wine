@@ -102,7 +102,7 @@ static void test_title(void)
     hpsp[0] = CreatePropertySheetPageA(&psp);
 
     memset(&psh, 0, sizeof(psh));
-    psh.dwSize = sizeof(psh);
+    psh.dwSize = CCSIZEOF_STRUCT(PROPSHEETHEADERA, pfnCallback);
     psh.dwFlags = PSH_MODELESS | PSH_USECALLBACK;
     psh.pszCaption = "test caption";
     psh.nPages = 1;
@@ -111,12 +111,8 @@ static void test_title(void)
     psh.pfnCallback = sheet_callback;
 
     hdlg = (HWND)PropertySheetA(&psh);
-    if (hdlg == INVALID_HANDLE_VALUE)
-    {
-        win_skip("comctl32 4.70 needs dwSize adjustment\n");
-        psh.dwSize = sizeof(psh) - sizeof(HBITMAP) - sizeof(HPALETTE) - sizeof(HBITMAP);
-        hdlg = (HWND)PropertySheetA(&psh);
-    }
+    ok(hdlg != INVALID_HANDLE_VALUE, "got invalid handle value %p\n", hdlg);
+
     DestroyWindow(hdlg);
 }
 
@@ -139,7 +135,7 @@ static void test_nopage(void)
     hpsp[0] = CreatePropertySheetPageA(&psp);
 
     memset(&psh, 0, sizeof(psh));
-    psh.dwSize = sizeof(psh);
+    psh.dwSize = CCSIZEOF_STRUCT(PROPSHEETHEADERA, pfnCallback);
     psh.dwFlags = PSH_MODELESS | PSH_USECALLBACK;
     psh.pszCaption = "test caption";
     psh.nPages = 1;
@@ -148,12 +144,8 @@ static void test_nopage(void)
     psh.pfnCallback = sheet_callback;
 
     hdlg = (HWND)PropertySheetA(&psh);
-    if (hdlg == INVALID_HANDLE_VALUE)
-    {
-        win_skip("comctl32 4.70 needs dwSize adjustment\n");
-        psh.dwSize = sizeof(psh) - sizeof(HBITMAP) - sizeof(HPALETTE) - sizeof(HBITMAP);
-        hdlg = (HWND)PropertySheetA(&psh);
-    }
+    ok(hdlg != INVALID_HANDLE_VALUE, "got invalid handle value %p\n", hdlg);
+
     ShowWindow(hdlg,SW_NORMAL);
     SendMessage(hdlg, PSM_REMOVEPAGE, 0, 0);
     RedrawWindow(hdlg,NULL,NULL,RDW_UPDATENOW|RDW_ERASENOW);
@@ -292,19 +284,14 @@ static void test_wiznavigation(void)
 
     /* set up the property sheet dialog */
     memset(&psh, 0, sizeof(psh));
-    psh.dwSize = sizeof(psh);
+    psh.dwSize = CCSIZEOF_STRUCT(PROPSHEETHEADERA, pfnCallback);
     psh.dwFlags = PSH_MODELESS | PSH_WIZARD;
     psh.pszCaption = "A Wizard";
     psh.nPages = 4;
     psh.hwndParent = GetDesktopWindow();
     U3(psh).phpage = hpsp;
     hdlg = (HWND)PropertySheetA(&psh);
-    if (hdlg == INVALID_HANDLE_VALUE)
-    {
-        win_skip("comctl32 4.70 needs dwSize adjustment\n");
-        psh.dwSize = sizeof(psh) - sizeof(HBITMAP) - sizeof(HPALETTE) - sizeof(HBITMAP);
-        hdlg = (HWND)PropertySheetA(&psh);
-    }
+    ok(hdlg != INVALID_HANDLE_VALUE, "got invalid handle %p\n", hdlg);
 
     ok(active_page == 0, "Active page should be 0. Is: %d\n", active_page);
 
@@ -395,7 +382,7 @@ static void test_buttons(void)
     hpsp[0] = CreatePropertySheetPageA(&psp);
 
     memset(&psh, 0, sizeof(psh));
-    psh.dwSize = sizeof(psh);
+    psh.dwSize = CCSIZEOF_STRUCT(PROPSHEETHEADERA, pfnCallback);
     psh.dwFlags = PSH_MODELESS | PSH_USECALLBACK;
     psh.pszCaption = "test caption";
     psh.nPages = 1;
@@ -404,12 +391,7 @@ static void test_buttons(void)
     psh.pfnCallback = sheet_callback;
 
     hdlg = (HWND)PropertySheetA(&psh);
-    if (hdlg == INVALID_HANDLE_VALUE)
-    {
-        win_skip("comctl32 4.70 needs dwSize adjustment\n");
-        psh.dwSize = sizeof(psh) - sizeof(HBITMAP) - sizeof(HPALETTE) - sizeof(HBITMAP);
-        hdlg = (HWND)PropertySheetA(&psh);
-    }
+    ok(hdlg != INVALID_HANDLE_VALUE, "got null handle\n");
 
     /* OK button */
     button = GetDlgItem(hdlg, IDOK);
@@ -710,7 +692,7 @@ static void test_messages(void)
     hpsp[0] = CreatePropertySheetPageA(&psp);
 
     memset(&psh, 0, sizeof(psh));
-    psh.dwSize = sizeof(psh);
+    psh.dwSize = CCSIZEOF_STRUCT(PROPSHEETHEADERA, pfnCallback);
     psh.dwFlags = PSH_NOAPPLYNOW | PSH_WIZARD | PSH_USECALLBACK
                   | PSH_MODELESS | PSH_USEICONID;
     psh.pszCaption = "test caption";
@@ -720,15 +702,73 @@ static void test_messages(void)
     psh.pfnCallback = sheet_callback_messages;
 
     hdlg = (HWND)PropertySheetA(&psh);
-    if (hdlg == INVALID_HANDLE_VALUE)
-    {
-        win_skip("comctl32 4.70 needs dwSize adjustment\n");
-        psh.dwSize = sizeof(psh) - sizeof(HBITMAP) - sizeof(HPALETTE) - sizeof(HBITMAP);
-        hdlg = (HWND)PropertySheetA(&psh);
-    }
+    ok(hdlg != INVALID_HANDLE_VALUE, "got invalid handle %p\n", hdlg);
+
     ShowWindow(hdlg,SW_NORMAL);
 
     ok_sequence(sequences, PROPSHEET_SEQ_INDEX, property_sheet_seq, "property sheet with custom window proc", TRUE);
+
+    DestroyWindow(hdlg);
+}
+
+static void test_PSM_ADDPAGE(void)
+{
+    HPROPSHEETPAGE hpsp[3];
+    PROPSHEETPAGEA psp;
+    PROPSHEETHEADERA psh;
+    HWND hdlg, tab;
+    BOOL ret;
+    DWORD r;
+
+    memset(&psp, 0, sizeof(psp));
+    psp.dwSize = sizeof(psp);
+    psp.dwFlags = 0;
+    psp.hInstance = GetModuleHandleA(NULL);
+    U(psp).pszTemplate = MAKEINTRESOURCE(IDD_PROP_PAGE_MESSAGE_TEST);
+    U2(psp).pszIcon = NULL;
+    psp.pfnDlgProc = page_dlg_proc_messages;
+    psp.lParam = 0;
+
+    /* two page with the same data */
+    hpsp[0] = CreatePropertySheetPageA(&psp);
+    hpsp[1] = CreatePropertySheetPageA(&psp);
+    hpsp[2] = CreatePropertySheetPageA(&psp);
+
+    memset(&psh, 0, sizeof(psh));
+    psh.dwSize = sizeof(psh);
+    psh.dwFlags = PSH_MODELESS;
+    psh.pszCaption = "test caption";
+    psh.nPages = 1;
+    psh.hwndParent = GetDesktopWindow();
+    U3(psh).phpage = hpsp;
+
+    hdlg = (HWND)PropertySheetA(&psh);
+    ok(hdlg != INVALID_HANDLE_VALUE, "got invalid handle %p\n", hdlg);
+
+    /* add pages one by one */
+    ret = SendMessageA(hdlg, PSM_ADDPAGE, 0, (LPARAM)hpsp[1]);
+    ok(ret == TRUE, "got %d\n", ret);
+
+    /* try with null and invalid value */
+    ret = SendMessageA(hdlg, PSM_ADDPAGE, 0, 0);
+    ok(ret == FALSE, "got %d\n", ret);
+
+if (0)
+{
+    /* crashes on native */
+    ret = SendMessageA(hdlg, PSM_ADDPAGE, 0, (LPARAM)INVALID_HANDLE_VALUE);
+}
+    /* check item count */
+    tab = (HWND)SendMessageA(hdlg, PSM_GETTABCONTROL, 0, 0);
+
+    r = SendMessageA(tab, TCM_GETITEMCOUNT, 0, 0);
+    ok(r == 2, "got %d\n", r);
+
+    ret = SendMessageA(hdlg, PSM_ADDPAGE, 0, (LPARAM)hpsp[2]);
+    ok(ret == TRUE, "got %d\n", ret);
+
+    r = SendMessageA(tab, TCM_GETITEMCOUNT, 0, 0);
+    ok(r == 3, "got %d\n", r);
 
     DestroyWindow(hdlg);
 }
@@ -742,4 +782,5 @@ START_TEST(propsheet)
     test_buttons();
     test_custom_default_button();
     test_messages();
+    test_PSM_ADDPAGE();
 }
