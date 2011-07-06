@@ -407,8 +407,7 @@ HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration9Impl *declaration,
  * IDirect3DVertexShader implementation structure
  */
 typedef struct IDirect3DVertexShader9Impl {
-  /* IUnknown fields */
-  const IDirect3DVertexShader9Vtbl *lpVtbl;
+  IDirect3DVertexShader9 IDirect3DVertexShader9_iface;
   LONG ref;
   struct wined3d_shader *wined3d_shader;
   IDirect3DDevice9Ex *parentDevice;

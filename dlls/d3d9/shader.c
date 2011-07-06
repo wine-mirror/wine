@@ -25,7 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 static inline IDirect3DVertexShader9Impl *impl_from_IDirect3DVertexShader9(IDirect3DVertexShader9 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirect3DVertexShader9Impl, lpVtbl);
+    return CONTAINING_RECORD(iface, IDirect3DVertexShader9Impl, IDirect3DVertexShader9_iface);
 }
 
 static HRESULT WINAPI d3d9_vertexshader_QueryInterface(IDirect3DVertexShader9 *iface, REFIID riid, void **object)
@@ -48,7 +48,7 @@ static HRESULT WINAPI d3d9_vertexshader_QueryInterface(IDirect3DVertexShader9 *i
 
 static ULONG WINAPI d3d9_vertexshader_AddRef(IDirect3DVertexShader9 *iface)
 {
-    IDirect3DVertexShader9Impl *shader = (IDirect3DVertexShader9Impl *)iface;
+    IDirect3DVertexShader9Impl *shader = impl_from_IDirect3DVertexShader9(iface);
     ULONG refcount = InterlockedIncrement(&shader->ref);
 
     TRACE("%p increasing refcount to %u.\n", iface, refcount);
@@ -66,7 +66,7 @@ static ULONG WINAPI d3d9_vertexshader_AddRef(IDirect3DVertexShader9 *iface)
 
 static ULONG WINAPI d3d9_vertexshader_Release(IDirect3DVertexShader9 *iface)
 {
-    IDirect3DVertexShader9Impl *shader = (IDirect3DVertexShader9Impl *)iface;
+    IDirect3DVertexShader9Impl *shader = impl_from_IDirect3DVertexShader9(iface);
     ULONG refcount = InterlockedDecrement(&shader->ref);
 
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
@@ -88,9 +88,11 @@ static ULONG WINAPI d3d9_vertexshader_Release(IDirect3DVertexShader9 *iface)
 
 static HRESULT WINAPI d3d9_vertexshader_GetDevice(IDirect3DVertexShader9 *iface, IDirect3DDevice9 **device)
 {
+    IDirect3DVertexShader9Impl *shader = impl_from_IDirect3DVertexShader9(iface);
+
     TRACE("iface %p, device %p.\n", iface, device);
 
-    *device = (IDirect3DDevice9 *)((IDirect3DVertexShader9Impl *)iface)->parentDevice;
+    *device = (IDirect3DDevice9 *)shader->parentDevice;
     IDirect3DDevice9_AddRef(*device);
 
     TRACE("Returning device %p.\n", *device);
@@ -101,12 +103,13 @@ static HRESULT WINAPI d3d9_vertexshader_GetDevice(IDirect3DVertexShader9 *iface,
 static HRESULT WINAPI d3d9_vertexshader_GetFunction(IDirect3DVertexShader9 *iface,
         void *data, UINT *data_size)
 {
+    IDirect3DVertexShader9Impl *shader = impl_from_IDirect3DVertexShader9(iface);
     HRESULT hr;
 
     TRACE("iface %p, data %p, data_size %p.\n", iface, data, data_size);
 
     wined3d_mutex_lock();
-    hr = wined3d_shader_get_byte_code(((IDirect3DVertexShader9Impl *)iface)->wined3d_shader, data, data_size);
+    hr = wined3d_shader_get_byte_code(shader->wined3d_shader, data, data_size);
     wined3d_mutex_unlock();
 
     return hr;
@@ -138,7 +141,7 @@ HRESULT vertexshader_init(IDirect3DVertexShader9Impl *shader, IDirect3DDevice9Im
     HRESULT hr;
 
     shader->ref = 1;
-    shader->lpVtbl = &d3d9_vertexshader_vtbl;
+    shader->IDirect3DVertexShader9_iface.lpVtbl = &d3d9_vertexshader_vtbl;
 
     wined3d_mutex_lock();
     hr = wined3d_shader_create_vs(device->wined3d_device, byte_code, NULL,

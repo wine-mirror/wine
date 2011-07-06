@@ -2289,7 +2289,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexShader(IDirect3DDevice9Ex
     }
 
     TRACE("Created vertex shader %p.\n", object);
-    *shader = (IDirect3DVertexShader9 *)object;
+    *shader = &object->IDirect3DVertexShader9_iface;
 
     return D3D_OK;
 }
