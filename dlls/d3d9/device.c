@@ -2049,9 +2049,9 @@ static HRESULT WINAPI IDirect3DDevice9Impl_ProcessVertices(IDirect3DDevice9Ex *i
         IDirect3DVertexDeclaration9 *pVertexDecl, DWORD Flags)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
+    IDirect3DVertexBuffer9Impl *dest = unsafe_impl_from_IDirect3DVertexBuffer9(pDestBuffer);
     IDirect3DVertexDeclaration9Impl *Decl = (IDirect3DVertexDeclaration9Impl *) pVertexDecl;
     HRESULT hr;
-    IDirect3DVertexBuffer9Impl *dest = (IDirect3DVertexBuffer9Impl *) pDestBuffer;
 
     TRACE("iface %p, src_start_idx %u, dst_idx %u, vertex_count %u, dst_buffer %p, declaration %p, flags %#x.\n",
             iface, SrcStartIndex, DestIndex, VertexCount, pDestBuffer, pVertexDecl, Flags);
@@ -2446,6 +2446,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetStreamSource(IDirect3DDevice9Ex *i
         UINT StreamNumber, IDirect3DVertexBuffer9 *pStreamData, UINT OffsetInBytes, UINT Stride)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
+    IDirect3DVertexBuffer9Impl *streamdata = unsafe_impl_from_IDirect3DVertexBuffer9(pStreamData);
     HRESULT hr;
 
     TRACE("iface %p, stream_idx %u, buffer %p, offset %u, stride %u.\n",
@@ -2453,7 +2454,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetStreamSource(IDirect3DDevice9Ex *i
 
     wined3d_mutex_lock();
     hr = wined3d_device_set_stream_source(This->wined3d_device, StreamNumber,
-            pStreamData ? ((IDirect3DVertexBuffer9Impl *)pStreamData)->wineD3DVertexBuffer : NULL,
+            streamdata ? streamdata->wineD3DVertexBuffer : NULL,
             OffsetInBytes, Stride);
     wined3d_mutex_unlock();
 
