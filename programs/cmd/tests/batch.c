@@ -29,29 +29,19 @@ static DWORD workdir_len;
 static const char* replace_escaped_spaces(const char *data, DWORD size, DWORD *new_size)
 {
     static const char escaped_space[] = {'@','s','p','a','c','e','@','\0'};
-    const char *a, *b;
-    char *new_data;
-    DWORD len_space = sizeof(escaped_space) -1;
+    char *ptr, *new_data;
 
-    a = b = data;
-    *new_size = 0;
+    new_data = ptr = HeapAlloc(GetProcessHeap(), 0, size + 1);
+    memcpy( new_data, data, size );
+    new_data[size] = 0;
 
-    new_data = HeapAlloc(GetProcessHeap(), 0, size*sizeof(char));
-    ok(new_data != NULL, "HeapAlloc failed\n");
-    if(!new_data)
-        return NULL;
-
-    while( (b = strstr(a, escaped_space)) )
+    while ((ptr = strstr(ptr, escaped_space)))
     {
-        strncpy(new_data + *new_size, a, b-a + 1);
-        *new_size += b-a + 1;
-        new_data[*new_size - 1] = ' ';
-        a = b + len_space;
+        char *end = ptr + sizeof(escaped_space) - 1;
+        *ptr++ = ' ';
+        memmove( ptr, end, strlen(end) + 1 );
     }
-
-    strncpy(new_data + *new_size, a, strlen(a) + 1);
-    *new_size += strlen(a);
-
+    *new_size = strlen(new_data);
     return new_data;
 }
 
