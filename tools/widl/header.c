@@ -1152,6 +1152,9 @@ static void write_coclass(FILE *header, type_t *cocl)
   fprintf(header, " * %s coclass\n", cocl->name);
   fprintf(header, " */\n\n");
   write_coclass_guid(header, cocl);
+  fprintf(header, "\n#ifdef __cplusplus\n");
+  fprintf(header, "class %s;\n", cocl->name);
+  fprintf(header, "#endif\n");
   fprintf(header, "\n");
 }
 
