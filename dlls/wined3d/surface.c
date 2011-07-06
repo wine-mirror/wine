@@ -5793,20 +5793,22 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
     surface->ds_current_size.cy = surface->resource.height;
 }
 
-void surface_modify_location(struct wined3d_surface *surface, DWORD flag, BOOL persistent)
+void surface_modify_location(struct wined3d_surface *surface, DWORD location, BOOL persistent)
 {
     const struct wined3d_gl_info *gl_info = &surface->resource.device->adapter->gl_info;
     struct wined3d_surface *overlay;
 
     TRACE("surface %p, location %s, persistent %#x.\n",
-            surface, debug_surflocation(flag), persistent);
+            surface, debug_surflocation(location), persistent);
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         if (surface_is_offscreen(surface))
         {
-            /* With ORM_FBO, SFLAG_INTEXTURE and SFLAG_INDRAWABLE are the same for offscreen targets. */
-            if (flag & (SFLAG_INTEXTURE | SFLAG_INDRAWABLE)) flag |= (SFLAG_INTEXTURE | SFLAG_INDRAWABLE);
+            /* With ORM_FBO, SFLAG_INTEXTURE and SFLAG_INDRAWABLE are the same
+             * for offscreen targets. */
+            if (location & (SFLAG_INTEXTURE | SFLAG_INDRAWABLE))
+                location |= (SFLAG_INTEXTURE | SFLAG_INDRAWABLE);
         }
         else
         {
@@ -5814,16 +5816,14 @@ void surface_modify_location(struct wined3d_surface *surface, DWORD flag, BOOL p
         }
     }
 
-    if (flag & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)
+    if (location & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)
             && gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
-    {
-        flag |= (SFLAG_INTEXTURE | SFLAG_INSRGBTEX);
-    }
+        location |= (SFLAG_INTEXTURE | SFLAG_INSRGBTEX);
 
     if (persistent)
     {
-        if (((surface->flags & SFLAG_INTEXTURE) && !(flag & SFLAG_INTEXTURE))
-                || ((surface->flags & SFLAG_INSRGBTEX) && !(flag & SFLAG_INSRGBTEX)))
+        if (((surface->flags & SFLAG_INTEXTURE) && !(location & SFLAG_INTEXTURE))
+                || ((surface->flags & SFLAG_INSRGBTEX) && !(location & SFLAG_INSRGBTEX)))
         {
             if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
             {
@@ -5832,10 +5832,10 @@ void surface_modify_location(struct wined3d_surface *surface, DWORD flag, BOOL p
             }
         }
         surface->flags &= ~SFLAG_LOCATIONS;
-        surface->flags |= flag;
+        surface->flags |= location;
 
         /* Redraw emulated overlays, if any */
-        if (flag & SFLAG_INDRAWABLE && !list_empty(&surface->overlays))
+        if (location & SFLAG_INDRAWABLE && !list_empty(&surface->overlays))
         {
             LIST_FOR_EACH_ENTRY(overlay, &surface->overlays, struct wined3d_surface, overlay_entry)
             {
@@ -5845,7 +5845,7 @@ void surface_modify_location(struct wined3d_surface *surface, DWORD flag, BOOL p
     }
     else
     {
-        if ((surface->flags & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)) && (flag & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)))
+        if ((surface->flags & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)) && (location & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)))
         {
             if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
             {
@@ -5853,7 +5853,7 @@ void surface_modify_location(struct wined3d_surface *surface, DWORD flag, BOOL p
                 wined3d_texture_set_dirty(surface->container.u.texture, TRUE);
             }
         }
-        surface->flags &= ~flag;
+        surface->flags &= ~location;
     }
 
     if (!(surface->flags & SFLAG_LOCATIONS))
