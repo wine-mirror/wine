@@ -1199,7 +1199,6 @@ static ME_DisplayItem *ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pR
   ME_DisplayItem *pNext, *pLastRun;
   pNext = ME_FindItemFwd(pRow, diRunOrStartRow);
   assert(pNext->type == diRun);
-  pLastRun = pNext;
   if (pbCaretAtEnd) *pbCaretAtEnd = FALSE;
   if (pOffset) *pOffset = 0;
   do {
