@@ -5053,7 +5053,7 @@ HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc)
     if (!XGetGeometry(gdi_display, pixmap, &root, &x, &y, &width, &height,
                       &border_width, &depth)) depth = 0;
     wine_tsx11_unlock();
-    if (!depth) return 0;
+    if (!pixmap_formats[depth]) return 0;
 
     TRACE("\tPixmap properties: width=%d, height=%d, depth=%d\n",
           width, height, depth);
@@ -5062,7 +5062,7 @@ HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc)
      * Create an HBITMAP with the same dimensions and BPP as the pixmap,
      * and make it a container for the pixmap passed.
      */
-    if (!(hBmp = CreateBitmap( width, height, 1, depth_to_bpp(depth), NULL ))) return 0;
+    if (!(hBmp = CreateBitmap( width, height, 1, pixmap_formats[depth]->bits_per_pixel, NULL ))) return 0;
 
     /* force bitmap to be owned by a screen DC */
     hdcMem = CreateCompatibleDC( hdc );

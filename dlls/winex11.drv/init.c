@@ -240,10 +240,8 @@ INT CDECL X11DRV_GetDeviceCaps( X11DRV_PDEVICE *physDev, INT cap )
          * BITSPIXEL: 8  -> COLORRES: 18
          * BITSPIXEL: 16 -> COLORRES: 16
          * BITSPIXEL: 24 -> COLORRES: 24
-         * (note that depth_to_bpp never chooses a bpp of 24)
          * BITSPIXEL: 32 -> COLORRES: 24 */
-        return (screen_bpp <= 8) ? 18 :
-               (screen_bpp == 32) ? 24 : screen_bpp;
+        return (screen_bpp <= 8) ? 18 : min( 24, screen_bpp );
     case RASTERCAPS:
         return (RC_BITBLT | RC_BANDING | RC_SCALING | RC_BITMAP64 | RC_DI_BITMAP |
                 RC_DIBTODEV | RC_BIGFONT | RC_STRETCHBLT | RC_STRETCHDIB | RC_DEVBITS |

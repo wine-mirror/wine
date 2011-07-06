@@ -503,8 +503,6 @@ extern COLORREF X11DRV_PALETTE_GetColor( X11DRV_PDEVICE *physDev, COLORREF color
 extern int X11DRV_PALETTE_LookupPixel(ColorShifts *shifts, COLORREF color) DECLSPEC_HIDDEN;
 extern void X11DRV_PALETTE_ComputeColorShifts(ColorShifts *shifts, unsigned long redMask, unsigned long greenMask, unsigned long blueMask) DECLSPEC_HIDDEN;
 
-extern unsigned int depth_to_bpp( unsigned int depth ) DECLSPEC_HIDDEN;
-
 /* GDI escapes */
 
 #define X11DRV_ESCAPE 6789
@@ -589,6 +587,7 @@ static inline size_t get_property_size( int format, unsigned long count )
 }
 
 extern Visual *visual DECLSPEC_HIDDEN;
+extern XPixmapFormatValues **pixmap_formats DECLSPEC_HIDDEN;
 extern Window root_window DECLSPEC_HIDDEN;
 extern int clipping_cursor DECLSPEC_HIDDEN;
 extern unsigned int screen_width DECLSPEC_HIDDEN;
