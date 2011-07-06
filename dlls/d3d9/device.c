@@ -853,7 +853,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexBuffer(IDirect3DDevice9Ex
     }
 
     TRACE("Created vertex buffer %p.\n", object);
-    *buffer = (IDirect3DVertexBuffer9 *)object;
+    *buffer = &object->IDirect3DVertexBuffer9_iface;
 
     return D3D_OK;
 }

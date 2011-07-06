@@ -251,10 +251,8 @@ HRESULT surface_init(IDirect3DSurface9Impl *surface, IDirect3DDevice9Impl *devic
  */
 typedef struct IDirect3DVertexBuffer9Impl
 {
-    /* IUnknown fields */
-    const IDirect3DVertexBuffer9Vtbl *lpVtbl;
-    LONG                    ref;
-
+    IDirect3DVertexBuffer9 IDirect3DVertexBuffer9_iface;
+    LONG ref;
     struct wined3d_buffer *wineD3DVertexBuffer;
     IDirect3DDevice9Ex *parentDevice;
     DWORD fvf;
