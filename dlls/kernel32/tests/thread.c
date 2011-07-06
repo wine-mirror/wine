@@ -1351,19 +1351,16 @@ static void test_ThreadErrorMode(void)
     pSetThreadErrorMode(oldmode, NULL);
 }
 
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 static inline void set_fpu_cw(WORD cw)
 {
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
     __asm__ volatile ("fnclex; fldcw %0" : : "m" (cw));
-#endif
 }
 
 static inline WORD get_fpu_cw(void)
 {
     WORD cw = 0;
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
     __asm__ volatile ("fnstcw %0" : "=m" (cw));
-#endif
     return cw;
 }
 
@@ -1431,6 +1428,7 @@ static void test_thread_fpu_cw(void)
     cw = get_fpu_cw();
     ok(cw == initial_cw, "Expected FPU control word %#x, got %#x.\n", initial_cw, cw);
 }
+#endif
 
 START_TEST(thread)
 {
