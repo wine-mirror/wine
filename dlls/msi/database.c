@@ -1519,7 +1519,7 @@ static LPWSTR create_diff_row_query(MSIDATABASE *merge, MSIQUERY *view,
                                     LPWSTR table, MSIRECORD *rec)
 {
     LPWSTR query = NULL, clause = NULL;
-    LPWSTR ptr = NULL, val;
+    LPWSTR val;
     LPCWSTR setptr;
     DWORD size = 1, oldsize;
     LPCWSTR key;
@@ -1542,7 +1542,6 @@ static LPWSTR create_diff_row_query(MSIDATABASE *merge, MSIQUERY *view,
     if (!clause)
         goto done;
 
-    ptr = clause;
     count = MSI_RecordGetFieldCount(keys);
     for (i = 1; i <= count; i++)
     {
@@ -1563,8 +1562,7 @@ static LPWSTR create_diff_row_query(MSIDATABASE *merge, MSIQUERY *view,
             goto done;
         }
 
-        ptr = clause + oldsize - 1;
-        sprintfW(ptr, setptr, key, val);
+        sprintfW(clause + oldsize - 1, setptr, key, val);
         msi_free(val);
     }
 
