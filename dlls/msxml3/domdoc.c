@@ -2893,7 +2893,6 @@ static HRESULT WINAPI domdoc_setProperty(
         {
             ctx = xmlXPathNewContext(This->node.node->doc);
             pTokBegin = nsStr;
-            pTokEnd = nsStr;
             for (; *pTokBegin; pTokBegin = pTokEnd)
             {
                 if (pNsEntry != NULL)
@@ -2920,7 +2919,6 @@ static HRESULT WINAPI domdoc_setProperty(
                 {
                     /*valid for XSLPattern?*/
                     FIXME("Setting default xmlns not supported - skipping.\n");
-                    pTokBegin = pTokEnd;
                     continue;
                 }
                 else if (*pTokBegin == ':')
