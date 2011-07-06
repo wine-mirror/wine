@@ -461,7 +461,7 @@ static void device_preload_texture(const struct wined3d_state *state, unsigned i
     texture->texture_ops->texture_preload(texture, srgb);
 }
 
-void device_preload_textures(struct wined3d_device *device)
+void device_preload_textures(const struct wined3d_device *device)
 {
     const struct wined3d_state *state = &device->stateBlock->state;
     unsigned int i;
