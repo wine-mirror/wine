@@ -161,6 +161,7 @@ static void output_relay_debug( DLLSPEC *spec )
 
         output( "\t.align %d\n", get_alignment(4) );
         output( ".L__wine_spec_relay_entry_point_%d:\n", i );
+        output_cfi( ".cfi_startproc" );
 
         args = get_args_size(odp) / get_ptr_size();
         flags = 0;
@@ -179,9 +180,11 @@ static void output_relay_debug( DLLSPEC *spec )
                 output( "\tpushl %%eax\n" );
             else
                 output( "\tpushl %%esp\n" );
+            output_cfi( ".cfi_adjust_cfa_offset 4" );
 
             if (odp->flags & FLAG_RET64) flags |= 1;
             output( "\tpushl $%u\n", (flags << 24) | (args << 16) | (i - spec->base) );
+            output_cfi( ".cfi_adjust_cfa_offset 4" );
 
             if (UsePIC)
             {
@@ -190,6 +193,7 @@ static void output_relay_debug( DLLSPEC *spec )
             }
             else output( "\tmovl $.L__wine_spec_relay_descr,%%eax\n" );
             output( "\tpushl %%eax\n" );
+            output_cfi( ".cfi_adjust_cfa_offset 4" );
 
             if (odp->flags & FLAG_REGISTER)
             {
@@ -198,6 +202,7 @@ static void output_relay_debug( DLLSPEC *spec )
             else
             {
                 output( "\tcall *4(%%eax)\n" );
+                output_cfi( ".cfi_adjust_cfa_offset -12" );
                 if (odp->type == TYPE_STDCALL || odp->type == TYPE_THISCALL)
                     output( "\tret $%u\n", args * get_ptr_size() );
                 else
@@ -206,9 +211,8 @@ static void output_relay_debug( DLLSPEC *spec )
             break;
 
         case CPU_x86_64:
-            output( "\t.cfi_startproc\n" );
             output( "\tsubq $40,%%rsp\n" );
-            output( "\t.cfi_adjust_cfa_offset 40\n" );
+            output_cfi( ".cfi_adjust_cfa_offset 40" );
             switch (args)
             {
             default: output( "\tmovq %%%s,72(%%rsp)\n", is_float_arg( odp, 3 ) ? "xmm3" : "r9" );
@@ -226,14 +230,14 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\tleaq .L__wine_spec_relay_descr(%%rip),%%rcx\n" );
             output( "\tcallq *8(%%rcx)\n" );
             output( "\taddq $40,%%rsp\n" );
-            output( "\t.cfi_adjust_cfa_offset -40\n" );
+            output_cfi( ".cfi_adjust_cfa_offset -40" );
             output( "\tret\n" );
-            output( "\t.cfi_endproc\n" );
             break;
 
         default:
             assert(0);
         }
+        output_cfi( ".cfi_endproc" );
     }
 }
 
