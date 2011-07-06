@@ -115,7 +115,7 @@ INT16 WINAPI ExtractPQ16(HPQ16 hPQ)
 {
     struct hpq *queue, *prev, *current, *currentPrev;
     int key = 0, tag = -1;
-    currentPrev = prev = NULL;
+    prev = NULL;
     queue = current = hpqueue;
     if (current)
         key = current->key;
