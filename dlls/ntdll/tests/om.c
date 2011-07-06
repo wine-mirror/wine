@@ -658,6 +658,8 @@ static void test_query_object(void)
 {
     static const WCHAR name[] = {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s',
                                  '\\','t','e','s','t','_','e','v','e','n','t'};
+    static const WCHAR type_event[] = {'E','v','e','n','t'};
+    static const WCHAR type_file[] = {'F','i','l','e'};
     HANDLE handle;
     char buffer[1024];
     NTSTATUS status;
@@ -673,9 +675,19 @@ static void test_query_object(void)
     ok( len >= sizeof(UNICODE_STRING) + sizeof(name) + sizeof(WCHAR), "unexpected len %u\n", len );
 
     len = 0;
+    status = pNtQueryObject( handle, ObjectTypeInformation, buffer, 0, &len );
+    todo_wine ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryObject failed %x\n", status );
+    todo_wine ok( len >= sizeof(OBJECT_TYPE_INFORMATION) + sizeof(type_event) + sizeof(WCHAR), "unexpected len %u\n", len );
+
+    len = 0;
     status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(UNICODE_STRING), &len );
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryObject failed %x\n", status );
     ok( len >= sizeof(UNICODE_STRING) + sizeof(name) + sizeof(WCHAR), "unexpected len %u\n", len );
+
+    len = 0;
+    status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(OBJECT_TYPE_INFORMATION), &len );
+    todo_wine ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryObject failed %x\n", status );
+    todo_wine ok( len >= sizeof(OBJECT_TYPE_INFORMATION) + sizeof(type_event) + sizeof(WCHAR), "unexpected len %u\n", len );
 
     len = 0;
     status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(buffer), &len );
@@ -692,6 +704,21 @@ static void test_query_object(void)
     status = pNtQueryObject( handle, ObjectNameInformation, buffer, len, &len );
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryObject failed %x\n", status );
     ok( len >= sizeof(UNICODE_STRING) + sizeof(name) + sizeof(WCHAR), "unexpected len %u\n", len );
+
+    len = 0;
+    memset( buffer, 0, sizeof(buffer) );
+    status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
+    todo_wine ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
+    todo_wine ok( len > sizeof(OBJECT_TYPE_INFORMATION), "unexpected len %u\n", len );
+    str = (UNICODE_STRING *)buffer;
+    todo_wine ok( len >= sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR), "unexpected len %u\n", len );
+    todo_wine ok( str->Buffer && !memcmp( str->Buffer, type_event, sizeof(type_file) ),
+                  "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+
+    len -= sizeof(WCHAR);
+    status = pNtQueryObject( handle, ObjectTypeInformation, buffer, len, &len );
+    todo_wine ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryObject failed %x\n", status );
+    todo_wine ok( len >= sizeof(OBJECT_TYPE_INFORMATION) + sizeof(type_event) + sizeof(WCHAR), "unexpected len %u\n", len );
 
     pNtClose( handle );
 
@@ -732,6 +759,17 @@ static void test_query_object(void)
         "NtQueryObject failed %x\n", status );
     ok( len == expected_len || broken(!len),
         "unexpected len %u\n", len );
+
+    len = 0;
+    memset( buffer, 0, sizeof(buffer) );
+    status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
+    todo_wine ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
+    todo_wine ok( len > sizeof(OBJECT_TYPE_INFORMATION), "unexpected len %u\n", len );
+    str = (UNICODE_STRING *)buffer;
+    expected_len = sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR);
+    todo_wine ok( len >= expected_len, "unexpected len %u\n", len );
+    todo_wine ok( str->Buffer && !memcmp( str->Buffer, type_file, sizeof(type_file) ),
+                  "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
 
     pNtClose( handle );
 }
