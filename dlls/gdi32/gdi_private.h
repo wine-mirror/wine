@@ -273,6 +273,9 @@ static inline INT GDI_ROUND(double val)
    return (int)floor(val + 0.5);
 }
 
+#define GET_DC_PHYSDEV(dc,func) \
+    get_physdev_entry_point( (dc)->physDev, FIELD_OFFSET(struct gdi_dc_funcs,func))
+
 /* bitmap object */
 
 typedef struct tagBITMAPOBJ

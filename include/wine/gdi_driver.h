@@ -200,7 +200,7 @@ static inline PHYSDEV get_physdev_entry_point( PHYSDEV dev, size_t offset )
     return dev;
 }
 
-#define GET_DC_PHYSDEV(dc,func) get_physdev_entry_point( (dc)->physDev, FIELD_OFFSET(DC_FUNCTIONS,func))
-#define GET_NEXT_PHYSDEV(dev,func) get_physdev_entry_point( (dev)->next, FIELD_OFFSET(DC_FUNCTIONS,func))
+#define GET_NEXT_PHYSDEV(dev,func) \
+    get_physdev_entry_point( (dev)->next, FIELD_OFFSET(struct gdi_dc_funcs,func))
 
 #endif /* __WINE_WINE_GDI_DRIVER_H */
