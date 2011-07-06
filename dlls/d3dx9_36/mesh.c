@@ -3763,7 +3763,6 @@ HRESULT WINAPI D3DXCreateSphere(LPDIRECT3DDEVICE9 device, FLOAT radius, UINT sli
 
     vertex = 0;
     face = 0;
-    stack = 0;
 
     vertices[vertex].normal.x = 0.0f;
     vertices[vertex].normal.y = 0.0f;
