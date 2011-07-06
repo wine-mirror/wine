@@ -660,10 +660,7 @@ static int LookupEntry(LFANDSIZE *plfsz)
 
   for(i = mru; i >= 0; i = glyphsetCache[i].next) {
     TRACE("%d\n", i);
-    if(glyphsetCache[i].count == -1) { /* reached free list so stop */
-      i = -1;
-      break;
-    }
+    if(glyphsetCache[i].count == -1) break; /* reached free list so stop */
 
     if(!fontcmp(&glyphsetCache[i].lfsz, plfsz)) {
       glyphsetCache[i].count++;
