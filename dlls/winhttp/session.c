@@ -1595,7 +1595,6 @@ BOOL WINAPI WinHttpTimeToSystemTime( LPCWSTR string, SYSTEMTIME *time )
     while (*s && !isdigitW( *s )) s++;
     if (*s == '\0') return TRUE;
     time->wSecond = strtolW( s, &end, 10 );
-    s = end;
 
     time->wMilliseconds = 0;
     return TRUE;
