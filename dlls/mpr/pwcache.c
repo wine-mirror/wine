@@ -260,7 +260,6 @@ UINT WINAPI WNetEnumCachedPasswords(
 
     sprintf(prefix, "X-%02X-", nType );
 
-    i = 0;
     for( i=0;  ; i++ )
     {
         val_sz  = sizeof val;
