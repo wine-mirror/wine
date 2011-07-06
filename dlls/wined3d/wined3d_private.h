@@ -2058,7 +2058,7 @@ static inline struct wined3d_surface *surface_from_resource(struct wined3d_resou
     return CONTAINING_RECORD(resource, struct wined3d_surface, resource);
 }
 
-static inline GLuint surface_get_texture_name(struct wined3d_surface *surface,
+static inline GLuint surface_get_texture_name(const struct wined3d_surface *surface,
         const struct wined3d_gl_info *gl_info, BOOL srgb)
 {
     return srgb && !gl_info->supported[EXT_TEXTURE_SRGB_DECODE]
