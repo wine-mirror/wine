@@ -14270,6 +14270,8 @@ $as_echo "#define HAVE_DAYLIGHT 1" >>confdefs.h
 
 fi
 
+ac_save_LIBS="$LIBS"
+LIBS="$LIBS -lm"
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for isinf" >&5
 $as_echo_n "checking for isinf... " >&6; }
 if ${ac_cv_have_isinf+:} false; then :
@@ -14335,6 +14337,7 @@ then
 $as_echo "#define HAVE_ISNAN 1" >>confdefs.h
 
 fi
+LIBS="$ac_save_LIBS"
 
 
 case $host_cpu in

@@ -2327,6 +2327,8 @@ then
 fi
 
 dnl Check for isinf
+ac_save_LIBS="$LIBS"
+LIBS="$LIBS -lm"
 AC_CACHE_CHECK([for isinf], ac_cv_have_isinf,
                AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[float f = 0.0; return isinf(f)]])],[ac_cv_have_isinf="yes"],[ac_cv_have_isinf="no"]))
 if test "$ac_cv_have_isinf" = "yes"
@@ -2341,6 +2343,7 @@ if test "$ac_cv_have_isnan" = "yes"
 then
     AC_DEFINE(HAVE_ISNAN, 1, [Define to 1 if you have the `isnan' function.])
 fi
+LIBS="$ac_save_LIBS"
 
 dnl *** check for the need to define platform-specific symbols
 
