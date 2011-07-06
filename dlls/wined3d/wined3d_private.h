@@ -2039,7 +2039,7 @@ struct wined3d_surface
     WINEDDCOLORKEY            glCKey;
 
     struct list               renderbuffers;
-    struct wined3d_renderbuffer_entry *current_renderbuffer;
+    const struct wined3d_renderbuffer_entry *current_renderbuffer;
     SIZE ds_current_size;
 
     /* DirectDraw clippers */
