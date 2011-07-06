@@ -1267,7 +1267,7 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
             write_header_stmts(header, type_iface_get_stmts(iface), iface, FALSE);
             write_rpc_interface_end(header, iface);
           }
-          if (is_object(iface)) is_object_interface++;
+          if (is_object(iface)) is_object_interface--;
         }
         else if (type_get_type(stmt->u.type) == TYPE_COCLASS)
           write_coclass(header, stmt->u.type);
