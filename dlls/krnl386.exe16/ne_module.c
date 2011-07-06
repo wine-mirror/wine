@@ -1400,7 +1400,7 @@ void WINAPI FreeLibrary16( HINSTANCE16 handle )
  */
 HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 {
-    HMODULE16	hModule = hFirstModule;
+    HMODULE16	hModule;
     LPSTR	s;
     BYTE	len, *name_table;
     char	tmpstr[MAX_PATH];

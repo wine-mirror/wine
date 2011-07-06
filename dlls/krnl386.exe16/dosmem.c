@@ -473,7 +473,7 @@ LPVOID DOSMEM_AllocBlock(UINT size, UINT16* pseg)
 {
     MCB *curr;
     MCB *next = NULL;
-    WORD psp = DOSVM_psp;
+    WORD psp;
 
     DOSMEM_InitDosMemory();
 
