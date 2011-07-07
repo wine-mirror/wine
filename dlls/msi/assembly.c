@@ -247,8 +247,11 @@ static WCHAR *get_assembly_display_name( MSIDATABASE *db, const WCHAR *comp, MSI
 
 done:
     msiobj_release( &view->hdr );
-    for (i = 0; i < name.count; i++) msi_free( name.attrs[i] );
-    msi_free( name.attrs );
+    if (name.attrs)
+    {
+        for (i = 0; i < name.count; i++) msi_free( name.attrs[i] );
+        msi_free( name.attrs );
+    }
     return display_name;
 }
 
