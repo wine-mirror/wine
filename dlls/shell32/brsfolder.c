@@ -852,7 +852,9 @@ static BOOL BrsFolder_OnSetExpanded(browse_info *info, LPVOID selection,
     LPCITEMIDLIST pidlCurrent, pidlRoot;
     TVITEMEXW item;
     BOOL bResult = FALSE;
-    
+
+    memset(&item, 0, sizeof(item));
+
     /* If 'selection' is a string, convert to a Shell ID List. */ 
     if (is_str) {
         IShellFolder *psfDesktop;
@@ -883,7 +885,6 @@ static BOOL BrsFolder_OnSetExpanded(browse_info *info, LPVOID selection,
         goto done;
 
     /* Initialize item to point to the first child of the root folder. */
-    memset(&item, 0, sizeof(item));
     item.mask = TVIF_PARAM;
     item.hItem = (HTREEITEM)SendMessageW(info->hwndTreeView, TVM_GETNEXTITEM, TVGN_ROOT, 0);
 
