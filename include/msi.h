@@ -673,6 +673,10 @@ UINT WINAPI MsiDetermineApplicablePatchesA(LPCSTR, DWORD, PMSIPATCHSEQUENCEINFOA
 UINT WINAPI MsiDetermineApplicablePatchesW(LPCWSTR, DWORD, PMSIPATCHSEQUENCEINFOW);
 #define     MsiDetermineApplicablePatches WINELIB_NAME_AW(MsiDetermineApplicablePatches)
 
+UINT WINAPI MsiDeterminePatchSequenceA(LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, PMSIPATCHSEQUENCEINFOA);
+UINT WINAPI MsiDeterminePatchSequenceW(LPCWSTR, LPCWSTR, MSIINSTALLCONTEXT, DWORD, PMSIPATCHSEQUENCEINFOW);
+#define     MsiDeterminePatchSequence WINELIB_NAME_AW(MsiDeterminePatchSequence)
+
 UINT WINAPI MsiApplyMultiplePatchesA(LPCSTR, LPCSTR, LPCSTR);
 UINT WINAPI MsiApplyMultiplePatchesW(LPCWSTR, LPCWSTR, LPCWSTR);
 #define     MsiApplyMultiplePatches WINELIB_NAME_AW(MsiApplyMultiplePatches)
