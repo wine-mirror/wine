@@ -252,7 +252,7 @@ BOOL PSDRV_WriteSetDownloadFont(PHYSDEV dev)
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     char *ps_name;
     LPOUTLINETEXTMETRICA potm;
-    DWORD len = GetOutlineTextMetricsA(physDev->hdc, 0, NULL);
+    DWORD len = GetOutlineTextMetricsA(dev->hdc, 0, NULL);
     DOWNLOAD *pdl;
     LOGFONTW lf;
     UINT ppem;
@@ -261,20 +261,20 @@ BOOL PSDRV_WriteSetDownloadFont(PHYSDEV dev)
     assert(physDev->font.fontloc == Download);
 
     potm = HeapAlloc(GetProcessHeap(), 0, len);
-    GetOutlineTextMetricsA(physDev->hdc, len, potm);
+    GetOutlineTextMetricsA(dev->hdc, len, potm);
 
     get_download_name(dev, potm, &ps_name);
     physDev->font.fontinfo.Download = is_font_downloaded(physDev, ps_name);
 
-    if (!GetObjectW( GetCurrentObject(physDev->hdc, OBJ_FONT), sizeof(lf), &lf ))
+    if (!GetObjectW( GetCurrentObject(dev->hdc, OBJ_FONT), sizeof(lf), &lf ))
         return FALSE;
 
-    ppem = calc_ppem_for_height(physDev->hdc, lf.lfHeight);
+    ppem = calc_ppem_for_height(dev->hdc, lf.lfHeight);
 
     /* Retrieve the world -> device transform */
-    GetTransform(physDev->hdc, 0x204, &xform);
+    GetTransform(dev->hdc, 0x204, &xform);
 
-    if(GetGraphicsMode(physDev->hdc) == GM_COMPATIBLE)
+    if(GetGraphicsMode(dev->hdc) == GM_COMPATIBLE)
     {
         xform.eM11 = xform.eM22 = fabs(xform.eM22);
         xform.eM21 = xform.eM12 = 0;
@@ -294,7 +294,7 @@ BOOL PSDRV_WriteSetDownloadFont(PHYSDEV dev)
         RECT bbox;
         UINT emsize;
 
-        if (!get_bbox(physDev->hdc, &bbox, &emsize)) {
+        if (!get_bbox(dev->hdc, &bbox, &emsize)) {
 	    HeapFree(GetProcessHeap(), 0, potm);
 	    return FALSE;
 	}
@@ -320,7 +320,7 @@ BOOL PSDRV_WriteSetDownloadFont(PHYSDEV dev)
 
         if(pdl->type == Type42) {
             char g_name[MAX_G_NAME + 1];
-            get_glyph_name(physDev->hdc, 0, g_name);
+            get_glyph_name(dev->hdc, 0, g_name);
             T42_download_glyph(dev, pdl, 0, g_name);
         }
     }
@@ -357,7 +357,7 @@ BOOL PSDRV_WriteDownloadGlyphShow(PHYSDEV dev, WORD *glyphs,
     switch(physDev->font.fontinfo.Download->type) {
     case Type42:
     for(i = 0; i < count; i++) {
-        get_glyph_name(physDev->hdc, glyphs[i], g_name);
+        get_glyph_name(dev->hdc, glyphs[i], g_name);
 	T42_download_glyph(dev, physDev->font.fontinfo.Download, glyphs[i], g_name);
 	PSDRV_WriteGlyphShow(dev, g_name);
     }
@@ -365,7 +365,7 @@ BOOL PSDRV_WriteDownloadGlyphShow(PHYSDEV dev, WORD *glyphs,
 
     case Type1:
     for(i = 0; i < count; i++) {
-        get_glyph_name(physDev->hdc, glyphs[i], g_name);
+        get_glyph_name(dev->hdc, glyphs[i], g_name);
 	T1_download_glyph(dev, physDev->font.fontinfo.Download, glyphs[i], g_name);
 	PSDRV_WriteGlyphShow(dev, g_name);
     }

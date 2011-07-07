@@ -355,7 +355,6 @@ typedef struct {
 typedef struct
 {
     struct gdi_physdev  dev;
-    HDC                 hdc;
     PSFONT		font;		/* Current PS font */
     DOWNLOAD            *downloaded_fonts;
     PSPEN		pen;

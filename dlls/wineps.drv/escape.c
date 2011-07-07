@@ -155,7 +155,7 @@ INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_dat
         r->bottom = 0;
 	TRACE("NEXTBAND rect to 0,0 - 0,0\n" );
 	physDev->job.banding = FALSE;
-        return EndPage( physDev->hdc );
+        return EndPage( dev->hdc );
     }
 
     case SETCOPYCOUNT:

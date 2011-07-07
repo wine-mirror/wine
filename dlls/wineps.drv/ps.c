@@ -839,8 +839,8 @@ BOOL PSDRV_WritePatternDict(PHYSDEV dev, BITMAP *bm, BYTE *bits)
     PSDRV_WriteSpool(dev, "def\n", 4);
 
     PSDRV_WriteIndexColorSpaceBegin(dev, 1);
-    map[0] = GetTextColor( physDev->hdc );
-    map[1] = GetBkColor( physDev->hdc );
+    map[0] = GetTextColor( dev->hdc );
+    map[1] = GetBkColor( dev->hdc );
     PSDRV_WriteRGB(dev, map, 2);
     PSDRV_WriteIndexColorSpaceEnd(dev);
 

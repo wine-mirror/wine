@@ -342,7 +342,6 @@ BOOL CDECL PSDRV_CreateDC( HDC hdc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWST
     physDev = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(*physDev) );
     if (!physDev) return FALSE;
     *pdev = physDev;
-    physDev->hdc = hdc;
 
     physDev->pi = pi;
 
@@ -408,7 +407,7 @@ HDC CDECL PSDRV_ResetDC( PHYSDEV dev, const DEVMODEW *lpInitData )
         HeapFree(PSDRV_Heap, 0, devmodeA);
         PSDRV_UpdateDevCaps(physDev);
     }
-    return physDev->hdc;
+    return dev->hdc;
 }
 
 /***********************************************************************
@@ -520,7 +519,7 @@ INT CDECL PSDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
     case SHADEBLENDCAPS:
         return SB_NONE;
     default:
-        FIXME("(%p): unsupported capability %d, will return 0\n", physDev->hdc, cap );
+        FIXME("(%p): unsupported capability %d, will return 0\n", dev->hdc, cap );
         return 0;
     }
 }

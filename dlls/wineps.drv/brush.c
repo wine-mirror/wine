@@ -37,7 +37,7 @@ HBRUSH CDECL PSDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
     TRACE("hbrush = %p\n", hbrush);
 
     if (hbrush == GetStockObject( DC_BRUSH ))
-        logbrush.lbColor = GetDCBrushColor( physDev->hdc );
+        logbrush.lbColor = GetDCBrushColor( dev->hdc );
 
     switch(logbrush.lbStyle) {
 
@@ -73,7 +73,7 @@ COLORREF CDECL PSDRV_SetDCBrushColor( PHYSDEV dev, COLORREF color )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
-    if (GetCurrentObject( physDev->hdc, OBJ_BRUSH ) == GetStockObject( DC_BRUSH ))
+    if (GetCurrentObject( dev->hdc, OBJ_BRUSH ) == GetStockObject( DC_BRUSH ))
     {
         PSDRV_CreateColor( dev, &physDev->brush.color, color );
         physDev->brush.set = FALSE;
@@ -93,7 +93,7 @@ static BOOL PSDRV_SetBrush( PHYSDEV dev )
     LOGBRUSH logbrush;
     BOOL ret = TRUE;
 
-    if (!GetObjectA( GetCurrentObject(physDev->hdc,OBJ_BRUSH), sizeof(logbrush), &logbrush ))
+    if (!GetObjectA( GetCurrentObject(dev->hdc,OBJ_BRUSH), sizeof(logbrush), &logbrush ))
     {
         ERR("Can't get BRUSHOBJ\n");
 	return FALSE;
@@ -159,7 +159,7 @@ BOOL PSDRV_Brush(PHYSDEV dev, BOOL EO)
     if(physDev->pathdepth)
         return FALSE;
 
-    if (!GetObjectA( GetCurrentObject(physDev->hdc,OBJ_BRUSH), sizeof(logbrush), &logbrush ))
+    if (!GetObjectA( GetCurrentObject(dev->hdc,OBJ_BRUSH), sizeof(logbrush), &logbrush ))
     {
         ERR("Can't get BRUSHOBJ\n");
 	return FALSE;

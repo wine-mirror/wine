@@ -218,7 +218,7 @@ BOOL PSDRV_SelectBuiltinFont(PHYSDEV dev, HFONT hfont,
         POINT pts[2];
 	pts[0].x = pts[0].y = pts[1].x = 0;
 	pts[1].y = height;
-	LPtoDP(physDev->hdc, pts, 2);
+	LPtoDP(dev->hdc, pts, 2);
 	height = pts[1].y - pts[0].y;
     }
     ScaleFont(physDev->font.fontinfo.Builtin.afm, height,
@@ -437,7 +437,7 @@ BOOL CDECL PSDRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW pro
 	        UINT fm;
 
 	        TRACE("Got '%s'\n", afmle->afm->FontName);
-	        fm = PSDRV_GetFontMetric( physDev->hdc, afmle->afm, &tm, &lf );
+	        fm = PSDRV_GetFontMetric( dev->hdc, afmle->afm, &tm, &lf );
 		if( (b = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp )) )
 		     bRet = b;
 		else break;
@@ -451,7 +451,7 @@ BOOL CDECL PSDRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW pro
 
 	    afmle = family->afmlist;
 	    TRACE("Got '%s'\n", afmle->afm->FontName);
-	    fm = PSDRV_GetFontMetric( physDev->hdc, afmle->afm, &tm, &lf );
+	    fm = PSDRV_GetFontMetric( dev->hdc, afmle->afm, &tm, &lf );
 	    if( (b = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp )) )
 	        bRet = b;
 	    else break;
