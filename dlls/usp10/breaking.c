@@ -82,7 +82,7 @@ void BREAK_line(const WCHAR *chars, int count, const SCRIPT_ANALYSIS *sa, SCRIPT
 
     for (i = 0; i < count; i++)
     {
-        break_class[i] = wine_linebreak_table[wine_linebreak_table[chars[i] >> 8] + (chars[i] & 0xff)];
+        break_class[i] = get_table_entry( wine_linebreak_table, chars[i] );
         break_before[i] = 0;
 
         memset(&la[i],0,sizeof(SCRIPT_LOGATTR));

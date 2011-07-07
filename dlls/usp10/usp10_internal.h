@@ -112,6 +112,11 @@ static inline BOOL is_consonant( int type )
     return (type == lex_Ra || type == lex_Consonant);
 }
 
+static inline WCHAR get_table_entry( const unsigned short *table, WCHAR ch )
+{
+    return table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
+}
+
 typedef int (*lexical_function)(WCHAR c);
 typedef void (*reorder_function)(LPWSTR pwChar, IndicSyllable *syllable, lexical_function lex);
 
