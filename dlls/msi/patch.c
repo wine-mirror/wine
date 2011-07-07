@@ -150,7 +150,7 @@ UINT msi_check_patch_applicable( MSIPACKAGE *package, MSISUMMARYINFO *si )
     return ret;
 }
 
-UINT msi_parse_patch_summary( MSISUMMARYINFO *si, MSIPATCHINFO **patch )
+static UINT msi_parse_patch_summary( MSISUMMARYINFO *si, MSIPATCHINFO **patch )
 {
     MSIPATCHINFO *pi;
     UINT r = ERROR_SUCCESS;
@@ -570,7 +570,7 @@ done:
     return r;
 }
 
-UINT msi_apply_patch_db( MSIPACKAGE *package, MSIDATABASE *patch_db, MSIPATCHINFO *patch )
+static UINT msi_apply_patch_db( MSIPACKAGE *package, MSIDATABASE *patch_db, MSIPATCHINFO *patch )
 {
     UINT i, r = ERROR_SUCCESS;
     WCHAR **substorage;
