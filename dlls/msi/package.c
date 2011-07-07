@@ -1514,7 +1514,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     si = MSI_GetSummaryInformationW( db->storage, 0 );
     if (!si)
     {
-        WARN("failed to load summary info %u\n", r);
+        WARN("failed to load summary info\n");
         msiobj_release( &package->hdr );
         return ERROR_INSTALL_PACKAGE_INVALID;
     }
