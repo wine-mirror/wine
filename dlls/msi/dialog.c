@@ -383,7 +383,6 @@ static UINT msi_dialog_build_font_list( msi_dialog *dialog )
 
     r = MSI_IterateRecords( view, NULL, msi_dialog_add_font, dialog );
     msiobj_release( &view->hdr );
-
     return r;
 }
 
@@ -1495,13 +1494,16 @@ static UINT msi_combobox_add_items( struct msi_combobox_info *info, LPCWSTR prop
     /* just get the number of records */
     count = 0;
     r = MSI_IterateRecords( view, &count, NULL, NULL );
-
+    if (r != ERROR_SUCCESS)
+    {
+        msiobj_release( &view->hdr );
+        return r;
+    }
     info->num_items = count;
     info->items = msi_alloc( sizeof(*info->items) * count );
 
     r = MSI_IterateRecords( view, NULL, msi_combobox_add_item, info );
     msiobj_release( &view->hdr );
-
     return r;
 }
 
@@ -2328,7 +2330,6 @@ static UINT msi_dialog_radiogroup_control( msi_dialog *dialog, MSIRECORD *rec )
     r = MSI_IterateRecords( view, 0, msi_dialog_create_radiobutton, &group );
     msiobj_release( &view->hdr );
     msi_free( group.propval );
-
     return r;
 }
 
@@ -2781,13 +2782,16 @@ static UINT msi_listbox_add_items( struct msi_listbox_info *info, LPCWSTR proper
     /* just get the number of records */
     count = 0;
     r = MSI_IterateRecords( view, &count, NULL, NULL );
-
+    if (r != ERROR_SUCCESS)
+    {
+        msiobj_release( &view->hdr );
+        return r;
+    }
     info->num_items = count;
     info->items = msi_alloc( sizeof(*info->items) * count );
 
     r = MSI_IterateRecords( view, NULL, msi_listbox_add_item, info );
     msiobj_release( &view->hdr );
-
     return r;
 }
 
@@ -3378,7 +3382,6 @@ static UINT msi_dialog_fill_controls( msi_dialog *dialog )
 
     r = MSI_IterateRecords( view, 0, msi_dialog_create_controls, dialog );
     msiobj_release( &view->hdr );
-
     return r;
 }
 
