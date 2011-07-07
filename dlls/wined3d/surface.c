@@ -288,7 +288,7 @@ static inline void surface_get_rect(struct wined3d_surface *surface, const RECT 
 }
 
 /* GL locking and context activation is done by the caller */
-void draw_textured_quad(struct wined3d_surface *src_surface, const RECT *src_rect,
+void draw_textured_quad(const struct wined3d_surface *src_surface, const RECT *src_rect,
         const RECT *dst_rect, WINED3DTEXTUREFILTERTYPE Filter)
 {
     struct blt_info info;

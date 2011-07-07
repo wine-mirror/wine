@@ -2095,8 +2095,8 @@ void get_drawable_size_swapchain(const struct wined3d_context *context, UINT *wi
 void get_drawable_size_backbuffer(const struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
 void get_drawable_size_fbo(const struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
 
-void draw_textured_quad(struct wined3d_surface *src_surface, const RECT *src_rect,
-                        const RECT *dst_rect, WINED3DTEXTUREFILTERTYPE Filter) DECLSPEC_HIDDEN;
+void draw_textured_quad(const struct wined3d_surface *src_surface, const RECT *src_rect,
+        const RECT *dst_rect, WINED3DTEXTUREFILTERTYPE Filter) DECLSPEC_HIDDEN;
 void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) DECLSPEC_HIDDEN;
 
 /* Surface flags: */
