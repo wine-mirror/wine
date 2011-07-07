@@ -223,9 +223,8 @@ HRESULT swapchain_init(IDirect3DSwapChain9Impl *swapchain, IDirect3DDevice9Impl 
  */
 typedef struct IDirect3DSurface9Impl
 {
-    /* IUnknown fields */
-    const IDirect3DSurface9Vtbl *lpVtbl;
-    LONG                    ref;
+    IDirect3DSurface9 IDirect3DSurface9_iface;
+    LONG ref;
     struct wined3d_surface *wined3d_surface;
     IDirect3DDevice9Ex *parentDevice;
 

@@ -920,7 +920,7 @@ static HRESULT IDirect3DDevice9Impl_CreateSurface(IDirect3DDevice9Impl *device, 
     }
 
     TRACE("Created surface %p.\n", object);
-    *ppSurface = (IDirect3DSurface9 *)object;
+    *ppSurface = &object->IDirect3DSurface9_iface;
 
     return D3D_OK;
 }
@@ -3142,7 +3142,7 @@ static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *
     IDirect3DDevice9Ex_Release(d3d_surface->parentDevice);
     d3d_surface->parentDevice = NULL;
 
-    IDirect3DSurface9_Release((IDirect3DSurface9 *)d3d_surface);
+    IDirect3DSurface9_Release(&d3d_surface->IDirect3DSurface9_iface);
     d3d_surface->forwardReference = container_parent;
 
     return hr;
@@ -3176,7 +3176,7 @@ static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_par
 
     d3d_surface->container = container_parent;
     /* Implicit surfaces are created with an refcount of 0 */
-    IDirect3DSurface9_Release((IDirect3DSurface9 *)d3d_surface);
+    IDirect3DSurface9_Release(&d3d_surface->IDirect3DSurface9_iface);
 
     return hr;
 }
@@ -3206,7 +3206,7 @@ static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_pa
     wined3d_surface_incref(*surface);
     d3d_surface->container = (IUnknown *)&device->IDirect3DDevice9Ex_iface;
     /* Implicit surfaces are created with an refcount of 0 */
-    IDirect3DSurface9_Release((IDirect3DSurface9 *)d3d_surface);
+    IDirect3DSurface9_Release(&d3d_surface->IDirect3DSurface9_iface);
 
     return hr;
 }
