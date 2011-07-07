@@ -2086,7 +2086,7 @@ void surface_set_container(struct wined3d_surface *surface,
         enum wined3d_container_type type, void *container) DECLSPEC_HIDDEN;
 void surface_set_texture_name(struct wined3d_surface *surface, GLuint name, BOOL srgb_name) DECLSPEC_HIDDEN;
 void surface_set_texture_target(struct wined3d_surface *surface, GLenum target) DECLSPEC_HIDDEN;
-void surface_translate_drawable_coords(struct wined3d_surface *surface, HWND window, RECT *rect) DECLSPEC_HIDDEN;
+void surface_translate_drawable_coords(const struct wined3d_surface *surface, HWND window, RECT *rect) DECLSPEC_HIDDEN;
 void surface_upload_data(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
         const struct wined3d_format *format, const RECT *src_rect, UINT src_w, const POINT *dst_point,
         BOOL srgb, const struct wined3d_bo_address *data) DECLSPEC_HIDDEN;

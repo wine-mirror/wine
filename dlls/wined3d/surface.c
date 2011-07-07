@@ -4975,7 +4975,7 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
  * drawable is limited to the window's client area. The sysmem and texture
  * copies do have the full screen size. Note that GL has a bottom-left
  * origin, while D3D has a top-left origin. */
-void surface_translate_drawable_coords(struct wined3d_surface *surface, HWND window, RECT *rect)
+void surface_translate_drawable_coords(const struct wined3d_surface *surface, HWND window, RECT *rect)
 {
     UINT drawable_height;
 
