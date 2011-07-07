@@ -2161,7 +2161,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
 /* This call just uploads data, the caller is responsible for binding the
  * correct texture. */
 /* Context activation is done by the caller. */
-void surface_upload_data(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
+void surface_upload_data(const struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
         const struct wined3d_format *format, const RECT *src_rect, UINT src_w, const POINT *dst_point,
         BOOL srgb, const struct wined3d_bo_address *data)
 {
