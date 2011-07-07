@@ -33,7 +33,6 @@
 @ cdecl SetBkColor(ptr long) PSDRV_SetBkColor
 @ cdecl SetDCBrushColor(ptr long) PSDRV_SetDCBrushColor
 @ cdecl SetDCPenColor(ptr long) PSDRV_SetDCPenColor
-@ cdecl SetDeviceClipping(ptr long long) PSDRV_SetDeviceClipping
 @ cdecl SetPixel(ptr long long long) PSDRV_SetPixel
 @ cdecl SetTextColor(ptr long) PSDRV_SetTextColor
 @ cdecl StartDoc(ptr ptr) PSDRV_StartDoc

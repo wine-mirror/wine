@@ -25,15 +25,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
 /***********************************************************************
- *           PSDRV_SetDeviceClipping
- */
-void CDECL PSDRV_SetDeviceClipping( PSDRV_PDEVICE *physDev, HRGN vis_rgn, HRGN clip_rgn )
-{
-    /* We could set a dirty flag here to speed up PSDRV_SetClip */
-    return;
-}
-
-/***********************************************************************
  *           PSDRV_SetClip
  *
  * The idea here is that every graphics operation should bracket
