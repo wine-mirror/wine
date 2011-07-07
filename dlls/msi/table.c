@@ -2746,7 +2746,6 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
           debugstr_w(name), tv->num_cols, tv->row_size, rawsize );
 
     /* interpret the data */
-    r = ERROR_SUCCESS;
     for( n=0; n < rawsize;  )
     {
         mask = rawdata[n] | (rawdata[n+1] << 8);

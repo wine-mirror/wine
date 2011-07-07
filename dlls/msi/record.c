@@ -833,7 +833,7 @@ UINT MSI_RecordReadStream(MSIRECORD *rec, UINT iField, char *buf, LPDWORD sz)
 
         ofs.QuadPart = cur.QuadPart = 0;
         end.QuadPart = 0;
-        r = IStream_Seek( stm, ofs, STREAM_SEEK_SET, &cur );
+        IStream_Seek( stm, ofs, STREAM_SEEK_SET, &cur );
         IStream_Seek( stm, ofs, STREAM_SEEK_END, &end );
         ofs.QuadPart = cur.QuadPart;
         IStream_Seek( stm, ofs, STREAM_SEEK_SET, &cur );

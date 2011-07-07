@@ -136,7 +136,6 @@ static WCHAR *load_ttf_name_id( const WCHAR *filename, DWORD id )
 
     ttNTHeader.uNRCount = SWAPWORD(ttNTHeader.uNRCount);
     ttNTHeader.uStorageOffset = SWAPWORD(ttNTHeader.uStorageOffset);
-    bFound = FALSE;
     for(i=0; i<ttNTHeader.uNRCount; i++)
     {
         if (!ReadFile(handle,&ttRecord, sizeof(TT_NAME_RECORD),&dwRead,NULL))

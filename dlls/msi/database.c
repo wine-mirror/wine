@@ -1518,11 +1518,9 @@ static LPWSTR get_key_value(MSIQUERY *view, LPCWSTR key, MSIRECORD *rec)
 static LPWSTR create_diff_row_query(MSIDATABASE *merge, MSIQUERY *view,
                                     LPWSTR table, MSIRECORD *rec)
 {
-    LPWSTR query = NULL, clause = NULL;
-    LPWSTR val;
-    LPCWSTR setptr;
-    DWORD size = 1, oldsize;
-    LPCWSTR key;
+    LPWSTR query = NULL, clause = NULL, val;
+    LPCWSTR setptr, key;
+    DWORD size, oldsize;
     MSIRECORD *keys;
     UINT r, i, count;
 
@@ -1538,10 +1536,11 @@ static LPWSTR create_diff_row_query(MSIDATABASE *merge, MSIQUERY *view,
     if (r != ERROR_SUCCESS)
         return NULL;
 
-    clause = msi_alloc_zero(size * sizeof(WCHAR));
+    clause = msi_alloc_zero(sizeof(WCHAR));
     if (!clause)
         goto done;
 
+    size = 1;
     count = MSI_RecordGetFieldCount(keys);
     for (i = 1; i <= count; i++)
     {
