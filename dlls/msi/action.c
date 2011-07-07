@@ -6977,6 +6977,7 @@ static UINT ACTION_RemoveExistingProducts( MSIPACKAGE *package )
     {
         r = MSI_IterateRecords( view, NULL, ITERATE_RemoveExistingProducts, package );
         msiobj_release( &view->hdr );
+        return r;
     }
     return ERROR_SUCCESS;
 }
