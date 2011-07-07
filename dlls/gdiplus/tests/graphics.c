@@ -3251,6 +3251,54 @@ static void test_get_set_textrenderinghint(void)
     ReleaseDC(hwnd, hdc);
 }
 
+static void test_getdc_scaled(void)
+{
+    GpStatus status;
+    GpGraphics *graphics = NULL;
+    GpBitmap *bitmap = NULL;
+    HDC hdc=NULL;
+    HBRUSH hbrush, holdbrush;
+    ARGB color;
+
+    status = GdipCreateBitmapFromScan0(10, 10, 12, PixelFormat24bppRGB, NULL, &bitmap);
+    expect(Ok, status);
+
+    status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, status);
+
+    status = GdipScaleWorldTransform(graphics, 2.0, 2.0, MatrixOrderPrepend);
+    expect(Ok, status);
+
+    status = GdipGetDC(graphics, &hdc);
+    expect(Ok, status);
+    ok(hdc != NULL, "got NULL hdc\n");
+
+    hbrush = CreateSolidBrush(RGB(255, 0, 0));
+
+    holdbrush = SelectObject(hdc, hbrush);
+
+    Rectangle(hdc, 2, 2, 6, 6);
+
+    SelectObject(hdc, holdbrush);
+
+    DeleteObject(hbrush);
+
+    status = GdipReleaseDC(graphics, hdc);
+    expect(Ok, status);
+
+    GdipDeleteGraphics(graphics);
+
+    status = GdipBitmapGetPixel(bitmap, 3, 3, &color);
+    expect(Ok, status);
+    expect(0xffff0000, color);
+
+    status = GdipBitmapGetPixel(bitmap, 8, 8, &color);
+    expect(Ok, status);
+    expect(0xff000000, color);
+
+    GdipDisposeImage((GpImage*)bitmap);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3311,6 +3359,7 @@ START_TEST(graphics)
     test_string_functions();
     test_get_set_interpolation();
     test_get_set_textrenderinghint();
+    test_getdc_scaled();
 
     GdiplusShutdown(gdiplusToken);
     DestroyWindow( hwnd );
