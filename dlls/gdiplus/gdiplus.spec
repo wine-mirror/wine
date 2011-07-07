@@ -443,7 +443,7 @@
 443 stdcall GdipPathIterNextSubpath(ptr ptr ptr ptr ptr)
 444 stdcall GdipPathIterNextSubpathPath(ptr ptr ptr ptr)
 445 stdcall GdipPathIterRewind(ptr)
-446 stub GdipPlayMetafileRecord
+446 stdcall GdipPlayMetafileRecord(ptr long long long ptr)
 447 stdcall GdipPrivateAddFontFile(ptr wstr)
 448 stdcall GdipPrivateAddMemoryFont(ptr ptr long)
 449 stdcall GdipRecordMetafile(long long ptr long wstr ptr)

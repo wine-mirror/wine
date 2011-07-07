@@ -327,6 +327,14 @@ GpStatus WINGDIPAPI GdipGetHemfFromMetafile(GpMetafile *metafile, HENHMETAFILE *
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
+    EmfPlusRecordType recordType, UINT flags, UINT dataSize, GDIPCONST BYTE *data)
+{
+    FIXME("(%p,%x,%x,%d,%p)\n", metafile, recordType, flags, dataSize, data);
+
+    return NotImplemented;
+}
+
 struct enum_metafile_data
 {
     EnumerateMetafileProc callback;
