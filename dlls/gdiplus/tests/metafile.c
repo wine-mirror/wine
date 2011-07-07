@@ -278,9 +278,9 @@ static void test_empty(void)
 static const emfplus_record getdc_records[] = {
     {0, EMR_HEADER},
     {0, EmfPlusRecordTypeHeader},
-    {1, EmfPlusRecordTypeGetDC},
-    {1, EMR_CREATEBRUSHINDIRECT},
-    {1, EMR_SELECTOBJECT},
+    {0, EmfPlusRecordTypeGetDC},
+    {0, EMR_CREATEBRUSHINDIRECT},
+    {0, EMR_SELECTOBJECT},
     {0, EMR_RECTANGLE},
     {0, EMR_SELECTOBJECT},
     {0, EMR_DELETEOBJECT},

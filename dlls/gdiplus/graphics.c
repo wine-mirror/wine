@@ -5311,6 +5311,8 @@ static const COLORREF DC_BACKGROUND_KEY = 0x0c0b0d;
 
 GpStatus WINGDIPAPI GdipGetDC(GpGraphics *graphics, HDC *hdc)
 {
+    GpStatus stat=Ok;
+
     TRACE("(%p, %p)\n", graphics, hdc);
 
     if(!graphics || !hdc)
@@ -5319,13 +5321,16 @@ GpStatus WINGDIPAPI GdipGetDC(GpGraphics *graphics, HDC *hdc)
     if(graphics->busy)
         return ObjectBusy;
 
-    if (!graphics->hdc ||
+    if (graphics->image && graphics->image->type == ImageTypeMetafile)
+    {
+        stat = METAFILE_GetDC((GpMetafile*)graphics->image, hdc);
+    }
+    else if (!graphics->hdc ||
         (graphics->image && graphics->image->type == ImageTypeBitmap && ((GpBitmap*)graphics->image)->format & PixelFormatAlpha))
     {
         /* Create a fake HDC and fill it with a constant color. */
         HDC temp_hdc;
         HBITMAP hbitmap;
-        GpStatus stat;
         GpRectF bounds;
         BITMAPINFOHEADER bmih;
         int i;
@@ -5374,22 +5379,26 @@ GpStatus WINGDIPAPI GdipGetDC(GpGraphics *graphics, HDC *hdc)
         *hdc = graphics->hdc;
     }
 
-    graphics->busy = TRUE;
+    if (stat == Ok)
+        graphics->busy = TRUE;
 
-    return Ok;
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipReleaseDC(GpGraphics *graphics, HDC hdc)
 {
+    GpStatus stat=Ok;
+
     TRACE("(%p, %p)\n", graphics, hdc);
 
-    if(!graphics || !hdc)
+    if(!graphics || !hdc || !graphics->busy)
         return InvalidParameter;
 
-    if((graphics->hdc != hdc && graphics->temp_hdc != hdc) || !(graphics->busy))
-        return InvalidParameter;
-
-    if (graphics->temp_hdc == hdc)
+    if (graphics->image && graphics->image->type == ImageTypeMetafile)
+    {
+        stat = METAFILE_ReleaseDC((GpMetafile*)graphics->image, hdc);
+    }
+    else if (graphics->temp_hdc == hdc)
     {
         DWORD* pos;
         int i;
@@ -5416,10 +5425,15 @@ GpStatus WINGDIPAPI GdipReleaseDC(GpGraphics *graphics, HDC hdc)
         graphics->temp_hdc = NULL;
         graphics->temp_hbitmap = NULL;
     }
+    else if (hdc != graphics->hdc)
+    {
+        stat = InvalidParameter;
+    }
 
-    graphics->busy = FALSE;
+    if (stat == Ok)
+        graphics->busy = FALSE;
 
-    return Ok;
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipGetClip(GpGraphics *graphics, GpRegion *region)

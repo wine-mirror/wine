@@ -297,6 +297,36 @@ GpStatus METAFILE_GetGraphicsContext(GpMetafile* metafile, GpGraphics **result)
     return stat;
 }
 
+GpStatus METAFILE_GetDC(GpMetafile* metafile, HDC *hdc)
+{
+    if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
+    {
+        EmfPlusRecordHeader *record;
+        GpStatus stat;
+
+        stat = METAFILE_AllocateRecord(metafile, sizeof(EmfPlusRecordHeader), (void**)&record);
+        if (stat != Ok)
+            return stat;
+
+        record->Type = EmfPlusRecordTypeGetDC;
+        record->Flags = 0;
+
+        METAFILE_WriteRecords(metafile);
+    }
+
+    *hdc = metafile->record_dc;
+
+    return Ok;
+}
+
+GpStatus METAFILE_ReleaseDC(GpMetafile* metafile, HDC hdc)
+{
+    if (hdc != metafile->record_dc)
+        return InvalidParameter;
+
+    return Ok;
+}
+
 GpStatus METAFILE_GraphicsDeleted(GpMetafile* metafile)
 {
     GpStatus stat;
