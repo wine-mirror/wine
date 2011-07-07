@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "wine/gdi_driver.h"
 
 /* Metafile defines */
 #define META_EOF 0x0000
@@ -71,13 +72,6 @@ typedef struct tagGDIOBJHDR
 } GDIOBJHDR;
 
 /* Device functions for the Wine driver interface */
-
-typedef struct gdi_physdev
-{
-    const struct tagDC_FUNCS *funcs;
-    struct gdi_physdev       *next;
-    HDC                       hdc;
-} *PHYSDEV;
 
 typedef struct
 {
@@ -154,7 +148,7 @@ typedef struct dibdrv_physdev
 #define DEFER_PEN        2
 #define DEFER_BRUSH      4
 
-typedef struct tagDC_FUNCS
+typedef struct gdi_dc_funcs
 {
     INT      (CDECL *pAbortDoc)(PHYSDEV);
     BOOL     (CDECL *pAbortPath)(PHYSDEV);

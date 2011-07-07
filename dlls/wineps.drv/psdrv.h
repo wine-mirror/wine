@@ -28,6 +28,7 @@
 #include "wingdi.h"
 #include "winspool.h"
 
+#include "wine/gdi_driver.h"
 #include "wine/list.h"
 
 typedef struct {
@@ -353,7 +354,7 @@ typedef struct {
 
 typedef struct
 {
-    void               *reserved[3];    /* reserved for gdi */
+    struct gdi_physdev  dev;
     HDC                 hdc;
     PSFONT		font;		/* Current PS font */
     DOWNLOAD            *downloaded_fonts;

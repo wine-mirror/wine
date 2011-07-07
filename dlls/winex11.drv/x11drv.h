@@ -59,6 +59,7 @@ typedef int Status;
 #include "wingdi.h"
 #include "winuser.h"
 #include "ddrawi.h"
+#include "wine/gdi_driver.h"
 #include "wine/list.h"
 
 #define MAX_PIXELFORMATS 8
@@ -140,11 +141,6 @@ typedef struct
 typedef UINT	 X_PHYSFONT;
 
 struct xrender_info;
-
-typedef struct gdi_physdev
-{
-    void *reserved[3];
-} *PHYSDEV;
 
   /* X physical device */
 typedef struct
