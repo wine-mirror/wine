@@ -588,10 +588,10 @@ uuid_string:
 						  $$ = parse_uuid($1); }
         ;
 
-callconv: tCDECL				{ $$ = $<str>1; }
-	| tFASTCALL				{ $$ = $<str>1; }
-	| tPASCAL				{ $$ = $<str>1; }
-	| tSTDCALL				{ $$ = $<str>1; }
+callconv: tCDECL				{ $$ = xstrdup("__cdecl"); }
+	| tFASTCALL				{ $$ = xstrdup("__fastcall"); }
+	| tPASCAL				{ $$ = xstrdup("__pascal"); }
+	| tSTDCALL				{ $$ = xstrdup("__stdcall"); }
 	;
 
 cases:						{ $$ = NULL; }
