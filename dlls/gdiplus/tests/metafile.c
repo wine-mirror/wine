@@ -212,9 +212,9 @@ static BOOL CALLBACK play_metafile_proc(EmfPlusRecordType record_type, unsigned 
     if (state->expected[state->count].record_type)
     {
         if (state->expected[state->count].playback_todo)
-            todo_wine ok(stat == Ok, "%s: GdipPlayMetafileRecord failed with stat %i\n", state->desc, stat);
+            todo_wine ok(stat == Ok, "%s.%i: GdipPlayMetafileRecord failed with stat %i\n", state->desc, state->count, stat);
         else
-            ok(stat == Ok, "%s: GdipPlayMetafileRecord failed with stat %i\n", state->desc, stat);
+            ok(stat == Ok, "%s.%i: GdipPlayMetafileRecord failed with stat %i\n", state->desc, state->count, stat);
         state->count++;
     }
     else
@@ -324,16 +324,16 @@ static void test_empty(void)
 }
 
 static const emfplus_record getdc_records[] = {
-    {0, EMR_HEADER, 1},
-    {0, EmfPlusRecordTypeHeader, 1},
-    {0, EmfPlusRecordTypeGetDC, 1},
-    {0, EMR_CREATEBRUSHINDIRECT, 1},
-    {0, EMR_SELECTOBJECT, 1},
-    {0, EMR_RECTANGLE, 1},
-    {0, EMR_SELECTOBJECT, 1},
-    {0, EMR_DELETEOBJECT, 1},
-    {0, EmfPlusRecordTypeEndOfFile, 1},
-    {0, EMR_EOF, 1},
+    {0, EMR_HEADER},
+    {0, EmfPlusRecordTypeHeader},
+    {0, EmfPlusRecordTypeGetDC},
+    {0, EMR_CREATEBRUSHINDIRECT},
+    {0, EMR_SELECTOBJECT},
+    {0, EMR_RECTANGLE},
+    {0, EMR_SELECTOBJECT},
+    {0, EMR_DELETEOBJECT},
+    {0, EmfPlusRecordTypeEndOfFile},
+    {0, EMR_EOF},
     {0}
 };
 
@@ -411,7 +411,7 @@ static void test_getdc(void)
 
     stat = GdipBitmapGetPixel(bitmap, 50, 50, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff0000ff, color);
+    expect(0xff0000ff, color);
 
     stat = GdipBitmapSetPixel(bitmap, 50, 50, 0);
     expect(Ok, stat);
@@ -420,7 +420,7 @@ static void test_getdc(void)
 
     stat = GdipBitmapGetPixel(bitmap, 15, 15, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff0000ff, color);
+    expect(0xff0000ff, color);
 
     stat = GdipBitmapGetPixel(bitmap, 50, 50, &color);
     expect(Ok, stat);
@@ -445,13 +445,13 @@ static void test_getdc(void)
 }
 
 static const emfplus_record emfonly_records[] = {
-    {0, EMR_HEADER, 1},
-    {0, EMR_CREATEBRUSHINDIRECT, 1},
-    {0, EMR_SELECTOBJECT, 1},
-    {0, EMR_RECTANGLE, 1},
-    {0, EMR_SELECTOBJECT, 1},
-    {0, EMR_DELETEOBJECT, 1},
-    {0, EMR_EOF, 1},
+    {0, EMR_HEADER},
+    {0, EMR_CREATEBRUSHINDIRECT},
+    {0, EMR_SELECTOBJECT},
+    {0, EMR_RECTANGLE},
+    {0, EMR_SELECTOBJECT},
+    {0, EMR_DELETEOBJECT},
+    {0, EMR_EOF},
     {0}
 };
 
@@ -528,7 +528,7 @@ static void test_emfonly(void)
 
     stat = GdipBitmapGetPixel(bitmap, 50, 50, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff0000ff, color);
+    expect(0xff0000ff, color);
 
     stat = GdipDeleteGraphics(graphics);
     expect(Ok, stat);

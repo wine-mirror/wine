@@ -274,12 +274,21 @@ struct GpMetafile{
     GpRectF bounds;
     GpUnit unit;
     MetafileType metafile_type;
+    HENHMETAFILE hemf;
+
+    /* recording */
     HDC record_dc;
     GpGraphics *record_graphics;
     BYTE *comment_data;
     DWORD comment_data_size;
     DWORD comment_data_length;
-    HENHMETAFILE hemf;
+
+    /* playback */
+    GpGraphics *playback_graphics;
+    HDC playback_dc;
+    GpPointF playback_points[3];
+    HANDLETABLE *handle_table;
+    int handle_count;
 };
 
 struct GpBitmap{

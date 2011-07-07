@@ -357,18 +357,100 @@ GpStatus WINGDIPAPI GdipGetHemfFromMetafile(GpMetafile *metafile, HENHMETAFILE *
     return Ok;
 }
 
+static GpStatus METAFILE_PlaybackGetDC(GpMetafile *metafile)
+{
+    GpStatus stat = Ok;
+
+    stat = GdipGetDC(metafile->playback_graphics, &metafile->playback_dc);
+
+    if (stat == Ok)
+    {
+        /* The result of GdipGetDC always expects device co-ordinates, but the
+         * device co-ordinates of the source metafile do not correspond to
+         * device co-ordinates of the destination. Therefore, we set up the DC
+         * so that the metafile's bounds map to the destination points where we
+         * are drawing this metafile. */
+        SetMapMode(metafile->playback_dc, MM_ANISOTROPIC);
+
+        SetWindowOrgEx(metafile->playback_dc, metafile->bounds.X, metafile->bounds.Y, NULL);
+        SetWindowExtEx(metafile->playback_dc, metafile->bounds.Width, metafile->bounds.Height, NULL);
+
+        SetViewportOrgEx(metafile->playback_dc, metafile->playback_points[0].X, metafile->playback_points[0].Y, NULL);
+        SetViewportExtEx(metafile->playback_dc,
+            metafile->playback_points[1].X - metafile->playback_points[0].X,
+            metafile->playback_points[2].Y - metafile->playback_points[0].Y, NULL);
+    }
+
+    return stat;
+}
+
+static void METAFILE_PlaybackReleaseDC(GpMetafile *metafile)
+{
+    if (metafile->playback_dc)
+    {
+        GdipReleaseDC(metafile->playback_graphics, metafile->playback_dc);
+        metafile->playback_dc = NULL;
+    }
+}
+
 GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
     EmfPlusRecordType recordType, UINT flags, UINT dataSize, GDIPCONST BYTE *data)
 {
-    FIXME("(%p,%x,%x,%d,%p)\n", metafile, recordType, flags, dataSize, data);
+    TRACE("(%p,%x,%x,%d,%p)\n", metafile, recordType, flags, dataSize, data);
 
-    return NotImplemented;
+    if (!metafile || (dataSize && !data) || !metafile->playback_graphics)
+        return InvalidParameter;
+
+    if (recordType >= 1 && recordType <= 0x7a)
+    {
+        /* regular EMF record */
+        if (metafile->playback_dc)
+        {
+            ENHMETARECORD *record;
+
+            record = GdipAlloc(dataSize + 8);
+
+            if (record)
+            {
+                record->iType = recordType;
+                record->nSize = dataSize;
+                memcpy(record->dParm, data, dataSize);
+
+                PlayEnhMetaFileRecord(metafile->playback_dc, metafile->handle_table,
+                    record, metafile->handle_count);
+
+                GdipFree(record);
+            }
+            else
+                return OutOfMemory;
+        }
+    }
+    else
+    {
+        METAFILE_PlaybackReleaseDC((GpMetafile*)metafile);
+
+        switch(recordType)
+        {
+        case EmfPlusRecordTypeHeader:
+        case EmfPlusRecordTypeEndOfFile:
+            break;
+        case EmfPlusRecordTypeGetDC:
+            METAFILE_PlaybackGetDC((GpMetafile*)metafile);
+            break;
+        default:
+            FIXME("Not implemented for record type %x\n", recordType);
+            return NotImplemented;
+        }
+    }
+
+    return Ok;
 }
 
 struct enum_metafile_data
 {
     EnumerateMetafileProc callback;
     void *callback_data;
+    GpMetafile *metafile;
 };
 
 static int CALLBACK enum_metafile_proc(HDC hDC, HANDLETABLE *lpHTable, const ENHMETARECORD *lpEMFR,
@@ -377,6 +459,9 @@ static int CALLBACK enum_metafile_proc(HDC hDC, HANDLETABLE *lpHTable, const ENH
     BOOL ret;
     struct enum_metafile_data *data = (struct enum_metafile_data*)lpData;
     const BYTE* pStr;
+
+    data->metafile->handle_table = lpHTable;
+    data->metafile->handle_count = nObj;
 
     /* First check for an EMF+ record. */
     if (lpEMFR->iType == EMR_GDICOMMENT)
@@ -424,6 +509,8 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics *graphics,
     VOID *callbackData, GDIPCONST GpImageAttributes *imageAttributes)
 {
     struct enum_metafile_data data;
+    GpStatus stat;
+    GpMetafile *real_metafile = (GpMetafile*)metafile; /* whoever made this const was joking */
 
     TRACE("(%p,%p,%p,%i,%p,%i,%p,%p,%p)\n", graphics, metafile,
         destPoints, count, srcRect, srcUnit, callback, callbackData,
@@ -435,14 +522,32 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics *graphics,
     if (!metafile->hemf)
         return InvalidParameter;
 
+    if (metafile->playback_graphics)
+        return ObjectBusy;
+
     TRACE("%s %i -> %s %s %s\n", debugstr_rectf(srcRect), srcUnit,
         debugstr_pointf(&destPoints[0]), debugstr_pointf(&destPoints[1]),
         debugstr_pointf(&destPoints[2]));
 
     data.callback = callback;
     data.callback_data = callbackData;
+    data.metafile = real_metafile;
 
-    EnumEnhMetaFile(0, metafile->hemf, enum_metafile_proc, &data, NULL);
+    real_metafile->playback_graphics = graphics;
+    real_metafile->playback_dc = NULL;
 
-    return Ok;
+    memcpy(real_metafile->playback_points, destPoints, sizeof(PointF) * 3);
+    stat = GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, real_metafile->playback_points, 3);
+
+    if (stat == Ok && metafile->metafile_type == MetafileTypeEmf)
+        stat = METAFILE_PlaybackGetDC((GpMetafile*)metafile);
+
+    if (stat == Ok)
+        EnumEnhMetaFile(0, metafile->hemf, enum_metafile_proc, &data, NULL);
+
+    METAFILE_PlaybackReleaseDC((GpMetafile*)metafile);
+
+    real_metafile->playback_graphics = NULL;
+
+    return stat;
 }
