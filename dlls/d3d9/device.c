@@ -400,7 +400,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetCursorProperties(IDirect3DDevice9E
         UINT XHotSpot, UINT YHotSpot, IDirect3DSurface9 *pCursorBitmap)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DSurface9Impl *pSurface = (IDirect3DSurface9Impl*)pCursorBitmap;
+    IDirect3DSurface9Impl *pSurface = unsafe_impl_from_IDirect3DSurface9(pCursorBitmap);
     HRESULT hr;
 
     TRACE("iface %p, hotspot_x %u, hotspot_y %u, bitmap %p.\n",
@@ -970,15 +970,16 @@ static HRESULT WINAPI IDirect3DDevice9Impl_UpdateSurface(IDirect3DDevice9Ex *ifa
         IDirect3DSurface9 *pDestinationSurface, const POINT *pDestPoint)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
+    IDirect3DSurface9Impl *src = unsafe_impl_from_IDirect3DSurface9(pSourceSurface);
+    IDirect3DSurface9Impl *dst = unsafe_impl_from_IDirect3DSurface9(pDestinationSurface);
     HRESULT hr;
 
     TRACE("iface %p, src_surface %p, src_rect %p, dst_surface %p, dst_point %p.\n",
             iface, pSourceSurface, pSourceRect, pDestinationSurface, pDestPoint);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_update_surface(This->wined3d_device,
-            ((IDirect3DSurface9Impl *)pSourceSurface)->wined3d_surface, pSourceRect,
-            ((IDirect3DSurface9Impl *)pDestinationSurface)->wined3d_surface, pDestPoint);
+    hr = wined3d_device_update_surface(This->wined3d_device, src->wined3d_surface, pSourceRect,
+            dst->wined3d_surface, pDestPoint);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1004,8 +1005,8 @@ static HRESULT WINAPI IDirect3DDevice9Impl_UpdateTexture(IDirect3DDevice9Ex *ifa
 static HRESULT WINAPI IDirect3DDevice9Impl_GetRenderTargetData(IDirect3DDevice9Ex *iface,
         IDirect3DSurface9 *pRenderTarget, IDirect3DSurface9 *pDestSurface)
 {
-    IDirect3DSurface9Impl *renderTarget = (IDirect3DSurface9Impl *)pRenderTarget;
-    IDirect3DSurface9Impl *destSurface = (IDirect3DSurface9Impl *)pDestSurface;
+    IDirect3DSurface9Impl *renderTarget = unsafe_impl_from_IDirect3DSurface9(pRenderTarget);
+    IDirect3DSurface9Impl *destSurface = unsafe_impl_from_IDirect3DSurface9(pDestSurface);
     HRESULT hr;
 
     TRACE("iface %p, render_target %p, dst_surface %p.\n", iface, pRenderTarget, pDestSurface);
@@ -1022,7 +1023,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetFrontBufferData(IDirect3DDevice9Ex
         UINT iSwapChain, IDirect3DSurface9 *pDestSurface)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DSurface9Impl *destSurface = (IDirect3DSurface9Impl *)pDestSurface;
+    IDirect3DSurface9Impl *destSurface = unsafe_impl_from_IDirect3DSurface9(pDestSurface);
     HRESULT hr;
 
     TRACE("iface %p, swapchain %u, dst_surface %p.\n", iface, iSwapChain, pDestSurface);
@@ -1037,8 +1038,8 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetFrontBufferData(IDirect3DDevice9Ex
 static HRESULT WINAPI IDirect3DDevice9Impl_StretchRect(IDirect3DDevice9Ex *iface, IDirect3DSurface9 *pSourceSurface,
         const RECT *pSourceRect, IDirect3DSurface9 *pDestSurface, const RECT *pDestRect, D3DTEXTUREFILTERTYPE Filter)
 {
-    IDirect3DSurface9Impl *src = (IDirect3DSurface9Impl *) pSourceSurface;
-    IDirect3DSurface9Impl *dst = (IDirect3DSurface9Impl *) pDestSurface;
+    IDirect3DSurface9Impl *src = unsafe_impl_from_IDirect3DSurface9(pSourceSurface);
+    IDirect3DSurface9Impl *dst = unsafe_impl_from_IDirect3DSurface9(pDestSurface);
     HRESULT hr;
 
     TRACE("iface %p, src_surface %p, src_rect %p, dst_surface %p, dst_rect %p, filter %#x.\n",
@@ -1062,7 +1063,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_ColorFill(IDirect3DDevice9Ex *iface,
         ((color >> 24) & 0xff) / 255.0f,
     };
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DSurface9Impl *surface = (IDirect3DSurface9Impl *)pSurface;
+    IDirect3DSurface9Impl *surface = unsafe_impl_from_IDirect3DSurface9(pSurface);
     struct wined3d_resource *wined3d_resource;
     struct wined3d_resource_desc desc;
     HRESULT hr;
@@ -1124,7 +1125,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetRenderTarget(IDirect3DDevice9Ex *i
         DWORD RenderTargetIndex, IDirect3DSurface9 *pRenderTarget)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DSurface9Impl *pSurface = (IDirect3DSurface9Impl*)pRenderTarget;
+    IDirect3DSurface9Impl *pSurface = unsafe_impl_from_IDirect3DSurface9(pRenderTarget);
     HRESULT hr;
 
     TRACE("iface %p, idx %u, surface %p.\n", iface, RenderTargetIndex, pRenderTarget);
@@ -1190,12 +1191,10 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetDepthStencilSurface(IDirect3DDevic
         IDirect3DSurface9 *pZStencilSurface)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
-    IDirect3DSurface9Impl *pSurface;
+    IDirect3DSurface9Impl *pSurface = unsafe_impl_from_IDirect3DSurface9(pZStencilSurface);
     HRESULT hr;
 
     TRACE("iface %p, depth_stencil %p.\n", iface, pZStencilSurface);
-
-    pSurface = (IDirect3DSurface9Impl*)pZStencilSurface;
 
     wined3d_mutex_lock();
     hr = wined3d_device_set_depth_stencil(This->wined3d_device, pSurface ? pSurface->wined3d_surface : NULL);

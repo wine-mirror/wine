@@ -98,15 +98,17 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DSwapChain9Impl_Present(LPDIRECT
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DSwapChain9Impl_GetFrontBufferData(LPDIRECT3DSWAPCHAIN9 iface, IDirect3DSurface9* pDestSurface) {
+static HRESULT WINAPI IDirect3DSwapChain9Impl_GetFrontBufferData(IDirect3DSwapChain9 *iface,
+        IDirect3DSurface9 *pDestSurface)
+{
     IDirect3DSwapChain9Impl *This = (IDirect3DSwapChain9Impl *)iface;
+    IDirect3DSurface9Impl *dst = unsafe_impl_from_IDirect3DSurface9(pDestSurface);
     HRESULT hr;
 
     TRACE("iface %p, surface %p.\n", iface, pDestSurface);
 
     wined3d_mutex_lock();
-    hr = wined3d_swapchain_get_front_buffer_data(This->wined3d_swapchain,
-            ((IDirect3DSurface9Impl *)pDestSurface)->wined3d_surface);
+    hr = wined3d_swapchain_get_front_buffer_data(This->wined3d_swapchain, dst->wined3d_surface);
     wined3d_mutex_unlock();
 
     return hr;
