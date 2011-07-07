@@ -3013,13 +3013,13 @@ interface nsIParser : nsISupports
             PRInt32 aContextNamespace, PRBool aQuirks);
     nsresult BuildModel();
     nsresult CancelParsingEvents();
-    void Reset();
-    PRBool CanInterrupt();
-    PRBool IsInsertionPointDefined();
-    void BeginEvaluatingParserInsertedScript();
-    void EndEvaluatingParserInsertedScript();
-    void MarkAsNotScriptCreated();
-    PRBool IsScriptCreated();
+    void cdecl Reset();
+    PRBool cdecl CanInterrupt();
+    PRBool cdecl IsInsertionPointDefined();
+    void cdecl BeginEvaluatingParserInsertedScript();
+    void cdecl EndEvaluatingParserInsertedScript();
+    void cdecl MarkAsNotScriptCreated();
+    PRBool cdecl IsScriptCreated();
 }
 
 [
