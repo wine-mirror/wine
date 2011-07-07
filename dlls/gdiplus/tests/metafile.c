@@ -358,6 +358,86 @@ static void test_getdc(void)
     ok(ret != 0, "Failed to delete enhmetafile %p\n", hemf);
 }
 
+static const emfplus_record emfonly_records[] = {
+    {0, EMR_HEADER},
+    {0, EMR_CREATEBRUSHINDIRECT},
+    {0, EMR_SELECTOBJECT},
+    {0, EMR_RECTANGLE},
+    {0, EMR_SELECTOBJECT},
+    {0, EMR_DELETEOBJECT},
+    {0, EMR_EOF},
+    {0}
+};
+
+static void test_emfonly(void)
+{
+    GpStatus stat;
+    GpMetafile *metafile;
+    GpGraphics *graphics;
+    HDC hdc, metafile_dc;
+    HENHMETAFILE hemf;
+    BOOL ret;
+    static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
+    static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
+    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
+    HBRUSH hbrush, holdbrush;
+
+    hdc = CreateCompatibleDC(0);
+
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(Ok, stat);
+
+    DeleteDC(hdc);
+
+    if (stat != Ok)
+        return;
+
+    stat = GdipGetHemfFromMetafile(metafile, &hemf);
+    expect(InvalidParameter, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipGetDC(graphics, &metafile_dc);
+    expect(Ok, stat);
+
+    if (stat != Ok)
+    {
+        GdipDeleteGraphics(graphics);
+        GdipDisposeImage((GpImage*)metafile);
+        return;
+    }
+
+    hbrush = CreateSolidBrush(0xff0000);
+
+    holdbrush = SelectObject(metafile_dc, hbrush);
+
+    Rectangle(metafile_dc, 25, 25, 75, 75);
+
+    SelectObject(metafile_dc, holdbrush);
+
+    DeleteObject(hbrush);
+
+    stat = GdipReleaseDC(graphics, metafile_dc);
+    expect(Ok, stat);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    check_metafile(metafile, emfonly_records, "emfonly metafile", dst_points, &frame, UnitPixel);
+
+    stat = GdipGetHemfFromMetafile(metafile, &hemf);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
+
+    check_emfplus(hemf, emfonly_records, "emfonly emf");
+
+    ret = DeleteEnhMetaFile(hemf);
+    ok(ret != 0, "Failed to delete enhmetafile %p\n", hemf);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -372,6 +452,7 @@ START_TEST(metafile)
 
     test_empty();
     test_getdc();
+    test_emfonly();
 
     GdiplusShutdown(gdiplusToken);
 }
