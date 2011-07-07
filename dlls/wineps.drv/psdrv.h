@@ -386,6 +386,10 @@ typedef struct {
     PSDRV_DEVMODEA *dlgdm;
 } PSDRV_DLGINFO;
 
+static inline PSDRV_PDEVICE *get_psdrv_dev( PHYSDEV dev )
+{
+    return (PSDRV_PDEVICE *)dev;
+}
 
 /*
  *  Every glyph name in the Adobe Glyph List and the 35 core PostScript fonts
@@ -419,66 +423,63 @@ extern BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm,
 	BOOL *p_added) DECLSPEC_HIDDEN;
 extern void PSDRV_FreeAFMList( FONTFAMILY *head ) DECLSPEC_HIDDEN;
 
-extern INT PSDRV_XWStoDS( PSDRV_PDEVICE *physDev, INT width ) DECLSPEC_HIDDEN;
+extern INT PSDRV_XWStoDS( PHYSDEV dev, INT width ) DECLSPEC_HIDDEN;
 
-extern BOOL PSDRV_Brush(PSDRV_PDEVICE *physDev, BOOL EO) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_SetFont( PSDRV_PDEVICE *physDev ) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_SetPen( PSDRV_PDEVICE *physDev ) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_Brush(PHYSDEV dev, BOOL EO) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_SetFont( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_SetPen( PHYSDEV dev ) DECLSPEC_HIDDEN;
 
-extern void PSDRV_SetClip(PSDRV_PDEVICE* phyDev) DECLSPEC_HIDDEN;
-extern void PSDRV_ResetClip(PSDRV_PDEVICE* phyDev) DECLSPEC_HIDDEN;
+extern void PSDRV_SetClip( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern void PSDRV_ResetClip( PHYSDEV dev ) DECLSPEC_HIDDEN;
 
 extern BOOL PSDRV_CopyColor(PSCOLOR *col1, PSCOLOR *col2) DECLSPEC_HIDDEN;
-extern void PSDRV_CreateColor( PSDRV_PDEVICE *physDev, PSCOLOR *pscolor,
+extern void PSDRV_CreateColor( PHYSDEV dev, PSCOLOR *pscolor,
 		     COLORREF wincolor ) DECLSPEC_HIDDEN;
 extern char PSDRV_UnicodeToANSI(int u) DECLSPEC_HIDDEN;
 
-extern INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title ) DECLSPEC_HIDDEN;
-extern INT PSDRV_WriteFooter( PSDRV_PDEVICE *physDev ) DECLSPEC_HIDDEN;
-extern INT PSDRV_WriteNewPage( PSDRV_PDEVICE *physDev ) DECLSPEC_HIDDEN;
-extern INT PSDRV_WriteEndPage( PSDRV_PDEVICE *physDev ) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteMoveTo(PSDRV_PDEVICE *physDev, INT x, INT y) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteLineTo(PSDRV_PDEVICE *physDev, INT x, INT y) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteStroke(PSDRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteRectangle(PSDRV_PDEVICE *physDev, INT x, INT y, INT width,
-			INT height) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteRRectangle(PSDRV_PDEVICE *physDev, INT x, INT y, INT width,
-			INT height) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteSetFont(PSDRV_PDEVICE *physDev, const char *name, matrix size,
-                               INT escapement) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteGlyphShow(PSDRV_PDEVICE *physDev, LPCSTR g_name) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteSetPen(PSDRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteArc(PSDRV_PDEVICE *physDev, INT x, INT y, INT w, INT h,
+extern INT PSDRV_WriteHeader( PHYSDEV dev, LPCSTR title ) DECLSPEC_HIDDEN;
+extern INT PSDRV_WriteFooter( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern INT PSDRV_WriteNewPage( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern INT PSDRV_WriteEndPage( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteMoveTo(PHYSDEV dev, INT x, INT y) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteLineTo(PHYSDEV dev, INT x, INT y) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteStroke(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteRectangle(PHYSDEV dev, INT x, INT y, INT width, INT height) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteRRectangle(PHYSDEV dev, INT x, INT y, INT width, INT height) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteSetFont(PHYSDEV dev, const char *name, matrix size, INT escapement) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteGlyphShow(PHYSDEV dev, LPCSTR g_name) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteSetPen(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteArc(PHYSDEV dev, INT x, INT y, INT w, INT h,
 			     double ang1, double ang2) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteSetColor(PSDRV_PDEVICE *physDev, PSCOLOR *color) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteSetBrush(PSDRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteFill(PSDRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteEOFill(PSDRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteGSave(PSDRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteGRestore(PSDRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteNewPath(PSDRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteClosePath(PSDRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteClip(PSDRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteRectClip(PSDRV_PDEVICE *physDev, INT x, INT y, INT w, INT h) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteRectClip2(PSDRV_PDEVICE *physDev, CHAR *pszArrayName) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteEOClip(PSDRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteHatch(PSDRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteRotate(PSDRV_PDEVICE *physDev, float ang) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteIndexColorSpaceBegin(PSDRV_PDEVICE *physDev, int size) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteIndexColorSpaceEnd(PSDRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteRGB(PSDRV_PDEVICE *physDev, COLORREF *map, int number) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteImage(PSDRV_PDEVICE *physDev, WORD depth, INT xDst, INT yDst,
+extern BOOL PSDRV_WriteSetColor(PHYSDEV dev, PSCOLOR *color) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteSetBrush(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteFill(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteEOFill(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteGSave(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteGRestore(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteNewPath(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteClosePath(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteClip(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteRectClip(PHYSDEV dev, INT x, INT y, INT w, INT h) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteRectClip2(PHYSDEV dev, CHAR *pszArrayName) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteEOClip(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteHatch(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteRotate(PHYSDEV dev, float ang) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteIndexColorSpaceBegin(PHYSDEV dev, int size) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteIndexColorSpaceEnd(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteRGB(PHYSDEV dev, COLORREF *map, int number) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteImage(PHYSDEV dev, WORD depth, INT xDst, INT yDst,
 			     INT widthDst, INT heightDst, INT widthSrc,
 			     INT heightSrc, BOOL mask) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteBytes(PSDRV_PDEVICE *physDev, const BYTE *bytes, DWORD number) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteData(PSDRV_PDEVICE *physDev, const BYTE *byte, DWORD number) DECLSPEC_HIDDEN;
-extern DWORD PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPCSTR lpData, DWORD cch) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WritePatternDict(PSDRV_PDEVICE *physDev, BITMAP *bm, BYTE *bits) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteDIBPatternDict(PSDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usage) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteArrayPut(PSDRV_PDEVICE *physDev, CHAR *pszArrayName, INT nIndex, LONG lCoord) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteArrayDef(PSDRV_PDEVICE *physDev, CHAR *pszArrayName, INT nSize) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteBytes(PHYSDEV dev, const BYTE *bytes, DWORD number) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteData(PHYSDEV dev, const BYTE *byte, DWORD number) DECLSPEC_HIDDEN;
+extern DWORD PSDRV_WriteSpool(PHYSDEV dev, LPCSTR lpData, DWORD cch) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WritePatternDict(PHYSDEV dev, BITMAP *bm, BYTE *bits) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteDIBPatternDict(PHYSDEV dev, BITMAPINFO *bmi, UINT usage) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteArrayPut(PHYSDEV dev, CHAR *pszArrayName, INT nIndex, LONG lCoord) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteArrayDef(PHYSDEV dev, CHAR *pszArrayName, INT nSize) DECLSPEC_HIDDEN;
 
-extern INT CDECL PSDRV_StartPage( PSDRV_PDEVICE *physDev ) DECLSPEC_HIDDEN;
+extern INT CDECL PSDRV_StartPage( PHYSDEV dev ) DECLSPEC_HIDDEN;
 
 INT PSDRV_GlyphListInit(void) DECLSPEC_HIDDEN;
 const GLYPHNAME *PSDRV_GlyphName(LPCSTR szName) DECLSPEC_HIDDEN;
@@ -488,31 +489,30 @@ BOOL PSDRV_GetType1Metrics(void) DECLSPEC_HIDDEN;
 const AFMMETRICS *PSDRV_UVMetrics(LONG UV, const AFM *afm) DECLSPEC_HIDDEN;
 SHORT PSDRV_CalcAvgCharWidth(const AFM *afm) DECLSPEC_HIDDEN;
 
-extern BOOL PSDRV_SelectBuiltinFont(PSDRV_PDEVICE *physDev, HFONT hfont,
+extern BOOL PSDRV_SelectBuiltinFont(PHYSDEV dev, HFONT hfont,
 				    LOGFONTW *plf, LPSTR FaceName) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteSetBuiltinFont(PSDRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteBuiltinGlyphShow(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteSetBuiltinFont(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteBuiltinGlyphShow(PHYSDEV dev, LPCWSTR str, INT count) DECLSPEC_HIDDEN;
 
-extern BOOL PSDRV_SelectDownloadFont(PSDRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteSetDownloadFont(PSDRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteDownloadGlyphShow(PSDRV_PDEVICE *physDev, WORD *glpyhs,
-					 UINT count) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_EmptyDownloadList(PSDRV_PDEVICE *physDev, BOOL write_undef) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_SelectDownloadFont(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteSetDownloadFont(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteDownloadGlyphShow(PHYSDEV dev, WORD *glpyhs, UINT count) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_EmptyDownloadList(PHYSDEV dev, BOOL write_undef) DECLSPEC_HIDDEN;
 
-extern DWORD write_spool( PSDRV_PDEVICE *physDev, const void *data, DWORD num ) DECLSPEC_HIDDEN;
+extern DWORD write_spool( PHYSDEV dev, const void *data, DWORD num ) DECLSPEC_HIDDEN;
 
 #define MAX_G_NAME 31 /* max length of PS glyph name */
 extern void get_glyph_name(HDC hdc, WORD index, char *name) DECLSPEC_HIDDEN;
 
-extern TYPE1 *T1_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
+extern TYPE1 *T1_download_header(PHYSDEV dev, char *ps_name,
                                  RECT *bbox, UINT emsize) DECLSPEC_HIDDEN;
-extern BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl,
+extern BOOL T1_download_glyph(PHYSDEV dev, DOWNLOAD *pdl,
 			      DWORD index, char *glyph_name) DECLSPEC_HIDDEN;
 extern void T1_free(TYPE1 *t1) DECLSPEC_HIDDEN;
 
-extern TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
+extern TYPE42 *T42_download_header(PHYSDEV dev, char *ps_name,
                                    RECT *bbox, UINT emsize) DECLSPEC_HIDDEN;
-extern BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl,
+extern BOOL T42_download_glyph(PHYSDEV dev, DOWNLOAD *pdl,
 			       DWORD index, char *glyph_name) DECLSPEC_HIDDEN;
 extern void T42_free(TYPE42 *t42) DECLSPEC_HIDDEN;
 

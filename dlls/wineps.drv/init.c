@@ -381,8 +381,10 @@ BOOL CDECL PSDRV_CreateDC( HDC hdc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWST
 /**********************************************************************
  *	     PSDRV_DeleteDC
  */
-BOOL CDECL PSDRV_DeleteDC( PSDRV_PDEVICE *physDev )
+BOOL CDECL PSDRV_DeleteDC( PHYSDEV dev )
 {
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+
     TRACE("\n");
 
     HeapFree( PSDRV_Heap, 0, physDev->Devmode );
@@ -396,8 +398,10 @@ BOOL CDECL PSDRV_DeleteDC( PSDRV_PDEVICE *physDev )
 /**********************************************************************
  *	     ResetDC   (WINEPS.@)
  */
-HDC CDECL PSDRV_ResetDC( PSDRV_PDEVICE *physDev, const DEVMODEW *lpInitData )
+HDC CDECL PSDRV_ResetDC( PHYSDEV dev, const DEVMODEW *lpInitData )
 {
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+
     if(lpInitData) {
         DEVMODEA *devmodeA = DEVMODEdupWtoA(PSDRV_Heap, lpInitData);
         PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODEA *)devmodeA, physDev->pi);
@@ -410,8 +414,10 @@ HDC CDECL PSDRV_ResetDC( PSDRV_PDEVICE *physDev, const DEVMODEW *lpInitData )
 /***********************************************************************
  *           GetDeviceCaps    (WINEPS.@)
  */
-INT CDECL PSDRV_GetDeviceCaps( PSDRV_PDEVICE *physDev, INT cap )
+INT CDECL PSDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
 {
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+
     switch(cap)
     {
     case DRIVERVERSION:

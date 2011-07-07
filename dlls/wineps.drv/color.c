@@ -60,9 +60,9 @@ BOOL PSDRV_CopyColor(PSCOLOR *col1, PSCOLOR *col2)
  * Result is grey scale if ColorDevice field of ppd is CD_False else an
  * rgb colour is produced.
  */
-void PSDRV_CreateColor( PSDRV_PDEVICE *physDev, PSCOLOR *pscolor,
-		     COLORREF wincolor )
+void PSDRV_CreateColor( PHYSDEV dev, PSCOLOR *pscolor, COLORREF wincolor )
 {
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     int ctype = wincolor >> 24;
     float r, g, b;
 
@@ -90,9 +90,10 @@ void PSDRV_CreateColor( PSDRV_PDEVICE *physDev, PSCOLOR *pscolor,
 /***********************************************************************
  *           PSDRV_SetBkColor
  */
-COLORREF CDECL PSDRV_SetBkColor( PSDRV_PDEVICE *physDev, COLORREF color )
+COLORREF CDECL PSDRV_SetBkColor( PHYSDEV dev, COLORREF color )
 {
-    PSDRV_CreateColor(physDev, &physDev->bkColor, color);
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+    PSDRV_CreateColor(dev, &physDev->bkColor, color);
     return color;
 }
 
@@ -100,9 +101,10 @@ COLORREF CDECL PSDRV_SetBkColor( PSDRV_PDEVICE *physDev, COLORREF color )
 /***********************************************************************
  *           PSDRV_SetTextColor
  */
-COLORREF CDECL PSDRV_SetTextColor( PSDRV_PDEVICE *physDev, COLORREF color )
+COLORREF CDECL PSDRV_SetTextColor( PHYSDEV dev, COLORREF color )
 {
-    PSDRV_CreateColor(physDev, &physDev->font.color, color);
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+    PSDRV_CreateColor(dev, &physDev->font.color, color);
     physDev->font.set = FALSE;
     return color;
 }

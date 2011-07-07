@@ -35,8 +35,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
  * small clip area in the printer dc that it can still write raw
  * PostScript to the driver and expect this code not to be clipped.
  */
-void PSDRV_SetClip( PSDRV_PDEVICE *physDev )
+void PSDRV_SetClip( PHYSDEV dev )
 {
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     CHAR szArrayName[] = "clippath";
     DWORD size;
     RGNDATA *rgndata = NULL;
@@ -67,20 +68,20 @@ void PSDRV_SetClip( PSDRV_PDEVICE *physDev )
 
         GetRegionData(hrgn, size, rgndata);
 
-        PSDRV_WriteGSave(physDev);
+        PSDRV_WriteGSave(dev);
 
         /* check for NULL region */
         if (rgndata->rdh.nCount == 0)
         {
             /* set an empty clip path. */
-            PSDRV_WriteRectClip(physDev, 0, 0, 0, 0);
+            PSDRV_WriteRectClip(dev, 0, 0, 0, 0);
         }
         /* optimize when it is a simple region */
         else if (rgndata->rdh.nCount == 1)
         {
             RECT *pRect = (RECT *)rgndata->Buffer;
 
-            PSDRV_WriteRectClip(physDev, pRect->left, pRect->top,
+            PSDRV_WriteRectClip(dev, pRect->left, pRect->top,
                                 pRect->right - pRect->left,
                                 pRect->bottom - pRect->top);
         }
@@ -89,20 +90,20 @@ void PSDRV_SetClip( PSDRV_PDEVICE *physDev )
             UINT i;
             RECT *pRect = (RECT *)rgndata->Buffer;
 
-            PSDRV_WriteArrayDef(physDev, szArrayName, rgndata->rdh.nCount * 4);
+            PSDRV_WriteArrayDef(dev, szArrayName, rgndata->rdh.nCount * 4);
 
             for (i = 0; i < rgndata->rdh.nCount; i++, pRect++)
             {
-                PSDRV_WriteArrayPut(physDev, szArrayName, i * 4,
+                PSDRV_WriteArrayPut(dev, szArrayName, i * 4,
                                     pRect->left);
-                PSDRV_WriteArrayPut(physDev, szArrayName, i * 4 + 1,
+                PSDRV_WriteArrayPut(dev, szArrayName, i * 4 + 1,
                                     pRect->top);
-                PSDRV_WriteArrayPut(physDev, szArrayName, i * 4 + 2,
+                PSDRV_WriteArrayPut(dev, szArrayName, i * 4 + 2,
                                     pRect->right - pRect->left);
-                PSDRV_WriteArrayPut(physDev, szArrayName, i * 4 + 3,
+                PSDRV_WriteArrayPut(dev, szArrayName, i * 4 + 3,
                                     pRect->bottom - pRect->top);
             }
-            PSDRV_WriteRectClip2(physDev, szArrayName);
+            PSDRV_WriteRectClip2(dev, szArrayName);
         }
     }
 end:
@@ -114,13 +115,14 @@ end:
 /***********************************************************************
  *           PSDRV_ResetClip
  */
-void PSDRV_ResetClip( PSDRV_PDEVICE *physDev )
+void PSDRV_ResetClip( PHYSDEV dev )
 {
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     HRGN hrgn = CreateRectRgn(0,0,0,0);
     BOOL empty;
 
     empty = !GetClipRgn(physDev->hdc, hrgn);
     if(!empty && !physDev->pathdepth)
-        PSDRV_WriteGRestore(physDev);
+        PSDRV_WriteGRestore(dev);
     DeleteObject(hrgn);
 }

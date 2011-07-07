@@ -90,7 +90,7 @@ static BOOL get_bitmap_info( const void *ptr, LONG *width, LONG *height, WORD *b
  *  Uses level 2 PostScript
  */
 
-static BOOL PSDRV_WriteImageHeader(PSDRV_PDEVICE *physDev, const BITMAPINFO *info, INT xDst,
+static BOOL PSDRV_WriteImageHeader(PHYSDEV dev, const BITMAPINFO *info, INT xDst,
 				   INT yDst, INT widthDst, INT heightDst,
 				   INT widthSrc, INT heightSrc)
 {
@@ -99,36 +99,36 @@ static BOOL PSDRV_WriteImageHeader(PSDRV_PDEVICE *physDev, const BITMAPINFO *inf
 
     switch(info->bmiHeader.biBitCount) {
     case 8:
-        PSDRV_WriteIndexColorSpaceBegin(physDev, 255);
+        PSDRV_WriteIndexColorSpaceBegin(dev, 255);
 	for(i = 0; i < 256; i++) {
 	    map[i] =  info->bmiColors[i].rgbRed |
 	      info->bmiColors[i].rgbGreen << 8 |
 	      info->bmiColors[i].rgbBlue << 16;
 	}
-	PSDRV_WriteRGB(physDev, map, 256);
-	PSDRV_WriteIndexColorSpaceEnd(physDev);
+	PSDRV_WriteRGB(dev, map, 256);
+	PSDRV_WriteIndexColorSpaceEnd(dev);
 	break;
 
     case 4:
-        PSDRV_WriteIndexColorSpaceBegin(physDev, 15);
+        PSDRV_WriteIndexColorSpaceBegin(dev, 15);
 	for(i = 0; i < 16; i++) {
 	    map[i] =  info->bmiColors[i].rgbRed |
 	      info->bmiColors[i].rgbGreen << 8 |
 	      info->bmiColors[i].rgbBlue << 16;
 	}
-	PSDRV_WriteRGB(physDev, map, 16);
-	PSDRV_WriteIndexColorSpaceEnd(physDev);
+	PSDRV_WriteRGB(dev, map, 16);
+	PSDRV_WriteIndexColorSpaceEnd(dev);
 	break;
 
     case 1:
-        PSDRV_WriteIndexColorSpaceBegin(physDev, 1);
+        PSDRV_WriteIndexColorSpaceBegin(dev, 1);
 	for(i = 0; i < 2; i++) {
 	    map[i] =  info->bmiColors[i].rgbRed |
 	      info->bmiColors[i].rgbGreen << 8 |
 	      info->bmiColors[i].rgbBlue << 16;
 	}
-	PSDRV_WriteRGB(physDev, map, 2);
-	PSDRV_WriteIndexColorSpaceEnd(physDev);
+	PSDRV_WriteRGB(dev, map, 2);
+	PSDRV_WriteIndexColorSpaceEnd(dev);
 	break;
 
     case 15:
@@ -139,7 +139,7 @@ static BOOL PSDRV_WriteImageHeader(PSDRV_PDEVICE *physDev, const BITMAPINFO *inf
 	PSCOLOR pscol;
 	pscol.type = PSCOLOR_RGB;
 	pscol.value.rgb.r = pscol.value.rgb.g = pscol.value.rgb.b = 0.0;
-        PSDRV_WriteSetColor(physDev, &pscol);
+        PSDRV_WriteSetColor(dev, &pscol);
         break;
       }
 
@@ -148,7 +148,7 @@ static BOOL PSDRV_WriteImageHeader(PSDRV_PDEVICE *physDev, const BITMAPINFO *inf
 	return FALSE;
     }
 
-    PSDRV_WriteImage(physDev, info->bmiHeader.biBitCount, xDst, yDst,
+    PSDRV_WriteImage(dev, info->bmiHeader.biBitCount, xDst, yDst,
 		     widthDst, heightDst, widthSrc, heightSrc, FALSE);
     return TRUE;
 }
@@ -166,7 +166,7 @@ static BOOL PSDRV_WriteImageHeader(PSDRV_PDEVICE *physDev, const BITMAPINFO *inf
  *  Uses level 2 PostScript
  */
 
-static BOOL PSDRV_WriteImageMaskHeader(PSDRV_PDEVICE *physDev, const BITMAPINFO *info, INT xDst,
+static BOOL PSDRV_WriteImageMaskHeader(PHYSDEV dev, const BITMAPINFO *info, INT xDst,
                                        INT yDst, INT widthDst, INT heightDst,
                                        INT widthSrc, INT heightSrc)
 {
@@ -186,18 +186,18 @@ static BOOL PSDRV_WriteImageMaskHeader(PSDRV_PDEVICE *physDev, const BITMAPINFO 
        the foregnd color corresponds to a bit equal to
        0 in the bitmap.
     */
-    PSDRV_CreateColor(physDev, &foregnd, map[0]);
-    PSDRV_CreateColor(physDev, &bkgnd, map[1]);
+    PSDRV_CreateColor(dev, &foregnd, map[0]);
+    PSDRV_CreateColor(dev, &bkgnd, map[1]);
 
-    PSDRV_WriteGSave(physDev);
-    PSDRV_WriteNewPath(physDev);
-    PSDRV_WriteRectangle(physDev, xDst, yDst, widthDst, heightDst);
-    PSDRV_WriteSetColor(physDev, &bkgnd);
-    PSDRV_WriteFill(physDev);
-    PSDRV_WriteGRestore(physDev);
+    PSDRV_WriteGSave(dev);
+    PSDRV_WriteNewPath(dev);
+    PSDRV_WriteRectangle(dev, xDst, yDst, widthDst, heightDst);
+    PSDRV_WriteSetColor(dev, &bkgnd);
+    PSDRV_WriteFill(dev);
+    PSDRV_WriteGRestore(dev);
 
-    PSDRV_WriteSetColor(physDev, &foregnd);
-    PSDRV_WriteImage(physDev, 1, xDst, yDst, widthDst, heightDst,
+    PSDRV_WriteSetColor(dev, &foregnd);
+    PSDRV_WriteImage(dev, 1, xDst, yDst, widthDst, heightDst,
 		     widthSrc, heightSrc, TRUE);
 
     return TRUE;
@@ -222,7 +222,7 @@ static inline DWORD max_ascii85_size(DWORD size)
  *  bit depths.
  *  Compression not implemented.
  */
-INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDst,
+INT CDECL PSDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
                                INT heightDst, INT xSrc, INT ySrc,
                                INT widthSrc, INT heightSrc, const void *bits,
                                const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
@@ -236,7 +236,7 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
     BYTE *dst_ptr, *bitmap, *rle, *ascii85;
     DWORD rle_len, ascii85_len, bitmap_size;
 
-    TRACE("%p (%d,%d %dx%d) -> (%d,%d %dx%d)\n", physDev->hdc,
+    TRACE("%p (%d,%d %dx%d) -> (%d,%d %dx%d)\n", dev->hdc,
 	  xSrc, ySrc, widthSrc, heightSrc, xDst, yDst, widthDst, heightDst);
 
     if (!get_bitmap_info( info, &fullSrcWidth, &fullSrcHeight, &bpp, &compression )) return FALSE;
@@ -257,7 +257,7 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
     pt[0].y = yDst;
     pt[1].x = xDst + widthDst;
     pt[1].y = yDst + heightDst;
-    LPtoDP( physDev->hdc, pt, 2 );
+    LPtoDP( dev->hdc, pt, 2 );
     xDst = pt[0].x;
     yDst = pt[0].y;
     widthDst = pt[1].x - pt[0].x;
@@ -266,11 +266,11 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
     switch(bpp) {
 
     case 1:
-        PSDRV_SetClip(physDev);
-	PSDRV_WriteGSave(physDev);
+        PSDRV_SetClip(dev);
+	PSDRV_WriteGSave(dev);
 
         /* Use imagemask rather than image */
-	PSDRV_WriteImageMaskHeader(physDev, info, xDst, yDst, widthDst, heightDst,
+	PSDRV_WriteImageMaskHeader(dev, info, xDst, yDst, widthDst, heightDst,
                                    widthSrc, heightSrc);
 	src_ptr = bits;
         if(stride < 0) src_ptr += (fullSrcHeight + 1) * stride;
@@ -284,9 +284,9 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
 	break;
 
     case 4:
-        PSDRV_SetClip(physDev);
-	PSDRV_WriteGSave(physDev);
-	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
+        PSDRV_SetClip(dev);
+	PSDRV_WriteGSave(dev);
+	PSDRV_WriteImageHeader(dev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
 	src_ptr = bits;
         if(stride < 0) src_ptr += (fullSrcHeight + 1) * stride;
@@ -300,9 +300,9 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
 	break;
 
     case 8:
-        PSDRV_SetClip(physDev);
-	PSDRV_WriteGSave(physDev);
-	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
+        PSDRV_SetClip(dev);
+	PSDRV_WriteGSave(dev);
+	PSDRV_WriteImageHeader(dev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
 	src_ptr = bits;
         if(stride < 0) src_ptr += (fullSrcHeight + 1) * stride;
@@ -315,9 +315,9 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
 
     case 15:
     case 16:
-        PSDRV_SetClip(physDev);
-	PSDRV_WriteGSave(physDev);
-	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
+        PSDRV_SetClip(dev);
+	PSDRV_WriteGSave(dev);
+	PSDRV_WriteImageHeader(dev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
 
 
@@ -349,9 +349,9 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
 	break;
 
     case 24:
-        PSDRV_SetClip(physDev);
-	PSDRV_WriteGSave(physDev);
-	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
+        PSDRV_SetClip(dev);
+	PSDRV_WriteGSave(dev);
+	PSDRV_WriteImageHeader(dev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
 
         src_ptr = bits;
@@ -372,9 +372,9 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
 	break;
 
     case 32:
-        PSDRV_SetClip(physDev);
-	PSDRV_WriteGSave(physDev);
-	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
+        PSDRV_SetClip(dev);
+	PSDRV_WriteGSave(dev);
+	PSDRV_WriteImageHeader(dev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
 
         src_ptr = bits;
@@ -406,10 +406,10 @@ INT CDECL PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT w
     ascii85 = HeapAlloc(GetProcessHeap(), 0, max_ascii85_size(rle_len));
     ascii85_len = ASCII85_encode(rle, rle_len, ascii85);
     HeapFree(GetProcessHeap(), 0, rle);
-    PSDRV_WriteData(physDev, ascii85, ascii85_len);
+    PSDRV_WriteData(dev, ascii85, ascii85_len);
     HeapFree(GetProcessHeap(), 0, ascii85);
-    PSDRV_WriteSpool(physDev, "~>\n", 3);
-    PSDRV_WriteGRestore(physDev);
-    PSDRV_ResetClip(physDev);
+    PSDRV_WriteSpool(dev, "~>\n", 3);
+    PSDRV_WriteGRestore(dev);
+    PSDRV_ResetClip(dev);
     return abs(heightSrc);
 }

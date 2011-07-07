@@ -47,9 +47,11 @@ static const char psbegindocument[] =
 "%%BeginDocument: Wine passthrough\n";
 
 
-DWORD write_spool( PSDRV_PDEVICE *physDev, const void *data, DWORD num )
+DWORD write_spool( PHYSDEV dev, const void *data, DWORD num )
 {
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     DWORD written;
+
     if (!WritePrinter(physDev->job.hprinter, (LPBYTE) data, num, &written) || (written != num))
         return SP_OUTOFDISK;
 
@@ -59,9 +61,11 @@ DWORD write_spool( PSDRV_PDEVICE *physDev, const void *data, DWORD num )
 /**********************************************************************
  *           ExtEscape  (WINEPS.@)
  */
-INT CDECL PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID in_data,
+INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
                            INT cbOutput, LPVOID out_data )
 {
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+
     switch(nEscape)
     {
     case QUERYESCSUPPORT:
@@ -275,10 +279,10 @@ INT CDECL PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPC
              * in_data[0] instead.
              */
             if(!physDev->job.in_passthrough) {
-                write_spool(physDev, psbegindocument, sizeof(psbegindocument)-1);
+                write_spool(dev, psbegindocument, sizeof(psbegindocument)-1);
                 physDev->job.in_passthrough = TRUE;
             }
-            return write_spool(physDev,((char*)in_data)+2,*(const WORD*)in_data);
+            return write_spool(dev,((char*)in_data)+2,*(const WORD*)in_data);
         }
 
     case POSTSCRIPT_IGNORE:
@@ -317,7 +321,7 @@ INT CDECL PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPC
 	      info->RenderMode, info->FillMode, info->BkMode);
 	switch(info->RenderMode) {
 	case RENDERMODE_NO_DISPLAY:
-	    PSDRV_WriteClosePath(physDev); /* not sure if this is necessary, but it can't hurt */
+	    PSDRV_WriteClosePath(dev); /* not sure if this is necessary, but it can't hurt */
 	    break;
 	case RENDERMODE_OPEN:
 	case RENDERMODE_CLOSED:
@@ -335,17 +339,17 @@ INT CDECL PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPC
 	switch(mode) {
 	case CLIP_SAVE:
 	    TRACE("CLIP_TO_PATH: CLIP_SAVE\n");
-	    PSDRV_WriteGSave(physDev);
+	    PSDRV_WriteGSave(dev);
 	    return 1;
 	case CLIP_RESTORE:
 	    TRACE("CLIP_TO_PATH: CLIP_RESTORE\n");
-	    PSDRV_WriteGRestore(physDev);
+	    PSDRV_WriteGRestore(dev);
 	    return 1;
 	case CLIP_INCLUSIVE:
 	    TRACE("CLIP_TO_PATH: CLIP_INCLUSIVE\n");
 	    /* FIXME to clip or eoclip ? (see PATH_INFO.FillMode) */
-	    PSDRV_WriteClip(physDev);
-            PSDRV_WriteNewPath(physDev);
+	    PSDRV_WriteClip(dev);
+            PSDRV_WriteNewPath(dev);
 	    return 1;
 	case CLIP_EXCLUSIVE:
 	    FIXME("CLIP_EXCLUSIVE: not implemented\n");
@@ -364,19 +368,21 @@ INT CDECL PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPC
 /************************************************************************
  *           PSDRV_StartPage
  */
-INT CDECL PSDRV_StartPage( PSDRV_PDEVICE *physDev )
+INT CDECL PSDRV_StartPage( PHYSDEV dev )
 {
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+
     if(!physDev->job.OutOfPage) {
         FIXME("Already started a page?\n");
 	return 1;
     }
 
     if(physDev->job.PageNo++ == 0) {
-        if(!PSDRV_WriteHeader( physDev, physDev->job.DocName ))
+        if(!PSDRV_WriteHeader( dev, physDev->job.DocName ))
             return 0;
     }
 
-    if(!PSDRV_WriteNewPage( physDev ))
+    if(!PSDRV_WriteNewPage( dev ))
         return 0;
     physDev->job.OutOfPage = FALSE;
     return 1;
@@ -386,15 +392,17 @@ INT CDECL PSDRV_StartPage( PSDRV_PDEVICE *physDev )
 /************************************************************************
  *           PSDRV_EndPage
  */
-INT CDECL PSDRV_EndPage( PSDRV_PDEVICE *physDev )
+INT CDECL PSDRV_EndPage( PHYSDEV dev )
 {
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+
     if(physDev->job.OutOfPage) {
         FIXME("Already ended a page?\n");
 	return 1;
     }
-    if(!PSDRV_WriteEndPage( physDev ))
+    if(!PSDRV_WriteEndPage( dev ))
         return 0;
-    PSDRV_EmptyDownloadList(physDev, FALSE);
+    PSDRV_EmptyDownloadList(dev, FALSE);
     physDev->job.OutOfPage = TRUE;
     return 1;
 }
@@ -403,8 +411,9 @@ INT CDECL PSDRV_EndPage( PSDRV_PDEVICE *physDev )
 /************************************************************************
  *           PSDRV_StartDocA
  */
-static INT PSDRV_StartDocA( PSDRV_PDEVICE *physDev, const DOCINFOA *doc )
+static INT PSDRV_StartDocA( PHYSDEV dev, const DOCINFOA *doc )
 {
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     DOC_INFO_1A di;
 
     TRACE("(%p, %p) => %s, %s, %s\n", physDev, doc, debugstr_a(doc->lpszDocName),
@@ -460,13 +469,13 @@ static INT PSDRV_StartDocA( PSDRV_PDEVICE *physDev, const DOCINFOA *doc )
 /************************************************************************
  *           PSDRV_StartDoc
  */
-INT CDECL PSDRV_StartDoc( PSDRV_PDEVICE *physDev, const DOCINFOW *doc )
+INT CDECL PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
 {
     DOCINFOA docA;
     INT ret, len;
     LPSTR docname = NULL, output = NULL, datatype = NULL;
 
-    TRACE("(%p, %p) => %d,%s,%s,%s\n", physDev, doc, doc->cbSize, debugstr_w(doc->lpszDocName),
+    TRACE("(%p, %p) => %d,%s,%s,%s\n", dev, doc, doc->cbSize, debugstr_w(doc->lpszDocName),
         debugstr_w(doc->lpszOutput), debugstr_w(doc->lpszDatatype));
 
     docA.cbSize = doc->cbSize;
@@ -493,7 +502,7 @@ INT CDECL PSDRV_StartDoc( PSDRV_PDEVICE *physDev, const DOCINFOW *doc )
     docA.lpszDatatype = datatype;
     docA.fwType = doc->fwType;
 
-    ret = PSDRV_StartDocA(physDev, &docA);
+    ret = PSDRV_StartDocA(dev, &docA);
 
     HeapFree( GetProcessHeap(), 0, docname );
     HeapFree( GetProcessHeap(), 0, output );
@@ -505,9 +514,11 @@ INT CDECL PSDRV_StartDoc( PSDRV_PDEVICE *physDev, const DOCINFOW *doc )
 /************************************************************************
  *           PSDRV_EndDoc
  */
-INT CDECL PSDRV_EndDoc( PSDRV_PDEVICE *physDev )
+INT CDECL PSDRV_EndDoc( PHYSDEV dev )
 {
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     INT ret = 1;
+
     if(!physDev->job.id) {
         FIXME("hJob == 0. Now what?\n");
 	return 0;
@@ -515,9 +526,9 @@ INT CDECL PSDRV_EndDoc( PSDRV_PDEVICE *physDev )
 
     if(!physDev->job.OutOfPage) {
         WARN("Somebody forgot an EndPage\n");
-	PSDRV_EndPage( physDev );
+	PSDRV_EndPage( dev );
     }
-    PSDRV_WriteFooter( physDev );
+    PSDRV_WriteFooter( dev );
 
     ret = EndDocPrinter(physDev->job.hprinter);
     ClosePrinter(physDev->job.hprinter);

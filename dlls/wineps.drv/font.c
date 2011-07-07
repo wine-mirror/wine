@@ -36,8 +36,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 /***********************************************************************
  *           SelectFont   (WINEPS.@)
  */
-HFONT CDECL PSDRV_SelectFont( PSDRV_PDEVICE *physDev, HFONT hfont, HANDLE gdiFont )
+HFONT CDECL PSDRV_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
 {
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     LOGFONTW lf;
     BOOL subst = FALSE;
     char FaceName[LF_FACESIZE];
@@ -112,28 +113,30 @@ HFONT CDECL PSDRV_SelectFont( PSDRV_PDEVICE *physDev, HFONT hfont, HANDLE gdiFon
     physDev->font.set = FALSE;
 
     if(gdiFont && !subst) {
-        if(PSDRV_SelectDownloadFont(physDev))
+        if(PSDRV_SelectDownloadFont(dev))
 	    return 0; /* use gdi font */
     }
 
-    PSDRV_SelectBuiltinFont(physDev, hfont, &lf, FaceName);
+    PSDRV_SelectBuiltinFont(dev, hfont, &lf, FaceName);
     return (HFONT)1; /* use device font */
 }
 
 /***********************************************************************
  *           PSDRV_SetFont
  */
-BOOL PSDRV_SetFont( PSDRV_PDEVICE *physDev )
+BOOL PSDRV_SetFont( PHYSDEV dev )
 {
-    PSDRV_WriteSetColor(physDev, &physDev->font.color);
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+
+    PSDRV_WriteSetColor(dev, &physDev->font.color);
     if(physDev->font.set) return TRUE;
 
     switch(physDev->font.fontloc) {
     case Builtin:
-        PSDRV_WriteSetBuiltinFont(physDev);
+        PSDRV_WriteSetBuiltinFont(dev);
 	break;
     case Download:
-        PSDRV_WriteSetDownloadFont(physDev);
+        PSDRV_WriteSetDownloadFont(dev);
 	break;
     default:
         ERR("fontloc = %d\n", physDev->font.fontloc);

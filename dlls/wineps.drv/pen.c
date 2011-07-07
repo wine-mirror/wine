@@ -37,8 +37,9 @@ static const char PEN_alternate[]  = "1";
 /***********************************************************************
  *           SelectPen   (WINEPS.@)
  */
-HPEN CDECL PSDRV_SelectPen( PSDRV_PDEVICE *physDev, HPEN hpen )
+HPEN CDECL PSDRV_SelectPen( PHYSDEV dev, HPEN hpen )
 {
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     LOGPEN logpen;
 
     if (!GetObjectW( hpen, sizeof(logpen), &logpen ))
@@ -66,7 +67,7 @@ HPEN CDECL PSDRV_SelectPen( PSDRV_PDEVICE *physDev, HPEN hpen )
     physDev->pen.width = logpen.lopnWidth.x;
     if ((logpen.lopnStyle & PS_GEOMETRIC) || (physDev->pen.width > 1))
     {
-        physDev->pen.width = PSDRV_XWStoDS( physDev, physDev->pen.width );
+        physDev->pen.width = PSDRV_XWStoDS( dev, physDev->pen.width );
         if(physDev->pen.width < 0) physDev->pen.width = -physDev->pen.width;
     }
     if (hpen == GetStockObject( DC_PEN ))
@@ -88,7 +89,7 @@ HPEN CDECL PSDRV_SelectPen( PSDRV_PDEVICE *physDev, HPEN hpen )
     case PS_ENDCAP_FLAT:   physDev->pen.endcap = 0; break;
     }
 
-    PSDRV_CreateColor(physDev, &physDev->pen.color, logpen.lopnColor);
+    PSDRV_CreateColor(dev, &physDev->pen.color, logpen.lopnColor);
     physDev->pen.style = logpen.lopnStyle & PS_STYLE_MASK;
 
     switch(physDev->pen.style) {
@@ -129,10 +130,12 @@ HPEN CDECL PSDRV_SelectPen( PSDRV_PDEVICE *physDev, HPEN hpen )
 /***********************************************************************
  *           SetDCPenColor (WINEPS.@)
  */
-COLORREF CDECL PSDRV_SetDCPenColor( PSDRV_PDEVICE *physDev, COLORREF color )
+COLORREF CDECL PSDRV_SetDCPenColor( PHYSDEV dev, COLORREF color )
 {
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+
     if (GetCurrentObject( physDev->hdc, OBJ_PEN ) == GetStockObject( DC_PEN ))
-        PSDRV_CreateColor( physDev, &physDev->pen.color, color );
+        PSDRV_CreateColor( dev, &physDev->pen.color, color );
     return color;
 }
 
@@ -142,13 +145,15 @@ COLORREF CDECL PSDRV_SetDCPenColor( PSDRV_PDEVICE *physDev, COLORREF color )
  *	PSDRV_SetPen
  *
  */
-BOOL PSDRV_SetPen(PSDRV_PDEVICE *physDev)
+BOOL PSDRV_SetPen( PHYSDEV dev )
 {
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+
     if (physDev->pen.style != PS_NULL) {
-	PSDRV_WriteSetColor(physDev, &physDev->pen.color);
+	PSDRV_WriteSetColor(dev, &physDev->pen.color);
 
 	if(!physDev->pen.set) {
-	    PSDRV_WriteSetPen(physDev);
+	    PSDRV_WriteSetPen(dev);
 	    physDev->pen.set = TRUE;
 	}
     }

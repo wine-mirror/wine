@@ -29,17 +29,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
-static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
+static BOOL PSDRV_Text(PHYSDEV dev, INT x, INT y, UINT flags,
 		       LPCWSTR str, UINT count,
 		       BOOL bDrawBackground, const INT *lpDx);
 
 /***********************************************************************
  *           PSDRV_ExtTextOut
  */
-BOOL CDECL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
+BOOL CDECL PSDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                              const RECT *lprect, LPCWSTR str, UINT count,
                              const INT *lpDx )
 {
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     BOOL bResult = TRUE;
     BOOL bClipped = FALSE;
     BOOL bOpaque = FALSE;
@@ -50,50 +51,51 @@ BOOL CDECL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     if(physDev->job.id == 0) return FALSE;
 
     /* write font if not already written */
-    PSDRV_SetFont(physDev);
+    PSDRV_SetFont(dev);
 
-    PSDRV_SetClip(physDev);
+    PSDRV_SetClip(dev);
 
     /* set clipping and/or draw background */
     if ((flags & (ETO_CLIPPED | ETO_OPAQUE)) && (lprect != NULL))
     {
-	PSDRV_WriteGSave(physDev);
-	PSDRV_WriteRectangle(physDev, lprect->left, lprect->top, lprect->right - lprect->left,
+	PSDRV_WriteGSave(dev);
+	PSDRV_WriteRectangle(dev, lprect->left, lprect->top, lprect->right - lprect->left,
 			     lprect->bottom - lprect->top);
 
 	if (flags & ETO_OPAQUE)
 	{
 	    bOpaque = TRUE;
-	    PSDRV_WriteGSave(physDev);
-	    PSDRV_WriteSetColor(physDev, &physDev->bkColor);
-	    PSDRV_WriteFill(physDev);
-	    PSDRV_WriteGRestore(physDev);
+	    PSDRV_WriteGSave(dev);
+	    PSDRV_WriteSetColor(dev, &physDev->bkColor);
+	    PSDRV_WriteFill(dev);
+	    PSDRV_WriteGRestore(dev);
 	}
 
 	if (flags & ETO_CLIPPED)
 	{
 	    bClipped = TRUE;
-	    PSDRV_WriteClip(physDev);
+	    PSDRV_WriteClip(dev);
 	}
 
-	bResult = PSDRV_Text(physDev, x, y, flags, str, count, !(bClipped && bOpaque), lpDx);
-	PSDRV_WriteGRestore(physDev);
+	bResult = PSDRV_Text(dev, x, y, flags, str, count, !(bClipped && bOpaque), lpDx);
+	PSDRV_WriteGRestore(dev);
     }
     else
     {
-	bResult = PSDRV_Text(physDev, x, y, flags, str, count, TRUE, lpDx);
+	bResult = PSDRV_Text(dev, x, y, flags, str, count, TRUE, lpDx);
     }
 
-    PSDRV_ResetClip(physDev);
+    PSDRV_ResetClip(dev);
     return bResult;
 }
 
 /***********************************************************************
  *           PSDRV_Text
  */
-static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR str,
+static BOOL PSDRV_Text(PHYSDEV dev, INT x, INT y, UINT flags, LPCWSTR str,
 		       UINT count, BOOL bDrawBackground, const INT *lpDx)
 {
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     WORD *glyphs = NULL;
 
     if (!count)
@@ -102,13 +104,13 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
     if(physDev->font.fontloc == Download)
         glyphs = (LPWORD)str;
 
-    PSDRV_WriteMoveTo(physDev, x, y);
+    PSDRV_WriteMoveTo(dev, x, y);
 
     if(!lpDx) {
         if(physDev->font.fontloc == Download)
-	    PSDRV_WriteDownloadGlyphShow(physDev, glyphs, count);
+	    PSDRV_WriteDownloadGlyphShow(dev, glyphs, count);
 	else
-	    PSDRV_WriteBuiltinGlyphShow(physDev, str, count);
+	    PSDRV_WriteBuiltinGlyphShow(dev, str, count);
     }
     else {
         UINT i;
@@ -116,9 +118,9 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
 
         for(i = 0; i < count-1; i++) {
 	    if(physDev->font.fontloc == Download)
-	        PSDRV_WriteDownloadGlyphShow(physDev, glyphs + i, 1);
+	        PSDRV_WriteDownloadGlyphShow(dev, glyphs + i, 1);
 	    else
-	        PSDRV_WriteBuiltinGlyphShow(physDev, str + i, 1);
+	        PSDRV_WriteBuiltinGlyphShow(dev, str + i, 1);
             if(flags & ETO_PDY)
             {
                 offset.x += lpDx[i * 2];
@@ -126,12 +128,12 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
             }
             else
                 offset.x += lpDx[i];
-	    PSDRV_WriteMoveTo(physDev, x + offset.x, y + offset.y);
+	    PSDRV_WriteMoveTo(dev, x + offset.x, y + offset.y);
 	}
 	if(physDev->font.fontloc == Download)
-	    PSDRV_WriteDownloadGlyphShow(physDev, glyphs + i, 1);
+	    PSDRV_WriteDownloadGlyphShow(dev, glyphs + i, 1);
 	else
-	    PSDRV_WriteBuiltinGlyphShow(physDev, str + i, 1);
+	    PSDRV_WriteBuiltinGlyphShow(dev, str + i, 1);
     }
 
     return TRUE;

@@ -134,7 +134,7 @@ static BOOL get_glyf_pos(TYPE42 *t42, DWORD index, DWORD *start, DWORD *end)
     return TRUE;
 }
 
-TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
+TYPE42 *T42_download_header(PHYSDEV dev, char *ps_name,
                             RECT *bbox, UINT emsize)
 {
     DWORD i, j, tablepos, nb_blocks, glyf_off = 0, loca_off = 0, cur_off;
@@ -173,7 +173,7 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
     t42->num_of_written_tables = 0;
 
     for(i = 0; i < num_of_tables; i++) {
-        LoadTable(physDev->hdc, t42->tables + i);
+        LoadTable(dev->hdc, t42->tables + i);
 	if(t42->tables[i].len > 0xffff && t42->tables[i].write) break;
 	if(t42->tables[i].write) t42->num_of_written_tables++;
 	if(t42->tables[i].MS_tag == MS_MAKE_TAG('l','o','c','a'))
@@ -207,13 +207,13 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
 	    (float)bbox->right / emsize, (float)bbox->top / emsize);
     pop_lc_numeric();
 
-    PSDRV_WriteSpool(physDev, buf, strlen(buf));
+    PSDRV_WriteSpool(dev, buf, strlen(buf));
 
     t42->num_of_written_tables++; /* explicitly add glyf */
     sprintf(buf, TT_offset_table, t42->num_of_written_tables,
 	    t42->num_of_written_tables, t42->num_of_written_tables, t42->num_of_written_tables);
 
-    PSDRV_WriteSpool(physDev, buf, strlen(buf));
+    PSDRV_WriteSpool(dev, buf, strlen(buf));
 
     tablepos = 12 + t42->num_of_written_tables * 16;
     cur_off = 12;
@@ -222,7 +222,7 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
         sprintf(buf, TT_table_dir_entry, FLIP_ORDER(t42->tables[i].MS_tag),
 		t42->tables[i].check, t42->tables[i].len ? tablepos : 0,
 		t42->tables[i].len);
-	PSDRV_WriteSpool(physDev, buf, strlen(buf));
+	PSDRV_WriteSpool(dev, buf, strlen(buf));
 	tablepos += ((t42->tables[i].len + 3) & ~3);
         if(t42->tables[i].MS_tag == MS_MAKE_TAG('l','o','c','a'))
             loca_off = cur_off;
@@ -230,19 +230,19 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
     }
     sprintf(buf, TT_table_dir_entry, FLIP_ORDER(t42->tables[t42->glyf_tab].MS_tag),
             t42->tables[t42->glyf_tab].check, tablepos, t42->tables[t42->glyf_tab].len);
-    PSDRV_WriteSpool(physDev, buf, strlen(buf));
-    PSDRV_WriteSpool(physDev, "00>\n", 4); /* add an extra byte for old PostScript rips */
+    PSDRV_WriteSpool(dev, buf, strlen(buf));
+    PSDRV_WriteSpool(dev, "00>\n", 4); /* add an extra byte for old PostScript rips */
     glyf_off = cur_off;
 
     for(i = 0; i < num_of_tables; i++) {
         if(t42->tables[i].len == 0 || !t42->tables[i].write) continue;
-	PSDRV_WriteSpool(physDev, "<", 1);
+	PSDRV_WriteSpool(dev, "<", 1);
 	for(j = 0; j < ((t42->tables[i].len + 3) & ~3); j++) {
 	    sprintf(buf, "%02x", t42->tables[i].data[j]);
-	    PSDRV_WriteSpool(physDev, buf, strlen(buf));
-	    if(j % 16 == 15) PSDRV_WriteSpool(physDev, "\n", 1);
+	    PSDRV_WriteSpool(dev, buf, strlen(buf));
+	    if(j % 16 == 15) PSDRV_WriteSpool(dev, "\n", 1);
 	}
-	PSDRV_WriteSpool(physDev, "00>\n", 4); /* add an extra byte for old PostScript rips */
+	PSDRV_WriteSpool(dev, "00>\n", 4); /* add an extra byte for old PostScript rips */
     }
     
     /* glyf_blocks is a 0 terminated list, holding the start offset of each block.  For simplicity
@@ -261,17 +261,17 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
         t42->glyf_blocks[nb_blocks-1] = end;
     }
 
-    PSDRV_WriteSpool(physDev, "[ ", 2);
+    PSDRV_WriteSpool(dev, "[ ", 2);
     for(i = 1; t42->glyf_blocks[i]; i++) {
         sprintf(buf,"%d ", t42->glyf_blocks[i] - t42->glyf_blocks[i-1] + 1);
         /* again add one byte for old PostScript rips */
-        PSDRV_WriteSpool(physDev, buf, strlen(buf));
+        PSDRV_WriteSpool(dev, buf, strlen(buf));
         if(i % 8 == 0)
-            PSDRV_WriteSpool(physDev, "\n", 1);
+            PSDRV_WriteSpool(dev, "\n", 1);
     }
-    PSDRV_WriteSpool(physDev, storage, sizeof(storage) - 1);
+    PSDRV_WriteSpool(dev, storage, sizeof(storage) - 1);
     sprintf(buf, end, loca_off, glyf_off);
-    PSDRV_WriteSpool(physDev, buf, strlen(buf));
+    PSDRV_WriteSpool(dev, buf, strlen(buf));
     HeapFree(GetProcessHeap(), 0, buf);
     return t42;
 }
@@ -279,7 +279,7 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
 
 
 
-BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
+BOOL T42_download_glyph(PHYSDEV dev, DOWNLOAD *pdl, DWORD index,
 			char *glyph_name)
 {
     DWORD start, end, i;
@@ -326,8 +326,8 @@ BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
 	    sg_index = GET_BE_WORD(sg_start + 2);
 
 	    TRACE("Sending subglyph %04x for glyph %04x\n", sg_index, index);
-	    get_glyph_name(physDev->hdc, sg_index, sg_name);
-	    T42_download_glyph(physDev, pdl, sg_index, sg_name);
+	    get_glyph_name(dev->hdc, sg_index, sg_name);
+	    T42_download_glyph(dev, pdl, sg_index, sg_name);
 	    sg_start += 4;
 	    if(sg_flags & ARG_1_AND_2_ARE_WORDS)
 	        sg_start += 4;
@@ -351,18 +351,18 @@ BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
     /* we don't have a string for the gdir and glyf tables, but we do have a 
        string for the TT header.  So the offset we need is tables - 2 */
     sprintf(buf, "%d %d\n", t42->num_of_written_tables - 2 + i, start - t42->glyf_blocks[i-1]);
-    PSDRV_WriteSpool(physDev, buf, strlen(buf));
+    PSDRV_WriteSpool(dev, buf, strlen(buf));
 
-    PSDRV_WriteSpool(physDev, "<", 1);
+    PSDRV_WriteSpool(dev, "<", 1);
     for(i = start; i < end; i++) {
         sprintf(buf, "%02x", *(t42->tables[t42->glyf_tab].data + i));
-	PSDRV_WriteSpool(physDev, buf, strlen(buf));
+	PSDRV_WriteSpool(dev, buf, strlen(buf));
 	if((i - start) % 16 == 15)
-	    PSDRV_WriteSpool(physDev, "\n", 1);
+	    PSDRV_WriteSpool(dev, "\n", 1);
     }
-    PSDRV_WriteSpool(physDev, ">\n", 2);
+    PSDRV_WriteSpool(dev, ">\n", 2);
     sprintf(buf, glyph_def, pdl->ps_name, index, glyph_name, index);
-    PSDRV_WriteSpool(physDev, buf, strlen(buf));
+    PSDRV_WriteSpool(dev, buf, strlen(buf));
 
     t42->glyph_sent[index] = TRUE;
     HeapFree(GetProcessHeap(), 0, buf);

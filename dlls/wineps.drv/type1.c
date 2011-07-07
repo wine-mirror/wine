@@ -70,7 +70,7 @@ static inline WORD  get_be_word(const void *p)  { return RtlUshortByteSwap(*(WOR
 static inline DWORD get_be_dword(const void *p) { return RtlUlongByteSwap(*(DWORD*)p); }
 #endif
 
-TYPE1 *T1_download_header(PSDRV_PDEVICE *physDev, char *ps_name, RECT *bbox, UINT emsize)
+TYPE1 *T1_download_header(PHYSDEV dev, char *ps_name, RECT *bbox, UINT emsize)
 {
     char *buf;
     TYPE1 *t1;
@@ -113,7 +113,7 @@ TYPE1 *T1_download_header(PSDRV_PDEVICE *physDev, char *ps_name, RECT *bbox, UIN
     sprintf(buf, dict, ps_name, t1->emsize, t1->emsize,
 	    bbox->left, bbox->bottom, bbox->right, bbox->top);
 
-    PSDRV_WriteSpool(physDev, buf, strlen(buf));
+    PSDRV_WriteSpool(dev, buf, strlen(buf));
 
     HeapFree(GetProcessHeap(), 0, buf);
     return t1;
@@ -512,8 +512,7 @@ static inline BOOL on_point(const glyph_outline *outline, WORD pt)
     return outline->flags[pt] & 1;
 }
 
-BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
-		       char *glyph_name)
+BOOL T1_download_glyph(PHYSDEV dev, DOWNLOAD *pdl, DWORD index, char *glyph_name)
 {
     DWORD len;
     WORD cur_pt, cont;
@@ -551,9 +550,9 @@ BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
     outline.flags = NULL;
     outline.end_pts = NULL;
     outline.pts = NULL;
-    get_hmetrics(physDev->hdc, index, &outline.lsb, &outline.advance);
+    get_hmetrics(dev->hdc, index, &outline.lsb, &outline.advance);
 
-    if(!append_glyph_outline(physDev->hdc, index, &outline)) return FALSE;
+    if(!append_glyph_outline(dev->hdc, index, &outline)) return FALSE;
 
     charstring = str_init(100);
     curpos.x = outline.lsb;
@@ -633,14 +632,14 @@ BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
 		    strlen(pdl->ps_name) + strlen(glyph_name) + 100);
 
     sprintf(buf, "%%%%glyph %04x\n", index);
-    PSDRV_WriteSpool(physDev, buf, strlen(buf));
+    PSDRV_WriteSpool(dev, buf, strlen(buf));
 
     len = str_get_bytes(charstring, &bytes);
     sprintf(buf, glyph_def_begin, pdl->ps_name, glyph_name, len);
-    PSDRV_WriteSpool(physDev, buf, strlen(buf));
-    PSDRV_WriteBytes(physDev, bytes, len);
+    PSDRV_WriteSpool(dev, buf, strlen(buf));
+    PSDRV_WriteBytes(dev, bytes, len);
     sprintf(buf, glyph_def_end);
-    PSDRV_WriteSpool(physDev, buf, strlen(buf));
+    PSDRV_WriteSpool(dev, buf, strlen(buf));
     str_free(charstring);
 
     t1->glyph_sent[index] = TRUE;
