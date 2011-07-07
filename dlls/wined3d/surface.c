@@ -2349,7 +2349,7 @@ static void surface_allocate_surface(struct wined3d_surface *surface, const stru
  * render target dimensions. With FBOs, the dimensions have to be an exact match. */
 /* TODO: We should synchronize the renderbuffer's content with the texture's content. */
 /* GL locking is done by the caller */
-void surface_set_compatible_renderbuffer(struct wined3d_surface *surface, struct wined3d_surface *rt)
+void surface_set_compatible_renderbuffer(struct wined3d_surface *surface, const struct wined3d_surface *rt)
 {
     const struct wined3d_gl_info *gl_info = &surface->resource.device->adapter->gl_info;
     struct wined3d_renderbuffer_entry *entry;
