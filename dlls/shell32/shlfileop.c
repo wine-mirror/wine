@@ -1348,7 +1348,6 @@ static HRESULT delete_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom)
 
     for (i = 0; i < flFrom->dwNumFiles; i++)
     {
-        bPathExists = TRUE;
         fileEntry = &flFrom->feFiles[i];
 
         if (!IsAttribFile(fileEntry->attributes) &&
