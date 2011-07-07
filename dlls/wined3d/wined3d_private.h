@@ -2159,7 +2159,7 @@ typedef enum {
     CONVERT_RGB32_888
 } CONVERT_TYPES;
 
-HRESULT d3dfmt_get_conv(struct wined3d_surface *surface, BOOL need_alpha_ck, BOOL use_texturing,
+HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_alpha_ck, BOOL use_texturing,
         struct wined3d_format *format, CONVERT_TYPES *convert) DECLSPEC_HIDDEN;
 void d3dfmt_p8_init_palette(struct wined3d_surface *surface, BYTE table[256][4], BOOL colorkey) DECLSPEC_HIDDEN;
 

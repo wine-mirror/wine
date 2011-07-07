@@ -4131,11 +4131,11 @@ static void flush_to_framebuffer_drawpixels(struct wined3d_surface *surface,
     context_release(context);
 }
 
-HRESULT d3dfmt_get_conv(struct wined3d_surface *surface, BOOL need_alpha_ck,
+HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_alpha_ck,
         BOOL use_texturing, struct wined3d_format *format, CONVERT_TYPES *convert)
 {
     BOOL colorkey_active = need_alpha_ck && (surface->CKeyFlags & WINEDDSD_CKSRCBLT);
-    struct wined3d_device *device = surface->resource.device;
+    const struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     BOOL blit_supported = FALSE;
 
