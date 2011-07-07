@@ -29,6 +29,7 @@ typedef struct emfplus_record
 {
     ULONG todo;
     ULONG record_type;
+    ULONG playback_todo;
 } emfplus_record;
 
 typedef struct emfplus_check_state
@@ -36,6 +37,7 @@ typedef struct emfplus_check_state
     const char *desc;
     int count;
     const struct emfplus_record *expected;
+    GpMetafile *metafile;
 } emfplus_check_state;
 
 static void check_record(int count, const char *desc, const struct emfplus_record *expected, const struct emfplus_record *actual)
@@ -178,6 +180,7 @@ static void check_metafile(GpMetafile *metafile, const emfplus_record *expected,
     state.desc = desc;
     state.count = 0;
     state.expected = expected;
+    state.metafile = metafile;
 
     hdc = CreateCompatibleDC(0);
 
@@ -196,6 +199,51 @@ static void check_metafile(GpMetafile *metafile, const emfplus_record *expected,
     GdipDeleteGraphics(graphics);
 
     DeleteDC(hdc);
+}
+
+static BOOL CALLBACK play_metafile_proc(EmfPlusRecordType record_type, unsigned int flags,
+    unsigned int dataSize, const unsigned char *pStr, void *userdata)
+{
+    emfplus_check_state *state = (emfplus_check_state*)userdata;
+    GpStatus stat;
+
+    stat = GdipPlayMetafileRecord(state->metafile, record_type, flags, dataSize, pStr);
+
+    if (state->expected[state->count].record_type)
+    {
+        if (state->expected[state->count].playback_todo)
+            todo_wine ok(stat == Ok, "%s: GdipPlayMetafileRecord failed with stat %i\n", state->desc, stat);
+        else
+            ok(stat == Ok, "%s: GdipPlayMetafileRecord failed with stat %i\n", state->desc, stat);
+        state->count++;
+    }
+    else
+    {
+        if (state->expected[state->count].playback_todo)
+            todo_wine ok(0, "%s: too many records\n", state->desc);
+        else
+            ok(0, "%s: too many records\n", state->desc);
+
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static void play_metafile(GpMetafile *metafile, GpGraphics *graphics, const emfplus_record *expected,
+    const char *desc, const GpPointF *dst_points, const GpRectF *src_rect, Unit src_unit)
+{
+    GpStatus stat;
+    emfplus_check_state state;
+
+    state.desc = desc;
+    state.count = 0;
+    state.expected = expected;
+    state.metafile = metafile;
+
+    stat = GdipEnumerateMetafileSrcRectDestPoints(graphics, metafile, dst_points,
+        3, src_rect, src_unit, play_metafile_proc, &state, NULL);
+    expect(Ok, stat);
 }
 
 static const emfplus_record empty_records[] = {
@@ -276,16 +324,16 @@ static void test_empty(void)
 }
 
 static const emfplus_record getdc_records[] = {
-    {0, EMR_HEADER},
-    {0, EmfPlusRecordTypeHeader},
-    {0, EmfPlusRecordTypeGetDC},
-    {0, EMR_CREATEBRUSHINDIRECT},
-    {0, EMR_SELECTOBJECT},
-    {0, EMR_RECTANGLE},
-    {0, EMR_SELECTOBJECT},
-    {0, EMR_DELETEOBJECT},
-    {0, EmfPlusRecordTypeEndOfFile},
-    {0, EMR_EOF},
+    {0, EMR_HEADER, 1},
+    {0, EmfPlusRecordTypeHeader, 1},
+    {0, EmfPlusRecordTypeGetDC, 1},
+    {0, EMR_CREATEBRUSHINDIRECT, 1},
+    {0, EMR_SELECTOBJECT, 1},
+    {0, EMR_RECTANGLE, 1},
+    {0, EMR_SELECTOBJECT, 1},
+    {0, EMR_DELETEOBJECT, 1},
+    {0, EmfPlusRecordTypeEndOfFile, 1},
+    {0, EMR_EOF, 1},
     {0}
 };
 
@@ -299,8 +347,11 @@ static void test_getdc(void)
     BOOL ret;
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
     static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
+    static const GpPointF dst_points_half[3] = {{0.0,0.0},{50.0,0.0},{0.0,50.0}};
     static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     HBRUSH hbrush, holdbrush;
+    GpBitmap *bitmap;
+    ARGB color;
 
     hdc = CreateCompatibleDC(0);
 
@@ -346,6 +397,41 @@ static void test_getdc(void)
 
     check_metafile(metafile, getdc_records, "getdc metafile", dst_points, &frame, UnitPixel);
 
+    stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, stat);
+
+    play_metafile(metafile, graphics, getdc_records, "getdc playback", dst_points, &frame, UnitPixel);
+
+    stat = GdipBitmapGetPixel(bitmap, 15, 15, &color);
+    expect(Ok, stat);
+    expect(0, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 50, 50, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff0000ff, color);
+
+    stat = GdipBitmapSetPixel(bitmap, 50, 50, 0);
+    expect(Ok, stat);
+
+    play_metafile(metafile, graphics, getdc_records, "getdc playback", dst_points_half, &frame, UnitPixel);
+
+    stat = GdipBitmapGetPixel(bitmap, 15, 15, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff0000ff, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 50, 50, &color);
+    expect(Ok, stat);
+    expect(0, color);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)bitmap);
+    expect(Ok, stat);
+
     stat = GdipGetHemfFromMetafile(metafile, &hemf);
     expect(Ok, stat);
 
@@ -359,13 +445,13 @@ static void test_getdc(void)
 }
 
 static const emfplus_record emfonly_records[] = {
-    {0, EMR_HEADER},
-    {0, EMR_CREATEBRUSHINDIRECT},
-    {0, EMR_SELECTOBJECT},
-    {0, EMR_RECTANGLE},
-    {0, EMR_SELECTOBJECT},
-    {0, EMR_DELETEOBJECT},
-    {0, EMR_EOF},
+    {0, EMR_HEADER, 1},
+    {0, EMR_CREATEBRUSHINDIRECT, 1},
+    {0, EMR_SELECTOBJECT, 1},
+    {0, EMR_RECTANGLE, 1},
+    {0, EMR_SELECTOBJECT, 1},
+    {0, EMR_DELETEOBJECT, 1},
+    {0, EMR_EOF, 1},
     {0}
 };
 
@@ -381,6 +467,8 @@ static void test_emfonly(void)
     static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
     static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     HBRUSH hbrush, holdbrush;
+    GpBitmap *bitmap;
+    ARGB color;
 
     hdc = CreateCompatibleDC(0);
 
@@ -425,6 +513,28 @@ static void test_emfonly(void)
     expect(Ok, stat);
 
     check_metafile(metafile, emfonly_records, "emfonly metafile", dst_points, &frame, UnitPixel);
+
+    stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, stat);
+
+    play_metafile(metafile, graphics, emfonly_records, "emfonly playback", dst_points, &frame, UnitPixel);
+
+    stat = GdipBitmapGetPixel(bitmap, 15, 15, &color);
+    expect(Ok, stat);
+    expect(0, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 50, 50, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff0000ff, color);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)bitmap);
+    expect(Ok, stat);
 
     stat = GdipGetHemfFromMetafile(metafile, &hemf);
     expect(Ok, stat);
