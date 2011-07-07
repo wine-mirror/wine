@@ -32,11 +32,21 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
+static BOOL match_language( MSIPACKAGE *package, LANGID langid )
+{
+    UINT i;
+
+    if (!package->num_langids || !langid) return TRUE;
+    for (i = 0; i < package->num_langids; i++)
+    {
+        if (package->langids[i] == langid) return TRUE;
+    }
+    return FALSE;
+}
+
 static UINT check_transform_applicable( MSIPACKAGE *package, IStorage *patch )
 {
-    static const WCHAR szSystemLanguageID[] = {
-        'S','y','s','t','e','m','L','a','n','g','u','a','g','e','I','D',0};
-    LPWSTR prod_code, patch_product, langid = NULL, template = NULL;
+    LPWSTR prod_code, patch_product, template = NULL;
     UINT ret = ERROR_FUNCTION_FAILED;
 
     prod_code = msi_dup_property( package->db, szProductCode );
@@ -68,14 +78,9 @@ static UINT check_transform_applicable( MSIPACKAGE *package, IStorage *patch )
             msiobj_release( &si->hdr );
             goto end;
         }
-        langid = msi_dup_property( package->db, szSystemLanguageID );
-        if (!langid)
-        {
-            msiobj_release( &si->hdr );
-            goto end;
-        }
+        TRACE("template: %s\n", debugstr_w(template));
         p = strchrW( template, ';' );
-        if (p && (!strcmpW( p + 1, langid ) || !strcmpW( p + 1, szZero )))
+        if (p && match_language( package, atoiW( p + 1 ) ))
         {
             TRACE("applicable transform\n");
             ret = ERROR_SUCCESS;
@@ -88,7 +93,6 @@ end:
     msi_free( patch_product );
     msi_free( prod_code );
     msi_free( template );
-    msi_free( langid );
     return ret;
 }
 
