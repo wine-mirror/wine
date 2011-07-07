@@ -29,7 +29,7 @@ my $UNIDATA = "http://www.unicode.org/Public/6.0.0/ucd";
 my $SORTKEYS = "http://www.unicode.org/reports/tr10/allkeys.txt";
 
 # Defaults mapping
-my $DEFAULTS = "./defaults";
+my $DEFAULTS = "tools/unicode-defaults";
 
 # Default char for undefined mappings
 my $DEF_CHAR = ord '?';
@@ -1716,7 +1716,7 @@ sub handle_bestfit_file($$$)
     }
     close $INPUT;
 
-    my $output = sprintf "c_%03d.c", $codepage;
+    my $output = sprintf "libs/wine/c_%03d.c", $codepage;
     open OUTPUT,">$output.new" or die "Cannot create $output";
 
     printf "Building %s from %s (%s)\n", $output, $filename, $comment;
@@ -1757,7 +1757,7 @@ sub HANDLE_FILE(@)
 
     ADD_DEFAULT_MAPPINGS();
 
-    my $output = sprintf "c_%03d.c", $codepage;
+    my $output = sprintf "libs/wine/c_%03d.c", $codepage;
     open OUTPUT,">$output.new" or die "Cannot create $output";
 
     printf "Building %s from %s (%s)\n", $output, $filename || "hardcoded data", $comment;
@@ -1801,9 +1801,12 @@ sub save_file($)
 
 ################################################################
 # output the list of codepage tables into the cptable.c file
-sub OUTPUT_CPTABLE()
+sub output_cptable($)
 {
+    my $output = shift;
     my @tables_decl = ();
+
+    printf "Building %s\n", $output;
 
     foreach my $file (@allfiles)
     {
@@ -1818,7 +1821,7 @@ sub OUTPUT_CPTABLE()
         push @tables_decl, sprintf("    &cptable_%03d,\n", $codepage);
     }
     push @tables_decl, "};";
-    REPLACE_IN_FILE( "cptable.c", @tables_decl );
+    REPLACE_IN_FILE( $output, @tables_decl );
 }
 
 ################################################################
@@ -1850,23 +1853,24 @@ sub REPLACE_IN_FILE($@)
 ################################################################
 # main routine
 
+chdir ".." if -f "./make_unicode";
 READ_DEFAULTS( $DEFAULTS );
-DUMP_CASE_MAPPINGS( "casemap.c" );
-DUMP_SORTKEYS( "collation.c", READ_SORTKEYS_FILE() );
-DUMP_COMPOSE_TABLES( "compose.c" );
-DUMP_CTYPE_TABLES( "wctype.c" );
-dump_mirroring( "../../dlls/usp10/mirror.c" );
-dump_shaping( "../../dlls/usp10/shaping.c" );
-dump_linebreak( "../../dlls/usp10/linebreak.c" );
-dump_indic( "../../dlls/usp10/indicsyllable.c" );
-dump_intl_nls("../../tools/l_intl.nls");
+DUMP_CASE_MAPPINGS( "libs/wine/casemap.c" );
+DUMP_SORTKEYS( "libs/wine/collation.c", READ_SORTKEYS_FILE() );
+DUMP_COMPOSE_TABLES( "libs/wine/compose.c" );
+DUMP_CTYPE_TABLES( "libs/wine/wctype.c" );
+dump_mirroring( "dlls/usp10/mirror.c" );
+dump_shaping( "dlls/usp10/shaping.c" );
+dump_linebreak( "dlls/usp10/linebreak.c" );
+dump_indic( "dlls/usp10/indicsyllable.c" );
+dump_intl_nls("tools/l_intl.nls");
 
 foreach my $file (@allfiles) { HANDLE_FILE( @{$file} ); }
 
-OUTPUT_CPTABLE();
+output_cptable("libs/wine/cptable.c");
 
 exit 0;
 
 # Local Variables:
-# compile-command: "./cpmap.pl && make -k"
+# compile-command: "./make_unicode"
 # End:
