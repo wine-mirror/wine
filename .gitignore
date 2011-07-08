@@ -178,6 +178,7 @@ include/fusion.h
 include/gameux.h
 include/hlink.h
 include/htiframe.h
+include/httprequest.h
 include/iads.h
 include/icftypes.h
 include/iextag.h
