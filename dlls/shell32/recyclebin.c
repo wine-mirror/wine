@@ -35,6 +35,7 @@
 #include "shlwapi.h"
 #include "shlobj.h"
 #include "shresdef.h"
+#include "shellfolder.h"
 #include "shellapi.h"
 #include "knownfolders.h"
 #include "wine/debug.h"
@@ -104,6 +105,7 @@ typedef struct tagRecycleBin
 {
     IShellFolder2 IShellFolder2_iface;
     IPersistFolder2 IPersistFolder2_iface;
+    ISFHelper ISFHelper_iface;
     LONG refCount;
 
     LPITEMIDLIST pidl;
@@ -111,6 +113,7 @@ typedef struct tagRecycleBin
 
 static const IShellFolder2Vtbl recycleBinVtbl;
 static const IPersistFolder2Vtbl recycleBinPersistVtbl;
+static const ISFHelperVtbl sfhelperVtbl;
 
 static inline RecycleBin *impl_from_IShellFolder2(IShellFolder2 *iface)
 {
@@ -120,6 +123,11 @@ static inline RecycleBin *impl_from_IShellFolder2(IShellFolder2 *iface)
 static RecycleBin *impl_from_IPersistFolder2(IPersistFolder2 *iface)
 {
     return CONTAINING_RECORD(iface, RecycleBin, IPersistFolder2_iface);
+}
+
+static RecycleBin *impl_from_ISFHelper(ISFHelper *iface)
+{
+    return CONTAINING_RECORD(iface, RecycleBin, ISFHelper_iface);
 }
 
 static void RecycleBin_Destructor(RecycleBin *This);
@@ -137,6 +145,7 @@ HRESULT WINAPI RecycleBin_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *
     ZeroMemory(obj, sizeof(RecycleBin));
     obj->IShellFolder2_iface.lpVtbl = &recycleBinVtbl;
     obj->IPersistFolder2_iface.lpVtbl = &recycleBinPersistVtbl;
+    obj->ISFHelper_iface.lpVtbl = &sfhelperVtbl;
     if (FAILED(ret = IPersistFolder2_QueryInterface(&obj->IPersistFolder2_iface, riid, ppOutput)))
     {
         RecycleBin_Destructor(obj);
@@ -166,6 +175,8 @@ static HRESULT WINAPI RecycleBin_QueryInterface(IShellFolder2 *iface, REFIID rii
     if (IsEqualGUID(riid, &IID_IPersist) || IsEqualGUID(riid, &IID_IPersistFolder)
             || IsEqualGUID(riid, &IID_IPersistFolder2))
         *ppvObject = &This->IPersistFolder2_iface;
+    if (IsEqualGUID(riid, &IID_ISFHelper))
+        *ppvObject = &This->ISFHelper_iface;
 
     if (*ppvObject != NULL)
     {
@@ -527,6 +538,42 @@ static const IPersistFolder2Vtbl recycleBinPersistVtbl =
     RecycleBin_GetCurFolder
 };
 
+static HRESULT WINAPI RecycleBin_ISFHelper_QueryInterface(ISFHelper *iface, REFIID riid,
+        void **ppvObject)
+{
+    RecycleBin *This = impl_from_ISFHelper(iface);
+
+    return RecycleBin_QueryInterface(&This->IShellFolder2_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI RecycleBin_ISFHelper_AddRef(ISFHelper *iface)
+{
+    RecycleBin *This = impl_from_ISFHelper(iface);
+
+    return RecycleBin_AddRef(&This->IShellFolder2_iface);
+}
+
+static ULONG WINAPI RecycleBin_ISFHelper_Release(ISFHelper *iface)
+{
+    RecycleBin *This = impl_from_ISFHelper(iface);
+
+    return RecycleBin_Release(&This->IShellFolder2_iface);
+}
+
+static HRESULT WINAPI RecycleBin_GetUniqueName(ISFHelper *iface,LPWSTR lpName,
+                                               UINT  uLen)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecycleBin_AddFolder(ISFHelper * iface, HWND hwnd,
+                                           LPCWSTR pwszName,
+                                           LPITEMIDLIST * ppidlOut)
+{
+    /*Adding folders doesn't make sense in the recycle bin*/
+    return E_NOTIMPL;
+}
+
 HRESULT erase_items(HWND parent,const LPCITEMIDLIST * apidl, UINT cidl, BOOL confirm)
 {
     UINT i=0;
@@ -578,6 +625,31 @@ HRESULT erase_items(HWND parent,const LPCITEMIDLIST * apidl, UINT cidl, BOOL con
     ILFree(recyclebin);
     return S_OK;
 }
+
+static HRESULT WINAPI RecycleBin_DeleteItems(ISFHelper * iface, UINT cidl,
+                                             LPCITEMIDLIST * apidl)
+{
+    TRACE("(%p,%u,%p)\n",iface,cidl,apidl);
+    return erase_items(GetActiveWindow(),apidl,cidl,TRUE);
+}
+
+static HRESULT WINAPI RecycleBin_CopyItems(ISFHelper * iface,
+                                           IShellFolder * pSFFrom,
+                                           UINT cidl, LPCITEMIDLIST * apidl)
+{
+    return E_NOTIMPL;
+}
+
+static const ISFHelperVtbl sfhelperVtbl =
+{
+    RecycleBin_ISFHelper_QueryInterface,
+    RecycleBin_ISFHelper_AddRef,
+    RecycleBin_ISFHelper_Release,
+    RecycleBin_GetUniqueName,
+    RecycleBin_AddFolder,
+    RecycleBin_DeleteItems,
+    RecycleBin_CopyItems
+};
 
 HRESULT WINAPI SHQueryRecycleBinA(LPCSTR pszRootPath, LPSHQUERYRBINFO pSHQueryRBInfo)
 {
