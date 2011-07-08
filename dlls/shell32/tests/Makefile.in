@@ -8,6 +8,7 @@ C_SRCS = \
 	ebrowser.c \
 	generated.c \
 	progman_dde.c \
+	recyclebin.c \
 	shelldispatch.c \
 	shelllink.c \
 	shellole.c \
