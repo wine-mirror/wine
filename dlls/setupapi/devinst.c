@@ -3728,8 +3728,13 @@ static HKEY SETUPDI_OpenDrvKey(struct DeviceInfo *devInfo, REGSAM samDesired)
         WCHAR devId[10];
 
         sprintfW(devId, fmt, devInfo->devId);
-        RegOpenKeyExW(classKey, devId, 0, samDesired, &key);
+        l = RegOpenKeyExW(classKey, devId, 0, samDesired, &key);
         RegCloseKey(classKey);
+        if (l)
+        {
+            SetLastError(ERROR_KEY_DOES_NOT_EXIST);
+            return INVALID_HANDLE_VALUE;
+        }
     }
     return key;
 }

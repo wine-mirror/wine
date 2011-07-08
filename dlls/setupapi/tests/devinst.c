@@ -974,7 +974,6 @@ static void testDevRegKey(void)
         key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
          DIREG_DRV, 0);
         /* The software key isn't created by default */
-        todo_wine
         ok(key == INVALID_HANDLE_VALUE &&
          GetLastError() == ERROR_KEY_DOES_NOT_EXIST,
          "Expected ERROR_KEY_DOES_NOT_EXIST, got %08x\n", GetLastError());
