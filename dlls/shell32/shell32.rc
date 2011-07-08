@@ -73,6 +73,18 @@ BEGIN
 END
 
 /*
+ Recycle Bin item menu
+*/
+MENU_RECYCLEBIN MENU
+BEGIN
+	POPUP ""
+	BEGIN
+	  MENUITEM "&Restore"		IDM_RECYCLEBIN_RESTORE
+	  MENUITEM "&Erase"		IDM_RECYCLEBIN_ERASE
+	END
+END
+
+/*
  shellview item menu
 */
 MENU_SHV_FILE MENU
@@ -243,6 +255,9 @@ STRINGTABLE
         IDS_RECYCLEBIN_ERASEITEM       "Are you sure you wish to permanently delete '%1'?"
         IDS_RECYCLEBIN_ERASEMULTIPLE   "Are you sure you wish to permanently delete these %1 items?"
         IDS_RECYCLEBIN_ERASE_CAPTION   "Confirm deletion"
+        IDS_RECYCLEBIN_OVERWRITEFILE      "A file already exists at the path %1.\n\nDo you want to replace it?"
+        IDS_RECYCLEBIN_OVERWRITEFOLDER      "A folder already exists at the path %1.\n\nDo you want to replace it?"
+        IDS_RECYCLEBIN_OVERWRITE_CAPTION    "Confirm overwrite"
 }
 
 STRINGTABLE

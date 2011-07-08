@@ -43,6 +43,7 @@
 #include "shell32_main.h"
 #include "enumidlist.h"
 #include "xdg.h"
+#include "pidl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(recyclebin);
 
@@ -96,6 +97,145 @@ static HRESULT FormatDateTime(LPWSTR buffer, int size, FILETIME ft)
 
     return (ret!=0 ? E_FAIL : S_OK);
 }
+
+typedef struct tagRecycleBinMenu
+{
+    IContextMenu2 IContextMenu2_iface;
+    LONG refCount;
+
+    UINT cidl;
+    LPITEMIDLIST *apidl;
+    IShellFolder2 *folder;
+} RecycleBinMenu;
+
+static const IContextMenu2Vtbl recycleBinMenuVtbl;
+
+static RecycleBinMenu *impl_from_IContextMenu2(IContextMenu2 *iface)
+{
+    return CONTAINING_RECORD(iface, RecycleBinMenu, IContextMenu2_iface);
+}
+
+static IContextMenu2* RecycleBinMenu_Constructor(UINT cidl, LPCITEMIDLIST *apidl, IShellFolder2 *folder)
+{
+    RecycleBinMenu *This = SHAlloc(sizeof(RecycleBinMenu));
+    TRACE("(%u,%p)\n",cidl,apidl);
+    This->IContextMenu2_iface.lpVtbl = &recycleBinMenuVtbl;
+    This->cidl = cidl;
+    This->apidl = _ILCopyaPidl(apidl,cidl);
+    IShellFolder2_AddRef(folder);
+    This->folder = folder;
+    This->refCount = 1;
+    return &This->IContextMenu2_iface;
+}
+
+static HRESULT WINAPI RecycleBinMenu_QueryInterface(IContextMenu2 *iface,
+                                                    REFIID riid,
+                                                    void **ppvObject)
+{
+    RecycleBinMenu *This = impl_from_IContextMenu2(iface);
+    TRACE("(%p, %s, %p) - stub\n", This, debugstr_guid(riid), ppvObject);
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI RecycleBinMenu_AddRef(IContextMenu2 *iface)
+{
+    RecycleBinMenu *This = impl_from_IContextMenu2(iface);
+    TRACE("(%p)\n", This);
+    return InterlockedIncrement(&This->refCount);
+
+}
+
+static ULONG WINAPI RecycleBinMenu_Release(IContextMenu2 *iface)
+{
+    RecycleBinMenu *This = impl_from_IContextMenu2(iface);
+    UINT result;
+    TRACE("(%p)\n", This);
+    result = InterlockedDecrement(&This->refCount);
+    if (result == 0)
+    {
+        TRACE("Destroying object\n");
+        _ILFreeaPidl(This->apidl,This->cidl);
+        IShellFolder_Release(This->folder);
+        SHFree(This);
+    }
+    return result;
+}
+
+static HRESULT WINAPI RecycleBinMenu_QueryContextMenu(IContextMenu2 *iface,
+                                                      HMENU hmenu,
+                                                      UINT indexMenu,
+                                                      UINT idCmdFirst,
+                                                      UINT idCmdLast,
+                                                      UINT uFlags)
+{
+    HMENU menures = LoadMenuW(shell32_hInstance,MAKEINTRESOURCEW(MENU_RECYCLEBIN));
+    if(uFlags & CMF_DEFAULTONLY)
+        return E_NOTIMPL;
+    else{
+        UINT idMax = Shell_MergeMenus(hmenu,GetSubMenu(menures,0),indexMenu,idCmdFirst,idCmdLast,MM_SUBMENUSHAVEIDS);
+        TRACE("Added %d id(s)",idMax-idCmdFirst);
+        return MAKE_HRESULT(SEVERITY_SUCCESS, FACILITY_NULL, idMax-idCmdFirst+1);
+    }
+}
+
+static void DoErase(RecycleBinMenu *This)
+{
+    ISFHelper *helper;
+    IShellFolder2_QueryInterface(This->folder,&IID_ISFHelper,(void**)&helper);
+    if(helper)
+        ISFHelper_DeleteItems(helper,This->cidl,(LPCITEMIDLIST*)This->apidl);
+}
+
+
+static HRESULT WINAPI RecycleBinMenu_InvokeCommand(IContextMenu2 *iface,
+                                                   LPCMINVOKECOMMANDINFO pici)
+{
+    RecycleBinMenu *This = impl_from_IContextMenu2(iface);
+    LPCSTR verb = pici->lpVerb;
+    if(!HIWORD(verb))
+    {
+        switch((UINT)verb)
+        {
+        case IDM_RECYCLEBIN_ERASE:
+            DoErase(This);
+            break;
+        default:
+            return E_NOTIMPL;
+        }
+    }
+    return S_OK;
+}
+
+static HRESULT WINAPI RecycleBinMenu_GetCommandString(IContextMenu2 *iface,
+                                                      UINT_PTR idCmd,
+                                                      UINT uType,
+                                                      UINT *pwReserved,
+                                                      LPSTR pszName,
+                                                      UINT cchMax)
+{
+    TRACE("(%p, %lu, %u, %p, %s, %u) - stub\n",iface,idCmd,uType,pwReserved,debugstr_a(pszName),cchMax);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecycleBinMenu_HandleMenuMsg(IContextMenu2 *iface,
+                                                   UINT uMsg, WPARAM wParam,
+                                                   LPARAM lParam)
+{
+    TRACE("(%p, %u, 0x%lx, 0x%lx) - stub\n",iface,uMsg,wParam,lParam);
+    return E_NOTIMPL;
+}
+
+
+static const IContextMenu2Vtbl recycleBinMenuVtbl =
+{
+    RecycleBinMenu_QueryInterface,
+    RecycleBinMenu_AddRef,
+    RecycleBinMenu_Release,
+    RecycleBinMenu_QueryContextMenu,
+    RecycleBinMenu_InvokeCommand,
+    RecycleBinMenu_GetCommandString,
+    RecycleBinMenu_HandleMenuMsg,
+};
 
 /*
  * Recycle Bin folder
@@ -317,11 +457,19 @@ static HRESULT WINAPI RecycleBin_GetAttributesOf(IShellFolder2 *This, UINT cidl,
     return S_OK;
 }
 
-static HRESULT WINAPI RecycleBin_GetUIObjectOf(IShellFolder2 *This, HWND hwndOwner, UINT cidl, LPCITEMIDLIST *apidl,
+static HRESULT WINAPI RecycleBin_GetUIObjectOf(IShellFolder2 *iface, HWND hwndOwner, UINT cidl, LPCITEMIDLIST *apidl,
                       REFIID riid, UINT *rgfReserved, void **ppv)
 {
-    FIXME("(%p, %p, %d, {%p, ...}, %s, %p, %p): stub!\n", This, hwndOwner, cidl, apidl[0], debugstr_guid(riid), rgfReserved, ppv);
+    RecycleBin *This = impl_from_IShellFolder2(iface);
     *ppv = NULL;
+    if(IsEqualGUID(riid, &IID_IContextMenu) || IsEqualGUID(riid, &IID_IContextMenu2))
+    {
+        TRACE("(%p, %p, %d, {%p, ...}, %s, %p, %p)\n", This, hwndOwner, cidl, apidl[0], debugstr_guid(riid), rgfReserved, ppv);
+        *ppv = RecycleBinMenu_Constructor(cidl,apidl,&(This->IShellFolder2_iface));
+        return S_OK;
+    }
+    FIXME("(%p, %p, %d, {%p, ...}, %s, %p, %p): stub!\n", iface, hwndOwner, cidl, apidl[0], debugstr_guid(riid), rgfReserved, ppv);
+
     return E_NOTIMPL;
 }
 

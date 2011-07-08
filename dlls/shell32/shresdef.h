@@ -145,6 +145,10 @@
 #define IDS_RECYCLEBIN_ERASEITEM         166
 #define IDS_RECYCLEBIN_ERASEMULTIPLE     167
 #define IDS_RECYCLEBIN_ERASE_CAPTION     168
+#define IDS_RECYCLEBIN_OVERWRITEFILE     169
+#define IDS_RECYCLEBIN_OVERWRITEFOLDER   170
+#define IDS_RECYCLEBIN_OVERWRITE_CAPTION 171
+
 
 #define IDS_LICENSE                 256
 #define IDS_LICENSE_CAPTION         257
@@ -155,6 +159,10 @@
 #define IDM_CPANEL_EXIT             201
 #define IDM_CPANEL_ABOUT            202
 #define IDM_CPANEL_APPLET_BASE      210
+
+#define MENU_RECYCLEBIN             300
+#define IDM_RECYCLEBIN_RESTORE      301
+#define IDM_RECYCLEBIN_ERASE        302
 
 /* Note: this string is referenced from the registry*/
 #define IDS_RECYCLEBIN_FOLDER_NAME   8964
