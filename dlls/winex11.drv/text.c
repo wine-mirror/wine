@@ -37,11 +37,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(text);
 /***********************************************************************
  *           X11DRV_ExtTextOut
  */
-BOOL CDECL
-X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
-                   const RECT *lprect, LPCWSTR wstr, UINT count,
-                   const INT *lpDx )
+BOOL CDECL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
+                              const RECT *lprect, LPCWSTR wstr, UINT count, const INT *lpDx )
 {
+    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     unsigned int i;
     fontObject*		pfo;
     XFontStruct*	font;
@@ -92,7 +91,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
         /* make a copy of the current device region */
         saved_region = CreateRectRgn( 0, 0, 0, 0 );
         CombineRgn( saved_region, physDev->region, 0, RGN_COPY );
-        X11DRV_SetDeviceClipping( physDev, saved_region, clip_region );
+        X11DRV_SetDeviceClipping( dev, saved_region, clip_region );
         DeleteObject( clip_region );
     }
 
@@ -181,7 +180,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     if (flags & ETO_CLIPPED)
     {
         /* restore the device region */
-        X11DRV_SetDeviceClipping( physDev, saved_region, 0 );
+        X11DRV_SetDeviceClipping( dev, saved_region, 0 );
         DeleteObject( saved_region );
     }
     goto END;
@@ -199,9 +198,10 @@ END:
 /***********************************************************************
  *           X11DRV_GetTextExtentExPoint
  */
-BOOL CDECL X11DRV_GetTextExtentExPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
+BOOL CDECL X11DRV_GetTextExtentExPoint( PHYSDEV dev, LPCWSTR str, INT count,
                                         INT maxExt, LPINT lpnFit, LPINT alpDx, LPSIZE size )
 {
+    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     fontObject* pfo = XFONT_GetFontObject( physDev->font );
 
     TRACE("%s %d\n", debugstr_wn(str,count), count);

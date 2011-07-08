@@ -1408,8 +1408,9 @@ static BOOL same_format(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst)
 /***********************************************************************
  *           X11DRV_PatBlt
  */
-BOOL CDECL X11DRV_PatBlt( X11DRV_PDEVICE *physDev, INT x, INT y, INT width, INT height, DWORD rop )
+BOOL CDECL X11DRV_PatBlt( PHYSDEV dev, INT x, INT y, INT width, INT height, DWORD rop )
 {
+    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     BOOL usePat = (((rop >> 4) & 0x0f0000) != (rop & 0x0f0000));
     const BYTE *opcode = BITBLT_Opcodes[(rop >> 16) & 0xff];
     struct bitblt_coords dst;
@@ -1485,11 +1486,12 @@ BOOL CDECL X11DRV_PatBlt( X11DRV_PDEVICE *physDev, INT x, INT y, INT width, INT 
 /***********************************************************************
  *           X11DRV_StretchBlt
  */
-BOOL CDECL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
+BOOL CDECL X11DRV_StretchBlt( PHYSDEV dst_dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
                               PHYSDEV src_dev, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
                               DWORD rop )
 {
-    X11DRV_PDEVICE *physDevSrc = (X11DRV_PDEVICE *)src_dev; /* FIXME: check that it's really an x11 dev */
+    X11DRV_PDEVICE *physDevDst = get_x11drv_dev( dst_dev );
+    X11DRV_PDEVICE *physDevSrc = get_x11drv_dev( src_dev ); /* FIXME: check that it's really an x11 dev */
     BOOL usePat, useDst, destUsed, fStretch, fNullBrush;
     struct bitblt_coords src, dst;
     INT width, height;
@@ -1685,11 +1687,12 @@ done:
 /***********************************************************************
  *           X11DRV_AlphaBlend
  */
-BOOL CDECL X11DRV_AlphaBlend( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
+BOOL CDECL X11DRV_AlphaBlend( PHYSDEV dst_dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
                               PHYSDEV src_dev, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
                               BLENDFUNCTION blendfn )
 {
-    X11DRV_PDEVICE *physDevSrc = (X11DRV_PDEVICE *)src_dev; /* FIXME: check that it's really an x11 dev */
+    X11DRV_PDEVICE *physDevDst = get_x11drv_dev( dst_dev );
+    X11DRV_PDEVICE *physDevSrc = get_x11drv_dev( src_dev ); /* FIXME: check that it's really an x11 dev */
     struct bitblt_coords src, dst;
 
     src.x      = xSrc;

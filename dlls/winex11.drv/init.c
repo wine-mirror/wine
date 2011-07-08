@@ -167,8 +167,10 @@ BOOL CDECL X11DRV_CreateDC( HDC hdc, X11DRV_PDEVICE **pdev, LPCWSTR driver, LPCW
 /**********************************************************************
  *	     X11DRV_DeleteDC
  */
-BOOL CDECL X11DRV_DeleteDC( X11DRV_PDEVICE *physDev )
+BOOL CDECL X11DRV_DeleteDC( PHYSDEV dev )
 {
+    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+
     if(physDev->xrender)
       X11DRV_XRender_DeleteDC( physDev );
     DeleteObject( physDev->region );
@@ -183,8 +185,10 @@ BOOL CDECL X11DRV_DeleteDC( X11DRV_PDEVICE *physDev )
 /***********************************************************************
  *           GetDeviceCaps    (X11DRV.@)
  */
-INT CDECL X11DRV_GetDeviceCaps( X11DRV_PDEVICE *physDev, INT cap )
+INT CDECL X11DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
 {
+    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+
     switch(cap)
     {
     case DRIVERVERSION:
@@ -284,9 +288,11 @@ INT CDECL X11DRV_GetDeviceCaps( X11DRV_PDEVICE *physDev, INT cap )
 /**********************************************************************
  *           ExtEscape  (X11DRV.@)
  */
-INT CDECL X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID in_data,
+INT CDECL X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_data,
                             INT out_count, LPVOID out_data )
 {
+    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+
     switch(escape)
     {
     case QUERYESCSUPPORT:

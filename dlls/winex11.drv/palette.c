@@ -1213,8 +1213,9 @@ static int X11DRV_LookupSysPaletteExact( BYTE r, BYTE g, BYTE b )
 /***********************************************************************
  *              RealizePalette    (X11DRV.@)
  */
-UINT X11DRV_RealizePalette( X11DRV_PDEVICE *physDev, HPALETTE hpal, BOOL primary )
+UINT CDECL X11DRV_RealizePalette( PHYSDEV dev, HPALETTE hpal, BOOL primary )
 {
+    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     char flag;
     int  index;
     UINT i, iRemapped = 0;
@@ -1331,7 +1332,7 @@ UINT X11DRV_RealizePalette( X11DRV_PDEVICE *physDev, HPALETTE hpal, BOOL primary
 /***********************************************************************
  *              UnrealizePalette    (X11DRV.@)
  */
-BOOL X11DRV_UnrealizePalette( HPALETTE hpal )
+BOOL CDECL X11DRV_UnrealizePalette( HPALETTE hpal )
 {
     int *mapping = palette_get_mapping( hpal );
 
@@ -1349,8 +1350,7 @@ BOOL X11DRV_UnrealizePalette( HPALETTE hpal )
 /***********************************************************************
  *              GetSystemPaletteEntries   (X11DRV.@)
  */
-UINT X11DRV_GetSystemPaletteEntries( X11DRV_PDEVICE *physDev, UINT start, UINT count,
-                                     LPPALETTEENTRY entries )
+UINT CDECL X11DRV_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count, LPPALETTEENTRY entries )
 {
     UINT i;
 
@@ -1375,8 +1375,9 @@ UINT X11DRV_GetSystemPaletteEntries( X11DRV_PDEVICE *physDev, UINT start, UINT c
 /***********************************************************************
  *              GetNearestColor   (X11DRV.@)
  */
-COLORREF X11DRV_GetNearestColor( X11DRV_PDEVICE *physDev, COLORREF color )
+COLORREF CDECL X11DRV_GetNearestColor( PHYSDEV dev, COLORREF color )
 {
+    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     unsigned char spec_type = color >> 24;
     COLORREF nearest;
 
@@ -1417,8 +1418,9 @@ COLORREF X11DRV_GetNearestColor( X11DRV_PDEVICE *physDev, COLORREF color )
 /***********************************************************************
  *              RealizeDefaultPalette    (X11DRV.@)
  */
-UINT X11DRV_RealizeDefaultPalette( X11DRV_PDEVICE *physDev )
+UINT CDECL X11DRV_RealizeDefaultPalette( PHYSDEV dev )
 {
+    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     UINT ret = 0;
 
     if (palette_size && GetObjectType(physDev->hdc) != OBJ_MEMDC)

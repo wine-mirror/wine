@@ -1872,7 +1872,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         /* make a copy of the current device region */
         saved_region = CreateRectRgn( 0, 0, 0, 0 );
         CombineRgn( saved_region, physDev->region, 0, RGN_COPY );
-        X11DRV_SetDeviceClipping( physDev, saved_region, clip_region );
+        X11DRV_SetDeviceClipping( &physDev->dev, saved_region, clip_region );
         DeleteObject( clip_region );
     }
 
@@ -2134,7 +2134,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     if (flags & ETO_CLIPPED)
     {
         /* restore the device region */
-        X11DRV_SetDeviceClipping( physDev, saved_region, 0 );
+        X11DRV_SetDeviceClipping( &physDev->dev, saved_region, 0 );
         DeleteObject( saved_region );
     }
 

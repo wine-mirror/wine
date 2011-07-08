@@ -87,8 +87,9 @@ void X11DRV_BITMAP_Init(void)
 /***********************************************************************
  *           SelectBitmap   (X11DRV.@)
  */
-HBITMAP CDECL X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
+HBITMAP CDECL X11DRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
 {
+    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     X_PHYSBITMAP *physBitmap;
     BITMAP bitmap;
 
@@ -131,7 +132,7 @@ HBITMAP CDECL X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
  *
  * Returns TRUE on success else FALSE
  */
-BOOL CDECL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, LPVOID bmBits )
+BOOL CDECL X11DRV_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap, LPVOID bmBits )
 {
     X_PHYSBITMAP *physBitmap;
     BITMAP bitmap;

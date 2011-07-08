@@ -169,6 +169,11 @@ typedef struct
     struct xrender_info *xrender;
 } X11DRV_PDEVICE;
 
+static inline X11DRV_PDEVICE *get_x11drv_dev( PHYSDEV dev )
+{
+    return (X11DRV_PDEVICE *)dev;
+}
+
 struct bitblt_coords
 {
     int  x;      /* original position and width */
@@ -187,66 +192,66 @@ extern GC get_bitmap_gc(int depth) DECLSPEC_HIDDEN;
 
 /* Wine driver X11 functions */
 
-extern BOOL CDECL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
+extern BOOL CDECL X11DRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf,
                                           FONTENUMPROCW dfeproc, LPARAM lp ) DECLSPEC_HIDDEN;
 extern LONG CDECL X11DRV_GetBitmapBits( HBITMAP hbitmap, void *bits, LONG count ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_GetCharWidth( X11DRV_PDEVICE *physDev, UINT firstChar,
+extern BOOL CDECL X11DRV_GetCharWidth( PHYSDEV dev, UINT firstChar,
                                        UINT lastChar, LPINT buffer ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_GetTextExtentExPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
+extern BOOL CDECL X11DRV_GetTextExtentExPoint( PHYSDEV dev, LPCWSTR str, INT count,
                                                INT maxExt, LPINT lpnFit, LPINT alpDx, LPSIZE size ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_GetTextMetrics(X11DRV_PDEVICE *physDev, TEXTMETRICW *metrics) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_LineTo( X11DRV_PDEVICE *physDev, INT x, INT y) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_Arc( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
+extern BOOL CDECL X11DRV_GetTextMetrics(PHYSDEV dev, TEXTMETRICW *metrics) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_LineTo( PHYSDEV dev, INT x, INT y) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_Arc( PHYSDEV dev, INT left, INT top, INT right,
                               INT bottom, INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_Pie( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
+extern BOOL CDECL X11DRV_Pie( PHYSDEV dev, INT left, INT top, INT right,
                               INT bottom, INT xstart, INT ystart, INT xend,
                               INT yend ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_Chord( X11DRV_PDEVICE *physDev, INT left, INT top,
+extern BOOL CDECL X11DRV_Chord( PHYSDEV dev, INT left, INT top,
                                 INT right, INT bottom, INT xstart,
                                 INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_Ellipse( X11DRV_PDEVICE *physDev, INT left, INT top,
+extern BOOL CDECL X11DRV_Ellipse( PHYSDEV dev, INT left, INT top,
                                   INT right, INT bottom ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_Rectangle(X11DRV_PDEVICE *physDev, INT left, INT top,
+extern BOOL CDECL X11DRV_Rectangle(PHYSDEV dev, INT left, INT top,
                                    INT right, INT bottom) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_RoundRect( X11DRV_PDEVICE *physDev, INT left, INT top,
+extern BOOL CDECL X11DRV_RoundRect( PHYSDEV dev, INT left, INT top,
                                     INT right, INT bottom, INT ell_width,
                                     INT ell_height ) DECLSPEC_HIDDEN;
-extern COLORREF CDECL X11DRV_SetPixel( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color ) DECLSPEC_HIDDEN;
-extern COLORREF CDECL X11DRV_GetPixel( X11DRV_PDEVICE *physDev, INT x, INT y) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_PaintRgn( X11DRV_PDEVICE *physDev, HRGN hrgn ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_Polyline( X11DRV_PDEVICE *physDev,const POINT* pt,INT count) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_Polygon( X11DRV_PDEVICE *physDev, const POINT* pt, INT count ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_PolyPolygon( X11DRV_PDEVICE *physDev, const POINT* pt,
+extern COLORREF CDECL X11DRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color ) DECLSPEC_HIDDEN;
+extern COLORREF CDECL X11DRV_GetPixel( PHYSDEV dev, INT x, INT y) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_Polyline( PHYSDEV dev,const POINT* pt,INT count) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_Polygon( PHYSDEV dev, const POINT* pt, INT count ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_PolyPolygon( PHYSDEV dev, const POINT* pt,
                                       const INT* counts, UINT polygons) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_PolyPolyline( X11DRV_PDEVICE *physDev, const POINT* pt,
+extern BOOL CDECL X11DRV_PolyPolyline( PHYSDEV dev, const POINT* pt,
                                        const DWORD* counts, DWORD polylines) DECLSPEC_HIDDEN;
 
-extern COLORREF CDECL X11DRV_SetBkColor( X11DRV_PDEVICE *physDev, COLORREF color ) DECLSPEC_HIDDEN;
-extern COLORREF CDECL X11DRV_SetTextColor( X11DRV_PDEVICE *physDev, COLORREF color ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_ExtFloodFill( X11DRV_PDEVICE *physDev, INT x, INT y,
+extern COLORREF CDECL X11DRV_SetBkColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
+extern COLORREF CDECL X11DRV_SetTextColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_ExtFloodFill( PHYSDEV dev, INT x, INT y,
                                        COLORREF color, UINT fillType ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y,
+extern BOOL CDECL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y,
                                      UINT flags, const RECT *lprect,
                                      LPCWSTR str, UINT count, const INT *lpDx ) DECLSPEC_HIDDEN;
 extern LONG CDECL X11DRV_SetBitmapBits( HBITMAP hbitmap, const void *bits, LONG count ) DECLSPEC_HIDDEN;
-extern void CDECL X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev, HRGN vis_rgn, HRGN clip_rgn ) DECLSPEC_HIDDEN;
-extern INT CDECL X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest,
+extern void CDECL X11DRV_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn ) DECLSPEC_HIDDEN;
+extern INT CDECL X11DRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest,
                                            INT yDest, DWORD cx, DWORD cy,
                                            INT xSrc, INT ySrc,
                                            UINT startscan, UINT lines,
                                            LPCVOID bits, const BITMAPINFO *info,
                                            UINT coloruse ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_GetDeviceGammaRamp( X11DRV_PDEVICE *physDev, LPVOID ramp ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_SetDeviceGammaRamp( X11DRV_PDEVICE *physDev, LPVOID ramp ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_GetDeviceGammaRamp( PHYSDEV dev, LPVOID ramp ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_SetDeviceGammaRamp( PHYSDEV dev, LPVOID ramp ) DECLSPEC_HIDDEN;
 
 /* OpenGL / X11 driver functions */
-extern int CDECL X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
+extern int CDECL X11DRV_ChoosePixelFormat(PHYSDEV dev,
 		                      const PIXELFORMATDESCRIPTOR *pppfd) DECLSPEC_HIDDEN;
-extern int CDECL X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
+extern int CDECL X11DRV_DescribePixelFormat(PHYSDEV dev,
 		                        int iPixelFormat, UINT nBytes,
 					PIXELFORMATDESCRIPTOR *ppfd) DECLSPEC_HIDDEN;
-extern int CDECL X11DRV_GetPixelFormat(X11DRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
+extern int CDECL X11DRV_GetPixelFormat(PHYSDEV dev) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_SwapBuffers(PHYSDEV dev) DECLSPEC_HIDDEN;
 extern void X11DRV_OpenGL_Cleanup(void) DECLSPEC_HIDDEN;
 
 /* X11 driver internal functions */

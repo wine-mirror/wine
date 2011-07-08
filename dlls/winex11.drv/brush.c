@@ -250,8 +250,9 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 /***********************************************************************
  *           SelectBrush   (X11DRV.@)
  */
-HBRUSH CDECL X11DRV_SelectBrush( X11DRV_PDEVICE *physDev, HBRUSH hbrush )
+HBRUSH CDECL X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
 {
+    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     LOGBRUSH logbrush;
     HBITMAP hBitmap;
     BITMAPINFO * bmpInfo;
@@ -320,8 +321,10 @@ HBRUSH CDECL X11DRV_SelectBrush( X11DRV_PDEVICE *physDev, HBRUSH hbrush )
 /***********************************************************************
  *           SetDCBrushColor (X11DRV.@)
  */
-COLORREF CDECL X11DRV_SetDCBrushColor( X11DRV_PDEVICE *physDev, COLORREF crColor )
+COLORREF CDECL X11DRV_SetDCBrushColor( PHYSDEV dev, COLORREF crColor )
 {
+    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+
     if (GetCurrentObject(physDev->hdc, OBJ_BRUSH) == GetStockObject( DC_BRUSH ))
         BRUSH_SelectSolidBrush( physDev, crColor );
 
