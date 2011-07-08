@@ -1,6 +1,6 @@
 MODULE    = winhttp.dll
 IMPORTLIB = winhttp
-IMPORTS   = shlwapi
+IMPORTS   = uuid shlwapi
 DELAYIMPORTS = crypt32 advapi32
 EXTRALIBS = @SOCKETLIBS@
 

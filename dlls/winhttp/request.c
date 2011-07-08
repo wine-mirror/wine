@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
 #include "config.h"
 #include "wine/port.h"
 #include "wine/debug.h"
@@ -30,6 +31,9 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "ole2.h"
+#include "initguid.h"
+#include "httprequest.h"
 #include "winhttp.h"
 
 #include "winhttp_private.h"
@@ -2131,4 +2135,314 @@ BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, LPCVOID buffer, DWORD to_write
 
     release_object( &request->hdr );
     return ret;
+}
+
+struct winhttp_request
+{
+    IWinHttpRequest IWinHttpRequest_iface;
+    LONG refs;
+};
+
+static inline struct winhttp_request *impl_from_IWinHttpRequest( IWinHttpRequest *iface )
+{
+    return CONTAINING_RECORD( iface, struct winhttp_request, IWinHttpRequest_iface );
+}
+
+static ULONG WINAPI winhttp_request_AddRef(
+    IWinHttpRequest *iface )
+{
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    return InterlockedIncrement( &request->refs );
+}
+
+static ULONG WINAPI winhttp_request_Release(
+    IWinHttpRequest *iface )
+{
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    LONG refs = InterlockedDecrement( &request->refs );
+    if (!refs)
+    {
+        TRACE("destroying %p\n", request);
+        heap_free( request );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI winhttp_request_QueryInterface(
+    IWinHttpRequest *iface,
+    REFIID riid,
+    void **obj )
+{
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+
+    TRACE("%p, %s, %p\n", request, debugstr_guid(riid), obj );
+
+    if (IsEqualGUID( riid, &IID_IWinHttpRequest ) ||
+        IsEqualGUID( riid, &IID_IDispatch ) ||
+        IsEqualGUID( riid, &IID_IUnknown ))
+    {
+        *obj = iface;
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+    IWinHttpRequest_AddRef( iface );
+    return S_OK;
+}
+
+static HRESULT WINAPI winhttp_request_GetTypeInfoCount(
+    IWinHttpRequest *iface,
+    UINT *count )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_GetTypeInfo(
+    IWinHttpRequest *iface,
+    UINT index,
+    LCID lcid,
+    ITypeInfo **info )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_GetIDsOfNames(
+    IWinHttpRequest *iface,
+    REFIID riid,
+    LPOLESTR *names,
+    UINT count,
+    LCID lcid,
+    DISPID *dispid )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_Invoke(
+    IWinHttpRequest *iface,
+    DISPID member,
+    REFIID riid,
+    LCID lcid,
+    WORD flags,
+    DISPPARAMS *params,
+    VARIANT *result,
+    EXCEPINFO *excep_info,
+    UINT *arg_err )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_SetProxy(
+    IWinHttpRequest *iface,
+    HTTPREQUEST_PROXY_SETTING proxy_setting,
+    VARIANT proxy_server,
+    VARIANT bypass_list )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_SetCredentials(
+    IWinHttpRequest *iface,
+    BSTR username,
+    BSTR password,
+    HTTPREQUEST_SETCREDENTIALS_FLAGS flags )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_Open(
+    IWinHttpRequest *iface,
+    BSTR method,
+    BSTR url,
+    VARIANT async )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_SetRequestHeader(
+    IWinHttpRequest *iface,
+    BSTR header,
+    BSTR value )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_GetResponseHeader(
+    IWinHttpRequest *iface,
+    BSTR header,
+    BSTR *value )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_GetAllResponseHeaders(
+    IWinHttpRequest *iface,
+    BSTR *headers )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_Send(
+    IWinHttpRequest *iface,
+    VARIANT body )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_get_Status(
+    IWinHttpRequest *iface,
+    LONG *status )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_get_StatusText(
+    IWinHttpRequest *iface,
+    BSTR *status )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_get_ResponseText(
+    IWinHttpRequest *iface,
+    BSTR *body )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_get_ResponseBody(
+    IWinHttpRequest *iface,
+    VARIANT *body )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_get_ResponseStream(
+    IWinHttpRequest *iface,
+    VARIANT *body )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_get_Option(
+    IWinHttpRequest *iface,
+    WinHttpRequestOption option,
+    VARIANT *value )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_put_Option(
+    IWinHttpRequest *iface,
+    WinHttpRequestOption option,
+    VARIANT value )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_WaitForResponse(
+    IWinHttpRequest *iface,
+    VARIANT timeout,
+    VARIANT_BOOL *succeeded )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_Abort(
+    IWinHttpRequest *iface )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_SetTimeouts(
+    IWinHttpRequest *iface,
+    LONG resolve_timeout,
+    LONG connect_timeout,
+    LONG send_timeout,
+    LONG receive_timeout )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_SetClientCertificate(
+    IWinHttpRequest *iface,
+    BSTR certificate )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI winhttp_request_SetAutoLogonPolicy(
+    IWinHttpRequest *iface,
+    WinHttpRequestAutoLogonPolicy policy )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static const struct IWinHttpRequestVtbl winhttp_request_vtbl =
+{
+    winhttp_request_QueryInterface,
+    winhttp_request_AddRef,
+    winhttp_request_Release,
+    winhttp_request_GetTypeInfoCount,
+    winhttp_request_GetTypeInfo,
+    winhttp_request_GetIDsOfNames,
+    winhttp_request_Invoke,
+    winhttp_request_SetProxy,
+    winhttp_request_SetCredentials,
+    winhttp_request_Open,
+    winhttp_request_SetRequestHeader,
+    winhttp_request_GetResponseHeader,
+    winhttp_request_GetAllResponseHeaders,
+    winhttp_request_Send,
+    winhttp_request_get_Status,
+    winhttp_request_get_StatusText,
+    winhttp_request_get_ResponseText,
+    winhttp_request_get_ResponseBody,
+    winhttp_request_get_ResponseStream,
+    winhttp_request_get_Option,
+    winhttp_request_put_Option,
+    winhttp_request_WaitForResponse,
+    winhttp_request_Abort,
+    winhttp_request_SetTimeouts,
+    winhttp_request_SetClientCertificate,
+    winhttp_request_SetAutoLogonPolicy
+};
+
+HRESULT WinHttpRequest_create( IUnknown *unknown, void **obj )
+{
+    struct winhttp_request *request;
+
+    TRACE("%p, %p\n", unknown, obj);
+
+    if (!(request = heap_alloc( sizeof(*request) ))) return E_OUTOFMEMORY;
+    request->IWinHttpRequest_iface.lpVtbl = &winhttp_request_vtbl;
+    request->refs = 1;
+
+    *obj = &request->IWinHttpRequest_iface;
+    TRACE("returning iface %p\n", *obj);
+    return S_OK;
 }

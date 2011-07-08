@@ -42,6 +42,7 @@
 # define closesocket close
 # define ioctlsocket ioctl
 #endif
+#include "ole2.h"
 
 static const WCHAR getW[]    = {'G','E','T',0};
 static const WCHAR postW[]   = {'P','O','S','T',0};
@@ -236,6 +237,8 @@ BOOL add_cookie_headers( request_t * ) DECLSPEC_HIDDEN;
 BOOL add_request_headers( request_t *, LPCWSTR, DWORD, DWORD ) DECLSPEC_HIDDEN;
 void delete_domain( domain_t * ) DECLSPEC_HIDDEN;
 BOOL set_server_for_hostname( connect_t *connect, LPCWSTR server, INTERNET_PORT port ) DECLSPEC_HIDDEN;
+
+extern HRESULT WinHttpRequest_create( IUnknown *, void ** ) DECLSPEC_HIDDEN;
 
 static inline void *heap_alloc( SIZE_T size )
 {
