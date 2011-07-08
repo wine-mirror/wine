@@ -259,7 +259,7 @@ HBRUSH CDECL X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
 
     if (!GetObjectA( hbrush, sizeof(logbrush), &logbrush )) return 0;
 
-    TRACE("hdc=%p hbrush=%p\n", physDev->hdc,hbrush);
+    TRACE("hdc=%p hbrush=%p\n", dev->hdc, hbrush);
 
     if (physDev->brush.pixmap)
     {
@@ -270,7 +270,7 @@ HBRUSH CDECL X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
     }
     physDev->brush.style = logbrush.lbStyle;
     if (hbrush == GetStockObject( DC_BRUSH ))
-        logbrush.lbColor = GetDCBrushColor( physDev->hdc );
+        logbrush.lbColor = GetDCBrushColor( dev->hdc );
 
     switch(logbrush.lbStyle)
     {
@@ -303,7 +303,7 @@ HBRUSH CDECL X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
         if ((bmpInfo = GlobalLock( (HGLOBAL)logbrush.lbHatch )))
 	{
 	    int size = bitmap_info_size( bmpInfo, logbrush.lbColor );
-	    hBitmap = CreateDIBitmap( physDev->hdc, &bmpInfo->bmiHeader,
+	    hBitmap = CreateDIBitmap( dev->hdc, &bmpInfo->bmiHeader,
                                         CBM_INIT, ((char *)bmpInfo) + size,
                                         bmpInfo,
                                         (WORD)logbrush.lbColor );
@@ -325,7 +325,7 @@ COLORREF CDECL X11DRV_SetDCBrushColor( PHYSDEV dev, COLORREF crColor )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
 
-    if (GetCurrentObject(physDev->hdc, OBJ_BRUSH) == GetStockObject( DC_BRUSH ))
+    if (GetCurrentObject(dev->hdc, OBJ_BRUSH) == GetStockObject( DC_BRUSH ))
         BRUSH_SelectSolidBrush( physDev, crColor );
 
     return crColor;

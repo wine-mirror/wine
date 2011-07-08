@@ -242,7 +242,7 @@ BOOL X11DRV_SetupGCForPatBlt( X11DRV_PDEVICE *physDev, GC gc, BOOL fMapColors )
         val.background = X11DRV_PALETTE_XPixelToPalette[val.background];
     }
 
-    val.function = X11DRV_XROPfunction[GetROP2(physDev->hdc)-1];
+    val.function = X11DRV_XROPfunction[GetROP2(physDev->dev.hdc)-1];
     /*
     ** Let's replace GXinvert by GXxor with (black xor white)
     ** This solves the selection color and leak problems in excel
@@ -259,7 +259,7 @@ BOOL X11DRV_SetupGCForPatBlt( X11DRV_PDEVICE *physDev, GC gc, BOOL fMapColors )
     {
     case FillStippled:
     case FillOpaqueStippled:
-	if (GetBkMode(physDev->hdc)==OPAQUE) val.fill_style = FillOpaqueStippled;
+	if (GetBkMode(physDev->dev.hdc)==OPAQUE) val.fill_style = FillOpaqueStippled;
 	val.stipple = physDev->brush.pixmap;
 	mask = GCStipple;
         break;
@@ -290,10 +290,10 @@ BOOL X11DRV_SetupGCForPatBlt( X11DRV_PDEVICE *physDev, GC gc, BOOL fMapColors )
         mask = 0;
         break;
     }
-    GetBrushOrgEx( physDev->hdc, &pt );
+    GetBrushOrgEx( physDev->dev.hdc, &pt );
     val.ts_x_origin = physDev->dc_rect.left + pt.x;
     val.ts_y_origin = physDev->dc_rect.top + pt.y;
-    val.fill_rule = (GetPolyFillMode(physDev->hdc) == WINDING) ? WindingRule : EvenOddRule;
+    val.fill_rule = (GetPolyFillMode(physDev->dev.hdc) == WINDING) ? WindingRule : EvenOddRule;
     wine_tsx11_lock();
     XChangeGC( gdi_display, gc,
 	       GCFunction | GCForeground | GCBackground | GCFillStyle |
@@ -326,7 +326,7 @@ BOOL X11DRV_SetupGCForBrush( X11DRV_PDEVICE *physDev )
 static BOOL X11DRV_SetupGCForPen( X11DRV_PDEVICE *physDev )
 {
     XGCValues val;
-    UINT rop2 = GetROP2(physDev->hdc);
+    UINT rop2 = GetROP2(physDev->dev.hdc);
 
     if (physDev->pen.style == PS_NULL) return FALSE;
 
@@ -386,7 +386,7 @@ static BOOL X11DRV_SetupGCForPen( X11DRV_PDEVICE *physDev )
     }
 
     if (physDev->pen.dash_len)
-        val.line_style = ((GetBkMode(physDev->hdc) == OPAQUE) && (!physDev->pen.ext))
+        val.line_style = ((GetBkMode(physDev->dev.hdc) == OPAQUE) && (!physDev->pen.ext))
                          ? LineDoubleDash : LineOnOffDash;
     else
         val.line_style = LineSolid;
@@ -446,7 +446,7 @@ INT X11DRV_XWStoDS( X11DRV_PDEVICE *physDev, INT width )
     pt[0].y = 0;
     pt[1].x = width;
     pt[1].y = 0;
-    LPtoDP( physDev->hdc, pt, 2 );
+    LPtoDP( physDev->dev.hdc, pt, 2 );
     return pt[1].x - pt[0].x;
 }
 
@@ -463,7 +463,7 @@ INT X11DRV_YWStoDS( X11DRV_PDEVICE *physDev, INT height )
     pt[0].y = 0;
     pt[1].x = 0;
     pt[1].y = height;
-    LPtoDP( physDev->hdc, pt, 2 );
+    LPtoDP( physDev->dev.hdc, pt, 2 );
     return pt[1].y - pt[0].y;
 }
 
@@ -479,10 +479,10 @@ BOOL CDECL X11DRV_LineTo( PHYSDEV dev, INT x, INT y )
 	/* Update the pixmap from the DIB section */
 	X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod);
 
-        GetCurrentPositionEx( physDev->hdc, &pt[0] );
+        GetCurrentPositionEx( dev->hdc, &pt[0] );
         pt[1].x = x;
         pt[1].y = y;
-        LPtoDP( physDev->hdc, pt, 2 );
+        LPtoDP( dev->hdc, pt, 2 );
 
         wine_tsx11_lock();
         XDrawLine(gdi_display, physDev->drawable, physDev->gc,
@@ -515,19 +515,19 @@ static BOOL X11DRV_DrawArc( PHYSDEV dev, INT left, INT top, INT right, INT botto
     XPoint points[4];
     BOOL update = FALSE;
     POINT start, end;
-    RECT rc = get_device_rect( physDev->hdc, left, top, right, bottom );
+    RECT rc = get_device_rect( dev->hdc, left, top, right, bottom );
 
     start.x = xstart;
     start.y = ystart;
     end.x = xend;
     end.y = yend;
-    LPtoDP(physDev->hdc, &start, 1);
-    LPtoDP(physDev->hdc, &end, 1);
+    LPtoDP(dev->hdc, &start, 1);
+    LPtoDP(dev->hdc, &end, 1);
 
     if ((rc.left == rc.right) || (rc.top == rc.bottom)
             ||(lines && ((rc.right-rc.left==1)||(rc.bottom-rc.top==1)))) return TRUE;
 
-    if (GetArcDirection( physDev->hdc ) == AD_CLOCKWISE)
+    if (GetArcDirection( dev->hdc ) == AD_CLOCKWISE)
       { POINT tmp = start; start = end; end = tmp; }
 
     oldwidth = width = physDev->pen.width;
@@ -695,7 +695,7 @@ BOOL CDECL X11DRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     INT width, oldwidth;
     BOOL update = FALSE;
-    RECT rc = get_device_rect( physDev->hdc, left, top, right, bottom );
+    RECT rc = get_device_rect( dev->hdc, left, top, right, bottom );
 
     if ((rc.left == rc.right) || (rc.top == rc.bottom)) return TRUE;
 
@@ -753,7 +753,7 @@ BOOL CDECL X11DRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT botto
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     INT width, oldwidth, oldjoinstyle;
     BOOL update = FALSE;
-    RECT rc = get_device_rect( physDev->hdc, left, top, right, bottom );
+    RECT rc = get_device_rect( dev->hdc, left, top, right, bottom );
 
     TRACE("(%d %d %d %d)\n", left, top, right, bottom);
 
@@ -822,7 +822,7 @@ BOOL CDECL X11DRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bott
     INT width, oldwidth, oldendcap;
     BOOL update = FALSE;
     POINT pts[2];
-    RECT rc = get_device_rect( physDev->hdc, left, top, right, bottom );
+    RECT rc = get_device_rect( dev->hdc, left, top, right, bottom );
 
     TRACE("(%d %d %d %d  %d %d\n",
     	left, top, right, bottom, ell_width, ell_height);
@@ -835,7 +835,7 @@ BOOL CDECL X11DRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bott
     pts[0].x = pts[0].y = 0;
     pts[1].x = ell_width;
     pts[1].y = ell_height;
-    LPtoDP(physDev->hdc, pts, 2);
+    LPtoDP(dev->hdc, pts, 2);
     ell_width  = max(abs( pts[1].x - pts[0].x ), 1);
     ell_height = max(abs( pts[1].y - pts[0].y ), 1);
 
@@ -1025,7 +1025,7 @@ COLORREF CDECL X11DRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 
     pt.x = x;
     pt.y = y;
-    LPtoDP( physDev->hdc, &pt, 1 );
+    LPtoDP( dev->hdc, &pt, 1 );
     pixel = X11DRV_PALETTE_ToPhysical( physDev, color );
 
     /* Update the pixmap from the DIB section */
@@ -1056,11 +1056,11 @@ COLORREF CDECL X11DRV_GetPixel( PHYSDEV dev, INT x, INT y )
     XImage * image;
     int pixel;
     POINT pt;
-    BOOL memdc = (GetObjectType(physDev->hdc) == OBJ_MEMDC);
+    BOOL memdc = (GetObjectType(dev->hdc) == OBJ_MEMDC);
 
     pt.x = x;
     pt.y = y;
-    LPtoDP( physDev->hdc, &pt, 1 );
+    LPtoDP( dev->hdc, &pt, 1 );
 
     /* Update the pixmap from the DIB section */
     X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod);
@@ -1109,7 +1109,7 @@ BOOL CDECL X11DRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
     {
         unsigned int i;
         XRectangle *rect;
-        RGNDATA *data = X11DRV_GetRegionData( hrgn, physDev->hdc );
+        RGNDATA *data = X11DRV_GetRegionData( hrgn, dev->hdc );
 
         if (!data) return FALSE;
         rect = (XRectangle *)data->Buffer;
@@ -1146,7 +1146,7 @@ BOOL CDECL X11DRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
     for (i = 0; i < count; i++)
     {
         POINT tmp = pt[i];
-        LPtoDP(physDev->hdc, &tmp, 1);
+        LPtoDP(dev->hdc, &tmp, 1);
         points[i].x = physDev->dc_rect.left + tmp.x;
         points[i].y = physDev->dc_rect.top + tmp.y;
     }
@@ -1184,7 +1184,7 @@ BOOL CDECL X11DRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
     for (i = 0; i < count; i++)
     {
         POINT tmp = pt[i];
-        LPtoDP(physDev->hdc, &tmp, 1);
+        LPtoDP(dev->hdc, &tmp, 1);
         points[i].x = physDev->dc_rect.left + tmp.x;
         points[i].y = physDev->dc_rect.top + tmp.y;
     }
@@ -1229,7 +1229,7 @@ BOOL CDECL X11DRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, 
     /* FIXME: The points should be converted to device coords before */
     /* creating the region. */
 
-    hrgn = CreatePolyPolygonRgn( pt, counts, polygons, GetPolyFillMode( physDev->hdc ) );
+    hrgn = CreatePolyPolygonRgn( pt, counts, polygons, GetPolyFillMode( dev->hdc ) );
     X11DRV_PaintRgn( dev, hrgn );
     DeleteObject( hrgn );
 
@@ -1255,7 +1255,7 @@ BOOL CDECL X11DRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, 
 	    for (j = 0; j < counts[i]; j++)
 	    {
                 POINT tmp = *pt;
-                LPtoDP(physDev->hdc, &tmp, 1);
+                LPtoDP(dev->hdc, &tmp, 1);
                 points[j].x = physDev->dc_rect.left + tmp.x;
                 points[j].y = physDev->dc_rect.top + tmp.y;
 		pt++;
@@ -1302,7 +1302,7 @@ BOOL CDECL X11DRV_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* count
             for (j = 0; j < counts[i]; j++)
             {
                 POINT tmp = *pt;
-                LPtoDP(physDev->hdc, &tmp, 1);
+                LPtoDP(dev->hdc, &tmp, 1);
                 points[j].x = physDev->dc_rect.left + tmp.x;
                 points[j].y = physDev->dc_rect.top + tmp.y;
                 pt++;
@@ -1410,7 +1410,7 @@ BOOL CDECL X11DRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT 
 
     pt.x = x;
     pt.y = y;
-    LPtoDP( physDev->hdc, &pt, 1 );
+    LPtoDP( dev->hdc, &pt, 1 );
     if (!PtInRegion( physDev->region, pt.x, pt.y )) return FALSE;
     GetRgnBox( physDev->region, &rect );
 

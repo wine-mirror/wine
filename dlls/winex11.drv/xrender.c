@@ -577,7 +577,7 @@ static Picture get_xrender_picture(X11DRV_PDEVICE *physDev)
                                               physDev->dc_rect.left, physDev->dc_rect.top,
                                               (XRectangle *)clip->Buffer, clip->rdh.nCount );
         wine_tsx11_unlock();
-        TRACE("Allocing pict=%lx dc=%p drawable=%08lx\n", info->pict, physDev->hdc, physDev->drawable);
+        TRACE("Allocing pict=%lx dc=%p drawable=%08lx\n", info->pict, physDev->dev.hdc, physDev->drawable);
         HeapFree( GetProcessHeap(), 0, clip );
     }
 
@@ -601,7 +601,7 @@ static Picture get_xrender_picture_source(X11DRV_PDEVICE *physDev, BOOL repeat)
         wine_tsx11_unlock();
 
         TRACE("Allocing pict_src=%lx dc=%p drawable=%08lx repeat=%u\n",
-              info->pict_src, physDev->hdc, physDev->drawable, pa.repeat);
+              info->pict_src, physDev->dev.hdc, physDev->drawable, pa.repeat);
     }
 
     return info->pict_src;
@@ -792,14 +792,14 @@ static BOOL get_gasp_flags(X11DRV_PDEVICE *physDev, WORD *flags)
 
     *flags = 0;
 
-    size = GetFontData(physDev->hdc, MS_GASP_TAG,  0, NULL, 0);
+    size = GetFontData(physDev->dev.hdc, MS_GASP_TAG,  0, NULL, 0);
     if(size == GDI_ERROR)
         return FALSE;
 
     gasp = buffer = HeapAlloc(GetProcessHeap(), 0, size);
-    GetFontData(physDev->hdc, MS_GASP_TAG,  0, gasp, size);
+    GetFontData(physDev->dev.hdc, MS_GASP_TAG,  0, gasp, size);
 
-    GetTextMetricsW(physDev->hdc, &tm);
+    GetTextMetricsW(physDev->dev.hdc, &tm);
     ppem = abs(X11DRV_YWStoDS(physDev, tm.tmAscent + tm.tmDescent - tm.tmInternalLeading));
 
     gasp++;
@@ -1062,7 +1062,7 @@ BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
     lfsz.devsize.cx = X11DRV_XWStoDS( physDev, lfsz.lf.lfWidth );
     lfsz.devsize.cy = X11DRV_YWStoDS( physDev, lfsz.lf.lfHeight );
 
-    GetTransform( physDev->hdc, 0x204, &lfsz.xform );
+    GetTransform( physDev->dev.hdc, 0x204, &lfsz.xform );
     TRACE("font transform %f %f %f %f\n", lfsz.xform.eM11, lfsz.xform.eM12,
           lfsz.xform.eM21, lfsz.xform.eM22);
 
@@ -1202,13 +1202,13 @@ void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
         XFlush( gdi_display );
         if (info->pict)
         {
-            TRACE("freeing pict = %lx dc = %p\n", info->pict, physDev->hdc);
+            TRACE("freeing pict = %lx dc = %p\n", info->pict, physDev->dev.hdc);
             pXRenderFreePicture(gdi_display, info->pict);
             info->pict = 0;
         }
         if(info->pict_src)
         {
-            TRACE("freeing pict = %lx dc = %p\n", info->pict_src, physDev->hdc);
+            TRACE("freeing pict = %lx dc = %p\n", info->pict_src, physDev->dev.hdc);
             pXRenderFreePicture(gdi_display, info->pict_src);
             info->pict_src = 0;
         }
@@ -1261,20 +1261,20 @@ static void UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
 	break;
     }
 
-    buflen = GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, 0, NULL, &identity);
+    buflen = GetGlyphOutlineW(physDev->dev.hdc, glyph, ggo_format, &gm, 0, NULL, &identity);
     if(buflen == GDI_ERROR) {
         if(format != AA_None) {
             format = AA_None;
             entry->aa_default = AA_None;
             ggo_format = GGO_GLYPH_INDEX | GGO_BITMAP;
-            buflen = GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, 0, NULL, &identity);
+            buflen = GetGlyphOutlineW(physDev->dev.hdc, glyph, ggo_format, &gm, 0, NULL, &identity);
         }
         if(buflen == GDI_ERROR) {
             WARN("GetGlyphOutlineW failed using default glyph\n");
-            buflen = GetGlyphOutlineW(physDev->hdc, 0, ggo_format, &gm, 0, NULL, &identity);
+            buflen = GetGlyphOutlineW(physDev->dev.hdc, 0, ggo_format, &gm, 0, NULL, &identity);
             if(buflen == GDI_ERROR) {
                 WARN("GetGlyphOutlineW failed for default glyph trying for space\n");
-                buflen = GetGlyphOutlineW(physDev->hdc, 0x20, ggo_format, &gm, 0, NULL, &identity);
+                buflen = GetGlyphOutlineW(physDev->dev.hdc, 0x20, ggo_format, &gm, 0, NULL, &identity);
                 if(buflen == GDI_ERROR) {
                     ERR("GetGlyphOutlineW for all attempts unable to upload a glyph\n");
                     return;
@@ -1356,7 +1356,7 @@ static void UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
 
 
     buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buflen);
-    GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, buflen, buf, &identity);
+    GetGlyphOutlineW(physDev->dev.hdc, glyph, ggo_format, &gm, buflen, buf, &identity);
     formatEntry->realized[glyph] = TRUE;
 
     TRACE("buflen = %d. Got metrics: %dx%d adv=%d,%d origin=%d,%d\n",

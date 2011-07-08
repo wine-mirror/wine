@@ -129,7 +129,6 @@ BOOL CDECL X11DRV_CreateDC( HDC hdc, X11DRV_PDEVICE **pdev, LPCWSTR driver, LPCW
     if (!physDev) return FALSE;
 
     *pdev = physDev;
-    physDev->hdc = hdc;
 
     if (GetObjectType( hdc ) == OBJ_MEMDC)
     {
@@ -187,8 +186,6 @@ BOOL CDECL X11DRV_DeleteDC( PHYSDEV dev )
  */
 INT CDECL X11DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
 {
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
-
     switch(cap)
     {
     case DRIVERVERSION:
@@ -262,7 +259,7 @@ INT CDECL X11DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
     case LOGPIXELSY:
         return log_pixels_y;
     case CAPS1:
-        FIXME("(%p): CAPS1 is unimplemented, will return 0\n", physDev->hdc );
+        FIXME("(%p): CAPS1 is unimplemented, will return 0\n", dev->hdc );
         /* please see wingdi.h for the possible bit-flag values that need
            to be returned. */
         return 0;
@@ -279,7 +276,7 @@ INT CDECL X11DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
     case BLTALIGNMENT:
         return 0;
     default:
-        FIXME("(%p): unsupported capability %d, will return 0\n", physDev->hdc, cap );
+        FIXME("(%p): unsupported capability %d, will return 0\n", dev->hdc, cap );
         return 0;
     }
 }
@@ -352,7 +349,7 @@ INT CDECL X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_da
                     XSetSubwindowMode( gdi_display, physDev->gc, data->mode );
                     wine_tsx11_unlock();
                     TRACE( "SET_DRAWABLE hdc %p drawable %lx gl_drawable %lx pf %u dc_rect %s drawable_rect %s\n",
-                           physDev->hdc, physDev->drawable, physDev->gl_drawable, physDev->current_pf,
+                           dev->hdc, physDev->drawable, physDev->gl_drawable, physDev->current_pf,
                            wine_dbgstr_rect(&physDev->dc_rect), wine_dbgstr_rect(&physDev->drawable_rect) );
                     return TRUE;
                 }
@@ -389,7 +386,7 @@ INT CDECL X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_da
                                 rect.top    = event.xgraphicsexpose.y - physDev->dc_rect.top;
                                 rect.right  = rect.left + event.xgraphicsexpose.width;
                                 rect.bottom = rect.top + event.xgraphicsexpose.height;
-                                if (GetLayout( physDev->hdc ) & LAYOUT_RTL)
+                                if (GetLayout( dev->hdc ) & LAYOUT_RTL)
                                     mirror_rect( &physDev->dc_rect, &rect );
 
                                 TRACE( "got %s count %d\n", wine_dbgstr_rect(&rect),

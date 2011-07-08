@@ -880,7 +880,7 @@ static inline BOOL colour_is_brighter(RGBQUAD c1, RGBQUAD c2)
  */
 COLORREF X11DRV_PALETTE_GetColor( X11DRV_PDEVICE *physDev, COLORREF color )
 {
-    HPALETTE             hPal = GetCurrentObject(physDev->hdc, OBJ_PAL );
+    HPALETTE             hPal = GetCurrentObject(physDev->dev.hdc, OBJ_PAL );
     unsigned char        spec_type = color >> 24;
     unsigned             idx = color & 0xffff;
     PALETTEENTRY         entry;
@@ -901,7 +901,7 @@ COLORREF X11DRV_PALETTE_GetColor( X11DRV_PDEVICE *physDev, COLORREF color )
         return RGB( entry.peRed, entry.peGreen, entry.peBlue );
 
       case 0x10: /* DIBINDEX */
-        if( GetDIBColorTable( physDev->hdc, idx, 1, &quad ) != 1 ) {
+        if( GetDIBColorTable( physDev->dev.hdc, idx, 1, &quad ) != 1 ) {
             WARN("DIBINDEX(%x) : idx %d is out of bounds, assuming black\n", color , idx);
             return 0;
         }
@@ -924,7 +924,7 @@ COLORREF X11DRV_PALETTE_GetColor( X11DRV_PDEVICE *physDev, COLORREF color )
 int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 {
     WORD 		 index = 0;
-    HPALETTE 		 hPal = GetCurrentObject(physDev->hdc, OBJ_PAL );
+    HPALETTE 		 hPal = GetCurrentObject(physDev->dev.hdc, OBJ_PAL );
     unsigned char	 spec_type = color >> 24;
     int *mapping = palette_get_mapping( hPal );
     PALETTEENTRY entry;
@@ -968,7 +968,7 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
                 int white = 1;
                 RGBQUAD table[2];
 
-                if (GetDIBColorTable( physDev->hdc, 0, 2, table ) == 2)
+                if (GetDIBColorTable( physDev->dev.hdc, 0, 2, table ) == 2)
                 {
                     if(!colour_is_brighter(table[1], table[0])) white = 0;
                 }
@@ -1024,7 +1024,7 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
                     int white = 1;
                     RGBQUAD table[2];
 
-                    if (GetDIBColorTable( physDev->hdc, 0, 2, table ) == 2)
+                    if (GetDIBColorTable( physDev->dev.hdc, 0, 2, table ) == 2)
                     {
                         if(!colour_is_brighter(table[1], table[0]))
                             white = 0;
@@ -1377,7 +1377,6 @@ UINT CDECL X11DRV_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count, 
  */
 COLORREF CDECL X11DRV_GetNearestColor( PHYSDEV dev, COLORREF color )
 {
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     unsigned char spec_type = color >> 24;
     COLORREF nearest;
 
@@ -1389,7 +1388,7 @@ COLORREF CDECL X11DRV_GetNearestColor( PHYSDEV dev, COLORREF color )
 
         UINT index;
         PALETTEENTRY entry;
-        HPALETTE hpal = GetCurrentObject( physDev->hdc, OBJ_PAL );
+        HPALETTE hpal = GetCurrentObject( dev->hdc, OBJ_PAL );
 
         if (!hpal) hpal = GetStockObject( DEFAULT_PALETTE );
 
@@ -1420,10 +1419,9 @@ COLORREF CDECL X11DRV_GetNearestColor( PHYSDEV dev, COLORREF color )
  */
 UINT CDECL X11DRV_RealizeDefaultPalette( PHYSDEV dev )
 {
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     UINT ret = 0;
 
-    if (palette_size && GetObjectType(physDev->hdc) != OBJ_MEMDC)
+    if (palette_size && GetObjectType(dev->hdc) != OBJ_MEMDC)
     {
         /* lookup is needed to account for SetSystemPaletteUse() stuff */
         int i, index, *mapping = palette_get_mapping( GetStockObject(DEFAULT_PALETTE) );

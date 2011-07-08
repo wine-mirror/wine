@@ -542,7 +542,7 @@ static void get_colors(X11DRV_PDEVICE *physDevDst, X11DRV_PDEVICE *physDevSrc,
     *fg = physDevDst->textPixel;
     *bg = physDevDst->backgroundPixel;
     if(physDevSrc->depth == 1) {
-        if(GetDIBColorTable(physDevSrc->hdc, 0, 2, rgb) == 2) {
+        if(GetDIBColorTable(physDevSrc->dev.hdc, 0, 2, rgb) == 2) {
             DWORD logcolor;
             logcolor = RGB(rgb[0].rgbRed, rgb[0].rgbGreen, rgb[0].rgbBlue);
             *fg = X11DRV_PALETTE_ToPhysical( physDevDst, logcolor );
@@ -918,7 +918,7 @@ static int BITBLT_GetSrcAreaStretch( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE 
     BITBLT_StretchImage( imageSrc, imageDst, src->width, src->height,
                          dst->width, dst->height, &rectSrc, &rectDst,
                          fg, physDevDst->depth != 1 ? bg : physDevSrc->backgroundPixel,
-                         image_pixel_mask( physDevSrc ), GetStretchBltMode(physDevDst->hdc) );
+                         image_pixel_mask( physDevSrc ), GetStretchBltMode(physDevDst->dev.hdc) );
     wine_tsx11_lock();
     XPutImage( gdi_display, pixmap, gc, imageDst, 0, 0, 0, 0,
                rectDst.right - rectDst.left, rectDst.bottom - rectDst.top );
@@ -944,7 +944,7 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
     INT width  = visRectSrc->right - visRectSrc->left;
     INT height = visRectSrc->bottom - visRectSrc->top;
     int fg, bg;
-    BOOL memdc = (GetObjectType(physDevSrc->hdc) == OBJ_MEMDC);
+    BOOL memdc = (GetObjectType(physDevSrc->dev.hdc) == OBJ_MEMDC);
 
     if (physDevSrc->depth == physDevDst->depth)
     {
@@ -1074,7 +1074,7 @@ static int BITBLT_GetDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, GC gc, RECT
     int exposures = 0;
     INT width  = visRectDst->right - visRectDst->left;
     INT height = visRectDst->bottom - visRectDst->top;
-    BOOL memdc = (GetObjectType( physDev->hdc ) == OBJ_MEMDC);
+    BOOL memdc = (GetObjectType( physDev->dev.hdc ) == OBJ_MEMDC);
 
     wine_tsx11_lock();
 
@@ -1182,7 +1182,7 @@ static BOOL BITBLT_GetVisRectangles( X11DRV_PDEVICE *physDevDst, X11DRV_PDEVICE 
     rect.top    = dst->y;
     rect.right  = dst->x + dst->width;
     rect.bottom = dst->y + dst->height;
-    LPtoDP( physDevDst->hdc, (POINT *)&rect, 2 );
+    LPtoDP( physDevDst->dev.hdc, (POINT *)&rect, 2 );
     dst->x      = rect.left;
     dst->y      = rect.top;
     dst->width  = rect.right - rect.left;
@@ -1207,7 +1207,7 @@ static BOOL BITBLT_GetVisRectangles( X11DRV_PDEVICE *physDevDst, X11DRV_PDEVICE 
     rect.top    = src->y;
     rect.right  = src->x + src->width;
     rect.bottom = src->y + src->height;
-    LPtoDP( physDevSrc->hdc, (POINT *)&rect, 2 );
+    LPtoDP( physDevSrc->dev.hdc, (POINT *)&rect, 2 );
     src->x      = rect.left;
     src->y      = rect.top;
     src->width  = rect.right - rect.left;
@@ -1419,7 +1419,7 @@ BOOL CDECL X11DRV_PatBlt( PHYSDEV dev, INT x, INT y, INT width, INT height, DWOR
     dst.y      = y;
     dst.width  = width;
     dst.height = height;
-    dst.layout = GetLayout( physDev->hdc );
+    dst.layout = GetLayout( dev->hdc );
 
     if (rop & NOMIRRORBITMAP)
     {
@@ -1507,12 +1507,12 @@ BOOL CDECL X11DRV_StretchBlt( PHYSDEV dst_dev, INT xDst, INT yDst, INT widthDst,
     src.y      = ySrc;
     src.width  = widthSrc;
     src.height = heightSrc;
-    src.layout = GetLayout( physDevSrc->hdc );
+    src.layout = GetLayout( src_dev->hdc );
     dst.x      = xDst;
     dst.y      = yDst;
     dst.width  = widthDst;
     dst.height = heightDst;
-    dst.layout = GetLayout( physDevDst->hdc );
+    dst.layout = GetLayout( dst_dev->hdc );
 
     if (rop & NOMIRRORBITMAP)
     {
@@ -1699,12 +1699,12 @@ BOOL CDECL X11DRV_AlphaBlend( PHYSDEV dst_dev, INT xDst, INT yDst, INT widthDst,
     src.y      = ySrc;
     src.width  = widthSrc;
     src.height = heightSrc;
-    src.layout = GetLayout( physDevSrc->hdc );
+    src.layout = GetLayout( src_dev->hdc );
     dst.x      = xDst;
     dst.y      = yDst;
     dst.width  = widthDst;
     dst.height = heightDst;
-    dst.layout = GetLayout( physDevDst->hdc );
+    dst.layout = GetLayout( dst_dev->hdc );
 
     if (!BITBLT_GetVisRectangles( physDevDst, physDevSrc, &dst, &src )) return TRUE;
 

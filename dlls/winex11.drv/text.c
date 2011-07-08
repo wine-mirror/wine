@@ -62,7 +62,7 @@ BOOL CDECL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         rotated = TRUE;
 
     TRACE("hdc=%p df=%04x %d,%d rc %s %s, %d  flags=%d lpDx=%p\n",
-          physDev->hdc, (UINT16)physDev->font, x, y, wine_dbgstr_rect(lprect),
+          dev->hdc, (UINT16)physDev->font, x, y, wine_dbgstr_rect(lprect),
 	  debugstr_wn (wstr, count), count, flags, lpDx);
 
       /* Draw the rectangle */

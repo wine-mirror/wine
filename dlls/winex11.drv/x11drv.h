@@ -146,7 +146,6 @@ struct xrender_info;
 typedef struct
 {
     struct gdi_physdev dev;
-    HDC           hdc;
     GC            gc;          /* X Window GC */
     Drawable      drawable;
     RECT          dc_rect;       /* DC rectangle relative to drawable */

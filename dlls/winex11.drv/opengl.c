@@ -658,7 +658,7 @@ static BOOL describeDrawable(X11DRV_PDEVICE *physDev) {
     fmt = ConvertPixelFormatWGLtoGLX(gdi_display, physDev->current_pf, TRUE /* Offscreen */, &fmt_count);
     if(!fmt) return FALSE;
 
-    TRACE(" HDC %p has:\n", physDev->hdc);
+    TRACE(" HDC %p has:\n", physDev->dev.hdc);
     TRACE(" - iPixelFormat %d\n", fmt->iPixelFormat);
     TRACE(" - Drawable %p\n", (void*) get_glxdrawable(physDev));
     TRACE(" - FBCONFIG_ID 0x%x\n", fmt->fmt_id);
@@ -1648,7 +1648,7 @@ static BOOL internal_SetPixelFormat(X11DRV_PDEVICE *physDev,
     pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
     wine_tsx11_unlock();
 
-    hwnd = WindowFromDC(physDev->hdc);
+    hwnd = WindowFromDC(physDev->dev.hdc);
     if(hwnd) {
         if(!(value&GLX_WINDOW_BIT)) {
             WARN("Pixel format %d is not compatible for window rendering\n", iPixelFormat);
@@ -1749,7 +1749,7 @@ HGLRC CDECL X11DRV_wglCreateContext(PHYSDEV dev)
     WineGLPixelFormat *fmt;
     int hdcPF = physDev->current_pf;
     int fmt_count = 0;
-    HDC hdc = physDev->hdc;
+    HDC hdc = dev->hdc;
 
     TRACE("(%p)->(PF:%d)\n", hdc, hdcPF);
 
@@ -1886,7 +1886,7 @@ BOOL CDECL X11DRV_wglMakeCurrent(PHYSDEV dev, HGLRC hglrc)
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     BOOL ret;
-    HDC hdc = physDev->hdc;
+    HDC hdc = dev->hdc;
     DWORD type = GetObjectType(hdc);
     Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
 
@@ -2004,8 +2004,8 @@ BOOL CDECL X11DRV_wglMakeContextCurrentARB( PHYSDEV draw_dev, PHYSDEV read_dev, 
 
                 ctx->has_been_current = TRUE;
                 ctx->tid = GetCurrentThreadId();
-                ctx->hdc = pDrawDev->hdc;
-                ctx->read_hdc = pReadDev->hdc;
+                ctx->hdc = draw_dev->hdc;
+                ctx->read_hdc = read_dev->hdc;
                 ctx->drawables[0] = d_draw;
                 ctx->drawables[1] = d_read;
                 ctx->refresh_drawables = FALSE;
@@ -2199,12 +2199,12 @@ BOOL CDECL X11DRV_wglUseFontBitmapsA(PHYSDEV dev, DWORD first, DWORD count, DWOR
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
      Font fid = physDev->font;
 
-     TRACE("(%p, %d, %d, %d) using font %ld\n", physDev->hdc, first, count, listBase, fid);
+     TRACE("(%p, %d, %d, %d) using font %ld\n", dev->hdc, first, count, listBase, fid);
 
      if (!has_opengl()) return FALSE;
 
      if (fid == 0) {
-         return internal_wglUseFontBitmaps(physDev->hdc, first, count, listBase, GetGlyphOutlineA);
+         return internal_wglUseFontBitmaps(dev->hdc, first, count, listBase, GetGlyphOutlineA);
      }
 
      wine_tsx11_lock();
@@ -2224,12 +2224,12 @@ BOOL CDECL X11DRV_wglUseFontBitmapsW(PHYSDEV dev, DWORD first, DWORD count, DWOR
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
      Font fid = physDev->font;
 
-     TRACE("(%p, %d, %d, %d) using font %ld\n", physDev->hdc, first, count, listBase, fid);
+     TRACE("(%p, %d, %d, %d) using font %ld\n", dev->hdc, first, count, listBase, fid);
 
      if (!has_opengl()) return FALSE;
 
      if (fid == 0) {
-         return internal_wglUseFontBitmaps(physDev->hdc, first, count, listBase, GetGlyphOutlineW);
+         return internal_wglUseFontBitmaps(dev->hdc, first, count, listBase, GetGlyphOutlineW);
      }
 
      WARN("Using the glX API for the WCHAR variant - some characters may come out incorrectly !\n");
@@ -2358,7 +2358,7 @@ HGLRC CDECL X11DRV_wglCreateContextAttribsARB(PHYSDEV dev, HGLRC hShareContext, 
     wine_tsx11_lock();
     ret = alloc_context();
     wine_tsx11_unlock();
-    ret->hdc = physDev->hdc;
+    ret->hdc = dev->hdc;
     ret->fmt = fmt;
     ret->vis = NULL; /* glXCreateContextAttribsARB requires a fbconfig instead of a visual */
     ret->gl3_context = TRUE;
@@ -2701,8 +2701,8 @@ HDC CDECL X11DRV_wglGetPbufferDCARB(PHYSDEV dev, HPBUFFERARB hPbuffer)
     SetRect( &physDev->drawable_rect, 0, 0, object->width, object->height );
     physDev->dc_rect = physDev->drawable_rect;
 
-    TRACE("(%p)->(%p)\n", hPbuffer, physDev->hdc);
-    return physDev->hdc;
+    TRACE("(%p)->(%p)\n", hPbuffer, dev->hdc);
+    return dev->hdc;
 }
 
 /**

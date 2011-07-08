@@ -3232,7 +3232,7 @@ HFONT CDECL X11DRV_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
     LOGFONTW logfont;
     LOGFONT16 lf;
 
-    TRACE("hdc=%p, hfont=%p\n", physDev->hdc, hfont);
+    TRACE("hdc=%p, hfont=%p\n", dev->hdc, hfont);
 
     if (!GetObjectW( hfont, sizeof(logfont), &logfont )) return HGDI_ERROR;
 
@@ -3275,7 +3275,7 @@ HFONT CDECL X11DRV_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
     }
 
     if (!lf.lfHeight)
-        lf.lfHeight = -(DEF_POINT_SIZE * GetDeviceCaps(physDev->hdc,LOGPIXELSY) + (72>>1)) / 72;
+        lf.lfHeight = -(DEF_POINT_SIZE * GetDeviceCaps(dev->hdc,LOGPIXELSY) + (72>>1)) / 72;
 
     {
 	/* Fixup aliases before passing to RealizeFont */

@@ -361,7 +361,7 @@ static int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
                 BOOL invert = FALSE;
                 RGBQUAD table[2];
 
-                if (GetDIBColorTable( physDev->hdc, 0, 2, table ) == 2)
+                if (GetDIBColorTable( physDev->dev.hdc, 0, 2, table ) == 2)
                     invert = !colour_is_brighter(table[1], table[0]);
 
                 for (i = start; i < end; i++, rgb++) 
@@ -385,7 +385,7 @@ static int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
                 BOOL invert = FALSE;
                 RGBQUAD table[2];
 
-                if (GetDIBColorTable( physDev->hdc, 0, 2, table ) == 2)
+                if (GetDIBColorTable( physDev->dev.hdc, 0, 2, table ) == 2)
                     invert = !colour_is_brighter(table[1], table[0]);
 
                 for (i = start; i < end; i++, rgb++)
@@ -3853,7 +3853,7 @@ INT CDECL X11DRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDest, DWORD cx,
     LONG width, height;
     BOOL top_down;
     POINT pt;
-    int rop = X11DRV_XROPfunction[GetROP2(physDev->hdc) - 1];
+    int rop = X11DRV_XROPfunction[GetROP2(dev->hdc) - 1];
 
     if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height,
 			   &descr.infoBpp, &descr.compression ) == -1)
@@ -3864,7 +3864,7 @@ INT CDECL X11DRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDest, DWORD cx,
 
     pt.x = xDest;
     pt.y = yDest;
-    LPtoDP(physDev->hdc, &pt, 1);
+    LPtoDP(dev->hdc, &pt, 1);
 
     if (!lines || (startscan >= height)) return 0;
     if (!top_down && startscan + lines > height) lines = height - startscan;
@@ -4117,7 +4117,7 @@ INT CDECL X11DRV_GetDIBits( PHYSDEV dev, HBITMAP hbitmap, UINT startscan, UINT l
 
   if (physBitmap->pixmap_depth > 1)
   {
-    GetPaletteEntries( GetCurrentObject( physDev->hdc, OBJ_PAL ), 0, 256, palette );
+    GetPaletteEntries( GetCurrentObject( dev->hdc, OBJ_PAL ), 0, 256, palette );
   }
   else
   {
@@ -4342,7 +4342,7 @@ void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physD
   int* x11ColorMap;
   int freeColorMap;
 
-  TRACE("(%p,%p,%d,%d,%d,%d,%d,%d)\n", physDevSrc->hdc, physDevDst->hdc,
+  TRACE("(%p,%p,%d,%d,%d,%d,%d,%d)\n", physDevSrc->dev.hdc, physDevDst->dev.hdc,
     xSrc, ySrc, xDest, yDest, width, height);
   /* this function is meant as an optimization for BitBlt,
    * not to be called otherwise */
@@ -4363,7 +4363,7 @@ void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physD
     /* if the source bitmap is 8bpp or less, we're supposed to use the
      * DC's palette for color conversion (not the DIB color table) */
     if (dib.dsBm.bmBitsPixel <= 8) {
-      HPALETTE hPalette = GetCurrentObject( physDevSrc->hdc, OBJ_PAL );
+      HPALETTE hPalette = GetCurrentObject( physDevSrc->dev.hdc, OBJ_PAL );
       if (!hPalette || (hPalette == GetStockObject(DEFAULT_PALETTE))) {
 	/* HACK: no palette has been set in the source DC,
 	 * use the DIB colormap instead - this is necessary in some

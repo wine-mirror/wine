@@ -80,7 +80,7 @@ HPEN CDECL X11DRV_SelectPen( PHYSDEV dev, HPEN hpen )
 
     if (physDev->pen.width == 1) physDev->pen.width = 0;  /* Faster */
     if (hpen == GetStockObject( DC_PEN ))
-        logpen.lopnColor = GetDCPenColor( physDev->hdc );
+        logpen.lopnColor = GetDCPenColor( dev->hdc );
     physDev->pen.pixel = X11DRV_PALETTE_ToPhysical( physDev, logpen.lopnColor );
     switch(logpen.lopnStyle & PS_STYLE_MASK)
     {
@@ -131,7 +131,7 @@ COLORREF CDECL X11DRV_SetDCPenColor( PHYSDEV dev, COLORREF crColor )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
 
-    if (GetCurrentObject(physDev->hdc, OBJ_PEN) == GetStockObject( DC_PEN ))
+    if (GetCurrentObject(dev->hdc, OBJ_PEN) == GetStockObject( DC_PEN ))
         physDev->pen.pixel = X11DRV_PALETTE_ToPhysical( physDev, crColor );
 
     return crColor;
