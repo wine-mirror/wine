@@ -508,6 +508,7 @@ struct IDirect3DExecuteBufferImpl
 
 HRESULT d3d_execute_buffer_init(IDirect3DExecuteBufferImpl *execute_buffer,
         IDirect3DDeviceImpl *device, D3DEXECUTEBUFFERDESC *desc) DECLSPEC_HIDDEN;
+IDirect3DExecuteBufferImpl *unsafe_impl_from_IDirect3DExecuteBuffer(IDirect3DExecuteBuffer *iface) DECLSPEC_HIDDEN;
 
 /* The execute function */
 HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *execute_buffer,

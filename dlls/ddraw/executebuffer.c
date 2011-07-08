@@ -870,3 +870,12 @@ HRESULT d3d_execute_buffer_init(IDirect3DExecuteBufferImpl *execute_buffer,
 
     return D3D_OK;
 }
+
+IDirect3DExecuteBufferImpl *unsafe_impl_from_IDirect3DExecuteBuffer(IDirect3DExecuteBuffer *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d_execute_buffer_vtbl);
+
+    return impl_from_IDirect3DExecuteBuffer(iface);
+}

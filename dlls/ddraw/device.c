@@ -707,25 +707,22 @@ IDirect3DDeviceImpl_1_CreateExecuteBuffer(IDirect3DDevice *iface,
  *  D3D_OK on success
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirect3DDeviceImpl_1_Execute(IDirect3DDevice *iface,
-                              IDirect3DExecuteBuffer *ExecuteBuffer,
-                              IDirect3DViewport *Viewport,
-                              DWORD Flags)
+static HRESULT WINAPI IDirect3DDeviceImpl_1_Execute(IDirect3DDevice *iface,
+        IDirect3DExecuteBuffer *ExecuteBuffer, IDirect3DViewport *Viewport, DWORD Flags)
 {
     IDirect3DDeviceImpl *This = device_from_device1(iface);
-    IDirect3DExecuteBufferImpl *Direct3DExecuteBufferImpl = (IDirect3DExecuteBufferImpl *)ExecuteBuffer;
+    IDirect3DExecuteBufferImpl *buffer = unsafe_impl_from_IDirect3DExecuteBuffer(ExecuteBuffer);
     IDirect3DViewportImpl *Direct3DViewportImpl = (IDirect3DViewportImpl *)Viewport;
     HRESULT hr;
 
     TRACE("iface %p, buffer %p, viewport %p, flags %#x.\n", iface, ExecuteBuffer, Viewport, Flags);
 
-    if(!Direct3DExecuteBufferImpl)
+    if(!buffer)
         return DDERR_INVALIDPARAMS;
 
     /* Execute... */
     EnterCriticalSection(&ddraw_cs);
-    hr = d3d_execute_buffer_execute(Direct3DExecuteBufferImpl, This, Direct3DViewportImpl);
+    hr = d3d_execute_buffer_execute(buffer, This, Direct3DViewportImpl);
     LeaveCriticalSection(&ddraw_cs);
 
     return hr;
