@@ -140,6 +140,7 @@ dlls/urlmon/urlmon_urlmon_p.c
 dlls/vbscript/vbscript_classes.h
 dlls/windowscodecs/windowscodecs_wincodec.h
 dlls/windowscodecs/windowscodecs_wincodec_p.c
+dlls/winhttp/winhttp_tlb.tlb
 dlls/wuapi/wuapi_tlb.tlb
 include/activaut.h
 include/activdbg.h

@@ -23,11 +23,14 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
+#include "rpcproxy.h"
 #include "httprequest.h"
 #include "winhttp.h"
 
 #include "wine/debug.h"
 #include "winhttp_private.h"
+
+static HINSTANCE instance;
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
 
@@ -39,6 +42,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     switch(fdwReason)
     {
     case DLL_PROCESS_ATTACH:
+        instance = hInstDLL;
         DisableThreadLibraryCalls(hInstDLL);
         break;
     case DLL_PROCESS_DETACH:
@@ -166,8 +170,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    FIXME("()\n");
-    return S_OK;
+    return __wine_register_resources( instance, NULL );
 }
 
 /***********************************************************************
@@ -175,6 +178,5 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    FIXME("()\n");
-    return S_OK;
+    return __wine_unregister_resources( instance, NULL );
 }

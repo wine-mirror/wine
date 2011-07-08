@@ -2564,6 +2564,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,windowscodecs.dll,1
 11,,winegstreamer.dll,1
 11,,wineqtdecoder.dll,1
+11,,winhttp.dll,1
 11,,wintrust.dll,1
 11,,wmiutils.dll,1
 11,,wuapi.dll,1

@@ -13,7 +13,9 @@ C_SRCS = \
 	session.c \
 	url.c
 
-RC_SRCS = \
-	version.rc
+IDL_TLB_SRCS = winhttp_tlb.idl
+IDL_R_SRCS   = winhttp_tlb.idl
+
+RC_SRCS = version.rc
 
 @MAKE_DLL_RULES@
