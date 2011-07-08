@@ -865,6 +865,8 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
 
     didevi.dwSize = sizeof(didevi);
 
+    if (dwFlags & DIEDBSFL_FORCEFEEDBACK) return DI_OK;
+
     /* Enumerate keyboard and mouse */
     for(i=0; i < sizeof(guids)/sizeof(guids[0]); i++)
     {
@@ -902,6 +904,8 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
           lpCallback, pvRef, dwFlags);
 
     didevi.dwSize = sizeof(didevi);
+
+    if (dwFlags & DIEDBSFL_FORCEFEEDBACK) return DI_OK;
 
     /* Enumerate keyboard and mouse */
     for(i=0; i < sizeof(guids)/sizeof(guids[0]); i++)

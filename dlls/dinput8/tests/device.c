@@ -263,8 +263,8 @@ static void test_action_mapping(void)
     count.mouse = NULL;
     hr = IDirectInput8_EnumDevicesBySemantics(pDI, 0, &af, counting_callback, &count, DIEDBSFL_FORCEFEEDBACK);
     ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr);
-    todo_wine ok (count.keyboard == NULL, "Keyboard should not be enumerated when asking for forcefeedback\n");
-    todo_wine ok (count.mouse == NULL, "Mouse should not be enumerated when asking for forcefeedback\n");
+    ok (count.keyboard == NULL, "Keyboard should not be enumerated when asking for forcefeedback\n");
+    ok (count.mouse == NULL, "Mouse should not be enumerated when asking for forcefeedback\n");
 
     /* Enumerate available devices. That is devices with not owned by any user.
        Before setting the action map for all devices we still have them available.
