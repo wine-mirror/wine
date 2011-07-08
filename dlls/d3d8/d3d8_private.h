@@ -277,6 +277,7 @@ struct IDirect3DVertexBuffer8Impl
 
 HRESULT vertexbuffer_init(IDirect3DVertexBuffer8Impl *buffer, IDirect3DDevice8Impl *device,
         UINT size, DWORD usage, DWORD fvf, D3DPOOL pool) DECLSPEC_HIDDEN;
+IDirect3DVertexBuffer8Impl *unsafe_impl_from_IDirect3DVertexBuffer8(IDirect3DVertexBuffer8 *iface) DECLSPEC_HIDDEN;
 
 /* --------------------- */
 /* IDirect3DIndexBuffer8 */

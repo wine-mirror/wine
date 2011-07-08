@@ -298,6 +298,15 @@ HRESULT vertexbuffer_init(IDirect3DVertexBuffer8Impl *buffer, IDirect3DDevice8Im
     return D3D_OK;
 }
 
+IDirect3DVertexBuffer8Impl *unsafe_impl_from_IDirect3DVertexBuffer8(IDirect3DVertexBuffer8 *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &Direct3DVertexBuffer8_Vtbl);
+
+    return impl_from_IDirect3DVertexBuffer8(iface);
+}
+
 static inline IDirect3DIndexBuffer8Impl *impl_from_IDirect3DIndexBuffer8(IDirect3DIndexBuffer8 *iface)
 {
     return CONTAINING_RECORD(iface, IDirect3DIndexBuffer8Impl, IDirect3DIndexBuffer8_iface);
