@@ -49,68 +49,43 @@ typedef struct _basic_string_wchar
 } basic_string_wchar;
 
 static void* (__cdecl *p_set_invalid_parameter_handler)(void*);
-static basic_string_char* (WINAPI *p_basic_string_char_concatenate)(basic_string_char*, const basic_string_char*, const basic_string_char*);
-static basic_string_char* (WINAPI *p_basic_string_char_concatenate_cstr)(basic_string_char*, const basic_string_char*, const char*);
+static basic_string_char* (__cdecl *p_basic_string_char_concatenate)(basic_string_char*, const basic_string_char*, const basic_string_char*);
+static basic_string_char* (__cdecl *p_basic_string_char_concatenate_cstr)(basic_string_char*, const basic_string_char*, const char*);
 
 #ifdef __i386__
-static basic_string_char* (WINAPI *p_basic_string_char_ctor)(void);
-static basic_string_char* (WINAPI *p_basic_string_char_copy_ctor)(basic_string_char*);
-static basic_string_char* (WINAPI *p_basic_string_char_ctor_cstr)(const char*);
-static void (WINAPI *p_basic_string_char_dtor)(void);
-static basic_string_char* (WINAPI *p_basic_string_char_erase)(size_t, size_t);
-static basic_string_char* (WINAPI *p_basic_string_char_assign_cstr_len)(const char*, size_t);
-static const char* (WINAPI *p_basic_string_char_cstr)(void);
-static const char* (WINAPI *p_basic_string_char_data)(void);
-static size_t (WINAPI *p_basic_string_char_size)(void);
-static size_t (WINAPI *p_basic_string_char_capacity)(void);
-static void (WINAPI *p_basic_string_char_swap)(basic_string_char*);
-static basic_string_char* (WINAPI *p_basic_string_char_append)(basic_string_char*);
-static basic_string_char* (WINAPI *p_basic_string_char_append_substr)(basic_string_char*, size_t, size_t);
-static int (WINAPI *p_basic_string_char_compare_substr_substr)(size_t, size_t, basic_string_char*, size_t, size_t);
-static int (WINAPI *p_basic_string_char_compare_substr_cstr_len)(size_t, size_t, const char*, size_t);
-static size_t (WINAPI *p_basic_string_char_find_cstr_substr)(const char*, size_t, size_t);
-
-static basic_string_wchar* (WINAPI *p_basic_string_wchar_ctor)(void);
-static basic_string_wchar* (WINAPI *p_basic_string_wchar_copy_ctor)(basic_string_wchar*);
-static basic_string_wchar* (WINAPI *p_basic_string_wchar_ctor_cstr)(const wchar_t*);
-static void (WINAPI *p_basic_string_wchar_dtor)(void);
-static basic_string_wchar* (WINAPI *p_basic_string_wchar_erase)(size_t, size_t);
-static basic_string_wchar* (WINAPI *p_basic_string_wchar_assign_cstr_len)(const wchar_t*, size_t);
-static const wchar_t* (WINAPI *p_basic_string_wchar_cstr)(void);
-static const wchar_t* (WINAPI *p_basic_string_wchar_data)(void);
-static size_t (WINAPI *p_basic_string_wchar_size)(void);
-static size_t (WINAPI *p_basic_string_wchar_capacity)(void);
-static void (WINAPI *p_basic_string_wchar_swap)(basic_string_wchar*);
+#define __thiscall __stdcall
 #else
-static basic_string_char* (__cdecl *p_basic_string_char_ctor)(basic_string_char*);
-static basic_string_char* (__cdecl *p_basic_string_char_copy_ctor)(basic_string_char*, basic_string_char*);
-static basic_string_char* (__cdecl *p_basic_string_char_ctor_cstr)(basic_string_char*, const char*);
-static void (__cdecl *p_basic_string_char_dtor)(basic_string_char*);
-static basic_string_char* (__cdecl *p_basic_string_char_erase)(basic_string_char*, size_t, size_t);
-static basic_string_char* (__cdecl *p_basic_string_char_assign_cstr_len)(basic_string_char*, const char*, size_t);
-static const char* (__cdecl *p_basic_string_char_cstr)(basic_string_char*);
-static const char* (__cdecl *p_basic_string_char_data)(basic_string_char*);
-static size_t (__cdecl *p_basic_string_char_size)(basic_string_char*);
-static size_t (__cdecl *p_basic_string_char_capacity)(basic_string_char*);
-static void (__cdecl *p_basic_string_char_swap)(basic_string_char*, basic_string_char*);
-static basic_string_char* (WINAPI *p_basic_string_char_append)(basic_string_char*, basic_string_char*);
-static basic_string_char* (WINAPI *p_basic_string_char_append_substr)(basic_string_char*, basic_string_char*, size_t, size_t);
-static int (WINAPI *p_basic_string_char_compare_substr_substr)(basic_string_char*, size_t, size_t, basic_string_char*, size_t, size_t);
-static int (WINAPI *p_basic_string_char_compare_substr_cstr_len)(basic_string_char*, size_t, size_t, const char*, size_t);
-static size_t (WINAPI *p_basic_string_char_find_cstr_substr)(basic_string_char*, const char*, size_t, size_t);
-
-static basic_string_wchar* (__cdecl *p_basic_string_wchar_ctor)(basic_string_wchar*);
-static basic_string_wchar* (__cdecl *p_basic_string_wchar_copy_ctor)(basic_string_wchar*, basic_string_wchar*);
-static basic_string_wchar* (__cdecl *p_basic_string_wchar_ctor_cstr)(basic_string_wchar*, const wchar_t*);
-static void (__cdecl *p_basic_string_wchar_dtor)(basic_string_wchar*);
-static basic_string_wchar* (__cdecl *p_basic_string_wchar_erase)(basic_string_wchar*, size_t, size_t);
-static basic_string_wchar* (__cdecl *p_basic_string_wchar_assign_cstr_len)(basic_string_wchar*, const wchar_t*, size_t);
-static const wchar_t* (__cdecl *p_basic_string_wchar_cstr)(basic_string_wchar*);
-static const wchar_t* (__cdecl *p_basic_string_wchar_data)(basic_string_wchar*);
-static size_t (__cdecl *p_basic_string_wchar_size)(basic_string_wchar*);
-static size_t (__cdecl *p_basic_string_wchar_capacity)(basic_string_wchar*);
-static void (__cdecl *p_basic_string_wchar_swap)(basic_string_wchar*, basic_string_wchar*);
+#define __thiscall __cdecl
 #endif
+
+static basic_string_char* (__thiscall *p_basic_string_char_ctor)(basic_string_char*);
+static basic_string_char* (__thiscall *p_basic_string_char_copy_ctor)(basic_string_char*, basic_string_char*);
+static basic_string_char* (__thiscall *p_basic_string_char_ctor_cstr)(basic_string_char*, const char*);
+static void (__thiscall *p_basic_string_char_dtor)(basic_string_char*);
+static basic_string_char* (__thiscall *p_basic_string_char_erase)(basic_string_char*, size_t, size_t);
+static basic_string_char* (__thiscall *p_basic_string_char_assign_cstr_len)(basic_string_char*, const char*, size_t);
+static const char* (__thiscall *p_basic_string_char_cstr)(basic_string_char*);
+static const char* (__thiscall *p_basic_string_char_data)(basic_string_char*);
+static size_t (__thiscall *p_basic_string_char_size)(basic_string_char*);
+static size_t (__thiscall *p_basic_string_char_capacity)(basic_string_char*);
+static void (__thiscall *p_basic_string_char_swap)(basic_string_char*, basic_string_char*);
+static basic_string_char* (__thiscall *p_basic_string_char_append)(basic_string_char*, basic_string_char*);
+static basic_string_char* (__thiscall *p_basic_string_char_append_substr)(basic_string_char*, basic_string_char*, size_t, size_t);
+static int (__thiscall *p_basic_string_char_compare_substr_substr)(basic_string_char*, size_t, size_t, basic_string_char*, size_t, size_t);
+static int (__thiscall *p_basic_string_char_compare_substr_cstr_len)(basic_string_char*, size_t, size_t, const char*, size_t);
+static size_t (__thiscall *p_basic_string_char_find_cstr_substr)(basic_string_char*, const char*, size_t, size_t);
+
+static basic_string_wchar* (__thiscall *p_basic_string_wchar_ctor)(basic_string_wchar*);
+static basic_string_wchar* (__thiscall *p_basic_string_wchar_copy_ctor)(basic_string_wchar*, basic_string_wchar*);
+static basic_string_wchar* (__thiscall *p_basic_string_wchar_ctor_cstr)(basic_string_wchar*, const wchar_t*);
+static void (__thiscall *p_basic_string_wchar_dtor)(basic_string_wchar*);
+static basic_string_wchar* (__thiscall *p_basic_string_wchar_erase)(basic_string_wchar*, size_t, size_t);
+static basic_string_wchar* (__thiscall *p_basic_string_wchar_assign_cstr_len)(basic_string_wchar*, const wchar_t*, size_t);
+static const wchar_t* (__thiscall *p_basic_string_wchar_cstr)(basic_string_wchar*);
+static const wchar_t* (__thiscall *p_basic_string_wchar_data)(basic_string_wchar*);
+static size_t (__thiscall *p_basic_string_wchar_size)(basic_string_wchar*);
+static size_t (__thiscall *p_basic_string_wchar_capacity)(basic_string_wchar*);
+static void (__thiscall *p_basic_string_wchar_swap)(basic_string_wchar*, basic_string_wchar*);
 
 static int invalid_parameter = 0;
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,

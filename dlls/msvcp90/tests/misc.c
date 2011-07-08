@@ -35,20 +35,17 @@ static BYTE (__cdecl *p_short_eq)(const void*, const void*);
 static char* (__cdecl *p_Copy_s)(char*, size_t, const char*, size_t);
 
 #ifdef __i386__
-static char* (WINAPI *p_char_address)(char*);
-static void* (WINAPI *p_char_ctor)(void);
-static void (WINAPI *p_char_deallocate)(char*, size_t);
-static char* (WINAPI *p_char_allocate)(size_t);
-static void (WINAPI *p_char_construct)(char*, const char*);
-static size_t (WINAPI *p_char_max_size)(void);
+#define __thiscall __stdcall
 #else
-static char* (__cdecl *p_char_address)(void*, char*);
-static void* (__cdecl *p_char_ctor)(void*);
-static void (__cdecl *p_char_deallocate)(void*, char*, size_t);
-static char* (__cdecl *p_char_allocate)(void*, size_t);
-static void (__cdecl *p_char_construct)(void*, char*, const char*);
-static size_t (__cdecl *p_char_max_size)(void*);
+#define __thiscall __cdecl
 #endif
+
+static char* (__thiscall *p_char_address)(void*, char*);
+static void* (__thiscall *p_char_ctor)(void*);
+static void (__thiscall *p_char_deallocate)(void*, char*, size_t);
+static char* (__thiscall *p_char_allocate)(void*, size_t);
+static void (__thiscall *p_char_construct)(void*, char*, const char*);
+static size_t (__thiscall *p_char_max_size)(void*);
 
 static int invalid_parameter = 0;
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
