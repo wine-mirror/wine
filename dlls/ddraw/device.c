@@ -685,7 +685,7 @@ IDirect3DDeviceImpl_1_CreateExecuteBuffer(IDirect3DDevice *iface,
         return hr;
     }
 
-    *ExecuteBuffer = (IDirect3DExecuteBuffer *)object;
+    *ExecuteBuffer = &object->IDirect3DExecuteBuffer_iface;
 
     TRACE(" Returning IDirect3DExecuteBuffer at %p, implementation is at %p\n", *ExecuteBuffer, object);
 

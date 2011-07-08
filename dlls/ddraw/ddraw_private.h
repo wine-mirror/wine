@@ -486,10 +486,8 @@ void d3d_viewport_init(IDirect3DViewportImpl *viewport, IDirectDrawImpl *ddraw) 
  *****************************************************************************/
 struct IDirect3DExecuteBufferImpl
 {
-    /* IUnknown */
-    const IDirect3DExecuteBufferVtbl *lpVtbl;
-    LONG                 ref;
-
+    IDirect3DExecuteBuffer IDirect3DExecuteBuffer_iface;
+    LONG ref;
     /* IDirect3DExecuteBuffer fields */
     IDirectDrawImpl      *ddraw;
     IDirect3DDeviceImpl  *d3ddev;
