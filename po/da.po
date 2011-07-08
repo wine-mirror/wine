@@ -7003,7 +7003,22 @@ msgid "There is no Windows program configured to open this type of file."
 msgstr ""
 "Der er ikke noget Windows program, konfigureret til at åbne denne type fil."
 
-#: shell32.rc:258
+#: shell32.rc:243
+#, fuzzy
+msgid "Are you sure you wish to permanently delete '%1'?"
+msgstr "Er du sikker på du vil slette '%1'?"
+
+#: shell32.rc:244
+#, fuzzy
+msgid "Are you sure you wish to permanently delete these %1 items?"
+msgstr "Er du sikker på du vil slette disse %1 filer?"
+
+#: shell32.rc:245
+#, fuzzy
+msgid "Confirm deletion"
+msgstr "Bekræft sletning af fil"
+
+#: shell32.rc:262
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -7033,7 +7048,7 @@ msgstr ""
 "sammen med dette program; hvis ikke, skriv til: the Free Software "
 "Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
-#: shell32.rc:246
+#: shell32.rc:250
 msgid "Wine License"
 msgstr "Licensbetingelser"
 

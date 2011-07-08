@@ -6987,7 +6987,22 @@ msgstr "Textové soubory (*.txt)"
 msgid "There is no Windows program configured to open this type of file."
 msgstr ""
 
-#: shell32.rc:258
+#: shell32.rc:243
+#, fuzzy
+msgid "Are you sure you wish to permanently delete '%1'?"
+msgstr "Opravdu chcete odstranit '%1'?"
+
+#: shell32.rc:244
+#, fuzzy
+msgid "Are you sure you wish to permanently delete these %1 items?"
+msgstr "Opravdu chcete odstranit těchto %1 položek?"
+
+#: shell32.rc:245
+#, fuzzy
+msgid "Confirm deletion"
+msgstr "Potvrdit odstranění souboru"
+
+#: shell32.rc:262
 #, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
@@ -7021,7 +7036,7 @@ msgstr ""
 "\n"
 "Přečtěte si soubor COPYING.LIB pro získání informací o licenci.\n"
 
-#: shell32.rc:246
+#: shell32.rc:250
 #, fuzzy
 msgid "Wine License"
 msgstr "WineMine"

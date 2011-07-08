@@ -7140,7 +7140,22 @@ msgstr "Futtatható fájlok (*.exe)"
 msgid "There is no Windows program configured to open this type of file."
 msgstr "Nincs Windowsos program társítva ennek a fájltípusnak a megnyitásához."
 
-#: shell32.rc:258
+#: shell32.rc:243
+#, fuzzy
+msgid "Are you sure you wish to permanently delete '%1'?"
+msgstr "Biztos hogy törölni szeretné ezt: '%1'?"
+
+#: shell32.rc:244
+#, fuzzy
+msgid "Are you sure you wish to permanently delete these %1 items?"
+msgstr "Biztos hogy törölni szeretné ezt a(z) %1 elemet?"
+
+#: shell32.rc:245
+#, fuzzy
+msgid "Confirm deletion"
+msgstr "Fájl törlési megerősítés"
+
+#: shell32.rc:262
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -7170,7 +7185,7 @@ msgstr ""
 "ha nem írjon a Free Software Foundation, Inc-nek: 51 Franklin St, Fifth "
 "Floor, Boston, MA 02110-1301, USA."
 
-#: shell32.rc:246
+#: shell32.rc:250
 msgid "Wine License"
 msgstr "Wine Licensz"
 

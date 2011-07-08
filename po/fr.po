@@ -6768,7 +6768,22 @@ msgid "There is no Windows program configured to open this type of file."
 msgstr ""
 "Aucun programme Windows n'est configuré pour ouvrir ce type de fichier."
 
-#: shell32.rc:258
+#: shell32.rc:243
+#, fuzzy
+msgid "Are you sure you wish to permanently delete '%1'?"
+msgstr "Voulez-vous réellement supprimer « %1 » ?"
+
+#: shell32.rc:244
+#, fuzzy
+msgid "Are you sure you wish to permanently delete these %1 items?"
+msgstr "Voulez-vous réellement supprimer ces %1 éléments ?"
+
+#: shell32.rc:245
+#, fuzzy
+msgid "Confirm deletion"
+msgstr "Confirmez la suppression du fichier"
+
+#: shell32.rc:262
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -6798,7 +6813,7 @@ msgstr ""
 "GNU avec Wine ; si ce n’est pas le cas, écrivez à la : Free Software "
 "Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
-#: shell32.rc:246
+#: shell32.rc:250
 msgid "Wine License"
 msgstr "Licence de Wine"
 

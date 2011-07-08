@@ -142,6 +142,10 @@
 
 #define IDS_SHLEXEC_NOASSOC         165
 
+#define IDS_RECYCLEBIN_ERASEITEM         166
+#define IDS_RECYCLEBIN_ERASEMULTIPLE     167
+#define IDS_RECYCLEBIN_ERASE_CAPTION     168
+
 #define IDS_LICENSE                 256
 #define IDS_LICENSE_CAPTION         257
 

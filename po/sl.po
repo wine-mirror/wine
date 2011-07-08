@@ -6769,7 +6769,22 @@ msgstr "Izvedljive datoteke (*.exe)"
 msgid "There is no Windows program configured to open this type of file."
 msgstr "Za odpiranje te vrste datotek ni na voljo noben program Windows."
 
-#: shell32.rc:258
+#: shell32.rc:243
+#, fuzzy
+msgid "Are you sure you wish to permanently delete '%1'?"
+msgstr "Ali ste prepričani, da želite izbrisati predmet '%1'?"
+
+#: shell32.rc:244
+#, fuzzy
+msgid "Are you sure you wish to permanently delete these %1 items?"
+msgstr "Ali ste prepričani, da želite izbrisati te predmete (%1)?"
+
+#: shell32.rc:245
+#, fuzzy
+msgid "Confirm deletion"
+msgstr "Potrdite brisanje datoteke"
+
+#: shell32.rc:262
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -6800,7 +6815,7 @@ msgstr ""
 "na naslov Free Software Foundation, Inc.,59 Temple Place - Suite 330, "
 "Boston, MA 02111-1307, USA in zahtevajte kopijo."
 
-#: shell32.rc:246
+#: shell32.rc:250
 msgid "Wine License"
 msgstr "Licenca Wine"
 

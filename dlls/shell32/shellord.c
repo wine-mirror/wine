@@ -2098,20 +2098,6 @@ HRESULT WINAPI SHStartNetConnectionDialog(HWND hwnd, LPCSTR pszRemoteName, DWORD
     return S_OK;
 }
 
-HRESULT WINAPI SHEmptyRecycleBinA(HWND hwnd, LPCSTR pszRootPath, DWORD dwFlags)
-{
-    FIXME("%p, %s, 0x%08x - stub\n", hwnd, debugstr_a(pszRootPath), dwFlags);
-
-    return S_OK;
-}
-
-HRESULT WINAPI SHEmptyRecycleBinW(HWND hwnd, LPCWSTR pszRootPath, DWORD dwFlags)
-{
-    FIXME("%p, %s, 0x%08x - stub\n", hwnd, debugstr_w(pszRootPath), dwFlags);
-
-    return S_OK;
-}
-
 DWORD WINAPI SHFormatDrive(HWND hwnd, UINT drive, UINT fmtID, UINT options)
 {
     FIXME("%p, 0x%08x, 0x%08x, 0x%08x - stub\n", hwnd, drive, fmtID, options);

@@ -6927,7 +6927,22 @@ msgstr "Programme (*.exe)"
 msgid "There is no Windows program configured to open this type of file."
 msgstr "Es ist kein Programm mit diesem Dateityp verknüpft."
 
-#: shell32.rc:258
+#: shell32.rc:243
+#, fuzzy
+msgid "Are you sure you wish to permanently delete '%1'?"
+msgstr "Sind Sie sich sicher, dass Sie '%1' löschen möchten?"
+
+#: shell32.rc:244
+#, fuzzy
+msgid "Are you sure you wish to permanently delete these %1 items?"
+msgstr "Sind Sie sich sicher, dass Sie diese %1 Objekte löschen möchten?"
+
+#: shell32.rc:245
+#, fuzzy
+msgid "Confirm deletion"
+msgstr "Bestätigung: Objekt löschen"
+
+#: shell32.rc:262
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -6957,7 +6972,7 @@ msgstr ""
 "Public License erhalten haben; wenn nicht schreiben Sie der Free Software "
 "Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
-#: shell32.rc:246
+#: shell32.rc:250
 msgid "Wine License"
 msgstr "Wine Lizenz"
 

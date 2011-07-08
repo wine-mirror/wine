@@ -239,6 +239,10 @@ STRINGTABLE
 	IDS_CPANEL_DESCRIPTION      "Description"
 
         IDS_SHLEXEC_NOASSOC         "There is no Windows program configured to open this type of file."
+
+        IDS_RECYCLEBIN_ERASEITEM       "Are you sure you wish to permanently delete '%1'?"
+        IDS_RECYCLEBIN_ERASEMULTIPLE   "Are you sure you wish to permanently delete these %1 items?"
+        IDS_RECYCLEBIN_ERASE_CAPTION   "Confirm deletion"
 }
 
 STRINGTABLE

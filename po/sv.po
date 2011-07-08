@@ -6759,7 +6759,22 @@ msgstr "Programfiler (*.exe)"
 msgid "There is no Windows program configured to open this type of file."
 msgstr "Inget Windows-program är inställt för att öppna denna filtyp."
 
-#: shell32.rc:258
+#: shell32.rc:243
+#, fuzzy
+msgid "Are you sure you wish to permanently delete '%1'?"
+msgstr "Är du säker du vill ta bort «%1»?"
+
+#: shell32.rc:244
+#, fuzzy
+msgid "Are you sure you wish to permanently delete these %1 items?"
+msgstr "Är du säker du vill ta bort dessa %1 element?"
+
+#: shell32.rc:245
+#, fuzzy
+msgid "Confirm deletion"
+msgstr "Bekräfta filborttagning"
+
+#: shell32.rc:262
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -6789,7 +6804,7 @@ msgstr ""
 "med Wine; om inte, skriv till: the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
-#: shell32.rc:246
+#: shell32.rc:250
 msgid "Wine License"
 msgstr "Wine-licens"
 

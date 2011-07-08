@@ -36,6 +36,7 @@
 #include "shlobj.h"
 #include "shresdef.h"
 #include "shellapi.h"
+#include "knownfolders.h"
 #include "wine/debug.h"
 
 #include "shell32_main.h"
@@ -526,6 +527,58 @@ static const IPersistFolder2Vtbl recycleBinPersistVtbl =
     RecycleBin_GetCurFolder
 };
 
+HRESULT erase_items(HWND parent,const LPCITEMIDLIST * apidl, UINT cidl, BOOL confirm)
+{
+    UINT i=0;
+    HRESULT ret = S_OK;
+    LPITEMIDLIST recyclebin;
+
+    if(confirm)
+    {
+        WCHAR arg[MAX_PATH];
+        WCHAR message[100];
+        WCHAR caption[50];
+        switch(cidl)
+        {
+        case 0:
+            return S_OK;
+        case 1:
+            {
+                WIN32_FIND_DATAW data;
+                TRASH_UnpackItemID(&((*apidl)->mkid),&data);
+                lstrcpynW(arg,data.cFileName,MAX_PATH);
+                LoadStringW(shell32_hInstance,IDS_RECYCLEBIN_ERASEITEM,message,
+                            sizeof(message)/sizeof(WCHAR));
+                break;
+            }
+        default:
+            {
+                static const WCHAR format[]={'%','u','\0'};
+                LoadStringW(shell32_hInstance,IDS_RECYCLEBIN_ERASEMULTIPLE,
+                            message,sizeof(message)/sizeof(WCHAR));
+                sprintfW(arg,format,cidl);
+                break;
+            }
+
+        }
+        LoadStringW(shell32_hInstance,IDS_RECYCLEBIN_ERASE_CAPTION,caption,
+                    sizeof(caption)/sizeof(WCHAR));
+        if(ShellMessageBoxW(shell32_hInstance,parent,message,caption,
+                            MB_YESNO|MB_ICONEXCLAMATION,arg)!=IDYES)
+            return ret;
+
+    }
+    SHGetFolderLocation(parent,CSIDL_BITBUCKET,0,0,&recyclebin);
+    for (; i<cidl; i++)
+    {
+        if(SUCCEEDED(TRASH_EraseItem(apidl[i])))
+            SHChangeNotify(SHCNE_DELETE,SHCNF_IDLIST,
+                           ILCombine(recyclebin,apidl[i]),0);
+    }
+    ILFree(recyclebin);
+    return S_OK;
+}
+
 HRESULT WINAPI SHQueryRecycleBinA(LPCSTR pszRootPath, LPSHQUERYRBINFO pSHQueryRBInfo)
 {
     WCHAR wszRootPath[MAX_PATH];
@@ -553,6 +606,33 @@ HRESULT WINAPI SHQueryRecycleBinW(LPCWSTR pszRootPath, LPSHQUERYRBINFO pSHQueryR
     }
     SHFree(apidl);
     return S_OK;
+}
+
+HRESULT WINAPI SHEmptyRecycleBinA(HWND hwnd, LPCSTR pszRootPath, DWORD dwFlags)
+{
+    WCHAR wszRootPath[MAX_PATH];
+    MultiByteToWideChar(CP_ACP, 0, pszRootPath, -1, wszRootPath, MAX_PATH);
+    return SHEmptyRecycleBinW(hwnd, wszRootPath, dwFlags);
+}
+
+#define SHERB_NOCONFIRMATION 1
+#define SHERB_NOPROGRESSUI   2
+#define SHERB_NOSOUND        4
+
+HRESULT WINAPI SHEmptyRecycleBinW(HWND hwnd, LPCWSTR pszRootPath, DWORD dwFlags)
+{
+    LPITEMIDLIST *apidl;
+    INT cidl;
+    INT i=0;
+    HRESULT ret;
+    TRACE("(%p, %s, 0x%08x)\n", hwnd, debugstr_w(pszRootPath) , dwFlags);
+    FIXME("Ignoring pszRootPath=%s\n",debugstr_w(pszRootPath));
+    TRASH_EnumItems(&apidl,&cidl);
+    ret = erase_items(hwnd,(const LPCITEMIDLIST*)apidl,cidl,!(dwFlags & SHERB_NOCONFIRMATION));
+    for (;i<cidl;i++)
+        ILFree(apidl[i]);
+    SHFree(apidl);
+    return ret;
 }
 
 /*************************************************************************

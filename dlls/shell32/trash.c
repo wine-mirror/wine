@@ -3,6 +3,7 @@
  * (see http://www.ramendik.ru/docs/trashspec.html)
  *
  * Copyright (C) 2006 Mikolaj Zalewski
+ * Copyright 2011 Jay Yang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -541,4 +542,31 @@ failed:
     DPA_DestroyCallback(tinfs, free_item_callback, NULL);
     
     return err;
+}
+
+HRESULT TRASH_EraseItem(LPCITEMIDLIST pidl)
+{
+    int suffix_length = strlen(trashinfo_suffix);
+
+    LPCSHITEMID id = &(pidl->mkid);
+    const char *bucket_name = (const char*)(id->abID+1+sizeof(WIN32_FIND_DATAW));
+    const char *filename = (const char*)(id->abID+1+sizeof(WIN32_FIND_DATAW)+strlen(bucket_name)+1);
+    char *file_path;
+
+    TRACE("(%p)",pidl);
+    if(strcmp(filename+strlen(filename)-suffix_length,trashinfo_suffix))
+    {
+        ERR("pidl at %p is not a valid recycle bin entry",pidl);
+        return E_INVALIDARG;
+    }
+    file_path = SHAlloc(max(strlen(home_trash->files_dir),strlen(home_trash->info_dir))+strlen(filename)+1);
+    sprintf(file_path,"%s%s",home_trash->info_dir,filename);
+    if(unlink(file_path))
+        WARN("failed to delete the trashinfo file %s",filename);
+    sprintf(file_path,"%s%s",home_trash->files_dir,filename);
+    file_path[strlen(home_trash->files_dir)+strlen(filename)-suffix_length] = '\0';
+    if(unlink(file_path))
+        WARN("could not erase %s from the trash (errno=%i)\n",filename,errno);
+    SHFree(file_path);
+    return S_OK;
 }

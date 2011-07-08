@@ -7122,7 +7122,22 @@ msgstr "Metin Dosyaları (*.txt)"
 msgid "There is no Windows program configured to open this type of file."
 msgstr ""
 
-#: shell32.rc:258
+#: shell32.rc:243
+#, fuzzy
+msgid "Are you sure you wish to permanently delete '%1'?"
+msgstr "'%1' öğesini silmek istediğinizden emin misiniz?"
+
+#: shell32.rc:244
+#, fuzzy
+msgid "Are you sure you wish to permanently delete these %1 items?"
+msgstr "Bu %1 öğeyi silmek istediğinizden emin misiniz?"
+
+#: shell32.rc:245
+#, fuzzy
+msgid "Confirm deletion"
+msgstr "Dosya silmeyi onayla"
+
+#: shell32.rc:262
 #, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
@@ -7156,7 +7171,7 @@ msgstr ""
 "\n"
 "See the COPYING.LIB file for license information.\n"
 
-#: shell32.rc:246
+#: shell32.rc:250
 #, fuzzy
 msgid "Wine License"
 msgstr "Wine Mayın Tarlası"

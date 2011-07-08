@@ -6733,7 +6733,22 @@ msgstr "실행 파일 (*.exe)"
 msgid "There is no Windows program configured to open this type of file."
 msgstr "이 형식의 파일을 도록 구성된 윈도우 프로그램이 없습니다."
 
-#: shell32.rc:258
+#: shell32.rc:243
+#, fuzzy
+msgid "Are you sure you wish to permanently delete '%1'?"
+msgstr "당신은  '%1'을 지우기를 바랍니까?"
+
+#: shell32.rc:244
+#, fuzzy
+msgid "Are you sure you wish to permanently delete these %1 items?"
+msgstr "당신은 %1 아이템(들)을 지우기를 바랍니까?"
+
+#: shell32.rc:245
+#, fuzzy
+msgid "Confirm deletion"
+msgstr "파일 지우기 확인"
+
+#: shell32.rc:262
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -6763,7 +6778,7 @@ msgstr ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
-#: shell32.rc:246
+#: shell32.rc:250
 msgid "Wine License"
 msgstr "Wine 라이센스"
 

@@ -41,6 +41,7 @@ BOOL TRASH_CanTrashFile(LPCWSTR wszPath) DECLSPEC_HIDDEN;
 BOOL TRASH_TrashFile(LPCWSTR wszPath) DECLSPEC_HIDDEN;
 HRESULT TRASH_UnpackItemID(LPCSHITEMID id, WIN32_FIND_DATAW *data) DECLSPEC_HIDDEN;
 HRESULT TRASH_EnumItems(LPITEMIDLIST **pidls, int *count) DECLSPEC_HIDDEN;
+HRESULT TRASH_EraseItem(LPCITEMIDLIST pidl) DECLSPEC_HIDDEN;
 
 HRESULT XDG_UserDirLookup(const char * const *xdg_dirs, const unsigned int num_dirs, char *** out_ptr) DECLSPEC_HIDDEN;
 

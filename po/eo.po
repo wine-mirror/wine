@@ -6876,7 +6876,22 @@ msgstr "Tekstdosieroj (*.txt)"
 msgid "There is no Windows program configured to open this type of file."
 msgstr ""
 
-#: shell32.rc:258
+#: shell32.rc:243
+#, fuzzy
+msgid "Are you sure you wish to permanently delete '%1'?"
+msgstr "Æu vi estas certa pri forigo de '%1'?"
+
+#: shell32.rc:244
+#, fuzzy
+msgid "Are you sure you wish to permanently delete these %1 items?"
+msgstr "Æu vi estas certa pri forigo de æi tiuj %1 komponantoj?"
+
+#: shell32.rc:245
+#, fuzzy
+msgid "Confirm deletion"
+msgstr "Konfirmu forigon de dosiero"
+
+#: shell32.rc:262
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -6893,7 +6908,7 @@ msgid ""
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
 
-#: shell32.rc:246
+#: shell32.rc:250
 #, fuzzy
 msgid "Wine License"
 msgstr "Wine Helpanto"
