@@ -2119,26 +2119,6 @@ DWORD WINAPI SHFormatDrive(HWND hwnd, UINT drive, UINT fmtID, UINT options)
     return SHFMT_NOFORMAT;
 }
 
-HRESULT WINAPI SHQueryRecycleBinA(LPCSTR pszRootPath, LPSHQUERYRBINFO pSHQueryRBInfo)
-{
-    FIXME("%s, %p - stub\n", debugstr_a(pszRootPath), pSHQueryRBInfo);
-
-    pSHQueryRBInfo->i64Size = 0;
-    pSHQueryRBInfo->i64NumItems = 0;
-
-    return S_OK;
-}
-
-HRESULT WINAPI SHQueryRecycleBinW(LPCWSTR pszRootPath, LPSHQUERYRBINFO pSHQueryRBInfo)
-{
-    FIXME("%s, %p - stub\n", debugstr_w(pszRootPath), pSHQueryRBInfo);
-
-    pSHQueryRBInfo->i64Size = 0;
-    pSHQueryRBInfo->i64NumItems = 0;
-
-    return S_OK;
-}
-
 /*************************************************************************
  *              SHSetLocalizedName (SHELL32.@)
  */

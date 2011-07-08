@@ -90,8 +90,8 @@ static void test_query_recyclebin(void)
     ok(!pSHFileOperationA(&shfo), "Deletion was not successful\n");
     hr = pSHQueryRecycleBinA(buf,&info2);
     ok(hr == S_OK, "SHQueryRecycleBinW failed with error 0x%x\n", hr);
-    todo_wine ok(info2.i64Size==info1.i64Size+written,"Expected recycle bin to have 0x%s bytes\n",str_from_int64(info1.i64Size+written));
-    todo_wine ok(info2.i64NumItems==info1.i64NumItems+1,"Expected recycle bin to have 0x%s items\n",str_from_int64(info1.i64NumItems+1));
+    ok(info2.i64Size==info1.i64Size+written,"Expected recycle bin to have 0x%s bytes\n",str_from_int64(info1.i64Size+written));
+    ok(info2.i64NumItems==info1.i64NumItems+1,"Expected recycle bin to have 0x%s items\n",str_from_int64(info1.i64NumItems+1));
 }
 
 

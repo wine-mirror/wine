@@ -2,6 +2,7 @@
  * Trash virtual folder support. The trashing engine is implemented in trash.c
  *
  * Copyright (C) 2006 Mikolaj Zalewski
+ * Copyright 2011 Jay Yang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -34,6 +35,7 @@
 #include "shlwapi.h"
 #include "shlobj.h"
 #include "shresdef.h"
+#include "shellapi.h"
 #include "wine/debug.h"
 
 #include "shell32_main.h"
@@ -523,6 +525,35 @@ static const IPersistFolder2Vtbl recycleBinPersistVtbl =
     /* IPersistFolder2 */
     RecycleBin_GetCurFolder
 };
+
+HRESULT WINAPI SHQueryRecycleBinA(LPCSTR pszRootPath, LPSHQUERYRBINFO pSHQueryRBInfo)
+{
+    WCHAR wszRootPath[MAX_PATH];
+    MultiByteToWideChar(CP_ACP, 0, pszRootPath, -1, wszRootPath, MAX_PATH);
+    return SHQueryRecycleBinW(wszRootPath, pSHQueryRBInfo);
+}
+
+HRESULT WINAPI SHQueryRecycleBinW(LPCWSTR pszRootPath, LPSHQUERYRBINFO pSHQueryRBInfo)
+{
+    LPITEMIDLIST *apidl;
+    INT cidl;
+    INT i=0;
+    TRACE("(%s, %p)\n", debugstr_w(pszRootPath), pSHQueryRBInfo);
+    FIXME("Ignoring pszRootPath=%s\n",debugstr_w(pszRootPath));
+
+    TRASH_EnumItems(&apidl,&cidl);
+    pSHQueryRBInfo->i64NumItems = cidl;
+    pSHQueryRBInfo->i64Size = 0;
+    for (; i<cidl; i++)
+    {
+        WIN32_FIND_DATAW data;
+        TRASH_UnpackItemID(&((apidl[i])->mkid),&data);
+        pSHQueryRBInfo->i64Size += ((DWORDLONG)data.nFileSizeHigh << 32) + data.nFileSizeLow;
+        ILFree(apidl[i]);
+    }
+    SHFree(apidl);
+    return S_OK;
+}
 
 /*************************************************************************
  * SHUpdateRecycleBinIcon                                [SHELL32.@]
