@@ -544,6 +544,39 @@ failed:
     return err;
 }
 
+HRESULT TRASH_RestoreItem(LPCITEMIDLIST pidl){
+    int suffix_length = strlen(trashinfo_suffix);
+    LPCSHITEMID id = &(pidl->mkid);
+    const char *bucket_name = (const char*)(id->abID+1+sizeof(WIN32_FIND_DATAW));
+    const char *filename = (const char*)(id->abID+1+sizeof(WIN32_FIND_DATAW)+strlen(bucket_name)+1);
+    char *restore_path;
+    WIN32_FIND_DATAW data;
+    char *file_path;
+
+    TRACE("(%p)",pidl);
+    if(strcmp(filename+strlen(filename)-suffix_length,trashinfo_suffix))
+    {
+        ERR("pidl at %p is not a valid recycle bin entry",pidl);
+        return E_INVALIDARG;
+    }
+    TRASH_UnpackItemID(id,&data);
+    restore_path = wine_get_unix_file_name(data.cFileName);
+    file_path = SHAlloc(max(strlen(home_trash->files_dir),strlen(home_trash->info_dir))+strlen(filename)+1);
+    sprintf(file_path,"%s%s",home_trash->files_dir,filename);
+    file_path[strlen(home_trash->files_dir)+strlen(filename)-suffix_length] = '\0';
+    if(!rename(file_path,restore_path))
+    {
+            sprintf(file_path,"%s%s",home_trash->info_dir,filename);
+            if(unlink(file_path))
+                WARN("failed to delete the trashinfo file %s",filename);
+    }
+    else
+        WARN("could not erase %s from the trash (errno=%i)\n",filename,errno);
+    SHFree(file_path);
+    HeapFree(GetProcessHeap(), 0, restore_path);
+    return S_OK;
+}
+
 HRESULT TRASH_EraseItem(LPCITEMIDLIST pidl)
 {
     int suffix_length = strlen(trashinfo_suffix);

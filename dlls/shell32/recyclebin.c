@@ -186,6 +186,52 @@ static void DoErase(RecycleBinMenu *This)
         ISFHelper_DeleteItems(helper,This->cidl,(LPCITEMIDLIST*)This->apidl);
 }
 
+static void DoRestore(RecycleBinMenu *This)
+{
+
+    /*TODO add prompts*/
+    UINT i;
+    for(i=0;i<This->cidl;i++)
+    {
+        WIN32_FIND_DATAW data;
+        TRASH_UnpackItemID(&((This->apidl[i])->mkid),&data);
+        if(PathFileExistsW(data.cFileName))
+        {
+            PIDLIST_ABSOLUTE dest_pidl = ILCreateFromPathW(data.cFileName);
+            WCHAR message[100];
+            WCHAR caption[50];
+            if(_ILIsFolder(ILFindLastID(dest_pidl)))
+                LoadStringW(shell32_hInstance,IDS_RECYCLEBIN_OVERWRITEFOLDER,
+                            message,sizeof(message)/sizeof(WCHAR));
+            else
+                LoadStringW(shell32_hInstance,IDS_RECYCLEBIN_OVERWRITEFILE,
+                            message,sizeof(message)/sizeof(WCHAR));
+            LoadStringW(shell32_hInstance,IDS_RECYCLEBIN_OVERWRITE_CAPTION,
+                        caption,sizeof(caption)/sizeof(WCHAR));
+
+            if(ShellMessageBoxW(shell32_hInstance,GetActiveWindow(),message,
+                                caption,MB_YESNO|MB_ICONEXCLAMATION,
+                                data.cFileName)!=IDYES)
+                continue;
+        }
+        if(SUCCEEDED(TRASH_RestoreItem(This->apidl[i])))
+        {
+            IPersistFolder2 *persist;
+            LPITEMIDLIST root_pidl;
+            PIDLIST_ABSOLUTE dest_pidl = ILCreateFromPathW(data.cFileName);
+            BOOL is_folder = _ILIsFolder(ILFindLastID(dest_pidl));
+            IShellFolder2_QueryInterface(This->folder,&IID_IPersistFolder2,
+                                         (void**)&persist);
+            IPersistFolder2_GetCurFolder(persist,&root_pidl);
+            SHChangeNotify(is_folder ? SHCNE_RMDIR : SHCNE_DELETE,
+                           SHCNF_IDLIST,ILCombine(root_pidl,This->apidl[i]),0);
+            SHChangeNotify(is_folder ? SHCNE_MKDIR : SHCNE_CREATE,
+                           SHCNF_IDLIST,dest_pidl,0);
+            ILFree(dest_pidl);
+            ILFree(root_pidl);
+        }
+    }
+}
 
 static HRESULT WINAPI RecycleBinMenu_InvokeCommand(IContextMenu2 *iface,
                                                    LPCMINVOKECOMMANDINFO pici)
@@ -198,6 +244,9 @@ static HRESULT WINAPI RecycleBinMenu_InvokeCommand(IContextMenu2 *iface,
         {
         case IDM_RECYCLEBIN_ERASE:
             DoErase(This);
+            break;
+        case IDM_RECYCLEBIN_RESTORE:
+            DoRestore(This);
             break;
         default:
             return E_NOTIMPL;
