@@ -753,6 +753,36 @@ static BOOL match_fbo_tex_update(const struct wined3d_gl_info *gl_info, const ch
     return *(DWORD *)data == 0x11111111;
 }
 
+/* Context activation is done by the caller. */
+static BOOL match_broken_rgba16(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+{
+    /* GL_RGBA16 uses GL_RGBA8 internally on Geforce 7 and older cards.
+     * This leads to graphical bugs in Half Life 2 and Unreal engine games. */
+    GLuint tex;
+    GLint size;
+
+    ENTER_GL();
+
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, 4, 4, 0, GL_RGBA, GL_UNSIGNED_SHORT, NULL);
+    checkGLcall("glTexImage2D");
+
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE, &size);
+    checkGLcall("glGetTexLevelParameteriv");
+    TRACE("Real color depth is %d\n", size);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    checkGLcall("glBindTexture");
+    glDeleteTextures(1, &tex);
+    checkGLcall("glDeleteTextures");
+
+    LEAVE_GL();
+
+    return size < 16;
+}
+
 static void quirk_arb_constants(struct wined3d_gl_info *gl_info)
 {
     TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL.\n", gl_info->limits.arb_vs_native_constants);
@@ -886,6 +916,11 @@ static void quirk_fbo_tex_update(struct wined3d_gl_info *gl_info)
     gl_info->quirks |= WINED3D_QUIRK_FBO_TEX_UPDATE;
 }
 
+static void quirk_broken_rgba16(struct wined3d_gl_info *gl_info)
+{
+    gl_info->quirks |= WINED3D_QUIRK_BROKEN_RGBA16;
+}
+
 struct driver_quirk
 {
     BOOL (*match)(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
@@ -969,6 +1004,11 @@ static const struct driver_quirk quirk_table[] =
         match_fbo_tex_update,
         quirk_fbo_tex_update,
         "FBO rebind for attachment updates"
+    },
+    {
+        match_broken_rgba16,
+        quirk_broken_rgba16,
+        "True RGBA16 is not available"
     },
 };
 
@@ -3504,8 +3544,16 @@ static BOOL CheckTextureCapability(const struct wined3d_adapter *adapter, const 
             TRACE_(d3d_caps)("[FAILED]\n");
             return FALSE;
 
-            /* Not supported */
         case WINED3DFMT_R16G16B16A16_UNORM:
+            if (gl_info->quirks & WINED3D_QUIRK_BROKEN_RGBA16)
+            {
+                TRACE_(d3d_caps)("[FAILED]\n");
+                return FALSE;
+            }
+            TRACE_(d3d_caps)("[OK]\n");
+            return TRUE;
+
+            /* Not supported */
         case WINED3DFMT_B2G3R3A8_UNORM:
             TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
             return FALSE;
