@@ -266,10 +266,8 @@ IDirect3DSurface8Impl *unsafe_impl_from_IDirect3DSurface8(IDirect3DSurface8 *ifa
  */
 struct IDirect3DVertexBuffer8Impl
 {
-    /* IUnknown fields */
-    const IDirect3DVertexBuffer8Vtbl *lpVtbl;
-    LONG                              ref;
-
+    IDirect3DVertexBuffer8 IDirect3DVertexBuffer8_iface;
+    LONG ref;
     struct wined3d_buffer *wineD3DVertexBuffer;
     IDirect3DDevice8 *parentDevice;
     DWORD fvf;
