@@ -3120,10 +3120,6 @@ clean::
 	\$(RM) fonts server tools $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
 fi
 
-WINE_APPEND_RULE([ALL_MAKEFILE_DEPENDS],
-[uninstall::
-	-rmdir \$(DESTDIR)\$(datadir)/wine \$(DESTDIR)\$(fakedlldir) \$(DESTDIR)\$(dlldir)])
-
 AC_OUTPUT
 
 if test "$no_create" = "yes"

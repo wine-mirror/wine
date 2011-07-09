@@ -217,23 +217,30 @@ $ac_dir: $ac_dir/Makefile dummy
     wine_fn_has_flag install-lib $ac_flags || wine_fn_has_flag install-dev $ac_flags || return
 
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"install:: $ac_dir
+".PHONY: $ac_dir/__install__ $ac_dir/__uninstall__
+$ac_dir/__install__:: $ac_dir
 	@cd $ac_dir && \$(MAKE) install
-uninstall:: $ac_dir/Makefile
-	@cd $ac_dir && \$(MAKE) uninstall"
+$ac_dir/__uninstall__:: $ac_dir/Makefile
+	@cd $ac_dir && \$(MAKE) uninstall
+install:: $ac_dir/__install__
+__uninstall__: $ac_dir/__uninstall__"
 
     if wine_fn_has_flag install-lib $ac_flags
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"install-lib:: $ac_dir
-	@cd $ac_dir && \$(MAKE) install-lib"
+".PHONY: $ac_dir/__install-lib__
+$ac_dir/__install-lib__:: $ac_dir
+	@cd $ac_dir && \$(MAKE) install-lib
+install-lib:: $ac_dir/__install-lib__"
     fi
 
     if wine_fn_has_flag install-dev $ac_flags
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"install-dev:: $ac_dir
-	@cd $ac_dir && \$(MAKE) install-dev"
+".PHONY: $ac_dir/__install-dev
+$ac_dir/__install-dev__:: $ac_dir
+	@cd $ac_dir && \$(MAKE) install-dev
+install-dev:: $ac_dir/__install-dev__"
     fi
 }
 
@@ -269,14 +276,19 @@ wine_fn_config_dll ()
               [test "$ac_enable" != enable_win16 || return 0],
               [wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "all: $ac_dir
-.PHONY: $ac_dir
+.PHONY: $ac_dir $ac_dir/__install__ $ac_dir/__install-lib__ $ac_dir/__uninstall__
 $ac_dir: $ac_dir/Makefile __builddeps__ dummy
 	@cd $ac_dir && \$(MAKE)
-install:: $ac_dir/Makefile __builddeps__ 
+$ac_dir/__install__:: $ac_dir/Makefile __builddeps__ 
 	@cd $ac_dir && \$(MAKE) install
-install-lib:: $ac_dir/Makefile __builddeps__ 
+$ac_dir/__install-lib__:: $ac_dir/Makefile __builddeps__ 
 	@cd $ac_dir && \$(MAKE) install-lib
-uninstall manpages htmlpages sgmlpages xmlpages:: $ac_dir/Makefile
+$ac_dir/__uninstall__:: $ac_dir/Makefile
+	@cd $ac_dir && \$(MAKE) uninstall
+install:: $ac_dir/__install__
+install-lib:: $ac_dir/__install-lib__
+__uninstall__: $ac_dir/__uninstall__
+manpages htmlpages sgmlpages xmlpages:: $ac_dir/Makefile
 	@cd $ac_dir && \$(MAKE) \$[@]"
 
         if test "x$enable_maintainer_mode" = xyes
@@ -304,8 +316,10 @@ $ac_file.def: $ac_dir/$ac_name.spec $ac_dir/Makefile
 	@cd $ac_dir && \$(MAKE) lib$ac_implib.def
 $ac_file.$STATIC_IMPLIBEXT: $ac_dir/Makefile dummy
 	@cd $ac_dir && \$(MAKE) lib$ac_implib.$STATIC_IMPLIBEXT
-install-dev:: $ac_dir/Makefile __builddeps__ 
-	@cd $ac_dir && \$(MAKE) install-dev"
+.PHONY: $ac_dir/__install-dev__
+$ac_dir/__install-dev__:: $ac_dir/Makefile __builddeps__ 
+	@cd $ac_dir && \$(MAKE) install-dev
+install-dev:: $ac_dir/__install-dev__"
         if test "x$CROSSTEST_DISABLE" = x
         then
             wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
@@ -322,8 +336,10 @@ $ac_file.def: $ac_dir/$ac_name.spec $ac_dir/Makefile \$(WINEBUILD)
 	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --def -o \$[@] --export \$(srcdir)/$ac_dir/$ac_name.spec
 $ac_file.a: $ac_dir/$ac_name.spec $ac_dir/Makefile \$(WINEBUILD)
 	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --implib -o \$[@] --export \$(srcdir)/$ac_dir/$ac_name.spec
-install-dev:: $ac_dir/Makefile __builddeps__ 
-	@cd $ac_dir && \$(MAKE) install-dev"
+.PHONY: $ac_dir/__install-dev__
+$ac_dir/__install-dev__:: $ac_dir/Makefile __builddeps__ 
+	@cd $ac_dir && \$(MAKE) install-dev
+install-dev:: $ac_dir/__install-dev__"
         if test "x$CROSSTEST_DISABLE" = x
         then
             wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
@@ -383,16 +399,19 @@ $ac_dir: $ac_dir/Makefile __builddeps__ dummy
 
     wine_fn_has_flag install $ac_flags || return
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"install install-lib:: $ac_dir/Makefile __builddeps__
+".PHONY: $ac_dir/__install__ $ac_dir/__uninstall__
+$ac_dir/__install__:: $ac_dir/Makefile __builddeps__
 	@cd $ac_dir && \$(MAKE) install
-uninstall:: $ac_dir/Makefile
-	@cd $ac_dir && \$(MAKE) uninstall"
+$ac_dir/__uninstall__:: $ac_dir/Makefile
+	@cd $ac_dir && \$(MAKE) uninstall
+install install-lib:: $ac_dir/__install__
+__uninstall__: $ac_dir/__uninstall__"
     if test -n "$DLLEXT" -a "x$enable_tools" != xno && wine_fn_has_flag installbin $ac_flags
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"install install-lib:: tools \$(DESTDIR)\$(bindir)
+"$ac_dir/__install__:: tools \$(DESTDIR)\$(bindir)
 	\$(INSTALL_SCRIPT) tools/wineapploader \$(DESTDIR)\$(bindir)/$ac_name
-uninstall::
+$ac_dir/__uninstall__::
 	\$(RM) \$(DESTDIR)\$(bindir)/$ac_name"
     fi])
 }

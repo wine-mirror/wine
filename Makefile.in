@@ -52,6 +52,12 @@ distclean:: clean
 	$(RM) config.* configure.lineno TAGS tags include/config.h include/stamp-h Makefile Make.tmp
 	$(RM) -r autom4te.cache
 
+# Rules for uninstalling
+
+.PHONY: __uninstall__
+uninstall:: __uninstall__
+	-rmdir $(DESTDIR)$(datadir)/wine $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir)
+
 # Dependencies between directories
 
 # dependencies needed to build any dll or program
