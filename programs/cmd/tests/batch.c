@@ -190,6 +190,8 @@ static void test_output(const char *out_data, DWORD out_size, const char *exp_da
 {
     const char *out_ptr = out_data, *exp_ptr = exp_data, *out_nl, *exp_nl, *err;
     DWORD line = 0;
+    static const char todo_wine_cmd[] = {'@','t','o','d','o','_','w','i','n','e','@'};
+    BOOL is_todo_wine;
 
     while(out_ptr < out_data+out_size && exp_ptr < exp_data+exp_size) {
         line++;
@@ -197,13 +199,22 @@ static void test_output(const char *out_data, DWORD out_size, const char *exp_da
         for(exp_nl = exp_ptr; exp_nl < exp_data+exp_size && *exp_nl != '\r' && *exp_nl != '\n'; exp_nl++);
         for(out_nl = out_ptr; out_nl < out_data+out_size && *out_nl != '\r' && *out_nl != '\n'; out_nl++);
 
+        is_todo_wine = (exp_ptr+sizeof(todo_wine_cmd) <= exp_nl &&
+                        !memcmp(exp_ptr, todo_wine_cmd, sizeof(todo_wine_cmd)));
+        if (is_todo_wine) {
+            exp_ptr += sizeof(todo_wine_cmd);
+            winetest_start_todo("wine");
+        }
+
         err = compare_line(out_ptr, out_nl, exp_ptr, exp_nl);
         if(err == out_nl)
             ok(0, "unexpected end of line %d (got '%.*s', wanted '%.*s')\n",
                line, (int)(out_nl-out_ptr), out_ptr, (int)(exp_nl-exp_ptr), exp_ptr);
-        else if(err)
-            ok(0, "unexpected char 0x%x position %d in line %d (got '%.*s', wanted '%.*s')\n",
-               *err, (int)(err-out_ptr), line, (int)(out_nl-out_ptr), out_ptr, (int)(exp_nl-exp_ptr), exp_ptr);
+        else
+            ok(!err, "unexpected char 0x%x position %d in line %d (got '%.*s', wanted '%.*s')\n",
+               (err ? *err : 0), (err ? (int)(err-out_ptr) : -1), line, (int)(out_nl-out_ptr), out_ptr, (int)(exp_nl-exp_ptr), exp_ptr);
+
+        if(is_todo_wine) winetest_end_todo("wine");
 
         exp_ptr = exp_nl+1;
         out_ptr = out_nl+1;
