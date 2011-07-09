@@ -872,7 +872,7 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 
   /* Argument checking is more lax than VariantCopy()... */
   vt = V_TYPE(pvargSrc);
-  if (V_ISARRAY(pvargSrc) ||
+  if (V_ISARRAY(pvargSrc) || (V_VT(pvargSrc) == (VT_RECORD|VT_BYREF)) ||
      (vt > VT_NULL && vt != (VARTYPE)15 && vt < VT_VOID &&
      !(V_VT(pvargSrc) & (VT_VECTOR|VT_RESERVED))))
   {
