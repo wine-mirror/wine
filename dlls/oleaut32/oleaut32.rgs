@@ -83,7 +83,7 @@ HKCR
         }
         '{DF0B3D60-548F-101B-8E65-08002B2BD119}'
         {
-            ProxyStubClsid32 = s '{00020420-0000-0000-C000-000000000046}'
+            ProxyStubClsid32 = s '{DF0B3D60-548F-101B-8E65-08002B2BD119}'
         }
     }
 }
