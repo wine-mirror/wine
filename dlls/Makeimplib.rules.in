@@ -8,7 +8,6 @@
 
 DLLFLAGS = @DLLFLAGS@
 DEFS     = -D__WINESRC__ $(EXTRADEFS)
-INSTALLDIRS = $(DESTDIR)$(dlldir)
 MAKEDEPFLAGS = -xo -xcross.o
 
 @MAKE_RULES@
@@ -26,13 +25,5 @@ $(MODULE:%=lib%.cross.a): $(CROSSOBJS) Makefile.in
 	$(RM) $@
 	$(CROSSAR) $(ARFLAGS) $@ $(CROSSOBJS)
 	$(CROSSRANLIB) $@
-
-# Rules for installation
-
-install install-dev:: $(MODULE:%=lib%.a) $(DESTDIR)$(dlldir)
-	$(INSTALL_DATA) $(MODULE:%=lib%.a) $(DESTDIR)$(dlldir)/$(MODULE:%=lib%.a)
-
-uninstall::
-	$(RM) $(DESTDIR)$(dlldir)/$(MODULE:%=lib%.a)
 
 # End of global library rules

@@ -26,7 +26,7 @@ EXTRASUBDIRS = \
 	programs
 
 # Destination directories for make install
-INSTALLDIRS = $(DESTDIR)$(bindir)
+INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(dlldir)
 
 all: wine
 	@echo "Wine build complete."

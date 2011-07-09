@@ -249,7 +249,21 @@ wine_fn_config_lib ()
     ac_name=$[1]
     ac_flags=$[2]
     ac_dir=dlls/$ac_name
-    wine_fn_config_makefile $ac_dir enable_$ac_name $ac_flags,install-dev dlls/Makeimplib.rules
+    wine_fn_config_makefile $ac_dir enable_$ac_name "$ac_flags" dlls/Makeimplib.rules
+
+    if wine_fn_has_flag install-dev $ac_flags
+    then :
+    else
+        wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+".PHONY: $ac_dir/__install__ $ac_dir/__uninstall__
+$ac_dir/__install__:: $ac_dir \$(DESTDIR)\$(dlldir)
+	\$(INSTALL_DATA) $ac_dir/lib$ac_name.a \$(DESTDIR)\$(dlldir)/lib$ac_name.a
+$ac_dir/__uninstall__::
+	\$(RM) \$(DESTDIR)\$(dlldir)/lib$ac_name.a
+install install-dev:: $ac_dir/__install__
+__uninstall__: $ac_dir/__uninstall__"
+    fi
+
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS "__builddeps__: $ac_dir"
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS "$ac_dir: tools/widl tools/winebuild tools/winegcc include"
 }
