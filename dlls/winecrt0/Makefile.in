@@ -1,4 +1,4 @@
-MODULE    = winecrt0
+MODULE    = libwinecrt0.a
 
 C_SRCS = \
 	delay_load.c \

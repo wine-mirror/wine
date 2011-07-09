@@ -1,4 +1,4 @@
-MODULE    = strmbase
+MODULE    = libstrmbase.a
 
 C_SRCS = \
 	dllfunc.c \

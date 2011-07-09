@@ -1,4 +1,4 @@
-MODULE    = adsiid
+MODULE    = libadsiid.a
 
 C_SRCS = \
 	adsiid.c
