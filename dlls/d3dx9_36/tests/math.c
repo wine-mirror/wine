@@ -2218,6 +2218,9 @@ static void test_D3DXVec_Array(void)
 
 static void test_D3DXFloat_Array(void)
 {
+    static const float z = 0.0f;
+    float nnan = 0.0f/z;
+    float nan = -nnan;
     unsigned int i;
     void *out = NULL;
     D3DXFLOAT16 half;
@@ -2248,10 +2251,10 @@ static void test_D3DXFloat_Array(void)
         { -65534.0f, 0xfc00, 0xfc00, -65536.0f, -65536.0f },
         { -65535.0f, 0xfc00, 0xfc00, -65535.0f, -65536.0f },
         { -65536.0f, 0xfc00, 0xfc00, -65536.0f, -65536.0f },
-        { INFINITY, 0x7c00, 0x7fff, 65536.0f, 131008.0f },
-        { -INFINITY, 0xffff, 0xffff, -131008.0f, -131008.0f },
-        { NAN, 0x7fff, 0x7fff, 131008.0f, 131008.0f },
-        { -NAN, 0xffff, 0xffff, -131008.0f, -131008.0f },
+        { 1.0f/z, 0x7c00, 0x7fff, 65536.0f, 131008.0f },
+        { -1.0f/z, 0xffff, 0xffff, -131008.0f, -131008.0f },
+        { nan, 0x7fff, 0x7fff, 131008.0f, 131008.0f },
+        { nnan, 0xffff, 0xffff, -131008.0f, -131008.0f },
         { 0.0f, 0x0, 0x0, 0.0f, 0.0f },
         { -0.0f, 0x8000, 0x8000, 0.0f, 0.0f },
         { 2.9809595e-08f, 0x0, 0x0, 0.0f, 0.0f },
