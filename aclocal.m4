@@ -418,13 +418,17 @@ wine_fn_config_program ()
     ac_dir=programs/$ac_name
     ac_enable=$[2]
     ac_flags=$[3]
-    wine_fn_all_dir_rules $ac_dir programs/Makeprog.rules
+    ac_program=$ac_name
+
+    case $ac_name in
+      *.*) ;;
+      *)   ac_program=$ac_program.exe ;;
+    esac
+
+    wine_fn_config_makefile $ac_dir $ac_enable "$ac_flags" programs/Makeprog.rules
 
     AS_VAR_IF([$ac_enable],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"all: $ac_dir
-.PHONY: $ac_dir
-$ac_dir: $ac_dir/Makefile __builddeps__ dummy
-	@cd $ac_dir && \$(MAKE)"
+"$ac_dir: __builddeps__"
 
     if test "x$enable_maintainer_mode" = xyes
     then
@@ -445,19 +449,32 @@ $ac_dir: $ac_dir/Makefile __builddeps__ dummy
     wine_fn_has_flag install $ac_flags || return
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 ".PHONY: $ac_dir/__install__ $ac_dir/__uninstall__
-$ac_dir/__install__:: $ac_dir/Makefile __builddeps__
-	@cd $ac_dir && \$(MAKE) install
-$ac_dir/__uninstall__:: $ac_dir/Makefile
-	@cd $ac_dir && \$(MAKE) uninstall
 install install-lib:: $ac_dir/__install__
 __uninstall__: $ac_dir/__uninstall__"
-    if test -n "$DLLEXT" -a "x$enable_tools" != xno && wine_fn_has_flag installbin $ac_flags
+
+    if test -n "$DLLEXT"
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir/__install__:: $ac_dir \$(DESTDIR)\$(dlldir) \$(DESTDIR)\$(fakedlldir)
+	\$(INSTALL_PROGRAM) $ac_dir/$ac_program$DLLEXT \$(DESTDIR)\$(dlldir)/$ac_program$DLLEXT
+	\$(INSTALL_DATA) $ac_dir/$ac_program.fake \$(DESTDIR)\$(fakedlldir)/$ac_program
+$ac_dir/__uninstall__::
+	\$(RM) \$(DESTDIR)\$(dlldir)/$ac_program$DLLEXT \$(DESTDIR)\$(fakedlldir)/$ac_program"
+
+        if test "x$enable_tools" != xno && wine_fn_has_flag installbin $ac_flags
+        then
+            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "$ac_dir/__install__:: tools \$(DESTDIR)\$(bindir)
 	\$(INSTALL_SCRIPT) tools/wineapploader \$(DESTDIR)\$(bindir)/$ac_name
 $ac_dir/__uninstall__::
 	\$(RM) \$(DESTDIR)\$(bindir)/$ac_name"
+        fi
+    else
+        wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir/__install-lib__:: $ac_dir \$(DESTDIR)\$(dlldir)
+	\$(INSTALL_PROGRAM) $ac_dir/$ac_program \$(DESTDIR)\$(dlldir)/$ac_program
+$ac_dir/__uninstall__::
+	\$(RM) \$(DESTDIR)\$(dlldir)/$ac_program"
     fi])
 }
 
