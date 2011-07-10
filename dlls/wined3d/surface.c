@@ -4245,10 +4245,10 @@ HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_alpha_c
     return WINED3D_OK;
 }
 
-void d3dfmt_p8_init_palette(struct wined3d_surface *surface, BYTE table[256][4], BOOL colorkey)
+void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[256][4], BOOL colorkey)
 {
-    struct wined3d_device *device = surface->resource.device;
-    struct wined3d_palette *pal = surface->palette;
+    const struct wined3d_device *device = surface->resource.device;
+    const struct wined3d_palette *pal = surface->palette;
     BOOL index_in_alpha = FALSE;
     unsigned int i;
 
