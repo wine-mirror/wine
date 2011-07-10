@@ -1240,7 +1240,6 @@ static BOOL elf_load_file_from_path(HANDLE hProcess,
 	ret = elf_load_file(hProcess, fn, load_offset, dyn_addr, elf_info);
 	HeapFree(GetProcessHeap(), 0, fn);
 	if (ret) break;
-	s = (t) ? (t+1) : NULL;
     }
 
     HeapFree(GetProcessHeap(), 0, pathW);
