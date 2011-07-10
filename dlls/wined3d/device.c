@@ -293,10 +293,9 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
                     element->offset, stride, debug_d3dformat(element->format->id), data.buffer_object);
 
             stream_info->elements[idx].format = element->format;
+            stream_info->elements[idx].data = data;
             stream_info->elements[idx].stride = stride;
-            stream_info->elements[idx].data = data.addr;
             stream_info->elements[idx].stream_idx = element->input_slot;
-            stream_info->elements[idx].buffer_object = data.buffer_object;
 
             if (!device->adapter->gl_info.supported[ARB_VERTEX_ARRAY_BGRA]
                     && element->format->id == WINED3DFMT_B8G8R8A8_UNORM)
@@ -324,11 +323,12 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
             buffer = device->stateBlock->state.streams[element->stream_idx].buffer;
             wined3d_buffer_preload(buffer);
 
-            /* If PreLoad dropped the buffer object, update the stream info. */
-            if (buffer->buffer_object != element->buffer_object)
+            /* If the preload dropped the buffer object, update the stream info. */
+            if (buffer->buffer_object != element->data.buffer_object)
             {
-                element->buffer_object = 0;
-                element->data = buffer_get_sysmem(buffer, &device->adapter->gl_info) + (ptrdiff_t)element->data;
+                element->data.buffer_object = 0;
+                element->data.addr = buffer_get_sysmem(buffer, &device->adapter->gl_info)
+                        + (ptrdiff_t)element->data.addr;
             }
 
             if (buffer->query)
@@ -340,11 +340,11 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
 static void stream_info_element_from_strided(const struct wined3d_gl_info *gl_info,
         const struct WineDirect3DStridedData *strided, struct wined3d_stream_info_element *e)
 {
+    e->data.addr = strided->lpData;
+    e->data.buffer_object = 0;
     e->format = wined3d_get_format(gl_info, strided->format);
     e->stride = strided->dwStride;
-    e->data = strided->lpData;
     e->stream_idx = 0;
-    e->buffer_object = 0;
 }
 
 static void device_stream_info_from_strided(const struct wined3d_gl_info *gl_info,
@@ -3287,7 +3287,7 @@ static HRESULT process_vertices_strided(struct wined3d_device *device, DWORD dwD
              ((DestFVF & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZRHW ) ) {
             /* The position first */
             const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_POSITION];
-            const float *p = (const float *)(element->data + i * element->stride);
+            const float *p = (const float *)(element->data.addr + i * element->stride);
             float x, y, z, rhw;
             TRACE("In: ( %06.2f %06.2f %06.2f )\n", p[0], p[1], p[2]);
 
@@ -3401,9 +3401,10 @@ static HRESULT process_vertices_strided(struct wined3d_device *device, DWORD dwD
             dest_ptr += sizeof(DWORD);
             if(dest_conv) dest_conv += sizeof(DWORD);
         }
-        if (DestFVF & WINED3DFVF_NORMAL) {
+        if (DestFVF & WINED3DFVF_NORMAL)
+        {
             const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_NORMAL];
-            const float *normal = (const float *)(element->data + i * element->stride);
+            const float *normal = (const float *)(element->data.addr + i * element->stride);
             /* AFAIK this should go into the lighting information */
             FIXME("Didn't expect the destination to have a normal\n");
             copy_and_next(dest_ptr, normal, 3 * sizeof(float));
@@ -3412,9 +3413,10 @@ static HRESULT process_vertices_strided(struct wined3d_device *device, DWORD dwD
             }
         }
 
-        if (DestFVF & WINED3DFVF_DIFFUSE) {
+        if (DestFVF & WINED3DFVF_DIFFUSE)
+        {
             const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_DIFFUSE];
-            const DWORD *color_d = (const DWORD *)(element->data + i * element->stride);
+            const DWORD *color_d = (const DWORD *)(element->data.addr + i * element->stride);
             if (!(stream_info->use_map & (1 << WINED3D_FFP_DIFFUSE)))
             {
                 static BOOL warned = FALSE;
@@ -3447,7 +3449,7 @@ static HRESULT process_vertices_strided(struct wined3d_device *device, DWORD dwD
         {
             /* What's the color value in the feedback buffer? */
             const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_SPECULAR];
-            const DWORD *color_s = (const DWORD *)(element->data + i * element->stride);
+            const DWORD *color_s = (const DWORD *)(element->data.addr + i * element->stride);
             if (!(stream_info->use_map & (1 << WINED3D_FFP_SPECULAR)))
             {
                 static BOOL warned = FALSE;
@@ -3476,9 +3478,10 @@ static HRESULT process_vertices_strided(struct wined3d_device *device, DWORD dwD
             }
         }
 
-        for (tex_index = 0; tex_index < numTextures; tex_index++) {
+        for (tex_index = 0; tex_index < numTextures; ++tex_index)
+        {
             const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_TEXCOORD0 + tex_index];
-            const float *tex_coord = (const float *)(element->data + i * element->stride);
+            const float *tex_coord = (const float *)(element->data.addr + i * element->stride);
             if (!(stream_info->use_map & (1 << (WINED3D_FFP_TEXCOORD0 + tex_index))))
             {
                 ERR("No source texture, but destination requests one\n");
@@ -3559,18 +3562,18 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
             if (!(stream_info.use_map & (1 << i))) continue;
 
             e = &stream_info.elements[i];
-            if (e->buffer_object)
+            if (e->data.buffer_object)
             {
                 struct wined3d_buffer *vb = device->stateBlock->state.streams[e->stream_idx].buffer;
-                e->buffer_object = 0;
-                e->data = (BYTE *)((ULONG_PTR)e->data + (ULONG_PTR)buffer_get_sysmem(vb, gl_info));
+                e->data.buffer_object = 0;
+                e->data.addr = (BYTE *)((ULONG_PTR)e->data.addr + (ULONG_PTR)buffer_get_sysmem(vb, gl_info));
                 ENTER_GL();
                 GL_EXTCALL(glDeleteBuffersARB(1, &vb->buffer_object));
                 vb->buffer_object = 0;
                 LEAVE_GL();
             }
-            if (e->data)
-                e->data += e->stride * src_start_idx;
+            if (e->data.addr)
+                e->data.addr += e->stride * src_start_idx;
         }
     }
 

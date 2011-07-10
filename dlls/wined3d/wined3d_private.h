@@ -847,9 +847,9 @@ do {                                                                            
 
 /* Trace vector and strided data information */
 #define TRACE_STRIDED(si, name) do { if (si->use_map & (1 << name)) \
-        TRACE( #name "=(data:%p, stride:%d, format:%#x, vbo %d, stream %u)\n", \
-        si->elements[name].data, si->elements[name].stride, si->elements[name].format->id, \
-        si->elements[name].buffer_object, si->elements[name].stream_idx); } while(0)
+        TRACE( #name " = (data {%#x:%p}, stride %d, format %s, stream %u)\n", \
+        si->elements[name].data.buffer_object, si->elements[name].data.addr, si->elements[name].stride, \
+        debug_d3dformat(si->elements[name].format->id), si->elements[name].stream_idx); } while(0)
 
 /* Global variables */
 extern const float identity[16] DECLSPEC_HIDDEN;
@@ -904,10 +904,9 @@ struct wined3d_bo_address
 struct wined3d_stream_info_element
 {
     const struct wined3d_format *format;
+    struct wined3d_bo_address data;
     GLsizei stride;
-    const BYTE *data;
     UINT stream_idx;
-    GLuint buffer_object;
 };
 
 struct wined3d_stream_info

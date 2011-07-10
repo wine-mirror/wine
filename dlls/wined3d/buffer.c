@@ -265,7 +265,7 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
         }
     }
 
-    data = (((DWORD_PTR)attrib->data) + offset) % This->stride;
+    data = (((DWORD_PTR)attrib->data.addr) + offset) % This->stride;
     attrib_size = attrib->format->component_count * attrib->format->component_size;
     for (i = 0; i < attrib_size; ++i)
     {
@@ -294,7 +294,7 @@ static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct win
      * there, on nonexistent attribs the vbo is 0.
      */
     if (!(si->use_map & (1 << attrib_idx))
-            || attrib->buffer_object != This->buffer_object)
+            || attrib->data.buffer_object != This->buffer_object)
         return FALSE;
 
     format = attrib->format->id;
