@@ -190,8 +190,7 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
     {
         const struct wined3d_vertex_declaration_element *element = &declaration->elements[i];
         struct wined3d_buffer *buffer = device->stateBlock->state.streams[element->input_slot].buffer;
-        GLuint buffer_object = 0;
-        const BYTE *data = NULL;
+        struct wined3d_bo_address data;
         BOOL stride_used;
         unsigned int idx;
         DWORD stride;
@@ -201,17 +200,20 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
 
         if (!buffer) continue;
 
+        data.buffer_object = 0;
+        data.addr = NULL;
+
         stride = device->stateBlock->state.streams[element->input_slot].stride;
         if (device->stateBlock->state.user_stream)
         {
             TRACE("Stream %u is UP, %p\n", element->input_slot, buffer);
-            buffer_object = 0;
-            data = (BYTE *)buffer;
+            data.buffer_object = 0;
+            data.addr = (BYTE *)buffer;
         }
         else
         {
             TRACE("Stream %u isn't UP, %p\n", element->input_slot, buffer);
-            data = buffer_get_memory(buffer, &device->adapter->gl_info, &buffer_object);
+            data.addr = buffer_get_memory(buffer, &device->adapter->gl_info, &data.buffer_object);
 
             /* Can't use vbo's if the base vertex index is negative. OpenGL doesn't accept negative offsets
              * (or rather offsets bigger than the vbo, because the pointer is unsigned), so use system memory
@@ -222,9 +224,9 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
             {
                 WARN("load_base_vertex_index is < 0 (%d), not using VBOs.\n",
                         device->stateBlock->state.load_base_vertex_index);
-                buffer_object = 0;
-                data = buffer_get_sysmem(buffer, &device->adapter->gl_info);
-                if ((UINT_PTR)data < -device->stateBlock->state.load_base_vertex_index * stride)
+                data.buffer_object = 0;
+                data.addr = buffer_get_sysmem(buffer, &device->adapter->gl_info);
+                if ((UINT_PTR)data.addr < -device->stateBlock->state.load_base_vertex_index * stride)
                 {
                     FIXME("System memory vertex data load offset is negative!\n");
                 }
@@ -232,7 +234,8 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
 
             if (fixup)
             {
-                if (buffer_object) *fixup = TRUE;
+                if (data.buffer_object)
+                    *fixup = TRUE;
                 else if (*fixup && !use_vshader
                         && (element->usage == WINED3DDECLUSAGE_COLOR
                         || element->usage == WINED3DDECLUSAGE_POSITIONT))
@@ -247,7 +250,7 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
                 }
             }
         }
-        data += element->offset;
+        data.addr += element->offset;
 
         TRACE("offset %u input_slot %u usage_idx %d\n", element->offset, element->input_slot, element->usage_idx);
 
@@ -287,13 +290,13 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
                     "input_slot %u, offset %u, stride %u, format %s, buffer_object %u]\n",
                     use_vshader ? "shader": "fixed function", idx,
                     debug_d3ddeclusage(element->usage), element->usage_idx, element->input_slot,
-                    element->offset, stride, debug_d3dformat(element->format->id), buffer_object);
+                    element->offset, stride, debug_d3dformat(element->format->id), data.buffer_object);
 
             stream_info->elements[idx].format = element->format;
             stream_info->elements[idx].stride = stride;
-            stream_info->elements[idx].data = data;
+            stream_info->elements[idx].data = data.addr;
             stream_info->elements[idx].stream_idx = element->input_slot;
-            stream_info->elements[idx].buffer_object = buffer_object;
+            stream_info->elements[idx].buffer_object = data.buffer_object;
 
             if (!device->adapter->gl_info.supported[ARB_VERTEX_ARRAY_BGRA]
                     && element->format->id == WINED3DFMT_B8G8R8A8_UNORM)
