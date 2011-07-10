@@ -213,7 +213,7 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
         else
         {
             TRACE("Stream %u isn't UP, %p\n", element->input_slot, buffer);
-            data.addr = buffer_get_memory(buffer, &device->adapter->gl_info, &data.buffer_object);
+            buffer_get_memory(buffer, &device->adapter->gl_info, &data);
 
             /* Can't use vbo's if the base vertex index is negative. OpenGL doesn't accept negative offsets
              * (or rather offsets bigger than the vbo, because the pointer is unsigned), so use system memory

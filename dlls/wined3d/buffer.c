@@ -467,10 +467,10 @@ static inline void fixup_transformed_pos(float *p)
 }
 
 /* Context activation is done by the caller. */
-const BYTE *buffer_get_memory(struct wined3d_buffer *buffer,
-        const struct wined3d_gl_info *gl_info, GLuint *buffer_object)
+void buffer_get_memory(struct wined3d_buffer *buffer, const struct wined3d_gl_info *gl_info,
+        struct wined3d_bo_address *data)
 {
-    *buffer_object = buffer->buffer_object;
+    data->buffer_object = buffer->buffer_object;
     if (!buffer->buffer_object)
     {
         if (buffer->flags & WINED3D_BUFFER_CREATEBO)
@@ -479,15 +479,16 @@ const BYTE *buffer_get_memory(struct wined3d_buffer *buffer,
             buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
             if (buffer->buffer_object)
             {
-                *buffer_object = buffer->buffer_object;
-                return NULL;
+                data->buffer_object = buffer->buffer_object;
+                data->addr = NULL;
+                return;
             }
         }
-        return buffer->resource.allocatedMemory;
+        data->addr = buffer->resource.allocatedMemory;
     }
     else
     {
-        return NULL;
+        data->addr = NULL;
     }
 }
 
