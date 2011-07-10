@@ -4453,6 +4453,7 @@ IDirect3DDeviceImpl_7_GetTexture(IDirect3DDevice7 *iface,
 
     *Texture = wined3d_texture_get_parent(wined3d_texture);
     IDirectDrawSurface7_AddRef(*Texture);
+    wined3d_texture_decref(wined3d_texture);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
