@@ -1984,11 +1984,11 @@ void surface_bind(struct wined3d_surface *surface, const struct wined3d_gl_info 
 }
 
 /* This function checks if the primary render target uses the 8bit paletted format. */
-static BOOL primary_render_target_is_p8(struct wined3d_device *device)
+static BOOL primary_render_target_is_p8(const struct wined3d_device *device)
 {
     if (device->fb.render_targets && device->fb.render_targets[0])
     {
-        struct wined3d_surface *render_target = device->fb.render_targets[0];
+        const struct wined3d_surface *render_target = device->fb.render_targets[0];
         if ((render_target->resource.usage & WINED3DUSAGE_RENDERTARGET)
                 && (render_target->resource.format->id == WINED3DFMT_P8_UINT))
             return TRUE;
