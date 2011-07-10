@@ -1475,7 +1475,7 @@ static HRESULT WINAPI GSTOutPin_DecideAllocator(BaseOutputPin *iface, IMemInputP
     GSTOutPin *This = (GSTOutPin *)iface;
     GSTImpl *GSTfilter = (GSTImpl*)This->pin.pin.pinInfo.pFilter;
 
-    pAlloc = NULL;
+    *pAlloc = NULL;
     if (GSTfilter->pInputPin.pAlloc)
         hr = IMemInputPin_NotifyAllocator(pPin, GSTfilter->pInputPin.pAlloc, FALSE);
     else

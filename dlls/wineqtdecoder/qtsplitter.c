@@ -1220,7 +1220,7 @@ static HRESULT WINAPI QTOutPin_DecideAllocator(BaseOutputPin *iface, IMemInputPi
     QTOutPin *This = (QTOutPin *)iface;
     QTSplitter *QTfilter = (QTSplitter*)This->pin.pin.pinInfo.pFilter;
 
-    pAlloc = NULL;
+    *pAlloc = NULL;
     if (QTfilter->pInputPin.pAlloc)
         hr = IMemInputPin_NotifyAllocator(pPin, QTfilter->pInputPin.pAlloc, FALSE);
     else
