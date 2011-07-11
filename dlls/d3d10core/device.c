@@ -133,7 +133,7 @@ static void STDMETHODCALLTYPE d3d10_device_PSSetShader(ID3D10Device *iface,
         ID3D10PixelShader *shader)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
-    struct d3d10_pixel_shader *ps = (struct d3d10_pixel_shader *)shader;
+    struct d3d10_pixel_shader *ps = unsafe_impl_from_ID3D10PixelShader(shader);
 
     TRACE("iface %p, shader %p\n", iface, shader);
 
