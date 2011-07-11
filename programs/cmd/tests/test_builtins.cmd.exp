@@ -102,6 +102,19 @@ r.test not found after delete, good
 del /q * succeeded on file1
 del /q * succeeded on file2.dat
 ------------ Testing del /s --------------
+----------- Testing mkdir -----------
+0
+0
+@todo_wine@1
+@todo_wine@1
+0
+0
+0
+0
+0
+@todo_wine@1
+0
+0
 -----------Testing Errorlevel-----------
 1
 errorlevel just right, good

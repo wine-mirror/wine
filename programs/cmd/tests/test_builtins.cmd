@@ -149,6 +149,50 @@ if exist "file with spaces.dat" del "file with spaces.dat"
 cd ..
 rmdir "foo bar"
 
+echo ----------- Testing mkdir -----------
+call :setError 0
+rem md and mkdir are synonymous
+mkdir foobar
+echo %ErrorLevel%
+rmdir foobar
+md foobar
+echo %ErrorLevel%
+rmdir foobar
+rem Creating an already existing directory/file must fail
+mkdir foobar
+md foobar
+echo %ErrorLevel%
+rmdir foobar
+echo > foobar
+mkdir foobar
+echo %ErrorLevel%
+del foobar
+rem Multi-level path creation
+mkdir foo
+echo %ErrorLevel%
+mkdir foo\bar\baz
+echo %ErrorLevel%
+cd foo
+echo %ErrorLevel%
+cd bar
+echo %ErrorLevel%
+cd baz
+echo %ErrorLevel%
+echo > ..\..\bar2
+mkdir ..\..\..\foo\bar2
+echo %ErrorLevel%
+del ..\..\bar2
+mkdir ..\..\..\foo\bar2
+echo %ErrorLevel%
+rmdir ..\..\..\foo\bar2
+cd ..
+rmdir baz
+cd ..
+rmdir bar
+cd ..
+rmdir foo
+echo %ErrorLevel%
+
 echo -----------Testing Errorlevel-----------
 rem nt 4.0 doesn't really support a way of setting errorlevel, so this is weak
 rem See http://www.robvanderwoude.com/exit.php
