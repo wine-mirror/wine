@@ -2646,7 +2646,6 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
     if (!HLPFILE_Uncompress_Topic(hlpfile)) return FALSE;
     if (!HLPFILE_ReadFont(hlpfile)) return FALSE;
 
-    buf = hlpfile->topic_map[0];
     old_index = -1;
     offs = 0;
     do
