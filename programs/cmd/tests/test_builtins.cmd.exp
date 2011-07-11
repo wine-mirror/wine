@@ -78,6 +78,22 @@ Testing case sensitivity with and without /i option
 if seems to default to case sensitivity
 if /i seems to work
 if /I seems to work
+-----------Testing for -----------
+A
+B
+C
+A
+B
+C
+@todo_wine@X Y
+@todo_wine@A C
+@todo_wine@A D
+@todo_wine@B C
+@todo_wine@B D
+@todo_wine@A C
+@todo_wine@A D
+@todo_wine@B C
+@todo_wine@B D
 -----------Testing del /a-----------
 not-r.test not found after delete, good
 r.test found before delete, good

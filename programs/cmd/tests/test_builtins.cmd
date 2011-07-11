@@ -78,6 +78,29 @@ if /i not foo==FOO echo if /i seems to be broken
 if /I foo==FOO echo if /I seems to work
 if /I not foo==FOO echo if /I seems to be broken
 
+echo -----------Testing for -----------
+for %%i in (A B C) do echo %%i
+for %%i in (A B C) do call :forTestFun1 %%i
+goto :endForTestFun1
+:forTestFun1
+echo %1
+goto :eof
+:endForTestFun1
+for %%i in (X) do (
+    for %%j in (Y) do (
+        echo %%i %%j ))
+for %%i in (A B) do (
+    for %%j in (C D) do (
+        echo %%i %%j ))
+for %%i in (A B) do (
+    for %%j in (C D) do (
+        call :forTestFun2 %%i %%j ))
+goto :endForTestFun2
+:forTestFun2
+echo %1 %2
+goto :eof
+:endForTestFun2
+
 echo -----------Testing del /a-----------
 del /f/q *.test > nul
 echo r > r.test
