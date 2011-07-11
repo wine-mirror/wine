@@ -30,4 +30,18 @@ typedef struct gdi_physdev
     HDC                        hdc;
 } *PHYSDEV;
 
+struct bitblt_coords
+{
+    int  log_x;     /* original position and size, in logical coords */
+    int  log_y;
+    int  log_width;
+    int  log_height;
+    int  x;         /* mapped position and size, in device coords */
+    int  y;
+    int  width;
+    int  height;
+    RECT visrect;   /* rectangle clipped to the visible part, in device coords */
+    DWORD layout;   /* DC layout */
+};
+
 #endif /* __WINE_WINE_GDI_DRIVER_H */

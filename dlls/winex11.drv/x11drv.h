@@ -173,17 +173,6 @@ static inline X11DRV_PDEVICE *get_x11drv_dev( PHYSDEV dev )
     return (X11DRV_PDEVICE *)dev;
 }
 
-struct bitblt_coords
-{
-    int  x;      /* original position and width */
-    int  y;
-    int  width;
-    int  height;
-    RECT visrect;   /* rectangle clipped to the visible part */
-    DWORD layout;   /* DC layout */
-};
-
-
 extern X_PHYSBITMAP BITMAP_stock_phys_bitmap DECLSPEC_HIDDEN;  /* phys bitmap for the default stock bitmap */
 
 /* Retrieve the GC used for bitmap operations */

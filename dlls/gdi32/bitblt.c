@@ -40,6 +40,130 @@ static inline BOOL rop_uses_src( DWORD rop )
     return ((rop >> 2) & 0x330000) != (rop & 0x330000);
 }
 
+static inline void swap_ints( int *i, int *j )
+{
+    int tmp = *i;
+    *i = *j;
+    *j = tmp;
+}
+
+static inline BOOL intersect_rect( RECT *dst, const RECT *src1, const RECT *src2 )
+{
+    dst->left   = max( src1->left, src2->left );
+    dst->top    = max( src1->top, src2->top );
+    dst->right  = min( src1->right, src2->right );
+    dst->bottom = min( src1->bottom, src2->bottom );
+    return (dst->left < dst->right && dst->top < dst->bottom);
+}
+
+static inline void offset_rect( RECT *rect, int offset_x, int offset_y )
+{
+    rect->left   += offset_x;
+    rect->top    += offset_y;
+    rect->right  += offset_x;
+    rect->bottom += offset_y;
+}
+
+static void get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
+                                DC *dc_src, struct bitblt_coords *src )
+{
+    RECT rect, clip;
+
+    /* get the destination visible rectangle */
+
+    rect.left   = dst->log_x;
+    rect.top    = dst->log_y;
+    rect.right  = dst->log_x + dst->log_width;
+    rect.bottom = dst->log_y + dst->log_height;
+    LPtoDP( dc_dst->hSelf, (POINT *)&rect, 2 );
+    dst->x      = rect.left;
+    dst->y      = rect.top;
+    dst->width  = rect.right - rect.left;
+    dst->height = rect.bottom - rect.top;
+    if (dst->layout & LAYOUT_RTL && dst->layout & LAYOUT_BITMAPORIENTATIONPRESERVED)
+    {
+        swap_ints( &rect.left, &rect.right );
+        dst->x = rect.left;
+        dst->width = rect.right - rect.left;
+    }
+    if (rect.left > rect.right) { swap_ints( &rect.left, &rect.right ); rect.left++; rect.right++; }
+    if (rect.top > rect.bottom) { swap_ints( &rect.top, &rect.bottom ); rect.top++; rect.bottom++; }
+
+    get_clip_box( dc_dst, &clip );
+    intersect_rect( &dst->visrect, &rect, &clip );
+
+    /* get the source visible rectangle */
+
+    if (!src) return;
+
+    rect.left   = src->log_x;
+    rect.top    = src->log_y;
+    rect.right  = src->log_x + src->log_width;
+    rect.bottom = src->log_y + src->log_height;
+    LPtoDP( dc_src->hSelf, (POINT *)&rect, 2 );
+    src->x      = rect.left;
+    src->y      = rect.top;
+    src->width  = rect.right - rect.left;
+    src->height = rect.bottom - rect.top;
+    if (src->layout & LAYOUT_RTL && src->layout & LAYOUT_BITMAPORIENTATIONPRESERVED)
+    {
+        swap_ints( &rect.left, &rect.right );
+        src->x = rect.left;
+        src->width = rect.right - rect.left;
+    }
+    if (rect.left > rect.right) { swap_ints( &rect.left, &rect.right ); rect.left++; rect.right++; }
+    if (rect.top > rect.bottom) { swap_ints( &rect.top, &rect.bottom ); rect.top++; rect.bottom++; }
+
+    /* source is not clipped */
+    if (dc_src->header.type == OBJ_MEMDC)
+        intersect_rect( &src->visrect, &rect, &dc_src->vis_rect );
+    else
+        src->visrect = rect;  /* FIXME: clip to device size */
+
+    /* intersect the rectangles */
+
+    if ((src->width == dst->width) && (src->height == dst->height)) /* no stretching */
+    {
+        offset_rect( &src->visrect, dst->x - src->x, dst->y - src->y );
+        intersect_rect( &rect, &src->visrect, &dst->visrect );
+        src->visrect = dst->visrect = rect;
+        offset_rect( &src->visrect, src->x - dst->x, src->y - dst->y );
+    }
+    else  /* stretching */
+    {
+        /* map source rectangle into destination coordinates */
+        rect.left   = dst->x + (src->visrect.left - src->x)*dst->width/src->width;
+        rect.top    = dst->y + (src->visrect.top - src->y)*dst->height/src->height;
+        rect.right  = dst->x + (src->visrect.right - src->x)*dst->width/src->width;
+        rect.bottom = dst->y + (src->visrect.bottom - src->y)*dst->height/src->height;
+        if (rect.left > rect.right) swap_ints( &rect.left, &rect.right );
+        if (rect.top > rect.bottom) swap_ints( &rect.top, &rect.bottom );
+
+        /* avoid rounding errors */
+        rect.left--;
+        rect.top--;
+        rect.right++;
+        rect.bottom++;
+        if (!intersect_rect( &dst->visrect, &rect, &dst->visrect )) return;
+
+        /* map destination rectangle back to source coordinates */
+        rect = dst->visrect;
+        rect.left   = src->x + (dst->visrect.left - dst->x)*src->width/dst->width;
+        rect.top    = src->y + (dst->visrect.top - dst->y)*src->height/dst->height;
+        rect.right  = src->x + (dst->visrect.right - dst->x)*src->width/dst->width;
+        rect.bottom = src->y + (dst->visrect.bottom - dst->y)*src->height/dst->height;
+        if (rect.left > rect.right) swap_ints( &rect.left, &rect.right );
+        if (rect.top > rect.bottom) swap_ints( &rect.top, &rect.bottom );
+
+        /* avoid rounding errors */
+        rect.left--;
+        rect.top--;
+        rect.right++;
+        rect.bottom++;
+        intersect_rect( &src->visrect, &rect, &src->visrect );
+    }
+}
+
 /* nulldrv fallback implementation using StretchDIBits */
 BOOL CDECL nulldrv_StretchBlt( PHYSDEV dst_dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
                                PHYSDEV src_dev, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
@@ -149,10 +273,30 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst, INT widthDst, INT height
 
     if ((dcSrc = get_dc_ptr( hdcSrc )))
     {
+        struct bitblt_coords src, dst;
         PHYSDEV src_dev = GET_DC_PHYSDEV( dcSrc, pStretchBlt );
         PHYSDEV dst_dev = GET_DC_PHYSDEV( dcDst, pStretchBlt );
+
         update_dc( dcSrc );
         update_dc( dcDst );
+
+        src.log_x      = xSrc;
+        src.log_y      = ySrc;
+        src.log_width  = widthSrc;
+        src.log_height = heightSrc;
+        src.layout     = dcSrc->layout;
+        dst.log_x      = xDst;
+        dst.log_y      = yDst;
+        dst.log_width  = widthDst;
+        dst.log_height = heightDst;
+        dst.layout     = dcDst->layout;
+        if (rop & NOMIRRORBITMAP)
+        {
+            src.layout |= LAYOUT_BITMAPORIENTATIONPRESERVED;
+            dst.layout |= LAYOUT_BITMAPORIENTATIONPRESERVED;
+            rop &= ~NOMIRRORBITMAP;
+        }
+        get_vis_rectangles( dcDst, &dst, dcSrc, &src );
         ret = dst_dev->funcs->pStretchBlt( dst_dev, xDst, yDst, widthDst, heightDst,
                                            src_dev, xSrc, ySrc, widthSrc, heightSrc, rop );
         release_dc_ptr( dcSrc );
