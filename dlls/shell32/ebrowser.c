@@ -743,6 +743,11 @@ static LRESULT main_on_wm_size(ExplorerBrowserImpl *This)
     return TRUE;
 }
 
+static LRESULT main_on_cwm_getishellbrowser(ExplorerBrowserImpl *This)
+{
+    return (LRESULT)&This->IShellBrowser_iface;
+}
+
 static LRESULT CALLBACK main_wndproc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 {
     ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
@@ -751,6 +756,7 @@ static LRESULT CALLBACK main_wndproc(HWND hWnd, UINT uMessage, WPARAM wParam, LP
     {
     case WM_CREATE:           return main_on_wm_create(hWnd, (CREATESTRUCTW*)lParam);
     case WM_SIZE:             return main_on_wm_size(This);
+    case CWM_GETISHELLBROWSER: return main_on_cwm_getishellbrowser(This);
     default:                  return DefWindowProcW(hWnd, uMessage, wParam, lParam);
     }
 
