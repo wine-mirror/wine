@@ -728,13 +728,28 @@ static LRESULT ShellView_OnCreate(IShellViewImpl *This)
     hr = IShellFolder_QueryInterface(This->pSFParent, &IID_IPersistFolder2, (LPVOID*)&ppf2);
     if (hr == S_OK)
     {
+        LPITEMIDLIST raw_pidl;
         SHChangeNotifyEntry ntreg;
 
-        hr = IPersistFolder2_GetCurFolder(ppf2, (LPITEMIDLIST*)&ntreg.pidl);
-        if (hr == S_OK)
+        hr = IPersistFolder2_GetCurFolder(ppf2, (LPITEMIDLIST*)&raw_pidl);
+        if(SUCCEEDED(hr))
         {
+            LPITEMIDLIST computer_pidl;
+            SHGetFolderLocation(NULL,CSIDL_DRIVES,NULL,0,&computer_pidl);
+            if(ILIsParent(computer_pidl,raw_pidl,FALSE))
+            {
+                /* Normalize the pidl to unixfs to workaround an issue with
+                 * sending notifications on dos paths
+                 */
+                WCHAR path[MAX_PATH];
+                SHGetPathFromIDListW(raw_pidl,path);
+                SHParseDisplayName(path,NULL,(LPITEMIDLIST*)&ntreg.pidl,0,NULL);
+                SHFree(raw_pidl);
+            }
+            else
+                ntreg.pidl = raw_pidl;
             ntreg.fRecursive = TRUE;
-            This->hNotify = SHChangeNotifyRegister(This->hWnd, SHCNF_IDLIST, SHCNE_ALLEVENTS,
+            This->hNotify = SHChangeNotifyRegister(This->hWnd, SHCNRF_InterruptLevel, SHCNE_ALLEVENTS,
                                                    SHV_CHANGE_NOTIFY, 1, &ntreg);
             SHFree((LPITEMIDLIST)ntreg.pidl);
         }
