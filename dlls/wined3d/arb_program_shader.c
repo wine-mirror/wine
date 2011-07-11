@@ -5960,6 +5960,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, str
     BOOL tex_read[MAX_TEXTURES] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
     BOOL bump_used[MAX_TEXTURES] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
     BOOL luminance_used[MAX_TEXTURES] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
+    UINT lowest_disabled_stage;
     const char *textype;
     const char *instr, *sat;
     char colorcor_dst[8];
@@ -6018,6 +6019,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, str
             tfactor_used = TRUE;
         }
     }
+    lowest_disabled_stage = stage;
 
     /* Shader header */
     if (!shader_buffer_init(&buffer))
@@ -6063,7 +6065,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, str
                        srgb_sub_high, 0.0, 0.0, 0.0);
     }
 
-    if (ffp_clip_emul(&stateblock->state) && settings->emul_clipplanes)
+    if (lowest_disabled_stage < 7 && settings->emul_clipplanes)
         shader_addline(&buffer, "KIL fragment.texcoord[7];\n");
 
     /* Generate texture sampling instructions) */
