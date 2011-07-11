@@ -952,7 +952,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePixelShader(ID3D10Device *if
     }
 
     TRACE("Created pixel shader %p.\n", object);
-    *shader = (ID3D10PixelShader *)object;
+    *shader = &object->ID3D10PixelShader_iface;
 
     return S_OK;
 }

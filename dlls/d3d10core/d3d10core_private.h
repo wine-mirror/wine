@@ -194,7 +194,7 @@ HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader, struct 
 /* ID3D10PixelShader */
 struct d3d10_pixel_shader
 {
-    const struct ID3D10PixelShaderVtbl *vtbl;
+    ID3D10PixelShader ID3D10PixelShader_iface;
     LONG refcount;
 
     struct wined3d_shader *wined3d_shader;

@@ -421,7 +421,7 @@ HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader, struct 
 
 static inline struct d3d10_pixel_shader *impl_from_ID3D10PixelShader(ID3D10PixelShader *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d10_pixel_shader, vtbl);
+    return CONTAINING_RECORD(iface, struct d3d10_pixel_shader, ID3D10PixelShader_iface);
 }
 
 /* IUnknown methods */
@@ -448,7 +448,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_pixel_shader_QueryInterface(ID3D10PixelSh
 
 static ULONG STDMETHODCALLTYPE d3d10_pixel_shader_AddRef(ID3D10PixelShader *iface)
 {
-    struct d3d10_pixel_shader *This = (struct d3d10_pixel_shader *)iface;
+    struct d3d10_pixel_shader *This = impl_from_ID3D10PixelShader(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -461,7 +461,7 @@ static ULONG STDMETHODCALLTYPE d3d10_pixel_shader_AddRef(ID3D10PixelShader *ifac
 
 static ULONG STDMETHODCALLTYPE d3d10_pixel_shader_Release(ID3D10PixelShader *iface)
 {
-    struct d3d10_pixel_shader *This = (struct d3d10_pixel_shader *)iface;
+    struct d3d10_pixel_shader *This = impl_from_ID3D10PixelShader(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -536,7 +536,7 @@ HRESULT d3d10_pixel_shader_init(struct d3d10_pixel_shader *shader, struct d3d10_
     struct d3d10_shader_info shader_info;
     HRESULT hr;
 
-    shader->vtbl = &d3d10_pixel_shader_vtbl;
+    shader->ID3D10PixelShader_iface.lpVtbl = &d3d10_pixel_shader_vtbl;
     shader->refcount = 1;
 
     shader_info.output_signature = &shader->output_signature;
