@@ -90,7 +90,7 @@ static void test_create_line(IDirect3DDevice9* device)
 
     D3DXMatrixIdentity(&world);
     D3DXMatrixIdentity(&identity);
-    world._11 = r11; world._12 = r12; world._13 = r13; world._14 = r14;
+    S(U(world))._11 = r11; S(U(world))._12 = r12; S(U(world))._13 = r13; S(U(world))._14 = r14;
 
     hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, &world);
     ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
