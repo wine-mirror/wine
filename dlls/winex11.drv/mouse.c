@@ -305,6 +305,7 @@ static void enable_xinput2(void)
     mask.mask_len = sizeof(mask_bits);
     memset( mask_bits, 0, sizeof(mask_bits) );
     XISetMask( mask_bits, XI_RawMotion );
+    XISetMask( mask_bits, XI_ButtonPress );
 
     for (i = 0; i < count; ++i)
     {
