@@ -1614,27 +1614,47 @@ static void free_ximage_bits( struct gdi_image_bits *bits )
 }
 
 /* store the palette or color mask data in the bitmap info structure */
-static void set_color_info( const ColorShifts *color_shifts, BITMAPINFO *info )
+static void set_color_info( PHYSDEV dev, const ColorShifts *color_shifts, BITMAPINFO *info )
 {
     DWORD *colors = (DWORD *)((char *)info + info->bmiHeader.biSize);
 
+    info->bmiHeader.biCompression = BI_RGB;
+    info->bmiHeader.biClrUsed = 0;
+
     switch (info->bmiHeader.biBitCount)
     {
-    case 1:
     case 4:
     case 8:
-        info->bmiHeader.biCompression = BI_RGB;
-        /* FIXME: set color palette */
+    {
+        RGBQUAD *rgb = (RGBQUAD *)colors;
+        PALETTEENTRY palette[256];
+        UINT i, count;
+
+        info->bmiHeader.biClrUsed = 1 << info->bmiHeader.biBitCount;
+        count = X11DRV_GetSystemPaletteEntries( dev, 0, info->bmiHeader.biClrUsed, palette );
+        for (i = 0; i < count; i++)
+        {
+            rgb[i].rgbRed   = palette[i].peRed;
+            rgb[i].rgbGreen = palette[i].peGreen;
+            rgb[i].rgbBlue  = palette[i].peBlue;
+            rgb[i].rgbReserved = 0;
+        }
+        memset( &rgb[count], 0, (info->bmiHeader.biClrUsed - count) * sizeof(*rgb) );
         break;
+    }
     case 16:
-    case 32:
-        info->bmiHeader.biCompression = BI_BITFIELDS;
         colors[0] = color_shifts->logicalRed.max << color_shifts->logicalRed.shift;
         colors[1] = color_shifts->logicalGreen.max << color_shifts->logicalGreen.shift;
         colors[2] = color_shifts->logicalBlue.max << color_shifts->logicalBlue.shift;
+        if (colors[0] != 0x7c00 || colors[1] != 0x03e0 || colors[2] != 0x001f)
+            info->bmiHeader.biCompression = BI_BITFIELDS;
         break;
-    case 24:
-        info->bmiHeader.biCompression = BI_RGB;
+    case 32:
+        colors[0] = color_shifts->logicalRed.max << color_shifts->logicalRed.shift;
+        colors[1] = color_shifts->logicalGreen.max << color_shifts->logicalGreen.shift;
+        colors[2] = color_shifts->logicalBlue.max << color_shifts->logicalBlue.shift;
+        if (colors[0] != 0xff0000 || colors[1] != 0x00ff00 || colors[2] != 0x0000ff)
+            info->bmiHeader.biCompression = BI_BITFIELDS;
         break;
     }
 }
@@ -1931,7 +1951,7 @@ update_format:
     info->bmiHeader.biPlanes   = 1;
     info->bmiHeader.biBitCount = format->bits_per_pixel;
     if (info->bmiHeader.biHeight > 0) info->bmiHeader.biHeight = -info->bmiHeader.biHeight;
-    set_color_info( physdev->color_shifts, info );
+    set_color_info( dev, physdev->color_shifts, info );
     return ERROR_BAD_FORMAT;
 }
 
@@ -2035,9 +2055,8 @@ DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
     info->bmiHeader.biSizeImage     = height * image->bytes_per_line;
     info->bmiHeader.biXPelsPerMeter = 0;
     info->bmiHeader.biYPelsPerMeter = 0;
-    info->bmiHeader.biClrUsed       = 0;
     info->bmiHeader.biClrImportant  = 0;
-    set_color_info( color_shifts, info );
+    set_color_info( dev, color_shifts, info );
 
     src_bits.ptr     = image->data;
     src_bits.is_copy = TRUE;
