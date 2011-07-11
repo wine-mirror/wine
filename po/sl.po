@@ -9598,7 +9598,8 @@ msgstr "Doda novo več-nizno vrednost"
 msgid "Exports selected branch of the registry to a text file"
 msgstr "Izvozi izbrano vejo registra v besedilno datoteko"
 
-#: start.rc:45
+#: start.rc:46
+#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9615,6 +9616,7 @@ msgid ""
 "/Unix        Use a Unix filename and start the file like windows explorer.\n"
 "/ProgIDOpen  Open a document using the following progID.\n"
 "/L           Show end-user license.\n"
+"/?           Display this help and exit.\n"
 "\n"
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n"
@@ -9642,7 +9644,7 @@ msgstr ""
 "To je prost program, ki ga lahko razširjate pod določenimi pogoji.\n"
 "Za podrobnosti zaženite 'start /L'.\n"
 
-#: start.rc:63
+#: start.rc:64
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -9684,7 +9686,7 @@ msgstr ""
 "59 Temple Place - Suite 330, Boston, MA 02111-1307, USA in zahtevajte "
 "kopijo.\n"
 
-#: start.rc:65
+#: start.rc:66
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
@@ -9694,7 +9696,7 @@ msgstr ""
 "program.\n"
 "Ukaz ShellExecuteEx ni uspel"
 
-#: start.rc:67
+#: start.rc:68
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr "Navedenega Unix imena datoteke ni mogoče prevesti v DOS ime datoteke."
 

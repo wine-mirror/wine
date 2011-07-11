@@ -9827,7 +9827,8 @@ msgstr "Fügt eine neue mehrteilige Zeichenfolge hinzu"
 msgid "Exports selected branch of the registry to a text file"
 msgstr "Exportiert den ausgewählten Zweig der Registry in eine Textdatei"
 
-#: start.rc:45
+#: start.rc:46
+#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9844,6 +9845,7 @@ msgid ""
 "/Unix        Use a Unix filename and start the file like windows explorer.\n"
 "/ProgIDOpen  Open a document using the following progID.\n"
 "/L           Show end-user license.\n"
+"/?           Display this help and exit.\n"
 "\n"
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n"
@@ -9871,7 +9873,7 @@ msgstr ""
 "Dies ist freie Software, und du bist willkommen, es unter bestimmten\n"
 "Bedingungen weiter zu verbreiten; führe 'start /L' für mehr Details aus.\n"
 
-#: start.rc:63
+#: start.rc:64
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -9907,7 +9909,7 @@ msgstr ""
 "\n"
 "Schau in die Datei COPYING.LIB für Lizenzinformationen.\n"
 
-#: start.rc:65
+#: start.rc:66
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
@@ -9917,7 +9919,7 @@ msgstr ""
 "der angegebenen Datei verknüpft.\n"
 "ShellExecuteEx gescheitert"
 
-#: start.rc:67
+#: start.rc:68
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr ""
 "Der angegebene Unix Dateiname konnte nicht in einen DOS Dateinamen "

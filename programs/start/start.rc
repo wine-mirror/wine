@@ -37,6 +37,7 @@ Options:\n\
 /Unix        Use a Unix filename and start the file like windows explorer.\n\
 /ProgIDOpen  Open a document using the following progID.\n\
 /L           Show end-user license.\n\
+/?           Display this help and exit.\n\
 \n\
 start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n\
 Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n\

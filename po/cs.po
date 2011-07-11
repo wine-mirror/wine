@@ -9829,7 +9829,8 @@ msgstr "Přidá novou řetězcovou položku"
 msgid "Exports selected branch of the registry to a text file"
 msgstr "Exportuje celý registr nebo jeho část do textového souboru"
 
-#: start.rc:45
+#: start.rc:46
+#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9846,6 +9847,7 @@ msgid ""
 "/Unix        Use a Unix filename and start the file like windows explorer.\n"
 "/ProgIDOpen  Open a document using the following progID.\n"
 "/L           Show end-user license.\n"
+"/?           Display this help and exit.\n"
 "\n"
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n"
@@ -9871,7 +9873,7 @@ msgstr ""
 "This is free software, and you are welcome to redistribute it\n"
 "under certain conditions; run 'start /L' for details.\n"
 
-#: start.rc:63
+#: start.rc:64
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -9907,7 +9909,7 @@ msgstr ""
 "\n"
 "Přečtěte si soubor COPYING.LIB pro získání informací o licenci.\n"
 
-#: start.rc:65
+#: start.rc:66
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
@@ -9917,7 +9919,7 @@ msgstr ""
 "souborem.\n"
 "ShellExecuteEx selhal"
 
-#: start.rc:67
+#: start.rc:68
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr "Could not translate the specified Unix filename to a DOS filename."
 

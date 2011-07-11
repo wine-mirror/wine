@@ -9545,7 +9545,8 @@ msgstr "新しい複数行文字列値を追加"
 msgid "Exports selected branch of the registry to a text file"
 msgstr "選択したレジストリ キー以下をテキストファイルに出力"
 
-#: start.rc:45
+#: start.rc:46
+#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9562,6 +9563,7 @@ msgid ""
 "/Unix        Use a Unix filename and start the file like windows explorer.\n"
 "/ProgIDOpen  Open a document using the following progID.\n"
 "/L           Show end-user license.\n"
+"/?           Display this help and exit.\n"
 "\n"
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n"
@@ -9590,7 +9592,7 @@ msgstr ""
 "これはフリー ソフトウェアです。一定の条件下で自由に再配布できます。\n"
 "条件の詳細は 'start /L' を起動してください。\n"
 
-#: start.rc:63
+#: start.rc:64
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -9626,7 +9628,7 @@ msgstr ""
 "\n"
 "ライセンスの内容については COPYING.LIB ファイルを参照してください。\n"
 
-#: start.rc:65
+#: start.rc:66
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
@@ -9636,7 +9638,7 @@ msgstr ""
 "ンが関連付けられていません。\n"
 "ShellExecuteEx が失敗しました。"
 
-#: start.rc:67
+#: start.rc:68
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr "指定された Unix ファイル名を DOS ファイル名に変換できませんでした。"
 

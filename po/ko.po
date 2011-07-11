@@ -9514,7 +9514,8 @@ msgstr "새 다중 문자열 값 더하기"
 msgid "Exports selected branch of the registry to a text file"
 msgstr "레지스트리의 선택된 부분을 텍스트 파일로 내보내기"
 
-#: start.rc:45
+#: start.rc:46
+#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9531,6 +9532,7 @@ msgid ""
 "/Unix        Use a Unix filename and start the file like windows explorer.\n"
 "/ProgIDOpen  Open a document using the following progID.\n"
 "/L           Show end-user license.\n"
+"/?           Display this help and exit.\n"
 "\n"
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n"
@@ -9557,7 +9559,7 @@ msgstr ""
 "This is free software, and you are welcome to redistribute it\n"
 "under certain conditions; run 'start /L' for details.\n"
 
-#: start.rc:63
+#: start.rc:64
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -9593,7 +9595,7 @@ msgstr ""
 "\n"
 "See the COPYING.LIB file for license information.\n"
 
-#: start.rc:65
+#: start.rc:66
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
@@ -9602,7 +9604,7 @@ msgstr ""
 "프로그램을 실행할 수 없거나, 지정된 파일에 연결된 프로그램이 없습니다.\n"
 "ShellExecuteEx 실패"
 
-#: start.rc:67
+#: start.rc:68
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr "지정된 Unix 파일명을 DOS 파일명으로 바꿀 수 없습니다."
 

@@ -260,6 +260,9 @@ int wmain (int argc, WCHAR *argv[])
 			case 'W':
 				sei.fMask |= SEE_MASK_NOCLOSEPROCESS;
 				break;
+			case '?':
+				usage();
+				break;
 			default:
 				WINE_ERR("Option '%s' not recognized\n", wine_dbgstr_w( argv[i]+ci-1));
 				usage();

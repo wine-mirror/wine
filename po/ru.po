@@ -9559,7 +9559,8 @@ msgstr "Добавляет новое многостроковое значен�
 msgid "Exports selected branch of the registry to a text file"
 msgstr "Экспортирует выделенную ветку реестра в текстовый файл"
 
-#: start.rc:45
+#: start.rc:46
+#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9576,6 +9577,7 @@ msgid ""
 "/Unix        Use a Unix filename and start the file like windows explorer.\n"
 "/ProgIDOpen  Open a document using the following progID.\n"
 "/L           Show end-user license.\n"
+"/?           Display this help and exit.\n"
 "\n"
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n"
@@ -9604,7 +9606,7 @@ msgstr ""
 "Это свободная программа, и вы можете её распространять на определённых\n"
 "условиях. Подробности будут сообщены при запуске с параметром /L.\n"
 
-#: start.rc:63
+#: start.rc:64
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -9640,7 +9642,7 @@ msgstr ""
 "\n"
 "См. информацию о лицензии в файле COPYING.LIB.\n"
 
-#: start.rc:65
+#: start.rc:66
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
@@ -9650,7 +9652,7 @@ msgstr ""
 "документа приложений.\n"
 "Вызов ShellExecuteEx провалился."
 
-#: start.rc:67
+#: start.rc:68
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr "Невозможно перевести имя программы UNIX в имя DOS."
 

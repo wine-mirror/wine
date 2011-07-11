@@ -9722,7 +9722,8 @@ msgstr ""
 "Exporteert de geselecteerde subsleutel van het register naar een tekst "
 "bestand"
 
-#: start.rc:45
+#: start.rc:46
+#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9739,6 +9740,7 @@ msgid ""
 "/Unix        Use a Unix filename and start the file like windows explorer.\n"
 "/ProgIDOpen  Open a document using the following progID.\n"
 "/L           Show end-user license.\n"
+"/?           Display this help and exit.\n"
 "\n"
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n"
@@ -9769,7 +9771,7 @@ msgstr ""
 "Dit is vrije software, en u wordt uitgenodigd om het verder te verspreiden\n"
 "onder bepaalde voorwaarden; draai 'start /L' voor details.\n"
 
-#: start.rc:63
+#: start.rc:64
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -9805,7 +9807,7 @@ msgstr ""
 "\n"
 "Bekijk het COPYING.LIB bestand voor informatie over de licentie.\n"
 
-#: start.rc:65
+#: start.rc:66
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
@@ -9815,7 +9817,7 @@ msgstr ""
 "opgegeven bestand.\n"
 "ShellExecuteEx is mislukt"
 
-#: start.rc:67
+#: start.rc:68
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr ""
 "Kon de opgegeven Unix bestandsnaam niet omzetten naar een DOS bestandsnaam."
