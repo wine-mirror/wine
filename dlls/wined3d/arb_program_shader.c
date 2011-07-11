@@ -5952,9 +5952,8 @@ static void gen_ffp_instr(struct wined3d_shader_buffer *buffer, unsigned int sta
     }
 }
 
-static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, struct wined3d_stateblock *stateblock)
+static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, const struct wined3d_gl_info *gl_info)
 {
-    const struct wined3d_gl_info *gl_info = &stateblock->device->adapter->gl_info;
     unsigned int stage;
     struct wined3d_shader_buffer buffer;
     BOOL tex_read[MAX_TEXTURES] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
@@ -6280,7 +6279,7 @@ static void fragment_prog_arbfp(DWORD state_id, struct wined3d_stateblock *state
             }
 
             memcpy(&new_desc->parent.settings, &settings, sizeof(settings));
-            new_desc->shader = gen_arbfp_ffp_shader(&settings, stateblock);
+            new_desc->shader = gen_arbfp_ffp_shader(&settings, gl_info);
             add_ffp_frag_shader(&priv->fragment_shaders, &new_desc->parent);
             TRACE("Allocated fixed function replacement shader descriptor %p\n", new_desc);
             desc = new_desc;
