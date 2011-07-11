@@ -128,6 +128,7 @@ static const IID * const doc_node_iids[] = {
     &IID_IInternetHostSecurityManager,
     &IID_IOleContainer,
     &IID_IObjectSafety,
+    &IID_IProvideClassInfo,
     NULL
 };
 
@@ -142,6 +143,7 @@ static const IID * const doc_obj_iids[] = {
     &IID_ICustomDoc,
     &IID_IOleContainer,
     &IID_IObjectSafety,
+    &IID_IProvideClassInfo,
     NULL
 };
 

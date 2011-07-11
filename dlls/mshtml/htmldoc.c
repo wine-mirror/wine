@@ -1770,6 +1770,46 @@ static const IDispatchExVtbl DocDispatchExVtbl = {
     DocDispatchEx_GetNameSpaceParent
 };
 
+static inline HTMLDocument *impl_from_IProvideClassInfo(IProvideClassInfo *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IProvideClassInfo_iface);
+}
+
+static HRESULT WINAPI ProvideClassInfo_QueryInterface(IProvideClassInfo *iface,
+        REFIID riid, void **ppv)
+{
+    HTMLDocument *This = impl_from_IProvideClassInfo(iface);
+    return htmldoc_query_interface(This, riid, ppv);
+}
+
+static ULONG WINAPI ProvideClassInfo_AddRef(IProvideClassInfo *iface)
+{
+    HTMLDocument *This = impl_from_IProvideClassInfo(iface);
+    return htmldoc_addref(This);
+}
+
+static ULONG WINAPI ProvideClassInfo_Release(IProvideClassInfo *iface)
+{
+    HTMLDocument *This = impl_from_IProvideClassInfo(iface);
+    return htmldoc_release(This);
+}
+
+static HRESULT WINAPI ProvideClassInfo_GetClassInfo(IProvideClassInfo* iface,
+        ITypeInfo **ppTI)
+{
+    HTMLDocument *This = impl_from_IProvideClassInfo(iface);
+    FIXME("(%p)->(%p)\n", This, ppTI);
+    *ppTI = NULL;
+    return E_NOTIMPL;
+}
+
+static const IProvideClassInfoVtbl ProvideClassInfoVtbl = {
+    ProvideClassInfo_QueryInterface,
+    ProvideClassInfo_AddRef,
+    ProvideClassInfo_Release,
+    ProvideClassInfo_GetClassInfo
+};
+
 static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -1897,6 +1937,9 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IObjectSafety, riid)) {
         TRACE("(%p)->(IID_IObjectSafety %p)\n", This, ppv);
         *ppv = &This->IObjectSafety_iface;
+    }else if(IsEqualGUID(&IID_IProvideClassInfo, riid)) {
+        TRACE("(%p)->(IID_IProvideClassInfo, %p)\n", This, ppv);
+        *ppv = &This->IProvideClassInfo_iface;
     }else {
         return FALSE;
     }
@@ -1913,6 +1956,7 @@ static void init_doc(HTMLDocument *doc, IUnknown *unk_impl, IDispatchEx *dispex)
     doc->IHTMLDocument2_iface.lpVtbl = &HTMLDocumentVtbl;
     doc->IDispatchEx_iface.lpVtbl = &DocDispatchExVtbl;
     doc->ISupportErrorInfo_iface.lpVtbl = &SupportErrorInfoVtbl;
+    doc->IProvideClassInfo_iface.lpVtbl = &ProvideClassInfoVtbl;
 
     doc->unk_impl = unk_impl;
     doc->dispex = dispex;
