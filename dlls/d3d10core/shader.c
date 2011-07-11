@@ -19,6 +19,7 @@
 
 #include "config.h"
 #include "wine/port.h"
+#include <assert.h>
 
 #include "d3d10core_private.h"
 
@@ -130,6 +131,11 @@ void shader_free_signature(struct wined3d_shader_signature *s)
 {
     HeapFree(GetProcessHeap(), 0, s->string_data);
     HeapFree(GetProcessHeap(), 0, s->elements);
+}
+
+static inline struct d3d10_vertex_shader *impl_from_ID3D10VertexShader(ID3D10VertexShader *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_vertex_shader, vtbl);
 }
 
 /* IUnknown methods */
@@ -265,6 +271,15 @@ HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d1
     }
 
     return S_OK;
+}
+
+struct d3d10_vertex_shader *unsafe_impl_from_ID3D10VertexShader(ID3D10VertexShader *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d10_vertex_shader_vtbl);
+
+    return impl_from_ID3D10VertexShader(iface);
 }
 
 static inline struct d3d10_geometry_shader *impl_from_ID3D10GeometryShader(ID3D10GeometryShader *iface)

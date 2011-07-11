@@ -151,7 +151,7 @@ static void STDMETHODCALLTYPE d3d10_device_VSSetShader(ID3D10Device *iface,
         ID3D10VertexShader *shader)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
-    struct d3d10_vertex_shader *vs = (struct d3d10_vertex_shader *)shader;
+    struct d3d10_vertex_shader *vs = unsafe_impl_from_ID3D10VertexShader(shader);
 
     TRACE("iface %p, shader %p\n", iface, shader);
 

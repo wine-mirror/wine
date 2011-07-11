@@ -176,6 +176,7 @@ struct d3d10_vertex_shader
 
 HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d10_device *device,
         const void *byte_code, SIZE_T byte_code_length) DECLSPEC_HIDDEN;
+struct d3d10_vertex_shader *unsafe_impl_from_ID3D10VertexShader(ID3D10VertexShader *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10GeometryShader */
 struct d3d10_geometry_shader
