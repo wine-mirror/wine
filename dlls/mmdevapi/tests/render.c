@@ -618,7 +618,6 @@ static void test_clock(void)
     hr = IAudioClock_GetPosition(acl, &pos, NULL);
     ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
     ok(pos == 0, "GetPosition returned non-zero pos after Reset\n");
-    last = pos;
 
     hr = IAudioRenderClient_GetBuffer(arc, pwfx->nSamplesPerSec / 2., &data);
     ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
