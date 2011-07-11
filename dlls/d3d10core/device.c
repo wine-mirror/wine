@@ -879,7 +879,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateVertexShader(ID3D10Device *i
     }
 
     TRACE("Created vertex shader %p.\n", object);
-    *shader = (ID3D10VertexShader *)object;
+    *shader = &object->ID3D10VertexShader_iface;
 
     return S_OK;
 }

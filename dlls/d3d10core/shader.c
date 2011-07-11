@@ -135,7 +135,7 @@ void shader_free_signature(struct wined3d_shader_signature *s)
 
 static inline struct d3d10_vertex_shader *impl_from_ID3D10VertexShader(ID3D10VertexShader *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d10_vertex_shader, vtbl);
+    return CONTAINING_RECORD(iface, struct d3d10_vertex_shader, ID3D10VertexShader_iface);
 }
 
 /* IUnknown methods */
@@ -162,7 +162,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_vertex_shader_QueryInterface(ID3D10Vertex
 
 static ULONG STDMETHODCALLTYPE d3d10_vertex_shader_AddRef(ID3D10VertexShader *iface)
 {
-    struct d3d10_vertex_shader *This = (struct d3d10_vertex_shader *)iface;
+    struct d3d10_vertex_shader *This = impl_from_ID3D10VertexShader(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -175,7 +175,7 @@ static ULONG STDMETHODCALLTYPE d3d10_vertex_shader_AddRef(ID3D10VertexShader *if
 
 static ULONG STDMETHODCALLTYPE d3d10_vertex_shader_Release(ID3D10VertexShader *iface)
 {
-    struct d3d10_vertex_shader *This = (struct d3d10_vertex_shader *)iface;
+    struct d3d10_vertex_shader *This = impl_from_ID3D10VertexShader(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -250,7 +250,7 @@ HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d1
     struct d3d10_shader_info shader_info;
     HRESULT hr;
 
-    shader->vtbl = &d3d10_vertex_shader_vtbl;
+    shader->ID3D10VertexShader_iface.lpVtbl = &d3d10_vertex_shader_vtbl;
     shader->refcount = 1;
 
     shader_info.output_signature = &shader->output_signature;

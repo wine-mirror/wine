@@ -167,7 +167,7 @@ HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d10_
 /* ID3D10VertexShader */
 struct d3d10_vertex_shader
 {
-    const struct ID3D10VertexShaderVtbl *vtbl;
+    ID3D10VertexShader ID3D10VertexShader_iface;
     LONG refcount;
 
     struct wined3d_shader *wined3d_shader;
