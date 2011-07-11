@@ -70,6 +70,11 @@ if 1 == 0 (
 ) else (
   echo else seems to work
 )
+if /c==/c (
+  echo if seems not to detect /c as parameter
+) else (
+  echo parameter detection seems to be broken
+)
 echo Testing case sensitivity with and without /i option
 if bar==BAR echo if does not default to case sensitivity
 if not bar==BAR echo if seems to default to case sensitivity

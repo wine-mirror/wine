@@ -74,6 +74,7 @@ P0S
 if/else should work with blocks
 if seems to work
 else seems to work
+@todo_wine@if seems not to detect /c as parameter
 Testing case sensitivity with and without /i option
 if seems to default to case sensitivity
 if /i seems to work
