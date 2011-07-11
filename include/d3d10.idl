@@ -514,6 +514,29 @@ typedef struct D3D10_TEXTURE1D_DESC {
     UINT MiscFlags;
 } D3D10_TEXTURE1D_DESC;
 
+cpp_quote("#if !defined(D3D10_NO_HELPERS) && defined(__cplusplus)")
+cpp_quote("struct CD3D10_TEXTURE1D_DESC : public D3D10_TEXTURE1D_DESC {")
+cpp_quote("    CD3D10_TEXTURE1D_DESC() {}")
+cpp_quote("    explicit CD3D10_TEXTURE1D_DESC(const D3D10_TEXTURE1D_DESC &o) : D3D10_TEXTURE1D_DESC(o) {}")
+cpp_quote("    explicit CD3D10_TEXTURE1D_DESC(DXGI_FORMAT format, UINT width, UINT arraySize = 1, UINT mipLevels = 0,")
+cpp_quote("        UINT bindFlags = D3D10_BIND_SHADER_RESOURCE, D3D10_USAGE usage = D3D10_USAGE_DEFAULT, UINT cpuaccessFlags = 0,")
+cpp_quote("        UINT miscFlags = 0) {")
+cpp_quote("        Width = width;")
+cpp_quote("        MipLevels = mipLevels;")
+cpp_quote("        ArraySize = arraySize;")
+cpp_quote("        Format = format;")
+cpp_quote("        Usage = usage;")
+cpp_quote("        BindFlags = bindFlags;")
+cpp_quote("        CPUAccessFlags = cpuaccessFlags;")
+cpp_quote("        MiscFlags = miscFlags;")
+cpp_quote("    }")
+cpp_quote("    ~CD3D10_TEXTURE1D_DESC() {}")
+cpp_quote("    operator const D3D10_TEXTURE1D_DESC&() const {")
+cpp_quote("        return *this;")
+cpp_quote("    }")
+cpp_quote("};")
+cpp_quote("#endif")
+
 typedef struct D3D10_TEXTURE2D_DESC {
     UINT Width;
     UINT Height;
