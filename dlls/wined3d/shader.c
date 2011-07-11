@@ -1164,7 +1164,7 @@ void shader_dump_src_param(const struct wined3d_shader_src_param *param,
 
 /* Shared code in order to generate the bulk of the shader string.
  * NOTE: A description of how to parse tokens can be found on MSDN. */
-void shader_generate_main(struct wined3d_shader *shader, struct wined3d_shader_buffer *buffer,
+void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_shader_buffer *buffer,
         const struct wined3d_shader_reg_maps *reg_maps, const DWORD *byte_code, void *backend_ctx)
 {
     struct wined3d_device *device = shader->device;

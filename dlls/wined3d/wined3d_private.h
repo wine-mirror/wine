@@ -2633,8 +2633,8 @@ void shader_dump_dst_param(const struct wined3d_shader_dst_param *param,
         const struct wined3d_shader_version *shader_version) DECLSPEC_HIDDEN;
 unsigned int shader_find_free_input_register(const struct wined3d_shader_reg_maps *reg_maps,
         unsigned int max) DECLSPEC_HIDDEN;
-void shader_generate_main(struct wined3d_shader *shader, struct wined3d_shader_buffer *buffer,
-        const struct wined3d_shader_reg_maps *reg_maps, const DWORD *pFunction, void *backend_ctx) DECLSPEC_HIDDEN;
+void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_shader_buffer *buffer,
+        const struct wined3d_shader_reg_maps *reg_maps, const DWORD *byte_code, void *backend_ctx) DECLSPEC_HIDDEN;
 BOOL shader_match_semantic(const char *semantic_name, WINED3DDECLUSAGE usage) DECLSPEC_HIDDEN;
 
 static inline BOOL shader_is_pshader_version(enum wined3d_shader_type type)
