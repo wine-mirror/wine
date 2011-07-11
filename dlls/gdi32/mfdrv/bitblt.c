@@ -43,9 +43,8 @@ BOOL  CDECL MFDRV_PatBlt( PHYSDEV dev, INT left, INT top, INT width, INT height,
  */
 #define STRETCH_VIA_DIB
 
-BOOL  CDECL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
-                              INT heightDst, PHYSDEV devSrc, INT xSrc, INT ySrc,
-                              INT widthSrc, INT heightSrc, DWORD rop )
+BOOL CDECL MFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
+                             PHYSDEV devSrc, struct bitblt_coords *src, DWORD rop )
 {
     BOOL ret;
     DWORD len;
@@ -110,14 +109,14 @@ BOOL  CDECL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
       mr->rdSize = len / sizeof(INT16);
       *(mr->rdParm) = LOWORD(rop);
       *(mr->rdParm + 1) = HIWORD(rop);
-      *(mr->rdParm + 2) = heightSrc;
-      *(mr->rdParm + 3) = widthSrc;
-      *(mr->rdParm + 4) = ySrc;
-      *(mr->rdParm + 5) = xSrc;
-      *(mr->rdParm + 6) = heightDst;
-      *(mr->rdParm + 7) = widthDst;
-      *(mr->rdParm + 8) = yDst;
-      *(mr->rdParm + 9) = xDst;
+      *(mr->rdParm + 2) = src->log_height;
+      *(mr->rdParm + 3) = src->log_width;
+      *(mr->rdParm + 4) = src->log_y;
+      *(mr->rdParm + 5) = src->log_x;
+      *(mr->rdParm + 6) = dst->log_height;
+      *(mr->rdParm + 7) = dst->log_width;
+      *(mr->rdParm + 8) = dst->log_y;
+      *(mr->rdParm + 9) = dst->log_x;
       ret = MFDRV_WriteRecord( devDst, mr, mr->rdSize * 2);
     }
     else

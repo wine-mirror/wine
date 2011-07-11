@@ -65,8 +65,8 @@ BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, INT left, INT top,
     return ret;
 }
 
-BOOL CDECL EMFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
-                              PHYSDEV devSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, DWORD rop )
+BOOL CDECL EMFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
+                              PHYSDEV devSrc, struct bitblt_coords *src, DWORD rop )
 {
     BOOL ret;
     PEMRBITBLT pEMR;
@@ -82,7 +82,7 @@ BOOL CDECL EMFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst, 
 
     if (devSrc->funcs == devDst->funcs) return FALSE;  /* can't use a metafile DC as source */
 
-    if (widthSrc == widthDst && heightSrc == heightDst)
+    if (src->log_width == dst->log_width && src->log_height == dst->log_height)
     {
         emrType = EMR_BITBLT;
         emrSize = sizeof(EMRBITBLT);
@@ -112,17 +112,17 @@ BOOL CDECL EMFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst, 
     /* Initialize EMR */
     pEMR->emr.iType = emrType;
     pEMR->emr.nSize = size;
-    pEMR->rclBounds.left = xDst;
-    pEMR->rclBounds.top = yDst;
-    pEMR->rclBounds.right = xDst + widthDst - 1;
-    pEMR->rclBounds.bottom = yDst + heightDst - 1;
-    pEMR->xDest = xDst;
-    pEMR->yDest = yDst;
-    pEMR->cxDest = widthDst;
-    pEMR->cyDest = heightDst;
+    pEMR->rclBounds.left = dst->log_x;
+    pEMR->rclBounds.top = dst->log_y;
+    pEMR->rclBounds.right = dst->log_x + dst->log_width - 1;
+    pEMR->rclBounds.bottom = dst->log_y + dst->log_height - 1;
+    pEMR->xDest = dst->log_x;
+    pEMR->yDest = dst->log_y;
+    pEMR->cxDest = dst->log_width;
+    pEMR->cyDest = dst->log_height;
     pEMR->dwRop = rop;
-    pEMR->xSrc = xSrc;
-    pEMR->ySrc = ySrc;
+    pEMR->xSrc = src->log_x;
+    pEMR->ySrc = src->log_y;
     GetWorldTransform(devSrc->hdc, &pEMR->xformSrc);
     pEMR->crBkColorSrc = GetBkColor(devSrc->hdc);
     pEMR->iUsageSrc = DIB_RGB_COLORS;
@@ -133,8 +133,8 @@ BOOL CDECL EMFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst, 
     if (emrType == EMR_STRETCHBLT) 
     {
         PEMRSTRETCHBLT pEMRStretch = (PEMRSTRETCHBLT)pEMR;
-        pEMRStretch->cxSrc = widthSrc;
-        pEMRStretch->cySrc = heightSrc;
+        pEMRStretch->cxSrc = src->log_width;
+        pEMRStretch->cySrc = src->log_height;
     }
 
     /* Initialize BITMAPINFO structure */

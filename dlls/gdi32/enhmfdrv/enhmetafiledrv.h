@@ -152,10 +152,8 @@ extern BOOL     CDECL EMFDRV_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT 
 extern BOOL     CDECL EMFDRV_SetWindowExtEx( PHYSDEV dev, INT x, INT y, SIZE *size ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_SetWorldTransform( PHYSDEV dev, const XFORM *xform ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL EMFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst,
-                                         INT widthDst, INT heightDst,
-                                         PHYSDEV devSrc, INT xSrc, INT ySrc,
-                                         INT widthSrc, INT heightSrc, DWORD rop ) DECLSPEC_HIDDEN;
+extern BOOL     CDECL EMFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
+                                         PHYSDEV devSrc, struct bitblt_coords *src, DWORD rop ) DECLSPEC_HIDDEN;
 extern INT      CDECL EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
                                             INT heightDst, INT xSrc, INT ySrc,
                                             INT widthSrc, INT heightSrc,

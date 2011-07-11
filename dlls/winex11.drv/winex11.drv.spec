@@ -56,7 +56,7 @@
 @ cdecl SetPixel(ptr long long long) X11DRV_SetPixel
 @ cdecl SetPixelFormat(ptr long ptr) X11DRV_SetPixelFormat
 @ cdecl SetTextColor(ptr long) X11DRV_SetTextColor
-@ cdecl StretchBlt(ptr long long long long ptr long long long long long) X11DRV_StretchBlt
+@ cdecl StretchBlt(ptr ptr ptr ptr long) X11DRV_StretchBlt
 @ cdecl SwapBuffers(ptr) X11DRV_SwapBuffers
 @ cdecl UnrealizePalette(long) X11DRV_UnrealizePalette
 

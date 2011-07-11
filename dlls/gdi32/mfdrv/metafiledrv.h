@@ -139,9 +139,8 @@ extern BOOL CDECL MFDRV_SetViewportExtEx( PHYSDEV dev, INT x, INT y, SIZE *size 
 extern BOOL CDECL MFDRV_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_SetWindowExtEx( PHYSDEV dev, INT x, INT y, SIZE *size ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
-extern BOOL  CDECL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
-                                     INT heightDst, PHYSDEV devSrc, INT xSrc, INT ySrc,
-                                     INT widthSrc, INT heightSrc, DWORD rop ) DECLSPEC_HIDDEN;
+extern BOOL CDECL MFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
+                                    PHYSDEV devSrc, struct bitblt_coords *src, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL  CDECL MFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern INT  CDECL MFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDest, DWORD cx,
                                            DWORD cy, INT xSrc, INT ySrc,

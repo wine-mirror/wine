@@ -165,9 +165,8 @@ static void get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
 }
 
 /* nulldrv fallback implementation using StretchDIBits */
-BOOL CDECL nulldrv_StretchBlt( PHYSDEV dst_dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
-                               PHYSDEV src_dev, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
-                               DWORD rop )
+BOOL CDECL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                               PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
 {
     DC *dc = get_nulldrv_dc( dst_dev );
     BITMAP bm;
@@ -175,20 +174,9 @@ BOOL CDECL nulldrv_StretchBlt( PHYSDEV dst_dev, INT xDst, INT yDst, INT widthDst
     HBITMAP hbm;
     LPVOID bits;
     INT lines;
-    POINT pts[2];
 
     /* make sure we have a real implementation for StretchDIBits */
     if (GET_DC_PHYSDEV( dc, pStretchDIBits ) == dst_dev) return 0;
-
-    pts[0].x = xSrc;
-    pts[0].y = ySrc;
-    pts[1].x = xSrc + widthSrc;
-    pts[1].y = ySrc + heightSrc;
-    LPtoDP( src_dev->hdc, pts, 2 );
-    xSrc      = pts[0].x;
-    ySrc      = pts[0].y;
-    widthSrc  = pts[1].x - pts[0].x;
-    heightSrc = pts[1].y - pts[0].y;
 
     if (GetObjectType( src_dev->hdc ) != OBJ_MEMDC) return FALSE;
     if (!GetObjectW( GetCurrentObject( src_dev->hdc, OBJ_BITMAP ), sizeof(bm), &bm )) return FALSE;
@@ -213,11 +201,11 @@ BOOL CDECL nulldrv_StretchBlt( PHYSDEV dst_dev, INT xDst, INT yDst, INT widthDst
     lines = GetDIBits( src_dev->hdc, hbm, 0, bm.bmHeight, bits, (BITMAPINFO*)&info_hdr, DIB_RGB_COLORS );
     SelectObject( src_dev->hdc, hbm );
 
-    if (lines) lines = StretchDIBits( dst_dev->hdc, xDst, yDst, widthDst, heightDst,
-                                      xSrc, bm.bmHeight - heightSrc - ySrc, widthSrc, heightSrc,
+    if (lines) lines = StretchDIBits( dst_dev->hdc, dst->log_x, dst->log_y, dst->log_width, dst->log_height,
+                                      src->x, bm.bmHeight - src->height - src->y, src->width, src->height,
                                       bits, (BITMAPINFO*)&info_hdr, DIB_RGB_COLORS, rop );
     HeapFree( GetProcessHeap(), 0, bits );
-    return (lines == heightSrc);
+    return (lines == src->height);
 }
 
 /***********************************************************************
@@ -265,10 +253,6 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst, INT widthDst, INT height
 
     if (!rop_uses_src( rop )) return PatBlt( hdcDst, xDst, yDst, widthDst, heightDst, rop );
 
-    TRACE("%p %d,%d %dx%d -> %p %d,%d %dx%d rop=%06x\n",
-          hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
-          hdcDst, xDst, yDst, widthDst, heightDst, rop );
-
     if (!(dcDst = get_dc_ptr( hdcDst ))) return FALSE;
 
     if ((dcSrc = get_dc_ptr( hdcSrc )))
@@ -297,8 +281,14 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst, INT widthDst, INT height
             rop &= ~NOMIRRORBITMAP;
         }
         get_vis_rectangles( dcDst, &dst, dcSrc, &src );
-        ret = dst_dev->funcs->pStretchBlt( dst_dev, xDst, yDst, widthDst, heightDst,
-                                           src_dev, xSrc, ySrc, widthSrc, heightSrc, rop );
+
+        TRACE("src %p log=%d,%d %dx%d phys=%d,%d %dx%d vis=%s  dst %p log=%d,%d %dx%d phys=%d,%d %dx%d vis=%s  rop=%06x\n",
+              hdcSrc, src.log_x, src.log_y, src.log_width, src.log_height,
+              src.x, src.y, src.width, src.height, wine_dbgstr_rect(&src.visrect),
+              hdcDst, dst.log_x, dst.log_y, dst.log_width, dst.log_height,
+              dst.x, dst.y, dst.width, dst.height, wine_dbgstr_rect(&dst.visrect), rop );
+
+        ret = dst_dev->funcs->pStretchBlt( dst_dev, &dst, src_dev, &src, rop );
         release_dc_ptr( dcSrc );
     }
     release_dc_ptr( dcDst );

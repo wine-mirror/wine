@@ -1486,57 +1486,29 @@ BOOL CDECL X11DRV_PatBlt( PHYSDEV dev, INT x, INT y, INT width, INT height, DWOR
 /***********************************************************************
  *           X11DRV_StretchBlt
  */
-BOOL CDECL X11DRV_StretchBlt( PHYSDEV dst_dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
-                              PHYSDEV src_dev, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
-                              DWORD rop )
+BOOL CDECL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                              PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
 {
     X11DRV_PDEVICE *physDevDst = get_x11drv_dev( dst_dev );
     X11DRV_PDEVICE *physDevSrc = get_x11drv_dev( src_dev ); /* FIXME: check that it's really an x11 dev */
     BOOL usePat, useDst, destUsed, fStretch, fNullBrush;
-    struct bitblt_coords src, dst;
     INT width, height;
     INT sDst, sSrc = DIB_Status_None;
     const BYTE *opcode;
     Pixmap pixmaps[3] = { 0, 0, 0 };  /* pixmaps for DST, SRC, TMP */
     GC tmpGC = 0;
 
+    if (IsRectEmpty( &dst->visrect )) return TRUE;
+
     usePat = (((rop >> 4) & 0x0f0000) != (rop & 0x0f0000));
     useDst = (((rop >> 1) & 0x550000) != (rop & 0x550000));
-
-    src.x      = xSrc;
-    src.y      = ySrc;
-    src.width  = widthSrc;
-    src.height = heightSrc;
-    src.layout = GetLayout( src_dev->hdc );
-    dst.x      = xDst;
-    dst.y      = yDst;
-    dst.width  = widthDst;
-    dst.height = heightDst;
-    dst.layout = GetLayout( dst_dev->hdc );
-
-    if (rop & NOMIRRORBITMAP)
-    {
-        src.layout |= LAYOUT_BITMAPORIENTATIONPRESERVED;
-        dst.layout |= LAYOUT_BITMAPORIENTATIONPRESERVED;
-        rop &= ~NOMIRRORBITMAP;
-    }
-
-    if (!BITBLT_GetVisRectangles( physDevDst, physDevSrc, &dst, &src ))
-        return TRUE;
-    fStretch = (src.width != dst.width) || (src.height != dst.height);
+    fStretch = (src->width != dst->width) || (src->height != dst->height);
 
     if (physDevDst != physDevSrc)
         sSrc = X11DRV_LockDIBSection( physDevSrc, DIB_Status_None );
 
-    TRACE("    rectdst=%d,%d %dx%d orgdst=%d,%d visdst=%s\n",
-          dst.x, dst.y, dst.width, dst.height,
-          physDevDst->dc_rect.left, physDevDst->dc_rect.top, wine_dbgstr_rect( &dst.visrect ) );
-    TRACE("    rectsrc=%d,%d %dx%d orgsrc=%d,%d vissrc=%s\n",
-          src.x, src.y, src.width, src.height,
-          physDevSrc->dc_rect.left, physDevSrc->dc_rect.top, wine_dbgstr_rect( &src.visrect ) );
-
-    width  = dst.visrect.right - dst.visrect.left;
-    height = dst.visrect.bottom - dst.visrect.top;
+    width  = dst->visrect.right - dst->visrect.left;
+    height = dst->visrect.bottom - dst->visrect.top;
 
     sDst = X11DRV_LockDIBSection( physDevDst, DIB_Status_None );
     if (physDevDst == physDevSrc) sSrc = sDst;
@@ -1546,8 +1518,8 @@ BOOL CDECL X11DRV_StretchBlt( PHYSDEV dst_dev, INT xDst, INT yDst, INT widthDst,
         sSrc == DIB_Status_AppMod && sDst == DIB_Status_AppMod &&
         same_format(physDevSrc, physDevDst))
     {
-        if (client_side_dib_copy( physDevSrc, src.visrect.left, src.visrect.top,
-                                  physDevDst, dst.visrect.left, dst.visrect.top, width, height ))
+        if (client_side_dib_copy( physDevSrc, src->visrect.left, src->visrect.top,
+                                  physDevDst, dst->visrect.left, dst->visrect.top, width, height ))
             goto done;
     }
 
@@ -1568,8 +1540,8 @@ BOOL CDECL X11DRV_StretchBlt( PHYSDEV dst_dev, INT xDst, INT yDst, INT widthDst,
             {
                 if (sSrc == DIB_Status_AppMod)
                 {
-                    X11DRV_DIB_CopyDIBSection( physDevSrc, physDevDst, src.visrect.left, src.visrect.top,
-                                               dst.visrect.left, dst.visrect.top, width, height );
+                    X11DRV_DIB_CopyDIBSection( physDevSrc, physDevDst, src->visrect.left, src->visrect.top,
+                                               dst->visrect.left, dst->visrect.top, width, height );
                     goto done;
                 }
                 X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod );
@@ -1577,11 +1549,11 @@ BOOL CDECL X11DRV_StretchBlt( PHYSDEV dst_dev, INT xDst, INT yDst, INT widthDst,
             wine_tsx11_lock();
             XCopyArea( gdi_display, physDevSrc->drawable,
                        physDevDst->drawable, physDevDst->gc,
-                       physDevSrc->dc_rect.left + src.visrect.left,
-                       physDevSrc->dc_rect.top + src.visrect.top,
+                       physDevSrc->dc_rect.left + src->visrect.left,
+                       physDevSrc->dc_rect.top + src->visrect.top,
                        width, height,
-                       physDevDst->dc_rect.left + dst.visrect.left,
-                       physDevDst->dc_rect.top + dst.visrect.top );
+                       physDevDst->dc_rect.left + dst->visrect.left,
+                       physDevDst->dc_rect.top + dst->visrect.top );
             physDevDst->exposures++;
             wine_tsx11_unlock();
             goto done;
@@ -1598,11 +1570,11 @@ BOOL CDECL X11DRV_StretchBlt( PHYSDEV dst_dev, INT xDst, INT yDst, INT widthDst,
             XSetFunction( gdi_display, physDevDst->gc, OP_ROP(*opcode) );
             XCopyPlane( gdi_display, physDevSrc->drawable,
                         physDevDst->drawable, physDevDst->gc,
-                        physDevSrc->dc_rect.left + src.visrect.left,
-                        physDevSrc->dc_rect.top + src.visrect.top,
+                        physDevSrc->dc_rect.left + src->visrect.left,
+                        physDevSrc->dc_rect.top + src->visrect.top,
                         width, height,
-                        physDevDst->dc_rect.left + dst.visrect.left,
-                        physDevDst->dc_rect.top + dst.visrect.top, 1 );
+                        physDevDst->dc_rect.left + dst->visrect.left,
+                        physDevDst->dc_rect.top + dst->visrect.top, 1 );
             physDevDst->exposures++;
             wine_tsx11_unlock();
             goto done;
@@ -1621,15 +1593,15 @@ BOOL CDECL X11DRV_StretchBlt( PHYSDEV dst_dev, INT xDst, INT yDst, INT widthDst,
 
     if (physDevDst != physDevSrc) X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod );
 
-    if(!X11DRV_XRender_GetSrcAreaStretch( physDevSrc, physDevDst, pixmaps[SRC], tmpGC, &src, &dst ))
+    if(!X11DRV_XRender_GetSrcAreaStretch( physDevSrc, physDevDst, pixmaps[SRC], tmpGC, src, dst ))
     {
         if (fStretch)
-            BITBLT_GetSrcAreaStretch( physDevSrc, physDevDst, pixmaps[SRC], tmpGC, &src, &dst );
+            BITBLT_GetSrcAreaStretch( physDevSrc, physDevDst, pixmaps[SRC], tmpGC, src, dst );
         else
-            BITBLT_GetSrcArea( physDevSrc, physDevDst, pixmaps[SRC], tmpGC, &src.visrect );
+            BITBLT_GetSrcArea( physDevSrc, physDevDst, pixmaps[SRC], tmpGC, &src->visrect );
     }
 
-    if (useDst) BITBLT_GetDstArea( physDevDst, pixmaps[DST], tmpGC, &dst.visrect );
+    if (useDst) BITBLT_GetDstArea( physDevDst, pixmaps[DST], tmpGC, &dst->visrect );
     if (usePat) fNullBrush = !X11DRV_SetupGCForPatBlt( physDevDst, tmpGC, TRUE );
     else fNullBrush = FALSE;
     destUsed = FALSE;
@@ -1670,7 +1642,7 @@ BOOL CDECL X11DRV_StretchBlt( PHYSDEV dst_dev, INT xDst, INT yDst, INT widthDst,
         }
     }
     XSetFunction( gdi_display, physDevDst->gc, GXcopy );
-    physDevDst->exposures += BITBLT_PutDstArea( physDevDst, pixmaps[destUsed ? DST : SRC], &dst.visrect );
+    physDevDst->exposures += BITBLT_PutDstArea( physDevDst, pixmaps[destUsed ? DST : SRC], &dst->visrect );
     XFreePixmap( gdi_display, pixmaps[DST] );
     if (pixmaps[SRC]) XFreePixmap( gdi_display, pixmaps[SRC] );
     if (pixmaps[TMP]) XFreePixmap( gdi_display, pixmaps[TMP] );
