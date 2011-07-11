@@ -28,21 +28,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
  *
  *                    PSDRV_PatBlt
  */
-BOOL CDECL PSDRV_PatBlt(PHYSDEV dev, INT x, INT y, INT width, INT height, DWORD dwRop)
+BOOL CDECL PSDRV_PatBlt(PHYSDEV dev, struct bitblt_coords *dst, DWORD dwRop)
 {
-    POINT pt[2];
-
-    pt[0].x = x;
-    pt[0].y = y;
-    pt[1].x = x + width;
-    pt[1].y = y + height;
-    LPtoDP( dev->hdc, pt, 2 );
-
     switch(dwRop) {
     case PATCOPY:
         PSDRV_SetClip(dev);
         PSDRV_WriteGSave(dev);
-        PSDRV_WriteRectangle(dev, pt[0].x, pt[0].y, pt[1].x - pt[0].x, pt[1].y - pt[0].y );
+        PSDRV_WriteRectangle(dev, dst->visrect.left, dst->visrect.top,
+                             dst->visrect.right - dst->visrect.left,
+                             dst->visrect.bottom - dst->visrect.top );
 	PSDRV_Brush(dev, FALSE);
 	PSDRV_WriteGRestore(dev);
         PSDRV_ResetClip(dev);
@@ -55,7 +49,9 @@ BOOL CDECL PSDRV_PatBlt(PHYSDEV dev, INT x, INT y, INT width, INT height, DWORD 
 
         PSDRV_SetClip(dev);
         PSDRV_WriteGSave(dev);
-        PSDRV_WriteRectangle(dev, pt[0].x, pt[0].y, pt[1].x - pt[0].x, pt[1].y - pt[0].y );
+        PSDRV_WriteRectangle(dev, dst->visrect.left, dst->visrect.top,
+                             dst->visrect.right - dst->visrect.left,
+                             dst->visrect.bottom - dst->visrect.top );
 	PSDRV_CreateColor( dev, &pscol, (dwRop == BLACKNESS) ? RGB(0,0,0) : RGB(0xff,0xff,0xff) );
 	PSDRV_WriteSetColor(dev, &pscol);
 	PSDRV_WriteFill(dev);
@@ -64,7 +60,7 @@ BOOL CDECL PSDRV_PatBlt(PHYSDEV dev, INT x, INT y, INT width, INT height, DWORD 
 	return TRUE;
       }
     default:
-        FIXME("Unsupported rop %d\n", dwRop);
+        FIXME("Unsupported rop %06x\n", dwRop);
 	return FALSE;
     }
 }

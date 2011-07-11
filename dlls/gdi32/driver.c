@@ -521,7 +521,7 @@ static BOOL CDECL nulldrv_PaintRgn( PHYSDEV dev, HRGN rgn )
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_PatBlt( PHYSDEV dev, INT x, INT y, INT width, INT height, DWORD rop )
+static BOOL CDECL nulldrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
     return TRUE;
 }

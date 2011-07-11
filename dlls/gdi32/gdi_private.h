@@ -206,7 +206,7 @@ typedef struct gdi_dc_funcs
     BOOL     (CDECL *pOffsetViewportOrgEx)(PHYSDEV,INT,INT,POINT*);
     BOOL     (CDECL *pOffsetWindowOrgEx)(PHYSDEV,INT,INT,POINT*);
     BOOL     (CDECL *pPaintRgn)(PHYSDEV,HRGN);
-    BOOL     (CDECL *pPatBlt)(PHYSDEV,INT,INT,INT,INT,DWORD);
+    BOOL     (CDECL *pPatBlt)(PHYSDEV,struct bitblt_coords*,DWORD);
     BOOL     (CDECL *pPie)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
     BOOL     (CDECL *pPolyBezier)(PHYSDEV,const POINT*,DWORD);
     BOOL     (CDECL *pPolyBezierTo)(PHYSDEV,const POINT*,DWORD);

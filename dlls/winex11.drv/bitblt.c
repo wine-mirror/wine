@@ -1408,34 +1408,14 @@ static BOOL same_format(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst)
 /***********************************************************************
  *           X11DRV_PatBlt
  */
-BOOL CDECL X11DRV_PatBlt( PHYSDEV dev, INT x, INT y, INT width, INT height, DWORD rop )
+BOOL CDECL X11DRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     BOOL usePat = (((rop >> 4) & 0x0f0000) != (rop & 0x0f0000));
     const BYTE *opcode = BITBLT_Opcodes[(rop >> 16) & 0xff];
-    struct bitblt_coords dst;
 
-    dst.x      = x;
-    dst.y      = y;
-    dst.width  = width;
-    dst.height = height;
-    dst.layout = GetLayout( dev->hdc );
-
-    if (rop & NOMIRRORBITMAP)
-    {
-        dst.layout |= LAYOUT_BITMAPORIENTATIONPRESERVED;
-        rop &= ~NOMIRRORBITMAP;
-    }
-
-    if (!BITBLT_GetVisRectangles( physDev, NULL, &dst, NULL )) return TRUE;
+    if (IsRectEmpty( &dst->visrect )) return TRUE;
     if (usePat && !X11DRV_SetupGCForBrush( physDev )) return TRUE;
-
-    TRACE( "rect=%d,%d %dx%d org=%d,%d vis=%s\n",
-          dst.x, dst.y, dst.width, dst.height,
-          physDev->dc_rect.left, physDev->dc_rect.top, wine_dbgstr_rect( &dst.visrect ) );
-
-    width  = dst.visrect.right - dst.visrect.left;
-    height = dst.visrect.bottom - dst.visrect.top;
 
     X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod );
 
@@ -1472,10 +1452,10 @@ BOOL CDECL X11DRV_PatBlt( PHYSDEV dev, INT x, INT y, INT width, INT height, DWOR
         break;
     }
     XFillRectangle( gdi_display, physDev->drawable, physDev->gc,
-                    physDev->dc_rect.left + dst.visrect.left,
-                    physDev->dc_rect.top + dst.visrect.top,
-                    dst.visrect.right - dst.visrect.left,
-                    dst.visrect.bottom - dst.visrect.top );
+                    physDev->dc_rect.left + dst->visrect.left,
+                    physDev->dc_rect.top + dst->visrect.top,
+                    dst->visrect.right - dst->visrect.left,
+                    dst->visrect.bottom - dst->visrect.top );
     wine_tsx11_unlock();
 
     X11DRV_UnlockDIBSection( physDev, TRUE );

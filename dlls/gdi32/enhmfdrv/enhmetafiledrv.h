@@ -98,8 +98,7 @@ extern INT      CDECL EMFDRV_OffsetClipRgn( PHYSDEV dev, INT x, INT y ) DECLSPEC
 extern BOOL     CDECL EMFDRV_OffsetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL EMFDRV_PatBlt( PHYSDEV dev, INT left, INT top,
-                                     INT width, INT height, DWORD rop ) DECLSPEC_HIDDEN;
+extern BOOL     CDECL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_Pie( PHYSDEV dev, INT left, INT top, INT right,
                                   INT bottom, INT xstart, INT ystart, INT xend,
                                   INT yend ) DECLSPEC_HIDDEN;

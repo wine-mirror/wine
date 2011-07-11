@@ -30,7 +30,7 @@
 @ cdecl GetTextMetrics(ptr ptr) X11DRV_GetTextMetrics
 @ cdecl LineTo(ptr long long) X11DRV_LineTo
 @ cdecl PaintRgn(ptr long) X11DRV_PaintRgn
-@ cdecl PatBlt(ptr long long long long long) X11DRV_PatBlt
+@ cdecl PatBlt(ptr ptr long) X11DRV_PatBlt
 @ cdecl Pie(ptr long long long long long long long long) X11DRV_Pie
 @ cdecl PolyPolygon(ptr ptr ptr long) X11DRV_PolyPolygon
 @ cdecl PolyPolyline(ptr ptr ptr long) X11DRV_PolyPolyline

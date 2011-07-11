@@ -18,7 +18,7 @@
 @ cdecl GetTextMetrics(ptr ptr) PSDRV_GetTextMetrics
 @ cdecl LineTo(ptr long long) PSDRV_LineTo
 @ cdecl PaintRgn(ptr long) PSDRV_PaintRgn
-@ cdecl PatBlt(ptr long long long long long) PSDRV_PatBlt
+@ cdecl PatBlt(ptr ptr long) PSDRV_PatBlt
 @ cdecl Pie(ptr long long long long long long long long) PSDRV_Pie
 @ cdecl PolyPolygon(ptr ptr ptr long) PSDRV_PolyPolygon
 @ cdecl PolyPolyline(ptr ptr ptr long) PSDRV_PolyPolyline

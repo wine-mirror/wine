@@ -214,19 +214,37 @@ BOOL CDECL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
 BOOL WINAPI PatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop)
 {
     DC * dc;
-    BOOL bRet = FALSE;
-
-    TRACE("%p %d,%d %dx%d %06x\n", hdc, left, top, width, height, rop );
+    BOOL ret = FALSE;
 
     if (rop_uses_src( rop )) return FALSE;
     if ((dc = get_dc_ptr( hdc )))
     {
+        struct bitblt_coords dst;
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPatBlt );
+
         update_dc( dc );
-        bRet = physdev->funcs->pPatBlt( physdev, left, top, width, height, rop );
+
+        dst.log_x      = left;
+        dst.log_y      = top;
+        dst.log_width  = width;
+        dst.log_height = height;
+        dst.layout     = dc->layout;
+        if (rop & NOMIRRORBITMAP)
+        {
+            dst.layout |= LAYOUT_BITMAPORIENTATIONPRESERVED;
+            rop &= ~NOMIRRORBITMAP;
+        }
+        get_vis_rectangles( dc, &dst, NULL, NULL );
+
+        TRACE("dst %p log=%d,%d %dx%d phys=%d,%d %dx%d vis=%s  rop=%06x\n",
+              hdc, dst.log_x, dst.log_y, dst.log_width, dst.log_height,
+              dst.x, dst.y, dst.width, dst.height, wine_dbgstr_rect(&dst.visrect), rop );
+
+        ret = physdev->funcs->pPatBlt( physdev, &dst, rop );
+
         release_dc_ptr( dc );
     }
-    return bRet;
+    return ret;
 }
 
 

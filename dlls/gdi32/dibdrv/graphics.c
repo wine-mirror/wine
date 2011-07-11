@@ -93,27 +93,26 @@ static inline INT get_rop2_from_rop(INT rop)
 /***********************************************************************
  *           dibdrv_PatBlt
  */
-BOOL CDECL dibdrv_PatBlt( PHYSDEV dev, INT x, INT y, INT width, INT height, DWORD rop )
+BOOL CDECL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPatBlt );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     INT rop2 = get_rop2_from_rop(rop);
-    RECT rect = get_device_rect( dev->hdc, x, y, x + width, y + height, TRUE );
     BOOL done;
 
-    TRACE("(%p, %d, %d, %d, %d, %06x)\n", dev, x, y, width, height, rop);
+    TRACE("(%p, %d, %d, %d, %d, %06x)\n", dev, dst->x, dst->y, dst->width, dst->height, rop);
 
     if(defer_brush(pdev))
-        return next->funcs->pPatBlt( next, x, y, width, height, rop );
+        return next->funcs->pPatBlt( next, dst, rop );
 
     update_brush_rop( pdev, rop2 );
 
-    done = pdev->brush_rects( pdev, 1, &rect );
+    done = pdev->brush_rects( pdev, 1, &dst->visrect );
 
     update_brush_rop( pdev, GetROP2(dev->hdc) );
 
     if(!done)
-        return next->funcs->pPatBlt( next, x, y, width, height, rop );
+        return next->funcs->pPatBlt( next, dst, rop );
 
     return TRUE;
 }

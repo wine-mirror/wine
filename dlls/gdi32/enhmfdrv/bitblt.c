@@ -27,22 +27,21 @@
 #include "enhmetafiledrv.h"
 #include "wine/debug.h"
 
-BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, INT left, INT top,
-                          INT width, INT height, DWORD rop )
+BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
     EMRBITBLT emr;
     BOOL ret;
 
     emr.emr.iType = EMR_BITBLT;
     emr.emr.nSize = sizeof(emr);
-    emr.rclBounds.left = left;
-    emr.rclBounds.top = top;
-    emr.rclBounds.right = left + width - 1;
-    emr.rclBounds.bottom = top + height - 1;
-    emr.xDest = left;
-    emr.yDest = top;
-    emr.cxDest = width;
-    emr.cyDest = height;
+    emr.rclBounds.left = dst->log_x;
+    emr.rclBounds.top = dst->log_y;
+    emr.rclBounds.right = dst->log_x + dst->log_width - 1;
+    emr.rclBounds.bottom = dst->log_y + dst->log_height - 1;
+    emr.xDest = dst->log_x;
+    emr.yDest = dst->log_y;
+    emr.cxDest = dst->log_width;
+    emr.cyDest = dst->log_height;
     emr.dwRop = rop;
     emr.xSrc = 0;
     emr.ySrc = 0;
