@@ -580,7 +580,6 @@ static void marshal_WdtpInterfacePointer(DWORD umcb_ctx, DWORD ctx)
     ok(size == 0, "size should be 0 bytes, not %d\n", size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, ctx, buffer, unk, &IID_IUnknown);
-    wireip = buffer;
     HeapFree(GetProcessHeap(), 0, buffer);
 
     /* Now for a non-NULL pointer. The marshalled data are two size DWORDS and then
