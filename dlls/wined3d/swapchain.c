@@ -644,9 +644,9 @@ static const struct wined3d_swapchain_ops swapchain_gl_ops =
 };
 
 /* Helper function that blits the front buffer contents to the target window. */
-void x11_copy_to_screen(struct wined3d_swapchain *swapchain, const RECT *rect)
+void x11_copy_to_screen(const struct wined3d_swapchain *swapchain, const RECT *rect)
 {
-    struct wined3d_surface *front;
+    const struct wined3d_surface *front;
     POINT offset = {0, 0};
     HDC src_dc, dst_dc;
     RECT draw_rect;

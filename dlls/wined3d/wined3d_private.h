@@ -2451,7 +2451,7 @@ struct wined3d_swapchain
     HWND backup_wnd;
 };
 
-void x11_copy_to_screen(struct wined3d_swapchain *swapchain, const RECT *rect) DECLSPEC_HIDDEN;
+void x11_copy_to_screen(const struct wined3d_swapchain *swapchain, const RECT *rect) DECLSPEC_HIDDEN;
 
 struct wined3d_context *swapchain_get_context(struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 void swapchain_destroy_contexts(struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
