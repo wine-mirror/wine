@@ -79,7 +79,7 @@ static	BOOL	WINMM_CreateIData(HINSTANCE hInstDLL)
 {
     hWinMM32Instance = hInstDLL;
     psLastEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-    return TRUE;
+    return WINMM_InitWaveform();
 }
 
 /**************************************************************************

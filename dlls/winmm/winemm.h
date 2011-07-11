@@ -152,6 +152,8 @@ void		TIME_MMTimeStop(void) DECLSPEC_HIDDEN;
 
 MMRESULT WINMM_CheckCallback(DWORD_PTR dwCallback, DWORD fdwOpen, BOOL mixer);
 
+BOOL WINMM_InitWaveform(void);
+
 /* Global variables */
 extern CRITICAL_SECTION WINMM_cs DECLSPEC_HIDDEN;
 extern HINSTANCE hWinMM32Instance DECLSPEC_HIDDEN;
