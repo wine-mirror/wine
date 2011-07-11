@@ -21,6 +21,7 @@
  */
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -122,7 +123,7 @@ static BOOL create_combobox_item(IShellFolder *folder, LPCITEMIDLIST pidl, IImag
     switch(strret.uType)
     {
     case STRRET_WSTR:
-        item->pszText = strret.pOleStr;
+        item->pszText = strret.u.pOleStr;
         break;
     default:
         WINE_FIXME("Unimplemented STRRET type:%u\n",strret.uType);
