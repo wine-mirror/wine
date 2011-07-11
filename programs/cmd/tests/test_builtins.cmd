@@ -225,6 +225,39 @@ if not exist foo (
     rmdir foo
 )
 
+echo ----------- Testing rmdir -----------
+call :setError 0
+rem rd and rmdir are synonymous
+mkdir foobar
+rmdir foobar
+echo %ErrorLevel%
+if not exist foobar echo dir removed
+mkdir foobar
+rd foobar
+echo %ErrorLevel%
+if not exist foobar echo dir removed
+rem Removing non-existent directory
+rmdir foobar
+echo %ErrorLevel%
+rem Removing single-level directories
+echo > foo
+rmdir foo
+echo %ErrorLevel%
+if exist foo echo file not removed
+del foo
+mkdir foo
+echo > foo\bar
+rmdir foo
+echo %ErrorLevel%
+if exist foo echo non-empty dir not removed
+del foo\bar
+mkdir foo\bar
+rmdir foo
+echo %ErrorLevel%
+if exist foo echo non-empty dir not removed
+rmdir foo\bar
+rmdir foo
+
 echo -----------Testing Errorlevel-----------
 rem nt 4.0 doesn't really support a way of setting errorlevel, so this is weak
 rem See http://www.robvanderwoude.com/exit.php

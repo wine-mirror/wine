@@ -124,6 +124,18 @@ dir created
 @todo_wine@ok, foo created
 @todo_wine@1
 @todo_wine@ok, foo\bar created
+----------- Testing rmdir -----------
+0
+dir removed
+0
+dir removed
+0
+0
+file not removed
+0
+non-empty dir not removed
+0
+non-empty dir not removed
 -----------Testing Errorlevel-----------
 1
 errorlevel just right, good
