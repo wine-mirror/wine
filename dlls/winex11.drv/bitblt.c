@@ -1166,116 +1166,6 @@ static int BITBLT_PutDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, RECT *visRe
 
 
 /***********************************************************************
- *           BITBLT_GetVisRectangles
- *
- * Get the source and destination visible rectangles for StretchBlt().
- * Return FALSE if one of the rectangles is empty.
- */
-static BOOL BITBLT_GetVisRectangles( X11DRV_PDEVICE *physDevDst, X11DRV_PDEVICE *physDevSrc,
-                                     struct bitblt_coords *dst, struct bitblt_coords *src )
-{
-    RECT rect, clipRect;
-
-      /* Get the destination visible rectangle */
-
-    rect.left   = dst->x;
-    rect.top    = dst->y;
-    rect.right  = dst->x + dst->width;
-    rect.bottom = dst->y + dst->height;
-    LPtoDP( physDevDst->dev.hdc, (POINT *)&rect, 2 );
-    dst->x      = rect.left;
-    dst->y      = rect.top;
-    dst->width  = rect.right - rect.left;
-    dst->height = rect.bottom - rect.top;
-    if (dst->layout & LAYOUT_RTL && dst->layout & LAYOUT_BITMAPORIENTATIONPRESERVED)
-    {
-        SWAP_INT32( &rect.left, &rect.right );
-        dst->x = rect.left;
-        dst->width = rect.right - rect.left;
-    }
-    if (rect.left > rect.right) { SWAP_INT32( &rect.left, &rect.right ); rect.left++; rect.right++; }
-    if (rect.top > rect.bottom) { SWAP_INT32( &rect.top, &rect.bottom ); rect.top++; rect.bottom++; }
-
-    GetRgnBox( physDevDst->region, &clipRect );
-    if (!IntersectRect( &dst->visrect, &rect, &clipRect )) return FALSE;
-
-      /* Get the source visible rectangle */
-
-    if (!physDevSrc) return TRUE;
-
-    rect.left   = src->x;
-    rect.top    = src->y;
-    rect.right  = src->x + src->width;
-    rect.bottom = src->y + src->height;
-    LPtoDP( physDevSrc->dev.hdc, (POINT *)&rect, 2 );
-    src->x      = rect.left;
-    src->y      = rect.top;
-    src->width  = rect.right - rect.left;
-    src->height = rect.bottom - rect.top;
-    if (src->layout & LAYOUT_RTL && src->layout & LAYOUT_BITMAPORIENTATIONPRESERVED)
-    {
-        SWAP_INT32( &rect.left, &rect.right );
-        src->x = rect.left;
-        src->width = rect.right - rect.left;
-    }
-    if (rect.left > rect.right) { SWAP_INT32( &rect.left, &rect.right ); rect.left++; rect.right++; }
-    if (rect.top > rect.bottom) { SWAP_INT32( &rect.top, &rect.bottom ); rect.top++; rect.bottom++; }
-
-    /* Apparently the clipping and visible regions are only for output,
-       so just check against dc extent here to avoid BadMatch errors */
-    clipRect = physDevSrc->drawable_rect;
-    OffsetRect( &clipRect, -(physDevSrc->drawable_rect.left + physDevSrc->dc_rect.left),
-                -(physDevSrc->drawable_rect.top + physDevSrc->dc_rect.top) );
-    if (!IntersectRect( &src->visrect, &rect, &clipRect ))
-        return FALSE;
-
-      /* Intersect the rectangles */
-
-    if ((src->width == dst->width) && (src->height == dst->height)) /* no stretching */
-    {
-        OffsetRect( &src->visrect, dst->x - src->x, dst->y - src->y );
-        if (!IntersectRect( &rect, &src->visrect, &dst->visrect )) return FALSE;
-        src->visrect = dst->visrect = rect;
-        OffsetRect( &src->visrect, src->x - dst->x, src->y - dst->y );
-    }
-    else  /* stretching */
-    {
-        /* Map source rectangle into destination coordinates */
-        rect.left   = dst->x + (src->visrect.left - src->x)*dst->width/src->width;
-        rect.top    = dst->y + (src->visrect.top - src->y)*dst->height/src->height;
-        rect.right  = dst->x + (src->visrect.right - src->x)*dst->width/src->width;
-        rect.bottom = dst->y + (src->visrect.bottom - src->y)*dst->height/src->height;
-        if (rect.left > rect.right) SWAP_INT32( &rect.left, &rect.right );
-        if (rect.top > rect.bottom) SWAP_INT32( &rect.top, &rect.bottom );
-
-        /* Avoid rounding errors */
-        rect.left--;
-        rect.top--;
-        rect.right++;
-        rect.bottom++;
-        if (!IntersectRect( &dst->visrect, &rect, &dst->visrect )) return FALSE;
-
-        /* Map destination rectangle back to source coordinates */
-        rect = dst->visrect;
-        rect.left   = src->x + (dst->visrect.left - dst->x)*src->width/dst->width;
-        rect.top    = src->y + (dst->visrect.top - dst->y)*src->height/dst->height;
-        rect.right  = src->x + (dst->visrect.right - dst->x)*src->width/dst->width;
-        rect.bottom = src->y + (dst->visrect.bottom - dst->y)*src->height/dst->height;
-        if (rect.left > rect.right) SWAP_INT32( &rect.left, &rect.right );
-        if (rect.top > rect.bottom) SWAP_INT32( &rect.top, &rect.bottom );
-
-        /* Avoid rounding errors */
-        rect.left--;
-        rect.top--;
-        rect.right++;
-        rect.bottom++;
-        if (!IntersectRect( &src->visrect, &rect, &src->visrect )) return FALSE;
-    }
-    return TRUE;
-}
-
-
-/***********************************************************************
  *           client_side_dib_copy
  */
 static BOOL client_side_dib_copy( X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
@@ -1639,41 +1529,21 @@ done:
 /***********************************************************************
  *           X11DRV_AlphaBlend
  */
-BOOL CDECL X11DRV_AlphaBlend( PHYSDEV dst_dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
-                              PHYSDEV src_dev, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
-                              BLENDFUNCTION blendfn )
+BOOL CDECL X11DRV_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                              PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION blendfn )
 {
     X11DRV_PDEVICE *physDevDst = get_x11drv_dev( dst_dev );
     X11DRV_PDEVICE *physDevSrc = get_x11drv_dev( src_dev ); /* FIXME: check that it's really an x11 dev */
-    struct bitblt_coords src, dst;
 
-    src.x      = xSrc;
-    src.y      = ySrc;
-    src.width  = widthSrc;
-    src.height = heightSrc;
-    src.layout = GetLayout( src_dev->hdc );
-    dst.x      = xDst;
-    dst.y      = yDst;
-    dst.width  = widthDst;
-    dst.height = heightDst;
-    dst.layout = GetLayout( dst_dev->hdc );
-
-    if (!BITBLT_GetVisRectangles( physDevDst, physDevSrc, &dst, &src )) return TRUE;
-
-    TRACE( "format %x alpha %u rectdst=%d,%d %dx%d orgdst=%d,%d visdst=%s rectsrc=%d,%d %dx%d orgsrc=%d,%d vissrc=%s\n",
-           blendfn.AlphaFormat, blendfn.SourceConstantAlpha, dst.x, dst.y, dst.width, dst.height,
-           physDevDst->dc_rect.left, physDevDst->dc_rect.top, wine_dbgstr_rect( &dst.visrect ),
-           src.x, src.y, src.width, src.height,
-           physDevSrc->dc_rect.left, physDevSrc->dc_rect.top, wine_dbgstr_rect( &src.visrect ) );
-
-    if (src.x < 0 || src.y < 0 || src.width < 0 || src.height < 0 ||
-        src.width > physDevSrc->drawable_rect.right - physDevSrc->drawable_rect.left - src.x ||
-        src.height > physDevSrc->drawable_rect.bottom - physDevSrc->drawable_rect.top - src.y)
+    if (src->x < 0 || src->y < 0 || src->width < 0 || src->height < 0 ||
+        src->width > physDevSrc->drawable_rect.right - physDevSrc->drawable_rect.left - src->x ||
+        src->height > physDevSrc->drawable_rect.bottom - physDevSrc->drawable_rect.top - src->y)
     {
-        WARN( "Invalid src coords: (%d,%d), size %dx%d\n", src.x, src.y, src.width, src.height );
+        WARN( "Invalid src coords: (%d,%d), size %dx%d\n", src->x, src->y, src->width, src->height );
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
+    if (IsRectEmpty( &dst->visrect )) return TRUE;
 
-    return XRender_AlphaBlend( physDevDst, physDevSrc, &dst, &src, blendfn );
+    return XRender_AlphaBlend( physDevDst, dst, physDevSrc, src, blendfn );
 }

@@ -152,7 +152,7 @@ typedef struct gdi_dc_funcs
 {
     INT      (CDECL *pAbortDoc)(PHYSDEV);
     BOOL     (CDECL *pAbortPath)(PHYSDEV);
-    BOOL     (CDECL *pAlphaBlend)(PHYSDEV,INT,INT,INT,INT,PHYSDEV,INT,INT,INT,INT,BLENDFUNCTION);
+    BOOL     (CDECL *pAlphaBlend)(PHYSDEV,struct bitblt_coords*,PHYSDEV,struct bitblt_coords*,BLENDFUNCTION);
     BOOL     (CDECL *pAngleArc)(PHYSDEV,INT,INT,DWORD,FLOAT,FLOAT);
     BOOL     (CDECL *pArc)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
     BOOL     (CDECL *pArcTo)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);

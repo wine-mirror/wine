@@ -607,22 +607,39 @@ BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heig
     BOOL ret = FALSE;
     DC *dcDst, *dcSrc;
 
-    TRACE( "%p %d,%d %dx%d -> %p %d,%d %dx%d op=%02x flags=%02x srcconstalpha=%02x alphafmt=%02x\n",
-           hdcSrc, xSrc, ySrc, widthSrc, heightSrc, hdcDst, xDst, yDst, widthDst, heightDst,
-           blendFunction.BlendOp, blendFunction.BlendFlags,
-           blendFunction.SourceConstantAlpha, blendFunction.AlphaFormat );
-
     dcSrc = get_dc_ptr( hdcSrc );
     if (!dcSrc) return FALSE;
 
     if ((dcDst = get_dc_ptr( hdcDst )))
     {
+        struct bitblt_coords src, dst;
         PHYSDEV src_dev = GET_DC_PHYSDEV( dcSrc, pAlphaBlend );
         PHYSDEV dst_dev = GET_DC_PHYSDEV( dcDst, pAlphaBlend );
+
         update_dc( dcSrc );
         update_dc( dcDst );
-        ret = dst_dev->funcs->pAlphaBlend( dst_dev, xDst, yDst, widthDst, heightDst,
-                                           src_dev, xSrc, ySrc, widthSrc, heightSrc, blendFunction );
+
+        src.log_x      = xSrc;
+        src.log_y      = ySrc;
+        src.log_width  = widthSrc;
+        src.log_height = heightSrc;
+        src.layout     = GetLayout( src_dev->hdc );
+        dst.log_x      = xDst;
+        dst.log_y      = yDst;
+        dst.log_width  = widthDst;
+        dst.log_height = heightDst;
+        dst.layout     = GetLayout( dst_dev->hdc );
+        get_vis_rectangles( dcDst, &dst, dcSrc, &src );
+
+        TRACE("src %p log=%d,%d %dx%d phys=%d,%d %dx%d vis=%s  dst %p log=%d,%d %dx%d phys=%d,%d %dx%d vis=%s  blend=%02x/%02x/%02x/%02x\n",
+              hdcSrc, src.log_x, src.log_y, src.log_width, src.log_height,
+              src.x, src.y, src.width, src.height, wine_dbgstr_rect(&src.visrect),
+              hdcDst, dst.log_x, dst.log_y, dst.log_width, dst.log_height,
+              dst.x, dst.y, dst.width, dst.height, wine_dbgstr_rect(&dst.visrect),
+              blendFunction.BlendOp, blendFunction.BlendFlags,
+              blendFunction.SourceConstantAlpha, blendFunction.AlphaFormat );
+
+        ret = dst_dev->funcs->pAlphaBlend( dst_dev, &dst, src_dev, &src, blendFunction );
         release_dc_ptr( dcDst );
     }
     release_dc_ptr( dcSrc );

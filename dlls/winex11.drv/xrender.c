@@ -2208,8 +2208,8 @@ static void xrender_mono_blit( Picture src_pict, Picture mask_pict, Picture dst_
 /******************************************************************************
  * AlphaBlend
  */
-BOOL XRender_AlphaBlend( X11DRV_PDEVICE *devDst, X11DRV_PDEVICE *devSrc,
-                         struct bitblt_coords *dst, struct bitblt_coords *src, BLENDFUNCTION blendfn )
+BOOL XRender_AlphaBlend( X11DRV_PDEVICE *devDst, struct bitblt_coords *dst,
+                         X11DRV_PDEVICE *devSrc, struct bitblt_coords *src, BLENDFUNCTION blendfn )
 {
     Picture dst_pict, src_pict = 0, mask_pict = 0, tmp_pict = 0;
     struct xrender_info *src_info = get_xrender_info( devSrc );

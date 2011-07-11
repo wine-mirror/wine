@@ -318,9 +318,8 @@ static INT CDECL nulldrv_AbortDoc( PHYSDEV dev )
     return 0;
 }
 
-static BOOL CDECL nulldrv_AlphaBlend( PHYSDEV dst_dev, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
-                                      PHYSDEV src_dev, INT x_src, INT y_src, INT width_src, INT height_src,
-                                      BLENDFUNCTION func)
+static BOOL CDECL nulldrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                                      PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION func)
 {
     return TRUE;
 }
