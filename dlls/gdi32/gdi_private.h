@@ -439,6 +439,7 @@ extern BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, PHYSDEV physdev ) DECLSPEC_HIDDE
 extern INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp ) DECLSPEC_HIDDEN;
 
 /* clipping.c */
+extern int get_clip_box( DC *dc, RECT *rect ) DECLSPEC_HIDDEN;
 extern void CLIPPING_UpdateGCRegion( DC * dc ) DECLSPEC_HIDDEN;
 
 /* Return the total clip region (if any) */

@@ -53,6 +53,27 @@ static inline RECT get_clip_rect( DC * dc, int left, int top, int right, int bot
 }
 
 /***********************************************************************
+ *           get_clip_box
+ *
+ * Get the clipping rectangle in device coordinates.
+ */
+int get_clip_box( DC *dc, RECT *rect )
+{
+    int ret = ERROR;
+    HRGN rgn, clip = get_clip_region( dc );
+
+    if (!clip) return GetRgnBox( dc->hVisRgn, rect );
+
+    if ((rgn = CreateRectRgn( 0, 0, 0, 0 )))
+    {
+        CombineRgn( rgn, dc->hVisRgn, clip, RGN_AND );
+        ret = GetRgnBox( rgn, rect );
+        DeleteObject( rgn );
+    }
+    return ret;
+}
+
+/***********************************************************************
  *           CLIPPING_UpdateGCRegion
  *
  * Update the GC clip region when the ClipRgn or VisRgn have changed.
@@ -379,19 +400,11 @@ BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
 INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
 {
     INT ret;
-    HRGN clip;
     DC *dc = get_dc_ptr( hdc );
     if (!dc) return ERROR;
 
     update_dc( dc );
-    if ((clip = get_clip_region(dc)))
-    {
-        HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
-        CombineRgn( hrgn, dc->hVisRgn, clip, RGN_AND );
-        ret = GetRgnBox( hrgn, rect );
-        DeleteObject( hrgn );
-    }
-    else ret = GetRgnBox( dc->hVisRgn, rect );
+    ret = get_clip_box( dc, rect );
     if (dc->layout & LAYOUT_RTL)
     {
         int tmp = rect->left;
