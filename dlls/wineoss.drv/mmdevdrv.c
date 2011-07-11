@@ -2755,7 +2755,7 @@ static const IChannelAudioVolumeVtbl ChannelAudioVolume_Vtbl =
     ChannelAudioVolume_GetAllVolumes
 };
 
-HRESULT WINAPI AudioSessionManager_QueryInterface(IAudioSessionManager2 *iface,
+static HRESULT WINAPI AudioSessionManager_QueryInterface(IAudioSessionManager2 *iface,
         REFIID riid, void **ppv)
 {
     TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
@@ -2777,7 +2777,7 @@ HRESULT WINAPI AudioSessionManager_QueryInterface(IAudioSessionManager2 *iface,
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI AudioSessionManager_AddRef(IAudioSessionManager2 *iface)
+static ULONG WINAPI AudioSessionManager_AddRef(IAudioSessionManager2 *iface)
 {
     SessionMgr *This = impl_from_IAudioSessionManager2(iface);
     ULONG ref;
@@ -2786,7 +2786,7 @@ ULONG WINAPI AudioSessionManager_AddRef(IAudioSessionManager2 *iface)
     return ref;
 }
 
-ULONG WINAPI AudioSessionManager_Release(IAudioSessionManager2 *iface)
+static ULONG WINAPI AudioSessionManager_Release(IAudioSessionManager2 *iface)
 {
     SessionMgr *This = impl_from_IAudioSessionManager2(iface);
     ULONG ref;
@@ -2797,7 +2797,7 @@ ULONG WINAPI AudioSessionManager_Release(IAudioSessionManager2 *iface)
     return ref;
 }
 
-HRESULT WINAPI AudioSessionManager_GetAudioSessionControl(
+static HRESULT WINAPI AudioSessionManager_GetAudioSessionControl(
         IAudioSessionManager2 *iface, const GUID *session_guid, DWORD flags,
         IAudioSessionControl **out)
 {
@@ -2824,7 +2824,7 @@ HRESULT WINAPI AudioSessionManager_GetAudioSessionControl(
     return S_OK;
 }
 
-HRESULT WINAPI AudioSessionManager_GetSimpleAudioVolume(
+static HRESULT WINAPI AudioSessionManager_GetSimpleAudioVolume(
         IAudioSessionManager2 *iface, const GUID *session_guid, DWORD flags,
         ISimpleAudioVolume **out)
 {
@@ -2851,7 +2851,7 @@ HRESULT WINAPI AudioSessionManager_GetSimpleAudioVolume(
     return S_OK;
 }
 
-HRESULT WINAPI AudioSessionManager_GetSessionEnumerator(
+static HRESULT WINAPI AudioSessionManager_GetSessionEnumerator(
         IAudioSessionManager2 *iface, IAudioSessionEnumerator **out)
 {
     SessionMgr *This = impl_from_IAudioSessionManager2(iface);
@@ -2859,7 +2859,7 @@ HRESULT WINAPI AudioSessionManager_GetSessionEnumerator(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI AudioSessionManager_RegisterSessionNotification(
+static HRESULT WINAPI AudioSessionManager_RegisterSessionNotification(
         IAudioSessionManager2 *iface, IAudioSessionNotification *notification)
 {
     SessionMgr *This = impl_from_IAudioSessionManager2(iface);
@@ -2867,7 +2867,7 @@ HRESULT WINAPI AudioSessionManager_RegisterSessionNotification(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI AudioSessionManager_UnregisterSessionNotification(
+static HRESULT WINAPI AudioSessionManager_UnregisterSessionNotification(
         IAudioSessionManager2 *iface, IAudioSessionNotification *notification)
 {
     SessionMgr *This = impl_from_IAudioSessionManager2(iface);
@@ -2875,7 +2875,7 @@ HRESULT WINAPI AudioSessionManager_UnregisterSessionNotification(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI AudioSessionManager_RegisterDuckNotification(
+static HRESULT WINAPI AudioSessionManager_RegisterDuckNotification(
         IAudioSessionManager2 *iface, const WCHAR *session_id,
         IAudioVolumeDuckNotification *notification)
 {
@@ -2884,7 +2884,7 @@ HRESULT WINAPI AudioSessionManager_RegisterDuckNotification(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI AudioSessionManager_UnregisterDuckNotification(
+static HRESULT WINAPI AudioSessionManager_UnregisterDuckNotification(
         IAudioSessionManager2 *iface,
         IAudioVolumeDuckNotification *notification)
 {
