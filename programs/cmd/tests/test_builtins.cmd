@@ -192,6 +192,38 @@ rmdir bar
 cd ..
 rmdir foo
 echo %ErrorLevel%
+rem Trailing backslashes
+mkdir foo\\\\
+echo %ErrorLevel%
+if exist foo (rmdir foo && echo dir created
+) else ( echo dir not created )
+echo %ErrorLevel%
+rem Invalid chars
+mkdir ?
+echo %ErrorLevel%
+call :setError 0
+mkdir ?\foo
+echo %ErrorLevel%
+call :setError 0
+mkdir foo\?
+echo %ErrorLevel%
+if exist foo (rmdir foo && echo ok, foo created
+) else ( echo foo not created )
+call :setError 0
+mkdir foo\bar\?
+echo %ErrorLevel%
+call :setError 0
+if not exist foo (
+    echo bad, foo not created
+) else (
+    cd foo
+    if exist bar (
+        echo ok, foo\bar created
+        rmdir bar
+    )
+    cd ..
+    rmdir foo
+)
 
 echo -----------Testing Errorlevel-----------
 rem nt 4.0 doesn't really support a way of setting errorlevel, so this is weak
