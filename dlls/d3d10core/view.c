@@ -294,7 +294,7 @@ HRESULT d3d10_depthstencil_view_init(struct d3d10_depthstencil_view *view)
 
 static inline struct d3d10_rendertarget_view *impl_from_ID3D10RenderTargetView(ID3D10RenderTargetView *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d10_rendertarget_view, vtbl);
+    return CONTAINING_RECORD(iface, struct d3d10_rendertarget_view, ID3D10RenderTargetView_iface);
 }
 
 /* IUnknown methods */
@@ -322,7 +322,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_rendertarget_view_QueryInterface(ID3D10Re
 
 static ULONG STDMETHODCALLTYPE d3d10_rendertarget_view_AddRef(ID3D10RenderTargetView *iface)
 {
-    struct d3d10_rendertarget_view *This = (struct d3d10_rendertarget_view *)iface;
+    struct d3d10_rendertarget_view *This = impl_from_ID3D10RenderTargetView(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -332,7 +332,7 @@ static ULONG STDMETHODCALLTYPE d3d10_rendertarget_view_AddRef(ID3D10RenderTarget
 
 static ULONG STDMETHODCALLTYPE d3d10_rendertarget_view_Release(ID3D10RenderTargetView *iface)
 {
-    struct d3d10_rendertarget_view *This = (struct d3d10_rendertarget_view *)iface;
+    struct d3d10_rendertarget_view *This = impl_from_ID3D10RenderTargetView(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -384,7 +384,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_rendertarget_view_SetPrivateDataInterface
 static void STDMETHODCALLTYPE d3d10_rendertarget_view_GetResource(ID3D10RenderTargetView *iface,
         ID3D10Resource **resource)
 {
-    struct d3d10_rendertarget_view *This = (struct d3d10_rendertarget_view *)iface;
+    struct d3d10_rendertarget_view *This = impl_from_ID3D10RenderTargetView(iface);
     struct wined3d_resource *wined3d_resource;
     IUnknown *parent;
     HRESULT hr;
@@ -414,7 +414,7 @@ static void STDMETHODCALLTYPE d3d10_rendertarget_view_GetResource(ID3D10RenderTa
 static void STDMETHODCALLTYPE d3d10_rendertarget_view_GetDesc(ID3D10RenderTargetView *iface,
         D3D10_RENDER_TARGET_VIEW_DESC *desc)
 {
-    struct d3d10_rendertarget_view *This = (struct d3d10_rendertarget_view *)iface;
+    struct d3d10_rendertarget_view *This = impl_from_ID3D10RenderTargetView(iface);
 
     TRACE("iface %p, desc %p\n", iface, desc);
 
@@ -444,7 +444,7 @@ HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view,
     struct wined3d_resource *wined3d_resource;
     HRESULT hr;
 
-    view->vtbl = &d3d10_rendertarget_view_vtbl;
+    view->ID3D10RenderTargetView_iface.lpVtbl = &d3d10_rendertarget_view_vtbl;
     view->refcount = 1;
 
     if (!desc)

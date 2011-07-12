@@ -132,7 +132,7 @@ HRESULT d3d10_depthstencil_view_init(struct d3d10_depthstencil_view *view) DECLS
 /* ID3D10RenderTargetView */
 struct d3d10_rendertarget_view
 {
-    const struct ID3D10RenderTargetViewVtbl *vtbl;
+    ID3D10RenderTargetView ID3D10RenderTargetView_iface;
     LONG refcount;
 
     struct wined3d_rendertarget_view *wined3d_view;

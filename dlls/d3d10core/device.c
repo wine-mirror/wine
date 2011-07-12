@@ -782,7 +782,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRenderTargetView(ID3D10Devic
     }
 
     TRACE("Created rendertarget view %p.\n", object);
-    *view = (ID3D10RenderTargetView *)object;
+    *view = &object->ID3D10RenderTargetView_iface;
 
     return S_OK;
 }
