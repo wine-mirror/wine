@@ -35,6 +35,7 @@
 # include <libxml/parser.h>
 # include <libxml/parserInternals.h>
 # include <libxml/xmlIO.h>
+# include <libxml/xmlversion.h>
 #endif
 
 #include "windef.h"
@@ -624,7 +625,15 @@ HRESULT dt_validate(XDR_DT dt, xmlChar const* content)
         case DT_UI8:
         case DT_URI:
         case DT_UUID:
-            assert(datatypes_schema != NULL);
+            if (!datatypes_schema)
+            {
+                ERR("failed to load schema for urn:schemas-microsoft-com:datatypes, "
+                    "you're probably using an old version of libxml2: " LIBXML_DOTTED_VERSION "\n");
+
+                /* Hopefully they don't need much in the way of XDR datatypes support... */
+                return S_OK;
+            }
+
             if (content && xmlStrlen(content))
             {
                 tmp_doc = xmlNewDoc(NULL);
