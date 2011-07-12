@@ -78,6 +78,7 @@ typedef struct
     int bit_count, width, height;
     int stride; /* stride in bytes.  Will be -ve for bottom-up dibs (see bits). */
     void *bits; /* points to the top-left corner of the dib. */
+    void *ptr_to_free;
 
     DWORD red_mask, green_mask, blue_mask;
     int red_shift, green_shift, blue_shift;

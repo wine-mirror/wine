@@ -60,7 +60,7 @@ extern void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor) DEC
 extern void update_brush_rop( dibdrv_physdev *pdev, INT rop ) DECLSPEC_HIDDEN;
 extern void reset_dash_origin(dibdrv_physdev *pdev) DECLSPEC_HIDDEN;
 extern BOOL init_dib_info_from_packed(dib_info *dib, const BITMAPINFOHEADER *bi, WORD usage, HPALETTE pal) DECLSPEC_HIDDEN;
-extern void free_dib_info(dib_info *dib, BOOL free_bits) DECLSPEC_HIDDEN;
+extern void free_dib_info(dib_info *dib) DECLSPEC_HIDDEN;
 extern void free_pattern_brush(dibdrv_physdev *pdev) DECLSPEC_HIDDEN;
 extern void copy_dib_color_info(dib_info *dst, const dib_info *src) DECLSPEC_HIDDEN;
 extern BOOL convert_dib(dib_info *dst, const dib_info *src) DECLSPEC_HIDDEN;

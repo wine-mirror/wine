@@ -1072,7 +1072,7 @@ static void free_pattern_brush_bits( dibdrv_physdev *pdev )
 void free_pattern_brush( dibdrv_physdev *pdev )
 {
     free_pattern_brush_bits( pdev );
-    free_dib_info( &pdev->brush_dib, TRUE );
+    free_dib_info( &pdev->brush_dib );
 }
 
 static BOOL create_pattern_brush_bits(dibdrv_physdev *pdev)
@@ -1295,7 +1295,7 @@ HBRUSH CDECL dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
                 pdev->brush_rects = pattern_brush;
                 pdev->defer &= ~DEFER_BRUSH;
             }
-            free_dib_info(&orig_dib, FALSE);
+            free_dib_info(&orig_dib);
         }
         GlobalUnlock((HGLOBAL)logbrush.lbHatch);
         break;

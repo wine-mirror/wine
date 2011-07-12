@@ -74,6 +74,7 @@ static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
     dib->height    = bi->biHeight;
     dib->stride    = ((dib->width * dib->bit_count + 31) >> 3) & ~3;
     dib->bits      = bits;
+    dib->ptr_to_free = NULL;
 
     if(dib->height < 0) /* top-down */
     {
@@ -197,6 +198,7 @@ static void clear_dib_info(dib_info *dib)
 {
     dib->color_table = NULL;
     dib->bits = NULL;
+    dib->ptr_to_free = NULL;
 }
 
 /**********************************************************************
@@ -204,15 +206,14 @@ static void clear_dib_info(dib_info *dib)
  *
  * Free the resources associated with a dib and optionally the bits
  */
-void free_dib_info(dib_info *dib, BOOL free_bits)
+void free_dib_info(dib_info *dib)
 {
     HeapFree(GetProcessHeap(), 0, dib->color_table);
     dib->color_table = NULL;
-    if(free_bits)
-    {
-        HeapFree(GetProcessHeap(), 0, dib->bits);
-        dib->bits = NULL;
-    }
+
+    HeapFree(GetProcessHeap(), 0, dib->ptr_to_free);
+    dib->ptr_to_free = NULL;
+    dib->bits = NULL;
 }
 
 void copy_dib_color_info(dib_info *dst, const dib_info *src)
@@ -254,7 +255,7 @@ BOOL convert_dib(dib_info *dst, const dib_info *src)
     dst->height = src->height;
     dst->width = src->width;
     dst->stride = ((dst->width * dst->bit_count + 31) >> 3) & ~3;
-    dst->bits = HeapAlloc(GetProcessHeap(), 0, dst->height * dst->stride);
+    dst->ptr_to_free = dst->bits = HeapAlloc(GetProcessHeap(), 0, dst->height * dst->stride);
 
     src_rect.left = src_rect.top = 0;
     src_rect.right = src->width;
@@ -262,7 +263,7 @@ BOOL convert_dib(dib_info *dst, const dib_info *src)
 
     ret = dst->funcs->convert_to(dst, src, &src_rect);
 
-    if(!ret) free_dib_info(dst, TRUE);
+    if(!ret) free_dib_info(dst);
     return ret;
 }
 
@@ -289,7 +290,7 @@ static BOOL CDECL dibdrv_DeleteDC( PHYSDEV dev )
     TRACE("(%p)\n", dev);
     DeleteObject(pdev->clip);
     free_pattern_brush(pdev);
-    free_dib_info(&pdev->dib, FALSE);
+    free_dib_info(&pdev->dib);
     return 0;
 }
 
