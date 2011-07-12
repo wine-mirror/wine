@@ -103,7 +103,7 @@ static HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEME
 
 static inline struct d3d10_input_layout *impl_from_ID3D10InputLayout(ID3D10InputLayout *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d10_input_layout, vtbl);
+    return CONTAINING_RECORD(iface, struct d3d10_input_layout, ID3D10InputLayout_iface);
 }
 
 /* IUnknown methods */
@@ -130,7 +130,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_input_layout_QueryInterface(ID3D10InputLa
 
 static ULONG STDMETHODCALLTYPE d3d10_input_layout_AddRef(ID3D10InputLayout *iface)
 {
-    struct d3d10_input_layout *This = (struct d3d10_input_layout *)iface;
+    struct d3d10_input_layout *This = impl_from_ID3D10InputLayout(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -145,7 +145,7 @@ static ULONG STDMETHODCALLTYPE d3d10_input_layout_AddRef(ID3D10InputLayout *ifac
 
 static ULONG STDMETHODCALLTYPE d3d10_input_layout_Release(ID3D10InputLayout *iface)
 {
-    struct d3d10_input_layout *This = (struct d3d10_input_layout *)iface;
+    struct d3d10_input_layout *This = impl_from_ID3D10InputLayout(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -222,7 +222,7 @@ HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d10_
     UINT wined3d_element_count;
     HRESULT hr;
 
-    layout->vtbl = &d3d10_input_layout_vtbl;
+    layout->ID3D10InputLayout_iface.lpVtbl = &d3d10_input_layout_vtbl;
     layout->refcount = 1;
 
     hr = d3d10_input_layout_to_wined3d_declaration(element_descs, element_count,

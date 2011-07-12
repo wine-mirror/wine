@@ -848,7 +848,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateInputLayout(ID3D10Device *if
     }
 
     TRACE("Created input layout %p.\n", object);
-    *input_layout = (ID3D10InputLayout *)object;
+    *input_layout = &object->ID3D10InputLayout_iface;
 
     return S_OK;
 }
