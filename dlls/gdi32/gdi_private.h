@@ -73,6 +73,11 @@ typedef struct tagGDIOBJHDR
 
 /* Device functions for the Wine driver interface */
 
+enum dib_info_flags
+{
+    private_color_table = 1
+};
+
 typedef struct
 {
     int bit_count, width, height;
@@ -86,6 +91,8 @@ typedef struct
 
     RGBQUAD *color_table;
     DWORD color_table_size;
+
+    enum dib_info_flags flags;
 
     const struct primitive_funcs *funcs;
 } dib_info;

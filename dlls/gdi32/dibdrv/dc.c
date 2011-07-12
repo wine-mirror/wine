@@ -64,7 +64,7 @@ static void init_bit_fields(dib_info *dib, const DWORD *bit_fields)
 }
 
 static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit_fields,
-                          RGBQUAD *color_table, int color_table_size, void *bits)
+                          RGBQUAD *color_table, int color_table_size, void *bits, enum dib_info_flags flags)
 {
     static const DWORD bit_fields_888[3] = {0xff0000, 0x00ff00, 0x0000ff};
     static const DWORD bit_fields_555[3] = {0x7c00, 0x03e0, 0x001f};
@@ -75,6 +75,7 @@ static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
     dib->stride    = ((dib->width * dib->bit_count + 31) >> 3) & ~3;
     dib->bits      = bits;
     dib->ptr_to_free = NULL;
+    dib->flags     = flags;
 
     if(dib->height < 0) /* top-down */
     {
@@ -138,10 +139,15 @@ static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
 
     if(color_table)
     {
-        dib->color_table = HeapAlloc(GetProcessHeap(), 0, color_table_size * sizeof(dib->color_table[0]));
-        if(!dib->color_table) return FALSE;
+        if (flags & private_color_table)
+        {
+            dib->color_table = HeapAlloc(GetProcessHeap(), 0, color_table_size * sizeof(dib->color_table[0]));
+            if(!dib->color_table) return FALSE;
+            memcpy(dib->color_table, color_table, color_table_size * sizeof(color_table[0]));
+        }
+        else
+            dib->color_table = color_table;
         dib->color_table_size = color_table_size;
-        memcpy(dib->color_table, color_table, color_table_size * sizeof(color_table[0]));
     }
     else
     {
@@ -191,7 +197,7 @@ BOOL init_dib_info_from_packed(dib_info *dib, const BITMAPINFOHEADER *bi, WORD u
         }
     }
 
-    return init_dib_info(dib, bi, masks, color_table, num_colors, ptr);
+    return init_dib_info(dib, bi, masks, color_table, num_colors, ptr, private_color_table);
 }
 
 static void clear_dib_info(dib_info *dib)
@@ -208,7 +214,8 @@ static void clear_dib_info(dib_info *dib)
  */
 void free_dib_info(dib_info *dib)
 {
-    HeapFree(GetProcessHeap(), 0, dib->color_table);
+    if (dib->flags & private_color_table)
+        HeapFree(GetProcessHeap(), 0, dib->color_table);
     dib->color_table = NULL;
 
     HeapFree(GetProcessHeap(), 0, dib->ptr_to_free);
@@ -231,11 +238,17 @@ void copy_dib_color_info(dib_info *dst, const dib_info *src)
     dst->funcs            = src->funcs;
     dst->color_table_size = src->color_table_size;
     dst->color_table      = NULL;
+    dst->flags            = src->flags;
     if(dst->color_table_size)
     {
         int size = dst->color_table_size * sizeof(dst->color_table[0]);
-        dst->color_table = HeapAlloc(GetProcessHeap(), 0, size);
-        memcpy(dst->color_table, src->color_table, size);
+        if (dst->flags & private_color_table)
+        {
+            dst->color_table = HeapAlloc(GetProcessHeap(), 0, size);
+            memcpy(dst->color_table, src->color_table, size);
+        }
+        else
+            dst->color_table = src->color_table;
     }
 }
 
@@ -315,7 +328,7 @@ static HBITMAP CDECL dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
     pdev->brush_and_bits = pdev->brush_xor_bits = NULL;
 
     if(!init_dib_info(&pdev->dib, &bmp->dib->dsBmih, bmp->dib->dsBitfields,
-                      bmp->color_table, bmp->nb_colors, bmp->dib->dsBm.bmBits))
+                      bmp->color_table, bmp->nb_colors, bmp->dib->dsBm.bmBits, private_color_table))
         pdev->defer |= DEFER_FORMAT;
 
     GDI_ReleaseObj( bitmap );
