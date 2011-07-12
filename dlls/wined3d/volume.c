@@ -89,7 +89,7 @@ void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture 
 }
 
 /* Context activation is done by the caller. */
-void volume_load(struct wined3d_volume *volume, UINT level, BOOL srgb_mode)
+void volume_load(const struct wined3d_volume *volume, UINT level, BOOL srgb_mode)
 {
     const struct wined3d_gl_info *gl_info = &volume->resource.device->adapter->gl_info;
     const struct wined3d_format *format = volume->resource.format;

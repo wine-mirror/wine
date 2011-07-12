@@ -1920,7 +1920,7 @@ static inline struct wined3d_volume *volume_from_resource(struct wined3d_resourc
 }
 
 void volume_add_dirty_box(struct wined3d_volume *volume, const WINED3DBOX *dirty_box) DECLSPEC_HIDDEN;
-void volume_load(struct wined3d_volume *volume, UINT level, BOOL srgb_mode) DECLSPEC_HIDDEN;
+void volume_load(const struct wined3d_volume *volume, UINT level, BOOL srgb_mode) DECLSPEC_HIDDEN;
 void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture *container) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
