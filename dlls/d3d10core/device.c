@@ -192,11 +192,12 @@ static void STDMETHODCALLTYPE d3d10_device_IASetInputLayout(ID3D10Device *iface,
         ID3D10InputLayout *input_layout)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
+    struct d3d10_input_layout *layout = unsafe_impl_from_ID3D10InputLayout(input_layout);
 
     TRACE("iface %p, input_layout %p\n", iface, input_layout);
 
     wined3d_device_set_vertex_declaration(This->wined3d_device,
-            input_layout ? ((struct d3d10_input_layout *)input_layout)->wined3d_decl : NULL);
+            layout ? layout->wined3d_decl : NULL);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_IASetVertexBuffers(ID3D10Device *iface, UINT start_slot,
