@@ -426,6 +426,66 @@ HRESULT WINAPI JoystickAGenericImpl_GetDeviceState(LPDIRECTINPUTDEVICE8A iface, 
     return JoystickWGenericImpl_GetDeviceState(IDirectInputDevice8W_from_impl(This), len, ptr);
 }
 
+
+HRESULT WINAPI JoystickWGenericImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W iface,
+                                                   LPDIACTIONFORMATW lpdiaf,
+                                                   LPCWSTR lpszUserName,
+                                                   DWORD dwFlags)
+{
+    FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
+
+    return DI_NOEFFECT;
+}
+
+HRESULT WINAPI JoystickAGenericImpl_BuildActionMap(LPDIRECTINPUTDEVICE8A iface,
+                                                   LPDIACTIONFORMATA lpdiaf,
+                                                   LPCSTR lpszUserName,
+                                                   DWORD dwFlags)
+{
+    JoystickGenericImpl *This = impl_from_IDirectInputDevice8A(iface);
+    DIACTIONFORMATW diafW;
+    HRESULT hr;
+
+    diafW.rgoAction = HeapAlloc(GetProcessHeap(), 0, sizeof(DIACTIONW)*lpdiaf->dwNumActions);
+    _copy_diactionformatAtoW(&diafW, lpdiaf);
+
+    hr = JoystickWGenericImpl_BuildActionMap(&This->base.IDirectInputDevice8W_iface, &diafW, NULL, dwFlags);
+
+    _copy_diactionformatWtoA(lpdiaf, &diafW);
+    HeapFree(GetProcessHeap(), 0, diafW.rgoAction);
+
+    return hr;
+}
+
+HRESULT WINAPI JoystickWGenericImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
+                                                 LPDIACTIONFORMATW lpdiaf,
+                                                 LPCWSTR lpszUserName,
+                                                 DWORD dwFlags)
+{
+    FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
+
+    return DI_NOEFFECT;
+}
+
+HRESULT WINAPI JoystickAGenericImpl_SetActionMap(LPDIRECTINPUTDEVICE8A iface,
+                                                 LPDIACTIONFORMATA lpdiaf,
+                                                 LPCSTR lpszUserName,
+                                                 DWORD dwFlags)
+{
+    JoystickGenericImpl *This = impl_from_IDirectInputDevice8A(iface);
+    DIACTIONFORMATW diafW;
+    HRESULT hr;
+
+    diafW.rgoAction = HeapAlloc(GetProcessHeap(), 0, sizeof(DIACTIONW)*lpdiaf->dwNumActions);
+    _copy_diactionformatAtoW(&diafW, lpdiaf);
+
+    hr = JoystickWGenericImpl_SetActionMap(&This->base.IDirectInputDevice8W_iface, &diafW, NULL, dwFlags);
+
+    HeapFree(GetProcessHeap(), 0, diafW.rgoAction);
+
+    return hr;
+}
+
 /*
  * This maps the read value (from the input event) to a value in the
  * 'wanted' range.

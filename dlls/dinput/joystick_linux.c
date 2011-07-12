@@ -682,8 +682,8 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 	IDirectInputDevice2AImpl_SendDeviceData,
 	IDirectInputDevice7AImpl_EnumEffectsInFile,
 	IDirectInputDevice7AImpl_WriteEffectToFile,
-	IDirectInputDevice8AImpl_BuildActionMap,
-	IDirectInputDevice8AImpl_SetActionMap,
+	JoystickAGenericImpl_BuildActionMap,
+	JoystickAGenericImpl_SetActionMap,
 	IDirectInputDevice8AImpl_GetImageInfo
 };
 
@@ -718,8 +718,8 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
     IDirectInputDevice2WImpl_SendDeviceData,
     IDirectInputDevice7WImpl_EnumEffectsInFile,
     IDirectInputDevice7WImpl_WriteEffectToFile,
-    IDirectInputDevice8WImpl_BuildActionMap,
-    IDirectInputDevice8WImpl_SetActionMap,
+    JoystickWGenericImpl_BuildActionMap,
+    JoystickWGenericImpl_SetActionMap,
     IDirectInputDevice8WImpl_GetImageInfo
 };
 
