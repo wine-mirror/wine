@@ -29,7 +29,7 @@
 @ stub DsGetDomainControllerInfoA
 @ stub DsGetDomainControllerInfoW
 @ stub DsGetRdnW
-@ stub DsGetSpnA
+@ stdcall DsGetSpnA(long str str long long ptr ptr ptr ptr)
 @ stub DsGetSpnW
 @ stub DsInheritSecurityIdentityA
 @ stub DsInheritSecurityIdentityW

@@ -150,3 +150,18 @@ DWORD WINAPI DsMakeSpnA(LPCSTR svc_class, LPCSTR svc_name,
 
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ *             DsMakeSpnA (NTDSAPI.@)
+ */
+DWORD WINAPI DsGetSpnA(DS_SPN_NAME_TYPE ServType, LPCSTR Servlass, LPCSTR ServName,
+                       USHORT InstPort, USHORT nInstanceNames,
+                       LPCSTR *pInstanceNames, const USHORT *pInstancePorts,
+                       DWORD *pSpn, LPSTR **pszSpn)
+{
+    FIXME("(%d,%s,%s,%d,%d,%p,%p,%p,%p): stub!\n", ServType,
+            debugstr_a(Servlass), debugstr_a(ServName), InstPort,
+            nInstanceNames, pInstanceNames, pInstancePorts, pSpn, pszSpn);
+
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}

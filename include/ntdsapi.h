@@ -29,6 +29,16 @@ DWORD WINAPI DsMakeSpnA(LPCSTR, LPCSTR, LPCSTR, USHORT, LPCSTR, DWORD*, LPSTR);
 DWORD WINAPI DsMakeSpnW(LPCWSTR, LPCWSTR, LPCWSTR, USHORT, LPCWSTR, DWORD*, LPWSTR);
 #define DsMakeSpn WINELIB_NAME_AW(DsMakeSpn)
 
+typedef enum
+{
+    DS_SPN_DNS_HOST    = 0,
+    DS_SPN_DN_HOST     = 1,
+    DS_SPN_NB_HOST     = 2,
+    DS_SPN_DOMAIN      = 3,
+    DS_SPN_NB_DOMAIN   = 4,
+    DS_SPN_SERVICE     = 5
+} DS_SPN_NAME_TYPE;
+
 #ifdef __cplusplus
 }
 #endif
