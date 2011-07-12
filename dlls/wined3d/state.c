@@ -4047,9 +4047,8 @@ static inline void unload_numbered_array(struct wined3d_context *context, int i)
 }
 
 /* This should match any arrays loaded in loadNumberedArrays
- * TODO: Only load / unload arrays if we have to.
- */
-static inline void unloadNumberedArrays(struct wined3d_context *context)
+ * TODO: Only load / unload arrays if we have to. */
+static void unload_numbered_arrays(struct wined3d_context *context)
 {
     /* disable any attribs (this is the same for both GLSL and ARB modes) */
     GLint maxAttribs = 16;
@@ -4065,16 +4064,17 @@ static inline void unloadNumberedArrays(struct wined3d_context *context)
     }
 }
 
-static void loadNumberedArrays(struct wined3d_stateblock *stateblock,
-        const struct wined3d_stream_info *stream_info, struct wined3d_context *context)
+static void load_numbered_arrays(struct wined3d_context *context,
+        const struct wined3d_stream_info *stream_info, const struct wined3d_state *state)
 {
+    struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLuint curVBO = gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] ? ~0U : 0;
     int i;
     struct wined3d_buffer *vb;
 
     /* Default to no instancing */
-    stateblock->device->instancedDraw = FALSE;
+    device->instancedDraw = FALSE;
 
     for (i = 0; i < MAX_ATTRIBS; i++)
     {
@@ -4086,13 +4086,13 @@ static void loadNumberedArrays(struct wined3d_stateblock *stateblock,
             continue;
         }
 
-        stream = &stateblock->state.streams[stream_info->elements[i].stream_idx];
+        stream = &state->streams[stream_info->elements[i].stream_idx];
 
         /* Do not load instance data. It will be specified using glTexCoord by drawprim */
         if (stream->flags & WINED3DSTREAMSOURCE_INSTANCEDATA)
         {
             if (context->numbered_array_mask & (1 << i)) unload_numbered_array(context, i);
-            stateblock->device->instancedDraw = TRUE;
+            device->instancedDraw = TRUE;
             continue;
         }
 
@@ -4115,7 +4115,7 @@ static void loadNumberedArrays(struct wined3d_stateblock *stateblock,
                     stream_info->elements[i].format->gl_vtx_type,
                     stream_info->elements[i].format->gl_normalized,
                     stream_info->elements[i].stride, stream_info->elements[i].data.addr
-                    + stateblock->state.load_base_vertex_index * stream_info->elements[i].stride
+                    + state->load_base_vertex_index * stream_info->elements[i].stride
                     + stream->offset));
 
             if (!(context->numbered_array_mask & (1 << i)))
@@ -4500,7 +4500,7 @@ static void streamsrc(DWORD state, struct wined3d_stateblock *stateblock, struct
     if (isStateDirty(context, STATE_VDECL)) return;
     if (context->numberedArraysLoaded && !load_numbered)
     {
-        unloadNumberedArrays(context);
+        unload_numbered_arrays(context);
         context->numberedArraysLoaded = FALSE;
         context->numbered_array_mask = 0;
     }
@@ -4513,7 +4513,7 @@ static void streamsrc(DWORD state, struct wined3d_stateblock *stateblock, struct
     if (load_numbered)
     {
         TRACE("Loading numbered arrays\n");
-        loadNumberedArrays(stateblock, &device->strided_streams, context);
+        load_numbered_arrays(context, &device->strided_streams, &stateblock->state);
         context->numberedArraysLoaded = TRUE;
     }
     else if (load_named)
