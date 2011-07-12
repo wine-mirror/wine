@@ -25,7 +25,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 
 /* Context activation is done by the caller. */
-static void volume_bind_and_dirtify(struct wined3d_volume *volume, const struct wined3d_gl_info *gl_info)
+static void volume_bind_and_dirtify(const struct wined3d_volume *volume, const struct wined3d_gl_info *gl_info)
 {
     struct wined3d_texture *container = volume->container;
     DWORD active_sampler;
