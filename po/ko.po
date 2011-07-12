@@ -6361,7 +6361,7 @@ msgstr "복구(&R)"
 
 #: shell32.rc:83
 msgid "&Erase"
-msgstr ""
+msgstr "지우기(&E)"
 
 #: shell32.rc:95
 msgid "E&xplore"
@@ -6742,44 +6742,38 @@ msgid "There is no Windows program configured to open this type of file."
 msgstr "이 형식의 파일을 도록 구성된 윈도우 프로그램이 없습니다."
 
 #: shell32.rc:255
-#, fuzzy
 msgid "Are you sure you wish to permanently delete '%1'?"
-msgstr "당신은  '%1'을 지우기를 바랍니까?"
+msgstr "당신은  '%1'을 완전히 지우기를 바랍니까?"
 
 #: shell32.rc:256
-#, fuzzy
 msgid "Are you sure you wish to permanently delete these %1 items?"
-msgstr "당신은 %1 아이템(들)을 지우기를 바랍니까?"
+msgstr "당신은 %1 아이템(들)을 완전히 지우기를 바랍니까?"
 
 #: shell32.rc:257
-#, fuzzy
 msgid "Confirm deletion"
-msgstr "파일 지우기 확인"
+msgstr "삭제 확인"
 
 #: shell32.rc:258
-#, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"파일은 이미 존재합니다.\n"
-"덮어쓰겠습니까?"
+"경로 %1에 파일은 이미 존재합니다.\n"
+"바꾸기를 원합니까?"
 
 #: shell32.rc:259
-#, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"파일은 이미 존재합니다.\n"
-"덮어쓰겠습니까?"
+"경로 %1에 폴더 이미 존재합니다.\n"
+"바꾸기를 원합니까?"
 
 #: shell32.rc:260
-#, fuzzy
 msgid "Confirm overwrite"
-msgstr "파일 덮어쓰기 확인"
+msgstr "덮어쓰기 확인"
 
 #: shell32.rc:277
 msgid ""
@@ -8419,9 +8413,8 @@ msgid "Wine Explorer"
 msgstr "Wine 탐색기"
 
 #: explorer.rc:29
-#, fuzzy
 msgid "Location:"
-msgstr "랜 연결"
+msgstr "위치:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
@@ -9515,7 +9508,6 @@ msgid "Exports selected branch of the registry to a text file"
 msgstr "레지스트리의 선택된 부분을 텍스트 파일로 내보내기"
 
 #: start.rc:46
-#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9539,7 +9531,7 @@ msgid ""
 "This is free software, and you are welcome to redistribute it\n"
 "under certain conditions; run 'start /L' for details.\n"
 msgstr ""
-"풀그림을 실행시키거나 보통 파일에 첨가해서 사용되는  풀그림으로 문서 열기\n"
+"풀그림을 실행시키거나 보통 파일에서 사용되는  풀그림으로 문서 열기\n"
 "Usage:\n"
 "start [옵션] 풀그림이나 파일 이름 [...]\n"
 "start [옵션] 문서 파일 이름\n"
