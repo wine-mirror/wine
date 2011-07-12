@@ -63,6 +63,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -443,6 +444,59 @@ static const DWORD bit_fields_888[3] = {0xff0000, 0x00ff00, 0x0000ff};
 static const DWORD bit_fields_565[3] = {0xf800, 0x07e0, 0x001f};
 static const DWORD bit_fields_555[3] = {0x7c00, 0x03e0, 0x001f};
 
+
+/************************************************************************
+ *      copy_color_info
+ *
+ * Copy BITMAPINFO color information where dst may be a BITMAPCOREINFO.
+ */
+static void copy_color_info(BITMAPINFO *dst, const BITMAPINFO *src, UINT coloruse)
+{
+    unsigned int colors = src->bmiHeader.biBitCount > 8 ? 0 : 1 << src->bmiHeader.biBitCount;
+    RGBQUAD *src_colors = (RGBQUAD *)((char *)src + src->bmiHeader.biSize);
+
+    assert( src->bmiHeader.biSize >= sizeof(BITMAPINFOHEADER) );
+
+    if (src->bmiHeader.biClrUsed) colors = src->bmiHeader.biClrUsed;
+
+    if (dst->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
+    {
+        BITMAPCOREINFO *core = (BITMAPCOREINFO *)dst;
+        if (coloruse == DIB_PAL_COLORS)
+            memcpy( core->bmciColors, src_colors, colors * sizeof(WORD) );
+        else
+        {
+            unsigned int i;
+            for (i = 0; i < colors; i++)
+            {
+                core->bmciColors[i].rgbtRed   = src_colors[i].rgbRed;
+                core->bmciColors[i].rgbtGreen = src_colors[i].rgbGreen;
+                core->bmciColors[i].rgbtBlue  = src_colors[i].rgbBlue;
+            }
+        }
+    }
+    else
+    {
+        dst->bmiHeader.biClrUsed   = src->bmiHeader.biClrUsed;
+        dst->bmiHeader.biSizeImage = src->bmiHeader.biSizeImage;
+
+        if (src->bmiHeader.biCompression == BI_BITFIELDS)
+            /* bitfields are always at bmiColors even in larger structures */
+            memcpy( dst->bmiColors, src->bmiColors, 3 * sizeof(DWORD) );
+        else if (colors)
+        {
+            void *colorptr = (char *)dst + dst->bmiHeader.biSize;
+            unsigned int size;
+
+            if (coloruse == DIB_PAL_COLORS)
+                size = colors * sizeof(WORD);
+            else
+                size = colors * sizeof(RGBQUAD);
+            memcpy( colorptr, src_colors, size );
+        }
+    }
+}
+
 /******************************************************************************
  * GetDIBits [GDI32.@]
  *
@@ -470,9 +524,8 @@ INT WINAPI GetDIBits(
     LONG height;
     WORD planes, bpp;
     DWORD compr, size;
-    void* colorPtr;
-    RGBQUAD quad_buf[256];
-    RGBQUAD* rgbQuads = quad_buf;
+    char dst_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *dst_info = (BITMAPINFO *)dst_bmibuf;
 
     if (!info) return 0;
 
@@ -495,14 +548,9 @@ INT WINAPI GetDIBits(
 	return 0;
     }
 
-    colorPtr = (LPBYTE) info + (WORD) info->bmiHeader.biSize;
-    if(!core_header) rgbQuads = colorPtr;
 
-    /* Transfer color info */
-
-    switch (bpp)
+    if (bpp == 0) /* query bitmap info only */
     {
-    case 0:  /* query bitmap info only */
         if (core_header)
         {
             BITMAPCOREHEADER* coreheader = (BITMAPCOREHEADER*) info;
@@ -549,34 +597,46 @@ INT WINAPI GetDIBits(
         }
         lines = abs(bmp->bitmap.bmHeight);
         goto done;
+    }
 
+
+    /* Since info may be a BITMAPCOREINFO or any of the larger BITMAPINFO structures, we'll use our
+       own copy and transfer the colour info back at the end */
+
+    dst_info->bmiHeader.biSize          = sizeof(dst_info->bmiHeader);
+    dst_info->bmiHeader.biWidth         = width;
+    dst_info->bmiHeader.biHeight        = height;
+    dst_info->bmiHeader.biPlanes        = planes;
+    dst_info->bmiHeader.biBitCount      = bpp;
+    dst_info->bmiHeader.biCompression   = compr;
+    dst_info->bmiHeader.biSizeImage     = DIB_GetDIBImageBytes( width, height, bpp );
+    dst_info->bmiHeader.biXPelsPerMeter = 0;
+    dst_info->bmiHeader.biYPelsPerMeter = 0;
+    dst_info->bmiHeader.biClrUsed       = 0;
+    dst_info->bmiHeader.biClrImportant  = 0;
+
+    switch (bpp)
+    {
     case 1:
     case 4:
     case 8:
     {
         unsigned int colors = 1 << bpp;
 
-        if (!core_header) info->bmiHeader.biClrUsed = 0;
-
         if (coloruse == DIB_PAL_COLORS)
         {
-            WORD *index = colorPtr;
+            WORD *index = (WORD*)dst_info->bmiColors;
             for (i = 0; i < colors; i++, index++)
                 *index = i;
-
-            break;
         }
 
-        /* If the bitmap object already has a dib section at the
+        /* If the bitmap object is a dib section at the
            same color depth then get the color map from it */
-
-        if (bmp->dib && bmp->dib->dsBm.bmBitsPixel == bpp)
+        else if (bmp->dib && bpp == bmp->dib->dsBm.bmBitsPixel)
         {
             colors = min( colors, bmp->nb_colors );
-
-            if (!core_header && colors != 1 << bpp) info->bmiHeader.biClrUsed = colors;
-
-            memcpy(rgbQuads, bmp->color_table, colors * sizeof(RGBQUAD));
+            if (colors != 1 << bpp) dst_info->bmiHeader.biClrUsed = colors;
+            memcpy( dst_info->bmiColors, bmp->color_table, colors * sizeof(RGBQUAD) );
         }
 
         /* For color DDBs in native depth (mono DDBs always have a black/white palette):
@@ -589,16 +649,16 @@ INT WINAPI GetDIBits(
             memset( palEntry, 0, sizeof(palEntry) );
             if (!GetPaletteEntries( dc->hPalette, 0, colors, palEntry ))
             {
-                release_dc_ptr( dc );
-                GDI_ReleaseObj( hbitmap );
-                return 0;
+                lines = 0;
+                goto done;
             }
+
             for (i = 0; i < colors; i++)
             {
-                rgbQuads[i].rgbRed      = palEntry[i].peRed;
-                rgbQuads[i].rgbGreen    = palEntry[i].peGreen;
-                rgbQuads[i].rgbBlue     = palEntry[i].peBlue;
-                rgbQuads[i].rgbReserved = 0;
+                dst_info->bmiColors[i].rgbRed      = palEntry[i].peRed;
+                dst_info->bmiColors[i].rgbGreen    = palEntry[i].peGreen;
+                dst_info->bmiColors[i].rgbBlue     = palEntry[i].peBlue;
+                dst_info->bmiColors[i].rgbReserved = 0;
             }
         }
         else
@@ -606,76 +666,64 @@ INT WINAPI GetDIBits(
             switch (bpp)
             {
             case 1:
-                rgbQuads[0].rgbRed = rgbQuads[0].rgbGreen = rgbQuads[0].rgbBlue = 0;
-                rgbQuads[0].rgbReserved = 0;
-                rgbQuads[1].rgbRed = rgbQuads[1].rgbGreen = rgbQuads[1].rgbBlue = 0xff;
-                rgbQuads[1].rgbReserved = 0;
+                dst_info->bmiColors[0].rgbRed = dst_info->bmiColors[0].rgbGreen = dst_info->bmiColors[0].rgbBlue = 0;
+                dst_info->bmiColors[0].rgbReserved = 0;
+                dst_info->bmiColors[1].rgbRed = dst_info->bmiColors[1].rgbGreen = dst_info->bmiColors[1].rgbBlue = 0xff;
+                dst_info->bmiColors[1].rgbReserved = 0;
                 break;
 
             case 4:
                 /* The EGA palette is the first and last 8 colours of the default palette
                    with the innermost pair swapped */
-                memcpy(rgbQuads,     DefLogPaletteQuads,      7 * sizeof(RGBQUAD));
-                memcpy(rgbQuads + 7, DefLogPaletteQuads + 12, 1 * sizeof(RGBQUAD));
-                memcpy(rgbQuads + 8, DefLogPaletteQuads +  7, 1 * sizeof(RGBQUAD));
-                memcpy(rgbQuads + 9, DefLogPaletteQuads + 13, 7 * sizeof(RGBQUAD));
+                memcpy(dst_info->bmiColors,     DefLogPaletteQuads,      7 * sizeof(RGBQUAD));
+                memcpy(dst_info->bmiColors + 7, DefLogPaletteQuads + 12, 1 * sizeof(RGBQUAD));
+                memcpy(dst_info->bmiColors + 8, DefLogPaletteQuads +  7, 1 * sizeof(RGBQUAD));
+                memcpy(dst_info->bmiColors + 9, DefLogPaletteQuads + 13, 7 * sizeof(RGBQUAD));
                 break;
 
             case 8:
-                memcpy(rgbQuads, DefLogPaletteQuads, 10 * sizeof(RGBQUAD));
-                memcpy(rgbQuads + 246, DefLogPaletteQuads + 10, 10 * sizeof(RGBQUAD));
+                memcpy(dst_info->bmiColors, DefLogPaletteQuads, 10 * sizeof(RGBQUAD));
+                memcpy(dst_info->bmiColors + 246, DefLogPaletteQuads + 10, 10 * sizeof(RGBQUAD));
                 for (i = 10; i < 246; i++)
                 {
-                    rgbQuads[i].rgbRed      = (i & 0x07) << 5;
-                    rgbQuads[i].rgbGreen    = (i & 0x38) << 2;
-                    rgbQuads[i].rgbBlue     =  i & 0xc0;
-                    rgbQuads[i].rgbReserved = 0;
+                    dst_info->bmiColors[i].rgbRed      = (i & 0x07) << 5;
+                    dst_info->bmiColors[i].rgbGreen    = (i & 0x38) << 2;
+                    dst_info->bmiColors[i].rgbBlue     =  i & 0xc0;
+                    dst_info->bmiColors[i].rgbReserved = 0;
                 }
             }
         }
-
-        if(core_header)
-        {
-            RGBTRIPLE *triple = (RGBTRIPLE *)colorPtr;
-            for (i = 0; i < colors; i++)
-            {
-                triple[i].rgbtRed   = rgbQuads[i].rgbRed;
-                triple[i].rgbtGreen = rgbQuads[i].rgbGreen;
-                triple[i].rgbtBlue  = rgbQuads[i].rgbBlue;
-            }
-        }
-
         break;
     }
 
     case 15:
-        if (info->bmiHeader.biCompression == BI_BITFIELDS)
-            memcpy( info->bmiColors, bit_fields_555, sizeof(bit_fields_555) );
+        if (dst_info->bmiHeader.biCompression == BI_BITFIELDS)
+            memcpy( dst_info->bmiColors, bit_fields_555, sizeof(bit_fields_555) );
         break;
 
     case 16:
-        if (info->bmiHeader.biCompression == BI_BITFIELDS)
+        if (dst_info->bmiHeader.biCompression == BI_BITFIELDS)
         {
             if (bmp->dib)
             {
                 if (bmp->dib->dsBmih.biCompression == BI_BITFIELDS && bmp->dib->dsBmih.biBitCount == bpp)
-                    memcpy( info->bmiColors, bmp->dib->dsBitfields, 3 * sizeof(DWORD) );
+                    memcpy( dst_info->bmiColors, bmp->dib->dsBitfields, 3 * sizeof(DWORD) );
                 else
-                    memcpy( info->bmiColors, bit_fields_555, sizeof(bit_fields_555) );
+                    memcpy( dst_info->bmiColors, bit_fields_555, sizeof(bit_fields_555) );
             }
             else
-                memcpy( info->bmiColors, bit_fields_565, sizeof(bit_fields_565) );
+                memcpy( dst_info->bmiColors, bit_fields_565, sizeof(bit_fields_565) );
         }
         break;
 
     case 24:
     case 32:
-        if (info->bmiHeader.biCompression == BI_BITFIELDS)
+        if (dst_info->bmiHeader.biCompression == BI_BITFIELDS)
         {
             if (bmp->dib && bmp->dib->dsBmih.biCompression == BI_BITFIELDS && bmp->dib->dsBmih.biBitCount == bpp)
-                memcpy( info->bmiColors, bmp->dib->dsBitfields, 3 * sizeof(DWORD) );
+                memcpy( dst_info->bmiColors, bmp->dib->dsBitfields, 3 * sizeof(DWORD) );
             else
-                memcpy( info->bmiColors, bit_fields_888, sizeof(bit_fields_888) );
+                memcpy( dst_info->bmiColors, bit_fields_888, sizeof(bit_fields_888) );
         }
         break;
     }
@@ -894,7 +942,7 @@ INT WINAPI GetDIBits(
                 break;
 
             default: /* ? bit DIB */
-                FIXME("Unsupported DIB depth %d\n", info->bmiHeader.biBitCount);
+                FIXME("Unsupported DIB depth %d\n", dst_info->bmiHeader.biBitCount);
                 break;
             }
         }
@@ -904,22 +952,12 @@ INT WINAPI GetDIBits(
             PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetDIBits );
             if (!BITMAP_SetOwnerDC( hbitmap, physdev )) lines = 0;
             else lines = physdev->funcs->pGetDIBits( physdev, hbitmap, startscan,
-                                                     lines, bits, info, coloruse );
+                                                     lines, bits, dst_info, coloruse );
         }
     }
     else lines = abs(height);
 
-    /* The knowledge base article Q81498 ("DIBs and Their Uses") states that
-       if bits == NULL and bpp != 0, only biSizeImage and the color table are
-       filled in. */
-    if (!core_header)
-    {
-        /* FIXME: biSizeImage should be calculated according to the selected
-           compression algorithm if biCompression != BI_RGB */
-        info->bmiHeader.biSizeImage = DIB_GetDIBImageBytes( width, height, bpp );
-        TRACE("biSizeImage = %d, ", info->bmiHeader.biSizeImage);
-    }
-    TRACE("biWidth = %d, biHeight = %d\n", width, height);
+    copy_color_info( info, dst_info, coloruse );
 
 done:
     release_dc_ptr( dc );
