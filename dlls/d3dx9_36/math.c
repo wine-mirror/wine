@@ -1776,7 +1776,7 @@ static inline unsigned short float_32_to_16(const float in)
 {
     int exp = 0, origexp;
     float tmp = fabs(in);
-    int sign = signbit(in);
+    int sign = (copysignf(1, in) < 0);
     unsigned int mantissa;
     unsigned short ret;
 
