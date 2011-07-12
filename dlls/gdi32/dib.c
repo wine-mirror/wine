@@ -439,6 +439,10 @@ static const RGBQUAD DefLogPaletteQuads[20] = { /* Copy of Default Logical Palet
     { 0xff, 0xff, 0xff, 0x00 }
 };
 
+static const DWORD bit_fields_888[3] = {0xff0000, 0x00ff00, 0x0000ff};
+static const DWORD bit_fields_565[3] = {0xf800, 0x07e0, 0x001f};
+static const DWORD bit_fields_555[3] = {0x7c00, 0x03e0, 0x001f};
+
 /******************************************************************************
  * GetDIBits [GDI32.@]
  *
@@ -646,11 +650,7 @@ INT WINAPI GetDIBits(
 
     case 15:
         if (info->bmiHeader.biCompression == BI_BITFIELDS)
-        {
-            ((PDWORD)info->bmiColors)[0] = 0x7c00;
-            ((PDWORD)info->bmiColors)[1] = 0x03e0;
-            ((PDWORD)info->bmiColors)[2] = 0x001f;
-        }
+            memcpy( info->bmiColors, bit_fields_555, sizeof(bit_fields_555) );
         break;
 
     case 16:
@@ -658,21 +658,13 @@ INT WINAPI GetDIBits(
         {
             if (bmp->dib)
             {
-                if (bmp->dib->dsBmih.biCompression == BI_BITFIELDS)
+                if (bmp->dib->dsBmih.biCompression == BI_BITFIELDS && bmp->dib->dsBmih.biBitCount == bpp)
                     memcpy( info->bmiColors, bmp->dib->dsBitfields, 3 * sizeof(DWORD) );
                 else
-                {
-                    ((PDWORD)info->bmiColors)[0] = 0x7c00;
-                    ((PDWORD)info->bmiColors)[1] = 0x03e0;
-                    ((PDWORD)info->bmiColors)[2] = 0x001f;
-                }
+                    memcpy( info->bmiColors, bit_fields_555, sizeof(bit_fields_555) );
             }
             else
-            {
-                ((PDWORD)info->bmiColors)[0] = 0xf800;
-                ((PDWORD)info->bmiColors)[1] = 0x07e0;
-                ((PDWORD)info->bmiColors)[2] = 0x001f;
-            }
+                memcpy( info->bmiColors, bit_fields_565, sizeof(bit_fields_565) );
         }
         break;
 
@@ -680,14 +672,10 @@ INT WINAPI GetDIBits(
     case 32:
         if (info->bmiHeader.biCompression == BI_BITFIELDS)
         {
-            if (bmp->dib && bmp->dib->dsBmih.biCompression == BI_BITFIELDS)
+            if (bmp->dib && bmp->dib->dsBmih.biCompression == BI_BITFIELDS && bmp->dib->dsBmih.biBitCount == bpp)
                 memcpy( info->bmiColors, bmp->dib->dsBitfields, 3 * sizeof(DWORD) );
             else
-            {
-                ((PDWORD)info->bmiColors)[0] = 0xff0000;
-                ((PDWORD)info->bmiColors)[1] = 0x00ff00;
-                ((PDWORD)info->bmiColors)[2] = 0x0000ff;
-            }
+                memcpy( info->bmiColors, bit_fields_888, sizeof(bit_fields_888) );
         }
         break;
     }
