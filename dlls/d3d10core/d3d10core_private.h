@@ -141,6 +141,7 @@ struct d3d10_rendertarget_view
 
 HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view,
         ID3D10Resource *resource, const D3D10_RENDER_TARGET_VIEW_DESC *desc) DECLSPEC_HIDDEN;
+struct d3d10_rendertarget_view *unsafe_impl_from_ID3D10RenderTargetView(ID3D10RenderTargetView *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10ShaderResourceView */
 struct d3d10_shader_resource_view

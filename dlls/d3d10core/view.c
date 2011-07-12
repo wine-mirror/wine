@@ -19,6 +19,7 @@
 
 #include "config.h"
 #include "wine/port.h"
+#include <assert.h>
 
 #define NONAMELESSUNION
 #include "d3d10core_private.h"
@@ -291,6 +292,11 @@ HRESULT d3d10_depthstencil_view_init(struct d3d10_depthstencil_view *view)
     return S_OK;
 }
 
+static inline struct d3d10_rendertarget_view *impl_from_ID3D10RenderTargetView(ID3D10RenderTargetView *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_rendertarget_view, vtbl);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE d3d10_rendertarget_view_QueryInterface(ID3D10RenderTargetView *iface,
@@ -466,6 +472,15 @@ HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view,
     }
 
     return S_OK;
+}
+
+struct d3d10_rendertarget_view *unsafe_impl_from_ID3D10RenderTargetView(ID3D10RenderTargetView *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d10_rendertarget_view_vtbl);
+
+    return impl_from_ID3D10RenderTargetView(iface);
 }
 
 static inline struct d3d10_shader_resource_view *impl_from_ID3D10ShaderResourceView(ID3D10ShaderResourceView *iface)
