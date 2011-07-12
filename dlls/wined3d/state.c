@@ -3265,7 +3265,7 @@ static void transform_texture(DWORD state_id, struct wined3d_stateblock *statebl
     }
 }
 
-static void unloadTexCoords(const struct wined3d_gl_info *gl_info)
+static void unload_tex_coords(const struct wined3d_gl_info *gl_info)
 {
     unsigned int texture_idx;
 
@@ -3276,23 +3276,25 @@ static void unloadTexCoords(const struct wined3d_gl_info *gl_info)
     }
 }
 
-static void loadTexCoords(const struct wined3d_gl_info *gl_info, struct wined3d_stateblock *stateblock,
-        const struct wined3d_stream_info *si, GLuint *curVBO)
+static void load_tex_coords(const struct wined3d_context *context, const struct wined3d_stream_info *si,
+        GLuint *curVBO, const struct wined3d_state *state)
 {
+    const struct wined3d_device *device = context->swapchain->device;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int mapped_stage = 0;
     unsigned int textureNo = 0;
 
     for (textureNo = 0; textureNo < gl_info->limits.texture_stages; ++textureNo)
     {
-        int coordIdx = stateblock->state.texture_states[textureNo][WINED3DTSS_TEXCOORDINDEX];
+        int coordIdx = state->texture_states[textureNo][WINED3DTSS_TEXCOORDINDEX];
 
-        mapped_stage = stateblock->device->texUnitMap[textureNo];
+        mapped_stage = device->texUnitMap[textureNo];
         if (mapped_stage == WINED3D_UNMAPPED_STAGE) continue;
 
         if (coordIdx < MAX_TEXTURES && (si->use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coordIdx))))
         {
             const struct wined3d_stream_info_element *e = &si->elements[WINED3D_FFP_TEXCOORD0 + coordIdx];
-            const struct wined3d_stream_state *stream = &stateblock->state.streams[e->stream_idx];
+            const struct wined3d_stream_state *stream = &state->streams[e->stream_idx];
 
             TRACE("Setting up texture %u, idx %d, coordindx %u, data {%#x:%p}.\n",
                     textureNo, mapped_stage, coordIdx, e->data.buffer_object, e->data.addr);
@@ -3309,7 +3311,7 @@ static void loadTexCoords(const struct wined3d_gl_info *gl_info, struct wined3d_
 
             /* The coords to supply depend completely on the fvf / vertex shader */
             glTexCoordPointer(e->format->gl_vtx_format, e->format->gl_vtx_type, e->stride,
-                    e->data.addr + stateblock->state.load_base_vertex_index * e->stride + stream->offset);
+                    e->data.addr + state->load_base_vertex_index * e->stride + stream->offset);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         }
         else
@@ -3329,15 +3331,16 @@ static void loadTexCoords(const struct wined3d_gl_info *gl_info, struct wined3d_
     checkGLcall("loadTexCoords");
 }
 
-static void tex_coordindex(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void tex_coordindex(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
+    DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     DWORD mapped_stage = stateblock->device->texUnitMap[stage];
     static const GLfloat s_plane[] = { 1.0f, 0.0f, 0.0f, 0.0f };
     static const GLfloat t_plane[] = { 0.0f, 1.0f, 0.0f, 0.0f };
     static const GLfloat r_plane[] = { 0.0f, 0.0f, 1.0f, 0.0f };
     static const GLfloat q_plane[] = { 0.0f, 0.0f, 0.0f, 1.0f };
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_state *state = &stateblock->state;
 
     if (mapped_stage == WINED3D_UNMAPPED_STAGE)
     {
@@ -3362,7 +3365,7 @@ static void tex_coordindex(DWORD state, struct wined3d_stateblock *stateblock, s
      * state. We do not (yet) support the WINED3DRENDERSTATE_WRAPx values, nor tie them up
      * to the TEXCOORDINDEX value
      */
-    switch (stateblock->state.texture_states[stage][WINED3DTSS_TEXCOORDINDEX] & 0xffff0000)
+    switch (state->texture_states[stage][WINED3DTSS_TEXCOORDINDEX] & 0xffff0000)
     {
         case WINED3DTSS_TCI_PASSTHRU:
             /* Use the specified texture coordinates contained within the
@@ -3477,7 +3480,7 @@ static void tex_coordindex(DWORD state, struct wined3d_stateblock *stateblock, s
 
         default:
             FIXME("Unhandled WINED3DTSS_TEXCOORDINDEX %#x.\n",
-                    stateblock->state.texture_states[stage][WINED3DTSS_TEXCOORDINDEX]);
+                    state->texture_states[stage][WINED3DTSS_TEXCOORDINDEX]);
             glDisable(GL_TEXTURE_GEN_S);
             glDisable(GL_TEXTURE_GEN_T);
             glDisable(GL_TEXTURE_GEN_R);
@@ -3500,8 +3503,8 @@ static void tex_coordindex(DWORD state, struct wined3d_stateblock *stateblock, s
          */
         GLuint curVBO = gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] ? ~0U : 0;
 
-        unloadTexCoords(gl_info);
-        loadTexCoords(gl_info, stateblock, &stateblock->device->strided_streams, &curVBO);
+        unload_tex_coords(gl_info);
+        load_tex_coords(context, &stateblock->device->strided_streams, &curVBO, state);
     }
 }
 
@@ -4033,7 +4036,7 @@ static inline void unloadVertexData(const struct wined3d_gl_info *gl_info)
     {
         glDisableClientState(GL_WEIGHT_ARRAY_ARB);
     }
-    unloadTexCoords(gl_info);
+    unload_tex_coords(gl_info);
 }
 
 static inline void unload_numbered_array(struct wined3d_context *context, int i)
@@ -4488,7 +4491,7 @@ static void loadVertexData(const struct wined3d_context *context, struct wined3d
     }
 
     /* Texture coords -------------------------------------------*/
-    loadTexCoords(gl_info, stateblock, si, &curVBO);
+    load_tex_coords(context, si, &curVBO, &stateblock->state);
 }
 
 static void streamsrc(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
