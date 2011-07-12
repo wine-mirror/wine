@@ -1879,7 +1879,6 @@ struct local_server_params
 static DWORD WINAPI local_server_thread(LPVOID param)
 {
     struct local_server_params * lsp = param;
-    HANDLE		hPipe;
     WCHAR 		pipefn[100];
     HRESULT		hres;
     IStream		*pStm = lsp->stream;
@@ -1898,22 +1897,24 @@ static DWORD WINAPI local_server_thread(LPVOID param)
 
     memset(&ovl, 0, sizeof(ovl));
     get_localserver_pipe_name(pipefn, &lsp->clsid);
-
-    hPipe = CreateNamedPipeW( pipefn, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
-                              PIPE_TYPE_BYTE|PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
-                              4096, 4096, 500 /* 0.5 second timeout */, NULL );
+    ovl.hEvent = pipe_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     SetEvent(lsp->ready_event);
-
-    if (hPipe == INVALID_HANDLE_VALUE)
-    {
-        FIXME("pipe creation failed for %s, le is %u\n", debugstr_w(pipefn), GetLastError());
-        return 1;
-    }
-
-    ovl.hEvent = pipe_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-    
+    /* Clients trying to connect between now and CreateNamedPipeW() will
+     * fail and will have to retry. See also the end of the loop.
+     */
     while (1) {
+        HANDLE hPipe;
+        hPipe = CreateNamedPipeW( pipefn, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+                                  PIPE_TYPE_BYTE|PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
+                                  4096, 4096, 500 /* 0.5 second timeout */, NULL );
+        if (hPipe == INVALID_HANDLE_VALUE)
+        {
+            FIXME("pipe creation failed for %s, le is %u\n", debugstr_w(pipefn), GetLastError());
+            CloseHandle(pipe_event);
+            return 1;
+        }
+
         if (!ConnectNamedPipe(hPipe, &ovl))
         {
             DWORD error = GetLastError();
@@ -1923,12 +1924,16 @@ static DWORD WINAPI local_server_thread(LPVOID param)
                 DWORD ret;
                 ret = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
                 if (ret != WAIT_OBJECT_0)
+                {
+                    CloseHandle(hPipe);
                     break;
+                }
             }
             /* client already connected isn't an error */
             else if (error != ERROR_PIPE_CONNECTED)
             {
                 ERR("ConnectNamedPipe failed with error %d\n", GetLastError());
+                CloseHandle(hPipe);
                 break;
             }
         }
@@ -1971,6 +1976,10 @@ static DWORD WINAPI local_server_thread(LPVOID param)
 
         FlushFileBuffers(hPipe);
         DisconnectNamedPipe(hPipe);
+        CloseHandle(hPipe);
+        /* Clients trying to connect between now and CreateNamedPipeW() will
+         * fail and will have to retry.
+         */
 
         TRACE("done marshalling IClassFactory\n");
 
@@ -1980,7 +1989,6 @@ static DWORD WINAPI local_server_thread(LPVOID param)
             break;
         }
     }
-    CloseHandle(hPipe);
     CloseHandle(pipe_event);
     return 0;
 }
