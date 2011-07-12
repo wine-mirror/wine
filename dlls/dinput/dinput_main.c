@@ -847,6 +847,7 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
     IDirectInputImpl *This = impl_from_IDirectInput8A( iface );
     DIDEVICEINSTANCEA didevi;
     LPDIRECTINPUTDEVICE8A lpdid;
+    DWORD callbackFlags;
     int i, j;
 
 
@@ -865,12 +866,36 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
 
     didevi.dwSize = sizeof(didevi);
 
+    /* Enumerate all the joysticks */
+    for (i = 0; i < NB_DINPUT_DEVICES; i++)
+    {
+        BOOL enumSuccess;
+
+        if (!dinput_devices[i]->enum_deviceA) continue;
+
+        for (j = 0, enumSuccess = -1; enumSuccess != 0; j++)
+        {
+            TRACE(" - checking device %u ('%s')\n", i, dinput_devices[i]->name);
+
+            callbackFlags = 0;
+            /* Default behavior is to enumerate attached game controllers */
+            enumSuccess = dinput_devices[i]->enum_deviceA(DI8DEVCLASS_GAMECTRL, DIEDFL_ATTACHEDONLY | dwFlags, &didevi, This->dwVersion, j);
+            if (enumSuccess)
+            {
+                IDirectInput_CreateDevice(iface, &didevi.guidInstance, &lpdid, NULL);
+
+                if (lpCallback(&didevi, lpdid, callbackFlags, 0, pvRef) == DIENUM_STOP)
+                    return DI_OK;
+            }
+        }
+    }
+
     if (dwFlags & DIEDBSFL_FORCEFEEDBACK) return DI_OK;
 
     /* Enumerate keyboard and mouse */
     for(i=0; i < sizeof(guids)/sizeof(guids[0]); i++)
     {
-        DWORD callbackFlags = 0;
+        callbackFlags = 0;
 
         IDirectInput_CreateDevice(iface, guids[i], &lpdid, NULL);
         IDirectInputDevice_GetDeviceInfo(lpdid, &didevi);
@@ -898,6 +923,7 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
     IDirectInputImpl *This = impl_from_IDirectInput8W(iface);
     DIDEVICEINSTANCEW didevi;
     LPDIRECTINPUTDEVICE8W lpdid;
+    DWORD callbackFlags;
     int i, j;
 
     FIXME("(this=%p,%s,%p,%p,%p,%04x): semi-stub\n", This, debugstr_w(ptszUserName), lpdiActionFormat,
@@ -905,12 +931,36 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
 
     didevi.dwSize = sizeof(didevi);
 
+    /* Enumerate all the joysticks */
+    for (i = 0; i < NB_DINPUT_DEVICES; i++)
+    {
+        BOOL enumSuccess;
+
+        if (!dinput_devices[i]->enum_deviceW) continue;
+
+        for (j = 0, enumSuccess = -1; enumSuccess != 0; j++)
+        {
+            TRACE(" - checking device %u ('%s')\n", i, dinput_devices[i]->name);
+
+            callbackFlags = 0;
+            /* Default behavior is to enumerate attached game controllers */
+            enumSuccess = dinput_devices[i]->enum_deviceW(DI8DEVCLASS_GAMECTRL, DIEDFL_ATTACHEDONLY | dwFlags, &didevi, This->dwVersion, j);
+            if (enumSuccess)
+            {
+                IDirectInput_CreateDevice(iface, &didevi.guidInstance, &lpdid, NULL);
+
+                if (lpCallback(&didevi, lpdid, callbackFlags, 0, pvRef) == DIENUM_STOP)
+                    return DI_OK;
+            }
+        }
+    }
+
     if (dwFlags & DIEDBSFL_FORCEFEEDBACK) return DI_OK;
 
     /* Enumerate keyboard and mouse */
     for(i=0; i < sizeof(guids)/sizeof(guids[0]); i++)
     {
-        DWORD callbackFlags = 0;
+        callbackFlags = 0;
 
         IDirectInput_CreateDevice(iface, guids[i], &lpdid, NULL);
         IDirectInputDevice_GetDeviceInfo(lpdid, &didevi);

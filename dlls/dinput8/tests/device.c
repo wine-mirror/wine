@@ -166,6 +166,9 @@ static BOOL CALLBACK enumeration_callback(
     hr = IDirectInputDevice8_SetActionMap(lpdid, data->lpdiaf, NULL, 0);
     ok (SUCCEEDED(hr), "SetActionMap failed hr=%08x\n", hr);
 
+    /* Some joysticks may have no suitable actions and thus should not be tested */
+    if (hr == DI_NOEFFECT) return DIENUM_CONTINUE;
+
     /* Test buffer size */
     memset(&dp, 0, sizeof(dp));
     dp.diph.dwSize = sizeof(dp);
