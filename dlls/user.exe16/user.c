@@ -2506,7 +2506,6 @@ INT16 WINAPI wvsprintf16( LPSTR buffer, LPCSTR spec, VA_LIST16 args )
             /* wsprintf16 ignores null characters */
             if (*p != '\0') p++;
             else if (format.width > 1) *p++ = ' ';
-            else len = 0;
             break;
         case WPR_STRING:
             if (len) memcpy( p, lpcstr_view, len );
