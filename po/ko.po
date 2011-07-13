@@ -6355,7 +6355,9 @@ msgstr "새 링크(&L)"
 msgid "Properties"
 msgstr "속성"
 
-#: shell32.rc:82 user32.rc:27 user32.rc:40 taskmgr.rc:138
+#: shell32.rc:82
+#, fuzzy
+msgctxt "recycle bin"
 msgid "&Restore"
 msgstr "복구(&R)"
 
@@ -6828,6 +6830,12 @@ msgstr "분"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr "초"
+
+#: user32.rc:27 user32.rc:40 taskmgr.rc:138
+#, fuzzy
+msgctxt "window"
+msgid "&Restore"
+msgstr "복구(&R)"
 
 #: user32.rc:28 user32.rc:41
 msgid "&Move"

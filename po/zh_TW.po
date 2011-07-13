@@ -6638,8 +6638,9 @@ msgstr "新建(&W)"
 msgid "Properties"
 msgstr "屬性(&P)"
 
-#: shell32.rc:82 user32.rc:27 user32.rc:40 taskmgr.rc:138
+#: shell32.rc:82
 #, fuzzy
+msgctxt "recycle bin"
 msgid "&Restore"
 msgstr ""
 "#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
@@ -7140,6 +7141,16 @@ msgstr " 分"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " 秒"
+
+#: user32.rc:27 user32.rc:40 taskmgr.rc:138
+#, fuzzy
+msgctxt "window"
+msgid "&Restore"
+msgstr ""
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"復原(&R)\n"
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"回復(&R)"
 
 #: user32.rc:28 user32.rc:41
 msgid "&Move"

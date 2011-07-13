@@ -24,7 +24,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 SYSMENU MENU
 {
-    MENUITEM "&Restore", 61728
+    MENUITEM "#msgctxt#window#&Restore", 61728
     MENUITEM "&Move", 61456
     MENUITEM "&Size", 61440
     MENUITEM "Mi&nimize", 61472
@@ -37,7 +37,7 @@ SYSMENU MENU
 
 SYSMENUMDI MENU
 {
-    MENUITEM "&Restore", 61728
+    MENUITEM "#msgctxt#window#&Restore", 61728
     MENUITEM "&Move", 61456
     MENUITEM "&Size", 61440
     MENUITEM "Mi&nimize", 61472

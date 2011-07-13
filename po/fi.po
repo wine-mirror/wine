@@ -6554,7 +6554,9 @@ msgstr "Uusi &linkki"
 msgid "Properties"
 msgstr "Ominaisuudet"
 
-#: shell32.rc:82 user32.rc:27 user32.rc:40 taskmgr.rc:138
+#: shell32.rc:82
+#, fuzzy
+msgctxt "recycle bin"
 msgid "&Restore"
 msgstr "&Palauta"
 
@@ -7042,6 +7044,12 @@ msgstr " min"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " s"
+
+#: user32.rc:27 user32.rc:40 taskmgr.rc:138
+#, fuzzy
+msgctxt "window"
+msgid "&Restore"
+msgstr "&Palauta"
 
 #: user32.rc:28 user32.rc:41
 msgid "&Move"

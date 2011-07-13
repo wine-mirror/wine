@@ -6608,7 +6608,9 @@ msgstr "新快捷方式 (&L)"
 msgid "Properties"
 msgstr "属性"
 
-#: shell32.rc:82 user32.rc:27 user32.rc:40 taskmgr.rc:138
+#: shell32.rc:82
+#, fuzzy
+msgctxt "recycle bin"
 msgid "&Restore"
 msgstr "恢复(&R)"
 
@@ -7091,6 +7093,12 @@ msgstr " 分"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " 秒"
+
+#: user32.rc:27 user32.rc:40 taskmgr.rc:138
+#, fuzzy
+msgctxt "window"
+msgid "&Restore"
+msgstr "恢复(&R)"
 
 #: user32.rc:28 user32.rc:41
 msgid "&Move"

@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-07-13 21:47+0900\n"
+"PO-Revision-Date: 2011-07-13 22:29+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -6362,9 +6362,10 @@ msgstr "新規ショートカット(&L)"
 msgid "Properties"
 msgstr "プロパティ"
 
-#: shell32.rc:82 user32.rc:27 user32.rc:40 taskmgr.rc:138
+#: shell32.rc:82
+msgctxt "recycle bin"
 msgid "&Restore"
-msgstr "元のサイズに戻す(&R)"
+msgstr "元に戻す(&R)"
 
 #: shell32.rc:83
 msgid "&Erase"
@@ -6837,6 +6838,11 @@ msgstr " min"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " sec"
+
+#: user32.rc:27 user32.rc:40 taskmgr.rc:138
+msgctxt "window"
+msgid "&Restore"
+msgstr "元のサイズに戻す(&R)"
 
 #: user32.rc:28 user32.rc:41
 msgid "&Move"

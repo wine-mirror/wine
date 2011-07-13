@@ -6677,7 +6677,9 @@ msgstr "Nova &veza"
 msgid "Properties"
 msgstr "Svojstva"
 
-#: shell32.rc:82 user32.rc:27 user32.rc:40 taskmgr.rc:138
+#: shell32.rc:82
+#, fuzzy
+msgctxt "recycle bin"
 msgid "&Restore"
 msgstr "&Povrati"
 
@@ -7166,6 +7168,12 @@ msgstr " min."
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " sek."
+
+#: user32.rc:27 user32.rc:40 taskmgr.rc:138
+#, fuzzy
+msgctxt "window"
+msgid "&Restore"
+msgstr "&Povrati"
 
 #: user32.rc:28 user32.rc:41
 msgid "&Move"

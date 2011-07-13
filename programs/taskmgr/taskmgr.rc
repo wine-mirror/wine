@@ -134,7 +134,7 @@ IDR_TRAY_POPUP MENU
 BEGIN
     POPUP "DUMMY"
     BEGIN
-        MENUITEM "&Restore",                    ID_RESTORE
+        MENUITEM "#msgctxt#window#&Restore",    ID_RESTORE
         MENUITEM "&Close",                      ID_FILE_EXIT
         MENUITEM SEPARATOR
         MENUITEM "&Always on Top",              ID_OPTIONS_ALWAYSONTOP

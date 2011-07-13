@@ -6365,7 +6365,9 @@ msgstr "&Ярлык"
 msgid "Properties"
 msgstr "Сво&йства"
 
-#: shell32.rc:82 user32.rc:27 user32.rc:40 taskmgr.rc:138
+#: shell32.rc:82
+#, fuzzy
+msgctxt "recycle bin"
 msgid "&Restore"
 msgstr "&Восстановить"
 
@@ -6843,6 +6845,12 @@ msgstr " мин"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " сек"
+
+#: user32.rc:27 user32.rc:40 taskmgr.rc:138
+#, fuzzy
+msgctxt "window"
+msgid "&Restore"
+msgstr "&Восстановить"
 
 #: user32.rc:28 user32.rc:41
 msgid "&Move"

@@ -6579,7 +6579,9 @@ msgstr "&קישור חדש"
 msgid "Properties"
 msgstr "מאפיינים"
 
-#: shell32.rc:82 user32.rc:27 user32.rc:40 taskmgr.rc:138
+#: shell32.rc:82
+#, fuzzy
+msgctxt "recycle bin"
 msgid "&Restore"
 msgstr "&שחזור"
 
@@ -7056,6 +7058,12 @@ msgstr " דקות"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " שניות"
+
+#: user32.rc:27 user32.rc:40 taskmgr.rc:138
+#, fuzzy
+msgctxt "window"
+msgid "&Restore"
+msgstr "&שחזור"
 
 #: user32.rc:28 user32.rc:41
 msgid "&Move"

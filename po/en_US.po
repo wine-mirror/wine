@@ -6365,7 +6365,8 @@ msgstr "New &Link"
 msgid "Properties"
 msgstr "Properties"
 
-#: shell32.rc:82 user32.rc:27 user32.rc:40 taskmgr.rc:138
+#: shell32.rc:82
+msgctxt "recycle bin"
 msgid "&Restore"
 msgstr "&Restore"
 
@@ -6842,6 +6843,11 @@ msgstr " min"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " sec"
+
+#: user32.rc:27 user32.rc:40 taskmgr.rc:138
+msgctxt "window"
+msgid "&Restore"
+msgstr "&Restore"
 
 #: user32.rc:28 user32.rc:41
 msgid "&Move"

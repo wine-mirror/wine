@@ -6371,7 +6371,9 @@ msgstr "Nauja &nuoroda"
 msgid "Properties"
 msgstr "Savybės"
 
-#: shell32.rc:82 user32.rc:27 user32.rc:40 taskmgr.rc:138
+#: shell32.rc:82
+#, fuzzy
+msgctxt "recycle bin"
 msgid "&Restore"
 msgstr "&Atkurti"
 
@@ -6849,6 +6851,12 @@ msgstr " min"
 #: shlwapi.rc:30
 msgid " sec"
 msgstr " sek"
+
+#: user32.rc:27 user32.rc:40 taskmgr.rc:138
+#, fuzzy
+msgctxt "window"
+msgid "&Restore"
+msgstr "&Atkurti"
 
 #: user32.rc:28 user32.rc:41
 msgid "&Move"
@@ -9601,7 +9609,8 @@ msgstr ""
 "/?           Parodyti šį pranešimą ir išeiti.\n"
 "\n"
 "start.exe versija 0.2 (C) 2003, Dan Kegel\n"
-"Start pateikiama BE JOKIŲ GARANTIJŲ; detales rasite paleidę su /L parametru.\n"
+"Start pateikiama BE JOKIŲ GARANTIJŲ; detales rasite paleidę su /L "
+"parametru.\n"
 "Ši programa yra laisva programinė įranga; galite ją platinti\n"
 "tam tikromis sąlygomis; paleiskite „start /L“ išsamiai informacijai gauti.\n"
 
