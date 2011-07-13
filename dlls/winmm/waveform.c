@@ -533,88 +533,6 @@ static HRESULT WINMM_InitMMDevices(void)
     return S_OK;
 }
 
-static UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
-                      LPCWAVEFORMATEX lpFormat, DWORD_PTR dwCallback,
-                      DWORD_PTR dwInstance, DWORD dwFlags)
-{
-    HANDLE		handle;
-    LPWINE_MLD		wmld;
-    DWORD		dwRet;
-    WAVEOPENDESC	wod;
-
-    TRACE("(%p, %d, %s, %p, %08lX, %08lX, %08X);\n",
-	  lphndl, (int)uDeviceID, (uType==MMDRV_WAVEOUT)?"Out":"In", lpFormat, dwCallback,
-	  dwInstance, dwFlags);
-
-    if (dwFlags & WAVE_FORMAT_QUERY)
-        TRACE("WAVE_FORMAT_QUERY requested !\n");
-
-    dwRet = WINMM_CheckCallback(dwCallback, dwFlags, FALSE);
-    if (dwRet != MMSYSERR_NOERROR)
-        return dwRet;
-
-    if (lpFormat == NULL) {
-        WARN("bad format\n");
-        return WAVERR_BADFORMAT;
-    }
-
-    if ((dwFlags & WAVE_MAPPED) && (uDeviceID == (UINT)-1)) {
-        WARN("invalid parameter\n");
-	return MMSYSERR_INVALPARAM;
-    }
-
-    /* may have a PCMWAVEFORMAT rather than a WAVEFORMATEX so don't read cbSize */
-    TRACE("wFormatTag=%u, nChannels=%u, nSamplesPerSec=%u, nAvgBytesPerSec=%u, nBlockAlign=%u, wBitsPerSample=%u\n",
-	  lpFormat->wFormatTag, lpFormat->nChannels, lpFormat->nSamplesPerSec,
-	  lpFormat->nAvgBytesPerSec, lpFormat->nBlockAlign, lpFormat->wBitsPerSample);
-
-    if ((wmld = MMDRV_Alloc(sizeof(WINE_WAVE), uType, &handle,
-			    &dwFlags, &dwCallback, &dwInstance)) == NULL) {
-	return MMSYSERR_NOMEM;
-    }
-
-    wod.hWave = handle;
-    wod.lpFormat = (LPWAVEFORMATEX)lpFormat;  /* should the struct be copied iso pointer? */
-    wod.dwCallback = dwCallback;
-    wod.dwInstance = dwInstance;
-    wod.dnDevNode = 0L;
-
-    TRACE("cb=%08lx\n", wod.dwCallback);
-
-    for (;;) {
-        if (dwFlags & WAVE_MAPPED) {
-            wod.uMappedDeviceID = uDeviceID;
-            uDeviceID = WAVE_MAPPER;
-        } else {
-            wod.uMappedDeviceID = -1;
-        }
-        wmld->uDeviceID = uDeviceID;
-    
-        dwRet = MMDRV_Open(wmld, (uType == MMDRV_WAVEOUT) ? WODM_OPEN : WIDM_OPEN,
-                           (DWORD_PTR)&wod, dwFlags);
-
-        TRACE("dwRet = %s\n", WINMM_ErrorToString(dwRet));
-        if (dwRet != WAVERR_BADFORMAT ||
-            ((dwFlags & (WAVE_MAPPED|WAVE_FORMAT_DIRECT)) != 0) || (uDeviceID == WAVE_MAPPER)) break;
-        /* if we ask for a format which isn't supported by the physical driver, 
-         * let's try to map it through the wave mapper (except, if we already tried
-         * or user didn't allow us to use acm codecs or the device is already the mapper)
-         */
-        dwFlags |= WAVE_MAPPED;
-        /* we shall loop only one */
-    }
-
-    if ((dwFlags & WAVE_FORMAT_QUERY) || dwRet != MMSYSERR_NOERROR) {
-        MMDRV_Free(handle, wmld);
-        handle = 0;
-    }
-
-    if (lphndl != NULL) *lphndl = handle;
-    TRACE("=> %s hWave=%p\n", WINMM_ErrorToString(dwRet), handle);
-
-    return dwRet;
-}
-
 static inline BOOL WINMM_IsMapper(UINT device)
 {
     return (device == WAVE_MAPPER || device == (UINT16)WAVE_MAPPER);
@@ -2369,7 +2287,8 @@ UINT WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage,
  */
 UINT WINAPI waveInGetNumDevs(void)
 {
-    return MMDRV_GetNum(MMDRV_WAVEIN);
+    TRACE("()\n");
+    return 0;
 }
 
 /**************************************************************************
@@ -2377,16 +2296,11 @@ UINT WINAPI waveInGetNumDevs(void)
  */
 UINT WINAPI waveInGetDevCapsW(UINT_PTR uDeviceID, LPWAVEINCAPSW lpCaps, UINT uSize)
 {
-    LPWINE_MLD		wmld;
-
-    TRACE("(%lu %p %u)!\n", uDeviceID, lpCaps, uSize);
+    TRACE("(%lu, %p, %u)\n", uDeviceID, lpCaps, uSize);
 
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 
-    if ((wmld = MMDRV_Get((HANDLE)uDeviceID, MMDRV_WAVEIN, TRUE)) == NULL)
-	return MMSYSERR_BADDEVICEID;
-
-    return MMDRV_Message(wmld, WIDM_GETDEVCAPS, (DWORD_PTR)lpCaps, uSize);
+    return MMSYSERR_BADDEVICEID;
 }
 
 /**************************************************************************
@@ -2422,8 +2336,9 @@ MMRESULT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
                            LPCWAVEFORMATEX lpFormat, DWORD_PTR dwCallback,
                            DWORD_PTR dwInstance, DWORD dwFlags)
 {
-    return WAVE_Open((HANDLE*)lphWaveIn, uDeviceID, MMDRV_WAVEIN, lpFormat,
-                     dwCallback, dwInstance, dwFlags);
+    TRACE("(%p, %u, %p, %lx, %lx, %08x)\n", lphWaveIn, uDeviceID, lpFormat,
+            dwCallback, dwInstance, dwFlags);
+    return MMSYSERR_BADDEVICEID;
 }
 
 /**************************************************************************
@@ -2431,18 +2346,8 @@ MMRESULT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
  */
 UINT WINAPI waveInClose(HWAVEIN hWaveIn)
 {
-    LPWINE_MLD		wmld;
-    DWORD		dwRet;
-
     TRACE("(%p)\n", hWaveIn);
-
-    if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    dwRet = MMDRV_Message(wmld, WIDM_CLOSE, 0L, 0L);
-    if (dwRet != WAVERR_STILLPLAYING)
-	MMDRV_Free(hWaveIn, wmld);
-    return dwRet;
+    return MMSYSERR_INVALHANDLE;
 }
 
 /**************************************************************************
@@ -2451,29 +2356,12 @@ UINT WINAPI waveInClose(HWAVEIN hWaveIn)
 UINT WINAPI waveInPrepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
 				UINT uSize)
 {
-    LPWINE_MLD		wmld;
-    UINT                result;
-
-    TRACE("(%p, %p, %u);\n", hWaveIn, lpWaveInHdr, uSize);
+    TRACE("(%p, %p, %u)\n", hWaveIn, lpWaveInHdr, uSize);
 
     if (lpWaveInHdr == NULL || uSize < sizeof (WAVEHDR))
 	return MMSYSERR_INVALPARAM;
 
-    if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    if ((result = MMDRV_Message(wmld, WIDM_PREPARE, (DWORD_PTR)lpWaveInHdr,
-                                uSize)) != MMSYSERR_NOTSUPPORTED)
-        return result;
-
-    if (lpWaveInHdr->dwFlags & WHDR_INQUEUE)
-        return WAVERR_STILLPLAYING;
-
-    lpWaveInHdr->dwFlags |= WHDR_PREPARED;
-    lpWaveInHdr->dwFlags &= ~WHDR_DONE;
-    lpWaveInHdr->dwBytesRecorded = 0;
-
-    return MMSYSERR_NOERROR;
+    return MMSYSERR_INVALHANDLE;
 }
 
 /**************************************************************************
@@ -2482,10 +2370,7 @@ UINT WINAPI waveInPrepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
 UINT WINAPI waveInUnprepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
 				  UINT uSize)
 {
-    LPWINE_MLD		wmld;
-    UINT                result;
-
-    TRACE("(%p, %p, %u);\n", hWaveIn, lpWaveInHdr, uSize);
+    TRACE("(%p, %p, %u)\n", hWaveIn, lpWaveInHdr, uSize);
 
     if (lpWaveInHdr == NULL || uSize < sizeof (WAVEHDR))
 	return MMSYSERR_INVALPARAM;
@@ -2493,20 +2378,7 @@ UINT WINAPI waveInUnprepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
     if (!(lpWaveInHdr->dwFlags & WHDR_PREPARED))
 	return MMSYSERR_NOERROR;
 
-    if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    if ((result = MMDRV_Message(wmld, WIDM_UNPREPARE, (DWORD_PTR)lpWaveInHdr,
-                                uSize)) != MMSYSERR_NOTSUPPORTED)
-        return result;
-
-    if (lpWaveInHdr->dwFlags & WHDR_INQUEUE)
-        return WAVERR_STILLPLAYING;
-
-    lpWaveInHdr->dwFlags &= ~WHDR_PREPARED;
-    lpWaveInHdr->dwFlags |= WHDR_DONE;
-
-    return MMSYSERR_NOERROR;
+    return MMSYSERR_INVALHANDLE;
 }
 
 /**************************************************************************
@@ -2515,15 +2387,12 @@ UINT WINAPI waveInUnprepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
 UINT WINAPI waveInAddBuffer(HWAVEIN hWaveIn,
 			    WAVEHDR* lpWaveInHdr, UINT uSize)
 {
-    LPWINE_MLD		wmld;
+    TRACE("(%p, %p, %u)\n", hWaveIn, lpWaveInHdr, uSize);
 
-    TRACE("(%p, %p, %u);\n", hWaveIn, lpWaveInHdr, uSize);
+    if(!lpWaveInHdr)
+        return MMSYSERR_INVALPARAM;
 
-    if (lpWaveInHdr == NULL) return MMSYSERR_INVALPARAM;
-    if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    return MMDRV_Message(wmld, WIDM_ADDBUFFER, (DWORD_PTR)lpWaveInHdr, uSize);
+    return MMSYSERR_INVALHANDLE;
 }
 
 /**************************************************************************
@@ -2531,14 +2400,8 @@ UINT WINAPI waveInAddBuffer(HWAVEIN hWaveIn,
  */
 UINT WINAPI waveInReset(HWAVEIN hWaveIn)
 {
-    LPWINE_MLD		wmld;
-
-    TRACE("(%p);\n", hWaveIn);
-
-    if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    return MMDRV_Message(wmld, WIDM_RESET, 0L, 0L);
+    TRACE("(%p)\n", hWaveIn);
+    return MMSYSERR_INVALHANDLE;
 }
 
 /**************************************************************************
@@ -2546,14 +2409,8 @@ UINT WINAPI waveInReset(HWAVEIN hWaveIn)
  */
 UINT WINAPI waveInStart(HWAVEIN hWaveIn)
 {
-    LPWINE_MLD		wmld;
-
-    TRACE("(%p);\n", hWaveIn);
-
-    if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    return MMDRV_Message(wmld, WIDM_START, 0L, 0L);
+    TRACE("(%p)\n", hWaveIn);
+    return MMSYSERR_INVALHANDLE;
 }
 
 /**************************************************************************
@@ -2561,14 +2418,8 @@ UINT WINAPI waveInStart(HWAVEIN hWaveIn)
  */
 UINT WINAPI waveInStop(HWAVEIN hWaveIn)
 {
-    LPWINE_MLD		wmld;
-
-    TRACE("(%p);\n", hWaveIn);
-
-    if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    return MMDRV_Message(wmld,WIDM_STOP, 0L, 0L);
+    TRACE("(%p)\n", hWaveIn);
+    return MMSYSERR_INVALHANDLE;
 }
 
 /**************************************************************************
@@ -2577,14 +2428,8 @@ UINT WINAPI waveInStop(HWAVEIN hWaveIn)
 UINT WINAPI waveInGetPosition(HWAVEIN hWaveIn, LPMMTIME lpTime,
 			      UINT uSize)
 {
-    LPWINE_MLD		wmld;
-
-    TRACE("(%p, %p, %u);\n", hWaveIn, lpTime, uSize);
-
-    if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    return MMDRV_Message(wmld, WIDM_GETPOS, (DWORD_PTR)lpTime, uSize);
+    TRACE("(%p, %p, %u)\n", hWaveIn, lpTime, uSize);
+    return MMSYSERR_INVALHANDLE;
 }
 
 /**************************************************************************
@@ -2592,17 +2437,11 @@ UINT WINAPI waveInGetPosition(HWAVEIN hWaveIn, LPMMTIME lpTime,
  */
 UINT WINAPI waveInGetID(HWAVEIN hWaveIn, UINT* lpuDeviceID)
 {
-    LPWINE_MLD		wmld;
-
-    TRACE("(%p, %p);\n", hWaveIn, lpuDeviceID);
+    TRACE("(%p, %p)\n", hWaveIn, lpuDeviceID);
 
     if (lpuDeviceID == NULL) return MMSYSERR_INVALHANDLE;
 
-    if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    *lpuDeviceID = wmld->uDeviceID;
-    return MMSYSERR_NOERROR;
+    return MMSYSERR_INVALHANDLE;
 }
 
 /**************************************************************************
@@ -2611,23 +2450,8 @@ UINT WINAPI waveInGetID(HWAVEIN hWaveIn, UINT* lpuDeviceID)
 UINT WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
                           DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    LPWINE_MLD		wmld;
-
     TRACE("(%p, %u, %ld, %ld)\n", hWaveIn, uMessage, dwParam1, dwParam2);
-
-    if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL) {
-	if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, TRUE)) != NULL) {
-	    return MMDRV_PhysicalFeatures(wmld, uMessage, dwParam1, dwParam2);
-	}
-	return MMSYSERR_INVALHANDLE;
-    }
-
-    /* from M$ KB */
-    if (uMessage < DRVM_IOCTL || (uMessage >= DRVM_IOCTL_LAST && uMessage < DRVM_MAPPER))
-	return MMSYSERR_INVALPARAM;
-
-
-    return MMDRV_Message(wmld, uMessage, dwParam1, dwParam2);
+    return MMSYSERR_INVALHANDLE;
 }
 
 /**************************************************************************
