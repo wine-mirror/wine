@@ -64,8 +64,6 @@ AC_ARG_WITH(ldap,      AS_HELP_STRING([--without-ldap],[do not use LDAP]),
             [if test "x$withval" = "xno"; then ac_cv_header_ldap_h=no; ac_cv_header_lber_h=no; fi])
 AC_ARG_WITH(mpg123,    AS_HELP_STRING([--without-mpg123],[do not use the mpg123 library]),
             [if test "x$withval" = "xno"; then ac_cv_header_mpg123_h=no; fi])
-AC_ARG_WITH(nas,       AS_HELP_STRING([--without-nas],[do not use the NAS sound support]),
-            [if test "x$withval" = "xno"; then ac_cv_header_audio_audiolib_h=no; fi])
 AC_ARG_WITH(openal,    AS_HELP_STRING([--without-openal],[do not use OpenAL]),
             [if test "x$withval" = "xno"; then ac_cv_header_AL_al_h=no; ac_cv_header_OpenAL_al_h=no; fi])
 AC_ARG_WITH(opencl,    AS_HELP_STRING([--without-opencl],[do not use OpenCL]),
@@ -1112,18 +1110,6 @@ This probably prevents linking to OpenGL. Try deleting the file and restarting c
     WINE_WARNING_WITH(opengl,[test -n "$opengl_msg"],[$opengl_msg
 OpenGL and Direct3D won't be supported.])
 
-    dnl **** Check for NAS ****
-    AC_SUBST(NASLIBS,"")
-    AC_CHECK_HEADERS(audio/audiolib.h,
-         [AC_CHECK_HEADERS(audio/soundlib.h,,,[#include <audio/audiolib.h>])
-          AC_CHECK_LIB(audio,AuCreateFlow,
-                       [AC_CHECK_LIB(Xau,XauGetBestAuthByAddr,
-                          [NASLIBS="-lXau -laudio -lXt $X_LIBS $XLIB $X_EXTRA_LIBS"],
-                          [NASLIBS="-laudio -lXt $X_LIBS $XLIB $X_EXTRA_LIBS"],
-                          [$X_LIBS])
-                       ],,
-                       [-lXt $X_LIBS $XLIB $X_EXTRA_LIBS])])
-
     CPPFLAGS="$ac_save_CPPFLAGS"
 else
     XLIB=""
@@ -1686,16 +1672,15 @@ WINE_CHECK_SONAME(odbc,SQLConnect,,[AC_DEFINE_UNQUOTED(SONAME_LIBODBC,["libodbc.
 dnl **** Disable unsupported winmm drivers ****
 test -n "$ALSALIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}
 test -n "$COREAUDIO" || enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
-test -n "$NASLIBS" || enable_winenas_drv=${enable_winenas_drv:-no}
 test -n "$ESDLIBS" || enable_wineesd_drv=${enable_wineesd_drv:-no}
 test -n "$ac_cv_lib_soname_jack" || enable_winejack_drv=${enable_winejack_drv:-no}
 test "x$ac_cv_member_oss_sysinfo_numaudioengines" = xyes || enable_wineoss_drv=${enable_wineoss_drv:-no}
 test "$ac_cv_header_linux_joystick_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
 dnl **** Check for any sound system ****
-if test "x$ALSALIBS$COREAUDIO$NASLIBS$ESDLIBS$ac_cv_lib_soname_jack" = "x" -a \
+if test "x$ALSALIBS$COREAUDIOLIBS$ESDLIBS$ac_cv_lib_soname_jack" = "x" -a \
         "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes -a \
-        "x$with_alsa$with_coreaudio$with_nas$with_esd$with_jack$with_oss" != xnononononono
+        "x$with_alsa$with_coreaudio$with_esd$with_jack$with_oss" != xnonononono
 then
     WINE_WARNING([No sound system was found. Windows applications will be silent.])
 fi
@@ -2883,7 +2868,6 @@ WINE_CONFIG_DLL(winejack.drv)
 WINE_CONFIG_DLL(winejoystick.drv)
 WINE_CONFIG_DLL(winemapi)
 WINE_CONFIG_DLL(winemp3.acm)
-WINE_CONFIG_DLL(winenas.drv)
 WINE_CONFIG_DLL(wineoss.drv)
 WINE_CONFIG_DLL(wineps.drv,,[install-lib])
 WINE_CONFIG_DLL(wineps16.drv16,enable_win16)

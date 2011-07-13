@@ -649,7 +649,6 @@ HALINCL
 XSLTINCL
 XML2INCL
 XML2LIBS
-NASLIBS
 X_EXTRA_LIBS
 X_LIBS
 X_PRE_LIBS
@@ -798,7 +797,6 @@ with_jack
 with_jpeg
 with_ldap
 with_mpg123
-with_nas
 with_openal
 with_opencl
 with_opengl
@@ -1490,7 +1488,6 @@ Optional Packages:
   --without-jpeg          do not use JPEG
   --without-ldap          do not use LDAP
   --without-mpg123        do not use the mpg123 library
-  --without-nas           do not use the NAS sound support
   --without-openal        do not use OpenAL
   --without-opencl        do not use OpenCL
   --without-opengl        do not use OpenGL
@@ -2638,12 +2635,6 @@ fi
 # Check whether --with-mpg123 was given.
 if test "${with_mpg123+set}" = set; then :
   withval=$with_mpg123; if test "x$withval" = "xno"; then ac_cv_header_mpg123_h=no; fi
-fi
-
-
-# Check whether --with-nas was given.
-if test "${with_nas+set}" = set; then :
-  withval=$with_nas; if test "x$withval" = "xno"; then ac_cv_header_audio_audiolib_h=no; fi
 fi
 
 
@@ -8926,115 +8917,6 @@ This is an error since --with-opengl was requested." "$LINENO" 5 ;;
 esac
 fi
 
-        NASLIBS=""
-
-    for ac_header in audio/audiolib.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "audio/audiolib.h" "ac_cv_header_audio_audiolib_h" "$ac_includes_default"
-if test "x$ac_cv_header_audio_audiolib_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_AUDIO_AUDIOLIB_H 1
-_ACEOF
- for ac_header in audio/soundlib.h
-do :
-  ac_fn_c_check_header_compile "$LINENO" "audio/soundlib.h" "ac_cv_header_audio_soundlib_h" "#include <audio/audiolib.h>
-"
-if test "x$ac_cv_header_audio_soundlib_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_AUDIO_SOUNDLIB_H 1
-_ACEOF
-
-fi
-
-done
-
-          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for AuCreateFlow in -laudio" >&5
-$as_echo_n "checking for AuCreateFlow in -laudio... " >&6; }
-if ${ac_cv_lib_audio_AuCreateFlow+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-laudio -lXt $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char AuCreateFlow ();
-int
-main ()
-{
-return AuCreateFlow ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_audio_AuCreateFlow=yes
-else
-  ac_cv_lib_audio_AuCreateFlow=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_audio_AuCreateFlow" >&5
-$as_echo "$ac_cv_lib_audio_AuCreateFlow" >&6; }
-if test "x$ac_cv_lib_audio_AuCreateFlow" = xyes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XauGetBestAuthByAddr in -lXau" >&5
-$as_echo_n "checking for XauGetBestAuthByAddr in -lXau... " >&6; }
-if ${ac_cv_lib_Xau_XauGetBestAuthByAddr+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXau $X_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char XauGetBestAuthByAddr ();
-int
-main ()
-{
-return XauGetBestAuthByAddr ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_Xau_XauGetBestAuthByAddr=yes
-else
-  ac_cv_lib_Xau_XauGetBestAuthByAddr=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_Xau_XauGetBestAuthByAddr" >&5
-$as_echo "$ac_cv_lib_Xau_XauGetBestAuthByAddr" >&6; }
-if test "x$ac_cv_lib_Xau_XauGetBestAuthByAddr" = xyes; then :
-  NASLIBS="-lXau -laudio -lXt $X_LIBS $XLIB $X_EXTRA_LIBS"
-else
-  NASLIBS="-laudio -lXt $X_LIBS $XLIB $X_EXTRA_LIBS"
-fi
-
-
-fi
-
-fi
-
-done
-
-
     CPPFLAGS="$ac_save_CPPFLAGS"
 else
     XLIB=""
@@ -12042,15 +11924,14 @@ fi
 
 test -n "$ALSALIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}
 test -n "$COREAUDIO" || enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
-test -n "$NASLIBS" || enable_winenas_drv=${enable_winenas_drv:-no}
 test -n "$ESDLIBS" || enable_wineesd_drv=${enable_wineesd_drv:-no}
 test -n "$ac_cv_lib_soname_jack" || enable_winejack_drv=${enable_winejack_drv:-no}
 test "x$ac_cv_member_oss_sysinfo_numaudioengines" = xyes || enable_wineoss_drv=${enable_wineoss_drv:-no}
 test "$ac_cv_header_linux_joystick_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
-if test "x$ALSALIBS$COREAUDIO$NASLIBS$ESDLIBS$ac_cv_lib_soname_jack" = "x" -a \
+if test "x$ALSALIBS$COREAUDIOLIBS$ESDLIBS$ac_cv_lib_soname_jack" = "x" -a \
         "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes -a \
-        "x$with_alsa$with_coreaudio$with_nas$with_esd$with_jack$with_oss" != xnononononono
+        "x$with_alsa$with_coreaudio$with_esd$with_jack$with_oss" != xnonononono
 then
     as_fn_append wine_warnings "|No sound system was found. Windows applications will be silent."
 fi
@@ -15460,7 +15341,6 @@ wine_fn_config_dll winejack.drv enable_winejack_drv
 wine_fn_config_dll winejoystick.drv enable_winejoystick_drv
 wine_fn_config_dll winemapi enable_winemapi
 wine_fn_config_dll winemp3.acm enable_winemp3_acm
-wine_fn_config_dll winenas.drv enable_winenas_drv
 wine_fn_config_dll wineoss.drv enable_wineoss_drv
 wine_fn_config_dll wineps.drv enable_wineps_drv install-lib
 wine_fn_config_dll wineps16.drv16 enable_win16

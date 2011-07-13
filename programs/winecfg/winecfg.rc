@@ -101,7 +101,6 @@ BEGIN
     IDS_DRIVER_ESOUND           "EsounD Driver"
     IDS_DRIVER_OSS              "OSS Driver"
     IDS_DRIVER_JACK             "JACK Driver"
-    IDS_DRIVER_NAS              "NAS Driver"
     IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
     IDS_OPEN_DRIVER_ERROR       "Couldn't open %s!"
     IDS_SOUNDDRIVERS            "Sound Drivers"

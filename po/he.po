@@ -167,7 +167,7 @@ msgstr "המועדפים שלי"
 msgid "System Path"
 msgstr "נתיב המערכת"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:122 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:121 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -10684,55 +10684,50 @@ msgstr "מנהל התקן JACK"
 
 #: winecfg.rc:104
 #, fuzzy
-msgid "NAS Driver"
-msgstr "מנהל התקן NAS"
-
-#: winecfg.rc:105
-#, fuzzy
 msgid "CoreAudio Driver"
 msgstr "מנהל התקן CoreAudio"
 
-#: winecfg.rc:106
+#: winecfg.rc:105
 #, fuzzy
 msgid "Couldn't open %s!"
 msgstr "לא ניתן לפתוח את %s!"
 
-#: winecfg.rc:107
+#: winecfg.rc:106
 #, fuzzy
 msgid "Sound Drivers"
 msgstr "מנהלי התקני שמע"
 
-#: winecfg.rc:108
+#: winecfg.rc:107
 #, fuzzy
 msgid "Wave Out Devices"
 msgstr "התקני פלט Wave"
 
-#: winecfg.rc:109
+#: winecfg.rc:108
 #, fuzzy
 msgid "Wave In Devices"
 msgstr "התקני קלט Wave"
 
-#: winecfg.rc:110
+#: winecfg.rc:109
 #, fuzzy
 msgid "MIDI Out Devices"
 msgstr "התקני פלט MIDI"
 
-#: winecfg.rc:111
+#: winecfg.rc:110
 #, fuzzy
 msgid "MIDI In Devices"
 msgstr "התקני קלט MIDI"
 
-#: winecfg.rc:112
+#: winecfg.rc:111
 #, fuzzy
 msgid "Aux Devices"
 msgstr "התקנים חיצוניים"
 
-#: winecfg.rc:113
+#: winecfg.rc:112
 #, fuzzy
 msgid "Mixer Devices"
 msgstr "התקני ערבול"
 
-#: winecfg.rc:114
+#: winecfg.rc:113
 #, fuzzy
 msgid ""
 "Found driver in registry that is not available!\n"
@@ -10743,162 +10738,162 @@ msgstr ""
 "\n"
 "האם למחוק את '%s' מרישום המערכת?"
 
-#: winecfg.rc:115
+#: winecfg.rc:114
 #, fuzzy
 msgid "Warning"
 msgstr "אזהרה"
 
-#: winecfg.rc:120
+#: winecfg.rc:119
 #, fuzzy
 msgid "Controls Background"
 msgstr "רקע הפקדים"
 
-#: winecfg.rc:121
+#: winecfg.rc:120
 #, fuzzy
 msgid "Controls Text"
 msgstr "טקסט הפקדים"
 
-#: winecfg.rc:123
+#: winecfg.rc:122
 #, fuzzy
 msgid "Menu Background"
 msgstr "רקע התפריט"
 
-#: winecfg.rc:124
+#: winecfg.rc:123
 #, fuzzy
 msgid "Menu Text"
 msgstr "טקסט בתפריט"
 
-#: winecfg.rc:125
+#: winecfg.rc:124
 #, fuzzy
 msgid "Scrollbar"
 msgstr "סרגל גלילה"
 
-#: winecfg.rc:126
+#: winecfg.rc:125
 #, fuzzy
 msgid "Selection Background"
 msgstr "רקע הבחירה"
 
-#: winecfg.rc:127
+#: winecfg.rc:126
 #, fuzzy
 msgid "Selection Text"
 msgstr "טקסט הבחירה"
 
-#: winecfg.rc:128
+#: winecfg.rc:127
 #, fuzzy
 msgid "ToolTip Background"
 msgstr "רקע חלונית העצה"
 
-#: winecfg.rc:129
+#: winecfg.rc:128
 #, fuzzy
 msgid "ToolTip Text"
 msgstr "טקסט חלונית עצה"
 
-#: winecfg.rc:130
+#: winecfg.rc:129
 #, fuzzy
 msgid "Window Background"
 msgstr "רקע החלון"
 
-#: winecfg.rc:131
+#: winecfg.rc:130
 #, fuzzy
 msgid "Window Text"
 msgstr "טקסט בחלון"
 
-#: winecfg.rc:132
+#: winecfg.rc:131
 #, fuzzy
 msgid "Active Title Bar"
 msgstr "כותרת החלון הפעיל"
 
-#: winecfg.rc:133
+#: winecfg.rc:132
 #, fuzzy
 msgid "Active Title Text"
 msgstr "טקסט בכותרת של פעיל"
 
-#: winecfg.rc:134
+#: winecfg.rc:133
 #, fuzzy
 msgid "Inactive Title Bar"
 msgstr "סרגל כותרת של בלתי פעיל"
 
-#: winecfg.rc:135
+#: winecfg.rc:134
 #, fuzzy
 msgid "Inactive Title Text"
 msgstr "טקסט כותרת של בלתי פעיל"
 
-#: winecfg.rc:136
+#: winecfg.rc:135
 #, fuzzy
 msgid "Message Box Text"
 msgstr "טקסט בתיבת הודעות"
 
-#: winecfg.rc:137
+#: winecfg.rc:136
 #, fuzzy
 msgid "Application Workspace"
 msgstr "מרחב היישומים"
 
-#: winecfg.rc:138
+#: winecfg.rc:137
 #, fuzzy
 msgid "Window Frame"
 msgstr "מסגרת החלון"
 
-#: winecfg.rc:139
+#: winecfg.rc:138
 #, fuzzy
 msgid "Active Border"
 msgstr "מסגרת של פעיל"
 
-#: winecfg.rc:140
+#: winecfg.rc:139
 #, fuzzy
 msgid "Inactive Border"
 msgstr "מסגרת של בלתי פעיל"
 
-#: winecfg.rc:141
+#: winecfg.rc:140
 #, fuzzy
 msgid "Controls Shadow"
 msgstr "הצללת הפקדים"
 
-#: winecfg.rc:142
+#: winecfg.rc:141
 #, fuzzy
 msgid "Gray Text"
 msgstr "טקסט אפור"
 
-#: winecfg.rc:143
+#: winecfg.rc:142
 #, fuzzy
 msgid "Controls Highlight"
 msgstr "הדגשת פקדים"
 
-#: winecfg.rc:144
+#: winecfg.rc:143
 #, fuzzy
 msgid "Controls Dark Shadow"
 msgstr "הפקדים בהצללה כהה"
 
-#: winecfg.rc:145
+#: winecfg.rc:144
 #, fuzzy
 msgid "Controls Light"
 msgstr "פקדים בהירים"
 
-#: winecfg.rc:146
+#: winecfg.rc:145
 #, fuzzy
 msgid "Controls Alternate Background"
 msgstr "צבע רקע הפקדים משתנה"
 
-#: winecfg.rc:147
+#: winecfg.rc:146
 #, fuzzy
 msgid "Hot Tracked Item"
 msgstr "פריט במעקב חם"
 
-#: winecfg.rc:148
+#: winecfg.rc:147
 #, fuzzy
 msgid "Active Title Bar Gradient"
 msgstr "מדרג שורת כותרת של חלון פעיל"
 
-#: winecfg.rc:149
+#: winecfg.rc:148
 #, fuzzy
 msgid "Inactive Title Bar Gradient"
 msgstr "מדרג שורת כותרת של חלון בלתי פעיל"
 
-#: winecfg.rc:150
+#: winecfg.rc:149
 #, fuzzy
 msgid "Menu Highlight"
 msgstr "הדגשה בתפריט"
 
-#: winecfg.rc:151
+#: winecfg.rc:150
 #, fuzzy
 msgid "Menu Bar"
 msgstr "סרגל תפריטים"

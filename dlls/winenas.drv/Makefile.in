@@ -1,9 +1,0 @@
-MODULE    = winenas.drv
-IMPORTS   = dxguid uuid winmm user32
-EXTRAINCL = @X_CFLAGS@
-EXTRALIBS = @NASLIBS@
-
-C_SRCS = \
-	audio.c
-
-@MAKE_DLL_RULES@
