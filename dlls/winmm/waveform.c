@@ -615,6 +615,11 @@ static UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
     return dwRet;
 }
 
+static inline BOOL WINMM_IsMapper(UINT device)
+{
+    return (device == WAVE_MAPPER || device == (UINT16)WAVE_MAPPER);
+}
+
 static MMRESULT WINMM_TryDeviceMapping(WINMM_OpenInfo *info, WORD channels,
         DWORD freq, DWORD bits_per_samp, BOOL is_out)
 {
@@ -644,15 +649,24 @@ static MMRESULT WINMM_TryDeviceMapping(WINMM_OpenInfo *info, WORD channels,
 
     /* ACM can convert from src->dst, so try to find a device
      * that supports dst */
-    for(i = 0; i < g_outmmdevices_count; ++i){
+    if(WINMM_IsMapper(info->req_device)){
+        for(i = 0; i < g_outmmdevices_count; ++i){
+            WINMM_OpenInfo l_info = *info;
+            l_info.req_device = i;
+            l_info.format = &target;
+            mr = WOD_Open(&l_info);
+            if(mr == MMSYSERR_NOERROR){
+                info->handle = l_info.handle;
+                break;
+            }
+        }
+    }else{
         WINMM_OpenInfo l_info = *info;
-        l_info.req_device = i;
+        l_info.flags &= ~WAVE_MAPPED;
         l_info.format = &target;
         mr = WOD_Open(&l_info);
-        if(mr == MMSYSERR_NOERROR){
+        if(mr == MMSYSERR_NOERROR)
             info->handle = l_info.handle;
-            break;
-        }
     }
     if(mr != MMSYSERR_NOERROR)
         return WAVERR_BADFORMAT;
@@ -684,8 +698,17 @@ static MMRESULT WINMM_MapDevice(WINMM_OpenInfo *info, BOOL is_out)
     /* try to find a direct match */
     if(is_out){
         WINMM_OpenInfo l_info = *info;
-        for(i = 0; i < g_outmmdevices_count; ++i){
-            l_info.req_device = i;
+        if(WINMM_IsMapper(info->req_device)){
+            for(i = 0; i < g_outmmdevices_count; ++i){
+                l_info.req_device = i;
+                mr = WOD_Open(&l_info);
+                if(mr == MMSYSERR_NOERROR){
+                    info->handle = l_info.handle;
+                    return mr;
+                }
+            }
+        }else{
+            l_info.flags &= ~WAVE_MAPPED;
             mr = WOD_Open(&l_info);
             if(mr == MMSYSERR_NOERROR){
                 info->handle = l_info.handle;
@@ -940,11 +963,6 @@ error:
     return ret;
 }
 
-static inline BOOL WINMM_IsMapper(UINT device)
-{
-    return (device == WAVE_MAPPER || device == (UINT16)WAVE_MAPPER);
-}
-
 static LRESULT WOD_Open(WINMM_OpenInfo *info)
 {
     WINMM_MMDevice *mmdevice;
@@ -955,7 +973,7 @@ static LRESULT WOD_Open(WINMM_OpenInfo *info)
 
     TRACE("(%u, %p, %08x)\n", info->req_device, info, info->flags);
 
-    if(WINMM_IsMapper(info->req_device))
+    if(WINMM_IsMapper(info->req_device) || (info->flags & WAVE_MAPPED))
         return WINMM_MapDevice(info, TRUE);
 
     if(info->req_device >= g_outmmdevices_count)
