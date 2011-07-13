@@ -229,19 +229,22 @@ static HRESULT alsa_get_card_devices(EDataFlow flow, WCHAR **ids, char **keys,
     static const WCHAR dashW[] = {' ','-',' ',0};
     int err, device;
     snd_pcm_info_t *info;
+    snd_pcm_stream_t stream = (flow == eRender ? SND_PCM_STREAM_PLAYBACK :
+        SND_PCM_STREAM_CAPTURE);
 
     info = HeapAlloc(GetProcessHeap(), 0, snd_pcm_info_sizeof());
     if(!info)
         return E_OUTOFMEMORY;
 
     snd_pcm_info_set_subdevice(info, 0);
-    snd_pcm_info_set_stream(info,
-            flow == eRender ? SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE);
+    snd_pcm_info_set_stream(info, stream);
 
     device = -1;
     for(err = snd_ctl_pcm_next_device(ctl, &device); device != -1 && err >= 0;
             err = snd_ctl_pcm_next_device(ctl, &device)){
         const char *devname;
+        char devnode[32];
+        snd_pcm_t *handle;
 
         snd_pcm_info_set_device(info, device);
 
@@ -254,6 +257,15 @@ static HRESULT alsa_get_card_devices(EDataFlow flow, WCHAR **ids, char **keys,
                     card, device, err, snd_strerror(err));
             continue;
         }
+
+        sprintf(devnode, "hw:%d,%d", card, device);
+        if((err = snd_pcm_open(&handle, devnode, stream, SND_PCM_NONBLOCK)) < 0){
+            WARN("The device \"%s\" failed to open, pretending it doesn't exist: %d (%s)\n",
+                    devnode, err, snd_strerror(err));
+            continue;
+        }
+
+        snd_pcm_close(handle);
 
         if(ids && keys){
             DWORD len, cardlen;
@@ -286,7 +298,7 @@ static HRESULT alsa_get_card_devices(EDataFlow flow, WCHAR **ids, char **keys,
                 HeapFree(GetProcessHeap(), 0, ids[*num]);
                 return E_OUTOFMEMORY;
             }
-            sprintf(keys[*num], "hw:%d,%d", card, device);
+            memcpy(keys[*num], devnode, sizeof(devnode));
         }
 
         ++(*num);

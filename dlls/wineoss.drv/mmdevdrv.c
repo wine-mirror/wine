@@ -285,6 +285,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, void ***keys,
     *def_index = -1;
     for(i = 0; i < sysinfo.numaudios; ++i){
         oss_audioinfo ai = {0};
+        int fd;
 
         ai.dev = i;
         if(ioctl(mixer_fd, SNDCTL_AUDIOINFO, &ai) < 0){
@@ -292,6 +293,17 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, void ***keys,
                     strerror(errno));
             continue;
         }
+
+        if(flow == eRender)
+            fd = open(ai.devnode, O_WRONLY, 0);
+        else
+            fd = open(ai.devnode, O_RDONLY, 0);
+        if(fd < 0){
+            WARN("Opening device \"%s\" failed, pretending it doesn't exist: %d (%s)",
+                    ai.devnode, errno, strerror(errno));
+            continue;
+        }
+        close(fd);
 
         if((flow == eCapture && (ai.caps & PCM_CAP_INPUT)) ||
                 (flow == eRender && (ai.caps & PCM_CAP_OUTPUT))){
