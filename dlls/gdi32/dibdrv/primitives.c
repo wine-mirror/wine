@@ -719,6 +719,15 @@ static DWORD colorref_to_pixel_null(const dib_info *dib, COLORREF color)
     return 0;
 }
 
+static inline BOOL bit_fields_match(const dib_info *d1, const dib_info *d2)
+{
+    assert( d1->bit_count > 8 && d1->bit_count == d2->bit_count );
+
+    return d1->red_mask   == d2->red_mask &&
+           d1->green_mask == d2->green_mask &&
+           d1->blue_mask  == d2->blue_mask;
+}
+
 static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
     DWORD *dst_start = dst->bits, *dst_pixel, src_val;
@@ -902,6 +911,20 @@ static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
                 }
                 dst_start += dst->stride / 4;
                 src_start += src->stride / 4;
+            }
+        }
+        else if(bit_fields_match(src, dst))
+        {
+            if(src->stride > 0 && dst->stride > 0 && src_rect->left == 0 && src_rect->right == src->width)
+                memcpy(dst->bits, src_start, (src_rect->bottom - src_rect->top) * src->stride);
+            else
+            {
+                for(y = src_rect->top; y < src_rect->bottom; y++)
+                {
+                    memcpy(dst_start, src_start, (src_rect->right - src_rect->left) * 4);
+                    dst_start += dst->stride / 4;
+                    src_start += src->stride / 4;
+                }
             }
         }
         else
@@ -1454,6 +1477,20 @@ static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                 }
                 dst_start += dst->stride / 2;
                 src_start += src->stride / 2;
+            }
+        }
+        else if(bit_fields_match(src, dst))
+        {
+            if(src->stride > 0 && dst->stride > 0 && src_rect->left == 0 && src_rect->right == src->width)
+                memcpy(dst->bits, src_start, (src_rect->bottom - src_rect->top) * src->stride);
+            else
+            {
+                for(y = src_rect->top; y < src_rect->bottom; y++)
+                {
+                    memcpy(dst_start, src_start, (src_rect->right - src_rect->left) * 2);
+                    dst_start += dst->stride / 2;
+                    src_start += src->stride / 2;
+                }
             }
         }
         else
