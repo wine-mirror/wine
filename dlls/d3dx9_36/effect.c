@@ -4737,7 +4737,7 @@ err_out:
 static HRESULT d3dx9_parse_resource(struct ID3DXBaseEffectImpl *base, const char *data, const char **ptr)
 {
     DWORD technique_index;
-    DWORD index, state_index, usage;
+    DWORD index, state_index, usage, element_index;
     struct d3dx_state *state;
     struct d3dx_parameter *param;
     HRESULT hr = E_FAIL;
@@ -4748,10 +4748,11 @@ static HRESULT d3dx9_parse_resource(struct ID3DXBaseEffectImpl *base, const char
     read_dword(ptr, &index);
     TRACE("index: %u\n", index);
 
-    skip_dword_unknown(ptr, 1);
+    read_dword(ptr, &element_index);
+    TRACE("element_index: %u\n", element_index);
 
     read_dword(ptr, &state_index);
-    TRACE("state: %u\n", state_index);
+    TRACE("state_index: %u\n", state_index);
 
     read_dword(ptr, &usage);
     TRACE("usage: %u\n", usage);
@@ -4768,6 +4769,17 @@ static HRESULT d3dx9_parse_resource(struct ID3DXBaseEffectImpl *base, const char
         }
 
         parameter = get_parameter_struct(base->parameter_handles[index]);
+        if (element_index != 0xffffffff)
+        {
+            if (element_index >= parameter->element_count && parameter->element_count != 0)
+            {
+                FIXME("Index out of bounds: element_index %u >= element_count %u\n", element_index, parameter->element_count);
+                return E_FAIL;
+            }
+
+            if (parameter->element_count != 0) parameter = get_parameter_struct(parameter->member_handles[element_index]);
+        }
+
         sampler = parameter->data;
         if (state_index >= sampler->state_count)
         {
