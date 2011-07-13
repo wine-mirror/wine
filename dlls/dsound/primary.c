@@ -125,7 +125,7 @@ HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
 
 	if (device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN)
 	{
-		DWORD flags = CALLBACK_FUNCTION;
+		DWORD flags = CALLBACK_FUNCTION | WAVE_MAPPED;
 
 		if (device->driver)
 			flags |= WAVE_DIRECTSOUND;

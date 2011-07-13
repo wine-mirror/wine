@@ -942,7 +942,7 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
 		return err;
 	    }
 	} else {
-	    DWORD flags = CALLBACK_FUNCTION;
+	    DWORD flags = CALLBACK_FUNCTION | WAVE_MAPPED;
             err = mmErr(waveInOpen(&(device->hwi),
                 device->drvdesc.dnDevNode, device->pwfx,
                 (DWORD_PTR)DSOUND_capture_callback, (DWORD_PTR)device, flags));
