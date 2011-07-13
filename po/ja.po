@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-06-20 22:04+0900\n"
+"PO-Revision-Date: 2011-07-13 21:47+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -6368,7 +6368,7 @@ msgstr "元のサイズに戻す(&R)"
 
 #: shell32.rc:83
 msgid "&Erase"
-msgstr ""
+msgstr "消去(&E)"
 
 #: shell32.rc:95
 msgid "E&xplore"
@@ -6749,44 +6749,40 @@ msgid "There is no Windows program configured to open this type of file."
 msgstr "このファイルの種類に関連付けられた Windows プログラムはありません。"
 
 #: shell32.rc:255
-#, fuzzy
 msgid "Are you sure you wish to permanently delete '%1'?"
-msgstr "'%1' を削除しますか?"
+msgstr "'%1' を完全に削除しますか?"
 
 #: shell32.rc:256
-#, fuzzy
 msgid "Are you sure you wish to permanently delete these %1 items?"
-msgstr "これら %1 ファイルを削除しますか?"
+msgstr "これら %1 項目を完全に削除しますか?"
 
 #: shell32.rc:257
-#, fuzzy
 msgid "Confirm deletion"
-msgstr "ファイルの削除の確認"
+msgstr "削除の確認"
 
 #: shell32.rc:258
-#, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"ファイルは既に存在します。\n"
-"上書きしますか?"
+"ファイルは %1 にすでに存在します。\n"
+"\n"
+"既存のファイルを置き換えますか?"
 
 #: shell32.rc:259
-#, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"ファイルは既に存在します。\n"
-"上書きしますか?"
+"フォルダは %1 にすでに存在します。\n"
+"\n"
+"既存のフォルダを置き換えますか?"
 
 #: shell32.rc:260
-#, fuzzy
 msgid "Confirm overwrite"
-msgstr "ファイルの上書きの確認"
+msgstr "上書きの確認"
 
 #: shell32.rc:277
 msgid ""
@@ -8447,9 +8443,8 @@ msgid "Wine Explorer"
 msgstr "Wine エクスプローラ"
 
 #: explorer.rc:29
-#, fuzzy
 msgid "Location:"
-msgstr "場所"
+msgstr "場所:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
@@ -9546,7 +9541,6 @@ msgid "Exports selected branch of the registry to a text file"
 msgstr "選択したレジストリ キー以下をテキストファイルに出力"
 
 #: start.rc:46
-#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9586,6 +9580,7 @@ msgstr ""
 "ルを開始します。\n"
 "/ProgIDOpen  直後に指定した progID を利用して文書を開きます。\n"
 "/L           エンドユーザ ライセンスを表示します。\n"
+"/?           このヘルプを表示し、終了します。\n"
 "\n"
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "Start は完全に無保証です。詳細は /L オプションをつけて起動してください。\n"
