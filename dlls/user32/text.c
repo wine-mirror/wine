@@ -723,7 +723,6 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
                  * pellip->under
                  */
             }
-            line_fits = (size.cx <= max_seg_width);
             ellipsified = 1;
         }
         /* As an optimisation if we have ellipsified and we are expanding
