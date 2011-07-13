@@ -185,7 +185,9 @@ msgstr "Omiljeno"
 msgid "System Path"
 msgstr "Sistemska putanja"
 
-#: comdlg32.rc:34 shell32.rc:153 shell32.rc:207 winecfg.rc:122 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:122 winefile.rc:103
+#, fuzzy
+msgctxt "display name"
 msgid "Desktop"
 msgstr "Radna površina"
 
@@ -6817,6 +6819,12 @@ msgstr "Muzika"
 #: shell32.rc:206
 msgid "My Videos"
 msgstr "Video snimci"
+
+#: shell32.rc:207
+#, fuzzy
+msgctxt "directory"
+msgid "Desktop"
+msgstr "Radna površina"
 
 #: shell32.rc:208
 msgid "NetHood"

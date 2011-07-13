@@ -162,7 +162,9 @@ msgstr "ที่คั่นหนังสือ"
 msgid "System Path"
 msgstr "System Path"
 
-#: comdlg32.rc:34 shell32.rc:153 shell32.rc:207 winecfg.rc:122 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:122 winefile.rc:103
+#, fuzzy
+msgctxt "display name"
 msgid "Desktop"
 msgstr "พื้นที่ทำงาน"
 
@@ -6524,6 +6526,12 @@ msgstr ""
 #: shell32.rc:206
 msgid "My Videos"
 msgstr ""
+
+#: shell32.rc:207
+#, fuzzy
+msgctxt "directory"
+msgid "Desktop"
+msgstr "พื้นที่ทำงาน"
 
 #: shell32.rc:208
 msgid "NetHood"

@@ -167,7 +167,9 @@ msgstr "Избранное"
 msgid "System Path"
 msgstr "Системный путь"
 
-#: comdlg32.rc:34 shell32.rc:153 shell32.rc:207 winecfg.rc:122 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:122 winefile.rc:103
+#, fuzzy
+msgctxt "display name"
 msgid "Desktop"
 msgstr "Рабочий стол"
 
@@ -6499,6 +6501,12 @@ msgstr "Моя музыка"
 #: shell32.rc:206
 msgid "My Videos"
 msgstr "Мои фильмы"
+
+#: shell32.rc:207
+#, fuzzy
+msgctxt "directory"
+msgid "Desktop"
+msgstr "Рабочий стол"
 
 #: shell32.rc:208
 msgid "NetHood"

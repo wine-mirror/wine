@@ -167,7 +167,9 @@ msgstr "내 즐겨찾기"
 msgid "System Path"
 msgstr "시스템 경로"
 
-#: comdlg32.rc:34 shell32.rc:153 shell32.rc:207 winecfg.rc:122 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:122 winefile.rc:103
+#, fuzzy
+msgctxt "display name"
 msgid "Desktop"
 msgstr "데스크탑"
 
@@ -6489,6 +6491,12 @@ msgstr "내 음악"
 #: shell32.rc:206
 msgid "My Videos"
 msgstr "내 비디오"
+
+#: shell32.rc:207
+#, fuzzy
+msgctxt "directory"
+msgid "Desktop"
+msgstr "데스크탑"
 
 #: shell32.rc:208
 msgid "NetHood"

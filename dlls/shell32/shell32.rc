@@ -150,7 +150,7 @@ STRINGTABLE
 	IDS_SHV_COL_MODEL	"Model"
 
         /* special folders */
-	IDS_DESKTOP		"Desktop"
+	IDS_DESKTOP		"#msgctxt#display name#Desktop"
 	IDS_MYCOMPUTER		"My Computer"
 	IDS_RECYCLEBIN_FOLDER_NAME      "Trash"
 	IDS_CONTROLPANEL	"Control Panel"
@@ -204,7 +204,7 @@ STRINGTABLE
 	IDS_STARTMENU               "Start Menu"
 	IDS_MYMUSIC                 "My Music"
 	IDS_MYVIDEO                 "My Videos"
-	IDS_DESKTOPDIRECTORY        "Desktop"
+	IDS_DESKTOPDIRECTORY        "#msgctxt#directory#Desktop"
 	IDS_NETHOOD                 "NetHood"
 	IDS_TEMPLATES               "Templates"
 	IDS_APPDATA                 "Application Data"

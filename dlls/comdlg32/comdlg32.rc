@@ -31,7 +31,7 @@ STRINGTABLE
     IDS_PERSONAL            "My Documents"
     IDS_FAVORITES           "My Favorites"
     IDS_PATH                "System Path"
-    IDS_DESKTOP             "Desktop"
+    IDS_DESKTOP             "#msgctxt#display name#Desktop"
     IDS_FONTS               "Fonts"
     IDS_MYCOMPUTER          "My Computer"
 }

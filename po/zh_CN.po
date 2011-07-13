@@ -173,7 +173,9 @@ msgstr "收藏夹"
 msgid "System Path"
 msgstr "系统路径"
 
-#: comdlg32.rc:34 shell32.rc:153 shell32.rc:207 winecfg.rc:122 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:122 winefile.rc:103
+#, fuzzy
+msgctxt "display name"
 msgid "Desktop"
 msgstr "桌面"
 
@@ -6748,6 +6750,12 @@ msgstr "My Music"
 #: shell32.rc:206
 msgid "My Videos"
 msgstr "My Videos"
+
+#: shell32.rc:207
+#, fuzzy
+msgctxt "directory"
+msgid "Desktop"
+msgstr "桌面"
 
 #: shell32.rc:208
 msgid "NetHood"

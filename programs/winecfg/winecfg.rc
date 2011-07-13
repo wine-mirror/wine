@@ -119,7 +119,7 @@ STRINGTABLE
 BEGIN
     IDC_SYSPARAMS_BUTTON            "Controls Background"
     IDC_SYSPARAMS_BUTTON_TEXT       "Controls Text"
-    IDC_SYSPARAMS_DESKTOP           "Desktop"
+    IDC_SYSPARAMS_DESKTOP           "#msgctxt#display name#Desktop"
     IDC_SYSPARAMS_MENU              "Menu Background"
     IDC_SYSPARAMS_MENU_TEXT         "Menu Text"
     IDC_SYSPARAMS_SCROLLBAR         "Scrollbar"

@@ -169,7 +169,9 @@ msgstr "Mina Favoriter"
 msgid "System Path"
 msgstr "Systemsökväg"
 
-#: comdlg32.rc:34 shell32.rc:153 shell32.rc:207 winecfg.rc:122 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:122 winefile.rc:103
+#, fuzzy
+msgctxt "display name"
 msgid "Desktop"
 msgstr "Skrivbord"
 
@@ -6513,6 +6515,12 @@ msgstr "Min musik"
 #: shell32.rc:206
 msgid "My Videos"
 msgstr "Mina videoklipp"
+
+#: shell32.rc:207
+#, fuzzy
+msgctxt "directory"
+msgid "Desktop"
+msgstr "Skrivbord"
 
 #: shell32.rc:208
 msgid "NetHood"

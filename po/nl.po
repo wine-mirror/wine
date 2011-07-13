@@ -170,7 +170,9 @@ msgstr "Mijn Favorieten"
 msgid "System Path"
 msgstr "Systeem Pad"
 
-#: comdlg32.rc:34 shell32.rc:153 shell32.rc:207 winecfg.rc:122 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:122 winefile.rc:103
+#, fuzzy
+msgctxt "display name"
 msgid "Desktop"
 msgstr "Bureaublad"
 
@@ -6610,6 +6612,12 @@ msgstr "Mijn Muziek"
 #: shell32.rc:206
 msgid "My Videos"
 msgstr "Mijn Video's"
+
+#: shell32.rc:207
+#, fuzzy
+msgctxt "directory"
+msgid "Desktop"
+msgstr "Bureaublad"
 
 #: shell32.rc:208
 msgid "NetHood"

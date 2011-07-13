@@ -174,7 +174,9 @@ msgstr "Sık Kullanılanlar"
 msgid "System Path"
 msgstr "Sistem Yolu"
 
-#: comdlg32.rc:34 shell32.rc:153 shell32.rc:207 winecfg.rc:122 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:122 winefile.rc:103
+#, fuzzy
+msgctxt "display name"
 msgid "Desktop"
 msgstr "Masaüstü"
 
@@ -6864,6 +6866,12 @@ msgstr "Belgelerim\\Müziğim"
 #: shell32.rc:206
 msgid "My Videos"
 msgstr "Belgelerim\\Vidyolarım"
+
+#: shell32.rc:207
+#, fuzzy
+msgctxt "directory"
+msgid "Desktop"
+msgstr "Masaüstü"
 
 #: shell32.rc:208
 msgid "NetHood"

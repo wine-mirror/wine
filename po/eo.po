@@ -168,7 +168,9 @@ msgstr "Miaj Favoritaj"
 msgid "System Path"
 msgstr "Sistemvojo"
 
-#: comdlg32.rc:34 shell32.rc:153 shell32.rc:207 winecfg.rc:122 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:122 winefile.rc:103
+#, fuzzy
+msgctxt "display name"
 msgid "Desktop"
 msgstr "Desktop"
 
@@ -6623,6 +6625,12 @@ msgstr "Miaj Dokumentoj\\Muziko"
 #: shell32.rc:206
 msgid "My Videos"
 msgstr "Miai Dokumentoj\\Video"
+
+#: shell32.rc:207
+#, fuzzy
+msgctxt "directory"
+msgid "Desktop"
+msgstr "Desktop"
 
 #: shell32.rc:208
 msgid "NetHood"

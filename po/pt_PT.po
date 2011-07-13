@@ -177,8 +177,9 @@ msgstr "Favoritos"
 msgid "System Path"
 msgstr "Localização do Sistema"
 
-#: comdlg32.rc:34 shell32.rc:153 shell32.rc:207 winecfg.rc:122 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:122 winefile.rc:103
 #, fuzzy
+msgctxt "display name"
 msgid "Desktop"
 msgstr ""
 "#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
@@ -6807,6 +6808,16 @@ msgstr "As Minhas Músicas"
 #: shell32.rc:206
 msgid "My Videos"
 msgstr "Os Meus Vídeos"
+
+#: shell32.rc:207
+#, fuzzy
+msgctxt "directory"
+msgid "Desktop"
+msgstr ""
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"Área de trabalho\n"
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"Ambiente de trabalho"
 
 #: shell32.rc:208
 msgid "NetHood"

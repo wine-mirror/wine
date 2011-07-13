@@ -163,7 +163,8 @@ msgstr ""
 msgid "System Path"
 msgstr ""
 
-#: comdlg32.rc:34 shell32.rc:153 shell32.rc:207 winecfg.rc:122 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:122 winefile.rc:103
+msgctxt "display name"
 msgid "Desktop"
 msgstr ""
 
@@ -6441,6 +6442,11 @@ msgstr ""
 
 #: shell32.rc:206
 msgid "My Videos"
+msgstr ""
+
+#: shell32.rc:207
+msgctxt "directory"
+msgid "Desktop"
 msgstr ""
 
 #: shell32.rc:208
