@@ -41,9 +41,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(driver);
 
 struct graphics_driver
 {
-    struct list             entry;
-    HMODULE                 module;  /* module handle */
-    DC_FUNCTIONS            funcs;
+    struct list                entry;
+    HMODULE                    module;  /* module handle */
+    const struct gdi_dc_funcs *funcs;
 };
 
 static struct list drivers = LIST_INIT( drivers );
@@ -65,150 +65,22 @@ static CRITICAL_SECTION driver_section = { &critsect_debug, -1, 0, 0, 0, 0 };
  */
 static struct graphics_driver *create_driver( HMODULE module )
 {
+    static const struct gdi_dc_funcs empty_funcs;
+    const struct gdi_dc_funcs *funcs = NULL;
     struct graphics_driver *driver;
 
     if (!(driver = HeapAlloc( GetProcessHeap(), 0, sizeof(*driver)))) return NULL;
     driver->module = module;
 
-    /* fill the function table */
     if (module)
     {
-#define GET_FUNC(name) driver->funcs.p##name = (void*)GetProcAddress( module, #name )
-        GET_FUNC(AbortDoc);
-        GET_FUNC(AbortPath);
-        GET_FUNC(AlphaBlend);
-        GET_FUNC(AngleArc);
-        GET_FUNC(Arc);
-        GET_FUNC(ArcTo);
-        GET_FUNC(BeginPath);
-        GET_FUNC(ChoosePixelFormat);
-        GET_FUNC(Chord);
-        GET_FUNC(CloseFigure);
-        GET_FUNC(CreateBitmap);
-        GET_FUNC(CreateDC);
-        GET_FUNC(CreateDIBSection);
-        GET_FUNC(DeleteBitmap);
-        GET_FUNC(DeleteDC);
-        GET_FUNC(DescribePixelFormat);
-        GET_FUNC(DeviceCapabilities);
-        GET_FUNC(Ellipse);
-        GET_FUNC(EndDoc);
-        GET_FUNC(EndPage);
-        GET_FUNC(EndPath);
-        GET_FUNC(EnumDeviceFonts);
-        GET_FUNC(EnumICMProfiles);
-        GET_FUNC(ExcludeClipRect);
-        GET_FUNC(ExtDeviceMode);
-        GET_FUNC(ExtEscape);
-        GET_FUNC(ExtFloodFill);
-        GET_FUNC(ExtSelectClipRgn);
-        GET_FUNC(ExtTextOut);
-        GET_FUNC(FillPath);
-        GET_FUNC(FillRgn);
-        GET_FUNC(FlattenPath);
-        GET_FUNC(FrameRgn);
-        GET_FUNC(GdiComment);
-        GET_FUNC(GetBitmapBits);
-        GET_FUNC(GetCharWidth);
-        GET_FUNC(GetDIBits);
-        GET_FUNC(GetDeviceCaps);
-        GET_FUNC(GetDeviceGammaRamp);
-        GET_FUNC(GetICMProfile);
-        GET_FUNC(GetNearestColor);
-        GET_FUNC(GetPixel);
-        GET_FUNC(GetPixelFormat);
-        GET_FUNC(GetSystemPaletteEntries);
-        GET_FUNC(GetTextExtentExPoint);
-        GET_FUNC(GetTextMetrics);
-        GET_FUNC(IntersectClipRect);
-        GET_FUNC(InvertRgn);
-        GET_FUNC(LineTo);
-        GET_FUNC(MoveTo);
-        GET_FUNC(ModifyWorldTransform);
-        GET_FUNC(OffsetClipRgn);
-        GET_FUNC(OffsetViewportOrgEx);
-        GET_FUNC(OffsetWindowOrgEx);
-        GET_FUNC(PaintRgn);
-        GET_FUNC(PatBlt);
-        GET_FUNC(Pie);
-        GET_FUNC(PolyBezier);
-        GET_FUNC(PolyBezierTo);
-        GET_FUNC(PolyDraw);
-        GET_FUNC(PolyPolygon);
-        GET_FUNC(PolyPolyline);
-        GET_FUNC(Polygon);
-        GET_FUNC(Polyline);
-        GET_FUNC(PolylineTo);
-        GET_FUNC(RealizeDefaultPalette);
-        GET_FUNC(RealizePalette);
-        GET_FUNC(Rectangle);
-        GET_FUNC(ResetDC);
-        GET_FUNC(RestoreDC);
-        GET_FUNC(RoundRect);
-        GET_FUNC(SaveDC);
-        GET_FUNC(ScaleViewportExtEx);
-        GET_FUNC(ScaleWindowExtEx);
-        GET_FUNC(SelectBitmap);
-        GET_FUNC(SelectBrush);
-        GET_FUNC(SelectClipPath);
-        GET_FUNC(SelectFont);
-        GET_FUNC(SelectPalette);
-        GET_FUNC(SelectPen);
-        GET_FUNC(SetArcDirection);
-        GET_FUNC(SetBitmapBits);
-        GET_FUNC(SetBkColor);
-        GET_FUNC(SetBkMode);
-        GET_FUNC(SetDCBrushColor);
-        GET_FUNC(SetDCPenColor);
-        GET_FUNC(SetDIBColorTable);
-        GET_FUNC(SetDIBits);
-        GET_FUNC(SetDIBitsToDevice);
-        GET_FUNC(SetDeviceClipping);
-        GET_FUNC(SetDeviceGammaRamp);
-        GET_FUNC(SetLayout);
-        GET_FUNC(SetMapMode);
-        GET_FUNC(SetMapperFlags);
-        GET_FUNC(SetPixel);
-        GET_FUNC(SetPixelFormat);
-        GET_FUNC(SetPolyFillMode);
-        GET_FUNC(SetROP2);
-        GET_FUNC(SetRelAbs);
-        GET_FUNC(SetStretchBltMode);
-        GET_FUNC(SetTextAlign);
-        GET_FUNC(SetTextCharacterExtra);
-        GET_FUNC(SetTextColor);
-        GET_FUNC(SetTextJustification);
-        GET_FUNC(SetViewportExtEx);
-        GET_FUNC(SetViewportOrgEx);
-        GET_FUNC(SetWindowExtEx);
-        GET_FUNC(SetWindowOrgEx);
-        GET_FUNC(SetWorldTransform);
-        GET_FUNC(StartDoc);
-        GET_FUNC(StartPage);
-        GET_FUNC(StretchBlt);
-        GET_FUNC(StretchDIBits);
-        GET_FUNC(StrokeAndFillPath);
-        GET_FUNC(StrokePath);
-        GET_FUNC(SwapBuffers);
-        GET_FUNC(UnrealizePalette);
-        GET_FUNC(WidenPath);
+        const struct gdi_dc_funcs * (CDECL *wine_get_gdi_driver)( unsigned int version );
 
-        /* OpenGL32 */
-        GET_FUNC(wglCreateContext);
-        GET_FUNC(wglCreateContextAttribsARB);
-        GET_FUNC(wglDeleteContext);
-        GET_FUNC(wglGetProcAddress);
-        GET_FUNC(wglGetPbufferDCARB);
-        GET_FUNC(wglMakeContextCurrentARB);
-        GET_FUNC(wglMakeCurrent);
-        GET_FUNC(wglSetPixelFormatWINE);
-        GET_FUNC(wglShareLists);
-        GET_FUNC(wglUseFontBitmapsA);
-        GET_FUNC(wglUseFontBitmapsW);
-#undef GET_FUNC
+        if ((wine_get_gdi_driver = (void *)GetProcAddress( module, "wine_get_gdi_driver" )))
+            funcs = wine_get_gdi_driver( WINE_GDI_DRIVER_VERSION );
     }
-    else memset( &driver->funcs, 0, sizeof(driver->funcs) );
-
+    if (!funcs) funcs = &empty_funcs;
+    driver->funcs = funcs;
     return driver;
 }
 
@@ -225,7 +97,7 @@ const DC_FUNCTIONS *DRIVER_get_display_driver(void)
     HMODULE module = 0;
     HKEY hkey;
 
-    if (display_driver) return &display_driver->funcs;  /* already loaded */
+    if (display_driver) return display_driver->funcs;  /* already loaded */
 
     strcpy( buffer, "x11" );  /* default value */
     /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
@@ -259,7 +131,7 @@ const DC_FUNCTIONS *DRIVER_get_display_driver(void)
         FreeLibrary( driver->module );
         HeapFree( GetProcessHeap(), 0, driver );
     }
-    return &display_driver->funcs;
+    return display_driver->funcs;
 }
 
 
@@ -278,7 +150,7 @@ const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name )
 
     if ((module = GetModuleHandleW( name )))
     {
-        if (display_driver && display_driver->module == module) return &display_driver->funcs;
+        if (display_driver && display_driver->module == module) return display_driver->funcs;
         EnterCriticalSection( &driver_section );
         LIST_FOR_EACH_ENTRY( driver, &drivers, struct graphics_driver, entry )
         {
@@ -309,7 +181,7 @@ const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name )
     TRACE( "loaded driver %p for %s\n", driver, debugstr_w(name) );
 done:
     LeaveCriticalSection( &driver_section );
-    return &driver->funcs;
+    return driver->funcs;
 }
 
 
