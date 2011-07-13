@@ -53,6 +53,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winmm);
 
+/* FIXME: Should be localized */
+static const WCHAR volumeW[] = {'V','o','l','u','m','e',0};
+static const WCHAR mastervolumeW[] = {'M','a','s','t','e','r',' ','V','o','l',
+    'u','m','e',0};
+static const WCHAR muteW[] = {'M','u','t','e',0};
+
 /* HWAVE (and HMIXER) format:
  *
  * XXXX... 1FDD DDDD IIII IIII
@@ -117,7 +123,13 @@ struct _WINMM_MMDevice {
     WAVEINCAPSW in_caps; /* must not be modified outside of WINMM_InitMMDevices*/
     WCHAR *dev_id;
 
+    ISimpleAudioVolume *volume;
+
     GUID session;
+
+    /* HMIXER format is the same as the HWAVE format, but the I bits are
+     * replaced by the value of this counter, to keep each HMIXER unique */
+    UINT mixer_count;
 
     CRITICAL_SECTION lock;
 
@@ -148,6 +160,12 @@ typedef struct _WINMM_OpenInfo {
     DWORD_PTR cb_user;
     DWORD flags;
 } WINMM_OpenInfo;
+
+typedef struct _WINMM_ControlDetails {
+    HMIXEROBJ hmix;
+    MIXERCONTROLDETAILS *details;
+    DWORD flags;
+} WINMM_ControlDetails;
 
 static LRESULT WOD_Open(WINMM_OpenInfo *info);
 static LRESULT WOD_Close(HWAVEOUT hwave);
@@ -1783,6 +1801,243 @@ static LRESULT WINMM_GetPosition(HWAVE hwave, MMTIME *time)
             bytes_per_frame);
 }
 
+static WINMM_MMDevice *WINMM_GetMixerMMDevice(HMIXEROBJ hmix, DWORD flags,
+        UINT *mmdev_index)
+{
+    UINT mmdev, dev, junk, *out;
+    BOOL is_out;
+
+    if(!mmdev_index)
+        out = &mmdev;
+    else
+        out = mmdev_index;
+
+    switch(flags & 0xF0000000){
+    case MIXER_OBJECTF_MIXER: /* == 0 */
+        *out = HandleToULong(hmix);
+        if(*out < g_outmmdevices_count)
+            return &g_out_mmdevices[*out];
+        if(*out - g_outmmdevices_count < g_inmmdevices_count){
+            *out -= g_outmmdevices_count;
+            return &g_in_mmdevices[*out];
+        }
+        /* fall through -- if it's not a valid mixer device, then
+         * it could be a valid mixer handle. windows seems to do
+         * this as well. */
+    case MIXER_OBJECTF_HMIXER:
+    case MIXER_OBJECTF_HWAVEOUT:
+    case MIXER_OBJECTF_HWAVEIN:
+        WINMM_DecomposeHWAVE((HWAVE)hmix, out, &is_out, &dev, &junk);
+        if(junk != 0x1 || (is_out && *out >= g_outmmdevices_count) ||
+               (!is_out && *out >= g_inmmdevices_count))
+            return NULL;
+        if(is_out)
+            return &g_out_mmdevices[*out];
+        return &g_in_mmdevices[*out];
+    case MIXER_OBJECTF_WAVEOUT:
+        *out = HandleToULong(hmix);
+        if(*out < g_outmmdevices_count)
+            return &g_out_mmdevices[*out];
+        return NULL;
+    case MIXER_OBJECTF_WAVEIN:
+        *out = HandleToULong(hmix);
+        if(*out < g_inmmdevices_count)
+            return &g_in_mmdevices[*out];
+        return NULL;
+    }
+
+    return NULL;
+}
+
+static MMRESULT WINMM_SetupMMDeviceVolume(WINMM_MMDevice *mmdevice)
+{
+    IAudioSessionManager *sesman;
+    IMMDevice *device;
+    HRESULT hr;
+
+    hr = IMMDeviceEnumerator_GetDevice(g_devenum, mmdevice->dev_id, &device);
+    if(FAILED(hr)){
+        ERR("Device %s (%s) unavailable: %08x\n",
+                wine_dbgstr_w(mmdevice->dev_id),
+                wine_dbgstr_w(mmdevice->out_caps.szPname), hr);
+        return MMSYSERR_ERROR;
+    }
+
+    hr = IMMDevice_Activate(device, &IID_IAudioSessionManager,
+            CLSCTX_INPROC_SERVER, NULL, (void**)&sesman);
+    if(FAILED(hr)){
+        ERR("Activate failed: %08x\n", hr);
+        IMMDevice_Release(device);
+        return MMSYSERR_ERROR;
+    }
+
+    IMMDevice_Release(device);
+
+    hr = IAudioSessionManager_GetSimpleAudioVolume(sesman, &mmdevice->session,
+            FALSE, &mmdevice->volume);
+    IAudioSessionManager_Release(sesman);
+    if(FAILED(hr)){
+        ERR("GetSimpleAudioVolume failed: %08x\n", hr);
+        return MMSYSERR_ERROR;
+    }
+
+    return MMSYSERR_NOERROR;
+}
+
+static LRESULT MXD_GetControlDetails(WINMM_ControlDetails *details)
+{
+    WINMM_MMDevice *mmdevice;
+    MIXERCONTROLDETAILS *control = details->details;
+    HRESULT hr;
+
+    TRACE("(%p)\n", details->hmix);
+
+    mmdevice = WINMM_GetMixerMMDevice(details->hmix, details->flags, NULL);
+    if(!mmdevice)
+        return MMSYSERR_INVALHANDLE;
+
+    EnterCriticalSection(&mmdevice->lock);
+
+    if(!mmdevice->volume){
+        MMRESULT mr;
+
+        mr = WINMM_SetupMMDeviceVolume(mmdevice);
+        if(mr != MMSYSERR_NOERROR){
+            LeaveCriticalSection(&mmdevice->lock);
+            return mr;
+        }
+    }
+
+    if(control->dwControlID == 0){
+        float vol;
+        MIXERCONTROLDETAILS_UNSIGNED *udet;
+
+        if(!control->paDetails ||
+                control->cbDetails < sizeof(MIXERCONTROLDETAILS_UNSIGNED)){
+            LeaveCriticalSection(&mmdevice->lock);
+            return MMSYSERR_INVALPARAM;
+        }
+
+        hr = ISimpleAudioVolume_GetMasterVolume(mmdevice->volume, &vol);
+        if(FAILED(hr)){
+            ERR("GetMasterVolume failed: %08x\n", hr);
+            LeaveCriticalSection(&mmdevice->lock);
+            return MMSYSERR_ERROR;
+        }
+
+        udet = (MIXERCONTROLDETAILS_UNSIGNED*)control->paDetails;
+        udet->dwValue = vol * ((unsigned int)0xFFFF);
+    }else if(control->dwControlID == 1){
+        BOOL mute;
+        MIXERCONTROLDETAILS_BOOLEAN *bdet;
+
+        if(!control->paDetails ||
+                control->cbDetails < sizeof(MIXERCONTROLDETAILS_BOOLEAN)){
+            LeaveCriticalSection(&mmdevice->lock);
+            return MMSYSERR_INVALPARAM;
+        }
+
+        hr = ISimpleAudioVolume_GetMute(mmdevice->volume, &mute);
+        if(FAILED(hr)){
+            ERR("GetMute failed: %08x\n", hr);
+            LeaveCriticalSection(&mmdevice->lock);
+            return MMSYSERR_ERROR;
+        }
+
+        bdet = (MIXERCONTROLDETAILS_BOOLEAN*)control->paDetails;
+        bdet->fValue = mute;
+    }else if(control->dwControlID == 2 || control->dwControlID == 3){
+        FIXME("What should the sw-side mixer controls map to?\n");
+    }else{
+        LeaveCriticalSection(&mmdevice->lock);
+        return MIXERR_INVALCONTROL;
+    }
+
+    LeaveCriticalSection(&mmdevice->lock);
+
+    return MMSYSERR_NOERROR;
+}
+
+static LRESULT MXD_SetControlDetails(WINMM_ControlDetails *details)
+{
+    WINMM_MMDevice *mmdevice;
+    MIXERCONTROLDETAILS *control = details->details;
+    HRESULT hr;
+
+    TRACE("(%p)\n", details->hmix);
+
+    mmdevice = WINMM_GetMixerMMDevice(details->hmix, details->flags, NULL);
+    if(!mmdevice)
+        return MMSYSERR_INVALHANDLE;
+
+    EnterCriticalSection(&mmdevice->lock);
+
+    if(!mmdevice->volume){
+        MMRESULT mr;
+
+        mr = WINMM_SetupMMDeviceVolume(mmdevice);
+        if(mr != MMSYSERR_NOERROR){
+            LeaveCriticalSection(&mmdevice->lock);
+            return mr;
+        }
+    }
+
+    if(control->dwControlID == 0){
+        float vol;
+        MIXERCONTROLDETAILS_UNSIGNED *udet;
+
+        if(!control->paDetails ||
+                control->cbDetails < sizeof(MIXERCONTROLDETAILS_UNSIGNED)){
+            LeaveCriticalSection(&mmdevice->lock);
+            return MMSYSERR_INVALPARAM;
+        }
+
+        udet = (MIXERCONTROLDETAILS_UNSIGNED*)control->paDetails;
+
+        if(udet->dwValue > 65535){
+            LeaveCriticalSection(&mmdevice->lock);
+            return MMSYSERR_INVALPARAM;
+        }
+
+        vol = udet->dwValue / 65535.f;
+
+        hr = ISimpleAudioVolume_SetMasterVolume(mmdevice->volume, vol, NULL);
+        if(FAILED(hr)){
+            ERR("SetMasterVolume failed: %08x\n", hr);
+            LeaveCriticalSection(&mmdevice->lock);
+            return MMSYSERR_ERROR;
+        }
+    }else if(control->dwControlID == 1){
+        BOOL mute;
+        MIXERCONTROLDETAILS_BOOLEAN *bdet;
+
+        if(!control->paDetails ||
+                control->cbDetails < sizeof(MIXERCONTROLDETAILS_BOOLEAN)){
+            LeaveCriticalSection(&mmdevice->lock);
+            return MMSYSERR_INVALPARAM;
+        }
+
+        bdet = (MIXERCONTROLDETAILS_BOOLEAN*)control->paDetails;
+        mute = bdet->fValue;
+
+        hr = ISimpleAudioVolume_SetMute(mmdevice->volume, mute, NULL);
+        if(FAILED(hr)){
+            ERR("SetMute failed: %08x\n", hr);
+            LeaveCriticalSection(&mmdevice->lock);
+            return MMSYSERR_ERROR;
+        }
+    }else if(control->dwControlID == 2 || control->dwControlID == 3){
+        FIXME("What should the sw-side mixer controls map to?\n");
+    }else{
+        LeaveCriticalSection(&mmdevice->lock);
+        return MIXERR_INVALCONTROL;
+    }
+
+    LeaveCriticalSection(&mmdevice->lock);
+
+    return MMSYSERR_NOERROR;
+}
+
 static LRESULT CALLBACK WINMM_DevicesMsgProc(HWND hwnd, UINT msg, WPARAM wparam,
         LPARAM lparam)
 {
@@ -1795,6 +2050,10 @@ static LRESULT CALLBACK WINMM_DevicesMsgProc(HWND hwnd, UINT msg, WPARAM wparam,
         return WID_Open((WINMM_OpenInfo*)wparam);
     case WIDM_CLOSE:
         return WID_Close((HWAVEIN)wparam);
+    case MXDM_GETCONTROLDETAILS:
+        return MXD_GetControlDetails((WINMM_ControlDetails*)wparam);
+    case MXDM_SETCONTROLDETAILS:
+        return MXD_SetControlDetails((WINMM_ControlDetails*)wparam);
     }
     return DefWindowProcW(hwnd, msg, wparam, lparam);
 }
@@ -3001,7 +3260,12 @@ UINT WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
 
 UINT WINAPI mixerGetNumDevs(void)
 {
-    return 0;
+    TRACE("\n");
+
+    if(!WINMM_StartDevicesThread())
+        return 0;
+
+    return g_outmmdevices_count + g_inmmdevices_count;
 }
 
 /**************************************************************************
@@ -3012,7 +3276,10 @@ UINT WINAPI mixerGetDevCapsA(UINT_PTR uDeviceID, LPMIXERCAPSA lpCaps, UINT uSize
     MIXERCAPSW micW;
     UINT       ret;
 
-    if (lpCaps == NULL) return MMSYSERR_INVALPARAM;
+    TRACE("(%lu, %p, %u)\n", uDeviceID, lpCaps, uSize);
+
+    if(!lpCaps)
+        return MMSYSERR_INVALPARAM;
 
     ret = mixerGetDevCapsW(uDeviceID, &micW, sizeof(micW));
 
@@ -3035,10 +3302,40 @@ UINT WINAPI mixerGetDevCapsA(UINT_PTR uDeviceID, LPMIXERCAPSA lpCaps, UINT uSize
  */
 UINT WINAPI mixerGetDevCapsW(UINT_PTR uDeviceID, LPMIXERCAPSW lpCaps, UINT uSize)
 {
+    WINMM_MMDevice *mmdevice;
+    MIXERCAPSW caps;
+
+    TRACE("(%lu, %p, %u)\n", uDeviceID, lpCaps, uSize);
+
+    if(!WINMM_StartDevicesThread())
+        return MMSYSERR_ERROR;
+
     if(!lpCaps)
         return MMSYSERR_INVALPARAM;
 
-    return MMSYSERR_BADDEVICEID;
+    if(!uSize)
+        return MMSYSERR_NOERROR;
+
+    if(uDeviceID >= g_outmmdevices_count + g_inmmdevices_count)
+        return MMSYSERR_BADDEVICEID;
+
+    if(uDeviceID < g_outmmdevices_count){
+        mmdevice = &g_out_mmdevices[uDeviceID];
+        memcpy(caps.szPname, mmdevice->out_caps.szPname, sizeof(caps.szPname));
+    }else{
+        mmdevice = &g_in_mmdevices[uDeviceID - g_outmmdevices_count];
+        memcpy(caps.szPname, mmdevice->in_caps.szPname, sizeof(caps.szPname));
+    }
+
+    caps.wMid = 0xFF;
+    caps.wPid = 0xFF;
+    caps.vDriverVersion = 0x00010001;
+    caps.fdwSupport = 0;
+    caps.cDestinations = 1;
+
+    memcpy(lpCaps, &caps, uSize);
+
+    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
@@ -3047,16 +3344,38 @@ UINT WINAPI mixerGetDevCapsW(UINT_PTR uDeviceID, LPMIXERCAPSW lpCaps, UINT uSize
 UINT WINAPI mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
                       DWORD_PTR dwInstance, DWORD fdwOpen)
 {
-    DWORD dwRet;
+    WINMM_MMDevice *mmdevice;
+    MMRESULT mr;
 
-    TRACE("(%p, %d, %08lx, %08lx, %08x)\n",
-	  lphMix, uDeviceID, dwCallback, dwInstance, fdwOpen);
+    TRACE("(%p, %d, %lx, %lx, %x)\n", lphMix, uDeviceID, dwCallback,
+            dwInstance, fdwOpen);
 
-    dwRet = WINMM_CheckCallback(dwCallback, fdwOpen, TRUE);
-    if (dwRet != MMSYSERR_NOERROR)
-        return dwRet;
+    if(!WINMM_StartDevicesThread())
+        return MMSYSERR_ERROR;
 
-    return MMSYSERR_BADDEVICEID;
+    if(!lphMix)
+        return MMSYSERR_INVALPARAM;
+
+    if(uDeviceID >= g_outmmdevices_count + g_inmmdevices_count)
+        return MMSYSERR_BADDEVICEID;
+
+    mr = WINMM_CheckCallback(dwCallback, fdwOpen, TRUE);
+    if(mr != MMSYSERR_NOERROR)
+        return mr;
+
+    if(uDeviceID < g_outmmdevices_count){
+        mmdevice = &g_out_mmdevices[uDeviceID];
+        *lphMix = (HMIXER)WINMM_MakeHWAVE(uDeviceID, TRUE,
+                mmdevice->mixer_count);
+    }else{
+        mmdevice = &g_in_mmdevices[uDeviceID - g_outmmdevices_count];
+        *lphMix = (HMIXER)WINMM_MakeHWAVE(uDeviceID - g_outmmdevices_count,
+                FALSE, mmdevice->mixer_count);
+    }
+
+    ++mmdevice->mixer_count;
+
+    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
@@ -3065,7 +3384,8 @@ UINT WINAPI mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
 UINT WINAPI mixerClose(HMIXER hMix)
 {
     TRACE("(%p)\n", hMix);
-    return MMSYSERR_INVALHANDLE;
+
+    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
@@ -3073,8 +3393,24 @@ UINT WINAPI mixerClose(HMIXER hMix)
  */
 UINT WINAPI mixerGetID(HMIXEROBJ hmix, LPUINT lpid, DWORD fdwID)
 {
-    TRACE("(%p, %p, %08x)\n", hmix, lpid, fdwID);
-    return MMSYSERR_INVALHANDLE;
+    WINMM_MMDevice *mmdevice;
+
+    TRACE("(%p, %p, %x)\n", hmix, lpid, fdwID);
+
+    if(!WINMM_StartDevicesThread())
+        return MMSYSERR_ERROR;
+
+    if(!lpid)
+        return MMSYSERR_INVALPARAM;
+
+    mmdevice = WINMM_GetMixerMMDevice(hmix, fdwID, lpid);
+    if(!mmdevice)
+        return MMSYSERR_INVALHANDLE;
+
+    if(mmdevice->in_caps.szPname[0] != '\0')
+        *lpid += g_outmmdevices_count;
+
+    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
@@ -3083,12 +3419,31 @@ UINT WINAPI mixerGetID(HMIXEROBJ hmix, LPUINT lpid, DWORD fdwID)
 UINT WINAPI mixerGetControlDetailsW(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdW,
 				    DWORD fdwDetails)
 {
-    TRACE("(%p, %p, %08x)\n", hmix, lpmcdW, fdwDetails);
+    WINMM_ControlDetails details;
+    HRESULT hr;
 
-    if(!lpmcdW || lpmcdW->cbStruct != sizeof(*lpmcdW))
+    TRACE("(%p, %p, %x)\n", hmix, lpmcdW, fdwDetails);
+
+    if(!WINMM_StartDevicesThread())
+        return MMSYSERR_ERROR;
+
+    if(!lpmcdW)
         return MMSYSERR_INVALPARAM;
 
-    return MMSYSERR_INVALHANDLE;
+    TRACE("dwControlID: %u\n", lpmcdW->dwControlID);
+
+    hr = WINMM_StartDevicesThread();
+    if(FAILED(hr)){
+        ERR("Couldn't start the device thread: %08x\n", hr);
+        return MMSYSERR_ERROR;
+    }
+
+    details.hmix = hmix;
+    details.details = lpmcdW;
+    details.flags = fdwDetails;
+
+    return SendMessageW(g_devices_hwnd, MXDM_GETCONTROLDETAILS,
+            (DWORD_PTR)&details, 0);
 }
 
 /**************************************************************************
@@ -3097,7 +3452,7 @@ UINT WINAPI mixerGetControlDetailsW(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdW
 UINT WINAPI mixerGetControlDetailsA(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdA,
                                     DWORD fdwDetails)
 {
-    DWORD			ret = MMSYSERR_NOTENABLED;
+    UINT ret = MMSYSERR_NOTSUPPORTED;
 
     TRACE("(%p, %p, %08x)\n", hmix, lpmcdA, fdwDetails);
 
@@ -3160,7 +3515,7 @@ UINT WINAPI mixerGetLineControlsA(HMIXEROBJ hmix, LPMIXERLINECONTROLSA lpmlcA,
     DWORD		ret;
     unsigned int	i;
 
-    TRACE("(%p, %p, %08x)\n", hmix, lpmlcA, fdwControls);
+    TRACE("(%p, %p, %x)\n", hmix, lpmlcA, fdwControls);
 
     if (lpmlcA == NULL || lpmlcA->cbStruct != sizeof(*lpmlcA) ||
 	lpmlcA->cbmxctrl != sizeof(MIXERCONTROLA))
@@ -3218,18 +3573,256 @@ UINT WINAPI mixerGetLineControlsA(HMIXEROBJ hmix, LPMIXERLINECONTROLSA lpmlcA,
     return ret;
 }
 
+static UINT WINMM_GetVolumeLineControl(WINMM_MMDevice *mmdevice, DWORD line,
+        MIXERCONTROLW *ctl, DWORD flags)
+{
+    ctl->dwControlID = (line == 0xFFFF0000) ? 0 : 2;
+    ctl->dwControlType = MIXERCONTROL_CONTROLTYPE_VOLUME;
+    ctl->fdwControl = MIXERCONTROL_CONTROLF_UNIFORM;
+    ctl->cMultipleItems = 0;
+    lstrcpyW(ctl->szShortName, volumeW);
+    lstrcpyW(ctl->szName, volumeW);
+    ctl->Bounds.s1.dwMinimum = 0;
+    ctl->Bounds.s1.dwMaximum = 0xFFFF;
+    ctl->Metrics.cSteps = 192;
+
+    return MMSYSERR_NOERROR;
+}
+
+static UINT WINMM_GetMuteLineControl(WINMM_MMDevice *mmdevice, DWORD line,
+        MIXERCONTROLW *ctl, DWORD flags)
+{
+    ctl->dwControlID = (line == 0xFFFF0000) ? 1 : 3;
+    ctl->dwControlType = MIXERCONTROL_CONTROLTYPE_MUTE;
+    ctl->fdwControl = MIXERCONTROL_CONTROLF_UNIFORM;
+    ctl->cMultipleItems = 0;
+    lstrcpyW(ctl->szShortName, muteW);
+    lstrcpyW(ctl->szName, muteW);
+    ctl->Bounds.s1.dwMinimum = 0;
+    ctl->Bounds.s1.dwMaximum = 1;
+    ctl->Metrics.cSteps = 0;
+
+    return MMSYSERR_NOERROR;
+}
+
 /**************************************************************************
  * 				mixerGetLineControlsW		[WINMM.@]
  */
 UINT WINAPI mixerGetLineControlsW(HMIXEROBJ hmix, LPMIXERLINECONTROLSW lpmlcW,
 				  DWORD fdwControls)
 {
+    WINMM_MMDevice *mmdevice;
+
     TRACE("(%p, %p, %08x)\n", hmix, lpmlcW, fdwControls);
 
-    if(!lpmlcW || lpmlcW->cbStruct != sizeof(*lpmlcW))
+    if(!WINMM_StartDevicesThread())
+        return MMSYSERR_ERROR;
+
+    if(fdwControls & ~(MIXER_GETLINECONTROLSF_ALL |
+                MIXER_GETLINECONTROLSF_ONEBYID |
+                MIXER_GETLINECONTROLSF_ONEBYTYPE |
+                MIXER_OBJECTF_HMIXER |
+                MIXER_OBJECTF_MIXER)){
+        WARN("Unknown GetLineControls flag: %x\n", fdwControls);
+        return MMSYSERR_INVALFLAG;
+    }
+
+    if(!lpmlcW || lpmlcW->cbStruct < sizeof(*lpmlcW) || !lpmlcW->pamxctrl)
         return MMSYSERR_INVALPARAM;
 
-    return MMSYSERR_INVALHANDLE;
+    TRACE("dwLineID: %u\n", lpmlcW->dwLineID);
+    TRACE("dwControl: %x\n", lpmlcW->u.dwControlID);
+    TRACE("cControls: %u\n", lpmlcW->cControls);
+
+    mmdevice = WINMM_GetMixerMMDevice(hmix, fdwControls, NULL);
+    if(!mmdevice)
+        return MMSYSERR_INVALHANDLE;
+
+    switch(fdwControls & MIXER_GETLINECONTROLSF_QUERYMASK){
+    case MIXER_GETLINECONTROLSF_ALL:
+        if(lpmlcW->cControls != 2)
+            return MMSYSERR_INVALPARAM;
+        if(lpmlcW->cbmxctrl < sizeof(MIXERCONTROLW))
+            return MMSYSERR_INVALPARAM;
+        if(lpmlcW->dwLineID != 0 && lpmlcW->dwLineID != 0xFFFF0000)
+            return MIXERR_INVALLINE;
+        WINMM_GetVolumeLineControl(mmdevice, lpmlcW->dwLineID,
+                &lpmlcW->pamxctrl[0], fdwControls);
+        WINMM_GetMuteLineControl(mmdevice, lpmlcW->dwLineID,
+                &lpmlcW->pamxctrl[1], fdwControls);
+        return MMSYSERR_NOERROR;
+    case MIXER_GETLINECONTROLSF_ONEBYID:
+        if(lpmlcW->cControls != 1)
+            return MMSYSERR_INVALPARAM;
+        if(lpmlcW->cbmxctrl < sizeof(MIXERCONTROLW))
+            return MMSYSERR_INVALPARAM;
+        if(lpmlcW->dwLineID != 0 && lpmlcW->dwLineID != 0xFFFF0000)
+            return MIXERR_INVALLINE;
+        if(lpmlcW->u.dwControlID == 0)
+            return WINMM_GetVolumeLineControl(mmdevice, lpmlcW->dwLineID,
+                    lpmlcW->pamxctrl, fdwControls);
+        if(lpmlcW->u.dwControlID == 1)
+            return WINMM_GetMuteLineControl(mmdevice, lpmlcW->dwLineID,
+                    lpmlcW->pamxctrl, fdwControls);
+        return MMSYSERR_NOTSUPPORTED;
+    case MIXER_GETLINECONTROLSF_ONEBYTYPE:
+        if(lpmlcW->cControls != 1)
+            return MMSYSERR_INVALPARAM;
+        if(lpmlcW->cbmxctrl < sizeof(MIXERCONTROLW))
+            return MMSYSERR_INVALPARAM;
+        if(lpmlcW->dwLineID != 0 && lpmlcW->dwLineID != 0xFFFF0000)
+            return MIXERR_INVALLINE;
+        if(lpmlcW->u.dwControlType == MIXERCONTROL_CONTROLTYPE_VOLUME)
+            return WINMM_GetVolumeLineControl(mmdevice, lpmlcW->dwLineID,
+                    lpmlcW->pamxctrl, fdwControls);
+        if(lpmlcW->u.dwControlType == MIXERCONTROL_CONTROLTYPE_MUTE)
+            return WINMM_GetMuteLineControl(mmdevice, lpmlcW->dwLineID,
+                    lpmlcW->pamxctrl, fdwControls);
+        return MMSYSERR_NOTSUPPORTED;
+    }
+
+    return MMSYSERR_NOTSUPPORTED;
+}
+
+static UINT WINMM_GetSourceLineInfo(WINMM_MMDevice *mmdevice, UINT mmdev_index,
+        MIXERLINEW *info, DWORD flags)
+{
+    BOOL is_out = TRUE;
+    if(mmdevice->in_caps.szPname[0] != '\0')
+        is_out = FALSE;
+
+    if(info->dwSource != 0)
+        return MIXERR_INVALLINE;
+
+    info->dwDestination = 0;
+    info->dwLineID = 0;
+    info->fdwLine = MIXERLINE_LINEF_ACTIVE | MIXERLINE_LINEF_SOURCE;
+    info->cConnections = 0;
+    info->cControls = 2;
+    /* volume & mute always affect all channels, so claim 1 channel */
+    info->cChannels = 1;
+    info->Target.dwDeviceID = mmdev_index;
+    info->Target.wMid = ~0;
+    info->Target.wPid = ~0;
+    info->Target.vDriverVersion = 0;
+
+    lstrcpyW(info->szShortName, volumeW);
+    lstrcpyW(info->szName, mastervolumeW);
+
+    if(is_out){
+        info->dwComponentType = MIXERLINE_COMPONENTTYPE_SRC_WAVEOUT;
+        info->Target.dwType = MIXERLINE_TARGETTYPE_WAVEOUT;
+        memcpy(info->Target.szPname, mmdevice->out_caps.szPname,
+                sizeof(info->Target.szPname));
+    }else{
+        info->dwComponentType = MIXERLINE_COMPONENTTYPE_SRC_LINE;
+        info->Target.dwType = MIXERLINE_TARGETTYPE_UNDEFINED;
+        info->Target.szPname[0] = '\0';
+    }
+
+    return MMSYSERR_NOERROR;
+}
+
+static UINT WINMM_GetDestinationLineInfo(WINMM_MMDevice *mmdevice,
+        UINT mmdev_index, MIXERLINEW *info, DWORD flags)
+{
+    BOOL is_out = TRUE;
+    if(mmdevice->in_caps.szPname[0] != '\0')
+        is_out = FALSE;
+
+    if(info->dwDestination != 0)
+        return MIXERR_INVALLINE;
+
+    info->dwSource = 0xFFFFFFFF;
+    info->dwLineID = 0xFFFF0000;
+    info->fdwLine = MIXERLINE_LINEF_ACTIVE;
+    info->cConnections = 1;
+    info->cControls = 2;
+
+    lstrcpyW(info->szShortName, volumeW);
+    lstrcpyW(info->szName, mastervolumeW);
+
+    info->Target.dwDeviceID = mmdev_index;
+    info->Target.wMid = ~0;
+    info->Target.wPid = ~0;
+    info->Target.vDriverVersion = 0;
+
+    if(is_out){
+        info->dwComponentType = MIXERLINE_COMPONENTTYPE_DST_SPEAKERS;
+        info->cChannels = mmdevice->out_caps.wChannels;
+        info->Target.dwType = MIXERLINE_TARGETTYPE_UNDEFINED;
+        info->Target.szPname[0] = '\0';
+    }else{
+        info->dwComponentType = MIXERLINE_COMPONENTTYPE_DST_WAVEIN;
+        info->cChannels = mmdevice->in_caps.wChannels;
+        info->Target.dwType = MIXERLINE_TARGETTYPE_WAVEIN;
+        memcpy(info->Target.szPname, mmdevice->in_caps.szPname,
+                sizeof(info->Target.szPname));
+    }
+
+    return MMSYSERR_NOERROR;
+}
+
+static UINT WINMM_GetComponentTypeLineInfo(WINMM_MMDevice *mmdevice,
+        UINT mmdev_index, MIXERLINEW *info, DWORD flags)
+{
+    BOOL is_out = TRUE;
+    if(mmdevice->in_caps.szPname[0] != '\0')
+        is_out = FALSE;
+
+    if(info->dwComponentType == MIXERLINE_COMPONENTTYPE_DST_WAVEIN){
+        if(is_out)
+            return MIXERR_INVALLINE;
+        info->dwDestination = 0;
+        return WINMM_GetDestinationLineInfo(mmdevice, mmdev_index, info, flags);
+    }
+
+    if(info->dwComponentType == MIXERLINE_COMPONENTTYPE_DST_SPEAKERS){
+        if(!is_out)
+            return MIXERR_INVALLINE;
+        info->dwDestination = 0;
+        return WINMM_GetDestinationLineInfo(mmdevice, mmdev_index, info, flags);
+    }
+
+    if(info->dwComponentType == MIXERLINE_COMPONENTTYPE_SRC_LINE){
+        if(is_out)
+            return MIXERR_INVALLINE;
+        info->dwSource = 0;
+        return WINMM_GetSourceLineInfo(mmdevice, mmdev_index, info, flags);
+    }
+
+    if(info->dwComponentType == MIXERLINE_COMPONENTTYPE_SRC_WAVEOUT){
+        if(!is_out)
+            return MIXERR_INVALLINE;
+        info->dwSource = 0;
+        return WINMM_GetSourceLineInfo(mmdevice, mmdev_index, info, flags);
+    }
+
+    TRACE("Returning INVALLINE on this component type: %u\n",
+            info->dwComponentType);
+
+    return MIXERR_INVALLINE;
+}
+
+static UINT WINMM_GetLineIDLineInfo(WINMM_MMDevice *mmdevice,
+        UINT mmdev_index, MIXERLINEW *info, DWORD flags)
+{
+    BOOL is_out = TRUE;
+    if(mmdevice->in_caps.szPname[0] != '\0')
+        is_out = FALSE;
+
+    if(info->dwLineID == 0xFFFF0000){
+        info->dwDestination = 0;
+        return WINMM_GetDestinationLineInfo(mmdevice, mmdev_index, info, flags);
+    }
+
+    if(info->dwLineID == 0){
+        info->dwSource = 0;
+        return WINMM_GetSourceLineInfo(mmdevice, mmdev_index, info, flags);
+    }
+
+    TRACE("Returning INVALLINE on this dwLineID: %u\n", info->dwLineID);
+    return MIXERR_INVALLINE;
 }
 
 /**************************************************************************
@@ -3237,9 +3830,57 @@ UINT WINAPI mixerGetLineControlsW(HMIXEROBJ hmix, LPMIXERLINECONTROLSW lpmlcW,
  */
 UINT WINAPI mixerGetLineInfoW(HMIXEROBJ hmix, LPMIXERLINEW lpmliW, DWORD fdwInfo)
 {
-    TRACE("(%p, %p, %08x)\n", hmix, lpmliW, fdwInfo);
+    UINT mmdev_index;
+    WINMM_MMDevice *mmdevice;
 
-    return MMSYSERR_INVALHANDLE;
+    TRACE("(%p, %p, %x)\n", hmix, lpmliW, fdwInfo);
+
+    if(!WINMM_StartDevicesThread())
+        return MMSYSERR_ERROR;
+
+    if(!lpmliW || lpmliW->cbStruct < sizeof(MIXERLINEW))
+        return MMSYSERR_INVALPARAM;
+
+    TRACE("dwDestination: %u\n", lpmliW->dwDestination);
+    TRACE("dwSource: %u\n", lpmliW->dwSource);
+    TRACE("dwLineID: %u\n", lpmliW->dwLineID);
+    TRACE("fdwLine: 0x%x\n", lpmliW->fdwLine);
+    TRACE("dwComponentType: 0x%x\n", lpmliW->dwComponentType);
+
+    if(fdwInfo & ~(MIXER_GETLINEINFOF_COMPONENTTYPE |
+                MIXER_GETLINEINFOF_DESTINATION |
+                MIXER_GETLINEINFOF_LINEID |
+                MIXER_GETLINEINFOF_SOURCE |
+                MIXER_GETLINEINFOF_TARGETTYPE |
+                MIXER_OBJECTF_HMIXER |
+                MIXER_OBJECTF_MIXER)){
+        WARN("Unknown GetLineInfo flag: %x\n", fdwInfo);
+        return MMSYSERR_INVALFLAG;
+    }
+
+    mmdevice = WINMM_GetMixerMMDevice(hmix, fdwInfo, &mmdev_index);
+    if(!mmdevice)
+        return MMSYSERR_INVALHANDLE;
+
+    switch(fdwInfo & MIXER_GETLINEINFOF_QUERYMASK){
+    case MIXER_GETLINEINFOF_DESTINATION:
+        return WINMM_GetDestinationLineInfo(mmdevice, mmdev_index, lpmliW,
+                fdwInfo);
+    case MIXER_GETLINEINFOF_SOURCE:
+        return WINMM_GetSourceLineInfo(mmdevice, mmdev_index, lpmliW, fdwInfo);
+    case MIXER_GETLINEINFOF_COMPONENTTYPE:
+        return WINMM_GetComponentTypeLineInfo(mmdevice, mmdev_index, lpmliW,
+                fdwInfo);
+    case MIXER_GETLINEINFOF_LINEID:
+        return WINMM_GetLineIDLineInfo(mmdevice, mmdev_index, lpmliW, fdwInfo);
+    case MIXER_GETLINEINFOF_TARGETTYPE:
+        FIXME("TARGETTYPE flag not implemented!\n");
+        return MIXERR_INVALLINE;
+    }
+
+    TRACE("Returning INVALFLAG on these flags: %lx\n",
+            fdwInfo & MIXER_GETLINEINFOF_QUERYMASK);
+    return MMSYSERR_INVALFLAG;
 }
 
 /**************************************************************************
@@ -3251,7 +3892,7 @@ UINT WINAPI mixerGetLineInfoA(HMIXEROBJ hmix, LPMIXERLINEA lpmliA,
     MIXERLINEW		mliW;
     UINT		ret;
 
-    TRACE("(%p, %p, %08x)\n", hmix, lpmliA, fdwInfo);
+    TRACE("(%p, %p, %x)\n", hmix, lpmliA, fdwInfo);
 
     if (lpmliA == NULL || lpmliA->cbStruct != sizeof(*lpmliA))
 	return MMSYSERR_INVALPARAM;
@@ -3317,9 +3958,35 @@ UINT WINAPI mixerGetLineInfoA(HMIXEROBJ hmix, LPMIXERLINEA lpmliA,
 UINT WINAPI mixerSetControlDetails(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd,
 				   DWORD fdwDetails)
 {
-    TRACE("(%p, %p, %08x)\n", hmix, lpmcd, fdwDetails);
+    WINMM_ControlDetails details;
+    HRESULT hr;
 
-    return MMSYSERR_INVALHANDLE;
+    TRACE("(%p, %p, %x)\n", hmix, lpmcd, fdwDetails);
+
+    if(!WINMM_StartDevicesThread())
+        return MMSYSERR_ERROR;
+
+    if((fdwDetails & MIXER_SETCONTROLDETAILSF_QUERYMASK) ==
+            MIXER_SETCONTROLDETAILSF_CUSTOM)
+        return MMSYSERR_NOTSUPPORTED;
+
+    if(!lpmcd)
+        return MMSYSERR_INVALPARAM;
+
+    TRACE("dwControlID: %u\n", lpmcd->dwControlID);
+
+    hr = WINMM_StartDevicesThread();
+    if(FAILED(hr)){
+        ERR("Couldn't start the device thread: %08x\n", hr);
+        return MMSYSERR_ERROR;
+    }
+
+    details.hmix = hmix;
+    details.details = lpmcd;
+    details.flags = fdwDetails;
+
+    return SendMessageW(g_devices_hwnd, MXDM_SETCONTROLDETAILS,
+            (DWORD_PTR)&details, 0);
 }
 
 /**************************************************************************
@@ -3327,7 +3994,7 @@ UINT WINAPI mixerSetControlDetails(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd,
  */
 DWORD WINAPI mixerMessage(HMIXER hmix, UINT uMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    TRACE("(%p, %d, %08lx, %08lx)\n", hmix, uMsg, dwParam1, dwParam2);
+    TRACE("(%p, %d, %lx, %lx)\n", hmix, uMsg, dwParam1, dwParam2);
 
-    return MMSYSERR_INVALHANDLE;
+    return MMSYSERR_NOTSUPPORTED;
 }
