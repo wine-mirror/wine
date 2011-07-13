@@ -187,7 +187,6 @@
 #define IDS_ACCEL_EMULATION             8303
 #define IDS_DRIVER_ALSA                 8304
 
-#define IDS_DRIVER_ESOUND               8306
 #define IDS_DRIVER_OSS                  8307
 #define IDS_DRIVER_JACK                 8308
 

@@ -42,7 +42,6 @@ AC_ARG_WITH(coreaudio, AS_HELP_STRING([--without-coreaudio],[do not use the Core
 AC_ARG_WITH(cups,      AS_HELP_STRING([--without-cups],[do not use CUPS]))
 AC_ARG_WITH(curses,    AS_HELP_STRING([--without-curses],[do not use (n)curses]),
             [if test "x$withval" = "xno"; then ac_cv_header_ncurses_h=no; ac_cv_header_curses_h=no; fi])
-AC_ARG_WITH(esd,       AS_HELP_STRING([--without-esd],[do not use the EsounD sound support]))
 AC_ARG_WITH(fontconfig,AS_HELP_STRING([--without-fontconfig],[do not use fontconfig]),
             [if test "x$withval" = "xno"; then ac_cv_header_fontconfig_fontconfig_h=no; fi])
 AC_ARG_WITH(freetype,  AS_HELP_STRING([--without-freetype],[do not use the FreeType library]))
@@ -1439,32 +1438,6 @@ then
     WINE_WARNING_WITH(gettextpo,[test "x$LIBGETTEXTPO" = "x"],[GetText ${notice_platform}development files not found (or too old). Internationalization won't be fully supported.])
 fi
 
-dnl **** Check for EsounD ****
-if test "x$with_esd" != xno
-then
-    save_CFLAGS="$CFLAGS"
-    AC_PATH_PROG(ESDCONFIG, esd-config, no)
-    if test "x$ESDCONFIG" != "xno"
-    then
-        ac_esd_incl=""
-        for i in `$ESDCONFIG --cflags`
-        do
-            case "$i" in
-                -I*) ac_esd_incl="$ac_esd_incl $i";;
-            esac
-        done
-        ac_esd_libs=`$ESDCONFIG --libs`
-        CFLAGS="$CFLAGS $ac_esd_incl"
-    fi
-    ac_esd_libs=${ac_esd_libs:-"-lesd"}
-    AC_CHECK_HEADER(esd.h,
-        [AC_CHECK_LIB(esd,esd_open_sound,
-            [AC_SUBST(ESDINCL, "$ac_esd_incl")
-             AC_SUBST(ESDLIBS, "$ac_esd_libs")],,
-            [$ac_esd_libs])])
-    CFLAGS="$save_CFLAGS"
-fi
-
 dnl **** Check for gstreamer ****
 if test "x$with_gstreamer" != "xno"
 then
@@ -1672,15 +1645,14 @@ WINE_CHECK_SONAME(odbc,SQLConnect,,[AC_DEFINE_UNQUOTED(SONAME_LIBODBC,["libodbc.
 dnl **** Disable unsupported winmm drivers ****
 test -n "$ALSALIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}
 test -n "$COREAUDIO" || enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
-test -n "$ESDLIBS" || enable_wineesd_drv=${enable_wineesd_drv:-no}
 test -n "$ac_cv_lib_soname_jack" || enable_winejack_drv=${enable_winejack_drv:-no}
 test "x$ac_cv_member_oss_sysinfo_numaudioengines" = xyes || enable_wineoss_drv=${enable_wineoss_drv:-no}
 test "$ac_cv_header_linux_joystick_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
 dnl **** Check for any sound system ****
-if test "x$ALSALIBS$COREAUDIOLIBS$ESDLIBS$ac_cv_lib_soname_jack" = "x" -a \
+if test "x$ALSALIBS$COREAUDIOLIBS$ac_cv_lib_soname_jack" = "x" -a \
         "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes -a \
-        "x$with_alsa$with_coreaudio$with_esd$with_jack$with_oss" != xnonononono
+        "x$with_alsa$with_coreaudio$with_jack$with_oss" != xnononono
 then
     WINE_WARNING([No sound system was found. Windows applications will be silent.])
 fi
@@ -2862,7 +2834,6 @@ WINE_CONFIG_DLL(winealsa.drv)
 WINE_CONFIG_DLL(winecoreaudio.drv)
 WINE_CONFIG_LIB(winecrt0)
 WINE_CONFIG_DLL(wined3d,,[implib])
-WINE_CONFIG_DLL(wineesd.drv)
 WINE_CONFIG_DLL(winegstreamer)
 WINE_CONFIG_DLL(winejack.drv)
 WINE_CONFIG_DLL(winejoystick.drv)

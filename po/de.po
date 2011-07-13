@@ -177,7 +177,7 @@ msgstr "Meine Favoriten"
 msgid "System Path"
 msgstr "System Ordner"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:121 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:120 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -10817,54 +10817,50 @@ msgid "ALSA Driver"
 msgstr "ALSA-Treiber"
 
 #: winecfg.rc:101
-msgid "EsounD Driver"
-msgstr "EsounD-Treiber"
-
-#: winecfg.rc:102
 msgid "OSS Driver"
 msgstr "OSS-Treiber"
 
-#: winecfg.rc:103
+#: winecfg.rc:102
 msgid "JACK Driver"
 msgstr "JACK-Treiber"
 
-#: winecfg.rc:104
+#: winecfg.rc:103
 msgid "CoreAudio Driver"
 msgstr "CoreAudio-Treiber"
 
-#: winecfg.rc:105
+#: winecfg.rc:104
 msgid "Couldn't open %s!"
 msgstr "Konnte %s nicht öffnen!"
 
-#: winecfg.rc:106
+#: winecfg.rc:105
 msgid "Sound Drivers"
 msgstr "Sound_Treiber"
 
-#: winecfg.rc:107
+#: winecfg.rc:106
 msgid "Wave Out Devices"
 msgstr "Wave-Ausgabe-Geräte"
 
-#: winecfg.rc:108
+#: winecfg.rc:107
 msgid "Wave In Devices"
 msgstr "Wave-Eingabe-Geräte"
 
-#: winecfg.rc:109
+#: winecfg.rc:108
 msgid "MIDI Out Devices"
 msgstr "MIDI-Ausgabe-Geräte"
 
-#: winecfg.rc:110
+#: winecfg.rc:109
 msgid "MIDI In Devices"
 msgstr "MIDI-Eingabe-Geräte"
 
-#: winecfg.rc:111
+#: winecfg.rc:110
 msgid "Aux Devices"
 msgstr "Aux-Geräte"
 
-#: winecfg.rc:112
+#: winecfg.rc:111
 msgid "Mixer Devices"
 msgstr "Mixer-Geräte"
 
-#: winecfg.rc:113
+#: winecfg.rc:112
 msgid ""
 "Found driver in registry that is not available!\n"
 "\n"
@@ -10874,131 +10870,131 @@ msgstr ""
 "\n"
 "Soll „%s“ aus der Registry entfernt werden?"
 
-#: winecfg.rc:114
+#: winecfg.rc:113
 msgid "Warning"
 msgstr "Warnung"
 
-#: winecfg.rc:119
+#: winecfg.rc:118
 msgid "Controls Background"
 msgstr "Steuerelementhintergrund"
 
-#: winecfg.rc:120
+#: winecfg.rc:119
 msgid "Controls Text"
 msgstr "Steuerelementtext"
 
-#: winecfg.rc:122
+#: winecfg.rc:121
 msgid "Menu Background"
 msgstr "Menühintergrund"
 
-#: winecfg.rc:123
+#: winecfg.rc:122
 msgid "Menu Text"
 msgstr "Menütext"
 
-#: winecfg.rc:124
+#: winecfg.rc:123
 msgid "Scrollbar"
 msgstr "Bildlaufleiste"
 
-#: winecfg.rc:125
+#: winecfg.rc:124
 msgid "Selection Background"
 msgstr "Auswahlhintergrund"
 
-#: winecfg.rc:126
+#: winecfg.rc:125
 msgid "Selection Text"
 msgstr "Auswahltext"
 
-#: winecfg.rc:127
+#: winecfg.rc:126
 msgid "ToolTip Background"
 msgstr "ToolTip-Hintergrund"
 
-#: winecfg.rc:128
+#: winecfg.rc:127
 msgid "ToolTip Text"
 msgstr "ToolTip-Text"
 
-#: winecfg.rc:129
+#: winecfg.rc:128
 msgid "Window Background"
 msgstr "Fensterhintergrund"
 
-#: winecfg.rc:130
+#: winecfg.rc:129
 msgid "Window Text"
 msgstr "Fenstertext"
 
-#: winecfg.rc:131
+#: winecfg.rc:130
 msgid "Active Title Bar"
 msgstr "Aktive Titelleiste"
 
-#: winecfg.rc:132
+#: winecfg.rc:131
 msgid "Active Title Text"
 msgstr "Aktiver Titelleistentext"
 
-#: winecfg.rc:133
+#: winecfg.rc:132
 msgid "Inactive Title Bar"
 msgstr "Inaktive Titelleiste"
 
-#: winecfg.rc:134
+#: winecfg.rc:133
 msgid "Inactive Title Text"
 msgstr "Inaktiver Titelleistentext"
 
-#: winecfg.rc:135
+#: winecfg.rc:134
 msgid "Message Box Text"
 msgstr "Message Box Text"
 
-#: winecfg.rc:136
+#: winecfg.rc:135
 msgid "Application Workspace"
 msgstr "Anwendungsarbeitsplatz"
 
-#: winecfg.rc:137
+#: winecfg.rc:136
 msgid "Window Frame"
 msgstr "Fensterrahmen"
 
-#: winecfg.rc:138
+#: winecfg.rc:137
 msgid "Active Border"
 msgstr "Aktiver Rand"
 
-#: winecfg.rc:139
+#: winecfg.rc:138
 msgid "Inactive Border"
 msgstr "Inaktiver Rand"
 
-#: winecfg.rc:140
+#: winecfg.rc:139
 msgid "Controls Shadow"
 msgstr "Steuerelementschatten"
 
-#: winecfg.rc:141
+#: winecfg.rc:140
 msgid "Gray Text"
 msgstr "Grauer Text"
 
-#: winecfg.rc:142
+#: winecfg.rc:141
 msgid "Controls Highlight"
 msgstr "Steuerelementhervorhebung"
 
-#: winecfg.rc:143
+#: winecfg.rc:142
 msgid "Controls Dark Shadow"
 msgstr "Dunkler Steuerelementschatten"
 
-#: winecfg.rc:144
+#: winecfg.rc:143
 msgid "Controls Light"
 msgstr "Steuerelementerhellung"
 
-#: winecfg.rc:145
+#: winecfg.rc:144
 msgid "Controls Alternate Background"
 msgstr "Alternativer Steuerelementhintergrund"
 
-#: winecfg.rc:146
+#: winecfg.rc:145
 msgid "Hot Tracked Item"
 msgstr "Heiß verfolgtes Element"
 
-#: winecfg.rc:147
+#: winecfg.rc:146
 msgid "Active Title Bar Gradient"
 msgstr "Gradient der aktiven Titelleiste"
 
-#: winecfg.rc:148
+#: winecfg.rc:147
 msgid "Inactive Title Bar Gradient"
 msgstr "Gradient der inaktiven Titelleiste"
 
-#: winecfg.rc:149
+#: winecfg.rc:148
 msgid "Menu Highlight"
 msgstr "Menühervorhebung"
 
-#: winecfg.rc:150
+#: winecfg.rc:149
 msgid "Menu Bar"
 msgstr "Menütitelleiste"
 

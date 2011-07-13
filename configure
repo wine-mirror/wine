@@ -628,9 +628,6 @@ OSS4INCL
 ALSALIBS
 GSTREAMER_INCL
 GSTREAMER_LIBS
-ESDLIBS
-ESDINCL
-ESDCONFIG
 LIBGETTEXTPO
 ZLIB
 FREETYPEINCL
@@ -783,7 +780,6 @@ with_cms
 with_coreaudio
 with_cups
 with_curses
-with_esd
 with_fontconfig
 with_freetype
 with_gettextpo
@@ -1474,7 +1470,6 @@ Optional Packages:
   --without-coreaudio     do not use the CoreAudio sound support
   --without-cups          do not use CUPS
   --without-curses        do not use (n)curses
-  --without-esd           do not use the EsounD sound support
   --without-fontconfig    do not use fontconfig
   --without-freetype      do not use the FreeType library
   --without-gettextpo     do not use the GetTextPO library
@@ -2551,12 +2546,6 @@ fi
 # Check whether --with-curses was given.
 if test "${with_curses+set}" = set; then :
   withval=$with_curses; if test "x$withval" = "xno"; then ac_cv_header_ncurses_h=no; ac_cv_header_curses_h=no; fi
-fi
-
-
-# Check whether --with-esd was given.
-if test "${with_esd+set}" = set; then :
-  withval=$with_esd;
 fi
 
 
@@ -10524,114 +10513,6 @@ esac
 fi
 fi
 
-if test "x$with_esd" != xno
-then
-    save_CFLAGS="$CFLAGS"
-    # Extract the first word of "esd-config", so it can be a program name with args.
-set dummy esd-config; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_ESDCONFIG+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $ESDCONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_ESDCONFIG="$ESDCONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_ESDCONFIG="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_ESDCONFIG" && ac_cv_path_ESDCONFIG="no"
-  ;;
-esac
-fi
-ESDCONFIG=$ac_cv_path_ESDCONFIG
-if test -n "$ESDCONFIG"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ESDCONFIG" >&5
-$as_echo "$ESDCONFIG" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-    if test "x$ESDCONFIG" != "xno"
-    then
-        ac_esd_incl=""
-        for i in `$ESDCONFIG --cflags`
-        do
-            case "$i" in
-                -I*) ac_esd_incl="$ac_esd_incl $i";;
-            esac
-        done
-        ac_esd_libs=`$ESDCONFIG --libs`
-        CFLAGS="$CFLAGS $ac_esd_incl"
-    fi
-    ac_esd_libs=${ac_esd_libs:-"-lesd"}
-    ac_fn_c_check_header_mongrel "$LINENO" "esd.h" "ac_cv_header_esd_h" "$ac_includes_default"
-if test "x$ac_cv_header_esd_h" = xyes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for esd_open_sound in -lesd" >&5
-$as_echo_n "checking for esd_open_sound in -lesd... " >&6; }
-if ${ac_cv_lib_esd_esd_open_sound+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lesd $ac_esd_libs $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char esd_open_sound ();
-int
-main ()
-{
-return esd_open_sound ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_esd_esd_open_sound=yes
-else
-  ac_cv_lib_esd_esd_open_sound=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_esd_esd_open_sound" >&5
-$as_echo "$ac_cv_lib_esd_esd_open_sound" >&6; }
-if test "x$ac_cv_lib_esd_esd_open_sound" = xyes; then :
-  ESDINCL="$ac_esd_incl"
-
-             ESDLIBS="$ac_esd_libs"
-
-fi
-
-fi
-
-
-    CFLAGS="$save_CFLAGS"
-fi
-
 if test "x$with_gstreamer" != "xno"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
@@ -11924,14 +11805,13 @@ fi
 
 test -n "$ALSALIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}
 test -n "$COREAUDIO" || enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
-test -n "$ESDLIBS" || enable_wineesd_drv=${enable_wineesd_drv:-no}
 test -n "$ac_cv_lib_soname_jack" || enable_winejack_drv=${enable_winejack_drv:-no}
 test "x$ac_cv_member_oss_sysinfo_numaudioengines" = xyes || enable_wineoss_drv=${enable_wineoss_drv:-no}
 test "$ac_cv_header_linux_joystick_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
-if test "x$ALSALIBS$COREAUDIOLIBS$ESDLIBS$ac_cv_lib_soname_jack" = "x" -a \
+if test "x$ALSALIBS$COREAUDIOLIBS$ac_cv_lib_soname_jack" = "x" -a \
         "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes -a \
-        "x$with_alsa$with_coreaudio$with_esd$with_jack$with_oss" != xnonononono
+        "x$with_alsa$with_coreaudio$with_jack$with_oss" != xnononono
 then
     as_fn_append wine_warnings "|No sound system was found. Windows applications will be silent."
 fi
@@ -15335,7 +15215,6 @@ wine_fn_config_dll winealsa.drv enable_winealsa_drv
 wine_fn_config_dll winecoreaudio.drv enable_winecoreaudio_drv
 wine_fn_config_lib winecrt0
 wine_fn_config_dll wined3d enable_wined3d implib
-wine_fn_config_dll wineesd.drv enable_wineesd_drv
 wine_fn_config_dll winegstreamer enable_winegstreamer
 wine_fn_config_dll winejack.drv enable_winejack_drv
 wine_fn_config_dll winejoystick.drv enable_winejoystick_drv

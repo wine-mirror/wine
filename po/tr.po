@@ -174,7 +174,7 @@ msgstr "Sık Kullanılanlar"
 msgid "System Path"
 msgstr "Sistem Yolu"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:121 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:120 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -10970,54 +10970,50 @@ msgid "ALSA Driver"
 msgstr "ALSA Sürücüsü"
 
 #: winecfg.rc:101
-msgid "EsounD Driver"
-msgstr "EsounD Sürücüsü"
-
-#: winecfg.rc:102
 msgid "OSS Driver"
 msgstr "OSS Sürücüsü"
 
-#: winecfg.rc:103
+#: winecfg.rc:102
 msgid "JACK Driver"
 msgstr "JACK Sürücüsü"
 
-#: winecfg.rc:104
+#: winecfg.rc:103
 msgid "CoreAudio Driver"
 msgstr "CoreAudio Sürücüsü"
 
-#: winecfg.rc:105
+#: winecfg.rc:104
 msgid "Couldn't open %s!"
 msgstr "%s açılamadı!"
 
-#: winecfg.rc:106
+#: winecfg.rc:105
 msgid "Sound Drivers"
 msgstr "Ses Sürücüleri"
 
-#: winecfg.rc:107
+#: winecfg.rc:106
 msgid "Wave Out Devices"
 msgstr "Dalga Çıkış Aygıtları"
 
-#: winecfg.rc:108
+#: winecfg.rc:107
 msgid "Wave In Devices"
 msgstr "Dalga Giriş Aygıtları"
 
-#: winecfg.rc:109
+#: winecfg.rc:108
 msgid "MIDI Out Devices"
 msgstr "MIDI Çıkış Aygıtları"
 
-#: winecfg.rc:110
+#: winecfg.rc:109
 msgid "MIDI In Devices"
 msgstr "MIDI Giriş Aygıtları"
 
-#: winecfg.rc:111
+#: winecfg.rc:110
 msgid "Aux Devices"
 msgstr "Aux Aygıtları"
 
-#: winecfg.rc:112
+#: winecfg.rc:111
 msgid "Mixer Devices"
 msgstr "Mixer Aygıtları"
 
-#: winecfg.rc:113
+#: winecfg.rc:112
 msgid ""
 "Found driver in registry that is not available!\n"
 "\n"
@@ -11027,147 +11023,147 @@ msgstr ""
 "\n"
 "\"%s\" girişi sistem kaydından silinsin mi?"
 
-#: winecfg.rc:114
+#: winecfg.rc:113
 msgid "Warning"
 msgstr "Uyarı"
 
-#: winecfg.rc:119
+#: winecfg.rc:118
 #, fuzzy
 msgid "Controls Background"
 msgstr "Arkaplanı Ko&pyala"
 
-#: winecfg.rc:120
+#: winecfg.rc:119
 #, fuzzy
 msgid "Controls Text"
 msgstr "Control"
 
-#: winecfg.rc:122
+#: winecfg.rc:121
 #, fuzzy
 msgid "Menu Background"
 msgstr "&Arkaplan"
 
-#: winecfg.rc:123
+#: winecfg.rc:122
 msgid "Menu Text"
 msgstr ""
 
-#: winecfg.rc:124
+#: winecfg.rc:123
 #, fuzzy
 msgid "Scrollbar"
 msgstr "Buraya Kaydır"
 
-#: winecfg.rc:125
+#: winecfg.rc:124
 #, fuzzy
 msgid "Selection Background"
 msgstr "Arka&plan Yap"
 
-#: winecfg.rc:126
+#: winecfg.rc:125
 #, fuzzy
 msgid "Selection Text"
 msgstr "Seçim &bilgisi"
 
-#: winecfg.rc:127
+#: winecfg.rc:126
 #, fuzzy
 msgid "ToolTip Background"
 msgstr "Arkaplanı Ko&pyala"
 
-#: winecfg.rc:128
+#: winecfg.rc:127
 msgid "ToolTip Text"
 msgstr ""
 
-#: winecfg.rc:129
+#: winecfg.rc:128
 #, fuzzy
 msgid "Window Background"
 msgstr "Arkaplanı Ko&pyala"
 
-#: winecfg.rc:130
+#: winecfg.rc:129
 #, fuzzy
 msgid "Window Text"
 msgstr "&Pencere"
 
-#: winecfg.rc:131
+#: winecfg.rc:130
 #, fuzzy
 msgid "Active Title Bar"
 msgstr "&Başlık Çubuğunu Kaldır"
 
-#: winecfg.rc:132
+#: winecfg.rc:131
 msgid "Active Title Text"
 msgstr ""
 
-#: winecfg.rc:133
+#: winecfg.rc:132
 msgid "Inactive Title Bar"
 msgstr ""
 
-#: winecfg.rc:134
+#: winecfg.rc:133
 msgid "Inactive Title Text"
 msgstr ""
 
-#: winecfg.rc:135
+#: winecfg.rc:134
 msgid "Message Box Text"
 msgstr ""
 
-#: winecfg.rc:136
+#: winecfg.rc:135
 #, fuzzy
 msgid "Application Workspace"
 msgstr "Seçenekler"
 
-#: winecfg.rc:137
+#: winecfg.rc:136
 #, fuzzy
 msgid "Window Frame"
 msgstr "&Pencere"
 
-#: winecfg.rc:138
+#: winecfg.rc:137
 msgid "Active Border"
 msgstr ""
 
-#: winecfg.rc:139
+#: winecfg.rc:138
 msgid "Inactive Border"
 msgstr ""
 
-#: winecfg.rc:140
+#: winecfg.rc:139
 #, fuzzy
 msgid "Controls Shadow"
 msgstr "Control Panel"
 
-#: winecfg.rc:141
+#: winecfg.rc:140
 #, fuzzy
 msgid "Gray Text"
 msgstr "Gri"
 
-#: winecfg.rc:142
+#: winecfg.rc:141
 msgid "Controls Highlight"
 msgstr ""
 
-#: winecfg.rc:143
+#: winecfg.rc:142
 #, fuzzy
 msgid "Controls Dark Shadow"
 msgstr "Controls Debug Channels"
 
-#: winecfg.rc:144
+#: winecfg.rc:143
 #, fuzzy
 msgid "Controls Light"
 msgstr "Control"
 
-#: winecfg.rc:145
+#: winecfg.rc:144
 msgid "Controls Alternate Background"
 msgstr ""
 
-#: winecfg.rc:146
+#: winecfg.rc:145
 msgid "Hot Tracked Item"
 msgstr ""
 
-#: winecfg.rc:147
+#: winecfg.rc:146
 msgid "Active Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:148
+#: winecfg.rc:147
 msgid "Inactive Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:149
+#: winecfg.rc:148
 msgid "Menu Highlight"
 msgstr ""
 
-#: winecfg.rc:150
+#: winecfg.rc:149
 msgid "Menu Bar"
 msgstr ""
 
