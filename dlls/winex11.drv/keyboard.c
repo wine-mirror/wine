@@ -1006,8 +1006,8 @@ static const WORD nonchar_key_vkey[256] =
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FFD8 */
     /* modifier keys */
     0, VK_LSHIFT, VK_RSHIFT, VK_LCONTROL,                       /* FFE0 */
-    VK_RCONTROL, VK_CAPITAL, 0, VK_MENU,
-    VK_MENU, VK_LMENU, VK_RMENU, VK_LWIN, VK_RWIN, 0, 0, 0,     /* FFE8 */
+    VK_RCONTROL, VK_CAPITAL, 0, VK_LMENU,
+    VK_RMENU, VK_LMENU, VK_RMENU, VK_LWIN, VK_RWIN, 0, 0, 0,    /* FFE8 */
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FFF0 */
     0, 0, 0, 0, 0, 0, 0, VK_DELETE                              /* FFF8 */
 };
