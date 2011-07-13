@@ -2149,7 +2149,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
     return TRUE;
 }
 
-static DWORD find_draw_buffers_mask(struct wined3d_context *context, struct wined3d_device *device)
+static DWORD find_draw_buffers_mask(const struct wined3d_context *context, const struct wined3d_device *device)
 {
     const struct wined3d_state *state = &device->stateBlock->state;
     struct wined3d_surface **rts = state->fb->render_targets;
