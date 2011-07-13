@@ -1099,6 +1099,8 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
         memcpy(&state->transforms[WINED3DTS_WORLDMATRIX(i)], identity, sizeof(identity));
     }
 
+    state->fb = &device->fb;
+
     TRACE("Render states\n");
     /* Render states: */
     if (device->auto_depth_stencil)

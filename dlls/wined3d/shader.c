@@ -1879,7 +1879,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
     memset(args, 0, sizeof(*args)); /* FIXME: Make sure all bits are set. */
     if (state->render_states[WINED3DRS_SRGBWRITEENABLE])
     {
-        struct wined3d_surface *rt = device->fb.render_targets[0];
+        const struct wined3d_surface *rt = state->fb->render_targets[0];
         if (rt->resource.format->flags & WINED3DFMT_FLAG_SRGB_WRITE) args->srgb_correction = 1;
     }
 

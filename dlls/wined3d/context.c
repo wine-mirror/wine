@@ -2149,10 +2149,11 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
     return TRUE;
 }
 
-static inline DWORD find_draw_buffers_mask(struct wined3d_context *context, struct wined3d_device *device)
+static DWORD find_draw_buffers_mask(struct wined3d_context *context, struct wined3d_device *device)
 {
-    struct wined3d_shader *ps = device->stateBlock->state.pixel_shader;
-    struct wined3d_surface **rts = device->fb.render_targets;
+    const struct wined3d_state *state = &device->stateBlock->state;
+    struct wined3d_surface **rts = state->fb->render_targets;
+    struct wined3d_shader *ps = state->pixel_shader;
     DWORD rt_mask, rt_mask_bits;
     unsigned int i;
 
@@ -2176,10 +2177,11 @@ static inline DWORD find_draw_buffers_mask(struct wined3d_context *context, stru
 }
 
 /* GL locking and context activation are done by the caller */
-void context_state_fb(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+void context_state_fb(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
+    const struct wined3d_state *state = &stateblock->state;
     struct wined3d_device *device = stateblock->device;
-    const struct wined3d_fb_state *fb = &device->fb;
+    const struct wined3d_fb_state *fb = state->fb;
     DWORD rt_mask = find_draw_buffers_mask(context, device);
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
@@ -2222,8 +2224,9 @@ void context_state_drawbuf(DWORD state, struct wined3d_stateblock *stateblock, s
 /* Context activation is done by the caller. */
 BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_device *device)
 {
+    struct wined3d_stateblock *stateblock = device->stateBlock;
     const struct StateEntry *state_table = device->StateTable;
-    const struct wined3d_fb_state *fb = &device->fb;
+    const struct wined3d_fb_state *fb = stateblock->state.fb;
     unsigned int i;
 
     if (!context_validate_rt_config(context->gl_info->limits.buffers,
@@ -2250,7 +2253,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
         DWORD idx = rep / (sizeof(*context->isStateDirty) * CHAR_BIT);
         BYTE shift = rep & ((sizeof(*context->isStateDirty) * CHAR_BIT) - 1);
         context->isStateDirty[idx] &= ~(1 << shift);
-        state_table[rep].apply(rep, device->stateBlock, context);
+        state_table[rep].apply(rep, stateblock, context);
     }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)

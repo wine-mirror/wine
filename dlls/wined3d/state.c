@@ -94,10 +94,12 @@ static void state_lighting(DWORD state, struct wined3d_stateblock *stateblock, s
     }
 }
 
-static void state_zenable(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void state_zenable(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
+    const struct wined3d_state *state = &stateblock->state;
+
     /* No z test without depth stencil buffers */
-    if (!stateblock->device->fb.depth_stencil)
+    if (!state->fb->depth_stencil)
     {
         TRACE("No Z buffer - disabling depth test\n");
         glDisable(GL_DEPTH_TEST); /* This also disables z writing in gl */
@@ -105,7 +107,7 @@ static void state_zenable(DWORD state, struct wined3d_stateblock *stateblock, st
         return;
     }
 
-    switch (stateblock->state.render_states[WINED3DRS_ZENABLE])
+    switch (state->render_states[WINED3DRS_ZENABLE])
     {
         case WINED3DZB_FALSE:
             glDisable(GL_DEPTH_TEST);
@@ -122,7 +124,7 @@ static void state_zenable(DWORD state, struct wined3d_stateblock *stateblock, st
             break;
         default:
             FIXME("Unrecognized D3DZBUFFERTYPE value %#x.\n",
-                    stateblock->state.render_states[WINED3DRS_ZENABLE]);
+                    state->render_states[WINED3DRS_ZENABLE]);
     }
 }
 
@@ -282,18 +284,19 @@ static GLenum gl_blend_factor(WINED3DBLEND factor, const struct wined3d_format *
     }
 }
 
-static void state_blend(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void state_blend(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    struct wined3d_surface *target = stateblock->device->fb.render_targets[0];
+    const struct wined3d_state *state = &stateblock->state;
+    const struct wined3d_surface *target = state->fb->render_targets[0];
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLenum srcBlend, dstBlend;
     WINED3DBLEND d3d_blend;
 
     /* According to the red book, GL_LINE_SMOOTH needs GL_BLEND with specific
      * blending parameters to work. */
-    if (stateblock->state.render_states[WINED3DRS_ALPHABLENDENABLE]
-            || stateblock->state.render_states[WINED3DRS_EDGEANTIALIAS]
-            || stateblock->state.render_states[WINED3DRS_ANTIALIASEDLINEENABLE])
+    if (state->render_states[WINED3DRS_ALPHABLENDENABLE]
+            || state->render_states[WINED3DRS_EDGEANTIALIAS]
+            || state->render_states[WINED3DRS_ANTIALIASEDLINEENABLE])
     {
         /* Disable blending in all cases even without pixelshaders.
          * With blending on we could face a big performance penalty.
@@ -318,7 +321,7 @@ static void state_blend(DWORD state, struct wined3d_stateblock *stateblock, stru
     /* WINED3DBLEND_BOTHSRCALPHA and WINED3DBLEND_BOTHINVSRCALPHA are legacy
      * source blending values which are still valid up to d3d9. They should
      * not occur as dest blend values. */
-    d3d_blend = stateblock->state.render_states[WINED3DRS_SRCBLEND];
+    d3d_blend = state->render_states[WINED3DRS_SRCBLEND];
     if (d3d_blend == WINED3DBLEND_BOTHSRCALPHA)
     {
         srcBlend = GL_SRC_ALPHA;
@@ -332,12 +335,12 @@ static void state_blend(DWORD state, struct wined3d_stateblock *stateblock, stru
     else
     {
         srcBlend = gl_blend_factor(d3d_blend, target->resource.format);
-        dstBlend = gl_blend_factor(stateblock->state.render_states[WINED3DRS_DESTBLEND],
+        dstBlend = gl_blend_factor(state->render_states[WINED3DRS_DESTBLEND],
                 target->resource.format);
     }
 
-    if (stateblock->state.render_states[WINED3DRS_EDGEANTIALIAS]
-            || stateblock->state.render_states[WINED3DRS_ANTIALIASEDLINEENABLE])
+    if (state->render_states[WINED3DRS_EDGEANTIALIAS]
+            || state->render_states[WINED3DRS_ANTIALIASEDLINEENABLE])
     {
         glEnable(GL_LINE_SMOOTH);
         checkGLcall("glEnable(GL_LINE_SMOOTH)");
@@ -357,7 +360,7 @@ static void state_blend(DWORD state, struct wined3d_stateblock *stateblock, stru
         state_blendop(STATE_RENDER(WINED3DRS_BLENDOPALPHA), stateblock, context);
     }
 
-    if (stateblock->state.render_states[WINED3DRS_SEPARATEALPHABLENDENABLE])
+    if (state->render_states[WINED3DRS_SEPARATEALPHABLENDENABLE])
     {
         GLenum srcBlendAlpha, dstBlendAlpha;
 
@@ -371,7 +374,7 @@ static void state_blend(DWORD state, struct wined3d_stateblock *stateblock, stru
         /* WINED3DBLEND_BOTHSRCALPHA and WINED3DBLEND_BOTHINVSRCALPHA are legacy
          * source blending values which are still valid up to d3d9. They should
          * not occur as dest blend values. */
-        d3d_blend = stateblock->state.render_states[WINED3DRS_SRCBLENDALPHA];
+        d3d_blend = state->render_states[WINED3DRS_SRCBLENDALPHA];
         if (d3d_blend == WINED3DBLEND_BOTHSRCALPHA)
         {
             srcBlendAlpha = GL_SRC_ALPHA;
@@ -385,7 +388,7 @@ static void state_blend(DWORD state, struct wined3d_stateblock *stateblock, stru
         else
         {
             srcBlendAlpha = gl_blend_factor(d3d_blend, target->resource.format);
-            dstBlendAlpha = gl_blend_factor(stateblock->state.render_states[WINED3DRS_DESTBLENDALPHA],
+            dstBlendAlpha = gl_blend_factor(state->render_states[WINED3DRS_DESTBLENDALPHA],
                     target->resource.format);
         }
 
@@ -397,9 +400,9 @@ static void state_blend(DWORD state, struct wined3d_stateblock *stateblock, stru
         checkGLcall("glBlendFunc");
     }
 
-    /* colorkey fixup for stage 0 alphaop depends on WINED3DRS_ALPHABLENDENABLE state,
-        so it may need updating */
-    if (stateblock->state.render_states[WINED3DRS_COLORKEYENABLE])
+    /* colorkey fixup for stage 0 alphaop depends on
+     * WINED3DRS_ALPHABLENDENABLE state, so it may need updating. */
+    if (state->render_states[WINED3DRS_COLORKEYENABLE])
         stateblock_apply_state(STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP), stateblock, context);
 }
 
@@ -795,9 +798,10 @@ static void renderstate_stencil_twosided(struct wined3d_context *context, GLint 
     checkGLcall("glStencilOp(...)");
 }
 
-static void state_stencil(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void state_stencil(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_state *state = &stateblock->state;
     DWORD onesided_enable = FALSE;
     DWORD twosided_enable = FALSE;
     GLint func = GL_ALWAYS;
@@ -812,27 +816,27 @@ static void state_stencil(DWORD state, struct wined3d_stateblock *stateblock, st
     GLint stencilPass_ccw = GL_KEEP;
 
     /* No stencil test without a stencil buffer. */
-    if (!stateblock->device->fb.depth_stencil)
+    if (!state->fb->depth_stencil)
     {
         glDisable(GL_STENCIL_TEST);
         checkGLcall("glDisable GL_STENCIL_TEST");
         return;
     }
 
-    onesided_enable = stateblock->state.render_states[WINED3DRS_STENCILENABLE];
-    twosided_enable = stateblock->state.render_states[WINED3DRS_TWOSIDEDSTENCILMODE];
-    if (!(func = CompareFunc(stateblock->state.render_states[WINED3DRS_STENCILFUNC])))
+    onesided_enable = state->render_states[WINED3DRS_STENCILENABLE];
+    twosided_enable = state->render_states[WINED3DRS_TWOSIDEDSTENCILMODE];
+    if (!(func = CompareFunc(state->render_states[WINED3DRS_STENCILFUNC])))
         func = GL_ALWAYS;
-    if (!(func_ccw = CompareFunc(stateblock->state.render_states[WINED3DRS_CCW_STENCILFUNC])))
+    if (!(func_ccw = CompareFunc(state->render_states[WINED3DRS_CCW_STENCILFUNC])))
         func_ccw = GL_ALWAYS;
-    ref = stateblock->state.render_states[WINED3DRS_STENCILREF];
-    mask = stateblock->state.render_states[WINED3DRS_STENCILMASK];
-    stencilFail = StencilOp(stateblock->state.render_states[WINED3DRS_STENCILFAIL]);
-    depthFail = StencilOp(stateblock->state.render_states[WINED3DRS_STENCILZFAIL]);
-    stencilPass = StencilOp(stateblock->state.render_states[WINED3DRS_STENCILPASS]);
-    stencilFail_ccw = StencilOp(stateblock->state.render_states[WINED3DRS_CCW_STENCILFAIL]);
-    depthFail_ccw = StencilOp(stateblock->state.render_states[WINED3DRS_CCW_STENCILZFAIL]);
-    stencilPass_ccw = StencilOp(stateblock->state.render_states[WINED3DRS_CCW_STENCILPASS]);
+    ref = state->render_states[WINED3DRS_STENCILREF];
+    mask = state->render_states[WINED3DRS_STENCILMASK];
+    stencilFail = StencilOp(state->render_states[WINED3DRS_STENCILFAIL]);
+    depthFail = StencilOp(state->render_states[WINED3DRS_STENCILZFAIL]);
+    stencilPass = StencilOp(state->render_states[WINED3DRS_STENCILPASS]);
+    stencilFail_ccw = StencilOp(state->render_states[WINED3DRS_CCW_STENCILFAIL]);
+    depthFail_ccw = StencilOp(state->render_states[WINED3DRS_CCW_STENCILZFAIL]);
+    stencilPass_ccw = StencilOp(state->render_states[WINED3DRS_CCW_STENCILPASS]);
 
     TRACE("(onesided %d, twosided %d, ref %x, mask %x, "
           "GL_FRONT: func: %x, fail %x, zfail %x, zpass %x "
@@ -893,9 +897,10 @@ static void state_stencil(DWORD state, struct wined3d_stateblock *stateblock, st
     }
 }
 
-static void state_stencilwrite2s(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void state_stencilwrite2s(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    DWORD mask = stateblock->device->fb.depth_stencil ? stateblock->state.render_states[WINED3DRS_STENCILWRITEMASK] : 0;
+    const struct wined3d_state *state = &stateblock->state;
+    DWORD mask = state->fb->depth_stencil ? state->render_states[WINED3DRS_STENCILWRITEMASK] : 0;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     GL_EXTCALL(glActiveStencilFaceEXT(GL_BACK));
@@ -907,9 +912,10 @@ static void state_stencilwrite2s(DWORD state, struct wined3d_stateblock *statebl
     glStencilMask(mask);
 }
 
-static void state_stencilwrite(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void state_stencilwrite(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    DWORD mask = stateblock->device->fb.depth_stencil ? stateblock->state.render_states[WINED3DRS_STENCILWRITEMASK] : 0;
+    const struct wined3d_state *state = &stateblock->state;
+    DWORD mask = state->fb->depth_stencil ? state->render_states[WINED3DRS_STENCILWRITEMASK] : 0;
 
     glStencilMask(mask);
     checkGLcall("glStencilMask");
@@ -1701,13 +1707,14 @@ static void state_scissor(DWORD state, struct wined3d_stateblock *stateblock, st
  * which makes a guess of the depth buffer format's highest possible value a
  * reasonable guess. Note that SLOPESCALEDEPTHBIAS is a scaling factor for the
  * depth slope, and doesn't need to be scaled. */
-static void state_depthbias(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void state_depthbias(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    if (stateblock->state.render_states[WINED3DRS_SLOPESCALEDEPTHBIAS]
-            || stateblock->state.render_states[WINED3DRS_DEPTHBIAS])
+    const struct wined3d_state *state = &stateblock->state;
+
+    if (state->render_states[WINED3DRS_SLOPESCALEDEPTHBIAS]
+            || state->render_states[WINED3DRS_DEPTHBIAS])
     {
-        const struct wined3d_device *device = stateblock->device;
-        const struct wined3d_surface *depth = device->fb.depth_stencil;
+        const struct wined3d_surface *depth = state->fb->depth_stencil;
         float scale;
 
         union
@@ -1716,13 +1723,13 @@ static void state_depthbias(DWORD state, struct wined3d_stateblock *stateblock, 
             float f;
         } scale_bias, const_bias;
 
-        scale_bias.d = stateblock->state.render_states[WINED3DRS_SLOPESCALEDEPTHBIAS];
-        const_bias.d = stateblock->state.render_states[WINED3DRS_DEPTHBIAS];
+        scale_bias.d = state->render_states[WINED3DRS_SLOPESCALEDEPTHBIAS];
+        const_bias.d = state->render_states[WINED3DRS_DEPTHBIAS];
 
         glEnable(GL_POLYGON_OFFSET_FILL);
         checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL)");
 
-        if (device->wined3d->flags & WINED3D_LEGACY_DEPTH_BIAS)
+        if (stateblock->device->wined3d->flags & WINED3D_LEGACY_DEPTH_BIAS)
         {
             float bias = -(float)const_bias.d;
             glPolygonOffset(bias, bias);
@@ -4680,7 +4687,7 @@ static void vertexdeclaration(DWORD state_id, struct wined3d_stateblock *statebl
 
 static void viewport_miscpart(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    struct wined3d_surface *target = stateblock->device->fb.render_targets[0];
+    const struct wined3d_surface *target = stateblock->state.fb->render_targets[0];
     UINT width, height;
     WINED3DVIEWPORT vp = stateblock->state.viewport;
 
@@ -4836,7 +4843,7 @@ static void light(DWORD state, struct wined3d_stateblock *stateblock, struct win
 
 static void scissorrect(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    struct wined3d_surface *target = stateblock->device->fb.render_targets[0];
+    const struct wined3d_surface *target = stateblock->state.fb->render_targets[0];
     RECT *pRect = &stateblock->state.scissor_rect;
     UINT height;
     UINT width;

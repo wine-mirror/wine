@@ -2238,6 +2238,8 @@ struct wined3d_stream_state
 
 struct wined3d_state
 {
+    const struct wined3d_fb_state *fb;
+
     struct wined3d_vertex_declaration *vertex_declaration;
     struct wined3d_stream_state streams[MAX_STREAMS + 1 /* tesselated pseudo-stream */];
     BOOL user_stream;

@@ -629,31 +629,31 @@ static void shader_arb_vs_local_constants(const struct arb_vs_compiled_shader *g
 static void shader_arb_load_constants(const struct wined3d_context *context, char usePixelShader, char useVertexShader)
 {
     struct wined3d_device *device = context->swapchain->device;
-    struct wined3d_stateblock *stateBlock = device->stateBlock;
+    const struct wined3d_state *state = &device->stateBlock->state;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_arb_priv *priv = device->shader_priv;
 
     if (useVertexShader)
     {
-        struct wined3d_shader *vshader = stateBlock->state.vertex_shader;
+        struct wined3d_shader *vshader = state->vertex_shader;
         const struct arb_vs_compiled_shader *gl_shader = priv->compiled_vprog;
 
         /* Load DirectX 9 float constants for vertex shader */
         device->highest_dirty_vs_const = shader_arb_load_constantsF(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
-                device->highest_dirty_vs_const, stateBlock->state.vs_consts_f, context->vshader_const_dirty);
-        shader_arb_vs_local_constants(gl_shader, context, &stateBlock->state);
+                device->highest_dirty_vs_const, state->vs_consts_f, context->vshader_const_dirty);
+        shader_arb_vs_local_constants(gl_shader, context, state);
     }
 
     if (usePixelShader)
     {
-        struct wined3d_shader *pshader = stateBlock->state.pixel_shader;
+        struct wined3d_shader *pshader = state->pixel_shader;
         const struct arb_ps_compiled_shader *gl_shader = priv->compiled_fprog;
-        UINT rt_height = device->fb.render_targets[0]->resource.height;
+        UINT rt_height = state->fb->render_targets[0]->resource.height;
 
         /* Load DirectX 9 float constants for pixel shader */
         device->highest_dirty_ps_const = shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
-                device->highest_dirty_ps_const, stateBlock->state.ps_consts_f, context->pshader_const_dirty);
-        shader_arb_ps_local_constants(gl_shader, context, &stateBlock->state, rt_height);
+                device->highest_dirty_ps_const, state->ps_consts_f, context->pshader_const_dirty);
+        shader_arb_ps_local_constants(gl_shader, context, state, rt_height);
     }
 }
 
@@ -4612,7 +4612,7 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
         }
         else
         {
-            UINT rt_height = device->fb.render_targets[0]->resource.height;
+            UINT rt_height = state->fb->render_targets[0]->resource.height;
             shader_arb_ps_local_constants(compiled, context, state, rt_height);
         }
 
