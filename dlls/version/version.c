@@ -1413,7 +1413,6 @@ DWORD WINAPI VerInstallFileA(
 	    }
 	}
     }
-    xret = 0;
     if (!(flags & VIFF_FORCEINSTALL)) {
 	VS_FIXEDFILEINFO *destvffi,*tmpvffi;
 	buf1 = _fetch_versioninfo(destfn,&destvffi);
