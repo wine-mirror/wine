@@ -2999,66 +2999,9 @@ UINT WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
     return MMSYSERR_NOTSUPPORTED;
 }
 
-/**************************************************************************
- * find out the real mixer ID depending on hmix (depends on dwFlags)
- */
-static UINT MIXER_GetDev(HMIXEROBJ hmix, DWORD dwFlags, LPWINE_MIXER * lplpwm)
-{
-    LPWINE_MIXER	lpwm = NULL;
-    UINT		uRet = MMSYSERR_NOERROR;
-
-    switch (dwFlags & 0xF0000000ul) {
-    case MIXER_OBJECTF_MIXER:
-	lpwm = (LPWINE_MIXER)MMDRV_Get(hmix, MMDRV_MIXER, TRUE);
-	break;
-    case MIXER_OBJECTF_HMIXER:
-	lpwm = (LPWINE_MIXER)MMDRV_Get(hmix, MMDRV_MIXER, FALSE);
-	break;
-    case MIXER_OBJECTF_WAVEOUT:
-	lpwm = (LPWINE_MIXER)MMDRV_GetRelated(hmix, MMDRV_WAVEOUT, TRUE,  MMDRV_MIXER);
-	break;
-    case MIXER_OBJECTF_HWAVEOUT:
-	lpwm = (LPWINE_MIXER)MMDRV_GetRelated(hmix, MMDRV_WAVEOUT, FALSE, MMDRV_MIXER);
-	break;
-    case MIXER_OBJECTF_WAVEIN:
-	lpwm = (LPWINE_MIXER)MMDRV_GetRelated(hmix, MMDRV_WAVEIN,  TRUE,  MMDRV_MIXER);
-	break;
-    case MIXER_OBJECTF_HWAVEIN:
-	lpwm = (LPWINE_MIXER)MMDRV_GetRelated(hmix, MMDRV_WAVEIN,  FALSE, MMDRV_MIXER);
-	break;
-    case MIXER_OBJECTF_MIDIOUT:
-	lpwm = (LPWINE_MIXER)MMDRV_GetRelated(hmix, MMDRV_MIDIOUT, TRUE,  MMDRV_MIXER);
-	break;
-    case MIXER_OBJECTF_HMIDIOUT:
-	lpwm = (LPWINE_MIXER)MMDRV_GetRelated(hmix, MMDRV_MIDIOUT, FALSE, MMDRV_MIXER);
-	break;
-    case MIXER_OBJECTF_MIDIIN:
-	lpwm = (LPWINE_MIXER)MMDRV_GetRelated(hmix, MMDRV_MIDIIN,  TRUE,  MMDRV_MIXER);
-	break;
-    case MIXER_OBJECTF_HMIDIIN:
-	lpwm = (LPWINE_MIXER)MMDRV_GetRelated(hmix, MMDRV_MIDIIN,  FALSE, MMDRV_MIXER);
-	break;
-    case MIXER_OBJECTF_AUX:
-	lpwm = (LPWINE_MIXER)MMDRV_GetRelated(hmix, MMDRV_AUX,     TRUE,  MMDRV_MIXER);
-	break;
-    default:
-	WARN("Unsupported flag (%08lx)\n", dwFlags & 0xF0000000ul);
-        lpwm = 0;
-        uRet = MMSYSERR_INVALFLAG;
-	break;
-    }
-    *lplpwm = lpwm;
-    if (lpwm == 0 && uRet == MMSYSERR_NOERROR)
-        uRet = MMSYSERR_INVALPARAM;
-    return uRet;
-}
-
-/**************************************************************************
- * 				mixerGetNumDevs			[WINMM.@]
- */
 UINT WINAPI mixerGetNumDevs(void)
 {
-    return MMDRV_GetNum(MMDRV_MIXER);
+    return 0;
 }
 
 /**************************************************************************
@@ -3092,24 +3035,10 @@ UINT WINAPI mixerGetDevCapsA(UINT_PTR uDeviceID, LPMIXERCAPSA lpCaps, UINT uSize
  */
 UINT WINAPI mixerGetDevCapsW(UINT_PTR uDeviceID, LPMIXERCAPSW lpCaps, UINT uSize)
 {
-    LPWINE_MLD wmld;
+    if(!lpCaps)
+        return MMSYSERR_INVALPARAM;
 
-    if (lpCaps == NULL)        return MMSYSERR_INVALPARAM;
-
-    if ((wmld = MMDRV_Get((HANDLE)uDeviceID, MMDRV_MIXER, TRUE)) == NULL)
-        return MMSYSERR_BADDEVICEID;
-
-    return MMDRV_Message(wmld, MXDM_GETDEVCAPS, (DWORD_PTR)lpCaps, uSize);
-}
-
-static void CALLBACK MIXER_WCallback(HMIXEROBJ hmx, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam, DWORD_PTR param2)
-{
-    HWND hWnd = (HWND)dwInstance;
-
-    if (!dwInstance)
-        return;
-
-    PostMessageW(hWnd, uMsg, (WPARAM)hmx, (LPARAM)dwParam);
+    return MMSYSERR_BADDEVICEID;
 }
 
 /**************************************************************************
@@ -3118,10 +3047,7 @@ static void CALLBACK MIXER_WCallback(HMIXEROBJ hmx, UINT uMsg, DWORD_PTR dwInsta
 UINT WINAPI mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
                       DWORD_PTR dwInstance, DWORD fdwOpen)
 {
-    HANDLE		hMix;
-    LPWINE_MLD		wmld;
-    DWORD		dwRet;
-    MIXEROPENDESC	mod;
+    DWORD dwRet;
 
     TRACE("(%p, %d, %08lx, %08lx, %08x)\n",
 	  lphMix, uDeviceID, dwCallback, dwInstance, fdwOpen);
@@ -3130,33 +3056,7 @@ UINT WINAPI mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
     if (dwRet != MMSYSERR_NOERROR)
         return dwRet;
 
-    mod.dwCallback = (DWORD_PTR)MIXER_WCallback;
-    if ((fdwOpen & CALLBACK_TYPEMASK) == CALLBACK_WINDOW)
-        mod.dwInstance = dwCallback;
-    else
-        mod.dwInstance = 0;
-
-    /* We're remapping to CALLBACK_FUNCTION because that's what old winmm is
-     * documented to do when opening the mixer driver.
-     * FIXME: Native supports CALLBACK_EVENT + CALLBACK_THREAD flags since w2k.
-     * FIXME: The non ALSA drivers ignore callback requests - bug.
-     */
-
-    wmld = MMDRV_Alloc(sizeof(WINE_MIXER), MMDRV_MIXER, &hMix, &fdwOpen,
-		       &dwCallback, &dwInstance);
-    wmld->uDeviceID = uDeviceID;
-    mod.hmx = hMix;
-
-    dwRet = MMDRV_Open(wmld, MXDM_OPEN, (DWORD_PTR)&mod, CALLBACK_FUNCTION);
-
-    if (dwRet != MMSYSERR_NOERROR) {
-	MMDRV_Free(hMix, wmld);
-	hMix = 0;
-    }
-    if (lphMix) *lphMix = hMix;
-    TRACE("=> %d hMixer=%p\n", dwRet, hMix);
-
-    return dwRet;
+    return MMSYSERR_BADDEVICEID;
 }
 
 /**************************************************************************
@@ -3164,17 +3064,8 @@ UINT WINAPI mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
  */
 UINT WINAPI mixerClose(HMIXER hMix)
 {
-    LPWINE_MLD		wmld;
-    DWORD		dwRet;
-
     TRACE("(%p)\n", hMix);
-
-    if ((wmld = MMDRV_Get(hMix, MMDRV_MIXER, FALSE)) == NULL) return MMSYSERR_INVALHANDLE;
-
-    dwRet = MMDRV_Close(wmld, MXDM_CLOSE);
-    MMDRV_Free(hMix, wmld);
-
-    return dwRet;
+    return MMSYSERR_INVALHANDLE;
 }
 
 /**************************************************************************
@@ -3182,18 +3073,8 @@ UINT WINAPI mixerClose(HMIXER hMix)
  */
 UINT WINAPI mixerGetID(HMIXEROBJ hmix, LPUINT lpid, DWORD fdwID)
 {
-    LPWINE_MIXER	lpwm;
-    UINT		uRet = MMSYSERR_NOERROR;
-
-    TRACE("(%p %p %08x)\n", hmix, lpid, fdwID);
-
-    if ((uRet = MIXER_GetDev(hmix, fdwID, &lpwm)) != MMSYSERR_NOERROR)
-	return uRet;
-
-    if (lpid)
-      *lpid = lpwm->mld.uDeviceID;
-
-    return uRet;
+    TRACE("(%p, %p, %08x)\n", hmix, lpid, fdwID);
+    return MMSYSERR_INVALHANDLE;
 }
 
 /**************************************************************************
@@ -3202,19 +3083,12 @@ UINT WINAPI mixerGetID(HMIXEROBJ hmix, LPUINT lpid, DWORD fdwID)
 UINT WINAPI mixerGetControlDetailsW(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdW,
 				    DWORD fdwDetails)
 {
-    LPWINE_MIXER	lpwm;
-    UINT		uRet = MMSYSERR_NOERROR;
-
     TRACE("(%p, %p, %08x)\n", hmix, lpmcdW, fdwDetails);
 
-    if ((uRet = MIXER_GetDev(hmix, fdwDetails, &lpwm)) != MMSYSERR_NOERROR)
-	return uRet;
+    if(!lpmcdW || lpmcdW->cbStruct != sizeof(*lpmcdW))
+        return MMSYSERR_INVALPARAM;
 
-    if (lpmcdW == NULL || lpmcdW->cbStruct != sizeof(*lpmcdW))
-	return MMSYSERR_INVALPARAM;
-
-    return MMDRV_Message(&lpwm->mld, MXDM_GETCONTROLDETAILS, (DWORD_PTR)lpmcdW,
-			 fdwDetails);
+    return MMSYSERR_INVALHANDLE;
 }
 
 /**************************************************************************
@@ -3350,19 +3224,12 @@ UINT WINAPI mixerGetLineControlsA(HMIXEROBJ hmix, LPMIXERLINECONTROLSA lpmlcA,
 UINT WINAPI mixerGetLineControlsW(HMIXEROBJ hmix, LPMIXERLINECONTROLSW lpmlcW,
 				  DWORD fdwControls)
 {
-    LPWINE_MIXER	lpwm;
-    UINT		uRet = MMSYSERR_NOERROR;
-
     TRACE("(%p, %p, %08x)\n", hmix, lpmlcW, fdwControls);
 
-    if ((uRet = MIXER_GetDev(hmix, fdwControls, &lpwm)) != MMSYSERR_NOERROR)
-	return uRet;
+    if(!lpmlcW || lpmlcW->cbStruct != sizeof(*lpmlcW))
+        return MMSYSERR_INVALPARAM;
 
-    if (lpmlcW == NULL || lpmlcW->cbStruct != sizeof(*lpmlcW))
-	return MMSYSERR_INVALPARAM;
-
-    return MMDRV_Message(&lpwm->mld, MXDM_GETLINECONTROLS, (DWORD_PTR)lpmlcW,
-			 fdwControls);
+    return MMSYSERR_INVALHANDLE;
 }
 
 /**************************************************************************
@@ -3370,16 +3237,9 @@ UINT WINAPI mixerGetLineControlsW(HMIXEROBJ hmix, LPMIXERLINECONTROLSW lpmlcW,
  */
 UINT WINAPI mixerGetLineInfoW(HMIXEROBJ hmix, LPMIXERLINEW lpmliW, DWORD fdwInfo)
 {
-    LPWINE_MIXER	lpwm;
-    UINT		uRet = MMSYSERR_NOERROR;
-
     TRACE("(%p, %p, %08x)\n", hmix, lpmliW, fdwInfo);
 
-    if ((uRet = MIXER_GetDev(hmix, fdwInfo, &lpwm)) != MMSYSERR_NOERROR)
-	return uRet;
-
-    return MMDRV_Message(&lpwm->mld, MXDM_GETLINEINFO, (DWORD_PTR)lpmliW,
-			 fdwInfo);
+    return MMSYSERR_INVALHANDLE;
 }
 
 /**************************************************************************
@@ -3457,16 +3317,9 @@ UINT WINAPI mixerGetLineInfoA(HMIXEROBJ hmix, LPMIXERLINEA lpmliA,
 UINT WINAPI mixerSetControlDetails(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd,
 				   DWORD fdwDetails)
 {
-    LPWINE_MIXER	lpwm;
-    UINT		uRet = MMSYSERR_NOERROR;
-
     TRACE("(%p, %p, %08x)\n", hmix, lpmcd, fdwDetails);
 
-    if ((uRet = MIXER_GetDev(hmix, fdwDetails, &lpwm)) != MMSYSERR_NOERROR)
-	return uRet;
-
-    return MMDRV_Message(&lpwm->mld, MXDM_SETCONTROLDETAILS, (DWORD_PTR)lpmcd,
-			 fdwDetails);
+    return MMSYSERR_INVALHANDLE;
 }
 
 /**************************************************************************
@@ -3474,13 +3327,7 @@ UINT WINAPI mixerSetControlDetails(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd,
  */
 DWORD WINAPI mixerMessage(HMIXER hmix, UINT uMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    LPWINE_MLD		wmld;
+    TRACE("(%p, %d, %08lx, %08lx)\n", hmix, uMsg, dwParam1, dwParam2);
 
-    TRACE("(%p, %d, %08lx, %08lx): semi-stub?\n",
-	  hmix, uMsg, dwParam1, dwParam2);
-
-    if ((wmld = MMDRV_Get(hmix, MMDRV_MIXER, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    return MMDRV_Message(wmld, uMsg, dwParam1, dwParam2);
+    return MMSYSERR_INVALHANDLE;
 }
