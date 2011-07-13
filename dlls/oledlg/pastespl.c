@@ -313,7 +313,6 @@ static void update_display_list(HWND hdlg, UINT src_list_id)
         SendMessageW(display_list, LB_INSERTSTRING, i, (LPARAM)txt);
         SendMessageW(display_list, LB_SETITEMDATA, i, item_data);
     }
-    old_pos = max(old_pos, count);
     SendMessageW(display_list, LB_SETCURSEL, 0, 0);
     SendMessageW(display_list, WM_SETREDRAW, 1, 0);
     if(GetForegroundWindow() == hdlg)
