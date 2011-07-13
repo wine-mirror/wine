@@ -113,7 +113,7 @@ static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
   if (file == HFILE_ERROR) return FALSE;
 
   size = 0;
-  hBuffer = LocalAlloc(LMEM_FIXED, size + MALLOCHUNK + 1);
+  hBuffer = LocalAlloc(LMEM_FIXED, MALLOCHUNK + 1);
   if (!hBuffer) return FALSE;
   buffer = LocalLock(hBuffer);
 
