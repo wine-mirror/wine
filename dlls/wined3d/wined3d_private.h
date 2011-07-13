@@ -1654,7 +1654,6 @@ struct wined3d_device
     DWORD vs_clipping;
 
     WORD view_ident : 1;                /* true iff view matrix is identity */
-    WORD untransformed : 1;
     WORD vertexBlendUsed : 1;           /* To avoid needless setting of the blend matrices */
     WORD isRecordingState : 1;
     WORD isInDraw : 1;
@@ -1665,7 +1664,7 @@ struct wined3d_device
     WORD useDrawStridedSlow : 1;
     WORD instancedDraw : 1;
     WORD filter_messages : 1;
-    WORD padding : 4;
+    WORD padding : 5;
 
     BYTE fixed_function_usage_map;      /* MAX_TEXTURES, 8 */
 

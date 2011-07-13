@@ -4544,7 +4544,7 @@ static void vertexdeclaration(DWORD state_id, struct wined3d_stateblock *statebl
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_state *state = &stateblock->state;
-    struct wined3d_device *device = stateblock->device;
+    const struct wined3d_device *device = stateblock->device;
     BOOL useVertexShaderFunction = use_vs(state);
     BOOL usePixelShaderFunction = use_ps(state);
     BOOL updateFog = FALSE;
@@ -4556,15 +4556,7 @@ static void vertexdeclaration(DWORD state_id, struct wined3d_stateblock *statebl
     if (transformed != context->last_was_rhw && !useVertexShaderFunction)
         updateFog = TRUE;
 
-    if (transformed) {
-        context->last_was_rhw = TRUE;
-    } else {
-
-        /* Untransformed, so relies on the view and projection matrices */
-        context->last_was_rhw = FALSE;
-        /* This turns off the Z scale trick to 'disable' viewport frustum clipping in rhw mode*/
-        device->untransformed = TRUE;
-    }
+    context->last_was_rhw = transformed;
 
     /* Don't have to apply the matrices when vertex shaders are used. When vshaders are turned
      * off this function will be called again anyway to make sure they're properly set
