@@ -50,7 +50,7 @@ static HWND g_hwndTestDlg, g_hwndTestDlgBut1, g_hwndTestDlgBut2, g_hwndTestDlgEd
 static HWND g_hwndInitialFocusT1, g_hwndInitialFocusT2, g_hwndInitialFocusGroupBox;
 
 static LONG g_styleInitialFocusT1, g_styleInitialFocusT2;
-static BOOL g_bInitialFocusInitDlgResult;
+static BOOL g_bInitialFocusInitDlgResult, g_bReceivedCommand;
 
 static int g_terminated;
 
@@ -539,6 +539,8 @@ static LRESULT CALLBACK testDlgWinProc (HWND hwnd, UINT uiMsg, WPARAM wParam,
         case WM_CREATE:
             return (OnTestDlgCreate (hwnd,
                     (LPCREATESTRUCTA) lParam) ? 0 : (LRESULT) -1);
+        case WM_COMMAND:
+            if(LOWORD(wParam) == 300) g_bReceivedCommand = TRUE;
     }
 
     return DefDlgProcA (hwnd, uiMsg, wParam, lParam);
@@ -576,6 +578,8 @@ static BOOL RegisterWindowClasses (void)
 
 static void test_WM_NEXTDLGCTL(void)
 {
+    HWND child1, child2, child3;
+    MSG msg;
     DWORD dwVal;
 
     g_hwndTestDlg = CreateWindowEx( WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR
@@ -678,6 +682,38 @@ static void test_WM_NEXTDLGCTL(void)
         dwVal = DefDlgProcA(g_hwndTestDlg, DM_GETDEFID, 0, 0);
         ok ( IDCANCEL == (LOWORD(dwVal)), "WM_NEXTDLGCTL changed default button\n");
     }
+
+    /* test nested default buttons */
+
+    child1 = CreateWindowA("button", "child1", WS_VISIBLE|WS_CHILD, 0, 0, 50, 50,
+                           g_hwndTestDlg, (HMENU)100, g_hinst, NULL);
+    ok(child1 != NULL, "failed to create first child\n");
+    child2 = CreateWindowA("button", "child2", WS_VISIBLE|WS_CHILD, 60, 60, 30, 30,
+                           g_hwndTestDlg, (HMENU)200, g_hinst, NULL);
+    ok(child2 != NULL, "failed to create second child\n");
+    /* create nested child */
+    child3 = CreateWindowA("button", "child3", WS_VISIBLE|WS_CHILD, 10, 10, 10, 10,
+                           child1, (HMENU)300, g_hinst, NULL);
+    ok(child3 != NULL, "failed to create subchild\n");
+
+    DefDlgProcA( g_hwndTestDlg, DM_SETDEFID, 200, 0);
+    dwVal = DefDlgProcA( g_hwndTestDlg, DM_GETDEFID, 0, 0);
+    ok(LOWORD(dwVal) == 200, "expected 200, got %x\n", dwVal);
+
+    DefDlgProcA( g_hwndTestDlg, DM_SETDEFID, 300, 0);
+    dwVal = DefDlgProcA( g_hwndTestDlg, DM_GETDEFID, 0, 0);
+    ok(LOWORD(dwVal) == 300, "expected 300, got %x\n", dwVal);
+    ok(SendMessageW( child3, WM_GETDLGCODE, 0, 0) != DLGC_DEFPUSHBUTTON,
+       "expected child3 not to be marked as DLGC_DEFPUSHBUTTON\n");
+
+    g_bReceivedCommand = FALSE;
+    FormEnterMsg (&msg, child3);
+    ok(IsDialogMessage (g_hwndTestDlg, &msg), "Did not handle the ENTER\n");
+    todo_wine ok(g_bReceivedCommand, "Did not trigger the default Button action\n");
+
+    DestroyWindow(child3);
+    DestroyWindow(child2);
+    DestroyWindow(child1);
     DestroyWindow(g_hwndTestDlg);
 }
 
