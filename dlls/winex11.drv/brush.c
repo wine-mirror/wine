@@ -250,7 +250,7 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 /***********************************************************************
  *           SelectBrush   (X11DRV.@)
  */
-HBRUSH CDECL X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
+HBRUSH X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     LOGBRUSH logbrush;
@@ -321,7 +321,7 @@ HBRUSH CDECL X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
 /***********************************************************************
  *           SetDCBrushColor (X11DRV.@)
  */
-COLORREF CDECL X11DRV_SetDCBrushColor( PHYSDEV dev, COLORREF crColor )
+COLORREF X11DRV_SetDCBrushColor( PHYSDEV dev, COLORREF crColor )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
 

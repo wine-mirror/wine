@@ -1298,7 +1298,7 @@ static BOOL same_format(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst)
 /***********************************************************************
  *           X11DRV_PatBlt
  */
-BOOL CDECL X11DRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
+BOOL X11DRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     BOOL usePat = (((rop >> 4) & 0x0f0000) != (rop & 0x0f0000));
@@ -1356,8 +1356,8 @@ BOOL CDECL X11DRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 /***********************************************************************
  *           X11DRV_StretchBlt
  */
-BOOL CDECL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                              PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
+BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                        PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
 {
     X11DRV_PDEVICE *physDevDst = get_x11drv_dev( dst_dev );
     X11DRV_PDEVICE *physDevSrc = get_x11drv_dev( src_dev ); /* FIXME: check that it's really an x11 dev */
@@ -1529,8 +1529,8 @@ done:
 /***********************************************************************
  *           X11DRV_AlphaBlend
  */
-BOOL CDECL X11DRV_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                              PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION blendfn )
+BOOL X11DRV_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                        PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION blendfn )
 {
     X11DRV_PDEVICE *physDevDst = get_x11drv_dev( dst_dev );
     X11DRV_PDEVICE *physDevSrc = get_x11drv_dev( src_dev ); /* FIXME: check that it's really an x11 dev */

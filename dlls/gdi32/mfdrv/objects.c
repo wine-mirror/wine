@@ -95,7 +95,7 @@ static INT16 MFDRV_FindObject( PHYSDEV dev, HGDIOBJ obj )
 /******************************************************************
  *         MFDRV_DeleteObject
  */
-BOOL CDECL MFDRV_DeleteObject( PHYSDEV dev, HGDIOBJ obj )
+BOOL MFDRV_DeleteObject( PHYSDEV dev, HGDIOBJ obj )
 {
     METARECORD mr;
     METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
@@ -137,7 +137,7 @@ static BOOL MFDRV_SelectObject( PHYSDEV dev, INT16 index)
 /***********************************************************************
  *           MFDRV_SelectBitmap
  */
-HBITMAP CDECL MFDRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
+HBITMAP MFDRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
 {
     return 0;
 }
@@ -338,7 +338,7 @@ done:
 /***********************************************************************
  *           MFDRV_SelectBrush
  */
-HBRUSH CDECL MFDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
+HBRUSH MFDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
 {
     INT16 index;
 
@@ -394,7 +394,7 @@ static UINT16 MFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont, LOGFONTW *logfo
 /***********************************************************************
  *           MFDRV_SelectFont
  */
-HFONT CDECL MFDRV_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
+HFONT MFDRV_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
 {
     LOGFONTW font;
     INT16 index;
@@ -432,7 +432,7 @@ static UINT16 MFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen, LOGPEN16 *logpen)
 /***********************************************************************
  *           MFDRV_SelectPen
  */
-HPEN CDECL MFDRV_SelectPen( PHYSDEV dev, HPEN hpen )
+HPEN MFDRV_SelectPen( PHYSDEV dev, HPEN hpen )
 {
     LOGPEN16 logpen;
     INT16 index;
@@ -514,7 +514,7 @@ static BOOL MFDRV_CreatePalette(PHYSDEV dev, HPALETTE hPalette, LOGPALETTE* logP
 /***********************************************************************
  *           MFDRV_SelectPalette
  */
-HPALETTE CDECL MFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPalette, BOOL bForceBackground )
+HPALETTE MFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPalette, BOOL bForceBackground )
 {
 #define PALVERSION 0x0300
 
@@ -550,7 +550,7 @@ HPALETTE CDECL MFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPalette, BOOL bForceB
 /***********************************************************************
  *           MFDRV_RealizePalette
  */
-UINT CDECL MFDRV_RealizePalette(PHYSDEV dev, HPALETTE hPalette, BOOL dummy)
+UINT MFDRV_RealizePalette(PHYSDEV dev, HPALETTE hPalette, BOOL dummy)
 {
     char buffer[sizeof(METARECORD) - sizeof(WORD)];
     METARECORD *mr = (METARECORD *)&buffer;

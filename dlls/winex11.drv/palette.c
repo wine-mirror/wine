@@ -1213,7 +1213,7 @@ static int X11DRV_LookupSysPaletteExact( BYTE r, BYTE g, BYTE b )
 /***********************************************************************
  *              RealizePalette    (X11DRV.@)
  */
-UINT CDECL X11DRV_RealizePalette( PHYSDEV dev, HPALETTE hpal, BOOL primary )
+UINT X11DRV_RealizePalette( PHYSDEV dev, HPALETTE hpal, BOOL primary )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     char flag;
@@ -1332,7 +1332,7 @@ UINT CDECL X11DRV_RealizePalette( PHYSDEV dev, HPALETTE hpal, BOOL primary )
 /***********************************************************************
  *              UnrealizePalette    (X11DRV.@)
  */
-BOOL CDECL X11DRV_UnrealizePalette( HPALETTE hpal )
+BOOL X11DRV_UnrealizePalette( HPALETTE hpal )
 {
     int *mapping = palette_get_mapping( hpal );
 
@@ -1350,7 +1350,7 @@ BOOL CDECL X11DRV_UnrealizePalette( HPALETTE hpal )
 /***********************************************************************
  *              GetSystemPaletteEntries   (X11DRV.@)
  */
-UINT CDECL X11DRV_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count, LPPALETTEENTRY entries )
+UINT X11DRV_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count, LPPALETTEENTRY entries )
 {
     UINT i;
 
@@ -1375,7 +1375,7 @@ UINT CDECL X11DRV_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count, 
 /***********************************************************************
  *              GetNearestColor   (X11DRV.@)
  */
-COLORREF CDECL X11DRV_GetNearestColor( PHYSDEV dev, COLORREF color )
+COLORREF X11DRV_GetNearestColor( PHYSDEV dev, COLORREF color )
 {
     unsigned char spec_type = color >> 24;
     COLORREF nearest;
@@ -1417,7 +1417,7 @@ COLORREF CDECL X11DRV_GetNearestColor( PHYSDEV dev, COLORREF color )
 /***********************************************************************
  *              RealizeDefaultPalette    (X11DRV.@)
  */
-UINT CDECL X11DRV_RealizeDefaultPalette( PHYSDEV dev )
+UINT X11DRV_RealizeDefaultPalette( PHYSDEV dev )
 {
     UINT ret = 0;
 

@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 /***********************************************************************
  *           SelectPen   (X11DRV.@)
  */
-HPEN CDECL X11DRV_SelectPen( PHYSDEV dev, HPEN hpen )
+HPEN X11DRV_SelectPen( PHYSDEV dev, HPEN hpen )
 {
     static const char PEN_dash[]          = { 16,8 };
     static const char PEN_dot[]           = { 4,4 };
@@ -127,7 +127,7 @@ HPEN CDECL X11DRV_SelectPen( PHYSDEV dev, HPEN hpen )
 /***********************************************************************
  *           SetDCPenColor (X11DRV.@)
  */
-COLORREF CDECL X11DRV_SetDCPenColor( PHYSDEV dev, COLORREF crColor )
+COLORREF X11DRV_SetDCPenColor( PHYSDEV dev, COLORREF crColor )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
 

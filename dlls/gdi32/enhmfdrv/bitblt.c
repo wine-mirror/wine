@@ -27,7 +27,7 @@
 #include "enhmetafiledrv.h"
 #include "wine/debug.h"
 
-BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
+BOOL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
     EMRBITBLT emr;
     BOOL ret;
@@ -64,8 +64,8 @@ BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
     return ret;
 }
 
-BOOL CDECL EMFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
-                              PHYSDEV devSrc, struct bitblt_coords *src, DWORD rop )
+BOOL EMFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
+                        PHYSDEV devSrc, struct bitblt_coords *src, DWORD rop )
 {
     BOOL ret;
     PEMRBITBLT pEMR;
@@ -169,11 +169,9 @@ BOOL CDECL EMFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
     return ret;
 }
 
-INT CDECL EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
-                                      INT heightDst, INT xSrc, INT ySrc,
-                                      INT widthSrc, INT heightSrc,
-                                      const void *bits, const BITMAPINFO *info,
-                                      UINT wUsage, DWORD dwRop )
+INT EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
+                          INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
+                          const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
 {
     EMRSTRETCHDIBITS *emr;
     BOOL ret;
@@ -232,10 +230,9 @@ INT CDECL EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
     return ret ? heightSrc : GDI_ERROR;
 }
 
-INT CDECL EMFDRV_SetDIBitsToDevice(
-    PHYSDEV dev, INT xDst, INT yDst, DWORD width, DWORD height,
-    INT xSrc, INT ySrc, UINT startscan, UINT lines,
-    LPCVOID bits, const BITMAPINFO *info, UINT wUsage )
+INT EMFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD width, DWORD height,
+                              INT xSrc, INT ySrc, UINT startscan, UINT lines,
+                              LPCVOID bits, const BITMAPINFO *info, UINT wUsage )
 {
     EMRSETDIBITSTODEVICE* pEMR;
     DWORD size, bmiSize, bitsSize;

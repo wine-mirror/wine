@@ -222,10 +222,9 @@ static inline DWORD max_ascii85_size(DWORD size)
  *  bit depths.
  *  Compression not implemented.
  */
-INT CDECL PSDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
-                               INT heightDst, INT xSrc, INT ySrc,
-                               INT widthSrc, INT heightSrc, const void *bits,
-                               const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
+INT PSDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
+                         INT heightDst, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
+                         const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
 {
     LONG fullSrcWidth, fullSrcHeight;
     INT stride;

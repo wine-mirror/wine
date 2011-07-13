@@ -322,9 +322,9 @@ static int (WINAPI *pPropertySheet) (LPCPROPSHEETHEADERW);
  *
  * Just returns default devmode at the moment.  No use of initialization file.
  */
-INT CDECL PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
-                              LPSTR lpszDevice, LPSTR lpszPort, LPDEVMODEA lpdmInput,
-                              LPSTR lpszProfile, DWORD dwMode)
+INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
+                        LPSTR lpszDevice, LPSTR lpszPort, LPDEVMODEA lpdmInput,
+                        LPSTR lpszProfile, DWORD dwMode)
 {
   PRINTERINFO *pi = PSDRV_FindPrinterInfo(lpszDevice);
   if(!pi) return -1;
@@ -413,8 +413,8 @@ INT CDECL PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput
  * Returns
  *      Result depends on the setting of fwCapability.  -1 indicates failure.
  */
-DWORD CDECL PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszPort,
-                                     WORD fwCapability, LPSTR lpszOutput, LPDEVMODEA lpDevMode)
+DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszPort,
+                               WORD fwCapability, LPSTR lpszOutput, LPDEVMODEA lpDevMode)
 {
   PRINTERINFO *pi;
   DEVMODEA *lpdm;

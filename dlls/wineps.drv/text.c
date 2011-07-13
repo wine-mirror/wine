@@ -36,9 +36,8 @@ static BOOL PSDRV_Text(PHYSDEV dev, INT x, INT y, UINT flags,
 /***********************************************************************
  *           PSDRV_ExtTextOut
  */
-BOOL CDECL PSDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
-                             const RECT *lprect, LPCWSTR str, UINT count,
-                             const INT *lpDx )
+BOOL PSDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *lprect, LPCWSTR str, UINT count,
+                       const INT *lpDx )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     BOOL bResult = TRUE;

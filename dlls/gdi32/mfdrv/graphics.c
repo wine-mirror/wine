@@ -33,8 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 /**********************************************************************
  *	     MFDRV_MoveTo
  */
-BOOL CDECL
-MFDRV_MoveTo(PHYSDEV dev, INT x, INT y)
+BOOL MFDRV_MoveTo(PHYSDEV dev, INT x, INT y)
 {
     return MFDRV_MetaParam2(dev,META_MOVETO,x,y);
 }
@@ -42,8 +41,7 @@ MFDRV_MoveTo(PHYSDEV dev, INT x, INT y)
 /***********************************************************************
  *           MFDRV_LineTo
  */
-BOOL CDECL
-MFDRV_LineTo( PHYSDEV dev, INT x, INT y )
+BOOL MFDRV_LineTo( PHYSDEV dev, INT x, INT y )
 {
      return MFDRV_MetaParam2(dev, META_LINETO, x, y);
 }
@@ -52,9 +50,8 @@ MFDRV_LineTo( PHYSDEV dev, INT x, INT y )
 /***********************************************************************
  *           MFDRV_Arc
  */
-BOOL CDECL
-MFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-           INT xstart, INT ystart, INT xend, INT yend )
+BOOL MFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                INT xstart, INT ystart, INT xend, INT yend )
 {
      return MFDRV_MetaParam8(dev, META_ARC, left, top, right, bottom,
 			     xstart, ystart, xend, yend);
@@ -64,9 +61,8 @@ MFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           MFDRV_Pie
  */
-BOOL CDECL
-MFDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-           INT xstart, INT ystart, INT xend, INT yend )
+BOOL MFDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                INT xstart, INT ystart, INT xend, INT yend )
 {
     return MFDRV_MetaParam8(dev, META_PIE, left, top, right, bottom,
 			    xstart, ystart, xend, yend);
@@ -76,9 +72,8 @@ MFDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           MFDRV_Chord
  */
-BOOL CDECL
-MFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-             INT xstart, INT ystart, INT xend, INT yend )
+BOOL MFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                  INT xstart, INT ystart, INT xend, INT yend )
 {
     return MFDRV_MetaParam8(dev, META_CHORD, left, top, right, bottom,
 			    xstart, ystart, xend, yend);
@@ -87,8 +82,7 @@ MFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           MFDRV_Ellipse
  */
-BOOL CDECL
-MFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+BOOL MFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     return MFDRV_MetaParam4(dev, META_ELLIPSE, left, top, right, bottom);
 }
@@ -96,8 +90,7 @@ MFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 /***********************************************************************
  *           MFDRV_Rectangle
  */
-BOOL CDECL
-MFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
+BOOL MFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 {
     return MFDRV_MetaParam4(dev, META_RECTANGLE, left, top, right, bottom);
 }
@@ -105,9 +98,8 @@ MFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 /***********************************************************************
  *           MFDRV_RoundRect
  */
-BOOL CDECL
-MFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
-                 INT bottom, INT ell_width, INT ell_height )
+BOOL MFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
+                      INT bottom, INT ell_width, INT ell_height )
 {
     return MFDRV_MetaParam6(dev, META_ROUNDRECT, left, top, right, bottom,
 			    ell_width, ell_height);
@@ -116,8 +108,7 @@ MFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
 /***********************************************************************
  *           MFDRV_SetPixel
  */
-COLORREF CDECL
-MFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
+COLORREF MFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 {
     return MFDRV_MetaParam4(dev, META_SETPIXEL, x, y,HIWORD(color),
 			    LOWORD(color));
@@ -150,8 +141,7 @@ static BOOL MFDRV_MetaPoly(PHYSDEV dev, short func, POINTS *pt, short count)
 /**********************************************************************
  *          MFDRV_Polyline
  */
-BOOL CDECL
-MFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
+BOOL MFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
 {
     int i;
     POINTS *pts;
@@ -174,8 +164,7 @@ MFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
 /**********************************************************************
  *          MFDRV_Polygon
  */
-BOOL CDECL
-MFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
+BOOL MFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
 {
     int i;
     POINTS *pts;
@@ -198,8 +187,7 @@ MFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
 /**********************************************************************
  *          MFDRV_PolyPolygon
  */
-BOOL CDECL
-MFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polygons)
+BOOL MFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polygons)
 {
     BOOL ret;
     DWORD len;
@@ -253,8 +241,7 @@ MFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polygon
 /**********************************************************************
  *          MFDRV_ExtFloodFill
  */
-BOOL CDECL
-MFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType )
+BOOL MFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType )
 {
     return MFDRV_MetaParam4(dev,META_FLOODFILL,x,y,HIWORD(color),
 			    LOWORD(color));
@@ -352,8 +339,7 @@ static INT16 MFDRV_CreateRegion(PHYSDEV dev, HRGN hrgn)
 /**********************************************************************
  *          MFDRV_PaintRgn
  */
-BOOL CDECL
-MFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
+BOOL MFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
 {
     INT16 index;
     index = MFDRV_CreateRegion( dev, hrgn );
@@ -366,8 +352,7 @@ MFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
 /**********************************************************************
  *          MFDRV_InvertRgn
  */
-BOOL CDECL
-MFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn )
+BOOL MFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn )
 {
     INT16 index;
     index = MFDRV_CreateRegion( dev, hrgn );
@@ -380,8 +365,7 @@ MFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn )
 /**********************************************************************
  *          MFDRV_FillRgn
  */
-BOOL CDECL
-MFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
+BOOL MFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
 {
     INT16 iRgn, iBrush;
     iRgn = MFDRV_CreateRegion( dev, hrgn );
@@ -396,8 +380,7 @@ MFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
 /**********************************************************************
  *          MFDRV_FrameRgn
  */
-BOOL CDECL
-MFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT x, INT y )
+BOOL MFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT x, INT y )
 {
     INT16 iRgn, iBrush;
     iRgn = MFDRV_CreateRegion( dev, hrgn );
@@ -413,7 +396,7 @@ MFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT x, INT y )
 /**********************************************************************
  *          MFDRV_ExtSelectClipRgn
  */
-INT CDECL MFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )
+INT MFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )
 {
     INT16 iRgn;
     INT ret;
@@ -434,8 +417,7 @@ INT CDECL MFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )
  * Since MetaFiles don't record Beziers and they don't even record
  * approximations to them using lines, we need this stub function.
  */
-BOOL CDECL
-MFDRV_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD count )
+BOOL MFDRV_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD count )
 {
     return FALSE;
 }
@@ -445,8 +427,7 @@ MFDRV_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD count )
  * Since MetaFiles don't record Beziers and they don't even record
  * approximations to them using lines, we need this stub function.
  */
-BOOL CDECL
-MFDRV_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD count )
+BOOL MFDRV_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD count )
 {
     return FALSE;
 }

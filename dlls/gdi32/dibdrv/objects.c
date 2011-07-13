@@ -926,7 +926,7 @@ static const dash_pattern dash_patterns[5] =
 /***********************************************************************
  *           dibdrv_SelectPen
  */
-HPEN CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
+HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectPen );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
@@ -1003,7 +1003,7 @@ HPEN CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
 /***********************************************************************
  *           dibdrv_SetDCPenColor
  */
-COLORREF CDECL dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
+COLORREF dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetDCPenColor );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
@@ -1245,7 +1245,7 @@ void update_brush_rop( dibdrv_physdev *pdev, INT rop )
 /***********************************************************************
  *           dibdrv_SelectBrush
  */
-HBRUSH CDECL dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
+HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectBrush );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
@@ -1323,7 +1323,7 @@ HBRUSH CDECL dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
 /***********************************************************************
  *           dibdrv_SetDCBrushColor
  */
-COLORREF CDECL dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
+COLORREF dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetDCBrushColor );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);

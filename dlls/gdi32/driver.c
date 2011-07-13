@@ -185,140 +185,137 @@ done:
 }
 
 
-static INT CDECL nulldrv_AbortDoc( PHYSDEV dev )
+static INT nulldrv_AbortDoc( PHYSDEV dev )
 {
     return 0;
 }
 
-static BOOL CDECL nulldrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                                      PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION func)
+static BOOL nulldrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                                PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION func)
 {
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                               INT xstart, INT ystart, INT xend, INT yend )
+static BOOL nulldrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                         INT xstart, INT ystart, INT xend, INT yend )
 {
     return TRUE;
 }
 
-static INT CDECL nulldrv_ChoosePixelFormat( PHYSDEV dev, const PIXELFORMATDESCRIPTOR *descr )
+static INT nulldrv_ChoosePixelFormat( PHYSDEV dev, const PIXELFORMATDESCRIPTOR *descr )
 {
     return 0;
 }
 
-static BOOL CDECL nulldrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                                 INT xstart, INT ystart, INT xend, INT yend )
+static BOOL nulldrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                           INT xstart, INT ystart, INT xend, INT yend )
 {
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_CreateBitmap( PHYSDEV dev, HBITMAP bitmap, LPVOID bits )
+static BOOL nulldrv_CreateBitmap( PHYSDEV dev, HBITMAP bitmap, LPVOID bits )
 {
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_CreateDC( HDC hdc, PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
-                                    LPCWSTR output, const DEVMODEW *devmode )
+static BOOL nulldrv_CreateDC( HDC hdc, PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
+                              LPCWSTR output, const DEVMODEW *devmode )
 {
     assert(0);  /* should never be called */
     return FALSE;
 }
 
-static HBITMAP CDECL nulldrv_CreateDIBSection( PHYSDEV dev, HBITMAP bitmap,
-                                               const BITMAPINFO *info, UINT usage )
+static HBITMAP nulldrv_CreateDIBSection( PHYSDEV dev, HBITMAP bitmap, const BITMAPINFO *info, UINT usage )
 {
     return bitmap;
 }
 
-static BOOL CDECL nulldrv_DeleteBitmap( HBITMAP bitmap )
+static BOOL nulldrv_DeleteBitmap( HBITMAP bitmap )
 {
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_DeleteDC( PHYSDEV dev )
+static BOOL nulldrv_DeleteDC( PHYSDEV dev )
 {
     assert(0);  /* should never be called */
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_DeleteObject( PHYSDEV dev, HGDIOBJ obj )
+static BOOL nulldrv_DeleteObject( PHYSDEV dev, HGDIOBJ obj )
 {
     return TRUE;
 }
 
-static INT CDECL nulldrv_DescribePixelFormat( PHYSDEV dev, INT format,
-                                              UINT size, PIXELFORMATDESCRIPTOR * descr )
+static INT nulldrv_DescribePixelFormat( PHYSDEV dev, INT format, UINT size, PIXELFORMATDESCRIPTOR * descr )
 {
     return 0;
 }
 
-static DWORD CDECL nulldrv_DeviceCapabilities( LPSTR buffer, LPCSTR device, LPCSTR port,
-                                               WORD cap, LPSTR output, DEVMODEA *devmode )
+static DWORD nulldrv_DeviceCapabilities( LPSTR buffer, LPCSTR device, LPCSTR port,
+                                         WORD cap, LPSTR output, DEVMODEA *devmode )
 {
     return -1;
 }
 
-static BOOL CDECL nulldrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+static BOOL nulldrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     return TRUE;
 }
 
-static INT CDECL nulldrv_EndDoc( PHYSDEV dev )
+static INT nulldrv_EndDoc( PHYSDEV dev )
 {
     return 0;
 }
 
-static INT CDECL nulldrv_EndPage( PHYSDEV dev )
+static INT nulldrv_EndPage( PHYSDEV dev )
 {
     return 0;
 }
 
-static BOOL CDECL nulldrv_EnumDeviceFonts( PHYSDEV dev, LOGFONTW *logfont,
-                                           FONTENUMPROCW proc, LPARAM lParam )
+static BOOL nulldrv_EnumDeviceFonts( PHYSDEV dev, LOGFONTW *logfont, FONTENUMPROCW proc, LPARAM lParam )
 {
     return FALSE;
 }
 
-static INT CDECL nulldrv_EnumICMProfiles( PHYSDEV dev, ICMENUMPROCW func, LPARAM lparam )
+static INT nulldrv_EnumICMProfiles( PHYSDEV dev, ICMENUMPROCW func, LPARAM lparam )
 {
     return -1;
 }
 
-static INT CDECL nulldrv_ExtDeviceMode( LPSTR buffer, HWND hwnd, DEVMODEA *output, LPSTR device,
-                                        LPSTR port, DEVMODEA *input, LPSTR profile, DWORD mode )
+static INT nulldrv_ExtDeviceMode( LPSTR buffer, HWND hwnd, DEVMODEA *output, LPSTR device,
+                                  LPSTR port, DEVMODEA *input, LPSTR profile, DWORD mode )
 {
     return -1;
 }
 
-static INT CDECL nulldrv_ExtEscape( PHYSDEV dev, INT escape, INT in_size, const void *in_data,
+static INT nulldrv_ExtEscape( PHYSDEV dev, INT escape, INT in_size, const void *in_data,
                                     INT out_size, void *out_data )
 {
     return 0;
 }
 
-static BOOL CDECL nulldrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
+static BOOL nulldrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
 {
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect,
-                                      LPCWSTR str, UINT count, const INT *dx )
+static BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect,
+                                LPCWSTR str, UINT count, const INT *dx )
 {
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_GdiComment( PHYSDEV dev, UINT size, const BYTE *data )
+static BOOL nulldrv_GdiComment( PHYSDEV dev, UINT size, const BYTE *data )
 {
     return FALSE;
 }
 
-static BOOL CDECL nulldrv_GetCharWidth( PHYSDEV dev, UINT first, UINT last, INT *buffer )
+static BOOL nulldrv_GetCharWidth( PHYSDEV dev, UINT first, UINT last, INT *buffer )
 {
     return FALSE;
 }
 
-static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
+static INT nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
 {
     switch (cap)  /* return meaningful values for some entries */
     {
@@ -340,325 +337,323 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
     }
 }
 
-static BOOL CDECL nulldrv_GetDeviceGammaRamp( PHYSDEV dev, void *ramp )
+static BOOL nulldrv_GetDeviceGammaRamp( PHYSDEV dev, void *ramp )
 {
     return FALSE;
 }
 
-static BOOL CDECL nulldrv_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
+static BOOL nulldrv_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
 {
     return FALSE;
 }
 
-static COLORREF CDECL nulldrv_GetPixel( PHYSDEV dev, INT x, INT y )
+static COLORREF nulldrv_GetPixel( PHYSDEV dev, INT x, INT y )
 {
     return 0;
 }
 
-static INT CDECL nulldrv_GetPixelFormat( PHYSDEV dev )
+static INT nulldrv_GetPixelFormat( PHYSDEV dev )
 {
     return 0;
 }
 
-static UINT CDECL nulldrv_GetSystemPaletteEntries( PHYSDEV dev, UINT start,
-                                                   UINT count, PALETTEENTRY *entries )
+static UINT nulldrv_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count, PALETTEENTRY *entries )
 {
     return 0;
 }
 
-static BOOL CDECL nulldrv_GetTextExtentExPoint( PHYSDEV dev, LPCWSTR str, INT count, INT max_ext,
-                                                INT *fit, INT *dx, SIZE *size )
+static BOOL nulldrv_GetTextExtentExPoint( PHYSDEV dev, LPCWSTR str, INT count, INT max_ext,
+                                          INT *fit, INT *dx, SIZE *size )
 {
     return FALSE;
 }
 
-static BOOL CDECL nulldrv_GetTextMetrics( PHYSDEV dev, TEXTMETRICW *metrics )
+static BOOL nulldrv_GetTextMetrics( PHYSDEV dev, TEXTMETRICW *metrics )
 {
     return FALSE;
 }
 
-static BOOL CDECL nulldrv_LineTo( PHYSDEV dev, INT x, INT y )
+static BOOL nulldrv_LineTo( PHYSDEV dev, INT x, INT y )
 {
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_MoveTo( PHYSDEV dev, INT x, INT y )
+static BOOL nulldrv_MoveTo( PHYSDEV dev, INT x, INT y )
 {
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_PaintRgn( PHYSDEV dev, HRGN rgn )
+static BOOL nulldrv_PaintRgn( PHYSDEV dev, HRGN rgn )
 {
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
+static BOOL nulldrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                               INT xstart, INT ystart, INT xend, INT yend )
+static BOOL nulldrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                         INT xstart, INT ystart, INT xend, INT yend )
 {
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_PolyPolygon( PHYSDEV dev, const POINT *points, const INT *counts, UINT polygons )
+static BOOL nulldrv_PolyPolygon( PHYSDEV dev, const POINT *points, const INT *counts, UINT polygons )
 {
     /* FIXME: could be implemented with Polygon */
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_PolyPolyline( PHYSDEV dev, const POINT *points, const DWORD *counts, DWORD lines )
+static BOOL nulldrv_PolyPolyline( PHYSDEV dev, const POINT *points, const DWORD *counts, DWORD lines )
 {
     /* FIXME: could be implemented with Polyline */
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_Polygon( PHYSDEV dev, const POINT *points, INT count )
+static BOOL nulldrv_Polygon( PHYSDEV dev, const POINT *points, INT count )
 {
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_Polyline( PHYSDEV dev, const POINT *points, INT count )
+static BOOL nulldrv_Polyline( PHYSDEV dev, const POINT *points, INT count )
 {
     return TRUE;
 }
 
-static UINT CDECL nulldrv_RealizeDefaultPalette( PHYSDEV dev )
+static UINT nulldrv_RealizeDefaultPalette( PHYSDEV dev )
 {
     return 0;
 }
 
-static UINT CDECL nulldrv_RealizePalette( PHYSDEV dev, HPALETTE palette, BOOL primary )
+static UINT nulldrv_RealizePalette( PHYSDEV dev, HPALETTE palette, BOOL primary )
 {
     return 0;
 }
 
-static BOOL CDECL nulldrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+static BOOL nulldrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     return TRUE;
 }
 
-static HDC CDECL nulldrv_ResetDC( PHYSDEV dev, const DEVMODEW *devmode )
+static HDC nulldrv_ResetDC( PHYSDEV dev, const DEVMODEW *devmode )
 {
     return 0;
 }
 
-static BOOL CDECL nulldrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                                     INT ell_width, INT ell_height )
+static BOOL nulldrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                               INT ell_width, INT ell_height )
 {
     return TRUE;
 }
 
-static HBITMAP CDECL nulldrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
+static HBITMAP nulldrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
 {
     return bitmap;
 }
 
-static HBRUSH CDECL nulldrv_SelectBrush( PHYSDEV dev, HBRUSH brush )
+static HBRUSH nulldrv_SelectBrush( PHYSDEV dev, HBRUSH brush )
 {
     return brush;
 }
 
-static HFONT CDECL nulldrv_SelectFont( PHYSDEV dev, HFONT font, HANDLE gdi_font )
+static HFONT nulldrv_SelectFont( PHYSDEV dev, HFONT font, HANDLE gdi_font )
 {
     return 0;
 }
 
-static HPALETTE CDECL nulldrv_SelectPalette( PHYSDEV dev, HPALETTE palette, BOOL bkgnd )
+static HPALETTE nulldrv_SelectPalette( PHYSDEV dev, HPALETTE palette, BOOL bkgnd )
 {
     return palette;
 }
 
-static HPEN CDECL nulldrv_SelectPen( PHYSDEV dev, HPEN pen )
+static HPEN nulldrv_SelectPen( PHYSDEV dev, HPEN pen )
 {
     return pen;
 }
 
-static INT CDECL nulldrv_SetArcDirection( PHYSDEV dev, INT dir )
+static INT nulldrv_SetArcDirection( PHYSDEV dev, INT dir )
 {
     return dir;
 }
 
-static COLORREF CDECL nulldrv_SetBkColor( PHYSDEV dev, COLORREF color )
+static COLORREF nulldrv_SetBkColor( PHYSDEV dev, COLORREF color )
 {
     return color;
 }
 
-static INT CDECL nulldrv_SetBkMode( PHYSDEV dev, INT mode )
+static INT nulldrv_SetBkMode( PHYSDEV dev, INT mode )
 {
     return mode;
 }
 
-static COLORREF CDECL nulldrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
+static COLORREF nulldrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
 {
     return color;
 }
 
-static COLORREF CDECL nulldrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
+static COLORREF nulldrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
 {
     return color;
 }
 
-static UINT CDECL nulldrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, const RGBQUAD *colors )
+static UINT nulldrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, const RGBQUAD *colors )
 {
     return 0;
 }
 
-static INT CDECL nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD width, DWORD height,
-                                            INT x_src, INT y_src, UINT start, UINT lines,
-                                            const void *bits, const BITMAPINFO *info, UINT coloruse )
+static INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD width, DWORD height,
+                                      INT x_src, INT y_src, UINT start, UINT lines,
+                                      const void *bits, const BITMAPINFO *info, UINT coloruse )
 {
     return 0;
 }
 
-static void CDECL nulldrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
+static void nulldrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
 {
 }
 
-static DWORD CDECL nulldrv_SetLayout( PHYSDEV dev, DWORD layout )
+static DWORD nulldrv_SetLayout( PHYSDEV dev, DWORD layout )
 {
     return layout;
 }
 
-static BOOL CDECL nulldrv_SetDeviceGammaRamp( PHYSDEV dev, void *ramp )
+static BOOL nulldrv_SetDeviceGammaRamp( PHYSDEV dev, void *ramp )
 {
     return FALSE;
 }
 
-static DWORD CDECL nulldrv_SetMapperFlags( PHYSDEV dev, DWORD flags )
+static DWORD nulldrv_SetMapperFlags( PHYSDEV dev, DWORD flags )
 {
     return flags;
 }
 
-static COLORREF CDECL nulldrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
+static COLORREF nulldrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 {
     return color;
 }
 
-static BOOL CDECL nulldrv_SetPixelFormat( PHYSDEV dev, INT format, const PIXELFORMATDESCRIPTOR *descr )
+static BOOL nulldrv_SetPixelFormat( PHYSDEV dev, INT format, const PIXELFORMATDESCRIPTOR *descr )
 {
     return FALSE;
 }
 
-static INT CDECL nulldrv_SetPolyFillMode( PHYSDEV dev, INT mode )
+static INT nulldrv_SetPolyFillMode( PHYSDEV dev, INT mode )
 {
     return mode;
 }
 
-static INT CDECL nulldrv_SetROP2( PHYSDEV dev, INT rop )
+static INT nulldrv_SetROP2( PHYSDEV dev, INT rop )
 {
     return rop;
 }
 
-static INT CDECL nulldrv_SetRelAbs( PHYSDEV dev, INT mode )
+static INT nulldrv_SetRelAbs( PHYSDEV dev, INT mode )
 {
     return mode;
 }
 
-static INT CDECL nulldrv_SetStretchBltMode( PHYSDEV dev, INT mode )
+static INT nulldrv_SetStretchBltMode( PHYSDEV dev, INT mode )
 {
     return mode;
 }
 
-static UINT CDECL nulldrv_SetTextAlign( PHYSDEV dev, UINT align )
+static UINT nulldrv_SetTextAlign( PHYSDEV dev, UINT align )
 {
     return align;
 }
 
-static INT CDECL nulldrv_SetTextCharacterExtra( PHYSDEV dev, INT extra )
+static INT nulldrv_SetTextCharacterExtra( PHYSDEV dev, INT extra )
 {
     return extra;
 }
 
-static COLORREF CDECL nulldrv_SetTextColor( PHYSDEV dev, COLORREF color )
+static COLORREF nulldrv_SetTextColor( PHYSDEV dev, COLORREF color )
 {
     return color;
 }
 
-static BOOL CDECL nulldrv_SetTextJustification( PHYSDEV dev, INT extra, INT breaks )
+static BOOL nulldrv_SetTextJustification( PHYSDEV dev, INT extra, INT breaks )
 {
     return TRUE;
 }
 
-static INT CDECL nulldrv_StartDoc( PHYSDEV dev, const DOCINFOW *info )
+static INT nulldrv_StartDoc( PHYSDEV dev, const DOCINFOW *info )
 {
     return 0;
 }
 
-static INT CDECL nulldrv_StartPage( PHYSDEV dev )
+static INT nulldrv_StartPage( PHYSDEV dev )
 {
     return 1;
 }
 
-static BOOL CDECL nulldrv_SwapBuffers( PHYSDEV dev )
+static BOOL nulldrv_SwapBuffers( PHYSDEV dev )
 {
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_UnrealizePalette( HPALETTE palette )
+static BOOL nulldrv_UnrealizePalette( HPALETTE palette )
 {
     return FALSE;
 }
 
-static BOOL CDECL nulldrv_wglCopyContext( HGLRC ctx_src, HGLRC ctx_dst, UINT mask )
+static BOOL nulldrv_wglCopyContext( HGLRC ctx_src, HGLRC ctx_dst, UINT mask )
 {
     return FALSE;
 }
 
-static HGLRC CDECL nulldrv_wglCreateContext( PHYSDEV dev )
+static HGLRC nulldrv_wglCreateContext( PHYSDEV dev )
 {
     return 0;
 }
 
-static HGLRC CDECL nulldrv_wglCreateContextAttribsARB( PHYSDEV dev, HGLRC share_ctx, const int *attribs )
+static HGLRC nulldrv_wglCreateContextAttribsARB( PHYSDEV dev, HGLRC share_ctx, const int *attribs )
 {
     return 0;
 }
 
-static BOOL CDECL nulldrv_wglDeleteContext( HGLRC ctx )
+static BOOL nulldrv_wglDeleteContext( HGLRC ctx )
 {
     return FALSE;
 }
 
-static PROC CDECL nulldrv_wglGetProcAddress( LPCSTR name )
+static PROC nulldrv_wglGetProcAddress( LPCSTR name )
 {
     return NULL;
 }
 
-static HDC CDECL nulldrv_wglGetPbufferDCARB( PHYSDEV dev, void *pbuffer )
+static HDC nulldrv_wglGetPbufferDCARB( PHYSDEV dev, void *pbuffer )
 {
     return 0;
 }
 
-static BOOL CDECL nulldrv_wglMakeCurrent( PHYSDEV dev, HGLRC ctx )
+static BOOL nulldrv_wglMakeCurrent( PHYSDEV dev, HGLRC ctx )
 {
     return FALSE;
 }
 
-static BOOL CDECL nulldrv_wglMakeContextCurrentARB( PHYSDEV dev_draw, PHYSDEV dev_read, HGLRC ctx )
+static BOOL nulldrv_wglMakeContextCurrentARB( PHYSDEV dev_draw, PHYSDEV dev_read, HGLRC ctx )
 {
     return FALSE;
 }
 
-static BOOL CDECL nulldrv_wglSetPixelFormatWINE( PHYSDEV dev, INT format,
-                                                 const PIXELFORMATDESCRIPTOR *descr )
+static BOOL nulldrv_wglSetPixelFormatWINE( PHYSDEV dev, INT format, const PIXELFORMATDESCRIPTOR *descr )
 {
     return FALSE;
 }
 
-static BOOL CDECL nulldrv_wglShareLists( HGLRC ctx1, HGLRC ctx2 )
+static BOOL nulldrv_wglShareLists( HGLRC ctx1, HGLRC ctx2 )
 {
     return FALSE;
 }
 
-static BOOL CDECL nulldrv_wglUseFontBitmapsA( PHYSDEV dev, DWORD start, DWORD count, DWORD base )
+static BOOL nulldrv_wglUseFontBitmapsA( PHYSDEV dev, DWORD start, DWORD count, DWORD base )
 {
     return FALSE;
 }
 
-static BOOL CDECL nulldrv_wglUseFontBitmapsW( PHYSDEV dev, DWORD start, DWORD count, DWORD base )
+static BOOL nulldrv_wglUseFontBitmapsW( PHYSDEV dev, DWORD start, DWORD count, DWORD base )
 {
     return FALSE;
 }

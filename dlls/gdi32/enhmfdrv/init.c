@@ -32,7 +32,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
-static BOOL CDECL EMFDRV_DeleteDC( PHYSDEV dev );
+static BOOL EMFDRV_DeleteDC( PHYSDEV dev );
 
 static const DC_FUNCTIONS EMFDRV_Funcs =
 {
@@ -161,7 +161,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
 /**********************************************************************
  *	     EMFDRV_DeleteDC
  */
-static BOOL CDECL EMFDRV_DeleteDC( PHYSDEV dev )
+static BOOL EMFDRV_DeleteDC( PHYSDEV dev )
 {
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
     UINT index;

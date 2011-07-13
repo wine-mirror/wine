@@ -18,14 +18,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-extern BOOL     CDECL dibdrv_LineTo( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
-extern HBRUSH   CDECL dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush ) DECLSPEC_HIDDEN;
-extern HPEN     CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen ) DECLSPEC_HIDDEN;
-extern COLORREF CDECL dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
-extern COLORREF CDECL dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_LineTo( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
+extern HBRUSH   dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush ) DECLSPEC_HIDDEN;
+extern HPEN     dibdrv_SelectPen( PHYSDEV dev, HPEN hpen ) DECLSPEC_HIDDEN;
+extern COLORREF dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
+extern COLORREF dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 
 static inline dibdrv_physdev *get_dibdrv_pdev( PHYSDEV dev )
 {

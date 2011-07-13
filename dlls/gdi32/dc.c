@@ -382,7 +382,7 @@ void DC_UpdateXforms( DC *dc )
 /***********************************************************************
  *           nulldrv_SaveDC
  */
-INT CDECL nulldrv_SaveDC( PHYSDEV dev )
+INT nulldrv_SaveDC( PHYSDEV dev )
 {
     DC *newdc, *dc = get_nulldrv_dc( dev );
 
@@ -470,7 +470,7 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
 /***********************************************************************
  *           restore_dc_state
  */
-BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
+BOOL nulldrv_RestoreDC( PHYSDEV dev, INT level )
 {
     DC *dcs, *first_dcs, *dc = get_nulldrv_dc( dev );
     INT save_level;

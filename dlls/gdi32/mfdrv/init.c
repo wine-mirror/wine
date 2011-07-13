@@ -30,14 +30,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 
-static BOOL CDECL MFDRV_DeleteDC( PHYSDEV dev );
+static BOOL MFDRV_DeleteDC( PHYSDEV dev );
 
 
 /**********************************************************************
  *           MFDRV_ExtEscape
  */
-static INT CDECL MFDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
-                                  INT cbOutput, LPVOID out_data )
+static INT MFDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
+                            INT cbOutput, LPVOID out_data )
 {
     METARECORD *mr;
     DWORD len;
@@ -63,7 +63,7 @@ static INT CDECL MFDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID
  *
  *A very simple implementation that returns DT_METAFILE
  */
-static INT CDECL MFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
+static INT MFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
 {
     switch(cap)
     {
@@ -250,7 +250,7 @@ static DC *MFDRV_AllocMetaFile(void)
 /**********************************************************************
  *	     MFDRV_DeleteDC
  */
-static BOOL CDECL MFDRV_DeleteDC( PHYSDEV dev )
+static BOOL MFDRV_DeleteDC( PHYSDEV dev )
 {
     METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
     DWORD index;

@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 /***********************************************************************
  *           SelectFont   (WINEPS.@)
  */
-HFONT CDECL PSDRV_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
+HFONT PSDRV_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     LOGFONTW lf;

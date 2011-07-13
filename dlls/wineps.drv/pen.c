@@ -37,7 +37,7 @@ static const char PEN_alternate[]  = "1";
 /***********************************************************************
  *           SelectPen   (WINEPS.@)
  */
-HPEN CDECL PSDRV_SelectPen( PHYSDEV dev, HPEN hpen )
+HPEN PSDRV_SelectPen( PHYSDEV dev, HPEN hpen )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     LOGPEN logpen;
@@ -130,7 +130,7 @@ HPEN CDECL PSDRV_SelectPen( PHYSDEV dev, HPEN hpen )
 /***********************************************************************
  *           SetDCPenColor (WINEPS.@)
  */
-COLORREF CDECL PSDRV_SetDCPenColor( PHYSDEV dev, COLORREF color )
+COLORREF PSDRV_SetDCPenColor( PHYSDEV dev, COLORREF color )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 

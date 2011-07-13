@@ -60,7 +60,7 @@ static void MAPPING_FixIsotropic( DC * dc )
  *           null driver fallback implementations
  */
 
-BOOL CDECL nulldrv_OffsetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
+BOOL nulldrv_OffsetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
 {
     DC *dc = get_nulldrv_dc( dev );
 
@@ -75,7 +75,7 @@ BOOL CDECL nulldrv_OffsetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
     return TRUE;
 }
 
-BOOL CDECL nulldrv_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
+BOOL nulldrv_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
 {
     DC *dc = get_nulldrv_dc( dev );
 
@@ -90,8 +90,7 @@ BOOL CDECL nulldrv_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
     return TRUE;
 }
 
-BOOL CDECL nulldrv_ScaleViewportExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_num, INT y_denom,
-                                       SIZE *size )
+BOOL nulldrv_ScaleViewportExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_num, INT y_denom, SIZE *size )
 {
     DC *dc = get_nulldrv_dc( dev );
 
@@ -112,8 +111,7 @@ BOOL CDECL nulldrv_ScaleViewportExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT 
     return TRUE;
 }
 
-BOOL CDECL nulldrv_ScaleWindowExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_num, INT y_denom,
-                                     SIZE *size )
+BOOL nulldrv_ScaleWindowExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_num, INT y_denom, SIZE *size )
 {
     DC *dc = get_nulldrv_dc( dev );
 
@@ -134,7 +132,7 @@ BOOL CDECL nulldrv_ScaleWindowExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_
     return TRUE;
 }
 
-INT CDECL nulldrv_SetMapMode( PHYSDEV dev, INT mode )
+INT nulldrv_SetMapMode( PHYSDEV dev, INT mode )
 {
     DC *dc = get_nulldrv_dc( dev );
     INT ret = dc->MapMode;
@@ -196,7 +194,7 @@ INT CDECL nulldrv_SetMapMode( PHYSDEV dev, INT mode )
     return ret;
 }
 
-BOOL CDECL nulldrv_SetViewportExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
+BOOL nulldrv_SetViewportExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
 {
     DC *dc = get_nulldrv_dc( dev );
 
@@ -214,7 +212,7 @@ BOOL CDECL nulldrv_SetViewportExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
     return TRUE;
 }
 
-BOOL CDECL nulldrv_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
+BOOL nulldrv_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
 {
     DC *dc = get_nulldrv_dc( dev );
 
@@ -229,7 +227,7 @@ BOOL CDECL nulldrv_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
     return TRUE;
 }
 
-BOOL CDECL nulldrv_SetWindowExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
+BOOL nulldrv_SetWindowExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
 {
     DC *dc = get_nulldrv_dc( dev );
 
@@ -250,7 +248,7 @@ BOOL CDECL nulldrv_SetWindowExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
     return TRUE;
 }
 
-BOOL CDECL nulldrv_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
+BOOL nulldrv_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
 {
     DC *dc = get_nulldrv_dc( dev );
 
@@ -265,7 +263,7 @@ BOOL CDECL nulldrv_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
     return TRUE;
 }
 
-BOOL CDECL nulldrv_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, DWORD mode )
+BOOL nulldrv_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, DWORD mode )
 {
     DC *dc = get_nulldrv_dc( dev );
 
@@ -292,7 +290,7 @@ BOOL CDECL nulldrv_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, DWORD 
     return TRUE;
 }
 
-BOOL CDECL nulldrv_SetWorldTransform( PHYSDEV dev, const XFORM *xform )
+BOOL nulldrv_SetWorldTransform( PHYSDEV dev, const XFORM *xform )
 {
     DC *dc = get_nulldrv_dc( dev );
 

@@ -297,7 +297,7 @@ static void update_masks( dibdrv_physdev *pdev, INT rop )
 /***********************************************************************
  *           dibdrv_DeleteDC
  */
-static BOOL CDECL dibdrv_DeleteDC( PHYSDEV dev )
+static BOOL dibdrv_DeleteDC( PHYSDEV dev )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     TRACE("(%p)\n", dev);
@@ -310,7 +310,7 @@ static BOOL CDECL dibdrv_DeleteDC( PHYSDEV dev )
 /***********************************************************************
  *           dibdrv_SelectBitmap
  */
-static HBITMAP CDECL dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
+static HBITMAP dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectBitmap );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
@@ -339,7 +339,7 @@ static HBITMAP CDECL dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
 /***********************************************************************
  *           dibdrv_SetBkColor
  */
-static COLORREF CDECL dibdrv_SetBkColor( PHYSDEV dev, COLORREF color )
+static COLORREF dibdrv_SetBkColor( PHYSDEV dev, COLORREF color )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetBkColor );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
@@ -362,7 +362,7 @@ static COLORREF CDECL dibdrv_SetBkColor( PHYSDEV dev, COLORREF color )
 /***********************************************************************
  *           dibdrv_SetBkMode
  */
-static INT CDECL dibdrv_SetBkMode( PHYSDEV dev, INT mode )
+static INT dibdrv_SetBkMode( PHYSDEV dev, INT mode )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetBkMode );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
@@ -381,7 +381,7 @@ static INT CDECL dibdrv_SetBkMode( PHYSDEV dev, INT mode )
 /***********************************************************************
  *           dibdrv_SetDeviceClipping
  */
-static void CDECL dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
+static void dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetDeviceClipping );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
@@ -394,7 +394,7 @@ static void CDECL dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip
 /***********************************************************************
  *           dibdrv_SetDIBColorTable
  */
-static UINT CDECL dibdrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, const RGBQUAD *colors )
+static UINT dibdrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, const RGBQUAD *colors )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetDIBColorTable );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
@@ -416,7 +416,7 @@ static UINT CDECL dibdrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, co
 /***********************************************************************
  *           dibdrv_SetROP2
  */
-static INT CDECL dibdrv_SetROP2( PHYSDEV dev, INT rop )
+static INT dibdrv_SetROP2( PHYSDEV dev, INT rop )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetROP2 );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);

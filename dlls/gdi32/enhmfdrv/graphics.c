@@ -36,8 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
 /**********************************************************************
  *	     EMFDRV_MoveTo
  */
-BOOL CDECL
-EMFDRV_MoveTo(PHYSDEV dev, INT x, INT y)
+BOOL EMFDRV_MoveTo(PHYSDEV dev, INT x, INT y)
 {
     EMRMOVETOEX emr;
 
@@ -52,8 +51,7 @@ EMFDRV_MoveTo(PHYSDEV dev, INT x, INT y)
 /***********************************************************************
  *           EMFDRV_LineTo
  */
-BOOL CDECL
-EMFDRV_LineTo( PHYSDEV dev, INT x, INT y )
+BOOL EMFDRV_LineTo( PHYSDEV dev, INT x, INT y )
 {
     POINT pt;
     EMRLINETO emr;
@@ -186,9 +184,8 @@ EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           EMFDRV_Arc
  */
-BOOL CDECL
-EMFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-	    INT xstart, INT ystart, INT xend, INT yend )
+BOOL EMFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                 INT xstart, INT ystart, INT xend, INT yend )
 {
     return EMFDRV_ArcChordPie( dev, left, top, right, bottom, xstart, ystart,
 			       xend, yend, EMR_ARC );
@@ -197,9 +194,8 @@ EMFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           EMFDRV_Pie
  */
-BOOL CDECL
-EMFDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-	    INT xstart, INT ystart, INT xend, INT yend )
+BOOL EMFDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                 INT xstart, INT ystart, INT xend, INT yend )
 {
     return EMFDRV_ArcChordPie( dev, left, top, right, bottom, xstart, ystart,
 			       xend, yend, EMR_PIE );
@@ -209,9 +205,8 @@ EMFDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           EMFDRV_Chord
  */
-BOOL CDECL
-EMFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-             INT xstart, INT ystart, INT xend, INT yend )
+BOOL EMFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                   INT xstart, INT ystart, INT xend, INT yend )
 {
     return EMFDRV_ArcChordPie( dev, left, top, right, bottom, xstart, ystart,
 			       xend, yend, EMR_CHORD );
@@ -220,8 +215,7 @@ EMFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           EMFDRV_Ellipse
  */
-BOOL CDECL
-EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+BOOL EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     EMRELLIPSE emr;
     INT temp;
@@ -252,8 +246,7 @@ EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 /***********************************************************************
  *           EMFDRV_Rectangle
  */
-BOOL CDECL
-EMFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
+BOOL EMFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 {
     EMRRECTANGLE emr;
     INT temp;
@@ -284,8 +277,7 @@ EMFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 /***********************************************************************
  *           EMFDRV_RoundRect
  */
-BOOL CDECL
-EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
+BOOL EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
 		  INT bottom, INT ell_width, INT ell_height )
 {
     EMRROUNDRECT emr;
@@ -317,8 +309,7 @@ EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
 /***********************************************************************
  *           EMFDRV_SetPixel
  */
-COLORREF CDECL
-EMFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
+COLORREF EMFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 {
     EMRSETPIXELV emr;
 
@@ -442,8 +433,7 @@ EMFDRV_Polylinegon16( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
 /**********************************************************************
  *          EMFDRV_Polyline
  */
-BOOL CDECL
-EMFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
+BOOL EMFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
 {
     if( EMFDRV_Polylinegon16( dev, pt, count, EMR_POLYLINE16 ) )
         return TRUE;
@@ -453,8 +443,7 @@ EMFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
 /**********************************************************************
  *          EMFDRV_Polygon
  */
-BOOL CDECL
-EMFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
+BOOL EMFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
 {
     if(count < 2) return FALSE;
     if( EMFDRV_Polylinegon16( dev, pt, count, EMR_POLYGON16 ) )
@@ -516,8 +505,7 @@ EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT po
 /**********************************************************************
  *          EMFDRV_PolyPolyline
  */
-BOOL CDECL
-EMFDRV_PolyPolyline(PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polys)
+BOOL EMFDRV_PolyPolyline(PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polys)
 {
     return EMFDRV_PolyPolylinegon( dev, pt, (const INT *)counts, polys,
 				   EMR_POLYPOLYLINE );
@@ -526,8 +514,7 @@ EMFDRV_PolyPolyline(PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD pol
 /**********************************************************************
  *          EMFDRV_PolyPolygon
  */
-BOOL CDECL
-EMFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polys )
+BOOL EMFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polys )
 {
     return EMFDRV_PolyPolylinegon( dev, pt, counts, polys, EMR_POLYPOLYGON );
 }
@@ -536,8 +523,7 @@ EMFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polys 
 /**********************************************************************
  *          EMFDRV_ExtFloodFill
  */
-BOOL CDECL
-EMFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType )
+BOOL EMFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType )
 {
     EMREXTFLOODFILL emr;
 
@@ -555,7 +541,7 @@ EMFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType )
 /*********************************************************************
  *          EMFDRV_FillRgn
  */
-BOOL CDECL EMFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
+BOOL EMFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
 {
     EMRFILLRGN *emr;
     DWORD size, rgnsize, index;
@@ -588,7 +574,7 @@ BOOL CDECL EMFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
 /*********************************************************************
  *          EMFDRV_FrameRgn
  */
-BOOL CDECL EMFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT width, INT height )
+BOOL EMFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT width, INT height )
 {
     EMRFRAMERGN *emr;
     DWORD size, rgnsize, index;
@@ -657,8 +643,7 @@ static BOOL EMFDRV_PaintInvertRgn( PHYSDEV dev, HRGN hrgn, DWORD iType )
 /**********************************************************************
  *          EMFDRV_PaintRgn
  */
-BOOL CDECL
-EMFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
+BOOL EMFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
 {
     return EMFDRV_PaintInvertRgn( dev, hrgn, EMR_PAINTRGN );
 }
@@ -666,8 +651,7 @@ EMFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
 /**********************************************************************
  *          EMFDRV_InvertRgn
  */
-BOOL CDECL
-EMFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn )
+BOOL EMFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn )
 {
     return EMFDRV_PaintInvertRgn( dev, hrgn, EMR_INVERTRGN );
 }
@@ -675,9 +659,8 @@ EMFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn )
 /**********************************************************************
  *          EMFDRV_ExtTextOut
  */
-BOOL CDECL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
-                              const RECT *lprect, LPCWSTR str, UINT count,
-                              const INT *lpDx )
+BOOL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *lprect,
+                        LPCWSTR str, UINT count, const INT *lpDx )
 {
     EMREXTTEXTOUTW *pemr;
     DWORD nSize;

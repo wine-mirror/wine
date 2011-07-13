@@ -59,7 +59,7 @@ static RECT get_device_rect( HDC hdc, int left, int top, int right, int bottom, 
 /***********************************************************************
  *           dibdrv_LineTo
  */
-BOOL CDECL dibdrv_LineTo( PHYSDEV dev, INT x, INT y )
+BOOL dibdrv_LineTo( PHYSDEV dev, INT x, INT y )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pLineTo );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
@@ -93,7 +93,7 @@ static inline INT get_rop2_from_rop(INT rop)
 /***********************************************************************
  *           dibdrv_PatBlt
  */
-BOOL CDECL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
+BOOL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPatBlt );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
@@ -120,7 +120,7 @@ BOOL CDECL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 /***********************************************************************
  *           dibdrv_PaintRgn
  */
-BOOL CDECL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
+BOOL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPaintRgn );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
@@ -149,7 +149,7 @@ BOOL CDECL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
 /***********************************************************************
  *           dibdrv_Rectangle
  */
-BOOL CDECL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pRectangle );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);

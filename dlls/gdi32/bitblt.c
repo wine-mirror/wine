@@ -165,8 +165,8 @@ static void get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
 }
 
 /* nulldrv fallback implementation using StretchDIBits */
-BOOL CDECL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                               PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
+BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                         PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
 {
     DC *dc = get_nulldrv_dc( dst_dev );
     BITMAP bm;

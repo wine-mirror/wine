@@ -2,66 +2,6 @@
 
 @ cdecl wine_get_gdi_driver(long) X11DRV_get_gdi_driver
 
-@ cdecl AlphaBlend(ptr ptr ptr ptr long) X11DRV_AlphaBlend
-@ cdecl Arc(ptr long long long long long long long long) X11DRV_Arc
-@ cdecl ChoosePixelFormat(ptr ptr) X11DRV_ChoosePixelFormat
-@ cdecl Chord(ptr long long long long long long long long) X11DRV_Chord
-@ cdecl CreateBitmap(ptr long ptr) X11DRV_CreateBitmap
-@ cdecl CreateDC(long ptr wstr wstr wstr ptr) X11DRV_CreateDC
-@ cdecl CreateDIBSection(ptr long ptr long) X11DRV_CreateDIBSection
-@ cdecl DeleteBitmap(long) X11DRV_DeleteBitmap
-@ cdecl DeleteDC(ptr) X11DRV_DeleteDC
-@ cdecl DescribePixelFormat(ptr long long ptr) X11DRV_DescribePixelFormat
-@ cdecl Ellipse(ptr long long long long) X11DRV_Ellipse
-@ cdecl EnumDeviceFonts(ptr ptr ptr long) X11DRV_EnumDeviceFonts
-@ cdecl EnumICMProfiles(ptr ptr long) X11DRV_EnumICMProfiles
-@ cdecl ExtEscape(ptr long long ptr long ptr) X11DRV_ExtEscape
-@ cdecl ExtFloodFill(ptr long long long long) X11DRV_ExtFloodFill
-@ cdecl ExtTextOut(ptr long long long ptr ptr long ptr) X11DRV_ExtTextOut
-@ cdecl GetBitmapBits(long ptr long) X11DRV_GetBitmapBits
-@ cdecl GetCharWidth(ptr long long ptr) X11DRV_GetCharWidth
-@ cdecl GetDIBits(ptr long long long ptr ptr long) X11DRV_GetDIBits
-@ cdecl GetDeviceCaps(ptr long) X11DRV_GetDeviceCaps
-@ cdecl GetDeviceGammaRamp(ptr ptr) X11DRV_GetDeviceGammaRamp
-@ cdecl GetICMProfile(ptr ptr ptr) X11DRV_GetICMProfile
-@ cdecl GetNearestColor(ptr long) X11DRV_GetNearestColor
-@ cdecl GetPixel(ptr long long) X11DRV_GetPixel
-@ cdecl GetPixelFormat(ptr) X11DRV_GetPixelFormat
-@ cdecl GetSystemPaletteEntries(ptr long long ptr) X11DRV_GetSystemPaletteEntries
-@ cdecl GetTextExtentExPoint(ptr ptr long long ptr ptr ptr) X11DRV_GetTextExtentExPoint
-@ cdecl GetTextMetrics(ptr ptr) X11DRV_GetTextMetrics
-@ cdecl LineTo(ptr long long) X11DRV_LineTo
-@ cdecl PaintRgn(ptr long) X11DRV_PaintRgn
-@ cdecl PatBlt(ptr ptr long) X11DRV_PatBlt
-@ cdecl Pie(ptr long long long long long long long long) X11DRV_Pie
-@ cdecl PolyPolygon(ptr ptr ptr long) X11DRV_PolyPolygon
-@ cdecl PolyPolyline(ptr ptr ptr long) X11DRV_PolyPolyline
-@ cdecl Polygon(ptr ptr long) X11DRV_Polygon
-@ cdecl Polyline(ptr ptr long) X11DRV_Polyline
-@ cdecl RealizeDefaultPalette(ptr) X11DRV_RealizeDefaultPalette
-@ cdecl RealizePalette(ptr long long) X11DRV_RealizePalette
-@ cdecl Rectangle(ptr long long long long) X11DRV_Rectangle
-@ cdecl RoundRect(ptr long long long long long long) X11DRV_RoundRect
-@ cdecl SelectBitmap(ptr long) X11DRV_SelectBitmap
-@ cdecl SelectBrush(ptr long) X11DRV_SelectBrush
-@ cdecl SelectFont(ptr long long) X11DRV_SelectFont
-@ cdecl SelectPen(ptr long) X11DRV_SelectPen
-@ cdecl SetBitmapBits(long ptr long) X11DRV_SetBitmapBits
-@ cdecl SetBkColor(ptr long) X11DRV_SetBkColor
-@ cdecl SetDCBrushColor(ptr long) X11DRV_SetDCBrushColor
-@ cdecl SetDCPenColor(ptr long) X11DRV_SetDCPenColor
-@ cdecl SetDIBColorTable(ptr long long ptr) X11DRV_SetDIBColorTable
-@ cdecl SetDIBits(ptr long long long ptr ptr long) X11DRV_SetDIBits
-@ cdecl SetDIBitsToDevice(ptr long long long long long long long long ptr ptr long) X11DRV_SetDIBitsToDevice
-@ cdecl SetDeviceClipping(ptr long long) X11DRV_SetDeviceClipping
-@ cdecl SetDeviceGammaRamp(ptr ptr) X11DRV_SetDeviceGammaRamp
-@ cdecl SetPixel(ptr long long long) X11DRV_SetPixel
-@ cdecl SetPixelFormat(ptr long ptr) X11DRV_SetPixelFormat
-@ cdecl SetTextColor(ptr long) X11DRV_SetTextColor
-@ cdecl StretchBlt(ptr ptr ptr ptr long) X11DRV_StretchBlt
-@ cdecl SwapBuffers(ptr) X11DRV_SwapBuffers
-@ cdecl UnrealizePalette(long) X11DRV_UnrealizePalette
-
 # USER driver
 
 @ cdecl ActivateKeyboardLayout(long long) X11DRV_ActivateKeyboardLayout
@@ -130,20 +70,6 @@
 
 # System tray
 @ cdecl wine_notify_icon(long ptr)
-
-# OpenGL
-@ cdecl wglCopyContext(long long long) X11DRV_wglCopyContext
-@ cdecl wglCreateContext(ptr) X11DRV_wglCreateContext
-@ cdecl wglCreateContextAttribsARB(ptr long ptr) X11DRV_wglCreateContextAttribsARB
-@ cdecl wglDeleteContext(long) X11DRV_wglDeleteContext
-@ cdecl wglGetProcAddress(str) X11DRV_wglGetProcAddress
-@ cdecl wglGetPbufferDCARB(ptr ptr) X11DRV_wglGetPbufferDCARB
-@ cdecl wglMakeContextCurrentARB(ptr ptr long) X11DRV_wglMakeContextCurrentARB
-@ cdecl wglMakeCurrent(ptr long) X11DRV_wglMakeCurrent
-@ cdecl wglSetPixelFormatWINE(ptr long ptr) X11DRV_wglSetPixelFormatWINE
-@ cdecl wglShareLists(long long) X11DRV_wglShareLists
-@ cdecl wglUseFontBitmapsA(ptr long long long) X11DRV_wglUseFontBitmapsA
-@ cdecl wglUseFontBitmapsW(ptr long long long) X11DRV_wglUseFontBitmapsW
 
 #IME Interface
 @ stdcall ImeInquire(ptr ptr wstr)

@@ -129,7 +129,7 @@ static inline void create_default_clip_region( DC * dc )
  *           null driver fallback implementations
  */
 
-INT CDECL nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode )
+INT nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode )
 {
     DC *dc = get_nulldrv_dc( dev );
     INT ret;
@@ -170,7 +170,7 @@ INT CDECL nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode )
     return ret;
 }
 
-INT CDECL nulldrv_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+INT nulldrv_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     DC *dc = get_nulldrv_dc( dev );
     RECT rect = get_clip_rect( dc, left, top, right, bottom );
@@ -185,7 +185,7 @@ INT CDECL nulldrv_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, IN
     return ret;
 }
 
-INT CDECL nulldrv_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+INT nulldrv_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     DC *dc = get_nulldrv_dc( dev );
     RECT rect = get_clip_rect( dc, left, top, right, bottom );
@@ -207,7 +207,7 @@ INT CDECL nulldrv_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, 
     return ret;
 }
 
-INT CDECL nulldrv_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
+INT nulldrv_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
 {
     DC *dc = get_nulldrv_dc( dev );
     INT ret = NULLREGION;

@@ -61,8 +61,8 @@ DWORD write_spool( PHYSDEV dev, const void *data, DWORD num )
 /**********************************************************************
  *           ExtEscape  (WINEPS.@)
  */
-INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
-                           INT cbOutput, LPVOID out_data )
+INT PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
+                     INT cbOutput, LPVOID out_data )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
@@ -368,7 +368,7 @@ INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_dat
 /************************************************************************
  *           PSDRV_StartPage
  */
-INT CDECL PSDRV_StartPage( PHYSDEV dev )
+INT PSDRV_StartPage( PHYSDEV dev )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
@@ -392,7 +392,7 @@ INT CDECL PSDRV_StartPage( PHYSDEV dev )
 /************************************************************************
  *           PSDRV_EndPage
  */
-INT CDECL PSDRV_EndPage( PHYSDEV dev )
+INT PSDRV_EndPage( PHYSDEV dev )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
@@ -469,7 +469,7 @@ static INT PSDRV_StartDocA( PHYSDEV dev, const DOCINFOA *doc )
 /************************************************************************
  *           PSDRV_StartDoc
  */
-INT CDECL PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
+INT PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
 {
     DOCINFOA docA;
     INT ret, len;
@@ -514,7 +514,7 @@ INT CDECL PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
 /************************************************************************
  *           PSDRV_EndDoc
  */
-INT CDECL PSDRV_EndDoc( PHYSDEV dev )
+INT PSDRV_EndDoc( PHYSDEV dev )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     INT ret = 1;

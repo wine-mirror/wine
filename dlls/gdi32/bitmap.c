@@ -50,7 +50,7 @@ static const struct gdi_obj_funcs bitmap_funcs =
  *           null driver fallback implementations
  */
 
-LONG CDECL nulldrv_GetBitmapBits( HBITMAP bitmap, void *bits, LONG size )
+LONG nulldrv_GetBitmapBits( HBITMAP bitmap, void *bits, LONG size )
 {
     BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
 
@@ -60,7 +60,7 @@ LONG CDECL nulldrv_GetBitmapBits( HBITMAP bitmap, void *bits, LONG size )
     return size;
 }
 
-LONG CDECL nulldrv_SetBitmapBits( HBITMAP bitmap, const void *bits, LONG size )
+LONG nulldrv_SetBitmapBits( HBITMAP bitmap, const void *bits, LONG size )
 {
     BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
 
@@ -79,15 +79,15 @@ LONG CDECL nulldrv_SetBitmapBits( HBITMAP bitmap, const void *bits, LONG size )
     return size;
 }
 
-INT CDECL nulldrv_GetDIBits( PHYSDEV dev, HBITMAP bitmap, UINT start, UINT lines, LPVOID bits,
-                             BITMAPINFO *info, UINT coloruse )
+INT nulldrv_GetDIBits( PHYSDEV dev, HBITMAP bitmap, UINT start, UINT lines, LPVOID bits,
+                       BITMAPINFO *info, UINT coloruse )
 {
     /* FIXME: transfer bits from bmp->bitmap.bmBits */
     return 0;
 }
 
-INT CDECL nulldrv_SetDIBits( PHYSDEV dev, HBITMAP bitmap, UINT start, UINT lines,
-                             const void *bits, const BITMAPINFO *info, UINT coloruse )
+INT nulldrv_SetDIBits( PHYSDEV dev, HBITMAP bitmap, UINT start, UINT lines,
+                       const void *bits, const BITMAPINFO *info, UINT coloruse )
 {
     /* FIXME: transfer bits to bmp->bitmap.bmBits */
     return 0;

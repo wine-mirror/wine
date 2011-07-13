@@ -2118,7 +2118,7 @@ BOOL WINAPI WidenPath(HDC hdc)
  *           null driver fallback implementations
  */
 
-BOOL CDECL nulldrv_BeginPath( PHYSDEV dev )
+BOOL nulldrv_BeginPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
 
@@ -2132,7 +2132,7 @@ BOOL CDECL nulldrv_BeginPath( PHYSDEV dev )
     return TRUE;
 }
 
-BOOL CDECL nulldrv_EndPath( PHYSDEV dev )
+BOOL nulldrv_EndPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
 
@@ -2145,7 +2145,7 @@ BOOL CDECL nulldrv_EndPath( PHYSDEV dev )
     return TRUE;
 }
 
-BOOL CDECL nulldrv_AbortPath( PHYSDEV dev )
+BOOL nulldrv_AbortPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
 
@@ -2153,7 +2153,7 @@ BOOL CDECL nulldrv_AbortPath( PHYSDEV dev )
     return TRUE;
 }
 
-BOOL CDECL nulldrv_CloseFigure( PHYSDEV dev )
+BOOL nulldrv_CloseFigure( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
 
@@ -2172,7 +2172,7 @@ BOOL CDECL nulldrv_CloseFigure( PHYSDEV dev )
     return TRUE;
 }
 
-BOOL CDECL nulldrv_SelectClipPath( PHYSDEV dev, INT mode )
+BOOL nulldrv_SelectClipPath( PHYSDEV dev, INT mode )
 {
     BOOL ret;
     HRGN hrgn;
@@ -2191,7 +2191,7 @@ BOOL CDECL nulldrv_SelectClipPath( PHYSDEV dev, INT mode )
     return ret;
 }
 
-BOOL CDECL nulldrv_FillPath( PHYSDEV dev )
+BOOL nulldrv_FillPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
 
@@ -2206,7 +2206,7 @@ BOOL CDECL nulldrv_FillPath( PHYSDEV dev )
     return TRUE;
 }
 
-BOOL CDECL nulldrv_StrokeAndFillPath( PHYSDEV dev )
+BOOL nulldrv_StrokeAndFillPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
 
@@ -2221,7 +2221,7 @@ BOOL CDECL nulldrv_StrokeAndFillPath( PHYSDEV dev )
     return TRUE;
 }
 
-BOOL CDECL nulldrv_StrokePath( PHYSDEV dev )
+BOOL nulldrv_StrokePath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
 
@@ -2235,7 +2235,7 @@ BOOL CDECL nulldrv_StrokePath( PHYSDEV dev )
     return TRUE;
 }
 
-BOOL CDECL nulldrv_FlattenPath( PHYSDEV dev )
+BOOL nulldrv_FlattenPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
 
@@ -2247,7 +2247,7 @@ BOOL CDECL nulldrv_FlattenPath( PHYSDEV dev )
     return PATH_FlattenPath( &dc->path );
 }
 
-BOOL CDECL nulldrv_WidenPath( PHYSDEV dev )
+BOOL nulldrv_WidenPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
 

@@ -464,52 +464,52 @@ static inline void release_wine_region(HRGN rgn)
 }
 
 /* null driver entry points */
-extern BOOL CDECL nulldrv_AbortPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT start, FLOAT sweep ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_BeginPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_CloseFigure( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_EndPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern INT  CDECL nulldrv_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
-extern INT  CDECL nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_FillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_FillRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_FlattenPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_FrameRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush, INT width, INT height ) DECLSPEC_HIDDEN;
-extern LONG CDECL nulldrv_GetBitmapBits( HBITMAP bitmap, void *bits, LONG size ) DECLSPEC_HIDDEN;
-extern INT  CDECL nulldrv_GetDIBits( PHYSDEV dev, HBITMAP bitmap, UINT start, UINT lines, LPVOID bits, BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
-extern COLORREF CDECL nulldrv_GetNearestColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
-extern INT  CDECL nulldrv_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_InvertRgn( PHYSDEV dev, HRGN rgn ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, DWORD mode ) DECLSPEC_HIDDEN;
-extern INT  CDECL nulldrv_OffsetClipRgn( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_OffsetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_PolyBezier( PHYSDEV dev, const POINT *points, DWORD count ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_PolyBezierTo( PHYSDEV dev, const POINT *points, DWORD count ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types, DWORD count ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_PolylineTo( PHYSDEV dev, const POINT *points, INT count ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level ) DECLSPEC_HIDDEN;
-extern INT  CDECL nulldrv_SaveDC( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_ScaleViewportExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_num, INT y_denom, SIZE *size ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_ScaleWindowExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_num, INT y_denom, SIZE *size ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_SelectClipPath( PHYSDEV dev, INT mode ) DECLSPEC_HIDDEN;
-extern LONG CDECL nulldrv_SetBitmapBits( HBITMAP bitmap, const void *bits, LONG size ) DECLSPEC_HIDDEN;
-extern INT  CDECL nulldrv_SetDIBits( PHYSDEV dev, HBITMAP bitmap, UINT start, UINT lines, const void *bits, const BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
-extern INT  CDECL nulldrv_SetMapMode( PHYSDEV dev, INT mode ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_SetViewportExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_SetWindowExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_SetWorldTransform( PHYSDEV dev, const XFORM *xform ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                                      PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop ) DECLSPEC_HIDDEN;
-extern INT  CDECL nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
-                                         INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
-                                         const BITMAPINFO *info, UINT coloruse, DWORD rop ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_StrokeAndFillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_StrokePath( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_WidenPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_AbortPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT start, FLOAT sweep ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_BeginPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_CloseFigure( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_EndPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern INT  nulldrv_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
+extern INT  nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_FillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_FillRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_FlattenPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_FrameRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush, INT width, INT height ) DECLSPEC_HIDDEN;
+extern LONG nulldrv_GetBitmapBits( HBITMAP bitmap, void *bits, LONG size ) DECLSPEC_HIDDEN;
+extern INT  nulldrv_GetDIBits( PHYSDEV dev, HBITMAP bitmap, UINT start, UINT lines, LPVOID bits, BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
+extern COLORREF nulldrv_GetNearestColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
+extern INT  nulldrv_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_InvertRgn( PHYSDEV dev, HRGN rgn ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, DWORD mode ) DECLSPEC_HIDDEN;
+extern INT  nulldrv_OffsetClipRgn( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_OffsetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_PolyBezier( PHYSDEV dev, const POINT *points, DWORD count ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_PolyBezierTo( PHYSDEV dev, const POINT *points, DWORD count ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types, DWORD count ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_PolylineTo( PHYSDEV dev, const POINT *points, INT count ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_RestoreDC( PHYSDEV dev, INT level ) DECLSPEC_HIDDEN;
+extern INT  nulldrv_SaveDC( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_ScaleViewportExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_num, INT y_denom, SIZE *size ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_ScaleWindowExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_num, INT y_denom, SIZE *size ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_SelectClipPath( PHYSDEV dev, INT mode ) DECLSPEC_HIDDEN;
+extern LONG nulldrv_SetBitmapBits( HBITMAP bitmap, const void *bits, LONG size ) DECLSPEC_HIDDEN;
+extern INT  nulldrv_SetDIBits( PHYSDEV dev, HBITMAP bitmap, UINT start, UINT lines, const void *bits, const BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
+extern INT  nulldrv_SetMapMode( PHYSDEV dev, INT mode ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_SetViewportExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_SetWindowExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_SetWorldTransform( PHYSDEV dev, const XFORM *xform ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                                PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop ) DECLSPEC_HIDDEN;
+extern INT  nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
+                                   INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
+                                   const BITMAPINFO *info, UINT coloruse, DWORD rop ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_StrokeAndFillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_StrokePath( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_WidenPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 
 static inline DC *get_nulldrv_dc( PHYSDEV dev )
 {
