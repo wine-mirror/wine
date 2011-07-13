@@ -188,7 +188,6 @@
 #define IDS_DRIVER_ALSA                 8304
 
 #define IDS_DRIVER_OSS                  8307
-#define IDS_DRIVER_JACK                 8308
 
 #define IDS_DRIVER_COREAUDIO            8311
 #define IDS_OPEN_DRIVER_ERROR           8312

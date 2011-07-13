@@ -99,7 +99,6 @@ BEGIN
     IDS_ACCEL_EMULATION         "Emulation"
     IDS_DRIVER_ALSA             "ALSA Driver"
     IDS_DRIVER_OSS              "OSS Driver"
-    IDS_DRIVER_JACK             "JACK Driver"
     IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
     IDS_OPEN_DRIVER_ERROR       "Couldn't open %s!"
     IDS_SOUNDDRIVERS            "Sound Drivers"

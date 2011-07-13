@@ -93,7 +93,6 @@ static AUDIO_DRIVER sAudioDrivers[] = {
   {IDS_DRIVER_ALSA,      "alsa"},
   {IDS_DRIVER_OSS,       "oss"},
   {IDS_DRIVER_COREAUDIO, "coreaudio"},
-  {IDS_DRIVER_JACK,      "jack"},
   {0, ""}
 };
 

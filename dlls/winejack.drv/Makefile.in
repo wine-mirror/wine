@@ -1,7 +1,0 @@
-MODULE    = winejack.drv
-IMPORTS   = dxguid uuid winmm user32
-
-C_SRCS = \
-	audio.c
-
-@MAKE_DLL_RULES@

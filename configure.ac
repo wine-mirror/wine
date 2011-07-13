@@ -55,8 +55,6 @@ AC_ARG_WITH(gsm,       AS_HELP_STRING([--without-gsm],[do not use libgsm (GSM 06
             [if test "x$withval" = "xno"; then ac_cv_header_gsm_h=no; ac_cv_header_gsm_gsm_h=no; fi])
 AC_ARG_WITH(gstreamer, AS_HELP_STRING([--without-gstreamer],[do not use GStreamer (codecs support)]))
 AC_ARG_WITH(hal,       AS_HELP_STRING([--without-hal],[do not use HAL (dynamic device support)]))
-AC_ARG_WITH(jack,      AS_HELP_STRING([--without-jack],[do not use the Jack sound support]),
-            [if test "x$withval" = "xno"; then ac_cv_header_jack_jack_h=no; fi])
 AC_ARG_WITH(jpeg,      AS_HELP_STRING([--without-jpeg],[do not use JPEG]),
             [if test "x$withval" = "xno"; then ac_cv_header_jpeglib_h=no; fi])
 AC_ARG_WITH(ldap,      AS_HELP_STRING([--without-ldap],[do not use LDAP]),
@@ -404,7 +402,6 @@ AC_CHECK_HEADERS(\
 	ieeefp.h \
 	inet/mib2.h \
 	io.h \
-	jack/jack.h \
 	jpeglib.h \
 	kstat.h \
 	lber.h \
@@ -1525,12 +1522,6 @@ fi
 WINE_NOTICE_WITH(cups,[test "x$ac_cv_lib_soname_cups" = "x"],
                  [libcups ${notice_platform}development files not found, CUPS won't be supported.])
 
-dnl **** Check for jack ****
-if test "$ac_cv_header_jack_jack_h" = "yes"
-then
-    WINE_CHECK_SONAME(jack,jack_client_new,,,,[[libjack-*[[0-9.]]*]])
-fi
-
 dnl **** Check for fontconfig ****
 if test "$ac_cv_header_fontconfig_fontconfig_h" = "yes"
 then
@@ -1645,14 +1636,13 @@ WINE_CHECK_SONAME(odbc,SQLConnect,,[AC_DEFINE_UNQUOTED(SONAME_LIBODBC,["libodbc.
 dnl **** Disable unsupported winmm drivers ****
 test -n "$ALSALIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}
 test -n "$COREAUDIO" || enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
-test -n "$ac_cv_lib_soname_jack" || enable_winejack_drv=${enable_winejack_drv:-no}
 test "x$ac_cv_member_oss_sysinfo_numaudioengines" = xyes || enable_wineoss_drv=${enable_wineoss_drv:-no}
 test "$ac_cv_header_linux_joystick_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
 dnl **** Check for any sound system ****
-if test "x$ALSALIBS$COREAUDIOLIBS$ac_cv_lib_soname_jack" = "x" -a \
+if test "x$ALSALIBS$COREAUDIOLIBS" = "x" -a \
         "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes -a \
-        "x$with_alsa$with_coreaudio$with_jack$with_oss" != xnononono
+        "x$with_alsa$with_coreaudio$with_oss" != xnonono
 then
     WINE_WARNING([No sound system was found. Windows applications will be silent.])
 fi
@@ -2835,7 +2825,6 @@ WINE_CONFIG_DLL(winecoreaudio.drv)
 WINE_CONFIG_LIB(winecrt0)
 WINE_CONFIG_DLL(wined3d,,[implib])
 WINE_CONFIG_DLL(winegstreamer)
-WINE_CONFIG_DLL(winejack.drv)
 WINE_CONFIG_DLL(winejoystick.drv)
 WINE_CONFIG_DLL(winemapi)
 WINE_CONFIG_DLL(winemp3.acm)

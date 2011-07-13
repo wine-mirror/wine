@@ -171,7 +171,7 @@ msgstr "Омиљено"
 msgid "System Path"
 msgstr "Системска путања"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:120 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:119 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -10501,193 +10501,189 @@ msgid "OSS Driver"
 msgstr ""
 
 #: winecfg.rc:102
-msgid "JACK Driver"
-msgstr ""
-
-#: winecfg.rc:103
 msgid "CoreAudio Driver"
 msgstr ""
 
-#: winecfg.rc:104
+#: winecfg.rc:103
 msgid "Couldn't open %s!"
 msgstr ""
 
-#: winecfg.rc:105
+#: winecfg.rc:104
 msgid "Sound Drivers"
 msgstr ""
 
-#: winecfg.rc:106
+#: winecfg.rc:105
 #, fuzzy
 msgid "Wave Out Devices"
 msgstr "Подразумевани WaveOut уређај"
 
-#: winecfg.rc:107
+#: winecfg.rc:106
 msgid "Wave In Devices"
 msgstr ""
 
-#: winecfg.rc:108
+#: winecfg.rc:107
 #, fuzzy
 msgid "MIDI Out Devices"
 msgstr "Подразумевани WaveOut уређај"
 
-#: winecfg.rc:109
+#: winecfg.rc:108
 msgid "MIDI In Devices"
 msgstr ""
 
-#: winecfg.rc:110
+#: winecfg.rc:109
 msgid "Aux Devices"
 msgstr ""
 
-#: winecfg.rc:111
+#: winecfg.rc:110
 msgid "Mixer Devices"
 msgstr ""
 
-#: winecfg.rc:112
+#: winecfg.rc:111
 msgid ""
 "Found driver in registry that is not available!\n"
 "\n"
 "Remove '%s' from registry?"
 msgstr ""
 
-#: winecfg.rc:113
+#: winecfg.rc:112
 msgid "Warning"
 msgstr ""
 
-#: winecfg.rc:118
+#: winecfg.rc:117
 #, fuzzy
 msgid "Controls Background"
 msgstr "&Умножи позадину"
 
-#: winecfg.rc:119
+#: winecfg.rc:118
 #, fuzzy
 msgid "Controls Text"
 msgstr "Контрола"
 
-#: winecfg.rc:121
+#: winecfg.rc:120
 #, fuzzy
 msgid "Menu Background"
 msgstr "&Умножи позадину"
 
-#: winecfg.rc:122
+#: winecfg.rc:121
 msgid "Menu Text"
 msgstr ""
 
-#: winecfg.rc:123
+#: winecfg.rc:122
 #, fuzzy
 msgid "Scrollbar"
 msgstr "трака за померање"
 
-#: winecfg.rc:124
+#: winecfg.rc:123
 #, fuzzy
 msgid "Selection Background"
 msgstr "Постави као позадину"
 
-#: winecfg.rc:125
+#: winecfg.rc:124
 #, fuzzy
 msgid "Selection Text"
 msgstr "Изабери &све"
 
-#: winecfg.rc:126
+#: winecfg.rc:125
 #, fuzzy
 msgid "ToolTip Background"
 msgstr "&Умножи позадину"
 
-#: winecfg.rc:127
+#: winecfg.rc:126
 msgid "ToolTip Text"
 msgstr ""
 
-#: winecfg.rc:128
+#: winecfg.rc:127
 #, fuzzy
 msgid "Window Background"
 msgstr "&Умножи позадину"
 
-#: winecfg.rc:129
+#: winecfg.rc:128
 #, fuzzy
 msgid "Window Text"
 msgstr "&Прозор"
 
-#: winecfg.rc:130
+#: winecfg.rc:129
 #, fuzzy
 msgid "Active Title Bar"
 msgstr "насловна линија"
 
-#: winecfg.rc:131
+#: winecfg.rc:130
 msgid "Active Title Text"
 msgstr ""
 
-#: winecfg.rc:132
+#: winecfg.rc:131
 msgid "Inactive Title Bar"
 msgstr ""
 
-#: winecfg.rc:133
+#: winecfg.rc:132
 msgid "Inactive Title Text"
 msgstr ""
 
-#: winecfg.rc:134
+#: winecfg.rc:133
 msgid "Message Box Text"
 msgstr ""
 
-#: winecfg.rc:135
+#: winecfg.rc:134
 #, fuzzy
 msgid "Application Workspace"
 msgstr "Програми"
 
-#: winecfg.rc:136
+#: winecfg.rc:135
 #, fuzzy
 msgid "Window Frame"
 msgstr "&Прозор"
 
-#: winecfg.rc:137
+#: winecfg.rc:136
 msgid "Active Border"
 msgstr ""
 
-#: winecfg.rc:138
+#: winecfg.rc:137
 msgid "Inactive Border"
 msgstr ""
 
-#: winecfg.rc:139
+#: winecfg.rc:138
 #, fuzzy
 msgid "Controls Shadow"
 msgstr "Управљачки панел"
 
-#: winecfg.rc:140
+#: winecfg.rc:139
 msgid "Gray Text"
 msgstr ""
 
-#: winecfg.rc:141
+#: winecfg.rc:140
 msgid "Controls Highlight"
 msgstr ""
 
-#: winecfg.rc:142
+#: winecfg.rc:141
 msgid "Controls Dark Shadow"
 msgstr ""
 
-#: winecfg.rc:143
+#: winecfg.rc:142
 #, fuzzy
 msgid "Controls Light"
 msgstr "Контрола"
 
-#: winecfg.rc:144
+#: winecfg.rc:143
 msgid "Controls Alternate Background"
 msgstr ""
 
-#: winecfg.rc:145
+#: winecfg.rc:144
 msgid "Hot Tracked Item"
 msgstr ""
 
-#: winecfg.rc:146
+#: winecfg.rc:145
 msgid "Active Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:147
+#: winecfg.rc:146
 msgid "Inactive Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:148
+#: winecfg.rc:147
 msgid "Menu Highlight"
 msgstr ""
 
-#: winecfg.rc:149
+#: winecfg.rc:148
 #, fuzzy
 msgid "Menu Bar"
 msgstr "линија менија"

@@ -299,9 +299,6 @@
 /* Define to 1 if you have the `isnan' function. */
 #undef HAVE_ISNAN
 
-/* Define to 1 if you have the <jack/jack.h> header file. */
-#undef HAVE_JACK_JACK_H
-
 /* Define to 1 if you have the <jpeglib.h> header file. */
 #undef HAVE_JPEGLIB_H
 
@@ -1234,9 +1231,6 @@
 
 /* Define to the soname of the libhal library. */
 #undef SONAME_LIBHAL
-
-/* Define to the soname of the libjack library. */
-#undef SONAME_LIBJACK
 
 /* Define to the soname of the libjpeg library. */
 #undef SONAME_LIBJPEG

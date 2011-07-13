@@ -183,7 +183,7 @@ msgstr "Mine favoriter"
 msgid "System Path"
 msgstr "System sti"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:120 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:119 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -10863,46 +10863,42 @@ msgid "OSS Driver"
 msgstr "OSS-driver"
 
 #: winecfg.rc:102
-msgid "JACK Driver"
-msgstr "JACK-driver"
-
-#: winecfg.rc:103
 msgid "CoreAudio Driver"
 msgstr "CoreAudio-driver"
 
-#: winecfg.rc:104
+#: winecfg.rc:103
 msgid "Couldn't open %s!"
 msgstr "Kunne ikke åbne %s!"
 
-#: winecfg.rc:105
+#: winecfg.rc:104
 msgid "Sound Drivers"
 msgstr "lyddrivere"
 
-#: winecfg.rc:106
+#: winecfg.rc:105
 msgid "Wave Out Devices"
 msgstr "Lyd ud enheder"
 
-#: winecfg.rc:107
+#: winecfg.rc:106
 msgid "Wave In Devices"
 msgstr "Lyd ind enheder"
 
-#: winecfg.rc:108
+#: winecfg.rc:107
 msgid "MIDI Out Devices"
 msgstr "MIDI ud enheder"
 
-#: winecfg.rc:109
+#: winecfg.rc:108
 msgid "MIDI In Devices"
 msgstr "MIDI ind enheder"
 
-#: winecfg.rc:110
+#: winecfg.rc:109
 msgid "Aux Devices"
 msgstr "Aux enheder"
 
-#: winecfg.rc:111
+#: winecfg.rc:110
 msgid "Mixer Devices"
 msgstr "Mixerenheder"
 
-#: winecfg.rc:112
+#: winecfg.rc:111
 msgid ""
 "Found driver in registry that is not available!\n"
 "\n"
@@ -10912,131 +10908,131 @@ msgstr ""
 "\n"
 "Fjern %s fra registrering databasen?"
 
-#: winecfg.rc:113
+#: winecfg.rc:112
 msgid "Warning"
 msgstr "Advarsel"
 
-#: winecfg.rc:118
+#: winecfg.rc:117
 msgid "Controls Background"
 msgstr "Controls baggrund"
 
-#: winecfg.rc:119
+#: winecfg.rc:118
 msgid "Controls Text"
 msgstr "Controls tekst"
 
-#: winecfg.rc:121
+#: winecfg.rc:120
 msgid "Menu Background"
 msgstr "Menubaggrund"
 
-#: winecfg.rc:122
+#: winecfg.rc:121
 msgid "Menu Text"
 msgstr "Menutekst"
 
-#: winecfg.rc:123
+#: winecfg.rc:122
 msgid "Scrollbar"
 msgstr "Scrollbar"
 
-#: winecfg.rc:124
+#: winecfg.rc:123
 msgid "Selection Background"
 msgstr "Markeret baggrund"
 
-#: winecfg.rc:125
+#: winecfg.rc:124
 msgid "Selection Text"
 msgstr "Markeret tekst"
 
-#: winecfg.rc:126
+#: winecfg.rc:125
 msgid "ToolTip Background"
 msgstr "Baggrund i værktøjstip"
 
-#: winecfg.rc:127
+#: winecfg.rc:126
 msgid "ToolTip Text"
 msgstr "Tekst i værktøjstip"
 
-#: winecfg.rc:128
+#: winecfg.rc:127
 msgid "Window Background"
 msgstr "vinduesbaggrund"
 
-#: winecfg.rc:129
+#: winecfg.rc:128
 msgid "Window Text"
 msgstr "vinduestekst"
 
-#: winecfg.rc:130
+#: winecfg.rc:129
 msgid "Active Title Bar"
 msgstr "Aktiv titellinie"
 
-#: winecfg.rc:131
+#: winecfg.rc:130
 msgid "Active Title Text"
 msgstr "Aktiv titeltekst"
 
-#: winecfg.rc:132
+#: winecfg.rc:131
 msgid "Inactive Title Bar"
 msgstr "Inaktiv titellinie"
 
-#: winecfg.rc:133
+#: winecfg.rc:132
 msgid "Inactive Title Text"
 msgstr "Inaktiv titeltekst"
 
-#: winecfg.rc:134
+#: winecfg.rc:133
 msgid "Message Box Text"
 msgstr "Meldingsvinduestekst"
 
-#: winecfg.rc:135
+#: winecfg.rc:134
 msgid "Application Workspace"
 msgstr "Arbejdsområde i program"
 
-#: winecfg.rc:136
+#: winecfg.rc:135
 msgid "Window Frame"
 msgstr "Vinduesramme"
 
-#: winecfg.rc:137
+#: winecfg.rc:136
 msgid "Active Border"
 msgstr "Aktiv kant"
 
-#: winecfg.rc:138
+#: winecfg.rc:137
 msgid "Inactive Border"
 msgstr "Inaktiv kant"
 
-#: winecfg.rc:139
+#: winecfg.rc:138
 msgid "Controls Shadow"
 msgstr "Controls skygge"
 
-#: winecfg.rc:140
+#: winecfg.rc:139
 msgid "Gray Text"
 msgstr "Grå tekst"
 
-#: winecfg.rc:141
+#: winecfg.rc:140
 msgid "Controls Highlight"
 msgstr "Markeret controls"
 
-#: winecfg.rc:142
+#: winecfg.rc:141
 msgid "Controls Dark Shadow"
 msgstr "Controls mørk skygge"
 
-#: winecfg.rc:143
+#: winecfg.rc:142
 msgid "Controls Light"
 msgstr "Controls lys"
 
-#: winecfg.rc:144
+#: winecfg.rc:143
 msgid "Controls Alternate Background"
 msgstr "Baggrund for skiftende controls"
 
-#: winecfg.rc:145
+#: winecfg.rc:144
 msgid "Hot Tracked Item"
 msgstr "Markeret element"
 
-#: winecfg.rc:146
+#: winecfg.rc:145
 msgid "Active Title Bar Gradient"
 msgstr "Gradient for aktiv titellinie"
 
-#: winecfg.rc:147
+#: winecfg.rc:146
 msgid "Inactive Title Bar Gradient"
 msgstr "Gradient for Inaktiv titellinie"
 
-#: winecfg.rc:148
+#: winecfg.rc:147
 msgid "Menu Highlight"
 msgstr "Markeret menu"
 
-#: winecfg.rc:149
+#: winecfg.rc:148
 msgid "Menu Bar"
 msgstr "Menulinie"
 

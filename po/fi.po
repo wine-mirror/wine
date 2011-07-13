@@ -167,7 +167,7 @@ msgstr "Suosikit"
 msgid "System Path"
 msgstr "Järjestelmäkansio"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:120 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:119 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -10437,46 +10437,42 @@ msgid "OSS Driver"
 msgstr "OSS Driver"
 
 #: winecfg.rc:102
-msgid "JACK Driver"
-msgstr "JACK Driver"
-
-#: winecfg.rc:103
 msgid "CoreAudio Driver"
 msgstr "CoreAudio Driver"
 
-#: winecfg.rc:104
+#: winecfg.rc:103
 msgid "Couldn't open %s!"
 msgstr "Couldn't open %s!"
 
-#: winecfg.rc:105
+#: winecfg.rc:104
 msgid "Sound Drivers"
 msgstr "Sound Drivers"
 
-#: winecfg.rc:106
+#: winecfg.rc:105
 msgid "Wave Out Devices"
 msgstr "Wave Out Devices"
 
-#: winecfg.rc:107
+#: winecfg.rc:106
 msgid "Wave In Devices"
 msgstr "Wave In Devices"
 
-#: winecfg.rc:108
+#: winecfg.rc:107
 msgid "MIDI Out Devices"
 msgstr "MIDI Out Devices"
 
-#: winecfg.rc:109
+#: winecfg.rc:108
 msgid "MIDI In Devices"
 msgstr "MIDI In Devices"
 
-#: winecfg.rc:110
+#: winecfg.rc:109
 msgid "Aux Devices"
 msgstr "Aux Devices"
 
-#: winecfg.rc:111
+#: winecfg.rc:110
 msgid "Mixer Devices"
 msgstr "Mixer Devices"
 
-#: winecfg.rc:112
+#: winecfg.rc:111
 msgid ""
 "Found driver in registry that is not available!\n"
 "\n"
@@ -10486,143 +10482,143 @@ msgstr ""
 "\n"
 "Remove \"%s\" from registry?"
 
-#: winecfg.rc:113
+#: winecfg.rc:112
 msgid "Warning"
 msgstr "Warning"
 
-#: winecfg.rc:118
+#: winecfg.rc:117
 #, fuzzy
 msgid "Controls Background"
 msgstr "&Kopioi Tausta"
 
-#: winecfg.rc:119
+#: winecfg.rc:118
 #, fuzzy
 msgid "Controls Text"
 msgstr "Hallinta"
 
-#: winecfg.rc:121
+#: winecfg.rc:120
 #, fuzzy
 msgid "Menu Background"
 msgstr "&Kopioi Tausta"
 
-#: winecfg.rc:122
+#: winecfg.rc:121
 msgid "Menu Text"
 msgstr ""
 
-#: winecfg.rc:123
+#: winecfg.rc:122
 #, fuzzy
 msgid "Scrollbar"
 msgstr "Vieritä Tänne"
 
-#: winecfg.rc:124
+#: winecfg.rc:123
 #, fuzzy
 msgid "Selection Background"
 msgstr "&Aseta Taustaksi"
 
-#: winecfg.rc:125
+#: winecfg.rc:124
 #, fuzzy
 msgid "Selection Text"
 msgstr "&Valitse Kaikki"
 
-#: winecfg.rc:126
+#: winecfg.rc:125
 #, fuzzy
 msgid "ToolTip Background"
 msgstr "&Kopioi Tausta"
 
-#: winecfg.rc:127
+#: winecfg.rc:126
 msgid "ToolTip Text"
 msgstr ""
 
-#: winecfg.rc:128
+#: winecfg.rc:127
 #, fuzzy
 msgid "Window Background"
 msgstr "&Kopioi Tausta"
 
-#: winecfg.rc:129
+#: winecfg.rc:128
 msgid "Window Text"
 msgstr ""
 
-#: winecfg.rc:130
+#: winecfg.rc:129
 #, fuzzy
 msgid "Active Title Bar"
 msgstr "&Ilman otsikkopalkkia"
 
-#: winecfg.rc:131
+#: winecfg.rc:130
 msgid "Active Title Text"
 msgstr ""
 
-#: winecfg.rc:132
+#: winecfg.rc:131
 msgid "Inactive Title Bar"
 msgstr ""
 
-#: winecfg.rc:133
+#: winecfg.rc:132
 msgid "Inactive Title Text"
 msgstr ""
 
-#: winecfg.rc:134
+#: winecfg.rc:133
 msgid "Message Box Text"
 msgstr ""
 
-#: winecfg.rc:135
+#: winecfg.rc:134
 #, fuzzy
 msgid "Application Workspace"
 msgstr "Valinnat"
 
-#: winecfg.rc:136
+#: winecfg.rc:135
 msgid "Window Frame"
 msgstr ""
 
-#: winecfg.rc:137
+#: winecfg.rc:136
 msgid "Active Border"
 msgstr ""
 
-#: winecfg.rc:138
+#: winecfg.rc:137
 msgid "Inactive Border"
 msgstr ""
 
-#: winecfg.rc:139
+#: winecfg.rc:138
 #, fuzzy
 msgid "Controls Shadow"
 msgstr "Ohjauspaneeli"
 
-#: winecfg.rc:140
+#: winecfg.rc:139
 msgid "Gray Text"
 msgstr ""
 
-#: winecfg.rc:141
+#: winecfg.rc:140
 msgid "Controls Highlight"
 msgstr ""
 
-#: winecfg.rc:142
+#: winecfg.rc:141
 msgid "Controls Dark Shadow"
 msgstr ""
 
-#: winecfg.rc:143
+#: winecfg.rc:142
 #, fuzzy
 msgid "Controls Light"
 msgstr "Hallinta"
 
-#: winecfg.rc:144
+#: winecfg.rc:143
 msgid "Controls Alternate Background"
 msgstr ""
 
-#: winecfg.rc:145
+#: winecfg.rc:144
 msgid "Hot Tracked Item"
 msgstr ""
 
-#: winecfg.rc:146
+#: winecfg.rc:145
 msgid "Active Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:147
+#: winecfg.rc:146
 msgid "Inactive Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:148
+#: winecfg.rc:147
 msgid "Menu Highlight"
 msgstr ""
 
-#: winecfg.rc:149
+#: winecfg.rc:148
 msgid "Menu Bar"
 msgstr ""
 

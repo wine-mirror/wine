@@ -170,7 +170,7 @@ msgstr "Priljubljene"
 msgid "System Path"
 msgstr "Sistemska pot"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:120 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:119 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -10586,46 +10586,42 @@ msgid "OSS Driver"
 msgstr "Gonilnik OSS"
 
 #: winecfg.rc:102
-msgid "JACK Driver"
-msgstr "Gonilnik JACK"
-
-#: winecfg.rc:103
 msgid "CoreAudio Driver"
 msgstr "Gonilnik CoreAudio"
 
-#: winecfg.rc:104
+#: winecfg.rc:103
 msgid "Couldn't open %s!"
 msgstr "Gonilnika %s ni mogoče odpreti!"
 
-#: winecfg.rc:105
+#: winecfg.rc:104
 msgid "Sound Drivers"
 msgstr "Zvočni gonilniki"
 
-#: winecfg.rc:106
+#: winecfg.rc:105
 msgid "Wave Out Devices"
 msgstr "Wave Izh naprave"
 
-#: winecfg.rc:107
+#: winecfg.rc:106
 msgid "Wave In Devices"
 msgstr "Wave Vh naprave"
 
-#: winecfg.rc:108
+#: winecfg.rc:107
 msgid "MIDI Out Devices"
 msgstr "MIDI Izh naprave"
 
-#: winecfg.rc:109
+#: winecfg.rc:108
 msgid "MIDI In Devices"
 msgstr "MIDI Vh naprave"
 
-#: winecfg.rc:110
+#: winecfg.rc:109
 msgid "Aux Devices"
 msgstr "Pomožne naprave"
 
-#: winecfg.rc:111
+#: winecfg.rc:110
 msgid "Mixer Devices"
 msgstr "Mešalne naprave"
 
-#: winecfg.rc:112
+#: winecfg.rc:111
 msgid ""
 "Found driver in registry that is not available!\n"
 "\n"
@@ -10635,131 +10631,131 @@ msgstr ""
 "\n"
 "Ali želite '%s' odstraniti iz registra?"
 
-#: winecfg.rc:113
+#: winecfg.rc:112
 msgid "Warning"
 msgstr "Opozorilo"
 
-#: winecfg.rc:118
+#: winecfg.rc:117
 msgid "Controls Background"
 msgstr "Ozadje nadzornikov"
 
-#: winecfg.rc:119
+#: winecfg.rc:118
 msgid "Controls Text"
 msgstr "Besedilo nadzornikov"
 
-#: winecfg.rc:121
+#: winecfg.rc:120
 msgid "Menu Background"
 msgstr "Ozadje menija"
 
-#: winecfg.rc:122
+#: winecfg.rc:121
 msgid "Menu Text"
 msgstr "Besedilo menija"
 
-#: winecfg.rc:123
+#: winecfg.rc:122
 msgid "Scrollbar"
 msgstr "Drsnik"
 
-#: winecfg.rc:124
+#: winecfg.rc:123
 msgid "Selection Background"
 msgstr "Ozadje izbire"
 
-#: winecfg.rc:125
+#: winecfg.rc:124
 msgid "Selection Text"
 msgstr "Besedilo izbire"
 
-#: winecfg.rc:126
+#: winecfg.rc:125
 msgid "ToolTip Background"
 msgstr "Ozadje orodnega namiga"
 
-#: winecfg.rc:127
+#: winecfg.rc:126
 msgid "ToolTip Text"
 msgstr "Besedilo orodnega namiga"
 
-#: winecfg.rc:128
+#: winecfg.rc:127
 msgid "Window Background"
 msgstr "Ozadje okna"
 
-#: winecfg.rc:129
+#: winecfg.rc:128
 msgid "Window Text"
 msgstr "Besedilo okna"
 
-#: winecfg.rc:130
+#: winecfg.rc:129
 msgid "Active Title Bar"
 msgstr "Dejavna nazivna vrstica"
 
-#: winecfg.rc:131
+#: winecfg.rc:130
 msgid "Active Title Text"
 msgstr "Besedilo dejavnega naziva"
 
-#: winecfg.rc:132
+#: winecfg.rc:131
 msgid "Inactive Title Bar"
 msgstr "Nedejavna nazivna vrstica"
 
-#: winecfg.rc:133
+#: winecfg.rc:132
 msgid "Inactive Title Text"
 msgstr "Besedilno nedejavnega naziva"
 
-#: winecfg.rc:134
+#: winecfg.rc:133
 msgid "Message Box Text"
 msgstr "Sporočilo polja z besedilom"
 
-#: winecfg.rc:135
+#: winecfg.rc:134
 msgid "Application Workspace"
 msgstr "Delovni prostor programa"
 
-#: winecfg.rc:136
+#: winecfg.rc:135
 msgid "Window Frame"
 msgstr "Okvir okna"
 
-#: winecfg.rc:137
+#: winecfg.rc:136
 msgid "Active Border"
 msgstr "Dejaven rob"
 
-#: winecfg.rc:138
+#: winecfg.rc:137
 msgid "Inactive Border"
 msgstr "Nedejaven rob"
 
-#: winecfg.rc:139
+#: winecfg.rc:138
 msgid "Controls Shadow"
 msgstr "Senca nadzornikov"
 
-#: winecfg.rc:140
+#: winecfg.rc:139
 msgid "Gray Text"
 msgstr "Sivo besedilo"
 
-#: winecfg.rc:141
+#: winecfg.rc:140
 msgid "Controls Highlight"
 msgstr "Poudarjanje nadzornikov"
 
-#: winecfg.rc:142
+#: winecfg.rc:141
 msgid "Controls Dark Shadow"
 msgstr "Temna senca nadzornikov"
 
-#: winecfg.rc:143
+#: winecfg.rc:142
 msgid "Controls Light"
 msgstr "Svetlost nadzornikov"
 
-#: winecfg.rc:144
+#: winecfg.rc:143
 msgid "Controls Alternate Background"
 msgstr "Nadomestno ozadje nadzornikov"
 
-#: winecfg.rc:145
+#: winecfg.rc:144
 msgid "Hot Tracked Item"
 msgstr "Predmet s hitrim sledenjem"
 
-#: winecfg.rc:146
+#: winecfg.rc:145
 msgid "Active Title Bar Gradient"
 msgstr "Preliv naslova dejavna nazivne vrstice"
 
-#: winecfg.rc:147
+#: winecfg.rc:146
 msgid "Inactive Title Bar Gradient"
 msgstr "Preliv nedejavne nazivne vrstice"
 
-#: winecfg.rc:148
+#: winecfg.rc:147
 msgid "Menu Highlight"
 msgstr "Poudarjanje menija"
 
-#: winecfg.rc:149
+#: winecfg.rc:148
 msgid "Menu Bar"
 msgstr "Menijska vrstica"
 

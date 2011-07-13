@@ -167,7 +167,7 @@ msgstr "お気に入り"
 msgid "System Path"
 msgstr "システム パス"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:120 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:119 winefile.rc:103
 msgctxt "display name"
 msgid "Desktop"
 msgstr "デスクトップ"
@@ -10517,46 +10517,42 @@ msgid "OSS Driver"
 msgstr "OSS ドライバ"
 
 #: winecfg.rc:102
-msgid "JACK Driver"
-msgstr "JACK ドライバ"
-
-#: winecfg.rc:103
 msgid "CoreAudio Driver"
 msgstr "CoreAudio ドライバ"
 
-#: winecfg.rc:104
+#: winecfg.rc:103
 msgid "Couldn't open %s!"
 msgstr "%sをオープンできません!"
 
-#: winecfg.rc:105
+#: winecfg.rc:104
 msgid "Sound Drivers"
 msgstr "サウンドドライバ"
 
-#: winecfg.rc:106
+#: winecfg.rc:105
 msgid "Wave Out Devices"
 msgstr "Wave 出力デバイス"
 
-#: winecfg.rc:107
+#: winecfg.rc:106
 msgid "Wave In Devices"
 msgstr "Wave 入力デバイス"
 
-#: winecfg.rc:108
+#: winecfg.rc:107
 msgid "MIDI Out Devices"
 msgstr "MIDI 出力デバイス"
 
-#: winecfg.rc:109
+#: winecfg.rc:108
 msgid "MIDI In Devices"
 msgstr "MIDI 入力デバイス"
 
-#: winecfg.rc:110
+#: winecfg.rc:109
 msgid "Aux Devices"
 msgstr "補助デバイス"
 
-#: winecfg.rc:111
+#: winecfg.rc:110
 msgid "Mixer Devices"
 msgstr "ミキサーデバイス"
 
-#: winecfg.rc:112
+#: winecfg.rc:111
 msgid ""
 "Found driver in registry that is not available!\n"
 "\n"
@@ -10566,131 +10562,131 @@ msgstr ""
 "\n"
 "レジストリから \"%s\" を削除しますか?"
 
-#: winecfg.rc:113
+#: winecfg.rc:112
 msgid "Warning"
 msgstr "警告"
 
-#: winecfg.rc:118
+#: winecfg.rc:117
 msgid "Controls Background"
 msgstr "コントロールの背景"
 
-#: winecfg.rc:119
+#: winecfg.rc:118
 msgid "Controls Text"
 msgstr "コントロールのテキスト"
 
-#: winecfg.rc:121
+#: winecfg.rc:120
 msgid "Menu Background"
 msgstr "メニューの背景"
 
-#: winecfg.rc:122
+#: winecfg.rc:121
 msgid "Menu Text"
 msgstr "メニューのテキスト"
 
-#: winecfg.rc:123
+#: winecfg.rc:122
 msgid "Scrollbar"
 msgstr "スクロールバー"
 
-#: winecfg.rc:124
+#: winecfg.rc:123
 msgid "Selection Background"
 msgstr "選択項目の背景"
 
-#: winecfg.rc:125
+#: winecfg.rc:124
 msgid "Selection Text"
 msgstr "選択項目のテキスト"
 
-#: winecfg.rc:126
+#: winecfg.rc:125
 msgid "ToolTip Background"
 msgstr "ヒントの背景"
 
-#: winecfg.rc:127
+#: winecfg.rc:126
 msgid "ToolTip Text"
 msgstr "ヒントのテキスト"
 
-#: winecfg.rc:128
+#: winecfg.rc:127
 msgid "Window Background"
 msgstr "ウィンドウの背景"
 
-#: winecfg.rc:129
+#: winecfg.rc:128
 msgid "Window Text"
 msgstr "ウィンドウのテキスト"
 
-#: winecfg.rc:130
+#: winecfg.rc:129
 msgid "Active Title Bar"
 msgstr "アクティブ タイトル バー"
 
-#: winecfg.rc:131
+#: winecfg.rc:130
 msgid "Active Title Text"
 msgstr "アクティブ タイトルのテキスト"
 
-#: winecfg.rc:132
+#: winecfg.rc:131
 msgid "Inactive Title Bar"
 msgstr "非アクティブ タイトル バー"
 
-#: winecfg.rc:133
+#: winecfg.rc:132
 msgid "Inactive Title Text"
 msgstr "非アクティブ タイトルのテキスト"
 
-#: winecfg.rc:134
+#: winecfg.rc:133
 msgid "Message Box Text"
 msgstr "メッセージ ボックスのテキスト"
 
-#: winecfg.rc:135
+#: winecfg.rc:134
 msgid "Application Workspace"
 msgstr "アプリケーション作業域"
 
-#: winecfg.rc:136
+#: winecfg.rc:135
 msgid "Window Frame"
 msgstr "ウィンドウの境界"
 
-#: winecfg.rc:137
+#: winecfg.rc:136
 msgid "Active Border"
 msgstr "アクティブ境界"
 
-#: winecfg.rc:138
+#: winecfg.rc:137
 msgid "Inactive Border"
 msgstr "非アクティブ境界"
 
-#: winecfg.rc:139
+#: winecfg.rc:138
 msgid "Controls Shadow"
 msgstr "Controls Shadow"
 
-#: winecfg.rc:140
+#: winecfg.rc:139
 msgid "Gray Text"
 msgstr "Gray Text"
 
-#: winecfg.rc:141
+#: winecfg.rc:140
 msgid "Controls Highlight"
 msgstr "Controls Highlight"
 
-#: winecfg.rc:142
+#: winecfg.rc:141
 msgid "Controls Dark Shadow"
 msgstr "Controls Dark Shadow"
 
-#: winecfg.rc:143
+#: winecfg.rc:142
 msgid "Controls Light"
 msgstr "Controls Light"
 
-#: winecfg.rc:144
+#: winecfg.rc:143
 msgid "Controls Alternate Background"
 msgstr "Controls Alternate Background"
 
-#: winecfg.rc:145
+#: winecfg.rc:144
 msgid "Hot Tracked Item"
 msgstr "Hot Tracked Item"
 
-#: winecfg.rc:146
+#: winecfg.rc:145
 msgid "Active Title Bar Gradient"
 msgstr "Active Title Bar Gradient"
 
-#: winecfg.rc:147
+#: winecfg.rc:146
 msgid "Inactive Title Bar Gradient"
 msgstr "Inactive Title Bar Gradient"
 
-#: winecfg.rc:148
+#: winecfg.rc:147
 msgid "Menu Highlight"
 msgstr "Menu Highlight"
 
-#: winecfg.rc:149
+#: winecfg.rc:148
 msgid "Menu Bar"
 msgstr "メニュー バー"
 

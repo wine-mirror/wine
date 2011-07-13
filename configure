@@ -789,7 +789,6 @@ with_gnutls
 with_gsm
 with_gstreamer
 with_hal
-with_jack
 with_jpeg
 with_ldap
 with_mpg123
@@ -1479,7 +1478,6 @@ Optional Packages:
   --without-gsm           do not use libgsm (GSM 06.10 codec support)
   --without-gstreamer     do not use GStreamer (codecs support)
   --without-hal           do not use HAL (dynamic device support)
-  --without-jack          do not use the Jack sound support
   --without-jpeg          do not use JPEG
   --without-ldap          do not use LDAP
   --without-mpg123        do not use the mpg123 library
@@ -2600,12 +2598,6 @@ fi
 # Check whether --with-hal was given.
 if test "${with_hal+set}" = set; then :
   withval=$with_hal;
-fi
-
-
-# Check whether --with-jack was given.
-if test "${with_jack+set}" = set; then :
-  withval=$with_jack; if test "x$withval" = "xno"; then ac_cv_header_jack_jack_h=no; fi
 fi
 
 
@@ -5709,7 +5701,6 @@ for ac_header in \
 	ieeefp.h \
 	inet/mib2.h \
 	io.h \
-	jack/jack.h \
 	jpeglib.h \
 	kstat.h \
 	lber.h \
@@ -10871,60 +10862,6 @@ This is an error since --with-cups was requested." "$LINENO" 5 ;;
 esac
 fi
 
-if test "$ac_cv_header_jack_jack_h" = "yes"
-then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -ljack" >&5
-$as_echo_n "checking for -ljack... " >&6; }
-if ${ac_cv_lib_soname_jack+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-ljack  $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char jack_client_new ();
-int
-main ()
-{
-return jack_client_new ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_jack=`$ac_cv_path_LDD conftest.exe | grep "jack" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_jack=`otool -L conftest$ac_exeext | grep "libjack-*[0-9.]*\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libjack-*[0-9.]*\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_jack=`$ac_cv_path_LDD conftest$ac_exeext | grep "libjack-*[0-9.]*\\.$LIBEXT" | sed -e "s/^.*\(libjack-*[0-9.]*\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'` ;;
-  esac
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if test "x$ac_cv_lib_soname_jack" = "x"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_jack" >&5
-$as_echo "$ac_cv_lib_soname_jack" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBJACK "$ac_cv_lib_soname_jack"
-_ACEOF
-
-
-fi
-fi
-
 if test "$ac_cv_header_fontconfig_fontconfig_h" = "yes"
 then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lfontconfig" >&5
@@ -11805,13 +11742,12 @@ fi
 
 test -n "$ALSALIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}
 test -n "$COREAUDIO" || enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
-test -n "$ac_cv_lib_soname_jack" || enable_winejack_drv=${enable_winejack_drv:-no}
 test "x$ac_cv_member_oss_sysinfo_numaudioengines" = xyes || enable_wineoss_drv=${enable_wineoss_drv:-no}
 test "$ac_cv_header_linux_joystick_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
-if test "x$ALSALIBS$COREAUDIOLIBS$ac_cv_lib_soname_jack" = "x" -a \
+if test "x$ALSALIBS$COREAUDIOLIBS" = "x" -a \
         "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes -a \
-        "x$with_alsa$with_coreaudio$with_jack$with_oss" != xnononono
+        "x$with_alsa$with_coreaudio$with_oss" != xnonono
 then
     as_fn_append wine_warnings "|No sound system was found. Windows applications will be silent."
 fi
@@ -15216,7 +15152,6 @@ wine_fn_config_dll winecoreaudio.drv enable_winecoreaudio_drv
 wine_fn_config_lib winecrt0
 wine_fn_config_dll wined3d enable_wined3d implib
 wine_fn_config_dll winegstreamer enable_winegstreamer
-wine_fn_config_dll winejack.drv enable_winejack_drv
 wine_fn_config_dll winejoystick.drv enable_winejoystick_drv
 wine_fn_config_dll winemapi enable_winemapi
 wine_fn_config_dll winemp3.acm enable_winemp3_acm
