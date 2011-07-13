@@ -902,7 +902,7 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
 
         /* If there's at least one action for the device it's priority 1 */
         for(j=0; j < lpdiActionFormat->dwActionSize; j++)
-            if ((lpdiActionFormat->rgoAction[j].dwSemantic & actionMasks[j]) == actionMasks[j])
+            if ((lpdiActionFormat->rgoAction[j].dwSemantic & actionMasks[i]) == actionMasks[i])
                 callbackFlags |= DIEDBS_MAPPEDPRI1;
 
         if (lpCallback(&didevi, lpdid, callbackFlags, sizeof(guids)/sizeof(guids[0]) - (i+1), pvRef) == DIENUM_STOP)
@@ -967,7 +967,7 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
 
         /* If there's at least one action for the device it's priority 1 */
         for(j=0; j < lpdiActionFormat->dwActionSize; j++)
-            if ((lpdiActionFormat->rgoAction[j].dwSemantic & actionMasks[j]) == actionMasks[j])
+            if ((lpdiActionFormat->rgoAction[j].dwSemantic & actionMasks[i]) == actionMasks[i])
                 callbackFlags |= DIEDBS_MAPPEDPRI1;
 
         if (lpCallback(&didevi, lpdid, callbackFlags, sizeof(guids)/sizeof(guids[0]) - (i+1), pvRef) == DIENUM_STOP)
