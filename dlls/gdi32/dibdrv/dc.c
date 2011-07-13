@@ -551,10 +551,10 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pwglCreateContext */
     NULL,                               /* pwglCreateContextAttribsARB */
     NULL,                               /* pwglDeleteContext */
-    NULL,                               /* pwglGetProcAddress */
     NULL,                               /* pwglGetPbufferDCARB */
-    NULL,                               /* pwglMakeCurrent */
+    NULL,                               /* pwglGetProcAddress */
     NULL,                               /* pwglMakeContextCurrentARB */
+    NULL,                               /* pwglMakeCurrent */
     NULL,                               /* pwglSetPixelFormatWINE */
     NULL,                               /* pwglShareLists */
     NULL,                               /* pwglUseFontBitmapsA */

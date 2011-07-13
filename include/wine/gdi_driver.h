@@ -171,10 +171,10 @@ struct gdi_dc_funcs
     HGLRC    (CDECL *pwglCreateContext)(PHYSDEV);
     HGLRC    (CDECL *pwglCreateContextAttribsARB)(PHYSDEV,HGLRC,const int*);
     BOOL     (CDECL *pwglDeleteContext)(HGLRC);
-    PROC     (CDECL *pwglGetProcAddress)(LPCSTR);
     HDC      (CDECL *pwglGetPbufferDCARB)(PHYSDEV,void*);
-    BOOL     (CDECL *pwglMakeCurrent)(PHYSDEV,HGLRC);
+    PROC     (CDECL *pwglGetProcAddress)(LPCSTR);
     BOOL     (CDECL *pwglMakeContextCurrentARB)(PHYSDEV,PHYSDEV,HGLRC);
+    BOOL     (CDECL *pwglMakeCurrent)(PHYSDEV,HGLRC);
     BOOL     (CDECL *pwglSetPixelFormatWINE)(PHYSDEV,INT,const PIXELFORMATDESCRIPTOR*);
     BOOL     (CDECL *pwglShareLists)(HGLRC,HGLRC);
     BOOL     (CDECL *pwglUseFontBitmapsA)(PHYSDEV,DWORD,DWORD,DWORD);
@@ -182,7 +182,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 1
+#define WINE_GDI_DRIVER_VERSION 2
 
 static inline PHYSDEV get_physdev_entry_point( PHYSDEV dev, size_t offset )
 {

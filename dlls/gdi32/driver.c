@@ -788,10 +788,10 @@ const DC_FUNCTIONS null_driver =
     nulldrv_wglCreateContext,           /* pwglCreateContext */
     nulldrv_wglCreateContextAttribsARB, /* pwglCreateContextAttribsARB */
     nulldrv_wglDeleteContext,           /* pwglDeleteContext */
-    nulldrv_wglGetProcAddress,          /* pwglGetProcAddress */
     nulldrv_wglGetPbufferDCARB,         /* pwglGetPbufferDCARB */
-    nulldrv_wglMakeCurrent,             /* pwglMakeCurrent */
+    nulldrv_wglGetProcAddress,          /* pwglGetProcAddress */
     nulldrv_wglMakeContextCurrentARB,   /* pwglMakeContextCurrentARB */
+    nulldrv_wglMakeCurrent,             /* pwglMakeCurrent */
     nulldrv_wglSetPixelFormatWINE,      /* pwglSetPixelFormatWINE */
     nulldrv_wglShareLists,              /* pwglShareLists */
     nulldrv_wglUseFontBitmapsA,         /* pwglUseFontBitmapsA */

@@ -568,10 +568,10 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_wglCreateContext,            /* pwglCreateContext */
     X11DRV_wglCreateContextAttribsARB,  /* pwglCreateContextAttribsARB */
     X11DRV_wglDeleteContext,            /* pwglDeleteContext */
-    X11DRV_wglGetProcAddress,           /* pwglGetProcAddress */
     X11DRV_wglGetPbufferDCARB,          /* pwglGetPbufferDCARB */
-    X11DRV_wglMakeCurrent,              /* pwglMakeCurrent */
+    X11DRV_wglGetProcAddress,           /* pwglGetProcAddress */
     X11DRV_wglMakeContextCurrentARB,    /* pwglMakeContextCurrentARB */
+    X11DRV_wglMakeCurrent,              /* pwglMakeCurrent */
     X11DRV_wglSetPixelFormatWINE,       /* pwglSetPixelFormatWINE */
     X11DRV_wglShareLists,               /* pwglShareLists */
     X11DRV_wglUseFontBitmapsA,          /* pwglUseFontBitmapsA */
