@@ -2265,7 +2265,6 @@ struct wined3d_state
 
     WINED3DMATRIX transforms[HIGHEST_TRANSFORMSTATE + 1];
     double clip_planes[MAX_CLIPPLANES][4];
-    WINED3DCLIPSTATUS clip_status;
     WINED3DMATERIAL material;
     WINED3DVIEWPORT viewport;
     RECT scissor_rect;

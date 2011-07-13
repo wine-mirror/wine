@@ -2242,9 +2242,6 @@ HRESULT CDECL wined3d_device_set_clip_status(struct wined3d_device *device, cons
     if (!clip_status)
         return WINED3DERR_INVALIDCALL;
 
-    device->updateStateBlock->state.clip_status.ClipUnion = clip_status->ClipUnion;
-    device->updateStateBlock->state.clip_status.ClipIntersection = clip_status->ClipIntersection;
-
     return WINED3D_OK;
 }
 
@@ -2254,9 +2251,6 @@ HRESULT CDECL wined3d_device_get_clip_status(struct wined3d_device *device, WINE
 
     if (!clip_status)
         return WINED3DERR_INVALIDCALL;
-
-    clip_status->ClipUnion = device->updateStateBlock->state.clip_status.ClipUnion;
-    clip_status->ClipIntersection = device->updateStateBlock->state.clip_status.ClipIntersection;
 
     return WINED3D_OK;
 }

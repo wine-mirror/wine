@@ -1233,10 +1233,6 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     state->render_states[WINED3DRS_DESTBLENDALPHA] = WINED3DBLEND_ZERO;
     state->render_states[WINED3DRS_BLENDOPALPHA] = WINED3DBLENDOP_ADD;
 
-    /* clipping status */
-    state->clip_status.ClipUnion = 0;
-    state->clip_status.ClipIntersection = 0xFFFFFFFF;
-
     /* Texture Stage States - Put directly into state block, we will call function below */
     for (i = 0; i < MAX_TEXTURES; ++i)
     {

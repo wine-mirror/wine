@@ -573,18 +573,6 @@ static void state_clipping(DWORD state_id, struct wined3d_stateblock *stateblock
     if (disable & WINED3DCLIPPLANE3) { glDisable(GL_CLIP_PLANE3); checkGLcall("glDisable(clip plane 3)"); }
     if (disable & WINED3DCLIPPLANE4) { glDisable(GL_CLIP_PLANE4); checkGLcall("glDisable(clip plane 4)"); }
     if (disable & WINED3DCLIPPLANE5) { glDisable(GL_CLIP_PLANE5); checkGLcall("glDisable(clip plane 5)"); }
-
-    /** update clipping status */
-    if (enable)
-    {
-        stateblock->state.clip_status.ClipUnion = 0;
-        stateblock->state.clip_status.ClipIntersection = 0xFFFFFFFF;
-    }
-    else
-    {
-        stateblock->state.clip_status.ClipUnion = 0;
-        stateblock->state.clip_status.ClipIntersection = 0;
-    }
 }
 
 static void state_blendop_w(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
