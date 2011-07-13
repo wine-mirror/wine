@@ -1,3 +1,5 @@
+@ cdecl wine_get_gdi_driver(long) PSDRV_get_gdi_driver
+
 # GDI driver
 
 @ cdecl Arc(ptr long long long long long long long long) PSDRV_Arc

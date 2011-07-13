@@ -301,7 +301,7 @@ static LPDEVMODEA DEVMODEdupWtoA(HANDLE heap, const DEVMODEW *dmW)
 /**********************************************************************
  *	     PSDRV_CreateDC
  */
-BOOL CDECL PSDRV_CreateDC( HDC hdc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR device,
+BOOL CDECL PSDRV_CreateDC( HDC hdc, PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
                            LPCWSTR output, const DEVMODEW* initData )
 {
     PSDRV_PDEVICE *physDev;
@@ -312,7 +312,7 @@ BOOL CDECL PSDRV_CreateDC( HDC hdc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWST
      * (See CreateCompatibleDC) */
     if ( !device && *pdev )
     {
-        pi = PSDRV_FindPrinterInfo((*pdev)->pi->FriendlyName);
+        pi = PSDRV_FindPrinterInfo(get_psdrv_dev(*pdev)->pi->FriendlyName);
     }
     else
     {
@@ -341,7 +341,7 @@ BOOL CDECL PSDRV_CreateDC( HDC hdc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWST
 
     physDev = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(*physDev) );
     if (!physDev) return FALSE;
-    *pdev = physDev;
+    *pdev = &physDev->dev;
 
     physDev->pi = pi;
 
@@ -797,4 +797,143 @@ fail:
     if (ppd) unlink(ppd);
     *last = NULL;
     return NULL;
+}
+
+
+static const struct gdi_dc_funcs psdrv_funcs =
+{
+    NULL,                               /* pAbortDoc */
+    NULL,                               /* pAbortPath */
+    NULL,                               /* pAlphaBlend */
+    NULL,                               /* pAngleArc */
+    PSDRV_Arc,                          /* pArc */
+    NULL,                               /* pArcTo */
+    NULL,                               /* pBeginPath */
+    NULL,                               /* pChoosePixelFormat */
+    PSDRV_Chord,                        /* pChord */
+    NULL,                               /* pCloseFigure */
+    NULL,                               /* pCreateBitmap */
+    PSDRV_CreateDC,                     /* pCreateDC */
+    NULL,                               /* pCreateDIBSection */
+    NULL,                               /* pDeleteBitmap */
+    PSDRV_DeleteDC,                     /* pDeleteDC */
+    NULL,                               /* pDeleteObject */
+    NULL,                               /* pDescribePixelFormat */
+    PSDRV_DeviceCapabilities,           /* pDeviceCapabilities */
+    PSDRV_Ellipse,                      /* pEllipse */
+    PSDRV_EndDoc,                       /* pEndDoc */
+    PSDRV_EndPage,                      /* pEndPage */
+    NULL,                               /* pEndPath */
+    PSDRV_EnumDeviceFonts,              /* pEnumDeviceFonts */
+    NULL,                               /* pEnumICMProfiles */
+    NULL,                               /* pExcludeClipRect */
+    PSDRV_ExtDeviceMode,                /* pExtDeviceMode */
+    PSDRV_ExtEscape,                    /* pExtEscape */
+    NULL,                               /* pExtFloodFill */
+    NULL,                               /* pExtSelectClipRgn */
+    PSDRV_ExtTextOut,                   /* pExtTextOut */
+    NULL,                               /* pFillPath */
+    NULL,                               /* pFillRgn */
+    NULL,                               /* pFlattenPath */
+    NULL,                               /* pFrameRgn */
+    NULL,                               /* pGdiComment */
+    NULL,                               /* pGetBitmapBits */
+    PSDRV_GetCharWidth,                 /* pGetCharWidth */
+    NULL,                               /* pGetDIBits */
+    PSDRV_GetDeviceCaps,                /* pGetDeviceCaps */
+    NULL,                               /* pGetDeviceGammaRamp */
+    NULL,                               /* pGetICMProfile */
+    NULL,                               /* pGetNearestColor */
+    NULL,                               /* pGetPixel */
+    NULL,                               /* pGetPixelFormat */
+    NULL,                               /* pGetSystemPaletteEntries */
+    PSDRV_GetTextExtentExPoint,         /* pGetTextExtentExPoint */
+    PSDRV_GetTextMetrics,               /* pGetTextMetrics */
+    NULL,                               /* pIntersectClipRect */
+    NULL,                               /* pInvertRgn */
+    PSDRV_LineTo,                       /* pLineTo */
+    NULL,                               /* pModifyWorldTransform */
+    NULL,                               /* pMoveTo */
+    NULL,                               /* pOffsetClipRgn */
+    NULL,                               /* pOffsetViewportOrg */
+    NULL,                               /* pOffsetWindowOrg */
+    PSDRV_PaintRgn,                     /* pPaintRgn */
+    PSDRV_PatBlt,                       /* pPatBlt */
+    PSDRV_Pie,                          /* pPie */
+    NULL,                               /* pPolyBezier */
+    NULL,                               /* pPolyBezierTo */
+    NULL,                               /* pPolyDraw */
+    PSDRV_PolyPolygon,                  /* pPolyPolygon */
+    PSDRV_PolyPolyline,                 /* pPolyPolyline */
+    PSDRV_Polygon,                      /* pPolygon */
+    PSDRV_Polyline,                     /* pPolyline */
+    NULL,                               /* pPolylineTo */
+    NULL,                               /* pRealizeDefaultPalette */
+    NULL,                               /* pRealizePalette */
+    PSDRV_Rectangle,                    /* pRectangle */
+    PSDRV_ResetDC,                      /* pResetDC */
+    NULL,                               /* pRestoreDC */
+    PSDRV_RoundRect,                    /* pRoundRect */
+    NULL,                               /* pSaveDC */
+    NULL,                               /* pScaleViewportExt */
+    NULL,                               /* pScaleWindowExt */
+    NULL,                               /* pSelectBitmap */
+    PSDRV_SelectBrush,                  /* pSelectBrush */
+    NULL,                               /* pSelectClipPath */
+    PSDRV_SelectFont,                   /* pSelectFont */
+    NULL,                               /* pSelectPalette */
+    PSDRV_SelectPen,                    /* pSelectPen */
+    NULL,                               /* pSetArcDirection */
+    NULL,                               /* pSetBitmapBits */
+    PSDRV_SetBkColor,                   /* pSetBkColor */
+    NULL,                               /* pSetBkMode */
+    PSDRV_SetDCBrushColor,              /* pSetDCBrushColor */
+    PSDRV_SetDCPenColor,                /* pSetDCPenColor */
+    NULL,                               /* pSetDIBColorTable */
+    NULL,                               /* pSetDIBits */
+    NULL,                               /* pSetDIBitsToDevice */
+    NULL,                               /* pSetDeviceClipping */
+    NULL,                               /* pSetDeviceGammaRamp */
+    NULL,                               /* pSetLayout */
+    NULL,                               /* pSetMapMode */
+    NULL,                               /* pSetMapperFlags */
+    PSDRV_SetPixel,                     /* pSetPixel */
+    NULL,                               /* pSetPixelFormat */
+    NULL,                               /* pSetPolyFillMode */
+    NULL,                               /* pSetROP2 */
+    NULL,                               /* pSetRelAbs */
+    NULL,                               /* pSetStretchBltMode */
+    NULL,                               /* pSetTextAlign */
+    NULL,                               /* pSetTextCharacterExtra */
+    PSDRV_SetTextColor,                 /* pSetTextColor */
+    NULL,                               /* pSetTextJustification */
+    NULL,                               /* pSetViewportExt */
+    NULL,                               /* pSetViewportOrg */
+    NULL,                               /* pSetWindowExt */
+    NULL,                               /* pSetWindowOrg */
+    NULL,                               /* pSetWorldTransform */
+    PSDRV_StartDoc,                     /* pStartDoc */
+    PSDRV_StartPage,                    /* pStartPage */
+    NULL,                               /* pStretchBlt */
+    PSDRV_StretchDIBits,                /* pStretchDIBits */
+    NULL,                               /* pStrokeAndFillPath */
+    NULL,                               /* pStrokePath */
+    NULL,                               /* pSwapBuffers */
+    NULL,                               /* pUnrealizePalette */
+    NULL,                               /* pWidenPath */
+    /* OpenGL not supported */
+};
+
+
+/******************************************************************************
+ *      PSDRV_get_gdi_driver
+ */
+const struct gdi_dc_funcs * CDECL PSDRV_get_gdi_driver( unsigned int version )
+{
+    if (version != WINE_GDI_DRIVER_VERSION)
+    {
+        ERR( "version mismatch, gdi32 wants %u but wineps has %u\n", version, WINE_GDI_DRIVER_VERSION );
+        return NULL;
+    }
+    return &psdrv_funcs;
 }
