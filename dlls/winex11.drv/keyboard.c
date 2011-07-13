@@ -1189,8 +1189,16 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
     int i, j;
     DWORD time = GetCurrentTime();
     BYTE keystate[256];
+    WORD vkey;
+    struct {
+        WORD vkey;
+        WORD scan;
+        BOOL pressed;
+    } modifiers[6]; /* VK_LSHIFT through VK_RMENU are contiguous */
 
     if (!get_async_key_state( keystate )) return;
+
+    memset(modifiers, 0, sizeof(modifiers));
 
     /* the minimum keycode is always greater or equal to 8, so we can
      * skip the first 8 values, hence start at 1
@@ -1199,7 +1207,9 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
     {
         for (j = 0; j < 8; j++)
         {
-            WORD vkey = keyc2vkey[(i * 8) + j];
+            int m;
+
+            vkey = keyc2vkey[(i * 8) + j];
 
             switch(vkey & 0xff)
             {
@@ -1209,20 +1219,34 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
             case VK_RCONTROL:
             case VK_LSHIFT:
             case VK_RSHIFT:
-                if (!(keystate[vkey & 0xff] & 0x80) != !(event->xkeymap.key_vector[i] & (1<<j)))
+                m = (vkey & 0xff) - VK_LSHIFT;
+                /* Take the vkey and scan from the first keycode we encounter
+                   for this modifier. */
+                if (!modifiers[m].vkey)
                 {
-                    WORD scan = keyc2scan[(i * 8) + j];
-                    DWORD flags = vkey & 0x100 ? KEYEVENTF_EXTENDEDKEY : 0;
-                    if (!(event->xkeymap.key_vector[i] & (1<<j))) flags |= KEYEVENTF_KEYUP;
-
-                    TRACE( "Adjusting state for vkey %#.2x. State before %#.2x\n",
-                           vkey, keystate[vkey & 0xff]);
-
-                    /* Fake key being pressed inside wine */
-                    X11DRV_send_keyboard_input( hwnd, vkey & 0xff, scan & 0xff, flags, time );
+                    modifiers[m].vkey = vkey;
+                    modifiers[m].scan = keyc2scan[(i * 8) + j];
                 }
+                if (event->xkeymap.key_vector[i] & (1<<j))
+                    modifiers[m].pressed = TRUE;
                 break;
             }
+        }
+    }
+
+    for (vkey = VK_LSHIFT; vkey <= VK_RMENU; vkey++)
+    {
+        int m = vkey - VK_LSHIFT;
+        if (modifiers[m].vkey && !(keystate[vkey] & 0x80) != !modifiers[m].pressed)
+        {
+            DWORD flags = modifiers[m].vkey & 0x100 ? KEYEVENTF_EXTENDEDKEY : 0;
+            if (!modifiers[m].pressed) flags |= KEYEVENTF_KEYUP;
+
+            TRACE( "Adjusting state for vkey %#.2x. State before %#.2x\n",
+                   modifiers[m].vkey, keystate[vkey]);
+
+            /* Fake key being pressed inside wine */
+            X11DRV_send_keyboard_input( hwnd, vkey, modifiers[m].scan & 0xff, flags, time );
         }
     }
 }
