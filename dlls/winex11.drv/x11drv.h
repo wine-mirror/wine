@@ -180,57 +180,92 @@ extern GC get_bitmap_gc(int depth) DECLSPEC_HIDDEN;
 
 /* Wine driver X11 functions */
 
+extern BOOL CDECL X11DRV_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                                     PHYSDEV src_dev, struct bitblt_coords *src,
+                                     BLENDFUNCTION blendfn ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_Arc( PHYSDEV dev, INT left, INT top, INT right,
+                              INT bottom, INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_Chord( PHYSDEV dev, INT left, INT top,
+                                INT right, INT bottom, INT xstart,
+                                INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap, LPVOID bmBits ) DECLSPEC_HIDDEN;
+extern HBITMAP CDECL X11DRV_CreateDIBSection( PHYSDEV dev, HBITMAP hbitmap,
+                                              const BITMAPINFO *bmi, UINT usage ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_DeleteBitmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_Ellipse( PHYSDEV dev, INT left, INT top,
+                                  INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL CDECL X11DRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf,
                                           FONTENUMPROCW dfeproc, LPARAM lp ) DECLSPEC_HIDDEN;
+extern INT CDECL X11DRV_EnumICMProfiles( PHYSDEV dev, ICMENUMPROCW proc, LPARAM lparam ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_ExtFloodFill( PHYSDEV dev, INT x, INT y,
+                                       COLORREF color, UINT fillType ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y,
+                                     UINT flags, const RECT *lprect,
+                                     LPCWSTR str, UINT count, const INT *lpDx ) DECLSPEC_HIDDEN;
 extern LONG CDECL X11DRV_GetBitmapBits( HBITMAP hbitmap, void *bits, LONG count ) DECLSPEC_HIDDEN;
 extern BOOL CDECL X11DRV_GetCharWidth( PHYSDEV dev, UINT firstChar,
                                        UINT lastChar, LPINT buffer ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_GetDeviceGammaRamp( PHYSDEV dev, LPVOID ramp ) DECLSPEC_HIDDEN;
+extern INT CDECL X11DRV_GetDIBits( PHYSDEV dev, HBITMAP hbitmap, UINT startscan, UINT lines,
+                                   LPVOID bits, BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename ) DECLSPEC_HIDDEN;
+extern COLORREF CDECL X11DRV_GetNearestColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
+extern COLORREF CDECL X11DRV_GetPixel( PHYSDEV dev, INT x, INT y) DECLSPEC_HIDDEN;
+extern UINT CDECL X11DRV_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count, LPPALETTEENTRY entries ) DECLSPEC_HIDDEN;
 extern BOOL CDECL X11DRV_GetTextExtentExPoint( PHYSDEV dev, LPCWSTR str, INT count,
                                                INT maxExt, LPINT lpnFit, LPINT alpDx, LPSIZE size ) DECLSPEC_HIDDEN;
 extern BOOL CDECL X11DRV_GetTextMetrics(PHYSDEV dev, TEXTMETRICW *metrics) DECLSPEC_HIDDEN;
 extern BOOL CDECL X11DRV_LineTo( PHYSDEV dev, INT x, INT y) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_Arc( PHYSDEV dev, INT left, INT top, INT right,
-                              INT bottom, INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_Pie( PHYSDEV dev, INT left, INT top, INT right,
-                              INT bottom, INT xstart, INT ystart, INT xend,
-                              INT yend ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_Chord( PHYSDEV dev, INT left, INT top,
-                                INT right, INT bottom, INT xstart,
-                                INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_Ellipse( PHYSDEV dev, INT left, INT top,
-                                  INT right, INT bottom ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_Rectangle(PHYSDEV dev, INT left, INT top,
-                                   INT right, INT bottom) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_RoundRect( PHYSDEV dev, INT left, INT top,
-                                    INT right, INT bottom, INT ell_width,
-                                    INT ell_height ) DECLSPEC_HIDDEN;
-extern COLORREF CDECL X11DRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color ) DECLSPEC_HIDDEN;
-extern COLORREF CDECL X11DRV_GetPixel( PHYSDEV dev, INT x, INT y) DECLSPEC_HIDDEN;
 extern BOOL CDECL X11DRV_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_Pie( PHYSDEV dev, INT left, INT top, INT right,
+                              INT bottom, INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 extern BOOL CDECL X11DRV_Polyline( PHYSDEV dev,const POINT* pt,INT count) DECLSPEC_HIDDEN;
 extern BOOL CDECL X11DRV_Polygon( PHYSDEV dev, const POINT* pt, INT count ) DECLSPEC_HIDDEN;
 extern BOOL CDECL X11DRV_PolyPolygon( PHYSDEV dev, const POINT* pt,
                                       const INT* counts, UINT polygons) DECLSPEC_HIDDEN;
 extern BOOL CDECL X11DRV_PolyPolyline( PHYSDEV dev, const POINT* pt,
                                        const DWORD* counts, DWORD polylines) DECLSPEC_HIDDEN;
-
-extern COLORREF CDECL X11DRV_SetBkColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
-extern COLORREF CDECL X11DRV_SetTextColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_ExtFloodFill( PHYSDEV dev, INT x, INT y,
-                                       COLORREF color, UINT fillType ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y,
-                                     UINT flags, const RECT *lprect,
-                                     LPCWSTR str, UINT count, const INT *lpDx ) DECLSPEC_HIDDEN;
+extern UINT CDECL X11DRV_RealizeDefaultPalette( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern UINT CDECL X11DRV_RealizePalette( PHYSDEV dev, HPALETTE hpal, BOOL primary ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_Rectangle(PHYSDEV dev, INT left, INT top,
+                                   INT right, INT bottom) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_RoundRect( PHYSDEV dev, INT left, INT top,
+                                    INT right, INT bottom, INT ell_width,
+                                    INT ell_height ) DECLSPEC_HIDDEN;
+extern HBITMAP CDECL X11DRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap ) DECLSPEC_HIDDEN;
+extern HBRUSH CDECL X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush ) DECLSPEC_HIDDEN;
+extern HFONT CDECL X11DRV_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont ) DECLSPEC_HIDDEN;
+extern HPEN CDECL X11DRV_SelectPen( PHYSDEV dev, HPEN hpen ) DECLSPEC_HIDDEN;
 extern LONG CDECL X11DRV_SetBitmapBits( HBITMAP hbitmap, const void *bits, LONG count ) DECLSPEC_HIDDEN;
+extern COLORREF CDECL X11DRV_SetBkColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
+extern COLORREF CDECL X11DRV_SetDCBrushColor( PHYSDEV dev, COLORREF crColor ) DECLSPEC_HIDDEN;
+extern COLORREF CDECL X11DRV_SetDCPenColor( PHYSDEV dev, COLORREF crColor ) DECLSPEC_HIDDEN;
 extern void CDECL X11DRV_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn ) DECLSPEC_HIDDEN;
-extern INT CDECL X11DRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest,
-                                           INT yDest, DWORD cx, DWORD cy,
-                                           INT xSrc, INT ySrc,
-                                           UINT startscan, UINT lines,
-                                           LPCVOID bits, const BITMAPINFO *info,
-                                           UINT coloruse ) DECLSPEC_HIDDEN;
-extern BOOL CDECL X11DRV_GetDeviceGammaRamp( PHYSDEV dev, LPVOID ramp ) DECLSPEC_HIDDEN;
 extern BOOL CDECL X11DRV_SetDeviceGammaRamp( PHYSDEV dev, LPVOID ramp ) DECLSPEC_HIDDEN;
+extern UINT CDECL X11DRV_SetDIBColorTable( PHYSDEV dev, UINT start, UINT count, const RGBQUAD *colors ) DECLSPEC_HIDDEN;
+extern INT CDECL X11DRV_SetDIBits( PHYSDEV dev, HBITMAP hbitmap, UINT startscan,
+                                   UINT lines, LPCVOID bits, const BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
+extern INT CDECL X11DRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDest, DWORD cx, DWORD cy, INT xSrc, INT ySrc,
+                                           UINT startscan, UINT lines, LPCVOID bits, const BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
+extern COLORREF CDECL X11DRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_SetPixelFormat(PHYSDEV dev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd) DECLSPEC_HIDDEN;
+extern COLORREF CDECL X11DRV_SetTextColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                                     PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_UnrealizePalette( HPALETTE hpal ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_wglCopyContext( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask ) DECLSPEC_HIDDEN;
+extern HGLRC CDECL X11DRV_wglCreateContext( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern HGLRC CDECL X11DRV_wglCreateContextAttribsARB( PHYSDEV dev, HGLRC hShareContext, const int* attribList ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_wglDeleteContext( HGLRC hglrc ) DECLSPEC_HIDDEN;
+extern PROC CDECL X11DRV_wglGetProcAddress( LPCSTR proc ) DECLSPEC_HIDDEN;
+extern HDC CDECL X11DRV_wglGetPbufferDCARB( PHYSDEV dev, void *pbuffer ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_wglMakeContextCurrentARB( PHYSDEV draw_dev, PHYSDEV read_dev, HGLRC hglrc ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_wglMakeCurrent( PHYSDEV dev, HGLRC hglrc ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_wglSetPixelFormatWINE( PHYSDEV dev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_wglShareLists( HGLRC hglrc1, HGLRC hglrc2 ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_wglUseFontBitmapsA( PHYSDEV dev, DWORD first, DWORD count, DWORD listBase ) DECLSPEC_HIDDEN;
+extern BOOL CDECL X11DRV_wglUseFontBitmapsW( PHYSDEV dev, DWORD first, DWORD count, DWORD listBase ) DECLSPEC_HIDDEN;
 
 /* OpenGL / X11 driver functions */
 extern int CDECL X11DRV_ChoosePixelFormat(PHYSDEV dev,

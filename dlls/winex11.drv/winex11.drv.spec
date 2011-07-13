@@ -1,5 +1,7 @@
 # GDI driver
 
+@ cdecl wine_get_gdi_driver(long) X11DRV_get_gdi_driver
+
 @ cdecl AlphaBlend(ptr ptr ptr ptr long) X11DRV_AlphaBlend
 @ cdecl Arc(ptr long long long long long long long long) X11DRV_Arc
 @ cdecl ChoosePixelFormat(ptr ptr) X11DRV_ChoosePixelFormat
