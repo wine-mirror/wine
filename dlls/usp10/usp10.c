@@ -1612,7 +1612,7 @@ HRESULT WINAPI ScriptShapeOpenType( HDC hdc, SCRIPT_CACHE *psc,
     if (cRanges)
         FIXME("Ranges not supported yet\n");
 
-    rtl = (!psa->fLogicalOrder && psa->fRTL);
+    rtl = (psa && !psa->fLogicalOrder && psa->fRTL);
 
     *pcGlyphs = cChars;
     if ((hr = init_script_cache(hdc, psc)) != S_OK) return hr;
@@ -1640,7 +1640,7 @@ HRESULT WINAPI ScriptShapeOpenType( HDC hdc, SCRIPT_CACHE *psc,
         pwLogClust[i] = idx;
     }
 
-    if (!psa->fNoGlyphIndex)
+    if (psa && !psa->fNoGlyphIndex)
     {
         WCHAR *rChars;
         if ((hr = SHAPE_CheckFontForRequiredFeatures(hdc, (ScriptCache *)*psc, psa)) != S_OK) return hr;
