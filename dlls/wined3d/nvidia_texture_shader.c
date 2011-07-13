@@ -457,13 +457,13 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
 }
 
 
-static void nvrc_colorop(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void nvrc_colorop(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    BOOL tex_used = stateblock->device->fixed_function_usage_map & (1 << stage);
-    DWORD mapped_stage = stateblock->device->texUnitMap[stage];
+    const struct wined3d_device *device = context->swapchain->device;
+    BOOL tex_used = device->fixed_function_usage_map & (1 << stage);
+    DWORD mapped_stage = device->texUnitMap[stage];
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    const struct wined3d_state *state = &stateblock->state;
 
     TRACE("Setting color op for stage %u.\n", stage);
 
@@ -567,11 +567,10 @@ static void nvrc_colorop(DWORD state_id, struct wined3d_stateblock *stateblock, 
     }
 }
 
-static void nvts_texdim(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void nvts_texdim(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     DWORD sampler = state_id - STATE_SAMPLER(0);
-    DWORD mapped_stage = stateblock->device->texUnitMap[sampler];
-    const struct wined3d_state *state = &stateblock->state;
+    DWORD mapped_stage = context->swapchain->device->texUnitMap[sampler];
 
     /* No need to enable / disable anything here for unused samplers. The tex_colorop
     * handler takes care. Also no action is needed with pixel shaders, or if tex_colorop
@@ -584,10 +583,10 @@ static void nvts_texdim(DWORD state_id, struct wined3d_stateblock *stateblock, s
     nvts_activate_dimensions(state, sampler, context);
 }
 
-static void nvts_bumpenvmat(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void nvts_bumpenvmat(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    DWORD mapped_stage = stateblock->device->texUnitMap[stage + 1];
+    DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
+    DWORD mapped_stage = context->swapchain->device->texUnitMap[stage + 1];
     const struct wined3d_gl_info *gl_info = context->gl_info;
     float mat[2][2];
 
@@ -602,22 +601,22 @@ static void nvts_bumpenvmat(DWORD state, struct wined3d_stateblock *stateblock, 
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
         checkGLcall("GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage))");
 
-        /* We can't just pass a pointer to the stateblock to GL due to the
+        /* We can't just pass a pointer to the state to GL due to the
          * different matrix format (column major vs row major). */
-        mat[0][0] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT00]);
-        mat[1][0] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT01]);
-        mat[0][1] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT10]);
-        mat[1][1] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT11]);
+        mat[0][0] = *((float *)&state->texture_states[stage][WINED3DTSS_BUMPENVMAT00]);
+        mat[1][0] = *((float *)&state->texture_states[stage][WINED3DTSS_BUMPENVMAT01]);
+        mat[0][1] = *((float *)&state->texture_states[stage][WINED3DTSS_BUMPENVMAT10]);
+        mat[1][1] = *((float *)&state->texture_states[stage][WINED3DTSS_BUMPENVMAT11]);
         glTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV, (float *)mat);
         checkGLcall("glTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV, mat)");
     }
 }
 
-static void nvrc_texfactor(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void nvrc_texfactor(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     float col[4];
-    D3DCOLORTOGLFLOAT4(stateblock->state.render_states[WINED3DRS_TEXTUREFACTOR], col);
+    D3DCOLORTOGLFLOAT4(state->render_states[WINED3DRS_TEXTUREFACTOR], col);
     GL_EXTCALL(glCombinerParameterfvNV(GL_CONSTANT_COLOR0_NV, &col[0]));
 }
 

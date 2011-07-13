@@ -796,17 +796,17 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
     return ret;
 }
 
-static void set_tex_op_atifs(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void set_tex_op_atifs(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
+    const struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    struct wined3d_device *device = stateblock->device;
     const struct atifs_ffp_desc *desc;
     struct ffp_frag_settings settings;
     struct atifs_private_data *priv = device->fragment_priv;
     DWORD mapped_stage;
     unsigned int i;
 
-    gen_ffp_frag_op(device, &stateblock->state, &settings, TRUE);
+    gen_ffp_frag_op(device, state, &settings, TRUE);
     desc = (const struct atifs_ffp_desc *)find_ffp_frag_shader(&priv->fragment_shaders, &settings);
     if(!desc) {
         struct atifs_ffp_desc *new_desc = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_desc));
@@ -839,33 +839,33 @@ static void set_tex_op_atifs(DWORD state, struct wined3d_stateblock *stateblock,
         {
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
             checkGLcall("glActiveTextureARB");
-            texture_activate_dimensions(stateblock->state.textures[i], gl_info);
+            texture_activate_dimensions(state->textures[i], gl_info);
         }
     }
 
     GL_EXTCALL(glBindFragmentShaderATI(desc->shader));
 }
 
-static void state_texfactor_atifs(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void state_texfactor_atifs(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     float col[4];
-    D3DCOLORTOGLFLOAT4(stateblock->state.render_states[WINED3DRS_TEXTUREFACTOR], col);
+    D3DCOLORTOGLFLOAT4(state->render_states[WINED3DRS_TEXTUREFACTOR], col);
 
     GL_EXTCALL(glSetFragmentShaderConstantATI(ATI_FFP_CONST_TFACTOR, col));
     checkGLcall("glSetFragmentShaderConstantATI(ATI_FFP_CONST_TFACTOR, col)");
 }
 
-static void set_bumpmat(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void set_bumpmat(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
+    DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     const struct wined3d_gl_info *gl_info = context->gl_info;
     float mat[2][2];
 
-    mat[0][0] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT00]);
-    mat[1][0] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT01]);
-    mat[0][1] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT10]);
-    mat[1][1] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT11]);
+    mat[0][0] = *((float *)&state->texture_states[stage][WINED3DTSS_BUMPENVMAT00]);
+    mat[1][0] = *((float *)&state->texture_states[stage][WINED3DTSS_BUMPENVMAT01]);
+    mat[0][1] = *((float *)&state->texture_states[stage][WINED3DTSS_BUMPENVMAT10]);
+    mat[1][1] = *((float *)&state->texture_states[stage][WINED3DTSS_BUMPENVMAT11]);
     /* GL_ATI_fragment_shader allows only constants from 0.0 to 1.0, but the bumpmat
      * constants can be in any range. While they should stay between [-1.0 and 1.0] because
      * Shader Model 1.x pixel shaders are clamped to that range negative values are used occasionally,
@@ -881,42 +881,43 @@ static void set_bumpmat(DWORD state, struct wined3d_stateblock *stateblock, stru
     checkGLcall("glSetFragmentShaderConstantATI(ATI_FFP_CONST_BUMPMAT(stage), mat)");
 }
 
-static void textransform(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void textransform(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     if (!isStateDirty(context, STATE_PIXELSHADER))
-        set_tex_op_atifs(state, stateblock, context);
+        set_tex_op_atifs(context, state, state_id);
 }
 
-static void atifs_apply_pixelshader(DWORD state_id,
-        struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void atifs_apply_pixelshader(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_state *state = &stateblock->state;
-    struct wined3d_device *device = stateblock->device;
+    const struct wined3d_device *device = context->swapchain->device;
     BOOL use_vshader = use_vs(state);
 
     context->last_was_pshader = use_ps(state);
-    /* The ATIFS code does not support pixel shaders currently, but we have to provide a state handler
-     * to call shader_select to select a vertex shader if one is applied because the vertex shader state
-     * may defer calling the shader backend if the pshader state is dirty.
+    /* The ATIFS code does not support pixel shaders currently, but we have to
+     * provide a state handler to call shader_select to select a vertex shader
+     * if one is applied because the vertex shader state may defer calling the
+     * shader backend if the pshader state is dirty.
      *
-     * In theory the application should not be able to mark the pixel shader dirty because it cannot
-     * create a shader, and thus has no way to set the state to something != NULL. However, a different
-     * pipeline part may link a different state to its pixelshader handler, thus a pshader state exists
-     * and can be dirtified. Also the pshader is always dirtified at startup, and blitting disables all
-     * shaders and dirtifies all shader states. If atifs can deal with this it keeps the rest of the code
-     * simpler.
-     */
-    if(!isStateDirty(context, device->StateTable[STATE_VSHADER].representative)) {
+     * In theory the application should not be able to mark the pixel shader
+     * dirty because it cannot create a shader, and thus has no way to set the
+     * state to something != NULL. However, a different pipeline part may link
+     * a different state to its pixelshader handler, thus a pshader state
+     * exists and can be dirtified. Also the pshader is always dirtified at
+     * startup, and blitting disables all shaders and dirtifies all shader
+     * states. If atifs can deal with this it keeps the rest of the code
+     * simpler. */
+    if (!isStateDirty(context, device->StateTable[STATE_VSHADER].representative))
+    {
         device->shader_backend->shader_select(context, FALSE, use_vshader);
 
         if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && use_vshader)
-            stateblock_apply_state(STATE_VERTEXSHADERCONSTANT, stateblock, context);
+            context_apply_state(context, state, STATE_VERTEXSHADERCONSTANT);
     }
 }
 
-static void atifs_srgbwriteenable(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void atifs_srgbwriteenable(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (stateblock->state.render_states[WINED3DRS_SRGBWRITEENABLE])
+    if (state->render_states[WINED3DRS_SRGBWRITEENABLE])
         WARN("sRGB writes are not supported by this fragment pipe.\n");
 }
 

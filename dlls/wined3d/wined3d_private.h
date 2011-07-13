@@ -1136,7 +1136,7 @@ struct wined3d_fb_state
     struct wined3d_surface *depth_stencil;
 };
 
-typedef void (*APPLYSTATEFUNC)(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *ctx);
+typedef void (*APPLYSTATEFUNC)(struct wined3d_context *ctx, const struct wined3d_state *state, DWORD state_id);
 
 struct StateEntry
 {
@@ -1252,10 +1252,10 @@ void context_resource_unloaded(const struct wined3d_device *device,
 BOOL context_set_current(struct wined3d_context *ctx) DECLSPEC_HIDDEN;
 void context_set_draw_buffer(struct wined3d_context *context, GLenum buffer) DECLSPEC_HIDDEN;
 void context_set_tls_idx(DWORD idx) DECLSPEC_HIDDEN;
-void context_state_drawbuf(DWORD state, struct wined3d_stateblock *stateblock,
-        struct wined3d_context *context) DECLSPEC_HIDDEN;
-void context_state_fb(DWORD state, struct wined3d_stateblock *stateblock,
-        struct wined3d_context *context) DECLSPEC_HIDDEN;
+void context_state_drawbuf(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void context_state_fb(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void context_surface_update(struct wined3d_context *context, const struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
@@ -2314,14 +2314,6 @@ struct wined3d_stateblock
 void stateblock_init_contained_states(struct wined3d_stateblock *stateblock) DECLSPEC_HIDDEN;
 void stateblock_init_default_state(struct wined3d_stateblock *stateblock) DECLSPEC_HIDDEN;
 
-static inline void stateblock_apply_state(DWORD state, struct wined3d_stateblock *stateblock,
-        struct wined3d_context *context)
-{
-    const struct StateEntry *statetable = stateblock->device->StateTable;
-    DWORD rep = statetable[state].representative;
-    statetable[rep].apply(rep, stateblock, context);
-}
-
 /* Direct3D terminology with little modifications. We do not have an issued state
  * because only the driver knows about it, but we have a created state because d3d
  * allows GetData on a created issue, but opengl doesn't
@@ -2499,20 +2491,20 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords,
         BOOL transformed, enum wined3d_format_id coordtype, BOOL ffp_can_disable_proj) DECLSPEC_HIDDEN;
 void texture_activate_dimensions(const struct wined3d_texture *texture,
         const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
-void sampler_texdim(DWORD state, struct wined3d_stateblock *stateblock,
-        struct wined3d_context *context) DECLSPEC_HIDDEN;
-void tex_alphaop(DWORD state, struct wined3d_stateblock *stateblock,
-        struct wined3d_context *context) DECLSPEC_HIDDEN;
-void apply_pixelshader(DWORD state, struct wined3d_stateblock *stateblock,
-        struct wined3d_context *context) DECLSPEC_HIDDEN;
-void state_fogcolor(DWORD state, struct wined3d_stateblock *stateblock,
-        struct wined3d_context *context) DECLSPEC_HIDDEN;
-void state_fogdensity(DWORD state, struct wined3d_stateblock *stateblock,
-        struct wined3d_context *context) DECLSPEC_HIDDEN;
-void state_fogstartend(DWORD state, struct wined3d_stateblock *stateblock,
-        struct wined3d_context *context) DECLSPEC_HIDDEN;
-void state_fog_fragpart(DWORD state, struct wined3d_stateblock *stateblock,
-        struct wined3d_context *context) DECLSPEC_HIDDEN;
+void sampler_texdim(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void tex_alphaop(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void apply_pixelshader(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void state_fogcolor(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void state_fogdensity(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void state_fogstartend(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void state_fog_fragpart(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 
 BOOL getColorBits(const struct wined3d_format *format,
         BYTE *redSize, BYTE *greenSize, BYTE *blueSize, BYTE *alphaSize, BYTE *totalSize) DECLSPEC_HIDDEN;
@@ -2832,6 +2824,14 @@ static inline BOOL use_vs(const struct wined3d_state *state)
 static inline BOOL use_ps(const struct wined3d_state *state)
 {
     return !!state->pixel_shader;
+}
+
+static inline void context_apply_state(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
+{
+    const struct StateEntry *statetable = context->swapchain->device->StateTable;
+    DWORD rep = statetable[state_id].representative;
+    statetable[rep].apply(context, state, rep);
 }
 
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */

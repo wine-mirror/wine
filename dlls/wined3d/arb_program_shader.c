@@ -5601,17 +5601,15 @@ static void arbfp_get_caps(const struct wined3d_gl_info *gl_info, struct fragmen
     caps->MaxSimultaneousTextures = min(gl_info->limits.fragment_samplers, 8);
 }
 
-static void state_texfactor_arbfp(DWORD state_id,
-        struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void state_texfactor_arbfp(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
 {
+    struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    const struct wined3d_state *state = &stateblock->state;
-    struct wined3d_device *device = stateblock->device;
     float col[4];
 
-    /* Don't load the parameter if we're using an arbfp pixel shader, otherwise we'll overwrite
-     * application provided constants
-     */
+    /* Don't load the parameter if we're using an arbfp pixel shader,
+     * otherwise we'll overwrite application provided constants. */
     if (device->shader_backend == &arb_program_shader_backend)
     {
         if (use_ps(state)) return;
@@ -5623,15 +5621,13 @@ static void state_texfactor_arbfp(DWORD state_id,
     D3DCOLORTOGLFLOAT4(state->render_states[WINED3DRS_TEXTUREFACTOR], col);
     GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR, col));
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR, col)");
-
 }
 
-static void state_arb_specularenable(DWORD state_id,
-        struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void state_arb_specularenable(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
 {
+    struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    const struct wined3d_state *state = &stateblock->state;
-    struct wined3d_device *device = stateblock->device;
     float col[4];
 
     /* Don't load the parameter if we're using an arbfp pixel shader, otherwise we'll overwrite
@@ -5658,12 +5654,11 @@ static void state_arb_specularenable(DWORD state_id,
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_SPECULAR_ENABLE, col)");
 }
 
-static void set_bumpmat_arbfp(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void set_bumpmat_arbfp(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
+    struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    const struct wined3d_state *state = &stateblock->state;
-    struct wined3d_device *device = stateblock->device;
     float mat[2][2];
 
     if (use_ps(state))
@@ -5674,7 +5669,7 @@ static void set_bumpmat_arbfp(DWORD state_id, struct wined3d_stateblock *statebl
              * anyway
              */
             if (!isStateDirty(context, STATE_PIXELSHADERCONSTANT))
-                stateblock_apply_state(STATE_PIXELSHADERCONSTANT, stateblock, context);
+                context_apply_state(context, state, STATE_PIXELSHADERCONSTANT);
         }
 
         if(device->shader_backend == &arb_program_shader_backend) {
@@ -5695,13 +5690,12 @@ static void set_bumpmat_arbfp(DWORD state_id, struct wined3d_stateblock *statebl
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_BUMPMAT(stage), &mat[0][0])");
 }
 
-static void tex_bumpenvlum_arbfp(DWORD state_id,
-        struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void tex_bumpenvlum_arbfp(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
 {
     DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
+    struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    const struct wined3d_state *state = &stateblock->state;
-    struct wined3d_device *device = stateblock->device;
     float param[4];
 
     if (use_ps(state))
@@ -5712,7 +5706,7 @@ static void tex_bumpenvlum_arbfp(DWORD state_id,
              * isn't scheduled anyway
              */
             if (!isStateDirty(context, STATE_PIXELSHADERCONSTANT))
-                stateblock_apply_state(STATE_PIXELSHADERCONSTANT, stateblock, context);
+                context_apply_state(context, state, STATE_PIXELSHADERCONSTANT);
         }
 
         if(device->shader_backend == &arb_program_shader_backend) {
@@ -6230,11 +6224,10 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
     return ret;
 }
 
-static void fragment_prog_arbfp(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void fragment_prog_arbfp(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
+    const struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    const struct wined3d_state *state = &stateblock->state;
-    struct wined3d_device *device = stateblock->device;
     struct shader_arb_priv *priv = device->fragment_priv;
     BOOL use_vshader = use_vs(state);
     BOOL use_pshader = use_ps(state);
@@ -6242,17 +6235,23 @@ static void fragment_prog_arbfp(DWORD state_id, struct wined3d_stateblock *state
     const struct arbfp_ffp_desc *desc;
     unsigned int i;
 
-    TRACE("state_id %#x, stateblock %p, context %p\n", state_id, stateblock, context);
+    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
-    if(isStateDirty(context, STATE_RENDER(WINED3DRS_FOGENABLE))) {
-        if(!use_pshader && device->shader_backend == &arb_program_shader_backend && context->last_was_pshader) {
-            /* Reload fixed function constants since they collide with the pixel shader constants */
-            for(i = 0; i < MAX_TEXTURES; i++) {
-                set_bumpmat_arbfp(STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT00), stateblock, context);
+    if (isStateDirty(context, STATE_RENDER(WINED3DRS_FOGENABLE)))
+    {
+        if (!use_pshader && device->shader_backend == &arb_program_shader_backend && context->last_was_pshader)
+        {
+            /* Reload fixed function constants since they collide with the
+             * pixel shader constants. */
+            for (i = 0; i < MAX_TEXTURES; ++i)
+            {
+                set_bumpmat_arbfp(context, state, STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT00));
             }
-            state_texfactor_arbfp(STATE_RENDER(WINED3DRS_TEXTUREFACTOR), stateblock, context);
-            state_arb_specularenable(STATE_RENDER(WINED3DRS_SPECULARENABLE), stateblock, context);
-        } else if(use_pshader && !isStateDirty(context, device->StateTable[STATE_VSHADER].representative)) {
+            state_texfactor_arbfp(context, state, STATE_RENDER(WINED3DRS_TEXTUREFACTOR));
+            state_arb_specularenable(context, state, STATE_RENDER(WINED3DRS_SPECULARENABLE));
+        }
+        else if(use_pshader && !isStateDirty(context, device->StateTable[STATE_VSHADER].representative))
+        {
             device->shader_backend->shader_select(context, use_pshader, use_vshader);
         }
         return;
@@ -6293,13 +6292,16 @@ static void fragment_prog_arbfp(DWORD state_id, struct wined3d_stateblock *state
         checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, desc->shader)");
         priv->current_fprogram_id = desc->shader;
 
-        if(device->shader_backend == &arb_program_shader_backend && context->last_was_pshader) {
-            /* Reload fixed function constants since they collide with the pixel shader constants */
-            for(i = 0; i < MAX_TEXTURES; i++) {
-                set_bumpmat_arbfp(STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT00), stateblock, context);
+        if (device->shader_backend == &arb_program_shader_backend && context->last_was_pshader)
+        {
+            /* Reload fixed function constants since they collide with the
+             * pixel shader constants. */
+            for (i = 0; i < MAX_TEXTURES; ++i)
+            {
+                set_bumpmat_arbfp(context, state, STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT00));
             }
-            state_texfactor_arbfp(STATE_RENDER(WINED3DRS_TEXTUREFACTOR), stateblock, context);
-            state_arb_specularenable(STATE_RENDER(WINED3DRS_SPECULARENABLE), stateblock, context);
+            state_texfactor_arbfp(context, state, STATE_RENDER(WINED3DRS_TEXTUREFACTOR));
+            state_arb_specularenable(context, state, STATE_RENDER(WINED3DRS_SPECULARENABLE));
         }
         context->last_was_pshader = FALSE;
     } else {
@@ -6319,29 +6321,30 @@ static void fragment_prog_arbfp(DWORD state_id, struct wined3d_stateblock *state
         device->shader_backend->shader_select(context, use_pshader, use_vshader);
 
         if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && (use_vshader || use_pshader))
-            stateblock_apply_state(STATE_VERTEXSHADERCONSTANT, stateblock, context);
+            context_apply_state(context, state, STATE_VERTEXSHADERCONSTANT);
     }
-    if (use_pshader) stateblock_apply_state(STATE_PIXELSHADERCONSTANT, stateblock, context);
+    if (use_pshader)
+        context_apply_state(context, state, STATE_PIXELSHADERCONSTANT);
 }
 
-/* We can't link the fog states to the fragment state directly since the vertex pipeline links them
- * to FOGENABLE. A different linking in different pipeline parts can't be expressed in the combined
- * state table, so we need to handle that with a forwarding function. The other invisible side effect
- * is that changing the fog start and fog end(which links to FOGENABLE in vertex) results in the
- * fragment_prog_arbfp function being called because FOGENABLE is dirty, which calls this function here
- */
-static void state_arbfp_fog(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+/* We can't link the fog states to the fragment state directly since the
+ * vertex pipeline links them to FOGENABLE. A different linking in different
+ * pipeline parts can't be expressed in the combined state table, so we need
+ * to handle that with a forwarding function. The other invisible side effect
+ * is that changing the fog start and fog end (which links to FOGENABLE in
+ * vertex) results in the fragment_prog_arbfp function being called because
+ * FOGENABLE is dirty, which calls this function here. */
+static void state_arbfp_fog(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_state *state = &stateblock->state;
     enum fogsource new_source;
 
-    TRACE("state_id %#x, stateblock %p, context %p\n", state_id, stateblock, context);
+    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
-    if(!isStateDirty(context, STATE_PIXELSHADER)) {
-        fragment_prog_arbfp(state_id, stateblock, context);
-    }
+    if (!isStateDirty(context, STATE_PIXELSHADER))
+        fragment_prog_arbfp(context, state, state_id);
 
-    if (!state->render_states[WINED3DRS_FOGENABLE]) return;
+    if (!state->render_states[WINED3DRS_FOGENABLE])
+        return;
 
     if (state->render_states[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
     {
@@ -6356,19 +6359,23 @@ static void state_arbfp_fog(DWORD state_id, struct wined3d_stateblock *statebloc
             else
                 new_source = FOGSOURCE_FFP;
         }
-    } else {
+    }
+    else
+    {
         new_source = FOGSOURCE_FFP;
     }
-    if(new_source != context->fog_source) {
+
+    if (new_source != context->fog_source)
+    {
         context->fog_source = new_source;
-        state_fogstartend(STATE_RENDER(WINED3DRS_FOGSTART), stateblock, context);
+        state_fogstartend(context, state, STATE_RENDER(WINED3DRS_FOGSTART));
     }
 }
 
-static void textransform(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+static void textransform(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     if (!isStateDirty(context, STATE_PIXELSHADER))
-        fragment_prog_arbfp(state, stateblock, context);
+        fragment_prog_arbfp(context, state, state_id);
 }
 
 static const struct StateEntryTemplate arbfp_fragmentstate_template[] = {

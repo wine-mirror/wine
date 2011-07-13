@@ -3126,20 +3126,22 @@ void texture_activate_dimensions(const struct wined3d_texture *texture, const st
 }
 
 /* GL locking is done by the caller (state handler) */
-void sampler_texdim(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+void sampler_texdim(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    DWORD sampler = state - STATE_SAMPLER(0);
-    DWORD mapped_stage = stateblock->device->texUnitMap[sampler];
+    DWORD sampler = state_id - STATE_SAMPLER(0);
+    DWORD mapped_stage = context->swapchain->device->texUnitMap[sampler];
 
-    /* No need to enable / disable anything here for unused samplers. The tex_colorop
-    * handler takes care. Also no action is needed with pixel shaders, or if tex_colorop
-    * will take care of this business
-    */
-    if (mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= context->gl_info->limits.textures) return;
-    if (sampler >= stateblock->state.lowest_disabled_stage) return;
-    if (isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) return;
+    /* No need to enable / disable anything here for unused samplers. The
+     * tex_colorop handler takes care. Also no action is needed with pixel
+     * shaders, or if tex_colorop will take care of this business. */
+    if (mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= context->gl_info->limits.textures)
+        return;
+    if (sampler >= state->lowest_disabled_stage)
+        return;
+    if (isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP)))
+        return;
 
-    texture_activate_dimensions(stateblock->state.textures[sampler], context->gl_info);
+    texture_activate_dimensions(state->textures[sampler], context->gl_info);
 }
 
 void *wined3d_rb_alloc(size_t size)

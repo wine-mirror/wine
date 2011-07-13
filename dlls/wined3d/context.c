@@ -2177,10 +2177,9 @@ static DWORD find_draw_buffers_mask(const struct wined3d_context *context, const
 }
 
 /* GL locking and context activation are done by the caller */
-void context_state_fb(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+void context_state_fb(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_state *state = &stateblock->state;
-    struct wined3d_device *device = stateblock->device;
+    const struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_fb_state *fb = state->fb;
     DWORD rt_mask = find_draw_buffers_mask(context, device);
 
@@ -2206,10 +2205,10 @@ void context_state_fb(DWORD state_id, struct wined3d_stateblock *stateblock, str
 }
 
 /* GL locking and context activation are done by the caller */
-void context_state_drawbuf(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
+void context_state_drawbuf(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
+    const struct wined3d_device *device = context->swapchain->device;
     DWORD rt_mask;
-    struct wined3d_device *device = stateblock->device;
 
     if (isStateDirty(context, STATE_FRAMEBUFFER)) return;
 
@@ -2224,9 +2223,9 @@ void context_state_drawbuf(DWORD state, struct wined3d_stateblock *stateblock, s
 /* Context activation is done by the caller. */
 BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_device *device)
 {
-    struct wined3d_stateblock *stateblock = device->stateBlock;
+    const struct wined3d_state *state = &device->stateBlock->state;
     const struct StateEntry *state_table = device->StateTable;
-    const struct wined3d_fb_state *fb = stateblock->state.fb;
+    const struct wined3d_fb_state *fb = state->fb;
     unsigned int i;
 
     if (!context_validate_rt_config(context->gl_info->limits.buffers,
@@ -2253,7 +2252,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
         DWORD idx = rep / (sizeof(*context->isStateDirty) * CHAR_BIT);
         BYTE shift = rep & ((sizeof(*context->isStateDirty) * CHAR_BIT) - 1);
         context->isStateDirty[idx] &= ~(1 << shift);
-        state_table[rep].apply(rep, stateblock, context);
+        state_table[rep].apply(context, state, rep);
     }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
