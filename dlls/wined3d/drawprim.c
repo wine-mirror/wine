@@ -74,7 +74,6 @@ static void drawStridedSlow(struct wined3d_device *device, const struct wined3d_
     const DWORD               *pIdxBufL     = NULL;
     UINT vx_index;
     const struct wined3d_state *state = &device->stateBlock->state;
-    const struct wined3d_stream_state *streams = state->streams;
     LONG SkipnStrides = startIdx;
     BOOL pixelShader = use_ps(state);
     BOOL specular_fog = FALSE;
@@ -111,13 +110,13 @@ static void drawStridedSlow(struct wined3d_device *device, const struct wined3d_
     if (si->use_map & (1 << WINED3D_FFP_POSITION))
     {
         element = &si->elements[WINED3D_FFP_POSITION];
-        position = element->data.addr + streams[element->stream_idx].offset;
+        position = element->data.addr;
     }
 
     if (si->use_map & (1 << WINED3D_FFP_NORMAL))
     {
         element = &si->elements[WINED3D_FFP_NORMAL];
-        normal = element->data.addr + streams[element->stream_idx].offset;
+        normal = element->data.addr;
     }
     else
     {
@@ -128,7 +127,7 @@ static void drawStridedSlow(struct wined3d_device *device, const struct wined3d_
     if (si->use_map & (1 << WINED3D_FFP_DIFFUSE))
     {
         element = &si->elements[WINED3D_FFP_DIFFUSE];
-        diffuse = element->data.addr + streams[element->stream_idx].offset;
+        diffuse = element->data.addr;
 
         if (num_untracked_materials && element->format->id != WINED3DFMT_B8G8R8A8_UNORM)
             FIXME("Implement diffuse color tracking from %s\n", debug_d3dformat(element->format->id));
@@ -141,7 +140,7 @@ static void drawStridedSlow(struct wined3d_device *device, const struct wined3d_
     if (si->use_map & (1 << WINED3D_FFP_SPECULAR))
     {
         element = &si->elements[WINED3D_FFP_SPECULAR];
-        specular = element->data.addr + streams[element->stream_idx].offset;
+        specular = element->data.addr;
 
         /* special case where the fog density is stored in the specular alpha channel */
         if (state->render_states[WINED3DRS_FOGENABLE]
@@ -201,7 +200,7 @@ static void drawStridedSlow(struct wined3d_device *device, const struct wined3d_
         if (si->use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coordIdx)))
         {
             element = &si->elements[WINED3D_FFP_TEXCOORD0 + coordIdx];
-            texCoords[coordIdx] = element->data.addr + streams[element->stream_idx].offset;
+            texCoords[coordIdx] = element->data.addr;
             tex_mask |= (1 << textureNo);
         }
         else
@@ -465,8 +464,7 @@ static void drawStridedSlowVs(const struct wined3d_gl_info *gl_info, const struc
         {
             if (!(si->use_map & (1 << i))) continue;
 
-            ptr = si->elements[i].data.addr + si->elements[i].stride * SkipnStrides
-                    + state->streams[si->elements[i].stream_idx].offset;
+            ptr = si->elements[i].data.addr + si->elements[i].stride * SkipnStrides;
 
             send_attribute(gl_info, si->elements[i].format->id, i, ptr);
         }
@@ -530,8 +528,7 @@ static void drawStridedInstanced(const struct wined3d_gl_info *gl_info, const st
         /* Specify the instanced attributes using immediate mode calls */
         for(j = 0; j < numInstancedAttribs; j++) {
             const BYTE *ptr = si->elements[instancedData[j]].data.addr
-                    + si->elements[instancedData[j]].stride * i
-                    + state->streams[si->elements[instancedData[j]].stream_idx].offset;
+                    + si->elements[instancedData[j]].stride * i;
             if (si->elements[instancedData[j]].data.buffer_object)
             {
                 struct wined3d_buffer *vb = state->streams[si->elements[instancedData[j]].stream_idx].buffer;

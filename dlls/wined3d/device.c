@@ -189,7 +189,8 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
     for (i = 0; i < declaration->element_count; ++i)
     {
         const struct wined3d_vertex_declaration_element *element = &declaration->elements[i];
-        struct wined3d_buffer *buffer = device->stateBlock->state.streams[element->input_slot].buffer;
+        const struct wined3d_stream_state *stream = &device->stateBlock->state.streams[element->input_slot];
+        struct wined3d_buffer *buffer = stream->buffer;
         struct wined3d_bo_address data;
         BOOL stride_used;
         unsigned int idx;
@@ -203,7 +204,7 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
         data.buffer_object = 0;
         data.addr = NULL;
 
-        stride = device->stateBlock->state.streams[element->input_slot].stride;
+        stride = stream->stride;
         if (device->stateBlock->state.user_stream)
         {
             TRACE("Stream %u is UP, %p\n", element->input_slot, buffer);
@@ -291,6 +292,8 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
                     use_vshader ? "shader": "fixed function", idx,
                     debug_d3ddeclusage(element->usage), element->usage_idx, element->input_slot,
                     element->offset, stride, debug_d3dformat(element->format->id), data.buffer_object);
+
+            data.addr += stream->offset;
 
             stream_info->elements[idx].format = element->format;
             stream_info->elements[idx].data = data;

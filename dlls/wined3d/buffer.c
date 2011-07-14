@@ -228,7 +228,6 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
         const enum wined3d_buffer_conversion_type conversion_type,
         const struct wined3d_stream_info_element *attrib, DWORD *stride_this_run)
 {
-    DWORD offset = This->resource.device->stateBlock->state.streams[attrib->stream_idx].offset;
     DWORD attrib_size;
     BOOL ret = FALSE;
     unsigned int i;
@@ -265,7 +264,7 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
         }
     }
 
-    data = (((DWORD_PTR)attrib->data.addr) + offset) % This->stride;
+    data = ((DWORD_PTR)attrib->data.addr) % This->stride;
     attrib_size = attrib->format->component_count * attrib->format->component_size;
     for (i = 0; i < attrib_size; ++i)
     {
