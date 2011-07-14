@@ -9023,12 +9023,8 @@ msgid "Wine Command Prompt"
 msgstr "Linia de comandă Wine"
 
 #: cmd.rc:287
-msgid ""
-"CMD Version %s\n"
-"\n"
-msgstr ""
-"CMD versiunea %s\n"
-"\n"
+msgid "CMD Version %s\n"
+msgstr "CMD versiunea %s\n"
 
 #: cmd.rc:288
 msgid "More? "

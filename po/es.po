@@ -8879,12 +8879,8 @@ msgid "Wine Command Prompt"
 msgstr "Wine Símbolo del sistema"
 
 #: cmd.rc:287
-msgid ""
-"CMD Version %s\n"
-"\n"
-msgstr ""
-"CMD Versión %s\n"
-"\n"
+msgid "CMD Version %s\n"
+msgstr "CMD Versión %s\n"
 
 #: cmd.rc:288
 msgid "More? "

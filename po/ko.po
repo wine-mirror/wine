@@ -8397,12 +8397,8 @@ msgid "Wine Command Prompt"
 msgstr "Wine 명령 입력대기"
 
 #: cmd.rc:287
-msgid ""
-"CMD Version %s\n"
-"\n"
-msgstr ""
-"CMD 버젼 %s\n"
-"\n"
+msgid "CMD Version %s\n"
+msgstr "CMD 버젼 %s\n"
 
 #: cmd.rc:288
 msgid "More? "

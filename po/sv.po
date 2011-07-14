@@ -8456,9 +8456,7 @@ msgid "Wine Command Prompt"
 msgstr "Wine kommandoprompt"
 
 #: cmd.rc:287
-msgid ""
-"CMD Version %s\n"
-"\n"
+msgid "CMD Version %s\n"
 msgstr "CMD Version %s\n"
 
 #: cmd.rc:288

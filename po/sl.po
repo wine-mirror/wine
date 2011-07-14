@@ -8476,12 +8476,8 @@ msgid "Wine Command Prompt"
 msgstr "Wine ukazni poziv"
 
 #: cmd.rc:287
-msgid ""
-"CMD Version %s\n"
-"\n"
-msgstr ""
-"Različica CMD %s\n"
-"\n"
+msgid "CMD Version %s\n"
+msgstr "Različica CMD %s\n"
 
 #: cmd.rc:288
 msgid "More? "
