@@ -1105,7 +1105,7 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
  * Retrieve an area from the destination DC, mapping all the
  * pixels to Windows colors.
  */
-static int BITBLT_GetDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, GC gc, RECT *visRectDst)
+static int BITBLT_GetDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, GC gc, const RECT *visRectDst)
 {
     int exposures = 0;
     INT width  = visRectDst->right - visRectDst->left;
@@ -1165,7 +1165,7 @@ static int BITBLT_GetDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, GC gc, RECT
  * Put an area back into the destination DC, mapping the pixel
  * colors to X pixels.
  */
-static int BITBLT_PutDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, RECT *visRectDst)
+static int BITBLT_PutDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, const RECT *visRectDst)
 {
     int exposures = 0;
     INT width  = visRectDst->right - visRectDst->left;
@@ -1331,6 +1331,65 @@ static BOOL same_format(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst)
     return FALSE;
 }
 
+static void execute_rop( X11DRV_PDEVICE *physdev, Pixmap src_pixmap, GC gc,
+                         const RECT *visrect, DWORD rop )
+{
+    Pixmap pixmaps[3];
+    Pixmap result = src_pixmap;
+    BOOL null_brush;
+    const BYTE *opcode = BITBLT_Opcodes[(rop >> 16) & 0xff];
+    BOOL use_pat = (((rop >> 4) & 0x0f0000) != (rop & 0x0f0000));
+    BOOL use_dst = (((rop >> 1) & 0x550000) != (rop & 0x550000));
+    int width  = visrect->right - visrect->left;
+    int height = visrect->bottom - visrect->top;
+
+    pixmaps[SRC] = src_pixmap;
+    pixmaps[TMP] = 0;
+    wine_tsx11_lock();
+    pixmaps[DST] = XCreatePixmap( gdi_display, root_window, width, height, physdev->depth );
+    wine_tsx11_unlock();
+
+    if (use_dst) BITBLT_GetDstArea( physdev, pixmaps[DST], gc, visrect );
+    null_brush = use_pat && !X11DRV_SetupGCForPatBlt( physdev, gc, TRUE );
+
+    wine_tsx11_lock();
+    for ( ; *opcode; opcode++)
+    {
+        if (OP_DST(*opcode) == DST) result = pixmaps[DST];
+        XSetFunction( gdi_display, gc, OP_ROP(*opcode) );
+        switch(OP_SRCDST(*opcode))
+        {
+        case OP_ARGS(DST,TMP):
+        case OP_ARGS(SRC,TMP):
+            if (!pixmaps[TMP])
+                pixmaps[TMP] = XCreatePixmap( gdi_display, root_window, width, height, physdev->depth );
+            /* fall through */
+        case OP_ARGS(DST,SRC):
+        case OP_ARGS(SRC,DST):
+        case OP_ARGS(TMP,SRC):
+        case OP_ARGS(TMP,DST):
+            XCopyArea( gdi_display, pixmaps[OP_SRC(*opcode)], pixmaps[OP_DST(*opcode)], gc,
+                       0, 0, width, height, 0, 0 );
+            break;
+
+        case OP_ARGS(PAT,TMP):
+            if (!pixmaps[TMP] && !null_brush)
+                pixmaps[TMP] = XCreatePixmap( gdi_display, root_window, width, height, physdev->depth );
+            /* fall through */
+        case OP_ARGS(PAT,DST):
+        case OP_ARGS(PAT,SRC):
+            if (!null_brush)
+                XFillRectangle( gdi_display, pixmaps[OP_DST(*opcode)], gc, 0, 0, width, height );
+            break;
+        }
+    }
+    XSetFunction( gdi_display, physdev->gc, GXcopy );
+    physdev->exposures += BITBLT_PutDstArea( physdev, result, visrect );
+    XFreePixmap( gdi_display, pixmaps[DST] );
+    if (pixmaps[TMP]) XFreePixmap( gdi_display, pixmaps[TMP] );
+    wine_tsx11_unlock();
+}
+
 /***********************************************************************
  *           X11DRV_PatBlt
  */
@@ -1397,17 +1456,15 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
 {
     X11DRV_PDEVICE *physDevDst = get_x11drv_dev( dst_dev );
     X11DRV_PDEVICE *physDevSrc = get_x11drv_dev( src_dev ); /* FIXME: check that it's really an x11 dev */
-    BOOL usePat, useDst, destUsed, fStretch, fNullBrush;
+    BOOL fStretch;
     INT width, height;
     INT sDst, sSrc = DIB_Status_None;
     const BYTE *opcode;
-    Pixmap pixmaps[3] = { 0, 0, 0 };  /* pixmaps for DST, SRC, TMP */
-    GC tmpGC = 0;
+    Pixmap src_pixmap;
+    GC tmpGC;
 
     if (IsRectEmpty( &dst->visrect )) return TRUE;
 
-    usePat = (((rop >> 4) & 0x0f0000) != (rop & 0x0f0000));
-    useDst = (((rop >> 1) & 0x550000) != (rop & 0x550000));
     fStretch = (src->width != dst->width) || (src->height != dst->height);
 
     if (physDevDst != physDevSrc)
@@ -1491,67 +1548,23 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     tmpGC = XCreateGC( gdi_display, physDevDst->drawable, 0, NULL );
     XSetSubwindowMode( gdi_display, tmpGC, IncludeInferiors );
     XSetGraphicsExposures( gdi_display, tmpGC, False );
-    pixmaps[DST] = XCreatePixmap( gdi_display, root_window, width, height,
-                                  physDevDst->depth );
-    pixmaps[SRC] = XCreatePixmap( gdi_display, root_window, width, height,
-                                  physDevDst->depth );
+    src_pixmap = XCreatePixmap( gdi_display, root_window, width, height, physDevDst->depth );
     wine_tsx11_unlock();
 
     if (physDevDst != physDevSrc) X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod );
 
-    if(!X11DRV_XRender_GetSrcAreaStretch( physDevSrc, physDevDst, pixmaps[SRC], tmpGC, src, dst ))
+    if(!X11DRV_XRender_GetSrcAreaStretch( physDevSrc, physDevDst, src_pixmap, tmpGC, src, dst ))
     {
         if (fStretch)
-            BITBLT_GetSrcAreaStretch( physDevSrc, physDevDst, pixmaps[SRC], tmpGC, src, dst );
+            BITBLT_GetSrcAreaStretch( physDevSrc, physDevDst, src_pixmap, tmpGC, src, dst );
         else
-            BITBLT_GetSrcArea( physDevSrc, physDevDst, pixmaps[SRC], tmpGC, &src->visrect );
+            BITBLT_GetSrcArea( physDevSrc, physDevDst, src_pixmap, tmpGC, &src->visrect );
     }
 
-    if (useDst) BITBLT_GetDstArea( physDevDst, pixmaps[DST], tmpGC, &dst->visrect );
-    if (usePat) fNullBrush = !X11DRV_SetupGCForPatBlt( physDevDst, tmpGC, TRUE );
-    else fNullBrush = FALSE;
-    destUsed = FALSE;
+    execute_rop( physDevDst, src_pixmap, tmpGC, &dst->visrect, rop );
 
     wine_tsx11_lock();
-    for ( ; *opcode; opcode++)
-    {
-        if (OP_DST(*opcode) == DST) destUsed = TRUE;
-        XSetFunction( gdi_display, tmpGC, OP_ROP(*opcode) );
-        switch(OP_SRCDST(*opcode))
-        {
-        case OP_ARGS(DST,TMP):
-        case OP_ARGS(SRC,TMP):
-            if (!pixmaps[TMP])
-                pixmaps[TMP] = XCreatePixmap( gdi_display, root_window,
-                                              width, height, physDevDst->depth );
-            /* fall through */
-        case OP_ARGS(DST,SRC):
-        case OP_ARGS(SRC,DST):
-        case OP_ARGS(TMP,SRC):
-        case OP_ARGS(TMP,DST):
-            XCopyArea( gdi_display, pixmaps[OP_SRC(*opcode)],
-                       pixmaps[OP_DST(*opcode)], tmpGC,
-                       0, 0, width, height, 0, 0 );
-            break;
-
-        case OP_ARGS(PAT,TMP):
-            if (!pixmaps[TMP] && !fNullBrush)
-                pixmaps[TMP] = XCreatePixmap( gdi_display, root_window,
-                                              width, height, physDevDst->depth );
-            /* fall through */
-        case OP_ARGS(PAT,DST):
-        case OP_ARGS(PAT,SRC):
-            if (!fNullBrush)
-                XFillRectangle( gdi_display, pixmaps[OP_DST(*opcode)],
-                                tmpGC, 0, 0, width, height );
-            break;
-        }
-    }
-    XSetFunction( gdi_display, physDevDst->gc, GXcopy );
-    physDevDst->exposures += BITBLT_PutDstArea( physDevDst, pixmaps[destUsed ? DST : SRC], &dst->visrect );
-    XFreePixmap( gdi_display, pixmaps[DST] );
-    if (pixmaps[SRC]) XFreePixmap( gdi_display, pixmaps[SRC] );
-    if (pixmaps[TMP]) XFreePixmap( gdi_display, pixmaps[TMP] );
+    XFreePixmap( gdi_display, src_pixmap );
     XFreeGC( gdi_display, tmpGC );
     wine_tsx11_unlock();
 
