@@ -129,6 +129,28 @@ void write_guid(FILE *f, const char *guid_prefix, const char *name, const UUID *
         uuid->Data4[6], uuid->Data4[7]);
 }
 
+static void write_uuid_decl(FILE *f, const char *name, const UUID *uuid)
+{
+  fprintf(f, "#ifdef __CRT_UUID_DECL\n");
+  fprintf(f, "__CRT_UUID_DECL(%s, 0x%08x, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,"
+        "0x%02x,0x%02x,0x%02x,0x%02x,0x%02x)\n",
+        name, uuid->Data1, uuid->Data2, uuid->Data3, uuid->Data4[0], uuid->Data4[1],
+        uuid->Data4[2], uuid->Data4[3], uuid->Data4[4], uuid->Data4[5], uuid->Data4[6],
+        uuid->Data4[7]);
+  fprintf(f, "#endif\n");
+}
+
+static const char *uuid_string(const UUID *uuid)
+{
+  static char buf[37];
+
+  sprintf(buf, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+        uuid->Data1, uuid->Data2, uuid->Data3, uuid->Data4[0], uuid->Data4[1], uuid->Data4[2],
+        uuid->Data4[3], uuid->Data4[4], uuid->Data4[5], uuid->Data4[6], uuid->Data4[7]);
+
+  return buf;
+}
+
 const char *get_name(const var_t *v)
 {
     static char buffer[256];
@@ -1014,24 +1036,6 @@ static void write_forward(FILE *header, type_t *iface)
   fprintf(header, "#endif\n\n" );
 }
 
-static void write_iface_guid(FILE *header, const type_t *iface)
-{
-  const UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
-  write_guid(header, "IID", iface->name, uuid);
-} 
-
-static void write_dispiface_guid(FILE *header, const type_t *iface)
-{
-  const UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
-  write_guid(header, "DIID", iface->name, uuid);
-}
-
-static void write_coclass_guid(FILE *header, const type_t *cocl)
-{
-  const UUID *uuid = get_attrp(cocl->attrs, ATTR_UUID);
-  write_guid(header, "CLSID", cocl->name, uuid);
-}
-
 static void write_com_interface_start(FILE *header, const type_t *iface)
 {
   int dispinterface = is_attr(iface->attrs, ATTR_DISPINTERFACE);
@@ -1045,21 +1049,26 @@ static void write_com_interface_start(FILE *header, const type_t *iface)
 static void write_com_interface_end(FILE *header, type_t *iface)
 {
   int dispinterface = is_attr(iface->attrs, ATTR_DISPINTERFACE);
-  if (dispinterface)
-    write_dispiface_guid(header, iface);
-  else
-    write_iface_guid(header, iface);
+  const UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
+
+  if (uuid)
+      write_guid(header, dispinterface ? "DIID" : "IID", iface->name, uuid);
+
   /* C++ interface */
   fprintf(header, "#if defined(__cplusplus) && !defined(CINTERFACE)\n");
+  if (uuid)
+      fprintf(header, "MIDL_INTERFACE(\"%s\")\n", uuid_string(uuid));
+  else
+      fprintf(header, "interface ");
   if (type_iface_get_inherit(iface))
   {
-    fprintf(header, "interface %s : public %s\n", iface->name,
+    fprintf(header, "%s : public %s\n", iface->name,
             type_iface_get_inherit(iface)->name);
     fprintf(header, "{\n");
   }
   else
   {
-    fprintf(header, "interface %s\n", iface->name);
+    fprintf(header, "%s\n", iface->name);
     fprintf(header, "{\n");
     fprintf(header, "    BEGIN_INTERFACE\n");
     fprintf(header, "\n");
@@ -1075,6 +1084,8 @@ static void write_com_interface_end(FILE *header, type_t *iface)
   if (!type_iface_get_inherit(iface))
     fprintf(header, "    END_INTERFACE\n");
   fprintf(header, "};\n");
+  if (uuid)
+      write_uuid_decl(header, iface->name, uuid);
   fprintf(header, "#else\n");
   /* C interface */
   fprintf(header, "typedef struct %sVtbl {\n", iface->name);
@@ -1148,12 +1159,23 @@ static void write_rpc_interface_end(FILE *header, const type_t *iface)
 
 static void write_coclass(FILE *header, type_t *cocl)
 {
+  const UUID *uuid = get_attrp(cocl->attrs, ATTR_UUID);
+
   fprintf(header, "/*****************************************************************************\n");
   fprintf(header, " * %s coclass\n", cocl->name);
   fprintf(header, " */\n\n");
-  write_coclass_guid(header, cocl);
+  if (uuid)
+      write_guid(header, "CLSID", cocl->name, uuid);
   fprintf(header, "\n#ifdef __cplusplus\n");
-  fprintf(header, "class %s;\n", cocl->name);
+  if (uuid)
+  {
+      fprintf(header, "class DECLSPEC_UUID(\"%s\") %s;\n", uuid_string(uuid), cocl->name);
+      write_uuid_decl(header, cocl->name, uuid);
+  }
+  else
+  {
+      fprintf(header, "class %s;\n", cocl->name);
+  }
   fprintf(header, "#endif\n");
   fprintf(header, "\n");
 }
