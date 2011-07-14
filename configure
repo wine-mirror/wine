@@ -6133,9 +6133,10 @@ fi
 done
 
 
-for ac_header in linux/videodev.h
+for ac_header in linux/videodev.h linux/videodev2.h
 do :
-  ac_fn_c_check_header_compile "$LINENO" "linux/videodev.h" "ac_cv_header_linux_videodev_h" "#ifdef HAVE_SYS_TIME_H
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 #include <sys/types.h>
@@ -6143,9 +6144,9 @@ do :
 #include <asm/types.h>
 #endif
 "
-if test "x$ac_cv_header_linux_videodev_h" = xyes; then :
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_LINUX_VIDEODEV_H 1
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
 _ACEOF
 
 fi
