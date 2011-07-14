@@ -2555,7 +2555,7 @@ int wmain (int argc, WCHAR *argvW[])
 
     /* Read until EOF (which for std input is never, but if redirect
        in place, may occur                                          */
-    WCMD_show_prompt ();
+    if (echo_mode) WCMD_show_prompt();
     if (WCMD_ReadAndParseLine(NULL, &toExecute,
                               GetStdHandle(STD_INPUT_HANDLE)) == NULL)
       break;
