@@ -1747,6 +1747,8 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
     struct gdi_image_bits dst_bits;
     const XPixmapFormatValues *format;
     const ColorShifts *color_shifts;
+    int width = rect->right - rect->left;
+    int height = rect->bottom - rect->top;
 
     if (hbitmap)
     {
@@ -1767,6 +1769,7 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
     if (info->bmiHeader.biPlanes != 1) goto update_format;
     if (info->bmiHeader.biBitCount != format->bits_per_pixel) goto update_format;
     if (info->bmiHeader.biHeight > 0) goto update_format; /* bottom-up not supported */
+    /* FIXME: could try to handle 1-bpp using XCopyPlane */
 
     if (info->bmiHeader.biCompression == BI_BITFIELDS)
     {
@@ -1814,18 +1817,46 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
         {
             wine_tsx11_lock();
             XPutImage( gdi_display, bitmap->pixmap, get_bitmap_gc(depth), image, dst_bits.offset, 0,
-                       rect->left, rect->top, rect->right - rect->left, rect->bottom - rect->top );
+                       rect->left, rect->top, width, height );
             wine_tsx11_unlock();
         }
         else
         {
-            /* FIXME: copy rop handling from BitBlt here */
+            const BYTE *opcode = BITBLT_Opcodes[(rop >> 16) & 0xff];
+
             X11DRV_LockDIBSection( physdev, DIB_Status_GdiMod );
-            wine_tsx11_lock();
-            XPutImage( gdi_display, physdev->drawable, physdev->gc, image, dst_bits.offset, 0,
-                       physdev->dc_rect.left + rect->left, physdev->dc_rect.top + rect->top,
-                       rect->right - rect->left, rect->bottom - rect->top );
-            wine_tsx11_unlock();
+
+            /* optimization for single-op ROPs */
+            if (!opcode[1] && OP_SRCDST(opcode[0]) == OP_ARGS(SRC,DST))
+            {
+                wine_tsx11_lock();
+                XSetFunction( gdi_display, physdev->gc, OP_ROP(*opcode) );
+                XPutImage( gdi_display, physdev->drawable, physdev->gc, image, dst_bits.offset, 0,
+                           physdev->dc_rect.left + rect->left, physdev->dc_rect.top + rect->top,
+                           width, height );
+                wine_tsx11_unlock();
+            }
+            else
+            {
+                Pixmap src_pixmap;
+                GC gc;
+
+                wine_tsx11_lock();
+                gc = XCreateGC( gdi_display, physdev->drawable, 0, NULL );
+                XSetSubwindowMode( gdi_display, gc, IncludeInferiors );
+                XSetGraphicsExposures( gdi_display, gc, False );
+                src_pixmap = XCreatePixmap( gdi_display, root_window, width, height, depth );
+                XPutImage( gdi_display, src_pixmap, gc, image, dst_bits.offset, 0, 0, 0, width, height );
+                wine_tsx11_unlock();
+
+                execute_rop( physdev, src_pixmap, gc, rect, rop );
+
+                wine_tsx11_lock();
+                XFreePixmap( gdi_display, src_pixmap );
+                XFreeGC( gdi_display, gc );
+                wine_tsx11_unlock();
+            }
+
             X11DRV_UnlockDIBSection( physdev, !ret );
         }
         image->data = NULL;
