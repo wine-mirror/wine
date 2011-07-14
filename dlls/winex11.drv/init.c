@@ -486,6 +486,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_GetDeviceCaps,               /* pGetDeviceCaps */
     X11DRV_GetDeviceGammaRamp,          /* pGetDeviceGammaRamp */
     X11DRV_GetICMProfile,               /* pGetICMProfile */
+    NULL,                               /* pGetImage */
     X11DRV_GetNearestColor,             /* pGetNearestColor */
     X11DRV_GetPixel,                    /* pGetPixel */
     X11DRV_GetPixelFormat,              /* pGetPixelFormat */
@@ -511,6 +512,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_Polygon,                     /* pPolygon */
     X11DRV_Polyline,                    /* pPolyline */
     NULL,                               /* pPolylineTo */
+    NULL,                               /* pPutImage */
     X11DRV_RealizeDefaultPalette,       /* pRealizeDefaultPalette */
     X11DRV_RealizePalette,              /* pRealizePalette */
     X11DRV_Rectangle,                   /* pRectangle */

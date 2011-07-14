@@ -121,6 +121,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_GetDeviceCaps,             /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */
     NULL,                            /* pGetICMProfile */
+    NULL,                            /* pGetImage */
     NULL,                            /* pGetNearestColor */
     NULL,                            /* pGetPixel */
     NULL,                            /* pGetPixelFormat */
@@ -146,6 +147,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_Polygon,                   /* pPolygon */
     MFDRV_Polyline,                  /* pPolyline */
     NULL,                            /* pPolylineTo */
+    NULL,                            /* pPutImage */
     NULL,                            /* pRealizeDefaultPalette */
     MFDRV_RealizePalette,            /* pRealizePalette */
     MFDRV_Rectangle,                 /* pRectangle */

@@ -347,6 +347,12 @@ static BOOL nulldrv_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
     return FALSE;
 }
 
+static DWORD nulldrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
+                               struct gdi_image_bits *bits, const RECT *rect )
+{
+    return ERROR_NOT_SUPPORTED;
+}
+
 static COLORREF nulldrv_GetPixel( PHYSDEV dev, INT x, INT y )
 {
     return 0;
@@ -419,6 +425,12 @@ static BOOL nulldrv_Polygon( PHYSDEV dev, const POINT *points, INT count )
 static BOOL nulldrv_Polyline( PHYSDEV dev, const POINT *points, INT count )
 {
     return TRUE;
+}
+
+static DWORD nulldrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
+                               const struct gdi_image_bits *bits, const RECT *rect, DWORD rop )
+{
+    return ERROR_SUCCESS;
 }
 
 static UINT nulldrv_RealizeDefaultPalette( PHYSDEV dev )
@@ -701,6 +713,7 @@ const DC_FUNCTIONS null_driver =
     nulldrv_GetDeviceCaps,              /* pGetDeviceCaps */
     nulldrv_GetDeviceGammaRamp,         /* pGetDeviceGammaRamp */
     nulldrv_GetICMProfile,              /* pGetICMProfile */
+    nulldrv_GetImage,                   /* pGetImage */
     nulldrv_GetNearestColor,            /* pGetNearestColor */
     nulldrv_GetPixel,                   /* pGetPixel */
     nulldrv_GetPixelFormat,             /* pGetPixelFormat */
@@ -726,6 +739,7 @@ const DC_FUNCTIONS null_driver =
     nulldrv_Polygon,                    /* pPolygon */
     nulldrv_Polyline,                   /* pPolyline */
     nulldrv_PolylineTo,                 /* pPolylineTo */
+    nulldrv_PutImage,                   /* pPutImage */
     nulldrv_RealizeDefaultPalette,      /* pRealizeDefaultPalette */
     nulldrv_RealizePalette,             /* pRealizePalette */
     nulldrv_Rectangle,                  /* pRectangle */

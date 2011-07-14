@@ -843,6 +843,7 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_GetDeviceCaps,                /* pGetDeviceCaps */
     NULL,                               /* pGetDeviceGammaRamp */
     NULL,                               /* pGetICMProfile */
+    NULL,                               /* pGetImage */
     NULL,                               /* pGetNearestColor */
     NULL,                               /* pGetPixel */
     NULL,                               /* pGetPixelFormat */
@@ -868,6 +869,7 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_Polygon,                      /* pPolygon */
     PSDRV_Polyline,                     /* pPolyline */
     NULL,                               /* pPolylineTo */
+    NULL,                               /* pPutImage */
     NULL,                               /* pRealizeDefaultPalette */
     NULL,                               /* pRealizePalette */
     PSDRV_Rectangle,                    /* pRectangle */

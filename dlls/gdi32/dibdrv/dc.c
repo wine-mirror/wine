@@ -469,6 +469,7 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pGetDeviceCaps */
     NULL,                               /* pGetDeviceGammaRamp */
     NULL,                               /* pGetICMProfile */
+    NULL,                               /* pGetImage */
     NULL,                               /* pGetNearestColor */
     NULL,                               /* pGetPixel */
     NULL,                               /* pGetPixelFormat */
@@ -494,6 +495,7 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pPolygon */
     NULL,                               /* pPolyline */
     NULL,                               /* pPolylineTo */
+    NULL,                               /* pPutImage */
     NULL,                               /* pRealizeDefaultPalette */
     NULL,                               /* pRealizePalette */
     dibdrv_Rectangle,                   /* pRectangle */

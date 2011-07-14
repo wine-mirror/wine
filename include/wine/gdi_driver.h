@@ -44,6 +44,15 @@ struct bitblt_coords
     DWORD layout;   /* DC layout */
 };
 
+struct gdi_image_bits
+{
+    void        *ptr;       /* pointer to the bits */
+    unsigned int offset;    /* x offset of first requested pixel */
+    BOOL         is_copy;   /* whether this is a copy of the bits that can be modified */
+    void       (*free)(struct gdi_image_bits *);  /* callback for freeing the bits */
+    void        *param;     /* extra parameter for callback private use */
+};
+
 struct gdi_dc_funcs
 {
     INT      (*pAbortDoc)(PHYSDEV);
@@ -87,6 +96,7 @@ struct gdi_dc_funcs
     INT      (*pGetDeviceCaps)(PHYSDEV,INT);
     BOOL     (*pGetDeviceGammaRamp)(PHYSDEV,LPVOID);
     BOOL     (*pGetICMProfile)(PHYSDEV,LPDWORD,LPWSTR);
+    DWORD    (*pGetImage)(PHYSDEV,HBITMAP,BITMAPINFO*,struct gdi_image_bits*,const RECT*);
     COLORREF (*pGetNearestColor)(PHYSDEV,COLORREF);
     COLORREF (*pGetPixel)(PHYSDEV,INT,INT);
     INT      (*pGetPixelFormat)(PHYSDEV);
@@ -112,6 +122,7 @@ struct gdi_dc_funcs
     BOOL     (*pPolygon)(PHYSDEV,const POINT*,INT);
     BOOL     (*pPolyline)(PHYSDEV,const POINT*,INT);
     BOOL     (*pPolylineTo)(PHYSDEV,const POINT*,INT);
+    DWORD    (*pPutImage)(PHYSDEV,HBITMAP,BITMAPINFO*,const struct gdi_image_bits*,const RECT*,DWORD);
     UINT     (*pRealizeDefaultPalette)(PHYSDEV);
     UINT     (*pRealizePalette)(PHYSDEV,HPALETTE,BOOL);
     BOOL     (*pRectangle)(PHYSDEV,INT,INT,INT,INT);

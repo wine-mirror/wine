@@ -77,6 +77,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_GetDeviceCaps,            /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */
     NULL,                            /* pGetICMProfile */
+    NULL,                            /* pGetImage */
     NULL,                            /* pGetNearestColor */
     NULL,                            /* pGetPixel */
     NULL,                            /* pGetPixelFormat */
@@ -102,6 +103,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_Polygon,                  /* pPolygon */
     EMFDRV_Polyline,                 /* pPolyline */
     NULL,                            /* pPolylineTo */
+    NULL,                            /* pPutImage */
     NULL,                            /* pRealizeDefaultPalette */
     NULL,                            /* pRealizePalette */
     EMFDRV_Rectangle,                /* pRectangle */
