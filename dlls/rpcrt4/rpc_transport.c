@@ -163,7 +163,7 @@ static RPC_STATUS rpcrt4_conn_create_pipe(RpcConnection *Connection, LPCSTR pnam
   RpcConnection_np *npc = (RpcConnection_np *) Connection;
   TRACE("listening on %s\n", pname);
 
-  npc->pipe = CreateNamedPipeA(pname, PIPE_ACCESS_DUPLEX,
+  npc->pipe = CreateNamedPipeA(pname, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
                                PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
                                PIPE_UNLIMITED_INSTANCES,
                                RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE, 5000, NULL);
