@@ -771,7 +771,7 @@ static HRESULT WINAPI RecycleBin_AddFolder(ISFHelper * iface, HWND hwnd,
     return E_NOTIMPL;
 }
 
-HRESULT erase_items(HWND parent,const LPCITEMIDLIST * apidl, UINT cidl, BOOL confirm)
+static HRESULT erase_items(HWND parent,const LPCITEMIDLIST * apidl, UINT cidl, BOOL confirm)
 {
     UINT i=0;
     HRESULT ret = S_OK;
