@@ -164,48 +164,97 @@ static void get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
     }
 }
 
+static DWORD convert_bits( const BITMAPINFO *src_info, struct gdi_image_bits *src_bits,
+                           const RECT *src_rect, BITMAPINFO *dst_info, struct gdi_image_bits *dst_bits )
+{
+    FIXME( "%u -> %u not implemented\n", src_info->bmiHeader.biBitCount, dst_info->bmiHeader.biBitCount );
+    dst_bits->ptr = src_bits->ptr;
+    dst_bits->offset = src_bits->offset;
+    dst_bits->is_copy = src_bits->is_copy;
+    dst_bits->free = NULL;
+    return ERROR_SUCCESS;
+}
+
 /* nulldrv fallback implementation using StretchDIBits */
 BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
                          PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
 {
-    DC *dc = get_nulldrv_dc( dst_dev );
+    DC *dc_src, *dc_dst = get_nulldrv_dc( dst_dev );
+    char src_buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    char dst_buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *src_info = (BITMAPINFO *)src_buffer;
+    BITMAPINFO *dst_info = (BITMAPINFO *)dst_buffer;
+    DWORD err;
+    struct gdi_image_bits src_bits, dst_bits;
     BITMAP bm;
-    BITMAPINFOHEADER info_hdr;
     HBITMAP hbm;
     LPVOID bits;
     INT lines;
 
+    if (dst->visrect.left >= dst->visrect.right || dst->visrect.top >= dst->visrect.bottom) return TRUE;
+
     /* make sure we have a real implementation for StretchDIBits */
-    if (GET_DC_PHYSDEV( dc, pStretchDIBits ) == dst_dev) return 0;
+    if (GET_DC_PHYSDEV( dc_dst, pStretchDIBits ) == dst_dev) goto try_get_image;
 
     if (GetObjectType( src_dev->hdc ) != OBJ_MEMDC) return FALSE;
     if (!GetObjectW( GetCurrentObject( src_dev->hdc, OBJ_BITMAP ), sizeof(bm), &bm )) return FALSE;
 
-    info_hdr.biSize = sizeof(info_hdr);
-    info_hdr.biWidth = bm.bmWidth;
-    info_hdr.biHeight = bm.bmHeight;
-    info_hdr.biPlanes = 1;
-    info_hdr.biBitCount = 32;
-    info_hdr.biCompression = BI_RGB;
-    info_hdr.biSizeImage = 0;
-    info_hdr.biXPelsPerMeter = 0;
-    info_hdr.biYPelsPerMeter = 0;
-    info_hdr.biClrUsed = 0;
-    info_hdr.biClrImportant = 0;
+    src_info->bmiHeader.biSize = sizeof(src_info->bmiHeader);
+    src_info->bmiHeader.biWidth = bm.bmWidth;
+    src_info->bmiHeader.biHeight = bm.bmHeight;
+    src_info->bmiHeader.biPlanes = 1;
+    src_info->bmiHeader.biBitCount = 32;
+    src_info->bmiHeader.biCompression = BI_RGB;
+    src_info->bmiHeader.biSizeImage = 0;
+    src_info->bmiHeader.biXPelsPerMeter = 0;
+    src_info->bmiHeader.biYPelsPerMeter = 0;
+    src_info->bmiHeader.biClrUsed = 0;
+    src_info->bmiHeader.biClrImportant = 0;
 
     if (!(bits = HeapAlloc(GetProcessHeap(), 0, bm.bmHeight * bm.bmWidth * 4)))
         return FALSE;
 
     /* Select out the src bitmap before calling GetDIBits */
     hbm = SelectObject( src_dev->hdc, GetStockObject(DEFAULT_BITMAP) );
-    lines = GetDIBits( src_dev->hdc, hbm, 0, bm.bmHeight, bits, (BITMAPINFO*)&info_hdr, DIB_RGB_COLORS );
+    lines = GetDIBits( src_dev->hdc, hbm, 0, bm.bmHeight, bits, src_info, DIB_RGB_COLORS );
     SelectObject( src_dev->hdc, hbm );
 
     if (lines) lines = StretchDIBits( dst_dev->hdc, dst->log_x, dst->log_y, dst->log_width, dst->log_height,
                                       src->x, bm.bmHeight - src->height - src->y, src->width, src->height,
-                                      bits, (BITMAPINFO*)&info_hdr, DIB_RGB_COLORS, rop );
+                                      bits, src_info, DIB_RGB_COLORS, rop );
     HeapFree( GetProcessHeap(), 0, bits );
     return (lines == src->height);
+
+try_get_image:
+
+    if (!(dc_src = get_dc_ptr( src_dev->hdc ))) return FALSE;
+    src_dev = GET_DC_PHYSDEV( dc_src, pGetImage );
+    err = src_dev->funcs->pGetImage( src_dev, 0, src_info, &src_bits, &src->visrect );
+    release_dc_ptr( dc_src );
+    if (err) return FALSE;
+
+    dst_dev = GET_DC_PHYSDEV( dc_dst, pPutImage );
+
+    if ((src->width != dst->width) || (src->height != dst->height))
+        FIXME( "should stretch %dx%d -> %dx%d\n",
+               src->width, src->height, dst->width, dst->height );
+
+    memcpy( dst_info, src_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
+    err = dst_dev->funcs->pPutImage( dst_dev, 0, dst_info, &src_bits, &dst->visrect, rop );
+    if (err == ERROR_BAD_FORMAT)
+    {
+        RECT src_rect = src->visrect;
+        offset_rect( &src_rect, src_bits.offset - src->visrect.left, -src->visrect.top );
+
+        err = convert_bits( src_info, &src_bits, &src_rect, dst_info, &dst_bits );
+        if (!err)
+        {
+            err = dst_dev->funcs->pPutImage( dst_dev, 0, dst_info, &dst_bits, &dst->visrect, rop );
+            if (dst_bits.free) dst_bits.free( &dst_bits );
+        }
+    }
+    if (src_bits.free) src_bits.free( &src_bits );
+    return !err;
 }
 
 /***********************************************************************
