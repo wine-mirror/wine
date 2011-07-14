@@ -1641,8 +1641,8 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
                               const struct gdi_image_bits *src_bits, struct gdi_image_bits *dst_bits )
 {
     BOOL need_byteswap;
-    int x, y, height = -info->bmiHeader.biHeight;
-    unsigned int width_bytes = image->bytes_per_line;
+    int x, y, height = abs(info->bmiHeader.biHeight);
+    int width_bytes = image->bytes_per_line;
     unsigned char *src, *dst;
 
     switch (info->bmiHeader.biBitCount)
@@ -1666,7 +1666,7 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
         break;
     }
 
-    if ((need_byteswap && !src_bits->is_copy) || (width_bytes & 3))
+    if ((need_byteswap && !src_bits->is_copy) || (width_bytes & 3) || (info->bmiHeader.biHeight > 0))
     {
         width_bytes = (width_bytes + 3) & ~3;
         info->bmiHeader.biSizeImage = height * width_bytes;
@@ -1688,6 +1688,12 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
 
     src = src_bits->ptr;
     dst = dst_bits->ptr;
+
+    if (info->bmiHeader.biHeight > 0)
+    {
+        dst += (height - 1) * width_bytes;
+        width_bytes = -width_bytes;
+    }
 
     if (need_byteswap)
     {
@@ -1768,7 +1774,6 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
 
     if (info->bmiHeader.biPlanes != 1) goto update_format;
     if (info->bmiHeader.biBitCount != format->bits_per_pixel) goto update_format;
-    if (info->bmiHeader.biHeight > 0) goto update_format; /* bottom-up not supported */
     /* FIXME: could try to handle 1-bpp using XCopyPlane */
 
     if (info->bmiHeader.biCompression == BI_BITFIELDS)
@@ -1804,7 +1809,7 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
 
     wine_tsx11_lock();
     image = XCreateImage( gdi_display, visual, depth, ZPixmap, 0, NULL,
-                          info->bmiHeader.biWidth, -info->bmiHeader.biHeight, 32, 0 );
+                          info->bmiHeader.biWidth, abs(info->bmiHeader.biHeight), 32, 0 );
     wine_tsx11_unlock();
     if (!image) return ERROR_OUTOFMEMORY;
 
