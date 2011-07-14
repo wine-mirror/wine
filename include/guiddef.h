@@ -29,6 +29,32 @@ typedef struct _GUID
     unsigned short Data3;
     unsigned char  Data4[ 8 ];
 } GUID;
+
+/* Macros for __uuidof emulation */
+#if defined(__cplusplus) && !defined(_MSC_VER)
+
+extern "C++" {
+    template<typename T> const GUID &__wine_uuidof();
+}
+
+#define __CRT_UUID_DECL(type,l,w1,w2,b1,b2,b3,b4,b5,b6,b7,b8)           \
+    extern "C++" {                                                      \
+    template<> inline const GUID &__wine_uuidof<type>() {               \
+        return (const IID){l,w1,w2, {b1,b2,b3,b4,b5,b6,b7,b8}};         \
+    }                                                                   \
+    template<> inline const GUID &__wine_uuidof<type*>() {              \
+        return __wine_uuidof<type>();                                   \
+    }                                                                   \
+    }
+
+#define __uuidof(type) __wine_uuidof<typeof(type)>()
+
+#else
+
+#define __CRT_UUID_DECL(type,l,w1,w2,b1,b2,b3,b4,b5,b6,b7,b8)
+
+#endif
+
 #endif
 
 #undef DEFINE_GUID
