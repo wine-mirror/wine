@@ -512,7 +512,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_Polygon,                     /* pPolygon */
     X11DRV_Polyline,                    /* pPolyline */
     NULL,                               /* pPolylineTo */
-    NULL,                               /* pPutImage */
+    X11DRV_PutImage,                    /* pPutImage */
     X11DRV_RealizeDefaultPalette,       /* pRealizeDefaultPalette */
     X11DRV_RealizePalette,              /* pRealizePalette */
     X11DRV_Rectangle,                   /* pRectangle */

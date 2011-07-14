@@ -1721,6 +1721,118 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
 }
 
 /***********************************************************************
+ *           X11DRV_PutImage
+ */
+DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const struct gdi_image_bits *bits,
+                       const RECT *rect, DWORD rop )
+{
+    X11DRV_PDEVICE *physdev;
+    X_PHYSBITMAP *bitmap;
+    DWORD ret = ERROR_SUCCESS;
+    XImage *image;
+    int depth;
+    struct gdi_image_bits dst_bits;
+    const XPixmapFormatValues *format;
+    const ColorShifts *color_shifts;
+
+    if (hbitmap)
+    {
+        if (!(bitmap = X11DRV_get_phys_bitmap( hbitmap ))) return ERROR_INVALID_HANDLE;
+        physdev = NULL;
+        depth = bitmap->pixmap_depth;
+        color_shifts = &bitmap->pixmap_color_shifts;
+    }
+    else
+    {
+        physdev = get_x11drv_dev( dev );
+        bitmap = NULL;
+        depth = physdev->depth;
+        color_shifts = physdev->color_shifts;
+    }
+    format = pixmap_formats[depth];
+
+    if (info->bmiHeader.biPlanes != 1) goto update_format;
+    if (info->bmiHeader.biBitCount != format->bits_per_pixel) goto update_format;
+    if (info->bmiHeader.biHeight > 0) goto update_format; /* bottom-up not supported */
+
+    if (info->bmiHeader.biCompression == BI_BITFIELDS)
+    {
+        DWORD *masks = (DWORD *)((char *)info + info->bmiHeader.biSize);
+        if (color_shifts->logicalRed.max << color_shifts->logicalRed.shift != masks[0] ||
+            color_shifts->logicalGreen.max << color_shifts->logicalGreen.shift != masks[1] ||
+            color_shifts->logicalBlue.max << color_shifts->logicalBlue.shift != masks[2])
+            goto update_format;
+    }
+    else if (info->bmiHeader.biCompression == BI_RGB)
+    {
+        switch (info->bmiHeader.biBitCount)
+        {
+        case 16:
+            if (color_shifts->logicalRed.max << color_shifts->logicalRed.shift     != 0x7c00 ||
+                color_shifts->logicalGreen.max << color_shifts->logicalGreen.shift != 0x03e0 ||
+                color_shifts->logicalBlue.max << color_shifts->logicalBlue.shift   != 0x001f)
+                goto update_format;
+            break;
+        case 24:
+        case 32:
+            if (color_shifts->logicalRed.max << color_shifts->logicalRed.shift     != 0xff0000 ||
+                color_shifts->logicalGreen.max << color_shifts->logicalGreen.shift != 0x00ff00 ||
+                color_shifts->logicalBlue.max << color_shifts->logicalBlue.shift   != 0x0000ff)
+                goto update_format;
+            break;
+        }
+    }
+    else goto update_format;
+
+    if (!bits) return ret;  /* just querying the format */
+
+    wine_tsx11_lock();
+    image = XCreateImage( gdi_display, visual, depth, ZPixmap, 0, NULL,
+                          info->bmiHeader.biWidth, -info->bmiHeader.biHeight, 32, 0 );
+    wine_tsx11_unlock();
+    if (!image) return ERROR_OUTOFMEMORY;
+
+    ret = copy_image_bits( info, color_shifts, image, bits, &dst_bits );
+
+    if (!ret)
+    {
+        image->data = dst_bits.ptr;
+        if (bitmap)
+        {
+            wine_tsx11_lock();
+            XPutImage( gdi_display, bitmap->pixmap, get_bitmap_gc(depth), image, dst_bits.offset, 0,
+                       rect->left, rect->top, rect->right - rect->left, rect->bottom - rect->top );
+            wine_tsx11_unlock();
+        }
+        else
+        {
+            /* FIXME: copy rop handling from BitBlt here */
+            X11DRV_LockDIBSection( physdev, DIB_Status_GdiMod );
+            wine_tsx11_lock();
+            XPutImage( gdi_display, physdev->drawable, physdev->gc, image, dst_bits.offset, 0,
+                       physdev->dc_rect.left + rect->left, physdev->dc_rect.top + rect->top,
+                       rect->right - rect->left, rect->bottom - rect->top );
+            wine_tsx11_unlock();
+            X11DRV_UnlockDIBSection( physdev, !ret );
+        }
+        image->data = NULL;
+    }
+
+    wine_tsx11_lock();
+    XDestroyImage( image );
+    wine_tsx11_unlock();
+    if (dst_bits.free) dst_bits.free( &dst_bits );
+    return ret;
+
+update_format:
+    info->bmiHeader.biPlanes   = 1;
+    info->bmiHeader.biBitCount = format->bits_per_pixel;
+    if (info->bmiHeader.biHeight > 0) info->bmiHeader.biHeight = -info->bmiHeader.biHeight;
+    set_color_info( physdev->color_shifts, info );
+    return ERROR_BAD_FORMAT;
+}
+
+/***********************************************************************
  *           X11DRV_GetImage
  */
 DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
