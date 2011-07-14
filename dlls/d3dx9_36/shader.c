@@ -639,6 +639,15 @@ static inline int is_vertex_shader(DWORD version)
     return (version & 0xFFFF0000) == 0xFFFE0000;
 }
 
+static DWORD calc_bytes(D3DXCONSTANT_DESC *desc)
+{
+    if (desc->RegisterSet != D3DXRS_FLOAT4 && desc->RegisterSet != D3DXRS_SAMPLER)
+        FIXME("Don't know how to calculate Bytes for constants of type %d\n",
+                desc->RegisterSet);
+
+    return 4 * desc->Elements * desc->Rows * desc->Columns;
+}
+
 /*** IUnknown methods ***/
 static HRESULT WINAPI ID3DXConstantTableImpl_QueryInterface(ID3DXConstantTable* iface, REFIID riid, void** ppvObject)
 {
@@ -1130,6 +1139,7 @@ static HRESULT parse_ctab_constant_type(const D3DXSHADER_TYPEINFO *type, ctab_co
     constant->desc.Columns = type->Columns;
     constant->desc.Elements = type->Elements;
     constant->desc.StructMembers = type->StructMembers;
+    constant->desc.Bytes = calc_bytes(&constant->desc);
 
     TRACE("class = %d, type = %d, rows = %d, columns = %d, elements = %d, struct_members = %d\n",
           constant->desc.Class, constant->desc.Type, constant->desc.Elements,
@@ -1237,22 +1247,6 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD* byte_code,
              &object->constants[i]);
         if (hr != D3D_OK)
             goto error;
-
-        if (constant_info[i].RegisterSet != D3DXRS_FLOAT4 &&
-                constant_info[i].RegisterSet != D3DXRS_SAMPLER)
-            FIXME("Don't know how to calculate Bytes for constants of type %d\n",
-                    constant_info[i].RegisterSet);
-
-        /*
-         * D3DXRS_FLOAT4 and D3DXRS_SAMPLER have a base size of 4
-         * (not taking into account dimensions and element count)
-         */
-        object->constants[i].desc.Bytes = 4;
-
-        /* Take into account dimensions and elements */
-        object->constants[i].desc.Bytes *= object->constants[i].desc.Elements;
-        object->constants[i].desc.Bytes *= object->constants[i].desc.Rows *
-                object->constants[i].desc.Columns;
     }
 
     *constant_table = &object->ID3DXConstantTable_iface;
