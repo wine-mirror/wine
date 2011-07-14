@@ -1519,6 +1519,7 @@ void WCMD_execute (WCHAR *command, WCHAR *redirects,
         WCMD_type (p);
 	break;
       case WCMD_VER:
+        WCMD_output(newline);
         WCMD_version ();
         break;
       case WCMD_VERIFY:
