@@ -553,10 +553,10 @@ HRESULT TRASH_RestoreItem(LPCITEMIDLIST pidl){
     WIN32_FIND_DATAW data;
     char *file_path;
 
-    TRACE("(%p)",pidl);
+    TRACE("(%p)\n",pidl);
     if(strcmp(filename+strlen(filename)-suffix_length,trashinfo_suffix))
     {
-        ERR("pidl at %p is not a valid recycle bin entry",pidl);
+        ERR("pidl at %p is not a valid recycle bin entry\n",pidl);
         return E_INVALIDARG;
     }
     TRASH_UnpackItemID(id,&data);
@@ -568,7 +568,7 @@ HRESULT TRASH_RestoreItem(LPCITEMIDLIST pidl){
     {
             sprintf(file_path,"%s%s",home_trash->info_dir,filename);
             if(unlink(file_path))
-                WARN("failed to delete the trashinfo file %s",filename);
+                WARN("failed to delete the trashinfo file %s\n",filename);
     }
     else
         WARN("could not erase %s from the trash (errno=%i)\n",filename,errno);
@@ -586,16 +586,16 @@ HRESULT TRASH_EraseItem(LPCITEMIDLIST pidl)
     const char *filename = (const char*)(id->abID+1+sizeof(WIN32_FIND_DATAW)+strlen(bucket_name)+1);
     char *file_path;
 
-    TRACE("(%p)",pidl);
+    TRACE("(%p)\n",pidl);
     if(strcmp(filename+strlen(filename)-suffix_length,trashinfo_suffix))
     {
-        ERR("pidl at %p is not a valid recycle bin entry",pidl);
+        ERR("pidl at %p is not a valid recycle bin entry\n",pidl);
         return E_INVALIDARG;
     }
     file_path = SHAlloc(max(strlen(home_trash->files_dir),strlen(home_trash->info_dir))+strlen(filename)+1);
     sprintf(file_path,"%s%s",home_trash->info_dir,filename);
     if(unlink(file_path))
-        WARN("failed to delete the trashinfo file %s",filename);
+        WARN("failed to delete the trashinfo file %s\n",filename);
     sprintf(file_path,"%s%s",home_trash->files_dir,filename);
     file_path[strlen(home_trash->files_dir)+strlen(filename)-suffix_length] = '\0';
     if(unlink(file_path))

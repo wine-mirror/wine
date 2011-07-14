@@ -59,12 +59,12 @@ static void test_query_recyclebin(void)
     CHAR buf[MAX_PATH+strlen(name)+2];
     if(!pSHQueryRecycleBinA)
     {
-        skip("SHQueryRecycleBinA does not exist");
+        skip("SHQueryRecycleBinA does not exist\n");
         return;
     }
     if(!pSHFileOperationA)
     {
-        skip("SHFileOperationA does not exist");
+        skip("SHFileOperationA does not exist\n");
         return;
     }
     GetCurrentDirectoryA(MAX_PATH, buf);

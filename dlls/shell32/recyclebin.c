@@ -173,7 +173,7 @@ static HRESULT WINAPI RecycleBinMenu_QueryContextMenu(IContextMenu2 *iface,
         return E_NOTIMPL;
     else{
         UINT idMax = Shell_MergeMenus(hmenu,GetSubMenu(menures,0),indexMenu,idCmdFirst,idCmdLast,MM_SUBMENUSHAVEIDS);
-        TRACE("Added %d id(s)",idMax-idCmdFirst);
+        TRACE("Added %d id(s)\n",idMax-idCmdFirst);
         return MAKE_HRESULT(SEVERITY_SUCCESS, FACILITY_NULL, idMax-idCmdFirst+1);
     }
 }
