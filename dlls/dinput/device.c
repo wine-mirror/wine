@@ -888,7 +888,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_EnumObjects(LPDIRECTINPUTDEVICE8A iface,
     {
         LPDIOBJECTDATAFORMAT odf = dataformat_to_odf(This->data_format.wine_df, i);
 
-        if (dwFlags != DIDFT_ALL && !(dwFlags & DIEFT_GETTYPE(odf->dwType))) continue;
+        if (dwFlags != DIDFT_ALL && !(dwFlags & DIDFT_GETTYPE(odf->dwType))) continue;
         if (IDirectInputDevice_GetObjectInfo(iface, &ddoi, odf->dwType, DIPH_BYID) != DI_OK)
             continue;
 
@@ -918,7 +918,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_EnumObjects(LPDIRECTINPUTDEVICE8W iface,
     {
         LPDIOBJECTDATAFORMAT odf = dataformat_to_odf(This->data_format.wine_df, i);
 
-        if (dwFlags != DIDFT_ALL && !(dwFlags & DIEFT_GETTYPE(odf->dwType))) continue;
+        if (dwFlags != DIDFT_ALL && !(dwFlags & DIDFT_GETTYPE(odf->dwType))) continue;
         if (IDirectInputDevice_GetObjectInfo(iface, &ddoi, odf->dwType, DIPH_BYID) != DI_OK)
             continue;
 
