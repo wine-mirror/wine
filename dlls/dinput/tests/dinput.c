@@ -201,16 +201,16 @@ static void test_DirectInputCreateEx(void)
         {TRUE,  DIRECTINPUT_VERSION + 1, &IID_IDirectInputA, TRUE,  DIERR_OLDDIRECTINPUTVERSION, NULL},
     };
 
-    static const REFIID no_interface_list[] = {&IID_IUnknown, &IID_IDirectInput8A,
-                                               &IID_IDirectInput8W, &IID_IDirectInputDeviceA,
-                                               &IID_IDirectInputDeviceW, &IID_IDirectInputDevice2A,
-                                               &IID_IDirectInputDevice2W, &IID_IDirectInputDevice7A,
-                                               &IID_IDirectInputDevice7W, &IID_IDirectInputDevice8A,
-                                               &IID_IDirectInputDevice8W, &IID_IDirectInputEffect};
+    static REFIID no_interface_list[] = {&IID_IUnknown, &IID_IDirectInput8A,
+                                         &IID_IDirectInput8W, &IID_IDirectInputDeviceA,
+                                         &IID_IDirectInputDeviceW, &IID_IDirectInputDevice2A,
+                                         &IID_IDirectInputDevice2W, &IID_IDirectInputDevice7A,
+                                         &IID_IDirectInputDevice7W, &IID_IDirectInputDevice8A,
+                                         &IID_IDirectInputDevice8W, &IID_IDirectInputEffect};
 
-    static const REFIID iid_list[] = {&IID_IDirectInputA, &IID_IDirectInputW,
-                                      &IID_IDirectInput2A, &IID_IDirectInput2W,
-                                      &IID_IDirectInput7A, &IID_IDirectInput7W};
+    static REFIID iid_list[] = {&IID_IDirectInputA, &IID_IDirectInputW,
+                                &IID_IDirectInput2A, &IID_IDirectInput2W,
+                                &IID_IDirectInput7A, &IID_IDirectInput7W};
 
     int i, j;
     IUnknown *pUnk;
@@ -270,9 +270,9 @@ static void test_DirectInputCreateEx(void)
 
 static void test_QueryInterface(void)
 {
-    static const REFIID iid_list[] = {&IID_IUnknown, &IID_IDirectInputA, &IID_IDirectInputW,
-                                      &IID_IDirectInput2A, &IID_IDirectInput2W,
-                                      &IID_IDirectInput7A, &IID_IDirectInput7W};
+    static REFIID iid_list[] = {&IID_IUnknown, &IID_IDirectInputA, &IID_IDirectInputW,
+                                &IID_IDirectInput2A, &IID_IDirectInput2W,
+                                &IID_IDirectInput7A, &IID_IDirectInput7W};
 
     static const struct
     {
