@@ -3422,9 +3422,14 @@ static HRESULT get_known_folder_path(
     if(hr == S_OK)
     {
         /* get parent's known folder path (recursive) */
-        get_known_folder_registry_path(NULL, parentGuid, &parentRegistryPath);
+        hr = get_known_folder_registry_path(NULL, parentGuid, &parentRegistryPath);
+        if(!SUCCEEDED(hr)) return hr;
 
         hr = get_known_folder_path(parentGuid, parentRegistryPath, &parentPath);
+        if(!SUCCEEDED(hr)) {
+            HeapFree(GetProcessHeap(), 0, parentRegistryPath);
+            return hr;
+        }
 
         lstrcatW(path, parentPath);
         lstrcatW(path, sBackslash);
