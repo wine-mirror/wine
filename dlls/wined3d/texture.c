@@ -647,7 +647,7 @@ static HRESULT texture2d_bind(struct wined3d_texture *texture,
     return hr;
 }
 
-static BOOL texture_srgb_mode(struct wined3d_texture *texture, enum WINED3DSRGB srgb)
+static BOOL texture_srgb_mode(const struct wined3d_texture *texture, enum WINED3DSRGB srgb)
 {
     switch (srgb)
     {
