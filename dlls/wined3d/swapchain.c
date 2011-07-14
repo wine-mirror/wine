@@ -277,7 +277,7 @@ HRESULT CDECL wined3d_swapchain_get_gamma_ramp(const struct wined3d_swapchain *s
 }
 
 /* A GL context is provided by the caller */
-static void swapchain_blit(struct wined3d_swapchain *swapchain,
+static void swapchain_blit(const struct wined3d_swapchain *swapchain,
         struct wined3d_context *context, const RECT *src_rect, const RECT *dst_rect)
 {
     struct wined3d_surface *backbuffer = swapchain->back_buffers[0];
