@@ -486,7 +486,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_GetDeviceCaps,               /* pGetDeviceCaps */
     X11DRV_GetDeviceGammaRamp,          /* pGetDeviceGammaRamp */
     X11DRV_GetICMProfile,               /* pGetICMProfile */
-    NULL,                               /* pGetImage */
+    X11DRV_GetImage,                    /* pGetImage */
     X11DRV_GetNearestColor,             /* pGetNearestColor */
     X11DRV_GetPixel,                    /* pGetPixel */
     X11DRV_GetPixelFormat,              /* pGetPixelFormat */

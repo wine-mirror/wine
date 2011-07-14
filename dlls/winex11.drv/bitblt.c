@@ -1,7 +1,7 @@
 /*
  * GDI bit-blit operations
  *
- * Copyright 1993, 1994  Alexandre Julliard
+ * Copyright 1993, 1994, 2011 Alexandre Julliard
  * Copyright 2006 Damjan Jovanovic
  *
  * This library is free software; you can redistribute it and/or
@@ -1546,4 +1546,174 @@ BOOL X11DRV_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     if (IsRectEmpty( &dst->visrect )) return TRUE;
 
     return XRender_AlphaBlend( physDevDst, dst, physDevSrc, src, blendfn );
+}
+
+
+static void free_heap_bits( struct gdi_image_bits *bits )
+{
+    HeapFree( GetProcessHeap(), 0, bits->ptr );
+}
+
+static void free_ximage_bits( struct gdi_image_bits *bits )
+{
+    wine_tsx11_lock();
+    XFree( bits->ptr );
+    wine_tsx11_unlock();
+}
+
+/* store the palette or color mask data in the bitmap info structure */
+static void set_color_info( const ColorShifts *color_shifts, BITMAPINFO *info )
+{
+    DWORD *colors = (DWORD *)((char *)info + info->bmiHeader.biSize);
+
+    switch (info->bmiHeader.biBitCount)
+    {
+    case 1:
+    case 4:
+    case 8:
+        info->bmiHeader.biCompression = BI_RGB;
+        /* FIXME: set color palette */
+        break;
+    case 16:
+    case 32:
+        info->bmiHeader.biCompression = BI_BITFIELDS;
+        colors[0] = color_shifts->logicalRed.max << color_shifts->logicalRed.shift;
+        colors[1] = color_shifts->logicalGreen.max << color_shifts->logicalGreen.shift;
+        colors[2] = color_shifts->logicalBlue.max << color_shifts->logicalBlue.shift;
+        break;
+    case 24:
+        info->bmiHeader.biCompression = BI_RGB;
+        break;
+    }
+}
+
+/***********************************************************************
+ *           X11DRV_GetImage
+ */
+DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
+                       struct gdi_image_bits *bits, const RECT *rect )
+{
+    X11DRV_PDEVICE *physdev;
+    X_PHYSBITMAP *bitmap;
+    DWORD ret = ERROR_SUCCESS;
+    XImage *image;
+    UINT i, align, x, y, width, height;
+    int depth;
+    const XPixmapFormatValues *format;
+    const ColorShifts *color_shifts;
+
+    if (hbitmap)
+    {
+        if (!(bitmap = X11DRV_get_phys_bitmap( hbitmap ))) return ERROR_INVALID_HANDLE;
+        physdev = NULL;
+        depth = bitmap->pixmap_depth;
+        color_shifts = &bitmap->pixmap_color_shifts;
+    }
+    else
+    {
+        physdev = get_x11drv_dev( dev );
+        bitmap = NULL;
+        depth = physdev->depth;
+        color_shifts = physdev->color_shifts;
+    }
+    format = pixmap_formats[depth];
+
+    /* align start and width to 32-bit boundary */
+    switch (format->bits_per_pixel)
+    {
+    case 1:  align = 32; break;
+    case 4:  align = 8;  break;
+    case 8:  align = 4;  break;
+    case 16: align = 2;  break;
+    case 24: align = 4;  break;
+    case 32: align = 1;  break;
+    default:
+        FIXME( "depth %u bpp %u not supported yet\n", depth, format->bits_per_pixel );
+        return ERROR_BAD_FORMAT;
+    }
+    bits->offset = rect->left & (align - 1);
+    x = rect->left - bits->offset;
+    y = rect->top;
+    width = rect->right - x;
+    height = rect->bottom - rect->top;
+    if (format->scanline_pad != 32) width = (width + (align - 1)) & ~(align - 1);
+
+    if (bitmap)
+    {
+        BITMAP bm;
+        GetObjectW( hbitmap, sizeof(bm), &bm );
+        width = min( width, bm.bmWidth - x );
+        height = min( height, bm.bmHeight - y );
+        wine_tsx11_lock();
+        image = XGetImage( gdi_display, bitmap->pixmap, x, y, width, height, AllPlanes, ZPixmap );
+        wine_tsx11_unlock();
+    }
+    else if (GetObjectType( dev->hdc ) == OBJ_MEMDC)
+    {
+        X11DRV_LockDIBSection( physdev, DIB_Status_GdiMod );
+        width = min( width, physdev->dc_rect.right - physdev->dc_rect.left - x );
+        height = min( height, physdev->dc_rect.bottom - physdev->dc_rect.top - y );
+        wine_tsx11_lock();
+        image = XGetImage( gdi_display, physdev->drawable,
+                           physdev->dc_rect.left + x, physdev->dc_rect.top + y,
+                           width, height, AllPlanes, ZPixmap );
+        wine_tsx11_unlock();
+        X11DRV_UnlockDIBSection( physdev, FALSE );
+    }
+    else
+    {
+        Pixmap pixmap;
+
+        wine_tsx11_lock();
+        /* use a temporary pixmap to avoid BadMatch errors */
+        pixmap = XCreatePixmap( gdi_display, root_window, width, height, depth );
+        XCopyArea( gdi_display, physdev->drawable, pixmap, get_bitmap_gc(depth),
+                   physdev->dc_rect.left + x, physdev->dc_rect.top + y, width, height, 0, 0 );
+        image = XGetImage( gdi_display, pixmap, 0, 0, width, height, AllPlanes, ZPixmap );
+        XFreePixmap( gdi_display, pixmap );
+        wine_tsx11_unlock();
+    }
+    if (!image) return ERROR_OUTOFMEMORY;
+
+    info->bmiHeader.biSize          = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth         = width;
+    info->bmiHeader.biHeight        = -height;
+    info->bmiHeader.biPlanes        = 1;
+    info->bmiHeader.biBitCount      = image->bits_per_pixel;
+    info->bmiHeader.biSizeImage     = height * image->bytes_per_line;
+    info->bmiHeader.biXPelsPerMeter = 0;
+    info->bmiHeader.biYPelsPerMeter = 0;
+    info->bmiHeader.biClrUsed       = 0;
+    info->bmiHeader.biClrImportant  = 0;
+    set_color_info( color_shifts, info );
+
+    /* check if we need to copy the bits */
+    if (image->bytes_per_line & 3)
+    {
+        UINT width_bytes = (image->bytes_per_line + 3) & ~3;
+        info->bmiHeader.biSizeImage = height * width_bytes;
+        if ((bits->ptr = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage )))
+        {
+            bits->is_copy = TRUE;
+            bits->free = free_heap_bits;
+            for (i = 0; i < height; i++)
+                memcpy( (char *)bits->ptr + i * width_bytes,
+                        (char *)image->data + i * image->bytes_per_line,
+                        image->bytes_per_line );
+            /* FIXME: byte swapping */
+        }
+        else ret = ERROR_OUTOFMEMORY;
+    }
+    else
+    {
+        bits->ptr = image->data;
+        bits->is_copy = TRUE;
+        bits->free = free_ximage_bits;
+        image->data = NULL;
+    }
+
+    wine_tsx11_lock();
+    XDestroyImage( image );
+    wine_tsx11_unlock();
+    return ret;
 }

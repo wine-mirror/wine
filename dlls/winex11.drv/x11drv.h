@@ -204,6 +204,8 @@ extern BOOL X11DRV_GetDeviceGammaRamp( PHYSDEV dev, LPVOID ramp ) DECLSPEC_HIDDE
 extern INT X11DRV_GetDIBits( PHYSDEV dev, HBITMAP hbitmap, UINT startscan, UINT lines,
                              LPVOID bits, BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename ) DECLSPEC_HIDDEN;
+extern DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
+                              struct gdi_image_bits *bits, const RECT *rect ) DECLSPEC_HIDDEN;
 extern COLORREF X11DRV_GetNearestColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF X11DRV_GetPixel( PHYSDEV dev, INT x, INT y) DECLSPEC_HIDDEN;
 extern UINT X11DRV_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count, LPPALETTEENTRY entries ) DECLSPEC_HIDDEN;
