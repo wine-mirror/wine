@@ -2543,7 +2543,7 @@ static UINT WINMM_QueryInstanceID(UINT device, WCHAR *str, DWORD_PTR len,
     return MMSYSERR_NOERROR;
 }
 
-UINT WINMM_DRVMessage(UINT dev, UINT message, DWORD_PTR param1,
+static UINT WINMM_DRVMessage(UINT dev, UINT message, DWORD_PTR param1,
         DWORD_PTR param2, BOOL is_out)
 {
     WINE_MLD *wmld;
