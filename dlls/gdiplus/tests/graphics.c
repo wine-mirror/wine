@@ -546,8 +546,9 @@ static void test_BeginContainer2(void)
     status = GdipBeginContainer2(graphics, &cont1);
     expect(Ok, status);
 
-    GdipCreateMatrix2(defTrans[0], defTrans[1], defTrans[2], defTrans[3],
+    status = GdipCreateMatrix2(defTrans[0], defTrans[1], defTrans[2], defTrans[3],
             defTrans[4], defTrans[5], &transform);
+    expect(Ok, status);
     GdipSetWorldTransform(graphics, transform);
     GdipDeleteMatrix(transform);
     transform = NULL;
@@ -555,7 +556,8 @@ static void test_BeginContainer2(void)
     status = GdipBeginContainer2(graphics, &cont2);
     expect(Ok, status);
 
-    GdipCreateMatrix2(10, 20, 30, 40, 50, 60, &transform);
+    status = GdipCreateMatrix2(10, 20, 30, 40, 50, 60, &transform);
+    expect(Ok, status);
     GdipSetWorldTransform(graphics, transform);
     GdipDeleteMatrix(transform);
     transform = NULL;
@@ -563,7 +565,8 @@ static void test_BeginContainer2(void)
     status = GdipEndContainer(graphics, cont2);
     expect(Ok, status);
 
-    GdipCreateMatrix(&transform);
+    status = GdipCreateMatrix(&transform);
+    expect(Ok, status);
     GdipGetWorldTransform(graphics, transform);
     GdipGetMatrixElements(transform, elems);
     ok(fabs(defTrans[0] - elems[0]) < 0.0001 &&
@@ -1430,7 +1433,8 @@ static void test_Get_Release_DC(void)
         rectf[i].Width  = (REAL)rect[i].Width;
     }
 
-    GdipCreateMatrix(&m);
+    status = GdipCreateMatrix(&m);
+    expect(Ok, status);
     GdipCreateRegion(&region);
     GdipCreateSolidFill((ARGB)0xdeadbeef, &brush);
     GdipCreatePath(FillModeAlternate, &path);
@@ -3036,7 +3040,8 @@ static void test_string_functions(void)
     for (i=0; i<4; i++)
         GdipDeleteRegion(regions[i]);
 
-    GdipCreateMatrix(&identity);
+    status = GdipCreateMatrix(&identity);
+    expect(Ok, status);
 
     position.X = 0;
     position.Y = 0;
