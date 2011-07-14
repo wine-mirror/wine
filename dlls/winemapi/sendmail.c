@@ -38,6 +38,37 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winemapi);
 
+/* Escapes a string for use in mailto: URL */
+static char *escape_string(char *in, char *empty_string)
+{
+    HRESULT res;
+    DWORD size;
+    char *escaped = NULL;
+
+    if (!in)
+        return empty_string;
+
+    size = 1;
+    res = UrlEscapeA(in, empty_string, &size, URL_ESCAPE_PERCENT | URL_ESCAPE_SEGMENT_ONLY);
+
+    if (res == E_POINTER)
+    {
+        escaped = HeapAlloc(GetProcessHeap(), 0, size);
+
+        if (!escaped)
+            return in;
+
+        /* If for some reason UrlEscape fails, just send the original text */
+        if (UrlEscapeA(in, escaped, &size, URL_ESCAPE_PERCENT | URL_ESCAPE_SEGMENT_ONLY) != S_OK)
+        {
+            HeapFree(GetProcessHeap(), 0, escaped);
+            escaped = in;
+        }
+    }
+
+    return escaped ? escaped : empty_string;
+}
+
 /**************************************************************************
  *  MAPISendMail
  *
@@ -62,8 +93,8 @@ ULONG WINAPI MAPISendMail(LHANDLE session, ULONG_PTR uiparam,
     unsigned int i, to_count = 0, cc_count = 0, bcc_count = 0;
     unsigned int to_size = 0, cc_size = 0, bcc_size = 0, subj_size, body_size;
 
-    char *to = NULL, *cc = NULL, *bcc = NULL;
-    const char *address, *subject, *body;
+    char *to = NULL, *cc = NULL, *bcc = NULL, *subject = NULL, *body = NULL;
+    const char *address;
     static const char format[] =
         "mailto:\"%s\"?subject=\"%s\"&cc=\"%s\"&bcc=\"%s\"&body=\"%s\"";
     static const char smtp[] = "smtp:";
@@ -126,8 +157,9 @@ ULONG WINAPI MAPISendMail(LHANDLE session, ULONG_PTR uiparam,
     if (message->nFileCount)
         FIXME("Ignoring attachments\n");
 
-    subject = message->lpszSubject ? message->lpszSubject : "";
-    body = message->lpszNoteText ? message->lpszNoteText : "";
+    /* Escape subject and body */
+    subject = escape_string(message->lpszSubject, empty_string);
+    body = escape_string(message->lpszNoteText, empty_string);
 
     TRACE("Subject: %s\n", debugstr_a(subject));
     TRACE("Body: %s\n", debugstr_a(body));
@@ -244,6 +276,12 @@ exit:
     HeapFree(GetProcessHeap(), 0, bcc);
     HeapFree(GetProcessHeap(), 0, mailto);
     HeapFree(GetProcessHeap(), 0, escape);
+
+    if (subject != empty_string)
+        HeapFree(GetProcessHeap(), 0, subject);
+
+    if (body != empty_string)
+        HeapFree(GetProcessHeap(), 0, body);
 
     return ret;
 }
