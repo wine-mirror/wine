@@ -70,6 +70,15 @@ ERRORLEVEL
 P0
 0S
 P0S
+------------ Testing type ------------
+
+@pwd@>type foobaz@space@
+bar
+
+@pwd@>echo ***@space@
+***
+bar
+***
 ------------ Testing if/else --------------
 if/else should work with blocks
 if seems to work

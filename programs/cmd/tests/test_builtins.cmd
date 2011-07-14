@@ -58,6 +58,16 @@ echo P%ERRORLEVEL%
 echo %ERRORLEVEL%S
 echo P%ERRORLEVEL%S
 
+echo ------------ Testing type ------------
+echo bar> foobaz
+@echo on
+type foobaz
+echo ***
+@echo off
+type foobaz
+echo ***
+del foobaz
+
 echo ------------ Testing if/else --------------
 echo if/else should work with blocks
 if 0 == 0 (
