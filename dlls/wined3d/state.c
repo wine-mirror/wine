@@ -1941,15 +1941,6 @@ static void state_swvp(struct wined3d_context *context, const struct wined3d_sta
         FIXME("Software vertex processing not implemented.\n");
 }
 
-/* Set texture operations up - The following avoids lots of ifdefs in this routine!*/
-#if defined (GL_VERSION_1_3)
-# define useext(A) A
-#elif defined (GL_EXT_texture_env_combine)
-# define useext(A) A##_EXT
-#elif defined (GL_ARB_texture_env_combine)
-# define useext(A) A##_ARB
-#endif
-
 static void get_src_and_opr(DWORD arg, BOOL is_alpha, GLenum* source, GLenum* operand) {
     /* The WINED3DTA_ALPHAREPLICATE flag specifies the alpha component of the
     * input should be used for all input components. The WINED3DTA_COMPLEMENT
@@ -2016,25 +2007,27 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
     manuals, i.e., replace arg1 with arg3, arg2 with arg1 and arg3 with arg2
     This affects WINED3DTOP_MULTIPLYADD and WINED3DTOP_LERP                     */
 
-    if (isAlpha) {
-        comb_target = useext(GL_COMBINE_ALPHA);
-        src0_target = useext(GL_SOURCE0_ALPHA);
-        src1_target = useext(GL_SOURCE1_ALPHA);
-        src2_target = useext(GL_SOURCE2_ALPHA);
-        opr0_target = useext(GL_OPERAND0_ALPHA);
-        opr1_target = useext(GL_OPERAND1_ALPHA);
-        opr2_target = useext(GL_OPERAND2_ALPHA);
+    if (isAlpha)
+    {
+        comb_target = GL_COMBINE_ALPHA;
+        src0_target = GL_SOURCE0_ALPHA;
+        src1_target = GL_SOURCE1_ALPHA;
+        src2_target = GL_SOURCE2_ALPHA;
+        opr0_target = GL_OPERAND0_ALPHA;
+        opr1_target = GL_OPERAND1_ALPHA;
+        opr2_target = GL_OPERAND2_ALPHA;
         scal_target = GL_ALPHA_SCALE;
     }
-    else {
-        comb_target = useext(GL_COMBINE_RGB);
-        src0_target = useext(GL_SOURCE0_RGB);
-        src1_target = useext(GL_SOURCE1_RGB);
-        src2_target = useext(GL_SOURCE2_RGB);
-        opr0_target = useext(GL_OPERAND0_RGB);
-        opr1_target = useext(GL_OPERAND1_RGB);
-        opr2_target = useext(GL_OPERAND2_RGB);
-        scal_target = useext(GL_RGB_SCALE);
+    else
+    {
+        comb_target = GL_COMBINE_RGB;
+        src0_target = GL_SOURCE0_RGB;
+        src1_target = GL_SOURCE1_RGB;
+        src2_target = GL_SOURCE2_RGB;
+        opr0_target = GL_OPERAND0_RGB;
+        opr1_target = GL_OPERAND1_RGB;
+        opr2_target = GL_OPERAND2_RGB;
+        scal_target = GL_RGB_SCALE;
     }
 
         /* If a texture stage references an invalid texture unit the stage just
@@ -2213,8 +2206,8 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 break;
 
             case WINED3DTOP_ADDSIGNED:
-                glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_ADD_SIGNED));
-                checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_ADD_SIGNED)");
+                glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD_SIGNED);
+                checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD_SIGNED");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
                 checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
                 glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
@@ -2236,8 +2229,8 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 break;
 
             case WINED3DTOP_ADDSIGNED2X:
-                glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_ADD_SIGNED));
-                checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_ADD_SIGNED)");
+                glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD_SIGNED);
+                checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD_SIGNED");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
                 checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
                 glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
@@ -2294,16 +2287,16 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
                 glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
                 checkGLcall("GL_TEXTURE_ENV, opr0_target, opr1");
-                glTexEnvi(GL_TEXTURE_ENV, src1_target, useext(GL_PRIMARY_COLOR));
-                checkGLcall("GL_TEXTURE_ENV, src1_target, useext(GL_PRIMARY_COLOR)");
+                glTexEnvi(GL_TEXTURE_ENV, src1_target, GL_PRIMARY_COLOR);
+                checkGLcall("GL_TEXTURE_ENV, src1_target, GL_PRIMARY_COLOR");
                 glTexEnvi(GL_TEXTURE_ENV, opr1_target, invopr);
                 checkGLcall("GL_TEXTURE_ENV, opr1_target, invopr");
                 glTexEnvi(GL_TEXTURE_ENV, src2_target, src2);
                 checkGLcall("GL_TEXTURE_ENV, src2_target, src2");
                 glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr2);
                 checkGLcall("GL_TEXTURE_ENV, opr2_target, opr2");
-                glTexEnvi(GL_TEXTURE_ENV, src3_target, useext(GL_PRIMARY_COLOR));
-                checkGLcall("GL_TEXTURE_ENV, src3_target, useext(GL_PRIMARY_COLOR)");
+                glTexEnvi(GL_TEXTURE_ENV, src3_target, GL_PRIMARY_COLOR);
+                checkGLcall("GL_TEXTURE_ENV, src3_target, GL_PRIMARY_COLOR");
                 glTexEnvi(GL_TEXTURE_ENV, opr3_target, GL_ONE_MINUS_SRC_ALPHA);
                 checkGLcall("GL_TEXTURE_ENV, opr3_target, GL_ONE_MINUS_SRC_ALPHA");
                 glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
@@ -2338,16 +2331,16 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
                 checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
                 glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
                 checkGLcall("GL_TEXTURE_ENV, opr0_target, opr1");
-                glTexEnvi(GL_TEXTURE_ENV, src1_target, useext(GL_CONSTANT));
-                checkGLcall("GL_TEXTURE_ENV, src1_target, useext(GL_CONSTANT)");
+                glTexEnvi(GL_TEXTURE_ENV, src1_target, GL_CONSTANT);
+                checkGLcall("GL_TEXTURE_ENV, src1_target, GL_CONSTANT");
                 glTexEnvi(GL_TEXTURE_ENV, opr1_target, invopr);
                 checkGLcall("GL_TEXTURE_ENV, opr1_target, invopr");
                 glTexEnvi(GL_TEXTURE_ENV, src2_target, src2);
                 checkGLcall("GL_TEXTURE_ENV, src2_target, src2");
                 glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr2);
                 checkGLcall("GL_TEXTURE_ENV, opr2_target, opr2");
-                glTexEnvi(GL_TEXTURE_ENV, src3_target, useext(GL_CONSTANT));
-                checkGLcall("GL_TEXTURE_ENV, src3_target, useext(GL_CONSTANT)");
+                glTexEnvi(GL_TEXTURE_ENV, src3_target, GL_CONSTANT);
+                checkGLcall("GL_TEXTURE_ENV, src3_target, GL_CONSTANT");
                 glTexEnvi(GL_TEXTURE_ENV, opr3_target, GL_ONE_MINUS_SRC_ALPHA);
                 checkGLcall("GL_TEXTURE_ENV, opr3_target, GL_ONE_MINUS_SRC_ALPHA");
                 glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
@@ -2617,8 +2610,8 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
         case WINED3DTOP_ADDSIGNED:
-            glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_ADD_SIGNED));
-            checkGLcall("GL_TEXTURE_ENV, comb_target, useext((GL_ADD_SIGNED)");
+            glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD_SIGNED);
+            checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD_SIGNED");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
             checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
             glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
@@ -2631,8 +2624,8 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
         case WINED3DTOP_ADDSIGNED2X:
-            glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_ADD_SIGNED));
-            checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_ADD_SIGNED)");
+            glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD_SIGNED);
+            checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD_SIGNED");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
             checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
             glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
@@ -2648,7 +2641,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             if (gl_info->supported[ARB_TEXTURE_ENV_COMBINE])
             {
                 glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_SUBTRACT);
-                checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_SUBTRACT)");
+                checkGLcall("GL_TEXTURE_ENV, comb_target, GL_SUBTRACT");
                 glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
                 checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
                 glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
@@ -2665,8 +2658,8 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             break;
 
         case WINED3DTOP_BLENDDIFFUSEALPHA:
-            glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_INTERPOLATE));
-            checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_INTERPOLATE)");
+            glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE);
+            checkGLcall("GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
             checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
             glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
@@ -2675,7 +2668,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             checkGLcall("GL_TEXTURE_ENV, src1_target, src2");
             glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr2);
             checkGLcall("GL_TEXTURE_ENV, opr1_target, opr2");
-            glTexEnvi(GL_TEXTURE_ENV, src2_target, useext(GL_PRIMARY_COLOR));
+            glTexEnvi(GL_TEXTURE_ENV, src2_target, GL_PRIMARY_COLOR);
             checkGLcall("GL_TEXTURE_ENV, src2_target, GL_PRIMARY_COLOR");
             glTexEnvi(GL_TEXTURE_ENV, opr2_target, GL_SRC_ALPHA);
             checkGLcall("GL_TEXTURE_ENV, opr2_target, GL_SRC_ALPHA");
@@ -2683,8 +2676,8 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
         case WINED3DTOP_BLENDTEXTUREALPHA:
-            glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_INTERPOLATE));
-            checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_INTERPOLATE)");
+            glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE);
+            checkGLcall("GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
             checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
             glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
@@ -2701,8 +2694,8 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
         case WINED3DTOP_BLENDFACTORALPHA:
-            glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_INTERPOLATE));
-            checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_INTERPOLATE)");
+            glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE);
+            checkGLcall("GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
             checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
             glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
@@ -2711,7 +2704,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             checkGLcall("GL_TEXTURE_ENV, src1_target, src2");
             glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr2);
             checkGLcall("GL_TEXTURE_ENV, opr1_target, opr2");
-            glTexEnvi(GL_TEXTURE_ENV, src2_target, useext(GL_CONSTANT));
+            glTexEnvi(GL_TEXTURE_ENV, src2_target, GL_CONSTANT);
             checkGLcall("GL_TEXTURE_ENV, src2_target, GL_CONSTANT");
             glTexEnvi(GL_TEXTURE_ENV, opr2_target, GL_SRC_ALPHA);
             checkGLcall("GL_TEXTURE_ENV, opr2_target, GL_SRC_ALPHA");
@@ -2719,8 +2712,8 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
         case WINED3DTOP_BLENDCURRENTALPHA:
-            glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_INTERPOLATE));
-            checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_INTERPOLATE)");
+            glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE);
+            checkGLcall("GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
             checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
             glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
@@ -2729,7 +2722,7 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             checkGLcall("GL_TEXTURE_ENV, src1_target, src2");
             glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr2);
             checkGLcall("GL_TEXTURE_ENV, opr1_target, opr2");
-            glTexEnvi(GL_TEXTURE_ENV, src2_target, useext(GL_PREVIOUS));
+            glTexEnvi(GL_TEXTURE_ENV, src2_target, GL_PREVIOUS);
             checkGLcall("GL_TEXTURE_ENV, src2_target, GL_PREVIOUS");
             glTexEnvi(GL_TEXTURE_ENV, opr2_target, GL_SRC_ALPHA);
             checkGLcall("GL_TEXTURE_ENV, opr2_target, GL_SRC_ALPHA");
@@ -2761,8 +2754,8 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
         case WINED3DTOP_LERP:
-            glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_INTERPOLATE));
-            checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_INTERPOLATE)");
+            glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE);
+            checkGLcall("GL_TEXTURE_ENV, comb_target, GL_INTERPOLATE");
             glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
             checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
             glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
@@ -3015,9 +3008,10 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
             }
         }
 
-        if (combineOK) {
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, useext(GL_COMBINE));
-            checkGLcall("GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, useext(GL_COMBINE)");
+        if (combineOK)
+        {
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+            checkGLcall("GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE");
 
             return;
         }
