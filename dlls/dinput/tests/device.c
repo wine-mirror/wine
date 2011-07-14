@@ -64,11 +64,20 @@ static BOOL CALLBACK enum_callback(LPCDIDEVICEOBJECTINSTANCE oi, LPVOID info)
     return DIENUM_CONTINUE;
 }
 
+static BOOL CALLBACK enum_type_callback(LPCDIDEVICEOBJECTINSTANCE oi, LPVOID info)
+{
+    DWORD expected = *(DWORD*)info;
+    ok (expected & DIDFT_GETTYPE(oi->dwType), "EnumObjects() enumerated wrong type for obj %s, expected: %08x got: %08x\n", oi->tszName, expected, oi->dwType);
+    return DIENUM_CONTINUE;
+}
+
 static void test_object_info(LPDIRECTINPUTDEVICE device, HWND hwnd)
 {
     HRESULT hr;
     DIPROPDWORD dp;
     DIDEVICEOBJECTINSTANCE obj_info;
+    DWORD obj_types[] = {DIDFT_BUTTON, DIDFT_AXIS, DIDFT_POV};
+    int type_index;
     int cnt = 0, cnt1 = 0;
 
     hr = IDirectInputDevice_EnumObjects(device, enum_callback, &cnt, DIDFT_ALL);
@@ -81,6 +90,13 @@ static void test_object_info(LPDIRECTINPUTDEVICE device, HWND hwnd)
     ok(SUCCEEDED(hr), "EnumObjects() failed: %08x\n", hr);
     if (0) /* fails for joystick only */
     ok(cnt == cnt1, "Enum count changed from %d to %d\n", cnt, cnt1);
+
+    /* Testing EnumObjects with different types of device objects */
+    for (type_index=0; type_index < sizeof(obj_types)/sizeof(obj_types[0]); type_index++)
+    {
+        hr = IDirectInputDevice_EnumObjects(device, enum_type_callback, &obj_types[type_index], obj_types[type_index]);
+        ok(SUCCEEDED(hr), "EnumObjects() failed: %08x\n", hr);
+    }
 
     /* No need to test devices without axis */
     obj_info.dwSize = sizeof(obj_info);
