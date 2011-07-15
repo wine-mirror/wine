@@ -1012,6 +1012,7 @@ static void test_mxwriter_properties(void)
     hr = IMXWriter_get_encoding(writer, &str);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(lstrcmpW(str, utf16W) == 0, "expected empty string, got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 
     /* invalid encoding name */
     str = SysAllocString(testW);
@@ -1025,6 +1026,7 @@ static void test_mxwriter_properties(void)
     hr = IMXWriter_get_version(writer, &str);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(!lstrcmpW(str, _bstr_("1.0")), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 
     IMXWriter_Release(writer);
     free_bstrs();
