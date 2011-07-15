@@ -89,8 +89,10 @@ static void get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
     if (rect.left > rect.right) { swap_ints( &rect.left, &rect.right ); rect.left++; rect.right++; }
     if (rect.top > rect.bottom) { swap_ints( &rect.top, &rect.bottom ); rect.top++; rect.bottom++; }
 
-    get_clip_box( dc_dst, &clip );
-    intersect_rect( &dst->visrect, &rect, &clip );
+    if (get_clip_box( dc_dst, &clip ))
+        intersect_rect( &dst->visrect, &rect, &clip );
+    else
+        dst->visrect = rect;
 
     /* get the source visible rectangle */
 
