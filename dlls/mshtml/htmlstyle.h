@@ -59,6 +59,7 @@ typedef enum {
     STYLEID_BORDER_TOP_WIDTH,
     STYLEID_BORDER_WIDTH,
     STYLEID_BOTTOM,
+    STYLEID_CLIP,
     STYLEID_COLOR,
     STYLEID_CURSOR,
     STYLEID_DISPLAY,
@@ -107,7 +108,8 @@ HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration*,styleid_t,LPCWSTR,DWORD) DEC
 HRESULT set_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *value, DWORD flags) DECLSPEC_HIDDEN;
 HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *p, DWORD flags) DECLSPEC_HIDDEN;
 
-#define ATTR_FIX_PX      1
-#define ATTR_FIX_URL     2
-#define ATTR_STR_TO_INT  4
-#define ATTR_HEX_INT     8
+#define ATTR_FIX_PX         0x0001
+#define ATTR_FIX_URL        0x0002
+#define ATTR_STR_TO_INT     0x0004
+#define ATTR_HEX_INT        0x0008
+#define ATTR_REMOVE_COMMA   0x0010

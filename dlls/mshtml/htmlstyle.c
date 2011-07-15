@@ -91,6 +91,8 @@ static const WCHAR attrBorderWidth[] =
     {'b','o','r','d','e','r','-','w','i','d','t','h',0};
 static const WCHAR attrBottom[] =
     {'b','o','t','t','o','m',0};
+static const WCHAR attrClip[] =
+    {'c','l','i','p',0};
 static const WCHAR attrColor[] =
     {'c','o','l','o','r',0};
 static const WCHAR attrCursor[] =
@@ -198,6 +200,7 @@ static const struct{
     {attrBorderTopWidth,       DISPID_IHTMLSTYLE_BORDERTOPWIDTH},
     {attrBorderWidth,          DISPID_IHTMLSTYLE_BORDERWIDTH},
     {attrBottom,               DISPID_IHTMLSTYLE2_BOTTOM},
+    {attrClip,                 DISPID_IHTMLSTYLE_CLIP},
     {attrColor,                DISPID_IHTMLSTYLE_COLOR},
     {attrCursor,               DISPID_IHTMLSTYLE_CURSOR},
     {attrDisplay,              DISPID_IHTMLSTYLE_DISPLAY},
@@ -410,6 +413,7 @@ static HRESULT get_nsstyle_attr_nsval(nsIDOMCSSStyleDeclaration *nsstyle, stylei
 static HRESULT nsstyle_to_bstr(const WCHAR *val, DWORD flags, BSTR *p)
 {
     BSTR ret;
+    DWORD len;
 
     if(!*val) {
         *p = NULL;
@@ -419,6 +423,34 @@ static HRESULT nsstyle_to_bstr(const WCHAR *val, DWORD flags, BSTR *p)
     ret = SysAllocString(val);
     if(!ret)
         return E_OUTOFMEMORY;
+
+    len = SysStringLen(ret);
+
+    if(flags & ATTR_REMOVE_COMMA) {
+        DWORD new_len = len;
+        WCHAR *ptr, *ptr2;
+
+        for(ptr = ret; (ptr = strchrW(ptr, ',')); ptr++)
+            new_len--;
+
+        if(new_len != len) {
+            BSTR new_ret;
+
+            new_ret = SysAllocStringLen(NULL, new_len);
+            if(!new_ret) {
+                SysFreeString(ret);
+                return E_OUTOFMEMORY;
+            }
+
+            for(ptr2 = new_ret, ptr = ret; *ptr; ptr++) {
+                if(*ptr != ',')
+                    *ptr2++ = *ptr;
+            }
+
+            SysFreeString(ret);
+            ret = new_ret;
+        }
+    }
 
     *p = ret;
     return S_OK;
@@ -488,7 +520,7 @@ HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, 
     nsAString_Finish(&str_value);
 
     TRACE("%s -> %s\n", debugstr_w(style_tbl[sid].name), debugstr_variant(p));
-    return hres;
+    return S_OK;
 }
 
 static inline HRESULT get_style_attr(HTMLStyle *This, styleid_t sid, BSTR *p)
@@ -2549,15 +2581,19 @@ static HRESULT WINAPI HTMLStyle_get_cursor(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_clip(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_style_attr(This, STYLEID_CLIP, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_clip(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_nsstyle_attr(This->nsstyle, STYLEID_CLIP, p, ATTR_REMOVE_COMMA);
 }
 
 static void set_opacity(HTMLStyle *This, const WCHAR *val)
