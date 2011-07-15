@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-06-15 21:15+0100\n"
+"PO-Revision-Date: 2011-07-14 22:15+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -168,7 +168,6 @@ msgid "System Path"
 msgstr "Chemin système (path)"
 
 #: comdlg32.rc:34 shell32.rc:153 winecfg.rc:119 winefile.rc:103
-#, fuzzy
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Bureau"
@@ -6385,14 +6384,13 @@ msgid "Properties"
 msgstr "Propriétés"
 
 #: shell32.rc:82
-#, fuzzy
 msgctxt "recycle bin"
 msgid "&Restore"
 msgstr "&Restaurer"
 
 #: shell32.rc:83
 msgid "&Erase"
-msgstr ""
+msgstr "&Effacer"
 
 #: shell32.rc:95
 msgid "E&xplore"
@@ -6520,7 +6518,6 @@ msgid "My Videos"
 msgstr "Mes vidéos"
 
 #: shell32.rc:207
-#, fuzzy
 msgctxt "directory"
 msgid "Desktop"
 msgstr "Bureau"
@@ -6875,7 +6872,6 @@ msgid " sec"
 msgstr " s"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
-#, fuzzy
 msgctxt "window"
 msgid "&Restore"
 msgstr "&Restaurer"
