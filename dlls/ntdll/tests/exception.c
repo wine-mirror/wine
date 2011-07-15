@@ -510,7 +510,6 @@ static void check_debug_registers(int test_num, const struct dbgreg_test *test)
     CHECK_DEBUG_REG(0, ~0);
     CHECK_DEBUG_REG(1, ~0);
     CHECK_DEBUG_REG(2, ~0);
-if (test_num == 2) todo_wine
     CHECK_DEBUG_REG(3, ~0);
     CHECK_DEBUG_REG(6, 0x0f);
     CHECK_DEBUG_REG(7, ~0xdc00);

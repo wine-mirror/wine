@@ -605,6 +605,8 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
         if (thread->context) thread->context->debug.i386_regs.dr3 = context->debug.i386_regs.dr3;
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(6), context->debug.i386_regs.dr6 ) == -1) goto error;
         if (thread->context) thread->context->debug.i386_regs.dr6 = context->debug.i386_regs.dr6;
+        /* Linux 2.6.33+ needs enable bits set briefly to update value returned by PEEKUSER later */
+        ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.i386_regs.dr7 | 0x55 );
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.i386_regs.dr7 ) == -1) goto error;
         if (thread->context) thread->context->debug.i386_regs.dr7 = context->debug.i386_regs.dr7;
         break;
@@ -620,6 +622,7 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
         if (thread->context) thread->context->debug.x86_64_regs.dr3 = context->debug.x86_64_regs.dr3;
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(6), context->debug.x86_64_regs.dr6 ) == -1) goto error;
         if (thread->context) thread->context->debug.x86_64_regs.dr6 = context->debug.x86_64_regs.dr6;
+        ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.x86_64_regs.dr7 | 0x55 );
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.x86_64_regs.dr7 ) == -1) goto error;
         if (thread->context) thread->context->debug.x86_64_regs.dr7 = context->debug.x86_64_regs.dr7;
         break;
