@@ -731,7 +731,7 @@ static inline BOOL bit_fields_match(const dib_info *d1, const dib_info *d2)
 static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
     DWORD *dst_start = dst->bits, *dst_pixel, src_val;
-    int x, y;
+    int x, y, pad_size = (dst->width - (src_rect->right - src_rect->left)) * 4;
 
     switch(src->bit_count)
     {
@@ -747,6 +747,7 @@ static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
                 for(y = src_rect->top; y < src_rect->bottom; y++)
                 {
                     memcpy(dst_start, src_start, (src_rect->right - src_rect->left) * 4);
+                    if(pad_size) memset(dst_start + (src_rect->right - src_rect->left), 0, pad_size);
                     dst_start += dst->stride / 4;
                     src_start += src->stride / 4;
                 }
@@ -765,6 +766,7 @@ static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
                                    (((src_val >> src->green_shift) & 0xff) <<  8) |
                                     ((src_val >> src->blue_shift)  & 0xff);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 4;
                 src_start += src->stride / 4;
             }
@@ -794,6 +796,7 @@ static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
 
                 *dst_pixel++ = ((rgb.rgbRed << 16) & 0xff0000) | ((rgb.rgbGreen << 8) & 0x00ff00) | (rgb.rgbBlue & 0x0000ff);
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 4;
             src_start += src->stride;
         }
@@ -816,6 +819,7 @@ static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
                                    ((src_val << 6) & 0x00f800) | ((src_val << 1) & 0x000700) |
                                    ((src_val << 3) & 0x0000f8) | ((src_val >> 2) & 0x000007);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 4;
                 src_start += src->stride / 2;
             }
@@ -836,6 +840,7 @@ static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
                                    (((src_val >> src->blue_shift)  <<  3) & 0x0000f8) |
                                    (((src_val >> src->blue_shift)  >>  2) & 0x000007);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 4;
                 src_start += src->stride / 2;
             }
@@ -856,6 +861,7 @@ static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
                                    (((src_val >> src->blue_shift)  <<  3) & 0x0000f8) |
                                    (((src_val >> src->blue_shift)  >>  2) & 0x000007);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 4;
                 src_start += src->stride / 2;
             }
@@ -883,6 +889,7 @@ static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
                 rgb = src->color_table[src_val];
                 *dst_pixel++ = rgb.rgbRed << 16 | rgb.rgbGreen << 8 | rgb.rgbBlue;
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 4;
             src_start += src->stride;
         }
@@ -907,6 +914,7 @@ static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
                 rgb = src->color_table[src_val];
                 *dst_pixel++ = rgb.rgbRed << 16 | rgb.rgbGreen << 8 | rgb.rgbBlue;
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 4;
             src_start += src->stride;
         }
@@ -928,6 +936,7 @@ static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
                 rgb = src->color_table[src_val];
                 *dst_pixel++ = rgb.rgbRed << 16 | rgb.rgbGreen << 8 | rgb.rgbBlue;
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 4;
             src_start += src->stride;
         }
@@ -945,7 +954,7 @@ static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
 static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
     DWORD *dst_start = dst->bits, *dst_pixel, src_val;
-    int x, y;
+    int x, y, pad_size = (dst->width - (src_rect->right - src_rect->left)) * 4;
 
     switch(src->bit_count)
     {
@@ -966,6 +975,7 @@ static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
                                    put_field((src_val >>  8) & 0xff, dst->green_shift, dst->green_len) |
                                    put_field( src_val        & 0xff, dst->blue_shift,  dst->blue_len);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 4;
                 src_start += src->stride / 4;
             }
@@ -979,6 +989,7 @@ static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
                 for(y = src_rect->top; y < src_rect->bottom; y++)
                 {
                     memcpy(dst_start, src_start, (src_rect->right - src_rect->left) * 4);
+                    if(pad_size) memset(dst_start + (src_rect->right - src_rect->left), 0, pad_size);
                     dst_start += dst->stride / 4;
                     src_start += src->stride / 4;
                 }
@@ -998,6 +1009,7 @@ static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
                                    (((src_val >> src->green_shift) & 0xff) << dst->green_shift) |
                                    (((src_val >> src->blue_shift)  & 0xff) << dst->blue_shift);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 4;
                 src_start += src->stride / 4;
             }
@@ -1030,6 +1042,7 @@ static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
                                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
                                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 4;
             src_start += src->stride;
         }
@@ -1052,6 +1065,7 @@ static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
                                    put_field(((src_val >> 2) & 0xf8) | ((src_val >>  7) & 0x07), dst->green_shift, dst->green_len) |
                                    put_field(((src_val << 3) & 0xf8) | ((src_val >>  2) & 0x07), dst->blue_shift,  dst->blue_len);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 4;
                 src_start += src->stride / 2;
             }
@@ -1072,6 +1086,7 @@ static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
                                    put_field( (((src_val >> src->blue_shift)  << 3) & 0xf8) |
                                               (((src_val >> src->blue_shift)  >> 2) & 0x07), dst->blue_shift, dst->blue_len);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 4;
                 src_start += src->stride / 2;
             }
@@ -1092,6 +1107,7 @@ static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
                                    put_field( (((src_val >> src->blue_shift)  << 3) & 0xf8) |
                                               (((src_val >> src->blue_shift)  >> 2) & 0x07), dst->blue_shift, dst->blue_len);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 4;
                 src_start += src->stride / 2;
             }
@@ -1121,6 +1137,7 @@ static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
                                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
                                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 4;
             src_start += src->stride;
         }
@@ -1147,6 +1164,7 @@ static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
                                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
                                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 4;
             src_start += src->stride;
         }
@@ -1170,6 +1188,7 @@ static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
                                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
                                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 4;
             src_start += src->stride;
         }
@@ -1188,7 +1207,7 @@ static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
 {
     BYTE *dst_start = dst->bits, *dst_pixel;
     DWORD src_val;
-    int x, y;
+    int x, y, pad_size = ((dst->width * 3 + 3) & ~3) - (src_rect->right - src_rect->left) * 3;
 
     switch(src->bit_count)
     {
@@ -1208,6 +1227,7 @@ static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
                     *dst_pixel++ = (src_val >>  8) & 0xff;
                     *dst_pixel++ = (src_val >> 16) & 0xff;
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
                 src_start += src->stride / 4;
             }
@@ -1225,6 +1245,7 @@ static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
                     *dst_pixel++ = (src_val >> src->green_shift) & 0xff;
                     *dst_pixel++ = (src_val >> src->red_shift)   & 0xff;
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
                 src_start += src->stride / 4;
             }
@@ -1248,6 +1269,7 @@ static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
             for(y = src_rect->top; y < src_rect->bottom; y++)
             {
                 memcpy(dst_start, src_start, (src_rect->right - src_rect->left) * 3);
+                if(pad_size) memset(dst_start + (src_rect->right - src_rect->left) * 3, 0, pad_size);
                 dst_start += dst->stride;
                 src_start += src->stride;
             }
@@ -1271,6 +1293,7 @@ static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
                     *dst_pixel++ = ((src_val >> 2) & 0xf8) | ((src_val >>  7) & 0x07);
                     *dst_pixel++ = ((src_val >> 7) & 0xf8) | ((src_val >> 12) & 0x07);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
                 src_start += src->stride / 2;
             }
@@ -1291,6 +1314,7 @@ static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
                     *dst_pixel++ = (((src_val >> src->red_shift)   << 3) & 0xf8) |
                                    (((src_val >> src->red_shift)   >> 2) & 0x07);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
                 src_start += src->stride / 2;
             }
@@ -1311,6 +1335,7 @@ static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
                     *dst_pixel++ = (((src_val >> src->red_shift)   << 3) & 0xf8) |
                                    (((src_val >> src->red_shift)   >> 2) & 0x07);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
                 src_start += src->stride / 2;
             }
@@ -1340,6 +1365,7 @@ static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
                 *dst_pixel++ = rgb.rgbGreen;
                 *dst_pixel++ = rgb.rgbRed;
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride;
             src_start += src->stride;
         }
@@ -1366,6 +1392,7 @@ static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
                 *dst_pixel++ = rgb.rgbGreen;
                 *dst_pixel++ = rgb.rgbRed;
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride;
             src_start += src->stride;
         }
@@ -1389,6 +1416,7 @@ static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
                 *dst_pixel++ = rgb.rgbGreen;
                 *dst_pixel++ = rgb.rgbRed;
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride;
             src_start += src->stride;
         }
@@ -1406,7 +1434,7 @@ static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
 static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
     WORD *dst_start = dst->bits, *dst_pixel;
-    INT x, y;
+    INT x, y, pad_size = ((dst->width + 1) & ~1) * 2 - (src_rect->right - src_rect->left) * 2;
     DWORD src_val;
 
     switch(src->bit_count)
@@ -1428,6 +1456,7 @@ static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
                                    ((src_val >> 6) & 0x03e0) |
                                    ((src_val >> 3) & 0x001f);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 2;
                 src_start += src->stride / 4;
             }
@@ -1445,6 +1474,7 @@ static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
                                    (((src_val >> src->green_shift) << 2) & 0x03e0) |
                                    (((src_val >> src->blue_shift)  >> 3) & 0x001f);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 2;
                 src_start += src->stride / 4;
             }
@@ -1476,6 +1506,7 @@ static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
                                ((rgb.rgbGreen << 2) & 0x03e0) |
                                ((rgb.rgbBlue  >> 3) & 0x001f);
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 2;
             src_start += src->stride;
         }
@@ -1494,6 +1525,7 @@ static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
                 for(y = src_rect->top; y < src_rect->bottom; y++)
                 {
                     memcpy(dst_start, src_start, (src_rect->right - src_rect->left) * 2);
+                    if(pad_size) memset(dst_start + (src_rect->right - src_rect->left), 0, pad_size);
                     dst_start += dst->stride / 2;
                     src_start += src->stride / 2;
                 }
@@ -1512,6 +1544,7 @@ static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
                                    (((src_val >> src->green_shift) <<  5) & 0x03e0) |
                                    ( (src_val >> src->blue_shift)         & 0x001f);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 2;
                 src_start += src->stride / 2;
             }
@@ -1529,6 +1562,7 @@ static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
                                    (((src_val >> src->green_shift) <<  4) & 0x03e0) |
                                    ( (src_val >> src->blue_shift)         & 0x001f);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 2;
                 src_start += src->stride / 2;
             }
@@ -1558,6 +1592,7 @@ static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
                                ((rgb.rgbGreen << 2) & 0x03e0) |
                                ((rgb.rgbBlue  >> 3) & 0x001f);
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 2;
             src_start += src->stride;
         }
@@ -1584,6 +1619,7 @@ static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
                                ((rgb.rgbGreen << 2) & 0x03e0) |
                                ((rgb.rgbBlue  >> 3) & 0x001f);
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 2;
             src_start += src->stride;
         }
@@ -1607,6 +1643,7 @@ static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
                                ((rgb.rgbGreen << 2) & 0x03e0) |
                                ((rgb.rgbBlue  >> 3) & 0x001f);
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 2;
             src_start += src->stride;
         }
@@ -1624,7 +1661,7 @@ static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
 static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
     WORD *dst_start = dst->bits, *dst_pixel;
-    INT x, y;
+    INT x, y, pad_size = ((dst->width + 1) & ~1) * 2 - (src_rect->right - src_rect->left) * 2;
     DWORD src_val;
 
     switch(src->bit_count)
@@ -1646,6 +1683,7 @@ static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                                    put_field((src_val >>  8) & 0xff, dst->green_shift, dst->green_len) |
                                    put_field( src_val        & 0xff, dst->blue_shift,  dst->blue_len);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 2;
                 src_start += src->stride / 4;
             }
@@ -1663,6 +1701,7 @@ static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                                    put_field((src_val >> src->green_shift) & 0xff, dst->green_shift, dst->green_len) |
                                    put_field((src_val >> src->blue_shift)  & 0xff, dst->blue_shift,  dst->blue_len);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 2;
                 src_start += src->stride / 4;
             }
@@ -1694,6 +1733,7 @@ static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
                                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 2;
             src_start += src->stride;
         }
@@ -1716,6 +1756,7 @@ static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                                    put_field(((src_val >> 2) & 0xf8) | ((src_val >>  7) & 0x07), dst->green_shift, dst->green_len) |
                                    put_field(((src_val << 3) & 0xf8) | ((src_val >>  2) & 0x07), dst->blue_shift,  dst->blue_len);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 2;
                 src_start += src->stride / 2;
             }
@@ -1729,6 +1770,7 @@ static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                 for(y = src_rect->top; y < src_rect->bottom; y++)
                 {
                     memcpy(dst_start, src_start, (src_rect->right - src_rect->left) * 2);
+                    if(pad_size) memset(dst_start + (src_rect->right - src_rect->left), 0, pad_size);
                     dst_start += dst->stride / 2;
                     src_start += src->stride / 2;
                 }
@@ -1750,6 +1792,7 @@ static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                                    put_field( (((src_val >> src->blue_shift)  << 3) & 0xf8) |
                                               (((src_val >> src->blue_shift)  >> 2) & 0x07), dst->blue_shift, dst->blue_len);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 2;
                 src_start += src->stride / 2;
             }
@@ -1770,6 +1813,7 @@ static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                                    put_field( (((src_val >> src->blue_shift)  << 3) & 0xf8) |
                                               (((src_val >> src->blue_shift)  >> 2) & 0x07), dst->blue_shift, dst->blue_len);
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 2;
                 src_start += src->stride / 2;
             }
@@ -1800,6 +1844,7 @@ static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
                                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 2;
             src_start += src->stride;
         }
@@ -1826,6 +1871,7 @@ static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
                                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 2;
             src_start += src->stride;
         }
@@ -1849,6 +1895,7 @@ static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
                                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 2;
             src_start += src->stride;
         }
@@ -1874,7 +1921,7 @@ static inline BOOL color_tables_match(const dib_info *d1, const dib_info *d2)
 static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
     BYTE *dst_start = dst->bits, *dst_pixel;
-    INT x, y;
+    INT x, y, pad_size = ((dst->width + 3) & ~3) - (src_rect->right - src_rect->left);
     DWORD src_val;
 
     switch(src->bit_count)
@@ -1896,6 +1943,7 @@ static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                                                                      ( src_val        & 0x00ff00) |
                                                                      ((src_val << 16) & 0xff0000) );
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
                 src_start += src->stride / 4;
             }
@@ -1913,6 +1961,7 @@ static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                                                                      (((src_val >> src->green_shift) <<  8) & 0x00ff00) |
                                                                      (((src_val >> src->blue_shift)  << 16) & 0xff0000) );
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
                 src_start += src->stride / 4;
             }
@@ -1944,6 +1993,7 @@ static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                                                                  ((rgb.rgbGreen << 8) & 0x00ff00) |
                                                                  ((rgb.rgbBlue << 16) & 0xff0000));
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride;
             src_start += src->stride;
         }
@@ -1966,6 +2016,7 @@ static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                                                                      ((src_val <<  6) & 0x00f800) | ((src_val <<  1) & 0x000700) |
                                                                      ((src_val << 19) & 0xf80000) | ((src_val << 14) & 0x070000) );
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
                 src_start += src->stride / 2;
             }
@@ -1986,6 +2037,7 @@ static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                                                                      (((src_val >> src->blue_shift)  << 19) & 0xf80000) |
                                                                      (((src_val >> src->blue_shift)  << 14) & 0x070000) );
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
                 src_start += src->stride / 2;
             }
@@ -2006,6 +2058,7 @@ static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                                                                      (((src_val >> src->blue_shift)  << 19) & 0xf80000) |
                                                                      (((src_val >> src->blue_shift)  << 14) & 0x070000) );
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
                 src_start += src->stride / 2;
             }
@@ -2031,6 +2084,7 @@ static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(y = src_rect->top; y < src_rect->bottom; y++)
                 {
                     memcpy(dst_start, src_start, src_rect->right - src_rect->left);
+                    if(pad_size) memset(dst_start + (src_rect->right - src_rect->left), 0, pad_size);
                     dst_start += dst->stride;
                     src_start += src->stride;
                 }
@@ -2050,6 +2104,7 @@ static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                     rgb = src->color_table[src_val];
                     *dst_pixel++ = colorref_to_pixel_colortable(dst, RGB(rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue));
                 }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
                 src_start += src->stride;
             }
@@ -2075,6 +2130,7 @@ static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                 rgb = src->color_table[src_val];
                 *dst_pixel++ = colorref_to_pixel_colortable(dst, RGB(rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue));
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride;
             src_start += src->stride;
         }
@@ -2096,6 +2152,7 @@ static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                 rgb = src->color_table[src_val];
                 *dst_pixel++ = colorref_to_pixel_colortable(dst, RGB(rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue));
             }
+            if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride;
             src_start += src->stride;
         }
@@ -2113,7 +2170,7 @@ static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
 static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
     BYTE *dst_start = dst->bits, *dst_pixel, dst_val;
-    INT x, y;
+    INT x, y, pad_size = ((dst->width + 7) & ~7) / 2 - (src_rect->right - src_rect->left + 1) / 2;
     DWORD src_val;
 
     switch(src->bit_count)
@@ -2142,6 +2199,11 @@ static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
                     else
                         *dst_pixel = (dst_val << 4) & 0xf0;
                 }
+                if(pad_size)
+                {
+                    if((x - src_rect->left) & 1) dst_pixel++;
+                    memset(dst_pixel, 0, pad_size);
+                }
                 dst_start += dst->stride;
                 src_start += src->stride / 4;
             }
@@ -2165,6 +2227,11 @@ static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
                     }
                     else
                         *dst_pixel = (dst_val << 4) & 0xf0;
+                }
+                if(pad_size)
+                {
+                    if((x - src_rect->left) & 1) dst_pixel++;
+                    memset(dst_pixel, 0, pad_size);
                 }
                 dst_start += dst->stride;
                 src_start += src->stride / 4;
@@ -2205,6 +2272,11 @@ static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
                 else
                     *dst_pixel = (dst_val << 4) & 0xf0;
             }
+            if(pad_size)
+            {
+                if((x - src_rect->left) & 1) dst_pixel++;
+                memset(dst_pixel, 0, pad_size);
+            }
             dst_start += dst->stride;
             src_start += src->stride;
         }
@@ -2234,6 +2306,11 @@ static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
                     else
                         *dst_pixel = (dst_val << 4) & 0xf0;
                 }
+                if(pad_size)
+                {
+                    if((x - src_rect->left) & 1) dst_pixel++;
+                    memset(dst_pixel, 0, pad_size);
+                }
                 dst_start += dst->stride;
                 src_start += src->stride / 2;
             }
@@ -2261,6 +2338,11 @@ static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
                     else
                         *dst_pixel = (dst_val << 4) & 0xf0;
                 }
+                if(pad_size)
+                {
+                    if((x - src_rect->left) & 1) dst_pixel++;
+                    memset(dst_pixel, 0, pad_size);
+                }
                 dst_start += dst->stride;
                 src_start += src->stride / 2;
             }
@@ -2287,6 +2369,11 @@ static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
                     }
                     else
                         *dst_pixel = (dst_val << 4) & 0xf0;
+                }
+                if(pad_size)
+                {
+                    if((x - src_rect->left) & 1) dst_pixel++;
+                    memset(dst_pixel, 0, pad_size);
                 }
                 dst_start += dst->stride;
                 src_start += src->stride / 2;
@@ -2323,6 +2410,11 @@ static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
                 else
                     *dst_pixel = (dst_val << 4) & 0xf0;
             }
+            if(pad_size)
+            {
+                if((x - src_rect->left) & 1) dst_pixel++;
+                memset(dst_pixel, 0, pad_size);
+            }
             dst_start += dst->stride;
             src_start += src->stride;
         }
@@ -2342,6 +2434,7 @@ static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(y = src_rect->top; y < src_rect->bottom; y++)
                 {
                     memcpy(dst_start, src_start, (src_rect->right - src_rect->left + 1) / 2);
+                    if(pad_size) memset(dst_start + (src_rect->right - src_rect->left + 1) / 2, 0, pad_size);
                     dst_start += dst->stride;
                     src_start += src->stride;
                 }
@@ -2370,6 +2463,11 @@ static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
                     }
                     else
                         *dst_pixel = (dst_val << 4) & 0xf0;
+                }
+                if(pad_size)
+                {
+                    if((x - src_rect->left) & 1) dst_pixel++;
+                    memset(dst_pixel, 0, pad_size);
                 }
                 dst_start += dst->stride;
                 src_start += src->stride;
@@ -2400,6 +2498,11 @@ static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
                 else
                     *dst_pixel = (dst_val << 4) & 0xf0;
             }
+            if(pad_size)
+            {
+                if((x - src_rect->left) & 1) dst_pixel++;
+                memset(dst_pixel, 0, pad_size);
+            }
             dst_start += dst->stride;
             src_start += src->stride;
         }
@@ -2418,7 +2521,7 @@ static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
 static BOOL convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
     BYTE *dst_start = dst->bits, *dst_pixel, dst_val;
-    INT x, y;
+    INT x, y, pad_size = ((dst->width + 31) & ~31) / 8 - (src_rect->right - src_rect->left + 7) / 8;
     DWORD src_val;
     int bit_pos;
 
@@ -2452,6 +2555,11 @@ static BOOL convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                         bit_pos = 0;
                     }
                 }
+                if(pad_size)
+                {
+                    if(bit_pos != 0) dst_pixel++;
+                    memset(dst_pixel, 0, pad_size);
+                }
                 dst_start += dst->stride;
                 src_start += src->stride / 4;
             }
@@ -2477,6 +2585,11 @@ static BOOL convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                         dst_pixel++;
                         bit_pos = 0;
                     }
+                }
+                if(pad_size)
+                {
+                    if(bit_pos != 0) dst_pixel++;
+                    memset(dst_pixel, 0, pad_size);
                 }
                 dst_start += dst->stride;
                 src_start += src->stride / 4;
@@ -2518,6 +2631,11 @@ static BOOL convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                     bit_pos = 0;
                 }
             }
+            if(pad_size)
+            {
+                if(bit_pos != 0) dst_pixel++;
+                memset(dst_pixel, 0, pad_size);
+            }
             dst_start += dst->stride;
             src_start += src->stride;
         }
@@ -2549,6 +2667,11 @@ static BOOL convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                         bit_pos = 0;
                     }
                 }
+                if(pad_size)
+                {
+                    if(bit_pos != 0) dst_pixel++;
+                    memset(dst_pixel, 0, pad_size);
+                }
                 dst_start += dst->stride;
                 src_start += src->stride / 2;
             }
@@ -2577,6 +2700,11 @@ static BOOL convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                         bit_pos = 0;
                     }
                 }
+                if(pad_size)
+                {
+                    if(bit_pos != 0) dst_pixel++;
+                    memset(dst_pixel, 0, pad_size);
+                }
                 dst_start += dst->stride;
                 src_start += src->stride / 2;
             }
@@ -2604,6 +2732,11 @@ static BOOL convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                         dst_pixel++;
                         bit_pos = 0;
                     }
+                }
+                if(pad_size)
+                {
+                    if(bit_pos != 0) dst_pixel++;
+                    memset(dst_pixel, 0, pad_size);
                 }
                 dst_start += dst->stride;
                 src_start += src->stride / 2;
@@ -2642,6 +2775,11 @@ static BOOL convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                     bit_pos = 0;
                 }
             }
+            if(pad_size)
+            {
+                if(bit_pos != 0) dst_pixel++;
+                memset(dst_pixel, 0, pad_size);
+            }
             dst_start += dst->stride;
             src_start += src->stride;
         }
@@ -2675,6 +2813,11 @@ static BOOL convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                     dst_pixel++;
                     bit_pos = 0;
                 }
+            }
+            if(pad_size)
+            {
+                if(bit_pos != 0) dst_pixel++;
+                memset(dst_pixel, 0, pad_size);
             }
             dst_start += dst->stride;
             src_start += src->stride;
@@ -2710,6 +2853,11 @@ static BOOL convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                     dst_pixel++;
                     bit_pos = 0;
                 }
+            }
+            if(pad_size)
+            {
+                if(bit_pos != 0) dst_pixel++;
+                memset(dst_pixel, 0, pad_size);
             }
             dst_start += dst->stride;
             src_start += src->stride;
