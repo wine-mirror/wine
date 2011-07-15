@@ -1798,9 +1798,8 @@ static HRESULT WINAPI ProvideClassInfo_GetClassInfo(IProvideClassInfo* iface,
         ITypeInfo **ppTI)
 {
     HTMLDocument *This = impl_from_IProvideClassInfo(iface);
-    FIXME("(%p)->(%p)\n", This, ppTI);
-    *ppTI = NULL;
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, ppTI);
+    return get_htmldoc_classinfo(ppTI);
 }
 
 static const IProvideClassInfoVtbl ProvideClassInfoVtbl = {

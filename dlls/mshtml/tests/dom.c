@@ -594,6 +594,42 @@ static void _test_disp2(unsigned line, IUnknown *unk, const IID *diid, const IID
         _test_disp_value(line, unk, val);
 }
 
+#define test_class_info(u) _test_class_info(__LINE__,u)
+static void _test_class_info(unsigned line, IUnknown *unk)
+{
+    IProvideClassInfo *classinfo;
+    ITypeInfo *typeinfo;
+    TYPEATTR *type_attr;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IProvideClassInfo, (void**)&classinfo);
+    ok_(__FILE__,line)(hres == S_OK, "Could not get IProvideClassInfo interface: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IProvideClassInfo_GetClassInfo(classinfo, &typeinfo);
+    ok_(__FILE__,line)(hres == S_OK, "Could not get ITypeInfo interface: %08x\n", hres);
+    if(FAILED(hres))
+    {
+        IProvideClassInfo_Release(classinfo);
+        return;
+    }
+
+    hres = ITypeInfo_GetTypeAttr(typeinfo, &type_attr);
+    ok_(__FILE__,line)(hres == S_OK, "GetTypeAttr failed: %08x\n", hres);
+    if(SUCCEEDED(hres))
+    {
+        ok_(__FILE__,line)(IsEqualGUID(&type_attr->guid, &CLSID_HTMLDocument),
+                "unexpected guid %s\n", dbgstr_guid(&type_attr->guid));
+        ok_(__FILE__,line)(type_attr->typekind == TKIND_COCLASS,
+                "unexpected typekind %d\n", type_attr->typekind);
+        ITypeInfo_ReleaseTypeAttr(typeinfo, type_attr);
+    }
+
+    ITypeInfo_Release(typeinfo);
+    IProvideClassInfo_Release(classinfo);
+}
+
 #define set_dispex_value(a,b,c) _set_dispex_value(__LINE__,a,b,c)
 static void _set_dispex_value(unsigned line, IUnknown *unk, const char *name, VARIANT *val)
 {
@@ -5958,9 +5994,11 @@ static void test_window(IHTMLDocument2 *doc)
 
     test_ifaces((IUnknown*)doc2, doc_node_iids);
     test_disp((IUnknown*)doc2, &DIID_DispHTMLDocument, "[object]");
+    test_class_info((IUnknown*)doc2);
 
     test_ifaces((IUnknown*)doc, doc_obj_iids);
     test_disp((IUnknown*)doc, &DIID_DispHTMLDocument, "[object]");
+    test_class_info((IUnknown*)doc);
 
     unk = (void*)0xdeadbeef;
     hres = IHTMLDocument2_QueryInterface(doc2, &IID_ICustomDoc, (void**)&unk);
