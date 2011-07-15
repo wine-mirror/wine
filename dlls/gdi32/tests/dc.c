@@ -72,7 +72,7 @@ static void test_savedc_2(void)
     ok(hdc != NULL, "GetDC failed\n");
 
     ret = GetClipBox(hdc, &rc_clip);
-    ok(ret == SIMPLEREGION, "GetClipBox returned %d instead of SIMPLEREGION\n", ret);
+    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION), "GetClipBox returned %d instead of SIMPLEREGION\n", ret);
     ret = GetClipRgn(hdc, hrgn);
     ok(ret == 0, "GetClipRgn returned %d instead of 0\n", ret);
     ret = GetRgnBox(hrgn, &rc);
@@ -105,7 +105,7 @@ todo_wine
         ok(ret == SIMPLEREGION, "IntersectClipRect returned %d instead of SIMPLEREGION\n", ret);
 
     ret = GetClipBox(hdc, &rc_clip);
-    ok(ret == SIMPLEREGION, "GetClipBox returned %d instead of SIMPLEREGION\n", ret);
+    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION), "GetClipBox returned %d instead of SIMPLEREGION\n", ret);
     SetRect(&rc, 0, 0, 50, 50);
     ok(EqualRect(&rc, &rc_clip), "rects are not equal\n");
 
@@ -113,7 +113,7 @@ todo_wine
     ok(ret, "ret = %d\n", ret);
 
     ret = GetClipBox(hdc, &rc_clip);
-    ok(ret == SIMPLEREGION, "GetClipBox returned %d instead of SIMPLEREGION\n", ret);
+    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION), "GetClipBox returned %d instead of SIMPLEREGION\n", ret);
     SetRect(&rc, 0, 0, 100, 100);
     ok(EqualRect(&rc, &rc_clip), "rects are not equal\n");
 
