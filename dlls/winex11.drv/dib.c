@@ -101,8 +101,6 @@ enum Rle_EscapeCodes
 
 
 static INT X11DRV_DIB_Coerce(X_PHYSBITMAP *,INT);
-static INT X11DRV_DIB_Lock(X_PHYSBITMAP *,INT);
-static void X11DRV_DIB_Unlock(X_PHYSBITMAP *,BOOL);
 
 /* 
   Some of the following helper functions are duplicated in
@@ -4576,7 +4574,7 @@ static INT X11DRV_DIB_Coerce(X_PHYSBITMAP *physBitmap, INT req)
 /***********************************************************************
  *           X11DRV_DIB_Lock
  */
-static INT X11DRV_DIB_Lock(X_PHYSBITMAP *physBitmap, INT req)
+INT X11DRV_DIB_Lock(X_PHYSBITMAP *physBitmap, INT req)
 {
     INT ret = DIB_Status_None;
 
@@ -4592,7 +4590,7 @@ static INT X11DRV_DIB_Lock(X_PHYSBITMAP *physBitmap, INT req)
 /***********************************************************************
  *           X11DRV_DIB_Unlock
  */
-static void X11DRV_DIB_Unlock(X_PHYSBITMAP *physBitmap, BOOL commit)
+void X11DRV_DIB_Unlock(X_PHYSBITMAP *physBitmap, BOOL commit)
 {
     if (!physBitmap->image) return;  /* not a DIB section */
     switch (physBitmap->status)

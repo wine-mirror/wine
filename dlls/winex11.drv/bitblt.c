@@ -1988,9 +1988,11 @@ DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
         GetObjectW( hbitmap, sizeof(bm), &bm );
         width = min( width, bm.bmWidth - x );
         height = min( height, bm.bmHeight - y );
+        X11DRV_DIB_Lock( bitmap, DIB_Status_GdiMod );
         wine_tsx11_lock();
         image = XGetImage( gdi_display, bitmap->pixmap, x, y, width, height, AllPlanes, ZPixmap );
         wine_tsx11_unlock();
+        X11DRV_DIB_Unlock( bitmap, TRUE );
     }
     else if (GetObjectType( dev->hdc ) == OBJ_MEMDC)
     {
