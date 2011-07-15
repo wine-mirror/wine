@@ -168,10 +168,9 @@ msgid "System Path"
 msgstr "시스템 경로"
 
 #: comdlg32.rc:34 shell32.rc:153 winecfg.rc:119 winefile.rc:103
-#, fuzzy
 msgctxt "display name"
 msgid "Desktop"
-msgstr "데스크탑"
+msgstr "바탕화면"
 
 #: comdlg32.rc:35 winhlp32.rc:46 winhlp32.rc:67
 msgid "Fonts"
@@ -6358,10 +6357,9 @@ msgid "Properties"
 msgstr "속성"
 
 #: shell32.rc:82
-#, fuzzy
 msgctxt "recycle bin"
 msgid "&Restore"
-msgstr "복구(&R)"
+msgstr "복원(&R)"
 
 #: shell32.rc:83
 msgid "&Erase"
@@ -6493,10 +6491,9 @@ msgid "My Videos"
 msgstr "내 비디오"
 
 #: shell32.rc:207
-#, fuzzy
 msgctxt "directory"
 msgid "Desktop"
-msgstr "데스크탑"
+msgstr "바탕화면"
 
 #: shell32.rc:208
 msgid "NetHood"
@@ -6592,7 +6589,7 @@ msgstr "Music\\Playlists"
 
 #: shell32.rc:231 shell32.rc:244
 msgid "Downloads"
-msgstr "Downloads"
+msgstr "다운로드"
 
 #: shell32.rc:148 taskmgr.rc:326
 msgid "Status"
@@ -6600,7 +6597,7 @@ msgstr "상태"
 
 #: shell32.rc:149
 msgid "Location"
-msgstr "랜 연결"
+msgstr "위치"
 
 #: shell32.rc:150
 msgid "Model"
@@ -6840,10 +6837,9 @@ msgid " sec"
 msgstr "초"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
-#, fuzzy
 msgctxt "window"
 msgid "&Restore"
-msgstr "복구(&R)"
+msgstr "복원(&R)"
 
 #: user32.rc:28 user32.rc:41
 msgid "&Move"
