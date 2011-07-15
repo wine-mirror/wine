@@ -474,18 +474,48 @@ static void test_prot_fault(void)
     }
 }
 
+struct dbgreg_test {
+    DWORD dr0, dr1, dr2, dr3, dr6, dr7;
+};
+
 /* test handling of debug registers */
 static DWORD dreg_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
                       CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
+    const struct dbgreg_test *test = *(const struct dbgreg_test **)(frame + 1);
+
     context->Eip += 2;	/* Skips the popl (%eax) */
-    context->Dr0 = 0x42424242;
-    context->Dr1 = 0;
-    context->Dr2 = 0;
-    context->Dr3 = 0;
-    context->Dr6 = 0;
-    context->Dr7 = 0x155;
+    context->Dr0 = test->dr0;
+    context->Dr1 = test->dr1;
+    context->Dr2 = test->dr2;
+    context->Dr3 = test->dr3;
+    context->Dr6 = test->dr6;
+    context->Dr7 = test->dr7;
     return ExceptionContinueExecution;
+}
+
+#define CHECK_DEBUG_REG(n, m) \
+    ok((ctx.Dr##n & m) == test->dr##n, "(%d) failed to set debug register " #n " to %x, got %x\n", \
+       test_num, test->dr##n, ctx.Dr##n)
+
+static void check_debug_registers(int test_num, const struct dbgreg_test *test)
+{
+    CONTEXT ctx;
+    NTSTATUS status;
+
+    ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+    status = pNtGetContextThread(GetCurrentThread(), &ctx);
+    ok(status == STATUS_SUCCESS, "NtGetContextThread failed with %x\n", status);
+
+    CHECK_DEBUG_REG(0, ~0);
+    CHECK_DEBUG_REG(1, ~0);
+if (test_num == 2) todo_wine
+    CHECK_DEBUG_REG(2, ~0);
+if (test_num == 2) todo_wine
+    CHECK_DEBUG_REG(3, ~0);
+    CHECK_DEBUG_REG(6, 0x0f);
+if (test_num == 2) todo_wine
+    CHECK_DEBUG_REG(7, ~0xdc00);
 }
 
 static const BYTE segfault_code[5] = {
@@ -644,6 +674,7 @@ static void test_exceptions(void)
 {
     CONTEXT ctx;
     NTSTATUS res;
+    struct dbgreg_test dreg_test;
 
     if (!pNtGetContextThread || !pNtSetContextThread)
     {
@@ -652,13 +683,21 @@ static void test_exceptions(void)
     }
 
     /* test handling of debug registers */
-    run_exception_test(dreg_handler, NULL, &segfault_code, sizeof(segfault_code), 0);
+    memset(&dreg_test, 0, sizeof(dreg_test));
 
-    ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
-    res = pNtGetContextThread(GetCurrentThread(), &ctx);
-    ok (res == STATUS_SUCCESS,"NtGetContextThread failed with %x\n", res);
-    ok(ctx.Dr0 == 0x42424242,"failed to set debugregister 0 to 0x42424242, got %x\n", ctx.Dr0);
-    ok((ctx.Dr7 & ~0xdc00) == 0x155,"failed to set debugregister 7 to 0x155, got %x\n", ctx.Dr7);
+    dreg_test.dr0 = 0x42424240;
+    dreg_test.dr2 = 0x126bb070;
+    dreg_test.dr3 = 0x0badbad0;
+    dreg_test.dr7 = 0xffff0115;
+    run_exception_test(dreg_handler, &dreg_test, &segfault_code, sizeof(segfault_code), 0);
+    check_debug_registers(1, &dreg_test);
+
+    dreg_test.dr0 = 0x42424242;
+    dreg_test.dr2 = 0x100f0fe7;
+    dreg_test.dr3 = 0x0abebabe;
+    dreg_test.dr7 = 0x115;
+    run_exception_test(dreg_handler, &dreg_test, &segfault_code, sizeof(segfault_code), 0);
+    check_debug_registers(2, &dreg_test);
 
     /* test single stepping behavior */
     got_exception = 0;
