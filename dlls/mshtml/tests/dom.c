@@ -5691,6 +5691,21 @@ static void test_default_style(IHTMLStyle *style)
     hres = IHTMLStyle_put_borderLeftColor(style, vDefault);
     ok(hres == S_OK, "put_borderLeftColor: %08x\n", hres);
 
+    /* clip */
+    hres = IHTMLStyle_get_clip(style, &str);
+    ok(hres == S_OK, "get_clip failed: %08x\n", hres);
+    ok(!str, "clip = %s\n", wine_dbgstr_w(str));
+
+    str = a2bstr("rect(0px 1px 500px 505px)");
+    hres = IHTMLStyle_put_clip(style, str);
+    ok(hres == S_OK, "put_clip failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_get_clip(style, &str);
+    ok(hres == S_OK, "get_clip failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "rect(0px 1px 500px 505px)"), "clip = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
     if(SUCCEEDED(hres)) {
