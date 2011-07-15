@@ -480,6 +480,24 @@ static const unsigned char bit_swap[256] =
     0x1f, 0x9f, 0x5f, 0xdf, 0x3f, 0xbf, 0x7f, 0xff
 };
 
+#ifdef WORDS_BIGENDIAN
+static const unsigned int zeropad_masks[32] =
+{
+    0xffffffff, 0x80000000, 0xc0000000, 0xe0000000, 0xf0000000, 0xf8000000, 0xfc000000, 0xfe000000,
+    0xff000000, 0xff800000, 0xffc00000, 0xffe00000, 0xfff00000, 0xfff80000, 0xfffc0000, 0xfffe0000,
+    0xffff0000, 0xffff8000, 0xffffc000, 0xffffe000, 0xfffff000, 0xfffff800, 0xfffffc00, 0xfffffe00,
+    0xffffff00, 0xffffff80, 0xffffffc0, 0xffffffe0, 0xfffffff0, 0xfffffff8, 0xfffffffc, 0xfffffffe
+};
+#else
+static const unsigned int zeropad_masks[32] =
+{
+    0xffffffff, 0x00000080, 0x000000c0, 0x000000e0, 0x000000f0, 0x000000f8, 0x000000fc, 0x000000fe,
+    0x000000ff, 0x000080ff, 0x0000c0ff, 0x0000e0ff, 0x0000f0ff, 0x0000f8ff, 0x0000fcff, 0x0000feff,
+    0x0000ffff, 0x0080ffff, 0x00c0ffff, 0x00e0ffff, 0x00f0ffff, 0x00f8ffff, 0x00fcffff, 0x00feffff,
+    0x00ffffff, 0x80ffffff, 0xc0ffffff, 0xe0ffffff, 0xf0ffffff, 0xf8ffffff, 0xfcffffff, 0xfeffffff
+};
+#endif
+
 #ifdef BITBLT_TEST  /* Opcodes test */
 
 static int do_bitop( int s, int d, int rop )
@@ -1637,12 +1655,19 @@ static void set_color_info( const ColorShifts *color_shifts, BITMAPINFO *info )
 }
 
 /* copy the image bits, fixing up alignment and byte swapping as necessary */
-static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts, XImage *image,
-                              const struct gdi_image_bits *src_bits, struct gdi_image_bits *dst_bits )
+ DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts, XImage *image,
+                              const struct gdi_image_bits *src_bits, struct gdi_image_bits *dst_bits,
+                              unsigned int zeropad_mask )
 {
+#ifdef WORDS_BIGENDIAN
+    static const int client_byte_order = MSBFirst;
+#else
+    static const int client_byte_order = LSBFirst;
+#endif
     BOOL need_byteswap;
     int x, y, height = abs(info->bmiHeader.biHeight);
     int width_bytes = image->bytes_per_line;
+    int padding_pos;
     unsigned char *src, *dst;
 
     switch (info->bmiHeader.biBitCount)
@@ -1655,7 +1680,7 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
         break;
     case 16:
     case 32:
-        need_byteswap = (image->byte_order != LSBFirst);
+        need_byteswap = (image->byte_order != client_byte_order);
         break;
     case 24:
         need_byteswap = ((image->byte_order == LSBFirst && color_shifts->logicalBlue.shift == 16) ||
@@ -1666,7 +1691,10 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
         break;
     }
 
-    if ((need_byteswap && !src_bits->is_copy) || (width_bytes & 3) || (info->bmiHeader.biHeight > 0))
+    if ((need_byteswap && !src_bits->is_copy) ||  /* need to swap bytes */
+        (zeropad_mask != ~0u && !src_bits->is_copy) ||  /* need to clear padding bytes */
+        (width_bytes & 3) ||  /* need to fixup line alignment */
+        (info->bmiHeader.biHeight > 0))  /* need to flip vertically */
     {
         width_bytes = (width_bytes + 3) & ~3;
         info->bmiHeader.biSizeImage = height * width_bytes;
@@ -1683,11 +1711,12 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
         dst_bits->offset = src_bits->offset;
         dst_bits->is_copy = src_bits->is_copy;
         dst_bits->free = NULL;
-        if (!need_byteswap) return ERROR_SUCCESS;  /* nothing to do */
+        if (!need_byteswap && zeropad_mask == ~0u) return ERROR_SUCCESS;  /* nothing to do */
     }
 
     src = src_bits->ptr;
     dst = dst_bits->ptr;
+    padding_pos = width_bytes/sizeof(unsigned int) - 1;
 
     if (info->bmiHeader.biHeight > 0)
     {
@@ -1701,21 +1730,31 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
         {
         case 1:
             for (y = 0; y < height; y++, src += image->bytes_per_line, dst += width_bytes)
+            {
                 for (x = 0; x < image->bytes_per_line; x++)
                     dst[x] = bit_swap[src[x]];
+                ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
+            }
             break;
         case 4:
             for (y = 0; y < height; y++, src += image->bytes_per_line, dst += width_bytes)
+            {
                 for (x = 0; x < image->bytes_per_line; x++)
                     dst[x] = (src[x] << 4) | (src[x] >> 4);
+                ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
+            }
             break;
         case 16:
             for (y = 0; y < height; y++, src += image->bytes_per_line, dst += width_bytes)
+            {
                 for (x = 0; x < info->bmiHeader.biWidth; x++)
                     ((USHORT *)dst)[x] = RtlUshortByteSwap( ((const USHORT *)src)[x] );
+                ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
+            }
             break;
         case 24:
             for (y = 0; y < height; y++, src += image->bytes_per_line, dst += width_bytes)
+            {
                 for (x = 0; x < info->bmiHeader.biWidth; x++)
                 {
                     unsigned char tmp = src[3 * x];
@@ -1723,6 +1762,8 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
                     dst[3 * x + 1] = src[3 * x + 1];
                     dst[3 * x + 2] = tmp;
                 }
+                ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
+            }
             break;
         case 32:
             for (y = 0; y < height; y++, src += image->bytes_per_line, dst += width_bytes)
@@ -1731,10 +1772,18 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
             break;
         }
     }
-    else
+    else if (src != dst)
     {
         for (y = 0; y < height; y++, src += image->bytes_per_line, dst += width_bytes)
+        {
             memcpy( dst, src, image->bytes_per_line );
+            ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
+        }
+    }
+    else  /* only need to clear the padding */
+    {
+        for (y = 0; y < height; y++, dst += width_bytes)
+            ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
     }
     return ERROR_SUCCESS;
 }
@@ -1813,7 +1862,7 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
     wine_tsx11_unlock();
     if (!image) return ERROR_OUTOFMEMORY;
 
-    ret = copy_image_bits( info, color_shifts, image, bits, &dst_bits );
+    ret = copy_image_bits( info, color_shifts, image, bits, &dst_bits, ~0u );
 
     if (!ret)
     {
@@ -1984,7 +2033,8 @@ DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
 
     src_bits.ptr     = image->data;
     src_bits.is_copy = TRUE;
-    ret = copy_image_bits( info, color_shifts, image, &src_bits, bits );
+    ret = copy_image_bits( info, color_shifts, image, &src_bits, bits,
+                           zeropad_masks[(width * image->bits_per_pixel) & 31] );
 
     if (!ret && bits->ptr == image->data)
     {
