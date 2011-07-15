@@ -234,6 +234,7 @@ include/wpcapi.h
 include/wtypes.h
 include/wuapi.h
 include/xmllite.h
+include/xmlparser.h
 libs/wpp/ppl.yy.c
 libs/wpp/ppy.tab.c
 libs/wpp/ppy.tab.h
