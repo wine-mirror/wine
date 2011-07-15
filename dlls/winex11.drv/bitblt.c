@@ -1802,8 +1802,6 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
     struct gdi_image_bits dst_bits;
     const XPixmapFormatValues *format;
     const ColorShifts *color_shifts;
-    int width = rect->right - rect->left;
-    int height = rect->bottom - rect->top;
 
     if (hbitmap)
     {
@@ -1866,6 +1864,9 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
 
     if (!ret)
     {
+        int width = rect->right - rect->left;
+        int height = rect->bottom - rect->top;
+
         image->data = dst_bits.ptr;
         if (bitmap)
         {
