@@ -182,7 +182,7 @@ static HRESULT WINAPI HTMLStyle2_get_position(IHTMLStyle2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_nsstyle_attr(This->nsstyle, STYLEID_POSITION, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_POSITION, p, 0);
 }
 
 static HRESULT WINAPI HTMLStyle2_put_unicodeBidi(IHTMLStyle2 *iface, BSTR v)

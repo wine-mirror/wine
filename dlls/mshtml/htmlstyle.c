@@ -424,7 +424,7 @@ static HRESULT nsstyle_to_bstr(const WCHAR *val, DWORD flags, BSTR *p)
     return S_OK;
 }
 
-HRESULT get_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, BSTR *p)
+HRESULT get_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, BSTR *p, DWORD flags)
 {
     nsAString str_value;
     const PRUnichar *value;
@@ -435,7 +435,7 @@ HRESULT get_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, BSTR
     get_nsstyle_attr_nsval(nsstyle, sid, &str_value);
 
     nsAString_GetData(&str_value, &value);
-    hres = nsstyle_to_bstr(value, 0, p);
+    hres = nsstyle_to_bstr(value, flags, p);
     nsAString_Finish(&str_value);
 
     TRACE("%s -> %s\n", debugstr_w(style_tbl[sid].name), debugstr_w(*p));
@@ -493,7 +493,7 @@ HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, 
 
 static inline HRESULT get_style_attr(HTMLStyle *This, styleid_t sid, BSTR *p)
 {
-    return get_nsstyle_attr(This->nsstyle, sid, p);
+    return get_nsstyle_attr(This->nsstyle, sid, p, 0);
 }
 
 static HRESULT check_style_attr_value(HTMLStyle *This, styleid_t sid, LPCWSTR exval, VARIANT_BOOL *p)

@@ -134,7 +134,7 @@ static HRESULT WINAPI HTMLCurrentStyle_get_position(IHTMLCurrentStyle *iface, BS
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_nsstyle_attr(This->nsstyle, STYLEID_POSITION, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_POSITION, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_styleFloat(IHTMLCurrentStyle *iface, BSTR *p)
@@ -164,21 +164,21 @@ static HRESULT WINAPI HTMLCurrentStyle_get_fontFamily(IHTMLCurrentStyle *iface, 
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_nsstyle_attr(This->nsstyle, STYLEID_FONT_FAMILY, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_FONT_FAMILY, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_fontStyle(IHTMLCurrentStyle *iface, BSTR *p)
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_nsstyle_attr(This->nsstyle, STYLEID_FONT_STYLE, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_FONT_STYLE, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_fontVariant(IHTMLCurrentStyle *iface, BSTR *p)
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_nsstyle_attr(This->nsstyle, STYLEID_FONT_VARIANT, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_FONT_VARIANT, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_fontWeight(IHTMLCurrentStyle *iface, VARIANT *p)
@@ -199,7 +199,7 @@ static HRESULT WINAPI HTMLCurrentStyle_get_backgroundImage(IHTMLCurrentStyle *if
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_nsstyle_attr(This->nsstyle, STYLEID_BACKGROUND_IMAGE, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_BACKGROUND_IMAGE, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_backgroundPositionX(IHTMLCurrentStyle *iface, VARIANT *p)
@@ -220,7 +220,7 @@ static HRESULT WINAPI HTMLCurrentStyle_get_backgroundRepeat(IHTMLCurrentStyle *i
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_nsstyle_attr(This->nsstyle, STYLEID_BACKGROUND_REPEAT, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_BACKGROUND_REPEAT, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_borderLeftColor(IHTMLCurrentStyle *iface, VARIANT *p)
@@ -255,28 +255,28 @@ static HRESULT WINAPI HTMLCurrentStyle_get_borderTopStyle(IHTMLCurrentStyle *ifa
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_nsstyle_attr(This->nsstyle, STYLEID_BORDER_TOP_STYLE, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_BORDER_TOP_STYLE, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_borderRightStyle(IHTMLCurrentStyle *iface, BSTR *p)
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_nsstyle_attr(This->nsstyle, STYLEID_BORDER_RIGHT_STYLE, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_BORDER_RIGHT_STYLE, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_borderBottomStyle(IHTMLCurrentStyle *iface, BSTR *p)
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_nsstyle_attr(This->nsstyle, STYLEID_BORDER_BOTTOM_STYLE, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_BORDER_BOTTOM_STYLE, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_borderLeftStyle(IHTMLCurrentStyle *iface, BSTR *p)
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_nsstyle_attr(This->nsstyle, STYLEID_BORDER_LEFT_STYLE, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_BORDER_LEFT_STYLE, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_borderTopWidth(IHTMLCurrentStyle *iface, VARIANT *p)
@@ -367,14 +367,14 @@ static HRESULT WINAPI HTMLCurrentStyle_get_textAlign(IHTMLCurrentStyle *iface, B
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_nsstyle_attr(This->nsstyle, STYLEID_TEXT_ALIGN, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_TEXT_ALIGN, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_textDecoration(IHTMLCurrentStyle *iface, BSTR *p)
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_nsstyle_attr(This->nsstyle, STYLEID_TEXT_DECORATION, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_TEXT_DECORATION, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_display(IHTMLCurrentStyle *iface, BSTR *p)
@@ -383,7 +383,7 @@ static HRESULT WINAPI HTMLCurrentStyle_get_display(IHTMLCurrentStyle *iface, BST
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_nsstyle_attr(This->nsstyle, STYLEID_DISPLAY, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_DISPLAY, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_visibility(IHTMLCurrentStyle *iface, BSTR *p)
@@ -392,7 +392,7 @@ static HRESULT WINAPI HTMLCurrentStyle_get_visibility(IHTMLCurrentStyle *iface, 
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_nsstyle_attr(This->nsstyle, STYLEID_VISIBILITY, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_VISIBILITY, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_zIndex(IHTMLCurrentStyle *iface, VARIANT *p)
@@ -525,7 +525,7 @@ static HRESULT WINAPI HTMLCurrentStyle_get_overflow(IHTMLCurrentStyle *iface, BS
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_nsstyle_attr(This->nsstyle, STYLEID_OVERFLOW, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_OVERFLOW, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_pageBreakBefore(IHTMLCurrentStyle *iface, BSTR *p)
@@ -546,7 +546,7 @@ static HRESULT WINAPI HTMLCurrentStyle_get_cursor(IHTMLCurrentStyle *iface, BSTR
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_nsstyle_attr(This->nsstyle, STYLEID_CURSOR, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_CURSOR, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_tableLayout(IHTMLCurrentStyle *iface, BSTR *p)
@@ -715,35 +715,35 @@ static HRESULT WINAPI HTMLCurrentStyle_get_borderStyle(IHTMLCurrentStyle *iface,
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_nsstyle_attr(This->nsstyle, STYLEID_BORDER_STYLE, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_BORDER_STYLE, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_borderColor(IHTMLCurrentStyle *iface, BSTR *p)
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_nsstyle_attr(This->nsstyle, STYLEID_BORDER_COLOR, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_BORDER_COLOR, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_borderWidth(IHTMLCurrentStyle *iface, BSTR *p)
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_nsstyle_attr(This->nsstyle, STYLEID_BORDER_WIDTH, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_BORDER_WIDTH, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_padding(IHTMLCurrentStyle *iface, BSTR *p)
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_nsstyle_attr(This->nsstyle, STYLEID_PADDING, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_PADDING, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_margin(IHTMLCurrentStyle *iface, BSTR *p)
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle(iface);
     TRACE("(%p)->(%p)\n", This, p);
-    return get_nsstyle_attr(This->nsstyle, STYLEID_MARGIN, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_MARGIN, p, 0);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_accelerator(IHTMLCurrentStyle *iface, BSTR *p)

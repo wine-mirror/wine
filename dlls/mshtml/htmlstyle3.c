@@ -141,7 +141,7 @@ static HRESULT WINAPI HTMLStyle3_get_wordWrap(IHTMLStyle3 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return get_nsstyle_attr(This->nsstyle, STYLEID_WORD_WRAP, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_WORD_WRAP, p, 0);
 }
 
 static HRESULT WINAPI HTMLStyle3_put_textUnderlinePosition(IHTMLStyle3 *iface, BSTR v)
