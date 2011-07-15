@@ -444,6 +444,57 @@ static const DWORD bit_fields_888[3] = {0xff0000, 0x00ff00, 0x0000ff};
 static const DWORD bit_fields_565[3] = {0xf800, 0x07e0, 0x001f};
 static const DWORD bit_fields_555[3] = {0x7c00, 0x03e0, 0x001f};
 
+static int fill_query_info( BITMAPINFO *info, BITMAPOBJ *bmp )
+{
+    BITMAPINFOHEADER header;
+
+    header.biSize   = info->bmiHeader.biSize; /* Ensure we don't overwrite the original size when we copy back */
+    header.biWidth  = bmp->bitmap.bmWidth;
+    header.biHeight = bmp->bitmap.bmHeight;
+    header.biPlanes = 1;
+
+    if (bmp->dib)
+    {
+        header.biBitCount = bmp->dib->dsBm.bmBitsPixel;
+        switch (bmp->dib->dsBm.bmBitsPixel)
+        {
+        case 16:
+        case 32:
+            header.biCompression = BI_BITFIELDS;
+            break;
+        default:
+            header.biCompression = BI_RGB;
+            break;
+        }
+    }
+    else
+    {
+        header.biCompression = (bmp->bitmap.bmBitsPixel > 8) ? BI_BITFIELDS : BI_RGB;
+        header.biBitCount = bmp->bitmap.bmBitsPixel;
+    }
+
+    header.biSizeImage = DIB_GetDIBImageBytes( bmp->bitmap.bmWidth,
+                                               bmp->bitmap.bmHeight,
+                                               bmp->bitmap.bmBitsPixel );
+    header.biXPelsPerMeter = 0;
+    header.biYPelsPerMeter = 0;
+    header.biClrUsed       = 0;
+    header.biClrImportant  = 0;
+
+    if ( info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER) )
+    {
+        BITMAPCOREHEADER *coreheader = (BITMAPCOREHEADER *)info;
+
+        coreheader->bcWidth    = header.biWidth;
+        coreheader->bcHeight   = header.biHeight;
+        coreheader->bcPlanes   = header.biPlanes;
+        coreheader->bcBitCount = header.biBitCount;
+    }
+    else
+        info->bmiHeader = header;
+
+    return abs(bmp->bitmap.bmHeight);
+}
 
 /************************************************************************
  *      copy_color_info
@@ -519,7 +570,6 @@ INT WINAPI GetDIBits(
     BITMAPOBJ * bmp;
     int i;
     int bitmap_type;
-    BOOL core_header;
     LONG width;
     LONG height;
     WORD planes, bpp;
@@ -535,7 +585,6 @@ INT WINAPI GetDIBits(
         ERR("Invalid bitmap format\n");
         return 0;
     }
-    core_header = (bitmap_type == 0);
     if (!(dc = get_dc_ptr( hdc )))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -551,54 +600,9 @@ INT WINAPI GetDIBits(
 
     if (bpp == 0) /* query bitmap info only */
     {
-        if (core_header)
-        {
-            BITMAPCOREHEADER* coreheader = (BITMAPCOREHEADER*) info;
-            coreheader->bcWidth = bmp->bitmap.bmWidth;
-            coreheader->bcHeight = bmp->bitmap.bmHeight;
-            coreheader->bcPlanes = 1;
-            coreheader->bcBitCount = bmp->bitmap.bmBitsPixel;
-        }
-        else
-        {
-            info->bmiHeader.biWidth = bmp->bitmap.bmWidth;
-            info->bmiHeader.biHeight = bmp->bitmap.bmHeight;
-            info->bmiHeader.biPlanes = 1;
-            info->bmiHeader.biSizeImage =
-                DIB_GetDIBImageBytes( bmp->bitmap.bmWidth,
-                                      bmp->bitmap.bmHeight,
-                                      bmp->bitmap.bmBitsPixel );
-            if (bmp->dib)
-            {
-                info->bmiHeader.biBitCount = bmp->dib->dsBm.bmBitsPixel;
-                switch (bmp->dib->dsBm.bmBitsPixel)
-                {
-                case 16:
-                case 32:
-                    info->bmiHeader.biCompression = BI_BITFIELDS;
-                    break;
-                default:
-                    info->bmiHeader.biCompression = BI_RGB;
-                    break;
-                }
-            }
-            else
-            {
-                info->bmiHeader.biCompression = (bmp->bitmap.bmBitsPixel > 8) ? BI_BITFIELDS : BI_RGB;
-                info->bmiHeader.biBitCount = bmp->bitmap.bmBitsPixel;
-            }
-            info->bmiHeader.biXPelsPerMeter = 0;
-            info->bmiHeader.biYPelsPerMeter = 0;
-            info->bmiHeader.biClrUsed = 0;
-            info->bmiHeader.biClrImportant = 0;
-
-            /* Windows 2000 doesn't touch the additional struct members if
-               it's a BITMAPV4HEADER or a BITMAPV5HEADER */
-        }
-        lines = abs(bmp->bitmap.bmHeight);
+        lines = fill_query_info( info, bmp );
         goto done;
     }
-
 
     /* Since info may be a BITMAPCOREINFO or any of the larger BITMAPINFO structures, we'll use our
        own copy and transfer the colour info back at the end */
