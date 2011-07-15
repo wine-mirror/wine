@@ -4713,6 +4713,9 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     args.graphics = graphics;
     args.brush = brush;
 
+    args.x = rect->X;
+    args.y = rect->Y;
+
     args.rel_width = rel_width;
     args.rel_height = rel_height;
 
