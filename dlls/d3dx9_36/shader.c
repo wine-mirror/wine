@@ -1278,3 +1278,65 @@ HRESULT WINAPI D3DXGetShaderConstantTable(CONST DWORD* byte_code,
 
     return D3DXGetShaderConstantTableEx(byte_code, 0, constant_table);
 }
+
+HRESULT WINAPI D3DXGetShaderSamplers(CONST DWORD *byte_code, LPCSTR *samplers, UINT *count)
+{
+    HRESULT hr;
+    LPD3DXCONSTANTTABLE constant_table = NULL;
+    D3DXCONSTANTTABLE_DESC constant_table_desc;
+    UINT i, sampler_count = 0;
+
+    TRACE("byte_code %p, samplers %p, count %p\n", byte_code, samplers, count);
+
+    if (count) *count = 0;
+
+    hr = D3DXGetShaderConstantTable(byte_code, &constant_table);
+    if (hr != D3D_OK)
+    {
+        WARN("Failed to get constant table\n");
+
+        /* no samplers found, all is fine */
+        return D3D_OK;
+    }
+
+    hr = ID3DXConstantTable_GetDesc(constant_table, &constant_table_desc);
+    if (hr != D3D_OK)
+    {
+        WARN("Failed to get constant table desc\n");
+        goto err_out;
+    }
+
+    for (i = 0; i < constant_table_desc.Constants; ++i)
+    {
+        D3DXHANDLE handle = ID3DXConstantTable_GetConstant(constant_table, NULL, i);
+        D3DXCONSTANT_DESC constant_desc;
+        UINT size;
+
+        hr = ID3DXConstantTable_GetConstantDesc(constant_table, handle, &constant_desc, &size);
+        if (hr != D3D_OK)
+        {
+            WARN("Failed to get constant desc\n");
+            goto err_out;
+        }
+
+        if (constant_desc.Type == D3DXPT_SAMPLER
+                || constant_desc.Type == D3DXPT_SAMPLER1D
+                || constant_desc.Type == D3DXPT_SAMPLER2D
+                || constant_desc.Type == D3DXPT_SAMPLER3D
+                || constant_desc.Type == D3DXPT_SAMPLERCUBE)
+        {
+            if (samplers) samplers[sampler_count] = constant_desc.Name;
+
+            ++sampler_count;
+        }
+    }
+
+    TRACE("Found %u samplers\n", sampler_count);
+
+err_out:
+
+    if (count) *count = sampler_count;
+    if (constant_table) ID3DXConstantTable_Release(constant_table);
+
+    return hr;
+}

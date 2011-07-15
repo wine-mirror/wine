@@ -702,6 +702,116 @@ static void test_get_sampler_index(void)
     ok(refcnt == 0, "The ID3DXConstantTable reference count was %u, should be 0\n", refcnt);
 }
 
+/*
+ * fxc.exe /Tps_3_0
+ */
+#if 0
+sampler s;
+sampler1D s1D;
+sampler2D s2D;
+sampler3D s3D;
+samplerCUBE scube;
+float4 init;
+float4 main(float3 tex : TEXCOORD0) : COLOR
+{
+    float4 tmp = init;
+    tmp = tmp + tex1D(s1D, tex.x);
+    tmp = tmp + tex1D(s1D, tex.y);
+    tmp = tmp + tex3D(s3D, tex.xyz);
+    tmp = tmp + tex1D(s, tex.x);
+    tmp = tmp + tex2D(s2D, tex.xy);
+    tmp = tmp + texCUBE(scube, tex.xyz);
+    return tmp;
+}
+#endif
+static const DWORD get_shader_samplers_blob[] =
+{
+    0xffff0300,                                                             /* ps_3_0                        */
+    0x0054fffe, FCC_CTAB,                                                   /* CTAB comment                  */
+    0x0000001c, 0x0000011b, 0xffff0300, 0x00000006, 0x0000001c, 0x00000100, /* Header                        */
+    0x00000114,
+    0x00000094, 0x00000002, 0x00000001, 0x0000009c, 0x00000000,             /* Constant 1 desc (init)        */
+    0x000000ac, 0x00040003, 0x00000001, 0x000000b0, 0x00000000,             /* Constant 2 desc (s)           */
+    0x000000c0, 0x00000003, 0x00000001, 0x000000c4, 0x00000000,             /* Constant 3 desc (s1D)         */
+    0x000000d4, 0x00010003, 0x00000001, 0x000000d8, 0x00000000,             /* Constant 4 desc (s2D)         */
+    0x000000e8, 0x00030003, 0x00000001, 0x000000ec, 0x00000000,             /* Constant 5 desc (s3D)         */
+    0x000000fc, 0x00020003, 0x00000001, 0x00000104, 0x00000000,             /* Constant 6 desc (scube)       */
+    0x74696e69, 0xababab00,                                                 /* Constant 1 name               */
+    0x00030001, 0x00040001, 0x00000001, 0x00000000,                         /* Constant 1 type desc          */
+    0xabab0073,                                                             /* Constant 2 name               */
+    0x000c0004, 0x00010001, 0x00000001, 0x00000000,                         /* Constant 2 type desc          */
+    0x00443173,                                                             /* Constant 3 name               */
+    0x000b0004, 0x00010001, 0x00000001, 0x00000000,                         /* Constant 3 type desc          */
+    0x00443273,                                                             /* Constant 4 name               */
+    0x000c0004, 0x00010001, 0x00000001, 0x00000000,                         /* Constant 4 type desc          */
+    0x00443373,                                                             /* Constant 5 name               */
+    0x000d0004, 0x00010001, 0x00000001, 0x00000000,                         /* Constant 5 type desc          */
+    0x62756373, 0xabab0065,                                                 /* Constant 6 name               */
+    0x000e0004, 0x00010001, 0x00000001, 0x00000000,                         /* Constant 6 type desc          */
+    0x335f7370, 0x4d00305f, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, /* Target/Creator name string    */
+    0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072, 0x392e3932,
+    0x332e3235, 0x00313131,
+    0x0200001f, 0x80000005, 0x90070000, 0x0200001f, 0x90000000, 0xa00f0800, /* shader                        */
+    0x0200001f, 0x90000000, 0xa00f0801, 0x0200001f, 0x98000000, 0xa00f0802,
+    0x0200001f, 0xa0000000, 0xa00f0803, 0x0200001f, 0x90000000, 0xa00f0804,
+    0x03000042, 0x800f0000, 0x90e40000, 0xa0e40800, 0x03000002, 0x800f0000,
+    0x80e40000, 0xa0e40000, 0x03000042, 0x800f0001, 0x90550000, 0xa0e40800,
+    0x03000002, 0x800f0000, 0x80e40000, 0x80e40001, 0x03000042, 0x800f0001,
+    0x90e40000, 0xa0e40803, 0x03000002, 0x800f0000, 0x80e40000, 0x80e40001,
+    0x03000042, 0x800f0001, 0x90e40000, 0xa0e40804, 0x03000002, 0x800f0000,
+    0x80e40000, 0x80e40001, 0x03000042, 0x800f0001, 0x90e40000, 0xa0e40801,
+    0x03000002, 0x800f0000, 0x80e40000, 0x80e40001, 0x03000042, 0x800f0001,
+    0x90e40000, 0xa0e40802, 0x03000002, 0x800f0800, 0x80e40000, 0x80e40001,
+    0x0000ffff,                                                             /* END                           */
+};
+
+static void test_get_shader_samplers(void)
+{
+    LPCSTR samplers[16] = {NULL}; /* maximum number of sampler registers v/ps 3.0 = 16 */
+    UINT count = 2;
+    HRESULT hr;
+
+#if 0
+    /* crashes if bytecode is NULL */
+    hr = D3DXGetShaderSamplers(NULL, NULL, &count);
+    ok(hr == D3D_OK, "D3DXGetShaderSamplers failed, got %x, expected %x\n", hr, D3D_OK);
+#endif
+
+    hr = D3DXGetShaderSamplers(get_shader_samplers_blob, NULL, NULL);
+    ok(hr == D3D_OK, "D3DXGetShaderSamplers failed, got %x, expected %x\n", hr, D3D_OK);
+
+    samplers[5] = "dummy";
+
+    hr = D3DXGetShaderSamplers(get_shader_samplers_blob, samplers, NULL);
+    ok(hr == D3D_OK, "D3DXGetShaderSamplers failed, got %x, expected %x\n", hr, D3D_OK);
+
+    ok(!strcmp(samplers[0], "s"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[0], "s");
+    ok(!strcmp(samplers[1], "s1D"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[1], "s1D");
+    ok(!strcmp(samplers[2], "s2D"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[2], "s2D");
+    ok(!strcmp(samplers[3], "s3D"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[3], "s3D");
+    ok(!strcmp(samplers[4], "scube"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[4], "scube");
+    ok(!strcmp(samplers[5], "dummy"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[5], "dummy");
+
+    /* reset samplers */
+    memset(samplers, 0, sizeof(samplers));
+    samplers[5] = "dummy";
+
+    hr = D3DXGetShaderSamplers(get_shader_samplers_blob, NULL, &count);
+    ok(hr == D3D_OK, "D3DXGetShaderSamplers failed, got %x, expected %x\n", hr, D3D_OK);
+    ok(count == 5, "D3DXGetShaderSamplers failed, got %u, expected %u\n", count, 5);
+
+    hr = D3DXGetShaderSamplers(get_shader_samplers_blob, samplers, &count);
+    ok(hr == D3D_OK, "D3DXGetShaderSamplers failed, got %x, expected %x\n", hr, D3D_OK);
+    ok(count == 5, "D3DXGetShaderSamplers failed, got %u, expected %u\n", count, 5);
+
+    ok(!strcmp(samplers[0], "s"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[0], "s");
+    ok(!strcmp(samplers[1], "s1D"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[1], "s1D");
+    ok(!strcmp(samplers[2], "s2D"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[2], "s2D");
+    ok(!strcmp(samplers[3], "s3D"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[3], "s3D");
+    ok(!strcmp(samplers[4], "scube"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[4], "scube");
+    ok(!strcmp(samplers[5], "dummy"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[5], "dummy");
+}
+
 START_TEST(shader)
 {
     test_get_shader_size();
@@ -711,4 +821,5 @@ START_TEST(shader)
     test_constant_tables();
     test_setting_constants();
     test_get_sampler_index();
+    test_get_shader_samplers();
 }
