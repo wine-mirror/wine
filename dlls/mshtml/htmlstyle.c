@@ -407,18 +407,35 @@ static HRESULT get_nsstyle_attr_nsval(nsIDOMCSSStyleDeclaration *nsstyle, stylei
     return NS_OK;
 }
 
+static HRESULT nsstyle_to_bstr(const WCHAR *val, DWORD flags, BSTR *p)
+{
+    BSTR ret;
+
+    if(!*val) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    ret = SysAllocString(val);
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    *p = ret;
+    return S_OK;
+}
+
 HRESULT get_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, BSTR *p)
 {
     nsAString str_value;
     const PRUnichar *value;
+    HRESULT hres;
 
     nsAString_Init(&str_value, NULL);
 
     get_nsstyle_attr_nsval(nsstyle, sid, &str_value);
 
     nsAString_GetData(&str_value, &value);
-    *p = *value ? SysAllocString(value) : NULL;
-
+    hres = nsstyle_to_bstr(value, 0, p);
     nsAString_Finish(&str_value);
 
     TRACE("%s -> %s\n", debugstr_w(style_tbl[sid].name), debugstr_w(*p));
@@ -430,6 +447,7 @@ HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, 
     nsAString str_value;
     const PRUnichar *value;
     BOOL set = FALSE;
+    HRESULT hres = S_OK;
 
     nsAString_Init(&str_value, NULL);
 
@@ -458,22 +476,19 @@ HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, 
     }
 
     if(!set) {
-        BSTR str = NULL;
+        BSTR str;
 
-        if(*value) {
-            str = SysAllocString(value);
-            if(!str)
-                return E_OUTOFMEMORY;
+        hres = nsstyle_to_bstr(value, flags, &str);
+        if(SUCCEEDED(hres)) {
+            V_VT(p) = VT_BSTR;
+            V_BSTR(p) = str;
         }
-
-        V_VT(p) = VT_BSTR;
-        V_BSTR(p) = str;
     }
 
     nsAString_Finish(&str_value);
 
     TRACE("%s -> %s\n", debugstr_w(style_tbl[sid].name), debugstr_variant(p));
-    return S_OK;
+    return hres;
 }
 
 static inline HRESULT get_style_attr(HTMLStyle *This, styleid_t sid, BSTR *p)
