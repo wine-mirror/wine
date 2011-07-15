@@ -332,7 +332,9 @@ static void run_localgroupgetinfo_tests(void)
     int i;
 
     status = pNetLocalGroupGetInfo(NULL, admins, 1, (LPBYTE *)&lgi);
-    ok(status == NERR_Success, "NetLocalGroupGetInfo unexpectedly returned %d\n", status);
+    ok(status == NERR_Success || broken(status == NERR_GroupNotFound),
+       "NetLocalGroupGetInfo unexpectedly returned %d\n", status);
+    if (status != NERR_Success) return;
 
     trace("Local groupname:%s\n", wine_dbgstr_w( lgi->lgrpi1_name));
     trace("Comment: %s\n", wine_dbgstr_w( lgi->lgrpi1_comment));
