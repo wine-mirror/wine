@@ -63,6 +63,8 @@ static struct testfile_s {
     { 1, FILE_ATTRIBUTE_HIDDEN,    "h.tmp", NULL, "hidden" },
     { 1, FILE_ATTRIBUTE_SYSTEM,    "s.tmp", NULL, "system" },
     { 0, FILE_ATTRIBUTE_DIRECTORY, "d.tmp", NULL, "directory" },
+    { 0, FILE_ATTRIBUTE_DIRECTORY, ".",     NULL, ". directory" },
+    { 0, FILE_ATTRIBUTE_DIRECTORY, "..",    NULL, ".. directory" },
     { 0, 0, NULL }
 };
 static const int max_test_dir_size = 20;  /* size of above plus some for .. etc */
@@ -80,8 +82,10 @@ static void set_up_attribute_test(const char *testdirA)
         char buf[MAX_PATH];
         pRtlMultiByteToUnicodeN(testfiles[i].nameW, sizeof(testfiles[i].nameW), NULL, testfiles[i].name, strlen(testfiles[i].name)+1);
 
-        sprintf(buf, "%s\\%s", testdirA, testfiles[i].name);
         testfiles[i].nfound = 0;
+        if (strcmp(testfiles[i].name, ".") == 0 || strcmp(testfiles[i].name, "..") == 0)
+            continue;
+        sprintf(buf, "%s\\%s", testdirA, testfiles[i].name);
         if (testfiles[i].attr & FILE_ATTRIBUTE_DIRECTORY) {
             ret = CreateDirectoryA(buf, NULL);
             ok(ret, "couldn't create dir '%s', error %d\n", buf, GetLastError());
@@ -104,6 +108,8 @@ static void tear_down_attribute_test(const char *testdirA)
     for (i=0; testfiles[i].name; i++) {
         int ret;
         char buf[MAX_PATH];
+        if (strcmp(testfiles[i].name, ".") == 0 || strcmp(testfiles[i].name, "..") == 0)
+            continue;
         sprintf(buf, "%s\\%s", testdirA, testfiles[i].name);
         if (testfiles[i].attr & FILE_ATTRIBUTE_DIRECTORY) {
             ret = RemoveDirectory(buf);
@@ -127,9 +133,6 @@ static void tally_test_file(FILE_BOTH_DIRECTORY_INFORMATION *dir_info)
     DWORD attrib = dir_info->FileAttributes & attribmask;
     WCHAR *nameW = dir_info->FileName;
     int namelen = dir_info->FileNameLength / sizeof(WCHAR);
-
-    if (nameW[0] == '.')
-        return;
 
     for (i=0; testfiles[i].name; i++) {
         int len = strlen(testfiles[i].name);
@@ -187,7 +190,7 @@ static void test_NtQueryDirectoryFile(void)
     }
 
     pNtQueryDirectoryFile( dirh, NULL, NULL, NULL, &io, data, sizeof(data),
-                       FileBothDirectoryInformation, FALSE, NULL, TRUE );
+                       FileBothDirectoryInformation, FALSE, NULL, FALSE );
     ok (U(io).Status == STATUS_SUCCESS, "filed to query directory; status %x\n", U(io).Status);
     data_len = io.Information;
     ok (data_len >= sizeof(FILE_BOTH_DIRECTORY_INFORMATION), "not enough data in directory\n");
@@ -216,9 +219,16 @@ static void test_NtQueryDirectoryFile(void)
     }
     ok(numfiles < max_test_dir_size, "too many loops\n");
 
-    for (i=0; testfiles[i].name; i++)
-        ok(testfiles[i].nfound == 1, "Wrong number %d of %s files found\n",
-          testfiles[i].nfound, testfiles[i].description);
+    for (i=0; testfiles[i].name; i++) {
+        if (strcmp(testfiles[i].name, ".") == 0 || strcmp(testfiles[i].name, "..") == 0) {
+            todo_wine
+            ok(testfiles[i].nfound == 1, "Wrong number %d of %s files found\n",
+              testfiles[i].nfound, testfiles[i].description);
+        } else {
+            ok(testfiles[i].nfound == 1, "Wrong number %d of %s files found\n",
+              testfiles[i].nfound, testfiles[i].description);
+        }
+    }
 
     pNtClose(dirh);
 done:
