@@ -2600,6 +2600,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 ; create some directories first
 10,help,
 10,inf,
+10,logs,
 10,temp,
 11,mui,
 11,spool\drivers\color,
