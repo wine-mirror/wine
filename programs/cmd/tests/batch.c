@@ -25,22 +25,39 @@
 static char workdir[MAX_PATH];
 static DWORD workdir_len;
 
-/* Substitute escaped spaces with real ones */
-static const char* replace_escaped_spaces(const char *data, DWORD size, DWORD *new_size)
+/* Convert to DOS line endings, and substitute escaped spaces with real ones */
+static const char* convert_input_data(const char *data, DWORD size, DWORD *new_size)
 {
-    static const char escaped_space[] = {'@','s','p','a','c','e','@','\0'};
+    static const char escaped_space[] = {'@','s','p','a','c','e','@'};
+    DWORD i, eol_count = 0;
     char *ptr, *new_data;
 
-    new_data = ptr = HeapAlloc(GetProcessHeap(), 0, size + 1);
-    memcpy( new_data, data, size );
-    new_data[size] = 0;
+    for (i = 0; i < size; i++)
+        if (data[i] == '\n') eol_count++;
 
-    while ((ptr = strstr(ptr, escaped_space)))
-    {
-        char *end = ptr + sizeof(escaped_space) - 1;
-        *ptr++ = ' ';
-        memmove( ptr, end, strlen(end) + 1 );
+    ptr = new_data = HeapAlloc(GetProcessHeap(), 0, size + eol_count + 1);
+
+    for (i = 0; i < size; i++) {
+        switch (data[i]) {
+            case '\n':
+                *ptr++ = '\r';
+                *ptr++ = '\n';
+                break;
+            case '@':
+                if (data + i + sizeof(escaped_space) - 1 < data + size
+                        && !memcmp(data + i, escaped_space, sizeof(escaped_space))) {
+                    *ptr++ = ' ';
+                    i += sizeof(escaped_space) - 1;
+                } else {
+                    *ptr++ = data[i];
+                }
+                break;
+            default:
+                *ptr++ = data[i];
+        }
     }
+    *ptr = '\0';
+
     *new_size = strlen(new_data);
     return new_data;
 }
@@ -233,7 +250,7 @@ static void run_test(const char *cmd_data, DWORD cmd_size, const char *exp_data,
     const char *out_data, *actual_cmd_data;
     DWORD out_size, actual_cmd_size;
 
-    actual_cmd_data = replace_escaped_spaces(cmd_data, cmd_size, &actual_cmd_size);
+    actual_cmd_data = convert_input_data(cmd_data, cmd_size, &actual_cmd_size);
     if(!actual_cmd_size || !actual_cmd_data)
         goto cleanup;
 
