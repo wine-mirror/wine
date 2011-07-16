@@ -309,6 +309,38 @@ BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG64 ModBase, PCSTR Mask,
 }
 
 /******************************************************************
+ *              SymEnumSourceLines (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymEnumSourceLines(HANDLE hProcess, ULONG64 base, PCSTR obj,
+                               PCSTR file, DWORD line, DWORD flags,
+                               PSYM_ENUMLINES_CALLBACK EnumLinesCallback,
+                               PVOID UserContext)
+{
+    FIXME("%p %s %s %s %u %u %p %p: stub!\n",
+          hProcess, wine_dbgstr_longlong(base), debugstr_a(obj), debugstr_a(file),
+          line, flags, EnumLinesCallback, UserContext);
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return FALSE;
+}
+
+/******************************************************************
+ *               SymEnumSourceLinesW(DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymEnumSourceLinesW(HANDLE hProcess, ULONG64 base, PCWSTR obj,
+                                PCWSTR file, DWORD line, DWORD flags,
+                                PSYM_ENUMLINES_CALLBACKW EnumLinesCallback,
+                                PVOID UserContext)
+{
+    FIXME("%p %s %s %s %u %u %p %p: stub!\n",
+          hProcess, wine_dbgstr_longlong(base), debugstr_w(obj), debugstr_w(file),
+          line, flags, EnumLinesCallback, UserContext);
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return FALSE;
+}
+
+/******************************************************************
  *		SymGetSourceFileToken (DBGHELP.@)
  *
  */

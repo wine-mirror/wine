@@ -46,8 +46,8 @@
 @ stub SymEnumSourceFileTokens
 @ stdcall SymEnumSourceFiles(ptr int64 str ptr ptr)
 @ stdcall SymEnumSourceFilesW(ptr int64 wstr ptr ptr)
-@ stub SymEnumSourceLines
-@ stub SymEnumSourceLinesW
+@ stdcall SymEnumSourceLines(ptr int64 str str long long ptr ptr)
+@ stdcall SymEnumSourceLinesW(ptr int64 wstr wstr long long ptr ptr)
 @ stub SymEnumSym
 @ stdcall SymEnumSymbols(ptr int64 str ptr ptr)
 @ stub SymEnumSymbolsForAddr
