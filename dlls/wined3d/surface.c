@@ -2477,11 +2477,11 @@ void surface_add_dirty_rect(struct wined3d_surface *surface, const WINED3DBOX *d
     }
 }
 
-static BOOL surface_convert_color_to_float(struct wined3d_surface *surface,
+static BOOL surface_convert_color_to_float(const struct wined3d_surface *surface,
         DWORD color, WINED3DCOLORVALUE *float_color)
 {
     const struct wined3d_format *format = surface->resource.format;
-    struct wined3d_device *device = surface->resource.device;
+    const struct wined3d_device *device = surface->resource.device;
 
     switch (format->id)
     {
