@@ -48,6 +48,26 @@ word
 word@space@
 word@space@@space@
 ------------ Testing 'set' --------------
+0
+1
+@todo_wine@0
+FOOBAR not defined
+@todo_wine@  baz
+FOOBAR =  baz
+@todo_wine@0
+@todo_wine@  baz2
+@todo_wine@0
+ bar
+@todo_wine@FOOBAR= bar
+@todo_wine@FOOBAR =  baz2
+FOOBAR =  baz
+FOOBAR not defined
+1
+bar
+foobar
+FOO not defined
+BAZ=bazbaz
+bazbaz
 set "FOO=bar" should not include the quotes in the variable value
 bar
 ------------ Testing variable expansion --------------

@@ -29,11 +29,47 @@ echo word@space@
 echo word@space@@space@
 
 echo ------------ Testing 'set' --------------
+echo %ErrorLevel%
+set FOOBAR 2> nul > nul
+echo %ErrorLevel%
+set FOOBAR =  baz
+echo %ErrorLevel%
+echo %FOOBAR%FOOBAR not defined
+echo %FOOBAR %
+set FOOBAR 2> nul
+set FOOBAR =  baz2
+echo %ErrorLevel%
+echo %fOObAr %
+set FOOBAR= bar
+echo %ErrorLevel%
+echo %FOOBAR%
+set FOO
+set FOOBAR=
+set FOOB
+echo %FOOBAR%FOOBAR not defined
+set FOOBAR =
+set FOOBA 2> nul > nul
+echo %ErrorLevel%
+set FOO=bar
+echo %FOO%
+set FOO=foo
+set BAR=bar
+echo %FOO%%BAR%
+set BAR=
+set FOO=
+set FOO=%FOO%
+echo %FOO%FOO not defined
+set BAZ%=bazbaz
+set BA
+echo %BAZ%%
+set BAZ%=
 echo set "FOO=bar" should not include the quotes in the variable value
 set "FOO=bar"
 echo %FOO%
+set FOO=
 
 echo ------------ Testing variable expansion --------------
+call :setError 0
 echo ~dp0 should be directory containing batch file
 echo %~dp0
 mkdir dummydir
