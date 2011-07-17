@@ -3807,10 +3807,6 @@ static UINT WINMM_GetComponentTypeLineInfo(WINMM_MMDevice *mmdevice,
 static UINT WINMM_GetLineIDLineInfo(WINMM_MMDevice *mmdevice,
         UINT mmdev_index, MIXERLINEW *info, DWORD flags)
 {
-    BOOL is_out = TRUE;
-    if(mmdevice->in_caps.szPname[0] != '\0')
-        is_out = FALSE;
-
     if(info->dwLineID == 0xFFFF0000){
         info->dwDestination = 0;
         return WINMM_GetDestinationLineInfo(mmdevice, mmdev_index, info, flags);
