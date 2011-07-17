@@ -299,7 +299,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, void ***keys,
         else
             fd = open(ai.devnode, O_RDONLY, 0);
         if(fd < 0){
-            WARN("Opening device \"%s\" failed, pretending it doesn't exist: %d (%s)",
+            WARN("Opening device \"%s\" failed, pretending it doesn't exist: %d (%s)\n",
                     ai.devnode, errno, strerror(errno));
             continue;
         }
