@@ -1640,7 +1640,7 @@ static void set_color_info( const ColorShifts *color_shifts, BITMAPINFO *info )
 }
 
 /* copy the image bits, fixing up alignment and byte swapping as necessary */
- DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts, XImage *image,
+static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts, XImage *image,
                               const struct gdi_image_bits *src_bits, struct gdi_image_bits *dst_bits,
                               unsigned int zeropad_mask )
 {
