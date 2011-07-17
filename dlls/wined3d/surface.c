@@ -1070,7 +1070,7 @@ static HRESULT surface_flip(struct wined3d_surface *surface, struct wined3d_surf
     return WINED3D_OK;
 }
 
-static BOOL surface_is_full_rect(struct wined3d_surface *surface, const RECT *r)
+static BOOL surface_is_full_rect(const struct wined3d_surface *surface, const RECT *r)
 {
     if ((r->left && r->right) || abs(r->right - r->left) != surface->resource.width)
         return FALSE;
