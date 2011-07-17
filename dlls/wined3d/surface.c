@@ -5561,7 +5561,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
 }
 
 /* GL locking is done by the caller */
-static void surface_depth_blt(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
+static void surface_depth_blt(const struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
         GLuint texture, GLint x, GLint y, GLsizei w, GLsizei h, GLenum target)
 {
     struct wined3d_device *device = surface->resource.device;
