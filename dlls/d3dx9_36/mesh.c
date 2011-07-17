@@ -534,7 +534,7 @@ static HRESULT WINAPI ID3DXMeshImpl_ConvertAdjacencyToPointReps(ID3DXMesh *iface
     /* Should never happen as CreateMesh does not allow meshes with 0 faces */
     if (This->numfaces == 0)
     {
-        ERR("Number of faces was zero.");
+        ERR("Number of faces was zero.\n");
         hr = D3DERR_INVALIDCALL;
         goto cleanup;
     }
