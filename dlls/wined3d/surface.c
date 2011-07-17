@@ -274,7 +274,7 @@ static void surface_get_blt_info(GLenum target, const RECT *rect, GLsizei w, GLs
     }
 }
 
-static inline void surface_get_rect(struct wined3d_surface *surface, const RECT *rect_in, RECT *rect_out)
+static void surface_get_rect(const struct wined3d_surface *surface, const RECT *rect_in, RECT *rect_out)
 {
     if (rect_in)
         *rect_out = *rect_in;
