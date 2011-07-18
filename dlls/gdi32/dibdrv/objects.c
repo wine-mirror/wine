@@ -1285,16 +1285,30 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
         dib_info orig_dib;
         WORD usage = LOWORD(logbrush.lbColor);
         HPALETTE pal = (usage == DIB_PAL_COLORS) ? GetCurrentObject(dev->hdc, OBJ_PAL) : NULL;
+        RECT rect;
 
         if(!bi) return NULL;
         if(init_dib_info_from_packed(&orig_dib, bi, usage, pal))
         {
             copy_dib_color_info(&pdev->brush_dib, &pdev->dib);
-            if(convert_dib(&pdev->brush_dib, &orig_dib))
+
+            pdev->brush_dib.height = orig_dib.height;
+            pdev->brush_dib.width  = orig_dib.width;
+            pdev->brush_dib.stride = ((pdev->brush_dib.width * pdev->brush_dib.bit_count + 31) >> 3) & ~3;
+            pdev->brush_dib.ptr_to_free = HeapAlloc( GetProcessHeap(), 0, pdev->brush_dib.height * pdev->brush_dib.stride );
+            pdev->brush_dib.bits = pdev->brush_dib.ptr_to_free;
+
+            rect.left = rect.top = 0;
+            rect.right = orig_dib.width;
+            rect.bottom = orig_dib.height;
+
+            if(pdev->brush_dib.funcs->convert_to(&pdev->brush_dib, &orig_dib, &rect))
             {
                 pdev->brush_rects = pattern_brush;
                 pdev->defer &= ~DEFER_BRUSH;
             }
+            else
+                free_dib_info(&pdev->brush_dib);
             free_dib_info(&orig_dib);
         }
         GlobalUnlock((HGLOBAL)logbrush.lbHatch);

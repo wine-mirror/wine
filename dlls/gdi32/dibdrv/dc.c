@@ -200,6 +200,20 @@ BOOL init_dib_info_from_packed(dib_info *dib, const BITMAPINFOHEADER *bi, WORD u
     return init_dib_info(dib, bi, masks, color_table, num_colors, ptr, private_color_table);
 }
 
+BOOL init_dib_info_from_bitmapinfo(dib_info *dib, const BITMAPINFO *info, void *bits, enum dib_info_flags flags)
+{
+    unsigned int colors = 0;
+    void *colorptr = (char *)&info->bmiHeader + info->bmiHeader.biSize;
+    const DWORD *bitfields = (info->bmiHeader.biCompression == BI_BITFIELDS) ? (DWORD *)colorptr : NULL;
+
+    if (info->bmiHeader.biBitCount <= 8)
+    {
+        colors = 1 << info->bmiHeader.biBitCount;
+        if (info->bmiHeader.biClrUsed) colors = info->bmiHeader.biClrUsed;
+    }
+    return init_dib_info( dib, &info->bmiHeader, bitfields, colors ? colorptr : NULL, colors, bits, flags );
+}
+
 static void clear_dib_info(dib_info *dib)
 {
     dib->color_table = NULL;
@@ -252,32 +266,23 @@ void copy_dib_color_info(dib_info *dst, const dib_info *src)
     }
 }
 
-/**************************************************************
- *            convert_dib
- *
- * Converts src into the format specified in dst.
- *
- * FIXME: At the moment this always creates a top-down dib,
- * do we want to give the option of bottom-up?
- */
-BOOL convert_dib(dib_info *dst, const dib_info *src)
+DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, const RECT *src_rect,
+                          const BITMAPINFO *dst_info, void *dst_bits )
 {
-    BOOL ret;
-    RECT src_rect;
+    dib_info src_dib, dst_dib;
+    DWORD ret;
 
-    dst->height = src->height;
-    dst->width = src->width;
-    dst->stride = ((dst->width * dst->bit_count + 31) >> 3) & ~3;
-    dst->ptr_to_free = dst->bits = HeapAlloc(GetProcessHeap(), 0, dst->height * dst->stride);
+    if ( !init_dib_info_from_bitmapinfo( &src_dib, src_info, src_bits, 0 ) )
+        return ERROR_BAD_FORMAT;
+    if ( !init_dib_info_from_bitmapinfo( &dst_dib, dst_info, dst_bits, 0 ) )
+        return ERROR_BAD_FORMAT;
 
-    src_rect.left = src_rect.top = 0;
-    src_rect.right = src->width;
-    src_rect.bottom = src->height;
+    ret = dst_dib.funcs->convert_to( &dst_dib, &src_dib, src_rect );
 
-    ret = dst->funcs->convert_to(dst, src, &src_rect);
+    /* We shared the color tables, so there's no need to free the dib_infos here */
 
-    if(!ret) free_dib_info(dst);
-    return ret;
+    if(!ret) return ERROR_BAD_FORMAT;
+    return ERROR_SUCCESS;
 }
 
 static void update_fg_colors( dibdrv_physdev *pdev )
