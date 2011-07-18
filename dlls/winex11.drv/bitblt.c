@@ -79,20 +79,20 @@ static const unsigned char BITBLT_Opcodes[256][MAX_OP_LEN] =
     { OP(PAT,DST,GXand), OP(SRC,DST,GXnor) },        /* 0x13  ~(S|(D&P))     */
     { OP(PAT,SRC,GXequiv), OP(SRC,DST,GXnor) },      /* 0x14  ~(D|~(P^S))    */
     { OP(PAT,SRC,GXand), OP(SRC,DST,GXnor) },        /* 0x15  ~(D|(P&S))     */
-    { OP(SRC,TMP,GXcopy), OP(PAT,TMP,GXnand),
-      OP(TMP,DST,GXand), OP(SRC,DST,GXxor),
+    { OP(SRC,TMP,GXcopy), OP(PAT,SRC,GXnand),
+      OP(SRC,DST,GXand), OP(TMP,DST,GXxor),
       OP(PAT,DST,GXxor) },                           /* 0x16  P^S^(D&~(P&S)  */
     { OP(SRC,TMP,GXcopy), OP(SRC,DST,GXxor),
       OP(PAT,SRC,GXxor), OP(SRC,DST,GXand),
       OP(TMP,DST,GXequiv) },                         /* 0x17 ~S^((S^P)&(S^D))*/
     { OP(PAT,SRC,GXxor), OP(PAT,DST,GXxor),
         OP(SRC,DST,GXand) },                         /* 0x18  (S^P)&(D^P)    */
-    { OP(SRC,TMP,GXcopy), OP(PAT,TMP,GXnand),
-      OP(TMP,DST,GXand), OP(SRC,DST,GXequiv) },      /* 0x19  ~S^(D&~(P&S))  */
+    { OP(SRC,TMP,GXcopy), OP(PAT,SRC,GXnand),
+      OP(SRC,DST,GXand), OP(TMP,DST,GXequiv) },      /* 0x19  ~S^(D&~(P&S))  */
     { OP(PAT,SRC,GXand), OP(SRC,DST,GXor),
       OP(PAT,DST,GXxor) },                           /* 0x1a  P^(D|(S&P))    */
-    { OP(SRC,TMP,GXcopy), OP(PAT,TMP,GXxor),
-      OP(TMP,DST,GXand), OP(SRC,DST,GXequiv) },      /* 0x1b  ~S^(D&(P^S))   */
+    { OP(SRC,TMP,GXcopy), OP(PAT,SRC,GXxor),
+      OP(SRC,DST,GXand), OP(TMP,DST,GXequiv) },      /* 0x1b  ~S^(D&(P^S))   */
     { OP(PAT,DST,GXand), OP(SRC,DST,GXor),
       OP(PAT,DST,GXxor) },                           /* 0x1c  P^(S|(D&P))    */
     { OP(DST,TMP,GXcopy), OP(PAT,DST,GXxor),
@@ -107,13 +107,13 @@ static const unsigned char BITBLT_Opcodes[256][MAX_OP_LEN] =
       OP(SRC,DST,GXand) },                           /* 0x24   (S^P)&(S^D)   */
     { OP(PAT,SRC,GXnand), OP(SRC,DST,GXand),
       OP(PAT,DST,GXequiv) },                         /* 0x25  ~P^(D&~(S&P))  */
-    { OP(SRC,TMP,GXcopy), OP(PAT,TMP,GXand),
-      OP(TMP,DST,GXor), OP(SRC,DST,GXxor) },         /* 0x26  S^(D|(S&P))    */
-    { OP(SRC,TMP,GXcopy), OP(PAT,TMP,GXequiv),
-      OP(TMP,DST,GXor), OP(SRC,DST,GXxor) },         /* 0x27  S^(D|~(P^S))   */
+    { OP(SRC,TMP,GXcopy), OP(PAT,SRC,GXand),
+      OP(SRC,DST,GXor), OP(TMP,DST,GXxor) },         /* 0x26  S^(D|(S&P))    */
+    { OP(SRC,TMP,GXcopy), OP(PAT,SRC,GXequiv),
+      OP(SRC,DST,GXor), OP(TMP,DST,GXxor) },         /* 0x27  S^(D|~(P^S))   */
     { OP(PAT,SRC,GXxor), OP(SRC,DST,GXand) },        /* 0x28  D&(P^S)        */
-    { OP(SRC,TMP,GXcopy), OP(PAT,TMP,GXand),
-      OP(TMP,DST,GXor), OP(SRC,DST,GXxor),
+    { OP(SRC,TMP,GXcopy), OP(PAT,SRC,GXand),
+      OP(SRC,DST,GXor), OP(TMP,DST,GXxor),
       OP(PAT,DST,GXequiv) },                         /* 0x29  ~P^S^(D|(P&S)) */
     { OP(PAT,SRC,GXnand), OP(SRC,DST,GXand) },       /* 0x2a  D&~(P&S)       */
     { OP(SRC,TMP,GXcopy), OP(PAT,SRC,GXxor),
@@ -528,7 +528,7 @@ static int do_bitop( int s, int d, int rop )
 int main()
 {
     int rop, i, res, src, dst, pat, tmp, dstUsed;
-    const BYTE *opcode;
+    const unsigned char *opcode;
 
     for (rop = 0; rop < 256; rop++)
     {
@@ -554,9 +554,6 @@ int main()
                 case OP_ARGS(SRC,DST):
                     dst = do_bitop( src, dst, *opcode & 0xf );
                     dstUsed = 1;
-                    break;
-                case OP_ARGS(PAT,TMP):
-                    tmp = do_bitop( pat, tmp, *opcode & 0xf );
                     break;
                 case OP_ARGS(PAT,DST):
                     dst = do_bitop( pat, dst, *opcode & 0xf );
@@ -1389,11 +1386,6 @@ static void execute_rop( X11DRV_PDEVICE *physdev, Pixmap src_pixmap, GC gc,
             XCopyArea( gdi_display, pixmaps[OP_SRC(*opcode)], pixmaps[OP_DST(*opcode)], gc,
                        0, 0, width, height, 0, 0 );
             break;
-
-        case OP_ARGS(PAT,TMP):
-            if (!pixmaps[TMP] && !null_brush)
-                pixmaps[TMP] = XCreatePixmap( gdi_display, root_window, width, height, physdev->depth );
-            /* fall through */
         case OP_ARGS(PAT,DST):
         case OP_ARGS(PAT,SRC):
             if (!null_brush)
