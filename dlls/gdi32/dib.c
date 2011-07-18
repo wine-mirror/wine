@@ -72,14 +72,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 
-static inline void offset_rect( RECT *rect, int offset_x, int offset_y )
-{
-    rect->left   += offset_x;
-    rect->top    += offset_y;
-    rect->right  += offset_x;
-    rect->bottom += offset_y;
-}
-
 /*
   Some of the following helper functions are duplicated in
   dlls/x11drv/dib.c

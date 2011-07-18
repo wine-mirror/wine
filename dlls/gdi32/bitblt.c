@@ -47,23 +47,6 @@ static inline void swap_ints( int *i, int *j )
     *j = tmp;
 }
 
-static inline BOOL intersect_rect( RECT *dst, const RECT *src1, const RECT *src2 )
-{
-    dst->left   = max( src1->left, src2->left );
-    dst->top    = max( src1->top, src2->top );
-    dst->right  = min( src1->right, src2->right );
-    dst->bottom = min( src1->bottom, src2->bottom );
-    return (dst->left < dst->right && dst->top < dst->bottom);
-}
-
-static inline void offset_rect( RECT *rect, int offset_x, int offset_y )
-{
-    rect->left   += offset_x;
-    rect->top    += offset_y;
-    rect->right  += offset_x;
-    rect->bottom += offset_y;
-}
-
 static void get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
                                 DC *dc_src, struct bitblt_coords *src )
 {
