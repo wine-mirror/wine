@@ -46,17 +46,30 @@ static CHAR string1[MAX_PATH], string2[MAX_PATH], string3[MAX_PATH];
 
 static HMODULE hmoduleRichEdit;
 
-static HWND new_window(LPCTSTR lpClassName, DWORD dwStyle, HWND parent) {
+static HWND new_window(LPCSTR lpClassName, DWORD dwStyle, HWND parent) {
   HWND hwnd;
-  hwnd = CreateWindow(lpClassName, NULL, dwStyle|WS_POPUP|WS_HSCROLL|WS_VSCROLL
+  hwnd = CreateWindowA(lpClassName, NULL, dwStyle|WS_POPUP|WS_HSCROLL|WS_VSCROLL
                       |WS_VISIBLE, 0, 0, 200, 60, parent, NULL,
                       hmoduleRichEdit, NULL);
   ok(hwnd != NULL, "class: %s, error: %d\n", lpClassName, (int) GetLastError());
   return hwnd;
 }
 
+static HWND new_windowW(LPCWSTR lpClassName, DWORD dwStyle, HWND parent) {
+  HWND hwnd;
+  hwnd = CreateWindowW(lpClassName, NULL, dwStyle|WS_POPUP|WS_HSCROLL|WS_VSCROLL
+                      |WS_VISIBLE, 0, 0, 200, 60, parent, NULL,
+                      hmoduleRichEdit, NULL);
+  ok(hwnd != NULL, "class: %s, error: %d\n", wine_dbgstr_w(lpClassName), (int) GetLastError());
+  return hwnd;
+}
+
 static HWND new_richedit(HWND parent) {
   return new_window(RICHEDIT_CLASS, ES_MULTILINE, parent);
+}
+
+static HWND new_richeditW(HWND parent) {
+  return new_windowW(RICHEDIT_CLASS20W, ES_MULTILINE, parent);
 }
 
 /* Keeps the window reponsive for the deley_time in seconds.
@@ -7034,6 +7047,93 @@ static void test_dialogmode(void)
     DestroyWindow(hwParent);
 }
 
+static void test_EM_FINDWORDBREAK_W(void)
+{
+    static const struct {
+        WCHAR c;
+        BOOL isdelimiter;        /* expected result of WB_ISDELIMITER */
+    } delimiter_tests[] = {
+        {0x0a,   FALSE},         /* newline */
+        {0x0b,   FALSE},         /* vertical tab mark */
+        {0x0c,   FALSE},         /* form feed */
+        {0x0d,   FALSE},         /* carriage return */
+        {0x20,   TRUE},          /* ANSI Space */
+        {0x61,   FALSE},         /* ASCII capital letter a */
+        {0xa0,   FALSE},         /* no-break space */
+        {0x2000, FALSE},         /* en quad */
+        {0x3000, FALSE},         /* Ideographic space */
+        {0x1100, FALSE},         /* Hangul Choseong Kiyeok (G sound) Ordinary Letter*/
+        {0x11ff, FALSE},         /* Hangul Jongseoung Kiyeok-Hieuh (Hard N sound) Ordinary Letter*/
+        {0x115f, FALSE},         /* Hangul Choseong Filler (no sound, used with two letter Hangul words) Ordinary Letter */
+        {0xac00, FALSE},         /* Hangul character GA*/
+        {0xd7af, FALSE},         /* End of Hangul character chart */
+        {0xf020, TRUE},          /* High Surrogate Space */
+        {0xff20, FALSE},         /* MS private for CP_SYMBOL round trip? */
+        {WCH_EMBEDDING, FALSE},  /* object replacement character*/
+    };
+    int i;
+    HWND hwndRichEdit = new_richeditW(NULL);
+    ok(IsWindowUnicode(hwndRichEdit), "window should be unicode\n");
+    for (i = 0; i < sizeof(delimiter_tests)/sizeof(delimiter_tests[0]); i++)
+    {
+        WCHAR wbuf[2];
+        int result;
+
+        wbuf[0] = delimiter_tests[i].c;
+        wbuf[1] = 0;
+        SendMessageW(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)wbuf);
+        result = SendMessageW(hwndRichEdit, EM_FINDWORDBREAK, WB_ISDELIMITER,0);
+        if (wbuf[0] == 0x20 || wbuf[0] == 0xf020)
+            todo_wine
+                ok(result == delimiter_tests[i].isdelimiter,
+                   "wanted ISDELIMITER_W(0x%x) %d, got %d\n",
+                   delimiter_tests[i].c, delimiter_tests[i].isdelimiter,result);
+        else
+            ok(result == delimiter_tests[i].isdelimiter,
+               "wanted ISDELIMITER_W(0x%x) %d, got %d\n",
+               delimiter_tests[i].c, delimiter_tests[i].isdelimiter, result);
+    }
+    DestroyWindow(hwndRichEdit);
+}
+
+static void test_EM_FINDWORDBREAK_A(void)
+{
+    static const struct {
+        WCHAR c;
+        BOOL isdelimiter;        /* expected result of WB_ISDELIMITER */
+    } delimiter_tests[] = {
+        {0x0a,   FALSE},         /* newline */
+        {0x0b,   FALSE},         /* vertical tab mark */
+        {0x0c,   FALSE},         /* form feed */
+        {0x0d,   FALSE},         /* carriage return */
+        {0x20,   TRUE},          /* ANSI Space */
+        {0x61,   FALSE},         /* ASCII capital letter a */
+    };
+    int i;
+    HWND hwndRichEdit = new_richedit(NULL);
+
+    ok(!IsWindowUnicode(hwndRichEdit), "window should not be unicode\n");
+    for (i = 0; i < sizeof(delimiter_tests)/sizeof(delimiter_tests[0]); i++)
+    {
+        int result;
+        char buf[2];
+        buf[0] = delimiter_tests[i].c;
+        buf[1] = 0;
+        SendMessageW(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)buf);
+        result = SendMessage(hwndRichEdit, EM_FINDWORDBREAK, WB_ISDELIMITER, 0);
+        if (buf[0] == 0x20)
+            todo_wine
+                ok(result == delimiter_tests[i].isdelimiter,
+                   "wanted ISDELIMITER_A(0x%x) %d, got %d\n",
+                   delimiter_tests[i].c, delimiter_tests[i].isdelimiter,result);
+        else
+            ok(result == delimiter_tests[i].isdelimiter,
+               "wanted ISDELIMITER_A(0x%x) %d, got %d\n",
+               delimiter_tests[i].c, delimiter_tests[i].isdelimiter, result);
+    }
+    DestroyWindow(hwndRichEdit);
+}
+
 START_TEST( editor )
 {
   BOOL ret;
@@ -7090,6 +7190,8 @@ START_TEST( editor )
   test_WM_GETDLGCODE();
   test_zoom();
   test_dialogmode();
+  test_EM_FINDWORDBREAK_W();
+  test_EM_FINDWORDBREAK_A();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
