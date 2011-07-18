@@ -26,7 +26,6 @@
 #include <assert.h>
 #include <stdarg.h>
 #ifdef HAVE_LIBXML2
-# include <libxml/parser.h>
 # include <libxml/xmlerror.h>
 # include <libxml/tree.h>
 # include <libxml/xmlschemas.h>
