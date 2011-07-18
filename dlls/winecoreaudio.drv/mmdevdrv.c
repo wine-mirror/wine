@@ -862,6 +862,8 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     }else
         This->period_ms = MinimumPeriod / 10000;
 
+    if(!duration)
+        duration = 300000; /* 0.03s */
     This->bufsize_frames = ceil(fmt->nSamplesPerSec * (duration / 10000000.));
 
     if(This->dataflow == eCapture){

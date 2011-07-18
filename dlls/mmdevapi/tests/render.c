@@ -211,6 +211,15 @@ static void test_audioclient(void)
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000, 0, NULL, NULL);
     ok(hr == E_POINTER, "Initialize with null format returns %08x\n", hr);
 
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 0, 0, pwfx, NULL);
+    ok(hr == S_OK, "Initialize with 0 buffer size returns %08x\n", hr);
+
+    IAudioClient_Release(ac);
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000, 0, pwfx, NULL);
     ok(hr == S_OK, "Valid Initialize returns %08x\n", hr);
 

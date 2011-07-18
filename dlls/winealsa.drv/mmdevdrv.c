@@ -799,6 +799,8 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         goto exit;
     }
 
+    if(!duration)
+        duration = 300000; /* 0.03s */
     This->bufsize_frames = ceil((duration / 10000000.) * fmt->nSamplesPerSec);
     This->local_buffer = HeapAlloc(GetProcessHeap(), 0,
             This->bufsize_frames * fmt->nBlockAlign);
