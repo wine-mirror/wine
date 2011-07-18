@@ -1177,7 +1177,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
 {
     IDirectSoundBufferImpl *dsb;
     HRESULT hres = DS_OK;
-    TRACE("(%p,%p,%p)\n", device, pdsb, pdsb);
+    TRACE("(%p,%p,%p)\n", device, ppdsb, pdsb);
 
     dsb = HeapAlloc(GetProcessHeap(),0,sizeof(*dsb));
     if (dsb == NULL) {
