@@ -804,9 +804,7 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
 
             /* Retrieve a source row */
             BITBLT_GetRow( srcImage, rowSrc, (ysrc >> 16) - visRectSrc->top,
-                           hswap ? widthSrc - visRectSrc->right
-                                 : visRectSrc->left,
-                           visRectSrc->right - visRectSrc->left,
+                           visRectSrc->left, visRectSrc->right - visRectSrc->left,
                            dstImage->depth, foreground, background, pixel_mask, hswap );
 
             /* Stretch or shrink it */
@@ -814,9 +812,7 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
                 BITBLT_StretchRow( rowSrc, rowDst, visRectDst->left,
                                    visRectDst->right - visRectDst->left,
                                    xinc, xoff, mode );
-            else BITBLT_ShrinkRow( rowSrc, rowDst,
-                                   hswap ? widthSrc - visRectSrc->right
-                                         : visRectSrc->left,
+            else BITBLT_ShrinkRow( rowSrc, rowDst, visRectSrc->left,
                                    visRectSrc->right - visRectSrc->left,
                                    xinc, xoff, mode );
 
@@ -863,9 +859,7 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
 
             /* Retrieve a source row */
             BITBLT_GetRow( srcImage, rowSrc, ysrc - visRectSrc->top,
-                           hswap ? widthSrc - visRectSrc->right
-                                 : visRectSrc->left,
-                           visRectSrc->right - visRectSrc->left,
+                           visRectSrc->left, visRectSrc->right - visRectSrc->left,
                            dstImage->depth, foreground, background, pixel_mask, hswap );
 
             /* Stretch or shrink it */
@@ -873,9 +867,7 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
                 BITBLT_StretchRow( rowSrc, rowDst, visRectDst->left,
                                    visRectDst->right - visRectDst->left,
                                    xinc, xoff, mode );
-            else BITBLT_ShrinkRow( rowSrc, rowDst,
-                                   hswap ? widthSrc - visRectSrc->right
-                                         : visRectSrc->left,
+            else BITBLT_ShrinkRow( rowSrc, rowDst, visRectSrc->left,
                                    visRectSrc->right - visRectSrc->left,
                                    xinc, xoff, mode );
 
@@ -1474,6 +1466,7 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     GC tmpGC;
 
     if (IsRectEmpty( &dst->visrect )) return TRUE;
+    if (IsRectEmpty( &src->visrect )) return TRUE;
 
     fStretch = (src->width != dst->width) || (src->height != dst->height);
 
