@@ -59,6 +59,9 @@ static HRESULT WINAPI VBScript_QueryInterface(IActiveScript *iface, REFIID riid,
     }else if(IsEqualGUID(riid, &IID_IActiveScript)) {
         TRACE("(%p)->(IID_IActiveScript %p)\n", This, ppv);
         *ppv = &This->IActiveScript_iface;
+    }else if(IsEqualGUID(riid, &IID_IActiveScriptParse)) {
+        TRACE("(%p)->(IID_IActiveScriptParse %p)\n", This, ppv);
+        *ppv = &This->IActiveScriptParse_iface;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -208,6 +211,71 @@ static const IActiveScriptVtbl VBScriptVtbl = {
     VBScript_Clone
 };
 
+static inline VBScript *impl_from_IActiveScriptParse(IActiveScriptParse *iface)
+{
+    return CONTAINING_RECORD(iface, VBScript, IActiveScriptParse_iface);
+}
+
+static HRESULT WINAPI VBScriptParse_QueryInterface(IActiveScriptParse *iface, REFIID riid, void **ppv)
+{
+    VBScript *This = impl_from_IActiveScriptParse(iface);
+    return IActiveScript_QueryInterface(&This->IActiveScript_iface, riid, ppv);
+}
+
+static ULONG WINAPI VBScriptParse_AddRef(IActiveScriptParse *iface)
+{
+    VBScript *This = impl_from_IActiveScriptParse(iface);
+    return IActiveScript_AddRef(&This->IActiveScript_iface);
+}
+
+static ULONG WINAPI VBScriptParse_Release(IActiveScriptParse *iface)
+{
+    VBScript *This = impl_from_IActiveScriptParse(iface);
+    return IActiveScript_Release(&This->IActiveScript_iface);
+}
+
+static HRESULT WINAPI VBScriptParse_InitNew(IActiveScriptParse *iface)
+{
+    VBScript *This = impl_from_IActiveScriptParse(iface);
+    FIXME("(%p)\n", This);
+    return S_OK;
+}
+
+static HRESULT WINAPI VBScriptParse_AddScriptlet(IActiveScriptParse *iface,
+        LPCOLESTR pstrDefaultName, LPCOLESTR pstrCode, LPCOLESTR pstrItemName,
+        LPCOLESTR pstrSubItemName, LPCOLESTR pstrEventName, LPCOLESTR pstrDelimiter,
+        CTXARG_T dwSourceContextCookie, ULONG ulStartingLineNumber, DWORD dwFlags,
+        BSTR *pbstrName, EXCEPINFO *pexcepinfo)
+{
+    VBScript *This = impl_from_IActiveScriptParse(iface);
+    FIXME("(%p)->(%s %s %s %s %s %s %s %u %x %p %p)\n", This, debugstr_w(pstrDefaultName),
+          debugstr_w(pstrCode), debugstr_w(pstrItemName), debugstr_w(pstrSubItemName),
+          debugstr_w(pstrEventName), debugstr_w(pstrDelimiter), wine_dbgstr_longlong(dwSourceContextCookie),
+          ulStartingLineNumber, dwFlags, pbstrName, pexcepinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VBScriptParse_ParseScriptText(IActiveScriptParse *iface,
+        LPCOLESTR pstrCode, LPCOLESTR pstrItemName, IUnknown *punkContext,
+        LPCOLESTR pstrDelimiter, CTXARG_T dwSourceContextCookie, ULONG ulStartingLine,
+        DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
+{
+    VBScript *This = impl_from_IActiveScriptParse(iface);
+    FIXME("(%p)->(%s %s %p %s %s %u %x %p %p)\n", This, debugstr_w(pstrCode),
+          debugstr_w(pstrItemName), punkContext, debugstr_w(pstrDelimiter),
+          wine_dbgstr_longlong(dwSourceContextCookie), ulStartingLine, dwFlags, pvarResult, pexcepinfo);
+    return E_NOTIMPL;
+}
+
+static const IActiveScriptParseVtbl VBScriptParseVtbl = {
+    VBScriptParse_QueryInterface,
+    VBScriptParse_AddRef,
+    VBScriptParse_Release,
+    VBScriptParse_InitNew,
+    VBScriptParse_AddScriptlet,
+    VBScriptParse_ParseScriptText
+};
+
 HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppv)
 {
     VBScript *ret;
@@ -220,6 +288,7 @@ HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pU
         return E_OUTOFMEMORY;
 
     ret->IActiveScript_iface.lpVtbl = &VBScriptVtbl;
+    ret->IActiveScriptParse_iface.lpVtbl = &VBScriptParseVtbl;
 
     ret->ref = 1;
 

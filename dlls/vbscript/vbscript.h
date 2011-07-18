@@ -21,6 +21,7 @@
 
 struct VBScript {
     IActiveScript IActiveScript_iface;
+    IActiveScriptParse IActiveScriptParse_iface;
 
     LONG ref;
 };
