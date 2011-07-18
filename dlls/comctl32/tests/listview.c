@@ -377,6 +377,7 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
               /* edit control still available from this notification */
               edit = (HWND)SendMessageA(((NMHDR*)lParam)->hwndFrom, LVM_GETEDITCONTROL, 0, 0);
               ok(IsWindow(edit), "expected valid edit control handle\n");
+              ok((GetWindowLongA(edit, GWL_STYLE) & ES_MULTILINE) == 0, "edit is multiline\n");
 
               return TRUE;
               }
