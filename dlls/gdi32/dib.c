@@ -72,6 +72,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 
+static inline void offset_rect( RECT *rect, int offset_x, int offset_y )
+{
+    rect->left   += offset_x;
+    rect->top    += offset_y;
+    rect->right  += offset_x;
+    rect->bottom += offset_y;
+}
 
 /*
   Some of the following helper functions are duplicated in
@@ -548,6 +555,45 @@ static void copy_color_info(BITMAPINFO *dst, const BITMAPINFO *src, UINT colorus
     }
 }
 
+static void fill_default_color_table( BITMAPINFO *info )
+{
+    int i;
+
+    switch (info->bmiHeader.biBitCount)
+    {
+    case 1:
+        info->bmiColors[0].rgbRed = info->bmiColors[0].rgbGreen = info->bmiColors[0].rgbBlue = 0;
+        info->bmiColors[0].rgbReserved = 0;
+        info->bmiColors[1].rgbRed = info->bmiColors[1].rgbGreen = info->bmiColors[1].rgbBlue = 0xff;
+        info->bmiColors[1].rgbReserved = 0;
+        break;
+
+    case 4:
+        /* The EGA palette is the first and last 8 colours of the default palette
+           with the innermost pair swapped */
+        memcpy(info->bmiColors,     DefLogPaletteQuads,      7 * sizeof(RGBQUAD));
+        memcpy(info->bmiColors + 7, DefLogPaletteQuads + 12, 1 * sizeof(RGBQUAD));
+        memcpy(info->bmiColors + 8, DefLogPaletteQuads +  7, 1 * sizeof(RGBQUAD));
+        memcpy(info->bmiColors + 9, DefLogPaletteQuads + 13, 7 * sizeof(RGBQUAD));
+        break;
+
+    case 8:
+        memcpy(info->bmiColors, DefLogPaletteQuads, 10 * sizeof(RGBQUAD));
+        memcpy(info->bmiColors + 246, DefLogPaletteQuads + 10, 10 * sizeof(RGBQUAD));
+        for (i = 10; i < 246; i++)
+        {
+            info->bmiColors[i].rgbRed      = (i & 0x07) << 5;
+            info->bmiColors[i].rgbGreen    = (i & 0x38) << 2;
+            info->bmiColors[i].rgbBlue     =  i & 0xc0;
+            info->bmiColors[i].rgbReserved = 0;
+        }
+        break;
+
+    default:
+        ERR("called with bitcount %d\n", info->bmiHeader.biBitCount);
+    }
+}
+
 /******************************************************************************
  * GetDIBits [GDI32.@]
  *
@@ -576,6 +622,7 @@ INT WINAPI GetDIBits(
     DWORD compr, size;
     char dst_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *dst_info = (BITMAPINFO *)dst_bmibuf;
+    unsigned int colors = 0;
 
     if (!info) return 0;
 
@@ -625,18 +672,11 @@ INT WINAPI GetDIBits(
     case 4:
     case 8:
     {
-        unsigned int colors = 1 << bpp;
-
-        if (coloruse == DIB_PAL_COLORS)
-        {
-            WORD *index = (WORD*)dst_info->bmiColors;
-            for (i = 0; i < colors; i++, index++)
-                *index = i;
-        }
+        colors = 1 << bpp;
 
         /* If the bitmap object is a dib section at the
            same color depth then get the color map from it */
-        else if (bmp->dib && bpp == bmp->dib->dsBm.bmBitsPixel)
+        if (bmp->dib && bpp == bmp->dib->dsBm.bmBitsPixel && coloruse == DIB_RGB_COLORS)
         {
             colors = min( colors, bmp->nb_colors );
             if (colors != 1 << bpp) dst_info->bmiHeader.biClrUsed = colors;
@@ -644,9 +684,9 @@ INT WINAPI GetDIBits(
         }
 
         /* For color DDBs in native depth (mono DDBs always have a black/white palette):
-           Generate the color map from the selected palette */
-
-        else if (bpp > 1 && bpp == bmp->bitmap.bmBitsPixel)
+           Generate the color map from the selected palette.  In the DIB_PAL_COLORS
+           case we'll fix up the indices after the format conversion. */
+        else if ( (bpp > 1 && bpp == bmp->bitmap.bmBitsPixel) || coloruse == DIB_PAL_COLORS )
         {
             PALETTEENTRY palEntry[256];
 
@@ -666,37 +706,7 @@ INT WINAPI GetDIBits(
             }
         }
         else
-        {
-            switch (bpp)
-            {
-            case 1:
-                dst_info->bmiColors[0].rgbRed = dst_info->bmiColors[0].rgbGreen = dst_info->bmiColors[0].rgbBlue = 0;
-                dst_info->bmiColors[0].rgbReserved = 0;
-                dst_info->bmiColors[1].rgbRed = dst_info->bmiColors[1].rgbGreen = dst_info->bmiColors[1].rgbBlue = 0xff;
-                dst_info->bmiColors[1].rgbReserved = 0;
-                break;
-
-            case 4:
-                /* The EGA palette is the first and last 8 colours of the default palette
-                   with the innermost pair swapped */
-                memcpy(dst_info->bmiColors,     DefLogPaletteQuads,      7 * sizeof(RGBQUAD));
-                memcpy(dst_info->bmiColors + 7, DefLogPaletteQuads + 12, 1 * sizeof(RGBQUAD));
-                memcpy(dst_info->bmiColors + 8, DefLogPaletteQuads +  7, 1 * sizeof(RGBQUAD));
-                memcpy(dst_info->bmiColors + 9, DefLogPaletteQuads + 13, 7 * sizeof(RGBQUAD));
-                break;
-
-            case 8:
-                memcpy(dst_info->bmiColors, DefLogPaletteQuads, 10 * sizeof(RGBQUAD));
-                memcpy(dst_info->bmiColors + 246, DefLogPaletteQuads + 10, 10 * sizeof(RGBQUAD));
-                for (i = 10; i < 246; i++)
-                {
-                    dst_info->bmiColors[i].rgbRed      = (i & 0x07) << 5;
-                    dst_info->bmiColors[i].rgbGreen    = (i & 0x38) << 2;
-                    dst_info->bmiColors[i].rgbBlue     =  i & 0xc0;
-                    dst_info->bmiColors[i].rgbReserved = 0;
-                }
-            }
-        }
+            fill_default_color_table( dst_info );
         break;
     }
 
@@ -734,232 +744,66 @@ INT WINAPI GetDIBits(
 
     if (bits && lines)
     {
-        /* If the bitmap object already have a dib section that contains image data, get the bits from it */
-        if(bmp->dib && bmp->dib->dsBm.bmBitsPixel >= 15 && bpp >= 15)
-        {
-            /*FIXME: Only RGB dibs supported for now */
-            unsigned int srcwidth = bmp->dib->dsBm.bmWidth;
-            int srcwidthb = bmp->dib->dsBm.bmWidthBytes;
-            unsigned int dstwidth = width;
-            int dstwidthb = DIB_GetDIBWidthBytes( width, bpp );
-            LPBYTE dbits = bits, sbits = (LPBYTE) bmp->dib->dsBm.bmBits + (startscan * srcwidthb);
-            unsigned int x, y, width, widthb;
+        PHYSDEV physdev;
+        RECT rect;
+        char src_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+        BITMAPINFO *src_info = (BITMAPINFO *)src_bmibuf;
+        struct gdi_image_bits src_bits;
+        DWORD err;
 
-            /*
-             * If copying from a top-down source bitmap, move the source
-             * pointer to the end of the source bitmap and negate the width
-             * so that we copy the bits upside-down.
-             */
-            if (bmp->dib->dsBmih.biHeight < 0)
-            {
-                sbits += (srcwidthb * (int)(abs(bmp->dib->dsBmih.biHeight) - 2 * startscan - 1));
-                srcwidthb = -srcwidthb;
-            }
-            /*Same for the destination.*/
-            if (height < 0)
-            {
-                dbits = (LPBYTE)bits + (dstwidthb * (lines - 1));
-                dstwidthb = -dstwidthb;
-            }
-            switch( bpp ) {
+        /* FIXME: will need updating once the dib driver has pGetImage. */
+        physdev = GET_DC_PHYSDEV( dc, pGetImage );
 
-	    case 15:
-            case 16: /* 16 bpp dstDIB */
-                {
-                    LPWORD dstbits = (LPWORD)dbits;
-                    WORD rmask = 0x7c00, gmask= 0x03e0, bmask = 0x001f;
+        if (!BITMAP_SetOwnerDC( hbitmap, physdev )) lines = 0;
 
-                    /* FIXME: BI_BITFIELDS not supported yet */
+        rect.left = 0;
+        rect.right = min( width, bmp->bitmap.bmWidth );
 
-                    switch(bmp->dib->dsBm.bmBitsPixel) {
-
-                    case 16: /* 16 bpp srcDIB -> 16 bpp dstDIB */
-                        {
-                            widthb = min(abs(srcwidthb), abs(dstwidthb));
-                            /* FIXME: BI_BITFIELDS not supported yet */
-                            for (y = 0; y < lines; y++, dbits+=dstwidthb, sbits+=srcwidthb)
-                                memcpy(dbits, sbits, widthb);
-                        }
-                        break;
-
-                    case 24: /* 24 bpp srcDIB -> 16 bpp dstDIB */
-                        {
-                            LPBYTE srcbits = sbits;
-
-                            width = min(srcwidth, dstwidth);
-                            for( y = 0; y < lines; y++) {
-                                for( x = 0; x < width; x++, srcbits += 3)
-                                    *dstbits++ = ((srcbits[0] >> 3) & bmask) |
-                                                 (((WORD)srcbits[1] << 2) & gmask) |
-                                                 (((WORD)srcbits[2] << 7) & rmask);
-
-                                dstbits = (LPWORD)(dbits+=dstwidthb);
-                                srcbits = (sbits += srcwidthb);
-                            }
-                        }
-                        break;
-
-                    case 32: /* 32 bpp srcDIB -> 16 bpp dstDIB */
-                        {
-                            LPDWORD srcbits = (LPDWORD)sbits;
-                            DWORD val;
-
-                            width = min(srcwidth, dstwidth);
-                            for( y = 0; y < lines; y++) {
-                                for( x = 0; x < width; x++ ) {
-                                    val = *srcbits++;
-                                    *dstbits++ = (WORD)(((val >> 3) & bmask) | ((val >> 6) & gmask) |
-                                                       ((val >> 9) & rmask));
-                                }
-                                dstbits = (LPWORD)(dbits+=dstwidthb);
-                                srcbits = (LPDWORD)(sbits+=srcwidthb);
-                            }
-                        }
-                        break;
-
-                    default: /* ? bit bmp -> 16 bit DIB */
-                        FIXME("15/16 bit DIB %d bit bitmap\n",
-                        bmp->bitmap.bmBitsPixel);
-                        break;
-                    }
-                }
-                break;
-
-            case 24: /* 24 bpp dstDIB */
-                {
-                    LPBYTE dstbits = dbits;
-
-                    switch(bmp->dib->dsBm.bmBitsPixel) {
-
-                    case 16: /* 16 bpp srcDIB -> 24 bpp dstDIB */
-                        {
-                            LPWORD srcbits = (LPWORD)sbits;
-                            WORD val;
-
-                            width = min(srcwidth, dstwidth);
-                            /* FIXME: BI_BITFIELDS not supported yet */
-                            for( y = 0; y < lines; y++) {
-                                for( x = 0; x < width; x++ ) {
-                                    val = *srcbits++;
-                                    *dstbits++ = (BYTE)(((val << 3) & 0xf8) | ((val >> 2) & 0x07));
-                                    *dstbits++ = (BYTE)(((val >> 2) & 0xf8) | ((val >> 7) & 0x07));
-                                    *dstbits++ = (BYTE)(((val >> 7) & 0xf8) | ((val >> 12) & 0x07));
-                                }
-                                dstbits = dbits+=dstwidthb;
-                                srcbits = (LPWORD)(sbits+=srcwidthb);
-                            }
-                        }
-                        break;
-
-                    case 24: /* 24 bpp srcDIB -> 24 bpp dstDIB */
-                        {
-                            widthb = min(abs(srcwidthb), abs(dstwidthb));
-                            for (y = 0; y < lines; y++, dbits+=dstwidthb, sbits+=srcwidthb)
-                                memcpy(dbits, sbits, widthb);
-                        }
-                        break;
-
-                    case 32: /* 32 bpp srcDIB -> 24 bpp dstDIB */
-                        {
-                            LPBYTE srcbits = sbits;
-
-                            width = min(srcwidth, dstwidth);
-                            for( y = 0; y < lines; y++) {
-                                for( x = 0; x < width; x++, srcbits++ ) {
-                                    *dstbits++ = *srcbits++;
-                                    *dstbits++ = *srcbits++;
-                                    *dstbits++ = *srcbits++;
-                                }
-                                dstbits = dbits+=dstwidthb;
-                                srcbits = sbits+=srcwidthb;
-                            }
-                        }
-                        break;
-
-                    default: /* ? bit bmp -> 24 bit DIB */
-                        FIXME("24 bit DIB %d bit bitmap\n",
-                              bmp->bitmap.bmBitsPixel);
-                        break;
-                    }
-                }
-                break;
-
-            case 32: /* 32 bpp dstDIB */
-                {
-                    LPDWORD dstbits = (LPDWORD)dbits;
-
-                    /* FIXME: BI_BITFIELDS not supported yet */
-
-                    switch(bmp->dib->dsBm.bmBitsPixel) {
-                        case 16: /* 16 bpp srcDIB -> 32 bpp dstDIB */
-                        {
-                            LPWORD srcbits = (LPWORD)sbits;
-                            DWORD val;
-
-                            width = min(srcwidth, dstwidth);
-                            /* FIXME: BI_BITFIELDS not supported yet */
-                            for( y = 0; y < lines; y++) {
-                                for( x = 0; x < width; x++ ) {
-                                    val = (DWORD)*srcbits++;
-                                    *dstbits++ = ((val << 3) & 0xf8) | ((val >> 2) & 0x07) |
-                                                 ((val << 6) & 0xf800) | ((val << 1) & 0x0700) |
-                                                 ((val << 9) & 0xf80000) | ((val << 4) & 0x070000);
-                                }
-                                dstbits=(LPDWORD)(dbits+=dstwidthb);
-                                srcbits=(LPWORD)(sbits+=srcwidthb);
-                            }
-                        }
-                        break;
-
-                    case 24: /* 24 bpp srcDIB -> 32 bpp dstDIB */
-                        {
-                            LPBYTE srcbits = sbits;
-
-                            width = min(srcwidth, dstwidth);
-                            for( y = 0; y < lines; y++) {
-                                for( x = 0; x < width; x++, srcbits+=3 )
-                                    *dstbits++ =  srcbits[0] |
-                                                 (srcbits[1] <<  8) |
-                                                 (srcbits[2] << 16);
-                                dstbits=(LPDWORD)(dbits+=dstwidthb);
-                                srcbits=(sbits+=srcwidthb);
-                            }
-                        }
-                        break;
-
-                    case 32: /* 32 bpp srcDIB -> 32 bpp dstDIB */
-                        {
-                            widthb = min(abs(srcwidthb), abs(dstwidthb));
-                            /* FIXME: BI_BITFIELDS not supported yet */
-                            for (y = 0; y < lines; y++, dbits+=dstwidthb, sbits+=srcwidthb) {
-                                memcpy(dbits, sbits, widthb);
-                            }
-                        }
-                        break;
-
-                    default: /* ? bit bmp -> 32 bit DIB */
-                        FIXME("32 bit DIB %d bit bitmap\n",
-                        bmp->bitmap.bmBitsPixel);
-                        break;
-                    }
-                }
-                break;
-
-            default: /* ? bit DIB */
-                FIXME("Unsupported DIB depth %d\n", dst_info->bmiHeader.biBitCount);
-                break;
-            }
-        }
-        /* Otherwise, get bits from the XImage */
+        if (startscan >= bmp->bitmap.bmHeight)                       /* constrain lines to within src bitmap */
+            lines = 0;
         else
+            lines = min( lines, bmp->bitmap.bmHeight - startscan );
+        lines = min( lines, abs(height) );                           /* and constrain to within dest bitmap */
+
+        if (lines == 0) goto done;
+
+        rect.bottom = bmp->bitmap.bmHeight - startscan;
+        rect.top = rect.bottom - lines;
+
+        err = physdev->funcs->pGetImage( physdev, hbitmap, src_info, &src_bits, &rect );
+
+        if(err)
         {
-            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetDIBits );
-            if (!BITMAP_SetOwnerDC( hbitmap, physdev )) lines = 0;
-            else lines = physdev->funcs->pGetDIBits( physdev, hbitmap, startscan,
-                                                     lines, bits, dst_info, coloruse );
+            lines = 0;
+            goto done;
         }
+
+        if (src_info->bmiHeader.biBitCount <= 8 && src_info->bmiHeader.biClrUsed == 0)
+        {
+            if (bmp->dib)
+                memcpy( src_info->bmiColors, bmp->color_table, bmp->nb_colors * sizeof(RGBQUAD) );
+            else
+                fill_default_color_table( src_info );
+        }
+
+        offset_rect( &rect, src_bits.offset, -rect.top );
+
+        if(dst_info->bmiHeader.biHeight > 0)
+            dst_info->bmiHeader.biHeight = lines;
+        else
+            dst_info->bmiHeader.biHeight = -lines;
+
+        convert_bitmapinfo( src_info, src_bits.ptr, &rect, dst_info, bits );
+        if (src_bits.free) src_bits.free( &src_bits );
     }
     else lines = abs(height);
+
+    if (coloruse == DIB_PAL_COLORS)
+    {
+        WORD *index = (WORD *)dst_info->bmiColors;
+        for (i = 0; i < colors; i++, index++)
+            *index = i;
+    }
 
     copy_color_info( info, dst_info, coloruse );
 

@@ -1711,7 +1711,6 @@ static void test_GetDIBits(void)
     }
 
     /* returned bits are DWORD aligned and upside down */
-todo_wine
     ok(!memcmp(buf, dib_bits_1, sizeof(dib_bits_1)), "DIB bits don't match\n");
 
     /* Test the palette indices */
