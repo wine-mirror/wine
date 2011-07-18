@@ -175,17 +175,6 @@ static int X11DRV_DIB_GetDIBWidthBytes( int width, int depth )
 
 
 /***********************************************************************
- *           X11DRV_DIB_GetDIBImageBytes
- *
- * Return the number of bytes used to hold the image in a DIB bitmap.
- */
-static int X11DRV_DIB_GetDIBImageBytes( int width, int height, int depth )
-{
-    return X11DRV_DIB_GetDIBWidthBytes( width, depth ) * abs( height );
-}
-
-
-/***********************************************************************
  *           bitmap_info_size
  *
  * Return the size of the bitmap info structure including color table.
@@ -4083,163 +4072,6 @@ INT X11DRV_SetDIBits( PHYSDEV dev, HBITMAP hbitmap, UINT startscan,
 }
 
 /***********************************************************************
- *           GetDIBits   (X11DRV.@)
- */
-INT X11DRV_GetDIBits( PHYSDEV dev, HBITMAP hbitmap, UINT startscan, UINT lines,
-                      LPVOID bits, BITMAPINFO *info, UINT coloruse )
-{
-  X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
-  X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hbitmap );
-  DIBSECTION dib;
-  X11DRV_DIB_IMAGEBITS_DESCR descr;
-  PALETTEENTRY palette[256];
-  size_t obj_size;
-  int height;
-  LONG width, tempHeight;
-  int bitmap_type;
-  BOOL core_header;
-  void* colorPtr;
-  static const PALETTEENTRY peBlack = {0,0,0,0};
-  static const PALETTEENTRY peWhite = {255,255,255,0};
-
-  if (!physBitmap) return 0;
-  if (!(obj_size = GetObjectW( hbitmap, sizeof(dib), &dib ))) return 0;
-
-  bitmap_type = DIB_GetBitmapInfo( (BITMAPINFOHEADER*)info, &width, &tempHeight, &descr.infoBpp, &descr.compression);
-  if (bitmap_type == -1)
-  {
-      ERR("Invalid bitmap\n");
-      return 0;
-  }
-
-  if (physBitmap->pixmap_depth > 1)
-  {
-    GetPaletteEntries( GetCurrentObject( dev->hdc, OBJ_PAL ), 0, 256, palette );
-  }
-  else
-  {
-    palette[0] = peBlack;
-    palette[1] = peWhite;
-  }
-
-  descr.lines = tempHeight;
-  core_header = (bitmap_type == 0);
-  colorPtr = (LPBYTE) info + (WORD) info->bmiHeader.biSize;
-
-  TRACE("%u scanlines of (%i,%i) -> (%i,%i) starting from %u\n",
-        lines, dib.dsBm.bmWidth, dib.dsBm.bmHeight, width, descr.lines, startscan);
-
-  if( lines > dib.dsBm.bmHeight ) lines = dib.dsBm.bmHeight;
-
-  height = descr.lines;
-  if (height < 0) height = -height;
-  if( lines > height ) lines = height;
-  /* Top-down images have a negative biHeight, the scanlines of these images
-   * were inverted in X11DRV_DIB_GetImageBits_xx
-   * To prevent this we simply change the sign of lines
-   * (the number of scan lines to copy).
-   * Negative lines are correctly handled by X11DRV_DIB_GetImageBits_xx.
-   */
-  if( descr.lines < 0 && lines > 0) lines = -lines;
-
-  if( startscan >= dib.dsBm.bmHeight ) return 0;
-
-  descr.colorMap = NULL;
-
-  switch (descr.infoBpp)
-  {
-      case 1:
-      case 4:
-      case 8:
-          descr.rMask= descr.gMask = descr.bMask = 0;
-          if(coloruse == DIB_RGB_COLORS)
-              descr.colorMap = colorPtr;
-          else {
-              int num_colors = 1 << descr.infoBpp, i;
-              RGBQUAD *rgb;
-              COLORREF colref;
-              WORD *index = colorPtr;
-              descr.colorMap = rgb = HeapAlloc(GetProcessHeap(), 0, num_colors * sizeof(RGBQUAD));
-              for(i = 0; i < num_colors; i++, rgb++, index++) {
-                  colref = X11DRV_PALETTE_ToLogical(physDev, X11DRV_PALETTE_ToPhysical(physDev, PALETTEINDEX(*index)));
-                  rgb->rgbRed = GetRValue(colref);
-                  rgb->rgbGreen = GetGValue(colref);
-                  rgb->rgbBlue = GetBValue(colref);
-                  rgb->rgbReserved = 0;
-              }
-          }
-          break;
-      case 15:
-      case 16:
-          descr.rMask = (descr.compression == BI_BITFIELDS) ? *(const DWORD *)info->bmiColors       : 0x7c00;
-          descr.gMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)info->bmiColors + 1) : 0x03e0;
-          descr.bMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)info->bmiColors + 2) : 0x001f;
-          break;
-      case 24:
-      case 32:
-          descr.rMask = (descr.compression == BI_BITFIELDS) ? *(const DWORD *)info->bmiColors       : 0xff0000;
-          descr.gMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)info->bmiColors + 1) : 0x00ff00;
-          descr.bMask = (descr.compression == BI_BITFIELDS) ? *((const DWORD *)info->bmiColors + 2) : 0x0000ff;
-          break;
-  }
-
-  descr.physDev    = physDev;
-  descr.palentry   = palette;
-  descr.bits       = bits;
-  descr.image      = physBitmap->image;
-  descr.infoWidth  = width;
-  descr.lines      = lines;
-  descr.depth      = physBitmap->pixmap_depth;
-  descr.shifts     = physBitmap->trueColor ? &physBitmap->pixmap_color_shifts : NULL;
-  descr.drawable   = physBitmap->pixmap;
-  descr.gc         = get_bitmap_gc(physBitmap->pixmap_depth);
-  descr.width      = dib.dsBm.bmWidth;
-  descr.height     = dib.dsBm.bmHeight;
-  descr.xDest      = 0;
-  descr.yDest      = 0;
-  descr.xSrc       = 0;
-  descr.sizeImage  = core_header ? 0 : info->bmiHeader.biSizeImage;
-  descr.physBitmap = physBitmap;
-
-  if (descr.lines > 0)
-  {
-     descr.ySrc = (descr.height-1) - (startscan + (lines-1));
-  }
-  else
-  {
-     descr.ySrc = startscan;
-  }
-  descr.shm_mode = physBitmap->shm_mode;
-  descr.dibpitch = (((descr.infoWidth * descr.infoBpp + 31) &~31) / 8);
-
-  X11DRV_DIB_Lock( physBitmap, DIB_Status_GdiMod );
-  X11DRV_DIB_GetImageBits( &descr );
-  X11DRV_DIB_Unlock( physBitmap, TRUE );
-
-  if(!core_header && info->bmiHeader.biSizeImage == 0) /* Fill in biSizeImage */
-      info->bmiHeader.biSizeImage = X11DRV_DIB_GetDIBImageBytes( descr.infoWidth,
-                                                                 descr.lines,
-                                                                 descr.infoBpp);
-
-  if (descr.compression == BI_BITFIELDS)
-  {
-    *(DWORD *)info->bmiColors       = descr.rMask;
-    *((DWORD *)info->bmiColors + 1) = descr.gMask;
-    *((DWORD *)info->bmiColors + 2) = descr.bMask;
-  }
-  else if (!core_header)
-  {
-    /* if RLE or JPEG compression were supported,
-     * this line would be invalid. */
-    info->bmiHeader.biCompression = 0;
-  }
-
-  if(descr.colorMap != colorPtr)
-      HeapFree(GetProcessHeap(), 0, descr.colorMap);
-  return lines;
-}
-
-/***********************************************************************
  *           X11DRV_DIB_DoCopyDIBSection
  */
 static void X11DRV_DIB_DoCopyDIBSection(X_PHYSBITMAP *physBitmap, BOOL toDIB,
@@ -4761,7 +4593,7 @@ HBITMAP X11DRV_CreateDIBSection( PHYSDEV dev, HBITMAP hbitmap, const BITMAPINFO 
     Bool pixmaps;
 #endif
 
-    DIB_GetBitmapInfo( &bmi->bmiHeader, &w, &h, &bpp, &compr );
+    if (DIB_GetBitmapInfo( &bmi->bmiHeader, &w, &h, &bpp, &compr ) == -1) return 0;
 
     if (!(physBitmap = X11DRV_init_phys_bitmap( hbitmap ))) return 0;
     if (h < 0) physBitmap->topdown = TRUE;
