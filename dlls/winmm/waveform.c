@@ -1104,6 +1104,11 @@ static HRESULT WINMM_CloseDevice(WINMM_Device *device)
         device->stopped = TRUE;
     }
 
+    if(device->acm_handle){
+        acmStreamClose(device->acm_handle, 0);
+        device->acm_handle = NULL;
+    }
+
     IMMDevice_Release(device->device);
     device->device = NULL;
 
