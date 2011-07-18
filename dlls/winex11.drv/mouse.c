@@ -359,27 +359,6 @@ static void disable_xinput2(void)
 #endif
 }
 
-/***********************************************************************
- *             create_clipping_msg_window
- */
-static HWND create_clipping_msg_window(void)
-{
-    static const WCHAR class_name[] = {'_','_','x','1','1','d','r','v','_','c','l','i','p','_','c','l','a','s','s',0};
-    static ATOM clip_class;
-
-    if (!clip_class)
-    {
-        WNDCLASSW class;
-        ATOM atom;
-
-        memset( &class, 0, sizeof(class) );
-        class.lpfnWndProc   = DefWindowProcW;
-        class.hInstance     = GetModuleHandleW(0);
-        class.lpszClassName = class_name;
-        if ((atom = RegisterClassW( &class ))) clip_class = atom;
-    }
-    return CreateWindowW( class_name, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, GetModuleHandleW(0), NULL );
-}
 
 /***********************************************************************
  *		grab_clipping_window
@@ -388,6 +367,7 @@ static HWND create_clipping_msg_window(void)
  */
 static BOOL grab_clipping_window( const RECT *clip, BOOL only_with_xinput )
 {
+    static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
     struct x11drv_thread_data *data = x11drv_thread_data();
     Window clip_window;
     HWND msg_hwnd = 0;
@@ -395,19 +375,19 @@ static BOOL grab_clipping_window( const RECT *clip, BOOL only_with_xinput )
     if (!data) return FALSE;
     if (!(clip_window = init_clip_window())) return TRUE;
 
-    /* create a clip message window unless we are already clipping */
-    if (!data->clip_hwnd)
-    {
-        if (!(msg_hwnd = create_clipping_msg_window())) return TRUE;
-        enable_xinput2();
-    }
+    if (!(msg_hwnd = CreateWindowW( messageW, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, 0,
+                                    GetModuleHandleW(0), NULL )))
+        return TRUE;
+
+    /* enable XInput2 unless we are already clipping */
+    if (!data->clip_hwnd) enable_xinput2();
 
     /* don't clip to 1x1 rectangle if we don't have XInput */
     if (clip->right - clip->left == 1 && clip->bottom - clip->top == 1) only_with_xinput = TRUE;
     if (only_with_xinput && data->xi2_state != xi_enabled)
     {
         WARN( "XInput2 not supported, refusing to clip to %s\n", wine_dbgstr_rect(clip) );
-        if (msg_hwnd) DestroyWindow( msg_hwnd );
+        DestroyWindow( msg_hwnd );
         ClipCursor( NULL );
         return TRUE;
     }
@@ -415,14 +395,14 @@ static BOOL grab_clipping_window( const RECT *clip, BOOL only_with_xinput )
     TRACE( "clipping to %s win %lx\n", wine_dbgstr_rect(clip), clip_window );
 
     wine_tsx11_lock();
-    if (msg_hwnd) XUnmapWindow( data->display, clip_window );
+    if (!data->clip_hwnd) XUnmapWindow( data->display, clip_window );
     XMoveResizeWindow( data->display, clip_window,
                        clip->left - virtual_screen_rect.left, clip->top - virtual_screen_rect.top,
                        max( 1, clip->right - clip->left ), max( 1, clip->bottom - clip->top ) );
     XMapWindow( data->display, clip_window );
 
     /* if the rectangle is shrinking we may get a pointer warp */
-    if (msg_hwnd || clip->left > clip_rect.left || clip->top > clip_rect.top ||
+    if (!data->clip_hwnd || clip->left > clip_rect.left || clip->top > clip_rect.top ||
         clip->right < clip_rect.right || clip->bottom < clip_rect.bottom)
         data->warp_serial = NextRequest( data->display );
 
@@ -435,16 +415,13 @@ static BOOL grab_clipping_window( const RECT *clip, BOOL only_with_xinput )
     if (!clipping_cursor)
     {
         disable_xinput2();
-        if (msg_hwnd) DestroyWindow( msg_hwnd );
+        DestroyWindow( msg_hwnd );
         return FALSE;
     }
     clip_rect = *clip;
-    if (msg_hwnd)
-    {
-        data->clip_hwnd = msg_hwnd;
-        sync_window_cursor( clip_window );
-        SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, (LPARAM)msg_hwnd );
-    }
+    if (!data->clip_hwnd) sync_window_cursor( clip_window );
+    data->clip_hwnd = msg_hwnd;
+    SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, (LPARAM)msg_hwnd );
     return TRUE;
 }
 
@@ -499,6 +476,7 @@ LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd )
     }
     else if (hwnd == data->clip_hwnd)  /* this is a notification that clipping has been reset */
     {
+        TRACE( "clip hwnd reset from %p\n", hwnd );
         data->clip_hwnd = 0;
         data->clip_reset = GetTickCount();
         disable_xinput2();
