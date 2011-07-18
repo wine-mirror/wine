@@ -37,6 +37,8 @@
 
 #include "winmm_test.h"
 
+static DWORD g_tid;
+
 static void test_multiple_waveopens(void)
 {
     HWAVEOUT handle1, handle2;
@@ -559,6 +561,8 @@ static void CALLBACK callback_func(HWAVEOUT hwo, UINT uMsg,
                                    DWORD_PTR dwInstance,
                                    DWORD dwParam1, DWORD dwParam2)
 {
+    if(uMsg == WOM_OPEN || uMsg == WOM_CLOSE)
+        ok(GetCurrentThreadId() == g_tid, "Got different thread ID\n");
     SetEvent((HANDLE)dwInstance);
 }
 
@@ -648,6 +652,7 @@ static void wave_out_test_deviceOut(int device, double duration,
         return;
     }
     wout=NULL;
+    g_tid = GetCurrentThreadId();
     rc=waveOutOpen(&wout,device,pwfx,callback,callback_instance,flags);
     /* Note: Win9x doesn't know WAVE_FORMAT_DIRECT */
     /* It is acceptable to fail on formats that are not specified to work */

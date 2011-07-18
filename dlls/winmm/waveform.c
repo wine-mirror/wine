@@ -998,8 +998,6 @@ static LRESULT WOD_Open(WINMM_OpenInfo *info)
 
     LeaveCriticalSection(&device->lock);
 
-    WINMM_NotifyClient(&cb_info, WOM_OPEN, 0, 0);
-
     return MMSYSERR_NOERROR;
 
 error:
@@ -1068,8 +1066,6 @@ static LRESULT WID_Open(WINMM_OpenInfo *info)
     memcpy(&cb_info, &device->cb_info, sizeof(cb_info));
 
     LeaveCriticalSection(&device->lock);
-
-    WINMM_NotifyClient(&cb_info, WIM_OPEN, 0, 0);
 
     return MMSYSERR_NOERROR;
 
@@ -1143,8 +1139,6 @@ static LRESULT WOD_Close(HWAVEOUT hwave)
 
     LeaveCriticalSection(&device->lock);
 
-    WINMM_NotifyClient(&cb_info, WOM_CLOSE, 0, 0);
-
     return MMSYSERR_NOERROR;
 }
 
@@ -1166,8 +1160,6 @@ static LRESULT WID_Close(HWAVEIN hwave)
     memcpy(&cb_info, &device->cb_info, sizeof(cb_info));
 
     LeaveCriticalSection(&device->lock);
-
-    WINMM_NotifyClient(&cb_info, WIM_CLOSE, 0, 0);
 
     return MMSYSERR_NOERROR;
 }
@@ -2325,6 +2317,7 @@ MMRESULT WINAPI waveOutOpen(LPHWAVEOUT lphWaveOut, UINT uDeviceID,
     LRESULT res;
     HRESULT hr;
     WINMM_OpenInfo info;
+    WINMM_CBInfo cb_info;
 
     TRACE("(%p, %u, %p, %lx, %lx, %08x)\n", lphWaveOut, uDeviceID, lpFormat,
             dwCallback, dwInstance, dwFlags);
@@ -2354,6 +2347,13 @@ MMRESULT WINAPI waveOutOpen(LPHWAVEOUT lphWaveOut, UINT uDeviceID,
     if(lphWaveOut)
         *lphWaveOut = (HWAVEOUT)info.handle;
 
+    cb_info.flags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
+    cb_info.callback = dwCallback;
+    cb_info.user = dwInstance;
+    cb_info.hwave = info.handle;
+
+    WINMM_NotifyClient(&cb_info, WOM_OPEN, 0, 0);
+
     return res;
 }
 
@@ -2362,12 +2362,30 @@ MMRESULT WINAPI waveOutOpen(LPHWAVEOUT lphWaveOut, UINT uDeviceID,
  */
 UINT WINAPI waveOutClose(HWAVEOUT hWaveOut)
 {
+    UINT res;
+    WINMM_Device *device;
+    WINMM_CBInfo cb_info;
+
     TRACE("(%p)\n", hWaveOut);
 
     if(!WINMM_StartDevicesThread())
         return MMSYSERR_ERROR;
 
-    return SendMessageW(g_devices_hwnd, WODM_CLOSE, (WPARAM)hWaveOut, 0);
+    device = WINMM_GetDeviceFromHWAVE((HWAVE)hWaveOut);
+
+    if(!WINMM_ValidateAndLock(device))
+        return MMSYSERR_INVALHANDLE;
+
+    memcpy(&cb_info, &device->cb_info, sizeof(cb_info));
+
+    LeaveCriticalSection(&device->lock);
+
+    res = SendMessageW(g_devices_hwnd, WODM_CLOSE, (WPARAM)hWaveOut, 0);
+
+    if(res == MMSYSERR_NOERROR)
+        WINMM_NotifyClient(&cb_info, WOM_CLOSE, 0, 0);
+
+    return res;
 }
 
 /**************************************************************************
@@ -2978,6 +2996,7 @@ MMRESULT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
     LRESULT res;
     HRESULT hr;
     WINMM_OpenInfo info;
+    WINMM_CBInfo cb_info;
 
     TRACE("(%p, %x, %p, %lx, %lx, %08x)\n", lphWaveIn, uDeviceID, lpFormat,
             dwCallback, dwInstance, dwFlags);
@@ -3007,6 +3026,13 @@ MMRESULT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
     if(lphWaveIn)
         *lphWaveIn = (HWAVEIN)info.handle;
 
+    cb_info.flags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
+    cb_info.callback = dwCallback;
+    cb_info.user = dwInstance;
+    cb_info.hwave = info.handle;
+
+    WINMM_NotifyClient(&cb_info, WIM_OPEN, 0, 0);
+
     return res;
 }
 
@@ -3015,12 +3041,30 @@ MMRESULT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
  */
 UINT WINAPI waveInClose(HWAVEIN hWaveIn)
 {
+    WINMM_Device *device;
+    WINMM_CBInfo cb_info;
+    UINT res;
+
     TRACE("(%p)\n", hWaveIn);
 
     if(!WINMM_StartDevicesThread())
         return MMSYSERR_ERROR;
 
-    return SendMessageW(g_devices_hwnd, WIDM_CLOSE, (WPARAM)hWaveIn, 0);
+    device = WINMM_GetDeviceFromHWAVE((HWAVE)hWaveIn);
+
+    if(!WINMM_ValidateAndLock(device))
+        return MMSYSERR_INVALHANDLE;
+
+    memcpy(&cb_info, &device->cb_info, sizeof(cb_info));
+
+    LeaveCriticalSection(&device->lock);
+
+    res = SendMessageW(g_devices_hwnd, WIDM_CLOSE, (WPARAM)hWaveIn, 0);
+
+    if(res == MMSYSERR_NOERROR)
+        WINMM_NotifyClient(&cb_info, WIM_CLOSE, 0, 0);
+
+    return res;
 }
 
 /**************************************************************************
