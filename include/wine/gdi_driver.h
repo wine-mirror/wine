@@ -92,7 +92,6 @@ struct gdi_dc_funcs
     BOOL     (*pGdiComment)(PHYSDEV,UINT,CONST BYTE*);
     LONG     (*pGetBitmapBits)(HBITMAP,void*,LONG);
     BOOL     (*pGetCharWidth)(PHYSDEV,UINT,UINT,LPINT);
-    INT      (*pGetDIBits)(PHYSDEV,HBITMAP,UINT,UINT,LPVOID,BITMAPINFO*,UINT);
     INT      (*pGetDeviceCaps)(PHYSDEV,INT);
     BOOL     (*pGetDeviceGammaRamp)(PHYSDEV,LPVOID);
     BOOL     (*pGetICMProfile)(PHYSDEV,LPDWORD,LPWSTR);
@@ -193,7 +192,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 3
+#define WINE_GDI_DRIVER_VERSION 4
 
 static inline PHYSDEV get_physdev_entry_point( PHYSDEV dev, size_t offset )
 {

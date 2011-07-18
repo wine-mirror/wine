@@ -201,8 +201,6 @@ extern BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT
 extern LONG X11DRV_GetBitmapBits( HBITMAP hbitmap, void *bits, LONG count ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_GetCharWidth( PHYSDEV dev, UINT firstChar, UINT lastChar, LPINT buffer ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_GetDeviceGammaRamp( PHYSDEV dev, LPVOID ramp ) DECLSPEC_HIDDEN;
-extern INT X11DRV_GetDIBits( PHYSDEV dev, HBITMAP hbitmap, UINT startscan, UINT lines,
-                             LPVOID bits, BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename ) DECLSPEC_HIDDEN;
 extern DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
                               struct gdi_image_bits *bits, const RECT *rect ) DECLSPEC_HIDDEN;

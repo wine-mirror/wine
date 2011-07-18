@@ -79,13 +79,6 @@ LONG nulldrv_SetBitmapBits( HBITMAP bitmap, const void *bits, LONG size )
     return size;
 }
 
-INT nulldrv_GetDIBits( PHYSDEV dev, HBITMAP bitmap, UINT start, UINT lines, LPVOID bits,
-                       BITMAPINFO *info, UINT coloruse )
-{
-    /* FIXME: transfer bits from bmp->bitmap.bmBits */
-    return 0;
-}
-
 INT nulldrv_SetDIBits( PHYSDEV dev, HBITMAP bitmap, UINT start, UINT lines,
                        const void *bits, const BITMAPINFO *info, UINT coloruse )
 {
