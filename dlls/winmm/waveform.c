@@ -305,7 +305,7 @@ static DWORD WINMM_NotifyClient(WINMM_CBInfo *info, WORD msg, DWORD_PTR param1,
 {
     TRACE("(%p, %u, %lx, %lx)\n", info->hwave, msg, param1, param2);
 
-    if(info->flags & DCB_NULL)
+    if((info->flags & DCB_TYPEMASK) == DCB_NULL)
         return MMSYSERR_NOERROR;
 
     if(!DriverCallback(info->callback, info->flags, (HDRVR)info->hwave,
