@@ -1,6 +1,7 @@
 MODULE    = vbscript.dll
 
 C_SRCS = \
+	vbscript.c \
 	vbscript_main.c
 
 RC_SRCS = vbscript.rc

@@ -28,6 +28,7 @@
 
 #include "ole2.h"
 #include "rpcproxy.h"
+#include "vbscript.h"
 #include "vbscript_classes.h"
 
 #include "wine/debug.h"
@@ -35,12 +36,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
 static HINSTANCE vbscript_hinstance;
-
-static HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppv)
-{
-    FIXME("(%p %s %p)\n", pUnkOuter, debugstr_guid(riid), ppv);
-    return E_NOINTERFACE;
-}
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
 {
