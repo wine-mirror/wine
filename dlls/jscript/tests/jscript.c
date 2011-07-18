@@ -605,6 +605,18 @@ static void test_jscript_uninitializing(void)
     ok(!ref, "ref = %d\n", ref);
 }
 
+static void test_aggregation(void)
+{
+    IUnknown *unk = (IUnknown*)0xdeadbeef;
+    HRESULT hres;
+
+    hres = CoCreateInstance(&CLSID_JScript, (IUnknown*)0xdeadbeef, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IUnknown, (void**)&unk);
+    ok(hres == CLASS_E_NOAGGREGATION || broken(E_INVALIDARG) /* win2k */,
+       "CoCreateInstance failed: %08x, expected CLASS_E_NOAGGREGATION\n", hres);
+    ok(!unk, "unk = %p\n", unk);
+}
+
 static BOOL check_jscript(void)
 {
     IActiveScriptProperty *script_prop;
@@ -626,6 +638,7 @@ START_TEST(jscript)
         test_jscript();
         test_jscript2();
         test_jscript_uninitializing();
+        test_aggregation();
     }else {
         win_skip("Broken engine, probably too old\n");
     }

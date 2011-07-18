@@ -963,6 +963,11 @@ HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUn
 
     TRACE("(%p %s %p)\n", pUnkOuter, debugstr_guid(riid), ppv);
 
+    if(pUnkOuter) {
+        *ppv = NULL;
+        return CLASS_E_NOAGGREGATION;
+    }
+
     lock_module();
 
     ret = heap_alloc_zero(sizeof(*ret));
