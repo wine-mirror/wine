@@ -1642,7 +1642,7 @@ static void set_color_info( const ColorShifts *color_shifts, BITMAPINFO *info )
 /* copy the image bits, fixing up alignment and byte swapping as necessary */
 static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts, XImage *image,
                               const struct gdi_image_bits *src_bits, struct gdi_image_bits *dst_bits,
-                              unsigned int zeropad_mask )
+                              const int *mapping, unsigned int zeropad_mask )
 {
 #ifdef WORDS_BIGENDIAN
     static const int client_byte_order = MSBFirst;
@@ -1678,6 +1678,7 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
 
     if ((need_byteswap && !src_bits->is_copy) ||  /* need to swap bytes */
         (zeropad_mask != ~0u && !src_bits->is_copy) ||  /* need to clear padding bytes */
+        (mapping && !src_bits->is_copy) ||  /* need to remap pixels */
         (width_bytes & 3) ||  /* need to fixup line alignment */
         (info->bmiHeader.biHeight > 0))  /* need to flip vertically */
     {
@@ -1696,7 +1697,7 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
         dst_bits->offset = src_bits->offset;
         dst_bits->is_copy = src_bits->is_copy;
         dst_bits->free = NULL;
-        if (!need_byteswap && zeropad_mask == ~0u) return ERROR_SUCCESS;  /* nothing to do */
+        if (!need_byteswap && zeropad_mask == ~0u && !mapping) return ERROR_SUCCESS;  /* nothing to do */
     }
 
     src = src_bits->ptr;
@@ -1709,7 +1710,7 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
         width_bytes = -width_bytes;
     }
 
-    if (need_byteswap)
+    if (need_byteswap || mapping)
     {
         switch (info->bmiHeader.biBitCount)
         {
@@ -1724,8 +1725,20 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
         case 4:
             for (y = 0; y < height; y++, src += image->bytes_per_line, dst += width_bytes)
             {
+                if (mapping)
+                    for (x = 0; x < image->bytes_per_line; x++)
+                        dst[x] = (mapping[src[x] & 0x0f] << 4) | mapping[src[x] >> 4];
+                else
+                    for (x = 0; x < image->bytes_per_line; x++)
+                        dst[x] = (src[x] << 4) | (src[x] >> 4);
+                ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
+            }
+            break;
+        case 8:
+            for (y = 0; y < height; y++, src += image->bytes_per_line, dst += width_bytes)
+            {
                 for (x = 0; x < image->bytes_per_line; x++)
-                    dst[x] = (src[x] << 4) | (src[x] >> 4);
+                    dst[x] = mapping[src[x]];
                 ((unsigned int *)dst)[padding_pos] &= zeropad_mask;
             }
             break;
@@ -1787,6 +1800,8 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
     struct gdi_image_bits dst_bits;
     const XPixmapFormatValues *format;
     const ColorShifts *color_shifts;
+    const BYTE *opcode = BITBLT_Opcodes[(rop >> 16) & 0xff];
+    const int *mapping = NULL;
 
     if (hbitmap)
     {
@@ -1845,7 +1860,13 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
     wine_tsx11_unlock();
     if (!image) return ERROR_OUTOFMEMORY;
 
-    ret = copy_image_bits( info, color_shifts, image, bits, &dst_bits, ~0u );
+    if (image->bits_per_pixel == 4 || image->bits_per_pixel == 8)
+    {
+        if (bitmap || (!opcode[1] && OP_SRCDST(opcode[0]) == OP_ARGS(SRC,DST)))
+            mapping = X11DRV_PALETTE_PaletteToXPixel;
+    }
+
+    ret = copy_image_bits( info, color_shifts, image, bits, &dst_bits, mapping, ~0u );
 
     if (!ret)
     {
@@ -1862,8 +1883,6 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
         }
         else
         {
-            const BYTE *opcode = BITBLT_Opcodes[(rop >> 16) & 0xff];
-
             X11DRV_LockDIBSection( physdev, DIB_Status_GdiMod );
 
             /* optimization for single-op ROPs */
@@ -1931,6 +1950,7 @@ DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
     struct gdi_image_bits src_bits;
     const XPixmapFormatValues *format;
     const ColorShifts *color_shifts;
+    const int *mapping = NULL;
 
     if (hbitmap)
     {
@@ -1952,8 +1972,8 @@ DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
     switch (format->bits_per_pixel)
     {
     case 1:  align = 32; break;
-    case 4:  align = 8;  break;
-    case 8:  align = 4;  break;
+    case 4:  align = 8;  mapping = X11DRV_PALETTE_XPixelToPalette; break;
+    case 8:  align = 4;  mapping = X11DRV_PALETTE_XPixelToPalette; break;
     case 16: align = 2;  break;
     case 24: align = 4;  break;
     case 32: align = 1;  break;
@@ -2021,7 +2041,7 @@ DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
 
     src_bits.ptr     = image->data;
     src_bits.is_copy = TRUE;
-    ret = copy_image_bits( info, color_shifts, image, &src_bits, bits,
+    ret = copy_image_bits( info, color_shifts, image, &src_bits, bits, mapping,
                            zeropad_masks[(width * image->bits_per_pixel) & 31] );
 
     if (!ret && bits->ptr == image->data)
