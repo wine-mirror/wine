@@ -648,33 +648,6 @@ static DWORD calc_bytes(D3DXCONSTANT_DESC *desc)
     return 4 * desc->Elements * desc->Rows * desc->Columns;
 }
 
-static ctab_constant *is_valid_constant(ID3DXConstantTableImpl *This, D3DXHANDLE parameter)
-{
-    UINT i;
-
-    for (i = 0; i < This->desc.Constants; i++)
-        if ((ctab_constant *)parameter == &This->constants[i])
-            return (ctab_constant *)parameter;
-
-    return NULL;
-}
-
-static ctab_constant *lookup_constant_by_name(ID3DXConstantTableImpl *This, ctab_constant *c, LPCSTR name)
-{
-    UINT i;
-
-    TRACE("(%p, %p, %s)\n", This, c, name);
-
-    if (c)
-        FIXME("Only top level constant supported\n");
-
-    for (i = 0; i < This->desc.Constants; i++)
-        if (!strcmp(This->constants[i].desc.Name, name))
-            return &This->constants[i];
-
-    return NULL;
-}
-
 /*** IUnknown methods ***/
 static HRESULT WINAPI ID3DXConstantTableImpl_QueryInterface(ID3DXConstantTable* iface, REFIID riid, void** ppvObject)
 {
@@ -768,13 +741,16 @@ static HRESULT WINAPI ID3DXConstantTableImpl_GetConstantDesc(ID3DXConstantTable*
         return D3DERR_INVALIDCALL;
 
     /* Applications can pass the name of the constant in place of the handle */
-    if (is_valid_constant(This, constant))
-        constant_info = (ctab_constant *)constant;
+    if (!((UINT_PTR)constant >> 16))
+        constant_info = &This->constants[(UINT_PTR)constant - 1];
     else
-        constant_info = lookup_constant_by_name(This, NULL, (LPCSTR)constant);
+    {
+        D3DXHANDLE c = ID3DXConstantTable_GetConstantByName(iface, NULL, constant);
+        if (!c)
+            return D3DERR_INVALIDCALL;
 
-    if (!constant_info)
-      return D3DERR_INVALIDCALL;
+        constant_info = &This->constants[(UINT_PTR)c - 1];
+    }
 
     if (desc)
         *desc = constant_info->desc;
@@ -809,33 +785,39 @@ static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstant(ID3DXConstantTable* 
 
     TRACE("(%p)->(%p, %d)\n", This, constant, index);
 
-    if (!constant)
+    if (constant)
     {
-        if (index >= This->desc.Constants)
-            return NULL;
-
-        return (D3DXHANDLE)&This->constants[index];
-    }
-    else
-    {
-        FIXME("Only top level constant supported\n");
+        FIXME("Only top level constants supported\n");
         return NULL;
     }
+
+    if (index >= This->desc.Constants)
+        return NULL;
+
+    return (D3DXHANDLE)(DWORD_PTR)(index + 1);
 }
 
 static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstantByName(ID3DXConstantTable* iface, D3DXHANDLE constant, LPCSTR name)
 {
     ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
+    UINT i;
 
     TRACE("(%p)->(%p, %s)\n", This, constant, name);
 
     if (!name)
         return NULL;
 
-    if (!constant || is_valid_constant(This, constant))
-        return (D3DXHANDLE)lookup_constant_by_name(This, (ctab_constant *)constant, name);
-    else
+    if (constant)
+    {
+        FIXME("Only top level constants supported\n");
         return NULL;
+    }
+
+    for (i = 0; i < This->desc.Constants; i++)
+        if (!strcmp(This->constants[i].desc.Name, name))
+            return (D3DXHANDLE)(DWORD_PTR)(i + 1);
+
+    return NULL;
 }
 
 static D3DXHANDLE WINAPI ID3DXConstantTableImpl_GetConstantElement(ID3DXConstantTable* iface, D3DXHANDLE constant, UINT index)
@@ -1235,6 +1217,13 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD* byte_code,
     if (ctab_header->Target)
         TRACE("Target = %s\n", object->ctab + ctab_header->Target);
 
+    if (object->desc.Constants > 65535)
+    {
+        FIXME("Too many constants (%u)\n", object->desc.Constants);
+        hr = E_NOTIMPL;
+        goto error;
+    }
+
     object->constants = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                                   sizeof(*object->constants) * object->desc.Constants);
     if (!object->constants)
@@ -1266,7 +1255,9 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(CONST DWORD* byte_code,
 
 error:
 
-    ID3DXConstantTableImpl_Release((ID3DXConstantTable *)object);
+    HeapFree(GetProcessHeap(), 0, object->constants);
+    HeapFree(GetProcessHeap(), 0, object->ctab);
+    HeapFree(GetProcessHeap(), 0, object);
 
     return hr;
 }
