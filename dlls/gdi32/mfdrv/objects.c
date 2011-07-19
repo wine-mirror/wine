@@ -249,7 +249,7 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
 		goto done;
 	    }
 
-	    bmSize = DIB_GetDIBImageBytes(bm.bmWidth, bm.bmHeight, DIB_PAL_COLORS);
+	    bmSize = get_dib_stride( bm.bmWidth, bm.bmBitsPixel) * bm.bmHeight;
 
 	    size = sizeof(METARECORD) + sizeof(WORD) + sizeof(BITMAPINFO) +
 	      sizeof(RGBQUAD) + bmSize;
@@ -303,9 +303,7 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
 	      if (info->bmiHeader.biCompression)
 		  bmSize = info->bmiHeader.biSizeImage;
 	      else
-		  bmSize = DIB_GetDIBImageBytes(info->bmiHeader.biWidth,
-						info->bmiHeader.biHeight,
-						info->bmiHeader.biBitCount);
+		  bmSize = get_dib_image_size( info );
 	      biSize = bitmap_info_size(info, LOWORD(logbrush.lbColor));
 	      size = sizeof(METARECORD) + biSize + bmSize + 2;
 	      mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);

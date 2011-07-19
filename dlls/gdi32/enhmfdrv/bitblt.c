@@ -99,7 +99,7 @@ BOOL EMFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
 
     nBPP = BM.bmPlanes * BM.bmBitsPixel;
     if(nBPP > 8) nBPP = 24; /* FIXME Can't get 16bpp to work for some reason */
-    bitsSize = DIB_GetDIBWidthBytes(BM.bmWidth, nBPP) * BM.bmHeight;
+    bitsSize = get_dib_stride( BM.bmWidth, nBPP ) * BM.bmHeight;
     bmiSize = sizeof(BITMAPINFOHEADER) +
         (nBPP <= 8 ? 1 << nBPP : 0) * sizeof(RGBQUAD);
 
@@ -175,11 +175,8 @@ INT EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT hei
 {
     EMRSTRETCHDIBITS *emr;
     BOOL ret;
-    UINT bmi_size=0, bits_size, emr_size;
-    
-    bits_size = DIB_GetDIBImageBytes(info->bmiHeader.biWidth,
-                                     info->bmiHeader.biHeight,
-                                     info->bmiHeader.biBitCount);
+    UINT bmi_size=0, emr_size;
+    UINT bits_size = get_dib_image_size(info);
 
     /* calculate the size of the colour table */
     bmi_size = bitmap_info_size(info, wUsage);
@@ -235,13 +232,9 @@ INT EMFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD width, DWOR
                               LPCVOID bits, const BITMAPINFO *info, UINT wUsage )
 {
     EMRSETDIBITSTODEVICE* pEMR;
-    DWORD size, bmiSize, bitsSize;
-
-    bmiSize = bitmap_info_size(info, wUsage);
-    bitsSize = DIB_GetDIBImageBytes( info->bmiHeader.biWidth,
-                                     info->bmiHeader.biHeight,
-                                     info->bmiHeader.biBitCount );
-    size = sizeof(EMRSETDIBITSTODEVICE) + bmiSize + bitsSize;
+    DWORD bmiSize = bitmap_info_size(info, wUsage);
+    DWORD bitsSize = get_dib_image_size( info );
+    DWORD size = sizeof(EMRSETDIBITSTODEVICE) + bmiSize + bitsSize;
 
     pEMR = HeapAlloc(GetProcessHeap(), 0, size);
     if (!pEMR) return 0;

@@ -72,48 +72,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 
-/*
-  Some of the following helper functions are duplicated in
-  dlls/x11drv/dib.c
-*/
-
-/***********************************************************************
- *           DIB_GetDIBWidthBytes
- *
- * Return the width of a DIB bitmap in bytes. DIB bitmap data is 32-bit aligned.
- */
-int DIB_GetDIBWidthBytes( int width, int depth )
-{
-    int words;
-
-    switch(depth)
-    {
-	case 1:  words = (width + 31) / 32; break;
-	case 4:  words = (width + 7) / 8; break;
-	case 8:  words = (width + 3) / 4; break;
-	case 15:
-	case 16: words = (width + 1) / 2; break;
-	case 24: words = (width * 3 + 3)/4; break;
-
-	default:
-            WARN("(%d): Unsupported depth\n", depth );
-	/* fall through */
-	case 32:
-	        words = width;
-    }
-    return 4 * words;
-}
-
-/***********************************************************************
- *           DIB_GetDIBImageBytes
- *
- * Return the number of bytes used to hold the image in a DIB bitmap.
- */
-int DIB_GetDIBImageBytes( int width, int height, int depth )
-{
-    return DIB_GetDIBWidthBytes( width, depth ) * abs( height );
-}
-
 
 /***********************************************************************
  *           bitmap_info_size
@@ -472,9 +430,7 @@ static int fill_query_info( BITMAPINFO *info, BITMAPOBJ *bmp )
         header.biBitCount = bmp->bitmap.bmBitsPixel;
     }
 
-    header.biSizeImage = DIB_GetDIBImageBytes( bmp->bitmap.bmWidth,
-                                               bmp->bitmap.bmHeight,
-                                               bmp->bitmap.bmBitsPixel );
+    header.biSizeImage = get_dib_image_size( (BITMAPINFO *)&header );
     header.biXPelsPerMeter = 0;
     header.biYPelsPerMeter = 0;
     header.biClrUsed       = 0;
@@ -652,7 +608,7 @@ INT WINAPI GetDIBits(
     dst_info->bmiHeader.biPlanes        = planes;
     dst_info->bmiHeader.biBitCount      = bpp;
     dst_info->bmiHeader.biCompression   = compr;
-    dst_info->bmiHeader.biSizeImage     = DIB_GetDIBImageBytes( width, height, bpp );
+    dst_info->bmiHeader.biSizeImage     = get_dib_image_size( dst_info );
     dst_info->bmiHeader.biXPelsPerMeter = 0;
     dst_info->bmiHeader.biYPelsPerMeter = 0;
     dst_info->bmiHeader.biClrUsed       = 0;
@@ -971,7 +927,7 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
     dib->dsBm.bmType       = 0;
     dib->dsBm.bmWidth      = width;
     dib->dsBm.bmHeight     = height >= 0 ? height : -height;
-    dib->dsBm.bmWidthBytes = DIB_GetDIBWidthBytes(width, bpp);
+    dib->dsBm.bmWidthBytes = get_dib_stride( width, bpp );
     dib->dsBm.bmPlanes     = planes;
     dib->dsBm.bmBitsPixel  = bpp;
     dib->dsBm.bmBits       = NULL;

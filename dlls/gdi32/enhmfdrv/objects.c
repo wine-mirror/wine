@@ -171,9 +171,7 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
 	if (info->bmiHeader.biCompression)
             bmSize = info->bmiHeader.biSizeImage;
         else
-	    bmSize = DIB_GetDIBImageBytes(info->bmiHeader.biWidth,
-					  info->bmiHeader.biHeight,
-					  info->bmiHeader.biBitCount);
+	    bmSize = get_dib_image_size( info );
 	biSize = bitmap_info_size(info, LOWORD(logbrush.lbColor));
 	size = sizeof(EMRCREATEDIBPATTERNBRUSHPT) + biSize + bmSize;
 	emr = HeapAlloc( GetProcessHeap(), 0, size );
@@ -212,7 +210,7 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
         }
 
         /* BMP will be aligned to 32 bits, not 16 */
-        bmSize = DIB_GetDIBImageBytes(bm.bmWidth, bm.bmHeight, bm.bmBitsPixel);
+        bmSize = get_dib_stride(bm.bmWidth, bm.bmBitsPixel) * bm.bmHeight;
 
         biSize = sizeof(BITMAPINFOHEADER);
         /* FIXME: There is an extra DWORD written by native before the BMI.

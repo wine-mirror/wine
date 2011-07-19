@@ -1133,7 +1133,7 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev)
     copy_dib_color_info(&pdev->brush_dib, &pdev->dib);
     pdev->brush_dib.width  = 8;
     pdev->brush_dib.height = 8;
-    pdev->brush_dib.stride = ((pdev->brush_dib.width * pdev->brush_dib.bit_count + 31) >> 3) & ~3;
+    pdev->brush_dib.stride = get_dib_stride( pdev->brush_dib.width, pdev->brush_dib.bit_count );
 
     size = pdev->brush_dib.height * pdev->brush_dib.stride;
 
@@ -1294,7 +1294,7 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
 
             pdev->brush_dib.height = orig_dib.height;
             pdev->brush_dib.width  = orig_dib.width;
-            pdev->brush_dib.stride = ((pdev->brush_dib.width * pdev->brush_dib.bit_count + 31) >> 3) & ~3;
+            pdev->brush_dib.stride = get_dib_stride( pdev->brush_dib.width, pdev->brush_dib.bit_count );
             pdev->brush_dib.ptr_to_free = HeapAlloc( GetProcessHeap(), 0, pdev->brush_dib.height * pdev->brush_dib.stride );
             pdev->brush_dib.bits = pdev->brush_dib.ptr_to_free;
 

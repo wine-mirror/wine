@@ -72,7 +72,7 @@ static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
     dib->bit_count = bi->biBitCount;
     dib->width     = bi->biWidth;
     dib->height    = bi->biHeight;
-    dib->stride    = ((dib->width * dib->bit_count + 31) >> 3) & ~3;
+    dib->stride    = get_dib_stride( dib->width, dib->bit_count );
     dib->bits      = bits;
     dib->ptr_to_free = NULL;
     dib->flags     = flags;

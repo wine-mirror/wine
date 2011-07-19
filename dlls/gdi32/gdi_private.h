@@ -22,6 +22,7 @@
 #define __WINE_GDI_PRIVATE_H
 
 #include <math.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
@@ -336,8 +337,6 @@ extern void DC_InitDC( DC * dc ) DECLSPEC_HIDDEN;
 extern void DC_UpdateXforms( DC * dc ) DECLSPEC_HIDDEN;
 
 /* dib.c */
-extern int DIB_GetDIBWidthBytes( int width, int depth ) DECLSPEC_HIDDEN;
-extern int DIB_GetDIBImageBytes( int width, int height, int depth ) DECLSPEC_HIDDEN;
 extern int bitmap_info_size( const BITMAPINFO * info, WORD coloruse ) DECLSPEC_HIDDEN;
 extern int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
                               LONG *height, WORD *planes, WORD *bpp, DWORD *compr, DWORD *size ) DECLSPEC_HIDDEN;
@@ -543,6 +542,17 @@ static inline void offset_rect( RECT *rect, int offset_x, int offset_y )
     rect->top    += offset_y;
     rect->right  += offset_x;
     rect->bottom += offset_y;
+}
+
+static inline int get_dib_stride( int width, int bpp )
+{
+    return ((width * bpp + 31) >> 3) & ~3;
+}
+
+static inline int get_dib_image_size( const BITMAPINFO *info )
+{
+    return get_dib_stride( info->bmiHeader.biWidth, info->bmiHeader.biBitCount )
+        * abs( info->bmiHeader.biHeight );
 }
 
 #endif /* __WINE_GDI_PRIVATE_H */

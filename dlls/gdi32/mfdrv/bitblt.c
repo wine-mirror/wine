@@ -69,7 +69,7 @@ BOOL MFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
     if(nBPP > 8) nBPP = 24; /* FIXME Can't get 16bpp to work for some reason */
     len = sizeof(METARECORD) + 10 * sizeof(INT16)
             + sizeof(BITMAPINFOHEADER) + (nBPP <= 8 ? 1 << nBPP: 0) * sizeof(RGBQUAD)
-              + DIB_GetDIBWidthBytes(BM.bmWidth, nBPP) * BM.bmHeight;
+              + get_dib_stride( BM.bmWidth, nBPP ) * BM.bmHeight;
     if (!(mr = HeapAlloc( GetProcessHeap(), 0, len)))
 	return FALSE;
     mr->rdFunction = META_DIBSTRETCHBLT;
@@ -79,7 +79,7 @@ BOOL MFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
     lpBMI->biHeight    = BM.bmHeight;
     lpBMI->biPlanes    = 1;
     lpBMI->biBitCount  = nBPP;
-    lpBMI->biSizeImage = DIB_GetDIBWidthBytes(BM.bmWidth, nBPP) * lpBMI->biHeight;
+    lpBMI->biSizeImage = get_dib_image_size( (BITMAPINFO *)lpBMI );
     lpBMI->biClrUsed   = nBPP <= 8 ? 1 << nBPP : 0;
     lpBMI->biCompression = BI_RGB;
     lpBMI->biXPelsPerMeter = MulDiv(GetDeviceCaps(devSrc->hdc,LOGPIXELSX),3937,100);
@@ -135,16 +135,10 @@ INT MFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
                          INT heightSrc, const void *bits,
                          const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
 {
-    DWORD len, infosize, imagesize;
-    METARECORD *mr;
-
-    infosize = bitmap_info_size(info, wUsage);
-    imagesize = DIB_GetDIBImageBytes( info->bmiHeader.biWidth,
-				      info->bmiHeader.biHeight,
-				      info->bmiHeader.biBitCount );
-
-    len = sizeof(METARECORD) + 10 * sizeof(WORD) + infosize + imagesize;
-    mr = HeapAlloc( GetProcessHeap(), 0, len );
+    DWORD infosize = bitmap_info_size(info, wUsage);
+    DWORD imagesize = get_dib_image_size( info );
+    DWORD len = sizeof(METARECORD) + 10 * sizeof(WORD) + infosize + imagesize;
+    METARECORD *mr = HeapAlloc( GetProcessHeap(), 0, len );
     if(!mr) return 0;
 
     mr->rdSize = len / 2;
@@ -177,16 +171,10 @@ INT MFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD cx,
                              UINT coloruse )
 
 {
-    DWORD len, infosize, imagesize;
-    METARECORD *mr;
-
-    infosize = bitmap_info_size(info, coloruse);
-    imagesize = DIB_GetDIBImageBytes( info->bmiHeader.biWidth,
-				      info->bmiHeader.biHeight,
-				      info->bmiHeader.biBitCount );
-
-    len = sizeof(METARECORD) + 8 * sizeof(WORD) + infosize + imagesize;
-    mr = HeapAlloc( GetProcessHeap(), 0, len );
+    DWORD infosize = bitmap_info_size(info, coloruse);
+    DWORD imagesize = get_dib_image_size( info );
+    DWORD len = sizeof(METARECORD) + 8 * sizeof(WORD) + infosize + imagesize;
+    METARECORD *mr = HeapAlloc( GetProcessHeap(), 0, len );
     if(!mr) return 0;
 
     mr->rdSize = len / 2;

@@ -62,9 +62,7 @@ static HGLOBAL dib_copy(const BITMAPINFO *info, UINT coloruse)
     if (info->bmiHeader.biCompression != BI_RGB && info->bmiHeader.biCompression != BI_BITFIELDS)
         size = info->bmiHeader.biSizeImage;
     else
-        size = DIB_GetDIBImageBytes(info->bmiHeader.biWidth,
-                                    info->bmiHeader.biHeight,
-                                    info->bmiHeader.biBitCount);
+        size = get_dib_image_size(info);
     size += bitmap_info_size( info, coloruse );
 
     if (!(hmem = GlobalAlloc( GMEM_MOVEABLE, size )))
