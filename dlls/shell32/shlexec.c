@@ -781,7 +781,9 @@ static unsigned dde_connect(const WCHAR* key, const WCHAR* start, WCHAR* ddeexec
     static const WCHAR wTopic[] = {'\\','t','o','p','i','c',0};
     WCHAR       regkey[256];
     WCHAR *     endkey = regkey + strlenW(key);
-    WCHAR       app[256], topic[256], ifexec[256], res[256];
+    WCHAR       app[256], topic[256], ifexec[256], static_res[256];
+    WCHAR *     dynamic_res=NULL;
+    WCHAR *     res;
     LONG        applen, topiclen, ifexeclen;
     WCHAR *     exec;
     DWORD       ddeInst = 0;
@@ -896,9 +898,14 @@ static unsigned dde_connect(const WCHAR* key, const WCHAR* start, WCHAR* ddeexec
         }
     }
 
-    SHELL_ArgifyW(res, sizeof(res)/sizeof(WCHAR), exec, lpFile, pidl, szCommandline, &resultLen);
-    if (resultLen > sizeof(res)/sizeof(WCHAR))
-        ERR("Argify buffer not large enough, truncated\n");
+    SHELL_ArgifyW(static_res, sizeof(static_res)/sizeof(WCHAR), exec, lpFile, pidl, szCommandline, &resultLen);
+    if (resultLen > sizeof(static_res)/sizeof(WCHAR))
+    {
+        res = dynamic_res = HeapAlloc(GetProcessHeap(), 0, resultLen * sizeof(WCHAR));
+        SHELL_ArgifyW(dynamic_res, resultLen, exec, lpFile, pidl, szCommandline, NULL);
+    }
+    else
+        res = static_res;
     TRACE("%s %s => %s\n", debugstr_w(exec), debugstr_w(lpFile), debugstr_w(res));
 
     /* It's documented in the KB 330337 that IE has a bug and returns
@@ -921,6 +928,8 @@ static unsigned dde_connect(const WCHAR* key, const WCHAR* start, WCHAR* ddeexec
     else
         WARN("DdeClientTransaction failed with error %04x\n", DdeGetLastError(ddeInst));
     ret = 33;
+
+    HeapFree(GetProcessHeap(), 0, dynamic_res);
 
     DdeDisconnect(hConv);
 
