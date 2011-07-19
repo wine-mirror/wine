@@ -692,6 +692,14 @@ static DWORD colorref_to_pixel_colortable(const dib_info *dib, COLORREF color)
     rgb.rgbGreen = GetGValue(color);
     rgb.rgbBlue = GetBValue(color);
 
+    /* special case for conversion to 1-bpp without a color table:
+     * we get a 1-entry table containing the background color
+     */
+    if (dib->bit_count == 1 && dib->color_table_size == 1)
+        return (rgb.rgbRed == dib->color_table[0].rgbRed &&
+                rgb.rgbGreen == dib->color_table[0].rgbGreen &&
+                rgb.rgbBlue == dib->color_table[0].rgbBlue);
+
     for(i = 0; i < dib->color_table_size; i++)
     {
         RGBQUAD *cur = dib->color_table + i;
