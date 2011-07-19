@@ -104,6 +104,37 @@ type foobaz
 echo ***
 del foobaz
 
+echo ------------ Testing NUL ------------
+md foobar && cd foobar
+rem NUL file (non) creation + case insensitivity
+rem Note: "if exist" does not work with NUL, so to check for file existence we use a kludgy workaround
+echo > bar
+echo foo > NUL
+dir /b /a-d
+echo foo > nul
+dir /b /a-d
+echo foo > NuL
+dir /b /a-d
+del bar
+rem NUL not special everywhere
+call :setError 123
+echo NUL> foo
+if not exist foo (echo foo should have been created) else (
+    type foo
+    del foo
+)
+rem Empty file creation
+copy nul foo > nul
+if exist foo (
+    echo foo created
+    del foo
+    type foo
+) else (
+    echo ***
+)
+cd ..
+rd foobar
+
 echo ------------ Testing if/else --------------
 echo if/else should work with blocks
 if 0 == 0 (
