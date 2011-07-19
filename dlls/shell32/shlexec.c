@@ -269,7 +269,12 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
         }
     }
 
-    *res = '\0';
+    used ++;
+    if (res - out < len)
+        *res = '\0';
+    else
+        out[len-1] = '\0';
+
     TRACE("used %i of %i space\n",used,len);
     if (out_len)
         *out_len = used;
