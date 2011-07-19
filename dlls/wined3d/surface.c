@@ -6280,7 +6280,7 @@ static void ffp_blit_free(struct wined3d_device *device) { }
 
 /* This function is used in case of 8bit paletted textures using GL_EXT_paletted_texture */
 /* Context activation is done by the caller. */
-static void ffp_blit_p8_upload_palette(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
+static void ffp_blit_p8_upload_palette(const struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
 {
     BYTE table[256][4];
     BOOL colorkey_active = (surface->CKeyFlags & WINEDDSD_CKSRCBLT) ? TRUE : FALSE;
