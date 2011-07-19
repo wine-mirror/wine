@@ -46,6 +46,7 @@ static NTSTATUS (WINAPI *pNtOpenSymbolicLinkObject)(PHANDLE, ACCESS_MASK, POBJEC
 static NTSTATUS (WINAPI *pNtCreateSymbolicLinkObject)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, PUNICODE_STRING);
 static NTSTATUS (WINAPI *pNtQuerySymbolicLinkObject)(HANDLE,PUNICODE_STRING,PULONG);
 static NTSTATUS (WINAPI *pNtQueryObject)(HANDLE,OBJECT_INFORMATION_CLASS,PVOID,ULONG,PULONG);
+static NTSTATUS (WINAPI *pNtReleaseSemaphore)(HANDLE handle, ULONG count, PULONG previous);
 
 
 static void test_case_sensitive (void)
@@ -774,6 +775,28 @@ static void test_query_object(void)
     pNtClose( handle );
 }
 
+static void test_type_mismatch(void)
+{
+    HANDLE h;
+    NTSTATUS res;
+    OBJECT_ATTRIBUTES attr;
+
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = NULL;
+    attr.Attributes               = 0;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    res = pNtCreateEvent( &h, 0, &attr, 0, 0 );
+    ok(!res, "can't create event: %x\n", res);
+
+    res = pNtReleaseSemaphore( h, 30, NULL );
+    ok(res == STATUS_OBJECT_TYPE_MISMATCH, "expected 0xc0000024, got %x\n", res);
+
+    pNtClose( h );
+}
+
 START_TEST(om)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
@@ -805,6 +828,7 @@ START_TEST(om)
     pNtCreateTimer          =  (void *)GetProcAddress(hntdll, "NtCreateTimer");
     pNtCreateSection        =  (void *)GetProcAddress(hntdll, "NtCreateSection");
     pNtQueryObject          =  (void *)GetProcAddress(hntdll, "NtQueryObject");
+    pNtReleaseSemaphore     =  (void *)GetProcAddress(hntdll, "NtReleaseSemaphore");
 
     test_case_sensitive();
     test_namespace_pipe();
@@ -812,4 +836,5 @@ START_TEST(om)
     test_directory();
     test_symboliclink();
     test_query_object();
+    test_type_mismatch();
 }
