@@ -872,7 +872,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         NULL
     },
     { /* 0x05 - CSIDL_PERSONAL */
-        &GUID_NULL,
+        &FOLDERID_Documents,
         CSIDL_Type_User,
         PersonalW,
         MAKEINTRESOURCEW(IDS_PERSONAL)
@@ -1256,7 +1256,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         NULL
     },
     { /* 0x45 */
-        &FOLDERID_Documents,
+        &GUID_NULL,
         CSIDL_Type_User,
         NULL,
         MAKEINTRESOURCEW(IDS_DOCUMENTS)

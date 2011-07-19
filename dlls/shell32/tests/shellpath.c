@@ -920,7 +920,7 @@ static const struct knownFolderDef known_folders[] = {
     KNOWN_FOLDER(FOLDERID_Cookies,                    CSIDL_COOKIES,                        "Cookies"),
     KNOWN_FOLDER(FOLDERID_Desktop,                    CSIDL_DESKTOP,                        "Desktop"),
     KNOWN_FOLDER(FOLDERID_DeviceMetadataStore,        NO_CSIDL,                             "DeviceMetadataStore"),
-    KNOWN_FOLDER(FOLDERID_Documents,                  CSIDL_MYDOCUMENTS | CSIDL_TODO_WINE,  "Personal"),
+    KNOWN_FOLDER(FOLDERID_Documents,                  CSIDL_MYDOCUMENTS,                    "Personal"),
     KNOWN_FOLDER(FOLDERID_DocumentsLibrary,           NO_CSIDL,                             "DocumentsLibrary"),
     KNOWN_FOLDER(FOLDERID_Downloads,                  NO_CSIDL,                             "Downloads"),
     KNOWN_FOLDER(FOLDERID_Favorites,                  CSIDL_FAVORITES,                      "Favorites"),
