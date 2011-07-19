@@ -403,14 +403,19 @@ struct object *get_handle_obj( struct process *process, obj_handle_t handle,
             set_error( STATUS_INVALID_HANDLE );
             return NULL;
         }
+        obj = entry->ptr;
+        if (ops && (obj->ops != ops))
+        {
+            set_error( STATUS_OBJECT_TYPE_MISMATCH );  /* not the right type */
+            return NULL;
+        }
         if ((entry->access & access) != access)
         {
             set_error( STATUS_ACCESS_DENIED );
             return NULL;
         }
-        obj = entry->ptr;
     }
-    if (ops && (obj->ops != ops))
+    else if (ops && (obj->ops != ops))
     {
         set_error( STATUS_OBJECT_TYPE_MISMATCH );  /* not the right type */
         return NULL;
