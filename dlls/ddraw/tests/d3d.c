@@ -4150,9 +4150,25 @@ static void test_coop_level_mode_set(void)
 {
     RECT fullscreen_rect, r, s;
     IDirectDraw7 *ddraw7;
+    WNDCLASSA wc = {0};
     HWND window;
     HRESULT hr;
     ULONG ref;
+
+    static const UINT exclusive_messages[] =
+    {
+        WM_WINDOWPOSCHANGING,
+        WM_WINDOWPOSCHANGED,
+        WM_SIZE,
+        WM_DISPLAYCHANGE,
+        0,
+    };
+
+    static const UINT normal_messages[] =
+    {
+        WM_DISPLAYCHANGE,
+        0,
+    };
 
     hr = pDirectDrawCreateEx(NULL, (void **)&ddraw7, &IID_IDirectDraw7, NULL);
     if (FAILED(hr))
@@ -4161,7 +4177,11 @@ static void test_coop_level_mode_set(void)
         return;
     }
 
-    window = CreateWindowA("static", "d3d7_test", WS_OVERLAPPEDWINDOW,
+    wc.lpfnWndProc = test_proc;
+    wc.lpszClassName = "d3d7_test_wndproc_wc";
+    ok(RegisterClassA(&wc), "Failed to register window class.\n");
+
+    window = CreateWindowA("d3d7_test_wndproc_wc", "d3d7_test", WS_OVERLAPPEDWINDOW,
             0, 0, 100, 100, 0, 0, 0, 0);
 
     SetRect(&fullscreen_rect, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
@@ -4172,8 +4192,7 @@ static void test_coop_level_mode_set(void)
     if (FAILED(hr))
     {
         IDirectDraw7_Release(ddraw7);
-        DestroyWindow(window);
-        return;
+        goto done;
     }
 
     GetWindowRect(window, &r);
@@ -4181,16 +4200,26 @@ static void test_coop_level_mode_set(void)
             fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
             r.left, r.top, r.right, r.bottom);
 
+    expect_messages = exclusive_messages;
+
     hr = IDirectDraw7_SetDisplayMode(ddraw7, 640, 480, 32, 0, 0);
     ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+
+    ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
+    expect_messages = NULL;
 
     GetWindowRect(window, &r);
     ok(EqualRect(&r, &s), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
             s.left, s.top, s.right, s.bottom,
             r.left, r.top, r.right, r.bottom);
 
+    expect_messages = exclusive_messages;
+
     hr = IDirectDraw_RestoreDisplayMode(ddraw7);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
+
+    ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
+    expect_messages = NULL;
 
     GetWindowRect(window, &r);
     ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
@@ -4204,16 +4233,26 @@ static void test_coop_level_mode_set(void)
             fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
             r.left, r.top, r.right, r.bottom);
 
+    expect_messages = normal_messages;
+
     hr = IDirectDraw7_SetDisplayMode(ddraw7, 640, 480, 32, 0, 0);
     ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+
+    ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
+    expect_messages = NULL;
 
     GetWindowRect(window, &r);
     ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
             fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
             r.left, r.top, r.right, r.bottom);
 
+    expect_messages = normal_messages;
+
     hr = IDirectDraw_RestoreDisplayMode(ddraw7);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
+
+    ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
+    expect_messages = NULL;
 
     GetWindowRect(window, &r);
     ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
@@ -4228,7 +4267,10 @@ static void test_coop_level_mode_set(void)
             fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
             r.left, r.top, r.right, r.bottom);
 
+done:
+    expect_messages = NULL;
     DestroyWindow(window);
+    UnregisterClassA("d3d7_test_wndproc_wc", GetModuleHandleA(NULL));
 }
 
 START_TEST(d3d)
