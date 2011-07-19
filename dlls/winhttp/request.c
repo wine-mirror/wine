@@ -2196,8 +2196,59 @@ static HRESULT WINAPI winhttp_request_GetTypeInfoCount(
     IWinHttpRequest *iface,
     UINT *count )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+
+    TRACE("%p, %p\n", request, count);
+    *count = 1;
+    return S_OK;
+}
+
+enum type_id
+{
+    IWinHttpRequest_tid,
+    last_tid
+};
+
+static ITypeLib *winhttp_typelib;
+static ITypeInfo *winhttp_typeinfo[last_tid];
+
+static REFIID winhttp_tid_id[] =
+{
+    &IID_IWinHttpRequest
+};
+
+static HRESULT get_typeinfo( enum type_id tid, ITypeInfo **ret )
+{
+    HRESULT hr;
+
+    if (!winhttp_typelib)
+    {
+        ITypeLib *typelib;
+
+        hr = LoadRegTypeLib( &LIBID_WinHttp, 5, 1, LOCALE_SYSTEM_DEFAULT, &typelib );
+        if (FAILED(hr))
+        {
+            ERR("LoadRegTypeLib failed: %08x\n", hr);
+            return hr;
+        }
+        if (InterlockedCompareExchangePointer( (void **)&winhttp_typelib, typelib, NULL ))
+            ITypeLib_Release( typelib );
+    }
+    if (!winhttp_typeinfo[tid])
+    {
+        ITypeInfo *typeinfo;
+
+        hr = ITypeLib_GetTypeInfoOfGuid( winhttp_typelib, winhttp_tid_id[tid], &typeinfo );
+        if (FAILED(hr))
+        {
+            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(winhttp_tid_id[tid]), hr);
+            return hr;
+        }
+        if (InterlockedCompareExchangePointer( (void **)(winhttp_typeinfo + tid), typeinfo, NULL ))
+            ITypeInfo_Release( typeinfo );
+    }
+    *ret = winhttp_typeinfo[tid];
+    return S_OK;
 }
 
 static HRESULT WINAPI winhttp_request_GetTypeInfo(
@@ -2206,8 +2257,10 @@ static HRESULT WINAPI winhttp_request_GetTypeInfo(
     LCID lcid,
     ITypeInfo **info )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    TRACE("%p, %u, %u, %p\n", request, index, lcid, info);
+
+    return get_typeinfo( IWinHttpRequest_tid, info );
 }
 
 static HRESULT WINAPI winhttp_request_GetIDsOfNames(
@@ -2218,8 +2271,21 @@ static HRESULT WINAPI winhttp_request_GetIDsOfNames(
     LCID lcid,
     DISPID *dispid )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("%p, %s, %p, %u, %u, %p\n", request, debugstr_guid(riid), names, count, lcid, dispid);
+
+    if (!names || !count || !dispid) return E_INVALIDARG;
+
+    hr = get_typeinfo( IWinHttpRequest_tid, &typeinfo );
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames( typeinfo, names, count, dispid );
+        ITypeInfo_Release( typeinfo );
+    }
+    return hr;
 }
 
 static HRESULT WINAPI winhttp_request_Invoke(
@@ -2233,8 +2299,21 @@ static HRESULT WINAPI winhttp_request_Invoke(
     EXCEPINFO *excep_info,
     UINT *arg_err )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("%p, %d, %s, %d, %d, %p, %p, %p, %p\n", request, member, debugstr_guid(riid),
+          lcid, flags, params, result, excep_info, arg_err);
+
+    hr = get_typeinfo( IWinHttpRequest_tid, &typeinfo );
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke( typeinfo, &request->IWinHttpRequest_iface, member, flags,
+                               params, result, excep_info, arg_err );
+        ITypeInfo_Release( typeinfo );
+    }
+    return hr;
 }
 
 static HRESULT WINAPI winhttp_request_SetProxy(
