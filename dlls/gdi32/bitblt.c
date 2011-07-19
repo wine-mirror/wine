@@ -224,6 +224,34 @@ try_get_image:
     {
         RECT src_rect = src->visrect;
 
+        /* 1-bpp source without a color table uses the destination DC colors */
+        if (src_info->bmiHeader.biBitCount == 1 && !src_info->bmiHeader.biClrUsed)
+        {
+            COLORREF color = GetTextColor( dst_dev->hdc );
+            src_info->bmiColors[0].rgbRed      = GetRValue( color );
+            src_info->bmiColors[0].rgbGreen    = GetGValue( color );
+            src_info->bmiColors[0].rgbBlue     = GetBValue( color );
+            src_info->bmiColors[0].rgbReserved = 0;
+            color = GetBkColor( dst_dev->hdc );
+            src_info->bmiColors[1].rgbRed      = GetRValue( color );
+            src_info->bmiColors[1].rgbGreen    = GetGValue( color );
+            src_info->bmiColors[1].rgbBlue     = GetBValue( color );
+            src_info->bmiColors[1].rgbReserved = 0;
+            src_info->bmiHeader.biClrUsed = 2;
+        }
+
+        /* 1-bpp destination without a color table requires a fake 1-entry table
+         * that contains only the background color */
+        if (dst_info->bmiHeader.biBitCount == 1 && !dst_info->bmiHeader.biClrUsed)
+        {
+            COLORREF color = GetBkColor( src_dev->hdc );
+            dst_info->bmiColors[0].rgbRed      = GetRValue( color );
+            dst_info->bmiColors[0].rgbGreen    = GetGValue( color );
+            dst_info->bmiColors[0].rgbBlue     = GetBValue( color );
+            dst_info->bmiColors[0].rgbReserved = 0;
+            dst_info->bmiHeader.biClrUsed = 1;
+        }
+
         offset_rect( &src_rect, src_bits.offset - src->visrect.left, -src->visrect.top );
         dst_info->bmiHeader.biWidth = src_rect.right - src_rect.left;
         dst_bits.ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ));
@@ -233,7 +261,11 @@ try_get_image:
             dst_bits.offset = 0;
             dst_bits.free = free_heap_bits;
             if (!(err = convert_bitmapinfo( src_info, src_bits.ptr, &src_rect, dst_info, dst_bits.ptr )))
+            {
+                /* get rid of the fake 1-bpp table */
+                if (dst_info->bmiHeader.biClrUsed == 1) dst_info->bmiHeader.biClrUsed = 0;
                 err = dst_dev->funcs->pPutImage( dst_dev, 0, dst_info, &dst_bits, &dst->visrect, rop );
+            }
             if (dst_bits.free) dst_bits.free( &dst_bits );
         }
         else err = ERROR_OUTOFMEMORY;
