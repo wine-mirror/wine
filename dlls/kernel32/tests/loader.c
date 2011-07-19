@@ -1,7 +1,7 @@
 /*
  * Unit test suite for the PE loader.
  *
- * Copyright 2006 Dmitry Timoshkov
+ * Copyright 2006,2011 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -560,8 +560,125 @@ static void test_ImportDescriptors(void)
     }
 }
 
+static void test_section_access(void)
+{
+    static const struct test_data
+    {
+        DWORD scn_file_access, scn_page_access;
+    } td[] =
+    {
+        { 0, PAGE_NOACCESS },
+        { IMAGE_SCN_MEM_READ, PAGE_READONLY },
+        { IMAGE_SCN_MEM_WRITE, PAGE_WRITECOPY },
+        { IMAGE_SCN_MEM_EXECUTE, PAGE_EXECUTE },
+        { IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE, PAGE_WRITECOPY },
+        { IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_EXECUTE, PAGE_EXECUTE_READ },
+        { IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_EXECUTE, PAGE_EXECUTE_WRITECOPY },
+        { IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_EXECUTE, PAGE_EXECUTE_WRITECOPY }
+    };
+    static const char filler[0x1000];
+    static const char section_data[0x10] = "section data";
+    int i;
+    DWORD dummy, file_align;
+    HANDLE hfile;
+    HMODULE hlib;
+    SYSTEM_INFO si;
+    char temp_path[MAX_PATH];
+    char dll_name[MAX_PATH];
+    SIZE_T size;
+    MEMORY_BASIC_INFORMATION info;
+    BOOL ret;
+
+    GetSystemInfo(&si);
+    trace("system page size %#x\n", si.dwPageSize);
+
+    /* prevent displaying of the "Unable to load this DLL" message box */
+    SetErrorMode(SEM_FAILCRITICALERRORS);
+
+    GetTempPath(MAX_PATH, temp_path);
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    {
+        GetTempFileName(temp_path, "ldr", 0, dll_name);
+
+        /*trace("creating %s\n", dll_name);*/
+        hfile = CreateFileA(dll_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+        if (hfile == INVALID_HANDLE_VALUE)
+        {
+            ok(0, "could not create %s\n", dll_name);
+            return;
+        }
+
+        SetLastError(0xdeadbeef);
+        ret = WriteFile(hfile, &dos_header, sizeof(dos_header), &dummy, NULL);
+        ok(ret, "WriteFile error %d\n", GetLastError());
+
+        nt_header.FileHeader.NumberOfSections = 1;
+        nt_header.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER);
+
+        nt_header.OptionalHeader.SectionAlignment = si.dwPageSize;
+        nt_header.OptionalHeader.FileAlignment = 0x200;
+        nt_header.OptionalHeader.SizeOfImage = sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + si.dwPageSize;
+        nt_header.OptionalHeader.SizeOfHeaders = sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER);
+        SetLastError(0xdeadbeef);
+        ret = WriteFile(hfile, &nt_header, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER), &dummy, NULL);
+        ok(ret, "WriteFile error %d\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = WriteFile(hfile, &nt_header.OptionalHeader, sizeof(IMAGE_OPTIONAL_HEADER), &dummy, NULL);
+        ok(ret, "WriteFile error %d\n", GetLastError());
+
+        section.SizeOfRawData = sizeof(section_data);
+        section.PointerToRawData = nt_header.OptionalHeader.FileAlignment;
+        section.VirtualAddress = nt_header.OptionalHeader.SectionAlignment;
+        section.Misc.VirtualSize = section.SizeOfRawData;
+        section.Characteristics = td[i].scn_file_access;
+        SetLastError(0xdeadbeef);
+        ret = WriteFile(hfile, &section, sizeof(section), &dummy, NULL);
+        ok(ret, "WriteFile error %d\n", GetLastError());
+
+        file_align = nt_header.OptionalHeader.FileAlignment - nt_header.OptionalHeader.SizeOfHeaders;
+        assert(file_align < sizeof(filler));
+        SetLastError(0xdeadbeef);
+        ret = WriteFile(hfile, filler, file_align, &dummy, NULL);
+        ok(ret, "WriteFile error %d\n", GetLastError());
+
+        /* section data */
+        SetLastError(0xdeadbeef);
+        ret = WriteFile(hfile, section_data, sizeof(section_data), &dummy, NULL);
+        ok(ret, "WriteFile error %d\n", GetLastError());
+
+        CloseHandle(hfile);
+
+        SetLastError(0xdeadbeef);
+        hlib = LoadLibrary(dll_name);
+        ok(ret, "LoadLibrary error %d\n", GetLastError());
+
+        size = VirtualQuery((char *)hlib + section.VirtualAddress, &info, sizeof(info));
+        ok(size == sizeof(info),
+            "%d: VirtualQuery error %d\n", i, GetLastError());
+        ok(info.BaseAddress == (char *)hlib + section.VirtualAddress, "%d: got %p != expected %p\n", i, info.BaseAddress, (char *)hlib + section.VirtualAddress);
+        ok(info.RegionSize == si.dwPageSize, "%d: got %#lx != expected %#x\n", i, info.RegionSize, si.dwPageSize);
+        ok(info.Protect == td[i].scn_page_access, "%d: got %#x != expected %#x\n", i, info.Protect, td[i].scn_page_access);
+        ok(info.AllocationBase == hlib, "%d: %p != %p\n", i, info.AllocationBase, hlib);
+        ok(info.AllocationProtect == PAGE_EXECUTE_WRITECOPY, "%d: %#x != PAGE_EXECUTE_WRITECOPY\n", i, info.AllocationProtect);
+        ok(info.State == MEM_COMMIT, "%d: %#x != MEM_COMMIT\n", i, info.State);
+        ok(info.Type == SEC_IMAGE, "%d: %#x != SEC_IMAGE\n", i, info.Type);
+        if (info.Protect != PAGE_NOACCESS)
+            ok(!memcmp((const char *)info.BaseAddress, section_data, section.SizeOfRawData), "wrong section data\n");
+
+        SetLastError(0xdeadbeef);
+        ret = FreeLibrary(hlib);
+        ok(ret, "FreeLibrary error %d\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        ret = DeleteFile(dll_name);
+        ok(ret, "DeleteFile error %d\n", GetLastError());
+    }
+}
+
 START_TEST(loader)
 {
     test_Loader();
     test_ImportDescriptors();
+    test_section_access();
 }
