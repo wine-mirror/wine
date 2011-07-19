@@ -505,14 +505,14 @@ mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner )
                     {
                         denied_mode |= (mode << 6) | (mode << 3) | mode; /* all */
                     }
-                    else if (security_equal_sid( sid, owner ))
-                    {
-                        denied_mode |= (mode << 6);  /* user only */
-                    }
                     else if ((security_equal_sid( user, owner ) &&
                               token_sid_present( current->process->token, sid, TRUE )))
                     {
                         denied_mode |= (mode << 6) | (mode << 3);  /* user + group */
+                    }
+                    else if (security_equal_sid( sid, owner ))
+                    {
+                        denied_mode |= (mode << 6);  /* user only */
                     }
                     break;
                 case ACCESS_ALLOWED_ACE_TYPE:
@@ -523,14 +523,14 @@ mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner )
                     {
                         new_mode |= (mode << 6) | (mode << 3) | mode;  /* all */
                     }
-                    else if (security_equal_sid( sid, owner ))
-                    {
-                        new_mode |= (mode << 6);  /* user only */
-                    }
                     else if ((security_equal_sid( user, owner ) &&
                               token_sid_present( current->process->token, sid, FALSE )))
                     {
                         new_mode |= (mode << 6) | (mode << 3);  /* user + group */
+                    }
+                    else if (security_equal_sid( sid, owner ))
+                    {
+                        new_mode |= (mode << 6);  /* user only */
                     }
                     break;
             }
