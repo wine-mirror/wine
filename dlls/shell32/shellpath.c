@@ -3175,6 +3175,15 @@ static HRESULT get_known_folder_redirection_place(
 
 static HRESULT get_known_folder_path_by_id(REFKNOWNFOLDERID folderId, LPWSTR lpRegistryPath, DWORD dwFlags, LPWSTR *ppszPath);
 
+static HRESULT get_known_folder_category(
+    LPWSTR registryPath,
+    KF_CATEGORY* pCategory)
+{
+    DWORD dwSize = sizeof(DWORD);
+    DWORD dwType;
+    return HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, registryPath, szCategory, RRF_RT_DWORD, &dwType, pCategory, &dwSize));
+}
+
 static HRESULT redirect_known_folder(
     REFKNOWNFOLDERID rfid,
     HWND hwnd,
@@ -3372,8 +3381,6 @@ static HRESULT WINAPI knownfolder_GetCategory(
 {
     struct knownfolder *knownfolder = impl_from_IKnownFolder(iface);
     HRESULT hr = S_OK;
-    DWORD dwSize = sizeof(DWORD);
-    DWORD dwType;
 
     TRACE("%p, %p\n", knownfolder, pCategory);
 
@@ -3382,7 +3389,7 @@ static HRESULT WINAPI knownfolder_GetCategory(
         hr = E_FAIL;
 
     if(SUCCEEDED(hr))
-        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, szCategory, RRF_RT_DWORD, &dwType, pCategory, &dwSize));
+        hr = get_known_folder_category(knownfolder->registryPath, pCategory);
 
     return hr;
 }
@@ -3585,8 +3592,30 @@ static HRESULT WINAPI knownfolder_GetFolderDefinition(
     IKnownFolder *iface,
     KNOWNFOLDER_DEFINITION *pKFD)
 {
-    FIXME("%p\n", pKFD);
-    return E_NOTIMPL;
+    struct knownfolder *knownfolder = impl_from_IKnownFolder( iface );
+    HRESULT hr;
+    DWORD dwSize;
+    TRACE("(%p, %p)\n", knownfolder, pKFD);
+
+    if(!pKFD) return E_INVALIDARG;
+
+    ZeroMemory(pKFD, sizeof(*pKFD));
+
+    hr = get_known_folder_category(knownfolder->registryPath, &pKFD->category);
+
+    if(SUCCEEDED(hr))
+        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, szName, RRF_RT_REG_SZ, NULL, NULL, &dwSize));
+
+    if(SUCCEEDED(hr))
+    {
+        pKFD->pszName = CoTaskMemAlloc(dwSize);
+        if(!pKFD->pszName) hr = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hr))
+        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, szName, RRF_RT_REG_SZ, NULL, pKFD->pszName, &dwSize));
+
+    return hr;
 }
 
 static const struct IKnownFolderVtbl knownfolder_vtbl =
