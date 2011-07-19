@@ -326,7 +326,7 @@ static void make_explorer_window(IShellFolder* startFolder)
     }
     hres = CoCreateInstance(&CLSID_ExplorerBrowser,NULL,CLSCTX_INPROC_SERVER,
                             &IID_IExplorerBrowser,(LPVOID*)&info->browser);
-    if(!SUCCEEDED(hres))
+    if(FAILED(hres))
     {
         WINE_ERR("Could not obtain an instance of IExplorerBrowser\n");
         HeapFree(GetProcessHeap(),0,info);
@@ -739,7 +739,7 @@ int WINAPI wWinMain(HINSTANCE hinstance,
     explorer_hInstance = hinstance;
     parse_command_line(cmdline,&parameters);
     hres = OleInitialize(NULL);
-    if(!SUCCEEDED(hres))
+    if(FAILED(hres))
     {
         WINE_ERR("Could not initialize COM\n");
         ExitProcess(EXIT_FAILURE);
