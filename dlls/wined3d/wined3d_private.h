@@ -1041,7 +1041,7 @@ enum wined3d_event_query_result
 };
 
 void wined3d_event_query_destroy(struct wined3d_event_query *query) DECLSPEC_HIDDEN;
-enum wined3d_event_query_result wined3d_event_query_finish(struct wined3d_event_query *query,
+enum wined3d_event_query_result wined3d_event_query_finish(const struct wined3d_event_query *query,
         struct wined3d_device *device) DECLSPEC_HIDDEN;
 void wined3d_event_query_issue(struct wined3d_event_query *query, struct wined3d_device *device) DECLSPEC_HIDDEN;
 BOOL wined3d_event_query_supported(const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;

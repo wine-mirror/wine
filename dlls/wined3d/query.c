@@ -110,7 +110,7 @@ static enum wined3d_event_query_result wined3d_event_query_test(const struct win
     return ret;
 }
 
-enum wined3d_event_query_result wined3d_event_query_finish(struct wined3d_event_query *query,
+enum wined3d_event_query_result wined3d_event_query_finish(const struct wined3d_event_query *query,
         struct wined3d_device *device)
 {
     struct wined3d_context *context;
