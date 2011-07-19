@@ -1747,28 +1747,74 @@ static nsresult NSAPI nsURI_SetScheme(nsIURL *iface, const nsACString *aScheme)
 static nsresult NSAPI nsURI_GetUserPass(nsIURL *iface, nsACString *aUserPass)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
+    BSTR user, pass;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, aUserPass);
 
-    if(This->nsuri)
-        return nsIURI_GetUserPass(This->nsuri, aUserPass);
+    if(!ensure_uri(This))
+        return NS_ERROR_UNEXPECTED;
 
-    return get_uri_string(This, Uri_PROPERTY_USER_INFO, aUserPass);
+    hres = IUri_GetUserName(This->uri, &user);
+    if(FAILED(hres))
+        return NS_ERROR_FAILURE;
+
+    hres = IUri_GetPassword(This->uri, &pass);
+    if(FAILED(hres)) {
+        SysFreeString(user);
+        return NS_ERROR_FAILURE;
+    }
+
+    if(*user || *pass) {
+        FIXME("Construct user:pass string\n");
+    }else {
+        nsACString_SetData(aUserPass, "");
+    }
+
+    SysFreeString(user);
+    SysFreeString(pass);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURI_SetUserPass(nsIURL *iface, const nsACString *aUserPass)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
+    WCHAR *user = NULL, *pass = NULL, *buf = NULL;
+    const char *user_pass;
+    HRESULT hres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aUserPass));
 
-    if(This->nsuri) {
-        invalidate_uri(This);
-        return nsIURI_SetUserPass(This->nsuri, aUserPass);
+    if(!ensure_uri_builder(This))
+        return NS_ERROR_UNEXPECTED;
+
+    nsACString_GetData(aUserPass, &user_pass);
+    if(*user_pass) {
+        WCHAR *ptr;
+
+        buf = heap_strdupAtoW(user_pass);
+        if(!buf)
+            return NS_ERROR_OUT_OF_MEMORY;
+
+        ptr = strchrW(buf, ':');
+        if(!ptr) {
+            user = buf;
+        }else if(ptr != buf) {
+            *ptr++ = 0;
+            user = buf;
+            if(*ptr)
+                pass = ptr;
+        }else {
+            pass = buf+1;
+        }
     }
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    hres = IUriBuilder_SetUserName(This->uri_builder, user);
+    if(SUCCEEDED(hres))
+        hres = IUriBuilder_SetPassword(This->uri_builder, pass);
+
+    heap_free(buf);
+    return SUCCEEDED(hres) ? NS_OK : NS_ERROR_FAILURE;
 }
 
 static nsresult NSAPI nsURI_GetUsername(nsIURL *iface, nsACString *aUsername)
