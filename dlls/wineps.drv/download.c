@@ -34,8 +34,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
-BOOL WINAPI GetTransform( HDC hdc, DWORD which, XFORM *xform );
-
 #define MS_MAKE_TAG( _x1, _x2, _x3, _x4 ) \
           ( ( (DWORD)_x4 << 24 ) |     \
             ( (DWORD)_x3 << 16 ) |     \
