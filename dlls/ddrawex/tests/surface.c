@@ -422,13 +422,13 @@ START_TEST(surface)
 
     hr = pDllGetClassObject(&CLSID_DirectDrawFactory, &IID_IClassFactory, (void **) &classfactory);
     ok(hr == S_OK, "Failed to create a IClassFactory\n");
-    if (!SUCCEEDED(hr)) {
+    if (FAILED(hr)) {
         skip("Failed to get DirectDrawFactory\n");
         return;
     }
     hr = IClassFactory_CreateInstance(classfactory, NULL, &IID_IDirectDrawFactory, (void **) &factory);
     ok(hr == S_OK, "Failed to create a IDirectDrawFactory\n");
-    if (!SUCCEEDED(hr)) {
+    if (FAILED(hr)) {
         IClassFactory_Release(classfactory);
         skip("Failed to get a DirectDrawFactory\n");
         return;
