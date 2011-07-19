@@ -166,6 +166,8 @@ file not removed
 non-empty dir not removed
 0
 non-empty dir not removed
+recursive rmdir succeeded
+recursive rmdir succeeded
 -----------Testing Errorlevel-----------
 1
 errorlevel just right, good

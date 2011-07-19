@@ -308,6 +308,27 @@ echo %ErrorLevel%
 if exist foo echo non-empty dir not removed
 rmdir foo\bar
 rmdir foo
+rem Recursive rmdir
+mkdir foo\bar\baz
+rmdir /s /Q foo
+if not exist foo (
+    echo recursive rmdir succeeded
+) else (
+    rd foo\bar\baz
+    rd foo\bar
+    rd foo
+)
+mkdir foo\bar\baz
+echo foo > foo\bar\brol
+rmdir /s /Q foo
+if not exist foo (
+    echo recursive rmdir succeeded
+) else (
+    rd foo\bar\baz
+    del foo\bar\brol
+    rd foo\bar
+    rd foo
+)
 
 echo -----------Testing Errorlevel-----------
 rem nt 4.0 doesn't really support a way of setting errorlevel, so this is weak
