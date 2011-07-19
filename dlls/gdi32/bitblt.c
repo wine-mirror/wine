@@ -149,15 +149,9 @@ static void get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
     }
 }
 
-static DWORD convert_bits( const BITMAPINFO *src_info, struct gdi_image_bits *src_bits,
-                           const RECT *src_rect, BITMAPINFO *dst_info, struct gdi_image_bits *dst_bits )
+static void free_heap_bits( struct gdi_image_bits *bits )
 {
-    FIXME( "%u -> %u not implemented\n", src_info->bmiHeader.biBitCount, dst_info->bmiHeader.biBitCount );
-    dst_bits->ptr = src_bits->ptr;
-    dst_bits->offset = src_bits->offset;
-    dst_bits->is_copy = src_bits->is_copy;
-    dst_bits->free = NULL;
-    return ERROR_SUCCESS;
+    HeapFree( GetProcessHeap(), 0, bits->ptr );
 }
 
 /* nulldrv fallback implementation using StretchDIBits */
@@ -229,14 +223,20 @@ try_get_image:
     if (err == ERROR_BAD_FORMAT)
     {
         RECT src_rect = src->visrect;
-        offset_rect( &src_rect, src_bits.offset - src->visrect.left, -src->visrect.top );
 
-        err = convert_bits( src_info, &src_bits, &src_rect, dst_info, &dst_bits );
-        if (!err)
+        offset_rect( &src_rect, src_bits.offset - src->visrect.left, -src->visrect.top );
+        dst_info->bmiHeader.biWidth = src_rect.right - src_rect.left;
+        dst_bits.ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ));
+        if (dst_bits.ptr)
         {
-            err = dst_dev->funcs->pPutImage( dst_dev, 0, dst_info, &dst_bits, &dst->visrect, rop );
+            dst_bits.is_copy = TRUE;
+            dst_bits.offset = 0;
+            dst_bits.free = free_heap_bits;
+            if (!(err = convert_bitmapinfo( src_info, src_bits.ptr, &src_rect, dst_info, dst_bits.ptr )))
+                err = dst_dev->funcs->pPutImage( dst_dev, 0, dst_info, &dst_bits, &dst->visrect, rop );
             if (dst_bits.free) dst_bits.free( &dst_bits );
         }
+        else err = ERROR_OUTOFMEMORY;
     }
     if (src_bits.free) src_bits.free( &src_bits );
     return !err;
