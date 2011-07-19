@@ -1,0 +1,7 @@
+TESTDLL   = vbscript.dll
+IMPORTS   = ole32
+
+C_SRCS = \
+	vbscript.c
+
+@MAKE_TEST_RULES@
