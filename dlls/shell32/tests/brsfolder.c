@@ -204,7 +204,7 @@ static void test_click_make_new_folder_button(void)
         test_folder_pathW, MAX_PATH);
     hr = SHGetDesktopFolder(&test_folder_object);
     ok (SUCCEEDED(hr), "SHGetDesktopFolder failed with hr 0x%08x\n", hr);
-    if (!SUCCEEDED(hr)) {
+    if (FAILED(hr)) {
         skip("SHGetDesktopFolder failed - skipping\n");
         return;
     }
@@ -331,7 +331,7 @@ static void test_selection(void)
 
     hr = SHGetDesktopFolder(&desktop_object);
     ok (SUCCEEDED(hr), "SHGetDesktopFolder failed with hr 0x%08x\n", hr);
-    if (!SUCCEEDED(hr)) {
+    if (FAILED(hr)) {
         skip("SHGetDesktopFolder failed - skipping\n");
         return;
     }

@@ -3423,10 +3423,10 @@ static HRESULT get_known_folder_path(
     {
         /* get parent's known folder path (recursive) */
         hr = get_known_folder_registry_path(NULL, parentGuid, &parentRegistryPath);
-        if(!SUCCEEDED(hr)) return hr;
+        if(FAILED(hr)) return hr;
 
         hr = get_known_folder_path(parentGuid, parentRegistryPath, &parentPath);
-        if(!SUCCEEDED(hr)) {
+        if(FAILED(hr)) {
             HeapFree(GetProcessHeap(), 0, parentRegistryPath);
             return hr;
         }
