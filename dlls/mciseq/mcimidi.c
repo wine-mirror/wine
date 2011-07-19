@@ -231,8 +231,7 @@ static DWORD MIDI_mciReadByte(WINE_MCIMIDI* wmm, BYTE *lpbyt)
 {
     DWORD	ret = 0;
 
-    if (lpbyt == NULL ||
-	mmioRead(wmm->hFile, (HPSTR)lpbyt, sizeof(BYTE)) != (long)sizeof(BYTE)) {
+    if (mmioRead(wmm->hFile, (HPSTR)lpbyt, sizeof(BYTE)) != (long)sizeof(BYTE)) {
 	WARN("Error reading wmm=%p\n", wmm);
 	ret = MCIERR_INVALID_FILE;
     }
@@ -248,8 +247,7 @@ static DWORD MIDI_mciReadWord(WINE_MCIMIDI* wmm, LPWORD lpw)
     BYTE	hibyte, lobyte;
     DWORD	ret = MCIERR_INVALID_FILE;
 
-    if (lpw != NULL &&
-	MIDI_mciReadByte(wmm, &hibyte) == 0 &&
+    if (MIDI_mciReadByte(wmm, &hibyte) == 0 &&
 	MIDI_mciReadByte(wmm, &lobyte) == 0) {
 	*lpw = ((WORD)hibyte << 8) + lobyte;
 	ret = 0;
@@ -265,8 +263,7 @@ static DWORD MIDI_mciReadLong(WINE_MCIMIDI* wmm, LPDWORD lpdw)
     WORD	hiword, loword;
     DWORD	ret = MCIERR_INVALID_FILE;
 
-    if (lpdw != NULL &&
-	MIDI_mciReadWord(wmm, &hiword) == 0 &&
+    if (MIDI_mciReadWord(wmm, &hiword) == 0 &&
 	MIDI_mciReadWord(wmm, &loword) == 0) {
 	*lpdw = MAKELONG(loword, hiword);
 	ret = 0;
@@ -281,24 +278,17 @@ static WORD MIDI_mciReadVaryLen(WINE_MCIMIDI* wmm, LPDWORD lpdw)
 {
     BYTE	byte;
     DWORD	value = 0;
-    WORD	ret = 0;
+    WORD	len = 0;
 
-    if (lpdw == NULL) {
-	ret = MCIERR_INVALID_FILE;
-    } else {
-	do {
-	    if (MIDI_mciReadByte(wmm, &byte) != 0) {
-		return 0;
-	    }
-	    value = (value << 7) + (byte & 0x7F);
-	    ret++;
-	} while (byte & 0x80);
-	*lpdw = value;
-	/*
-	  TRACE("val=%08X\n", value);
-	*/
-    }
-    return ret;
+    do {
+	if (MIDI_mciReadByte(wmm, &byte) != 0) {
+	    return 0;
+	}
+	value = (value << 7) + (byte & 0x7F);
+	len++;
+    } while (byte & 0x80);
+    *lpdw = value;
+    return len;
 }
 
 /**************************************************************************
