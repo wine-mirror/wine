@@ -230,7 +230,7 @@ static void map_sysval(enum wined3d_sysval_semantic sysval, struct wined3d_shade
     }
 }
 
-static void map_register(struct wined3d_sm4_data *priv, struct wined3d_shader_register *reg)
+static void map_register(const struct wined3d_sm4_data *priv, struct wined3d_shader_register *reg)
 {
     switch (priv->shader_version.type)
     {
