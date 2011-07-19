@@ -650,7 +650,7 @@ static LRESULT CALLBACK sheet_callback_messages_proc (HWND hwnd, UINT msg, WPARA
 
 static int CALLBACK sheet_callback_messages(HWND hwnd, UINT msg, LPARAM lParam)
 {
-    save_message(hwnd, msg, (WPARAM)NULL, lParam, RECEIVER_SHEET_CALLBACK);
+    save_message(hwnd, msg, 0, lParam, RECEIVER_SHEET_CALLBACK);
 
     switch (msg)
     {
