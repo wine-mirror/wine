@@ -3376,7 +3376,7 @@ HRESULT WINAPI D3DXLoadMeshFromXResource(HMODULE module,
     if (!resinfo) return D3DXERR_INVALIDDATA;
 
     hr = load_resource_into_memory(module, resinfo, &buffer, &size);
-    if (!FAILED(hr)) return D3DXERR_INVALIDDATA;
+    if (FAILED(hr)) return D3DXERR_INVALIDDATA;
 
     return D3DXLoadMeshFromXInMemory(buffer, size, options, device, adjacency,
             materials, effect_instances, num_materials, mesh);
