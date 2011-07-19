@@ -331,6 +331,9 @@ if not exist foo (
 )
 
 echo -----------Testing Errorlevel-----------
+rem WARNING: Do *not* add tests using ErrorLevel after this section
+should_not_exist 2> nul > nul
+echo %ErrorLevel%
 rem nt 4.0 doesn't really support a way of setting errorlevel, so this is weak
 rem See http://www.robvanderwoude.com/exit.php
 call :setError 1

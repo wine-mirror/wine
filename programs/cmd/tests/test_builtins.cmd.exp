@@ -169,6 +169,7 @@ non-empty dir not removed
 recursive rmdir succeeded
 recursive rmdir succeeded
 -----------Testing Errorlevel-----------
+9009
 1
 errorlevel just right, good
 abc0def@or_broken@abc1def
