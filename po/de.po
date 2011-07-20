@@ -1048,7 +1048,7 @@ msgstr "Private Schlüsselbenutzungsdauer"
 
 #: crypt32.rc:137
 msgid "Client Information"
-msgstr "Client Information"
+msgstr ""
 
 #: crypt32.rc:138
 msgid "Server Authentication"
@@ -6211,7 +6211,7 @@ msgstr "Aus&schneiden"
 
 #: shdoclc.rc:139
 msgid "Context Unknown"
-msgstr "Context Unknown"
+msgstr ""
 
 #: shdoclc.rc:144
 msgid "DYNSRC Image"
@@ -6239,15 +6239,15 @@ msgstr "Debug"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
-msgstr "Trace Tags"
+msgstr ""
 
 #: shdoclc.rc:197
 msgid "Resource Failures"
-msgstr "Resource Failures"
+msgstr ""
 
 #: shdoclc.rc:198
 msgid "Dump Tracking Info"
-msgstr "Dump Tracking Info"
+msgstr ""
 
 #: shdoclc.rc:199
 msgid "Debug Break"
@@ -6279,23 +6279,23 @@ msgstr "Dump LayoutRects"
 
 #: shdoclc.rc:206
 msgid "Memory Monitor"
-msgstr "Memory Monitor"
+msgstr ""
 
 #: shdoclc.rc:207
 msgid "Performance Meters"
-msgstr "Performance Meters"
+msgstr ""
 
 #: shdoclc.rc:208
 msgid "Save HTML"
-msgstr "Save HTML"
+msgstr ""
 
 #: shdoclc.rc:210
 msgid "&Browse View"
-msgstr "&Browse View"
+msgstr ""
 
 #: shdoclc.rc:211
 msgid "&Edit View"
-msgstr "&Edit View"
+msgstr ""
 
 #: shdoclc.rc:214
 msgid "Vertical Scrollbar"
@@ -10928,7 +10928,7 @@ msgstr "Inaktiver Titelleistentext"
 
 #: winecfg.rc:133
 msgid "Message Box Text"
-msgstr "Message Box Text"
+msgstr ""
 
 #: winecfg.rc:134
 msgid "Application Workspace"
@@ -11333,19 +11333,19 @@ msgstr "&Definieren..."
 
 #: winhlp32.rc:45
 msgid "History"
-msgstr "History"
+msgstr ""
 
 #: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
-msgstr "Small"
+msgstr ""
 
 #: winhlp32.rc:49 winhlp32.rc:70
 msgid "Normal"
-msgstr "Normal"
+msgstr ""
 
 #: winhlp32.rc:50 winhlp32.rc:71
 msgid "Large"
-msgstr "Large"
+msgstr ""
 
 #: winhlp32.rc:54
 #, fuzzy
