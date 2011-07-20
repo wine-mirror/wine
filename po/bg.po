@@ -1598,7 +1598,7 @@ msgstr ""
 
 #: cryptui.rc:62 shell32.rc:251 ipconfig.rc:41
 msgid "Description"
-msgstr "Description"
+msgstr ""
 
 #: cryptui.rc:63
 #, fuzzy
@@ -5430,8 +5430,6 @@ msgid ""
 "The specified installation package could not be opened.  Please check the "
 "file path and try again."
 msgstr ""
-"The specified installation package could not be opened.  Please check the "
-"file path and try again."
 
 #: msi.rc:28
 msgid "path %s not found"
@@ -5966,7 +5964,7 @@ msgstr ""
 
 #: shdoclc.rc:36
 msgid "Default"
-msgstr "Default"
+msgstr ""
 
 #: shdoclc.rc:39
 msgid "F&orward"
@@ -6033,7 +6031,7 @@ msgstr ""
 
 #: shdoclc.rc:61
 msgid "Image"
-msgstr "Image"
+msgstr ""
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6100,7 +6098,7 @@ msgstr "Сво&йства"
 
 #: shdoclc.rc:86
 msgid "Control"
-msgstr "Control"
+msgstr ""
 
 #: shdoclc.rc:88 user32.rc:55
 msgid "&Undo"
@@ -6112,7 +6110,7 @@ msgstr "Из&трий"
 
 #: shdoclc.rc:98
 msgid "Table"
-msgstr "Table"
+msgstr ""
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
@@ -6161,7 +6159,7 @@ msgstr "&Печат"
 
 #: shdoclc.rc:122
 msgid "Anchor"
-msgstr "Anchor"
+msgstr ""
 
 #: shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
@@ -6177,7 +6175,7 @@ msgstr "&Изрежи"
 
 #: shdoclc.rc:139
 msgid "Context Unknown"
-msgstr "Context Unknown"
+msgstr ""
 
 #: shdoclc.rc:144
 msgid "DYNSRC Image"
@@ -6201,71 +6199,71 @@ msgstr "Върни се в началото"
 
 #: shdoclc.rc:194
 msgid "Debug"
-msgstr "Debug"
+msgstr ""
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
-msgstr "Trace Tags"
+msgstr ""
 
 #: shdoclc.rc:197
 msgid "Resource Failures"
-msgstr "Resource Failures"
+msgstr ""
 
 #: shdoclc.rc:198
 msgid "Dump Tracking Info"
-msgstr "Dump Tracking Info"
+msgstr ""
 
 #: shdoclc.rc:199
 msgid "Debug Break"
-msgstr "Debug Break"
+msgstr ""
 
 #: shdoclc.rc:200
 msgid "Debug View"
-msgstr "Debug View"
+msgstr ""
 
 #: shdoclc.rc:201
 msgid "Dump Tree"
-msgstr "Dump Tree"
+msgstr ""
 
 #: shdoclc.rc:202
 msgid "Dump Lines"
-msgstr "Dump Lines"
+msgstr ""
 
 #: shdoclc.rc:203
 msgid "Dump DisplayTree"
-msgstr "Dump DisplayTree"
+msgstr ""
 
 #: shdoclc.rc:204
 msgid "Dump FormatCaches"
-msgstr "Dump FormatCaches"
+msgstr ""
 
 #: shdoclc.rc:205
 msgid "Dump LayoutRects"
-msgstr "Dump LayoutRects"
+msgstr ""
 
 #: shdoclc.rc:206
 msgid "Memory Monitor"
-msgstr "Memory Monitor"
+msgstr ""
 
 #: shdoclc.rc:207
 msgid "Performance Meters"
-msgstr "Performance Meters"
+msgstr ""
 
 #: shdoclc.rc:208
 msgid "Save HTML"
-msgstr "Save HTML"
+msgstr ""
 
 #: shdoclc.rc:210
 msgid "&Browse View"
-msgstr "&Browse View"
+msgstr ""
 
 #: shdoclc.rc:211
 msgid "&Edit View"
-msgstr "&Edit View"
+msgstr ""
 
 #: shdoclc.rc:214
 msgid "Vertical Scrollbar"
-msgstr "Vertical Scrollbar"
+msgstr ""
 
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
@@ -6297,7 +6295,7 @@ msgstr "Превърти надолу"
 
 #: shdoclc.rc:228
 msgid "Horizontal Scrollbar"
-msgstr "Horizontal Scrollbar"
+msgstr ""
 
 #: shdoclc.rc:232
 msgid "Left Edge"
@@ -6532,9 +6530,8 @@ msgstr ""
 "Из&ход"
 
 #: shell32.rc:127
-#, fuzzy
 msgid "&About Control Panel"
-msgstr "&About Control Panel..."
+msgstr ""
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:113
 msgid "Size"
@@ -6570,15 +6567,15 @@ msgstr "Група"
 
 #: shell32.rc:145
 msgid "Original location"
-msgstr "Original location"
+msgstr ""
 
 #: shell32.rc:146
 msgid "Date deleted"
-msgstr "Date deleted"
+msgstr ""
 
 #: shell32.rc:156
 msgid "Control Panel"
-msgstr "Control Panel"
+msgstr ""
 
 #: shell32.rc:163
 msgid "Select"
@@ -6840,9 +6837,6 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"This folder already contains a file called '%1'.\n"
-"\n"
-"Do you want to replace it?"
 
 #: shell32.rc:172
 msgid "Are you sure you want to delete the selected item(s)?"
@@ -6852,20 +6846,18 @@ msgstr "Наистина ли искате да изтриете избрани�
 msgid ""
 "Are you sure that you want to send '%1' and all its content to the Trash?"
 msgstr ""
-"Are you sure that you want to send '%1' and all its content to the Trash?"
 
 #: shell32.rc:173
 msgid "Are you sure that you want to send '%1' to the Trash?"
-msgstr "Are you sure that you want to send '%1' to the Trash?"
+msgstr ""
 
 #: shell32.rc:175
 msgid "Are you sure that you want to send these %1 items to the Trash?"
-msgstr "Are you sure that you want to send these %1 items to the Trash?"
+msgstr ""
 
 #: shell32.rc:176
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 msgstr ""
-"The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 
 #: shell32.rc:179
 msgid ""
@@ -6875,19 +6867,14 @@ msgid ""
 "selected folder they will be replaced. Do you still want to move or copy\n"
 "the folder?"
 msgstr ""
-"This folder already contains a folder named '%1'.\n"
-"\n"
-"If the files in the destination folder have the same names as files in the\n"
-"selected folder they will be replaced. Do you still want to move or copy\n"
-"the folder?"
 
 #: shell32.rc:247
 msgid "New Folder"
-msgstr "New Folder"
+msgstr ""
 
 #: shell32.rc:249
 msgid "Wine Control Panel"
-msgstr "Wine Control Panel"
+msgstr ""
 
 #: shell32.rc:191
 msgid "Unable to display Run File dialog box (internal error)"
@@ -8570,7 +8557,7 @@ msgstr "&Съдържание"
 
 #: notepad.rc:59
 msgid "&About Notepad"
-msgstr "&About Notepad"
+msgstr ""
 
 #: notepad.rc:65
 msgid "&f"
@@ -8578,7 +8565,7 @@ msgstr "&f"
 
 #: notepad.rc:66
 msgid "Page &p"
-msgstr "Page &p"
+msgstr ""
 
 #: notepad.rc:68
 msgid "Notepad"
@@ -9002,7 +8989,7 @@ msgstr "&Още прозорци..."
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
-msgstr "&Options"
+msgstr ""
 
 #: progman.rc:42
 msgid "&Arrange automatically"
@@ -9182,7 +9169,7 @@ msgstr "&DWORD стойност"
 
 #: regedit.rc:51 regedit.rc:102
 msgid "&Multi String Value"
-msgstr "&Multi String Value"
+msgstr ""
 
 #: regedit.rc:52 regedit.rc:103
 #, fuzzy
@@ -9229,7 +9216,7 @@ msgstr "Промени двоичните данни"
 
 #: regedit.rc:109
 msgid "&Export..."
-msgstr "&Export..."
+msgstr ""
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
@@ -9405,11 +9392,11 @@ msgstr "Наистина ли искате да изтриете стойнос�
 
 #: regedit.rc:186
 msgid "Search string '%s' not found"
-msgstr "Search string '%s' not found"
+msgstr ""
 
 #: regedit.rc:183
 msgid "Are you sure you want to delete these values?"
-msgstr "Are you sure you want to delete these values?"
+msgstr ""
 
 #: regedit.rc:184
 msgid "New Key #%d"
@@ -9869,9 +9856,8 @@ msgid "Processes"
 msgstr ""
 
 #: taskmgr.rc:264
-#, fuzzy
 msgid "Performance"
-msgstr "Performance Meters"
+msgstr ""
 
 #: taskmgr.rc:265
 msgid "CPU Usage: %3d%%"
@@ -10071,13 +10057,12 @@ msgid "Warn"
 msgstr ""
 
 #: taskmgr.rc:331
-#, fuzzy
 msgid "Trace"
-msgstr "Trace Tags"
+msgstr ""
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
-msgstr "Wine Application Uninstaller"
+msgstr ""
 
 #: uninstaller.rc:27
 msgid ""
@@ -10237,23 +10222,23 @@ msgstr "забранена"
 
 #: winecfg.rc:67
 msgid "Default Settings"
-msgstr "Default Settings"
+msgstr ""
 
 #: winecfg.rc:68
 msgid "Wine Programs (*.exe,*.exe.so)"
-msgstr "Wine Programs (*.exe,*.exe.so)"
+msgstr ""
 
 #: winecfg.rc:69
 msgid "Use global settings"
-msgstr "Use global settings"
+msgstr ""
 
 #: winecfg.rc:70
 msgid "Select an executable file"
-msgstr "Select an executable file"
+msgstr ""
 
 #: winecfg.rc:75
 msgid "Hardware"
-msgstr "Hardware"
+msgstr ""
 
 #: winecfg.rc:76
 #, fuzzy
@@ -10262,40 +10247,35 @@ msgid "None"
 msgstr "Нищо"
 
 #: winecfg.rc:81
-#, fuzzy
 msgid "Autodetect..."
-msgstr "Autodetect"
+msgstr ""
 
 #: winecfg.rc:82
 msgid "Local hard disk"
-msgstr "Local hard disk"
+msgstr ""
 
 #: winecfg.rc:83
 msgid "Network share"
-msgstr "Network share"
+msgstr ""
 
 #: winecfg.rc:84
 msgid "Floppy disk"
-msgstr "Floppy disk"
+msgstr ""
 
 #: winecfg.rc:85
 msgid "CD-ROM"
 msgstr "CD-ROM"
 
 #: winecfg.rc:86
-#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
 "Each drive must have a letter, from A to Z, so you cannot have more than 26."
 msgstr ""
-"You cannot add any more drives.\n"
-"\n"
-"Each drive must have a letter, from A to Z, so you cannot have more than 26"
 
 #: winecfg.rc:87
 msgid "System drive"
-msgstr "System drive"
+msgstr ""
 
 #: winecfg.rc:88
 msgid ""
@@ -10304,18 +10284,14 @@ msgid ""
 "Most Windows applications expect drive C to exist, and will die messily if "
 "it doesn't. If you proceed remember to recreate it!"
 msgstr ""
-"Are you sure you want to delete drive C?\n"
-"\n"
-"Most Windows applications expect drive C to exist, and will die messily if "
-"it doesn't. If you proceed remember to recreate it!"
 
 #: winecfg.rc:89
 msgid "Letter"
-msgstr "Letter"
+msgstr ""
 
 #: winecfg.rc:90
 msgid "Drive Mapping"
-msgstr "Drive Mapping"
+msgstr ""
 
 #: winecfg.rc:91
 msgid ""
@@ -10323,69 +10299,66 @@ msgid ""
 "\n"
 "Remember to click 'Add' in the Drives tab to create one!\n"
 msgstr ""
-"You don't have a drive C. This is not so great.\n"
-"\n"
-"Remember to click 'Add' in the Drives tab to create one!\n"
 
 #: winecfg.rc:96
 msgid "Full"
-msgstr "Full"
+msgstr ""
 
 #: winecfg.rc:97
 msgid "Standard"
-msgstr "Standard"
+msgstr ""
 
 #: winecfg.rc:98
 msgid "Basic"
-msgstr "Basic"
+msgstr ""
 
 #: winecfg.rc:99
 msgid "Emulation"
-msgstr "Emulation"
+msgstr ""
 
 #: winecfg.rc:100
 msgid "ALSA Driver"
-msgstr "ALSA Driver"
+msgstr ""
 
 #: winecfg.rc:101
 msgid "OSS Driver"
-msgstr "OSS Driver"
+msgstr ""
 
 #: winecfg.rc:102
 msgid "CoreAudio Driver"
-msgstr "CoreAudio Driver"
+msgstr ""
 
 #: winecfg.rc:103
 msgid "Couldn't open %s!"
-msgstr "Couldn't open %s!"
+msgstr ""
 
 #: winecfg.rc:104
 msgid "Sound Drivers"
-msgstr "Sound Drivers"
+msgstr ""
 
 #: winecfg.rc:105
 msgid "Wave Out Devices"
-msgstr "Wave Out Devices"
+msgstr ""
 
 #: winecfg.rc:106
 msgid "Wave In Devices"
-msgstr "Wave In Devices"
+msgstr ""
 
 #: winecfg.rc:107
 msgid "MIDI Out Devices"
-msgstr "MIDI Out Devices"
+msgstr ""
 
 #: winecfg.rc:108
 msgid "MIDI In Devices"
-msgstr "MIDI In Devices"
+msgstr ""
 
 #: winecfg.rc:109
 msgid "Aux Devices"
-msgstr "Aux Devices"
+msgstr ""
 
 #: winecfg.rc:110
 msgid "Mixer Devices"
-msgstr "Mixer Devices"
+msgstr ""
 
 #: winecfg.rc:111
 msgid ""
@@ -10393,13 +10366,10 @@ msgid ""
 "\n"
 "Remove '%s' from registry?"
 msgstr ""
-"Found driver in registry that is not available!\n"
-"\n"
-"Remove \"%s\" from registry?"
 
 #: winecfg.rc:112
 msgid "Warning"
-msgstr "Warning"
+msgstr ""
 
 #: winecfg.rc:117
 #, fuzzy
@@ -10873,19 +10843,19 @@ msgstr "&Задай..."
 
 #: winhlp32.rc:45
 msgid "History"
-msgstr "History"
+msgstr ""
 
 #: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
-msgstr "Small"
+msgstr ""
 
 #: winhlp32.rc:49 winhlp32.rc:70
 msgid "Normal"
-msgstr "Normal"
+msgstr ""
 
 #: winhlp32.rc:50 winhlp32.rc:71
 msgid "Large"
-msgstr "Large"
+msgstr ""
 
 #: winhlp32.rc:54
 #, fuzzy
@@ -10920,7 +10890,7 @@ msgstr "Грешка при четене на помощния файл `%s'"
 
 #: winhlp32.rc:85
 msgid "Summary"
-msgstr "Summary"
+msgstr ""
 
 #: winhlp32.rc:84
 msgid "&Index"
@@ -10932,11 +10902,11 @@ msgstr "Помощни файлове (*.hlp)"
 
 #: winhlp32.rc:89
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr "Cannot find '%s'. Do you want to find this file yourself?"
+msgstr ""
 
 #: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
-msgstr "Cannot find a richedit implementation... Aborting"
+msgstr ""
 
 #: winhlp32.rc:91
 msgid "Help topics: "
