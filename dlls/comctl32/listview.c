@@ -8914,22 +8914,17 @@ static BOOL LISTVIEW_SetTextBkColor(LISTVIEW_INFO *infoPtr, COLORREF color)
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] clrText : text color
+ * [I] color   : text color
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_SetTextColor (LISTVIEW_INFO *infoPtr, COLORREF clrText)
+static BOOL LISTVIEW_SetTextColor (LISTVIEW_INFO *infoPtr, COLORREF color)
 {
-    TRACE("(clrText=%x)\n", clrText);
+    TRACE("(color=%x)\n", color);
 
-    if (infoPtr->clrText != clrText)
-    {
-	infoPtr->clrText = clrText;
-	LISTVIEW_InvalidateList(infoPtr);
-    }
-
+    infoPtr->clrText = color;
     return TRUE;
 }
 
