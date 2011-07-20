@@ -167,10 +167,10 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     BITMAPINFO *src_info = (BITMAPINFO *)src_buffer;
     BITMAPINFO *dst_info = (BITMAPINFO *)dst_buffer;
     DWORD err;
-    struct gdi_image_bits src_bits, dst_bits;
+    struct gdi_image_bits bits;
     BITMAP bm;
     HBITMAP hbm;
-    LPVOID bits;
+    LPVOID ptr;
     INT lines;
 
     /* make sure we have a real implementation for StretchDIBits */
@@ -191,36 +191,31 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     src_info->bmiHeader.biClrUsed = 0;
     src_info->bmiHeader.biClrImportant = 0;
 
-    if (!(bits = HeapAlloc(GetProcessHeap(), 0, bm.bmHeight * bm.bmWidth * 4)))
+    if (!(ptr = HeapAlloc(GetProcessHeap(), 0, bm.bmHeight * bm.bmWidth * 4)))
         return FALSE;
 
     /* Select out the src bitmap before calling GetDIBits */
     hbm = SelectObject( src_dev->hdc, GetStockObject(DEFAULT_BITMAP) );
-    lines = GetDIBits( src_dev->hdc, hbm, 0, bm.bmHeight, bits, src_info, DIB_RGB_COLORS );
+    lines = GetDIBits( src_dev->hdc, hbm, 0, bm.bmHeight, ptr, src_info, DIB_RGB_COLORS );
     SelectObject( src_dev->hdc, hbm );
 
     if (lines) lines = StretchDIBits( dst_dev->hdc, dst->log_x, dst->log_y, dst->log_width, dst->log_height,
                                       src->x, bm.bmHeight - src->height - src->y, src->width, src->height,
-                                      bits, src_info, DIB_RGB_COLORS, rop );
-    HeapFree( GetProcessHeap(), 0, bits );
+                                      ptr, src_info, DIB_RGB_COLORS, rop );
+    HeapFree( GetProcessHeap(), 0, ptr );
     return (lines == src->height);
 
 try_get_image:
 
     if (!(dc_src = get_dc_ptr( src_dev->hdc ))) return FALSE;
     src_dev = GET_DC_PHYSDEV( dc_src, pGetImage );
-    err = src_dev->funcs->pGetImage( src_dev, 0, src_info, &src_bits, src );
+    err = src_dev->funcs->pGetImage( src_dev, 0, src_info, &bits, src );
     release_dc_ptr( dc_src );
     if (err) return FALSE;
 
     dst_dev = GET_DC_PHYSDEV( dc_dst, pPutImage );
-
-    if ((src->width != dst->width) || (src->height != dst->height))
-        FIXME( "should stretch %dx%d -> %dx%d\n",
-               src->width, src->height, dst->width, dst->height );
-
     memcpy( dst_info, src_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
-    err = dst_dev->funcs->pPutImage( dst_dev, 0, dst_info, &src_bits, src, dst, rop );
+    err = dst_dev->funcs->pPutImage( dst_dev, 0, dst_info, &bits, src, dst, rop );
     if (err == ERROR_BAD_FORMAT)
     {
         /* 1-bpp source without a color table uses the destination DC colors */
@@ -252,23 +247,32 @@ try_get_image:
         }
 
         dst_info->bmiHeader.biWidth = src->visrect.right - src->visrect.left;
-        dst_bits.ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ));
-        if (dst_bits.ptr)
+        if ((ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ))))
         {
-            dst_bits.is_copy = TRUE;
-            dst_bits.offset = 0;
-            dst_bits.free = free_heap_bits;
-            if (!(err = convert_bitmapinfo( src_info, src_bits.ptr, &src->visrect, dst_info, dst_bits.ptr )))
+            err = convert_bitmapinfo( src_info, bits.ptr, &src->visrect, dst_info, ptr );
+            if (bits.free) bits.free( &bits );
+            bits.ptr = ptr;
+            bits.is_copy = TRUE;
+            bits.offset = 0;
+            bits.free = free_heap_bits;
+            if (!err)
             {
                 /* get rid of the fake 1-bpp table */
                 if (dst_info->bmiHeader.biClrUsed == 1) dst_info->bmiHeader.biClrUsed = 0;
-                err = dst_dev->funcs->pPutImage( dst_dev, 0, dst_info, &dst_bits, src, dst, rop );
+                err = dst_dev->funcs->pPutImage( dst_dev, 0, dst_info, &bits, src, dst, rop );
             }
-            if (dst_bits.free) dst_bits.free( &dst_bits );
         }
         else err = ERROR_OUTOFMEMORY;
     }
-    if (src_bits.free) src_bits.free( &src_bits );
+
+    if (err == ERROR_TRANSFORM_NOT_SUPPORTED &&
+        ((src->width != dst->width) || (src->height != dst->height)))
+    {
+        FIXME( "should stretch %dx%d -> %dx%d\n",
+               src->width, src->height, dst->width, dst->height );
+    }
+
+    if (bits.free) bits.free( &bits );
     return !err;
 }
 

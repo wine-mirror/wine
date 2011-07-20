@@ -1898,6 +1898,7 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
     /* FIXME: could try to handle 1-bpp using XCopyPlane */
     if (!matching_color_info( dev, color_shifts, info )) goto update_format;
     if (!bits) return ERROR_SUCCESS;  /* just querying the format */
+    if ((src->width != dst->width) || (src->height != dst->height)) return ERROR_TRANSFORM_NOT_SUPPORTED;
 
     wine_tsx11_lock();
     image = XCreateImage( gdi_display, visual, depth, ZPixmap, 0, NULL,
