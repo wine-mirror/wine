@@ -1988,10 +1988,30 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetString(ID3DXBaseEffect *iface, D3DX
 static HRESULT WINAPI ID3DXBaseEffectImpl_SetTexture(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPDIRECT3DBASETEXTURE9 texture)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
 
-    FIXME("iface %p, parameter %p, texture %p stub\n", This, parameter, texture);
+    TRACE("iface %p, parameter %p, texture %p\n", This, parameter, texture);
 
-    return E_NOTIMPL;
+    if (!param) param = get_parameter_by_name(This, NULL, parameter);
+
+    if (texture && param && !param->element_count &&
+            (param->type == D3DXPT_TEXTURE || param->type == D3DXPT_TEXTURE1D
+            || param->type == D3DXPT_TEXTURE2D || param->type ==  D3DXPT_TEXTURE3D
+            || param->type == D3DXPT_TEXTURECUBE))
+    {
+        LPDIRECT3DBASETEXTURE9 oltexture = *(LPDIRECT3DBASETEXTURE9 *)param->data;
+
+        if (texture) IDirect3DBaseTexture9_AddRef(texture);
+        if (oltexture) IDirect3DBaseTexture9_Release(oltexture);
+
+        *(LPDIRECT3DBASETEXTURE9 *)param->data = texture;
+
+        return D3D_OK;
+    }
+
+    WARN("Invalid argument specified\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetTexture(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPDIRECT3DBASETEXTURE9 *texture)
