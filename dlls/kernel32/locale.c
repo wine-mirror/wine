@@ -2843,7 +2843,7 @@ INT WINAPI CompareStringW(LCID lcid, DWORD style,
  *
  * RETURNS
  *  Success: CSTR_LESS_THAN, CSTR_EQUAL or CSTR_GREATER_THAN depending on whether
- *           str2 is less than, equal to or greater than str1 respectively.
+ *           str1 is less than, equal to or greater than str2 respectively.
  *  Failure: FALSE. Use GetLastError() to determine the cause.
  */
 INT WINAPI CompareStringA(LCID lcid, DWORD style,
@@ -2914,7 +2914,7 @@ INT WINAPI CompareStringA(LCID lcid, DWORD style,
  *
  * RETURNS
  *  Success: A number less than, equal to or greater than 0 depending on whether
- *           str2 is less than, equal to or greater than str1 respectively.
+ *           str1 is less than, equal to or greater than str2 respectively.
  *  Failure: FALSE. Use GetLastError() to determine the cause.
  */
 int WINAPI lstrcmpA(LPCSTR str1, LPCSTR str2)
