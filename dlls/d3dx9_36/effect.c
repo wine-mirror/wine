@@ -880,6 +880,22 @@ static inline BOOL get_bool(void *data)
     return (*(DWORD *)data) ? TRUE : FALSE;
 }
 
+static void get_matrix(struct d3dx_parameter *param, D3DXMATRIX *matrix)
+{
+    unsigned int i, k;
+
+    for (i = 0; i < 4; ++i)
+    {
+        for (k = 0; k < 4; ++k)
+        {
+            if ((i < param->rows) && (k < param->columns))
+                matrix->m[i][k] = get_float(param->type, (float *)param->data + i * param->columns + k);
+            else
+                matrix->m[i][k] = 0.0f;
+        }
+    }
+}
+
 static struct d3dx_parameter *get_parameter_element_by_name(struct d3dx_parameter *parameter, LPCSTR name)
 {
     UINT element;
@@ -1835,10 +1851,35 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetMatrix(ID3DXBaseEffect *iface, D3DX
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetMatrix(ID3DXBaseEffect *iface, D3DXHANDLE parameter, D3DXMATRIX *matrix)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
-    FIXME("iface %p, parameter %p, matrix %p stub\n", This, parameter, matrix);
+    TRACE("iface %p, parameter %p, matrix %p\n", This, parameter, matrix);
 
-    return E_NOTIMPL;
+    if (matrix && param && !param->element_count)
+    {
+        TRACE("Class %s\n", debug_d3dxparameter_class(param->class));
+
+        switch (param->class)
+        {
+            case D3DXPC_MATRIX_ROWS:
+                get_matrix(param, matrix);
+                return D3D_OK;
+
+            case D3DXPC_SCALAR:
+            case D3DXPC_VECTOR:
+            case D3DXPC_OBJECT:
+            case D3DXPC_STRUCT:
+                break;
+
+            default:
+                FIXME("Unhandled class %s\n", debug_d3dxparameter_class(param->class));
+                break;
+        }
+    }
+
+    WARN("Invalid argument specified\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_SetMatrixArray(ID3DXBaseEffect *iface, D3DXHANDLE parameter, CONST D3DXMATRIX *matrix, UINT count)
