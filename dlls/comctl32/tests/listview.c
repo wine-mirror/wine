@@ -1793,7 +1793,7 @@ static void test_color(void)
     rect.right = rect.bottom = 1;
     r = GetUpdateRect(hwnd, &rect, TRUE);
     todo_wine expect(FALSE, r);
-    todo_wine ok(rect.right == 0 && rect.bottom == 0, "got update rectangle\n");
+    ok(rect.right == 0 && rect.bottom == 0, "got update rectangle\n");
 
     r = ValidateRect(hwnd, NULL);
     expect(TRUE, r);

@@ -7913,30 +7913,29 @@ static BOOL LISTVIEW_Scroll(LISTVIEW_INFO *infoPtr, INT dx, INT dy)
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] clrBk : background color
+ * [I] color   : background color
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_SetBkColor(LISTVIEW_INFO *infoPtr, COLORREF clrBk)
+static BOOL LISTVIEW_SetBkColor(LISTVIEW_INFO *infoPtr, COLORREF color)
 {
-    TRACE("(clrBk=%x)\n", clrBk);
+    TRACE("(color=%x)\n", color);
 
-    if(infoPtr->clrBk != clrBk) {
+    if(infoPtr->clrBk != color) {
 	if (infoPtr->clrBk != CLR_NONE) DeleteObject(infoPtr->hBkBrush);
-	infoPtr->clrBk = clrBk;
-	if (clrBk == CLR_NONE)
+	infoPtr->clrBk = color;
+	if (color == CLR_NONE)
 	    infoPtr->hBkBrush = (HBRUSH)GetClassLongPtrW(infoPtr->hwndSelf, GCLP_HBRBACKGROUND);
 	else
 	{
-	    infoPtr->hBkBrush = CreateSolidBrush(clrBk);
+	    infoPtr->hBkBrush = CreateSolidBrush(color);
 	    infoPtr->dwLvExStyle &= ~LVS_EX_TRANSPARENTBKGND;
 	}
-	LISTVIEW_InvalidateList(infoPtr);
     }
 
-   return TRUE;
+    return TRUE;
 }
 
 /* LISTVIEW_SetBkImage */
