@@ -2,9 +2,9 @@
 2 stdcall CryptUIDlgCertMgr(ptr)
 3 stub CryptUIDlgFreeCAContext
 4 stub CryptUIDlgSelectCA
-5 stub CryptUIDlgSelectCertificateA
+5 stdcall CryptUIDlgSelectCertificateA(ptr)
 6 stub CryptUIDlgSelectCertificateFromStore
-7 stub CryptUIDlgSelectCertificateW
+7 stdcall CryptUIDlgSelectCertificateW(ptr)
 8 stdcall CryptUIDlgSelectStoreA(ptr)
 9 stdcall CryptUIDlgSelectStoreW(ptr)
 10 stub CryptUIDlgViewCRLA

@@ -7043,3 +7043,15 @@ BOOL WINAPI CryptUIDlgViewSignerInfoA(CRYPTUI_VIEWSIGNERINFO_STRUCTA *pcvsi)
     FIXME("%p: stub\n", pcvsi);
     return FALSE;
 }
+
+PCCERT_CONTEXT WINAPI CryptUIDlgSelectCertificateW(PCCRYPTUI_SELECTCERTIFICATE_STRUCTW pcsc)
+{
+    FIXME("%p: stub\n", pcsc);
+    return NULL;
+}
+
+PCCERT_CONTEXT WINAPI CryptUIDlgSelectCertificateA(PCCRYPTUI_SELECTCERTIFICATE_STRUCTA pcsc)
+{
+    FIXME("%p: stub\n", pcsc);
+    return NULL;
+}
