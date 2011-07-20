@@ -176,8 +176,11 @@ static HRESULT WINAPI Host_get_ScriptName(IHost *iface, BSTR *out_ScriptName)
 
 static HRESULT WINAPI Host_get_ScriptFullName(IHost *iface, BSTR *out_ScriptFullName)
 {
-    WINE_FIXME("(%p)\n", out_ScriptFullName);
-    return E_NOTIMPL;
+    WINE_TRACE("(%p)\n", out_ScriptFullName);
+
+    if(!(*out_ScriptFullName = SysAllocString(scriptFullName)))
+        return E_OUTOFMEMORY;
+    return S_OK;
 }
 
 static HRESULT WINAPI Host_get_Arguments(IHost *iface, IArguments2 **out_Arguments)

@@ -62,6 +62,7 @@ DEFINE_EXPECT(reportSuccess);
 #define DISPID_TESTOBJ_WSCRIPTFULLNAME           10003
 #define DISPID_TESTOBJ_WSCRIPTPATH               10004
 #define DISPID_TESTOBJ_WSCRIPTSCRIPTNAME         10005
+#define DISPID_TESTOBJ_WSCRIPTSCRIPTFULLNAME     10006
 
 #define TESTOBJ_CLSID "{178fc166-f585-4e24-9c13-4bb7faf80646}"
 
@@ -152,6 +153,8 @@ static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid,
             rgDispId[i] = DISPID_TESTOBJ_WSCRIPTPATH;
         }else if(!strcmp_wa(rgszNames[i], "wscriptScriptName")) {
             rgDispId[i] = DISPID_TESTOBJ_WSCRIPTSCRIPTNAME;
+        }else if(!strcmp_wa(rgszNames[i], "wscriptScriptFullName")) {
+            rgDispId[i] = DISPID_TESTOBJ_WSCRIPTSCRIPTFULLNAME;
         }else {
             ok(0, "unexpected name %s\n", wine_dbgstr_w(rgszNames[i]));
             return DISP_E_UNKNOWNNAME;
@@ -243,6 +246,22 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         if(!res || res > sizeof(fullPath)/sizeof(WCHAR))
             return E_FAIL;
         if(!(V_BSTR(pVarResult) = SysAllocString(a2bstr(pos))))
+            return E_OUTOFMEMORY;
+        break;
+    }
+    case DISPID_TESTOBJ_WSCRIPTSCRIPTFULLNAME:
+    {
+        char fullPath[MAX_PATH];
+        long res;
+
+        ok(wFlags == INVOKE_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(pdp->cArgs == 0, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        V_VT(pVarResult) = VT_BSTR;
+        res = GetFullPathNameA(script_name, sizeof(fullPath)/sizeof(WCHAR), fullPath, NULL);
+        if(!res || res > sizeof(fullPath)/sizeof(WCHAR))
+            return E_FAIL;
+        if(!(V_BSTR(pVarResult) = SysAllocString(a2bstr(fullPath))))
             return E_OUTOFMEMORY;
         break;
     }
