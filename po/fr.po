@@ -34,8 +34,9 @@ msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
 msgstr ""
-"Impossible d'exécuter le désinstalleur « %s ». Voulez-vous supprimer "
-"l'entrée de désinstallation de ce programme de la base de registre ?"
+"Impossible d'exécuter le programme de désinstallation « %s ». Voulez-vous "
+"supprimer l'entrée de désinstallation de ce programme de la base de "
+"registre ?"
 
 #: appwiz.rc:33
 msgid "Not specified"
@@ -4473,7 +4474,7 @@ msgstr "Fichier journal d'événements modifié\n"
 
 #: winerror.mc:2726
 msgid "Installer service failed.\n"
-msgstr "Échec du service d'installation\n"
+msgstr "Échec du service d'installation.\n"
 
 #: winerror.mc:2731
 msgid "Installation aborted by user\n"
@@ -5845,7 +5846,7 @@ msgstr "mm"
 #: sane.rc:34
 msgctxt "unit: dots/inch"
 msgid "dpi"
-msgstr "dpi"
+msgstr "ppp"
 
 #: sane.rc:35
 msgctxt "unit: percent"
@@ -5895,7 +5896,7 @@ msgstr "&Copier l'arrière-plan"
 
 #: shdoclc.rc:44
 msgid "Set as &Desktop Item"
-msgstr "Définir comme élément du &Bureau..."
+msgstr "Définir comme élément du &Bureau"
 
 #: shdoclc.rc:46 shdoclc.rc:95 shdoclc.rc:117 user32.rc:62
 msgid "Select &All"
@@ -6095,7 +6096,7 @@ msgstr "Retour arrière"
 
 #: shdoclc.rc:194
 msgid "Debug"
-msgstr "Déboguage"
+msgstr "Débogage"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6262,7 +6263,7 @@ msgstr "&Imprimer..."
 
 #: shdocvw.rc:37 wordpad.rc:34
 msgid "Print previe&w"
-msgstr "&Aperçu avant impression..."
+msgstr "&Aperçu avant impression"
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6301,7 +6302,7 @@ msgstr "Aid&e"
 
 #: shdocvw.rc:57
 msgid "&About Internet Explorer"
-msgstr "À &propos d'Internet Explorer..."
+msgstr "À &propos d'Internet Explorer"
 
 #: shdocvw.rc:67
 msgctxt "home page"
@@ -6802,6 +6803,7 @@ msgid ""
 "Do you want to replace it?"
 msgstr ""
 "Un fichier existe déjà dans le chemin %1.\n"
+"\n"
 "Voulez-vous le remplacer ?"
 
 #: shell32.rc:259
@@ -6811,6 +6813,7 @@ msgid ""
 "Do you want to replace it?"
 msgstr ""
 "Un dossier existe déjà dans le chemin %1.\n"
+"\n"
 "Voulez-vous le remplacer ?"
 
 #: shell32.rc:260
@@ -6857,7 +6860,7 @@ msgstr "Corbeille"
 
 #: shlwapi.rc:27
 msgid "%ld bytes"
-msgstr "%ld bytes"
+msgstr "%ld octets"
 
 #: shlwapi.rc:28
 msgid " hr"
@@ -7069,7 +7072,7 @@ msgid ""
 "Windows SYSTEM directory, and then try again."
 msgstr ""
 "La configuration MIDI actuelle est altérée. Copiez le fichier MIDIMAP.CFG "
-"original dans le réportoire Windows SYSTEM, puis réessayez."
+"original dans le répertoire Windows SYSTEM, puis réessayez."
 
 #: winmm.rc:56
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
@@ -7106,8 +7109,9 @@ msgid ""
 "Quit one or more applications to increase available memory, and then try "
 "again."
 msgstr ""
-"Mémoire insuffisante pour cette tâche. Quittez un ou plusieurs programmes, "
-"puis essayez à nouveau."
+"Mémoire insuffisante pour cette tâche.\n"
+"Quittez un ou plusieurs programmes pour libérer de la mémoire, puis essayez "
+"à nouveau."
 
 #: winmm.rc:62
 msgid ""
@@ -7153,7 +7157,7 @@ msgid ""
 "manufacturer about obtaining a new driver."
 msgstr ""
 "Le pilote de périphérique a renvoyé une réponse de type non valide. "
-"Contactez le constructeur du périphérique pour obtenir un nouveau pilote"
+"Contactez le constructeur du périphérique pour obtenir un nouveau pilote."
 
 #: winmm.rc:69
 msgid ""
@@ -7161,7 +7165,7 @@ msgid ""
 "manufacturer about obtaining a new driver."
 msgstr ""
 "Le pilote de périphérique présente un problème. Contactez le constructeur du "
-"périphérique pour obtenir un nouveau pilote"
+"périphérique pour obtenir un nouveau pilote."
 
 #: winmm.rc:70
 msgid "The specified command requires a parameter. Please supply one."
@@ -7475,7 +7479,7 @@ msgid ""
 "The device you are trying to play to cannot recognize the current file "
 "format."
 msgstr ""
-"Ce périphérique ne parvient pas à reconnaître le format du fichier actuel. "
+"Ce périphérique ne parvient pas à reconnaître le format du fichier actuel."
 
 #: winmm.rc:116
 #, fuzzy
@@ -7892,12 +7896,11 @@ msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
-"CD <rép> est la version courte de CHDIR. Elle change le répertoire courant "
-"par défaut.\n"
+"CD <rép> est la version courte de CHDIR. Elle change le répertoire courant.\n"
 
 #: cmd.rc:42
 msgid "CHDIR <dir> changes the current default directory.\n"
-msgstr "CHDIR <rép> change le répertoire courant par défaut.\n"
+msgstr "CHDIR <rép> change le répertoire courant.\n"
 
 #: cmd.rc:44
 msgid "CLS clears the console screen.\n"
@@ -8051,10 +8054,12 @@ msgid ""
 "\n"
 "MOVE fails if the old and new locations are on different DOS drive letters.\n"
 msgstr ""
-"MOVE déplace un fichier, un groupe de fichiers ou un répertoire\n"
-"à un autre endroit dans le système de fichiers. Si l'objet déplacé est un "
-"répertoire, alors\n"
-"tous ses fichiers et sous-répertoires sont également déplacés.\n"
+"MOVE déplace un fichier ou un répertoire vers un autre point du système\n"
+"de fichiers.\n"
+"\n"
+"Si l'objet déplacé est un répertoire, alors tous ses fichiers et\n"
+"sous-répertoires sont également déplacés.\n"
+"\n"
 "MOVE échoue si l'ancien et le nouvel emplacement sont sur des lecteurs DOS "
 "différents.\n"
 
@@ -8191,16 +8196,16 @@ msgstr ""
 "\n"
 "SET <variable>=<valeur>\n"
 "\n"
-"où <variable> et <valeur> sont des chaînes de caractères. Il ne peut y avoir "
-"aucun\n"
-"espace autour du signe '=', ni dans <variable>.\n"
+"où <variable> et <valeur> sont des chaînes de caractères. Il ne peut y "
+"avoir\n"
+"aucun espace autour du signe '=', ni dans <variable>.\n"
 "\n"
-"\n"
-"Sous Wine, l'environnement du système hôte est\n"
-"inclus dans l'environnement Win32, il y aura par conséquent généralement\n"
-"bien plus de valeurs que dans un système Win32 natif. Notez qu'il\n"
-"n'est pas possible de modifier l'environnement du système d'exploitation "
-"dans cmd.\n"
+"Sous Wine, l'environnement du système hôte est inclus dans l'environnement\n"
+"Win32, il y aura par conséquent généralement bien plus de valeurs que dans "
+"un\n"
+"système Win32 natif. Notez qu'il n'est pas possible de modifier "
+"l'environnement\n"
+"du système d'exploitation dans cmd.\n"
 
 #: cmd.rc:184
 msgid ""
@@ -8244,9 +8249,8 @@ msgid ""
 "The verify flag has no function in Wine.\n"
 msgstr ""
 "VERIFY est utilisé pour positionner, effacer ou tester l'indicateur de "
-"vérification.\n"
+"vérification. Les formes suivantes sont correctes :\n"
 "\n"
-"Les formes suivantes sont correctes :\n"
 "VERIFY ON\tPositionne l'indicateur\n"
 "VERIFY OFF\tEfface l'indicateur\n"
 "VERIFY\t\tAffiche l'état ON ou OFF de l'indicateur.\n"
@@ -8259,7 +8263,7 @@ msgstr "VER affiche la version de cmd utilisée.\n"
 
 #: cmd.rc:206
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "VOL affiche le nom de volume d'un lecteur de disque\n"
+msgstr "VOL affiche le nom de volume d'un lecteur de disque.\n"
 
 #: cmd.rc:209
 msgid ""
@@ -8337,7 +8341,7 @@ msgstr ""
 "Les commandes intégrées de CMD sont :\n"
 "ATTRIB\t\tAffiche ou modifie les attributs de fichiers DOS\n"
 "CALL\t\tInvoque un fichier batch à l'intérieur d'un autre\n"
-"CD (CHDIR)\tChange le répertoire courant par défaut\n"
+"CD (CHDIR)\tChange le répertoire courant\n"
 "CHOICE\t\tAttend l'appui d'une touche appartenant à une liste configurable\n"
 "CLS\t\tEfface l'écran\n"
 "COPY\t\tCopie un ou plusieurs fichiers\n"
@@ -8351,7 +8355,8 @@ msgstr ""
 "MORE\t\tAffiche du texte par pages\n"
 "MOVE\t\tDéplace un fichier, un groupe de fichiers ou un répertoire\n"
 "PATH\t\tRègle ou affiche le chemin de recherche\n"
-"POPD\t\tRemplace le répertoire courant par le dernier enregistré avec PUSHD\n"
+"POPD\t\tRemplace le répertoire courant par le dernier enregistré avec\n"
+"\t\tPUSHD\n"
 "PROMPT\t\tChange l'invite de commande\n"
 "PUSHD\t\tChange de répertoire en enregistrant le répertoire courant\n"
 "REN (RENAME)\tRenomme un fichier\n"
@@ -8836,7 +8841,8 @@ msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
 msgstr ""
-"Vous n'avez pas entré de texte. Veuillez taper quelque chose et recommencer"
+"Vous n'avez pas entré de texte.\n"
+"Veuillez taper quelque chose et recommencer"
 
 #: notepad.rc:83
 msgid ""
@@ -8868,8 +8874,7 @@ msgid ""
 "Close one or more applications to increase the amount of free memory."
 msgstr ""
 "Pas assez de mémoire pour terminer cette tâche.\n"
-"Fermez une ou plusieurs applications pour libérer\n"
-"de la mémoire."
+"Fermez une ou plusieurs applications pour libérer de la mémoire."
 
 #: notepad.rc:90
 msgid "Unicode (UTF-16)"
@@ -9210,7 +9215,7 @@ msgstr "E&xécuter..."
 
 #: progman.rc:39
 msgid "E&xit Windows"
-msgstr "&Quitter Windows..."
+msgstr "&Quitter Windows"
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
@@ -9670,7 +9675,7 @@ msgid ""
 "This is free software, and you are welcome to redistribute it\n"
 "under certain conditions; run 'start /L' for details.\n"
 msgstr ""
-"Lancer un programme, ou ouvrir un document avec le programme normalement "
+"Lance un programme, ou ouvre un document avec le programme normalement "
 "associé à cette extension.\n"
 "Usage :\n"
 "start [options] fichier_programme [...]\n"
@@ -9681,18 +9686,22 @@ msgstr ""
 "/MAX[imized]       Lancer le programme maximisé.\n"
 "/R[estored]        Lancer le programme normalement (ni minimisé ni "
 "maximisé).\n"
-"/W[ait]            Attendre que le programme lancé se termine, puis renvoyer "
-"son code de sortie.\n"
-"/ProgIDOpen progID Ouvrir un document en utilisant le programme identifié "
-"par progID.\n"
+"/W[ait]            Attendre que le programme lancé se termine, puis "
+"renvoyer\n"
+"                   son code de sortie.\n"
+"/Unix              Utiliser un chemin Unix et lancer le fichier comme "
+"windows\n"
+"                   explorer.\n"
+"/ProgIDOpen progID Ouvrir un document en utilisant le programme identifié\n"
+"                   par progID.\n"
 "/L                 Afficher la licence d'utilisation.\n"
 "/?                 Afficher cette aide et se terminer.\n"
 "\n"
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"Start est fourni sans AUCUNE GARANTIE ; pour les détails lancez avec "
+"Start est fourni sans AUCUNE GARANTIE ; pour plus de détails lancez le avec\n"
 "l'option /L.\n"
 "Ceci est un logiciel libre, et vous êtes invité à le redistribuer\n"
-"sous certaines conditions ; lancez « start /L » pour les détails.\n"
+"sous certaines conditions ; lancez « start /L » pour plus de détails.\n"
 
 #: start.rc:64
 msgid ""
@@ -9955,7 +9964,7 @@ msgstr "Gestionnaire des tâches"
 
 #: taskmgr.rc:182
 msgid "Create New Task"
-msgstr "Nouvelle tâche..."
+msgstr "Nouvelle tâche"
 
 #: taskmgr.rc:187
 msgid "Runs a new program"
@@ -10346,7 +10355,7 @@ msgstr "Trace"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
-msgstr "Désinstalleur d'applications de Wine"
+msgstr "Programme de désinstallation des applications Wine"
 
 #: uninstaller.rc:27
 msgid ""
@@ -10400,7 +10409,7 @@ msgstr "Lecteurs"
 
 #: winecfg.rc:41
 msgid "Select the unix target directory, please."
-msgstr "Veuillez sélectionner le répertoire de destination Unix :"
+msgstr "Veuillez sélectionner le répertoire Unix cible."
 
 #: winecfg.rc:43
 msgid "Show &Advanced"
@@ -10904,8 +10913,9 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Exemple : « wineconsole cmd » démarre l'interpréteur de commandes de Wine "
-"dans une console Wine\n"
+"Exemple :\n"
+"  wineconsole cmd\n"
+"Démarre l'interpréteur de commandes de Wine dans une console Wine\n"
 "\n"
 
 #: winedbg.rc:35
@@ -11022,7 +11032,7 @@ msgstr "Gestionnaire de fichiers de Wine"
 
 #: winefile.rc:101
 msgid "root fs"
-msgstr "root fs"
+msgstr "fs racine"
 
 #: winefile.rc:102
 msgid "unixfs"
