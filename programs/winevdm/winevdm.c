@@ -184,7 +184,8 @@ static void start_dosbox( const char *appname, const char *args )
             p += sprintf( p, "mount %c %s/dosdevices/%c:\n", 'a' + i, config_dir, 'a' + i );
     p += sprintf( p, "%c:\ncd ", path[0] );
     p += WideCharToMultiByte( CP_UNIXCP, 0, path + 2, -1, p, 4 * strlenW(path), NULL, NULL ) - 1;
-    p += sprintf( p, "\n%s %s\n", appname, args );
+    p += sprintf( p, "\nconfig -securemode\n" );
+    p += sprintf( p, "%s %s\n", appname, args );
     p += sprintf( p, "exit\n" );
     if (WriteFile( file, buffer, strlen(buffer), &written, NULL ) && written == strlen(buffer))
     {
