@@ -28,6 +28,7 @@
 #include "wscript.h"
 
 #include <wine/debug.h>
+#include <wine/unicode.h>
 
 #define BUILDVERSION 16535
 
@@ -127,8 +128,19 @@ static HRESULT WINAPI Host_get_FullName(IHost *iface, BSTR *out_Path)
 
 static HRESULT WINAPI Host_get_Path(IHost *iface, BSTR *out_Path)
 {
-    WINE_FIXME("(%p)\n", out_Path);
-    return E_NOTIMPL;
+    WCHAR path[MAX_PATH];
+    int howMany;
+    WCHAR *pos;
+
+    WINE_TRACE("(%p)\n", out_Path);
+
+    if(GetModuleFileNameW(NULL, path, sizeof(path)/sizeof(WCHAR)) == 0)
+        return E_FAIL;
+    pos = strrchrW(path, '\\');
+    howMany = pos - path;
+    if(!(*out_Path = SysAllocStringLen(path, howMany)))
+        return E_OUTOFMEMORY;
+    return S_OK;
 }
 
 static HRESULT WINAPI Host_get_Interactive(IHost *iface, VARIANT_BOOL *out_Interactive)

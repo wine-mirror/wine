@@ -60,6 +60,7 @@ DEFINE_EXPECT(reportSuccess);
 #define DISPID_TESTOBJ_TRACE                     10001
 #define DISPID_TESTOBJ_REPORTSUCCESS             10002
 #define DISPID_TESTOBJ_WSCRIPTFULLNAME           10003
+#define DISPID_TESTOBJ_WSCRIPTPATH               10004
 
 #define TESTOBJ_CLSID "{178fc166-f585-4e24-9c13-4bb7faf80646}"
 
@@ -73,6 +74,17 @@ static int strcmp_wa(LPCWSTR strw, const char *stra)
     WCHAR buf[512];
     MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(WCHAR));
     return lstrcmpW(strw, buf);
+}
+
+static const WCHAR* mystrrchr(const WCHAR *str, WCHAR ch)
+{
+    const WCHAR *pos = NULL, *current = str;
+    while(*current != 0) {
+        if(*current == ch)
+            pos = current;
+        ++current;
+    }
+    return pos;
 }
 
 static HRESULT WINAPI Dispatch_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
@@ -123,6 +135,8 @@ static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid,
             rgDispId[i] = DISPID_TESTOBJ_REPORTSUCCESS;
         }else if(!strcmp_wa(rgszNames[i], "wscriptFullName")) {
             rgDispId[i] = DISPID_TESTOBJ_WSCRIPTFULLNAME;
+        }else if(!strcmp_wa(rgszNames[i], "wscriptPath")) {
+            rgDispId[i] = DISPID_TESTOBJ_WSCRIPTPATH;
         }else {
             ok(0, "unexpected name %s\n", wine_dbgstr_w(rgszNames[i]));
             return DISP_E_UNKNOWNNAME;
@@ -178,6 +192,25 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         if(res == 0)
             return E_FAIL;
         if(!(V_BSTR(pVarResult) = SysAllocString(fullName)))
+            return E_OUTOFMEMORY;
+        break;
+    }
+    case DISPID_TESTOBJ_WSCRIPTPATH:
+    {
+        WCHAR fullPath[MAX_PATH];
+        const WCHAR wscriptexe[] = {'w','s','c','r','i','p','t','.','e','x','e',0};
+        DWORD res;
+        const WCHAR *pos;
+
+        ok(wFlags == INVOKE_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(pdp->cArgs == 0, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        V_VT(pVarResult) = VT_BSTR;
+        res = SearchPathW(NULL, wscriptexe, NULL, sizeof(fullPath)/sizeof(WCHAR), fullPath, NULL);
+        if(res == 0)
+            return E_FAIL;
+        pos = mystrrchr(fullPath, '\\');
+        if(!(V_BSTR(pVarResult) = SysAllocStringLen(fullPath, pos-fullPath)))
             return E_OUTOFMEMORY;
         break;
     }
