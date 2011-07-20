@@ -672,8 +672,23 @@ BOOL PSDRV_WriteRGB(PHYSDEV dev, COLORREF *map, int number)
     return TRUE;
 }
 
+BOOL PSDRV_WriteRGBQUAD(PHYSDEV dev, const RGBQUAD *rgb, int number)
+{
+    char *buf = HeapAlloc(PSDRV_Heap, 0, number * 7 + 1), *ptr;
+    int i;
+
+    ptr = buf;
+    for(i = 0; i < number; i++)
+        ptr += sprintf(ptr, "%02x%02x%02x%c", rgb->rgbRed, rgb->rgbGreen, rgb->rgbBlue,
+                       ((i & 0x7) == 0x7) || (i == number - 1) ? '\n' : ' ');
+
+    PSDRV_WriteSpool(dev, buf, ptr - buf);
+    HeapFree(PSDRV_Heap, 0, buf);
+    return TRUE;
+}
+
 static BOOL PSDRV_WriteImageDict(PHYSDEV dev, WORD depth,
-				 INT widthSrc, INT heightSrc, char *bits)
+				 INT widthSrc, INT heightSrc, char *bits, BOOL top_down)
 {
     static const char start[] = "<<\n"
       " /ImageType 1\n /Width %d\n /Height %d\n /BitsPerComponent %d\n"
@@ -687,8 +702,12 @@ static BOOL PSDRV_WriteImageDict(PHYSDEV dev, WORD depth,
 
     char *buf = HeapAlloc(PSDRV_Heap, 0, 1000);
 
-    sprintf(buf, start, widthSrc, heightSrc,
-	    (depth < 8) ? depth : 8, widthSrc, -heightSrc, heightSrc);
+    if (top_down)
+        sprintf(buf, start, widthSrc, heightSrc,
+                (depth < 8) ? depth : 8, widthSrc, heightSrc, 0);
+    else
+        sprintf(buf, start, widthSrc, heightSrc,
+                (depth < 8) ? depth : 8, widthSrc, -heightSrc, heightSrc);
 
     PSDRV_WriteSpool(dev, buf, strlen(buf));
 
@@ -725,7 +744,7 @@ static BOOL PSDRV_WriteImageDict(PHYSDEV dev, WORD depth,
 
 BOOL PSDRV_WriteImage(PHYSDEV dev, WORD depth, INT xDst, INT yDst,
 		      INT widthDst, INT heightDst, INT widthSrc,
-		      INT heightSrc, BOOL mask)
+		      INT heightSrc, BOOL mask, BOOL top_down)
 {
     static const char start[] = "%d %d translate\n%d %d scale\n";
     static const char image[] = "image\n";
@@ -734,7 +753,7 @@ BOOL PSDRV_WriteImage(PHYSDEV dev, WORD depth, INT xDst, INT yDst,
 
     sprintf(buf, start, xDst, yDst, widthDst, heightDst);
     PSDRV_WriteSpool(dev, buf, strlen(buf));
-    PSDRV_WriteImageDict(dev, depth, widthSrc, heightSrc, NULL);
+    PSDRV_WriteImageDict(dev, depth, widthSrc, heightSrc, NULL, top_down);
     if(mask)
         PSDRV_WriteSpool(dev, imagemask, sizeof(imagemask) - 1);
     else
@@ -835,7 +854,7 @@ BOOL PSDRV_WritePatternDict(PHYSDEV dev, BITMAP *bm, BYTE *bits)
 	}
     }
     PSDRV_WriteSpool(dev, mypat, sizeof(mypat) - 1);
-    PSDRV_WriteImageDict(dev, 1, 8, 8, buf);
+    PSDRV_WriteImageDict(dev, 1, 8, 8, buf, FALSE);
     PSDRV_WriteSpool(dev, "def\n", 4);
 
     PSDRV_WriteIndexColorSpaceBegin(dev, 1);
@@ -892,7 +911,7 @@ BOOL PSDRV_WriteDIBPatternDict(PHYSDEV dev, BITMAPINFO *bmi, UINT usage)
 	}
     }
     PSDRV_WriteSpool(dev, mypat, sizeof(mypat) - 1);
-    PSDRV_WriteImageDict(dev, 1, 8, 8, buf);
+    PSDRV_WriteImageDict(dev, 1, 8, 8, buf, FALSE);
     PSDRV_WriteSpool(dev, "def\n", 4);
 
     PSDRV_WriteIndexColorSpaceBegin(dev, 1);
