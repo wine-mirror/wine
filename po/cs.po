@@ -101,11 +101,11 @@ msgstr ""
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
-msgstr "Waveform: %s"
+msgstr ""
 
 #: avifil32.rc:28
 msgid "Waveform"
-msgstr "Waveform"
+msgstr ""
 
 #: avifil32.rc:29
 msgid "All multimedia files"
@@ -1640,7 +1640,7 @@ msgstr ""
 
 #: cryptui.rc:62 shell32.rc:251 ipconfig.rc:41
 msgid "Description"
-msgstr "Description"
+msgstr ""
 
 #: cryptui.rc:63
 #, fuzzy
@@ -2088,7 +2088,7 @@ msgstr "&Obsah"
 
 #: hhctrl.rc:29
 msgid "I&ndex"
-msgstr "I&ndex"
+msgstr ""
 
 #: hhctrl.rc:30 notepad.rc:52
 #, fuzzy
@@ -6055,7 +6055,7 @@ msgstr ""
 
 #: shdoclc.rc:36
 msgid "Default"
-msgstr "Default"
+msgstr ""
 
 #: shdoclc.rc:39
 #, fuzzy
@@ -6203,7 +6203,7 @@ msgstr ""
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
-msgstr "&Select"
+msgstr ""
 
 #: shdoclc.rc:102
 msgid "&Cell"
@@ -6623,9 +6623,8 @@ msgid "E&xit"
 msgstr "&Konec"
 
 #: shell32.rc:127
-#, fuzzy
 msgid "&About Control Panel"
-msgstr "&About Control Panel..."
+msgstr ""
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:113
 msgid "Size"
@@ -6653,23 +6652,23 @@ msgstr "Komentář"
 
 #: shell32.rc:143
 msgid "Owner"
-msgstr "Owner"
+msgstr ""
 
 #: shell32.rc:144
 msgid "Group"
-msgstr "Group"
+msgstr ""
 
 #: shell32.rc:145
 msgid "Original location"
-msgstr "Original location"
+msgstr ""
 
 #: shell32.rc:146
 msgid "Date deleted"
-msgstr "Date deleted"
+msgstr ""
 
 #: shell32.rc:156
 msgid "Control Panel"
-msgstr "Control Panel"
+msgstr ""
 
 #: shell32.rc:163
 msgid "Select"
@@ -6939,32 +6938,27 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"This folder already contains a file called '%1'.\n"
-"\n"
-"Do you want to replace it?"
 
 #: shell32.rc:172
 msgid "Are you sure you want to delete the selected item(s)?"
-msgstr "Are you sure you want to delete the selected item(s)?"
+msgstr ""
 
 #: shell32.rc:174
 msgid ""
 "Are you sure that you want to send '%1' and all its content to the Trash?"
 msgstr ""
-"Are you sure that you want to send '%1' and all its content to the Trash?"
 
 #: shell32.rc:173
 msgid "Are you sure that you want to send '%1' to the Trash?"
-msgstr "Are you sure that you want to send '%1' to the Trash?"
+msgstr ""
 
 #: shell32.rc:175
 msgid "Are you sure that you want to send these %1 items to the Trash?"
-msgstr "Are you sure that you want to send these %1 items to the Trash?"
+msgstr ""
 
 #: shell32.rc:176
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 msgstr ""
-"The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 
 #: shell32.rc:179
 msgid ""
@@ -6974,19 +6968,14 @@ msgid ""
 "selected folder they will be replaced. Do you still want to move or copy\n"
 "the folder?"
 msgstr ""
-"This folder already contains a folder named '%1'.\n"
-"\n"
-"If the files in the destination folder have the same names as files in the\n"
-"selected folder they will be replaced. Do you still want to move or copy\n"
-"the folder?"
 
 #: shell32.rc:247
 msgid "New Folder"
-msgstr "New Folder"
+msgstr ""
 
 #: shell32.rc:249
 msgid "Wine Control Panel"
-msgstr "Wine Control Panel"
+msgstr ""
 
 #: shell32.rc:191
 msgid "Unable to display Run File dialog box (internal error)"
@@ -8437,20 +8426,16 @@ msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <directoryname> saves the current directory onto a\n"
-"stack, and then changes the current directory to the supplied one.\n"
 
 #: cmd.rc:212
 msgid ""
 "POPD changes current directory to the last one saved with\n"
 "PUSHD.\n"
 msgstr ""
-"POPD changes current directory to the last one saved with\n"
-"PUSHD.\n"
 
 #: cmd.rc:214
 msgid "MORE displays output of files or piped input in pages.\n"
-msgstr "MORE displays output of files or piped input in pages.\n"
+msgstr ""
 
 #: cmd.rc:218
 msgid ""
@@ -8536,7 +8521,7 @@ msgstr ""
 
 #: cmd.rc:255
 msgid "Are you sure"
-msgstr "Are you sure"
+msgstr ""
 
 #: cmd.rc:256 xcopy.rc:40
 msgctxt "Yes key"
@@ -8550,80 +8535,77 @@ msgstr "N"
 
 #: cmd.rc:258
 msgid "File association missing for extension %s\n"
-msgstr "File association missing for extension %s\n"
+msgstr ""
 
 #: cmd.rc:259
 msgid "No open command associated with file type '%s'\n"
-msgstr "No open command associated with file type '%s'\n"
+msgstr ""
 
 #: cmd.rc:260
 msgid "Overwrite %s"
-msgstr "Overwrite %s"
+msgstr ""
 
 #: cmd.rc:261
 msgid "More..."
-msgstr "More..."
+msgstr ""
 
 #: cmd.rc:262
 msgid "Line in Batch processing possibly truncated. Using:\n"
-msgstr "Line in Batch processing possibly truncated. Using:\n"
+msgstr ""
 
 #: cmd.rc:263
 msgid ""
 "Not Yet Implemented\n"
 "\n"
 msgstr ""
-"Not Yet Implemented\n"
-"\n"
 
 #: cmd.rc:264
 msgid "Argument missing\n"
-msgstr "Argument missing\n"
+msgstr ""
 
 #: cmd.rc:265
 msgid "Syntax error\n"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: cmd.rc:266
-#, fuzzy
 msgid "%s: File Not Found\n"
-msgstr "%s : File Not Found\n"
+msgstr ""
 
 #: cmd.rc:267
 msgid "No help available for %s\n"
-msgstr "No help available for %s\n"
+msgstr ""
 
 #: cmd.rc:268
 msgid "Target to GOTO not found\n"
-msgstr "Target to GOTO not found\n"
+msgstr ""
 
 #: cmd.rc:269
 msgid "Current Date is %s\n"
-msgstr "Current Date is %s\n"
+msgstr ""
 
 #: cmd.rc:270
 msgid "Current Time is %s\n"
-msgstr "Current Time is %s\n"
+msgstr ""
 
 #: cmd.rc:271
 msgid "Enter new date: "
-msgstr "Enter new date: "
+msgstr ""
 
 #: cmd.rc:272
 msgid "Enter new time: "
-msgstr "Enter new time: "
+msgstr ""
 
 #: cmd.rc:273
 msgid "Environment variable %s not defined\n"
-msgstr "Environment variable %s not defined\n"
+msgstr ""
 
 #: cmd.rc:274 xcopy.rc:38
 msgid "Failed to open '%s'\n"
-msgstr "Failed to open '%s'\n"
+msgstr ""
 
 #: cmd.rc:275
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr "Cannot call batch label outside of a batch script\n"
+msgstr ""
 
 #: cmd.rc:276 xcopy.rc:42
 msgctxt "All key"
@@ -8632,23 +8614,23 @@ msgstr "A"
 
 #: cmd.rc:277
 msgid "%s, Delete"
-msgstr "%s, Delete"
+msgstr ""
 
 #: cmd.rc:278
 msgid "Echo is %s\n"
-msgstr "Echo is %s\n"
+msgstr ""
 
 #: cmd.rc:279
 msgid "Verify is %s\n"
-msgstr "Verify is %s\n"
+msgstr ""
 
 #: cmd.rc:280
 msgid "Verify must be ON or OFF\n"
-msgstr "Verify must be ON or OFF\n"
+msgstr ""
 
 #: cmd.rc:281
 msgid "Parameter error\n"
-msgstr "Parameter error\n"
+msgstr ""
 
 #: cmd.rc:282
 msgid ""
@@ -8656,25 +8638,22 @@ msgid ""
 "Volume Serial Number is %04x-%04x\n"
 "\n"
 msgstr ""
-"Volume in drive %c is %s\n"
-"Volume Serial Number is %04x-%04x\n"
-"\n"
 
 #: cmd.rc:283
 msgid "Volume label (11 characters, ENTER for none)?"
-msgstr "Volume label (11 characters, ENTER for none)?"
+msgstr ""
 
 #: cmd.rc:284
 msgid "PATH not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: cmd.rc:285
 msgid "Press Return key to continue: "
-msgstr "Press Return key to continue: "
+msgstr ""
 
 #: cmd.rc:286
 msgid "Wine Command Prompt"
-msgstr "Wine Command Prompt"
+msgstr ""
 
 #: cmd.rc:287
 msgid "CMD Version %s\n"
@@ -8682,11 +8661,11 @@ msgstr "CMD Version %s\n"
 
 #: cmd.rc:288
 msgid "More? "
-msgstr "More? "
+msgstr ""
 
 #: cmd.rc:289
 msgid "The input line is too long.\n"
-msgstr "The input line is too long.\n"
+msgstr ""
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -9588,7 +9567,7 @@ msgstr "&DWORD položka"
 
 #: regedit.rc:51 regedit.rc:102
 msgid "&Multi String Value"
-msgstr "&Multi String Value"
+msgstr ""
 
 #: regedit.rc:52 regedit.rc:103
 #, fuzzy
@@ -9640,7 +9619,7 @@ msgstr "Upravit binární data"
 
 #: regedit.rc:109
 msgid "&Export..."
-msgstr "&Export..."
+msgstr ""
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
@@ -9729,7 +9708,7 @@ msgstr "Ukáže nebo skryje status bar"
 
 #: regedit.rc:164
 msgid "Change position of split between two panes"
-msgstr "Change position of split between two panes"
+msgstr ""
 
 #: regedit.rc:165
 msgid "Refreshes the window"
@@ -9813,11 +9792,11 @@ msgstr "Opravdu chcete smazat položku '%s'?"
 
 #: regedit.rc:186
 msgid "Search string '%s' not found"
-msgstr "Search string '%s' not found"
+msgstr ""
 
 #: regedit.rc:183
 msgid "Are you sure you want to delete these values?"
-msgstr "Are you sure you want to delete these values?"
+msgstr ""
 
 #: regedit.rc:184
 msgid "New Key #%d"
@@ -9933,7 +9912,7 @@ msgstr ""
 
 #: start.rc:68
 msgid "Could not translate the specified Unix filename to a DOS filename."
-msgstr "Could not translate the specified Unix filename to a DOS filename."
+msgstr ""
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
@@ -11124,7 +11103,7 @@ msgstr ""
 
 #: winefile.rc:44
 msgid "&Disk"
-msgstr "&Disk"
+msgstr ""
 
 #: winefile.rc:45
 #, fuzzy
@@ -11239,7 +11218,7 @@ msgstr "Datum poslední modifikace"
 
 #: winefile.rc:117
 msgid "Index/Inode"
-msgstr "Index/Inode"
+msgstr ""
 
 #: winefile.rc:120
 msgid "Security"
@@ -11271,7 +11250,7 @@ msgstr "&Pokročilý"
 
 #: winemine.rc:41
 msgid "&Expert"
-msgstr "&Expert"
+msgstr ""
 
 #: winemine.rc:42
 msgid "&Custom..."
@@ -11317,19 +11296,19 @@ msgstr "Při&dat..."
 
 #: winhlp32.rc:45
 msgid "History"
-msgstr "History"
+msgstr ""
 
 #: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
-msgstr "Small"
+msgstr ""
 
 #: winhlp32.rc:49 winhlp32.rc:70
 msgid "Normal"
-msgstr "Normal"
+msgstr ""
 
 #: winhlp32.rc:50 winhlp32.rc:71
 msgid "Large"
-msgstr "Large"
+msgstr ""
 
 #: winhlp32.rc:54
 #, fuzzy
@@ -11364,7 +11343,7 @@ msgstr "Nelze přečíst soubor nápovědy `%s'"
 
 #: winhlp32.rc:85
 msgid "Summary"
-msgstr "Summary"
+msgstr ""
 
 #: winhlp32.rc:84
 msgid "&Index"
@@ -11376,11 +11355,11 @@ msgstr "Soubory nápovědy (*.hlp)"
 
 #: winhlp32.rc:89
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr "Cannot find '%s'. Do you want to find this file yourself?"
+msgstr ""
 
 #: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
-msgstr "Cannot find a richedit implementation... Aborting"
+msgstr ""
 
 #: winhlp32.rc:91
 msgid "Help topics: "
