@@ -1916,10 +1916,12 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
         image->data = dst_bits.ptr;
         if (bitmap)
         {
+            X11DRV_DIB_Lock( bitmap, DIB_Status_GdiMod );
             wine_tsx11_lock();
             XPutImage( gdi_display, bitmap->pixmap, get_bitmap_gc(depth), image, dst_bits.offset, 0,
                        rect->left, rect->top, width, height );
             wine_tsx11_unlock();
+            X11DRV_DIB_Unlock( bitmap, TRUE );
         }
         else
         {
