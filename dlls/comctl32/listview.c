@@ -8894,23 +8894,18 @@ static INT LISTVIEW_SetSelectionMark(LISTVIEW_INFO *infoPtr, INT nIndex)
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] clrTextBk : text background color
+ * [I] color   : text background color
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_SetTextBkColor(LISTVIEW_INFO *infoPtr, COLORREF clrTextBk)
+static BOOL LISTVIEW_SetTextBkColor(LISTVIEW_INFO *infoPtr, COLORREF color)
 {
-    TRACE("(clrTextBk=%x)\n", clrTextBk);
+    TRACE("(color=%x)\n", color);
 
-    if (infoPtr->clrTextBk != clrTextBk)
-    {
-	infoPtr->clrTextBk = clrTextBk;
-	LISTVIEW_InvalidateList(infoPtr);
-    }
-    
-  return TRUE;
+    infoPtr->clrTextBk = color;
+    return TRUE;
 }
 
 /***

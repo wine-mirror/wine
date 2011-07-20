@@ -1748,8 +1748,7 @@ static void test_icon_spacing(void)
 
 static void test_color(void)
 {
-    /* SETBKCOLOR/GETBKCOLOR, SETTEXTCOLOR/GETTEXTCOLOR, SETTEXTBKCOLOR/GETTEXTBKCOLOR */
-
+    RECT rect;
     HWND hwnd;
     DWORD r;
     int i;
@@ -1768,23 +1767,54 @@ static void test_color(void)
 
         r = SendMessage(hwnd, LVM_SETBKCOLOR, 0, color);
         expect(TRUE, r);
-        r = SendMessage(hwnd, LVM_GETBKCOLOR, 0, color);
+        r = SendMessage(hwnd, LVM_GETBKCOLOR, 0, 0);
         expect(color, r);
 
         r = SendMessage(hwnd, LVM_SETTEXTCOLOR, 0, color);
         expect (TRUE, r);
-        r = SendMessage(hwnd, LVM_GETTEXTCOLOR, 0, color);
+        r = SendMessage(hwnd, LVM_GETTEXTCOLOR, 0, 0);
         expect(color, r);
 
         r = SendMessage(hwnd, LVM_SETTEXTBKCOLOR, 0, color);
         expect(TRUE, r);
-        r = SendMessage(hwnd, LVM_GETTEXTBKCOLOR, 0, color);
+        r = SendMessage(hwnd, LVM_GETTEXTBKCOLOR, 0, 0);
         expect(color, r);
     }
 
     ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_color_seq, "test color seq", FALSE);
-
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    /* invalidation test done separately to avoid a message chain mess */
+    r = ValidateRect(hwnd, NULL);
+    expect(TRUE, r);
+    r = SendMessage(hwnd, LVM_SETBKCOLOR, 0, colors[0]);
+    expect(TRUE, r);
+
+    rect.right = rect.bottom = 1;
+    r = GetUpdateRect(hwnd, &rect, TRUE);
+    todo_wine expect(FALSE, r);
+    todo_wine ok(rect.right == 0 && rect.bottom == 0, "got update rectangle\n");
+
+    r = ValidateRect(hwnd, NULL);
+    expect(TRUE, r);
+    r = SendMessage(hwnd, LVM_SETTEXTCOLOR, 0, colors[0]);
+    expect(TRUE, r);
+
+    rect.right = rect.bottom = 1;
+    r = GetUpdateRect(hwnd, &rect, TRUE);
+    todo_wine expect(FALSE, r);
+    todo_wine ok(rect.right == 0 && rect.bottom == 0, "got update rectangle\n");
+
+    r = ValidateRect(hwnd, NULL);
+    expect(TRUE, r);
+    r = SendMessage(hwnd, LVM_SETTEXTBKCOLOR, 0, colors[0]);
+    expect(TRUE, r);
+
+    rect.right = rect.bottom = 1;
+    r = GetUpdateRect(hwnd, &rect, TRUE);
+    todo_wine expect(FALSE, r);
+    ok(rect.right == 0 && rect.bottom == 0, "got update rectangle\n");
+
     DestroyWindow(hwnd);
 }
 
