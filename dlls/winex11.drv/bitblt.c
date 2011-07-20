@@ -1973,7 +1973,7 @@ update_format:
     info->bmiHeader.biPlanes   = 1;
     info->bmiHeader.biBitCount = format->bits_per_pixel;
     if (info->bmiHeader.biHeight > 0) info->bmiHeader.biHeight = -info->bmiHeader.biHeight;
-    set_color_info( dev, physdev->color_shifts, info );
+    set_color_info( dev, color_shifts, info );
     return ERROR_BAD_FORMAT;
 }
 
