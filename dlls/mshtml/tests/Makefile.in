@@ -9,7 +9,8 @@ C_SRCS = \
 	htmllocation.c \
 	misc.c \
 	protocol.c \
-	script.c
+	script.c \
+	style.c
 
 RC_SRCS = rsrc.rc
 
