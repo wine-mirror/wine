@@ -868,7 +868,7 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_Polygon,                      /* pPolygon */
     PSDRV_Polyline,                     /* pPolyline */
     NULL,                               /* pPolylineTo */
-    NULL,                               /* pPutImage */
+    PSDRV_PutImage,                     /* pPutImage */
     NULL,                               /* pRealizeDefaultPalette */
     NULL,                               /* pRealizePalette */
     PSDRV_Rectangle,                    /* pRectangle */

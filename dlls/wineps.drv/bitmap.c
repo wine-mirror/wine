@@ -177,6 +177,11 @@ static inline DWORD max_ascii85_size(DWORD size)
     return (size + 3) / 4 * 5;
 }
 
+static void free_heap_bits( struct gdi_image_bits *bits )
+{
+    HeapFree( GetProcessHeap(), 0, bits->ptr );
+}
+
 /***************************************************************************
  *                PSDRV_WriteImageBits
  */
@@ -203,6 +208,117 @@ static void PSDRV_WriteImageBits( PHYSDEV dev, const BITMAPINFO *info, INT xDst,
     PSDRV_WriteData(dev, ascii85, ascii85_len);
     PSDRV_WriteSpool(dev, "~>\n", 3);
     HeapFree(GetProcessHeap(), 0, ascii85);
+}
+
+/***********************************************************************
+ *           PSDRV_PutImage
+ */
+DWORD PSDRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const struct gdi_image_bits *bits,
+                      struct bitblt_coords *src, struct bitblt_coords *dst, DWORD rop )
+{
+    int src_stride, dst_stride, size, x, y, width, height, bit_offset;
+    int dst_x, dst_y, dst_width, dst_height;
+    unsigned char *src_ptr, *dst_ptr;
+    struct gdi_image_bits dst_bits;
+
+    if (hbitmap) return ERROR_NOT_SUPPORTED;
+
+    if (info->bmiHeader.biPlanes != 1) goto update_format;
+    if (info->bmiHeader.biCompression != BI_RGB) goto update_format;
+    if (info->bmiHeader.biBitCount == 16 || info->bmiHeader.biBitCount == 32) goto update_format;
+    if (!bits) return ERROR_SUCCESS;  /* just querying the format */
+
+    TRACE( "bpp %u %s -> %s\n", info->bmiHeader.biBitCount, wine_dbgstr_rect(&src->visrect),
+           wine_dbgstr_rect(&dst->visrect) );
+
+    width = src->visrect.right - src->visrect.left;
+    height = src->visrect.bottom - src->visrect.top;
+    src_stride = get_dib_width_bytes( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );
+    dst_stride = (width * info->bmiHeader.biBitCount + 7) / 8;
+
+    src_ptr = bits->ptr;
+    if (info->bmiHeader.biHeight > 0)
+        src_ptr += (info->bmiHeader.biHeight - src->visrect.bottom) * src_stride;
+    else
+        src_ptr += src->visrect.top * src_stride;
+    bit_offset = src->visrect.left * info->bmiHeader.biBitCount;
+    src_ptr += bit_offset / 8;
+    bit_offset &= 7;
+    if (bit_offset) FIXME( "pos %s not supported\n", wine_dbgstr_rect(&src->visrect) );
+    size = height * dst_stride;
+
+    if (src_stride != dst_stride || (info->bmiHeader.biBitCount == 24 && !bits->is_copy))
+    {
+        if (!(dst_bits.ptr = HeapAlloc( GetProcessHeap(), 0, size ))) return ERROR_OUTOFMEMORY;
+        dst_bits.is_copy = TRUE;
+        dst_bits.free = free_heap_bits;
+    }
+    else
+    {
+        dst_bits.ptr = src_ptr;
+        dst_bits.is_copy = bits->is_copy;
+        dst_bits.free = NULL;
+    }
+    dst_ptr = dst_bits.ptr;
+
+    switch (info->bmiHeader.biBitCount)
+    {
+    case 1:
+    case 4:
+    case 8:
+        if (src_stride != dst_stride)
+            for (y = 0; y < height; y++, src_ptr += src_stride, dst_ptr += dst_stride)
+                memcpy( dst_ptr, src_ptr, dst_stride );
+        break;
+    case 24:
+        if (dst_ptr != src_ptr)
+            for (y = 0; y < height; y++, src_ptr += src_stride, dst_ptr += dst_stride)
+                for (x = 0; x < width; x++)
+                {
+                    dst_ptr[x * 3]     = src_ptr[x * 3 + 2];
+                    dst_ptr[x * 3 + 1] = src_ptr[x * 3 + 1];
+                    dst_ptr[x * 3 + 2] = src_ptr[x * 3];
+                }
+        else  /* swap R and B in place */
+            for (y = 0; y < height; y++, src_ptr += src_stride, dst_ptr += dst_stride)
+                for (x = 0; x < width; x++)
+                {
+                    unsigned char tmp = dst_ptr[x * 3];
+                    dst_ptr[x * 3] = dst_ptr[x * 3 + 2];
+                    dst_ptr[x * 3 + 2] = tmp;
+                }
+        break;
+    }
+
+    dst_x = dst->visrect.left;
+    dst_y = dst->visrect.top,
+    dst_width = dst->visrect.right - dst->visrect.left;
+    dst_height = dst->visrect.bottom - dst->visrect.top;
+    if (src->width * dst->width < 0)
+    {
+        dst_x += dst_width;
+        dst_width = -dst_width;
+    }
+    if (src->height * dst->height < 0)
+    {
+        dst_y += dst_height;
+        dst_height = -dst_height;
+    }
+
+    PSDRV_SetClip(dev);
+    PSDRV_WriteGSave(dev);
+    PSDRV_WriteImageBits( dev, info, dst_x, dst_y, dst_width, dst_height,
+                          width, height, dst_bits.ptr, size );
+    PSDRV_WriteGRestore(dev);
+    PSDRV_ResetClip(dev);
+    if (dst_bits.free) dst_bits.free( &dst_bits );
+    return ERROR_SUCCESS;
+
+update_format:
+    info->bmiHeader.biPlanes = 1;
+    if (info->bmiHeader.biBitCount > 8) info->bmiHeader.biBitCount = 24;
+    info->bmiHeader.biCompression = BI_RGB;
+    return ERROR_BAD_FORMAT;
 }
 
 /***************************************************************************

@@ -443,6 +443,8 @@ extern BOOL PSDRV_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* counts,
 extern BOOL PSDRV_PolyPolyline( PHYSDEV dev, const POINT* pts, const DWORD* counts, DWORD polylines ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count ) DECLSPEC_HIDDEN;
+extern DWORD PSDRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const struct gdi_image_bits *bits,
+                             struct bitblt_coords *src, struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
                              INT bottom, INT ell_width, INT ell_height ) DECLSPEC_HIDDEN;
