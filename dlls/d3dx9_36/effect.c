@@ -559,6 +559,15 @@ static struct d3dx_parameter *is_valid_parameter(struct ID3DXBaseEffectImpl *bas
     return NULL;
 }
 
+static inline struct d3dx_parameter *get_valid_parameter(struct ID3DXBaseEffectImpl *base, D3DXHANDLE parameter)
+{
+    struct d3dx_parameter *param = is_valid_parameter(base, parameter);
+
+    if (!param) param = get_parameter_by_name(base, NULL, parameter);
+
+    return param;
+}
+
 static void free_state(struct d3dx_state *state)
 {
     free_parameter_state(state->parameter, FALSE, FALSE, state->type);
@@ -1092,11 +1101,9 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetDesc(ID3DXBaseEffect *iface, D3DXEF
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetParameterDesc(ID3DXBaseEffect *iface, D3DXHANDLE parameter, D3DXPARAMETER_DESC *desc)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
     TRACE("iface %p, parameter %p, desc %p\n", This, parameter, desc);
-
-    if (!param) param = get_parameter_struct(iface->lpVtbl->GetParameterByName(iface, NULL, parameter));
 
     if (!desc || !param)
     {
@@ -1174,11 +1181,9 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetFunctionDesc(ID3DXBaseEffect *iface
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameter(ID3DXBaseEffect *iface, D3DXHANDLE parameter, UINT index)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
     TRACE("iface %p, parameter %p, index %u\n", This, parameter, index);
-
-    if (!param) param = get_parameter_by_name(This, NULL, parameter);
 
     if (!parameter)
     {
@@ -1205,12 +1210,10 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameter(ID3DXBaseEffect *iface
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameterByName(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPCSTR name)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
     D3DXHANDLE handle;
 
     TRACE("iface %p, parameter %p, name %s\n", This, parameter, debugstr_a(name));
-
-    if (!param) param = get_parameter_by_name(This, NULL, parameter);
 
     if (!name)
     {
@@ -1228,13 +1231,11 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameterByName(ID3DXBaseEffect 
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameterBySemantic(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPCSTR semantic)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
     struct d3dx_parameter *temp_param;
     UINT i;
 
     TRACE("iface %p, parameter %p, semantic %s\n", This, parameter, debugstr_a(semantic));
-
-    if (!param) param = get_parameter_by_name(This, NULL, parameter);
 
     if (!parameter)
     {
@@ -1291,11 +1292,9 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameterBySemantic(ID3DXBaseEff
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameterElement(ID3DXBaseEffect *iface, D3DXHANDLE parameter, UINT index)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
     TRACE("iface %p, parameter %p, index %u\n", This, parameter, index);
-
-    if (!param) param = get_parameter_by_name(This, NULL, parameter);
 
     if (!param)
     {
@@ -1436,7 +1435,7 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetFunctionByName(ID3DXBaseEffect *
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotation(ID3DXBaseEffect *iface, D3DXHANDLE object, UINT index)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, object);
+    struct d3dx_parameter *param = get_valid_parameter(This, object);
     struct d3dx_pass *pass = is_valid_pass(This, object);
     struct d3dx_technique *technique = is_valid_technique(This, object);
     UINT annotation_count = 0;
@@ -1454,15 +1453,10 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotation(ID3DXBaseEffect *ifac
         annotation_count = technique->annotation_count;
         annotation_handles = technique->annotation_handles;
     }
-    else
+    else if (param)
     {
-        if (!param) param = get_parameter_by_name(This, NULL, object);
-
-        if (param)
-        {
-            annotation_count = param->annotation_count;
-            annotation_handles = param->annotation_handles;
-        }
+        annotation_count = param->annotation_count;
+        annotation_handles = param->annotation_handles;
     }
     /* Todo: add funcs */
 
@@ -1480,7 +1474,7 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotation(ID3DXBaseEffect *ifac
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotationByName(ID3DXBaseEffect *iface, D3DXHANDLE object, LPCSTR name)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, object);
+    struct d3dx_parameter *param = get_valid_parameter(This, object);
     struct d3dx_pass *pass = is_valid_pass(This, object);
     struct d3dx_technique *technique = is_valid_technique(This, object);
     UINT annotation_count = 0, i;
@@ -1504,15 +1498,10 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotationByName(ID3DXBaseEffect
         annotation_count = technique->annotation_count;
         annotation_handles = technique->annotation_handles;
     }
-    else
+    else if (param)
     {
-        if (!param) param = get_parameter_by_name(This, NULL, object);
-
-        if (param)
-        {
-            annotation_count = param->annotation_count;
-            annotation_handles = param->annotation_handles;
-        }
+        annotation_count = param->annotation_count;
+        annotation_handles = param->annotation_handles;
     }
     /* Todo: add funcs */
 
@@ -1544,11 +1533,10 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetValue(ID3DXBaseEffect *iface, D3DXH
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetValue(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPVOID data, UINT bytes)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
     TRACE("iface %p, parameter %p, data %p, bytes %u\n", This, parameter, data, bytes);
 
-    if (!param) param = get_parameter_by_name(This, NULL, parameter);
     if (!param)
     {
         WARN("Invalid parameter %p specified\n", parameter);
@@ -1622,11 +1610,9 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetBool(ID3DXBaseEffect *iface, D3DXHA
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetBool(ID3DXBaseEffect *iface, D3DXHANDLE parameter, BOOL *b)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
     TRACE("iface %p, parameter %p, b %p\n", This, parameter, b);
-
-    if (!param) param = get_parameter_by_name(This, NULL, parameter);
 
     if (b && param && !param->element_count && param->class == D3DXPC_SCALAR)
     {
@@ -1652,11 +1638,9 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetBoolArray(ID3DXBaseEffect *iface, D
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetBoolArray(ID3DXBaseEffect *iface, D3DXHANDLE parameter, BOOL *b, UINT count)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
     TRACE("iface %p, parameter %p, b %p, count %u\n", This, parameter, b, count);
-
-    if (!param) param = get_parameter_by_name(This, NULL, parameter);
 
     if (b && param && (param->class == D3DXPC_SCALAR
             || param->class == D3DXPC_VECTOR
@@ -1689,11 +1673,9 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetInt(ID3DXBaseEffect *iface, D3DXHAN
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetInt(ID3DXBaseEffect *iface, D3DXHANDLE parameter, INT *n)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
     TRACE("iface %p, parameter %p, n %p\n", This, parameter, n);
-
-    if (!param) param = get_parameter_by_name(This, NULL, parameter);
 
     if (n && param && !param->element_count && param->class == D3DXPC_SCALAR)
     {
@@ -1719,11 +1701,9 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetIntArray(ID3DXBaseEffect *iface, D3
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetIntArray(ID3DXBaseEffect *iface, D3DXHANDLE parameter, INT *n, UINT count)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
     TRACE("iface %p, parameter %p, n %p, count %u\n", This, parameter, n, count);
-
-    if (!param) param = get_parameter_by_name(This, NULL, parameter);
 
     if (n && param && (param->class == D3DXPC_SCALAR
             || param->class == D3DXPC_VECTOR
@@ -1756,11 +1736,9 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetFloat(ID3DXBaseEffect *iface, D3DXH
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetFloat(ID3DXBaseEffect *iface, D3DXHANDLE parameter, FLOAT *f)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
     TRACE("iface %p, parameter %p, f %p\n", This, parameter, f);
-
-    if (!param) param = get_parameter_by_name(This, NULL, parameter);
 
     if (f && param && !param->element_count && param->class == D3DXPC_SCALAR)
     {
@@ -1786,11 +1764,9 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetFloatArray(ID3DXBaseEffect *iface, 
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetFloatArray(ID3DXBaseEffect *iface, D3DXHANDLE parameter, FLOAT *f, UINT count)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
     TRACE("iface %p, parameter %p, f %p, count %u\n", This, parameter, f, count);
-
-    if (!param) param = get_parameter_by_name(This, NULL, parameter);
 
     if (f && param && (param->class == D3DXPC_SCALAR
             || param->class == D3DXPC_VECTOR
@@ -1967,11 +1943,9 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetString(ID3DXBaseEffect *iface, D3DX
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetString(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPCSTR *string)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
     TRACE("iface %p, parameter %p, string %p\n", This, parameter, string);
-
-    if (!param) param = get_parameter_by_name(This, NULL, parameter);
 
     if (string && param && !param->element_count && param->type == D3DXPT_STRING)
     {
@@ -1988,11 +1962,9 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetString(ID3DXBaseEffect *iface, D3DX
 static HRESULT WINAPI ID3DXBaseEffectImpl_SetTexture(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPDIRECT3DBASETEXTURE9 texture)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
     TRACE("iface %p, parameter %p, texture %p\n", This, parameter, texture);
-
-    if (!param) param = get_parameter_by_name(This, NULL, parameter);
 
     if (texture && param && !param->element_count &&
             (param->type == D3DXPT_TEXTURE || param->type == D3DXPT_TEXTURE1D
@@ -2017,7 +1989,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetTexture(ID3DXBaseEffect *iface, D3D
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetTexture(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPDIRECT3DBASETEXTURE9 *texture)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
     TRACE("iface %p, parameter %p, texture %p\n", This, parameter, texture);
 
@@ -2040,11 +2012,9 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetTexture(ID3DXBaseEffect *iface, D3D
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetPixelShader(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPDIRECT3DPIXELSHADER9 *pshader)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
     TRACE("iface %p, parameter %p, pshader %p\n", This, parameter, pshader);
-
-    if (!param) param = get_parameter_by_name(This, NULL, parameter);
 
     if (pshader && param && !param->element_count && param->type == D3DXPT_PIXELSHADER)
     {
@@ -2062,11 +2032,9 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetPixelShader(ID3DXBaseEffect *iface,
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetVertexShader(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPDIRECT3DVERTEXSHADER9 *vshader)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
-    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
     TRACE("iface %p, parameter %p, vshader %p\n", This, parameter, vshader);
-
-    if (!param) param = get_parameter_by_name(This, NULL, parameter);
 
     if (vshader && param && !param->element_count && param->type == D3DXPT_VERTEXSHADER)
     {
