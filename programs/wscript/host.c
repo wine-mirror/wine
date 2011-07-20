@@ -114,8 +114,15 @@ static HRESULT WINAPI Host_get_Application(IHost *iface, IDispatch **out_Dispatc
 
 static HRESULT WINAPI Host_get_FullName(IHost *iface, BSTR *out_Path)
 {
-    WINE_FIXME("(%p)\n", out_Path);
-    return E_NOTIMPL;
+    WCHAR fullPath[MAX_PATH];
+
+    WINE_TRACE("(%p)\n", out_Path);
+
+    if(GetModuleFileNameW(NULL, fullPath, sizeof(fullPath)/sizeof(WCHAR)) == 0)
+        return E_FAIL;
+    if(!(*out_Path = SysAllocString(fullPath)))
+        return E_OUTOFMEMORY;
+    return S_OK;
 }
 
 static HRESULT WINAPI Host_get_Path(IHost *iface, BSTR *out_Path)

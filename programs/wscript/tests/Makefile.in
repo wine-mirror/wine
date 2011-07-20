@@ -1,5 +1,5 @@
 TESTDLL   = wscript.exe
-IMPORTS   = ole32 advapi32
+IMPORTS   = ole32 oleaut32 advapi32
 
 C_SRCS = \
 	run.c

@@ -56,9 +56,10 @@
 
 DEFINE_EXPECT(reportSuccess);
 
-#define DISPID_TESTOBJ_OK             10000
-#define DISPID_TESTOBJ_TRACE          10001
-#define DISPID_TESTOBJ_REPORTSUCCESS  10002
+#define DISPID_TESTOBJ_OK                        10000
+#define DISPID_TESTOBJ_TRACE                     10001
+#define DISPID_TESTOBJ_REPORTSUCCESS             10002
+#define DISPID_TESTOBJ_WSCRIPTFULLNAME           10003
 
 #define TESTOBJ_CLSID "{178fc166-f585-4e24-9c13-4bb7faf80646}"
 
@@ -120,6 +121,8 @@ static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid,
             rgDispId[i] = DISPID_TESTOBJ_TRACE;
         }else if(!strcmp_wa(rgszNames[i], "reportSuccess")) {
             rgDispId[i] = DISPID_TESTOBJ_REPORTSUCCESS;
+        }else if(!strcmp_wa(rgszNames[i], "wscriptFullName")) {
+            rgDispId[i] = DISPID_TESTOBJ_WSCRIPTFULLNAME;
         }else {
             ok(0, "unexpected name %s\n", wine_dbgstr_w(rgszNames[i]));
             return DISP_E_UNKNOWNNAME;
@@ -161,6 +164,23 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         if(pVarResult)
             V_VT(pVarResult) = VT_EMPTY;
         break;
+    case DISPID_TESTOBJ_WSCRIPTFULLNAME:
+    {
+        WCHAR fullName[MAX_PATH];
+        const WCHAR wscriptexe[] = {'w','s','c','r','i','p','t','.','e','x','e',0};
+        DWORD res;
+
+        ok(wFlags == INVOKE_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(pdp->cArgs == 0, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        V_VT(pVarResult) = VT_BSTR;
+        res = SearchPathW(NULL, wscriptexe, NULL, sizeof(fullName)/sizeof(WCHAR), fullName, NULL);
+        if(res == 0)
+            return E_FAIL;
+        if(!(V_BSTR(pVarResult) = SysAllocString(fullName)))
+            return E_OUTOFMEMORY;
+        break;
+    }
     default:
         ok(0, "unexpected dispIdMember %d\n", dispIdMember);
         return E_NOTIMPL;

@@ -28,5 +28,6 @@ ok(WScript === WSH, "WScript !== WSH");
 ok(WScript.Name === "Windows Script Host", "WScript.Name = " + WScript.Name);
 ok(typeof(WScript.Version) === "string", "typeof(WScript.Version) = " + typeof(WScript.Version));
 ok(typeof(WScript.BuildVersion) === "number", "typeof(WScript.BuldVersion) = " + typeof(WScript.BuldVersion));
+ok(WScript.FullName === winetest.wscriptFullName, "WScript.FullName = ", WScript.FullName);
 
 winetest.reportSuccess();
