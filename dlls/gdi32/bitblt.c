@@ -47,7 +47,7 @@ static inline void swap_ints( int *i, int *j )
     *j = tmp;
 }
 
-static void get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
+static BOOL get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
                                 DC *dc_src, struct bitblt_coords *src )
 {
     RECT rect, clip;
@@ -79,7 +79,7 @@ static void get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
 
     /* get the source visible rectangle */
 
-    if (!src) return;
+    if (!src) return !is_rect_empty( &dst->visrect );
 
     rect.left   = src->log_x;
     rect.top    = src->log_y;
@@ -105,6 +105,9 @@ static void get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
     else
         src->visrect = rect;  /* FIXME: clip to device size */
 
+    if (is_rect_empty( &src->visrect )) return FALSE;
+    if (is_rect_empty( &dst->visrect )) return FALSE;
+
     /* intersect the rectangles */
 
     if ((src->width == dst->width) && (src->height == dst->height)) /* no stretching */
@@ -129,10 +132,9 @@ static void get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
         rect.top--;
         rect.right++;
         rect.bottom++;
-        if (!intersect_rect( &dst->visrect, &rect, &dst->visrect )) return;
+        if (!intersect_rect( &dst->visrect, &rect, &dst->visrect )) return FALSE;
 
         /* map destination rectangle back to source coordinates */
-        rect = dst->visrect;
         rect.left   = src->x + (dst->visrect.left - dst->x)*src->width/dst->width;
         rect.top    = src->y + (dst->visrect.top - dst->y)*src->height/dst->height;
         rect.right  = src->x + (dst->visrect.right - dst->x)*src->width/dst->width;
@@ -145,8 +147,9 @@ static void get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
         rect.top--;
         rect.right++;
         rect.bottom++;
-        intersect_rect( &src->visrect, &rect, &src->visrect );
+        if (!intersect_rect( &src->visrect, &rect, &src->visrect )) return FALSE;
     }
+    return TRUE;
 }
 
 static void free_heap_bits( struct gdi_image_bits *bits )
@@ -169,8 +172,6 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     HBITMAP hbm;
     LPVOID bits;
     INT lines;
-
-    if (dst->visrect.left >= dst->visrect.right || dst->visrect.top >= dst->visrect.bottom) return TRUE;
 
     /* make sure we have a real implementation for StretchDIBits */
     if (GET_DC_PHYSDEV( dc_dst, pStretchDIBits ) == dst_dev) goto try_get_image;
@@ -300,13 +301,13 @@ BOOL WINAPI PatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop
             dst.layout |= LAYOUT_BITMAPORIENTATIONPRESERVED;
             rop &= ~NOMIRRORBITMAP;
         }
-        get_vis_rectangles( dc, &dst, NULL, NULL );
+        ret = !get_vis_rectangles( dc, &dst, NULL, NULL );
 
         TRACE("dst %p log=%d,%d %dx%d phys=%d,%d %dx%d vis=%s  rop=%06x\n",
               hdc, dst.log_x, dst.log_y, dst.log_width, dst.log_height,
               dst.x, dst.y, dst.width, dst.height, wine_dbgstr_rect(&dst.visrect), rop );
 
-        ret = physdev->funcs->pPatBlt( physdev, &dst, rop );
+        if (!ret) ret = physdev->funcs->pPatBlt( physdev, &dst, rop );
 
         release_dc_ptr( dc );
     }
@@ -364,7 +365,7 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst, INT widthDst, INT height
             dst.layout |= LAYOUT_BITMAPORIENTATIONPRESERVED;
             rop &= ~NOMIRRORBITMAP;
         }
-        get_vis_rectangles( dcDst, &dst, dcSrc, &src );
+        ret = !get_vis_rectangles( dcDst, &dst, dcSrc, &src );
 
         TRACE("src %p log=%d,%d %dx%d phys=%d,%d %dx%d vis=%s  dst %p log=%d,%d %dx%d phys=%d,%d %dx%d vis=%s  rop=%06x\n",
               hdcSrc, src.log_x, src.log_y, src.log_width, src.log_height,
@@ -372,7 +373,7 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst, INT widthDst, INT height
               hdcDst, dst.log_x, dst.log_y, dst.log_width, dst.log_height,
               dst.x, dst.y, dst.width, dst.height, wine_dbgstr_rect(&dst.visrect), rop );
 
-        ret = dst_dev->funcs->pStretchBlt( dst_dev, &dst, src_dev, &src, rop );
+        if (!ret) ret = dst_dev->funcs->pStretchBlt( dst_dev, &dst, src_dev, &src, rop );
         release_dc_ptr( dcSrc );
     }
     release_dc_ptr( dcDst );
@@ -695,7 +696,7 @@ BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heig
         dst.log_width  = widthDst;
         dst.log_height = heightDst;
         dst.layout     = GetLayout( dst_dev->hdc );
-        get_vis_rectangles( dcDst, &dst, dcSrc, &src );
+        ret = !get_vis_rectangles( dcDst, &dst, dcSrc, &src );
 
         TRACE("src %p log=%d,%d %dx%d phys=%d,%d %dx%d vis=%s  dst %p log=%d,%d %dx%d phys=%d,%d %dx%d vis=%s  blend=%02x/%02x/%02x/%02x\n",
               hdcSrc, src.log_x, src.log_y, src.log_width, src.log_height,
@@ -705,7 +706,7 @@ BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heig
               blendFunction.BlendOp, blendFunction.BlendFlags,
               blendFunction.SourceConstantAlpha, blendFunction.AlphaFormat );
 
-        ret = dst_dev->funcs->pAlphaBlend( dst_dev, &dst, src_dev, &src, blendFunction );
+        if (!ret) ret = dst_dev->funcs->pAlphaBlend( dst_dev, &dst, src_dev, &src, blendFunction );
         release_dc_ptr( dcDst );
     }
     release_dc_ptr( dcSrc );

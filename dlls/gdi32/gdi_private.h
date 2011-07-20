@@ -527,13 +527,18 @@ BOOL WINAPI FontIsLinked(HDC);
 
 BOOL WINAPI SetVirtualResolution(HDC hdc, DWORD horz_res, DWORD vert_res, DWORD horz_size, DWORD vert_size);
 
+static inline BOOL is_rect_empty( const RECT *rect )
+{
+    return (rect->left >= rect->right || rect->top >= rect->bottom);
+}
+
 static inline BOOL intersect_rect( RECT *dst, const RECT *src1, const RECT *src2 )
 {
     dst->left   = max( src1->left, src2->left );
     dst->top    = max( src1->top, src2->top );
     dst->right  = min( src1->right, src2->right );
     dst->bottom = min( src1->bottom, src2->bottom );
-    return (dst->left < dst->right && dst->top < dst->bottom);
+    return !is_rect_empty( dst );
 }
 
 static inline void offset_rect( RECT *rect, int offset_x, int offset_y )

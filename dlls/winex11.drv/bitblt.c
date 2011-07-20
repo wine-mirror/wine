@@ -1401,7 +1401,6 @@ BOOL X11DRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
     BOOL usePat = (((rop >> 4) & 0x0f0000) != (rop & 0x0f0000));
     const BYTE *opcode = BITBLT_Opcodes[(rop >> 16) & 0xff];
 
-    if (IsRectEmpty( &dst->visrect )) return TRUE;
     if (usePat && !X11DRV_SetupGCForBrush( physDev )) return TRUE;
 
     X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod );
@@ -1464,9 +1463,6 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     const BYTE *opcode;
     Pixmap src_pixmap;
     GC tmpGC;
-
-    if (IsRectEmpty( &dst->visrect )) return TRUE;
-    if (IsRectEmpty( &src->visrect )) return TRUE;
 
     fStretch = (src->width != dst->width) || (src->height != dst->height);
 
@@ -1595,7 +1591,6 @@ BOOL X11DRV_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    if (IsRectEmpty( &dst->visrect )) return TRUE;
 
     return XRender_AlphaBlend( physDevDst, dst, physDevSrc, src, blendfn );
 }
