@@ -168,44 +168,7 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     BITMAPINFO *dst_info = (BITMAPINFO *)dst_buffer;
     DWORD err;
     struct gdi_image_bits bits;
-    BITMAP bm;
-    HBITMAP hbm;
     LPVOID ptr;
-    INT lines;
-
-    /* make sure we have a real implementation for StretchDIBits */
-    if (GET_DC_PHYSDEV( dc_dst, pStretchDIBits ) == dst_dev) goto try_get_image;
-
-    if (GetObjectType( src_dev->hdc ) != OBJ_MEMDC) return FALSE;
-    if (!GetObjectW( GetCurrentObject( src_dev->hdc, OBJ_BITMAP ), sizeof(bm), &bm )) return FALSE;
-
-    src_info->bmiHeader.biSize = sizeof(src_info->bmiHeader);
-    src_info->bmiHeader.biWidth = bm.bmWidth;
-    src_info->bmiHeader.biHeight = bm.bmHeight;
-    src_info->bmiHeader.biPlanes = 1;
-    src_info->bmiHeader.biBitCount = 32;
-    src_info->bmiHeader.biCompression = BI_RGB;
-    src_info->bmiHeader.biSizeImage = 0;
-    src_info->bmiHeader.biXPelsPerMeter = 0;
-    src_info->bmiHeader.biYPelsPerMeter = 0;
-    src_info->bmiHeader.biClrUsed = 0;
-    src_info->bmiHeader.biClrImportant = 0;
-
-    if (!(ptr = HeapAlloc(GetProcessHeap(), 0, bm.bmHeight * bm.bmWidth * 4)))
-        return FALSE;
-
-    /* Select out the src bitmap before calling GetDIBits */
-    hbm = SelectObject( src_dev->hdc, GetStockObject(DEFAULT_BITMAP) );
-    lines = GetDIBits( src_dev->hdc, hbm, 0, bm.bmHeight, ptr, src_info, DIB_RGB_COLORS );
-    SelectObject( src_dev->hdc, hbm );
-
-    if (lines) lines = StretchDIBits( dst_dev->hdc, dst->log_x, dst->log_y, dst->log_width, dst->log_height,
-                                      src->x, bm.bmHeight - src->height - src->y, src->width, src->height,
-                                      ptr, src_info, DIB_RGB_COLORS, rop );
-    HeapFree( GetProcessHeap(), 0, ptr );
-    return (lines == src->height);
-
-try_get_image:
 
     if (!(dc_src = get_dc_ptr( src_dev->hdc ))) return FALSE;
     src_dev = GET_DC_PHYSDEV( dc_src, pGetImage );
