@@ -1659,6 +1659,60 @@ static void set_color_info( PHYSDEV dev, const ColorShifts *color_shifts, BITMAP
     }
 }
 
+/* check if the specified color info is suitable for PutImage */
+static BOOL matching_color_info( PHYSDEV dev, const ColorShifts *color_shifts, const BITMAPINFO *info )
+{
+    DWORD *colors = (DWORD *)((char *)info + info->bmiHeader.biSize);
+
+    switch (info->bmiHeader.biBitCount)
+    {
+    case 1:
+        if (info->bmiHeader.biCompression != BI_RGB) return FALSE;
+        return !info->bmiHeader.biClrUsed;  /* color map not allowed */
+    case 4:
+    case 8:
+    {
+        RGBQUAD *rgb = (RGBQUAD *)colors;
+        PALETTEENTRY palette[256];
+        UINT i, count;
+
+        if (info->bmiHeader.biCompression != BI_RGB) return FALSE;
+        count = X11DRV_GetSystemPaletteEntries( dev, 0, 1 << info->bmiHeader.biBitCount, palette );
+        if (count != info->bmiHeader.biClrUsed) return FALSE;
+        for (i = 0; i < count; i++)
+        {
+            if (rgb[i].rgbRed   != palette[i].peRed ||
+                rgb[i].rgbGreen != palette[i].peGreen ||
+                rgb[i].rgbBlue  != palette[i].peBlue) return FALSE;
+        }
+        return TRUE;
+    }
+    case 16:
+        if (info->bmiHeader.biCompression == BI_BITFIELDS)
+            return (color_shifts->logicalRed.max << color_shifts->logicalRed.shift == colors[0] &&
+                    color_shifts->logicalGreen.max << color_shifts->logicalGreen.shift == colors[1] &&
+                    color_shifts->logicalBlue.max << color_shifts->logicalBlue.shift == colors[2]);
+        if (info->bmiHeader.biCompression == BI_RGB)
+            return (color_shifts->logicalRed.max << color_shifts->logicalRed.shift     == 0x7c00 &&
+                    color_shifts->logicalGreen.max << color_shifts->logicalGreen.shift == 0x03e0 &&
+                    color_shifts->logicalBlue.max << color_shifts->logicalBlue.shift   == 0x001f);
+        break;
+    case 32:
+        if (info->bmiHeader.biCompression == BI_BITFIELDS)
+            return (color_shifts->logicalRed.max << color_shifts->logicalRed.shift == colors[0] &&
+                    color_shifts->logicalGreen.max << color_shifts->logicalGreen.shift == colors[1] &&
+                    color_shifts->logicalBlue.max << color_shifts->logicalBlue.shift == colors[2]);
+        /* fall through */
+    case 24:
+        if (info->bmiHeader.biCompression == BI_RGB)
+            return (color_shifts->logicalRed.max << color_shifts->logicalRed.shift     == 0xff0000 &&
+                    color_shifts->logicalGreen.max << color_shifts->logicalGreen.shift == 0x00ff00 &&
+                    color_shifts->logicalBlue.max << color_shifts->logicalBlue.shift   == 0x0000ff);
+        break;
+    }
+    return FALSE;
+}
+
 /* copy the image bits, fixing up alignment and byte swapping as necessary */
 static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts, XImage *image,
                               const struct gdi_image_bits *src_bits, struct gdi_image_bits *dst_bits,
@@ -1814,7 +1868,7 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
 {
     X11DRV_PDEVICE *physdev;
     X_PHYSBITMAP *bitmap;
-    DWORD ret = ERROR_SUCCESS;
+    DWORD ret;
     XImage *image;
     int depth;
     struct gdi_image_bits dst_bits;
@@ -1842,37 +1896,8 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
     if (info->bmiHeader.biPlanes != 1) goto update_format;
     if (info->bmiHeader.biBitCount != format->bits_per_pixel) goto update_format;
     /* FIXME: could try to handle 1-bpp using XCopyPlane */
-
-    if (info->bmiHeader.biCompression == BI_BITFIELDS)
-    {
-        DWORD *masks = (DWORD *)((char *)info + info->bmiHeader.biSize);
-        if (color_shifts->logicalRed.max << color_shifts->logicalRed.shift != masks[0] ||
-            color_shifts->logicalGreen.max << color_shifts->logicalGreen.shift != masks[1] ||
-            color_shifts->logicalBlue.max << color_shifts->logicalBlue.shift != masks[2])
-            goto update_format;
-    }
-    else if (info->bmiHeader.biCompression == BI_RGB)
-    {
-        switch (info->bmiHeader.biBitCount)
-        {
-        case 16:
-            if (color_shifts->logicalRed.max << color_shifts->logicalRed.shift     != 0x7c00 ||
-                color_shifts->logicalGreen.max << color_shifts->logicalGreen.shift != 0x03e0 ||
-                color_shifts->logicalBlue.max << color_shifts->logicalBlue.shift   != 0x001f)
-                goto update_format;
-            break;
-        case 24:
-        case 32:
-            if (color_shifts->logicalRed.max << color_shifts->logicalRed.shift     != 0xff0000 ||
-                color_shifts->logicalGreen.max << color_shifts->logicalGreen.shift != 0x00ff00 ||
-                color_shifts->logicalBlue.max << color_shifts->logicalBlue.shift   != 0x0000ff)
-                goto update_format;
-            break;
-        }
-    }
-    else goto update_format;
-
-    if (!bits) return ret;  /* just querying the format */
+    if (!matching_color_info( dev, color_shifts, info )) goto update_format;
+    if (!bits) return ERROR_SUCCESS;  /* just querying the format */
 
     wine_tsx11_lock();
     image = XCreateImage( gdi_display, visual, depth, ZPixmap, 0, NULL,
