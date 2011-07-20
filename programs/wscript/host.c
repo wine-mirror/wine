@@ -163,8 +163,15 @@ static HRESULT WINAPI Host_Quit(IHost *iface, int ExitCode)
 
 static HRESULT WINAPI Host_get_ScriptName(IHost *iface, BSTR *out_ScriptName)
 {
-    WINE_FIXME("(%p)\n", out_ScriptName);
-    return E_NOTIMPL;
+    WCHAR *scriptName;
+
+    WINE_TRACE("(%p)\n", out_ScriptName);
+
+    scriptName = strrchrW(scriptFullName, '\\');
+    ++scriptName;
+    if(!(*out_ScriptName = SysAllocString(scriptName)))
+        return E_OUTOFMEMORY;
+    return S_OK;
 }
 
 static HRESULT WINAPI Host_get_ScriptFullName(IHost *iface, BSTR *out_ScriptFullName)

@@ -21,3 +21,5 @@
 extern IHost host_obj;
 
 extern ITypeInfo *host_ti;
+
+extern WCHAR scriptFullName[];

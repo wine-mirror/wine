@@ -30,5 +30,6 @@ ok(typeof(WScript.Version) === "string", "typeof(WScript.Version) = " + typeof(W
 ok(typeof(WScript.BuildVersion) === "number", "typeof(WScript.BuldVersion) = " + typeof(WScript.BuldVersion));
 ok(WScript.FullName === winetest.wscriptFullName, "WScript.FullName = ", WScript.FullName);
 ok(WScript.Path === winetest.wscriptPath, "WScript.Path = ", WScript.Path);
+ok(WScript.ScriptName === winetest.wscriptScriptName, "WScript.ScriptName = " + WScript.ScriptName);
 
 winetest.reportSuccess();

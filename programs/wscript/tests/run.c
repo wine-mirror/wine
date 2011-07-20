@@ -61,6 +61,7 @@ DEFINE_EXPECT(reportSuccess);
 #define DISPID_TESTOBJ_REPORTSUCCESS             10002
 #define DISPID_TESTOBJ_WSCRIPTFULLNAME           10003
 #define DISPID_TESTOBJ_WSCRIPTPATH               10004
+#define DISPID_TESTOBJ_WSCRIPTSCRIPTNAME         10005
 
 #define TESTOBJ_CLSID "{178fc166-f585-4e24-9c13-4bb7faf80646}"
 
@@ -85,6 +86,18 @@ static const WCHAR* mystrrchr(const WCHAR *str, WCHAR ch)
         ++current;
     }
     return pos;
+}
+
+static BSTR a2bstr(const char *str)
+{
+    BSTR ret;
+    int len;
+
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    ret = SysAllocStringLen(NULL, len-1);
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+
+    return ret;
 }
 
 static HRESULT WINAPI Dispatch_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
@@ -137,6 +150,8 @@ static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid,
             rgDispId[i] = DISPID_TESTOBJ_WSCRIPTFULLNAME;
         }else if(!strcmp_wa(rgszNames[i], "wscriptPath")) {
             rgDispId[i] = DISPID_TESTOBJ_WSCRIPTPATH;
+        }else if(!strcmp_wa(rgszNames[i], "wscriptScriptName")) {
+            rgDispId[i] = DISPID_TESTOBJ_WSCRIPTSCRIPTNAME;
         }else {
             ok(0, "unexpected name %s\n", wine_dbgstr_w(rgszNames[i]));
             return DISP_E_UNKNOWNNAME;
@@ -211,6 +226,23 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
             return E_FAIL;
         pos = mystrrchr(fullPath, '\\');
         if(!(V_BSTR(pVarResult) = SysAllocStringLen(fullPath, pos-fullPath)))
+            return E_OUTOFMEMORY;
+        break;
+    }
+    case DISPID_TESTOBJ_WSCRIPTSCRIPTNAME:
+    {
+        char fullPath[MAX_PATH];
+        char *pos;
+        long res;
+
+        ok(wFlags == INVOKE_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(pdp->cArgs == 0, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        V_VT(pVarResult) = VT_BSTR;
+        res = GetFullPathNameA(script_name, sizeof(fullPath)/sizeof(WCHAR), fullPath, &pos);
+        if(!res || res > sizeof(fullPath)/sizeof(WCHAR))
+            return E_FAIL;
+        if(!(V_BSTR(pVarResult) = SysAllocString(a2bstr(pos))))
             return E_OUTOFMEMORY;
         break;
     }

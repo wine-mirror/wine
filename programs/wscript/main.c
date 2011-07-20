@@ -36,6 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wscript);
 
 static const WCHAR wscriptW[] = {'W','S','c','r','i','p','t',0};
 static const WCHAR wshW[] = {'W','S','H',0};
+WCHAR scriptFullName[MAX_PATH];
 
 ITypeInfo *host_ti;
 
@@ -326,6 +327,7 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
     WCHAR **argv;
     CLSID clsid;
     int argc, i;
+    DWORD res;
 
     WINE_TRACE("(%p %p %s %x)\n", hInst, hPrevInst, wine_dbgstr_w(cmdline), cmdshow);
 
@@ -346,6 +348,9 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
         WINE_FIXME("No file name specified\n");
         return 1;
     }
+    res = GetFullPathNameW(filename, sizeof(scriptFullName)/sizeof(WCHAR), scriptFullName, NULL);
+    if(!res || res > sizeof(scriptFullName)/sizeof(WCHAR))
+        return 1;
 
     ext = strchrW(filename, '.');
     if(!ext)
