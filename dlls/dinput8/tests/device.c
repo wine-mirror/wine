@@ -132,6 +132,7 @@ static BOOL CALLBACK enumeration_callback(
 {
     HRESULT hr;
     DIPROPDWORD dp;
+    DIPROPRANGE dpr;
     struct enum_data *data = pvRef;
     if (!data) return DIENUM_CONTINUE;
 
@@ -178,6 +179,20 @@ static BOOL CALLBACK enumeration_callback(
     hr = IDirectInputDevice_GetProperty(lpdid, DIPROP_BUFFERSIZE, &dp.diph);
     ok (SUCCEEDED(hr), "GetProperty failed hr=%08x\n", hr);
     ok (dp.dwData == data->lpdiaf->dwBufferSize, "SetActionMap must set the buffer, buffersize=%d\n", dp.dwData);
+
+    /* Test axis range */
+    memset(&dpr, 0, sizeof(dpr));
+    dpr.diph.dwSize = sizeof(dpr);
+    dpr.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    dpr.diph.dwHow  = DIPH_DEVICE;
+
+    hr = IDirectInputDevice_GetProperty(lpdid, DIPROP_RANGE, &dpr.diph);
+    /* Only test if device supports the range property */
+    if (SUCCEEDED(hr))
+    {
+        ok (dpr.lMin == data->lpdiaf->lAxisMin, "SetActionMap must set the min axis range expected=%d got=%d\n", data->lpdiaf->lAxisMin, dpr.lMin);
+        ok (dpr.lMax == data->lpdiaf->lAxisMax, "SetActionMap must set the max axis range expected=%d got=%d\n", data->lpdiaf->lAxisMax, dpr.lMax);
+    }
 
     /* SetActionMap has set the data format so now it should work */
     hr = IDirectInputDevice8_Acquire(lpdid);

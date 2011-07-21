@@ -1483,8 +1483,16 @@ HRESULT WINAPI IDirectInputDevice8WImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface
 						     DWORD dwFlags)
 {
     DIPROPDWORD dp;
+    DIPROPRANGE dpr;
 
     FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
+
+    dpr.diph.dwSize = sizeof(DIPROPRANGE);
+    dpr.lMin = lpdiaf->lAxisMin;
+    dpr.lMax = lpdiaf->lAxisMax;
+    dpr.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    dpr.diph.dwHow = DIPH_DEVICE;
+    IDirectInputDevice8_SetProperty(iface, DIPROP_RANGE, &dpr.diph);
 
     if (lpdiaf->dwBufferSize > 0)
     {
