@@ -642,7 +642,7 @@ static void test_WM_NEXTDLGCTL(void)
                         "Button1 style not set to BS_DEFPUSHBUTTON\n" );
 
                 ok ( !((GetWindowLong( g_hwndTestDlgBut2, GWL_STYLE)) & BS_DEFPUSHBUTTON),
-                        "Button2's style not chaged to BS_PUSHBUTTON\n" );
+                        "Button2's style not changed to BS_PUSHBUTTON\n" );
         }
 
         /*
@@ -667,7 +667,7 @@ static void test_WM_NEXTDLGCTL(void)
                         "Button2 style not set to BS_DEFPUSHBUTTON\n" );
 
                 ok ( !((GetWindowLong( g_hwndTestDlgBut1, GWL_STYLE)) & BS_DEFPUSHBUTTON),
-                        "Button1's style not chaged to BS_PUSHBUTTON\n" );
+                        "Button1's style not changed to BS_PUSHBUTTON\n" );
         }
 
         /*
