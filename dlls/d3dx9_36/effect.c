@@ -1970,10 +1970,40 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetMatrixTranspose(ID3DXBaseEffect *if
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetMatrixTranspose(ID3DXBaseEffect *iface, D3DXHANDLE parameter, D3DXMATRIX *matrix)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
+    D3DXMATRIX m;
 
-    FIXME("iface %p, parameter %p, matrix %p stub\n", This, parameter, matrix);
+    TRACE("iface %p, parameter %p, matrix %p\n", This, parameter, matrix);
 
-    return E_NOTIMPL;
+    if (matrix && param && !param->element_count)
+    {
+        TRACE("Class %s\n", debug_d3dxparameter_class(param->class));
+
+        switch (param->class)
+        {
+            case D3DXPC_SCALAR:
+            case D3DXPC_VECTOR:
+                get_matrix(param, matrix);
+                return D3D_OK;
+
+            case D3DXPC_MATRIX_ROWS:
+                get_matrix(param, &m);
+                D3DXMatrixTranspose(matrix, &m);
+                return D3D_OK;
+
+            case D3DXPC_OBJECT:
+            case D3DXPC_STRUCT:
+                break;
+
+            default:
+                FIXME("Unhandled class %s\n", debug_d3dxparameter_class(param->class));
+                break;
+        }
+    }
+
+    WARN("Invalid argument specified\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_SetMatrixTransposeArray(ID3DXBaseEffect *iface, D3DXHANDLE parameter, CONST D3DXMATRIX *matrix, UINT count)
