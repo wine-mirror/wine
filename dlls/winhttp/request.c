@@ -2156,6 +2156,10 @@ struct winhttp_request
     HINTERNET hrequest;
     HANDLE wait;
     HANDLE cancel;
+    char *buffer;
+    char *ptr;
+    DWORD bytes_available;
+    DWORD bytes_read;
     LONG resolve_timeout;
     LONG connect_timeout;
     LONG send_timeout;
@@ -2187,6 +2191,7 @@ static ULONG WINAPI winhttp_request_Release(
         WinHttpCloseHandle( request->hsession );
         CloseHandle( request->wait );
         CloseHandle( request->cancel );
+        heap_free( request->buffer );
         heap_free( request );
     }
     return refs;
@@ -2475,6 +2480,17 @@ static DWORD wait_for_completion( struct winhttp_request *request, DWORD timeout
 static void CALLBACK wait_status_callback( HINTERNET handle, DWORD_PTR context, DWORD status, LPVOID buffer, DWORD size )
 {
     struct winhttp_request *request = (struct winhttp_request *)context;
+
+    switch (status)
+    {
+    case WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE:
+        request->bytes_available = *(DWORD *)buffer;
+        break;
+    case WINHTTP_CALLBACK_STATUS_READ_COMPLETE:
+        request->bytes_read = size;
+        break;
+    default: break;
+    }
     SetEvent( request->wait );
 }
 
@@ -2599,12 +2615,109 @@ static HRESULT WINAPI winhttp_request_get_StatusText(
     return S_OK;
 }
 
+static DWORD request_read_body( struct winhttp_request *request, DWORD timeout )
+{
+    DWORD err, size, total_bytes_read, buflen = 4096;
+
+    if (request->state >= REQUEST_STATE_BODY_RECEIVED) return ERROR_SUCCESS;
+    if ((err = request_wait_for_response( request, timeout, NULL ))) return err;
+
+    if (!(request->buffer = heap_alloc( buflen ))) return E_OUTOFMEMORY;
+    size = total_bytes_read = 0;
+    request->ptr = request->buffer;
+    do
+    {
+        wait_set_status_callback( request, WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE );
+        if (!WinHttpQueryDataAvailable( request->hrequest, &request->bytes_available ))
+        {
+            err = GetLastError();
+            goto error;
+        }
+        wait_for_completion( request, timeout );
+        if (!request->bytes_available) break;
+        size += request->bytes_available;
+        if (buflen < size)
+        {
+            char *tmp;
+            while (buflen < size) buflen *= 2;
+            if (!(tmp = heap_realloc( request->buffer, buflen )))
+            {
+                err = ERROR_OUTOFMEMORY;
+                goto error;
+            }
+            request->buffer = tmp;
+        }
+        wait_set_status_callback( request, WINHTTP_CALLBACK_STATUS_READ_COMPLETE );
+        if (!WinHttpReadData( request->hrequest, request->ptr, request->bytes_available, &request->bytes_read ))
+        {
+            err = GetLastError();
+            goto error;
+        }
+        wait_for_completion( request, timeout );
+        total_bytes_read += request->bytes_read;
+        request->ptr += request->bytes_read;
+    } while (request->bytes_read);
+
+    request->state = REQUEST_STATE_BODY_RECEIVED;
+    return ERROR_SUCCESS;
+
+error:
+    heap_free( request->buffer );
+    request->buffer = NULL;
+    TRACE("error %u\n", err);
+    return err;
+}
+
+static DWORD request_get_codepage( struct winhttp_request *request, UINT *codepage )
+{
+    static const WCHAR utf8W[] = {'u','t','f','-','8',0};
+    static const WCHAR charsetW[] = {'c','h','a','r','s','e','t',0};
+    WCHAR *buffer, *p;
+    DWORD size;
+
+    *codepage = CP_ACP;
+    if (!WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_CONTENT_TYPE, NULL, NULL, &size, NULL ) &&
+        GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    {
+        if (!(buffer = heap_alloc( size ))) return ERROR_OUTOFMEMORY;
+        if (!WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_CONTENT_TYPE, NULL, buffer, &size, NULL ))
+        {
+            return GetLastError();
+        }
+        if ((p = strstrW( buffer, charsetW )))
+        {
+            p += strlenW( charsetW );
+            while (*p == ' ') p++;
+            if (*p++ == '=')
+            {
+                while (*p == ' ') p++;
+                if (!strcmpiW( p, utf8W )) *codepage = CP_UTF8;
+            }
+        }
+        heap_free( buffer );
+    }
+    return ERROR_SUCCESS;
+}
+
 static HRESULT WINAPI winhttp_request_get_ResponseText(
     IWinHttpRequest *iface,
     BSTR *body )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    UINT codepage;
+    DWORD err;
+    int len;
+
+    TRACE("%p, %p\n", request, body);
+
+    if ((err = request_read_body( request, INFINITE ))) return HRESULT_FROM_WIN32( err );
+    if ((err = request_get_codepage( request, &codepage ))) return HRESULT_FROM_WIN32( err );
+
+    len = MultiByteToWideChar( codepage, 0, request->buffer, request->ptr - request->buffer, NULL, 0 );
+    if (!(*body = SysAllocStringLen( NULL, len ))) return E_OUTOFMEMORY;
+    MultiByteToWideChar( codepage, 0, request->buffer, request->ptr - request->buffer, *body, len );
+    (*body)[len] = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI winhttp_request_get_ResponseBody(
