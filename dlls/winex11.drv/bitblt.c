@@ -1921,15 +1921,30 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
         image->data = dst_bits.ptr;
         if (bitmap)
         {
+            RGNDATA *clip_data = NULL;
+            GC gc;
+
+            if (clip) clip_data = X11DRV_GetRegionData( clip, 0 );
             X11DRV_DIB_Lock( bitmap, DIB_Status_GdiMod );
+
             wine_tsx11_lock();
-            XPutImage( gdi_display, bitmap->pixmap, get_bitmap_gc(depth), image, src->visrect.left, 0,
+            gc = XCreateGC( gdi_display, bitmap->pixmap, 0, NULL );
+            XSetGraphicsExposures( gdi_display, gc, False );
+            if (clip_data) XSetClipRectangles( gdi_display, gc, 0, 0, (XRectangle *)clip_data->Buffer,
+                                               clip_data->rdh.nCount, YXBanded );
+            XPutImage( gdi_display, bitmap->pixmap, gc, image, src->visrect.left, 0,
                        dst->visrect.left, dst->visrect.top, width, height );
+            XFreeGC( gdi_display, gc );
             wine_tsx11_unlock();
+
             X11DRV_DIB_Unlock( bitmap, TRUE );
+            HeapFree( GetProcessHeap(), 0, clip_data );
         }
         else
         {
+            HRGN saved_region = 0;
+
+            if (clip) saved_region = add_extra_clipping_region( physdev, clip );
             X11DRV_LockDIBSection( physdev, DIB_Status_GdiMod );
 
             /* optimization for single-op ROPs */
@@ -1964,6 +1979,7 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
             }
 
             X11DRV_UnlockDIBSection( physdev, !ret );
+            if (saved_region) restore_clipping_region( physdev, saved_region );
         }
         image->data = NULL;
     }
