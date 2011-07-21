@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
 #include <stdarg.h>
 #include <stdlib.h>
 #include <windef.h>
@@ -26,6 +27,8 @@
 #include <wincrypt.h>
 #include <winreg.h>
 #include <winsock.h>
+#include "initguid.h"
+#include <httprequest.h>
 
 #include "wine/test.h"
 
@@ -2095,6 +2098,166 @@ static void test_credentials(void)
     WinHttpCloseHandle(ses);
 }
 
+static void test_IWinHttpRequest(void)
+{
+    static const WCHAR url1W[] = {'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g',0};
+    static const WCHAR url2W[] = {'w','i','n','e','h','q','.','o','r','g',0};
+    static const WCHAR method1W[] = {'G','E','T',0};
+    static const WCHAR method2W[] = {'I','N','V','A','L','I','D',0};
+    HRESULT hr;
+    IWinHttpRequest *req;
+    BSTR method, url, response = NULL, status_text = NULL;
+    VARIANT async, empty, timeout;
+    VARIANT_BOOL succeeded;
+    LONG status;
+
+    CoInitialize( NULL );
+    hr = CoCreateInstance( &CLSID_WinHttpRequest, NULL, CLSCTX_INPROC_SERVER, &IID_IWinHttpRequest, (void **)&req );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    VariantInit( &empty );
+    V_VT( &empty ) = VT_ERROR;
+
+    hr = IWinHttpRequest_Open( req, NULL, NULL, empty );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    method = SysAllocString( method1W );
+    hr = IWinHttpRequest_Open( req, method, NULL, empty );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    url = SysAllocString( url1W );
+    hr = IWinHttpRequest_Open( req, NULL, url, empty );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_Abort( req );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_Open( req, method, url, empty );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_Abort( req );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_Release( req );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = CoCreateInstance( &CLSID_WinHttpRequest, NULL, CLSCTX_INPROC_SERVER, &IID_IWinHttpRequest, (void **)&req );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    VariantInit( &async );
+    V_VT( &async ) = VT_BOOL;
+    V_BOOL( &async ) = VARIANT_FALSE;
+
+    SysFreeString( url );
+    url = SysAllocString( url2W );
+    hr = IWinHttpRequest_Open( req, method, url, async );
+    ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_UNRECOGNIZED_SCHEME ), "got %08x\n", hr );
+
+    SysFreeString( method );
+    method = SysAllocString( method2W );
+    hr = IWinHttpRequest_Open( req, method, url, async );
+    ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_UNRECOGNIZED_SCHEME ), "got %08x\n", hr );
+
+    SysFreeString( method );
+    method = SysAllocString( method1W );
+    SysFreeString( url );
+    url = SysAllocString( url1W );
+    hr = IWinHttpRequest_Open( req, method, url, async );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_Abort( req );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_Send( req, empty );
+    ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_OPEN ), "got %08x\n", hr );
+
+    hr = IWinHttpRequest_Abort( req );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_Release( req );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = CoCreateInstance( &CLSID_WinHttpRequest, NULL, CLSCTX_INPROC_SERVER, &IID_IWinHttpRequest, (void **)&req );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_get_Status( req, &status );
+    ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_SEND ), "got %08x\n", hr );
+
+    hr = IWinHttpRequest_get_StatusText( req, &status_text );
+    ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_SEND ), "got %08x\n", hr );
+
+    hr = IWinHttpRequest_SetTimeouts( req, 10000, 10000, 10000, 10000 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    SysFreeString( method );
+    method = SysAllocString( method1W );
+    SysFreeString( url );
+    url = SysAllocString( url1W );
+    hr = IWinHttpRequest_Open( req, method, url, async );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_get_Status( req, &status );
+    ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_SEND ), "got %08x\n", hr );
+
+    hr = IWinHttpRequest_get_StatusText( req, &status_text );
+    ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_SEND ), "got %08x\n", hr );
+
+    hr = IWinHttpRequest_SetTimeouts( req, 10000, 10000, 10000, 10000 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_Send( req, empty );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_Send( req, empty );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    status = 0;
+    hr = IWinHttpRequest_get_Status( req, &status );
+    ok( hr == S_OK, "got %08x\n", hr );
+    trace("%d\n", status);
+
+    hr = IWinHttpRequest_get_StatusText( req, &status_text );
+    ok( hr == S_OK, "got %08x\n", hr );
+    trace("%s\n", wine_dbgstr_w(status_text));
+    SysFreeString( status_text );
+
+    VariantInit( &timeout );
+    V_VT( &timeout ) = VT_I4;
+    V_I4( &timeout ) = 10;
+    hr = IWinHttpRequest_WaitForResponse( req, timeout, &succeeded );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_get_Status( req, &status );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_get_StatusText( req, &status_text );
+    ok( hr == S_OK, "got %08x\n", hr );
+    SysFreeString( status_text );
+
+    hr = IWinHttpRequest_Send( req, empty );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_get_ResponseText( req, &response );
+    ok( hr == S_OK, "got %08x\n", hr );
+    SysFreeString( response );
+
+    hr = IWinHttpRequest_Send( req, empty );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_Abort( req );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_Abort( req );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_Release( req );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    SysFreeString( method );
+    SysFreeString( url );
+    CoUninitialize();
+}
+
 START_TEST (winhttp)
 {
     static const WCHAR basicW[] = {'/','b','a','s','i','c',0};
@@ -2116,6 +2279,7 @@ START_TEST (winhttp)
     test_Timeouts();
     test_resolve_timeout();
     test_credentials();
+    test_IWinHttpRequest();
 
     si.event = CreateEvent(NULL, 0, 0, NULL);
     si.port = 7532;
