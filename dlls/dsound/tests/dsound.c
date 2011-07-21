@@ -1185,7 +1185,6 @@ static HRESULT test_duplicate(LPGUID lpGuid)
                                 event,WAIT_OBJECT_0+1);
 
                     ref=IDirectSoundNotify_Release(dup_notify);
-                    todo_wine
                     ok(ref==0,"IDirectSoundNotify_Release() has %d references, "
                        "should have 0\n",ref);
                 }

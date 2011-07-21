@@ -1213,6 +1213,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     dsb->ref = 0;
     dsb->state = STATE_STOPPED;
     dsb->buf_mixpos = dsb->sec_mixpos = 0;
+    dsb->notify = NULL;
     dsb->device = device;
     dsb->ds3db = NULL;
     dsb->iks = NULL; /* FIXME? */
