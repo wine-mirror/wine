@@ -852,7 +852,7 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
     }
 }
 
-static inline void update_heap_entry(struct constant_heap *heap, unsigned int idx,
+static void update_heap_entry(const struct constant_heap *heap, unsigned int idx,
         unsigned int heap_idx, DWORD new_version)
 {
     struct constant_entry *entries = heap->entries;
