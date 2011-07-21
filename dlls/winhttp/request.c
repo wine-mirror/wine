@@ -2517,6 +2517,36 @@ static HRESULT WINAPI winhttp_request_Send(
     return S_OK;
 }
 
+static DWORD request_wait_for_response( struct winhttp_request *request, DWORD timeout, VARIANT_BOOL *succeeded )
+{
+    DWORD err;
+
+    if (request->state >= REQUEST_STATE_RESPONSE_RECEIVED) return ERROR_SUCCESS;
+    if (request->state < REQUEST_STATE_SENT)
+    {
+        if ((err = wait_for_completion( request, timeout ))) return err;
+        request->state = REQUEST_STATE_SENT;
+    }
+    wait_set_status_callback( request, WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE );
+    if (!WinHttpReceiveResponse( request->hrequest, NULL ))
+    {
+        return GetLastError();
+    }
+    switch ((err = wait_for_completion( request, timeout )))
+    {
+    case WAIT_OBJECT_0:
+        if (succeeded) *succeeded = VARIANT_TRUE;
+        break;
+    case WAIT_TIMEOUT:
+        if (succeeded) *succeeded = VARIANT_FALSE;
+        break;
+    default:
+        return err;
+    }
+    request->state = REQUEST_STATE_RESPONSE_RECEIVED;
+    return ERROR_SUCCESS;
+}
+
 static HRESULT WINAPI winhttp_request_get_Status(
     IWinHttpRequest *iface,
     LONG *status )
@@ -2580,8 +2610,12 @@ static HRESULT WINAPI winhttp_request_WaitForResponse(
     VARIANT timeout,
     VARIANT_BOOL *succeeded )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    DWORD msecs = (V_I4(&timeout) == -1) ? INFINITE : V_I4(&timeout) * 1000;
+
+    TRACE("%p, %s, %p\n", request, debugstr_variant(&timeout), succeeded);
+
+    return HRESULT_FROM_WIN32( request_wait_for_response( request, msecs, succeeded ) );
 }
 
 static HRESULT WINAPI winhttp_request_Abort(
