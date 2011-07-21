@@ -105,9 +105,9 @@ static UINT_PTR handle_table_size;
 
 typedef struct
 {
-    DWORD dwProxyEnabled;
-    LPWSTR lpszProxyServer;
-    LPWSTR lpszProxyBypass;
+    DWORD  proxyEnabled;
+    LPWSTR proxy;
+    LPWSTR proxyBypass;
 } proxyinfo_t;
 
 static const WCHAR szInternetSettings[] =
@@ -337,15 +337,15 @@ static LONG INTERNET_SaveProxySettings( proxyinfo_t *lpwpi )
     if ((ret = RegOpenKeyW( HKEY_CURRENT_USER, szInternetSettings, &key )))
         return ret;
 
-    if ((ret = RegSetValueExW( key, szProxyEnable, 0, REG_DWORD, (BYTE*)&lpwpi->dwProxyEnabled, sizeof(DWORD))))
+    if ((ret = RegSetValueExW( key, szProxyEnable, 0, REG_DWORD, (BYTE*)&lpwpi->proxyEnabled, sizeof(DWORD))))
     {
         RegCloseKey( key );
         return ret;
     }
 
-    if (lpwpi->lpszProxyServer)
+    if (lpwpi->proxy)
     {
-        if ((ret = RegSetValueExW( key, szProxyServer, 0, REG_SZ, (BYTE*)lpwpi->lpszProxyServer, sizeof(WCHAR) * (lstrlenW(lpwpi->lpszProxyServer) + 1))))
+        if ((ret = RegSetValueExW( key, szProxyServer, 0, REG_SZ, (BYTE*)lpwpi->proxy, sizeof(WCHAR) * (lstrlenW(lpwpi->proxy) + 1))))
         {
             RegCloseKey( key );
             return ret;
@@ -494,8 +494,8 @@ BOOL WINAPI DetectAutoProxyUrl(LPSTR lpszAutoProxyUrl,
 
 static void FreeProxyInfo( proxyinfo_t *lpwpi )
 {
-    heap_free(lpwpi->lpszProxyServer);
-    heap_free(lpwpi->lpszProxyBypass);
+    heap_free(lpwpi->proxy);
+    heap_free(lpwpi->proxyBypass);
 }
 
 /***********************************************************************
@@ -520,17 +520,17 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
         return ret;
 
     len = sizeof(DWORD);
-    if (RegQueryValueExW( key, szProxyEnable, NULL, &type, (BYTE *)&lpwpi->dwProxyEnabled, &len ) || type != REG_DWORD)
+    if (RegQueryValueExW( key, szProxyEnable, NULL, &type, (BYTE *)&lpwpi->proxyEnabled, &len ) || type != REG_DWORD)
     {
-        lpwpi->dwProxyEnabled = 0;
-        if((ret = RegSetValueExW( key, szProxyEnable, 0, REG_DWORD, (BYTE *)&lpwpi->dwProxyEnabled, sizeof(DWORD) )))
+        lpwpi->proxyEnabled = 0;
+        if((ret = RegSetValueExW( key, szProxyEnable, 0, REG_DWORD, (BYTE *)&lpwpi->proxyEnabled, sizeof(DWORD) )))
         {
             RegCloseKey( key );
             return ret;
         }
     }
 
-    if (!(envproxy = getenv( "http_proxy" )) || lpwpi->dwProxyEnabled)
+    if (!(envproxy = getenv( "http_proxy" )) || lpwpi->proxyEnabled)
     {
         TRACE("Proxy is enabled.\n");
 
@@ -557,14 +557,14 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
             p = strchrW( szProxy, ' ' );
             if (p) *p = 0;
 
-            lpwpi->lpszProxyServer = szProxy;
+            lpwpi->proxy = szProxy;
 
-            TRACE("http proxy = %s\n", debugstr_w(lpwpi->lpszProxyServer));
+            TRACE("http proxy = %s\n", debugstr_w(lpwpi->proxy));
         }
         else
         {
             TRACE("No proxy server settings in registry.\n");
-            lpwpi->lpszProxyServer = NULL;
+            lpwpi->proxy = NULL;
         }
     }
     else if (envproxy)
@@ -576,14 +576,14 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
             return ERROR_OUTOFMEMORY;
         MultiByteToWideChar( CP_UNIXCP, 0, envproxy, -1, envproxyW, len );
 
-        lpwpi->dwProxyEnabled = 1;
-        lpwpi->lpszProxyServer = envproxyW;
+        lpwpi->proxyEnabled = 1;
+        lpwpi->proxy = envproxyW;
 
-        TRACE("http proxy (from environment) = %s\n", debugstr_w(lpwpi->lpszProxyServer));
+        TRACE("http proxy (from environment) = %s\n", debugstr_w(lpwpi->proxy));
     }
     RegCloseKey( key );
 
-    lpwpi->lpszProxyBypass = NULL;
+    lpwpi->proxyBypass = NULL;
 
     return ERROR_SUCCESS;
 }
@@ -598,10 +598,10 @@ static BOOL INTERNET_ConfigureProxy( appinfo_t *lpwai )
     if (INTERNET_LoadProxySettings( &wpi ))
         return FALSE;
 
-    if (wpi.dwProxyEnabled)
+    if (wpi.proxyEnabled)
     {
         lpwai->accessType = INTERNET_OPEN_TYPE_PROXY;
-        lpwai->proxy = wpi.lpszProxyServer;
+        lpwai->proxy = wpi.proxy;
         return TRUE;
     }
 
@@ -2333,7 +2333,7 @@ DWORD INET_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *
 
             switch (optionW->dwOption) {
             case INTERNET_PER_CONN_FLAGS:
-                if(pi.dwProxyEnabled)
+                if(pi.proxyEnabled)
                     optionW->Value.dwValue = PROXY_TYPE_PROXY;
                 else
                     optionW->Value.dwValue = PROXY_TYPE_DIRECT;
@@ -2341,16 +2341,16 @@ DWORD INET_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *
 
             case INTERNET_PER_CONN_PROXY_SERVER:
                 if (unicode)
-                    optionW->Value.pszValue = heap_strdupW(pi.lpszProxyServer);
+                    optionW->Value.pszValue = heap_strdupW(pi.proxy);
                 else
-                    optionA->Value.pszValue = heap_strdupWtoA(pi.lpszProxyServer);
+                    optionA->Value.pszValue = heap_strdupWtoA(pi.proxy);
                 break;
 
             case INTERNET_PER_CONN_PROXY_BYPASS:
                 if (unicode)
-                    optionW->Value.pszValue = heap_strdupW(pi.lpszProxyBypass);
+                    optionW->Value.pszValue = heap_strdupW(pi.proxyBypass);
                 else
-                    optionA->Value.pszValue = heap_strdupWtoA(pi.lpszProxyBypass);
+                    optionA->Value.pszValue = heap_strdupWtoA(pi.proxyBypass);
                 break;
 
             case INTERNET_PER_CONN_AUTOCONFIG_URL:
@@ -2669,18 +2669,18 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
 
             switch (option->dwOption) {
             case INTERNET_PER_CONN_PROXY_SERVER:
-                heap_free(pi.lpszProxyServer);
-                pi.lpszProxyServer = heap_strdupW(option->Value.pszValue);
+                heap_free(pi.proxy);
+                pi.proxy = heap_strdupW(option->Value.pszValue);
                 break;
 
             case INTERNET_PER_CONN_FLAGS:
                 if(option->Value.dwValue & PROXY_TYPE_PROXY)
-                    pi.dwProxyEnabled = 1;
+                    pi.proxyEnabled = 1;
                 else
                 {
                     if(option->Value.dwValue != PROXY_TYPE_DIRECT)
                         FIXME("Unhandled flags: 0x%x\n", option->Value.dwValue);
-                    pi.dwProxyEnabled = 0;
+                    pi.proxyEnabled = 0;
                 }
                 break;
 
