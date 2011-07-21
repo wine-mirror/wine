@@ -1063,12 +1063,7 @@ static HRESULT test_notify(LPDIRECTSOUNDBUFFER dsb,
         return rc;
 
     ret=WaitForMultipleObjects(count,event,FALSE,0);
-    if (expected != WAIT_OBJECT_0+1) {
-        todo_wine
-        ok(ret==expected,"expected %d. got %d\n",expected,ret);
-    }
-    else
-        ok(ret==expected,"expected %d. got %d\n",expected,ret);
+    ok(ret==expected,"expected %d. got %d\n",expected,ret);
     return rc;
 }
 
