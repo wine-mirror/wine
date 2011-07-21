@@ -41,13 +41,13 @@ typedef HRESULT (*fnCreateInstance)(IUnknown *pUnkOuter, IUnknown **ppObj);
  */
 typedef struct _gameuxcf
 {
-    const struct IClassFactoryVtbl *lpVtbl;
+    IClassFactory IClassFactory_iface;
     fnCreateInstance pfnCreateInstance;
 } gameuxcf;
 
 static inline gameuxcf *impl_from_IClassFactory(IClassFactory *iface)
 {
-    return (gameuxcf*)((char*)iface - FIELD_OFFSET(gameuxcf, lpVtbl));
+    return CONTAINING_RECORD(iface, gameuxcf, IClassFactory_iface);
 }
 
 static HRESULT WINAPI gameuxcf_QueryInterface(
@@ -130,8 +130,8 @@ static const struct IClassFactoryVtbl gameuxcf_vtbl =
     gameuxcf_LockServer
 };
 
-static gameuxcf gameexplorercf = { &gameuxcf_vtbl, GameExplorer_create };
-static gameuxcf gamestatisticscf  = { &gameuxcf_vtbl, GameStatistics_create };
+static gameuxcf gameexplorercf = { { &gameuxcf_vtbl }, GameExplorer_create };
+static gameuxcf gamestatisticscf  = { { &gameuxcf_vtbl }, GameStatistics_create };
 
 /***************************************************************
  * gameux ClassFactory
@@ -147,11 +147,11 @@ HRESULT WINAPI DllGetClassObject(
 
     if(IsEqualCLSID(rclsid, &CLSID_GameExplorer))
     {
-        cf = (IClassFactory*)&gameexplorercf.lpVtbl;
+        cf = &gameexplorercf.IClassFactory_iface;
     }
     else if( IsEqualCLSID( rclsid, &CLSID_GameStatistics ))
     {
-        cf = (IClassFactory*) &gamestatisticscf.lpVtbl;
+        cf = &gamestatisticscf.IClassFactory_iface;
     }
 
     if(!cf)
