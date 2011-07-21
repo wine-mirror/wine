@@ -1866,13 +1866,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
     if (flags & ETO_CLIPPED)
     {
-        HRGN clip_region;
-
-        clip_region = CreateRectRgnIndirect( lprect );
-        /* make a copy of the current device region */
-        saved_region = CreateRectRgn( 0, 0, 0, 0 );
-        CombineRgn( saved_region, physDev->region, 0, RGN_COPY );
-        X11DRV_SetDeviceClipping( &physDev->dev, saved_region, clip_region );
+        HRGN clip_region = CreateRectRgnIndirect( lprect );
+        saved_region = add_extra_clipping_region( physDev, clip_region );
         DeleteObject( clip_region );
     }
 
@@ -2131,12 +2126,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     }
     LeaveCriticalSection(&xrender_cs);
 
-    if (flags & ETO_CLIPPED)
-    {
-        /* restore the device region */
-        X11DRV_SetDeviceClipping( &physDev->dev, saved_region, 0 );
-        DeleteObject( saved_region );
-    }
+    if (saved_region) restore_clipping_region( physDev, saved_region );
 
     retv = TRUE;
 

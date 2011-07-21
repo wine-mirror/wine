@@ -185,25 +185,60 @@ RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp )
 }
 
 
-/***********************************************************************
- *           X11DRV_SetDeviceClipping
- */
-void X11DRV_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
+static void update_x11_clipping( X11DRV_PDEVICE *physDev )
 {
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     RGNDATA *data;
 
-    CombineRgn( physDev->region, vis_rgn, clip_rgn, clip_rgn ? RGN_AND : RGN_COPY );
     if (!(data = X11DRV_GetRegionData( physDev->region, 0 ))) return;
-
     wine_tsx11_lock();
     XSetClipRectangles( gdi_display, physDev->gc, physDev->dc_rect.left, physDev->dc_rect.top,
                         (XRectangle *)data->Buffer, data->rdh.nCount, YXBanded );
     wine_tsx11_unlock();
 
     if (physDev->xrender) X11DRV_XRender_SetDeviceClipping(physDev, data);
-
     HeapFree( GetProcessHeap(), 0, data );
+}
+
+/***********************************************************************
+ *           add_extra_clipping_region
+ *
+ * Temporarily add a region to the current clipping region.
+ * The returned region must be restored with restore_clipping_region.
+ */
+HRGN add_extra_clipping_region( X11DRV_PDEVICE *dev, HRGN rgn )
+{
+    HRGN ret, clip;
+
+    if (!(clip = CreateRectRgn( 0, 0, 0, 0 ))) return 0;
+    CombineRgn( clip, dev->region, rgn, RGN_AND );
+    ret = dev->region;
+    dev->region = clip;
+    update_x11_clipping( dev );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           restore_clipping_region
+ */
+void restore_clipping_region( X11DRV_PDEVICE *dev, HRGN rgn )
+{
+    if (!rgn) return;
+    DeleteObject( dev->region );
+    dev->region = rgn;
+    update_x11_clipping( dev );
+}
+
+
+/***********************************************************************
+ *           X11DRV_SetDeviceClipping
+ */
+void X11DRV_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
+{
+    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+
+    CombineRgn( physDev->region, vis_rgn, clip_rgn, clip_rgn ? RGN_AND : RGN_COPY );
+    update_x11_clipping( physDev );
 }
 
 
