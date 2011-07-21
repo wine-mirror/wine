@@ -1059,7 +1059,7 @@ static void test_extension(void)
     char curdir[MAX_PATH];
     char *filename_ptr;
     const char *test_file_name = "deadbeef";
-    const char **cur_filter;
+    unsigned int i;
     DWORD ret;
     BOOL boolret;
 
@@ -1077,13 +1077,13 @@ static void test_extension(void)
     ofn.lpfnHook = test_extension_wndproc;
     ofn.nFileExtension = 0;
 
-    for (cur_filter = defext_filters; cur_filter < defext_filters + ARRAY_SIZE(defext_filters); cur_filter++) {
-        ofn.lpstrFilter = *cur_filter;
+    for (i = 0; i < ARRAY_SIZE(defext_filters); i++) {
+        ofn.lpstrFilter = defext_filters[i];
         strcpy(filename, test_file_name);
         boolret = GetSaveFileNameA(&ofn);
-        ok(boolret, "expected true\n");
+        ok(boolret, "%u: expected true\n", i);
         ret = CommDlgExtendedError();
-        ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
+        ok(!ret, "%u: CommDlgExtendedError returned %#x\n", i, ret);
         filename_ptr = ofn.lpstrFile + strlen( ofn.lpstrFile ) - strlen( test_file_name );
         ok( strlen(ofn.lpstrFile) >= strlen(test_file_name), "Filename %s is too short\n", ofn.lpstrFile );
         ok( strcmp(filename_ptr, test_file_name) == 0,
