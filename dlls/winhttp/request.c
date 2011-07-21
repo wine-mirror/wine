@@ -2551,8 +2551,24 @@ static HRESULT WINAPI winhttp_request_get_Status(
     IWinHttpRequest *iface,
     LONG *status )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    DWORD err, flags, status_code, len = sizeof(status_code), index = 0;
+
+    TRACE("%p, %p\n", request, status);
+
+    if (request->state < REQUEST_STATE_SENT)
+    {
+        return HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_SEND );
+    }
+    if ((err = request_wait_for_response( request, INFINITE, NULL ))) return HRESULT_FROM_WIN32( err );
+
+    flags = WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER;
+    if (!WinHttpQueryHeaders( request->hrequest, flags, NULL, &status_code, &len, &index ))
+    {
+        return HRESULT_FROM_WIN32( GetLastError() );
+    }
+    *status = status_code;
+    return S_OK;
 }
 
 static HRESULT WINAPI winhttp_request_get_StatusText(
