@@ -2575,8 +2575,28 @@ static HRESULT WINAPI winhttp_request_get_StatusText(
     IWinHttpRequest *iface,
     BSTR *status )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    DWORD err, len = 0, index = 0;
+
+    TRACE("%p, %p\n", request, status);
+
+    if (request->state < REQUEST_STATE_SENT)
+    {
+        return HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_SEND );
+    }
+    if ((err = request_wait_for_response( request, INFINITE, NULL ))) return HRESULT_FROM_WIN32( err );
+
+    WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_STATUS_TEXT, NULL, NULL, &len, &index );
+    err = GetLastError();
+    if (err != ERROR_INSUFFICIENT_BUFFER) return HRESULT_FROM_WIN32( err );
+    if (!(*status = SysAllocStringLen( NULL, len / sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+    index = 0;
+    if (!WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_STATUS_TEXT, NULL, *status, &len, &index ))
+    {
+        SysFreeString( *status );
+        return HRESULT_FROM_WIN32( GetLastError() );
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI winhttp_request_get_ResponseText(
