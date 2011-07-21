@@ -2137,10 +2137,25 @@ BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, LPCVOID buffer, DWORD to_write
     return ret;
 }
 
+enum request_state
+{
+    REQUEST_STATE_INVALID,
+    REQUEST_STATE_OPEN,
+    REQUEST_STATE_SENT,
+    REQUEST_STATE_RESPONSE_RECEIVED,
+    REQUEST_STATE_BODY_RECEIVED
+};
+
 struct winhttp_request
 {
     IWinHttpRequest IWinHttpRequest_iface;
     LONG refs;
+    enum request_state state;
+    HINTERNET hsession;
+    HINTERNET hconnect;
+    HINTERNET hrequest;
+    HANDLE wait;
+    HANDLE cancel;
 };
 
 static inline struct winhttp_request *impl_from_IWinHttpRequest( IWinHttpRequest *iface )
@@ -2163,6 +2178,11 @@ static ULONG WINAPI winhttp_request_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", request);
+        WinHttpCloseHandle( request->hrequest );
+        WinHttpCloseHandle( request->hconnect );
+        WinHttpCloseHandle( request->hsession );
+        CloseHandle( request->wait );
+        CloseHandle( request->cancel );
         heap_free( request );
     }
     return refs;
@@ -2342,8 +2362,70 @@ static HRESULT WINAPI winhttp_request_Open(
     BSTR url,
     VARIANT async )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    HINTERNET hsession = NULL, hconnect = NULL, hrequest;
+    URL_COMPONENTS uc;
+    WCHAR *hostname, *path;
+    DWORD err, flags = 0;
+
+    TRACE("%p, %s, %s, %s\n", request, debugstr_w(method), debugstr_w(url),
+          debugstr_variant(&async));
+
+    if (!method) return E_INVALIDARG;
+
+    memset( &uc, 0, sizeof(uc) );
+    uc.dwStructSize = sizeof(uc);
+    uc.dwHostNameLength = ~0u;
+    uc.dwUrlPathLength  = ~0u;
+    if (!WinHttpCrackUrl( url, 0, 0, &uc )) return HRESULT_FROM_WIN32( GetLastError() );
+
+    if (!(hostname = heap_alloc( (uc.dwHostNameLength + 1) * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+    memcpy( hostname, uc.lpszHostName, uc.dwHostNameLength * sizeof(WCHAR) );
+    hostname[uc.dwHostNameLength] = 0;
+    if (!(path = heap_alloc( (uc.dwUrlPathLength + 1) * sizeof(WCHAR) )))
+    {
+        heap_free( hostname );
+        return E_OUTOFMEMORY;
+    }
+    memcpy( path, uc.lpszUrlPath, uc.dwUrlPathLength * sizeof(WCHAR) );
+    path[uc.dwUrlPathLength] = 0;
+
+    if (V_BOOL( &async ) == VARIANT_TRUE) flags |= WINHTTP_FLAG_ASYNC;
+    if (!(hsession = WinHttpOpen( NULL, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, NULL, NULL, flags )))
+    {
+        err = GetLastError();
+        goto error;
+    }
+    if (!(hconnect = WinHttpConnect( hsession, hostname, uc.nPort, 0 )))
+    {
+        err = GetLastError();
+        goto error;
+    }
+    if (!(hrequest = WinHttpOpenRequest( hconnect, method, path, NULL, NULL, NULL, 0 )))
+    {
+        err = GetLastError();
+        goto error;
+    }
+    if (flags & WINHTTP_FLAG_ASYNC)
+    {
+        request->wait   = CreateEventW( NULL, FALSE, FALSE, NULL );
+        request->cancel = CreateEventW( NULL, FALSE, FALSE, NULL );
+        WinHttpSetOption( hrequest, WINHTTP_OPTION_CONTEXT_VALUE, &request, sizeof(request) );
+    }
+    request->state = REQUEST_STATE_OPEN;
+    request->hsession = hsession;
+    request->hconnect = hconnect;
+    request->hrequest = hrequest;
+    heap_free( hostname );
+    heap_free( path );
+    return S_OK;
+
+error:
+    WinHttpCloseHandle( hconnect );
+    WinHttpCloseHandle( hsession );
+    heap_free( hostname );
+    heap_free( path );
+    return HRESULT_FROM_WIN32( err );
 }
 
 static HRESULT WINAPI winhttp_request_SetRequestHeader(
@@ -2517,7 +2599,7 @@ HRESULT WinHttpRequest_create( IUnknown *unknown, void **obj )
 
     TRACE("%p, %p\n", unknown, obj);
 
-    if (!(request = heap_alloc( sizeof(*request) ))) return E_OUTOFMEMORY;
+    if (!(request = heap_alloc_zero( sizeof(*request) ))) return E_OUTOFMEMORY;
     request->IWinHttpRequest_iface.lpVtbl = &winhttp_request_vtbl;
     request->refs = 1;
 
