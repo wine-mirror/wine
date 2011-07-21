@@ -498,10 +498,24 @@ static void FreeProxyInfo( proxyinfo_t *lpwpi )
     heap_free(lpwpi->proxyBypass);
 }
 
+static proxyinfo_t *global_proxy;
+
+static void free_global_proxy( void )
+{
+    EnterCriticalSection( &WININET_cs );
+    if (global_proxy)
+    {
+        FreeProxyInfo( global_proxy );
+        heap_free( global_proxy );
+    }
+    LeaveCriticalSection( &WININET_cs );
+}
+
 /***********************************************************************
  *          INTERNET_LoadProxySettings
  *
- * Loads proxy information from the registry or environment into lpwpi.
+ * Loads proxy information from process-wide global settings, the registry,
+ * or the environment into lpwpi.
  *
  * The caller should call FreeProxyInfo when done with lpwpi.
  *
@@ -515,6 +529,15 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
     DWORD type, len;
     LPCSTR envproxy;
     LONG ret;
+
+    EnterCriticalSection( &WININET_cs );
+    if (global_proxy)
+    {
+        lpwpi->proxyEnabled = global_proxy->proxyEnabled;
+        lpwpi->proxy = heap_strdupW( global_proxy->proxy );
+        lpwpi->proxyBypass = heap_strdupW( global_proxy->proxyBypass );
+    }
+    LeaveCriticalSection( &WININET_cs );
 
     if ((ret = RegOpenKeyW( HKEY_CURRENT_USER, szInternetSettings, &key )))
         return ret;
@@ -2538,6 +2561,48 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
             lpwhh->ErrorMask = *(ULONG*)lpBuffer;
       }
       break;
+    case INTERNET_OPTION_PROXY:
+    {
+        INTERNET_PROXY_INFOW *info = lpBuffer;
+
+        if (!lpBuffer || dwBufferLength < sizeof(INTERNET_PROXY_INFOW))
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+        if (!hInternet)
+        {
+            EnterCriticalSection( &WININET_cs );
+            free_global_proxy();
+            global_proxy = heap_alloc( sizeof(proxyinfo_t) );
+            if (global_proxy)
+            {
+                if (info->dwAccessType == INTERNET_OPEN_TYPE_PROXY)
+                {
+                    global_proxy->proxyEnabled = 1;
+                    global_proxy->proxy = heap_strdupW( info->lpszProxy );
+                    global_proxy->proxyBypass = heap_strdupW( info->lpszProxyBypass );
+                }
+                else
+                {
+                    global_proxy->proxyEnabled = 0;
+                    global_proxy->proxy = global_proxy->proxyBypass = NULL;
+                }
+            }
+            LeaveCriticalSection( &WININET_cs );
+        }
+        else
+        {
+            /* In general, each type of object should handle
+             * INTERNET_OPTION_PROXY directly.  This FIXME ensures it doesn't
+             * get silently dropped.
+             */
+            FIXME("INTERNET_OPTION_PROXY unimplemented\n");
+            SetLastError(ERROR_INTERNET_INVALID_OPTION);
+            ret = FALSE;
+        }
+        break;
+    }
     case INTERNET_OPTION_CODEPAGE:
       {
         ULONG codepage = *(ULONG *)lpBuffer;
