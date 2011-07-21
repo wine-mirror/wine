@@ -4401,14 +4401,15 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem, BOOL is
     HWND hwndSelf = infoPtr->hwndSelf;
     LPWSTR pszText = NULL;
     BOOL bResult, bChanged = FALSE;
+    RECT oldItemArea;
 
     TRACE("(lpLVItem=%s, isW=%d)\n", debuglvitem_t(lpLVItem, isW), isW);
 
     if (!lpLVItem || lpLVItem->iItem < 0 || lpLVItem->iItem >= infoPtr->nItemCount)
 	return FALSE;
 
-    /* Invalidate old item area */
-    LISTVIEW_InvalidateItem(infoPtr, lpLVItem->iItem);
+    /* Store old item area */
+    LISTVIEW_GetItemBox(infoPtr, lpLVItem->iItem, &oldItemArea);
 
     /* For efficiency, we transform the lpLVItem->pszText to Unicode here */
     if ((lpLVItem->mask & LVIF_TEXT) && is_text(lpLVItem->pszText))
@@ -4436,7 +4437,10 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem, BOOL is
              lpLVItem->iSubItem > 0 && lpLVItem->iSubItem <= DPA_GetPtrCount(infoPtr->hdpaColumns) )
 	    LISTVIEW_InvalidateSubItem(infoPtr, lpLVItem->iItem, lpLVItem->iSubItem);
 	else
+        {
+            LISTVIEW_InvalidateRect(infoPtr, &oldItemArea);
 	    LISTVIEW_InvalidateItem(infoPtr, lpLVItem->iItem);
+        }
     }
     /* restore text */
     if (pszText)
