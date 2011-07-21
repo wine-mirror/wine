@@ -2598,8 +2598,15 @@ static HRESULT WINAPI winhttp_request_SetTimeouts(
     LONG send_timeout,
     LONG receive_timeout )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+
+    TRACE("%p, %d, %d, %d, %d\n", request, resolve_timeout, connect_timeout, send_timeout, receive_timeout);
+
+    request->resolve_timeout = resolve_timeout;
+    request->connect_timeout = connect_timeout;
+    request->send_timeout    = send_timeout;
+    request->receive_timeout = receive_timeout;
+    return S_OK;
 }
 
 static HRESULT WINAPI winhttp_request_SetClientCertificate(
