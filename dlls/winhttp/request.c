@@ -2156,6 +2156,10 @@ struct winhttp_request
     HINTERNET hrequest;
     HANDLE wait;
     HANDLE cancel;
+    LONG resolve_timeout;
+    LONG connect_timeout;
+    LONG send_timeout;
+    LONG receive_timeout;
 };
 
 static inline struct winhttp_request *impl_from_IWinHttpRequest( IWinHttpRequest *iface )
@@ -2454,12 +2458,63 @@ static HRESULT WINAPI winhttp_request_GetAllResponseHeaders(
     return E_NOTIMPL;
 }
 
+static DWORD wait_for_completion( struct winhttp_request *request, DWORD timeout )
+{
+    DWORD err;
+    HANDLE handles[2];
+
+    if (!request->wait) return ERROR_SUCCESS;
+
+    handles[0] = request->wait;
+    handles[1] = request->cancel;
+    err = WaitForMultipleObjects( 2, handles, FALSE, timeout );
+    if (err) WARN("wait failed with error %u\n", err);
+    return err;
+}
+
+static void CALLBACK wait_status_callback( HINTERNET handle, DWORD_PTR context, DWORD status, LPVOID buffer, DWORD size )
+{
+    struct winhttp_request *request = (struct winhttp_request *)context;
+    SetEvent( request->wait );
+}
+
+static void wait_set_status_callback( struct winhttp_request *request, DWORD status )
+{
+    if (!request->wait) return;
+    WinHttpSetStatusCallback( request->hrequest, wait_status_callback, status, 0 );
+}
+
 static HRESULT WINAPI winhttp_request_Send(
     IWinHttpRequest *iface,
     VARIANT body )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    DWORD err;
+
+    TRACE("%p, %s\n", request, debugstr_variant(&body));
+
+    if (request->state < REQUEST_STATE_OPEN)
+    {
+        return HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_OPEN );
+    }
+    if (request->state >= REQUEST_STATE_SENT) return ERROR_SUCCESS;
+
+    if (!WinHttpSetTimeouts( request->hrequest,
+                             request->resolve_timeout,
+                             request->connect_timeout,
+                             request->send_timeout,
+                             request->receive_timeout ))
+    {
+        return HRESULT_FROM_WIN32( GetLastError() );
+    }
+    wait_set_status_callback( request, WINHTTP_CALLBACK_STATUS_REQUEST_SENT );
+    if (!WinHttpSendRequest( request->hrequest, NULL, 0, NULL, 0, 0, 0 ))
+    {
+        return HRESULT_FROM_WIN32( GetLastError() );
+    }
+    if ((err = wait_for_completion( request, INFINITE ))) return err;
+    request->state = REQUEST_STATE_SENT;
+    return S_OK;
 }
 
 static HRESULT WINAPI winhttp_request_get_Status(
@@ -2602,6 +2657,10 @@ HRESULT WinHttpRequest_create( IUnknown *unknown, void **obj )
     if (!(request = heap_alloc_zero( sizeof(*request) ))) return E_OUTOFMEMORY;
     request->IWinHttpRequest_iface.lpVtbl = &winhttp_request_vtbl;
     request->refs = 1;
+    request->resolve_timeout = 0;
+    request->connect_timeout = 60000;
+    request->send_timeout    = 30000;
+    request->receive_timeout = 30000;
 
     *obj = &request->IWinHttpRequest_iface;
     TRACE("returning iface %p\n", *obj);
