@@ -480,6 +480,7 @@ extern BOOL PSDRV_Brush(PHYSDEV dev, BOOL EO) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_SetFont( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_SetPen( PHYSDEV dev ) DECLSPEC_HIDDEN;
 
+extern void PSDRV_AddClip( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern void PSDRV_SetClip( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern void PSDRV_ResetClip( PHYSDEV dev ) DECLSPEC_HIDDEN;
 

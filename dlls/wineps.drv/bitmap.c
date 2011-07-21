@@ -308,6 +308,7 @@ DWORD PSDRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info,
 
     PSDRV_SetClip(dev);
     PSDRV_WriteGSave(dev);
+    if (clip) PSDRV_AddClip( dev, clip );
     PSDRV_WriteImageBits( dev, info, dst_x, dst_y, dst_width, dst_height,
                           width, height, dst_bits.ptr, size );
     PSDRV_WriteGRestore(dev);

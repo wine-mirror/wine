@@ -25,6 +25,47 @@
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
 /***********************************************************************
+ *           PSDRV_AddClip
+ */
+void PSDRV_AddClip( PHYSDEV dev, HRGN hrgn )
+{
+    CHAR szArrayName[] = "clippath";
+    RECT *rect;
+    RGNDATA *data;
+    DWORD i, size = GetRegionData(hrgn, 0, NULL);
+
+    if (!size) return;
+    if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) return;
+    GetRegionData( hrgn, size, data );
+    rect = (RECT *)data->Buffer;
+
+    switch (data->rdh.nCount)
+    {
+    case 0:
+        /* set an empty clip path. */
+        PSDRV_WriteRectClip(dev, 0, 0, 0, 0);
+        break;
+    case 1:
+        /* optimize when it is a simple region */
+        PSDRV_WriteRectClip(dev, rect->left, rect->top,
+                            rect->right - rect->left, rect->bottom - rect->top);
+        break;
+    default:
+        PSDRV_WriteArrayDef(dev, szArrayName, data->rdh.nCount * 4);
+        for (i = 0; i < data->rdh.nCount; i++, rect++)
+        {
+            PSDRV_WriteArrayPut(dev, szArrayName, i * 4, rect->left);
+            PSDRV_WriteArrayPut(dev, szArrayName, i * 4 + 1, rect->top);
+            PSDRV_WriteArrayPut(dev, szArrayName, i * 4 + 2, rect->right - rect->left);
+            PSDRV_WriteArrayPut(dev, szArrayName, i * 4 + 3, rect->bottom - rect->top);
+        }
+        PSDRV_WriteRectClip2(dev, szArrayName);
+        break;
+    }
+    HeapFree( GetProcessHeap(), 0, data );
+}
+
+/***********************************************************************
  *           PSDRV_SetClip
  *
  * The idea here is that every graphics operation should bracket
@@ -38,76 +79,21 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 void PSDRV_SetClip( PHYSDEV dev )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
-    CHAR szArrayName[] = "clippath";
-    DWORD size;
-    RGNDATA *rgndata = NULL;
-    HRGN hrgn = CreateRectRgn(0,0,0,0);
-    BOOL empty;
+    HRGN hrgn;
 
     TRACE("hdc=%p\n", dev->hdc);
 
     if(physDev->pathdepth) {
         TRACE("inside a path, so not clipping\n");
-        goto end;
+        return;
     }
 
-    empty = !GetClipRgn(dev->hdc, hrgn);
-
-    if(!empty) {
-        size = GetRegionData(hrgn, 0, NULL);
-        if(!size) {
-            ERR("Invalid region\n");
-            goto end;
-        }
-
-        rgndata = HeapAlloc( GetProcessHeap(), 0, size );
-        if(!rgndata) {
-            ERR("Can't allocate buffer\n");
-            goto end;
-        }
-
-        GetRegionData(hrgn, size, rgndata);
-
+    hrgn = CreateRectRgn(0,0,0,0);
+    if (GetClipRgn(dev->hdc, hrgn))
+    {
         PSDRV_WriteGSave(dev);
-
-        /* check for NULL region */
-        if (rgndata->rdh.nCount == 0)
-        {
-            /* set an empty clip path. */
-            PSDRV_WriteRectClip(dev, 0, 0, 0, 0);
-        }
-        /* optimize when it is a simple region */
-        else if (rgndata->rdh.nCount == 1)
-        {
-            RECT *pRect = (RECT *)rgndata->Buffer;
-
-            PSDRV_WriteRectClip(dev, pRect->left, pRect->top,
-                                pRect->right - pRect->left,
-                                pRect->bottom - pRect->top);
-        }
-        else
-        {
-            UINT i;
-            RECT *pRect = (RECT *)rgndata->Buffer;
-
-            PSDRV_WriteArrayDef(dev, szArrayName, rgndata->rdh.nCount * 4);
-
-            for (i = 0; i < rgndata->rdh.nCount; i++, pRect++)
-            {
-                PSDRV_WriteArrayPut(dev, szArrayName, i * 4,
-                                    pRect->left);
-                PSDRV_WriteArrayPut(dev, szArrayName, i * 4 + 1,
-                                    pRect->top);
-                PSDRV_WriteArrayPut(dev, szArrayName, i * 4 + 2,
-                                    pRect->right - pRect->left);
-                PSDRV_WriteArrayPut(dev, szArrayName, i * 4 + 3,
-                                    pRect->bottom - pRect->top);
-            }
-            PSDRV_WriteRectClip2(dev, szArrayName);
-        }
+        PSDRV_AddClip( dev, hrgn );
     }
-end:
-    HeapFree( GetProcessHeap(), 0, rgndata );
     DeleteObject(hrgn);
 }
 
