@@ -376,7 +376,7 @@ static void shader_glsl_load_psamplers(const struct wined3d_gl_info *gl_info,
 
 /* GL locking is done by the caller */
 static void shader_glsl_load_vsamplers(const struct wined3d_gl_info *gl_info,
-        DWORD *tex_unit_map, GLhandleARB programId)
+        const DWORD *tex_unit_map, GLhandleARB programId)
 {
     GLint name_loc;
     char sampler_name[20];
