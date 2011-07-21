@@ -120,7 +120,7 @@ struct gdi_dc_funcs
     BOOL     (*pPolygon)(PHYSDEV,const POINT*,INT);
     BOOL     (*pPolyline)(PHYSDEV,const POINT*,INT);
     BOOL     (*pPolylineTo)(PHYSDEV,const POINT*,INT);
-    DWORD    (*pPutImage)(PHYSDEV,HBITMAP,BITMAPINFO*,const struct gdi_image_bits*,struct bitblt_coords*,struct bitblt_coords*,DWORD);
+    DWORD    (*pPutImage)(PHYSDEV,HBITMAP,HRGN,BITMAPINFO*,const struct gdi_image_bits*,struct bitblt_coords*,struct bitblt_coords*,DWORD);
     UINT     (*pRealizeDefaultPalette)(PHYSDEV);
     UINT     (*pRealizePalette)(PHYSDEV,HPALETTE,BOOL);
     BOOL     (*pRectangle)(PHYSDEV,INT,INT,INT,INT);
@@ -191,7 +191,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 6
+#define WINE_GDI_DRIVER_VERSION 7
 
 static inline PHYSDEV get_physdev_entry_point( PHYSDEV dev, size_t offset )
 {

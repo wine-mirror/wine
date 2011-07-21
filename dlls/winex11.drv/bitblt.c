@@ -1861,8 +1861,9 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
 /***********************************************************************
  *           X11DRV_PutImage
  */
-DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const struct gdi_image_bits *bits,
-                       struct bitblt_coords *src, struct bitblt_coords *dst, DWORD rop )
+DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info,
+                       const struct gdi_image_bits *bits, struct bitblt_coords *src,
+                       struct bitblt_coords *dst, DWORD rop )
 {
     X11DRV_PDEVICE *physdev;
     X_PHYSBITMAP *bitmap;
