@@ -36,7 +36,7 @@ typedef enum _CMDdelimiters {
   CMD_NONE,        /* End of line or single & */
   CMD_ONFAILURE,   /* ||                      */
   CMD_ONSUCCESS,   /* &&                      */
-  CMD_PIPE         /* Single                  */
+  CMD_PIPE         /* Single |                */
 } CMD_DELIMITERS;
 
 typedef struct _CMD_LIST {
