@@ -4146,6 +4146,19 @@ static void test_redundant_mode_set(void)
     DestroyWindow(window);
 }
 
+static SIZE screen_size;
+
+static LRESULT CALLBACK mode_set_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
+{
+    if (message == WM_SIZE)
+    {
+        screen_size.cx = GetSystemMetrics(SM_CXSCREEN);
+        screen_size.cy = GetSystemMetrics(SM_CYSCREEN);
+    }
+
+    return test_proc(hwnd, message, wparam, lparam);
+}
+
 static void test_coop_level_mode_set(void)
 {
     RECT fullscreen_rect, r, s;
@@ -4160,7 +4173,10 @@ static void test_coop_level_mode_set(void)
         WM_WINDOWPOSCHANGING,
         WM_WINDOWPOSCHANGED,
         WM_SIZE,
-        WM_DISPLAYCHANGE,
+        /* WM_DISPLAYCHANGE,    This message is received after WM_SIZE on native. However, the
+         *                      more important behaviour is that at the time the WM_SIZE message
+         *                      is processed SM_CXSCREEN and SM_CYSCREEN already have the new
+         *                      values. */
         0,
     };
 
@@ -4177,7 +4193,7 @@ static void test_coop_level_mode_set(void)
         return;
     }
 
-    wc.lpfnWndProc = test_proc;
+    wc.lpfnWndProc = mode_set_proc;
     wc.lpszClassName = "d3d7_test_wndproc_wc";
     ok(RegisterClassA(&wc), "Failed to register window class.\n");
 
@@ -4201,12 +4217,17 @@ static void test_coop_level_mode_set(void)
             r.left, r.top, r.right, r.bottom);
 
     expect_messages = exclusive_messages;
+    screen_size.cx = 0;
+    screen_size.cy = 0;
 
     hr = IDirectDraw7_SetDisplayMode(ddraw7, 640, 480, 32, 0, 0);
     ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
 
     ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
     expect_messages = NULL;
+    ok(screen_size.cx == s.right && screen_size.cy == s.bottom,
+            "Expected screen size %ux%u, got %ux%u.\n",
+            s.right, s.bottom, screen_size.cx, screen_size.cy);
 
     GetWindowRect(window, &r);
     ok(EqualRect(&r, &s), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
@@ -4214,12 +4235,17 @@ static void test_coop_level_mode_set(void)
             r.left, r.top, r.right, r.bottom);
 
     expect_messages = exclusive_messages;
+    screen_size.cx = 0;
+    screen_size.cy = 0;
 
     hr = IDirectDraw_RestoreDisplayMode(ddraw7);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
 
     ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
     expect_messages = NULL;
+    ok(screen_size.cx == fullscreen_rect.right && screen_size.cy == fullscreen_rect.bottom,
+            "Expected screen size %ux%u, got %ux%u.\n",
+            fullscreen_rect.right, fullscreen_rect.bottom, screen_size.cx, screen_size.cy);
 
     GetWindowRect(window, &r);
     ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
@@ -4234,12 +4260,15 @@ static void test_coop_level_mode_set(void)
             r.left, r.top, r.right, r.bottom);
 
     expect_messages = normal_messages;
+    screen_size.cx = 0;
+    screen_size.cy = 0;
 
     hr = IDirectDraw7_SetDisplayMode(ddraw7, 640, 480, 32, 0, 0);
     ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
 
     ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
     expect_messages = NULL;
+    ok(!screen_size.cx && !screen_size.cy, "Got unxpected screen size %ux%u.\n", screen_size.cx, screen_size.cy);
 
     GetWindowRect(window, &r);
     ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
@@ -4247,12 +4276,15 @@ static void test_coop_level_mode_set(void)
             r.left, r.top, r.right, r.bottom);
 
     expect_messages = normal_messages;
+    screen_size.cx = 0;
+    screen_size.cy = 0;
 
     hr = IDirectDraw_RestoreDisplayMode(ddraw7);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
 
     ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
     expect_messages = NULL;
+    ok(!screen_size.cx && !screen_size.cy, "Got unxpected screen size %ux%u.\n", screen_size.cx, screen_size.cy);
 
     GetWindowRect(window, &r);
     ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
