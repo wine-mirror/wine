@@ -209,7 +209,7 @@ try_get_image:
 
     if (!(dc_src = get_dc_ptr( src_dev->hdc ))) return FALSE;
     src_dev = GET_DC_PHYSDEV( dc_src, pGetImage );
-    err = src_dev->funcs->pGetImage( src_dev, 0, src_info, &src_bits, &src->visrect );
+    err = src_dev->funcs->pGetImage( src_dev, 0, src_info, &src_bits, src );
     release_dc_ptr( dc_src );
     if (err) return FALSE;
 
@@ -220,11 +220,9 @@ try_get_image:
                src->width, src->height, dst->width, dst->height );
 
     memcpy( dst_info, src_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
-    err = dst_dev->funcs->pPutImage( dst_dev, 0, dst_info, &src_bits, &dst->visrect, rop );
+    err = dst_dev->funcs->pPutImage( dst_dev, 0, dst_info, &src_bits, src, dst, rop );
     if (err == ERROR_BAD_FORMAT)
     {
-        RECT src_rect = src->visrect;
-
         /* 1-bpp source without a color table uses the destination DC colors */
         if (src_info->bmiHeader.biBitCount == 1 && !src_info->bmiHeader.biClrUsed)
         {
@@ -253,19 +251,18 @@ try_get_image:
             dst_info->bmiHeader.biClrUsed = 1;
         }
 
-        offset_rect( &src_rect, src_bits.offset - src->visrect.left, -src->visrect.top );
-        dst_info->bmiHeader.biWidth = src_rect.right - src_rect.left;
+        dst_info->bmiHeader.biWidth = src->visrect.right - src->visrect.left;
         dst_bits.ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ));
         if (dst_bits.ptr)
         {
             dst_bits.is_copy = TRUE;
             dst_bits.offset = 0;
             dst_bits.free = free_heap_bits;
-            if (!(err = convert_bitmapinfo( src_info, src_bits.ptr, &src_rect, dst_info, dst_bits.ptr )))
+            if (!(err = convert_bitmapinfo( src_info, src_bits.ptr, &src->visrect, dst_info, dst_bits.ptr )))
             {
                 /* get rid of the fake 1-bpp table */
                 if (dst_info->bmiHeader.biClrUsed == 1) dst_info->bmiHeader.biClrUsed = 0;
-                err = dst_dev->funcs->pPutImage( dst_dev, 0, dst_info, &dst_bits, &dst->visrect, rop );
+                err = dst_dev->funcs->pPutImage( dst_dev, 0, dst_info, &dst_bits, src, dst, rop );
             }
             if (dst_bits.free) dst_bits.free( &dst_bits );
         }

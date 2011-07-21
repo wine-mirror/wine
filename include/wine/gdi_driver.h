@@ -95,7 +95,7 @@ struct gdi_dc_funcs
     INT      (*pGetDeviceCaps)(PHYSDEV,INT);
     BOOL     (*pGetDeviceGammaRamp)(PHYSDEV,LPVOID);
     BOOL     (*pGetICMProfile)(PHYSDEV,LPDWORD,LPWSTR);
-    DWORD    (*pGetImage)(PHYSDEV,HBITMAP,BITMAPINFO*,struct gdi_image_bits*,const RECT*);
+    DWORD    (*pGetImage)(PHYSDEV,HBITMAP,BITMAPINFO*,struct gdi_image_bits*,struct bitblt_coords*);
     COLORREF (*pGetNearestColor)(PHYSDEV,COLORREF);
     COLORREF (*pGetPixel)(PHYSDEV,INT,INT);
     INT      (*pGetPixelFormat)(PHYSDEV);
@@ -121,7 +121,7 @@ struct gdi_dc_funcs
     BOOL     (*pPolygon)(PHYSDEV,const POINT*,INT);
     BOOL     (*pPolyline)(PHYSDEV,const POINT*,INT);
     BOOL     (*pPolylineTo)(PHYSDEV,const POINT*,INT);
-    DWORD    (*pPutImage)(PHYSDEV,HBITMAP,BITMAPINFO*,const struct gdi_image_bits*,const RECT*,DWORD);
+    DWORD    (*pPutImage)(PHYSDEV,HBITMAP,BITMAPINFO*,const struct gdi_image_bits*,struct bitblt_coords*,struct bitblt_coords*,DWORD);
     UINT     (*pRealizeDefaultPalette)(PHYSDEV);
     UINT     (*pRealizePalette)(PHYSDEV,HPALETTE,BOOL);
     BOOL     (*pRectangle)(PHYSDEV,INT,INT,INT,INT);
@@ -192,7 +192,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 4
+#define WINE_GDI_DRIVER_VERSION 5
 
 static inline PHYSDEV get_physdev_entry_point( PHYSDEV dev, size_t offset )
 {

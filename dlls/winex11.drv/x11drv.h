@@ -203,7 +203,7 @@ extern BOOL X11DRV_GetCharWidth( PHYSDEV dev, UINT firstChar, UINT lastChar, LPI
 extern BOOL X11DRV_GetDeviceGammaRamp( PHYSDEV dev, LPVOID ramp ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename ) DECLSPEC_HIDDEN;
 extern DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
-                              struct gdi_image_bits *bits, const RECT *rect ) DECLSPEC_HIDDEN;
+                              struct gdi_image_bits *bits, struct bitblt_coords *src ) DECLSPEC_HIDDEN;
 extern COLORREF X11DRV_GetNearestColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF X11DRV_GetPixel( PHYSDEV dev, INT x, INT y) DECLSPEC_HIDDEN;
 extern UINT X11DRV_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count, LPPALETTEENTRY entries ) DECLSPEC_HIDDEN;
@@ -220,7 +220,7 @@ extern BOOL X11DRV_Polygon( PHYSDEV dev, const POINT* pt, INT count ) DECLSPEC_H
 extern BOOL X11DRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polygons) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polylines) DECLSPEC_HIDDEN;
 extern DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const struct gdi_image_bits *bits,
-                              const RECT *rect, DWORD rop ) DECLSPEC_HIDDEN;
+                              struct bitblt_coords *src, struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
 extern UINT X11DRV_RealizeDefaultPalette( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern UINT X11DRV_RealizePalette( PHYSDEV dev, HPALETTE hpal, BOOL primary ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom) DECLSPEC_HIDDEN;

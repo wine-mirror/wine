@@ -693,10 +693,10 @@ INT WINAPI GetDIBits(
     if (bits && lines)
     {
         PHYSDEV physdev;
-        RECT rect;
         char src_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
         BITMAPINFO *src_info = (BITMAPINFO *)src_bmibuf;
         struct gdi_image_bits src_bits;
+        struct bitblt_coords src;
         DWORD err;
 
         /* FIXME: will need updating once the dib driver has pGetImage. */
@@ -704,8 +704,8 @@ INT WINAPI GetDIBits(
 
         if (!BITMAP_SetOwnerDC( hbitmap, physdev )) lines = 0;
 
-        rect.left = 0;
-        rect.right = min( width, bmp->bitmap.bmWidth );
+        src.visrect.left = 0;
+        src.visrect.right = min( width, bmp->bitmap.bmWidth );
 
         if (startscan >= bmp->bitmap.bmHeight)                       /* constrain lines to within src bitmap */
             lines = 0;
@@ -715,10 +715,14 @@ INT WINAPI GetDIBits(
 
         if (lines == 0) goto done;
 
-        rect.bottom = bmp->bitmap.bmHeight - startscan;
-        rect.top = rect.bottom - lines;
+        src.visrect.bottom = bmp->bitmap.bmHeight - startscan;
+        src.visrect.top = src.visrect.bottom - lines;
+        src.x = src.visrect.left;
+        src.y = src.visrect.top;
+        src.width = src.visrect.right - src.visrect.left;
+        src.height = src.visrect.bottom - src.visrect.top;
 
-        err = physdev->funcs->pGetImage( physdev, hbitmap, src_info, &src_bits, &rect );
+        err = physdev->funcs->pGetImage( physdev, hbitmap, src_info, &src_bits, &src );
 
         if(err)
         {
@@ -734,14 +738,12 @@ INT WINAPI GetDIBits(
                 fill_default_color_table( src_info );
         }
 
-        offset_rect( &rect, src_bits.offset, -rect.top );
-
         if(dst_info->bmiHeader.biHeight > 0)
             dst_info->bmiHeader.biHeight = lines;
         else
             dst_info->bmiHeader.biHeight = -lines;
 
-        convert_bitmapinfo( src_info, src_bits.ptr, &rect, dst_info, bits );
+        convert_bitmapinfo( src_info, src_bits.ptr, &src.visrect, dst_info, bits );
         if (src_bits.free) src_bits.free( &src_bits );
     }
     else lines = abs(height);

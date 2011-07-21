@@ -1711,7 +1711,7 @@ static BOOL matching_color_info( PHYSDEV dev, const ColorShifts *color_shifts, c
 /* copy the image bits, fixing up alignment and byte swapping as necessary */
 static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts, XImage *image,
                               const struct gdi_image_bits *src_bits, struct gdi_image_bits *dst_bits,
-                              const int *mapping, unsigned int zeropad_mask )
+                              struct bitblt_coords *coords, const int *mapping, unsigned int zeropad_mask )
 {
 #ifdef WORDS_BIGENDIAN
     static const int client_byte_order = MSBFirst;
@@ -1719,7 +1719,7 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
     static const int client_byte_order = LSBFirst;
 #endif
     BOOL need_byteswap;
-    int x, y, height = abs(info->bmiHeader.biHeight);
+    int x, y, height = coords->visrect.bottom - coords->visrect.top;
     int width_bytes = image->bytes_per_line;
     int padding_pos;
     unsigned char *src, *dst;
@@ -1745,6 +1745,12 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
         break;
     }
 
+    src = src_bits->ptr;
+    if (info->bmiHeader.biHeight > 0)
+        src += (info->bmiHeader.biHeight - coords->visrect.bottom) * width_bytes;
+    else
+        src += coords->visrect.top * width_bytes;
+
     if ((need_byteswap && !src_bits->is_copy) ||  /* need to swap bytes */
         (zeropad_mask != ~0u && !src_bits->is_copy) ||  /* need to clear padding bytes */
         (mapping && !src_bits->is_copy) ||  /* need to remap pixels */
@@ -1762,14 +1768,13 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
     else
     {
         /* swap bits in place */
-        dst_bits->ptr = src_bits->ptr;
+        dst_bits->ptr = src;
         dst_bits->offset = src_bits->offset;
         dst_bits->is_copy = src_bits->is_copy;
         dst_bits->free = NULL;
         if (!need_byteswap && zeropad_mask == ~0u && !mapping) return ERROR_SUCCESS;  /* nothing to do */
     }
 
-    src = src_bits->ptr;
     dst = dst_bits->ptr;
     padding_pos = width_bytes/sizeof(unsigned int) - 1;
 
@@ -1859,7 +1864,7 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
  *           X11DRV_PutImage
  */
 DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const struct gdi_image_bits *bits,
-                       const RECT *rect, DWORD rop )
+                       struct bitblt_coords *src, struct bitblt_coords *dst, DWORD rop )
 {
     X11DRV_PDEVICE *physdev;
     X_PHYSBITMAP *bitmap;
@@ -1896,7 +1901,7 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
 
     wine_tsx11_lock();
     image = XCreateImage( gdi_display, visual, depth, ZPixmap, 0, NULL,
-                          info->bmiHeader.biWidth, abs(info->bmiHeader.biHeight), 32, 0 );
+                          info->bmiHeader.biWidth, src->visrect.bottom - src->visrect.top, 32, 0 );
     wine_tsx11_unlock();
     if (!image) return ERROR_OUTOFMEMORY;
 
@@ -1906,20 +1911,20 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
             mapping = X11DRV_PALETTE_PaletteToXPixel;
     }
 
-    ret = copy_image_bits( info, color_shifts, image, bits, &dst_bits, mapping, ~0u );
+    ret = copy_image_bits( info, color_shifts, image, bits, &dst_bits, src, mapping, ~0u );
 
     if (!ret)
     {
-        int width = rect->right - rect->left;
-        int height = rect->bottom - rect->top;
+        int width = dst->visrect.right - dst->visrect.left;
+        int height = dst->visrect.bottom - dst->visrect.top;
 
         image->data = dst_bits.ptr;
         if (bitmap)
         {
             X11DRV_DIB_Lock( bitmap, DIB_Status_GdiMod );
             wine_tsx11_lock();
-            XPutImage( gdi_display, bitmap->pixmap, get_bitmap_gc(depth), image, dst_bits.offset, 0,
-                       rect->left, rect->top, width, height );
+            XPutImage( gdi_display, bitmap->pixmap, get_bitmap_gc(depth), image, src->visrect.left, 0,
+                       dst->visrect.left, dst->visrect.top, width, height );
             wine_tsx11_unlock();
             X11DRV_DIB_Unlock( bitmap, TRUE );
         }
@@ -1932,9 +1937,9 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
             {
                 wine_tsx11_lock();
                 XSetFunction( gdi_display, physdev->gc, OP_ROP(*opcode) );
-                XPutImage( gdi_display, physdev->drawable, physdev->gc, image, dst_bits.offset, 0,
-                           physdev->dc_rect.left + rect->left, physdev->dc_rect.top + rect->top,
-                           width, height );
+                XPutImage( gdi_display, physdev->drawable, physdev->gc, image, src->visrect.left, 0,
+                           physdev->dc_rect.left + dst->visrect.left,
+                           physdev->dc_rect.top + dst->visrect.top, width, height );
                 wine_tsx11_unlock();
             }
             else
@@ -1947,10 +1952,10 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, const str
                 XSetSubwindowMode( gdi_display, gc, IncludeInferiors );
                 XSetGraphicsExposures( gdi_display, gc, False );
                 src_pixmap = XCreatePixmap( gdi_display, root_window, width, height, depth );
-                XPutImage( gdi_display, src_pixmap, gc, image, dst_bits.offset, 0, 0, 0, width, height );
+                XPutImage( gdi_display, src_pixmap, gc, image, src->visrect.left, 0, 0, 0, width, height );
                 wine_tsx11_unlock();
 
-                execute_rop( physdev, src_pixmap, gc, rect, rop );
+                execute_rop( physdev, src_pixmap, gc, &dst->visrect, rop );
 
                 wine_tsx11_lock();
                 XFreePixmap( gdi_display, src_pixmap );
@@ -1981,7 +1986,7 @@ update_format:
  *           X11DRV_GetImage
  */
 DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
-                       struct gdi_image_bits *bits, const RECT *rect )
+                       struct gdi_image_bits *bits, struct bitblt_coords *src )
 {
     X11DRV_PDEVICE *physdev;
     X_PHYSBITMAP *bitmap;
@@ -2023,12 +2028,16 @@ DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
         FIXME( "depth %u bpp %u not supported yet\n", depth, format->bits_per_pixel );
         return ERROR_BAD_FORMAT;
     }
-    src_bits.offset = rect->left & (align - 1);
-    x = rect->left - src_bits.offset;
-    y = rect->top;
-    width = rect->right - x;
-    height = rect->bottom - rect->top;
+    src_bits.offset = src->visrect.left & (align - 1);
+    x = src->visrect.left - src_bits.offset;
+    y = src->visrect.top;
+    width = src->visrect.right - x;
+    height = src->visrect.bottom - src->visrect.top;
     if (format->scanline_pad != 32) width = (width + (align - 1)) & ~(align - 1);
+    /* make the source rectangle relative to the returned bits */
+    src->x -= x;
+    src->y -= y;
+    OffsetRect( &src->visrect, -x, -y );
 
     if (bitmap)
     {
@@ -2082,7 +2091,7 @@ DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
 
     src_bits.ptr     = image->data;
     src_bits.is_copy = TRUE;
-    ret = copy_image_bits( info, color_shifts, image, &src_bits, bits, mapping,
+    ret = copy_image_bits( info, color_shifts, image, &src_bits, bits, src, mapping,
                            zeropad_masks[(width * image->bits_per_pixel) & 31] );
 
     if (!ret && bits->ptr == image->data)
