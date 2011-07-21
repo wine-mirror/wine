@@ -366,6 +366,29 @@ static inline LPDIOBJECTDATAFORMAT dataformat_to_odf(LPCDIDATAFORMAT df, int idx
     return (LPDIOBJECTDATAFORMAT)((LPBYTE)df->rgodf + idx * df->dwObjSize);
 }
 
+/* dataformat_to_odf_by_type
+ *  Find the Nth object of the selected type in the DataFormat
+ */
+LPDIOBJECTDATAFORMAT dataformat_to_odf_by_type(LPCDIDATAFORMAT df, int n, DWORD type)
+{
+    int i, nfound = 0;
+
+    for (i=0; i < df->dwNumObjs; i++)
+    {
+        LPDIOBJECTDATAFORMAT odf = dataformat_to_odf(df, i);
+
+        if (odf->dwType & type)
+        {
+            if (n == nfound)
+                return odf;
+
+            nfound++;
+        }
+    }
+
+    return NULL;
+}
+
 static HRESULT create_DataFormat(LPCDIDATAFORMAT asked_format, DataFormat *format)
 {
     DataTransform *dt;

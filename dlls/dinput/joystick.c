@@ -432,9 +432,47 @@ HRESULT WINAPI JoystickWGenericImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W iface,
                                                    LPCWSTR lpszUserName,
                                                    DWORD dwFlags)
 {
+    JoystickGenericImpl *This = impl_from_IDirectInputDevice8W(iface);
+    int i, j, has_actions = 0;
+    DWORD object_types[] = { DIDFT_AXIS, DIDFT_BUTTON };
+    DWORD type_map[] = { DIDFT_RELAXIS, DIDFT_PSHBUTTON };
+
     FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
 
-    return DI_NOEFFECT;
+    for (i=0; i < lpdiaf->dwNumActions; i++)
+    {
+        DWORD inst = (0x000000ff & (lpdiaf->rgoAction[i].dwSemantic)) - 1;
+        DWORD type = 0x000000ff & (lpdiaf->rgoAction[i].dwSemantic >> 8);
+        DWORD genre = 0xff000000 & lpdiaf->rgoAction[i].dwSemantic;
+
+        /* Only consider actions of the right genre */
+        if (lpdiaf->dwGenre != genre && genre != DIGENRE_ANY) continue;
+
+        for (j=0; j < sizeof(object_types)/sizeof(object_types[0]); j++)
+        {
+            if (type & object_types[j])
+            {
+                /* Assure that the object exists */
+                LPDIOBJECTDATAFORMAT odf = dataformat_to_odf_by_type(This->base.data_format.wine_df, inst, DIDFT_BUTTON);
+
+                if (odf != NULL)
+                {
+                    lpdiaf->rgoAction[i].dwObjID = type_map[j] | (0x0000ff00 & (inst << 8));
+                    lpdiaf->rgoAction[i].guidInstance = This->base.guid;
+                    lpdiaf->rgoAction[i].dwHow = DIAH_DEFAULT;
+
+                    has_actions = 1;
+
+                    /* No need to try other types if the action was already mapped */
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!has_actions) return DI_NOEFFECT;
+
+    return IDirectInputDevice8WImpl_BuildActionMap(iface, lpdiaf, lpszUserName, dwFlags);
 }
 
 HRESULT WINAPI JoystickAGenericImpl_BuildActionMap(LPDIRECTINPUTDEVICE8A iface,
