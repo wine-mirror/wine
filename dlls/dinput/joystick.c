@@ -500,9 +500,67 @@ HRESULT WINAPI JoystickWGenericImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
                                                  LPCWSTR lpszUserName,
                                                  DWORD dwFlags)
 {
+    JoystickGenericImpl *This = impl_from_IDirectInputDevice8W(iface);
+    DIDATAFORMAT data_format;
+    DIOBJECTDATAFORMAT *obj_df = NULL;
+    int i, action = 0, num_actions = 0;
+    unsigned int offset = 0;
+
     FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
 
-    return DI_NOEFFECT;
+    if (This->base.acquired) return DIERR_ACQUIRED;
+
+    data_format.dwSize = sizeof(data_format);
+    data_format.dwObjSize = sizeof(DIOBJECTDATAFORMAT);
+    data_format.dwFlags = DIDF_RELAXIS;
+    data_format.dwDataSize = lpdiaf->dwDataSize;
+
+    /* count the actions */
+    for (i=0; i < lpdiaf->dwNumActions; i++)
+        if (IsEqualGUID(&This->base.guid, &lpdiaf->rgoAction[i].guidInstance))
+            num_actions++;
+
+    if (num_actions == 0) return DI_NOEFFECT;
+
+    This->base.num_actions = num_actions;
+
+    /* Construct the dataformat and actionmap */
+    obj_df = HeapAlloc(GetProcessHeap(), 0, sizeof(DIOBJECTDATAFORMAT)*num_actions);
+    data_format.rgodf = (LPDIOBJECTDATAFORMAT)obj_df;
+    data_format.dwNumObjs = num_actions;
+
+    This->base.action_map = HeapAlloc(GetProcessHeap(), 0, sizeof(ActionMap)*num_actions);
+
+    for (i = 0; i < lpdiaf->dwNumActions; i++)
+    {
+        if (IsEqualGUID(&This->base.guid, &lpdiaf->rgoAction[i].guidInstance))
+        {
+            LPDIDATAFORMAT df = This->base.data_format.wine_df;
+            DWORD inst = DIDFT_GETINSTANCE(lpdiaf->rgoAction[i].dwObjID);
+            DWORD type = DIDFT_GETTYPE(lpdiaf->rgoAction[i].dwObjID);
+            LPDIOBJECTDATAFORMAT obj;
+
+            if (type == DIDFT_PSHBUTTON) type = DIDFT_BUTTON;
+            if (type == DIDFT_RELAXIS) type = DIDFT_AXIS;
+
+            obj = dataformat_to_odf_by_type(df, inst, type);
+
+            memcpy(&obj_df[action], obj, df->dwObjSize);
+
+            This->base.action_map[action].uAppData = lpdiaf->rgoAction[i].uAppData;
+            This->base.action_map[action].offset = offset;
+            obj_df[action].dwOfs = offset;
+            offset += (type & DIDFT_BUTTON) ? 1 : 4;
+
+            action++;
+        }
+    }
+
+    IDirectInputDevice8_SetDataFormat(iface, &data_format);
+
+    HeapFree(GetProcessHeap(), 0, obj_df);
+
+    return IDirectInputDevice8WImpl_SetActionMap(iface, lpdiaf, lpszUserName, dwFlags);
 }
 
 HRESULT WINAPI JoystickAGenericImpl_SetActionMap(LPDIRECTINPUTDEVICE8A iface,
