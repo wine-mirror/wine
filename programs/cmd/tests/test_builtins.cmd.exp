@@ -174,6 +174,18 @@ non-empty dir not removed
 non-empty dir not removed
 recursive rmdir succeeded
 recursive rmdir succeeded
+------------ Testing CALL --------------
+foo
+foo 8
+bar :testRoutine
+@todo_wine@0
+@todo_wine@foo created
+@todo_wine@Should expand foobaz
+@todo_wine@batfile
+@todo_wine@robinfile
+@todo_wine@1
+@todo_wine@1
+non-builtin dir
 -----------Testing Errorlevel-----------
 9009
 1

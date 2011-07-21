@@ -361,6 +361,46 @@ if not exist foo (
     rd foo
 )
 
+echo ------------ Testing CALL --------------
+mkdir foobar & cd foobar
+rem External script
+echo echo foo %%1 > foo.cmd
+call foo
+call foo.cmd 8
+del foo.cmd
+rem Internal routines
+call :testRoutine :testRoutine
+goto :endTestRoutine
+:testRoutine
+echo bar %1
+goto :eof
+:endTestRoutine
+rem Should work for builtins...
+call mkdir foo
+echo %ErrorLevel%
+if exist foo (echo foo created) else echo foo should exist!
+rmdir foo
+set FOOBAZ_VAR=foobaz
+call echo Should expand %FOOBAZ_VAR%
+set FOOBAZ_VAR=
+echo>batfile
+call dir /b
+echo>robinfile
+if 1==1 call del batfile
+dir /b
+if exist batfile echo batfile shouldn't exist
+rem ... but not for 'if' or 'for'
+call if 1==1 echo bar 2> nul
+echo %ErrorLevel%
+call :setError 0
+call for %%i in (foo bar baz) do echo %%i 2> nul
+echo %ErrorLevel%
+rem First look for programs in the path before trying a builtin
+echo echo non-builtin dir > dir.cmd
+call dir /b
+cd ..
+rd /s/q foobar
+
 echo -----------Testing Errorlevel-----------
 rem WARNING: Do *not* add tests using ErrorLevel after this section
 should_not_exist 2> nul > nul
