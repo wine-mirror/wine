@@ -4253,6 +4253,50 @@ static void test_coop_level_mode_set(void)
             r.left, r.top, r.right, r.bottom);
 
     hr = IDirectDraw7_SetCooperativeLevel(ddraw7, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+
+    GetWindowRect(window, &r);
+    ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
+            fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
+            r.left, r.top, r.right, r.bottom);
+
+    expect_messages = normal_messages;
+    screen_size.cx = 0;
+    screen_size.cy = 0;
+
+    hr = IDirectDraw7_SetDisplayMode(ddraw7, 640, 480, 32, 0, 0);
+    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+
+    ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
+    expect_messages = NULL;
+    ok(!screen_size.cx && !screen_size.cy, "Got unxpected screen size %ux%u.\n", screen_size.cx, screen_size.cy);
+
+    GetWindowRect(window, &r);
+    ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
+            fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
+            r.left, r.top, r.right, r.bottom);
+
+    expect_messages = normal_messages;
+    screen_size.cx = 0;
+    screen_size.cy = 0;
+
+    hr = IDirectDraw_RestoreDisplayMode(ddraw7);
+    ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
+
+    ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
+    expect_messages = NULL;
+    ok(!screen_size.cx && !screen_size.cy, "Got unxpected screen size %ux%u.\n", screen_size.cx, screen_size.cy);
+
+    GetWindowRect(window, &r);
+    ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
+            fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
+            r.left, r.top, r.right, r.bottom);
+
+    /* DDSCL_NORMAL | DDSCL_FULLSCREEN behaves the same as just DDSCL_NORMAL.
+     * Resizing the window on mode changes is a property of DDSCL_EXCLUSIVE,
+     * not DDSCL_FULLSCREEN. */
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw7, window, DDSCL_NORMAL | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
 
     GetWindowRect(window, &r);
     ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
