@@ -2770,8 +2770,28 @@ static HRESULT WINAPI winhttp_request_WaitForResponse(
 static HRESULT WINAPI winhttp_request_Abort(
     IWinHttpRequest *iface )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+
+    TRACE("%p\n", request);
+
+    SetEvent( request->cancel );
+    WinHttpCloseHandle( request->hrequest );
+    WinHttpCloseHandle( request->hconnect );
+    WinHttpCloseHandle( request->hsession );
+    CloseHandle( request->wait );
+    CloseHandle( request->cancel );
+    heap_free( request->buffer );
+    request->state = REQUEST_STATE_INVALID;
+    request->hrequest = NULL;
+    request->hconnect = NULL;
+    request->hsession = NULL;
+    request->wait     = NULL;
+    request->cancel   = NULL;
+    request->buffer   = NULL;
+    request->ptr      = NULL;
+    request->bytes_available = 0;
+    request->bytes_read = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI winhttp_request_SetTimeouts(
