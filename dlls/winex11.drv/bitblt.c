@@ -1761,7 +1761,6 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
         info->bmiHeader.biSizeImage = height * width_bytes;
         if (!(dst_bits->ptr = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage )))
             return ERROR_OUTOFMEMORY;
-        dst_bits->offset = src_bits->offset;
         dst_bits->is_copy = TRUE;
         dst_bits->free = free_heap_bits;
     }
@@ -1769,7 +1768,6 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
     {
         /* swap bits in place */
         dst_bits->ptr = src;
-        dst_bits->offset = src_bits->offset;
         dst_bits->is_copy = src_bits->is_copy;
         dst_bits->free = NULL;
         if (!need_byteswap && zeropad_mask == ~0u && !mapping) return ERROR_SUCCESS;  /* nothing to do */
@@ -2029,8 +2027,7 @@ DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
         FIXME( "depth %u bpp %u not supported yet\n", depth, format->bits_per_pixel );
         return ERROR_BAD_FORMAT;
     }
-    src_bits.offset = src->visrect.left & (align - 1);
-    x = src->visrect.left - src_bits.offset;
+    x = src->visrect.left & ~(align - 1);
     y = src->visrect.top;
     width = src->visrect.right - x;
     height = src->visrect.bottom - src->visrect.top;

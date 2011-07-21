@@ -253,7 +253,6 @@ try_get_image:
             if (bits.free) bits.free( &bits );
             bits.ptr = ptr;
             bits.is_copy = TRUE;
-            bits.offset = 0;
             bits.free = free_heap_bits;
             if (!err)
             {

@@ -46,11 +46,10 @@ struct bitblt_coords
 
 struct gdi_image_bits
 {
-    void        *ptr;       /* pointer to the bits */
-    unsigned int offset;    /* x offset of first requested pixel */
-    BOOL         is_copy;   /* whether this is a copy of the bits that can be modified */
-    void       (*free)(struct gdi_image_bits *);  /* callback for freeing the bits */
-    void        *param;     /* extra parameter for callback private use */
+    void   *ptr;       /* pointer to the bits */
+    BOOL    is_copy;   /* whether this is a copy of the bits that can be modified */
+    void  (*free)(struct gdi_image_bits *);  /* callback for freeing the bits */
+    void   *param;     /* extra parameter for callback private use */
 };
 
 struct gdi_dc_funcs
@@ -192,7 +191,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 5
+#define WINE_GDI_DRIVER_VERSION 6
 
 static inline PHYSDEV get_physdev_entry_point( PHYSDEV dev, size_t offset )
 {
