@@ -880,6 +880,14 @@ static inline BOOL get_bool(void *data)
     return (*(DWORD *)data) ? TRUE : FALSE;
 }
 
+static void get_vector(struct d3dx_parameter *param, D3DXVECTOR4 *vector)
+{
+    vector->x = get_float(param->type, (float *)param->data);
+    vector->y = param->columns > 1 ? get_float(param->type, (float *)param->data + 1) : 0.0f;
+    vector->z = param->columns > 2 ? get_float(param->type, (float *)param->data + 2) : 0.0f;
+    vector->w = param->columns > 3 ? get_float(param->type, (float *)param->data + 3) : 0.0f;
+}
+
 static void get_matrix(struct d3dx_parameter *param, D3DXMATRIX *matrix)
 {
     unsigned int i, k;
@@ -1833,10 +1841,42 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetVectorArray(ID3DXBaseEffect *iface,
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetVectorArray(ID3DXBaseEffect *iface, D3DXHANDLE parameter, D3DXVECTOR4 *vector, UINT count)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
-    FIXME("iface %p, parameter %p, vector %p, count %u stub\n", This, parameter, vector, count);
+    TRACE("iface %p, parameter %p, vector %p, count %u\n", This, parameter, vector, count);
 
-    return E_NOTIMPL;
+    if (!count) return D3D_OK;
+
+    if (vector && param && count <= param->element_count)
+    {
+        UINT i;
+
+        TRACE("Class %s\n", debug_d3dxparameter_class(param->class));
+
+        switch (param->class)
+        {
+            case D3DXPC_VECTOR:
+                for (i = 0; i < count; ++i)
+                {
+                    get_vector(get_parameter_struct(param->member_handles[i]), &vector[i]);
+                }
+                return D3D_OK;
+
+            case D3DXPC_SCALAR:
+            case D3DXPC_MATRIX_ROWS:
+            case D3DXPC_OBJECT:
+            case D3DXPC_STRUCT:
+                break;
+
+            default:
+                FIXME("Unhandled class %s\n", debug_d3dxparameter_class(param->class));
+                break;
+        }
+    }
+
+    WARN("Invalid argument specified\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_SetMatrix(ID3DXBaseEffect *iface, D3DXHANDLE parameter, CONST D3DXMATRIX *matrix)
