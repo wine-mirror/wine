@@ -145,6 +145,8 @@ static const WCHAR attrPaddingTop[] =
     {'p','a','d','d','i','n','g','-','t','o','p',0};
 static const WCHAR attrPageBreakAfter[] =
     {'p','a','g','e','-','b','r','e','a','k','-','a','f','t','e','r',0};
+static const WCHAR attrPageBreakBefore[] =
+    {'p','a','g','e','-','b','r','e','a','k','-','b','e','f','o','r','e',0};
 static const WCHAR attrPosition[] =
     {'p','o','s','i','t','i','o','n',0};
 static const WCHAR attrRight[] =
@@ -229,6 +231,7 @@ static const struct{
     {attrPaddingRight,         DISPID_IHTMLSTYLE_PADDINGRIGHT},
     {attrPaddingTop,           DISPID_IHTMLSTYLE_PADDINGTOP},
     {attrPageBreakAfter,       DISPID_IHTMLSTYLE_PAGEBREAKAFTER},
+    {attrPageBreakBefore,      DISPID_IHTMLSTYLE_PAGEBREAKBEFORE},
     {attrPosition,             DISPID_IHTMLSTYLE2_POSITION},
     {attrRight,                DISPID_IHTMLSTYLE2_RIGHT},
     {attrTextAlign,            DISPID_IHTMLSTYLE_TEXTALIGN},
@@ -2348,15 +2351,19 @@ static HRESULT WINAPI HTMLStyle_get_overflow(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_pageBreakBefore(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_nsstyle_attr(This->nsstyle, STYLEID_PAGE_BREAK_BEFORE, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_pageBreakBefore(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_nsstyle_attr(This->nsstyle, STYLEID_PAGE_BREAK_BEFORE, p, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_put_pageBreakAfter(IHTMLStyle *iface, BSTR v)

@@ -1653,6 +1653,21 @@ static void test_body_style(IHTMLStyle *style)
     ok(!strcmp_wa(str, "always"), "pageBreakAfter = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
+    /* pageBreakBefore */
+    hres = IHTMLStyle_get_pageBreakBefore(style, &str);
+    ok(hres == S_OK, "get_pageBreakBefore failed: %08x\n", hres);
+    ok(!str, "pageBreakBefore = %s\n", wine_dbgstr_w(str));
+
+    str = a2bstr("always");
+    hres = IHTMLStyle_put_pageBreakBefore(style, str);
+    ok(hres == S_OK, "put_pageBreakBefore failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_get_pageBreakBefore(style, &str);
+    ok(hres == S_OK, "get_pageBreakBefore failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "always"), "pageBreakBefore = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
     if(SUCCEEDED(hres)) {
