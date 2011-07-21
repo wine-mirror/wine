@@ -1766,7 +1766,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetFloat(ID3DXBaseEffect *iface, D3DXH
 
     if (f && param && !param->element_count && param->class == D3DXPC_SCALAR)
     {
-        f = param->data;
+        *f = get_float(param->type, (DWORD *)param->data);
         TRACE("Returning %f\n", *f);
         return D3D_OK;
     }
