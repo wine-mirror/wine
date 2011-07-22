@@ -2068,6 +2068,15 @@ static BOOL parse_path_opaque(const WCHAR **ptr, parse_data *data, DWORD flags) 
 static BOOL parse_hierpart(const WCHAR **ptr, parse_data *data, DWORD flags) {
     const WCHAR *start = *ptr;
 
+    /* For javascript: URIs, simply set everything as a path */
+    if(data->scheme_type == URL_SCHEME_JAVASCRIPT) {
+        data->path = *ptr;
+        data->path_len = strlenW(*ptr);
+        data->is_opaque = TRUE;
+        *ptr += data->path_len;
+        return TRUE;
+    }
+
     /* Checks if the authority information needs to be parsed. */
     if(is_hierarchical_uri(ptr, data)) {
         /* Only treat it as a hierarchical URI if the scheme_type is known or
@@ -3078,6 +3087,15 @@ static BOOL canonicalize_path_opaque(const parse_data *data, Uri *uri, DWORD fla
     }
 
     uri->path_start = uri->canon_len;
+
+    /* For javascript: URIs, simply copy path part withoutany canonicalization */
+    if(data->scheme_type == URL_SCHEME_JAVASCRIPT) {
+        if(!computeOnly)
+            memcpy(uri->canon_uri+uri->canon_len, data->path, data->path_len*sizeof(WCHAR));
+        uri->path_len = data->path_len;
+        uri->canon_len += data->path_len;
+        return TRUE;
+    }
 
     /* Windows doesn't allow a "//" to appear after the scheme
      * of a URI, if it's an opaque URI.

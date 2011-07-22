@@ -4192,7 +4192,81 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
-
+    {   "javascript:void", 0, S_OK, FALSE,
+        {
+            {"javascript:void",S_OK},
+            {"",S_FALSE},
+            {"javascript:void",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"void",S_OK},
+            {"void",S_OK},
+            {"",S_FALSE},
+            {"javascript:void",S_OK},
+            {"javascript",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_JAVASCRIPT,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "javascript://undefined", 0, S_OK, FALSE,
+        {
+            {"javascript://undefined",S_OK},
+            {"",S_FALSE},
+            {"javascript://undefined",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"//undefined",S_OK},
+            {"//undefined",S_OK},
+            {"",S_FALSE},
+            {"javascript://undefined",S_OK},
+            {"javascript",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_JAVASCRIPT,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "JavaSCript:escape('/\\?#?')", 0, S_OK, FALSE,
+        {
+            {"javascript:escape('/\\?#?')",S_OK},
+            {"",S_FALSE},
+            {"javascript:escape('/\\?#?')",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"escape('/\\?#?')",S_OK},
+            {"escape('/\\?#?')",S_OK},
+            {"",S_FALSE},
+            {"JavaSCript:escape('/\\?#?')",S_OK},
+            {"javascript",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_JAVASCRIPT,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    }
 };
 
 typedef struct _invalid_uri {
