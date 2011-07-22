@@ -13169,7 +13169,8 @@ static void test_hotkey(void)
     SetLastError(0xdeadbeef);
     ret = UnregisterHotKey(NULL, 0);
     ok(ret == FALSE, "expected FALSE, got %i\n", ret);
-    ok(GetLastError() == ERROR_HOTKEY_NOT_REGISTERED, "unexpected error %d\n", GetLastError());
+    ok(GetLastError() == ERROR_HOTKEY_NOT_REGISTERED || broken(GetLastError() == 0xdeadbeef),
+       "unexpected error %d\n", GetLastError());
 
     if (ret == TRUE)
     {
@@ -13185,7 +13186,8 @@ static void test_hotkey(void)
     SetLastError(0xdeadbeef);
     ret = UnregisterHotKey(test_window, 0);
     ok(ret == FALSE, "expected FALSE, got %i\n", ret);
-    ok(GetLastError() == ERROR_HOTKEY_NOT_REGISTERED, "unexpected error %d\n", GetLastError());
+    ok(GetLastError() == ERROR_HOTKEY_NOT_REGISTERED || broken(GetLastError() == 0xdeadbeef),
+       "unexpected error %d\n", GetLastError());
 
     /* Search for a Windows Key + letter combination that hasn't been registered */
     for (hotkey_letter = 0x41; hotkey_letter <= 0x51; hotkey_letter ++)
@@ -13199,7 +13201,8 @@ static void test_hotkey(void)
         }
         else
         {
-            ok(GetLastError() == ERROR_HOTKEY_ALREADY_REGISTERED, "unexpected error %d\n", GetLastError());
+            ok(GetLastError() == ERROR_HOTKEY_ALREADY_REGISTERED || broken(GetLastError() == 0xdeadbeef),
+               "unexpected error %d\n", GetLastError());
         }
     }
 
@@ -13216,19 +13219,22 @@ static void test_hotkey(void)
     SetLastError(0xdeadbeef);
     ret = RegisterHotKey(test_window, 4, MOD_WIN, hotkey_letter);
     ok(ret == FALSE, "expected FALSE, got %i\n", ret);
-    ok(GetLastError() == ERROR_HOTKEY_ALREADY_REGISTERED, "unexpected error %d\n", GetLastError());
+    ok(GetLastError() == ERROR_HOTKEY_ALREADY_REGISTERED || broken(GetLastError() == 0xdeadbeef),
+       "unexpected error %d\n", GetLastError());
 
     /* Same key combination, different window */
     SetLastError(0xdeadbeef);
     ret = RegisterHotKey(NULL, 5, MOD_WIN, hotkey_letter);
     ok(ret == FALSE, "expected FALSE, got %i\n", ret);
-    ok(GetLastError() == ERROR_HOTKEY_ALREADY_REGISTERED, "unexpected error %d\n", GetLastError());
+    ok(GetLastError() == ERROR_HOTKEY_ALREADY_REGISTERED || broken(GetLastError() == 0xdeadbeef),
+       "unexpected error %d\n", GetLastError());
 
     /* Register the same hotkey twice */
     SetLastError(0xdeadbeef);
     ret = RegisterHotKey(test_window, 5, MOD_WIN, hotkey_letter);
     ok(ret == FALSE, "expected FALSE, got %i\n", ret);
-    ok(GetLastError() == ERROR_HOTKEY_ALREADY_REGISTERED, "unexpected error %d\n", GetLastError());
+    ok(GetLastError() == ERROR_HOTKEY_ALREADY_REGISTERED || broken(GetLastError() == 0xdeadbeef),
+       "unexpected error %d\n", GetLastError());
 
     /* Window on another thread */
     taskbar_window = FindWindowA("Shell_TrayWnd", NULL);
@@ -13241,7 +13247,8 @@ static void test_hotkey(void)
         SetLastError(0xdeadbeef);
         ret = RegisterHotKey(taskbar_window, 5, 0, hotkey_letter);
         ok(ret == FALSE, "expected FALSE, got %i\n", ret);
-        ok(GetLastError() == ERROR_WINDOW_OF_OTHER_THREAD, "unexpected error %d\n", GetLastError());
+        ok(GetLastError() == ERROR_WINDOW_OF_OTHER_THREAD || broken(GetLastError() == 0xdeadbeef),
+           "unexpected error %d\n", GetLastError());
     }
 
     /* Inject the appropriate key sequence */
@@ -13345,7 +13352,8 @@ static void test_hotkey(void)
     SetLastError(0xdeadbeef);
     ret = UnregisterHotKey(test_window, 5);
     ok(ret == FALSE, "expected FALSE, got %i\n", ret);
-    ok(GetLastError() == ERROR_HOTKEY_NOT_REGISTERED, "unexpected error %d\n", GetLastError());
+    ok(GetLastError() == ERROR_HOTKEY_NOT_REGISTERED || broken(GetLastError() == 0xdeadbeef),
+       "unexpected error %d\n", GetLastError());
 
     /* Register thread hotkey */
     ret = RegisterHotKey(NULL, 5, MOD_WIN, hotkey_letter);
