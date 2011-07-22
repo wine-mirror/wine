@@ -9698,7 +9698,7 @@ msgstr ""
 "/?                 Afficher cette aide et se terminer.\n"
 "\n"
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"Start est fourni sans AUCUNE GARANTIE ; pour plus de détails lancez le avec\n"
+"Start est fourni sans AUCUNE GARANTIE ; pour plus de détails lancez-le avec\n"
 "l'option /L.\n"
 "Ceci est un logiciel libre, et vous êtes invité à le redistribuer\n"
 "sous certaines conditions ; lancez « start /L » pour plus de détails.\n"
@@ -11032,7 +11032,7 @@ msgstr "Gestionnaire de fichiers de Wine"
 
 #: winefile.rc:101
 msgid "root fs"
-msgstr "fs racine"
+msgstr "dossier racine"
 
 #: winefile.rc:102
 msgid "unixfs"
