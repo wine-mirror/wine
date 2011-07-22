@@ -181,6 +181,9 @@ static BSTR a2bstr(const char *str)
     BSTR ret;
     int len;
 
+    if(!str)
+        return NULL;
+
     len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
     ret = SysAllocStringLen(NULL, len);
     MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
@@ -2454,7 +2457,7 @@ static const char simple_script_str[] =
     "<script language=\"TestScript\">simple script</script>"
     "</body></html>";
 
-static void test_exec_script(IHTMLDocument2 *doc)
+static void test_exec_script(IHTMLDocument2 *doc, const char *codea, const char *langa)
 {
     IHTMLWindow2 *window;
     BSTR code, lang;
@@ -2464,8 +2467,8 @@ static void test_exec_script(IHTMLDocument2 *doc)
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
     ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
 
-    code = a2bstr("execScript call");
-    lang = a2bstr("TestScript");
+    code = a2bstr(codea);
+    lang = a2bstr(langa);
 
     SET_EXPECT(ParseScriptText_execScript);
     hres = IHTMLWindow2_execScript(window, code, lang, &v);
@@ -2524,7 +2527,7 @@ static void test_simple_script(void)
     CHECK_CALLED(ParseScriptText_script);
     CHECK_CALLED(SetScriptState_CONNECTED);
 
-    test_exec_script(doc);
+    test_exec_script(doc, "execScript call", "TestScript");
 
     if(site)
         IActiveScriptSite_Release(site);
