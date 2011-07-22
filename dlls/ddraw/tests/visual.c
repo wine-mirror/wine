@@ -423,14 +423,14 @@ static void fog_test(IDirect3DDevice7 *device)
     D3DDEVICEDESC7 caps;
 
     /* Gets full z based fog with linear fog, no fog with specular color */
-    struct sVertex unstransformed_1[] = {
+    struct sVertex untransformed_1[] = {
         {-1,    -1,   0.1f,         0xFFFF0000,     0xFF000000  },
         {-1,     0,   0.1f,         0xFFFF0000,     0xFF000000  },
         { 0,     0,   0.1f,         0xFFFF0000,     0xFF000000  },
         { 0,    -1,   0.1f,         0xFFFF0000,     0xFF000000  },
     };
     /* Ok, I am too lazy to deal with transform matrices */
-    struct sVertex unstransformed_2[] = {
+    struct sVertex untransformed_2[] = {
         {-1,     0,   1.0f,         0xFFFF0000,     0xFF000000  },
         {-1,     1,   1.0f,         0xFFFF0000,     0xFF000000  },
         { 0,     1,   1.0f,         0xFFFF0000,     0xFF000000  },
@@ -483,7 +483,7 @@ static void fog_test(IDirect3DDevice7 *device)
     {
         /* Untransformed, vertex fog = NONE, table fog = NONE: Read the fog weighting from the specular color */
         hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_SPECULAR,
-                                                   unstransformed_1, 4, Indices, 6, 0);
+                                                   untransformed_1, 4, Indices, 6, 0);
         ok(hr == D3D_OK, "DrawIndexedPrimitive returned %08x\n", hr);
 
         /* That makes it use the Z value */
@@ -493,7 +493,7 @@ static void fog_test(IDirect3DDevice7 *device)
          * Use the Z value as input into the equation
          */
         hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_SPECULAR,
-                                                   unstransformed_2, 4, Indices, 6, 0);
+                                                   untransformed_2, 4, Indices, 6, 0);
         ok(hr == D3D_OK, "DrawIndexedPrimitive returned %08x\n", hr);
 
         /* transformed verts */
