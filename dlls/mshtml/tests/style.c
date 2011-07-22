@@ -277,6 +277,23 @@ static void test_style2(IHTMLStyle2 *style2)
     ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
     ok(!strcmp_wa(V_BSTR(&v), "3px"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
+
+    /* direction */
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle2_get_direction(style2, &str);
+    ok(hres == S_OK, "get_direction failed: %08x\n", hres);
+    ok(!str, "str = %s\n", wine_dbgstr_w(str));
+
+    str = a2bstr("ltr");
+    hres = IHTMLStyle2_put_direction(style2, str);
+    ok(hres == S_OK, "put_direction failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLStyle2_get_direction(style2, &str);
+    ok(hres == S_OK, "get_direction failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "ltr"), "str = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_style3(IHTMLStyle3 *style3)

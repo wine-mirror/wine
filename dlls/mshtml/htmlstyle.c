@@ -97,6 +97,8 @@ static const WCHAR attrColor[] =
     {'c','o','l','o','r',0};
 static const WCHAR attrCursor[] =
     {'c','u','r','s','o','r',0};
+static const WCHAR attrDirection[] =
+    {'d','i','r','e','c','t','i','o','n',0};
 static const WCHAR attrDisplay[] =
     {'d','i','s','p','l','a','y',0};
 static const WCHAR attrFilter[] =
@@ -207,6 +209,7 @@ static const struct{
     {attrClip,                 DISPID_IHTMLSTYLE_CLIP},
     {attrColor,                DISPID_IHTMLSTYLE_COLOR},
     {attrCursor,               DISPID_IHTMLSTYLE_CURSOR},
+    {attrDirection,            DISPID_IHTMLSTYLE2_DIRECTION},
     {attrDisplay,              DISPID_IHTMLSTYLE_DISPLAY},
     {attrFilter,               DISPID_IHTMLSTYLE_FILTER},
     {attrFontFamily,           DISPID_IHTMLSTYLE_FONTFAMILY},
