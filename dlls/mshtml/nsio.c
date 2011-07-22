@@ -997,7 +997,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
             nsres = before_async_open(This, window->doc_obj->nscontainer, &cancel);
             if(NS_SUCCEEDED(nsres)  && cancel) {
                 TRACE("canceled\n");
-                nsres = NS_ERROR_UNEXPECTED;
+                nsres = NS_BINDING_ABORTED;
             }
         }
     }
