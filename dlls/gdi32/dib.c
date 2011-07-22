@@ -271,7 +271,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
                 bm.bmBitsPixel == bpp && bm.bmPlanes == planes)
             {
                 /* fast path */
-                return SetDIBits( dev->hdc, hBitmap, 0, height, bits, info, coloruse );
+                return SetDIBits( dev->hdc, hBitmap, 0, abs( height ), bits, info, coloruse );
             }
         }
     }
@@ -295,7 +295,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
         StretchBlt( hdcMem, xSrc, abs(height) - heightSrc - ySrc, widthSrc, heightSrc,
                     dev->hdc, xDst, yDst, widthDst, heightDst, rop );
     }
-    ret = SetDIBits( hdcMem, hBitmap, 0, height, bits, info, coloruse );
+    ret = SetDIBits( hdcMem, hBitmap, 0, abs( height ), bits, info, coloruse );
     if (ret) StretchBlt( dev->hdc, xDst, yDst, widthDst, heightDst,
                          hdcMem, xSrc, abs(height) - heightSrc - ySrc, widthSrc, heightSrc, rop );
     DeleteDC( hdcMem );
