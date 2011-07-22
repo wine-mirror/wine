@@ -672,6 +672,7 @@ static INT COMBOEX_InsertItemW (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW const *ci
     SendMessageW (infoPtr->hwndCombo, CB_INSERTSTRING, cit->iItem, (LPARAM)item);
 
     memset (&nmcit.ceItem, 0, sizeof(nmcit.ceItem));
+    nmcit.ceItem.mask=~0;
     COMBOEX_CopyItem (item, &nmcit.ceItem);
     COMBOEX_NotifyItem (infoPtr, CBEN_INSERTITEM, &nmcit);
 
@@ -1304,6 +1305,7 @@ static BOOL COMBOEX_WM_DeleteItem (COMBOEX_INFO *infoPtr, DELETEITEMSTRUCT const
     infoPtr->nb_items--;
 
     memset (&nmcit.ceItem, 0, sizeof(nmcit.ceItem));
+    nmcit.ceItem.mask=~0;
     COMBOEX_CopyItem (olditem, &nmcit.ceItem);
     COMBOEX_NotifyItem (infoPtr, CBEN_DELETEITEM, &nmcit);
 
