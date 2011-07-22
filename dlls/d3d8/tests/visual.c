@@ -388,6 +388,55 @@ static void fog_test(IDirect3DDevice8 *device)
     };
     WORD Indices[] = {0, 1, 2, 2, 3, 0};
 
+    D3DCAPS8 caps;
+    float ident_mat[16] =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+    float world_mat1[16] =
+    {
+        1.0f, 0.0f,  0.0f, 0.0f,
+        0.0f, 1.0f,  0.0f, 0.0f,
+        0.0f, 0.0f,  1.0f, 0.0f,
+        0.0f, 0.0f, -0.5f, 1.0f
+    };
+    float world_mat2[16] =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 1.0f
+    };
+    float proj_mat[16] =
+    {
+        1.0f, 0.0f,  0.0f, 0.0f,
+        0.0f, 1.0f,  0.0f, 0.0f,
+        0.0f, 0.0f,  1.0f, 0.0f,
+        0.0f, 0.0f, -1.0f, 1.0f
+    };
+
+    struct sVertex far_quad1[] =
+    {
+        {-1.0f, -1.0f, 0.5f, 0xffff0000, 0xff000000},
+        {-1.0f,  0.0f, 0.5f, 0xffff0000, 0xff000000},
+        { 0.0f,  0.0f, 0.5f, 0xffff0000, 0xff000000},
+        { 0.0f, -1.0f, 0.5f, 0xffff0000, 0xff000000},
+    };
+    struct sVertex far_quad2[] =
+    {
+        {-1.0f, 0.0f, 1.5f, 0xffff0000, 0xff000000},
+        {-1.0f, 1.0f, 1.5f, 0xffff0000, 0xff000000},
+        { 0.0f, 1.0f, 1.5f, 0xffff0000, 0xff000000},
+        { 0.0f, 0.0f, 1.5f, 0xffff0000, 0xff000000},
+    };
+
+    memset(&caps, 0, sizeof(caps));
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetDeviceCaps returned %08x\n", hr);
+
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice8_Clear returned %#08x\n", hr);
 
@@ -469,6 +518,95 @@ static void fog_test(IDirect3DDevice8 *device)
     ok(color == 0x0000FF00, "Transformed vertex with linear table fog has color %08x\n", color);
 
     IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+
+    if (caps.RasterCaps & D3DPRASTERCAPS_FOGTABLE)
+    {
+        /* A simple fog + non-identity world matrix test */
+        hr = IDirect3DDevice8_SetTransform(device, D3DTS_WORLDMATRIX(0), (D3DMATRIX *) world_mat1);
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetTransform returned %#08x\n", hr);
+
+        hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGTABLEMODE, D3DFOG_LINEAR);
+        ok(hr == D3D_OK, "Setting fog table mode to D3DFOG_LINEAR returned %#08x\n", hr);
+        hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGVERTEXMODE, D3DFOG_NONE);
+        ok(hr == D3D_OK, "Turning off vertex fog returned %#08x\n", hr);
+
+        hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
+        ok(hr == D3D_OK, "IDirect3DDevice8_Clear returned %#08x\n", hr);
+
+        if (IDirect3DDevice8_BeginScene(device) == D3D_OK)
+        {
+            hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_SPECULAR);
+            ok(hr == D3D_OK, "SetVertexShader returned %#08x\n", hr);
+
+            hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4,
+                    2, Indices, D3DFMT_INDEX16, far_quad1, sizeof(far_quad1[0]));
+            ok(hr == D3D_OK, "DrawIndexedPrimitiveUP returned %#08x\n", hr);
+
+            hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4,
+                    2, Indices, D3DFMT_INDEX16, far_quad2, sizeof(far_quad2[0]));
+            ok(hr == D3D_OK, "DrawIndexedPrimitiveUP returned %#08x\n", hr);
+
+            hr = IDirect3DDevice8_EndScene(device);
+            ok(hr == D3D_OK, "EndScene returned %#08x\n", hr);
+        }
+        else
+        {
+            ok(FALSE, "BeginScene failed\n");
+        }
+
+        color = getPixelColor(device, 160, 360);
+        ok(color_match(color, 0x00ff0000, 4), "Unfogged quad has color %08x\n", color);
+        color = getPixelColor(device, 160, 120);
+        ok(color == 0x0000ff00, "Fogged out quad has color %08x\n", color);
+
+        IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+
+        /* Test fog behavior with an orthogonal (but not identity) projection matrix */
+        hr = IDirect3DDevice8_SetTransform(device, D3DTS_WORLDMATRIX(0), (D3DMATRIX *) world_mat2);
+        ok(hr == D3D_OK, "SetTransform returned %#08x\n", hr);
+        hr = IDirect3DDevice8_SetTransform(device, D3DTS_PROJECTION, (D3DMATRIX *) proj_mat);
+        ok(hr == D3D_OK, "SetTransform returned %#08x\n", hr);
+
+        hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
+        ok(hr == D3D_OK, "Clear returned %#08x\n", hr);
+
+        if (IDirect3DDevice8_BeginScene(device) == D3D_OK)
+        {
+            hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_SPECULAR);
+            ok(hr == D3D_OK, "SetVertexShader returned %#08x\n", hr);
+
+            hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4,
+                    2, Indices, D3DFMT_INDEX16, untransformed_1, sizeof(untransformed_1[0]));
+            ok(hr == D3D_OK, "DrawIndexedPrimitiveUP returned %#08x\n", hr);
+
+            hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4,
+                    2, Indices, D3DFMT_INDEX16, untransformed_2, sizeof(untransformed_2[0]));
+            ok(hr == D3D_OK, "DrawIndexedPrimitiveUP returned %#08x\n", hr);
+
+            hr = IDirect3DDevice8_EndScene(device);
+            ok(hr == D3D_OK, "EndScene returned %#08x\n", hr);
+        }
+        else
+        {
+            ok(FALSE, "BeginScene failed\n");
+        }
+
+        color = getPixelColor(device, 160, 360);
+        todo_wine ok(color_match(color, 0x00e51900, 4), "Partially fogged quad has color %08x\n", color);
+        color = getPixelColor(device, 160, 120);
+        ok(color == 0x0000ff00, "Fogged out quad has color %08x\n", color);
+
+        IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+
+        hr = IDirect3DDevice8_SetTransform(device, D3DTS_WORLDMATRIX(0), (D3DMATRIX *) ident_mat);
+        ok(hr == D3D_OK, "SetTransform returned %#08x\n", hr);
+        hr = IDirect3DDevice8_SetTransform(device, D3DTS_PROJECTION, (D3DMATRIX *) ident_mat);
+        ok(hr == D3D_OK, "SetTransform returned %#08x\n", hr);
+    }
+    else
+    {
+        skip("D3DPRASTERCAPS_FOGTABLE not supported, skipping some fog tests\n");
+    }
 
     /* Turn off the fog master switch to avoid confusing other tests */
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
