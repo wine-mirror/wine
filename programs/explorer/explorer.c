@@ -62,8 +62,9 @@ typedef struct
     IExplorerBrowser *browser;
     HWND main_window,path_box;
     INT rebar_height;
-    LPCITEMIDLIST pidl;
+    LPITEMIDLIST pidl;
     IImageList *icon_list;
+    DWORD advise_cookie;
 } explorer_info;
 
 enum
@@ -139,6 +140,7 @@ static BOOL create_combobox_item(IShellFolder *folder, LPCITEMIDLIST pidl, IImag
                                       &icon_index,&icon_flags);
         IExtractIconW_Extract(extract_icon,icon_file,icon_index,NULL,&icon,20);
         item->iImage = ImageList_AddIcon((HIMAGELIST)icon_list,icon);
+        IExtractIconW_Release(extract_icon);
     }
     else
     {
@@ -179,12 +181,14 @@ static void update_path_box(explorer_info *info)
     if(SUCCEEDED(IShellFolder_EnumObjects(desktop,NULL,SHCONTF_FOLDERS,&ids))
        && ids!=NULL)
     {
-        LPITEMIDLIST curr_pidl;
+        LPITEMIDLIST curr_pidl=NULL;
         HRESULT hres;
 
         item.iIndent = 1;
         while(1)
         {
+            ILFree(curr_pidl);
+            curr_pidl=NULL;
             hres = IEnumIDList_Next(ids,1,&curr_pidl,NULL);
             if(FAILED(hres) || hres == S_FALSE)
                 break;
@@ -245,6 +249,8 @@ static void update_path_box(explorer_info *info)
                     CoTaskMemFree(item.pszText);
             }
         }
+        ILFree(curr_pidl);
+        IEnumIDList_Release(ids);
     }
     else
         WINE_WARN("Could not enumerate the desktop\n");
@@ -255,7 +261,8 @@ static void update_path_box(explorer_info *info)
 static HRESULT WINAPI IExplorerBrowserEventsImpl_fnOnNavigationComplete(IExplorerBrowserEvents *iface, PCIDLIST_ABSOLUTE pidl)
 {
     IExplorerBrowserEventsImpl *This = impl_from_IExplorerBrowserEvents(iface);
-    This->info->pidl = pidl;
+    ILFree(This->info->pidl);
+    This->info->pidl = ILClone(pidl);
     update_path_box(This->info);
     return S_OK;
 }
@@ -292,9 +299,9 @@ static IExplorerBrowserEvents *make_explorer_events(explorer_info *info)
         = HeapAlloc(GetProcessHeap(), 0, sizeof(IExplorerBrowserEventsImpl));
     ret->IExplorerBrowserEvents_iface.lpVtbl = &vt_IExplorerBrowserEvents;
     ret->info = info;
+    ret->ref = 1;
     SHGetImageList(SHIL_SMALL,&IID_IImageList,(void**)&(ret->info->icon_list));
     SendMessageW(info->path_box,CBEM_SETIMAGELIST,0,(LPARAM)ret->info->icon_list);
-    IExplorerBrowserEvents_AddRef(&ret->IExplorerBrowserEvents_iface);
     return &ret->IExplorerBrowserEvents_iface;
 }
 
@@ -306,7 +313,6 @@ static void make_explorer_window(IShellFolder* startFolder)
     IExplorerBrowserEvents *events;
     explorer_info *info;
     HRESULT hres;
-    DWORD cookie;
     WCHAR explorer_title[100];
     WCHAR pathbox_label[50];
     TBADDBITMAP bitmap_info;
@@ -318,7 +324,7 @@ static void make_explorer_window(IShellFolder* startFolder)
                 sizeof(explorer_title)/sizeof(WCHAR));
     LoadStringW(explorer_hInstance,IDS_PATHBOX_LABEL,pathbox_label,
                 sizeof(pathbox_label)/sizeof(WCHAR));
-    info = HeapAlloc(GetProcessHeap(),0,sizeof(explorer_info));
+    info = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(explorer_info));
     if(!info)
     {
         WINE_ERR("Could not allocate a explorer_info struct\n");
@@ -402,7 +408,7 @@ static void make_explorer_window(IShellFolder* startFolder)
     band_info.hwndChild=info->path_box;
     SendMessageW(rebar,RB_INSERTBANDW,-1,(LPARAM)&band_info);
     events = make_explorer_events(info);
-    IExplorerBrowser_Advise(info->browser,events,&cookie);
+    IExplorerBrowser_Advise(info->browser,events,&info->advise_cookie);
     IExplorerBrowser_BrowseToObject(info->browser,(IUnknown*)startFolder,
                                     SBSP_ABSOLUTE);
     ShowWindow(info->main_window,SW_SHOWDEFAULT);
@@ -532,8 +538,13 @@ static LRESULT CALLBACK explorer_wnd_proc(HWND hwnd, UINT uMsg, WPARAM wParam, L
     switch(uMsg)
     {
     case WM_DESTROY:
+        IExplorerBrowser_Unadvise(browser,info->advise_cookie);
+        IExplorerBrowser_Destroy(browser);
         IExplorerBrowser_Release(browser);
+        ILFree(info->pidl);
+        IImageList_Release(info->icon_list);
         HeapFree(GetProcessHeap(),0,info);
+        SetWindowLongPtrW(hwnd,EXPLORER_INFO_INDEX,0);
         PostQuitMessage(0);
         break;
     case WM_QUIT:
