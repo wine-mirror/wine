@@ -2025,7 +2025,8 @@ static void ok_sequence_(const struct message *expected_list, const char *contex
 
     while (expected->message && actual->message)
     {
-	if (expected->message == actual->message)
+	if (expected->message == actual->message &&
+            !((expected->flags ^ actual->flags) & (hook|winevent_hook|kbd_hook)))
 	{
 	    if (expected->flags & wparam)
 	    {
@@ -2130,7 +2131,8 @@ static void ok_sequence_(const struct message *expected_list, const char *contex
 	/* silently drop hook messages if there is no support for them */
 	else if ((expected->flags & optional) ||
                  ((expected->flags & hook) && !hCBT_hook) ||
-                 ((expected->flags & winevent_hook) && !hEvent_hook))
+                 ((expected->flags & winevent_hook) && !hEvent_hook) ||
+                 ((expected->flags & kbd_hook) && !hKBD_hook))
 	    expected++;
 	else if (todo)
 	{
@@ -13213,7 +13215,7 @@ static void test_hotkey(void)
     }
 
     hKBD_hook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, GetModuleHandle(NULL), 0);
-    ok(hKBD_hook != NULL, "failed to install hook, err %i\n", GetLastError());
+    if (!hKBD_hook) win_skip("WH_KEYBOARD_LL is not supported\n");
 
     /* Same key combination, different id */
     SetLastError(0xdeadbeef);
@@ -13409,7 +13411,7 @@ static void test_hotkey(void)
     ret = UnregisterHotKey(NULL, 5);
     ok(ret == TRUE, "expected TRUE, got %i, err=%d\n", ret, GetLastError());
 
-    UnhookWindowsHookEx(hKBD_hook);
+    if (hKBD_hook) UnhookWindowsHookEx(hKBD_hook);
     hKBD_hook = NULL;
 
 end:
