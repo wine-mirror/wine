@@ -209,6 +209,30 @@ static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *
     return TRUE;
 }
 
+static int fill_color_table_from_palette( BITMAPINFO *info, DC *dc )
+{
+    PALETTEENTRY palEntry[256];
+    int i, colors = (info->bmiHeader.biBitCount > 8) ? 0 : 1 << info->bmiHeader.biBitCount;
+
+    if (info->bmiHeader.biClrUsed) colors = info->bmiHeader.biClrUsed;
+
+    if (!colors) return 0;
+
+    memset( palEntry, 0, sizeof(palEntry) );
+    if (!GetPaletteEntries( dc->hPalette, 0, colors, palEntry ))
+        return 0;
+
+    for (i = 0; i < colors; i++)
+    {
+        info->bmiColors[i].rgbRed      = palEntry[i].peRed;
+        info->bmiColors[i].rgbGreen    = palEntry[i].peGreen;
+        info->bmiColors[i].rgbBlue     = palEntry[i].peBlue;
+        info->bmiColors[i].rgbReserved = 0;
+    }
+
+    return colors;
+}
+
 /* nulldrv fallback implementation using SetDIBits/StretchBlt */
 INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
                            INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
@@ -715,21 +739,10 @@ INT WINAPI GetDIBits(
            case we'll fix up the indices after the format conversion. */
         else if ( (bpp > 1 && bpp == bmp->bitmap.bmBitsPixel) || coloruse == DIB_PAL_COLORS )
         {
-            PALETTEENTRY palEntry[256];
-
-            memset( palEntry, 0, sizeof(palEntry) );
-            if (!GetPaletteEntries( dc->hPalette, 0, colors, palEntry ))
+            if (!fill_color_table_from_palette( dst_info, dc ))
             {
                 lines = 0;
                 goto done;
-            }
-
-            for (i = 0; i < colors; i++)
-            {
-                dst_info->bmiColors[i].rgbRed      = palEntry[i].peRed;
-                dst_info->bmiColors[i].rgbGreen    = palEntry[i].peGreen;
-                dst_info->bmiColors[i].rgbBlue     = palEntry[i].peBlue;
-                dst_info->bmiColors[i].rgbReserved = 0;
             }
         }
         else
