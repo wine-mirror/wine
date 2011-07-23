@@ -692,6 +692,7 @@ void set_current_mon(HTMLWindow*,IMoniker*) DECLSPEC_HIDDEN;
 HRESULT start_binding(HTMLWindow*,HTMLDocumentNode*,BSCallback*,IBindCtx*) DECLSPEC_HIDDEN;
 HRESULT async_start_doc_binding(HTMLWindow*,nsChannelBSC*) DECLSPEC_HIDDEN;
 void abort_document_bindings(HTMLDocumentNode*) DECLSPEC_HIDDEN;
+void set_download_state(HTMLDocumentObj*,int) DECLSPEC_HIDDEN;
 
 HRESULT bind_mon_to_buffer(HTMLDocumentNode*,IMoniker*,void**,DWORD*) DECLSPEC_HIDDEN;
 

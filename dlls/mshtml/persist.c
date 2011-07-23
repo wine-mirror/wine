@@ -94,6 +94,28 @@ void set_current_mon(HTMLWindow *This, IMoniker *mon)
     set_script_mode(This, use_gecko_script(This) ? SCRIPTMODE_GECKO : SCRIPTMODE_ACTIVESCRIPT);
 }
 
+void set_download_state(HTMLDocumentObj *doc, int state)
+{
+    if(doc->client) {
+        IOleCommandTarget *olecmd;
+        HRESULT hres;
+
+        hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
+        if(SUCCEEDED(hres)) {
+            VARIANT var;
+
+            V_VT(&var) = VT_I4;
+            V_I4(&var) = state;
+
+            IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETDOWNLOADSTATE,
+                    OLECMDEXECOPT_DONTPROMPTUSER, &var, NULL);
+            IOleCommandTarget_Release(olecmd);
+        }
+    }
+
+    doc->download_state = state;
+}
+
 static void set_progress_proc(task_t *_task)
 {
     docobj_task_t *task = (docobj_task_t*)_task;
@@ -139,7 +161,6 @@ static void set_downloading_proc(task_t *_task)
 {
     download_proc_task_t *task = (download_proc_task_t*)_task;
     HTMLDocumentObj *doc = task->doc;
-    IOleCommandTarget *olecmd;
     HRESULT hres;
 
     TRACE("(%p)\n", doc);
@@ -147,24 +168,11 @@ static void set_downloading_proc(task_t *_task)
     set_statustext(doc, IDS_STATUS_DOWNLOADINGFROM, task->url);
     CoTaskMemFree(task->url);
 
+    if(task->set_download)
+        set_download_state(doc, 1);
+
     if(!doc->client)
         return;
-
-    if(task->set_download) {
-        hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
-        if(SUCCEEDED(hres)) {
-            VARIANT var;
-
-            V_VT(&var) = VT_I4;
-            V_I4(&var) = 1;
-
-            IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETDOWNLOADSTATE,
-                    OLECMDEXECOPT_DONTPROMPTUSER, &var, NULL);
-            IOleCommandTarget_Release(olecmd);
-        }
-
-        doc->download_state = 1;
-    }
 
     if(doc->view_sink)
         IAdviseSink_OnViewChange(doc->view_sink, DVASPECT_CONTENT, -1);
