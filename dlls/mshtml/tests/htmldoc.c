@@ -192,9 +192,9 @@ static BOOL expect_InPlaceUIWindow_SetActiveObject_active = TRUE;
 static BOOL ipsex, ipsw;
 static BOOL set_clientsite, container_locked;
 static BOOL readystate_set_loading = FALSE, readystate_set_interactive = FALSE, load_from_stream;
-static BOOL editmode = FALSE;
+static BOOL editmode = FALSE, ignore_external_qi;
 static BOOL inplace_deactivated, open_call;
-static BOOL complete = FALSE;
+static BOOL complete, loading_js;
 static DWORD status_code = HTTP_STATUS_OK;
 static BOOL asynchronous_binding = FALSE;
 static int stream_read, protocol_read;
@@ -408,7 +408,8 @@ static HRESULT WINAPI External_QueryInterface(IDispatch *iface, REFIID riid, voi
     if(IsEqualGUID(&IID_External_unk, riid))
         return E_NOINTERFACE; /* TODO */
 
-    ok(0, "unexpected riid: %s\n", debugstr_guid(riid));
+    if(!ignore_external_qi)
+        ok(0, "unexpected riid: %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -2619,7 +2620,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             switch(V_I4(pvaIn)) {
             case 0:
                 CHECK_EXPECT(Exec_SETDOWNLOADSTATE_0);
-                load_state = LD_INTERACTIVE;
+                if(!loading_js)
+                    load_state = LD_INTERACTIVE;
                 break;
             case 1:
                 CHECK_EXPECT(Exec_SETDOWNLOADSTATE_1);
@@ -2699,7 +2701,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             if(SUCCEEDED(hres))
                 IHTMLPrivateWindow_Release(priv_window);
 
-            load_state = LD_LOADING;
+            load_state = loading_js ? LD_COMPLETE : LD_LOADING;
             return S_OK; /* TODO */
         }
 
@@ -4045,16 +4047,21 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
     test_readyState((IUnknown*)persist);
 }
 
-#define DWL_VERBDONE  0x0001
-#define DWL_CSS       0x0002
-#define DWL_TRYCSS    0x0004
-#define DWL_HTTP      0x0008
-#define DWL_EMPTY     0x0010
+#define DWL_VERBDONE    0x0001
+#define DWL_CSS         0x0002
+#define DWL_TRYCSS      0x0004
+#define DWL_HTTP        0x0008
+#define DWL_EMPTY       0x0010
+#define DWL_JAVASCRIPT  0x0020
 
 static void test_download(DWORD flags)
 {
+    const BOOL is_js = (flags & DWL_JAVASCRIPT) != 0;
     HWND hwnd;
+    BOOL *b;
     MSG msg;
+
+    b = is_js ? &called_Exec_SETDOWNLOADSTATE_0 : &called_Exec_HTTPEQUIV_DONE;
 
     hwnd = FindWindowA("Internet Explorer_Hidden", NULL);
     ok(hwnd != NULL, "Could not find hidden window\n");
@@ -4063,11 +4070,13 @@ static void test_download(DWORD flags)
 
     if(flags & (DWL_VERBDONE|DWL_HTTP))
         SET_EXPECT(Exec_SETPROGRESSMAX);
-    if((flags & DWL_VERBDONE) && !load_from_stream)
+    if((flags & DWL_VERBDONE) && !load_from_stream && !is_js)
         SET_EXPECT(GetHostInfo);
     SET_EXPECT(SetStatusText);
     if(!(flags & DWL_EMPTY))
         SET_EXPECT(Exec_SETDOWNLOADSTATE_1);
+    if(is_js)
+        SET_EXPECT(GetExternal);
     SET_EXPECT(OnViewChange);
     SET_EXPECT(GetDropTarget);
     if(flags & DWL_TRYCSS)
@@ -4080,22 +4089,24 @@ static void test_download(DWORD flags)
         SET_EXPECT(Protocol_Read);
         SET_EXPECT(UnlockRequest);
     }
-    if(!(flags & DWL_EMPTY))
+    if(!(flags & (DWL_EMPTY|DWL_JAVASCRIPT)))
         SET_EXPECT(Invoke_OnReadyStateChange_Interactive);
-    SET_EXPECT(Invoke_OnReadyStateChange_Complete);
+    if(!is_js)
+        SET_EXPECT(Invoke_OnReadyStateChange_Complete);
     SET_EXPECT(Exec_Explorer_69);
     SET_EXPECT(EnableModeless_TRUE); /* IE7 */
     SET_EXPECT(Frame_EnableModeless_TRUE); /* IE7 */
     SET_EXPECT(EnableModeless_FALSE); /* IE7 */
     SET_EXPECT(Frame_EnableModeless_FALSE); /* IE7 */
-    if(nav_url)
+    if(nav_url && !is_js)
         SET_EXPECT(Exec_ShellDocView_37);
     if(flags & DWL_HTTP) {
         SET_EXPECT(OnChanged_1012);
         SET_EXPECT(Exec_HTTPEQUIV);
         SET_EXPECT(Exec_SETTITLE);
     }
-    SET_EXPECT(OnChanged_1005);
+    if(!is_js)
+        SET_EXPECT(OnChanged_1005);
     SET_EXPECT(OnChanged_READYSTATE);
     SET_EXPECT(Exec_SETPROGRESSPOS);
     if(!(flags & DWL_EMPTY))
@@ -4103,8 +4114,10 @@ static void test_download(DWORD flags)
     SET_EXPECT(Exec_ShellDocView_103);
     SET_EXPECT(Exec_ShellDocView_105);
     SET_EXPECT(Exec_ShellDocView_140);
-    SET_EXPECT(Exec_MSHTML_PARSECOMPLETE);
-    SET_EXPECT(Exec_HTTPEQUIV_DONE);
+    if(!is_js) {
+        SET_EXPECT(Exec_MSHTML_PARSECOMPLETE);
+        SET_EXPECT(Exec_HTTPEQUIV_DONE);
+    }
     SET_EXPECT(SetStatusText);
     if(nav_url) {
         SET_EXPECT(UpdateUI);
@@ -4112,15 +4125,18 @@ static void test_download(DWORD flags)
         SET_EXPECT(Exec_SETTITLE);
         SET_EXPECT(UpdateBackForwardState);
     }
-    if(!editmode && !(flags & DWL_EMPTY))
-        SET_EXPECT(FireNavigateComplete2);
-    if(!editmode)
-        SET_EXPECT(FireDocumentComplete);
-    SET_EXPECT(ActiveElementChanged);
+    if(!is_js) {
+        if(!editmode) {
+            if(!(flags & DWL_EMPTY))
+                SET_EXPECT(FireNavigateComplete2);
+            SET_EXPECT(FireDocumentComplete);
+        }
+        SET_EXPECT(ActiveElementChanged);
+    }
     SET_EXPECT(IsErrorUrl);
     expect_status_text = (LPWSTR)0xdeadbeef; /* TODO */
 
-    while(!called_Exec_HTTPEQUIV_DONE && GetMessage(&msg, NULL, 0, 0)) {
+    while(!*b && GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
@@ -4129,7 +4145,7 @@ static void test_download(DWORD flags)
         CHECK_CALLED(Exec_SETPROGRESSMAX);
     if(flags & DWL_HTTP)
         SET_CALLED(Exec_SETPROGRESSMAX);
-    if((flags & DWL_VERBDONE) && !load_from_stream) {
+    if((flags & DWL_VERBDONE) && !load_from_stream && !is_js) {
         if(nav_url)
             todo_wine CHECK_CALLED(GetHostInfo);
         else
@@ -4138,6 +4154,8 @@ static void test_download(DWORD flags)
     CHECK_CALLED(SetStatusText);
     if(!(flags & DWL_EMPTY))
         CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
+    if(is_js)
+        CHECK_CALLED(GetExternal);
     CHECK_CALLED(OnViewChange);
     SET_CALLED(GetDropTarget);
     if(flags & DWL_TRYCSS)
@@ -4150,31 +4168,39 @@ static void test_download(DWORD flags)
         CHECK_CALLED(Protocol_Read);
         CHECK_CALLED(UnlockRequest);
     }
-    if(!(flags & DWL_EMPTY))
+    if(!(flags & (DWL_EMPTY|DWL_JAVASCRIPT)))
         CHECK_CALLED(Invoke_OnReadyStateChange_Interactive);
-    CHECK_CALLED(Invoke_OnReadyStateChange_Complete);
+    if(!is_js)
+        CHECK_CALLED(Invoke_OnReadyStateChange_Complete);
     SET_CALLED(Exec_Explorer_69);
     SET_CALLED(EnableModeless_TRUE); /* IE7 */
     SET_CALLED(Frame_EnableModeless_TRUE); /* IE7 */
     SET_CALLED(EnableModeless_FALSE); /* IE7 */
     SET_CALLED(Frame_EnableModeless_FALSE); /* IE7 */
-    if(nav_url)
+    if(nav_url && !is_js)
         todo_wine CHECK_CALLED(Exec_ShellDocView_37);
     if(flags & DWL_HTTP) todo_wine {
         CHECK_CALLED(OnChanged_1012);
         CHECK_CALLED(Exec_HTTPEQUIV);
         CHECK_CALLED(Exec_SETTITLE);
     }
-    CHECK_CALLED(OnChanged_1005);
-    CHECK_CALLED(OnChanged_READYSTATE);
-    CHECK_CALLED(Exec_SETPROGRESSPOS);
+    if(!is_js) {
+        CHECK_CALLED(OnChanged_1005);
+        CHECK_CALLED(OnChanged_READYSTATE);
+        CHECK_CALLED(Exec_SETPROGRESSPOS);
+    }else {
+        SET_CALLED(OnChanged_READYSTATE); /* sometimes called */
+        todo_wine CHECK_CALLED(Exec_SETPROGRESSPOS);
+    }
     if(!(flags & DWL_EMPTY))
         CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
     SET_CALLED(Exec_ShellDocView_103);
     SET_CALLED(Exec_ShellDocView_105);
     SET_CALLED(Exec_ShellDocView_140);
-    CHECK_CALLED(Exec_MSHTML_PARSECOMPLETE);
-    CHECK_CALLED(Exec_HTTPEQUIV_DONE);
+    if(!is_js) {
+        CHECK_CALLED(Exec_MSHTML_PARSECOMPLETE);
+        CHECK_CALLED(Exec_HTTPEQUIV_DONE);
+    }
     SET_CALLED(SetStatusText);
     if(nav_url) { /* avoiding race, FIXME: find better way */
         SET_CALLED(UpdateUI);
@@ -4182,11 +4208,14 @@ static void test_download(DWORD flags)
         SET_CALLED(Exec_SETTITLE);
         todo_wine CHECK_CALLED_BROKEN(UpdateBackForwardState);
     }
-    if(!editmode && !(flags & DWL_EMPTY))
-        todo_wine CHECK_CALLED(FireNavigateComplete2);
-    if(!editmode)
-        CHECK_CALLED(FireDocumentComplete);
-    todo_wine CHECK_CALLED(ActiveElementChanged);
+    if(!is_js) {
+        if(!editmode) {
+            if(!(flags & DWL_EMPTY))
+                todo_wine CHECK_CALLED(FireNavigateComplete2);
+            CHECK_CALLED(FireDocumentComplete);
+        }
+        todo_wine CHECK_CALLED(ActiveElementChanged);
+    }
     todo_wine CHECK_CALLED_BROKEN(IsErrorUrl);
 
     load_state = LD_COMPLETE;
@@ -4233,23 +4262,27 @@ static void test_Persist(IHTMLDocument2 *doc, IMoniker *mon)
     }
 }
 
-static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace)
+static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *new_nav_url, BOOL is_js)
 {
     IHTMLPrivateWindow *priv_window;
+    const char *prev_nav_url;
     IHTMLWindow2 *window;
     IHTMLLocation *location;
     BSTR str, str2;
     VARIANT vempty;
     HRESULT hres;
 
+    trace("put_href %s...\n", new_nav_url);
+
+    loading_js = is_js;
+
     location = NULL;
     hres = IHTMLDocument2_get_location(doc, &location);
     ok(hres == S_OK, "get_location failed: %08x\n", hres);
     ok(location != NULL, "location == NULL\n");
 
-    nav_url = use_replace ? "about:replace" : "about:blank";
-
-    str = a2bstr(nav_url);
+    prev_nav_url = nav_url;
+    str = a2bstr(nav_url = new_nav_url);
     SET_EXPECT(TranslateUrl);
     SET_EXPECT(Navigate);
     if(use_replace) {
@@ -4257,10 +4290,18 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace)
         ok(hres == S_OK, "put_href failed: %08x\n", hres);
     }else {
         hres = IHTMLLocation_put_href(location, str);
-        ok(hres == S_OK, "put_href failed: %08x\n", hres);
+        if(is_js && hres == E_ACCESSDENIED)
+            win_skip("put_href: got E_ACCESSDENIED\n");
+        else
+            ok(hres == S_OK, "put_href failed: %08x\n", hres);
     }
-    CHECK_CALLED(TranslateUrl);
-    CHECK_CALLED(Navigate);
+    if(hres == S_OK) {
+        CHECK_CALLED(TranslateUrl);
+        CHECK_CALLED(Navigate);
+    }else {
+        SET_CALLED(TranslateUrl);
+        SET_CALLED(Navigate);
+    }
 
     IHTMLLocation_Release(location);
 
@@ -4276,9 +4317,7 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace)
     SET_EXPECT(Exec_ShellDocView_67);
     SET_EXPECT(Invoke_AMBIENT_SILENT);
     SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
-    SET_EXPECT(OnChanged_READYSTATE);
     SET_EXPECT(Exec_ShellDocView_63);
-    SET_EXPECT(Invoke_OnReadyStateChange_Loading);
 
     str2 = a2bstr("");
     V_VT(&vempty) = VT_EMPTY;
@@ -4290,9 +4329,7 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace)
     CHECK_CALLED(Exec_ShellDocView_67);
     CHECK_CALLED(Invoke_AMBIENT_SILENT);
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
-    SET_CALLED(OnChanged_READYSTATE); /* not always called */
     CHECK_CALLED(Exec_ShellDocView_63);
-    CLEAR_CALLED(Invoke_OnReadyStateChange_Loading); /* not always called */
 
     if(doc_mon) {
         test_GetCurMoniker(doc_unk, doc_mon, NULL);
@@ -4300,20 +4337,32 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace)
     }
     hres = IHTMLPrivateWindow_GetAddressBarUrl(priv_window, &str2);
     ok(hres == S_OK, "GetAddressBarUrl failed: %08x\n", hres);
-    ok(!strcmp_wa(str2, use_replace?"about:blank":"http://www.winehq.org/"),
-                "unexpected address bar url:  %s\n", wine_dbgstr_w(str2));
+    ok(!strcmp_wa(str2, prev_nav_url), "unexpected address bar url:  %s\n", wine_dbgstr_w(str2));
     SysFreeString(str2);
 
-    SET_EXPECT(Invoke_OnReadyStateChange_Loading);
-    test_download(DWL_VERBDONE);
-    CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
+    if(is_js)
+        ignore_external_qi = TRUE;
+    else
+        SET_EXPECT(Invoke_OnReadyStateChange_Loading);
+    test_download(DWL_VERBDONE | (is_js ? DWL_JAVASCRIPT : 0));
+    if(is_js)
+        ignore_external_qi = FALSE;
+    else
+        CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
 
     hres = IHTMLPrivateWindow_GetAddressBarUrl(priv_window, &str2);
     ok(hres == S_OK, "GetAddressBarUrl failed: %08x\n", hres);
-    ok(!lstrcmpW(str2, str), "unexpected address bar url:  %s\n", wine_dbgstr_w(str2));
+    if(is_js)
+        ok(!strcmp_wa(str2, prev_nav_url), "unexpected address bar url:  %s\n", wine_dbgstr_w(str2));
+    else
+        ok(!lstrcmpW(str2, str), "unexpected address bar url:  %s\n", wine_dbgstr_w(str2));
     SysFreeString(str2);
     SysFreeString(str);
     IHTMLPrivateWindow_Release(priv_window);
+
+    loading_js = FALSE;
+    if(is_js)
+        nav_url = prev_nav_url;
 }
 
 static void test_open_window(IHTMLDocument2 *doc)
@@ -5655,8 +5704,12 @@ static void test_HTMLDocument_http(void)
     test_MSHTML_QueryStatus(doc, OLECMDF_SUPPORTED);
     test_GetCurMoniker((IUnknown*)doc, http_mon, NULL);
 
-    test_put_href(doc, FALSE);
-    test_put_href(doc, TRUE);
+    nav_url = "http://www.winehq.org/"; /* for valid prev nav_url */
+    test_put_href(doc, FALSE, "javascript:external&&undefined", TRUE);
+
+    test_put_href(doc, FALSE, "about:blank", FALSE);
+    test_put_href(doc, TRUE, "about:replace", FALSE);
+
     test_open_window(doc);
 
     test_InPlaceDeactivate(doc, TRUE);
