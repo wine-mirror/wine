@@ -2174,7 +2174,7 @@ static nsresult NSAPI nsURI_GetAsciiHost(nsIURL *iface, nsACString *aAsciiHost)
     if(This->nsuri)
         return nsIURI_GetAsciiHost(This->nsuri, aAsciiHost);
 
-    FIXME("Use Uri_PUNYCODE_IDN_HOST flag\n");
+    WARN("Use Uri_PUNYCODE_IDN_HOST flag\n");
     return get_uri_string(This, Uri_PROPERTY_HOST, aAsciiHost);
 }
 
