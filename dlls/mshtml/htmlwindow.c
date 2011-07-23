@@ -1676,6 +1676,7 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
     nsChannelBSC *bsc;
     IMoniker *mon;
     BSTR new_url;
+    IUri *uri;
     HRESULT hres;
 
     TRACE("(%p)->(%s %s %s %s %s %s %x)\n", This, debugstr_w(url), debugstr_w(arg2), debugstr_w(arg3), debugstr_w(arg4),
@@ -1710,14 +1711,19 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
         }
     }
 
-    /* FIXME: Why not set_ready_state? */
-    This->readystate = READYSTATE_UNINITIALIZED;
-
-    hres = CreateURLMoniker(NULL, new_url, &mon);
+    hres = CreateUri(new_url, 0, 0, &uri);
     if(new_url != url)
         SysFreeString(new_url);
     if(FAILED(hres))
         return hres;
+
+    hres = CreateURLMonikerEx2(NULL, uri, &mon, URL_MK_UNIFORM);
+    IUri_Release(uri);
+    if(FAILED(hres))
+        return hres;
+
+    /* FIXME: Why not set_ready_state? */
+    This->readystate = READYSTATE_UNINITIALIZED;
 
     if(post_data_var) {
         if(V_VT(post_data_var) == (VT_ARRAY|VT_UI1)) {
