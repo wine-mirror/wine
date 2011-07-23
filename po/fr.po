@@ -34,9 +34,9 @@ msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
 msgstr ""
-"Impossible d'exécuter le programme de désinstallation « %s ». Voulez-vous "
+"Impossible d'exécuter le programme de désinstallation « %s ». Voulez-vous "
 "supprimer l'entrée de désinstallation de ce programme de la base de "
-"registre ?"
+"registre ?"
 
 #: appwiz.rc:33
 msgid "Not specified"
@@ -142,7 +142,7 @@ msgstr "Fermer"
 
 #: comctl32.rc:33
 msgid "Today:"
-msgstr "Aujourd'hui :"
+msgstr "Aujourd'hui :"
 
 #: comctl32.rc:34
 msgid "Go to today"
@@ -222,7 +222,7 @@ msgid ""
 "A filename cannot contain any of the following characters:\n"
 "                          / : < > |"
 msgstr ""
-"Un nom de fichier ne peut contenir aucun des caractères suivants :\n"
+"Un nom de fichier ne peut contenir aucun des caractères suivants :\n"
 "                          / : < > |"
 
 #: comdlg32.rc:49
@@ -456,27 +456,27 @@ msgstr "Insertion manuelle du papier ; "
 
 #: comdlg32.rc:100
 msgid "Paper problem; "
-msgstr "Problème de papier ; "
+msgstr "Problème de papier ; "
 
 #: comdlg32.rc:101
 msgid "Printer offline; "
-msgstr "L'imprimante n'est pas en ligne ; "
+msgstr "L'imprimante n'est pas en ligne ; "
 
 #: comdlg32.rc:102
 msgid "I/O Active; "
-msgstr "E/S actives ; "
+msgstr "E/S actives ; "
 
 #: comdlg32.rc:103
 msgid "Busy; "
-msgstr "Occupée ; "
+msgstr "Occupée ; "
 
 #: comdlg32.rc:104
 msgid "Printing; "
-msgstr "En cours d'impression ; "
+msgstr "En cours d'impression ; "
 
 #: comdlg32.rc:105
 msgid "Output tray is full; "
-msgstr "Le bac de sortie est plein ; "
+msgstr "Le bac de sortie est plein ; "
 
 #: comdlg32.rc:106
 msgid "Not available; "
@@ -1424,7 +1424,7 @@ msgstr "Politique de certification"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr "Identifiant de politique : "
+msgstr "Identifiant de politique : "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -1493,15 +1493,15 @@ msgstr "Impossible de vérifier tous les rôles prévus pour ce certificat."
 
 #: cryptui.rc:34
 msgid "This certificate is intended for the following purposes:"
-msgstr "Ce certificat n'est prévu que pour les rôles suivants :"
+msgstr "Ce certificat n'est prévu que pour les rôles suivants :"
 
 #: cryptui.rc:35
 msgid "Issued to: "
-msgstr "Émis pour : "
+msgstr "Émis pour : "
 
 #: cryptui.rc:36
 msgid "Issued by: "
-msgstr "Émis par : "
+msgstr "Émis par : "
 
 #: cryptui.rc:37
 msgid "Valid from "
@@ -1770,7 +1770,7 @@ msgid ""
 "Are you sure you want to remove this certificate?"
 msgstr ""
 "Vous ne pourrez plus déchiffrer ou signer de messages avec ce certificat.\n"
-"Voulez-vous réellement supprimer ce certificat ?"
+"Voulez-vous réellement supprimer ce certificat ?"
 
 #: cryptui.rc:108
 msgid ""
@@ -1779,7 +1779,7 @@ msgid ""
 "Are you sure you want to remove these certificates?"
 msgstr ""
 "Vous ne pourrez plus déchiffrer ou signer de messages avec ces certificats.\n"
-"Voulez-vous réellement supprimer ces certificats ?"
+"Voulez-vous réellement supprimer ces certificats ?"
 
 #: cryptui.rc:109
 msgid ""
@@ -1789,7 +1789,7 @@ msgid ""
 msgstr ""
 "Vous ne pourrez plus chiffrer ou vérifier de signature de messages avec ce "
 "certificat.\n"
-"Voulez-vous réellement supprimer ce certificat ?"
+"Voulez-vous réellement supprimer ce certificat ?"
 
 #: cryptui.rc:110
 msgid ""
@@ -1799,7 +1799,7 @@ msgid ""
 msgstr ""
 "Vous ne pourrez plus chiffrer ou vérifier de signature de messages avec ces "
 "certificats.\n"
-"Voulez-vous réellement supprimer ces certificats ?"
+"Voulez-vous réellement supprimer ces certificats ?"
 
 #: cryptui.rc:111
 msgid ""
@@ -1809,7 +1809,7 @@ msgid ""
 msgstr ""
 "Les certificats émis par cette autorité de certification ne seront plus "
 "considérés comme valables.\n"
-"Voulez-vous réellement supprimer ce certificat ?"
+"Voulez-vous réellement supprimer ce certificat ?"
 
 #: cryptui.rc:112
 msgid ""
@@ -1819,7 +1819,7 @@ msgid ""
 msgstr ""
 "Les certificats émis par cette autorité de certification ne seront plus "
 "considérés comme valables.\n"
-"Voulez-vous réellement supprimer ces certificats ?"
+"Voulez-vous réellement supprimer ces certificats ?"
 
 #: cryptui.rc:113
 msgid ""
@@ -1830,7 +1830,7 @@ msgstr ""
 "Les certificats émis par cette autorité de certification racine, ou par "
 "toute autorité de certification qu'elle valide, ne seront plus considérés "
 "comme valables.\n"
-"Voulez-vous réellement supprimer ce certificat racine de confiance ?"
+"Voulez-vous réellement supprimer ce certificat racine de confiance ?"
 
 #: cryptui.rc:114
 msgid ""
@@ -1841,7 +1841,7 @@ msgstr ""
 "Les certificats émis par ces autorités de certification racines, ou par "
 "toute autorité de certification qu'elles valident, ne seront plus considérés "
 "comme valables.\n"
-"Voulez-vous réellement supprimer ces certificats racines de confiance ?"
+"Voulez-vous réellement supprimer ces certificats racines de confiance ?"
 
 #: cryptui.rc:115
 msgid ""
@@ -1850,7 +1850,7 @@ msgid ""
 msgstr ""
 "Les logiciels signés par cet éditeur ne seront plus considérés comme "
 "valables.\n"
-"Voulez-vous réellement supprimer ce certificat ?"
+"Voulez-vous réellement supprimer ce certificat ?"
 
 #: cryptui.rc:116
 msgid ""
@@ -1859,15 +1859,15 @@ msgid ""
 msgstr ""
 "Les logiciels signés par ces éditeurs ne seront plus considérés comme "
 "valables.\n"
-"Voulez-vous réellement supprimer ces certificats ?"
+"Voulez-vous réellement supprimer ces certificats ?"
 
 #: cryptui.rc:117
 msgid "Are you sure you want to remove this certificate?"
-msgstr "Voulez-vous réellement supprimer ce certificat ?"
+msgstr "Voulez-vous réellement supprimer ce certificat ?"
 
 #: cryptui.rc:118
 msgid "Are you sure you want to remove these certificates?"
-msgstr "Voulez-vous réellement supprimer ces certificats ?"
+msgstr "Voulez-vous réellement supprimer ces certificats ?"
 
 #: cryptui.rc:119
 msgid "Certificates"
@@ -1935,7 +1935,7 @@ msgstr "Choisissez le nom du fichier dans lequel le contenu sera sauvé."
 
 #: cryptui.rc:152
 msgid "The specified file already exists.  Do you want to replace it?"
-msgstr "Le fichier spécifié existe déjà. Voulez-vous le remplacer ?"
+msgstr "Le fichier spécifié existe déjà. Voulez-vous le remplacer ?"
 
 #: cryptui.rc:153
 msgid "DER-Encoded Binary X.509 (*.cer)"
@@ -2003,11 +2003,11 @@ msgstr "Les mots de passe ne correspondent pas."
 
 #: cryptui.rc:172
 msgid "Note: The private key for this certificate could not be opened."
-msgstr "Note : la clé privée de ce certificat n'a pu être ouverte."
+msgstr "Note : la clé privée de ce certificat n'a pu être ouverte."
 
 #: cryptui.rc:173
 msgid "Note: The private  key for this certificate is not exportable."
-msgstr "Note : la clé privée de ce certificat n'est pas exportable."
+msgstr "Note : la clé privée de ce certificat n'est pas exportable."
 
 #: devenum.rc:32
 msgid "Default DirectSound"
@@ -2194,7 +2194,7 @@ msgstr ""
 
 #: inetcpl.rc:30
 msgid "Security settings for zone: "
-msgstr "Paramètres de sécurité pour la zone : "
+msgstr "Paramètres de sécurité pour la zone : "
 
 #: inetcpl.rc:31
 msgid "Custom"
@@ -2254,15 +2254,15 @@ msgstr "Erreur de syntaxe"
 
 #: jscript.rc:33
 msgid "Expected ';'"
-msgstr "« ; » attendu"
+msgstr "« ; » attendu"
 
 #: jscript.rc:34
 msgid "Expected '('"
-msgstr "« ( » attendu"
+msgstr "« ( » attendu"
 
 #: jscript.rc:35
 msgid "Expected ')'"
-msgstr "« ) » attendu"
+msgstr "« ) » attendu"
 
 #: jscript.rc:36
 msgid "Unterminated string constant"
@@ -2282,7 +2282,7 @@ msgstr "Fonction attendue"
 
 #: jscript.rc:39
 msgid "'[object]' is not a date object"
-msgstr "« [objet] » n'est pas un objet de type date"
+msgstr "« [objet] » n'est pas un objet de type date"
 
 #: jscript.rc:41
 msgid "Object expected"
@@ -2294,7 +2294,7 @@ msgstr "Affectation illégale"
 
 #: jscript.rc:43
 msgid "'|' is undefined"
-msgstr "« | » n'est pas défini"
+msgstr "« | » n'est pas défini"
 
 #: jscript.rc:44
 msgid "Boolean object expected"
@@ -5424,7 +5424,7 @@ msgstr "lecteur réseau pour la fonctionnalité manquante"
 
 #: msi.rc:60
 msgid "feature from:"
-msgstr "fonctionnalité depuis :"
+msgstr "fonctionnalité depuis :"
 
 #: msi.rc:61
 msgid "choose which folder contains %s"
@@ -6697,7 +6697,7 @@ msgstr "Confirmez la suppression du dossier"
 
 #: shell32.rc:170
 msgid "Are you sure you want to delete '%1'?"
-msgstr "Voulez-vous réellement supprimer « %1 » ?"
+msgstr "Voulez-vous réellement supprimer « %1 » ?"
 
 #: shell32.rc:171
 msgid "Are you sure you want to delete these %1 items?"
@@ -6786,11 +6786,11 @@ msgstr ""
 
 #: shell32.rc:255
 msgid "Are you sure you wish to permanently delete '%1'?"
-msgstr "Voulez-vous réellement supprimer définitivement « %1 » ?"
+msgstr "Voulez-vous réellement supprimer définitivement « %1 » ?"
 
 #: shell32.rc:256
 msgid "Are you sure you wish to permanently delete these %1 items?"
-msgstr "Voulez-vous réellement supprimer définitivement ces %1 éléments ?"
+msgstr "Voulez-vous réellement supprimer définitivement ces %1 éléments ?"
 
 #: shell32.rc:257
 msgid "Confirm deletion"
@@ -6971,7 +6971,7 @@ msgstr "Le descripteur de périphérique spécifié est invalide."
 
 #: winmm.rc:34
 msgid "There is no driver installed on your system!\n"
-msgstr "Aucun pilote n'est installé sur votre système !\n"
+msgstr "Aucun pilote n'est installé sur votre système !\n"
 
 #: winmm.rc:35
 msgid ""
@@ -7144,7 +7144,7 @@ msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
 msgstr ""
-"La commande spécifiée nécessite un paramètre chaîne de caractères : veuillez "
+"La commande spécifiée nécessite un paramètre chaîne de caractères : veuillez "
 "en spécifier un."
 
 #: winmm.rc:67
@@ -7169,7 +7169,7 @@ msgstr ""
 
 #: winmm.rc:70
 msgid "The specified command requires a parameter. Please supply one."
-msgstr "Il manque un paramètre dans la commande spécifiée : veuillez l'entrer."
+msgstr "Il manque un paramètre dans la commande spécifiée : veuillez l'entrer."
 
 #: winmm.rc:71
 msgid "The MCI device you are using does not support the specified command."
@@ -7205,7 +7205,7 @@ msgstr ""
 #: winmm.rc:76
 msgid "Cannot use 'all' as the device name with the specified command."
 msgstr ""
-"Ne peut utiliser « all » comme nom de périphérique spécifique pour cette "
+"Ne peut utiliser « all » comme nom de périphérique spécifique pour cette "
 "commande."
 
 #: winmm.rc:77
@@ -7273,8 +7273,8 @@ msgid ""
 "parameter with each 'open' command."
 msgstr ""
 "Le pilote de périphérique est déjà utilisé en ce moment. Pour le partager, "
-"utilisez le paramètre de partage (« shareable ») dans chaque commande "
-"d'ouverture (« open »)."
+"utilisez le paramètre de partage (« shareable ») dans chaque commande "
+"d'ouverture (« open »)."
 
 #: winmm.rc:87
 msgid ""
@@ -7282,7 +7282,7 @@ msgid ""
 "Please supply one."
 msgstr ""
 "La commande spécifiée requiert un nom d'alias, de fichier, de pilote ou de "
-"périphérique : veuillez l'entrer."
+"périphérique : veuillez l'entrer."
 
 #: winmm.rc:88
 msgid ""
@@ -7323,12 +7323,12 @@ msgstr ""
 #: winmm.rc:94
 msgid "You must specify an alias when using the 'new' parameter."
 msgstr ""
-"Vous devez spécifier un alias lorsque vous employez le paramètre « new »."
+"Vous devez spécifier un alias lorsque vous employez le paramètre « new »."
 
 #: winmm.rc:95
 msgid "Cannot use the 'notify' flag with auto-opened devices."
 msgstr ""
-"Impossible d'utiliser l'indicateur « notifier » avec les périphériques "
+"Impossible d'utiliser l'indicateur « notifier » avec les périphériques "
 "ouverts automatiquement."
 
 #: winmm.rc:96
@@ -7503,7 +7503,7 @@ msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
 msgstr ""
-"Impossible d'utiliser le format horaire « pointeur de piste » et le format "
+"Impossible d'utiliser le format horaire « pointeur de piste » et le format "
 "horaire SMPTE en même temps."
 
 #: winmm.rc:124
@@ -8833,7 +8833,7 @@ msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
 msgstr ""
-"Le fichier « %s » est trop grand pour le bloc-notes.\n"
+"Le fichier « %s » est trop grand pour le bloc-notes.\n"
 "Veuillez utiliser un autre éditeur."
 
 #: notepad.rc:81
@@ -8850,7 +8850,7 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"Le fichier « %s » n'existe pas.\n"
+"Le fichier « %s » n'existe pas.\n"
 "\n"
 "Voulez-vous créer un nouveau fichier ?"
 
@@ -8860,13 +8860,13 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"Le fichier « %s » a été modifié\n"
+"Le fichier « %s » a été modifié\n"
 "\n"
 "Voulez-vous enregistrer vos modifications ?"
 
 #: notepad.rc:86
 msgid "'%s' could not be found."
-msgstr "« %s » non trouvé."
+msgstr "« %s » non trouvé."
 
 #: notepad.rc:88
 msgid ""
@@ -8902,7 +8902,7 @@ msgstr ""
 "vous le sauvez dans le codage %s.\n"
 "Pour conserver ces caractères, cliquez sur Annuler et sélectionnez\n"
 "une des alternatives Unicode dans la liste déroulante Codage.\n"
-"Continuer ?"
+"Continuer ?"
 
 #: oleview.rc:29
 msgid "&Bind to file..."
@@ -9605,7 +9605,7 @@ msgstr ""
 
 #: regedit.rc:178
 msgid "Can't query value '%s'"
-msgstr "Ne peut consulter la valeur « %s »"
+msgstr "Ne peut consulter la valeur « %s »"
 
 #: regedit.rc:179
 msgid "Can't edit keys of this type (%u)"
@@ -9621,11 +9621,11 @@ msgstr "Confirmez l'effacement de valeur"
 
 #: regedit.rc:182
 msgid "Are you sure you want to delete value '%s'?"
-msgstr "Voulez-vous réellement supprimer la valeur « %s » ?"
+msgstr "Voulez-vous réellement supprimer la valeur « %s » ?"
 
 #: regedit.rc:186
 msgid "Search string '%s' not found"
-msgstr "Occurrence de « %s » non trouvée"
+msgstr "Occurrence de « %s » non trouvée"
 
 #: regedit.rc:183
 msgid "Are you sure you want to delete these values?"
@@ -9641,7 +9641,7 @@ msgstr "Nouvelle valeur #%d"
 
 #: regedit.rc:177
 msgid "Can't query key '%s'"
-msgstr "Ne peut consulter la clé « %s »"
+msgstr "Ne peut consulter la clé « %s »"
 
 #: regedit.rc:149
 msgid "Adds a new multi string value"
@@ -9701,7 +9701,7 @@ msgstr ""
 "Start est fourni sans AUCUNE GARANTIE ; pour plus de détails lancez-le avec\n"
 "l'option /L.\n"
 "Ceci est un logiciel libre, et vous êtes invité à le redistribuer\n"
-"sous certaines conditions ; lancez « start /L » pour plus de détails.\n"
+"sous certaines conditions ; lancez « start /L » pour plus de détails.\n"
 
 #: start.rc:64
 msgid ""
@@ -9791,7 +9791,7 @@ msgstr ""
 msgid ""
 "Close message sent to top-level windows of process \"%s\" with PID %u.\n"
 msgstr ""
-"Message de fermeture envoyé aux fenêtres supérieures du processus « %s » de "
+"Message de fermeture envoyé aux fenêtres supérieures du processus « %s » de "
 "PID %u.\n"
 
 #: taskkill.rc:35
@@ -9800,23 +9800,23 @@ msgstr "Le processus de PID %u a été terminé brutalement.\n"
 
 #: taskkill.rc:36
 msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
-msgstr "Le processus « %s » de PID %u a été terminé brutalement.\n"
+msgstr "Le processus « %s » de PID %u a été terminé brutalement.\n"
 
 #: taskkill.rc:37
 msgid "Error: Could not find process \"%s\".\n"
-msgstr "Erreur : processus « %s » introuvable.\n"
+msgstr "Erreur : processus « %s » introuvable.\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr "Erreur : impossible d'énumérer la liste de processus.\n"
+msgstr "Erreur : impossible d'énumérer la liste de processus.\n"
 
 #: taskkill.rc:39
 msgid "Error: Unable to terminate process \"%s\".\n"
-msgstr "Erreur : impossible de terminer le processus « %s ».\n"
+msgstr "Erreur : impossible de terminer le processus « %s ».\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr "Erreur : un processus ne peut pas s'auto-terminer.\n"
+msgstr "Erreur : un processus ne peut pas s'auto-terminer.\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -9979,7 +9979,7 @@ msgstr ""
 #: taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
 msgstr ""
-"Le gestionnaire des tâches est minimisé quand une opération « Basculer vers "
+"Le gestionnaire des tâches est minimisé quand une opération « Basculer vers "
 "» est effectuée"
 
 #: taskmgr.rc:191
@@ -10147,15 +10147,15 @@ msgstr "Performance"
 
 #: taskmgr.rc:265
 msgid "CPU Usage: %3d%%"
-msgstr "Utilisation CPU : %3d%%"
+msgstr "Utilisation CPU : %3d%%"
 
 #: taskmgr.rc:266
 msgid "Processes: %d"
-msgstr "Processus : %d"
+msgstr "Processus : %d"
 
 #: taskmgr.rc:267
 msgid "Mem Usage: %dK / %dK"
-msgstr "Utilisation mémoire : %dK / %dK"
+msgstr "Utilisation mémoire : %dK / %dK"
 
 #: taskmgr.rc:272
 msgid "Image Name"
@@ -10267,9 +10267,9 @@ msgid ""
 "cause undesired results including system instability. Are you\n"
 "sure you want to change the priority class?"
 msgstr ""
-"ATTENTION : modifier la classe de priorité de ce processus peut\n"
+"ATTENTION : modifier la classe de priorité de ce processus peut\n"
 "causer des résultats imprévus y compris une instabilité système. Êtes-vous\n"
-"sûr(e) de vouloir modifier la classe de priorité ?"
+"sûr(e) de vouloir modifier la classe de priorité ?"
 
 #: taskmgr.rc:305
 msgid "Unable to Change Priority"
@@ -10283,11 +10283,11 @@ msgid ""
 "data before it is terminated. Are you sure you want to\n"
 "terminate the process?"
 msgstr ""
-"ATTENTION : stopper un processus peut causer des résultats\n"
+"ATTENTION : stopper un processus peut causer des résultats\n"
 "imprévus y compris une perte de données ou une instabilité système. Le\n"
 "processus n'aura pas la possibilité de sauver son état ou ses\n"
 "données avant d'être arrêté. Êtes-vous sûr(e) de vouloir\n"
-"stopper le processus ?"
+"stopper le processus ?"
 
 #: taskmgr.rc:311
 msgid "Unable to Terminate Process"
@@ -10298,8 +10298,8 @@ msgid ""
 "WARNING: Debugging this process may result in loss of data.\n"
 "Are you sure you wish to attach the debugger?"
 msgstr ""
-"ATTENTION : déboguer ce processus peut causer des pertes de données.\n"
-"Voulez-vous réellement attacher le débogueur ?"
+"ATTENTION : déboguer ce processus peut causer des pertes de données.\n"
+"Voulez-vous réellement attacher le débogueur ?"
 
 #: taskmgr.rc:314
 msgid "Unable to Debug Process"
@@ -10363,9 +10363,9 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
-"L'exécution de la commande de désinstallation « %s » a échoué, peut-être du "
+"L'exécution de la commande de désinstallation « %s » a échoué, peut-être du "
 "fait d'un exécutable introuvable.\n"
-"Souhaitez-vous supprimer l'entrée de désinstallation de la base de registre ?"
+"Souhaitez-vous supprimer l'entrée de désinstallation de la base de registre ?"
 
 #: view.rc:33
 msgid "&Pan"
@@ -10562,9 +10562,9 @@ msgid ""
 "\n"
 "Each drive must have a letter, from A to Z, so you cannot have more than 26."
 msgstr ""
-"Impossible d'ajouter des lecteurs supplémentaires !\n"
+"Impossible d'ajouter des lecteurs supplémentaires !\n"
 "\n"
-"Chaque lecteur se voit assigner une lettre de A à Z ; vous ne pouvez donc "
+"Chaque lecteur se voit assigner une lettre de A à Z ; vous ne pouvez donc "
 "pas en avoir plus de 26."
 
 #: winecfg.rc:87
@@ -11208,7 +11208,7 @@ msgstr "Aucune implémentation richedit détectée... Abandon"
 
 #: winhlp32.rc:91
 msgid "Help topics: "
-msgstr "Rubriques d'aide : "
+msgstr "Rubriques d'aide : "
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
