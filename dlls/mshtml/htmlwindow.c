@@ -1747,6 +1747,7 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
         return hres;
     }
 
+    prepare_for_binding(&This->doc_obj->basedoc, mon, NULL, TRUE);
     hres = set_moniker(&This->doc_obj->basedoc, mon, NULL, bsc, TRUE);
     if(SUCCEEDED(hres))
         hres = async_start_doc_binding(This, bsc);
