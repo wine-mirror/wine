@@ -830,7 +830,7 @@ IUnknown * CALLBACK Gstreamer_AudioConvert_create(IUnknown *punkout, HRESULT *ph
     return obj;
 }
 
-HRESULT WINAPI GSTTf_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
+static HRESULT WINAPI GSTTf_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
     HRESULT hr;
     GstTfImpl *This = (GstTfImpl*)iface;
