@@ -1,0 +1,6 @@
+MODULE    = ieframe.dll
+
+C_SRCS = \
+	ieframe_main.c
+
+@MAKE_DLL_RULES@

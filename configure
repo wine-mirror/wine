@@ -14854,6 +14854,7 @@ wine_fn_config_dll hnetcfg enable_hnetcfg
 wine_fn_config_dll httpapi enable_httpapi
 wine_fn_config_dll iccvid enable_iccvid po
 wine_fn_config_dll icmp enable_icmp
+wine_fn_config_dll ieframe enable_ieframe
 wine_fn_config_dll ifsmgr.vxd enable_win16
 wine_fn_config_dll imaadp32.acm enable_imaadp32_acm
 wine_fn_config_dll imagehlp enable_imagehlp implib
