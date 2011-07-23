@@ -589,7 +589,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 		if (hr != S_OK)
 		    break;
 
-		if (strstrW(strs, hwndText) == strs) {
+		if (StrStrIW(strs, hwndText) == strs) {
                     if (!filled && (This->options & ACO_AUTOAPPEND)) {
 			SetWindowTextW(hwnd, strs);
 			SendMessageW(hwnd, EM_SETSEL, lstrlenW(hwndText), lstrlenW(strs));
