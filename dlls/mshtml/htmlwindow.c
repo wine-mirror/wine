@@ -27,6 +27,9 @@
 #include "mshtmdid.h"
 #include "shlguid.h"
 
+#define NO_SHLWAPI_REG
+#include "shlwapi.h"
+
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
@@ -1666,6 +1669,52 @@ static ULONG WINAPI HTMLPrivateWindow_Release(IHTMLPrivateWindow *iface)
     return IHTMLWindow2_Release(&This->IHTMLWindow2_iface);
 }
 
+static void handle_javascript(HTMLWindow *window, const WCHAR *code)
+{
+    VARIANT v;
+    HRESULT hres;
+
+    static const WCHAR jscriptW[] = {'j','s','c','r','i','p','t',0};
+
+    set_download_state(window->doc_obj, 1);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = exec_script(window, code, jscriptW, &v);
+    if(SUCCEEDED(hres) && V_VT(&v) != VT_EMPTY) {
+        FIXME("javascirpt URL returned %s\n", debugstr_variant(&v));
+        VariantClear(&v);
+    }
+
+    if(window->doc_obj->view_sink)
+        IAdviseSink_OnViewChange(window->doc_obj->view_sink, DVASPECT_CONTENT, -1);
+
+    set_download_state(window->doc_obj, 0);
+}
+
+typedef struct {
+    task_t header;
+    HTMLWindow *window;
+    IUri *uri;
+} navigate_javascript_task_t;
+
+static void navigate_javascript_proc(task_t *_task)
+{
+    navigate_javascript_task_t *task = (navigate_javascript_task_t*)_task;
+    BSTR code;
+    HRESULT hres;
+
+    task->window->readystate = READYSTATE_COMPLETE;
+
+    hres = IUri_GetPath(task->uri, &code);
+    if(SUCCEEDED(hres)) {
+        handle_javascript(task->window, code);
+        SysFreeString(code);
+    }
+
+    IHTMLWindow2_Release(&task->window->IHTMLWindow2_iface);
+    IUri_Release(task->uri);
+}
+
 typedef struct {
     task_t header;
     HTMLWindow *window;
@@ -1691,12 +1740,12 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
         BSTR arg4, VARIANT *post_data_var, VARIANT *headers_var, ULONG flags)
 {
     HTMLWindow *This = impl_from_IHTMLPrivateWindow(iface);
-    navigate_task_t *task;
     DWORD post_data_size = 0;
     BYTE *post_data = NULL;
     WCHAR *headers = NULL;
     nsChannelBSC *bsc;
     IMoniker *mon;
+    DWORD scheme;
     BSTR new_url;
     IUri *uri;
     HRESULT hres;
@@ -1740,7 +1789,6 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
         return hres;
 
     hres = CreateURLMonikerEx2(NULL, uri, &mon, URL_MK_UNIFORM);
-    IUri_Release(uri);
     if(FAILED(hres))
         return hres;
 
@@ -1771,22 +1819,48 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
 
     prepare_for_binding(&This->doc_obj->basedoc, mon, NULL, TRUE);
 
+    hres = IUri_GetScheme(uri, &scheme);
 
-    task = heap_alloc(sizeof(*task));
-    if(!task) {
+    if(scheme != URL_SCHEME_JAVASCRIPT) {
+        navigate_task_t *task;
+
+        IUri_Release(uri);
+
+        task = heap_alloc(sizeof(*task));
+        if(!task) {
+            IUnknown_Release((IUnknown*)bsc);
+            IMoniker_Release(mon);
+            return E_OUTOFMEMORY;
+        }
+
+        IHTMLWindow2_AddRef(&This->IHTMLWindow2_iface);
+        task->window = This;
+        task->bscallback = bsc;
+        task->mon = mon;
+        push_task(&task->header, navigate_proc, This->task_magic);
+
+        /* Silently and repeated when real loading starts? */
+        This->readystate = READYSTATE_LOADING;
+    }else {
+        navigate_javascript_task_t *task;
+
         IUnknown_Release((IUnknown*)bsc);
         IMoniker_Release(mon);
-        return E_OUTOFMEMORY;
+
+        task = heap_alloc(sizeof(*task));
+        if(!task) {
+            IUri_Release(uri);
+            return E_OUTOFMEMORY;
+        }
+
+        IHTMLWindow2_AddRef(&This->IHTMLWindow2_iface);
+        task->window = This;
+        task->uri = uri;
+        push_task(&task->header, navigate_javascript_proc, This->task_magic);
+
+        /* Why silently? */
+        This->readystate = READYSTATE_COMPLETE;
     }
-
-    IHTMLWindow2_AddRef(&This->IHTMLWindow2_iface);
-    task->window = This;
-    task->bscallback = bsc;
-    task->mon = mon;
-    push_task(&task->header, navigate_proc, This->task_magic);
-
-    /* Silently and repeated when real loading starts? */
-    This->readystate = READYSTATE_LOADING;
 
     return S_OK;
 }
