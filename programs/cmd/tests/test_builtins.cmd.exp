@@ -47,8 +47,27 @@ word
 .word
 word@space@
 word@space@@space@
+@todo_wine@------------ Testing ^ escape character --------------
+@todo_wine@hello, world
+@todo_wine@hello, world
+@todo_wine@hell^o, world
+@todo_wine@hell^o, world
+baz
+@todo_wine@baz
+@todo_wine@foo | echo bar
+@todo_wine@foo & echo bar
+@todo_wine@bak &
+@todo_wine@baz@space@
+@todo_wine@0@or_broken@1
+@todo_wine@foo > foo
+@todo_wine@<
+@todo_wine@ffoof
+@todo_wine@FOO=bar | baz
+@todo_wine@0
+@todo_wine@FOO=bar ^| baz
+@todo_wine@bar | baz
+@todo_wine@0
 ------------ Testing 'set' --------------
-0
 1
 @todo_wine@0
 FOOBAR not defined

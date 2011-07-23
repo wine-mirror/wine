@@ -28,8 +28,42 @@ echo .word
 echo word@space@
 echo word@space@@space@
 
-echo ------------ Testing 'set' --------------
+echo ------------ Testing ^^ escape character --------------
+rem Using something like "echo foo^" asks for an additional char after a "More?" prompt on the following line; it's not possible to currently test that non-interactively
+echo ^hell^o, world
+echo hell^o, world
+echo hell^^o, world
+echo hell^^^o, world
+mkdir foobar
+echo baz> foobar\baz
+type foobar\baz
+type foobar^\baz
+rd /s/q foobar
+echo foo ^| echo bar
+echo foo ^& echo bar
+call :setError 0
+echo bak ^&& echo baz 2> nul
 echo %ErrorLevel%
+echo foo ^> foo
+echo ^<> foo
+type foo
+del foo
+set FOO=oof
+echo ff^%FOO%
+set FOO=bar ^| baz
+set FOO
+rem FIXME: echoing %FOO% gives an error (baz not recognized) but prematurely
+rem exits the script on windows; redirecting stdout and/or stderr doesn't help
+echo %ErrorLevel%
+call :setError 0
+set FOO=bar ^^^| baz
+set FOO
+echo %FOO%
+echo %ErrorLevel%
+set FOO=
+
+echo ------------ Testing 'set' --------------
+call :setError 0
 set FOOBAR 2> nul > nul
 echo %ErrorLevel%
 set FOOBAR =  baz
