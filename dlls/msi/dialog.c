@@ -692,12 +692,9 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
     }
     else if ( !strcmpW( attribute, szSelectionPath ) )
     {
-        LPWSTR prop = msi_dialog_dup_property( dialog, ctrl->property, TRUE );
-        LPWSTR path;
-        if (!prop) return;
-        path = msi_dup_property( dialog->package->db, prop );
+        LPWSTR path = msi_dialog_dup_property( dialog, ctrl->property, TRUE );
+        if (!path) return;
         SetWindowTextW( ctrl->hwnd, path );
-        msi_free(prop);
         msi_free(path);
     }
     else
