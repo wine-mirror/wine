@@ -4730,6 +4730,13 @@ float CDECL wined3d_device_get_npatch_mode(struct wined3d_device *device)
     return 0.0f;
 }
 
+static inline void invalidate_active_texture(struct wined3d_device *device, struct wined3d_context *context)
+{
+    DWORD sampler = device->rev_tex_unit_map[context->active_texture];
+    if (sampler != WINED3D_UNMAPPED_STAGE)
+        context_invalidate_state(context, STATE_SAMPLER(sampler));
+}
+
 HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
         struct wined3d_surface *src_surface, const RECT *src_rect,
         struct wined3d_surface *dst_surface, const POINT *dst_point)
@@ -4744,7 +4751,6 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
     CONVERT_TYPES convert;
     UINT dst_w, dst_h;
     UINT src_w, src_h;
-    DWORD sampler;
     POINT p;
     RECT r;
 
@@ -4831,10 +4837,6 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
     context = context_acquire(device, NULL);
     gl_info = context->gl_info;
 
-    ENTER_GL();
-    context_active_texture(context, gl_info, 0);
-    LEAVE_GL();
-
     /* Only load the surface for partial updates. For newly allocated texture
      * the texture wouldn't be the current location, and we'd upload zeroes
      * just to overwrite them again. */
@@ -4852,13 +4854,11 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
 
     surface_upload_data(dst_surface, gl_info, src_format, src_rect, src_w, dst_point, FALSE, &data);
 
+    invalidate_active_texture(device, context);
+
     context_release(context);
 
     surface_modify_location(dst_surface, SFLAG_INTEXTURE, TRUE);
-    sampler = device->rev_tex_unit_map[0];
-    if (sampler != WINED3D_UNMAPPED_STAGE)
-        device_invalidate_state(device, STATE_SAMPLER(sampler));
-
     return WINED3D_OK;
 }
 
@@ -5258,7 +5258,6 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
             INT height = device->cursorHeight;
             INT width = device->cursorWidth;
             INT bpp = format->byte_count;
-            DWORD sampler;
             INT i;
 
             /* Reformat the texture memory (pitch and width can be
@@ -5278,11 +5277,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
                 checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
             }
 
-            /* Make sure that a proper texture unit is selected */
-            context_active_texture(context, gl_info, 0);
-            sampler = device->rev_tex_unit_map[0];
-            if (sampler != WINED3D_UNMAPPED_STAGE)
-                context_invalidate_state(context, STATE_SAMPLER(sampler));
+            invalidate_active_texture(device, context);
             /* Create a new cursor texture */
             glGenTextures(1, &device->cursorTexture);
             checkGLcall("glGenTextures");
