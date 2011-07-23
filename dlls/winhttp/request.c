@@ -2361,8 +2361,28 @@ static HRESULT WINAPI winhttp_request_SetCredentials(
     BSTR password,
     HTTPREQUEST_SETCREDENTIALS_FLAGS flags )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    DWORD target, scheme = WINHTTP_AUTH_SCHEME_BASIC; /* FIXME: query supported schemes */
+
+    TRACE("%p, %s, %p\n", request, debugstr_w(username), password);
+
+    if (request->state < REQUEST_STATE_OPEN)
+    {
+        return HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_OPEN );
+    }
+    switch (flags)
+    {
+    case HTTPREQUEST_SETCREDENTIALS_FOR_SERVER:
+        target = WINHTTP_AUTH_TARGET_SERVER;
+        break;
+    case HTTPREQUEST_SETCREDENTIALS_FOR_PROXY:
+        target = WINHTTP_AUTH_TARGET_PROXY;
+        break;
+    default:
+        return E_INVALIDARG;
+    }
+    if (WinHttpSetCredentials( request->hrequest, target, scheme, username, password, NULL )) return S_OK;
+    return HRESULT_FROM_WIN32( GetLastError() );
 }
 
 static HRESULT WINAPI winhttp_request_Open(

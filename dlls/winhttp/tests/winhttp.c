@@ -2100,13 +2100,15 @@ static void test_credentials(void)
 
 static void test_IWinHttpRequest(void)
 {
+    static const WCHAR usernameW[] = {'u','s','e','r','n','a','m','e',0};
+    static const WCHAR passwordW[] = {'p','a','s','s','w','o','r','d',0};
     static const WCHAR url1W[] = {'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g',0};
     static const WCHAR url2W[] = {'w','i','n','e','h','q','.','o','r','g',0};
     static const WCHAR method1W[] = {'G','E','T',0};
     static const WCHAR method2W[] = {'I','N','V','A','L','I','D',0};
     HRESULT hr;
     IWinHttpRequest *req;
-    BSTR method, url, response = NULL, status_text = NULL;
+    BSTR method, url, username, password, response = NULL, status_text = NULL;
     VARIANT async, empty, timeout, body;
     VARIANT_BOOL succeeded;
     LONG status;
@@ -2189,6 +2191,9 @@ static void test_IWinHttpRequest(void)
     hr = IWinHttpRequest_SetTimeouts( req, 10000, 10000, 10000, 10000 );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    hr = IWinHttpRequest_SetCredentials( req, NULL, NULL, 0xdeadbeef );
+    ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_OPEN ), "got %08x\n", hr );
+
     SysFreeString( method );
     method = SysAllocString( method1W );
     SysFreeString( url );
@@ -2203,6 +2208,20 @@ static void test_IWinHttpRequest(void)
     ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_SEND ), "got %08x\n", hr );
 
     hr = IWinHttpRequest_SetTimeouts( req, 10000, 10000, 10000, 10000 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_SetCredentials( req, NULL, NULL, 0xdeadbeef );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    username = SysAllocString( usernameW );
+    hr = IWinHttpRequest_SetCredentials( req, username, NULL, 0xdeadbeef );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    password = SysAllocString( passwordW );
+    hr = IWinHttpRequest_SetCredentials( req, username, password, 0xdeadbeef );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_SetCredentials( req, username, password, HTTPREQUEST_SETCREDENTIALS_FOR_SERVER );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = IWinHttpRequest_Send( req, empty );
@@ -2221,6 +2240,9 @@ static void test_IWinHttpRequest(void)
     trace("%s\n", wine_dbgstr_w(status_text));
     SysFreeString( status_text );
 
+    hr = IWinHttpRequest_SetCredentials( req, username, password, HTTPREQUEST_SETCREDENTIALS_FOR_SERVER );
+    ok( hr == S_OK, "got %08x\n", hr );
+
     VariantInit( &timeout );
     V_VT( &timeout ) = VT_I4;
     V_I4( &timeout ) = 10;
@@ -2233,6 +2255,9 @@ static void test_IWinHttpRequest(void)
     hr = IWinHttpRequest_get_StatusText( req, &status_text );
     ok( hr == S_OK, "got %08x\n", hr );
     SysFreeString( status_text );
+
+    hr = IWinHttpRequest_SetCredentials( req, username, password, HTTPREQUEST_SETCREDENTIALS_FOR_SERVER );
+    ok( hr == S_OK, "got %08x\n", hr );
 
     hr = IWinHttpRequest_Send( req, empty );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -2264,6 +2289,8 @@ static void test_IWinHttpRequest(void)
 
     SysFreeString( method );
     SysFreeString( url );
+    SysFreeString( username );
+    SysFreeString( password );
     CoUninitialize();
 }
 
