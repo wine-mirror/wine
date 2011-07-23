@@ -75,6 +75,40 @@ static void test_query_dos_deviceA(void)
     HeapFree( GetProcessHeap(), 0, buffer );
 }
 
+void test_define_dos_deviceA(void)
+{
+    char drivestr[3];
+    char buf[MAX_PATH];
+    DWORD ret;
+
+    /* Find an unused drive letter */
+    drivestr[1] = ':';
+    drivestr[2] = 0;
+    for (drivestr[0] = 'a'; drivestr[0] <= 'z'; drivestr[0]++) {
+        ret = QueryDosDeviceA( drivestr, buf, sizeof(buf));
+        if (!ret) break;
+    }
+    if (drivestr[0] > 'z') {
+        skip("can't test creating a dos drive, none available\n");
+        return;
+    }
+
+    /* Map it to point to the current directory */
+    ret = GetCurrentDirectory(sizeof(buf), buf);
+    ok(ret, "GetCurrentDir\n");
+
+    ret = DefineDosDeviceA(0, drivestr, buf);
+    todo_wine
+    ok(ret, "Could not make drive %s point to %s! \n", drivestr, buf);
+
+    if (!ret) {
+        skip("can't test removing fake drive\n");
+    } else {
+	ret = DefineDosDeviceA(DDD_REMOVE_DEFINITION, drivestr, NULL);
+	ok(ret, "Could not remove fake drive %s!\n", drivestr);
+    }
+}
+
 static void test_FindFirstVolume(void)
 {
     char volume[51];
@@ -705,6 +739,7 @@ START_TEST(volume)
     pGetVolumePathNamesForVolumeNameW = (void *) GetProcAddress(hdll, "GetVolumePathNamesForVolumeNameW");
 
     test_query_dos_deviceA();
+    test_define_dos_deviceA();
     test_FindFirstVolume();
     test_GetVolumeNameForVolumeMountPointA();
     test_GetVolumeNameForVolumeMountPointW();
