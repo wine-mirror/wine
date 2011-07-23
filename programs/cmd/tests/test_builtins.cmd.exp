@@ -90,6 +90,12 @@ ERRORLEVEL
 P0
 0S
 P0S
+------------ Testing conditional execution --------------
+@todo_wine@...unconditional &
+foo1
+bar2@space@
+foo2
+@todo_wine@foobar deleted
 ------------ Testing type ------------
 
 @pwd@>type foobaz@space@

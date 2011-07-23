@@ -94,6 +94,19 @@ echo P%ERRORLEVEL%
 echo %ERRORLEVEL%S
 echo P%ERRORLEVEL%S
 
+echo ------------ Testing conditional execution --------------
+echo ...unconditional ^&
+call :setError 123 & echo foo1
+echo bar2 & echo foo2
+mkdir foobar & cd foobar
+echo > foobazbar
+cd .. & rd /s/q foobar
+if exist foobazbar (
+    echo foobar not deleted!
+    cd ..
+    rd /s/q foobar
+) else echo foobar deleted
+
 echo ------------ Testing type ------------
 echo bar> foobaz
 @echo on
@@ -105,7 +118,7 @@ echo ***
 del foobaz
 
 echo ------------ Testing NUL ------------
-md foobar && cd foobar
+md foobar & cd foobar
 rem NUL file (non) creation + case insensitivity
 rem Note: "if exist" does not work with NUL, so to check for file existence we use a kludgy workaround
 echo > bar
@@ -277,7 +290,7 @@ echo %ErrorLevel%
 rem Trailing backslashes
 mkdir foo\\\\
 echo %ErrorLevel%
-if exist foo (rmdir foo && echo dir created
+if exist foo (rmdir foo & echo dir created
 ) else ( echo dir not created )
 echo %ErrorLevel%
 rem Invalid chars
@@ -289,7 +302,7 @@ echo %ErrorLevel%
 call :setError 0
 mkdir foo\?
 echo %ErrorLevel%
-if exist foo (rmdir foo && echo ok, foo created
+if exist foo (rmdir foo & echo ok, foo created
 ) else ( echo foo not created )
 call :setError 0
 mkdir foo\bar\?
