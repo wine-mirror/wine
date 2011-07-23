@@ -2,7 +2,7 @@ EXTRADEFS = -D_SHDOCVW_
 MODULE    = shdocvw.dll
 IMPORTLIB = shdocvw
 IMPORTS   = uuid shell32 comctl32 shlwapi user32 gdi32 advapi32
-DELAYIMPORTS = version urlmon ole32 oleaut32
+DELAYIMPORTS = version urlmon ole32 oleaut32 ieframe
 
 C_SRCS = \
 	classinfo.c \
@@ -13,7 +13,6 @@ C_SRCS = \
 	frame.c \
 	ie.c \
 	iexplore.c \
-	intshcut.c \
 	navigate.c \
 	oleobject.c \
 	persist.c \

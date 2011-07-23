@@ -16,18 +16,64 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
+#include "ieframe.h"
 
-#include <stdarg.h>
-
-#define COBJMACROS
-
-#include "windef.h"
-#include "winbase.h"
+#include "isguids.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ieframe);
+
+LONG module_ref = 0;
+
+static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", iface, ppv);
+        *ppv = iface;
+    }else if(IsEqualGUID(&IID_IClassFactory, riid)) {
+        TRACE("(%p)->(IID_IClassFactory %p)\n", iface, ppv);
+        *ppv = iface;
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    FIXME("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
+{
+    TRACE("(%p)\n", iface);
+    return 2;
+}
+
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
+{
+    TRACE("(%p)\n", iface);
+    return 1;
+}
+
+static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
+{
+    TRACE("(%p)->(%x)\n", iface, fLock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl InternetShortcutFactoryVtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    InternetShortcut_Create,
+    ClassFactory_LockServer
+};
+
+static IClassFactory InternetShortcutFactory = { &InternetShortcutFactoryVtbl };
 
 /******************************************************************
  *              DllMain (ieframe.@)
@@ -53,6 +99,11 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
+    if(IsEqualGUID(rclsid, &CLSID_InternetShortcut)) {
+        TRACE("(CLSID_InternetShortcut %s %p)\n", debugstr_guid(riid), ppv);
+        return IClassFactory_QueryInterface(&InternetShortcutFactory, riid, ppv);
+    }
+
     FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }
@@ -62,8 +113,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    FIXME("()\n");
-    return S_FALSE;
+    TRACE("()\n");
+    return module_ref ? S_FALSE : S_OK;
 }
 
 /***********************************************************************

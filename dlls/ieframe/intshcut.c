@@ -27,20 +27,21 @@
  * The installer for the Zuma Deluxe Popcap game is good for testing.
  */
 
-#include <stdarg.h>
 #include <stdio.h>
 
-#define NONAMELESSUNION
-#include "wine/debug.h"
-#include "shdocvw.h"
-#include "objidl.h"
+#include "ieframe.h"
+
+#include "shlobj.h"
 #include "shobjidl.h"
 #include "intshcut.h"
 #include "shellapi.h"
 #include "winreg.h"
 #include "shlwapi.h"
+#include "shlguid.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(ieframe);
 
 typedef struct
 {
@@ -133,7 +134,7 @@ static BOOL StartLinkProcessor( LPCOLESTR szLink )
     if( !buffer )
         return FALSE;
 
-    wsprintfW( buffer, szFormat, szLink );
+    sprintfW( buffer, szFormat, szLink );
     ret = run_winemenubuilder( buffer );
     heap_free( buffer );
     return ret;
@@ -191,7 +192,7 @@ static ULONG Unknown_Release(InternetShortcut *This)
         CoTaskMemFree(This->currentFile);
         IPropertySetStorage_Release(This->property_set_storage);
         heap_free(This);
-        SHDOCVW_UnlockModule();
+        unlock_module();
     }
     return count;
 }
@@ -815,7 +816,7 @@ static InternetShortcut *create_shortcut(void)
         newshortcut->IUniformResourceLocatorW_iface.lpVtbl = &uniformResourceLocatorWVtbl;
         newshortcut->IPersistFile_iface.lpVtbl = &persistFileVtbl;
         newshortcut->IPropertySetStorage_iface.lpVtbl = &propertySetStorageVtbl;
-        newshortcut->refCount = 0;
+        newshortcut->refCount = 1;
         hr = StgCreateStorageEx(NULL, STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_DELETEONRELEASE,
                                 STGFMT_STORAGE, 0, NULL, NULL, &IID_IPropertySetStorage, (void **) &newshortcut->property_set_storage);
         if FAILED(hr)
@@ -839,64 +840,58 @@ static InternetShortcut *create_shortcut(void)
     return newshortcut;
 }
 
-HRESULT InternetShortcut_Create(IUnknown *pOuter, REFIID riid, void **ppv)
+HRESULT WINAPI InternetShortcut_Create(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
 {
     InternetShortcut *This;
-    HRESULT hr;
+    HRESULT hres;
 
-    TRACE("(%p, %s, %p)\n", pOuter, debugstr_guid(riid), ppv);
+    TRACE("(%p, %s, %p)\n", outer, debugstr_guid(riid), ppv);
 
     *ppv = NULL;
 
-    if(pOuter)
+    if(outer)
         return CLASS_E_NOAGGREGATION;
 
     This = create_shortcut();
-    if (This)
-    {
-        hr = Unknown_QueryInterface(This, riid, ppv);
-        if (SUCCEEDED(hr))
-            SHDOCVW_LockModule();
-        else
-            heap_free(This);
-        return hr;
-    }
-    else
+    if(!This)
         return E_OUTOFMEMORY;
+
+    hres = Unknown_QueryInterface(This, riid, ppv);
+    Unknown_Release(This);
+    return hres;
 }
 
 
 /**********************************************************************
- * OpenURL  (SHDOCVW.@)
+ * OpenURL  (ieframe.@)
  */
 void WINAPI OpenURL(HWND hWnd, HINSTANCE hInst, LPCSTR lpcstrUrl, int nShowCmd)
 {
     InternetShortcut *shortcut;
     WCHAR* urlfilepath = NULL;
+    int len;
+
     shortcut = create_shortcut();
 
-    if (shortcut)
-    {
-        int len;
+    if(!shortcut)
+        return;
 
-        len = MultiByteToWideChar(CP_ACP, 0, lpcstrUrl, -1, NULL, 0);
-        urlfilepath = heap_alloc(len * sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, lpcstrUrl, -1, urlfilepath, len);
+    len = MultiByteToWideChar(CP_ACP, 0, lpcstrUrl, -1, NULL, 0);
+    urlfilepath = heap_alloc(len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, lpcstrUrl, -1, urlfilepath, len);
 
-        if(SUCCEEDED(IPersistFile_Load(&shortcut->IPersistFile_iface, urlfilepath, 0)))
-        {
-            URLINVOKECOMMANDINFOW ici;
+    if(SUCCEEDED(IPersistFile_Load(&shortcut->IPersistFile_iface, urlfilepath, 0))) {
+        URLINVOKECOMMANDINFOW ici;
 
-            memset( &ici, 0, sizeof ici );
-            ici.dwcbSize = sizeof ici;
-            ici.dwFlags = IURL_INVOKECOMMAND_FL_USE_DEFAULT_VERB;
-            ici.hwndParent = hWnd;
+        memset( &ici, 0, sizeof ici );
+        ici.dwcbSize = sizeof ici;
+        ici.dwFlags = IURL_INVOKECOMMAND_FL_USE_DEFAULT_VERB;
+        ici.hwndParent = hWnd;
 
-            if(FAILED(UniformResourceLocatorW_InvokeCommand(&shortcut->IUniformResourceLocatorW_iface, (PURLINVOKECOMMANDINFOW) &ici)))
-                    TRACE("failed to open URL: %s\n", debugstr_a(lpcstrUrl));
-        }
-
-        heap_free(shortcut);
-        heap_free(urlfilepath);
+        if(FAILED(UniformResourceLocatorW_InvokeCommand(&shortcut->IUniformResourceLocatorW_iface, (PURLINVOKECOMMANDINFOW) &ici)))
+            TRACE("failed to open URL: %s\n", debugstr_a(lpcstrUrl));
     }
+
+    heap_free(urlfilepath);
+    Unknown_Release(shortcut);
 }

@@ -259,9 +259,6 @@ void InternetExplorer_WebBrowser_Init(InternetExplorer*) DECLSPEC_HIDDEN;
 void released_obj(void) DECLSPEC_HIDDEN;
 
 HRESULT CUrlHistory_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
-
-HRESULT InternetShortcut_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
-
 HRESULT TaskbarList_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
 /**********************************************************************
@@ -275,6 +272,8 @@ extern HINSTANCE shdocvw_hinstance DECLSPEC_HIDDEN;
 extern void register_iewindow_class(void) DECLSPEC_HIDDEN;
 extern void unregister_iewindow_class(void) DECLSPEC_HIDDEN;
 extern HRESULT update_ie_statustext(InternetExplorer*, LPCWSTR) DECLSPEC_HIDDEN;
+
+HINSTANCE get_ieframe_instance(void) DECLSPEC_HIDDEN;
 
 HRESULT register_class_object(BOOL) DECLSPEC_HIDDEN;
 HRESULT get_typeinfo(ITypeInfo**) DECLSPEC_HIDDEN;

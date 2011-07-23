@@ -1,6 +1,9 @@
 MODULE    = ieframe.dll
+IMPORTLIB = ieframe
+IMPORTS   = uuid urlmon shell32 ole32 advapi32
 
 C_SRCS = \
-	ieframe_main.c
+	ieframe_main.c \
+	intshcut.c
 
 @MAKE_DLL_RULES@

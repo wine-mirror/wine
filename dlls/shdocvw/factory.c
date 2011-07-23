@@ -128,6 +128,25 @@ static const IClassFactoryVtbl WBCF_Vtbl =
     WBCF_LockServer
 };
 
+static HRESULT get_ieframe_object(REFCLSID rclsid, REFIID riid, void **ppv)
+{
+    HINSTANCE ieframe_instance;
+
+    static HRESULT (WINAPI *ieframe_DllGetClassObject)(REFCLSID,REFIID,void**);
+
+    if(!ieframe_DllGetClassObject) {
+        ieframe_instance = get_ieframe_instance();
+        if(!ieframe_instance)
+            return CLASS_E_CLASSNOTAVAILABLE;
+
+        ieframe_DllGetClassObject = (void*)GetProcAddress(ieframe_instance, "DllGetClassObject");
+        if(!ieframe_DllGetClassObject)
+            return CLASS_E_CLASSNOTAVAILABLE;
+    }
+
+    return ieframe_DllGetClassObject(rclsid, riid, ppv);
+}
+
 /*************************************************************************
  *              DllGetClassObject (SHDOCVW.@)
  */
@@ -136,7 +155,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
     static IClassFactoryImpl WB1ClassFactory = {{&WBCF_Vtbl}, WebBrowserV1_Create};
     static IClassFactoryImpl WB2ClassFactory = {{&WBCF_Vtbl}, WebBrowserV2_Create};
     static IClassFactoryImpl CUHClassFactory = {{&WBCF_Vtbl}, CUrlHistory_Create};
-    static IClassFactoryImpl ISCClassFactory = {{&WBCF_Vtbl}, InternetShortcut_Create};
     static IClassFactoryImpl TBLClassFactory = {{&WBCF_Vtbl}, TaskbarList_Create};
 
     TRACE("\n");
@@ -151,7 +169,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
         return IClassFactory_QueryInterface(&CUHClassFactory.IClassFactory_iface, riid, ppv);
 
     if(IsEqualGUID(&CLSID_InternetShortcut, rclsid))
-        return IClassFactory_QueryInterface(&ISCClassFactory.IClassFactory_iface, riid, ppv);
+        return get_ieframe_object(rclsid, riid, ppv);
 
     if(IsEqualGUID(&CLSID_TaskbarList, rclsid))
         return IClassFactory_QueryInterface(&TBLClassFactory.IClassFactory_iface, riid, ppv);

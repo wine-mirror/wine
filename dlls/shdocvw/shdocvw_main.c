@@ -92,6 +92,18 @@ const char *debugstr_variant(const VARIANT *v)
     }
 }
 
+static HINSTANCE ieframe_instance;
+
+HINSTANCE get_ieframe_instance(void)
+{
+    static const WCHAR ieframe_dllW[] = {'i','e','f','r','a','m','e','.','d','l','l',0};
+
+    if(!ieframe_instance)
+        ieframe_instance = LoadLibraryW(ieframe_dllW);
+
+    return ieframe_instance;
+}
+
 /*************************************************************************
  * SHDOCVW DllMain
  */
@@ -109,6 +121,8 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
         unregister_iewindow_class();
         if(wb_typeinfo)
             ITypeInfo_Release(wb_typeinfo);
+        if(ieframe_instance)
+            FreeLibrary(ieframe_instance);
         break;
     }
     return TRUE;

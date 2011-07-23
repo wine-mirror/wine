@@ -122,7 +122,7 @@
 @ stub IEWriteErrorLog
 @ stdcall ImportPrivacySettings(wstr ptr ptr)
 @ stub InstallReg_RunDLL
-@ stdcall OpenURL(long long str long)
+@ stdcall OpenURL(long long str long) ieframe.OpenURL
 @ stub SHGetIDispatchForFolder
 @ stdcall SetQueryNetSessionCount(long)
 @ stub SoftwareUpdateMessageBox
