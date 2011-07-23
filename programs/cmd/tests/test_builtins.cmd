@@ -113,6 +113,13 @@ if exist foo3 (
     del foo3
 ) else echo foo3 not created
 echo bar4 && echo foo4
+echo ...on failure conditional ^|^|
+call :setError 789 || echo foo5
+echo foo6 || echo bar6 > bar6
+if exist bar6 (
+    echo bar6 created
+    del bar6
+)
 
 echo ------------ Testing type ------------
 echo bar> foobaz

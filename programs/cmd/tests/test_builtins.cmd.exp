@@ -100,6 +100,9 @@ foo2
 @todo_wine@foo3 not created
 bar4@space@
 foo4
+@todo_wine@...on failure conditional ||
+@todo_wine@foo5
+@todo_wine@foo6@space@
 ------------ Testing type ------------
 
 @pwd@>type foobaz@space@
