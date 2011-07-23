@@ -795,11 +795,6 @@ static ScriptHost *get_script_host(HTMLWindow *window, const GUID *guid)
 {
     ScriptHost *iter;
 
-    if(IsEqualGUID(&CLSID_JScript, guid) && window->scriptmode != SCRIPTMODE_ACTIVESCRIPT) {
-        TRACE("Ignoring JScript\n");
-        return NULL;
-    }
-
     LIST_FOR_EACH_ENTRY(iter, &window->script_hosts, ScriptHost, entry) {
         if(IsEqualGUID(guid, &iter->guid))
             return iter;
@@ -815,6 +810,11 @@ void doc_insert_script(HTMLWindow *window, nsIDOMHTMLScriptElement *nsscript)
 
     if(!get_script_guid(nsscript, &guid)) {
         WARN("Could not find script GUID\n");
+        return;
+    }
+
+    if(IsEqualGUID(&CLSID_JScript, &guid) && window->scriptmode != SCRIPTMODE_ACTIVESCRIPT) {
+        TRACE("Ignoring JScript\n");
         return;
     }
 
@@ -857,6 +857,11 @@ IDispatch *script_parse_event(HTMLWindow *window, LPCWSTR text)
         ptr++;
     }else {
         ptr = text;
+    }
+
+    if(IsEqualGUID(&CLSID_JScript, &guid) && window->scriptmode != SCRIPTMODE_ACTIVESCRIPT) {
+        TRACE("Ignoring JScript\n");
+        return NULL;
     }
 
     script_host = get_script_host(window, &guid);
