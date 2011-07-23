@@ -2107,7 +2107,7 @@ static void test_IWinHttpRequest(void)
     HRESULT hr;
     IWinHttpRequest *req;
     BSTR method, url, response = NULL, status_text = NULL;
-    VARIANT async, empty, timeout;
+    VARIANT async, empty, timeout, body;
     VARIANT_BOOL succeeded;
     LONG status;
 
@@ -2240,6 +2240,15 @@ static void test_IWinHttpRequest(void)
     hr = IWinHttpRequest_get_ResponseText( req, &response );
     ok( hr == S_OK, "got %08x\n", hr );
     SysFreeString( response );
+
+    VariantInit( &body );
+    V_VT( &body ) = VT_ERROR;
+    hr = IWinHttpRequest_get_ResponseBody( req, &body );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_VT( &body ) == (VT_ARRAY|VT_UI1), "got %08x\n", V_VT( &body ) );
+
+    hr = VariantClear( &body );
+    ok( hr == S_OK, "got %08x\n", hr );
 
     hr = IWinHttpRequest_Send( req, empty );
     ok( hr == S_OK, "got %08x\n", hr );

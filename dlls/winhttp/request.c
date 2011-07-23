@@ -2724,8 +2724,31 @@ static HRESULT WINAPI winhttp_request_get_ResponseBody(
     IWinHttpRequest *iface,
     VARIANT *body )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    SAFEARRAY *sa;
+    HRESULT hr;
+    DWORD err;
+    char *ptr;
+
+    TRACE("%p, %p\n", request, body);
+
+    if ((err = request_read_body( request, INFINITE ))) return HRESULT_FROM_WIN32( err );
+
+    if (!(sa = SafeArrayCreateVector( VT_UI1, 0, request->offset ))) return E_OUTOFMEMORY;
+    if ((hr = SafeArrayAccessData( sa, (void **)&ptr )) != S_OK)
+    {
+        SafeArrayDestroy( sa );
+        return hr;
+    }
+    memcpy( ptr, request->buffer, request->offset );
+    if ((hr = SafeArrayUnaccessData( sa )) != S_OK)
+    {
+        SafeArrayDestroy( sa );
+        return hr;
+    }
+    V_VT( body ) =  VT_ARRAY|VT_UI1;
+    V_ARRAY( body ) = sa;
+    return S_OK;
 }
 
 static HRESULT WINAPI winhttp_request_get_ResponseStream(
