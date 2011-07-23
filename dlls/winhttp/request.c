@@ -2157,7 +2157,7 @@ struct winhttp_request
     HANDLE wait;
     HANDLE cancel;
     char *buffer;
-    char *ptr;
+    DWORD offset;
     DWORD bytes_available;
     DWORD bytes_read;
     LONG resolve_timeout;
@@ -2624,7 +2624,6 @@ static DWORD request_read_body( struct winhttp_request *request, DWORD timeout )
 
     if (!(request->buffer = heap_alloc( buflen ))) return E_OUTOFMEMORY;
     size = total_bytes_read = 0;
-    request->ptr = request->buffer;
     do
     {
         wait_set_status_callback( request, WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE );
@@ -2648,14 +2647,15 @@ static DWORD request_read_body( struct winhttp_request *request, DWORD timeout )
             request->buffer = tmp;
         }
         wait_set_status_callback( request, WINHTTP_CALLBACK_STATUS_READ_COMPLETE );
-        if (!WinHttpReadData( request->hrequest, request->ptr, request->bytes_available, &request->bytes_read ))
+        if (!WinHttpReadData( request->hrequest, request->buffer + request->offset,
+                              request->bytes_available, &request->bytes_read ))
         {
             err = GetLastError();
             goto error;
         }
         wait_for_completion( request, timeout );
         total_bytes_read += request->bytes_read;
-        request->ptr += request->bytes_read;
+        request->offset += request->bytes_read;
     } while (request->bytes_read);
 
     request->state = REQUEST_STATE_BODY_RECEIVED;
@@ -2713,9 +2713,9 @@ static HRESULT WINAPI winhttp_request_get_ResponseText(
     if ((err = request_read_body( request, INFINITE ))) return HRESULT_FROM_WIN32( err );
     if ((err = request_get_codepage( request, &codepage ))) return HRESULT_FROM_WIN32( err );
 
-    len = MultiByteToWideChar( codepage, 0, request->buffer, request->ptr - request->buffer, NULL, 0 );
+    len = MultiByteToWideChar( codepage, 0, request->buffer, request->offset, NULL, 0 );
     if (!(*body = SysAllocStringLen( NULL, len ))) return E_OUTOFMEMORY;
-    MultiByteToWideChar( codepage, 0, request->buffer, request->ptr - request->buffer, *body, len );
+    MultiByteToWideChar( codepage, 0, request->buffer, request->offset, *body, len );
     (*body)[len] = 0;
     return S_OK;
 }
@@ -2788,7 +2788,7 @@ static HRESULT WINAPI winhttp_request_Abort(
     request->wait     = NULL;
     request->cancel   = NULL;
     request->buffer   = NULL;
-    request->ptr      = NULL;
+    request->offset = 0;
     request->bytes_available = 0;
     request->bytes_read = 0;
     return S_OK;
