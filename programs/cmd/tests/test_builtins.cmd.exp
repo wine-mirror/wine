@@ -96,6 +96,10 @@ foo1
 bar2@space@
 foo2
 @todo_wine@foobar deleted
+@todo_wine@...on success conditional &&
+@todo_wine@foo3 not created
+bar4@space@
+foo4
 ------------ Testing type ------------
 
 @pwd@>type foobaz@space@

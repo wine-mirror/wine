@@ -106,6 +106,13 @@ if exist foobazbar (
     cd ..
     rd /s/q foobar
 ) else echo foobar deleted
+echo ...on success conditional ^&^&
+call :setError 456 && echo foo3 > foo3
+if exist foo3 (
+    echo foo3 created
+    del foo3
+) else echo foo3 not created
+echo bar4 && echo foo4
 
 echo ------------ Testing type ------------
 echo bar> foobaz
