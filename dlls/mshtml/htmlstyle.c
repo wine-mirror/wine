@@ -480,7 +480,7 @@ HRESULT get_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, BSTR
     nsAString_Finish(&str_value);
 
     TRACE("%s -> %s\n", debugstr_w(style_tbl[sid].name), debugstr_w(*p));
-    return S_OK;
+    return hres;
 }
 
 HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *p, DWORD flags)
