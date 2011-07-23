@@ -288,6 +288,7 @@ static VOID test_CreateRemoteThread(void)
         skip("child process wasn't mapped at same address, so can't do CreateRemoteThread tests.\n");
         return;
     }
+    ok(ret == WAIT_OBJECT_0 || broken(ret == WAIT_OBJECT_0+1 /* nt4,w2k */), "WaitForAllObjects 2 events %d\n", ret);
 
     hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
     ok(hEvent != NULL, "Can't create event, err=%u\n", GetLastError());
@@ -1248,7 +1249,7 @@ static void test_TLS(void)
   }
 
   ret = WaitForMultipleObjects(2, threads, TRUE, 60000);
-  ok(ret == WAIT_OBJECT_0 || ret == WAIT_OBJECT_0+1 /* nt4 */, "WaitForMultipleObjects failed %u\n",ret);
+  ok(ret == WAIT_OBJECT_0 || broken(ret == WAIT_OBJECT_0+1 /* nt4,w2k */), "WaitForAllObjects 2 threads %d\n",ret);
 
   for (i = 0; i < 2; ++i)
     CloseHandle(threads[i]);

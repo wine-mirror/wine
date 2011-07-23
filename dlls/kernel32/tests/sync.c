@@ -41,8 +41,7 @@ static void test_signalandwait(void)
     DWORD (WINAPI *pSignalObjectAndWait)(HANDLE, HANDLE, DWORD, BOOL);
     HMODULE kernel32;
     DWORD r;
-    int i;
-    HANDLE event[2], maxevents[MAXIMUM_WAIT_OBJECTS], semaphore[2], file;
+    HANDLE event[2], semaphore[2], file;
 
     kernel32 = GetModuleHandle("kernel32");
     pSignalObjectAndWait = (void*) GetProcAddress(kernel32, "SignalObjectAndWait");
@@ -93,19 +92,6 @@ static void test_signalandwait(void)
 
     CloseHandle(event[0]);
     CloseHandle(event[1]);
-
-    /* create the maximum number of events and make sure 
-     * we can wait on that many */
-    for (i=0; i<MAXIMUM_WAIT_OBJECTS; i++)
-    {
-        maxevents[i] = CreateEvent(NULL, 1, 1, NULL);
-        ok( maxevents[i] != 0, "should create enough events\n");
-    }
-    r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, 0, 0);
-    ok( r != WAIT_FAILED && r != WAIT_TIMEOUT, "should succeed\n");
-
-    for (i=0; i<MAXIMUM_WAIT_OBJECTS; i++)
-        if (maxevents[i]) CloseHandle(maxevents[i]);
 
     /* semaphores */
     semaphore[0] = CreateSemaphore( NULL, 0, 1, NULL );
@@ -1027,6 +1013,37 @@ static void test_WaitForSingleObject(void)
     CloseHandle(nonsignaled);
 }
 
+static void test_WaitForMultipleObjects(void)
+{
+    DWORD r;
+    int i;
+    HANDLE maxevents[MAXIMUM_WAIT_OBJECTS];
+
+    /* create the maximum number of events and make sure
+     * we can wait on that many */
+    for (i=0; i<MAXIMUM_WAIT_OBJECTS; i++)
+    {
+        maxevents[i] = CreateEvent(NULL, i==0, TRUE, NULL);
+        ok( maxevents[i] != 0, "should create enough events\n");
+    }
+
+    /* a manual-reset event remains signaled, an auto-reset event is cleared */
+    r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, 0, 0);
+    ok( r == WAIT_OBJECT_0, "should signal lowest handle first, got %d\n", r);
+    r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, 0, 0);
+    ok( r == WAIT_OBJECT_0, "should signal handle #0 first, got %d\n", r);
+    ok(ResetEvent(maxevents[0]), "ResetEvent\n");
+    for (i=1; i<MAXIMUM_WAIT_OBJECTS; i++)
+    {
+        /* the lowest index is checked first and remaining events are untouched */
+        r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, 0, 0);
+        ok( r == WAIT_OBJECT_0+i, "should signal handle #%d first, got %d\n", i, r);
+    }
+
+    for (i=0; i<MAXIMUM_WAIT_OBJECTS; i++)
+        if (maxevents[i]) CloseHandle(maxevents[i]);
+}
+
 START_TEST(sync)
 {
     HMODULE hdll = GetModuleHandle("kernel32");
@@ -1047,4 +1064,5 @@ START_TEST(sync)
     test_iocp_callback();
     test_timer_queue();
     test_WaitForSingleObject();
+    test_WaitForMultipleObjects();
 }
