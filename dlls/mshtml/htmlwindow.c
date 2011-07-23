@@ -1666,10 +1666,32 @@ static ULONG WINAPI HTMLPrivateWindow_Release(IHTMLPrivateWindow *iface)
     return IHTMLWindow2_Release(&This->IHTMLWindow2_iface);
 }
 
+typedef struct {
+    task_t header;
+    HTMLWindow *window;
+    nsChannelBSC *bscallback;
+    IMoniker *mon;
+} navigate_task_t;
+
+static void navigate_proc(task_t *_task)
+{
+    navigate_task_t *task = (navigate_task_t*)_task;
+    HRESULT hres;
+
+    hres = set_moniker(&task->window->doc_obj->basedoc, task->mon, NULL, task->bscallback, TRUE);
+    if(SUCCEEDED(hres))
+        hres = start_binding(task->window, NULL, (BSCallback*)task->bscallback, NULL);
+
+    IUnknown_Release((IUnknown*)task->bscallback);
+    IHTMLWindow2_Release(&task->window->IHTMLWindow2_iface);
+    IMoniker_Release(task->mon);
+}
+
 static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface, BSTR url, BSTR arg2, BSTR arg3,
         BSTR arg4, VARIANT *post_data_var, VARIANT *headers_var, ULONG flags)
 {
     HTMLWindow *This = impl_from_IHTMLPrivateWindow(iface);
+    navigate_task_t *task;
     DWORD post_data_size = 0;
     BYTE *post_data = NULL;
     WCHAR *headers = NULL;
@@ -1748,13 +1770,25 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
     }
 
     prepare_for_binding(&This->doc_obj->basedoc, mon, NULL, TRUE);
-    hres = set_moniker(&This->doc_obj->basedoc, mon, NULL, bsc, TRUE);
-    if(SUCCEEDED(hres))
-        hres = async_start_doc_binding(This, bsc);
 
-    IUnknown_Release((IUnknown*)bsc);
-    IMoniker_Release(mon);
-    return hres;
+
+    task = heap_alloc(sizeof(*task));
+    if(!task) {
+        IUnknown_Release((IUnknown*)bsc);
+        IMoniker_Release(mon);
+        return E_OUTOFMEMORY;
+    }
+
+    IHTMLWindow2_AddRef(&This->IHTMLWindow2_iface);
+    task->window = This;
+    task->bscallback = bsc;
+    task->mon = mon;
+    push_task(&task->header, navigate_proc, This->task_magic);
+
+    /* Silently and repeated when real loading starts? */
+    This->readystate = READYSTATE_LOADING;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLPrivateWindow_GetPendingUrl(IHTMLPrivateWindow *iface, BSTR *url)

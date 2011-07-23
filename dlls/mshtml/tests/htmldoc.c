@@ -4306,7 +4306,7 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace)
 
     SET_EXPECT(Invoke_OnReadyStateChange_Loading);
     test_download(DWL_VERBDONE);
-    todo_wine CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
+    CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
 
     hres = IHTMLPrivateWindow_GetAddressBarUrl(priv_window, &str2);
     ok(hres == S_OK, "GetAddressBarUrl failed: %08x\n", hres);
