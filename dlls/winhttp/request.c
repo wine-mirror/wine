@@ -1828,8 +1828,11 @@ static BOOL receive_response( request_t *request, BOOL async )
 
     for (;;)
     {
-        if (!(ret = read_reply( request ))) break;
-
+        if (!(ret = read_reply( request )))
+        {
+            set_last_error( ERROR_WINHTTP_INVALID_SERVER_RESPONSE );
+            break;
+        }
         size = sizeof(DWORD);
         query = WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER;
         if (!(ret = query_headers( request, query, NULL, &status, &size, NULL ))) break;

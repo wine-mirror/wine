@@ -1955,6 +1955,7 @@ static void test_no_headers(int port)
 {
     static const WCHAR no_headersW[] = {'/','n','o','_','h','e','a','d','e','r','s',0};
     HINTERNET ses, con, req;
+    DWORD error;
     BOOL ret;
 
     ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
@@ -1969,8 +1970,11 @@ static void test_no_headers(int port)
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
     ok(ret, "failed to send request %u\n", GetLastError());
 
+    SetLastError(0xdeadbeef);
     ret = WinHttpReceiveResponse(req, NULL);
+    error = GetLastError();
     ok(!ret, "expected failure\n");
+    ok(error == ERROR_WINHTTP_INVALID_SERVER_RESPONSE, "got %u\n", error);
 
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
