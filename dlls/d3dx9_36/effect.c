@@ -18,8 +18,10 @@
 
 #include "config.h"
 #include "wine/port.h"
+#define NONAMELESSUNION
 #include "wine/debug.h"
 #include "wine/unicode.h"
+
 #include "windef.h"
 #include "wingdi.h"
 #include "d3dx9_36_private.h"
@@ -897,9 +899,9 @@ static void get_matrix(struct d3dx_parameter *param, D3DXMATRIX *matrix)
         for (k = 0; k < 4; ++k)
         {
             if ((i < param->rows) && (k < param->columns))
-                matrix->m[i][k] = get_float(param->type, (float *)param->data + i * param->columns + k);
+                matrix->u.m[i][k] = get_float(param->type, (float *)param->data + i * param->columns + k);
             else
-                matrix->m[i][k] = 0.0f;
+                matrix->u.m[i][k] = 0.0f;
         }
     }
 }
