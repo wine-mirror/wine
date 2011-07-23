@@ -38,22 +38,23 @@
 #include "wine/unicode.h"
 
 #include "mshtml_private.h"
+#include "binding.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define CONTENT_LENGTH "Content-Length"
 #define UTF16_STR "utf-16"
 
-typedef struct {
+struct nsProtocolStream {
     nsIInputStream nsIInputStream_iface;
 
     LONG ref;
 
     char buf[1024];
     DWORD buf_size;
-} nsProtocolStream;
+};
 
-typedef struct {
+struct BSCallbackVtbl {
     void (*destroy)(BSCallback*);
     HRESULT (*init_bindinfo)(BSCallback*);
     HRESULT (*start_binding)(BSCallback*);
@@ -62,31 +63,6 @@ typedef struct {
     HRESULT (*on_progress)(BSCallback*,ULONG,LPCWSTR);
     HRESULT (*on_response)(BSCallback*,DWORD,LPCWSTR);
     HRESULT (*beginning_transaction)(BSCallback*,WCHAR**);
-} BSCallbackVtbl;
-
-struct BSCallback {
-    IBindStatusCallback IBindStatusCallback_iface;
-    IServiceProvider    IServiceProvider_iface;
-    IHttpNegotiate2     IHttpNegotiate2_iface;
-    IInternetBindInfo   IInternetBindInfo_iface;
-
-    const BSCallbackVtbl          *vtbl;
-
-    LONG ref;
-
-    LPWSTR headers;
-    HGLOBAL post_data;
-    ULONG post_data_len;
-    ULONG readed;
-    DWORD bindf;
-    BOOL bindinfo_ready;
-
-    IMoniker *mon;
-    IBinding *binding;
-
-    HTMLDocumentNode *doc;
-
-    struct list entry;
 };
 
 static inline nsProtocolStream *impl_from_nsIInputStream(nsIInputStream *iface)
@@ -861,18 +837,6 @@ HRESULT bind_mon_to_buffer(HTMLDocumentNode *doc, IMoniker *mon, void **buf, DWO
 
     return hres;
 }
-
-struct nsChannelBSC {
-    BSCallback bsc;
-
-    HTMLWindow *window;
-
-    nsChannel *nschannel;
-    nsIStreamListener *nslistener;
-    nsISupports *nscontext;
-
-    nsProtocolStream *nsstream;
-};
 
 static HRESULT read_post_data_stream(nsChannelBSC *This, nsChannel *nschannel)
 {

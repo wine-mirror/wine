@@ -491,51 +491,6 @@ struct NSContainer {
     HWND hwnd;
 };
 
-typedef struct nsWineURI nsWineURI;
-
-nsresult on_start_uri_open(NSContainer*,nsIURI*,PRBool*) DECLSPEC_HIDDEN;
-
-/* Keep sync with request_method_strings in nsio.c */
-typedef enum {
-    METHOD_GET,
-    METHOD_PUT,
-    METHOD_POST
-} REQUEST_METHOD;
-
-typedef struct {
-    nsIHttpChannel         nsIHttpChannel_iface;
-    nsIUploadChannel       nsIUploadChannel_iface;
-    nsIHttpChannelInternal nsIHttpChannelInternal_iface;
-
-    LONG ref;
-
-    nsWineURI *uri;
-    nsIInputStream *post_data_stream;
-    BOOL post_data_contains_headers;
-    nsILoadGroup *load_group;
-    nsIInterfaceRequestor *notif_callback;
-    nsISupports *owner;
-    nsLoadFlags load_flags;
-    nsIURI *original_uri;
-    nsIURI *referrer;
-    char *content_type;
-    char *charset;
-    PRUint32 response_status;
-    REQUEST_METHOD request_method;
-    struct list response_headers;
-    struct list request_headers;
-    UINT url_scheme;
-} nsChannel;
-
-typedef struct {
-    struct list entry;
-    WCHAR *header;
-    WCHAR *data;
-} http_header_t;
-
-HRESULT set_http_header(struct list*,const WCHAR*,int,const WCHAR*,int) DECLSPEC_HIDDEN;
-HRESULT create_redirect_nschannel(const WCHAR*,nsChannel*,nsChannel**) DECLSPEC_HIDDEN;
-
 typedef struct {
     HRESULT (*qi)(HTMLDOMNode*,REFIID,void**);
     void (*destructor)(HTMLDOMNode*);
@@ -701,13 +656,9 @@ void release_nsio(void) DECLSPEC_HIDDEN;
 BOOL is_gecko_path(const char*) DECLSPEC_HIDDEN;
 
 HRESULT nsuri_to_url(LPCWSTR,BOOL,BSTR*) DECLSPEC_HIDDEN;
-HRESULT create_doc_uri(HTMLWindow*,WCHAR*,nsWineURI**) DECLSPEC_HIDDEN;
-HRESULT load_nsuri(HTMLWindow*,nsWineURI*,nsChannelBSC*,DWORD) DECLSPEC_HIDDEN;
 
-HRESULT hlink_frame_navigate(HTMLDocument*,LPCWSTR,nsChannel*,DWORD,BOOL*) DECLSPEC_HIDDEN;
 HRESULT navigate_url(HTMLWindow*,const WCHAR*,const WCHAR*) DECLSPEC_HIDDEN;
 HRESULT set_frame_doc(HTMLFrameBase*,nsIDOMDocument*) DECLSPEC_HIDDEN;
-HRESULT set_moniker(HTMLDocument*,IMoniker*,IBindCtx*,nsChannelBSC*,BOOL) DECLSPEC_HIDDEN;
 
 void call_property_onchanged(ConnectionPoint*,DISPID) DECLSPEC_HIDDEN;
 HRESULT call_set_active_object(IOleInPlaceUIWindow*,IOleInPlaceActiveObject*) DECLSPEC_HIDDEN;
@@ -743,10 +694,6 @@ HRESULT async_start_doc_binding(HTMLWindow*,nsChannelBSC*) DECLSPEC_HIDDEN;
 void abort_document_bindings(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 
 HRESULT bind_mon_to_buffer(HTMLDocumentNode*,IMoniker*,void**,DWORD*) DECLSPEC_HIDDEN;
-
-HRESULT create_channelbsc(IMoniker*,WCHAR*,BYTE*,DWORD,nsChannelBSC**) DECLSPEC_HIDDEN;
-HRESULT channelbsc_load_stream(nsChannelBSC*,IStream*) DECLSPEC_HIDDEN;
-void channelbsc_set_channel(nsChannelBSC*,nsChannel*,nsIStreamListener*,nsISupports*) DECLSPEC_HIDDEN;
 
 void set_ready_state(HTMLWindow*,READYSTATE) DECLSPEC_HIDDEN;
 

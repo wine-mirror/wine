@@ -35,6 +35,7 @@
 
 #include "mshtml_private.h"
 #include "htmlevent.h"
+#include "binding.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 WINE_DECLARE_DEBUG_CHANNEL(gecko);

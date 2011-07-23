@@ -31,6 +31,7 @@
 
 #include "mshtml_private.h"
 #include "htmlevent.h"
+#include "binding.h"
 #include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
