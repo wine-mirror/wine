@@ -233,7 +233,7 @@ static const struct {
     {URL_SCHEME_HTTPS,  443},
 };
 
-/* List of 3 character top level domain names Windows seems to recognize.
+/* List of 3-character top level domain names Windows seems to recognize.
  * There might be more, but, these are the only ones I've found so far.
  */
 static const struct {
@@ -278,7 +278,7 @@ static inline BOOL is_forbidden_dos_path_char(WCHAR val) {
 }
 
 /* A URI is implicitly a file path if it begins with
- * a drive letter (eg X:) or starts with "\\" (UNC path).
+ * a drive letter (e.g. X:) or starts with "\\" (UNC path).
  */
 static inline BOOL is_implicit_file_path(const WCHAR *str) {
     return (is_unc_path(str) || (is_alpha(str[0]) && str[1] == ':'));
@@ -328,7 +328,7 @@ static inline BOOL is_gendelim(WCHAR val) {
 
 /* Characters that delimit the end of the authority
  * section of a URI. Sometimes a '\\' is considered
- * an authority delimeter.
+ * an authority delimiter.
  */
 static inline BOOL is_auth_delim(WCHAR val, BOOL acceptSlash) {
     return (val == '#' || val == '/' || val == '?' ||
@@ -403,7 +403,7 @@ static void apply_default_flags(DWORD *flags) {
 /* Determines if the URI is hierarchical using the information already parsed into
  * data and using the current location of parsing in the URI string.
  *
- * Windows considers a URI hierarchical if on of the following is true:
+ * Windows considers a URI hierarchical if one of the following is true:
  *  A.) It's a wildcard scheme.
  *  B.) It's an implicit file scheme.
  *  C.) It's a known hierarchical scheme and it has two '\\' after the scheme name.
@@ -526,8 +526,8 @@ static BOOL are_equal_simple(const Uri *a, const Uri *b) {
 }
 
 /* Computes the size of the given IPv6 address.
- * Each h16 component is 16bits, if there is an IPv4 address, it's
- * 32bits. If there's an elision it can be 16bits to 128bits, depending
+ * Each h16 component is 16 bits. If there is an IPv4 address, it's
+ * 32 bits. If there's an elision it can be 16 to 128 bits, depending
  * on the number of other components.
  *
  * Modeled after google-url's CheckIPv6ComponentsSize function
@@ -541,7 +541,7 @@ static void compute_ipv6_comps_size(ipv6_address *address) {
 
     if(address->elision) {
         /* An elision can be anywhere from 2 bytes up to 16 bytes.
-         * It size depends on the size of the h16 and IPv4 components.
+         * Its size depends on the size of the h16 and IPv4 components.
          */
         address->elision_size = 16 - address->components_size;
         if(address->elision_size < 2)
@@ -567,7 +567,7 @@ static int hex_to_int(WCHAR val) {
  * the two characters following the '%' aren't valid hex values then
  * this function returns the NULL character.
  *
- * Eg.
+ * E.g.
  *  "%2E" will result in '.' being returned by this function.
  */
 static WCHAR decode_pct_val(const WCHAR *ptr) {
@@ -616,7 +616,7 @@ void find_domain_name(const WCHAR *host, DWORD host_len,
     *domain_start = -1;
 
     /* There has to be at least enough room for a '.' followed by a
-     * 3 character TLD for a domain to even exist in the host name.
+     * 3-character TLD for a domain to even exist in the host name.
      */
     if(host_len < 4)
         return;
@@ -640,7 +640,7 @@ void find_domain_name(const WCHAR *host, DWORD host_len,
         } else if(last_tld-host == 3) {
             DWORD i;
 
-            /* If there's three characters in front of last_tld and
+            /* If there are three characters in front of last_tld and
              * they are on the list of recognized TLDs, then this
              * host doesn't have a domain (since the host only contains
              * a TLD name.
@@ -789,12 +789,12 @@ static INT find_file_extension(const WCHAR *path, DWORD path_len) {
 /* Computes the location where the elision should occur in the IPv6
  * address using the numerical values of each component stored in
  * 'values'. If the address shouldn't contain an elision then 'index'
- * is assigned -1 as it's value. Otherwise 'index' will contain the
+ * is assigned -1 as its value. Otherwise 'index' will contain the
  * starting index (into values) where the elision should be, and 'count'
  * will contain the number of cells the elision covers.
  *
  * NOTES:
- *  Windows will expand an elision if the elision only represents 1 h16
+ *  Windows will expand an elision if the elision only represents one h16
  *  component of the address.
  *
  *  Ex: [1::2:3:4:5:6:7] -> [1:0:2:3:4:5:6:7]
@@ -915,7 +915,7 @@ static UINT ipv4toui(const WCHAR *ip, DWORD len) {
     return ret;
 }
 
-/* Converts an IPv4 address in numerical form into it's fully qualified
+/* Converts an IPv4 address in numerical form into its fully qualified
  * string form. This function returns the number of characters written
  * to 'dest'. If 'dest' is NULL this function will return the number of
  * characters that would have been written.
@@ -956,7 +956,7 @@ static DWORD ui2str(WCHAR *dest, UINT value) {
     return ret;
 }
 
-/* Converts an h16 component (from an IPv6 address) into it's
+/* Converts a h16 component (from an IPv6 address) into its
  * numerical value.
  *
  * This function assumes that the h16 component has already been validated.
@@ -1063,7 +1063,7 @@ static BOOL check_dec_octet(const WCHAR **ptr) {
     ++(*ptr);
 
     c2 = *ptr;
-    /* Since the 1 digit requirment was meet, it doesn't
+    /* Since the 1-digit requirement was met, it doesn't
      * matter if this is a DIGIT value, it's considered a
      * dec-octet.
      */
@@ -1270,7 +1270,7 @@ static BOOL parse_scheme(const WCHAR **ptr, parse_data *data, DWORD flags, DWORD
 
             TRACE("(%p %p %x): URI is an implicit file path.\n", ptr, data, flags);
         } else {
-            /* Window's does not consider anything that can implicitly be a file
+            /* Windows does not consider anything that can implicitly be a file
              * path to be a valid URI if the ALLOW_IMPLICIT_FILE_SCHEME flag is not set...
              */
             TRACE("(%p %p %x): URI is implicitly a file path, but, the ALLOW_IMPLICIT_FILE_SCHEME flag wasn't set.\n",
@@ -1278,10 +1278,10 @@ static BOOL parse_scheme(const WCHAR **ptr, parse_data *data, DWORD flags, DWORD
             return FALSE;
         }
     } else if(!parse_scheme_name(ptr, data, extras)) {
-        /* No Scheme was found, this means it could be:
+        /* No scheme was found, this means it could be:
          *      a) an implicit Wildcard scheme
          *      b) a relative URI
-         *      c) a invalid URI.
+         *      c) an invalid URI.
          */
         if(flags & Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME) {
             data->scheme = wildcardW;
@@ -1379,10 +1379,10 @@ static BOOL parse_password(const WCHAR **ptr, parse_data *data, DWORD flags, DWO
  *      ex:
  *          ftp://user:pass:word@winehq.org
  *
- *      Would yield, "user" as the username and "pass:word" as the password.
+ *      would yield "user" as the username and "pass:word" as the password.
  *
  *  2)  Windows allows any character to appear in the "userinfo" part of
- *      a URI, as long as it's not an authority delimeter character set.
+ *      a URI, as long as it's not an authority delimiter character set.
  */
 static void parse_userinfo(const WCHAR **ptr, parse_data *data, DWORD flags) {
     const WCHAR *start = *ptr;
@@ -1467,7 +1467,7 @@ static BOOL parse_port(const WCHAR **ptr, parse_data *data, DWORD flags) {
 /* Attempts to parse a IPv4 address from the URI.
  *
  * NOTES:
- *  Window's normalizes IPv4 addresses, This means there's three
+ *  Windows normalizes IPv4 addresses, This means there are three
  *  possibilities for the URI to contain an IPv4 address.
  *      1)  A well formed address (ex. 192.2.2.2).
  *      2)  A partially formed address. For example "192.0" would
@@ -1504,7 +1504,7 @@ static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data, DWORD flags) 
             return FALSE;
         }
     } else if(!is_auth_delim(**ptr, !is_unknown)) {
-        /* Found more data which belongs the host, so this isn't an IPv4. */
+        /* Found more data which belongs to the host, so this isn't an IPv4. */
         *ptr = data->host;
         data->host = NULL;
         data->has_implicit_ip = FALSE;
@@ -1535,8 +1535,8 @@ static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data, DWORD flags) 
  *  Windows doesn't like host names which start with '[' and end with ']'
  *  and don't contain a valid IP literal address in between them.
  *
- *  On Windows if an '[' is encountered in the host name the ':' no longer
- *  counts as a delimiter until you reach the next ']' or an "authority delimeter".
+ *  On Windows if a '[' is encountered in the host name the ':' no longer
+ *  counts as a delimiter until you reach the next ']' or an "authority delimiter".
  *
  *  A reg-name CAN be empty.
  */
@@ -1557,7 +1557,7 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags, DWO
          * path can also have a '|' instead of a ':' after the drive letter.
          */
         if(is_drive_path(*ptr)) {
-            /* Regular old drive paths don't have a host type (or host name). */
+            /* Regular old drive paths have no host type (or host name). */
             data->host_type = Uri_HOST_UNKNOWN;
             data->host = *ptr;
             data->host_len = 0;
@@ -1589,7 +1589,7 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags, DWO
                         return FALSE;
                     } else
                         /* Windows gives up on trying to parse a port when it
-                         * encounters 1 invalid port.
+                         * encounters an invalid port.
                          */
                         ignore_col = TRUE;
                 } else {
@@ -1781,7 +1781,7 @@ static BOOL parse_ipv6address(const WCHAR **ptr, parse_data *data, DWORD flags) 
 
     if(ip.elision_size == 2) {
         /* For some reason on Windows if an elision that represents
-         * only 1 h16 component is encountered at the very begin or
+         * only one h16 component is encountered at the very begin or
          * end of an IPv6 address, Windows does not consider it a
          * valid IPv6 address.
          *
@@ -2002,7 +2002,7 @@ static BOOL parse_path_hierarchical(const WCHAR **ptr, parse_data *data, DWORD f
     return TRUE;
 }
 
-/* Parses the path of a opaque URI (much less strict then the parser
+/* Parses the path of an opaque URI (much less strict then the parser
  * for a hierarchical URI).
  *
  * NOTE:
@@ -2044,7 +2044,7 @@ static BOOL parse_path_opaque(const WCHAR **ptr, parse_data *data, DWORD flags) 
 
 /* Determines how the URI should be parsed after the scheme information.
  *
- * If the scheme is followed, by "//" then, it is treated as an hierarchical URI
+ * If the scheme is followed by "//", then it is treated as a hierarchical URI
  * which then the authority and path information will be parsed out. Otherwise, the
  * URI will be treated as an opaque URI which the authority information is not parsed
  * out.
@@ -2062,7 +2062,7 @@ static BOOL parse_path_opaque(const WCHAR **ptr, parse_data *data, DWORD flags) 
  * NOTES:
  *  If the URI is of an unknown scheme type and has a "//" following the scheme then it
  *  is treated as a hierarchical URI, but, if the CREATE_NO_CRACK_UNKNOWN_SCHEMES flag is
- *  set then it is considered an opaque URI reguardless of what follows the scheme information
+ *  set then it is considered an opaque URI regardless of what follows the scheme information
  *  (per MSDN documentation).
  */
 static BOOL parse_hierpart(const WCHAR **ptr, parse_data *data, DWORD flags) {
@@ -2093,7 +2093,7 @@ static BOOL parse_hierpart(const WCHAR **ptr, parse_data *data, DWORD flags) {
 
             return parse_path_hierarchical(ptr, data, flags);
         } else
-            /* Reset ptr to it's starting position so opaque path parsing
+            /* Reset ptr to its starting position so opaque path parsing
              * begins at the correct location.
              */
             *ptr = start;
@@ -2116,8 +2116,8 @@ static BOOL parse_hierpart(const WCHAR **ptr, parse_data *data, DWORD flags) {
  *
  * NOTES:
  *  If NO_DECODE_EXTRA_INFO flag is set, then invalid percent encoded
- *  data is allowed appear in the query string. For unknown scheme types
- *  invalid percent encoded data is allowed to appear reguardless.
+ *  data is allowed to appear in the query string. For unknown scheme types
+ *  invalid percent encoded data is allowed to appear regardless.
  */
 static BOOL parse_query(const WCHAR **ptr, parse_data *data, DWORD flags) {
     const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
@@ -2155,8 +2155,8 @@ static BOOL parse_query(const WCHAR **ptr, parse_data *data, DWORD flags) {
  *
  * NOTES:
  *  If NO_DECODE_EXTRA_INFO flag is set, then invalid percent encoded
- *  data is allowed appear in the query string. For unknown scheme types
- *  invalid percent encoded data is allowed to appear reguardless.
+ *  data is allowed to appear in the query string. For unknown scheme types
+ *  invalid percent encoded data is allowed to appear regardless.
  */
 static BOOL parse_fragment(const WCHAR **ptr, parse_data *data, DWORD flags) {
     const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
@@ -2233,7 +2233,7 @@ static BOOL canonicalize_username(const parse_data *data, Uri *uri, DWORD flags,
         if(*ptr == '%') {
             /* Only decode % encoded values for known scheme types. */
             if(data->scheme_type != URL_SCHEME_UNKNOWN) {
-                /* See if the value really needs decoded. */
+                /* See if the value really needs decoding. */
                 WCHAR val = decode_pct_val(ptr);
                 if(is_unreserved(val)) {
                     if(!computeOnly)
@@ -2291,7 +2291,7 @@ static BOOL canonicalize_password(const parse_data *data, Uri *uri, DWORD flags,
         if(*ptr == '%') {
             /* Only decode % encoded values for known scheme types. */
             if(data->scheme_type != URL_SCHEME_UNKNOWN) {
-                /* See if the value really needs decoded. */
+                /* See if the value really needs decoding. */
                 WCHAR val = decode_pct_val(ptr);
                 if(is_unreserved(val)) {
                     if(!computeOnly)
@@ -2367,7 +2367,7 @@ static BOOL canonicalize_userinfo(const parse_data *data, Uri *uri, DWORD flags,
  * Things that happen:
  *  1)  If Uri_CREATE_NO_CANONICALIZE flag is not set, then the reg_name is
  *      lower cased. Unless it's an unknown scheme type, which case it's
- *      no lower cased reguardless.
+ *      no lower cased regardless.
  *
  *  2)  Unreserved % encoded characters are decoded for known
  *      scheme types.
@@ -2413,7 +2413,7 @@ static BOOL canonicalize_reg_name(const parse_data *data, Uri *uri,
         if(*ptr == '%' && known_scheme) {
             WCHAR val = decode_pct_val(ptr);
             if(is_unreserved(val)) {
-                /* If NO_CANONICALZE is not set, then windows lower cases the
+                /* If NO_CANONICALIZE is not set, then windows lower cases the
                  * decoded value.
                  */
                 if(!(flags & Uri_CREATE_NO_CANONICALIZE) && isupperW(val)) {
@@ -2483,8 +2483,8 @@ static BOOL canonicalize_implicit_ipv4address(const parse_data *data, Uri *uri, 
     uri->host_start = uri->canon_len;
 
     TRACE("%u\n", data->implicit_ipv4);
-    /* For unknown scheme types Window's doesn't convert
-     * the value into an IP address, but, it still considers
+    /* For unknown scheme types Windows doesn't convert
+     * the value into an IP address, but it still considers
      * it an IPv4 address.
      */
     if(data->scheme_type == URL_SCHEME_UNKNOWN) {
@@ -2515,7 +2515,7 @@ static BOOL canonicalize_implicit_ipv4address(const parse_data *data, Uri *uri, 
  * If the parse_data represents a URI that has an implicit IPv4 address
  * (ex. http://256/, this function will convert 256 into 0.0.1.0). If
  * the implicit IP address exceeds the value of UINT_MAX (maximum value
- * for an IPv4 address) it's canonicalized as if were a reg-name.
+ * for an IPv4 address) it's canonicalized as if it were a reg-name.
  *
  * If the parse_data contains a partial or full IPv4 address it normalizes it.
  * A partial IPv4 address is something like "192.0" and would be normalized to
@@ -2523,7 +2523,7 @@ static BOOL canonicalize_implicit_ipv4address(const parse_data *data, Uri *uri, 
  * be normalized to "192.2.1.3".
  *
  * NOTES:
- *  Window's ONLY normalizes IPv4 address for known scheme types (one that isn't
+ *  Windows ONLY normalizes IPv4 address for known scheme types (one that isn't
  *  URL_SCHEME_UNKNOWN). For unknown scheme types, it simply copies the data from
  *  the original URI into the canonicalized URI, but, it still recognizes URI's
  *  host type as HOST_IPV4.
@@ -2605,11 +2605,11 @@ static BOOL canonicalize_ipv4address(const parse_data *data, Uri *uri, DWORD fla
 /* Attempts to canonicalize the IPv6 address of the URI.
  *
  * Multiple things happen during the canonicalization of an IPv6 address:
- *  1)  Any leading zero's in an h16 component are removed.
+ *  1)  Any leading zero's in a h16 component are removed.
  *      Ex: [0001:0022::] -> [1:22::]
  *
  *  2)  The longest sequence of zero h16 components are compressed
- *      into a "::" (elision). If there's a tie, the first is choosen.
+ *      into a "::" (elision). If there's a tie, the first is chosen.
  *
  *      Ex: [0:0:0:0:1:6:7:8]   -> [::1:6:7:8]
  *          [0:0:0:0:1:2::]     -> [::1:2:0:0]
@@ -2619,7 +2619,7 @@ static BOOL canonicalize_ipv4address(const parse_data *data, Uri *uri, DWORD fla
  *      also normalized.
  *      Ex: [::001.002.022.000] -> [::1.2.22.0]
  *
- *  4)  If an elision is present, but, only represents 1 h16 component
+ *  4)  If an elision is present, but, only represents one h16 component
  *      it's expanded.
  *
  *      Ex: [1::2:3:4:5:6:7] -> [1:0:2:3:4:5:6:7]
@@ -2895,7 +2895,7 @@ static BOOL canonicalize_authority(const parse_data *data, Uri *uri, DWORD flags
  * Things that happen:
  *  1). Forbidden characters are percent encoded, unless the NO_ENCODE_FORBIDDEN
  *      flag is set or it's a file URI. Forbidden characters are always encoded
- *      for file schemes reguardless and forbidden characters are never encoded
+ *      for file schemes regardless and forbidden characters are never encoded
  *      for unknown scheme types.
  *
  *  2). For known scheme types '\\' are changed to '/'.
@@ -2957,7 +2957,7 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
         if(is_drive_path(ptr)) {
             if(!computeOnly) {
                 uri->canon_uri[uri->canon_len] = *ptr;
-                /* If theres a '|' after the drive letter, convert it to a ':'. */
+                /* If there's a '|' after the drive letter, convert it to a ':'. */
                 uri->canon_uri[uri->canon_len+1] = ':';
             }
             ptr += 2;
@@ -2979,7 +2979,7 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
             const WCHAR *tmp = ptr;
             WCHAR val;
 
-            /* Check if the % represents a valid encoded char, or if it needs encoded. */
+            /* Check if the % represents a valid encoded char, or if it needs encoding. */
             BOOL force_encode = !check_pct_encoded(&tmp) && is_file && !(flags&Uri_CREATE_FILE_USE_DOS_PATH);
             val = decode_pct_val(ptr);
 
@@ -3088,7 +3088,7 @@ static BOOL canonicalize_path_opaque(const parse_data *data, Uri *uri, DWORD fla
 
     uri->path_start = uri->canon_len;
 
-    /* For javascript: URIs, simply copy path part withoutany canonicalization */
+    /* For javascript: URIs, simply copy path part without any canonicalization */
     if(data->scheme_type == URL_SCHEME_JAVASCRIPT) {
         if(!computeOnly)
             memcpy(uri->canon_uri+uri->canon_len, data->path, data->path_len*sizeof(WCHAR));
@@ -3395,7 +3395,7 @@ static BOOL canonicalize_scheme(const parse_data *data, Uri *uri, DWORD flags, B
     return TRUE;
 }
 
-/* Compute's what the length of the URI specified by the parse_data will be
+/* Computes what the length of the URI specified by the parse_data will be
  * after canonicalization occurs using the specified flags.
  *
  * This function will return a non-zero value indicating the length of the canonicalized
@@ -3435,11 +3435,11 @@ static int compute_canonicalized_length(const parse_data *data, DWORD flags) {
 }
 
 /* Canonicalizes the URI data specified in the parse_data, using the given flags. If the
- * canonicalization succeededs it will store all the canonicalization information
+ * canonicalization succeeds it will store all the canonicalization information
  * in the pointer to the Uri.
  *
  * To canonicalize a URI this function first computes what the length of the URI
- * specified by the parse_data will be. Once this is done it will then perfom the actual
+ * specified by the parse_data will be. Once this is done it will then perform the actual
  * canonicalization of the URI.
  */
 static HRESULT canonicalize_uri(const parse_data *data, Uri *uri, DWORD flags) {
@@ -3491,7 +3491,7 @@ static HRESULT canonicalize_uri(const parse_data *data, Uri *uri, DWORD flags) {
      */
     if(uri->canon_len < uri->canon_size) {
         /* This happens if the URI is hierarchical and dot
-         * segments were removed from it's path.
+         * segments were removed from its path.
          */
         WCHAR *tmp = heap_realloc(uri->canon_uri, (uri->canon_len+1)*sizeof(WCHAR));
         if(!tmp)
@@ -5090,8 +5090,8 @@ static Uri* create_uri_obj(void) {
  *
  * RETURNS
  *  Success: Returns S_OK. ppURI contains the pointer to the newly allocated IUri.
- *  Failure: E_INVALIDARG if there's invalid flag combinations in dwFlags, or an
- *           invalid parameters, or pwzURI doesn't represnt a valid URI.
+ *  Failure: E_INVALIDARG if there are invalid flag combinations in dwFlags, or an
+ *           invalid parameter, or pwzURI doesn't represent a valid URI.
  *           E_OUTOFMEMORY if any memory allocation fails.
  *
  * NOTES
@@ -5183,7 +5183,7 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
  *
  * PARAMS
  *  pwzURI      [I] The URI to parse and perform canonicalization on.
- *  pwzFragment [I] The explict fragment string which should be added to pwzURI.
+ *  pwzFragment [I] The explicit fragment string which should be added to pwzURI.
  *  dwFlags     [I] The flags which will be passed to CreateUri.
  *  dwReserved  [I] Reserved (not used).
  *  ppURI       [O] The resulting IUri after parsing/canonicalization.
@@ -5192,7 +5192,7 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
  *  Success: S_OK. ppURI contains the pointer to the newly allocated IUri.
  *  Failure: E_INVALIDARG if pwzURI already contains a fragment and pwzFragment
  *           isn't NULL. Will also return E_INVALIDARG for the same reasons as
- *           CreateUri will. E_OUTOFMEMORY if any allocations fail.
+ *           CreateUri will. E_OUTOFMEMORY if any allocation fails.
  */
 HRESULT WINAPI CreateUriWithFragment(LPCWSTR pwzURI, LPCWSTR pwzFragment, DWORD dwFlags,
                                      DWORD_PTR dwReserved, IUri **ppURI)
@@ -5803,7 +5803,7 @@ static HRESULT merge_paths(parse_data *data, const WCHAR *base, DWORD base_len, 
     WCHAR *ptr;
 
     if(base_len) {
-        /* Find the characters the will be copied over from
+        /* Find the characters that will be copied over from
          * the base path.
          */
         end = memrchrW(base, '/', base_len);
@@ -6298,7 +6298,7 @@ static HRESULT parse_canonicalize(const Uri *uri, DWORD flags, LPWSTR output,
 
     buffer[len++] = 0;
 
-    /* The null terminator isn't included the length. */
+    /* The null terminator isn't included in the length. */
     *result_len = len-1;
     if(len > output_len)
         return STRSAFE_E_INSUFFICIENT_BUFFER;
