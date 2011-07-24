@@ -2076,7 +2076,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
     if (isStateDirty(context, STATE_FRAMEBUFFER) || fb != &device->fb
             || rt_count != context->gl_info->limits.buffers)
     {
-        if (!context_validate_rt_config(rt_count, fb->render_targets, fb->depth_stencil))
+        if (!context_validate_rt_config(rt_count, rts, fb->depth_stencil))
             return FALSE;
 
         if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
@@ -2085,7 +2085,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
 
             ENTER_GL();
 
-            if (!rt_count || surface_is_offscreen(fb->render_targets[0]))
+            if (!rt_count || surface_is_offscreen(rts[0]))
             {
                 for (i = 0; i < rt_count; ++i)
                 {
@@ -2105,7 +2105,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
             else
             {
                 context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL, SFLAG_INDRAWABLE);
-                rt_mask = context_generate_rt_mask_from_surface(fb->render_targets[0]);
+                rt_mask = context_generate_rt_mask_from_surface(rts[0]);
             }
 
             LEAVE_GL();
@@ -2121,7 +2121,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
         }
     }
     else if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
-        && (!rt_count || surface_is_offscreen(fb->render_targets[0])))
+            && (!rt_count || surface_is_offscreen(rts[0])))
     {
         for (i = 0; i < rt_count; ++i)
         {
