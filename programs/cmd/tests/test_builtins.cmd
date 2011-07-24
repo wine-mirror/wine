@@ -430,6 +430,18 @@ if not exist foo (
     rd foo\bar
     rd foo
 )
+rem multiples directories at once
+mkdir foobaz & cd foobaz
+mkdir foo
+mkdir bar\baz
+mkdir foobar
+rd /s/q foo bar foobar
+if not exist foo (echo foo removed) else echo foo not removed!
+if not exist bar (echo bar removed) else echo bar not removed!
+if not exist foobar (echo foobar removed) else echo foobar not removed!
+if not exist bar\baz (echo bar\baz removed) else echo bar\baz not removed!
+cd ..
+rd /s/q foobaz
 
 echo ------------ Testing CALL --------------
 mkdir foobar & cd foobar

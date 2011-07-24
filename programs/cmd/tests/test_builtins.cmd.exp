@@ -210,6 +210,10 @@ non-empty dir not removed
 non-empty dir not removed
 recursive rmdir succeeded
 recursive rmdir succeeded
+foo removed
+bar removed
+foobar removed
+bar\baz removed
 ------------ Testing CALL --------------
 foo
 foo 8
