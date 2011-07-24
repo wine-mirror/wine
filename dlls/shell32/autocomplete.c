@@ -486,7 +486,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 	    }
 	    return CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
 	case WM_KEYUP:
-            GetWindowTextW( hwnd, hwndText, 255);
+            GetWindowTextW( hwnd, hwndText, sizeof(hwndText)/sizeof(WCHAR));
 
 	    switch(wParam) {
 		case VK_RETURN:
@@ -591,11 +591,16 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 
 		if (StrStrIW(strs, hwndText) == strs) {
                     if (!filled && (This->options & ACO_AUTOAPPEND)) {
-			SetWindowTextW(hwnd, strs);
-			SendMessageW(hwnd, EM_SETSEL, lstrlenW(hwndText), lstrlenW(strs));
+                        INT typed_length = strlenW(hwndText);
+                        WCHAR buffW[255];
+
+                        strcpyW(buffW, hwndText);
+                        strcatW(buffW, &strs[typed_length]);
+                        SetWindowTextW(hwnd, buffW);
+                        SendMessageW(hwnd, EM_SETSEL, typed_length, strlenW(strs));
                         if (!(This->options & ACO_AUTOSUGGEST))
                             break;
-		    }		
+                    }
 
 		    if (This->options & ACO_AUTOSUGGEST) {
 			SendMessageW(This->hwndListBox, LB_ADDSTRING, 0, (LPARAM)strs);
