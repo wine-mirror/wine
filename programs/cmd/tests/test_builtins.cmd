@@ -367,6 +367,15 @@ if not exist foo (
     cd ..
     rmdir foo
 )
+rem multiples directories at once
+mkdir foobaz & cd foobaz
+mkdir foo bar\baz foobar
+if exist foo (echo foo created) else echo foo not created!
+if exist bar (echo bar created) else echo bar not created!
+if exist foobar (echo foobar created) else echo foobar not created!
+if exist bar\baz (echo bar\baz created) else echo bar\baz not created!
+cd ..
+rd /s/q foobaz
 
 echo ----------- Testing rmdir -----------
 call :setError 0

@@ -192,6 +192,10 @@ dir created
 @todo_wine@ok, foo created
 @todo_wine@1
 @todo_wine@ok, foo\bar created
+foo created
+@todo_wine@bar created
+@todo_wine@foobar created
+@todo_wine@bar\baz created
 ----------- Testing rmdir -----------
 0
 dir removed
