@@ -6250,7 +6250,7 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
             state_texfactor_arbfp(context, state, STATE_RENDER(WINED3DRS_TEXTUREFACTOR));
             state_arb_specularenable(context, state, STATE_RENDER(WINED3DRS_SPECULARENABLE));
         }
-        else if(use_pshader && !isStateDirty(context, device->StateTable[STATE_VSHADER].representative))
+        else if (use_pshader && !isStateDirty(context, context->state_table[STATE_VSHADER].representative))
         {
             device->shader_backend->shader_select(context, use_pshader, use_vshader);
         }
@@ -6317,7 +6317,8 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
      * Don't call shader_select if the vertex shader is dirty, because it will be called later on by the vertex
      * shader handler
      */
-    if(!isStateDirty(context, device->StateTable[STATE_VSHADER].representative)) {
+    if (!isStateDirty(context, context->state_table[STATE_VSHADER].representative))
+    {
         device->shader_backend->shader_select(context, use_pshader, use_vshader);
 
         if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && (use_vshader || use_pshader))

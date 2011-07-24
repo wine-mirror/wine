@@ -906,7 +906,7 @@ static void atifs_apply_pixelshader(struct wined3d_context *context, const struc
      * startup, and blitting disables all shaders and dirtifies all shader
      * states. If atifs can deal with this it keeps the rest of the code
      * simpler. */
-    if (!isStateDirty(context, device->StateTable[STATE_VSHADER].representative))
+    if (!isStateDirty(context, context->state_table[STATE_VSHADER].representative))
     {
         device->shader_backend->shader_select(context, FALSE, use_vshader);
 

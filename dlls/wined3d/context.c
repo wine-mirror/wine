@@ -1348,13 +1348,14 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     }
 
     ret->gl_info = gl_info;
+    ret->state_table = device->StateTable;
 
     /* Mark all states dirty to force a proper initialization of the states
      * on the first use of the context. */
     for (state = 0; state <= STATE_HIGHEST; ++state)
     {
-        if (device->StateTable[state].representative)
-            context_invalidate_state(ret, state, device->StateTable);
+        if (ret->state_table[state].representative)
+            context_invalidate_state(ret, state, ret->state_table);
     }
 
     ret->swapchain = swapchain;
@@ -1620,7 +1621,7 @@ static inline void set_blit_dimension(UINT width, UINT height) {
 static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *context)
 {
     int i;
-    const struct StateEntry *StateTable = device->StateTable;
+    const struct StateEntry *StateTable = context->state_table;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     UINT width = context->current_rt->resource.width;
     UINT height = context->current_rt->resource.height;
@@ -1966,8 +1967,8 @@ static BOOL match_depth_stencil_format(const struct wined3d_format *existing,
 }
 
 /* The caller provides a context */
-static void context_validate_onscreen_formats(struct wined3d_device *device,
-        struct wined3d_context *context, const struct wined3d_surface *depth_stencil)
+static void context_validate_onscreen_formats(struct wined3d_context *context,
+        const struct wined3d_surface *depth_stencil)
 {
     /* Onscreen surfaces are always in a swapchain */
     struct wined3d_swapchain *swapchain = context->current_rt->container.u.swapchain;
@@ -1983,7 +1984,7 @@ static void context_validate_onscreen_formats(struct wined3d_device *device,
     /* The currently active context is the necessary context to access the swapchain's onscreen buffers */
     surface_load_location(context->current_rt, SFLAG_INTEXTURE, NULL);
     swapchain->render_to_fbo = TRUE;
-    context_set_render_offscreen(context, device->StateTable, TRUE);
+    context_set_render_offscreen(context, context->state_table, TRUE);
 }
 
 static DWORD context_generate_rt_mask_no_fbo(const struct wined3d_device *device, const struct wined3d_surface *rt)
@@ -2003,7 +2004,7 @@ void context_apply_blit_state(struct wined3d_context *context, struct wined3d_de
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        context_validate_onscreen_formats(device, context, NULL);
+        context_validate_onscreen_formats(context, NULL);
 
         if (context->render_offscreen)
         {
@@ -2044,7 +2045,7 @@ void context_apply_blit_state(struct wined3d_context *context, struct wined3d_de
     LEAVE_GL();
 
     SetupForBlit(device, context);
-    context_invalidate_state(context, STATE_FRAMEBUFFER, device->StateTable);
+    context_invalidate_state(context, STATE_FRAMEBUFFER, context->state_table);
 }
 
 static BOOL context_validate_rt_config(UINT rt_count,
@@ -2068,7 +2069,7 @@ static BOOL context_validate_rt_config(UINT rt_count,
 BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_device *device,
         UINT rt_count, const struct wined3d_fb_state *fb)
 {
-    const struct StateEntry *state_table = device->StateTable;
+    const struct StateEntry *state_table = context->state_table;
     DWORD rt_mask = 0;
     UINT i;
     struct wined3d_surface **rts = fb->render_targets;
@@ -2081,7 +2082,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
 
         if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
         {
-            context_validate_onscreen_formats(device, context, fb->depth_stencil);
+            context_validate_onscreen_formats(context, fb->depth_stencil);
 
             ENTER_GL();
 
@@ -2113,7 +2114,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
             /* If the framebuffer is not the device's fb the device's fb has to be reapplied
              * next draw. Otherwise we could mark the framebuffer state clean here, once the
              * state management allows this */
-            context_invalidate_state(context, STATE_FRAMEBUFFER, device->StateTable);
+            context_invalidate_state(context, STATE_FRAMEBUFFER, state_table);
         }
         else
         {
@@ -2138,7 +2139,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
     {
         context_apply_draw_buffers(context, rt_mask);
         context->draw_buffers_mask = rt_mask;
-        context_invalidate_state(context, STATE_FRAMEBUFFER, device->StateTable);
+        context_invalidate_state(context, STATE_FRAMEBUFFER, state_table);
     }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
@@ -2242,7 +2243,7 @@ void context_state_drawbuf(struct wined3d_context *context, const struct wined3d
 BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_device *device)
 {
     const struct wined3d_state *state = &device->stateBlock->state;
-    const struct StateEntry *state_table = device->StateTable;
+    const struct StateEntry *state_table = context->state_table;
     const struct wined3d_fb_state *fb = state->fb;
     unsigned int i;
 
@@ -2289,7 +2290,7 @@ static void context_setup_target(struct wined3d_device *device,
         struct wined3d_context *context, struct wined3d_surface *target)
 {
     BOOL old_render_offscreen = context->render_offscreen, render_offscreen;
-    const struct StateEntry *StateTable = device->StateTable;
+    const struct StateEntry *StateTable = context->state_table;
 
     if (!target) return;
     render_offscreen = surface_is_offscreen(target);

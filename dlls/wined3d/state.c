@@ -579,7 +579,7 @@ static void state_clipping(struct wined3d_context *context, const struct wined3d
 
         /* glEnable(GL_CLIP_PLANEx) doesn't apply to vertex shaders. The enabled / disabled planes are
          * hardcoded into the shader. Update the shader to update the enabled clipplanes */
-        if (!isStateDirty(context, device->StateTable[STATE_VSHADER].representative))
+        if (!isStateDirty(context, context->state_table[STATE_VSHADER].representative))
         {
             device->shader_backend->shader_select(context, use_ps(state), TRUE);
             if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT))
@@ -3642,7 +3642,7 @@ void apply_pixelshader(struct wined3d_context *context, const struct wined3d_sta
         context->last_was_pshader = FALSE;
     }
 
-    if (!isStateDirty(context, device->StateTable[STATE_VSHADER].representative))
+    if (!isStateDirty(context, context->state_table[STATE_VSHADER].representative))
     {
         device->shader_backend->shader_select(context, use_pshader, use_vshader);
 

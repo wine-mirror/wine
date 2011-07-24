@@ -1049,6 +1049,7 @@ BOOL wined3d_event_query_supported(const struct wined3d_gl_info *gl_info) DECLSP
 struct wined3d_context
 {
     const struct wined3d_gl_info *gl_info;
+    const struct StateEntry *state_table;
     /* State dirtification
      * dirtyArray is an array that contains markers for dirty states. numDirtyEntries states are dirty, their numbers are in indices
      * 0...numDirtyEntries - 1. isStateDirty is a redundant copy of the dirtyArray. Technically only one of them would be needed,
@@ -2828,9 +2829,9 @@ static inline BOOL use_ps(const struct wined3d_state *state)
 static inline void context_apply_state(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
-    const struct StateEntry *statetable = context->swapchain->device->StateTable;
-    DWORD rep = statetable[state_id].representative;
-    statetable[rep].apply(context, state, rep);
+    const struct StateEntry *state_table = context->state_table;
+    DWORD rep = state_table[state_id].representative;
+    state_table[rep].apply(context, state, rep);
 }
 
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */
