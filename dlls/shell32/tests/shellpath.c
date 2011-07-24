@@ -901,11 +901,11 @@ struct knownFolderDef {
 };
 
 static const struct knownFolderDef known_folders[] = {
-    KNOWN_FOLDER(FOLDERID_AddNewPrograms,             NO_CSIDL,                             "AddNewPrograms"),
+    KNOWN_FOLDER(FOLDERID_AddNewPrograms,             NO_CSIDL,                             "AddNewProgramsFolder"),
     KNOWN_FOLDER(FOLDERID_AdminTools,                 CSIDL_ADMINTOOLS,                     "Administrative Tools"),
-    KNOWN_FOLDER(FOLDERID_AppUpdates,                 NO_CSIDL,                             "AppUpdates"),
+    KNOWN_FOLDER(FOLDERID_AppUpdates,                 NO_CSIDL,                             "AppUpdatesFolder"),
     KNOWN_FOLDER(FOLDERID_CDBurning,                  CSIDL_CDBURN_AREA,                    "CD Burning"),
-    KNOWN_FOLDER(FOLDERID_ChangeRemovePrograms,       NO_CSIDL,                             "ChangeRemovePrograms"),
+    KNOWN_FOLDER(FOLDERID_ChangeRemovePrograms,       NO_CSIDL,                             "ChangeRemoveProgramsFolder"),
     KNOWN_FOLDER(FOLDERID_CommonAdminTools,           CSIDL_COMMON_ADMINTOOLS,              "Common Administrative Tools"),
     KNOWN_FOLDER(FOLDERID_CommonOEMLinks,             CSIDL_COMMON_OEM_LINKS,               "OEM Links"),
     KNOWN_FOLDER(FOLDERID_CommonPrograms,             CSIDL_COMMON_PROGRAMS,                "Common Programs"),
@@ -919,7 +919,7 @@ static const struct knownFolderDef known_folders[] = {
     KNOWN_FOLDER(FOLDERID_ControlPanelFolder,         CSIDL_CONTROLS,                       "ControlPanelFolder"),
     KNOWN_FOLDER(FOLDERID_Cookies,                    CSIDL_COOKIES,                        "Cookies"),
     KNOWN_FOLDER(FOLDERID_Desktop,                    CSIDL_DESKTOP,                        "Desktop"),
-    KNOWN_FOLDER(FOLDERID_DeviceMetadataStore,        NO_CSIDL,                             "DeviceMetadataStore"),
+    KNOWN_FOLDER(FOLDERID_DeviceMetadataStore,        NO_CSIDL,                             "Device Metadata Store"),
     KNOWN_FOLDER(FOLDERID_Documents,                  CSIDL_MYDOCUMENTS,                    "Personal"),
     KNOWN_FOLDER(FOLDERID_DocumentsLibrary,           NO_CSIDL,                             "DocumentsLibrary"),
     KNOWN_FOLDER(FOLDERID_Downloads,                  NO_CSIDL,                             "Downloads"),
@@ -928,7 +928,7 @@ static const struct knownFolderDef known_folders[] = {
     KNOWN_FOLDER(FOLDERID_Games,                      NO_CSIDL,                             "Games"),
     KNOWN_FOLDER(FOLDERID_GameTasks,                  NO_CSIDL,                             "GameTasks"),
     KNOWN_FOLDER(FOLDERID_History,                    CSIDL_HISTORY,                        "History"),
-    KNOWN_FOLDER(FOLDERID_HomeGroup,                  NO_CSIDL,                             "HomeGroup"),
+    KNOWN_FOLDER(FOLDERID_HomeGroup,                  NO_CSIDL,                             "HomeGroupFolder"),
     KNOWN_FOLDER(FOLDERID_ImplicitAppShortcuts,       NO_CSIDL,                             "ImplicitAppShortcuts"),
     KNOWN_FOLDER(FOLDERID_InternetCache,              CSIDL_INTERNET_CACHE,                 "Cache"),
     KNOWN_FOLDER(FOLDERID_InternetFolder,             CSIDL_INTERNET,                       "InternetFolder"),
@@ -941,7 +941,7 @@ static const struct knownFolderDef known_folders[] = {
     KNOWN_FOLDER(FOLDERID_MusicLibrary,               NO_CSIDL,                             "MusicLibrary"),
     KNOWN_FOLDER(FOLDERID_NetHood,                    CSIDL_NETHOOD,                        "NetHood"),
     KNOWN_FOLDER(FOLDERID_NetworkFolder,              CSIDL_NETWORK,                        "NetworkPlacesFolder"),
-    KNOWN_FOLDER(FOLDERID_OriginalImages,             NO_CSIDL,                             "OriginalImages"),
+    KNOWN_FOLDER(FOLDERID_OriginalImages,             NO_CSIDL,                             "Original Images"),
     KNOWN_FOLDER(FOLDERID_PhotoAlbums,                NO_CSIDL,                             "PhotoAlbums"),
     KNOWN_FOLDER(FOLDERID_Pictures,                   CSIDL_MYPICTURES,                     "My Pictures"),
     KNOWN_FOLDER(FOLDERID_PicturesLibrary,            NO_CSIDL,                             "PicturesLibrary"),
@@ -958,14 +958,14 @@ static const struct knownFolderDef known_folders[] = {
     KNOWN_FOLDER(FOLDERID_Public,                     NO_CSIDL,                             "Public"),
     KNOWN_FOLDER(FOLDERID_PublicDesktop,              CSIDL_COMMON_DESKTOPDIRECTORY,        "Common Desktop"),
     KNOWN_FOLDER(FOLDERID_PublicDocuments,            CSIDL_COMMON_DOCUMENTS,               "Common Documents"),
-    KNOWN_FOLDER(FOLDERID_PublicDownloads,            NO_CSIDL,                             "PublicDownloads"),
+    KNOWN_FOLDER(FOLDERID_PublicDownloads,            NO_CSIDL,                             "CommonDownloads"),
     KNOWN_FOLDER(FOLDERID_PublicGameTasks,            NO_CSIDL,                             "PublicGameTasks"),
     KNOWN_FOLDER(FOLDERID_PublicLibraries,            NO_CSIDL,                             "PublicLibraries"),
     KNOWN_FOLDER(FOLDERID_PublicMusic,                CSIDL_COMMON_MUSIC,                   "CommonMusic"),
     KNOWN_FOLDER(FOLDERID_PublicPictures,             CSIDL_COMMON_PICTURES,                "CommonPictures"),
-    KNOWN_FOLDER(FOLDERID_PublicRingtones,            NO_CSIDL,                             "PublicRingtones"),
+    KNOWN_FOLDER(FOLDERID_PublicRingtones,            NO_CSIDL,                             "CommonRingtones"),
     KNOWN_FOLDER(FOLDERID_PublicVideos,               CSIDL_COMMON_VIDEO,                   "CommonVideo"),
-    KNOWN_FOLDER(FOLDERID_QuickLaunch,                NO_CSIDL,                             "QuickLaunch"),
+    KNOWN_FOLDER(FOLDERID_QuickLaunch,                NO_CSIDL,                             "Quick Launch"),
     KNOWN_FOLDER(FOLDERID_Recent,                     CSIDL_RECENT,                         "Recent"),
     KNOWN_FOLDER(FOLDERID_RecordedTVLibrary,          NO_CSIDL,                             "RecordedTVLibrary"),
     KNOWN_FOLDER(FOLDERID_RecycleBinFolder,           CSIDL_BITBUCKET,                      "RecycleBinFolder"),
@@ -977,27 +977,27 @@ static const struct knownFolderDef known_folders[] = {
     KNOWN_FOLDER(FOLDERID_SamplePlaylists,            NO_CSIDL,                             "SamplePlaylists"),
     KNOWN_FOLDER(FOLDERID_SampleVideos,               NO_CSIDL,                             "SampleVideos"),
     KNOWN_FOLDER(FOLDERID_SavedGames,                 NO_CSIDL,                             "SavedGames"),
-    KNOWN_FOLDER(FOLDERID_SavedSearches,              NO_CSIDL,                             "SavedSearches"),
-    KNOWN_FOLDER(FOLDERID_SEARCH_CSC,                 NO_CSIDL,                             "SEARCH_CSC"),
-    KNOWN_FOLDER(FOLDERID_SearchHome,                 NO_CSIDL,                             "SearchHome"),
-    KNOWN_FOLDER(FOLDERID_SEARCH_MAPI,                NO_CSIDL,                             "SEARCH_MAPI"),
+    KNOWN_FOLDER(FOLDERID_SavedSearches,              NO_CSIDL,                             "Searches"),
+    KNOWN_FOLDER(FOLDERID_SEARCH_CSC,                 NO_CSIDL,                             "CSCFolder"),
+    KNOWN_FOLDER(FOLDERID_SearchHome,                 NO_CSIDL,                             "SearchHomeFolder"),
+    KNOWN_FOLDER(FOLDERID_SEARCH_MAPI,                NO_CSIDL,                             "MAPIFolder"),
     KNOWN_FOLDER(FOLDERID_SendTo,                     CSIDL_SENDTO,                         "SendTo"),
-    KNOWN_FOLDER(FOLDERID_SidebarDefaultParts,        NO_CSIDL,                             "SidebarDefaultParts"),
-    KNOWN_FOLDER(FOLDERID_SidebarParts,               NO_CSIDL,                             "SidebarParts"),
+    KNOWN_FOLDER(FOLDERID_SidebarDefaultParts,        NO_CSIDL,                             "Default Gadgets"),
+    KNOWN_FOLDER(FOLDERID_SidebarParts,               NO_CSIDL,                             "Gadgets"),
     KNOWN_FOLDER(FOLDERID_StartMenu,                  CSIDL_STARTMENU,                      "Start Menu"),
     KNOWN_FOLDER(FOLDERID_Startup,                    CSIDL_STARTUP,                        "Startup"),
-    KNOWN_FOLDER(FOLDERID_SyncManagerFolder,          NO_CSIDL,                             "SyncManagerFolder"),
+    KNOWN_FOLDER(FOLDERID_SyncManagerFolder,          NO_CSIDL,                             "SyncCenterFolder"),
     KNOWN_FOLDER(FOLDERID_SyncResultsFolder,          NO_CSIDL,                             "SyncResultsFolder"),
     KNOWN_FOLDER(FOLDERID_SyncSetupFolder,            NO_CSIDL,                             "SyncSetupFolder"),
     KNOWN_FOLDER(FOLDERID_System,                     CSIDL_SYSTEM,                         "System"),
     KNOWN_FOLDER(FOLDERID_SystemX86,                  CSIDL_SYSTEMX86,                      "SystemX86"),
     KNOWN_FOLDER(FOLDERID_Templates,                  CSIDL_TEMPLATES,                      "Templates"),
-    KNOWN_FOLDER(FOLDERID_UserPinned,                 NO_CSIDL,                             "UserPinned"),
+    KNOWN_FOLDER(FOLDERID_UserPinned,                 NO_CSIDL,                             "User Pinned"),
     KNOWN_FOLDER(FOLDERID_UserProfiles,               NO_CSIDL,                             "UserProfiles"),
     KNOWN_FOLDER(FOLDERID_UserProgramFiles,           NO_CSIDL,                             "UserProgramFiles"),
     KNOWN_FOLDER(FOLDERID_UserProgramFilesCommon,     NO_CSIDL,                             "UserProgramFilesCommon"),
-    KNOWN_FOLDER(FOLDERID_UsersFiles,                 NO_CSIDL,                             "UsersFiles"),
-    KNOWN_FOLDER(FOLDERID_UsersLibraries,             NO_CSIDL,                             "UsersLibraries"),
+    KNOWN_FOLDER(FOLDERID_UsersFiles,                 NO_CSIDL,                             "UsersFilesFolder"),
+    KNOWN_FOLDER(FOLDERID_UsersLibraries,             NO_CSIDL,                             "UsersLibrariesFolder"),
     KNOWN_FOLDER(FOLDERID_Videos,                     CSIDL_MYVIDEO,                        "My Video"),
     KNOWN_FOLDER(FOLDERID_VideosLibrary,              NO_CSIDL,                             "VideosLibrary"),
     KNOWN_FOLDER(FOLDERID_Windows,                    CSIDL_WINDOWS,                        "Windows"),
@@ -1030,27 +1030,27 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
                     todo_wine ok_(__FILE__, known_folder->line)(csidl == expectedCsidl, "invalid CSIDL retrieved for folder %s. %d (%s) expected, but %d found\n", known_folder->sFolderId, expectedCsidl, known_folder->sCsidl, csidl);
                 else
                     ok_(__FILE__, known_folder->line)(csidl == expectedCsidl, "invalid CSIDL retrieved for folder %s. %d (%s) expected, but %d found\n", known_folder->sFolderId, expectedCsidl, known_folder->sCsidl, csidl);
+            }
 
-                hr = IKnownFolderManager_GetFolder(mgr, folderId, &folder);
-                ok_(__FILE__, known_folder->line)(hr == S_OK, "cannot get known folder for %s\n", known_folder->sFolderId);
+            hr = IKnownFolderManager_GetFolder(mgr, folderId, &folder);
+            ok_(__FILE__, known_folder->line)(hr == S_OK, "cannot get known folder for %s\n", known_folder->sFolderId);
+            if(SUCCEEDED(hr))
+            {
+                hr = IKnownFolder_GetFolderDefinition(folder, &kfd);
+                todo_wine
+                ok_(__FILE__, known_folder->line)(hr == S_OK, "cannot get known folder definition for %s\n", known_folder->sFolderId);
                 if(SUCCEEDED(hr))
                 {
-                    hr = IKnownFolder_GetFolderDefinition(folder, &kfd);
+                    ret = MultiByteToWideChar(CP_ACP, 0, known_folder->sName, -1,  sName, sizeof(sName)/sizeof(sName[0]));
+                    ok_(__FILE__, known_folder->line)(ret != 0, "cannot convert known folder name \"%s\" to wide characters\n", known_folder->sName);
+
                     todo_wine
-                    ok_(__FILE__, known_folder->line)(hr == S_OK, "cannot get known folder definition for %s\n", known_folder->sFolderId);
-                    if(SUCCEEDED(hr))
-                    {
-                        ret = MultiByteToWideChar(CP_ACP, 0, known_folder->sName, -1,  sName, sizeof(sName)/sizeof(sName[0]));
-                        ok_(__FILE__, known_folder->line)(ret != 0, "cannot convert known folder name \"%s\" to wide characters\n", known_folder->sName);
+                    ok_(__FILE__, known_folder->line)(lstrcmpW(kfd.pszName, sName)==0, "invalid known folder name returned for %s: %s expected, but %s retrieved\n", known_folder->sFolderId, wine_dbgstr_w(sName), wine_dbgstr_w(kfd.pszName));
 
-                        todo_wine
-                        ok_(__FILE__, known_folder->line)(lstrcmpW(kfd.pszName, sName)==0, "invalid known folder name returned for %s: %s expected, but %s retrieved\n", known_folder->sFolderId, wine_dbgstr_w(sName), wine_dbgstr_w(kfd.pszName));
-
-                        FreeKnownFolderDefinitionFields(&kfd);
-                    }
-
-                IKnownFolder_Release(folder);
+                    FreeKnownFolderDefinitionFields(&kfd);
                 }
+
+            IKnownFolder_Release(folder);
             }
 
             break;
