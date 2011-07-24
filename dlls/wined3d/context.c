@@ -2074,7 +2074,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
     struct wined3d_surface **rts = fb->render_targets;
 
     if (isStateDirty(context, STATE_FRAMEBUFFER) || fb != &device->fb
-            || rt_count != device->adapter->gl_info.limits.buffers)
+            || rt_count != context->gl_info->limits.buffers)
     {
         if (!context_validate_rt_config(rt_count, fb->render_targets, fb->depth_stencil))
             return FALSE;
