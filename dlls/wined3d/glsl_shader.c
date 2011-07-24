@@ -823,7 +823,7 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
             }
         }
 
-        if (pshader->u.ps.vpos_uniform)
+        if (prog->ycorrection_location != -1)
         {
             float correction_params[4];
 
@@ -1043,7 +1043,6 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                     + 1 < gl_info->limits.glsl_ps_float_constants)
             {
                 shader_addline(buffer, "uniform vec4 ycorrection;\n");
-                shader->u.ps.vpos_uniform = 1;
                 extra_constants_needed++;
             }
             else

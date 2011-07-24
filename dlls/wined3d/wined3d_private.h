@@ -2566,7 +2566,6 @@ struct wined3d_pixel_shader
     unsigned int declared_in_count;
 
     /* Some information about the shader behavior */
-    char vpos_uniform;
     BOOL color0_mov;
     DWORD color0_reg;
 };
