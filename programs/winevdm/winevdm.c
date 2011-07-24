@@ -161,12 +161,6 @@ static void start_dosbox( const char *appname, const char *args )
     char *dosbox = find_dosbox();
 
     if (!dosbox) return;
-    if (tolower(appname[0]) == 'z')
-    {
-        WINE_MESSAGE( "winevdm: Cannot start DOS application %s\n", appname );
-        WINE_MESSAGE( "         because DOSBox doesn't support running from the Z: drive.\n" );
-        ExitProcess(1);
-    }
     if (!GetTempPathW( MAX_PATH, path )) return;
     if (!GetTempFileNameW( path, cfgW, 0, config )) return;
     if (!GetCurrentDirectoryW( MAX_PATH, path )) return;
@@ -174,12 +168,19 @@ static void start_dosbox( const char *appname, const char *args )
     if (file == INVALID_HANDLE_VALUE) return;
 
     buffer = HeapAlloc( GetProcessHeap(), 0, sizeof("[autoexec]") +
+                        sizeof("mount -z c") + sizeof("config -securemode") +
                         25 * (strlen(config_dir) + sizeof("mount c /dosdevices/c:")) +
                         4 * strlenW( path ) +
                         6 + strlen( appname ) + strlen( args ) + 20 );
     p = buffer;
     p += sprintf( p, "[autoexec]\n" );
-    for (i = 0; i < 25; i++)
+    for (i = 25; i >= 0; i--)
+        if (!(drives & (1 << i)))
+        {
+            p += sprintf( p, "mount -z %c\n", 'a' + i );
+            break;
+        }
+    for (i = 0; i <= 25; i++)
         if (drives & (1 << i))
             p += sprintf( p, "mount %c %s/dosdevices/%c:\n", 'a' + i, config_dir, 'a' + i );
     p += sprintf( p, "%c:\ncd ", path[0] );
