@@ -41,7 +41,122 @@
 #include "wine/list.h"
 #include "wine/unicode.h"
 
-#ifdef HAVE_LIBGETTEXTPO
+static resource_t *new_top, *new_tail;
+
+static int is_english( const language_t *lan )
+{
+    return lan->id == LANG_ENGLISH && lan->sub == SUBLANG_DEFAULT;
+}
+
+static version_t *get_dup_version( language_t *lang )
+{
+    /* English "translations" take precedence over the original rc contents */
+    return new_version( is_english( lang ) ? 1 : -1 );
+}
+
+static name_id_t *dup_name_id( name_id_t *id )
+{
+    name_id_t *new;
+
+    if (!id || id->type != name_str) return id;
+    new = new_name_id();
+    *new = *id;
+    new->name.s_name = convert_string( id->name.s_name, str_unicode, 1252 );
+    return new;
+}
+
+static char *convert_msgid_ascii( const string_t *str, int error_on_invalid_char )
+{
+    int i;
+    string_t *newstr = convert_string( str, str_unicode, 1252 );
+    char *buffer = xmalloc( newstr->size + 1 );
+
+    for (i = 0; i < newstr->size; i++)
+    {
+        buffer[i] =  newstr->str.wstr[i];
+        if (newstr->str.wstr[i] >= 32 && newstr->str.wstr[i] <= 127) continue;
+        if (newstr->str.wstr[i] == '\t' || newstr->str.wstr[i] == '\n') continue;
+        if (error_on_invalid_char)
+        {
+            print_location( &newstr->loc );
+            error( "Invalid character %04x in source string\n", newstr->str.wstr[i] );
+        }
+        free( buffer);
+        free_string( newstr );
+        return NULL;
+    }
+    buffer[i] = 0;
+    free_string( newstr );
+    return buffer;
+}
+
+static char *get_message_context( char **msgid )
+{
+    static const char magic[] = "#msgctxt#";
+    char *id, *context;
+
+    if (strncmp( *msgid, magic, sizeof(magic) - 1 )) return NULL;
+    context = *msgid + sizeof(magic) - 1;
+    if (!(id = strchr( context, '#' ))) return NULL;
+    *id = 0;
+    *msgid = id + 1;
+    return context;
+}
+
+static int control_has_title( const control_t *ctrl )
+{
+    if (!ctrl->title) return 0;
+    if (ctrl->title->type != name_str) return 0;
+    /* check for text static control */
+    if (ctrl->ctlclass && ctrl->ctlclass->type == name_ord && ctrl->ctlclass->name.i_name == CT_STATIC)
+    {
+        switch (ctrl->style->or_mask & SS_TYPEMASK)
+        {
+        case SS_LEFT:
+        case SS_CENTER:
+        case SS_RIGHT:
+            return 1;
+        default:
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static resource_t *dup_resource( resource_t *res, language_t *lang )
+{
+    resource_t *new = xmalloc( sizeof(*new) );
+
+    *new = *res;
+    new->lan = lang;
+    new->next = new->prev = NULL;
+    new->name = dup_name_id( res->name );
+
+    switch (res->type)
+    {
+    case res_dlg:
+        new->res.dlg = xmalloc( sizeof(*(new)->res.dlg) );
+        *new->res.dlg = *res->res.dlg;
+        new->res.dlg->lvc.language = lang;
+        new->res.dlg->lvc.version = get_dup_version( lang );
+        break;
+    case res_men:
+        new->res.men = xmalloc( sizeof(*(new)->res.men) );
+        *new->res.men = *res->res.men;
+        new->res.men->lvc.language = lang;
+        new->res.men->lvc.version = get_dup_version( lang );
+        break;
+    case res_stt:
+        new->res.stt = xmalloc( sizeof(*(new)->res.stt) );
+        *new->res.stt = *res->res.stt;
+        new->res.stt->lvc.language = lang;
+        new->res.stt->lvc.version = get_dup_version( lang );
+        break;
+    default:
+        assert(0);
+    }
+    return new;
+}
 
 static const struct
 {
@@ -276,6 +391,37 @@ static const struct
 #endif
 };
 
+#ifndef HAVE_LIBGETTEXTPO
+
+typedef void *po_file_t;
+
+static const char *get_msgstr( po_file_t po, const char *msgid, const char *context, int *found )
+{
+    if (context) (*found)++;
+    return msgid;
+}
+
+static po_file_t read_po_file( const char *name )
+{
+    return NULL;
+}
+
+static void po_file_free ( po_file_t po )
+{
+}
+
+void write_pot_file( const char *outname )
+{
+    error( "PO files not supported in this wrc build\n" );
+}
+
+void write_po_files( const char *outname )
+{
+    error( "PO files not supported in this wrc build\n" );
+}
+
+#else  /* HAVE_LIBGETTEXTPO */
+
 static void po_xerror( int severity, po_message_t message,
                        const char *filename, size_t lineno, size_t column,
                        int multiline_p, const char *message_text )
@@ -301,11 +447,6 @@ static void po_xerror2( int severity, po_message_t message1,
 
 static const struct po_xerror_handler po_xerror_handler = { po_xerror, po_xerror2 };
 
-static int is_english( const language_t *lan )
-{
-    return lan->id == LANG_ENGLISH && lan->sub == SUBLANG_DEFAULT;
-}
-
 static char *convert_string_utf8( const string_t *str, int codepage )
 {
     string_t *newstr = convert_string( str, str_unicode, codepage );
@@ -314,44 +455,6 @@ static char *convert_string_utf8( const string_t *str, int codepage )
     buffer[len] = 0;
     free_string( newstr );
     return buffer;
-}
-
-static char *convert_msgid_ascii( const string_t *str, int error_on_invalid_char )
-{
-    int i;
-    string_t *newstr = convert_string( str, str_unicode, 1252 );
-    char *buffer = xmalloc( newstr->size + 1 );
-
-    for (i = 0; i < newstr->size; i++)
-    {
-        buffer[i] =  newstr->str.wstr[i];
-        if (newstr->str.wstr[i] >= 32 && newstr->str.wstr[i] <= 127) continue;
-        if (newstr->str.wstr[i] == '\t' || newstr->str.wstr[i] == '\n') continue;
-        if (error_on_invalid_char)
-        {
-            print_location( &newstr->loc );
-            error( "Invalid character %04x in source string\n", newstr->str.wstr[i] );
-        }
-        free( buffer);
-        free_string( newstr );
-        return NULL;
-    }
-    buffer[i] = 0;
-    free_string( newstr );
-    return buffer;
-}
-
-static char *get_message_context( char **msgid )
-{
-    static const char magic[] = "#msgctxt#";
-    char *id, *context;
-
-    if (strncmp( *msgid, magic, sizeof(magic) - 1 )) return NULL;
-    context = *msgid + sizeof(magic) - 1;
-    if (!(id = strchr( context, '#' ))) return NULL;
-    *id = 0;
-    *msgid = id + 1;
-    return context;
 }
 
 static po_message_t find_message( po_file_t po, const char *msgid, const char *msgctxt,
@@ -369,6 +472,32 @@ static po_message_t find_message( po_file_t po, const char *msgid, const char *m
         if (!strcmp( context, msgctxt )) break;
     }
     return msg;
+}
+
+static const char *get_msgstr( po_file_t po, const char *msgid, const char *context, int *found )
+{
+    const char *ret = msgid;
+    po_message_t msg;
+    po_message_iterator_t iterator;
+
+    msg = find_message( po, msgid, context, &iterator );
+    if (msg && !po_message_is_fuzzy( msg ))
+    {
+        ret = po_message_msgstr( msg );
+        if (!ret[0]) ret = msgid;  /* ignore empty strings */
+        else (*found)++;
+    }
+    po_message_iterator_free( iterator );
+    return ret;
+}
+
+static po_file_t read_po_file( const char *name )
+{
+    po_file_t po;
+
+    if (!(po = po_file_read( name, &po_xerror_handler )))
+        error( "cannot load po file '%s'\n", name );
+    return po;
 }
 
 static void add_po_string( po_file_t po, const string_t *msgid, const string_t *msgstr,
@@ -504,26 +633,6 @@ static unsigned int flush_po_files( const char *output_name )
         free( name );
     }
     return count;
-}
-
-static int control_has_title( const control_t *ctrl )
-{
-    if (!ctrl->title) return 0;
-    if (ctrl->title->type != name_str) return 0;
-    /* check for text static control */
-    if (ctrl->ctlclass && ctrl->ctlclass->type == name_ord && ctrl->ctlclass->name.i_name == CT_STATIC)
-    {
-        switch (ctrl->style->or_mask & SS_TYPEMASK)
-        {
-        case SS_LEFT:
-        case SS_CENTER:
-        case SS_RIGHT:
-            return 1;
-        default:
-            return 0;
-        }
-    }
-    return 1;
 }
 
 static void add_pot_stringtable( po_file_t po, const resource_t *res )
@@ -679,13 +788,10 @@ void write_pot_file( const char *outname )
 void write_po_files( const char *outname )
 {
     resource_t *res, *english;
-    po_file_t po;
 
     for (res = resource_top; res; res = res->next)
     {
         if (!(english = find_english_resource( res ))) continue;
-        po = get_po_file( res->lan );
-
         switch (res->type)
         {
         case res_acc: break;  /* FIXME */
@@ -703,64 +809,10 @@ void write_po_files( const char *outname )
     }
 }
 
-static resource_t *new_top, *new_tail;
-
-static version_t *get_dup_version( language_t *lang )
-{
-    /* English "translations" take precedence over the original rc contents */
-    return new_version( is_english( lang ) ? 1 : -1 );
-}
-
-static name_id_t *dup_name_id( name_id_t *id )
-{
-    name_id_t *new;
-
-    if (!id || id->type != name_str) return id;
-    new = new_name_id();
-    *new = *id;
-    new->name.s_name = convert_string( id->name.s_name, str_unicode, 1252 );
-    return new;
-}
-
-static resource_t *dup_resource( resource_t *res, language_t *lang )
-{
-    resource_t *new = xmalloc( sizeof(*new) );
-
-    *new = *res;
-    new->lan = lang;
-    new->next = new->prev = NULL;
-    new->name = dup_name_id( res->name );
-
-    switch (res->type)
-    {
-    case res_dlg:
-        new->res.dlg = xmalloc( sizeof(*(new)->res.dlg) );
-        *new->res.dlg = *res->res.dlg;
-        new->res.dlg->lvc.language = lang;
-        new->res.dlg->lvc.version = get_dup_version( lang );
-        break;
-    case res_men:
-        new->res.men = xmalloc( sizeof(*(new)->res.men) );
-        *new->res.men = *res->res.men;
-        new->res.men->lvc.language = lang;
-        new->res.men->lvc.version = get_dup_version( lang );
-        break;
-    case res_stt:
-        new->res.stt = xmalloc( sizeof(*(new)->res.stt) );
-        *new->res.stt = *res->res.stt;
-        new->res.stt->lvc.language = lang;
-        new->res.stt->lvc.version = get_dup_version( lang );
-        break;
-    default:
-        assert(0);
-    }
-    return new;
-}
+#endif  /* HAVE_LIBGETTEXTPO */
 
 static string_t *translate_string( po_file_t po, string_t *str, int *found )
 {
-    po_message_t msg;
-    po_message_iterator_t iterator;
     string_t *new;
     const char *transl;
     int res;
@@ -771,16 +823,7 @@ static string_t *translate_string( po_file_t po, string_t *str, int *found )
 
     msgid = buffer;
     context = get_message_context( &msgid );
-    msg = find_message( po, msgid, context, &iterator );
-    po_message_iterator_free( iterator );
-
-    if (msg && !po_message_is_fuzzy( msg ))
-    {
-        transl = po_message_msgstr( msg );
-        if (!transl[0]) transl = msgid;  /* ignore empty strings */
-        else (*found)++;
-    }
-    else transl = msgid;
+    transl = get_msgstr( po, msgid, context, found );
 
     new = xmalloc( sizeof(*new) );
     new->type = str_unicode;
@@ -959,8 +1002,7 @@ void add_translations( const char *po_dir )
                 error( "unknown language '%s'\n", tok );
 
             name = strmake( "%s/%s.po", po_dir, tok );
-            if (!(po = po_file_read( name, &po_xerror_handler )))
-                error( "cannot load po file for language '%s'\n", tok );
+            po = read_po_file( name );
             translate_resources( po, new_language(languages[i].id, languages[i].sub) );
             po_file_free( po );
             free( name );
@@ -976,21 +1018,3 @@ void add_translations( const char *po_dir )
         resource_top = new_top;
     }
 }
-
-#else  /* HAVE_LIBGETTEXTPO */
-
-void write_pot_file( const char *outname )
-{
-    error( "PO files not supported in this wrc build\n" );
-}
-
-void write_po_files( const char *outname )
-{
-    error( "PO files not supported in this wrc build\n" );
-}
-
-void add_translations( const char *po_dir )
-{
-}
-
-#endif
