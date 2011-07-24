@@ -1640,7 +1640,7 @@ test "x$ac_cv_member_oss_sysinfo_numaudioengines" = xyes || enable_wineoss_drv=$
 test "$ac_cv_header_linux_joystick_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
 dnl **** Check for any sound system ****
-if test "x$ALSALIBS$COREAUDIOLIBS" = "x" -a \
+if test "x$ALSALIBS$COREAUDIO" = "x" -a \
         "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes -a \
         "x$with_alsa$with_coreaudio$with_oss" != xnonono
 then
