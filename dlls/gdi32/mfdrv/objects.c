@@ -270,7 +270,7 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
 	    info->bmiHeader.biSizeImage = bmSize;
 
 	    GetBitmapBits((HANDLE)logbrush.lbHatch,
-		      bm.bmHeight * BITMAP_GetWidthBytes (bm.bmWidth, bm.bmBitsPixel),
+		      bm.bmHeight * get_bitmap_stride(bm.bmWidth, bm.bmBitsPixel),
 		      (LPBYTE)info + sizeof(BITMAPINFO) + sizeof(RGBQUAD));
 
 	    /* Change the padding to be DIB compatible if needed */

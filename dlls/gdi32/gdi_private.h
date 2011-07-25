@@ -311,7 +311,6 @@ extern BOOL BIDI_Reorder( HDC hDC, LPCWSTR lpString, INT uCount, DWORD dwFlags, 
 /* bitmap.c */
 extern HBITMAP BITMAP_CopyBitmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 extern BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, PHYSDEV physdev ) DECLSPEC_HIDDEN;
-extern INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp ) DECLSPEC_HIDDEN;
 
 /* clipping.c */
 extern int get_clip_box( DC *dc, RECT *rect ) DECLSPEC_HIDDEN;
@@ -547,6 +546,11 @@ static inline void offset_rect( RECT *rect, int offset_x, int offset_y )
     rect->top    += offset_y;
     rect->right  += offset_x;
     rect->bottom += offset_y;
+}
+
+static inline int get_bitmap_stride( int width, int bpp )
+{
+    return ((width * bpp + 15) >> 3) & ~1;
 }
 
 static inline int get_dib_stride( int width, int bpp )

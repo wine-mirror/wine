@@ -137,41 +137,6 @@ done:
 }
 
 
-/***********************************************************************
- *           BITMAP_GetWidthBytes
- *
- * Return number of bytes taken by a scanline of 16-bit aligned Windows DDB
- * data.
- */
-INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp )
-{
-    switch(bpp)
-    {
-    case 1:
-	return 2 * ((bmWidth+15) >> 4);
-
-    case 24:
-	bmWidth *= 3; /* fall through */
-    case 8:
-	return bmWidth + (bmWidth & 1);
-
-    case 32:
-	return bmWidth * 4;
-
-    case 16:
-    case 15:
-	return bmWidth * 2;
-
-    case 4:
-	return 2 * ((bmWidth+3) >> 2);
-
-    default:
-	WARN("Unknown depth %d, please report.\n", bpp );
-    }
-    return -1;
-}
-
-
 /******************************************************************************
  * CreateBitmap [GDI32.@]
  *
@@ -196,7 +161,7 @@ HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
     bm.bmType = 0;
     bm.bmWidth = width;
     bm.bmHeight = height;
-    bm.bmWidthBytes = BITMAP_GetWidthBytes( width, bpp );
+    bm.bmWidthBytes = get_bitmap_stride( width, bpp );
     bm.bmPlanes = planes;
     bm.bmBitsPixel = bpp;
     bm.bmBits = (LPVOID)bits;
@@ -363,7 +328,7 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
     }
 
     /* Windows ignores the provided bm.bmWidthBytes */
-    bm.bmWidthBytes = BITMAP_GetWidthBytes( bm.bmWidth, bm.bmBitsPixel );
+    bm.bmWidthBytes = get_bitmap_stride( bm.bmWidth, bm.bmBitsPixel );
     /* XP doesn't allow to create bitmaps larger than 128 Mb */
     if (bm.bmHeight > 128 * 1024 * 1024 / bm.bmWidthBytes)
     {
@@ -426,7 +391,7 @@ LONG WINAPI GetBitmapBits(
     {
         DIBSECTION *dib = bmp->dib;
         const char *src = dib->dsBm.bmBits;
-        INT width_bytes = BITMAP_GetWidthBytes(dib->dsBm.bmWidth, dib->dsBm.bmBitsPixel);
+        INT width_bytes = get_bitmap_stride(dib->dsBm.bmWidth, dib->dsBm.bmBitsPixel);
         LONG max = width_bytes * bmp->bitmap.bmHeight;
 
         if (!bits)

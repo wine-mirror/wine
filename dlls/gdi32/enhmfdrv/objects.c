@@ -231,7 +231,7 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
         info->biBitCount = bm.bmBitsPixel;
         info->biSizeImage = bmSize;
         GetBitmapBits((HANDLE)logbrush.lbHatch,
-                      bm.bmHeight * BITMAP_GetWidthBytes(bm.bmWidth, bm.bmBitsPixel),
+                      bm.bmHeight * get_bitmap_stride(bm.bmWidth, bm.bmBitsPixel),
                       (LPBYTE)info + sizeof(BITMAPINFOHEADER));
 
         /* Change the padding to be DIB compatible if needed */
