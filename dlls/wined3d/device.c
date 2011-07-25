@@ -5614,14 +5614,23 @@ err:
 
 /* Do not call while under the GL lock. */
 HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
-        WINED3DPRESENT_PARAMETERS *present_parameters)
+        WINED3DPRESENT_PARAMETERS *present_parameters,
+        wined3d_device_reset_cb callback)
 {
+    struct wined3d_resource *resource, *cursor;
     struct wined3d_swapchain *swapchain;
     BOOL DisplayModeChanged = FALSE;
     WINED3DDISPLAYMODE mode;
     HRESULT hr;
 
     TRACE("device %p, present_parameters %p.\n", device, present_parameters);
+
+    LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
+    {
+        TRACE("Enumerating resource %p.\n", resource);
+        if (FAILED(hr = callback(resource)))
+            return hr;
+    }
 
     hr = wined3d_device_get_swapchain(device, 0, &swapchain);
     if (FAILED(hr))

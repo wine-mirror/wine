@@ -2108,6 +2108,7 @@ struct wined3d_device_parent_ops
 };
 
 typedef HRESULT (__stdcall *D3DCB_ENUMRESOURCES)(struct wined3d_resource *resource, void *pData);
+typedef HRESULT (CDECL *wined3d_device_reset_cb)(struct wined3d_resource *resource);
 
 void __stdcall wined3d_mutex_lock(void);
 void __stdcall wined3d_mutex_unlock(void);
@@ -2284,7 +2285,8 @@ HRESULT __cdecl wined3d_device_process_vertices(struct wined3d_device *device,
         UINT src_start_idx, UINT dst_idx, UINT vertex_count, struct wined3d_buffer *dst_buffer,
         struct wined3d_vertex_declaration *declaration, DWORD flags, DWORD dst_fvf);
 void __cdecl wined3d_device_release_focus_window(struct wined3d_device *device);
-HRESULT __cdecl wined3d_device_reset(struct wined3d_device *device, WINED3DPRESENT_PARAMETERS *present_parameters);
+HRESULT __cdecl wined3d_device_reset(struct wined3d_device *device,
+        WINED3DPRESENT_PARAMETERS *present_parameters, wined3d_device_reset_cb callback);
 void __cdecl wined3d_device_restore_fullscreen_window(struct wined3d_device *device, HWND window);
 HRESULT __cdecl wined3d_device_set_base_vertex_index(struct wined3d_device *device, INT base_index);
 HRESULT __cdecl wined3d_device_set_clip_plane(struct wined3d_device *device, UINT plane_idx, const float *plane);

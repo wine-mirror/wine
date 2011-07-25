@@ -516,10 +516,9 @@ static UINT WINAPI IDirect3DDevice9Impl_GetNumberOfSwapChains(IDirect3DDevice9Ex
     return count;
 }
 
-static HRESULT WINAPI reset_enum_callback(struct wined3d_resource *resource, void *data)
+static HRESULT CDECL reset_enum_callback(struct wined3d_resource *resource)
 {
     struct wined3d_resource_desc desc;
-    BOOL *resources_ok = data;
 
     wined3d_resource_get_desc(resource, &desc);
     if (desc.pool == WINED3DPOOL_DEFAULT)
@@ -529,8 +528,7 @@ static HRESULT WINAPI reset_enum_callback(struct wined3d_resource *resource, voi
         if (desc.resource_type != WINED3DRTYPE_SURFACE)
         {
             WARN("Resource %p in pool D3DPOOL_DEFAULT blocks the Reset call.\n", resource);
-            *resources_ok = FALSE;
-            return S_FALSE;
+            return D3DERR_INVALIDCALL;
         }
 
         surface = wined3d_resource_get_parent(resource);
@@ -539,14 +537,13 @@ static HRESULT WINAPI reset_enum_callback(struct wined3d_resource *resource, voi
         if (IDirect3DSurface9_Release(surface))
         {
             WARN("Surface %p (resource %p) in pool D3DPOOL_DEFAULT blocks the Reset call.\n", surface, resource);
-            *resources_ok = FALSE;
-            return S_FALSE;
+            return D3DERR_INVALIDCALL;
         }
 
         WARN("Surface %p (resource %p) is an implicit resource with ref 0.\n", surface, resource);
     }
 
-    return S_OK;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_Reset(IDirect3DDevice9Ex *iface,
@@ -555,7 +552,6 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_Reset(IDirect3DDevi
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
     WINED3DPRESENT_PARAMETERS localParameters;
     HRESULT hr;
-    BOOL resources_ok = TRUE;
     UINT i;
 
     TRACE("iface %p, present_parameters %p.\n", iface, pPresentationParameters);
@@ -579,16 +575,6 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_Reset(IDirect3DDevi
         wined3d_device_set_texture(This->wined3d_device, i, NULL);
     }
 
-    wined3d_device_enum_resources(This->wined3d_device, reset_enum_callback, &resources_ok);
-    if (!resources_ok)
-    {
-        WARN("The application is holding D3DPOOL_DEFAULT resources, rejecting reset\n");
-        This->notreset = TRUE;
-        wined3d_mutex_unlock();
-
-        return D3DERR_INVALIDCALL;
-    }
-
     localParameters.BackBufferWidth                     = pPresentationParameters->BackBufferWidth;
     localParameters.BackBufferHeight                    = pPresentationParameters->BackBufferHeight;
     localParameters.BackBufferFormat                    = wined3dformat_from_d3dformat(pPresentationParameters->BackBufferFormat);
@@ -605,8 +591,9 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_Reset(IDirect3DDevi
     localParameters.PresentationInterval                = pPresentationParameters->PresentationInterval;
     localParameters.AutoRestoreDisplayMode              = TRUE;
 
-    hr = wined3d_device_reset(This->wined3d_device, &localParameters);
-    if(FAILED(hr)) {
+    hr = wined3d_device_reset(This->wined3d_device, &localParameters, reset_enum_callback);
+    if (FAILED(hr))
+    {
         This->notreset = TRUE;
 
         pPresentationParameters->BackBufferWidth            = localParameters.BackBufferWidth;

@@ -113,7 +113,7 @@
 @ cdecl wined3d_device_present(ptr ptr ptr ptr ptr)
 @ cdecl wined3d_device_process_vertices(ptr long long long ptr ptr long long)
 @ cdecl wined3d_device_release_focus_window(ptr)
-@ cdecl wined3d_device_reset(ptr ptr)
+@ cdecl wined3d_device_reset(ptr ptr ptr)
 @ cdecl wined3d_device_restore_fullscreen_window(ptr ptr)
 @ cdecl wined3d_device_set_base_vertex_index(ptr long)
 @ cdecl wined3d_device_set_clip_plane(ptr long ptr)
