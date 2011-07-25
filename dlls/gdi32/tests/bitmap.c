@@ -3230,6 +3230,378 @@ static void test_GetSetDIBits_rtl(void)
     ReleaseDC( NULL, hdc );
 }
 
+static void test_SetDIBits(void)
+{
+    char bmi_buf[ FIELD_OFFSET( BITMAPINFO, bmiColors[256] ) ];
+    BITMAPINFO *info = (BITMAPINFO *)bmi_buf;
+    DWORD *dib_bits;
+    HDC hdc = GetDC( NULL );
+    DWORD data[128], inverted_data[128];
+    HBITMAP dib;
+    int i, ret;
+
+    memset( info, 0, sizeof(bmi_buf) );
+
+    info->bmiHeader.biSize        = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth       = 8;
+    info->bmiHeader.biHeight      = 8;
+    info->bmiHeader.biPlanes      = 1;
+    info->bmiHeader.biBitCount    = 32;
+    info->bmiHeader.biCompression = BI_RGB;
+
+    dib = CreateDIBSection( NULL, info, DIB_RGB_COLORS, (void**)&dib_bits, NULL, 0 );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    for (i = 0; i < 128; i++)
+    {
+        data[i] = i;
+        inverted_data[120 - (i & ~7) + (i & 7)] = i;
+    }
+
+    /* b-u -> b-u */
+
+    ret = SetDIBits( hdc, dib, 0, 8, data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( dib_bits, data, 64 * 4 ), "bits differ\n");
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBits( hdc, dib, 1, 5, data, info, DIB_RGB_COLORS );
+    ok( ret == 5, "got %d\n", ret );
+    for (i = 0; i < 8; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    ok( !memcmp( dib_bits + 8, data, 40 * 4 ), "bits differ\n");
+    for (i = 48; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    /* top of dst is aligned with startscans down for the top of the src.
+       Then starting from the bottom of src, lines rows are copied across. */
+
+    info->bmiHeader.biHeight = 16;
+    ret = SetDIBits( hdc, dib, 1, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 12, "got %d\n", ret );
+    ok( !memcmp( dib_bits, data + 56,  40 * 4 ), "bits differ\n");
+    for (i = 40; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biHeight = 5;
+    ret = SetDIBits( hdc, dib, 1, 2, data, info, DIB_RGB_COLORS );
+    ok( ret == 2, "got %d\n", ret );
+    for (i = 0; i < 32; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    ok( !memcmp( dib_bits + 32, data,  16 * 4 ), "bits differ\n");
+    for (i = 48; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+
+    /* t-d -> b-u */
+    info->bmiHeader.biHeight = -8;
+    ret = SetDIBits( hdc, dib, 0, 8, data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( dib_bits, inverted_data + 64,  64 * 4 ), "bits differ\n");
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    /* top of dst now lines up with -(abs(src_h) - startscan - lines) and
+       we copy lines rows from the top of the src */
+
+    ret = SetDIBits( hdc, dib, 1, 5, data, info, DIB_RGB_COLORS );
+    ok( ret == 5, "got %d\n", ret );
+    for (i = 0; i < 8; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    ok( !memcmp( dib_bits + 8, inverted_data + 88, 40 * 4 ), "bits differ\n");
+    for (i = 48; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biHeight = -16;
+    ret = SetDIBits( hdc, dib, 1, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 12, "got %d\n", ret );
+    ok( !memcmp( dib_bits, inverted_data + 88, 40 * 4 ), "bits differ\n");
+    for (i = 40; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biHeight = -5;
+    ret = SetDIBits( hdc, dib, 1, 2, data, info, DIB_RGB_COLORS );
+    ok( ret == 2, "got %d\n", ret );
+    for (i = 0; i < 32; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    ok( !memcmp( dib_bits + 32, inverted_data + 112, 16 * 4 ), "bits differ\n");
+    for (i = 48; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    DeleteObject( dib );
+
+    info->bmiHeader.biHeight = -8;
+
+    dib = CreateDIBSection( NULL, info, DIB_RGB_COLORS, (void**)&dib_bits, NULL, 0 );
+    memset( dib_bits, 0xaa, 16 * 16 * 4 );
+
+    /* t-d -> t-d */
+
+    /* like the t-d -> b-u case. */
+
+    ret = SetDIBits( hdc, dib, 0, 8, data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( dib_bits, data, 64 * 4 ), "bits differ\n");
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBits( hdc, dib, 1, 5, data, info, DIB_RGB_COLORS );
+    ok( ret == 5, "got %d\n", ret );
+    for (i = 0; i < 16; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    ok( !memcmp( dib_bits + 16, data, 40 * 4 ), "bits differ\n");
+    for (i = 56; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biHeight = -16;
+    ret = SetDIBits( hdc, dib, 1, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 12, "got %d\n", ret );
+    for (i = 0; i < 24; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    ok( !memcmp( dib_bits + 24, data,  40 * 4 ), "bits differ\n");
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biHeight = -5;
+    ret = SetDIBits( hdc, dib, 1, 2, data, info, DIB_RGB_COLORS );
+    ok( ret == 2, "got %d\n", ret );
+    for (i = 0; i < 16; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    ok( !memcmp( dib_bits + 16, data,  16 * 4 ), "bits differ\n");
+    for (i = 32; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    /* b-u -> t-d */
+    /* like the b-u -> b-u case */
+
+    info->bmiHeader.biHeight = 8;
+    ret = SetDIBits( hdc, dib, 0, 8, data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( dib_bits, inverted_data + 64, 64 * 4 ), "bits differ\n");
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBits( hdc, dib, 1, 5, data, info, DIB_RGB_COLORS );
+    ok( ret == 5, "got %d\n", ret );
+    for (i = 0; i < 16; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    ok( !memcmp( dib_bits + 16, inverted_data + 88, 40 * 4 ), "bits differ\n");
+    for (i = 56; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biHeight = 16;
+    ret = SetDIBits( hdc, dib, 1, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 12, "got %d\n", ret );
+    for (i = 0; i < 24; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    ok( !memcmp( dib_bits + 24, inverted_data + 32, 40 * 4 ), "bits differ\n");
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biHeight = 5;
+    ret = SetDIBits( hdc, dib, 1, 2, data, info, DIB_RGB_COLORS );
+    ok( ret == 2, "got %d\n", ret );
+    for (i = 0; i < 16; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    ok( !memcmp( dib_bits + 16, inverted_data + 112, 16 * 4 ), "bits differ\n");
+    for (i = 32; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    DeleteObject( dib );
+    ReleaseDC( NULL, hdc );
+}
+
+static void test_SetDIBits_RLE4(void)
+{
+    char bmi_buf[ FIELD_OFFSET( BITMAPINFO, bmiColors[256] ) ];
+    BITMAPINFO *info = (BITMAPINFO *)bmi_buf;
+    DWORD *dib_bits;
+    HDC hdc = GetDC( NULL );
+    BYTE rle4_data[26] = { 0x03, 0x52, 0x07, 0x68, 0x00, 0x00,     /* 5, 2, 5, 6, 8, 6, 8, 6, (8, 6,) <eol> */
+                           0x00, 0x03, 0x14, 0x50, 0x00, 0x05,
+                           0x79, 0xfd, 0xb0, 0x00, 0x00, 0x00,     /* 1, 4, 5, 7, 9, f, d, b <pad> <eol> */
+                           0x00, 0x02, 0x01, 0x02, 0x05, 0x87,     /* dx=1, dy=2, 8, 7, 8, 7, 8 */
+                           0x00, 0x01 };                           /* <eod> */
+    HBITMAP dib;
+    int i, ret;
+    DWORD bottom_up[64] = { 0x00050505, 0x00020202, 0x00050505, 0x00060606, 0x00080808, 0x00060606, 0x00080808, 0x00060606,
+                            0x00010101, 0x00040404, 0x00050505, 0x00070707, 0x00090909, 0x000f0f0f, 0x000d0d0d, 0x000b0b0b,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0x00080808, 0x00070707, 0x00080808, 0x00070707, 0x00080808, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa };
+
+    memset( info, 0, sizeof(bmi_buf) );
+
+    info->bmiHeader.biSize        = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth       = 8;
+    info->bmiHeader.biHeight      = 8;
+    info->bmiHeader.biPlanes      = 1;
+    info->bmiHeader.biBitCount    = 32;
+    info->bmiHeader.biCompression = BI_RGB;
+
+    dib = CreateDIBSection( NULL, info, DIB_RGB_COLORS, (void**)&dib_bits, NULL, 0 );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biBitCount    = 4;
+    info->bmiHeader.biCompression = BI_RLE4;
+    info->bmiHeader.biSizeImage   = sizeof(rle4_data);
+
+    for (i = 0; i < 16; i++)
+    {
+        info->bmiColors[i].rgbRed      = i;
+        info->bmiColors[i].rgbGreen    = i;
+        info->bmiColors[i].rgbBlue     = i;
+        info->bmiColors[i].rgbReserved = 0;
+    }
+
+    ret = SetDIBits( hdc, dib, 0, 8, rle4_data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( dib_bits, bottom_up, sizeof(bottom_up) ), "bits differ\n" );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    DeleteObject( dib );
+    ReleaseDC( NULL, hdc );
+}
+
+static void test_SetDIBits_RLE8(void)
+{
+    char bmi_buf[ FIELD_OFFSET( BITMAPINFO, bmiColors[256] ) ];
+    BITMAPINFO *info = (BITMAPINFO *)bmi_buf;
+    DWORD *dib_bits;
+    HDC hdc = GetDC( NULL );
+    BYTE rle8_data[20] = { 0x03, 0x02, 0x04, 0xf0, 0x00, 0x00,     /* 2, 2, 2, f0, f0, f0, f0, <eol> */
+                           0x00, 0x03, 0x04, 0x05, 0x06, 0x00,     /* 4, 5, 6, <pad> */
+                           0x00, 0x02, 0x01, 0x02, 0x05, 0x80,     /* dx=1, dy=2, 80, 80, 80, 80, (80) */
+                           0x00, 0x01 };                           /* <eod> */
+    HBITMAP dib;
+    int i, ret;
+    DWORD bottom_up[64] = { 0x00020202, 0x00020202, 0x00020202, 0x00f0f0f0, 0x00f0f0f0, 0x00f0f0f0, 0x00f0f0f0, 0xaaaaaaaa,
+                            0x00040404, 0x00050505, 0x00060606, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0x00808080, 0x00808080, 0x00808080, 0x00808080,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa };
+    DWORD top_down[64]  = { 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0x00808080, 0x00808080, 0x00808080, 0x00808080,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0x00040404, 0x00050505, 0x00060606, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0x00020202, 0x00020202, 0x00020202, 0x00f0f0f0, 0x00f0f0f0, 0x00f0f0f0, 0x00f0f0f0, 0xaaaaaaaa };
+
+    memset( info, 0, sizeof(bmi_buf) );
+
+    info->bmiHeader.biSize        = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth       = 8;
+    info->bmiHeader.biHeight      = 8;
+    info->bmiHeader.biPlanes      = 1;
+    info->bmiHeader.biBitCount    = 32;
+    info->bmiHeader.biCompression = BI_RGB;
+
+    dib = CreateDIBSection( NULL, info, DIB_RGB_COLORS, (void**)&dib_bits, NULL, 0 );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biBitCount    = 8;
+    info->bmiHeader.biCompression = BI_RLE8;
+    info->bmiHeader.biSizeImage   = sizeof(rle8_data);
+
+    for (i = 0; i < 256; i++)
+    {
+        info->bmiColors[i].rgbRed      = i;
+        info->bmiColors[i].rgbGreen    = i;
+        info->bmiColors[i].rgbBlue     = i;
+        info->bmiColors[i].rgbReserved = 0;
+    }
+
+    ret = SetDIBits( hdc, dib, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( dib_bits, bottom_up, sizeof(bottom_up) ), "bits differ\n");
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    /* startscan and lines are ignored, unless lines == 0 */
+    ret = SetDIBits( hdc, dib, 1, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( dib_bits, bottom_up, sizeof(bottom_up) ), "bits differ\n");
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBits( hdc, dib, 1, 1, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( dib_bits, bottom_up, sizeof(bottom_up) ), "bits differ\n");
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBits( hdc, dib, 1, 0, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 0, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    /* reduce width to 4, left-hand side of dst is touched. */
+    info->bmiHeader.biWidth = 4;
+    ret = SetDIBits( hdc, dib, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    for (i = 0; i < 64; i++)
+    {
+        DWORD expect = (i & 4) ? 0xaaaaaaaa : bottom_up[i];
+        ok( dib_bits[i] == expect, "%d: got %08x\n", i, dib_bits[i] );
+    }
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    /* Show that the top lines are aligned by adjusting the height of the src */
+
+    /* reduce the height to 4 -> top 4 lines of dst are touched (corresponding to last half of the bits). */
+    info->bmiHeader.biWidth  = 8;
+    info->bmiHeader.biHeight = 4;
+    ret = SetDIBits( hdc, dib, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 4, "got %d\n", ret );
+    for (i = 0; i < 32; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    ok( !memcmp( dib_bits + 32, bottom_up, 32 * 4 ), "bits differ\n");
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    /* increase the height to 9 -> everything moves down one row. */
+    info->bmiHeader.biHeight = 9;
+    ret = SetDIBits( hdc, dib, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 9, "got %d\n", ret );
+    ok( !memcmp( dib_bits, bottom_up + 8, 56 * 4 ), "bits differ\n");
+    for (i = 0; i < 8; i++) ok( dib_bits[56 + i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[56 + i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    /* top-down compressed dibs are invalid */
+    info->bmiHeader.biHeight = -8;
+    SetLastError( 0xdeadbeef );
+    ret = SetDIBits( hdc, dib, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 0, "got %d\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %x\n", GetLastError() );
+    DeleteObject( dib );
+
+    /* top-down dst */
+
+    info->bmiHeader.biHeight      = -8;
+    info->bmiHeader.biBitCount    = 32;
+    info->bmiHeader.biCompression = BI_RGB;
+    info->bmiHeader.biSizeImage   = 0;
+
+    dib = CreateDIBSection( NULL, info, DIB_RGB_COLORS, (void**)&dib_bits, NULL, 0 );
+    memset( dib_bits, 0xaa, 16 * 16 * 4 );
+
+    info->bmiHeader.biHeight      = 8;
+    info->bmiHeader.biBitCount    = 8;
+    info->bmiHeader.biCompression = BI_RLE8;
+    info->bmiHeader.biSizeImage   = sizeof(rle8_data);
+
+    ret = SetDIBits( hdc, dib, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( dib_bits, top_down, sizeof(top_down) ), "bits differ\n");
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biHeight = 4;
+    ret = SetDIBits( hdc, dib, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 4, "got %d\n", ret );
+    ok( !memcmp( dib_bits, top_down + 32, 32 * 4 ), "bits differ\n");
+    for (i = 32; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biHeight = 9;
+    ret = SetDIBits( hdc, dib, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 9, "got %d\n", ret );
+    for (i = 0; i < 8; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    ok( !memcmp( dib_bits + 8, top_down, 56 * 4 ), "bits differ\n");
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    DeleteObject( dib );
+
+    ReleaseDC( NULL, hdc );
+}
+
 START_TEST(bitmap)
 {
     HMODULE hdll;
@@ -3264,4 +3636,7 @@ START_TEST(bitmap)
     test_GetDIBits_top_down(24);
     test_GetDIBits_top_down(32);
     test_GetSetDIBits_rtl();
+    test_SetDIBits();
+    test_SetDIBits_RLE4();
+    test_SetDIBits_RLE8();
 }
