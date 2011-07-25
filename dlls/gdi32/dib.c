@@ -233,6 +233,157 @@ static int fill_color_table_from_palette( BITMAPINFO *info, DC *dc )
     return colors;
 }
 
+static void *get_pixel_ptr( const BITMAPINFO *info, void *bits, int x, int y )
+{
+    const int width = info->bmiHeader.biWidth, height = info->bmiHeader.biHeight;
+    const int bpp = info->bmiHeader.biBitCount;
+
+    if (height > 0)
+        return (char *)bits + (height - y - 1) * get_dib_stride( width, bpp ) + x * bpp / 8;
+    else
+        return (char *)bits + y * get_dib_stride( width, bpp ) + x * bpp / 8;
+}
+
+static BOOL build_rle_bitmap( const BITMAPINFO *info, struct gdi_image_bits *bits, HRGN *clip )
+{
+    int i = 0;
+    int left, right;
+    int x, y, width = info->bmiHeader.biWidth, height = info->bmiHeader.biHeight;
+    HRGN run = NULL;
+    BYTE skip, num, data;
+    BYTE *out_bits, *in_bits = bits->ptr;
+
+    *clip = NULL;
+
+    assert( info->bmiHeader.biBitCount == 4 || info->bmiHeader.biBitCount == 8 );
+
+    out_bits = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( info ) );
+    *clip = CreateRectRgn( 0, 0, 0, 0 );
+    run   = CreateRectRgn( 0, 0, 0, 0 );
+    if (!out_bits || !*clip || !run) goto fail;
+
+    x = left = right = 0;
+    y = height - 1;
+
+    while (i < info->bmiHeader.biSizeImage - 1)
+    {
+        num = in_bits[i];
+        data = in_bits[i + 1];
+        i += 2;
+
+        if (num)
+        {
+            if (x + num > width) num = width - x;
+            if (num)
+            {
+                BYTE s = data, *out_ptr = get_pixel_ptr( info, out_bits, x, y );
+                if (info->bmiHeader.biBitCount == 8)
+                    memset( out_ptr, s, num );
+                else
+                {
+                    if(x & 1)
+                    {
+                        s = ((s >> 4) & 0x0f) | ((s << 4) & 0xf0);
+                        *out_ptr = (*out_ptr & 0xf0) | (s & 0x0f);
+                        out_ptr++;
+                        x++;
+                        num--;
+                    }
+                    /* this will write one too many if num is odd, but that doesn't matter */
+                    if (num) memset( out_ptr, s, (num + 1) / 2 );
+                }
+            }
+            x += num;
+            right = x;
+        }
+        else
+        {
+            if (data < 3)
+            {
+                if(left != right)
+                {
+                    SetRectRgn( run, left, y, right, y + 1 );
+                    CombineRgn( *clip, run, *clip, RGN_OR );
+                }
+                switch (data)
+                {
+                case 0: /* eol */
+                    left = right = x = 0;
+                    y--;
+                    if(y < 0) goto done;
+                    break;
+
+                case 1: /* eod */
+                    goto done;
+
+                case 2: /* delta */
+                    if (i >= info->bmiHeader.biSizeImage - 1) goto done;
+                    x += in_bits[i];
+                    if (x > width) x = width;
+                    left = right = x;
+                    y -= in_bits[i + 1];
+                    if(y < 0) goto done;
+                    i += 2;
+                }
+            }
+            else /* data bytes of data */
+            {
+                num = data;
+                skip = (num * info->bmiHeader.biBitCount + 7) / 8;
+                if (skip > info->bmiHeader.biSizeImage - i) goto done;
+                skip = (skip + 1) & ~1;
+                if (x + num > width) num = width - x;
+                if (num)
+                {
+                    BYTE *out_ptr = get_pixel_ptr( info, out_bits, x, y );
+                    if (info->bmiHeader.biBitCount == 8)
+                        memcpy( out_ptr, in_bits + i, num );
+                    else
+                    {
+                        if(x & 1)
+                        {
+                            const BYTE *in_ptr = in_bits + i;
+                            for ( ; num; num--, x++)
+                            {
+                                if (x & 1)
+                                {
+                                    *out_ptr = (*out_ptr & 0xf0) | ((*in_ptr >> 4) & 0x0f);
+                                    out_ptr++;
+                                }
+                                else
+                                    *out_ptr = (*in_ptr++ << 4) & 0xf0;
+                            }
+                        }
+                        else
+                            memcpy( out_ptr, in_bits + i, (num + 1) / 2);
+                    }
+                }
+                x += num;
+                right = x;
+                i += skip;
+            }
+        }
+    }
+
+done:
+    DeleteObject( run );
+    if (bits->free) bits->free( bits );
+
+    bits->ptr     = out_bits;
+    bits->is_copy = TRUE;
+    bits->free    = free_heap_bits;
+
+    return TRUE;
+
+fail:
+    if (run) DeleteObject( run );
+    if (*clip) DeleteObject( *clip );
+    HeapFree( GetProcessHeap(), 0, out_bits );
+    return FALSE;
+}
+
+
+
 /* nulldrv fallback implementation using SetDIBits/StretchBlt */
 INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
                            INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
@@ -355,7 +506,19 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
     BITMAPOBJ *bitmap;
     char src_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *src_info = (BITMAPINFO *)src_bmibuf;
+    char dst_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *dst_info = (BITMAPINFO *)dst_bmibuf;
     INT result = 0;
+    DWORD err;
+    struct gdi_image_bits src_bits;
+    struct bitblt_coords src, dst;
+    INT src_to_dst_offset;
+    HRGN clip = 0;
+
+    src_bits.ptr = (void *)bits;
+    src_bits.is_copy = FALSE;
+    src_bits.free = NULL;
+    src_bits.param = NULL;
 
     if (coloruse == DIB_RGB_COLORS && !dc)
     {
@@ -377,12 +540,97 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 
     if (!bitmapinfo_from_user_bitmapinfo( src_info, info, coloruse )) goto done;
 
-    physdev = GET_DC_PHYSDEV( dc, pSetDIBits );
+    if (coloruse == DIB_PAL_COLORS)
+        if (!fill_color_table_from_palette( src_info, dc )) goto done;
+
+    if (src_info->bmiHeader.biCompression == BI_RLE4 || src_info->bmiHeader.biCompression == BI_RLE8)
+    {
+        if ( src_info->bmiHeader.biHeight < 0 ||
+            (src_info->bmiHeader.biCompression == BI_RLE4 && src_info->bmiHeader.biBitCount != 4) ||
+            (src_info->bmiHeader.biCompression == BI_RLE8 && src_info->bmiHeader.biBitCount != 8) )
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            goto done;
+        }
+
+        if (lines == 0) goto done;
+        else lines = src_info->bmiHeader.biHeight;
+        startscan = 0;
+
+        if (!build_rle_bitmap( src_info, &src_bits, &clip )) goto done;
+    }
+
+    dst.visrect.left   = 0;
+    dst.visrect.top    = 0;
+    dst.visrect.right  = bitmap->bitmap.bmWidth;
+    dst.visrect.bottom = bitmap->bitmap.bmHeight;
+
+    src.visrect.left   = 0;
+    src.visrect.top    = 0;
+    src.visrect.right  = src_info->bmiHeader.biWidth;
+    src.visrect.bottom = abs( src_info->bmiHeader.biHeight );
+
+    if (src_info->bmiHeader.biHeight > 0)
+    {
+        src_to_dst_offset = -startscan;
+        lines = min( lines, src.visrect.bottom - startscan );
+        if (lines < src.visrect.bottom) src.visrect.top = src.visrect.bottom - lines;
+    }
+    else
+    {
+        src_to_dst_offset = src.visrect.bottom - lines - startscan;
+        /* Unlike the bottom-up case, Windows doesn't limit lines. */
+        if (lines < src.visrect.bottom) src.visrect.bottom = lines;
+    }
+
+    physdev = GET_DC_PHYSDEV( dc, pPutImage );
     if (!BITMAP_SetOwnerDC( hbitmap, physdev )) goto done;
 
-    result = physdev->funcs->pSetDIBits( physdev, hbitmap, startscan, lines, bits, src_info, coloruse );
+    result = lines;
+
+    offset_rect( &src.visrect, 0, src_to_dst_offset );
+    if (!intersect_rect( &dst.visrect, &src.visrect, &dst.visrect )) goto done;
+    src.visrect = dst.visrect;
+    offset_rect( &src.visrect, 0, -src_to_dst_offset );
+
+    src.x      = src.visrect.left;
+    src.y      = src.visrect.top;
+    src.width  = src.visrect.right - src.visrect.left;
+    src.height = src.visrect.bottom - src.visrect.top;
+
+    dst.x      = dst.visrect.left;
+    dst.y      = dst.visrect.top;
+    dst.width  = dst.visrect.right - dst.visrect.left;
+    dst.height = dst.visrect.bottom - dst.visrect.top;
+
+    memcpy( dst_info, src_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
+
+    err = physdev->funcs->pPutImage( physdev, hbitmap, clip, dst_info, &src_bits, &src, &dst, 0 );
+    if (err == ERROR_BAD_FORMAT)
+    {
+        void *ptr;
+
+        dst_info->bmiHeader.biWidth = dst.width;
+        ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ));
+        if (ptr)
+        {
+            err = convert_bitmapinfo( src_info, src_bits.ptr, &src.visrect, dst_info, ptr );
+            {
+                if (src_bits.free) src_bits.free( &src_bits );
+                src_bits.ptr = ptr;
+                src_bits.is_copy = TRUE;
+                src_bits.free = free_heap_bits;
+                if (!err)
+                    err = physdev->funcs->pPutImage( physdev, hbitmap, clip, dst_info, &src_bits, &src, &dst, 0 );
+            }
+        }
+        else err = ERROR_OUTOFMEMORY;
+    }
+    if(err) result = 0;
 
 done:
+    if (src_bits.free) src_bits.free( &src_bits );
+    if (clip) DeleteObject( clip );
     GDI_ReleaseObj( hbitmap );
     release_dc_ptr( dc );
     if (delete_hdc) DeleteDC(hdc);

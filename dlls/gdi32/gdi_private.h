@@ -560,4 +560,6 @@ static inline int get_dib_image_size( const BITMAPINFO *info )
         * abs( info->bmiHeader.biHeight );
 }
 
+extern void free_heap_bits( struct gdi_image_bits *bits ) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_GDI_PRIVATE_H */

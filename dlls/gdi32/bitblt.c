@@ -152,7 +152,7 @@ static BOOL get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
     return TRUE;
 }
 
-static void free_heap_bits( struct gdi_image_bits *bits )
+void free_heap_bits( struct gdi_image_bits *bits )
 {
     HeapFree( GetProcessHeap(), 0, bits->ptr );
 }
