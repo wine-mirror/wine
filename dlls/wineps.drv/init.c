@@ -837,7 +837,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pFlattenPath */
     NULL,                               /* pFrameRgn */
     NULL,                               /* pGdiComment */
-    NULL,                               /* pGetBitmapBits */
     PSDRV_GetCharWidth,                 /* pGetCharWidth */
     PSDRV_GetDeviceCaps,                /* pGetDeviceCaps */
     NULL,                               /* pGetDeviceGammaRamp */

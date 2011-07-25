@@ -480,7 +480,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pFlattenPath */
     NULL,                               /* pFrameRgn */
     NULL,                               /* pGdiComment */
-    NULL,                               /* pGetBitmapBits */
     X11DRV_GetCharWidth,                /* pGetCharWidth */
     X11DRV_GetDeviceCaps,               /* pGetDeviceCaps */
     X11DRV_GetDeviceGammaRamp,          /* pGetDeviceGammaRamp */

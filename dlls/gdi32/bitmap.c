@@ -50,16 +50,6 @@ static const struct gdi_obj_funcs bitmap_funcs =
  *           null driver fallback implementations
  */
 
-LONG nulldrv_GetBitmapBits( HBITMAP bitmap, void *bits, LONG size )
-{
-    BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
-
-    if (bmp->bitmap.bmBits) memcpy( bits, bmp->bitmap.bmBits, size );
-    else memset( bits, 0, size );
-    GDI_ReleaseObj( bitmap );
-    return size;
-}
-
 LONG nulldrv_SetBitmapBits( HBITMAP bitmap, const void *bits, LONG size )
 {
     BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );

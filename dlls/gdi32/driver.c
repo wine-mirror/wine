@@ -702,7 +702,6 @@ const DC_FUNCTIONS null_driver =
     nulldrv_FlattenPath,                /* pFlattenPath */
     nulldrv_FrameRgn,                   /* pFrameRgn */
     nulldrv_GdiComment,                 /* pGdiComment */
-    nulldrv_GetBitmapBits,              /* pGetBitmapBits */
     nulldrv_GetCharWidth,               /* pGetCharWidth */
     nulldrv_GetDeviceCaps,              /* pGetDeviceCaps */
     nulldrv_GetDeviceGammaRamp,         /* pGetDeviceGammaRamp */

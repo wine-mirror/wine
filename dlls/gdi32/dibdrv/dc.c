@@ -586,7 +586,6 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pFlattenPath */
     NULL,                               /* pFrameRgn */
     NULL,                               /* pGdiComment */
-    NULL,                               /* pGetBitmapBits */
     NULL,                               /* pGetCharWidth */
     NULL,                               /* pGetDeviceCaps */
     NULL,                               /* pGetDeviceGammaRamp */

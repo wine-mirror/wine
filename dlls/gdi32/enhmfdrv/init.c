@@ -71,7 +71,6 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_FlattenPath,              /* pFlattenPath */
     EMFDRV_FrameRgn,                 /* pFrameRgn */
     EMFDRV_GdiComment,               /* pGdiComment */
-    NULL,                            /* pGetBitmapBits */
     NULL,                            /* pGetCharWidth */
     EMFDRV_GetDeviceCaps,            /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */

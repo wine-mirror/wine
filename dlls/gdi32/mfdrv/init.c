@@ -115,7 +115,6 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_FlattenPath,               /* pFlattenPath */
     MFDRV_FrameRgn,                  /* pFrameRgn */
     NULL,                            /* pGdiComment */
-    NULL,                            /* pGetBitmapBits */
     NULL,                            /* pGetCharWidth */
     MFDRV_GetDeviceCaps,             /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */
