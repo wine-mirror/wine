@@ -1032,17 +1032,11 @@ INT WINAPI GetDIBits(
 
     if (bits && lines)
     {
-        PHYSDEV physdev;
         char src_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
         BITMAPINFO *src_info = (BITMAPINFO *)src_bmibuf;
         struct gdi_image_bits src_bits;
         struct bitblt_coords src;
         DWORD err;
-
-        /* FIXME: will need updating once the dib driver has pGetImage. */
-        physdev = GET_DC_PHYSDEV( dc, pGetImage );
-
-        if (!BITMAP_SetOwnerDC( hbitmap, physdev )) lines = 0;
 
         src.visrect.left = 0;
         src.visrect.right = min( width, bmp->bitmap.bmWidth );
@@ -1062,8 +1056,7 @@ INT WINAPI GetDIBits(
         src.width = src.visrect.right - src.visrect.left;
         src.height = src.visrect.bottom - src.visrect.top;
 
-        err = physdev->funcs->pGetImage( physdev, hbitmap, src_info, &src_bits, &src );
-
+        err = bmp->funcs->pGetImage( NULL, hbitmap, src_info, &src_bits, &src );
         if(err)
         {
             lines = 0;

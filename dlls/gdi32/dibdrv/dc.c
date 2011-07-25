@@ -27,6 +27,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dib);
 
+static const DWORD bit_fields_888[3] = {0xff0000, 0x00ff00, 0x0000ff};
+static const DWORD bit_fields_555[3] = {0x7c00, 0x03e0, 0x001f};
+
 static void calc_shift_and_len(DWORD mask, int *shift, int *len)
 {
     int s, l;
@@ -66,9 +69,6 @@ static void init_bit_fields(dib_info *dib, const DWORD *bit_fields)
 static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit_fields,
                           RGBQUAD *color_table, int color_table_size, void *bits, enum dib_info_flags flags)
 {
-    static const DWORD bit_fields_888[3] = {0xff0000, 0x00ff00, 0x0000ff};
-    static const DWORD bit_fields_555[3] = {0x7c00, 0x03e0, 0x001f};
-
     dib->bit_count = bi->biBitCount;
     dib->width     = bi->biWidth;
     dib->height    = bi->biHeight;
@@ -313,6 +313,124 @@ static BOOL dibdrv_DeleteDC( PHYSDEV dev )
 }
 
 /***********************************************************************
+ *           dibdrv_GetImage
+ */
+static DWORD dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
+                              struct gdi_image_bits *bits, struct bitblt_coords *src )
+{
+    TRACE( "%p %p %p\n", dev, hbitmap, info );
+
+    info->bmiHeader.biSize          = sizeof(info->bmiHeader);
+    info->bmiHeader.biPlanes        = 1;
+    info->bmiHeader.biCompression   = BI_RGB;
+    info->bmiHeader.biXPelsPerMeter = 0;
+    info->bmiHeader.biYPelsPerMeter = 0;
+    info->bmiHeader.biClrUsed       = 0;
+    info->bmiHeader.biClrImportant  = 0;
+
+    if (hbitmap)
+    {
+        BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
+
+        if (!bmp) return ERROR_INVALID_HANDLE;
+        assert(bmp->dib);
+
+        info->bmiHeader.biWidth     = bmp->dib->dsBmih.biWidth;
+        info->bmiHeader.biHeight    = bmp->dib->dsBmih.biHeight;
+        info->bmiHeader.biBitCount  = bmp->dib->dsBmih.biBitCount;
+        info->bmiHeader.biSizeImage = get_dib_image_size( (BITMAPINFO *)&bmp->dib->dsBmih );
+
+        switch (info->bmiHeader.biBitCount)
+        {
+        case 1:
+        case 4:
+        case 8:
+            if (bmp->color_table)
+            {
+                info->bmiHeader.biClrUsed = min( bmp->nb_colors, 1 << info->bmiHeader.biBitCount );
+                memcpy( info->bmiColors, bmp->color_table, info->bmiHeader.biClrUsed * sizeof(RGBQUAD) );
+            }
+            break;
+        case 16:
+            if (bmp->dib->dsBmih.biCompression == BI_BITFIELDS &&
+                memcmp( bmp->dib->dsBitfields, bit_fields_555, sizeof(bmp->dib->dsBitfields) ))
+            {
+                info->bmiHeader.biCompression = BI_BITFIELDS;
+                memcpy( info->bmiColors, bmp->dib->dsBitfields, sizeof(bmp->dib->dsBitfields) );
+            }
+            break;
+        case 32:
+            if (bmp->dib->dsBmih.biCompression == BI_BITFIELDS &&
+                memcmp( bmp->dib->dsBitfields, bit_fields_888, sizeof(bmp->dib->dsBitfields) ))
+            {
+                info->bmiHeader.biCompression = BI_BITFIELDS;
+                memcpy( info->bmiColors, bmp->dib->dsBitfields, sizeof(bmp->dib->dsBitfields) );
+            }
+            break;
+        }
+        if (bits)
+        {
+            bits->ptr = bmp->dib->dsBm.bmBits;
+            bits->is_copy = FALSE;
+            bits->free = NULL;
+        }
+        GDI_ReleaseObj( hbitmap );
+    }
+    else
+    {
+        dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+
+        info->bmiHeader.biWidth     = pdev->dib.width;
+        info->bmiHeader.biHeight    = pdev->dib.stride > 0 ? -pdev->dib.height : pdev->dib.height;
+        info->bmiHeader.biBitCount  = pdev->dib.bit_count;
+        info->bmiHeader.biSizeImage = pdev->dib.height * abs(pdev->dib.stride);
+
+        switch (info->bmiHeader.biBitCount)
+        {
+        case 1:
+        case 4:
+        case 8:
+            if (pdev->dib.color_table)
+            {
+                info->bmiHeader.biClrUsed = min( pdev->dib.color_table_size, 1 << pdev->dib.bit_count );
+                memcpy( info->bmiColors, pdev->dib.color_table,
+                        info->bmiHeader.biClrUsed * sizeof(RGBQUAD) );
+            }
+            break;
+        case 16:
+            if (pdev->dib.funcs != &funcs_555)
+            {
+                DWORD *masks = (DWORD *)info->bmiColors;
+                masks[0] = pdev->dib.red_mask;
+                masks[1] = pdev->dib.green_mask;
+                masks[2] = pdev->dib.blue_mask;
+                info->bmiHeader.biCompression = BI_BITFIELDS;
+            }
+            break;
+        case 32:
+            if (pdev->dib.funcs != &funcs_8888)
+            {
+                DWORD *masks = (DWORD *)info->bmiColors;
+                masks[0] = pdev->dib.red_mask;
+                masks[1] = pdev->dib.green_mask;
+                masks[2] = pdev->dib.blue_mask;
+                info->bmiHeader.biCompression = BI_BITFIELDS;
+            }
+            break;
+        }
+        if (bits)
+        {
+            bits->ptr = pdev->dib.bits;
+            if (pdev->dib.stride < 0)
+                bits->ptr = (char *)bits->ptr + (pdev->dib.height - 1) * pdev->dib.stride;
+            bits->is_copy = FALSE;
+            bits->free = NULL;
+        }
+    }
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
  *           dibdrv_SelectBitmap
  */
 static HBITMAP dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
@@ -473,7 +591,7 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pGetDeviceCaps */
     NULL,                               /* pGetDeviceGammaRamp */
     NULL,                               /* pGetICMProfile */
-    NULL,                               /* pGetImage */
+    dibdrv_GetImage,                    /* pGetImage */
     NULL,                               /* pGetNearestColor */
     NULL,                               /* pGetPixel */
     NULL,                               /* pGetPixelFormat */
