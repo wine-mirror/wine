@@ -382,83 +382,58 @@ LONG WINAPI GetBitmapBits(
     LONG count,        /* [in]  Number of bytes to copy */
     LPVOID bits)       /* [out] Pointer to buffer to receive bits */
 {
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
+    struct gdi_image_bits src_bits;
+    struct bitblt_coords src;
+    int dst_stride, max, ret;
     BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
-    LONG height, ret;
 
     if (!bmp) return 0;
 
-    if (bmp->dib)  /* simply copy the bits from the DIB */
+    if (bmp->dib) dst_stride = get_bitmap_stride( bmp->dib->dsBmih.biWidth, bmp->dib->dsBmih.biBitCount );
+    else dst_stride = get_bitmap_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
+
+    ret = max = dst_stride * bmp->bitmap.bmHeight;
+    if (!bits) goto done;
+    if (count > max) count = max;
+    ret = count;
+
+    src.visrect.left = 0;
+    src.visrect.right = bmp->bitmap.bmWidth;
+    src.visrect.top = 0;
+    src.visrect.bottom = (count + dst_stride - 1) / dst_stride;
+    src.x = src.y = 0;
+    src.width = src.visrect.right - src.visrect.left;
+    src.height = src.visrect.bottom - src.visrect.top;
+
+    if (!bmp->funcs->pGetImage( NULL, hbitmap, info, &src_bits, &src ))
     {
-        DIBSECTION *dib = bmp->dib;
-        const char *src = dib->dsBm.bmBits;
-        INT width_bytes = get_bitmap_stride(dib->dsBm.bmWidth, dib->dsBm.bmBitsPixel);
-        LONG max = width_bytes * bmp->bitmap.bmHeight;
+        const char *src_ptr = src_bits.ptr;
+        int src_stride = get_dib_stride( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );
 
-        if (!bits)
+        /* GetBitmapBits returns 16-bit aligned data */
+
+        if (info->bmiHeader.biHeight > 0)
         {
-            ret = max;
-            goto done;
+            src_ptr += (info->bmiHeader.biHeight - 1) * src_stride;
+            src_stride = -src_stride;
         }
+        src_ptr += src.visrect.top * src_stride;
 
-        if (count > max) count = max;
-        ret = count;
-
-        /* GetBitmapBits returns not 32-bit aligned data */
-
-        if (bmp->dib->dsBmih.biHeight >= 0)  /* not top-down, need to flip contents vertically */
+        if (src_stride == dst_stride) memcpy( bits, src_ptr, count );
+        else while (count > 0)
         {
-            src += dib->dsBm.bmWidthBytes * dib->dsBm.bmHeight;
-            while (count > 0)
-            {
-                src -= dib->dsBm.bmWidthBytes;
-                memcpy( bits, src, min( count, width_bytes ) );
-                bits = (char *)bits + width_bytes;
-                count -= width_bytes;
-            }
+            memcpy( bits, src_ptr, min( count, dst_stride ) );
+            src_ptr += src_stride;
+            bits = (char *)bits + dst_stride;
+            count -= dst_stride;
         }
-        else
-        {
-            while (count > 0)
-            {
-                memcpy( bits, src, min( count, width_bytes ) );
-                src += dib->dsBm.bmWidthBytes;
-                bits = (char *)bits + width_bytes;
-                count -= width_bytes;
-            }
-        }
-        goto done;
+        if (src_bits.free) src_bits.free( &src_bits );
     }
+    else ret = 0;
 
-    /* If the bits vector is null, the function should return the read size */
-    if(bits == NULL)
-    {
-        ret = bmp->bitmap.bmWidthBytes * bmp->bitmap.bmHeight;
-        goto done;
-    }
-
-    if (count < 0) {
-	WARN("(%d): Negative number of bytes passed???\n", count );
-	count = -count;
-    }
-
-    /* Only get entire lines */
-    height = count / bmp->bitmap.bmWidthBytes;
-    if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
-    count = height * bmp->bitmap.bmWidthBytes;
-    if (count == 0)
-      {
-	WARN("Less than one entire line requested\n");
-        ret = 0;
-        goto done;
-      }
-
-
-    TRACE("(%p, %d, %p) %dx%d %d colors fetched height: %d\n",
-          hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
-          1 << bmp->bitmap.bmBitsPixel, height );
-
-    ret = bmp->funcs->pGetBitmapBits( hbitmap, bits, count );
- done:
+done:
     GDI_ReleaseObj( hbitmap );
     return ret;
 }
