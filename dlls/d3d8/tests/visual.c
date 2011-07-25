@@ -358,14 +358,14 @@ static void fog_test(IDirect3DDevice8 *device)
     float start = 0.0, end = 1.0;
 
     /* Gets full z based fog with linear fog, no fog with specular color */
-    struct sVertex unstransformed_1[] = {
+    struct sVertex untransformed_1[] = {
         {-1,    -1,   0.1f,         0xFFFF0000,     0xFF000000  },
         {-1,     0,   0.1f,         0xFFFF0000,     0xFF000000  },
         { 0,     0,   0.1f,         0xFFFF0000,     0xFF000000  },
         { 0,    -1,   0.1f,         0xFFFF0000,     0xFF000000  },
     };
     /* Ok, I am too lazy to deal with transform matrices */
-    struct sVertex unstransformed_2[] = {
+    struct sVertex untransformed_2[] = {
         {-1,     0,   1.0f,         0xFFFF0000,     0xFF000000  },
         {-1,     1,   1.0f,         0xFFFF0000,     0xFF000000  },
         { 0,     1,   1.0f,         0xFFFF0000,     0xFF000000  },
@@ -417,8 +417,8 @@ static void fog_test(IDirect3DDevice8 *device)
         ok( hr == D3D_OK, "SetVertexShader returned %#08x\n", hr);
         /* Untransformed, vertex fog = NONE, table fog = NONE: Read the fog weighting from the specular color */
         hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
-                                                     2 /*PrimCount */, Indices, D3DFMT_INDEX16, unstransformed_1,
-                                                     sizeof(unstransformed_1[0]));
+                                                     2 /*PrimCount */, Indices, D3DFMT_INDEX16, untransformed_1,
+                                                     sizeof(untransformed_1[0]));
         ok(hr == D3D_OK, "DrawIndexedPrimitiveUP returned %#08x\n", hr);
 
         /* That makes it use the Z value */
@@ -428,8 +428,8 @@ static void fog_test(IDirect3DDevice8 *device)
          * Use the Z value as input into the equation
          */
         hr = IDirect3DDevice8_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
-                                                     2 /*PrimCount */, Indices, D3DFMT_INDEX16, unstransformed_2,
-                                                     sizeof(unstransformed_1[0]));
+                                                     2 /*PrimCount */, Indices, D3DFMT_INDEX16, untransformed_2,
+                                                     sizeof(untransformed_2[0]));
         ok(hr == D3D_OK, "DrawIndexedPrimitiveUP returned %#08x\n", hr);
 
         /* transformed verts */
