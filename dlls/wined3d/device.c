@@ -1372,17 +1372,9 @@ err_out:
     return hr;
 }
 
-static HRESULT WINAPI device_unload_resource(struct wined3d_resource *resource, void *data)
-{
-    TRACE("Unloading resource %p.\n", resource);
-
-    resource->resource_ops->resource_unload(resource);
-
-    return S_OK;
-}
-
 HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
 {
+    struct wined3d_resource *resource, *cursor;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     struct wined3d_surface *surface;
@@ -1406,7 +1398,12 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
         wined3d_surface_decref(device->logo_surface);
 
     /* Unload resources */
-    wined3d_device_enum_resources(device, device_unload_resource, NULL);
+    LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
+    {
+        TRACE("Unloading resource %p.\n", resource);
+
+        resource->resource_ops->resource_unload(resource);
+    }
 
     TRACE("Deleting high order patches\n");
     for(i = 0; i < PATCHMAP_SIZE; i++) {
@@ -5382,24 +5379,23 @@ BOOL CDECL wined3d_device_show_cursor(struct wined3d_device *device, BOOL show)
     return oldVisible;
 }
 
-static HRESULT WINAPI evict_managed_resource(struct wined3d_resource *resource, void *data)
-{
-    TRACE("checking resource %p for eviction\n", resource);
-
-    if (resource->pool == WINED3DPOOL_MANAGED)
-    {
-        TRACE("Evicting %p.\n", resource);
-        resource->resource_ops->resource_unload(resource);
-    }
-
-    return S_OK;
-}
-
 HRESULT CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
 {
+    struct wined3d_resource *resource, *cursor;
+
     TRACE("device %p.\n", device);
 
-    wined3d_device_enum_resources(device, evict_managed_resource, NULL);
+    LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
+    {
+        TRACE("Checking resource %p for eviction.\n", resource);
+
+        if (resource->pool == WINED3DPOOL_MANAGED)
+        {
+            TRACE("Evicting %p.\n", resource);
+            resource->resource_ops->resource_unload(resource);
+        }
+    }
+
     /* Invalidate stream sources, the buffer(s) may have been evicted. */
     device_invalidate_state(device, STATE_STREAMSRC);
 
@@ -5499,6 +5495,7 @@ static BOOL is_display_mode_supported(struct wined3d_device *device, const WINED
 /* Do not call while under the GL lock. */
 static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d_swapchain *swapchain)
 {
+    struct wined3d_resource *resource, *cursor;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     struct wined3d_shader *shader;
@@ -5506,7 +5503,13 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
     context = context_acquire(device, NULL);
     gl_info = context->gl_info;
 
-    wined3d_device_enum_resources(device, device_unload_resource, NULL);
+    LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
+    {
+        TRACE("Unloading resource %p.\n", resource);
+
+        resource->resource_ops->resource_unload(resource);
+    }
+
     LIST_FOR_EACH_ENTRY(shader, &device->shaders, struct wined3d_shader, shader_list_entry)
     {
         device->shader_backend->shader_destroy(shader);
@@ -6056,26 +6059,6 @@ void device_resource_released(struct wined3d_device *device, struct wined3d_reso
     device_resource_remove(device, resource);
 
     TRACE("Resource released.\n");
-}
-
-HRESULT CDECL wined3d_device_enum_resources(struct wined3d_device *device,
-        D3DCB_ENUMRESOURCES callback, void *data)
-{
-    struct wined3d_resource *resource, *cursor;
-
-    TRACE("device %p, callback %p, data %p.\n", device, callback, data);
-
-    LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
-    {
-        TRACE("enumerating resource %p.\n", resource);
-        if (callback(resource, data) == S_FALSE)
-        {
-            TRACE("Canceling enumeration.\n");
-            break;
-        }
-    }
-
-    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_device_get_surface_from_dc(struct wined3d_device *device,

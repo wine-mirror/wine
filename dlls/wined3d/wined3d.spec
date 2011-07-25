@@ -60,7 +60,6 @@
 @ cdecl wined3d_device_draw_tri_patch(ptr long ptr ptr)
 @ cdecl wined3d_device_end_scene(ptr)
 @ cdecl wined3d_device_end_stateblock(ptr ptr)
-@ cdecl wined3d_device_enum_resources(ptr ptr ptr)
 @ cdecl wined3d_device_evict_managed_resources(ptr)
 @ cdecl wined3d_device_get_available_texture_mem(ptr)
 @ cdecl wined3d_device_get_back_buffer(ptr long long long ptr)
