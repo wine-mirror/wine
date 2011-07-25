@@ -397,13 +397,13 @@ static void fog_test(IDirect3DDevice8 *device)
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGENABLE, TRUE);
     ok(hr == D3D_OK, "Turning on fog calculations returned %#08x\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGCOLOR, 0xFF00FF00 /* A nice green */);
-    ok(hr == D3D_OK, "Turning on fog calculations returned %#08x\n", hr);
+    ok(hr == D3D_OK, "Setting fog color returned %#08x\n", hr);
 
     /* First test: Both table fog and vertex fog off */
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGTABLEMODE, D3DFOG_NONE);
     ok(hr == D3D_OK, "Turning off table fog returned %#08x\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGVERTEXMODE, D3DFOG_NONE);
-    ok(hr == D3D_OK, "Turning off table fog returned %#08x\n", hr);
+    ok(hr == D3D_OK, "Turning off vertex fog returned %#08x\n", hr);
 
     /* Start = 0, end = 1. Should be default, but set them */
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGSTART, *((DWORD *) &start));
@@ -423,7 +423,7 @@ static void fog_test(IDirect3DDevice8 *device)
 
         /* That makes it use the Z value */
         hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
-        ok(hr == D3D_OK, "Turning off table fog returned %#08x\n", hr);
+        ok(hr == D3D_OK, "Setting fog vertex mode to D3DFOG_LINEAR returned %#08x\n", hr);
         /* Untransformed, vertex fog != none (or table fog != none):
          * Use the Z value as input into the equation
          */
