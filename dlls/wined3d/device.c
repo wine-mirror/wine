@@ -5634,7 +5634,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     {
         wined3d_device_set_stream_source(device, i, NULL, 0, 0);
     }
-    for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
+    for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
     {
         wined3d_device_set_texture(device, i, NULL);
     }
