@@ -522,7 +522,6 @@ const DC_FUNCTIONS dib_driver =
     dibdrv_SetDCBrushColor,             /* pSetDCBrushColor */
     dibdrv_SetDCPenColor,               /* pSetDCPenColor */
     dibdrv_SetDIBColorTable,            /* pSetDIBColorTable */
-    NULL,                               /* pSetDIBits */
     NULL,                               /* pSetDIBitsToDevice */
     dibdrv_SetDeviceClipping,           /* pSetDeviceClipping */
     NULL,                               /* pSetDeviceGammaRamp */

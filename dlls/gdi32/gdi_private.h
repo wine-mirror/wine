@@ -499,7 +499,6 @@ extern BOOL nulldrv_ScaleViewportExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT
 extern BOOL nulldrv_ScaleWindowExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_num, INT y_denom, SIZE *size ) DECLSPEC_HIDDEN;
 extern BOOL nulldrv_SelectClipPath( PHYSDEV dev, INT mode ) DECLSPEC_HIDDEN;
 extern LONG nulldrv_SetBitmapBits( HBITMAP bitmap, const void *bits, LONG size ) DECLSPEC_HIDDEN;
-extern INT  nulldrv_SetDIBits( PHYSDEV dev, HBITMAP bitmap, UINT start, UINT lines, const void *bits, const BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
 extern INT  nulldrv_SetMapMode( PHYSDEV dev, INT mode ) DECLSPEC_HIDDEN;
 extern BOOL nulldrv_SetViewportExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size ) DECLSPEC_HIDDEN;
 extern BOOL nulldrv_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;

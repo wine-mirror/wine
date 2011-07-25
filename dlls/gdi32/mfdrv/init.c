@@ -169,7 +169,6 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_SetDCBrushColor,           /* pSetDCBrushColor*/
     MFDRV_SetDCPenColor,             /* pSetDCPenColor*/
     NULL,                            /* pSetDIBColorTable */
-    NULL,                            /* pSetDIBits */
     MFDRV_SetDIBitsToDevice,         /* pSetDIBitsToDevice */
     NULL,                            /* pSetDeviceClipping */
     NULL,                            /* pSetDeviceGammaRamp */

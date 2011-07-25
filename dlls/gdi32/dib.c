@@ -397,8 +397,8 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
     HBITMAP hBitmap;
     HDC hdcMem;
 
-    /* make sure we have a real implementation for StretchBlt and SetDIBits */
-    if (GET_DC_PHYSDEV( dc, pStretchBlt ) == dev || GET_DC_PHYSDEV( dc, pSetDIBits ) == dev)
+    /* make sure we have a real implementation for StretchBlt and PutImage */
+    if (GET_DC_PHYSDEV( dc, pStretchBlt ) == dev || GET_DC_PHYSDEV( dc, pPutImage ) == dev)
         return 0;
 
     if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, &planes, &bpp, &compr, &size ) == -1)

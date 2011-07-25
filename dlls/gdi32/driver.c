@@ -762,7 +762,6 @@ const DC_FUNCTIONS null_driver =
     nulldrv_SetDCBrushColor,            /* pSetDCBrushColor */
     nulldrv_SetDCPenColor,              /* pSetDCPenColor */
     nulldrv_SetDIBColorTable,           /* pSetDIBColorTable */
-    nulldrv_SetDIBits,                  /* pSetDIBits */
     nulldrv_SetDIBitsToDevice,          /* pSetDIBitsToDevice */
     nulldrv_SetDeviceClipping,          /* pSetDeviceClipping */
     nulldrv_SetDeviceGammaRamp,         /* pSetDeviceGammaRamp */
