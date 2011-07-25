@@ -26,7 +26,7 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <ctype.h>
-#ifdef HAVE_GETTEXT_PO_H
+#ifdef HAVE_LIBGETTEXTPO
 #include <gettext-po.h>
 #endif
 
