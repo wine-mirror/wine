@@ -79,6 +79,64 @@ LONG nulldrv_SetBitmapBits( HBITMAP bitmap, const void *bits, LONG size )
     return size;
 }
 
+DWORD nulldrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
+                        struct gdi_image_bits *bits, struct bitblt_coords *src )
+{
+    BITMAPOBJ *bmp;
+    int height, width_bytes;
+
+    if (!hbitmap) return ERROR_NOT_SUPPORTED;
+    if (!(bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP ))) return ERROR_INVALID_HANDLE;
+
+    info->bmiHeader.biSize          = sizeof(info->bmiHeader);
+    info->bmiHeader.biPlanes        = 1;
+    info->bmiHeader.biBitCount      = bmp->bitmap.bmBitsPixel;
+    info->bmiHeader.biCompression   = BI_RGB;
+    info->bmiHeader.biXPelsPerMeter = 0;
+    info->bmiHeader.biYPelsPerMeter = 0;
+    info->bmiHeader.biClrUsed       = 0;
+    info->bmiHeader.biClrImportant  = 0;
+    if (!bits) goto done;
+
+    height = src->visrect.bottom - src->visrect.top;
+    width_bytes = get_dib_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
+    info->bmiHeader.biWidth     = bmp->bitmap.bmWidth;
+    info->bmiHeader.biHeight    = -height;
+    info->bmiHeader.biSizeImage = height * width_bytes;
+
+    /* make the source rectangle relative to the returned bits */
+    src->y -= src->visrect.top;
+    offset_rect( &src->visrect, 0, -src->visrect.top );
+
+    if (bmp->bitmap.bmBits && bmp->bitmap.bmWidthBytes == width_bytes)
+    {
+        bits->ptr = (char *)bmp->bitmap.bmBits + src->visrect.top * width_bytes;
+        bits->is_copy = FALSE;
+        bits->free = NULL;
+    }
+    else
+    {
+        bits->ptr = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage );
+        bits->is_copy = TRUE;
+        bits->free = free_heap_bits;
+        if (bmp->bitmap.bmBits)
+        {
+            /* fixup the line alignment */
+            char *src = bmp->bitmap.bmBits, *dst = bits->ptr;
+            for ( ; height > 0; height--, src += bmp->bitmap.bmWidthBytes, dst += width_bytes)
+            {
+                memcpy( dst, src, bmp->bitmap.bmWidthBytes );
+                memset( dst + bmp->bitmap.bmWidthBytes, 0, width_bytes - bmp->bitmap.bmWidthBytes );
+            }
+        }
+        else memset( bits->ptr, 0, info->bmiHeader.biSizeImage );
+    }
+done:
+    GDI_ReleaseObj( hbitmap );
+    return ERROR_SUCCESS;
+}
+
+
 /***********************************************************************
  *           BITMAP_GetWidthBytes
  *

@@ -347,12 +347,6 @@ static BOOL nulldrv_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
     return FALSE;
 }
 
-static DWORD nulldrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
-                               struct gdi_image_bits *bits, struct bitblt_coords *src )
-{
-    return ERROR_NOT_SUPPORTED;
-}
-
 static COLORREF nulldrv_GetPixel( PHYSDEV dev, INT x, INT y )
 {
     return 0;
