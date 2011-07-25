@@ -358,7 +358,7 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
     else if( szPersist == MSIDBOPEN_TRANSACT )
     {
         r = StgOpenStorage( szDBPath, NULL,
-              STGM_TRANSACTED|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, NULL, 0, &stg);
+              STGM_TRANSACTED|STGM_READWRITE|STGM_SHARE_DENY_WRITE, NULL, 0, &stg);
     }
     else if( szPersist == MSIDBOPEN_DIRECT )
     {
