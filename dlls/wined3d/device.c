@@ -5624,9 +5624,20 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     struct wined3d_swapchain *swapchain;
     BOOL DisplayModeChanged = FALSE;
     WINED3DDISPLAYMODE mode;
+    unsigned int i;
     HRESULT hr;
 
     TRACE("device %p, present_parameters %p.\n", device, present_parameters);
+
+    wined3d_device_set_index_buffer(device, NULL, WINED3DFMT_UNKNOWN);
+    for (i = 0; i < MAX_STREAMS; ++i)
+    {
+        wined3d_device_set_stream_source(device, i, NULL, 0, 0);
+    }
+    for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
+    {
+        wined3d_device_set_texture(device, i, NULL);
+    }
 
     LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
     {

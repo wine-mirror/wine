@@ -552,7 +552,6 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_Reset(IDirect3DDevi
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
     WINED3DPRESENT_PARAMETERS localParameters;
     HRESULT hr;
-    UINT i;
 
     TRACE("iface %p, present_parameters %p.\n", iface, pPresentationParameters);
 
@@ -565,15 +564,6 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_Reset(IDirect3DDevi
      * below fails, the device is considered "lost", and _Reset and _Release are the only allowed calls
      */
     wined3d_mutex_lock();
-    wined3d_device_set_index_buffer(This->wined3d_device, NULL, WINED3DFMT_UNKNOWN);
-    for (i = 0; i < 16; ++i)
-    {
-        wined3d_device_set_stream_source(This->wined3d_device, i, NULL, 0, 0);
-    }
-    for (i = 0; i < 16; ++i)
-    {
-        wined3d_device_set_texture(This->wined3d_device, i, NULL);
-    }
 
     localParameters.BackBufferWidth                     = pPresentationParameters->BackBufferWidth;
     localParameters.BackBufferHeight                    = pPresentationParameters->BackBufferHeight;

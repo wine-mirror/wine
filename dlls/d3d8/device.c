@@ -564,20 +564,10 @@ static HRESULT WINAPI IDirect3DDevice8Impl_Reset(IDirect3DDevice8 *iface,
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
     WINED3DPRESENT_PARAMETERS localParameters;
     HRESULT hr;
-    UINT i;
 
     TRACE("iface %p, present_parameters %p.\n", iface, pPresentationParameters);
 
     wined3d_mutex_lock();
-    wined3d_device_set_index_buffer(This->wined3d_device, NULL, WINED3DFMT_UNKNOWN);
-    for (i = 0; i < 16; ++i)
-    {
-        wined3d_device_set_stream_source(This->wined3d_device, i, NULL, 0, 0);
-    }
-    for (i = 0; i < 16; ++i)
-    {
-        wined3d_device_set_texture(This->wined3d_device, i, NULL);
-    }
 
     localParameters.BackBufferWidth                             = pPresentationParameters->BackBufferWidth;
     localParameters.BackBufferHeight                            = pPresentationParameters->BackBufferHeight;
