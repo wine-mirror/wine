@@ -290,7 +290,9 @@ wine_fn_config_dll ()
 
     AS_VAR_IF([$ac_enable],[no],
               dnl enable_win16 is special in that it disables import libs too
-              [test "$ac_enable" != enable_win16 || return 0],
+              [test "$ac_enable" != enable_win16 || return 0
+               wine_fn_has_flag implib $ac_flags && wine_fn_all_dir_rules $ac_dir dlls/Makedll.rules],
+
               [wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "$ac_dir: __builddeps__
 manpages htmlpages sgmlpages xmlpages:: $ac_dir/Makefile
