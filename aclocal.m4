@@ -276,34 +276,49 @@ wine_fn_config_dll ()
     ac_flags=$[3]
     ac_implib=${4:-$ac_name}
     ac_file=$ac_dir/lib$ac_implib
+    ac_dll=$ac_name
     ac_deps="tools/widl tools/winebuild tools/winegcc include"
     ac_implibflags=""
 
     case $ac_name in
       *16) ac_implibflags=" -m16" ;;
+      *.*) ;;
+      *)   ac_dll=$ac_dll.dll ;;
     esac
 
-    wine_fn_all_dir_rules $ac_dir dlls/Makedll.rules
+    wine_fn_config_makefile $ac_dir $ac_enable "$ac_flags" dlls/Makedll.rules
 
     AS_VAR_IF([$ac_enable],[no],
               dnl enable_win16 is special in that it disables import libs too
               [test "$ac_enable" != enable_win16 || return 0],
               [wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"all: $ac_dir
-.PHONY: $ac_dir $ac_dir/__install__ $ac_dir/__install-lib__ $ac_dir/__uninstall__
-$ac_dir: $ac_dir/Makefile __builddeps__ dummy
-	@cd $ac_dir && \$(MAKE)
-$ac_dir/__install__:: $ac_dir/Makefile __builddeps__ 
-	@cd $ac_dir && \$(MAKE) install
-$ac_dir/__install-lib__:: $ac_dir/Makefile __builddeps__ 
-	@cd $ac_dir && \$(MAKE) install-lib
-$ac_dir/__uninstall__:: $ac_dir/Makefile
-	@cd $ac_dir && \$(MAKE) uninstall
-install:: $ac_dir/__install__
-install-lib:: $ac_dir/__install-lib__
-__uninstall__: $ac_dir/__uninstall__
+"$ac_dir: __builddeps__
 manpages htmlpages sgmlpages xmlpages:: $ac_dir/Makefile
 	@cd $ac_dir && \$(MAKE) \$[@]"
+
+        if wine_fn_has_flag install-lib $ac_flags
+        then :
+        else
+            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+".PHONY: $ac_dir/__install-lib__ $ac_dir/__uninstall__
+install install-lib:: $ac_dir/__install-lib__
+__uninstall__: $ac_dir/__uninstall__"
+            if test -n "$DLLEXT"
+            then
+                wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir/__install-lib__:: $ac_dir \$(DESTDIR)\$(dlldir) \$(DESTDIR)\$(fakedlldir)
+	\$(INSTALL_PROGRAM) $ac_dir/$ac_dll$DLLEXT \$(DESTDIR)\$(dlldir)/$ac_dll$DLLEXT
+	\$(INSTALL_DATA) $ac_dir/$ac_dll.fake \$(DESTDIR)\$(fakedlldir)/$ac_dll
+$ac_dir/__uninstall__::
+	\$(RM) \$(DESTDIR)\$(dlldir)/$ac_dll$DLLEXT \$(DESTDIR)\$(fakedlldir)/$ac_dll"
+            else
+                wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir/__install-lib__:: $ac_dir \$(DESTDIR)\$(dlldir)
+	\$(INSTALL_PROGRAM) $ac_dir/$ac_dll \$(DESTDIR)\$(dlldir)/$ac_dll
+$ac_dir/__uninstall__::
+	\$(RM) \$(DESTDIR)\$(dlldir)/$ac_dll"
+            fi
+        fi
 
         if test "x$enable_maintainer_mode" = xyes
         then
