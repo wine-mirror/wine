@@ -52,13 +52,13 @@ typedef struct tagMSICOLUMNHASHENTRY
 
 typedef struct tagMSICOLUMNINFO
 {
-    LPWSTR tablename;
-    UINT   number;
-    LPWSTR colname;
-    UINT   type;
-    UINT   offset;
-    INT    ref_count;
-    BOOL   temporary;
+    LPCWSTR tablename;
+    UINT    number;
+    LPCWSTR colname;
+    UINT    type;
+    UINT    offset;
+    INT     ref_count;
+    BOOL    temporary;
     MSICOLUMNHASHENTRY **hash_table;
 } MSICOLUMNINFO;
 
@@ -83,12 +83,12 @@ struct tagMSITABLE
 };
 
 /* information for default tables */
-static WCHAR szTables[]  = { '_','T','a','b','l','e','s',0 };
-static WCHAR szTable[]  = { 'T','a','b','l','e',0 };
-static WCHAR szName[]    = { 'N','a','m','e',0 };
-static WCHAR szColumns[] = { '_','C','o','l','u','m','n','s',0 };
-static WCHAR szNumber[]  = { 'N','u','m','b','e','r',0 };
-static WCHAR szType[]    = { 'T','y','p','e',0 };
+static const WCHAR szTables[]  = {'_','T','a','b','l','e','s',0};
+static const WCHAR szTable[]   = {'T','a','b','l','e',0};
+static const WCHAR szName[]    = {'N','a','m','e',0};
+static const WCHAR szColumns[] = {'_','C','o','l','u','m','n','s',0};
+static const WCHAR szNumber[]  = {'N','u','m','b','e','r',0};
+static const WCHAR szType[]    = {'T','y','p','e',0};
 
 static const MSICOLUMNINFO _Columns_cols[4] = {
     { szColumns, 1, szTable,  MSITYPE_VALID | MSITYPE_STRING | MSITYPE_KEY | 64, 0, 0, 0, NULL },
@@ -376,13 +376,7 @@ end:
 static void msi_free_colinfo( MSICOLUMNINFO *colinfo, UINT count )
 {
     UINT i;
-
-    for (i = 0; i < count; i++)
-    {
-        msi_free( colinfo[i].tablename );
-        msi_free( colinfo[i].colname );
-        msi_free( colinfo[i].hash_table );
-    }
+    for (i = 0; i < count; i++) msi_free( colinfo[i].hash_table );
 }
 
 static void free_table( MSITABLE *table )
@@ -553,15 +547,9 @@ static UINT get_defaulttablecolumns( MSIDATABASE *db, LPCWSTR name, MSICOLUMNINF
     }
     else return ERROR_FUNCTION_FAILED;
 
-    /* duplicate the string data so we can free it in msi_free_colinfo */
     for (i = 0; i < n; i++)
     {
-        if (colinfo && i < *sz)
-        {
-            colinfo[i] = p[i];
-            colinfo[i].tablename = strdupW( p[i].tablename );
-            colinfo[i].colname = strdupW( p[i].colname );
-        }
+        if (colinfo && i < *sz) colinfo[i] = p[i];
         if (colinfo && i >= *sz) break;
     }
     table_calc_column_offsets( db, colinfo, n );
@@ -660,11 +648,6 @@ static UINT read_table_int( BYTE *const *data, UINT row, UINT col, UINT bytes )
     return ret;
 }
 
-static LPWSTR msi_makestring( const MSIDATABASE *db, UINT string_id )
-{
-    return strdupW( msi_string_lookup_id( db->strings, string_id ) );
-}
-
 static UINT get_tablecolumns( MSIDATABASE *db, LPCWSTR szTableName, MSICOLUMNINFO *colinfo, UINT *sz )
 {
     UINT r, i, n = 0, table_id, count, maxcount = *sz;
@@ -718,9 +701,9 @@ static UINT get_tablecolumns( MSIDATABASE *db, LPCWSTR szTableName, MSICOLUMNINF
                 ERR("duplicate column %d\n", col);
                 continue;
             }
-            colinfo[col - 1].tablename = msi_makestring( db, table_id );
+            colinfo[col - 1].tablename = msi_string_lookup_id( db->strings, table_id );
             colinfo[col - 1].number = col;
-            colinfo[col - 1].colname = msi_makestring( db, id );
+            colinfo[col - 1].colname = msi_string_lookup_id( db->strings, id );
             colinfo[col - 1].type = read_table_int( table->data, i, table->colinfo[3].offset,
                                                     sizeof(USHORT) ) - (1 << 15);
             colinfo[col - 1].offset = 0;
@@ -972,22 +955,17 @@ err:
 static void msi_update_table_columns( MSIDATABASE *db, LPCWSTR name )
 {
     MSITABLE *table;
-    LPWSTR tablename;
     UINT size, offset, old_count;
     UINT n;
 
-    /* We may free name in msi_free_colinfo. */
-    tablename = strdupW( name );
-
-    table = find_cached_table( db, tablename );
+    table = find_cached_table( db, name );
     old_count = table->col_count;
     msi_free_colinfo( table->colinfo, table->col_count );
     msi_free( table->colinfo );
     table->colinfo = NULL;
 
-    table_get_column_info( db, tablename, &table->colinfo, &table->col_count );
-    if (!table->col_count)
-        goto done;
+    table_get_column_info( db, name, &table->colinfo, &table->col_count );
+    if (!table->col_count) return;
 
     size = msi_table_get_row_size( db, table->colinfo, table->col_count, LONG_STR_BYTES );
     offset = table->colinfo[table->col_count - 1].offset;
@@ -998,9 +976,6 @@ static void msi_update_table_columns( MSIDATABASE *db, LPCWSTR name )
         if (old_count < table->col_count)
             memset( &table->data[n][offset], 0, size - offset );
     }
-
-done:
-    msi_free(tablename);
 }
 
 /* try to find the table name in the _Tables table */
