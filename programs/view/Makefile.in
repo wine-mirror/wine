@@ -3,9 +3,7 @@ APPMODE   = -mwindows
 IMPORTS   = comdlg32 user32 gdi32
 
 C_SRCS = \
-	init.c \
-	view.c \
-	winmain.c
+	view.c
 
 RC_SRCS = \
 	Cs.rc \
