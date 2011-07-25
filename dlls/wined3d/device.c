@@ -5638,6 +5638,11 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     {
         wined3d_device_set_texture(device, i, NULL);
     }
+    if (device->onscreen_depth_stencil)
+    {
+        wined3d_surface_decref(device->onscreen_depth_stencil);
+        device->onscreen_depth_stencil = NULL;
+    }
 
     LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
     {
