@@ -2044,6 +2044,17 @@ DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
         FIXME( "depth %u bpp %u not supported yet\n", depth, format->bits_per_pixel );
         return ERROR_BAD_FORMAT;
     }
+
+    info->bmiHeader.biSize          = sizeof(info->bmiHeader);
+    info->bmiHeader.biPlanes        = 1;
+    info->bmiHeader.biBitCount      = format->bits_per_pixel;
+    info->bmiHeader.biXPelsPerMeter = 0;
+    info->bmiHeader.biYPelsPerMeter = 0;
+    info->bmiHeader.biClrImportant  = 0;
+    set_color_info( dev, color_shifts, info );
+
+    if (!bits) return ERROR_SUCCESS;  /* just querying the color information */
+
     x = src->visrect.left & ~(align - 1);
     y = src->visrect.top;
     width = src->visrect.right - x;
@@ -2093,16 +2104,9 @@ DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
     }
     if (!image) return ERROR_OUTOFMEMORY;
 
-    info->bmiHeader.biSize          = sizeof(info->bmiHeader);
-    info->bmiHeader.biWidth         = width;
-    info->bmiHeader.biHeight        = -height;
-    info->bmiHeader.biPlanes        = 1;
-    info->bmiHeader.biBitCount      = image->bits_per_pixel;
-    info->bmiHeader.biSizeImage     = height * image->bytes_per_line;
-    info->bmiHeader.biXPelsPerMeter = 0;
-    info->bmiHeader.biYPelsPerMeter = 0;
-    info->bmiHeader.biClrImportant  = 0;
-    set_color_info( dev, color_shifts, info );
+    info->bmiHeader.biWidth     = width;
+    info->bmiHeader.biHeight    = -height;
+    info->bmiHeader.biSizeImage = height * image->bytes_per_line;
 
     src_bits.ptr     = image->data;
     src_bits.is_copy = TRUE;
