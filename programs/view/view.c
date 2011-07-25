@@ -27,9 +27,10 @@ static char szAppName[5] = "View";
 static char szTitle[80];
 
 static HMETAFILE hmf;
+static HENHMETAFILE enhmf;
 static int deltax = 0, deltay = 0;
 static int width = 0, height = 0;
-static BOOL isAldus;
+static BOOL isAldus, isEnhanced;
 
 #include "pshpack1.h"
 typedef struct
@@ -52,13 +53,32 @@ static BOOL FileOpen(HWND hWnd, char *fn, int fnsz)
 		       0, 0, NULL, NULL, 0, 0, NULL,
 		       fnsz, NULL, 0, NULL, NULL, 
 		       OFN_SHOWHELP, 0, 0, NULL, 0, NULL };
-  ofn.lpstrFilter = "Metafiles\0*.wmf\0";
+  ofn.lpstrFilter = "Metafiles\0*.wmf;*.emf\0";
   ofn.hwndOwner = hWnd;
   ofn.lpstrFile = fn;
   if( fnsz < 1 )
     return FALSE;
   *fn = 0;
   return GetOpenFileName(&ofn);
+}
+
+static BOOL FileIsEnhanced( LPCSTR szFileName )
+{
+  HFILE hInFile;
+  ENHMETAHEADER enh;
+
+  if( (hInFile = _lopen( szFileName, OF_READ ) ) == HFILE_ERROR )
+    return FALSE;
+
+  if( _lread( hInFile, &enh, sizeof(ENHMETAHEADER) ) != sizeof(ENHMETAHEADER) )
+    {
+      _lclose( hInFile );
+      return FALSE;
+    }
+  _lclose( hInFile );
+
+  /* Is it enhanced? */
+  return (enh.dSignature == ENHMETA_SIGNATURE);
 }
 
 static BOOL FileIsPlaceable( LPCSTR szFileName )
@@ -154,7 +174,14 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMessage, WPARAM wparam, LPARAM 
 	SetWindowExtEx(ps.hdc, width, height, NULL);
 	SetViewportExtEx(ps.hdc, width, height, NULL);
 	SetViewportOrgEx(ps.hdc, deltax, deltay, NULL);
-	if(hmf) PlayMetaFile(ps.hdc, hmf);
+       if (isEnhanced && enhmf)
+       {
+           RECT r;
+           GetClientRect(hwnd, &r);
+           PlayEnhMetaFile(ps.hdc, enhmf, &r);
+       }
+       else if (hmf)
+           PlayMetaFile(ps.hdc, hmf);
 	EndPaint(hwnd, &ps);
       }
       break;
@@ -171,7 +198,11 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMessage, WPARAM wparam, LPARAM 
 		hmf = GetPlaceableMetaFile(hwnd, filename);
 	      } else {
 		RECT r;
-		hmf = GetMetaFile(filename);
+               isEnhanced = FileIsEnhanced(filename);
+               if (isEnhanced)
+                   enhmf = GetEnhMetaFile(filename);
+               else
+                   hmf = GetMetaFile(filename);
 		GetClientRect(hwnd, &r);
 		width = r.right - r.left;
 		height = r.bottom - r.top;
