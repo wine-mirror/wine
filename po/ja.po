@@ -8180,7 +8180,23 @@ msgstr "VER は動作しているcmdのバージョンを表示します。\n"
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL はディスク デバイスのボリューム ラベルを表示します。\n"
 
-#: cmd.rc:209
+#: cmd.rc:210
+msgid ""
+"ENDLOCAL ends localization of environment changes in a batch file\n"
+"which were introduced by a preceding SETLOCAL.\n"
+msgstr ""
+
+#: cmd.rc:218
+msgid ""
+"SETLOCAL starts localization of environment changes in a batch file.\n"
+"\n"
+"Environment changes done after a SETLOCAL are local to the batch file, and\n"
+"are preserved until the next ENDLOCAL is encountered (or at the end of the\n"
+"file, whichever comes first), at which point the previous environment\n"
+"settings are restored.\n"
+msgstr ""
+
+#: cmd.rc:221
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -8188,7 +8204,7 @@ msgstr ""
 "PUSHD <ディレクトリ名> はカレント ディレクトリをスタック上に保存し、カ\n"
 "レント ディレクトリを指定されたディレクトリに変更します。\n"
 
-#: cmd.rc:212
+#: cmd.rc:224
 msgid ""
 "POPD changes current directory to the last one saved with\n"
 "PUSHD.\n"
@@ -8196,11 +8212,11 @@ msgstr ""
 "POPD は PUSHD で最後に保存されたディレクトリにカレント ディレクトリを変\n"
 "更します。\n"
 
-#: cmd.rc:214
+#: cmd.rc:226
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE はファイルの出力やパイプ化された入力を表示します。\n"
 
-#: cmd.rc:218
+#: cmd.rc:230
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -8210,7 +8226,7 @@ msgstr ""
 "すまで待機します。\n"
 "CHOICE は主にバッチ ファイルでメニュー選択を構築するために使われます。\n"
 
-#: cmd.rc:222
+#: cmd.rc:234
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -8218,7 +8234,8 @@ msgstr ""
 "EXIT は現在のコマンドセッションを終了してcmdを呼び出したOSまたはシェルに戻し"
 "ます。\n"
 
-#: cmd.rc:253
+#: cmd.rc:267
+#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ATTRIB\t\tShow or change DOS file attributes\n"
@@ -8232,6 +8249,7 @@ msgid ""
 "DEL (ERASE)\tDelete a file or set of files\n"
 "DIR\t\tList the contents of a directory\n"
 "ECHO\t\tCopy text directly to the console output\n"
+"ENDLOCAL\tEnd localization of environment changes in a batch file\n"
 "HELP\t\tShow brief help details on a topic\n"
 "MD (MKDIR)\tCreate a subdirectory\n"
 "MORE\t\tDisplay output in pages\n"
@@ -8243,6 +8261,7 @@ msgid ""
 "REN (RENAME)\tRename a file\n"
 "RD (RMDIR)\tDelete a subdirectory\n"
 "SET\t\tSet or show environment variables\n"
+"SETLOCAL\tStart localization of environment changes in a batch file\n"
 "TIME\t\tSet or show the current system time\n"
 "TITLE\t\tSet the window title for the CMD session\n"
 "TYPE\t\tType the contents of a text file\n"
@@ -8285,41 +8304,41 @@ msgstr ""
 "上記のコマンドに関する詳細を表示するには HELP <コマンド名> と入力して下さ"
 "い。\n"
 
-#: cmd.rc:255
+#: cmd.rc:269
 msgid "Are you sure"
 msgstr "よろしいですか"
 
-#: cmd.rc:256 xcopy.rc:40
+#: cmd.rc:270 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "Y"
 
-#: cmd.rc:257 xcopy.rc:41
+#: cmd.rc:271 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:258
+#: cmd.rc:272
 msgid "File association missing for extension %s\n"
 msgstr "拡張子 %s に対するファイル関連付けがありません。\n"
 
-#: cmd.rc:259
+#: cmd.rc:273
 msgid "No open command associated with file type '%s'\n"
 msgstr "ファイル タイプ '%s' に関連付けられた開くコマンドがありません。\n"
 
-#: cmd.rc:260
+#: cmd.rc:274
 msgid "Overwrite %s"
 msgstr "上書き %s"
 
-#: cmd.rc:261
+#: cmd.rc:275
 msgid "More..."
 msgstr "More..."
 
-#: cmd.rc:262
+#: cmd.rc:276
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "バッチ処理の行が切り落とされた可能性があります。対象行:\n"
 
-#: cmd.rc:263
+#: cmd.rc:277
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -8327,80 +8346,80 @@ msgstr ""
 "まだ実装されていません\n"
 "\n"
 
-#: cmd.rc:264
+#: cmd.rc:278
 msgid "Argument missing\n"
 msgstr "引数がありません\n"
 
-#: cmd.rc:265
+#: cmd.rc:279
 msgid "Syntax error\n"
 msgstr "文法エラー\n"
 
-#: cmd.rc:266
+#: cmd.rc:280
 msgid "%s: File Not Found\n"
 msgstr "%s: ファイルが見つかりません\n"
 
-#: cmd.rc:267
+#: cmd.rc:281
 msgid "No help available for %s\n"
 msgstr "%s に対するヘルプはありません\n"
 
-#: cmd.rc:268
+#: cmd.rc:282
 msgid "Target to GOTO not found\n"
 msgstr "GOTO の対象が見つかりません\n"
 
-#: cmd.rc:269
+#: cmd.rc:283
 msgid "Current Date is %s\n"
 msgstr "現在の日付は %s\n"
 
-#: cmd.rc:270
+#: cmd.rc:284
 msgid "Current Time is %s\n"
 msgstr "現在の時刻は %s\n"
 
-#: cmd.rc:271
+#: cmd.rc:285
 msgid "Enter new date: "
 msgstr "新しい日付を入力してください: "
 
-#: cmd.rc:272
+#: cmd.rc:286
 msgid "Enter new time: "
 msgstr "新しい時刻を入力してください: "
 
-#: cmd.rc:273
+#: cmd.rc:287
 msgid "Environment variable %s not defined\n"
 msgstr "環境変数 %s は定義されていません\n"
 
-#: cmd.rc:274 xcopy.rc:38
+#: cmd.rc:288 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr "'%s' を開けません\n"
 
-#: cmd.rc:275
+#: cmd.rc:289
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "バッチ スクリプトの外からバッチ ラベルを呼び出すことはできません\n"
 
-#: cmd.rc:276 xcopy.rc:42
+#: cmd.rc:290 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:277
+#: cmd.rc:291
 msgid "%s, Delete"
 msgstr "%s, 削除"
 
-#: cmd.rc:278
+#: cmd.rc:292
 msgid "Echo is %s\n"
 msgstr "Echo は %s\n"
 
-#: cmd.rc:279
+#: cmd.rc:293
 msgid "Verify is %s\n"
 msgstr "Verify は %s\n"
 
-#: cmd.rc:280
+#: cmd.rc:294
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify は ON か OFF で指定してください\n"
 
-#: cmd.rc:281
+#: cmd.rc:295
 msgid "Parameter error\n"
 msgstr "パラメータ エラー\n"
 
-#: cmd.rc:282
+#: cmd.rc:296
 msgid ""
 "Volume in drive %c is %s\n"
 "Volume Serial Number is %04x-%04x\n"
@@ -8410,31 +8429,31 @@ msgstr ""
 "ボリューム シリアル番号は %04x-%04x\n"
 "\n"
 
-#: cmd.rc:283
+#: cmd.rc:297
 msgid "Volume label (11 characters, ENTER for none)?"
 msgstr "ボリューム ラベル(半角11文字, ENTER で無指定)?"
 
-#: cmd.rc:284
+#: cmd.rc:298
 msgid "PATH not found\n"
 msgstr "PATH が見つかりません\n"
 
-#: cmd.rc:285
+#: cmd.rc:299
 msgid "Press Return key to continue: "
 msgstr "続けるにはリターンキーを押して下さい: "
 
-#: cmd.rc:286
+#: cmd.rc:300
 msgid "Wine Command Prompt"
 msgstr "Wine コマンド プロンプト"
 
-#: cmd.rc:287
+#: cmd.rc:301
 msgid "CMD Version %s\n"
 msgstr "CMD バージョン %s\n"
 
-#: cmd.rc:288
+#: cmd.rc:302
 msgid "More? "
 msgstr "More? "
 
-#: cmd.rc:289
+#: cmd.rc:303
 msgid "The input line is too long.\n"
 msgstr "入力行が長すぎます。\n"
 

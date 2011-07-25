@@ -205,6 +205,18 @@ The verify flag has no function in Wine.\n"
 
   WCMD_VOL,    "VOL shows the volume label of a disk device.\n"
 
+  WCMD_ENDLOCAL,
+"ENDLOCAL ends localization of environment changes in a batch file\n\
+which were introduced by a preceding SETLOCAL.\n"
+
+  WCMD_SETLOCAL,
+"SETLOCAL starts localization of environment changes in a batch file.\n\
+\n\
+Environment changes done after a SETLOCAL are local to the batch file, and\n\
+are preserved until the next ENDLOCAL is encountered (or at the end of the\n\
+file, whichever comes first), at which point the previous environment\n\
+settings are restored.\n"
+
   WCMD_PUSHD,  "PUSHD <directoryname> saves the current directory onto a\n\
 stack, and then changes the current directory to the supplied one.\n"
 
@@ -233,6 +245,7 @@ DATE\t\tShow or change the system date\n\
 DEL (ERASE)\tDelete a file or set of files\n\
 DIR\t\tList the contents of a directory\n\
 ECHO\t\tCopy text directly to the console output\n\
+ENDLOCAL\tEnd localization of environment changes in a batch file\n\
 HELP\t\tShow brief help details on a topic\n\
 MD (MKDIR)\tCreate a subdirectory\n\
 MORE\t\tDisplay output in pages\n\
@@ -244,6 +257,7 @@ PUSHD\t\tChanges to a new directory, saving the current one\n\
 REN (RENAME)\tRename a file\n\
 RD (RMDIR)\tDelete a subdirectory\n\
 SET\t\tSet or show environment variables\n\
+SETLOCAL\tStart localization of environment changes in a batch file\n\
 TIME\t\tSet or show the current system time\n\
 TITLE\t\tSet the window title for the CMD session\n\
 TYPE\t\tType the contents of a text file\n\

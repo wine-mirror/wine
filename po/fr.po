@@ -8265,7 +8265,23 @@ msgstr "VER affiche la version de cmd utilisée.\n"
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL affiche le nom de volume d'un lecteur de disque.\n"
 
-#: cmd.rc:209
+#: cmd.rc:210
+msgid ""
+"ENDLOCAL ends localization of environment changes in a batch file\n"
+"which were introduced by a preceding SETLOCAL.\n"
+msgstr ""
+
+#: cmd.rc:218
+msgid ""
+"SETLOCAL starts localization of environment changes in a batch file.\n"
+"\n"
+"Environment changes done after a SETLOCAL are local to the batch file, and\n"
+"are preserved until the next ENDLOCAL is encountered (or at the end of the\n"
+"file, whichever comes first), at which point the previous environment\n"
+"settings are restored.\n"
+msgstr ""
+
+#: cmd.rc:221
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -8273,7 +8289,7 @@ msgstr ""
 "PUSHD <répertoire> enregistre le répertoire courant sur\n"
 "une pile et remplace le répertoire courant par le répertoire spécifié.\n"
 
-#: cmd.rc:212
+#: cmd.rc:224
 msgid ""
 "POPD changes current directory to the last one saved with\n"
 "PUSHD.\n"
@@ -8281,11 +8297,11 @@ msgstr ""
 "POPD remplace le répertoire courant par le dernier enregistré à l'aide de\n"
 "PUSHD.\n"
 
-#: cmd.rc:214
+#: cmd.rc:226
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE affiche le contenu de fichiers ou l'entrée standard par pages.\n"
 
-#: cmd.rc:218
+#: cmd.rc:230
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -8296,7 +8312,7 @@ msgstr ""
 "CHOICE est principalement utilisé pour construire une sélection de menu dans "
 "un fichier batch.\n"
 
-#: cmd.rc:222
+#: cmd.rc:234
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -8304,7 +8320,8 @@ msgstr ""
 "EXIT termine la session de ligne de commande et retourne\n"
 "au système d'exploitation ou au shell où vous avez invoqué cmd.\n"
 
-#: cmd.rc:253
+#: cmd.rc:267
+#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ATTRIB\t\tShow or change DOS file attributes\n"
@@ -8318,6 +8335,7 @@ msgid ""
 "DEL (ERASE)\tDelete a file or set of files\n"
 "DIR\t\tList the contents of a directory\n"
 "ECHO\t\tCopy text directly to the console output\n"
+"ENDLOCAL\tEnd localization of environment changes in a batch file\n"
 "HELP\t\tShow brief help details on a topic\n"
 "MD (MKDIR)\tCreate a subdirectory\n"
 "MORE\t\tDisplay output in pages\n"
@@ -8329,6 +8347,7 @@ msgid ""
 "REN (RENAME)\tRename a file\n"
 "RD (RMDIR)\tDelete a subdirectory\n"
 "SET\t\tSet or show environment variables\n"
+"SETLOCAL\tStart localization of environment changes in a batch file\n"
 "TIME\t\tSet or show the current system time\n"
 "TITLE\t\tSet the window title for the CMD session\n"
 "TYPE\t\tType the contents of a text file\n"
@@ -8371,42 +8390,42 @@ msgstr ""
 "\n"
 "Entrez HELP <commande> pour plus d'informations sur les commandes ci-dessus\n"
 
-#: cmd.rc:255
+#: cmd.rc:269
 msgid "Are you sure"
 msgstr "Êtes-vous sûr(e)"
 
-#: cmd.rc:256 xcopy.rc:40
+#: cmd.rc:270 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "O"
 
-#: cmd.rc:257 xcopy.rc:41
+#: cmd.rc:271 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:258
+#: cmd.rc:272
 msgid "File association missing for extension %s\n"
 msgstr "Association de fichier manquante pour l'extension %s\n"
 
-#: cmd.rc:259
+#: cmd.rc:273
 msgid "No open command associated with file type '%s'\n"
 msgstr ""
 "Aucune commande d'ouverture n'est associée avec le type de fichier « %s »\n"
 
-#: cmd.rc:260
+#: cmd.rc:274
 msgid "Overwrite %s"
 msgstr "Écraser %s"
 
-#: cmd.rc:261
+#: cmd.rc:275
 msgid "More..."
 msgstr "Plus..."
 
-#: cmd.rc:262
+#: cmd.rc:276
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Ligne du processus batch probablement tronquée. Utilisation de :\n"
 
-#: cmd.rc:263
+#: cmd.rc:277
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -8414,80 +8433,80 @@ msgstr ""
 "Pas encore implémenté\n"
 "\n"
 
-#: cmd.rc:264
+#: cmd.rc:278
 msgid "Argument missing\n"
 msgstr "Argument manquant\n"
 
-#: cmd.rc:265
+#: cmd.rc:279
 msgid "Syntax error\n"
 msgstr "Erreur de syntaxe\n"
 
-#: cmd.rc:266
+#: cmd.rc:280
 msgid "%s: File Not Found\n"
 msgstr "%s : fichier non trouvé\n"
 
-#: cmd.rc:267
+#: cmd.rc:281
 msgid "No help available for %s\n"
 msgstr "Pas d'aide disponible pour %s\n"
 
-#: cmd.rc:268
+#: cmd.rc:282
 msgid "Target to GOTO not found\n"
 msgstr "La destination de l'instruction GOTO n'a pas été trouvée\n"
 
-#: cmd.rc:269
+#: cmd.rc:283
 msgid "Current Date is %s\n"
 msgstr "La date courante est %s\n"
 
-#: cmd.rc:270
+#: cmd.rc:284
 msgid "Current Time is %s\n"
 msgstr "L'heure courante est %s\n"
 
-#: cmd.rc:271
+#: cmd.rc:285
 msgid "Enter new date: "
 msgstr "Saisissez la nouvelle date : "
 
-#: cmd.rc:272
+#: cmd.rc:286
 msgid "Enter new time: "
 msgstr "Saisissez la nouvelle heure : "
 
-#: cmd.rc:273
+#: cmd.rc:287
 msgid "Environment variable %s not defined\n"
 msgstr "La variable d'environnement %s n'est pas définie\n"
 
-#: cmd.rc:274 xcopy.rc:38
+#: cmd.rc:288 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr "Impossible d'ouvrir « %s »\n"
 
-#: cmd.rc:275
+#: cmd.rc:289
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Impossible d'appeler une étiquette de batch hors d'un script batch\n"
 
-#: cmd.rc:276 xcopy.rc:42
+#: cmd.rc:290 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "T"
 
-#: cmd.rc:277
+#: cmd.rc:291
 msgid "%s, Delete"
 msgstr "%s, Supprimer"
 
-#: cmd.rc:278
+#: cmd.rc:292
 msgid "Echo is %s\n"
 msgstr "Echo est %s\n"
 
-#: cmd.rc:279
+#: cmd.rc:293
 msgid "Verify is %s\n"
 msgstr "Verify est %s\n"
 
-#: cmd.rc:280
+#: cmd.rc:294
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify doit être ON ou OFF\n"
 
-#: cmd.rc:281
+#: cmd.rc:295
 msgid "Parameter error\n"
 msgstr "Erreur de paramètre\n"
 
-#: cmd.rc:282
+#: cmd.rc:296
 msgid ""
 "Volume in drive %c is %s\n"
 "Volume Serial Number is %04x-%04x\n"
@@ -8497,31 +8516,31 @@ msgstr ""
 "Le numéro de série du volume est %04x-%04x\n"
 "\n"
 
-#: cmd.rc:283
+#: cmd.rc:297
 msgid "Volume label (11 characters, ENTER for none)?"
 msgstr "Étiquette du volume (11 caractères, ENTRÉE pour aucun) ?"
 
-#: cmd.rc:284
+#: cmd.rc:298
 msgid "PATH not found\n"
 msgstr "PATH non trouvé\n"
 
-#: cmd.rc:285
+#: cmd.rc:299
 msgid "Press Return key to continue: "
 msgstr "Appuyez sur ENTRÉE pour continuer : "
 
-#: cmd.rc:286
+#: cmd.rc:300
 msgid "Wine Command Prompt"
 msgstr "Invite de commande Wine"
 
-#: cmd.rc:287
+#: cmd.rc:301
 msgid "CMD Version %s\n"
 msgstr "CMD version %s\n"
 
-#: cmd.rc:288
+#: cmd.rc:302
 msgid "More? "
 msgstr "Plus ? "
 
-#: cmd.rc:289
+#: cmd.rc:303
 msgid "The input line is too long.\n"
 msgstr "La ligne d'entrée est trop longue.\n"
 
@@ -9979,8 +9998,8 @@ msgstr ""
 #: taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
 msgstr ""
-"Le gestionnaire des tâches est minimisé quand une opération « Basculer vers "
-"» est effectuée"
+"Le gestionnaire des tâches est minimisé quand une opération « Basculer "
+"vers » est effectuée"
 
 #: taskmgr.rc:191
 msgid "Hide the Task Manager when it is minimized"

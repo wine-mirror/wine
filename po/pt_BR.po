@@ -8491,7 +8491,23 @@ msgstr "VER mostra a versão em execução do cmd.\n"
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "Ajuda do comando VOL\n"
 
-#: cmd.rc:209
+#: cmd.rc:210
+msgid ""
+"ENDLOCAL ends localization of environment changes in a batch file\n"
+"which were introduced by a preceding SETLOCAL.\n"
+msgstr ""
+
+#: cmd.rc:218
+msgid ""
+"SETLOCAL starts localization of environment changes in a batch file.\n"
+"\n"
+"Environment changes done after a SETLOCAL are local to the batch file, and\n"
+"are preserved until the next ENDLOCAL is encountered (or at the end of the\n"
+"file, whichever comes first), at which point the previous environment\n"
+"settings are restored.\n"
+msgstr ""
+
+#: cmd.rc:221
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -8499,7 +8515,7 @@ msgstr ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 
-#: cmd.rc:212
+#: cmd.rc:224
 msgid ""
 "POPD changes current directory to the last one saved with\n"
 "PUSHD.\n"
@@ -8507,18 +8523,18 @@ msgstr ""
 "POPD changes current directory to the last one saved with\n"
 "PUSHD.\n"
 
-#: cmd.rc:214
+#: cmd.rc:226
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE displays output of files or piped input in pages.\n"
 
-#: cmd.rc:218
+#: cmd.rc:230
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
 
-#: cmd.rc:222
+#: cmd.rc:234
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -8526,7 +8542,8 @@ msgstr ""
 "EXIT termina a sessão de comando atual e retorna ao sistema operacional\n"
 "ou shell que tenha invocado o cmd.\n"
 
-#: cmd.rc:253
+#: cmd.rc:267
+#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ATTRIB\t\tShow or change DOS file attributes\n"
@@ -8540,6 +8557,7 @@ msgid ""
 "DEL (ERASE)\tDelete a file or set of files\n"
 "DIR\t\tList the contents of a directory\n"
 "ECHO\t\tCopy text directly to the console output\n"
+"ENDLOCAL\tEnd localization of environment changes in a batch file\n"
 "HELP\t\tShow brief help details on a topic\n"
 "MD (MKDIR)\tCreate a subdirectory\n"
 "MORE\t\tDisplay output in pages\n"
@@ -8551,6 +8569,7 @@ msgid ""
 "REN (RENAME)\tRename a file\n"
 "RD (RMDIR)\tDelete a subdirectory\n"
 "SET\t\tSet or show environment variables\n"
+"SETLOCAL\tStart localization of environment changes in a batch file\n"
 "TIME\t\tSet or show the current system time\n"
 "TITLE\t\tSet the window title for the CMD session\n"
 "TYPE\t\tType the contents of a text file\n"
@@ -8592,41 +8611,41 @@ msgstr ""
 "Entre HELP <comando> para maiores informações sobre alguns dos comandos "
 "acima\n"
 
-#: cmd.rc:255
+#: cmd.rc:269
 msgid "Are you sure"
 msgstr "Tem certeza"
 
-#: cmd.rc:256 xcopy.rc:40
+#: cmd.rc:270 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "S"
 
-#: cmd.rc:257 xcopy.rc:41
+#: cmd.rc:271 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:258
+#: cmd.rc:272
 msgid "File association missing for extension %s\n"
 msgstr "Associação de arquivo faltando para a extensão %s\n"
 
-#: cmd.rc:259
+#: cmd.rc:273
 msgid "No open command associated with file type '%s'\n"
 msgstr "Nenhum comando de abertura associado ao tipo de arquivo '%s'\n"
 
-#: cmd.rc:260
+#: cmd.rc:274
 msgid "Overwrite %s"
 msgstr "Sobrescrever %s"
 
-#: cmd.rc:261
+#: cmd.rc:275
 msgid "More..."
 msgstr "Mais..."
 
-#: cmd.rc:262
+#: cmd.rc:276
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Linha no processamento do Batch possivelmente truncada. Usando:\n"
 
-#: cmd.rc:263
+#: cmd.rc:277
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -8634,80 +8653,80 @@ msgstr ""
 "Ainda não implementado\n"
 "\n"
 
-#: cmd.rc:264
+#: cmd.rc:278
 msgid "Argument missing\n"
 msgstr "Faltando argumento\n"
 
-#: cmd.rc:265
+#: cmd.rc:279
 msgid "Syntax error\n"
 msgstr "Erro de sintaxe\n"
 
-#: cmd.rc:266
+#: cmd.rc:280
 msgid "%s: File Not Found\n"
 msgstr "%s : Arquivo Não Encontrado\n"
 
-#: cmd.rc:267
+#: cmd.rc:281
 msgid "No help available for %s\n"
 msgstr "Sem ajuda disponível para %s\n"
 
-#: cmd.rc:268
+#: cmd.rc:282
 msgid "Target to GOTO not found\n"
 msgstr "Alvo para GOTO não encontrado\n"
 
-#: cmd.rc:269
+#: cmd.rc:283
 msgid "Current Date is %s\n"
 msgstr "A Data Atual é %s\n"
 
-#: cmd.rc:270
+#: cmd.rc:284
 msgid "Current Time is %s\n"
 msgstr "A Hora Atual é %s\n"
 
-#: cmd.rc:271
+#: cmd.rc:285
 msgid "Enter new date: "
 msgstr "Entre nova data: "
 
-#: cmd.rc:272
+#: cmd.rc:286
 msgid "Enter new time: "
 msgstr "Entre nova hora: "
 
-#: cmd.rc:273
+#: cmd.rc:287
 msgid "Environment variable %s not defined\n"
 msgstr "Variável de ambiente %s não definida\n"
 
-#: cmd.rc:274 xcopy.rc:38
+#: cmd.rc:288 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr "Falha ao abrir '%s'\n"
 
-#: cmd.rc:275
+#: cmd.rc:289
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Não pode chamar um rótulo batch fora de um script batch\n"
 
-#: cmd.rc:276 xcopy.rc:42
+#: cmd.rc:290 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:277
+#: cmd.rc:291
 msgid "%s, Delete"
 msgstr "%s, Excluir"
 
-#: cmd.rc:278
+#: cmd.rc:292
 msgid "Echo is %s\n"
 msgstr "Echo é %s\n"
 
-#: cmd.rc:279
+#: cmd.rc:293
 msgid "Verify is %s\n"
 msgstr "Verify é %s\n"
 
-#: cmd.rc:280
+#: cmd.rc:294
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify deve ser ON ou OFF\n"
 
-#: cmd.rc:281
+#: cmd.rc:295
 msgid "Parameter error\n"
 msgstr "Erro de parâmetro\n"
 
-#: cmd.rc:282
+#: cmd.rc:296
 msgid ""
 "Volume in drive %c is %s\n"
 "Volume Serial Number is %04x-%04x\n"
@@ -8717,31 +8736,31 @@ msgstr ""
 "O Número de Série do Volume é %04x-%04x\n"
 "\n"
 
-#: cmd.rc:283
+#: cmd.rc:297
 msgid "Volume label (11 characters, ENTER for none)?"
 msgstr "Rótulo do Volume (11 characters, ENTER for none)?"
 
-#: cmd.rc:284
+#: cmd.rc:298
 msgid "PATH not found\n"
 msgstr "PATH não encontrado\n"
 
-#: cmd.rc:285
+#: cmd.rc:299
 msgid "Press Return key to continue: "
 msgstr "Pressione a tecla Enter para continuar: "
 
-#: cmd.rc:286
+#: cmd.rc:300
 msgid "Wine Command Prompt"
 msgstr "Prompt de Comando Wine"
 
-#: cmd.rc:287
+#: cmd.rc:301
 msgid "CMD Version %s\n"
 msgstr "CMD Versão %s\n"
 
-#: cmd.rc:288
+#: cmd.rc:302
 msgid "More? "
 msgstr "Mais? "
 
-#: cmd.rc:289
+#: cmd.rc:303
 msgid "The input line is too long.\n"
 msgstr "A linha de entrada é muito longa.\n"
 
