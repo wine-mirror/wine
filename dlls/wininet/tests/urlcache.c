@@ -146,10 +146,12 @@ static void test_GetUrlCacheEntryInfoExA(void)
     /* Querying the redirect URL fails with ERROR_INVALID_PARAMETER */
     SetLastError(0xdeadbeef);
     ret = GetUrlCacheEntryInfoEx(TEST_URL, NULL, NULL, NULL, &cbRedirectUrl, NULL, 0);
+    ok(!ret, "GetUrlCacheEntryInfoEx should have failed\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = GetUrlCacheEntryInfoEx(TEST_URL, NULL, &cbCacheEntryInfo, NULL, &cbRedirectUrl, NULL, 0);
+    ok(!ret, "GetUrlCacheEntryInfoEx should have failed\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 }
@@ -234,6 +236,7 @@ static void test_IsUrlCacheEntryExpiredA(void)
        "expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
     info = HeapAlloc(GetProcessHeap(), 0, size);
     ret = GetUrlCacheEntryInfo(TEST_URL, info, &size);
+    ok(ret, "GetUrlCacheEntryInfo failed: %d\n", GetLastError());
     GetSystemTimeAsFileTime(&info->ExpireTime);
     exp_time.u.LowPart = info->ExpireTime.dwLowDateTime;
     exp_time.u.HighPart = info->ExpireTime.dwHighDateTime;
