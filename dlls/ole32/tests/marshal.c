@@ -1870,6 +1870,7 @@ static LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
         /* note the use of the magic IID_IWineTest value to tell remote thread
          * to try to send a message back to us */
         hr = IClassFactory_CreateInstance(proxy, NULL, &IID_IWineTest, (void **)&object);
+        ok(hr == S_FALSE, "expected S_FALSE, got %d\n", hr);
 
         IClassFactory_Release(proxy);
 
