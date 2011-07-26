@@ -1032,10 +1032,9 @@ static void context_enter(struct wined3d_context *context)
     }
 }
 
-static void context_invalidate_state(struct wined3d_context *context,
-        DWORD state, const struct StateEntry *state_table)
+static void context_invalidate_state(struct wined3d_context *context, DWORD state)
 {
-    DWORD rep = state_table[state].representative;
+    DWORD rep = context->state_table[state].representative;
     DWORD idx;
     BYTE shift;
 
@@ -1355,7 +1354,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     for (state = 0; state <= STATE_HIGHEST; ++state)
     {
         if (ret->state_table[state].representative)
-            context_invalidate_state(ret, state, ret->state_table);
+            context_invalidate_state(ret, state);
     }
 
     ret->swapchain = swapchain;
@@ -1621,7 +1620,6 @@ static inline void set_blit_dimension(UINT width, UINT height) {
 static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *context)
 {
     int i;
-    const struct StateEntry *StateTable = context->state_table;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     UINT width = context->current_rt->resource.width;
     UINT height = context->current_rt->resource.height;
@@ -1651,8 +1649,8 @@ static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *
     device->shader_backend->shader_select(context, FALSE, FALSE);
     LEAVE_GL();
 
-    context_invalidate_state(context, STATE_VSHADER, StateTable);
-    context_invalidate_state(context, STATE_PIXELSHADER, StateTable);
+    context_invalidate_state(context, STATE_VSHADER);
+    context_invalidate_state(context, STATE_PIXELSHADER);
 
     /* Call ENTER_GL() once for all gl calls below. In theory we should not call
      * helper functions in between gl calls. This function is full of context_invalidate_state
@@ -1694,8 +1692,8 @@ static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *
         if (sampler != WINED3D_UNMAPPED_STAGE)
         {
             if (sampler < MAX_TEXTURES)
-                context_invalidate_state(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP), StateTable);
-            context_invalidate_state(context, STATE_SAMPLER(sampler), StateTable);
+                context_invalidate_state(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP));
+            context_invalidate_state(context, STATE_SAMPLER(sampler));
         }
     }
     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
@@ -1737,53 +1735,53 @@ static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *
     {
         if (sampler < MAX_TEXTURES)
         {
-            context_invalidate_state(context, STATE_TRANSFORM(WINED3DTS_TEXTURE0 + sampler), StateTable);
-            context_invalidate_state(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP), StateTable);
+            context_invalidate_state(context, STATE_TRANSFORM(WINED3DTS_TEXTURE0 + sampler));
+            context_invalidate_state(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP));
         }
-        context_invalidate_state(context, STATE_SAMPLER(sampler), StateTable);
+        context_invalidate_state(context, STATE_SAMPLER(sampler));
     }
 
     /* Other misc states */
     glDisable(GL_ALPHA_TEST);
     checkGLcall("glDisable(GL_ALPHA_TEST)");
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_ALPHATESTENABLE), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_ALPHATESTENABLE));
     glDisable(GL_LIGHTING);
     checkGLcall("glDisable GL_LIGHTING");
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_LIGHTING), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_LIGHTING));
     glDisable(GL_DEPTH_TEST);
     checkGLcall("glDisable GL_DEPTH_TEST");
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_ZENABLE), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_ZENABLE));
     glDisableWINE(GL_FOG);
     checkGLcall("glDisable GL_FOG");
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_FOGENABLE), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_FOGENABLE));
     glDisable(GL_BLEND);
     checkGLcall("glDisable GL_BLEND");
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE));
     glDisable(GL_CULL_FACE);
     checkGLcall("glDisable GL_CULL_FACE");
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_CULLMODE), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_CULLMODE));
     glDisable(GL_STENCIL_TEST);
     checkGLcall("glDisable GL_STENCIL_TEST");
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_STENCILENABLE), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_STENCILENABLE));
     glDisable(GL_SCISSOR_TEST);
     checkGLcall("glDisable GL_SCISSOR_TEST");
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
     if (gl_info->supported[ARB_POINT_SPRITE])
     {
         glDisable(GL_POINT_SPRITE_ARB);
         checkGLcall("glDisable GL_POINT_SPRITE_ARB");
-        context_invalidate_state(context, STATE_RENDER(WINED3DRS_POINTSPRITEENABLE), StateTable);
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_POINTSPRITEENABLE));
     }
     glColorMask(GL_TRUE, GL_TRUE,GL_TRUE,GL_TRUE);
     checkGLcall("glColorMask");
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE), StateTable);
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1), StateTable);
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2), StateTable);
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
     if (gl_info->supported[EXT_SECONDARY_COLOR])
     {
         glDisable(GL_COLOR_SUM_EXT);
-        context_invalidate_state(context, STATE_RENDER(WINED3DRS_SPECULARENABLE), StateTable);
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_SPECULARENABLE));
         checkGLcall("glDisable(GL_COLOR_SUM_EXT)");
     }
 
@@ -1792,10 +1790,10 @@ static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *
     checkGLcall("glMatrixMode(GL_MODELVIEW)");
     glLoadIdentity();
     checkGLcall("glLoadIdentity()");
-    context_invalidate_state(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), StateTable);
+    context_invalidate_state(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)));
 
     context->last_was_rhw = TRUE;
-    context_invalidate_state(context, STATE_VDECL, StateTable); /* because of last_was_rhw = TRUE */
+    context_invalidate_state(context, STATE_VDECL); /* because of last_was_rhw = TRUE */
 
     glDisable(GL_CLIP_PLANE0); checkGLcall("glDisable(clip plane 0)");
     glDisable(GL_CLIP_PLANE1); checkGLcall("glDisable(clip plane 1)");
@@ -1803,7 +1801,7 @@ static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *
     glDisable(GL_CLIP_PLANE3); checkGLcall("glDisable(clip plane 3)");
     glDisable(GL_CLIP_PLANE4); checkGLcall("glDisable(clip plane 4)");
     glDisable(GL_CLIP_PLANE5); checkGLcall("glDisable(clip plane 5)");
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_CLIPPING), StateTable);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_CLIPPING));
 
     set_blit_dimension(width, height);
     device->frag_pipe->enable_extension(FALSE);
@@ -1811,8 +1809,8 @@ static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *
     LEAVE_GL();
 
     context->blit_w = width; context->blit_h = height;
-    context_invalidate_state(context, STATE_VIEWPORT, StateTable);
-    context_invalidate_state(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
+    context_invalidate_state(context, STATE_VIEWPORT);
+    context_invalidate_state(context, STATE_TRANSFORM(WINED3DTS_PROJECTION));
 }
 
 /* Do not call while under the GL lock. */
@@ -1935,16 +1933,15 @@ void context_set_draw_buffer(struct wined3d_context *context, GLenum buffer)
     context->draw_buffers_mask = context_generate_rt_mask(buffer);
 }
 
-static inline void context_set_render_offscreen(struct wined3d_context *context, const struct StateEntry *StateTable,
-        BOOL offscreen)
+static void context_set_render_offscreen(struct wined3d_context *context, BOOL offscreen)
 {
     if (context->render_offscreen == offscreen) return;
 
-    context_invalidate_state(context, STATE_POINTSPRITECOORDORIGIN, StateTable);
-    context_invalidate_state(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
-    context_invalidate_state(context, STATE_VIEWPORT, StateTable);
-    context_invalidate_state(context, STATE_SCISSORRECT, StateTable);
-    context_invalidate_state(context, STATE_FRONTFACE, StateTable);
+    context_invalidate_state(context, STATE_POINTSPRITECOORDORIGIN);
+    context_invalidate_state(context, STATE_TRANSFORM(WINED3DTS_PROJECTION));
+    context_invalidate_state(context, STATE_VIEWPORT);
+    context_invalidate_state(context, STATE_SCISSORRECT);
+    context_invalidate_state(context, STATE_FRONTFACE);
     context->render_offscreen = offscreen;
 }
 
@@ -1984,7 +1981,7 @@ static void context_validate_onscreen_formats(struct wined3d_context *context,
     /* The currently active context is the necessary context to access the swapchain's onscreen buffers */
     surface_load_location(context->current_rt, SFLAG_INTEXTURE, NULL);
     swapchain->render_to_fbo = TRUE;
-    context_set_render_offscreen(context, context->state_table, TRUE);
+    context_set_render_offscreen(context, TRUE);
 }
 
 static DWORD context_generate_rt_mask_no_fbo(const struct wined3d_device *device, const struct wined3d_surface *rt)
@@ -2045,7 +2042,7 @@ void context_apply_blit_state(struct wined3d_context *context, struct wined3d_de
     LEAVE_GL();
 
     SetupForBlit(device, context);
-    context_invalidate_state(context, STATE_FRAMEBUFFER, context->state_table);
+    context_invalidate_state(context, STATE_FRAMEBUFFER);
 }
 
 static BOOL context_validate_rt_config(UINT rt_count,
@@ -2069,7 +2066,6 @@ static BOOL context_validate_rt_config(UINT rt_count,
 BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_device *device,
         UINT rt_count, const struct wined3d_fb_state *fb)
 {
-    const struct StateEntry *state_table = context->state_table;
     DWORD rt_mask = 0;
     UINT i;
     struct wined3d_surface **rts = fb->render_targets;
@@ -2114,7 +2110,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
             /* If the framebuffer is not the device's fb the device's fb has to be reapplied
              * next draw. Otherwise we could mark the framebuffer state clean here, once the
              * state management allows this */
-            context_invalidate_state(context, STATE_FRAMEBUFFER, state_table);
+            context_invalidate_state(context, STATE_FRAMEBUFFER);
         }
         else
         {
@@ -2139,7 +2135,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
     {
         context_apply_draw_buffers(context, rt_mask);
         context->draw_buffers_mask = rt_mask;
-        context_invalidate_state(context, STATE_FRAMEBUFFER, state_table);
+        context_invalidate_state(context, STATE_FRAMEBUFFER);
     }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
@@ -2161,9 +2157,9 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
     checkGLcall("glEnable GL_SCISSOR_TEST");
     LEAVE_GL();
 
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), state_table);
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE), state_table);
-    context_invalidate_state(context, STATE_SCISSORRECT, state_table);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE));
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+    context_invalidate_state(context, STATE_SCISSORRECT);
 
     return TRUE;
 }
@@ -2290,7 +2286,6 @@ static void context_setup_target(struct wined3d_device *device,
         struct wined3d_context *context, struct wined3d_surface *target)
 {
     BOOL old_render_offscreen = context->render_offscreen, render_offscreen;
-    const struct StateEntry *StateTable = context->state_table;
 
     if (!target) return;
     render_offscreen = surface_is_offscreen(target);
@@ -2300,7 +2295,7 @@ static void context_setup_target(struct wined3d_device *device,
      * the alpha blend state changes with different render target formats. */
     if (!context->current_rt)
     {
-        context_invalidate_state(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE));
     }
     else
     {
@@ -2312,11 +2307,11 @@ static void context_setup_target(struct wined3d_device *device,
             /* Disable blending when the alpha mask has changed and when a format doesn't support blending. */
             if ((old->alpha_mask && !new->alpha_mask) || (!old->alpha_mask && new->alpha_mask)
                     || !(new->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
-                context_invalidate_state(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
+                context_invalidate_state(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE));
 
             /* Update sRGB writing when switching between formats that do/do not support sRGB writing */
             if ((old->flags & WINED3DFMT_FLAG_SRGB_WRITE) != (new->flags & WINED3DFMT_FLAG_SRGB_WRITE))
-                context_invalidate_state(context, STATE_RENDER(WINED3DRS_SRGBWRITEENABLE), StateTable);
+                context_invalidate_state(context, STATE_RENDER(WINED3DRS_SRGBWRITEENABLE));
         }
 
         /* When switching away from an offscreen render target, and we're not
@@ -2338,7 +2333,7 @@ static void context_setup_target(struct wined3d_device *device,
     }
 
     context->current_rt = target;
-    context_set_render_offscreen(context, StateTable, render_offscreen);
+    context_set_render_offscreen(context, render_offscreen);
 }
 
 /* Do not call while under the GL lock. */
