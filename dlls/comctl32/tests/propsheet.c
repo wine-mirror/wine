@@ -502,7 +502,6 @@ static void test_custom_default_button(void)
         }
     }
 
-    todo_wine
     ok(add_button_has_been_pressed, "The Add button has not been pressed!\n");
 
     DestroyWindow(hdlg);

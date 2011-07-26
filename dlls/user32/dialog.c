@@ -1120,6 +1120,38 @@ static void DIALOG_FixChildrenOnChangeFocus (HWND hwndDlg, HWND hwndNext)
 }
 
 /***********************************************************************
+ *           DIALOG_IdToHwnd
+ *
+ * A recursive version of GetDlgItem
+ *
+ * RETURNS
+ *  The HWND for a Child ID.
+ */
+static HWND DIALOG_IdToHwnd( HWND hwndDlg, INT id )
+{
+    int i;
+    HWND *list = WIN_ListChildren( hwndDlg );
+    HWND ret = 0;
+
+    if (!list) return 0;
+
+    for (i = 0; list[i]; i++)
+    {
+        if (GetWindowLongPtrW( list[i], GWLP_ID ) == id)
+        {
+            ret = list[i];
+            break;
+        }
+
+        /* Recurse into every child */
+        if ((ret = DIALOG_IdToHwnd( list[i], id ))) break;
+    }
+
+    HeapFree( GetProcessHeap(), 0, list );
+    return ret;
+}
+
+/***********************************************************************
  *		IsDialogMessageW (USER32.@)
  */
 BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
@@ -1227,7 +1259,7 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
                 }
                 else if (DC_HASDEFID == HIWORD(dw = SendMessageW (hwndDlg, DM_GETDEFID, 0, 0)))
                 {
-                    HWND hwndDef = GetDlgItem(hwndDlg, LOWORD(dw));
+                    HWND hwndDef = DIALOG_IdToHwnd(hwndDlg, LOWORD(dw));
                     if (hwndDef ? IsWindowEnabled(hwndDef) : LOWORD(dw)==IDOK)
                         SendMessageW( hwndDlg, WM_COMMAND, MAKEWPARAM( LOWORD(dw), BN_CLICKED ), (LPARAM)hwndDef);
                 }

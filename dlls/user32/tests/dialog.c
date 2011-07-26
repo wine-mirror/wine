@@ -709,7 +709,7 @@ static void test_WM_NEXTDLGCTL(void)
     g_bReceivedCommand = FALSE;
     FormEnterMsg (&msg, child3);
     ok(IsDialogMessage (g_hwndTestDlg, &msg), "Did not handle the ENTER\n");
-    todo_wine ok(g_bReceivedCommand, "Did not trigger the default Button action\n");
+    ok(g_bReceivedCommand, "Did not trigger the default Button action\n");
 
     DestroyWindow(child3);
     DestroyWindow(child2);
