@@ -2673,6 +2673,12 @@ static HRESULT WINAPI winhttp_request_Send(
     VARIANT body )
 {
     struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    SAFEARRAY *sa = NULL;
+    VARIANT array;
+    char *ptr = NULL;
+    LONG size = 0;
+    HRESULT hr;
+    BOOL ret;
     DWORD err;
 
     TRACE("%p, %s\n", request, debugstr_variant(&body));
@@ -2695,11 +2701,20 @@ static HRESULT WINAPI winhttp_request_Send(
     {
         return HRESULT_FROM_WIN32( get_last_error() );
     }
-    wait_set_status_callback( request, WINHTTP_CALLBACK_STATUS_REQUEST_SENT );
-    if (!WinHttpSendRequest( request->hrequest, NULL, 0, NULL, 0, 0, 0 ))
+    VariantInit( &array );
+    if (VariantChangeType( &array, &body, 0, VT_ARRAY|VT_UI1 ) == S_OK)
     {
-        return HRESULT_FROM_WIN32( get_last_error() );
+        SAFEARRAY *sa = V_ARRAY( &array );
+        if ((hr = SafeArrayAccessData( sa, (void **)&ptr )) != S_OK) return hr;
+        if ((hr = SafeArrayGetUBound( sa, 1, &size ) != S_OK)) return hr;
+        size++;
     }
+    wait_set_status_callback( request, WINHTTP_CALLBACK_STATUS_REQUEST_SENT );
+    ret = WinHttpSendRequest( request->hrequest, NULL, 0, ptr, size, size, 0 );
+    err = get_last_error();
+    if (sa && (hr = SafeArrayUnaccessData( sa )) != S_OK) return hr;
+    if (!ret) return HRESULT_FROM_WIN32( err );
+
     if ((err = wait_for_completion( request, INFINITE ))) return HRESULT_FROM_WIN32( err );
     request->state = REQUEST_STATE_SENT;
     return S_OK;
