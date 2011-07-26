@@ -258,7 +258,6 @@ void InternetExplorer_WebBrowser_Init(InternetExplorer*) DECLSPEC_HIDDEN;
 
 void released_obj(void) DECLSPEC_HIDDEN;
 
-HRESULT CUrlHistory_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT TaskbarList_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
 /**********************************************************************

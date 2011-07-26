@@ -20,7 +20,6 @@ C_SRCS = \
 	shellbrowser.c \
 	shlinstobj.c \
 	taskbarlist.c \
-	urlhist.c \
 	view.c \
 	webbrowser.c
 

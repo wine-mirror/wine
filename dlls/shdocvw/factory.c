@@ -154,7 +154,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
     static IClassFactoryImpl WB1ClassFactory = {{&WBCF_Vtbl}, WebBrowserV1_Create};
     static IClassFactoryImpl WB2ClassFactory = {{&WBCF_Vtbl}, WebBrowserV2_Create};
-    static IClassFactoryImpl CUHClassFactory = {{&WBCF_Vtbl}, CUrlHistory_Create};
     static IClassFactoryImpl TBLClassFactory = {{&WBCF_Vtbl}, TaskbarList_Create};
 
     TRACE("\n");
@@ -165,10 +164,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
     if(IsEqualGUID(&CLSID_WebBrowser_V1, rclsid))
         return IClassFactory_QueryInterface(&WB1ClassFactory.IClassFactory_iface, riid, ppv);
 
-    if(IsEqualGUID(&CLSID_CUrlHistory, rclsid))
-        return IClassFactory_QueryInterface(&CUHClassFactory.IClassFactory_iface, riid, ppv);
-
-    if(IsEqualGUID(&CLSID_InternetShortcut, rclsid))
+    if(IsEqualGUID(&CLSID_InternetShortcut, rclsid)
+       || IsEqualGUID(&CLSID_CUrlHistory, rclsid))
         return get_ieframe_object(rclsid, riid, ppv);
 
     if(IsEqualGUID(&CLSID_TaskbarList, rclsid))

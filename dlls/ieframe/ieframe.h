@@ -32,7 +32,8 @@
 
 #include "wine/unicode.h"
 
-HRESULT WINAPI InternetShortcut_Create(IClassFactory*,IUnknown*,REFIID,void**);
+HRESULT WINAPI CUrlHistory_Create(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
+HRESULT WINAPI InternetShortcut_Create(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
 extern LONG module_ref DECLSPEC_HIDDEN;
 

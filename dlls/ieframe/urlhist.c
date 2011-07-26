@@ -16,9 +16,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "wine/debug.h"
-#include "shdocvw.h"
+#include "ieframe.h"
 #include "urlhist.h"
+
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
@@ -48,13 +49,13 @@ static HRESULT WINAPI UrlHistoryStg_QueryInterface(IUrlHistoryStg2 *iface, REFII
 
 static ULONG WINAPI UrlHistoryStg_AddRef(IUrlHistoryStg2 *iface)
 {
-    SHDOCVW_LockModule();
+    lock_module();
     return 2;
 }
 
 static ULONG WINAPI UrlHistoryStg_Release(IUrlHistoryStg2 *iface)
 {
-    SHDOCVW_UnlockModule();
+    unlock_module();
     return 1;
 }
 
@@ -122,7 +123,7 @@ static const IUrlHistoryStg2Vtbl UrlHistoryStg2Vtbl = {
 
 static IUrlHistoryStg2 UrlHistoryStg2 = { &UrlHistoryStg2Vtbl };
 
-HRESULT CUrlHistory_Create(IUnknown *pOuter, REFIID riid, void **ppv)
+HRESULT WINAPI CUrlHistory_Create(IClassFactory *iface, IUnknown *pOuter, REFIID riid, void **ppv)
 {
     if(pOuter)
         return CLASS_E_NOAGGREGATION;

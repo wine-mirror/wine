@@ -18,6 +18,7 @@
 
 #include "ieframe.h"
 
+#include "shlguid.h"
 #include "isguids.h"
 
 #include "wine/debug.h"
@@ -75,6 +76,16 @@ static const IClassFactoryVtbl InternetShortcutFactoryVtbl = {
 
 static IClassFactory InternetShortcutFactory = { &InternetShortcutFactoryVtbl };
 
+static const IClassFactoryVtbl CUrlHistoryFactoryVtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    CUrlHistory_Create,
+    ClassFactory_LockServer
+};
+
+static IClassFactory CUrlHistoryFactory = { &CUrlHistoryFactoryVtbl };
+
 /******************************************************************
  *              DllMain (ieframe.@)
  */
@@ -102,6 +113,11 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     if(IsEqualGUID(rclsid, &CLSID_InternetShortcut)) {
         TRACE("(CLSID_InternetShortcut %s %p)\n", debugstr_guid(riid), ppv);
         return IClassFactory_QueryInterface(&InternetShortcutFactory, riid, ppv);
+    }
+
+    if(IsEqualGUID(&CLSID_CUrlHistory, rclsid)) {
+        TRACE("(CLSID_CUrlHistory %s %p)\n", debugstr_guid(riid), ppv);
+        return IClassFactory_QueryInterface(&CUrlHistoryFactory, riid, ppv);
     }
 
     FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
