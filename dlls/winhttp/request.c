@@ -2168,6 +2168,7 @@ struct winhttp_request
     LONG connect_timeout;
     LONG send_timeout;
     LONG receive_timeout;
+    WINHTTP_PROXY_INFO proxy;
 };
 
 static inline struct winhttp_request *impl_from_IWinHttpRequest( IWinHttpRequest *iface )
@@ -2355,8 +2356,34 @@ static HRESULT WINAPI winhttp_request_SetProxy(
     VARIANT proxy_server,
     VARIANT bypass_list )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+
+    TRACE("%p, %u, %s, %s\n", request, proxy_setting, debugstr_variant(&proxy_server),
+          debugstr_variant(&bypass_list));
+
+    switch (proxy_setting)
+    {
+    case HTTPREQUEST_PROXYSETTING_DEFAULT:
+        request->proxy.dwAccessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
+        request->proxy.lpszProxy = NULL;
+        request->proxy.lpszProxyBypass = NULL;
+        break;
+
+    case HTTPREQUEST_PROXYSETTING_DIRECT:
+        request->proxy.dwAccessType = WINHTTP_ACCESS_TYPE_NO_PROXY;
+        request->proxy.lpszProxy = NULL;
+        request->proxy.lpszProxyBypass = NULL;
+        break;
+
+    case HTTPREQUEST_PROXYSETTING_PROXY:
+        request->proxy.dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+        request->proxy.lpszProxy = V_BSTR( &proxy_server );
+        request->proxy.lpszProxyBypass = V_BSTR( &bypass_list );
+        break;
+
+    default: return E_INVALIDARG;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI winhttp_request_SetCredentials(
@@ -2557,6 +2584,10 @@ static HRESULT WINAPI winhttp_request_Send(
     }
     if (request->state >= REQUEST_STATE_SENT) return ERROR_SUCCESS;
 
+    if (!WinHttpSetOption( request->hrequest, WINHTTP_OPTION_PROXY, &request->proxy, sizeof(request->proxy) ))
+    {
+        return HRESULT_FROM_WIN32( get_last_error() );
+    }
     if (!WinHttpSetTimeouts( request->hrequest,
                              request->resolve_timeout,
                              request->connect_timeout,
@@ -2855,6 +2886,9 @@ static HRESULT WINAPI winhttp_request_Abort(
     request->bytes_available = 0;
     request->bytes_read = 0;
     request->error = ERROR_SUCCESS;
+    request->proxy.dwAccessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
+    request->proxy.lpszProxy = NULL;
+    request->proxy.lpszProxyBypass = NULL;
     return S_OK;
 }
 

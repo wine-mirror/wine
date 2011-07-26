@@ -2110,10 +2110,12 @@ static void test_IWinHttpRequest(void)
     static const WCHAR url2W[] = {'w','i','n','e','h','q','.','o','r','g',0};
     static const WCHAR method1W[] = {'G','E','T',0};
     static const WCHAR method2W[] = {'I','N','V','A','L','I','D',0};
+    static const WCHAR proxy_serverW[] = {'p','r','o','x','y','s','e','r','v','e','r',0};
+    static const WCHAR bypas_listW[] = {'b','y','p','a','s','s','l','i','s','t',0};
     HRESULT hr;
     IWinHttpRequest *req;
     BSTR method, url, username, password, response = NULL, status_text = NULL;
-    VARIANT async, empty, timeout, body;
+    VARIANT async, empty, timeout, body, proxy_server, bypass_list;
     VARIANT_BOOL succeeded;
     LONG status;
 
@@ -2198,6 +2200,19 @@ static void test_IWinHttpRequest(void)
     hr = IWinHttpRequest_SetCredentials( req, NULL, NULL, 0xdeadbeef );
     ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_OPEN ), "got %08x\n", hr );
 
+    VariantInit( &proxy_server );
+    V_VT( &proxy_server ) = VT_ERROR;
+    VariantInit( &bypass_list );
+    V_VT( &bypass_list ) = VT_ERROR;
+    hr = IWinHttpRequest_SetProxy( req, HTTPREQUEST_PROXYSETTING_DIRECT, proxy_server, bypass_list );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_SetProxy( req, HTTPREQUEST_PROXYSETTING_PROXY, proxy_server, bypass_list );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_SetProxy( req, HTTPREQUEST_PROXYSETTING_DIRECT, proxy_server, bypass_list );
+    ok( hr == S_OK, "got %08x\n", hr );
+
     SysFreeString( method );
     method = SysAllocString( method1W );
     SysFreeString( url );
@@ -2228,6 +2243,19 @@ static void test_IWinHttpRequest(void)
     hr = IWinHttpRequest_SetCredentials( req, username, password, HTTPREQUEST_SETCREDENTIALS_FOR_SERVER );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    V_VT( &proxy_server ) = VT_BSTR;
+    V_BSTR( &proxy_server ) = SysAllocString( proxy_serverW );
+    V_VT( &bypass_list ) = VT_BSTR;
+    V_BSTR( &bypass_list ) = SysAllocString( bypas_listW );
+    hr = IWinHttpRequest_SetProxy( req, HTTPREQUEST_PROXYSETTING_PROXY, proxy_server, bypass_list );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_SetProxy( req, 0xdeadbeef, proxy_server, bypass_list );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_SetProxy( req, HTTPREQUEST_PROXYSETTING_DIRECT, proxy_server, bypass_list );
+    ok( hr == S_OK, "got %08x\n", hr );
+
     hr = IWinHttpRequest_Send( req, empty );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -2247,6 +2275,12 @@ static void test_IWinHttpRequest(void)
     hr = IWinHttpRequest_SetCredentials( req, username, password, HTTPREQUEST_SETCREDENTIALS_FOR_SERVER );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    hr = IWinHttpRequest_SetProxy( req, HTTPREQUEST_PROXYSETTING_PROXY, proxy_server, bypass_list );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_SetProxy( req, HTTPREQUEST_PROXYSETTING_DIRECT, proxy_server, bypass_list );
+    ok( hr == S_OK, "got %08x\n", hr );
+
     VariantInit( &timeout );
     V_VT( &timeout ) = VT_I4;
     V_I4( &timeout ) = 10;
@@ -2261,6 +2295,12 @@ static void test_IWinHttpRequest(void)
     SysFreeString( status_text );
 
     hr = IWinHttpRequest_SetCredentials( req, username, password, HTTPREQUEST_SETCREDENTIALS_FOR_SERVER );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_SetProxy( req, HTTPREQUEST_PROXYSETTING_PROXY, proxy_server, bypass_list );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_SetProxy( req, HTTPREQUEST_PROXYSETTING_DIRECT, proxy_server, bypass_list );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = IWinHttpRequest_Send( req, empty );
@@ -2279,6 +2319,12 @@ static void test_IWinHttpRequest(void)
     hr = VariantClear( &body );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    hr = IWinHttpRequest_SetProxy( req, HTTPREQUEST_PROXYSETTING_PROXY, proxy_server, bypass_list );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_SetProxy( req, HTTPREQUEST_PROXYSETTING_DIRECT, proxy_server, bypass_list );
+    ok( hr == S_OK, "got %08x\n", hr );
+
     hr = IWinHttpRequest_Send( req, empty );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -2295,6 +2341,8 @@ static void test_IWinHttpRequest(void)
     SysFreeString( url );
     SysFreeString( username );
     SysFreeString( password );
+    VariantClear( &proxy_server );
+    VariantClear( &bypass_list );
     CoUninitialize();
 }
 
