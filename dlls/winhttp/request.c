@@ -2429,6 +2429,7 @@ static HRESULT WINAPI winhttp_request_Open(
 {
     static const WCHAR typeW[] = {'*','/','*',0};
     static const WCHAR *acceptW[] = {typeW, NULL};
+    static const WCHAR httpsW[] = {'h','t','t','p','s'};
     static const WCHAR user_agentW[] = {
         'M','o','z','i','l','l','a','/','4','.','0',' ','(','c','o','m','p','a','t','i','b','l','e',';',' ',
         'W','i','n','3','2',';',' ','W','i','n','H','t','t','p','.','W','i','n','H','t','t','p',
@@ -2437,7 +2438,7 @@ static HRESULT WINAPI winhttp_request_Open(
     HINTERNET hsession = NULL, hconnect = NULL, hrequest;
     URL_COMPONENTS uc;
     WCHAR *hostname, *path;
-    DWORD err, flags = 0;
+    DWORD err, len, flags = 0, request_flags = 0;
 
     TRACE("%p, %s, %s, %s\n", request, debugstr_w(method), debugstr_w(url),
           debugstr_variant(&async));
@@ -2446,6 +2447,7 @@ static HRESULT WINAPI winhttp_request_Open(
 
     memset( &uc, 0, sizeof(uc) );
     uc.dwStructSize = sizeof(uc);
+    uc.dwSchemeLength   = ~0u;
     uc.dwHostNameLength = ~0u;
     uc.dwUrlPathLength  = ~0u;
     if (!WinHttpCrackUrl( url, 0, 0, &uc )) return HRESULT_FROM_WIN32( get_last_error() );
@@ -2472,7 +2474,12 @@ static HRESULT WINAPI winhttp_request_Open(
         err = get_last_error();
         goto error;
     }
-    if (!(hrequest = WinHttpOpenRequest( hconnect, method, path, NULL, NULL, acceptW, 0 )))
+    len = sizeof(httpsW) / sizeof(WCHAR);
+    if (uc.dwSchemeLength == len && !memcmp( uc.lpszScheme, httpsW, len * sizeof(WCHAR) ))
+    {
+        request_flags |= WINHTTP_FLAG_SECURE;
+    }
+    if (!(hrequest = WinHttpOpenRequest( hconnect, method, path, NULL, NULL, acceptW, request_flags )))
     {
         err = get_last_error();
         goto error;
