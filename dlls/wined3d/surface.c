@@ -1145,21 +1145,21 @@ static void wined3d_surface_depth_blt_fbo(struct wined3d_device *device, struct 
     if (gl_mask & GL_DEPTH_BUFFER_BIT)
     {
         glDepthMask(GL_TRUE);
-        device_invalidate_state(device, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
     }
     if (gl_mask & GL_STENCIL_BUFFER_BIT)
     {
         if (context->gl_info->supported[EXT_STENCIL_TWO_SIDE])
         {
             glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
-            device_invalidate_state(device, STATE_RENDER(WINED3DRS_TWOSIDEDSTENCILMODE));
+            context_invalidate_state(context, STATE_RENDER(WINED3DRS_TWOSIDEDSTENCILMODE));
         }
         glStencilMask(~0U);
-        device_invalidate_state(device, STATE_RENDER(WINED3DRS_STENCILWRITEMASK));
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_STENCILWRITEMASK));
     }
 
     glDisable(GL_SCISSOR_TEST);
-    device_invalidate_state(device, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
 
     gl_info->fbo_ops.glBlitFramebuffer(src_rect->left, src_rect->top, src_rect->right, src_rect->bottom,
             dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, gl_mask, GL_NEAREST);
