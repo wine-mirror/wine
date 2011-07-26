@@ -281,7 +281,6 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
         struct wined3d_context *context, const RECT *src_rect, const RECT *dst_rect)
 {
     struct wined3d_surface *backbuffer = swapchain->back_buffers[0];
-    struct wined3d_device *device = swapchain->device;
     UINT src_w = src_rect->right - src_rect->left;
     UINT src_h = src_rect->bottom - src_rect->top;
     GLenum gl_filter;
@@ -309,16 +308,16 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
 
         context_bind_fbo(context, GL_DRAW_FRAMEBUFFER, NULL);
         context_set_draw_buffer(context, GL_BACK);
-        device_invalidate_state(device, STATE_FRAMEBUFFER);
+        context_invalidate_state(context, STATE_FRAMEBUFFER);
 
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
-        device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
-        device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
-        device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
 
         glDisable(GL_SCISSOR_TEST);
-        device_invalidate_state(device, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
 
         /* Note that the texture is upside down */
         gl_info->fbo_ops.glBlitFramebuffer(src_rect->left, src_rect->top, src_rect->right, src_rect->bottom,
@@ -329,6 +328,7 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
     }
     else
     {
+        struct wined3d_device *device = swapchain->device;
         struct wined3d_context *context2;
         float tex_left = src_rect->left;
         float tex_top = src_rect->top;

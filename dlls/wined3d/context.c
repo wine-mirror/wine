@@ -1032,7 +1032,7 @@ static void context_enter(struct wined3d_context *context)
     }
 }
 
-static void context_invalidate_state(struct wined3d_context *context, DWORD state)
+void context_invalidate_state(struct wined3d_context *context, DWORD state)
 {
     DWORD rep = context->state_table[state].representative;
     DWORD idx;
