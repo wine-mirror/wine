@@ -2524,14 +2524,6 @@ static HRESULT WINAPI winhttp_request_GetResponseHeader(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI winhttp_request_GetAllResponseHeaders(
-    IWinHttpRequest *iface,
-    BSTR *headers )
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
 static DWORD wait_for_completion( struct winhttp_request *request, DWORD timeout )
 {
     HANDLE handles[2];
@@ -2587,6 +2579,48 @@ static void wait_set_status_callback( struct winhttp_request *request, DWORD sta
     WinHttpSetStatusCallback( request->hrequest, wait_status_callback, status, 0 );
 }
 
+static DWORD request_wait_for_response( struct winhttp_request *request, DWORD timeout )
+{
+    if (request->state >= REQUEST_STATE_RESPONSE_RECEIVED) return ERROR_SUCCESS;
+
+    wait_set_status_callback( request, WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE );
+    if (!WinHttpReceiveResponse( request->hrequest, NULL ))
+    {
+        return get_last_error();
+    }
+    return wait_for_completion( request, timeout );
+}
+
+static HRESULT WINAPI winhttp_request_GetAllResponseHeaders(
+    IWinHttpRequest *iface,
+    BSTR *headers )
+{
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    DWORD err, size;
+
+    TRACE("%p, %p\n", request, headers);
+
+    if (!headers) return E_INVALIDARG;
+    if (request->state < REQUEST_STATE_SENT)
+    {
+        return HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_SEND );
+    }
+    if ((err = request_wait_for_response( request, INFINITE ))) return HRESULT_FROM_WIN32( err );
+    request->state = REQUEST_STATE_RESPONSE_RECEIVED;
+
+    size = 0;
+    WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, NULL, NULL, &size, NULL );
+    err = get_last_error();
+    if (err != ERROR_INSUFFICIENT_BUFFER) return HRESULT_FROM_WIN32( err );
+    if (!(*headers = SysAllocStringLen( NULL, size / sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+    if (!WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, NULL, *headers, &size, NULL ))
+    {
+        SysFreeString( *headers );
+        return HRESULT_FROM_WIN32( get_last_error() );
+    }
+    return S_OK;
+}
+
 static HRESULT WINAPI winhttp_request_Send(
     IWinHttpRequest *iface,
     VARIANT body )
@@ -2622,18 +2656,6 @@ static HRESULT WINAPI winhttp_request_Send(
     if ((err = wait_for_completion( request, INFINITE ))) return HRESULT_FROM_WIN32( err );
     request->state = REQUEST_STATE_SENT;
     return S_OK;
-}
-
-static DWORD request_wait_for_response( struct winhttp_request *request, DWORD timeout )
-{
-    if (request->state >= REQUEST_STATE_RESPONSE_RECEIVED) return ERROR_SUCCESS;
-
-    wait_set_status_callback( request, WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE );
-    if (!WinHttpReceiveResponse( request->hrequest, NULL ))
-    {
-        return get_last_error();
-    }
-    return wait_for_completion( request, timeout );
 }
 
 static HRESULT WINAPI winhttp_request_get_Status(
