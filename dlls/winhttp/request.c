@@ -2429,6 +2429,10 @@ static HRESULT WINAPI winhttp_request_Open(
 {
     static const WCHAR typeW[] = {'*','/','*',0};
     static const WCHAR *acceptW[] = {typeW, NULL};
+    static const WCHAR user_agentW[] = {
+        'M','o','z','i','l','l','a','/','4','.','0',' ','(','c','o','m','p','a','t','i','b','l','e',';',' ',
+        'W','i','n','3','2',';',' ','W','i','n','H','t','t','p','.','W','i','n','H','t','t','p',
+        'R','e','q','u','e','s','t','.','5',')',0};
     struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
     HINTERNET hsession = NULL, hconnect = NULL, hrequest;
     URL_COMPONENTS uc;
@@ -2458,7 +2462,7 @@ static HRESULT WINAPI winhttp_request_Open(
     path[uc.dwUrlPathLength] = 0;
 
     if (V_BOOL( &async ) == VARIANT_TRUE) flags |= WINHTTP_FLAG_ASYNC;
-    if (!(hsession = WinHttpOpen( NULL, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, NULL, NULL, flags )))
+    if (!(hsession = WinHttpOpen( user_agentW, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, NULL, NULL, flags )))
     {
         err = get_last_error();
         goto error;
