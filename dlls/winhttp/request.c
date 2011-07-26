@@ -2443,7 +2443,7 @@ static HRESULT WINAPI winhttp_request_Open(
     TRACE("%p, %s, %s, %s\n", request, debugstr_w(method), debugstr_w(url),
           debugstr_variant(&async));
 
-    if (!method) return E_INVALIDARG;
+    if (!method || !url) return E_INVALIDARG;
 
     memset( &uc, 0, sizeof(uc) );
     uc.dwStructSize = sizeof(uc);
@@ -2667,6 +2667,7 @@ static HRESULT WINAPI winhttp_request_get_Status(
 
     TRACE("%p, %p\n", request, status);
 
+    if (!status) return E_INVALIDARG;
     if (request->state < REQUEST_STATE_SENT)
     {
         return HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_SEND );
@@ -2692,6 +2693,7 @@ static HRESULT WINAPI winhttp_request_get_StatusText(
 
     TRACE("%p, %p\n", request, status);
 
+    if (!status) return E_INVALIDARG;
     if (request->state < REQUEST_STATE_SENT)
     {
         return HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_SEND );
@@ -2808,6 +2810,11 @@ static HRESULT WINAPI winhttp_request_get_ResponseText(
 
     TRACE("%p, %p\n", request, body);
 
+    if (!body) return E_INVALIDARG;
+    if (request->state < REQUEST_STATE_SENT)
+    {
+        return HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_SEND );
+    }
     if ((err = request_read_body( request, INFINITE ))) return HRESULT_FROM_WIN32( err );
     if ((err = request_get_codepage( request, &codepage ))) return HRESULT_FROM_WIN32( err );
 
@@ -2830,6 +2837,7 @@ static HRESULT WINAPI winhttp_request_get_ResponseBody(
 
     TRACE("%p, %p\n", request, body);
 
+    if (!body) return E_INVALIDARG;
     if ((err = request_read_body( request, INFINITE ))) return HRESULT_FROM_WIN32( err );
 
     if (!(sa = SafeArrayCreateVector( VT_UI1, 0, request->offset ))) return E_OUTOFMEMORY;
