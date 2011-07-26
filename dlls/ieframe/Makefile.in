@@ -8,4 +8,7 @@ C_SRCS = \
 	taskbarlist.c \
 	urlhist.c
 
+RC_SRCS = \
+	ieframe.rc
+
 @MAKE_DLL_RULES@
