@@ -3683,6 +3683,7 @@ char * CDECL MSVCRT_tmpnam(char *s)
   {
     size = msvcrt_int_to_base32(tmpnam_unique++, tmpstr);
     memcpy(p, tmpstr, size);
+    p[size] = '\0';
     if (GetFileAttributesA(s) == INVALID_FILE_ATTRIBUTES &&
         GetLastError() == ERROR_FILE_NOT_FOUND)
       break;
@@ -3714,6 +3715,7 @@ MSVCRT_wchar_t * CDECL MSVCRT_wtmpnam(MSVCRT_wchar_t *s)
     {
         size = msvcrt_int_to_base32_w(tmpnam_unique++, tmpstr);
         memcpy(p, tmpstr, size*sizeof(MSVCRT_wchar_t));
+        p[size] = '\0';
         if (GetFileAttributesW(s) == INVALID_FILE_ATTRIBUTES &&
                 GetLastError() == ERROR_FILE_NOT_FOUND)
             break;

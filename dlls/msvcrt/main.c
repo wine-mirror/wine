@@ -74,6 +74,8 @@ static inline void msvcrt_free_tls_mem(void)
     HeapFree(GetProcessHeap(),0,tls->strerror_buffer);
     HeapFree(GetProcessHeap(),0,tls->wcserror_buffer);
     HeapFree(GetProcessHeap(),0,tls->time_buffer);
+    HeapFree(GetProcessHeap(),0,tls->tmpnam_buffer);
+    HeapFree(GetProcessHeap(),0,tls->wtmpnam_buffer);
     if(tls->have_locale) {
         free_locinfo(tls->locinfo);
         free_mbcinfo(tls->mbcinfo);
