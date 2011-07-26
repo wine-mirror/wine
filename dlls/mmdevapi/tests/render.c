@@ -571,7 +571,6 @@ static void test_clock(void)
     ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
     ok(pos == 0, "GetPosition returned non-zero pos before being started\n");
     ok(pcpos != 0, "GetPosition returned zero pcpos\n");
-    last = pos;
 
     hr = IAudioClient_GetService(ac, &IID_IAudioRenderClient, (void**)&arc);
     ok(hr == S_OK, "GetService(IAudioRenderClient) failed: %08x\n", hr);
