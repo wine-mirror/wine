@@ -535,6 +535,19 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
         } else if(flags.Format && strchr("aeEfgG", flags.Format)) {
             char float_fmt[20], buf_a[32], *tmp = buf_a, *decimal_point;
             int max_len = (flags.FieldLength>flags.Precision ? flags.FieldLength : flags.Precision) + 10;
+            double val = pf_args(args_ctx, pos, VT_R8, valist).get_double;
+
+            if(flags.Format=='f') {
+                if(val>-10.0 && val<10.0)
+                    i = 1;
+                else
+                    i = 1 + log10(val<0 ? -val : val);
+                /* Default precision is 6, additional space for sign, separator and nullbyte is required */
+                i += (flags.Precision==-1 ? 6 : flags.Precision) + 3;
+
+                if(i > max_len)
+                    max_len = i;
+            }
 
             if(max_len > sizeof(buf_a))
                 tmp = HeapAlloc(GetProcessHeap(), 0, max_len);
@@ -543,7 +556,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
 
             FUNC_NAME(pf_rebuild_format_string)(float_fmt, &flags);
 
-            sprintf(tmp, float_fmt, pf_args(args_ctx, pos, VT_R8, valist).get_double);
+            sprintf(tmp, float_fmt, val);
             if(toupper(flags.Format)=='E' || toupper(flags.Format)=='G')
                 FUNC_NAME(pf_fixup_exponent)(tmp);
 
