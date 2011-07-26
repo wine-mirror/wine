@@ -324,6 +324,7 @@ static void test_create(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = CreateBindCtx(0, &bctx);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     stream = (void*)0xdeadbeef;
     hr = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&stream);
