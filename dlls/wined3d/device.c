@@ -174,8 +174,9 @@ static BOOL fixed_get_input(BYTE usage, BYTE usage_idx, unsigned int *regnum)
 void device_stream_info_from_declaration(struct wined3d_device *device,
         BOOL use_vshader, struct wined3d_stream_info *stream_info, BOOL *fixup)
 {
+    const struct wined3d_state *state = &device->stateBlock->state;
     /* We need to deal with frequency data! */
-    struct wined3d_vertex_declaration *declaration = device->stateBlock->state.vertex_declaration;
+    struct wined3d_vertex_declaration *declaration = state->vertex_declaration;
     unsigned int i;
 
     stream_info->use_map = 0;
@@ -189,7 +190,7 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
     for (i = 0; i < declaration->element_count; ++i)
     {
         const struct wined3d_vertex_declaration_element *element = &declaration->elements[i];
-        const struct wined3d_stream_state *stream = &device->stateBlock->state.streams[element->input_slot];
+        const struct wined3d_stream_state *stream = &state->streams[element->input_slot];
         struct wined3d_buffer *buffer = stream->buffer;
         struct wined3d_bo_address data;
         BOOL stride_used;
@@ -205,7 +206,7 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
         data.addr = NULL;
 
         stride = stream->stride;
-        if (device->stateBlock->state.user_stream)
+        if (state->user_stream)
         {
             TRACE("Stream %u is UP, %p\n", element->input_slot, buffer);
             data.buffer_object = 0;
@@ -221,13 +222,13 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
              * sources. In most sane cases the pointer - offset will still be > 0, otherwise it will wrap
              * around to some big value. Hope that with the indices, the driver wraps it back internally. If
              * not, drawStridedSlow is needed, including a vertex buffer path. */
-            if (device->stateBlock->state.load_base_vertex_index < 0)
+            if (state->load_base_vertex_index < 0)
             {
                 WARN("load_base_vertex_index is < 0 (%d), not using VBOs.\n",
-                        device->stateBlock->state.load_base_vertex_index);
+                        state->load_base_vertex_index);
                 data.buffer_object = 0;
                 data.addr = buffer_get_sysmem(buffer, &device->adapter->gl_info);
-                if ((UINT_PTR)data.addr < -device->stateBlock->state.load_base_vertex_index * stride)
+                if ((UINT_PTR)data.addr < -state->load_base_vertex_index * stride)
                 {
                     FIXME("System memory vertex data load offset is negative!\n");
                 }
@@ -262,7 +263,7 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
                 /* TODO: Assuming vertexdeclarations are usually used with the
                  * same or a similar shader, it might be worth it to store the
                  * last used output slot and try that one first. */
-                stride_used = vshader_get_input(device->stateBlock->state.vertex_shader,
+                stride_used = vshader_get_input(state->vertex_shader,
                         element->usage, element->usage_idx, &idx);
             }
             else
@@ -310,7 +311,7 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
     }
 
     device->num_buffer_queries = 0;
-    if (!device->stateBlock->state.user_stream)
+    if (!state->user_stream)
     {
         WORD map = stream_info->use_map;
 
@@ -323,7 +324,7 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
             if (!(map & 1)) continue;
 
             element = &stream_info->elements[i];
-            buffer = device->stateBlock->state.streams[element->stream_idx].buffer;
+            buffer = state->streams[element->stream_idx].buffer;
             wined3d_buffer_preload(buffer);
 
             /* If the preload dropped the buffer object, update the stream info. */
