@@ -14,6 +14,7 @@ C_SRCS = \
 	large_int.c \
 	om.c \
 	path.c \
+	pipe.c \
 	port.c \
 	reg.c \
 	rtl.c \
