@@ -1493,6 +1493,9 @@ static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data, DWORD flags) 
             data->has_implicit_ip = TRUE;
     }
 
+    data->host_len = *ptr - data->host;
+    data->host_type = Uri_HOST_IPV4;
+
     /* Check if what we found is the only part of the host name (if it isn't
      * we don't have an IPv4 address).
      */
@@ -1510,9 +1513,6 @@ static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data, DWORD flags) 
         data->has_implicit_ip = FALSE;
         return FALSE;
     }
-
-    data->host_len = *ptr - data->host;
-    data->host_type = Uri_HOST_IPV4;
 
     TRACE("(%p %p %x): IPv4 address found. host=%s host_len=%d host_type=%d\n",
         ptr, data, flags, debugstr_wn(data->host, data->host_len),

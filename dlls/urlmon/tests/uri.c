@@ -997,6 +997,31 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
+    {   "http://127.0.0.1:8000", 0, S_OK, FALSE,
+        {
+            {"http://127.0.0.1:8000/",S_OK},
+            {"127.0.0.1:8000",S_OK},
+            {"http://127.0.0.1:8000/",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"127.0.0.1",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"http://127.0.0.1:8000",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_IPV4,S_OK,FALSE},
+            {8000,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
     /* Make sure it normalizes partial IPv4 addresses correctly. */
     {   "http://127.0/", 0, S_OK, FALSE,
         {
