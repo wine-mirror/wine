@@ -29,11 +29,13 @@
 #include "winuser.h"
 
 #include "ole2.h"
+#include "shlobj.h"
 
 #include "wine/unicode.h"
 
 HRESULT WINAPI CUrlHistory_Create(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT WINAPI InternetShortcut_Create(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
+HRESULT WINAPI TaskbarList_Create(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
 extern LONG module_ref DECLSPEC_HIDDEN;
 

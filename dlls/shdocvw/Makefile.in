@@ -19,7 +19,6 @@ C_SRCS = \
 	shdocvw_main.c \
 	shellbrowser.c \
 	shlinstobj.c \
-	taskbarlist.c \
 	view.c \
 	webbrowser.c
 

@@ -18,11 +18,9 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
-#include "wine/debug.h"
+#include "ieframe.h"
 
-#include "shdocvw.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
@@ -79,8 +77,8 @@ static ULONG STDMETHODCALLTYPE taskbar_list_Release(ITaskbarList4 *iface)
 
     if (!refcount)
     {
-        HeapFree(GetProcessHeap(), 0, This);
-        SHDOCVW_UnlockModule();
+        heap_free(This);
+        unlock_module();
     }
 
     return refcount;
@@ -289,10 +287,10 @@ static const struct ITaskbarList4Vtbl taskbar_list_vtbl =
     taskbar_list_SetTabProperties,
 };
 
-HRESULT TaskbarList_Create(IUnknown *outer, REFIID riid, void **taskbar_list)
+HRESULT WINAPI TaskbarList_Create(IClassFactory *iface, IUnknown *outer, REFIID riid, void **taskbar_list)
 {
     struct taskbar_list *object;
-    HRESULT hr;
+    HRESULT hres;
 
     TRACE("outer %p, riid %s, taskbar_list %p\n", outer, debugstr_guid(riid), taskbar_list);
 
@@ -303,7 +301,7 @@ HRESULT TaskbarList_Create(IUnknown *outer, REFIID riid, void **taskbar_list)
         return CLASS_E_NOAGGREGATION;
     }
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    object = heap_alloc_zero(sizeof(*object));
     if (!object)
     {
         ERR("Failed to allocate taskbar list object memory\n");
@@ -312,18 +310,12 @@ HRESULT TaskbarList_Create(IUnknown *outer, REFIID riid, void **taskbar_list)
     }
 
     object->ITaskbarList4_iface.lpVtbl = &taskbar_list_vtbl;
-    object->refcount = 0;
+    object->refcount = 1;
+    lock_module();
 
     TRACE("Created ITaskbarList4 %p\n", object);
 
-    hr = ITaskbarList4_QueryInterface(&object->ITaskbarList4_iface, riid, taskbar_list);
-    if (FAILED(hr))
-    {
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
-    }
-
-    SHDOCVW_LockModule();
-
-    return S_OK;
+    hres = ITaskbarList4_QueryInterface(&object->ITaskbarList4_iface, riid, taskbar_list);
+    ITaskbarList4_Release(&object->ITaskbarList4_iface);
+    return hres;
 }

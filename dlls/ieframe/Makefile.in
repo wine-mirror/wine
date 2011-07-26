@@ -5,6 +5,7 @@ IMPORTS   = uuid urlmon shell32 ole32 advapi32
 C_SRCS = \
 	ieframe_main.c \
 	intshcut.c \
+	taskbarlist.c \
 	urlhist.c
 
 @MAKE_DLL_RULES@

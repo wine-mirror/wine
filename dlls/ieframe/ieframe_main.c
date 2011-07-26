@@ -86,6 +86,16 @@ static const IClassFactoryVtbl CUrlHistoryFactoryVtbl = {
 
 static IClassFactory CUrlHistoryFactory = { &CUrlHistoryFactoryVtbl };
 
+static const IClassFactoryVtbl TaskbarListFactoryVtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    TaskbarList_Create,
+    ClassFactory_LockServer
+};
+
+static IClassFactory TaskbarListFactory = { &TaskbarListFactoryVtbl };
+
 /******************************************************************
  *              DllMain (ieframe.@)
  */
@@ -119,6 +129,12 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
         TRACE("(CLSID_CUrlHistory %s %p)\n", debugstr_guid(riid), ppv);
         return IClassFactory_QueryInterface(&CUrlHistoryFactory, riid, ppv);
     }
+
+    if(IsEqualGUID(&CLSID_TaskbarList, rclsid)) {
+        TRACE("(CLSID_TaskbarList %s %p)\n", debugstr_guid(riid), ppv);
+        return IClassFactory_QueryInterface(&TaskbarListFactory, riid, ppv);
+    }
+
 
     FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;

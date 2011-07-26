@@ -154,7 +154,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
     static IClassFactoryImpl WB1ClassFactory = {{&WBCF_Vtbl}, WebBrowserV1_Create};
     static IClassFactoryImpl WB2ClassFactory = {{&WBCF_Vtbl}, WebBrowserV2_Create};
-    static IClassFactoryImpl TBLClassFactory = {{&WBCF_Vtbl}, TaskbarList_Create};
 
     TRACE("\n");
 
@@ -165,11 +164,9 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
         return IClassFactory_QueryInterface(&WB1ClassFactory.IClassFactory_iface, riid, ppv);
 
     if(IsEqualGUID(&CLSID_InternetShortcut, rclsid)
-       || IsEqualGUID(&CLSID_CUrlHistory, rclsid))
+       || IsEqualGUID(&CLSID_CUrlHistory, rclsid)
+       || IsEqualGUID(&CLSID_TaskbarList, rclsid))
         return get_ieframe_object(rclsid, riid, ppv);
-
-    if(IsEqualGUID(&CLSID_TaskbarList, rclsid))
-        return IClassFactory_QueryInterface(&TBLClassFactory.IClassFactory_iface, riid, ppv);
 
     /* As a last resort, figure if the CLSID belongs to a 'Shell Instance Object' */
     return SHDOCVW_GetShellInstanceObjectClassObject(rclsid, riid, ppv);
