@@ -902,7 +902,7 @@ static void nt_mailslot_test(void)
         "rc = %x not STATUS_SUCCESS or STATUS_INVALID_PARAMETER\n", rc);
     ok( hslot != 0, "Handle is invalid\n");
 
-    if  ( rc == STATUS_SUCCESS ) rc = pNtClose(hslot);
+    if  ( rc == STATUS_SUCCESS ) pNtClose(hslot);
 
     /*
      * Test that the length field is checked properly
