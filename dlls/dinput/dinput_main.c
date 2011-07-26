@@ -874,7 +874,7 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
       LPVOID pvRef, DWORD dwFlags
 )
 {
-    static const REFGUID guids[2] = { &GUID_SysKeyboard, &GUID_SysMouse };
+    static REFGUID guids[2] = { &GUID_SysKeyboard, &GUID_SysMouse };
     static const DWORD actionMasks[] = { DIKEYBOARD_MASK, DIMOUSE_MASK };
     IDirectInputImpl *This = impl_from_IDirectInput8A( iface );
     DIDEVICEINSTANCEA didevi;
@@ -945,7 +945,7 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
       LPVOID pvRef, DWORD dwFlags
 )
 {
-    static const REFGUID guids[2] = { &GUID_SysKeyboard, &GUID_SysMouse };
+    static REFGUID guids[2] = { &GUID_SysKeyboard, &GUID_SysMouse };
     static const DWORD actionMasks[] = { DIKEYBOARD_MASK, DIMOUSE_MASK };
     IDirectInputImpl *This = impl_from_IDirectInput8W(iface);
     DIDEVICEINSTANCEW didevi;
