@@ -45,6 +45,7 @@
 
 #include "mmdevapi.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
@@ -99,16 +100,26 @@ static BOOL init_driver(void)
         return TRUE;
 
     if(RegOpenKeyW(HKEY_CURRENT_USER, drv_key, &key) == ERROR_SUCCESS){
-        WCHAR driver_name[256];
+        WCHAR driver_name[256], *p, *next;
         DWORD size = sizeof(driver_name);
 
         if(RegQueryValueExW(key, drv_value, 0, NULL, (BYTE*)driver_name,
-                    &size) == ERROR_SUCCESS){
-            BOOL ret = load_driver(driver_name);
+                    &size) == ERROR_SUCCESS && driver_name[0] != '\0'){
             RegCloseKey(key);
-            if(!ret)
-                ERR("Failed to load driver: %s\n", wine_dbgstr_w(driver_name));
-            return ret;
+
+            for(next = p = driver_name; next; p = next + 1){
+                next = strchrW(p, ',');
+                if(next)
+                    *next = '\0';
+
+                if(load_driver(p))
+                    return TRUE;
+
+                TRACE("Failed to load driver: %s\n", wine_dbgstr_w(driver_name));
+            }
+
+            ERR("No drivers in the registry loaded successfully!\n");
+            return FALSE;
         }
 
         RegCloseKey(key);
