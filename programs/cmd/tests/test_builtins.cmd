@@ -28,6 +28,38 @@ echo .word
 echo word@space@
 echo word@space@@space@
 
+echo ------------ Testing redirection operators --------------
+mkdir foobar & cd foobar
+echo ...stdout redirection
+echo foo>foo
+type foo
+echo foo 1> foo
+type foo
+echo foo1> foo
+type foo
+echo foo11> foo
+type foo
+echo foo12> foo
+type foo
+echo ...stdout appending
+echo foo>foo
+echo foo >>foo
+type foo
+del foo
+echo foob >> foo
+type foo
+echo fooc 1>>foo
+type foo
+echo food1>>foo
+type foo
+echo food2>>foo
+type foo
+del foo
+echo food21>>foo
+type foo
+cd ..
+rd /s/q foobar
+
 echo ------------ Testing ^^ escape character --------------
 rem Using something like "echo foo^" asks for an additional char after a "More?" prompt on the following line; it's not possible to currently test that non-interactively
 echo ^hell^o, world

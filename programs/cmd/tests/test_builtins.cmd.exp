@@ -47,6 +47,27 @@ word
 .word
 word@space@
 word@space@@space@
+------------ Testing redirection operators --------------
+...stdout redirection
+foo
+foo@space@
+@todo_wine@foo1
+@todo_wine@foo11
+@todo_wine@foo12
+...stdout appending
+foo
+foo@space@
+foob@space@
+foob@space@
+fooc@space@
+foob@space@
+fooc@space@
+@todo_wine@food1
+@todo_wine@foob@space@
+@todo_wine@fooc@space@
+@todo_wine@food1
+@todo_wine@food2
+@todo_wine@food21
 @todo_wine@------------ Testing ^ escape character --------------
 @todo_wine@hello, world
 @todo_wine@hello, world
