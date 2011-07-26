@@ -1453,7 +1453,7 @@ static void test_startSession(void)
     ok(SUCCEEDED(hr),"GetFocus Failed\n");
     ok(g_dm == dmtest,"Expected DocumentMgr not focused\n");
 
-    cnt = ITfDocumentMgr_Release(g_dm);
+    ITfDocumentMgr_Release(g_dm);
 
     hr = ITfThreadMgr_GetFocus(g_tm,&dmtest);
     ok(SUCCEEDED(hr),"GetFocus Failed\n");
@@ -1807,6 +1807,7 @@ TfEditCookie ec)
     selection.style.fInterimChar = FALSE;
     test_ACP_SetSelection = SINK_EXPECTED;
     hr = ITfContext_SetSelection(cxt, ec, 1, &selection);
+    ok(SUCCEEDED(hr),"ITfContext_SetSelection failed\n");
     sink_check_ok(&test_ACP_SetSelection,"SetSelection");
     ITfRange_Release(range);
 
@@ -2010,6 +2011,7 @@ static void test_AssociateFocus(void)
     test_OnSetFocus  = SINK_OPTIONAL; /* Doesn't always fire on Win7 */
     test_ACP_GetStatus = SINK_OPTIONAL;
     hr = ITfThreadMgr_SetFocus(g_tm,NULL);
+    ok(SUCCEEDED(hr),"ITfThreadMgr_SetFocus failed\n");
     sink_check_ok(&test_OnSetFocus,"OnSetFocus");
     test_ACP_GetStatus = SINK_UNEXPECTED;
     ITfDocumentMgr_Release(dmorig);
