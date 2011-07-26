@@ -594,7 +594,6 @@ static void surface_bind_and_dirtify(struct wined3d_surface *surface,
 {
     struct wined3d_device *device = surface->resource.device;
     DWORD active_sampler;
-    GLint active_texture;
 
     /* We don't need a specific texture unit, but after binding the texture
      * the current unit is dirty. Read the unit back instead of switching to
@@ -604,15 +603,8 @@ static void surface_bind_and_dirtify(struct wined3d_surface *surface,
      * To be more specific, this is tricky because we can implicitly be
      * called from sampler() in state.c. This means we can't touch anything
      * other than whatever happens to be the currently active texture, or we
-     * would risk marking already applied sampler states dirty again.
-     *
-     * TODO: Track the current active texture per GL context instead of using
-     * glGet(). */
-
-    ENTER_GL();
-    glGetIntegerv(GL_ACTIVE_TEXTURE, &active_texture);
-    LEAVE_GL();
-    active_sampler = device->rev_tex_unit_map[active_texture - GL_TEXTURE0_ARB];
+     * would risk marking already applied sampler states dirty again. */
+    active_sampler = device->rev_tex_unit_map[context->active_texture];
 
     if (active_sampler != WINED3D_UNMAPPED_STAGE)
         device_invalidate_state(device, STATE_SAMPLER(active_sampler));

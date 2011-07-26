@@ -37,20 +37,8 @@ static void volume_bind_and_dirtify(const struct wined3d_volume *volume, struct 
      * To be more specific, this is tricky because we can implicitly be called
      * from sampler() in state.c. This means we can't touch anything other than
      * whatever happens to be the currently active texture, or we would risk
-     * marking already applied sampler states dirty again.
-     *
-     * TODO: Track the current active texture per GL context instead of using glGet
-     */
-    if (context->gl_info->supported[ARB_MULTITEXTURE])
-    {
-        GLint active_texture;
-        ENTER_GL();
-        glGetIntegerv(GL_ACTIVE_TEXTURE, &active_texture);
-        LEAVE_GL();
-        active_sampler = volume->resource.device->rev_tex_unit_map[active_texture - GL_TEXTURE0_ARB];
-    } else {
-        active_sampler = 0;
-    }
+     * marking already applied sampler states dirty again. */
+    active_sampler = volume->resource.device->rev_tex_unit_map[context->active_texture];
 
     if (active_sampler != WINED3D_UNMAPPED_STAGE)
         device_invalidate_state(volume->resource.device, STATE_SAMPLER(active_sampler));
