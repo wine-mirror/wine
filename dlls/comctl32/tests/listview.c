@@ -1323,8 +1323,7 @@ static void test_columns(void)
 
     /* Check its width */
     rc = SendMessageA(hwnd, LVM_GETCOLUMNWIDTH, 0, 0);
-    ok(rc == 10 || broken(rc == 0) /* win9x */,
-       "Inserting column with no mask failed to set width to 10 with %d\n", rc);
+    ok(rc == 10, "Inserting column with no mask failed to set width to 10 with %d\n", rc);
 
     DestroyWindow(hwnd);
 
@@ -3919,7 +3918,7 @@ static void test_notifyformat(void)
     r = SendMessage(hwnd, LVM_GETUNICODEFORMAT, 0, 0);
     expect(0, r);
     r = SendMessage(header, HDM_GETUNICODEFORMAT, 0, 0);
-    ok( r == 1 || broken(r == 0), /* win9x */ "Expected 1, got %d\n", r );
+    ok( r == 1, "Expected 1, got %d\n", r );
     r = SendMessage(hwnd, WM_NOTIFYFORMAT, 0, NF_QUERY);
     ok(r != 0, "Expected valid format\n");
 
@@ -3929,7 +3928,7 @@ static void test_notifyformat(void)
     r = SendMessage(hwnd, LVM_GETUNICODEFORMAT, 0, 0);
     expect(1, r);
     r = SendMessage(header, HDM_GETUNICODEFORMAT, 0, 0);
-    ok( r == 1 || broken(r == 0), /* win9x */ "Expected 1, got %d\n", r );
+    ok( r == 1, "Expected 1, got %d\n", r );
 
     notifyFormat = NFR_ANSI;
     r = SendMessage(hwnd, WM_NOTIFYFORMAT, 0, NF_REQUERY);
@@ -3937,16 +3936,9 @@ static void test_notifyformat(void)
     r = SendMessage(hwnd, LVM_GETUNICODEFORMAT, 0, 0);
     expect(0, r);
     r = SendMessage(header, HDM_GETUNICODEFORMAT, 0, 0);
-    ok( r == 1 || broken(r == 0), /* win9x */ "Expected 1, got %d\n", r );
+    ok( r == 1, "Expected 1, got %d\n", r );
 
     DestroyWindow(hwnd);
-
-    /* try different unicode window combination and defaults */
-    if (!GetModuleHandleW(NULL))
-    {
-        win_skip("Additional notify format tests are incompatible with Win9x\n");
-        return;
-    }
 
     hwndparentW = create_parent_window(TRUE);
     ok(IsWindow(hwndparentW), "Unicode parent creation failed\n");
