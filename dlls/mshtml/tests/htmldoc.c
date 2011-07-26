@@ -2988,6 +2988,7 @@ static HRESULT WINAPI EventDispatch_Invoke(IDispatch *iface, DISPID dispIdMember
     case 1026:
     case 1027:
     case 1034:
+    case 1035:
     case 1037:
     case 1047:
     case 1045:
