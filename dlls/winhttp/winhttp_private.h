@@ -157,6 +157,8 @@ typedef struct
     DWORD content_read;   /* bytes read so far */
     header_t *headers;
     DWORD num_headers;
+    WCHAR **accept_types;
+    DWORD num_accept_types;
 } request_t;
 
 typedef struct _task_header_t task_header_t;

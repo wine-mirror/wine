@@ -1031,8 +1031,13 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
     WCHAR *req = NULL;
     char *req_ascii;
     int bytes_sent;
-    DWORD len;
+    DWORD len, i, flags;
 
+    flags = WINHTTP_ADDREQ_FLAG_ADD|WINHTTP_ADDREQ_FLAG_COALESCE_WITH_COMMA;
+    for (i = 0; i < request->num_accept_types; i++)
+    {
+        process_header( request, attr_accept, request->accept_types[i], flags, TRUE );
+    }
     if (session->agent)
         process_header( request, attr_user_agent, session->agent, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
 
@@ -2422,6 +2427,8 @@ static HRESULT WINAPI winhttp_request_Open(
     BSTR url,
     VARIANT async )
 {
+    static const WCHAR typeW[] = {'*','/','*',0};
+    static const WCHAR *acceptW[] = {typeW, NULL};
     struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
     HINTERNET hsession = NULL, hconnect = NULL, hrequest;
     URL_COMPONENTS uc;
@@ -2461,7 +2468,7 @@ static HRESULT WINAPI winhttp_request_Open(
         err = get_last_error();
         goto error;
     }
-    if (!(hrequest = WinHttpOpenRequest( hconnect, method, path, NULL, NULL, NULL, 0 )))
+    if (!(hrequest = WinHttpOpenRequest( hconnect, method, path, NULL, NULL, acceptW, 0 )))
     {
         err = get_last_error();
         goto error;

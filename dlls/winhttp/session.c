@@ -527,7 +527,7 @@ end:
 static void request_destroy( object_header_t *hdr )
 {
     request_t *request = (request_t *)hdr;
-    DWORD i;
+    unsigned int i;
 
     TRACE("%p\n", request);
 
@@ -544,6 +544,8 @@ static void request_destroy( object_header_t *hdr )
         heap_free( request->headers[i].value );
     }
     heap_free( request->headers );
+    for (i = 0; i < request->num_accept_types; i++) heap_free( request->accept_types[i] );
+    heap_free( request->accept_types );
     heap_free( request );
 }
 
@@ -859,6 +861,39 @@ static const object_vtbl_t request_vtbl =
     request_set_option
 };
 
+static BOOL store_accept_types( request_t *request, const WCHAR **accept_types )
+{
+    const WCHAR **types = accept_types;
+    int i;
+
+    if (!types) return TRUE;
+    while (*types)
+    {
+        request->num_accept_types++;
+        types++;
+    }
+    if (!request->num_accept_types) return TRUE;
+    if (!(request->accept_types = heap_alloc( request->num_accept_types * sizeof(WCHAR *))))
+    {
+        request->num_accept_types = 0;
+        return FALSE;
+    }
+    types = accept_types;
+    for (i = 0; i < request->num_accept_types; i++)
+    {
+        if (!(request->accept_types[i] = strdupW( *types )))
+        {
+            for (; i >= 0; i--) heap_free( request->accept_types[i] );
+            heap_free( request->accept_types );
+            request->accept_types = NULL;
+            request->num_accept_types = 0;
+            return FALSE;
+        }
+        types++;
+    }
+    return TRUE;
+}
+
 /***********************************************************************
  *          WinHttpOpenRequest (winhttp.@)
  */
@@ -926,6 +961,7 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
 
     if (!version || !version[0]) version = http1_1;
     if (!(request->version = strdupW( version ))) goto end;
+    if (!(store_accept_types( request, types ))) goto end;
 
     if (!(hrequest = alloc_handle( &request->hdr ))) goto end;
     request->hdr.handle = hrequest;
