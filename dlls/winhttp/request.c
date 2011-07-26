@@ -2511,8 +2511,33 @@ static HRESULT WINAPI winhttp_request_SetRequestHeader(
     BSTR header,
     BSTR value )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    static const WCHAR fmtW[] = {'%','s',':',' ','%','s','\r','\n',0};
+    static const WCHAR emptyW[] = {0};
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    DWORD len;
+    WCHAR *str;
+    BOOL ret;
+
+    TRACE("%p, %s, %s\n", request, debugstr_w(header), debugstr_w(value));
+
+    if (!header) return E_INVALIDARG;
+    if (request->state < REQUEST_STATE_OPEN)
+    {
+        return HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_OPEN );
+    }
+    if (request->state >= REQUEST_STATE_SENT)
+    {
+        return HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_AFTER_SEND );
+    }
+    len = strlenW( header ) + 4;
+    if (value) len += strlenW( value );
+    if (!(str = heap_alloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+
+    sprintfW( str, fmtW, header, value ? value : emptyW );
+    ret = WinHttpAddRequestHeaders( request->hrequest, str, len, WINHTTP_ADDREQ_FLAG_REPLACE );
+    heap_free( str );
+    if (ret) return S_OK;
+    return HRESULT_FROM_WIN32( get_last_error() );
 }
 
 static DWORD wait_for_completion( struct winhttp_request *request, DWORD timeout )

@@ -2113,13 +2113,19 @@ static void test_IWinHttpRequest(void)
     static const WCHAR proxy_serverW[] = {'p','r','o','x','y','s','e','r','v','e','r',0};
     static const WCHAR bypas_listW[] = {'b','y','p','a','s','s','l','i','s','t',0};
     static const WCHAR connectionW[] = {'C','o','n','n','e','c','t','i','o','n',0};
+    static const WCHAR dateW[] = {'D','a','t','e',0};
     HRESULT hr;
     IWinHttpRequest *req;
     BSTR method, url, username, password, response = NULL, status_text = NULL, headers = NULL;
-    BSTR connection, value = NULL;
+    BSTR date, today, connection, value = NULL;
     VARIANT async, empty, timeout, body, proxy_server, bypass_list;
     VARIANT_BOOL succeeded;
     LONG status;
+    WCHAR todayW[WINHTTP_TIME_FORMAT_BUFSIZE];
+    SYSTEMTIME st;
+
+    GetSystemTime( &st );
+    WinHttpTimeFromSystemTime( &st, todayW );
 
     CoInitialize( NULL );
     hr = CoCreateInstance( &CLSID_WinHttpRequest, NULL, CLSCTX_INPROC_SERVER, &IID_IWinHttpRequest, (void **)&req );
@@ -2248,6 +2254,17 @@ static void test_IWinHttpRequest(void)
     hr = IWinHttpRequest_GetResponseHeader( req, connection, &value );
     ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_SEND ), "got %08x\n", hr );
 
+    hr = IWinHttpRequest_SetRequestHeader( req, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    date = SysAllocString( dateW );
+    hr = IWinHttpRequest_SetRequestHeader( req, date, NULL );
+    ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_OPEN ), "got %08x\n", hr );
+
+    today = SysAllocString( todayW );
+    hr = IWinHttpRequest_SetRequestHeader( req, date, today );
+    ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_OPEN ), "got %08x\n", hr );
+
     SysFreeString( method );
     method = SysAllocString( method1W );
     SysFreeString( url );
@@ -2312,6 +2329,12 @@ static void test_IWinHttpRequest(void)
     hr = IWinHttpRequest_GetResponseHeader( req, connection, &value );
     ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_SEND ), "got %08x\n", hr );
 
+    hr = IWinHttpRequest_SetRequestHeader( req, date, today );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_SetRequestHeader( req, date, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
     hr = IWinHttpRequest_Send( req, empty );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -2369,6 +2392,9 @@ static void test_IWinHttpRequest(void)
     hr = IWinHttpRequest_GetResponseHeader( req, connection, &value );
     ok( hr == S_OK, "got %08x\n", hr );
     SysFreeString( value );
+
+    hr = IWinHttpRequest_SetRequestHeader( req, date, today );
+    ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_AFTER_SEND ), "got %08x\n", hr );
 
     VariantInit( &timeout );
     V_VT( &timeout ) = VT_I4;
@@ -2428,6 +2454,9 @@ static void test_IWinHttpRequest(void)
     ok( hr == S_OK, "got %08x\n", hr );
     SysFreeString( value );
 
+    hr = IWinHttpRequest_SetRequestHeader( req, date, today );
+    ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_AFTER_SEND ), "got %08x\n", hr );
+
     hr = IWinHttpRequest_Send( req, empty );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -2444,6 +2473,8 @@ static void test_IWinHttpRequest(void)
     SysFreeString( url );
     SysFreeString( username );
     SysFreeString( password );
+    SysFreeString( date );
+    SysFreeString( today );
     VariantClear( &proxy_server );
     VariantClear( &bypass_list );
     CoUninitialize();
