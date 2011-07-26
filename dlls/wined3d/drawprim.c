@@ -790,9 +790,11 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch
 {
     unsigned int i, j, num_quads, out_vertex_size, buffer_size, d3d_out_vertex_size;
     float max_x = 0.0f, max_y = 0.0f, max_z = 0.0f, neg_z = 0.0f;
+    struct wined3d_state *state = &This->stateBlock->state;
     struct wined3d_stream_info stream_info;
     struct wined3d_stream_info_element *e;
     struct wined3d_context *context;
+    struct wined3d_shader *vs;
     const BYTE *data;
     const WINED3DRECTPATCH_INFO *info = &patch->RectPatchInfo;
     DWORD vtxStride;
@@ -805,15 +807,17 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch
     context = context_acquire(This, NULL);
     context_apply_blit_state(context, This);
 
-    /* First, locate the position data. This is provided in a vertex buffer in the stateblock.
-     * Beware of vbos
-     */
-    device_stream_info_from_declaration(This, FALSE, &stream_info, NULL);
+    /* First, locate the position data. This is provided in a vertex buffer in
+     * the stateblock. Beware of VBOs. */
+    vs = state->vertex_shader;
+    state->vertex_shader = NULL;
+    device_stream_info_from_declaration(This, &stream_info, NULL);
+    state->vertex_shader = vs;
 
     e = &stream_info.elements[WINED3D_FFP_POSITION];
     if (e->data.buffer_object)
     {
-        struct wined3d_buffer *vb = This->stateBlock->state.streams[e->stream_idx].buffer;
+        struct wined3d_buffer *vb = state->streams[e->stream_idx].buffer;
         e->data.addr = (BYTE *)((ULONG_PTR)e->data.addr + (ULONG_PTR)buffer_get_sysmem(vb, context->gl_info));
     }
     vtxStride = e->stride;

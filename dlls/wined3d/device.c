@@ -172,11 +172,12 @@ static BOOL fixed_get_input(BYTE usage, BYTE usage_idx, unsigned int *regnum)
 
 /* Context activation is done by the caller. */
 void device_stream_info_from_declaration(struct wined3d_device *device,
-        BOOL use_vshader, struct wined3d_stream_info *stream_info, BOOL *fixup)
+        struct wined3d_stream_info *stream_info, BOOL *fixup)
 {
     const struct wined3d_state *state = &device->stateBlock->state;
     /* We need to deal with frequency data! */
     struct wined3d_vertex_declaration *declaration = state->vertex_declaration;
+    BOOL use_vshader;
     unsigned int i;
 
     stream_info->use_map = 0;
@@ -184,7 +185,7 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
 
     /* Check for transformed vertices, disable vertex shader if present. */
     stream_info->position_transformed = declaration->position_transformed;
-    if (declaration->position_transformed) use_vshader = FALSE;
+    use_vshader = state->vertex_shader && !declaration->position_transformed;
 
     /* Translate the declaration into strided data. */
     for (i = 0; i < declaration->element_count; ++i)
@@ -426,7 +427,7 @@ void device_update_stream_info(struct wined3d_device *device, const struct wined
     else
     {
         TRACE("============================= Vertex Declaration =============================\n");
-        device_stream_info_from_declaration(device, !!state->vertex_shader, stream_info, &fixup);
+        device_stream_info_from_declaration(device, stream_info, &fixup);
     }
 
     if (state->vertex_shader && !stream_info->position_transformed)
@@ -3517,10 +3518,12 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
         UINT src_start_idx, UINT dst_idx, UINT vertex_count, struct wined3d_buffer *dst_buffer,
         struct wined3d_vertex_declaration *declaration, DWORD flags, DWORD dst_fvf)
 {
-    BOOL vbo = FALSE, streamWasUP = device->stateBlock->state.user_stream;
+    struct wined3d_state *state = &device->stateBlock->state;
+    BOOL vbo = FALSE, streamWasUP = state->user_stream;
     struct wined3d_stream_info stream_info;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
+    struct wined3d_shader *vs;
     HRESULT hr;
 
     TRACE("device %p, src_start_idx %u, dst_idx %u, vertex_count %u, "
@@ -3535,12 +3538,15 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
     context = context_acquire(device, NULL);
     gl_info = context->gl_info;
 
-    /* ProcessVertices reads from vertex buffers, which have to be assigned. DrawPrimitive and DrawPrimitiveUP
-     * control the streamIsUP flag, thus restore it afterwards.
-     */
-    device->stateBlock->state.user_stream = FALSE;
-    device_stream_info_from_declaration(device, FALSE, &stream_info, &vbo);
-    device->stateBlock->state.user_stream = streamWasUP;
+    /* ProcessVertices reads from vertex buffers, which have to be assigned.
+     * DrawPrimitive and DrawPrimitiveUP control the streamIsUP flag, thus
+     * restore it afterwards. */
+    vs = state->vertex_shader;
+    state->vertex_shader = NULL;
+    state->user_stream = FALSE;
+    device_stream_info_from_declaration(device, &stream_info, &vbo);
+    state->user_stream = streamWasUP;
+    state->vertex_shader = vs;
 
     if (vbo || src_start_idx)
     {
@@ -3559,7 +3565,7 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
             e = &stream_info.elements[i];
             if (e->data.buffer_object)
             {
-                struct wined3d_buffer *vb = device->stateBlock->state.streams[e->stream_idx].buffer;
+                struct wined3d_buffer *vb = state->streams[e->stream_idx].buffer;
                 e->data.buffer_object = 0;
                 e->data.addr = (BYTE *)((ULONG_PTR)e->data.addr + (ULONG_PTR)buffer_get_sysmem(vb, gl_info));
                 ENTER_GL();
