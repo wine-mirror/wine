@@ -221,7 +221,7 @@ static void test_GetCurrentObject(void)
     hobj = GetCurrentObject(hdc, OBJ_PEN);
     ok(hobj == hpen, "OBJ_PEN is wrong: %p\n", hobj);
     hobj = GetCurrentObject(hdc, OBJ_EXTPEN);
-    ok(hobj == hpen || broken(hobj == 0) /* win9x */, "OBJ_EXTPEN is wrong: %p\n", hobj);
+    ok(hobj == hpen, "OBJ_EXTPEN is wrong: %p\n", hobj);
 
     hbrush = CreateSolidBrush(RGB(10, 20, 30));
     assert(hbrush != 0);
@@ -257,7 +257,7 @@ static void test_GetCurrentObject(void)
     hobj = GetCurrentObject(hdc, OBJ_PEN);
     ok(hobj == hpen, "OBJ_PEN is wrong: %p\n", hobj);
     hobj = GetCurrentObject(hdc, OBJ_EXTPEN);
-    ok(hobj == hpen || broken(hobj == 0) /* win9x */, "OBJ_EXTPEN is wrong: %p\n", hobj);
+    ok(hobj == hpen, "OBJ_EXTPEN is wrong: %p\n", hobj);
 
     hcs = GetColorSpace(hdc);
     if (hcs)
@@ -268,7 +268,7 @@ static void test_GetCurrentObject(void)
         ok(hcs != 0, "CreateColorSpace failed\n");
         SelectObject(hdc, hcs);
         hobj = GetCurrentObject(hdc, OBJ_COLORSPACE);
-        ok(hobj == hcs || broken(hobj == 0) /* win9x */, "OBJ_COLORSPACE is wrong: %p\n", hobj);
+        ok(hobj == hcs, "OBJ_COLORSPACE is wrong: %p\n", hobj);
     }
 
     hrgn = CreateRectRgn(1, 1, 100, 100);
