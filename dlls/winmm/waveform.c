@@ -300,19 +300,11 @@ static WINMM_Device *WINMM_GetDeviceFromHWAVE(HWAVE hwave)
 
 /* Note: NotifyClient should never be called while holding the device lock
  * since the client may call wave* functions from within the callback. */
-static DWORD WINMM_NotifyClient(WINMM_CBInfo *info, WORD msg, DWORD_PTR param1,
+static inline void WINMM_NotifyClient(WINMM_CBInfo *info, WORD msg, DWORD_PTR param1,
         DWORD_PTR param2)
 {
-    TRACE("(%p, %u, %lx, %lx)\n", info->hwave, msg, param1, param2);
-
-    if((info->flags & DCB_TYPEMASK) == DCB_NULL)
-        return MMSYSERR_NOERROR;
-
-    if(!DriverCallback(info->callback, info->flags, (HDRVR)info->hwave,
-                msg, info->user, param1, param2))
-        return MMSYSERR_ERROR;
-
-    return MMSYSERR_NOERROR;
+    DriverCallback(info->callback, info->flags, (HDRVR)info->hwave,
+        msg, info->user, param1, param2);
 }
 
 static HRESULT WINMM_GetFriendlyName(IMMDevice *device, WCHAR *out,
@@ -2330,6 +2322,9 @@ MMRESULT WINAPI waveOutOpen(LPHWAVEOUT lphWaveOut, UINT uDeviceID,
         ERR("Couldn't start the device thread: %08x\n", hr);
         return MMSYSERR_ERROR;
     }
+    res = WINMM_CheckCallback(dwCallback, dwFlags, FALSE);
+    if(res != MMSYSERR_NOERROR)
+        return res;
 
     info.format = (WAVEFORMATEX*)lpFormat;
     info.callback = dwCallback;
@@ -2978,6 +2973,9 @@ MMRESULT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
         ERR("Couldn't start the device thread: %08x\n", hr);
         return MMSYSERR_ERROR;
     }
+    res = WINMM_CheckCallback(dwCallback, dwFlags, FALSE);
+    if(res != MMSYSERR_NOERROR)
+        return res;
 
     info.format = (WAVEFORMATEX*)lpFormat;
     info.callback = dwCallback;
@@ -3347,12 +3345,12 @@ UINT WINAPI mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
     if(!lphMix)
         return MMSYSERR_INVALPARAM;
 
-    if(uDeviceID >= g_outmmdevices_count + g_inmmdevices_count)
-        return MMSYSERR_BADDEVICEID;
-
     mr = WINMM_CheckCallback(dwCallback, fdwOpen, TRUE);
     if(mr != MMSYSERR_NOERROR)
         return mr;
+
+    if(uDeviceID >= g_outmmdevices_count + g_inmmdevices_count)
+        return MMSYSERR_BADDEVICEID;
 
     if(uDeviceID < g_outmmdevices_count){
         mmdevice = &g_out_mmdevices[uDeviceID];
