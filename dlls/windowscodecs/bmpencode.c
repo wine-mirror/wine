@@ -489,8 +489,8 @@ static HRESULT WINAPI BmpEncoder_Initialize(IWICBitmapEncoder *iface,
 static HRESULT WINAPI BmpEncoder_GetContainerFormat(IWICBitmapEncoder *iface,
     GUID *pguidContainerFormat)
 {
-    FIXME("(%p,%s): stub\n", iface, debugstr_guid(pguidContainerFormat));
-    return E_NOTIMPL;
+    memcpy(pguidContainerFormat, &GUID_ContainerFormatBmp, sizeof(GUID));
+    return S_OK;
 }
 
 static HRESULT WINAPI BmpEncoder_GetEncoderInfo(IWICBitmapEncoder *iface,

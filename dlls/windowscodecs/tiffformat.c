@@ -1650,8 +1650,8 @@ exit:
 static HRESULT WINAPI TiffEncoder_GetContainerFormat(IWICBitmapEncoder *iface,
     GUID *pguidContainerFormat)
 {
-    FIXME("(%p,%s): stub\n", iface, debugstr_guid(pguidContainerFormat));
-    return E_NOTIMPL;
+    memcpy(pguidContainerFormat, &GUID_ContainerFormatTiff, sizeof(GUID));
+    return S_OK;
 }
 
 static HRESULT WINAPI TiffEncoder_GetEncoderInfo(IWICBitmapEncoder *iface,

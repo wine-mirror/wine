@@ -527,8 +527,8 @@ end:
 static HRESULT WINAPI IcoDecoder_GetContainerFormat(IWICBitmapDecoder *iface,
     GUID *pguidContainerFormat)
 {
-    FIXME("(%p,%p): stub\n", iface, pguidContainerFormat);
-    return E_NOTIMPL;
+    memcpy(pguidContainerFormat, &GUID_ContainerFormatIco, sizeof(GUID));
+    return S_OK;
 }
 
 static HRESULT WINAPI IcoDecoder_GetDecoderInfo(IWICBitmapDecoder *iface,
