@@ -2370,9 +2370,6 @@ UINT WINAPI waveOutClose(HWAVEOUT hWaveOut)
 
     TRACE("(%p)\n", hWaveOut);
 
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
-
     device = WINMM_GetDeviceFromHWAVE((HWAVE)hWaveOut);
 
     if(!WINMM_ValidateAndLock(device))
@@ -2398,9 +2395,6 @@ UINT WINAPI waveOutPrepareHeader(HWAVEOUT hWaveOut,
 {
     TRACE("(%p, %p, %u)\n", hWaveOut, lpWaveOutHdr, uSize);
 
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
-
     if(!lpWaveOutHdr || uSize < sizeof(WAVEHDR))
         return MMSYSERR_INVALPARAM;
 
@@ -2417,9 +2411,6 @@ UINT WINAPI waveOutUnprepareHeader(HWAVEOUT hWaveOut,
 				   LPWAVEHDR lpWaveOutHdr, UINT uSize)
 {
     TRACE("(%p, %p, %u)\n", hWaveOut, lpWaveOutHdr, uSize);
-
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
 
     if(!lpWaveOutHdr || uSize < sizeof(WAVEHDR))
         return MMSYSERR_INVALPARAM;
@@ -2442,9 +2433,6 @@ UINT WINAPI waveOutWrite(HWAVEOUT hWaveOut, WAVEHDR *header, UINT uSize)
     HRESULT hr;
 
     TRACE("(%p, %p, %u)\n", hWaveOut, header, uSize);
-
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
 
     device = WINMM_GetDeviceFromHWAVE((HWAVE)hWaveOut);
 
@@ -2510,9 +2498,6 @@ UINT WINAPI waveOutBreakLoop(HWAVEOUT hWaveOut)
 
     TRACE("(%p)\n", hWaveOut);
 
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
-
     device = WINMM_GetDeviceFromHWAVE((HWAVE)hWaveOut);
 
     if(!WINMM_ValidateAndLock(device))
@@ -2532,9 +2517,6 @@ UINT WINAPI waveOutPause(HWAVEOUT hWaveOut)
 {
     TRACE("(%p)\n", hWaveOut);
 
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
-
     return WINMM_Pause((HWAVE)hWaveOut);
 }
 
@@ -2544,9 +2526,6 @@ UINT WINAPI waveOutPause(HWAVEOUT hWaveOut)
 UINT WINAPI waveOutReset(HWAVEOUT hWaveOut)
 {
     TRACE("(%p)\n", hWaveOut);
-
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
 
     return WINMM_Reset((HWAVE)hWaveOut);
 }
@@ -2560,9 +2539,6 @@ UINT WINAPI waveOutRestart(HWAVEOUT hWaveOut)
     HRESULT hr;
 
     TRACE("(%p)\n", hWaveOut);
-
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
 
     device = WINMM_GetDeviceFromHWAVE((HWAVE)hWaveOut);
 
@@ -2589,9 +2565,6 @@ UINT WINAPI waveOutGetPosition(HWAVEOUT hWaveOut, LPMMTIME lpTime,
 			       UINT uSize)
 {
     TRACE("(%p, %p, %u)\n", hWaveOut, lpTime, uSize);
-
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
 
     if(!uSize || !lpTime || uSize != sizeof(MMTIME))
         return MMSYSERR_INVALPARAM;
@@ -2650,9 +2623,6 @@ UINT WINAPI waveOutGetVolume(HWAVEOUT hWaveOut, DWORD *out)
 
     TRACE("(%p, %p)\n", hWaveOut, out);
 
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
-
     if(!out)
         return MMSYSERR_INVALPARAM;
 
@@ -2704,9 +2674,6 @@ UINT WINAPI waveOutSetVolume(HWAVEOUT hWaveOut, DWORD in)
     HRESULT hr;
 
     TRACE("(%p, %08x)\n", hWaveOut, in);
-
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
 
     device = WINMM_GetDeviceFromHWAVE((HWAVE)hWaveOut);
 
@@ -2763,9 +2730,6 @@ UINT WINAPI waveOutGetID(HWAVEOUT hWaveOut, UINT* lpuDeviceID)
     BOOL is_out;
 
     TRACE("(%p, %p)\n", hWaveOut, lpuDeviceID);
-
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
 
     if(!lpuDeviceID)
         return MMSYSERR_INVALPARAM;
@@ -3054,9 +3018,6 @@ UINT WINAPI waveInClose(HWAVEIN hWaveIn)
 
     TRACE("(%p)\n", hWaveIn);
 
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
-
     device = WINMM_GetDeviceFromHWAVE((HWAVE)hWaveIn);
 
     if(!WINMM_ValidateAndLock(device))
@@ -3082,9 +3043,6 @@ UINT WINAPI waveInPrepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
 {
     TRACE("(%p, %p, %u)\n", hWaveIn, lpWaveInHdr, uSize);
 
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
-
     if(!lpWaveInHdr || uSize < sizeof(WAVEHDR))
         return MMSYSERR_INVALPARAM;
 
@@ -3101,9 +3059,6 @@ UINT WINAPI waveInUnprepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
 				  UINT uSize)
 {
     TRACE("(%p, %p, %u)\n", hWaveIn, lpWaveInHdr, uSize);
-
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
 
     if(!lpWaveInHdr || uSize < sizeof(WAVEHDR))
         return MMSYSERR_INVALPARAM;
@@ -3161,9 +3116,6 @@ UINT WINAPI waveInReset(HWAVEIN hWaveIn)
 {
     TRACE("(%p)\n", hWaveIn);
 
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
-
     return WINMM_Reset((HWAVE)hWaveIn);
 }
 
@@ -3176,9 +3128,6 @@ UINT WINAPI waveInStart(HWAVEIN hWaveIn)
     HRESULT hr;
 
     TRACE("(%p)\n", hWaveIn);
-
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
 
     device = WINMM_GetDeviceFromHWAVE((HWAVE)hWaveIn);
 
@@ -3207,9 +3156,6 @@ UINT WINAPI waveInStop(HWAVEIN hWaveIn)
     HRESULT hr;
 
     TRACE("(%p)\n", hWaveIn);
-
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
 
     device = WINMM_GetDeviceFromHWAVE((HWAVE)hWaveIn);
 
@@ -3249,9 +3195,6 @@ UINT WINAPI waveInGetPosition(HWAVEIN hWaveIn, LPMMTIME lpTime,
 {
     TRACE("(%p, %p, %u)\n", hWaveIn, lpTime, uSize);
 
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
-
     if(!uSize || !lpTime || uSize != sizeof(MMTIME))
         return MMSYSERR_INVALPARAM;
 
@@ -3268,9 +3211,6 @@ UINT WINAPI waveInGetID(HWAVEIN hWaveIn, UINT* lpuDeviceID)
     WINMM_Device *device;
 
     TRACE("(%p, %p)\n", hWaveIn, lpuDeviceID);
-
-    if(!WINMM_StartDevicesThread())
-        return MMSYSERR_ERROR;
 
     if(!lpuDeviceID)
         return MMSYSERR_INVALPARAM;
