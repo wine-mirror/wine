@@ -852,6 +852,22 @@ static void test__tzset(void)
     _putenv(TZ_env);
 }
 
+static void test_clock(void)
+{
+    static const int THRESH = 50;
+    clock_t s, e;
+    int i;
+
+    for (i = 0; i < 10; i++)
+    {
+        s = clock();
+        Sleep(1000);
+        e = clock();
+
+        ok(abs((e-s) - 1000) < THRESH, "clock off on loop %i: %i\n", i, e-s);
+    }
+}
+
 START_TEST(time)
 {
     init();
@@ -870,4 +886,5 @@ START_TEST(time)
     test_localtime64_s();
     test_daylight();
     test_asctime();
+    test_clock();
 }
