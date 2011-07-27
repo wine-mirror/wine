@@ -277,16 +277,13 @@ static BOOL InitApplication(HINSTANCE hInstance)
      main window */
 
   wc.cbSize = sizeof(WNDCLASSEX);
-
-  /* Load small icon image */
-  wc.hIconSm = LoadImage(hInstance, MAKEINTRESOURCEA(IDI_APPICON), IMAGE_ICON, 16, 16, 0);
-
   wc.style         = CS_HREDRAW | CS_VREDRAW;             /* Class style(s) */
   wc.lpfnWndProc   = WndProc;                             /* Window Procedure */
   wc.cbClsExtra    = 0;                          /* No per-class extra data */
   wc.cbWndExtra    = 0;                         /* No per-window extra data */
   wc.hInstance     = hInstance;                      /* Owner of this class */
-  wc.hIcon         = LoadIcon(hInstance, szAppName);  /* Icon name from .rc */
+  wc.hIcon         = NULL;
+  wc.hIconSm       = NULL;
   wc.hCursor       = LoadCursor(NULL, IDC_ARROW);                 /* Cursor */
   wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);           /* Default color */
   wc.lpszMenuName  = szAppName;                       /* Menu name from .rc */
