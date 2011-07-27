@@ -143,8 +143,13 @@ static HRESULT WINAPI FlipRotator_GetResolution(IWICBitmapFlipRotator *iface,
 static HRESULT WINAPI FlipRotator_CopyPalette(IWICBitmapFlipRotator *iface,
     IWICPalette *pIPalette)
 {
-    FIXME("(%p,%p): stub\n", iface, pIPalette);
-    return E_NOTIMPL;
+    FlipRotator *This = impl_from_IWICBitmapFlipRotator(iface);
+    TRACE("(%p,%p)\n", iface, pIPalette);
+
+    if (!This->source)
+        return WINCODEC_ERR_WRONGSTATE;
+    else
+        return IWICBitmapSource_CopyPalette(This->source, pIPalette);
 }
 
 static HRESULT WINAPI FlipRotator_CopyPixels(IWICBitmapFlipRotator *iface,
