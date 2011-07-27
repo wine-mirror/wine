@@ -31,4 +31,6 @@ RC_SRCS = \
 
 PO_SRCS = ieframe.rc
 
+IDL_TLB_SRCS = ieframe_v1.idl
+
 @MAKE_DLL_RULES@

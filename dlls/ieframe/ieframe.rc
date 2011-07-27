@@ -84,3 +84,6 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #define WINE_EXTRAVALUES VALUE "OLESelfRegister",""
 
 #include "wine/wine_common_ver.rc"
+
+/* @makedep: ieframe_v1.tlb */
+1 TYPELIB ieframe_v1.tlb

@@ -55,6 +55,7 @@ dlls/dispex/disp_ex_p.c
 dlls/dxdiagn/fil_data.h
 dlls/gameux/gameux_tlb.tlb
 dlls/hhctrl.ocx/hhctrl_tlb.tlb
+dlls/ieframe/ieframe_v1.tlb
 dlls/infosoft/infosoft.h
 dlls/jscript/jscript_classes.h
 dlls/jscript/jsglobal.tlb
