@@ -5263,7 +5263,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
             checkGLcall("glActiveTextureARB");
             sampler = device->rev_tex_unit_map[0];
             if (sampler != WINED3D_UNMAPPED_STAGE)
-                device_invalidate_state(device, STATE_SAMPLER(sampler));
+                context_invalidate_state(context, STATE_SAMPLER(sampler));
             /* Create a new cursor texture */
             glGenTextures(1, &device->cursorTexture);
             checkGLcall("glGenTextures");
