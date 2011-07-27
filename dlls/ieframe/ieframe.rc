@@ -87,3 +87,6 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: ieframe_v1.tlb */
 1 TYPELIB ieframe_v1.tlb
+
+/* @makedep: ietoolbar.bmp */
+IDB_IETOOLBAR BITMAP ietoolbar.bmp
