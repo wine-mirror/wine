@@ -275,9 +275,9 @@ UINT ACTION_RegisterFonts(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
-    MSI_IterateRecords(view, NULL, ITERATE_RegisterFonts, package);
+    rc = MSI_IterateRecords(view, NULL, ITERATE_RegisterFonts, package);
     msiobj_release(&view->hdr);
-    return ERROR_SUCCESS;
+    return rc;
 }
 
 static UINT ITERATE_UnregisterFonts( MSIRECORD *row, LPVOID param )
@@ -355,7 +355,7 @@ UINT ACTION_UnregisterFonts( MSIPACKAGE *package )
     if (r != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
-    MSI_IterateRecords( view, NULL, ITERATE_UnregisterFonts, package );
+    r = MSI_IterateRecords( view, NULL, ITERATE_UnregisterFonts, package );
     msiobj_release( &view->hdr );
-    return ERROR_SUCCESS;
+    return r;
 }

@@ -538,7 +538,7 @@ static UINT iterate_all_classes(MSIRECORD *rec, LPVOID param)
     return ERROR_SUCCESS;
 }
 
-static VOID load_all_classes(MSIPACKAGE *package)
+static UINT load_all_classes( MSIPACKAGE *package )
 {
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ','`','C','l','a','s','s','`',0};
@@ -547,10 +547,11 @@ static VOID load_all_classes(MSIPACKAGE *package)
 
     rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
-        return;
+        return ERROR_SUCCESS;
 
     rc = MSI_IterateRecords(view, NULL, iterate_all_classes, package);
     msiobj_release(&view->hdr);
+    return rc;
 }
 
 static UINT iterate_all_extensions(MSIRECORD *rec, LPVOID param)
@@ -583,7 +584,7 @@ static UINT iterate_all_extensions(MSIRECORD *rec, LPVOID param)
     return ERROR_SUCCESS;
 }
 
-static VOID load_all_extensions(MSIPACKAGE *package)
+static UINT load_all_extensions( MSIPACKAGE *package )
 {
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`','E','x','t','e','n','s','i','o','n','`',0};
@@ -592,10 +593,11 @@ static VOID load_all_extensions(MSIPACKAGE *package)
 
     rc = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (rc != ERROR_SUCCESS)
-        return;
+        return ERROR_SUCCESS;
 
     rc = MSI_IterateRecords(view, NULL, iterate_all_extensions, package);
     msiobj_release(&view->hdr);
+    return rc;
 }
 
 static UINT iterate_all_progids(MSIRECORD *rec, LPVOID param)
@@ -608,7 +610,7 @@ static UINT iterate_all_progids(MSIRECORD *rec, LPVOID param)
     return ERROR_SUCCESS;
 }
 
-static VOID load_all_progids(MSIPACKAGE *package)
+static UINT load_all_progids( MSIPACKAGE *package )
 {
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','`','P','r','o','g','I','d','`',' ','F','R','O','M',' ',
@@ -618,13 +620,14 @@ static VOID load_all_progids(MSIPACKAGE *package)
 
     rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
-        return;
+        return ERROR_SUCCESS;
 
     rc = MSI_IterateRecords(view, NULL, iterate_all_progids, package);
     msiobj_release(&view->hdr);
+    return rc;
 }
 
-static VOID load_all_verbs(MSIPACKAGE *package)
+static UINT load_all_verbs( MSIPACKAGE *package )
 {
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`','V','e','r','b','`',0};
@@ -633,10 +636,11 @@ static VOID load_all_verbs(MSIPACKAGE *package)
 
     rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
-        return;
+        return ERROR_SUCCESS;
 
     rc = MSI_IterateRecords(view, NULL, iterate_load_verb, package);
     msiobj_release(&view->hdr);
+    return rc;
 }
 
 static UINT iterate_all_mimes(MSIRECORD *rec, LPVOID param)
@@ -649,7 +653,7 @@ static UINT iterate_all_mimes(MSIRECORD *rec, LPVOID param)
     return ERROR_SUCCESS;
 }
 
-static VOID load_all_mimes(MSIPACKAGE *package)
+static UINT load_all_mimes( MSIPACKAGE *package )
 {
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','`','C','o','n','t','e','n','t','T','y','p','e','`',' ',
@@ -659,29 +663,39 @@ static VOID load_all_mimes(MSIPACKAGE *package)
 
     rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
-        return;
+        return ERROR_SUCCESS;
 
     rc = MSI_IterateRecords(view, NULL, iterate_all_mimes, package);
     msiobj_release(&view->hdr);
+    return rc;
 }
 
-static void load_classes_and_such(MSIPACKAGE *package)
+static UINT load_classes_and_such( MSIPACKAGE *package )
 {
+    UINT r;
+
     TRACE("Loading all the class info and related tables\n");
 
     /* check if already loaded */
     if (!list_empty( &package->classes ) ||
         !list_empty( &package->mimes ) ||
         !list_empty( &package->extensions ) ||
-        !list_empty( &package->progids ) )
-        return;
+        !list_empty( &package->progids )) return ERROR_SUCCESS;
 
-    load_all_classes(package);
-    load_all_extensions(package);
-    load_all_progids(package);
+    r = load_all_classes( package );
+    if (r != ERROR_SUCCESS) return r;
+
+    r = load_all_extensions( package );
+    if (r != ERROR_SUCCESS) return r;
+
+    r = load_all_progids( package );
+    if (r != ERROR_SUCCESS) return r;
+
     /* these loads must come after the other loads */
-    load_all_verbs(package);
-    load_all_mimes(package);
+    r = load_all_verbs( package );
+    if (r != ERROR_SUCCESS) return r;
+
+    return load_all_mimes( package );
 }
 
 static void mark_progid_for_install( MSIPACKAGE* package, MSIPROGID *progid )
@@ -788,10 +802,13 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
     static const WCHAR szFileType_fmt[] = {'F','i','l','e','T','y','p','e','\\','%','s','\\','%','i',0};
     const WCHAR *keypath;
     MSIRECORD *uirow;
-    HKEY hkey,hkey2,hkey3;
+    HKEY hkey, hkey2, hkey3;
     MSICLASS *cls;
+    UINT r;
 
-    load_classes_and_such(package);
+    r = load_classes_and_such( package );
+    if (r != ERROR_SUCCESS)
+        return r;
 
     if (is_64bit && package->platform == PLATFORM_INTEL)
         keypath = szWow6432NodeCLSID;
@@ -953,8 +970,11 @@ UINT ACTION_UnregisterClassInfo( MSIPACKAGE *package )
     MSIRECORD *uirow;
     MSICLASS *cls;
     HKEY hkey, hkey2;
+    UINT r;
 
-    load_classes_and_such( package );
+    r = load_classes_and_such( package );
+    if (r != ERROR_SUCCESS)
+        return r;
 
     if (is_64bit && package->platform == PLATFORM_INTEL)
         keypath = szWow6432NodeCLSID;
@@ -1087,8 +1107,11 @@ UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package)
 {
     MSIPROGID *progid;
     MSIRECORD *uirow;
+    UINT r;
 
-    load_classes_and_such(package);
+    r = load_classes_and_such( package );
+    if (r != ERROR_SUCCESS)
+        return r;
 
     LIST_FOR_EACH_ENTRY( progid, &package->progids, MSIPROGID, entry )
     {
@@ -1120,8 +1143,11 @@ UINT ACTION_UnregisterProgIdInfo( MSIPACKAGE *package )
     MSIPROGID *progid;
     MSIRECORD *uirow;
     LONG res;
+    UINT r;
 
-    load_classes_and_such( package );
+    r = load_classes_and_such( package );
+    if (r != ERROR_SUCCESS)
+        return r;
 
     LIST_FOR_EACH_ENTRY( progid, &package->progids, MSIPROGID, entry )
     {
@@ -1233,8 +1259,11 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
     MSIRECORD *uirow;
     BOOL install_on_demand = TRUE;
     LONG res;
+    UINT r;
 
-    load_classes_and_such(package);
+    r = load_classes_and_such( package );
+    if (r != ERROR_SUCCESS)
+        return r;
 
     /* We need to set install_on_demand based on if the shell handles advertised
      * shortcuts and the like. Because Mike McCormack is working on this i am
@@ -1346,8 +1375,11 @@ UINT ACTION_UnregisterExtensionInfo( MSIPACKAGE *package )
     MSIEXTENSION *ext;
     MSIRECORD *uirow;
     LONG res;
+    UINT r;
 
-    load_classes_and_such( package );
+    r = load_classes_and_such( package );
+    if (r != ERROR_SUCCESS)
+        return r;
 
     LIST_FOR_EACH_ENTRY( ext, &package->extensions, MSIEXTENSION, entry )
     {
@@ -1431,8 +1463,11 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
     static const WCHAR szExtension[] = {'E','x','t','e','n','s','i','o','n',0};
     MSIRECORD *uirow;
     MSIMIME *mt;
+    UINT r;
 
-    load_classes_and_such(package);
+    r = load_classes_and_such( package );
+    if (r != ERROR_SUCCESS)
+        return r;
 
     LIST_FOR_EACH_ENTRY( mt, &package->mimes, MSIMIME, entry )
     {
@@ -1485,8 +1520,11 @@ UINT ACTION_UnregisterMIMEInfo( MSIPACKAGE *package )
 {
     MSIRECORD *uirow;
     MSIMIME *mime;
+    UINT r;
 
-    load_classes_and_such( package );
+    r = load_classes_and_such( package );
+    if (r != ERROR_SUCCESS)
+        return r;
 
     LIST_FOR_EACH_ENTRY( mime, &package->mimes, MSIMIME, entry )
     {

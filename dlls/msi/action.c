@@ -1109,9 +1109,9 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
     ilfs.package = package;
     ilfs.feature = feature;
 
-    MSI_IterateRecords(view, NULL, iterate_load_featurecomponents , &ilfs);
+    rc = MSI_IterateRecords(view, NULL, iterate_load_featurecomponents , &ilfs);
     msiobj_release(&view->hdr);
-    return ERROR_SUCCESS;
+    return rc;
 }
 
 static UINT find_feature_children(MSIRECORD * row, LPVOID param)
@@ -1316,7 +1316,7 @@ static UINT load_all_files(MSIPACKAGE *package)
 
     rc = MSI_IterateRecords(view, NULL, load_file, package);
     msiobj_release(&view->hdr);
-    return ERROR_SUCCESS;
+    return rc;
 }
 
 static UINT load_media( MSIRECORD *row, LPVOID param )
@@ -1344,9 +1344,9 @@ static UINT load_all_media( MSIPACKAGE *package )
     if (r != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
-    MSI_IterateRecords( view, NULL, load_media, package );
+    r = MSI_IterateRecords( view, NULL, load_media, package );
     msiobj_release( &view->hdr );
-    return ERROR_SUCCESS;
+    return r;
 }
 
 static UINT load_patch(MSIRECORD *row, LPVOID param)
@@ -1409,7 +1409,7 @@ static UINT load_all_patches(MSIPACKAGE *package)
 
     rc = MSI_IterateRecords(view, NULL, load_patch, package);
     msiobj_release(&view->hdr);
-    return ERROR_SUCCESS;
+    return rc;
 }
 
 static UINT load_folder_persistence( MSIPACKAGE *package, MSIFOLDER *folder )
@@ -2347,6 +2347,8 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         {
             rc = MSI_IterateRecords( view, NULL, ITERATE_CostFinalizeConditions, package );
             msiobj_release( &view->hdr );
+            if (rc != ERROR_SUCCESS)
+                return rc;
         }
     }
 
@@ -2910,8 +2912,10 @@ static UINT ACTION_InstallValidate(MSIPACKAGE *package)
     rc = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (rc == ERROR_SUCCESS)
     {
-        MSI_IterateRecords( view, &count, NULL, package );
+        rc = MSI_IterateRecords( view, &count, NULL, package );
         msiobj_release( &view->hdr );
+        if (rc != ERROR_SUCCESS)
+            return rc;
         total += count * REG_PROGRESS_VALUE;
     }
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
@@ -3798,8 +3802,10 @@ static UINT msi_publish_icons(MSIPACKAGE *package)
     r = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (r == ERROR_SUCCESS)
     {
-        MSI_IterateRecords(view, NULL, ITERATE_PublishIcon, package);
+        r = MSI_IterateRecords(view, NULL, ITERATE_PublishIcon, package);
         msiobj_release(&view->hdr);
+        if (r != ERROR_SUCCESS)
+            return r;
     }
     return ERROR_SUCCESS;
 }
@@ -4487,9 +4493,9 @@ static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
-    MSI_IterateRecords(view, NULL, ITERATE_SelfRegModules, package);
+    rc = MSI_IterateRecords(view, NULL, ITERATE_SelfRegModules, package);
     msiobj_release(&view->hdr);
-    return ERROR_SUCCESS;
+    return rc;
 }
 
 static UINT ITERATE_SelfUnregModules( MSIRECORD *row, LPVOID param )
@@ -4537,9 +4543,9 @@ static UINT ACTION_SelfUnregModules( MSIPACKAGE *package )
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
-    MSI_IterateRecords( view, NULL, ITERATE_SelfUnregModules, package );
+    rc = MSI_IterateRecords( view, NULL, ITERATE_SelfUnregModules, package );
     msiobj_release( &view->hdr );
-    return ERROR_SUCCESS;
+    return rc;
 }
 
 static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
@@ -6180,26 +6186,30 @@ static UINT ACTION_InstallODBC( MSIPACKAGE *package )
     UINT rc;
 
     rc = MSI_DatabaseOpenViewW(package->db, driver_query, &view);
-    if (rc != ERROR_SUCCESS)
-        return ERROR_SUCCESS;
-
-    rc = MSI_IterateRecords(view, NULL, ITERATE_InstallODBCDriver, package);
-    msiobj_release(&view->hdr);
-
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MSI_IterateRecords(view, NULL, ITERATE_InstallODBCDriver, package);
+        msiobj_release(&view->hdr);
+        if (rc != ERROR_SUCCESS)
+            return rc;
+    }
     rc = MSI_DatabaseOpenViewW(package->db, translator_query, &view);
-    if (rc != ERROR_SUCCESS)
-        return ERROR_SUCCESS;
-
-    rc = MSI_IterateRecords(view, NULL, ITERATE_InstallODBCTranslator, package);
-    msiobj_release(&view->hdr);
-
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MSI_IterateRecords(view, NULL, ITERATE_InstallODBCTranslator, package);
+        msiobj_release(&view->hdr);
+        if (rc != ERROR_SUCCESS)
+            return rc;
+    }
     rc = MSI_DatabaseOpenViewW(package->db, source_query, &view);
-    if (rc != ERROR_SUCCESS)
-        return ERROR_SUCCESS;
-
-    rc = MSI_IterateRecords(view, NULL, ITERATE_InstallODBCDataSource, package);
-    msiobj_release(&view->hdr);
-    return rc;
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MSI_IterateRecords(view, NULL, ITERATE_InstallODBCDataSource, package);
+        msiobj_release(&view->hdr);
+        if (rc != ERROR_SUCCESS)
+            return rc;
+    }
+    return ERROR_SUCCESS;
 }
 
 static UINT ITERATE_RemoveODBCDriver( MSIRECORD *rec, LPVOID param )
@@ -6354,26 +6364,30 @@ static UINT ACTION_RemoveODBC( MSIPACKAGE *package )
     UINT rc;
 
     rc = MSI_DatabaseOpenViewW( package->db, driver_query, &view );
-    if (rc != ERROR_SUCCESS)
-        return ERROR_SUCCESS;
-
-    rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveODBCDriver, package );
-    msiobj_release( &view->hdr );
-
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveODBCDriver, package );
+        msiobj_release( &view->hdr );
+        if (rc != ERROR_SUCCESS)
+            return rc;
+    }
     rc = MSI_DatabaseOpenViewW( package->db, translator_query, &view );
-    if (rc != ERROR_SUCCESS)
-        return ERROR_SUCCESS;
-
-    rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveODBCTranslator, package );
-    msiobj_release( &view->hdr );
-
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveODBCTranslator, package );
+        msiobj_release( &view->hdr );
+        if (rc != ERROR_SUCCESS)
+            return rc;
+    }
     rc = MSI_DatabaseOpenViewW( package->db, source_query, &view );
-    if (rc != ERROR_SUCCESS)
-        return ERROR_SUCCESS;
-
-    rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveODBCDataSource, package );
-    msiobj_release( &view->hdr );
-    return rc;
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveODBCDataSource, package );
+        msiobj_release( &view->hdr );
+        if (rc != ERROR_SUCCESS)
+            return rc;
+    }
+    return ERROR_SUCCESS;
 }
 
 #define ENV_ACT_SETALWAYS   0x1
@@ -6856,6 +6870,8 @@ static UINT ACTION_SetODBCFolders( MSIPACKAGE *package )
         count = 0;
         r = MSI_IterateRecords( view, &count, NULL, package );
         msiobj_release( &view->hdr );
+        if (r != ERROR_SUCCESS)
+            return r;
         if (count) FIXME("ignored %u rows in ODBCDriver table\n", count);
     }
     r = MSI_DatabaseOpenViewW( package->db, translator_query, &view );
@@ -6864,6 +6880,8 @@ static UINT ACTION_SetODBCFolders( MSIPACKAGE *package )
         count = 0;
         r = MSI_IterateRecords( view, &count, NULL, package );
         msiobj_release( &view->hdr );
+        if (r != ERROR_SUCCESS)
+            return r;
         if (count) FIXME("ignored %u rows in ODBCTranslator table\n", count);
     }
     return ERROR_SUCCESS;
@@ -6896,7 +6914,8 @@ static UINT ACTION_RemoveExistingProducts( MSIPACKAGE *package )
     {
         r = MSI_IterateRecords( view, NULL, ITERATE_RemoveExistingProducts, package );
         msiobj_release( &view->hdr );
-        return r;
+        if (r != ERROR_SUCCESS)
+            return r;
     }
     return ERROR_SUCCESS;
 }
@@ -6959,6 +6978,8 @@ static UINT ACTION_MigrateFeatureStates( MSIPACKAGE *package )
     {
         r = MSI_IterateRecords( view, NULL, ITERATE_MigrateFeatureStates, package );
         msiobj_release( &view->hdr );
+        if (r != ERROR_SUCCESS)
+            return r;
     }
     return ERROR_SUCCESS;
 }
@@ -7020,6 +7041,8 @@ static UINT ACTION_BindImage( MSIPACKAGE *package )
     {
         r = MSI_IterateRecords( view, NULL, ITERATE_BindImage, package );
         msiobj_release( &view->hdr );
+        if (r != ERROR_SUCCESS)
+            return r;
     }
     return ERROR_SUCCESS;
 }
@@ -7037,6 +7060,8 @@ static UINT msi_unimplemented_action_stub( MSIPACKAGE *package, LPCSTR action, L
     {
         r = MSI_IterateRecords(view, &count, NULL, package);
         msiobj_release(&view->hdr);
+        if (r != ERROR_SUCCESS)
+            return r;
     }
     if (count) FIXME("%s: ignored %u rows from %s\n", action, count, debugstr_w(table));
     return ERROR_SUCCESS;

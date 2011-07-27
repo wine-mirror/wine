@@ -1235,8 +1235,10 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
     r = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (r == ERROR_SUCCESS)
     {
-        MSI_IterateRecords(view, NULL, ITERATE_RemoveFiles, package);
+        r = MSI_IterateRecords(view, NULL, ITERATE_RemoveFiles, package);
         msiobj_release(&view->hdr);
+        if (r != ERROR_SUCCESS)
+            return r;
     }
 
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
