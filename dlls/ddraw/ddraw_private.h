@@ -159,7 +159,7 @@ struct IDirectDrawSurfaceImpl
     IDirectDrawSurface IDirectDrawSurface_iface;
     IDirectDrawGammaControl IDirectDrawGammaControl_iface;
     const IDirect3DTexture2Vtbl *IDirect3DTexture2_vtbl;
-    const IDirect3DTextureVtbl *IDirect3DTexture_vtbl;
+    IDirect3DTexture IDirect3DTexture_iface;
 
     LONG                     ref7, ref4, ref3, ref2, ref1, iface_count, gamma_count;
     IUnknown                *ifaceToRelease;
@@ -214,9 +214,9 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
         DDSURFACEDESC2 *desc, UINT mip_level, WINED3DSURFTYPE surface_type, UINT version) DECLSPEC_HIDDEN;
 ULONG ddraw_surface_release_iface(IDirectDrawSurfaceImpl *This) DECLSPEC_HIDDEN;
 
-static inline IDirectDrawSurfaceImpl *surface_from_texture1(IDirect3DTexture *iface)
+static inline IDirectDrawSurfaceImpl *impl_from_IDirect3DTexture(IDirect3DTexture *iface)
 {
-    return (IDirectDrawSurfaceImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawSurfaceImpl, IDirect3DTexture_vtbl));
+    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirect3DTexture_iface);
 }
 
 static inline IDirectDrawSurfaceImpl *surface_from_texture2(IDirect3DTexture2 *iface)

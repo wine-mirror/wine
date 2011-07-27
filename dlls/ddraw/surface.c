@@ -141,7 +141,7 @@ static HRESULT WINAPI ddraw_surface7_QueryInterface(IDirectDrawSurface7 *iface, 
     {
         if (IsEqualGUID( &IID_IDirect3DTexture, riid ))
         {
-            *obj = &This->IDirect3DTexture_vtbl;
+            *obj = &This->IDirect3DTexture_iface;
             TRACE(" returning Direct3DTexture interface at %p.\n", *obj);
         }
         else
@@ -209,7 +209,7 @@ static HRESULT WINAPI d3d_texture2_QueryInterface(IDirect3DTexture2 *iface, REFI
 
 static HRESULT WINAPI d3d_texture1_QueryInterface(IDirect3DTexture *iface, REFIID riid, void **object)
 {
-    IDirectDrawSurfaceImpl *This = surface_from_texture1(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirect3DTexture(iface);
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
     return ddraw_surface7_QueryInterface(&This->IDirectDrawSurface7_iface, riid, object);
@@ -340,7 +340,7 @@ static ULONG WINAPI d3d_texture2_AddRef(IDirect3DTexture2 *iface)
 
 static ULONG WINAPI d3d_texture1_AddRef(IDirect3DTexture *iface)
 {
-    IDirectDrawSurfaceImpl *This = surface_from_texture1(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirect3DTexture(iface);
     TRACE("iface %p.\n", iface);
 
     return ddraw_surface1_AddRef(&This->IDirectDrawSurface_iface);
@@ -623,7 +623,7 @@ static ULONG WINAPI d3d_texture2_Release(IDirect3DTexture2 *iface)
 
 static ULONG WINAPI d3d_texture1_Release(IDirect3DTexture *iface)
 {
-    IDirectDrawSurfaceImpl *This = surface_from_texture1(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirect3DTexture(iface);
     TRACE("iface %p.\n", iface);
 
     return ddraw_surface1_Release(&This->IDirectDrawSurface_iface);
@@ -4450,7 +4450,7 @@ static HRESULT WINAPI d3d_texture2_PaletteChanged(IDirect3DTexture2 *iface, DWOR
 
 static HRESULT WINAPI d3d_texture1_PaletteChanged(IDirect3DTexture *iface, DWORD start, DWORD count)
 {
-    IDirectDrawSurfaceImpl *surface = surface_from_texture1(iface);
+    IDirectDrawSurfaceImpl *surface = impl_from_IDirect3DTexture(iface);
 
     TRACE("iface %p, start %u, count %u.\n", iface, start, count);
 
@@ -4521,12 +4521,12 @@ static HRESULT WINAPI d3d_texture2_GetHandle(IDirect3DTexture2 *iface,
 static HRESULT WINAPI d3d_texture1_GetHandle(IDirect3DTexture *iface,
         IDirect3DDevice *device, D3DTEXTUREHANDLE *handle)
 {
-    IDirect3DTexture2 *texture2 = (IDirect3DTexture2 *)&surface_from_texture1(iface)->IDirect3DTexture2_vtbl;
+    IDirectDrawSurfaceImpl *This = impl_from_IDirect3DTexture(iface);
     IDirect3DDevice2 *device2 = (IDirect3DDevice2 *)&device_from_device1(device)->IDirect3DDevice2_vtbl;
 
     TRACE("iface %p, device %p, handle %p.\n", iface, device, handle);
 
-    return d3d_texture2_GetHandle(texture2, device2, handle);
+    return d3d_texture2_GetHandle((IDirect3DTexture2 *)&This->IDirect3DTexture2_vtbl, device2, handle);
 }
 
 /*****************************************************************************
@@ -4703,10 +4703,11 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
 
 static HRESULT WINAPI d3d_texture1_Load(IDirect3DTexture *iface, IDirect3DTexture *src_texture)
 {
+    IDirectDrawSurfaceImpl* This = impl_from_IDirect3DTexture(iface);
     IDirectDrawSurfaceImpl* src_surface = unsafe_impl_from_IDirect3DTexture(src_texture);
     TRACE("iface %p, src_texture %p.\n", iface, src_texture);
 
-    return d3d_texture2_Load((IDirect3DTexture2 *)&surface_from_texture1(iface)->IDirect3DTexture2_vtbl,
+    return d3d_texture2_Load((IDirect3DTexture2 *)&This->IDirect3DTexture2_vtbl,
             src_surface ? (IDirect3DTexture2 *)&src_surface->IDirect3DTexture2_vtbl : NULL);
 }
 
@@ -5033,7 +5034,7 @@ IDirectDrawSurfaceImpl *unsafe_impl_from_IDirect3DTexture(IDirect3DTexture *ifac
 {
     if (!iface) return NULL;
     assert(iface->lpVtbl == &d3d_texture1_vtbl);
-    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirect3DTexture_vtbl);
+    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirect3DTexture_iface);
 }
 
 static void STDMETHODCALLTYPE ddraw_surface_wined3d_object_destroyed(void *parent)
@@ -5200,7 +5201,7 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     surface->IDirectDrawSurface_iface.lpVtbl = &ddraw_surface1_vtbl;
     surface->IDirectDrawGammaControl_iface.lpVtbl = &ddraw_gamma_control_vtbl;
     surface->IDirect3DTexture2_vtbl = &d3d_texture2_vtbl;
-    surface->IDirect3DTexture_vtbl = &d3d_texture1_vtbl;
+    surface->IDirect3DTexture_iface.lpVtbl = &d3d_texture1_vtbl;
     surface->iface_count = 1;
     surface->version = version;
     surface->ddraw = ddraw;
