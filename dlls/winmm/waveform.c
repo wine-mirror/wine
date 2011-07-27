@@ -706,9 +706,9 @@ static MMRESULT WINMM_MapDevice(WINMM_OpenInfo *info, BOOL is_out)
     }
 
     /* no direct match, so set up the ACM stream */
-    if(info->format->wFormatTag != WAVE_FORMAT_PCM ||
-            (info->format->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-             !IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))){
+    if(info->format->wFormatTag != WAVE_FORMAT_PCM &&
+            !(info->format->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+              IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))){
         /* convert to PCM format if it's not already */
         mr = WINMM_TryDeviceMapping(info, info->format->nChannels,
                 info->format->nSamplesPerSec, 16, is_out);
@@ -889,6 +889,8 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
             goto error;
         }
 
+        /* As the devices thread is waiting on g_device_handles, it can
+         * only be modified from within this same thread. */
         if(g_device_handles){
             g_device_handles = HeapReAlloc(GetProcessHeap(), 0, g_device_handles,
                     sizeof(HANDLE) * (g_devhandle_count + 1));
@@ -2087,11 +2089,11 @@ static DWORD WINAPI WINMM_DevicesThreadProc(void *arg)
         DWORD wait;
         wait = MsgWaitForMultipleObjects(g_devhandle_count, g_device_handles,
                 FALSE, INFINITE, QS_ALLINPUT);
-        if(wait == g_devhandle_count - WAIT_OBJECT_0){
+        if(wait == g_devhandle_count + WAIT_OBJECT_0){
             MSG msg;
             if(PeekMessageW(&msg, g_devices_hwnd, 0, 0, PM_REMOVE))
                 ERR("Unexpected message: 0x%x\n", msg.message);
-        }else if(wait < g_devhandle_count){
+        }else if(wait < g_devhandle_count + WAIT_OBJECT_0){
             WINMM_Device *device = g_handle_devices[wait - WAIT_OBJECT_0];
             if(device->render)
                 WOD_PushData(device);
@@ -2149,7 +2151,7 @@ static BOOL WINMM_StartDevicesThread(void)
     wait = WaitForMultipleObjects(2, events, FALSE, INFINITE);
     CloseHandle(events[0]);
     if(wait != WAIT_OBJECT_0){
-        if(wait == 1 - WAIT_OBJECT_0){
+        if(wait == 1 + WAIT_OBJECT_0){
             CloseHandle(g_devices_thread);
             g_devices_thread = NULL;
             g_devices_hwnd = NULL;
