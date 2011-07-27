@@ -91,7 +91,6 @@ static BOOL output_text_header(HANDLE hFile, const char *caption)
     ptr += len;
 
     memcpy(ptr, crlf, sizeof(crlf));
-    ptr += sizeof(crlf);
 
     return WriteFile(hFile, output_buffer, total_len, NULL, NULL);
 }
