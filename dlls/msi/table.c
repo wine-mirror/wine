@@ -728,6 +728,7 @@ static UINT get_tablecolumns( MSIDATABASE *db, LPCWSTR szTableName, MSICOLUMNINF
 UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
                        MSICONDITION persistent, MSITABLE **table_ret)
 {
+    enum StringPersistence string_persistence = (persistent) ? StringPersistent : StringNonPersistent;
     UINT r, nField;
     MSIVIEW *tv = NULL;
     MSIRECORD *rec = NULL;
@@ -767,9 +768,12 @@ UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
 
     for( i = 0, col = col_info; col; i++, col = col->next )
     {
-        table->colinfo[ i ].tablename = strdupW( col->table );
+        UINT table_id = msi_addstringW( db->strings, col->table, -1, 1, string_persistence );
+        UINT col_id = msi_addstringW( db->strings, col->column, -1, 1, string_persistence );
+
+        table->colinfo[ i ].tablename = msi_string_lookup_id( db->strings, table_id );
         table->colinfo[ i ].number = i + 1;
-        table->colinfo[ i ].colname = strdupW( col->column );
+        table->colinfo[ i ].colname = msi_string_lookup_id( db->strings, col_id );
         table->colinfo[ i ].type = col->type;
         table->colinfo[ i ].offset = 0;
         table->colinfo[ i ].ref_count = 0;
