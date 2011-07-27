@@ -2247,6 +2247,11 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
             fb->render_targets, fb->depth_stencil))
         return FALSE;
 
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && isStateDirty(context, STATE_FRAMEBUFFER))
+    {
+        context_validate_onscreen_formats(context, fb->depth_stencil);
+    }
+
     /* Preload resources before FBO setup. Texture preload in particular may
      * result in changes to the current FBO, due to using e.g. FBO blits for
      * updating a resource location. */
