@@ -482,13 +482,6 @@ static void test_Loader(void)
             BOOL error_match;
             int error_index;
 
-            if (GetLastError() == ERROR_GEN_FAILURE) /* Win9x, broken behaviour */
-            {
-                trace("skipping the loader test on Win9x\n");
-                DeleteFile(dll_name);
-                return;
-            }
-
             error_match = FALSE;
             for (error_index = 0;
                  ! error_match && error_index < sizeof(td[i].errors) / sizeof(DWORD);

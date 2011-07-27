@@ -111,16 +111,6 @@ static void test_null_source(void)
         len, GLE);
 }
 
-/* lstrcmpW is not supported on Win9x! */
-static int mylstrcmpW(const WCHAR* str1, const WCHAR* str2)
-{
-    while (*str1 && *str1==*str2) {
-        str1++;
-        str2++;
-    }
-    return *str1-*str2;
-}
-
 static void test_negative_source_length(void)
 {
     int len;
@@ -139,7 +129,7 @@ static void test_negative_source_length(void)
     SetLastError( 0xdeadbeef );
     memset(bufW,'x',sizeof(bufW));
     len = MultiByteToWideChar(CP_ACP, 0, "foobar", -2002, bufW, 10);
-    ok(len == 7 && !mylstrcmpW(bufW, foobarW) && GetLastError() == 0xdeadbeef,
+    ok(len == 7 && !lstrcmpW(bufW, foobarW) && GetLastError() == 0xdeadbeef,
        "MultiByteToWideChar(-2002): len=%d error=%u\n", len, GetLastError());
 
     SetLastError(0xdeadbeef);
