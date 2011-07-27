@@ -77,6 +77,7 @@ DEFINE_EXPECT(form_onsubmit);
 DEFINE_EXPECT(form_onclick);
 DEFINE_EXPECT(submit_onclick);
 DEFINE_EXPECT(submit_onclick_attached);
+DEFINE_EXPECT(submit_onclick_setret);
 
 static HWND container_hwnd = NULL;
 static IHTMLWindow2 *window;
@@ -989,6 +990,33 @@ static HRESULT WINAPI submit_onclick_attached(IDispatchEx *iface, DISPID id, LCI
 
 EVENT_HANDLER_FUNC_OBJ(submit_onclick_attached);
 
+static VARIANT onclick_retval, onclick_event_retval;
+
+static HRESULT WINAPI submit_onclick_setret(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    IHTMLEventObj *event;
+    HRESULT hres;
+
+    CHECK_EXPECT(submit_onclick_setret);
+    test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    test_event_src("INPUT");
+
+    event = NULL;
+    hres = IHTMLWindow2_get_event(window, &event);
+    ok(hres == S_OK, "get_event failed: %08x\n", hres);
+    ok(event != NULL, "event == NULL\n");
+
+    hres = IHTMLEventObj_put_returnValue(event, onclick_event_retval);
+    ok(hres == S_OK, "put_returnValue failed: %08x\n", hres);
+    IHTMLEventObj_Release(event);
+
+    *pvarRes = onclick_retval;
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(submit_onclick_setret);
+
 static HRESULT WINAPI iframedoc_onreadystatechange(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
@@ -1777,6 +1805,57 @@ static void test_submit(IHTMLDocument2 *doc)
     CHECK_CALLED(doccp_onclick_cancel);
 
     unregister_cp((IUnknown*)doc, &DIID_HTMLDocumentEvents, cp_cookie);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)&submit_onclick_setret_obj;
+    hres = IHTMLElement_put_onclick(submit, v);
+    ok(hres == S_OK, "put_onclick failed: %08x\n", hres);
+
+    V_VT(&onclick_retval) = VT_BOOL;
+    V_BOOL(&onclick_retval) = VARIANT_TRUE;
+    V_VT(&onclick_event_retval) = VT_BOOL;
+    V_BOOL(&onclick_event_retval) = VARIANT_TRUE;
+
+    SET_EXPECT(submit_onclick_setret);
+    SET_EXPECT(form_onclick);
+    SET_EXPECT(form_onsubmit);
+    hres = IHTMLElement_click(submit);
+    ok(hres == S_OK, "click failed: %08x\n", hres);
+    CHECK_CALLED(submit_onclick_setret);
+    CHECK_CALLED(form_onclick);
+    CHECK_CALLED(form_onsubmit);
+
+    V_VT(&onclick_event_retval) = VT_BOOL;
+    V_BOOL(&onclick_event_retval) = VARIANT_FALSE;
+
+    SET_EXPECT(submit_onclick_setret);
+    SET_EXPECT(form_onclick);
+    hres = IHTMLElement_click(submit);
+    ok(hres == S_OK, "click failed: %08x\n", hres);
+    CHECK_CALLED(submit_onclick_setret);
+    CHECK_CALLED(form_onclick);
+
+    V_VT(&onclick_retval) = VT_BOOL;
+    V_BOOL(&onclick_retval) = VARIANT_FALSE;
+    V_VT(&onclick_event_retval) = VT_BOOL;
+    V_BOOL(&onclick_event_retval) = VARIANT_TRUE;
+
+    SET_EXPECT(submit_onclick_setret);
+    SET_EXPECT(form_onclick);
+    hres = IHTMLElement_click(submit);
+    ok(hres == S_OK, "click failed: %08x\n", hres);
+    CHECK_CALLED(submit_onclick_setret);
+    CHECK_CALLED(form_onclick);
+
+    V_VT(&onclick_event_retval) = VT_BOOL;
+    V_BOOL(&onclick_event_retval) = VARIANT_FALSE;
+
+    SET_EXPECT(submit_onclick_setret);
+    SET_EXPECT(form_onclick);
+    hres = IHTMLElement_click(submit);
+    ok(hres == S_OK, "click failed: %08x\n", hres);
+    CHECK_CALLED(submit_onclick_setret);
+    CHECK_CALLED(form_onclick);
 
     IHTMLElement_Release(submit);
 }
