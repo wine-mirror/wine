@@ -2162,6 +2162,7 @@ struct winhttp_request
     HINTERNET hsession;
     HINTERNET hconnect;
     HINTERNET hrequest;
+    WCHAR *verb;
     HANDLE wait;
     HANDLE cancel;
     char *buffer;
@@ -2202,6 +2203,7 @@ static ULONG WINAPI winhttp_request_Release(
         CloseHandle( request->wait );
         CloseHandle( request->cancel );
         heap_free( request->buffer );
+        heap_free( request->verb );
         heap_free( request );
     }
     return refs;
@@ -2444,6 +2446,7 @@ static HRESULT WINAPI winhttp_request_Open(
           debugstr_variant(&async));
 
     if (!method || !url) return E_INVALIDARG;
+    if (!(request->verb = strdupW( method ))) return E_OUTOFMEMORY;
 
     memset( &uc, 0, sizeof(uc) );
     uc.dwStructSize = sizeof(uc);
@@ -2703,7 +2706,7 @@ static HRESULT WINAPI winhttp_request_Send(
         return HRESULT_FROM_WIN32( get_last_error() );
     }
     VariantInit( &array );
-    if (VariantChangeType( &array, &body, 0, VT_ARRAY|VT_UI1 ) == S_OK)
+    if (strcmpW( request->verb, getW ) && VariantChangeType( &array, &body, 0, VT_ARRAY|VT_UI1 ) == S_OK)
     {
         SAFEARRAY *sa = V_ARRAY( &array );
         if ((hr = SafeArrayAccessData( sa, (void **)&ptr )) != S_OK) return hr;
@@ -2986,6 +2989,7 @@ static HRESULT WINAPI winhttp_request_Abort(
     CloseHandle( request->wait );
     CloseHandle( request->cancel );
     heap_free( request->buffer );
+    heap_free( request->verb );
     request->state = REQUEST_STATE_INVALID;
     request->hrequest = NULL;
     request->hconnect = NULL;
@@ -2993,6 +2997,7 @@ static HRESULT WINAPI winhttp_request_Abort(
     request->wait     = NULL;
     request->cancel   = NULL;
     request->buffer   = NULL;
+    request->verb     = NULL;
     request->offset = 0;
     request->bytes_available = 0;
     request->bytes_read = 0;
