@@ -233,7 +233,40 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     return TRUE;
 }
 
-HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, void ***keys,
+static UINT get_default_index(EDataFlow flow, char **keys, UINT num)
+{
+    int fd = -1, err, i;
+    oss_audioinfo ai;
+
+    if(flow == eRender)
+        fd = open("/dev/dsp", O_WRONLY);
+    else
+        fd = open("/dev/dsp", O_RDONLY);
+
+    if(fd < 0){
+        WARN("Couldn't open default device!\n");
+        return 0;
+    }
+
+    ai.dev = -1;
+    if((err = ioctl(fd, SNDCTL_ENGINEINFO, &ai)) < 0){
+        WARN("SNDCTL_ENGINEINFO failed: %d (%s)\n", err, strerror(err));
+        close(fd);
+        return 0;
+    }
+
+    close(fd);
+
+    TRACE("Default devnode: %s\n", ai.devnode);
+    for(i = 0; i < num; ++i)
+        if(!strcmp(ai.devnode, keys[i]))
+            return i;
+
+    WARN("Couldn't find default device! Choosing first.\n");
+    return 0;
+}
+
+HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
         UINT *num, UINT *def_index)
 {
     int i, mixer_fd;
@@ -282,7 +315,6 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, void ***keys,
     *keys = HeapAlloc(GetProcessHeap(), 0, sysinfo.numaudios * sizeof(char *));
 
     *num = 0;
-    *def_index = -1;
     for(i = 0; i < sysinfo.numaudios; ++i){
         oss_audioinfo ai = {0};
         int fd;
@@ -340,17 +372,13 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, void ***keys,
             MultiByteToWideChar(CP_UNIXCP, 0, ai.name, -1,
                     (*ids)[*num], len);
 
-            if(ai.caps & PCM_CAP_DEFAULT)
-                *def_index = *num;
-
             (*num)++;
         }
     }
 
-    if(*def_index == -1)
-        *def_index = 0;
-
     close(mixer_fd);
+
+    *def_index = get_default_index(flow, *keys, *num);
 
     return S_OK;
 }
