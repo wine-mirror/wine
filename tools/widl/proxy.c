@@ -111,12 +111,14 @@ static void clear_output_vars( const var_list_t *args )
   if (!args) return;
   LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
   {
-    if (is_attr(arg->attrs, ATTR_OUT) && !is_attr(arg->attrs, ATTR_IN)) {
-      print_proxy( "if(%s)\n", arg->name );
-      indent++;
-      print_proxy( "MIDL_memset( %s, 0, sizeof( *%s ));\n", arg->name, arg->name );
-      indent--;
-    }
+      if (is_attr(arg->attrs, ATTR_IN)) continue;
+      if (!is_attr(arg->attrs, ATTR_OUT)) continue;
+      if (is_ptr(arg->type))
+      {
+          if (type_get_type(type_pointer_get_ref(arg->type)) == TYPE_BASIC) continue;
+          if (type_get_type(type_pointer_get_ref(arg->type)) == TYPE_ENUM) continue;
+      }
+      print_proxy( "if (%s) MIDL_memset( %s, 0, sizeof( *%s ));\n", arg->name, arg->name, arg->name );
   }
 }
 
