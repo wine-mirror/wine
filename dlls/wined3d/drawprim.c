@@ -875,7 +875,7 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch
      */
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     checkGLcall("glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)");
-    device_invalidate_state(This, STATE_RENDER(WINED3DRS_FILLMODE));
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_FILLMODE));
     if (patch->has_normals)
     {
         static const GLfloat black[] = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -887,30 +887,30 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch
         checkGLcall("glEnable(GL_LIGHTING)");
         glLightModelfv(GL_LIGHT_MODEL_AMBIENT, black);
         checkGLcall("glLightModel for MODEL_AMBIENT");
-        device_invalidate_state(This, STATE_RENDER(WINED3DRS_AMBIENT));
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_AMBIENT));
 
         for (i = 3; i < context->gl_info->limits.lights; ++i)
         {
             glDisable(GL_LIGHT0 + i);
             checkGLcall("glDisable(GL_LIGHT0 + i)");
-            device_invalidate_state(This, STATE_ACTIVELIGHT(i));
+            context_invalidate_state(context, STATE_ACTIVELIGHT(i));
         }
 
-        device_invalidate_state(This, STATE_ACTIVELIGHT(0));
+        context_invalidate_state(context, STATE_ACTIVELIGHT(0));
         glLightfv(GL_LIGHT0, GL_DIFFUSE, red);
         glLightfv(GL_LIGHT0, GL_SPECULAR, black);
         glLightfv(GL_LIGHT0, GL_AMBIENT, black);
         glLightfv(GL_LIGHT0, GL_POSITION, red);
         glEnable(GL_LIGHT0);
         checkGLcall("Setting up light 1");
-        device_invalidate_state(This, STATE_ACTIVELIGHT(1));
+        context_invalidate_state(context, STATE_ACTIVELIGHT(1));
         glLightfv(GL_LIGHT1, GL_DIFFUSE, green);
         glLightfv(GL_LIGHT1, GL_SPECULAR, black);
         glLightfv(GL_LIGHT1, GL_AMBIENT, black);
         glLightfv(GL_LIGHT1, GL_POSITION, green);
         glEnable(GL_LIGHT1);
         checkGLcall("Setting up light 2");
-        device_invalidate_state(This, STATE_ACTIVELIGHT(2));
+        context_invalidate_state(context, STATE_ACTIVELIGHT(2));
         glLightfv(GL_LIGHT2, GL_DIFFUSE, blue);
         glLightfv(GL_LIGHT2, GL_SPECULAR, black);
         glLightfv(GL_LIGHT2, GL_AMBIENT, black);
@@ -918,8 +918,8 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch
         glEnable(GL_LIGHT2);
         checkGLcall("Setting up light 3");
 
-        device_invalidate_state(This, STATE_MATERIAL);
-        device_invalidate_state(This, STATE_RENDER(WINED3DRS_COLORVERTEX));
+        context_invalidate_state(context, STATE_MATERIAL);
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORVERTEX));
         glDisable(GL_COLOR_MATERIAL);
         glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
