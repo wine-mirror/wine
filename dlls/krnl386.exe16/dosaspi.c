@@ -64,7 +64,7 @@ DOSASPI_PostProc( SRB_ExecSCSICmd *lpPRB )
 	{
 		CONTEXT ctx;
 /* The stack should look like this on entry to proc
- * NOTE: the SDK draws the following diagram bass akwards, use this one
+ * NOTE: the SDK draws the following diagram bass awkwardly, use this one
  * to avoid being confused.  Remember, the act of pushing something on
  * an intel stack involves decreasing the stack pointer by the size of
  * the data, and then copying the data at the new SP.

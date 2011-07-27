@@ -144,7 +144,7 @@ static INT read_header(HFILE fd,struct lzfileheader *head)
 	memcpy(&(head->compressiontype),buf+LZ_MAGIC_LEN,1);
 	memcpy(&(head->lastchar),buf+LZ_MAGIC_LEN+1,1);
 
-	/* FIXME: consider endianess on non-intel architectures */
+	/* FIXME: consider endianness on non-intel architectures */
 	memcpy(&(head->reallength),buf+LZ_MAGIC_LEN+2,4);
 
 	if (memcmp(head->magic,LZMagic,LZ_MAGIC_LEN))

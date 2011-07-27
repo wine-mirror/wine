@@ -101,7 +101,7 @@ typedef struct
 typedef struct
 {
     DWORD count;
-    DWORD dashes[16]; /* 16 is the maximium number for a PS_USERSTYLE pen */
+    DWORD dashes[16]; /* 16 is the maximum number for a PS_USERSTYLE pen */
     DWORD total_len;  /* total length of the dashes, should be multiplied by 2 if there are an odd number of dash lengths */
 } dash_pattern;
 

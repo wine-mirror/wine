@@ -1650,7 +1650,7 @@ BOOL WINAPI IsDBCSLeadByteEx( UINT codepage, BYTE testchar )
  *  testchar [I] Character to test
  *
  * RETURNS
- *  TRUE, if testchar is a lead byte in the Ansii code page,
+ *  TRUE, if testchar is a lead byte in the ANSI code page,
  *  FALSE otherwise.
  */
 BOOL WINAPI IsDBCSLeadByte( BYTE testchar )

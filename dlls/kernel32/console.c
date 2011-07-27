@@ -202,8 +202,8 @@ static BOOL put_console_into_raw_mode(int fd)
 }
 
 /* put back the console in cooked mode iff we're the process which created the bare console
- * we don't test if thie process has set the console in raw mode as it could be one of its
- * child who did it
+ * we don't test if this process has set the console in raw mode as it could be one of its
+ * children who did it
  */
 static BOOL restore_console_mode(HANDLE hin)
 {

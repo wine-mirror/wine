@@ -93,7 +93,7 @@ static DWORD copy_filename_WtoA( LPCWSTR nameW, LPSTR buffer, DWORD len )
  * checks if there are some files to be removed or renamed/moved.
  * <fn1> has to be valid and <fn2> may be NULL. If both pointers are
  * non-NULL then the file is moved, otherwise it is deleted.  The
- * entry of the registrykey is always appended with two zero
+ * entry of the registry key is always appended with two zero
  * terminated strings. If <fn2> is NULL then the second entry is
  * simply a single 0-byte. Otherwise the second filename goes
  * there. The entries are prepended with \??\ before the path and the

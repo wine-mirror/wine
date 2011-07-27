@@ -40,8 +40,8 @@ DMUS_S_END                               Return value from IDirectMusicTrack::Pl
 DMUS_S_STRING_TRUNCATED                  Returned string has been truncated to fit the buffer size.
 DMUS_S_LAST_TOOL                         Returned from IDirectMusicGraph::StampPMsg() this indicates that the PMsg is already stamped with the last tool in the graph. The returned PMsg's tool pointer is now NULL.
 DMUS_S_OVER_CHORD                        Returned from IDirectMusicPerformance::MusicToMIDI() this indicates  that no note has been calculated because the music value has the note  at a position higher than the top note of the chord. This applies only to DMUS_PLAYMODE_NORMALCHORD play mode. This success code indicates that the caller should not do anything with the note. It is not meant to be played against this chord.
-DMUS_S_UP_OCTAVE                         Returned from IDirectMusicPerformance::MIDIToMusic()  and IDirectMusicPerformance::MusicToMIDI() this indicates  that the note conversion generated a note value that is below 0,  so it has been bumped up one or more octaves to be in the proper MIDI range of 0 through 127.  Note that this is valid for MIDIToMusic() when using play modes DMUS_PLAYMODE_FIXEDTOCHORD and DMUS_PLAYMODE_FIXEDTOKEY, both of which store MIDI values in wMusicValue. With MusicToMIDI() it is valid for all play modes. Ofcourse, DMUS_PLAYMODE_FIXED will never return this success code.
-DMUS_S_DOWN_OCTAVE                       Returned from IDirectMusicPerformance::MIDIToMusic()  and IDirectMusicPerformance::MusicToMIDI() this indicates  that the note conversion generated a note value that is above 127, so it has been bumped down one or more octaves to be in the proper MIDI range of 0 through 127.  Note that this is valid for MIDIToMusic() when using play modes DMUS_PLAYMODE_FIXEDTOCHORD and DMUS_PLAYMODE_FIXEDTOKEY, both of which store MIDI values in wMusicValue. With MusicToMIDI() it is valid for all play modes. Ofcourse, DMUS_PLAYMODE_FIXED will never return this success code.
+DMUS_S_UP_OCTAVE                         Returned from IDirectMusicPerformance::MIDIToMusic() and IDirectMusicPerformance::MusicToMIDI() this indicates that the note conversion generated a note value that is below 0, so it has been bumped up one or more octaves to be in the proper MIDI range of 0 through 127.  Note that this is valid for MIDIToMusic() when using play modes DMUS_PLAYMODE_FIXEDTOCHORD and DMUS_PLAYMODE_FIXEDTOKEY, both of which store MIDI values in wMusicValue. With MusicToMIDI() it is valid for all play modes. Of course, DMUS_PLAYMODE_FIXED will never return this success code.
+DMUS_S_DOWN_OCTAVE                       Returned from IDirectMusicPerformance::MIDIToMusic()  and IDirectMusicPerformance::MusicToMIDI() this indicates  that the note conversion generated a note value that is above 127, so it has been bumped down one or more octaves to be in the proper MIDI range of 0 through 127.  Note that this is valid for MIDIToMusic() when using play modes DMUS_PLAYMODE_FIXEDTOCHORD and DMUS_PLAYMODE_FIXEDTOKEY, both of which store MIDI values in wMusicValue. With MusicToMIDI() it is valid for all play modes. Of course, DMUS_PLAYMODE_FIXED will never return this success code.
 DMUS_S_NOBUFFERCONTROL                   Although the audio output from the port will be routed to the same device as the given DirectSound buffer, buffer controls such as pan and volume will not affect the output.
 DMUS_S_GARBAGE_COLLECTED                 The requested operation was not performed because during CollectGarbage the loader determined that the object had been released.
 E_PENDING                                The data necessary to complete this operation is not yet available.
@@ -226,11 +226,11 @@ DDERR_NOT4BITCOLORINDEX                  DirectDrawSurface is not in 4 bit color
 DDERR_NOT8BITCOLOR                       DirectDraw Surface is not in 8 bit color mode and the requested operation requires 8 bit color.
 DDERR_NOTEXTUREHW                        Operation could not be carried out because there is no texture mapping hardware present or available.
 DDERR_NOVSYNCHW                          Operation could not be carried out because there is no hardware support for vertical blank synchronized operations.
-DDERR_NOZBUFFERHW                        Operation could not be carried out because there is no hardware support for zbuffer blting.
+DDERR_NOZBUFFERHW                        Operation could not be carried out because there is no hardware support for zbuffer blitting.
 DDERR_NOZOVERLAYHW                       Overlay surfaces could not be z layered based on their BltOrder because the hardware does not support z layering of overlays.
 DDERR_OUTOFCAPS                          The hardware needed for the requested operation has already been allocated.
 DDERR_OVERLAYCANTCLIP                    hardware does not support clipped overlays
-DDERR_OVERLAYCOLORKEYONLYONEACTIVE       Can only have ony color key active at one time for overlays
+DDERR_OVERLAYCOLORKEYONLYONEACTIVE       Can only have one color key active at one time for overlays
 DDERR_PALETTEBUSY                        Access to this palette is being refused because the palette is already locked by another thread.
 DDERR_COLORKEYNOTSET                     No src color key specified for this operation.
 DDERR_SURFACEALREADYATTACHED             This surface is already attached to the surface it is being attached to.
@@ -256,7 +256,7 @@ DDERR_NODIRECTDRAWHW                     A hardware only DirectDraw object creat
 DDERR_PRIMARYSURFACEALREADYEXISTS        this process already has created a primary surface
 DDERR_NOEMULATION                        software emulation not available.
 DDERR_REGIONTOOSMALL                     region passed to Clipper::GetClipList is too small.
-DDERR_CLIPPERISUSINGHWND                 an attempt was made to set a clip list for a clipper objec that is already monitoring an hwnd.
+DDERR_CLIPPERISUSINGHWND                 an attempt was made to set a clip list for a clipper object that is already monitoring an hwnd.
 DDERR_NOCLIPPERATTACHED                  No clipper object attached to surface object
 DDERR_NOHWND                             Clipper notification requires an HWND or no HWND has previously been set as the CooperativeLevel HWND.
 DDERR_HWNDSUBCLASSED                     HWND used by DirectDraw CooperativeLevel has been subclassed, this prevents DirectDraw from restoring state.
@@ -267,14 +267,14 @@ DDERR_BLTFASTCANTCLIP                    If a clipper object is attached to the 
 DDERR_NOBLTHW                            No blter.
 DDERR_NODDROPSHW                         No DirectDraw ROP hardware.
 DDERR_OVERLAYNOTVISIBLE                  returned when GetOverlayPosition is called on a hidden overlay
-DDERR_NOOVERLAYDEST                      returned when GetOverlayPosition is called on a overlay that UpdateOverlay has never been called on to establish a destionation.
-DDERR_INVALIDPOSITION                    returned when the position of the overlay on the destionation is no longer legal for that destionation.
+DDERR_NOOVERLAYDEST                      returned when GetOverlayPosition is called on a overlay that UpdateOverlay has never been called on to establish a destination.
+DDERR_INVALIDPOSITION                    returned when the position of the overlay on the destination is no longer legal for that destionation.
 DDERR_NOTAOVERLAYSURFACE                 returned when an overlay member is called for a non-overlay surface
 DDERR_EXCLUSIVEMODEALREADYSET            An attempt was made to set the cooperative level when it was already set to exclusive.
 DDERR_NOTFLIPPABLE                       An attempt has been made to flip a surface that is not flippable.
 DDERR_CANTDUPLICATE                      Can't duplicate primary & 3D surfaces, or surfaces that are implicitly created.
 DDERR_NOTLOCKED                          Surface was not locked.  An attempt to unlock a surface that was not locked at all, or by this process, has been attempted.
-DDERR_CANTCREATEDC                       Windows cannot create any more DCs, or a DC was requested for a paltte-indexed surface when the surface had no palette AND the display mode was not palette-indexed (in this case DirectDraw cannot select a proper palette into the DC)
+DDERR_CANTCREATEDC                       Windows cannot create any more DCs, or a DC was requested for a palette-indexed surface when the surface had no palette AND the display mode was not palette-indexed (in this case DirectDraw cannot select a proper palette into the DC)
 DDERR_NODC                               No DC was ever created for this surface.
 DDERR_WRONGMODE                          This surface cannot be restored because it was created in a different mode.
 DDERR_IMPLICITLYCREATED                  This surface cannot be restored because it is an implicitly created surface.
@@ -396,7 +396,7 @@ DMUS_E_CANNOT_CONVERT                    A call to MIDIToMusic() or MusicToMIDI(
 DMUS_E_DESCEND_CHUNK_FAIL                DMUS_E_DESCEND_CHUNK_FAIL is returned when the end of the file  was reached before the desired chunk was found.
 DMUS_E_NOT_LOADED                        An attempt to use this object failed because it first needs to be loaded.
 DMUS_E_SCRIPT_LANGUAGE_INCOMPATIBLE      The activeX scripting engine for the script's language is not compatible with DirectMusic.
-DMUS_E_SCRIPT_UNSUPPORTED_VARTYPE        A varient was used that had a type that is not supported by DirectMusic.
+DMUS_E_SCRIPT_UNSUPPORTED_VARTYPE        A variant was used that had a type that is not supported by DirectMusic.
 DMUS_E_SCRIPT_ERROR_IN_SCRIPT            An error was encountered while parsing or executing the script. The pErrorInfo parameter (if supplied) was filled with information about the error.
 DMUS_E_SCRIPT_CANTLOAD_OLEAUT32          Loading of oleaut32.dll failed.  VBScript and other activeX scripting languages require use of oleaut32.dll.  On platforms where oleaut32.dll is not present, only the DirectMusicScript language, which doesn't require oleaut32.dll can be used.
 DMUS_E_SCRIPT_LOADSCRIPT_ERROR           An error occurred while parsing a script loaded using LoadScript.  The script that was loaded contains an error.

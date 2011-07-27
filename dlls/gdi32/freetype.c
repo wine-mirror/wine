@@ -5249,7 +5249,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
 	   r2 = r1 + (c + b)/3
 	   r3 = r0 + c + b + a
 
-	   A quadratic Beizer has the form:
+	   A quadratic Bezier has the form:
 	   p(t) = (1-t)^2 p0 + 2(1-t)t p1 + t^2 p2
 
 	   So equating powers of t leads to:

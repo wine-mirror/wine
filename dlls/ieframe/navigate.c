@@ -560,7 +560,7 @@ static BOOL try_application_url(LPCWSTR url)
     if(res != ERROR_SUCCESS || type != REG_SZ)
         return FALSE;
 
-    TRACE("openning application %s\n", debugstr_w(app));
+    TRACE("opening application %s\n", debugstr_w(app));
 
     memset(&exec_info, 0, sizeof(exec_info));
     exec_info.cbSize = sizeof(exec_info);
@@ -701,7 +701,7 @@ static void doc_navigate_proc(DocHost *This, task_header_t *t)
         VARIANT_BOOL cancel = VARIANT_FALSE;
         on_before_navigate2(This, task->url, task->post_data, task->headers, &cancel);
         if(cancel) {
-            TRACE("Navigation calnceled\n");
+            TRACE("Navigation canceled\n");
             return;
         }
     }

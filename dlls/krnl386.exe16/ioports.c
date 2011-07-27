@@ -235,7 +235,7 @@ static WORD get_timer_val(unsigned timer)
 
     /* This is not strictly correct. In most cases the old countdown should
      * finish normally (by counting down to 0) or halt and not jump to 0.
-     * But we are calculating and not countig, so this seems to be a good
+     * But we are calculating and not counting, so this seems to be a good
      * solution and should work well with most (all?) programs
      */
     if (tmr_8253[timer].flags & TMR_UPDATE)
@@ -648,7 +648,7 @@ static int IO_pp_do_access(int idx,int ppctl, DWORD* res)
 
 /* IO_pp_inp
  *
- * Check if we can satisfy the INP command with some of the configured PPDEV deviced
+ * Check if we can satisfy the INP command with some of the configured PPDEV device
  * Return NULL on success
  */
 static int IO_pp_inp(int port, DWORD* res)
@@ -684,7 +684,7 @@ static int IO_pp_inp(int port, DWORD* res)
 
 /* IO_pp_outp
  *
- * Check if we can satisfy the OUTP command with some of the configured PPDEV deviced
+ * Check if we can satisfy the OUTP command with some of the configured PPDEV device
  * Return NULL on success
  */
 static BOOL IO_pp_outp(int port, DWORD* res)

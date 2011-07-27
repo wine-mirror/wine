@@ -193,7 +193,7 @@ static void SB_Reset(void)
     /* Generic DAC/ADC DMA (16-bit, 8-bit) */
     for(i=0xB0;i<=0xCF;i++)
         DSP_Command[i]=3;
-    /* DSP Indentification */
+    /* DSP Identification */
     DSP_Command[0xE0]=1;
 
     /* Clear command and input buffer */

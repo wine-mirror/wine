@@ -329,9 +329,9 @@ HBRUSH WINAPI CreateSolidBrush( COLORREF color )
  * Set the brush origin for a device context.
  *
  * PARAMS
- *  hdc    [I] Device context to set the brush origin for 
+ *  hdc    [I] Device context to set the brush origin for
  *  x      [I] New x origin
- *  y      [I] Ney y origin
+ *  y      [I] New y origin
  *  oldorg [O] If non NULL, destination for previously set brush origin.
  *
  * RETURNS

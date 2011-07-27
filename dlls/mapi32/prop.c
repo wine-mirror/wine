@@ -705,7 +705,8 @@ VOID WINAPI FreeProws(LPSRowSet lpRowSet)
  *  pcBytes [O] If non-NULL, destination for the size of the property array
  *
  * RETURNS
- *  Success: S_OK. If pcBytes is non-NULL, it contains the size of the propery array.
+ *  Success: S_OK. If pcBytes is non-NULL, it contains the size of the
+ *           properties array.
  *  Failure: MAPI_E_INVALID_PARAMETER, if any parameter is invalid or validation
  *           of the property array fails.
  */
@@ -1425,7 +1426,7 @@ static IPropDataItem *IMAPIPROP_GetValue(IPropDataImpl *This, ULONG ulPropTag)
     LIST_FOR_EACH(cursor, &This->values)
     {
         LPIPropDataItem current = LIST_ENTRY(cursor, IPropDataItem, entry);
-        /* Note that propery types don't have to match, just Id's */
+        /* Note that property types don't have to match, just Id's */
         if (PROP_ID(current->value->ulPropTag) == PROP_ID(ulPropTag))
             return current;
     }

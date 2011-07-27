@@ -258,7 +258,7 @@ HRESULT WINAPI IDirectMusicInstrumentImpl_Custom_Load (LPDIRECTMUSICINSTRUMENT i
 													break;
 												}				
 												default: {
-													TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+													TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
 													liMove.QuadPart = Chunk.dwSize;
 													IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 													break;						
@@ -289,7 +289,7 @@ HRESULT WINAPI IDirectMusicInstrumentImpl_Custom_Load (LPDIRECTMUSICINSTRUMENT i
 													break;
 												}
 												default: {
-													TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+													TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
 													liMove.QuadPart = Chunk.dwSize;
 													IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 													break;						
@@ -360,7 +360,7 @@ HRESULT WINAPI IDirectMusicInstrumentImpl_Custom_Load (LPDIRECTMUSICINSTRUMENT i
 													break;
 												}
 												default: {
-													TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+													TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
 													if (even_or_odd(Chunk.dwSize)) {
 														ListCount[1] ++;
 														Chunk.dwSize++;
@@ -385,7 +385,7 @@ HRESULT WINAPI IDirectMusicInstrumentImpl_Custom_Load (LPDIRECTMUSICINSTRUMENT i
 								break;
 							}				
 							default: {
-								TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+								TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
 								liMove.QuadPart = Chunk.dwSize;
 								IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 								break;						
@@ -396,7 +396,7 @@ HRESULT WINAPI IDirectMusicInstrumentImpl_Custom_Load (LPDIRECTMUSICINSTRUMENT i
 					break;
 				}
 				default: {
-					TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+					TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
 					liMove.QuadPart = Chunk.dwSize;
 					IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 					break;						

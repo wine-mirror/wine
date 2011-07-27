@@ -26,7 +26,7 @@ extern HRESULT GameStatistics_create(IUnknown* pUnkOuter, IUnknown **ppObj) DECL
  *
  * These are helper function and structures, which  are used widely in gameux
  * implementation. Details about usage and place of implementation is
- * in description of each function/strucutre.
+ * in description of each function/structure.
  */
 
 /*******************************************************************************

@@ -1,6 +1,6 @@
 /*
  * GDI region objects. Shamelessly ripped out from the X11 distribution
- * Thanks for the nice licence.
+ * Thanks for the nice license.
  *
  * Copyright 1993, 1994, 1995 Alexandre Julliard
  * Modifications and additions: Copyright 1998 Huw Davies

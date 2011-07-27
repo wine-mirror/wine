@@ -620,7 +620,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetCurrentPosition(
 	This->sec_mixpos = newpos;
 
 	/* at this point, do not attempt to reset buffers, mess with primary mix position,
-           or anything like that to reduce latancy. The data already prebuffered cannot be changed */
+           or anything like that to reduce latency. The data already prebuffered cannot be changed */
 
 	/* position HW buffer if applicable, else just start mixing from new location instead */
 	if (This->hwbuf) {

@@ -3527,7 +3527,7 @@ static INT index_from_var(script_ctx_t *ctx, VARIANT *v)
 
     memset(&ei, 0, sizeof(ei));
     hres = to_number(ctx, v, &ei, &num);
-    if(FAILED(hres)) { /* FIXME: Move ignoring exceptions to to_promitive */
+    if(FAILED(hres)) { /* FIXME: Move ignoring exceptions to to_primitive */
         VariantClear(&ei.var);
         return 0;
     }

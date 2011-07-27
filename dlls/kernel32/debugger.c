@@ -294,7 +294,7 @@ void WINAPI OutputDebugStringA( LPCSTR str )
 
             if (buffer && eventbuffer && eventdata)
             {
-                /* monitor is present, synchronize with other OutputDebugString invokations */
+                /* monitor is present, synchronize with other OutputDebugString invocations */
                 WaitForSingleObject( DBWinMutex, INFINITE );
 
                 /* acquire control over the buffer */

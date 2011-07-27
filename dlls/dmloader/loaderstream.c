@@ -41,7 +41,7 @@
  *     stream is; as such, all functions are supported, as long as underlying 
  *     ("low-level") stream supports them
  *
- * - Rok Mandeljc; 24. april, 2004
+ * - Rok Mandeljc; 24. April, 2004
 */
 
 #define NONAMELESSUNION

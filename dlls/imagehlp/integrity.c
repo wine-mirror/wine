@@ -744,7 +744,7 @@ static BOOL IMAGEHLP_ReportImportSection( IMAGE_SECTION_HEADER *hdr,
 /***********************************************************************
  *		ImageGetDigestStream (IMAGEHLP.@)
  *
- * Gets a stream of bytes from a PE file overwhich a hash might be computed to
+ * Gets a stream of bytes from a PE file over which a hash might be computed to
  * verify that the image has not changed.  Useful for creating a certificate to
  * be added to the file with ImageAddCertificate.
  *

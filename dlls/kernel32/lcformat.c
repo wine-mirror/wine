@@ -721,7 +721,7 @@ static INT NLS_GetDateTimeFormatW(LCID lcid, DWORD dwFlags,
   }
   cchWritten++; /* Include terminating NUL */
 
-  TRACE("returning length=%d, ouput=%s\n", cchWritten, debugstr_w(lpStr));
+  TRACE("returning length=%d, output=%s\n", cchWritten, debugstr_w(lpStr));
   return cchWritten;
 
 overrun:

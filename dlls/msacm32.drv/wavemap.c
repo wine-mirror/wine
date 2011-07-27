@@ -335,7 +335,7 @@ static	DWORD	wodWrite(WAVEMAPDATA* wom, LPWAVEHDR lpWaveHdrSrc, DWORD dwParam2)
     if (ash->cbSrcLength > ash->cbSrcLengthUsed)
         FIXME("Not all src buffer has been written, expect bogus sound\n");
     else if (ash->cbSrcLength < ash->cbSrcLengthUsed)
-        ERR("CoDec has read more data than it is allowed to\n");
+        ERR("Codec has read more data than it is allowed to\n");
 
     if (ash->cbDstLengthUsed == 0) {
         /* something went wrong in decoding */

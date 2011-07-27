@@ -301,7 +301,7 @@ static inline UINT get_palette_index(BYTE r, BYTE g, BYTE b, BYTE a, GpBitmap* b
     int best_distance = 0x7fff;
     int distance;
     int i;
-    /* This algorithm scans entire pallete,
+    /* This algorithm scans entire palette,
        computes difference from desired color (all color components have equal weight)
        and returns the index of color with least difference.
 

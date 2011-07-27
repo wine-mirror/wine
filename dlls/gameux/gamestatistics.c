@@ -635,7 +635,7 @@ static HRESULT GAMEUX_loadGameStatistics(struct GAMEUX_STATS *pStats,
     }
     else if(hr == S_FALSE && openType == GAMESTATS_OPEN_OPENORCREATE) /* file does not exist */
     {
-        /* create new statitics, not yet connected with file */
+        /* create new statistics, not yet connected with file */
         ZeroMemory(pStats->categories, sizeof(pStats->categories));
         *pOpenResult = GAMESTATS_OPEN_CREATED;
         hr = S_OK;
