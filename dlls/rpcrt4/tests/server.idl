@@ -162,6 +162,7 @@ cpp_quote("#endif")
   int sum_cs(cs_t *cs);
   int sum_cps(cps_t *cps);
   int sum_cpsc(cpsc_t *cpsc);
+  int get_cpsc(int n, [out] cpsc_t *cpsc );
   int sum_complex_array(int n, [size_is(n)] refpint_t pi[]);
 
   typedef [wire_marshal(int)] void *puint_t;

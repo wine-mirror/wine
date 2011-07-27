@@ -340,6 +340,19 @@ int __cdecl s_sum_cpsc(cpsc_t *cpsc)
   return sum;
 }
 
+int __cdecl s_get_cpsc(int n, cpsc_t *cpsc)
+{
+  static int array[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+  int i, ret;
+
+  cpsc->ca = array;
+  cpsc->a = min( 10, 2 * n );
+  cpsc->b = 2;
+  cpsc->c = 1;
+  for (i = ret = 0; i < cpsc->a; i++) ret += cpsc->ca[i];
+  return ret;
+}
+
 int __cdecl s_square_puint(puint_t p)
 {
   int n = atoi(p);
@@ -1226,6 +1239,7 @@ array_tests(void)
   cs_t *cs;
   int n;
   int ca[5] = {1, -2, 3, -4, 5};
+  int tmp[10];
   doub_carr_t *dc;
   int *pi;
   pints_t api[5];
@@ -1292,6 +1306,18 @@ array_tests(void)
   cpsc.c = 0;
   cpsc.ca = c;
   ok(sum_cpsc(&cpsc) == 10, "RPC sum_cpsc\n");
+
+  cpsc.ca = NULL;
+  ok(get_cpsc(5, &cpsc) == 45, "RPC sum_cpsc\n");
+  ok( cpsc.a == 10, "RPC get_cpsc %u\n", cpsc.a );
+  for (n = 0; n < 10; n++) ok( cpsc.ca[n] == n, "RPC get_cpsc[%d] = %d\n", n, cpsc.ca[n] );
+
+  memset( tmp, 0x33, sizeof(tmp) );
+  cpsc.ca = tmp;
+  ok(get_cpsc(4, &cpsc) == 28, "RPC sum_cpsc\n");
+  ok( cpsc.a == 8, "RPC get_cpsc %u\n", cpsc.a );
+  ok( cpsc.ca == tmp, "RPC get_cpsc %p/%p\n", cpsc.ca, tmp );
+  for (n = 0; n < 8; n++) ok( cpsc.ca[n] == n, "RPC get_cpsc[%d] = %d\n", n, cpsc.ca[n] );
 
   ok(sum_toplev_conf_2n(c, 3) == 15, "RPC sum_toplev_conf_2n\n");
   ok(sum_toplev_conf_cond(c, 5, 6, 1) == 10, "RPC sum_toplev_conf_cond\n");
