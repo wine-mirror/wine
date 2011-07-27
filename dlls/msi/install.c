@@ -119,7 +119,7 @@ UINT WINAPI MsiSequenceA( MSIHANDLE hInstall, LPCSTR szTable, INT iSequenceMode 
     LPWSTR szwTable;
     UINT ret;
 
-    TRACE("%s\n", debugstr_a(szTable));
+    TRACE("%s, %d\n", debugstr_a(szTable), iSequenceMode);
 
     szwTable = strdupAtoW(szTable);
     if (szTable && !szwTable)
@@ -138,7 +138,7 @@ UINT WINAPI MsiSequenceW( MSIHANDLE hInstall, LPCWSTR szTable, INT iSequenceMode
     MSIPACKAGE *package;
     UINT ret;
 
-    TRACE("%s\n", debugstr_w(szTable));
+    TRACE("%s, %d\n", debugstr_w(szTable), iSequenceMode);
 
     package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE );
     if (!package)
@@ -173,10 +173,8 @@ UINT WINAPI MsiSequenceW( MSIHANDLE hInstall, LPCWSTR szTable, INT iSequenceMode
 
         return ERROR_SUCCESS;
     }
-
-    ret = MSI_Sequence( package, szTable, iSequenceMode );
+    ret = MSI_Sequence( package, szTable );
     msiobj_release( &package->hdr );
- 
     return ret;
 }
 

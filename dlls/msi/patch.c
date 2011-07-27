@@ -266,7 +266,7 @@ static void patch_offset_list_free( struct patch_offset_list *pos )
 
 static void patch_offset_get_patches( MSIDATABASE *db, UINT last_sequence, struct patch_offset_list *pos )
 {
-    static const WCHAR query_patch[] = {
+    static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','P','a','t','c','h',' ',
         'W','H','E','R','E',' ','S','e','q','u','e','n','c','e',' ','<','=',' ','?',' ',
         'O','R','D','E','R',' ','B','Y',' ','S','e','q','u','e','n','c','e',0};
@@ -274,7 +274,7 @@ static void patch_offset_get_patches( MSIDATABASE *db, UINT last_sequence, struc
     MSIRECORD *rec;
     UINT r;
 
-    r = MSI_DatabaseOpenViewW( db, query_patch, &view );
+    r = MSI_DatabaseOpenViewW( db, query, &view );
     if (r != ERROR_SUCCESS)
         return;
 
@@ -301,7 +301,7 @@ static void patch_offset_get_patches( MSIDATABASE *db, UINT last_sequence, struc
 
 static void patch_offset_get_files( MSIDATABASE *db, UINT last_sequence, struct patch_offset_list *pos )
 {
-    static const WCHAR query_files[] = {
+    static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','F','i','l','e',' ',
         'W','H','E','R','E',' ','S','e','q','u','e','n','c','e',' ','<','=',' ','?',' ',
         'O','R','D','E','R',' ','B','Y',' ','S','e','q','u','e','n','c','e',0};
@@ -309,7 +309,7 @@ static void patch_offset_get_files( MSIDATABASE *db, UINT last_sequence, struct 
     MSIRECORD *rec;
     UINT r;
 
-    r = MSI_DatabaseOpenViewW( db, query_files, &view );
+    r = MSI_DatabaseOpenViewW( db, query, &view );
     if (r != ERROR_SUCCESS)
         return;
 
@@ -342,7 +342,7 @@ static void patch_offset_get_files( MSIDATABASE *db, UINT last_sequence, struct 
 
 static UINT patch_offset_modify_db( MSIDATABASE *db, struct patch_offset_list *pos )
 {
-    static const WCHAR query_files[] = {
+    static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','F','i','l','e',' ',
         'W','H','E','R','E',' ','S','e','q','u','e','n','c','e',' ','>','=',' ','?',' ',
         'A','N','D',' ','S','e','q','u','e','n','c','e',' ','<','=',' ','?',' ',
@@ -352,7 +352,7 @@ static UINT patch_offset_modify_db( MSIDATABASE *db, struct patch_offset_list *p
     MSIQUERY *view;
     UINT r;
 
-    r = MSI_DatabaseOpenViewW( db, query_files, &view );
+    r = MSI_DatabaseOpenViewW( db, query, &view );
     if (r != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 

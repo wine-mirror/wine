@@ -205,18 +205,17 @@ static UINT ITERATE_FindRelatedProducts(MSIRECORD *rec, LPVOID param)
 
 UINT ACTION_FindRelatedProducts(MSIPACKAGE *package)
 {
-    static const WCHAR Query[] = 
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',
-         ' ','`','U','p','g','r','a','d','e','`',0};
-    UINT rc = ERROR_SUCCESS;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','U','p','g','r','a','d','e','`',0};
     MSIQUERY *view;
+    UINT rc;
 
     if (msi_get_property_int(package->db, szInstalled, 0))
     {
         TRACE("Skipping FindRelatedProducts action: product already installed\n");
         return ERROR_SUCCESS;
     }
-
     if (msi_action_is_unique(package, szFindRelatedProducts))
     {
         TRACE("Skipping FindRelatedProducts action: already done in UI sequence\n");
@@ -225,12 +224,11 @@ UINT ACTION_FindRelatedProducts(MSIPACKAGE *package)
     else
         msi_register_unique_action(package, szFindRelatedProducts);
 
-    rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
     
     rc = MSI_IterateRecords(view, NULL, ITERATE_FindRelatedProducts, package);
     msiobj_release(&view->hdr);
-    
     return rc;
 }

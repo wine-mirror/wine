@@ -74,12 +74,12 @@ static MSIAPPID *load_appid( MSIPACKAGE* package, MSIRECORD *row )
 
 static MSIAPPID *load_given_appid( MSIPACKAGE *package, LPCWSTR name )
 {
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','A','p','p','I','d','`',' ','W','H','E','R','E',' ',
+        '`','A','p','p','I','d','`',' ','=',' ','\'','%','s','\'',0};
     MSIRECORD *row;
     MSIAPPID *appid;
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','A','p','p','I','d','`',' ','W','H','E','R','E',' ',
-         '`','A','p','p','I','d','`',' ','=',' ','\'','%','s','\'',0};
 
     if (!name)
         return NULL;
@@ -94,13 +94,12 @@ static MSIAPPID *load_given_appid( MSIPACKAGE *package, LPCWSTR name )
         }
     }
     
-    row = MSI_QueryGetRecord(package->db, ExecSeqQuery, name);
+    row = MSI_QueryGetRecord(package->db, query, name);
     if (!row)
         return NULL;
 
     appid = load_appid(package, row);
     msiobj_release(&row->hdr);
-
     return appid;
 }
 
@@ -179,12 +178,12 @@ static MSIPROGID *load_progid( MSIPACKAGE* package, MSIRECORD *row )
 
 static MSIPROGID *load_given_progid(MSIPACKAGE *package, LPCWSTR name)
 {
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','P','r','o','g','I','d','`',' ','W','H','E','R','E',' ',
+        '`','P','r','o','g','I','d','`',' ','=',' ','\'','%','s','\'',0};
     MSIPROGID *progid;
     MSIRECORD *row;
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','P','r','o','g','I','d','`',' ','W','H','E','R','E',' ',
-         '`','P','r','o','g','I','d','`',' ','=',' ','\'','%','s','\'',0};
 
     if (!name)
         return NULL;
@@ -199,13 +198,12 @@ static MSIPROGID *load_given_progid(MSIPACKAGE *package, LPCWSTR name)
         }
     }
     
-    row = MSI_QueryGetRecord( package->db, ExecSeqQuery, name );
+    row = MSI_QueryGetRecord( package->db, query, name );
     if (!row)
         return NULL;
 
     progid = load_progid(package, row);
     msiobj_release(&row->hdr);
-
     return progid;
 }
 
@@ -310,12 +308,12 @@ static MSICLASS *load_class( MSIPACKAGE* package, MSIRECORD *row )
  */
 static MSICLASS *load_given_class(MSIPACKAGE *package, LPCWSTR classid)
 {
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','C','l','a','s','s','`',' ','W','H','E','R','E',' ',
+        '`','C','L','S','I','D','`',' ','=',' ','\'','%','s','\'',0};
     MSICLASS *cls;
     MSIRECORD *row;
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','C','l','a','s','s','`',' ','W','H','E','R','E',' ',
-         '`','C','L','S','I','D','`',' ','=',' ','\'','%','s','\'',0};
 
     if (!classid)
         return NULL;
@@ -330,13 +328,12 @@ static MSICLASS *load_given_class(MSIPACKAGE *package, LPCWSTR classid)
         }
     }
 
-    row = MSI_QueryGetRecord(package->db, ExecSeqQuery, classid);
+    row = MSI_QueryGetRecord(package->db, query, classid);
     if (!row)
         return NULL;
 
     cls = load_class(package, row);
     msiobj_release(&row->hdr);
-
     return cls;
 }
 
@@ -370,12 +367,11 @@ static MSIMIME *load_mime( MSIPACKAGE* package, MSIRECORD *row )
 
 static MSIMIME *load_given_mime( MSIPACKAGE *package, LPCWSTR mime )
 {
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','M','I','M','E','`',' ','W','H','E','R','E',' ',
+        '`','C','o','n','t','e','n','t','T','y','p','e','`',' ','=',' ','\'','%','s','\'',0};
     MSIRECORD *row;
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','M','I','M','E','`',' ','W','H','E','R','E',' ',
-         '`','C','o','n','t','e','n','t','T','y','p','e','`',' ','=',' ',
-         '\'','%','s','\'',0};
     MSIMIME *mt;
 
     if (!mime)
@@ -391,13 +387,12 @@ static MSIMIME *load_given_mime( MSIPACKAGE *package, LPCWSTR mime )
         }
     }
     
-    row = MSI_QueryGetRecord(package->db, ExecSeqQuery, mime);
+    row = MSI_QueryGetRecord(package->db, query, mime);
     if (!row)
         return NULL;
 
     mt = load_mime(package, row);
     msiobj_release(&row->hdr);
-
     return mt;
 }
 
@@ -440,14 +435,12 @@ static MSIEXTENSION *load_extension( MSIPACKAGE* package, MSIRECORD *row )
  */
 static MSIEXTENSION *load_given_extension( MSIPACKAGE *package, LPCWSTR name )
 {
-    MSIRECORD *row;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','E','x','t','e','n','s','i','o','n','`',' ','W','H','E','R','E',' ',
+        '`','E','x','t','e','n','s','i','o','n','`',' ','=',' ','\'','%','s','\'',0};
     MSIEXTENSION *ext;
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','E','x','t','e','n','s','i','o','n','`',' ',
-         'W','H','E','R','E',' ',
-         '`','E','x','t','e','n','s','i','o','n','`',' ','=',' ',
-         '\'','%','s','\'',0};
+    MSIRECORD *row;
 
     if (!name)
         return NULL;
@@ -465,13 +458,12 @@ static MSIEXTENSION *load_given_extension( MSIPACKAGE *package, LPCWSTR name )
         }
     }
     
-    row = MSI_QueryGetRecord( package->db, ExecSeqQuery, name );
+    row = MSI_QueryGetRecord( package->db, query, name );
     if (!row)
         return NULL;
 
     ext = load_extension(package, row);
     msiobj_release(&row->hdr);
-
     return ext;
 }
 
@@ -548,14 +540,12 @@ static UINT iterate_all_classes(MSIRECORD *rec, LPVOID param)
 
 static VOID load_all_classes(MSIPACKAGE *package)
 {
-    UINT rc = ERROR_SUCCESS;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ','`','C','l','a','s','s','`',0};
     MSIQUERY *view;
+    UINT rc;
 
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
-         '`','C','l','a','s','s','`',0};
-
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
         return;
 
@@ -595,14 +585,12 @@ static UINT iterate_all_extensions(MSIRECORD *rec, LPVOID param)
 
 static VOID load_all_extensions(MSIPACKAGE *package)
 {
-    UINT rc = ERROR_SUCCESS;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`','E','x','t','e','n','s','i','o','n','`',0};
     MSIQUERY *view;
+    UINT rc;
 
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','E','x','t','e','n','s','i','o','n','`',0};
-
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    rc = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (rc != ERROR_SUCCESS)
         return;
 
@@ -622,14 +610,13 @@ static UINT iterate_all_progids(MSIRECORD *rec, LPVOID param)
 
 static VOID load_all_progids(MSIPACKAGE *package)
 {
-    UINT rc = ERROR_SUCCESS;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','`','P','r','o','g','I','d','`',' ','F','R','O','M',' ',
+        '`','P','r','o','g','I','d','`',0};
     MSIQUERY *view;
+    UINT rc;
 
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','`','P','r','o','g','I','d','`',' ',
-         'F','R','O','M',' ', '`','P','r','o','g','I','d','`',0};
-
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
         return;
 
@@ -639,14 +626,12 @@ static VOID load_all_progids(MSIPACKAGE *package)
 
 static VOID load_all_verbs(MSIPACKAGE *package)
 {
-    UINT rc = ERROR_SUCCESS;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`','V','e','r','b','`',0};
     MSIQUERY *view;
+    UINT rc;
 
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','V','e','r','b','`',0};
-
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
         return;
 
@@ -666,16 +651,13 @@ static UINT iterate_all_mimes(MSIRECORD *rec, LPVOID param)
 
 static VOID load_all_mimes(MSIPACKAGE *package)
 {
-    UINT rc = ERROR_SUCCESS;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','`','C','o','n','t','e','n','t','T','y','p','e','`',' ',
+        'F','R','O','M',' ','`','M','I','M','E','`',0};
     MSIQUERY *view;
+    UINT rc;
 
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ',
-         '`','C','o','n','t','e','n','t','T','y','p','e','`',
-         ' ','F','R','O','M',' ',
-         '`','M','I','M','E','`',0};
-
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
         return;
 
@@ -960,7 +942,6 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         msi_ui_actiondata( package, szRegisterClassInfo, uirow );
         msiobj_release(&uirow->hdr);
     }
-
     RegCloseKey(hkey);
     return ERROR_SUCCESS;
 }
@@ -1051,7 +1032,6 @@ UINT ACTION_UnregisterClassInfo( MSIPACKAGE *package )
         msi_ui_actiondata( package, szUnregisterClassInfo, uirow );
         msiobj_release( &uirow->hdr );
     }
-
     RegCloseKey( hkey );
     return ERROR_SUCCESS;
 }
@@ -1132,7 +1112,6 @@ UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package)
         msi_ui_actiondata( package, szRegisterProgIdInfo, uirow );
         msiobj_release( &uirow->hdr );
     }
-
     return ERROR_SUCCESS;
 }
 
@@ -1167,7 +1146,6 @@ UINT ACTION_UnregisterProgIdInfo( MSIPACKAGE *package )
         msi_ui_actiondata( package, szUnregisterProgIdInfo, uirow );
         msiobj_release( &uirow->hdr );
     }
-
     return ERROR_SUCCESS;
 }
 
@@ -1249,8 +1227,7 @@ static UINT register_verb(MSIPACKAGE *package, LPCWSTR progid,
 
 UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
 {
-    static const WCHAR szContentType[] = 
-        {'C','o','n','t','e','n','t',' ','T','y','p','e',0 };
+    static const WCHAR szContentType[] = {'C','o','n','t','e','n','t',' ','T','y','p','e',0};
     HKEY hkey = NULL;
     MSIEXTENSION *ext;
     MSIRECORD *uirow;
@@ -1361,7 +1338,6 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
         msi_ui_actiondata( package, szRegisterExtensionInfo, uirow );
         msiobj_release(&uirow->hdr);
     }
-
     return ERROR_SUCCESS;
 }
 
@@ -1447,14 +1423,12 @@ UINT ACTION_UnregisterExtensionInfo( MSIPACKAGE *package )
         msi_ui_actiondata( package, szUnregisterExtensionInfo, uirow );
         msiobj_release( &uirow->hdr );
     }
-
     return ERROR_SUCCESS;
 }
 
 UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
 {
-    static const WCHAR szExten[] = 
-        {'E','x','t','e','n','s','i','o','n',0 };
+    static const WCHAR szExtension[] = {'E','x','t','e','n','s','i','o','n',0};
     MSIRECORD *uirow;
     MSIMIME *mt;
 
@@ -1462,8 +1436,7 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY( mt, &package->mimes, MSIMIME, entry )
     {
-        LPWSTR extension;
-        LPWSTR key;
+        LPWSTR extension, key;
 
         /* 
          * check if the MIME is to be installed. Either as requested by an
@@ -1491,7 +1464,7 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
 
             strcpyW( key, szMIMEDatabase );
             strcatW( key, mt->ContentType );
-            msi_reg_set_subkey_val( HKEY_CLASSES_ROOT, key, szExten, extension );
+            msi_reg_set_subkey_val( HKEY_CLASSES_ROOT, key, szExtension, extension );
 
             if (mt->clsid)
                 msi_reg_set_subkey_val( HKEY_CLASSES_ROOT, key, szCLSID, mt->clsid );
@@ -1505,7 +1478,6 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
         msi_ui_actiondata( package, szRegisterMIMEInfo, uirow );
         msiobj_release( &uirow->hdr );
     }
-
     return ERROR_SUCCESS;
 }
 
@@ -1550,6 +1522,5 @@ UINT ACTION_UnregisterMIMEInfo( MSIPACKAGE *package )
         msi_ui_actiondata( package, szUnregisterMIMEInfo, uirow );
         msiobj_release( &uirow->hdr );
     }
-
     return ERROR_SUCCESS;
 }

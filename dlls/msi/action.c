@@ -406,25 +406,20 @@ WCHAR **msi_split_string( const WCHAR *str, WCHAR sep )
 
 static BOOL ui_sequence_exists( MSIPACKAGE *package )
 {
+    static const WCHAR query [] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','I','n','s','t','a','l','l','U','I','S','e','q','u','e','n','c','e','`',' ',
+        'W','H','E','R','E',' ','`','S','e','q','u','e','n','c','e','`',' ','>',' ','0',' ',
+        'O','R','D','E','R',' ','B','Y',' ','`','S','e','q','u','e','n','c','e','`',0};
     MSIQUERY *view;
     UINT rc;
 
-    static const WCHAR ExecSeqQuery [] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','I','n','s','t','a','l','l',
-         'U','I','S','e','q','u','e','n','c','e','`',
-         ' ','W','H','E','R','E',' ',
-         '`','S','e','q','u','e','n','c','e','`',' ',
-         '>',' ','0',' ','O','R','D','E','R',' ','B','Y',' ',
-         '`','S','e','q','u','e','n','c','e','`',0};
-
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc == ERROR_SUCCESS)
     {
         msiobj_release(&view->hdr);
         return TRUE;
     }
-
     return FALSE;
 }
 
@@ -546,49 +541,44 @@ static UINT ITERATE_Actions(MSIRECORD *row, LPVOID param)
     return rc;
 }
 
-UINT MSI_Sequence( MSIPACKAGE *package, LPCWSTR szTable, INT iSequenceMode )
+UINT MSI_Sequence( MSIPACKAGE *package, LPCWSTR table )
 {
-    MSIQUERY * view;
-    UINT r;
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','%','s','`',
-         ' ','W','H','E','R','E',' ', 
-         '`','S','e','q','u','e','n','c','e','`',' ',
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`','%','s','`',
+         ' ','W','H','E','R','E',' ','`','S','e','q','u','e','n','c','e','`',' ',
          '>',' ','0',' ','O','R','D','E','R',' ','B','Y',' ',
          '`','S','e','q','u','e','n','c','e','`',0};
+    MSIQUERY *view;
+    UINT r;
 
-    TRACE("%p %s %i\n", package, debugstr_w(szTable), iSequenceMode );
+    TRACE("%p %s\n", package, debugstr_w(table));
 
-    r = MSI_OpenQuery( package->db, &view, query, szTable );
+    r = MSI_OpenQuery( package->db, &view, query, table );
     if (r == ERROR_SUCCESS)
     {
         r = MSI_IterateRecords( view, NULL, ITERATE_Actions, package );
         msiobj_release(&view->hdr);
     }
-
     return r;
 }
 
 static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
 {
-    MSIQUERY * view;
-    UINT rc;
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
-         '`','I','n','s','t','a','l','l','E','x','e','c','u','t','e',
-         'S','e','q','u','e','n','c','e','`',' ', 'W','H','E','R','E',' ',
-         '`','S','e','q','u','e','n','c','e','`',' ', '>',' ','%','i',' ',
-         'O','R','D','E','R',' ', 'B','Y',' ',
-         '`','S','e','q','u','e','n','c','e','`',0 };
-    static const WCHAR IVQuery[] =
-        {'S','E','L','E','C','T',' ','`','S','e','q','u','e','n','c','e','`',
-         ' ', 'F','R','O','M',' ','`','I','n','s','t','a','l','l',
-         'E','x','e','c','u','t','e','S','e','q','u','e','n','c','e','`',' ',
-         'W','H','E','R','E',' ','`','A','c','t','i','o','n','`',' ','=',
-         ' ','\'', 'I','n','s','t','a','l','l',
-         'V','a','l','i','d','a','t','e','\'', 0};
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
+        '`','I','n','s','t','a','l','l','E','x','e','c','u','t','e',
+        'S','e','q','u','e','n','c','e','`',' ', 'W','H','E','R','E',' ',
+        '`','S','e','q','u','e','n','c','e','`',' ', '>',' ','%','i',' ',
+        'O','R','D','E','R',' ', 'B','Y',' ','`','S','e','q','u','e','n','c','e','`',0};
+    static const WCHAR query_validate[] = {
+        'S','E','L','E','C','T',' ','`','S','e','q','u','e','n','c','e','`',
+        ' ', 'F','R','O','M',' ','`','I','n','s','t','a','l','l',
+        'E','x','e','c','u','t','e','S','e','q','u','e','n','c','e','`',' ',
+        'W','H','E','R','E',' ','`','A','c','t','i','o','n','`',' ','=',
+        ' ','\'', 'I','n','s','t','a','l','l','V','a','l','i','d','a','t','e','\'',0};
+    MSIQUERY *view;
     INT seq = 0;
+    UINT rc;
 
     if (package->script->ExecuteSequenceRun)
     {
@@ -601,49 +591,40 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
     /* get the sequence number */
     if (UIran)
     {
-        MSIRECORD *row = MSI_QueryGetRecord(package->db, IVQuery);
-        if( !row )
-            return ERROR_FUNCTION_FAILED;
+        MSIRECORD *row = MSI_QueryGetRecord(package->db, query_validate);
+        if (!row) return ERROR_FUNCTION_FAILED;
         seq = MSI_RecordGetInteger(row,1);
         msiobj_release(&row->hdr);
     }
-
-    rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, seq);
+    rc = MSI_OpenQuery(package->db, &view, query, seq);
     if (rc == ERROR_SUCCESS)
     {
         TRACE("Running the actions\n");
 
         msi_set_property(package->db, szSourceDir, NULL);
-
         rc = MSI_IterateRecords(view, NULL, ITERATE_Actions, package);
         msiobj_release(&view->hdr);
     }
-
     return rc;
 }
 
 static UINT ACTION_ProcessUISequence(MSIPACKAGE *package)
 {
-    MSIQUERY * view;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','I','n','s','t','a','l','l','U','I','S','e','q','u','e','n','c','e','`',' ',
+        'W','H','E','R','E',' ','`','S','e','q','u','e','n','c','e','`',' ','>',' ','0',' ',
+        'O','R','D','E','R',' ','B','Y',' ','`','S','e','q','u','e','n','c','e','`',0};
+    MSIQUERY *view;
     UINT rc;
-    static const WCHAR ExecSeqQuery [] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','I','n','s','t','a','l','l',
-         'U','I','S','e','q','u','e','n','c','e','`',
-         ' ','W','H','E','R','E',' ', 
-         '`','S','e','q','u','e','n','c','e','`',' ',
-         '>',' ','0',' ','O','R','D','E','R',' ','B','Y',' ',
-         '`','S','e','q','u','e','n','c','e','`',0};
 
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc == ERROR_SUCCESS)
     {
         TRACE("Running the actions\n"); 
-
         rc = MSI_IterateRecords(view, NULL, ITERATE_Actions, package);
         msiobj_release(&view->hdr);
     }
-
     return rc;
 }
 
@@ -884,20 +865,18 @@ static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
 
 static UINT ACTION_CreateFolders(MSIPACKAGE *package)
 {
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','C','r','e','a','t','e','F','o','l','d','e','r','`',0};
-    UINT rc;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','C','r','e','a','t','e','F','o','l','d','e','r','`',0};
     MSIQUERY *view;
+    UINT rc;
 
-    /* create all the empty folders specified in the CreateFolder table */
-    rc = MSI_DatabaseOpenViewW(package->db, query, &view );
+    rc = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_CreateFolders, package);
     msiobj_release(&view->hdr);
-
     return rc;
 }
 
@@ -952,10 +931,9 @@ static UINT ITERATE_RemoveFolders( MSIRECORD *row, LPVOID param )
 
 static UINT ACTION_RemoveFolders( MSIPACKAGE *package )
 {
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','C','r','e','a','t','e','F','o','l','d','e','r','`',0};
-
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','C','r','e','a','t','e','F','o','l','d','e','r','`',0};
     MSIQUERY *view;
     UINT rc;
 
@@ -965,7 +943,6 @@ static UINT ACTION_RemoveFolders( MSIPACKAGE *package )
 
     rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveFolders, package );
     msiobj_release( &view->hdr );
-
     return rc;
 }
 
@@ -1002,8 +979,8 @@ static UINT load_component( MSIRECORD *row, LPVOID param )
 UINT msi_load_all_components( MSIPACKAGE *package )
 {
     static const WCHAR query[] = {
-        'S','E','L','E','C','T',' ','*',' ','F','R', 'O','M',' ', 
-         '`','C','o','m','p','o','n','e','n','t','`',0 };
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','C','o','m','p','o','n','e','n','t','`',0};
     MSIQUERY *view;
     UINT r;
 
@@ -1023,7 +1000,6 @@ UINT msi_load_all_components( MSIPACKAGE *package )
 
     r = MSI_IterateRecords(view, NULL, load_component, package);
     msiobj_release(&view->hdr);
-
     msi_destroy_assembly_caches( package );
     return r;
 }
@@ -1083,18 +1059,16 @@ static UINT iterate_load_featurecomponents(MSIRECORD *row, LPVOID param)
 
 static UINT load_feature(MSIRECORD * row, LPVOID param)
 {
-    MSIPACKAGE* package = param;
-    MSIFEATURE* feature;
-    static const WCHAR Query1[] = 
-        {'S','E','L','E','C','T',' ',
-         '`','C','o','m','p','o','n','e','n','t','_','`',
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','`','C','o','m','p','o','n','e','n','t','_','`',
          ' ','F','R','O','M',' ','`','F','e','a','t','u','r','e',
-         'C','o','m','p','o','n','e','n','t','s','`',' ',
-         'W','H','E','R','E',' ',
+         'C','o','m','p','o','n','e','n','t','s','`',' ','W','H','E','R','E',' ',
          '`','F','e', 'a','t','u','r','e','_','`',' ','=','\'','%','s','\'',0};
-    MSIQUERY * view;
-    UINT    rc;
+    MSIPACKAGE *package = param;
+    MSIFEATURE *feature;
+    MSIQUERY *view;
     _ilfs ilfs;
+    UINT rc;
 
     /* fill in the data */
 
@@ -1128,7 +1102,7 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
 
     /* load feature components */
 
-    rc = MSI_OpenQuery( package->db, &view, Query1, feature->Feature );
+    rc = MSI_OpenQuery( package->db, &view, query, feature->Feature );
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
@@ -1137,7 +1111,6 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
 
     MSI_IterateRecords(view, NULL, iterate_load_featurecomponents , &ilfs);
     msiobj_release(&view->hdr);
-
     return ERROR_SUCCESS;
 }
 
@@ -1164,9 +1137,9 @@ static UINT find_feature_children(MSIRECORD * row, LPVOID param)
 UINT msi_load_all_features( MSIPACKAGE *package )
 {
     static const WCHAR query[] = {
-        'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
-        '`','F','e','a','t','u','r','e','`',' ','O','R','D','E','R',
-        ' ','B','Y',' ','`','D','i','s','p','l','a','y','`',0};
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','F','e','a','t','u','r','e','`',' ','O','R','D','E','R',' ','B','Y',' ',
+        '`','D','i','s','p','l','a','y','`',0};
     MSIQUERY *view;
     UINT r;
 
@@ -1179,11 +1152,12 @@ UINT msi_load_all_features( MSIPACKAGE *package )
 
     r = MSI_IterateRecords( view, NULL, load_feature, package );
     if (r != ERROR_SUCCESS)
+    {
+        msiobj_release( &view->hdr );
         return r;
-
+    }
     r = MSI_IterateRecords( view, NULL, find_feature_children, package );
     msiobj_release( &view->hdr );
-
     return r;
 }
 
@@ -1326,23 +1300,22 @@ static UINT load_file(MSIRECORD *row, LPVOID param)
 
 static UINT load_all_files(MSIPACKAGE *package)
 {
-    MSIQUERY * view;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
+        '`','F','i','l','e','`',' ', 'O','R','D','E','R',' ','B','Y',' ',
+        '`','S','e','q','u','e','n','c','e','`', 0};
+    MSIQUERY *view;
     UINT rc;
-    static const WCHAR Query[] =
-        {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
-         '`','F','i','l','e','`',' ', 'O','R','D','E','R',' ','B','Y',' ',
-         '`','S','e','q','u','e','n','c','e','`', 0};
 
     if (!list_empty(&package->files))
         return ERROR_SUCCESS;
 
-    rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
     rc = MSI_IterateRecords(view, NULL, load_file, package);
     msiobj_release(&view->hdr);
-
     return ERROR_SUCCESS;
 }
 
@@ -1360,14 +1333,16 @@ static UINT load_media( MSIRECORD *row, LPVOID param )
 
 static UINT load_all_media( MSIPACKAGE *package )
 {
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`','M','e','d','i','a','`',' ',
-         'O','R','D','E','R',' ','B','Y',' ','`','D','i','s','k','I','d','`',0};
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`',
+        'M','e','d','i','a','`',' ','O','R','D','E','R',' ','B','Y',' ',
+        '`','D','i','s','k','I','d','`',0};
     MSIQUERY *view;
     UINT r;
 
     r = MSI_DatabaseOpenViewW( package->db, query, &view );
-    if (r != ERROR_SUCCESS) return ERROR_SUCCESS;
+    if (r != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
 
     MSI_IterateRecords( view, NULL, load_media, package );
     msiobj_release( &view->hdr );
@@ -1418,23 +1393,22 @@ static UINT load_patch(MSIRECORD *row, LPVOID param)
 
 static UINT load_all_patches(MSIPACKAGE *package)
 {
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','P','a','t','c','h','`',' ','O','R','D','E','R',' ','B','Y',' ',
+        '`','S','e','q','u','e','n','c','e','`',0};
     MSIQUERY *view;
     UINT rc;
-    static const WCHAR Query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','P','a','t','c','h','`',' ','O','R','D','E','R',' ','B','Y',' ',
-         '`','S','e','q','u','e','n','c','e','`',0};
 
     if (!list_empty(&package->filepatches))
         return ERROR_SUCCESS;
 
-    rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
     rc = MSI_IterateRecords(view, NULL, load_patch, package);
     msiobj_release(&view->hdr);
-
     return ERROR_SUCCESS;
 }
 
@@ -1549,8 +1523,8 @@ static UINT find_folder_children( MSIRECORD *row, LPVOID param )
 static UINT load_all_folders( MSIPACKAGE *package )
 {
     static const WCHAR query[] = {
-        'S','E','L','E','C','T',' ','*',' ','F','R', 'O','M',' ',
-         '`','D','i','r','e','c','t','o','r','y','`',0 };
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','D','i','r','e','c','t','o','r','y','`',0};
     MSIQUERY *view;
     UINT r;
 
@@ -2335,14 +2309,15 @@ void msi_resolve_target_folder( MSIPACKAGE *package, const WCHAR *name, BOOL loa
 
 static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 {
-    static const WCHAR condition_query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`','C','o','n','d','i','t','i','o','n','`',0};
-    static const WCHAR szOutOfDiskSpace[] =
-        {'O','u','t','O','f','D','i','s','k','S','p','a','c','e',0};
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','C','o','n','d','i','t','i','o','n','`',0};
+    static const WCHAR szOutOfDiskSpace[] = {
+        'O','u','t','O','f','D','i','s','k','S','p','a','c','e',0};
     MSICOMPONENT *comp;
-    UINT rc = ERROR_SUCCESS;
-    MSIQUERY * view;
+    MSIQUERY *view;
     LPWSTR level;
+    UINT rc;
 
     TRACE("Building directory properties\n");
     msi_resolve_target_folder( package, szTargetDir, TRUE );
@@ -2367,7 +2342,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     {
         TRACE("Evaluating feature conditions\n");
 
-        rc = MSI_DatabaseOpenViewW( package->db, condition_query, &view );
+        rc = MSI_DatabaseOpenViewW( package->db, query, &view );
         if (rc == ERROR_SUCCESS)
         {
             rc = MSI_IterateRecords( view, NULL, ITERATE_CostFinalizeConditions, package );
@@ -2697,13 +2672,13 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
 
 static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
 {
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','R','e','g','i','s','t','r','y','`',0};
+    MSIQUERY *view;
     UINT rc;
-    MSIQUERY * view;
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','R','e','g','i','s','t','r','y','`',0 };
 
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
@@ -2882,14 +2857,14 @@ static UINT ITERATE_RemoveRegistryValuesOnInstall( MSIRECORD *row, LPVOID param 
 
 static UINT ACTION_RemoveRegistryValues( MSIPACKAGE *package )
 {
-    UINT rc;
+    static const WCHAR registry_query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','R','e','g','i','s','t','r','y','`',0};
+    static const WCHAR remove_registry_query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','R','e','m','o','v','e','R','e','g','i','s','t','r','y','`',0};
     MSIQUERY *view;
-    static const WCHAR registry_query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','R','e','g','i','s','t','r','y','`',0 };
-    static const WCHAR remove_registry_query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','R','e','m','o','v','e','R','e','g','i','s','t','r','y','`',0 };
+    UINT rc;
 
     rc = MSI_DatabaseOpenViewW( package->db, registry_query, &view );
     if (rc == ERROR_SUCCESS)
@@ -2899,7 +2874,6 @@ static UINT ACTION_RemoveRegistryValues( MSIPACKAGE *package )
         if (rc != ERROR_SUCCESS)
             return rc;
     }
-
     rc = MSI_DatabaseOpenViewW( package->db, remove_registry_query, &view );
     if (rc == ERROR_SUCCESS)
     {
@@ -2908,7 +2882,6 @@ static UINT ACTION_RemoveRegistryValues( MSIPACKAGE *package )
         if (rc != ERROR_SUCCESS)
             return rc;
     }
-
     return ERROR_SUCCESS;
 }
 
@@ -2922,19 +2895,19 @@ static UINT ACTION_InstallInitialize(MSIPACKAGE *package)
 
 static UINT ACTION_InstallValidate(MSIPACKAGE *package)
 {
+    static const WCHAR query[]= {
+        'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
+        '`','R','e','g','i','s','t','r','y','`',0};
     MSICOMPONENT *comp;
     DWORD total = 0, count = 0;
-    static const WCHAR q1[]=
-        {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
-         '`','R','e','g','i','s','t','r','y','`',0};
-    UINT rc;
-    MSIQUERY * view;
+    MSIQUERY *view;
     MSIFEATURE *feature;
     MSIFILE *file;
+    UINT rc;
 
     TRACE("InstallValidate\n");
 
-    rc = MSI_DatabaseOpenViewW(package->db, q1, &view);
+    rc = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (rc == ERROR_SUCCESS)
     {
         MSI_IterateRecords( view, &count, NULL, package );
@@ -2955,7 +2928,6 @@ static UINT ACTION_InstallValidate(MSIPACKAGE *package)
               debugstr_w(feature->Feature), feature->Installed,
               feature->ActionRequest, feature->Action);
     }
-    
     return ERROR_SUCCESS;
 }
 
@@ -2991,21 +2963,20 @@ static UINT ITERATE_LaunchConditions(MSIRECORD *row, LPVOID param)
 
 static UINT ACTION_LaunchConditions(MSIPACKAGE *package)
 {
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','L','a','u','n','c','h','C','o','n','d','i','t','i','o','n','`',0};
+    MSIQUERY *view;
     UINT rc;
-    MSIQUERY * view = NULL;
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','L','a','u','n','c','h','C','o','n','d','i','t','i','o','n','`',0};
 
     TRACE("Checking launch conditions\n");
 
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_LaunchConditions, package);
     msiobj_release(&view->hdr);
-
     return rc;
 }
 
@@ -3017,20 +2988,18 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, MSICOMPONENT *cmp )
 
     if (cmp->Attributes & msidbComponentAttributesRegistryKeyPath)
     {
-        MSIRECORD * row = 0;
-        UINT root,len;
-        LPWSTR deformated,buffer,deformated_name;
-        LPCWSTR key,name;
-        static const WCHAR ExecSeqQuery[] =
-            {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-             '`','R','e','g','i','s','t','r','y','`',' ',
-             'W','H','E','R','E',' ', '`','R','e','g','i','s','t','r','y','`',
-             ' ','=',' ' ,'\'','%','s','\'',0 };
-        static const WCHAR fmt[]={'%','0','2','i',':','\\','%','s','\\',0};
-        static const WCHAR fmt2[]=
-            {'%','0','2','i',':','\\','%','s','\\','%','s',0};
+        static const WCHAR query[] = {
+            'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+            '`','R','e','g','i','s','t','r','y','`',' ','W','H','E','R','E',' ',
+            '`','R','e','g','i','s','t','r','y','`',' ','=',' ' ,'\'','%','s','\'',0};
+        static const WCHAR fmt[] = {'%','0','2','i',':','\\','%','s','\\',0};
+        static const WCHAR fmt2[]= {'%','0','2','i',':','\\','%','s','\\','%','s',0};
+        MSIRECORD *row;
+        UINT root, len;
+        LPWSTR deformated, buffer, deformated_name;
+        LPCWSTR key, name;
 
-        row = MSI_QueryGetRecord(package->db, ExecSeqQuery,cmp->KeyPath);
+        row = MSI_QueryGetRecord(package->db, query, cmp->KeyPath);
         if (!row)
             return NULL;
 
@@ -3460,19 +3429,13 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
 
 static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
 {
-    /* 
-     * OK this is a bit confusing.. I am given a _Component key and I believe
-     * that the file that is being registered as a type library is the "key file
-     * of that component" which I interpret to mean "The file in the KeyPath of
-     * that component".
-     */
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','T','y','p','e','L','i','b','`',0};
+    MSIQUERY *view;
     UINT rc;
-    MSIQUERY * view;
-    static const WCHAR Query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','T','y','p','e','L','i','b','`',0};
 
-    rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
@@ -3527,11 +3490,11 @@ static UINT ITERATE_UnregisterTypeLibraries( MSIRECORD *row, LPVOID param )
 
 static UINT ACTION_UnregisterTypeLibraries( MSIPACKAGE *package )
 {
-    UINT rc;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','T','y','p','e','L','i','b','`',0};
     MSIQUERY *view;
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','T','y','p','e','L','i','b','`',0};
+    UINT rc;
 
     rc = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (rc != ERROR_SUCCESS)
@@ -3703,14 +3666,14 @@ err:
 
 static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
 {
-    UINT rc;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','S','h','o','r','t','c','u','t','`',0};
+    MSIQUERY *view;
     HRESULT res;
-    MSIQUERY * view;
-    static const WCHAR Query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','S','h','o','r','t','c','u','t','`',0};
+    UINT rc;
 
-    rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
@@ -3719,9 +3682,7 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
     rc = MSI_IterateRecords(view, NULL, ITERATE_CreateShortcuts, package);
     msiobj_release(&view->hdr);
 
-    if (SUCCEEDED(res))
-        CoUninitialize();
-
+    if (SUCCEEDED(res)) CoUninitialize();
     return rc;
 }
 
@@ -3759,11 +3720,11 @@ static UINT ITERATE_RemoveShortcuts( MSIRECORD *row, LPVOID param )
 
 static UINT ACTION_RemoveShortcuts( MSIPACKAGE *package )
 {
-    UINT rc;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','S','h','o','r','t','c','u','t','`',0};
     MSIQUERY *view;
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','S','h','o','r','t','c','u','t','`',0};
+    UINT rc;
 
     rc = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (rc != ERROR_SUCCESS)
@@ -3771,7 +3732,6 @@ static UINT ACTION_RemoveShortcuts( MSIPACKAGE *package )
 
     rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveShortcuts, package );
     msiobj_release( &view->hdr );
-
     return rc;
 }
 
@@ -3829,12 +3789,11 @@ static UINT ITERATE_PublishIcon(MSIRECORD *row, LPVOID param)
 
 static UINT msi_publish_icons(MSIPACKAGE *package)
 {
-    UINT r;
-    MSIQUERY *view;
-
     static const WCHAR query[]= {
-        'S','E','L','E','C','T',' ','*',' ',
-        'F','R','O','M',' ','`','I','c','o','n','`',0};
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','I','c','o','n','`',0};
+    MSIQUERY *view;
+    UINT r;
 
     r = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (r == ERROR_SUCCESS)
@@ -3842,7 +3801,6 @@ static UINT msi_publish_icons(MSIPACKAGE *package)
         MSI_IterateRecords(view, NULL, ITERATE_PublishIcon, package);
         msiobj_release(&view->hdr);
     }
-
     return ERROR_SUCCESS;
 }
 
@@ -4178,7 +4136,6 @@ end:
 
     RegCloseKey(hukey);
     RegCloseKey(hudkey);
-
     return rc;
 }
 
@@ -4292,18 +4249,15 @@ static UINT ITERATE_WriteIniValues(MSIRECORD *row, LPVOID param)
 
 static UINT ACTION_WriteIniValues(MSIPACKAGE *package)
 {
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','I','n','i','F','i','l','e','`',0};
+    MSIQUERY *view;
     UINT rc;
-    MSIQUERY * view;
-    static const WCHAR ExecSeqQuery[] = 
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','I','n','i','F','i','l','e','`',0};
 
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
-    {
-        TRACE("no IniFile table\n");
         return ERROR_SUCCESS;
-    }
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_WriteIniValues, package);
     msiobj_release(&view->hdr);
@@ -4435,14 +4389,14 @@ static UINT ITERATE_RemoveIniValuesOnInstall( MSIRECORD *row, LPVOID param )
 
 static UINT ACTION_RemoveIniValues( MSIPACKAGE *package )
 {
-    UINT rc;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','I','n','i','F','i','l','e','`',0};
+    static const WCHAR remove_query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','R','e','m','o','v','e','I','n','i','F','i','l','e','`',0};
     MSIQUERY *view;
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','I','n','i','F','i','l','e','`',0};
-    static const WCHAR remove_query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','R','e','m','o','v','e','I','n','i','F','i','l','e','`',0};
+    UINT rc;
 
     rc = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (rc == ERROR_SUCCESS)
@@ -4452,7 +4406,6 @@ static UINT ACTION_RemoveIniValues( MSIPACKAGE *package )
         if (rc != ERROR_SUCCESS)
             return rc;
     }
-
     rc = MSI_DatabaseOpenViewW( package->db, remove_query, &view );
     if (rc == ERROR_SUCCESS)
     {
@@ -4461,7 +4414,6 @@ static UINT ACTION_RemoveIniValues( MSIPACKAGE *package )
         if (rc != ERROR_SUCCESS)
             return rc;
     }
-
     return ERROR_SUCCESS;
 }
 
@@ -4525,22 +4477,18 @@ static UINT ITERATE_SelfRegModules(MSIRECORD *row, LPVOID param)
 
 static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
 {
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','S','e','l','f','R','e','g','`',0};
+    MSIQUERY *view;
     UINT rc;
-    MSIQUERY * view;
-    static const WCHAR ExecSeqQuery[] = 
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','S','e','l','f','R','e','g','`',0};
 
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
-    {
-        TRACE("no SelfReg table\n");
         return ERROR_SUCCESS;
-    }
 
     MSI_IterateRecords(view, NULL, ITERATE_SelfRegModules, package);
     msiobj_release(&view->hdr);
-
     return ERROR_SUCCESS;
 }
 
@@ -4579,22 +4527,18 @@ static UINT ITERATE_SelfUnregModules( MSIRECORD *row, LPVOID param )
 
 static UINT ACTION_SelfUnregModules( MSIPACKAGE *package )
 {
-    UINT rc;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','S','e','l','f','R','e','g','`',0};
     MSIQUERY *view;
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','S','e','l','f','R','e','g','`',0};
+    UINT rc;
 
     rc = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (rc != ERROR_SUCCESS)
-    {
-        TRACE("no SelfReg table\n");
         return ERROR_SUCCESS;
-    }
 
     MSI_IterateRecords( view, NULL, ITERATE_SelfUnregModules, package );
     msiobj_release( &view->hdr );
-
     return ERROR_SUCCESS;
 }
 
@@ -5375,20 +5319,18 @@ end:
  */
 static UINT ACTION_PublishComponents(MSIPACKAGE *package)
 {
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','P','u','b','l','i','s','h','C','o','m','p','o','n','e','n','t','`',0};
+    MSIQUERY *view;
     UINT rc;
-    MSIQUERY * view;
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','P','u','b','l','i','s','h',
-         'C','o','m','p','o','n','e','n','t','`',0};
     
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_PublishComponent, package);
     msiobj_release(&view->hdr);
-
     return rc;
 }
 
@@ -5449,12 +5391,11 @@ static UINT ITERATE_UnpublishComponent( MSIRECORD *rec, LPVOID param )
 
 static UINT ACTION_UnpublishComponents( MSIPACKAGE *package )
 {
-    UINT rc;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','P','u','b','l','i','s','h','C','o','m','p','o','n','e','n','t','`',0};
     MSIQUERY *view;
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','P','u','b','l','i','s','h',
-         'C','o','m','p','o','n','e','n','t','`',0};
+    UINT rc;
 
     rc = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (rc != ERROR_SUCCESS)
@@ -5462,7 +5403,6 @@ static UINT ACTION_UnpublishComponents( MSIPACKAGE *package )
 
     rc = MSI_IterateRecords( view, NULL, ITERATE_UnpublishComponent, package );
     msiobj_release( &view->hdr );
-
     return rc;
 }
 
@@ -5578,19 +5518,18 @@ done:
 
 static UINT ACTION_InstallServices( MSIPACKAGE *package )
 {
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'S','e','r','v','i','c','e','I','n','s','t','a','l','l',0};
+    MSIQUERY *view;
     UINT rc;
-    MSIQUERY * view;
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'S','e','r','v','i','c','e','I','n','s','t','a','l','l',0};
     
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_InstallService, package);
     msiobj_release(&view->hdr);
-
     return rc;
 }
 
@@ -5723,12 +5662,11 @@ done:
 
 static UINT ACTION_StartServices( MSIPACKAGE *package )
 {
-    UINT rc;
-    MSIQUERY *view;
-
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-        'S','e','r','v','i','c','e','C','o','n','t','r','o','l',0 };
+        'S','e','r','v','i','c','e','C','o','n','t','r','o','l',0};
+    MSIQUERY *view;
+    UINT rc;
 
     rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
@@ -5736,7 +5674,6 @@ static UINT ACTION_StartServices( MSIPACKAGE *package )
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_StartService, package);
     msiobj_release(&view->hdr);
-
     return rc;
 }
 
@@ -5885,12 +5822,11 @@ done:
 
 static UINT ACTION_StopServices( MSIPACKAGE *package )
 {
-    UINT rc;
-    MSIQUERY *view;
-
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-        'S','e','r','v','i','c','e','C','o','n','t','r','o','l',0 };
+        'S','e','r','v','i','c','e','C','o','n','t','r','o','l',0};
+    MSIQUERY *view;
+    UINT rc;
 
     rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
@@ -5898,7 +5834,6 @@ static UINT ACTION_StopServices( MSIPACKAGE *package )
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_StopService, package);
     msiobj_release(&view->hdr);
-
     return rc;
 }
 
@@ -5973,12 +5908,11 @@ done:
 
 static UINT ACTION_DeleteServices( MSIPACKAGE *package )
 {
-    UINT rc;
-    MSIQUERY *view;
-
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-        'S','e','r','v','i','c','e','C','o','n','t','r','o','l',0 };
+        'S','e','r','v','i','c','e','C','o','n','t','r','o','l',0};
+    MSIQUERY *view;
+    UINT rc;
 
     rc = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (rc != ERROR_SUCCESS)
@@ -5986,7 +5920,6 @@ static UINT ACTION_DeleteServices( MSIPACKAGE *package )
 
     rc = MSI_IterateRecords( view, NULL, ITERATE_DeleteService, package );
     msiobj_release( &view->hdr );
-
     return rc;
 }
 
@@ -6234,20 +6167,17 @@ static UINT ITERATE_InstallODBCDataSource( MSIRECORD *rec, LPVOID param )
 
 static UINT ACTION_InstallODBC( MSIPACKAGE *package )
 {
-    UINT rc;
-    MSIQUERY *view;
-
     static const WCHAR driver_query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-        'O','D','B','C','D','r','i','v','e','r',0 };
-
+        'O','D','B','C','D','r','i','v','e','r',0};
     static const WCHAR translator_query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-        'O','D','B','C','T','r','a','n','s','l','a','t','o','r',0 };
-
+        'O','D','B','C','T','r','a','n','s','l','a','t','o','r',0};
     static const WCHAR source_query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-        'O','D','B','C','D','a','t','a','S','o','u','r','c','e',0 };
+        'O','D','B','C','D','a','t','a','S','o','u','r','c','e',0};
+    MSIQUERY *view;
+    UINT rc;
 
     rc = MSI_DatabaseOpenViewW(package->db, driver_query, &view);
     if (rc != ERROR_SUCCESS)
@@ -6269,7 +6199,6 @@ static UINT ACTION_InstallODBC( MSIPACKAGE *package )
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_InstallODBCDataSource, package);
     msiobj_release(&view->hdr);
-
     return rc;
 }
 
@@ -6412,20 +6341,17 @@ static UINT ITERATE_RemoveODBCDataSource( MSIRECORD *rec, LPVOID param )
 
 static UINT ACTION_RemoveODBC( MSIPACKAGE *package )
 {
-    UINT rc;
-    MSIQUERY *view;
-
     static const WCHAR driver_query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-        'O','D','B','C','D','r','i','v','e','r',0 };
-
+        'O','D','B','C','D','r','i','v','e','r',0};
     static const WCHAR translator_query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-        'O','D','B','C','T','r','a','n','s','l','a','t','o','r',0 };
-
+        'O','D','B','C','T','r','a','n','s','l','a','t','o','r',0};
     static const WCHAR source_query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-        'O','D','B','C','D','a','t','a','S','o','u','r','c','e',0 };
+        'O','D','B','C','D','a','t','a','S','o','u','r','c','e',0};
+    MSIQUERY *view;
+    UINT rc;
 
     rc = MSI_DatabaseOpenViewW( package->db, driver_query, &view );
     if (rc != ERROR_SUCCESS)
@@ -6447,7 +6373,6 @@ static UINT ACTION_RemoveODBC( MSIPACKAGE *package )
 
     rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveODBCDataSource, package );
     msiobj_release( &view->hdr );
-
     return rc;
 }
 
@@ -6744,18 +6669,18 @@ done:
 
 static UINT ACTION_WriteEnvironmentStrings( MSIPACKAGE *package )
 {
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','E','n','v','i','r','o','n','m','e','n','t','`',0};
+    MSIQUERY *view;
     UINT rc;
-    MSIQUERY * view;
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','E','n','v','i','r','o','n','m','e','n','t','`',0};
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_WriteEnvironmentString, package);
     msiobj_release(&view->hdr);
-
     return rc;
 }
 
@@ -6837,11 +6762,11 @@ done:
 
 static UINT ACTION_RemoveEnvironmentStrings( MSIPACKAGE *package )
 {
-    UINT rc;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','E','n','v','i','r','o','n','m','e','n','t','`',0};
     MSIQUERY *view;
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','E','n','v','i','r','o','n','m','e','n','t','`',0};
+    UINT rc;
 
     rc = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (rc != ERROR_SUCCESS)
@@ -6849,7 +6774,6 @@ static UINT ACTION_RemoveEnvironmentStrings( MSIPACKAGE *package )
 
     rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveEnvironmentString, package );
     msiobj_release( &view->hdr );
-
     return rc;
 }
 
@@ -6917,16 +6841,14 @@ static UINT ACTION_InstallAdminPackage( MSIPACKAGE *package )
 
 static UINT ACTION_SetODBCFolders( MSIPACKAGE *package )
 {
-    UINT r, count;
-    MSIQUERY *view;
-
     static const WCHAR driver_query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-        'O','D','B','C','D','r','i','v','e','r',0 };
-
+        'O','D','B','C','D','r','i','v','e','r',0};
     static const WCHAR translator_query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-        'O','D','B','C','T','r','a','n','s','l','a','t','o','r',0 };
+        'O','D','B','C','T','r','a','n','s','l','a','t','o','r',0};
+    MSIQUERY *view;
+    UINT r, count;
 
     r = MSI_DatabaseOpenViewW( package->db, driver_query, &view );
     if (r == ERROR_SUCCESS)
@@ -6936,7 +6858,6 @@ static UINT ACTION_SetODBCFolders( MSIPACKAGE *package )
         msiobj_release( &view->hdr );
         if (count) FIXME("ignored %u rows in ODBCDriver table\n", count);
     }
-
     r = MSI_DatabaseOpenViewW( package->db, translator_query, &view );
     if (r == ERROR_SUCCESS)
     {
@@ -6945,7 +6866,6 @@ static UINT ACTION_SetODBCFolders( MSIPACKAGE *package )
         msiobj_release( &view->hdr );
         if (count) FIXME("ignored %u rows in ODBCTranslator table\n", count);
     }
-
     return ERROR_SUCCESS;
 }
 
@@ -6965,12 +6885,11 @@ static UINT ITERATE_RemoveExistingProducts( MSIRECORD *rec, LPVOID param )
 
 static UINT ACTION_RemoveExistingProducts( MSIPACKAGE *package )
 {
-    UINT r;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','A','c','t','i','o','n','P','r','o','p','e','r','t','y',' ',
+        'F','R','O','M',' ','U','p','g','r','a','d','e',0};
     MSIQUERY *view;
-
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','A','c','t','i','o','n','P','r','o','p','e','r','t','y',
-         ' ','F','R','O','M',' ','U','p','g','r','a','d','e',0};
+    UINT r;
 
     r = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (r == ERROR_SUCCESS)
@@ -7019,10 +6938,11 @@ static UINT ITERATE_MigrateFeatureStates( MSIRECORD *rec, LPVOID param )
 
 static UINT ACTION_MigrateFeatureStates( MSIPACKAGE *package )
 {
-    UINT r;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'U','p','g','r','a','d','e',0};
     MSIQUERY *view;
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','U','p','g','r','a','d','e',0};
+    UINT r;
 
     if (msi_get_property_int( package->db, szInstalled, 0 ))
     {
@@ -7034,7 +6954,6 @@ static UINT ACTION_MigrateFeatureStates( MSIPACKAGE *package )
         TRACE("Preselected property is set, not migrating feature states\n");
         return ERROR_SUCCESS;
     }
-
     r = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (r == ERROR_SUCCESS)
     {
@@ -7090,10 +7009,11 @@ static UINT ITERATE_BindImage( MSIRECORD *rec, LPVOID param )
 
 static UINT ACTION_BindImage( MSIPACKAGE *package )
 {
-    UINT r;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'B','i','n','d','I','m','a','g','e',0};
     MSIQUERY *view;
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','B','i','n','d','I','m','a','g','e',0};
+    UINT r;
 
     r = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (r == ERROR_SUCCESS)
@@ -7104,13 +7024,11 @@ static UINT ACTION_BindImage( MSIPACKAGE *package )
     return ERROR_SUCCESS;
 }
 
-static UINT msi_unimplemented_action_stub( MSIPACKAGE *package,
-                                           LPCSTR action, LPCWSTR table )
+static UINT msi_unimplemented_action_stub( MSIPACKAGE *package, LPCSTR action, LPCWSTR table )
 {
     static const WCHAR query[] = {
-        'S','E','L','E','C','T',' ','*',' ',
-        'F','R','O','M',' ','`','%','s','`',0 };
-    MSIQUERY *view = NULL;
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`','%','s','`',0};
+    MSIQUERY *view;
     DWORD count = 0;
     UINT r;
     
@@ -7120,11 +7038,7 @@ static UINT msi_unimplemented_action_stub( MSIPACKAGE *package,
         r = MSI_IterateRecords(view, &count, NULL, package);
         msiobj_release(&view->hdr);
     }
-
-    if (count)
-        FIXME("%s -> %u ignored %s table values\n",
-              action, count, debugstr_w(table));
-
+    if (count) FIXME("%s: ignored %u rows from %s\n", action, count, debugstr_w(table));
     return ERROR_SUCCESS;
 }
 
@@ -7331,21 +7245,21 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq)
     UINT rc = ERROR_SUCCESS;
     MSIRECORD *row;
 
-    static const WCHAR ExecSeqQuery[] =
+    static const WCHAR query[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','I','n','s','t','a','l','l','E','x','e','c','u','t','e',
          'S','e','q','u','e','n','c','e','`',' ', 'W','H','E','R','E',' ',
          '`','S','e','q','u','e','n','c','e','`',' ', '=',' ','%','i',0};
-    static const WCHAR UISeqQuery[] =
+    static const WCHAR ui_query[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
      '`','I','n','s','t','a','l','l','U','I','S','e','q','u','e','n','c','e',
      '`', ' ', 'W','H','E','R','E',' ','`','S','e','q','u','e','n','c','e','`',
 	 ' ', '=',' ','%','i',0};
 
     if (needs_ui_sequence(package))
-        row = MSI_QueryGetRecord(package->db, UISeqQuery, seq);
+        row = MSI_QueryGetRecord(package->db, ui_query, seq);
     else
-        row = MSI_QueryGetRecord(package->db, ExecSeqQuery, seq);
+        row = MSI_QueryGetRecord(package->db, query, seq);
 
     if (row)
     {

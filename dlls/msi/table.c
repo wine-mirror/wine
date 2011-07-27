@@ -1237,16 +1237,14 @@ static UINT TABLE_get_row( struct tagMSIVIEW *view, UINT row, MSIRECORD **rec )
 
 static UINT msi_addstreamW( MSIDATABASE *db, LPCWSTR name, IStream *data )
 {
-    UINT r;
-    MSIQUERY *query = NULL;
-    MSIRECORD *rec = NULL;
-
     static const WCHAR insert[] = {
-       'I','N','S','E','R','T',' ','I','N','T','O',' ',
-          '`','_','S','t','r','e','a','m','s','`',' ',
-         '(','`','N','a','m','e','`',',',
-             '`','D','a','t','a','`',')',' ',
-         'V','A','L','U','E','S',' ','(','?',',','?',')',0};
+        'I','N','S','E','R','T',' ','I','N','T','O',' ',
+        '`','_','S','t','r','e','a','m','s','`',' ',
+        '(','`','N','a','m','e','`',',','`','D','a','t','a','`',')',' ',
+        'V','A','L','U','E','S',' ','(','?',',','?',')',0};
+    MSIQUERY *query = NULL;
+    MSIRECORD *rec;
+    UINT r;
 
     TRACE("%p %s %p\n", db, debugstr_w(name), data);
 
@@ -1271,7 +1269,6 @@ static UINT msi_addstreamW( MSIDATABASE *db, LPCWSTR name, IStream *data )
 err:
     msiobj_release( &query->hdr );
     msiobj_release( &rec->hdr );
-
     return r;
 }
 

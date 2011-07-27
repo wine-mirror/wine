@@ -367,21 +367,20 @@ static void MSI_FreePackage( MSIOBJECTHDR *arg)
 
 static UINT create_temp_property_table(MSIPACKAGE *package)
 {
-    MSIQUERY *view = NULL;
+    static const WCHAR query[] = {
+        'C','R','E','A','T','E',' ','T','A','B','L','E',' ',
+        '`','_','P','r','o','p','e','r','t','y','`',' ','(',' ',
+        '`','_','P','r','o','p','e','r','t','y','`',' ',
+        'C','H','A','R','(','5','6',')',' ','N','O','T',' ','N','U','L','L',' ',
+        'T','E','M','P','O','R','A','R','Y',',',' ',
+        '`','V','a','l','u','e','`',' ','C','H','A','R','(','9','8',')',' ',
+        'N','O','T',' ','N','U','L','L',' ','T','E','M','P','O','R','A','R','Y',
+        ' ','P','R','I','M','A','R','Y',' ','K','E','Y',' ',
+        '`','_','P','r','o','p','e','r','t','y','`',')',' ','H','O','L','D',0};
+    MSIQUERY *view;
     UINT rc;
 
-    static const WCHAR CreateSql[] = {
-       'C','R','E','A','T','E',' ','T','A','B','L','E',' ',
-       '`','_','P','r','o','p','e','r','t','y','`',' ','(',' ',
-       '`','_','P','r','o','p','e','r','t','y','`',' ',
-       'C','H','A','R','(','5','6',')',' ','N','O','T',' ','N','U','L','L',' ',
-       'T','E','M','P','O','R','A','R','Y',',',' ',
-       '`','V','a','l','u','e','`',' ','C','H','A','R','(','9','8',')',' ',
-       'N','O','T',' ','N','U','L','L',' ','T','E','M','P','O','R','A','R','Y',
-       ' ','P','R','I','M','A','R','Y',' ','K','E','Y',' ',
-       '`','_','P','r','o','p','e','r','t','y','`',')',' ','H','O','L','D',0};
-
-    rc = MSI_DatabaseOpenViewW(package->db, CreateSql, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
         return rc;
 
@@ -393,22 +392,20 @@ static UINT create_temp_property_table(MSIPACKAGE *package)
 
 UINT msi_clone_properties(MSIPACKAGE *package)
 {
-    MSIQUERY *view_select = NULL;
-    UINT rc;
-
     static const WCHAR query_select[] = {
-       'S','E','L','E','C','T',' ','*',' ',
-       'F','R','O','M',' ','`','P','r','o','p','e','r','t','y','`',0};
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','P','r','o','p','e','r','t','y','`',0};
     static const WCHAR query_insert[] = {
-       'I','N','S','E','R','T',' ','i','n','t','o',' ',
-       '`','_','P','r','o','p','e','r','t','y','`',' ',
-       '(','`','_','P','r','o','p','e','r','t','y','`',',',
-       '`','V','a','l','u','e','`',')',' ',
-       'V','A','L','U','E','S',' ','(','?',',','?',')',0};
+        'I','N','S','E','R','T',' ','I','N','T','O',' ',
+        '`','_','P','r','o','p','e','r','t','y','`',' ',
+        '(','`','_','P','r','o','p','e','r','t','y','`',',','`','V','a','l','u','e','`',')',' ',
+        'V','A','L','U','E','S',' ','(','?',',','?',')',0};
     static const WCHAR query_update[] = {
         'U','P','D','A','T','E',' ','`','_','P','r','o','p','e','r','t','y','`',' ',
         'S','E','T',' ','`','V','a','l','u','e','`',' ','=',' ','?',' ',
         'W','H','E','R','E',' ','`','_','P','r','o','p','e','r','t','y','`',' ','=',' ','?',0};
+    MSIQUERY *view_select;
+    UINT rc;
 
     rc = MSI_DatabaseOpenViewW( package->db, query_select, &view_select );
     if (rc != ERROR_SUCCESS)
@@ -1934,27 +1931,24 @@ void msi_reset_folders( MSIPACKAGE *package, BOOL source )
 
 UINT msi_set_property( MSIDATABASE *db, LPCWSTR szName, LPCWSTR szValue )
 {
-    MSIQUERY *view;
-    MSIRECORD *row = NULL;
-    UINT rc;
-    DWORD sz = 0;
-    WCHAR Query[1024];
-
-    static const WCHAR Insert[] = {
-        'I','N','S','E','R','T',' ','i','n','t','o',' ',
-        '`','_','P','r','o','p','e','r','t','y','`',' ','(',
-        '`','_','P','r','o','p','e','r','t','y','`',',',
-        '`','V','a','l','u','e','`',')',' ','V','A','L','U','E','S'
-        ,' ','(','?',',','?',')',0};
-    static const WCHAR Update[] = {
-        'U','P','D','A','T','E',' ','`','_','P','r','o','p','e','r','t','y','`',
-        ' ','s','e','t',' ','`','V','a','l','u','e','`',' ','=',' ','?',' ',
-        'w','h','e','r','e',' ','`','_','P','r','o','p','e','r','t','y','`',
-        ' ','=',' ','\'','%','s','\'',0};
-    static const WCHAR Delete[] = {
+    static const WCHAR insert_query[] = {
+        'I','N','S','E','R','T',' ','I','N','T','O',' ',
+        '`','_','P','r','o','p','e','r','t','y','`',' ',
+        '(','`','_','P','r','o','p','e','r','t','y','`',',','`','V','a','l','u','e','`',')',' ',
+        'V','A','L','U','E','S',' ','(','?',',','?',')',0};
+    static const WCHAR update_query[] = {
+        'U','P','D','A','T','E',' ','`','_','P','r','o','p','e','r','t','y','`',' ',
+        'S','E','T',' ','`','V','a','l','u','e','`',' ','=',' ','?',' ','W','H','E','R','E',' ',
+        '`','_','P','r','o','p','e','r','t','y','`',' ','=',' ','\'','%','s','\'',0};
+    static const WCHAR delete_query[] = {
         'D','E','L','E','T','E',' ','F','R','O','M',' ',
         '`','_','P','r','o','p','e','r','t','y','`',' ','W','H','E','R','E',' ',
         '`','_','P','r','o','p','e','r','t','y','`',' ','=',' ','\'','%','s','\'',0};
+    MSIQUERY *view;
+    MSIRECORD *row = NULL;
+    DWORD sz = 0;
+    WCHAR query[1024];
+    UINT rc;
 
     TRACE("%p %s %s\n", db, debugstr_w(szName), debugstr_w(szValue));
 
@@ -1968,35 +1962,32 @@ UINT msi_set_property( MSIDATABASE *db, LPCWSTR szName, LPCWSTR szValue )
     rc = msi_get_property(db, szName, 0, &sz);
     if (!szValue || !*szValue)
     {
-        sprintfW(Query, Delete, szName);
+        sprintfW(query, delete_query, szName);
     }
     else if (rc == ERROR_MORE_DATA || rc == ERROR_SUCCESS)
     {
-        sprintfW(Query, Update, szName);
+        sprintfW(query, update_query, szName);
 
         row = MSI_CreateRecord(1);
         MSI_RecordSetStringW(row, 1, szValue);
     }
     else
     {
-        strcpyW(Query, Insert);
+        strcpyW(query, insert_query);
 
         row = MSI_CreateRecord(2);
         MSI_RecordSetStringW(row, 1, szName);
         MSI_RecordSetStringW(row, 2, szValue);
     }
 
-    rc = MSI_DatabaseOpenViewW(db, Query, &view);
+    rc = MSI_DatabaseOpenViewW(db, query, &view);
     if (rc == ERROR_SUCCESS)
     {
         rc = MSI_ViewExecute(view, row);
         MSI_ViewClose(view);
         msiobj_release(&view->hdr);
     }
-
-    if (row)
-      msiobj_release(&row->hdr);
-
+    if (row) msiobj_release(&row->hdr);
     return rc;
 }
 
@@ -2053,15 +2044,13 @@ UINT WINAPI MsiSetPropertyW( MSIHANDLE hInstall, LPCWSTR szName, LPCWSTR szValue
 
 static MSIRECORD *msi_get_property_row( MSIDATABASE *db, LPCWSTR name )
 {
-    MSIQUERY *view;
-    MSIRECORD *rec, *row = NULL;
-    UINT r;
-
     static const WCHAR query[]= {
         'S','E','L','E','C','T',' ','`','V','a','l','u','e','`',' ',
-        'F','R','O','M',' ' ,'`','_','P','r','o','p','e','r','t','y','`',
-        ' ','W','H','E','R','E',' ' ,'`','_','P','r','o','p','e','r','t','y','`',
-        '=','?',0};
+        'F','R','O','M',' ' ,'`','_','P','r','o','p','e','r','t','y','`',' ',
+        'W','H','E','R','E',' ' ,'`','_','P','r','o','p','e','r','t','y','`','=','?',0};
+    MSIRECORD *rec, *row = NULL;
+    MSIQUERY *view;
+    UINT r;
 
     if (!name || !*name)
         return NULL;
@@ -2080,7 +2069,6 @@ static MSIRECORD *msi_get_property_row( MSIDATABASE *db, LPCWSTR name )
         MSI_ViewClose(view);
         msiobj_release(&view->hdr);
     }
-
     msiobj_release(&rec->hdr);
     return row;
 }

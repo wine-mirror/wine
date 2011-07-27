@@ -1186,18 +1186,16 @@ static UINT HANDLE_CustomType53_54(MSIPACKAGE *package, LPCWSTR source,
 
 UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL execute)
 {
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','C','u','s','t','o','m','A','c','t','i','o','n','`',' ','W','H','E','R','E',' ',
+        '`','A','c','t','i' ,'o','n','`',' ','=',' ','\'','%','s','\'',0};
     UINT rc = ERROR_SUCCESS;
-    MSIRECORD * row = 0;
-    static const WCHAR ExecSeqQuery[] =
-    {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-     '`','C','u','s','t','o' ,'m','A','c','t','i','o','n','`',
-     ' ','W','H','E','R','E',' ','`','A','c','t','i' ,'o','n','`',' ',
-     '=',' ','\'','%','s','\'',0};
+    MSIRECORD *row;
     UINT type;
     LPCWSTR source, target;
     LPWSTR ptr, deferred_data = NULL;
-    LPWSTR action_copy = strdupW(action);
-    WCHAR *deformated=NULL;
+    LPWSTR deformated = NULL, action_copy = strdupW(action);
 
     /* deferred action: [properties]Action */
     if ((ptr = strrchrW(action_copy, ']')))
@@ -1206,7 +1204,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
         action = ptr + 1;
     }
 
-    row = MSI_QueryGetRecord( package->db, ExecSeqQuery, action );
+    row = MSI_QueryGetRecord( package->db, query, action );
     if (!row)
     {
         msi_free(action_copy);

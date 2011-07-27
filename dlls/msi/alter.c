@@ -135,8 +135,12 @@ static UINT alter_add_column(MSIALTERVIEW *av)
     {
         r = MSI_IterateRecords(view, NULL, ITERATE_columns, &colnum);
         msiobj_release(&view->hdr);
+        if (r != ERROR_SUCCESS)
+        {
+            columns->ops->delete(columns);
+            return r;
+        }
     }
-
     r = columns->ops->add_column(columns, av->colinfo->table,
                                  colnum, av->colinfo->column,
                                  av->colinfo->type, (av->hold == 1));

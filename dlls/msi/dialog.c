@@ -369,11 +369,10 @@ static UINT msi_dialog_set_font( msi_dialog *dialog, HWND hwnd, LPCWSTR name )
 static UINT msi_dialog_build_font_list( msi_dialog *dialog )
 {
     static const WCHAR query[] = {
-      'S','E','L','E','C','T',' ','*',' ',
-      'F','R','O','M',' ','`','T','e','x','t','S','t','y','l','e','`',' ',0
-    };
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','T','e','x','t','S','t','y','l','e','`',0};
+    MSIQUERY *view;
     UINT r;
-    MSIQUERY *view = NULL;
 
     TRACE("dialog %p\n", dialog );
 
@@ -938,12 +937,12 @@ static UINT msi_dialog_control_event( MSIRECORD *rec, LPVOID param )
 static UINT msi_dialog_button_handler( msi_dialog *dialog, msi_control *control, WPARAM param )
 {
     static const WCHAR query[] = {
-      'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-      'C','o','n','t','r','o','l','E','v','e','n','t',' ','W','H','E','R','E',' ',
-      '`','D','i','a','l','o','g','_','`',' ','=',' ','\'','%','s','\'',' ','A','N','D',' ',
-      '`','C','o','n','t','r','o','l','_','`',' ','=',' ','\'','%','s','\'',' ',
-      'O','R','D','E','R',' ','B','Y',' ','`','O','r','d','e','r','i','n','g','`',0};
-    MSIQUERY *view = NULL;
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'C','o','n','t','r','o','l','E','v','e','n','t',' ','W','H','E','R','E',' ',
+        '`','D','i','a','l','o','g','_','`',' ','=',' ','\'','%','s','\'',' ','A','N','D',' ',
+        '`','C','o','n','t','r','o','l','_','`',' ','=',' ','\'','%','s','\'',' ',
+        'O','R','D','E','R',' ','B','Y',' ','`','O','r','d','e','r','i','n','g','`',0};
+    MSIQUERY *view;
     UINT r;
 
     if (HIWORD(param) != BN_CLICKED)
@@ -953,9 +952,8 @@ static UINT msi_dialog_button_handler( msi_dialog *dialog, msi_control *control,
     if (r != ERROR_SUCCESS)
     {
         ERR("query failed\n");
-        return 0;
+        return ERROR_SUCCESS;
     }
-
     r = MSI_IterateRecords( view, 0, msi_dialog_control_event, dialog );
     msiobj_release( &view->hdr );
     return r;
@@ -1472,17 +1470,14 @@ static UINT msi_combobox_add_item( MSIRECORD *rec, LPVOID param )
 
 static UINT msi_combobox_add_items( struct msi_combobox_info *info, LPCWSTR property )
 {
-    UINT r;
-    MSIQUERY *view = NULL;
-    DWORD count;
-
     static const WCHAR query[] = {
-        'S','E','L','E','C','T',' ','*',' ',
-        'F','R','O','M',' ','`','C','o','m','b','o','B','o','x','`',' ',
-        'W','H','E','R','E',' ',
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','C','o','m','b','o','B','o','x','`',' ','W','H','E','R','E',' ',
         '`','P','r','o','p','e','r','t','y','`',' ','=',' ','\'','%','s','\'',' ',
-        'O','R','D','E','R',' ','B','Y',' ','`','O','r','d','e','r','`',0
-    };
+        'O','R','D','E','R',' ','B','Y',' ','`','O','r','d','e','r','`',0};
+    MSIQUERY *view;
+    DWORD count;
+    UINT r;
 
     r = MSI_OpenQuery( info->dialog->package->db, &view, query, property );
     if (r != ERROR_SUCCESS)
@@ -1545,11 +1540,11 @@ static UINT msi_dialog_set_control_condition( MSIRECORD *rec, LPVOID param )
 static UINT msi_dialog_evaluate_control_conditions( msi_dialog *dialog )
 {
     static const WCHAR query[] = {
-      'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
         'C','o','n','t','r','o','l','C','o','n','d','i','t','i','o','n',' ',
-      'W','H','E','R','E',' ','`','D','i','a','l','o','g','_','`',' ','=',' ','\'','%','s','\'',0};
+        'W','H','E','R','E',' ','`','D','i','a','l','o','g','_','`',' ','=',' ','\'','%','s','\'',0};
     UINT r;
-    MSIQUERY *view = NULL;
+    MSIQUERY *view;
     MSIPACKAGE *package = dialog->package;
 
     TRACE("%p %s\n", dialog, debugstr_w(dialog->name));
@@ -2274,14 +2269,13 @@ static LRESULT WINAPI MSIRadioGroup_WndProc( HWND hWnd, UINT msg, WPARAM wParam,
 static UINT msi_dialog_radiogroup_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     static const WCHAR query[] = {
-        'S','E','L','E','C','T',' ','*',' ',
-        'F','R','O','M',' ','R','a','d','i','o','B','u','t','t','o','n',' ',
-        'W','H','E','R','E',' ',
-           '`','P','r','o','p','e','r','t','y','`',' ','=',' ','\'','%','s','\'',0};
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'R','a','d','i','o','B','u','t','t','o','n',' ','W','H','E','R','E',' ',
+        '`','P','r','o','p','e','r','t','y','`',' ','=',' ','\'','%','s','\'',0};
     UINT r;
     LPCWSTR prop;
     msi_control *control;
-    MSIQUERY *view = NULL;
+    MSIQUERY *view;
     radio_button_group_descr group;
     MSIPACKAGE *package = dialog->package;
     WNDPROC oldproc;
@@ -2760,17 +2754,14 @@ static UINT msi_listbox_add_item( MSIRECORD *rec, LPVOID param )
 
 static UINT msi_listbox_add_items( struct msi_listbox_info *info, LPCWSTR property )
 {
-    UINT r;
-    MSIQUERY *view = NULL;
-    DWORD count;
-
     static const WCHAR query[] = {
-        'S','E','L','E','C','T',' ','*',' ',
-        'F','R','O','M',' ','`','L','i','s','t','B','o','x','`',' ',
-        'W','H','E','R','E',' ',
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','L','i','s','t','B','o','x','`',' ','W','H','E','R','E',' ',
         '`','P','r','o','p','e','r','t','y','`',' ','=',' ','\'','%','s','\'',' ',
-        'O','R','D','E','R',' ','B','Y',' ','`','O','r','d','e','r','`',0
-    };
+        'O','R','D','E','R',' ','B','Y',' ','`','O','r','d','e','r','`',0};
+    MSIQUERY *view;
+    DWORD count;
+    UINT r;
 
     r = MSI_OpenQuery( info->dialog->package->db, &view, query, property );
     if ( r != ERROR_SUCCESS )
@@ -3359,12 +3350,11 @@ static UINT msi_dialog_create_controls( MSIRECORD *rec, LPVOID param )
 static UINT msi_dialog_fill_controls( msi_dialog *dialog )
 {
     static const WCHAR query[] = {
-        'S','E','L','E','C','T',' ','*',' ',
-        'F','R','O','M',' ','C','o','n','t','r','o','l',' ',
-        'W','H','E','R','E',' ',
-           '`','D','i','a','l','o','g','_','`',' ','=',' ','\'','%','s','\'',0};
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'C','o','n','t','r','o','l',' ','W','H','E','R','E',' ',
+        '`','D','i','a','l','o','g','_','`',' ','=',' ','\'','%','s','\'',0};
     UINT r;
-    MSIQUERY *view = NULL;
+    MSIQUERY *view;
     MSIPACKAGE *package = dialog->package;
 
     TRACE("%p %s\n", dialog, debugstr_w(dialog->name) );

@@ -266,22 +266,17 @@ static UINT ITERATE_RegisterFonts(MSIRECORD *row, LPVOID param)
 
 UINT ACTION_RegisterFonts(MSIPACKAGE *package)
 {
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`','F','o','n','t','`',0};
+    MSIQUERY *view;
     UINT rc;
-    MSIQUERY * view;
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','F','o','n','t','`',0};
 
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
-    {
-        TRACE("MSI_DatabaseOpenViewW failed: %d\n", rc);
         return ERROR_SUCCESS;
-    }
 
     MSI_IterateRecords(view, NULL, ITERATE_RegisterFonts, package);
     msiobj_release(&view->hdr);
-
     return ERROR_SUCCESS;
 }
 
@@ -351,21 +346,16 @@ static UINT ITERATE_UnregisterFonts( MSIRECORD *row, LPVOID param )
 
 UINT ACTION_UnregisterFonts( MSIPACKAGE *package )
 {
-    UINT r;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`','F','o','n','t','`',0};
     MSIQUERY *view;
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','F','o','n','t','`',0};
+    UINT r;
 
     r = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (r != ERROR_SUCCESS)
-    {
-        TRACE("MSI_DatabaseOpenViewW failed: %u\n", r);
         return ERROR_SUCCESS;
-    }
 
     MSI_IterateRecords( view, NULL, ITERATE_UnregisterFonts, package );
     msiobj_release( &view->hdr );
-
     return ERROR_SUCCESS;
 }

@@ -1877,12 +1877,12 @@ done:
 static UINT gather_merge_data(MSIDATABASE *db, MSIDATABASE *merge,
                               struct list *tabledata)
 {
-    UINT r;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','_','T','a','b','l','e','s','`',0};
     MSIQUERY *view;
     MERGEDATA data;
-
-    static const WCHAR query[] = {'S','E','L','E','C','T',' ','*',' ',
-        'F','R','O','M',' ','`','_','T','a','b','l','e','s','`',0};
+    UINT r;
 
     r = MSI_DatabaseOpenViewW(merge, query, &view);
     if (r != ERROR_SUCCESS)
@@ -1892,7 +1892,6 @@ static UINT gather_merge_data(MSIDATABASE *db, MSIDATABASE *merge,
     data.merge = merge;
     data.tabledata = tabledata;
     r = MSI_IterateRecords(view, NULL, merge_diff_tables, &data);
-
     msiobj_release(&view->hdr);
     return r;
 }

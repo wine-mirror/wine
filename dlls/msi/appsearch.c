@@ -1072,10 +1072,9 @@ static UINT iterate_appsearch(MSIRECORD *row, LPVOID param)
 UINT ACTION_AppSearch(MSIPACKAGE *package)
 {
     static const WCHAR query[] =  {
-        's','e','l','e','c','t',' ','*',' ',
-        'f','r','o','m',' ',
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
         'A','p','p','S','e','a','r','c','h',0};
-    MSIQUERY *view = NULL;
+    MSIQUERY *view;
     UINT r;
 
     if (msi_action_is_unique(package, szAppSearch))
@@ -1092,7 +1091,6 @@ UINT ACTION_AppSearch(MSIPACKAGE *package)
 
     r = MSI_IterateRecords( view, NULL, iterate_appsearch, package );
     msiobj_release( &view->hdr );
-
     return r;
 }
 
@@ -1127,10 +1125,9 @@ static UINT ITERATE_CCPSearch(MSIRECORD *row, LPVOID param)
 UINT ACTION_CCPSearch(MSIPACKAGE *package)
 {
     static const WCHAR query[] =  {
-        's','e','l','e','c','t',' ','*',' ',
-        'f','r','o','m',' ',
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
         'C','C','P','S','e','a','r','c','h',0};
-    MSIQUERY *view = NULL;
+    MSIQUERY *view;
     UINT r;
 
     if (msi_action_is_unique(package, szCCPSearch))
@@ -1147,6 +1144,5 @@ UINT ACTION_CCPSearch(MSIPACKAGE *package)
 
     r = MSI_IterateRecords(view, NULL, ITERATE_CCPSearch, package);
     msiobj_release(&view->hdr);
-
     return r;
 }

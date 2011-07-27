@@ -880,20 +880,18 @@ done:
 
 UINT ACTION_MoveFiles( MSIPACKAGE *package )
 {
-    UINT rc;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','M','o','v','e','F','i','l','e','`',0};
     MSIQUERY *view;
+    UINT rc;
 
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','M','o','v','e','F','i','l','e','`',0};
-
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_MoveFiles, package);
     msiobj_release(&view->hdr);
-
     return rc;
 }
 
@@ -1014,19 +1012,18 @@ static UINT ITERATE_DuplicateFiles(MSIRECORD *row, LPVOID param)
 
 UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
 {
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','D','u','p','l','i','c','a','t','e','F','i','l','e','`',0};
+    MSIQUERY *view;
     UINT rc;
-    MSIQUERY * view;
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','D','u','p','l','i','c','a','t','e','F','i','l','e','`',0};
 
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
     rc = MSI_IterateRecords(view, NULL, ITERATE_DuplicateFiles, package);
     msiobj_release(&view->hdr);
-
     return rc;
 }
 
@@ -1091,11 +1088,11 @@ static UINT ITERATE_RemoveDuplicateFiles( MSIRECORD *row, LPVOID param )
 
 UINT ACTION_RemoveDuplicateFiles( MSIPACKAGE *package )
 {
-    UINT rc;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','D','u','p','l','i','c','a','t','e','F','i','l','e','`',0};
     MSIQUERY *view;
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','D','u','p','l','i','c','a','t','e','F','i','l','e','`',0};
+    UINT rc;
 
     rc = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (rc != ERROR_SUCCESS)
@@ -1103,7 +1100,6 @@ UINT ACTION_RemoveDuplicateFiles( MSIPACKAGE *package )
 
     rc = MSI_IterateRecords( view, NULL, ITERATE_RemoveDuplicateFiles, package );
     msiobj_release( &view->hdr );
-
     return rc;
 }
 
@@ -1228,9 +1224,9 @@ static void remove_folder( MSIFOLDER *folder )
 
 UINT ACTION_RemoveFiles( MSIPACKAGE *package )
 {
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','R','e','m','o','v','e','F','i','l','e','`',0};
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','R','e','m','o','v','e','F','i','l','e','`',0};
     MSIQUERY *view;
     MSICOMPONENT *comp;
     MSIFILE *file;
