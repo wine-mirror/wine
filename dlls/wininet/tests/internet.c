@@ -41,16 +41,6 @@ static BOOL (WINAPI *pIsDomainLegalCookieDomainW)(LPCWSTR, LPCWSTR);
 static DWORD (WINAPI *pPrivacyGetZonePreferenceW)(DWORD, DWORD, LPDWORD, LPWSTR, LPDWORD);
 static DWORD (WINAPI *pPrivacySetZonePreferenceW)(DWORD, DWORD, DWORD, LPCWSTR);
 
-/* Win9x and WinMe don't have lstrcmpW */
-static int strcmp_ww(const WCHAR *str1, const WCHAR *str2)
-{
-    DWORD len1 = lstrlenW(str1);
-    DWORD len2 = lstrlenW(str2);
-
-    if (len1 != len2) return 1;
-    return memcmp(str1, str2, len1 * sizeof(WCHAR));
-}
-
 /* ############################### */
 
 static void test_InternetCanonicalizeUrlA(void)
@@ -497,7 +487,7 @@ static void test_null(void)
   ok( sz == 1 + lstrlenW(buffer) || sz == lstrlenW(buffer), "sz wrong %d\n", sz);
 
   /* before XP SP2, buffer is "server; server" */
-  ok( !strcmp_ww(szExpect, buffer) || !strcmp_ww(szServer, buffer), "cookie data wrong\n");
+  ok( !lstrcmpW(szExpect, buffer) || !lstrcmpW(szServer, buffer), "cookie data wrong\n");
 
   sz = sizeof(buffer);
   r = InternetQueryOptionA(NULL, INTERNET_OPTION_CONNECTED_STATE, buffer, &sz);
@@ -995,7 +985,7 @@ static void test_Option_PerConnectionOption(void)
     ret = InternetQueryOptionW(NULL, INTERNET_OPTION_PER_CONNECTION_OPTION,
             &list, &size);
     ok(ret == TRUE, "InternetQueryOption should've succeeded\n");
-    ok(!strcmp_ww(list.pOptions[0].Value.pszValue, proxy_srvW),
+    ok(!lstrcmpW(list.pOptions[0].Value.pszValue, proxy_srvW),
             "Retrieved proxy server should've been %s, was: %s\n",
             wine_dbgstr_w(proxy_srvW), wine_dbgstr_w(list.pOptions[0].Value.pszValue));
     ok(list.pOptions[1].Value.dwValue == PROXY_TYPE_PROXY,
