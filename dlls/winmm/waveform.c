@@ -1195,6 +1195,7 @@ static LRESULT WINMM_PrepareHeader(HWAVE hwave, WAVEHDR *header)
 
         mr = acmStreamPrepareHeader(device->acm_handle, ash, 0);
         if(mr != MMSYSERR_NOERROR){
+            HeapFree(GetProcessHeap(), 0, ash);
             LeaveCriticalSection(&device->lock);
             return mr;
         }
