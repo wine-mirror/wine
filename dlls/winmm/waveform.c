@@ -1445,7 +1445,7 @@ static void WOD_PushData(WINMM_Device *device)
     device->played_frames += avail_frames;
 
 exit:
-    memcpy(&cb_info, &device->cb_info, sizeof(cb_info));
+    cb_info = device->cb_info;
 
     LeaveCriticalSection(&device->lock);
 
@@ -1625,7 +1625,7 @@ static void WID_PullData(WINMM_Device *device)
     }
 
 exit:
-    memcpy(&cb_info, &device->cb_info, sizeof(cb_info));
+    cb_info = device->cb_info;
 
     LeaveCriticalSection(&device->lock);
 
@@ -1718,7 +1718,7 @@ static LRESULT WINMM_Reset(HWAVE hwave)
     device->loop_counter = 0;
     device->last_clock_pos = 0;
 
-    memcpy(&cb_info, &device->cb_info, sizeof(cb_info));
+    cb_info = device->cb_info;
 
     LeaveCriticalSection(&device->lock);
 
@@ -2367,7 +2367,7 @@ UINT WINAPI waveOutClose(HWAVEOUT hWaveOut)
     if(!WINMM_ValidateAndLock(device))
         return MMSYSERR_INVALHANDLE;
 
-    memcpy(&cb_info, &device->cb_info, sizeof(cb_info));
+    cb_info = device->cb_info;
 
     LeaveCriticalSection(&device->lock);
 
@@ -3015,7 +3015,7 @@ UINT WINAPI waveInClose(HWAVEIN hWaveIn)
     if(!WINMM_ValidateAndLock(device))
         return MMSYSERR_INVALHANDLE;
 
-    memcpy(&cb_info, &device->cb_info, sizeof(cb_info));
+    cb_info = device->cb_info;
 
     LeaveCriticalSection(&device->lock);
 
@@ -3169,7 +3169,7 @@ UINT WINAPI waveInStop(HWAVEIN hWaveIn)
     }else
         buf = NULL;
 
-    memcpy(&cb_info, &device->cb_info, sizeof(cb_info));
+    cb_info = device->cb_info;
 
     LeaveCriticalSection(&device->lock);
 
