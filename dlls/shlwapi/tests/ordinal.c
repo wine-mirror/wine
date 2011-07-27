@@ -2889,8 +2889,11 @@ static void test_SHGetShellKey(void)
     hres = pSKAllocValueW(SHKEY_Root_HKLM, WineTestW, NULL, NULL, (void**)&alloc_data, &size);
     ok(hres == S_OK, "hres= %x\n", hres);
     ok(size == sizeof(DWORD), "size = %d\n", size);
-    ok(*alloc_data == 1234, "*alloc_data = %d\n", *alloc_data);
-    LocalFree(alloc_data);
+    if (SUCCEEDED(hres))
+    {
+        ok(*alloc_data == 1234, "*alloc_data = %d\n", *alloc_data);
+        LocalFree(alloc_data);
+    }
 
     hres = pSKDeleteValueW(SHKEY_Root_HKLM, WineTestW, NULL);
     ok(hres == S_OK, "hres = %x\n", hres);
