@@ -1318,9 +1318,7 @@ static void test_edit_control_limittext(void)
     ok(r == 30000, "Incorrect default text limit, expected 30000 got %u\n", r);
     SendMessage(hwEdit, EM_SETLIMITTEXT, 0, 0);
     r = SendMessage(hwEdit, EM_GETLIMITTEXT, 0, 0);
-    /* Win9x+ME: 32766; WinNT: 2147483646UL */
-    ok( (r == 32766) || (r == 2147483646UL),
-        "got limit %u (expected 32766 or 2147483646)\n", r);
+    ok( r == 2147483646, "got limit %u (expected 2147483646)\n", r);
     DestroyWindow(hwEdit);
 
     /* Test default limit for multi-line control */
@@ -1330,9 +1328,7 @@ static void test_edit_control_limittext(void)
     ok(r == 30000, "Incorrect default text limit, expected 30000 got %u\n", r);
     SendMessage(hwEdit, EM_SETLIMITTEXT, 0, 0);
     r = SendMessage(hwEdit, EM_GETLIMITTEXT, 0, 0);
-    /* Win9x+ME: 65535; WinNT: 4294967295UL */
-    ok( (r == 65535) || (r == 4294967295UL),
-        "got limit %u (expected 65535 or 4294967295)\n", r);
+    ok( r == 4294967295U, "got limit %u (expected 4294967295)\n", r);
     DestroyWindow(hwEdit);
 }
 
