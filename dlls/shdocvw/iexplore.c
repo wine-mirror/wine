@@ -566,7 +566,7 @@ static LRESULT iewnd_OnCommand(InternetExplorer *This, HWND hwnd, UINT msg, WPAR
     switch(LOWORD(wparam))
     {
         case ID_BROWSE_OPEN:
-            DialogBoxParamW(shdocvw_hinstance, MAKEINTRESOURCEW(IDD_BROWSE_OPEN), hwnd, ie_dialog_open_proc, (LPARAM)This);
+            DialogBoxParamW(get_ieframe_instance(), MAKEINTRESOURCEW(IDD_BROWSE_OPEN), hwnd, ie_dialog_open_proc, (LPARAM)This);
             break;
 
         case ID_BROWSE_PRINT:

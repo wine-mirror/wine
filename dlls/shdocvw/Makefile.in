@@ -23,24 +23,6 @@ C_SRCS = \
 	webbrowser.c
 
 RC_SRCS = \
-	De.rc \
-	En.rc \
-	Es.rc \
-	Fr.rc \
-	He.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sr.rc \
-	Sv.rc \
-	Uk.rc \
 	shdocvw.rc
 
 PO_SRCS = shdocvw.rc
