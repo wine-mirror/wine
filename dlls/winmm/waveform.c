@@ -820,7 +820,7 @@ static MMRESULT WINMM_MapDevice(WINMM_OpenInfo *info, BOOL is_out)
 static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
         WINMM_OpenInfo *info)
 {
-    WAVEFORMATEX *closer_fmt = NULL, *passed_fmt;
+    WAVEFORMATEX *closer_fmt = NULL, fmt, *passed_fmt;
     LRESULT ret = MMSYSERR_ERROR;
     HRESULT hr;
 
@@ -843,7 +843,7 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
     if(info->format->wFormatTag == WAVE_FORMAT_PCM){
         /* we aren't guaranteed that the struct in lpFormat is a full
          * WAVEFORMATEX struct, which IAC::IsFormatSupported requires */
-        passed_fmt = HeapAlloc(GetProcessHeap(), 0, sizeof(WAVEFORMATEX));
+        passed_fmt = &fmt;
         memcpy(passed_fmt, info->format, sizeof(PCMWAVEFORMAT));
         passed_fmt->cbSize = 0;
     }else
@@ -854,20 +854,14 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
     if(closer_fmt)
         CoTaskMemFree(closer_fmt);
     if(FAILED(hr) && hr != AUDCLNT_E_UNSUPPORTED_FORMAT){
-        if(info->format->wFormatTag == WAVE_FORMAT_PCM)
-            HeapFree(GetProcessHeap(), 0, passed_fmt);
         ERR("IsFormatSupported failed: %08x\n", hr);
         goto error;
     }
     if(hr == S_FALSE || hr == AUDCLNT_E_UNSUPPORTED_FORMAT){
-        if(info->format->wFormatTag == WAVE_FORMAT_PCM)
-            HeapFree(GetProcessHeap(), 0, passed_fmt);
         ret = WAVERR_BADFORMAT;
         goto error;
     }
     if(info->flags & WAVE_FORMAT_QUERY){
-        if(info->format->wFormatTag == WAVE_FORMAT_PCM)
-            HeapFree(GetProcessHeap(), 0, passed_fmt);
         ret = MMSYSERR_NOERROR;
         goto error;
     }
@@ -876,8 +870,6 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
     hr = IAudioClient_Initialize(device->client, AUDCLNT_SHAREMODE_SHARED,
             AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_NOPERSIST,
             10 * 100000, 50000, passed_fmt, &device->parent->session);
-    if(info->format->wFormatTag == WAVE_FORMAT_PCM)
-        HeapFree(GetProcessHeap(), 0, passed_fmt);
     if(FAILED(hr)){
         ERR("Initialize failed: %08x\n", hr);
         goto error;
