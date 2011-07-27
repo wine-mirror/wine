@@ -940,7 +940,6 @@ static LRESULT WOD_Open(WINMM_OpenInfo *info)
 {
     WINMM_MMDevice *mmdevice;
     WINMM_Device *device = NULL;
-    WINMM_CBInfo cb_info;
     LRESULT ret = MMSYSERR_ERROR;
     HRESULT hr;
 
@@ -980,8 +979,6 @@ static LRESULT WOD_Open(WINMM_OpenInfo *info)
         goto error;
     }
 
-    memcpy(&cb_info, &device->cb_info, sizeof(cb_info));
-
     LeaveCriticalSection(&device->lock);
 
     return MMSYSERR_NOERROR;
@@ -1016,7 +1013,6 @@ static LRESULT WID_Open(WINMM_OpenInfo *info)
 {
     WINMM_MMDevice *mmdevice;
     WINMM_Device *device = NULL;
-    WINMM_CBInfo cb_info;
     LRESULT ret = MMSYSERR_ERROR;
     HRESULT hr;
 
@@ -1048,8 +1044,6 @@ static LRESULT WID_Open(WINMM_OpenInfo *info)
         ERR("GetService failed: %08x\n", hr);
         goto error;
     }
-
-    memcpy(&cb_info, &device->cb_info, sizeof(cb_info));
 
     LeaveCriticalSection(&device->lock);
 
@@ -1106,7 +1100,6 @@ static HRESULT WINMM_CloseDevice(WINMM_Device *device)
 static LRESULT WOD_Close(HWAVEOUT hwave)
 {
     WINMM_Device *device = WINMM_GetDeviceFromHWAVE((HWAVE)hwave);
-    WINMM_CBInfo cb_info;
 
     TRACE("(%p)\n", hwave);
 
@@ -1121,8 +1114,6 @@ static LRESULT WOD_Close(HWAVEOUT hwave)
     IAudioStreamVolume_Release(device->volume);
     device->volume = NULL;
 
-    memcpy(&cb_info, &device->cb_info, sizeof(cb_info));
-
     LeaveCriticalSection(&device->lock);
 
     return MMSYSERR_NOERROR;
@@ -1131,7 +1122,6 @@ static LRESULT WOD_Close(HWAVEOUT hwave)
 static LRESULT WID_Close(HWAVEIN hwave)
 {
     WINMM_Device *device = WINMM_GetDeviceFromHWAVE((HWAVE)hwave);
-    WINMM_CBInfo cb_info;
 
     TRACE("(%p)\n", hwave);
 
@@ -1142,8 +1132,6 @@ static LRESULT WID_Close(HWAVEIN hwave)
 
     IAudioCaptureClient_Release(device->capture);
     device->capture = NULL;
-
-    memcpy(&cb_info, &device->cb_info, sizeof(cb_info));
 
     LeaveCriticalSection(&device->lock);
 
@@ -1637,8 +1625,6 @@ static HRESULT WINMM_BeginPlaying(WINMM_Device *device)
 
     TRACE("(%p)\n", device->handle);
 
-    EnterCriticalSection(&device->lock);
-
     if(device->render)
         /* prebuffer data before starting */
         WOD_PushData(device);
@@ -1649,13 +1635,10 @@ static HRESULT WINMM_BeginPlaying(WINMM_Device *device)
         hr = IAudioClient_Start(device->client);
         if(FAILED(hr) && hr != AUDCLNT_E_NOT_STOPPED){
             device->stopped = TRUE;
-            LeaveCriticalSection(&device->lock);
             ERR("Start failed: %08x\n", hr);
             return hr;
         }
     }
-
-    LeaveCriticalSection(&device->lock);
 
     return S_OK;
 }
@@ -2304,7 +2287,6 @@ MMRESULT WINAPI waveOutOpen(LPHWAVEOUT lphWaveOut, UINT uDeviceID,
                        DWORD_PTR dwInstance, DWORD dwFlags)
 {
     LRESULT res;
-    HRESULT hr;
     WINMM_OpenInfo info;
     WINMM_CBInfo cb_info;
 
@@ -2317,11 +2299,6 @@ MMRESULT WINAPI waveOutOpen(LPHWAVEOUT lphWaveOut, UINT uDeviceID,
     if(!lphWaveOut && !(dwFlags & WAVE_FORMAT_QUERY))
         return MMSYSERR_INVALPARAM;
 
-    hr = WINMM_StartDevicesThread();
-    if(FAILED(hr)){
-        ERR("Couldn't start the device thread: %08x\n", hr);
-        return MMSYSERR_ERROR;
-    }
     res = WINMM_CheckCallback(dwCallback, dwFlags, FALSE);
     if(res != MMSYSERR_NOERROR)
         return res;
@@ -2955,7 +2932,6 @@ MMRESULT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
                            DWORD_PTR dwInstance, DWORD dwFlags)
 {
     LRESULT res;
-    HRESULT hr;
     WINMM_OpenInfo info;
     WINMM_CBInfo cb_info;
 
@@ -2968,11 +2944,6 @@ MMRESULT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
     if(!lphWaveIn && !(dwFlags & WAVE_FORMAT_QUERY))
         return MMSYSERR_INVALPARAM;
 
-    hr = WINMM_StartDevicesThread();
-    if(FAILED(hr)){
-        ERR("Couldn't start the device thread: %08x\n", hr);
-        return MMSYSERR_ERROR;
-    }
     res = WINMM_CheckCallback(dwCallback, dwFlags, FALSE);
     if(res != MMSYSERR_NOERROR)
         return res;
@@ -3409,7 +3380,6 @@ UINT WINAPI mixerGetControlDetailsW(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdW
 				    DWORD fdwDetails)
 {
     WINMM_ControlDetails details;
-    HRESULT hr;
 
     TRACE("(%p, %p, %x)\n", hmix, lpmcdW, fdwDetails);
 
@@ -3420,12 +3390,6 @@ UINT WINAPI mixerGetControlDetailsW(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdW
         return MMSYSERR_INVALPARAM;
 
     TRACE("dwControlID: %u\n", lpmcdW->dwControlID);
-
-    hr = WINMM_StartDevicesThread();
-    if(FAILED(hr)){
-        ERR("Couldn't start the device thread: %08x\n", hr);
-        return MMSYSERR_ERROR;
-    }
 
     details.hmix = hmix;
     details.details = lpmcdW;
@@ -3944,7 +3908,6 @@ UINT WINAPI mixerSetControlDetails(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd,
 				   DWORD fdwDetails)
 {
     WINMM_ControlDetails details;
-    HRESULT hr;
 
     TRACE("(%p, %p, %x)\n", hmix, lpmcd, fdwDetails);
 
@@ -3959,12 +3922,6 @@ UINT WINAPI mixerSetControlDetails(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd,
         return MMSYSERR_INVALPARAM;
 
     TRACE("dwControlID: %u\n", lpmcd->dwControlID);
-
-    hr = WINMM_StartDevicesThread();
-    if(FAILED(hr)){
-        ERR("Couldn't start the device thread: %08x\n", hr);
-        return MMSYSERR_ERROR;
-    }
 
     details.hmix = hmix;
     details.details = lpmcd;
