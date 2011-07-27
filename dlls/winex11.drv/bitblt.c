@@ -1919,6 +1919,10 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
         int height = dst->visrect.bottom - dst->visrect.top;
 
         image->data = dst_bits.ptr;
+        /* hack: make sure the bits are readable if we are reading from a DIB section */
+        /* to be removed once we get rid of DIB access protections */
+        if (!dst_bits.is_copy) IsBadReadPtr( dst_bits.ptr, height * image->bytes_per_line );
+
         if (bitmap)
         {
             RGNDATA *clip_data = NULL;
