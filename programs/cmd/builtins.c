@@ -861,10 +861,10 @@ void WCMD_echo (const WCHAR *command) {
   int count;
   const WCHAR *origcommand = command;
 
-  if (command[0]==' ' || command[0]=='.')
+  if (command[0]==' ' || command[0]=='.' || command[0]==':')
     command++;
   count = strlenW(command);
-  if (count == 0 && origcommand[0]!='.') {
+  if (count == 0 && origcommand[0]!='.' && origcommand[0]!=':') {
     if (echo_mode) WCMD_output (WCMD_LoadMessage(WCMD_ECHOPROMPT), onW);
     else WCMD_output (WCMD_LoadMessage(WCMD_ECHOPROMPT), offW);
     return;
