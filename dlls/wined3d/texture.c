@@ -1068,15 +1068,15 @@ static HRESULT texture3d_bind(struct wined3d_texture *texture,
 static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB srgb)
 {
     struct wined3d_device *device = texture->resource.device;
-    struct wined3d_context *context = NULL;
+    struct wined3d_context *context;
     BOOL srgb_was_toggled = FALSE;
     unsigned int i;
 
     TRACE("texture %p, srgb %#x.\n", texture, srgb);
 
-    if (!device->isInDraw)
-        context = context_acquire(device, NULL);
-    else if (texture->bind_count > 0)
+    /* TODO: Use already acquired context when possible. */
+    context = context_acquire(device, NULL);
+    if (texture->bind_count > 0)
     {
         BOOL texture_srgb = texture->flags & WINED3D_TEXTURE_IS_SRGB;
         BOOL sampler_srgb = texture_srgb_mode(texture, srgb);
@@ -1115,8 +1115,7 @@ static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
         TRACE("Texture %p not dirty, nothing to do.\n", texture);
     }
 
-    if (context)
-        context_release(context);
+    context_release(context);
 
     /* No longer dirty */
     texture->texture_rgb.dirty = FALSE;

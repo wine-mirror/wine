@@ -3861,11 +3861,12 @@ void surface_internal_preload(struct wined3d_surface *surface, enum WINED3DSRGB 
     }
     else
     {
-        struct wined3d_context *context = NULL;
+        struct wined3d_context *context;
 
         TRACE("(%p) : About to load surface\n", surface);
 
-        if (!device->isInDraw) context = context_acquire(device, NULL);
+        /* TODO: Use already acquired context when possible. */
+        context = context_acquire(device, NULL);
 
         if (surface->resource.format->id == WINED3DFMT_P8_UINT
                 || surface->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
@@ -3892,7 +3893,7 @@ void surface_internal_preload(struct wined3d_surface *surface, enum WINED3DSRGB 
             LEAVE_GL();
         }
 
-        if (context) context_release(context);
+        context_release(context);
     }
 }
 
@@ -5888,16 +5889,15 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
     if (surface->flags & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX))
     {
         struct wined3d_device *device = surface->resource.device;
-        struct wined3d_context *context = NULL;
+        struct wined3d_context *context;
 
-        if (!device->isInDraw)
-            context = context_acquire(device, NULL);
+        /* TODO: Use already acquired context when possible. */
+        context = context_acquire(device, NULL);
 
         surface_bind_and_dirtify(surface, gl_info, !(surface->flags & SFLAG_INTEXTURE));
         surface_download_data(surface, gl_info);
 
-        if (context)
-            context_release(context);
+        context_release(context);
 
         return;
     }
@@ -5943,17 +5943,16 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
      * called. */
     if ((convert != NO_CONVERSION) && (surface->flags & SFLAG_PBO))
     {
-        struct wined3d_context *context = NULL;
+        struct wined3d_context *context;
 
         TRACE("Removing the pbo attached to surface %p.\n", surface);
 
-        if (!device->isInDraw)
-            context = context_acquire(device, NULL);
+        /* TODO: Use already acquired context when possible. */
+        context = context_acquire(device, NULL);
 
         surface_remove_pbo(surface, gl_info);
 
-        if (context)
-            context_release(context);
+        context_release(context);
     }
 
     if ((convert != NO_CONVERSION) && surface->resource.allocatedMemory)
@@ -6003,7 +6002,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     const DWORD attach_flags = WINED3DFMT_FLAG_FBO_ATTACHABLE | WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB;
     RECT src_rect = {0, 0, surface->resource.width, surface->resource.height};
     struct wined3d_device *device = surface->resource.device;
-    struct wined3d_context *context = NULL;
+    struct wined3d_context *context;
     UINT width, src_pitch, dst_pitch;
     struct wined3d_bo_address data;
     struct wined3d_format format;
@@ -6067,8 +6066,8 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         surface_load_location(surface, SFLAG_INSYSMEM, rect);
     }
 
-    if (!device->isInDraw)
-        context = context_acquire(device, NULL);
+    /* TODO: Use already acquired context when possible. */
+    context = context_acquire(device, NULL);
 
     surface_prepare_texture(surface, gl_info, srgb);
     surface_bind_and_dirtify(surface, gl_info, srgb);
@@ -6104,8 +6103,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         if (!(mem = HeapAlloc(GetProcessHeap(), 0, dst_pitch * height)))
         {
             ERR("Out of memory (%u).\n", dst_pitch * height);
-            if (context)
-                context_release(context);
+            context_release(context);
             return E_OUTOFMEMORY;
         }
         format.convert(surface->resource.allocatedMemory, mem, src_pitch, width, height);
@@ -6122,8 +6120,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         if (!(mem = HeapAlloc(GetProcessHeap(), 0, dst_pitch * height)))
         {
             ERR("Out of memory (%u).\n", dst_pitch * height);
-            if (context)
-                context_release(context);
+            context_release(context);
             return E_OUTOFMEMORY;
         }
         d3dfmt_convert_surface(surface->resource.allocatedMemory, mem, src_pitch,
@@ -6138,8 +6135,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     data.addr = mem;
     surface_upload_data(surface, gl_info, &format, &src_rect, width, &dst_point, srgb, &data);
 
-    if (context)
-        context_release(context);
+    context_release(context);
 
     /* Don't delete PBO memory. */
     if ((mem != surface->resource.allocatedMemory) && !(surface->flags & SFLAG_PBO))
