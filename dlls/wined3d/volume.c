@@ -25,7 +25,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 
 /* Context activation is done by the caller. */
-static void volume_bind_and_dirtify(const struct wined3d_volume *volume, const struct wined3d_gl_info *gl_info)
+static void volume_bind_and_dirtify(const struct wined3d_volume *volume, struct wined3d_context *context)
 {
     struct wined3d_texture *container = volume->container;
     DWORD active_sampler;
@@ -41,7 +41,7 @@ static void volume_bind_and_dirtify(const struct wined3d_volume *volume, const s
      *
      * TODO: Track the current active texture per GL context instead of using glGet
      */
-    if (gl_info->supported[ARB_MULTITEXTURE])
+    if (context->gl_info->supported[ARB_MULTITEXTURE])
     {
         GLint active_texture;
         ENTER_GL();
@@ -55,7 +55,7 @@ static void volume_bind_and_dirtify(const struct wined3d_volume *volume, const s
     if (active_sampler != WINED3D_UNMAPPED_STAGE)
         device_invalidate_state(volume->resource.device, STATE_SAMPLER(active_sampler));
 
-    container->texture_ops->texture_bind(container, gl_info, FALSE);
+    container->texture_ops->texture_bind(container, context, FALSE);
 }
 
 void volume_add_dirty_box(struct wined3d_volume *volume, const WINED3DBOX *dirty_box)
@@ -89,15 +89,15 @@ void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture 
 }
 
 /* Context activation is done by the caller. */
-void volume_load(const struct wined3d_volume *volume, UINT level, BOOL srgb_mode)
+void volume_load(const struct wined3d_volume *volume, struct wined3d_context *context, UINT level, BOOL srgb_mode)
 {
-    const struct wined3d_gl_info *gl_info = &volume->resource.device->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_format *format = volume->resource.format;
 
-    TRACE("volume %p, level %u, srgb %#x, format %s (%#x).\n",
-            volume, level, srgb_mode, debug_d3dformat(format->id), format->id);
+    TRACE("volume %p, context %p, level %u, srgb %#x, format %s (%#x).\n",
+            volume, context, level, srgb_mode, debug_d3dformat(format->id), format->id);
 
-    volume_bind_and_dirtify(volume, gl_info);
+    volume_bind_and_dirtify(volume, context);
 
     ENTER_GL();
     GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D, level, format->glInternal,

@@ -1198,7 +1198,7 @@ struct blit_shader
 {
     HRESULT (*alloc_private)(struct wined3d_device *device);
     void (*free_private)(struct wined3d_device *device);
-    HRESULT (*set_shader)(void *blit_priv, const struct wined3d_gl_info *gl_info, struct wined3d_surface *surface);
+    HRESULT (*set_shader)(void *blit_priv, struct wined3d_context *context, struct wined3d_surface *surface);
     void (*unset_shader)(const struct wined3d_gl_info *gl_info);
     BOOL (*blit_supported)(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
             const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,
@@ -1853,7 +1853,7 @@ struct gl_texture
 struct wined3d_texture_ops
 {
     HRESULT (*texture_bind)(struct wined3d_texture *texture,
-            const struct wined3d_gl_info *gl_info, BOOL srgb);
+            struct wined3d_context *context, BOOL srgb);
     void (*texture_preload)(struct wined3d_texture *texture, enum WINED3DSRGB srgb);
     void (*texture_sub_resource_add_dirty_region)(struct wined3d_resource *sub_resource,
             const WINED3DBOX *dirty_region);
@@ -1917,7 +1917,7 @@ static inline struct wined3d_volume *volume_from_resource(struct wined3d_resourc
 }
 
 void volume_add_dirty_box(struct wined3d_volume *volume, const WINED3DBOX *dirty_box) DECLSPEC_HIDDEN;
-void volume_load(const struct wined3d_volume *volume, UINT level, BOOL srgb_mode) DECLSPEC_HIDDEN;
+void volume_load(const struct wined3d_volume *volume, struct wined3d_context *context, UINT level, BOOL srgb_mode) DECLSPEC_HIDDEN;
 void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture *container) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
@@ -2060,7 +2060,7 @@ static inline GLuint surface_get_texture_name(const struct wined3d_surface *surf
 }
 
 void surface_add_dirty_rect(struct wined3d_surface *surface, const WINED3DBOX *dirty_rect) DECLSPEC_HIDDEN;
-void surface_bind(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info, BOOL srgb) DECLSPEC_HIDDEN;
+void surface_bind(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 HRESULT surface_color_fill(struct wined3d_surface *s, const RECT *rect, const WINED3DCOLORVALUE *color) DECLSPEC_HIDDEN;
 GLenum surface_get_gl_buffer(const struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 BOOL surface_init_sysmem(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
@@ -2073,7 +2073,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, c
 void surface_modify_ds_location(struct wined3d_surface *surface, DWORD location, UINT w, UINT h) DECLSPEC_HIDDEN;
 void surface_modify_location(struct wined3d_surface *surface, DWORD location, BOOL persistent) DECLSPEC_HIDDEN;
 void surface_prepare_texture(struct wined3d_surface *surface,
-        const struct wined3d_gl_info *gl_info, BOOL srgb) DECLSPEC_HIDDEN;
+        struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void surface_set_compatible_renderbuffer(struct wined3d_surface *surface,
         const struct wined3d_surface *rt) DECLSPEC_HIDDEN;
 void surface_set_container(struct wined3d_surface *surface,

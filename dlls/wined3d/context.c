@@ -112,7 +112,7 @@ static void context_destroy_fbo(struct wined3d_context *context, GLuint *fbo)
 }
 
 /* GL locking is done by the caller */
-static void context_attach_depth_stencil_fbo(const struct wined3d_context *context,
+static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         GLenum fbo_target, struct wined3d_surface *depth_stencil)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -141,7 +141,7 @@ static void context_attach_depth_stencil_fbo(const struct wined3d_context *conte
         }
         else
         {
-            surface_prepare_texture(depth_stencil, gl_info, FALSE);
+            surface_prepare_texture(depth_stencil, context, FALSE);
 
             if (format_flags & WINED3DFMT_FLAG_DEPTH)
             {
@@ -183,7 +183,7 @@ static void context_attach_depth_stencil_fbo(const struct wined3d_context *conte
 }
 
 /* GL locking is done by the caller */
-static void context_attach_surface_fbo(const struct wined3d_context *context,
+static void context_attach_surface_fbo(struct wined3d_context *context,
         GLenum fbo_target, DWORD idx, struct wined3d_surface *surface, DWORD location)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -199,7 +199,7 @@ static void context_attach_surface_fbo(const struct wined3d_context *context,
             case SFLAG_INTEXTURE:
             case SFLAG_INSRGBTEX:
                 srgb = location == SFLAG_INSRGBTEX;
-                surface_prepare_texture(surface, gl_info, srgb);
+                surface_prepare_texture(surface, context, srgb);
                 gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_COLOR_ATTACHMENT0 + idx,
                         surface->texture_target, surface_get_texture_name(surface, gl_info, srgb),
                         surface->texture_level);

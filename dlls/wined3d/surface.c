@@ -590,7 +590,7 @@ static void surface_evict_sysmem(struct wined3d_surface *surface)
 
 /* Context activation is done by the caller. */
 static void surface_bind_and_dirtify(struct wined3d_surface *surface,
-        const struct wined3d_gl_info *gl_info, BOOL srgb)
+        struct wined3d_context *context, BOOL srgb)
 {
     struct wined3d_device *device = surface->resource.device;
     DWORD active_sampler;
@@ -616,7 +616,7 @@ static void surface_bind_and_dirtify(struct wined3d_surface *surface,
 
     if (active_sampler != WINED3D_UNMAPPED_STAGE)
         device_invalidate_state(device, STATE_SAMPLER(active_sampler));
-    surface_bind(surface, gl_info, srgb);
+    surface_bind(surface, context, srgb);
 }
 
 static void surface_force_reload(struct wined3d_surface *surface)
@@ -632,13 +632,13 @@ static void surface_release_client_storage(struct wined3d_surface *surface)
     glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
     if (surface->texture_name)
     {
-        surface_bind_and_dirtify(surface, context->gl_info, FALSE);
+        surface_bind_and_dirtify(surface, context, FALSE);
         glTexImage2D(surface->texture_target, surface->texture_level,
                 GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     }
     if (surface->texture_name_srgb)
     {
-        surface_bind_and_dirtify(surface, context->gl_info, TRUE);
+        surface_bind_and_dirtify(surface, context, TRUE);
         glTexImage2D(surface->texture_target, surface->texture_level,
                 GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     }
@@ -2222,16 +2222,16 @@ void surface_set_texture_target(struct wined3d_surface *surface, GLenum target)
 }
 
 /* Context activation is done by the caller. */
-void surface_bind(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info, BOOL srgb)
+void surface_bind(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb)
 {
-    TRACE("surface %p, gl_info %p, srgb %#x.\n", surface, gl_info, srgb);
+    TRACE("surface %p, context %p, srgb %#x.\n", surface, context, srgb);
 
     if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
         struct wined3d_texture *texture = surface->container.u.texture;
 
         TRACE("Passing to container (%p).\n", texture);
-        texture->texture_ops->texture_bind(texture, gl_info, srgb);
+        texture->texture_ops->texture_bind(texture, context, srgb);
     }
     else
     {
@@ -4202,8 +4202,8 @@ static void read_from_framebuffer_texture(struct wined3d_surface *surface, BOOL 
     gl_info = context->gl_info;
     device_invalidate_state(device, STATE_FRAMEBUFFER);
 
-    surface_prepare_texture(surface, gl_info, srgb);
-    surface_bind_and_dirtify(surface, gl_info, srgb);
+    surface_prepare_texture(surface, context, srgb);
+    surface_bind_and_dirtify(surface, context, srgb);
 
     TRACE("Reading back offscreen render target %p.\n", surface);
 
@@ -4223,7 +4223,7 @@ static void read_from_framebuffer_texture(struct wined3d_surface *surface, BOOL 
 
 /* Context activation is done by the caller. */
 static void surface_prepare_texture_internal(struct wined3d_surface *surface,
-        const struct wined3d_gl_info *gl_info, BOOL srgb)
+        struct wined3d_context *context, BOOL srgb)
 {
     DWORD alloc_flag = srgb ? SFLAG_SRGBALLOCATED : SFLAG_ALLOCATED;
     CONVERT_TYPES convert;
@@ -4235,13 +4235,13 @@ static void surface_prepare_texture_internal(struct wined3d_surface *surface,
     if (convert != NO_CONVERSION || format.convert) surface->flags |= SFLAG_CONVERTED;
     else surface->flags &= ~SFLAG_CONVERTED;
 
-    surface_bind_and_dirtify(surface, gl_info, srgb);
-    surface_allocate_surface(surface, gl_info, &format, srgb);
+    surface_bind_and_dirtify(surface, context, srgb);
+    surface_allocate_surface(surface, context->gl_info, &format, srgb);
     surface->flags |= alloc_flag;
 }
 
 /* Context activation is done by the caller. */
-void surface_prepare_texture(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info, BOOL srgb)
+void surface_prepare_texture(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb)
 {
     if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
@@ -4254,13 +4254,13 @@ void surface_prepare_texture(struct wined3d_surface *surface, const struct wined
         for (i = 0; i < sub_count; ++i)
         {
             struct wined3d_surface *s = surface_from_resource(texture->sub_resources[i]);
-            surface_prepare_texture_internal(s, gl_info, srgb);
+            surface_prepare_texture_internal(s, context, srgb);
         }
 
         return;
     }
 
-    surface_prepare_texture_internal(surface, gl_info, srgb);
+    surface_prepare_texture_internal(surface, context, srgb);
 }
 
 static void flush_to_framebuffer_drawpixels(struct wined3d_surface *surface,
@@ -5230,7 +5230,7 @@ static void surface_blt_to_drawable(struct wined3d_device *device,
     if (!surface_is_offscreen(dst_surface))
         surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
 
-    device->blitter->set_shader(device->blit_priv, context->gl_info, src_surface);
+    device->blitter->set_shader(device->blit_priv, context, src_surface);
 
     ENTER_GL();
 
@@ -5577,10 +5577,11 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
 }
 
 /* GL locking is done by the caller */
-static void surface_depth_blt(const struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
+static void surface_depth_blt(const struct wined3d_surface *surface, struct wined3d_context *context,
         GLuint texture, GLint x, GLint y, GLsizei w, GLsizei h, GLenum target)
 {
     struct wined3d_device *device = surface->resource.device;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     GLint compare_mode = GL_NONE;
     struct blt_info info;
     GLint old_binding = 0;
@@ -5650,7 +5651,6 @@ void surface_modify_ds_location(struct wined3d_surface *surface,
 void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_context *context, DWORD location)
 {
     struct wined3d_device *device = surface->resource.device;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
     GLsizei w, h;
 
     TRACE("surface %p, new location %#x.\n", surface, location);
@@ -5756,7 +5756,7 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
         glReadBuffer(GL_NONE);
 
         /* Do the actual blit */
-        surface_depth_blt(surface, gl_info, device->depth_blt_texture, 0, 0, w, h, bind_target);
+        surface_depth_blt(surface, context, device->depth_blt_texture, 0, 0, w, h, bind_target);
         checkGLcall("depth_blt");
 
         context_invalidate_state(context, STATE_FRAMEBUFFER);
@@ -5773,7 +5773,7 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
 
         context_apply_fbo_state_blit(context, GL_FRAMEBUFFER,
                 context->swapchain->front_buffer, NULL, SFLAG_INDRAWABLE);
-        surface_depth_blt(surface, gl_info, surface->texture_name,
+        surface_depth_blt(surface, context, surface->texture_name,
                 0, surface->pow2Height - h, w, h, surface->texture_target);
         checkGLcall("depth_blt");
 
@@ -5894,7 +5894,7 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
         /* TODO: Use already acquired context when possible. */
         context = context_acquire(device, NULL);
 
-        surface_bind_and_dirtify(surface, gl_info, !(surface->flags & SFLAG_INTEXTURE));
+        surface_bind_and_dirtify(surface, context, !(surface->flags & SFLAG_INTEXTURE));
         surface_download_data(surface, gl_info);
 
         context_release(context);
@@ -6069,8 +6069,8 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     /* TODO: Use already acquired context when possible. */
     context = context_acquire(device, NULL);
 
-    surface_prepare_texture(surface, gl_info, srgb);
-    surface_bind_and_dirtify(surface, gl_info, srgb);
+    surface_prepare_texture(surface, context, srgb);
+    surface_bind_and_dirtify(surface, context, srgb);
 
     if (surface->CKeyFlags & WINEDDSD_CKSRCBLT)
     {
@@ -6289,15 +6289,15 @@ static void ffp_blit_p8_upload_palette(const struct wined3d_surface *surface, co
 }
 
 /* Context activation is done by the caller. */
-static HRESULT ffp_blit_set(void *blit_priv, const struct wined3d_gl_info *gl_info, struct wined3d_surface *surface)
+static HRESULT ffp_blit_set(void *blit_priv, struct wined3d_context *context, struct wined3d_surface *surface)
 {
     enum complex_fixup fixup = get_complex_fixup(surface->resource.format->color_fixup);
 
     /* When EXT_PALETTED_TEXTURE is around, palette conversion is done by the GPU
      * else the surface is converted in software at upload time in LoadLocation.
      */
-    if(fixup == COMPLEX_FIXUP_P8 && gl_info->supported[EXT_PALETTED_TEXTURE])
-        ffp_blit_p8_upload_palette(surface, gl_info);
+    if(fixup == COMPLEX_FIXUP_P8 && context->gl_info->supported[EXT_PALETTED_TEXTURE])
+        ffp_blit_p8_upload_palette(surface, context->gl_info);
 
     ENTER_GL();
     glEnable(surface->texture_target);
@@ -6438,7 +6438,7 @@ static void cpu_blit_free(struct wined3d_device *device)
 }
 
 /* Context activation is done by the caller. */
-static HRESULT cpu_blit_set(void *blit_priv, const struct wined3d_gl_info *gl_info, struct wined3d_surface *surface)
+static HRESULT cpu_blit_set(void *blit_priv, struct wined3d_context *context, struct wined3d_surface *surface)
 {
     return WINED3D_OK;
 }

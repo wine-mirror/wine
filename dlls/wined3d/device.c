@@ -4841,10 +4841,10 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
      * the texture wouldn't be the current location, and we'd upload zeroes
      * just to overwrite them again. */
     if (update_w == dst_w && update_h == dst_h)
-        surface_prepare_texture(dst_surface, gl_info, FALSE);
+        surface_prepare_texture(dst_surface, context, FALSE);
     else
         surface_load_location(dst_surface, SFLAG_INTEXTURE, NULL);
-    surface_bind(dst_surface, gl_info, FALSE);
+    surface_bind(dst_surface, context, FALSE);
 
     data.buffer_object = 0;
     data.addr = src_surface->resource.allocatedMemory;

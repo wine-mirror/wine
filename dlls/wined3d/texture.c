@@ -133,14 +133,14 @@ void wined3d_texture_set_dirty(struct wined3d_texture *texture, BOOL dirty)
 
 /* Context activation is done by the caller. */
 static HRESULT wined3d_texture_bind(struct wined3d_texture *texture,
-        const struct wined3d_gl_info *gl_info, BOOL srgb, BOOL *set_surface_desc)
+        struct wined3d_context *context, BOOL srgb, BOOL *set_surface_desc)
 {
     struct gl_texture *gl_tex;
     BOOL new_texture = FALSE;
     HRESULT hr = WINED3D_OK;
     GLenum target;
 
-    TRACE("texture %p, srgb %#x, set_surface_desc %p.\n", texture, srgb, set_surface_desc);
+    TRACE("texture %p, context %p, srgb %#x, set_surface_desc %p.\n", texture, context, srgb, set_surface_desc);
 
     /* sRGB mode cache for preload() calls outside drawprim. */
     if (srgb)
@@ -148,7 +148,7 @@ static HRESULT wined3d_texture_bind(struct wined3d_texture *texture,
     else
         texture->flags &= ~WINED3D_TEXTURE_IS_SRGB;
 
-    gl_tex = wined3d_texture_get_gl_texture(texture, gl_info, srgb);
+    gl_tex = wined3d_texture_get_gl_texture(texture, context->gl_info, srgb);
     target = texture->target;
 
     ENTER_GL();
@@ -176,7 +176,7 @@ static HRESULT wined3d_texture_bind(struct wined3d_texture *texture,
         gl_tex->states[WINED3DTEXSTA_MIPFILTER] = WINED3DTEXF_LINEAR; /* GL_NEAREST_MIPMAP_LINEAR */
         gl_tex->states[WINED3DTEXSTA_MAXMIPLEVEL] = 0;
         gl_tex->states[WINED3DTEXSTA_MAXANISOTROPY] = 1;
-        if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+        if (context->gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
             gl_tex->states[WINED3DTEXSTA_SRGBTEXTURE] = TRUE;
         else
             gl_tex->states[WINED3DTEXSTA_SRGBTEXTURE] = srgb;
@@ -590,23 +590,23 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
 
 /* Context activation is done by the caller. */
 static HRESULT texture2d_bind(struct wined3d_texture *texture,
-        const struct wined3d_gl_info *gl_info, BOOL srgb)
+        struct wined3d_context *context, BOOL srgb)
 {
     BOOL set_gl_texture_desc;
     HRESULT hr;
 
-    TRACE("texture %p, gl_info %p, srgb %#x.\n", texture, gl_info, srgb);
+    TRACE("texture %p, context %p, srgb %#x.\n", texture, context, srgb);
 
-    hr = wined3d_texture_bind(texture, gl_info, srgb, &set_gl_texture_desc);
+    hr = wined3d_texture_bind(texture, context, srgb, &set_gl_texture_desc);
     if (set_gl_texture_desc && SUCCEEDED(hr))
     {
         UINT sub_count = texture->level_count * texture->layer_count;
-        BOOL srgb_tex = !gl_info->supported[EXT_TEXTURE_SRGB_DECODE]
+        BOOL srgb_tex = !context->gl_info->supported[EXT_TEXTURE_SRGB_DECODE]
                 && (texture->flags & WINED3D_TEXTURE_IS_SRGB);
         struct gl_texture *gl_tex;
         UINT i;
 
-        gl_tex = wined3d_texture_get_gl_texture(texture, gl_info, srgb_tex);
+        gl_tex = wined3d_texture_get_gl_texture(texture, context->gl_info, srgb_tex);
 
         for (i = 0; i < sub_count; ++i)
         {
@@ -1055,13 +1055,13 @@ static HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT he
 
 /* Context activation is done by the caller. */
 static HRESULT texture3d_bind(struct wined3d_texture *texture,
-        const struct wined3d_gl_info *gl_info, BOOL srgb)
+        struct wined3d_context *context, BOOL srgb)
 {
     BOOL dummy;
 
-    TRACE("texture %p, gl_info %p, srgb %#x.\n", texture, gl_info, srgb);
+    TRACE("texture %p, context %p, srgb %#x.\n", texture, context, srgb);
 
-    return wined3d_texture_bind(texture, gl_info, srgb, &dummy);
+    return wined3d_texture_bind(texture, context, srgb, &dummy);
 }
 
 /* Do not call while under the GL lock. */
@@ -1097,7 +1097,7 @@ static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
     {
         for (i = 0; i < texture->level_count; ++i)
         {
-            volume_load(volume_from_resource(texture->sub_resources[i]), i,
+            volume_load(volume_from_resource(texture->sub_resources[i]), context, i,
                     texture->flags & WINED3D_TEXTURE_IS_SRGB);
         }
     }
@@ -1107,7 +1107,7 @@ static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
         {
             struct wined3d_volume *volume = volume_from_resource(texture->sub_resources[i]);
             volume_add_dirty_box(volume, NULL);
-            volume_load(volume, i, texture->flags & WINED3D_TEXTURE_IS_SRGB);
+            volume_load(volume, context, i, texture->flags & WINED3D_TEXTURE_IS_SRGB);
         }
     }
     else
