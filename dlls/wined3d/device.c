@@ -707,10 +707,10 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
         if (context->gl_info->supported[EXT_STENCIL_TWO_SIDE])
         {
             glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
-            device_invalidate_state(device, STATE_RENDER(WINED3DRS_TWOSIDEDSTENCILMODE));
+            context_invalidate_state(context, STATE_RENDER(WINED3DRS_TWOSIDEDSTENCILMODE));
         }
         glStencilMask(~0U);
-        device_invalidate_state(device, STATE_RENDER(WINED3DRS_STENCILWRITEMASK));
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_STENCILWRITEMASK));
         glClearStencil(stencil);
         checkGLcall("glClearStencil");
         clear_mask = clear_mask | GL_STENCIL_BUFFER_BIT;
@@ -730,7 +730,7 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
         surface_modify_location(fb->depth_stencil, SFLAG_INDRAWABLE, TRUE);
 
         glDepthMask(GL_TRUE);
-        device_invalidate_state(device, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
         glClearDepth(depth);
         checkGLcall("glClearDepth");
         clear_mask = clear_mask | GL_DEPTH_BUFFER_BIT;
@@ -744,10 +744,10 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
         }
 
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
-        device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
-        device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
-        device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
+        context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
         glClearColor(color->r, color->g, color->b, color->a);
         checkGLcall("glClearColor");
         clear_mask = clear_mask | GL_COLOR_BUFFER_BIT;
