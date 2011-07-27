@@ -184,12 +184,27 @@ if seems to default to case sensitivity
 if /i seems to work
 if /I seems to work
 -----------Testing for -----------
+...plain FOR
 A
 B
 C
+%I
+%I
+%I
+%j
+%j
+%j
 A
 B
 C
+1
+4
+1
+A
+B
+C
+...imbricated FORs
+@todo_wine@X Y
 @todo_wine@X Y
 @todo_wine@A C
 @todo_wine@A D
@@ -199,6 +214,8 @@ C
 @todo_wine@A D
 @todo_wine@B C
 @todo_wine@B D
+...basic wildcards
+bazbaz
 -----------Testing del /a-----------
 not-r.test not found after delete, good
 r.test found before delete, good

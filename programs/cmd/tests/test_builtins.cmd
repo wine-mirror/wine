@@ -262,16 +262,25 @@ if /I foo==FOO echo if /I seems to work
 if /I not foo==FOO echo if /I seems to be broken
 
 echo -----------Testing for -----------
+echo ...plain FOR
 for %%i in (A B C) do echo %%i
+for %%i in (A B C) do echo %%I
+for %%i in (A B C) do echo %%j
 for %%i in (A B C) do call :forTestFun1 %%i
+for %%i in (1,4,1) do echo %%i
+for %%i in (A, B,C) do echo %%i
 goto :endForTestFun1
 :forTestFun1
 echo %1
 goto :eof
 :endForTestFun1
+echo ...imbricated FORs
 for %%i in (X) do (
     for %%j in (Y) do (
         echo %%i %%j))
+for %%i in (X) do (
+    for %%I in (Y) do (
+        echo %%i %%I))
 for %%i in (A B) do (
     for %%j in (C D) do (
         echo %%i %%j))
@@ -283,6 +292,15 @@ goto :endForTestFun2
 echo %1 %2
 goto :eof
 :endForTestFun2
+mkdir foobar & cd foobar
+mkdir foo
+mkdir bar
+mkdir baz
+echo > bazbaz
+echo ...basic wildcards
+for %%i in (ba*) do echo %%i
+cd ..
+rd /s/Q foobar
 
 echo -----------Testing del /a-----------
 del /f/q *.test > nul
