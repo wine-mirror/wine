@@ -1,7 +1,7 @@
 /*
  * Copyright 2004 Mike McCormack for CodeWeavers
  * Copyright 2006 Rob Shearman for CodeWeavers
- * Copyright 2008 Hans Leidekker for CodeWeavers
+ * Copyright 2008, 2011 Hans Leidekker for CodeWeavers
  * Copyright 2009 Juan Lang
  *
  * This library is free software; you can redistribute it and/or
@@ -2450,18 +2450,19 @@ static HRESULT WINAPI winhttp_request_Open(
     uc.dwSchemeLength   = ~0u;
     uc.dwHostNameLength = ~0u;
     uc.dwUrlPathLength  = ~0u;
+    uc.dwExtraInfoLength = ~0u;
     if (!WinHttpCrackUrl( url, 0, 0, &uc )) return HRESULT_FROM_WIN32( get_last_error() );
 
     if (!(hostname = heap_alloc( (uc.dwHostNameLength + 1) * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
     memcpy( hostname, uc.lpszHostName, uc.dwHostNameLength * sizeof(WCHAR) );
     hostname[uc.dwHostNameLength] = 0;
-    if (!(path = heap_alloc( (uc.dwUrlPathLength + 1) * sizeof(WCHAR) )))
+    if (!(path = heap_alloc( (uc.dwUrlPathLength + uc.dwExtraInfoLength + 1) * sizeof(WCHAR) )))
     {
         heap_free( hostname );
         return E_OUTOFMEMORY;
     }
-    memcpy( path, uc.lpszUrlPath, uc.dwUrlPathLength * sizeof(WCHAR) );
-    path[uc.dwUrlPathLength] = 0;
+    memcpy( path, uc.lpszUrlPath, (uc.dwUrlPathLength + uc.dwExtraInfoLength) * sizeof(WCHAR) );
+    path[uc.dwUrlPathLength + uc.dwExtraInfoLength] = 0;
 
     if (V_BOOL( &async ) == VARIANT_TRUE) flags |= WINHTTP_FLAG_ASYNC;
     if (!(hsession = WinHttpOpen( user_agentW, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, NULL, NULL, flags )))
