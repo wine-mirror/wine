@@ -85,7 +85,6 @@ struct tagMSITABLE
 /* information for default tables */
 static const WCHAR szTables[]  = {'_','T','a','b','l','e','s',0};
 static const WCHAR szTable[]   = {'T','a','b','l','e',0};
-static const WCHAR szName[]    = {'N','a','m','e',0};
 static const WCHAR szColumns[] = {'_','C','o','l','u','m','n','s',0};
 static const WCHAR szNumber[]  = {'N','u','m','b','e','r',0};
 static const WCHAR szType[]    = {'T','y','p','e',0};
@@ -1502,8 +1501,8 @@ static UINT TABLE_get_dimensions( struct tagMSIVIEW *view, UINT *rows, UINT *col
 }
 
 static UINT TABLE_get_column_info( struct tagMSIVIEW *view,
-                UINT n, LPWSTR *name, UINT *type, BOOL *temporary,
-                LPWSTR *table_name )
+                UINT n, LPCWSTR *name, UINT *type, BOOL *temporary,
+                LPCWSTR *table_name )
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
 
@@ -1514,14 +1513,14 @@ static UINT TABLE_get_column_info( struct tagMSIVIEW *view,
 
     if( name )
     {
-        *name = strdupW( tv->columns[n-1].colname );
+        *name = tv->columns[n-1].colname;
         if( !*name )
             return ERROR_FUNCTION_FAILED;
     }
 
     if( table_name )
     {
-        *table_name = strdupW( tv->columns[n-1].tablename );
+        *table_name = tv->columns[n-1].tablename;
         if( !*table_name )
             return ERROR_FUNCTION_FAILED;
     }

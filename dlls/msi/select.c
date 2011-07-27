@@ -208,9 +208,8 @@ static UINT SELECT_get_dimensions( struct tagMSIVIEW *view, UINT *rows, UINT *co
     return sv->table->ops->get_dimensions( sv->table, rows, NULL );
 }
 
-static UINT SELECT_get_column_info( struct tagMSIVIEW *view,
-                UINT n, LPWSTR *name, UINT *type, BOOL *temporary,
-                LPWSTR *table_name)
+static UINT SELECT_get_column_info( struct tagMSIVIEW *view, UINT n, LPCWSTR *name,
+                                    UINT *type, BOOL *temporary, LPCWSTR *table_name )
 {
     MSISELECTVIEW *sv = (MSISELECTVIEW*)view;
 
@@ -232,7 +231,6 @@ static UINT msi_select_update(struct tagMSIVIEW *view, MSIRECORD *rec, UINT row)
 {
     MSISELECTVIEW *sv = (MSISELECTVIEW*)view;
     UINT r, i, num_columns, col, type, val;
-    LPWSTR name;
     LPCWSTR str;
     MSIRECORD *mod;
 
@@ -248,8 +246,7 @@ static UINT msi_select_update(struct tagMSIVIEW *view, MSIRECORD *rec, UINT row)
     {
         col = sv->cols[i];
 
-        r = SELECT_get_column_info(view, i + 1, &name, &type, NULL, NULL);
-        msi_free(name);
+        r = SELECT_get_column_info(view, i + 1, NULL, &type, NULL, NULL);
         if (r != ERROR_SUCCESS)
         {
             ERR("Failed to get column information: %d\n", r);

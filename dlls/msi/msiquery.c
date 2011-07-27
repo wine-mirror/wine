@@ -58,8 +58,7 @@ static void MSI_CloseView( MSIOBJECTHDR *arg )
 
 UINT VIEW_find_column( MSIVIEW *table, LPCWSTR name, LPCWSTR table_name, UINT *n )
 {
-    LPWSTR col_name;
-    LPWSTR haystack_table_name;
+    LPCWSTR col_name, haystack_table_name;
     UINT i, count, r;
 
     r = table->ops->get_dimensions( table, NULL, &count );
@@ -70,7 +69,6 @@ UINT VIEW_find_column( MSIVIEW *table, LPCWSTR name, LPCWSTR table_name, UINT *n
     {
         INT x;
 
-        col_name = NULL;
         r = table->ops->get_column_info( table, i, &col_name, NULL,
                                          NULL, &haystack_table_name );
         if( r != ERROR_SUCCESS )
@@ -78,15 +76,12 @@ UINT VIEW_find_column( MSIVIEW *table, LPCWSTR name, LPCWSTR table_name, UINT *n
         x = strcmpW( name, col_name );
         if( table_name )
             x |= strcmpW( table_name, haystack_table_name );
-        msi_free( col_name );
-        msi_free( haystack_table_name );
         if( !x )
         {
             *n = i;
             return ERROR_SUCCESS;
         }
     }
-
     return ERROR_INVALID_PARAMETER;
 }
 
@@ -536,7 +531,7 @@ UINT MSI_ViewGetColumnInfo( MSIQUERY *query, MSICOLINFO info, MSIRECORD **prec )
     UINT r = ERROR_FUNCTION_FAILED, i, count = 0, type;
     MSIRECORD *rec;
     MSIVIEW *view = query->view;
-    LPWSTR name;
+    LPCWSTR name;
     BOOL temporary;
 
     if( !view )
@@ -558,17 +553,14 @@ UINT MSI_ViewGetColumnInfo( MSIQUERY *query, MSICOLINFO info, MSIRECORD **prec )
     for( i=0; i<count; i++ )
     {
         name = NULL;
-        r = view->ops->get_column_info( view, i+1, &name, &type, &temporary,
-                                        NULL );
+        r = view->ops->get_column_info( view, i+1, &name, &type, &temporary, NULL );
         if( r != ERROR_SUCCESS )
             continue;
         if (info == MSICOLINFO_NAMES)
             MSI_RecordSetStringW( rec, i+1, name );
         else
             msi_set_record_type_string( rec, i+1, type, temporary );
-        msi_free( name );
     }
-
     *prec = rec;
     return ERROR_SUCCESS;
 }

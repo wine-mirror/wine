@@ -267,16 +267,9 @@ static UINT STREAMS_get_dimensions(struct tagMSIVIEW *view, UINT *rows, UINT *co
     return ERROR_SUCCESS;
 }
 
-static UINT STREAMS_get_column_info(struct tagMSIVIEW *view, UINT n,
-                                    LPWSTR *name, UINT *type, BOOL *temporary,
-                                    LPWSTR *table_name)
+static UINT STREAMS_get_column_info( struct tagMSIVIEW *view, UINT n, LPCWSTR *name,
+                                     UINT *type, BOOL *temporary, LPCWSTR *table_name )
 {
-    LPCWSTR name_ptr = NULL;
-
-    static const WCHAR Name[] = {'N','a','m','e',0};
-    static const WCHAR Data[] = {'D','a','t','a',0};
-    static const WCHAR _Streams[] = {'_','S','t','r','e','a','m','s',0};
-
     TRACE("(%p, %d, %p, %p, %p, %p)\n", view, n, name, type, temporary,
           table_name);
 
@@ -286,35 +279,17 @@ static UINT STREAMS_get_column_info(struct tagMSIVIEW *view, UINT n,
     switch (n)
     {
     case 1:
-        name_ptr = Name;
+        if (name) *name = szName;
         if (type) *type = MSITYPE_STRING | MSITYPE_VALID | MAX_STREAM_NAME_LEN;
         break;
 
     case 2:
-        name_ptr = Data;
+        if (name) *name = szData;
         if (type) *type = MSITYPE_STRING | MSITYPE_VALID | MSITYPE_NULLABLE;
         break;
     }
-
-    if (name)
-    {
-        *name = strdupW(name_ptr);
-        if (!*name) return ERROR_FUNCTION_FAILED;
-    }
-
-    if (table_name)
-    {
-        *table_name = strdupW(_Streams);
-        if (!*table_name)
-        {
-            msi_free(name);
-            return ERROR_FUNCTION_FAILED;
-        }
-    }
-
-    if (temporary)
-        *temporary = FALSE;
-
+    if (table_name) *table_name = szStreams;
+    if (temporary) *temporary = FALSE;
     return ERROR_SUCCESS;
 }
 

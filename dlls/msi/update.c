@@ -154,9 +154,8 @@ static UINT UPDATE_get_dimensions( struct tagMSIVIEW *view, UINT *rows, UINT *co
     return wv->ops->get_dimensions( wv, rows, cols );
 }
 
-static UINT UPDATE_get_column_info( struct tagMSIVIEW *view,
-                UINT n, LPWSTR *name, UINT *type, BOOL *temporary,
-                LPWSTR* table_name )
+static UINT UPDATE_get_column_info( struct tagMSIVIEW *view, UINT n, LPCWSTR *name,
+                                    UINT *type, BOOL *temporary, LPCWSTR *table_name )
 {
     MSIUPDATEVIEW *uv = (MSIUPDATEVIEW*)view;
     MSIVIEW *wv;

@@ -261,11 +261,10 @@ typedef struct tagMSIVIEWOPS
     /*
      * get_column_info - returns the name and type of a specific column
      *
-     *  The name and tablename is HeapAlloc'ed by this function and should be
-     *  freed by the caller.
      *  The column information can be queried at any time.
      */
-    UINT (*get_column_info)( struct tagMSIVIEW *view, UINT n, LPWSTR *name, UINT *type, BOOL *temporary, LPWSTR *tableName);
+    UINT (*get_column_info)( struct tagMSIVIEW *view, UINT n, LPCWSTR *name, UINT *type,
+                             BOOL *temporary, LPCWSTR *table_name );
 
     /*
      * modify - not yet implemented properly
@@ -1158,6 +1157,8 @@ static const WCHAR szInstallLevel[] = {'I','N','S','T','A','L','L','L','E','V','
 static const WCHAR szCostInitialize[] = {'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0};
 static const WCHAR szAppDataFolder[] = {'A','p','p','D','a','t','a','F','o','l','d','e','r',0};
 static const WCHAR szRollbackDisabled[] = {'R','o','l','l','b','a','c','k','D','i','s','a','b','l','e','d',0};
+static const WCHAR szName[] = {'N','a','m','e',0};
+static const WCHAR szData[] = {'D','a','t','a',0};
 
 /* memory allocation macro functions */
 static void *msi_alloc( size_t len ) __WINE_ALLOC_SIZE(1);

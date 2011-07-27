@@ -91,9 +91,8 @@ static UINT CREATE_get_dimensions( struct tagMSIVIEW *view, UINT *rows, UINT *co
     return ERROR_FUNCTION_FAILED;
 }
 
-static UINT CREATE_get_column_info( struct tagMSIVIEW *view,
-                UINT n, LPWSTR *name, UINT *type, BOOL *temporary,
-                LPWSTR *table_name)
+static UINT CREATE_get_column_info( struct tagMSIVIEW *view, UINT n, LPCWSTR *name,
+                                    UINT *type, BOOL *temporary, LPCWSTR *table_name )
 {
     MSICREATEVIEW *cv = (MSICREATEVIEW*)view;
 

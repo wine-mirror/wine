@@ -496,9 +496,8 @@ static UINT WHERE_get_dimensions( struct tagMSIVIEW *view, UINT *rows, UINT *col
     return wv->table->ops->get_dimensions( wv->table, NULL, cols );
 }
 
-static UINT WHERE_get_column_info( struct tagMSIVIEW *view,
-                UINT n, LPWSTR *name, UINT *type, BOOL *temporary,
-                LPWSTR *table_name)
+static UINT WHERE_get_column_info( struct tagMSIVIEW *view, UINT n, LPCWSTR *name,
+                                   UINT *type, BOOL *temporary, LPCWSTR *table_name )
 {
     MSIWHEREVIEW *wv = (MSIWHEREVIEW*)view;
 
