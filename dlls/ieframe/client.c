@@ -18,10 +18,12 @@
 
 #include <stdio.h>
 
-#include "wine/debug.h"
-#include "shdocvw.h"
+#include "ieframe.h"
+
 #include "mshtmdid.h"
 #include "idispids.h"
+
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 

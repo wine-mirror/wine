@@ -16,12 +16,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "wine/debug.h"
-#include "shdocvw.h"
-#include "hlink.h"
+#include "ieframe.h"
+
 #include "exdispid.h"
 #include "mshtml.h"
 #include "initguid.h"
+
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
@@ -340,7 +341,7 @@ void create_doc_view_hwnd(DocHost *This)
             NULL
         };
 
-        wndclass.hInstance = shdocvw_hinstance;
+        wndclass.hInstance = ieframe_instance;
 
         doc_view_atom = RegisterClassExW(&wndclass);
     }
@@ -350,7 +351,7 @@ void create_doc_view_hwnd(DocHost *This)
          wszShell_DocObject_View,
          WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP,
          rect.left, rect.top, rect.right, rect.bottom, This->frame_hwnd,
-         NULL, shdocvw_hinstance, This);
+         NULL, ieframe_instance, This);
 }
 
 void deactivate_document(DocHost *This)

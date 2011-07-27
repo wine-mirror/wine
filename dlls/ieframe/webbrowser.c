@@ -19,11 +19,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "wine/debug.h"
-#include "shdocvw.h"
+#include "ieframe.h"
+
 #include "exdispid.h"
 #include "mshtml.h"
 #include "shdeprecated.h"
+
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
@@ -173,7 +175,7 @@ static ULONG WINAPI WebBrowser_Release(IWebBrowser2 *iface)
         WebBrowser_OleObject_Destroy(This);
 
         heap_free(This);
-        SHDOCVW_UnlockModule();
+        unlock_module();
     }
 
     return ref;
@@ -1234,12 +1236,12 @@ static const IDocHostContainerVtbl DocHostContainerVtbl = {
     DocHostContainer_exec
 };
 
-static HRESULT WebBrowser_Create(INT version, IUnknown *pOuter, REFIID riid, void **ppv)
+static HRESULT create_webbrowser(int version, IUnknown *outer, REFIID riid, void **ppv)
 {
     WebBrowser *ret;
     HRESULT hres;
 
-    TRACE("(%p %s %p) version=%d\n", pOuter, debugstr_guid(riid), ppv, version);
+    TRACE("(%p %s %p) version=%d\n", outer, debugstr_guid(riid), ppv, version);
 
     ret = heap_alloc_zero(sizeof(WebBrowser));
 
@@ -1263,7 +1265,7 @@ static HRESULT WebBrowser_Create(INT version, IUnknown *pOuter, REFIID riid, voi
 
     HlinkFrame_Init(&ret->hlink_frame, (IUnknown*)&ret->IWebBrowser2_iface, &ret->doc_host);
 
-    SHDOCVW_LockModule();
+    lock_module();
 
     hres = IWebBrowser_QueryInterface(&ret->IWebBrowser2_iface, riid, ppv);
 
@@ -1271,12 +1273,12 @@ static HRESULT WebBrowser_Create(INT version, IUnknown *pOuter, REFIID riid, voi
     return hres;
 }
 
-HRESULT WebBrowserV1_Create(IUnknown *pOuter, REFIID riid, void **ppv)
+HRESULT WINAPI WebBrowserV1_Create(IClassFactory *iface, IUnknown *pOuter, REFIID riid, void **ppv)
 {
-    return WebBrowser_Create(1, pOuter, riid, ppv);
+    return create_webbrowser(1, pOuter, riid, ppv);
 }
 
-HRESULT WebBrowserV2_Create(IUnknown *pOuter, REFIID riid, void **ppv)
+HRESULT WINAPI WebBrowser_Create(IClassFactory *iface, IUnknown *pOuter, REFIID riid, void **ppv)
 {
-    return WebBrowser_Create(2, pOuter, riid, ppv);
+    return create_webbrowser(2, pOuter, riid, ppv);
 }

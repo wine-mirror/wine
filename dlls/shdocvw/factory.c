@@ -37,97 +37,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
  * Implement the WebBrowser class factory
  */
 
-typedef struct
-{
-    /* IUnknown fields */
-    IClassFactory IClassFactory_iface;
-    HRESULT (*cf)(LPUNKNOWN, REFIID, LPVOID *);
-    LONG ref;
-} IClassFactoryImpl;
-
-static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
-{
-    return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
-}
-
-
-/**********************************************************************
- * WBCF_QueryInterface (IUnknown)
- */
-static HRESULT WINAPI WBCF_QueryInterface(LPCLASSFACTORY iface,
-                                          REFIID riid, LPVOID *ppobj)
-{
-    TRACE("(%s %p)\n", debugstr_guid(riid), ppobj);
-
-    if (!ppobj)
-        return E_POINTER;
-
-    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IClassFactory, riid)) {
-        *ppobj = iface;
-        IClassFactory_AddRef(iface);
-        return S_OK;
-    }
-
-    WARN("Not supported interface %s\n", debugstr_guid(riid));
-
-    *ppobj = NULL;
-    return E_NOINTERFACE;
-}
-
-/************************************************************************
- * WBCF_AddRef (IUnknown)
- */
-static ULONG WINAPI WBCF_AddRef(LPCLASSFACTORY iface)
-{
-    SHDOCVW_LockModule();
-
-    return 2; /* non-heap based object */
-}
-
-/************************************************************************
- * WBCF_Release (IUnknown)
- */
-static ULONG WINAPI WBCF_Release(LPCLASSFACTORY iface)
-{
-    SHDOCVW_UnlockModule();
-
-    return 1; /* non-heap based object */
-}
-
-/************************************************************************
- * WBCF_CreateInstance (IClassFactory)
- */
-static HRESULT WINAPI WBCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter,
-                                          REFIID riid, LPVOID *ppobj)
-{
-    IClassFactoryImpl *This = (IClassFactoryImpl *) iface;
-    return This->cf(pOuter, riid, ppobj);
-}
-
-/************************************************************************
- * WBCF_LockServer (IClassFactory)
- */
-static HRESULT WINAPI WBCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
-{
-    TRACE("(%d)\n", dolock);
-
-    if (dolock)
-        SHDOCVW_LockModule();
-    else
-        SHDOCVW_UnlockModule();
-    
-    return S_OK;
-}
-
-static const IClassFactoryVtbl WBCF_Vtbl =
-{
-    WBCF_QueryInterface,
-    WBCF_AddRef,
-    WBCF_Release,
-    WBCF_CreateInstance,
-    WBCF_LockServer
-};
-
 static HRESULT get_ieframe_object(REFCLSID rclsid, REFIID riid, void **ppv)
 {
     HINSTANCE ieframe_instance;
@@ -152,50 +61,17 @@ static HRESULT get_ieframe_object(REFCLSID rclsid, REFIID riid, void **ppv)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
-    static IClassFactoryImpl WB1ClassFactory = {{&WBCF_Vtbl}, WebBrowserV1_Create};
-    static IClassFactoryImpl WB2ClassFactory = {{&WBCF_Vtbl}, WebBrowserV2_Create};
-
     TRACE("\n");
 
-    if(IsEqualGUID(&CLSID_WebBrowser, rclsid))
-        return IClassFactory_QueryInterface(&WB2ClassFactory.IClassFactory_iface, riid, ppv);
-
-    if(IsEqualGUID(&CLSID_WebBrowser_V1, rclsid))
-        return IClassFactory_QueryInterface(&WB1ClassFactory.IClassFactory_iface, riid, ppv);
-
-    if(IsEqualGUID(&CLSID_InternetShortcut, rclsid)
+    if(IsEqualGUID(&CLSID_WebBrowser, rclsid)
+       || IsEqualGUID(&CLSID_WebBrowser_V1, rclsid)
+       || IsEqualGUID(&CLSID_InternetShortcut, rclsid)
        || IsEqualGUID(&CLSID_CUrlHistory, rclsid)
        || IsEqualGUID(&CLSID_TaskbarList, rclsid))
         return get_ieframe_object(rclsid, riid, ppv);
 
     /* As a last resort, figure if the CLSID belongs to a 'Shell Instance Object' */
     return SHDOCVW_GetShellInstanceObjectClassObject(rclsid, riid, ppv);
-}
-
-HRESULT register_class_object(BOOL do_reg)
-{
-    HRESULT hres;
-
-    static DWORD cookie;
-    static IClassFactoryImpl IEClassFactory = {{&WBCF_Vtbl}, InternetExplorer_Create};
-
-    if(do_reg) {
-        hres = CoRegisterClassObject(&CLSID_InternetExplorer,
-                                     (IUnknown*)&IEClassFactory.IClassFactory_iface, CLSCTX_SERVER,
-                                     REGCLS_MULTIPLEUSE|REGCLS_SUSPENDED, &cookie);
-        if (FAILED(hres)) {
-            ERR("failed to register object %08x\n", hres);
-            return hres;
-        }
-
-        hres = CoResumeClassObjects();
-        if(SUCCEEDED(hres))
-            return hres;
-
-        ERR("failed to resume object %08x\n", hres);
-    }
-
-    return CoRevokeClassObject(cookie);
 }
 
 static HRESULT reg_install(LPCSTR section, STRTABLEA *strtable)
@@ -313,7 +189,7 @@ static BOOL check_native_ie(void)
     return ret;
 }
 
-DWORD register_iexplore(BOOL doregister)
+static DWORD register_iexplore(BOOL doregister)
 {
     HRESULT hres;
     if (check_native_ie())
@@ -323,4 +199,29 @@ DWORD register_iexplore(BOOL doregister)
     }
     hres = reg_install(doregister ? "RegisterIE" : "UnregisterIE", NULL);
     return FAILED(hres);
+}
+
+/******************************************************************
+ *		IEWinMain            (SHDOCVW.101)
+ *
+ * Only returns on error.
+ */
+DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
+{
+    DWORD (WINAPI *pIEWinMain)(LPSTR,int);
+
+    TRACE("%s %d\n", debugstr_a(szCommandLine), nShowWindow);
+
+    if(*szCommandLine == '-' || *szCommandLine == '/') {
+        if(!strcasecmp(szCommandLine+1, "regserver"))
+            return register_iexplore(TRUE);
+        if(!strcasecmp(szCommandLine+1, "unregserver"))
+            return register_iexplore(FALSE);
+    }
+
+    pIEWinMain = (void*)GetProcAddress(get_ieframe_instance(), MAKEINTRESOURCEA(101));
+    if(!pIEWinMain)
+        ExitProcess(1);
+
+    return pIEWinMain(szCommandLine, nShowWindow);
 }

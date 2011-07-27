@@ -42,56 +42,6 @@ LONG SHDOCVW_refCount = 0;
 
 HINSTANCE shdocvw_hinstance = 0;
 static HMODULE SHDOCVW_hshell32 = 0;
-static ITypeInfo *wb_typeinfo = NULL;
-
-HRESULT get_typeinfo(ITypeInfo **typeinfo)
-{
-    ITypeLib *typelib;
-    HRESULT hres;
-
-    if(wb_typeinfo) {
-        *typeinfo = wb_typeinfo;
-        return S_OK;
-    }
-
-    hres = LoadRegTypeLib(&LIBID_SHDocVw, 1, 1, LOCALE_SYSTEM_DEFAULT, &typelib);
-    if(FAILED(hres)) {
-        ERR("LoadRegTypeLib failed: %08x\n", hres);
-        return hres;
-    }
-
-    hres = ITypeLib_GetTypeInfoOfGuid(typelib, &IID_IWebBrowser2, &wb_typeinfo);
-    ITypeLib_Release(typelib);
-
-    *typeinfo = wb_typeinfo;
-    return hres;
-}
-
-const char *debugstr_variant(const VARIANT *v)
-{
-    if(!v)
-        return "(null)";
-
-    switch(V_VT(v)) {
-    case VT_EMPTY:
-        return "{VT_EMPTY}";
-    case VT_NULL:
-        return "{VT_NULL}";
-    case VT_I4:
-        return wine_dbg_sprintf("{VT_I4: %d}", V_I4(v));
-    case VT_R8:
-        return wine_dbg_sprintf("{VT_R8: %lf}", V_R8(v));
-    case VT_BSTR:
-        return wine_dbg_sprintf("{VT_BSTR: %s}", debugstr_w(V_BSTR(v)));
-    case VT_DISPATCH:
-        return wine_dbg_sprintf("{VT_DISPATCH: %p}", V_DISPATCH(v));
-    case VT_BOOL:
-        return wine_dbg_sprintf("{VT_BOOL: %x}", V_BOOL(v));
-    default:
-        return wine_dbg_sprintf("{vt %d}", V_VT(v));
-    }
-}
-
 static HINSTANCE ieframe_instance;
 
 HINSTANCE get_ieframe_instance(void)
@@ -114,13 +64,9 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
     {
         case DLL_PROCESS_ATTACH:
         shdocvw_hinstance = hinst;
-        register_iewindow_class();
         break;
     case DLL_PROCESS_DETACH:
         if (SHDOCVW_hshell32) FreeLibrary(SHDOCVW_hshell32);
-        unregister_iewindow_class();
-        if(wb_typeinfo)
-            ITypeInfo_Release(wb_typeinfo);
         if(ieframe_instance)
             FreeLibrary(ieframe_instance);
         break;

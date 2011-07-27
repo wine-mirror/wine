@@ -1,3 +1,6 @@
+# ordinal exports
+101 stdcall -noname IEWinMain(str long)
+
 @ stdcall -private DllCanUnloadNow()
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stdcall -private DllRegisterServer()

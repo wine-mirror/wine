@@ -19,15 +19,16 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 
-#include "wine/debug.h"
+#include "ieframe.h"
 
-#include "shdocvw.h"
 #include "exdispid.h"
 #include "shellapi.h"
 #include "winreg.h"
 #include "shlwapi.h"
 #include "wininet.h"
 #include "mshtml.h"
+
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
@@ -560,7 +561,7 @@ static BOOL try_application_url(LPCWSTR url)
         return FALSE;
 
     TRACE("openning application %s\n", debugstr_w(app));
- 
+
     memset(&exec_info, 0, sizeof(exec_info));
     exec_info.cbSize = sizeof(exec_info);
     exec_info.lpFile = url;
@@ -840,7 +841,7 @@ HRESULT navigate_url(DocHost *This, LPCWSTR url, const VARIANT *Flags,
 
     TRACE("navigating to %s\n", debugstr_w(url));
 
-    if((Flags && V_VT(Flags) != VT_EMPTY) 
+    if((Flags && V_VT(Flags) != VT_EMPTY)
        || (TargetFrameName && V_VT(TargetFrameName) != VT_EMPTY))
         FIXME("Unsupported args (Flags %p:%d; TargetFrameName %p:%d)\n",
                 Flags, Flags ? V_VT(Flags) : -1, TargetFrameName,

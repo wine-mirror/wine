@@ -24,11 +24,14 @@
  */
 
 #include <string.h>
-#include "wine/debug.h"
-#include "shdocvw.h"
+
+#include "ieframe.h"
+
 #include "htiframe.h"
 #include "idispids.h"
 #include "mshtmdid.h"
+
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
@@ -88,7 +91,7 @@ static void create_shell_embedding_hwnd(WebBrowser *This)
             wszShellEmbedding,
             NULL
         };
-        wndclass.hInstance = shdocvw_hinstance;
+        wndclass.hInstance = ieframe_instance;
 
         RegisterClassExW(&wndclass);
     }
@@ -105,7 +108,7 @@ static void create_shell_embedding_hwnd(WebBrowser *This)
             WS_CLIPSIBLINGS | WS_CLIPCHILDREN
             | (parent ? WS_CHILD | WS_TABSTOP : WS_POPUP | WS_MAXIMIZEBOX),
             0, 0, 0, 0, parent,
-            NULL, shdocvw_hinstance, This);
+            NULL, ieframe_instance, This);
 
     TRACE("parent=%p hwnd=%p\n", parent, This->shell_embedding_hwnd);
 }

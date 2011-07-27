@@ -23,8 +23,10 @@
  */
 
 #include <string.h>
+
+#include "ieframe.h"
+
 #include "wine/debug.h"
-#include "shdocvw.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
