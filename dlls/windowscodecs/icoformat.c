@@ -69,6 +69,7 @@ typedef struct {
     IWICBitmapFrameDecode IWICBitmapFrameDecode_iface;
     LONG ref;
     UINT width, height;
+    double dpiX, dpiY;
     BYTE *bits;
 } IcoFrameDecode;
 
@@ -155,8 +156,14 @@ static HRESULT WINAPI IcoFrameDecode_GetPixelFormat(IWICBitmapFrameDecode *iface
 static HRESULT WINAPI IcoFrameDecode_GetResolution(IWICBitmapFrameDecode *iface,
     double *pDpiX, double *pDpiY)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, pDpiX, pDpiY);
-    return E_NOTIMPL;
+    IcoFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
+
+    *pDpiX = This->dpiX;
+    *pDpiY = This->dpiY;
+
+    TRACE("(%p) -> (%f,%f)\n", iface, *pDpiX, *pDpiY);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IcoFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
@@ -275,6 +282,9 @@ static HRESULT ReadIcoDib(IStream *stream, IcoFrameDecode *result)
 
                 IWICBitmapSource_Release(source);
             }
+
+            if (SUCCEEDED(hr))
+                hr = IWICBitmapFrameDecode_GetResolution(source, &result->dpiX, &result->dpiY);
 
             IWICBitmapFrameDecode_Release(framedecode);
         }
@@ -400,6 +410,9 @@ static HRESULT ReadIcoPng(IStream *stream, IcoFrameDecode *result)
     if (FAILED(hr))
         goto end;
     hr = IWICBitmapFrameDecode_GetSize(sourceFrame, &result->width, &result->height);
+    if (FAILED(hr))
+        goto end;
+    hr = IWICBitmapFrameDecode_GetResolution(sourceFrame, &result->dpiX, &result->dpiY);
     if (FAILED(hr))
         goto end;
     result->bits = HeapAlloc(GetProcessHeap(), 0, 4 * result->width * result->height);
