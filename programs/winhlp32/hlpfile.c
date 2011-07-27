@@ -1585,7 +1585,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
 
             case 0x8C:
                 if (!HLPFILE_RtfAddControl(rd, "\\_")) goto done;
-                /* FIXME: it could be that hypen is also in input stream !! */
+                /* FIXME: it could be that hyphen is also in input stream !! */
                 format += 1;
                 rd->char_pos++;
                 break;

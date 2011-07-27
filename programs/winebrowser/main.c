@@ -22,7 +22,7 @@
  *  Winebrowser is a winelib application that will start the appropriate
  *  native browser or mail client for a wine installation that lacks a 
  *  windows browser/mail client. For example, you will be able to open
- *  urls via native mozilla if no browser has yet been installed in wine.
+ *  URLs via native mozilla if no browser has yet been installed in wine.
  *
  *  The application to launch is chosen from a default set or, if set,
  *  taken from a registry key.

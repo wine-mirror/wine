@@ -229,7 +229,7 @@ static int show_dll_in_list( const char *name )
 
 static void set_controls_from_selection(HWND dialog)
 {
-    /* FIXME: display/update some information about the selected dll (purpose, recommended loadorder) maybe? */
+    /* FIXME: display/update some information about the selected dll (purpose, recommended load order) maybe? */
 }
 
 static void clear_settings(HWND dialog)

@@ -57,7 +57,7 @@ static void GraphCtrl_Init(TGraphCtrl* this)
      * we need a starting point (i.e. a "previous" point)
      * use 0.0 as the default first point.
      * these are public member variables, and can be changed outside
-     * (after construction).  Therefore m_perviousPosition could be set to
+     * (after construction).  Therefore m_dPreviousPosition could be set to
      * a more appropriate value prior to the first call to SetPosition.
      */
     this->m_dPreviousPosition[0] = 0.0;
@@ -69,8 +69,8 @@ static void GraphCtrl_Init(TGraphCtrl* this)
     this->m_nYDecimals = 3;
 
     /*  set some initial values for the scaling until "SetRange" is called.
-     *  these are protected varaibles and must be set with SetRange
-     *  in order to ensure that m_dRange is updated accordingly 
+     *  these are protected variables and must be set with SetRange
+     *  in order to ensure that m_dRange is updated accordingly
      */
     /*   m_dLowerLimit = -10.0; */
     /*   m_dUpperLimit =  10.0; */
@@ -401,7 +401,7 @@ static void GraphCtrl_DrawPoint(TGraphCtrl* this)
                SRCCOPY);
 
         /*  establish a rectangle over the right side of plot */
-        /*  which now needs to be cleaned up proir to adding the new point */
+        /*  which now needs to be cleaned up prior to adding the new point */
         rectCleanUp = this->m_rectPlot;
         rectCleanUp.left  = rectCleanUp.right - this->m_nShiftPixels;
 

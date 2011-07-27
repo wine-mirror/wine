@@ -447,7 +447,7 @@ HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONTW* lf,
      *  - the width of all characters in the font
      * This isn't true in Wine. As a temporary workaround, we get as the width of the
      * cell, the width of the first character in the font, after checking that all
-     * characters in the font have the same width (I hear paranoïa coming)
+     * characters in the font have the same width (I hear paranoia coming)
      * when this gets fixed, the code should be using tm.tmAveCharWidth
      * or tm.tmMaxCharWidth as the cell width.
      */
