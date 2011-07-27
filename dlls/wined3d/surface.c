@@ -5105,16 +5105,16 @@ static void surface_blt_fbo(struct wined3d_device *device, const WINED3DTEXTUREF
         context_set_draw_buffer(context, GL_COLOR_ATTACHMENT0);
     }
     context_check_fbo_status(context, GL_DRAW_FRAMEBUFFER);
-    device_invalidate_state(device, STATE_FRAMEBUFFER);
+    context_invalidate_state(context, STATE_FRAMEBUFFER);
 
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
-    device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
-    device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
-    device_invalidate_state(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
 
     glDisable(GL_SCISSOR_TEST);
-    device_invalidate_state(device, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
 
     gl_info->fbo_ops.glBlitFramebuffer(src_rect.left, src_rect.top, src_rect.right, src_rect.bottom,
             dst_rect.left, dst_rect.top, dst_rect.right, dst_rect.bottom, GL_COLOR_BUFFER_BIT, gl_filter);
