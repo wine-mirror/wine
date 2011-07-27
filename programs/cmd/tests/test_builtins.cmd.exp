@@ -30,6 +30,18 @@ word
 @pwd@>echo .word@space@
 .word
 
+@todo_wine@@pwd@>echo:
+@todo_wine@
+
+@pwd@>echo :@space@
+:
+
+@todo_wine@@pwd@>echo:word
+@todo_wine@word
+
+@pwd@>echo :word@space@
+:word
+
 @pwd@>echo word@space@@space@
 word@space@
 
@@ -45,6 +57,10 @@ at-echoed-word
 .
 word
 .word
+@todo_wine@
+:
+@todo_wine@word
+:word
 word@space@
 word@space@@space@
 ------------ Testing redirection operators --------------

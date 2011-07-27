@@ -11,6 +11,10 @@ echo.
 echo .
 echo.word
 echo .word
+echo:
+echo :
+echo:word
+echo :word
 echo word@space@
 echo word@space@@space@
 
@@ -25,6 +29,10 @@ echo.
 echo .
 echo.word
 echo .word
+echo:
+echo :
+echo:word
+echo :word
 echo word@space@
 echo word@space@@space@
 
