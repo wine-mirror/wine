@@ -147,20 +147,9 @@ static int need_delegation_indirect(const type_t *iface)
 static void free_variable( const var_t *arg, const char *local_var_prefix )
 {
   unsigned int type_offset = arg->type->typestring_offset;
-  expr_t *iid;
   type_t *type = arg->type;
-  expr_t *size = get_size_is_expr(type, arg->name);
 
-  if (size)
-  {
-    print_proxy( "__frame->_StubMsg.MaxCount = " );
-    write_expr(proxy, size, 0, 1, NULL, NULL, local_var_prefix);
-    fprintf(proxy, ";\n\n");
-    print_proxy( "NdrClearOutParameters( &__frame->_StubMsg, ");
-    fprintf(proxy, "&__MIDL_TypeFormatString.Format[%u], ", type_offset );
-    fprintf(proxy, "(void*)%s );\n", arg->name );
-    return;
-  }
+  write_parameter_conf_or_var_exprs(proxy, indent, local_var_prefix, PHASE_FREE, arg, FALSE);
 
   switch (typegen_detect_type(type, arg->attrs, TDT_IGNORE_STRINGS))
   {
@@ -174,23 +163,11 @@ static void free_variable( const var_t *arg, const char *local_var_prefix )
     break;
 
   case TGT_IFACE_POINTER:
-    iid = get_attrp( arg->attrs, ATTR_IIDIS );
-    if( iid )
-    {
-      print_proxy( "__frame->_StubMsg.MaxCount = (ULONG_PTR) " );
-      write_expr(proxy, iid, 1, 1, NULL, NULL, local_var_prefix);
-      print_proxy( ";\n\n" );
-    }
-    /* fall through */
   case TGT_POINTER:
-    if (get_pointer_fc(type, arg->attrs, TRUE) == RPC_FC_FP)
-    {
-      print_proxy( "NdrClearOutParameters( &__frame->_StubMsg, ");
-      fprintf(proxy, "&__MIDL_TypeFormatString.Format[%u], ", type_offset );
-      fprintf(proxy, "(void*)%s );\n", arg->name );
-    }
-    else
-      print_proxy("/* FIXME: %s code for %s type %d missing */\n", __FUNCTION__, arg->name, type_get_type(type) );
+  case TGT_ARRAY:
+    print_proxy( "NdrClearOutParameters( &__frame->_StubMsg, ");
+    fprintf(proxy, "&__MIDL_TypeFormatString.Format[%u], ", type_offset );
+    fprintf(proxy, "(void *)%s );\n", arg->name );
     break;
 
   default:

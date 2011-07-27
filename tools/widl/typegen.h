@@ -68,6 +68,8 @@ void write_typeformatstring(FILE *file, const statement_list_t *stmts, type_pred
 void write_procformatstring_offsets( FILE *file, const type_t *iface );
 void print_phase_basetype(FILE *file, int indent, const char *local_var_prefix, enum remoting_phase phase,
                           enum pass pass, const var_t *var, const char *varname);
+void write_parameter_conf_or_var_exprs(FILE *file, int indent, const char *local_var_prefix,
+                                       enum remoting_phase phase, const var_t *var, int valid_variance);
 void write_remoting_arguments(FILE *file, int indent, const var_t *func, const char *local_var_prefix,
                               enum pass pass, enum remoting_phase phase);
 unsigned int get_size_procformatstring_func(const type_t *iface, const var_t *func);

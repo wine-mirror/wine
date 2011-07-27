@@ -4035,8 +4035,8 @@ expr_t *get_size_is_expr(const type_t *t, const char *name)
     return x;
 }
 
-static void write_parameter_conf_or_var_exprs(FILE *file, int indent, const char *local_var_prefix,
-                                              enum remoting_phase phase, const var_t *var)
+void write_parameter_conf_or_var_exprs(FILE *file, int indent, const char *local_var_prefix,
+                                       enum remoting_phase phase, const var_t *var, int valid_variance)
 {
     const type_t *type = var->type;
     /* get fundamental type for the argument */
@@ -4057,9 +4057,14 @@ static void write_parameter_conf_or_var_exprs(FILE *file, int indent, const char
                 if (type_array_has_variance(type))
                 {
                     print_file(file, indent, "__frame->_StubMsg.Offset = 0;\n"); /* FIXME */
-                    print_file(file, indent, "__frame->_StubMsg.ActualCount = (ULONG_PTR)");
-                    write_expr(file, type_array_get_variance(type), 1, 1, NULL, NULL, local_var_prefix);
-                    fprintf(file, ";\n\n");
+                    if (valid_variance)
+                    {
+                        print_file(file, indent, "__frame->_StubMsg.ActualCount = (ULONG_PTR)");
+                        write_expr(file, type_array_get_variance(type), 1, 1, NULL, NULL, local_var_prefix);
+                        fprintf(file, ";\n\n");
+                    }
+                    else
+                        print_file(file, indent, "__frame->_StubMsg.ActualCount = __frame->_StubMsg.MaxCount;\n\n");
                 }
             }
             break;
@@ -4135,7 +4140,7 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
 
     if (phase == PHASE_BUFFERSIZE && get_required_buffer_size( var, &alignment, pass )) return;
 
-    write_parameter_conf_or_var_exprs(file, indent, local_var_prefix, phase, var);
+    write_parameter_conf_or_var_exprs(file, indent, local_var_prefix, phase, var, TRUE);
 
     switch (typegen_detect_type(type, var->attrs, TDT_ALL_TYPES))
     {
