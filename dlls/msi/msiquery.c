@@ -831,6 +831,12 @@ UINT WINAPI MsiDatabaseCommit( MSIHANDLE hdb )
         return ERROR_SUCCESS;
     }
 
+    if (db->mode == MSIDBOPEN_READONLY)
+    {
+        msiobj_release( &db->hdr );
+        return ERROR_SUCCESS;
+    }
+
     /* FIXME: lock the database */
 
     r = MSI_CommitTables( db );
