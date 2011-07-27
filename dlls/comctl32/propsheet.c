@@ -543,7 +543,6 @@ static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
   /* Extract the caption */
   psInfo->proppage[index].pszText = p;
   TRACE("Tab %d %s\n",index,debugstr_w( p ));
-  p += lstrlenW( p ) + 1;
 
   if (dwFlags & PSP_USETITLE)
   {

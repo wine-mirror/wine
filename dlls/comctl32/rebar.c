@@ -1577,7 +1577,7 @@ REBAR_SizeToHeight(REBAR_INFO *infoPtr, int height)
         }
     }
     else
-        extra -= REBAR_SizeChildrenToHeight(infoPtr, first_visible(infoPtr), infoPtr->uNumBands, extra / infoPtr->uNumRows, &fChanged);
+        REBAR_SizeChildrenToHeight(infoPtr, first_visible(infoPtr), infoPtr->uNumBands, extra / infoPtr->uNumRows, &fChanged);
 
     if (fChanged)
         REBAR_Layout(infoPtr);
