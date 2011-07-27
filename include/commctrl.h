@@ -579,7 +579,7 @@ typedef struct _IMAGELISTDRAWPARAMS
     INT         y;
     INT         cx;
     INT         cy;
-    INT         xBitmap;  /* x offest from the upperleft of bitmap */
+    INT         xBitmap;  /* x offset from the upperleft of bitmap */
     INT         yBitmap;  /* y offset from the upperleft of bitmap */
     COLORREF    rgbBk;
     COLORREF    rgbFg;

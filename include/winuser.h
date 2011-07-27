@@ -982,7 +982,7 @@ typedef struct tagWINDOWPLACEMENT
 #define COLOR_3DHILIGHT            COLOR_BTNHIGHLIGHT
 #define COLOR_BTNHILIGHT           COLOR_BTNHIGHLIGHT
 /* win98 colors */
-#define COLOR_ALTERNATEBTNFACE         25  /* undocumented, constant's name unknown */
+#define COLOR_ALTERNATEBTNFACE         25  /* undocumented, constant name unknown */
 #define COLOR_HOTLIGHT                 26
 #define COLOR_GRADIENTACTIVECAPTION    27
 #define COLOR_GRADIENTINACTIVECAPTION  28

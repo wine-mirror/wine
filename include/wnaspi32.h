@@ -19,8 +19,8 @@
 #ifndef __WNASPI32_H__
 #define __WNASPI32_H__
 
-/* This file should be 100% source compatible according to MSes docs and
- * Adaptecs docs */
+/* This file should be 100% source compatible according to MS docs and
+ * Adaptec docs */
 
 #ifdef __cplusplus
 extern "C" {

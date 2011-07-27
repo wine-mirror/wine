@@ -258,8 +258,8 @@ DECLARE_INTERFACE_(IDirect3D9Ex,IDirect3D9)
     /* Note: Microsoft's d3d9.h does not declare IDirect3D9Ex::RegisterSoftwareDevice . This would mean that
      * the offsets of the other methods in the Vtable change too. This is wrong. In Microsoft's
      * d3d9.dll, the offsets for the other functions are still compatible with IDirect3D9.
-     * This is probably because even in MS's header IDirect3D9Ex inherits from IDirect3D9, which makes the
-     * C++ inferface compatible, and nobody uses the C interface in Windows world.
+     * This is probably because even in MS header IDirect3D9Ex inherits from IDirect3D9, which makes the
+     * C++ interface compatible, and nobody uses the C interface in Windows world.
      */
     STDMETHOD(RegisterSoftwareDevice)(THIS_ void* pInitializeFunction) PURE;
 

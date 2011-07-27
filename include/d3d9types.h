@@ -1305,7 +1305,7 @@ typedef struct D3DDEVINFO_VCACHE {
     DWORD         OptMethod; 
      /* Cache size to use (only valid if OptMethod==1) */
     DWORD         CacheSize;
-    /* internal for deciding when to restart strips, non user modifyable (only valid if OptMethod==1) */
+    /* internal for deciding when to restart strips, non user modifiable (only valid if OptMethod==1) */
     DWORD         MagicNumber; 
 } D3DDEVINFO_VCACHE;
 
