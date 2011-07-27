@@ -1016,12 +1016,13 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
                 struct wined3d_context *context;
                 const struct wined3d_gl_info *gl_info;
 
-                if (buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
-                    device_invalidate_state(device, STATE_INDEXBUFFER);
-
                 context = context_acquire(device, NULL);
                 gl_info = context->gl_info;
+
                 ENTER_GL();
+
+                if (buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
+                    context_invalidate_state(context, STATE_INDEXBUFFER);
                 GL_EXTCALL(glBindBufferARB(buffer->buffer_type_hint, buffer->buffer_object));
 
                 if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
