@@ -23,6 +23,7 @@
 #include <stdio.h>
 
 static HINSTANCE hInst;
+static HWND hMainWnd;
 static char szAppName[5] = "View";
 static char szTitle[80];
 
@@ -101,7 +102,7 @@ static BOOL FileIsPlaceable( LPCSTR szFileName )
   return (apmh.key == APMHEADER_KEY);
 }
 
-static HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName )
+static HMETAFILE GetPlaceableMetaFile( LPCSTR szFileName )
 {
   LPBYTE lpData;
   METAHEADER mfHeader;
@@ -125,7 +126,7 @@ static HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName )
     char msg[128];
     sprintf(msg, "Computed checksum %04x != stored checksum %04x\n",
 	   checksum, APMHeader.checksum);
-        MessageBox(hwnd, msg, "Checksum failed", MB_OK);
+        MessageBox(hMainWnd, msg, "Checksum failed", MB_OK);
     return 0;
   }
 
@@ -150,16 +151,36 @@ static HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName )
   height = APMHeader.bbox.Bottom - APMHeader.bbox.Top;
 
   /*      printf("Ok! width %d height %d inch %d\n", width, height, APMHeader.inch);  */
-  hdc = GetDC(hwnd);
+  hdc = GetDC(hMainWnd);
   width = width * GetDeviceCaps(hdc, LOGPIXELSX)/APMHeader.inch;
   height = height * GetDeviceCaps(hdc,LOGPIXELSY)/APMHeader.inch;
-  ReleaseDC(hwnd, hdc);
+  ReleaseDC(hMainWnd, hdc);
 
   deltax = 0;
   deltay = 0 ;
   return hmf;
 }
 
+static void DoOpenFile(LPCSTR filename)
+{
+  if (!filename) return;
+
+  isAldus = FileIsPlaceable(filename);
+  if (isAldus) {
+    hmf = GetPlaceableMetaFile(filename);
+  } else {
+    RECT r;
+    isEnhanced = FileIsEnhanced(filename);
+    if (isEnhanced)
+       enhmf = GetEnhMetaFile(filename);
+    else
+       hmf = GetMetaFile(filename);
+    GetClientRect(hMainWnd, &r);
+    width = r.right - r.left;
+    height = r.bottom - r.top;
+  }
+  InvalidateRect( hMainWnd, NULL, TRUE );
+}
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMessage, WPARAM wparam, LPARAM lparam)
 {
@@ -192,23 +213,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMessage, WPARAM wparam, LPARAM 
 	case IDM_OPEN:
 	  {
 	    char filename[MAX_PATH];
-	    if (FileOpen(hwnd, filename, sizeof(filename))) {
-	      isAldus = FileIsPlaceable(filename);
-	      if (isAldus) {
-		hmf = GetPlaceableMetaFile(hwnd, filename);
-	      } else {
-		RECT r;
-               isEnhanced = FileIsEnhanced(filename);
-               if (isEnhanced)
-                   enhmf = GetEnhMetaFile(filename);
-               else
-                   hmf = GetMetaFile(filename);
-		GetClientRect(hwnd, &r);
-		width = r.right - r.left;
-		height = r.bottom - r.top;
-	      }
-	      InvalidateRect( hwnd, NULL, TRUE );
-	    }
+           if (FileOpen(hwnd, filename, sizeof(filename)))
+             DoOpenFile(filename);
 	  }
 	  break;
 
@@ -301,32 +307,56 @@ static BOOL InitApplication(HINSTANCE hInstance)
 
 static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-    HWND hwnd;
-
     /* Save the instance handle in a global variable for later use */
     hInst = hInstance;
 
     /* Create main window */
-    hwnd = CreateWindow(szAppName,           /* See RegisterClass() call */
-                        szTitle,             /* window title */
-                        WS_OVERLAPPEDWINDOW, /* Window style */
-                        CW_USEDEFAULT, 0,    /* positioning */
-                        CW_USEDEFAULT, 0,    /* size */
-                        NULL,                /* Overlapped has no parent */
-                        NULL,                /* Use the window class menu */
-                        hInstance,
-                        NULL);
+    hMainWnd = CreateWindow(szAppName,           /* See RegisterClass() call */
+                            szTitle,             /* window title */
+                            WS_OVERLAPPEDWINDOW, /* Window style */
+                            CW_USEDEFAULT, 0,    /* positioning */
+                            CW_USEDEFAULT, 0,    /* size */
+                            NULL,                /* Overlapped has no parent */
+                            NULL,                /* Use the window class menu */
+                            hInstance,
+                            NULL);
 
-    if (!hwnd)
+    if (!hMainWnd)
         return FALSE;
 
     /* Call module specific instance initialization functions here */
 
     /* show the window, and paint it for the first time */
-    ShowWindow(hwnd, nCmdShow);
-    UpdateWindow(hwnd);
+    ShowWindow(hMainWnd, nCmdShow);
+    UpdateWindow(hMainWnd);
 
     return TRUE;
+}
+
+static void HandleCommandLine(LPSTR cmdline)
+{
+    CHAR delimiter;
+
+    /* skip white space */
+    while (*cmdline == ' ') cmdline++;
+
+    /* skip executable name */
+    delimiter = (*cmdline == '"' ? '"' : ' ');
+
+    if (*cmdline == delimiter) cmdline++;
+    while (*cmdline && *cmdline != delimiter) cmdline++;
+    if (*cmdline == delimiter) cmdline++;
+
+    if (*cmdline)
+    {
+        /* file name is passed on the command line */
+        if (cmdline[0] == '"')
+        {
+            cmdline++;
+            cmdline[lstrlen(cmdline) - 1] = 0;
+        }
+        DoOpenFile(cmdline);
+    }
 }
 
 int APIENTRY WinMain(HINSTANCE hInstance,
@@ -352,6 +382,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     {
       return FALSE;
     }
+
+    HandleCommandLine(GetCommandLine());
 
     hAccelTable = LoadAccelerators(hInstance, szAppName);
 
