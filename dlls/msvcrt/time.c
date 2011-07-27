@@ -30,6 +30,7 @@
 #include "mtdll.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winternl.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -709,19 +710,23 @@ int CDECL _wstrtime_s(MSVCRT_wchar_t* time, MSVCRT_size_t size)
  */
 MSVCRT_clock_t CDECL MSVCRT_clock(void)
 {
-  FILETIME ftc, fte, ftk, ftu;
-  ULONGLONG utime, ktime;
- 
-  MSVCRT_clock_t clock;
+    static LONGLONG start_time;
+    LARGE_INTEGER systime;
 
-  GetProcessTimes(GetCurrentProcess(), &ftc, &fte, &ftk, &ftu);
+    if(!start_time) {
+        KERNEL_USER_TIMES pti;
 
-  ktime = ((ULONGLONG)ftk.dwHighDateTime << 32) | ftk.dwLowDateTime;
-  utime = ((ULONGLONG)ftu.dwHighDateTime << 32) | ftu.dwLowDateTime;
+        /* while Linux's clock returns user time, Windows' clock
+         * returns wall-clock time from process start.  cache the
+         * process start time since it won't change and to avoid
+         * wineserver round-trip overhead */
+        if(NtQueryInformationProcess(GetCurrentProcess(), ProcessTimes, &pti, sizeof(pti), NULL))
+            return -1;
+        start_time = pti.CreateTime.QuadPart;
+    }
 
-  clock = (utime + ktime) / (TICKSPERSEC / MSVCRT_CLOCKS_PER_SEC);
-
-  return clock;
+    NtQuerySystemTime(&systime);
+    return (systime.QuadPart - start_time) * MSVCRT_CLOCKS_PER_SEC / TICKSPERSEC;
 }
 
 /*********************************************************************
