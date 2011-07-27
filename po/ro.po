@@ -460,7 +460,7 @@ msgstr ""
 msgid "Select a font size between %d and %d points."
 msgstr "Alegeți o mărime de font între %d și %d puncte."
 
-#: comdlg32.rc:152 shdocvw.rc:32
+#: comdlg32.rc:152 ieframe.rc:32
 msgid "&Save"
 msgstr "&Salvează"
 
@@ -2255,15 +2255,15 @@ msgstr "Afișează"
 msgid "Hide"
 msgstr "Ascunde"
 
-#: hhctrl.rc:41 shdoclc.rc:164 shdoclc.rc:188 shdocvw.rc:65
+#: hhctrl.rc:41 ieframe.rc:65 shdoclc.rc:164 shdoclc.rc:188
 msgid "Stop"
 msgstr "Oprește"
 
-#: hhctrl.rc:42 shdocvw.rc:66 shell32.rc:59
+#: hhctrl.rc:42 ieframe.rc:66 shell32.rc:59
 msgid "Refresh"
 msgstr "Actualizează"
 
-#: hhctrl.rc:43 shdocvw.rc:63
+#: hhctrl.rc:43 ieframe.rc:63
 msgid "Back"
 msgstr "Înapoi"
 
@@ -2277,7 +2277,7 @@ msgstr "Acasă"
 msgid "Sync"
 msgstr "Sincronizează"
 
-#: hhctrl.rc:48 shdocvw.rc:64
+#: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"
 msgstr "Înainte"
 
@@ -2340,6 +2340,114 @@ msgstr "IDTB_TOC_PREV"
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
 msgstr "Codecul Cinepak Video"
+
+#: ieframe.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
+#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
+#: wordpad.rc:26
+msgid "&File"
+msgstr "&Fișier"
+
+#: ieframe.rc:27 regedit.rc:44 regedit.rc:95
+msgid "&New"
+msgstr "&Nou"
+
+#: ieframe.rc:29 winefile.rc:76
+msgid "&Window"
+msgstr "&Fereastră"
+
+#: ieframe.rc:31 view.rc:30 winhlp32.rc:29
+msgid "&Open..."
+msgstr "&Deschidere..."
+
+#: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
+msgid "Save &as..."
+msgstr "S&alvare ca..."
+
+#: ieframe.rc:35
+msgid "Print &format..."
+msgstr "&Format tipărire..."
+
+#: ieframe.rc:36
+msgid "Pr&int..."
+msgstr "T&ipărire..."
+
+#: ieframe.rc:37 wordpad.rc:34
+#, fuzzy
+msgid "Print previe&w"
+msgstr "Pre&vizualizare imprimare..."
+
+#: ieframe.rc:39 shdoclc.rc:58 shell32.rc:105 clock.rc:28 wineconsole.rc:27
+#, fuzzy
+msgid "&Properties"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Proprietăți\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"P&roprietăți"
+
+#: ieframe.rc:40 oleview.rc:80 taskmgr.rc:139
+msgid "&Close"
+msgstr "În&chide"
+
+#: ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
+#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+msgid "&View"
+msgstr "&Vizualizare"
+
+#: ieframe.rc:44
+msgid "&Toolbars"
+msgstr "&Despre Internet Explorer..."
+
+#: ieframe.rc:46
+#, fuzzy
+msgid "&Standard bar"
+msgstr "Bară de &stare"
+
+#: ieframe.rc:47
+#, fuzzy
+msgid "&Address bar"
+msgstr "Adresa IP="
+
+#: ieframe.rc:50 regedit.rc:71
+#, fuzzy
+msgid "&Favorites"
+msgstr "Favor&ite"
+
+#: ieframe.rc:52 regedit.rc:73
+#, fuzzy
+msgid "&Add to Favorites..."
+msgstr "Adaugă la &favorite..."
+
+#: ieframe.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 oleview.rc:69
+#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
+#: winhlp32.rc:53 wordpad.rc:91
+#, fuzzy
+msgid "&Help"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"&Ajutor\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"A&jutor"
+
+#: ieframe.rc:57
+#, fuzzy
+msgid "&About Internet Explorer"
+msgstr "Wine Internet Explorer"
+
+#: ieframe.rc:67
+#, fuzzy
+msgctxt "home page"
+msgid "Home"
+msgstr "Acasă"
+
+#: ieframe.rc:68 winhlp32.rc:66
+msgid "Print..."
+msgstr "Tipărește..."
+
+#: ieframe.rc:73
+#, fuzzy
+msgid "Address"
+msgstr "Adresa IP="
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -6386,15 +6494,6 @@ msgstr "Codificar&e"
 msgid "Pr&int"
 msgstr "&Tipărește"
 
-#: shdoclc.rc:58 shdocvw.rc:39 shell32.rc:105 clock.rc:28 wineconsole.rc:27
-#, fuzzy
-msgid "&Properties"
-msgstr ""
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"&Proprietăți\n"
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"P&roprietăți"
-
 #: shdoclc.rc:61
 msgid "Image"
 msgstr "Imagine"
@@ -6713,105 +6812,6 @@ msgstr "&w&bPagina &p"
 #: shdoclc.rc:31
 msgid "&u&b&d"
 msgstr "&u&b&d"
-
-#: shdocvw.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
-#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
-#: wordpad.rc:26
-msgid "&File"
-msgstr "&Fișier"
-
-#: shdocvw.rc:27 regedit.rc:44 regedit.rc:95
-msgid "&New"
-msgstr "&Nou"
-
-#: shdocvw.rc:29 winefile.rc:76
-msgid "&Window"
-msgstr "&Fereastră"
-
-#: shdocvw.rc:31 view.rc:30 winhlp32.rc:29
-msgid "&Open..."
-msgstr "&Deschidere..."
-
-#: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
-msgid "Save &as..."
-msgstr "S&alvare ca..."
-
-#: shdocvw.rc:35
-msgid "Print &format..."
-msgstr "&Format tipărire..."
-
-#: shdocvw.rc:36
-msgid "Pr&int..."
-msgstr "T&ipărire..."
-
-#: shdocvw.rc:37 wordpad.rc:34
-#, fuzzy
-msgid "Print previe&w"
-msgstr "Pre&vizualizare imprimare..."
-
-#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
-msgid "&Close"
-msgstr "În&chide"
-
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
-#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
-msgid "&View"
-msgstr "&Vizualizare"
-
-#: shdocvw.rc:44
-msgid "&Toolbars"
-msgstr "&Despre Internet Explorer..."
-
-#: shdocvw.rc:46
-#, fuzzy
-msgid "&Standard bar"
-msgstr "Bară de &stare"
-
-#: shdocvw.rc:47
-#, fuzzy
-msgid "&Address bar"
-msgstr "Adresa IP="
-
-#: shdocvw.rc:50 regedit.rc:71
-#, fuzzy
-msgid "&Favorites"
-msgstr "Favor&ite"
-
-#: shdocvw.rc:52 regedit.rc:73
-#, fuzzy
-msgid "&Add to Favorites..."
-msgstr "Adaugă la &favorite..."
-
-#: shdocvw.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 oleview.rc:69
-#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
-#: winhlp32.rc:53 wordpad.rc:91
-#, fuzzy
-msgid "&Help"
-msgstr ""
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"&Ajutor\n"
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"A&jutor"
-
-#: shdocvw.rc:57
-#, fuzzy
-msgid "&About Internet Explorer"
-msgstr "Wine Internet Explorer"
-
-#: shdocvw.rc:67
-#, fuzzy
-msgctxt "home page"
-msgid "Home"
-msgstr "Acasă"
-
-#: shdocvw.rc:68 winhlp32.rc:66
-msgid "Print..."
-msgstr "Tipărește..."
-
-#: shdocvw.rc:73
-#, fuzzy
-msgid "Address"
-msgstr "Adresa IP="
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252

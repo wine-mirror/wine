@@ -408,7 +408,7 @@ msgstr ""
 msgid "Select a font size between %d and %d points."
 msgstr "Välj en teckenstorlek mellan %d och %d punkter."
 
-#: comdlg32.rc:152 shdocvw.rc:32
+#: comdlg32.rc:152 ieframe.rc:32
 msgid "&Save"
 msgstr "&Spara"
 
@@ -2098,15 +2098,15 @@ msgstr "Visa"
 msgid "Hide"
 msgstr "Dölj"
 
-#: hhctrl.rc:41 shdoclc.rc:164 shdoclc.rc:188 shdocvw.rc:65
+#: hhctrl.rc:41 ieframe.rc:65 shdoclc.rc:164 shdoclc.rc:188
 msgid "Stop"
 msgstr "Stopp"
 
-#: hhctrl.rc:42 shdocvw.rc:66 shell32.rc:59
+#: hhctrl.rc:42 ieframe.rc:66 shell32.rc:59
 msgid "Refresh"
 msgstr "Uppdatera"
 
-#: hhctrl.rc:43 shdocvw.rc:63
+#: hhctrl.rc:43 ieframe.rc:63
 msgid "Back"
 msgstr "Bakåt"
 
@@ -2120,7 +2120,7 @@ msgstr "Hem"
 msgid "Sync"
 msgstr "Synkronisera"
 
-#: hhctrl.rc:48 shdocvw.rc:64
+#: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"
 msgstr "Framåt"
 
@@ -2183,6 +2183,99 @@ msgstr "IDTB_TOC_PREV"
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
 msgstr "Cinepak videokodek"
+
+#: ieframe.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
+#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
+#: wordpad.rc:26
+msgid "&File"
+msgstr "&Arkiv"
+
+#: ieframe.rc:27 regedit.rc:44 regedit.rc:95
+msgid "&New"
+msgstr "&Ny"
+
+#: ieframe.rc:29 winefile.rc:76
+msgid "&Window"
+msgstr "&Fönster"
+
+#: ieframe.rc:31 view.rc:30 winhlp32.rc:29
+msgid "&Open..."
+msgstr "&Öppna..."
+
+#: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
+msgid "Save &as..."
+msgstr "Spara s&om..."
+
+#: ieframe.rc:35
+msgid "Print &format..."
+msgstr "U&tskriftsformat..."
+
+#: ieframe.rc:36
+msgid "Pr&int..."
+msgstr "Skriv &ut..."
+
+#: ieframe.rc:37 wordpad.rc:34
+#, fuzzy
+msgid "Print previe&w"
+msgstr "&Förhandsgranskning..."
+
+#: ieframe.rc:39 shdoclc.rc:58 shell32.rc:105 clock.rc:28 wineconsole.rc:27
+msgid "&Properties"
+msgstr "&Egenskaper"
+
+#: ieframe.rc:40 oleview.rc:80 taskmgr.rc:139
+msgid "&Close"
+msgstr "St&äng"
+
+#: ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
+#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+msgid "&View"
+msgstr "&Visa"
+
+#: ieframe.rc:44
+msgid "&Toolbars"
+msgstr "Verktygs&fält"
+
+#: ieframe.rc:46
+msgid "&Standard bar"
+msgstr "&Standardfält"
+
+#: ieframe.rc:47
+msgid "&Address bar"
+msgstr "&Adressfält"
+
+#: ieframe.rc:50 regedit.rc:71
+msgid "&Favorites"
+msgstr "&Favoriter"
+
+#: ieframe.rc:52 regedit.rc:73
+msgid "&Add to Favorites..."
+msgstr "&Lägg till i favoriter..."
+
+#: ieframe.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 oleview.rc:69
+#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
+#: winhlp32.rc:53 wordpad.rc:91
+msgid "&Help"
+msgstr "&Hjälp"
+
+#: ieframe.rc:57
+#, fuzzy
+msgid "&About Internet Explorer"
+msgstr "&Om Internet Explorer..."
+
+#: ieframe.rc:67
+#, fuzzy
+msgctxt "home page"
+msgid "Home"
+msgstr "Hem"
+
+#: ieframe.rc:68 winhlp32.rc:66
+msgid "Print..."
+msgstr "Skriv ut..."
+
+#: ieframe.rc:73
+msgid "Address"
+msgstr "Adress"
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -5921,10 +6014,6 @@ msgstr "Tecken&kodning"
 msgid "Pr&int"
 msgstr "Skriv &ut"
 
-#: shdoclc.rc:58 shdocvw.rc:39 shell32.rc:105 clock.rc:28 wineconsole.rc:27
-msgid "&Properties"
-msgstr "&Egenskaper"
-
 #: shdoclc.rc:61
 msgid "Image"
 msgstr "Bild"
@@ -6223,95 +6312,6 @@ msgstr "&w&bSida &p"
 #: shdoclc.rc:31
 msgid "&u&b&d"
 msgstr "&u&b&d"
-
-#: shdocvw.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
-#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
-#: wordpad.rc:26
-msgid "&File"
-msgstr "&Arkiv"
-
-#: shdocvw.rc:27 regedit.rc:44 regedit.rc:95
-msgid "&New"
-msgstr "&Ny"
-
-#: shdocvw.rc:29 winefile.rc:76
-msgid "&Window"
-msgstr "&Fönster"
-
-#: shdocvw.rc:31 view.rc:30 winhlp32.rc:29
-msgid "&Open..."
-msgstr "&Öppna..."
-
-#: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
-msgid "Save &as..."
-msgstr "Spara s&om..."
-
-#: shdocvw.rc:35
-msgid "Print &format..."
-msgstr "U&tskriftsformat..."
-
-#: shdocvw.rc:36
-msgid "Pr&int..."
-msgstr "Skriv &ut..."
-
-#: shdocvw.rc:37 wordpad.rc:34
-#, fuzzy
-msgid "Print previe&w"
-msgstr "&Förhandsgranskning..."
-
-#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
-msgid "&Close"
-msgstr "St&äng"
-
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
-#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
-msgid "&View"
-msgstr "&Visa"
-
-#: shdocvw.rc:44
-msgid "&Toolbars"
-msgstr "Verktygs&fält"
-
-#: shdocvw.rc:46
-msgid "&Standard bar"
-msgstr "&Standardfält"
-
-#: shdocvw.rc:47
-msgid "&Address bar"
-msgstr "&Adressfält"
-
-#: shdocvw.rc:50 regedit.rc:71
-msgid "&Favorites"
-msgstr "&Favoriter"
-
-#: shdocvw.rc:52 regedit.rc:73
-msgid "&Add to Favorites..."
-msgstr "&Lägg till i favoriter..."
-
-#: shdocvw.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 oleview.rc:69
-#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
-#: winhlp32.rc:53 wordpad.rc:91
-msgid "&Help"
-msgstr "&Hjälp"
-
-#: shdocvw.rc:57
-#, fuzzy
-msgid "&About Internet Explorer"
-msgstr "&Om Internet Explorer..."
-
-#: shdocvw.rc:67
-#, fuzzy
-msgctxt "home page"
-msgid "Home"
-msgstr "Hem"
-
-#: shdocvw.rc:68 winhlp32.rc:66
-msgid "Print..."
-msgstr "Skriv ut..."
-
-#: shdocvw.rc:73
-msgid "Address"
-msgstr "Adress"
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252

@@ -405,7 +405,7 @@ msgstr ""
 msgid "Select a font size between %d and %d points."
 msgstr "フォントサイズを %d ポイントから %d ポイントの間で選択してください。"
 
-#: comdlg32.rc:152 shdocvw.rc:32
+#: comdlg32.rc:152 ieframe.rc:32
 msgid "&Save"
 msgstr "保存(&S)"
 
@@ -2084,15 +2084,15 @@ msgstr "表示"
 msgid "Hide"
 msgstr "非表示"
 
-#: hhctrl.rc:41 shdoclc.rc:164 shdoclc.rc:188 shdocvw.rc:65
+#: hhctrl.rc:41 ieframe.rc:65 shdoclc.rc:164 shdoclc.rc:188
 msgid "Stop"
 msgstr "中止"
 
-#: hhctrl.rc:42 shdocvw.rc:66 shell32.rc:59
+#: hhctrl.rc:42 ieframe.rc:66 shell32.rc:59
 msgid "Refresh"
 msgstr "更新"
 
-#: hhctrl.rc:43 shdocvw.rc:63
+#: hhctrl.rc:43 ieframe.rc:63
 msgid "Back"
 msgstr "戻る"
 
@@ -2105,7 +2105,7 @@ msgstr "ホーム"
 msgid "Sync"
 msgstr "同期"
 
-#: hhctrl.rc:48 shdocvw.rc:64
+#: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"
 msgstr "進む"
 
@@ -2168,6 +2168,96 @@ msgstr "IDTB_TOC_PREV"
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
 msgstr "Cinepak ビデオコーデック"
+
+#: ieframe.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
+#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
+#: wordpad.rc:26
+msgid "&File"
+msgstr "ファイル(&F)"
+
+#: ieframe.rc:27 regedit.rc:44 regedit.rc:95
+msgid "&New"
+msgstr "新規(&N)"
+
+#: ieframe.rc:29 winefile.rc:76
+msgid "&Window"
+msgstr "ウィンドウ(&W)"
+
+#: ieframe.rc:31 view.rc:30 winhlp32.rc:29
+msgid "&Open..."
+msgstr "開く(&O)"
+
+#: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
+msgid "Save &as..."
+msgstr "名前を付けて保存(&A)..."
+
+#: ieframe.rc:35
+msgid "Print &format..."
+msgstr "印刷フォーマット(&F)..."
+
+#: ieframe.rc:36
+msgid "Pr&int..."
+msgstr "印刷(&I)..."
+
+#: ieframe.rc:37 wordpad.rc:34
+msgid "Print previe&w"
+msgstr "印刷プレビュー(&W)"
+
+#: ieframe.rc:39 shdoclc.rc:58 shell32.rc:105 clock.rc:28 wineconsole.rc:27
+msgid "&Properties"
+msgstr "プロパティ(&P)"
+
+#: ieframe.rc:40 oleview.rc:80 taskmgr.rc:139
+msgid "&Close"
+msgstr "閉じる(&C)"
+
+#: ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
+#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+msgid "&View"
+msgstr "表示(&V)"
+
+#: ieframe.rc:44
+msgid "&Toolbars"
+msgstr "ツールバー(&T)"
+
+#: ieframe.rc:46
+msgid "&Standard bar"
+msgstr "ステータス バー(&S)"
+
+#: ieframe.rc:47
+msgid "&Address bar"
+msgstr "アドレス バー(&A)"
+
+#: ieframe.rc:50 regedit.rc:71
+msgid "&Favorites"
+msgstr "お気に入り(&F)"
+
+#: ieframe.rc:52 regedit.rc:73
+msgid "&Add to Favorites..."
+msgstr "お気に入りに追加(&A)..."
+
+#: ieframe.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 oleview.rc:69
+#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
+#: winhlp32.rc:53 wordpad.rc:91
+msgid "&Help"
+msgstr "ヘルプ(&H)"
+
+#: ieframe.rc:57
+msgid "&About Internet Explorer"
+msgstr "バージョン情報(&A)"
+
+#: ieframe.rc:67
+msgctxt "home page"
+msgid "Home"
+msgstr "ホーム"
+
+#: ieframe.rc:68 winhlp32.rc:66
+msgid "Print..."
+msgstr "印刷..."
+
+#: ieframe.rc:73
+msgid "Address"
+msgstr "アドレス"
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -5907,10 +5997,6 @@ msgstr "エンコード(&E)"
 msgid "Pr&int"
 msgstr "印刷(&I)"
 
-#: shdoclc.rc:58 shdocvw.rc:39 shell32.rc:105 clock.rc:28 wineconsole.rc:27
-msgid "&Properties"
-msgstr "プロパティ(&P)"
-
 #: shdoclc.rc:61
 msgid "Image"
 msgstr "Image"
@@ -6209,92 +6295,6 @@ msgstr "&w&b&pページ"
 #: shdoclc.rc:31
 msgid "&u&b&d"
 msgstr "&u&b&d"
-
-#: shdocvw.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
-#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
-#: wordpad.rc:26
-msgid "&File"
-msgstr "ファイル(&F)"
-
-#: shdocvw.rc:27 regedit.rc:44 regedit.rc:95
-msgid "&New"
-msgstr "新規(&N)"
-
-#: shdocvw.rc:29 winefile.rc:76
-msgid "&Window"
-msgstr "ウィンドウ(&W)"
-
-#: shdocvw.rc:31 view.rc:30 winhlp32.rc:29
-msgid "&Open..."
-msgstr "開く(&O)"
-
-#: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
-msgid "Save &as..."
-msgstr "名前を付けて保存(&A)..."
-
-#: shdocvw.rc:35
-msgid "Print &format..."
-msgstr "印刷フォーマット(&F)..."
-
-#: shdocvw.rc:36
-msgid "Pr&int..."
-msgstr "印刷(&I)..."
-
-#: shdocvw.rc:37 wordpad.rc:34
-msgid "Print previe&w"
-msgstr "印刷プレビュー(&W)"
-
-#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
-msgid "&Close"
-msgstr "閉じる(&C)"
-
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
-#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
-msgid "&View"
-msgstr "表示(&V)"
-
-#: shdocvw.rc:44
-msgid "&Toolbars"
-msgstr "ツールバー(&T)"
-
-#: shdocvw.rc:46
-msgid "&Standard bar"
-msgstr "ステータス バー(&S)"
-
-#: shdocvw.rc:47
-msgid "&Address bar"
-msgstr "アドレス バー(&A)"
-
-#: shdocvw.rc:50 regedit.rc:71
-msgid "&Favorites"
-msgstr "お気に入り(&F)"
-
-#: shdocvw.rc:52 regedit.rc:73
-msgid "&Add to Favorites..."
-msgstr "お気に入りに追加(&A)..."
-
-#: shdocvw.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 oleview.rc:69
-#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
-#: winhlp32.rc:53 wordpad.rc:91
-msgid "&Help"
-msgstr "ヘルプ(&H)"
-
-#: shdocvw.rc:57
-msgid "&About Internet Explorer"
-msgstr "バージョン情報(&A)"
-
-#: shdocvw.rc:67
-msgctxt "home page"
-msgid "Home"
-msgstr "ホーム"
-
-#: shdocvw.rc:68 winhlp32.rc:66
-msgid "Print..."
-msgstr "印刷..."
-
-#: shdocvw.rc:73
-msgid "Address"
-msgstr "アドレス"
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252

@@ -29,4 +29,6 @@ RC_SRCS = \
 	Uk.rc \
 	ieframe.rc
 
+PO_SRCS = ieframe.rc
+
 @MAKE_DLL_RULES@

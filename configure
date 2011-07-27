@@ -14887,7 +14887,7 @@ wine_fn_config_dll hnetcfg enable_hnetcfg
 wine_fn_config_dll httpapi enable_httpapi
 wine_fn_config_dll iccvid enable_iccvid po
 wine_fn_config_dll icmp enable_icmp
-wine_fn_config_dll ieframe enable_ieframe implib
+wine_fn_config_dll ieframe enable_ieframe implib,po
 wine_fn_config_dll ifsmgr.vxd enable_win16
 wine_fn_config_dll imaadp32.acm enable_imaadp32_acm
 wine_fn_config_dll imagehlp enable_imagehlp implib
@@ -15106,7 +15106,7 @@ wine_fn_config_dll setupx.dll16 enable_win16
 wine_fn_config_dll sfc enable_sfc implib
 wine_fn_config_dll sfc_os enable_sfc_os implib
 wine_fn_config_dll shdoclc enable_shdoclc po
-wine_fn_config_dll shdocvw enable_shdocvw implib,po
+wine_fn_config_dll shdocvw enable_shdocvw implib
 wine_fn_config_test dlls/shdocvw/tests shdocvw_test
 wine_fn_config_dll shell.dll16 enable_win16
 wine_fn_config_dll shell32 enable_shell32 implib,po

@@ -431,7 +431,7 @@ msgstr ""
 msgid "Select a font size between %d and %d points."
 msgstr "Seleccione o tamanho do tipo de letra entre %d e %d pontos."
 
-#: comdlg32.rc:152 shdocvw.rc:32
+#: comdlg32.rc:152 ieframe.rc:32
 msgid "&Save"
 msgstr "&Gravar"
 
@@ -2219,7 +2219,7 @@ msgstr "Mostrar"
 msgid "Hide"
 msgstr "Esconder"
 
-#: hhctrl.rc:41 shdoclc.rc:164 shdoclc.rc:188 shdocvw.rc:65
+#: hhctrl.rc:41 ieframe.rc:65 shdoclc.rc:164 shdoclc.rc:188
 #, fuzzy
 msgid "Stop"
 msgstr ""
@@ -2228,7 +2228,7 @@ msgstr ""
 "#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
 "Pa&rar"
 
-#: hhctrl.rc:42 shdocvw.rc:66 shell32.rc:59
+#: hhctrl.rc:42 ieframe.rc:66 shell32.rc:59
 #, fuzzy
 msgid "Refresh"
 msgstr ""
@@ -2237,7 +2237,7 @@ msgstr ""
 "#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
 "&Actualizar"
 
-#: hhctrl.rc:43 shdocvw.rc:63
+#: hhctrl.rc:43 ieframe.rc:63
 msgid "Back"
 msgstr "Retroceder"
 
@@ -2251,7 +2251,7 @@ msgstr "Início"
 msgid "Sync"
 msgstr "Sincronizar"
 
-#: hhctrl.rc:48 shdocvw.rc:64
+#: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"
 msgstr "Avançar"
 
@@ -2314,6 +2314,131 @@ msgstr "IDTB_TOC_PREV"
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
 msgstr "Codec Video Cinepak"
+
+#: ieframe.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
+#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
+#: wordpad.rc:26
+msgid "&File"
+msgstr "&Ficheiro"
+
+#: ieframe.rc:27 regedit.rc:44 regedit.rc:95
+msgid "&New"
+msgstr "&Novo"
+
+#: ieframe.rc:29 winefile.rc:76
+msgid "&Window"
+msgstr "&Janela"
+
+#: ieframe.rc:31 view.rc:30 winhlp32.rc:29
+#, fuzzy
+msgid "&Open..."
+msgstr ""
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"&Abrir\n"
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"&Abrir..."
+
+#: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
+#, fuzzy
+msgid "Save &as..."
+msgstr ""
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"Gravar &como...\n"
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"Guardar &como..."
+
+#: ieframe.rc:35
+#, fuzzy
+msgid "Print &format..."
+msgstr "Imprimir..."
+
+#: ieframe.rc:36
+#, fuzzy
+msgid "Pr&int..."
+msgstr "Imprimir..."
+
+#: ieframe.rc:37 wordpad.rc:34
+#, fuzzy
+msgid "Print previe&w"
+msgstr "&Pré visualizar..."
+
+#: ieframe.rc:39 shdoclc.rc:58 shell32.rc:105 clock.rc:28 wineconsole.rc:27
+msgid "&Properties"
+msgstr "&Propriedades"
+
+#: ieframe.rc:40 oleview.rc:80 taskmgr.rc:139
+msgid "&Close"
+msgstr "&Fechar"
+
+#: ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
+#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+#, fuzzy
+msgid "&View"
+msgstr ""
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"&Ver\n"
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"E&xibir"
+
+#: ieframe.rc:44
+#, fuzzy
+msgid "&Toolbars"
+msgstr ""
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"Barra de &ferramentas\n"
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"&Barra de Ferramentas"
+
+#: ieframe.rc:46
+#, fuzzy
+msgid "&Standard bar"
+msgstr "Barra de &Estado"
+
+#: ieframe.rc:47
+#, fuzzy
+msgid "&Address bar"
+msgstr "Endereço IP="
+
+#: ieframe.rc:50 regedit.rc:71
+#, fuzzy
+msgid "&Favorites"
+msgstr "&Favoritos"
+
+#: ieframe.rc:52 regedit.rc:73
+#, fuzzy
+msgid "&Add to Favorites..."
+msgstr "Adicionar aos &Favoritos..."
+
+#: ieframe.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 oleview.rc:69
+#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
+#: winhlp32.rc:53 wordpad.rc:91
+#, fuzzy
+msgid "&Help"
+msgstr ""
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"&Ajuda\n"
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"Aj&uda"
+
+#: ieframe.rc:57
+#, fuzzy
+msgid "&About Internet Explorer"
+msgstr "Explorador de Internet Wine"
+
+#: ieframe.rc:67
+#, fuzzy
+msgctxt "home page"
+msgid "Home"
+msgstr "Início"
+
+#: ieframe.rc:68 winhlp32.rc:66
+msgid "Print..."
+msgstr "Imprimir..."
+
+#: ieframe.rc:73
+#, fuzzy
+msgid "Address"
+msgstr "Endereço IP="
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -6157,10 +6282,6 @@ msgstr "Co&dificação"
 msgid "Pr&int"
 msgstr "I&mprimir"
 
-#: shdoclc.rc:58 shdocvw.rc:39 shell32.rc:105 clock.rc:28 wineconsole.rc:27
-msgid "&Properties"
-msgstr "&Propriedades"
-
 #: shdoclc.rc:61
 msgid "Image"
 msgstr "Imagem"
@@ -6474,127 +6595,6 @@ msgstr "&w&bPage &p"
 #: shdoclc.rc:31
 msgid "&u&b&d"
 msgstr "&u&b&d"
-
-#: shdocvw.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
-#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
-#: wordpad.rc:26
-msgid "&File"
-msgstr "&Ficheiro"
-
-#: shdocvw.rc:27 regedit.rc:44 regedit.rc:95
-msgid "&New"
-msgstr "&Novo"
-
-#: shdocvw.rc:29 winefile.rc:76
-msgid "&Window"
-msgstr "&Janela"
-
-#: shdocvw.rc:31 view.rc:30 winhlp32.rc:29
-#, fuzzy
-msgid "&Open..."
-msgstr ""
-"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"&Abrir\n"
-"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"&Abrir..."
-
-#: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
-#, fuzzy
-msgid "Save &as..."
-msgstr ""
-"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"Gravar &como...\n"
-"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"Guardar &como..."
-
-#: shdocvw.rc:35
-#, fuzzy
-msgid "Print &format..."
-msgstr "Imprimir..."
-
-#: shdocvw.rc:36
-#, fuzzy
-msgid "Pr&int..."
-msgstr "Imprimir..."
-
-#: shdocvw.rc:37 wordpad.rc:34
-#, fuzzy
-msgid "Print previe&w"
-msgstr "&Pré visualizar..."
-
-#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
-msgid "&Close"
-msgstr "&Fechar"
-
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
-#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
-#, fuzzy
-msgid "&View"
-msgstr ""
-"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"&Ver\n"
-"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"E&xibir"
-
-#: shdocvw.rc:44
-#, fuzzy
-msgid "&Toolbars"
-msgstr ""
-"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"Barra de &ferramentas\n"
-"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"&Barra de Ferramentas"
-
-#: shdocvw.rc:46
-#, fuzzy
-msgid "&Standard bar"
-msgstr "Barra de &Estado"
-
-#: shdocvw.rc:47
-#, fuzzy
-msgid "&Address bar"
-msgstr "Endereço IP="
-
-#: shdocvw.rc:50 regedit.rc:71
-#, fuzzy
-msgid "&Favorites"
-msgstr "&Favoritos"
-
-#: shdocvw.rc:52 regedit.rc:73
-#, fuzzy
-msgid "&Add to Favorites..."
-msgstr "Adicionar aos &Favoritos..."
-
-#: shdocvw.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 oleview.rc:69
-#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
-#: winhlp32.rc:53 wordpad.rc:91
-#, fuzzy
-msgid "&Help"
-msgstr ""
-"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"&Ajuda\n"
-"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"Aj&uda"
-
-#: shdocvw.rc:57
-#, fuzzy
-msgid "&About Internet Explorer"
-msgstr "Explorador de Internet Wine"
-
-#: shdocvw.rc:67
-#, fuzzy
-msgctxt "home page"
-msgid "Home"
-msgstr "Início"
-
-#: shdocvw.rc:68 winhlp32.rc:66
-msgid "Print..."
-msgstr "Imprimir..."
-
-#: shdocvw.rc:73
-#, fuzzy
-msgid "Address"
-msgstr "Endereço IP="
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252

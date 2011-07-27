@@ -406,7 +406,7 @@ msgstr ""
 msgid "Select a font size between %d and %d points."
 msgstr "Valitse fontin koko väliltä %d ja %d pistettä."
 
-#: comdlg32.rc:152 shdocvw.rc:32
+#: comdlg32.rc:152 ieframe.rc:32
 msgid "&Save"
 msgstr "&Tallenna"
 
@@ -2080,7 +2080,7 @@ msgstr "Näytä"
 msgid "Hide"
 msgstr "Piilota"
 
-#: hhctrl.rc:41 shdoclc.rc:164 shdoclc.rc:188 shdocvw.rc:65
+#: hhctrl.rc:41 ieframe.rc:65 shdoclc.rc:164 shdoclc.rc:188
 #, fuzzy
 msgid "Stop"
 msgstr ""
@@ -2089,11 +2089,11 @@ msgstr ""
 "#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
 "P&ysäytä"
 
-#: hhctrl.rc:42 shdocvw.rc:66 shell32.rc:59
+#: hhctrl.rc:42 ieframe.rc:66 shell32.rc:59
 msgid "Refresh"
 msgstr "Päivitä"
 
-#: hhctrl.rc:43 shdocvw.rc:63
+#: hhctrl.rc:43 ieframe.rc:63
 msgid "Back"
 msgstr "Takaisin"
 
@@ -2107,7 +2107,7 @@ msgstr "Alkuun"
 msgid "Sync"
 msgstr "Synkronoi"
 
-#: hhctrl.rc:48 shdocvw.rc:64
+#: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"
 msgstr "Seuraava"
 
@@ -2169,6 +2169,120 @@ msgstr "IDTB_TOC_PREV"
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
+msgstr ""
+
+#: ieframe.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
+#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
+#: wordpad.rc:26
+msgid "&File"
+msgstr "&Tiedosto"
+
+#: ieframe.rc:27 regedit.rc:44 regedit.rc:95
+#, fuzzy
+msgid "&New"
+msgstr "&Uusi\tF2"
+
+#: ieframe.rc:29 winefile.rc:76
+msgid "&Window"
+msgstr ""
+
+#: ieframe.rc:31 view.rc:30 winhlp32.rc:29
+#, fuzzy
+msgid "&Open..."
+msgstr ""
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"&Avaa\n"
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"&Avaa..."
+
+#: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
+msgid "Save &as..."
+msgstr "Talleta &nimellä..."
+
+#: ieframe.rc:35
+#, fuzzy
+msgid "Print &format..."
+msgstr "Tulosta"
+
+#: ieframe.rc:36
+#, fuzzy
+msgid "Pr&int..."
+msgstr "Tulosta"
+
+#: ieframe.rc:37 wordpad.rc:34
+#, fuzzy
+msgid "Print previe&w"
+msgstr "Tulosta &Kuva..."
+
+#: ieframe.rc:39 shdoclc.rc:58 shell32.rc:105 clock.rc:28 wineconsole.rc:27
+#, fuzzy
+msgid "&Properties"
+msgstr ""
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"&Ominaisuudet\n"
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"O&minaisuudet"
+
+#: ieframe.rc:40 oleview.rc:80 taskmgr.rc:139
+msgid "&Close"
+msgstr ""
+
+#: ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
+#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+msgid "&View"
+msgstr "&Näkymä"
+
+#: ieframe.rc:44
+msgid "&Toolbars"
+msgstr ""
+
+#: ieframe.rc:46
+msgid "&Standard bar"
+msgstr ""
+
+#: ieframe.rc:47
+msgid "&Address bar"
+msgstr ""
+
+#: ieframe.rc:50 regedit.rc:71
+#, fuzzy
+msgid "&Favorites"
+msgstr "S&uosikit"
+
+#: ieframe.rc:52 regedit.rc:73
+#, fuzzy
+msgid "&Add to Favorites..."
+msgstr "Lis&ää Suosikkeihin..."
+
+#: ieframe.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 oleview.rc:69
+#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
+#: winhlp32.rc:53 wordpad.rc:91
+#, fuzzy
+msgid "&Help"
+msgstr ""
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"&Apua\n"
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"&Ohje"
+
+#: ieframe.rc:57
+#, fuzzy
+msgid "&About Internet Explorer"
+msgstr "&About Notepad"
+
+#: ieframe.rc:67
+#, fuzzy
+msgctxt "home page"
+msgid "Home"
+msgstr "Alkuun"
+
+#: ieframe.rc:68 winhlp32.rc:66
+#, fuzzy
+msgid "Print..."
+msgstr "Tulosta"
+
+#: ieframe.rc:73
+msgid "Address"
 msgstr ""
 
 #: inetcpl.rc:28
@@ -6055,15 +6169,6 @@ msgstr "Koo&daus"
 msgid "Pr&int"
 msgstr "Tul&osta"
 
-#: shdoclc.rc:58 shdocvw.rc:39 shell32.rc:105 clock.rc:28 wineconsole.rc:27
-#, fuzzy
-msgid "&Properties"
-msgstr ""
-"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
-"&Ominaisuudet\n"
-"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
-"O&minaisuudet"
-
 #: shdoclc.rc:61
 msgid "Image"
 msgstr "Kuva"
@@ -6382,111 +6487,6 @@ msgstr "Sivu Ylös"
 
 #: shdoclc.rc:31
 msgid "&u&b&d"
-msgstr ""
-
-#: shdocvw.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
-#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
-#: wordpad.rc:26
-msgid "&File"
-msgstr "&Tiedosto"
-
-#: shdocvw.rc:27 regedit.rc:44 regedit.rc:95
-#, fuzzy
-msgid "&New"
-msgstr "&Uusi\tF2"
-
-#: shdocvw.rc:29 winefile.rc:76
-msgid "&Window"
-msgstr ""
-
-#: shdocvw.rc:31 view.rc:30 winhlp32.rc:29
-#, fuzzy
-msgid "&Open..."
-msgstr ""
-"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
-"&Avaa\n"
-"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
-"&Avaa..."
-
-#: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
-msgid "Save &as..."
-msgstr "Talleta &nimellä..."
-
-#: shdocvw.rc:35
-#, fuzzy
-msgid "Print &format..."
-msgstr "Tulosta"
-
-#: shdocvw.rc:36
-#, fuzzy
-msgid "Pr&int..."
-msgstr "Tulosta"
-
-#: shdocvw.rc:37 wordpad.rc:34
-#, fuzzy
-msgid "Print previe&w"
-msgstr "Tulosta &Kuva..."
-
-#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
-msgid "&Close"
-msgstr ""
-
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
-#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
-msgid "&View"
-msgstr "&Näkymä"
-
-#: shdocvw.rc:44
-msgid "&Toolbars"
-msgstr ""
-
-#: shdocvw.rc:46
-msgid "&Standard bar"
-msgstr ""
-
-#: shdocvw.rc:47
-msgid "&Address bar"
-msgstr ""
-
-#: shdocvw.rc:50 regedit.rc:71
-#, fuzzy
-msgid "&Favorites"
-msgstr "S&uosikit"
-
-#: shdocvw.rc:52 regedit.rc:73
-#, fuzzy
-msgid "&Add to Favorites..."
-msgstr "Lis&ää Suosikkeihin..."
-
-#: shdocvw.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 oleview.rc:69
-#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
-#: winhlp32.rc:53 wordpad.rc:91
-#, fuzzy
-msgid "&Help"
-msgstr ""
-"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
-"&Apua\n"
-"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
-"&Ohje"
-
-#: shdocvw.rc:57
-#, fuzzy
-msgid "&About Internet Explorer"
-msgstr "&About Notepad"
-
-#: shdocvw.rc:67
-#, fuzzy
-msgctxt "home page"
-msgid "Home"
-msgstr "Alkuun"
-
-#: shdocvw.rc:68 winhlp32.rc:66
-#, fuzzy
-msgid "Print..."
-msgstr "Tulosta"
-
-#: shdocvw.rc:73
-msgid "Address"
 msgstr ""
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65

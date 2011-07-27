@@ -314,7 +314,7 @@ static void add_tbs_to_menu(HMENU menu)
 
 static HMENU create_ie_menu(void)
 {
-    HMENU menu = LoadMenuW(shdocvw_hinstance, MAKEINTRESOURCEW(IDR_BROWSE_MAIN_MENU));
+    HMENU menu = LoadMenuW(get_ieframe_instance(), MAKEINTRESOURCEW(IDR_BROWSE_MAIN_MENU));
     HMENU favmenu = get_fav_menu(menu);
     WCHAR path[MAX_PATH];
 
@@ -415,7 +415,7 @@ static void add_tb_button(HWND hwnd, int bmp, int cmd, int strId)
     TBBUTTON btn;
     WCHAR buf[30];
 
-    LoadStringW(shdocvw_hinstance, strId, buf, sizeof(buf)/sizeof(buf[0]));
+    LoadStringW(get_ieframe_instance(), strId, buf, sizeof(buf)/sizeof(buf[0]));
 
     btn.iBitmap = bmp;
     btn.idCommand = cmd;
@@ -438,7 +438,7 @@ static void create_rebar(HWND hwnd)
     HIMAGELIST imagelist;
     WCHAR idb_ietoolbar[] = {'I','D','B','_','I','E','T','O','O','L','B','A','R',0};
 
-    LoadStringW(shdocvw_hinstance, IDS_ADDRESS, addr, sizeof(addr)/sizeof(addr[0]));
+    LoadStringW(get_ieframe_instance(), IDS_ADDRESS, addr, sizeof(addr)/sizeof(addr[0]));
 
     hwndRebar = CreateWindowExW(WS_EX_TOOLWINDOW, REBARCLASSNAMEW, NULL, WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|RBS_VARHEIGHT|CCS_TOP|CCS_NODIVIDER, 0, 0, 0, 0, hwnd, (HMENU)IDC_BROWSE_REBAR, shdocvw_hinstance, NULL);
 

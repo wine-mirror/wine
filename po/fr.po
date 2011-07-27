@@ -406,7 +406,7 @@ msgstr ""
 msgid "Select a font size between %d and %d points."
 msgstr "Sélectionnez une taille de police entre %d et %d points."
 
-#: comdlg32.rc:152 shdocvw.rc:32
+#: comdlg32.rc:152 ieframe.rc:32
 msgid "&Save"
 msgstr "&Enregistrer"
 
@@ -2098,15 +2098,15 @@ msgstr "Afficher"
 msgid "Hide"
 msgstr "Cacher"
 
-#: hhctrl.rc:41 shdoclc.rc:164 shdoclc.rc:188 shdocvw.rc:65
+#: hhctrl.rc:41 ieframe.rc:65 shdoclc.rc:164 shdoclc.rc:188
 msgid "Stop"
 msgstr "Arrêter"
 
-#: hhctrl.rc:42 shdocvw.rc:66 shell32.rc:59
+#: hhctrl.rc:42 ieframe.rc:66 shell32.rc:59
 msgid "Refresh"
 msgstr "Recharger"
 
-#: hhctrl.rc:43 shdocvw.rc:63
+#: hhctrl.rc:43 ieframe.rc:63
 msgid "Back"
 msgstr "Précédent"
 
@@ -2119,7 +2119,7 @@ msgstr "Sommaire"
 msgid "Sync"
 msgstr "Synchroniser"
 
-#: hhctrl.rc:48 shdocvw.rc:64
+#: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"
 msgstr "Suivant"
 
@@ -2182,6 +2182,96 @@ msgstr "IDTB_TOC_PREV"
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
 msgstr "Codec vidéo Cinepak"
+
+#: ieframe.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
+#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
+#: wordpad.rc:26
+msgid "&File"
+msgstr "&Fichier"
+
+#: ieframe.rc:27 regedit.rc:44 regedit.rc:95
+msgid "&New"
+msgstr "&Nouvelle"
+
+#: ieframe.rc:29 winefile.rc:76
+msgid "&Window"
+msgstr "&Fenêtre"
+
+#: ieframe.rc:31 view.rc:30 winhlp32.rc:29
+msgid "&Open..."
+msgstr "&Ouvrir..."
+
+#: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
+msgid "Save &as..."
+msgstr "Enregistrer &sous..."
+
+#: ieframe.rc:35
+msgid "Print &format..."
+msgstr "&Format d'impression..."
+
+#: ieframe.rc:36
+msgid "Pr&int..."
+msgstr "&Imprimer..."
+
+#: ieframe.rc:37 wordpad.rc:34
+msgid "Print previe&w"
+msgstr "&Aperçu avant impression"
+
+#: ieframe.rc:39 shdoclc.rc:58 shell32.rc:105 clock.rc:28 wineconsole.rc:27
+msgid "&Properties"
+msgstr "&Propriétés"
+
+#: ieframe.rc:40 oleview.rc:80 taskmgr.rc:139
+msgid "&Close"
+msgstr "&Fermer"
+
+#: ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
+#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+msgid "&View"
+msgstr "&Affichage"
+
+#: ieframe.rc:44
+msgid "&Toolbars"
+msgstr "&Barres d'outils"
+
+#: ieframe.rc:46
+msgid "&Standard bar"
+msgstr "Barre &standard"
+
+#: ieframe.rc:47
+msgid "&Address bar"
+msgstr "Barre d'&adresse"
+
+#: ieframe.rc:50 regedit.rc:71
+msgid "&Favorites"
+msgstr "&Favoris"
+
+#: ieframe.rc:52 regedit.rc:73
+msgid "&Add to Favorites..."
+msgstr "&Ajouter aux favoris..."
+
+#: ieframe.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 oleview.rc:69
+#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
+#: winhlp32.rc:53 wordpad.rc:91
+msgid "&Help"
+msgstr "Aid&e"
+
+#: ieframe.rc:57
+msgid "&About Internet Explorer"
+msgstr "À &propos d'Internet Explorer"
+
+#: ieframe.rc:67
+msgctxt "home page"
+msgid "Home"
+msgstr "Accueil"
+
+#: ieframe.rc:68 winhlp32.rc:66
+msgid "Print..."
+msgstr "Imprimer..."
+
+#: ieframe.rc:73
+msgid "Address"
+msgstr "Adresse"
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -5927,10 +6017,6 @@ msgstr "Coda&ge"
 msgid "Pr&int"
 msgstr "&Imprimer"
 
-#: shdoclc.rc:58 shdocvw.rc:39 shell32.rc:105 clock.rc:28 wineconsole.rc:27
-msgid "&Properties"
-msgstr "&Propriétés"
-
 #: shdoclc.rc:61
 msgid "Image"
 msgstr "Image"
@@ -6230,92 +6316,6 @@ msgstr "&w&bPage &p"
 #: shdoclc.rc:31
 msgid "&u&b&d"
 msgstr "&u&b&d"
-
-#: shdocvw.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
-#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
-#: wordpad.rc:26
-msgid "&File"
-msgstr "&Fichier"
-
-#: shdocvw.rc:27 regedit.rc:44 regedit.rc:95
-msgid "&New"
-msgstr "&Nouvelle"
-
-#: shdocvw.rc:29 winefile.rc:76
-msgid "&Window"
-msgstr "&Fenêtre"
-
-#: shdocvw.rc:31 view.rc:30 winhlp32.rc:29
-msgid "&Open..."
-msgstr "&Ouvrir..."
-
-#: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
-msgid "Save &as..."
-msgstr "Enregistrer &sous..."
-
-#: shdocvw.rc:35
-msgid "Print &format..."
-msgstr "&Format d'impression..."
-
-#: shdocvw.rc:36
-msgid "Pr&int..."
-msgstr "&Imprimer..."
-
-#: shdocvw.rc:37 wordpad.rc:34
-msgid "Print previe&w"
-msgstr "&Aperçu avant impression"
-
-#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
-msgid "&Close"
-msgstr "&Fermer"
-
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
-#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
-msgid "&View"
-msgstr "&Affichage"
-
-#: shdocvw.rc:44
-msgid "&Toolbars"
-msgstr "&Barres d'outils"
-
-#: shdocvw.rc:46
-msgid "&Standard bar"
-msgstr "Barre &standard"
-
-#: shdocvw.rc:47
-msgid "&Address bar"
-msgstr "Barre d'&adresse"
-
-#: shdocvw.rc:50 regedit.rc:71
-msgid "&Favorites"
-msgstr "&Favoris"
-
-#: shdocvw.rc:52 regedit.rc:73
-msgid "&Add to Favorites..."
-msgstr "&Ajouter aux favoris..."
-
-#: shdocvw.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 oleview.rc:69
-#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
-#: winhlp32.rc:53 wordpad.rc:91
-msgid "&Help"
-msgstr "Aid&e"
-
-#: shdocvw.rc:57
-msgid "&About Internet Explorer"
-msgstr "À &propos d'Internet Explorer"
-
-#: shdocvw.rc:67
-msgctxt "home page"
-msgid "Home"
-msgstr "Accueil"
-
-#: shdocvw.rc:68 winhlp32.rc:66
-msgid "Print..."
-msgstr "Imprimer..."
-
-#: shdocvw.rc:73
-msgid "Address"
-msgstr "Adresse"
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252

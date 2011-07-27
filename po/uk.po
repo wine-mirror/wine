@@ -403,7 +403,7 @@ msgstr ""
 msgid "Select a font size between %d and %d points."
 msgstr "Биберіть шрифт розміром %d - %d пунктів."
 
-#: comdlg32.rc:152 shdocvw.rc:32
+#: comdlg32.rc:152 ieframe.rc:32
 msgid "&Save"
 msgstr "&Зберегти"
 
@@ -2089,15 +2089,15 @@ msgstr "Показувати"
 msgid "Hide"
 msgstr "Приховати"
 
-#: hhctrl.rc:41 shdoclc.rc:164 shdoclc.rc:188 shdocvw.rc:65
+#: hhctrl.rc:41 ieframe.rc:65 shdoclc.rc:164 shdoclc.rc:188
 msgid "Stop"
 msgstr "Зупинити"
 
-#: hhctrl.rc:42 shdocvw.rc:66 shell32.rc:59
+#: hhctrl.rc:42 ieframe.rc:66 shell32.rc:59
 msgid "Refresh"
 msgstr "Оновити"
 
-#: hhctrl.rc:43 shdocvw.rc:63
+#: hhctrl.rc:43 ieframe.rc:63
 msgid "Back"
 msgstr "Назад"
 
@@ -2110,7 +2110,7 @@ msgstr "Додому"
 msgid "Sync"
 msgstr "Синхронізувати"
 
-#: hhctrl.rc:48 shdocvw.rc:64
+#: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"
 msgstr "Вперед"
 
@@ -2173,6 +2173,96 @@ msgstr "IDTB_TOC_PREV"
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
 msgstr "Відео кодек Cinepak"
+
+#: ieframe.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
+#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
+#: wordpad.rc:26
+msgid "&File"
+msgstr "&Файл"
+
+#: ieframe.rc:27 regedit.rc:44 regedit.rc:95
+msgid "&New"
+msgstr "&Новий"
+
+#: ieframe.rc:29 winefile.rc:76
+msgid "&Window"
+msgstr "Ві&кно"
+
+#: ieframe.rc:31 view.rc:30 winhlp32.rc:29
+msgid "&Open..."
+msgstr "&Відкрити..."
+
+#: ieframe.rc:33 notepad.rc:30 wordpad.rc:31
+msgid "Save &as..."
+msgstr "Зберегти &як..."
+
+#: ieframe.rc:35
+msgid "Print &format..."
+msgstr "&Формат друку..."
+
+#: ieframe.rc:36
+msgid "Pr&int..."
+msgstr "&Друк..."
+
+#: ieframe.rc:37 wordpad.rc:34
+msgid "Print previe&w"
+msgstr "Попередній пе&регляд"
+
+#: ieframe.rc:39 shdoclc.rc:58 shell32.rc:105 clock.rc:28 wineconsole.rc:27
+msgid "&Properties"
+msgstr "В&ластивості"
+
+#: ieframe.rc:40 oleview.rc:80 taskmgr.rc:139
+msgid "&Close"
+msgstr "За&крити"
+
+#: ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
+#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+msgid "&View"
+msgstr "&Вигляд"
+
+#: ieframe.rc:44
+msgid "&Toolbars"
+msgstr "&Панелі інструментів"
+
+#: ieframe.rc:46
+msgid "&Standard bar"
+msgstr "&Стандартна панель"
+
+#: ieframe.rc:47
+msgid "&Address bar"
+msgstr "Рядок &адреси"
+
+#: ieframe.rc:50 regedit.rc:71
+msgid "&Favorites"
+msgstr "&Обране"
+
+#: ieframe.rc:52 regedit.rc:73
+msgid "&Add to Favorites..."
+msgstr "&Додати до Обраного..."
+
+#: ieframe.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 oleview.rc:69
+#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
+#: winhlp32.rc:53 wordpad.rc:91
+msgid "&Help"
+msgstr "&Довідка"
+
+#: ieframe.rc:57
+msgid "&About Internet Explorer"
+msgstr "&Про Оглядач Інтернету"
+
+#: ieframe.rc:67
+msgctxt "home page"
+msgid "Home"
+msgstr "Додому"
+
+#: ieframe.rc:68 winhlp32.rc:66
+msgid "Print..."
+msgstr "Друк..."
+
+#: ieframe.rc:73
+msgid "Address"
+msgstr "Адреса"
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -5907,10 +5997,6 @@ msgstr "&Кодування"
 msgid "Pr&int"
 msgstr "&Друк"
 
-#: shdoclc.rc:58 shdocvw.rc:39 shell32.rc:105 clock.rc:28 wineconsole.rc:27
-msgid "&Properties"
-msgstr "В&ластивості"
-
 #: shdoclc.rc:61
 msgid "Image"
 msgstr "Image"
@@ -6209,92 +6295,6 @@ msgstr "&w&bСторінка &p"
 #: shdoclc.rc:31
 msgid "&u&b&d"
 msgstr "&u&b&d"
-
-#: shdocvw.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
-#: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
-#: wordpad.rc:26
-msgid "&File"
-msgstr "&Файл"
-
-#: shdocvw.rc:27 regedit.rc:44 regedit.rc:95
-msgid "&New"
-msgstr "&Новий"
-
-#: shdocvw.rc:29 winefile.rc:76
-msgid "&Window"
-msgstr "Ві&кно"
-
-#: shdocvw.rc:31 view.rc:30 winhlp32.rc:29
-msgid "&Open..."
-msgstr "&Відкрити..."
-
-#: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
-msgid "Save &as..."
-msgstr "Зберегти &як..."
-
-#: shdocvw.rc:35
-msgid "Print &format..."
-msgstr "&Формат друку..."
-
-#: shdocvw.rc:36
-msgid "Pr&int..."
-msgstr "&Друк..."
-
-#: shdocvw.rc:37 wordpad.rc:34
-msgid "Print previe&w"
-msgstr "Попередній пе&регляд"
-
-#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
-msgid "&Close"
-msgstr "За&крити"
-
-#: shdocvw.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
-#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
-msgid "&View"
-msgstr "&Вигляд"
-
-#: shdocvw.rc:44
-msgid "&Toolbars"
-msgstr "&Панелі інструментів"
-
-#: shdocvw.rc:46
-msgid "&Standard bar"
-msgstr "&Стандартна панель"
-
-#: shdocvw.rc:47
-msgid "&Address bar"
-msgstr "Рядок &адреси"
-
-#: shdocvw.rc:50 regedit.rc:71
-msgid "&Favorites"
-msgstr "&Обране"
-
-#: shdocvw.rc:52 regedit.rc:73
-msgid "&Add to Favorites..."
-msgstr "&Додати до Обраного..."
-
-#: shdocvw.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 oleview.rc:69
-#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
-#: winhlp32.rc:53 wordpad.rc:91
-msgid "&Help"
-msgstr "&Довідка"
-
-#: shdocvw.rc:57
-msgid "&About Internet Explorer"
-msgstr "&Про Оглядач Інтернету"
-
-#: shdocvw.rc:67
-msgctxt "home page"
-msgid "Home"
-msgstr "Додому"
-
-#: shdocvw.rc:68 winhlp32.rc:66
-msgid "Print..."
-msgstr "Друк..."
-
-#: shdocvw.rc:73
-msgid "Address"
-msgstr "Адреса"
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252
