@@ -669,8 +669,13 @@ static INT brush_can_fill_path(GpBrush *brush)
     switch (brush->bt)
     {
     case BrushTypeSolidColor:
-    case BrushTypeHatchFill:
         return 1;
+    case BrushTypeHatchFill:
+    {
+        GpHatch *hatch = (GpHatch*)brush;
+        return ((hatch->forecol & 0xff000000) == 0xff000000) &&
+               ((hatch->backcol & 0xff000000) == 0xff000000);
+    }
     case BrushTypeLinearGradient:
     case BrushTypeTextureFill:
     /* Gdi32 isn't much help with these, so we should use brush_fill_pixels instead. */
