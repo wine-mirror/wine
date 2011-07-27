@@ -62,9 +62,8 @@ struct IDirectPlay8ClientImpl
  */
 struct IDirectPlay8AddressImpl
 {
-  /* IUnknown fields */
-  const IDirectPlay8AddressVtbl *lpVtbl;
-  LONG          ref;
+  IDirectPlay8Address IDirectPlay8Address_iface;
+  LONG ref;
   /* IDirectPlay8Address fields */
   GUID SP_guid;
   const WCHAR *url;
