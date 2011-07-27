@@ -151,7 +151,7 @@ typedef struct _DIRECTORY_STACK
 
 /*
  *	Serial nos of builtin commands. These constants must be in step with
- *	the list of strings defined in WCMD.C, and WCMD_EXIT *must* always be
+ *	the list of strings defined in wcmd.rc, and WCMD_EXIT *must* always be
  *	the last one.
  *
  *	Yes it *would* be nice to use an enumeration here, but the Resource

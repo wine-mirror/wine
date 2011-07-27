@@ -903,8 +903,8 @@ static void init_msvcrt_io_block(STARTUPINFOW* st)
     if (st_p.cbReserved2 && st_p.lpReserved2)
     {
         /* Override the entries for fd 0,1,2 if we happened
-         * to change those std handles (this depends on the way wcmd sets
-         * it's new input & output handles)
+         * to change those std handles (this depends on the way cmd sets
+         * its new input & output handles)
          */
         size_t sz = max(sizeof(unsigned) + (sizeof(char) + sizeof(HANDLE)) * 3, st_p.cbReserved2);
         BYTE* ptr = HeapAlloc(GetProcessHeap(), 0, sz);
@@ -1661,7 +1661,7 @@ static void WCMD_addCommand(WCHAR *command, int *commandLen,
 /***************************************************************************
  * WCMD_IsEndQuote
  *
- *   Checks if the quote pointet to is the end-quote.
+ *   Checks if the quote pointed to is the end-quote.
  *
  *   Quotes end if:
  *
@@ -1716,7 +1716,7 @@ static BOOL WCMD_IsEndQuote(WCHAR *quote, int quoteIndex)
  *
  *   Either uses supplied input or
  *     Reads a file from the handle, and then...
- *   Parse the text buffer, spliting into separate commands
+ *   Parse the text buffer, splitting into separate commands
  *     - unquoted && strings split 2 commands but the 2nd is flagged as
  *            following an &&
  *     - ( as the first character just ups the bracket depth
@@ -2422,7 +2422,7 @@ int wmain (int argc, WCHAR *argvW[])
   }
 
   if (opt_c) {
-      /* If we do a "wcmd /c command", we don't want to allocate a new
+      /* If we do a "cmd /c command", we don't want to allocate a new
        * console since the command returns immediately. Rather, we use
        * the currently allocated input and output handles. This allows
        * us to pipe to and read from the command interpreter.
