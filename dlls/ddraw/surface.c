@@ -4703,10 +4703,11 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
 
 static HRESULT WINAPI d3d_texture1_Load(IDirect3DTexture *iface, IDirect3DTexture *src_texture)
 {
+    IDirectDrawSurfaceImpl* src_surface = unsafe_impl_from_IDirect3DTexture(src_texture);
     TRACE("iface %p, src_texture %p.\n", iface, src_texture);
 
     return d3d_texture2_Load((IDirect3DTexture2 *)&surface_from_texture1(iface)->IDirect3DTexture2_vtbl,
-            src_texture ? (IDirect3DTexture2 *)&surface_from_texture1(src_texture)->IDirect3DTexture2_vtbl : NULL);
+            src_surface ? (IDirect3DTexture2 *)&src_surface->IDirect3DTexture2_vtbl : NULL);
 }
 
 /*****************************************************************************
@@ -5026,6 +5027,13 @@ IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface(IDirectDrawSurface *
     if (!iface) return NULL;
     assert(iface->lpVtbl == &ddraw_surface1_vtbl);
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface_iface);
+}
+
+IDirectDrawSurfaceImpl *unsafe_impl_from_IDirect3DTexture(IDirect3DTexture *iface)
+{
+    if (!iface) return NULL;
+    assert(iface->lpVtbl == &d3d_texture1_vtbl);
+    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirect3DTexture_vtbl);
 }
 
 static void STDMETHODCALLTYPE ddraw_surface_wined3d_object_destroyed(void *parent)

@@ -568,8 +568,8 @@ static HRESULT WINAPI IDirect3DDeviceImpl_1_SwapTextureHandles(IDirect3DDevice *
         IDirect3DTexture *D3DTex1, IDirect3DTexture *D3DTex2)
 {
     IDirect3DDeviceImpl *This = device_from_device1(iface);
-    IDirectDrawSurfaceImpl *surf1 = surface_from_texture1(D3DTex1);
-    IDirectDrawSurfaceImpl *surf2 = surface_from_texture1(D3DTex2);
+    IDirectDrawSurfaceImpl *surf1 = unsafe_impl_from_IDirect3DTexture(D3DTex1);
+    IDirectDrawSurfaceImpl *surf2 = unsafe_impl_from_IDirect3DTexture(D3DTex2);
     IDirect3DTexture2 *t1 = surf1 ? (IDirect3DTexture2 *)&surf1->IDirect3DTexture2_vtbl : NULL;
     IDirect3DTexture2 *t2 = surf2 ? (IDirect3DTexture2 *)&surf2->IDirect3DTexture2_vtbl : NULL;
 
