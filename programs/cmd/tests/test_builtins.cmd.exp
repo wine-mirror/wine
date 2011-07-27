@@ -18,13 +18,13 @@ at-echoed-word
 @pwd@>echo "/?"@space@
 "/?"
 
-@pwd@>echo.
+@todo_wine@@pwd@>echo.
 
 
 @pwd@>echo .@space@
 .
 
-@pwd@>echo.word
+@todo_wine@@pwd@>echo.word
 word
 
 @pwd@>echo .word@space@
@@ -100,7 +100,7 @@ FOOBAR =  baz
  bar
 @todo_wine@FOOBAR= bar
 @todo_wine@FOOBAR =  baz2
-FOOBAR =  baz
+FOOBAR =  baz2
 FOOBAR not defined
 1
 bar
@@ -114,7 +114,7 @@ bar
 ~dp0 should be directory containing batch file
 @pwd@\
 @pwd@\
-CD value @pwd@@or_broken@CD value
+CD value @pwd@@or_broken@CD value@space@
 %
 P
 P
@@ -236,8 +236,8 @@ bar removed
 foobar removed
 bar\baz removed
 ------------ Testing CALL --------------
-foo
-foo 8
+foo@space@
+@todo_wine@foo 8
 bar :testRoutine
 @todo_wine@0
 @todo_wine@foo created

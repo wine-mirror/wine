@@ -263,10 +263,10 @@ goto :eof
 :endForTestFun1
 for %%i in (X) do (
     for %%j in (Y) do (
-        echo %%i %%j ))
+        echo %%i %%j))
 for %%i in (A B) do (
     for %%j in (C D) do (
-        echo %%i %%j ))
+        echo %%i %%j))
 for %%i in (A B) do (
     for %%j in (C D) do (
         call :forTestFun2 %%i %%j ))
@@ -478,7 +478,7 @@ rd /s/q foobaz
 echo ------------ Testing CALL --------------
 mkdir foobar & cd foobar
 rem External script
-echo echo foo %%1 > foo.cmd
+echo echo foo %%1> foo.cmd
 call foo
 call foo.cmd 8
 del foo.cmd
@@ -510,7 +510,7 @@ call :setError 0
 call for %%i in (foo bar baz) do echo %%i 2> nul
 echo %ErrorLevel%
 rem First look for programs in the path before trying a builtin
-echo echo non-builtin dir > dir.cmd
+echo echo non-builtin dir> dir.cmd
 call dir /b
 cd ..
 rd /s/q foobar

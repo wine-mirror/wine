@@ -200,7 +200,12 @@ static const char *compare_line(const char *out_line, const char *out_end, const
         out_ptr++;
     }
 
-    return exp_ptr == exp_end ? NULL : out_ptr;
+    if(exp_ptr != exp_end)
+        return out_ptr;
+    else if(out_ptr != out_end)
+        return exp_end;
+
+    return NULL;
 }
 
 static void test_output(const char *out_data, DWORD out_size, const char *exp_data, DWORD exp_size)
@@ -226,6 +231,9 @@ static void test_output(const char *out_data, DWORD out_size, const char *exp_da
         err = compare_line(out_ptr, out_nl, exp_ptr, exp_nl);
         if(err == out_nl)
             ok(0, "unexpected end of line %d (got '%.*s', wanted '%.*s')\n",
+               line, (int)(out_nl-out_ptr), out_ptr, (int)(exp_nl-exp_ptr), exp_ptr);
+        else if(err == exp_nl)
+            ok(0, "excess characters on line %d (got '%.*s', wanted '%.*s')\n",
                line, (int)(out_nl-out_ptr), out_ptr, (int)(exp_nl-exp_ptr), exp_ptr);
         else
             ok(!err, "unexpected char 0x%x position %d in line %d (got '%.*s', wanted '%.*s')\n",
