@@ -1823,12 +1823,6 @@ HRESULT WINAPI CoInternetGetSecurityUrlEx(IUri *pUri, IUri **ppSecUri, PSUACTION
     if(FAILED(hres))
         return hres;
 
-    hres = CreateUri(ret_url, Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME, 0, ppSecUri);
-    if(FAILED(hres)) {
-        CoTaskMemFree(ret_url);
-        return hres;
-    }
-
     /* File URIs have to hierarchical. */
     hres = IUri_GetScheme(pUri, (DWORD*)&scheme_type);
     if(SUCCEEDED(hres) && scheme_type == URL_SCHEME_FILE) {
