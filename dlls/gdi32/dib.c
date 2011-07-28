@@ -1035,28 +1035,84 @@ INT WINAPI GetDIBits(
         char src_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
         BITMAPINFO *src_info = (BITMAPINFO *)src_bmibuf;
         struct gdi_image_bits src_bits;
-        struct bitblt_coords src;
+        struct bitblt_coords src, dst;
         DWORD err;
+        int dst_to_src_offset;
+        BOOL empty_rect;
 
-        src.visrect.left = 0;
-        src.visrect.right = min( width, bmp->bitmap.bmWidth );
+        src.visrect.left   = 0;
+        src.visrect.top    = 0;
+        src.visrect.right  = bmp->bitmap.bmWidth;
+        src.visrect.bottom = bmp->bitmap.bmHeight;
 
-        if (startscan >= bmp->bitmap.bmHeight)                       /* constrain lines to within src bitmap */
-            lines = 0;
+        dst.visrect.left   = 0;
+        dst.visrect.top    = 0;
+        dst.visrect.right  = dst_info->bmiHeader.biWidth;
+        dst.visrect.bottom = abs( dst_info->bmiHeader.biHeight );
+
+        if (startscan >= dst.visrect.bottom)
+        {
+            lines = 1; /* yes, this is strange */
+            goto empty_image;
+        }
+
+        if (dst_info->bmiHeader.biHeight > 0)
+        {
+            dst_to_src_offset = -startscan;
+            lines = min( lines, dst.visrect.bottom - startscan );
+            if (lines < dst.visrect.bottom) dst.visrect.top = dst.visrect.bottom - lines;
+        }
         else
-            lines = min( lines, bmp->bitmap.bmHeight - startscan );
-        lines = min( lines, abs(height) );                           /* and constrain to within dest bitmap */
+        {
+            dst_to_src_offset = dst.visrect.bottom - lines - startscan;
+            if (dst_to_src_offset < 0)
+            {
+                dst_to_src_offset = 0;
+                lines = dst.visrect.bottom - startscan;
+            }
+            if (lines < dst.visrect.bottom) dst.visrect.bottom = lines;
+        }
 
-        if (lines == 0) goto done;
+        offset_rect( &dst.visrect, 0, dst_to_src_offset );
+        empty_rect = !intersect_rect( &src.visrect, &src.visrect, &dst.visrect );
+        dst.visrect = src.visrect;
+        offset_rect( &dst.visrect, 0, -dst_to_src_offset );
 
-        src.visrect.bottom = bmp->bitmap.bmHeight - startscan;
-        src.visrect.top = src.visrect.bottom - lines;
-        src.x = src.visrect.left;
-        src.y = src.visrect.top;
-        src.width = src.visrect.right - src.visrect.left;
+        if (dst_info->bmiHeader.biHeight > 0)
+        {
+            if (dst.visrect.bottom < dst_info->bmiHeader.biHeight)
+            {
+                int pad_lines = min( dst_info->bmiHeader.biHeight - dst.visrect.bottom, lines );
+                int pad_bytes = pad_lines * get_dib_stride( width, bpp );
+                memset( bits, 0, pad_bytes );
+                bits = (char *)bits + pad_bytes;
+            }
+        }
+        else
+        {
+            if (dst.visrect.bottom < lines)
+            {
+                int pad_lines = lines - dst.visrect.bottom, stride = get_dib_stride( width, bpp );
+                int pad_bytes = pad_lines * stride;
+                memset( (char *)bits + dst.visrect.bottom * stride, 0, pad_bytes );
+            }
+        }
+
+        if (empty_rect)
+        {
+            lines = 0;
+            goto empty_image;
+        }
+
+        src.x      = src.visrect.left;
+        src.y      = src.visrect.top;
+        src.width  = src.visrect.right - src.visrect.left;
         src.height = src.visrect.bottom - src.visrect.top;
 
+        lines = src.height;
+
         err = bmp->funcs->pGetImage( NULL, hbitmap, src_info, &src_bits, &src );
+
         if(err)
         {
             lines = 0;
@@ -1072,15 +1128,16 @@ INT WINAPI GetDIBits(
         }
 
         if(dst_info->bmiHeader.biHeight > 0)
-            dst_info->bmiHeader.biHeight = lines;
+            dst_info->bmiHeader.biHeight = src.height;
         else
-            dst_info->bmiHeader.biHeight = -lines;
+            dst_info->bmiHeader.biHeight = -src.height;
 
         convert_bitmapinfo( src_info, src_bits.ptr, &src.visrect, dst_info, bits );
         if (src_bits.free) src_bits.free( &src_bits );
     }
     else lines = abs(height);
 
+empty_image:
     if (coloruse == DIB_PAL_COLORS)
     {
         WORD *index = (WORD *)dst_info->bmiColors;
