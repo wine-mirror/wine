@@ -288,41 +288,31 @@ static void client_do_args(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
                            int phase, unsigned char *args, void **fpu_args,
                            unsigned short number_of_params, unsigned char *pRetVal)
 {
-    /* current format string offset */
-    int current_offset = 0;
-    /* current stack offset */
-    unsigned short current_stack_offset = 0;
-    /* counter */
-    unsigned short i;
+    const NDR_PARAM_OIF *params = (const NDR_PARAM_OIF *)pFormat;
+    unsigned int i;
 
     for (i = 0; i < number_of_params; i++)
     {
-        const NDR_PARAM_OIF_BASETYPE *pParam =
-            (const NDR_PARAM_OIF_BASETYPE *)&pFormat[current_offset];
-        unsigned char * pArg;
-
-        current_stack_offset = pParam->stack_offset;
-        pArg = ARG_FROM_OFFSET(args, current_stack_offset);
+        unsigned char *pArg = args + params[i].stack_offset;
 
         TRACE("param[%d]: new format\n", i);
-        TRACE("\tparam_attributes:"); dump_RPC_FC_PROC_PF(pParam->param_attributes); TRACE("\n");
-        TRACE("\tstack_offset: 0x%x\n", current_stack_offset);
+        TRACE("\tparam_attributes:"); dump_RPC_FC_PROC_PF(params[i].attr); TRACE("\n");
+        TRACE("\tstack_offset: 0x%x\n", params[i].stack_offset);
         TRACE("\tmemory addr (before): %p\n", pArg);
 
-        if (pParam->param_attributes.IsBasetype)
+        if (params[i].attr.IsBasetype)
         {
-            const unsigned char * pTypeFormat =
-                &pParam->type_format_char;
+            const unsigned char * pTypeFormat = &params[i].u.type_format_char;
 
 #ifdef __x86_64__  /* floats are passed as doubles through varargs functions */
             float f;
-            if (*pTypeFormat == RPC_FC_FLOAT && !pParam->param_attributes.IsSimpleRef && !fpu_args)
+            if (*pTypeFormat == RPC_FC_FLOAT && !params[i].attr.IsSimpleRef && !fpu_args)
             {
                 f = *(double *)pArg;
                 pArg = (unsigned char *)&f;
             }
 #endif
-            if (pParam->param_attributes.IsSimpleRef)
+            if (params[i].attr.IsSimpleRef)
             {
                 pArg = *(unsigned char **)pArg;
                 if (!pArg) RpcRaiseException(RPC_X_NULL_REF_POINTER);
@@ -333,37 +323,32 @@ static void client_do_args(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
             switch (phase)
             {
             case PROXY_CALCSIZE:
-                if (pParam->param_attributes.IsIn)
+                if (params[i].attr.IsIn)
                     call_buffer_sizer(pStubMsg, pArg, pTypeFormat);
                 break;
             case PROXY_MARSHAL:
-                if (pParam->param_attributes.IsIn)
+                if (params[i].attr.IsIn)
                     call_marshaller(pStubMsg, pArg, pTypeFormat);
                 break;
             case PROXY_UNMARSHAL:
-                if (pParam->param_attributes.IsOut)
+                if (params[i].attr.IsOut)
                 {
-                    if (pParam->param_attributes.IsReturn) pArg = pRetVal;
+                    if (params[i].attr.IsReturn) pArg = pRetVal;
                     call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
                 }
                 break;
             default:
                 RpcRaiseException(RPC_S_INTERNAL_ERROR);
             }
-
-            current_offset += sizeof(NDR_PARAM_OIF_BASETYPE);
         }
         else
         {
-            const NDR_PARAM_OIF_OTHER *pParamOther =
-                (const NDR_PARAM_OIF_OTHER *)&pFormat[current_offset];
-
             const unsigned char * pTypeFormat =
-                &(pStubMsg->StubDesc->pFormatTypes[pParamOther->type_offset]);
+                &(pStubMsg->StubDesc->pFormatTypes[params[i].u.type_offset]);
 
             /* if a simple ref pointer then we have to do the
              * check for the pointer being non-NULL. */
-            if (pParam->param_attributes.IsSimpleRef)
+            if (params[i].attr.IsSimpleRef)
             {
                 if (!*(unsigned char **)pArg)
                     RpcRaiseException(RPC_X_NULL_REF_POINTER);
@@ -374,28 +359,28 @@ static void client_do_args(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
             switch (phase)
             {
             case PROXY_CALCSIZE:
-                if (pParam->param_attributes.IsIn)
+                if (params[i].attr.IsIn)
                 {
-                    if (pParam->param_attributes.IsByValue)
+                    if (params[i].attr.IsByValue)
                         call_buffer_sizer(pStubMsg, pArg, pTypeFormat);
                     else
                         call_buffer_sizer(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
                 }
                 break;
             case PROXY_MARSHAL:
-                if (pParam->param_attributes.IsIn)
+                if (params[i].attr.IsIn)
                 {
-                    if (pParam->param_attributes.IsByValue)
+                    if (params[i].attr.IsByValue)
                         call_marshaller(pStubMsg, pArg, pTypeFormat);
                     else
                         call_marshaller(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
                 }
                 break;
             case PROXY_UNMARSHAL:
-                if (pParam->param_attributes.IsOut)
+                if (params[i].attr.IsOut)
                 {
-                    if (pParam->param_attributes.IsReturn) pArg = pRetVal;
-                    if (pParam->param_attributes.IsByValue)
+                    if (params[i].attr.IsReturn) pArg = pRetVal;
+                    if (params[i].attr.IsByValue)
                         call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
                     else
                         call_unmarshaller(pStubMsg, (unsigned char **)pArg, pTypeFormat, 0);
@@ -404,8 +389,6 @@ static void client_do_args(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
             default:
                 RpcRaiseException(RPC_S_INTERNAL_ERROR);
             }
-
-            current_offset += sizeof(NDR_PARAM_OIF_OTHER);
         }
         TRACE("\tmemory addr (after): %p\n", pArg);
     }
@@ -1137,70 +1120,59 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
                               unsigned char *args,
                               unsigned short number_of_params)
 {
-    /* counter */
-    unsigned short i;
-    /* current format string offset */
-    int current_offset = 0;
-    /* current stack offset */
-    unsigned short current_stack_offset = 0;
-    /* location to put retval into */
+    const NDR_PARAM_OIF *params = (const NDR_PARAM_OIF *)pFormat;
+    unsigned int i;
     LONG_PTR *retval_ptr = NULL;
 
     for (i = 0; i < number_of_params; i++)
     {
-        const NDR_PARAM_OIF_BASETYPE *pParam =
-        (const NDR_PARAM_OIF_BASETYPE *)&pFormat[current_offset];
-        unsigned char *pArg;
-
-        current_stack_offset = pParam->stack_offset;
-        pArg = args + current_stack_offset;
+        unsigned char *pArg = args + params[i].stack_offset;
 
         TRACE("param[%d]: new format\n", i);
-        TRACE("\tparam_attributes:"); dump_RPC_FC_PROC_PF(pParam->param_attributes); TRACE("\n");
-        TRACE("\tstack_offset: 0x%x\n", current_stack_offset);
+        TRACE("\tparam_attributes:"); dump_RPC_FC_PROC_PF(params[i].attr); TRACE("\n");
+        TRACE("\tstack_offset: 0x%x\n", params[i].stack_offset);
         TRACE("\tmemory addr (before): %p -> %p\n", pArg, *(unsigned char **)pArg);
 
-        if (pParam->param_attributes.IsBasetype)
+        if (params[i].attr.IsBasetype)
         {
-            const unsigned char *pTypeFormat =
-            &pParam->type_format_char;
+            const unsigned char *pTypeFormat = &params[i].u.type_format_char;
 
             TRACE("\tbase type: 0x%02x\n", *pTypeFormat);
 
             switch (phase)
             {
                 case STUBLESS_MARSHAL:
-                    if (pParam->param_attributes.IsOut || pParam->param_attributes.IsReturn)
+                    if (params[i].attr.IsOut || params[i].attr.IsReturn)
                     {
-                        if (pParam->param_attributes.IsSimpleRef)
+                        if (params[i].attr.IsSimpleRef)
                             call_marshaller(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
                         else
                             call_marshaller(pStubMsg, pArg, pTypeFormat);
                     }
                     break;
                 case STUBLESS_FREE:
-                    if (pParam->param_attributes.ServerAllocSize)
+                    if (params[i].attr.ServerAllocSize)
                         HeapFree(GetProcessHeap(), 0, *(void **)pArg);
                     break;
                 case STUBLESS_INITOUT:
                     break;
                 case STUBLESS_UNMARSHAL:
-                    if (pParam->param_attributes.ServerAllocSize)
+                    if (params[i].attr.ServerAllocSize)
                         *(void **)pArg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                                   pParam->param_attributes.ServerAllocSize * 8);
+                                                   params[i].attr.ServerAllocSize * 8);
 
-                    if (pParam->param_attributes.IsIn)
+                    if (params[i].attr.IsIn)
                     {
-                        if (pParam->param_attributes.IsSimpleRef)
+                        if (params[i].attr.IsSimpleRef)
                             call_unmarshaller(pStubMsg, (unsigned char **)pArg, pTypeFormat, 0);
                         else
                             call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
                     }
                     break;
                 case STUBLESS_CALCSIZE:
-                    if (pParam->param_attributes.IsOut || pParam->param_attributes.IsReturn)
+                    if (params[i].attr.IsOut || params[i].attr.IsReturn)
                     {
-                        if (pParam->param_attributes.IsSimpleRef)
+                        if (params[i].attr.IsSimpleRef)
                             call_buffer_sizer(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
                         else
                             call_buffer_sizer(pStubMsg, pArg, pTypeFormat);
@@ -1209,45 +1181,40 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
                 default:
                     RpcRaiseException(RPC_S_INTERNAL_ERROR);
             }
-
-            current_offset += sizeof(NDR_PARAM_OIF_BASETYPE);
         }
         else
         {
-            const NDR_PARAM_OIF_OTHER *pParamOther =
-            (const NDR_PARAM_OIF_OTHER *)&pFormat[current_offset];
-
             const unsigned char * pTypeFormat =
-                &(pStubMsg->StubDesc->pFormatTypes[pParamOther->type_offset]);
+                &(pStubMsg->StubDesc->pFormatTypes[params[i].u.type_offset]);
 
             TRACE("\tcomplex type 0x%02x\n", *pTypeFormat);
 
             switch (phase)
             {
                 case STUBLESS_MARSHAL:
-                    if (pParam->param_attributes.IsOut || pParam->param_attributes.IsReturn)
+                    if (params[i].attr.IsOut || params[i].attr.IsReturn)
                     {
-                        if (pParam->param_attributes.IsByValue)
+                        if (params[i].attr.IsByValue)
                             call_marshaller(pStubMsg, pArg, pTypeFormat);
                         else
                             call_marshaller(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
                     }
                     break;
                 case STUBLESS_FREE:
-                    if (pParam->param_attributes.MustFree)
+                    if (params[i].attr.MustFree)
                     {
-                        if (pParam->param_attributes.IsByValue)
+                        if (params[i].attr.IsByValue)
                             call_freer(pStubMsg, pArg, pTypeFormat);
                         else
                             call_freer(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
                     }
-                    else if (pParam->param_attributes.ServerAllocSize)
+                    else if (params[i].attr.ServerAllocSize)
                     {
                         HeapFree(GetProcessHeap(), 0, *(void **)pArg);
                     }
-                    else if (pParam->param_attributes.IsOut &&
-                             !pParam->param_attributes.IsIn &&
-                             !pParam->param_attributes.IsByValue)
+                    else if (params[i].attr.IsOut &&
+                             !params[i].attr.IsIn &&
+                             !params[i].attr.IsByValue)
                     {
                         if (*pTypeFormat != RPC_FC_BIND_CONTEXT)
                             pStubMsg->pfnFree(*(void **)pArg);
@@ -1255,10 +1222,10 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
 
                     break;
                 case STUBLESS_INITOUT:
-                    if (!pParam->param_attributes.IsIn &&
-                             pParam->param_attributes.IsOut &&
-                             !pParam->param_attributes.ServerAllocSize &&
-                             !pParam->param_attributes.IsByValue)
+                    if (!params[i].attr.IsIn &&
+                             params[i].attr.IsOut &&
+                             !params[i].attr.ServerAllocSize &&
+                             !params[i].attr.IsByValue)
                     {
                         if (*pTypeFormat == RPC_FC_BIND_CONTEXT)
                         {
@@ -1279,22 +1246,22 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
                     }
                     break;
                 case STUBLESS_UNMARSHAL:
-                    if (pParam->param_attributes.ServerAllocSize)
+                    if (params[i].attr.ServerAllocSize)
                         *(void **)pArg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                                   pParam->param_attributes.ServerAllocSize * 8);
+                                                   params[i].attr.ServerAllocSize * 8);
 
-                    if (pParam->param_attributes.IsIn)
+                    if (params[i].attr.IsIn)
                     {
-                        if (pParam->param_attributes.IsByValue)
+                        if (params[i].attr.IsByValue)
                             call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
                         else
                             call_unmarshaller(pStubMsg, (unsigned char **)pArg, pTypeFormat, 0);
                     }
                     break;
                 case STUBLESS_CALCSIZE:
-                    if (pParam->param_attributes.IsOut || pParam->param_attributes.IsReturn)
+                    if (params[i].attr.IsOut || params[i].attr.IsReturn)
                     {
-                        if (pParam->param_attributes.IsByValue)
+                        if (params[i].attr.IsByValue)
                             call_buffer_sizer(pStubMsg, pArg, pTypeFormat);
                         else
                             call_buffer_sizer(pStubMsg, *(unsigned char **)pArg, pTypeFormat);
@@ -1303,13 +1270,11 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
                 default:
                     RpcRaiseException(RPC_S_INTERNAL_ERROR);
             }
-
-            current_offset += sizeof(NDR_PARAM_OIF_OTHER);
         }
         TRACE("\tmemory addr (after): %p -> %p\n", pArg, *(unsigned char **)pArg);
 
         /* make a note of the address of the return value parameter for later */
-        if (pParam->param_attributes.IsReturn) retval_ptr = (LONG_PTR *)pArg;
+        if (params[i].attr.IsReturn) retval_ptr = (LONG_PTR *)pArg;
     }
 
     return retval_ptr;

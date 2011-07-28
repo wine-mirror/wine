@@ -141,31 +141,20 @@ typedef struct _NDR_PARAM_OI_OTHER
     unsigned short type_offset;
 } NDR_PARAM_OI_OTHER;
 
-typedef struct _NDR_PARAM_OIF_BASETYPE
+typedef struct
 {
-    PARAM_ATTRIBUTES param_attributes;
-
+    PARAM_ATTRIBUTES attr;
     /* the offset on the calling stack where the parameter is located */
     unsigned short stack_offset;
-
-    /* see NDR_PARAM_OI_BASETYPE::type_format_char */
-    unsigned char type_format_char;
-
-    /* always FC_PAD */
-    unsigned char unused;
-} NDR_PARAM_OIF_BASETYPE;
-
-typedef struct _NDR_PARAM_OIF_OTHER
-{
-    PARAM_ATTRIBUTES param_attributes;
-
-    /* see NDR_PARAM_OIF_BASETYPE::stack_offset */
-    unsigned short stack_offset;
-
-    /* offset into the provided type format string where the type for this
-     * parameter starts */
-    unsigned short type_offset;
-} NDR_PARAM_OIF_OTHER;
+    union
+    {
+        /* see NDR_PARAM_OI_BASETYPE::type_format_char */
+        unsigned char type_format_char;
+        /* offset into the provided type format string where the type for this
+         * parameter starts */
+        unsigned short type_offset;
+    } u;
+} NDR_PARAM_OIF;
 
 /* explicit handle description for FC_BIND_PRIMITIVE type */
 typedef struct _NDR_EHD_PRIMITIVE
