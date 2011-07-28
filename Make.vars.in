@@ -8,7 +8,6 @@ datarootdir     = @datarootdir@
 datadir         = @datadir@
 infodir         = @infodir@
 mandir          = @mandir@
-sysconfdir      = @sysconfdir@
 fontdir         = $(datadir)/wine/fonts
 includedir      = @includedir@/wine
 dlldir          = @libdir@/wine
