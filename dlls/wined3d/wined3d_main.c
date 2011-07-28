@@ -28,6 +28,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 struct wined3d_wndproc
 {
@@ -238,6 +239,7 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
         {
             if (!strcmp(buffer,"disabled"))
             {
+                ERR_(winediag)("The GLSL shader backend has been disabled. You get to keep all the pieces if it breaks.\n");
                 TRACE("Use of GL Shading Language disabled\n");
                 wined3d_settings.glslRequested = FALSE;
             }
