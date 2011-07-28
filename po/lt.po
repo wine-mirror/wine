@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-07-13 22:17+0300\n"
+"PO-Revision-Date: 2011-07-28 19:21+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -171,7 +171,6 @@ msgid "System Path"
 msgstr "Sistemos kelias"
 
 #: comdlg32.rc:34 shell32.rc:153 winecfg.rc:119 winefile.rc:103
-#, fuzzy
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Darbalaukis"
@@ -6374,7 +6373,6 @@ msgid "Properties"
 msgstr "Savybės"
 
 #: shell32.rc:82
-#, fuzzy
 msgctxt "recycle bin"
 msgid "&Restore"
 msgstr "&Atkurti"
@@ -6509,7 +6507,6 @@ msgid "My Videos"
 msgstr "Vaizdai"
 
 #: shell32.rc:207
-#, fuzzy
 msgctxt "directory"
 msgid "Desktop"
 msgstr "Darbalaukis"
@@ -6861,7 +6858,6 @@ msgid " sec"
 msgstr " sek"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
-#, fuzzy
 msgctxt "window"
 msgid "&Restore"
 msgstr "&Atkurti"
@@ -8209,6 +8205,8 @@ msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
+"ENDLOCAL komandų faile baigia aplinkos pakeitimų lokalizavimą,\n"
+"kuris buvo padarytas ankstesnio SETLOCAL.\n"
 
 #: cmd.rc:218
 msgid ""
@@ -8219,6 +8217,11 @@ msgid ""
 "file, whichever comes first), at which point the previous environment\n"
 "settings are restored.\n"
 msgstr ""
+"SETLOCAL pradeda aplinkos pakeitimų lokalizavimą komandų faile.\n"
+"\n"
+"Aplinkos pakeitimai padaryti po SETLOCAL yra lokalūs komandų faile ir yra\n"
+"išlaikomi iki kol sutinkamas kitas ENDLOCAL (arba failo pabaiga, kas\n"
+"pasitaiko pirmiau), tada atkuriami ankstesnės aplinkos nustatymai.\n"
 
 #: cmd.rc:221
 msgid ""
@@ -8257,7 +8260,6 @@ msgstr ""
 "ar apvalkalą iš kur CMD buvo iškviestas.\n"
 
 #: cmd.rc:267
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ATTRIB\t\tShow or change DOS file attributes\n"
@@ -8305,6 +8307,7 @@ msgstr ""
 "DEL (ERASE)\tŠalinti failą ar failų aibę\n"
 "DIR\t\tPateikti katalogo turinį\n"
 "ECHO\t\tKopijuoti tekstą tiesiai į pulto išvedimą\n"
+"ENDLOCAL\tBaigia aplinkos pakeitimų lokalizavimą komandų faile\n"
 "HELP\t\tParodyti trumpą pagalbą apie temą\n"
 "MD (MKDIR)\tSukurti pakatalogį\n"
 "MORE\t\tRodyti išvedimą puslapiais\n"
@@ -8316,6 +8319,7 @@ msgstr ""
 "REN (RENAME)\tPervadinti failą\n"
 "RD (RMDIR)\tŠalinti pakatalogį\n"
 "SET\t\tNustatyti ar parodyti aplinkos kintamuosius\n"
+"SETLOCAL\tPradeda aplinkos pakeitimų lokalizavimą komandų faile\n"
 "TIME\t\tNustatyti ar parodyti dabartinį sistemos laiką\n"
 "TITLE\t\tNustatyti CMD seanso lango antraštę\n"
 "TYPE\t\tIšvesti tekstinio failo turinį\n"
