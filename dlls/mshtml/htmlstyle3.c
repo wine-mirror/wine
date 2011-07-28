@@ -458,8 +458,139 @@ static const IHTMLStyle4Vtbl HTMLStyle4Vtbl = {
     HTMLStyle4_get_minHeight
 };
 
+static inline HTMLStyle *impl_from_IHTMLStyle5(IHTMLStyle5 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLStyle, IHTMLStyle5_iface);
+}
+
+static HRESULT WINAPI HTMLStyle5_QueryInterface(IHTMLStyle5 *iface, REFIID riid, void **ppv)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle5(iface);
+
+    return IHTMLStyle_QueryInterface(&This->IHTMLStyle_iface, riid, ppv);
+}
+
+static ULONG WINAPI HTMLStyle5_AddRef(IHTMLStyle5 *iface)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle5(iface);
+
+    return IHTMLStyle_AddRef(&This->IHTMLStyle_iface);
+}
+
+static ULONG WINAPI HTMLStyle5_Release(IHTMLStyle5 *iface)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle5(iface);
+
+    return IHTMLStyle_Release(&This->IHTMLStyle_iface);
+}
+
+static HRESULT WINAPI HTMLStyle5_GetTypeInfoCount(IHTMLStyle5 *iface, UINT *pctinfo)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle5(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI HTMLStyle5_GetTypeInfo(IHTMLStyle5 *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle5(iface);
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI HTMLStyle5_GetIDsOfNames(IHTMLStyle5 *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle5(iface);
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+            lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLStyle5_Invoke(IHTMLStyle5 *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle5(iface);
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLStyle5_put_msInterpolationMode(IHTMLStyle5 *iface, BSTR v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle5(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle5_get_msInterpolationMode(IHTMLStyle5 *iface, BSTR *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle5(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle5_put_maxHeight(IHTMLStyle5 *iface, VARIANT v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle5(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle5_get_maxHeight(IHTMLStyle5 *iface, VARIANT *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle5(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle5_put_minWidth(IHTMLStyle5 *iface, VARIANT v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle5(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle5_get_minWidth(IHTMLStyle5 *iface, VARIANT *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle5(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle5_put_maxWidth(IHTMLStyle5 *iface, VARIANT v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle5(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle5_get_maxWidth(IHTMLStyle5 *iface, VARIANT *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle5(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static const IHTMLStyle5Vtbl HTMLStyle5Vtbl = {
+    HTMLStyle5_QueryInterface,
+    HTMLStyle5_AddRef,
+    HTMLStyle5_Release,
+    HTMLStyle5_GetTypeInfoCount,
+    HTMLStyle5_GetTypeInfo,
+    HTMLStyle5_GetIDsOfNames,
+    HTMLStyle5_Invoke,
+    HTMLStyle5_put_msInterpolationMode,
+    HTMLStyle5_get_msInterpolationMode,
+    HTMLStyle5_put_maxHeight,
+    HTMLStyle5_get_maxHeight,
+    HTMLStyle5_put_minWidth,
+    HTMLStyle5_get_minWidth,
+    HTMLStyle5_put_maxWidth,
+    HTMLStyle5_get_maxWidth
+};
+
 void HTMLStyle3_Init(HTMLStyle *This)
 {
     This->IHTMLStyle3_iface.lpVtbl = &HTMLStyle3Vtbl;
     This->IHTMLStyle4_iface.lpVtbl = &HTMLStyle4Vtbl;
+    This->IHTMLStyle5_iface.lpVtbl = &HTMLStyle5Vtbl;
 }
