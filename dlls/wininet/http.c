@@ -873,7 +873,7 @@ static void cache_basic_authorization(LPWSTR host, LPWSTR realm, LPSTR auth_data
     {
         ad = heap_alloc(sizeof(basicAuthorizationData));
         ad->host = heap_strdupW(host);
-        ad->host = heap_strdupW(realm);
+        ad->realm = heap_strdupW(realm);
         ad->authorization = heap_alloc(auth_data_len);
         memcpy(ad->authorization, auth_data, auth_data_len);
         ad->authorizationLen = auth_data_len;
