@@ -2440,7 +2440,7 @@ static HRESULT WINAPI winhttp_request_Open(
     HINTERNET hsession = NULL, hconnect = NULL, hrequest;
     URL_COMPONENTS uc;
     WCHAR *hostname, *path;
-    DWORD err, len, flags = 0, request_flags = 0;
+    DWORD err, len, flags = 0, request_flags = 0, disable_flags;
 
     TRACE("%p, %s, %s, %s\n", request, debugstr_w(method), debugstr_w(url),
           debugstr_variant(&async));
@@ -2484,6 +2484,12 @@ static HRESULT WINAPI winhttp_request_Open(
         request_flags |= WINHTTP_FLAG_SECURE;
     }
     if (!(hrequest = WinHttpOpenRequest( hconnect, method, path, NULL, NULL, acceptW, request_flags )))
+    {
+        err = get_last_error();
+        goto error;
+    }
+    disable_flags = WINHTTP_DISABLE_AUTHENTICATION;
+    if (!WinHttpSetOption( hrequest, WINHTTP_OPTION_DISABLE_FEATURE, &disable_flags, sizeof(disable_flags) ))
     {
         err = get_last_error();
         goto error;
