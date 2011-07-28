@@ -3199,6 +3199,8 @@ static HRESULT redirect_known_folder(
     LPWSTR lpRegistryPath = NULL, lpSrcPath = NULL;
     TRACE("(%s, %p, 0x%08x, %s, %d, %p, %p)\n", debugstr_guid(rfid), hwnd, flags, debugstr_w(pszTargetPath), cFolders, pExclusion, ppszError);
 
+    if (ppszError) *ppszError = NULL;
+
     hr = get_known_folder_registry_path(rfid, NULL, &lpRegistryPath);
 
     if(SUCCEEDED(hr))
