@@ -1,0 +1,7 @@
+TESTDLL   = ieframe.dll
+IMPORTS   = ole32
+
+C_SRCS = \
+	ie.c
+
+@MAKE_TEST_RULES@

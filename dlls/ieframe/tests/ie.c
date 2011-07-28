@@ -24,6 +24,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "initguid.h"
 #include "ole2.h"
 #include "exdisp.h"
 
@@ -58,10 +59,7 @@ static void test_InternetExplorer(void)
 
     hres = CoCreateInstance(&CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
             &IID_IUnknown, (void**)&unk);
-    if(FAILED(hres)) {
-        win_skip("Could not create InternetExplorer object\n");
-        return;
-    }
+    ok(hres == S_OK, "Could not create InternetExplorer instance: %08x\n", hres);
 
     hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
     ok(hres == S_OK, "Could not get IWebBrowser2 interface: %08x\n", hres);
