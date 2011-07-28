@@ -304,15 +304,14 @@ static UINT WINAPI IDirect3DDevice9Impl_GetAvailableTextureMem(IDirect3DDevice9E
 static HRESULT WINAPI IDirect3DDevice9Impl_EvictManagedResources(IDirect3DDevice9Ex *iface)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
-    HRESULT hr;
 
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_evict_managed_resources(This->wined3d_device);
+    wined3d_device_evict_managed_resources(This->wined3d_device);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DDevice9Impl_GetDirect3D(IDirect3DDevice9Ex *iface,

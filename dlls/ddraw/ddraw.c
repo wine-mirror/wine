@@ -5158,15 +5158,15 @@ static HRESULT WINAPI d3d3_EnumZBufferFormats(IDirect3D3 *iface, REFCLSID device
 static HRESULT WINAPI d3d7_EvictManagedTextures(IDirect3D7 *iface)
 {
     IDirectDrawImpl *This = impl_from_IDirect3D7(iface);
-    HRESULT hr;
+
     TRACE("iface %p!\n", iface);
 
     EnterCriticalSection(&ddraw_cs);
-    if (!This->d3d_initialized) hr = D3D_OK;
-    else hr = wined3d_device_evict_managed_resources(This->wined3d_device);
+    if (This->d3d_initialized)
+        wined3d_device_evict_managed_resources(This->wined3d_device);
     LeaveCriticalSection(&ddraw_cs);
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d3_EvictManagedTextures(IDirect3D3 *iface)

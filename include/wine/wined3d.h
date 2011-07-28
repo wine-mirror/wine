@@ -2204,7 +2204,7 @@ HRESULT __cdecl wined3d_device_draw_tri_patch(struct wined3d_device *device, UIN
         const float *num_segs, const WINED3DTRIPATCH_INFO *tri_patch_info);
 HRESULT __cdecl wined3d_device_end_scene(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_end_stateblock(struct wined3d_device *device, struct wined3d_stateblock **stateblock);
-HRESULT __cdecl wined3d_device_evict_managed_resources(struct wined3d_device *device);
+void __cdecl wined3d_device_evict_managed_resources(struct wined3d_device *device);
 UINT __cdecl wined3d_device_get_available_texture_mem(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_back_buffer(struct wined3d_device *device, UINT swapchain_idx,
         UINT backbuffer_idx, WINED3DBACKBUFFER_TYPE backbuffer_type, struct wined3d_surface **backbuffer);

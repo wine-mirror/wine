@@ -361,16 +361,15 @@ static HRESULT WINAPI IDirect3DDevice8Impl_ResourceManagerDiscardBytes(IDirect3D
         DWORD Bytes)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    HRESULT hr;
 
     TRACE("iface %p, byte_count %u.\n", iface, Bytes);
     if (Bytes) FIXME("Byte count ignored.\n");
 
     wined3d_mutex_lock();
-    hr = wined3d_device_evict_managed_resources(This->wined3d_device);
+    wined3d_device_evict_managed_resources(This->wined3d_device);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_GetDirect3D(IDirect3DDevice8 *iface, IDirect3D8 **ppD3D8)

@@ -5386,7 +5386,7 @@ BOOL CDECL wined3d_device_show_cursor(struct wined3d_device *device, BOOL show)
     return oldVisible;
 }
 
-HRESULT CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
+void CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
 {
     struct wined3d_resource *resource, *cursor;
 
@@ -5405,8 +5405,6 @@ HRESULT CDECL wined3d_device_evict_managed_resources(struct wined3d_device *devi
 
     /* Invalidate stream sources, the buffer(s) may have been evicted. */
     device_invalidate_state(device, STATE_STREAMSRC);
-
-    return WINED3D_OK;
 }
 
 static HRESULT updateSurfaceDesc(struct wined3d_surface *surface,
