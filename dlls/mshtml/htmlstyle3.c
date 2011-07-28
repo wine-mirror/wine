@@ -588,9 +588,332 @@ static const IHTMLStyle5Vtbl HTMLStyle5Vtbl = {
     HTMLStyle5_get_maxWidth
 };
 
+static inline HTMLStyle *impl_from_IHTMLStyle6(IHTMLStyle6 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLStyle, IHTMLStyle6_iface);
+}
+
+static HRESULT WINAPI HTMLStyle6_QueryInterface(IHTMLStyle6 *iface, REFIID riid, void **ppv)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+
+    return IHTMLStyle_QueryInterface(&This->IHTMLStyle_iface, riid, ppv);
+}
+
+static ULONG WINAPI HTMLStyle6_AddRef(IHTMLStyle6 *iface)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+
+    return IHTMLStyle_AddRef(&This->IHTMLStyle_iface);
+}
+
+static ULONG WINAPI HTMLStyle6_Release(IHTMLStyle6 *iface)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+
+    return IHTMLStyle_Release(&This->IHTMLStyle_iface);
+}
+
+static HRESULT WINAPI HTMLStyle6_GetTypeInfoCount(IHTMLStyle6 *iface, UINT *pctinfo)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI HTMLStyle6_GetTypeInfo(IHTMLStyle6 *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI HTMLStyle6_GetIDsOfNames(IHTMLStyle6 *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+            lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLStyle6_Invoke(IHTMLStyle6 *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLStyle6_put_content(IHTMLStyle6 *iface, BSTR v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_get_content(IHTMLStyle6 *iface, BSTR *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_put_contentSide(IHTMLStyle6 *iface, BSTR v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_get_contentSide(IHTMLStyle6 *iface, BSTR *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_put_counterIncrement(IHTMLStyle6 *iface, BSTR v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_get_counterIncrement(IHTMLStyle6 *iface, BSTR *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_put_counterReset(IHTMLStyle6 *iface, BSTR v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_get_counterReset(IHTMLStyle6 *iface, BSTR *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_put_outline(IHTMLStyle6 *iface, BSTR v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_get_outline(IHTMLStyle6 *iface, BSTR *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_put_outlineWidth(IHTMLStyle6 *iface, VARIANT v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_get_outlineWidth(IHTMLStyle6 *iface, VARIANT *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_put_outlineStyle(IHTMLStyle6 *iface, BSTR v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_get_outlineStyle(IHTMLStyle6 *iface, BSTR *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_put_outlineColor(IHTMLStyle6 *iface, VARIANT v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_get_outlineColor(IHTMLStyle6 *iface, VARIANT *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_put_boxSizing(IHTMLStyle6 *iface, BSTR v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_get_boxSizing(IHTMLStyle6 *iface, BSTR *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_put_boxSpacing(IHTMLStyle6 *iface, BSTR v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_get_boxSpacing(IHTMLStyle6 *iface, BSTR *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_put_orphans(IHTMLStyle6 *iface, VARIANT v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_get_orphans(IHTMLStyle6 *iface, VARIANT *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_put_windows(IHTMLStyle6 *iface, VARIANT v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_get_windows(IHTMLStyle6 *iface, VARIANT *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_put_pageBreakInside(IHTMLStyle6 *iface, BSTR v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_get_pageBreakInside(IHTMLStyle6 *iface, BSTR *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_put_emptyCells(IHTMLStyle6 *iface, BSTR v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_get_emptyCells(IHTMLStyle6 *iface, BSTR *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_put_msBlockProgression(IHTMLStyle6 *iface, BSTR v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_get_msBlockProgression(IHTMLStyle6 *iface, BSTR *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_put_quotes(IHTMLStyle6 *iface, BSTR v)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLStyle6_get_quotes(IHTMLStyle6 *iface, BSTR *p)
+{
+    HTMLStyle *This = impl_from_IHTMLStyle6(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static const IHTMLStyle6Vtbl HTMLStyle6Vtbl = {
+    HTMLStyle6_QueryInterface,
+    HTMLStyle6_AddRef,
+    HTMLStyle6_Release,
+    HTMLStyle6_GetTypeInfoCount,
+    HTMLStyle6_GetTypeInfo,
+    HTMLStyle6_GetIDsOfNames,
+    HTMLStyle6_Invoke,
+    HTMLStyle6_put_content,
+    HTMLStyle6_get_content,
+    HTMLStyle6_put_contentSide,
+    HTMLStyle6_get_contentSide,
+    HTMLStyle6_put_counterIncrement,
+    HTMLStyle6_get_counterIncrement,
+    HTMLStyle6_put_counterReset,
+    HTMLStyle6_get_counterReset,
+    HTMLStyle6_put_outline,
+    HTMLStyle6_get_outline,
+    HTMLStyle6_put_outlineWidth,
+    HTMLStyle6_get_outlineWidth,
+    HTMLStyle6_put_outlineStyle,
+    HTMLStyle6_get_outlineStyle,
+    HTMLStyle6_put_outlineColor,
+    HTMLStyle6_get_outlineColor,
+    HTMLStyle6_put_boxSizing,
+    HTMLStyle6_get_boxSizing,
+    HTMLStyle6_put_boxSpacing,
+    HTMLStyle6_get_boxSpacing,
+    HTMLStyle6_put_orphans,
+    HTMLStyle6_get_orphans,
+    HTMLStyle6_put_windows,
+    HTMLStyle6_get_windows,
+    HTMLStyle6_put_pageBreakInside,
+    HTMLStyle6_get_pageBreakInside,
+    HTMLStyle6_put_emptyCells,
+    HTMLStyle6_get_emptyCells,
+    HTMLStyle6_put_msBlockProgression,
+    HTMLStyle6_get_msBlockProgression,
+    HTMLStyle6_put_quotes,
+    HTMLStyle6_get_quotes
+};
+
 void HTMLStyle3_Init(HTMLStyle *This)
 {
     This->IHTMLStyle3_iface.lpVtbl = &HTMLStyle3Vtbl;
     This->IHTMLStyle4_iface.lpVtbl = &HTMLStyle4Vtbl;
     This->IHTMLStyle5_iface.lpVtbl = &HTMLStyle5Vtbl;
+    This->IHTMLStyle6_iface.lpVtbl = &HTMLStyle6Vtbl;
 }
