@@ -31,106 +31,85 @@ static HINSTANCE instance;
 LONG DMUSIC_refCount = 0;
 
 typedef struct {
-    const IClassFactoryVtbl *lpVtbl;
+        IClassFactory IClassFactory_iface;
+        HRESULT WINAPI (*fnCreateInstance)(REFIID riid, void **ppv, IUnknown *pUnkOuter);
 } IClassFactoryImpl;
 
 /******************************************************************
- *		DirectMusic ClassFactory
+ *      IClassFactory implementation
  */
-static HRESULT WINAPI DirectMusicCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
-
-	if (ppobj == NULL) return E_POINTER;
-	
-	return E_NOINTERFACE;
+static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+        return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
 }
 
-static ULONG WINAPI DirectMusicCF_AddRef(LPCLASSFACTORY iface) {
-	DMUSIC_LockModule();
+static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+        if (ppv == NULL)
+                return E_POINTER;
 
-	return 2; /* non-heap based object */
+        if (IsEqualGUID(&IID_IUnknown, riid))
+                TRACE("(%p)->(IID_IUnknown %p)\n", iface, ppv);
+        else if (IsEqualGUID(&IID_IClassFactory, riid))
+                TRACE("(%p)->(IID_IClassFactory %p)\n", iface, ppv);
+        else {
+                FIXME("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+                *ppv = NULL;
+                return E_NOINTERFACE;
+        }
+
+        *ppv = iface;
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
 }
 
-static ULONG WINAPI DirectMusicCF_Release(LPCLASSFACTORY iface) {
-	DMUSIC_UnlockModule();
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
+{
+        DMUSIC_LockModule();
 
-	return 1; /* non-heap based object */
+        return 2; /* non-heap based object */
 }
 
-static HRESULT WINAPI DirectMusicCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
-	TRACE ("(%p, %s, %p)\n", pOuter, debugstr_dmguid(riid), ppobj);
-	return DMUSIC_CreateDirectMusicImpl (riid, ppobj, pOuter);
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
+{
+        DMUSIC_UnlockModule();
+
+        return 1; /* non-heap based object */
 }
 
-static HRESULT WINAPI DirectMusicCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	TRACE("(%d)\n", dolock);
+static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter,
+        REFIID riid, void **ppv)
+{
+        IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
-	if (dolock)
-		DMUSIC_LockModule();
-	else
-		DMUSIC_UnlockModule();
-	
-	return S_OK;
+        TRACE ("(%p, %s, %p)\n", pUnkOuter, debugstr_dmguid(riid), ppv);
+
+        return This->fnCreateInstance(riid, ppv, pUnkOuter);
 }
 
-static const IClassFactoryVtbl DirectMusicCF_Vtbl = {
-	DirectMusicCF_QueryInterface,
-	DirectMusicCF_AddRef,
-	DirectMusicCF_Release,
-	DirectMusicCF_CreateInstance,
-	DirectMusicCF_LockServer
+static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
+{
+        TRACE("(%d)\n", dolock);
+
+        if (dolock)
+                DMUSIC_LockModule();
+        else
+                DMUSIC_UnlockModule();
+
+        return S_OK;
+}
+
+static const IClassFactoryVtbl classfactory_vtbl = {
+        ClassFactory_QueryInterface,
+        ClassFactory_AddRef,
+        ClassFactory_Release,
+        ClassFactory_CreateInstance,
+        ClassFactory_LockServer
 };
 
-static IClassFactoryImpl DirectMusic_CF = {&DirectMusicCF_Vtbl};
-
-/******************************************************************
- *		DirectMusicCollection ClassFactory
- */
-static HRESULT WINAPI CollectionCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	FIXME("- no interface IID: %s\n", debugstr_guid(riid));
-
-	if (ppobj == NULL) return E_POINTER;
-	
-	return E_NOINTERFACE;
-}
-
-static ULONG WINAPI CollectionCF_AddRef(LPCLASSFACTORY iface) {
-	DMUSIC_LockModule();
-
-	return 2; /* non-heap based object */
-}
-
-static ULONG WINAPI CollectionCF_Release(LPCLASSFACTORY iface) {
-	DMUSIC_UnlockModule();
-
-	return 1; /* non-heap based object */
-}
-
-static HRESULT WINAPI CollectionCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
-	TRACE ("(%p, %s, %p)\n", pOuter, debugstr_dmguid(riid), ppobj);
-	return DMUSIC_CreateDirectMusicCollectionImpl (riid, ppobj, pOuter);
-}
-
-static HRESULT WINAPI CollectionCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	TRACE("(%d)\n", dolock);
-
-	if (dolock)
-		DMUSIC_LockModule();
-	else
-		DMUSIC_UnlockModule();
-	
-	return S_OK;
-}
-
-static const IClassFactoryVtbl CollectionCF_Vtbl = {
-	CollectionCF_QueryInterface,
-	CollectionCF_AddRef,
-	CollectionCF_Release,
-	CollectionCF_CreateInstance,
-	CollectionCF_LockServer
-};
-
-static IClassFactoryImpl Collection_CF = {&CollectionCF_Vtbl};
+static IClassFactoryImpl DirectMusic_CF = {{&classfactory_vtbl}, DMUSIC_CreateDirectMusicImpl};
+static IClassFactoryImpl Collection_CF = {{&classfactory_vtbl},
+                                          DMUSIC_CreateDirectMusicCollectionImpl};
 
 /******************************************************************
  *		DllMain
