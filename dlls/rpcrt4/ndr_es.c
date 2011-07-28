@@ -329,10 +329,10 @@ void WINAPIV NdrMesProcEncodeDecode(handle_t Handle, const MIDL_STUB_DESC * pStu
     unsigned short stack_size;
     /* header for procedure string */
     const NDR_PROC_HEADER *pProcHeader = (const NDR_PROC_HEADER *)&pFormat[0];
-    /* the value to return to the client from the remote procedure */
-    LONG_PTR RetVal = 0;
     const RPC_CLIENT_INTERFACE *client_interface;
     __ms_va_list args;
+    unsigned int number_of_params;
+    ULONG_PTR arg_buffer[256];
 
     TRACE("Handle %p, pStubDesc %p, pFormat %p, ...\n", Handle, pStubDesc, pFormat);
 
@@ -401,23 +401,22 @@ void WINAPIV NdrMesProcEncodeDecode(handle_t Handle, const MIDL_STUB_DESC * pStu
     pEsMsg->StubMsg.StackTop = va_arg( args, unsigned char * );
     __ms_va_end( args );
 
+    pFormat = convert_old_args( &pEsMsg->StubMsg, pFormat, stack_size, FALSE,
+                                arg_buffer, sizeof(arg_buffer), &number_of_params );
+
     switch (pEsMsg->Operation)
     {
     case MES_ENCODE:
         pEsMsg->StubMsg.BufferLength = mes_proc_header_buffer_size();
 
-        client_do_args_old_format(&pEsMsg->StubMsg, pFormat, PROXY_CALCSIZE,
-                                  stack_size, (unsigned char *)&RetVal,
-                                  FALSE /* object_proc */, TRUE /* ignore_retval */);
+        client_do_args( &pEsMsg->StubMsg, pFormat, PROXY_CALCSIZE, NULL, number_of_params, NULL );
 
         pEsMsg->ByteCount = pEsMsg->StubMsg.BufferLength - mes_proc_header_buffer_size();
         es_data_alloc(pEsMsg, pEsMsg->StubMsg.BufferLength);
 
         mes_proc_header_marshal(pEsMsg);
 
-        client_do_args_old_format(&pEsMsg->StubMsg, pFormat, PROXY_MARSHAL,
-                                  stack_size, (unsigned char *)&RetVal,
-                                  FALSE /* object_proc */, TRUE /* ignore_retval */);
+        client_do_args( &pEsMsg->StubMsg, pFormat, PROXY_MARSHAL, NULL, number_of_params, NULL );
 
         es_data_write(pEsMsg, pEsMsg->ByteCount);
         break;
@@ -426,9 +425,7 @@ void WINAPIV NdrMesProcEncodeDecode(handle_t Handle, const MIDL_STUB_DESC * pStu
 
         es_data_read(pEsMsg, pEsMsg->ByteCount);
 
-        client_do_args_old_format(&pEsMsg->StubMsg, pFormat, PROXY_UNMARSHAL,
-                                  stack_size, (unsigned char *)&RetVal,
-                                  FALSE /* object_proc */, TRUE /* ignore_retval */);
+        client_do_args( &pEsMsg->StubMsg, pFormat, PROXY_UNMARSHAL, NULL, number_of_params, NULL );
         break;
     default:
         RpcRaiseException(RPC_S_INTERNAL_ERROR);

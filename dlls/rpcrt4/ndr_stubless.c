@@ -292,8 +292,8 @@ static void client_free_handle(
     }
 }
 
-static void client_do_args(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, int phase, void **fpu_args,
-                           unsigned short number_of_params, unsigned char *pRetVal)
+void client_do_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, int phase, void **fpu_args,
+                     unsigned short number_of_params, unsigned char *pRetVal )
 {
     const NDR_PARAM_OIF *params = (const NDR_PARAM_OIF *)pFormat;
     unsigned int i;
@@ -337,7 +337,7 @@ static void client_do_args(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, 
             case PROXY_UNMARSHAL:
                 if (params[i].attr.IsOut)
                 {
-                    if (params[i].attr.IsReturn) pArg = pRetVal;
+                    if (params[i].attr.IsReturn && pRetVal) pArg = pRetVal;
                     call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
                 }
                 break;
@@ -446,9 +446,9 @@ static BOOL is_by_value( PFORMAT_STRING format )
     }
 }
 
-static PFORMAT_STRING convert_old_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
-                                        unsigned int stack_size, BOOL object_proc,
-                                        void *buffer, unsigned int size, unsigned int *count )
+PFORMAT_STRING convert_old_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
+                                 unsigned int stack_size, BOOL object_proc,
+                                 void *buffer, unsigned int size, unsigned int *count )
 {
     NDR_PARAM_OIF *args = buffer;
     unsigned int i, stack_offset = object_proc ? sizeof(void *) : 0;
@@ -513,119 +513,6 @@ static PFORMAT_STRING convert_old_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STR
     }
     *count = i;
     return (PFORMAT_STRING)args;
-}
-
-void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
-                               PFORMAT_STRING pFormat, int phase, unsigned short stack_size,
-                               unsigned char *pRetVal, BOOL object_proc, BOOL ignore_retval)
-{
-    /* current format string offset */
-    int current_offset = 0;
-    /* current stack offset */
-    unsigned short current_stack_offset = object_proc ? sizeof(void *) : 0;
-    /* counter */
-    unsigned short i;
-
-    /* NOTE: V1 style format doesn't terminate on the number_of_params
-     * condition as it doesn't have this attribute. Instead it
-     * terminates when the stack size given in the header is exceeded.
-     */
-    for (i = 0; TRUE; i++)
-    {
-        const NDR_PARAM_OI_BASETYPE *pParam =
-            (const NDR_PARAM_OI_BASETYPE *)&pFormat[current_offset];
-        unsigned char * pArg = pStubMsg->StackTop + current_stack_offset;
-
-        /* no more parameters; exit loop */
-        if (current_stack_offset >= stack_size)
-            break;
-
-        TRACE("param[%d]: old format\n", i);
-        TRACE("\tparam_direction: 0x%x\n", pParam->param_direction);
-        TRACE("\tstack_offset: 0x%x\n", current_stack_offset);
-        TRACE("\tmemory addr (before): %p\n", pArg);
-
-        if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE ||
-            pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
-        {
-            const unsigned char * pTypeFormat =
-                &pParam->type_format_char;
-
-            TRACE("\tbase type 0x%02x\n", *pTypeFormat);
-
-            switch (phase)
-            {
-            case PROXY_CALCSIZE:
-                if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE)
-                    call_buffer_sizer(pStubMsg, pArg, pTypeFormat);
-                break;
-            case PROXY_MARSHAL:
-                if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE)
-                    call_marshaller(pStubMsg, pArg, pTypeFormat);
-                break;
-            case PROXY_UNMARSHAL:
-                if (!ignore_retval &&
-                    pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
-                {
-                    if (pParam->param_direction & RPC_FC_RETURN_PARAM)
-                        call_unmarshaller(pStubMsg, &pRetVal, pTypeFormat, 0);
-                    else
-                        call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
-                }
-                break;
-            default:
-                RpcRaiseException(RPC_S_INTERNAL_ERROR);
-            }
-
-            current_stack_offset += type_stack_size(*pTypeFormat);
-            current_offset += sizeof(NDR_PARAM_OI_BASETYPE);
-        }
-        else
-        {
-            const NDR_PARAM_OI_OTHER *pParamOther = (const NDR_PARAM_OI_OTHER *)&pFormat[current_offset];
-            const unsigned char *pTypeFormat = &pStubMsg->StubDesc->pFormatTypes[pParamOther->type_offset];
-            const BOOL by_value = is_by_value( pTypeFormat );
-
-            TRACE("\tcomplex type 0x%02x\n", *pTypeFormat);
-
-            switch (phase)
-            {
-            case PROXY_CALCSIZE:
-                if (pParam->param_direction == RPC_FC_IN_PARAM ||
-                    pParam->param_direction == RPC_FC_IN_OUT_PARAM)
-                {
-                    if (!by_value) pArg = *(unsigned char **)pArg;
-                    call_buffer_sizer(pStubMsg, pArg, pTypeFormat);
-                }
-                break;
-            case PROXY_MARSHAL:
-                if (pParam->param_direction == RPC_FC_IN_PARAM ||
-                    pParam->param_direction == RPC_FC_IN_OUT_PARAM)
-                {
-                    if (!by_value) pArg = *(unsigned char **)pArg;
-                    call_marshaller(pStubMsg, pArg, pTypeFormat);
-                }
-                break;
-            case PROXY_UNMARSHAL:
-                if (pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
-                    pParam->param_direction == RPC_FC_OUT_PARAM)
-                {
-                    if (by_value)
-                        call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
-                    else
-                        call_unmarshaller(pStubMsg, (unsigned char **)pArg, pTypeFormat, 0);
-                }
-                else if (pParam->param_direction == RPC_FC_RETURN_PARAM)
-                    call_unmarshaller(pStubMsg, (unsigned char **)pRetVal, pTypeFormat, 0);
-                break;
-            default:
-                RpcRaiseException(RPC_S_INTERNAL_ERROR);
-            }
-
-            current_stack_offset += pParamOther->stack_size * sizeof(void *);
-            current_offset += sizeof(NDR_PARAM_OI_OTHER);
-        }
-    }
 }
 
 LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat,

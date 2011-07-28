@@ -229,7 +229,9 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                                 void **stack_top, void **fpu_stack ) DECLSPEC_HIDDEN;
 LONG_PTR CDECL ndr_async_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat,
                                       void **stack_top ) DECLSPEC_HIDDEN;
-void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
-                               PFORMAT_STRING pFormat, int phase, unsigned short stack_size,
-                               unsigned char *pRetVal, BOOL object_proc, BOOL ignore_retval) DECLSPEC_HIDDEN;
+void client_do_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, int phase, void **fpu_args,
+                     unsigned short number_of_params, unsigned char *pRetVal ) DECLSPEC_HIDDEN;
+PFORMAT_STRING convert_old_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
+                                 unsigned int stack_size, BOOL object_proc,
+                                 void *buffer, unsigned int size, unsigned int *count ) DECLSPEC_HIDDEN;
 RPC_STATUS NdrpCompleteAsyncClientCall(RPC_ASYNC_STATE *pAsync, void *Reply) DECLSPEC_HIDDEN;
