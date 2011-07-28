@@ -371,7 +371,8 @@ static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
     char *pPathTail, *pElement, *pCanonicalTail, szPath[FILENAME_MAX], *pszUnixPath, has_failed = 0, mb_path[FILENAME_MAX];
     WCHAR wszDrive[] = { '?', ':', '\\', 0 }, dospath[PATH_MAX], *dospath_end;
     int cDriveSymlinkLen;
-    
+    void *redir;
+
     TRACE("(pszDosPath=%s, pszCanonicalPath=%p)\n", debugstr_w(pszDosPath), pszCanonicalPath);
 
     if (!pszDosPath || pszDosPath[1] != ':')
@@ -392,6 +393,7 @@ static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
     dospath_end = dospath + lstrlenW(dospath);
     /* search for the most valid UNIX path possible, then append missing
      * path parts */
+    Wow64DisableWow64FsRedirection(&redir);
     while(!(pszUnixPath = wine_get_unix_file_name(dospath))){
         if(has_failed){
             *dospath_end = '/';
@@ -405,6 +407,7 @@ static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
         }
         *dospath_end = '\0';
     }
+    Wow64RevertWow64FsRedirection(redir);
     if(dospath_end < dospath)
         return FALSE;
     strcat(szPath, pszUnixPath + cDriveSymlinkLen);

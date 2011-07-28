@@ -70,6 +70,7 @@ static HRESULT (WINAPI *pSHGetItemFromDataObject)(IDataObject*,DATAOBJ_GET_ITEM_
 static HRESULT (WINAPI *pSHGetIDListFromObject)(IUnknown*, PIDLIST_ABSOLUTE*);
 static HRESULT (WINAPI *pSHGetItemFromObject)(IUnknown*,REFIID,void**);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
+static UINT (WINAPI *pGetSystemWow64DirectoryW)(LPWSTR, UINT);
 
 static WCHAR *make_wstr(const char *str)
 {
@@ -165,7 +166,9 @@ static void init_function_pointers(void)
     hmod = GetModuleHandleA("shlwapi.dll");
     pStrRetToBufW = (void*)GetProcAddress(hmod, "StrRetToBufW");
 
-    pIsWow64Process = (void*)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
+    hmod = GetModuleHandleA("kernel32.dll");
+    pIsWow64Process = (void*)GetProcAddress(hmod, "IsWow64Process");
+    pGetSystemWow64DirectoryW = (void*)GetProcAddress(hmod, "GetSystemWow64DirectoryW");
 
     hr = SHGetMalloc(&ppM);
     ok(hr == S_OK, "SHGetMalloc failed %08x\n", hr);
@@ -3727,7 +3730,7 @@ static void test_SHParseDisplayName(void)
     WCHAR dirW[MAX_PATH];
     WCHAR nameW[10];
     HRESULT hr;
-    BOOL ret;
+    BOOL ret, is_wow64;
 
     if (!pSHParseDisplayName)
     {
@@ -3774,6 +3777,24 @@ if (0)
     ok(ret == TRUE, "expected equal idls\n");
     pILFree(pidl1);
     pILFree(pidl2);
+
+    /* system32 is not redirected to syswow64 on WOW64 */
+    if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
+    if (is_wow64 && pGetSystemWow64DirectoryW)
+    {
+        *dirW = 0;
+        ok(GetSystemDirectoryW(dirW, MAX_PATH) > 0, "GetSystemDirectoryW failed: %u\n", GetLastError());
+        hr = pSHParseDisplayName(dirW, NULL, &pidl1, 0, NULL);
+        ok(hr == S_OK, "failed %08x\n", hr);
+        *dirW = 0;
+        ok(pGetSystemWow64DirectoryW(dirW, MAX_PATH) > 0, "GetSystemWow64DirectoryW failed: %u\n", GetLastError());
+        hr = pSHParseDisplayName(dirW, NULL, &pidl2, 0, NULL);
+        ok(hr == S_OK, "failed %08x\n", hr);
+        ret = pILIsEqual(pidl1, pidl2);
+        ok(ret == FALSE, "expected different idls\n");
+        pILFree(pidl1);
+        pILFree(pidl2);
+    }
 
     IShellFolder_Release(desktop);
 }
