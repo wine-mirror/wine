@@ -480,6 +480,7 @@ PFORMAT_STRING convert_old_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFo
             break;
         case RPC_FC_IN_PARAM:
             args[i].attr.IsIn = 1;
+            args[i].attr.MustFree = 1;
             break;
         case RPC_FC_IN_PARAM_NO_FREE_INST:
             args[i].attr.IsIn = 1;
@@ -488,6 +489,7 @@ PFORMAT_STRING convert_old_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFo
         case RPC_FC_IN_OUT_PARAM:
             args[i].attr.IsIn = 1;
             args[i].attr.IsOut = 1;
+            args[i].attr.MustFree = 1;
             break;
         case RPC_FC_OUT_PARAM:
             args[i].attr.IsOut = 1;
@@ -1229,149 +1231,6 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
     return retval_ptr;
 }
 
-static LONG_PTR *stub_do_old_args(MIDL_STUB_MESSAGE *pStubMsg,
-                                  PFORMAT_STRING pFormat, int phase,
-                                  unsigned short stack_size, BOOL object)
-{
-    /* counter */
-    unsigned short i;
-    /* current format string offset */
-    int current_offset = 0;
-    /* current stack offset */
-    unsigned short current_stack_offset = object ? sizeof(void *) : 0;
-    /* location to put retval into */
-    LONG_PTR *retval_ptr = NULL;
-
-    for (i = 0; TRUE; i++)
-    {
-        const NDR_PARAM_OI_BASETYPE *pParam =
-        (const NDR_PARAM_OI_BASETYPE *)&pFormat[current_offset];
-        unsigned char *pArg = pStubMsg->StackTop + current_stack_offset;
-
-        /* no more parameters; exit loop */
-        if (current_stack_offset >= stack_size)
-            break;
-
-        TRACE("param[%d]: old format\n", i);
-        TRACE("\tparam_direction: 0x%x\n", pParam->param_direction);
-        TRACE("\tstack_offset: 0x%x\n", current_stack_offset);
-
-        if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE ||
-            pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
-        {
-            const unsigned char *pTypeFormat =
-            &pParam->type_format_char;
-
-            TRACE("\tbase type 0x%02x\n", *pTypeFormat);
-
-            if (pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
-                retval_ptr = (LONG_PTR *)pArg;
-
-            switch (phase)
-            {
-                case STUBLESS_MARSHAL:
-                    if (pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
-                        call_marshaller(pStubMsg, pArg, pTypeFormat);
-                    break;
-                case STUBLESS_FREE:
-                    if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE)
-                        call_freer(pStubMsg, pArg, pTypeFormat);
-                    break;
-                case STUBLESS_INITOUT:
-                    break;
-                case STUBLESS_UNMARSHAL:
-                    if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE)
-                        call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
-                    break;
-                case STUBLESS_CALCSIZE:
-                    if (pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
-                        call_buffer_sizer(pStubMsg, pArg, pTypeFormat);
-                    break;
-                default:
-                    RpcRaiseException(RPC_S_INTERNAL_ERROR);
-            }
-
-            current_stack_offset += type_stack_size(*pTypeFormat);
-            current_offset += sizeof(NDR_PARAM_OI_BASETYPE);
-        }
-        else
-        {
-            const NDR_PARAM_OI_OTHER *pParamOther =
-            (const NDR_PARAM_OI_OTHER *)&pFormat[current_offset];
-
-            const unsigned char * pTypeFormat =
-                &pStubMsg->StubDesc->pFormatTypes[pParamOther->type_offset];
-            const BOOL by_value = is_by_value( pTypeFormat );
-
-            TRACE("\tcomplex type 0x%02x\n", *pTypeFormat);
-
-            if (pParam->param_direction == RPC_FC_RETURN_PARAM)
-                retval_ptr = (LONG_PTR *)pArg;
-
-            switch (phase)
-            {
-                case STUBLESS_MARSHAL:
-                    if (pParam->param_direction == RPC_FC_OUT_PARAM ||
-                        pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
-                        pParam->param_direction == RPC_FC_RETURN_PARAM)
-                    {
-                        if (!by_value) pArg = *(unsigned char **)pArg;
-                        call_marshaller(pStubMsg, pArg, pTypeFormat);
-                    }
-                    break;
-                case STUBLESS_FREE:
-                    if (pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
-                        pParam->param_direction == RPC_FC_IN_PARAM)
-                    {
-                        if (!by_value) pArg = *(unsigned char **)pArg;
-                        call_freer(pStubMsg, pArg, pTypeFormat);
-                    }
-                    else if (pParam->param_direction == RPC_FC_OUT_PARAM && !by_value)
-                        pStubMsg->pfnFree(*(void **)pArg);
-                    break;
-                case STUBLESS_INITOUT:
-                    if (pParam->param_direction == RPC_FC_OUT_PARAM && !by_value)
-                    {
-                        DWORD size = calc_arg_size(pStubMsg, pTypeFormat);
-
-                        if(size)
-                        {
-                            *(void **)pArg = NdrAllocate(pStubMsg, size);
-                            memset(*(void **)pArg, 0, size);
-                        }
-                    }
-                    break;
-                case STUBLESS_UNMARSHAL:
-                    if (pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
-                        pParam->param_direction == RPC_FC_IN_PARAM)
-                    {
-                        if (by_value)
-                            call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
-                        else
-                            call_unmarshaller(pStubMsg, (unsigned char **)pArg, pTypeFormat, 0);
-                    }
-                    break;
-                case STUBLESS_CALCSIZE:
-                    if (pParam->param_direction == RPC_FC_OUT_PARAM ||
-                        pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
-                        pParam->param_direction == RPC_FC_RETURN_PARAM)
-                    {
-                        if (!by_value) pArg = *(unsigned char **)pArg;
-                        call_buffer_sizer(pStubMsg, pArg, pTypeFormat);
-                    }
-                    break;
-                default:
-                    RpcRaiseException(RPC_S_INTERNAL_ERROR);
-            }
-
-            current_stack_offset += pParamOther->stack_size * sizeof(void *);
-            current_offset += sizeof(NDR_PARAM_OI_OTHER);
-        }
-    }
-
-    return retval_ptr;
-}
-
 /***********************************************************************
  *            NdrStubCall2 [RPCRT4.@]
  *
@@ -1396,7 +1255,7 @@ LONG WINAPI NdrStubCall2(
     /* size of stack */
     unsigned short stack_size;
     /* number of parameters. optional for client to give it to us */
-    unsigned char number_of_params = ~0;
+    unsigned int number_of_params;
     /* cache of Oif_flags from v2 procedure header */
     INTERPRETER_OPT_FLAGS Oif_flags = { 0 };
     /* cache of extension flags from NDR_PROC_HEADER_EXTS */
@@ -1405,14 +1264,10 @@ LONG WINAPI NdrStubCall2(
     int phase;
     /* header for procedure string */
     const NDR_PROC_HEADER *pProcHeader;
-    /* offset in format string for start of params */
-    int parameter_start_offset;
-    /* current format string offset */
-    int current_offset;
-    /* -Oif or -Oicf generated format */
-    BOOL bV2Format = FALSE;
     /* location to put retval into */
     LONG_PTR *retval_ptr = NULL;
+    /* correlation cache */
+    ULONG_PTR NdrCorrCache[256];
 
     TRACE("pThis %p, pChannel %p, pRpcMsg %p, pdwStubPhase %p\n", pThis, pChannel, pRpcMsg, pdwStubPhase);
 
@@ -1431,13 +1286,13 @@ LONG WINAPI NdrStubCall2(
     {
         const NDR_PROC_HEADER_RPC *pProcHeader = (const NDR_PROC_HEADER_RPC *)&pFormat[0];
         stack_size = pProcHeader->stack_size;
-        current_offset = sizeof(NDR_PROC_HEADER_RPC);
+        pFormat += sizeof(NDR_PROC_HEADER_RPC);
 
     }
     else
     {
         stack_size = pProcHeader->stack_size;
-        current_offset = sizeof(NDR_PROC_HEADER);
+        pFormat += sizeof(NDR_PROC_HEADER);
     }
 
     TRACE("Oi_flags = 0x%02x\n", pProcHeader->Oi_flags);
@@ -1447,16 +1302,16 @@ LONG WINAPI NdrStubCall2(
     {
     /* explicit binding: parse additional section */
     case RPC_FC_BIND_EXPLICIT:
-        switch (pFormat[current_offset]) /* handle_type */
+        switch (*pFormat) /* handle_type */
         {
         case RPC_FC_BIND_PRIMITIVE: /* explicit primitive */
-            current_offset += sizeof(NDR_EHD_PRIMITIVE);
+            pFormat += sizeof(NDR_EHD_PRIMITIVE);
             break;
         case RPC_FC_BIND_GENERIC: /* explicit generic */
-            current_offset += sizeof(NDR_EHD_GENERIC);
+            pFormat += sizeof(NDR_EHD_GENERIC);
             break;
         case RPC_FC_BIND_CONTEXT: /* explicit context */
-            current_offset += sizeof(NDR_EHD_CONTEXT);
+            pFormat += sizeof(NDR_EHD_CONTEXT);
             break;
         default:
             ERR("bad explicit binding handle type (0x%02x)\n", pProcHeader->handle_type);
@@ -1471,29 +1326,6 @@ LONG WINAPI NdrStubCall2(
     default:
         ERR("bad implicit binding handle type (0x%02x)\n", pProcHeader->handle_type);
         RpcRaiseException(RPC_X_BAD_STUB_DATA);
-    }
-
-    bV2Format = (pStubDesc->Version >= 0x20000);
-
-    if (bV2Format)
-    {
-        const NDR_PROC_PARTIAL_OIF_HEADER *pOIFHeader =
-            (const NDR_PROC_PARTIAL_OIF_HEADER *)&pFormat[current_offset];
-
-        Oif_flags = pOIFHeader->Oi2Flags;
-        number_of_params = pOIFHeader->number_of_params;
-
-        current_offset += sizeof(NDR_PROC_PARTIAL_OIF_HEADER);
-
-        TRACE("Oif_flags = %s\n", debugstr_INTERPRETER_OPT_FLAGS(Oif_flags) );
-
-        if (Oif_flags.HasExtensions)
-        {
-            const NDR_PROC_HEADER_EXTS *pExtensions =
-                (const NDR_PROC_HEADER_EXTS *)&pFormat[current_offset];
-            ext_flags = pExtensions->Flags2;
-            current_offset += pExtensions->Size;
-        }
     }
 
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
@@ -1517,27 +1349,6 @@ LONG WINAPI NdrStubCall2(
           FIXME("Set RPCSS memory allocation routines\n");
 #endif
 
-    if (Oif_flags.HasPipes)
-    {
-        FIXME("pipes not supported yet\n");
-        RpcRaiseException(RPC_X_WRONG_STUB_VERSION); /* FIXME: remove when implemented */
-        /* init pipes package */
-        /* NdrPipesInitialize(...) */
-    }
-    if (ext_flags.HasNewCorrDesc)
-    {
-        /* initialize extra correlation package */
-        FIXME("new correlation description not implemented\n");
-        stubMsg.fHasNewCorrDesc = TRUE;
-    }
-
-    /* convert strings, floating point values and endianess into our
-     * preferred format */
-    if ((pRpcMsg->DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
-        NdrConvert(&stubMsg, pFormat);
-
-    parameter_start_offset = current_offset;
-
     TRACE("allocating memory for stack of size %x\n", stack_size);
 
     args = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, stack_size);
@@ -1547,6 +1358,51 @@ LONG WINAPI NdrStubCall2(
      * are calling an object method */
     if (pThis)
         *(void **)args = ((CStdStubBuffer *)pThis)->pvServerObject;
+
+    if (pStubDesc->Version >= 0x20000)  /* -Oicf format */
+    {
+        const NDR_PROC_PARTIAL_OIF_HEADER *pOIFHeader = (const NDR_PROC_PARTIAL_OIF_HEADER *)pFormat;
+
+        Oif_flags = pOIFHeader->Oi2Flags;
+        number_of_params = pOIFHeader->number_of_params;
+
+        pFormat += sizeof(NDR_PROC_PARTIAL_OIF_HEADER);
+
+        TRACE("Oif_flags = %s\n", debugstr_INTERPRETER_OPT_FLAGS(Oif_flags) );
+
+        if (Oif_flags.HasExtensions)
+        {
+            const NDR_PROC_HEADER_EXTS *pExtensions = (const NDR_PROC_HEADER_EXTS *)pFormat;
+            ext_flags = pExtensions->Flags2;
+            pFormat += pExtensions->Size;
+        }
+
+        if (Oif_flags.HasPipes)
+        {
+            FIXME("pipes not supported yet\n");
+            RpcRaiseException(RPC_X_WRONG_STUB_VERSION); /* FIXME: remove when implemented */
+            /* init pipes package */
+            /* NdrPipesInitialize(...) */
+        }
+        if (ext_flags.HasNewCorrDesc)
+        {
+            /* initialize extra correlation package */
+            FIXME("new correlation description not implemented\n");
+            stubMsg.fHasNewCorrDesc = TRUE;
+        }
+    }
+    else
+    {
+        pFormat = convert_old_args( &stubMsg, pFormat, stack_size,
+                                    pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT,
+                                    /* reuse the correlation cache, it's not needed for v1 format */
+                                    NdrCorrCache, sizeof(NdrCorrCache), &number_of_params );
+    }
+
+    /* convert strings, floating point values and endianess into our
+     * preferred format */
+    if ((pRpcMsg->DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
+        NdrConvert(&stubMsg, pFormat);
 
     for (phase = STUBLESS_UNMARSHAL; phase <= STUBLESS_FREE; phase++)
     {
@@ -1606,14 +1462,7 @@ LONG WINAPI NdrStubCall2(
         case STUBLESS_CALCSIZE:
         case STUBLESS_MARSHAL:
         case STUBLESS_FREE:
-            if (bV2Format)
-                retval_ptr = stub_do_args(&stubMsg, &pFormat[parameter_start_offset],
-                                          phase, number_of_params);
-            else
-                retval_ptr = stub_do_old_args(&stubMsg, &pFormat[parameter_start_offset],
-                                              phase, stack_size,
-                                              (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT));
-
+            retval_ptr = stub_do_args(&stubMsg, pFormat, phase, number_of_params);
             break;
         default:
             ERR("shouldn't reach here. phase %d\n", phase);
