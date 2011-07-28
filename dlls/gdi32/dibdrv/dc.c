@@ -163,7 +163,7 @@ BOOL init_dib_info_from_packed(dib_info *dib, const BITMAPINFOHEADER *bi, WORD u
     DWORD *masks = NULL;
     RGBQUAD *color_table = NULL, pal_table[256];
     BYTE *ptr = (BYTE*)bi + bi->biSize;
-    int num_colors = bi->biClrUsed;
+    int num_colors = get_dib_num_of_colors( (const BITMAPINFO *)bi );
 
     if(bi->biCompression == BI_BITFIELDS)
     {
@@ -171,7 +171,6 @@ BOOL init_dib_info_from_packed(dib_info *dib, const BITMAPINFOHEADER *bi, WORD u
         ptr += 3 * sizeof(DWORD);
     }
 
-    if(!num_colors && bi->biBitCount <= 8) num_colors = 1 << bi->biBitCount;
     if(num_colors)
     {
         if(usage == DIB_PAL_COLORS)
@@ -202,15 +201,10 @@ BOOL init_dib_info_from_packed(dib_info *dib, const BITMAPINFOHEADER *bi, WORD u
 
 BOOL init_dib_info_from_bitmapinfo(dib_info *dib, const BITMAPINFO *info, void *bits, enum dib_info_flags flags)
 {
-    unsigned int colors = 0;
+    unsigned int colors = get_dib_num_of_colors( info );
     void *colorptr = (char *)&info->bmiHeader + info->bmiHeader.biSize;
     const DWORD *bitfields = (info->bmiHeader.biCompression == BI_BITFIELDS) ? (DWORD *)colorptr : NULL;
 
-    if (info->bmiHeader.biBitCount <= 8)
-    {
-        colors = 1 << info->bmiHeader.biBitCount;
-        if (info->bmiHeader.biClrUsed) colors = info->bmiHeader.biClrUsed;
-    }
     return init_dib_info( dib, &info->bmiHeader, bitfields, colors ? colorptr : NULL, colors, bits, flags );
 }
 

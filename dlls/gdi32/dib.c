@@ -91,10 +91,7 @@ int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
     }
     else  /* assume BITMAPINFOHEADER */
     {
-        colors = info->bmiHeader.biClrUsed;
-        if (colors > 256) colors = 256;
-        if (!colors && (info->bmiHeader.biBitCount <= 8))
-            colors = 1 << info->bmiHeader.biBitCount;
+        colors = get_dib_num_of_colors( info );
         if (info->bmiHeader.biCompression == BI_BITFIELDS) masks = 3;
         size = max( info->bmiHeader.biSize, sizeof(BITMAPINFOHEADER) + masks * sizeof(DWORD) );
         return size + colors * ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBQUAD) : sizeof(WORD));
@@ -212,9 +209,7 @@ static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *
 static int fill_color_table_from_palette( BITMAPINFO *info, DC *dc )
 {
     PALETTEENTRY palEntry[256];
-    int i, colors = (info->bmiHeader.biBitCount > 8) ? 0 : 1 << info->bmiHeader.biBitCount;
-
-    if (info->bmiHeader.biClrUsed) colors = info->bmiHeader.biClrUsed;
+    int i, colors = get_dib_num_of_colors( info );
 
     if (!colors) return 0;
 
@@ -809,12 +804,10 @@ static int fill_query_info( BITMAPINFO *info, BITMAPOBJ *bmp )
  */
 static void copy_color_info(BITMAPINFO *dst, const BITMAPINFO *src, UINT coloruse)
 {
-    unsigned int colors = src->bmiHeader.biBitCount > 8 ? 0 : 1 << src->bmiHeader.biBitCount;
+    unsigned int colors = get_dib_num_of_colors( src );
     RGBQUAD *src_colors = (RGBQUAD *)((char *)src + src->bmiHeader.biSize);
 
     assert( src->bmiHeader.biSize >= sizeof(BITMAPINFOHEADER) );
-
-    if (src->bmiHeader.biClrUsed) colors = src->bmiHeader.biClrUsed;
 
     if (dst->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
     {
@@ -1219,8 +1212,7 @@ static void DIB_CopyColorTable( DC *dc, BITMAPOBJ *bmp, WORD coloruse, const BIT
     }
     else
     {
-        colors = info->bmiHeader.biClrUsed;
-        if (!colors) colors = 1 << info->bmiHeader.biBitCount;
+        colors = get_dib_num_of_colors( info );
     }
 
     if (colors > 256) {

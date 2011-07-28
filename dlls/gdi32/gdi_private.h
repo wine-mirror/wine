@@ -564,6 +564,12 @@ static inline int get_dib_image_size( const BITMAPINFO *info )
         * abs( info->bmiHeader.biHeight );
 }
 
+static inline int get_dib_num_of_colors( const BITMAPINFO *info )
+{
+    if (info->bmiHeader.biClrUsed) return min( info->bmiHeader.biClrUsed, 256 );
+    return info->bmiHeader.biBitCount > 8 ? 0 : 1 << info->bmiHeader.biBitCount;
+}
+
 extern void free_heap_bits( struct gdi_image_bits *bits ) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_GDI_PRIVATE_H */
