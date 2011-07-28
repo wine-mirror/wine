@@ -107,33 +107,41 @@ void WINAPI NdrRpcSmSetClientToOsf(PMIDL_STUB_MESSAGE pMessage)
 #endif
 }
 
-static void dump_RPC_FC_PROC_PF(PARAM_ATTRIBUTES param_attributes)
+static const char *debugstr_PROC_PF(PARAM_ATTRIBUTES param_attributes)
 {
-    if (param_attributes.MustSize) TRACE(" MustSize");
-    if (param_attributes.MustFree) TRACE(" MustFree");
-    if (param_attributes.IsPipe) TRACE(" IsPipe");
-    if (param_attributes.IsIn) TRACE(" IsIn");
-    if (param_attributes.IsOut) TRACE(" IsOut");
-    if (param_attributes.IsReturn) TRACE(" IsReturn");
-    if (param_attributes.IsBasetype) TRACE(" IsBasetype");
-    if (param_attributes.IsByValue) TRACE(" IsByValue");
-    if (param_attributes.IsSimpleRef) TRACE(" IsSimpleRef");
-    if (param_attributes.IsDontCallFreeInst) TRACE(" IsDontCallFreeInst");
-    if (param_attributes.SaveForAsyncFinish) TRACE(" SaveForAsyncFinish");
-    if (param_attributes.ServerAllocSize) TRACE(" ServerAllocSize = %d", param_attributes.ServerAllocSize * 8);
+    char buffer[160];
+
+    buffer[0] = 0;
+    if (param_attributes.MustSize) strcat(buffer, " MustSize");
+    if (param_attributes.MustFree) strcat(buffer, " MustFree");
+    if (param_attributes.IsPipe) strcat(buffer, " IsPipe");
+    if (param_attributes.IsIn) strcat(buffer, " IsIn");
+    if (param_attributes.IsOut) strcat(buffer, " IsOut");
+    if (param_attributes.IsReturn) strcat(buffer, " IsReturn");
+    if (param_attributes.IsBasetype) strcat(buffer, " IsBasetype");
+    if (param_attributes.IsByValue) strcat(buffer, " IsByValue");
+    if (param_attributes.IsSimpleRef) strcat(buffer, " IsSimpleRef");
+    if (param_attributes.IsDontCallFreeInst) strcat(buffer, " IsDontCallFreeInst");
+    if (param_attributes.SaveForAsyncFinish) strcat(buffer, " SaveForAsyncFinish");
+    if (param_attributes.ServerAllocSize)
+        sprintf( buffer + strlen(buffer), " ServerAllocSize = %d", param_attributes.ServerAllocSize * 8);
+    return buffer[0] ? wine_dbg_sprintf( "%s", buffer + 1 ) : "";
 }
 
-static void dump_INTERPRETER_OPT_FLAGS(INTERPRETER_OPT_FLAGS Oi2Flags)
+static const char *debugstr_INTERPRETER_OPT_FLAGS(INTERPRETER_OPT_FLAGS Oi2Flags)
 {
-    if (Oi2Flags.ServerMustSize) TRACE(" ServerMustSize");
-    if (Oi2Flags.ClientMustSize) TRACE(" ClientMustSize");
-    if (Oi2Flags.HasReturn) TRACE(" HasReturn");
-    if (Oi2Flags.HasPipes) TRACE(" HasPipes");
-    if (Oi2Flags.Unused) TRACE(" Unused");
-    if (Oi2Flags.HasAsyncUuid) TRACE(" HasAsyncUuid");
-    if (Oi2Flags.HasExtensions) TRACE(" HasExtensions");
-    if (Oi2Flags.HasAsyncHandle) TRACE(" HasAsyncHandle");
-    TRACE("\n");
+    char buffer[160];
+
+    buffer[0] = 0;
+    if (Oi2Flags.ServerMustSize) strcat(buffer, " ServerMustSize");
+    if (Oi2Flags.ClientMustSize) strcat(buffer, " ClientMustSize");
+    if (Oi2Flags.HasReturn) strcat(buffer, " HasReturn");
+    if (Oi2Flags.HasPipes) strcat(buffer, " HasPipes");
+    if (Oi2Flags.Unused) strcat(buffer, " Unused");
+    if (Oi2Flags.HasAsyncUuid) strcat(buffer, " HasAsyncUuid");
+    if (Oi2Flags.HasExtensions) strcat(buffer, " HasExtensions");
+    if (Oi2Flags.HasAsyncHandle) strcat(buffer, " HasAsyncHandle");
+    return buffer[0] ? wine_dbg_sprintf( "%s", buffer + 1 ) : "";
 }
 
 #define ARG_FROM_OFFSET(args, offset) ((args) + (offset))
@@ -294,10 +302,7 @@ static void client_do_args(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, 
     {
         unsigned char *pArg = pStubMsg->StackTop + params[i].stack_offset;
 
-        TRACE("param[%d]: new format\n", i);
-        TRACE("\tparam_attributes:"); dump_RPC_FC_PROC_PF(params[i].attr); TRACE("\n");
-        TRACE("\tstack_offset: 0x%x\n", params[i].stack_offset);
-        TRACE("\tmemory addr (before): %p\n", pArg);
+        TRACE("param[%d]: %p %s\n", i, pArg, debugstr_PROC_PF( params[i].attr ));
 
         if (params[i].attr.IsBasetype)
         {
@@ -643,7 +648,7 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
 
         pFormat += sizeof(NDR_PROC_PARTIAL_OIF_HEADER);
 
-        TRACE("Oif_flags = "); dump_INTERPRETER_OPT_FLAGS(Oif_flags);
+        TRACE("Oif_flags = %s\n", debugstr_INTERPRETER_OPT_FLAGS(Oif_flags) );
 
         if (Oif_flags.HasExtensions)
         {
@@ -1125,10 +1130,8 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
     {
         unsigned char *pArg = pStubMsg->StackTop + params[i].stack_offset;
 
-        TRACE("param[%d]: new format\n", i);
-        TRACE("\tparam_attributes:"); dump_RPC_FC_PROC_PF(params[i].attr); TRACE("\n");
-        TRACE("\tstack_offset: 0x%x\n", params[i].stack_offset);
-        TRACE("\tmemory addr (before): %p -> %p\n", pArg, *(unsigned char **)pArg);
+        TRACE("param[%d]: %p -> %p %s\n", i,
+              pArg, *(unsigned char **)pArg, debugstr_PROC_PF( params[i].attr ));
 
         if (params[i].attr.IsBasetype)
         {
@@ -1532,16 +1535,16 @@ LONG WINAPI NdrStubCall2(
         number_of_params = pOIFHeader->number_of_params;
 
         current_offset += sizeof(NDR_PROC_PARTIAL_OIF_HEADER);
-    }
 
-    TRACE("Oif_flags = "); dump_INTERPRETER_OPT_FLAGS(Oif_flags);
+        TRACE("Oif_flags = %s\n", debugstr_INTERPRETER_OPT_FLAGS(Oif_flags) );
 
-    if (Oif_flags.HasExtensions)
-    {
-        const NDR_PROC_HEADER_EXTS *pExtensions =
-            (const NDR_PROC_HEADER_EXTS *)&pFormat[current_offset];
-        ext_flags = pExtensions->Flags2;
-        current_offset += pExtensions->Size;
+        if (Oif_flags.HasExtensions)
+        {
+            const NDR_PROC_HEADER_EXTS *pExtensions =
+                (const NDR_PROC_HEADER_EXTS *)&pFormat[current_offset];
+            ext_flags = pExtensions->Flags2;
+            current_offset += pExtensions->Size;
+        }
     }
 
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
@@ -1825,16 +1828,16 @@ LONG_PTR CDECL ndr_async_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING 
         async_call_data->number_of_params = pOIFHeader->number_of_params;
 
         pFormat += sizeof(NDR_PROC_PARTIAL_OIF_HEADER);
-    }
 
-    TRACE("Oif_flags = "); dump_INTERPRETER_OPT_FLAGS(Oif_flags);
+        TRACE("Oif_flags = %s\n", debugstr_INTERPRETER_OPT_FLAGS(Oif_flags) );
 
-    if (Oif_flags.HasExtensions)
-    {
-        const NDR_PROC_HEADER_EXTS *pExtensions =
-            (const NDR_PROC_HEADER_EXTS *)pFormat;
-        ext_flags = pExtensions->Flags2;
-        pFormat += pExtensions->Size;
+        if (Oif_flags.HasExtensions)
+        {
+            const NDR_PROC_HEADER_EXTS *pExtensions =
+                (const NDR_PROC_HEADER_EXTS *)pFormat;
+            ext_flags = pExtensions->Flags2;
+            pFormat += pExtensions->Size;
+        }
     }
 
     async_call_data->pParamFormat = pFormat;
