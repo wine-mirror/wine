@@ -153,6 +153,8 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLStyle2) \
     XIID(IHTMLStyle3) \
     XIID(IHTMLStyle4) \
+    XIID(IHTMLStyle5) \
+    XIID(IHTMLStyle6) \
     XIID(IHTMLStyleElement) \
     XIID(IHTMLStyleSheetsCollection) \
     XIID(IHTMLTable) \
