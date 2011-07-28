@@ -144,6 +144,62 @@ static inline void call_freer(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemor
     if (m) m(pStubMsg, pMemory, pFormat);
 }
 
+static DWORD calc_arg_size(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
+{
+    DWORD size;
+    switch(*pFormat)
+    {
+    case RPC_FC_STRUCT:
+        size = *(const WORD*)(pFormat + 2);
+        break;
+    case RPC_FC_BOGUS_STRUCT:
+        size = *(const WORD*)(pFormat + 2);
+        if(*(const WORD*)(pFormat + 4))
+            FIXME("Unhandled conformant description\n");
+        break;
+    case RPC_FC_CARRAY:
+    case RPC_FC_CVARRAY:
+        size = *(const WORD*)(pFormat + 2);
+        ComputeConformance(pStubMsg, NULL, pFormat + 4, 0);
+        size *= pStubMsg->MaxCount;
+        break;
+    case RPC_FC_SMFARRAY:
+    case RPC_FC_SMVARRAY:
+        size = *(const WORD*)(pFormat + 2);
+        break;
+    case RPC_FC_LGFARRAY:
+    case RPC_FC_LGVARRAY:
+        size = *(const DWORD*)(pFormat + 2);
+        break;
+    case RPC_FC_BOGUS_ARRAY:
+        pFormat = ComputeConformance(pStubMsg, NULL, pFormat + 4, *(const WORD*)&pFormat[2]);
+        TRACE("conformance = %ld\n", pStubMsg->MaxCount);
+        pFormat = ComputeVariance(pStubMsg, NULL, pFormat, pStubMsg->MaxCount);
+        size = ComplexStructSize(pStubMsg, pFormat);
+        size *= pStubMsg->MaxCount;
+        break;
+    case RPC_FC_C_CSTRING:
+    case RPC_FC_C_WSTRING:
+        if (*pFormat == RPC_FC_C_CSTRING)
+            size = sizeof(CHAR);
+        else
+            size = sizeof(WCHAR);
+        if (pFormat[1] == RPC_FC_STRING_SIZED)
+            ComputeConformance(pStubMsg, NULL, pFormat + 2, 0);
+        else
+            pStubMsg->MaxCount = 0;
+        size *= pStubMsg->MaxCount;
+        break;
+    default:
+        FIXME("Unhandled type %02x\n", *pFormat);
+        /* fallthrough */
+    case RPC_FC_RP:
+        size = sizeof(void *);
+        break;
+    }
+    return size;
+}
+
 void WINAPI NdrRpcSmSetClientToOsf(PMIDL_STUB_MESSAGE pMessage)
 {
 #if 0 /* these functions are not defined yet */
@@ -367,6 +423,13 @@ void client_do_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, enum s
 
         switch (phase)
         {
+        case STUBLESS_INITOUT:
+            if (!params[i].attr.IsBasetype && params[i].attr.IsOut &&
+                !params[i].attr.IsIn && !params[i].attr.IsByValue)
+            {
+                memset( *(unsigned char **)pArg, 0, calc_arg_size( pStubMsg, pTypeFormat ));
+            }
+            break;
         case STUBLESS_CALCSIZE:
             if (params[i].attr.IsSimpleRef && !*(unsigned char **)pArg)
                 RpcRaiseException(RPC_X_NULL_REF_POINTER);
@@ -648,24 +711,33 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     }
 
     /* order of phases:
-     * 1. CALCSIZE - calculate the buffer size
-     * 2. GETBUFFER - allocate the buffer
-     * 3. MARSHAL - marshal [in] params into the buffer
-     * 4. SENDRECEIVE - send/receive buffer
-     * 5. UNMARSHAL - unmarshal [out] params from buffer
-     * 6. FREE - clear [out] parameters (for proxies, and only on error)
+     * 1. INITOUT - zero [out] parameters (proxies only)
+     * 2. CALCSIZE - calculate the buffer size
+     * 3. GETBUFFER - allocate the buffer
+     * 4. MARSHAL - marshal [in] params into the buffer
+     * 5. SENDRECEIVE - send/receive buffer
+     * 6. UNMARSHAL - unmarshal [out] params from buffer
+     * 7. FREE - clear [out] parameters (for proxies, and only on error)
      */
     if ((pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT) ||
         (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_HAS_COMM_OR_FAULT))
     {
+        /* 1. INITOUT */
+        if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
+        {
+            TRACE( "INITOUT\n" );
+            client_do_args(&stubMsg, pFormat, STUBLESS_INITOUT, fpu_stack,
+                           number_of_params, (unsigned char *)&RetVal);
+        }
+
         __TRY
         {
-            /* 1. CALCSIZE */
+            /* 2. CALCSIZE */
             TRACE( "CALCSIZE\n" );
             client_do_args(&stubMsg, pFormat, STUBLESS_CALCSIZE, fpu_stack,
                            number_of_params, (unsigned char *)&RetVal);
 
-            /* 2. GETBUFFER */
+            /* 3. GETBUFFER */
             TRACE( "GETBUFFER\n" );
             if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
             {
@@ -691,12 +763,12 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                 }
             }
 
-            /* 3. MARSHAL */
+            /* 4. MARSHAL */
             TRACE( "MARSHAL\n" );
             client_do_args(&stubMsg, pFormat, STUBLESS_MARSHAL, fpu_stack,
                            number_of_params, (unsigned char *)&RetVal);
 
-            /* 4. SENDRECEIVE */
+            /* 5. SENDRECEIVE */
             TRACE( "SENDRECEIVE\n" );
             if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
             {
@@ -729,7 +801,7 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
             if ((rpcMsg.DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
                 NdrConvert(&stubMsg, pFormat);
 
-            /* 5. UNMARSHAL */
+            /* 6. UNMARSHAL */
             TRACE( "UNMARSHAL\n" );
             client_do_args(&stubMsg, pFormat, STUBLESS_UNMARSHAL, fpu_stack,
                            number_of_params, (unsigned char *)&RetVal);
@@ -738,7 +810,7 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         {
             if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
             {
-                /* 6. FREE */
+                /* 7. FREE */
                 TRACE( "FREE\n" );
                 client_do_args(&stubMsg, pFormat, STUBLESS_FREE, fpu_stack,
                                number_of_params, (unsigned char *)&RetVal);
@@ -774,12 +846,12 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     }
     else
     {
-        /* 1. CALCSIZE */
+        /* 2. CALCSIZE */
         TRACE( "CALCSIZE\n" );
         client_do_args(&stubMsg, pFormat, STUBLESS_CALCSIZE, fpu_stack,
                        number_of_params, (unsigned char *)&RetVal);
 
-        /* 2. GETBUFFER */
+        /* 3. GETBUFFER */
         TRACE( "GETBUFFER\n" );
         if (Oif_flags.HasPipes)
             /* NdrGetPipeBuffer(...) */
@@ -796,12 +868,12 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                 NdrGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
         }
 
-        /* 3. MARSHAL */
+        /* 4. MARSHAL */
         TRACE( "MARSHAL\n" );
         client_do_args(&stubMsg, pFormat, STUBLESS_MARSHAL, fpu_stack,
                        number_of_params, (unsigned char *)&RetVal);
 
-        /* 4. SENDRECEIVE */
+        /* 5. SENDRECEIVE */
         TRACE( "SENDRECEIVE\n" );
         if (Oif_flags.HasPipes)
             /* NdrPipesSendReceive(...) */
@@ -823,7 +895,7 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         if ((rpcMsg.DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
             NdrConvert(&stubMsg, pFormat);
 
-        /* 5. UNMARSHAL */
+        /* 6. UNMARSHAL */
         TRACE( "UNMARSHAL\n" );
         client_do_args(&stubMsg, pFormat, STUBLESS_UNMARSHAL, fpu_stack,
                        number_of_params, (unsigned char *)&RetVal);
@@ -999,62 +1071,6 @@ LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, uns
     return 0;
 }
 #endif
-
-static DWORD calc_arg_size(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
-{
-    DWORD size;
-    switch(*pFormat)
-    {
-    case RPC_FC_STRUCT:
-        size = *(const WORD*)(pFormat + 2);
-        break;
-    case RPC_FC_BOGUS_STRUCT:
-        size = *(const WORD*)(pFormat + 2);
-        if(*(const WORD*)(pFormat + 4))
-            FIXME("Unhandled conformant description\n");
-        break;
-    case RPC_FC_CARRAY:
-    case RPC_FC_CVARRAY:
-        size = *(const WORD*)(pFormat + 2);
-        ComputeConformance(pStubMsg, NULL, pFormat + 4, 0);
-        size *= pStubMsg->MaxCount;
-        break;
-    case RPC_FC_SMFARRAY:
-    case RPC_FC_SMVARRAY:
-        size = *(const WORD*)(pFormat + 2);
-        break;
-    case RPC_FC_LGFARRAY:
-    case RPC_FC_LGVARRAY:
-        size = *(const DWORD*)(pFormat + 2);
-        break;
-    case RPC_FC_BOGUS_ARRAY:
-        pFormat = ComputeConformance(pStubMsg, NULL, pFormat + 4, *(const WORD*)&pFormat[2]);
-        TRACE("conformance = %ld\n", pStubMsg->MaxCount);
-        pFormat = ComputeVariance(pStubMsg, NULL, pFormat, pStubMsg->MaxCount);
-        size = ComplexStructSize(pStubMsg, pFormat);
-        size *= pStubMsg->MaxCount;
-        break;
-    case RPC_FC_C_CSTRING:
-    case RPC_FC_C_WSTRING:
-        if (*pFormat == RPC_FC_C_CSTRING)
-            size = sizeof(CHAR);
-        else
-            size = sizeof(WCHAR);
-        if (pFormat[1] == RPC_FC_STRING_SIZED)
-            ComputeConformance(pStubMsg, NULL, pFormat + 2, 0);
-        else
-            pStubMsg->MaxCount = 0;
-        size *= pStubMsg->MaxCount;
-        break;
-    default:
-        FIXME("Unhandled type %02x\n", *pFormat);
-        /* fallthrough */
-    case RPC_FC_RP:
-        size = sizeof(void *);
-        break;
-    }
-    return size;
-}
 
 static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
                               PFORMAT_STRING pFormat, enum stubless_phase phase,
