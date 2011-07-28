@@ -1252,7 +1252,7 @@ int main(int argc, char **argv)
     {
         if (argv[i][0] == '-')  /* option */
 	{
-	    /* determine if tihs switch is followed by a separate argument */
+	    /* determine if this switch is followed by a separate argument */
 	    next_is_arg = 0;
 	    option_arg = 0;
 	    switch(argv[i][1])

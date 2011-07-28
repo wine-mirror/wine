@@ -983,7 +983,7 @@ static resource_t *find_main(int type, name_id_t *id, resource_lang_node_t *lang
 
     if (neutral != NULL && (en != NULL || en_US != NULL))
     {
-        fprintf(stderr, "INFO: Resource %04x/%s has both NEUTRAL and MASTER language translarion\n",
+        fprintf(stderr, "INFO: Resource %04x/%s has both NEUTRAL and MASTER language translation\n",
             type, get_nameid_str(id));
     }
 

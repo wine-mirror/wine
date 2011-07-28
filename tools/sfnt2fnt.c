@@ -579,7 +579,7 @@ static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc,
                 else
                     left_byte = face->glyph->bitmap.buffer[(y - (ascent - face->glyph->bitmap_top)) * face->glyph->bitmap.pitch + x - x_off - 1];
 
-                /* On the last non-trival output byte (x == x_end) have we got one or two input bytes */
+                /* On the last non-trivial output byte (x == x_end) have we got one or two input bytes */
                 if(x == x_end && (face->glyph->bitmap_left % 8 != 0) && ((face->glyph->bitmap.width % 8 == 0) || (x != (((face->glyph->bitmap.width) & ~0x7) + face->glyph->bitmap_left) / 8)))
                     right_byte = 0;
                 else

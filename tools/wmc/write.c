@@ -231,7 +231,7 @@ void write_h_file(const char *fname)
 			if(!once)
 			{
 				/*
-				 * Search for an english text.
+				 * Search for an English text.
 				 * If not found, then use the first in the list
 				 */
 				once++;
