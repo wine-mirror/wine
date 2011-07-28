@@ -1892,9 +1892,9 @@ typedef void (WINE_GLAPI *PGLFNFINISHOBJECTAPPLEPROC)(GLenum, GLuint);
 #define GL_APPLE_flush_buffer_range 1
 #define GL_BUFFER_SERIALIZED_MODIFY_APPLE                   0x8a12
 #define GL_BUFFER_FLUSHING_UNMAP_APPLE                      0x8a13
+#endif
 typedef void (WINE_GLAPI *PGLFNBUFFERPARAMETERIAPPLE)(GLenum target, GLenum pname, GLint param);
 typedef void (WINE_GLAPI *PGLFNFLUSHMAPPEDBUFFERRANGEAPPLE)(GLenum target, GLintptr offset, GLsizeiptr size);
-#endif
 
 /* GL_APPLE_flush_render */
 typedef void (WINE_GLAPI *PGLFNFLUSHRENDERAPPLEPROC)(void);
@@ -1969,15 +1969,15 @@ typedef void (WINE_GLAPI *PGLFNDRAWBUFFERSARBPROC)(GLsizei n, const GLenum *bufs
 /* GL_ARB_draw_elements_base_vertex */
 #ifndef GL_ARB_draw_elements_base_vertex
 #define GL_ARB_draw_elements_base_vertex 1
+#endif
 typedef void (WINE_GLAPI *PGLFNDRAWELEMENTSBASEVERTEXPROC)(GLenum mode, GLsizei count, GLenum type,
         const GLvoid *indices, GLint basevertex);
 typedef void (WINE_GLAPI *PGLFNDRAWRANGEELEMENTSBASEVERTEXPROC)(GLenum mode, GLuint start, GLuint end,
-         GLsizei count, GLenum type, const GLvoid *indices, GLint basevertex);
+        GLsizei count, GLenum type, const GLvoid *indices, GLint basevertex);
 typedef void (WINE_GLAPI *PGLFNDRAWELEMENTSINSTANCEDBASEVERTEXPROC)(GLenum mode, GLsizei count,
-         GLenum type, const GLvoid *indices, GLsizei primcount, GLint basevertex);
+        GLenum type, const GLvoid *indices, GLsizei primcount, GLint basevertex);
 typedef void (WINE_GLAPI *PGLFNMULTIDRAWELEMENTSBASEVERTEXPROC)(GLenum mode, GLsizei *count, GLenum type,
-         const GLvoid **indices, GLsizei primcount, GLint *basevertex);
-#endif
+        const GLvoid **indices, GLsizei primcount, GLint *basevertex);
 
 /* GL_ARB_fragment_program */
 #ifndef GL_ARB_fragment_program
@@ -3083,11 +3083,11 @@ typedef void (WINE_GLAPI *PGLFNGLGENERATEMIPMAPEXTPROC)(GLenum target);
 /* GL_EXT_gpu_program_parameters */
 #ifndef GL_EXT_gpu_program_parameters
 #define GL_EXT_gpu_program_parameters 1
+#endif
 typedef void (WINE_GLAPI *PGLFNPROGRAMENVPARAMETERS4FVEXTPROC)(GLenum target,
         GLuint index, GLsizei count, const float *params);
 typedef void (WINE_GLAPI *PGLFNPROGRAMLOCALPARAMETERS4FVEXTPROC)(GLenum target,
         GLuint index, GLsizei count, const float *params);
-#endif
 
 /* GL_EXT_gpu_shader4 */
 #ifndef GL_EXT_gpu_shader4
