@@ -147,14 +147,12 @@ static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *
 
     if (bitmap_type == -1) return FALSE;
 
-    colors = (bpp > 8) ? 0 : 1 << bpp;
-
     if (bitmap_type == 1)
     {
         dst->bmiHeader                 = info->bmiHeader;
         dst->bmiHeader.biSize          = sizeof(dst->bmiHeader);
 
-        if (info->bmiHeader.biClrUsed) colors = info->bmiHeader.biClrUsed;
+        colors = get_dib_num_of_colors( dst );
 
         if (info->bmiHeader.biCompression == BI_BITFIELDS)
             /* bitfields are always at bmiColors even in larger structures */
@@ -183,6 +181,8 @@ static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *
         dst->bmiHeader.biYPelsPerMeter = 0;
         dst->bmiHeader.biClrUsed       = 0;
         dst->bmiHeader.biClrImportant  = 0;
+
+        colors = get_dib_num_of_colors( dst );
 
         if (colors)
         {
