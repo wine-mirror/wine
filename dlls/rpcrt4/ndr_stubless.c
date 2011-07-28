@@ -346,6 +346,7 @@ void client_do_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, enum s
     for (i = 0; i < number_of_params; i++)
     {
         unsigned char *pArg = pStubMsg->StackTop + params[i].stack_offset;
+        PFORMAT_STRING pTypeFormat = (PFORMAT_STRING)&pStubMsg->StubDesc->pFormatTypes[params[i].u.type_offset];
 
 #ifdef __x86_64__  /* floats are passed as doubles through varargs functions */
         float f;
@@ -361,18 +362,14 @@ void client_do_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, enum s
 #endif
 
         TRACE("param[%d]: %p type %02x %s\n", i, pArg,
-              params[i].attr.IsBasetype ? params[i].u.type_format_char :
-                  pStubMsg->StubDesc->pFormatTypes[params[i].u.type_offset],
+              params[i].attr.IsBasetype ? params[i].u.type_format_char : *pTypeFormat,
               debugstr_PROC_PF( params[i].attr ));
-
-        /* if a simple ref pointer then we have to do the
-         * check for the pointer being non-NULL. */
-        if (params[i].attr.IsSimpleRef && !*(unsigned char **)pArg)
-            RpcRaiseException(RPC_X_NULL_REF_POINTER);
 
         switch (phase)
         {
         case STUBLESS_CALCSIZE:
+            if (params[i].attr.IsSimpleRef && !*(unsigned char **)pArg)
+                RpcRaiseException(RPC_X_NULL_REF_POINTER);
             if (params[i].attr.IsIn) call_buffer_sizer(pStubMsg, pArg, &params[i]);
             break;
         case STUBLESS_MARSHAL:
@@ -384,6 +381,10 @@ void client_do_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, enum s
                 if (params[i].attr.IsReturn && pRetVal) pArg = pRetVal;
                 call_unmarshaller(pStubMsg, &pArg, &params[i], 0);
             }
+            break;
+        case STUBLESS_FREE:
+            if (!params[i].attr.IsBasetype && params[i].attr.IsOut && !params[i].attr.IsByValue)
+                NdrClearOutParameters( pStubMsg, pTypeFormat, *(unsigned char **)pArg );
             break;
         default:
             RpcRaiseException(RPC_S_INTERNAL_ERROR);
@@ -652,6 +653,7 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
      * 3. MARSHAL - marshal [in] params into the buffer
      * 4. SENDRECEIVE - send/receive buffer
      * 5. UNMARSHAL - unmarshal [out] params from buffer
+     * 6. FREE - clear [out] parameters (for proxies, and only on error)
      */
     if ((pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT) ||
         (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_HAS_COMM_OR_FAULT))
@@ -735,7 +737,13 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         __EXCEPT_ALL
         {
             if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
+            {
+                /* 6. FREE */
+                TRACE( "FREE\n" );
+                client_do_args(&stubMsg, pFormat, STUBLESS_FREE, fpu_stack,
+                               number_of_params, (unsigned char *)&RetVal);
                 RetVal = NdrProxyErrorHandler(GetExceptionCode());
+            }
             else
             {
                 const COMM_FAULT_OFFSETS *comm_fault_offsets = &pStubDesc->CommFaultOffsets[procedure_number];
