@@ -3230,6 +3230,324 @@ static void test_GetSetDIBits_rtl(void)
     ReleaseDC( NULL, hdc );
 }
 
+static void test_GetDIBits_scanlines(void)
+{
+    char bmi_buf[ FIELD_OFFSET( BITMAPINFO, bmiColors[256] ) ];
+    BITMAPINFO *info = (BITMAPINFO *)bmi_buf;
+    DWORD *dib_bits;
+    HDC hdc = GetDC( NULL );
+    HBITMAP dib;
+    DWORD data[128], inverted_bits[64];
+    int i, ret;
+
+    memset( info, 0, sizeof(bmi_buf) );
+
+    info->bmiHeader.biSize        = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth       = 8;
+    info->bmiHeader.biHeight      = 8;
+    info->bmiHeader.biPlanes      = 1;
+    info->bmiHeader.biBitCount    = 32;
+    info->bmiHeader.biCompression = BI_RGB;
+
+    dib = CreateDIBSection( NULL, info, DIB_RGB_COLORS, (void**)&dib_bits, NULL, 0 );
+
+    for (i = 0; i < 64; i++)
+    {
+        dib_bits[i] = i;
+        inverted_bits[56 - (i & ~7) + (i & 7)] = i;
+    }
+
+    /* b-u -> b-u */
+
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 0, 8, data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( data, dib_bits, 64 * 4 ), "bits differ\n");
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 1, 5, data, info, DIB_RGB_COLORS );
+    ok( ret == 5, "got %d\n", ret );
+    ok( !memcmp( data, dib_bits + 8, 40 * 4 ), "bits differ\n");
+    for (i = 40; i < 64; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 1, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 7, "got %d\n", ret );
+    ok( !memcmp( data, dib_bits + 8, 56 * 4 ), "bits differ\n");
+    for (i = 56; i < 64; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 9, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 1, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    info->bmiHeader.biHeight = 16;
+    ret = GetDIBits( hdc, dib, 1, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 5, "got %d\n", ret );
+    for (i = 0; i < 56; i++) ok( data[i] == 0, "%d: got %08x\n", i, data[i] );
+    ok( !memcmp( data + 56, dib_bits, 40 * 4 ), "bits differ\n");
+    for (i = 96; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 2, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 6, "got %d\n", ret );
+    for (i = 0; i < 48; i++) ok( data[i] == 0, "%d: got %08x\n", i, data[i] );
+    ok( !memcmp( data + 48, dib_bits, 48 * 4 ), "bits differ\n");
+    for (i = 96; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 2, 3, data, info, DIB_RGB_COLORS );
+    ok( ret == 0, "got %d\n", ret );
+    for (i = 0; i < 24; i++) ok( data[i] == 0, "%d: got %08x\n", i, data[i] );
+    for (i = 24; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    info->bmiHeader.biHeight = 5;
+    ret = GetDIBits( hdc, dib, 1, 2, data, info, DIB_RGB_COLORS );
+    ok( ret == 2, "got %d\n", ret );
+    ok( !memcmp( data, dib_bits + 32, 16 * 4 ), "bits differ\n");
+    for (i = 16; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    /* b-u -> t-d */
+
+    info->bmiHeader.biHeight = -8;
+    ret = GetDIBits( hdc, dib, 0, 8, data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( data, inverted_bits, 64 * 4 ), "bits differ\n");
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 1, 5, data, info, DIB_RGB_COLORS );
+    ok( ret == 5, "got %d\n", ret );
+    ok( !memcmp( data, inverted_bits + 16, 40 * 4 ), "bits differ\n");
+    for (i = 40; i < 64; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 1, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 7, "got %d\n", ret );
+    ok( !memcmp( data, inverted_bits, 56 * 4 ), "bits differ\n");
+    for (i = 56; i < 64; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 4, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 4, "got %d\n", ret );
+    ok( !memcmp( data, inverted_bits, 32 * 4 ), "bits differ\n");
+    for (i = 32; i < 64; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 3, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 5, "got %d\n", ret );
+    ok( !memcmp( data, inverted_bits, 40 * 4 ), "bits differ\n");
+    for (i = 40; i < 64; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 3, 13, data, info, DIB_RGB_COLORS );
+    ok( ret == 5, "got %d\n", ret );
+    ok( !memcmp( data, inverted_bits, 40 * 4 ), "bits differ\n");
+    for (i = 40; i < 64; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    info->bmiHeader.biHeight = -16;
+    ret = GetDIBits( hdc, dib, 0, 16, data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( data, inverted_bits, 64 * 4 ), "bits differ\n");
+    for (i = 64; i < 128; i++) ok( data[i] == 0, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 1, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 5, "got %d\n", ret );
+    ok( !memcmp( data, inverted_bits + 24, 40 * 4 ), "bits differ\n");
+    for (i = 40; i < 96; i++) ok( data[i] == 0, "%d: got %08x\n", i, data[i] );
+    for (i = 96; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 4, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( data, inverted_bits, 64 * 4 ), "bits differ\n");
+    for (i = 64; i < 96; i++) ok( data[i] == 0, "%d: got %08x\n", i, data[i] );
+    for (i = 96; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 5, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( data, inverted_bits, 64 * 4 ), "bits differ\n");
+    for (i = 64; i < 88; i++) ok( data[i] == 0, "%d: got %08x\n", i, data[i] );
+    for (i = 88; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 9, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 7, "got %d\n", ret );
+    ok( !memcmp( data, inverted_bits, 56 * 4 ), "bits differ\n");
+    for (i = 56; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 18, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 1, "got %d\n", ret );
+    for (i = 0; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    info->bmiHeader.biHeight = -5;
+    ret = GetDIBits( hdc, dib, 1, 2, data, info, DIB_RGB_COLORS );
+    ok( ret == 2, "got %d\n", ret );
+    ok( !memcmp( data, inverted_bits + 16, 16 * 4 ), "bits differ\n");
+    for (i = 16; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    DeleteObject( dib );
+
+    info->bmiHeader.biSize        = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth       = 8;
+    info->bmiHeader.biHeight      = -8;
+    info->bmiHeader.biPlanes      = 1;
+    info->bmiHeader.biBitCount    = 32;
+    info->bmiHeader.biCompression = BI_RGB;
+
+    dib = CreateDIBSection( NULL, info, DIB_RGB_COLORS, (void**)&dib_bits, NULL, 0 );
+
+    for (i = 0; i < 64; i++) dib_bits[i] = i;
+
+    /* t-d -> t-d */
+
+    info->bmiHeader.biHeight = -8;
+    ret = GetDIBits( hdc, dib, 0, 8, data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( data, dib_bits, 64 * 4 ), "bits differ\n");
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 1, 5, data, info, DIB_RGB_COLORS );
+    ok( ret == 5, "got %d\n", ret );
+    ok( !memcmp( data, dib_bits + 16, 40 * 4 ), "bits differ\n");
+    for (i = 40; i < 64; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 1, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 7, "got %d\n", ret );
+    ok( !memcmp( data, dib_bits, 56 * 4 ), "bits differ\n");
+    for (i = 56; i < 64; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 4, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 4, "got %d\n", ret );
+    ok( !memcmp( data, dib_bits, 32 * 4 ), "bits differ\n");
+    for (i = 32; i < 64; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 3, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 5, "got %d\n", ret );
+    ok( !memcmp( data, dib_bits, 40 * 4 ), "bits differ\n");
+    for (i = 40; i < 64; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 3, 13, data, info, DIB_RGB_COLORS );
+    ok( ret == 5, "got %d\n", ret );
+    ok( !memcmp( data, dib_bits, 40 * 4 ), "bits differ\n");
+    for (i = 40; i < 64; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    info->bmiHeader.biHeight = -16;
+    ret = GetDIBits( hdc, dib, 0, 16, data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( data, dib_bits, 64 * 4 ), "bits differ\n");
+    for (i = 64; i < 128; i++) ok( data[i] == 0, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 1, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 5, "got %d\n", ret );
+    ok( !memcmp( data, dib_bits + 24, 40 * 4 ), "bits differ\n");
+    for (i = 40; i < 96; i++) ok( data[i] == 0, "%d: got %08x\n", i, data[i] );
+    for (i = 96; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 4, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( data, dib_bits, 64 * 4 ), "bits differ\n");
+    for (i = 64; i < 96; i++) ok( data[i] == 0, "%d: got %08x\n", i, data[i] );
+    for (i = 96; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 5, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( data, dib_bits, 64 * 4 ), "bits differ\n");
+    for (i = 64; i < 88; i++) ok( data[i] == 0, "%d: got %08x\n", i, data[i] );
+    for (i = 88; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 9, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 7, "got %d\n", ret );
+    ok( !memcmp( data, dib_bits, 56 * 4 ), "bits differ\n");
+    for (i = 56; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    info->bmiHeader.biHeight = -5;
+    ret = GetDIBits( hdc, dib, 1, 2, data, info, DIB_RGB_COLORS );
+    ok( ret == 2, "got %d\n", ret );
+    ok( !memcmp( data, dib_bits + 16, 16 * 4 ), "bits differ\n");
+    for (i = 16; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+
+    /* t-d -> b-u */
+
+    info->bmiHeader.biHeight = 8;
+
+    ret = GetDIBits( hdc, dib, 0, 8, data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    ok( !memcmp( data, inverted_bits, 64 * 4 ), "bits differ\n");
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 1, 5, data, info, DIB_RGB_COLORS );
+    ok( ret == 5, "got %d\n", ret );
+    ok( !memcmp( data, inverted_bits + 8, 40 * 4 ), "bits differ\n");
+    for (i = 40; i < 64; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 1, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 7, "got %d\n", ret );
+    ok( !memcmp( data, inverted_bits + 8, 56 * 4 ), "bits differ\n");
+    for (i = 56; i < 64; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 9, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 1, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    info->bmiHeader.biHeight = 16;
+    ret = GetDIBits( hdc, dib, 1, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 5, "got %d\n", ret );
+    for (i = 0; i < 56; i++) ok( data[i] == 0, "%d: got %08x\n", i, data[i] );
+    ok( !memcmp( data + 56, inverted_bits, 40 * 4 ), "bits differ\n");
+    for (i = 96; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 2, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 6, "got %d\n", ret );
+    for (i = 0; i < 48; i++) ok( data[i] == 0, "%d: got %08x\n", i, data[i] );
+    ok( !memcmp( data + 48, inverted_bits, 48 * 4 ), "bits differ\n");
+    for (i = 96; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    ret = GetDIBits( hdc, dib, 2, 3, data, info, DIB_RGB_COLORS );
+    ok( ret == 0, "got %d\n", ret );
+    for (i = 0; i < 24; i++) ok( data[i] == 0, "%d: got %08x\n", i, data[i] );
+    for (i = 24; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    info->bmiHeader.biHeight = 5;
+    ret = GetDIBits( hdc, dib, 1, 2, data, info, DIB_RGB_COLORS );
+    ok( ret == 2, "got %d\n", ret );
+    ok( !memcmp( data, inverted_bits + 32, 16 * 4 ), "bits differ\n");
+    for (i = 16; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
+    memset( data, 0xaa, sizeof(data) );
+
+    DeleteObject( dib );
+
+    ReleaseDC( NULL, hdc );
+}
+
+
 static void test_SetDIBits(void)
 {
     char bmi_buf[ FIELD_OFFSET( BITMAPINFO, bmiColors[256] ) ];
@@ -3290,7 +3608,6 @@ static void test_SetDIBits(void)
     for (i = 48; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
     memset( dib_bits, 0xaa, 64 * 4 );
 
-
     /* t-d -> b-u */
     info->bmiHeader.biHeight = -8;
     ret = SetDIBits( hdc, dib, 0, 8, data, info, DIB_RGB_COLORS );
@@ -3313,6 +3630,16 @@ static void test_SetDIBits(void)
     ok( ret == 12, "got %d\n", ret );
     ok( !memcmp( dib_bits, inverted_data + 88, 40 * 4 ), "bits differ\n");
     for (i = 40; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBits( hdc, dib, 4, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 12, "got %d\n", ret );
+    ok( !memcmp( dib_bits, inverted_data + 64, 64 * 4 ), "bits differ\n");
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBits( hdc, dib, 5, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 12, "got %d\n", ret );
+    ok( !memcmp( dib_bits, inverted_data + 56, 64 * 4 ), "bits differ\n");
     memset( dib_bits, 0xaa, 64 * 4 );
 
     info->bmiHeader.biHeight = -5;
@@ -3636,6 +3963,7 @@ START_TEST(bitmap)
     test_GetDIBits_top_down(24);
     test_GetDIBits_top_down(32);
     test_GetSetDIBits_rtl();
+    test_GetDIBits_scanlines();
     test_SetDIBits();
     test_SetDIBits_RLE4();
     test_SetDIBits_RLE8();
