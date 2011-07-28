@@ -342,13 +342,13 @@ int __cdecl s_sum_cpsc(cpsc_t *cpsc)
 
 int __cdecl s_get_cpsc(int n, cpsc_t *cpsc)
 {
-  static int array[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
   int i, ret;
 
-  cpsc->ca = array;
-  cpsc->a = min( 10, 2 * n );
+  cpsc->a = 2 * n;
   cpsc->b = 2;
   cpsc->c = 1;
+  cpsc->ca = MIDL_user_allocate( cpsc->a * sizeof(int) );
+  for (i = ret = 0; i < cpsc->a; i++) cpsc->ca[i] = i;
   for (i = ret = 0; i < cpsc->a; i++) ret += cpsc->ca[i];
   return ret;
 }
