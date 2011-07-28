@@ -31,13 +31,14 @@ static HINSTANCE instance;
 LONG DSWAVE_refCount = 0;
 
 typedef struct {
-    const IClassFactoryVtbl *lpVtbl;
+        IClassFactory IClassFactory_iface;
 } IClassFactoryImpl;
 
 /******************************************************************
  *		DirectMusicWave ClassFactory
  */
-static HRESULT WINAPI WaveCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
+static HRESULT WINAPI WaveCF_QueryInterface(IClassFactory * iface, REFIID riid, void **ppobj)
+{
 	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
 
 	if (ppobj == NULL) return E_POINTER;
@@ -45,25 +46,30 @@ static HRESULT WINAPI WaveCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPV
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI WaveCF_AddRef(LPCLASSFACTORY iface) {
+static ULONG WINAPI WaveCF_AddRef(IClassFactory * iface)
+{
 	DSWAVE_LockModule();
 
 	return 2; /* non-heap based object */
 }
 
-static ULONG WINAPI WaveCF_Release(LPCLASSFACTORY iface) {
+static ULONG WINAPI WaveCF_Release(IClassFactory * iface)
+{
 	DSWAVE_UnlockModule();
 
 	return 1; /* non-heap based object */
 }
 
-static HRESULT WINAPI WaveCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI WaveCF_CreateInstance(IClassFactory * iface, IUnknown *pOuter, REFIID riid,
+        void **ppobj)
+{
 	TRACE ("(%p, %s, %p)\n", pOuter, debugstr_dmguid(riid), ppobj);
-	
+
 	return DMUSIC_CreateDirectMusicWaveImpl (riid, ppobj, pOuter);
 }
 
-static HRESULT WINAPI WaveCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
+static HRESULT WINAPI WaveCF_LockServer(IClassFactory * iface, BOOL dolock)
+{
 	TRACE("(%d)\n", dolock);
 
 	if (dolock)
@@ -82,7 +88,7 @@ static const IClassFactoryVtbl WaveCF_Vtbl = {
 	WaveCF_LockServer
 };
 
-static IClassFactoryImpl Wave_CF = {&WaveCF_Vtbl};
+static IClassFactoryImpl Wave_CF = {{&WaveCF_Vtbl}};
 
 /******************************************************************
  *		DllMain
