@@ -144,14 +144,6 @@ static inline void call_freer(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemor
     if (m) m(pStubMsg, pMemory, pFormat);
 }
 
-#define STUBLESS_UNMARSHAL  1
-#define STUBLESS_INITOUT    2
-#define STUBLESS_CALLSERVER 3
-#define STUBLESS_CALCSIZE   4
-#define STUBLESS_GETBUFFER  5
-#define STUBLESS_MARSHAL    6
-#define STUBLESS_FREE       7
-
 void WINAPI NdrRpcSmSetClientToOsf(PMIDL_STUB_MESSAGE pMessage)
 {
 #if 0 /* these functions are not defined yet */
@@ -345,8 +337,8 @@ static void client_free_handle(
     }
 }
 
-void client_do_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, int phase, void **fpu_args,
-                     unsigned short number_of_params, unsigned char *pRetVal )
+void client_do_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, enum stubless_phase phase,
+                     void **fpu_args, unsigned short number_of_params, unsigned char *pRetVal )
 {
     const NDR_PARAM_OIF *params = (const NDR_PARAM_OIF *)pFormat;
     unsigned int i;
@@ -380,13 +372,13 @@ void client_do_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, int ph
 
         switch (phase)
         {
-        case PROXY_CALCSIZE:
+        case STUBLESS_CALCSIZE:
             if (params[i].attr.IsIn) call_buffer_sizer(pStubMsg, pArg, &params[i]);
             break;
-        case PROXY_MARSHAL:
+        case STUBLESS_MARSHAL:
             if (params[i].attr.IsIn) call_marshaller(pStubMsg, pArg, &params[i]);
             break;
-        case PROXY_UNMARSHAL:
+        case STUBLESS_UNMARSHAL:
             if (params[i].attr.IsOut)
             {
                 if (params[i].attr.IsReturn && pRetVal) pArg = pRetVal;
@@ -535,8 +527,6 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     INTERPRETER_OPT_FLAGS Oif_flags = { 0 };
     /* cache of extension flags from NDR_PROC_HEADER_EXTS */
     INTERPRETER_OPT_FLAGS2 ext_flags = { 0 };
-    /* the type of pass we are currently doing */
-    int phase;
     /* header for procedure string */
     const NDR_PROC_HEADER * pProcHeader = (const NDR_PROC_HEADER *)&pFormat[0];
     /* the value to return to the client from the remote procedure */
@@ -657,91 +647,90 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     }
 
     /* order of phases:
-     * 1. PROXY_CALCSIZE - calculate the buffer size
-     * 2. PROXY_GETBUFFER - allocate the buffer
-     * 3. PROXY_MARHSAL - marshal [in] params into the buffer
-     * 4. PROXY_SENDRECEIVE - send/receive buffer
-     * 5. PROXY_UNMARHSAL - unmarshal [out] params from buffer
+     * 1. CALCSIZE - calculate the buffer size
+     * 2. GETBUFFER - allocate the buffer
+     * 3. MARSHAL - marshal [in] params into the buffer
+     * 4. SENDRECEIVE - send/receive buffer
+     * 5. UNMARSHAL - unmarshal [out] params from buffer
      */
     if ((pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT) ||
         (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_HAS_COMM_OR_FAULT))
     {
         __TRY
         {
-            for (phase = PROXY_CALCSIZE; phase <= PROXY_UNMARSHAL; phase++)
+            /* 1. CALCSIZE */
+            TRACE( "CALCSIZE\n" );
+            client_do_args(&stubMsg, pFormat, STUBLESS_CALCSIZE, fpu_stack,
+                           number_of_params, (unsigned char *)&RetVal);
+
+            /* 2. GETBUFFER */
+            TRACE( "GETBUFFER\n" );
+            if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
             {
-                TRACE("phase = %d\n", phase);
-                switch (phase)
+                /* allocate the buffer */
+                NdrProxyGetBuffer(This, &stubMsg);
+            }
+            else
+            {
+                /* allocate the buffer */
+                if (Oif_flags.HasPipes)
+                    /* NdrGetPipeBuffer(...) */
+                    FIXME("pipes not supported yet\n");
+                else
                 {
-                case PROXY_GETBUFFER:
-                    if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
-                    {
-                        /* allocate the buffer */
-                        NdrProxyGetBuffer(This, &stubMsg);
-                    }
-                    else
-                    {
-                        /* allocate the buffer */
-                        if (Oif_flags.HasPipes)
-                            /* NdrGetPipeBuffer(...) */
-                            FIXME("pipes not supported yet\n");
-                        else
-                        {
-                            if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
+                    if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
 #if 0
-                                NdrNsGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
+                        NdrNsGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
 #else
-                                FIXME("using auto handle - call NdrNsGetBuffer when it gets implemented\n");
+                    FIXME("using auto handle - call NdrNsGetBuffer when it gets implemented\n");
 #endif
-                            else
-                                NdrGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
-                        }
-                    }
-                    break;
-                case PROXY_SENDRECEIVE:
-                    if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
-                    {
-                        /* send the [in] params and receive the [out] and [retval]
-                         * params */
-                        NdrProxySendReceive(This, &stubMsg);
-                    }
                     else
-                    {
-                        /* send the [in] params and receive the [out] and [retval]
-                         * params */
-                        if (Oif_flags.HasPipes)
-                            /* NdrPipesSendReceive(...) */
-                            FIXME("pipes not supported yet\n");
-                        else
-                        {
-                            if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
-#if 0
-                                NdrNsSendReceive(&stubMsg, stubMsg.Buffer, pStubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle);
-#else
-                                FIXME("using auto handle - call NdrNsSendReceive when it gets implemented\n");
-#endif
-                            else
-                                NdrSendReceive(&stubMsg, stubMsg.Buffer);
-                        }
-                    }
-
-                    /* convert strings, floating point values and endianess into our
-                     * preferred format */
-                    if ((rpcMsg.DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
-                        NdrConvert(&stubMsg, pFormat);
-
-                    break;
-                case PROXY_CALCSIZE:
-                case PROXY_MARSHAL:
-                case PROXY_UNMARSHAL:
-                    client_do_args(&stubMsg, pFormat, phase, fpu_stack,
-                                   number_of_params, (unsigned char *)&RetVal);
-                    break;
-                default:
-                    ERR("shouldn't reach here. phase %d\n", phase);
-                    break;
+                        NdrGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
                 }
             }
+
+            /* 3. MARSHAL */
+            TRACE( "MARSHAL\n" );
+            client_do_args(&stubMsg, pFormat, STUBLESS_MARSHAL, fpu_stack,
+                           number_of_params, (unsigned char *)&RetVal);
+
+            /* 4. SENDRECEIVE */
+            TRACE( "SENDRECEIVE\n" );
+            if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
+            {
+                /* send the [in] params and receive the [out] and [retval]
+                 * params */
+                NdrProxySendReceive(This, &stubMsg);
+            }
+            else
+            {
+                /* send the [in] params and receive the [out] and [retval]
+                 * params */
+                if (Oif_flags.HasPipes)
+                    /* NdrPipesSendReceive(...) */
+                    FIXME("pipes not supported yet\n");
+                else
+                {
+                    if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
+#if 0
+                        NdrNsSendReceive(&stubMsg, stubMsg.Buffer, pStubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle);
+#else
+                    FIXME("using auto handle - call NdrNsSendReceive when it gets implemented\n");
+#endif
+                    else
+                        NdrSendReceive(&stubMsg, stubMsg.Buffer);
+                }
+            }
+
+            /* convert strings, floating point values and endianess into our
+             * preferred format */
+            if ((rpcMsg.DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
+                NdrConvert(&stubMsg, pFormat);
+
+            /* 5. UNMARSHAL */
+            TRACE( "UNMARSHAL\n" );
+            client_do_args(&stubMsg, pFormat, STUBLESS_UNMARSHAL, fpu_stack,
+                           number_of_params, (unsigned char *)&RetVal);
         }
         __EXCEPT_ALL
         {
@@ -777,70 +766,59 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     }
     else
     {
-        /* order of phases:
-         * 1. PROXY_CALCSIZE - calculate the buffer size
-         * 2. PROXY_GETBUFFER - allocate the buffer
-         * 3. PROXY_MARHSAL - marshal [in] params into the buffer
-         * 4. PROXY_SENDRECEIVE - send/receive buffer
-         * 5. PROXY_UNMARHSAL - unmarshal [out] params from buffer
-         */
-        for (phase = PROXY_CALCSIZE; phase <= PROXY_UNMARSHAL; phase++)
+        /* 1. CALCSIZE */
+        TRACE( "CALCSIZE\n" );
+        client_do_args(&stubMsg, pFormat, STUBLESS_CALCSIZE, fpu_stack,
+                       number_of_params, (unsigned char *)&RetVal);
+
+        /* 2. GETBUFFER */
+        TRACE( "GETBUFFER\n" );
+        if (Oif_flags.HasPipes)
+            /* NdrGetPipeBuffer(...) */
+            FIXME("pipes not supported yet\n");
+        else
         {
-            TRACE("phase = %d\n", phase);
-            switch (phase)
-            {
-            case PROXY_GETBUFFER:
-                /* allocate the buffer */
-                if (Oif_flags.HasPipes)
-                    /* NdrGetPipeBuffer(...) */
-                    FIXME("pipes not supported yet\n");
-                else
-                {
-                    if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
+            if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
 #if 0
-                        NdrNsGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
+                NdrNsGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
 #else
-                        FIXME("using auto handle - call NdrNsGetBuffer when it gets implemented\n");
+            FIXME("using auto handle - call NdrNsGetBuffer when it gets implemented\n");
 #endif
-                    else
-                        NdrGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
-                }
-                break;
-            case PROXY_SENDRECEIVE:
-                /* send the [in] params and receive the [out] and [retval]
-                 * params */
-                if (Oif_flags.HasPipes)
-                    /* NdrPipesSendReceive(...) */
-                    FIXME("pipes not supported yet\n");
-                else
-                {
-                    if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
-#if 0
-                        NdrNsSendReceive(&stubMsg, stubMsg.Buffer, pStubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle);
-#else
-                        FIXME("using auto handle - call NdrNsSendReceive when it gets implemented\n");
-#endif
-                    else
-                        NdrSendReceive(&stubMsg, stubMsg.Buffer);
-                }
-
-                /* convert strings, floating point values and endianess into our
-                 * preferred format */
-                if ((rpcMsg.DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
-                    NdrConvert(&stubMsg, pFormat);
-
-                break;
-            case PROXY_CALCSIZE:
-            case PROXY_MARSHAL:
-            case PROXY_UNMARSHAL:
-                client_do_args(&stubMsg, pFormat, phase, fpu_stack,
-                               number_of_params, (unsigned char *)&RetVal);
-                break;
-            default:
-                ERR("shouldn't reach here. phase %d\n", phase);
-                break;
-            }
+            else
+                NdrGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
         }
+
+        /* 3. MARSHAL */
+        TRACE( "MARSHAL\n" );
+        client_do_args(&stubMsg, pFormat, STUBLESS_MARSHAL, fpu_stack,
+                       number_of_params, (unsigned char *)&RetVal);
+
+        /* 4. SENDRECEIVE */
+        TRACE( "SENDRECEIVE\n" );
+        if (Oif_flags.HasPipes)
+            /* NdrPipesSendReceive(...) */
+            FIXME("pipes not supported yet\n");
+        else
+        {
+            if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
+#if 0
+                NdrNsSendReceive(&stubMsg, stubMsg.Buffer, pStubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle);
+#else
+            FIXME("using auto handle - call NdrNsSendReceive when it gets implemented\n");
+#endif
+            else
+                NdrSendReceive(&stubMsg, stubMsg.Buffer);
+        }
+
+        /* convert strings, floating point values and endianess into our
+         * preferred format */
+        if ((rpcMsg.DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
+            NdrConvert(&stubMsg, pFormat);
+
+        /* 5. UNMARSHAL */
+        TRACE( "UNMARSHAL\n" );
+        client_do_args(&stubMsg, pFormat, STUBLESS_UNMARSHAL, fpu_stack,
+                       number_of_params, (unsigned char *)&RetVal);
     }
 
     if (ext_flags.HasNewCorrDesc)
@@ -1071,7 +1049,7 @@ static DWORD calc_arg_size(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
 }
 
 static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
-                              PFORMAT_STRING pFormat, int phase,
+                              PFORMAT_STRING pFormat, enum stubless_phase phase,
                               unsigned short number_of_params)
 {
     const NDR_PARAM_OIF *params = (const NDR_PARAM_OIF *)pFormat;
@@ -1187,7 +1165,7 @@ LONG WINAPI NdrStubCall2(
     /* cache of extension flags from NDR_PROC_HEADER_EXTS */
     INTERPRETER_OPT_FLAGS2 ext_flags = { 0 };
     /* the type of pass we are currently doing */
-    int phase;
+    enum stubless_phase phase;
     /* header for procedure string */
     const NDR_PROC_HEADER *pProcHeader;
     /* location to put retval into */
@@ -1474,12 +1452,11 @@ LONG_PTR CDECL ndr_async_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING 
     INTERPRETER_OPT_FLAGS Oif_flags = { 0 };
     /* cache of extension flags from NDR_PROC_HEADER_EXTS */
     INTERPRETER_OPT_FLAGS2 ext_flags = { 0 };
-    /* the type of pass we are currently doing */
-    int phase;
     /* header for procedure string */
     const NDR_PROC_HEADER * pProcHeader = (const NDR_PROC_HEADER *)&pFormat[0];
     /* -Oif or -Oicf generated format */
     BOOL bV2Format = FALSE;
+    RPC_STATUS status;
 
     TRACE("pStubDesc %p, pFormat %p, ...\n", pStubDesc, pFormat);
 
@@ -1596,72 +1573,65 @@ LONG_PTR CDECL ndr_async_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING 
     }
 
     /* order of phases:
-     * 1. PROXY_CALCSIZE - calculate the buffer size
-     * 2. PROXY_GETBUFFER - allocate the buffer
-     * 3. PROXY_MARHSAL - marshal [in] params into the buffer
-     * 4. PROXY_SENDRECEIVE - send buffer
+     * 1. CALCSIZE - calculate the buffer size
+     * 2. GETBUFFER - allocate the buffer
+     * 3. MARSHAL - marshal [in] params into the buffer
+     * 4. SENDRECEIVE - send buffer
      * Then in NdrpCompleteAsyncClientCall:
-     * 1. PROXY_SENDRECEIVE - receive buffer
-     * 2. PROXY_UNMARHSAL - unmarshal [out] params from buffer
+     * 1. SENDRECEIVE - receive buffer
+     * 2. UNMARSHAL - unmarshal [out] params from buffer
      */
-    for (phase = PROXY_CALCSIZE; phase <= PROXY_SENDRECEIVE; phase++)
+
+    /* 1. CALCSIZE */
+    TRACE( "CALCSIZE\n" );
+    client_do_args(pStubMsg, pFormat, STUBLESS_CALCSIZE, NULL, async_call_data->number_of_params, NULL);
+
+    /* 2. GETBUFFER */
+    TRACE( "GETBUFFER\n" );
+    if (Oif_flags.HasPipes)
+        /* NdrGetPipeBuffer(...) */
+        FIXME("pipes not supported yet\n");
+    else
     {
-        RPC_STATUS status;
-        TRACE("phase = %d\n", phase);
-        switch (phase)
-        {
-        case PROXY_GETBUFFER:
-            /* allocate the buffer */
-            if (Oif_flags.HasPipes)
-                /* NdrGetPipeBuffer(...) */
-                FIXME("pipes not supported yet\n");
-            else
-            {
-                if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
+        if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
 #if 0
-                    NdrNsGetBuffer(pStubMsg, pStubMsg->BufferLength, async_call_data->hBinding);
+            NdrNsGetBuffer(pStubMsg, pStubMsg->BufferLength, async_call_data->hBinding);
 #else
-                    FIXME("using auto handle - call NdrNsGetBuffer when it gets implemented\n");
+        FIXME("using auto handle - call NdrNsGetBuffer when it gets implemented\n");
 #endif
-                else
-                    NdrGetBuffer(pStubMsg, pStubMsg->BufferLength, async_call_data->hBinding);
-            }
-            pRpcMsg->RpcFlags |= RPC_BUFFER_ASYNC;
-            status = I_RpcAsyncSetHandle(pRpcMsg, pAsync);
+        else
+            NdrGetBuffer(pStubMsg, pStubMsg->BufferLength, async_call_data->hBinding);
+    }
+    pRpcMsg->RpcFlags |= RPC_BUFFER_ASYNC;
+    status = I_RpcAsyncSetHandle(pRpcMsg, pAsync);
+    if (status != RPC_S_OK)
+        RpcRaiseException(status);
+
+    /* 3. MARSHAL */
+    TRACE( "MARSHAL\n" );
+    client_do_args(pStubMsg, pFormat, STUBLESS_MARSHAL, NULL, async_call_data->number_of_params, NULL);
+
+    /* 4. SENDRECEIVE */
+    TRACE( "SEND\n" );
+    pRpcMsg->RpcFlags |= RPC_BUFFER_ASYNC;
+    /* send the [in] params only */
+    if (Oif_flags.HasPipes)
+        /* NdrPipesSend(...) */
+        FIXME("pipes not supported yet\n");
+    else
+    {
+        if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
+#if 0
+            NdrNsSend(&stubMsg, stubMsg.Buffer, pStubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle);
+#else
+        FIXME("using auto handle - call NdrNsSend when it gets implemented\n");
+#endif
+        else
+        {
+            pStubMsg->RpcMsg->BufferLength = pStubMsg->Buffer - (unsigned char *)pStubMsg->RpcMsg->Buffer;
+            status = I_RpcSend(pStubMsg->RpcMsg);
             if (status != RPC_S_OK)
                 RpcRaiseException(status);
-            break;
-        case PROXY_SENDRECEIVE:
-            pRpcMsg->RpcFlags |= RPC_BUFFER_ASYNC;
-            /* send the [in] params only */
-            if (Oif_flags.HasPipes)
-                /* NdrPipesSend(...) */
-                FIXME("pipes not supported yet\n");
-            else
-            {
-                if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
-#if 0
-                    NdrNsSend(&stubMsg, stubMsg.Buffer, pStubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle);
-#else
-                    FIXME("using auto handle - call NdrNsSend when it gets implemented\n");
-#endif
-                else
-                {
-                    pStubMsg->RpcMsg->BufferLength = pStubMsg->Buffer - (unsigned char *)pStubMsg->RpcMsg->Buffer;
-                    status = I_RpcSend(pStubMsg->RpcMsg);
-                    if (status != RPC_S_OK)
-                        RpcRaiseException(status);
-                }
-            }
-
-            break;
-        case PROXY_CALCSIZE:
-        case PROXY_MARSHAL:
-            client_do_args(pStubMsg, pFormat, phase, NULL, async_call_data->number_of_params, NULL);
-            break;
-        default:
-            ERR("shouldn't reach here. phase %d\n", phase);
-            break;
         }
     }
 
@@ -1675,8 +1645,6 @@ RPC_STATUS NdrpCompleteAsyncClientCall(RPC_ASYNC_STATE *pAsync, void *Reply)
     /* pointer to start of stack where arguments start */
     PMIDL_STUB_MESSAGE pStubMsg;
     struct async_call_data *async_call_data;
-    /* the type of pass we are currently doing */
-    int phase;
     /* header for procedure string */
     const NDR_PROC_HEADER * pProcHeader;
     RPC_STATUS status = RPC_S_OK;
@@ -1689,55 +1657,47 @@ RPC_STATUS NdrpCompleteAsyncClientCall(RPC_ASYNC_STATE *pAsync, void *Reply)
     pProcHeader = async_call_data->pProcHeader;
 
     /* order of phases:
-     * 1. PROXY_CALCSIZE - calculate the buffer size
-     * 2. PROXY_GETBUFFER - allocate the buffer
-     * 3. PROXY_MARHSAL - marshal [in] params into the buffer
-     * 4. PROXY_SENDRECEIVE - send buffer
+     * 1. CALCSIZE - calculate the buffer size
+     * 2. GETBUFFER - allocate the buffer
+     * 3. MARSHAL - marshal [in] params into the buffer
+     * 4. SENDRECEIVE - send buffer
      * Then in NdrpCompleteAsyncClientCall:
-     * 1. PROXY_SENDRECEIVE - receive buffer
-     * 2. PROXY_UNMARHSAL - unmarshal [out] params from buffer
+     * 1. SENDRECEIVE - receive buffer
+     * 2. UNMARSHAL - unmarshal [out] params from buffer
      */
-    for (phase = PROXY_SENDRECEIVE; phase <= PROXY_UNMARSHAL; phase++)
-    {
-        switch (phase)
-        {
-        case PROXY_SENDRECEIVE:
-            pStubMsg->RpcMsg->RpcFlags |= RPC_BUFFER_ASYNC;
-            /* receive the [out] params */
-            if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
+
+    /* 1. SENDRECEIVE */
+    TRACE( "RECEIVE\n" );
+    pStubMsg->RpcMsg->RpcFlags |= RPC_BUFFER_ASYNC;
+    /* receive the [out] params */
+    if (pProcHeader->handle_type == RPC_FC_AUTO_HANDLE)
 #if 0
-                NdrNsReceive(&stubMsg, stubMsg.Buffer, pStubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle);
+        NdrNsReceive(&stubMsg, stubMsg.Buffer, pStubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle);
 #else
-                FIXME("using auto handle - call NdrNsReceive when it gets implemented\n");
+    FIXME("using auto handle - call NdrNsReceive when it gets implemented\n");
 #endif
-            else
-            {
-                status = I_RpcReceive(pStubMsg->RpcMsg);
-                if (status != RPC_S_OK)
-                    goto cleanup;
-                pStubMsg->BufferLength = pStubMsg->RpcMsg->BufferLength;
-                pStubMsg->BufferStart = pStubMsg->RpcMsg->Buffer;
-                pStubMsg->BufferEnd = pStubMsg->BufferStart + pStubMsg->BufferLength;
-                pStubMsg->Buffer = pStubMsg->BufferStart;
-            }
-
-            /* convert strings, floating point values and endianess into our
-             * preferred format */
-#if 0
-            if ((pStubMsg->RpcMsg.DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
-                NdrConvert(pStubMsg, pFormat);
-#endif
-
-            break;
-        case PROXY_UNMARSHAL:
-            client_do_args(pStubMsg, async_call_data->pParamFormat, phase,
-                           NULL, async_call_data->number_of_params, Reply);
-            break;
-        default:
-            ERR("shouldn't reach here. phase %d\n", phase);
-            break;
-        }
+    else
+    {
+        status = I_RpcReceive(pStubMsg->RpcMsg);
+        if (status != RPC_S_OK)
+            goto cleanup;
+        pStubMsg->BufferLength = pStubMsg->RpcMsg->BufferLength;
+        pStubMsg->BufferStart = pStubMsg->RpcMsg->Buffer;
+        pStubMsg->BufferEnd = pStubMsg->BufferStart + pStubMsg->BufferLength;
+        pStubMsg->Buffer = pStubMsg->BufferStart;
     }
+
+    /* convert strings, floating point values and endianess into our
+     * preferred format */
+#if 0
+    if ((pStubMsg->RpcMsg.DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
+        NdrConvert(pStubMsg, pFormat);
+#endif
+
+    /* 2. UNMARSHAL */
+    TRACE( "UNMARSHAL\n" );
+    client_do_args(pStubMsg, async_call_data->pParamFormat, STUBLESS_UNMARSHAL,
+                   NULL, async_call_data->number_of_params, Reply);
 
 cleanup:
     if (pStubMsg->fHasNewCorrDesc)
