@@ -1175,7 +1175,9 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD5700,         "ATI Radeon HD 5700 Series",        DRIVER_AMD_R600,         512 },
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD5800,         "ATI Radeon HD 5800 Series",        DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD5900,         "ATI Radeon HD 5900 Series",        DRIVER_AMD_R600,         1024},
-    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6310,         "AMD Radeon HD 6310 Graphics",      DRIVER_AMD_R600,         1024},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6300,         "AMD Radeon HD 6300 series Graphics", DRIVER_AMD_R600,       1024},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6400,         "AMD Radeon HD 6400 Series",        DRIVER_AMD_R600,         1024},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6600,         "AMD Radeon HD 6600 Series",        DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6800,         "AMD Radeon HD 6800 Series",        DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6900,         "AMD Radeon HD 6900 Series",        DRIVER_AMD_R600,         2048},
     /* Intel cards */
@@ -1845,7 +1847,9 @@ static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info
             /* Northern Islands */
             {"CAYMAN",  CARD_AMD_RADEON_HD6900},
             {"BARTS",   CARD_AMD_RADEON_HD6800},
-            {"PALM",    CARD_AMD_RADEON_HD6310},
+            {"TURKS",   CARD_AMD_RADEON_HD6600},
+            {"CAICOS",  CARD_AMD_RADEON_HD6400},
+            {"PALM",    CARD_AMD_RADEON_HD6300},
             /* Evergreen */
             {"HEMLOCK", CARD_AMD_RADEON_HD5900},
             {"CYPRESS", CARD_AMD_RADEON_HD5800},

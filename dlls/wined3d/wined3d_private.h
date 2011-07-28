@@ -1338,7 +1338,9 @@ enum wined3d_pci_device
     CARD_AMD_RADEON_HD5850          = 0x6898,
     CARD_AMD_RADEON_HD5870          = 0x6899,
     CARD_AMD_RADEON_HD5900          = 0x689c,
-    CARD_AMD_RADEON_HD6310          = 0x9803,
+    CARD_AMD_RADEON_HD6300          = 0x9803,
+    CARD_AMD_RADEON_HD6400          = 0x6770,
+    CARD_AMD_RADEON_HD6600          = 0x6758,
     CARD_AMD_RADEON_HD6800          = 0x6739,
     CARD_AMD_RADEON_HD6900          = 0x6719,
 
