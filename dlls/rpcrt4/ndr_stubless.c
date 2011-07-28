@@ -446,6 +446,75 @@ static BOOL is_by_value( PFORMAT_STRING format )
     }
 }
 
+static PFORMAT_STRING convert_old_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
+                                        unsigned int stack_size, BOOL object_proc,
+                                        void *buffer, unsigned int size, unsigned int *count )
+{
+    NDR_PARAM_OIF *args = buffer;
+    unsigned int i, stack_offset = object_proc ? sizeof(void *) : 0;
+
+    for (i = 0; stack_offset < stack_size; i++)
+    {
+        const NDR_PARAM_OI_BASETYPE *param = (const NDR_PARAM_OI_BASETYPE *)pFormat;
+        const NDR_PARAM_OI_OTHER *other = (const NDR_PARAM_OI_OTHER *)pFormat;
+
+        if (i + 1 > size / sizeof(*args))
+        {
+            FIXME( "%u args not supported\n", i );
+            RpcRaiseException( RPC_S_INTERNAL_ERROR );
+        }
+
+        args[i].stack_offset = stack_offset;
+        memset( &args[i].attr, 0, sizeof(args[i].attr) );
+
+        switch (param->param_direction)
+        {
+        case RPC_FC_IN_PARAM_BASETYPE:
+            args[i].attr.IsIn = 1;
+            args[i].attr.IsBasetype = 1;
+            break;
+        case RPC_FC_RETURN_PARAM_BASETYPE:
+            args[i].attr.IsOut = 1;
+            args[i].attr.IsReturn = 1;
+            args[i].attr.IsBasetype = 1;
+            break;
+        case RPC_FC_IN_PARAM:
+            args[i].attr.IsIn = 1;
+            break;
+        case RPC_FC_IN_PARAM_NO_FREE_INST:
+            args[i].attr.IsIn = 1;
+            args[i].attr.IsDontCallFreeInst = 1;
+            break;
+        case RPC_FC_IN_OUT_PARAM:
+            args[i].attr.IsIn = 1;
+            args[i].attr.IsOut = 1;
+            break;
+        case RPC_FC_OUT_PARAM:
+            args[i].attr.IsOut = 1;
+            break;
+        case RPC_FC_RETURN_PARAM:
+            args[i].attr.IsOut = 1;
+            args[i].attr.IsReturn = 1;
+            break;
+        }
+        if (args[i].attr.IsBasetype)
+        {
+            args[i].u.type_format_char = param->type_format_char;
+            stack_offset += type_stack_size( param->type_format_char );
+            pFormat += sizeof(NDR_PARAM_OI_BASETYPE);
+        }
+        else
+        {
+            args[i].u.type_offset = other->type_offset;
+            args[i].attr.IsByValue = is_by_value( &pStubMsg->StubDesc->pFormatTypes[other->type_offset] );
+            stack_offset += other->stack_size * sizeof(void *);
+            pFormat += sizeof(NDR_PARAM_OI_OTHER);
+        }
+    }
+    *count = i;
+    return (PFORMAT_STRING)args;
+}
+
 void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
                                PFORMAT_STRING pFormat, int phase, unsigned short stack_size,
                                unsigned char *pRetVal, BOOL object_proc, BOOL ignore_retval)
@@ -571,7 +640,7 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     /* size of stack */
     unsigned short stack_size;
     /* number of parameters. optional for client to give it to us */
-    unsigned char number_of_params = ~0;
+    unsigned int number_of_params;
     /* cache of Oif_flags from v2 procedure header */
     INTERPRETER_OPT_FLAGS Oif_flags = { 0 };
     /* cache of extension flags from NDR_PROC_HEADER_EXTS */
@@ -580,8 +649,6 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     int phase;
     /* header for procedure string */
     const NDR_PROC_HEADER * pProcHeader = (const NDR_PROC_HEADER *)&pFormat[0];
-    /* -Oif or -Oicf generated format */
-    BOOL bV2Format = FALSE;
     /* the value to return to the client from the remote procedure */
     LONG_PTR RetVal = 0;
     /* the pointer to the object when in OLE mode */
@@ -636,9 +703,7 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         if (!pFormat) goto done;
     }
 
-    bV2Format = (pStubDesc->Version >= 0x20000);
-
-    if (bV2Format)
+    if (pStubDesc->Version >= 0x20000)  /* -Oicf format */
     {
         const NDR_PROC_PARTIAL_OIF_HEADER *pOIFHeader =
             (const NDR_PROC_PARTIAL_OIF_HEADER *)pFormat;
@@ -669,6 +734,13 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
             }
 #endif
         }
+    }
+    else
+    {
+        pFormat = convert_old_args( &stubMsg, pFormat, stack_size,
+                                    pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT,
+                                    /* reuse the correlation cache, it's not needed for v1 format */
+                                    NdrCorrCache, sizeof(NdrCorrCache), &number_of_params );
     }
 
     stubMsg.BufferLength = 0;
@@ -772,13 +844,8 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                 case PROXY_CALCSIZE:
                 case PROXY_MARSHAL:
                 case PROXY_UNMARSHAL:
-                    if (bV2Format)
-                        client_do_args(&stubMsg, pFormat, phase, fpu_stack,
-                                       number_of_params, (unsigned char *)&RetVal);
-                    else
-                        client_do_args_old_format(&stubMsg, pFormat, phase,
-                                                  stack_size, (unsigned char *)&RetVal,
-                                                  (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT), FALSE);
+                    client_do_args(&stubMsg, pFormat, phase, fpu_stack,
+                                   number_of_params, (unsigned char *)&RetVal);
                     break;
                 default:
                     ERR("shouldn't reach here. phase %d\n", phase);
@@ -876,13 +943,8 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
             case PROXY_CALCSIZE:
             case PROXY_MARSHAL:
             case PROXY_UNMARSHAL:
-                if (bV2Format)
-                    client_do_args(&stubMsg, pFormat, phase, fpu_stack,
-                                   number_of_params, (unsigned char *)&RetVal);
-                else
-                    client_do_args_old_format(&stubMsg, pFormat, phase,
-                                              stack_size, (unsigned char *)&RetVal,
-                                              (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT), FALSE);
+                client_do_args(&stubMsg, pFormat, phase, fpu_stack,
+                               number_of_params, (unsigned char *)&RetVal);
                 break;
             default:
                 ERR("shouldn't reach here. phase %d\n", phase);
@@ -1732,7 +1794,7 @@ struct async_call_data
     /* size of stack */
     unsigned short stack_size;
     /* number of parameters. optional for client to give it to us */
-    unsigned char number_of_params;
+    unsigned int number_of_params;
     /* correlation cache */
     ULONG_PTR NdrCorrCache[256];
 };
@@ -1768,7 +1830,6 @@ LONG_PTR CDECL ndr_async_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING 
 
     async_call_data = I_RpcAllocate(sizeof(*async_call_data) + sizeof(MIDL_STUB_MESSAGE) + sizeof(RPC_MESSAGE));
     if (!async_call_data) RpcRaiseException(ERROR_OUTOFMEMORY);
-    async_call_data->number_of_params = ~0;
     async_call_data->pProcHeader = pProcHeader;
 
     async_call_data->pStubMsg = pStubMsg = (PMIDL_STUB_MESSAGE)(async_call_data + 1);
@@ -1838,6 +1899,13 @@ LONG_PTR CDECL ndr_async_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING 
             ext_flags = pExtensions->Flags2;
             pFormat += pExtensions->Size;
         }
+    }
+    else
+    {
+        pFormat = convert_old_args( pStubMsg, pFormat, async_call_data->stack_size,
+                                    pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT,
+                                    async_call_data->NdrCorrCache, sizeof(async_call_data->NdrCorrCache),
+                                    &async_call_data->number_of_params );
     }
 
     async_call_data->pParamFormat = pFormat;
@@ -1927,12 +1995,7 @@ LONG_PTR CDECL ndr_async_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING 
             break;
         case PROXY_CALCSIZE:
         case PROXY_MARSHAL:
-            if (bV2Format)
-                client_do_args(pStubMsg, pFormat, phase, NULL, async_call_data->number_of_params, NULL);
-            else
-                client_do_args_old_format(pStubMsg, pFormat, phase,
-                                          async_call_data->stack_size, NULL,
-                                          (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT), FALSE);
+            client_do_args(pStubMsg, pFormat, phase, NULL, async_call_data->number_of_params, NULL);
             break;
         default:
             ERR("shouldn't reach here. phase %d\n", phase);
@@ -1954,8 +2017,6 @@ RPC_STATUS NdrpCompleteAsyncClientCall(RPC_ASYNC_STATE *pAsync, void *Reply)
     int phase;
     /* header for procedure string */
     const NDR_PROC_HEADER * pProcHeader;
-    /* -Oif or -Oicf generated format */
-    BOOL bV2Format;
     RPC_STATUS status = RPC_S_OK;
 
     if (!pAsync->StubInfo)
@@ -1964,8 +2025,6 @@ RPC_STATUS NdrpCompleteAsyncClientCall(RPC_ASYNC_STATE *pAsync, void *Reply)
     async_call_data = pAsync->StubInfo;
     pStubMsg = async_call_data->pStubMsg;
     pProcHeader = async_call_data->pProcHeader;
-
-    bV2Format = (pStubMsg->StubDesc->Version >= 0x20000);
 
     /* order of phases:
      * 1. PROXY_CALCSIZE - calculate the buffer size
@@ -2009,12 +2068,8 @@ RPC_STATUS NdrpCompleteAsyncClientCall(RPC_ASYNC_STATE *pAsync, void *Reply)
 
             break;
         case PROXY_UNMARSHAL:
-            if (bV2Format)
-                client_do_args(pStubMsg, async_call_data->pParamFormat, phase,
-                               NULL, async_call_data->number_of_params, Reply);
-            else
-                client_do_args_old_format(pStubMsg, async_call_data->pParamFormat, phase,
-                                          async_call_data->stack_size, Reply, FALSE, FALSE);
+            client_do_args(pStubMsg, async_call_data->pParamFormat, phase,
+                           NULL, async_call_data->number_of_params, Reply);
             break;
         default:
             ERR("shouldn't reach here. phase %d\n", phase);
