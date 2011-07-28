@@ -2272,6 +2272,129 @@ methods:
 
     [propget, id(DISPID_IHTMLSTYLE4_MINHEIGHT), displaybind, bindable]
     VARIANT minHeight();
+
+    [propput, id(DISPID_IHTMLSTYLE5_MSINTERPOLATIONMODE), displaybind, bindable]
+    void msInterpolationMode(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE5_MSINTERPOLATIONMODE), displaybind, bindable]
+    BSTR msInterpolationMode();
+
+    [propput, id(DISPID_IHTMLSTYLE5_MAXHEIGHT), displaybind, bindable]
+    void maxHeight(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE5_MAXHEIGHT), displaybind, bindable]
+    VARIANT maxHeight();
+
+    [propput, id(DISPID_IHTMLSTYLE5_MINWIDTH), displaybind, bindable]
+    void minWidth(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE5_MINWIDTH), displaybind, bindable]
+    VARIANT minWidth();
+
+    [propput, id(DISPID_IHTMLSTYLE5_MAXWIDTH), displaybind, bindable]
+    void maxWidth(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE5_MAXWIDTH), displaybind, bindable]
+    VARIANT maxWidth();
+
+    [propput, id(DISPID_IHTMLSTYLE6_CONTENT), displaybind, bindable]
+    void content(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE6_CONTENT), displaybind, bindable]
+    BSTR content();
+
+    [propput, id(DISPID_IHTMLSTYLE6_CAPTIONSIDE), displaybind, bindable]
+    void captionSide(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE6_CAPTIONSIDE), displaybind, bindable]
+    BSTR captionSide();
+
+    [propput, id(DISPID_IHTMLSTYLE6_COUNTERINCREMENT), displaybind, bindable]
+    void counterIncrement(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE6_COUNTERINCREMENT), displaybind, bindable]
+    BSTR counterIncrement();
+
+    [propput, id(DISPID_IHTMLSTYLE6_COUNTERRESET), displaybind, bindable]
+    void counterReset(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE6_COUNTERRESET), displaybind, bindable]
+    BSTR counterReset();
+
+    [propput, id(DISPID_IHTMLSTYLE6_OUTLINE), displaybind, bindable]
+    void outline(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE6_OUTLINE), displaybind, bindable]
+    BSTR outline();
+
+    [propput, id(DISPID_IHTMLSTYLE6_OUTLINEWIDTH), displaybind, bindable]
+    void outlineWidth(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE6_OUTLINEWIDTH), displaybind, bindable]
+    VARIANT outlineWidth();
+
+    [propput, id(DISPID_IHTMLSTYLE6_OUTLINESTYLE), displaybind, bindable]
+    void outlineStyle(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE6_OUTLINESTYLE), displaybind, bindable]
+    BSTR outlineStyle();
+
+    [propput, id(DISPID_IHTMLSTYLE6_OUTLINECOLOR), displaybind, bindable]
+    void outlineColor(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE6_OUTLINECOLOR), displaybind, bindable]
+    VARIANT outlineColor();
+
+    [propput, id(DISPID_IHTMLSTYLE6_BOXSIZING), displaybind, bindable]
+    void boxSizing(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE6_BOXSIZING), displaybind, bindable]
+    BSTR boxSizing();
+
+    [propput, id(DISPID_IHTMLSTYLE6_BORDERSPACING), displaybind, bindable]
+    void borderSpacing(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE6_BORDERSPACING), displaybind, bindable]
+    BSTR borderSpacing();
+
+    [propput, id(DISPID_IHTMLSTYLE6_ORPHANS), displaybind, bindable]
+    void orphans(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE6_ORPHANS), displaybind, bindable]
+    VARIANT orphans();
+
+    [propput, id(DISPID_IHTMLSTYLE6_WIDOWS), displaybind, bindable]
+    void widows(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE6_WIDOWS), displaybind, bindable]
+    VARIANT widows();
+
+    [propput, id(DISPID_IHTMLSTYLE6_PAGEBREAKINSIDE), displaybind, bindable]
+    void pageBreakInside(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE6_PAGEBREAKINSIDE), displaybind, bindable]
+    BSTR pageBreakInside();
+
+    [propput, id(DISPID_IHTMLSTYLE6_EMPTYCELLS), displaybind, bindable]
+    void emptyCells(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE6_EMPTYCELLS), displaybind, bindable]
+    BSTR emptyCells();
+
+    [propput, id(DISPID_IHTMLSTYLE6_MSBLOCKPROGRESSION), displaybind, bindable]
+    void msBlockProgression(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE6_MSBLOCKPROGRESSION), displaybind, bindable]
+    BSTR msBlockProgression();
+
+    [propput, id(DISPID_IHTMLSTYLE6_QUOTES), displaybind, bindable]
+    void quotes(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE6_QUOTES), displaybind, bindable]
+    BSTR quotes();
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
+    IDispatch *constructor();
 }
 
 [
