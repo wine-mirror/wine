@@ -1527,6 +1527,10 @@ BOOL WINAPI ReplaceFileW(LPCWSTR lpReplacedFileName, LPCWSTR lpReplacementFileNa
     IO_STATUS_BLOCK io;
     OBJECT_ATTRIBUTES attr;
 
+    TRACE("%s %s %s 0x%08x %p %p\n", debugstr_w(lpReplacedFileName),
+          debugstr_w(lpReplacementFileName), debugstr_w(lpBackupFileName),
+          dwReplaceFlags, lpExclude, lpReserved);
+
     if (dwReplaceFlags)
         FIXME("Ignoring flags %x\n", dwReplaceFlags);
 
