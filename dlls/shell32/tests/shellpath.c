@@ -1010,6 +1010,7 @@ static const struct knownFolderDef known_folders[] = {
     { NULL, NULL, 0, NULL, NULL, 0, 0 }
 };
 #undef KNOWN_FOLDER
+BOOL known_folder_found[sizeof(known_folders)/sizeof(known_folders[0])-1];
 
 static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId)
 {
@@ -1021,14 +1022,15 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
     WCHAR sName[1024], sRelativePath[MAX_PATH];
     BOOL validPath;
     char sParentGuid[39];
+    BOOL *current_known_folder_found = &known_folder_found[0];
     BOOL found = FALSE;
 
     while(known_folder->folderId != NULL)
     {
         if(IsEqualGUID(known_folder->folderId, folderId))
         {
+            *current_known_folder_found = TRUE;
             found = TRUE;
-
             /* verify CSIDL */
             if(known_folder->csidl != NO_CSIDL)
             {
@@ -1084,6 +1086,7 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
             break;
         }
         known_folder++;
+        current_known_folder_found++;
     }
 
     if(!found)
@@ -1241,10 +1244,17 @@ static void test_knownFolders(void)
             ok(hr == S_OK, "failed to release KnownFolder instance: 0x%08x\n", hr);
         }
 
+        for(i=0; i<sizeof(known_folder_found)/sizeof(known_folder_found[0]); ++i)
+            known_folder_found[i] = FALSE;
+
         hr = IKnownFolderManager_GetFolderIds(mgr, &folders, &nCount);
         ok(hr == S_OK, "failed to get known folders: 0x%08x\n", hr);
         for(i=0;i<nCount;++i)
             check_known_folder(mgr, &folders[i]);
+
+        for(i=0; i<sizeof(known_folder_found)/sizeof(known_folder_found[0]); ++i)
+            if(!known_folder_found[i])
+                trace("Known folder %s not found on current platform\n", known_folders[i].sFolderId);
 
         CoTaskMemFree(folders);
 
