@@ -317,6 +317,25 @@ rem sort < tmp
 rem del tmp
 cd ..
 rd /s/Q foobar
+echo ...for /L
+rem Some cases loop forever writing 0s, like e.g. (1,0,1), (1,a,3) or (a,b,c); those can't be tested here
+for /L %%i in (1,2,0) do echo %%i
+for /L %%i in (1,2,6) do echo %%i
+for /l %%i in (1 ,2,6) do echo %%i
+for /L %%i in (a,2,3) do echo %%i
+for /L %%i in (1,2,-1) do echo %%i
+for /L %%i in (-4,-1,-1) do echo %%i
+for /L %%i in (1,-2,-2) do echo %%i
+for /L %%i in (1,2,a) do echo %%i
+echo ErrorLevel %ErrorLevel%
+for /L %%i in (1,a,b) do echo %%i
+echo ErrorLevel %ErrorLevel%
+rem FIXME: following test cases cannot be currently tested due to an inconsistent/buggy 'for /L' parsing.
+rem for /L %%i in (a,2,b) do echo %%i
+rem for /L %%i in (1,1,1) do echo %%i
+rem for /L %%i in (1,-2,-1) do echo %%i
+rem for /L %%i in (-1,-1,-1) do echo %%i
+rem for /L %%i in (1,2, 3) do echo %%i
 
 echo -----------Testing del /a-----------
 del /f/q *.test > nul

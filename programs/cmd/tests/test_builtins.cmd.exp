@@ -220,6 +220,19 @@ bazbaz
 baz
 foo
 bar
+...for /L
+1
+3
+5
+1
+3
+5
+0
+2
+1
+-1
+@todo_wine@ErrorLevel 0
+@todo_wine@ErrorLevel 0
 -----------Testing del /a-----------
 not-r.test not found after delete, good
 r.test found before delete, good
