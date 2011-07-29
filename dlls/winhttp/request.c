@@ -2446,7 +2446,6 @@ static HRESULT WINAPI winhttp_request_Open(
           debugstr_variant(&async));
 
     if (!method || !url) return E_INVALIDARG;
-    if (!(request->verb = strdupW( method ))) return E_OUTOFMEMORY;
 
     memset( &uc, 0, sizeof(uc) );
     uc.dwStructSize = sizeof(uc);
@@ -2455,6 +2454,7 @@ static HRESULT WINAPI winhttp_request_Open(
     uc.dwUrlPathLength  = ~0u;
     uc.dwExtraInfoLength = ~0u;
     if (!WinHttpCrackUrl( url, 0, 0, &uc )) return HRESULT_FROM_WIN32( get_last_error() );
+    if (!(request->verb = strdupW( method ))) return E_OUTOFMEMORY;
 
     if (!(hostname = heap_alloc( (uc.dwHostNameLength + 1) * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
     memcpy( hostname, uc.lpszHostName, uc.dwHostNameLength * sizeof(WCHAR) );
@@ -2541,7 +2541,7 @@ static HRESULT WINAPI winhttp_request_SetRequestHeader(
     }
     len = strlenW( header ) + 4;
     if (value) len += strlenW( value );
-    if (!(str = heap_alloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+    if (!(str = heap_alloc( (len + 1) * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
 
     sprintfW( str, fmtW, header, value ? value : emptyW );
     ret = WinHttpAddRequestHeaders( request->hrequest, str, len, WINHTTP_ADDREQ_FLAG_REPLACE );
@@ -2795,6 +2795,7 @@ static DWORD request_read_body( struct winhttp_request *request, DWORD timeout )
     request->state = REQUEST_STATE_RESPONSE_RECEIVED;
 
     if (!(request->buffer = heap_alloc( buflen ))) return E_OUTOFMEMORY;
+    request->buffer[0] = 0;
     size = total_bytes_read = 0;
     do
     {

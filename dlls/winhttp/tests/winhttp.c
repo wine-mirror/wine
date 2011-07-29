@@ -2473,6 +2473,7 @@ static void test_IWinHttpRequest(void)
     SysFreeString( url );
     SysFreeString( username );
     SysFreeString( password );
+    SysFreeString( connection );
     SysFreeString( date );
     SysFreeString( today );
     VariantClear( &proxy_server );
