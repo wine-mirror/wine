@@ -20,7 +20,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
+WINE_DEFAULT_DEBUG_CHANNEL(ieframe);
 
 static inline InternetExplorer *impl_from_IWebBrowser2(IWebBrowser2 *iface)
 {

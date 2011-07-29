@@ -1,5 +1,5 @@
 /*
- * Header includes for shdocvw.dll
+ * Header includes for ieframe.dll
  *
  * Copyright 2011 Jacek Caban for CodeWeavers
  *

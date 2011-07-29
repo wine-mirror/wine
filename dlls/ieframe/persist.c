@@ -23,7 +23,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
+WINE_DEFAULT_DEBUG_CHANNEL(ieframe);
 
 /**********************************************************************
  * Implement the IPersistStorage interface

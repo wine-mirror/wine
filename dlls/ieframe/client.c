@@ -25,7 +25,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
+WINE_DEFAULT_DEBUG_CHANNEL(ieframe);
 
 static inline DocHost *impl_from_IOleClientSite(IOleClientSite *iface)
 {

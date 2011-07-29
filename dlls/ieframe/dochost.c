@@ -24,7 +24,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
+WINE_DEFAULT_DEBUG_CHANNEL(ieframe);
 
 DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
 

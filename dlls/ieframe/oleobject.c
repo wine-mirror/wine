@@ -33,7 +33,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
+WINE_DEFAULT_DEBUG_CHANNEL(ieframe);
 
 /* shlwapi.dll */
 HWND WINAPI SHSetParentHwnd(HWND hWnd, HWND hWndParent);
