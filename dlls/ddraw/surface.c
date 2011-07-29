@@ -4572,7 +4572,7 @@ static IDirectDrawSurfaceImpl *get_sub_mimaplevel(IDirectDrawSurfaceImpl *surfac
 static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTexture2 *src_texture)
 {
     IDirectDrawSurfaceImpl *dst_surface = surface_from_texture2(iface);
-    IDirectDrawSurfaceImpl *src_surface = surface_from_texture2(src_texture);
+    IDirectDrawSurfaceImpl *src_surface = unsafe_impl_from_IDirect3DTexture2(src_texture);
     HRESULT hr;
 
     TRACE("iface %p, src_texture %p.\n", iface, src_texture);
@@ -5028,6 +5028,13 @@ IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface(IDirectDrawSurface *
     if (!iface) return NULL;
     assert(iface->lpVtbl == &ddraw_surface1_vtbl);
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface_iface);
+}
+
+IDirectDrawSurfaceImpl *unsafe_impl_from_IDirect3DTexture2(IDirect3DTexture2 *iface)
+{
+    if (!iface) return NULL;
+    assert(iface->lpVtbl == &d3d_texture2_vtbl);
+    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirect3DTexture2_vtbl);
 }
 
 IDirectDrawSurfaceImpl *unsafe_impl_from_IDirect3DTexture(IDirect3DTexture *iface)

@@ -544,8 +544,8 @@ IDirect3DDeviceImpl_2_SwapTextureHandles(IDirect3DDevice2 *iface,
                                          IDirect3DTexture2 *Tex2)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
-    IDirectDrawSurfaceImpl *surf1 = surface_from_texture2(Tex1);
-    IDirectDrawSurfaceImpl *surf2 = surface_from_texture2(Tex2);
+    IDirectDrawSurfaceImpl *surf1 = unsafe_impl_from_IDirect3DTexture2(Tex1);
+    IDirectDrawSurfaceImpl *surf2 = unsafe_impl_from_IDirect3DTexture2(Tex2);
     DWORD h1, h2;
 
     TRACE("iface %p, tex1 %p, tex2 %p.\n", iface, Tex1, Tex2);
@@ -4564,7 +4564,7 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
                                  IDirect3DTexture2 *Texture2)
 {
     IDirect3DDeviceImpl *This = device_from_device3(iface);
-    IDirectDrawSurfaceImpl *tex = Texture2 ? surface_from_texture2(Texture2) : NULL;
+    IDirectDrawSurfaceImpl *tex = unsafe_impl_from_IDirect3DTexture2(Texture2);
     DWORD texmapblend;
     HRESULT hr;
 
