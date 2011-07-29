@@ -158,7 +158,7 @@ struct IDirectDrawSurfaceImpl
     IDirectDrawSurface2 IDirectDrawSurface2_iface;
     IDirectDrawSurface IDirectDrawSurface_iface;
     IDirectDrawGammaControl IDirectDrawGammaControl_iface;
-    const IDirect3DTexture2Vtbl *IDirect3DTexture2_vtbl;
+    IDirect3DTexture2 IDirect3DTexture2_iface;
     IDirect3DTexture IDirect3DTexture_iface;
 
     LONG                     ref7, ref4, ref3, ref2, ref1, iface_count, gamma_count;
@@ -221,7 +221,7 @@ static inline IDirectDrawSurfaceImpl *impl_from_IDirect3DTexture(IDirect3DTextur
 
 static inline IDirectDrawSurfaceImpl *impl_from_IDirect3DTexture2(IDirect3DTexture2 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirect3DTexture2_vtbl);
+    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirect3DTexture2_iface);
 }
 
 static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface(IDirectDrawSurface *iface)

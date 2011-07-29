@@ -570,8 +570,8 @@ static HRESULT WINAPI IDirect3DDeviceImpl_1_SwapTextureHandles(IDirect3DDevice *
     IDirect3DDeviceImpl *This = device_from_device1(iface);
     IDirectDrawSurfaceImpl *surf1 = unsafe_impl_from_IDirect3DTexture(D3DTex1);
     IDirectDrawSurfaceImpl *surf2 = unsafe_impl_from_IDirect3DTexture(D3DTex2);
-    IDirect3DTexture2 *t1 = surf1 ? (IDirect3DTexture2 *)&surf1->IDirect3DTexture2_vtbl : NULL;
-    IDirect3DTexture2 *t2 = surf2 ? (IDirect3DTexture2 *)&surf2->IDirect3DTexture2_vtbl : NULL;
+    IDirect3DTexture2 *t1 = surf1 ? &surf1->IDirect3DTexture2_iface : NULL;
+    IDirect3DTexture2 *t2 = surf2 ? &surf2->IDirect3DTexture2_iface : NULL;
 
     TRACE("iface %p, tex1 %p, tex2 %p.\n", iface, D3DTex1, D3DTex2);
 
@@ -2780,7 +2780,7 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                 break;
             }
 
-            hr = IDirect3DDevice3_SetTexture(iface, 0, (IDirect3DTexture2 *)&surf->IDirect3DTexture2_vtbl);
+            hr = IDirect3DDevice3_SetTexture(iface, 0, &surf->IDirect3DTexture2_iface);
             break;
         }
 
@@ -4493,7 +4493,7 @@ static HRESULT WINAPI IDirect3DDeviceImpl_3_GetTexture(IDirect3DDevice3 *iface, 
     ret = IDirect3DDevice7_GetTexture((IDirect3DDevice7 *)device_from_device3(iface), Stage, &ret_val);
 
     ret_val_impl = unsafe_impl_from_IDirectDrawSurface7(ret_val);
-    *Texture2 = ret_val_impl ? (IDirect3DTexture2 *)&ret_val_impl->IDirect3DTexture2_vtbl : NULL;
+    *Texture2 = ret_val_impl ? &ret_val_impl->IDirect3DTexture2_iface : NULL;
 
     TRACE("Returning texture %p.\n", *Texture2);
 
