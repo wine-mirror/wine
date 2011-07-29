@@ -248,21 +248,19 @@ static dispex_data_t *preprocess_dispex_data(DispatchEx *This)
 
     if(!data->func_cnt) {
         heap_free(data->funcs);
+        data->name_table = NULL;
         data->funcs = NULL;
-    }else if(data->func_cnt != size) {
-        data->funcs = heap_realloc(data->funcs, data->func_cnt * sizeof(func_info_t));
+        return data;
     }
 
+
+    data->funcs = heap_realloc(data->funcs, data->func_cnt * sizeof(func_info_t));
     qsort(data->funcs, data->func_cnt, sizeof(func_info_t), dispid_cmp);
 
-    if(data->funcs) {
-        data->name_table = heap_alloc(data->func_cnt * sizeof(func_info_t*));
-        for(i=0; i < data->func_cnt; i++)
-            data->name_table[i] = data->funcs+i;
-        qsort(data->name_table, data->func_cnt, sizeof(func_info_t*), func_name_cmp);
-    }else {
-        data->name_table = NULL;
-    }
+    data->name_table = heap_alloc(data->func_cnt * sizeof(func_info_t*));
+    for(i=0; i < data->func_cnt; i++)
+        data->name_table[i] = data->funcs+i;
+    qsort(data->name_table, data->func_cnt, sizeof(func_info_t*), func_name_cmp);
 
     return data;
 }
