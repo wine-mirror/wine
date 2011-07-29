@@ -284,7 +284,7 @@ static HRESULT ReadIcoDib(IStream *stream, IcoFrameDecode *result)
             }
 
             if (SUCCEEDED(hr))
-                hr = IWICBitmapFrameDecode_GetResolution(source, &result->dpiX, &result->dpiY);
+                hr = IWICBitmapFrameDecode_GetResolution(framedecode, &result->dpiX, &result->dpiY);
 
             IWICBitmapFrameDecode_Release(framedecode);
         }
