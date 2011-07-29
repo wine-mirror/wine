@@ -2565,6 +2565,9 @@ static DWORD wait_for_completion( struct winhttp_request *request, DWORD timeout
     {
     case WAIT_OBJECT_0:
         break;
+    case WAIT_OBJECT_0 + 1:
+        request->error = ERROR_CANCELLED;
+        break;
     case WAIT_TIMEOUT:
         request->error = ERROR_TIMEOUT;
         break;
