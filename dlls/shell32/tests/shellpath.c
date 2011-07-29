@@ -890,8 +890,8 @@ if (0) { /* crashes */
 /* Standard CSIDL values (and their flags) uses only two less-significant bytes */
 #define NO_CSIDL 0x10000
 #define CSIDL_TODO_WINE 0x20000
-#define KNOWN_FOLDER(id, csidl, name, category, parent) \
-    { &id, # id, csidl, # csidl, name, category, &parent, # parent, __LINE__ }
+#define KNOWN_FOLDER(id, csidl, name, category, parent, relative_path) \
+    { &id, # id, csidl, # csidl, name, category, &parent, # parent, relative_path, __LINE__ }
 
 struct knownFolderDef {
     const KNOWNFOLDERID *folderId;
@@ -902,110 +902,111 @@ struct knownFolderDef {
     const KF_CATEGORY category;
     const KNOWNFOLDERID *fidParent;
     const char *sParent;
+    const char *sRelativePath;
     const int line;
 };
 
 static const struct knownFolderDef known_folders[] = {
-    KNOWN_FOLDER(FOLDERID_AddNewPrograms,             NO_CSIDL,                             "AddNewProgramsFolder",         KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_AdminTools,                 CSIDL_ADMINTOOLS,                     "Administrative Tools",         KF_CATEGORY_PERUSER,  FOLDERID_Programs),
-    KNOWN_FOLDER(FOLDERID_AppUpdates,                 NO_CSIDL,                             "AppUpdatesFolder",             KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_CDBurning,                  CSIDL_CDBURN_AREA,                    "CD Burning",                   KF_CATEGORY_PERUSER,  FOLDERID_LocalAppData),
-    KNOWN_FOLDER(FOLDERID_ChangeRemovePrograms,       NO_CSIDL,                             "ChangeRemoveProgramsFolder",   KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_CommonAdminTools,           CSIDL_COMMON_ADMINTOOLS,              "Common Administrative Tools",  KF_CATEGORY_COMMON,   FOLDERID_CommonPrograms),
-    KNOWN_FOLDER(FOLDERID_CommonOEMLinks,             CSIDL_COMMON_OEM_LINKS,               "OEM Links",                    KF_CATEGORY_COMMON,   FOLDERID_ProgramData),
-    KNOWN_FOLDER(FOLDERID_CommonPrograms,             CSIDL_COMMON_PROGRAMS,                "Common Programs",              KF_CATEGORY_COMMON,   FOLDERID_CommonStartMenu),
-    KNOWN_FOLDER(FOLDERID_CommonStartMenu,            CSIDL_COMMON_STARTMENU,               "Common Start Menu",            KF_CATEGORY_COMMON,   FOLDERID_ProgramData),
-    KNOWN_FOLDER(FOLDERID_CommonStartup,              CSIDL_COMMON_STARTUP,                 "Common Startup",               KF_CATEGORY_COMMON,   FOLDERID_CommonPrograms),
-    KNOWN_FOLDER(FOLDERID_CommonTemplates,            CSIDL_COMMON_TEMPLATES,               "Common Templates",             KF_CATEGORY_COMMON,   FOLDERID_ProgramData),
-    KNOWN_FOLDER(FOLDERID_ComputerFolder,             CSIDL_DRIVES,                         "MyComputerFolder",             KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_ConflictFolder,             NO_CSIDL,                             "ConflictFolder",               KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_ConnectionsFolder,          CSIDL_CONNECTIONS,                    "ConnectionsFolder",            KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_Contacts,                   NO_CSIDL,                             "Contacts",                     KF_CATEGORY_PERUSER,  FOLDERID_Profile),
-    KNOWN_FOLDER(FOLDERID_ControlPanelFolder,         CSIDL_CONTROLS,                       "ControlPanelFolder",           KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_Cookies,                    CSIDL_COOKIES,                        "Cookies",                      KF_CATEGORY_PERUSER,  FOLDERID_RoamingAppData),
-    KNOWN_FOLDER(FOLDERID_Desktop,                    CSIDL_DESKTOP,                        "Desktop",                      KF_CATEGORY_PERUSER,  FOLDERID_Profile),
-    KNOWN_FOLDER(FOLDERID_DeviceMetadataStore,        NO_CSIDL,                             "Device Metadata Store",        KF_CATEGORY_COMMON,   FOLDERID_ProgramData),
-    KNOWN_FOLDER(FOLDERID_Documents,                  CSIDL_MYDOCUMENTS,                    "Personal",                     KF_CATEGORY_PERUSER,  FOLDERID_Profile),
-    KNOWN_FOLDER(FOLDERID_DocumentsLibrary,           NO_CSIDL,                             "DocumentsLibrary",             KF_CATEGORY_PERUSER,  FOLDERID_Libraries),
-    KNOWN_FOLDER(FOLDERID_Downloads,                  NO_CSIDL,                             "Downloads",                    KF_CATEGORY_PERUSER,  FOLDERID_Profile),
-    KNOWN_FOLDER(FOLDERID_Favorites,                  CSIDL_FAVORITES,                      "Favorites",                    KF_CATEGORY_PERUSER,  FOLDERID_Profile),
-    KNOWN_FOLDER(FOLDERID_Fonts,                      CSIDL_FONTS,                          "Fonts",                        KF_CATEGORY_FIXED,    FOLDERID_Windows),
-    KNOWN_FOLDER(FOLDERID_Games,                      NO_CSIDL,                             "Games",                        KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_GameTasks,                  NO_CSIDL,                             "GameTasks",                    KF_CATEGORY_PERUSER,  FOLDERID_LocalAppData),
-    KNOWN_FOLDER(FOLDERID_History,                    CSIDL_HISTORY,                        "History",                      KF_CATEGORY_PERUSER,  FOLDERID_LocalAppData),
-    KNOWN_FOLDER(FOLDERID_HomeGroup,                  NO_CSIDL,                             "HomeGroupFolder",              KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_ImplicitAppShortcuts,       NO_CSIDL,                             "ImplicitAppShortcuts",         KF_CATEGORY_PERUSER,  FOLDERID_UserPinned),
-    KNOWN_FOLDER(FOLDERID_InternetCache,              CSIDL_INTERNET_CACHE,                 "Cache",                        KF_CATEGORY_PERUSER,  FOLDERID_LocalAppData),
-    KNOWN_FOLDER(FOLDERID_InternetFolder,             CSIDL_INTERNET,                       "InternetFolder",               KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_Libraries,                  NO_CSIDL,                             "Libraries",                    KF_CATEGORY_PERUSER,  FOLDERID_RoamingAppData),
-    KNOWN_FOLDER(FOLDERID_Links,                      NO_CSIDL,                             "Links",                        KF_CATEGORY_PERUSER,  FOLDERID_Profile),
-    KNOWN_FOLDER(FOLDERID_LocalAppData,               CSIDL_LOCAL_APPDATA,                  "Local AppData",                KF_CATEGORY_PERUSER,  FOLDERID_Profile),
-    KNOWN_FOLDER(FOLDERID_LocalAppDataLow,            NO_CSIDL,                             "LocalAppDataLow",              KF_CATEGORY_PERUSER,  FOLDERID_Profile),
-    KNOWN_FOLDER(FOLDERID_LocalizedResourcesDir,      CSIDL_RESOURCES_LOCALIZED,            "LocalizedResourcesDir",        KF_CATEGORY_FIXED,    GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_Music,                      CSIDL_MYMUSIC,                        "My Music",                     KF_CATEGORY_PERUSER,  FOLDERID_Profile),
-    KNOWN_FOLDER(FOLDERID_MusicLibrary,               NO_CSIDL,                             "MusicLibrary",                 KF_CATEGORY_PERUSER,  FOLDERID_Libraries),
-    KNOWN_FOLDER(FOLDERID_NetHood,                    CSIDL_NETHOOD,                        "NetHood",                      KF_CATEGORY_PERUSER,  FOLDERID_RoamingAppData),
-    KNOWN_FOLDER(FOLDERID_NetworkFolder,              CSIDL_NETWORK,                        "NetworkPlacesFolder",          KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_OriginalImages,             NO_CSIDL,                             "Original Images",              KF_CATEGORY_PERUSER,  FOLDERID_LocalAppData),
-    KNOWN_FOLDER(FOLDERID_PhotoAlbums,                NO_CSIDL,                             "PhotoAlbums",                  KF_CATEGORY_PERUSER,  FOLDERID_Pictures),
-    KNOWN_FOLDER(FOLDERID_Pictures,                   CSIDL_MYPICTURES,                     "My Pictures",                  KF_CATEGORY_PERUSER,  FOLDERID_Profile),
-    KNOWN_FOLDER(FOLDERID_PicturesLibrary,            NO_CSIDL,                             "PicturesLibrary",              KF_CATEGORY_PERUSER,  FOLDERID_Libraries),
-    KNOWN_FOLDER(FOLDERID_Playlists,                  NO_CSIDL,                             "Playlists",                    KF_CATEGORY_PERUSER,  FOLDERID_Music),
-    KNOWN_FOLDER(FOLDERID_PrintersFolder,             CSIDL_PRINTERS,                       "PrintersFolder",               KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_PrintHood,                  CSIDL_PRINTHOOD,                      "PrintHood",                    KF_CATEGORY_PERUSER,  FOLDERID_RoamingAppData),
-    KNOWN_FOLDER(FOLDERID_Profile,                    CSIDL_PROFILE,                        "Profile",                      KF_CATEGORY_FIXED,    GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_ProgramData,                CSIDL_COMMON_APPDATA,                 "Common AppData",               KF_CATEGORY_FIXED,    GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_ProgramFiles,               CSIDL_PROGRAM_FILES,                  "ProgramFiles",                 KF_CATEGORY_FIXED,    GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_ProgramFilesCommon,         CSIDL_PROGRAM_FILES_COMMON,           "ProgramFilesCommon",           KF_CATEGORY_FIXED,    GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_ProgramFilesCommonX86,      NO_CSIDL,                             "ProgramFilesCommonX86",        KF_CATEGORY_FIXED,    GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_ProgramFilesX86,            CSIDL_PROGRAM_FILESX86,               "ProgramFilesX86",              KF_CATEGORY_FIXED,    GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_Programs,                   CSIDL_PROGRAMS,                       "Programs",                     KF_CATEGORY_PERUSER,  FOLDERID_StartMenu),
-    KNOWN_FOLDER(FOLDERID_Public,                     NO_CSIDL,                             "Public",                       KF_CATEGORY_FIXED,    GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_PublicDesktop,              CSIDL_COMMON_DESKTOPDIRECTORY,        "Common Desktop",               KF_CATEGORY_COMMON,   FOLDERID_Public),
-    KNOWN_FOLDER(FOLDERID_PublicDocuments,            CSIDL_COMMON_DOCUMENTS,               "Common Documents",             KF_CATEGORY_COMMON,   FOLDERID_Public),
-    KNOWN_FOLDER(FOLDERID_PublicDownloads,            NO_CSIDL,                             "CommonDownloads",              KF_CATEGORY_COMMON,   FOLDERID_Public),
-    KNOWN_FOLDER(FOLDERID_PublicGameTasks,            NO_CSIDL,                             "PublicGameTasks",              KF_CATEGORY_COMMON,   FOLDERID_ProgramData),
-    KNOWN_FOLDER(FOLDERID_PublicLibraries,            NO_CSIDL,                             "PublicLibraries",              KF_CATEGORY_COMMON,   FOLDERID_Public),
-    KNOWN_FOLDER(FOLDERID_PublicMusic,                CSIDL_COMMON_MUSIC,                   "CommonMusic",                  KF_CATEGORY_COMMON,   FOLDERID_Public),
-    KNOWN_FOLDER(FOLDERID_PublicPictures,             CSIDL_COMMON_PICTURES,                "CommonPictures",               KF_CATEGORY_COMMON,   FOLDERID_Public),
-    KNOWN_FOLDER(FOLDERID_PublicRingtones,            NO_CSIDL,                             "CommonRingtones",              KF_CATEGORY_COMMON,   FOLDERID_ProgramData),
-    KNOWN_FOLDER(FOLDERID_PublicVideos,               CSIDL_COMMON_VIDEO,                   "CommonVideo",                  KF_CATEGORY_COMMON,   FOLDERID_Public),
-    KNOWN_FOLDER(FOLDERID_QuickLaunch,                NO_CSIDL,                             "Quick Launch",                 KF_CATEGORY_PERUSER,  FOLDERID_RoamingAppData),
-    KNOWN_FOLDER(FOLDERID_Recent,                     CSIDL_RECENT,                         "Recent",                       KF_CATEGORY_PERUSER,  FOLDERID_RoamingAppData),
-    KNOWN_FOLDER(FOLDERID_RecordedTVLibrary,          NO_CSIDL,                             "RecordedTVLibrary",            KF_CATEGORY_COMMON,   FOLDERID_PublicLibraries),
-    KNOWN_FOLDER(FOLDERID_RecycleBinFolder,           CSIDL_BITBUCKET,                      "RecycleBinFolder",             KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_ResourceDir,                CSIDL_RESOURCES,                      "ResourceDir",                  KF_CATEGORY_FIXED,    GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_Ringtones,                  NO_CSIDL,                             "Ringtones",                    KF_CATEGORY_PERUSER,  FOLDERID_LocalAppData),
-    KNOWN_FOLDER(FOLDERID_RoamingAppData,             CSIDL_APPDATA,                        "AppData",                      KF_CATEGORY_PERUSER,  FOLDERID_Profile),
-    KNOWN_FOLDER(FOLDERID_SampleMusic,                NO_CSIDL,                             "SampleMusic",                  KF_CATEGORY_COMMON,   FOLDERID_PublicMusic),
-    KNOWN_FOLDER(FOLDERID_SamplePictures,             NO_CSIDL,                             "SamplePictures",               KF_CATEGORY_COMMON,   FOLDERID_PublicPictures),
-    KNOWN_FOLDER(FOLDERID_SamplePlaylists,            NO_CSIDL,                             "SamplePlaylists",              KF_CATEGORY_COMMON,   FOLDERID_PublicMusic),
-    KNOWN_FOLDER(FOLDERID_SampleVideos,               NO_CSIDL,                             "SampleVideos",                 KF_CATEGORY_COMMON,   FOLDERID_PublicVideos),
-    KNOWN_FOLDER(FOLDERID_SavedGames,                 NO_CSIDL,                             "SavedGames",                   KF_CATEGORY_PERUSER,  FOLDERID_Profile),
-    KNOWN_FOLDER(FOLDERID_SavedSearches,              NO_CSIDL,                             "Searches",                     KF_CATEGORY_PERUSER,  FOLDERID_Profile),
-    KNOWN_FOLDER(FOLDERID_SEARCH_CSC,                 NO_CSIDL,                             "CSCFolder",                    KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_SearchHome,                 NO_CSIDL,                             "SearchHomeFolder",             KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_SEARCH_MAPI,                NO_CSIDL,                             "MAPIFolder",                   KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_SendTo,                     CSIDL_SENDTO,                         "SendTo",                       KF_CATEGORY_PERUSER,  FOLDERID_RoamingAppData),
-    KNOWN_FOLDER(FOLDERID_SidebarDefaultParts,        NO_CSIDL,                             "Default Gadgets",              KF_CATEGORY_COMMON,   FOLDERID_ProgramFiles),
-    KNOWN_FOLDER(FOLDERID_SidebarParts,               NO_CSIDL,                             "Gadgets",                      KF_CATEGORY_PERUSER,  FOLDERID_LocalAppData),
-    KNOWN_FOLDER(FOLDERID_StartMenu,                  CSIDL_STARTMENU,                      "Start Menu",                   KF_CATEGORY_PERUSER,  FOLDERID_RoamingAppData),
-    KNOWN_FOLDER(FOLDERID_Startup,                    CSIDL_STARTUP,                        "Startup",                      KF_CATEGORY_PERUSER,  FOLDERID_Programs),
-    KNOWN_FOLDER(FOLDERID_SyncManagerFolder,          NO_CSIDL,                             "SyncCenterFolder",             KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_SyncResultsFolder,          NO_CSIDL,                             "SyncResultsFolder",            KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_SyncSetupFolder,            NO_CSIDL,                             "SyncSetupFolder",              KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_System,                     CSIDL_SYSTEM,                         "System",                       KF_CATEGORY_FIXED,    GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_SystemX86,                  CSIDL_SYSTEMX86,                      "SystemX86",                    KF_CATEGORY_FIXED,    GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_Templates,                  CSIDL_TEMPLATES,                      "Templates",                    KF_CATEGORY_PERUSER,  FOLDERID_RoamingAppData),
-    KNOWN_FOLDER(FOLDERID_UserPinned,                 NO_CSIDL,                             "User Pinned",                  KF_CATEGORY_PERUSER,  FOLDERID_QuickLaunch),
-    KNOWN_FOLDER(FOLDERID_UserProfiles,               NO_CSIDL,                             "UserProfiles",                 KF_CATEGORY_FIXED,    GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_UserProgramFiles,           NO_CSIDL,                             "UserProgramFiles",             KF_CATEGORY_PERUSER,  FOLDERID_LocalAppData),
-    KNOWN_FOLDER(FOLDERID_UserProgramFilesCommon,     NO_CSIDL,                             "UserProgramFilesCommon",       KF_CATEGORY_PERUSER,  FOLDERID_UserProgramFiles),
-    KNOWN_FOLDER(FOLDERID_UsersFiles,                 NO_CSIDL,                             "UsersFilesFolder",             KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_UsersLibraries,             NO_CSIDL,                             "UsersLibrariesFolder",         KF_CATEGORY_VIRTUAL,  GUID_NULL),
-    KNOWN_FOLDER(FOLDERID_Videos,                     CSIDL_MYVIDEO,                        "My Video",                     KF_CATEGORY_PERUSER,  FOLDERID_Profile),
-    KNOWN_FOLDER(FOLDERID_VideosLibrary,              NO_CSIDL,                             "VideosLibrary",                KF_CATEGORY_PERUSER,  FOLDERID_Libraries),
-    KNOWN_FOLDER(FOLDERID_Windows,                    CSIDL_WINDOWS,                        "Windows",                      KF_CATEGORY_FIXED,    GUID_NULL),
+    KNOWN_FOLDER(FOLDERID_AddNewPrograms,             NO_CSIDL,                             "AddNewProgramsFolder",         KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_AdminTools,                 CSIDL_ADMINTOOLS,                     "Administrative Tools",         KF_CATEGORY_PERUSER,  FOLDERID_Programs,            "Administrative Tools"),
+    KNOWN_FOLDER(FOLDERID_AppUpdates,                 NO_CSIDL,                             "AppUpdatesFolder",             KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_CDBurning,                  CSIDL_CDBURN_AREA,                    "CD Burning",                   KF_CATEGORY_PERUSER,  FOLDERID_LocalAppData,        "Microsoft\\Windows\\Burn\\Burn"),
+    KNOWN_FOLDER(FOLDERID_ChangeRemovePrograms,       NO_CSIDL,                             "ChangeRemoveProgramsFolder",   KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_CommonAdminTools,           CSIDL_COMMON_ADMINTOOLS,              "Common Administrative Tools",  KF_CATEGORY_COMMON,   FOLDERID_CommonPrograms,      "Administrative Tools"),
+    KNOWN_FOLDER(FOLDERID_CommonOEMLinks,             CSIDL_COMMON_OEM_LINKS,               "OEM Links",                    KF_CATEGORY_COMMON,   FOLDERID_ProgramData,         "OEM Links"),
+    KNOWN_FOLDER(FOLDERID_CommonPrograms,             CSIDL_COMMON_PROGRAMS,                "Common Programs",              KF_CATEGORY_COMMON,   FOLDERID_CommonStartMenu,     "Programs"),
+    KNOWN_FOLDER(FOLDERID_CommonStartMenu,            CSIDL_COMMON_STARTMENU,               "Common Start Menu",            KF_CATEGORY_COMMON,   FOLDERID_ProgramData,         "Microsoft\\Windows\\Start Menu"),
+    KNOWN_FOLDER(FOLDERID_CommonStartup,              CSIDL_COMMON_STARTUP,                 "Common Startup",               KF_CATEGORY_COMMON,   FOLDERID_CommonPrograms,      "StartUp"),
+    KNOWN_FOLDER(FOLDERID_CommonTemplates,            CSIDL_COMMON_TEMPLATES,               "Common Templates",             KF_CATEGORY_COMMON,   FOLDERID_ProgramData,         "Microsoft\\Windows\\Templates"),
+    KNOWN_FOLDER(FOLDERID_ComputerFolder,             CSIDL_DRIVES,                         "MyComputerFolder",             KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_ConflictFolder,             NO_CSIDL,                             "ConflictFolder",               KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_ConnectionsFolder,          CSIDL_CONNECTIONS,                    "ConnectionsFolder",            KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_Contacts,                   NO_CSIDL,                             "Contacts",                     KF_CATEGORY_PERUSER,  FOLDERID_Profile,             "Contacts"),
+    KNOWN_FOLDER(FOLDERID_ControlPanelFolder,         CSIDL_CONTROLS,                       "ControlPanelFolder",           KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_Cookies,                    CSIDL_COOKIES,                        "Cookies",                      KF_CATEGORY_PERUSER,  FOLDERID_RoamingAppData,      "Microsoft\\Windows\\Cookies"),
+    KNOWN_FOLDER(FOLDERID_Desktop,                    CSIDL_DESKTOP,                        "Desktop",                      KF_CATEGORY_PERUSER,  FOLDERID_Profile,             "Desktop"),
+    KNOWN_FOLDER(FOLDERID_DeviceMetadataStore,        NO_CSIDL,                             "Device Metadata Store",        KF_CATEGORY_COMMON,   FOLDERID_ProgramData,         "Microsoft\\Windows\\DeviceMetadataStore"),
+    KNOWN_FOLDER(FOLDERID_Documents,                  CSIDL_MYDOCUMENTS,                    "Personal",                     KF_CATEGORY_PERUSER,  FOLDERID_Profile,             "Documents"),
+    KNOWN_FOLDER(FOLDERID_DocumentsLibrary,           NO_CSIDL,                             "DocumentsLibrary",             KF_CATEGORY_PERUSER,  FOLDERID_Libraries,           "Documents.library-ms"),
+    KNOWN_FOLDER(FOLDERID_Downloads,                  NO_CSIDL,                             "Downloads",                    KF_CATEGORY_PERUSER,  FOLDERID_Profile,             "Downloads"),
+    KNOWN_FOLDER(FOLDERID_Favorites,                  CSIDL_FAVORITES,                      "Favorites",                    KF_CATEGORY_PERUSER,  FOLDERID_Profile,             "Favorites"),
+    KNOWN_FOLDER(FOLDERID_Fonts,                      CSIDL_FONTS,                          "Fonts",                        KF_CATEGORY_FIXED,    FOLDERID_Windows,             NULL),
+    KNOWN_FOLDER(FOLDERID_Games,                      NO_CSIDL,                             "Games",                        KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_GameTasks,                  NO_CSIDL,                             "GameTasks",                    KF_CATEGORY_PERUSER,  FOLDERID_LocalAppData,        "Microsoft\\Windows\\GameExplorer"),
+    KNOWN_FOLDER(FOLDERID_History,                    CSIDL_HISTORY,                        "History",                      KF_CATEGORY_PERUSER,  FOLDERID_LocalAppData,        "Microsoft\\Windows\\History"),
+    KNOWN_FOLDER(FOLDERID_HomeGroup,                  NO_CSIDL,                             "HomeGroupFolder",              KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_ImplicitAppShortcuts,       NO_CSIDL,                             "ImplicitAppShortcuts",         KF_CATEGORY_PERUSER,  FOLDERID_UserPinned,          "ImplicitAppShortcuts"),
+    KNOWN_FOLDER(FOLDERID_InternetCache,              CSIDL_INTERNET_CACHE,                 "Cache",                        KF_CATEGORY_PERUSER,  FOLDERID_LocalAppData,        "Microsoft\\Windows\\Temporary Internet Files"),
+    KNOWN_FOLDER(FOLDERID_InternetFolder,             CSIDL_INTERNET,                       "InternetFolder",               KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_Libraries,                  NO_CSIDL,                             "Libraries",                    KF_CATEGORY_PERUSER,  FOLDERID_RoamingAppData,      "Microsoft\\Windows\\Libraries"),
+    KNOWN_FOLDER(FOLDERID_Links,                      NO_CSIDL,                             "Links",                        KF_CATEGORY_PERUSER,  FOLDERID_Profile,             "Links"),
+    KNOWN_FOLDER(FOLDERID_LocalAppData,               CSIDL_LOCAL_APPDATA,                  "Local AppData",                KF_CATEGORY_PERUSER,  FOLDERID_Profile,             "AppData\\Local"),
+    KNOWN_FOLDER(FOLDERID_LocalAppDataLow,            NO_CSIDL,                             "LocalAppDataLow",              KF_CATEGORY_PERUSER,  FOLDERID_Profile,             "AppData\\LocalLow"),
+    KNOWN_FOLDER(FOLDERID_LocalizedResourcesDir,      CSIDL_RESOURCES_LOCALIZED,            "LocalizedResourcesDir",        KF_CATEGORY_FIXED,    GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_Music,                      CSIDL_MYMUSIC,                        "My Music",                     KF_CATEGORY_PERUSER,  FOLDERID_Profile,             "Music"),
+    KNOWN_FOLDER(FOLDERID_MusicLibrary,               NO_CSIDL,                             "MusicLibrary",                 KF_CATEGORY_PERUSER,  FOLDERID_Libraries,           "Music.library-ms"),
+    KNOWN_FOLDER(FOLDERID_NetHood,                    CSIDL_NETHOOD,                        "NetHood",                      KF_CATEGORY_PERUSER,  FOLDERID_RoamingAppData,      "Microsoft\\Windows\\Network Shortcuts"),
+    KNOWN_FOLDER(FOLDERID_NetworkFolder,              CSIDL_NETWORK,                        "NetworkPlacesFolder",          KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_OriginalImages,             NO_CSIDL,                             "Original Images",              KF_CATEGORY_PERUSER,  FOLDERID_LocalAppData,        "Microsoft\\Windows Photo Gallery\\Original Images"),
+    KNOWN_FOLDER(FOLDERID_PhotoAlbums,                NO_CSIDL,                             "PhotoAlbums",                  KF_CATEGORY_PERUSER,  FOLDERID_Pictures,            "Slide Shows"),
+    KNOWN_FOLDER(FOLDERID_Pictures,                   CSIDL_MYPICTURES,                     "My Pictures",                  KF_CATEGORY_PERUSER,  FOLDERID_Profile,             "Pictures"),
+    KNOWN_FOLDER(FOLDERID_PicturesLibrary,            NO_CSIDL,                             "PicturesLibrary",              KF_CATEGORY_PERUSER,  FOLDERID_Libraries,           "Pictures.library-ms"),
+    KNOWN_FOLDER(FOLDERID_Playlists,                  NO_CSIDL,                             "Playlists",                    KF_CATEGORY_PERUSER,  FOLDERID_Music,               "Playlists"),
+    KNOWN_FOLDER(FOLDERID_PrintersFolder,             CSIDL_PRINTERS,                       "PrintersFolder",               KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_PrintHood,                  CSIDL_PRINTHOOD,                      "PrintHood",                    KF_CATEGORY_PERUSER,  FOLDERID_RoamingAppData,      "Microsoft\\Windows\\Printer Shortcuts"),
+    KNOWN_FOLDER(FOLDERID_Profile,                    CSIDL_PROFILE,                        "Profile",                      KF_CATEGORY_FIXED,    GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_ProgramData,                CSIDL_COMMON_APPDATA,                 "Common AppData",               KF_CATEGORY_FIXED,    GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_ProgramFiles,               CSIDL_PROGRAM_FILES,                  "ProgramFiles",                 KF_CATEGORY_FIXED,    GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_ProgramFilesCommon,         CSIDL_PROGRAM_FILES_COMMON,           "ProgramFilesCommon",           KF_CATEGORY_FIXED,    GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_ProgramFilesCommonX86,      NO_CSIDL,                             "ProgramFilesCommonX86",        KF_CATEGORY_FIXED,    GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_ProgramFilesX86,            CSIDL_PROGRAM_FILESX86,               "ProgramFilesX86",              KF_CATEGORY_FIXED,    GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_Programs,                   CSIDL_PROGRAMS,                       "Programs",                     KF_CATEGORY_PERUSER,  FOLDERID_StartMenu,           "Programs"),
+    KNOWN_FOLDER(FOLDERID_Public,                     NO_CSIDL,                             "Public",                       KF_CATEGORY_FIXED,    GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_PublicDesktop,              CSIDL_COMMON_DESKTOPDIRECTORY,        "Common Desktop",               KF_CATEGORY_COMMON,   FOLDERID_Public,              "Desktop"),
+    KNOWN_FOLDER(FOLDERID_PublicDocuments,            CSIDL_COMMON_DOCUMENTS,               "Common Documents",             KF_CATEGORY_COMMON,   FOLDERID_Public,              "Documents"),
+    KNOWN_FOLDER(FOLDERID_PublicDownloads,            NO_CSIDL,                             "CommonDownloads",              KF_CATEGORY_COMMON,   FOLDERID_Public,              "Downloads"),
+    KNOWN_FOLDER(FOLDERID_PublicGameTasks,            NO_CSIDL,                             "PublicGameTasks",              KF_CATEGORY_COMMON,   FOLDERID_ProgramData,         "Microsoft\\Windows\\GameExplorer"),
+    KNOWN_FOLDER(FOLDERID_PublicLibraries,            NO_CSIDL,                             "PublicLibraries",              KF_CATEGORY_COMMON,   FOLDERID_Public,              "Libraries"),
+    KNOWN_FOLDER(FOLDERID_PublicMusic,                CSIDL_COMMON_MUSIC,                   "CommonMusic",                  KF_CATEGORY_COMMON,   FOLDERID_Public,              "Music"),
+    KNOWN_FOLDER(FOLDERID_PublicPictures,             CSIDL_COMMON_PICTURES,                "CommonPictures",               KF_CATEGORY_COMMON,   FOLDERID_Public,              "Pictures"),
+    KNOWN_FOLDER(FOLDERID_PublicRingtones,            NO_CSIDL,                             "CommonRingtones",              KF_CATEGORY_COMMON,   FOLDERID_ProgramData,         "Microsoft\\Windows\\Ringtones"),
+    KNOWN_FOLDER(FOLDERID_PublicVideos,               CSIDL_COMMON_VIDEO,                   "CommonVideo",                  KF_CATEGORY_COMMON,   FOLDERID_Public,              "Videos"),
+    KNOWN_FOLDER(FOLDERID_QuickLaunch,                NO_CSIDL,                             "Quick Launch",                 KF_CATEGORY_PERUSER,  FOLDERID_RoamingAppData,      "Microsoft\\Internet Explorer\\Quick Launch"),
+    KNOWN_FOLDER(FOLDERID_Recent,                     CSIDL_RECENT,                         "Recent",                       KF_CATEGORY_PERUSER,  FOLDERID_RoamingAppData,      "Microsoft\\Windows\\Recent"),
+    KNOWN_FOLDER(FOLDERID_RecordedTVLibrary,          NO_CSIDL,                             "RecordedTVLibrary",            KF_CATEGORY_COMMON,   FOLDERID_PublicLibraries,     "RecordedTV.library-ms"),
+    KNOWN_FOLDER(FOLDERID_RecycleBinFolder,           CSIDL_BITBUCKET,                      "RecycleBinFolder",             KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_ResourceDir,                CSIDL_RESOURCES,                      "ResourceDir",                  KF_CATEGORY_FIXED,    GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_Ringtones,                  NO_CSIDL,                             "Ringtones",                    KF_CATEGORY_PERUSER,  FOLDERID_LocalAppData,        "Microsoft\\Windows\\Ringtones"),
+    KNOWN_FOLDER(FOLDERID_RoamingAppData,             CSIDL_APPDATA,                        "AppData",                      KF_CATEGORY_PERUSER,  FOLDERID_Profile,             "AppData\\Roaming"),
+    KNOWN_FOLDER(FOLDERID_SampleMusic,                NO_CSIDL,                             "SampleMusic",                  KF_CATEGORY_COMMON,   FOLDERID_PublicMusic,         "Sample Music"),
+    KNOWN_FOLDER(FOLDERID_SamplePictures,             NO_CSIDL,                             "SamplePictures",               KF_CATEGORY_COMMON,   FOLDERID_PublicPictures,      "Sample Pictures"),
+    KNOWN_FOLDER(FOLDERID_SamplePlaylists,            NO_CSIDL,                             "SamplePlaylists",              KF_CATEGORY_COMMON,   FOLDERID_PublicMusic,         "Sample Playlists"),
+    KNOWN_FOLDER(FOLDERID_SampleVideos,               NO_CSIDL,                             "SampleVideos",                 KF_CATEGORY_COMMON,   FOLDERID_PublicVideos,        "Sample Videos"),
+    KNOWN_FOLDER(FOLDERID_SavedGames,                 NO_CSIDL,                             "SavedGames",                   KF_CATEGORY_PERUSER,  FOLDERID_Profile,             "Saved Games"),
+    KNOWN_FOLDER(FOLDERID_SavedSearches,              NO_CSIDL,                             "Searches",                     KF_CATEGORY_PERUSER,  FOLDERID_Profile,             "Searches"),
+    KNOWN_FOLDER(FOLDERID_SEARCH_CSC,                 NO_CSIDL,                             "CSCFolder",                    KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_SearchHome,                 NO_CSIDL,                             "SearchHomeFolder",             KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_SEARCH_MAPI,                NO_CSIDL,                             "MAPIFolder",                   KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_SendTo,                     CSIDL_SENDTO,                         "SendTo",                       KF_CATEGORY_PERUSER,  FOLDERID_RoamingAppData,      "Microsoft\\Windows\\SendTo"),
+    KNOWN_FOLDER(FOLDERID_SidebarDefaultParts,        NO_CSIDL,                             "Default Gadgets",              KF_CATEGORY_COMMON,   FOLDERID_ProgramFiles,        "Windows Sidebar\\Gadgets"),
+    KNOWN_FOLDER(FOLDERID_SidebarParts,               NO_CSIDL,                             "Gadgets",                      KF_CATEGORY_PERUSER,  FOLDERID_LocalAppData,        "Microsoft\\Windows Sidebar\\Gadgets"),
+    KNOWN_FOLDER(FOLDERID_StartMenu,                  CSIDL_STARTMENU,                      "Start Menu",                   KF_CATEGORY_PERUSER,  FOLDERID_RoamingAppData,      "Microsoft\\Windows\\Start Menu"),
+    KNOWN_FOLDER(FOLDERID_Startup,                    CSIDL_STARTUP,                        "Startup",                      KF_CATEGORY_PERUSER,  FOLDERID_Programs,            "StartUp"),
+    KNOWN_FOLDER(FOLDERID_SyncManagerFolder,          NO_CSIDL,                             "SyncCenterFolder",             KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_SyncResultsFolder,          NO_CSIDL,                             "SyncResultsFolder",            KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_SyncSetupFolder,            NO_CSIDL,                             "SyncSetupFolder",              KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_System,                     CSIDL_SYSTEM,                         "System",                       KF_CATEGORY_FIXED,    GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_SystemX86,                  CSIDL_SYSTEMX86,                      "SystemX86",                    KF_CATEGORY_FIXED,    GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_Templates,                  CSIDL_TEMPLATES,                      "Templates",                    KF_CATEGORY_PERUSER,  FOLDERID_RoamingAppData,      "Microsoft\\Windows\\Templates"),
+    KNOWN_FOLDER(FOLDERID_UserPinned,                 NO_CSIDL,                             "User Pinned",                  KF_CATEGORY_PERUSER,  FOLDERID_QuickLaunch,         "User Pinned"),
+    KNOWN_FOLDER(FOLDERID_UserProfiles,               NO_CSIDL,                             "UserProfiles",                 KF_CATEGORY_FIXED,    GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_UserProgramFiles,           NO_CSIDL,                             "UserProgramFiles",             KF_CATEGORY_PERUSER,  FOLDERID_LocalAppData,        "Programs"),
+    KNOWN_FOLDER(FOLDERID_UserProgramFilesCommon,     NO_CSIDL,                             "UserProgramFilesCommon",       KF_CATEGORY_PERUSER,  FOLDERID_UserProgramFiles,    "Common"),
+    KNOWN_FOLDER(FOLDERID_UsersFiles,                 NO_CSIDL,                             "UsersFilesFolder",             KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_UsersLibraries,             NO_CSIDL,                             "UsersLibrariesFolder",         KF_CATEGORY_VIRTUAL,  GUID_NULL,                    NULL),
+    KNOWN_FOLDER(FOLDERID_Videos,                     CSIDL_MYVIDEO,                        "My Video",                     KF_CATEGORY_PERUSER,  FOLDERID_Profile,             "Videos"),
+    KNOWN_FOLDER(FOLDERID_VideosLibrary,              NO_CSIDL,                             "VideosLibrary",                KF_CATEGORY_PERUSER,  FOLDERID_Libraries,           "Videos.library-ms"),
+    KNOWN_FOLDER(FOLDERID_Windows,                    CSIDL_WINDOWS,                        "Windows",                      KF_CATEGORY_FIXED,    GUID_NULL,                    NULL),
     { NULL, NULL, 0, NULL, NULL, 0, 0 }
 };
 #undef KNOWN_FOLDER
@@ -1017,7 +1018,8 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
     int csidl, expectedCsidl, ret;
     KNOWNFOLDER_DEFINITION kfd;
     IKnownFolder *folder;
-    WCHAR sName[1024];
+    WCHAR sName[1024], sRelativePath[MAX_PATH];
+    BOOL validPath;
     char sParentGuid[39];
 
     while(known_folder->folderId != NULL)
@@ -1057,6 +1059,18 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
 
                     printGUID(&kfd.fidParent, sParentGuid);
                     ok_(__FILE__, known_folder->line)(IsEqualGUID(known_folder->fidParent, &kfd.fidParent), "invalid known folder parent for %s: %s expected, but %s retrieved\n", known_folder->sFolderId, known_folder->sParent, sParentGuid);
+
+                    if(!known_folder->sRelativePath)
+                        validPath = (kfd.pszRelativePath==NULL);
+                    else
+                    {
+                        ret = MultiByteToWideChar(CP_ACP, 0, known_folder->sRelativePath, -1, sRelativePath, sizeof(sRelativePath)/sizeof(sRelativePath[0]));
+                        ok_(__FILE__, known_folder->line)(ret != 0, "cannot convert known folder path \"%s\" to wide characters\n", known_folder->sRelativePath);
+
+                        validPath = (lstrcmpW(kfd.pszRelativePath, sRelativePath)==0);
+                    }
+
+                    ok_(__FILE__, known_folder->line)(validPath, "invalid known folder relative path returned for %s: %s expected, but %s retrieved\n", known_folder->sFolderId, known_folder->sRelativePath, wine_dbgstr_w(kfd.pszRelativePath));
 
                     FreeKnownFolderDefinitionFields(&kfd);
                 }
