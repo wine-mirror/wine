@@ -389,6 +389,13 @@ static void print_version (void)
     }
 }
 
+static void print_language(void)
+{
+    xprintf ("    SystemDefaultLCID=%x\n", GetSystemDefaultLCID());
+    xprintf ("    UserDefaultLCID=%x\n", GetUserDefaultLCID());
+    xprintf ("    ThreadLocale=%x\n", GetThreadLocale());
+}
+
 static inline int is_dot_dir(const char* x)
 {
     return ((x[0] == '.') && ((x[1] == 0) || ((x[1] == '.') && (x[2] == 0))));
@@ -987,6 +994,7 @@ run_tests (char *logname, char *outdir)
     }
     xprintf ("Operating system version:\n");
     print_version ();
+    print_language ();
     xprintf ("Dll info:\n" );
 
     report (R_STATUS, "Counting tests");
