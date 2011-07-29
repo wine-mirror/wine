@@ -893,6 +893,12 @@ if (0) { /* crashes */
 #define KNOWN_FOLDER(id, csidl, name, category, parent, relative_path) \
     { &id, # id, csidl, # csidl, name, category, &parent, # parent, relative_path, __LINE__ }
 
+/* non-published known folders test */
+static const GUID _FOLDERID_CryptoKeys =            {0xB88F4DAA, 0xE7BD, 0x49A9, {0xB7, 0x4D, 0x02, 0x88, 0x5A, 0x5D, 0xC7, 0x65} };
+static const GUID _FOLDERID_DpapiKeys =             {0x10C07CD0, 0xEF91, 0x4567, {0xB8, 0x50, 0x44, 0x8B, 0x77, 0xCB, 0x37, 0xF9} };
+static const GUID _FOLDERID_SystemCertificates =    {0x54EED2E0, 0xE7CA, 0x4FDB, {0x91, 0x48, 0x0F, 0x42, 0x47, 0x29, 0x1C, 0xFA} };
+static const GUID _FOLDERID_CredentialManager =     {0x915221FB, 0x9EFE, 0x4BDA, {0x8F, 0xD7, 0xF7, 0x8D, 0xCA, 0x77, 0x4F, 0x87} };
+
 struct knownFolderDef {
     const KNOWNFOLDERID *folderId;
     const char *sFolderId;
@@ -1007,6 +1013,10 @@ static const struct knownFolderDef known_folders[] = {
     KNOWN_FOLDER(FOLDERID_Videos,                     CSIDL_MYVIDEO,                        "My Video",                     KF_CATEGORY_PERUSER,  FOLDERID_Profile,             "Videos"),
     KNOWN_FOLDER(FOLDERID_VideosLibrary,              NO_CSIDL,                             "VideosLibrary",                KF_CATEGORY_PERUSER,  FOLDERID_Libraries,           "Videos.library-ms"),
     KNOWN_FOLDER(FOLDERID_Windows,                    CSIDL_WINDOWS,                        "Windows",                      KF_CATEGORY_FIXED,    GUID_NULL,                    NULL),
+    KNOWN_FOLDER(_FOLDERID_CredentialManager,         NO_CSIDL,                             "CredentialManager",            KF_CATEGORY_FIXED,    GUID_NULL,                    NULL),
+    KNOWN_FOLDER(_FOLDERID_CryptoKeys,                NO_CSIDL,                             "CryptoKeys",                   KF_CATEGORY_FIXED,    GUID_NULL,                    NULL),
+    KNOWN_FOLDER(_FOLDERID_DpapiKeys,                 NO_CSIDL,                             "DpapiKeys",                    KF_CATEGORY_FIXED,    GUID_NULL,                    NULL),
+    KNOWN_FOLDER(_FOLDERID_SystemCertificates,        NO_CSIDL,                             "SystemCertificates",           KF_CATEGORY_FIXED,    GUID_NULL,                    NULL),
     { NULL, NULL, 0, NULL, NULL, 0, 0 }
 };
 #undef KNOWN_FOLDER
