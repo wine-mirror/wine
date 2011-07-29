@@ -5809,7 +5809,7 @@
 @ stub __Wcrtomb_lk
 @ stub towctrans
 @ stub wctrans
-@ stub wctype
+@ cdecl wctype(str)
 
 #Functions not exported in native dll:
 @ thiscall -arch=win32 ?_Tidy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEX_N@Z(ptr long) basic_string_char_tidy_built

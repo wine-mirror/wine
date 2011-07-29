@@ -5106,4 +5106,4 @@
 @ cdecl wcsrtombs(ptr ptr long ptr) msvcrt.wcsrtombs
 @ cdecl wctob(long) msvcrt.wctob
 @ stub wctrans
-@ stub wctype
+@ cdecl wctype(str) msvcp90.wctype

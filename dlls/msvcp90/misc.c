@@ -172,3 +172,31 @@ void __thiscall _Lockit_dtor(_Lockit *this)
 {
     _Lockit__Lockit_dtor(this);
 }
+
+/* wctype */
+unsigned short __cdecl wctype(const char *property)
+{
+    static const struct {
+        const char *name;
+        unsigned short mask;
+    } properties[] = {
+        { "alnum", _DIGIT|_ALPHA },
+        { "alpha", _ALPHA },
+        { "cntrl", _CONTROL },
+        { "digit", _DIGIT },
+        { "graph", _DIGIT|_PUNCT|_ALPHA },
+        { "lower", _LOWER },
+        { "print", _DIGIT|_PUNCT|_BLANK|_ALPHA },
+        { "punct", _PUNCT },
+        { "space", _SPACE },
+        { "upper", _UPPER },
+        { "xdigit", _HEX }
+    };
+    int i;
+
+    for(i=0; i<sizeof(properties)/sizeof(properties[0]); i++)
+        if(!strcmp(property, properties[i].name))
+            return properties[i].mask;
+
+    return 0;
+}

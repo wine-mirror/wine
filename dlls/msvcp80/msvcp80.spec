@@ -5787,4 +5787,4 @@
 @ stub __Wcrtomb_lk
 @ stub towctrans
 @ stub wctrans
-@ stub wctype
+@ cdecl wctype(str) msvcp90.wctype

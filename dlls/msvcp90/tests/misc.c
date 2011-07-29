@@ -34,6 +34,8 @@ static BYTE (__cdecl *p_short_eq)(const void*, const void*);
 
 static char* (__cdecl *p_Copy_s)(char*, size_t, const char*, size_t);
 
+static unsigned short (__cdecl *p_wctype)(const char*);
+
 #ifdef __i386__
 #define __thiscall __stdcall
 #else
@@ -124,6 +126,7 @@ static BOOL init(void)
 
     p_set_invalid_parameter_handler(test_invalid_parameter_handler);
 
+    SET(p_wctype, "wctype");
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAEADAEBD@Z");
         SET(p_wchar_assign, "?assign@?$char_traits@_W@std@@SAXAEA_WAEB_W@Z");
@@ -259,6 +262,35 @@ static void test_Copy_s(void)
     ok(errno == 0xdeadbeef, "errno = %d\n", errno);
 }
 
+static void test_wctype(void)
+{
+    static const struct {
+        const char *name;
+        unsigned short mask;
+    } properties[] = {
+        { "alnum",  0x107 },
+        { "alpha",  0x103 },
+        { "cntrl",  0x020 },
+        { "digit",  0x004 },
+        { "graph",  0x117 },
+        { "lower",  0x002 },
+        { "print",  0x157 },
+        { "punct",  0x010 },
+        { "space",  0x008 },
+        { "upper",  0x001 },
+        { "xdigit", 0x080 },
+        { "ALNUM",  0x000 },
+        { "Alnum",  0x000 },
+        { "",  0x000 }
+    };
+    int i, ret;
+
+    for(i=0; i<sizeof(properties)/sizeof(properties[0]); i++) {
+        ret = p_wctype(properties[i].name);
+        ok(properties[i].mask == ret, "%d - Expected %x, got %x\n", i, properties[i].mask, ret);
+    }
+}
+
 static void test_allocator_char(void)
 {
     void *allocator = (void*)0xdeadbeef;
@@ -298,6 +330,7 @@ START_TEST(misc)
     test_assign();
     test_equal();
     test_Copy_s();
+    test_wctype();
 
     test_allocator_char();
 
