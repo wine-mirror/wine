@@ -216,6 +216,10 @@ C
 @todo_wine@B D
 ...basic wildcards
 bazbaz
+...for /d
+baz
+foo
+bar
 -----------Testing del /a-----------
 not-r.test not found after delete, good
 r.test found before delete, good

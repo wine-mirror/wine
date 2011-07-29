@@ -299,6 +299,22 @@ mkdir baz
 echo > bazbaz
 echo ...basic wildcards
 for %%i in (ba*) do echo %%i
+echo ...for /d
+for /d %%i in (baz foo bar) do echo %%i
+rem FIXME for /d incorrectly parses when wildcards are used
+rem for /d %%i in (bazb*) do echo %%i
+rem FIXME can't test wildcard expansion here since it's listed in directory
+rem order, and not in alphabetic order.
+rem Proper testing would need a currently missing "sort" program implementation.
+rem for /d %%i in (ba*) do echo %%i>> tmp
+rem sort < tmp
+rem del tmp
+rem for /d %%i in (?a*) do echo %%i>> tmp
+rem sort < tmp
+rem del tmp
+rem for /d %%i in (*) do echo %%i>> tmp
+rem sort < tmp
+rem del tmp
 cd ..
 rd /s/Q foobar
 
