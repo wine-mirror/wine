@@ -288,7 +288,19 @@ bar\baz removed
 ------------ Testing CALL --------------
 foo@space@
 @todo_wine@foo 8
+foo@space@@space@
+foo bar@space@
+@todo_wine@foo ""@space@
+@todo_wine@"" bar@space@
+foo ''@space@
+'' bar@space@
 bar :testRoutine
+foo@space@
+foo bar
+@todo_wine@foo ""
+@todo_wine@"" bar
+foo ''
+'' bar
 @todo_wine@0
 @todo_wine@foo created
 @todo_wine@Should expand foobaz

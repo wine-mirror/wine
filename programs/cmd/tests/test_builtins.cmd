@@ -542,6 +542,13 @@ rem External script
 echo echo foo %%1> foo.cmd
 call foo
 call foo.cmd 8
+echo echo %%1 %%2 > foo.cmd
+call foo.cmd foo
+call foo.cmd foo bar
+call foo.cmd foo ""
+call foo.cmd "" bar
+call foo.cmd foo ''
+call foo.cmd '' bar
 del foo.cmd
 rem Internal routines
 call :testRoutine :testRoutine
@@ -550,6 +557,19 @@ goto :endTestRoutine
 echo bar %1
 goto :eof
 :endTestRoutine
+
+call :testRoutineArgs foo
+call :testRoutineArgs foo bar
+call :testRoutineArgs foo ""
+call :testRoutineArgs ""  bar
+call :testRoutineArgs foo ''
+call :testRoutineArgs ''  bar
+goto :endTestRoutineArgs
+:testRoutineArgs
+echo %1 %2
+goto :eof
+:endTestRoutineArgs
+
 rem Should work for builtins...
 call mkdir foo
 echo %ErrorLevel%
