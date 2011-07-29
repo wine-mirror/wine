@@ -201,7 +201,7 @@ static HRESULT WINAPI ddraw_gamma_control_QueryInterface(IDirectDrawGammaControl
 
 static HRESULT WINAPI d3d_texture2_QueryInterface(IDirect3DTexture2 *iface, REFIID riid, void **object)
 {
-    IDirectDrawSurfaceImpl *This = surface_from_texture2(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirect3DTexture2(iface);
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
     return ddraw_surface7_QueryInterface(&This->IDirectDrawSurface7_iface, riid, object);
@@ -332,7 +332,7 @@ static ULONG WINAPI ddraw_gamma_control_AddRef(IDirectDrawGammaControl *iface)
 
 static ULONG WINAPI d3d_texture2_AddRef(IDirect3DTexture2 *iface)
 {
-    IDirectDrawSurfaceImpl *This = surface_from_texture2(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirect3DTexture2(iface);
     TRACE("iface %p.\n", iface);
 
     return ddraw_surface1_AddRef(&This->IDirectDrawSurface_iface);
@@ -615,7 +615,7 @@ static ULONG WINAPI ddraw_gamma_control_Release(IDirectDrawGammaControl *iface)
 
 static ULONG WINAPI d3d_texture2_Release(IDirect3DTexture2 *iface)
 {
-    IDirectDrawSurfaceImpl *This = surface_from_texture2(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirect3DTexture2(iface);
     TRACE("iface %p.\n", iface);
 
     return ddraw_surface1_Release(&This->IDirectDrawSurface_iface);
@@ -4491,7 +4491,7 @@ static HRESULT WINAPI d3d_texture1_Unload(IDirect3DTexture *iface)
 static HRESULT WINAPI d3d_texture2_GetHandle(IDirect3DTexture2 *iface,
         IDirect3DDevice2 *device, D3DTEXTUREHANDLE *handle)
 {
-    IDirectDrawSurfaceImpl *surface = surface_from_texture2(iface);
+    IDirectDrawSurfaceImpl *surface = impl_from_IDirect3DTexture2(iface);
 
     TRACE("iface %p, device %p, handle %p.\n", iface, device, handle);
 
@@ -4571,7 +4571,7 @@ static IDirectDrawSurfaceImpl *get_sub_mimaplevel(IDirectDrawSurfaceImpl *surfac
  *****************************************************************************/
 static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTexture2 *src_texture)
 {
-    IDirectDrawSurfaceImpl *dst_surface = surface_from_texture2(iface);
+    IDirectDrawSurfaceImpl *dst_surface = impl_from_IDirect3DTexture2(iface);
     IDirectDrawSurfaceImpl *src_surface = unsafe_impl_from_IDirect3DTexture2(src_texture);
     HRESULT hr;
 
