@@ -1021,11 +1021,14 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
     WCHAR sName[1024], sRelativePath[MAX_PATH];
     BOOL validPath;
     char sParentGuid[39];
+    BOOL found = FALSE;
 
     while(known_folder->folderId != NULL)
     {
         if(IsEqualGUID(known_folder->folderId, folderId))
         {
+            found = TRUE;
+
             /* verify CSIDL */
             if(known_folder->csidl != NO_CSIDL)
             {
@@ -1081,6 +1084,42 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
             break;
         }
         known_folder++;
+    }
+
+    if(!found)
+    {
+        printGUID(folderId, sParentGuid);
+        trace("unknown known folder found: %s\n", sParentGuid);
+
+        hr = IKnownFolderManager_GetFolder(mgr, folderId, &folder);
+        ok(hr == S_OK, "cannot get known folder for %s\n", sParentGuid);
+        if(SUCCEEDED(hr))
+        {
+            hr = IKnownFolder_GetFolderDefinition(folder, &kfd);
+            todo_wine
+            ok(hr == S_OK, "cannot get known folder definition for %s\n", sParentGuid);
+            if(SUCCEEDED(hr))
+            {
+                trace("  category: %d\n", kfd.category);
+                trace("  name: %s\n", wine_dbgstr_w(kfd.pszName));
+                trace("  description: %s\n", wine_dbgstr_w(kfd.pszDescription));
+                printGUID(&kfd.fidParent, sParentGuid);
+                trace("  parent: %s\n", sParentGuid);
+                trace("  relative path: %s\n", wine_dbgstr_w(kfd.pszRelativePath));
+                trace("  parsing name: %s\n", wine_dbgstr_w(kfd.pszParsingName));
+                trace("  tooltip: %s\n", wine_dbgstr_w(kfd.pszTooltip));
+                trace("  localized name: %s\n", wine_dbgstr_w(kfd.pszLocalizedName));
+                trace("  icon: %s\n", wine_dbgstr_w(kfd.pszIcon));
+                trace("  security: %s\n", wine_dbgstr_w(kfd.pszSecurity));
+                trace("  attributes: 0x%08x\n", kfd.dwAttributes);
+                trace("  flags: 0x%08x\n", kfd.kfdFlags);
+                printGUID(&kfd.ftidType, sParentGuid);
+                trace("  type: %s\n", sParentGuid);
+                FreeKnownFolderDefinitionFields(&kfd);
+            }
+
+            IKnownFolder_Release(folder);
+        }
     }
 }
 #undef NO_CSIDL
