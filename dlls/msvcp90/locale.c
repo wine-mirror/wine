@@ -21,6 +21,8 @@
 #include <stdarg.h>
 
 #include "msvcp90.h"
+#include "locale.h"
+
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
@@ -45,6 +47,35 @@ typedef struct _locale__Locimp {
     MSVCP_bool transparent;
     basic_string_char name;
 } locale__Locimp;
+
+typedef struct {
+    void *timeptr;
+} _Timevec;
+
+typedef struct {
+    _Lockit lock;
+    basic_string_char days;
+    basic_string_char months;
+    basic_string_char oldlocname;
+    basic_string_char newlocname;
+} _Locinfo;
+
+typedef struct {
+    LCID handle;
+    unsigned page;
+} _Collvec;
+
+typedef struct {
+    LCID handle;
+    unsigned page;
+    const short *table;
+    int delfl;
+} _Ctypevec;
+
+typedef struct {
+    LCID handle;
+    unsigned page;
+} _Cvtvec;
 
 /* ?_Id_cnt@id@locale@std@@0HA */
 int locale_id__Id_cnt = 0;
@@ -250,7 +281,7 @@ locale__Locimp** __cdecl locale__Locimp__Clocptr_func(void)
 
 /* ?_Makeloc@_Locimp@locale@std@@CAPAV123@ABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makeloc@_Locimp@locale@std@@CAPEAV123@AEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
-locale__Locimp* __cdecl locale__Locimp__Makeloc(const /*_Locinfo*/void *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
+locale__Locimp* __cdecl locale__Locimp__Makeloc(const _Locinfo *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {
     FIXME("(%p %d %p %p) stub\n", locinfo, cat, locimp, loc);
     return NULL;
@@ -258,21 +289,21 @@ locale__Locimp* __cdecl locale__Locimp__Makeloc(const /*_Locinfo*/void *locinfo,
 
 /* ?_Makeushloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makeushloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
-void __cdecl locale__Locimp__Makeushloc(const /*_Locinfo*/void *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
+void __cdecl locale__Locimp__Makeushloc(const _Locinfo *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {
     FIXME("(%p %d %p %p) stub\n", locinfo, cat, locimp, loc);
 }
 
 /* ?_Makewloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makewloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
-void __cdecl locale__Locimp__Makewloc(const /*_Locinfo*/void *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
+void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {
     FIXME("(%p %d %p %p) stub\n", locinfo, cat, locimp, loc);
 }
 
 /* ?_Makexloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z */
 /* ?_Makexloc@_Locimp@locale@std@@CAXAEBV_Locinfo@3@HPEAV123@PEBV23@@Z */
-void __cdecl locale__Locimp__Makexloc(const /*_Locinfo*/void *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
+void __cdecl locale__Locimp__Makexloc(const _Locinfo *locinfo, category cat, locale__Locimp *locimp, const locale *loc)
 {
     FIXME("(%p %d %p %p) stub\n", locinfo, cat, locimp, loc);
 }
@@ -456,5 +487,255 @@ basic_string_char __thiscall locale_name(const locale *this)
 {
     basic_string_char ret = { 0 }; /* FIXME */
     FIXME( "(%p) stub\n", this);
+    return ret;
+}
+
+/* ??0_Timevec@std@@QAE@ABV01@@Z */
+/* ??0_Timevec@std@@QEAA@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(_Timevec_copy_ctor, 8)
+_Timevec* __thiscall _Timevec_copy_ctor(_Timevec *this, const _Timevec *copy)
+{
+    FIXME("(%p %p) stub\n", this, copy);
+    return NULL;
+}
+
+/* ??0_Timevec@std@@QAE@PAX@Z */
+/* ??0_Timevec@std@@QEAA@PEAX@Z */
+DEFINE_THISCALL_WRAPPER(_Timevec_ctor_timeptr, 8)
+_Timevec* __thiscall _Timevec_ctor_timeptr(_Timevec *this, void *timeptr)
+{
+    FIXME("(%p %p) stub\n", this, timeptr);
+    return NULL;
+}
+
+/* ??_F_Timevec@std@@QAEXXZ */
+/* ??_F_Timevec@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_Timevec_ctor, 4)
+_Timevec* __thiscall _Timevec_ctor(_Timevec *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ??1_Timevec@std@@QAE@XZ */
+/* ??1_Timevec@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Timevec_dtor, 4)
+void __thiscall _Timevec_dtor(_Timevec *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ??4_Timevec@std@@QAEAAV01@ABV01@@Z */
+/* ??4_Timevec@std@@QEAAAEAV01@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(_Timevec_op_assign, 8)
+_Timevec* __thiscall _Timevec_op_assign(_Timevec *this, _Timevec *right)
+{
+    FIXME("(%p %p) stub\n", this, right);
+    return NULL;
+}
+
+/* ?_Getptr@_Timevec@std@@QBEPAXXZ */
+/* ?_Getptr@_Timevec@std@@QEBAPEAXXZ */
+DEFINE_THISCALL_WRAPPER(_Timevec__Getptr, 4)
+void* __thiscall _Timevec__Getptr(_Timevec *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?_Locinfo_ctor@_Locinfo@std@@SAXPAV12@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z */
+/* ?_Locinfo_ctor@_Locinfo@std@@SAXPEAV12@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z */
+_Locinfo* __cdecl _Locinfo__Locinfo_ctor_bstr(_Locinfo *locinfo, const basic_string_char *locstr)
+{
+    FIXME("(%p %p) stub\n", locinfo, locstr);
+    return NULL;
+}
+
+/* ??0_Locinfo@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z */
+/* ??0_Locinfo@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z */
+DEFINE_THISCALL_WRAPPER(_Locinfo_ctor_bstr, 8)
+_Locinfo* __thiscall _Locinfo_ctor_bstr(_Locinfo *this, const basic_string_char *locstr)
+{
+    FIXME("(%p %p) stub\n", this, locstr);
+    return NULL;
+}
+
+/* ?_Locinfo_ctor@_Locinfo@std@@SAXPAV12@HPBD@Z */
+/* ?_Locinfo_ctor@_Locinfo@std@@SAXPEAV12@HPEBD@Z */
+_Locinfo* __cdecl _Locinfo__Locinfo_ctor_cat_cstr(_Locinfo *locinfo, int category, const char *locstr)
+{
+    FIXME("(%p %d %s) stub\n", locinfo, category, locstr);
+    return NULL;
+}
+
+/* ??0_Locinfo@std@@QAE@HPBD@Z */
+/* ??0_Locinfo@std@@QEAA@HPEBD@Z */
+DEFINE_THISCALL_WRAPPER(_Locinfo_ctor_cat_cstr, 12)
+_Locinfo* __thiscall _Locinfo_ctor_cat_cstr(_Locinfo *this, int category, const char *locstr)
+{
+    FIXME("(%p %d %s) stub\n", this, category, locstr);
+    return NULL;
+}
+
+/* ?_Locinfo_ctor@_Locinfo@std@@SAXPAV12@PBD@Z */
+/* ?_Locinfo_ctor@_Locinfo@std@@SAXPEAV12@PEBD@Z */
+_Locinfo* __cdecl _Locinfo__Locinfo_ctor_cstr(_Locinfo *locinfo, const char *locstr)
+{
+    FIXME("(%p %s) stub\n", locinfo, locstr);
+    return NULL;
+}
+
+/* ??0_Locinfo@std@@QAE@PBD@Z */
+/* ??0_Locinfo@std@@QEAA@PEBD@Z */
+DEFINE_THISCALL_WRAPPER(_Locinfo_ctor_cstr, 8)
+_Locinfo* __thiscall _Locinfo_ctor_cstr(_Locinfo *this, const char *locstr)
+{
+    FIXME("(%p %s) stub\n", this, locstr);
+    return NULL;
+}
+
+/* ?_Locinfo_dtor@_Locinfo@std@@SAXPAV12@@Z */
+/* ?_Locinfo_dtor@_Locinfo@std@@SAXPEAV12@@Z */
+_Locinfo* __cdecl _Locinfo__Locinfo_dtor(_Locinfo *locinfo)
+{
+    FIXME("(%p) stub\n", locinfo);
+    return NULL;
+}
+
+/* ??_F_Locinfo@std@@QAEXXZ */
+/* ??_F_Locinfo@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_Locinfo_ctor, 4)
+_Locinfo* __thiscall _Locinfo_ctor(_Locinfo *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ??1_Locinfo@std@@QAE@XZ */
+/* ??1_Locinfo@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Locinfo_dtor, 4)
+void __thiscall _Locinfo_dtor(_Locinfo *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?_Locinfo_Addcats@_Locinfo@std@@SAAAV12@PAV12@HPBD@Z */
+/* ?_Locinfo_Addcats@_Locinfo@std@@SAAEAV12@PEAV12@HPEBD@Z */
+_Locinfo* __cdecl _Locinfo__Locinfo_Addcats(_Locinfo *locinfo, int category, const char *locstr)
+{
+    FIXME("%p %d %s) stub\n", locinfo, category, locstr);
+    return NULL;
+}
+
+/* ?_Addcats@_Locinfo@std@@QAEAAV12@HPBD@Z */
+/* ?_Addcats@_Locinfo@std@@QEAAAEAV12@HPEBD@Z */
+DEFINE_THISCALL_WRAPPER(_Locinfo__Addcats, 12)
+_Locinfo* __thiscall _Locinfo__Addcats(_Locinfo *this, int category, const char *locstr)
+{
+    FIXME("(%p %d %s) stub\n", this, category, locstr);
+    return NULL;
+}
+
+/* ?_Getcoll@_Locinfo@std@@QBE?AU_Collvec@@XZ */
+/* ?_Getcoll@_Locinfo@std@@QEBA?AU_Collvec@@XZ */
+DEFINE_THISCALL_WRAPPER(_Locinfo__Getcoll, 4)
+_Collvec __thiscall _Locinfo__Getcoll(const _Locinfo *this)
+{
+    _Collvec ret = { 0 }; /* FIXME */
+    FIXME("(%p) stub\n", this);
+    return ret;
+}
+
+/* ?_Getctype@_Locinfo@std@@QBE?AU_Ctypevec@@XZ */
+/* ?_Getctype@_Locinfo@std@@QEBA?AU_Ctypevec@@XZ */
+DEFINE_THISCALL_WRAPPER_RETPTR(_Locinfo__Getctype, 4)
+_Ctypevec __thiscall _Locinfo__Getctype(const _Locinfo *this)
+{
+    _Ctypevec ret = { 0 }; /* FIXME */
+    FIXME("(%p) stub\n", this);
+    return ret;
+}
+
+/* ?_Getcvt@_Locinfo@std@@QBE?AU_Cvtvec@@XZ */
+/* ?_Getcvt@_Locinfo@std@@QEBA?AU_Cvtvec@@XZ */
+DEFINE_THISCALL_WRAPPER(_Locinfo__Getcvt, 4)
+_Cvtvec __thiscall _Locinfo__Getcvt(const _Locinfo *this)
+{
+    _Cvtvec ret = { 0 }; /* FIXME */
+    FIXME("(%p) stub\n", this);
+    return ret;
+}
+
+/* ?_Getdateorder@_Locinfo@std@@QBEHXZ */
+/* ?_Getdateorder@_Locinfo@std@@QEBAHXZ */
+DEFINE_THISCALL_WRAPPER(_Locinfo__Getdateorder, 4)
+int __thiscall _Locinfo__Getdateorder(const _Locinfo *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?_Getdays@_Locinfo@std@@QBEPBDXZ */
+/* ?_Getdays@_Locinfo@std@@QEBAPEBDXZ */
+DEFINE_THISCALL_WRAPPER(_Locinfo__Getdays, 4)
+const char* __thiscall _Locinfo__Getdays(const _Locinfo *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?_Getmonths@_Locinfo@std@@QBEPBDXZ */
+/* ?_Getmonths@_Locinfo@std@@QEBAPEBDXZ */
+DEFINE_THISCALL_WRAPPER(_Locinfo__Getmonths, 4)
+const char* __thiscall _Locinfo__Getmonths(const _Locinfo *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?_Getfalse@_Locinfo@std@@QBEPBDXZ */
+/* ?_Getfalse@_Locinfo@std@@QEBAPEBDXZ */
+DEFINE_THISCALL_WRAPPER(_Locinfo__Getfalse, 4)
+const char* __thiscall _Locinfo__Getfalse(const _Locinfo *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?_Gettrue@_Locinfo@std@@QBEPBDXZ */
+/* ?_Gettrue@_Locinfo@std@@QEBAPEBDXZ */
+DEFINE_THISCALL_WRAPPER(_Locinfo__Gettrue, 4)
+const char* __thiscall _Locinfo__Gettrue(const _Locinfo *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?_Getlconv@_Locinfo@std@@QBEPBUlconv@@XZ */
+/* ?_Getlconv@_Locinfo@std@@QEBAPEBUlconv@@XZ */
+DEFINE_THISCALL_WRAPPER(_Locinfo__Getlconv, 4)
+const struct lconv* __thiscall _Locinfo__Getlconv(const _Locinfo *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?_Getname@_Locinfo@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+/* ?_Getname@_Locinfo@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+DEFINE_THISCALL_WRAPPER_RETPTR(_Locinfo__Getname, 4)
+basic_string_char __thiscall _Locinfo__Getname(const _Locinfo *this)
+{
+    basic_string_char ret = { 0 }; /* FIXME */
+    FIXME("(%p) stub\n", this);
+    return ret;
+}
+
+/* ?_Gettnames@_Locinfo@std@@QBE?AV_Timevec@2@XZ */
+/* ?_Gettnames@_Locinfo@std@@QEBA?AV_Timevec@2@XZ */
+DEFINE_THISCALL_WRAPPER(_Locinfo__Gettnames, 4)
+_Timevec __thiscall _Locinfo__Gettnames(const _Locinfo *this)
+{
+    _Timevec ret = { 0 }; /* FIXME */
+    FIXME("(%p) stub\n", this);
     return ret;
 }
