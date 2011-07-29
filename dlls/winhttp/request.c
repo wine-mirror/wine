@@ -2202,6 +2202,8 @@ static ULONG WINAPI winhttp_request_Release(
         WinHttpCloseHandle( request->hsession );
         CloseHandle( request->wait );
         CloseHandle( request->cancel );
+        heap_free( (WCHAR *)request->proxy.lpszProxy );
+        heap_free( (WCHAR *)request->proxy.lpszProxyBypass );
         heap_free( request->buffer );
         heap_free( request->verb );
         heap_free( request );
@@ -2384,8 +2386,8 @@ static HRESULT WINAPI winhttp_request_SetProxy(
 
     case HTTPREQUEST_PROXYSETTING_PROXY:
         request->proxy.dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
-        request->proxy.lpszProxy = V_BSTR( &proxy_server );
-        request->proxy.lpszProxyBypass = V_BSTR( &bypass_list );
+        request->proxy.lpszProxy = strdupW( V_BSTR( &proxy_server ) );
+        request->proxy.lpszProxyBypass = strdupW( V_BSTR( &bypass_list ) );
         break;
 
     default: return E_INVALIDARG;
@@ -3021,6 +3023,8 @@ static HRESULT WINAPI winhttp_request_Abort(
     WinHttpCloseHandle( request->hsession );
     CloseHandle( request->wait );
     CloseHandle( request->cancel );
+    heap_free( (WCHAR *)request->proxy.lpszProxy );
+    heap_free( (WCHAR *)request->proxy.lpszProxyBypass );
     heap_free( request->buffer );
     heap_free( request->verb );
     initialize_request( request );
