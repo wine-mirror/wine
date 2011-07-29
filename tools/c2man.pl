@@ -1133,13 +1133,12 @@ sub output_spec($)
     $percent_documented = int($percent_documented);
   }
 
-  # Make a list of the contributors to this DLL. Do this only for the source
-  # files that make up the DLL, because some directories specify multiple dlls.
+  # Make a list of the contributors to this DLL.
   my @contributors;
 
-  for (@{$spec_details->{SOURCES}})
+  foreach my $source_file (keys %source_files)
   {
-    my $source_details = $source_files{$_}[0];
+    my $source_details = $source_files{$source_file}[0];
     for (@{$source_details->{CONTRIBUTORS}})
     {
       push (@contributors, $_);
