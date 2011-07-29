@@ -150,6 +150,7 @@ static DWORD calc_arg_size(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
     switch(*pFormat)
     {
     case RPC_FC_STRUCT:
+    case RPC_FC_PSTRUCT:
         size = *(const WORD*)(pFormat + 2);
         break;
     case RPC_FC_BOGUS_STRUCT:
@@ -177,6 +178,15 @@ static DWORD calc_arg_size(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
         pFormat = ComputeVariance(pStubMsg, NULL, pFormat, pStubMsg->MaxCount);
         size = ComplexStructSize(pStubMsg, pFormat);
         size *= pStubMsg->MaxCount;
+        break;
+    case RPC_FC_USER_MARSHAL:
+        size = *(const WORD*)(pFormat + 4);
+        break;
+    case RPC_FC_CSTRING:
+        size = *(const WORD*)(pFormat + 2);
+        break;
+    case RPC_FC_WSTRING:
+        size = *(const WORD*)(pFormat + 2) * sizeof(WCHAR);
         break;
     case RPC_FC_C_CSTRING:
     case RPC_FC_C_WSTRING:
