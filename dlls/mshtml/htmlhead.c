@@ -295,7 +295,7 @@ static HRESULT HTMLHeadElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
         TRACE("(%p)->(IID_IHTMLHeadElement %p)\n", This, ppv);
         *ppv = &This->IHTMLHeadElement_iface;
     }else {
-        HTMLElement_QI(&This->element.node, riid, ppv);
+        return HTMLElement_QI(&This->element.node, riid, ppv);
     }
 
     IUnknown_AddRef((IUnknown*)*ppv);
