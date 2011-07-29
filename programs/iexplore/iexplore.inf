@@ -2,20 +2,12 @@
 Signature="$CHICAGO$"
 
 
-[RegisterDll]
-AddReg=Classes.Reg
-
-
-[UnregisterDll]
-DelReg=Classes.Reg
-
-
 [RegisterIE]
-AddReg=IE.Reg, Settings.Reg
+AddReg=Classes.Reg, IE.Reg, Settings.Reg
 
 
 [UnregisterIE]
-DelReg=IE.Reg, Settings.Reg
+DelReg=Classes.Reg, IE.Reg, Settings.Reg
 
 
 [Classes.Reg]
@@ -44,3 +36,8 @@ HKLM,"Software\Microsoft\Windows\CurrentVersion\App Paths\iexplore.exe","Path",,
 HKLM,"Software\Microsoft\Internet Explorer","Build",,"86001"
 HKLM,"Software\Microsoft\Internet Explorer","Version",,"8.0.6001.18702"
 HKLM,"Software\Microsoft\Internet Explorer","W2kVersion",,"8.0.6001.18702"
+
+
+[Strings]
+CLSID_InternetExplorer="{0002df01-0000-0000-c000-000000000046}"
+CLSID_Internet="{871c5380-42a0-1069-a2ea-08002b30309d}"

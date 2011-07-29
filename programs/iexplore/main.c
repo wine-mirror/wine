@@ -19,10 +19,64 @@
  */
 
 #include <windows.h>
+#include <advpub.h>
+#include <rpcproxy.h>
+
+#include "wine/unicode.h"
+#include "wine/debug.h"
 
 extern DWORD WINAPI IEWinMain(LPSTR, int);
 
-int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
+static BOOL check_native_ie(void)
 {
+    DWORD handle, size;
+    LPWSTR file_desc;
+    UINT bytes;
+    void* buf;
+    BOOL ret;
+
+    static const WCHAR browseui_dllW[] = {'b','r','o','w','s','e','u','i','.','d','l','l',0};
+    static const WCHAR wineW[] = {'W','i','n','e',0};
+    static const WCHAR file_desc_strW[] =
+        {'\\','S','t','r','i','n','g','F','i','l','e','I','n','f','o',
+         '\\','0','4','0','9','0','4','e','4',
+         '\\','F','i','l','e','D','e','s','c','r','i','p','t','i','o','n',0};
+
+    size = GetFileVersionInfoSizeW(browseui_dllW, &handle);
+    if(!size)
+        return TRUE;
+
+    buf = HeapAlloc(GetProcessHeap(), 0, size);
+    GetFileVersionInfoW(browseui_dllW, 0, size,buf);
+
+    ret = !VerQueryValueW(buf, file_desc_strW, (void**)&file_desc, &bytes) || !strstrW(file_desc, wineW);
+
+    HeapFree(GetProcessHeap(), 0, buf);
+    return ret;
+}
+
+static DWORD register_iexplore(BOOL doregister)
+{
+    HRESULT hres;
+
+    if (check_native_ie()) {
+        WINE_MESSAGE("Native IE detected, not doing registration\n");
+        return 0;
+    }
+
+    hres = RegInstallA(NULL, doregister ? "RegisterIE" : "UnregisterIE", NULL);
+    return FAILED(hres);
+}
+
+int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
+{
+
+    if(*cmdline == '-' || *cmdline == '/') {
+        if(!strcasecmp(cmdline+1, "regserver"))
+            return register_iexplore(TRUE);
+        if(!strcasecmp(cmdline+1, "unregserver"))
+            return register_iexplore(FALSE);
+    }
+
     return IEWinMain(cmdline, show);
 }
