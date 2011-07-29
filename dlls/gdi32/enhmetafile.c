@@ -1903,7 +1903,6 @@ BOOL WINAPI PlayEnhMetaFileRecord(
             HDC hdcSrc = CreateCompatibleDC(hdc);
             HBITMAP hBmp = 0, hBmpOld = 0;
             const BITMAPINFO *pbi = (const BITMAPINFO *)((const BYTE *)mr + pAlphaBlend->offBmiSrc);
-            BLENDFUNCTION blendfn;
             void *bits;
 
             SetWorldTransform(hdcSrc, &pAlphaBlend->xformSrc);
@@ -1912,14 +1911,9 @@ BOOL WINAPI PlayEnhMetaFileRecord(
             memcpy(bits, (const BYTE *)mr + pAlphaBlend->offBitsSrc, pAlphaBlend->cbBitsSrc);
             hBmpOld = SelectObject(hdcSrc, hBmp);
 
-            blendfn.BlendOp             = (pAlphaBlend->dwRop >> 24) & 0xff;
-            blendfn.BlendFlags          = (pAlphaBlend->dwRop >> 16) & 0xff;
-            blendfn.SourceConstantAlpha = (pAlphaBlend->dwRop >>  8) & 0xff;
-            blendfn.AlphaFormat         = (pAlphaBlend->dwRop) & 0xff;
-
             GdiAlphaBlend(hdc, pAlphaBlend->xDest, pAlphaBlend->yDest, pAlphaBlend->cxDest, pAlphaBlend->cyDest,
                        hdcSrc, pAlphaBlend->xSrc, pAlphaBlend->ySrc, pAlphaBlend->cxSrc, pAlphaBlend->cySrc,
-                       blendfn);
+                          *(BLENDFUNCTION *)&pAlphaBlend->dwRop);
 
             SelectObject(hdcSrc, hBmpOld);
             DeleteObject(hBmp);
