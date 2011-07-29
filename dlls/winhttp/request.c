@@ -2985,21 +2985,8 @@ static HRESULT WINAPI winhttp_request_WaitForResponse(
     }
 }
 
-static HRESULT WINAPI winhttp_request_Abort(
-    IWinHttpRequest *iface )
+static void initialize_request( struct winhttp_request *request )
 {
-    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
-
-    TRACE("%p\n", request);
-
-    SetEvent( request->cancel );
-    WinHttpCloseHandle( request->hrequest );
-    WinHttpCloseHandle( request->hconnect );
-    WinHttpCloseHandle( request->hsession );
-    CloseHandle( request->wait );
-    CloseHandle( request->cancel );
-    heap_free( request->buffer );
-    heap_free( request->verb );
     request->state = REQUEST_STATE_INVALID;
     request->hrequest = NULL;
     request->hconnect = NULL;
@@ -3015,6 +3002,28 @@ static HRESULT WINAPI winhttp_request_Abort(
     request->proxy.dwAccessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
     request->proxy.lpszProxy = NULL;
     request->proxy.lpszProxyBypass = NULL;
+    request->resolve_timeout = 0;
+    request->connect_timeout = 60000;
+    request->send_timeout    = 30000;
+    request->receive_timeout = 30000;
+}
+
+static HRESULT WINAPI winhttp_request_Abort(
+    IWinHttpRequest *iface )
+{
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+
+    TRACE("%p\n", request);
+
+    SetEvent( request->cancel );
+    WinHttpCloseHandle( request->hrequest );
+    WinHttpCloseHandle( request->hconnect );
+    WinHttpCloseHandle( request->hsession );
+    CloseHandle( request->wait );
+    CloseHandle( request->cancel );
+    heap_free( request->buffer );
+    heap_free( request->verb );
+    initialize_request( request );
     return S_OK;
 }
 
@@ -3088,13 +3097,10 @@ HRESULT WinHttpRequest_create( IUnknown *unknown, void **obj )
 
     TRACE("%p, %p\n", unknown, obj);
 
-    if (!(request = heap_alloc_zero( sizeof(*request) ))) return E_OUTOFMEMORY;
+    if (!(request = heap_alloc( sizeof(*request) ))) return E_OUTOFMEMORY;
     request->IWinHttpRequest_iface.lpVtbl = &winhttp_request_vtbl;
     request->refs = 1;
-    request->resolve_timeout = 0;
-    request->connect_timeout = 60000;
-    request->send_timeout    = 30000;
-    request->receive_timeout = 30000;
+    initialize_request( request );
 
     *obj = &request->IWinHttpRequest_iface;
     TRACE("returning iface %p\n", *obj);
