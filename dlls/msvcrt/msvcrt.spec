@@ -1047,10 +1047,10 @@
 @ cdecl _vsprintf_p(ptr long str ptr) MSVCRT_vsprintf_p
 @ cdecl _vsprintf_p_l(ptr long str ptr ptr) MSVCRT_vsprintf_p_l
 # stub _vsprintf_s_l(ptr long str ptr ptr)
-@ cdecl _vswprintf(ptr long wstr ptr) MSVCRT_vsnwprintf
-@ cdecl _vswprintf_c(ptr long wstr ptr) MSVCRT_vsnwprintf
-@ cdecl _vswprintf_c_l(ptr long wstr ptr ptr) MSVCRT_vsnwprintf_l
-@ cdecl _vswprintf_l(ptr long wstr ptr ptr) MSVCRT_vsnwprintf_l
+@ cdecl _vswprintf(ptr long wstr ptr) MSVCRT_vswprintf
+@ cdecl _vswprintf_c(ptr long wstr ptr) MSVCRT_vswprintf
+@ cdecl _vswprintf_c_l(ptr long wstr ptr ptr) MSVCRT_vswprintf_l
+@ cdecl _vswprintf_l(ptr long wstr ptr ptr) MSVCRT_vswprintf_l
 @ cdecl _vswprintf_p_l(ptr long wstr ptr ptr) MSVCRT_vswprintf_p_l
 @ cdecl _vswprintf_s_l(ptr long wstr ptr ptr) MSVCRT_vswprintf_s_l
 # stub _vwprintf_l(wstr ptr ptr)
