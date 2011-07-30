@@ -995,10 +995,13 @@ static void test_typelibmarshal(void)
     ok_ole_success(hr, CoUnmarshalInterface);
     IStream_Release(pStream);
 
-    hr = IKindaEnumWidget_Next(pKEW, &pWidget);
-    ok_ole_success(hr, IKindaEnumWidget_Next);
+    if (hr == S_OK)
+    {
+        hr = IKindaEnumWidget_Next(pKEW, &pWidget);
+        ok_ole_success(hr, IKindaEnumWidget_Next);
 
-    IKindaEnumWidget_Release(pKEW);
+        IKindaEnumWidget_Release(pKEW);
+    }
 
     hr = IWidget_QueryInterface(pWidget, &IID_IDispatch, (void **)&pDispatch);
     ok_ole_success(hr, IWidget_QueryInterface);
