@@ -210,7 +210,7 @@ static void test_overlapped(void)
     hClient = CreateFileW(testpipe, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);
     ok(hClient != INVALID_HANDLE_VALUE, "can't open pipe, GetLastError: %x\n", GetLastError());
 
-    ok(iosb.Status == 0, "Wrong iostatus %x\n", iosb.Status);
+    ok(U(iosb).Status == 0, "Wrong iostatus %x\n", U(iosb).Status);
     ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
 
     ok(!ioapc_called, "IOAPC ran too early\n");
@@ -281,7 +281,7 @@ static void test_alertable(void)
     todo_wine ok(res == STATUS_CANCELLED, "NtFsControlFile returned %x\n", res);
 
     todo_wine ok(userapc_called, "user apc didn't run\n");
-    ok(iosb.Status == 0x55555555, "iosb.Status got changed to %x\n", iosb.Status);
+    ok(U(iosb).Status == 0x55555555, "iosb.Status got changed to %x\n", U(iosb).Status);
     todo_wine ok(WaitForSingleObjectEx(hEvent, 0, TRUE) == WAIT_TIMEOUT, "hEvent signaled\n");
     ok(!ioapc_called, "IOAPC ran\n");
 
@@ -295,7 +295,7 @@ static void test_alertable(void)
     todo_wine ok(res == STATUS_CANCELLED, "NtFsControlFile returned %x\n", res);
 
     ok(userapc_called, "user apc didn't run\n");
-    todo_wine ok(iosb.Status == 0x55555555, "iosb.Status got changed to %x\n", iosb.Status);
+    todo_wine ok(U(iosb).Status == 0x55555555, "iosb.Status got changed to %x\n", U(iosb).Status);
     ok(WaitForSingleObjectEx(hEvent, 0, TRUE) == WAIT_TIMEOUT, "hEvent signaled\n");
     ok(!ioapc_called, "IOAPC ran\n");
 
@@ -316,7 +316,7 @@ static void test_alertable(void)
     todo_wine ok(!res, "NtFsControlFile returned %x\n", res);
 
     ok(open_succeded, "couldn't open client side pipe\n");
-    ok(!iosb.Status, "Wrong iostatus %x\n", iosb.Status);
+    ok(!U(iosb).Status, "Wrong iostatus %x\n", U(iosb).Status);
     todo_wine ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
 
     WaitForSingleObject(hThread, INFINITE);
@@ -351,7 +351,7 @@ static void test_nonalertable(void)
     todo_wine ok(!res, "NtFsControlFile returned %x\n", res);
 
     ok(open_succeded, "couldn't open client side pipe\n");
-    todo_wine ok(!iosb.Status, "Wrong iostatus %x\n", iosb.Status);
+    todo_wine ok(!U(iosb).Status, "Wrong iostatus %x\n", U(iosb).Status);
     todo_wine ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
 
     ok(!ioapc_called, "IOAPC ran too early\n");
@@ -391,7 +391,7 @@ static void test_cancelio(void)
     todo_wine ok(!res, "NtCancelIoFile returned %x\n", res);
 
     todo_wine {
-        ok(iosb.Status == STATUS_CANCELLED, "Wrong iostatus %x\n", iosb.Status);
+        ok(U(iosb).Status == STATUS_CANCELLED, "Wrong iostatus %x\n", U(iosb).Status);
         ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
     }
 
