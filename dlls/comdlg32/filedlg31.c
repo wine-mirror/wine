@@ -441,7 +441,7 @@ static LRESULT FD31_FileListSelect( const FD31_DATA *lfs )
     if (lRet == LB_ERR)
         return TRUE;
 
-    /* set the edit control to the choosen file */
+    /* set the edit control to the chosen file */
     if ((pstr = HeapAlloc(GetProcessHeap(), 0, BUFFILEALLOC)))
     {
         SendDlgItemMessageW(hWnd, lst1, LB_GETTEXT, lRet,

@@ -192,7 +192,7 @@ static BOOL create_manifest( BOOL install )
  * PARAMS
  *     hinstDLL    [I] handle to the 'dlls' instance
  *     fdwReason   [I]
- *     lpvReserved [I] reserverd, must be NULL
+ *     lpvReserved [I] reserved, must be NULL
  *
  * RETURNS
  *     Success: TRUE
@@ -701,7 +701,7 @@ CreateUpDownControl (DWORD style, INT x, INT y, INT cx, INT cy,
  *
  * NOTES
  *     This function is just a dummy - all the controls are registered at
- *     the DLL's initialization. See InitCommonContolsEx for details.
+ *     the DLL initialization time. See InitCommonContolsEx for details.
  */
 
 VOID WINAPI
@@ -1088,7 +1088,7 @@ VOID WINAPI InitMUILanguage (LANGID uiLang)
  * PARAMS
  *     hWnd [in] handle to window subclass.
  *     pfnSubclass [in] Pointer to new window procedure.
- *     uIDSubclass [in] Unique identifier of sublass together with pfnSubclass.
+ *     uIDSubclass [in] Unique identifier of subclass together with pfnSubclass.
  *     dwRef [in] Reference data to pass to window procedure.
  *
  * RETURNS
@@ -1177,7 +1177,7 @@ BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
  * PARAMS
  *     hWnd [in] Handle to window which were subclassing
  *     pfnSubclass [in] Pointer to the subclass procedure
- *     uID [in] Unique indentifier of the subclassing procedure
+ *     uID [in] Unique identifier of the subclassing procedure
  *     pdwRef [out] Pointer to the reference data
  *
  * RETURNS
@@ -1320,7 +1320,7 @@ static LRESULT WINAPI COMCTL32_SubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam
 /***********************************************************************
  * DefSubclassProc [COMCTL32.413]
  *
- * Calls the next window procedure (ie. the one before this subclass)
+ * Calls the next window procedure (i.e. the one before this subclass)
  *
  * PARAMS
  *     hWnd [in] The window that we're subclassing

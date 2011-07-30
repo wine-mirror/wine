@@ -97,7 +97,7 @@ typedef struct
  * Special flag set in DRAWITEMSTRUCT itemState field. It is set by
  * the ComboEx version of the Combo Window Proc so that when the
  * WM_DRAWITEM message is then passed to ComboEx, we know that this
- * particular WM_DRAWITEM message is for listbox only items. Any messasges
+ * particular WM_DRAWITEM message is for listbox only items. Any message
  * without this flag is then for the Edit control field.
  *
  * We really cannot use the ODS_COMBOBOXEDIT flag because MSDN states that

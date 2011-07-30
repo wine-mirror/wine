@@ -174,7 +174,7 @@ static LRESULT REPLACEDLG_WMInitDialog(HWND hWnd, LPARAM lParam,
     SetWindowLongPtrW(hWnd, DWLP_USER, lParam);
     *lpFlags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
     /*
-     * FIXME : If the initial FindWhat string is empty, we should disable the FinNext /
+     * FIXME : If the initial FindWhat string is empty, we should disable the FindNext /
      * Replace / ReplaceAll buttons.  Only after typing some text, the buttons should be
      * enabled.
      */

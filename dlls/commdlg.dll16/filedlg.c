@@ -63,7 +63,7 @@ BOOL16 CALLBACK FileSaveDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam, L
  *    FALSE on cancel, error, close or filename-does-not-fit-in-buffer.
  *
  * BUGS
- *    unknown, there are some FIXME's left.
+ *    unknown, there are some FIXMEs left.
  */
 BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn ) /* [in/out] address of structure with data*/
 {
@@ -116,7 +116,7 @@ BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn ) /* [in/out] address of structure w
  *    FALSE on cancel, error, close or filename-does-not-fit-in-buffer.
  *
  * BUGS
- *    unknown. There are some FIXME's left.
+ *    unknown. There are some FIXMEs left.
  */
 BOOL16 WINAPI GetSaveFileName16( SEGPTR ofn ) /* [in/out] address of structure with data*/
 {

@@ -591,7 +591,7 @@ BOOL WINAPI CryptGetDefaultOIDFunctionAddress(HCRYPTOIDFUNCSET hFuncSet,
  *             CryptRegisterOIDFunction (CRYPT32.@)
  *
  * Register the DLL and the functions it uses to cover the combination
- * of encoding type, functionname and OID.
+ * of encoding type, function name and OID.
  *
  * PARAMS
  *  dwEncodingType       [I] Encoding type to be used.

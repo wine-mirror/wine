@@ -528,8 +528,7 @@ static void asmparser_instr(struct asm_parser *This, DWORD opcode,
     }
     TRACE_(parsed_shader)("\n");
 
- /* Check for instructions with different syntaxes in different shader versio
-ns */
+ /* Check for instructions with different syntaxes in different shader versions */
     switch(opcode) {
         case BWRITERSIO_SINCOS:
             /* The syntax changes between vs 2 and the other shader versions */

@@ -68,7 +68,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(monthcal);
 					   to the next/prev month */
 #define MC_TODAYUPDATEDELAY 120000 /* time between today check for update (2 min) */
 
-#define MC_PREVNEXTMONTHTIMER   1	/* Timer ID's */
+#define MC_PREVNEXTMONTHTIMER   1	/* Timer IDs */
 #define MC_TODAYUPDATETIMER     2
 
 #define countof(arr) (sizeof(arr)/sizeof(arr[0]))
@@ -199,7 +199,7 @@ static inline void MONTHCAL_NotifySelect(const MONTHCAL_INFO *infoPtr)
 }
 
 /* returns the number of days in any given month, checking for leap days */
-/* january is 1, december is 12 */
+/* January is 1, December is 12 */
 int MONTHCAL_MonthLength(int month, int year)
 {
   const int mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -286,7 +286,7 @@ static void MONTHCAL_CopyDate(const SYSTEMTIME *from, SYSTEMTIME *to)
  *   0 : first == second
  *   1 : first >  second
  *
- *  Note that no date validation performed, alreadt validated values expected.
+ *  Note that no date validation performed, already validated values expected.
  */
 static LONG MONTHCAL_CompareSystemTime(const SYSTEMTIME *first, const SYSTEMTIME *second)
 {
@@ -331,7 +331,7 @@ static LONG MONTHCAL_CompareDate(const SYSTEMTIME *first, const SYSTEMTIME *seco
  *
  * RETURN VALUE
  *
- *  TRUE  - date whithin largest and configured range
+ *  TRUE  - date within largest and configured range
  *  FALSE - date is outside largest or configured range
  */
 static BOOL MONTHCAL_IsDateInValidRange(const MONTHCAL_INFO *infoPtr,
@@ -532,7 +532,7 @@ static void MONTHCAL_GetMaxDate(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *date)
 }
 
 /* From a given point, calculate the row (weekpos), column(daypos)
-   and day in the calendar. day== 0 mean the last day of tha last month
+   and day in the calendar. day== 0 mean the last day of the last month
 */
 static int MONTHCAL_CalcDayFromPos(const MONTHCAL_INFO *infoPtr, int x, int y,
 				   int *daypos, int *weekpos)
@@ -820,7 +820,7 @@ static void MONTHCAL_PaintWeeknumbers(const MONTHCAL_INFO *infoPtr, HDC hdc, con
      The week containing Jan 1 is the first week of year
      LOCALE_IFIRSTWEEKOFYEAR == 2 (e.g. Germany):
      First week of year must contain 4 days of the new year
-     LOCALE_IFIRSTWEEKOFYEAR == 1  (what contries?)
+     LOCALE_IFIRSTWEEKOFYEAR == 1  (what countries?)
      The first week of the year must contain only days of the new year
   */
   GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IFIRSTWEEKOFYEAR, buf, countof(buf));
@@ -840,7 +840,7 @@ static void MONTHCAL_PaintWeeknumbers(const MONTHCAL_INFO *infoPtr, HDC hdc, con
 
   if (date->wMonth == 1)
   {
-    /* calculate all those exceptions for january */
+    /* calculate all those exceptions for January */
     st.wDay = st.wMonth = 1;
     weeknum1 = MONTHCAL_CalculateDayOfWeek(&st, FALSE);
     if ((infoPtr->firstDay - weeknum1) % 7 > mindays)
@@ -1228,7 +1228,7 @@ MONTHCAL_GetFirstDayOfWeek(const MONTHCAL_INFO *infoPtr)
  * RETURN VALUE:
  *  Low word contains previous first day,
  *  high word indicates was first day forced with this message before or is
- *  locale difined (TRUE - was forced, FALSE - wasn't).
+ *  locale defined (TRUE - was forced, FALSE - wasn't).
  *
  * FIXME: this needs to be implemented properly in MONTHCAL_Refresh()
  * FIXME: we need more error checking here

@@ -539,7 +539,7 @@ static HRESULT parse_fx10_type(struct d3d10_effect_type *t, const char *ptr, con
 
         /*
          * Not sure if this calculation is 100% correct, but a test
-         * show's that these values work.
+         * shows that these values work.
          */
         t->elementtype->size_unpacked = t->size_packed / t->element_count;
         TRACE("\tUnpacked size: %#x.\n", t->elementtype->size_unpacked);

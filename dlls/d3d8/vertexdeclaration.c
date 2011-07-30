@@ -193,7 +193,7 @@ size_t parse_token(const DWORD* pToken)
 
         default:
             TRACE(" 0x%08x UNKNOWN\n", token);
-            /* argg error */
+            /* arg error */
     }
 
     return tokenlen;

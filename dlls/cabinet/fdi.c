@@ -48,7 +48,7 @@
  * Test unit(s).
  *
  * The fdintNEXT_CABINET callbacks are probably not working quite as they should.
- * There are several FIXME's in the source describing some of the deficiencies in
+ * There are several FIXMEs in the source describing some of the deficiencies in
  * some detail.  Additionally, we do not do a very good job of returning the right
  * error codes to this callback.
  *
@@ -2731,7 +2731,7 @@ BOOL __cdecl FDICopy(
 
         TRACE("Resetting folder for file %s.\n", debugstr_a(file->filename));
 
-        /* free stuff for the old decompresser */
+        /* free stuff for the old decompressor */
         switch (ct2) {
         case cffoldCOMPTYPE_LZX:
           if (LZX(window)) {
@@ -2752,7 +2752,7 @@ BOOL __cdecl FDICopy(
         CAB(offset) = 0;
         CAB(outlen) = 0;
 
-        /* initialize the new decompresser */
+        /* initialize the new decompressor */
         switch (ct1) {
         case cffoldCOMPTYPE_NONE:
           CAB(decompress) = NONEfdi_decomp;

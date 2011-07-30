@@ -485,7 +485,7 @@ struct cpu
     /* dwarf dedicated information */
     unsigned    (*map_dwarf_register)(unsigned regno);
 
-    /* context related maniputation */
+    /* context related manipulation */
     void*       (*fetch_context_reg)(CONTEXT* context, unsigned regno, unsigned* size);
     const char* (*fetch_regname)(unsigned regno);
 };

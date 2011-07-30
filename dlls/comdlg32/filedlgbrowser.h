@@ -95,7 +95,7 @@ typedef struct
 } FileOpenDlgInfos;
 
 /***********************************************************************
- * Control ID's
+ * Control IDs
  */
 #define IDS_ABOUTBOX                    101
 #define IDS_DOCUMENTFOLDERS             102

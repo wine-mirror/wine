@@ -47,7 +47,7 @@ static inline IDirect3DVertexBufferImpl *impl_from_IDirect3DVertexBuffer7(IDirec
  * For a link to QueryInterface rules, see IDirectDraw7::QueryInterface
  *
  * Params
- *  riid: Queryied Interface id
+ *  riid: Queried Interface id
  *  obj: Address to return the interface pointer
  *
  * Returns:

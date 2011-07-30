@@ -1024,8 +1024,8 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
 
   /*
    * 1. iterate over HKEY_CLASSES_ROOT\\AVIFile\\Extensions and collect
-   *    extensions and CLSID's
-   * 2. iterate over collected CLSID's and copy its description and its
+   *    extensions and CLSIDs
+   * 2. iterate over collected CLSIDs and copy its description and its
    *    extensions to szFilter if it fits
    *
    * First filter is named "All multimedia files" and its filter is a

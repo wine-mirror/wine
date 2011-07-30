@@ -1511,7 +1511,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
 
   /* Initialise the file name edit control */
   handledPath = FALSE;
-  TRACE("Before manipilation, file = %s, dir = %s\n", debugstr_w(fodInfos->filename), debugstr_w(fodInfos->initdir));
+  TRACE("Before manipulation, file = %s, dir = %s\n", debugstr_w(fodInfos->filename), debugstr_w(fodInfos->initdir));
 
   if(fodInfos->filename)
   {

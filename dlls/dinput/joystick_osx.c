@@ -398,7 +398,7 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
                     int usagePage = IOHIDElementGetUsagePage( tIOHIDElementRef );
                     if (usagePage != kHIDPage_Button)
                     {
-                        /* avoid strange elements found on the 360 controler */
+                        /* avoid strange elements found on the 360 controller */
                         continue;
                     }
 

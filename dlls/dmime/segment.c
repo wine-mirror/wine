@@ -674,7 +674,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_ParseDescripto
 												break;
 											}
 											default: {
-												TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+												TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
 												liMove.QuadPart = Chunk.dwSize;
 												IStream_Seek (pStream, liMove, STREAM_SEEK_CUR, NULL);
 												break;						
@@ -692,7 +692,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_ParseDescripto
                                                                     TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 								    switch (Chunk.fccID) {
 								    default: {
-								      TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+								      TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
 								      liMove.QuadPart = Chunk.dwSize;
 								      IStream_Seek (pStream, liMove, STREAM_SEEK_CUR, NULL);
 								      break;						
@@ -712,7 +712,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_ParseDescripto
 							break;
 						}	
 						default: {
-							TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+							TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
 							liMove.QuadPart = Chunk.dwSize;
 							IStream_Seek (pStream, liMove, STREAM_SEEK_CUR, NULL);
 							break;						
@@ -971,7 +971,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSIST
 	break;
       }
 
-      TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+      TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
       liMove.QuadPart = Chunk.dwSize;
       IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
       break;						
@@ -1015,7 +1015,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackList (LPPERSIST
 	break;
       }
       default: {
-	TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+	TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
 	liMove.QuadPart = StreamSize;
 	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 	break;
@@ -1024,7 +1024,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackList (LPPERSIST
       break;
     }
     default: {
-      TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+      TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
       liMove.QuadPart = Chunk.dwSize;
       IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
       break;						
@@ -1124,7 +1124,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseSegmentForm (LPPERSI
 	    if (hr == S_FALSE) {
 	      switch (Chunk.fccID) {
 	      default: {
-		TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+		TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
 		liMove.QuadPart = Chunk.dwSize;
 		IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 		break;						
@@ -1152,7 +1152,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseSegmentForm (LPPERSI
 	break;
       }
       default: {
-	TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+	TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
 	liMove.QuadPart = Chunk.dwSize;
 	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 	break;						

@@ -260,7 +260,7 @@ static void CredDialogShowIncorrectPasswordBalloon(HWND hwndDlg, struct cred_dia
     SendMessageW(params->hwndBalloonTip, TTM_SETTITLEW, TTI_ERROR, (LPARAM)wszTitle);
 
     GetWindowRect(GetDlgItem(hwndDlg, IDC_PASSWORD), &rcPassword);
-    /* centred vertically and in the right side of the password edit control */
+    /* centered vertically and in the right side of the password edit control */
     x = rcPassword.right - 12;
     y = (rcPassword.top + rcPassword.bottom) / 2;
     SendMessageW(params->hwndBalloonTip, TTM_TRACKPOSITION, 0, MAKELONG(x, y));

@@ -325,7 +325,7 @@ TOOLBAR_ButtonHasString(const TBUTTON_INFO *btnPtr)
 * 		TOOLBAR_CheckStyle
 *
 * This function validates that the styles set are implemented and
-* issues FIXME's warning of possible problems. In a perfect world this
+* issues FIXMEs warning of possible problems. In a perfect world this
 * function should be null.
 */
 static void
@@ -1467,7 +1467,7 @@ TOOLBAR_WrapToolbar(TOOLBAR_INFO *infoPtr)
 *
 * +--------------------------------------------------------+ ^
 * |                    ^                     ^             | |
-* |                    | pad.cy / 2          | centred     | |
+* |                    | pad.cy / 2          | centered    | |
 * | pad.cx/2 + cxedge +--------------+     +------------+  | | DEFPAD_CY +
 * |<----------------->| nBitmapWidth |     | Text       |  | | max(nBitmapHeight, szText.cy)
 * |                   |<------------>|     |            |  | |
@@ -1483,7 +1483,7 @@ TOOLBAR_WrapToolbar(TOOLBAR_INFO *infoPtr)
 *
 * +-----------------------------------+ ^
 * |                     ^             | |
-* |                     | centred     | | LISTPAD_CY +
+* |                     | centered    | | LISTPAD_CY +
 * |                   +------------+  | | szText.cy
 * |                   | Text       |  | |
 * |                   |            |  | |
@@ -1521,13 +1521,13 @@ TOOLBAR_WrapToolbar(TOOLBAR_INFO *infoPtr)
 * |                     | pad.cy / 2  | | nBitmapHeight +
 * |                     -             | | szText.cy +
 * |                   +------------+  | | DEFPAD_CY + 1
-* |    centred        |   Bitmap   |  | |
+* |    centered       |   Bitmap   |  | |
 * |<----------------->|            |  | |
 * |                   +------------+  | |
 * |                         ^         | |
 * |                       1 |         | |
 * |                         -         | |
-* |     centred     +---------------+ | |
+* |     centered    +---------------+ | |
 * |<--------------->|      Text     | | |
 * |                 +---------------+ | |
 * +-----------------------------------+ -
@@ -1540,7 +1540,7 @@ TOOLBAR_WrapToolbar(TOOLBAR_INFO *infoPtr)
 * |                     ^                 | |
 * |                     | 2 + pad.cy / 2  | |
 * |                     -                 | | szText.cy +
-* |    centred      +-----------------+   | | pad.cy + 2
+* |    centered     +-----------------+   | | pad.cy + 2
 * |<--------------->|   Text          |   | |
 * |                 +-----------------+   | |
 * |                                       | |
@@ -4378,7 +4378,7 @@ TOOLBAR_SetButtonSize (TOOLBAR_INFO *infoPtr, LPARAM lParam)
     /*
      * The documentation also does not mention that if 0 is supplied for
      * either size, the system changes it to the default of 24 wide and
-     * 22 high. Demonstarted in ControlSpy Toolbar. GLA 3/02
+     * 22 high. Demonstrated in ControlSpy Toolbar. GLA 3/02
      */
     if (cx == 0) cx = 24;
     if (cy == 0) cy = 22;

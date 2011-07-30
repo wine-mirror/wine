@@ -88,7 +88,7 @@ const char* pe_map_section(struct image_section_map* ism)
             return IMAGE_NO_MAP;
         }
         /* FIXME: that's rather drastic, but that will do for now
-         * that's ok if the full file map exists, but we could be less agressive otherwise and
+         * that's ok if the full file map exists, but we could be less aggressive otherwise and
          * only map the relevant section
          */
         if ((mapping = pe_map_full(ism->fmap, &nth)))

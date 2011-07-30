@@ -427,7 +427,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput, unsig
     newDevice->ff_state    = FF_STATUS_STOPPED;
 #endif
     /* There is no way in linux to query force feedback autocenter status.
-       Instead, track it with ff_autocenter, and assume it's initialy
+       Instead, track it with ff_autocenter, and assume it's initially
        enabled. */
     newDevice->ff_autocenter = 1;
     newDevice->ff_gain = 0xFFFF;
@@ -716,8 +716,8 @@ static HRESULT WINAPI JoystickWImpl_Unacquire(LPDIRECTINPUTDEVICE8W iface)
       /* Enable autocenter. */
       event.type = EV_FF;
       event.code = FF_AUTOCENTER;
-      /* TODO: Read autocenter strengh before disabling it, and use it here
-       * instead of 0xFFFF (maximum strengh).
+      /* TODO: Read autocenter strength before disabling it, and use it here
+       * instead of 0xFFFF (maximum strength).
        */
       event.value = 0xFFFF;
       if (write(This->joyfd, &event, sizeof(event)) == -1)

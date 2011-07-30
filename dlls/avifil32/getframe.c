@@ -215,7 +215,7 @@ static LPVOID  WINAPI IGetFrame_fnGetFrame(IGetFrame *iface, LONG lPos)
 	if (FAILED(AVIStreamSampleSize(This->pStream, lNext, &readBytes)))
 	  return NULL; /* bad thing, but bad things will happen */
 	if (readBytes <= 0) {
-	  ERR(": IAVIStream::REad doesn't return needed bytes!\n");
+	  ERR(": IAVIStream::Read doesn't return needed bytes!\n");
 	  return NULL;
 	}
 

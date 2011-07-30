@@ -763,7 +763,7 @@ static int elf_new_wine_thunks(struct module* module, const struct hash_table* h
                  * we are adding new symbols, but as we're parsing a symbol table
                  * (hopefully without duplicate symbols) we delay rebuilding the sorted
                  * module table until we're done with the symbol table
-                 * Otherwise, as we intertwine symbols's add and lookup, performance
+                 * Otherwise, as we intertwine symbols' add and lookup, performance
                  * is rather bad
                  */
                 module->sortlist_valid = TRUE;
@@ -1285,7 +1285,7 @@ static BOOL elf_load_file_from_dll_path(HANDLE hProcess,
 /******************************************************************
  *		elf_search_auxv
  *
- * locate some a value from the debuggee auxillary vector
+ * locate some a value from the debuggee auxiliary vector
  */
 static BOOL elf_search_auxv(const struct process* pcs, unsigned type, unsigned long* val)
 {
@@ -1307,7 +1307,7 @@ static BOOL elf_search_auxv(const struct process* pcs, unsigned type, unsigned l
         return FALSE;
     }
     /* walk through envp[] */
-    /* envp[] strings are located after the auxillary vector, so protect the walk */
+    /* envp[] strings are located after the auxiliary vector, so protect the walk */
     str_max = (void*)(DWORD_PTR)~0L;
     while (ReadProcessMemory(pcs->handle, addr, &str, sizeof(str), NULL) &&
            (addr = (void*)((DWORD_PTR)addr + sizeof(str))) != NULL && str != NULL)

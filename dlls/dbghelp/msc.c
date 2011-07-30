@@ -1398,7 +1398,7 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
             {
                 /* now locate function (if any) */
                 addr = func_addr0 + ltb->offsets[k] - start[j].start;
-                /* unfortunetaly, we can have several functions in the same block, if there's no
+                /* unfortunately, we can have several functions in the same block, if there's no
                  * gap between them... find the new function if needed
                  */
                 if (!func || addr >= func->address + func->size)

@@ -215,7 +215,7 @@ static HRESULT WINAPI ddraw7_QueryInterface(IDirectDraw7 *iface, REFIID refiid, 
         }
         else if(This->ImplType != SURFACE_OPENGL && DefaultSurfaceType == SURFACE_UNKNOWN)
         {
-            ERR("(%p) The App is requesting a D3D device, but a non-OpenGL surface type was choosen. Prepare for trouble!\n", This);
+            ERR("(%p) The App is requesting a D3D device, but a non-OpenGL surface type was chosen. Prepare for trouble!\n", This);
             ERR(" (%p) You may want to contact wine-devel for help\n", This);
             /* Should I assert(0) here??? */
         }
@@ -2734,7 +2734,7 @@ static HRESULT ddraw_create_surface(IDirectDrawImpl *This, DDSURFACEDESC2 *pDDSD
         DDRAW_dump_surface_desc(pDDSD);
     }
 
-    /* Select the surface type, if it wasn't choosen yet */
+    /* Select the surface type, if it wasn't chosen yet */
     if(ImplType == SURFACE_UNKNOWN)
     {
         /* Use GL Surfaces if a D3DDEVICE Surface is requested */

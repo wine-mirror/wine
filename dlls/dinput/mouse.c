@@ -749,7 +749,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceInfo(
     TRACE("(this=%p,%p)\n", This, pdidi);
 
     if (pdidi->dwSize != sizeof(DIDEVICEINSTANCEA)) {
-        WARN(" dinput3 not supporte yet...\n");
+        WARN(" dinput3 not supported yet...\n");
 	return DI_OK;
     }
 
@@ -764,7 +764,7 @@ static HRESULT WINAPI SysMouseWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface, L
     TRACE("(this=%p,%p)\n", This, pdidi);
 
     if (pdidi->dwSize != sizeof(DIDEVICEINSTANCEW)) {
-        WARN(" dinput3 not supporte yet...\n");
+        WARN(" dinput3 not supported yet...\n");
 	return DI_OK;
     }
 

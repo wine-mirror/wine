@@ -1664,7 +1664,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
     }
     else
     {
-        /* variable has been optimiezd away... report anyway */
+        /* variable has been optimized away... report anyway */
         loc.kind = loc_error;
         loc.reg = loc_err_no_location;
         if (subpgm->func)

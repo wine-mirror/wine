@@ -2586,7 +2586,7 @@ static inline WORD get_devname_offset(const DEVNAMES *dn, devnames_name which)
     case devnames_device_name: return dn->wDeviceOffset;
     case devnames_output_name: return dn->wOutputOffset;
     }
-    ERR("Souldn't be here\n");
+    ERR("Shouldn't be here\n");
     return 0;
 }
 

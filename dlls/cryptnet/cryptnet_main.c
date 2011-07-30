@@ -571,7 +571,7 @@ static BOOL CRYPT_GetObjectFromCache(LPCWSTR pszURL, PCRYPT_BLOB_ARRAY pObject,
     return ret;
 }
 
-/* Parses the URL, and sets components's lpszHostName and lpszUrlPath members
+/* Parses the URL, and sets components' lpszHostName and lpszUrlPath members
  * to NULL-terminated copies of those portions of the URL (to be freed with
  * CryptMemFree.)
  */

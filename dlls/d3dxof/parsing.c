@@ -1385,7 +1385,7 @@ _exit:
 
   if (buf->pxo->nb_childs > MAX_CHILDS)
   {
-    FIXME("Too many childs %d\n", buf->pxo->nb_childs);
+    FIXME("Too many children %d\n", buf->pxo->nb_childs);
     return FALSE;
   }
 

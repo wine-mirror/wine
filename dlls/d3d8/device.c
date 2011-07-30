@@ -3146,7 +3146,7 @@ HRESULT device_init(IDirect3DDevice8Impl *device, IDirect3D8Impl *parent, struct
     device->decls = HeapAlloc(GetProcessHeap(), 0, device->declArraySize * sizeof(*device->decls));
     if (!device->decls)
     {
-        ERR("Failed to allocate FVF vertex delcaration map memory.\n");
+        ERR("Failed to allocate FVF vertex declaration map memory.\n");
         hr = E_OUTOFMEMORY;
         goto err;
     }

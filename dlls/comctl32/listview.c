@@ -1296,7 +1296,7 @@ static RANGE iterator_range(const ITERATOR *i)
 }
 
 /***
- * Releases resources associated with this ierator.
+ * Releases resources associated with this iterator.
  */
 static inline void iterator_destroy(const ITERATOR *i)
 {
@@ -4938,7 +4938,7 @@ static void LISTVIEW_RefreshReportGrid(LISTVIEW_INFO *infoPtr, HDC hdc)
             LineTo (hdc, rcItem.right, infoPtr->rcList.bottom);
         }
 
-        /* draw the horizontial lines for the rows */
+        /* draw the horizontal lines for the rows */
         itemheight =  LISTVIEW_CalculateItemHeight(infoPtr);
         rcItem.left   = infoPtr->rcList.left;
         rcItem.right  = infoPtr->rcList.right;
@@ -5543,7 +5543,7 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
 		}
 	    }
 
-	    /* if we found our subitem, zapp it */	
+	    /* if we found our subitem, zap it */
 	    if (nSubItem > 0)
 	    {
 		/* free string */
@@ -8418,7 +8418,7 @@ static DWORD LISTVIEW_SetExtendedListViewStyle(LISTVIEW_INFO *infoPtr, DWORD dwM
                 ImageList_Destroy(infoPtr->himlState);
         }
         himl = LISTVIEW_SetImageList(infoPtr, LVSIL_STATE, himl);
-        /*   checkbox list replaces prevous custom list or... */
+        /*   checkbox list replaces previous custom list or... */
         if(((infoPtr->dwLvExStyle & LVS_EX_CHECKBOXES) &&
            !(infoPtr->dwStyle & LVS_SHAREIMAGELISTS)) ||
             /* ...previous was checkbox list */

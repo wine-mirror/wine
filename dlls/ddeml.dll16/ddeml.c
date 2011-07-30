@@ -155,7 +155,7 @@ static HDDEDATA	CALLBACK WDML_InvokeCallback16(DWORD pfn16, UINT uType, UINT uFm
  * a 32bit callback. This thunk also stores (in the code!) the 16bit
  * address of the 16bit callback, and passes it back to
  * WDML_InvokeCallback16.
- * The code below is mainly to create the thunks themselved
+ * The code below is mainly to create the thunks themselves
  */
 #include "pshpack1.h"
 static struct ddeml_thunk
