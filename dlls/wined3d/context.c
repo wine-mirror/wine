@@ -112,8 +112,8 @@ static void context_destroy_fbo(struct wined3d_context *context, GLuint *fbo)
 }
 
 /* GL locking is done by the caller */
-void context_attach_depth_stencil_fbo(const struct wined3d_context *context,
-        GLenum fbo_target, struct wined3d_surface *depth_stencil, BOOL use_render_buffer)
+static void context_attach_depth_stencil_fbo(const struct wined3d_context *context,
+        GLenum fbo_target, struct wined3d_surface *depth_stencil)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -123,7 +123,7 @@ void context_attach_depth_stencil_fbo(const struct wined3d_context *context,
     {
         DWORD format_flags = depth_stencil->resource.format->flags;
 
-        if (use_render_buffer && depth_stencil->current_renderbuffer)
+        if (depth_stencil->current_renderbuffer)
         {
             if (format_flags & WINED3DFMT_FLAG_DEPTH)
             {
@@ -381,7 +381,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
     /* Apply depth targets */
     if (entry->depth_stencil)
         surface_set_compatible_renderbuffer(entry->depth_stencil, entry->render_targets[0]);
-    context_attach_depth_stencil_fbo(context, target, entry->depth_stencil, TRUE);
+    context_attach_depth_stencil_fbo(context, target, entry->depth_stencil);
 
     entry->attached = TRUE;
 }
@@ -863,11 +863,6 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
 
     if (context->valid)
     {
-        if (context->dst_fbo)
-        {
-            TRACE("Destroy dst FBO %d\n", context->dst_fbo);
-            context_destroy_fbo(context, &context->dst_fbo);
-        }
         if (context->dummy_arbfp_prog)
         {
             GL_EXTCALL(glDeleteProgramsARB(1, &context->dummy_arbfp_prog));

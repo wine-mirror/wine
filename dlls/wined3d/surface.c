@@ -5705,7 +5705,8 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
 
         /* Note that we use depth_blt here as well, rather than glCopyTexImage2D
          * directly on the FBO texture. That's because we need to flip. */
-        context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
+        context_apply_fbo_state_blit(context, GL_FRAMEBUFFER,
+                context->swapchain->front_buffer, NULL, SFLAG_INDRAWABLE);
         if (surface->texture_target == GL_TEXTURE_RECTANGLE_ARB)
         {
             glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_binding);
@@ -5733,27 +5734,9 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
         glTexParameteri(bind_target, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
         glBindTexture(bind_target, old_binding);
 
-        /* Setup the destination */
-        if (!device->depth_blt_rb)
-        {
-            gl_info->fbo_ops.glGenRenderbuffers(1, &device->depth_blt_rb);
-            checkGLcall("glGenRenderbuffersEXT");
-        }
-        if (device->depth_blt_rb_w != w || device->depth_blt_rb_h != h)
-        {
-            gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, device->depth_blt_rb);
-            checkGLcall("glBindRenderbufferEXT");
-            gl_info->fbo_ops.glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, w, h);
-            checkGLcall("glRenderbufferStorageEXT");
-            device->depth_blt_rb_w = w;
-            device->depth_blt_rb_h = h;
-        }
-
-        context_bind_fbo(context, GL_FRAMEBUFFER, &context->dst_fbo);
-        gl_info->fbo_ops.glFramebufferRenderbuffer(GL_FRAMEBUFFER,
-                GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, device->depth_blt_rb);
-        checkGLcall("glFramebufferRenderbufferEXT");
-        context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER, surface, FALSE);
+        context_apply_fbo_state_blit(context, GL_FRAMEBUFFER,
+                NULL, surface, SFLAG_INTEXTURE);
+        context_set_draw_buffer(context, GL_NONE);
 
         /* Do the actual blit */
         surface_depth_blt(surface, gl_info, device->depth_blt_texture, 0, 0, w, h, bind_target);
@@ -5771,7 +5754,8 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
 
         ENTER_GL();
 
-        context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
+        context_apply_fbo_state_blit(context, GL_FRAMEBUFFER,
+                context->swapchain->front_buffer, NULL, SFLAG_INDRAWABLE);
         surface_depth_blt(surface, gl_info, surface->texture_name,
                 0, surface->pow2Height - h, w, h, surface->texture_target);
         checkGLcall("depth_blt");

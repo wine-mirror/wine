@@ -1437,15 +1437,6 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
         LEAVE_GL();
         device->depth_blt_texture = 0;
     }
-    if (device->depth_blt_rb)
-    {
-        ENTER_GL();
-        gl_info->fbo_ops.glDeleteRenderbuffers(1, &device->depth_blt_rb);
-        LEAVE_GL();
-        device->depth_blt_rb = 0;
-        device->depth_blt_rb_w = 0;
-        device->depth_blt_rb_h = 0;
-    }
 
     /* Release the update stateblock */
     if (wined3d_stateblock_decref(device->updateStateBlock))
@@ -5525,13 +5516,6 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
     {
         glDeleteTextures(1, &device->depth_blt_texture);
         device->depth_blt_texture = 0;
-    }
-    if (device->depth_blt_rb)
-    {
-        gl_info->fbo_ops.glDeleteRenderbuffers(1, &device->depth_blt_rb);
-        device->depth_blt_rb = 0;
-        device->depth_blt_rb_w = 0;
-        device->depth_blt_rb_h = 0;
     }
     if (device->cursorTexture)
     {
