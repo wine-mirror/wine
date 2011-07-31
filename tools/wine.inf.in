@@ -2527,6 +2527,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,hhctrl.ocx,1
 11,,hlink.dll,1
 11,,hnetcfg.dll,1
+11,,ieframe.dll,1
 11,,inetcomm.dll,1
 11,,infosoft.dll,1
 11,,inseng.dll,1

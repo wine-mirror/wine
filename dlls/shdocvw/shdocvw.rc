@@ -32,6 +32,3 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: shdocvw_v1.tlb */
 1 TYPELIB shdocvw_v1.tlb
-
-/* @makedep: shdocvw.rgs */
-2 WINE_REGISTRY shdocvw.rgs

@@ -17,33 +17,3 @@
  */
 
 #include "exdisp.idl"
-
-[
-    threading(apartment),
-    uuid(871c5380-42a0-1069-a2ea-08002b30309d)
-] coclass Internet { }
-
-[
-    helpstring("Microsoft Url History Service"),
-    threading(apartment),
-    uuid(3c374a40-bae4-11cf-bf7d-00aa006946ee)
-] coclass CUrlHistory { interface IUrlHistoryStg2; } 
-
-[
-    helpstring("Task Bar Communication"),
-    threading(apartment),
-    uuid(56fdf344-fd6d-11d0-958a-006097c9a090)
-] coclass TaskbarList { interface ITaskbarList; } 
-
-[
-    helpstring("Internet Shortcut"),
-    threading(apartment),
-    progid("InternetShortcut"),
-    uuid(fbf23b40-e3f0-101b-8488-00aa003e56f8)
-] coclass InternetShortcut
-{
-    interface IUniformResourceLocatorA;
-    interface IUniformResourceLocatorW;
-    interface IPersistFile;
-    interface IPropertySetStorage;
-}

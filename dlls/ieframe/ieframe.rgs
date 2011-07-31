@@ -48,7 +48,7 @@ HKCR
         {
             open
             {
-                command = s 'rundll32.exe shdocvw.dll,OpenURL %%l'
+                command = s 'rundll32.exe ieframe.dll,OpenURL %%l'
             }
             print
             {

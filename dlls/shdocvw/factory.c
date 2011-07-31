@@ -23,7 +23,6 @@
 
 #include "shdocvw.h"
 #include "winreg.h"
-#include "rpcproxy.h"
 #include "isguids.h"
 
 #include "winver.h"
@@ -79,7 +78,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 HRESULT WINAPI DllRegisterServer(void)
 {
     TRACE("\n");
-    return __wine_register_resources( shdocvw_hinstance, NULL );
+    return S_OK;
 }
 
 /***********************************************************************
@@ -88,7 +87,7 @@ HRESULT WINAPI DllRegisterServer(void)
 HRESULT WINAPI DllUnregisterServer(void)
 {
     TRACE("\n");
-    return __wine_unregister_resources( shdocvw_hinstance, NULL );
+    return S_OK;
 }
 
 /******************************************************************

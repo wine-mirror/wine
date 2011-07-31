@@ -90,3 +90,6 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: ietoolbar.bmp */
 IDB_IETOOLBAR BITMAP ietoolbar.bmp
+
+/* @makedep: ieframe.rgs */
+2 WINE_REGISTRY ieframe.rgs

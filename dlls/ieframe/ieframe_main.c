@@ -18,6 +18,7 @@
 
 #include "ieframe.h"
 
+#include "rpcproxy.h"
 #include "shlguid.h"
 #include "isguids.h"
 
@@ -277,8 +278,8 @@ HRESULT WINAPI DllCanUnloadNow(void)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    FIXME("()\n");
-    return S_OK;
+    TRACE("()\n");
+    return __wine_register_resources(ieframe_instance, NULL);
 }
 
 /***********************************************************************
@@ -286,6 +287,6 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    FIXME("()\n");
-    return S_OK;
+    TRACE("()\n");
+    return __wine_unregister_resources(ieframe_instance, NULL);
 }
