@@ -608,13 +608,6 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
         return;
     }
 
-    if (!context_apply_draw_state(context, device))
-    {
-        context_release(context);
-        WARN("Unable to apply draw state, skipping draw.\n");
-        return;
-    }
-
     if (device->fb.depth_stencil)
     {
         /* Note that this depends on the context_acquire() call above to set
@@ -648,6 +641,13 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
                 surface_modify_location(ds, SFLAG_INDRAWABLE, TRUE);
             }
         }
+    }
+
+    if (!context_apply_draw_state(context, device))
+    {
+        context_release(context);
+        WARN("Unable to apply draw state, skipping draw.\n");
+        return;
     }
 
     if ((!context->gl_info->supported[WINED3D_GL_VERSION_2_0]
