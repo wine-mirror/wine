@@ -5010,6 +5010,7 @@ static void surface_blt_fbo(struct wined3d_device *device, const WINED3DTEXTUREF
     struct wined3d_context *context;
     RECT src_rect, dst_rect;
     GLenum gl_filter;
+    GLenum buffer;
 
     TRACE("device %p, filter %s,\n", device, debug_d3dtexturefiltertype(filter));
     TRACE("src_surface %p, src_location %s, src_rect %s,\n",
@@ -5062,48 +5063,38 @@ static void surface_blt_fbo(struct wined3d_device *device, const WINED3DTEXTUREF
 
     if (src_location == SFLAG_INDRAWABLE)
     {
-        GLenum buffer = surface_get_gl_buffer(src_surface);
-
         TRACE("Source surface %p is onscreen.\n", src_surface);
-
+        buffer = surface_get_gl_buffer(src_surface);
         surface_translate_drawable_coords(src_surface, context->win_handle, &src_rect);
-
-        ENTER_GL();
-        context_bind_fbo(context, GL_READ_FRAMEBUFFER, NULL);
-        glReadBuffer(buffer);
-        checkGLcall("glReadBuffer()");
     }
     else
     {
         TRACE("Source surface %p is offscreen.\n", src_surface);
-        ENTER_GL();
-        context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, src_surface, NULL, src_location);
-        glReadBuffer(GL_COLOR_ATTACHMENT0);
-        checkGLcall("glReadBuffer()");
+        buffer = GL_COLOR_ATTACHMENT0;
     }
+
+    ENTER_GL();
+    context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, src_surface, NULL, src_location);
+    glReadBuffer(buffer);
+    checkGLcall("glReadBuffer()");
     context_check_fbo_status(context, GL_READ_FRAMEBUFFER);
     LEAVE_GL();
 
     if (dst_location == SFLAG_INDRAWABLE)
     {
-        GLenum buffer = surface_get_gl_buffer(dst_surface);
-
         TRACE("Destination surface %p is onscreen.\n", dst_surface);
-
+        buffer = surface_get_gl_buffer(dst_surface);
         surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
-
-        ENTER_GL();
-        context_bind_fbo(context, GL_DRAW_FRAMEBUFFER, NULL);
-        context_set_draw_buffer(context, buffer);
     }
     else
     {
         TRACE("Destination surface %p is offscreen.\n", dst_surface);
-
-        ENTER_GL();
-        context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER, dst_surface, NULL, dst_location);
-        context_set_draw_buffer(context, GL_COLOR_ATTACHMENT0);
+        buffer = GL_COLOR_ATTACHMENT0;
     }
+
+    ENTER_GL();
+    context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER, dst_surface, NULL, dst_location);
+    context_set_draw_buffer(context, buffer);
     context_check_fbo_status(context, GL_DRAW_FRAMEBUFFER);
     context_invalidate_state(context, STATE_FRAMEBUFFER);
 

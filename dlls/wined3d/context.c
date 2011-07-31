@@ -33,7 +33,7 @@ static DWORD wined3d_context_tls_idx;
 /* FBO helper functions */
 
 /* GL locking is done by the caller */
-void context_bind_fbo(struct wined3d_context *context, GLenum target, GLuint *fbo)
+static void context_bind_fbo(struct wined3d_context *context, GLenum target, GLuint *fbo)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLuint f;
