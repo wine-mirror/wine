@@ -1598,6 +1598,22 @@ static LRESULT COMBOEX_Destroy (COMBOEX_INFO *infoPtr)
 }
 
 
+static LRESULT COMBOEX_Enable (COMBOEX_INFO *infoPtr, BOOL enable)
+{
+    TRACE("hwnd=%p, enable=%s\n", infoPtr->hwndSelf, enable ? "TRUE":"FALSE");
+
+    if (infoPtr->hwndEdit)
+       EnableWindow(infoPtr->hwndEdit, enable);
+
+    EnableWindow(infoPtr->hwndCombo, enable);
+
+    /* Force the control to repaint when the enabled state changes. */
+    InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
+
+    return 1;
+}
+
+
 static LRESULT COMBOEX_MeasureItem (COMBOEX_INFO const *infoPtr, MEASUREITEMSTRUCT *mis)
 {
     static const WCHAR strW[] = { 'W', 0 };
@@ -2277,6 +2293,9 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_DESTROY:
 	    return COMBOEX_Destroy (infoPtr);
+
+	case WM_ENABLE:
+	    return COMBOEX_Enable (infoPtr, (BOOL)wParam);
 
         case WM_MEASUREITEM:
             return COMBOEX_MeasureItem (infoPtr, (MEASUREITEMSTRUCT *)lParam);
