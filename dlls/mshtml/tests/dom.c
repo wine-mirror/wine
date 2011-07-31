@@ -1058,6 +1058,31 @@ static void _set_window_name(unsigned line, IHTMLWindow2 *window, const char *na
     _test_window_name(line, window, name);
 }
 
+#define test_window_status(d) _test_window_status(__LINE__,d)
+static void _test_window_status(unsigned line, IHTMLWindow2 *window)
+{
+    BSTR status;
+    HRESULT hres;
+
+    status = (void*)0xdeadbeef;
+    hres = IHTMLWindow2_get_status(window, &status);
+    ok_(__FILE__,line)(hres == S_OK, "get_status failed: %08x\n", hres);
+    ok_(__FILE__,line)(!status, "status = %s\n", wine_dbgstr_w(status));
+    SysFreeString(status);
+}
+
+#define set_window_status(w,n) _set_window_status(__LINE__,w,n)
+static void _set_window_status(unsigned line, IHTMLWindow2 *window, const char *status)
+{
+    BSTR str;
+    HRESULT hres;
+
+    str = a2bstr(status);
+    hres = IHTMLWindow2_put_status(window, str);
+    SysFreeString(str);
+    ok_(__FILE__,line)(hres == S_OK, "put_status failed: %08x\n", hres);
+}
+
 #define test_window_length(w,l) _test_window_length(__LINE__,w,l)
 static void _test_window_length(unsigned line, IHTMLWindow2 *window, LONG exlen)
 {
@@ -4146,6 +4171,8 @@ static void test_window(IHTMLDocument2 *doc)
     set_window_name(window, "test");
     test_window_length(window, 0);
     test_screen(window);
+    test_window_status(window);
+    set_window_status(window, "Test!");
 
     IHTMLWindow2_Release(window);
 }
