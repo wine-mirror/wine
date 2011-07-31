@@ -894,8 +894,8 @@ void ME_GetCharFormat(ME_TextEditor *editor, const ME_Cursor *from,
 
   do {
     /* FIXME add more style feature comparisons */
-    int nAttribs = CFM_SIZE | CFM_FACE | CFM_COLOR | CFM_UNDERLINETYPE;
-    int nEffects = CFM_BOLD | CFM_ITALIC | CFM_UNDERLINE | CFM_STRIKEOUT | CFM_PROTECTED | CFM_LINK | CFM_SUPERSCRIPT;
+    DWORD dwAttribs = CFM_SIZE | CFM_FACE | CFM_COLOR | CFM_UNDERLINETYPE;
+    DWORD dwEffects = CFM_BOLD | CFM_ITALIC | CFM_UNDERLINE | CFM_STRIKEOUT | CFM_PROTECTED | CFM_LINK | CFM_SUPERSCRIPT;
 
     run = ME_FindItemFwd(run, diRun);
 
@@ -903,7 +903,7 @@ void ME_GetCharFormat(ME_TextEditor *editor, const ME_Cursor *from,
     tmp.cbSize = sizeof(tmp);
     ME_GetRunCharFormat(editor, run, &tmp);
 
-    assert((tmp.dwMask & nAttribs) == nAttribs);
+    assert((tmp.dwMask & dwAttribs) == dwAttribs);
     /* reset flags that differ */
 
     if (pFmt->yHeight != tmp.yHeight)
@@ -929,7 +929,7 @@ void ME_GetCharFormat(ME_TextEditor *editor, const ME_Cursor *from,
       }
     }
 
-    pFmt->dwMask &= ~((pFmt->dwEffects ^ tmp.dwEffects) & nEffects);
+    pFmt->dwMask &= ~((pFmt->dwEffects ^ tmp.dwEffects) & dwEffects);
     pFmt->dwEffects = tmp.dwEffects;
 
   } while(run != run_end);
