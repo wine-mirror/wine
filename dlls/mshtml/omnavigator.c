@@ -693,8 +693,14 @@ static HRESULT WINAPI OmNavigator_get_platform(IOmNavigator *iface, BSTR *p)
 static HRESULT WINAPI OmNavigator_get_appMinorVersion(IOmNavigator *iface, BSTR *p)
 {
     OmNavigator *This = impl_from_IOmNavigator(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    static const WCHAR zeroW[] = {'0',0};
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    /* NOTE: MSIE returns "0" or values like ";SP2;". Returning "0" should be enough. */
+    *p = SysAllocString(zeroW);
+    return S_OK;
 }
 
 static HRESULT WINAPI OmNavigator_get_connectionSpeed(IOmNavigator *iface, LONG *p)

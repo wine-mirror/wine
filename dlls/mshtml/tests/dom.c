@@ -3942,6 +3942,12 @@ static void test_navigator(IHTMLDocument2 *doc)
         skip("nonstandard user agent\n");
     }
 
+    bstr = NULL;
+    hres = IOmNavigator_get_appMinorVersion(navigator, &bstr);
+    ok(hres == S_OK, "get_appMonorVersion failed: %08x\n", hres);
+    ok(bstr != NULL, "appMinorVersion returned NULL\n");
+    SysFreeString(bstr);
+
     test_mime_types_col(navigator);
 
     ref = IOmNavigator_Release(navigator);
