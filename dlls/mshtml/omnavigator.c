@@ -621,25 +621,57 @@ static HRESULT WINAPI OmNavigator_get_cpuClass(IOmNavigator *iface, BSTR *p)
     return *p ? S_OK : E_OUTOFMEMORY;
 }
 
+static HRESULT get_language_string(LCID lcid, BSTR *p)
+{
+    BSTR ret;
+    int len;
+
+    len = LCIDToLocaleName(lcid, NULL, 0, 0);
+    if(!len) {
+        WARN("LCIDToLocaleName failed: %u\n", GetLastError());
+        return E_FAIL;
+    }
+
+    ret = SysAllocStringLen(NULL, len-1);
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    len = LCIDToLocaleName(lcid, ret, len, 0);
+    if(!len) {
+        WARN("LCIDToLocaleName failed: %u\n", GetLastError());
+        SysFreeString(ret);
+        return E_FAIL;
+    }
+
+    *p = ret;
+    return S_OK;
+}
+
 static HRESULT WINAPI OmNavigator_get_systemLanguage(IOmNavigator *iface, BSTR *p)
 {
     OmNavigator *This = impl_from_IOmNavigator(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_language_string(LOCALE_SYSTEM_DEFAULT, p);
 }
 
 static HRESULT WINAPI OmNavigator_get_browserLanguage(IOmNavigator *iface, BSTR *p)
 {
     OmNavigator *This = impl_from_IOmNavigator(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_language_string(GetUserDefaultUILanguage(), p);
 }
 
 static HRESULT WINAPI OmNavigator_get_userLanguage(IOmNavigator *iface, BSTR *p)
 {
     OmNavigator *This = impl_from_IOmNavigator(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_language_string(LOCALE_USER_DEFAULT, p);
 }
 
 static HRESULT WINAPI OmNavigator_get_platform(IOmNavigator *iface, BSTR *p)
