@@ -680,13 +680,6 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
         return WINED3D_OK;
     }
 
-    if (!context_apply_clear_state(context, device, rt_count, fb))
-    {
-        context_release(context);
-        WARN("Failed to apply clear state, skipping clear.\n");
-        return WINED3D_OK;
-    }
-
     if (target)
     {
         render_offscreen = context->render_offscreen;
@@ -697,6 +690,22 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
         render_offscreen = TRUE;
         drawable_width = fb->depth_stencil->pow2Width;
         drawable_height = fb->depth_stencil->pow2Height;
+    }
+
+    if (flags & WINED3DCLEAR_ZBUFFER)
+    {
+        DWORD location = render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
+
+        if (location == SFLAG_DS_ONSCREEN && fb->depth_stencil != device->onscreen_depth_stencil)
+            device_switch_onscreen_ds(device, context, fb->depth_stencil);
+        prepare_ds_clear(fb->depth_stencil, context, location, draw_rect, rect_count, clear_rect);
+    }
+
+    if (!context_apply_clear_state(context, device, rt_count, fb))
+    {
+        context_release(context);
+        WARN("Failed to apply clear state, skipping clear.\n");
+        return WINED3D_OK;
     }
 
     ENTER_GL();
@@ -718,15 +727,6 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
 
     if (flags & WINED3DCLEAR_ZBUFFER)
     {
-        DWORD location = render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
-
-        if (location == SFLAG_DS_ONSCREEN && fb->depth_stencil != device->onscreen_depth_stencil)
-        {
-            LEAVE_GL();
-            device_switch_onscreen_ds(device, context, fb->depth_stencil);
-            ENTER_GL();
-        }
-        prepare_ds_clear(fb->depth_stencil, context, location, draw_rect, rect_count, clear_rect);
         surface_modify_location(fb->depth_stencil, SFLAG_INDRAWABLE, TRUE);
 
         glDepthMask(GL_TRUE);
