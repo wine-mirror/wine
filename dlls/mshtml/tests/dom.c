@@ -3760,11 +3760,18 @@ static void test_location(IHTMLDocument2 *doc)
     ok(!ref, "location chould be destroyed here\n");
 }
 
-static void test_plugins_col(IOmNavigator *nav)
+static void test_plugins_col(IHTMLDocument2 *doc)
 {
     IHTMLPluginsCollection *col, *col2;
+    IHTMLWindow2 *window;
+    IOmNavigator *nav;
     ULONG ref;
+    LONG len;
     HRESULT hres;
+
+    window = get_doc_window(doc);
+    hres = IHTMLWindow2_get_navigator(window, &nav);
+    IHTMLWindow2_Release(window);
 
     hres = IOmNavigator_get_plugins(nav, &col);
     ok(hres == S_OK, "get_plugins failed: %08x\n", hres);
@@ -3776,8 +3783,15 @@ static void test_plugins_col(IOmNavigator *nav)
 
     test_disp2((IUnknown*)col, &DIID_DispCPlugins, &IID_IHTMLPluginsCollection, "[object]");
 
+    len = 0xdeadbeef;
+    hres = IHTMLPluginsCollection_get_length(col, &len);
+    ok(hres == S_OK, "get_length failed: %08x\n", hres);
+    ok(!len, "length = %d\n", len);
+
     ref = IHTMLPluginsCollection_Release(col);
     ok(!ref, "ref=%d\n", ref);
+
+    IOmNavigator_Release(nav);
 }
 
 static void test_mime_types_col(IOmNavigator *nav)
@@ -3892,7 +3906,6 @@ static void test_navigator(IHTMLDocument2 *doc)
         skip("nonstandard user agent\n");
     }
 
-    test_plugins_col(navigator);
     test_mime_types_col(navigator);
 
     ref = IOmNavigator_Release(navigator);
@@ -4263,6 +4276,7 @@ static void test_defaults(IHTMLDocument2 *doc)
     test_compatmode(doc);
     test_location(doc);
     test_navigator(doc);
+    test_plugins_col(doc);
 
     elem2 = get_elem2_iface((IUnknown*)elem);
     hres = IHTMLElement2_get_currentStyle(elem2, &cstyle);
@@ -4652,6 +4666,8 @@ static void test_elems(IHTMLDocument2 *doc)
 
         IHTMLElementCollection_Release(collection);
     }
+
+    test_plugins_col(doc);
 
     elem = get_doc_elem(doc);
     test_elem_all((IUnknown*)elem, all_types+1, sizeof(all_types)/sizeof(all_types[0])-1);

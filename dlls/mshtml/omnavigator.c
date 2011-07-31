@@ -145,8 +145,12 @@ static HRESULT WINAPI HTMLPluginsCollection_Invoke(IHTMLPluginsCollection *iface
 static HRESULT WINAPI HTMLPluginsCollection_get_length(IHTMLPluginsCollection *iface, LONG *p)
 {
     HTMLPluginsCollection *This = impl_from_IHTMLPluginsCollection(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    /* IE always returns 0 here */
+    *p = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLPluginsCollection_refresh(IHTMLPluginsCollection *iface, VARIANT_BOOL reload)
