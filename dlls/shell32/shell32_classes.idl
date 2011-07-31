@@ -135,3 +135,8 @@ coclass KnownFolderManager { interface IKnownFolderManager; }
     threading(apartment),
     uuid(21ec2020-3aea-1069-a2dd-08002b30309d)
 ] coclass ControlPanel { interface IShellFolder2; }
+
+[
+    threading(apartment),
+    uuid(53bd6b4e-3780-4693-afc3-7161c2f3ee9c)
+] coclass MruLongList { }

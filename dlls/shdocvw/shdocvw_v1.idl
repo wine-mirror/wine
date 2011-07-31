@@ -19,11 +19,6 @@
 #include "exdisp.idl"
 
 [
-    threading(apartment),
-    uuid(53bd6b4e-3780-4693-afc3-7161c2f3ee9c)
-] coclass MruLongList { }
-
-[
     helpstring("Microsoft Browser Architecture"),
     threading(apartment),
     uuid(a5e46e3a-8849-11d1-9d8c-00c04fc99d61)
