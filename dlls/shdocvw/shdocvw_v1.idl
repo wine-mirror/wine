@@ -19,12 +19,6 @@
 #include "exdisp.idl"
 
 [
-    helpstring("Microsoft Browser Architecture"),
-    threading(apartment),
-    uuid(a5e46e3a-8849-11d1-9d8c-00c04fc99d61)
-] coclass MicrosoftBrowserArchitecture { } 
-
-[
     threading(apartment),
     uuid(871c5380-42a0-1069-a2ea-08002b30309d)
 ] coclass Internet { }
