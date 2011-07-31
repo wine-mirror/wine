@@ -5759,8 +5759,7 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
         surface_depth_blt(surface, gl_info, device->depth_blt_texture, 0, 0, w, h, bind_target);
         checkGLcall("depth_blt");
 
-        if (context->current_fbo) context_bind_fbo(context, GL_FRAMEBUFFER, &context->current_fbo->id);
-        else context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
+        context_invalidate_state(context, STATE_FRAMEBUFFER);
 
         LEAVE_GL();
 
@@ -5777,7 +5776,7 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
                 0, surface->pow2Height - h, w, h, surface->texture_target);
         checkGLcall("depth_blt");
 
-        if (context->current_fbo) context_bind_fbo(context, GL_FRAMEBUFFER, &context->current_fbo->id);
+        context_invalidate_state(context, STATE_FRAMEBUFFER);
 
         LEAVE_GL();
 
