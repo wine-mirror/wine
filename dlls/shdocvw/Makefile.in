@@ -5,7 +5,6 @@ IMPORTS   = uuid shlwapi
 DELAYIMPORTS = version ole32 oleaut32 ieframe
 
 C_SRCS = \
-	factory.c \
 	shdocvw_main.c \
 	shlinstobj.c
 

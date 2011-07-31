@@ -33,6 +33,7 @@
 #include "winreg.h"
 #include "shlwapi.h"
 #include "wininet.h"
+#include "isguids.h"
 
 #include "initguid.h"
 
@@ -52,6 +53,79 @@ HINSTANCE get_ieframe_instance(void)
         ieframe_instance = LoadLibraryW(ieframe_dllW);
 
     return ieframe_instance;
+}
+
+static HRESULT get_ieframe_object(REFCLSID rclsid, REFIID riid, void **ppv)
+{
+    HINSTANCE ieframe_instance;
+
+    static HRESULT (WINAPI *ieframe_DllGetClassObject)(REFCLSID,REFIID,void**);
+
+    if(!ieframe_DllGetClassObject) {
+        ieframe_instance = get_ieframe_instance();
+        if(!ieframe_instance)
+            return CLASS_E_CLASSNOTAVAILABLE;
+
+        ieframe_DllGetClassObject = (void*)GetProcAddress(ieframe_instance, "DllGetClassObject");
+        if(!ieframe_DllGetClassObject)
+            return CLASS_E_CLASSNOTAVAILABLE;
+    }
+
+    return ieframe_DllGetClassObject(rclsid, riid, ppv);
+}
+
+/*************************************************************************
+ *              DllGetClassObject (SHDOCVW.@)
+ */
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
+{
+    TRACE("\n");
+
+    if(IsEqualGUID(&CLSID_WebBrowser, rclsid)
+       || IsEqualGUID(&CLSID_WebBrowser_V1, rclsid)
+       || IsEqualGUID(&CLSID_InternetShortcut, rclsid)
+       || IsEqualGUID(&CLSID_CUrlHistory, rclsid)
+       || IsEqualGUID(&CLSID_TaskbarList, rclsid))
+        return get_ieframe_object(rclsid, riid, ppv);
+
+    /* As a last resort, figure if the CLSID belongs to a 'Shell Instance Object' */
+    return SHDOCVW_GetShellInstanceObjectClassObject(rclsid, riid, ppv);
+}
+
+/***********************************************************************
+ *          DllRegisterServer (shdocvw.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    TRACE("\n");
+    return S_OK;
+}
+
+/***********************************************************************
+ *          DllUnregisterServer (shdocvw.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    TRACE("\n");
+    return S_OK;
+}
+
+/******************************************************************
+ *             IEWinMain            (SHDOCVW.101)
+ *
+ * Only returns on error.
+ */
+DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
+{
+    DWORD (WINAPI *pIEWinMain)(LPSTR,int);
+
+    TRACE("%s %d\n", debugstr_a(szCommandLine), nShowWindow);
+
+    pIEWinMain = (void*)GetProcAddress(get_ieframe_instance(), MAKEINTRESOURCEA(101));
+    if(!pIEWinMain)
+        ExitProcess(1);
+
+    return pIEWinMain(szCommandLine, nShowWindow);
 }
 
 /*************************************************************************
