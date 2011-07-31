@@ -1,7 +1,7 @@
 EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 MODULE    = iexplore.exe
 APPMODE   = -mwindows
-IMPORTS   = shdocvw
+IMPORTS   = ieframe
 DELAYIMPORTS = advpack version
 
 C_SRCS = \
