@@ -34,6 +34,8 @@
 #include "mshtml_test.h"
 #include "objsafe.h"
 
+static INT (WINAPI *pLCIDToLocaleName)(LCID,LPWSTR,INT,DWORD);
+
 static const char doc_blank[] = "<html></html>";
 static const char doc_str1[] = "<html><body>test</body></html>";
 static const char range_test_str[] =
@@ -3820,6 +3822,22 @@ static void test_mime_types_col(IOmNavigator *nav)
     ok(!ref, "ref=%d\n", ref);
 }
 
+#define test_language_string(a,b) _test_language_string(__LINE__,a,b)
+static void _test_language_string(unsigned line, const WCHAR *lang, LCID lcid)
+{
+    WCHAR buf[64];
+    int res;
+
+    if(pLCIDToLocaleName) {
+        res = pLCIDToLocaleName(lcid, buf, sizeof(buf)/sizeof(WCHAR), 0);
+        ok_(__FILE__,line)(res, "LCIDToLocaleName failed: %u\n", GetLastError());
+        ok_(__FILE__,line)(!lstrcmpW(lang, buf), "lang = %s, expected %s\n", wine_dbgstr_w(lang), wine_dbgstr_w(buf));
+    }else {
+        win_skip("LCIDToLocaleName not available, unable to test language string\n");
+        ok_(__FILE__,line)(lang != NULL, "lang == NULL\n");
+    }
+}
+
 static void test_navigator(IHTMLDocument2 *doc)
 {
     IHTMLWindow2 *window;
@@ -3875,6 +3893,24 @@ static void test_navigator(IHTMLDocument2 *doc)
     hres = IOmNavigator_get_appVersion(navigator, &bstr);
     ok(hres == S_OK, "get_appVersion failed: %08x\n", hres);
     ok(!memcmp(bstr, v40, sizeof(v40)), "appVersion is %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    bstr = NULL;
+    hres = IOmNavigator_get_systemLanguage(navigator, &bstr);
+    ok(hres == S_OK, "get_systemLanguage failed: %08x\n", hres);
+    test_language_string(bstr, LOCALE_SYSTEM_DEFAULT);
+    SysFreeString(bstr);
+
+    bstr = NULL;
+    hres = IOmNavigator_get_browserLanguage(navigator, &bstr);
+    ok(hres == S_OK, "get_browserLanguage failed: %08x\n", hres);
+    test_language_string(bstr, GetUserDefaultUILanguage());
+    SysFreeString(bstr);
+
+    bstr = NULL;
+    hres = IOmNavigator_get_userLanguage(navigator, &bstr);
+    ok(hres == S_OK, "get_userLanguage failed: %08x\n", hres);
+    test_language_string(bstr, LOCALE_USER_DEFAULT);
     SysFreeString(bstr);
 
     hres = IOmNavigator_toString(navigator, NULL);
@@ -5868,6 +5904,8 @@ static void run_domtest(const char *str, domtest_t test)
 
 START_TEST(dom)
 {
+    pLCIDToLocaleName = (void*)GetProcAddress(GetModuleHandleA("kernel32.dll"), "LCIDToLocaleName");
+
     CoInitialize(NULL);
 
     run_domtest(doc_str1, test_doc_elem);
