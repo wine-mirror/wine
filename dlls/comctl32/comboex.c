@@ -1328,8 +1328,6 @@ static LRESULT COMBOEX_DrawItem (const COMBOEX_INFO *infoPtr, DRAWITEMSTRUCT con
     COLORREF nbkc, ntxc, bkc, txc;
     int drawimage, drawstate, xioff;
 
-    if (!IsWindowEnabled(infoPtr->hwndCombo)) return 0;
-
     TRACE("DRAWITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n",
 	  dis->CtlType, dis->CtlID);
     TRACE("itemID=0x%08x itemAction=0x%08x itemState=0x%08x\n",
