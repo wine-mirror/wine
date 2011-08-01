@@ -1281,15 +1281,15 @@ static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, co
 }
 
 /* Do not call while under the GL lock. */
-static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect_in,
-        struct wined3d_surface *src_surface, const RECT *src_rect_in, DWORD flags,
+static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect,
+        struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
         const WINEDDBLTFX *fx, WINED3DTEXTUREFILTERTYPE filter)
 {
     struct wined3d_device *device = dst_surface->resource.device;
     DWORD src_ds_flags, dst_ds_flags;
 
     TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
-            dst_surface, wine_dbgstr_rect(dst_rect_in), src_surface, wine_dbgstr_rect(src_rect_in),
+            dst_surface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
             flags, fx, debug_d3dtexturefiltertype(filter));
     TRACE("Usage is %s.\n", debug_d3dusage(dst_surface->resource.usage));
 
@@ -1310,22 +1310,17 @@ static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_
         if (flags & WINEDDBLT_DEPTHFILL)
         {
             float depth;
-            RECT rect;
 
             TRACE("Depth fill.\n");
-
-            surface_get_rect(dst_surface, dst_rect_in, &rect);
 
             if (!surface_convert_depth_to_float(dst_surface, fx->u5.dwFillDepth, &depth))
                 return WINED3DERR_INVALIDCALL;
 
-            if (SUCCEEDED(wined3d_surface_depth_fill(dst_surface, &rect, depth)))
+            if (SUCCEEDED(wined3d_surface_depth_fill(dst_surface, dst_rect, depth)))
                 return WINED3D_OK;
         }
         else
         {
-            RECT src_rect, dst_rect;
-
             /* Accessing depth / stencil surfaces is supposed to fail while in
              * a scene, except for fills, which seem to work. */
             if (device->inScene)
@@ -1340,21 +1335,21 @@ static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_
                 return WINED3DERR_INVALIDCALL;
             }
 
-            if (src_rect_in && (src_rect_in->top || src_rect_in->left
-                    || src_rect_in->bottom != src_surface->resource.height
-                    || src_rect_in->right != src_surface->resource.width))
+            if (src_rect->top || src_rect->left
+                    || src_rect->bottom != src_surface->resource.height
+                    || src_rect->right != src_surface->resource.width)
             {
                 WARN("Rejecting depth / stencil blit with invalid source rect %s.\n",
-                        wine_dbgstr_rect(src_rect_in));
+                        wine_dbgstr_rect(src_rect));
                 return WINED3DERR_INVALIDCALL;
             }
 
-            if (dst_rect_in && (dst_rect_in->top || dst_rect_in->left
-                    || dst_rect_in->bottom != dst_surface->resource.height
-                    || dst_rect_in->right != dst_surface->resource.width))
+            if (dst_rect->top || dst_rect->left
+                    || dst_rect->bottom != dst_surface->resource.height
+                    || dst_rect->right != dst_surface->resource.width)
             {
                 WARN("Rejecting depth / stencil blit with invalid destination rect %s.\n",
-                        wine_dbgstr_rect(src_rect_in));
+                        wine_dbgstr_rect(src_rect));
                 return WINED3DERR_INVALIDCALL;
             }
 
@@ -1365,10 +1360,7 @@ static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_
                 return WINED3DERR_INVALIDCALL;
             }
 
-            surface_get_rect(src_surface, src_rect_in, &src_rect);
-            surface_get_rect(dst_surface, dst_rect_in, &dst_rect);
-
-            if (SUCCEEDED(wined3d_surface_depth_blt(src_surface, &src_rect, dst_surface, &dst_rect)))
+            if (SUCCEEDED(wined3d_surface_depth_blt(src_surface, src_rect, dst_surface, dst_rect)))
                 return WINED3D_OK;
         }
     }
@@ -1377,15 +1369,15 @@ static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_
     if ((dst_surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
             || (src_surface && (src_surface->resource.usage & WINED3DUSAGE_RENDERTARGET)))
     {
-        if (SUCCEEDED(IWineD3DSurfaceImpl_BltOverride(dst_surface, dst_rect_in,
-                src_surface, src_rect_in, flags, fx, filter)))
+        if (SUCCEEDED(IWineD3DSurfaceImpl_BltOverride(dst_surface, dst_rect,
+                src_surface, src_rect, flags, fx, filter)))
             return WINED3D_OK;
     }
 
     /* For the rest call the X11 surface implementation. For render targets
      * this should be implemented OpenGL accelerated in BltOverride, other
      * blits are rather rare. */
-    return surface_cpu_blt(dst_surface, dst_rect_in, src_surface, src_rect_in, flags, fx, filter);
+    return surface_cpu_blt(dst_surface, dst_rect, src_surface, src_rect, flags, fx, filter);
 }
 
 /* Do not call while under the GL lock. */
@@ -3410,16 +3402,24 @@ do { \
 }
 
 /* Do not call while under the GL lock. */
-HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect,
-        struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
+HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect_in,
+        struct wined3d_surface *src_surface, const RECT *src_rect_in, DWORD flags,
         const WINEDDBLTFX *fx, WINED3DTEXTUREFILTERTYPE filter)
 {
+    RECT src_rect, dst_rect;
+
     TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
-            dst_surface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
+            dst_surface, wine_dbgstr_rect(dst_rect_in), src_surface, wine_dbgstr_rect(src_rect_in),
             flags, fx, debug_d3dtexturefiltertype(filter));
 
+    surface_get_rect(dst_surface, dst_rect_in, &dst_rect);
+    if (src_surface)
+        surface_get_rect(src_surface, src_rect_in, &src_rect);
+    else
+        memset(&src_rect, 0, sizeof(src_rect));
+
     return dst_surface->surface_ops->surface_blt(dst_surface,
-            dst_rect, src_surface, src_rect, flags, fx, filter);
+            &dst_rect, src_surface, &src_rect, flags, fx, filter);
 }
 
 /* Do not call while under the GL lock. */
