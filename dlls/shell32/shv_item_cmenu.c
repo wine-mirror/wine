@@ -47,13 +47,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 */
 typedef struct
 {
-        IContextMenu2   IContextMenu2_iface;
-	LONG		ref;
-	IShellFolder*	pSFParent;
-	LPITEMIDLIST	pidl;		/* root pidl */
-	LPITEMIDLIST	*apidl;		/* array of child pidls */
-	UINT		cidl;
-	BOOL		bAllValues;
+    IContextMenu2   IContextMenu2_iface;
+    LONG            ref;
+    IShellFolder*   pSFParent;
+    LPITEMIDLIST    pidl;       /* root pidl */
+    LPITEMIDLIST    *apidl;     /* array of child pidls */
+    UINT            cidl;
+    BOOL            bAllValues;
+    UINT            verb_offset;
 } ItemCmImpl;
 
 static inline ItemCmImpl *impl_from_IContextMenu2(IContextMenu2 *iface)
@@ -223,27 +224,26 @@ static HRESULT WINAPI ISvItemCm_fnQueryContextMenu(
 	UINT idCmdLast,
 	UINT uFlags)
 {
-	ItemCmImpl *This = impl_from_IContextMenu2(iface);
-	INT uIDMax;
+    ItemCmImpl *This = impl_from_IContextMenu2(iface);
+    INT uIDMax;
 
-	TRACE("(%p)->(hmenu=%p indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",This, hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
+    TRACE("(%p)->(hmenu=%p indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",This, hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
 
-	if (idCmdFirst != 0)
-	  FIXME("We should use idCmdFirst=%d and idCmdLast=%d for command ids\n", idCmdFirst, idCmdLast);
+    This->verb_offset=idCmdFirst;
 
-	if(!(CMF_DEFAULTONLY & uFlags) && This->cidl>0)
-	{
-          HMENU hmenures = LoadMenuW(shell32_hInstance, MAKEINTRESOURCEW(MENU_SHV_FILE));
+    if(!(CMF_DEFAULTONLY & uFlags) && This->cidl>0)
+    {
+        HMENU hmenures = LoadMenuW(shell32_hInstance, MAKEINTRESOURCEW(MENU_SHV_FILE));
 
-	  if(uFlags & CMF_EXPLORE)
+        if(uFlags & CMF_EXPLORE)
             RemoveMenu(hmenures, FCIDM_SHVIEW_OPEN, MF_BYCOMMAND);
 
-          uIDMax = Shell_MergeMenus(hmenu, GetSubMenu(hmenures, 0), indexMenu, idCmdFirst, idCmdLast, MM_SUBMENUSHAVEIDS);
+        uIDMax = Shell_MergeMenus(hmenu, GetSubMenu(hmenures, 0), indexMenu, idCmdFirst, idCmdLast, MM_SUBMENUSHAVEIDS);
 
-          DestroyMenu(hmenures);
+        DestroyMenu(hmenures);
 
-	  if(This->bAllValues)
-	  {
+        if(This->bAllValues)
+        {
             MENUITEMINFOW mi;
             WCHAR str[255];
             mi.cbSize = sizeof(mi);
@@ -253,18 +253,18 @@ static HRESULT WINAPI ISvItemCm_fnQueryContextMenu(
             GetMenuItemInfoW(hmenu, FCIDM_SHVIEW_EXPLORE, MF_BYCOMMAND, &mi);
             RemoveMenu(hmenu, FCIDM_SHVIEW_EXPLORE, MF_BYCOMMAND);
             _InsertMenuItemW(hmenu, (uFlags & CMF_EXPLORE) ? 1 : 2, MF_BYPOSITION, FCIDM_SHVIEW_EXPLORE, MFT_STRING, str, MFS_ENABLED);
-	  }
+        }
 
-	  SetMenuDefaultItem(hmenu, 0, MF_BYPOSITION);
+        SetMenuDefaultItem(hmenu, 0, MF_BYPOSITION);
 
-	  if(uFlags & ~CMF_CANRENAME)
+        if(uFlags & ~CMF_CANRENAME)
             RemoveMenu(hmenu, FCIDM_SHVIEW_RENAME, MF_BYCOMMAND);
-          else
+        else
             EnableMenuItem(hmenu, FCIDM_SHVIEW_RENAME, MF_BYCOMMAND | ISvItemCm_CanRenameItems(This) ? MFS_ENABLED : MFS_DISABLED);
 
-	  return MAKE_HRESULT(SEVERITY_SUCCESS, 0, uIDMax);
-	}
-	return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
+        return MAKE_HRESULT(SEVERITY_SUCCESS, 0, uIDMax-idCmdFirst);
+    }
+    return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
 }
 
 /**************************************************************************
@@ -520,7 +520,7 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
 
     if (HIWORD(lpcmi->lpVerb) == 0)
     {
-        switch(LOWORD(lpcmi->lpVerb))
+        switch(LOWORD(lpcmi->lpVerb-This->verb_offset))
         {
         case FCIDM_SHVIEW_EXPLORE:
             TRACE("Verb FCIDM_SHVIEW_EXPLORE\n");
@@ -551,7 +551,7 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
             DoOpenProperties(This, lpcmi->hwnd);
             break;
         default:
-            FIXME("Unhandled Verb %xl\n",LOWORD(lpcmi->lpVerb));
+            FIXME("Unhandled Verb %xl\n",LOWORD(lpcmi->lpVerb)-This->verb_offset);
             return E_INVALIDARG;
         }
     }
@@ -595,9 +595,9 @@ static HRESULT WINAPI ISvItemCm_fnGetCommandString(
 	    break;
 
 	  case GCS_VERBA:
-	    switch(idCommand)
+	    switch(idCommand-This->verb_offset)
 	    {
-	      case FCIDM_SHVIEW_RENAME:
+	    case FCIDM_SHVIEW_RENAME:
 	        strcpy(lpszName, "rename");
 	        hr = NOERROR;
 	        break;
@@ -607,8 +607,9 @@ static HRESULT WINAPI ISvItemCm_fnGetCommandString(
 	     /* NT 4.0 with IE 3.0x or no IE will always call This with GCS_VERBW. In This
 	     case, you need to do the lstrcpyW to the pointer passed.*/
 	  case GCS_VERBW:
-	    switch(idCommand)
-	    { case FCIDM_SHVIEW_RENAME:
+	    switch(idCommand-This->verb_offset)
+	    {
+	    case FCIDM_SHVIEW_RENAME:
                 MultiByteToWideChar( CP_ACP, 0, "rename", -1, (LPWSTR)lpszName, uMaxNameLen );
 	        hr = NOERROR;
 	        break;

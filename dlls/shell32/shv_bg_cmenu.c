@@ -42,10 +42,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 */
 typedef struct
 {
-	const IContextMenu2Vtbl *lpVtbl;
-	IShellFolder*	pSFParent;
-	LONG		ref;
-	BOOL		bDesktop;
+    const IContextMenu2Vtbl *lpVtbl;
+    IShellFolder*           pSFParent;
+    LONG                    ref;
+    BOOL                    bDesktop;
+    UINT                    verb_offset;
 } BgCmImpl;
 
 
@@ -157,6 +158,7 @@ static HRESULT WINAPI ISVBgCm_fnQueryContextMenu(
     TRACE("(%p)->(hmenu=%p indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",
           This, hMenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
 
+    This->verb_offset=idCmdFirst;
 
     hMyMenu = LoadMenuA(shell32_hInstance, "MENU_002");
     if (uFlags & CMF_DEFAULTONLY)
@@ -175,7 +177,7 @@ static HRESULT WINAPI ISVBgCm_fnQueryContextMenu(
     {
         idMax = Shell_MergeMenus (hMenu, GetSubMenu(hMyMenu,0), indexMenu,
                                   idCmdFirst, idCmdLast, MM_SUBMENUSHAVEIDS);
-        hr =  MAKE_HRESULT(SEVERITY_SUCCESS, FACILITY_NULL, idMax-idCmdFirst+1);
+        hr =  MAKE_HRESULT(SEVERITY_SUCCESS, FACILITY_NULL, idMax-idCmdFirst);
     }
     DestroyMenu(hMyMenu);
 
@@ -358,7 +360,7 @@ static HRESULT WINAPI ISVBgCm_fnInvokeCommand(
 	  }
 	  else
 	  {
-	    switch(LOWORD(lpcmi->lpVerb))
+	    switch(LOWORD(lpcmi->lpVerb)-This->verb_offset)
 	    {
 	      case FCIDM_SHVIEW_REFRESH:
 	        if (lpSV) IShellView_Refresh(lpSV);
