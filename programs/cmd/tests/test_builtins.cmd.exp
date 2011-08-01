@@ -146,6 +146,21 @@ ERRORLEVEL
 P0
 0S
 P0S
+------------ Testing variable delayed expansion --------------
+...default mode (load-time expansion)
+foo
+!FOO!
+foo
+foo
+...runtime (delayed) expansion mode
+foo
+@todo_wine@foo@or_broken@!FOO!
+foo
+@todo_wine@bar@or_broken@foo
+0
+0@or_broken@1
+foo
+!FOO!
 ------------ Testing conditional execution --------------
 @todo_wine@...unconditional &
 foo1

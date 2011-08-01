@@ -168,6 +168,46 @@ echo P%ERRORLEVEL%
 echo %ERRORLEVEL%S
 echo P%ERRORLEVEL%S
 
+echo ------------ Testing variable delayed expansion --------------
+rem NT4 doesn't support this
+echo ...default mode (load-time expansion)
+set FOO=foo
+echo %FOO%
+echo !FOO!
+if %FOO% == foo (
+    set FOO=bar
+    if %FOO% == bar (echo bar) else echo foo
+)
+
+set FOO=foo
+if %FOO% == foo (
+    set FOO=bar
+    if !FOO! == bar (echo bar) else echo foo
+)
+
+echo ...runtime (delayed) expansion mode
+setlocal EnableDelayedExpansion
+set FOO=foo
+echo %FOO%
+echo !FOO!
+if %FOO% == foo (
+    set FOO=bar
+    if %FOO% == bar (echo bar) else echo foo
+)
+
+set FOO=foo
+if %FOO% == foo (
+    set FOO=bar
+    if !FOO! == bar (echo bar) else echo foo
+)
+echo %ErrorLevel%
+setlocal DisableDelayedExpansion
+echo %ErrorLevel%
+set FOO=foo
+echo %FOO%
+echo !FOO!
+set FOO=
+
 echo ------------ Testing conditional execution --------------
 echo ...unconditional ^&
 call :setError 123 & echo foo1
