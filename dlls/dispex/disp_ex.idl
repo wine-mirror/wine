@@ -1,1 +1,7 @@
 #include "dispex.idl"
+
+[
+    threading(both),
+    uuid(10e2414a-ec59-49d2-bc51-5add2c36febc)  /* IDispatchEx */
+]
+coclass PSFactoryBuffer { interface IFactoryBuffer; }
