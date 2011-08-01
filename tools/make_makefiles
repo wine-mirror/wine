@@ -310,11 +310,12 @@ sub parse_makefile($)
             $make{"=rules"} = $makerules{$var};
             next;
         }
-        if (/^\s*(MODULE|IMPORTLIB|TESTDLL)\s*=\s*(.*)/)
+        if (/^\s*(MODULE|IMPORTLIB|TESTDLL|MANPAGE)\s*=\s*(.*)/)
         {
             my $var = $1;
             $make{$var} = $2;
             push @{$make{"=flags"}}, "implib" if $var eq "IMPORTLIB";
+            push @{$make{"=flags"}}, "manpage" if $var eq "MANPAGE";
             next;
         }
         if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPRS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|MC_SRCS|RC_SRCS|PO_SRCS|SVG_SRCS|PROGRAMS)\s*=\s*(.*)/)

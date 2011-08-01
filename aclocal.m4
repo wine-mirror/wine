@@ -477,6 +477,15 @@ $ac_dir/__uninstall__::
 	\$(INSTALL_PROGRAM) $ac_dir/$ac_program \$(DESTDIR)\$(dlldir)/$ac_program
 $ac_dir/__uninstall__::
 	\$(RM) \$(DESTDIR)\$(dlldir)/$ac_program"
+    fi
+
+    if test "x$enable_tools" != xno && wine_fn_has_flag manpage $ac_flags
+    then
+        wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir/__install__:: $ac_dir \$(DESTDIR)\$(mandir)/man\$(prog_manext)
+	\$(INSTALL_DATA) $ac_dir/$ac_name.man \$(DESTDIR)\$(mandir)/man\$(prog_manext)/$ac_name.\$(prog_manext)
+$ac_dir/__uninstall__::
+	\$(RM) \$(DESTDIR)\$(mandir)/man\$(prog_manext)/$ac_name.\$(prog_manext)"
     fi])
 }
 

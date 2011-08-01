@@ -14549,6 +14549,15 @@ $ac_dir/__uninstall__::
 $ac_dir/__uninstall__::
 	\$(RM) \$(DESTDIR)\$(dlldir)/$ac_program"
     fi
+
+    if test "x$enable_tools" != xno && wine_fn_has_flag manpage $ac_flags
+    then
+        wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir/__install__:: $ac_dir \$(DESTDIR)\$(mandir)/man\$(prog_manext)
+	\$(INSTALL_DATA) $ac_dir/$ac_name.man \$(DESTDIR)\$(mandir)/man\$(prog_manext)/$ac_name.\$(prog_manext)
+$ac_dir/__uninstall__::
+	\$(RM) \$(DESTDIR)\$(mandir)/man\$(prog_manext)/$ac_name.\$(prog_manext)"
+    fi
 fi
 }
 
@@ -15244,7 +15253,7 @@ wine_fn_config_makefile include enable_include install-dev
 wine_fn_config_makefile libs/port enable_libs_port
 wine_fn_config_makefile libs/wine enable_libs_wine install-dev,install-lib
 wine_fn_config_makefile libs/wpp enable_libs_wpp
-wine_fn_config_makefile loader enable_loader install-lib
+wine_fn_config_makefile loader enable_loader install-lib,manpage
 wine_fn_config_program aspnet_regiis enable_aspnet_regiis install
 wine_fn_config_program attrib enable_attrib install
 wine_fn_config_program cabarc enable_cabarc install
@@ -15267,20 +15276,20 @@ wine_fn_config_program ipconfig enable_ipconfig install,po
 wine_fn_config_program lodctr enable_lodctr install
 wine_fn_config_program mofcomp enable_mofcomp install
 wine_fn_config_program mshta enable_mshta install
-wine_fn_config_program msiexec enable_msiexec install,installbin
+wine_fn_config_program msiexec enable_msiexec install,installbin,manpage
 wine_fn_config_program net enable_net install,po
 wine_fn_config_program netsh enable_netsh install
 wine_fn_config_program ngen enable_ngen install
-wine_fn_config_program notepad enable_notepad install,installbin,po
+wine_fn_config_program notepad enable_notepad install,installbin,manpage,po
 wine_fn_config_program oleview enable_oleview install,po
 wine_fn_config_program ping enable_ping install
 wine_fn_config_program plugplay enable_plugplay install
 wine_fn_config_program progman enable_progman install,po
 wine_fn_config_program reg enable_reg install,po
-wine_fn_config_program regedit enable_regedit install,installbin,po
+wine_fn_config_program regedit enable_regedit install,installbin,manpage,po
 wine_fn_config_test programs/regedit/tests regedit.exe_test
 wine_fn_config_program regsvcs enable_regsvcs install
-wine_fn_config_program regsvr32 enable_regsvr32 install,installbin
+wine_fn_config_program regsvr32 enable_regsvr32 install,installbin,manpage
 wine_fn_config_program rpcss enable_rpcss install
 wine_fn_config_program rundll.exe16 enable_win16 install
 wine_fn_config_program rundll32 enable_rundll32 install
@@ -15297,17 +15306,17 @@ wine_fn_config_program termsv enable_termsv install
 wine_fn_config_program uninstaller enable_uninstaller install,po
 wine_fn_config_program unlodctr enable_unlodctr install
 wine_fn_config_program view enable_view po
-wine_fn_config_program wineboot enable_wineboot install,installbin
+wine_fn_config_program wineboot enable_wineboot install,installbin,manpage
 wine_fn_config_program winebrowser enable_winebrowser install
-wine_fn_config_program winecfg enable_winecfg install,installbin,po
-wine_fn_config_program wineconsole enable_wineconsole install,installbin,po
-wine_fn_config_program winedbg enable_winedbg install,installbin,po
+wine_fn_config_program winecfg enable_winecfg install,installbin,manpage,po
+wine_fn_config_program wineconsole enable_wineconsole install,installbin,manpage,po
+wine_fn_config_program winedbg enable_winedbg install,installbin,manpage,po
 wine_fn_config_program winedevice enable_winedevice install
-wine_fn_config_program winefile enable_winefile install,installbin,po
+wine_fn_config_program winefile enable_winefile install,installbin,manpage,po
 wine_fn_config_program winemenubuilder enable_winemenubuilder install
-wine_fn_config_program winemine enable_winemine install,installbin,po
+wine_fn_config_program winemine enable_winemine install,installbin,manpage,po
 wine_fn_config_program winemsibuilder enable_winemsibuilder install
-wine_fn_config_program winepath enable_winepath install,installbin
+wine_fn_config_program winepath enable_winepath install,installbin,manpage
 wine_fn_config_program winetest enable_winetest
 wine_fn_config_program winevdm enable_win16 install
 wine_fn_config_program winhelp.exe16 enable_win16 install
@@ -15320,14 +15329,14 @@ wine_fn_config_program write enable_write install,po
 wine_fn_config_program wscript enable_wscript install
 wine_fn_config_test programs/wscript/tests wscript.exe_test
 wine_fn_config_program xcopy enable_xcopy install,po
-wine_fn_config_makefile server enable_server install-lib
-wine_fn_config_tool tools install-dev,install-lib
-wine_fn_config_tool tools/widl install-dev
-wine_fn_config_tool tools/winebuild install-dev
-wine_fn_config_tool tools/winedump install-dev
-wine_fn_config_tool tools/winegcc install-dev
-wine_fn_config_tool tools/wmc install-dev
-wine_fn_config_tool tools/wrc install-dev
+wine_fn_config_makefile server enable_server install-lib,manpage
+wine_fn_config_tool tools install-dev,install-lib,manpage
+wine_fn_config_tool tools/widl install-dev,manpage
+wine_fn_config_tool tools/winebuild install-dev,manpage
+wine_fn_config_tool tools/winedump install-dev,manpage
+wine_fn_config_tool tools/winegcc install-dev,manpage
+wine_fn_config_tool tools/wmc install-dev,manpage
+wine_fn_config_tool tools/wrc install-dev,manpage
 
 LINGUAS="\
 ar \

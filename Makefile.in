@@ -29,7 +29,8 @@ EXTRASUBDIRS = \
 INSTALLDIRS = \
 	$(DESTDIR)$(bindir) \
 	$(DESTDIR)$(dlldir) \
-	$(DESTDIR)$(fakedlldir)
+	$(DESTDIR)$(fakedlldir) \
+	$(DESTDIR)$(mandir)/man$(prog_manext)
 
 all: wine
 	@echo "Wine build complete."
