@@ -80,7 +80,7 @@ static const type_t *find_ps_factory( const statement_list_t *stmts )
 static int write_interface( const type_t *iface, const type_t *ps_factory )
 {
     const UUID *uuid = get_attrp( iface->attrs, ATTR_UUID );
-    const UUID *ps_uuid = ps_factory ? get_attrp( ps_factory->attrs, ATTR_UUID ) : NULL;
+    const UUID *ps_uuid = get_attrp( ps_factory->attrs, ATTR_UUID );
 
     if (!uuid) return 0;
     if (!is_object( iface )) return 0;
@@ -94,8 +94,7 @@ static int write_interface( const type_t *iface, const type_t *ps_factory )
     put_str( indent, "{\n" );
     indent++;
     put_str( indent, "NumMethods = s %u\n", count_methods( iface ));
-    put_str( indent, "ProxyStubClsid32 = s '%s'\n",
-             ps_uuid ? format_uuid( ps_uuid ) : "%CLSID_PSFactoryBuffer%" );
+    put_str( indent, "ProxyStubClsid32 = s '%s'\n", format_uuid( ps_uuid ));
     indent--;
     put_str( indent, "}\n" );
     return 1;
@@ -222,7 +221,6 @@ static inline void put_string( const char *str )
 
 void write_regscript( const statement_list_t *stmts )
 {
-    int count;
     const type_t *ps_factory;
 
     if (!do_regscript) return;
@@ -236,18 +234,11 @@ void write_regscript( const statement_list_t *stmts )
     put_str( indent, "NoRemove Interface\n" );
     put_str( indent++, "{\n" );
     ps_factory = find_ps_factory( stmts );
-    count = write_interfaces( stmts, ps_factory );
+    if (ps_factory) write_interfaces( stmts, ps_factory );
     put_str( --indent, "}\n" );
 
     put_str( indent, "NoRemove CLSID\n" );
     put_str( indent++, "{\n" );
-    if (count && !ps_factory)
-    {
-        put_str( indent, "ForceRemove '%%CLSID_PSFactoryBuffer%%' = s 'PSFactoryBuffer'\n" );
-        put_str( indent++, "{\n" );
-        put_str( indent, "InprocServer32 = s '%%MODULE%%' { val ThreadingModel = s 'Both' }\n" );
-        put_str( --indent, "}\n" );
-    }
     write_coclasses( stmts, NULL );
     put_str( --indent, "}\n" );
 
