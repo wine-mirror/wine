@@ -1304,6 +1304,12 @@ static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_
         goto fallback;
     }
 
+    if (!device->d3d_initialized)
+    {
+        WARN("D3D not initialized, using fallback.\n");
+        goto fallback;
+    }
+
     dst_ds_flags = dst_surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
     if (src_surface)
         src_ds_flags = src_surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
