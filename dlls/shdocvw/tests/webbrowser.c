@@ -135,6 +135,8 @@ DEFINE_EXPECT(GetDropTarget);
 DEFINE_EXPECT(TranslateUrl);
 DEFINE_EXPECT(ShowUI);
 DEFINE_EXPECT(HideUI);
+DEFINE_EXPECT(OnUIDeactivate);
+DEFINE_EXPECT(OnInPlaceDeactivate);
 DEFINE_EXPECT(RequestUIActivate);
 DEFINE_EXPECT(ControlSite_TranslateAccelerator);
 DEFINE_EXPECT(OnFocus);
@@ -147,7 +149,7 @@ static VARIANT_BOOL exvb;
 static IWebBrowser2 *wb;
 
 static HWND container_hwnd, shell_embedding_hwnd;
-static BOOL is_downloading, is_first_load, use_container_olecmd;
+static BOOL is_downloading, is_first_load, use_container_olecmd, test_close;
 static HRESULT hr_dochost_TranslateAccelerator = E_NOTIMPL;
 static HRESULT hr_site_TranslateAccelerator = E_NOTIMPL;
 static const char *current_url;
@@ -1106,8 +1108,13 @@ static HRESULT WINAPI InPlaceUIWindow_SetActiveObject(IOleInPlaceFrame *iface,
         IOleInPlaceActiveObject *pActiveObject, LPCOLESTR pszObjName)
 {
     CHECK_EXPECT(UIWindow_SetActiveObject);
-    ok(pActiveObject != NULL, "pActiveObject = NULL\n");
-    ok(!lstrcmpW(pszObjName, wszItem), "unexpected pszObjName\n");
+    if(!test_close) {
+        ok(pActiveObject != NULL, "pActiveObject = NULL\n");
+        ok(!lstrcmpW(pszObjName, wszItem), "unexpected pszObjName\n");
+    } else {
+        ok(!pActiveObject, "pActiveObject != NULL\n");
+        ok(!pszObjName, "pszObjName != NULL\n");
+    }
     return S_OK;
 }
 
@@ -1115,8 +1122,13 @@ static HRESULT WINAPI InPlaceFrame_SetActiveObject(IOleInPlaceFrame *iface,
         IOleInPlaceActiveObject *pActiveObject, LPCOLESTR pszObjName)
 {
     CHECK_EXPECT(Frame_SetActiveObject);
-    ok(pActiveObject != NULL, "pActiveObject = NULL\n");
-    ok(!lstrcmpW(pszObjName, wszItem), "unexpected pszObjName\n");
+    if(!test_close) {
+        ok(pActiveObject != NULL, "pActiveObject = NULL\n");
+        ok(!lstrcmpW(pszObjName, wszItem), "unexpected pszObjName\n");
+    } else {
+        ok(!pActiveObject, "pActiveObject != NULL\n");
+        ok(!pszObjName, "pszObjName != NULL\n");
+    }
     return S_OK;
 }
 
@@ -1293,14 +1305,15 @@ static HRESULT WINAPI InPlaceSite_Scroll(IOleInPlaceSiteEx *iface, SIZE scrollEx
 
 static HRESULT WINAPI InPlaceSite_OnUIDeactivate(IOleInPlaceSiteEx *iface, BOOL fUndoable)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(OnUIDeactivate);
+    ok(!fUndoable, "fUndoable should be FALSE\n");
+    return S_OK;
 }
 
 static HRESULT WINAPI InPlaceSite_OnInPlaceDeactivate(IOleInPlaceSiteEx *iface)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(OnInPlaceDeactivate);
+    return S_OK;
 }
 
 static HRESULT WINAPI InPlaceSite_DiscardUndoState(IOleInPlaceSiteEx *iface)
@@ -2979,7 +2992,52 @@ static void test_dochost_qs(IUnknown *unk)
     IServiceProvider_Release(serv_prov);
 }
 
-static void test_WebBrowser(BOOL do_download)
+static void test_Close(IWebBrowser2 *wb, BOOL do_download)
+{
+    IOleObject *oo;
+    IOleClientSite *ocs;
+    HRESULT hres;
+
+    hres = IWebBrowser2_QueryInterface(wb, &IID_IOleObject, (void**)&oo);
+    ok(hres == S_OK, "QueryInterface failed: %08x\n", hres);
+    if(hres != S_OK)
+        return;
+
+    test_close = TRUE;
+
+    SET_EXPECT(Frame_SetActiveObject);
+    SET_EXPECT(UIWindow_SetActiveObject);
+    SET_EXPECT(OnUIDeactivate);
+    SET_EXPECT(OnFocus);
+    SET_EXPECT(OnInPlaceDeactivate);
+    if(!do_download) {
+        SET_EXPECT(Invoke_COMMANDSTATECHANGE);
+        SET_EXPECT(Invoke_DOWNLOADCOMPLETE);
+    }
+    hres = IOleObject_Close(oo, OLECLOSE_NOSAVE);
+    ok(hres == S_OK, "OleObject_Close failed: %x\n", hres);
+    CHECK_CALLED(Frame_SetActiveObject);
+    CHECK_CALLED(UIWindow_SetActiveObject);
+    CHECK_CALLED(OnUIDeactivate);
+    todo_wine CHECK_CALLED(OnFocus);
+    CHECK_CALLED(OnInPlaceDeactivate);
+    if(!do_download) {
+        todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
+        todo_wine CHECK_CALLED(Invoke_DOWNLOADCOMPLETE);
+    }
+
+    hres = IOleObject_GetClientSite(oo, &ocs);
+    ok(hres == S_OK, "hres = %x\n", hres);
+    ok(!ocs, "ocs != NULL\n");
+
+    hres = IOleObject_Close(oo, OLECLOSE_NOSAVE);
+    ok(hres == S_OK, "OleObject_Close failed: %x\n", hres);
+
+    test_close = FALSE;
+    IOleObject_Release(oo);
+}
+
+static void test_WebBrowser(BOOL do_download, BOOL do_close)
 {
     IUnknown *unk = NULL;
     ULONG ref;
@@ -3035,7 +3093,10 @@ static void test_WebBrowser(BOOL do_download)
         test_dochost_qs(unk);
     }
 
-    test_ClientSite(unk, NULL, !do_download);
+    if(do_close)
+        test_Close(wb, do_download);
+    else
+        test_ClientSite(unk, NULL, !do_download);
     test_ie_funcs(unk);
     test_GetControlInfo(unk);
     test_wb_funcs(unk, FALSE);
@@ -3103,9 +3164,11 @@ START_TEST(webbrowser)
       container_hwnd = create_container_window();
 
       trace("Testing WebBrowser (no download)...\n");
-      test_WebBrowser(FALSE);
+      test_WebBrowser(FALSE, FALSE);
+      test_WebBrowser(FALSE, TRUE);
       trace("Testing WebBrowser...\n");
-      test_WebBrowser(TRUE);
+      test_WebBrowser(TRUE, FALSE);
+      test_WebBrowser(TRUE, TRUE);
       trace("Testing WebBrowser w/o container-based olecmd...\n");
       test_WebBrowser_NoContainerOlecmd();
     }else {
