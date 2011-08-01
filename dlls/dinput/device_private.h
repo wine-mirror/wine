@@ -237,18 +237,10 @@ extern HRESULT WINAPI IDirectInputDevice7WImpl_WriteEffectToFile(LPDIRECTINPUTDE
 								 DWORD dwEntries,
 								 LPDIFILEEFFECT rgDiFileEft,
 								 DWORD dwFlags)  DECLSPEC_HIDDEN;
-extern HRESULT WINAPI IDirectInputDevice8AImpl_BuildActionMap(LPDIRECTINPUTDEVICE8A iface,
-							      LPDIACTIONFORMATA lpdiaf,
-							      LPCSTR lpszUserName,
-							      DWORD dwFlags) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI IDirectInputDevice8WImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W iface,
 							      LPDIACTIONFORMATW lpdiaf,
 							      LPCWSTR lpszUserName,
 							      DWORD dwFlags) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI IDirectInputDevice8AImpl_SetActionMap(LPDIRECTINPUTDEVICE8A iface,
-							    LPDIACTIONFORMATA lpdiaf,
-							    LPCSTR lpszUserName,
-							    DWORD dwFlags) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI IDirectInputDevice8WImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
 							    LPDIACTIONFORMATW lpdiaf,
 							    LPCWSTR lpszUserName,

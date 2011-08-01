@@ -1424,22 +1424,6 @@ HRESULT WINAPI IDirectInputDevice7WImpl_WriteEffectToFile(LPDIRECTINPUTDEVICE8W 
     return DI_OK;
 }
 
-HRESULT WINAPI IDirectInputDevice8AImpl_BuildActionMap(LPDIRECTINPUTDEVICE8A iface,
-						       LPDIACTIONFORMATA lpdiaf,
-						       LPCSTR lpszUserName,
-						       DWORD dwFlags)
-{
-    FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, lpszUserName, dwFlags);
-#define X(x) if (dwFlags & x) FIXME("\tdwFlags =|"#x"\n");
-	X(DIDBAM_DEFAULT)
-	X(DIDBAM_PRESERVE)
-	X(DIDBAM_INITIALIZE)
-	X(DIDBAM_HWDEFAULTS)
-#undef X
-    _dump_diactionformatA(lpdiaf);
-    return DI_OK;
-}
-
 HRESULT WINAPI IDirectInputDevice8WImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W iface,
 						       LPDIACTIONFORMATW lpdiaf,
 						       LPCWSTR lpszUserName,
@@ -1454,27 +1438,6 @@ HRESULT WINAPI IDirectInputDevice8WImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W ifa
 #undef X
   
     return DI_OK;
-}
-
-HRESULT WINAPI IDirectInputDevice8AImpl_SetActionMap(LPDIRECTINPUTDEVICE8A iface,
-						     LPDIACTIONFORMATA lpdiaf,
-						     LPCSTR lpszUserName,
-						     DWORD dwFlags)
-{
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
-    DIACTIONFORMATW diafW;
-    HRESULT hr;
-
-    FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, lpszUserName, dwFlags);
-
-    diafW.rgoAction = HeapAlloc(GetProcessHeap(), 0, sizeof(DIACTIONW)*lpdiaf->dwNumActions);
-    _copy_diactionformatAtoW(&diafW, lpdiaf);
-
-    hr = IDirectInputDevice8WImpl_SetActionMap(&This->IDirectInputDevice8W_iface, &diafW, NULL, dwFlags);
-
-    HeapFree(GetProcessHeap(), 0, diafW.rgoAction);
-
-    return hr;
 }
 
 HRESULT WINAPI IDirectInputDevice8WImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
