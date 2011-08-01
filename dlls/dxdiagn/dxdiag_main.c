@@ -60,11 +60,22 @@ typedef struct {
 
 static HRESULT WINAPI DXDiagCF_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
 {
-  FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+  if (ppv == NULL)
+    return E_POINTER;
 
-  if (ppv == NULL) return E_POINTER;
-  
-  return E_NOINTERFACE;
+  if (IsEqualGUID(&IID_IUnknown, riid))
+    TRACE("(%p)->(IID_IUnknown %p)\n", iface, ppv);
+  else if (IsEqualGUID(&IID_IClassFactory, riid))
+    TRACE("(%p)->(IID_IClassFactory %p)\n", iface, ppv);
+  else {
+    FIXME("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+    *ppv = NULL;
+    return E_NOINTERFACE;
+  }
+
+  *ppv = iface;
+  IClassFactory_AddRef(iface);
+  return S_OK;
 }
 
 static ULONG WINAPI DXDiagCF_AddRef(IClassFactory *iface)
