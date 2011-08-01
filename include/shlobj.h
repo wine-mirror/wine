@@ -1701,6 +1701,30 @@ static inline BOOL ILIsEmpty(LPCITEMIDLIST pidl)
     return !(pidl && pidl->mkid.cb);
 }
 
+#include <pshpack8.h>
+
+typedef struct {
+    HWND hwnd;
+    IContextMenuCB *pcmcb;
+    PCIDLIST_ABSOLUTE pidlFolder;
+    IShellFolder *psf;
+    UINT cidl;
+    PCUITEMID_CHILD_ARRAY apidl;
+    IUnknown *punkAssociationInfo;
+    UINT cKeys;
+    const HKEY *aKeys;
+} DEFCONTEXTMENU;
+
+#include <poppack.h>
+
+HRESULT WINAPI SHCreateDefaultContextMenu(const DEFCONTEXTMENU *pdcm, REFIID riid, void **ppv);
+
+typedef HRESULT (CALLBACK *LPFNDFMCALLBACK)(IShellFolder*,HWND,IDataObject*,UINT,WPARAM,LPARAM);
+
+HRESULT WINAPI CDefFolderMenu_Create2(LPCITEMIDLIST pidlFolder, HWND hwnd, UINT cidl,
+                                      LPCITEMIDLIST *apidl, IShellFolder *psf,
+                                      LPFNDFMCALLBACK lpfn, UINT nKeys, const HKEY *ahkeys,
+                                      IContextMenu **ppcm);
 
 #include <poppack.h>
 
