@@ -1263,7 +1263,7 @@ static WAVEHDR *WOD_MarkDoneHeaders(WINMM_Device *device)
     HRESULT hr;
     WAVEHDR *queue, *first = device->first;
     UINT64 clock_freq, clock_pos, clock_frames;
-    UINT32 nloops, queue_frames;
+    UINT32 nloops, queue_frames = 0;
 
     hr = IAudioClock_GetFrequency(device->clock, &clock_freq);
     if(FAILED(hr)){
@@ -1282,19 +1282,21 @@ static WAVEHDR *WOD_MarkDoneHeaders(WINMM_Device *device)
     first = queue = device->first;
     nloops = device->loop_counter;
     while(queue &&
-            (queue_frames = WINMM_HeaderLenFrames(device, queue)) <=
+            (queue_frames += WINMM_HeaderLenFrames(device, queue)) <=
                 clock_frames - device->last_clock_pos){
-        WAVEHDR *next = queue->lpNext;
         if(!nloops){
             device->first->dwFlags &= ~WHDR_INQUEUE;
             device->first->dwFlags |= WHDR_DONE;
             device->last_clock_pos += queue_frames;
-            queue = device->first = next;
+            queue_frames = 0;
+            queue = device->first = queue->lpNext;
         }else{
-            if(queue->dwFlags & WHDR_BEGINLOOP)
-                queue = next;
-
-            if(queue->dwFlags & WHDR_ENDLOOP){
+            if(queue->dwFlags & WHDR_BEGINLOOP){
+                if(queue->dwFlags & WHDR_ENDLOOP)
+                    --nloops;
+                else
+                    queue = queue->lpNext;
+            }else if(queue->dwFlags & WHDR_ENDLOOP){
                 queue = device->loop_start;
                 --nloops;
             }
@@ -2476,8 +2478,13 @@ UINT WINAPI waveOutWrite(HWAVEOUT hWaveOut, WAVEHDR *header, UINT uSize)
         device->last = header;
         if(!device->playing)
             device->playing = header;
-    }else
+    }else{
         device->playing = device->first = device->last = header;
+        if(header->dwFlags & WHDR_BEGINLOOP){
+            device->loop_counter = header->dwLoops;
+            device->loop_start = header;
+        }
+    }
 
     header->lpNext = NULL;
     header->dwFlags &= ~WHDR_DONE;
