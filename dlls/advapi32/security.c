@@ -607,6 +607,19 @@ CheckTokenMembership( HANDLE token, PSID sid_to_check,
         }
         token = thread_token;
     }
+    else
+    {
+        TOKEN_TYPE type;
+
+        ret = GetTokenInformation(token, TokenType, &type, sizeof(TOKEN_TYPE), &size);
+        if (!ret) goto exit;
+
+        if (type == TokenPrimary)
+        {
+            SetLastError(ERROR_NO_IMPERSONATION_TOKEN);
+            return FALSE;
+        }
+    }
 
     ret = GetTokenInformation(token, TokenGroups, NULL, 0, &size);
     if (!ret && GetLastError() != ERROR_INSUFFICIENT_BUFFER)

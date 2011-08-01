@@ -3637,21 +3637,23 @@ static void test_CheckTokenMembership(void)
         return;
     }
 
+    is_member = FALSE;
     ret = pCheckTokenMembership(token, token_groups->Groups[i].Sid, &is_member);
     ok(ret, "CheckTokenMembership failed with error %d\n", GetLastError());
     ok(is_member, "CheckTokenMembership should have detected sid as member\n");
 
+    is_member = FALSE;
     ret = pCheckTokenMembership(NULL, token_groups->Groups[i].Sid, &is_member);
     ok(ret, "CheckTokenMembership failed with error %d\n", GetLastError());
     ok(is_member, "CheckTokenMembership should have detected sid as member\n");
 
+    is_member = TRUE;
+    SetLastError(0xdeadbeef);
     ret = pCheckTokenMembership(process_token, token_groups->Groups[i].Sid, &is_member);
-todo_wine {
     ok(!ret && GetLastError() == ERROR_NO_IMPERSONATION_TOKEN,
         "CheckTokenMembership with process token %s with error %d\n",
         ret ? "succeeded" : "failed", GetLastError());
     ok(!is_member, "CheckTokenMembership should have cleared is_member\n");
-}
 
     HeapFree(GetProcessHeap(), 0, token_groups);
     CloseHandle(token);
