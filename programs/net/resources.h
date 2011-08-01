@@ -35,3 +35,9 @@
 #define STRING_NO_ENTRIES	  115
 #define STRING_USE_HEADER	  116
 #define STRING_USE_ENTRY	  117
+#define STRING_OK		  118
+#define STRING_PAUSED		  119
+#define STRING_SESSLOST 	  120
+#define STRING_NETERR		  121
+#define STRING_CONN		  122
+#define STRING_RECONN		  123

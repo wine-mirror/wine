@@ -42,4 +42,10 @@ STRINGTABLE
     STRING_NO_ENTRIES, "There are no entries in the list.\n"
     STRING_USE_HEADER, "\nStatus  Local   Remote\n---------------------------------------------------------------\n"
     STRING_USE_ENTRY,  "%s      %S      %S      Open resources: %lu\n"
+    STRING_OK, "OK"
+    STRING_PAUSED, "Paused"
+    STRING_SESSLOST, "Disconnected"
+    STRING_NETERR "A network error occurred"
+    STRING_CONN "Connection is being made"
+    STRING_RECONN, "Reconnecting"
 }

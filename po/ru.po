@@ -8665,6 +8665,35 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S         %S      Открытых ресурсов: %lu\n"
 
+#: net.rc:45
+msgid "OK"
+msgstr ""
+
+#: net.rc:46
+#, fuzzy
+msgid "Paused"
+msgstr "&Приостановить"
+
+#: net.rc:47
+#, fuzzy
+msgid "Disconnected"
+msgstr "Канал уже подсоединён\n"
+
+#: net.rc:48
+#, fuzzy
+msgid "A network error occurred"
+msgstr "Произошла ошибка принтера"
+
+#: net.rc:49
+#, fuzzy
+msgid "Connection is being made"
+msgstr "Соединение активно\n"
+
+#: net.rc:50
+#, fuzzy
+msgid "Reconnecting"
+msgstr "Подключение к %s"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "Созд&ать\tCtrl+N"

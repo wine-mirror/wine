@@ -8644,6 +8644,35 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S       %S      リソース数: %lu\n"
 
+#: net.rc:45
+msgid "OK"
+msgstr ""
+
+#: net.rc:46
+#, fuzzy
+msgid "Paused"
+msgstr "一時停止(&P)"
+
+#: net.rc:47
+#, fuzzy
+msgid "Disconnected"
+msgstr "パイプは接続されています。\n"
+
+#: net.rc:48
+#, fuzzy
+msgid "A network error occurred"
+msgstr "プリンタ エラーが発生しました。"
+
+#: net.rc:49
+#, fuzzy
+msgid "Connection is being made"
+msgstr "接続はアクティブです。\n"
+
+#: net.rc:50
+#, fuzzy
+msgid "Reconnecting"
+msgstr "%s に接続しています"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "新規作成(&N)\tCtrl+N"

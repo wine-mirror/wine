@@ -8696,6 +8696,35 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Odprta sredstva: %lu\n"
 
+#: net.rc:45
+msgid "OK"
+msgstr ""
+
+#: net.rc:46
+#, fuzzy
+msgid "Paused"
+msgstr "V &premoru"
+
+#: net.rc:47
+#, fuzzy
+msgid "Disconnected"
+msgstr "Cev je povezana\n"
+
+#: net.rc:48
+#, fuzzy
+msgid "A network error occurred"
+msgstr "Prišlo je do napake tiskanja."
+
+#: net.rc:49
+#, fuzzy
+msgid "Connection is being made"
+msgstr "Povezava je dejavna\n"
+
+#: net.rc:50
+#, fuzzy
+msgid "Reconnecting"
+msgstr "Povezovanje z %s"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Nova\tCtrl+N"

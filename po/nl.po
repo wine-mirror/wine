@@ -8811,6 +8811,35 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Open resources: %lu\n"
 
+#: net.rc:45
+msgid "OK"
+msgstr ""
+
+#: net.rc:46
+#, fuzzy
+msgid "Paused"
+msgstr "&Pauze"
+
+#: net.rc:47
+#, fuzzy
+msgid "Disconnected"
+msgstr "Pipe verbonden\n"
+
+#: net.rc:48
+#, fuzzy
+msgid "A network error occurred"
+msgstr "Er heeft zich een fout voorgedaan met de printer."
+
+#: net.rc:49
+#, fuzzy
+msgid "Connection is being made"
+msgstr "Verbinding is actief\n"
+
+#: net.rc:50
+#, fuzzy
+msgid "Reconnecting"
+msgstr "Verbinden met %s"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Nieuw"

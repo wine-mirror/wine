@@ -8490,6 +8490,35 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
+#: net.rc:45
+msgid "OK"
+msgstr ""
+
+#: net.rc:46
+#, fuzzy
+msgid "Paused"
+msgstr "Преустановено; "
+
+#: net.rc:47
+#, fuzzy
+msgid "Disconnected"
+msgstr "Файлът не е намерен"
+
+#: net.rc:48
+#, fuzzy
+msgid "A network error occurred"
+msgstr "Появи се грешка при печатането."
+
+#: net.rc:49
+#, fuzzy
+msgid "Connection is being made"
+msgstr "LAN връзка"
+
+#: net.rc:50
+#, fuzzy
+msgid "Reconnecting"
+msgstr "Default Settings"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Нов\tCtrl+N"

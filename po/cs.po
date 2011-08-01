@@ -8860,6 +8860,35 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
+#: net.rc:45
+msgid "OK"
+msgstr ""
+
+#: net.rc:46
+#, fuzzy
+msgid "Paused"
+msgstr "Pozastaven; "
+
+#: net.rc:47
+#, fuzzy
+msgid "Disconnected"
+msgstr "Soubor nebyl nalezen"
+
+#: net.rc:48
+#, fuzzy
+msgid "A network error occurred"
+msgstr "Nastala chyba tisku."
+
+#: net.rc:49
+#, fuzzy
+msgid "Connection is being made"
+msgstr "Připojit &síťové zařízení"
+
+#: net.rc:50
+#, fuzzy
+msgid "Reconnecting"
+msgstr "Standardní nastavení"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Nový\tCtrl+N"

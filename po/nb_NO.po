@@ -8925,6 +8925,35 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Åpne ressurser: %lu\n"
 
+#: net.rc:45
+msgid "OK"
+msgstr ""
+
+#: net.rc:46
+#, fuzzy
+msgid "Paused"
+msgstr "&Pause"
+
+#: net.rc:47
+#, fuzzy
+msgid "Disconnected"
+msgstr "Røret er tilkoblet\n"
+
+#: net.rc:48
+#, fuzzy
+msgid "A network error occurred"
+msgstr "En skriverfeil har oppstått."
+
+#: net.rc:49
+#, fuzzy
+msgid "Connection is being made"
+msgstr "Tilkoblingen er aktiv\n"
+
+#: net.rc:50
+#, fuzzy
+msgid "Reconnecting"
+msgstr "Kobler til %s"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Ny\tCtrl+N"

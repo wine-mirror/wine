@@ -8681,6 +8681,35 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr ""
 
+#: net.rc:45
+msgid "OK"
+msgstr ""
+
+#: net.rc:46
+#, fuzzy
+msgid "Paused"
+msgstr "暫停(&P)"
+
+#: net.rc:47
+#, fuzzy
+msgid "Disconnected"
+msgstr "找不到檔案"
+
+#: net.rc:48
+#, fuzzy
+msgid "A network error occurred"
+msgstr "印表機錯誤。"
+
+#: net.rc:49
+#, fuzzy
+msgid "Connection is being made"
+msgstr "區域網路連線"
+
+#: net.rc:50
+#, fuzzy
+msgid "Reconnecting"
+msgstr "正在連接到 %s"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "新建(&N)\tCtrl+N"

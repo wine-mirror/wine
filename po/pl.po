@@ -8675,6 +8675,35 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Otwarte zasoby: %lu\n"
 
+#: net.rc:45
+msgid "OK"
+msgstr ""
+
+#: net.rc:46
+#, fuzzy
+msgid "Paused"
+msgstr "&Wstrzymana"
+
+#: net.rc:47
+#, fuzzy
+msgid "Disconnected"
+msgstr "Symbol potoku podłączony\n"
+
+#: net.rc:48
+#, fuzzy
+msgid "A network error occurred"
+msgstr "Błąd drukowania."
+
+#: net.rc:49
+#, fuzzy
+msgid "Connection is being made"
+msgstr "Połączenie jest aktywne\n"
+
+#: net.rc:50
+#, fuzzy
+msgid "Reconnecting"
+msgstr "Łączenie z %s"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "&Nowy\tCtrl+N"

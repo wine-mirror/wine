@@ -8549,6 +8549,30 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      Open resources: %lu\n"
 
+#: net.rc:45
+msgid "OK"
+msgstr ""
+
+#: net.rc:46
+msgid "Paused"
+msgstr ""
+
+#: net.rc:47
+msgid "Disconnected"
+msgstr "Disconnected"
+
+#: net.rc:48
+msgid "A network error occurred"
+msgstr "A network error occurred"
+
+#: net.rc:49
+msgid "Connection is being made"
+msgstr "Connection is being made"
+
+#: net.rc:50
+msgid "Reconnecting"
+msgstr "Reconnecting"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr ""

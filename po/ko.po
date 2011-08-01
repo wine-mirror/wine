@@ -8620,6 +8620,35 @@ msgstr ""
 msgid "%s      %S      %S      Open resources: %lu\n"
 msgstr "%s      %S      %S      열린 리소스: %lu\n"
 
+#: net.rc:45
+msgid "OK"
+msgstr ""
+
+#: net.rc:46
+#, fuzzy
+msgid "Paused"
+msgstr "정지(&P)"
+
+#: net.rc:47
+#, fuzzy
+msgid "Disconnected"
+msgstr "파이프 연결됨\n"
+
+#: net.rc:48
+#, fuzzy
+msgid "A network error occurred"
+msgstr "프린터 오류 발생."
+
+#: net.rc:49
+#, fuzzy
+msgid "Connection is being made"
+msgstr "연결이 활성화됨\n"
+
+#: net.rc:50
+#, fuzzy
+msgid "Reconnecting"
+msgstr " %s 연결중"
+
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
 msgstr "새로 만들기(&N)\tCtrl+N"

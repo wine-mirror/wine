@@ -55,14 +55,22 @@ static BOOL net_use(int argc, char *argv[])
 {
     USE_INFO_2 *buffer, *connection;
     DWORD read, total, resume_handle, rc, i;
-    const char *status_description[] = { "OK", "Paused", "Disconnected", "An error occurred",
-                                         "A network error occurred", "Connection is being made",
-					 "Reconnecting" };
+    char *status[STRING_RECONN-STRING_OK+1];
     resume_handle = 0;
     buffer = NULL;
 
     if(argc<3)
     {
+        HMODULE hmod = GetModuleHandleW(NULL);
+
+        /* Load the status strings */
+        for (i = 0; i < sizeof(status)/sizeof(*status); i++)
+        {
+            status[i] = HeapAlloc(GetProcessHeap(), 0, 1024);
+            LoadStringA(hmod, STRING_OK+i, status[i], 1024);
+            printf("i=%d desc=%s\n", i, status[i]);
+        }
+
         do {
             rc = NetUseEnum(NULL, 2, (BYTE **) &buffer, 2048, &read, &total, &resume_handle);
             if (rc != ERROR_MORE_DATA && rc != ERROR_SUCCESS)
@@ -78,11 +86,15 @@ static BOOL net_use(int argc, char *argv[])
 
             output_string(STRING_USE_HEADER);
             for (i = 0, connection = buffer; i < read; ++i, ++connection)
-                output_string(STRING_USE_ENTRY, status_description[connection->ui2_status], connection->ui2_local,
+                output_string(STRING_USE_ENTRY, status[connection->ui2_status], connection->ui2_local,
 				connection->ui2_remote, connection->ui2_refcount);
 
             if (buffer != NULL) NetApiBufferFree(buffer);
         } while (rc == ERROR_MORE_DATA);
+
+        /* Release the status strings */
+        for (i = 0; i < sizeof(status)/sizeof(*status); i++)
+            HeapFree(GetProcessHeap(), 0, status[i]);
 
 	return TRUE;
     }
