@@ -1293,12 +1293,6 @@ static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_
             flags, fx, debug_d3dtexturefiltertype(filter));
     TRACE("Usage is %s.\n", debug_d3dusage(dst_surface->resource.usage));
 
-    if ((dst_surface->flags & SFLAG_LOCKED) || (src_surface && (src_surface->flags & SFLAG_LOCKED)))
-    {
-        WARN(" Surface is busy, returning DDERR_SURFACEBUSY\n");
-        return WINEDDERR_SURFACEBUSY;
-    }
-
     dst_ds_flags = dst_surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
     if (src_surface)
         src_ds_flags = src_surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
@@ -3411,6 +3405,12 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
     TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
             dst_surface, wine_dbgstr_rect(dst_rect_in), src_surface, wine_dbgstr_rect(src_rect_in),
             flags, fx, debug_d3dtexturefiltertype(filter));
+
+    if ((dst_surface->flags & SFLAG_LOCKED) || (src_surface && (src_surface->flags & SFLAG_LOCKED)))
+    {
+        WARN("Surface is busy, returning WINEDDERR_SURFACEBUSY.\n");
+        return WINEDDERR_SURFACEBUSY;
+    }
 
     surface_get_rect(dst_surface, dst_rect_in, &dst_rect);
     if (src_surface)
@@ -6438,12 +6438,6 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
     TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
             dst_surface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
             flags, fx, debug_d3dtexturefiltertype(filter));
-
-    if ((dst_surface->flags & SFLAG_LOCKED) || (src_surface && (src_surface->flags & SFLAG_LOCKED)))
-    {
-        WARN("Surface is busy, returning WINEDDERR_SURFACEBUSY\n");
-        return WINEDDERR_SURFACEBUSY;
-    }
 
     /* First check for the validity of source / destination rectangles.
      * This was verified using a test application and by MSDN. */
