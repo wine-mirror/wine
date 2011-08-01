@@ -25,6 +25,28 @@ extern "C" {
 #include "lmcons.h"
 #include "lmuseflg.h"
 
+
+#define USE_LOCAL_PARMNUM          1
+#define USE_REMOTE_PARMNUM         2
+#define USE_PASSWORD_PARMNUM       3
+#define USE_ASGTYPE_PARMNUM        4
+#define USE_USERNAME_PARMNUM       5
+#define USE_DOMAINNAME_PARMNUM     6
+
+#define USE_OK                     0
+#define USE_PAUSED                 1
+#define USE_SESSLOST               2
+#define USE_DISCONN                USE_SESSLOST
+#define USE_NETERR                 3
+#define USE_CONN                   4
+#define USE_RECONN                 5
+
+#define USE_WILDCARD               ((DWORD)-1)
+#define USE_DISKDEV                0
+#define USE_SPOOLDEV               1
+#define USE_CHARDEV                2
+#define USE_IPC                    3
+
 typedef struct _USE_INFO_1
 {
     LMSTR ui1_local;
