@@ -7054,11 +7054,11 @@ static void test_EM_FINDWORDBREAK_W(void)
         BOOL isdelimiter;        /* expected result of WB_ISDELIMITER */
     } delimiter_tests[] = {
         {0x0a,   FALSE},         /* newline */
-        {0x0b,   FALSE},         /* vertical tab mark */
+        {0x0b,   FALSE},         /* vertical tab */
         {0x0c,   FALSE},         /* form feed */
         {0x0d,   FALSE},         /* carriage return */
-        {0x20,   TRUE},          /* ANSI Space */
-        {0x61,   FALSE},         /* ASCII capital letter a */
+        {0x20,   TRUE},          /* space */
+        {0x61,   FALSE},         /* capital letter a */
         {0xa0,   FALSE},         /* no-break space */
         {0x2000, FALSE},         /* en quad */
         {0x3000, FALSE},         /* Ideographic space */
@@ -7067,8 +7067,8 @@ static void test_EM_FINDWORDBREAK_W(void)
         {0x115f, FALSE},         /* Hangul Choseong Filler (no sound, used with two letter Hangul words) Ordinary Letter */
         {0xac00, FALSE},         /* Hangul character GA*/
         {0xd7af, FALSE},         /* End of Hangul character chart */
-        {0xf020, TRUE},          /* High Surrogate Space */
-        {0xff20, FALSE},         /* MS private for CP_SYMBOL round trip? */
+        {0xf020, TRUE},          /* MS private for CP_SYMBOL round trip?, see kb897872 */
+        {0xff20, FALSE},         /* fullwidth commercial @ */
         {WCH_EMBEDDING, FALSE},  /* object replacement character*/
     };
     int i;
@@ -7103,11 +7103,11 @@ static void test_EM_FINDWORDBREAK_A(void)
         BOOL isdelimiter;        /* expected result of WB_ISDELIMITER */
     } delimiter_tests[] = {
         {0x0a,   FALSE},         /* newline */
-        {0x0b,   FALSE},         /* vertical tab mark */
+        {0x0b,   FALSE},         /* vertical tab */
         {0x0c,   FALSE},         /* form feed */
         {0x0d,   FALSE},         /* carriage return */
-        {0x20,   TRUE},          /* ANSI Space */
-        {0x61,   FALSE},         /* ASCII capital letter a */
+        {0x20,   TRUE},          /* space */
+        {0x61,   FALSE},         /* capital letter a */
     };
     int i;
     HWND hwndRichEdit = new_richedit(NULL);
