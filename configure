@@ -6417,7 +6417,7 @@ fi
 
     APPLICATIONSERVICESLIB="-framework ApplicationServices"
 
-    LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00000000,-segaddr,WINE_SHAREDHEAP,0x7f000000"
+    LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00001000,-segaddr,WINE_SHAREDHEAP,0x7f000000"
 
     if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"
     then

@@ -697,7 +697,7 @@ case $host_os in
     AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")
     AC_SUBST(IOKITLIB,"-framework IOKit -framework CoreFoundation")
     AC_SUBST(APPLICATIONSERVICESLIB,"-framework ApplicationServices")
-    AC_SUBST(LDEXECFLAGS,["-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00000000,-segaddr,WINE_SHAREDHEAP,0x7f000000"])
+    AC_SUBST(LDEXECFLAGS,["-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00001000,-segaddr,WINE_SHAREDHEAP,0x7f000000"])
     if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"
     then
         dnl DiskArbitration API is not public on Darwin < 8.0, use it only if header found
