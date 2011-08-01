@@ -19,6 +19,12 @@
 #include "ocidl.idl"
 
 [
+    threading(both),
+    uuid(b196b286-bab4-101a-b69c-00aa00341d07)
+]
+coclass PSFactoryBuffer { interface IFactoryBuffer; }
+
+[
     helpstring("Standard Font"),
     progid("StdFont"),
     threading(both),

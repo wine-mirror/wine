@@ -35,6 +35,7 @@
 #include "oleauto.h"
 #include "initguid.h"
 #include "typelib.h"
+#include "oleaut32_oaidl.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
