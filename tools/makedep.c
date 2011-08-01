@@ -890,7 +890,7 @@ static int output_src( FILE *file, INCL_FILE *pFile, int *column )
             const char *suffix = "cips";
 
             name = strmake( "%s.tlb", obj );
-            if (find_src_file( name )) *column += fprintf( file, "%s", name );
+            if (find_src_file( name )) *column += fprintf( file, "%s %s_t.res", name, obj );
             else
             {
                 got_header = 1;

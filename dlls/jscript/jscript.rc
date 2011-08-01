@@ -54,6 +54,3 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: jscript.rgs */
 2 WINE_REGISTRY jscript.rgs
-
-/* @makedep: jsglobal.tlb */
-1 TYPELIB jsglobal.tlb

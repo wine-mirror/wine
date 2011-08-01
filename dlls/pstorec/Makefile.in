@@ -4,8 +4,6 @@ IMPORTS   = uuid
 C_SRCS = \
 	pstorec.c
 
-RC_SRCS = rsrc.rc
-
 IDL_TLB_SRCS = pstorec_tlb.idl
 
 @MAKE_DLL_RULES@

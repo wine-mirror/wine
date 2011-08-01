@@ -63,9 +63,6 @@ STRINGTABLE
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
-/* @makedep: msiserver.tlb */
-1 TYPELIB msiserver.tlb
-
 /* @makedep: msiserver.rgs */
 1 WINE_REGISTRY msiserver.rgs
 

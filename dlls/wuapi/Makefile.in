@@ -13,6 +13,4 @@ C_SRCS = \
 IDL_TLB_SRCS = wuapi_tlb.idl
 IDL_R_SRCS   = wuapi_tlb.idl
 
-RC_SRCS = rsrc.rc
-
 @MAKE_DLL_RULES@

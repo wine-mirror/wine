@@ -30,7 +30,7 @@ CLEAN_TARGETS = $(IDL_GEN_C_SRCS) $(IDL_GEN_HEADERS) $(IDL_TLB_SRCS:.idl=.tlb) $
                 $(PO_SRCS:%=rsrc.pot) $(MC_SRCS:%=msg.pot) $(XTEMPLATE_SRCS:.x=.h)
 
 OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_SRCS:.c=.o) \
-       $(IDL_R_SRCS:.idl=_r.res) $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.res) $(EXTRA_OBJS)
+       $(IDL_R_SRCS:.idl=_r.res) $(IDL_TLB_RES) $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.res) $(EXTRA_OBJS)
 
 CROSSOBJS = $(OBJS:.o=.cross.o)
 LINTS  = $(C_SRCS:.c=.ln)
@@ -42,7 +42,7 @@ filter: dummy
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .res .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .man.in .man _c.c _i.c _p.c _s.c _r.res .cross.o @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
+.SUFFIXES: .mc .rc .res .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .man.in .man _c.c _i.c _p.c _s.c _r.res _t.res .cross.o @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -84,6 +84,9 @@ filter: dummy
 	$(WIDL) $(IDLFLAGS) -s -o $@ $<
 
 .idl.tlb:
+	$(WIDL) $(TARGETFLAGS) $(IDLFLAGS) -t -o $@ $<
+
+.idl_t.res:
 	$(WIDL) $(TARGETFLAGS) $(IDLFLAGS) -t -o $@ $<
 
 .c.ln:
@@ -191,7 +194,7 @@ $(PO_SRCS:.rc=.res): $(ALL_PO_FILES)
 
 # Misc. rules
 
-$(IDL_GEN_HEADERS) $(IDL_GEN_C_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_R_SRCS:.idl=_r.res): $(WIDL)
+$(IDL_GEN_HEADERS) $(IDL_GEN_C_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_TLB_RES) $(IDL_R_SRCS:.idl=_r.res): $(WIDL)
 
 dummy:
 

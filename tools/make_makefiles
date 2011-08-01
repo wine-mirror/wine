@@ -531,6 +531,7 @@ sub update_ignores(@)
         {
             my @pattern = @{$src};
             next unless defined $makefile{$pattern[0]};
+            next if $pattern[0] eq "IDL_TLB_SRCS" && $makefile{"=rules"} eq "dlls/Makedll.rules";
             push @list, map { (my $ret = $_) =~ s/$pattern[1]$/$pattern[2]/; $ret; } @{$makefile{$pattern[0]}};
         }
         foreach my $f (@list)
