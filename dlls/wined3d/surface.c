@@ -1287,11 +1287,22 @@ static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_
 {
     struct wined3d_device *device = dst_surface->resource.device;
     DWORD src_ds_flags, dst_ds_flags;
+    static const DWORD simple_blit = WINEDDBLT_ASYNC
+            | WINEDDBLT_COLORFILL
+            | WINEDDBLT_WAIT
+            | WINEDDBLT_DEPTHFILL
+            | WINEDDBLT_DONOTWAIT;
 
     TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
             dst_surface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
             flags, fx, debug_d3dtexturefiltertype(filter));
     TRACE("Usage is %s.\n", debug_d3dusage(dst_surface->resource.usage));
+
+    if (flags & ~simple_blit)
+    {
+        WARN("Using fallback for complex blit (%#x).\n", flags);
+        goto fallback;
+    }
 
     dst_ds_flags = dst_surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
     if (src_surface)
@@ -1358,6 +1369,8 @@ static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_
                 return WINED3D_OK;
         }
     }
+
+fallback:
 
     /* Special cases for render targets. */
     if ((dst_surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
