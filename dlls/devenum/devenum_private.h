@@ -57,7 +57,7 @@ static inline void DEVENUM_UnlockModule(void) { InterlockedDecrement(&dll_refs);
  */
 typedef struct
 {
-    const IClassFactoryVtbl *lpVtbl;
+    IClassFactory IClassFactory_iface;
 } ClassFactoryImpl;
 
 typedef struct

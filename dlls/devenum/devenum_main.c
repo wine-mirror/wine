@@ -75,7 +75,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
      * Oh well - works just fine as it is */
     if (IsEqualGUID(rclsid, &CLSID_SystemDeviceEnum) ||
         IsEqualGUID(rclsid, &CLSID_CDeviceMoniker))
-        return IClassFactory_QueryInterface((IClassFactory*)&DEVENUM_ClassFactory, iid, ppv);
+        return IClassFactory_QueryInterface(&DEVENUM_ClassFactory.IClassFactory_iface, iid, ppv);
 
     FIXME("CLSID: %s, IID: %s\n", debugstr_guid(rclsid), debugstr_guid(iid));
     return CLASS_E_CLASSNOTAVAILABLE;
