@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-07-28 19:21+0300\n"
+"PO-Revision-Date: 2011-08-01 21:57+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -8673,32 +8673,27 @@ msgstr "%s      %S      %S      Atverti ištekliai: %lu\n"
 
 #: net.rc:45
 msgid "OK"
-msgstr ""
+msgstr "Gerai"
 
 #: net.rc:46
-#, fuzzy
 msgid "Paused"
-msgstr "&Pristabdyta"
+msgstr "Pristabdyta"
 
 #: net.rc:47
-#, fuzzy
 msgid "Disconnected"
-msgstr "Kanalas prijungtas\n"
+msgstr "Atjungta"
 
 #: net.rc:48
-#, fuzzy
 msgid "A network error occurred"
-msgstr "Įvyko spausdintuvo klaida."
+msgstr "Įvyko tinklo klaida"
 
 #: net.rc:49
-#, fuzzy
 msgid "Connection is being made"
-msgstr "Sujungimas aktyvus\n"
+msgstr "Jungiamasi"
 
 #: net.rc:50
-#, fuzzy
 msgid "Reconnecting"
-msgstr "Jungiamasi prie %s"
+msgstr "Jungiamasi iš naujo"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
