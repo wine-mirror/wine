@@ -208,17 +208,6 @@ static void write_progids( const statement_list_t *stmts )
     }
 }
 
-/* put a string into the resource file */
-static inline void put_string( const char *str )
-{
-    while (*str)
-    {
-        unsigned char ch = *str++;
-        put_word( toupper(ch) );
-    }
-    put_word( 0 );
-}
-
 void write_regscript( const statement_list_t *stmts )
 {
     const type_t *ps_factory;
@@ -247,41 +236,8 @@ void write_regscript( const statement_list_t *stmts )
 
     if (strendswith( regscript_name, ".res" ))  /* create a binary resource file */
     {
-        unsigned char *data = output_buffer;
-        size_t data_size = output_buffer_pos;
-        size_t header_size = 5 * sizeof(unsigned int) + 2 * sizeof(unsigned short);
-
-        header_size += (strlen(regscript_token) + strlen("WINE_REGISTRY") + 2) * sizeof(unsigned short);
-
-        init_output_buffer();
-
-        put_dword( 0 );      /* ResSize */
-        put_dword( 32 );     /* HeaderSize */
-        put_word( 0xffff );  /* ResType */
-        put_word( 0x0000 );
-        put_word( 0xffff );  /* ResName */
-        put_word( 0x0000 );
-        put_dword( 0 );      /* DataVersion */
-        put_word( 0 );       /* Memory options */
-        put_word( 0 );       /* Language */
-        put_dword( 0 );      /* Version */
-        put_dword( 0 );      /* Characteristics */
-
-        put_dword( data_size );               /* ResSize */
-        put_dword( (header_size + 3) & ~3 );  /* HeaderSize */
-        put_string( "WINE_REGISTRY" );        /* ResType */
-        put_string( regscript_token );        /* ResName */
-        align_output( 4 );
-        put_dword( 0 );      /* DataVersion */
-        put_word( 0 );       /* Memory options */
-        put_word( 0 );       /* Language */
-        put_dword( 0 );      /* Version */
-        put_dword( 0 );      /* Characteristics */
-
-        put_data( data, data_size );
-        free( data );
-        align_output( 4 );
-        flush_output_buffer( regscript_name );
+        add_output_to_resources( "WINE_REGISTRY", regscript_token );
+        flush_output_resources( regscript_name );
     }
     else
     {
