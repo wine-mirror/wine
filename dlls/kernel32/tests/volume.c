@@ -99,7 +99,7 @@ void test_define_dos_deviceA(void)
 
     ret = DefineDosDeviceA(0, drivestr, buf);
     todo_wine
-    ok(ret, "Could not make drive %s point to %s! \n", drivestr, buf);
+    ok(ret, "Could not make drive %s point to %s!\n", drivestr, buf);
 
     if (!ret) {
         skip("can't test removing fake drive\n");
