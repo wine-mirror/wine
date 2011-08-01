@@ -71,6 +71,7 @@ static HRESULT (WINAPI *pSHGetIDListFromObject)(IUnknown*, PIDLIST_ABSOLUTE*);
 static HRESULT (WINAPI *pSHGetItemFromObject)(IUnknown*,REFIID,void**);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static UINT (WINAPI *pGetSystemWow64DirectoryW)(LPWSTR, UINT);
+static HRESULT (WINAPI *pSHCreateDefaultContextMenu)(const DEFCONTEXTMENU*,REFIID,void**);
 
 static WCHAR *make_wstr(const char *str)
 {
@@ -126,6 +127,7 @@ static void init_function_pointers(void)
     MAKEFUNC(SHGetItemFromDataObject);
     MAKEFUNC(SHGetIDListFromObject);
     MAKEFUNC(SHGetItemFromObject);
+    MAKEFUNC(SHCreateDefaultContextMenu);
 #undef MAKEFUNC
 
 #define MAKEFUNC_ORD(f, ord) (p##f = (void*)GetProcAddress(hmod, (LPSTR)(ord)))
@@ -4475,6 +4477,93 @@ static void test_SHChangeNotify(void)
     ok(br == TRUE, "RemoveDirectory failed: %d\n", GetLastError());
 }
 
+static void test_SHCreateDefaultContextMenu(void)
+{
+    HKEY keys[16];
+    WCHAR path[MAX_PATH];
+    IShellFolder *desktop,*folder;
+    IPersistFolder2 *persist;
+    IContextMenu *cmenu;
+    LONG status;
+    LPITEMIDLIST pidlFolder, pidl_child, pidl;
+    DEFCONTEXTMENU cminfo;
+    HRESULT hr;
+    UINT i;
+    const WCHAR filename[] =
+        {'\\','t','e','s','t','d','i','r','\\','t','e','s','t','1','.','t','x','t',0};
+    if(!pSHCreateDefaultContextMenu)
+    {
+        todo_wine win_skip("SHCreateDefaultContextMenu missing.\n");
+        return;
+    }
+
+    if(!pSHBindToParent)
+    {
+        skip("SHBindToParent missing.\n");
+        return;
+    }
+
+    GetCurrentDirectoryW(MAX_PATH, path);
+    if(!lstrlenW(path))
+    {
+        skip("GetCurrentDirectoryW returned an empty string.\n");
+        return;
+    }
+    lstrcatW(path, filename);
+    SHGetDesktopFolder(&desktop);
+
+    CreateFilesFolders();
+
+    hr = IShellFolder_ParseDisplayName(desktop, NULL, NULL, path, NULL, &pidl, 0);
+    ok(hr == S_OK || broken(hr == E_FAIL) /* WinME */, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+
+        hr = pSHBindToParent(pidl, &IID_IShellFolder, (void**)&folder, (LPCITEMIDLIST*)&pidl_child);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+        IShellFolder_QueryInterface(folder,&IID_IPersistFolder2,(void**)&persist);
+        IPersistFolder2_GetCurFolder(persist,&pidlFolder);
+        IPersistFolder2_Release(persist);
+        if(SUCCEEDED(hr))
+        {
+
+            cminfo.hwnd=NULL;
+            cminfo.pcmcb=NULL;
+            cminfo.psf=folder;
+            cminfo.pidlFolder=NULL;
+            cminfo.apidl=(LPCITEMIDLIST*)&pidl_child;
+            cminfo.cidl=1;
+            cminfo.aKeys=NULL;
+            cminfo.cKeys=0;
+            cminfo.punkAssociationInfo=NULL;
+            hr = pSHCreateDefaultContextMenu(&cminfo,&IID_IContextMenu,(void**)&cmenu);
+            ok(hr==S_OK,"Got 0x%08x\n", hr);
+            IContextMenu_Release(cmenu);
+            cminfo.pidlFolder=pidlFolder;
+            hr = pSHCreateDefaultContextMenu(&cminfo,&IID_IContextMenu,(void**)&cmenu);
+            ok(hr==S_OK,"Got 0x%08x\n", hr);
+            IContextMenu_Release(cmenu);
+            status = RegOpenKeyExA(HKEY_CLASSES_ROOT,"*",0,KEY_READ,keys);
+            if(status==ERROR_SUCCESS){
+                for(i=1;i<16;i++)
+                    keys[i]=keys[0];
+                cminfo.aKeys=keys;
+                cminfo.cKeys=16;
+                hr = pSHCreateDefaultContextMenu(&cminfo,&IID_IContextMenu,(void**)&cmenu);
+                RegCloseKey(keys[0]);
+                ok(hr==S_OK,"Got 0x%08x\n", hr);
+                IContextMenu_Release(cmenu);
+            }
+        }
+        ILFree(pidlFolder);
+        IShellFolder_Release(folder);
+    }
+    IShellFolder_Release(desktop);
+    ILFree(pidl);
+    Cleanup();
+}
+
 START_TEST(shlfolder)
 {
     init_function_pointers();
@@ -4509,6 +4598,7 @@ START_TEST(shlfolder)
     test_SHChangeNotify();
     test_ShellItemBindToHandler();
     test_ShellItemGetAttributes();
+    test_SHCreateDefaultContextMenu();
 
     OleUninitialize();
 }
