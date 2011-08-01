@@ -135,6 +135,7 @@ static HRESULT activate_inplace(WebBrowser *This, IOleClientSite *active_site)
     if(hres != S_OK) {
         WARN("CanInPlaceActivate returned: %08x\n", hres);
         IOleInPlaceSite_Release(This->inplace);
+        This->inplace = NULL;
         return E_FAIL;
     }
 
@@ -402,8 +403,26 @@ static HRESULT WINAPI OleObject_SetHostNames(IOleObject *iface, LPCOLESTR szCont
 static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
 {
     WebBrowser *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%d)\n", This, dwSaveOption);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, dwSaveOption);
+
+    if(dwSaveOption != OLECLOSE_NOSAVE) {
+        FIXME("unimplemnted flag: %x\n", dwSaveOption);
+        return E_NOTIMPL;
+    }
+
+    if(This->doc_host.frame)
+        IOleInPlaceFrame_SetActiveObject(This->doc_host.frame, NULL, NULL);
+
+    if(This->uiwindow)
+        IOleInPlaceUIWindow_SetActiveObject(This->uiwindow, NULL, NULL);
+
+    if(This->inplace) {
+        IOleInPlaceSite_OnUIDeactivate(This->inplace, FALSE);
+        IOleInPlaceSite_OnInPlaceDeactivate(This->inplace);
+    }
+
+    return IOleObject_SetClientSite(iface, NULL);
 }
 
 static HRESULT WINAPI OleObject_SetMoniker(IOleObject *iface, DWORD dwWhichMoniker, IMoniker* pmk)
