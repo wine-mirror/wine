@@ -20,6 +20,13 @@
 
 import "oledb.idl";
 
+
+[
+    threading(both),
+    uuid(06210e88-01f5-11d1-b512-0080c781c384)
+]
+coclass PSFactoryBuffer { interface IFactoryBuffer; }
+
 [
     object,
     uuid(38248178-cf6d-11de-abe5-000c2916d865),

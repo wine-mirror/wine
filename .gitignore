@@ -67,10 +67,8 @@ dlls/libkernel.def
 dlls/libwinspool.def
 dlls/libxinput.def
 dlls/msdaps/msdaps.h
-dlls/msdaps/msdaps_i.c
 dlls/msdaps/msdaps_p.c
 dlls/msdaps/row_server.h
-dlls/msdaps/row_server_i.c
 dlls/msdaps/row_server_p.c
 dlls/mshtml.tlb/mshtml_tlb.tlb
 dlls/mshtml/nsiface.h

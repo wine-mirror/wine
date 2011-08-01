@@ -29,6 +29,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
+#include "initguid.h"
 #include "objbase.h"
 #include "oleauto.h"
 #define DBINITCONSTANTS
