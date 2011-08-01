@@ -17,3 +17,9 @@
  */
 
 #include "oleidl.idl"
+
+[
+    threading(both),
+    uuid(00000320-0000-0000-c000-000000000046)
+]
+coclass PSFactoryBuffer { interface IFactoryBuffer; }

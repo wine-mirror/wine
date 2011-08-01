@@ -97,6 +97,12 @@ coclass Picture_Dib { interface IPicture; }
 coclass ClassMoniker { interface IMoniker; }
 
 [
+    threading(both),
+    uuid(00000320-0000-0000-c000-000000000046)
+]
+coclass PSFactoryBuffer { interface IFactoryBuffer; }
+
+[
     threading(apartment),
     uuid(00000323-0000-0000-c000-000000000046)
 ]

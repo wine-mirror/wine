@@ -22,6 +22,12 @@
 import "unknwn.idl";
 
 [
+    threading(both),
+    uuid(00000320-0000-0000-c000-000000000046)
+]
+coclass PSFactoryBuffer { interface IFactoryBuffer; }
+
+[
   uuid(99fcfe60-5260-101b-bbcb-00aa0021347a),
   pointer_default(unique)
 ]
