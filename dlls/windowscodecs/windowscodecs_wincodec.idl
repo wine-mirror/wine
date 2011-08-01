@@ -19,6 +19,12 @@
 #include "wincodec.idl"
 
 [
+    threading(both),
+    uuid(00000301-a8f2-4877-ba0a-fd2b6645fb94)  /* IWICFormatConverter */
+]
+coclass PSFactoryBuffer { interface IFactoryBuffer; }
+
+[
     helpstring("WIC Imaging Factory"),
     threading(both),
     uuid(cacaf262-9370-4615-a13b-9f5539da4c0a)
