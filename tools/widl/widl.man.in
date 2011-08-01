@@ -48,7 +48,9 @@ Use old naming conventions.
 .PP
 .B Type library options:
 .IP \fB-t\fR
-Generate a type library. The default output filename is \fIinfile\fB.tlb\fR.
+Generate a type library. The default output filename is
+\fIinfile\fB.tlb\fR.  If the output file name ends in \fB.res\fR, a
+binary resource file containing the type library is generated instead.
 .IP "\fB-m32, -m64\fR"
 Generate a Win32, respectively Win64, type library.
 .PP

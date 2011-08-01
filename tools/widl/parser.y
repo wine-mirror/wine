@@ -1725,7 +1725,6 @@ static typelib_t *make_library(const char *name, const attr_list_t *attrs)
 {
     typelib_t *typelib = xmalloc(sizeof(*typelib));
     typelib->name = xstrdup(name);
-    typelib->filename = NULL;
     typelib->attrs = attrs;
     list_init( &typelib->importlibs );
     return typelib;
