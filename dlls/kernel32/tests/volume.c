@@ -75,7 +75,7 @@ static void test_query_dos_deviceA(void)
     HeapFree( GetProcessHeap(), 0, buffer );
 }
 
-void test_define_dos_deviceA(void)
+static void test_define_dos_deviceA(void)
 {
     char drivestr[3];
     char buf[MAX_PATH];
