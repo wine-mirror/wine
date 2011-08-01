@@ -1890,7 +1890,7 @@ static DWORD WINAPI local_server_thread(LPVOID param)
     ULONG		res;
     BOOL multi_use = lsp->multi_use;
     OVERLAPPED ovl;
-    HANDLE pipe_event;
+    HANDLE pipe_event, hPipe, new_pipe;
     DWORD  bytes;
 
     TRACE("Starting threader for %s.\n",debugstr_guid(&lsp->clsid));
@@ -1899,22 +1899,19 @@ static DWORD WINAPI local_server_thread(LPVOID param)
     get_localserver_pipe_name(pipefn, &lsp->clsid);
     ovl.hEvent = pipe_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
-    SetEvent(lsp->ready_event);
-    /* Clients trying to connect between now and CreateNamedPipeW() will
-     * fail and will have to retry. See also the end of the loop.
-     */
-    while (1) {
-        HANDLE hPipe;
-        hPipe = CreateNamedPipeW( pipefn, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
-                                  PIPE_TYPE_BYTE|PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
-                                  4096, 4096, 500 /* 0.5 second timeout */, NULL );
-        if (hPipe == INVALID_HANDLE_VALUE)
-        {
-            FIXME("pipe creation failed for %s, le is %u\n", debugstr_w(pipefn), GetLastError());
-            CloseHandle(pipe_event);
-            return 1;
-        }
+    hPipe = CreateNamedPipeW( pipefn, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+                              PIPE_TYPE_BYTE|PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
+                              4096, 4096, 500 /* 0.5 second timeout */, NULL );
+    if (hPipe == INVALID_HANDLE_VALUE)
+    {
+        FIXME("pipe creation failed for %s, le is %u\n", debugstr_w(pipefn), GetLastError());
+        CloseHandle(pipe_event);
+        return 1;
+    }
 
+    SetEvent(lsp->ready_event);
+
+    while (1) {
         if (!ConnectNamedPipe(hPipe, &ovl))
         {
             DWORD error = GetLastError();
@@ -1976,18 +1973,25 @@ static DWORD WINAPI local_server_thread(LPVOID param)
 
         FlushFileBuffers(hPipe);
         DisconnectNamedPipe(hPipe);
-        CloseHandle(hPipe);
-        /* Clients trying to connect between now and CreateNamedPipeW() will
-         * fail and will have to retry.
-         */
-
         TRACE("done marshalling IClassFactory\n");
 
         if (!multi_use)
         {
             TRACE("single use object, shutting down pipe %s\n", debugstr_w(pipefn));
+            CloseHandle(hPipe);
             break;
         }
+        new_pipe = CreateNamedPipeW( pipefn, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+                                     PIPE_TYPE_BYTE|PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
+                                     4096, 4096, 500 /* 0.5 second timeout */, NULL );
+        CloseHandle(hPipe);
+        if (new_pipe == INVALID_HANDLE_VALUE)
+        {
+            FIXME("pipe creation failed for %s, le is %u\n", debugstr_w(pipefn), GetLastError());
+            CloseHandle(pipe_event);
+            return 1;
+        }
+        hPipe = new_pipe;
     }
     CloseHandle(pipe_event);
     return 0;
