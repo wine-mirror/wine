@@ -20,6 +20,12 @@ cpp_quote("#include <wingdi.h>")
 #include "strmif.idl"
 
 [
+    threading(both),
+    uuid(670d1d20-a068-11d0-b3f0-00aa003761c5)  /* IAMCopyCaptureFileProgress */
+]
+coclass PSFactoryBuffer { interface IFactoryBuffer; }
+
+[
     helpstring("Filter Graph"),
     threading(both),
     uuid(e436ebb3-524f-11ce-9f53-0020af0ba770)
