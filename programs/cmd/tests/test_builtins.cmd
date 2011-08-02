@@ -518,6 +518,11 @@ if exist foobar (echo foobar created) else echo foobar not created!
 if exist bar\baz (echo bar\baz created) else echo bar\baz not created!
 cd ..
 rd /s/q foobaz
+call :setError 0
+mkdir foo\*
+echo mkdir foo\* errorlevel %ErrorLevel%
+if exist foo (rmdir foo & echo ok, foo created
+) else ( echo bad, foo not created )
 
 echo ----------- Testing rmdir -----------
 call :setError 0

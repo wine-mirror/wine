@@ -264,14 +264,14 @@ del /q * succeeded on file2.dat
 ----------- Testing mkdir -----------
 0
 0
-@todo_wine@1
-@todo_wine@1
+1
+1
 0
 0
 0
 0
 0
-@todo_wine@1
+1
 0
 0
 0
@@ -280,13 +280,15 @@ dir created
 mkdir ? gives errorlevel 1
 mkdir ?\foo gives errorlevel 1
 mkdir foo\? gives errorlevel 1
-@todo_wine@ok, foo created
+ok, foo created
 mkdir foo\bar\? gives errorlevel 1
-@todo_wine@ok, foo\bar created
+ok, foo\bar created
 foo created
 bar created
 foobar created
 bar\baz created
+mkdir foo\* errorlevel 1
+ok, foo created
 ----------- Testing rmdir -----------
 0
 dir removed

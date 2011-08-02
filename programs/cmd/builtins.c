@@ -473,54 +473,45 @@ void WCMD_copy (void) {
 /****************************************************************************
  * WCMD_create_dir
  *
- * Create a directory.
+ * Create a directory (and, if needed, any intermediate directories).
  *
- * this works recursively. so mkdir dir1\dir2\dir3 will create dir1 and dir2 if
- * they do not already exist.
+ * Modifies its argument by replacing slashes temporarily with nulls.
  */
 
 static BOOL create_full_path(WCHAR* path)
 {
-    int len;
-    WCHAR *new_path;
-    BOOL ret = TRUE;
+    WCHAR *p, *start;
 
-    new_path = HeapAlloc(GetProcessHeap(),0,(strlenW(path)+1) * sizeof(WCHAR));
-    strcpyW(new_path,path);
+    /* don't mess with drive letter portion of path, if any */
+    start = path;
+    if (path[1] == ':')
+        start = path+2;
 
-    while ((len = strlenW(new_path)) && new_path[len - 1] == '\\')
-        new_path[len - 1] = 0;
+    /* Strip trailing slashes. */
+    for (p = path + strlenW(path) - 1; p != start && *p == '\\'; p--)
+        *p = 0;
 
-    while (!CreateDirectoryW(new_path,NULL))
-    {
-        WCHAR *slash;
-        DWORD last_error = GetLastError();
-        if (last_error == ERROR_ALREADY_EXISTS)
-            break;
-
-        if (last_error != ERROR_PATH_NOT_FOUND)
-        {
-            ret = FALSE;
-            break;
+    /* Step through path, creating intermediate directories as needed. */
+    /* First component includes drive letter, if any. */
+    p = start;
+    for (;;) {
+        DWORD rv;
+        /* Skip to end of component */
+        while (*p == '\\') p++;
+        while (*p && *p != '\\') p++;
+        if (!*p) {
+            /* path is now the original full path */
+            return CreateDirectoryW(path, NULL);
         }
-
-        if (!(slash = strrchrW(new_path,'\\')) && ! (slash = strrchrW(new_path,'/')))
-        {
-            ret = FALSE;
-            break;
-        }
-
-        len = slash - new_path;
-        new_path[len] = 0;
-        if (!create_full_path(new_path))
-        {
-            ret = FALSE;
-            break;
-        }
-        new_path[len] = '\\';
+        /* Truncate path, create intermediate directory, and restore path */
+        *p = 0;
+        rv = CreateDirectoryW(path, NULL);
+        *p = '\\';
+        if (!rv && GetLastError() != ERROR_ALREADY_EXISTS)
+            return FALSE;
     }
-    HeapFree(GetProcessHeap(),0,new_path);
-    return ret;
+    /* notreached */
+    return FALSE;
 }
 
 void WCMD_create_dir (WCHAR *command) {
