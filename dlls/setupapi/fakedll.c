@@ -33,6 +33,8 @@
 # include <unistd.h>
 #endif
 
+#define COBJMACROS
+#define ATL_INITGUID
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
 #include "ntstatus.h"
@@ -45,6 +47,8 @@
 #include "wine/unicode.h"
 #include "wine/library.h"
 #include "wine/debug.h"
+#include "ole2.h"
+#include "atliface.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
@@ -59,6 +63,7 @@ static SIZE_T file_buffer_size;
 static unsigned int handled_count;
 static unsigned int handled_total;
 static char **handled_dlls;
+static IRegistrar *registrar;
 
 struct dll_info
 {
@@ -465,6 +470,67 @@ static HANDLE create_dest_file( const WCHAR *name )
     return h;
 }
 
+static BOOL CALLBACK register_resource( HMODULE module, LPCWSTR type, LPWSTR name, LONG_PTR arg )
+{
+    HRESULT *hr = (HRESULT *)arg;
+    WCHAR *buffer;
+    HRSRC rsrc = FindResourceW( module, name, type );
+    char *str = LoadResource( module, rsrc );
+    DWORD lenW, lenA = SizeofResource( module, rsrc );
+
+    if (!str) return FALSE;
+    lenW = MultiByteToWideChar( CP_UTF8, 0, str, lenA, NULL, 0 ) + 1;
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) ))) return FALSE;
+    MultiByteToWideChar( CP_UTF8, 0, str, lenA, buffer, lenW );
+    buffer[lenW - 1] = 0;
+    *hr = IRegistrar_StringRegister( registrar, buffer );
+    HeapFree( GetProcessHeap(), 0, buffer );
+    return TRUE;
+}
+
+static void register_fake_dll( const WCHAR *name, const void *data, size_t size )
+{
+    static const WCHAR atlW[] = {'a','t','l','.','d','l','l',0};
+    static const WCHAR moduleW[] = {'M','O','D','U','L','E',0};
+    static const WCHAR regtypeW[] = {'W','I','N','E','_','R','E','G','I','S','T','R','Y',0};
+    const IMAGE_RESOURCE_DIRECTORY *resdir;
+    LDR_RESOURCE_INFO info;
+    HRESULT hr = S_OK;
+    HMODULE module = (HMODULE)((ULONG_PTR)data | 1);
+
+    info.Type = (ULONG_PTR)regtypeW;
+    if (LdrFindResourceDirectory_U( module, &info, 1, &resdir )) return;
+
+    if (!registrar)
+    {
+        /* create the object by hand since we can't guarantee that atl and ole32 are registered */
+        IClassFactory *cf;
+        HRESULT (WINAPI *pDllGetClassObject)( REFCLSID clsid, REFIID iid, LPVOID *ppv );
+        HMODULE atl = LoadLibraryW( atlW );
+
+        if ((pDllGetClassObject = (void *)GetProcAddress( atl, "DllGetClassObject" )))
+        {
+            hr = pDllGetClassObject( &CLSID_Registrar, &IID_IClassFactory, (void **)&cf );
+            if (SUCCEEDED( hr ))
+            {
+                hr = IClassFactory_CreateInstance( cf, NULL, &IID_IRegistrar, (void **)&registrar );
+                IClassFactory_Release( cf );
+            }
+        }
+        if (!registrar)
+        {
+            ERR( "failed to create IRegistrar: %x\n", hr );
+            return;
+        }
+    }
+
+    TRACE( "registering %s\n", debugstr_w(name) );
+    IRegistrar_ClearReplacements( registrar );
+    IRegistrar_AddReplacement( registrar, moduleW, name );
+    EnumResourceNamesW( module, regtypeW, register_resource, (LONG_PTR)&hr );
+    if (FAILED(hr)) ERR( "failed to register %s: %x\n", debugstr_w(name), hr );
+}
+
 /* copy a fake dll file to the dest directory */
 static void install_fake_dll( WCHAR *dest, char *file, const char *ext )
 {
@@ -494,7 +560,8 @@ static void install_fake_dll( WCHAR *dest, char *file, const char *ext )
             ret = (WriteFile( h, data, size, &written, NULL ) && written == size);
             if (!ret) ERR( "failed to write to %s (error=%u)\n", debugstr_w(dest), GetLastError() );
             CloseHandle( h );
-            if (!ret) DeleteFileW( dest );
+            if (ret) register_fake_dll( dest, data, size );
+            else DeleteFileW( dest );
         }
     }
     *destname = 0;  /* restore it for next file */
@@ -608,7 +675,8 @@ BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
         DWORD written;
 
         ret = (WriteFile( h, buffer, size, &written, NULL ) && written == size);
-        if (!ret) ERR( "failed to write to %s (error=%u)\n", debugstr_w(name), GetLastError() );
+        if (ret) register_fake_dll( name, buffer, size );
+        else ERR( "failed to write to %s (error=%u)\n", debugstr_w(name), GetLastError() );
     }
     else
     {
@@ -632,4 +700,6 @@ void cleanup_fake_dlls(void)
     HeapFree( GetProcessHeap(), 0, handled_dlls );
     handled_dlls = NULL;
     handled_count = handled_total = 0;
+    if (registrar) IRegistrar_Release( registrar );
+    registrar = NULL;
 }
