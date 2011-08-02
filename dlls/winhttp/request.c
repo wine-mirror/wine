@@ -2174,6 +2174,7 @@ struct winhttp_request
     DWORD bytes_available;
     DWORD bytes_read;
     DWORD error;
+    DWORD logon_policy;
     LONG resolve_timeout;
     LONG connect_timeout;
     LONG send_timeout;
@@ -2845,6 +2846,11 @@ static HRESULT request_send( struct winhttp_request *request )
     {
         return HRESULT_FROM_WIN32( get_last_error() );
     }
+    if (!WinHttpSetOption( request->hrequest, WINHTTP_OPTION_AUTOLOGON_POLICY, &request->logon_policy,
+                           sizeof(request->logon_policy) ))
+    {
+        return HRESULT_FROM_WIN32( get_last_error() );
+    }
     if (!WinHttpSetTimeouts( request->hrequest,
                              request->resolve_timeout,
                              request->connect_timeout,
@@ -3241,8 +3247,28 @@ static HRESULT WINAPI winhttp_request_SetAutoLogonPolicy(
     IWinHttpRequest *iface,
     WinHttpRequestAutoLogonPolicy policy )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    HRESULT hr = S_OK;
+
+    TRACE("%p, %u\n", request, policy );
+
+    EnterCriticalSection( &request->cs );
+    switch (policy)
+    {
+    case AutoLogonPolicy_Always:
+        request->logon_policy = WINHTTP_AUTOLOGON_SECURITY_LEVEL_LOW;
+        break;
+    case AutoLogonPolicy_OnlyIfBypassProxy:
+        request->logon_policy = WINHTTP_AUTOLOGON_SECURITY_LEVEL_MEDIUM;
+        break;
+    case AutoLogonPolicy_Never:
+        request->logon_policy = WINHTTP_AUTOLOGON_SECURITY_LEVEL_HIGH;
+        break;
+    default: hr = E_INVALIDARG;
+        break;
+    }
+    LeaveCriticalSection( &request->cs );
+    return hr;
 }
 
 static const struct IWinHttpRequestVtbl winhttp_request_vtbl =

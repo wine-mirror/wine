@@ -2265,6 +2265,12 @@ static void test_IWinHttpRequest(void)
     hr = IWinHttpRequest_SetRequestHeader( req, date, today );
     ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_OPEN ), "got %08x\n", hr );
 
+    hr = IWinHttpRequest_SetAutoLogonPolicy( req, 0xdeadbeef );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_SetAutoLogonPolicy( req, AutoLogonPolicy_OnlyIfBypassProxy );
+    ok( hr == S_OK, "got %08x\n", hr );
+
     SysFreeString( method );
     method = SysAllocString( method1W );
     SysFreeString( url );
@@ -2335,6 +2341,9 @@ static void test_IWinHttpRequest(void)
     hr = IWinHttpRequest_SetRequestHeader( req, date, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    hr = IWinHttpRequest_SetAutoLogonPolicy( req, AutoLogonPolicy_OnlyIfBypassProxy );
+    ok( hr == S_OK, "got %08x\n", hr );
+
     hr = IWinHttpRequest_Send( req, empty );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -2396,6 +2405,9 @@ static void test_IWinHttpRequest(void)
     hr = IWinHttpRequest_SetRequestHeader( req, date, today );
     ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_AFTER_SEND ), "got %08x\n", hr );
 
+    hr = IWinHttpRequest_SetAutoLogonPolicy( req, AutoLogonPolicy_OnlyIfBypassProxy );
+    ok( hr == S_OK, "got %08x\n", hr );
+
     VariantInit( &timeout );
     V_VT( &timeout ) = VT_I4;
     V_I4( &timeout ) = 10;
@@ -2456,6 +2468,9 @@ static void test_IWinHttpRequest(void)
 
     hr = IWinHttpRequest_SetRequestHeader( req, date, today );
     ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_AFTER_SEND ), "got %08x\n", hr );
+
+    hr = IWinHttpRequest_SetAutoLogonPolicy( req, AutoLogonPolicy_OnlyIfBypassProxy );
+    ok( hr == S_OK, "got %08x\n", hr );
 
     hr = IWinHttpRequest_Send( req, empty );
     ok( hr == S_OK, "got %08x\n", hr );
