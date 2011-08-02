@@ -79,6 +79,31 @@ static inline void do_rop_8(BYTE *ptr, BYTE and, BYTE xor)
     *ptr = (*ptr & and) ^ xor;
 }
 
+static inline void do_rop_mask_8(BYTE *ptr, BYTE and, BYTE xor, BYTE mask)
+{
+    *ptr = (*ptr & (and | ~mask)) ^ (xor & mask);
+}
+
+static inline void do_rop_codes_32(DWORD *dst, DWORD src, struct rop_codes *codes)
+{
+    do_rop_32( dst, (src & codes->a1) ^ codes->a2, (src & codes->x1) ^ codes->x2 );
+}
+
+static inline void do_rop_codes_16(WORD *dst, WORD src, struct rop_codes *codes)
+{
+    do_rop_16( dst, (src & codes->a1) ^ codes->a2, (src & codes->x1) ^ codes->x2 );
+}
+
+static inline void do_rop_codes_8(BYTE *dst, BYTE src, struct rop_codes *codes)
+{
+    do_rop_8( dst, (src & codes->a1) ^ codes->a2, (src & codes->x1) ^ codes->x2 );
+}
+
+static inline void do_rop_codes_mask_8(BYTE *dst, BYTE src, struct rop_codes *codes, BYTE mask)
+{
+    do_rop_mask_8( dst, (src & codes->a1) ^ codes->a2, (src & codes->x1) ^ codes->x2, mask );
+}
+
 static void solid_rects_32(const dib_info *dib, int num, const RECT *rc, DWORD and, DWORD xor)
 {
     DWORD *ptr, *start;
@@ -643,6 +668,303 @@ static void pattern_rects_1(const dib_info *dib, int num, const RECT *rc, const 
 
 static void pattern_rects_null(const dib_info *dib, int num, const RECT *rc, const POINT *origin,
                                const dib_info *brush, void *and_bits, void *xor_bits)
+{
+    return;
+}
+
+static void copy_rect_32(const dib_info *dst, const RECT *rc,
+                         const dib_info *src, const POINT *origin, int rop2)
+{
+    DWORD *dst_start = get_pixel_ptr_32(dst, rc->left, rc->top);
+    DWORD *src_start = get_pixel_ptr_32(src, origin->x, origin->y);
+    DWORD *dst_ptr, *src_ptr;
+    DWORD and = 0, xor = 0;
+    struct rop_codes codes;
+    int x, y;
+
+    switch (rop2)
+    {
+    case R2_NOP:   return;
+    case R2_NOT:   and = ~0u;
+        /* fall through */
+    case R2_WHITE: xor = ~0u;
+        /* fall through */
+    case R2_BLACK:
+        dst->funcs->solid_rects( dst, 1, rc, and, xor );
+        return;
+
+    case R2_COPYPEN:
+        for (y = rc->top; y < rc->bottom; y++)
+        {
+            memcpy( dst_start, src_start, (rc->right - rc->left) * 4 );
+            dst_start += dst->stride / 4;
+            src_start += src->stride / 4;
+        }
+        return;
+
+    default:
+        get_rop_codes( rop2, &codes );
+        for (y = rc->top; y < rc->bottom; y++)
+        {
+            for (x = rc->left, dst_ptr = dst_start, src_ptr = src_start; x < rc->right; x++)
+                do_rop_codes_32( dst_ptr++, *src_ptr++, &codes );
+
+            dst_start += dst->stride / 4;
+            src_start += src->stride / 4;
+        }
+        return;
+    }
+}
+
+static void copy_rect_24(const dib_info *dst, const RECT *rc,
+                         const dib_info *src, const POINT *origin, int rop2)
+{
+    BYTE *dst_start = get_pixel_ptr_24(dst, rc->left, rc->top);
+    BYTE *src_start = get_pixel_ptr_24(src, origin->x, origin->y);
+    BYTE *dst_ptr, *src_ptr;
+    DWORD and = 0, xor = 0;
+    int x, y;
+    struct rop_codes codes;
+
+    switch (rop2)
+    {
+    case R2_NOP:   return;
+    case R2_NOT:   and = ~0u;
+        /* fall through */
+    case R2_WHITE: xor = ~0u;
+        /* fall through */
+    case R2_BLACK:
+        dst->funcs->solid_rects( dst, 1, rc, and, xor );
+        return;
+
+    case R2_COPYPEN:
+        for (y = rc->top; y < rc->bottom; y++)
+        {
+            memcpy( dst_start, src_start, (rc->right - rc->left) * 3);
+            dst_start += dst->stride;
+            src_start += src->stride;
+        }
+        return;
+
+    default:
+        get_rop_codes( rop2, &codes );
+        for (y = rc->top; y < rc->bottom; y++)
+        {
+            for (x = rc->left, dst_ptr = dst_start, src_ptr = src_start; x < rc->right; x++)
+            {
+                do_rop_codes_8( dst_ptr++, *src_ptr++, &codes );
+                do_rop_codes_8( dst_ptr++, *src_ptr++, &codes );
+                do_rop_codes_8( dst_ptr++, *src_ptr++, &codes );
+            }
+            dst_start += dst->stride;
+            src_start += src->stride;
+        }
+        return;
+    }
+}
+
+static void copy_rect_16(const dib_info *dst, const RECT *rc,
+                         const dib_info *src, const POINT *origin, int rop2)
+{
+    WORD *dst_start = get_pixel_ptr_16(dst, rc->left, rc->top);
+    WORD *src_start = get_pixel_ptr_16(src, origin->x, origin->y);
+    WORD *dst_ptr, *src_ptr;
+    DWORD and = 0, xor = 0;
+    int x, y;
+    struct rop_codes codes;
+
+    switch (rop2)
+    {
+    case R2_NOP:   return;
+    case R2_NOT:   and = ~0u;
+        /* fall through */
+    case R2_WHITE: xor = ~0u;
+        /* fall through */
+    case R2_BLACK:
+        dst->funcs->solid_rects( dst, 1, rc, and, xor );
+        return;
+
+    case R2_COPYPEN:
+        for (y = rc->top; y < rc->bottom; y++)
+        {
+            memcpy( dst_start, src_start, (rc->right - rc->left) * 2 );
+            dst_start += dst->stride / 2;
+            src_start += src->stride / 2;
+        }
+        return;
+
+    default:
+        get_rop_codes( rop2, &codes );
+        for (y = rc->top; y < rc->bottom; y++)
+        {
+            for (x = rc->left, dst_ptr = dst_start, src_ptr = src_start; x < rc->right; x++)
+                do_rop_codes_16( dst_ptr++, *src_ptr++, &codes );
+
+            dst_start += dst->stride / 2;
+            src_start += src->stride / 2;
+        }
+        return;
+    }
+}
+
+static void copy_rect_8(const dib_info *dst, const RECT *rc,
+                        const dib_info *src, const POINT *origin, int rop2)
+{
+    BYTE *dst_start = get_pixel_ptr_8(dst, rc->left, rc->top);
+    BYTE *src_start = get_pixel_ptr_8(src, origin->x, origin->y);
+    BYTE *dst_ptr, *src_ptr;
+    DWORD and = 0, xor = 0;
+    int x, y;
+    struct rop_codes codes;
+
+    switch (rop2)
+    {
+    case R2_NOP:   return;
+    case R2_NOT:   and = ~0u;
+        /* fall through */
+    case R2_WHITE: xor = ~0u;
+        /* fall through */
+    case R2_BLACK:
+        dst->funcs->solid_rects( dst, 1, rc, and, xor );
+        return;
+
+    case R2_COPYPEN:
+        for (y = rc->top; y < rc->bottom; y++)
+        {
+            memcpy( dst_start, src_start, (rc->right - rc->left) );
+            dst_start += dst->stride;
+            src_start += src->stride;
+        }
+        return;
+
+    default:
+        get_rop_codes( rop2, &codes );
+        for (y = rc->top; y < rc->bottom; y++)
+        {
+            for (x = rc->left, dst_ptr = dst_start, src_ptr = src_start; x < rc->right; x++)
+                do_rop_codes_8( dst_ptr++, *src_ptr++, &codes );
+
+            dst_start += dst->stride;
+            src_start += src->stride;
+        }
+        return;
+    }
+}
+
+static void copy_rect_4(const dib_info *dst, const RECT *rc,
+                        const dib_info *src, const POINT *origin, int rop2)
+{
+    BYTE *dst_start = get_pixel_ptr_4(dst, rc->left, rc->top);
+    BYTE *src_start = get_pixel_ptr_4(src, origin->x, origin->y);
+    BYTE *dst_ptr, *src_ptr, src_val;
+    DWORD and = 0, xor = 0;
+    int x, src_x, y;
+    struct rop_codes codes;
+
+    switch (rop2)
+    {
+    case R2_NOP:   return;
+    case R2_NOT:   and = ~0u;
+        /* fall through */
+    case R2_WHITE: xor = ~0u;
+        /* fall through */
+    case R2_BLACK:
+        dst->funcs->solid_rects( dst, 1, rc, and, xor );
+        return;
+
+    case R2_COPYPEN:
+        if ((rc->left & 1) == 0 && (origin->x & 1) == 0 && (rc->right & 1) == 0)
+        {
+            for (y = rc->top; y < rc->bottom; y++)
+            {
+                memcpy( dst_start, src_start, (rc->right - rc->left) / 2 );
+                dst_start += dst->stride;
+                src_start += src->stride;
+            }
+            return;
+        }
+        /* fall through */
+    default:
+        get_rop_codes( rop2, &codes );
+        for (y = rc->top; y < rc->bottom; y++)
+        {
+            for (x = rc->left, src_x = origin->x, dst_ptr = dst_start, src_ptr = src_start; x < rc->right; x++, src_x++)
+            {
+                if (x & 1)
+                {
+                    if (src_x & 1) src_val =  *src_ptr++;
+                    else           src_val =  *src_ptr >> 4;
+                    do_rop_codes_mask_8( dst_ptr++, src_val, &codes, 0x0f );
+                }
+                else
+                {
+                    if (src_x & 1) src_val = *src_ptr++ << 4;
+                    else           src_val = *src_ptr;
+                    do_rop_codes_mask_8( dst_ptr, src_val, &codes, 0xf0 );
+                }
+            }
+            dst_start += dst->stride;
+            src_start += src->stride;
+        }
+        return;
+    }
+}
+
+static void copy_rect_1(const dib_info *dst, const RECT *rc,
+                        const dib_info *src, const POINT *origin, int rop2)
+{
+    BYTE *dst_start = get_pixel_ptr_1(dst, rc->left, rc->top);
+    BYTE *src_start = get_pixel_ptr_1(src, origin->x, origin->y);
+    BYTE *dst_ptr, *src_ptr, src_val;
+    DWORD and = 0, xor = 0;
+    int x, y, dst_bitpos, src_bitpos;
+    struct rop_codes codes;
+
+    switch (rop2)
+    {
+    case R2_NOP:   return;
+    case R2_NOT:   and = ~0u;
+        /* fall through */
+    case R2_WHITE: xor = ~0u;
+        /* fall through */
+    case R2_BLACK:
+        dst->funcs->solid_rects( dst, 1, rc, and, xor );
+        return;
+
+    case R2_COPYPEN:
+        if ((rc->left & 7) == 0 && (origin->x & 7) == 0 && (rc->right & 7) == 0)
+        {
+            for (y = rc->top; y < rc->bottom; y++)
+            {
+                memcpy( dst_start, src_start, (rc->right - rc->left) / 8);
+                dst_start += dst->stride;
+                src_start += src->stride;
+            }
+            return;
+        }
+        /* fall through */
+    default:
+        get_rop_codes( rop2, &codes );
+        for (y = rc->top; y < rc->bottom; y++)
+        {
+            dst_bitpos = rc->left & 7;
+            src_bitpos = origin->x & 7;
+            for (x = rc->left, dst_ptr = dst_start, src_ptr = src_start; x < rc->right; x++)
+            {
+                src_val = *src_ptr & pixel_masks_1[src_bitpos] ? 0xff : 0;
+                do_rop_codes_mask_8( dst_ptr, src_val, &codes, pixel_masks_1[dst_bitpos] );
+                if (dst_bitpos++ == 7) { dst_ptr++, dst_bitpos = 0; }
+                if (src_bitpos++ == 7) { src_ptr++, src_bitpos = 0; }
+            }
+            dst_start += dst->stride;
+            src_start += src->stride;
+        }
+        return;
+    }
+}
+
+static void copy_rect_null(const dib_info *dst, const RECT *rc,
+                           const dib_info *src, const POINT *origin, int rop2)
 {
     return;
 }
@@ -3118,6 +3440,7 @@ const primitive_funcs funcs_8888 =
 {
     solid_rects_32,
     pattern_rects_32,
+    copy_rect_32,
     colorref_to_pixel_888,
     convert_to_8888,
     create_rop_masks_32
@@ -3127,6 +3450,7 @@ const primitive_funcs funcs_32 =
 {
     solid_rects_32,
     pattern_rects_32,
+    copy_rect_32,
     colorref_to_pixel_masks,
     convert_to_32,
     create_rop_masks_32
@@ -3136,6 +3460,7 @@ const primitive_funcs funcs_24 =
 {
     solid_rects_24,
     pattern_rects_24,
+    copy_rect_24,
     colorref_to_pixel_888,
     convert_to_24,
     create_rop_masks_24
@@ -3145,6 +3470,7 @@ const primitive_funcs funcs_555 =
 {
     solid_rects_16,
     pattern_rects_16,
+    copy_rect_16,
     colorref_to_pixel_555,
     convert_to_555,
     create_rop_masks_16
@@ -3154,6 +3480,7 @@ const primitive_funcs funcs_16 =
 {
     solid_rects_16,
     pattern_rects_16,
+    copy_rect_16,
     colorref_to_pixel_masks,
     convert_to_16,
     create_rop_masks_16
@@ -3163,6 +3490,7 @@ const primitive_funcs funcs_8 =
 {
     solid_rects_8,
     pattern_rects_8,
+    copy_rect_8,
     colorref_to_pixel_colortable,
     convert_to_8,
     create_rop_masks_8
@@ -3172,6 +3500,7 @@ const primitive_funcs funcs_4 =
 {
     solid_rects_4,
     pattern_rects_4,
+    copy_rect_4,
     colorref_to_pixel_colortable,
     convert_to_4,
     create_rop_masks_4
@@ -3181,6 +3510,7 @@ const primitive_funcs funcs_1 =
 {
     solid_rects_1,
     pattern_rects_1,
+    copy_rect_1,
     colorref_to_pixel_colortable,
     convert_to_1,
     create_rop_masks_1
@@ -3190,6 +3520,7 @@ const primitive_funcs funcs_null =
 {
     solid_rects_null,
     pattern_rects_null,
+    copy_rect_null,
     colorref_to_pixel_null,
     convert_to_null,
     create_rop_masks_null
