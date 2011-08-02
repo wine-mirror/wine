@@ -55,7 +55,7 @@ static const unsigned int section_alignment = 4096;
 static const unsigned int max_dll_name_len = 64;
 
 static void *file_buffer;
-static size_t file_buffer_size;
+static SIZE_T file_buffer_size;
 static unsigned int handled_count;
 static unsigned int handled_total;
 static char **handled_dlls;
@@ -187,11 +187,9 @@ failed:
 
 /* read in the contents of a file into the global file buffer */
 /* return 1 on success, 0 on nonexistent file, -1 on other error */
-static int read_file( const char *name, void **data, size_t *size )
+static int read_file( const char *name, void **data, SIZE_T *size )
 {
-    static char static_file_buffer[4096];
     struct stat st;
-    void *buffer = static_file_buffer;
     int fd, ret = -1;
     size_t header_size;
     IMAGE_DOS_HEADER *dos;
@@ -202,29 +200,27 @@ static int read_file( const char *name, void **data, size_t *size )
     if ((fd = open( name, O_RDONLY | O_BINARY )) == -1) return 0;
     if (fstat( fd, &st ) == -1) goto done;
     *size = st.st_size;
-    if (st.st_size > sizeof(static_file_buffer))
+    if (!file_buffer || st.st_size > file_buffer_size)
     {
-        if (!file_buffer || st.st_size > file_buffer_size)
-        {
-            HeapFree( GetProcessHeap(), 0, file_buffer );
-            if (!(file_buffer = HeapAlloc( GetProcessHeap(), 0, st.st_size ))) goto done;
-            file_buffer_size = st.st_size;
-        }
-        buffer = file_buffer;
+        VirtualFree( file_buffer, 0, MEM_RELEASE );
+        file_buffer = NULL;
+        file_buffer_size = st.st_size;
+        if (NtAllocateVirtualMemory( GetCurrentProcess(), &file_buffer, 0, &file_buffer_size,
+                                     MEM_COMMIT, PAGE_READWRITE )) goto done;
     }
 
     /* check for valid fake dll file */
 
     if (st.st_size < min_size) goto done;
     header_size = min( st.st_size, 4096 );
-    if (pread( fd, buffer, header_size, 0 ) != header_size) goto done;
-    dos = buffer;
+    if (pread( fd, file_buffer, header_size, 0 ) != header_size) goto done;
+    dos = file_buffer;
     if (dos->e_magic != IMAGE_DOS_SIGNATURE) goto done;
     if (dos->e_lfanew < sizeof(fakedll_signature)) goto done;
     if (memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) )) goto done;
     if (dos->e_lfanew + FIELD_OFFSET(IMAGE_NT_HEADERS,OptionalHeader.MajorLinkerVersion) > header_size)
         goto done;
-    nt = (IMAGE_NT_HEADERS *)((char *)buffer + dos->e_lfanew);
+    nt = (IMAGE_NT_HEADERS *)((char *)file_buffer + dos->e_lfanew);
     if (nt->Signature == IMAGE_NT_SIGNATURE && nt->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR_MAGIC)
     {
         /* wrong 32/64 type, pretend it doesn't exist */
@@ -232,10 +228,10 @@ static int read_file( const char *name, void **data, size_t *size )
         goto done;
     }
     if (st.st_size == header_size ||
-        pread( fd, (char *)buffer + header_size,
+        pread( fd, (char *)file_buffer + header_size,
                st.st_size - header_size, header_size ) == st.st_size - header_size)
     {
-        *data = buffer;
+        *data = file_buffer;
         ret = 1;
     }
 done:
@@ -380,7 +376,7 @@ static inline char *prepend( char *buffer, const char *str, size_t len )
 }
 
 /* try to load a pre-compiled fake dll */
-static void *load_fake_dll( const WCHAR *name, size_t *size )
+static void *load_fake_dll( const WCHAR *name, SIZE_T *size )
 {
     const char *build_dir = wine_get_build_dir();
     const char *path;
@@ -473,7 +469,7 @@ static HANDLE create_dest_file( const WCHAR *name )
 static void install_fake_dll( WCHAR *dest, char *file, const char *ext )
 {
     int ret;
-    size_t size;
+    SIZE_T size;
     void *data;
     DWORD written;
     WCHAR *destname = dest + strlenW(dest);
@@ -581,7 +577,7 @@ BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
 {
     HANDLE h;
     BOOL ret;
-    size_t size;
+    SIZE_T size;
     const WCHAR *filename;
     void *buffer;
 
@@ -631,7 +627,7 @@ BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
  */
 void cleanup_fake_dlls(void)
 {
-    HeapFree( GetProcessHeap(), 0, file_buffer );
+    if (file_buffer) VirtualFree( file_buffer, 0, MEM_RELEASE );
     file_buffer = NULL;
     HeapFree( GetProcessHeap(), 0, handled_dlls );
     handled_dlls = NULL;
