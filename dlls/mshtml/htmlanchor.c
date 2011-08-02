@@ -26,9 +26,10 @@
 #include "winuser.h"
 #include "ole2.h"
 
-#include "wine/debug.h"
-
 #include "mshtml_private.h"
+#include "htmlevent.h"
+
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -39,6 +40,43 @@ typedef struct {
 
     nsIDOMHTMLAnchorElement *nsanchor;
 } HTMLAnchorElement;
+
+static HRESULT navigate_anchor(HTMLAnchorElement *This)
+{
+    nsAString href_str, target_str;
+    const PRUnichar *href, *target;
+    nsresult nsres;
+    HRESULT hres;
+
+    nsres = nsIDOMHTMLAnchorElement_GetTarget(This->nsanchor, &target_str);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    nsAString_GetData(&target_str, &target);
+    if(*target) {
+        FIXME("Navigating to target %s is not implemented\n", debugstr_w(target));
+        nsAString_Finish(&target_str);
+        return S_OK;
+    }
+
+    nsAString_Finish(&target_str);
+
+    nsres = nsIDOMHTMLAnchorElement_GetHref(This->nsanchor, &href_str);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    nsAString_GetData(&href_str, &href);
+    if(*href) {
+        HTMLWindow *window = This->element.node.doc->basedoc.window;
+        hres = navigate_url(window, href, window->url);
+    }else {
+        TRACE("empty href\n");
+        hres = S_OK;
+    }
+
+    nsAString_Finish(&href_str);
+    return hres;
+}
 
 static inline HTMLAnchorElement *impl_from_IHTMLAnchorElement(IHTMLAnchorElement *iface)
 {
@@ -542,10 +580,26 @@ static void HTMLAnchorElement_destructor(HTMLDOMNode *iface)
     HTMLElement_destructor(&This->element.node);
 }
 
+static HRESULT HTMLAnchorElement_handle_event(HTMLDOMNode *iface, eventid_t eid, BOOL *prevent_default)
+{
+    HTMLAnchorElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(eid == EVENTID_CLICK) {
+        TRACE("CLICK\n");
+        *prevent_default = TRUE;
+        return navigate_anchor(This);
+    }
+
+    return S_OK;
+}
+
 static const NodeImplVtbl HTMLAnchorElementImplVtbl = {
     HTMLAnchorElement_QI,
     HTMLAnchorElement_destructor,
-    HTMLElement_clone
+    HTMLElement_clone,
+    NULL,
+    NULL,
+    HTMLAnchorElement_handle_event
 };
 
 static const tid_t HTMLAnchorElement_iface_tids[] = {
