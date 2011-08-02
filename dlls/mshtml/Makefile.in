@@ -104,8 +104,6 @@ PO_SRCS = mshtml.rc
 
 IDL_H_SRCS = nsiface.idl
 
-IDL_R_SRCS = \
-	mshtml_classes.idl \
-	mshtml_tlb.idl
+IDL_R_SRCS = mshtml_classes.idl
 
 @MAKE_DLL_RULES@

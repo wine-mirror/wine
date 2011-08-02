@@ -285,6 +285,15 @@ coclass MHTMLDocument { }
 coclass ResProtocol { }
 
 [
+    helpstring("Microsoft Scriptlet Component"),
+    progid("ScriptBridge.ScriptBridge.1"),
+    vi_progid("ScriptBridge.ScriptBridge"),
+    threading(apartment),
+    uuid(ae24fdae-03c6-11d1-8b76-0080c744f389)
+]
+coclass Scriptlet { }
+
+[
     helpstring("Microsoft HTML Resource Pluggable Protocol"),
     threading(apartment),
     uuid(76e67a63-06e9-11d2-a840-006008059382)
