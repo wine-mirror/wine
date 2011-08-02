@@ -2539,6 +2539,7 @@ static BOOL surface_convert_color_to_float(const struct wined3d_surface *surface
 HRESULT surface_load(struct wined3d_surface *surface, BOOL srgb)
 {
     DWORD flag = srgb ? SFLAG_INSRGBTEX : SFLAG_INTEXTURE;
+    BOOL ck_changed;
 
     TRACE("surface %p, srgb %#x.\n", surface, srgb);
 
@@ -2548,14 +2549,11 @@ HRESULT surface_load(struct wined3d_surface *surface, BOOL srgb)
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (!(surface->flags & flag))
-    {
-        TRACE("Reloading because surface is dirty\n");
-    }
+    ck_changed = !(surface->flags & SFLAG_GLCKEY) != !(surface->CKeyFlags & WINEDDSD_CKSRCBLT);
+
     /* Reload if either the texture and sysmem have different ideas about the
      * color key, or the actual key values changed. */
-    else if (!(surface->flags & SFLAG_GLCKEY) != !(surface->CKeyFlags & WINEDDSD_CKSRCBLT)
-            || ((surface->CKeyFlags & WINEDDSD_CKSRCBLT)
+    if (ck_changed || ((surface->CKeyFlags & WINEDDSD_CKSRCBLT)
             && (surface->glCKey.dwColorSpaceLowValue != surface->SrcBltCKey.dwColorSpaceLowValue
             || surface->glCKey.dwColorSpaceHighValue != surface->SrcBltCKey.dwColorSpaceHighValue)))
     {
@@ -2568,6 +2566,13 @@ HRESULT surface_load(struct wined3d_surface *surface, BOOL srgb)
          * this kills performance though :( */
         /* TODO: This is not necessarily needed with hw palettized texture support. */
         surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
+        /* Switching color keying on / off may change the internal format. */
+        if (ck_changed)
+            surface_force_reload(surface);
+    }
+    else if (!(surface->flags & flag))
+    {
+        TRACE("Reloading because surface is dirty.\n");
     }
     else
     {
