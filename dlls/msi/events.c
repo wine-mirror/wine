@@ -215,18 +215,19 @@ static UINT ControlEvent_AddSource( MSIPACKAGE *package, LPCWSTR argument, msi_d
 static UINT ControlEvent_SetTargetPath(MSIPACKAGE* package, LPCWSTR argument, 
                                    msi_dialog* dialog)
 {
+    static const WCHAR szSelectionPath[] = {'S','e','l','e','c','t','i','o','n','P','a','t','h',0};
     LPWSTR path = msi_dup_property( package->db, argument );
     MSIRECORD *rec = MSI_CreateRecord( 1 );
-    UINT r;
-
-    static const WCHAR szSelectionPath[] = {'S','e','l','e','c','t','i','o','n','P','a','t','h',0};
+    UINT r = ERROR_SUCCESS;
 
     MSI_RecordSetStringW( rec, 1, path );
     ControlEvent_FireSubscribedEvent( package, szSelectionPath, rec );
-
-    /* failure to set the path halts the executing of control events */
-    r = MSI_SetTargetPathW(package, argument, path);
-    msi_free(path);
+    if (path)
+    {
+        /* failure to set the path halts the executing of control events */
+        r = MSI_SetTargetPathW(package, argument, path);
+        msi_free(path);
+    }
     msi_free(&rec->hdr);
     return r;
 }
