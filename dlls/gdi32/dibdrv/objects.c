@@ -57,11 +57,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(dib);
  *
  */
 
-/* A = (P & A1) | (~P & A2) */
-#define ZERO {0, 0}
-#define ONE {0xffffffff, 0xffffffff}
-#define P {0xffffffff, 0}
-#define NOT_P {0, 0xffffffff}
+/* A = (P & A1) ^ A2 */
+#define ZERO  { 0u,  0u}
+#define ONE   { 0u, ~0u}
+#define P     {~0u,  0u}
+#define NOT_P {~0u, ~0u}
 
 static const DWORD rop2_and_array[16][2] =
 {
@@ -71,7 +71,7 @@ static const DWORD rop2_and_array[16][2] =
     ZERO, NOT_P, NOT_P, ZERO
 };
 
-/* X = (P & X1) | (~P & X2) */
+/* X = (P & X1) ^ X2 */
 static const DWORD rop2_xor_array[16][2] =
 {
     ZERO, NOT_P, ZERO, NOT_P,
@@ -88,8 +88,8 @@ static const DWORD rop2_xor_array[16][2] =
 void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor)
 {
     /* NB The ROP2 codes start at one and the arrays are zero-based */
-    *and = (color & rop2_and_array[rop-1][0]) | ((~color) & rop2_and_array[rop-1][1]);
-    *xor = (color & rop2_xor_array[rop-1][0]) | ((~color) & rop2_xor_array[rop-1][1]);
+    *and = (color & rop2_and_array[rop-1][0]) ^ rop2_and_array[rop-1][1];
+    *xor = (color & rop2_xor_array[rop-1][0]) ^ rop2_xor_array[rop-1][1];
 }
 
 static inline RGBQUAD rgbquad_from_colorref(COLORREF c)
