@@ -1877,7 +1877,7 @@ struct local_server_params
 {
     CLSID clsid;
     IStream *stream;
-    HANDLE ready_event;
+    HANDLE pipe;
     HANDLE stop_event;
     HANDLE thread;
     BOOL multi_use;
@@ -1898,7 +1898,7 @@ static DWORD WINAPI local_server_thread(LPVOID param)
     ULONG		res;
     BOOL multi_use = lsp->multi_use;
     OVERLAPPED ovl;
-    HANDLE pipe_event, hPipe, new_pipe;
+    HANDLE pipe_event, hPipe = lsp->pipe, new_pipe;
     DWORD  bytes;
 
     TRACE("Starting threader for %s.\n",debugstr_guid(&lsp->clsid));
@@ -1906,18 +1906,6 @@ static DWORD WINAPI local_server_thread(LPVOID param)
     memset(&ovl, 0, sizeof(ovl));
     get_localserver_pipe_name(pipefn, &lsp->clsid);
     ovl.hEvent = pipe_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-
-    hPipe = CreateNamedPipeW( pipefn, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
-                              PIPE_TYPE_BYTE|PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
-                              4096, 4096, 500 /* 0.5 second timeout */, NULL );
-    if (hPipe == INVALID_HANDLE_VALUE)
-    {
-        FIXME("pipe creation failed for %s, le is %u\n", debugstr_w(pipefn), GetLastError());
-        CloseHandle(pipe_event);
-        return 1;
-    }
-
-    SetEvent(lsp->ready_event);
 
     while (1) {
         if (!ConnectNamedPipe(hPipe, &ovl))
@@ -2008,8 +1996,9 @@ static DWORD WINAPI local_server_thread(LPVOID param)
 /* starts listening for a local server */
 HRESULT RPC_StartLocalServer(REFCLSID clsid, IStream *stream, BOOL multi_use, void **registration)
 {
-    DWORD tid;
+    DWORD tid, err;
     struct local_server_params *lsp;
+    WCHAR pipefn[100];
 
     lsp = HeapAlloc(GetProcessHeap(), 0, sizeof(*lsp));
     if (!lsp)
@@ -2018,33 +2007,35 @@ HRESULT RPC_StartLocalServer(REFCLSID clsid, IStream *stream, BOOL multi_use, vo
     lsp->clsid = *clsid;
     lsp->stream = stream;
     IStream_AddRef(stream);
-    lsp->ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-    if (!lsp->ready_event)
-    {
-        HeapFree(GetProcessHeap(), 0, lsp);
-        return HRESULT_FROM_WIN32(GetLastError());
-    }
     lsp->stop_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     if (!lsp->stop_event)
     {
-        CloseHandle(lsp->ready_event);
         HeapFree(GetProcessHeap(), 0, lsp);
         return HRESULT_FROM_WIN32(GetLastError());
     }
     lsp->multi_use = multi_use;
 
+    get_localserver_pipe_name(pipefn, &lsp->clsid);
+    lsp->pipe = CreateNamedPipeW(pipefn, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+                                 PIPE_TYPE_BYTE|PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
+                                 4096, 4096, 500 /* 0.5 second timeout */, NULL);
+    if (lsp->pipe == INVALID_HANDLE_VALUE)
+    {
+        err = GetLastError();
+        FIXME("pipe creation failed for %s, le is %u\n", debugstr_w(pipefn), GetLastError());
+        CloseHandle(lsp->stop_event);
+        HeapFree(GetProcessHeap(), 0, lsp);
+        return HRESULT_FROM_WIN32(err);
+    }
+
     lsp->thread = CreateThread(NULL, 0, local_server_thread, lsp, 0, &tid);
     if (!lsp->thread)
     {
-        CloseHandle(lsp->ready_event);
+        CloseHandle(lsp->pipe);
         CloseHandle(lsp->stop_event);
         HeapFree(GetProcessHeap(), 0, lsp);
         return HRESULT_FROM_WIN32(GetLastError());
     }
-
-    WaitForSingleObject(lsp->ready_event, INFINITE);
-    CloseHandle(lsp->ready_event);
-    lsp->ready_event = NULL;
 
     *registration = lsp;
     return S_OK;
