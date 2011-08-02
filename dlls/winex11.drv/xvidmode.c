@@ -389,7 +389,7 @@ static BOOL X11DRV_XF86VM_SetGammaRamp(LPDDGAMMARAMP ramp)
 #ifdef X_XF86VidModeSetGamma
   XF86VidModeGamma gamma;
 
-  if (xf86vm_major < 2) return FALSE; /* no gamma control */
+  if (xf86vm_major < 2 || !usexvidmode) return FALSE; /* no gamma control */
 #ifdef X_XF86VidModeSetGammaRamp
   else if (xf86vm_use_gammaramp)
   {
