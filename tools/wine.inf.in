@@ -126,18 +126,21 @@ AddReg=\
 [DefaultInstall.Services]
 AddService=MountMgr,0x800,MountMgrService
 AddService=Spooler,0,SpoolerService
+AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
 AddService=PlugPlay,0,PlugPlayService
 
 [DefaultInstall.NT.Services]
 AddService=MountMgr,0x800,MountMgrService
 AddService=Spooler,0,SpoolerService
+AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
 AddService=PlugPlay,0,PlugPlayService
 
 [DefaultInstall.ntamd64.Services]
 AddService=MountMgr,0x800,MountMgrService
 AddService=Spooler,0,SpoolerService
+AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
 AddService=PlugPlay,0,PlugPlayService
 
@@ -2979,6 +2982,19 @@ ServiceBinary="%11%\termsv.exe"
 ServiceType=32
 StartType=3
 ErrorControl=1
+
+[StiService]
+AddReg=StiServiceKeys
+Description="WIA Service"
+DisplayName="WIA Service"
+ServiceBinary="%11%\svchost.exe -k imgsvc"
+ServiceType=16
+StartType=3
+ErrorControl=1
+
+[StiServiceKeys]
+HKR,Parameters,"ServiceDll",,"%11%\wiaservc.dll"
+HKLM,%CurrentVersionNT%\SvcHost,"imgsvc",0x00010000,"StiSvc"
 
 [PlugPlayService]
 Description="Enables automatic configuration of devices"
