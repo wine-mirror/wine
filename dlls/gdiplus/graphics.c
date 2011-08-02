@@ -4643,7 +4643,8 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     GpPointF pt[3], rectcpy[4];
     POINT corners[4];
     REAL rel_width, rel_height;
-    INT offsety = 0, save_state;
+    INT save_state;
+    REAL offsety = 0.0;
     struct draw_string_args args;
     RectF scaled_rect;
     HDC hdc, temp_hdc=NULL;
@@ -4719,7 +4720,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     args.brush = brush;
 
     args.x = rect->X;
-    args.y = rect->Y;
+    args.y = rect->Y + offsety;
 
     args.rel_width = rel_width;
     args.rel_height = rel_height;
