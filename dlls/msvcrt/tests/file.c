@@ -358,17 +358,21 @@ static void test_asciimode(void)
 
     fp = fopen("ascii.tst", "r");
     c= fgetc(fp);
+    ok(c == '0', "fgetc failed, expected '0', got '%c'\n", c);
     c= fgetc(fp);
+    ok(c == '\n', "fgetc failed, expected '\\n', got '%c'\n", c);
     fseek(fp,0,SEEK_CUR);
     for(i=1; i<10; i++) {
 	ok((j = ftell(fp)) == i*3, "ftell fails in TEXT mode\n");
 	fseek(fp,0,SEEK_CUR);
 	ok((c = fgetc(fp)) == '0'+ i, "fgetc after fseek failed in line %d\n", i);
 	c= fgetc(fp);
+        ok(c == '\n', "fgetc failed, expected '\\n', got '%c'\n", c);
     }
     /* Show that fseek doesn't skip \\r !*/
     rewind(fp);
     c= fgetc(fp);
+    ok(c == '0', "fgetc failed, expected '0', got '%c'\n", c);
     fseek(fp, 2 ,SEEK_CUR);
     for(i=1; i<10; i++) {
 	ok((c = fgetc(fp)) == '0'+ i, "fgetc after fseek with pos Offset failed in line %d\n", i);
@@ -376,6 +380,7 @@ static void test_asciimode(void)
     }
     fseek(fp, 9*3 ,SEEK_SET);
     c = fgetc(fp);
+    ok(c == '9', "fgetc failed, expected '9', got '%c'\n", c);
     fseek(fp, -4 ,SEEK_CUR);
     for(i= 8; i>=0; i--) {
 	ok((c = fgetc(fp)) == '0'+ i, "fgetc after fseek with neg Offset failed in line %d\n", i);
