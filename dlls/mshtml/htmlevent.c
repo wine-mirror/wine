@@ -1088,14 +1088,14 @@ HRESULT dispatch_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *even
     return S_OK;
 }
 
-HRESULT call_event(HTMLDOMNode *node, eventid_t eid)
+HRESULT call_fire_event(HTMLDOMNode *node, eventid_t eid)
 {
     HRESULT hres;
 
-    if(node->vtbl->call_event) {
+    if(node->vtbl->fire_event) {
         BOOL handled = FALSE;
 
-        hres = node->vtbl->call_event(node, eid, &handled);
+        hres = node->vtbl->fire_event(node, eid, &handled);
         if(handled)
             return hres;
     }

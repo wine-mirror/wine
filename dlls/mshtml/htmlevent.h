@@ -51,7 +51,7 @@ HRESULT get_event_handler(event_target_t**,eventid_t,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT attach_event(event_target_t**,nsIDOMNode*,HTMLDocument*,BSTR,IDispatch*,VARIANT_BOOL*) DECLSPEC_HIDDEN;
 HRESULT detach_event(event_target_t*,HTMLDocument*,BSTR,IDispatch*) DECLSPEC_HIDDEN;
 HRESULT dispatch_event(HTMLDOMNode*,const WCHAR*,VARIANT*,VARIANT_BOOL*) DECLSPEC_HIDDEN;
-HRESULT call_event(HTMLDOMNode*,eventid_t) DECLSPEC_HIDDEN;
+HRESULT call_fire_event(HTMLDOMNode*,eventid_t) DECLSPEC_HIDDEN;
 void update_cp_events(HTMLWindow*,event_target_t**,cp_static_data_t*,nsIDOMNode*) DECLSPEC_HIDDEN;
 
 static inline event_target_t **get_node_event_target(HTMLDOMNode *node)

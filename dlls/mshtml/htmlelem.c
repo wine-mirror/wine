@@ -1371,7 +1371,7 @@ static HRESULT WINAPI HTMLElement_click(IHTMLElement *iface)
 
     TRACE("(%p)\n", This);
 
-    return call_event(&This->node, EVENTID_CLICK);
+    return call_fire_event(&This->node, EVENTID_CLICK);
 }
 
 static HRESULT WINAPI HTMLElement_get_filters(IHTMLElement *iface,
