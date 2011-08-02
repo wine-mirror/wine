@@ -2414,8 +2414,8 @@ static HRESULT WINAPI winhttp_request_SetProxy(
 
     case HTTPREQUEST_PROXYSETTING_PROXY:
         request->proxy.dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
-        request->proxy.lpszProxy = strdupW( V_BSTR( &proxy_server ) );
-        request->proxy.lpszProxyBypass = strdupW( V_BSTR( &bypass_list ) );
+        if (V_VT( &proxy_server ) == VT_BSTR) request->proxy.lpszProxy = strdupW( V_BSTR( &proxy_server ) );
+        if (V_VT( &bypass_list ) == VT_BSTR) request->proxy.lpszProxyBypass = strdupW( V_BSTR( &bypass_list ) );
         break;
 
     default:
