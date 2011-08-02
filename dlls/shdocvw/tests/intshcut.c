@@ -29,6 +29,7 @@
 #include "winreg.h"
 #include "winerror.h"
 
+#include "initguid.h"
 #include "shlobj.h"
 #include "shobjidl.h"
 #include "shlguid.h"

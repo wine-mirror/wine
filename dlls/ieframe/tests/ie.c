@@ -24,7 +24,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "initguid.h"
 #include "ole2.h"
 #include "exdisp.h"
 

@@ -3142,38 +3142,20 @@ static void test_WebBrowser_NoContainerOlecmd(void)
     ok(ref == 0, "ref=%d, expected 0\n", ref);
 }
 
-static BOOL check_ie(void)
-{
-    IHTMLDocument5 *doc;
-    HRESULT hres;
-
-    hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
-            &IID_IHTMLDocument5, (void**)&doc);
-    if(FAILED(hres))
-      return FALSE;
-
-    IHTMLDocument5_Release(doc);
-    return TRUE;
-}
-
 START_TEST(webbrowser)
 {
     OleInitialize(NULL);
 
-    if(check_ie()) {
-      container_hwnd = create_container_window();
+    container_hwnd = create_container_window();
 
-      trace("Testing WebBrowser (no download)...\n");
-      test_WebBrowser(FALSE, FALSE);
-      test_WebBrowser(FALSE, TRUE);
-      trace("Testing WebBrowser...\n");
-      test_WebBrowser(TRUE, FALSE);
-      test_WebBrowser(TRUE, TRUE);
-      trace("Testing WebBrowser w/o container-based olecmd...\n");
-      test_WebBrowser_NoContainerOlecmd();
-    }else {
-      win_skip("Skipping tests on too old IE\n");
-    }
+    trace("Testing WebBrowser (no download)...\n");
+    test_WebBrowser(FALSE, FALSE);
+    test_WebBrowser(FALSE, TRUE);
+    trace("Testing WebBrowser...\n");
+    test_WebBrowser(TRUE, FALSE);
+    test_WebBrowser(TRUE, TRUE);
+    trace("Testing WebBrowser w/o container-based olecmd...\n");
+    test_WebBrowser_NoContainerOlecmd();
 
     OleUninitialize();
 }
