@@ -820,7 +820,7 @@ DWORD WINAPI lineGetTranslateCapsA(HLINEAPP hLineApp, DWORD dwAPIVersion,
     strptr = ((LPBYTE) lpTranslateCaps) +
         lpTranslateCaps->dwCardListOffset + lpTranslateCaps->dwCardListSize;
     pLocEntry = (LPLINELOCATIONENTRY) (lpTranslateCaps + 1);
-    /* key with Preferred CardID's */
+    /* key with Preferred CardIDs */
     if( RegOpenKeyA(HKEY_CURRENT_USER, szLocationsKey, &hkCardLocations)
             != ERROR_SUCCESS ) 
         hkCardLocations = 0;

@@ -1016,7 +1016,7 @@ HRESULT WINAPI SafeArrayGetUBound(SAFEARRAY *psa, UINT nDim, LONG *plUbound)
  *
  * PARAMS
  *  psa      [I] Array to get dimension lower bound from
- *  nDim     [I] The dimension number to get the lowe bound of
+ *  nDim     [I] The dimension number to get the lower bound of
  *  plLbound [O] Destination for the lower bound
  *
  * RETURNS

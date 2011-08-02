@@ -469,7 +469,7 @@ static HRESULT get_zone_from_domains(LPCWSTR url, LPCWSTR schema, DWORD *zone)
      * The reason is with how CoInternetParseUrl handles unknown scheme types
      * when it's parsing the domain of a URL (IE it always returns E_FAIL).
      *
-     * Windows doesn't compenstate for this and simply doesn't check if
+     * Windows doesn't compensate for this and simply doesn't check if
      * the URL maps into any domains.
      */
     if(hres != S_OK) {

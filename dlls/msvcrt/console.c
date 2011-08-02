@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
  * Note: init and free don't need MT locking since they are called at DLL
- * (de)attachment time, which is syncronised for us
+ * (de)attachment time, which is synchronised for us
  */
 
 #include "msvcrt.h"

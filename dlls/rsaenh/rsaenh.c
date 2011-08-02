@@ -762,7 +762,7 @@ static inline void setup_key(CRYPTKEY *pCryptKey) {
  *
  * PARAMS
  *  hProv      [I] Handle to the provider to which the created key will belong.
- *  aiAlgid    [I] The new key shall use the crypto algorithm idenfied by aiAlgid.
+ *  aiAlgid    [I] The new key shall use the crypto algorithm identified by aiAlgid.
  *  dwFlags    [I] Upper 16 bits give the key length.
  *                 Lower 16 bits: CRYPT_EXPORTABLE, CRYPT_CREATE_SALT,
  *                 CRYPT_NO_SALT

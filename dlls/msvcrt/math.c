@@ -1278,7 +1278,7 @@ char * CDECL _ecvt( double number, int ndigits, int *decpt, int *sign )
 {
     int prec, len;
     thread_data_t *data = msvcrt_get_thread_data();
-    /* FIXME: check better for overflow (native supports over 300 chars's) */
+    /* FIXME: check better for overflow (native supports over 300 chars) */
     ndigits = min( ndigits, 80 - 7); /* 7 : space for dec point, 1 for "e",
                                       * 4 for exponent and one for
                                       * terminating '\0' */

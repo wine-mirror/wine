@@ -903,7 +903,7 @@ STORAGE_get_free_big_blocknr(stream_access16 *str) {
 	ret = STORAGE_put_big_block(str,bigblocknr,block);
 	assert(ret);
 
-	/* if we had a bbd block already (mostlikely) we need
+	/* if we had a bbd block already (most likely) we need
 	 * to link the new one into the chain
 	 */
 	if (lastbigblocknr!=-1) {
@@ -1485,7 +1485,7 @@ HRESULT CDECL IStream16_fnWrite(IStream16 *iface, const void *pv, ULONG cb, ULON
 	}
 
 	/* There are just some cases where we didn't modify it, we write it out
-	 * everytime
+	 * every time
 	 */
 	if (!STORAGE_put_pps_entry(&This->str,This->ppsent,&(This->stde)))
 		return E_FAIL;
@@ -1497,7 +1497,7 @@ HRESULT CDECL IStream16_fnWrite(IStream16 *iface, const void *pv, ULONG cb, ULON
 		while (cb>0) {
 			/* we ensured that it is allocated above */
 			assert(blocknr>=0);
-			/* Read old block everytime, since we can have
+			/* Read old block every time, since we can have
 			 * overlapping data at START and END of the write
 			 */
 			if (!STORAGE_get_small_block(&This->str,blocknr,block))
@@ -1525,7 +1525,7 @@ HRESULT CDECL IStream16_fnWrite(IStream16 *iface, const void *pv, ULONG cb, ULON
 		while (cb>0) {
 			/* we ensured that it is allocated above, so it better is */
 			assert(blocknr>=0);
-			/* read old block everytime, since we can have
+			/* read old block every time, since we can have
 			 * overlapping data at START and END of the write
 			 */
 			if (!STORAGE_get_big_block(&This->str,blocknr,block))

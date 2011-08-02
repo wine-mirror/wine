@@ -206,7 +206,7 @@ void ME_CommitUndo(ME_TextEditor *editor) {
 }
 
 /**
- * Groups supsequent changes with previous ones for an undo if coalescing.
+ * Groups subsequent changes with previous ones for an undo if coalescing.
  *
  * Has no effect if the previous changes were followed by a ME_CommitUndo. This
  * function will only have an affect if the previous changes were followed by

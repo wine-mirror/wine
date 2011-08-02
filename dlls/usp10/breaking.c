@@ -1,5 +1,5 @@
 /*
- * Implementation of line breaking algorighm for the Uniscribe Script Processor
+ * Implementation of line breaking algorithm for the Uniscribe Script Processor
  *
  * Copyright 2011 CodeWeavers, Aric Stewart
  *
@@ -101,7 +101,7 @@ void BREAK_line(const WCHAR *chars, int count, const SCRIPT_ANALYSIS *sa, SCRIPT
     }
 
     /* LB1 */
-    /* TODO: Have outside algorithims for these scripts */
+    /* TODO: Have outside algorithms for these scripts */
     for (i = 0; i < count; i++)
     {
         switch(break_class[i])

@@ -209,7 +209,7 @@ error:
 
 /*
  * Try to create a .trashinfo file. This function will make several attempts with
- * different filenames. It will return the filename that succeded or NULL if a file
+ * different filenames. It will return the filename that succeeded or NULL if a file
  * couldn't be created.
  */
 static char *create_trashinfo(const char *info_dir, const char *file_path)
@@ -285,7 +285,7 @@ static BOOL TRASH_MoveFileToBucket(TRASH_BUCKET *pBucket, const char *unix_path)
     
     if (rename(unix_path, trash_path)==0)
     {
-        TRACE("rename succeded\n");
+        TRACE("rename succeeded\n");
         goto cleanup;
     }
     

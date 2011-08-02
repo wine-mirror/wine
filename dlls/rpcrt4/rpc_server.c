@@ -1224,7 +1224,7 @@ RPC_STATUS WINAPI RpcServerUnregisterIfEx( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUu
  *   RPC_S_INVALID_OBJECT     The provided object (nil) is not valid
  *   RPC_S_ALREADY_REGISTERED The provided object is already registered
  *
- * Maps "Object" UUIDs to "Type" UUID's.  Passing the nil UUID as the type
+ * Maps "Object" UUIDs to "Type" UUIDs.  Passing the nil UUID as the type
  * resets the mapping for the specified object UUID to nil (the default).
  * The nil object is always associated with the nil type and cannot be
  * reassigned.  Servers can support multiple implementations on the same

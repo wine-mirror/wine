@@ -784,7 +784,7 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
                     wine_dbgstr_rect(&current_rect));
 
             /* Tests show that rectangles where x1 > x2 or y1 > y2 are ignored silently.
-             * The rectangle is not cleared, no error is returned, but further rectanlges are
+             * The rectangle is not cleared, no error is returned, but further rectangles are
              * still cleared if they are valid. */
             if (current_rect.left > current_rect.right || current_rect.top > current_rect.bottom)
             {
@@ -1285,7 +1285,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
         {
             if (context_get_current()->aux_buffers > 0)
             {
-                TRACE("Using auxilliary buffer for offscreen rendering\n");
+                TRACE("Using auxiliary buffer for offscreen rendering\n");
                 device->offscreenBuffer = GL_AUX0;
             }
             else

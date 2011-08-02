@@ -456,7 +456,7 @@ static const char main_key_BG_phonetic[MAIN_LEN][4] =
 };
 
 /*** Belarusian standard keyboard layout (contributed by Hleb Valoska) */
-/*** It matches belarusian layout for XKB from Alexander Mikhailian    */
+/*** It matches Belarusian layout for XKB from Alexander Mikhailian    */
 static const char main_key_BY[MAIN_LEN][4] =
 {
  "`~£³","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
@@ -2155,7 +2155,7 @@ UINT CDECL X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 		case MAPVK_VK_TO_CHAR: /* vkey-code to unshifted ANSI code */
 		{
                         /* we still don't know what "unshifted" means. in windows VK_W (0x57)
-                         * returns 0x57, which is upercase 'W'. So we have to return the uppercase
+                         * returns 0x57, which is uppercase 'W'. So we have to return the uppercase
                          * key.. Looks like something is wrong with the MS docs?
                          * This is only true for letters, for example VK_0 returns '0' not ')'.
                          * - hence we use the lock mask to ensure this happens.

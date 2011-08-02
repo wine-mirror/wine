@@ -282,7 +282,7 @@ static HRESULT WINAPI InstanceObjectFactory_IClassFactory_CreateInstance(IClassF
 
     hr = IPersistPropertyBag_Load(pPersistPropertyBag, This->m_pPropertyBag, NULL);
     if (FAILED(hr)) {
-        TRACE("Failed to initialize object from ProperyBag: hr = %08x\n", hr);
+        TRACE("Failed to initialize object from PropertyBag: hr = %08x\n", hr);
         IPersistPropertyBag_Release(pPersistPropertyBag);
         return hr;
     }
@@ -402,9 +402,9 @@ HRESULT SHDOCVW_GetShellInstanceObjectClassObject(REFCLSID rclsid, REFIID riid,
         return CLASS_E_CLASSNOTAVAILABLE;
     }
 
-    /* If the construction succeeds, the new RegistryPropertyBag is responsible for closing 
-     * hInitProperyBagKey. */
-    hr = RegistryPropertyBag_Constructor(hInitPropertyBagKey, &IID_IPropertyBag, 
+    /* If the construction succeeds, the new RegistryPropertyBag is responsible for closing
+     * hInitPropertyBagKey. */
+    hr = RegistryPropertyBag_Constructor(hInitPropertyBagKey, &IID_IPropertyBag,
                                          (LPVOID*)&pInitPropertyBag);
     if (FAILED(hr)) {
         RegCloseKey(hInitPropertyBagKey);

@@ -3879,7 +3879,7 @@ static void SLTG_ProcessModule(char *pBlk, ITypeInfoImpl *pTI,
 }
 
 /* Because SLTG_OtherTypeInfo is such a painful struct, we make a more
-   managable copy of it into this */
+   manageable copy of it into this */
 typedef struct {
   WORD small_no;
   char *index_name;

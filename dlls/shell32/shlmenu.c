@@ -926,7 +926,7 @@ UINT WINAPI Shell_MergeMenus (HMENU hmDst, HMENU hmSrc, UINT uInsert, UINT uIDAd
 	    {
 	      miiSrc.wID += uIDAdjust;			/* add uIDAdjust to the ID */
 
-	      if (miiSrc.wID > uIDAdjustMax)		/* skip ID's higher uIDAdjustMax */
+	      if (miiSrc.wID > uIDAdjustMax)		/* skip IDs higher than uIDAdjustMax */
 	        continue;
 
 	      if (uIDMax <= miiSrc.wID)			/* remember the highest ID */
@@ -953,7 +953,7 @@ UINT WINAPI Shell_MergeMenus (HMENU hmDst, HMENU hmSrc, UINT uInsert, UINT uIDAd
 	  {
 	    miiSrc.wID += uIDAdjust;			/* add uIDAdjust to the ID */
 
-	    if (miiSrc.wID > uIDAdjustMax)		/* skip ID's higher uIDAdjustMax */
+	    if (miiSrc.wID > uIDAdjustMax)		/* skip IDs higher than uIDAdjustMax */
 	      continue;
 
 	    if (uIDMax <= miiSrc.wID)			/* remember the highest ID */

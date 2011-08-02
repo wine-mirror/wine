@@ -155,7 +155,7 @@ static inline IShellViewImpl *impl_from_IShellFolderView(IShellFolderView *iface
     return CONTAINING_RECORD(iface, IShellViewImpl, IShellFolderView_iface);
 }
 
-/* ListView Header ID's */
+/* ListView Header IDs */
 #define LISTVIEW_COLUMN_NAME 0
 #define LISTVIEW_COLUMN_SIZE 1
 #define LISTVIEW_COLUMN_TYPE 2
@@ -1272,7 +1272,7 @@ static LRESULT ShellView_OnKillFocus(IShellViewImpl * This)
 * ShellView_OnCommand()
 *
 * NOTES
-*	the CmdID's are the ones from the context menu
+*	the CmdIDs are the ones from the context menu
 */
 static LRESULT ShellView_OnCommand(IShellViewImpl * This,DWORD dwCmdID, DWORD dwCmd, HWND hwndCmd)
 {
@@ -1304,7 +1304,7 @@ static LRESULT ShellView_OnCommand(IShellViewImpl * This,DWORD dwCmdID, DWORD dw
 	    CheckToolbar(This);
 	    break;
 
-	  /* the menu-ID's for sorting are 0x30... see shell32.rc */
+	  /* the menu IDs for sorting are 0x30... see shell32.rc */
 	  case 0x30:
 	  case 0x31:
 	  case 0x32:

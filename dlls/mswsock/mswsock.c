@@ -71,10 +71,10 @@ static void get_fn_pointers(SOCKET s)
  *
  * listener       [I] Listening socket
  * acceptor       [I] Socket to accept on
- * dest           [O] Destination for inital data
+ * dest           [O] Destination for initial data
  * dest_len       [I] Size of dest in bytes
- * local_addr_len [I] Number of bytes reserved in dest for local addrress
- * rem_addr_len   [I] Number of bytes reserved in dest for remote addrress
+ * local_addr_len [I] Number of bytes reserved in dest for local address
+ * rem_addr_len   [I] Number of bytes reserved in dest for remote address
  * received       [O] Destination for number of bytes of initial data
  * overlapped     [I] For asynchronous execution
  *
@@ -99,7 +99,7 @@ BOOL WINAPI AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DWORD dest_le
 /***********************************************************************
  *		GetAcceptExSockaddrs (MSWSOCK.@)
  *
- * Get infomation about an accepted socket.
+ * Get information about an accepted socket.
  *
  * data           [O] Destination for the first block of data from AcceptEx()
  * data_len       [I] length of data in bytes

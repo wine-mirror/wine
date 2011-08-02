@@ -497,7 +497,7 @@ BOOL WINAPI GetColorProfileFromHandle( HPROFILE handle, PBYTE buffer, PDWORD siz
  *  Failure: FALSE
  *
  * NOTES
- *  The profile header returned will be adjusted for endianess.
+ *  The profile header returned will be adjusted for endianness.
  */
 BOOL WINAPI GetColorProfileHeader( HPROFILE handle, PPROFILEHEADER header )
 {

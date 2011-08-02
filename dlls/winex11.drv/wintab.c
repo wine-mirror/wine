@@ -227,7 +227,7 @@ typedef struct tagWTI_DEVICES_INFO
 #define CSR_TYPE_ERASER     0x82a
 #define CSR_TYPE_MOUSE_2D   0x007
 #define CSR_TYPE_MOUSE_4D   0x094
-/* CSR_TYPE_OTHER is a special value! assumed no real world signifigance
+/* CSR_TYPE_OTHER is a special value! assumed no real world significance
  * if a stylus type or eraser type eventually have this value
  * it'll be a bug.  As of 2008 05 21 we can be sure because
  * linux wacom lists all the known values and this isn't one of them */
@@ -293,8 +293,8 @@ static DWORD         gSerial;
  * etc.....
  *
  * So with multimode tablets we could potentially need
- * 2 slots of the same type per tablet ie.
- * you are usuing 2 styluses at once so they would
+ * 2 slots of the same type per tablet i.e.
+ * you are using 2 styluses at once so they would
  * get placed in Cursors #1 and Cursor #4
  *
  * Now say someone has 2 multimode tablets with 2 erasers each

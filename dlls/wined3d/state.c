@@ -4882,7 +4882,7 @@ const struct StateEntryTemplate misc_state_template[] = {
     { STATE_POINTSPRITECOORDORIGIN,                       { STATE_POINTSPRITECOORDORIGIN,                       psorigin            }, WINED3D_GL_VERSION_2_0          },
     { STATE_POINTSPRITECOORDORIGIN,                       { STATE_POINTSPRITECOORDORIGIN,                       psorigin_w          }, WINED3D_GL_EXT_NONE             },
 
-    /* TODO: Move shader constant loading to vertex and fragment pipeline repectively, as soon as the pshader and
+    /* TODO: Move shader constant loading to vertex and fragment pipeline respectively, as soon as the pshader and
      * vshader loadings are untied from each other
      */
     { STATE_VERTEXSHADERCONSTANT,                         { STATE_VERTEXSHADERCONSTANT,                         shaderconstant      }, WINED3D_GL_EXT_NONE             },

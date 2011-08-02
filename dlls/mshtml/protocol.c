@@ -923,10 +923,10 @@ static HRESULT WINAPI ResProtocolInfo_QueryInfo(IInternetProtocolInfo *iface, LP
         break;
 
     case QUERY_IS_SECURE:
-        FIXME("not supporte QUERY_IS_SECURE\n");
+        FIXME("QUERY_IS_SECURE not supported\n");
         return E_NOTIMPL;
     case QUERY_IS_SAFE:
-        FIXME("not supporte QUERY_IS_SAFE\n");
+        FIXME("QUERY_IS_SAFE not supported\n");
         return E_NOTIMPL;
     default:
         return INET_E_USE_DEFAULT_PROTOCOLHANDLER;
@@ -1008,7 +1008,7 @@ static HRESULT WINAPI JSProtocolInfo_QueryInfo(IInternetProtocolInfo *iface, LPC
         break;
 
     case QUERY_IS_SECURE:
-        FIXME("not supporte QUERY_IS_SECURE\n");
+        FIXME("QUERY_IS_SECURE not supported\n");
         return E_NOTIMPL;
 
     default:

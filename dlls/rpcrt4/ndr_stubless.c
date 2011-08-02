@@ -900,7 +900,7 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                 NdrSendReceive(&stubMsg, stubMsg.Buffer);
         }
 
-        /* convert strings, floating point values and endianess into our
+        /* convert strings, floating point values and endianness into our
          * preferred format */
         if ((rpcMsg.DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
             NdrConvert(&stubMsg, pFormat);
@@ -1721,7 +1721,7 @@ RPC_STATUS NdrpCompleteAsyncClientCall(RPC_ASYNC_STATE *pAsync, void *Reply)
         pStubMsg->Buffer = pStubMsg->BufferStart;
     }
 
-    /* convert strings, floating point values and endianess into our
+    /* convert strings, floating point values and endianness into our
      * preferred format */
 #if 0
     if ((pStubMsg->RpcMsg.DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)

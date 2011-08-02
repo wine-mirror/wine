@@ -2940,7 +2940,7 @@ static HRESULT WINAPI fnIMultiLanguage2_GetRfc1766Info(
 
     if ((PRIMARYLANGID(LangId) != LANG_ENGLISH) &&
         (last_lang != LangId)) {
-        FIXME("Only english names supported (requested: 0x%04x)\n", LangId);
+        FIXME("Only English names supported (requested: 0x%04x)\n", LangId);
         last_lang = LangId;
     }
 

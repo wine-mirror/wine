@@ -56,7 +56,7 @@ static WCHAR regpath_exclude[] = {'S','o','f','t','w','a','r','e','\\',
                                   'E','x','c','l','u','d','e','d','A','p','p','l','i','c','a','t','i','o','n','s',0};
 
 /***********************************************************************
- * Memory alloccation helper
+ * Memory allocation helper
  */
 
 static inline void * __WINE_ALLOC_SIZE(1) heap_alloc_zero(size_t len)
@@ -98,7 +98,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  *
  * RETURNS
  *  Success: S_OK
- *  Faulure: A HRESULT error code
+ *  Failure: A HRESULT error code
  *
  */
 HRESULT WINAPI WerAddExcludedApplication(PCWSTR exeName, BOOL allUsers)
@@ -139,7 +139,7 @@ HRESULT WINAPI WerAddExcludedApplication(PCWSTR exeName, BOOL allUsers)
  *
  * RETURNS
  *  Success: S_OK
- *  Faulure: A HRESULT error code
+ *  Failure: A HRESULT error code
  *
  */
 HRESULT WINAPI WerRemoveExcludedApplication(PCWSTR exeName, BOOL allUsers)

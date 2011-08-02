@@ -1230,7 +1230,7 @@ UINT msi_download_file( LPCWSTR szUrl, LPWSTR filename )
     DWORD size = 0;
     HRESULT hr;
 
-    /* call will always fail, becase size is 0,
+    /* call will always fail, because size is 0,
      * but will return ERROR_FILE_NOT_FOUND first
      * if the file doesn't exist
      */

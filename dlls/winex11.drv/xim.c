@@ -445,7 +445,7 @@ static BOOL open_xim( Display *display )
 
         if (ximStyleCallback == 0)
         {
-            TRACE("No callback style avalable\n");
+            TRACE("No callback style available\n");
             ximStyleCallback = ximStyle;
         }
 

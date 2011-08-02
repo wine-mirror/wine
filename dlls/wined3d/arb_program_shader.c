@@ -723,7 +723,7 @@ static DWORD shader_generate_arb_declarations(struct wined3d_shader *shader,
      * With vertex shaders we need the posFixup and on some GL implementations 4 helper
      * immediate values. The posFixup is loaded using program.env for now, so always
      * subtract one from the number of constants. If the shader uses indirect addressing,
-     * account for the helper const too because we have to declare all availabke d3d constants
+     * account for the helper const too because we have to declare all available d3d constants
      * and don't know which are actually used.
      */
     if (pshader)
@@ -1836,7 +1836,7 @@ static void pshader_hw_texkill(const struct wined3d_shader_instruction *ins)
     char reg_dest[40];
 
     /* No swizzles are allowed in d3d's texkill. PS 1.x ignores the 4th component as documented,
-     * but >= 2.0 honors it(undocumented, but tested by the d3d9 testsuit)
+     * but >= 2.0 honors it (undocumented, but tested by the d3d9 testsuite)
      */
     shader_arb_get_dst_param(ins, dst, reg_dest);
 
@@ -6899,7 +6899,7 @@ static void upload_palette(struct wined3d_surface *surface)
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     /* Upload the palette */
-    /* TODO: avoid unneeed uploads in the future by adding some SFLAG_PALETTE_DIRTY mechanism */
+    /* TODO: avoid unneeded uploads in the future by adding some SFLAG_PALETTE_DIRTY mechanism */
     glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, table);
 
     /* Switch back to unit 0 in which the 2D texture will be stored. */

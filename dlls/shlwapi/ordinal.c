@@ -76,7 +76,7 @@ BOOL    WINAPI SHAboutInfoW(LPWSTR,DWORD);
 /*************************************************************************
  * SHLWAPI_DupSharedHandle
  *
- * Internal implemetation of SHLWAPI_11.
+ * Internal implementation of SHLWAPI_11.
  */
 static HANDLE SHLWAPI_DupSharedHandle(HANDLE hShared, DWORD dwDstProcId,
                                       DWORD dwSrcProcId, DWORD dwAccess,

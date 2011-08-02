@@ -401,7 +401,7 @@ HRESULT WINAPI BaseOutputPinImpl_Connect(IPin * iface, IPin * pReceivePin, const
     TRACE("(%p/%p)->(%p, %p)\n", This, iface, pReceivePin, pmt);
     dump_AM_MEDIA_TYPE(pmt);
 
-    /* If we try to connect to ourself, we will definitely deadlock.
+    /* If we try to connect to ourselves, we will definitely deadlock.
      * There are other cases where we could deadlock too, but this
      * catches the obvious case */
     assert(pReceivePin != iface);

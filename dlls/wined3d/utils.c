@@ -569,7 +569,7 @@ static const struct wined3d_format_texture_info format_texture_info[] =
     /* GL_APPLE_ycbcr_422 claims that its '2YUV' format, which is supported via the UNSIGNED_SHORT_8_8_REV_APPLE type
      * is equivalent to 'UYVY' format on Windows, and the 'YUVS' via UNSIGNED_SHORT_8_8_APPLE equates to 'YUY2'. The
      * d3d9 test however shows that the opposite is true. Since the extension is from 2002, it predates the x86 based
-     * Macs, so probably the endianess differs. This could be tested as soon as we have a Windows and MacOS on a big
+     * Macs, so probably the endianness differs. This could be tested as soon as we have a Windows and MacOS on a big
      * endian machine
      */
     {WINED3DFMT_UYVY,                   GL_LUMINANCE_ALPHA,               GL_LUMINANCE_ALPHA,                     0,

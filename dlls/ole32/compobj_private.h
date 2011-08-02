@@ -138,7 +138,7 @@ struct apartment
   DWORD host_apt_tid;      /* thread ID of apartment hosting objects of differing threading model (CS cs) */
   HWND host_apt_hwnd;      /* handle to apartment window of host apartment (CS cs) */
 
-  /* FIXME: OID's should be given out by RPCSS */
+  /* FIXME: OIDs should be given out by RPCSS */
   OID oidc;                /* object ID counter, starts at 1, zero is invalid OID (CS cs) */
 
   /* STA-only fields */

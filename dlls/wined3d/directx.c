@@ -829,7 +829,7 @@ static void quirk_amd_dx9(struct wined3d_gl_info *gl_info)
     /* MacOS advertises GL_ARB_texture_non_power_of_two on ATI r500 and earlier cards, although
      * these cards only support GL_ARB_texture_rectangle(D3DPTEXTURECAPS_NONPOW2CONDITIONAL).
      * If real NP2 textures are used, the driver falls back to software. We could just remove the
-     * extension and use GL_ARB_texture_rectangle instead, but texture_rectangle is inconventient
+     * extension and use GL_ARB_texture_rectangle instead, but texture_rectangle is inconvenient
      * due to the non-normalized texture coordinates. Thus set an internal extension flag,
      * GL_WINE_normalized_texrect, which signals the code that it can use non power of two textures
      * as per GL_ARB_texture_non_power_of_two, but has to stick to the texture_rectangle limits.
@@ -3650,7 +3650,7 @@ static BOOL CheckTextureCapability(const struct wined3d_adapter *adapter, const 
             /* These formats seem to be similar to the HILO formats in GL_NV_texture_shader. NVHU
              * is said to be GL_UNSIGNED_HILO16, NVHS GL_SIGNED_HILO16. Rumours say that d3d computes
              * a 3rd channel similarly to D3DFMT_CxV8U8(So NVHS could be called D3DFMT_CxV16U16).
-             * ATI refused to support formats which can easilly be emulated with pixel shaders, so
+             * ATI refused to support formats which can easily be emulated with pixel shaders, so
              * Applications have to deal with not having NVHS and NVHU.
              */
             TRACE_(d3d_caps)("[FAILED]\n");

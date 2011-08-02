@@ -73,7 +73,7 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, const RECT *
 
     if (!bOnlyNew || (item->member.para.nFlags & MEPF_REPAINT))
     {
-      /* Draw the pargraph if any of the paragraph is in the update region. */
+      /* Draw the paragraph if any of the paragraph is in the update region. */
       if (ys < rcUpdate->bottom && ye > rcUpdate->top)
       {
         ME_DrawParagraph(&c, item);
@@ -1092,7 +1092,7 @@ void ME_ScrollRight(ME_TextEditor *editor, int cx)
   ME_HScrollAbs(editor, editor->horz_si.nPos + cx);
 }
 
-/* Calculates the visiblity after a call to SetScrollRange or
+/* Calculates the visibility after a call to SetScrollRange or
  * SetScrollInfo with SIF_RANGE. */
 static BOOL ME_PostSetScrollRangeVisibility(SCROLLINFO *si)
 {

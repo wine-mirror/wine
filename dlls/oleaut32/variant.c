@@ -1607,7 +1607,7 @@ static void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID 
  *            from "oleauto.h".
  *
  * FIXME
- *  - I am unsure if this function should parse non-arabic (e.g. Thai)
+ *  - I am unsure if this function should parse non-Arabic (e.g. Thai)
  *   numerals, so this has not been implemented.
  */
 HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,

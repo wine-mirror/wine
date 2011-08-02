@@ -57,7 +57,7 @@ extern INT WINAPI SHStringFromGUIDW(REFGUID guid, LPWSTR lpszDest, INT cchMax); 
 typedef HRESULT (CALLBACK *LPFNCREATEINSTANCE)(IUnknown* pUnkOuter, REFIID riid, LPVOID* ppvObject);
 static IClassFactory * IDefClF_fnConstructor(LPFNCREATEINSTANCE lpfnCI, PLONG pcRefDll, REFIID riidInst);
 
-/* this table contains all CLSID's of shell32 objects */
+/* this table contains all CLSIDs of shell32 objects */
 static const struct {
 	REFIID			riid;
 	LPFNCREATEINSTANCE	lpfnCI;

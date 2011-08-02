@@ -217,7 +217,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_Read(
 	pv, cb, pcbRead);
 
   /*
-   * If the caller is not interested in the nubmer of bytes read,
+   * If the caller is not interested in the number of bytes read,
    * we use another buffer to avoid "if" statements in the code.
    */
   if (pcbRead==0)

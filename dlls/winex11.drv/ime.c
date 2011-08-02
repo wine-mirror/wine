@@ -35,7 +35,7 @@
  *  This flow does not work well for the X11 driver and XIM.
  *   (It works fine for Mac)
  *  As such we will have to reroute step 1.  Instead the x11drv driver will
- *  generate an XIM events and call directly into this IME implimenetaion.
+ *  generate an XIM events and call directly into this IME implementation.
  *  As such we will have to use the alternative ImmGenerateMessage path to be
  *  generate the messages that we want the IMM layer to send to the application.
  */
@@ -1143,7 +1143,7 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
          *    needed and possible.   If our ptCurrentPos is outside of our rect
          *    then no window is displayed.
          * CFS_FORCE_POSITION: appears to behave just like CFS_POINT
-         *    maybe becase the default MSIME does not do any IME adjusting.
+         *    maybe because the default MSIME does not do any IME adjusting.
          */
         if (lpIMC->cfCompForm.dwStyle != CFS_DEFAULT)
         {

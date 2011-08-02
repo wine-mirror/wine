@@ -527,7 +527,7 @@ static void SETUPDI_FreeDeviceInfo(struct DeviceInfo *devInfo)
     GlobalFree((HANDLE)devInfo->devId);
 }
 
-/* Adds a device with GUID guid and identifer devInst to set.  Allocates a
+/* Adds a device with GUID guid and identifier devInst to set.  Allocates a
  * struct DeviceInfo, and points the returned device info's Reserved member
  * to it.  "Phantom" devices are deleted from the registry when closed.
  * Returns a pointer to the newly allocated device info.
@@ -609,7 +609,7 @@ BOOL WINAPI SetupDiBuildClassInfoList(
  *              SetupDiBuildClassInfoListExA  (SETUPAPI.@)
  *
  * Returns a list of setup class GUIDs that identify the classes
- * that are installed on a local or remote macine.
+ * that are installed on a local or remote machine.
  *
  * PARAMS
  *   Flags [I] control exclusion of classes from the list.
@@ -655,7 +655,7 @@ BOOL WINAPI SetupDiBuildClassInfoListExA(
  *              SetupDiBuildClassInfoListExW  (SETUPAPI.@)
  *
  * Returns a list of setup class GUIDs that identify the classes
- * that are installed on a local or remote macine.
+ * that are installed on a local or remote machine.
  *
  * PARAMS
  *   Flags [I] control exclusion of classes from the list.
