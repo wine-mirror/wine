@@ -124,6 +124,7 @@ AddReg=\
     VersionInfo
 
 [DefaultInstall.Services]
+AddService=BITS,0,BITSService
 AddService=MountMgr,0x800,MountMgrService
 AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
@@ -131,6 +132,7 @@ AddService=TermService,0,TerminalServices
 AddService=PlugPlay,0,PlugPlayService
 
 [DefaultInstall.NT.Services]
+AddService=BITS,0,BITSService
 AddService=MountMgr,0x800,MountMgrService
 AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
@@ -138,6 +140,7 @@ AddService=TermService,0,TerminalServices
 AddService=PlugPlay,0,PlugPlayService
 
 [DefaultInstall.ntamd64.Services]
+AddService=BITS,0,BITSService
 AddService=MountMgr,0x800,MountMgrService
 AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
@@ -2957,6 +2960,15 @@ HKLM,%CurrentVersionNT%\Time Zones\Yakutsk Standard Time,"Std",,"Yakutsk Standar
 HKLM,%CurrentVersionNT%\Time Zones\Yakutsk Standard Time,"TZI",1,e4,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,02,00,00,00,00,00,00,00
 HKLM,%CurrentVersion%\Time Zones,"SymbolicLinkValue",0x60000,"\Registry\Machine\%CurrentVersionNT%\Time Zones"
 
+[BITSService]
+AddReg=BITSServiceKeys
+Description="BITS Service"
+DisplayName="BITS Service"
+ServiceBinary="%11%\svchost.exe -k netsvcs"
+ServiceType=16
+StartType=3
+ErrorControl=1
+
 [MountMgrService]
 Description="Device mounting service"
 DisplayName="Mount Manager"
@@ -2990,6 +3002,10 @@ ServiceBinary="%11%\svchost.exe -k imgsvc"
 ServiceType=16
 StartType=3
 ErrorControl=1
+
+[BITSServiceKeys]
+HKR,Parameters,"ServiceDll",,"%11%\qmgr.dll"
+HKLM,%CurrentVersionNT%\SvcHost,"netsvcs",0x00010000,"BITS"
 
 [StiServiceKeys]
 HKR,Parameters,"ServiceDll",,"%11%\wiaservc.dll"
