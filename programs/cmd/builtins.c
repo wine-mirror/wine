@@ -537,6 +537,7 @@ void WCMD_create_dir (WCHAR *command) {
         if (!argN) break;
         if (!create_full_path(thisArg)) {
             WCMD_print_error ();
+            errorlevel = 1;
         }
     }
 }

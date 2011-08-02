@@ -277,11 +277,11 @@ del /q * succeeded on file2.dat
 0
 dir created
 0
-@todo_wine@1
-@todo_wine@1
-@todo_wine@1
+mkdir ? gives errorlevel 1
+mkdir ?\foo gives errorlevel 1
+mkdir foo\? gives errorlevel 1
 @todo_wine@ok, foo created
-@todo_wine@1
+mkdir foo\bar\? gives errorlevel 1
 @todo_wine@ok, foo\bar created
 foo created
 bar created

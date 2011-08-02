@@ -485,18 +485,18 @@ if exist foo (rmdir foo & echo dir created
 echo %ErrorLevel%
 rem Invalid chars
 mkdir ?
-echo %ErrorLevel%
+echo mkdir ? gives errorlevel %ErrorLevel%
 call :setError 0
 mkdir ?\foo
-echo %ErrorLevel%
+echo mkdir ?\foo gives errorlevel %ErrorLevel%
 call :setError 0
 mkdir foo\?
-echo %ErrorLevel%
+echo mkdir foo\? gives errorlevel %ErrorLevel%
 if exist foo (rmdir foo & echo ok, foo created
 ) else ( echo foo not created )
 call :setError 0
 mkdir foo\bar\?
-echo %ErrorLevel%
+echo mkdir foo\bar\? gives errorlevel %ErrorLevel%
 call :setError 0
 if not exist foo (
     echo bad, foo not created
