@@ -6875,7 +6875,7 @@ static GLuint gen_p8_shader(struct arbfp_blit_priv *priv,
 }
 
 /* Context activation is done by the caller. */
-static void upload_palette(struct wined3d_surface *surface)
+static void upload_palette(struct wined3d_surface *surface, struct wined3d_context *context)
 {
     BYTE table[256][4];
     struct wined3d_device *device = surface->resource.device;
@@ -6903,7 +6903,7 @@ static void upload_palette(struct wined3d_surface *surface)
     glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, table);
 
     /* Switch back to unit 0 in which the 2D texture will be stored. */
-    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0));
+    context_active_texture(context, gl_info, 0);
     LEAVE_GL();
 }
 
@@ -7105,7 +7105,7 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
             shader = textype == GL_TEXTURE_RECTANGLE_ARB ? priv->p8_rect_shader : priv->p8_2d_shader;
             if (!shader) shader = gen_p8_shader(priv, gl_info, textype);
 
-            upload_palette(surface);
+            upload_palette(surface, context);
             break;
 
         default:

@@ -1088,6 +1088,7 @@ struct wined3d_context
     GLenum                  untracked_materials[2];
     UINT                    blit_w, blit_h;
     enum fogsource          fog_source;
+    DWORD active_texture;
 
     char                    *vshader_const_dirty, *pshader_const_dirty;
 
@@ -1234,6 +1235,8 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
 BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_device *device) DECLSPEC_HIDDEN;
 void context_apply_fbo_state_blit(struct wined3d_context *context, GLenum target,
         struct wined3d_surface *render_target, struct wined3d_surface *depth_stencil, DWORD location) DECLSPEC_HIDDEN;
+void context_active_texture(struct wined3d_context *context, const struct wined3d_gl_info *gl_info,
+        unsigned int unit) DECLSPEC_HIDDEN;
 void context_check_fbo_status(const struct wined3d_context *context, GLenum target) DECLSPEC_HIDDEN;
 struct wined3d_context *context_create(struct wined3d_swapchain *swapchain, struct wined3d_surface *target,
         const struct wined3d_format *ds_format) DECLSPEC_HIDDEN;

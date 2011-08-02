@@ -967,7 +967,7 @@ out:
 }
 
 /* Context activation is done by the caller. */
-static void create_dummy_textures(struct wined3d_device *device)
+static void create_dummy_textures(struct wined3d_device *device, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     unsigned int i;
@@ -989,8 +989,7 @@ static void create_dummy_textures(struct wined3d_device *device)
         DWORD color = 0x000000ff;
 
         /* Make appropriate texture active */
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
-        checkGLcall("glActiveTextureARB");
+        context_active_texture(context, gl_info, i);
 
         /* Generate an opengl texture name */
         glGenTextures(1, &device->dummyTextureName[i]);
@@ -1272,7 +1271,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
 
     context = context_acquire(device, swapchain->front_buffer);
 
-    create_dummy_textures(device);
+    create_dummy_textures(device, context);
 
     ENTER_GL();
 
@@ -4833,8 +4832,7 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
     gl_info = context->gl_info;
 
     ENTER_GL();
-    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
-    checkGLcall("glActiveTextureARB");
+    context_active_texture(context, gl_info, 0);
     LEAVE_GL();
 
     /* Only load the surface for partial updates. For newly allocated texture
@@ -5281,8 +5279,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
             }
 
             /* Make sure that a proper texture unit is selected */
-            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
-            checkGLcall("glActiveTextureARB");
+            context_active_texture(context, gl_info, 0);
             sampler = device->rev_tex_unit_map[0];
             if (sampler != WINED3D_UNMAPPED_STAGE)
                 context_invalidate_state(context, STATE_SAMPLER(sampler));
@@ -5588,7 +5585,7 @@ static HRESULT create_primary_opengl_context(struct wined3d_device *device, stru
 
     swapchain->context[0] = context;
     swapchain->num_contexts = 1;
-    create_dummy_textures(device);
+    create_dummy_textures(device, context);
     context_release(context);
 
     hr = device->shader_backend->shader_alloc_private(device);

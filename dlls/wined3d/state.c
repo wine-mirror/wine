@@ -753,8 +753,7 @@ static void state_texfactor(struct wined3d_context *context, const struct wined3
         /* Note the WINED3DRS value applies to all textures, but GL has one
          * per texture, so apply it now ready to be used!
          */
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
-        checkGLcall("glActiveTextureARB");
+        context_active_texture(context, gl_info, i);
 
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
         checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
@@ -3031,8 +3030,7 @@ static void tex_colorop(struct wined3d_context *context, const struct wined3d_st
             FIXME("Attempt to enable unsupported stage!\n");
             return;
         }
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
-        checkGLcall("glActiveTextureARB");
+        context_active_texture(context, gl_info, mapped_stage);
     }
 
     if (stage >= state->lowest_disabled_stage)
@@ -3090,8 +3088,7 @@ void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *st
             FIXME("Attempt to enable unsupported stage!\n");
             return;
         }
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
-        checkGLcall("glActiveTextureARB");
+        context_active_texture(context, gl_info, mapped_stage);
     }
 
     op = state->texture_states[stage][WINED3DTSS_ALPHAOP];
@@ -3193,8 +3190,7 @@ static void transform_texture(struct wined3d_context *context, const struct wine
     if (mapped_stage == WINED3D_UNMAPPED_STAGE) return;
     if (mapped_stage >= gl_info->limits.textures) return;
 
-    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
-    checkGLcall("glActiveTextureARB");
+    context_active_texture(context, gl_info, mapped_stage);
     generated = (state->texture_states[texUnit][WINED3DTSS_TEXCOORDINDEX] & 0xffff0000) != WINED3DTSS_TCI_PASSTHRU;
     coordIdx = min(state->texture_states[texUnit][WINED3DTSS_TEXCOORDINDEX & 0x0000ffff], MAX_TEXTURES - 1);
 
@@ -3309,8 +3305,7 @@ static void tex_coordindex(struct wined3d_context *context, const struct wined3d
         WARN("stage %u not mapped to a valid texture unit (%u)\n", stage, mapped_stage);
         return;
     }
-    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
-    checkGLcall("glActiveTextureARB");
+    context_active_texture(context, gl_info, mapped_stage);
 
     /* Values 0-7 are indexes into the FVF tex coords - See comments in DrawPrimitive
      *
@@ -3538,8 +3533,7 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
     {
         return;
     }
-    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
-    checkGLcall("glActiveTextureARB");
+    context_active_texture(context, gl_info, mapped_stage);
 
     if (state->textures[sampler])
     {

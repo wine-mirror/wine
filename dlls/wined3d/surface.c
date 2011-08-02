@@ -5602,7 +5602,7 @@ static void surface_depth_blt(const struct wined3d_surface *surface, struct wine
 
     SetRect(&rect, 0, h, w, 0);
     surface_get_blt_info(target, &rect, surface->pow2Width, surface->pow2Height, &info);
-    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
+    context_active_texture(context, context->gl_info, 0);
     glGetIntegerv(info.binding, &old_binding);
     glBindTexture(info.bind_target, texture);
     if (gl_info->supported[ARB_SHADOW])

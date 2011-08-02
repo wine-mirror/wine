@@ -837,8 +837,7 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
         mapped_stage = device->texUnitMap[i];
         if (mapped_stage != WINED3D_UNMAPPED_STAGE)
         {
-            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
-            checkGLcall("glActiveTextureARB");
+            context_active_texture(context, gl_info, mapped_stage);
             texture_activate_dimensions(state->textures[i], gl_info);
         }
     }

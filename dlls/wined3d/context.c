@@ -1498,7 +1498,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
          */
         for (s = 1; s < gl_info->limits.textures; ++s)
         {
-            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + s));
+            context_active_texture(ret, gl_info, s);
             glTexEnvi(GL_TEXTURE_SHADER_NV, GL_PREVIOUS_TEXTURE_INPUT_NV, GL_TEXTURE0_ARB + s - 1);
             checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_PREVIOUS_TEXTURE_INPUT_NV, ...");
         }
@@ -1527,7 +1527,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     {
         for (s = 0; s < gl_info->limits.textures; ++s)
         {
-            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + s));
+            context_active_texture(ret, gl_info, s);
             glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
             checkGLcall("glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)");
         }
@@ -1667,8 +1667,7 @@ static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *
     for (i = gl_info->limits.textures - 1; i > 0 ; --i)
     {
         sampler = device->rev_tex_unit_map[i];
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
-        checkGLcall("glActiveTextureARB");
+        context_active_texture(context, gl_info, i);
 
         if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
         {
@@ -1695,8 +1694,7 @@ static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *
             context_invalidate_state(context, STATE_SAMPLER(sampler));
         }
     }
-    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
-    checkGLcall("glActiveTextureARB");
+    context_active_texture(context, gl_info, 0);
 
     sampler = device->rev_tex_unit_map[0];
 
@@ -1880,6 +1878,14 @@ void context_set_draw_buffer(struct wined3d_context *context, GLenum buffer)
         context->current_fbo->rt_mask = context_generate_rt_mask(buffer);
     else
         context->draw_buffers_mask = context_generate_rt_mask(buffer);
+}
+
+/* GL locking is done by the caller. */
+void context_active_texture(struct wined3d_context *context, const struct wined3d_gl_info *gl_info, unsigned int unit)
+{
+    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0 + unit));
+    checkGLcall("glActiveTextureARB");
+    context->active_texture = unit;
 }
 
 static void context_set_render_offscreen(struct wined3d_context *context, BOOL offscreen)
