@@ -509,6 +509,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
     struct bitblt_coords src, dst;
     INT src_to_dst_offset;
     HRGN clip = 0;
+    const struct gdi_dc_funcs *funcs;
 
     src_bits.ptr = (void *)bits;
     src_bits.is_copy = FALSE;
@@ -578,8 +579,13 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
         if (lines < src.visrect.bottom) src.visrect.bottom = lines;
     }
 
-    physdev = GET_DC_PHYSDEV( dc, pPutImage );
+    /* Hack to ensure we don't get the nulldrv if the bmp hasn't been selected
+       into a dc yet */
+    physdev = GET_DC_PHYSDEV( dc, pCreateBitmap );
     if (!BITMAP_SetOwnerDC( hbitmap, physdev )) goto done;
+
+    funcs = bitmap->funcs;
+    if (bitmap->dib) funcs = dc->dibdrv.dev.funcs;
 
     result = lines;
 
@@ -600,7 +606,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 
     memcpy( dst_info, src_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
 
-    err = physdev->funcs->pPutImage( physdev, hbitmap, clip, dst_info, &src_bits, &src, &dst, 0 );
+    err = funcs->pPutImage( NULL, hbitmap, clip, dst_info, &src_bits, &src, &dst, 0 );
     if (err == ERROR_BAD_FORMAT)
     {
         void *ptr;
@@ -616,7 +622,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
                 src_bits.is_copy = TRUE;
                 src_bits.free = free_heap_bits;
                 if (!err)
-                    err = physdev->funcs->pPutImage( physdev, hbitmap, clip, dst_info, &src_bits, &src, &dst, 0 );
+                    err = funcs->pPutImage( NULL, hbitmap, clip, dst_info, &src_bits, &src, &dst, 0 );
             }
         }
         else err = ERROR_OUTOFMEMORY;
@@ -915,6 +921,7 @@ INT WINAPI GetDIBits(
     char dst_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *dst_info = (BITMAPINFO *)dst_bmibuf;
     unsigned int colors = 0;
+    const struct gdi_dc_funcs *funcs;
 
     if (!info) return 0;
 
@@ -936,6 +943,8 @@ INT WINAPI GetDIBits(
 	return 0;
     }
 
+    funcs = bmp->funcs;
+    if (bmp->dib) funcs = dc->dibdrv.dev.funcs;
 
     if (bpp == 0) /* query bitmap info only */
     {
@@ -1104,7 +1113,7 @@ INT WINAPI GetDIBits(
 
         lines = src.height;
 
-        err = bmp->funcs->pGetImage( NULL, hbitmap, src_info, &src_bits, &src );
+        err = funcs->pGetImage( NULL, hbitmap, src_info, &src_bits, &src );
 
         if(err)
         {

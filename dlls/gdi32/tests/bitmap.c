@@ -437,8 +437,7 @@ static void test_dib_bits_access( HBITMAP hdib, void *bits )
     ok(info.AllocationProtect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.AllocationProtect);
     ok(info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State);
     ok(info.Type == MEM_PRIVATE, "%x != MEM_PRIVATE\n", info.Type);
-    /* it has been protected now */
-    todo_wine ok(info.Protect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.Protect);
+    ok(info.Protect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.Protect);
 
     /* try writing protected bits to a file */
 
