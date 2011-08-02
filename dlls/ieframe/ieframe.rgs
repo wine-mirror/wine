@@ -50,14 +50,6 @@ HKCR
             {
                 command = s 'rundll32.exe ieframe.dll,OpenURL %%l'
             }
-            print
-            {
-                command = s 'rundll32.exe mshtml.dll,PrintHTML ""%%1""'
-            }
-            printto
-            {
-                command = s 'rundll32.exe mshtml.dll,PrintHTML ""%%1"" ""%%2"" ""%%3"" ""%%4""'
-            }
         }
     }
     ForceRemove '.url' = s 'InternetShortcut'
