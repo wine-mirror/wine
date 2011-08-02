@@ -2,45 +2,13 @@ HKCR
 {
     NoRemove CLSID
     {
-        ForceRemove '{0000002F-0000-0000-C000-000000000046}' = s 'CLSID_RecordInfo'
-        {
-            InprocServer32 = s '%MODULE%' { val ThreadingModel = s 'Both' }
-        }
-        ForceRemove '{00020420-0000-0000-C000-000000000046}' = s 'PSDispatch'
-        {
-            InprocServer = s 'ole2disp.dll'
-            InprocServer32 = s '%MODULE%' { val ThreadingModel = s 'Both' }
-        }
-        ForceRemove '{00020421-0000-0000-C000-000000000046}' = s 'PSEnumVariant'
-        {
-            InprocServer = s 'ole2disp.dll'
-            InprocServer32 = s '%MODULE%' { val ThreadingModel = s 'Both' }
-        }
-        ForceRemove '{00020422-0000-0000-C000-000000000046}' = s 'PSTypeInfo'
-        {
-            InprocServer = s 'ole2disp.dll'
-            InprocServer32 = s '%MODULE%' { val ThreadingModel = s 'Both' }
-        }
-        ForceRemove '{00020423-0000-0000-C000-000000000046}' = s 'PSTypeLib'
-        {
-            InprocServer = s 'ole2disp.dll'
-            InprocServer32 = s '%MODULE%' { val ThreadingModel = s 'Both' }
-        }
-        ForceRemove '{00020424-0000-0000-C000-000000000046}' = s 'PSOAInterface'
-        {
-            InprocServer = s 'ole2disp.dll'
-            InprocServer32 = s '%MODULE%' { val ThreadingModel = s 'Both' }
-        }
-        ForceRemove '{00020425-0000-0000-C000-000000000046}' = s 'PSTypeComp'
-        {
-            InprocServer = s 'ole2disp.dll'
-            InprocServer32 = s '%MODULE%' { val ThreadingModel = s 'Both' }
-        }
-        ForceRemove '{DF0B3D60-548F-101B-8E65-08002B2BD119}' = s 'PSSupportErrorInfo'
-        {
-            InprocServer = s 'ole2disp.dll'
-            InprocServer32 = s '%MODULE%'
-        }
+        '{00020420-0000-0000-C000-000000000046}' { InprocServer = s 'ole2disp.dll' }
+        '{00020421-0000-0000-C000-000000000046}' { InprocServer = s 'ole2disp.dll' }
+        '{00020422-0000-0000-C000-000000000046}' { InprocServer = s 'ole2disp.dll' }
+        '{00020423-0000-0000-C000-000000000046}' { InprocServer = s 'ole2disp.dll' }
+        '{00020424-0000-0000-C000-000000000046}' { InprocServer = s 'ole2disp.dll' }
+        '{00020425-0000-0000-C000-000000000046}' { InprocServer = s 'ole2disp.dll' }
+        '{DF0B3D60-548F-101B-8E65-08002B2BD119}' { InprocServer = s 'ole2disp.dll' }
     }
     NoRemove Interface
     {
