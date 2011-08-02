@@ -2622,7 +2622,7 @@ BOOL getDepthStencilBits(const struct wined3d_format *format, BYTE *depthSize, B
 /* Note: It's the caller's responsibility to ensure values can be expressed
  * in the requested format. UNORM formats for example can only express values
  * in the range 0.0f -> 1.0f. */
-DWORD wined3d_format_convert_from_float(const struct wined3d_format *format, const WINED3DCOLORVALUE *color)
+DWORD wined3d_format_convert_from_float(const struct wined3d_surface *surface, const WINED3DCOLORVALUE *color)
 {
     static const struct
     {
@@ -2653,6 +2653,7 @@ DWORD wined3d_format_convert_from_float(const struct wined3d_format *format, con
         {WINED3DFMT_B10G10R10A2_UNORM, 1023.0f, 1023.0f, 1023.0f,    3.0f, 20, 10,  0, 30},
         {WINED3DFMT_R10G10B10A2_UNORM, 1023.0f, 1023.0f, 1023.0f,    3.0f,  0, 10, 20, 30},
     };
+    const struct wined3d_format *format = surface->resource.format;
     unsigned int i;
 
     TRACE("Converting color {%.8e %.8e %.8e %.8e} to format %s.\n",
@@ -2672,6 +2673,40 @@ DWORD wined3d_format_convert_from_float(const struct wined3d_format *format, con
         TRACE("Returning 0x%08x.\n", ret);
 
         return ret;
+    }
+
+    if (format->id == WINED3DFMT_P8_UINT)
+    {
+        PALETTEENTRY *e;
+        BYTE r, g, b, a;
+
+        if (!surface->palette)
+        {
+            WARN("Surface doesn't have a palette, returning 0.\n");
+            return 0;
+        }
+
+        r = (BYTE)((color->r * 255.0f) + 0.5f);
+        g = (BYTE)((color->g * 255.0f) + 0.5f);
+        b = (BYTE)((color->b * 255.0f) + 0.5f);
+        a = (BYTE)((color->a * 255.0f) + 0.5f);
+
+        e = &surface->palette->palents[a];
+        if (e->peRed == r && e->peGreen == g && e->peBlue == b)
+            return a;
+
+        WARN("Alpha didn't match index, searching full palette.\n");
+
+        for (i = 0; i < 256; ++i)
+        {
+            e = &surface->palette->palents[i];
+            if (e->peRed == r && e->peGreen == g && e->peBlue == b)
+                return i;
+        }
+
+        FIXME("Unable to convert color to palette index.\n");
+
+        return 0;
     }
 
     FIXME("Conversion for format %s not implemented.\n", debug_d3dformat(format->id));

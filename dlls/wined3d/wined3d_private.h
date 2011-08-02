@@ -2805,7 +2805,7 @@ const struct wined3d_format *wined3d_get_format(const struct wined3d_gl_info *gl
         enum wined3d_format_id format_id) DECLSPEC_HIDDEN;
 UINT wined3d_format_calculate_size(const struct wined3d_format *format,
         UINT alignment, UINT width, UINT height) DECLSPEC_HIDDEN;
-DWORD wined3d_format_convert_from_float(const struct wined3d_format *format,
+DWORD wined3d_format_convert_from_float(const struct wined3d_surface *surface,
         const WINED3DCOLORVALUE *color) DECLSPEC_HIDDEN;
 
 static inline BOOL use_vs(const struct wined3d_state *state)

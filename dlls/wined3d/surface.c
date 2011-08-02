@@ -7355,7 +7355,7 @@ static HRESULT cpu_blit_color_fill(struct wined3d_device *device, struct wined3d
 
     memset(&BltFx, 0, sizeof(BltFx));
     BltFx.dwSize = sizeof(BltFx);
-    BltFx.u5.dwFillColor = wined3d_format_convert_from_float(dst_surface->resource.format, color);
+    BltFx.u5.dwFillColor = wined3d_format_convert_from_float(dst_surface, color);
     return wined3d_surface_blt(dst_surface, dst_rect, NULL, NULL,
             WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
 }
