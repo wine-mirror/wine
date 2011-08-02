@@ -14,7 +14,6 @@ C_SRCS = \
 	url.c
 
 IDL_TLB_SRCS = winhttp_tlb.idl
-IDL_R_SRCS   = winhttp_tlb.idl
 
 RC_SRCS = version.rc
 

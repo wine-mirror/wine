@@ -9,7 +9,6 @@ C_SRCS = \
 	main.c
 
 IDL_TLB_SRCS = gameux_tlb.idl
-IDL_R_SRCS   = gameux_tlb.idl
 
 RC_SRCS = rsrc.rc
 

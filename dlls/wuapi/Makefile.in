@@ -11,6 +11,5 @@ C_SRCS = \
 	updates.c
 
 IDL_TLB_SRCS = wuapi_tlb.idl
-IDL_R_SRCS   = wuapi_tlb.idl
 
 @MAKE_DLL_RULES@

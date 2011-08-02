@@ -3,6 +3,5 @@ MODULE = msxml2.dll
 C_SRCS = main.c
 
 IDL_TLB_SRCS = msxml2_tlb.idl
-IDL_R_SRCS   = msxml2_tlb.idl
 
 @MAKE_DLL_RULES@

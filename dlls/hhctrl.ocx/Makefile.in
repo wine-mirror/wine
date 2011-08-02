@@ -12,7 +12,6 @@ C_SRCS = \
 	webbrowser.c
 
 IDL_TLB_SRCS = hhctrl_tlb.idl
-IDL_R_SRCS   = hhctrl_tlb.idl
 
 RC_SRCS = hhctrl.rc
 PO_SRCS = hhctrl.rc
