@@ -1984,9 +1984,6 @@ struct wined3d_surface_ops
     void (*surface_unmap)(struct wined3d_surface *surface);
     HRESULT (*surface_getdc)(struct wined3d_surface *surface);
     HRESULT (*surface_flip)(struct wined3d_surface *surface, struct wined3d_surface *override);
-    HRESULT (*surface_blt)(struct wined3d_surface *dst_surface, const RECT *dst_rect,
-            struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
-            const WINEDDBLTFX *fx, WINED3DTEXTUREFILTERTYPE filter);
     HRESULT (*surface_bltfast)(struct wined3d_surface *dst_surface, DWORD dst_x, DWORD dst_y,
             struct wined3d_surface *src_surface, const RECT *src_rect, DWORD trans);
     HRESULT (*surface_set_mem)(struct wined3d_surface *surface, void *mem);

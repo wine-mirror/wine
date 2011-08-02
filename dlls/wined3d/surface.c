@@ -1281,13 +1281,15 @@ static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, co
 }
 
 /* Do not call while under the GL lock. */
-static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect,
-        struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
+HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect_in,
+        struct wined3d_surface *src_surface, const RECT *src_rect_in, DWORD flags,
         const WINEDDBLTFX *fx, WINED3DTEXTUREFILTERTYPE filter)
 {
     const struct wined3d_swapchain *src_swapchain, *dst_swapchain;
     struct wined3d_device *device = dst_surface->resource.device;
     DWORD src_ds_flags, dst_ds_flags;
+    RECT src_rect, dst_rect;
+
     static const DWORD simple_blit = WINEDDBLT_ASYNC
             | WINEDDBLT_COLORFILL
             | WINEDDBLT_WAIT
@@ -1295,19 +1297,31 @@ static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_
             | WINEDDBLT_DONOTWAIT;
 
     TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
-            dst_surface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
+            dst_surface, wine_dbgstr_rect(dst_rect_in), src_surface, wine_dbgstr_rect(src_rect_in),
             flags, fx, debug_d3dtexturefiltertype(filter));
     TRACE("Usage is %s.\n", debug_d3dusage(dst_surface->resource.usage));
 
-    if (flags & ~simple_blit)
+    if ((dst_surface->flags & SFLAG_LOCKED) || (src_surface && (src_surface->flags & SFLAG_LOCKED)))
     {
-        WARN("Using fallback for complex blit (%#x).\n", flags);
-        goto fallback;
+        WARN("Surface is busy, returning WINEDDERR_SURFACEBUSY.\n");
+        return WINEDDERR_SURFACEBUSY;
     }
+
+    surface_get_rect(dst_surface, dst_rect_in, &dst_rect);
+    if (src_surface)
+        surface_get_rect(src_surface, src_rect_in, &src_rect);
+    else
+        memset(&src_rect, 0, sizeof(src_rect));
 
     if (!device->d3d_initialized)
     {
         WARN("D3D not initialized, using fallback.\n");
+        goto cpu;
+    }
+
+    if (flags & ~simple_blit)
+    {
+        WARN("Using fallback for complex blit (%#x).\n", flags);
         goto fallback;
     }
 
@@ -1349,7 +1363,7 @@ static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_
             if (!surface_convert_depth_to_float(dst_surface, fx->u5.dwFillDepth, &depth))
                 return WINED3DERR_INVALIDCALL;
 
-            if (SUCCEEDED(wined3d_surface_depth_fill(dst_surface, dst_rect, depth)))
+            if (SUCCEEDED(wined3d_surface_depth_fill(dst_surface, &dst_rect, depth)))
                 return WINED3D_OK;
         }
         else
@@ -1368,21 +1382,21 @@ static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_
                 return WINED3DERR_INVALIDCALL;
             }
 
-            if (src_rect->top || src_rect->left
-                    || src_rect->bottom != src_surface->resource.height
-                    || src_rect->right != src_surface->resource.width)
+            if (src_rect.top || src_rect.left
+                    || src_rect.bottom != src_surface->resource.height
+                    || src_rect.right != src_surface->resource.width)
             {
                 WARN("Rejecting depth / stencil blit with invalid source rect %s.\n",
-                        wine_dbgstr_rect(src_rect));
+                        wine_dbgstr_rect(&src_rect));
                 return WINED3DERR_INVALIDCALL;
             }
 
-            if (dst_rect->top || dst_rect->left
-                    || dst_rect->bottom != dst_surface->resource.height
-                    || dst_rect->right != dst_surface->resource.width)
+            if (dst_rect.top || dst_rect.left
+                    || dst_rect.bottom != dst_surface->resource.height
+                    || dst_rect.right != dst_surface->resource.width)
             {
                 WARN("Rejecting depth / stencil blit with invalid destination rect %s.\n",
-                        wine_dbgstr_rect(src_rect));
+                        wine_dbgstr_rect(&src_rect));
                 return WINED3DERR_INVALIDCALL;
             }
 
@@ -1393,7 +1407,7 @@ static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_
                 return WINED3DERR_INVALIDCALL;
             }
 
-            if (SUCCEEDED(wined3d_surface_depth_blt(src_surface, src_rect, dst_surface, dst_rect)))
+            if (SUCCEEDED(wined3d_surface_depth_blt(src_surface, &src_rect, dst_surface, &dst_rect)))
                 return WINED3D_OK;
         }
     }
@@ -1404,15 +1418,17 @@ fallback:
     if ((dst_surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
             || (src_surface && (src_surface->resource.usage & WINED3DUSAGE_RENDERTARGET)))
     {
-        if (SUCCEEDED(IWineD3DSurfaceImpl_BltOverride(dst_surface, dst_rect,
-                src_surface, src_rect, flags, fx, filter)))
+        if (SUCCEEDED(IWineD3DSurfaceImpl_BltOverride(dst_surface, &dst_rect,
+                src_surface, &src_rect, flags, fx, filter)))
             return WINED3D_OK;
     }
+
+cpu:
 
     /* For the rest call the X11 surface implementation. For render targets
      * this should be implemented OpenGL accelerated in BltOverride, other
      * blits are rather rare. */
-    return surface_cpu_blt(dst_surface, dst_rect, src_surface, src_rect, flags, fx, filter);
+    return surface_cpu_blt(dst_surface, &dst_rect, src_surface, &src_rect, flags, fx, filter);
 }
 
 /* Do not call while under the GL lock. */
@@ -1641,7 +1657,6 @@ static const struct wined3d_surface_ops surface_ops =
     surface_unmap,
     surface_getdc,
     surface_flip,
-    surface_blt,
     surface_bltfast,
     surface_set_mem,
 };
@@ -1826,17 +1841,6 @@ static HRESULT gdi_surface_flip(struct wined3d_surface *surface, struct wined3d_
     return WINED3D_OK;
 }
 
-static HRESULT gdi_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect,
-        struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
-        const WINEDDBLTFX *fx, WINED3DTEXTUREFILTERTYPE filter)
-{
-    TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
-            dst_surface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
-            flags, fx, debug_d3dtexturefiltertype(filter));
-
-    return surface_cpu_blt(dst_surface, dst_rect, src_surface, src_rect, flags, fx, filter);
-}
-
 static HRESULT gdi_surface_bltfast(struct wined3d_surface *dst_surface, DWORD dst_x, DWORD dst_y,
         struct wined3d_surface *src_surface, const RECT *src_rect, DWORD trans)
 {
@@ -1904,7 +1908,6 @@ static const struct wined3d_surface_ops gdi_surface_ops =
     gdi_surface_unmap,
     gdi_surface_getdc,
     gdi_surface_flip,
-    gdi_surface_blt,
     gdi_surface_bltfast,
     gdi_surface_set_mem,
 };
@@ -3439,33 +3442,6 @@ do { \
     }
 
     return WINED3D_OK;
-}
-
-/* Do not call while under the GL lock. */
-HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect_in,
-        struct wined3d_surface *src_surface, const RECT *src_rect_in, DWORD flags,
-        const WINEDDBLTFX *fx, WINED3DTEXTUREFILTERTYPE filter)
-{
-    RECT src_rect, dst_rect;
-
-    TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
-            dst_surface, wine_dbgstr_rect(dst_rect_in), src_surface, wine_dbgstr_rect(src_rect_in),
-            flags, fx, debug_d3dtexturefiltertype(filter));
-
-    if ((dst_surface->flags & SFLAG_LOCKED) || (src_surface && (src_surface->flags & SFLAG_LOCKED)))
-    {
-        WARN("Surface is busy, returning WINEDDERR_SURFACEBUSY.\n");
-        return WINEDDERR_SURFACEBUSY;
-    }
-
-    surface_get_rect(dst_surface, dst_rect_in, &dst_rect);
-    if (src_surface)
-        surface_get_rect(src_surface, src_rect_in, &src_rect);
-    else
-        memset(&src_rect, 0, sizeof(src_rect));
-
-    return dst_surface->surface_ops->surface_blt(dst_surface,
-            &dst_rect, src_surface, &src_rect, flags, fx, filter);
 }
 
 /* Do not call while under the GL lock. */
