@@ -134,7 +134,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
 HRESULT WINAPI DllRegisterServer(void)
 {
     TRACE("()\n");
-    return __wine_register_resources(vbscript_hinstance, NULL);
+    return __wine_register_resources(vbscript_hinstance);
 }
 
 /***********************************************************************
@@ -143,5 +143,5 @@ HRESULT WINAPI DllRegisterServer(void)
 HRESULT WINAPI DllUnregisterServer(void)
 {
     TRACE("()\n");
-    return __wine_unregister_resources(vbscript_hinstance, NULL);
+    return __wine_unregister_resources(vbscript_hinstance);
 }

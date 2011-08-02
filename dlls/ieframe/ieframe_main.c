@@ -279,7 +279,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
 HRESULT WINAPI DllRegisterServer(void)
 {
     TRACE("()\n");
-    return __wine_register_resources(ieframe_instance, NULL);
+    return __wine_register_resources(ieframe_instance);
 }
 
 /***********************************************************************
@@ -288,5 +288,5 @@ HRESULT WINAPI DllRegisterServer(void)
 HRESULT WINAPI DllUnregisterServer(void)
 {
     TRACE("()\n");
-    return __wine_unregister_resources(ieframe_instance, NULL);
+    return __wine_unregister_resources(ieframe_instance);
 }

@@ -100,7 +100,7 @@ HRESULT WINAPI DllRegisterServer(void)
 
     TRACE("\n");
 
-    res = __wine_register_resources( DEVENUM_hInstance, NULL );
+    res = __wine_register_resources( DEVENUM_hInstance );
 
     /* Quartz is needed for IFilterMapper2 */
     DEVENUM_RegisterQuartz();
@@ -149,7 +149,7 @@ HRESULT WINAPI DllRegisterServer(void)
 HRESULT WINAPI DllUnregisterServer(void)
 {
     FIXME("stub!\n");
-    return __wine_unregister_resources( DEVENUM_hInstance, NULL );
+    return __wine_unregister_resources( DEVENUM_hInstance );
 }
 
 typedef HRESULT (WINAPI *DllRegisterServer_func)(void);

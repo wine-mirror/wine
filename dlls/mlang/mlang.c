@@ -3597,7 +3597,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    return __wine_register_resources( instance, NULL );
+    return __wine_register_resources( instance );
 }
 
 /***********************************************************************
@@ -3605,7 +3605,7 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    return __wine_unregister_resources( instance, NULL );
+    return __wine_unregister_resources( instance );
 }
 
 HRESULT WINAPI GetGlobalFontLinkObject(void **unknown)

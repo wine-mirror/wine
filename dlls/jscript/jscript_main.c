@@ -143,7 +143,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
 HRESULT WINAPI DllRegisterServer(void)
 {
     TRACE("()\n");
-    return __wine_register_resources(jscript_hinstance, NULL);
+    return __wine_register_resources(jscript_hinstance);
 }
 
 /***********************************************************************
@@ -152,5 +152,5 @@ HRESULT WINAPI DllRegisterServer(void)
 HRESULT WINAPI DllUnregisterServer(void)
 {
     TRACE("()\n");
-    return __wine_unregister_resources(jscript_hinstance, NULL);
+    return __wine_unregister_resources(jscript_hinstance);
 }

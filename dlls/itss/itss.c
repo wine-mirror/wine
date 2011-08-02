@@ -393,7 +393,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    return __wine_register_resources( hInst, NULL );
+    return __wine_register_resources( hInst );
 }
 
 /***********************************************************************
@@ -401,5 +401,5 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    return __wine_unregister_resources( hInst, NULL );
+    return __wine_unregister_resources( hInst );
 }

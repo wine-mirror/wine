@@ -396,7 +396,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    return __wine_register_resources( hhctrl_hinstance, NULL );
+    return __wine_register_resources( hhctrl_hinstance );
 }
 
 /***********************************************************************
@@ -404,5 +404,5 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    return __wine_unregister_resources( hhctrl_hinstance, NULL );
+    return __wine_unregister_resources( hhctrl_hinstance );
 }

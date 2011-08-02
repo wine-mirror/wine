@@ -299,7 +299,7 @@ const char *debugstr_variant(const VARIANT *v)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    return __wine_register_resources( MSXML_hInstance, NULL );
+    return __wine_register_resources( MSXML_hInstance );
 }
 
 /***********************************************************************
@@ -307,5 +307,5 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    return __wine_unregister_resources( MSXML_hInstance, NULL );
+    return __wine_unregister_resources( MSXML_hInstance );
 }

@@ -64,7 +64,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    return __wine_register_resources( instance, NULL );
+    return __wine_register_resources( instance );
 }
 
 /***********************************************************************
@@ -72,5 +72,5 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    return __wine_unregister_resources( instance, NULL );
+    return __wine_unregister_resources( instance );
 }

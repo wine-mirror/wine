@@ -246,7 +246,7 @@ HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    return __wine_register_resources( BROWSEUI_hinstance, NULL );
+    return __wine_register_resources( BROWSEUI_hinstance );
 }
 
 /***********************************************************************
@@ -254,5 +254,5 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    return __wine_unregister_resources( BROWSEUI_hinstance, NULL );
+    return __wine_unregister_resources( BROWSEUI_hinstance );
 }

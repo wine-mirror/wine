@@ -165,14 +165,14 @@ static HRESULT register_server(BOOL do_register)
 
 HRESULT WINAPI DllRegisterServer(void)
 {
-    HRESULT hr = __wine_register_resources( hInst, NULL );
+    HRESULT hr = __wine_register_resources( hInst );
     if (FAILED(hr)) return hr;
     return register_server(TRUE);
 }
 
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    HRESULT hr = __wine_unregister_resources( hInst, NULL );
+    HRESULT hr = __wine_unregister_resources( hInst );
     if (FAILED(hr)) return hr;
     return register_server(FALSE);
 }

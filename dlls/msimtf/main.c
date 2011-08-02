@@ -163,7 +163,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    return __wine_register_resources( msimtf_instance, NULL );
+    return __wine_register_resources( msimtf_instance );
 }
 
 /***********************************************************************
@@ -171,5 +171,5 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    return __wine_unregister_resources( msimtf_instance, NULL );
+    return __wine_unregister_resources( msimtf_instance );
 }

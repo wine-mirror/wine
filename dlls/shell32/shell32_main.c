@@ -1238,7 +1238,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    HRESULT hr = __wine_register_resources( shell32_hInstance, NULL );
+    HRESULT hr = __wine_register_resources( shell32_hInstance );
     if (SUCCEEDED(hr)) hr = SHELL_RegisterShellFolders();
     return hr;
 }
@@ -1248,7 +1248,7 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    return __wine_unregister_resources( shell32_hInstance, NULL );
+    return __wine_unregister_resources( shell32_hInstance );
 }
 
 /***********************************************************************

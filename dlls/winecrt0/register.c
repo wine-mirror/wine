@@ -33,12 +33,10 @@
 static const WCHAR ole32W[] = {'o','l','e','3','2','.','d','l','l',0};
 static const WCHAR regtypeW[] = {'W','I','N','E','_','R','E','G','I','S','T','R','Y',0};
 static const WCHAR moduleW[] = {'M','O','D','U','L','E',0};
-static const WCHAR clsidW[] = {'C','L','S','I','D','_','P','S','F','a','c','t','o','r','y','B','u','f','f','e','r',0};
 
 struct reg_info
 {
     IRegistrar  *registrar;
-    const CLSID *clsid;
     BOOL         do_register;
     BOOL         uninit;
     HRESULT      result;
@@ -48,17 +46,15 @@ static HMODULE ole32;
 static HRESULT (WINAPI *pCoInitialize)(LPVOID);
 static void (WINAPI *pCoUninitialize)(void);
 static HRESULT (WINAPI *pCoCreateInstance)(REFCLSID,LPUNKNOWN,DWORD,REFIID,LPVOID*);
-static INT (WINAPI *pStringFromGUID2)(REFGUID,LPOLESTR,INT);
 
 static IRegistrar *create_registrar( HMODULE inst, struct reg_info *info )
 {
-    if (!pStringFromGUID2)
+    if (!pCoCreateInstance)
     {
         if (!(ole32 = LoadLibraryW( ole32W )) ||
             !(pCoInitialize = (void *)GetProcAddress( ole32, "CoInitialize" )) ||
             !(pCoUninitialize = (void *)GetProcAddress( ole32, "CoUninitialize" )) ||
-            !(pCoCreateInstance = (void *)GetProcAddress( ole32, "CoCreateInstance" )) ||
-            !(pStringFromGUID2 = (void *)GetProcAddress( ole32, "StringFromGUID2" )))
+            !(pCoCreateInstance = (void *)GetProcAddress( ole32, "CoCreateInstance" )))
         {
             info->result = E_NOINTERFACE;
             return NULL;
@@ -74,11 +70,6 @@ static IRegistrar *create_registrar( HMODULE inst, struct reg_info *info )
 
         GetModuleFileNameW( inst, str, MAX_PATH );
         IRegistrar_AddReplacement( info->registrar, moduleW, str );
-        if (info->clsid)
-        {
-            pStringFromGUID2( info->clsid, str, MAX_PATH );
-            IRegistrar_AddReplacement( info->registrar, clsidW, str );
-        }
     }
     return info->registrar;
 }
@@ -111,12 +102,11 @@ static BOOL CALLBACK register_resource( HMODULE module, LPCWSTR type, LPWSTR nam
     return SUCCEEDED(info->result);
 }
 
-HRESULT __wine_register_resources( HMODULE module, const CLSID *clsid )
+HRESULT __wine_register_resources( HMODULE module )
 {
     struct reg_info info;
 
     info.registrar = NULL;
-    info.clsid = clsid;
     info.do_register = TRUE;
     info.uninit = FALSE;
     info.result = S_OK;
@@ -126,12 +116,11 @@ HRESULT __wine_register_resources( HMODULE module, const CLSID *clsid )
     return info.result;
 }
 
-HRESULT __wine_unregister_resources( HMODULE module, const CLSID *clsid )
+HRESULT __wine_unregister_resources( HMODULE module )
 {
     struct reg_info info;
 
     info.registrar = NULL;
-    info.clsid = clsid;
     info.do_register = FALSE;
     info.uninit = FALSE;
     info.result = S_OK;
