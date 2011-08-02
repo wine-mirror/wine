@@ -207,6 +207,15 @@ set FOO=foo
 echo %FOO%
 echo !FOO!
 set FOO=
+echo ...using /V cmd flag
+echo @echo off> tmp.cmd
+echo set FOO=foo>> tmp.cmd
+echo echo %%FOO%%>> tmp.cmd
+echo echo !FOO!>> tmp.cmd
+echo set FOO=>> tmp.cmd
+cmd /V:ON /C tmp.cmd
+cmd /V:OfF /C tmp.cmd
+del tmp.cmd
 
 echo ------------ Testing conditional execution --------------
 echo ...unconditional ^&
