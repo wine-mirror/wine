@@ -104,11 +104,9 @@ static ULONG WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_Release (LPDIRECTM
             /*This->CritSect.DebugInfo->Spare[0] = 0;
               DeleteCriticalSection (&This->CritSect); */
             HeapFree (GetProcessHeap(), 0, This);
-
-            /* decrease number of instances */
-            InterlockedDecrement (&dwDirectMusicLoader);
+            unlock_module();
 	}
-	
+
 	return dwRef;
 }
 
@@ -895,9 +893,8 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderImpl (LPCGUID lpcGUID, LPVOID *ppob
 		pDefaultDLSEntry->bInvalidDefaultDLS = TRUE;
 	}
 
-	/* increase number of instances */
-	InterlockedIncrement (&dwDirectMusicLoader);
-	
+        lock_module();
+
 	return IDirectMusicLoaderImpl_IDirectMusicLoader_QueryInterface ((LPDIRECTMUSICLOADER8)obj, lpcGUID, ppobj);
 }
 

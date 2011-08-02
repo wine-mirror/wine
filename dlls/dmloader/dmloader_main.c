@@ -23,8 +23,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmloader);
 
 static HINSTANCE instance;
-LONG dwDirectMusicContainer = 0;
-LONG dwDirectMusicLoader = 0;
+LONG module_ref = 0;
 
 typedef struct {
     IClassFactory IClassFactory_iface;
@@ -61,14 +60,14 @@ static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID r
 
 static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
 {
-    InterlockedIncrement(&dwDirectMusicLoader);
+    lock_module();
 
     return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 {
-    InterlockedDecrement(&dwDirectMusicLoader);
+    unlock_module();
 
     return 1; /* non-heap based object */
 }
@@ -88,9 +87,9 @@ static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
     TRACE("(%d)\n", dolock);
 
     if (dolock)
-        InterlockedIncrement(&dwDirectMusicLoader);
+        lock_module();
     else
-        InterlockedDecrement(&dwDirectMusicLoader);
+        unlock_module();
 
     return S_OK;
 }
@@ -127,14 +126,10 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
  */
 HRESULT WINAPI DllCanUnloadNow (void)
 {
-    TRACE("(void)\n");
-	/* if there are no instances left, it's safe to release */
-	if (!dwDirectMusicContainer && !dwDirectMusicLoader)
-		return S_OK;
-	else
-    	return S_FALSE;
-}
+    TRACE("() ref=%d\n", module_ref);
 
+    return module_ref ? S_FALSE : S_OK;
+}
 
 /******************************************************************
  *		DllGetClassObject (DMLOADER.@)

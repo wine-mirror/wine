@@ -68,9 +68,7 @@ static HRESULT DMUSIC_DestroyDirectMusicContainerImpl (LPDIRECTMUSICCONTAINER if
 	IStream_Release (This->pStream);
 
 	/* FIXME: release allocated entries */
-
-	/* decrease number of instances */
-	InterlockedDecrement (&dwDirectMusicContainer);
+	unlock_module();
 
 	return S_OK;
 }
@@ -924,8 +922,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicContainerImpl (LPCGUID lpcGUID, LPVOID* p
 	obj->pContainedObjects = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(struct list));
 	list_init (obj->pContainedObjects);
 
-	/* increase number of instances */
-	InterlockedIncrement (&dwDirectMusicContainer);
-	
+	lock_module();
+
 	return IDirectMusicContainerImpl_IDirectMusicContainer_QueryInterface ((LPDIRECTMUSICCONTAINER)&obj->ContainerVtbl, lpcGUID, ppobj);
 }
