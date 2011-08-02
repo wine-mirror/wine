@@ -2493,6 +2493,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 [RegisterDllsSection]
 ;;some dlls have to be registered first
 11,,shell32.dll,1
+11,,quartz.dll,1
 
 11,,comctl32.dll,2
 11,,cryptdlg.dll,1
@@ -2502,7 +2503,6 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,msiexec.exe,1
 11,,msisip.dll,1
 11,,qcap.dll,1
-11,,quartz.dll,1
 11,,urlmon.dll,1
 11,,windowscodecs.dll,1
 11,,winegstreamer.dll,1
