@@ -56,6 +56,12 @@ extern const primitive_funcs funcs_4    DECLSPEC_HIDDEN;
 extern const primitive_funcs funcs_1    DECLSPEC_HIDDEN;
 extern const primitive_funcs funcs_null DECLSPEC_HIDDEN;
 
+struct rop_codes
+{
+    DWORD a1, a2, x1, x2;
+};
+
+extern void get_rop_codes(INT rop, struct rop_codes *codes);
 extern void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor) DECLSPEC_HIDDEN;
 extern void update_brush_rop( dibdrv_physdev *pdev, INT rop ) DECLSPEC_HIDDEN;
 extern void reset_dash_origin(dibdrv_physdev *pdev) DECLSPEC_HIDDEN;

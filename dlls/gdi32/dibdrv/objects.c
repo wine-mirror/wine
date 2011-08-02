@@ -85,11 +85,22 @@ static const DWORD rop2_xor_array[16][2] =
 #undef ONE
 #undef ZERO
 
-void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor)
+void get_rop_codes(INT rop, struct rop_codes *codes)
 {
     /* NB The ROP2 codes start at one and the arrays are zero-based */
-    *and = (color & rop2_and_array[rop-1][0]) ^ rop2_and_array[rop-1][1];
-    *xor = (color & rop2_xor_array[rop-1][0]) ^ rop2_xor_array[rop-1][1];
+    codes->a1 = rop2_and_array[rop-1][0];
+    codes->a2 = rop2_and_array[rop-1][1];
+    codes->x1 = rop2_xor_array[rop-1][0];
+    codes->x2 = rop2_xor_array[rop-1][1];
+}
+
+void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor)
+{
+    struct rop_codes codes;
+    get_rop_codes( rop, &codes );
+
+    *and = (color & codes.a1) ^ codes.a2;
+    *xor = (color & codes.x1) ^ codes.x2;
 }
 
 static inline RGBQUAD rgbquad_from_colorref(COLORREF c)
