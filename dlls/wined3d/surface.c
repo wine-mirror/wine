@@ -1285,6 +1285,7 @@ static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_
         struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
         const WINEDDBLTFX *fx, WINED3DTEXTUREFILTERTYPE filter)
 {
+    const struct wined3d_swapchain *src_swapchain, *dst_swapchain;
     struct wined3d_device *device = dst_surface->resource.device;
     DWORD src_ds_flags, dst_ds_flags;
     static const DWORD simple_blit = WINEDDBLT_ASYNC
@@ -1307,6 +1308,27 @@ static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_
     if (!device->d3d_initialized)
     {
         WARN("D3D not initialized, using fallback.\n");
+        goto fallback;
+    }
+
+    if (src_surface && src_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
+        src_swapchain = src_surface->container.u.swapchain;
+    else
+        src_swapchain = NULL;
+
+    if (dst_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
+        dst_swapchain = dst_surface->container.u.swapchain;
+    else
+        dst_swapchain = NULL;
+
+    /* This isn't strictly needed. FBO blits for example could deal with
+     * cross-swapchain blits by first downloading the source to a texture
+     * before switching to the destination context. We just have this here to
+     * not have to deal with the issue, since cross-swapchain blits should be
+     * rare. */
+    if (src_swapchain && dst_swapchain && src_swapchain != dst_swapchain)
+    {
+        FIXME("Using fallback for cross-swapchain blit.\n");
         goto fallback;
     }
 
