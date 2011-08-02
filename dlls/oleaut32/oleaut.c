@@ -843,48 +843,12 @@ BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD fdwReason, LPVOID lpvReserved)
     return OLEAUTPS_DllMain( hInstDll, fdwReason, lpvReserved );
 }
 
-
-static HRESULT register_typelib( const WCHAR *name )
-{
-    static const WCHAR backslash[] = {'\\',0};
-    HRESULT hr;
-    ITypeLib *typelib;
-    WCHAR *path;
-    DWORD len;
-
-    len = GetSystemDirectoryW( NULL, 0 ) + strlenW( name ) + 1;
-    if (!(path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
-    GetSystemDirectoryW( path, len );
-    strcatW( path, backslash );
-    strcatW( path, name );
-    hr = LoadTypeLib( path, &typelib );
-    if (SUCCEEDED(hr))
-    {
-        hr = RegisterTypeLib( typelib, path, NULL );
-        ITypeLib_Release( typelib );
-    }
-    HeapFree( GetProcessHeap(), 0, path );
-    return hr;
-}
-
 /***********************************************************************
  *		DllRegisterServer (OLEAUT32.@)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    HRESULT hr;
-
-    TRACE("\n");
-
-    hr = OLEAUTPS_DllRegisterServer();
-    if (SUCCEEDED(hr))
-    {
-        const WCHAR stdole32W[] = {'s','t','d','o','l','e','3','2','.','t','l','b',0};
-        const WCHAR stdole2W[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
-        hr = register_typelib( stdole2W );
-        if (SUCCEEDED(hr)) hr = register_typelib( stdole32W );
-    }
-    return hr;
+    return OLEAUTPS_DllRegisterServer();
 }
 
 /***********************************************************************
