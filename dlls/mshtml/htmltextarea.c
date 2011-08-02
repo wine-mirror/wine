@@ -449,6 +449,7 @@ static const NodeImplVtbl HTMLTextAreaElementImplVtbl = {
     HTMLElement_clone,
     NULL,
     NULL,
+    NULL,
     HTMLTextAreaElementImpl_put_disabled,
     HTMLTextAreaElementImpl_get_disabled
 };

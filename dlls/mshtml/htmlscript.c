@@ -335,6 +335,7 @@ static const NodeImplVtbl HTMLScriptElementImplVtbl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     HTMLScriptElement_get_readystate
 };
 

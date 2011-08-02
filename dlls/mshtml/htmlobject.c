@@ -475,6 +475,7 @@ static const NodeImplVtbl HTMLObjectElementImplVtbl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     HTMLObjectElement_get_readystate,
     HTMLObjectElement_get_dispid,
     HTMLObjectElement_invoke

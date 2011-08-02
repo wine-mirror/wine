@@ -980,8 +980,10 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
     HTMLEventObj *event_obj = NULL;
     IHTMLEventObj *prev_event;
     nsIDOMNode *parent, *nsnode;
+    BOOL prevent_default = FALSE;
     HTMLDOMNode *node;
     PRUint16 node_type;
+    nsresult nsres;
     HRESULT hres;
 
     TRACE("(%p) %s\n", doc, debugstr_w(event_info[eid].name));
@@ -1053,14 +1055,42 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
     if(nsnode)
         nsIDOMNode_Release(nsnode);
 
+    if(event_obj && event_obj->prevent_default)
+        prevent_default = TRUE;
     doc->basedoc.window->event = prev_event;
-
-    if(event_obj) {
-        if(event_obj->prevent_default && nsevent) {
-            TRACE("calling PreventDefault\n");
-            nsIDOMEvent_PreventDefault(nsevent);
-        }
+    if(event_obj)
         IHTMLEventObj_Release(&event_obj->IHTMLEventObj_iface);
+
+    if(!prevent_default) {
+        nsIDOMNode_AddRef(target);
+        nsnode = target;
+
+        do {
+            hres = get_node(doc, nsnode, TRUE, &node);
+            if(FAILED(hres))
+                break;
+
+            if(node && node->vtbl->handle_event) {
+                hres = node->vtbl->handle_event(node, eid, &prevent_default);
+                if(FAILED(hres) || prevent_default)
+                    break;
+            }
+
+            nsres = nsIDOMNode_GetParentNode(nsnode, &parent);
+            if(NS_FAILED(nsres))
+                break;
+
+            nsIDOMNode_Release(nsnode);
+            nsnode = parent;
+        } while(nsnode);
+
+        if(nsnode)
+            nsIDOMNode_Release(nsnode);
+    }
+
+    if(prevent_default && nsevent) {
+        TRACE("calling PreventDefault\n");
+        nsIDOMEvent_PreventDefault(nsevent);
     }
 }
 

@@ -252,6 +252,7 @@ static const NodeImplVtbl HTMLIFrameImplVtbl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     HTMLIFrame_get_document,
     HTMLIFrame_get_readystate,
     HTMLIFrame_get_dispid,

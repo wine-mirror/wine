@@ -499,6 +499,7 @@ typedef struct {
     HRESULT (*clone)(HTMLDOMNode*,nsIDOMNode*,HTMLDOMNode**);
     event_target_t **(*get_event_target)(HTMLDOMNode*);
     HRESULT (*fire_event)(HTMLDOMNode*,DWORD,BOOL*);
+    HRESULT (*handle_event)(HTMLDOMNode*,DWORD,BOOL*);
     HRESULT (*put_disabled)(HTMLDOMNode*,VARIANT_BOOL);
     HRESULT (*get_disabled)(HTMLDOMNode*,VARIANT_BOOL*);
     HRESULT (*get_document)(HTMLDOMNode*,IDispatch**);
