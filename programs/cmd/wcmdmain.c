@@ -1472,7 +1472,7 @@ void WCMD_execute (WCHAR *command, WCHAR *redirects,
         break;
       case WCMD_MD:
       case WCMD_MKDIR:
-        WCMD_create_dir ();
+        WCMD_create_dir (p);
 	break;
       case WCMD_MOVE:
         WCMD_move ();

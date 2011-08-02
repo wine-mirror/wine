@@ -523,13 +523,22 @@ static BOOL create_full_path(WCHAR* path)
     return ret;
 }
 
-void WCMD_create_dir (void) {
+void WCMD_create_dir (WCHAR *command) {
+    int   argno = 0;
+    WCHAR *argN = command;
 
     if (param1[0] == 0x00) {
         WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
         return;
     }
-    if (!create_full_path(param1)) WCMD_print_error ();
+    /* Loop through all args */
+    while (TRUE) {
+        WCHAR *thisArg = WCMD_parameter(command, argno++, &argN);
+        if (!argN) break;
+        if (!create_full_path(thisArg)) {
+            WCMD_print_error ();
+        }
+    }
 }
 
 /* Parse the /A options given by the user on the commandline
