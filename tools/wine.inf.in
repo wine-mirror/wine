@@ -125,6 +125,7 @@ AddReg=\
 
 [DefaultInstall.Services]
 AddService=BITS,0,BITSService
+AddService=MSIServer,0,MSIService
 AddService=MountMgr,0x800,MountMgrService
 AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
@@ -133,6 +134,7 @@ AddService=PlugPlay,0,PlugPlayService
 
 [DefaultInstall.NT.Services]
 AddService=BITS,0,BITSService
+AddService=MSIServer,0,MSIService
 AddService=MountMgr,0x800,MountMgrService
 AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
@@ -141,6 +143,7 @@ AddService=PlugPlay,0,PlugPlayService
 
 [DefaultInstall.ntamd64.Services]
 AddService=BITS,0,BITSService
+AddService=MSIServer,0,MSIService
 AddService=MountMgr,0x800,MountMgrService
 AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
@@ -2500,7 +2503,6 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,cryptnet.dll,1
 11,,devenum.dll,1
 11,,mshtml.dll,1
-11,,msiexec.exe,1
 11,,msisip.dll,1
 11,,qcap.dll,1
 11,,urlmon.dll,1
@@ -2965,6 +2967,14 @@ Description="BITS Service"
 DisplayName="BITS Service"
 ServiceBinary="%11%\svchost.exe -k netsvcs"
 ServiceType=16
+StartType=3
+ErrorControl=1
+
+[MSIService]
+Description="MSI Installer Server"
+DisplayName="MSIServer"
+ServiceBinary="%11%\msiexec.exe /V"
+ServiceType=32
 StartType=3
 ErrorControl=1
 
