@@ -1182,12 +1182,6 @@ static HRESULT ensure_nsevent_handler(HTMLDocumentNode *doc, event_target_t *eve
     if(!(event_info[eid].flags & EVENT_DEFAULTLISTENER))
         return S_OK;
 
-    if(!doc->event_vector) {
-        doc->event_vector = heap_alloc_zero(EVENTID_LAST*sizeof(BOOL));
-        if(!doc->event_vector)
-            return E_OUTOFMEMORY;
-    }
-
     if(!doc->event_vector[eid]) {
         doc->event_vector[eid] = TRUE;
         add_nsevent_listener(doc, NULL, event_info[eid].name);
@@ -1373,6 +1367,16 @@ void check_event_attr(HTMLDocumentNode *doc, nsIDOMElement *nselem)
 
     nsAString_Finish(&attr_value_str);
     nsAString_Finish(&attr_name_str);
+}
+
+HRESULT doc_init_events(HTMLDocumentNode *doc)
+{
+    doc->event_vector = heap_alloc_zero(EVENTID_LAST*sizeof(BOOL));
+    if(!doc->event_vector)
+        return E_OUTOFMEMORY;
+
+    init_nsevents(doc);
+    return S_OK;
 }
 
 void release_event_target(event_target_t *event_target)

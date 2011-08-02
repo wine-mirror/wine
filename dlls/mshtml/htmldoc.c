@@ -2164,8 +2164,6 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLWindow *wi
             &doc->node.dispex.IDispatchEx_iface);
     HTMLDocumentNode_SecMgr_Init(doc);
 
-    init_nsevents(doc);
-
     list_init(&doc->bindings);
     list_init(&doc->selection_list);
     list_init(&doc->range_list);
@@ -2188,6 +2186,7 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     nsIDOMHTMLDocument_AddRef(nsdoc);
     doc->nsdoc = nsdoc;
     init_document_mutation(doc);
+    doc_init_events(doc);
 
     HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)nsdoc);
     doc->node.vtbl = &HTMLDocumentNodeImplVtbl;
