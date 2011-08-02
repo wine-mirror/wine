@@ -676,6 +676,9 @@ static HRESULT setup_oss_device(ACImpl *This, const WAVEFORMATEX *fmt,
     WAVEFORMATEXTENSIBLE *fmtex = (void*)fmt;
     WAVEFORMATEX *closest = NULL;
 
+    if(out)
+        *out = NULL;
+
     tmp = oss_format = get_oss_format(fmt);
     if(oss_format < 0)
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
@@ -689,6 +692,8 @@ static HRESULT setup_oss_device(ACImpl *This, const WAVEFORMATEX *fmt,
     }
 
     closest = clone_format(fmt);
+    if(!closest)
+        return E_OUTOFMEMORY;
 
     tmp = fmt->nSamplesPerSec;
     if(ioctl(This->fd, SNDCTL_DSP_SPEED, &tmp) < 0){
@@ -723,17 +728,14 @@ static HRESULT setup_oss_device(ACImpl *This, const WAVEFORMATEX *fmt,
             ret = S_FALSE;
     }
 
-    if(ret == S_OK || !out){
-        CoTaskMemFree( closest);
-        if(out)
-            *out = NULL;
-    }else{
+    if(ret == S_FALSE && out){
         closest->nBlockAlign =
             closest->nChannels * closest->wBitsPerSample / 8;
         closest->nAvgBytesPerSec =
             closest->nBlockAlign * closest->nSamplesPerSec;
         *out = closest;
-    }
+    } else
+        CoTaskMemFree(closest);
 
     TRACE("returning: %08x\n", ret);
     return ret;

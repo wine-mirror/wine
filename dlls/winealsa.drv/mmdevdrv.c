@@ -1189,6 +1189,9 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
 
     dump_fmt(fmt);
 
+    if(out)
+        *out = NULL;
+
     EnterCriticalSection(&This->lock);
 
     if((err = snd_pcm_hw_params_any(This->pcm_handle, This->hw_params)) < 0){
@@ -1320,17 +1323,14 @@ exit:
     LeaveCriticalSection(&This->lock);
     HeapFree(GetProcessHeap(), 0, formats);
 
-    if(hr == S_OK || !out){
-        CoTaskMemFree(closest);
-        if(out)
-            *out = NULL;
-    }else if(closest){
+    if(hr == S_FALSE && out) {
         closest->nBlockAlign =
             closest->nChannels * closest->wBitsPerSample / 8;
         closest->nAvgBytesPerSec =
             closest->nBlockAlign * closest->nSamplesPerSec;
         *out = closest;
-    }
+    } else
+        CoTaskMemFree(closest);
 
     TRACE("returning: %08x\n", hr);
     return hr;
