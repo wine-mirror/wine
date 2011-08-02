@@ -54,6 +54,10 @@ HRESULT dispatch_event(HTMLDOMNode*,const WCHAR*,VARIANT*,VARIANT_BOOL*) DECLSPE
 HRESULT call_fire_event(HTMLDOMNode*,eventid_t) DECLSPEC_HIDDEN;
 void update_cp_events(HTMLWindow*,event_target_t**,cp_static_data_t*,nsIDOMNode*) DECLSPEC_HIDDEN;
 
+void init_nsevents(HTMLDocumentNode*) DECLSPEC_HIDDEN;
+void release_nsevents(HTMLDocumentNode*) DECLSPEC_HIDDEN;
+void add_nsevent_listener(HTMLDocumentNode*,nsIDOMNode*,LPCWSTR) DECLSPEC_HIDDEN;
+
 static inline event_target_t **get_node_event_target(HTMLDOMNode *node)
 {
     return node->vtbl->get_event_target ? node->vtbl->get_event_target(node) : &node->event_target;

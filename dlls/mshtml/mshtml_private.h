@@ -686,10 +686,6 @@ HRESULT nsnode_to_nsstring(nsIDOMNode*,nsAString*) DECLSPEC_HIDDEN;
 void get_editor_controller(NSContainer*) DECLSPEC_HIDDEN;
 nsresult get_nsinterface(nsISupports*,REFIID,void**) DECLSPEC_HIDDEN;
 
-void init_nsevents(HTMLDocumentNode*) DECLSPEC_HIDDEN;
-void release_nsevents(HTMLDocumentNode*) DECLSPEC_HIDDEN;
-void add_nsevent_listener(HTMLDocumentNode*,nsIDOMNode*,LPCWSTR) DECLSPEC_HIDDEN;
-
 void set_window_bscallback(HTMLWindow*,nsChannelBSC*) DECLSPEC_HIDDEN;
 void set_current_mon(HTMLWindow*,IMoniker*) DECLSPEC_HIDDEN;
 HRESULT start_binding(HTMLWindow*,HTMLDocumentNode*,BSCallback*,IBindCtx*) DECLSPEC_HIDDEN;
