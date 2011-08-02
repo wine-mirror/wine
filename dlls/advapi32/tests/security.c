@@ -115,6 +115,8 @@ static DWORD (WINAPI *pGetSecurityInfo)(HANDLE, SE_OBJECT_TYPE, SECURITY_INFORMA
                                         PSID*, PSID*, PACL*, PACL*, PSECURITY_DESCRIPTOR*);
 static NTSTATUS (WINAPI *pNtAccessCheck)(PSECURITY_DESCRIPTOR, HANDLE, ACCESS_MASK, PGENERIC_MAPPING,
                                          PPRIVILEGE_SET, PULONG, PULONG, NTSTATUS*);
+static BOOL (WINAPI *pCreateRestrictedToken)(HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD,
+                                             PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
 
 static HMODULE hmod;
 static int     myARGC;
@@ -157,6 +159,7 @@ static void init(void)
     pSetEntriesInAclA = (void *)GetProcAddress(hmod, "SetEntriesInAclA");
     pSetSecurityDescriptorControl = (void *)GetProcAddress(hmod, "SetSecurityDescriptorControl");
     pGetSecurityInfo = (void *)GetProcAddress(hmod, "GetSecurityInfo");
+    pCreateRestrictedToken = (void *)GetProcAddress(hmod, "CreateRestrictedToken");
 
     myARGC = winetest_get_mainargs( &myARGV );
 }
@@ -3868,6 +3871,97 @@ static void test_GetUserNameW(void)
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Last error was %u\n", GetLastError());
 }
 
+static void test_CreateRestrictedToken(void)
+{
+    HANDLE process_token, token, r_token;
+    PTOKEN_GROUPS token_groups, groups2;
+    SID_AND_ATTRIBUTES sattr;
+    BOOL is_member;
+    DWORD size;
+    BOOL ret;
+    DWORD i, j;
+
+    if (!pCreateRestrictedToken)
+    {
+        win_skip("CreateRestrictedToken is not available\n");
+        return;
+    }
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_DUPLICATE|TOKEN_QUERY, &process_token);
+    ok(ret, "got error %d\n", GetLastError());
+
+    ret = DuplicateTokenEx(process_token, TOKEN_DUPLICATE|TOKEN_ADJUST_GROUPS|TOKEN_QUERY,
+        NULL, SecurityImpersonation, TokenImpersonation, &token);
+    ok(ret, "got error %d\n", GetLastError());
+
+    /* groups */
+    ret = GetTokenInformation(token, TokenGroups, NULL, 0, &size);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+        "got %d with error %d\n", ret, GetLastError());
+    token_groups = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = GetTokenInformation(token, TokenGroups, token_groups, size, &size);
+    ok(ret, "got error %d\n", GetLastError());
+
+    for (i = 0; i < token_groups->GroupCount; i++)
+    {
+        if (token_groups->Groups[i].Attributes & SE_GROUP_ENABLED)
+            break;
+    }
+
+    if (i == token_groups->GroupCount)
+    {
+        HeapFree(GetProcessHeap(), 0, token_groups);
+        CloseHandle(token);
+        skip("User not a member of any group\n");
+        return;
+    }
+
+    is_member = FALSE;
+    ret = pCheckTokenMembership(token, token_groups->Groups[i].Sid, &is_member);
+    ok(ret, "got error %d\n", GetLastError());
+    ok(is_member, "not a member\n");
+
+    /* disable a SID in new token */
+    sattr.Sid = token_groups->Groups[i].Sid;
+    sattr.Attributes = 0;
+    ret = pCreateRestrictedToken(token, 0, 1, &sattr, 0, NULL, 0, NULL, &r_token);
+    todo_wine ok(ret, "got error %d\n", GetLastError());
+
+    if (ret)
+    {
+        /* check if a SID is enabled */
+        is_member = TRUE;
+        ret = pCheckTokenMembership(r_token, token_groups->Groups[i].Sid, &is_member);
+        ok(ret, "got error %d\n", GetLastError());
+        ok(!is_member, "not a member\n");
+
+        ret = GetTokenInformation(r_token, TokenGroups, NULL, 0, &size);
+        ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d with error %d\n",
+            ret, GetLastError());
+        groups2 = HeapAlloc(GetProcessHeap(), 0, size);
+        ret = GetTokenInformation(r_token, TokenGroups, groups2, size, &size);
+        ok(ret, "got error %d\n", GetLastError());
+
+        for (j = 0; j < groups2->GroupCount; j++)
+        {
+            if (EqualSid(groups2->Groups[j].Sid, token_groups->Groups[i].Sid))
+                break;
+        }
+
+        ok(groups2->Groups[j].Attributes & SE_GROUP_USE_FOR_DENY_ONLY,
+            "got wrong attributes\n");
+        ok((groups2->Groups[j].Attributes & SE_GROUP_ENABLED) == 0,
+            "got wrong attributes\n");
+
+        HeapFree(GetProcessHeap(), 0, groups2);
+    }
+
+    HeapFree(GetProcessHeap(), 0, token_groups);
+    CloseHandle(r_token);
+    CloseHandle(token);
+    CloseHandle(process_token);
+}
+
 START_TEST(security)
 {
     init();
@@ -3903,4 +3997,5 @@ START_TEST(security)
     test_EqualSid();
     test_GetUserNameA();
     test_GetUserNameW();
+    test_CreateRestrictedToken();
 }
