@@ -293,6 +293,33 @@ static void update_masks( dibdrv_physdev *pdev, INT rop )
         calc_and_xor_masks( rop, pdev->bkgnd_color, &pdev->bkgnd_and, &pdev->bkgnd_xor );
 }
 
+ /***********************************************************************
+ *           add_extra_clipping_region
+ *
+ * Temporarily add a region to the current clipping region.
+ * The returned region must be restored with restore_clipping_region.
+ */
+static HRGN add_extra_clipping_region( dibdrv_physdev *pdev, HRGN rgn )
+{
+    HRGN ret, clip;
+
+    if (!(clip = CreateRectRgn( 0, 0, 0, 0 ))) return 0;
+    CombineRgn( clip, pdev->clip, rgn, RGN_AND );
+    ret = pdev->clip;
+    pdev->clip = clip;
+    return ret;
+}
+
+/***********************************************************************
+ *           restore_clipping_region
+ */
+static void restore_clipping_region( dibdrv_physdev *pdev, HRGN rgn )
+{
+    if (!rgn) return;
+    DeleteObject( pdev->clip );
+    pdev->clip = rgn;
+}
+
 /***********************************************************************
  *           dibdrv_DeleteDC
  */
@@ -431,6 +458,164 @@ static DWORD dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
         }
     }
     return ERROR_SUCCESS;
+}
+
+static BOOL matching_color_info( const dib_info *dib, const BITMAPINFO *info )
+{
+    switch (info->bmiHeader.biBitCount)
+    {
+    case 1:
+    case 4:
+    case 8:
+    {
+        RGBQUAD *color_table = (RGBQUAD *)((char *)info + info->bmiHeader.biSize);
+        if (dib->color_table_size != info->bmiHeader.biClrUsed ) return FALSE;
+        return memcmp( color_table, dib->color_table, dib->color_table_size * sizeof(RGBQUAD) );
+    }
+
+    case 16:
+    {
+        DWORD *masks = (DWORD *)info->bmiColors;
+        if (info->bmiHeader.biCompression == BI_RGB) return dib->funcs == &funcs_555;
+        if (info->bmiHeader.biCompression == BI_BITFIELDS)
+            return masks[0] == dib->red_mask && masks[1] == dib->green_mask && masks[2] == dib->blue_mask;
+        break;
+    }
+
+    case 24:
+        return TRUE;
+
+    case 32:
+    {
+        DWORD *masks = (DWORD *)info->bmiColors;
+        if (info->bmiHeader.biCompression == BI_RGB) return dib->funcs == &funcs_8888;
+        if (info->bmiHeader.biCompression == BI_BITFIELDS)
+            return masks[0] == dib->red_mask && masks[1] == dib->green_mask && masks[2] == dib->blue_mask;
+        break;
+    }
+
+    }
+
+    return FALSE;
+}
+
+static inline BOOL rop_uses_pat(DWORD rop)
+{
+    return ((rop >> 4) & 0x0f0000) != (rop & 0x0f0000);
+}
+
+/***********************************************************************
+ *           dibdrv_PutImage
+ */
+static DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info,
+                              const struct gdi_image_bits *bits, struct bitblt_coords *src,
+                              struct bitblt_coords *dst, DWORD rop )
+{
+    dib_info *dib, stand_alone;
+    DWORD ret;
+    RECT rect;
+    POINT origin;
+    dib_info src_dib;
+    HRGN total_clip, saved_clip = NULL;
+    dibdrv_physdev *pdev = NULL;
+    const WINEREGION *clip_data;
+    int i, rop2;
+
+    TRACE( "%p %p %p\n", dev, hbitmap, info );
+
+    if (!hbitmap && rop_uses_pat( rop ))
+    {
+        PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPutImage );
+        FIXME( "rop %08x unsupported, forwarding to graphics driver\n", rop );
+        return next->funcs->pPutImage( next, 0, clip, info, bits, src, dst, rop );
+    }
+
+    if (hbitmap)
+    {
+        BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
+
+        if (!bmp) return ERROR_INVALID_HANDLE;
+        assert(bmp->dib);
+
+        if (!init_dib_info( &stand_alone, &bmp->dib->dsBmih, bmp->dib->dsBitfields,
+                            bmp->color_table, bmp->nb_colors, bmp->dib->dsBm.bmBits, 0 ))
+        {
+            ret = ERROR_BAD_FORMAT;
+            goto done;
+        }
+        dib = &stand_alone;
+    }
+    else
+        dib = &pdev->dib;
+
+    if (info->bmiHeader.biPlanes != 1) goto update_format;
+    if (info->bmiHeader.biBitCount != dib->bit_count) goto update_format;
+    if (!matching_color_info( dib, info )) goto update_format;
+    if (!bits)
+    {
+        ret = ERROR_SUCCESS;
+        goto done;
+    }
+    if ((src->width != dst->width) || (src->height != dst->height))
+    {
+        ret = ERROR_TRANSFORM_NOT_SUPPORTED;
+        goto done;
+    }
+
+    init_dib_info_from_bitmapinfo( &src_dib, info, bits->ptr, 0 );
+
+    rect.left   = dst->x;
+    rect.top    = dst->y;
+    rect.right  = dst->x + dst->width;
+    rect.bottom = dst->y + dst->height;
+    origin.x = src->x;
+    origin.y = src->y;
+
+    if (hbitmap)
+    {
+        total_clip = clip;
+        rop2 = R2_COPYPEN;
+    }
+    else
+    {
+        if (clip) saved_clip = add_extra_clipping_region( pdev, clip );
+        total_clip = pdev->clip;
+        rop2 =  ((rop >> 16) & 0xf) + 1;
+    }
+
+    if (total_clip == NULL) dib->funcs->copy_rect( dib, &rect, &src_dib, &origin, rop2 );
+    else
+    {
+        clip_data = get_wine_region( total_clip );
+        for (i = 0; i < clip_data->numRects; i++)
+        {
+            RECT clipped_rect;
+
+            if (intersect_rect( &clipped_rect, &rect, clip_data->rects + i ))
+            {
+                origin.x = src->x + clipped_rect.left - dst->x;
+                origin.y = src->y + clipped_rect.top  - dst->y;
+                dib->funcs->copy_rect( dib, &clipped_rect, &src_dib, &origin, rop2 );
+            }
+        }
+        release_wine_region( total_clip );
+    }
+    ret = ERROR_SUCCESS;
+
+    if (saved_clip) restore_clipping_region( pdev, saved_clip );
+
+    goto done;
+
+update_format:
+    info->bmiHeader.biPlanes   = 1;
+    info->bmiHeader.biBitCount = dib->bit_count;
+    set_color_info( dib, info );
+    ret = ERROR_BAD_FORMAT;
+
+done:
+    if (hbitmap) GDI_ReleaseObj( hbitmap );
+
+    return ret;
 }
 
 /***********************************************************************
@@ -619,7 +804,7 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pPolygon */
     NULL,                               /* pPolyline */
     NULL,                               /* pPolylineTo */
-    NULL,                               /* pPutImage */
+    dibdrv_PutImage,                    /* pPutImage */
     NULL,                               /* pRealizeDefaultPalette */
     NULL,                               /* pRealizePalette */
     dibdrv_Rectangle,                   /* pRectangle */
