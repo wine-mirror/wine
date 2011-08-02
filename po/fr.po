@@ -8753,29 +8753,24 @@ msgid "OK"
 msgstr ""
 
 #: net.rc:46
-#, fuzzy
 msgid "Paused"
-msgstr "En pau&se"
+msgstr "En pause"
 
 #: net.rc:47
-#, fuzzy
 msgid "Disconnected"
-msgstr "Canal de communication connecté\n"
+msgstr "Déconnecté\n"
 
 #: net.rc:48
-#, fuzzy
 msgid "A network error occurred"
-msgstr "Une erreur d'impression s'est produite."
+msgstr "Une erreur réseau s'est produite."
 
 #: net.rc:49
-#, fuzzy
 msgid "Connection is being made"
-msgstr "Connexion active\n"
+msgstr "Connexion en cours\n"
 
 #: net.rc:50
-#, fuzzy
 msgid "Reconnecting"
-msgstr "Connexion à %s"
+msgstr "Reconnexion"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
