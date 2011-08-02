@@ -64,32 +64,11 @@ typedef struct IDirectMusicLoaderGenericStream  IDirectMusicLoaderGenericStream;
 /*****************************************************************************
  * Creation helpers
  */
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderCF (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicContainerCF (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicContainerImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderFileStream (LPVOID *ppobj) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderResourceStream (LPVOID *ppobj) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderGenericStream (LPVOID *ppobj) DECLSPEC_HIDDEN;
-
-/*****************************************************************************
- * IDirectMusicLoaderCF implementation structure
- */
-struct IDirectMusicLoaderCF {
-	/* IUnknown fields */
-	const IClassFactoryVtbl *lpVtbl;
-	LONG dwRef;
-};
-
-/*****************************************************************************
- * IDirectMusicContainerCF implementation structure
- */
-struct IDirectMusicContainerCF {
-	/* IUnknown fields */
-	const IClassFactoryVtbl *lpVtbl;
-	LONG dwRef;
-};
 
 /* cache/alias entry */
 typedef struct _WINE_LOADER_ENTRY {

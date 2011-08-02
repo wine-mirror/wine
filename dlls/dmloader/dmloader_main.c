@@ -26,6 +26,87 @@ static HINSTANCE instance;
 LONG dwDirectMusicContainer = 0;
 LONG dwDirectMusicLoader = 0;
 
+typedef struct {
+    IClassFactory IClassFactory_iface;
+    HRESULT WINAPI (*fnCreateInstance)(REFIID riid, void **ppv, IUnknown *pUnkOuter);
+} IClassFactoryImpl;
+
+/******************************************************************
+ *      IClassFactory implementation
+ */
+static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
+}
+
+static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    if (ppv == NULL)
+        return E_POINTER;
+
+    if (IsEqualGUID(&IID_IUnknown, riid))
+        TRACE("(%p)->(IID_IUnknown %p)\n", iface, ppv);
+    else if (IsEqualGUID(&IID_IClassFactory, riid))
+        TRACE("(%p)->(IID_IClassFactory %p)\n", iface, ppv);
+    else {
+        FIXME("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+}
+
+    *ppv = iface;
+    IClassFactory_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
+{
+    InterlockedIncrement(&dwDirectMusicLoader);
+
+    return 2; /* non-heap based object */
+}
+
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
+{
+    InterlockedDecrement(&dwDirectMusicLoader);
+
+    return 1; /* non-heap based object */
+}
+
+static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter,
+    REFIID riid, void **ppv)
+{
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
+
+    TRACE ("(%p, %s, %p)\n", pUnkOuter, debugstr_dmguid(riid), ppv);
+
+    return This->fnCreateInstance(riid, ppv, pUnkOuter);
+}
+
+static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
+{
+    TRACE("(%d)\n", dolock);
+
+    if (dolock)
+        InterlockedIncrement(&dwDirectMusicLoader);
+    else
+        InterlockedDecrement(&dwDirectMusicLoader);
+
+    return S_OK;
+}
+
+static const IClassFactoryVtbl classfactory_vtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    ClassFactory_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactoryImpl dm_loader_CF = {{&classfactory_vtbl}, DMUSIC_CreateDirectMusicLoaderImpl};
+static IClassFactoryImpl dm_container_CF = {{&classfactory_vtbl},
+                                            DMUSIC_CreateDirectMusicContainerImpl};
+
 /******************************************************************
  *		DllMain
  */
@@ -62,11 +143,15 @@ HRESULT WINAPI DllGetClassObject (REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     TRACE("(%s, %s, %p)\n", debugstr_dmguid(rclsid), debugstr_dmguid(riid), ppv);
     if (IsEqualCLSID (rclsid, &CLSID_DirectMusicLoader) && IsEqualIID (riid, &IID_IClassFactory)) {
-		return DMUSIC_CreateDirectMusicLoaderCF (riid, ppv, NULL);
-	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicContainer) && IsEqualIID (riid, &IID_IClassFactory)) {
-		return DMUSIC_CreateDirectMusicContainerCF (riid, ppv, NULL);		
-	}
-	
+        IClassFactory_AddRef(&dm_loader_CF.IClassFactory_iface);
+        *ppv = &dm_loader_CF.IClassFactory_iface;
+        return S_OK;
+    } else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicContainer) && IsEqualIID (riid, &IID_IClassFactory)) {
+        IClassFactory_AddRef(&dm_container_CF.IClassFactory_iface);
+        *ppv = &dm_container_CF.IClassFactory_iface;
+        return S_OK;
+    }
+
     WARN(": no class found\n");
     return CLASS_E_CLASSNOTAVAILABLE;
 }

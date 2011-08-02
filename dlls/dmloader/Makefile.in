@@ -2,7 +2,6 @@ MODULE    = dmloader.dll
 IMPORTS   = dxguid uuid ole32 advapi32
 
 C_SRCS = \
-	classfactory.c \
 	container.c \
 	debug.c \
 	dmloader_main.c \
