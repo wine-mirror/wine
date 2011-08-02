@@ -306,6 +306,46 @@ static BOOL dibdrv_DeleteDC( PHYSDEV dev )
     return 0;
 }
 
+static void set_color_info( const dib_info *dib, BITMAPINFO *info )
+{
+    info->bmiHeader.biCompression = BI_RGB;
+    info->bmiHeader.biClrUsed     = 0;
+
+    switch (info->bmiHeader.biBitCount)
+    {
+    case 1:
+    case 4:
+    case 8:
+        if (dib->color_table)
+        {
+            info->bmiHeader.biClrUsed = min( dib->color_table_size, 1 << dib->bit_count );
+            memcpy( info->bmiColors, dib->color_table,
+                    info->bmiHeader.biClrUsed * sizeof(RGBQUAD) );
+        }
+        break;
+    case 16:
+        if (dib->funcs != &funcs_555)
+        {
+            DWORD *masks = (DWORD *)info->bmiColors;
+            masks[0] = dib->red_mask;
+            masks[1] = dib->green_mask;
+            masks[2] = dib->blue_mask;
+            info->bmiHeader.biCompression = BI_BITFIELDS;
+        }
+        break;
+    case 32:
+        if (dib->funcs != &funcs_8888)
+        {
+            DWORD *masks = (DWORD *)info->bmiColors;
+            masks[0] = dib->red_mask;
+            masks[1] = dib->green_mask;
+            masks[2] = dib->blue_mask;
+            info->bmiHeader.biCompression = BI_BITFIELDS;
+        }
+        break;
+    }
+}
+
 /***********************************************************************
  *           dibdrv_GetImage
  */
@@ -379,39 +419,8 @@ static DWORD dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
         info->bmiHeader.biBitCount  = pdev->dib.bit_count;
         info->bmiHeader.biSizeImage = pdev->dib.height * abs(pdev->dib.stride);
 
-        switch (info->bmiHeader.biBitCount)
-        {
-        case 1:
-        case 4:
-        case 8:
-            if (pdev->dib.color_table)
-            {
-                info->bmiHeader.biClrUsed = min( pdev->dib.color_table_size, 1 << pdev->dib.bit_count );
-                memcpy( info->bmiColors, pdev->dib.color_table,
-                        info->bmiHeader.biClrUsed * sizeof(RGBQUAD) );
-            }
-            break;
-        case 16:
-            if (pdev->dib.funcs != &funcs_555)
-            {
-                DWORD *masks = (DWORD *)info->bmiColors;
-                masks[0] = pdev->dib.red_mask;
-                masks[1] = pdev->dib.green_mask;
-                masks[2] = pdev->dib.blue_mask;
-                info->bmiHeader.biCompression = BI_BITFIELDS;
-            }
-            break;
-        case 32:
-            if (pdev->dib.funcs != &funcs_8888)
-            {
-                DWORD *masks = (DWORD *)info->bmiColors;
-                masks[0] = pdev->dib.red_mask;
-                masks[1] = pdev->dib.green_mask;
-                masks[2] = pdev->dib.blue_mask;
-                info->bmiHeader.biCompression = BI_BITFIELDS;
-            }
-            break;
-        }
+        set_color_info( &pdev->dib, info );
+
         if (bits)
         {
             bits->ptr = pdev->dib.bits;
