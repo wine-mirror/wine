@@ -86,6 +86,7 @@ extern void write_proxies(const statement_list_t *stmts);
 extern void write_client(const statement_list_t *stmts);
 extern void write_server(const statement_list_t *stmts);
 extern void write_regscript(const statement_list_t *stmts);
+extern void output_typelib_regscript( const typelib_t *typelib );
 extern void write_local_stubs(const statement_list_t *stmts);
 extern void write_dlldata(const statement_list_t *stmts);
 

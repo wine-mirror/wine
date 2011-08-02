@@ -231,9 +231,6 @@ HKCR,https\shell\open\ddeexec,"NoActivateHandler",2,""
 HKCR,https\shell\open\ddeexec\Application,,2,"IExplore"
 HKCR,https\shell\open\ddeexec\Topic,,2,"WWW_OpenURL"
 HKCR,mailto\shell\open\command,,2,"%11%\winebrowser %1"
-; FIXME: the following should be done by the dll registration
-HKCR,TypeLib\{00020430-0000-0000-C000-000000000046}\1.0\0\win16,,,"stdole.tlb"
-HKCR,TypeLib\{00020430-0000-0000-C000-000000000046}\1.0\FLAGS,,,"1"
 
 HKCR,MIME\Database\Charset\_iso-2022-jp$ESC,"Codepage",0x10003,932
 HKCR,MIME\Database\Charset\_iso-2022-jp$ESC,"InternetEncoding",0x10003,50221
@@ -2496,19 +2493,9 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,cryptdlg.dll,1
 11,,cryptnet.dll,1
 11,,devenum.dll,1
-11,,gameux.dll,1
-11,,hhctrl.ocx,1
-11,,ieframe.dll,1
-11,,jscript.dll,1
 11,,mshtml.dll,1
-11,,msi.dll,1
 11,,msiexec.exe,1
 11,,msisip.dll,1
-11,,msxml.dll,1
-11,,msxml2.dll,1
-11,,msxml3.dll,1
-11,,msxml4.dll,1
-11,,msxml6.dll,1
 11,,qcap.dll,1
 11,,qmgr.dll,1
 11,,quartz.dll,1
@@ -2517,9 +2504,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,windowscodecs.dll,1
 11,,winegstreamer.dll,1
 11,,wineqtdecoder.dll,1
-11,,winhttp.dll,1
 11,,wintrust.dll,1
-11,,wuapi.dll,1
 11,,iexplore.exe,1
 
 ; 32bit-only fake dlls
