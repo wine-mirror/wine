@@ -141,6 +141,7 @@ typedef struct {
 #define EVENT_FORWARDBODY        0x0004
 #define EVENT_NODEHANDLER        0x0008
 #define EVENT_CANCELABLE         0x0010
+#define EVENT_SETONINIT          0x0020
 
 static const event_info_t event_info[] = {
     {beforeunloadW,      onbeforeunloadW,      EVENTT_NONE,   DISPID_EVMETH_ONBEFOREUNLOAD,
@@ -150,7 +151,7 @@ static const event_info_t event_info[] = {
     {changeW,            onchangeW,            EVENTT_HTML,   DISPID_EVMETH_ONCHANGE,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {clickW,             onclickW,             EVENTT_MOUSE,  DISPID_EVMETH_ONCLICK,
-        EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE},
+        EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE|EVENT_SETONINIT},
     {contextmenuW,       oncontextmenuW,       EVENTT_MOUSE,  DISPID_EVMETH_ONCONTEXTMENU,
         EVENT_BUBBLE|EVENT_CANCELABLE},
     {dblclickW,          ondblclickW,          EVENTT_MOUSE,  DISPID_EVMETH_ONDBLCLICK,
@@ -1371,11 +1372,23 @@ void check_event_attr(HTMLDocumentNode *doc, nsIDOMElement *nselem)
 
 HRESULT doc_init_events(HTMLDocumentNode *doc)
 {
+    unsigned i;
+    HRESULT hres;
+
     doc->event_vector = heap_alloc_zero(EVENTID_LAST*sizeof(BOOL));
     if(!doc->event_vector)
         return E_OUTOFMEMORY;
 
     init_nsevents(doc);
+
+    for(i=0; i < EVENTID_LAST; i++) {
+        if(event_info[i].flags & EVENT_SETONINIT) {
+            hres = ensure_nsevent_handler(doc, NULL, NULL, i);
+            if(FAILED(hres))
+                return hres;
+        }
+    }
+
     return S_OK;
 }
 
