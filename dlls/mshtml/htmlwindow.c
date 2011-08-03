@@ -1741,9 +1741,15 @@ static void navigate_proc(task_t *_task)
     if(SUCCEEDED(hres))
         hres = start_binding(task->window, NULL, (BSCallback*)task->bscallback, NULL);
 
+}
+
+static void navigate_task_destr(task_t *_task)
+{
+    navigate_task_t *task = (navigate_task_t*)_task;
+
     IUnknown_Release((IUnknown*)task->bscallback);
-    IHTMLWindow2_Release(&task->window->IHTMLWindow2_iface);
     IMoniker_Release(task->mon);
+    heap_free(task);
 }
 
 static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface, BSTR url, BSTR arg2, BSTR arg3,
@@ -1843,11 +1849,10 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
             return E_OUTOFMEMORY;
         }
 
-        IHTMLWindow2_AddRef(&This->IHTMLWindow2_iface);
         task->window = This;
         task->bscallback = bsc;
         task->mon = mon;
-        push_task(&task->header, navigate_proc, NULL, This->task_magic);
+        push_task(&task->header, navigate_proc, navigate_task_destr, This->task_magic);
 
         /* Silently and repeated when real loading starts? */
         This->readystate = READYSTATE_LOADING;
