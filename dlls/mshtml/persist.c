@@ -166,7 +166,6 @@ static void set_downloading_proc(task_t *_task)
     TRACE("(%p)\n", doc);
 
     set_statustext(doc, IDS_STATUS_DOWNLOADINGFROM, task->url);
-    CoTaskMemFree(task->url);
 
     if(task->set_download)
         set_download_state(doc, 1);
@@ -186,6 +185,14 @@ static void set_downloading_proc(task_t *_task)
             IDropTarget_Release(drop_target);
         }
     }
+}
+
+static void set_downloading_task_destr(task_t *_task)
+{
+    download_proc_task_t *task = (download_proc_task_t*)_task;
+
+    CoTaskMemFree(task->url);
+    heap_free(task);
 }
 
 void prepare_for_binding(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BOOL navigated_binding)
@@ -303,7 +310,7 @@ HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, nsChannel
     download_task->doc = This->doc_obj;
     download_task->set_download = set_download;
     download_task->url = url;
-    push_task(&download_task->header, set_downloading_proc, NULL, This->doc_obj->basedoc.task_magic);
+    push_task(&download_task->header, set_downloading_proc, set_downloading_task_destr, This->doc_obj->basedoc.task_magic);
 
     return S_OK;
 }
