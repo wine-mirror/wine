@@ -513,7 +513,6 @@ static DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINF
 {
     dib_info *dib, stand_alone;
     DWORD ret;
-    RECT rect;
     POINT origin;
     dib_info src_dib;
     HRGN total_clip, saved_clip = NULL;
@@ -564,12 +563,8 @@ static DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINF
 
     init_dib_info_from_bitmapinfo( &src_dib, info, bits->ptr, 0 );
 
-    rect.left   = dst->x;
-    rect.top    = dst->y;
-    rect.right  = dst->x + dst->width;
-    rect.bottom = dst->y + dst->height;
-    origin.x = src->x;
-    origin.y = src->y;
+    origin.x = src->visrect.left;
+    origin.y = src->visrect.top;
 
     if (hbitmap)
     {
@@ -583,7 +578,7 @@ static DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINF
         rop2 =  ((rop >> 16) & 0xf) + 1;
     }
 
-    if (total_clip == NULL) dib->funcs->copy_rect( dib, &rect, &src_dib, &origin, rop2 );
+    if (total_clip == NULL) dib->funcs->copy_rect( dib, &dst->visrect, &src_dib, &origin, rop2 );
     else
     {
         clip_data = get_wine_region( total_clip );
@@ -591,10 +586,10 @@ static DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINF
         {
             RECT clipped_rect;
 
-            if (intersect_rect( &clipped_rect, &rect, clip_data->rects + i ))
+            if (intersect_rect( &clipped_rect, &dst->visrect, clip_data->rects + i ))
             {
-                origin.x = src->x + clipped_rect.left - dst->x;
-                origin.y = src->y + clipped_rect.top  - dst->y;
+                origin.x = src->visrect.left + clipped_rect.left - dst->visrect.left;
+                origin.y = src->visrect.top + clipped_rect.top  - dst->visrect.top;
                 dib->funcs->copy_rect( dib, &clipped_rect, &src_dib, &origin, rop2 );
             }
         }
