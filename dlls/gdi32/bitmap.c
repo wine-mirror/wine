@@ -518,8 +518,13 @@ LONG WINAPI SetBitmapBits(
     LONG count,        /* [in] Number of bytes in bitmap array */
     LPCVOID bits)      /* [in] Address of array with bitmap bits */
 {
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
     BITMAPOBJ *bmp;
-    LONG height, ret;
+    DWORD err;
+    int i, src_stride, dst_stride;
+    struct bitblt_coords src, dst;
+    struct gdi_image_bits src_bits;
 
     if (!bits) return 0;
 
@@ -531,43 +536,71 @@ LONG WINAPI SetBitmapBits(
 	count = -count;
     }
 
-    if (bmp->dib)  /* simply copy the bits into the DIB */
+    if (bmp->dib) src_stride = get_bitmap_stride( bmp->dib->dsBmih.biWidth, bmp->dib->dsBmih.biBitCount );
+    else src_stride = get_bitmap_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
+
+    dst_stride = get_dib_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
+
+    src.visrect.left   = src.x = 0;
+    src.visrect.top    = src.y = 0;
+    src.visrect.right  = src.width = bmp->bitmap.bmWidth;
+    src.visrect.bottom = src.height = min( count / src_stride, bmp->bitmap.bmHeight );
+    dst = src;
+
+    /* Only set entire lines */
+    count = src.height * src_stride;
+
+    TRACE("(%p, %d, %p) %dx%d %d bpp fetched height: %d\n",
+          hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
+          bmp->bitmap.bmBitsPixel, src.height );
+
+    if (src_stride == dst_stride)
     {
-        DIBSECTION *dib = bmp->dib;
-        char *dest = dib->dsBm.bmBits;
-        LONG max = dib->dsBm.bmWidthBytes * dib->dsBm.bmHeight;
-        if (count > max) count = max;
-        ret = count;
-
-        if (bmp->dib->dsBmih.biHeight >= 0)  /* not top-down, need to flip contents vertically */
+        src_bits.ptr = (void *)bits;
+        src_bits.is_copy = FALSE;
+        src_bits.free = NULL;
+    }
+    else
+    {
+        if (!(src_bits.ptr = HeapAlloc( GetProcessHeap(), 0, dst.height * dst_stride )))
         {
-            dest += dib->dsBm.bmWidthBytes * dib->dsBm.bmHeight;
-            while (count > 0)
-            {
-                dest -= dib->dsBm.bmWidthBytes;
-                memcpy( dest, bits, min( count, dib->dsBm.bmWidthBytes ) );
-                bits = (const char *)bits + dib->dsBm.bmWidthBytes;
-                count -= dib->dsBm.bmWidthBytes;
-            }
+            GDI_ReleaseObj( hbitmap );
+            return 0;
         }
-        else memcpy( dest, bits, count );
-
-        GDI_ReleaseObj( hbitmap );
-        return ret;
+        src_bits.is_copy = TRUE;
+        src_bits.free = free_heap_bits;
+        for (i = 0; i < dst.height; i++)
+            memcpy( (char *)src_bits.ptr + i * dst_stride, (char *)bits + i * src_stride, src_stride );
     }
 
-    /* Only get entire lines */
-    height = count / bmp->bitmap.bmWidthBytes;
-    if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
-    count = height * bmp->bitmap.bmWidthBytes;
+    /* query the color info */
+    info->bmiHeader.biSize          = sizeof(info->bmiHeader);
+    info->bmiHeader.biPlanes        = 1;
+    info->bmiHeader.biBitCount      = bmp->bitmap.bmBitsPixel;
+    info->bmiHeader.biCompression   = BI_RGB;
+    info->bmiHeader.biXPelsPerMeter = 0;
+    info->bmiHeader.biYPelsPerMeter = 0;
+    info->bmiHeader.biClrUsed       = 0;
+    info->bmiHeader.biClrImportant  = 0;
+    info->bmiHeader.biWidth         = 0;
+    info->bmiHeader.biHeight        = 0;
+    info->bmiHeader.biSizeImage     = 0;
+    err = bmp->funcs->pPutImage( NULL, hbitmap, 0, info, NULL, NULL, NULL, SRCCOPY );
 
-    TRACE("(%p, %d, %p) %dx%d %d colors fetched height: %d\n",
-          hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
-          1 << bmp->bitmap.bmBitsPixel, height );
+    if (!err || err == ERROR_BAD_FORMAT)
+    {
+        info->bmiHeader.biPlanes        = 1;
+        info->bmiHeader.biBitCount      = bmp->bitmap.bmBitsPixel;
+        info->bmiHeader.biWidth         = bmp->bitmap.bmWidth;
+        info->bmiHeader.biHeight        = -dst.height;
+        info->bmiHeader.biSizeImage     = dst.height * dst_stride;
+        err = bmp->funcs->pPutImage( NULL, hbitmap, 0, info, &src_bits, &src, &dst, SRCCOPY );
+    }
+    if (err) count = 0;
 
-    ret = bmp->funcs->pSetBitmapBits( hbitmap, bits, count );
+    if (src_bits.free) src_bits.free( &src_bits );
     GDI_ReleaseObj( hbitmap );
-    return ret;
+    return count;
 }
 
 /**********************************************************************
