@@ -724,7 +724,7 @@ static unsigned int token_adjust_privileges( struct token *token, const LUID_AND
             continue;
         }
 
-        if (privs[i].Attributes & SE_PRIVILEGE_REMOVE)
+        if (privs[i].Attributes & SE_PRIVILEGE_REMOVED)
             privilege_remove( privilege );
         else
         {
