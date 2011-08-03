@@ -769,7 +769,7 @@ static void register_protocols(void)
 
     hres = CoGetClassObject(&CLSID_AboutProtocol, CLSCTX_INPROC_SERVER, NULL,
             &IID_IClassFactory, (void**)&factory);
-    ok(hres == S_OK, "Coud not get AboutProtocol factory: %08x\n", hres);
+    ok(hres == S_OK, "Could not get AboutProtocol factory: %08x\n", hres);
     if(FAILED(hres))
         return;
 

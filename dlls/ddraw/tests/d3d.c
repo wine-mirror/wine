@@ -687,7 +687,7 @@ static void SceneTest(void)
 {
     HRESULT                      hr;
 
-    /* Test an EndScene without beginscene. Should return an error */
+    /* Test an EndScene without BeginScene. Should return an error */
     hr = IDirect3DDevice7_EndScene(lpD3DDevice);
     ok(hr == D3DERR_SCENE_NOT_IN_SCENE, "IDirect3DDevice7_EndScene returned %08x\n", hr);
 

@@ -2519,16 +2519,16 @@ static void test_formatrecord_tables(void)
     ok( r == ERROR_SUCCESS, "cannot create CustomAction table: %d\n", r);
 
     r = add_custom_action_entry( hdb, "'MyCustom', 51, 'prop', '[!temporal_file]'" );
-    ok( r == ERROR_SUCCESS, "cannt add custom action: %d\n", r);
+    ok( r == ERROR_SUCCESS, "cannot add custom action: %d\n", r);
 
     r = add_custom_action_entry( hdb, "'EscapeIt1', 51, 'prop', '[\\[]Bracket Text[\\]]'" );
-    ok( r == ERROR_SUCCESS, "cannt add custom action: %d\n", r);
+    ok( r == ERROR_SUCCESS, "cannot add custom action: %d\n", r);
 
     r = add_custom_action_entry( hdb, "'EscapeIt2', 51, 'prop', '[\\xabcd]'" );
-    ok( r == ERROR_SUCCESS, "cannt add custom action: %d\n", r);
+    ok( r == ERROR_SUCCESS, "cannot add custom action: %d\n", r);
 
     r = add_custom_action_entry( hdb, "'EscapeIt3', 51, 'prop', '[abcd\\xefgh]'" );
-    ok( r == ERROR_SUCCESS, "cannt add custom action: %d\n", r);
+    ok( r == ERROR_SUCCESS, "cannot add custom action: %d\n", r);
 
     r = package_from_db( hdb, &hpkg );
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)

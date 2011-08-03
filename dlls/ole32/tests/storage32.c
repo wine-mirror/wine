@@ -875,7 +875,7 @@ static void test_storage_refcount(void)
         STATSTG statstg;
 
         r = IStorage_Stat( stg, &statstg, STATFLAG_NONAME );
-        ok(r == S_OK, "Stat should have succeded instead of returning 0x%08x\n", r);
+        ok(r == S_OK, "Stat should have succeeded instead of returning 0x%08x\n", r);
         ok(statstg.type == STGTY_STORAGE, "Statstg type should have been STGTY_STORAGE instead of %d\n", statstg.type);
         ok(U(statstg.cbSize).LowPart == 0, "Statstg cbSize.LowPart should have been 0 instead of %d\n", U(statstg.cbSize).LowPart);
         ok(U(statstg.cbSize).HighPart == 0, "Statstg cbSize.HighPart should have been 0 instead of %d\n", U(statstg.cbSize).HighPart);
@@ -890,7 +890,7 @@ static void test_storage_refcount(void)
         ok(r == S_OK, "CreateStorage should have succeeded instead of returning 0x%08x\n", r);
 
         r = IStorage_Stat( stg2, &statstg, STATFLAG_DEFAULT );
-        ok(r == S_OK, "Stat should have succeded instead of returning 0x%08x\n", r);
+        ok(r == S_OK, "Stat should have succeeded instead of returning 0x%08x\n", r);
         ok(!memcmp(statstg.pwcsName, stgname, sizeof(stgname)),
             "Statstg pwcsName should have been the name the storage was created with\n");
         ok(statstg.type == STGTY_STORAGE, "Statstg type should have been STGTY_STORAGE instead of %d\n", statstg.type);
@@ -1555,7 +1555,7 @@ static void test_parent_free(void)
         if (r == S_OK)
         {
             r = IStream_Write(stm, "this should fail\n", 17, NULL);
-            ok(r==STG_E_REVERTED, "IStream->Write sould fail, hr=%x\n", r);
+            ok(r==STG_E_REVERTED, "IStream->Write should fail, hr=%x\n", r);
 
             IStream_Release(stm);
 

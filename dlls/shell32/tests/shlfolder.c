@@ -1778,7 +1778,7 @@ static void test_ITEMIDLIST_format(void) {
             /* WinXP stores a derived 8.3 dos name (LONGER~1.8_3) here. We probably
              * can't implement this correctly, since unix filesystems don't support
              * this nasty short/long filename stuff. So we'll probably stay with our
-             * current habbit of storing the long filename here, which seems to work
+             * current habit of storing the long filename here, which seems to work
              * just fine. */
             todo_wine
             ok(pidlFile->mkid.abID[18] == '~' ||

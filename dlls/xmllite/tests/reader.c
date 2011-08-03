@@ -576,7 +576,7 @@ todo_wine {
     ok(type == XmlNodeType_XmlDeclaration,
                      "Expected XmlNodeType_XmlDeclaration, got %s\n", type_to_str(type));
 }
-    /* new version 1.2.x and 1.3.x properly update postition for <?xml ?> */
+    /* new version 1.2.x and 1.3.x properly update position for <?xml ?> */
     ok_pos(reader, 1, 3, -1, 55, TRUE);
 
     /* check attributes */

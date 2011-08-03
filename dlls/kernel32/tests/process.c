@@ -832,7 +832,7 @@ static void test_CommandLine(void)
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_SHOWNORMAL;
 
-    /* from Frangois */
+    /* from François */
     get_file_name(resfile);
     sprintf(buffer, "\"%s\" tests/process.c \"%s\" \"a\\\"b\\\\\" c\\\" d", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
@@ -1677,7 +1677,7 @@ static void test_ProcessNameA(void)
 
     /* this is a difference between the ascii and the unicode version
      * the unicode version crashes when the size is big enough to hold the result
-     * ascii version throughs an error
+     * ascii version through an error
      */
     size = 1024;
     expect_eq_d(FALSE, pQueryFullProcessImageNameA(GetCurrentProcess(), 0, NULL, &size));

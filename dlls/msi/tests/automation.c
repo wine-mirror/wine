@@ -2420,7 +2420,7 @@ static void test_Installer_InstallProduct(void)
 
     /* Avoid an interactive dialog in case of insufficient privileges. */
     hr = Installer_UILevelPut(INSTALLUILEVEL_NONE);
-    ok(hr == S_OK, "Expected UILevel propery put invoke to return S_OK, got 0x%08x\n", hr);
+    ok(hr == S_OK, "Expected UILevel property put invoke to return S_OK, got 0x%08x\n", hr);
 
     /* Installer::InstallProduct */
     hr = Installer_InstallProduct(szMsifile, NULL);

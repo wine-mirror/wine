@@ -6064,7 +6064,7 @@ static void test_ChangeType_keep_dst(void)
      V_INT(&v2) = 4;
      hres = VariantChangeTypeEx(&v2, &v1, 0, 0, VT_INT);
      ok(hres == DISP_E_TYPEMISMATCH, "VariantChangeTypeEx returns %08x\n", hres);
-     ok(V_VT(&v2) == VT_INT && V_INT(&v2) == 4, "VariantChangeTypeEx changed dst variant\n");     
+     ok(V_VT(&v2) == VT_INT && V_INT(&v2) == 4, "VariantChangeTypeEx changed dst variant\n");
      SysFreeString(bstr);
 }
 
@@ -6072,7 +6072,7 @@ START_TEST(vartype)
 {
   hOleaut32 = GetModuleHandleA("oleaut32.dll");
 
-  trace("LCID's: System=0x%08x, User=0x%08x\n", GetSystemDefaultLCID(),
+  trace("LCIDs: System=0x%08x, User=0x%08x\n", GetSystemDefaultLCID(),
         GetUserDefaultLCID());
 
   test_VarI1FromI2();

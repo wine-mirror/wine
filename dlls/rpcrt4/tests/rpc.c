@@ -846,7 +846,7 @@ static void test_RpcBindingFree(void)
 
     status = RpcBindingFree(&binding);
     ok(status == RPC_S_INVALID_BINDING,
-       "RpcBindingFree should have retured RPC_S_INVALID_BINDING instead of %d\n",
+       "RpcBindingFree should have returned RPC_S_INVALID_BINDING instead of %d\n",
        status);
 }
 

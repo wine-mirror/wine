@@ -749,7 +749,7 @@ static const ustr2astr_t ustr2astr[] = {
     {  8,  7, 12, "------------", 12, 12, 12, "abcdef", FALSE, 6, 7, 7, "abcdef", STATUS_SUCCESS},
     {  8,  7, 12, "------------",  0, 12, 12,  NULL,    FALSE, 0, 7, 0, "",       STATUS_SUCCESS},
 #if 0
-    /* crashes on japanese and chinese XP */
+    /* crashes on Japanese and Chinese XP */
     {  0,  0, 12, NULL,           10, 10, 12,  NULL,    FALSE, 5, 0, 0, NULL,     STATUS_BUFFER_OVERFLOW},
 #endif
 };
@@ -1613,7 +1613,7 @@ static void one_RtlIntegerToUnicodeString_test(int test_num, const int2str_t *in
 	/* the string would have (which can be larger than the MaximumLength). */
 	/* To allow all this in the tests we do the following: */
 	if (expected_unicode_string.Length > 32 && unicode_string.Length == 0) {
-	    /* The value is too large to convert only triggerd when testing native */
+	    /* The value is too large to convert only triggered when testing native */
 	    expected_unicode_string.Length = 0;
 	}
     } else {
@@ -1754,7 +1754,7 @@ static void test_RtlIsTextUnicode(void)
 
     /* build byte reversed unicode string with no control chars */
     be_unicode_no_controls = HeapAlloc(GetProcessHeap(), 0, sizeof(unicode) + sizeof(WCHAR));
-    ok(be_unicode_no_controls != NULL, "Expeced HeapAlloc to succeed.\n");
+    ok(be_unicode_no_controls != NULL, "Expected HeapAlloc to succeed.\n");
     be_unicode_no_controls[0] = 0xfffe;
     for (i = 0; i < sizeof(unicode_no_controls)/sizeof(unicode_no_controls[0]); i++)
         be_unicode_no_controls[i + 1] = (unicode_no_controls[i] >> 8) | ((unicode_no_controls[i] & 0xff) << 8);

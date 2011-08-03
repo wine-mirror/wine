@@ -98,12 +98,12 @@ static void MeshBuilderTest(void)
     info.lpMemory = data_bad_version;
     info.dSize = strlen(data_bad_version);
     hr = IDirect3DRMMeshBuilder_Load(pMeshBuilder, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
-    ok(hr == D3DRMERR_BADFILE, "Sould have returned D3DRMERR_BADFILE (hr = %x)\n", hr);
+    ok(hr == D3DRMERR_BADFILE, "Should have returned D3DRMERR_BADFILE (hr = %x)\n", hr);
 
     info.lpMemory = data_no_mesh;
     info.dSize = strlen(data_no_mesh);
     hr = IDirect3DRMMeshBuilder_Load(pMeshBuilder, &info, NULL, D3DRMLOAD_FROMMEMORY, NULL, NULL);
-    ok(hr == D3DRMERR_NOTFOUND, "Sould have returned D3DRMERR_NOTFOUND (hr = %x)\n", hr);
+    ok(hr == D3DRMERR_NOTFOUND, "Should have returned D3DRMERR_NOTFOUND (hr = %x)\n", hr);
 
     info.lpMemory = data_ok;
     info.dSize = strlen(data_ok);

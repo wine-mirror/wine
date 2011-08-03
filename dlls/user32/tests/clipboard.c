@@ -81,7 +81,7 @@ static void test_ClipboardOwner(void)
     SetLastError(0xdeadbeef);
     ret = OpenClipboard(hWnd2);
     ok(!ret && (GetLastError() == 0xdeadbeef || GetLastError() == ERROR_ACCESS_DENIED),
-       "OpenClipboard should fail without setting last error valuei, or with ERROR_ACCESS_DENIED, got error %d\n", GetLastError());
+       "OpenClipboard should fail without setting last error value, or with ERROR_ACCESS_DENIED, got error %d\n", GetLastError());
 
     ret = CloseClipboard();
     ok( ret, "CloseClipboard error %d\n", GetLastError());

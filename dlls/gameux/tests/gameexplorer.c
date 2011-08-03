@@ -50,8 +50,8 @@ static LONG WINAPI (*_RegGetValueW)(HKEY,LPCWSTR,LPCWSTR,DWORD,LPDWORD,PVOID,LPD
  * available on older operating systems.
  *
  * Returns:
- *  TRUE                        procedures were loaded successfunnly
- *  FALSE                       procedures were not loaded successfunnly
+ *  TRUE                        procedures were loaded successfully
+ *  FALSE                       procedures were not loaded successfully
  */
 static BOOL _loadDynamicRoutines(void)
 {

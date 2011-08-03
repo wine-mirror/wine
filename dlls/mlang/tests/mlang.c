@@ -1223,7 +1223,7 @@ static void test_GetRfc1766Info(IMultiLanguage2 *iML2)
 
     }
 
-    /* SUBLANG_NEUTRAL only allowed for english, arabic, chinese */
+    /* SUBLANG_NEUTRAL only allowed for English, Arabic, Chinese */
     ret = IMultiLanguage2_GetRfc1766Info(iML2, MAKELANGID(LANG_GERMAN, SUBLANG_NEUTRAL), LANG_ENGLISH, prfc);
     ok(ret == E_FAIL, "got 0x%x (expected E_FAIL)\n", ret);
 

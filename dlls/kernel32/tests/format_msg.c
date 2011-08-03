@@ -1360,7 +1360,7 @@ static void test_message_from_hmodule(void)
                          MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), out, sizeof(out)/sizeof(CHAR), NULL);
     ok(ret == 0, "FormatMessageA returned non-zero\n");
 
-    /*Test nonexistent messageID with varying language ID's Note: FormatMessageW behaves the same*/
+    /*Test nonexistent messageID with varying language IDs Note: FormatMessageW behaves the same*/
     SetLastError(0xdeadbeef);
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 3044,
                          MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), out, sizeof(out)/sizeof(CHAR), NULL);

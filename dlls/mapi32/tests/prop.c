@@ -690,11 +690,11 @@ static void test_PpropFindProp(void)
 
         pRet = pPpropFindProp(&pvProp, 1u, ptTypes[i]);
         ok(pRet == &pvProp,
-           "PpropFindProp[%d]: Didn't find existing propery\n",
+           "PpropFindProp[%d]: Didn't find existing property\n",
            ptTypes[i]);
 
         pRet = pPpropFindProp(&pvProp, 1u, i ? ptTypes[i-1] : ptTypes[i+1]);
-        ok(pRet == NULL, "PpropFindProp[%d]: Found nonexistent propery\n",
+        ok(pRet == NULL, "PpropFindProp[%d]: Found nonexistent property\n",
            ptTypes[i]);
     }
 
@@ -929,20 +929,20 @@ static void test_LpValFindProp(void)
 
         pRet = pLpValFindProp(PROP_TAG(ptTypes[i], 1u), 1u, &pvProp);
         ok(pRet == &pvProp,
-           "LpValFindProp[%d]: Didn't find existing propery id/type\n",
+           "LpValFindProp[%d]: Didn't find existing property id/type\n",
            ptTypes[i]);
 
         pRet = pLpValFindProp(PROP_TAG(ptTypes[i], 0u), 1u, &pvProp);
-        ok(pRet == NULL, "LpValFindProp[%d]: Found nonexistent propery id\n",
+        ok(pRet == NULL, "LpValFindProp[%d]: Found nonexistent property id\n",
            ptTypes[i]);
 
         pRet = pLpValFindProp(PROP_TAG(PT_NULL, 0u), 1u, &pvProp);
-        ok(pRet == NULL, "LpValFindProp[%d]: Found nonexistent propery id/type\n",
+        ok(pRet == NULL, "LpValFindProp[%d]: Found nonexistent property id/type\n",
            ptTypes[i]);
 
         pRet = pLpValFindProp(PROP_TAG(PT_NULL, 1u), 1u, &pvProp);
         ok(pRet == &pvProp,
-           "LpValFindProp[%d]: Didn't find existing propery id\n",
+           "LpValFindProp[%d]: Didn't find existing property id\n",
            ptTypes[i]);
     }
 }

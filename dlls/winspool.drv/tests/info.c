@@ -807,7 +807,7 @@ static void test_EnumForms(LPSTR pName)
     RETURN_ON_DEACTIVATED_SPOOLER(res)
     if (!res || !hprinter)
     {
-        /* Open the local Prinserver is not supported on win9x */
+        /* Open the local Printserver is not supported on win9x */
         if (pName) skip("Failed to open '%s' (not supported on win9x)\n", pName);
         return;
     }

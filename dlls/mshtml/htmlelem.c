@@ -502,7 +502,7 @@ static HRESULT WINAPI HTMLElement_get_style(IHTMLElement *iface, IHTMLStyle **p)
         nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMElementCSSInlineStyle,
                 (void**)&nselemstyle);
         if(NS_FAILED(nsres)) {
-            ERR("Coud not get nsIDOMCSSStyleDeclaration interface: %08x\n", nsres);
+            ERR("Could not get nsIDOMCSSStyleDeclaration interface: %08x\n", nsres);
             return E_FAIL;
         }
 

@@ -1423,7 +1423,7 @@ static void test_TVS_SINGLEEXPAND(void)
 
     hTree = create_treeview_control(0);
     SetWindowLongA(hTree, GWL_STYLE, GetWindowLong(hTree, GWL_STYLE) | TVS_SINGLEEXPAND);
-    /* to avoid paiting related notifications */
+    /* to avoid painting related notifications */
     ShowWindow(hTree, SW_HIDE);
     fill_tree(hTree);
 

@@ -138,7 +138,7 @@ static void test_versioninfo(void)
     hr = pGetRequestedRuntimeInfo( NULL, v2_0, NULL, 0, 0, NULL, MAX_PATH, &path_len, version, MAX_PATH, &size);
     ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
     ok(!winetest_strcmpW(version, v2_0), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0));
-    /* With NULL-pointer for bufferlength, the buffer itsself still gets filled with correct string */
+    /* With NULL-pointer for bufferlength, the buffer itself still gets filled with correct string */
     memset(version, 0, sizeof(version));
     hr = pGetRequestedRuntimeInfo( NULL, v2_0, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, NULL);
     ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);

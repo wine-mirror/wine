@@ -2314,7 +2314,7 @@ typedef struct
     USHORT usFirstCharIndex;
     USHORT usLastCharIndex;
     /* According to the Apple spec, original version didn't have the below fields,
-     * version numbers were taked from the OpenType spec.
+     * version numbers were taken from the OpenType spec.
      */
     /* version 0 (TrueType 1.5) */
     USHORT sTypoAscender;

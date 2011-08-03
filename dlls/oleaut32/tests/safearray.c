@@ -333,7 +333,7 @@ static void test_safearray(void)
 	ok(hres == S_OK || hres == E_OUTOFMEMORY,
           "SAR to a 0 elements dimension failed with hres %x\n", hres);
 	hres = SafeArrayDestroy(a);
-	ok(hres == S_OK,"SAD of 0 dim array faild with hres %x\n", hres);
+	ok(hres == S_OK,"SAD of 0 dim array failed with hres %x\n", hres);
 
         SafeArrayAllocDescriptor(2, &a);
         a->rgsabound[0].cElements = 2;
@@ -370,7 +370,7 @@ static void test_safearray(void)
         ok(*(WORD *)ptr1 == 0x55aa, "Data not preserved when resizing array\n");
 
         hres = SafeArrayDestroy(a);
-        ok(hres == S_OK,"SAD faild with hres %x\n", hres);
+        ok(hres == S_OK,"SAD failed with hres %x\n", hres);
 
 	bounds[0].cElements = 0;	bounds[0].lLbound =  1;
 	bounds[1].cElements =  2;	bounds[1].lLbound = 23;
@@ -378,14 +378,14 @@ static void test_safearray(void)
     	ok(a != NULL,"SAC(VT_INT32,2,...) with 0 element dim failed.\n");
 
         hres = SafeArrayDestroy(a);
-        ok(hres == S_OK,"SAD faild with hres %x\n", hres);
+        ok(hres == S_OK,"SAD failed with hres %x\n", hres);
 	bounds[0].cElements = 1;	bounds[0].lLbound =  1;
 	bounds[1].cElements = 0;	bounds[1].lLbound = 23;
     	a = SafeArrayCreate(VT_I4,2,bounds);
     	ok(a != NULL,"SAC(VT_INT32,2,...) with 0 element dim failed.\n");
 
         hres = SafeArrayDestroy(a);
-        ok(hres == S_OK,"SAD faild with hres %x\n", hres);
+        ok(hres == S_OK,"SAD failed with hres %x\n", hres);
 
 	bounds[0].cElements = 42;	bounds[0].lLbound =  1;
 	bounds[1].cElements =  2;	bounds[1].lLbound = 23;
@@ -470,7 +470,7 @@ static void test_safearray(void)
 	ok(S_OK == hres, "SAUAD failed with 0x%x\n", hres);
 
 	hres = SafeArrayDestroy(a);
-	ok(hres == S_OK,"SAD faild with hres %x\n", hres);
+	ok(hres == S_OK,"SAD failed with hres %x\n", hres);
 
 	for (i=0;i<sizeof(vttypes)/sizeof(vttypes[0]);i++) {
 	if ((i == VT_I8 || i == VT_UI8) && HAVE_OLEAUT32_I8)
@@ -535,7 +535,7 @@ static void test_safearray(void)
         }
 
 		hres = SafeArrayDestroy(c);
-		ok(hres == S_OK,"SAD faild with hres %x\n", hres);
+		ok(hres == S_OK,"SAD failed with hres %x\n", hres);
 
 		hres = SafeArrayDestroy(a);
 		ok(hres == S_OK,"SAD of array with vt %d failed with hres %x\n", vttypes[i].vt, hres);
@@ -1453,7 +1453,7 @@ static void test_SafeArrayCreateEx(void)
 
   /* VT_RECORD failure case */
   sa = pSafeArrayCreateEx(VT_RECORD, 1, sab, NULL);
-  ok(sa == NULL, "CreateEx (NULL-Rec) succeded\n");
+  ok(sa == NULL, "CreateEx (NULL-Rec) succeeded\n");
 
   iRec = IRecordInfoImpl_Construct();
 

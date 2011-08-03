@@ -1716,11 +1716,11 @@ static void test_copy(void)
     {
         ok(DeleteFileA("threedir\\two.txt"), "Expected file to exist\n");
         ok(!DeleteFileA("fourdir"), "Expected file to not exist\n");
-        ok(!RemoveDirectoryA("fourdir"), "Expected dit to not exist\n");
+        ok(!RemoveDirectoryA("fourdir"), "Expected dir to not exist\n");
     }
     ok(RemoveDirectoryA("threedir"), "Expected dir to exist\n");
     ok(!DeleteFileA("five"), "Expected file to not exist\n");
-    ok(!RemoveDirectoryA("five"), "Expected dit to not exist\n");
+    ok(!RemoveDirectoryA("five"), "Expected dir to not exist\n");
 
     createTestFile("aa.txt");
     createTestFile("ab.txt");

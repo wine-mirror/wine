@@ -99,7 +99,7 @@ static LPCSTR Guid2str(const GUID *guid)
         return "DPSPGUID_SERIAL";
     if (IsEqualGUID(guid, &DPSPGUID_MODEM))
         return "DPSPGUID_MODEM";
-    /* DirectPlay Address ID's */
+    /* DirectPlay Address IDs */
     if (IsEqualGUID(guid, &DPAID_TotalSize))
         return "DPAID_TotalSize";
     if (IsEqualGUID(guid, &DPAID_ServiceProvider))
@@ -1730,7 +1730,7 @@ static void test_SessionDesc(void)
     hr = IDirectPlayX_SetSessionDesc( pDP[1], &dpsd, 0 );
     checkHR( DPERR_ACCESSDENIED, hr );
 
-    /* Trying to change inmutable properties */
+    /* Trying to change immutable properties */
     /*  Flags */
     hr = IDirectPlayX_SetSessionDesc( pDP[0], &dpsd, 0 );
     checkHR( DP_OK, hr );
@@ -5001,7 +5001,7 @@ static void test_Send(void)
                             (LPVOID) message, messageSize );
     checkHR( DPERR_INVALIDPARAMS, hr );
 
-    /* - Corerct flags, secure session incorrectly opened (without flags) */
+    /* - Correct flags, secure session incorrectly opened (without flags) */
     hr = IDirectPlayX_Close( pDP[0] );
     checkHR( DP_OK, hr );
 

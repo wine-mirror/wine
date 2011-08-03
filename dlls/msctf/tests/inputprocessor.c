@@ -558,7 +558,7 @@ ITfContext *pic)
     ITfContext *test;
 
     hr = ITfContext_GetDocumentMgr(pic,&docmgr);
-    ok(SUCCEEDED(hr),"GetDocumenMgr failed\n");
+    ok(SUCCEEDED(hr),"GetDocumentMgr failed\n");
     test = (ITfContext*)0xdeadbeef;
     ITfDocumentMgr_Release(docmgr);
     hr = ITfDocumentMgr_GetTop(docmgr,&test);
@@ -579,7 +579,7 @@ ITfContext *pic)
     ITfContext *test;
 
     hr = ITfContext_GetDocumentMgr(pic,&docmgr);
-    ok(SUCCEEDED(hr),"GetDocumenMgr failed\n");
+    ok(SUCCEEDED(hr),"GetDocumentMgr failed\n");
     ITfDocumentMgr_Release(docmgr);
     test = (ITfContext*)0xdeadbeef;
     hr = ITfDocumentMgr_GetTop(docmgr,&test);
@@ -1025,7 +1025,7 @@ static void test_ThreadMgrAdviseSinks(void)
     ok(SUCCEEDED(hr),"Failed to Advise Sink\n");
     ok(tmSinkCookie!=0,"Failed to get sink cookie\n");
 
-    /* Advising the sink adds a ref, Relesing here lets the object be deleted
+    /* Advising the sink adds a ref, Releasing here lets the object be deleted
        when unadvised */
     tmSinkRefCount = 2;
     IUnknown_Release(sink);
@@ -1866,7 +1866,7 @@ static void test_TStoApplicationText(void)
     }
 
     hrSession = 0xfeedface;
-    /* Test no premissions flags */
+    /* Test no permissions flags */
     hr = ITfContext_RequestEditSession(cxt, tid, es, TF_ES_SYNC, &hrSession);
     ok(hr == E_INVALIDARG,"RequestEditSession should have failed with %x not %x\n",E_INVALIDARG,hr);
     ok(hrSession == E_FAIL,"hrSession should be %x not %x\n",E_FAIL,hrSession);

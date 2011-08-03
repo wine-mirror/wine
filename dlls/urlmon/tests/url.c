@@ -2085,9 +2085,9 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     ok(GetCurrentThreadId() == thread_id, "wrong thread %d\n", GetCurrentThreadId());
 
     if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
-        ok(!fFullyAvailable, "fFulyAvailable = %x\n", fFullyAvailable);
+        ok(!fFullyAvailable, "fFullyAvailable = %x\n", fFullyAvailable);
     else
-        ok(fFullyAvailable, "fFulyAvailable = %x\n", fFullyAvailable);
+        ok(fFullyAvailable, "fFullyAvailable = %x\n", fFullyAvailable);
     ok(pimkName != NULL, "pimkName == NULL\n");
     ok(pibc != NULL, "pibc == NULL\n");
     ok(grfMode == 0x12, "grfMode = %x\n", grfMode);
@@ -3606,7 +3606,7 @@ static void test_StdURLMoniker(void)
       IUri *uri;
 
       hres = IMoniker_QueryInterface(mon, &IID_IUriContainer, (void**)&uri_container);
-      ok(hres == S_OK, "Coud not get IUriMoniker iface: %08x\n", hres);
+      ok(hres == S_OK, "Could not get IUriMoniker iface: %08x\n", hres);
 
 
       uri = (void*)0xdeadbeef;

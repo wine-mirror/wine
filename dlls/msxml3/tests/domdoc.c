@@ -3058,17 +3058,17 @@ todo_wine
     if (list)
     {
         r = IXMLDOMNodeList_get_item(list, 0, NULL);
-        ok(r == E_INVALIDARG, "Exected E_INVALIDARG got %08x\n", r);
+        ok(r == E_INVALIDARG, "Expected E_INVALIDARG got %08x\n", r);
 
         r = IXMLDOMNodeList_get_length(list, NULL);
-        ok(r == E_INVALIDARG, "Exected E_INVALIDARG got %08x\n", r);
+        ok(r == E_INVALIDARG, "Expected E_INVALIDARG got %08x\n", r);
 
         r = IXMLDOMNodeList_get_length( list, &count );
         ok( r == S_OK, "get_length returns %08x\n", r );
         ok( count == 4, "get_length got %d\n", count );
 
         r = IXMLDOMNodeList_nextNode(list, NULL);
-        ok(r == E_INVALIDARG, "Exected E_INVALIDARG got %08x\n", r);
+        ok(r == E_INVALIDARG, "Expected E_INVALIDARG got %08x\n", r);
 
         r = IXMLDOMNodeList_nextNode( list, &node );
         ok( r == S_OK, "nextNode returned wrong code\n");
@@ -3091,7 +3091,7 @@ todo_wine
         ok( V_BSTR(&var) == NULL, "variant value wasn't null\n");
 
         r = IXMLDOMNode_hasChildNodes( node, NULL );
-        ok( r == E_INVALIDARG, "hasChildNoes bad return\n");
+        ok( r == E_INVALIDARG, "hasChildNodes bad return\n");
 
         EXPECT_CHILDREN(node);
 
@@ -4691,7 +4691,7 @@ static void test_XMLHTTP(void)
 
     hr = SafeArrayAccessData(V_ARRAY(&varbody), &ptr);
     EXPECT_HR(hr, S_OK);
-    ok(memcmp(ptr, xmltestbodyA, sizeof(xmltestbodyA)-1) == 0, "got wrond body data\n");
+    ok(memcmp(ptr, xmltestbodyA, sizeof(xmltestbodyA)-1) == 0, "got wrong body data\n");
     SafeArrayUnaccessData(V_ARRAY(&varbody));
 
     VariantClear(&varbody);
@@ -6895,7 +6895,7 @@ static void test_save(void)
     hr = IXMLDOMDocument_get_xml(doc2, &sNew);
     EXPECT_HR(hr, S_OK);
 
-    ok( !lstrcmpW( sOrig, sNew ), "New document is not the same as origial\n");
+    ok( !lstrcmpW( sOrig, sNew ), "New document is not the same as original\n");
 
     SysFreeString(sOrig);
     SysFreeString(sNew);

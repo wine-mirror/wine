@@ -255,7 +255,7 @@ static void test_VarFormat(void)
 
   if (PRIMARYLANGID(LANGIDFROMLCID(GetUserDefaultLCID())) != LANG_ENGLISH)
   {
-    skip("Skipping VarFormat tests for non english language\n");
+    skip("Skipping VarFormat tests for non English language\n");
     return;
   }
   GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, buff, sizeof(buff)/sizeof(char));

@@ -773,7 +773,7 @@ static IDispatchEx *parse_procedure_a(IActiveScriptParse *parser, const char *sr
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(parser, &IID_IActiveScriptParseProcedure2, (void**)&parse_proc);
-    ok(hres == S_OK, "Coult not get IActiveScriptParseProcedure2: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IActiveScriptParseProcedure2: %08x\n", hres);
 
     str = a2bstr(src);
     hres = IActiveScriptParseProcedure2_64_ParseProcedureText(parse_proc, str, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, &disp);
@@ -1073,7 +1073,7 @@ static BOOL register_activex(void)
 
     hres = CoRegisterClassObject(&CLSID_TestObj, (IUnknown *)&activex_cf,
                                  CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &regid);
-    ok(hres == S_OK, "Could not register screipt engine: %08x\n", hres);
+    ok(hres == S_OK, "Could not register script engine: %08x\n", hres);
 
     return TRUE;
 }

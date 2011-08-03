@@ -226,7 +226,7 @@ static void test_Skip_walkList(void)
         ok(hres == S_OK, "Skip failed: %08x\n", hres);
         if(hres != S_OK)
         {
-            skip("Unable to propely Skip files\n");
+            skip("Unable to properly Skip files\n");
             return;
         }
     }

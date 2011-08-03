@@ -113,7 +113,7 @@ static HRESULT _unregisterGame(void) {
 }
 /*******************************************************************************
  * _buildStatisticsFilePath
- * Creates path to file contaning statistics of game with given id.
+ * Creates path to file containing statistics of game with given id.
  *
  * Parameters:
  *  guidApplicationId                       [I]     application id of game
@@ -340,7 +340,7 @@ static void test_gamestatisticsmgr( void )
         hr = IGameStatistics_Release(gs);
         ok(SUCCEEDED(hr), "releasing IGameStatistics returned error: 0x%08x\n", hr);
 
-        /* try to read written statisticd */
+        /* try to read written statistics */
         hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENORCREATE, &dwOpenResult, &gs);
         ok(SUCCEEDED(hr), "GetGameStatistics returned error: 0x%08x\n", hr);
         ok(dwOpenResult == GAMESTATS_OPEN_OPENED, "GetGameStatistics returned invalid open result: 0x%x\n", dwOpenResult);

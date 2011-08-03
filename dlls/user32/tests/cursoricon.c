@@ -1802,7 +1802,7 @@ static void test_DrawIcon(void)
 
     if(GetDeviceCaps(hdcDst, BITSPIXEL) <= 8)
     {
-        skip("Windows will distort DrawIcon colors at 8-bpp and less due to palletizing.\n");
+        skip("Windows will distort DrawIcon colors at 8-bpp and less due to palettizing.\n");
         goto cleanup;
     }
 
@@ -1886,7 +1886,7 @@ static void test_DrawIconEx(void)
 
     if(GetDeviceCaps(hdcDst, BITSPIXEL) <= 8)
     {
-        skip("Windows will distort DrawIconEx colors at 8-bpp and less due to palletizing.\n");
+        skip("Windows will distort DrawIconEx colors at 8-bpp and less due to palettizing.\n");
         goto cleanup;
     }
 
@@ -2035,7 +2035,7 @@ static void test_DrawState(void)
 
     if(GetDeviceCaps(hdcDst, BITSPIXEL) <= 8)
     {
-        skip("Windows will distort DrawIconEx colors at 8-bpp and less due to palletizing.\n");
+        skip("Windows will distort DrawIconEx colors at 8-bpp and less due to palettizing.\n");
         goto cleanup;
     }
 

@@ -221,7 +221,7 @@ static LRESULT WINAPI menu_ownerdraw_wnd_proc(HWND hwnd, UINT msg,
                     }
 
                 if( pdis->itemData > MOD_maxid) return TRUE;
-                /* store the rectangl */
+                /* store the rectangle */
                 MOD_rc[pdis->itemData] = pdis->rcItem;
                 /* calculate average character width */
                 GetTextExtentPoint( pdis->hDC, chrs, 52, &sz );
@@ -3103,7 +3103,7 @@ static void test_menu_cancelmode(void)
     {MSG msg;   while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessage(&msg);}
     /* test the effect of sending a WM_CANCELMODE message in the WM_INITMENULOOP
      * handler of the menu owner */
-    /* test results is exctracted from variable g_got_enteridle. Possible values:
+    /* test results is extracted from variable g_got_enteridle. Possible values:
      * 0 : complete conformance. Sending WM_CANCELMODE cancels a menu initializing tracking
      * 1 : Sending WM_CANCELMODE cancels a menu that is in tracking state
      * 2 : Sending WM_CANCELMODE does not work

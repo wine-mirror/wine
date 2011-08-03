@@ -230,7 +230,7 @@ static void CALLBACK userapc(ULONG_PTR dwParam)
     userapc_called = TRUE;
 }
 
-static BOOL open_succeded;
+static BOOL open_succeeded;
 static DWORD WINAPI thread(PVOID main_thread)
 {
     HANDLE h;
@@ -248,11 +248,11 @@ static DWORD WINAPI thread(PVOID main_thread)
     h = CreateFileW(testpipe, GENERIC_WRITE | GENERIC_READ, 0, 0, OPEN_EXISTING, 0, 0);
 
     if (h != INVALID_HANDLE_VALUE) {
-        open_succeded = TRUE;
+        open_succeeded = TRUE;
         Sleep(100);
         CloseHandle(h);
     } else
-        open_succeded = FALSE;
+        open_succeeded = FALSE;
 
     return 0;
 }
@@ -303,7 +303,7 @@ static void test_alertable(void)
 
     SleepEx(0, TRUE); /* get rid of the userapc, if NtFsControlFile failed */
 
-    ok(open_succeded, "couldn't open client side pipe\n");
+    ok(open_succeeded, "couldn't open client side pipe\n");
 
     CloseHandle(hThread);
     DisconnectNamedPipe(hPipe);
@@ -315,7 +315,7 @@ static void test_alertable(void)
     res = listen_pipe(hPipe, hEvent, &iosb, TRUE);
     todo_wine ok(!res, "NtFsControlFile returned %x\n", res);
 
-    ok(open_succeded, "couldn't open client side pipe\n");
+    ok(open_succeeded, "couldn't open client side pipe\n");
     ok(!U(iosb).Status, "Wrong iostatus %x\n", U(iosb).Status);
     todo_wine ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
 
@@ -350,7 +350,7 @@ static void test_nonalertable(void)
     res = listen_pipe(hPipe, hEvent, &iosb, TRUE);
     todo_wine ok(!res, "NtFsControlFile returned %x\n", res);
 
-    ok(open_succeded, "couldn't open client side pipe\n");
+    ok(open_succeeded, "couldn't open client side pipe\n");
     todo_wine ok(!U(iosb).Status, "Wrong iostatus %x\n", U(iosb).Status);
     todo_wine ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
 

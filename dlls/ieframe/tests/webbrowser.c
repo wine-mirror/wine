@@ -721,7 +721,7 @@ static void test_OnBeforeNavigate(const VARIANT *disp, const VARIANT *url, const
     if(V_VARIANTREF(headers)) {
         ok(V_VT(V_VARIANTREF(headers)) == VT_BSTR, "V_VT(V_VARIANTREF(headers))=%d, expected VT_BSTR\n",
            V_VT(V_VARIANTREF(headers)));
-        ok(V_BSTR(V_VARIANTREF(headers)) == NULL, "V_BSTR(V_VARIANTREF(heders)) = %p, expected NULL\n",
+        ok(V_BSTR(V_VARIANTREF(headers)) == NULL, "V_BSTR(V_VARIANTREF(headers)) = %p, expected NULL\n",
            V_BSTR(V_VARIANTREF(headers)));
     }
 
@@ -729,7 +729,7 @@ static void test_OnBeforeNavigate(const VARIANT *disp, const VARIANT *url, const
        V_VT(cancel));
     ok(V_BOOLREF(cancel) != NULL, "V_BOOLREF(pDispParams->rgvarg[0] == NULL)\n");
     if(V_BOOLREF(cancel))
-        ok(*V_BOOLREF(cancel) == VARIANT_FALSE, "*V_BOOLREF(calcel) = %x, expected VARIANT_FALSE\n",
+        ok(*V_BOOLREF(cancel) == VARIANT_FALSE, "*V_BOOLREF(cancel) = %x, expected VARIANT_FALSE\n",
            *V_BOOLREF(cancel));
 }
 
@@ -2258,9 +2258,9 @@ static void test_GetControlInfo(IUnknown *unk)
         return;
 
     hres = IOleControl_GetControlInfo(control, &info);
-    ok(hres == E_NOTIMPL, "GetControlInfo failed: %08x, exxpected E_NOTIMPL\n", hres);
+    ok(hres == E_NOTIMPL, "GetControlInfo failed: %08x, expected E_NOTIMPL\n", hres);
     hres = IOleControl_GetControlInfo(control, NULL);
-    ok(hres == E_NOTIMPL, "GetControlInfo failed: %08x, exxpected E_NOTIMPL\n", hres);
+    ok(hres == E_NOTIMPL, "GetControlInfo failed: %08x, expected E_NOTIMPL\n", hres);
 
     IOleControl_Release(control);
 }

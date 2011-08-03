@@ -133,7 +133,7 @@ static void test_URLSubRegQueryA(void)
             "got 0x%x and %d (expected S_OK and %d)\n", hr, used, len - 2);
     }
 
-    /* only space for the terminating 0: function still succeded */
+    /* only space for the terminating 0: function still succeeded */
     memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
     hr = pURLSubRegQueryA(regpath_iemain, start_page, REG_SZ, buffer, 1, -1);

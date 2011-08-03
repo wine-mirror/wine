@@ -2463,7 +2463,7 @@ static DWORD WINAPI SysParamsThreadFunc( LPVOID lpParam )
      * not all metrics are properly restored. Problems are
      * SM_CXMAXTRACK, SM_CYMAXTRACK
      * Fortunately setting the Non-Client metrics like in
-     * test_SPI_SETNONCLIENTMETRICS will corect this. That is why
+     * test_SPI_SETNONCLIENTMETRICS will correct this. That is why
      * we do the DISPLAY change now... */
     test_WM_DISPLAYCHANGE();
     test_SPI_SETNONCLIENTMETRICS();             /*     42 */

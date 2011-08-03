@@ -842,7 +842,7 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
-    /* Unreserved, percent encoded characters aren't decoded in the userinfo becuase the scheme
+    /* Unreserved, percent encoded characters aren't decoded in the userinfo because the scheme
      * isn't known.
      */
     {   "zip://%2E:%52%53ord@winehq.org/", 0, S_OK, FALSE,
@@ -1436,7 +1436,7 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
-    /* Hostname get's lower cased for known scheme types. */
+    /* Hostname gets lower-cased for known scheme types. */
     {   "http://WWW.GOOGLE.com/", 0, S_OK, FALSE,
         {
             {"http://www.google.com/",S_OK,FALSE},

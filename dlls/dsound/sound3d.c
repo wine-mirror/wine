@@ -62,7 +62,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound3d);
  *              Auxiliary functions
  */
 
-/* scalar product (i believe it's called dot product in english) */
+/* scalar product (I believe it's called dot product in English) */
 static inline D3DVALUE ScalarProduct (const D3DVECTOR *a, const D3DVECTOR *b)
 {
 	D3DVALUE c;
@@ -72,7 +72,7 @@ static inline D3DVALUE ScalarProduct (const D3DVECTOR *a, const D3DVECTOR *b)
 	return c;
 }
 
-/* vector product (i believe it's called cross product in english */
+/* vector product (I believe it's called cross product in English */
 static inline D3DVECTOR VectorProduct (const D3DVECTOR *a, const D3DVECTOR *b)
 {
 	D3DVECTOR c;

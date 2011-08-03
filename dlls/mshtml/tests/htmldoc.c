@@ -2086,9 +2086,9 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
             if(activeobj) {
                 IOleInPlaceActiveObject_GetWindow(activeobj, &hwnd);
                 ok(hres == S_OK, "GetWindow failed: %08x\n", hres);
-                ok(hwnd == NULL, "hwnd=%p, expeted NULL\n", hwnd);
+                ok(hwnd == NULL, "hwnd=%p, expected NULL\n", hwnd);
             }
-            
+
             if(call_UIActivate == CallUIActivate_ActivateMe) {
                 SET_EXPECT(CanInPlaceActivate);
                 SET_EXPECT(GetWindowContext);

@@ -595,7 +595,7 @@ static void test_dibsections(void)
     ok(ret, "GetDIBits doesn't work with a BITMAPCOREHEADER\n");
     ok((pbci->bmciHeader.bcWidth == 16) && (pbci->bmciHeader.bcHeight == 16)
         && (pbci->bmciHeader.bcBitCount == 1) && (pbci->bmciHeader.bcPlanes == 1),
-    "GetDIBits did't fill in the BITMAPCOREHEADER structure properly\n");
+    "GetDIBits didn't fill in the BITMAPCOREHEADER structure properly\n");
 
     ret = GetDIBits(hdc, hdib, 0, 16, &coreBits, (BITMAPINFO*) pbci, DIB_RGB_COLORS);
     ok(ret, "GetDIBits doesn't work with a BITMAPCOREHEADER\n");

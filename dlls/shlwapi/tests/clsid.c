@@ -128,7 +128,7 @@ static void test_ClassIDs(void)
     i++;
   }
 
-  /* Test endianess */
+  /* Test endianness */
   dwLen = pSHLWAPI_23(&IID_Endianess, szBuff, 256);
   ok(dwLen == (is_vista ? S_OK : 39), "wrong size %u for IID_Endianess\n", dwLen);
 

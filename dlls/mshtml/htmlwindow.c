@@ -107,7 +107,7 @@ nsIDOMWindow *get_nsdoc_window(nsIDOMDocument *nsdoc)
     nsres = nsIDOMAbstractView_QueryInterface(nsview, &IID_nsIDOMWindow, (void**)&nswindow);
     nsIDOMAbstractView_Release(nsview);
     if(NS_FAILED(nsres)) {
-        ERR("Coult not get nsIDOMWindow iface: %08x\n", nsres);
+        ERR("Could not get nsIDOMWindow iface: %08x\n", nsres);
         return NULL;
     }
 

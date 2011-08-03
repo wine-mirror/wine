@@ -1470,5 +1470,5 @@ void ThreadMgr_OnDocumentMgrDestruction(ITfThreadMgr *tm, ITfDocumentMgr *mgr)
             return;
         }
     }
-    FIXME("ITfDocumenMgr %p not found in this thread\n",mgr);
+    FIXME("ITfDocumentMgr %p not found in this thread\n",mgr);
 }

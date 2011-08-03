@@ -2622,7 +2622,7 @@ static BOOL register_script_engine(void)
 
     hres = CoRegisterClassObject(&CLSID_TestScript, (IUnknown *)&script_cf,
                                  CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &regid);
-    ok(hres == S_OK, "Could not register screipt engine: %08x\n", hres);
+    ok(hres == S_OK, "Could not register script engine: %08x\n", hres);
 
     return TRUE;
 }

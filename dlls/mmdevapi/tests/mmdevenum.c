@@ -30,7 +30,7 @@
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
-/* Some of the QueryInterface tests are really just to check if I got the IID's right :) */
+/* Some of the QueryInterface tests are really just to check if I got the IIDs right :) */
 
 /* IMMDeviceCollection appears to have no QueryInterface method and instead forwards to mme */
 static void test_collection(IMMDeviceEnumerator *mme, IMMDeviceCollection *col)

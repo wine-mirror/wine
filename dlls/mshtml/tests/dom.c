@@ -5720,7 +5720,7 @@ static IHTMLDocument2 *create_docfrag(IHTMLDocument2 *doc)
     HRESULT hres;
 
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
-    ok(hres == S_OK, "Coult not get IHTMLDocument3 iface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IHTMLDocument3 iface: %08x\n", hres);
 
     hres = IHTMLDocument3_createDocumentFragment(doc3, &frag);
     IHTMLDocument3_Release(doc3);

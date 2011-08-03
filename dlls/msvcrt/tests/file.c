@@ -1310,7 +1310,7 @@ static void test_get_osfhandle(void)
     WriteFile(handle, "bar", 3, &bytes_written, NULL);
     _close(fd);
     fd = _open(fname, _O_RDONLY, 0);
-    ok(fd != -1, "Coudn't open '%s' after _get_osfhanle()\n", fname);
+    ok(fd != -1, "Couldn't open '%s' after _get_osfhandle()\n", fname);
 
     _close(fd);
     _unlink(fname);

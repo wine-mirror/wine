@@ -300,7 +300,7 @@ static void test_swapchain(void)
 
     /* Get the implicit swapchain */
     hr = IDirect3DDevice9_GetSwapChain(pDevice, 0, &swapchain0);
-    ok(SUCCEEDED(hr), "Failed to get the impicit swapchain (%08x)\n", hr);
+    ok(SUCCEEDED(hr), "Failed to get the implicit swapchain (%08x)\n", hr);
     if(swapchain0) IDirect3DSwapChain9_Release(swapchain0);
 
     /* Check if there is a back buffer */
@@ -1409,7 +1409,7 @@ static void test_scene(void)
     ok(hr == D3D_OK, "IDirect3DDevice9_GetCaps failed with %08x\n", hr);
     if(FAILED(hr)) goto cleanup;
 
-    /* Test an EndScene without beginscene. Should return an error */
+    /* Test an EndScene without BeginScene. Should return an error */
     hr = IDirect3DDevice9_EndScene(pDevice);
     ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_EndScene returned %08x\n", hr);
 

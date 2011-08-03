@@ -295,7 +295,7 @@ static const struct message WmSwitchChild[] = {
     { WM_NCACTIVATE, sent|wparam|defwinproc, 0 }, /* in the 2nd MDI child */
     { WM_MDIACTIVATE, sent|defwinproc }, /* in the 2nd MDI child */
     { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
-    /* Preparing for maximize and maximaze the 1st MDI child */
+    /* Preparing for maximize and maximize the 1st MDI child */
     { WM_GETMINMAXINFO, sent|defwinproc }, /* in the 1st MDI child */
     { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, SWP_FRAMECHANGED|SWP_STATECHANGED }, /* in the 1st MDI child */
     { WM_NCCALCSIZE, sent|wparam|defwinproc, 1 }, /* in the 1st MDI child */
@@ -6729,7 +6729,7 @@ static void test_interthread_messages(void)
     CloseHandle(wnd_event.start_event);
 
     SetLastError(0xdeadbeef);
-    ok(!DestroyWindow(wnd_event.hwnd), "DestroyWindow succeded\n");
+    ok(!DestroyWindow(wnd_event.hwnd), "DestroyWindow succeeded\n");
     ok(GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == 0xdeadbeef,
        "wrong error code %d\n", GetLastError());
 
@@ -6751,7 +6751,7 @@ static void test_interthread_messages(void)
     SetLastError(0xdeadbeef);
     len = DispatchMessageA(&msg);
     ok((!len && GetLastError() == ERROR_MESSAGE_SYNC_ONLY) || broken(len), /* nt4 */
-       "DispatchMessageA(WM_GETTEXT) succeded on another thread window: ret %d, error %d\n", len, GetLastError());
+       "DispatchMessageA(WM_GETTEXT) succeeded on another thread window: ret %d, error %d\n", len, GetLastError());
 
     /* the following test causes an exception in user.exe under win9x */
     msg.hwnd = wnd_event.hwnd;

@@ -1135,7 +1135,7 @@ static void test_SetZoneAttributes(void)
 
     /* The key for the zone must be present, when calling SetZoneAttributes */
     myRegDeleteTreeA(HKEY_CURRENT_USER, regpath);
-    /* E_FAIL is returned from IE6 here, which is resonable.
+    /* E_FAIL is returned from IE6 here, which is reasonable.
        All newer IE return S_OK without saving the zone attributes to the registry.
        This is a Windows bug, but we have to accept that as standard */
     hr = IInternetZoneManager_SetZoneAttributes(zonemgr, URLZONE_CUSTOM, pZA);

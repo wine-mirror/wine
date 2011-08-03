@@ -1341,7 +1341,7 @@ static void test_scene(void)
         goto cleanup;
     }
 
-    /* Test an EndScene without beginscene. Should return an error */
+    /* Test an EndScene without BeginScene. Should return an error */
     hr = IDirect3DDevice8_EndScene(pDevice);
     ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_EndScene returned %#08x\n", hr);
 

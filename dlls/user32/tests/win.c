@@ -5157,13 +5157,13 @@ static void test_SetWindowLong(void)
     retval = SetWindowLongPtr(NULL, GWLP_WNDPROC, 0);
     ok(!retval, "SetWindowLongPtr on invalid window handle should have returned 0 instead of 0x%lx\n", retval);
     ok(check_error(GetLastError(), ERROR_INVALID_WINDOW_HANDLE),
-        "SetWindowLongPtr should have set error to ERROR_INVALID_WINDOW_HANDLE instad of %d\n", GetLastError());
+        "SetWindowLongPtr should have set error to ERROR_INVALID_WINDOW_HANDLE instead of %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     retval = SetWindowLongPtr(hwndMain, 0xdeadbeef, 0);
     ok(!retval, "SetWindowLongPtr on invalid index should have returned 0 instead of 0x%lx\n", retval);
     ok(check_error(GetLastError(), ERROR_INVALID_INDEX),
-        "SetWindowLongPtr should have set error to ERROR_INVALID_INDEX instad of %d\n", GetLastError());
+        "SetWindowLongPtr should have set error to ERROR_INVALID_INDEX instead of %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     retval = SetWindowLongPtr(hwndMain, GWLP_WNDPROC, 0);
@@ -5239,7 +5239,7 @@ static void test_ShowWindow(void)
     ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
     GetWindowRect(hwnd, &rcMinimized);
     ok(!EqualRect(&rcMain, &rcMinimized), "rects shouldn't match\n");
-    /* shouldn't be able to resize minized windows */
+    /* shouldn't be able to resize minimized windows */
     ret = SetWindowPos(hwnd, 0, 0, 0,
                        (rcMinimized.right - rcMinimized.left) * 2,
                        (rcMinimized.bottom - rcMinimized.top) * 2,

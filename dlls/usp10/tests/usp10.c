@@ -1760,7 +1760,7 @@ static void test_ScriptTextOut3(HDC hdc)
     ABC             pABC[256];
     RECT            rect;
 
-    /* This is to ensure that non exisiting glyphs are translated into a valid glyph number */
+    /* This is to ensure that non existing glyphs are translated into a valid glyph number */
     cInChars = 2;
     cMaxItems = 255;
     hr = ScriptItemize(TestItem1, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
@@ -2116,9 +2116,9 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
             hr = ScriptStringCPtoX(ssa, Cp, FALSE, &lead);
             ok(hr == S_OK, "ScriptStringCPtoX should return S_OK not %08x\n", hr);
             if (rtl[Cp])
-                ok(lead > trail, "Leading values should be after trialing for rtl chracters(%i)\n",Cp);
+                ok(lead > trail, "Leading values should be after trialing for rtl characters(%i)\n",Cp);
             else
-                ok(lead < trail, "Trailing values should be after leading for ltr chracters(%i)\n",Cp);
+                ok(lead < trail, "Trailing values should be after leading for ltr characters(%i)\n",Cp);
 
             /* move by 1 pixel so that we are not inbetween 2 characters.  That could result in being the lead of a rtl and
                at the same time the trail of an ltr */
@@ -2215,7 +2215,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
         hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
         ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
         ok(Ch == String_len, "ScriptStringXtoCP should return Ch = %i not %d for X outside trailing edge\n", String_len, Ch);
-        ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = outside traling edge\n",
+        ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = outside trailing edge\n",
                                    iTrailing);
 
         /*

@@ -845,7 +845,7 @@ static void test_reg_open_key(void)
     /* open same key twice */
     ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkResult);
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
-    ok(hkResult != hkPreserve, "epxected hkResult != hkPreserve\n");
+    ok(hkResult != hkPreserve, "expected hkResult != hkPreserve\n");
     ok(hkResult != NULL, "hkResult != NULL\n");
     RegCloseKey(hkResult);
 

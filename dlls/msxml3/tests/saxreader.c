@@ -1050,7 +1050,7 @@ static void test_mxwriter_flush(void)
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     EXPECT_REF(stream, 1);
 
-    /* detach whe nothing was attached */
+    /* detach when nothing was attached */
     V_VT(&dest) = VT_EMPTY;
     hr = IMXWriter_put_output(writer, dest);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
@@ -1145,7 +1145,7 @@ static void test_mxwriter_startenddocument(void)
     /* now try another startDocument */
     hr = ISAXContentHandler_startDocument(content);
     ok(hr == S_OK, "got %08x\n", hr);
-    /* and get duplcated prolog */
+    /* and get duplicated prolog */
     V_VT(&dest) = VT_EMPTY;
     hr = IMXWriter_get_output(writer, &dest);
     ok(hr == S_OK, "got %08x\n", hr);

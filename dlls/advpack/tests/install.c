@@ -95,7 +95,7 @@ static void test_RunSetupCommand(void)
     hr = pRunSetupCommand(NULL, "idontexist.exe", "Install", systemdir, "Title", &hexe, 0, NULL);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
        "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %d\n", hr);
-    ok(hexe == NULL, "Expcted hexe to be NULL\n");
+    ok(hexe == NULL, "Expected hexe to be NULL\n");
     ok(!TerminateProcess(hexe, 0), "Expected TerminateProcess to fail\n");
 
     /* try a bad directory */
@@ -103,7 +103,7 @@ static void test_RunSetupCommand(void)
     hr = pRunSetupCommand(NULL, "winver.exe", "Install", "non\\existent\\directory", "Title", &hexe, 0, NULL);
     ok(hr == HRESULT_FROM_WIN32(ERROR_DIRECTORY),
        "Expected HRESULT_FROM_WIN32(ERROR_DIRECTORY), got %d\n", hr);
-    ok(hexe == NULL, "Expcted hexe to be NULL\n");
+    ok(hexe == NULL, "Expected hexe to be NULL\n");
     ok(!TerminateProcess(hexe, 0), "Expected TerminateProcess to fail\n");
 
     /* try to run an exe with the RSC_FLAG_INF flag */

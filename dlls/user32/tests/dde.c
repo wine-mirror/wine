@@ -1001,7 +1001,7 @@ static LRESULT WINAPI dde_msg_client_wndproc(HWND hwnd, UINT msg, WPARAM wparam,
         ok(data->fAckReq == 0, "Expected 0, got %d\n", data->fAckReq);
         ok(data->cfFormat == CF_TEXT, "Expected CF_TEXT, got %d\n", data->cfFormat);
         ok(!lstrcmpA((LPSTR)data->Value, "requested data\r\n"),
-           "Expeted 'requested data\\r\\n', got %s\n", data->Value);
+           "Expected 'requested data\\r\\n', got %s\n", data->Value);
         GlobalUnlock((HGLOBAL)lo);
 
         size = GlobalGetAtomNameA(hi, str, MAX_PATH);
@@ -1761,7 +1761,7 @@ static void test_initialisation(void)
 
     item = DdeCreateStringHandleA(client_pid, "request", CP_WINANSI);
 
-    /* There is no converstation so an invalild parameter results */
+    /* There is no conversation so an invalid parameter results */
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
     hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);

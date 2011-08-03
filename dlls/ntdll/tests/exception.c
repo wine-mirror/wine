@@ -717,7 +717,7 @@ static void test_exceptions(void)
     ctx.Dr7 = 3;
     ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
     res = pNtSetContextThread( GetCurrentThread(), &ctx);
-    ok( res == STATUS_SUCCESS, "NtSetContextThread faild with %x\n", res);
+    ok( res == STATUS_SUCCESS, "NtSetContextThread failed with %x\n", res);
 
     got_exception = 0;
     run_exception_test(bpx_handler, NULL, dummy_code, sizeof(dummy_code), 0);
@@ -796,7 +796,7 @@ static void test_debugger(void)
 
             if (counter > 100)
             {
-                ok(FALSE, "got way too many exceptions, probaby caught in a infinite loop, terminating child\n");
+                ok(FALSE, "got way too many exceptions, probably caught in a infinite loop, terminating child\n");
                 pNtTerminateProcess(pi.hProcess, 1);
             }
             else if (counter >= 2) /* skip startup breakpoint */

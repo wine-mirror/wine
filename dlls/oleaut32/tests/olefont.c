@@ -71,7 +71,7 @@ static void test_ifont_size(LONG lo_size, LONG hi_size,
         DWORD rtnval;
 
 	fd.cbSizeofstruct = sizeof(FONTDESC);
-	fd.lpstrName      = arial_font; /* using scaleable instead of bitmap font reduces errors due to font realization */
+	fd.lpstrName      = arial_font; /* using scalable instead of bitmap font reduces errors due to font realization */
 	S(fd.cySize).Lo   = lo_size;
 	S(fd.cySize).Hi   = hi_size;
 	fd.sWeight        = 0;
@@ -100,7 +100,7 @@ static void test_ifont_size(LONG lo_size, LONG hi_size,
 	ok(hres == S_OK,"%s: IFont_get_size returns 0x%08x instead of S_OK.\n",
 		test_name, hres);
 
-        /* Check returned size - allow for errors due to rouding & font realization. */
+        /* Check returned size - allow for errors due to rounding & font realization. */
 	ok((abs(S(psize).Lo - lo_size) < 10000) && S(psize).Hi == hi_size,
 		"%s: IFont_get_Size: Lo=%d, Hi=%d; expected Lo=%d, Hi=%d.\n",
 		test_name, S(psize).Lo, S(psize).Hi, lo_size, hi_size);
@@ -112,7 +112,7 @@ static void test_ifont_size(LONG lo_size, LONG hi_size,
 	rtnval = GetObject (hfont, sizeof(LOGFONT), &lf);
         ok(rtnval > 0, "GetObject(hfont) failed\n");
 
-        /* Since font scaling may encounter rouding errors, allow 1 pixel deviation. */
+        /* Since font scaling may encounter rounding errors, allow 1 pixel deviation. */
 	ok(abs(lf.lfHeight - hfont_height) <= 1,
 		"%s: hFont has lf.lfHeight=%d, expected %d.\n",
 		test_name, lf.lfHeight, hfont_height);
