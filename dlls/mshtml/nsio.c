@@ -889,8 +889,14 @@ static void start_binding_proc(task_t *_task)
     start_binding_task_t *task = (start_binding_task_t*)_task;
 
     start_binding(NULL, task->doc, (BSCallback*)task->bscallback, NULL);
+}
 
-    IUnknown_Release((IUnknown*)task->bscallback);
+static void start_binding_task_destr(task_t *_task)
+{
+    start_binding_task_t *task = (start_binding_task_t*)_task;
+
+    IBindStatusCallback_Release(&task->bscallback->bsc.IBindStatusCallback_iface);
+    heap_free(task);
 }
 
 static nsresult async_open(nsChannel *This, HTMLWindow *window, BOOL is_doc_channel, nsIStreamListener *listener,
@@ -925,7 +931,7 @@ static nsresult async_open(nsChannel *This, HTMLWindow *window, BOOL is_doc_chan
 
         task->doc = window->doc;
         task->bscallback = bscallback;
-        push_task(&task->header, start_binding_proc, NULL, window->doc->basedoc.task_magic);
+        push_task(&task->header, start_binding_proc, start_binding_task_destr, window->doc->basedoc.task_magic);
     }
 
     return NS_OK;
