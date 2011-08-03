@@ -340,7 +340,7 @@ extern void DC_UpdateXforms( DC * dc ) DECLSPEC_HIDDEN;
 extern int bitmap_info_size( const BITMAPINFO * info, WORD coloruse ) DECLSPEC_HIDDEN;
 extern int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
                               LONG *height, WORD *planes, WORD *bpp, DWORD *compr, DWORD *size ) DECLSPEC_HIDDEN;
-extern DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, const RECT *src_rect,
+extern DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitblt_coords *src,
                                  const BITMAPINFO *dst_info, void *dst_bits ) DECLSPEC_HIDDEN;
 
 

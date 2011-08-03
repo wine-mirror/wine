@@ -615,7 +615,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
         ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ));
         if (ptr)
         {
-            err = convert_bitmapinfo( src_info, src_bits.ptr, &src.visrect, dst_info, ptr );
+            err = convert_bitmapinfo( src_info, src_bits.ptr, &src, dst_info, ptr );
             {
                 if (src_bits.free) src_bits.free( &src_bits );
                 src_bits.ptr = ptr;
@@ -1134,7 +1134,7 @@ INT WINAPI GetDIBits(
         else
             dst_info->bmiHeader.biHeight = -src.height;
 
-        convert_bitmapinfo( src_info, src_bits.ptr, &src.visrect, dst_info, bits );
+        convert_bitmapinfo( src_info, src_bits.ptr, &src, dst_info, bits );
         if (src_bits.free) src_bits.free( &src_bits );
     }
     else lines = abs(height);

@@ -212,7 +212,7 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
         dst_info->bmiHeader.biWidth = src->visrect.right - src->visrect.left;
         if ((ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ))))
         {
-            err = convert_bitmapinfo( src_info, bits.ptr, &src->visrect, dst_info, ptr );
+            err = convert_bitmapinfo( src_info, bits.ptr, src, dst_info, ptr );
             if (bits.free) bits.free( &bits );
             bits.ptr = ptr;
             bits.is_copy = TRUE;
