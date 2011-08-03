@@ -1340,6 +1340,31 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
         memset(&src_rect, 0, sizeof(src_rect));
     }
 
+    if (!fx || !(fx->dwDDFX))
+        flags &= ~WINEDDBLT_DDFX;
+
+    if (flags & WINEDDBLT_WAIT)
+        flags &= ~WINEDDBLT_WAIT;
+
+    if (flags & WINEDDBLT_ASYNC)
+    {
+        static unsigned int once;
+
+        if (!once++)
+            FIXME("Can't handle WINEDDBLT_ASYNC flag.\n");
+        flags &= ~WINEDDBLT_ASYNC;
+    }
+
+    /* WINEDDBLT_DONOTWAIT appeared in DX7. */
+    if (flags & WINEDDBLT_DONOTWAIT)
+    {
+        static unsigned int once;
+
+        if (!once++)
+            FIXME("Can't handle WINEDDBLT_DONOTWAIT flag.\n");
+        flags &= ~WINEDDBLT_DONOTWAIT;
+    }
+
     if (!device->d3d_initialized)
     {
         WARN("D3D not initialized, using fallback.\n");
@@ -6594,8 +6619,6 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
             wined3d_surface_map(dst_surface, &dlock, NULL, 0);
     }
 
-    if (!fx || !(fx->dwDDFX)) flags &= ~WINEDDBLT_DDFX;
-
     if (src_format->flags & dst_format->flags & WINED3DFMT_FLAG_FOURCC)
     {
         if (!dst_rect || src_surface == dst_surface)
@@ -6616,28 +6639,6 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
         dbuf = dlock.pBits;
     else
         dbuf = (BYTE*)dlock.pBits+(xdst.top*dlock.Pitch)+(xdst.left*bpp);
-
-    if (flags & WINEDDBLT_WAIT)
-    {
-        flags &= ~WINEDDBLT_WAIT;
-    }
-    if (flags & WINEDDBLT_ASYNC)
-    {
-        static BOOL displayed = FALSE;
-        if (!displayed)
-            FIXME("Can't handle WINEDDBLT_ASYNC flag right now.\n");
-        displayed = TRUE;
-        flags &= ~WINEDDBLT_ASYNC;
-    }
-    if (flags & WINEDDBLT_DONOTWAIT)
-    {
-        /* WINEDDBLT_DONOTWAIT appeared in DX7 */
-        static BOOL displayed = FALSE;
-        if (!displayed)
-            FIXME("Can't handle WINEDDBLT_DONOTWAIT flag right now.\n");
-        displayed = TRUE;
-        flags &= ~WINEDDBLT_DONOTWAIT;
-    }
 
     /* First, all the 'source-less' blits */
     if (flags & WINEDDBLT_COLORFILL)
