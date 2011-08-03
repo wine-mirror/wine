@@ -1539,9 +1539,6 @@ HEADER_NCDestroy (HEADER_INFO *infoPtr)
 
     Free(infoPtr->order);
 
-    if (infoPtr->himl)
-      ImageList_Destroy (infoPtr->himl);
-
     SetWindowLongPtrW (infoPtr->hwndSelf, 0, 0);
     Free (infoPtr);
 

@@ -980,7 +980,6 @@ static void test_hdm_imageMessages(HWND hParent)
     DestroyWindow(hChild);
 
     wasValid = ImageList_Destroy(hImageList);
-todo_wine
     ok(wasValid, "Header must not free image list at destruction!\n");
 }
 
