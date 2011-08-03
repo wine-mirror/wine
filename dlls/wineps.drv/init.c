@@ -884,7 +884,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pSelectPalette */
     PSDRV_SelectPen,                    /* pSelectPen */
     NULL,                               /* pSetArcDirection */
-    NULL,                               /* pSetBitmapBits */
     PSDRV_SetBkColor,                   /* pSetBkColor */
     NULL,                               /* pSetBkMode */
     PSDRV_SetDCBrushColor,              /* pSetDCBrushColor */

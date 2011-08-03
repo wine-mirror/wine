@@ -742,7 +742,6 @@ const DC_FUNCTIONS null_driver =
     nulldrv_SelectPalette,              /* pSelectPalette */
     nulldrv_SelectPen,                  /* pSelectPen */
     nulldrv_SetArcDirection,            /* pSetArcDirection */
-    nulldrv_SetBitmapBits,              /* pSetBitmapBits */
     nulldrv_SetBkColor,                 /* pSetBkColor */
     nulldrv_SetBkMode,                  /* pSetBkMode */
     nulldrv_SetDCBrushColor,            /* pSetDCBrushColor */

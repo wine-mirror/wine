@@ -821,7 +821,6 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pSelectPalette */
     dibdrv_SelectPen,                   /* pSelectPen */
     NULL,                               /* pSetArcDirection */
-    NULL,                               /* pSetBitmapBits */
     dibdrv_SetBkColor,                  /* pSetBkColor */
     dibdrv_SetBkMode,                   /* pSetBkMode */
     dibdrv_SetDCBrushColor,             /* pSetDCBrushColor */

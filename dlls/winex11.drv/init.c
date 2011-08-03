@@ -527,7 +527,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pSelectPalette */
     X11DRV_SelectPen,                   /* pSelectPen */
     NULL,                               /* pSetArcDirection */
-    X11DRV_SetBitmapBits,               /* pSetBitmapBits */
     X11DRV_SetBkColor,                  /* pSetBkColor */
     NULL,                               /* pSetBkMode */
     X11DRV_SetDCBrushColor,             /* pSetDCBrushColor */
