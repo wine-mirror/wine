@@ -61,14 +61,17 @@ static inline void small_pause(void)
 
 #ifdef __linux__
 
+static int wait_op = 128; /*FUTEX_WAIT|FUTEX_PRIVATE_FLAG*/
+static int wake_op = 129; /*FUTEX_WAKE|FUTEX_PRIVATE_FLAG*/
+
 static inline int futex_wait( int *addr, int val, struct timespec *timeout )
 {
-    return syscall( SYS_futex, addr, 0/*FUTEX_WAIT*/, val, timeout, 0, 0 );
+    return syscall( SYS_futex, addr, wait_op, val, timeout, 0, 0 );
 }
 
 static inline int futex_wake( int *addr, int val )
 {
-    return syscall( SYS_futex, addr, 1/*FUTEX_WAKE*/, val, NULL, 0, 0 );
+    return syscall( SYS_futex, addr, wake_op, val, NULL, 0, 0 );
 }
 
 static inline int use_futexes(void)
@@ -78,6 +81,12 @@ static inline int use_futexes(void)
     if (supported == -1)
     {
         futex_wait( &supported, 10, NULL );
+        if (errno == ENOSYS)
+        {
+            wait_op = 0; /*FUTEX_WAIT*/
+            wake_op = 1; /*FUTEX_WAKE*/
+            futex_wait( &supported, 10, NULL );
+        }
         supported = (errno != ENOSYS);
     }
     return supported;
