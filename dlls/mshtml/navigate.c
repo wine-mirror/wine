@@ -1224,7 +1224,14 @@ static void stop_request_proc(task_t *_task)
     list_remove(&task->bsc->bsc.entry);
     list_init(&task->bsc->bsc.entry);
     on_stop_nsrequest(task->bsc, S_OK);
+}
+
+static void stop_request_task_destr(task_t *_task)
+{
+    stop_request_task_t *task = (stop_request_task_t*)_task;
+
     IBindStatusCallback_Release(&task->bsc->bsc.IBindStatusCallback_iface);
+    heap_free(task);
 }
 
 static HRESULT async_stop_request(nsChannelBSC *This)
@@ -1242,7 +1249,7 @@ static HRESULT async_stop_request(nsChannelBSC *This)
 
     IBindStatusCallback_AddRef(&This->bsc.IBindStatusCallback_iface);
     task->bsc = This;
-    push_task(&task->header, stop_request_proc, NULL, This->bsc.doc->basedoc.doc_obj->basedoc.task_magic);
+    push_task(&task->header, stop_request_proc, stop_request_task_destr, This->bsc.doc->basedoc.doc_obj->basedoc.task_magic);
     return S_OK;
 }
 
