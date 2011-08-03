@@ -28,7 +28,6 @@
 #include "ole2.h"
 #include "activscp.h"
 #include "activdbg.h"
-#include "objsafe.h"
 
 #include "wine/debug.h"
 

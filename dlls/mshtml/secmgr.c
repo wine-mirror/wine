@@ -27,7 +27,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
-#include "objsafe.h"
 #include "activscp.h"
 
 #include "wine/debug.h"

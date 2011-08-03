@@ -36,7 +36,6 @@
 #include "rpcproxy.h"
 #include "shlguid.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #define INIT_GUID

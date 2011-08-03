@@ -29,7 +29,6 @@
 #include "ole2.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 #include "mshtml_private.h"
 
