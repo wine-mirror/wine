@@ -233,7 +233,7 @@ static void _dump_EnumDevices_dwFlags(DWORD dwFlags) {
     TRACE("\n");
 }
 
-void _dump_diactionformatA(LPDIACTIONFORMATA lpdiActionFormat) {
+static void _dump_diactionformatA(LPDIACTIONFORMATA lpdiActionFormat) {
     unsigned int i;
 
     FIXME("diaf.dwSize = %d\n", lpdiActionFormat->dwSize);
