@@ -29,7 +29,6 @@
 #include "winreg.h"
 #include "winerror.h"
 
-#include "initguid.h"
 #include "shlobj.h"
 #include "shobjidl.h"
 #include "shlguid.h"
@@ -180,20 +179,6 @@ static void _check_string_transform(unsigned line, IUniformResourceLocatorA *url
     }
 }
 
-static BOOL check_ie(void)
-{
-    IHTMLDocument5 *doc;
-    HRESULT hres;
-
-    hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
-                            &IID_IHTMLDocument5, (void**)&doc);
-    if(FAILED(hres))
-        return FALSE;
-
-    IHTMLDocument5_Release(doc);
-    return TRUE;
-}
-
 static void test_ReadAndWriteProperties(void)
 {
     int iconIndex = 7;
@@ -217,6 +202,7 @@ static void test_ReadAndWriteProperties(void)
     lstrcatW(fileNameW, shortcutW);
 
     hr = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUniformResourceLocatorA, (void**)&urlA);
+    ok(hr == S_OK, "Could not create CLSID_InternetShortcut instance: %08x\n", hr);
     if (hr == S_OK)
     {
         IPersistFile *pf;
@@ -257,10 +243,9 @@ static void test_ReadAndWriteProperties(void)
         urlA->lpVtbl->Release(urlA);
         IPropertySetStorage_Release(pPropSetStg);
     }
-    else
-        skip("could not create a CLSID_InternetShortcut for property tests, hr=0x%x\n", hr);
 
     hr = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUniformResourceLocatorA, (void**)&urlAFromFile);
+    ok(hr == S_OK, "Could not create CLSID_InternetShortcut instance: %08x\n", hr);
     if (hr == S_OK)
     {
         IPropertySetStorage *pPropSetStg;
@@ -306,8 +291,6 @@ static void test_ReadAndWriteProperties(void)
         urlAFromFile->lpVtbl->Release(urlAFromFile);
         DeleteFileW(fileNameW);
     }
-    else
-        skip("could not create a CLSID_InternetShortcut for property tests, hr=0x%x\n", hr);
 }
 
 static void test_NullURLs(void)
@@ -409,10 +392,9 @@ static void test_InternetShortcut(void)
     HRESULT hres;
 
     hres = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUniformResourceLocatorA, (void**)&url);
-    if(FAILED(hres)) {
-        win_skip("Could not create CLSID_InternetShortcut instance: %08x\n", hres);
+    ok(hres == S_OK, "Could not create CLSID_InternetShortcut instance: %08x\n", hres);
+    if(FAILED(hres))
         return;
-    }
 
     test_Aggregability();
     test_QueryInterface();
@@ -426,10 +408,7 @@ START_TEST(intshcut)
 {
     OleInitialize(NULL);
 
-    if(check_ie())
-        test_InternetShortcut();
-    else
-        win_skip("Too old IE\n");
+    test_InternetShortcut();
 
     OleUninitialize();
 }

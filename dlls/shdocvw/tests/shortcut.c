@@ -40,6 +40,7 @@
 #include "winbase.h"
 #include "winreg.h"
 
+#include "initguid.h"
 #include "shlobj.h"
 #include "shobjidl.h"
 #include "shlguid.h"
