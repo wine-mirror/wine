@@ -4493,7 +4493,7 @@ static void test_SHCreateDefaultContextMenu(void)
         {'\\','t','e','s','t','d','i','r','\\','t','e','s','t','1','.','t','x','t',0};
     if(!pSHCreateDefaultContextMenu)
     {
-        todo_wine win_skip("SHCreateDefaultContextMenu missing.\n");
+        win_skip("SHCreateDefaultContextMenu missing.\n");
         return;
     }
 

@@ -257,6 +257,7 @@
  688 stdcall SHPropStgReadMultiple(ptr long long ptr ptr)
  689 stdcall SHPropStgWriteMultiple(ptr ptr long ptr ptr long)
 
+ 701 stdcall CDefFolderMenu_Create2(ptr ptr long ptr ptr ptr long ptr ptr)
  704 stdcall -noname GUIDFromStringW(wstr ptr)
 
  714 stdcall @(ptr) SHELL32_714 # PathIsTemporaryW
@@ -333,6 +334,7 @@
 @ stdcall SHBrowseForFolderW(ptr)
 @ stdcall SHChangeNotify (long long ptr ptr)
 @ stub SHChangeNotifySuspendResume
+@ stdcall SHCreateDefaultContextMenu(ptr ptr ptr)
 @ stdcall SHCreateDirectoryExA(long str ptr)
 @ stdcall SHCreateDirectoryExW(long wstr ptr)
 @ stdcall SHCreateItemFromIDList(ptr ptr ptr)
