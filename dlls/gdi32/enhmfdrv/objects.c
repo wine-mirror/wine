@@ -105,36 +105,6 @@ HBITMAP EMFDRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
 }
 
 
-/* Internal helper for EMFDRV_CreateBrushIndirect():
- * Change the padding of a bitmap from 16 (BMP) to 32 (DIB) bits.
- */
-static inline void EMFDRV_PadTo32(LPBYTE lpRows, int height, int width)
-{
-    int bytes16 = 2 * ((width + 15) / 16);
-    int bytes32 = 4 * ((width + 31) / 32);
-    LPBYTE lpSrc, lpDst;
-    int i;
-
-    if (!height)
-        return;
-
-    height = abs(height) - 1;
-    lpSrc = lpRows + height * bytes16;
-    lpDst = lpRows + height * bytes32;
-
-    /* Note that we work backwards so we can re-pad in place */
-    while (height >= 0)
-    {
-        for (i = bytes32; i > bytes16; i--)
-            lpDst[i - 1] = 0; /* Zero the padding bytes */
-        for (; i > 0; i--)
-            lpDst[i - 1] = lpSrc[i - 1]; /* Move image bytes into alignment */
-        lpSrc -= bytes16;
-        lpDst -= bytes32;
-        height--;
-    }
-}
-
 /***********************************************************************
  *           EMFDRV_CreateBrushIndirect
  */
@@ -197,46 +167,36 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
     case BS_PATTERN:
       {
         EMRCREATEDIBPATTERNBRUSHPT *emr;
-        BITMAPINFOHEADER *info;
-        BITMAP bm;
-        DWORD bmSize, biSize, size;
+        char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+        BITMAPINFO *dst_info, *src_info = (BITMAPINFO *)buffer;
+        struct gdi_image_bits bits;
+        DWORD size;
 
-        GetObjectA((HANDLE)logbrush.lbHatch, sizeof(bm), &bm);
-
-        if (bm.bmBitsPixel != 1 || bm.bmPlanes != 1)
+        if (!get_bitmap_image( (HANDLE)logbrush.lbHatch, src_info, &bits )) break;
+        if (src_info->bmiHeader.biBitCount != 1)
         {
             FIXME("Trying to create a color pattern brush\n");
+            if (bits.free) bits.free( &bits );
             break;
         }
 
-        /* BMP will be aligned to 32 bits, not 16 */
-        bmSize = get_dib_stride(bm.bmWidth, bm.bmBitsPixel) * bm.bmHeight;
-
-        biSize = sizeof(BITMAPINFOHEADER);
         /* FIXME: There is an extra DWORD written by native before the BMI.
          *        Not sure what its meant to contain.
          */
-        size = sizeof(EMRCREATEDIBPATTERNBRUSHPT) + biSize + bmSize + sizeof(DWORD);
+        size = sizeof(EMRCREATEDIBPATTERNBRUSHPT) + sizeof(DWORD) +
+            sizeof(BITMAPINFOHEADER) + src_info->bmiHeader.biSizeImage;
 
         emr = HeapAlloc( GetProcessHeap(), 0, size );
         if(!emr)
-          break;
+        {
+            if (bits.free) bits.free( &bits );
+            break;
+        }
 
-        info = (BITMAPINFOHEADER *)((LPBYTE)emr +
-                sizeof(EMRCREATEDIBPATTERNBRUSHPT) + sizeof(DWORD));
-        info->biSize = sizeof(BITMAPINFOHEADER);
-        info->biWidth = bm.bmWidth;
-        info->biHeight = bm.bmHeight;
-        info->biPlanes = bm.bmPlanes;
-        info->biBitCount = bm.bmBitsPixel;
-        info->biSizeImage = bmSize;
-        GetBitmapBits((HANDLE)logbrush.lbHatch,
-                      bm.bmHeight * get_bitmap_stride(bm.bmWidth, bm.bmBitsPixel),
-                      (LPBYTE)info + sizeof(BITMAPINFOHEADER));
-
-        /* Change the padding to be DIB compatible if needed */
-        if (bm.bmWidth & 31)
-            EMFDRV_PadTo32((LPBYTE)info + sizeof(BITMAPINFOHEADER), bm.bmWidth, bm.bmHeight);
+        dst_info = (BITMAPINFO *)((LPBYTE)(emr + 1) + sizeof(DWORD));
+        dst_info->bmiHeader = src_info->bmiHeader;
+        memcpy( &dst_info->bmiHeader + 1, bits.ptr, dst_info->bmiHeader.biSizeImage );
+        if (bits.free) bits.free( &bits );
 
         emr->emr.iType = EMR_CREATEMONOBRUSH;
         emr->emr.nSize = size;
@@ -249,10 +209,10 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
          * FIXME: It may be that the DIB functions themselves accept this value.
          */
         emr->iUsage = DIB_PAL_MONO;
-        emr->offBmi = (LPBYTE)info - (LPBYTE)emr;
-        emr->cbBmi = biSize;
-        emr->offBits = emr->offBmi + biSize;
-        emr->cbBits = bmSize;
+        emr->offBmi = (LPBYTE)dst_info - (LPBYTE)emr;
+        emr->cbBmi = sizeof( BITMAPINFOHEADER );
+        emr->offBits = emr->offBmi + emr->cbBmi;
+        emr->cbBits = dst_info->bmiHeader.biSizeImage;
 
         if(!EMFDRV_WriteRecord( dev, &emr->emr ))
             index = 0;
