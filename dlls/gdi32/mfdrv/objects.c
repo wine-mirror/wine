@@ -142,69 +142,6 @@ HBITMAP MFDRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
     return 0;
 }
 
-/***********************************************************************
- * Internal helper for MFDRV_CreateBrushIndirect():
- * Change the padding of a bitmap from 16 (BMP) to 32 (DIB) bits.
- */
-static inline void MFDRV_PadTo32(LPBYTE lpRows, int height, int width)
-{
-    int bytes16 = 2 * ((width + 15) / 16);
-    int bytes32 = 4 * ((width + 31) / 32);
-    LPBYTE lpSrc, lpDst;
-    int i;
-
-    if (!height)
-        return;
-
-    height = abs(height) - 1;
-    lpSrc = lpRows + height * bytes16;
-    lpDst = lpRows + height * bytes32;
-
-    /* Note that we work backwards so we can re-pad in place */
-    while (height >= 0)
-    {
-        for (i = bytes32; i > bytes16; i--)
-            lpDst[i - 1] = 0; /* Zero the padding bytes */
-        for (; i > 0; i--)
-            lpDst[i - 1] = lpSrc[i - 1]; /* Move image bytes into alignment */
-        lpSrc -= bytes16;
-        lpDst -= bytes32;
-        height--;
-    }
-}
-
-/***********************************************************************
- * Internal helper for MFDRV_CreateBrushIndirect():
- * Reverse order of bitmap rows in going from BMP to DIB.
- */
-static inline void MFDRV_Reverse(LPBYTE lpRows, int height, int width)
-{
-    int bytes = 4 * ((width + 31) / 32);
-    LPBYTE lpSrc, lpDst;
-    BYTE temp;
-    int i;
-
-    if (!height)
-        return;
-
-    lpSrc = lpRows;
-    lpDst = lpRows + (height-1) * bytes;
-    height = height/2;
-
-    while (height > 0)
-    {
-        for (i = 0; i < bytes; i++)
-        {
-            temp = lpDst[i];
-            lpDst[i] = lpSrc[i];
-            lpSrc[i] = temp;
-        }
-        lpSrc += bytes;
-        lpDst -= bytes;
-        height--;
-    }
-}
-
 /******************************************************************
  *         MFDRV_CreateBrushIndirect
  */
@@ -238,59 +175,57 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
 	}
     case BS_PATTERN:
         {
-	    BITMAP bm;
-	    BITMAPINFO *info;
-	    DWORD bmSize;
+            char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+            BITMAPINFO *dst_info, *src_info = (BITMAPINFO *)buffer;
+            struct gdi_image_bits bits;
 	    COLORREF cref;
 
-	    GetObjectA((HANDLE)logbrush.lbHatch, sizeof(bm), &bm);
-	    if(bm.bmBitsPixel != 1 || bm.bmPlanes != 1) {
+            if (!get_bitmap_image( (HANDLE)logbrush.lbHatch, src_info, &bits )) goto done;
+	    if (src_info->bmiHeader.biBitCount != 1)
+            {
 	        FIXME("Trying to store a colour pattern brush\n");
+                if (bits.free) bits.free( &bits );
 		goto done;
 	    }
 
-	    bmSize = get_dib_stride( bm.bmWidth, bm.bmBitsPixel) * bm.bmHeight;
+	    size = FIELD_OFFSET( METARECORD, rdParm[2] ) +
+                FIELD_OFFSET( BITMAPINFO, bmiColors[2] ) + src_info->bmiHeader.biSizeImage;
 
-	    size = sizeof(METARECORD) + sizeof(WORD) + sizeof(BITMAPINFO) +
-	      sizeof(RGBQUAD) + bmSize;
-
-	    mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-	    if(!mr) goto done;
+            if (!(mr = HeapAlloc( GetProcessHeap(), 0, size )))
+            {
+                if (bits.free) bits.free( &bits );
+                goto done;
+            }
 	    mr->rdFunction = META_DIBCREATEPATTERNBRUSH;
 	    mr->rdSize = size / 2;
 	    mr->rdParm[0] = BS_PATTERN;
 	    mr->rdParm[1] = DIB_RGB_COLORS;
-	    info = (BITMAPINFO *)(mr->rdParm + 2);
-
-	    info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	    info->bmiHeader.biWidth = bm.bmWidth;
-	    info->bmiHeader.biHeight = bm.bmHeight;
-	    info->bmiHeader.biPlanes = 1;
-	    info->bmiHeader.biBitCount = 1;
-	    info->bmiHeader.biSizeImage = bmSize;
-
-	    GetBitmapBits((HANDLE)logbrush.lbHatch,
-		      bm.bmHeight * get_bitmap_stride(bm.bmWidth, bm.bmBitsPixel),
-		      (LPBYTE)info + sizeof(BITMAPINFO) + sizeof(RGBQUAD));
-
-	    /* Change the padding to be DIB compatible if needed */
-	    if(bm.bmWidth & 31)
-	        MFDRV_PadTo32((LPBYTE)info + sizeof(BITMAPINFO) + sizeof(RGBQUAD),
-		      bm.bmWidth, bm.bmHeight);
-	    /* BMP and DIB have opposite row order conventions */
-            MFDRV_Reverse((LPBYTE)info + sizeof(BITMAPINFO) + sizeof(RGBQUAD),
-		      bm.bmWidth, bm.bmHeight);
-
+            dst_info = (BITMAPINFO *)(mr->rdParm + 2);
+            dst_info->bmiHeader = src_info->bmiHeader;
 	    cref = GetTextColor( dev->hdc );
-	    info->bmiColors[0].rgbRed = GetRValue(cref);
-	    info->bmiColors[0].rgbGreen = GetGValue(cref);
-	    info->bmiColors[0].rgbBlue = GetBValue(cref);
-	    info->bmiColors[0].rgbReserved = 0;
+            dst_info->bmiColors[0].rgbRed = GetRValue(cref);
+            dst_info->bmiColors[0].rgbGreen = GetGValue(cref);
+            dst_info->bmiColors[0].rgbBlue = GetBValue(cref);
+            dst_info->bmiColors[0].rgbReserved = 0;
 	    cref = GetBkColor( dev->hdc );
-	    info->bmiColors[1].rgbRed = GetRValue(cref);
-	    info->bmiColors[1].rgbGreen = GetGValue(cref);
-	    info->bmiColors[1].rgbBlue = GetBValue(cref);
-	    info->bmiColors[1].rgbReserved = 0;
+            dst_info->bmiColors[1].rgbRed = GetRValue(cref);
+            dst_info->bmiColors[1].rgbGreen = GetGValue(cref);
+            dst_info->bmiColors[1].rgbBlue = GetBValue(cref);
+            dst_info->bmiColors[1].rgbReserved = 0;
+
+            /* always return a bottom-up DIB */
+            if (dst_info->bmiHeader.biHeight < 0)
+            {
+                int i, width_bytes = get_dib_stride( dst_info->bmiHeader.biWidth,
+                                                     dst_info->bmiHeader.biBitCount );
+                char *dst_ptr = (char *)&dst_info->bmiColors[2];
+                dst_info->bmiHeader.biHeight = -dst_info->bmiHeader.biHeight;
+                dst_ptr += (dst_info->bmiHeader.biHeight - 1) * width_bytes;
+                for (i = 0; i < dst_info->bmiHeader.biHeight; i++, dst_ptr -= width_bytes)
+                    memcpy( dst_ptr, (char *)bits.ptr + i * width_bytes, width_bytes );
+            }
+            else memcpy( &dst_info->bmiColors[2], bits.ptr, dst_info->bmiHeader.biSizeImage );
+            if (bits.free) bits.free( &bits );
 	    break;
 	}
 

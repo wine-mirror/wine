@@ -414,6 +414,26 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
 }
 
 
+/* convenience wrapper for GetImage to retrieve the full contents of a bitmap */
+BOOL get_bitmap_image( HBITMAP hbitmap, BITMAPINFO *info, struct gdi_image_bits *bits )
+{
+    struct bitblt_coords src;
+    BOOL ret = FALSE;
+    BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
+
+    if (bmp)
+    {
+        src.visrect.left   = src.x = 0;
+        src.visrect.top    = src.y = 0;
+        src.visrect.right  = src.width = bmp->bitmap.bmWidth;
+        src.visrect.bottom = src.height = bmp->bitmap.bmHeight;
+        ret = !bmp->funcs->pGetImage( NULL, hbitmap, info, bits, &src );
+        GDI_ReleaseObj( hbitmap );
+    }
+    return ret;
+}
+
+
 /***********************************************************************
  * GetBitmapBits [GDI32.@]
  *
