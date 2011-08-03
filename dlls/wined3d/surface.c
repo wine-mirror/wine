@@ -5500,10 +5500,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
                         src_surface->resource.format,
                         dst_rect, dst_surface->resource.usage, dst_surface->resource.pool,
                         dst_surface->resource.format))
-        {
-            return arbfp_blit_surface(device, src_surface, src_rect, dst_surface, dst_rect,
-                    WINED3D_BLIT_OP_COLOR_BLIT, Filter);
-        }
+            return arbfp_blit_surface(device, Filter, src_surface, src_rect, dst_surface, dst_rect);
 
         if (!device->blitter->blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
                 src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,

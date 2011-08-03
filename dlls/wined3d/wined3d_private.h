@@ -1218,9 +1218,9 @@ const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *g
         DECLSPEC_HIDDEN;
 
 /* Temporary blit_shader helper functions */
-HRESULT arbfp_blit_surface(struct wined3d_device *device, struct wined3d_surface *src_surface,
-        const RECT *src_rect, struct wined3d_surface *dst_surface, const RECT *dst_rect_in,
-        enum wined3d_blit_op blit_op, DWORD Filter) DECLSPEC_HIDDEN;
+HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
+        struct wined3d_surface *src_surface, const RECT *src_rect,
+        struct wined3d_surface *dst_surface, const RECT *dst_rect) DECLSPEC_HIDDEN;
 
 struct wined3d_context *context_acquire(struct wined3d_device *device, struct wined3d_surface *target) DECLSPEC_HIDDEN;
 void context_alloc_event_query(struct wined3d_context *context,

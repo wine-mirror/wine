@@ -7208,8 +7208,9 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info, enum win
     }
 }
 
-HRESULT arbfp_blit_surface(struct wined3d_device *device, struct wined3d_surface *src_surface, const RECT *src_rect,
-        struct wined3d_surface *dst_surface, const RECT *dst_rect_in, enum wined3d_blit_op blit_op, DWORD Filter)
+HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
+        struct wined3d_surface *src_surface, const RECT *src_rect,
+        struct wined3d_surface *dst_surface, const RECT *dst_rect_in)
 {
     struct wined3d_context *context;
     RECT dst_rect = *dst_rect_in;
@@ -7229,7 +7230,7 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, struct wined3d_surface
     ENTER_GL();
 
     /* Draw a textured quad */
-    draw_textured_quad(src_surface, src_rect, &dst_rect, Filter);
+    draw_textured_quad(src_surface, src_rect, &dst_rect, filter);
 
     LEAVE_GL();
 
