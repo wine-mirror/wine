@@ -36,7 +36,7 @@
 #define MAX_NAME_LEN 32
 #define MAX_ARRAY_DIM 4
 #define MAX_MEMBERS 50
-#define MAX_CHILDS 100
+#define MAX_CHILDREN 100
 #define MAX_TEMPLATES 200
 #define MAX_OBJECTS 500
 #define MAX_SUBOBJECTS 2000
@@ -56,8 +56,8 @@ typedef struct {
     GUID class_id;
     BOOL open;
     BOOL binary;
-    ULONG nb_childs;
-    char childs[MAX_CHILDS][MAX_NAME_LEN];
+    ULONG nb_children;
+    char children[MAX_CHILDREN][MAX_NAME_LEN];
     ULONG nb_members;
     member members[MAX_MEMBERS];
 } xtemplate;
@@ -79,9 +79,9 @@ struct _xobject {
    DWORD size;
    ULONG nb_members;
    xobject_member members[MAX_MEMBERS];
-   ULONG nb_childs;
+   ULONG nb_children;
    ULONG nb_subobjects;
-   struct _xobject * childs[MAX_CHILDS];
+   struct _xobject * children[MAX_CHILDREN];
    struct _xobject * root;
 };
 

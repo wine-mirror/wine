@@ -156,11 +156,11 @@ static void dump_template(xtemplate* templates_array, xtemplate* ptemplate)
   }
   if (ptemplate->open)
     DPRINTF("[...]\n");
-  else if (ptemplate->nb_childs)
+  else if (ptemplate->nb_children)
   {
-    DPRINTF("[%s", ptemplate->childs[0]);
-    for (j = 1; j < ptemplate->nb_childs; j++)
-      DPRINTF(",%s", ptemplate->childs[j]);
+    DPRINTF("[%s", ptemplate->children[0]);
+    for (j = 1; j < ptemplate->nb_children; j++)
+      DPRINTF(",%s", ptemplate->children[j]);
     DPRINTF("]\n");
   }
   DPRINTF("}\n");
@@ -909,10 +909,10 @@ static BOOL parse_template_option_info(parse_buffer * buf)
     {
       if (get_TOKEN(buf) != TOKEN_NAME)
         return FALSE;
-      strcpy(cur_template->childs[cur_template->nb_childs], (char*)buf->value);
+      strcpy(cur_template->children[cur_template->nb_children], (char*)buf->value);
       if (check_TOKEN(buf) == TOKEN_GUID)
         get_TOKEN(buf);
-      cur_template->nb_childs++;
+      cur_template->nb_children++;
       if (check_TOKEN(buf) != TOKEN_COMMA)
         break;
       get_TOKEN(buf);
@@ -1305,7 +1305,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
 
 static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional)
 {
-  buf->pxo->nb_childs = 0;
+  buf->pxo->nb_children = 0;
 
   if (!parse_object_members_list(buf))
     return FALSE;
@@ -1350,10 +1350,10 @@ _exit:
             return FALSE;
         }
 
-        buf->pxo->childs[buf->pxo->nb_childs] = &buf->pxo_tab[buf->pxo->root->nb_subobjects++];
-        buf->pxo->childs[buf->pxo->nb_childs]->ptarget = &(buf->pxo_globals[i])[j];
-        buf->pxo->childs[buf->pxo->nb_childs]->binary = FALSE;
-        buf->pxo->nb_childs++;
+        buf->pxo->children[buf->pxo->nb_children] = &buf->pxo_tab[buf->pxo->root->nb_subobjects++];
+        buf->pxo->children[buf->pxo->nb_children]->ptarget = &(buf->pxo_globals[i])[j];
+        buf->pxo->children[buf->pxo->nb_children]->binary = FALSE;
+        buf->pxo->nb_children++;
       }
       else if (check_TOKEN(buf) == TOKEN_NAME)
       {
@@ -1365,7 +1365,7 @@ _exit:
             return FALSE;
         }
 
-        buf->pxo = buf->pxo->childs[buf->pxo->nb_childs] = &buf->pxo_tab[buf->pxo->root->nb_subobjects++];
+        buf->pxo = buf->pxo->children[buf->pxo->nb_children] = &buf->pxo_tab[buf->pxo->root->nb_subobjects++];
 
         TRACE("Enter optional %s\n", (char*)buf->value);
         buf->level++;
@@ -1376,16 +1376,16 @@ _exit:
         }
         buf->level--;
         buf->pxo = pxo;
-        buf->pxo->nb_childs++;
+        buf->pxo->nb_children++;
       }
       else
         break;
     }
   }
 
-  if (buf->pxo->nb_childs > MAX_CHILDS)
+  if (buf->pxo->nb_children > MAX_CHILDREN)
   {
-    FIXME("Too many children %d\n", buf->pxo->nb_childs);
+    FIXME("Too many children %d\n", buf->pxo->nb_children);
     return FALSE;
   }
 

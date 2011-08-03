@@ -615,7 +615,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetNextObject(IDirectXFileData* iface
 
   TRACE("(%p/%p)->(%p)\n", This, iface, ppChildObj);
 
-  if (This->cur_enum_object >= This->pobj->nb_childs)
+  if (This->cur_enum_object >= This->pobj->nb_children)
     return DXFILEERR_NOMOREOBJECTS;
 
   if (This->from_ref && (This->level >= 1))
@@ -624,7 +624,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetNextObject(IDirectXFileData* iface
     return DXFILEERR_NOMOREOBJECTS;
   }
 
-  if (This->pobj->childs[This->cur_enum_object]->binary)
+  if (This->pobj->children[This->cur_enum_object]->binary)
   {
     IDirectXFileBinaryImpl *object;
 
@@ -634,7 +634,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetNextObject(IDirectXFileData* iface
 
     *ppChildObj = (LPDIRECTXFILEOBJECT)&object->IDirectXFileBinary_iface;
   }
-  else if (This->pobj->childs[This->cur_enum_object]->ptarget)
+  else if (This->pobj->children[This->cur_enum_object]->ptarget)
   {
     IDirectXFileDataReferenceImpl *object;
 
@@ -642,7 +642,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetNextObject(IDirectXFileData* iface
     if (FAILED(hr))
       return hr;
 
-    object->ptarget = This->pobj->childs[This->cur_enum_object++]->ptarget;
+    object->ptarget = This->pobj->children[This->cur_enum_object++]->ptarget;
 
     *ppChildObj = (LPDIRECTXFILEOBJECT)&object->IDirectXFileDataReference_iface;
   }
@@ -654,7 +654,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetNextObject(IDirectXFileData* iface
     if (FAILED(hr))
       return hr;
 
-    object->pobj = This->pobj->childs[This->cur_enum_object++];
+    object->pobj = This->pobj->children[This->cur_enum_object++];
     object->cur_enum_object = 0;
     object->from_ref = This->from_ref;
     object->level = This->level + 1;
