@@ -126,6 +126,81 @@ done:
     return ERROR_SUCCESS;
 }
 
+DWORD nulldrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info,
+                        const struct gdi_image_bits *bits, struct bitblt_coords *src,
+                        struct bitblt_coords *dst, DWORD rop )
+{
+    BITMAPOBJ *bmp;
+
+    if (!hbitmap) return ERROR_SUCCESS;
+    if (!(bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP ))) return ERROR_INVALID_HANDLE;
+
+    if (info->bmiHeader.biPlanes != 1) goto update_format;
+    if (info->bmiHeader.biBitCount != bmp->bitmap.bmBitsPixel) goto update_format;
+    /* FIXME: check color masks */
+
+    if (bits)
+    {
+        int i, width_bytes = get_dib_stride( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );
+        unsigned char *dst_bits, *src_bits;
+
+        if ((src->width != dst->width) || (src->height != dst->height))
+        {
+            GDI_ReleaseObj( hbitmap );
+            return ERROR_TRANSFORM_NOT_SUPPORTED;
+        }
+        if (src->visrect.left > 0 || src->visrect.right < bmp->bitmap.bmWidth ||
+            dst->visrect.left > 0 || dst->visrect.right < bmp->bitmap.bmWidth)
+        {
+            FIXME( "setting partial rows not supported\n" );
+            GDI_ReleaseObj( hbitmap );
+            return ERROR_NOT_SUPPORTED;
+        }
+        if (clip)
+        {
+            FIXME( "clip region not supported\n" );
+            GDI_ReleaseObj( hbitmap );
+            return ERROR_NOT_SUPPORTED;
+        }
+
+        if (!bmp->bitmap.bmBits &&
+            !(bmp->bitmap.bmBits = HeapAlloc( GetProcessHeap(), 0,
+                                              bmp->bitmap.bmHeight * bmp->bitmap.bmWidthBytes )))
+        {
+            GDI_ReleaseObj( hbitmap );
+            return ERROR_OUTOFMEMORY;
+        }
+        src_bits = bits->ptr;
+        if (info->bmiHeader.biHeight > 0)
+        {
+            src_bits += (info->bmiHeader.biHeight - 1 - src->visrect.top) * width_bytes;
+            width_bytes = -width_bytes;
+        }
+        else
+            src_bits += src->visrect.top * width_bytes;
+
+        dst_bits = (unsigned char *)bmp->bitmap.bmBits + dst->visrect.top * bmp->bitmap.bmWidthBytes;
+        if (width_bytes != bmp->bitmap.bmWidthBytes)
+        {
+            for (i = 0; i < dst->visrect.bottom - dst->visrect.top; i++)
+            {
+                memcpy( dst_bits, src_bits, min( abs(width_bytes), bmp->bitmap.bmWidthBytes ));
+                src_bits += width_bytes;
+                dst_bits += bmp->bitmap.bmWidthBytes;
+            }
+        }
+        else memcpy( dst_bits, src_bits, width_bytes * (dst->visrect.bottom - dst->visrect.top) );
+    }
+    GDI_ReleaseObj( hbitmap );
+    return ERROR_SUCCESS;
+
+update_format:
+    info->bmiHeader.biPlanes   = 1;
+    info->bmiHeader.biBitCount = bmp->bitmap.bmBitsPixel;
+    if (info->bmiHeader.biHeight > 0) info->bmiHeader.biHeight = -info->bmiHeader.biHeight;
+    return ERROR_BAD_FORMAT;
+}
+
 
 /******************************************************************************
  * CreateBitmap [GDI32.@]

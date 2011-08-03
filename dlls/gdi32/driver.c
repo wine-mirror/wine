@@ -421,13 +421,6 @@ static BOOL nulldrv_Polyline( PHYSDEV dev, const POINT *points, INT count )
     return TRUE;
 }
 
-static DWORD nulldrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info,
-                               const struct gdi_image_bits *bits, struct bitblt_coords *src,
-                               struct bitblt_coords *dst, DWORD rop )
-{
-    return ERROR_SUCCESS;
-}
-
 static UINT nulldrv_RealizeDefaultPalette( PHYSDEV dev )
 {
     return 0;
