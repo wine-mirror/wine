@@ -1679,17 +1679,33 @@ static ULONG WINAPI HTMLPrivateWindow_Release(IHTMLPrivateWindow *iface)
     return IHTMLWindow2_Release(&This->IHTMLWindow2_iface);
 }
 
-static void handle_javascript(HTMLWindow *window, const WCHAR *code)
+typedef struct {
+    task_t header;
+    HTMLWindow *window;
+    IUri *uri;
+} navigate_javascript_task_t;
+
+static void navigate_javascript_proc(task_t *_task)
 {
+    navigate_javascript_task_t *task = (navigate_javascript_task_t*)_task;
+    HTMLWindow *window = task->window;
     VARIANT v;
+    BSTR code;
     HRESULT hres;
 
     static const WCHAR jscriptW[] = {'j','s','c','r','i','p','t',0};
+
+    task->window->readystate = READYSTATE_COMPLETE;
+
+    hres = IUri_GetPath(task->uri, &code);
+    if(FAILED(hres))
+        return;
 
     set_download_state(window->doc_obj, 1);
 
     V_VT(&v) = VT_EMPTY;
     hres = exec_script(window, code, jscriptW, &v);
+    SysFreeString(code);
     if(SUCCEEDED(hres) && V_VT(&v) != VT_EMPTY) {
         FIXME("javascirpt URL returned %s\n", debugstr_variant(&v));
         VariantClear(&v);
@@ -1701,28 +1717,12 @@ static void handle_javascript(HTMLWindow *window, const WCHAR *code)
     set_download_state(window->doc_obj, 0);
 }
 
-typedef struct {
-    task_t header;
-    HTMLWindow *window;
-    IUri *uri;
-} navigate_javascript_task_t;
-
-static void navigate_javascript_proc(task_t *_task)
+static void navigate_javascript_task_destr(task_t *_task)
 {
     navigate_javascript_task_t *task = (navigate_javascript_task_t*)_task;
-    BSTR code;
-    HRESULT hres;
 
-    task->window->readystate = READYSTATE_COMPLETE;
-
-    hres = IUri_GetPath(task->uri, &code);
-    if(SUCCEEDED(hres)) {
-        handle_javascript(task->window, code);
-        SysFreeString(code);
-    }
-
-    IHTMLWindow2_Release(&task->window->IHTMLWindow2_iface);
     IUri_Release(task->uri);
+    heap_free(task);
 }
 
 typedef struct {
@@ -1868,10 +1868,9 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
             return E_OUTOFMEMORY;
         }
 
-        IHTMLWindow2_AddRef(&This->IHTMLWindow2_iface);
         task->window = This;
         task->uri = uri;
-        push_task(&task->header, navigate_javascript_proc, NULL, This->task_magic);
+        push_task(&task->header, navigate_javascript_proc, navigate_javascript_task_destr, This->task_magic);
 
         /* Why silently? */
         This->readystate = READYSTATE_COMPLETE;
