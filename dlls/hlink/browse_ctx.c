@@ -271,7 +271,7 @@ static HRESULT WINAPI IHlinkBC_Clone( IHlinkBrowseContext* iface,
 }
 
 static HRESULT WINAPI IHlinkBC_Close(IHlinkBrowseContext* iface,
-        DWORD reserverd)
+        DWORD reserved)
 {
     FIXME("\n");
     return E_NOTIMPL;
