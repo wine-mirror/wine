@@ -642,8 +642,8 @@
 @ stdcall SystemFunction041(ptr long long) # RtlDecryptMemory
 @ stdcall TraceEvent(int64 ptr)
 @ stub TraceEventInstance
-@ stub TraceMessage
-@ stub TraceMessageVa
+@ varargs TraceMessage(int64 long ptr long)
+@ stdcall TraceMessageVa(int64 long ptr long ptr)
 # @ stub TreeResetNamedSecurityInfoA
 @ stdcall TreeResetNamedSecurityInfoW(wstr long long ptr ptr ptr ptr long ptr long ptr)
 # @ stub TrusteeAccessToObjectA

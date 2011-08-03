@@ -884,3 +884,19 @@ ULONG WINAPI ProcessTrace( PTRACEHANDLE HandleArray, ULONG HandleCount, LPFILETI
     FIXME("%p %u %p %p: stub\n", HandleArray, HandleCount, StartTime, EndTime);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+ULONG TraceMessage( TRACEHANDLE SessionHandle, ULONG MessageFlags, LPGUID MessageGuid,
+                    USHORT MessageNumber, ...)
+{
+    FIXME("(%s %d %s %d) : stub\n", wine_dbgstr_longlong(SessionHandle), MessageFlags,
+                    debugstr_guid(MessageGuid), MessageNumber);
+    return ERROR_SUCCESS;
+}
+
+ULONG TraceMessageVa( TRACEHANDLE SessionHandle, ULONG MessageFlags, LPGUID MessageGuid,
+                    USHORT MessageNumber, __ms_va_list args)
+{
+    FIXME("(%s %d %s %d) : stub\n", wine_dbgstr_longlong(SessionHandle), MessageFlags,
+                    debugstr_guid(MessageGuid), MessageNumber);
+    return ERROR_SUCCESS;
+}
