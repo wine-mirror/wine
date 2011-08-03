@@ -995,13 +995,10 @@ static void test_typelibmarshal(void)
     ok_ole_success(hr, CoUnmarshalInterface);
     IStream_Release(pStream);
 
-    if (hr == S_OK)
-    {
-        hr = IKindaEnumWidget_Next(pKEW, &pWidget);
-        ok_ole_success(hr, IKindaEnumWidget_Next);
+    hr = IKindaEnumWidget_Next(pKEW, &pWidget);
+    ok_ole_success(hr, IKindaEnumWidget_Next);
 
-        IKindaEnumWidget_Release(pKEW);
-    }
+    IKindaEnumWidget_Release(pKEW);
 
     hr = IWidget_QueryInterface(pWidget, &IID_IDispatch, (void **)&pDispatch);
     ok_ole_success(hr, IWidget_QueryInterface);
@@ -1547,7 +1544,12 @@ START_TEST(tmarshal)
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = register_current_module_typelib();
-    ok_ole_success(hr, register_current_module_typelib);
+    if (FAILED(hr))
+    {
+        CoUninitialize();
+        win_skip("Registration of the test typelib failed, skipping tests\n");
+        return;
+    }
 
     test_typelibmarshal();
     test_DispCallFunc();
