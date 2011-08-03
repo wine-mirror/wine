@@ -141,7 +141,7 @@ typedef struct {
 #define EVENT_FORWARDBODY        0x0004
 #define EVENT_NODEHANDLER        0x0008
 #define EVENT_CANCELABLE         0x0010
-#define EVENT_SETONINIT          0x0020
+#define EVENT_HASDEFAULTHANDLERS 0x0020
 
 static const event_info_t event_info[] = {
     {beforeunloadW,      onbeforeunloadW,      EVENTT_NONE,   DISPID_EVMETH_ONBEFOREUNLOAD,
@@ -151,7 +151,7 @@ static const event_info_t event_info[] = {
     {changeW,            onchangeW,            EVENTT_HTML,   DISPID_EVMETH_ONCHANGE,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {clickW,             onclickW,             EVENTT_MOUSE,  DISPID_EVMETH_ONCLICK,
-        EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE|EVENT_SETONINIT},
+        EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE|EVENT_HASDEFAULTHANDLERS},
     {contextmenuW,       oncontextmenuW,       EVENTT_MOUSE,  DISPID_EVMETH_ONCONTEXTMENU,
         EVENT_BUBBLE|EVENT_CANCELABLE},
     {dblclickW,          ondblclickW,          EVENTT_MOUSE,  DISPID_EVMETH_ONDBLCLICK,
@@ -1062,7 +1062,7 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, nsIDOMNode
     if(event_obj)
         IHTMLEventObj_Release(&event_obj->IHTMLEventObj_iface);
 
-    if(!prevent_default) {
+    if(!prevent_default && (event_info[eid].flags & EVENT_HASDEFAULTHANDLERS)) {
         nsIDOMNode_AddRef(target);
         nsnode = target;
 
@@ -1382,7 +1382,7 @@ HRESULT doc_init_events(HTMLDocumentNode *doc)
     init_nsevents(doc);
 
     for(i=0; i < EVENTID_LAST; i++) {
-        if(event_info[i].flags & EVENT_SETONINIT) {
+        if(event_info[i].flags & EVENT_HASDEFAULTHANDLERS) {
             hres = ensure_nsevent_handler(doc, NULL, NULL, i);
             if(FAILED(hres))
                 return hres;
