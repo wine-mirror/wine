@@ -531,9 +531,8 @@ done:
 
     user_shared_data->NtProductType      = current_version->wProductType;
     user_shared_data->ProductTypeIsValid = TRUE;
-    user_shared_data->MajorNtVersion     = current_version->dwMajorVersion;
-    user_shared_data->MinorNtVersion     = current_version->dwMinorVersion;
-    user_shared_data->MinorNtVersion     = current_version->dwMinorVersion;
+    user_shared_data->NtMajorVersion     = current_version->dwMajorVersion;
+    user_shared_data->NtMinorVersion     = current_version->dwMinorVersion;
     user_shared_data->SuiteMask          = current_version->wSuiteMask;
 
     TRACE( "got %d.%d platform %d build %x name %s service pack %d.%d product %d\n",

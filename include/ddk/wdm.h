@@ -994,6 +994,13 @@ typedef enum _ALTERNATIVE_ARCHITECTURE_TYPE
    EndAlternatives
 } ALTERNATIVE_ARCHITECTURE_TYPE;
 
+#define NX_SUPPORT_POLICY_ALWAYSOFF     0
+#define NX_SUPPORT_POLICY_ALWAYSON      1
+#define NX_SUPPORT_POLICY_OPTIN         2
+#define NX_SUPPORT_POLICY_OPTOUT        3
+
+#define MAX_WOW64_SHARED_ENTRIES 16
+
 typedef struct _KUSER_SHARED_DATA {
     ULONG TickCountLowDeprecated;
     ULONG TickCountMultiplier;
@@ -1003,15 +1010,15 @@ typedef struct _KUSER_SHARED_DATA {
     USHORT ImageNumberLow;
     USHORT ImageNumberHigh;
     WCHAR NtSystemRoot[260];
-    ULONG MaxStckTraceDepth;
+    ULONG MaxStackTraceDepth;
     ULONG CryptoExponent;
     ULONG TimeZoneId;
     ULONG LargePageMinimum;
-    ULONG Reserverd2[7];
+    ULONG Reserved2[7];
     NT_PRODUCT_TYPE NtProductType;
     BOOLEAN ProductTypeIsValid;
-    ULONG MajorNtVersion;
-    ULONG MinorNtVersion;
+    ULONG NtMajorVersion;
+    ULONG NtMinorVersion;
     BOOLEAN ProcessorFeatures[PROCESSOR_FEATURE_MAX];
     ULONG Reserved1;
     ULONG Reserved3;
@@ -1020,6 +1027,7 @@ typedef struct _KUSER_SHARED_DATA {
     LARGE_INTEGER SystemExpirationDate;
     ULONG SuiteMask;
     BOOLEAN KdDebuggerEnabled;
+    UCHAR NXSupportPolicy;
     volatile ULONG ActiveConsoleId;
     volatile ULONG DismountCount;
     ULONG ComPlusPackage;
@@ -1027,12 +1035,16 @@ typedef struct _KUSER_SHARED_DATA {
     ULONG NumberOfPhysicalPages;
     BOOLEAN SafeBootMode;
     ULONG TraceLogging;
-    ULONGLONG Fill0;
-    ULONGLONG SystemCall[4];
+    ULONGLONG TestRetInstruction;
+    ULONG SystemCall;
+    ULONG SystemCallReturn;
+    ULONGLONG SystemCallPad[3];
     union {
         volatile KSYSTEM_TIME TickCount;
         volatile ULONG64 TickCountQuad;
     } DUMMYUNIONNAME;
+    ULONG Cookie;
+    ULONG Wow64SharedInformation[MAX_WOW64_SHARED_ENTRIES];
 } KSHARED_USER_DATA, *PKSHARED_USER_DATA;
 
 typedef enum _MEMORY_CACHING_TYPE {
