@@ -190,7 +190,7 @@ void WINAPI BSTR_UserFree(ULONG *pFlags, BSTR *pstr)
 typedef struct
 {
     DWORD clSize;
-    DWORD rpcReserverd;
+    DWORD rpcReserved;
     USHORT vt;
     USHORT wReserved1;
     USHORT wReserved2;
@@ -459,7 +459,7 @@ unsigned char * WINAPI VARIANT_UserMarshal(ULONG *pFlags, unsigned char *Buffer,
     header = (variant_wire_t *)Buffer; 
 
     header->clSize = 0; /* fixed up at the end */
-    header->rpcReserverd = 0;
+    header->rpcReserved = 0;
     header->vt = pvar->n1.n2.vt;
     header->wReserved1 = pvar->n1.n2.wReserved1;
     header->wReserved2 = pvar->n1.n2.wReserved2;
