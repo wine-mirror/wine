@@ -132,7 +132,7 @@ HBITMAP X11DRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
  *
  * Returns TRUE on success else FALSE
  */
-BOOL X11DRV_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap, LPVOID bmBits )
+BOOL X11DRV_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap )
 {
     X_PHYSBITMAP *physBitmap;
     BITMAP bitmap;
@@ -178,27 +178,19 @@ BOOL X11DRV_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap, LPVOID bmBits )
     /* Create the pixmap */
     physBitmap->pixmap = XCreatePixmap(gdi_display, root_window,
                                        bitmap.bmWidth, bitmap.bmHeight, physBitmap->pixmap_depth);
+    if (physBitmap->pixmap)
+    {
+        GC gc = get_bitmap_gc(physBitmap->pixmap_depth);
+        XSetFunction( gdi_display, gc, GXclear );
+        XFillRectangle( gdi_display, physBitmap->pixmap, gc, 0, 0, bitmap.bmWidth, bitmap.bmHeight );
+        XSetFunction( gdi_display, gc, GXcopy );
+    }
     wine_tsx11_unlock();
     if (!physBitmap->pixmap)
     {
         WARN("Can't create Pixmap\n");
         HeapFree( GetProcessHeap(), 0, physBitmap );
         return FALSE;
-    }
-
-    if (bmBits) /* Set bitmap bits */
-    {
-        X11DRV_SetBitmapBits( hbitmap, bmBits, bitmap.bmHeight * bitmap.bmWidthBytes );
-    }
-    else  /* else clear the bitmap */
-    {
-        GC gc = get_bitmap_gc(physBitmap->pixmap_depth);
-        wine_tsx11_lock();
-        XSetFunction( gdi_display, gc, GXclear );
-        XFillRectangle( gdi_display, physBitmap->pixmap, gc, 0, 0,
-                        bitmap.bmWidth, bitmap.bmHeight );
-        XSetFunction( gdi_display, gc, GXcopy );
-        wine_tsx11_unlock();
     }
     return TRUE;
 }

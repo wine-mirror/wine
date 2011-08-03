@@ -657,6 +657,12 @@ HBITMAP BITMAP_CopyBitmap(HBITMAP hbitmap)
 }
 
 
+static void set_initial_bitmap_bits( HBITMAP hbitmap, BITMAPOBJ *bmp )
+{
+    if (!bmp->bitmap.bmBits) return;
+    SetBitmapBits( hbitmap, bmp->bitmap.bmHeight * bmp->bitmap.bmWidthBytes, bmp->bitmap.bmBits );
+}
+
 /***********************************************************************
  *           BITMAP_SetOwnerDC
  *
@@ -681,8 +687,12 @@ BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, PHYSDEV physdev )
         {
             if (physdev->funcs->pCreateBitmap)
             {
-                ret = physdev->funcs->pCreateBitmap( physdev, hbitmap, bitmap->bitmap.bmBits );
-                if (ret) bitmap->funcs = physdev->funcs;
+                ret = physdev->funcs->pCreateBitmap( physdev, hbitmap );
+                if (ret)
+                {
+                    bitmap->funcs = physdev->funcs;
+                    set_initial_bitmap_bits( hbitmap, bitmap );
+                }
             }
             else
             {
