@@ -116,15 +116,16 @@ void remove_target_tasks(LONG target)
         SetTimer(thread_data->thread_hwnd, TIMER_ID, timer->time - GetTickCount(), NULL);
     }
 
-    while(thread_data->task_queue_head
-          && thread_data->task_queue_head->target_magic == target)
-        pop_task();
+    while(thread_data->task_queue_head && thread_data->task_queue_head->target_magic == target) {
+        iter = pop_task();
+        iter->destr(iter);
+    }
 
     for(iter = thread_data->task_queue_head; iter; iter = iter->next) {
         while(iter->next && iter->next->target_magic == target) {
             tmp = iter->next;
             iter->next = tmp->next;
-            heap_free(tmp);
+            tmp->destr(tmp);
         }
 
         if(!iter->next)
