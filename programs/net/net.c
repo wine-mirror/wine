@@ -25,18 +25,44 @@
 #define NET_START 0001
 #define NET_STOP  0002
 
+static int output_write(WCHAR* str, int len)
+{
+    DWORD ret, count;
+    ret = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, len, &count, NULL);
+    if (!ret)
+    {
+        DWORD lenA;
+        char* strA;
+
+        /* On Windows WriteConsoleW() fails if the output is redirected. So fall
+         * back to WriteFile(), assuming the console encoding is still the right
+         * one in that case.
+         */
+        lenA = WideCharToMultiByte(GetConsoleOutputCP(), 0, str, len,
+                                   NULL, 0, NULL, NULL);
+        strA = HeapAlloc(GetProcessHeap(), 0, lenA);
+        if (!strA)
+            return 0;
+
+        WideCharToMultiByte(GetConsoleOutputCP(), 0, str, len, strA, lenA,
+                            NULL, NULL);
+        WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), strA, len, &count, FALSE);
+        HeapFree(GetProcessHeap(), 0, strA);
+    }
+    return count;
+}
+
 static int output_string(int msg, ...)
 {
     WCHAR fmt[8192];
     WCHAR str[8192];
     int len;
-    DWORD count;
     va_list arguments;
 
     LoadStringW(GetModuleHandleW(NULL), msg, fmt, sizeof(fmt));
     va_start(arguments, msg);
     len = vsprintfW(str, fmt, arguments);
-    WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, len, &count, NULL);
+    output_write(str, len);
     va_end(arguments);
     return 0;
 }
@@ -48,9 +74,7 @@ static BOOL output_error_string(DWORD error)
             FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_ALLOCATE_BUFFER,
             NULL, error, 0, (LPWSTR)&pBuffer, 0, NULL))
     {
-        DWORD count;
-        int len = lstrlenW(pBuffer);
-        WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), pBuffer, len, &count, NULL);
+        output_write(pBuffer, lstrlenW(pBuffer));
         LocalFree(pBuffer);
         return TRUE;
     }
