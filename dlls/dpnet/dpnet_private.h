@@ -47,9 +47,8 @@ typedef struct IDirectPlay8ThreadPoolImpl IDirectPlay8ThreadPoolImpl;
  */
 struct IDirectPlay8ClientImpl
 {
-  /* IUnknown fields */
-  const IDirectPlay8ClientVtbl *lpVtbl;
-  LONG          ref;
+  IDirectPlay8Client IDirectPlay8Client_iface;
+  LONG ref;
   /* IDirectPlay8Client fields */
 };
 
