@@ -1598,7 +1598,14 @@ static void start_doc_binding_proc(task_t *_task)
     start_doc_binding_task_t *task = (start_doc_binding_task_t*)_task;
 
     start_binding(task->window, NULL, (BSCallback*)task->bscallback, NULL);
+}
+
+static void start_doc_binding_task_destr(task_t *_task)
+{
+    start_doc_binding_task_t *task = (start_doc_binding_task_t*)_task;
+
     IBindStatusCallback_Release(&task->bscallback->bsc.IBindStatusCallback_iface);
+    heap_free(task);
 }
 
 HRESULT async_start_doc_binding(HTMLWindow *window, nsChannelBSC *bscallback)
@@ -1613,7 +1620,7 @@ HRESULT async_start_doc_binding(HTMLWindow *window, nsChannelBSC *bscallback)
     task->bscallback = bscallback;
     IBindStatusCallback_AddRef(&bscallback->bsc.IBindStatusCallback_iface);
 
-    push_task(&task->header, start_doc_binding_proc, NULL, window->task_magic);
+    push_task(&task->header, start_doc_binding_proc, start_doc_binding_task_destr, window->task_magic);
     return S_OK;
 }
 
