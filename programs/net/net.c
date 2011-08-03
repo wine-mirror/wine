@@ -68,7 +68,6 @@ static BOOL net_use(int argc, char *argv[])
         {
             status[i] = HeapAlloc(GetProcessHeap(), 0, 1024);
             LoadStringA(hmod, STRING_OK+i, status[i], 1024);
-            printf("i=%d desc=%s\n", i, status[i]);
         }
 
         do {
