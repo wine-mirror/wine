@@ -67,7 +67,7 @@ my $OPT_ASK_SKIP=-1;
 # The following constants define the architecture
 
 ##
-# Default Architecture will be choosen
+# Default Architecture will be chosen
 my $OPT_ARCH_DEFAULT=0;
 
 ##

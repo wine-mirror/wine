@@ -1538,7 +1538,7 @@ static BOOL ensure_uri_builder(nsWineURI *This)
 
         hres = CreateIUriBuilder(This->uri, 0, 0, &This->uri_builder);
         if(FAILED(hres)) {
-            WARN("CreateIUriBulder failed: %08x\n", hres);
+            WARN("CreateIUriBuilder failed: %08x\n", hres);
             return FALSE;
         }
     }

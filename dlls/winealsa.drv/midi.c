@@ -150,12 +150,12 @@ static	int 	MIDI_AlsaToWindowsDeviceType(unsigned int type)
      * MOD_SQSYNTH      square wave internal synth
      * MOD_FMSYNTH      FM internal synth
      * MOD_MAPPER       MIDI mapper
-     * MOD_WAVETABLE    hardware watetable internal synth
+     * MOD_WAVETABLE    hardware wavetable internal synth
      * MOD_SWSYNTH      software internal synth
      */
 
     /* FIXME Is this really the correct equivalence from ALSA to
-       Windows Sound type */
+       Windows Sound type? */
 
     if (type & SND_SEQ_PORT_TYPE_SYNTH)
         return MOD_FMSYNTH;

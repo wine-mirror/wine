@@ -3363,7 +3363,7 @@ PRINTDLG_PagePaintProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     HDC hdc;
     HBRUSH hbrush, holdbrush;
     pagesetup_data *data;
-    int papersize=0, orientation=0; /* FIXME: set this values for user paint hook */
+    int papersize=0, orientation=0; /* FIXME: set these values for the user paint hook */
     double scalx, scaly;
 
     if (uMsg != WM_PAINT)

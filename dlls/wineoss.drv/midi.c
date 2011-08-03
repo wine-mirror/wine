@@ -155,7 +155,7 @@ static	int 	MIDI_UnixToWindowsDeviceType(int type)
      * MOD_SQSYNTH      square wave internal synth
      * MOD_FMSYNTH      FM internal synth
      * MOD_MAPPER       MIDI mapper
-     * MOD_WAVETABLE    hardware watetable internal synth
+     * MOD_WAVETABLE    hardware wavetable internal synth
      * MOD_SWSYNTH      software internal synth
      */
 

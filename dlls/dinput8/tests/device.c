@@ -296,7 +296,7 @@ static void test_action_mapping(void)
     hr = IDirectInput8_EnumDevicesBySemantics(pDI, 0, &af, enumeration_callback, &data, DIEDBSFL_ATTACHEDONLY);
     ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%08x\n", hr);
 
-    /* After a succesfull action mapping we should have no devices available */
+    /* After a successful action mapping we should have no devices available */
     count.ndevices = 0;
     hr = IDirectInput8_EnumDevicesBySemantics(pDI, 0, &af, counting_callback, &count, DIEDBSFL_AVAILABLEDEVICES);
     ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr);

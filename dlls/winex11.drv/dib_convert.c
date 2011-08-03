@@ -1,5 +1,5 @@
 /*
- * DIB conversion routinues for cases where the source and destination
+ * DIB conversion routines for cases where the source and destination
  * have the same byte order.
  *
  * Copyright (C) 2001 Francois Gouget

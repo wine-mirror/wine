@@ -395,7 +395,7 @@ static BOOL CALLBACK EnumJoysticks(
             }
 
             /* Check effect status.
-             * State: initialy stopped
+             * State: initially stopped
              * start
              * State: started
              * unacquire, acquire, download
@@ -435,7 +435,7 @@ static BOOL CALLBACK EnumJoysticks(
             ok(IsEqualGUID(&GUID_ConstantForce, &guid), "Wrong guid returned\n");
 
             /* Check autocenter status
-             * State: initialy stopped
+             * State: initially stopped
              * enable
              * State: enabled
              * acquire

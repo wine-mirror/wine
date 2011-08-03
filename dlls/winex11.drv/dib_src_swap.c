@@ -1,5 +1,5 @@
 /*
- * DIB conversion routinues for cases where the source
+ * DIB conversion routines for cases where the source
  * has non-native byte order.
  *
  * Copyright (C) 2003 Huw Davies

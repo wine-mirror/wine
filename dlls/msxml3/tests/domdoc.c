@@ -8499,7 +8499,7 @@ static void test_setAttributeNode(void)
 
     IXMLDOMElement_Release(elem);
 
-    /* initialy used element is released, attribute still 'has' a container */
+    /* initially used element is released, attribute still 'has' a container */
     hr = IXMLDOMDocument_get_documentElement(doc, &elem);
     ok( hr == S_OK, "got 0x%08x\n", hr);
     ret_attr = (void*)0xdeadbeef;

@@ -1,5 +1,5 @@
 /*
- *    Misc marshaling routinues
+ *    Misc marshaling routines
  *
  * Copyright 2009 Huw Davies
  *

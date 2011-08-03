@@ -530,7 +530,7 @@ mkdir foobar
 rd foobar
 echo %ErrorLevel%
 if not exist foobar echo dir removed
-rem Removing non-existent directory
+rem Removing nonexistent directory
 rmdir foobar
 echo %ErrorLevel%
 rem Removing single-level directories
