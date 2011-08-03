@@ -2320,14 +2320,35 @@ static nsresult NSAPI nsURL_SetRef(nsIURL *iface, const nsACString *aRef)
 static nsresult NSAPI nsURL_GetDirectory(nsIURL *iface, nsACString *aDirectory)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
+    char *dir = NULL;
+    WCHAR *ptr;
+    BSTR path;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, aDirectory);
 
-    if(This->nsurl)
-        return nsIURL_GetDirectory(This->nsurl, aDirectory);
+    if(!ensure_uri(This))
+        return NS_ERROR_UNEXPECTED;
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    hres = IUri_GetPath(This->uri, &path);
+    if(FAILED(hres))
+        return NS_ERROR_FAILURE;
+
+    ptr = strrchrW(path, '/');
+    if(ptr) {
+        if(ptr[1])
+            *ptr = 0;
+        dir = heap_strdupWtoA(path);
+        if(!dir) {
+            SysFreeString(path);
+            return NS_ERROR_OUT_OF_MEMORY;
+        }
+    }
+
+    SysFreeString(path);
+    TRACE("ret %s\n", debugstr_a(dir));
+    nsACString_SetData(aDirectory, dir ? dir : "");
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURL_SetDirectory(nsIURL *iface, const nsACString *aDirectory)
