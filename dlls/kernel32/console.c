@@ -45,6 +45,7 @@
 # include <sys/poll.h>
 #endif
 
+#define NONAMELESSUNION
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -2361,7 +2362,9 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
     {
         char*           ptr;
         unsigned        len;
-        BOOL            ret;
+        HANDLE          hFile;
+        NTSTATUS        status;
+        IO_STATUS_BLOCK iosb;
 
         close(fd);
         /* FIXME: mode ENABLED_OUTPUT is not processed (or actually we rely on underlying Unix/TTY fd
@@ -2372,17 +2375,28 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
             return FALSE;
 
         WideCharToMultiByte(CP_UNIXCP, 0, lpBuffer, nNumberOfCharsToWrite, ptr, len, NULL, NULL);
-        ret = WriteFile(wine_server_ptr_handle(console_handle_unmap(hConsoleOutput)),
-                        ptr, len, lpNumberOfCharsWritten, NULL);
-        if (ret && lpNumberOfCharsWritten)
+        hFile = wine_server_ptr_handle(console_handle_unmap(hConsoleOutput));
+        status = NtWriteFile(hFile, NULL, NULL, NULL, &iosb, ptr, len, 0, NULL);
+        if (status == STATUS_PENDING)
         {
-            if (*lpNumberOfCharsWritten == len)
+            WaitForSingleObject(hFile, INFINITE);
+            status = iosb.u.Status;
+        }
+
+        if (status != STATUS_PENDING && lpNumberOfCharsWritten)
+        {
+            if (iosb.Information == len)
                 *lpNumberOfCharsWritten = nNumberOfCharsToWrite;
             else
                 FIXME("Conversion not supported yet\n");
         }
         HeapFree(GetProcessHeap(), 0, ptr);
-        return ret;
+        if (status != STATUS_SUCCESS)
+        {
+            SetLastError(RtlNtStatusToDosError(status));
+            return FALSE;
+        }
+        return TRUE;
     }
 
     if (!GetConsoleMode(hConsoleOutput, &mode) || !GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))
