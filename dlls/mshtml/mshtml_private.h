@@ -817,6 +817,7 @@ typedef void (*task_proc_t)(task_t*);
 struct task_t {
     LONG target_magic;
     task_proc_t proc;
+    task_proc_t destr;
     struct task_t *next;
 };
 
@@ -836,7 +837,7 @@ thread_data_t *get_thread_data(BOOL) DECLSPEC_HIDDEN;
 HWND get_thread_hwnd(void) DECLSPEC_HIDDEN;
 
 LONG get_task_target_magic(void) DECLSPEC_HIDDEN;
-void push_task(task_t*,task_proc_t,LONG) DECLSPEC_HIDDEN;
+void push_task(task_t*,task_proc_t,task_proc_t,LONG) DECLSPEC_HIDDEN;
 void remove_target_tasks(LONG) DECLSPEC_HIDDEN;
 
 DWORD set_task_timer(HTMLDocument*,DWORD,BOOL,IDispatch*) DECLSPEC_HIDDEN;

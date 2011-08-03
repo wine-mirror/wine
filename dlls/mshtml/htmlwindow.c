@@ -1847,7 +1847,7 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
         task->window = This;
         task->bscallback = bsc;
         task->mon = mon;
-        push_task(&task->header, navigate_proc, This->task_magic);
+        push_task(&task->header, navigate_proc, NULL, This->task_magic);
 
         /* Silently and repeated when real loading starts? */
         This->readystate = READYSTATE_LOADING;
@@ -1866,7 +1866,7 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
         IHTMLWindow2_AddRef(&This->IHTMLWindow2_iface);
         task->window = This;
         task->uri = uri;
-        push_task(&task->header, navigate_javascript_proc, This->task_magic);
+        push_task(&task->header, navigate_javascript_proc, NULL, This->task_magic);
 
         /* Why silently? */
         This->readystate = READYSTATE_COMPLETE;

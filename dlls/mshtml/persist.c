@@ -296,14 +296,14 @@ HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, nsChannel
 
         task = heap_alloc(sizeof(docobj_task_t));
         task->doc = This->doc_obj;
-        push_task(&task->header, set_progress_proc, This->doc_obj->basedoc.task_magic);
+        push_task(&task->header, set_progress_proc, NULL, This->doc_obj->basedoc.task_magic);
     }
 
     download_task = heap_alloc(sizeof(download_proc_task_t));
     download_task->doc = This->doc_obj;
     download_task->set_download = set_download;
     download_task->url = url;
-    push_task(&download_task->header, set_downloading_proc, This->doc_obj->basedoc.task_magic);
+    push_task(&download_task->header, set_downloading_proc, NULL, This->doc_obj->basedoc.task_magic);
 
     return S_OK;
 }

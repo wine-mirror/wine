@@ -925,7 +925,7 @@ static nsresult async_open(nsChannel *This, HTMLWindow *window, BOOL is_doc_chan
 
         task->doc = window->doc;
         task->bscallback = bscallback;
-        push_task(&task->header, start_binding_proc, window->doc->basedoc.task_magic);
+        push_task(&task->header, start_binding_proc, NULL, window->doc->basedoc.task_magic);
     }
 
     return NS_OK;
