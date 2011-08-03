@@ -115,7 +115,7 @@ static ULONG WINAPI Test_IClassFactory_Release(LPCLASSFACTORY iface)
 
 static HRESULT WINAPI Test_IClassFactory_CreateInstance(
     LPCLASSFACTORY iface,
-    LPUNKNOWN pUnkOuter,
+    IUnknown *pUnkOuter,
     REFIID riid,
     LPVOID *ppvObj)
 {
@@ -570,7 +570,7 @@ static void test_CoRegisterMessageFilter(void)
 }
 
 static HRESULT WINAPI Test_IUnknown_QueryInterface(
-    LPUNKNOWN iface,
+    IUnknown *iface,
     REFIID riid,
     LPVOID *ppvObj)
 {
@@ -588,12 +588,12 @@ static HRESULT WINAPI Test_IUnknown_QueryInterface(
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI Test_IUnknown_AddRef(LPUNKNOWN iface)
+static ULONG WINAPI Test_IUnknown_AddRef(IUnknown *iface)
 {
     return 2; /* non-heap-based object */
 }
 
-static ULONG WINAPI Test_IUnknown_Release(LPUNKNOWN iface)
+static ULONG WINAPI Test_IUnknown_Release(IUnknown *iface)
 {
     return 1; /* non-heap-based object */
 }
@@ -1271,9 +1271,14 @@ static void test_CoGetObjectContext(void)
 }
 
 typedef struct {
-    const IUnknownVtbl *lpVtbl;
+    IUnknown IUnknown_iface;
     LONG refs;
 } Test_CallContext;
+
+static inline Test_CallContext *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, Test_CallContext, IUnknown_iface);
+}
 
 static HRESULT WINAPI Test_CallContext_QueryInterface(
     IUnknown *iface,
@@ -1295,13 +1300,13 @@ static HRESULT WINAPI Test_CallContext_QueryInterface(
 
 static ULONG WINAPI Test_CallContext_AddRef(IUnknown *iface)
 {
-    Test_CallContext *This = (Test_CallContext*)iface;
+    Test_CallContext *This = impl_from_IUnknown(iface);
     return InterlockedIncrement(&This->refs);
 }
 
 static ULONG WINAPI Test_CallContext_Release(IUnknown *iface)
 {
-    Test_CallContext *This = (Test_CallContext*)iface;
+    Test_CallContext *This = impl_from_IUnknown(iface);
     ULONG refs = InterlockedDecrement(&This->refs);
     if (!refs)
         HeapFree(GetProcessHeap(), 0, This);
@@ -1320,7 +1325,7 @@ static void test_CoGetCallContext(void)
     HRESULT hr;
     ULONG refs;
     IUnknown *pUnk;
-    IUnknown *test_object;
+    Test_CallContext *test_object;
 
     if (!pCoSwitchCallContext)
     {
@@ -1331,41 +1336,43 @@ static void test_CoGetCallContext(void)
     CoInitialize(NULL);
 
     test_object = HeapAlloc(GetProcessHeap(), 0, sizeof(Test_CallContext));
-    ((Test_CallContext*)test_object)->lpVtbl = &TestCallContext_Vtbl;
-    ((Test_CallContext*)test_object)->refs = 1;
+    test_object->IUnknown_iface.lpVtbl = &TestCallContext_Vtbl;
+    test_object->refs = 1;
 
     hr = CoGetCallContext(&IID_IUnknown, (void**)&pUnk);
     ok(hr == RPC_E_CALL_COMPLETE, "Expected RPC_E_CALL_COMPLETE, got 0x%08x\n", hr);
 
     pUnk = (IUnknown*)0xdeadbeef;
-    hr = pCoSwitchCallContext(test_object, &pUnk);
+    hr = pCoSwitchCallContext(&test_object->IUnknown_iface, &pUnk);
     ok_ole_success(hr, "CoSwitchCallContext");
     ok(pUnk == NULL, "expected NULL, got %p\n", pUnk);
-    refs = IUnknown_AddRef(test_object);
+    refs = IUnknown_AddRef(&test_object->IUnknown_iface);
     ok(refs == 2, "Expected refcount 2, got %d\n", refs);
-    IUnknown_Release(test_object);
+    IUnknown_Release(&test_object->IUnknown_iface);
 
     pUnk = (IUnknown*)0xdeadbeef;
     hr = CoGetCallContext(&IID_IUnknown, (void**)&pUnk);
     ok_ole_success(hr, "CoGetCallContext");
-    ok(pUnk == test_object, "expected %p, got %p\n", test_object, pUnk);
-    refs = IUnknown_AddRef(test_object);
+    ok(pUnk == &test_object->IUnknown_iface, "expected %p, got %p\n",
+       &test_object->IUnknown_iface, pUnk);
+    refs = IUnknown_AddRef(&test_object->IUnknown_iface);
     ok(refs == 3, "Expected refcount 3, got %d\n", refs);
-    IUnknown_Release(test_object);
+    IUnknown_Release(&test_object->IUnknown_iface);
     IUnknown_Release(pUnk);
 
     pUnk = (IUnknown*)0xdeadbeef;
     hr = pCoSwitchCallContext(NULL, &pUnk);
     ok_ole_success(hr, "CoSwitchCallContext");
-    ok(pUnk == test_object, "expected %p, got %p\n", test_object, pUnk);
-    refs = IUnknown_AddRef(test_object);
+    ok(pUnk == &test_object->IUnknown_iface, "expected %p, got %p\n",
+       &test_object->IUnknown_iface, pUnk);
+    refs = IUnknown_AddRef(&test_object->IUnknown_iface);
     ok(refs == 2, "Expected refcount 2, got %d\n", refs);
-    IUnknown_Release(test_object);
+    IUnknown_Release(&test_object->IUnknown_iface);
 
     hr = CoGetCallContext(&IID_IUnknown, (void**)&pUnk);
     ok(hr == RPC_E_CALL_COMPLETE, "Expected RPC_E_CALL_COMPLETE, got 0x%08x\n", hr);
 
-    IUnknown_Release(test_object);
+    IUnknown_Release(&test_object->IUnknown_iface);
 
     CoUninitialize();
 }
