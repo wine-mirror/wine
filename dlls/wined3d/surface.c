@@ -6461,142 +6461,118 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
 
     /* First check for the validity of source / destination rectangles.
      * This was verified using a test application and by MSDN. */
-    if (src_rect)
+    if (src_surface)
     {
-        if (src_surface)
+        if (src_rect->right < src_rect->left || src_rect->bottom < src_rect->top
+                || src_rect->left > src_surface->resource.width || src_rect->left < 0
+                || src_rect->top > src_surface->resource.height || src_rect->top < 0
+                || src_rect->right > src_surface->resource.width || src_rect->right < 0
+                || src_rect->bottom > src_surface->resource.height || src_rect->bottom < 0)
         {
-            if (src_rect->right < src_rect->left || src_rect->bottom < src_rect->top
-                    || src_rect->left > src_surface->resource.width || src_rect->left < 0
-                    || src_rect->top > src_surface->resource.height || src_rect->top < 0
-                    || src_rect->right > src_surface->resource.width || src_rect->right < 0
-                    || src_rect->bottom > src_surface->resource.height || src_rect->bottom < 0)
-            {
-                WARN("Application gave us bad source rectangle for Blt.\n");
-                return WINEDDERR_INVALIDRECT;
-            }
-
-            if (!src_rect->right || !src_rect->bottom
-                    || src_rect->left == (int)src_surface->resource.width
-                    || src_rect->top == (int)src_surface->resource.height)
-            {
-                TRACE("Nothing to be done.\n");
-                return WINED3D_OK;
-            }
-        }
-
-        xsrc = *src_rect;
-    }
-    else if (src_surface)
-    {
-        xsrc.left = 0;
-        xsrc.top = 0;
-        xsrc.right = src_surface->resource.width;
-        xsrc.bottom = src_surface->resource.height;
-    }
-    else
-    {
-        memset(&xsrc, 0, sizeof(xsrc));
-    }
-
-    if (dst_rect)
-    {
-        /* For the Destination rect, it can be out of bounds on the condition
-         * that a clipper is set for the given surface. */
-        if (!dst_surface->clipper && (dst_rect->right < dst_rect->left || dst_rect->bottom < dst_rect->top
-                || dst_rect->left > dst_surface->resource.width || dst_rect->left < 0
-                || dst_rect->top > dst_surface->resource.height || dst_rect->top < 0
-                || dst_rect->right > dst_surface->resource.width || dst_rect->right < 0
-                || dst_rect->bottom > dst_surface->resource.height || dst_rect->bottom < 0))
-        {
-            WARN("Application gave us bad destination rectangle for Blt without a clipper set.\n");
+            WARN("Application gave us bad source rectangle for Blt.\n");
             return WINEDDERR_INVALIDRECT;
         }
 
-        if (dst_rect->right <= 0 || dst_rect->bottom <= 0
-                || dst_rect->left >= (int)dst_surface->resource.width
-                || dst_rect->top >= (int)dst_surface->resource.height)
+        if (!src_rect->right || !src_rect->bottom
+                || src_rect->left == (int)src_surface->resource.width
+                || src_rect->top == (int)src_surface->resource.height)
         {
             TRACE("Nothing to be done.\n");
             return WINED3D_OK;
         }
+    }
 
-        if (!src_surface)
-        {
-            RECT full_rect;
+    xsrc = *src_rect;
 
-            full_rect.left = 0;
-            full_rect.top = 0;
-            full_rect.right = dst_surface->resource.width;
-            full_rect.bottom = dst_surface->resource.height;
-            IntersectRect(&xdst, &full_rect, dst_rect);
-        }
-        else
-        {
-            BOOL clip_horiz, clip_vert;
+    /* The destination rect can be out of bounds on the condition that a
+     * clipper is set for the surface. */
+    if (!dst_surface->clipper && (dst_rect->right < dst_rect->left || dst_rect->bottom < dst_rect->top
+            || dst_rect->left > dst_surface->resource.width || dst_rect->left < 0
+            || dst_rect->top > dst_surface->resource.height || dst_rect->top < 0
+            || dst_rect->right > dst_surface->resource.width || dst_rect->right < 0
+            || dst_rect->bottom > dst_surface->resource.height || dst_rect->bottom < 0))
+    {
+        WARN("Application gave us bad destination rectangle for Blt without a clipper set.\n");
+        return WINEDDERR_INVALIDRECT;
+    }
 
-            xdst = *dst_rect;
-            clip_horiz = xdst.left < 0 || xdst.right > (int)dst_surface->resource.width;
-            clip_vert = xdst.top < 0 || xdst.bottom > (int)dst_surface->resource.height;
+    if (dst_rect->right <= 0 || dst_rect->bottom <= 0
+            || dst_rect->left >= (int)dst_surface->resource.width
+            || dst_rect->top >= (int)dst_surface->resource.height)
+    {
+        TRACE("Nothing to be done.\n");
+        return WINED3D_OK;
+    }
 
-            if (clip_vert || clip_horiz)
-            {
-                /* Now check if this is a special case or not... */
-                if ((flags & WINEDDBLT_DDFX)
-                        || (clip_horiz && xdst.right - xdst.left != xsrc.right - xsrc.left)
-                        || (clip_vert && xdst.bottom - xdst.top != xsrc.bottom - xsrc.top))
-                {
-                    WARN("Out of screen rectangle in special case. Not handled right now.\n");
-                    return WINED3D_OK;
-                }
+    if (!src_surface)
+    {
+        RECT full_rect;
 
-                if (clip_horiz)
-                {
-                    if (xdst.left < 0)
-                    {
-                        xsrc.left -= xdst.left;
-                        xdst.left = 0;
-                    }
-                    if (xdst.right > dst_surface->resource.width)
-                    {
-                        xsrc.right -= (xdst.right - (int)dst_surface->resource.width);
-                        xdst.right = (int)dst_surface->resource.width;
-                    }
-                }
-
-                if (clip_vert)
-                {
-                    if (xdst.top < 0)
-                    {
-                        xsrc.top -= xdst.top;
-                        xdst.top = 0;
-                    }
-                    if (xdst.bottom > dst_surface->resource.height)
-                    {
-                        xsrc.bottom -= (xdst.bottom - (int)dst_surface->resource.height);
-                        xdst.bottom = (int)dst_surface->resource.height;
-                    }
-                }
-
-                /* And check if after clipping something is still to be done... */
-                if ((xdst.right <= 0) || (xdst.bottom <= 0)
-                        || (xdst.left >= (int)dst_surface->resource.width)
-                        || (xdst.top >= (int)dst_surface->resource.height)
-                        || (xsrc.right <= 0) || (xsrc.bottom <= 0)
-                        || (xsrc.left >= (int)src_surface->resource.width)
-                        || (xsrc.top >= (int)src_surface->resource.height))
-                {
-                    TRACE("Nothing to be done after clipping.\n");
-                    return WINED3D_OK;
-                }
-            }
-        }
+        full_rect.left = 0;
+        full_rect.top = 0;
+        full_rect.right = dst_surface->resource.width;
+        full_rect.bottom = dst_surface->resource.height;
+        IntersectRect(&xdst, &full_rect, dst_rect);
     }
     else
     {
-        xdst.left = 0;
-        xdst.top = 0;
-        xdst.right = dst_surface->resource.width;
-        xdst.bottom = dst_surface->resource.height;
+        BOOL clip_horiz, clip_vert;
+
+        xdst = *dst_rect;
+        clip_horiz = xdst.left < 0 || xdst.right > (int)dst_surface->resource.width;
+        clip_vert = xdst.top < 0 || xdst.bottom > (int)dst_surface->resource.height;
+
+        if (clip_vert || clip_horiz)
+        {
+            /* Now check if this is a special case or not... */
+            if ((flags & WINEDDBLT_DDFX)
+                    || (clip_horiz && xdst.right - xdst.left != xsrc.right - xsrc.left)
+                    || (clip_vert && xdst.bottom - xdst.top != xsrc.bottom - xsrc.top))
+            {
+                WARN("Out of screen rectangle in special case. Not handled right now.\n");
+                return WINED3D_OK;
+            }
+
+            if (clip_horiz)
+            {
+                if (xdst.left < 0)
+                {
+                    xsrc.left -= xdst.left;
+                    xdst.left = 0;
+                }
+                if (xdst.right > dst_surface->resource.width)
+                {
+                    xsrc.right -= (xdst.right - (int)dst_surface->resource.width);
+                    xdst.right = (int)dst_surface->resource.width;
+                }
+            }
+
+            if (clip_vert)
+            {
+                if (xdst.top < 0)
+                {
+                    xsrc.top -= xdst.top;
+                    xdst.top = 0;
+                }
+                if (xdst.bottom > dst_surface->resource.height)
+                {
+                    xsrc.bottom -= (xdst.bottom - (int)dst_surface->resource.height);
+                    xdst.bottom = (int)dst_surface->resource.height;
+                }
+            }
+
+            /* And check if after clipping something is still to be done... */
+            if ((xdst.right <= 0) || (xdst.bottom <= 0)
+                    || (xdst.left >= (int)dst_surface->resource.width)
+                    || (xdst.top >= (int)dst_surface->resource.height)
+                    || (xsrc.right <= 0) || (xsrc.bottom <= 0)
+                    || (xsrc.left >= (int)src_surface->resource.width)
+                    || (xsrc.top >= (int)src_surface->resource.height))
+            {
+                TRACE("Nothing to be done after clipping.\n");
+                return WINED3D_OK;
+            }
+        }
     }
 
     if (src_surface == dst_surface)
