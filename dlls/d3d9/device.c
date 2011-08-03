@@ -1023,6 +1023,8 @@ static HRESULT WINAPI IDirect3DDevice9Impl_StretchRect(IDirect3DDevice9Ex *iface
 
     wined3d_mutex_lock();
     hr = wined3d_surface_blt(dst->wined3d_surface, pDestRect, src->wined3d_surface, pSourceRect, 0, NULL, Filter);
+    if (hr == WINEDDERR_INVALIDRECT)
+        hr = D3DERR_INVALIDCALL;
     wined3d_mutex_unlock();
 
     return hr;

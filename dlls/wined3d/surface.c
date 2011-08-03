@@ -1308,10 +1308,37 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
     }
 
     surface_get_rect(dst_surface, dst_rect_in, &dst_rect);
+
+    /* The destination rect can be out of bounds on the condition
+     * that a clipper is set for the surface. */
+    if (!dst_surface->clipper && (dst_rect.left >= dst_rect.right || dst_rect.top >= dst_rect.bottom
+            || dst_rect.left > dst_surface->resource.width || dst_rect.left < 0
+            || dst_rect.top > dst_surface->resource.height || dst_rect.top < 0
+            || dst_rect.right > dst_surface->resource.width || dst_rect.right < 0
+            || dst_rect.bottom > dst_surface->resource.height || dst_rect.bottom < 0))
+    {
+        WARN("Application gave us bad destination rectangle for blit without a clipper set.\n");
+        return WINEDDERR_INVALIDRECT;
+    }
+
     if (src_surface)
+    {
         surface_get_rect(src_surface, src_rect_in, &src_rect);
+
+        if (src_rect.left >= src_rect.right || src_rect.top >= src_rect.bottom
+                || src_rect.left > src_surface->resource.width || src_rect.left < 0
+                || src_rect.top > src_surface->resource.height || src_rect.top < 0
+                || src_rect.right > src_surface->resource.width || src_rect.right < 0
+                || src_rect.bottom > src_surface->resource.height || src_rect.bottom < 0)
+        {
+            WARN("Application gave us bad source rectangle for Blt.\n");
+            return WINEDDERR_INVALIDRECT;
+        }
+    }
     else
+    {
         memset(&src_rect, 0, sizeof(src_rect));
+    }
 
     if (!device->d3d_initialized)
     {
@@ -6459,50 +6486,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
             dst_surface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
             flags, fx, debug_d3dtexturefiltertype(filter));
 
-    /* First check for the validity of source / destination rectangles.
-     * This was verified using a test application and by MSDN. */
-    if (src_surface)
-    {
-        if (src_rect->right < src_rect->left || src_rect->bottom < src_rect->top
-                || src_rect->left > src_surface->resource.width || src_rect->left < 0
-                || src_rect->top > src_surface->resource.height || src_rect->top < 0
-                || src_rect->right > src_surface->resource.width || src_rect->right < 0
-                || src_rect->bottom > src_surface->resource.height || src_rect->bottom < 0)
-        {
-            WARN("Application gave us bad source rectangle for Blt.\n");
-            return WINEDDERR_INVALIDRECT;
-        }
-
-        if (!src_rect->right || !src_rect->bottom
-                || src_rect->left == (int)src_surface->resource.width
-                || src_rect->top == (int)src_surface->resource.height)
-        {
-            TRACE("Nothing to be done.\n");
-            return WINED3D_OK;
-        }
-    }
-
     xsrc = *src_rect;
-
-    /* The destination rect can be out of bounds on the condition that a
-     * clipper is set for the surface. */
-    if (!dst_surface->clipper && (dst_rect->right < dst_rect->left || dst_rect->bottom < dst_rect->top
-            || dst_rect->left > dst_surface->resource.width || dst_rect->left < 0
-            || dst_rect->top > dst_surface->resource.height || dst_rect->top < 0
-            || dst_rect->right > dst_surface->resource.width || dst_rect->right < 0
-            || dst_rect->bottom > dst_surface->resource.height || dst_rect->bottom < 0))
-    {
-        WARN("Application gave us bad destination rectangle for Blt without a clipper set.\n");
-        return WINEDDERR_INVALIDRECT;
-    }
-
-    if (dst_rect->right <= 0 || dst_rect->bottom <= 0
-            || dst_rect->left >= (int)dst_surface->resource.width
-            || dst_rect->top >= (int)dst_surface->resource.height)
-    {
-        TRACE("Nothing to be done.\n");
-        return WINED3D_OK;
-    }
 
     if (!src_surface)
     {

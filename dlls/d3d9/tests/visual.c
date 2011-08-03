@@ -2589,11 +2589,11 @@ static void stretchrect_test(IDirect3DDevice9 *device)
 
         /* Flipping in y-direction through src_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64_flipy, surf_offscreen_dest64, &dst_rect64, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
 
         /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64, surf_offscreen_dest64, &dst_rect64_flipy, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* offscreenplain ==> rendertarget texture, same size */
@@ -2618,11 +2618,11 @@ static void stretchrect_test(IDirect3DDevice9 *device)
 
         /* Flipping in y-direction through src_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64_flipy, surf_tex_rt_dest64, &dst_rect64, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
 
         /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64, surf_tex_rt_dest64, &dst_rect64_flipy, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* offscreenplain ==> rendertarget surface, same size */
@@ -2641,11 +2641,11 @@ static void stretchrect_test(IDirect3DDevice9 *device)
 
         /* Flipping in y-direction through src_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64_flipy, surf_rt_dest64, &dst_rect64, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
 
         /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64, surf_rt_dest64, &dst_rect64_flipy, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* offscreenplain ==> texture, same size (should fail) */
@@ -2735,11 +2735,11 @@ static void stretchrect_test(IDirect3DDevice9 *device)
 
         /* Flipping in y-direction through src_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, surf_tex64, &src_rect64_flipy, surf_tex_rt_dest64, &dst_rect64, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
 
         /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, surf_tex64, &src_rect64, surf_tex_rt_dest64, &dst_rect64_flipy, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* texture ==> rendertarget surface, same size */
@@ -2758,11 +2758,11 @@ static void stretchrect_test(IDirect3DDevice9 *device)
 
         /* Flipping in y-direction through src_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, surf_tex64, &src_rect64_flipy, surf_rt_dest64, &dst_rect64, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
 
         /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, surf_tex64, &src_rect64, surf_rt_dest64, &dst_rect64_flipy, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* texture ==> texture, same size (should fail) */
@@ -2857,11 +2857,11 @@ static void stretchrect_test(IDirect3DDevice9 *device)
 
         /* Flipping in y-direction through src_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, &src_rect64_flipy, surf_tex_rt_dest64, &dst_rect64, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
 
         /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, &src_rect64, surf_tex_rt_dest64, &dst_rect64_flipy, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* rendertarget texture ==> rendertarget surface, same size */
@@ -2880,11 +2880,11 @@ static void stretchrect_test(IDirect3DDevice9 *device)
 
         /* Flipping in y-direction through src_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, &src_rect64_flipy, surf_rt_dest64, &dst_rect64, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
 
         /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, &src_rect64, surf_rt_dest64, &dst_rect64_flipy, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* rendertarget texture ==> texture, same size (should fail) */
@@ -2975,11 +2975,11 @@ static void stretchrect_test(IDirect3DDevice9 *device)
 
         /* Flipping in y-direction through src_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, surf_rt64, &src_rect64_flipy, surf_tex_rt_dest64, &dst_rect64, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
 
         /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, surf_rt64, &src_rect64, surf_tex_rt_dest64, &dst_rect64_flipy, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* rendertarget surface ==> rendertarget surface, same size */
@@ -2998,11 +2998,11 @@ static void stretchrect_test(IDirect3DDevice9 *device)
 
         /* Flipping in y-direction through src_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, surf_rt64, &src_rect64_flipy, surf_rt_dest64, &dst_rect64_flipy, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
 
         /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, surf_rt64, &src_rect64, surf_rt_dest64, &dst_rect64_flipy, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* rendertarget surface ==> texture, same size (should fail) */
@@ -3071,11 +3071,11 @@ static void stretchrect_test(IDirect3DDevice9 *device)
 
         /* Flipping in y-direction through src_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, backbuffer, &src_rect_flipy, surf_tex_rt_dest640_480, &dst_rect, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
 
         /* Flipping in y-direction through dst_rect, no scaling (not allowed) */
         hr = IDirect3DDevice9_StretchRect(device, backbuffer, &src_rect, surf_tex_rt_dest640_480, &dst_rect_flipy, 0);
-        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
 
     /* TODO: Test format conversions */
