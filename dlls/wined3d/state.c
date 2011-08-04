@@ -1594,21 +1594,8 @@ static void state_pointsprite_w(struct wined3d_context *context, const struct wi
 
 static void state_pointsprite(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-
     if (state->render_states[WINED3DRS_POINTSPRITEENABLE])
     {
-        static BOOL warned;
-
-        if (gl_info->limits.point_sprite_units < gl_info->limits.textures && !warned)
-        {
-            if (use_ps(state) || state->lowest_disabled_stage > gl_info->limits.point_sprite_units)
-            {
-                FIXME("The app uses point sprite texture coordinates on more units than supported by the driver\n");
-                warned = TRUE;
-            }
-        }
-
         glEnable(GL_POINT_SPRITE_ARB);
         checkGLcall("glEnable(GL_POINT_SPRITE_ARB)");
     } else {

@@ -1445,7 +1445,6 @@ struct wined3d_gl_limits
     UINT texture3d_size;
     float pointsize_max;
     float pointsize_min;
-    UINT point_sprite_units;
     UINT blends;
     UINT anisotropy;
     float shininess;

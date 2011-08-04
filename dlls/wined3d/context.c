@@ -1522,11 +1522,14 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(dummy_program), dummy_program));
     }
 
-    for (s = 0; s < gl_info->limits.point_sprite_units; ++s)
+    if (gl_info->supported[ARB_POINT_SPRITE])
     {
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + s));
-        glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
-        checkGLcall("glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)");
+        for (s = 0; s < gl_info->limits.textures; ++s)
+        {
+            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + s));
+            glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
+            checkGLcall("glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)");
+        }
     }
 
     if (gl_info->supported[ARB_PROVOKING_VERTEX])

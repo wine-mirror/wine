@@ -596,13 +596,6 @@ static BOOL match_apple_nonr500ati(const struct wined3d_gl_info *gl_info, const 
     return TRUE;
 }
 
-static BOOL match_fglrx(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
-{
-    return gl_vendor == GL_VENDOR_FGLRX;
-
-}
-
 static BOOL match_dx10_capable(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
         enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
@@ -801,27 +794,6 @@ static void quirk_apple_glsl_constants(struct wined3d_gl_info *gl_info)
     gl_info->reserved_glsl_constants = max(gl_info->reserved_glsl_constants, 12);
 }
 
-/* fglrx crashes with a very bad kernel panic if GL_POINT_SPRITE_ARB is set to GL_COORD_REPLACE_ARB
- * on more than one texture unit. This means that the d3d9 visual point size test will cause a
- * kernel panic on any machine running fglrx 9.3(latest that supports r300 to r500 cards). This
- * quirk only enables point sprites on the first texture unit. This keeps point sprites working in
- * most games, but avoids the crash
- *
- * A more sophisticated way would be to find all units that need texture coordinates and enable
- * point sprites for one if only one is found, and software emulate point sprites in drawStridedSlow
- * if more than one unit needs texture coordinates(This requires software ffp and vertex shaders though)
- *
- * Note that disabling the extension entirely does not gain predictability because there is no point
- * sprite capability flag in d3d, so the potential rendering bugs are the same if we disable the extension. */
-static void quirk_one_point_sprite(struct wined3d_gl_info *gl_info)
-{
-    if (gl_info->supported[ARB_POINT_SPRITE])
-    {
-        TRACE("Limiting point sprites to one texture unit.\n");
-        gl_info->limits.point_sprite_units = 1;
-    }
-}
-
 static void quirk_amd_dx9(struct wined3d_gl_info *gl_info)
 {
     quirk_arb_constants(gl_info);
@@ -961,11 +933,6 @@ static const struct driver_quirk quirk_table[] =
         match_apple_nonr500ati,
         quirk_texcoord_w,
         "Init texcoord .w for Apple ATI >= r600 GPU driver"
-    },
-    {
-        match_fglrx,
-        quirk_one_point_sprite,
-        "Fglrx point sprite crash workaround"
     },
     {
         match_dx10_capable,
@@ -2624,14 +2591,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     {
         /* GL_ARB_half_float_vertex is a subset of GL_NV_half_float. */
         gl_info->supported[ARB_HALF_FLOAT_VERTEX] = TRUE;
-    }
-    if (gl_info->supported[ARB_POINT_SPRITE])
-    {
-        gl_info->limits.point_sprite_units = gl_info->limits.textures;
-    }
-    else
-    {
-        gl_info->limits.point_sprite_units = 0;
     }
     checkGLcall("extension detection");
 
