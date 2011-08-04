@@ -918,24 +918,24 @@ INT WINAPI GetDIBits(
     DC * dc;
     BITMAPOBJ * bmp;
     int i;
-    int bitmap_type;
     LONG width;
     LONG height;
-    WORD planes, bpp;
-    DWORD compr, size;
+    WORD bpp;
     char dst_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *dst_info = (BITMAPINFO *)dst_bmibuf;
     unsigned int colors = 0;
     const struct gdi_dc_funcs *funcs;
 
-    if (!info) return 0;
-
-    bitmap_type = DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, &planes, &bpp, &compr, &size);
-    if (bitmap_type == -1)
+    /* Since info may be a BITMAPCOREINFO or any of the larger BITMAPINFO structures, we'll use our
+       own copy and transfer the colour info back at the end */
+    if (!bitmapinfoheader_from_user_bitmapinfo( &dst_info->bmiHeader, &info->bmiHeader ))
     {
         ERR("Invalid bitmap format\n");
         return 0;
     }
+    dst_info->bmiHeader.biClrUsed = 0;
+    dst_info->bmiHeader.biClrImportant = 0;
+
     if (!(dc = get_dc_ptr( hdc )))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -951,26 +951,14 @@ INT WINAPI GetDIBits(
     funcs = bmp->funcs;
     if (bmp->dib) funcs = dc->dibdrv.dev.funcs;
 
+    width = dst_info->bmiHeader.biWidth;
+    height = dst_info->bmiHeader.biHeight;
+    bpp = dst_info->bmiHeader.biBitCount;
     if (bpp == 0) /* query bitmap info only */
     {
         lines = fill_query_info( info, bmp );
         goto done;
     }
-
-    /* Since info may be a BITMAPCOREINFO or any of the larger BITMAPINFO structures, we'll use our
-       own copy and transfer the colour info back at the end */
-
-    dst_info->bmiHeader.biSize          = sizeof(dst_info->bmiHeader);
-    dst_info->bmiHeader.biWidth         = width;
-    dst_info->bmiHeader.biHeight        = height;
-    dst_info->bmiHeader.biPlanes        = planes;
-    dst_info->bmiHeader.biBitCount      = bpp;
-    dst_info->bmiHeader.biCompression   = compr;
-    dst_info->bmiHeader.biSizeImage     = get_dib_image_size( dst_info );
-    dst_info->bmiHeader.biXPelsPerMeter = 0;
-    dst_info->bmiHeader.biYPelsPerMeter = 0;
-    dst_info->bmiHeader.biClrUsed       = 0;
-    dst_info->bmiHeader.biClrImportant  = 0;
 
     switch (bpp)
     {
