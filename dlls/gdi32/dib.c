@@ -881,7 +881,7 @@ INT WINAPI GetDIBits(
 {
     DC * dc;
     BITMAPOBJ * bmp;
-    int i;
+    int i, ret = 0;
     LONG width;
     LONG height;
     WORD bpp;
@@ -916,7 +916,7 @@ INT WINAPI GetDIBits(
     bpp = dst_info->bmiHeader.biBitCount;
     if (bpp == 0) /* query bitmap info only */
     {
-        lines = fill_query_info( info, bmp );
+        ret = fill_query_info( info, bmp );
         goto done;
     }
 
@@ -1007,7 +1007,7 @@ INT WINAPI GetDIBits(
 
         if (startscan >= dst.visrect.bottom)
         {
-            lines = 1; /* yes, this is strange */
+            ret = 1; /* yes, this is strange */
             goto empty_image;
         }
 
@@ -1053,26 +1053,18 @@ INT WINAPI GetDIBits(
             }
         }
 
-        if (empty_rect)
-        {
-            lines = 0;
-            goto empty_image;
-        }
+        if (empty_rect) goto empty_image;
 
         src.x      = src.visrect.left;
         src.y      = src.visrect.top;
         src.width  = src.visrect.right - src.visrect.left;
         src.height = src.visrect.bottom - src.visrect.top;
 
-        lines = src.height;
-
         err = funcs->pGetImage( NULL, hbitmap, src_info, &src_bits, &src );
 
-        if(err)
-        {
-            lines = 0;
-            goto done;
-        }
+        if (err) goto done;
+
+        ret = src.height;
 
         if (src_info->bmiHeader.biBitCount <= 8 && src_info->bmiHeader.biClrUsed == 0)
         {
@@ -1090,7 +1082,7 @@ INT WINAPI GetDIBits(
         convert_bitmapinfo( src_info, src_bits.ptr, &src, dst_info, bits );
         if (src_bits.free) src_bits.free( &src_bits );
     }
-    else lines = abs(height);
+    else ret = abs( height );
 
 empty_image:
     if (coloruse == DIB_PAL_COLORS)
@@ -1105,7 +1097,7 @@ empty_image:
 done:
     release_dc_ptr( dc );
     GDI_ReleaseObj( hbitmap );
-    return lines;
+    return ret;
 }
 
 
