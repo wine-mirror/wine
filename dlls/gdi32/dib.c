@@ -135,77 +135,77 @@ int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
 }
 
 /*******************************************************************************************
- *  Fill out a true BITMAPINFO from a variable sized BITMAPINFO / BITMAPCOREINFO.
+ *  Fill out a true BITMAPINFOHEADER from a variable sized BITMAPINFOHEADER / BITMAPCOREHEADER.
  */
-static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *info, UINT coloruse )
+static BOOL bitmapinfoheader_from_user_bitmapinfo( BITMAPINFOHEADER *dst, const BITMAPINFOHEADER *info )
 {
     LONG width, height;
     WORD planes, bpp;
     DWORD compr, size;
-    void *src_colors;
-    unsigned int colors;
-    int bitmap_type = DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, &planes, &bpp, &compr, &size );
+    int bitmap_type = DIB_GetBitmapInfo( info, &width, &height, &planes, &bpp, &compr, &size );
 
     if (bitmap_type == -1) return FALSE;
 
-    src_colors = (char *)info + info->bmiHeader.biSize;
     if (bitmap_type == 1)
     {
-        dst->bmiHeader                 = info->bmiHeader;
-        dst->bmiHeader.biSize          = sizeof(dst->bmiHeader);
-
-        colors = get_dib_num_of_colors( dst );
-
-        if (info->bmiHeader.biCompression == BI_BITFIELDS)
-            /* bitfields are always at bmiColors even in larger structures */
-            memcpy( dst->bmiColors, info->bmiColors, 3 * sizeof(DWORD) );
-        else if (colors)
-        {
-            unsigned int size;
-
-            if (coloruse == DIB_PAL_COLORS)
-                size = colors * sizeof(WORD);
-            else
-                size = colors * sizeof(RGBQUAD);
-            memcpy( dst->bmiColors, src_colors, size );
-        }
+        *dst = *info;
     }
     else
     {
-        dst->bmiHeader.biSize          = sizeof(dst->bmiHeader);
-        dst->bmiHeader.biWidth         = width;
-        dst->bmiHeader.biHeight        = height;
-        dst->bmiHeader.biPlanes        = planes;
-        dst->bmiHeader.biBitCount      = bpp;
-        dst->bmiHeader.biCompression   = compr;
-        dst->bmiHeader.biXPelsPerMeter = 0;
-        dst->bmiHeader.biYPelsPerMeter = 0;
-        dst->bmiHeader.biClrUsed       = 0;
-        dst->bmiHeader.biClrImportant  = 0;
+        dst->biWidth         = width;
+        dst->biHeight        = height;
+        dst->biPlanes        = planes;
+        dst->biBitCount      = bpp;
+        dst->biCompression   = compr;
+        dst->biXPelsPerMeter = 0;
+        dst->biYPelsPerMeter = 0;
+        dst->biClrUsed       = 0;
+        dst->biClrImportant  = 0;
+    }
 
-        colors = get_dib_num_of_colors( dst );
+    dst->biSize = sizeof(*dst);
+    if (dst->biCompression == BI_RGB || dst->biCompression == BI_BITFIELDS)
+        dst->biSizeImage = get_dib_image_size( (BITMAPINFO *)dst );
+    return TRUE;
+}
 
-        if (colors)
+/*******************************************************************************************
+ *  Fill out a true BITMAPINFO from a variable sized BITMAPINFO / BITMAPCOREINFO.
+ */
+static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *info, UINT coloruse )
+{
+    void *src_colors;
+    unsigned int colors;
+
+    if (!bitmapinfoheader_from_user_bitmapinfo( &dst->bmiHeader, &info->bmiHeader )) return FALSE;
+
+    src_colors = (char *)info + info->bmiHeader.biSize;
+    colors = get_dib_num_of_colors( dst );
+
+    if (info->bmiHeader.biCompression == BI_BITFIELDS)
+    {
+        /* bitfields are always at bmiColors even in larger structures */
+        memcpy( dst->bmiColors, info->bmiColors, 3 * sizeof(DWORD) );
+    }
+    else if (colors)
+    {
+        if (coloruse == DIB_PAL_COLORS)
+            memcpy( dst->bmiColors, src_colors, colors * sizeof(WORD) );
+        else if (info->bmiHeader.biSize != sizeof(BITMAPCOREHEADER))
+            memcpy( dst->bmiColors, src_colors, colors * sizeof(RGBQUAD) );
+        else
         {
-            if (coloruse == DIB_PAL_COLORS)
-                memcpy( dst->bmiColors, src_colors, colors * sizeof(WORD) );
-            else
+            unsigned int i;
+            RGBTRIPLE *triple = (RGBTRIPLE *)src_colors;
+            for (i = 0; i < colors; i++)
             {
-                unsigned int i;
-                RGBTRIPLE *triple = (RGBTRIPLE *)src_colors;
-                for (i = 0; i < colors; i++)
-                {
-                    dst->bmiColors[i].rgbRed      = triple[i].rgbtRed;
-                    dst->bmiColors[i].rgbGreen    = triple[i].rgbtGreen;
-                    dst->bmiColors[i].rgbBlue     = triple[i].rgbtBlue;
-                    dst->bmiColors[i].rgbReserved = 0;
-                }
+                dst->bmiColors[i].rgbRed      = triple[i].rgbtRed;
+                dst->bmiColors[i].rgbGreen    = triple[i].rgbtGreen;
+                dst->bmiColors[i].rgbBlue     = triple[i].rgbtBlue;
+                dst->bmiColors[i].rgbReserved = 0;
             }
         }
     }
-
-    if (dst->bmiHeader.biCompression == BI_RGB || dst->bmiHeader.biCompression == BI_BITFIELDS)
-        dst->bmiHeader.biSizeImage = get_dib_image_size( dst );
     return TRUE;
 }
 
