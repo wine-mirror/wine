@@ -28,8 +28,7 @@
   
     Most Windows API functions taking a BITMAPINFO* / BITMAPINFOHEADER* also
     accept the old "core" structures, and so must WINE.
-    You can distinguish them by looking at the first member (bcSize/biSize),
-    or use the internal function DIB_GetBitmapInfo.
+    You can distinguish them by looking at the first member (bcSize/biSize).
 
     
   * The palettes are stored in different formats:
@@ -98,69 +97,34 @@ int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
     }
 }
 
-
-/***********************************************************************
- *           DIB_GetBitmapInfo
- *
- * Get the info from a bitmap header.
- * Return 0 for COREHEADER, 1 for INFOHEADER, -1 for error.
- */
-int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
-                       LONG *height, WORD *planes, WORD *bpp, DWORD *compr, DWORD *size )
-{
-    if (!header) return -1;
-    if (header->biSize == sizeof(BITMAPCOREHEADER))
-    {
-        const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)header;
-        *width  = core->bcWidth;
-        *height = core->bcHeight;
-        *planes = core->bcPlanes;
-        *bpp    = core->bcBitCount;
-        *compr  = 0;
-        *size   = 0;
-        return 0;
-    }
-    if (header->biSize >= sizeof(BITMAPINFOHEADER)) /* assume BITMAPINFOHEADER */
-    {
-        *width  = header->biWidth;
-        *height = header->biHeight;
-        *planes = header->biPlanes;
-        *bpp    = header->biBitCount;
-        *compr  = header->biCompression;
-        *size   = header->biSizeImage;
-        return 1;
-    }
-    ERR("(%d): unknown/wrong size for header\n", header->biSize );
-    return -1;
-}
-
 /*******************************************************************************************
  *  Fill out a true BITMAPINFOHEADER from a variable sized BITMAPINFOHEADER / BITMAPCOREHEADER.
  */
 static BOOL bitmapinfoheader_from_user_bitmapinfo( BITMAPINFOHEADER *dst, const BITMAPINFOHEADER *info )
 {
-    LONG width, height;
-    WORD planes, bpp;
-    DWORD compr, size;
-    int bitmap_type = DIB_GetBitmapInfo( info, &width, &height, &planes, &bpp, &compr, &size );
+    if (!info) return FALSE;
 
-    if (bitmap_type == -1) return FALSE;
-
-    if (bitmap_type == 1)
+    if (info->biSize == sizeof(BITMAPCOREHEADER))
+    {
+        const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)info;
+        dst->biWidth         = core->bcWidth;
+        dst->biHeight        = core->bcHeight;
+        dst->biPlanes        = core->bcPlanes;
+        dst->biBitCount      = core->bcBitCount;
+        dst->biCompression   = BI_RGB;
+        dst->biXPelsPerMeter = 0;
+        dst->biYPelsPerMeter = 0;
+        dst->biClrUsed       = 0;
+        dst->biClrImportant  = 0;
+    }
+    else if (info->biSize >= sizeof(BITMAPINFOHEADER)) /* assume BITMAPINFOHEADER */
     {
         *dst = *info;
     }
     else
     {
-        dst->biWidth         = width;
-        dst->biHeight        = height;
-        dst->biPlanes        = planes;
-        dst->biBitCount      = bpp;
-        dst->biCompression   = compr;
-        dst->biXPelsPerMeter = 0;
-        dst->biYPelsPerMeter = 0;
-        dst->biClrUsed       = 0;
-        dst->biClrImportant  = 0;
+        WARN( "(%u): unknown/wrong size for header\n", info->biSize );
+        return FALSE;
     }
 
     dst->biSize = sizeof(*dst);
@@ -928,11 +892,7 @@ INT WINAPI GetDIBits(
 
     /* Since info may be a BITMAPCOREINFO or any of the larger BITMAPINFO structures, we'll use our
        own copy and transfer the colour info back at the end */
-    if (!bitmapinfoheader_from_user_bitmapinfo( &dst_info->bmiHeader, &info->bmiHeader ))
-    {
-        ERR("Invalid bitmap format\n");
-        return 0;
-    }
+    if (!bitmapinfoheader_from_user_bitmapinfo( &dst_info->bmiHeader, &info->bmiHeader )) return 0;
     dst_info->bmiHeader.biClrUsed = 0;
     dst_info->bmiHeader.biClrImportant = 0;
 
