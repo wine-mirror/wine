@@ -36,8 +36,6 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect,
         struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
         const WINEDDBLTFX *fx, WINED3DTEXTUREFILTERTYPE filter);
-static HRESULT surface_cpu_bltfast(struct wined3d_surface *dst_surface, DWORD dst_x, DWORD dst_y,
-        struct wined3d_surface *src_surface, const RECT *src_rect, DWORD trans);
 static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surface, const RECT *dst_rect,
         struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags, const WINEDDBLTFX *fx,
         WINED3DTEXTUREFILTERTYPE filter);
@@ -1484,58 +1482,32 @@ cpu:
 }
 
 /* Do not call while under the GL lock. */
-static HRESULT surface_bltfast(struct wined3d_surface *dst_surface, DWORD dst_x, DWORD dst_y,
+HRESULT CDECL wined3d_surface_bltfast(struct wined3d_surface *dst_surface, DWORD dst_x, DWORD dst_y,
         struct wined3d_surface *src_surface, const RECT *src_rect_in, DWORD trans)
 {
-    struct wined3d_device *device = dst_surface->resource.device;
+    RECT src_rect, dst_rect;
+    DWORD flags = 0;
 
-    TRACE("dst_surface %p, dst_x %u, dst_y %u, src_surface %p, src_rect %s, flags %#x.\n",
+    TRACE("dst_surface %p, dst_x %u, dst_y %u, src_surface %p, src_rect_in %s, trans %#x.\n",
             dst_surface, dst_x, dst_y, src_surface, wine_dbgstr_rect(src_rect_in), trans);
 
-    if ((dst_surface->flags & SFLAG_LOCKED) || (src_surface->flags & SFLAG_LOCKED))
-    {
-        WARN("Surface is busy, returning WINEDDERR_SURFACEBUSY.\n");
-        return WINEDDERR_SURFACEBUSY;
-    }
+    surface_get_rect(src_surface, src_rect_in, &src_rect);
 
-    if (device->inScene && (dst_surface == device->fb.depth_stencil || src_surface == device->fb.depth_stencil))
-    {
-        WARN("Attempt to access the depth / stencil surface while in a scene.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
+    dst_rect.left = dst_x;
+    dst_rect.top = dst_y;
+    dst_rect.right = dst_x + src_rect.right - src_rect.left;
+    dst_rect.bottom = dst_y + src_rect.bottom - src_rect.top;
 
-    /* Special cases for RenderTargets */
-    if ((dst_surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
-            || (src_surface->resource.usage & WINED3DUSAGE_RENDERTARGET))
-    {
+    if (trans & WINEDDBLTFAST_SRCCOLORKEY)
+        flags |= WINEDDBLT_KEYSRC;
+    if (trans & WINEDDBLTFAST_DESTCOLORKEY)
+        flags |= WINEDDBLT_KEYDEST;
+    if (trans & WINEDDBLTFAST_WAIT)
+        flags |= WINEDDBLT_WAIT;
+    if (trans & WINEDDBLTFAST_DONOTWAIT)
+        flags |= WINEDDBLT_DONOTWAIT;
 
-        RECT src_rect, dst_rect;
-        DWORD flags = 0;
-
-        surface_get_rect(src_surface, src_rect_in, &src_rect);
-
-        dst_rect.left = dst_x;
-        dst_rect.top = dst_y;
-        dst_rect.right = dst_x + src_rect.right - src_rect.left;
-        dst_rect.bottom = dst_y + src_rect.bottom - src_rect.top;
-
-        /* Convert BltFast flags into Blt ones because BltOverride is called
-         * from Blt as well. */
-        if (trans & WINEDDBLTFAST_SRCCOLORKEY)
-            flags |= WINEDDBLT_KEYSRC;
-        if (trans & WINEDDBLTFAST_DESTCOLORKEY)
-            flags |= WINEDDBLT_KEYDEST;
-        if (trans & WINEDDBLTFAST_WAIT)
-            flags |= WINEDDBLT_WAIT;
-        if (trans & WINEDDBLTFAST_DONOTWAIT)
-            flags |= WINEDDBLT_DONOTWAIT;
-
-        if (SUCCEEDED(IWineD3DSurfaceImpl_BltOverride(dst_surface,
-                &dst_rect, src_surface, &src_rect, flags, NULL, WINED3DTEXF_POINT)))
-            return WINED3D_OK;
-    }
-
-    return surface_cpu_bltfast(dst_surface, dst_x, dst_y, src_surface, src_rect_in, trans);
+    return wined3d_surface_blt(dst_surface, &dst_rect, src_surface, &src_rect, flags, NULL, WINED3DTEXF_POINT);
 }
 
 static HRESULT surface_set_mem(struct wined3d_surface *surface, void *mem)
@@ -1709,7 +1681,6 @@ static const struct wined3d_surface_ops surface_ops =
     surface_unmap,
     surface_getdc,
     surface_flip,
-    surface_bltfast,
     surface_set_mem,
 };
 
@@ -1893,15 +1864,6 @@ static HRESULT gdi_surface_flip(struct wined3d_surface *surface, struct wined3d_
     return WINED3D_OK;
 }
 
-static HRESULT gdi_surface_bltfast(struct wined3d_surface *dst_surface, DWORD dst_x, DWORD dst_y,
-        struct wined3d_surface *src_surface, const RECT *src_rect, DWORD trans)
-{
-    TRACE("dst_surface %p, dst_x %u, dst_y %u, src_surface %p, src_rect %s, flags %#x.\n",
-            dst_surface, dst_x, dst_y, src_surface, wine_dbgstr_rect(src_rect), trans);
-
-    return surface_cpu_bltfast(dst_surface, dst_x, dst_y, src_surface, src_rect, trans);
-}
-
 static HRESULT gdi_surface_set_mem(struct wined3d_surface *surface, void *mem)
 {
     TRACE("surface %p, mem %p.\n", surface, mem);
@@ -1960,7 +1922,6 @@ static const struct wined3d_surface_ops gdi_surface_ops =
     gdi_surface_unmap,
     gdi_surface_getdc,
     gdi_surface_flip,
-    gdi_surface_bltfast,
     gdi_surface_set_mem,
 };
 
@@ -3494,17 +3455,6 @@ do { \
     }
 
     return WINED3D_OK;
-}
-
-/* Do not call while under the GL lock. */
-HRESULT CDECL wined3d_surface_bltfast(struct wined3d_surface *dst_surface, DWORD dst_x, DWORD dst_y,
-        struct wined3d_surface *src_surface, const RECT *src_rect, DWORD trans)
-{
-    TRACE("dst_surface %p, dst_x %u, dst_y %u, src_surface %p, src_rect %s, trans %#x.\n",
-            dst_surface, dst_x, dst_y, src_surface, wine_dbgstr_rect(src_rect), trans);
-
-    return dst_surface->surface_ops->surface_bltfast(dst_surface,
-            dst_x, dst_y, src_surface, src_rect, trans);
 }
 
 HRESULT CDECL wined3d_surface_unmap(struct wined3d_surface *surface)
@@ -7027,278 +6977,6 @@ release:
     /* Release the converted surface, if any. */
     if (src_surface && src_surface != orig_src)
         wined3d_surface_decref(src_surface);
-
-    return hr;
-}
-
-static HRESULT surface_cpu_bltfast(struct wined3d_surface *dst_surface, DWORD dst_x, DWORD dst_y,
-        struct wined3d_surface *src_surface, const RECT *src_rect, DWORD trans)
-{
-    const struct wined3d_format *src_format, *dst_format;
-    RECT lock_src, lock_dst, lock_union;
-    WINED3DLOCKED_RECT dlock, slock;
-    HRESULT hr = WINED3D_OK;
-    int bpp, w, h, x, y;
-    const BYTE *sbuf;
-    BYTE *dbuf;
-    RECT rsrc2;
-
-    TRACE("dst_surface %p, dst_x %u, dst_y %u, src_surface %p, src_rect %s, flags %#x.\n",
-            dst_surface, dst_x, dst_y, src_surface, wine_dbgstr_rect(src_rect), trans);
-
-    if ((dst_surface->flags & SFLAG_LOCKED) || (src_surface->flags & SFLAG_LOCKED))
-    {
-        WARN(" Surface is busy, returning DDERR_SURFACEBUSY\n");
-        return WINEDDERR_SURFACEBUSY;
-    }
-
-    if (!src_rect)
-    {
-        WARN("src_rect is NULL!\n");
-        rsrc2.left = 0;
-        rsrc2.top = 0;
-        rsrc2.right = src_surface->resource.width;
-        rsrc2.bottom = src_surface->resource.height;
-        src_rect = &rsrc2;
-    }
-
-    /* Check source rect for validity. Copied from normal Blt. Fixes Baldur's Gate. */
-    if ((src_rect->bottom > src_surface->resource.height) || (src_rect->bottom < 0)
-            || (src_rect->top > src_surface->resource.height) || (src_rect->top < 0)
-            || (src_rect->left > src_surface->resource.width) || (src_rect->left < 0)
-            || (src_rect->right > src_surface->resource.width) || (src_rect->right < 0)
-            || (src_rect->right < src_rect->left) || (src_rect->bottom < src_rect->top))
-    {
-        WARN("Application gave us bad source rectangle for BltFast.\n");
-        return WINEDDERR_INVALIDRECT;
-    }
-
-    h = src_rect->bottom - src_rect->top;
-    if (h > dst_surface->resource.height - dst_y)
-        h = dst_surface->resource.height - dst_y;
-    if (h > src_surface->resource.height - src_rect->top)
-        h = src_surface->resource.height - src_rect->top;
-    if (h <= 0)
-        return WINEDDERR_INVALIDRECT;
-
-    w = src_rect->right - src_rect->left;
-    if (w > dst_surface->resource.width - dst_x)
-        w = dst_surface->resource.width - dst_x;
-    if (w > src_surface->resource.width - src_rect->left)
-        w = src_surface->resource.width - src_rect->left;
-    if (w <= 0)
-        return WINEDDERR_INVALIDRECT;
-
-    /* Now compute the locking rectangle... */
-    lock_src.left = src_rect->left;
-    lock_src.top = src_rect->top;
-    lock_src.right = lock_src.left + w;
-    lock_src.bottom = lock_src.top + h;
-
-    lock_dst.left = dst_x;
-    lock_dst.top = dst_y;
-    lock_dst.right = dst_x + w;
-    lock_dst.bottom = dst_y + h;
-
-    bpp = dst_surface->resource.format->byte_count;
-
-    /* We need to lock the surfaces, or we won't get refreshes when done. */
-    if (src_surface == dst_surface)
-    {
-        int pitch;
-
-        UnionRect(&lock_union, &lock_src, &lock_dst);
-
-        /* Lock the union of the two rectangles. */
-        hr = wined3d_surface_map(dst_surface, &dlock, &lock_union, 0);
-        if (FAILED(hr))
-            goto error;
-
-        pitch = dlock.Pitch;
-        slock.Pitch = dlock.Pitch;
-
-        /* Since slock was originally copied from this surface's description, we can just reuse it. */
-        sbuf = dst_surface->resource.allocatedMemory + lock_src.top * pitch + lock_src.left * bpp;
-        dbuf = dst_surface->resource.allocatedMemory + lock_dst.top * pitch + lock_dst.left * bpp;
-        src_format = src_surface->resource.format;
-        dst_format = src_format;
-    }
-    else
-    {
-        hr = wined3d_surface_map(src_surface, &slock, &lock_src, WINED3DLOCK_READONLY);
-        if (FAILED(hr))
-            goto error;
-        hr = wined3d_surface_map(dst_surface, &dlock, &lock_dst, 0);
-        if (FAILED(hr))
-            goto error;
-
-        sbuf = slock.pBits;
-        dbuf = dlock.pBits;
-        TRACE("Dst is at %p, Src is at %p.\n", dbuf, sbuf);
-
-        src_format = src_surface->resource.format;
-        dst_format = dst_surface->resource.format;
-    }
-
-    /* Handle compressed surfaces first... */
-    if (src_format->flags & dst_format->flags & WINED3DFMT_FLAG_COMPRESSED)
-    {
-        UINT row_block_count;
-
-        TRACE("compressed -> compressed copy\n");
-        if (trans)
-            FIXME("trans arg not supported when a compressed surface is involved\n");
-        if (dst_x || dst_y)
-            FIXME("offset for destination surface is not supported\n");
-        if (src_surface->resource.format->id != dst_surface->resource.format->id)
-        {
-            FIXME("compressed -> compressed copy only supported for the same type of surface\n");
-            hr = WINED3DERR_WRONGTEXTUREFORMAT;
-            goto error;
-        }
-
-        row_block_count = (w + dst_format->block_width - 1) / dst_format->block_width;
-        for (y = 0; y < h; y += dst_format->block_height)
-        {
-            memcpy(dbuf, sbuf, row_block_count * dst_format->block_byte_count);
-            dbuf += dlock.Pitch;
-            sbuf += slock.Pitch;
-        }
-
-        goto error;
-    }
-    if ((src_format->flags & WINED3DFMT_FLAG_COMPRESSED) && !(dst_format->flags & WINED3DFMT_FLAG_COMPRESSED))
-    {
-        /* TODO: Use the libtxc_dxtn.so shared library to do software
-         * decompression. */
-        ERR("Software decompression not supported.\n");
-        goto error;
-    }
-
-    if (trans & (WINEDDBLTFAST_SRCCOLORKEY | WINEDDBLTFAST_DESTCOLORKEY))
-    {
-        DWORD keylow, keyhigh;
-        DWORD mask = src_surface->resource.format->red_mask
-                | src_surface->resource.format->green_mask
-                | src_surface->resource.format->blue_mask;
-
-        /* For some 8-bit formats like L8 and P8 color masks don't make sense */
-        if (!mask && bpp == 1)
-            mask = 0xff;
-
-        TRACE("Color keyed copy.\n");
-        if (trans & WINEDDBLTFAST_SRCCOLORKEY)
-        {
-            keylow = src_surface->SrcBltCKey.dwColorSpaceLowValue;
-            keyhigh = src_surface->SrcBltCKey.dwColorSpaceHighValue;
-        }
-        else
-        {
-            /* I'm not sure if this is correct. */
-            FIXME("WINEDDBLTFAST_DESTCOLORKEY not fully supported yet.\n");
-            keylow = dst_surface->DestBltCKey.dwColorSpaceLowValue;
-            keyhigh = dst_surface->DestBltCKey.dwColorSpaceHighValue;
-        }
-
-#define COPYBOX_COLORKEY(type) \
-do { \
-    const type *s = (const type *)sbuf; \
-    type *d = (type *)dbuf; \
-    type tmp; \
-    for (y = 0; y < h; y++) \
-    { \
-        for (x = 0; x < w; x++) \
-        { \
-            tmp = s[x]; \
-            if ((tmp & mask) < keylow || (tmp & mask) > keyhigh) d[x] = tmp; \
-        } \
-        s = (const type *)((const BYTE *)s + slock.Pitch); \
-        d = (type *)((BYTE *)d + dlock.Pitch); \
-    } \
-} while(0)
-
-        switch (bpp)
-        {
-            case 1:
-                COPYBOX_COLORKEY(BYTE);
-                break;
-            case 2:
-                COPYBOX_COLORKEY(WORD);
-                break;
-            case 4:
-                COPYBOX_COLORKEY(DWORD);
-                break;
-            case 3:
-            {
-                const BYTE *s;
-                DWORD tmp;
-                BYTE *d;
-                s = sbuf;
-                d = dbuf;
-                for (y = 0; y < h; ++y)
-                {
-                    for (x = 0; x < w * 3; x += 3)
-                    {
-                        tmp = (DWORD)s[x] + ((DWORD)s[x + 1] << 8) + ((DWORD)s[x + 2] << 16);
-                        if (tmp < keylow || tmp > keyhigh)
-                        {
-                            d[x + 0] = s[x + 0];
-                            d[x + 1] = s[x + 1];
-                            d[x + 2] = s[x + 2];
-                        }
-                    }
-                    s += slock.Pitch;
-                    d += dlock.Pitch;
-                }
-                break;
-            }
-            default:
-                FIXME("Source color key blitting not supported for bpp %u.\n", bpp * 8);
-                hr = WINED3DERR_NOTAVAILABLE;
-                goto error;
-        }
-#undef COPYBOX_COLORKEY
-        TRACE("Copy done.\n");
-    }
-    else
-    {
-        int width = w * bpp;
-        INT sbufpitch, dbufpitch;
-
-        TRACE("No color key copy.\n");
-        /* Handle overlapping surfaces. */
-        if (sbuf < dbuf)
-        {
-            sbuf += (h - 1) * slock.Pitch;
-            dbuf += (h - 1) * dlock.Pitch;
-            sbufpitch = -slock.Pitch;
-            dbufpitch = -dlock.Pitch;
-        }
-        else
-        {
-            sbufpitch = slock.Pitch;
-            dbufpitch = dlock.Pitch;
-        }
-        for (y = 0; y < h; ++y)
-        {
-            /* This is pretty easy, a line for line memcpy. */
-            memmove(dbuf, sbuf, width);
-            sbuf += sbufpitch;
-            dbuf += dbufpitch;
-        }
-        TRACE("Copy done.\n");
-    }
-
-error:
-    if (src_surface == dst_surface)
-    {
-        wined3d_surface_unmap(dst_surface);
-    }
-    else
-    {
-        wined3d_surface_unmap(dst_surface);
-        wined3d_surface_unmap(src_surface);
-    }
 
     return hr;
 }
