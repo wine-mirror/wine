@@ -293,7 +293,6 @@ enum sym_get_lval symbol_picker_interactive(const char* name, const struct sgv_d
     }
     do
     {
-        i = 0;
         if (input_read_line("=> ", buffer, sizeof(buffer)))
         {
             if (buffer[0] == '\0') return sglv_aborted;
