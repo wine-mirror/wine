@@ -881,14 +881,16 @@ INT WINAPI GetDIBits(
 {
     DC * dc;
     BITMAPOBJ * bmp;
-    int i, ret = 0;
-    LONG width;
-    LONG height;
-    WORD bpp;
+    int i, dst_to_src_offset, ret = 0;
+    DWORD err;
     char dst_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *dst_info = (BITMAPINFO *)dst_bmibuf;
-    unsigned int colors = 0;
+    char src_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *src_info = (BITMAPINFO *)src_bmibuf;
     const struct gdi_dc_funcs *funcs;
+    struct gdi_image_bits src_bits;
+    struct bitblt_coords src, dst;
+    BOOL empty_rect = FALSE;
 
     /* Since info may be a BITMAPCOREINFO or any of the larger BITMAPINFO structures, we'll use our
        own copy and transfer the colour info back at the end */
@@ -911,106 +913,27 @@ INT WINAPI GetDIBits(
     funcs = bmp->funcs;
     if (bmp->dib) funcs = dc->dibdrv.dev.funcs;
 
-    width = dst_info->bmiHeader.biWidth;
-    height = dst_info->bmiHeader.biHeight;
-    bpp = dst_info->bmiHeader.biBitCount;
-    if (bpp == 0) /* query bitmap info only */
+    if (dst_info->bmiHeader.biBitCount == 0) /* query bitmap info only */
     {
         ret = fill_query_info( info, bmp );
         goto done;
     }
 
-    switch (bpp)
+    src.visrect.left   = 0;
+    src.visrect.top    = 0;
+    src.visrect.right  = bmp->bitmap.bmWidth;
+    src.visrect.bottom = bmp->bitmap.bmHeight;
+
+    dst.visrect.left   = 0;
+    dst.visrect.top    = 0;
+    dst.visrect.right  = dst_info->bmiHeader.biWidth;
+    dst.visrect.bottom = abs( dst_info->bmiHeader.biHeight );
+
+    if (lines == 0 || startscan >= dst.visrect.bottom)
+        bits = NULL;
+
+    if (bits)
     {
-    case 1:
-    case 4:
-    case 8:
-    {
-        colors = 1 << bpp;
-
-        /* If the bitmap object is a dib section at the
-           same color depth then get the color map from it */
-        if (bmp->dib && bpp == bmp->dib->dsBm.bmBitsPixel && coloruse == DIB_RGB_COLORS)
-        {
-            colors = min( colors, bmp->nb_colors );
-            if (colors != 1 << bpp) dst_info->bmiHeader.biClrUsed = colors;
-            memcpy( dst_info->bmiColors, bmp->color_table, colors * sizeof(RGBQUAD) );
-        }
-
-        /* For color DDBs in native depth (mono DDBs always have a black/white palette):
-           Generate the color map from the selected palette.  In the DIB_PAL_COLORS
-           case we'll fix up the indices after the format conversion. */
-        else if ( (bpp > 1 && bpp == bmp->bitmap.bmBitsPixel) || coloruse == DIB_PAL_COLORS )
-        {
-            if (!fill_color_table_from_palette( dst_info, dc ))
-            {
-                lines = 0;
-                goto done;
-            }
-        }
-        else
-            fill_default_color_table( dst_info );
-        break;
-    }
-
-    case 15:
-        if (dst_info->bmiHeader.biCompression == BI_BITFIELDS)
-            memcpy( dst_info->bmiColors, bit_fields_555, sizeof(bit_fields_555) );
-        break;
-
-    case 16:
-        if (dst_info->bmiHeader.biCompression == BI_BITFIELDS)
-        {
-            if (bmp->dib)
-            {
-                if (bmp->dib->dsBmih.biCompression == BI_BITFIELDS && bmp->dib->dsBmih.biBitCount == bpp)
-                    memcpy( dst_info->bmiColors, bmp->dib->dsBitfields, 3 * sizeof(DWORD) );
-                else
-                    memcpy( dst_info->bmiColors, bit_fields_555, sizeof(bit_fields_555) );
-            }
-            else
-                memcpy( dst_info->bmiColors, bit_fields_565, sizeof(bit_fields_565) );
-        }
-        break;
-
-    case 24:
-    case 32:
-        if (dst_info->bmiHeader.biCompression == BI_BITFIELDS)
-        {
-            if (bmp->dib && bmp->dib->dsBmih.biCompression == BI_BITFIELDS && bmp->dib->dsBmih.biBitCount == bpp)
-                memcpy( dst_info->bmiColors, bmp->dib->dsBitfields, 3 * sizeof(DWORD) );
-            else
-                memcpy( dst_info->bmiColors, bit_fields_888, sizeof(bit_fields_888) );
-        }
-        break;
-    }
-
-    if (bits && lines)
-    {
-        char src_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
-        BITMAPINFO *src_info = (BITMAPINFO *)src_bmibuf;
-        struct gdi_image_bits src_bits;
-        struct bitblt_coords src, dst;
-        DWORD err;
-        int dst_to_src_offset;
-        BOOL empty_rect;
-
-        src.visrect.left   = 0;
-        src.visrect.top    = 0;
-        src.visrect.right  = bmp->bitmap.bmWidth;
-        src.visrect.bottom = bmp->bitmap.bmHeight;
-
-        dst.visrect.left   = 0;
-        dst.visrect.top    = 0;
-        dst.visrect.right  = dst_info->bmiHeader.biWidth;
-        dst.visrect.bottom = abs( dst_info->bmiHeader.biHeight );
-
-        if (startscan >= dst.visrect.bottom)
-        {
-            ret = 1; /* yes, this is strange */
-            goto empty_image;
-        }
-
         if (dst_info->bmiHeader.biHeight > 0)
         {
             dst_to_src_offset = -startscan;
@@ -1038,7 +961,7 @@ INT WINAPI GetDIBits(
             if (dst.visrect.bottom < dst_info->bmiHeader.biHeight)
             {
                 int pad_lines = min( dst_info->bmiHeader.biHeight - dst.visrect.bottom, lines );
-                int pad_bytes = pad_lines * get_dib_stride( width, bpp );
+                int pad_bytes = pad_lines * get_dib_stride( dst_info->bmiHeader.biWidth, dst_info->bmiHeader.biBitCount );
                 memset( bits, 0, pad_bytes );
                 bits = (char *)bits + pad_bytes;
             }
@@ -1047,33 +970,71 @@ INT WINAPI GetDIBits(
         {
             if (dst.visrect.bottom < lines)
             {
-                int pad_lines = lines - dst.visrect.bottom, stride = get_dib_stride( width, bpp );
+                int pad_lines = lines - dst.visrect.bottom;
+                int stride = get_dib_stride( dst_info->bmiHeader.biWidth, dst_info->bmiHeader.biBitCount );
                 int pad_bytes = pad_lines * stride;
                 memset( (char *)bits + dst.visrect.bottom * stride, 0, pad_bytes );
             }
         }
 
-        if (empty_rect) goto empty_image;
+        if (empty_rect) bits = NULL;
 
         src.x      = src.visrect.left;
         src.y      = src.visrect.top;
         src.width  = src.visrect.right - src.visrect.left;
         src.height = src.visrect.bottom - src.visrect.top;
 
-        err = funcs->pGetImage( NULL, hbitmap, src_info, &src_bits, &src );
+        lines = src.height;
+    }
 
-        if (err) goto done;
+    err = funcs->pGetImage( NULL, hbitmap, src_info, bits ? &src_bits : NULL, bits ? &src : NULL );
 
-        ret = src.height;
+    if (err) goto done;
 
-        if (src_info->bmiHeader.biBitCount <= 8 && src_info->bmiHeader.biClrUsed == 0)
+    /* fill out the src colour table, if it needs one */
+    if (src_info->bmiHeader.biBitCount <= 8 && src_info->bmiHeader.biClrUsed == 0)
+    {
+        fill_default_color_table( src_info );
+        src_info->bmiHeader.biClrUsed = 1 << src_info->bmiHeader.biBitCount;
+    }
+
+    /* if the src and dst are the same depth, copy the colour info across */
+    if (dst_info->bmiHeader.biBitCount == src_info->bmiHeader.biBitCount && coloruse == DIB_RGB_COLORS )
+    {
+        switch (src_info->bmiHeader.biBitCount)
         {
-            if (bmp->dib)
-                memcpy( src_info->bmiColors, bmp->color_table, bmp->nb_colors * sizeof(RGBQUAD) );
-            else
-                fill_default_color_table( src_info );
+        case 16:
+            if (src_info->bmiHeader.biCompression == BI_RGB)
+            {
+                src_info->bmiHeader.biCompression = BI_BITFIELDS;
+                memcpy( src_info->bmiColors, bit_fields_555, sizeof(bit_fields_555) );
+            }
+            break;
+        case 32:
+            if (src_info->bmiHeader.biCompression == BI_RGB)
+            {
+                src_info->bmiHeader.biCompression = BI_BITFIELDS;
+                memcpy( src_info->bmiColors, bit_fields_888, sizeof(bit_fields_888) );
+            }
+            break;
         }
+        src_info->bmiHeader.biSizeImage = get_dib_image_size( dst_info );
+        copy_color_info( dst_info, src_info, coloruse );
+    }
+    else if (dst_info->bmiHeader.biBitCount <= 8) /* otherwise construct a default colour table for the dst, if needed */
+    {
+        if( coloruse == DIB_PAL_COLORS )
+        {
+            if (!fill_color_table_from_palette( dst_info, dc )) goto done;
+        }
+        else
+        {
+            fill_default_color_table( dst_info );
+        }
+    }
 
+    if (bits)
+    {
         if(dst_info->bmiHeader.biHeight > 0)
             dst_info->bmiHeader.biHeight = src.height;
         else
@@ -1081,13 +1042,15 @@ INT WINAPI GetDIBits(
 
         convert_bitmapinfo( src_info, src_bits.ptr, &src, dst_info, bits );
         if (src_bits.free) src_bits.free( &src_bits );
+        ret = lines;
     }
-    else ret = abs( height );
+    else
+        ret = empty_rect ? FALSE : TRUE;
 
-empty_image:
     if (coloruse == DIB_PAL_COLORS)
     {
         WORD *index = (WORD *)dst_info->bmiColors;
+        int colors = get_dib_num_of_colors( dst_info );
         for (i = 0; i < colors; i++, index++)
             *index = i;
     }
