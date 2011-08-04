@@ -115,7 +115,10 @@ library IWshRuntimeLibrary
 
     [
         helpstring("Windows Script Host Shell Object"),
-        uuid(f935dc22-1cf0-11d0-adb9-00c04fd58a0b)
+        uuid(f935dc22-1cf0-11d0-adb9-00c04fd58a0b),
+        threading(apartment),
+        progid("WScript.Shell.1"),
+        vi_progid("WScript.Shell")
     ]
     coclass IWshShell_Class {
         [default] interface IWshShell3;
@@ -123,7 +126,10 @@ library IWshRuntimeLibrary
 
     [
         helpstring("Windows Script Host Shell Object"),
-        uuid(72c24dd5-d70a-438b-8a42-98424b88afb8)
+        uuid(72c24dd5-d70a-438b-8a42-98424b88afb8),
+        threading(apartment),
+        progid("WScript.Shell.1"),
+        vi_progid("WScript.Shell")
     ]
     coclass WshShell {
         [default] interface IWshShell3;
@@ -131,7 +137,10 @@ library IWshRuntimeLibrary
 
     [
         helpstring("Windows Script Host Network Object"),
-        uuid(f935dc26-1cf0-11d0-adb9-00c04fd58a0b)
+        uuid(f935dc26-1cf0-11d0-adb9-00c04fd58a0b),
+        threading(apartment),
+        progid("WScript.Network.1"),
+        vi_progid("WScript.Network")
     ]
     coclass IWshNetwork_Class {
         [default] interface IWshNetwork2;
@@ -139,7 +148,10 @@ library IWshRuntimeLibrary
 
     [
         helpstring("Windows Script Host Network Object"),
-        uuid(093ff999-1ea0-4079-9525-9614c3504b74)
+        uuid(093ff999-1ea0-4079-9525-9614c3504b74),
+        threading(apartment),
+        progid("WScript.Network.1"),
+        vi_progid("WScript.Network")
     ]
     coclass WshNetwork {
         [default] interface IWshNetwork2;

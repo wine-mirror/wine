@@ -24,10 +24,14 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "ole2.h"
+#include "rpcproxy.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wshom);
+
+static HINSTANCE wshom_instance;
 
 /******************************************************************
  *              DllMain (wshom.ocx.@)
@@ -41,7 +45,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     case DLL_WINE_PREATTACH:
         return FALSE;  /* prefer native version */
     case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(hInstDLL);
+        wshom_instance = hInstDLL;
+        DisableThreadLibraryCalls(wshom_instance);
         break;
     }
 
@@ -71,8 +76,8 @@ HRESULT WINAPI DllCanUnloadNow(void)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    FIXME("()\n");
-    return S_OK;
+    TRACE("()\n");
+    return __wine_register_resources(wshom_instance);
 }
 
 /***********************************************************************
@@ -80,6 +85,6 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    FIXME("()\n");
-    return S_OK;
+    TRACE("()\n");
+    return __wine_unregister_resources(wshom_instance);
 }
