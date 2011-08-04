@@ -186,7 +186,8 @@ static const char *compare_line(const char *out_line, const char *out_end, const
                      && !memcmp(exp_ptr, or_broken_cmd, sizeof(or_broken_cmd))) {
                 exp_ptr = exp_end;
                 continue;
-            }
+            }else if(out_ptr == out_end || *out_ptr != *exp_ptr)
+                err = out_ptr;
         }else if(out_ptr == out_end || *out_ptr != *exp_ptr) {
             err = out_ptr;
         }
