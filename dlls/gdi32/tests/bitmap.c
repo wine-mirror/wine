@@ -1252,6 +1252,28 @@ static void test_GetDIBits_selected_DIB(UINT bpp)
 
     ok( !memcmp( bits, bits2, dib_size ), "bit mismatch (bpp %d)\n", bpp );
 
+    /* Test various combinations of lines = 0 and bits2 = NULL */
+    memset( info2->bmiColors, 0xcc, 256 * sizeof(RGBQUAD) );
+    res = GetDIBits( dc, dib, 0, 0, bits2, info2, DIB_RGB_COLORS );
+todo_wine
+    ok( res == 1, "got %d (bpp %d)\n", res, bpp );
+    ok( !memcmp( info->bmiColors, info2->bmiColors, (1 << bpp) * sizeof(RGBQUAD) ),
+        "color table mismatch (bpp %d)\n", bpp );
+
+    memset( info2->bmiColors, 0xcc, 256 * sizeof(RGBQUAD) );
+    res = GetDIBits( dc, dib, 0, 0, NULL, info2, DIB_RGB_COLORS );
+todo_wine
+    ok( res == 1, "got %d (bpp %d)\n", res, bpp );
+    ok( !memcmp( info->bmiColors, info2->bmiColors, (1 << bpp) * sizeof(RGBQUAD) ),
+        "color table mismatch (bpp %d)\n", bpp );
+
+    memset( info2->bmiColors, 0xcc, 256 * sizeof(RGBQUAD) );
+    res = GetDIBits( dc, dib, 0, info->bmiHeader.biHeight, NULL, info2, DIB_RGB_COLORS );
+todo_wine
+    ok( res == 1, "got %d (bpp %d)\n", res, bpp );
+    ok( !memcmp( info->bmiColors, info2->bmiColors, (1 << bpp) * sizeof(RGBQUAD) ),
+        "color table mismatch (bpp %d)\n", bpp );
+
     /* Map into a 32bit-DIB */
     info2->bmiHeader.biBitCount = 32;
     res = GetDIBits(dc, dib, 0, info->bmiHeader.biHeight, bits2, info2, DIB_RGB_COLORS);
@@ -1364,7 +1386,8 @@ static void test_GetDIBits_selected_DDB(BOOL monochrome)
 
         /* Get the palette indices */
         res = GetDIBits(dc, ddb, 0, 0, NULL, info2, DIB_PAL_COLORS);
-        ok( res, "got %d (bpp %d)\n", res, bpp );
+todo_wine
+        ok( res == 1, "got %d (bpp %d)\n", res, bpp );
 
         for (i = 0; i < (1 << info->bmiHeader.biBitCount); i++)
             ok( colors[i] == i, "%d: got %d (bpp %d)\n", i, colors[i], bpp );
