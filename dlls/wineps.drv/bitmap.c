@@ -49,37 +49,6 @@ static inline int get_dib_width_bytes( int width, int depth )
     return 4 * words;
 }
 
-/* get the bitmap info from either an INFOHEADER or COREHEADER bitmap */
-static BOOL get_bitmap_info( const void *ptr, LONG *width, LONG *height, WORD *bpp, WORD *compr )
-{
-    const BITMAPINFOHEADER *header = ptr;
-
-    switch(header->biSize)
-    {
-    case sizeof(BITMAPCOREHEADER):
-        {
-            const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)header;
-            *width  = core->bcWidth;
-            *height = core->bcHeight;
-            *bpp    = core->bcBitCount;
-            *compr  = 0;
-        }
-        return TRUE;
-    case sizeof(BITMAPINFOHEADER):
-    case sizeof(BITMAPV4HEADER):
-    case sizeof(BITMAPV5HEADER):
-        /* V4 and V5 structures are a superset of the INFOHEADER structure */
-        *width  = header->biWidth;
-        *height = header->biHeight;
-        *bpp    = header->biBitCount;
-        *compr  = header->biCompression;
-        return TRUE;
-    default:
-        ERR("(%d): unknown/wrong size for header\n", header->biSize );
-        return FALSE;
-    }
-}
-
 
 /***************************************************************************
  *                PSDRV_WriteImageHeader
@@ -336,9 +305,7 @@ INT PSDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
                          INT heightDst, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
                          const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
 {
-    LONG fullSrcWidth, fullSrcHeight;
     INT stride;
-    WORD bpp, compression;
     INT line;
     POINT pt[2];
     const BYTE *src_ptr;
@@ -348,15 +315,13 @@ INT PSDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
     TRACE("%p (%d,%d %dx%d) -> (%d,%d %dx%d)\n", dev->hdc,
 	  xSrc, ySrc, widthSrc, heightSrc, xDst, yDst, widthDst, heightDst);
 
-    if (!get_bitmap_info( info, &fullSrcWidth, &fullSrcHeight, &bpp, &compression )) return FALSE;
+    stride = get_dib_width_bytes( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );
 
-    stride = get_dib_width_bytes(fullSrcWidth, bpp);
-
-    TRACE("full size=%dx%d bpp=%d compression=%d rop=%08x\n", fullSrcWidth,
-	  fullSrcHeight, bpp, compression, dwRop);
+    TRACE("full size=%dx%d bpp=%d compression=%d rop=%08x\n", info->bmiHeader.biWidth,
+	  info->bmiHeader.biHeight, info->bmiHeader.biBitCount, info->bmiHeader.biCompression, dwRop);
 
 
-    if(compression != BI_RGB) {
+    if(info->bmiHeader.biCompression != BI_RGB) {
         FIXME("Compression not supported\n");
 	return FALSE;
     }
@@ -371,7 +336,7 @@ INT PSDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
     widthDst = pt[1].x - pt[0].x;
     heightDst = pt[1].y - pt[0].y;
 
-    switch(bpp) {
+    switch (info->bmiHeader.biBitCount) {
 
     case 1:
 	src_ptr = bits;

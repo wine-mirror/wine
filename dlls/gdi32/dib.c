@@ -389,9 +389,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
 {
     DC *dc = get_nulldrv_dc( dev );
     INT ret;
-    LONG width, height;
-    WORD planes, bpp;
-    DWORD compr, size;
+    LONG height;
     HBITMAP hBitmap;
     HDC hdcMem;
 
@@ -399,10 +397,8 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
     if (GET_DC_PHYSDEV( dc, pStretchBlt ) == dev || GET_DC_PHYSDEV( dc, pPutImage ) == dev)
         return 0;
 
-    if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, &planes, &bpp, &compr, &size ) == -1)
-        return 0;
-
-    if (width < 0) return 0;
+    if (info->bmiHeader.biWidth < 0) return 0;
+    height = info->bmiHeader.biHeight;
 
     if (xSrc == 0 && ySrc == 0 && widthDst == widthSrc && heightDst == heightSrc &&
         info->bmiHeader.biCompression == BI_RGB)
@@ -417,7 +413,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
             hBitmap = GetCurrentObject( dev->hdc, OBJ_BITMAP );
             if (GetObjectW( hBitmap, sizeof(bm), &bm ) &&
                 bm.bmWidth == widthSrc && bm.bmHeight == heightSrc &&
-                bm.bmBitsPixel == bpp && bm.bmPlanes == planes)
+                bm.bmBitsPixel == info->bmiHeader.biBitCount && bm.bmPlanes == 1)
             {
                 /* fast path */
                 return SetDIBits( dev->hdc, hBitmap, 0, abs( height ), bits, info, coloruse );
@@ -426,7 +422,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
     }
 
     hdcMem = CreateCompatibleDC( dev->hdc );
-    hBitmap = CreateCompatibleBitmap( dev->hdc, width, height );
+    hBitmap = CreateCompatibleBitmap( dev->hdc, info->bmiHeader.biWidth, height );
     SelectObject( hdcMem, hBitmap );
     if (coloruse == DIB_PAL_COLORS)
         SelectPalette( hdcMem, GetCurrentObject( dev->hdc, OBJ_PAL ), FALSE );
@@ -457,12 +453,15 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
  */
 INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst, INT heightDst,
                          INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
-                         const BITMAPINFO *info, UINT coloruse, DWORD rop )
+                         const BITMAPINFO *bmi, UINT coloruse, DWORD rop )
 {
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
     DC *dc;
     INT ret = 0;
 
-    if (!bits || !info) return 0;
+    if (!bits) return 0;
+    if (!bitmapinfo_from_user_bitmapinfo( info, bmi, coloruse )) return 0;
 
     if ((dc = get_dc_ptr( hdc )))
     {

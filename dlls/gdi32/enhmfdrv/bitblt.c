@@ -175,13 +175,12 @@ INT EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT hei
 {
     EMRSTRETCHDIBITS *emr;
     BOOL ret;
-    UINT bmi_size=0, emr_size;
-    UINT bits_size = get_dib_image_size(info);
+    UINT bmi_size, emr_size;
 
     /* calculate the size of the colour table */
     bmi_size = bitmap_info_size(info, wUsage);
 
-    emr_size = sizeof (EMRSTRETCHDIBITS) + bmi_size + bits_size;
+    emr_size = sizeof (EMRSTRETCHDIBITS) + bmi_size + info->bmiHeader.biSizeImage;
     emr = HeapAlloc(GetProcessHeap(), 0, emr_size );
     if (!emr) return 0;
 
@@ -189,7 +188,7 @@ INT EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT hei
     memcpy( &emr[1], info, bmi_size);
 
     /* write bitmap bits to the record */
-    memcpy ( ( (BYTE *) (&emr[1]) ) + bmi_size, bits, bits_size);
+    memcpy ( ( (BYTE *) (&emr[1]) ) + bmi_size, bits, info->bmiHeader.biSizeImage);
 
     /* fill in the EMR header at the front of our piece of memory */
     emr->emr.iType = EMR_STRETCHDIBITS;
@@ -207,7 +206,7 @@ INT EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT hei
     emr->offBmiSrc    = sizeof (EMRSTRETCHDIBITS);
     emr->cbBmiSrc     = bmi_size;
     emr->offBitsSrc   = emr->offBmiSrc + bmi_size; 
-    emr->cbBitsSrc    = bits_size;
+    emr->cbBitsSrc    = info->bmiHeader.biSizeImage;
 
     emr->cxSrc = widthSrc;
     emr->cySrc = heightSrc;
