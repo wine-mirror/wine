@@ -5008,6 +5008,7 @@ void CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
 {
     struct wined3d_resource *resource;
     HRESULT hr;
+    RECT rect;
 
     resource = rendertarget_view->resource;
     if (resource->resourceType != WINED3DRTYPE_SURFACE)
@@ -5016,7 +5017,8 @@ void CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
         return;
     }
 
-    hr = surface_color_fill(surface_from_resource(resource), NULL, color);
+    SetRect(&rect, 0, 0, resource->width, resource->height);
+    hr = surface_color_fill(surface_from_resource(resource), &rect, color);
     if (FAILED(hr)) ERR("Color fill failed, hr %#x.\n", hr);
 }
 
