@@ -152,16 +152,6 @@ static const char *compare_line(const char *out_line, const char *out_end, const
     static const char space_cmd[] = {'@','s','p','a','c','e','@'};
     static const char or_broken_cmd[] = {'@','o','r','_','b','r','o','k','e','n','@'};
 
-    /* Corner case where exp_line directly starts with @or_broken@, on Windowses */
-    if(broken(1)
-            && exp_line+sizeof(or_broken_cmd) <= exp_end
-            && !memcmp(exp_line, or_broken_cmd, sizeof(or_broken_cmd))) {
-        if(out_line == out_end)
-            return NULL;
-        else
-            exp_ptr = exp_line + sizeof(or_broken_cmd);
-    }
-
     while(exp_ptr < exp_end) {
         if(*exp_ptr == '@') {
             if(exp_ptr+sizeof(pwd_cmd) <= exp_end
@@ -183,8 +173,10 @@ static const char *compare_line(const char *out_line, const char *out_end, const
                 continue;
             }else if(exp_ptr+sizeof(or_broken_cmd) <= exp_end
                      && !memcmp(exp_ptr, or_broken_cmd, sizeof(or_broken_cmd))) {
-                exp_ptr = exp_end;
-                continue;
+                if(out_ptr == out_end)
+                    return NULL;
+                else
+                    err = out_ptr;
             }else if(out_ptr == out_end || *out_ptr != *exp_ptr)
                 err = out_ptr;
         }else if(out_ptr == out_end || *out_ptr != *exp_ptr) {
