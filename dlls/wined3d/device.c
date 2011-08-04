@@ -4981,6 +4981,8 @@ HRESULT CDECL wined3d_device_delete_patch(struct wined3d_device *device, UINT ha
 HRESULT CDECL wined3d_device_color_fill(struct wined3d_device *device,
         struct wined3d_surface *surface, const RECT *rect, const WINED3DCOLORVALUE *color)
 {
+    RECT r;
+
     TRACE("device %p, surface %p, rect %s, color {%.8e, %.8e, %.8e, %.8e}.\n",
             device, surface, wine_dbgstr_rect(rect),
             color->r, color->g, color->b, color->a);
@@ -4989,6 +4991,12 @@ HRESULT CDECL wined3d_device_color_fill(struct wined3d_device *device,
     {
         FIXME("call to colorfill with non WINED3DPOOL_DEFAULT or WINED3DPOOL_SYSTEMMEM surface\n");
         return WINED3DERR_INVALIDCALL;
+    }
+
+    if (!rect)
+    {
+        SetRect(&r, 0, 0, surface->resource.width, surface->resource.height);
+        rect = &r;
     }
 
     return surface_color_fill(surface, rect, color);
