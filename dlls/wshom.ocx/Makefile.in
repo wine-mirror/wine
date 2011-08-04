@@ -3,4 +3,6 @@ MODULE    = wshom.ocx
 C_SRCS = \
 	wshom_main.c
 
+IDL_TLB_SRCS = wshom.idl
+
 @MAKE_DLL_RULES@

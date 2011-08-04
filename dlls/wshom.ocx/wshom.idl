@@ -1,0 +1,147 @@
+/*
+ * Copyright 2011 Jacek Caban for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "oaidl.idl";
+
+[
+    helpstring("Windows Script Host Object Model"),
+    uuid(f935dc20-1cf0-11d0-adb9-00c04fd58a0b),
+    version(1.0)
+]
+library IWshRuntimeLibrary
+{
+    importlib("stdole2.tlb");
+
+    [
+        uuid(f935dc27-1cf0-11d0-adb9-00c04fd58a0b),
+        odl,
+        dual,
+        oleautomation
+    ]
+    interface IWshCollection : IDispatch {
+        [id(DISPID_VALUE)]
+        HRESULT Item(
+                [in] VARIANT *Index,
+                [out, retval] VARIANT *out_Value);
+
+        [id(1)]
+        HRESULT Count([out, retval] long *out_Count);
+
+        [id(2), propget]
+        HRESULT length([out, retval] long *out_Count);
+
+        [id(DISPID_NEWENUM)]
+        HRESULT _NewEnum([out, retval] IUnknown *out_Enum);
+    }
+
+    [
+        uuid(f935dc29-1cf0-11d0-adb9-00c04fd58a0b),
+        odl,
+        dual,
+        oleautomation
+    ]
+    interface IWshEnvironment : IDispatch {
+        [id(DISPID_VALUE), propget]
+        HRESULT Item(
+                [in] BSTR Name,
+                [out, retval] BSTR *out_Value);
+
+        [id(DISPID_VALUE), propput]
+        HRESULT Item(
+                [in] BSTR Name,
+                [in] BSTR out_Value);
+
+        [id(1)]
+        HRESULT Count([out, retval] long *out_Count);
+
+        [id(2), propget]
+        HRESULT length([out, retval] long *out_Count);
+
+        [id(DISPID_NEWENUM)]
+        HRESULT _NewEnum([out, retval] IUnknown *out_Enum);
+
+        [id(0x03e9)]
+        HRESULT Remove([in] BSTR Name);
+    }
+
+    [
+        uuid(41904400-be18-11d3-a28b-00104bd35090),
+        odl,
+        dual,
+        oleautomation
+    ]
+    interface IWshShell3 : IDispatch {
+        [id(0x0064), propget]
+        HRESULT SpecialFolders([out, retval] IWshCollection **out_Folders);
+
+        [id(0x00c8), propget]
+        HRESULT Environment(
+                [in, optional] VARIANT *Type,
+                [out, retval] IWshEnvironment **out_Env);
+
+        [id(0x03e8)]
+        HRESULT Run(
+                [in] BSTR Command,
+                [in, optional] VARIANT *WindowStyle,
+                [in, optional] VARIANT *WaitOnReturn,
+                [out, retval] int *out_ExitCode);
+    }
+
+    [
+        uuid(24be5a31-edfe-11d2-b933-00104b365c9f),
+        odl,
+        dual,
+        oleautomation
+    ]
+    interface IWshNetwork2 : IDispatch {
+        [id(0x60020000), propget]
+        HRESULT UserDomain([out, retval] BSTR *out_UserDomain);
+    }
+
+    [
+        helpstring("Windows Script Host Shell Object"),
+        uuid(f935dc22-1cf0-11d0-adb9-00c04fd58a0b)
+    ]
+    coclass IWshShell_Class {
+        [default] interface IWshShell3;
+    }
+
+    [
+        helpstring("Windows Script Host Shell Object"),
+        uuid(72c24dd5-d70a-438b-8a42-98424b88afb8)
+    ]
+    coclass WshShell {
+        [default] interface IWshShell3;
+    }
+
+    [
+        helpstring("Windows Script Host Network Object"),
+        uuid(f935dc26-1cf0-11d0-adb9-00c04fd58a0b)
+    ]
+    coclass IWshNetwork_Class {
+        [default] interface IWshNetwork2;
+    }
+
+    [
+        helpstring("Windows Script Host Network Object"),
+        uuid(093ff999-1ea0-4079-9525-9614c3504b74)
+    ]
+    coclass WshNetwork {
+        [default] interface IWshNetwork2;
+    }
+}
