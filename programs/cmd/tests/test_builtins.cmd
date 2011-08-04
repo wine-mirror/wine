@@ -385,6 +385,85 @@ rem for /L %%i in (1,1,1) do echo %%i
 rem for /L %%i in (1,-2,-1) do echo %%i
 rem for /L %%i in (-1,-1,-1) do echo %%i
 rem for /L %%i in (1,2, 3) do echo %%i
+echo ...for /a
+rem No output when using "set expr" syntax, unless in interactive mode
+rem Need to use "set envvar=expr" to use in a batch script
+echo ......individual operations
+set var=0
+set /a var=1 +2 & echo %var%
+set /a var=1 +-2 & echo %var%
+set /a var=1 --2 & echo %var%
+set /a var=2* 3 & echo %var%
+set /a var=-2* -5 & echo %var%
+set /a var=12/3 & echo %var%
+set /a var=13/3 & echo %var%
+set /a var=-13/3 & echo %var%
+rem FIXME Divide by zero should return an error, but error messages cannot be tested with current infrastructure
+set /a var=5 %% 5 & echo %var%
+set /a var=5 %% 3 & echo %var%
+set /a var=5 %% -3 & echo %var%
+set /a var=-5 %% -3 & echo %var%
+set /a var=1 ^<^< 0 & echo %var%
+set /a var=1 ^<^< 2 & echo %var%
+set /a var=1 ^<^< -2 & echo %var%
+set /a var=-1 ^<^< -2 & echo %var%
+set /a var=-1 ^<^< 2 & echo %var%
+set /a var=9 ^>^> 0 & echo %var%
+set /a var=9 ^>^> 2 & echo %var%
+set /a var=9 ^>^> -2 & echo %var%
+set /a var=-9 ^>^> -2 & echo %var%
+set /a var=-9 ^>^> 2 & echo %var%
+set /a var=5 ^& 0 & echo %var%
+set /a var=5 ^& 1 & echo %var%
+set /a var=5 ^& 3 & echo %var%
+set /a var=5 ^& 4 & echo %var%
+set /a var=5 ^& 1 & echo %var%
+set /a var=5 ^| 0 & echo %var%
+set /a var=5 ^| 1 & echo %var%
+set /a var=5 ^| 3 & echo %var%
+set /a var=5 ^| 4 & echo %var%
+set /a var=5 ^| 1 & echo %var%
+set /a var=5 ^^ 0 & echo %var%
+set /a var=5 ^^ 1 & echo %var%
+set /a var=5 ^^ 3 & echo %var%
+set /a var=5 ^^ 4 & echo %var%
+set /a var=5 ^^ 1 & echo %var%
+echo ......precedence and grouping
+set /a var=4 + 2*3 & echo %var%
+set /a var=(4+2)*3 & echo %var%
+set /a var=4 * 3/5 & echo %var%
+set /a var=(4 * 3)/5 & echo %var%
+set /a var=4 * 5 %% 4 & echo %var%
+set /a var=4 * (5 %% 4) & echo %var%
+set /a var=3 %% (5 + 8 %% 3 ^^ 2) & echo %var%
+set /a var=3 %% (5 + 8 %% 3 ^^ -2) & echo %var%
+echo ......octal and hexadecimal
+set /a var=0xf + 3 & echo %var%
+set /a var=0xF + 3 & echo %var%
+set /a var=015 + 2 & echo %var%
+set /a var=3, 8+3,0 & echo %var%
+echo ......variables
+set /a var=foo=3, foo+1 & echo %var%
+if defined foo (echo %foo%) else (
+    echo foo not defined
+)
+set /a var=foo=3, foo+=1 & echo %var%
+set /a var=foo=3, bar=1, bar+=foo, bar & echo %var%
+set /a var=foo*= foo & echo %var%
+set /a var=whateverNonExistingVar & echo %var%
+set /a var=whateverNonExistingVar + bar & echo %var%
+set /a var=foo -= foo + 7 & echo %var%
+set /a var=foo /= 3 + 2 & echo %var%
+set /a var=foo=5, foo %%=2 & echo %var%
+set /a var=foo ^<^<= 2 & echo %var%
+set /a var=foo ^>^>= 2 & echo %var%
+set /a var=foo ^&= 2 & echo %var%
+set /a var=foo=5, foo ^|= 2 & echo %var%
+set /a var=foo=5, foo ^^= 2 & echo %var%
+set /a var=foo=19, foo %%= 4 + (bar %%= 7) & echo.
+set foo=
+set bar=
+set var=
 
 echo -----------Testing del /a-----------
 del /f/q *.test > nul

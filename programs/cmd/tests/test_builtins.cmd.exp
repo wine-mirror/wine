@@ -253,6 +253,76 @@ bar
 -1
 @todo_wine@ErrorLevel 0
 @todo_wine@ErrorLevel 0
+...for /a
+......individual operations
+0
+@todo_wine@3
+@todo_wine@-1
+@todo_wine@3
+@todo_wine@6
+@todo_wine@10
+@todo_wine@4
+@todo_wine@4
+@todo_wine@-4
+0
+@todo_wine@2
+@todo_wine@2
+@todo_wine@-2
+@todo_wine@1
+@todo_wine@4
+0@or_broken@1073741824
+0@or_broken@-1073741824
+@todo_wine@-4
+@todo_wine@9
+@todo_wine@2
+0
+@todo_wine@-1
+@todo_wine@-3
+0
+@todo_wine@1
+@todo_wine@1
+@todo_wine@4
+@todo_wine@1
+@todo_wine@5
+@todo_wine@5
+@todo_wine@7
+@todo_wine@5
+@todo_wine@5
+@todo_wine@5
+@todo_wine@4
+@todo_wine@6
+@todo_wine@1
+......precedence and grouping
+@todo_wine@4
+@todo_wine@10
+@todo_wine@18@or_broken@10
+@todo_wine@2@or_broken@0
+@todo_wine@2@or_broken@0
+0@or_broken@4
+@todo_wine@4
+@todo_wine@3@or_broken@4
+......octal and hexadecimal
+@todo_wine@3@or_broken@4
+@todo_wine@18
+@todo_wine@18
+@todo_wine@15
+......variables
+@todo_wine@3
+@todo_wine@3@or_broken@foo not defined
+@todo_wine@3@or_broken@0
+@todo_wine@3@or_broken@0
+@todo_wine@3@or_broken@0
+@todo_wine@9@or_broken@0
+0
+@todo_wine@4@or_broken@0
+@todo_wine@-7@or_broken@0
+@todo_wine@-1@or_broken@0
+@todo_wine@5@or_broken@0
+@todo_wine@4@or_broken@0
+@todo_wine@1@or_broken@0
+0
+@todo_wine@5@or_broken@0
+
 -----------Testing del /a-----------
 not-r.test not found after delete, good
 r.test found before delete, good
