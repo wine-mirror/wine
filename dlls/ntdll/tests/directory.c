@@ -215,16 +215,9 @@ static void test_flags_NtQueryDirectoryFile(OBJECT_ATTRIBUTES *attr, const char 
     }
     ok(numfiles < max_test_dir_size, "too many loops\n");
 
-    for (i=0; testfiles[i].name; i++) {
-        if ((strcmp(testfiles[i].name, ".") == 0 || strcmp(testfiles[i].name, "..") == 0) && (single_entry || !restart_flag)) {
-            todo_wine
-            ok(testfiles[i].nfound == 1, "Wrong number %d of %s files found (ReturnSingleEntry=%d,RestartScan=%d)\n",
-              testfiles[i].nfound, testfiles[i].description, single_entry, restart_flag);
-        } else {
-            ok(testfiles[i].nfound == 1, "Wrong number %d of %s files found (ReturnSingleEntry=%d,RestartScan=%d)\n",
-              testfiles[i].nfound, testfiles[i].description, single_entry, restart_flag);
-        }
-    }
+    for (i=0; testfiles[i].name; i++)
+        ok(testfiles[i].nfound == 1, "Wrong number %d of %s files found (ReturnSingleEntry=%d,RestartScan=%d)\n",
+           testfiles[i].nfound, testfiles[i].description, single_entry, restart_flag);
 
     pNtClose(dirh);
 }
