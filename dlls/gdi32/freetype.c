@@ -1613,19 +1613,24 @@ static void LoadReplaceList(void)
             /* "NewName"="Oldname" */
             WideCharToMultiByte(CP_ACP, 0, value, -1, familyA, sizeof(familyA), NULL, NULL);
 
-            /* Find the old family and hence all of the font files
-               in that family */
-            LIST_FOR_EACH(family_elem_ptr, &font_list) {
-                family = LIST_ENTRY(family_elem_ptr, Family, entry);
-                if(!strcmpiW(family->FamilyName, data)) {
-                    LIST_FOR_EACH(face_elem_ptr, &family->faces) {
-                        face = LIST_ENTRY(face_elem_ptr, Face, entry);
-                        TRACE("mapping %s %s to %s\n", debugstr_w(family->FamilyName),
-                              debugstr_w(face->StyleName), familyA);
-                        /* Now add a new entry with the new family name */
-                        AddFontToList(face->file, face->font_data_ptr, face->font_data_size, familyA, family->FamilyName, ADDFONT_FORCE_BITMAP | (face->external ? ADDFONT_EXTERNAL_FONT : 0));
+            if(!find_family_from_name(value))
+            {
+                /* Find the old family and hence all of the font files
+                   in that family */
+                LIST_FOR_EACH(family_elem_ptr, &font_list) {
+                    family = LIST_ENTRY(family_elem_ptr, Family, entry);
+                    if(!strcmpiW(family->FamilyName, data)) {
+                        LIST_FOR_EACH(face_elem_ptr, &family->faces) {
+                            face = LIST_ENTRY(face_elem_ptr, Face, entry);
+                            TRACE("mapping %s %s to %s\n", debugstr_w(family->FamilyName),
+                                  debugstr_w(face->StyleName), familyA);
+                            /* Now add a new entry with the new family name */
+                            AddFontToList(face->file, face->font_data_ptr, face->font_data_size,
+                                          familyA, family->FamilyName,
+                                          ADDFONT_FORCE_BITMAP | (face->external ? ADDFONT_EXTERNAL_FONT : 0));
+                        }
+                        break;
                     }
-                    break;
                 }
             }
 	    /* reset dlen and vlen */
