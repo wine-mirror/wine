@@ -3846,9 +3846,18 @@ static HRESULT WINAPI foldermanager_RegisterFolder(
         }
 
         if(SUCCEEDED(hr) && pKFD->category != KF_CATEGORY_VIRTUAL)
-            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szRelativePath, 0, REG_SZ, (LPBYTE)pKFD->pszRelativePath, (lstrlenW(pKFD->pszRelativePath)+1)*sizeof(WCHAR) ));
+        {
+            if(!pKFD->pszRelativePath)
+                hr = E_INVALIDARG;
+
+            if(SUCCEEDED(hr))
+                hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szRelativePath, 0, REG_SZ, (LPBYTE)pKFD->pszRelativePath, (lstrlenW(pKFD->pszRelativePath)+1)*sizeof(WCHAR) ));
+        }
 
         RegCloseKey(hKey);
+
+        if(FAILED(hr))
+            SHDeleteKeyW(HKEY_LOCAL_MACHINE, registryPath);
     }
 
     HeapFree(GetProcessHeap(), 0, registryPath);
