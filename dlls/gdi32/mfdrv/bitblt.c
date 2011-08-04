@@ -171,8 +171,7 @@ INT MFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD cx,
 
 {
     DWORD infosize = bitmap_info_size(info, coloruse);
-    DWORD imagesize = get_dib_image_size( info );
-    DWORD len = sizeof(METARECORD) + 8 * sizeof(WORD) + infosize + imagesize;
+    DWORD len = sizeof(METARECORD) + 8 * sizeof(WORD) + infosize + info->bmiHeader.biSizeImage;
     METARECORD *mr = HeapAlloc( GetProcessHeap(), 0, len );
     if(!mr) return 0;
 
@@ -188,7 +187,7 @@ INT MFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD cx,
     mr->rdParm[7] = (INT16)yDst;
     mr->rdParm[8] = (INT16)xDst;
     memcpy(mr->rdParm + 9, info, infosize);
-    memcpy(mr->rdParm + 9 + infosize / 2, bits, imagesize);
+    memcpy(mr->rdParm + 9 + infosize / 2, bits, info->bmiHeader.biSizeImage);
     MFDRV_WriteRecord( dev, mr, mr->rdSize * 2 );
     HeapFree( GetProcessHeap(), 0, mr );
     return lines;

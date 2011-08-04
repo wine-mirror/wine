@@ -240,42 +240,6 @@ void X11DRV_DIB_DestroyXImage( XImage *image )
 
 
 /***********************************************************************
- *           DIB_GetBitmapInfoEx
- *
- * Get the info from a bitmap header.
- * Return 1 for INFOHEADER, 0 for COREHEADER, -1 for error.
- */
-static int DIB_GetBitmapInfoEx( const BITMAPINFOHEADER *header, LONG *width,
-                                LONG *height, WORD *planes, WORD *bpp,
-                                WORD *compr, DWORD *size )
-{
-    if (header->biSize == sizeof(BITMAPCOREHEADER))
-    {
-        const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)header;
-        *width  = core->bcWidth;
-        *height = core->bcHeight;
-        *planes = core->bcPlanes;
-        *bpp    = core->bcBitCount;
-        *compr  = 0;
-        *size   = 0;
-        return 0;
-    }
-    if (header->biSize >= sizeof(BITMAPINFOHEADER))
-    {
-        *width  = header->biWidth;
-        *height = header->biHeight;
-        *planes = header->biPlanes;
-        *bpp    = header->biBitCount;
-        *compr  = header->biCompression;
-        *size   = header->biSizeImage;
-        return 1;
-    }
-    ERR("(%d): unknown/wrong size for header\n", header->biSize );
-    return -1;
-}
-
-
-/***********************************************************************
  *           X11DRV_DIB_GetColorCount
  *
  * Computes the number of colors for the bitmap palette.
@@ -283,39 +247,9 @@ static int DIB_GetBitmapInfoEx( const BITMAPINFOHEADER *header, LONG *width,
  */
 static unsigned int X11DRV_DIB_GetColorCount(const BITMAPINFO *info)
 {
-    unsigned int colors;
-    BOOL core_info = info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER);
-
-    if (core_info)
-    {
-        colors = 1 << ((const BITMAPCOREINFO*)info)->bmciHeader.bcBitCount;
-    }
-    else
-    {
-        colors = info->bmiHeader.biClrUsed;
-        if (!colors) colors = 1 << info->bmiHeader.biBitCount;
-    }
-    if (colors > 256)
-    {
-        ERR("called with >256 colors!\n");
-        colors = 0;
-    }
+    unsigned int colors = min( info->bmiHeader.biClrUsed, 256 );
+    if (!colors) colors = 1 << info->bmiHeader.biBitCount;
     return colors;
-}
-
-/***********************************************************************
- *           DIB_GetBitmapInfo
- *
- * Get the info from a bitmap header.
- * Return 1 for INFOHEADER, 0 for COREHEADER, -1 for error.
- */
-static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
-                              LONG *height, WORD *bpp, WORD *compr )
-{
-    WORD planes;
-    DWORD size;
-    
-    return DIB_GetBitmapInfoEx( header, width, height, &planes, bpp, compr, &size);    
 }
 
 
@@ -332,61 +266,33 @@ static inline BOOL colour_is_brighter(RGBQUAD c1, RGBQUAD c2)
  * for a >8-bit deep bitmap.
  */
 static int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
-                             WORD coloruse, WORD depth, BOOL quads,
-                             const void *colorPtr, int start, int end )
+                                    WORD coloruse, WORD depth, const void *colorPtr, int start, int end )
 {
     int i;
 
     if (coloruse == DIB_RGB_COLORS)
     {
-        if (quads)
+        const RGBQUAD * rgb = colorPtr;
+
+        if (depth == 1)  /* Monochrome */
         {
-            const RGBQUAD * rgb = colorPtr;
+            BOOL invert = FALSE;
+            RGBQUAD table[2];
 
-            if (depth == 1)  /* Monochrome */
-            {
-                BOOL invert = FALSE;
-                RGBQUAD table[2];
+            if (GetDIBColorTable( physDev->dev.hdc, 0, 2, table ) == 2)
+                invert = !colour_is_brighter(table[1], table[0]);
 
-                if (GetDIBColorTable( physDev->dev.hdc, 0, 2, table ) == 2)
-                    invert = !colour_is_brighter(table[1], table[0]);
-
-                for (i = start; i < end; i++, rgb++) 
-                    colorMapping[i] = ((rgb->rgbRed + rgb->rgbGreen +
-                                        rgb->rgbBlue > 255*3/2 && !invert) ||
-                                       (rgb->rgbRed + rgb->rgbGreen +
-                                        rgb->rgbBlue <= 255*3/2 && invert));
-            }
-            else
-                for (i = start; i < end; i++, rgb++)
-                    colorMapping[i] = X11DRV_PALETTE_LookupPixel(physDev->color_shifts, RGB(rgb->rgbRed,
-                                                                rgb->rgbGreen,
-                                                                rgb->rgbBlue));
+            for (i = start; i < end; i++, rgb++)
+                colorMapping[i] = ((rgb->rgbRed + rgb->rgbGreen +
+                                    rgb->rgbBlue > 255*3/2 && !invert) ||
+                                   (rgb->rgbRed + rgb->rgbGreen +
+                                    rgb->rgbBlue <= 255*3/2 && invert));
         }
         else
-        {
-            const RGBTRIPLE * rgb = colorPtr;
-
-            if (depth == 1)  /* Monochrome */
-            {
-                BOOL invert = FALSE;
-                RGBQUAD table[2];
-
-                if (GetDIBColorTable( physDev->dev.hdc, 0, 2, table ) == 2)
-                    invert = !colour_is_brighter(table[1], table[0]);
-
-                for (i = start; i < end; i++, rgb++)
-                    colorMapping[i] = ((rgb->rgbtRed + rgb->rgbtGreen +
-                                        rgb->rgbtBlue > 255*3/2 && !invert) ||
-                                       (rgb->rgbtRed + rgb->rgbtGreen +
-                                        rgb->rgbtBlue <= 255*3/2 && invert));
-            }
-            else
-                for (i = start; i < end; i++, rgb++)
-                    colorMapping[i] = X11DRV_PALETTE_LookupPixel(physDev->color_shifts, RGB(rgb->rgbtRed,
-                                                               rgb->rgbtGreen,
-                                                               rgb->rgbtBlue));
-        }
+            for (i = start; i < end; i++, rgb++)
+                colorMapping[i] = X11DRV_PALETTE_LookupPixel(physDev->color_shifts, RGB(rgb->rgbRed,
+                                                                                        rgb->rgbGreen,
+                                                                                        rgb->rgbBlue));
     }
     else  /* DIB_PAL_COLORS */
     {
@@ -408,7 +314,6 @@ static int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
 static int *X11DRV_DIB_BuildColorMap( X11DRV_PDEVICE *physDev, WORD coloruse, WORD depth,
                                       const BITMAPINFO *info, int *nColors )
 {
-    BOOL isInfo;
     const void *colorPtr;
     int *colorMapping;
 
@@ -416,13 +321,12 @@ static int *X11DRV_DIB_BuildColorMap( X11DRV_PDEVICE *physDev, WORD coloruse, WO
     *nColors = X11DRV_DIB_GetColorCount(info);
     if (!*nColors) return NULL;
 
-    isInfo = info->bmiHeader.biSize != sizeof(BITMAPCOREHEADER);
     colorPtr = (const BYTE*)info + (WORD)info->bmiHeader.biSize;
     if (!(colorMapping = HeapAlloc(GetProcessHeap(), 0, *nColors * sizeof(int) )))
         return NULL;
 
     return X11DRV_DIB_GenColorMap( physDev, colorMapping, coloruse, depth,
-                                   isInfo, colorPtr, 0, *nColors);
+                                   colorPtr, 0, *nColors);
 }
 
 /***********************************************************************
@@ -3836,17 +3740,15 @@ INT X11DRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDest, DWORD cx, DWORD
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     X11DRV_DIB_IMAGEBITS_DESCR descr;
     INT result;
-    LONG width, height;
+    LONG height;
     BOOL top_down;
     POINT pt;
     int rop = X11DRV_XROPfunction[GetROP2(dev->hdc) - 1];
 
-    if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height,
-			   &descr.infoBpp, &descr.compression ) == -1)
-        return 0;
-
-    top_down = (height < 0);
-    if (top_down) height = -height;
+    top_down = (info->bmiHeader.biHeight < 0);
+    height = abs( info->bmiHeader.biHeight );
+    descr.infoBpp = info->bmiHeader.biBitCount;
+    descr.compression = info->bmiHeader.biCompression;
 
     pt.x = xDest;
     pt.y = yDest;
@@ -3883,8 +3785,8 @@ INT X11DRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDest, DWORD cx, DWORD
         ySrc = 0;
         if (cy > lines) cy = lines;
     }
-    if (xSrc >= width) return lines;
-    if (xSrc + cx >= width) cx = width - xSrc;
+    if (xSrc >= info->bmiHeader.biWidth) return lines;
+    if (xSrc + cx >= info->bmiHeader.biWidth) cx = info->bmiHeader.biWidth - xSrc;
     if (!cx || !cy) return lines;
 
     /* Update the pixmap from the DIB section */
@@ -3928,7 +3830,7 @@ INT X11DRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDest, DWORD cx, DWORD
     descr.image      = NULL;
     descr.palentry   = NULL;
     descr.lines      = top_down ? -lines : lines;
-    descr.infoWidth  = width;
+    descr.infoWidth  = info->bmiHeader.biWidth;
     descr.depth      = physDev->depth;
     descr.shifts     = physDev->color_shifts;
     descr.drawable   = physDev->drawable;
@@ -3940,7 +3842,7 @@ INT X11DRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDest, DWORD cx, DWORD
     descr.width      = cx;
     descr.height     = cy;
     descr.shm_mode   = X11DRV_SHM_NONE;
-    descr.dibpitch   = ((width * descr.infoBpp + 31) &~31) / 8;
+    descr.dibpitch   = X11DRV_DIB_GetDIBWidthBytes( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );
     descr.physBitmap = NULL;
 
     result = X11DRV_DIB_SetImageBits( &descr );
@@ -4655,8 +4557,7 @@ UINT X11DRV_SetDIBColorTable( PHYSDEV dev, UINT start, UINT count, const RGBQUAD
          */
         X11DRV_DIB_Lock( physBitmap, DIB_Status_AppMod );
         X11DRV_DIB_GenColorMap( physDev, physBitmap->colorMap, DIB_RGB_COLORS,
-                                dib.dsBm.bmBitsPixel,
-                                TRUE, colors, start, end );
+                                dib.dsBm.bmBitsPixel, colors, start, end );
         X11DRV_DIB_Unlock( physBitmap, TRUE );
         ret = end - start;
     }

@@ -232,8 +232,7 @@ INT EMFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD width, DWOR
 {
     EMRSETDIBITSTODEVICE* pEMR;
     DWORD bmiSize = bitmap_info_size(info, wUsage);
-    DWORD bitsSize = get_dib_image_size( info );
-    DWORD size = sizeof(EMRSETDIBITSTODEVICE) + bmiSize + bitsSize;
+    DWORD size = sizeof(EMRSETDIBITSTODEVICE) + bmiSize + info->bmiHeader.biSizeImage;
 
     pEMR = HeapAlloc(GetProcessHeap(), 0, size);
     if (!pEMR) return 0;
@@ -253,12 +252,12 @@ INT EMFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD width, DWOR
     pEMR->offBmiSrc = sizeof(EMRSETDIBITSTODEVICE);
     pEMR->cbBmiSrc = bmiSize;
     pEMR->offBitsSrc = sizeof(EMRSETDIBITSTODEVICE) + bmiSize;
-    pEMR->cbBitsSrc = bitsSize;
+    pEMR->cbBitsSrc = info->bmiHeader.biSizeImage;
     pEMR->iUsageSrc = wUsage;
     pEMR->iStartScan = startscan;
     pEMR->cScans = lines;
     memcpy((BYTE*)pEMR + pEMR->offBmiSrc, info, bmiSize);
-    memcpy((BYTE*)pEMR + pEMR->offBitsSrc, bits, bitsSize);
+    memcpy((BYTE*)pEMR + pEMR->offBitsSrc, bits, info->bmiHeader.biSizeImage);
 
     if (EMFDRV_WriteRecord(dev, (EMR*)pEMR))
         EMFDRV_UpdateBBox(dev, &(pEMR->rclBounds));

@@ -646,13 +646,16 @@ done:
  */
 INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
                            DWORD cy, INT xSrc, INT ySrc, UINT startscan,
-                           UINT lines, LPCVOID bits, const BITMAPINFO *info,
+                           UINT lines, LPCVOID bits, const BITMAPINFO *bmi,
                            UINT coloruse )
 {
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
     INT ret = 0;
     DC *dc;
 
     if (!bits) return 0;
+    if (!bitmapinfo_from_user_bitmapinfo( info, bmi, coloruse )) return 0;
 
     if ((dc = get_dc_ptr( hdc )))
     {
