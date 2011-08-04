@@ -2970,8 +2970,13 @@ static Atom X11DRV_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent 
     }
     else
     {
-        TRACE("\tType %s,Format %d,nItems %ld, Remain %ld\n",
-              XGetAtomName(display, atype), aformat, cTargetPropList, remain);
+        if (TRACE_ON(clipboard))
+        {
+            char * const typeName = XGetAtomName(display, atype);
+            TRACE("\tType %s,Format %d,nItems %ld, Remain %ld\n",
+                  typeName, aformat, cTargetPropList, remain);
+            XFree(typeName);
+        }
         wine_tsx11_unlock();
 
         /*
