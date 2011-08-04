@@ -84,9 +84,8 @@ struct IDirectPlay8LobbiedApplicationImpl
  */
 struct IDirectPlay8PeerImpl
 {
-  /* IUnknown fields */
-  const IDirectPlay8PeerVtbl *lpVtbl;
-  LONG          ref;
+  IDirectPlay8Peer IDirectPlay8Peer_iface;
+  LONG ref;
 };
 
 /*****************************************************************************
