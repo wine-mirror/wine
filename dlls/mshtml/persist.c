@@ -334,6 +334,7 @@ static HRESULT get_doc_string(HTMLDocumentNode *This, char **str)
     LPCWSTR strw;
     nsAString nsstr;
     nsresult nsres;
+    HRESULT hres;
 
     if(!This->nsdoc) {
         WARN("NULL nsdoc\n");
@@ -347,8 +348,12 @@ static HRESULT get_doc_string(HTMLDocumentNode *This, char **str)
     }
 
     nsAString_Init(&nsstr, NULL);
-    nsnode_to_nsstring(nsnode, &nsstr);
+    hres = nsnode_to_nsstring(nsnode, &nsstr);
     nsIDOMNode_Release(nsnode);
+    if(FAILED(hres)) {
+        nsAString_Finish(&nsstr);
+        return hres;
+    }
 
     nsAString_GetData(&nsstr, &strw);
     TRACE("%s\n", debugstr_w(strw));
@@ -357,6 +362,8 @@ static HRESULT get_doc_string(HTMLDocumentNode *This, char **str)
 
     nsAString_Finish(&nsstr);
 
+    if(!*str)
+        return E_OUTOFMEMORY;
     return S_OK;
 }
 
