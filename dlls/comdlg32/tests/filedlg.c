@@ -226,7 +226,8 @@ static UINT_PTR CALLBACK create_view_window2_hook(HWND dlg, UINT msg, WPARAM wPa
 
             hr = IShellView2_GetCurrentInfo(shell_view2, &folder_settings);
             ok(SUCCEEDED(hr), "GetCurrentInfo returned %#x\n", hr);
-            ok(folder_settings.ViewMode == FVM_DETAILS, "view mode is %d, expected FVM_DETAILS\n",
+            ok(folder_settings.ViewMode == FVM_DETAILS || broken(folder_settings.ViewMode == FVM_LIST), /* nt4 */
+               "view mode is %d, expected FVM_DETAILS\n",
                folder_settings.ViewMode);
 
 cleanup:
@@ -1032,7 +1033,7 @@ static UINT_PTR WINAPI test_extension_wndproc(HWND dlg, UINT msg, WPARAM wParam,
 {
     HWND parent = GetParent( dlg);
     if( msg == WM_NOTIFY) {
-        SetTimer( dlg, 0, 100, 0);
+        SetTimer( dlg, 0, 1000, 0);
         PostMessage( parent, WM_COMMAND, IDOK, 0);
     }
     if( msg == WM_TIMER) {
