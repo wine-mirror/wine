@@ -300,6 +300,9 @@ sub process_source_file($)
     {
       if ( /^\/\**$/ )
       {
+        # This file is used by the DLL - Make sure we get our contributors right
+        @{$spec_files{$comment->{DLL_NAME}}[0]->{CURRENT_EXTRA}} = ();
+        push (@{$spec_files{$comment->{DLL_NAME}}[0]->{SOURCES}},$comment->{FILE});
         # Found a comment start
         $comment->{COMMENT_NAME} = "";
         $comment->{ALT_NAME} = "";
@@ -419,10 +422,6 @@ sub process_source_file($)
 
     if ($parse_state == 4) # Reading in the function definition
     {
-      # This file is used by the DLL - Make sure we get our contributors right
-      @{$spec_files{$comment->{DLL_NAME}}[0]->{CURRENT_EXTRA}} = ();
-      push (@{$spec_files{$comment->{DLL_NAME}}[0]->{SOURCES}},$comment->{FILE});
-
       push (@{$comment->{PROTOTYPE}},$_);
       # Strip comments from the line before checking for ')'
       my $stripped_line = $_;
