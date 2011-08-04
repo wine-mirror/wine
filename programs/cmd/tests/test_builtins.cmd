@@ -650,6 +650,48 @@ call dir /b
 cd ..
 rd /s/q foobar
 
+echo ------------ Testing setlocal/endlocal ------------
+call :setError 0
+rem Note: setlocal EnableDelayedExtension already tested in the variable delayed expansion test section
+mkdir foobar & cd foobar
+echo ...enable/disable extensions
+setlocal DisableEXTensions
+echo ErrLev: %ErrorLevel%
+endlocal
+echo ErrLev: %ErrorLevel%
+echo @echo off> tmp.cmd
+echo echo ErrLev: %%ErrorLevel%%>> tmp.cmd
+rem Enabled by default
+cmd /C tmp.cmd
+cmd /E:OfF /C tmp.cmd
+cmd /e:oN /C tmp.cmd
+
+rem FIXME: creating file before setting envvar value to prevent parsing-time evaluation (due to EnableDelayedExpansion not being implemented/available yet)
+echo ...setlocal with corresponding endlocal
+echo @echo off> test.cmd
+echo echo %%VAR%%>> test.cmd
+echo setlocal>> test.cmd
+echo set VAR=localval>> test.cmd
+echo echo %%VAR%%>> test.cmd
+echo endlocal>> test.cmd
+echo echo %%VAR%%>> test.cmd
+set VAR=globalval
+call test.cmd
+echo %VAR%
+set VAR=
+echo ...setlocal with no corresponding endlocal
+echo @echo off> test.cmd
+echo echo %%VAR%%>> test.cmd
+echo setlocal>> test.cmd
+echo set VAR=localval>> test.cmd
+echo echo %%VAR%%>> test.cmd
+set VAR=globalval
+call test.cmd
+echo %VAR%
+set VAR=
+cd ..
+rd /q/s foobar
+
 echo -----------Testing Errorlevel-----------
 rem WARNING: Do *not* add tests using ErrorLevel after this section
 should_not_exist 2> nul > nul

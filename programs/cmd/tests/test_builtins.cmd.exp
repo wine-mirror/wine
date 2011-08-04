@@ -331,6 +331,22 @@ foo ''
 @todo_wine@1
 @todo_wine@1
 non-builtin dir
+------------ Testing setlocal/endlocal ------------
+...enable/disable extensions
+@todo_wine@ErrLev:@space@
+ErrLev: 0
+ErrLev: 0
+@todo_wine@ErrLev:@space@@or_broken@ErrLev: 0
+ErrLev: 0
+...setlocal with corresponding endlocal
+globalval
+localval
+globalval
+globalval
+...setlocal with no corresponding endlocal
+globalval
+localval
+@todo_wine@globalval
 -----------Testing Errorlevel-----------
 9009
 1
