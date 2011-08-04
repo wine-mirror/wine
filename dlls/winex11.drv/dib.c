@@ -4470,16 +4470,12 @@ HBITMAP X11DRV_CreateDIBSection( PHYSDEV dev, HBITMAP hbitmap, const BITMAPINFO 
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     X_PHYSBITMAP *physBitmap;
     DIBSECTION dib;
-    WORD bpp, compr;
-    LONG w, h;
 #ifdef HAVE_LIBXXSHM
     Bool pixmaps;
 #endif
 
-    if (DIB_GetBitmapInfo( &bmi->bmiHeader, &w, &h, &bpp, &compr ) == -1) return 0;
-
     if (!(physBitmap = X11DRV_init_phys_bitmap( hbitmap ))) return 0;
-    if (h < 0) physBitmap->topdown = TRUE;
+    physBitmap->topdown = bmi->bmiHeader.biHeight < 0;
     physBitmap->status = DIB_Status_None;
 
     GetObjectW( hbitmap, sizeof(dib), &dib );

@@ -108,6 +108,7 @@ int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
 int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
                        LONG *height, WORD *planes, WORD *bpp, DWORD *compr, DWORD *size )
 {
+    if (!header) return -1;
     if (header->biSize == sizeof(BITMAPCOREHEADER))
     {
         const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)header;
@@ -141,12 +142,13 @@ static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *
     LONG width, height;
     WORD planes, bpp;
     DWORD compr, size;
-    void *src_colors = (char *)info + info->bmiHeader.biSize;
+    void *src_colors;
     unsigned int colors;
     int bitmap_type = DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, &planes, &bpp, &compr, &size );
 
     if (bitmap_type == -1) return FALSE;
 
+    src_colors = (char *)info + info->bmiHeader.biSize;
     if (bitmap_type == 1)
     {
         dst->bmiHeader                 = info->bmiHeader;
@@ -176,7 +178,6 @@ static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *
         dst->bmiHeader.biPlanes        = planes;
         dst->bmiHeader.biBitCount      = bpp;
         dst->bmiHeader.biCompression   = compr;
-        dst->bmiHeader.biSizeImage     = size;
         dst->bmiHeader.biXPelsPerMeter = 0;
         dst->bmiHeader.biYPelsPerMeter = 0;
         dst->bmiHeader.biClrUsed       = 0;
@@ -203,6 +204,8 @@ static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *
         }
     }
 
+    if (dst->bmiHeader.biCompression == BI_RGB || dst->bmiHeader.biCompression == BI_BITFIELDS)
+        dst->bmiHeader.biSizeImage = get_dib_image_size( dst );
     return TRUE;
 }
 
@@ -1208,64 +1211,34 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
     return handle;
 }
 
-/* Copy/synthesize RGB palette from BITMAPINFO. Ripped from dlls/winex11.drv/dib.c */
+/* Copy/synthesize RGB palette from BITMAPINFO */
 static void DIB_CopyColorTable( DC *dc, BITMAPOBJ *bmp, WORD coloruse, const BITMAPINFO *info )
 {
-    RGBQUAD *colorTable;
     unsigned int colors, i;
-    BOOL core_info = info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER);
 
-    if (core_info)
+    colors = get_dib_num_of_colors( info );
+    if (!(bmp->color_table = HeapAlloc(GetProcessHeap(), 0, colors * sizeof(RGBQUAD) ))) return;
+    bmp->nb_colors = colors;
+
+    if (coloruse == DIB_RGB_COLORS)
     {
-        colors = 1 << ((const BITMAPCOREINFO*) info)->bmciHeader.bcBitCount;
-    }
-    else
-    {
-        colors = get_dib_num_of_colors( info );
-    }
-
-    if (colors > 256) {
-        ERR("called with >256 colors!\n");
-        return;
-    }
-
-    if (!(colorTable = HeapAlloc(GetProcessHeap(), 0, colors * sizeof(RGBQUAD) ))) return;
-
-    if(coloruse == DIB_RGB_COLORS)
-    {
-        if (core_info)
-        {
-           /* Convert RGBTRIPLEs to RGBQUADs */
-           for (i=0; i < colors; i++)
-           {
-               colorTable[i].rgbRed   = ((const BITMAPCOREINFO*) info)->bmciColors[i].rgbtRed;
-               colorTable[i].rgbGreen = ((const BITMAPCOREINFO*) info)->bmciColors[i].rgbtGreen;
-               colorTable[i].rgbBlue  = ((const BITMAPCOREINFO*) info)->bmciColors[i].rgbtBlue;
-               colorTable[i].rgbReserved = 0;
-           }
-        }
-        else
-        {
-            memcpy(colorTable, (const BYTE*) info + (WORD) info->bmiHeader.biSize, colors * sizeof(RGBQUAD));
-        }
+        memcpy( bmp->color_table, info->bmiColors, colors * sizeof(RGBQUAD));
     }
     else
     {
         PALETTEENTRY entries[256];
-        const WORD *index = (const WORD*) ((const BYTE*) info + (WORD) info->bmiHeader.biSize);
+        const WORD *index = (const WORD *)info->bmiColors;
         UINT count = GetPaletteEntries( dc->hPalette, 0, colors, entries );
 
         for (i = 0; i < colors; i++, index++)
         {
             PALETTEENTRY *entry = &entries[*index % count];
-            colorTable[i].rgbRed = entry->peRed;
-            colorTable[i].rgbGreen = entry->peGreen;
-            colorTable[i].rgbBlue = entry->peBlue;
-            colorTable[i].rgbReserved = 0;
+            bmp->color_table[i].rgbRed = entry->peRed;
+            bmp->color_table[i].rgbGreen = entry->peGreen;
+            bmp->color_table[i].rgbBlue = entry->peBlue;
+            bmp->color_table[i].rgbReserved = 0;
         }
     }
-    bmp->color_table = colorTable;
-    bmp->nb_colors = colors;
 }
 
 /***********************************************************************
@@ -1274,88 +1247,61 @@ static void DIB_CopyColorTable( DC *dc, BITMAPOBJ *bmp, WORD coloruse, const BIT
 HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
                                 VOID **bits, HANDLE section, DWORD offset)
 {
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
     HBITMAP ret = 0;
     DC *dc;
     BOOL bDesktopDC = FALSE;
     DIBSECTION *dib;
     BITMAPOBJ *bmp;
-    int bitmap_type;
-    LONG width, height;
-    WORD planes, bpp;
-    DWORD compression, sizeImage;
     void *mapBits = NULL;
 
-    if(!bmi){
-        if(bits) *bits = NULL;
-        return NULL;
-    }
+    if (bits) *bits = NULL;
+    if (!bitmapinfo_from_user_bitmapinfo( info, bmi, usage )) return 0;
 
-    if (((bitmap_type = DIB_GetBitmapInfo( &bmi->bmiHeader, &width, &height,
-                                           &planes, &bpp, &compression, &sizeImage )) == -1))
-        return 0;
-
-    switch (bpp)
+    switch (info->bmiHeader.biBitCount)
     {
     case 16:
     case 32:
-        if (compression == BI_BITFIELDS) break;
+        if (info->bmiHeader.biCompression == BI_BITFIELDS) break;
         /* fall through */
     case 1:
     case 4:
     case 8:
     case 24:
-        if (compression == BI_RGB) break;
+        if (info->bmiHeader.biCompression == BI_RGB) break;
         /* fall through */
     default:
-        WARN( "invalid %u bpp compression %u\n", bpp, compression );
+        WARN( "invalid %u bpp compression %u\n",
+              info->bmiHeader.biBitCount, info->bmiHeader.biCompression );
         return 0;
     }
 
     if (!(dib = HeapAlloc( GetProcessHeap(), 0, sizeof(*dib) ))) return 0;
 
     TRACE("format (%d,%d), planes %d, bpp %d, %s, size %d %s\n",
-          width, height, planes, bpp, compression == BI_BITFIELDS? "BI_BITFIELDS" : "BI_RGB",
-          sizeImage, usage == DIB_PAL_COLORS? "PAL" : "RGB");
+          info->bmiHeader.biWidth, info->bmiHeader.biHeight,
+          info->bmiHeader.biPlanes, info->bmiHeader.biBitCount,
+          info->bmiHeader.biCompression == BI_BITFIELDS? "BI_BITFIELDS" : "BI_RGB",
+          info->bmiHeader.biSizeImage, usage == DIB_PAL_COLORS? "PAL" : "RGB");
 
     dib->dsBm.bmType       = 0;
-    dib->dsBm.bmWidth      = width;
-    dib->dsBm.bmHeight     = height >= 0 ? height : -height;
-    dib->dsBm.bmWidthBytes = get_dib_stride( width, bpp );
-    dib->dsBm.bmPlanes     = planes;
-    dib->dsBm.bmBitsPixel  = bpp;
+    dib->dsBm.bmWidth      = info->bmiHeader.biWidth;
+    dib->dsBm.bmHeight     = abs( info->bmiHeader.biHeight );
+    dib->dsBm.bmWidthBytes = get_dib_stride( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );
+    dib->dsBm.bmPlanes     = info->bmiHeader.biPlanes;
+    dib->dsBm.bmBitsPixel  = info->bmiHeader.biBitCount;
     dib->dsBm.bmBits       = NULL;
-
-    if (!bitmap_type)  /* core header */
-    {
-        /* convert the BITMAPCOREHEADER to a BITMAPINFOHEADER */
-        dib->dsBmih.biSize = sizeof(BITMAPINFOHEADER);
-        dib->dsBmih.biWidth = width;
-        dib->dsBmih.biHeight = height;
-        dib->dsBmih.biPlanes = planes;
-        dib->dsBmih.biBitCount = bpp;
-        dib->dsBmih.biCompression = compression;
-        dib->dsBmih.biXPelsPerMeter = 0;
-        dib->dsBmih.biYPelsPerMeter = 0;
-        dib->dsBmih.biClrUsed = 0;
-        dib->dsBmih.biClrImportant = 0;
-    }
-    else
-    {
-        /* truncate extended bitmap headers (BITMAPV4HEADER etc.) */
-        dib->dsBmih = bmi->bmiHeader;
-        dib->dsBmih.biSize = sizeof(BITMAPINFOHEADER);
-    }
+    dib->dsBmih            = info->bmiHeader;
 
     /* set number of entries in bmi.bmiColors table */
-    if( bpp <= 8 )
-        dib->dsBmih.biClrUsed = 1 << bpp;
-
-    dib->dsBmih.biSizeImage = dib->dsBm.bmWidthBytes * dib->dsBm.bmHeight;
+    if( info->bmiHeader.biBitCount <= 8 )
+        dib->dsBmih.biClrUsed = 1 << info->bmiHeader.biBitCount;
 
     /* set dsBitfields values */
     dib->dsBitfields[0] = dib->dsBitfields[1] = dib->dsBitfields[2] = 0;
 
-    if((bpp == 15 || bpp == 16) && compression == BI_RGB)
+    if (info->bmiHeader.biBitCount == 16 && info->bmiHeader.biCompression == BI_RGB)
     {
         /* In this case Windows changes biCompression to BI_BITFIELDS,
            however for now we won't do this, as there are a lot
@@ -1366,7 +1312,7 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
         dib->dsBitfields[1] = 0x03e0;
         dib->dsBitfields[2] = 0x001f;
     }
-    else if(compression == BI_BITFIELDS)
+    else if (info->bmiHeader.biCompression == BI_BITFIELDS)
     {
         dib->dsBitfields[0] =  *(const DWORD *)bmi->bmiColors;
         dib->dsBitfields[1] =  *((const DWORD *)bmi->bmiColors + 1);
@@ -1413,7 +1359,7 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
 
     /* create Device Dependent Bitmap and add DIB pointer */
     ret = CreateBitmap( dib->dsBm.bmWidth, dib->dsBm.bmHeight, 1,
-                        (bpp == 1) ? 1 : GetDeviceCaps(hdc, BITSPIXEL), NULL );
+                        (info->bmiHeader.biBitCount == 1) ? 1 : GetDeviceCaps(hdc, BITSPIXEL), NULL );
 
     if (ret && ((bmp = GDI_GetObjPtr(ret, OBJ_BITMAP))))
     {
@@ -1421,10 +1367,10 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
         bmp->dib = dib;
         bmp->funcs = physdev->funcs;
         /* create local copy of DIB palette */
-        if (bpp <= 8) DIB_CopyColorTable( dc, bmp, usage, bmi );
+        if (info->bmiHeader.biBitCount <= 8) DIB_CopyColorTable( dc, bmp, usage, info );
         GDI_ReleaseObj( ret );
 
-        if (!physdev->funcs->pCreateDIBSection( physdev, ret, bmi, usage ))
+        if (!physdev->funcs->pCreateDIBSection( physdev, ret, info, usage ))
         {
             DeleteObject( ret );
             ret = 0;
