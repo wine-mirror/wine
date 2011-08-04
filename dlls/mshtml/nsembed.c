@@ -794,10 +794,12 @@ static HRESULT nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNo
         return E_FAIL;
     }
 
-    nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIContent, (void**)&nscontent);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDontent interface: %08x\n", nsres);
-        return E_FAIL;
+    if(type != DOCUMENT_NODE) {
+        nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIContent, (void**)&nscontent);
+        if(NS_FAILED(nsres)) {
+            ERR("Could not get nsIContent interface: %08x\n", nsres);
+            return E_FAIL;
+        }
     }
 
     switch(type) {
@@ -849,7 +851,8 @@ static HRESULT nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNo
     if(type == ELEMENT_NODE)
         nsIContentSerializer_AppendElementEnd(serializer, nscontent, str);
 
-    nsIContent_Release(nscontent);
+    if(type != DOCUMENT_NODE)
+        nsIContent_Release(nscontent);
     return S_OK;
 }
 
