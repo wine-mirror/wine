@@ -3622,14 +3622,6 @@ static HRESULT WINAPI ddraw_surface7_BltFast(IDirectDrawSurface7 *iface, DWORD d
      */
     if(rsrc)
     {
-        if(rsrc->top > rsrc->bottom || rsrc->left > rsrc->right ||
-           rsrc->right > src->surface_desc.dwWidth ||
-           rsrc->bottom > src->surface_desc.dwHeight)
-        {
-            WARN("Source rectangle is invalid, returning DDERR_INVALIDRECT\n");
-            return DDERR_INVALIDRECT;
-        }
-
         src_w = rsrc->right - rsrc->left;
         src_h = rsrc->bottom - rsrc->top;
     }
