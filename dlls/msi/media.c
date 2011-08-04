@@ -712,6 +712,7 @@ UINT msi_load_media_info(MSIPACKAGE *package, UINT Sequence, MSIMEDIAINFO *mi)
     msi_set_sourcedir_props(package, FALSE);
     source_dir = msi_dup_property(package->db, szSourceDir);
     lstrcpyW(mi->sourcedir, source_dir);
+    PathAddBackslashW(mi->sourcedir);
     mi->type = get_drive_type(source_dir);
 
     options = MSICODE_PRODUCT;
@@ -797,6 +798,7 @@ static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
                     }
 
                     lstrcpyW(mi->sourcedir, volume);
+                    PathAddBackslashW(mi->sourcedir);
                     TRACE("Found network source %s\n", debugstr_w(mi->sourcedir));
                     return ERROR_SUCCESS;
                 }
@@ -827,6 +829,7 @@ static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
         {
             /* FIXME: what about SourceDir */
             lstrcpyW(mi->sourcedir, source);
+            PathAddBackslashW(mi->sourcedir);
             TRACE("Found disk source %s\n", debugstr_w(mi->sourcedir));
             return ERROR_SUCCESS;
         }
@@ -866,6 +869,7 @@ UINT ready_media(MSIPACKAGE *package, UINT Sequence, BOOL IsCompressed, MSIMEDIA
         }
         if ((p = strrchrW(temppath, '\\'))) *p = 0;
         strcpyW(mi->sourcedir, temppath);
+        PathAddBackslashW(mi->sourcedir);
         msi_free(mi->cabinet);
         mi->cabinet = strdupW(p + 1);
 
