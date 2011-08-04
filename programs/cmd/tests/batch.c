@@ -178,7 +178,6 @@ static const char *compare_line(const char *out_line, const char *out_end, const
             }else if(exp_ptr+sizeof(space_cmd) <= exp_end
                     && !memcmp(exp_ptr, space_cmd, sizeof(space_cmd))) {
                 exp_ptr += sizeof(space_cmd);
-                ok(*out_ptr == ' ', "expected space\n");
                 if(out_ptr < out_end && *out_ptr == ' ')
                     out_ptr++;
                 continue;
