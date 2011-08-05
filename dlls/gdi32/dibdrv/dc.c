@@ -542,7 +542,10 @@ static DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINF
         dib = &stand_alone;
     }
     else
+    {
+        pdev = get_dibdrv_pdev( dev );
         dib = &pdev->dib;
+    }
 
     if (info->bmiHeader.biPlanes != 1) goto update_format;
     if (info->bmiHeader.biBitCount != dib->bit_count) goto update_format;
