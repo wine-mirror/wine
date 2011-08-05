@@ -531,18 +531,6 @@ static void test_dibsections(void)
     ok(hdib == NULL, "CreateDIBSection should fail when asked to create a compressed DIB section\n");
     ok(GetLastError() == 0xdeadbeef, "wrong error %d\n", GetLastError());
 
-    for (i = 0; i < 128; i++)
-    {
-        pbmi->bmiHeader.biBitCount = i;
-        pbmi->bmiHeader.biCompression = BI_RGB;
-        hdib = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
-        if (i == 1 || i == 4 || i == 8 || i == 16 || i == 24 || i == 32)
-            ok(hdib != NULL, "CreateDIBSection bpp %u\n", i);
-        else
-            ok(hdib == NULL, "CreateDIBSection bpp %u succeeded\n", i);
-        if (hdib) DeleteObject( hdib );
-    }
-
     pbmi->bmiHeader.biBitCount = 16;
     pbmi->bmiHeader.biCompression = BI_BITFIELDS;
     ((PDWORD)pbmi->bmiColors)[0] = 0xf800;
@@ -860,6 +848,229 @@ static void test_dibsections(void)
     DeleteDC(hdcmem);
     DeleteDC(hdcmem2);
     ReleaseDC(0, hdc);
+}
+
+static void test_dib_formats(void)
+{
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256])];
+    BITMAPINFO *bi = (BITMAPINFO *)buffer;
+    char data[256];
+    void *bits;
+    int planes, bpp, compr;
+    HBITMAP hdib, hbmp;
+    HDC hdc, memdc;
+    UINT ret;
+    BOOL expect_ok, todo;
+
+    hdc = GetDC( 0 );
+    memdc = CreateCompatibleDC( 0 );
+    hbmp = CreateCompatibleBitmap( hdc, 10, 10 );
+
+    memset( data, 0xaa, sizeof(data) );
+
+    for (bpp = 0; bpp <= 64; bpp++)
+    {
+        for (planes = 0; planes <= 64; planes++)
+        {
+            for (compr = 0; compr < 8; compr++)
+            {
+                switch (bpp)
+                {
+                case 1:
+                case 4:
+                case 8:
+                case 24: expect_ok = (compr == BI_RGB); break;
+                case 16:
+                case 32: expect_ok = (compr == BI_RGB || compr == BI_BITFIELDS); break;
+                default: expect_ok = FALSE; break;
+                }
+                if (!planes) expect_ok = FALSE;
+                todo = (compr == BI_BITFIELDS);  /* wine doesn't like strange bitfields */
+
+                memset( bi, 0, sizeof(bi->bmiHeader) );
+                bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+                bi->bmiHeader.biWidth = 2;
+                bi->bmiHeader.biHeight = 2;
+                bi->bmiHeader.biPlanes = planes;
+                bi->bmiHeader.biBitCount = bpp;
+                bi->bmiHeader.biCompression = compr;
+                bi->bmiHeader.biSizeImage = 0;
+                memset( bi->bmiColors, 0xaa, sizeof(RGBQUAD) * 256 );
+
+                hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+                if (expect_ok && (planes == 1 || planes * bpp <= 16))
+                    ok( hdib != NULL, "CreateDIBSection failed for %u/%u/%u\n", bpp, planes, compr );
+                else
+                    ok( hdib == NULL, "CreateDIBSection succeeded for %u/%u/%u\n", bpp, planes, compr );
+                if (hdib) DeleteObject( hdib );
+
+                hdib = CreateDIBitmap( hdc, &bi->bmiHeader, 0, data, bi, DIB_RGB_COLORS );
+                /* no sanity checks in CreateDIBitmap except compression */
+                if (compr == BI_JPEG || compr == BI_PNG)
+                    ok( hdib == NULL || broken(hdib != NULL), /* nt4 */
+                        "CreateDIBitmap succeeded for %u/%u/%u\n", bpp, planes, compr );
+                else
+                    ok( hdib != NULL, "CreateDIBitmap failed for %u/%u/%u\n", bpp, planes, compr );
+                if (hdib) DeleteObject( hdib );
+
+                /* RLE needs a size */
+                bi->bmiHeader.biSizeImage = 0;
+                ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
+                if (expect_ok)
+                {
+                    if (todo)
+                        todo_wine ok( ret, "SetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
+                    else
+                        ok( ret, "SetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
+                }
+                else
+                    ok( !ret ||
+                        broken((bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8)), /* nt4 */
+                        "SetDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
+                ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_RGB_COLORS );
+                if (expect_ok)
+                    ok( ret, "SetDIBitsToDevice failed for %u/%u/%u\n", bpp, planes, compr );
+                else
+                    ok( !ret ||
+                        broken((bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8)), /* nt4 */
+                        "SetDIBitsToDevice succeeded for %u/%u/%u\n", bpp, planes, compr );
+                ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
+                if (expect_ok)
+                {
+                    if (todo)
+                        todo_wine ok( ret, "StretchDIBits failed for %u/%u/%u\n", bpp, planes, compr );
+                    else
+                        ok( ret, "StretchDIBits failed for %u/%u/%u\n", bpp, planes, compr );
+                }
+                else
+                    ok( !ret ||
+                        broken((bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8)), /* nt4 */
+                        "StretchDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
+
+                bi->bmiHeader.biSizeImage = 1;
+                ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
+                if (expect_ok || (bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8))
+                {
+                    if (todo)
+                        todo_wine ok( ret, "SetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
+                    else
+                        ok( ret, "SetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
+                }
+                else
+                    ok( !ret, "SetDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
+                ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_RGB_COLORS );
+                if (expect_ok || (bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8))
+                    ok( ret, "SetDIBitsToDevice failed for %u/%u/%u\n", bpp, planes, compr );
+                else
+                    ok( !ret, "SetDIBitsToDevice succeeded for %u/%u/%u\n", bpp, planes, compr );
+                ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
+                if (expect_ok || (bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8))
+                {
+                    if (todo)
+                        todo_wine ok( ret, "StretchDIBits failed for %u/%u/%u\n", bpp, planes, compr );
+                    else
+                        ok( ret, "StretchDIBits failed for %u/%u/%u\n", bpp, planes, compr );
+                }
+                else
+                    ok( !ret, "StretchDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
+            }
+        }
+    }
+
+    memset( bi, 0, sizeof(bi->bmiHeader) );
+    bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bi->bmiHeader.biWidth = 2;
+    bi->bmiHeader.biHeight = 2;
+    bi->bmiHeader.biPlanes = 1;
+    bi->bmiHeader.biBitCount = 16;
+    bi->bmiHeader.biCompression = BI_BITFIELDS;
+    bi->bmiHeader.biSizeImage = 0;
+    *(DWORD *)&bi->bmiColors[0] = 0;
+    *(DWORD *)&bi->bmiColors[1] = 0;
+    *(DWORD *)&bi->bmiColors[2] = 0;
+
+    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok( hdib == NULL, "CreateDIBSection succeeded with null bitfields\n" );
+    ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
+    ok( !ret, "SetDIBits succeeded with null bitfields\n" );
+    /* other functions don't check */
+    hdib = CreateDIBitmap( hdc, &bi->bmiHeader, 0, bits, bi, DIB_RGB_COLORS );
+    ok( hdib != NULL, "CreateDIBitmap failed with null bitfields\n" );
+    DeleteObject( hdib );
+    ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_RGB_COLORS );
+    ok( ret, "SetDIBitsToDevice failed with null bitfields\n" );
+    ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
+    todo_wine ok( ret, "StretchDIBits failed with null bitfields\n" );
+
+    /* all fields must be non-zero */
+    *(DWORD *)&bi->bmiColors[0] = 3;
+    *(DWORD *)&bi->bmiColors[1] = 0;
+    *(DWORD *)&bi->bmiColors[2] = 7;
+    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok( hdib == NULL, "CreateDIBSection succeeded with null bitfields\n" );
+    ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
+    ok( !ret, "SetDIBits succeeded with null bitfields\n" );
+
+    /* garbage is ok though */
+    *(DWORD *)&bi->bmiColors[0] = 0x55;
+    *(DWORD *)&bi->bmiColors[1] = 0x44;
+    *(DWORD *)&bi->bmiColors[2] = 0x33;
+    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok( hdib != NULL, "CreateDIBSection failed with bad bitfields\n" );
+    if (hdib) DeleteObject( hdib );
+    ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
+    todo_wine ok( ret, "SetDIBits failed with bad bitfields\n" );
+
+    bi->bmiHeader.biWidth = -2;
+    bi->bmiHeader.biHeight = 2;
+    bi->bmiHeader.biBitCount = 32;
+    bi->bmiHeader.biCompression = BI_RGB;
+    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok( hdib == NULL, "CreateDIBSection succeeded with negative width\n" );
+    hdib = CreateDIBitmap( hdc, &bi->bmiHeader, 0, bits, bi, DIB_RGB_COLORS );
+    ok( hdib == NULL, "CreateDIBitmap succeeded with negative width\n" );
+    ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
+    ok( !ret, "SetDIBits succeeded with negative width\n" );
+    ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_RGB_COLORS );
+    ok( !ret, "SetDIBitsToDevice succeeded with negative width\n" );
+    ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
+    ok( !ret, "StretchDIBits succeeded with negative width\n" );
+
+    bi->bmiHeader.biWidth = 0;
+    bi->bmiHeader.biHeight = 2;
+    bi->bmiHeader.biBitCount = 32;
+    bi->bmiHeader.biCompression = BI_RGB;
+    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok( hdib == NULL, "CreateDIBSection succeeded with zero width\n" );
+    hdib = CreateDIBitmap( hdc, &bi->bmiHeader, 0, bits, bi, DIB_RGB_COLORS );
+    ok( hdib != NULL, "CreateDIBitmap failed with zero width\n" );
+    DeleteObject( hdib );
+    ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
+    ok( !ret || broken(ret), /* nt4 */ "SetDIBits succeeded with zero width\n" );
+    ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_RGB_COLORS );
+    ok( !ret || broken(ret), /* nt4 */ "SetDIBitsToDevice succeeded with zero width\n" );
+    ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
+    ok( !ret || broken(ret), /* nt4 */ "StretchDIBits succeeded with zero width\n" );
+
+    bi->bmiHeader.biWidth = 2;
+    bi->bmiHeader.biHeight = 0;
+    bi->bmiHeader.biBitCount = 32;
+    bi->bmiHeader.biCompression = BI_RGB;
+    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok( hdib == NULL, "CreateDIBSection succeeded with zero height\n" );
+    hdib = CreateDIBitmap( hdc, &bi->bmiHeader, 0, bits, bi, DIB_RGB_COLORS );
+    ok( hdib != NULL, "CreateDIBitmap failed with zero height\n" );
+    DeleteObject( hdib );
+    ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
+    ok( !ret, "SetDIBits succeeded with zero height\n" );
+    ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_RGB_COLORS );
+    ok( !ret, "SetDIBitsToDevice succeeded with zero height\n" );
+    ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
+    ok( !ret, "StretchDIBits succeeded with zero height\n" );
+
+    DeleteDC( memdc );
+    DeleteObject( hbmp );
+    ReleaseDC( 0, hdc );
 }
 
 static void test_mono_dibsection(void)
@@ -3900,6 +4111,7 @@ START_TEST(bitmap)
 
     test_createdibitmap();
     test_dibsections();
+    test_dib_formats();
     test_mono_dibsection();
     test_bitmap();
     test_bmBits();

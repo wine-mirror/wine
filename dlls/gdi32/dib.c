@@ -98,6 +98,38 @@ int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
 }
 
 /*******************************************************************************************
+ * Verify that the DIB parameters are valid.
+ */
+static BOOL is_valid_dib_format( const BITMAPINFOHEADER *info, BOOL allow_compression )
+{
+    if (info->biWidth <= 0) return FALSE;
+    if (info->biHeight == 0) return FALSE;
+
+    if (allow_compression && (info->biCompression == BI_RLE4 || info->biCompression == BI_RLE8))
+    {
+        if (info->biHeight < 0) return FALSE;
+        if (!info->biSizeImage) return FALSE;
+        return info->biBitCount == (info->biCompression == BI_RLE4 ? 4 : 8);
+    }
+
+    if (!info->biPlanes) return FALSE;
+
+    switch (info->biBitCount)
+    {
+    case 1:
+    case 4:
+    case 8:
+    case 24:
+        return (info->biCompression == BI_RGB);
+    case 16:
+    case 32:
+        return (info->biCompression == BI_BITFIELDS || info->biCompression == BI_RGB);
+    default:
+        return FALSE;
+    }
+}
+
+/*******************************************************************************************
  *  Fill out a true BITMAPINFOHEADER from a variable sized BITMAPINFOHEADER / BITMAPCOREHEADER.
  */
 static BOOL bitmapinfoheader_from_user_bitmapinfo( BITMAPINFOHEADER *dst, const BITMAPINFOHEADER *info )
@@ -136,12 +168,14 @@ static BOOL bitmapinfoheader_from_user_bitmapinfo( BITMAPINFOHEADER *dst, const 
 /*******************************************************************************************
  *  Fill out a true BITMAPINFO from a variable sized BITMAPINFO / BITMAPCOREINFO.
  */
-static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *info, UINT coloruse )
+static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *info,
+                                             UINT coloruse, BOOL allow_compression )
 {
     void *src_colors;
     unsigned int colors;
 
     if (!bitmapinfoheader_from_user_bitmapinfo( &dst->bmiHeader, &info->bmiHeader )) return FALSE;
+    if (!is_valid_dib_format( &dst->bmiHeader, allow_compression )) return FALSE;
 
     src_colors = (char *)info + info->bmiHeader.biSize;
     colors = get_dib_num_of_colors( dst );
@@ -361,7 +395,6 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
     if (GET_DC_PHYSDEV( dc, pStretchBlt ) == dev || GET_DC_PHYSDEV( dc, pPutImage ) == dev)
         return 0;
 
-    if (info->bmiHeader.biWidth < 0) return 0;
     height = info->bmiHeader.biHeight;
 
     if (xSrc == 0 && ySrc == 0 && widthDst == widthSrc && heightDst == heightSrc &&
@@ -425,7 +458,11 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst, INT heightDs
     INT ret = 0;
 
     if (!bits) return 0;
-    if (!bitmapinfo_from_user_bitmapinfo( info, bmi, coloruse )) return 0;
+    if (!bitmapinfo_from_user_bitmapinfo( info, bmi, coloruse, TRUE ))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
 
     if ((dc = get_dc_ptr( hdc )))
     {
@@ -477,6 +514,12 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
     HRGN clip = 0;
     const struct gdi_dc_funcs *funcs;
 
+    if (!bitmapinfo_from_user_bitmapinfo( src_info, info, coloruse, TRUE ))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
     src_bits.ptr = (void *)bits;
     src_bits.is_copy = FALSE;
     src_bits.free = NULL;
@@ -500,21 +543,11 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
         return 0;
     }
 
-    if (!bitmapinfo_from_user_bitmapinfo( src_info, info, coloruse )) goto done;
-
     if (coloruse == DIB_PAL_COLORS)
         if (!fill_color_table_from_palette( src_info, dc )) goto done;
 
     if (src_info->bmiHeader.biCompression == BI_RLE4 || src_info->bmiHeader.biCompression == BI_RLE8)
     {
-        if ( src_info->bmiHeader.biHeight < 0 ||
-            (src_info->bmiHeader.biCompression == BI_RLE4 && src_info->bmiHeader.biBitCount != 4) ||
-            (src_info->bmiHeader.biCompression == BI_RLE8 && src_info->bmiHeader.biBitCount != 8) )
-        {
-            SetLastError( ERROR_INVALID_PARAMETER );
-            goto done;
-        }
-
         if (lines == 0) goto done;
         else lines = src_info->bmiHeader.biHeight;
         startscan = 0;
@@ -619,7 +652,11 @@ INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
     DC *dc;
 
     if (!bits) return 0;
-    if (!bitmapinfo_from_user_bitmapinfo( info, bmi, coloruse )) return 0;
+    if (!bitmapinfo_from_user_bitmapinfo( info, bmi, coloruse, TRUE ))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
 
     if ((dc = get_dc_ptr( hdc )))
     {
@@ -1079,6 +1116,7 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
     LONG height;
 
     if (!bitmapinfoheader_from_user_bitmapinfo( &info, header )) return 0;
+    if (info.biCompression == BI_JPEG || info.biCompression == BI_PNG) return 0;
     if (info.biWidth < 0) return 0;
 
     /* Top-down DIBs have a negative height */
@@ -1154,24 +1192,11 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
     void *mapBits = NULL;
 
     if (bits) *bits = NULL;
-    if (!bitmapinfo_from_user_bitmapinfo( info, bmi, usage )) return 0;
-
-    switch (info->bmiHeader.biBitCount)
+    if (!bitmapinfo_from_user_bitmapinfo( info, bmi, usage, FALSE )) return 0;
+    if (info->bmiHeader.biPlanes != 1)
     {
-    case 16:
-    case 32:
-        if (info->bmiHeader.biCompression == BI_BITFIELDS) break;
-        /* fall through */
-    case 1:
-    case 4:
-    case 8:
-    case 24:
-        if (info->bmiHeader.biCompression == BI_RGB) break;
-        /* fall through */
-    default:
-        WARN( "invalid %u bpp compression %u\n",
-              info->bmiHeader.biBitCount, info->bmiHeader.biCompression );
-        return 0;
+        if (info->bmiHeader.biPlanes * info->bmiHeader.biBitCount > 16) return 0;
+        WARN( "%u planes not properly supported\n", info->bmiHeader.biPlanes );
     }
 
     if (!(dib = HeapAlloc( GetProcessHeap(), 0, sizeof(*dib) ))) return 0;
@@ -1214,6 +1239,7 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
         dib->dsBitfields[0] =  *(const DWORD *)bmi->bmiColors;
         dib->dsBitfields[1] =  *((const DWORD *)bmi->bmiColors + 1);
         dib->dsBitfields[2] =  *((const DWORD *)bmi->bmiColors + 2);
+        if (!dib->dsBitfields[0] || !dib->dsBitfields[1] || !dib->dsBitfields[2]) goto error;
     }
 
     /* get storage location for DIB bits */
