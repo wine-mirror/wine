@@ -3479,8 +3479,7 @@ cleanup:
  */
 DWORD WINAPI K32GetProcessImageFileNameA( HANDLE process, LPSTR file, DWORD size )
 {
-    FIXME("(%p, %p, %d) stub\n", process, file, size );
-    return 0;
+    return QueryFullProcessImageNameA(process, PROCESS_NAME_NATIVE, file, &size) ? size : 0;
 }
 
 /***********************************************************************

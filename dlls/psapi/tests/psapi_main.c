@@ -222,15 +222,15 @@ static void test_GetProcessImageFileName(void)
 
     SetLastError(0xdeadbeef);
     pGetProcessImageFileNameA(NULL, szImgPath, sizeof(szImgPath));
-    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "expected error=ERROR_INVALID_HANDLE but got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected error=ERROR_INVALID_HANDLE but got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     pGetProcessImageFileNameA(hpSR, szImgPath, sizeof(szImgPath));
-    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "expected error=ERROR_ACCESS_DENIED but got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "expected error=ERROR_ACCESS_DENIED but got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     pGetProcessImageFileNameA(hpQI, szImgPath, 0);
-    todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "expected error=ERROR_INSUFFICIENT_BUFFER but got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "expected error=ERROR_INSUFFICIENT_BUFFER but got %d\n", GetLastError());
 
     ret = pGetProcessImageFileNameA(hpQI, szImgPath, sizeof(szImgPath));
     ret1 = pGetMappedFileNameA(hpQV, hMod, szMapPath, sizeof(szMapPath));
