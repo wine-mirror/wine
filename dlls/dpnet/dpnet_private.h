@@ -73,10 +73,8 @@ struct IDirectPlay8AddressImpl
  */
 struct IDirectPlay8LobbiedApplicationImpl
 {
-  /* IUnknown fields */
-  const IDirectPlay8LobbiedApplicationVtbl *lpVtbl;
-  LONG          ref;
-  /* IDirectPlay8LobbiedApplication fields */
+  IDirectPlay8LobbiedApplication IDirectPlay8LobbiedApplication_iface;
+  LONG ref;
 };
 
 /*****************************************************************************

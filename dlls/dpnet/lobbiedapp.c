@@ -37,12 +37,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dpnet);
 
+static inline IDirectPlay8LobbiedApplicationImpl *impl_from_IDirectPlay8LobbiedApplication(IDirectPlay8LobbiedApplication *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectPlay8LobbiedApplicationImpl,
+            IDirectPlay8LobbiedApplication_iface);
+}
+
 /* IDirectPlay8LobbiedApplication IUnknown parts follow: */
-static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_QueryInterface(
-                                  PDIRECTPLAY8LOBBIEDAPPLICATION iface,
-                                  REFIID riid,
-                                  LPVOID *ppobj) {
-    IDirectPlay8LobbiedApplicationImpl *This = (IDirectPlay8LobbiedApplicationImpl *)iface;
+static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_QueryInterface(IDirectPlay8LobbiedApplication *iface,
+        REFIID riid, void **ppobj)
+{
+    IDirectPlay8LobbiedApplicationImpl *This = impl_from_IDirectPlay8LobbiedApplication(iface);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirectPlay8LobbiedApplication)) {
@@ -55,9 +60,9 @@ static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_QueryInterface(
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirectPlay8LobbiedApplicationImpl_AddRef(
-                                PDIRECTPLAY8LOBBIEDAPPLICATION iface) {
-    IDirectPlay8LobbiedApplicationImpl *This = (IDirectPlay8LobbiedApplicationImpl *)iface;
+static ULONG WINAPI IDirectPlay8LobbiedApplicationImpl_AddRef(IDirectPlay8LobbiedApplication *iface)
+{
+    IDirectPlay8LobbiedApplicationImpl *This = impl_from_IDirectPlay8LobbiedApplication(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
 
     TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
@@ -65,9 +70,9 @@ static ULONG WINAPI IDirectPlay8LobbiedApplicationImpl_AddRef(
     return refCount;
 }
 
-static ULONG WINAPI IDirectPlay8LobbiedApplicationImpl_Release(
-                                PDIRECTPLAY8LOBBIEDAPPLICATION iface) {
-    IDirectPlay8LobbiedApplicationImpl *This = (IDirectPlay8LobbiedApplicationImpl *)iface;
+static ULONG WINAPI IDirectPlay8LobbiedApplicationImpl_Release(IDirectPlay8LobbiedApplication *iface)
+{
+    IDirectPlay8LobbiedApplicationImpl *This = impl_from_IDirectPlay8LobbiedApplication(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
@@ -80,81 +85,78 @@ static ULONG WINAPI IDirectPlay8LobbiedApplicationImpl_Release(
 
 /* IDirectPlay8LobbiedApplication Interface follow: */
 
-static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_Initialize(PDIRECTPLAY8LOBBIEDAPPLICATION iface,
-                                                                CONST PVOID pvUserContext,
-                                                                CONST PFNDPNMESSAGEHANDLER pfn,
-                                                                DPNHANDLE* CONST pdpnhConnection,
-                                                                CONST DWORD dwFlags) {
-  IDirectPlay8LobbiedApplicationImpl *This = (IDirectPlay8LobbiedApplicationImpl *)iface;
+static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_Initialize(IDirectPlay8LobbiedApplication *iface,
+        void * const pvUserContext, const PFNDPNMESSAGEHANDLER pfn,
+        DPNHANDLE * const pdpnhConnection, const DWORD dwFlags)
+{
+  IDirectPlay8LobbiedApplicationImpl *This = impl_from_IDirectPlay8LobbiedApplication(iface);
   FIXME("(%p): stub\n", This);
   return DPN_OK;
 }
 
-static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_RegisterProgram(PDIRECTPLAY8LOBBIEDAPPLICATION iface,
-                                                                PDPL_PROGRAM_DESC pdplProgramDesc,
-                                                                CONST DWORD dwFlags) {
-  IDirectPlay8LobbiedApplicationImpl *This = (IDirectPlay8LobbiedApplicationImpl *)iface;
+static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_RegisterProgram(IDirectPlay8LobbiedApplication *iface,
+        PDPL_PROGRAM_DESC pdplProgramDesc, const DWORD dwFlags)
+{
+  IDirectPlay8LobbiedApplicationImpl *This = impl_from_IDirectPlay8LobbiedApplication(iface);
   FIXME("(%p): stub\n", This);
   return DPN_OK;
 }
 
-static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_UnRegisterProgram(PDIRECTPLAY8LOBBIEDAPPLICATION iface,
-                                                                GUID* pguidApplication,
-                                                                CONST DWORD dwFlags) {
-  IDirectPlay8LobbiedApplicationImpl *This = (IDirectPlay8LobbiedApplicationImpl *)iface;
+static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_UnRegisterProgram(IDirectPlay8LobbiedApplication *iface,
+        GUID *pguidApplication, const DWORD dwFlags)
+{
+  IDirectPlay8LobbiedApplicationImpl *This = impl_from_IDirectPlay8LobbiedApplication(iface);
   FIXME("(%p): stub\n", This);
   return DPN_OK;
 }
 
-static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_Send(PDIRECTPLAY8LOBBIEDAPPLICATION iface,
-                                                          CONST DPNHANDLE hConnection,
-                                                          BYTE* CONST pBuffer,
-                                                          CONST DWORD pBufferSize,
-                                                          CONST DWORD dwFlags) {
-  IDirectPlay8LobbiedApplicationImpl *This = (IDirectPlay8LobbiedApplicationImpl *)iface;
+static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_Send(IDirectPlay8LobbiedApplication *iface,
+        const DPNHANDLE hConnection, BYTE * const pBuffer, const DWORD pBufferSize,
+        const DWORD dwFlags)
+{
+  IDirectPlay8LobbiedApplicationImpl *This = impl_from_IDirectPlay8LobbiedApplication(iface);
   FIXME("(%p): stub\n", This);
   return DPN_OK;
 }
 
-static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_SetAppAvailable(PDIRECTPLAY8LOBBIEDAPPLICATION iface,
-                                                          CONST BOOL fAvailable,
-                                                          CONST DWORD dwFlags) {
-  IDirectPlay8LobbiedApplicationImpl *This = (IDirectPlay8LobbiedApplicationImpl *)iface;
+static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_SetAppAvailable(IDirectPlay8LobbiedApplication *iface,
+        const BOOL fAvailable, const DWORD dwFlags)
+{
+  IDirectPlay8LobbiedApplicationImpl *This = impl_from_IDirectPlay8LobbiedApplication(iface);
   FIXME("(%p): stub\n", This);
   return DPN_OK;
 }
 
-static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_UpdateStatus(PDIRECTPLAY8LOBBIEDAPPLICATION iface,
-                                                          CONST DPNHANDLE hConnection,
-                                                          CONST DWORD dwStatus,
-                                                          CONST DWORD dwFlags) {
-  IDirectPlay8LobbiedApplicationImpl *This = (IDirectPlay8LobbiedApplicationImpl *)iface;
+static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_UpdateStatus(IDirectPlay8LobbiedApplication *iface,
+        const DPNHANDLE hConnection, const DWORD dwStatus, const DWORD dwFlags)
+{
+  IDirectPlay8LobbiedApplicationImpl *This = impl_from_IDirectPlay8LobbiedApplication(iface);
   FIXME("(%p): stub\n", This);
   return DPN_OK;
 }
 
-static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_Close(PDIRECTPLAY8LOBBIEDAPPLICATION iface,
-                                                          CONST DWORD dwFlags) {
-  IDirectPlay8LobbiedApplicationImpl *This = (IDirectPlay8LobbiedApplicationImpl *)iface;
+static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_Close(IDirectPlay8LobbiedApplication *iface,
+        const DWORD dwFlags)
+{
+  IDirectPlay8LobbiedApplicationImpl *This = impl_from_IDirectPlay8LobbiedApplication(iface);
   FIXME("(%p): stub\n", This);
   return DPN_OK;
 }
 
-static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_GetConnectionSettings(PDIRECTPLAY8LOBBIEDAPPLICATION iface,
-                                                          CONST DPNHANDLE hConnection,
-                                                          DPL_CONNECTION_SETTINGS* CONST pdplSessionInfo,
-                                                          DWORD* pdwInfoSize,
-                                                          CONST DWORD dwFlags) {
-  IDirectPlay8LobbiedApplicationImpl *This = (IDirectPlay8LobbiedApplicationImpl *)iface;
+static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_GetConnectionSettings(IDirectPlay8LobbiedApplication *iface,
+        const DPNHANDLE hConnection, DPL_CONNECTION_SETTINGS * const pdplSessionInfo,
+        DWORD *pdwInfoSize, const DWORD dwFlags)
+{
+  IDirectPlay8LobbiedApplicationImpl *This = impl_from_IDirectPlay8LobbiedApplication(iface);
   FIXME("(%p): stub\n", This);
   return DPN_OK;
 }
 
-static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_SetConnectionSettings(PDIRECTPLAY8LOBBIEDAPPLICATION iface,
-                                                          CONST DPNHANDLE hConnection,
-                                                          CONST DPL_CONNECTION_SETTINGS* CONST pdplSessionInfo,
-                                                          CONST DWORD dwFlags) {
-  IDirectPlay8LobbiedApplicationImpl *This = (IDirectPlay8LobbiedApplicationImpl *)iface;
+static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_SetConnectionSettings(IDirectPlay8LobbiedApplication *iface,
+        const DPNHANDLE hConnection, const DPL_CONNECTION_SETTINGS * const pdplSessionInfo,
+        const DWORD dwFlags)
+{
+  IDirectPlay8LobbiedApplicationImpl *This = impl_from_IDirectPlay8LobbiedApplication(iface);
   FIXME("(%p): stub\n", This);
   return DPN_OK;
 }
@@ -187,7 +189,8 @@ HRESULT DPNET_CreateDirectPlay8LobbiedApp(LPCLASSFACTORY iface, LPUNKNOWN punkOu
     *ppobj = NULL;
     return E_OUTOFMEMORY;
   }
-  app->lpVtbl = &DirectPlay8LobbiedApplication_Vtbl;
-  app->ref = 0; /* will be inited with QueryInterface */
-  return IDirectPlay8LobbiedApplicationImpl_QueryInterface ((PDIRECTPLAY8LOBBIEDAPPLICATION)app, riid, ppobj);
+  app->IDirectPlay8LobbiedApplication_iface.lpVtbl = &DirectPlay8LobbiedApplication_Vtbl;
+  app->ref = 0;
+  return IDirectPlay8LobbiedApplicationImpl_QueryInterface(&app->IDirectPlay8LobbiedApplication_iface,
+          riid, ppobj);
 }
