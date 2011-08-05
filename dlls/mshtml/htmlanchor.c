@@ -44,36 +44,37 @@ typedef struct {
 static HRESULT navigate_anchor(HTMLAnchorElement *This)
 {
     nsAString href_str, target_str;
-    const PRUnichar *href, *target;
     nsresult nsres;
     HRESULT hres;
 
+    nsAString_Init(&target_str, NULL);
     nsres = nsIDOMHTMLAnchorElement_GetTarget(This->nsanchor, &target_str);
-    if(NS_FAILED(nsres))
-        return E_FAIL;
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *target;
 
-    nsAString_GetData(&target_str, &target);
-    if(*target) {
-        FIXME("Navigating to target %s is not implemented\n", debugstr_w(target));
-        nsAString_Finish(&target_str);
-        return S_OK;
+        nsAString_GetData(&target_str, &target);
+        if(*target) {
+            FIXME("Navigating to target %s is not implemented\n", debugstr_w(target));
+            nsAString_Finish(&target_str);
+            return S_OK;
+        }
     }
-
     nsAString_Finish(&target_str);
 
+    nsAString_Init(&href_str, NULL);
     nsres = nsIDOMHTMLAnchorElement_GetHref(This->nsanchor, &href_str);
-    if(NS_FAILED(nsres))
-        return E_FAIL;
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *href;
 
-    nsAString_GetData(&href_str, &href);
-    if(*href) {
-        HTMLWindow *window = This->element.node.doc->basedoc.window;
-        hres = navigate_url(window, href, window->url);
-    }else {
-        TRACE("empty href\n");
-        hres = S_OK;
+        nsAString_GetData(&href_str, &href);
+        if(*href) {
+            HTMLWindow *window = This->element.node.doc->basedoc.window;
+            hres = navigate_url(window, href, window->url);
+        }else {
+            TRACE("empty href\n");
+            hres = S_OK;
+        }
     }
-
     nsAString_Finish(&href_str);
     return hres;
 }
