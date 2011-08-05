@@ -3875,7 +3875,7 @@ static HRESULT WINAPI foldermanager_UnregisterFolder(
     hr = get_known_folder_registry_path(rfid, NULL, &registryPath);
 
     if(SUCCEEDED(hr))
-        hr = HRESULT_FROM_WIN32(RegDeleteKeyW(HKEY_LOCAL_MACHINE, registryPath));
+        hr = HRESULT_FROM_WIN32(SHDeleteKeyW(HKEY_LOCAL_MACHINE, registryPath));
 
     HeapFree(GetProcessHeap(), 0, registryPath);
     return hr;
