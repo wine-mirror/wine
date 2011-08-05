@@ -93,9 +93,8 @@ struct IDirectPlay8PeerImpl
  */
 struct IDirectPlay8ThreadPoolImpl
 {
-  /* IUnknown fields */
-  const IDirectPlay8ThreadPoolVtbl *lpVtbl;
-  LONG          ref;
+  IDirectPlay8ThreadPool IDirectPlay8ThreadPool_iface;
+  LONG ref;
 };
 
 /**
