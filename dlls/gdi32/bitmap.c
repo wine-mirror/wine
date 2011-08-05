@@ -179,6 +179,7 @@ update_format:
     info->bmiHeader.biPlanes   = 1;
     info->bmiHeader.biBitCount = bmp->bitmap.bmBitsPixel;
     if (info->bmiHeader.biHeight > 0) info->bmiHeader.biHeight = -info->bmiHeader.biHeight;
+    GDI_ReleaseObj( hbitmap );
     return ERROR_BAD_FORMAT;
 }
 
