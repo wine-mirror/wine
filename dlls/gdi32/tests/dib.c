@@ -1125,7 +1125,6 @@ static void test_simple_graphics(void)
     ok(ds.dsBitfields[0] == 0x7c00, "got %08x\n", ds.dsBitfields[0]);
     ok(ds.dsBitfields[1] == 0x03e0, "got %08x\n", ds.dsBitfields[1]);
     ok(ds.dsBitfields[2] == 0x001f, "got %08x\n", ds.dsBitfields[2]);
-todo_wine
     ok(ds.dsBmih.biCompression == BI_BITFIELDS, "got %x\n", ds.dsBmih.biCompression);
 
     orig_bm = SelectObject(mem_dc, dib);

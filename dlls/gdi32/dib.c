@@ -1221,15 +1221,9 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
         dib->dsBmih.biClrUsed = 1 << info->bmiHeader.biBitCount;
 
     /* set dsBitfields values */
-    dib->dsBitfields[0] = dib->dsBitfields[1] = dib->dsBitfields[2] = 0;
-
     if (info->bmiHeader.biBitCount == 16 && info->bmiHeader.biCompression == BI_RGB)
     {
-        /* In this case Windows changes biCompression to BI_BITFIELDS,
-           however for now we won't do this, as there are a lot
-           of places where BI_BITFIELDS is currently unsupported. */
-
-        /* dib->dsBmih.biCompression = compression = BI_BITFIELDS;*/
+        dib->dsBmih.biCompression = BI_BITFIELDS;
         dib->dsBitfields[0] = 0x7c00;
         dib->dsBitfields[1] = 0x03e0;
         dib->dsBitfields[2] = 0x001f;
@@ -1241,6 +1235,7 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
         dib->dsBitfields[2] =  *((const DWORD *)bmi->bmiColors + 2);
         if (!dib->dsBitfields[0] || !dib->dsBitfields[1] || !dib->dsBitfields[2]) goto error;
     }
+    else dib->dsBitfields[0] = dib->dsBitfields[1] = dib->dsBitfields[2] = 0;
 
     /* get storage location for DIB bits */
 
