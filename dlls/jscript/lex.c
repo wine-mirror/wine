@@ -337,7 +337,7 @@ static int parse_identifier(parser_ctx_t *ctx, const WCHAR **ret)
     len = ctx->ptr-ptr;
 
     *ret = wstr = parser_alloc(ctx, (len+1)*sizeof(WCHAR));
-    memcpy(wstr, ptr, (len+1)*sizeof(WCHAR));
+    memcpy(wstr, ptr, len*sizeof(WCHAR));
     wstr[len] = 0;
 
     /* FIXME: unescape */
