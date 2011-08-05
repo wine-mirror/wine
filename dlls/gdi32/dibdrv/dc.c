@@ -380,6 +380,9 @@ static void set_color_info( const dib_info *dib, BITMAPINFO *info )
 static DWORD dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
                               struct gdi_image_bits *bits, struct bitblt_coords *src )
 {
+    DWORD ret = ERROR_SUCCESS;
+    dib_info *dib, stand_alone;
+
     TRACE( "%p %p %p\n", dev, hbitmap, info );
 
     info->bmiHeader.biSize          = sizeof(info->bmiHeader);
@@ -397,64 +400,39 @@ static DWORD dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
         if (!bmp) return ERROR_INVALID_HANDLE;
         assert(bmp->dib);
 
-        info->bmiHeader.biWidth     = bmp->dib->dsBmih.biWidth;
-        info->bmiHeader.biHeight    = bmp->dib->dsBmih.biHeight;
-        info->bmiHeader.biBitCount  = bmp->dib->dsBmih.biBitCount;
-        info->bmiHeader.biSizeImage = get_dib_image_size( (BITMAPINFO *)&bmp->dib->dsBmih );
-
-        switch (info->bmiHeader.biBitCount)
+        if (!init_dib_info( &stand_alone, &bmp->dib->dsBmih, bmp->dib->dsBitfields,
+                            bmp->color_table, bmp->nb_colors, bmp->dib->dsBm.bmBits, 0 ))
         {
-        case 1:
-        case 4:
-        case 8:
-            if (bmp->color_table)
-            {
-                info->bmiHeader.biClrUsed = min( bmp->nb_colors, 1 << info->bmiHeader.biBitCount );
-                memcpy( info->bmiColors, bmp->color_table, info->bmiHeader.biClrUsed * sizeof(RGBQUAD) );
-            }
-            break;
-        case 16:
-            info->bmiHeader.biCompression = BI_BITFIELDS;
-            memcpy( info->bmiColors, bmp->dib->dsBitfields, sizeof(bmp->dib->dsBitfields) );
-            break;
-        case 32:
-            if (bmp->dib->dsBmih.biCompression == BI_BITFIELDS &&
-                memcmp( bmp->dib->dsBitfields, bit_fields_888, sizeof(bmp->dib->dsBitfields) ))
-            {
-                info->bmiHeader.biCompression = BI_BITFIELDS;
-                memcpy( info->bmiColors, bmp->dib->dsBitfields, sizeof(bmp->dib->dsBitfields) );
-            }
-            break;
+            ret = ERROR_BAD_FORMAT;
+            goto done;
         }
-        if (bits)
-        {
-            bits->ptr = bmp->dib->dsBm.bmBits;
-            bits->is_copy = FALSE;
-            bits->free = NULL;
-        }
-        GDI_ReleaseObj( hbitmap );
+        dib = &stand_alone;
     }
     else
     {
         dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-
-        info->bmiHeader.biWidth     = pdev->dib.width;
-        info->bmiHeader.biHeight    = pdev->dib.stride > 0 ? -pdev->dib.height : pdev->dib.height;
-        info->bmiHeader.biBitCount  = pdev->dib.bit_count;
-        info->bmiHeader.biSizeImage = pdev->dib.height * abs(pdev->dib.stride);
-
-        set_color_info( &pdev->dib, info );
-
-        if (bits)
-        {
-            bits->ptr = pdev->dib.bits;
-            if (pdev->dib.stride < 0)
-                bits->ptr = (char *)bits->ptr + (pdev->dib.height - 1) * pdev->dib.stride;
-            bits->is_copy = FALSE;
-            bits->free = NULL;
-        }
+        dib = &pdev->dib;
     }
-    return ERROR_SUCCESS;
+
+    info->bmiHeader.biWidth     = dib->width;
+    info->bmiHeader.biHeight    = dib->stride > 0 ? -dib->height : dib->height;
+    info->bmiHeader.biBitCount  = dib->bit_count;
+    info->bmiHeader.biSizeImage = dib->height * abs( dib->stride );
+
+    set_color_info( dib, info );
+
+    if (bits)
+    {
+        bits->ptr = dib->bits;
+        if (dib->stride < 0)
+            bits->ptr = (char *)bits->ptr + (dib->height - 1) * dib->stride;
+        bits->is_copy = FALSE;
+        bits->free = NULL;
+    }
+
+done:
+   if (hbitmap) GDI_ReleaseObj( hbitmap );
+   return ret;
 }
 
 static BOOL matching_color_info( const dib_info *dib, const BITMAPINFO *info )
