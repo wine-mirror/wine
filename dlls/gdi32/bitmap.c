@@ -67,6 +67,14 @@ DWORD nulldrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
     info->bmiHeader.biYPelsPerMeter = 0;
     info->bmiHeader.biClrUsed       = 0;
     info->bmiHeader.biClrImportant  = 0;
+    if (bmp->bitmap.bmBitsPixel == 16)
+    {
+        DWORD *masks = (DWORD *)info->bmiColors;
+        masks[0] = 0x7c00;
+        masks[1] = 0x03e0;
+        masks[2] = 0x001f;
+        info->bmiHeader.biCompression = BI_BITFIELDS;
+    }
     if (!bits) goto done;
 
     height = src->visrect.bottom - src->visrect.top;

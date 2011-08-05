@@ -1641,8 +1641,7 @@ static void set_color_info( PHYSDEV dev, const ColorShifts *color_shifts, BITMAP
         colors[0] = color_shifts->logicalRed.max << color_shifts->logicalRed.shift;
         colors[1] = color_shifts->logicalGreen.max << color_shifts->logicalGreen.shift;
         colors[2] = color_shifts->logicalBlue.max << color_shifts->logicalBlue.shift;
-        if (colors[0] != 0x7c00 || colors[1] != 0x03e0 || colors[2] != 0x001f)
-            info->bmiHeader.biCompression = BI_BITFIELDS;
+        info->bmiHeader.biCompression = BI_BITFIELDS;
         break;
     case 32:
         colors[0] = color_shifts->logicalRed.max << color_shifts->logicalRed.shift;

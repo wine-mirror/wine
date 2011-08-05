@@ -339,6 +339,8 @@ static BOOL dibdrv_DeleteDC( PHYSDEV dev )
 
 static void set_color_info( const dib_info *dib, BITMAPINFO *info )
 {
+    DWORD *masks = (DWORD *)info->bmiColors;
+
     info->bmiHeader.biCompression = BI_RGB;
     info->bmiHeader.biClrUsed     = 0;
 
@@ -355,19 +357,14 @@ static void set_color_info( const dib_info *dib, BITMAPINFO *info )
         }
         break;
     case 16:
-        if (dib->funcs != &funcs_555)
-        {
-            DWORD *masks = (DWORD *)info->bmiColors;
-            masks[0] = dib->red_mask;
-            masks[1] = dib->green_mask;
-            masks[2] = dib->blue_mask;
-            info->bmiHeader.biCompression = BI_BITFIELDS;
-        }
+        masks[0] = dib->red_mask;
+        masks[1] = dib->green_mask;
+        masks[2] = dib->blue_mask;
+        info->bmiHeader.biCompression = BI_BITFIELDS;
         break;
     case 32:
         if (dib->funcs != &funcs_8888)
         {
-            DWORD *masks = (DWORD *)info->bmiColors;
             masks[0] = dib->red_mask;
             masks[1] = dib->green_mask;
             masks[2] = dib->blue_mask;
@@ -417,12 +414,8 @@ static DWORD dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
             }
             break;
         case 16:
-            if (bmp->dib->dsBmih.biCompression == BI_BITFIELDS &&
-                memcmp( bmp->dib->dsBitfields, bit_fields_555, sizeof(bmp->dib->dsBitfields) ))
-            {
-                info->bmiHeader.biCompression = BI_BITFIELDS;
-                memcpy( info->bmiColors, bmp->dib->dsBitfields, sizeof(bmp->dib->dsBitfields) );
-            }
+            info->bmiHeader.biCompression = BI_BITFIELDS;
+            memcpy( info->bmiColors, bmp->dib->dsBitfields, sizeof(bmp->dib->dsBitfields) );
             break;
         case 32:
             if (bmp->dib->dsBmih.biCompression == BI_BITFIELDS &&
