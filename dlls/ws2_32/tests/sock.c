@@ -2311,7 +2311,7 @@ static void test_errors(void)
         timeval.tv_usec = 50000;
 
         ret = select(1, NULL, &set, NULL, &timeval);
-        todo_wine ok( (ret == 0), "expected 0 (timeout), got: %d\n", ret );
+        ok( (ret == 0), "expected 0 (timeout), got: %d\n", ret );
     }
 
     ret = closesocket(sock);
@@ -2353,8 +2353,8 @@ static void test_select(void)
     ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
     ok ( (ret == 0), "select should not return any socket handles\n");
     ok ( !FD_ISSET(fdRead, &readfds), "FD should not be set\n");
-    ok ( !FD_ISSET(fdWrite, &writefds), "FD should not be set\n");
     }
+    ok ( !FD_ISSET(fdWrite, &writefds), "FD should not be set\n");
 
     ok ( !FD_ISSET(fdRead, &exceptfds), "FD should not be set\n");
     ok ( !FD_ISSET(fdWrite, &exceptfds), "FD should not be set\n");

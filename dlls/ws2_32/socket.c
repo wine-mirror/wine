@@ -3661,7 +3661,8 @@ static int get_poll_results( WS_fd_set *readfds, WS_fd_set *writefds, WS_fd_set 
     if (writefds)
     {
         for (i = k = 0; i < writefds->fd_count; i++, j++)
-            if (fds[j].revents) writefds->fd_array[k++] = writefds->fd_array[i];
+            if ((fds[j].revents & POLLOUT) && !(fds[j].revents & POLLHUP))
+                writefds->fd_array[k++] = writefds->fd_array[i];
         writefds->fd_count = k;
         total += k;
     }
