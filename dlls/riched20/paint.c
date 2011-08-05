@@ -957,7 +957,7 @@ static void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph)
           rc.left = c->pt.x + run->pt.x;
           rc.right = rc.left + run->nWidth;
           rc.top = c->pt.y + para->pt.y + run->pt.y;
-          rc.bottom = rc.bottom + height;
+          rc.bottom = rc.top + height;
           TRACE("rc = (%d, %d, %d, %d)\n", rc.left, rc.top, rc.right, rc.bottom);
           FrameRect(c->hDC, &rc, GetSysColorBrush(COLOR_GRAYTEXT));
         }
