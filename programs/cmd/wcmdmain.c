@@ -1786,10 +1786,22 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
     /* Show prompt before batch line IF echo is on and in batch program */
     if (context && echo_mode && extraSpace[0] && (extraSpace[0] != '@')) {
       const WCHAR spc[]={' ','\0'};
+      const WCHAR echoDot[] = {'e','c','h','o','.'};
+      const WCHAR echoCol[] = {'e','c','h','o',':'};
+      const DWORD len = sizeof(echoDot)/sizeof(echoDot[0]);
+      DWORD curr_size = strlenW(extraSpace);
+      DWORD min_len = (curr_size < len ? curr_size : len);
       WCMD_show_prompt();
       WCMD_output_asis(extraSpace);
       /* I don't know why Windows puts a space here but it does */
-      WCMD_output_asis(spc);
+      /* Except for lines starting with 'echo.' or 'echo:'. Ask MS why */
+      if (CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
+                         extraSpace, min_len, echoDot, len) != CSTR_EQUAL
+          && CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
+                         extraSpace, min_len, echoCol, len) != CSTR_EQUAL)
+      {
+          WCMD_output_asis(spc);
+      }
       WCMD_output_asis(newline);
     }
 

@@ -18,25 +18,25 @@ at-echoed-word
 @pwd@>echo "/?"@space@
 "/?"
 
-@todo_wine@@pwd@>echo.
+@pwd@>echo.
 
 
 @pwd@>echo .@space@
 .
 
-@todo_wine@@pwd@>echo.word
+@pwd@>echo.word
 word
 
 @pwd@>echo .word@space@
 .word
 
-@todo_wine@@pwd@>echo:
+@pwd@>echo:
 
 
 @pwd@>echo :@space@
 :
 
-@todo_wine@@pwd@>echo:word
+@pwd@>echo:word
 word
 
 @pwd@>echo :word@space@
