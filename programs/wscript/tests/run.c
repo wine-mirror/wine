@@ -23,6 +23,7 @@
 
 #include <initguid.h>
 #include <windows.h>
+#include <psapi.h>
 #include <oaidl.h>
 
 #include "wine/test.h"
@@ -70,6 +71,7 @@ static const GUID CLSID_TestObj =
     {0x178fc166,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x06,0x46}};
 
 static const char *script_name;
+static HANDLE wscript_process;
 
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
@@ -199,14 +201,13 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
     case DISPID_TESTOBJ_WSCRIPTFULLNAME:
     {
         WCHAR fullName[MAX_PATH];
-        const WCHAR wscriptexe[] = {'w','s','c','r','i','p','t','.','e','x','e',0};
         DWORD res;
 
         ok(wFlags == INVOKE_PROPERTYGET, "wFlags = %x\n", wFlags);
         ok(pdp->cArgs == 0, "cArgs = %d\n", pdp->cArgs);
         ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
         V_VT(pVarResult) = VT_BSTR;
-        res = SearchPathW(NULL, wscriptexe, NULL, sizeof(fullName)/sizeof(WCHAR), fullName, NULL);
+        res = GetModuleFileNameExW(wscript_process, NULL, fullName, sizeof(fullName)/sizeof(WCHAR));
         if(res == 0)
             return E_FAIL;
         if(!(V_BSTR(pVarResult) = SysAllocString(fullName)))
@@ -216,7 +217,6 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
     case DISPID_TESTOBJ_WSCRIPTPATH:
     {
         WCHAR fullPath[MAX_PATH];
-        const WCHAR wscriptexe[] = {'w','s','c','r','i','p','t','.','e','x','e',0};
         DWORD res;
         const WCHAR *pos;
 
@@ -224,7 +224,7 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         ok(pdp->cArgs == 0, "cArgs = %d\n", pdp->cArgs);
         ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
         V_VT(pVarResult) = VT_BSTR;
-        res = SearchPathW(NULL, wscriptexe, NULL, sizeof(fullPath)/sizeof(WCHAR), fullPath, NULL);
+        res = GetModuleFileNameExW(wscript_process, NULL, fullPath, sizeof(fullPath)/sizeof(WCHAR));
         if(res == 0)
             return E_FAIL;
         pos = mystrrchr(fullPath, '\\');
@@ -347,6 +347,7 @@ static void run_test(const char *file_name)
         return;
     }
 
+    wscript_process = pi.hProcess;
     WaitForSingleObject(pi.hProcess, INFINITE);
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
