@@ -1088,7 +1088,7 @@ static ULONG WINAPI CompositeCMenu_Release(IContextMenu3 *iface)
     return 0;
 }
 
-static UINT WINAPI CompositeCMenu_GetIndexForCommandId(CompositeCMenu *This,UINT id)
+static UINT CompositeCMenu_GetIndexForCommandId(CompositeCMenu *This,UINT id)
 {
     UINT low=0;
     UINT high=This->menu_count;
