@@ -1246,7 +1246,7 @@ static const IContextMenu3Vtbl CompositeCMenuVtbl=
     CompositeCMenu_HandleMenuMsg2
 };
 
-HRESULT SHELL_CreateContextMenu(HWND hwnd, IContextMenu* system_menu,
+static HRESULT SHELL_CreateContextMenu(HWND hwnd, IContextMenu* system_menu,
                                 IShellFolder *folder, LPCITEMIDLIST folder_pidl,
                                 LPCITEMIDLIST *apidl, UINT cidl, const HKEY *aKeys,
                                 UINT cKeys,REFIID riid, void** ppv)
