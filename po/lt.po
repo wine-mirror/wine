@@ -8668,8 +8668,8 @@ msgstr ""
 "---------------------------------------------------------------\n"
 
 #: net.rc:44
-msgid "%s      %S      %S      Open resources: %lu\n"
-msgstr "%s      %S      %S      Atverti ištekliai: %lu\n"
+msgid "%s      %s      %s      Open resources: %lu\n"
+msgstr "%s      %s      %s      Atverti ištekliai: %lu\n"
 
 #: net.rc:45
 msgid "OK"

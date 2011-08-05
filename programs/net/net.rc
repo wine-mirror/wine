@@ -41,7 +41,7 @@ STRINGTABLE
                        "   Commands available are:\n   NET HELP    NET START    NET STOP    NET USE\n"
     STRING_NO_ENTRIES, "There are no entries in the list.\n"
     STRING_USE_HEADER, "\nStatus  Local   Remote\n---------------------------------------------------------------\n"
-    STRING_USE_ENTRY,  "%s      %S      %S      Open resources: %lu\n"
+    STRING_USE_ENTRY,  "%s      %s      %s      Open resources: %lu\n"
     STRING_OK, "OK"
     STRING_PAUSED, "Paused"
     STRING_SESSLOST, "Disconnected"

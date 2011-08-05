@@ -1,5 +1,5 @@
 MODULE    = net.exe
-APPMODE   = -mconsole
+APPMODE   = -mconsole -municode
 IMPORTS   = netapi32 user32 advapi32
 EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 

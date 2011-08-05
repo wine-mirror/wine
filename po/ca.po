@@ -8233,7 +8233,7 @@ msgid ""
 msgstr ""
 
 #: net.rc:44
-msgid "%s      %S      %S      Open resources: %lu\n"
+msgid "%s      %s      %s      Open resources: %lu\n"
 msgstr ""
 
 #: net.rc:45

@@ -16,10 +16,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdio.h>
-#include <string.h>
 #include <windows.h>
 #include <lm.h>
+#include <wine/unicode.h>
+
 #include "resources.h"
 
 #define NET_START 0001
@@ -27,35 +27,41 @@
 
 static int output_string(int msg, ...)
 {
-    char msg_buffer[8192];
+    WCHAR fmt[8192];
+    WCHAR str[8192];
+    int len;
+    DWORD count;
     va_list arguments;
 
-    LoadStringA(GetModuleHandleW(NULL), msg, msg_buffer, sizeof(msg_buffer));
+    LoadStringW(GetModuleHandleW(NULL), msg, fmt, sizeof(fmt));
     va_start(arguments, msg);
-    vprintf(msg_buffer, arguments);
+    len = vsprintfW(str, fmt, arguments);
+    WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, len, &count, NULL);
     va_end(arguments);
     return 0;
 }
 
 static BOOL output_error_string(DWORD error)
 {
-    LPSTR pBuffer;
-    if (FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM |
+    LPWSTR pBuffer;
+    if (FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM |
             FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_ALLOCATE_BUFFER,
-            NULL, error, 0, (LPSTR)&pBuffer, 0, NULL))
+            NULL, error, 0, (LPWSTR)&pBuffer, 0, NULL))
     {
-        fputs(pBuffer, stdout);
+        DWORD count;
+        int len = lstrlenW(pBuffer);
+        WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), pBuffer, len, &count, NULL);
         LocalFree(pBuffer);
         return TRUE;
     }
     return FALSE;
 }
 
-static BOOL net_use(int argc, char *argv[])
+static BOOL net_use(int argc, const WCHAR* argv[])
 {
     USE_INFO_2 *buffer, *connection;
     DWORD read, total, resume_handle, rc, i;
-    char *status[STRING_RECONN-STRING_OK+1];
+    WCHAR* status[STRING_RECONN-STRING_OK+1];
     resume_handle = 0;
     buffer = NULL;
 
@@ -66,8 +72,8 @@ static BOOL net_use(int argc, char *argv[])
         /* Load the status strings */
         for (i = 0; i < sizeof(status)/sizeof(*status); i++)
         {
-            status[i] = HeapAlloc(GetProcessHeap(), 0, 1024);
-            LoadStringA(hmod, STRING_OK+i, status[i], 1024);
+            status[i] = HeapAlloc(GetProcessHeap(), 0, 1024 * sizeof(**status));
+            LoadStringW(hmod, STRING_OK+i, status[i], 1024);
         }
 
         do {
@@ -133,12 +139,12 @@ static BOOL StopService(SC_HANDLE SCManager, SC_HANDLE serviceHandle)
     return result;
 }
 
-static BOOL net_service(int operation, char *service_name)
+static BOOL net_service(int operation, const WCHAR* service_name)
 {
     SC_HANDLE SCManager, serviceHandle;
     BOOL result = 0;
-    char service_display_name[4096];
-    DWORD buffer_size = sizeof(service_display_name);
+    WCHAR service_display_name[4096];
+    DWORD buffer_size;
 
     SCManager = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if(!SCManager)
@@ -146,7 +152,7 @@ static BOOL net_service(int operation, char *service_name)
         output_string(STRING_NO_SCM);
         return FALSE;
     }
-    serviceHandle = OpenServiceA(SCManager, service_name, SC_MANAGER_ALL_ACCESS);
+    serviceHandle = OpenServiceW(SCManager, service_name, SC_MANAGER_ALL_ACCESS);
     if(!serviceHandle)
     {
         output_string(STRING_NO_SVCHANDLE);
@@ -154,9 +160,9 @@ static BOOL net_service(int operation, char *service_name)
         return FALSE;
     }
 
-
-    GetServiceDisplayNameA(SCManager, service_name, service_display_name, &buffer_size);
-    if (!service_display_name[0]) strcpy(service_display_name, service_name);
+    buffer_size = sizeof(service_display_name)/sizeof(*service_display_name);
+    GetServiceDisplayNameW(SCManager, service_name, service_display_name, &buffer_size);
+    if (!service_display_name[0]) lstrcpyW(service_display_name, service_name);
 
     switch(operation)
     {
@@ -189,20 +195,29 @@ static BOOL net_service(int operation, char *service_name)
     return result;
 }
 
-int main(int argc, char *argv[])
+static int arg_is(const WCHAR* str1, const WCHAR* str2)
 {
+    return CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE, str1, -1, str2, -1) == CSTR_EQUAL;
+}
+
+int wmain(int argc, const WCHAR* argv[])
+{
+    static const WCHAR helpW[]={'h','e','l','p',0};
+    static const WCHAR startW[]={'s','t','a','r','t',0};
+    static const WCHAR stopW[]={'s','t','o','p',0};
+    static const WCHAR useW[]={'u','s','e',0};
     if (argc < 2)
     {
         output_string(STRING_USAGE);
         return 1;
     }
 
-    if(!strcasecmp(argv[1], "help"))
+    if(arg_is(argv[1], helpW))
     {
         output_string(STRING_HELP_USAGE);
     }
 
-    if(!strcasecmp(argv[1], "start"))
+    if(arg_is(argv[1], startW))
     {
         if(argc < 3)
         {
@@ -217,7 +232,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if(!strcasecmp(argv[1], "stop"))
+    if(arg_is(argv[1], stopW))
     {
         if(argc < 3)
         {
@@ -232,7 +247,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if(!strcasecmp(argv[1], "use"))
+    if(arg_is(argv[1], useW))
     {
         if(!net_use(argc, argv)) return 1;
     }

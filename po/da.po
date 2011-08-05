@@ -8920,8 +8920,8 @@ msgstr ""
 "---------------------------------------------------------------\n"
 
 #: net.rc:44
-msgid "%s      %S      %S      Open resources: %lu\n"
-msgstr "%s      %S      %S      Åbne resourser: %lu\n"
+msgid "%s      %s      %s      Open resources: %lu\n"
+msgstr "%s      %s      %s      Åbne resourser: %lu\n"
 
 #: net.rc:45
 msgid "OK"

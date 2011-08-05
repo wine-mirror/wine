@@ -8672,8 +8672,8 @@ msgstr ""
 "---------------------------------------------------------------\n"
 
 #: net.rc:44
-msgid "%s      %S      %S      Open resources: %lu\n"
-msgstr "%s      %S      %S      Otwarte zasoby: %lu\n"
+msgid "%s      %s      %s      Open resources: %lu\n"
+msgstr "%s      %s      %s      Otwarte zasoby: %lu\n"
 
 #: net.rc:45
 msgid "OK"
