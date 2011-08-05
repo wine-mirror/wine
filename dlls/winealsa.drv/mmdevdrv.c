@@ -842,6 +842,14 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         goto exit;
     }
 
+    if((err = snd_pcm_sw_params_set_silence_size(This->pcm_handle,
+                    sw_params, boundary)) < 0){
+        WARN("Unable to set silence size to %lx: %d (%s)\n", boundary, err,
+                snd_strerror(err));
+        hr = E_FAIL;
+        goto exit;
+    }
+
     if((err = snd_pcm_sw_params(This->pcm_handle, sw_params)) < 0){
         WARN("Unable to set sw params: %d (%s)\n", err, snd_strerror(err));
         hr = E_FAIL;
