@@ -61,12 +61,32 @@ static BOOL set_component( WCHAR **str, DWORD *str_len, WCHAR *value, DWORD len,
     return TRUE;
 }
 
-static BOOL decode_url( LPCWSTR url, LPWSTR buffer, LPDWORD buflen )
+static WCHAR *decode_url( LPCWSTR url, DWORD *len )
 {
-    HRESULT hr = UrlCanonicalizeW( url, buffer, buflen, URL_WININET_COMPATIBILITY | URL_UNESCAPE );
-    if (hr == E_POINTER) set_last_error( ERROR_INSUFFICIENT_BUFFER );
-    if (hr == E_INVALIDARG) set_last_error( ERROR_INVALID_PARAMETER );
-    return (SUCCEEDED(hr)) ? TRUE : FALSE;
+    const WCHAR *p = url;
+    WCHAR hex[3], *q, *ret;
+
+    if (!(ret = heap_alloc( *len * sizeof(WCHAR) ))) return NULL;
+    q = ret;
+    while (*len > 0)
+    {
+        if (p[0] == '%' && isxdigitW( p[1] ) && isxdigitW( p[2] ))
+        {
+            hex[0] = p[1];
+            hex[1] = p[2];
+            hex[2] = 0;
+            *q++ = strtolW( hex, NULL, 16 );
+            p += 3;
+            *len -= 3;
+        }
+        else
+        {
+            *q++ = *p++;
+            *len -= 1;
+        }
+    }
+    *len = q - ret;
+    return ret;
 }
 
 /***********************************************************************
@@ -75,8 +95,7 @@ static BOOL decode_url( LPCWSTR url, LPWSTR buffer, LPDWORD buflen )
 BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONENTSW uc )
 {
     BOOL ret = FALSE;
-    WCHAR *p, *q, *r;
-    WCHAR *url_decoded = NULL;
+    WCHAR *p, *q, *r, *url_decoded = NULL;
 
     TRACE("%s, %d, %x, %p\n", debugstr_w(url), len, flags, uc);
 
@@ -91,28 +110,12 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
 
     if (flags & ICU_DECODE)
     {
-        WCHAR *url_tmp;
-        DWORD url_len = len + 1;
-
-        if (!(url_tmp = HeapAlloc( GetProcessHeap(), 0, url_len * sizeof(WCHAR) )))
+        if (!(url_decoded = decode_url( url, &len )))
         {
             set_last_error( ERROR_OUTOFMEMORY );
             return FALSE;
         }
-        memcpy( url_tmp, url, len * sizeof(WCHAR) );
-        url_tmp[len] = 0;
-        if (!(url_decoded = HeapAlloc( GetProcessHeap(), 0, url_len * sizeof(WCHAR) )))
-        {
-            HeapFree( GetProcessHeap(), 0, url_tmp );
-            set_last_error( ERROR_OUTOFMEMORY );
-            return FALSE;
-        }
-        if (decode_url( url_tmp, url_decoded, &url_len ))
-        {
-            len = url_len;
-            url = url_decoded;
-        }
-        HeapFree( GetProcessHeap(), 0, url_tmp );
+        url = url_decoded;
     }
     if (!(p = strchrW( url, ':' )))
     {
