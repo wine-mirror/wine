@@ -10241,7 +10241,7 @@ static void test_quit_message(void)
         add_message(&rmsg);
         DispatchMessage(&msg);
     }
-    ok_sequence(WmStopQuitSeq, "WmStopQuitSeq", TRUE);
+    ok_sequence(WmStopQuitSeq, "WmStopQuitSeq", FALSE);
 }
 
 static const struct message WmMouseHoverSeq[] = {

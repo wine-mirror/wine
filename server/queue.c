@@ -1918,7 +1918,15 @@ void queue_cleanup_window( struct thread *thread, user_handle_t win )
         LIST_FOR_EACH_SAFE( ptr, next, &queue->msg_list[i] )
         {
             struct message *msg = LIST_ENTRY( ptr, struct message, entry );
-            if (msg->win == win) remove_queue_message( queue, msg, i );
+            if (msg->win == win)
+            {
+                if (msg->msg == WM_QUIT && !queue->quit_message)
+                {
+                    queue->quit_message = 1;
+                    queue->exit_code = msg->wparam;
+                }
+                remove_queue_message( queue, msg, i );
+            }
         }
     }
 
