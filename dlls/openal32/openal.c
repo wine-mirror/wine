@@ -269,7 +269,7 @@ const ALCchar* CDECL wine_alcGetString(ALCdevice *device, ALCenum param)
 
 ALvoid CDECL wine_alcGetIntegerv(ALCdevice *device, ALCenum param, ALCsizei size, ALCint *dest)
 {
-    return alcGetIntegerv(device, param, size, dest);
+    alcGetIntegerv(device, param, size, dest);
 }
 
 
