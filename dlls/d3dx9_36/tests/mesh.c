@@ -5384,7 +5384,7 @@ static void test_convert_adjacency_to_point_reps(void)
         }
 
         /* Convert adjacency to point representation */
-        memset(point_reps, -1, tc[i].num_vertices * sizeof(*point_reps));
+        for (j = 0; j < tc[i].num_vertices; j++) point_reps[j] = -1;
         hr = mesh->lpVtbl->ConvertAdjacencyToPointReps(mesh, tc[i].adjacency, point_reps);
         ok(hr == D3D_OK, "ConvertAdjacencyToPointReps failed case %d. "
            "Got %x expected D3D_OK\n", i, hr);
@@ -5921,7 +5921,8 @@ static void test_convert_point_reps_to_adjacency(void)
         }
 
         /* Convert point representation to adjacency*/
-        memset(adjacency, -2, VERTS_PER_FACE * tc[i].num_faces * sizeof(*adjacency));
+        for (j = 0; j < VERTS_PER_FACE * tc[i].num_faces; j++) adjacency[j] = -2;
+
         hr = mesh->lpVtbl->ConvertPointRepsToAdjacency(mesh, tc[i].point_reps, adjacency);
         ok(hr == D3D_OK, "ConvertPointRepsToAdjacency failed case %d. "
            "Got %x expected D3D_OK\n", i, hr);
@@ -5935,7 +5936,7 @@ static void test_convert_point_reps_to_adjacency(void)
         }
 
         /* NULL point representation is considered identity. */
-        memset(adjacency, -2, VERTS_PER_FACE * tc[i].num_faces * sizeof(*adjacency));
+        for (j = 0; j < VERTS_PER_FACE * tc[i].num_faces; j++) adjacency[j] = -2;
         hr = mesh_null_check->lpVtbl->ConvertPointRepsToAdjacency(mesh, NULL, adjacency);
         ok(hr == D3D_OK, "ConvertPointRepsToAdjacency NULL point_reps. "
                      "Got %x expected D3D_OK\n", hr);
