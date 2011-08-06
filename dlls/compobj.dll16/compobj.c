@@ -306,7 +306,7 @@ void WINAPI CoUninitialize16(void)
  */
 void WINAPI CoFreeUnusedLibraries16(void)
 {
-    return CoFreeUnusedLibraries();
+    CoFreeUnusedLibraries();
 }
 
 /***********************************************************************
