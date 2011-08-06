@@ -917,7 +917,7 @@ static void *zalloc( void *opaque, unsigned int items, unsigned int size )
 static void zfree( void *opaque, void *ptr )
 {
     FCI_Int *fci = opaque;
-    return fci->free( ptr );
+    fci->free( ptr );
 }
 
 static cab_UWORD compress_MSZIP( FCI_Int *fci )
