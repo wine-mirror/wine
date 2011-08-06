@@ -481,13 +481,13 @@ static inline void MONTHCAL_GetMonth(SYSTEMTIME *date, INT months)
 /* properly updates date to point on next month */
 static inline void MONTHCAL_GetNextMonth(SYSTEMTIME *date)
 {
-  return MONTHCAL_GetMonth(date, 1);
+  MONTHCAL_GetMonth(date, 1);
 }
 
 /* properly updates date to point on prev month */
 static inline void MONTHCAL_GetPrevMonth(SYSTEMTIME *date)
 {
-  return MONTHCAL_GetMonth(date, -1);
+  MONTHCAL_GetMonth(date, -1);
 }
 
 /* Returns full date for a first currently visible day */
