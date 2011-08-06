@@ -81,7 +81,7 @@ HRESULT WINAPI OleInitialize16(LPVOID reserved)
  */
 void WINAPI OleUninitialize16(void)
 {
-    return OleUninitialize();
+    OleUninitialize();
 }
 
 /***********************************************************************
