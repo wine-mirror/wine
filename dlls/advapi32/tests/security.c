@@ -3924,6 +3924,7 @@ static void test_CreateRestrictedToken(void)
     /* disable a SID in new token */
     sattr.Sid = token_groups->Groups[i].Sid;
     sattr.Attributes = 0;
+    r_token = NULL;
     ret = pCreateRestrictedToken(token, 0, 1, &sattr, 0, NULL, 0, NULL, &r_token);
     todo_wine ok(ret, "got error %d\n", GetLastError());
 
