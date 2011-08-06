@@ -250,7 +250,7 @@ static UINT get_default_index(EDataFlow flow, char **keys, UINT num)
 
     ai.dev = -1;
     if((err = ioctl(fd, SNDCTL_ENGINEINFO, &ai)) < 0){
-        WARN("SNDCTL_ENGINEINFO failed: %d (%s)\n", err, strerror(err));
+        WARN("SNDCTL_ENGINEINFO failed: %d (%s)\n", err, strerror(errno));
         close(fd);
         return 0;
     }
