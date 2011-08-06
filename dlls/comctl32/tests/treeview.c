@@ -40,6 +40,7 @@ static BOOL g_get_from_expand;
 static BOOL g_get_rect_in_expand;
 static BOOL g_disp_A_to_W;
 static BOOL g_disp_set_stateimage;
+static BOOL g_beginedit_alter_text;
 
 #define NUM_MSG_SEQUENCES   2
 #define TREEVIEW_SEQ_INDEX  0
@@ -99,7 +100,7 @@ static const struct message focus_seq[] = {
     { WM_PAINT, sent|defwinproc },
     { WM_NCPAINT, sent|wparam|defwinproc, 1 },
     { WM_ERASEBKGND, sent|defwinproc },
-    { TVM_EDITLABEL, sent },
+    { TVM_EDITLABELA, sent },
     { WM_COMMAND, sent|wparam|defwinproc, MAKEWPARAM(0, EN_UPDATE) },
     { WM_COMMAND, sent|wparam|defwinproc, MAKEWPARAM(0, EN_CHANGE) },
     { WM_PARENTNOTIFY, sent|wparam|defwinproc, MAKEWPARAM(WM_CREATE, 0) },
@@ -1025,6 +1026,21 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
 
                 break;
               }
+            case TVN_BEGINLABELEDIT:
+              {
+                if (g_beginedit_alter_text)
+                {
+                    static const char* textA = "<edittextaltered>";
+                    HWND edit;
+
+                    edit = (HWND)SendMessageA(pHdr->hwndFrom, TVM_GETEDITCONTROL, 0, 0);
+                    ok(IsWindow(edit), "failed to get edit handle\n");
+                    SetWindowTextA(edit, textA);
+                }
+
+                break;
+              }
+
             case TVN_ENDLABELEDIT: return TRUE;
             case TVN_ITEMEXPANDINGA:
                 ok(pTreeView->itemNew.mask ==
@@ -1181,18 +1197,18 @@ static void test_itemedit(void)
     DWORD r;
     HWND edit;
     TVITEMA item;
-    CHAR buff[2];
+    CHAR buffA[20];
     HWND hTree;
 
     hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     /* try with null item */
-    edit = (HWND)SendMessage(hTree, TVM_EDITLABEL, 0, 0);
+    edit = (HWND)SendMessage(hTree, TVM_EDITLABELA, 0, 0);
     ok(!IsWindow(edit), "Expected valid handle\n");
 
     /* trigger edit */
-    edit = (HWND)SendMessage(hTree, TVM_EDITLABEL, 0, (LPARAM)hRoot);
+    edit = (HWND)SendMessage(hTree, TVM_EDITLABELA, 0, (LPARAM)hRoot);
     ok(IsWindow(edit), "Expected valid handle\n");
     /* item shouldn't be selected automatically after TVM_EDITLABEL */
     r = SendMessage(hTree, TVM_GETITEMSTATE, (WPARAM)hRoot, TVIS_SELECTED);
@@ -1209,7 +1225,7 @@ static void test_itemedit(void)
     expect(0, r);
 
     /* try to cancel with wrong (not null) handle */
-    edit = (HWND)SendMessage(hTree, TVM_EDITLABEL, 0, (LPARAM)hRoot);
+    edit = (HWND)SendMessage(hTree, TVM_EDITLABELA, 0, (LPARAM)hRoot);
     ok(IsWindow(edit), "Expected valid handle\n");
     r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)hTree);
     expect(0, r);
@@ -1220,13 +1236,13 @@ static void test_itemedit(void)
     /* remove selection after starting edit */
     r = TreeView_SelectItem(hTree, hRoot);
     expect(TRUE, r);
-    edit = (HWND)SendMessage(hTree, TVM_EDITLABEL, 0, (LPARAM)hRoot);
+    edit = (HWND)SendMessage(hTree, TVM_EDITLABELA, 0, (LPARAM)hRoot);
     ok(IsWindow(edit), "Expected valid handle\n");
     r = TreeView_SelectItem(hTree, NULL);
     expect(TRUE, r);
     /* alter text */
-    strcpy(buff, "x");
-    r = SendMessage(edit, WM_SETTEXT, 0, (LPARAM)buff);
+    strcpy(buffA, "x");
+    r = SendMessage(edit, WM_SETTEXT, 0, (LPARAM)buffA);
     expect(TRUE, r);
     r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
     expect(0, r);
@@ -1234,11 +1250,43 @@ static void test_itemedit(void)
     /* check that text is saved */
     item.mask = TVIF_TEXT;
     item.hItem = hRoot;
-    item.pszText = buff;
-    item.cchTextMax = sizeof(buff)/sizeof(CHAR);
+    item.pszText = buffA;
+    item.cchTextMax = sizeof(buffA)/sizeof(CHAR);
     r = SendMessage(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, r);
-    ok(!strcmp("x", buff), "Expected item text to change\n");
+    ok(!strcmp("x", buffA), "Expected item text to change\n");
+
+    /* try A/W messages */
+    edit = (HWND)SendMessageA(hTree, TVM_EDITLABELA, 0, (LPARAM)hRoot);
+    ok(IsWindow(edit), "Expected valid handle\n");
+    ok(IsWindowUnicode(edit), "got ansi window\n");
+    r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
+    expect(0, r);
+    ok(!IsWindow(edit), "expected invalid handle\n");
+
+    edit = (HWND)SendMessageA(hTree, TVM_EDITLABELW, 0, (LPARAM)hRoot);
+    ok(IsWindow(edit), "Expected valid handle\n");
+    ok(IsWindowUnicode(edit), "got ansi window\n");
+    r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
+    expect(0, r);
+
+    /* alter text during TVM_BEGINLABELEDIT, check that it's preserved */
+    strcpy(buffA, "<root>");
+
+    item.mask = TVIF_TEXT;
+    item.hItem = hRoot;
+    item.pszText = buffA;
+    item.cchTextMax = 0;
+    r = SendMessage(hTree, TVM_SETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, r);
+
+    g_beginedit_alter_text = TRUE;
+    edit = (HWND)SendMessageA(hTree, TVM_EDITLABELA, 0, (LPARAM)hRoot);
+    ok(IsWindow(edit), "Expected valid handle\n");
+    g_beginedit_alter_text = FALSE;
+
+    GetWindowTextA(edit, buffA, sizeof(buffA)/sizeof(CHAR));
+    ok(!strcmp(buffA, "<edittextaltered>"), "got string %s\n", buffA);
 
     DestroyWindow(hTree);
 }

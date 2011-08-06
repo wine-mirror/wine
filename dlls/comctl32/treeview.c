@@ -3871,6 +3871,8 @@ TREEVIEW_EditLabel(TREEVIEW_INFO *infoPtr, HTREEITEM hItem)
     infoPtr->wpEditOrig = (WNDPROC)SetWindowLongPtrW(hwndEdit, GWLP_WNDPROC,
 						  (DWORD_PTR)
 						  TREEVIEW_Edit_SubclassProc);
+    if (hItem->pszText)
+        SetWindowTextW(hwndEdit, hItem->pszText);
 
     if (TREEVIEW_BeginLabelEditNotify(infoPtr, hItem))
     {
@@ -3879,9 +3881,6 @@ TREEVIEW_EditLabel(TREEVIEW_INFO *infoPtr, HTREEITEM hItem)
 	infoPtr->editItem = NULL;
 	return NULL;
     }
-
-    if (hItem->pszText)
-        SetWindowTextW(hwndEdit, hItem->pszText);
 
     SetFocus(hwndEdit);
     SendMessageW(hwndEdit, EM_SETSEL, 0, -1);
