@@ -362,7 +362,7 @@ void __thiscall ios_base_clear_reraise(ios_base *this, IOSB_iostate state, MSVCP
 DEFINE_THISCALL_WRAPPER(ios_base_clear, 8)
 void __thiscall ios_base_clear(ios_base *this, IOSB_iostate state)
 {
-    return ios_base_clear_reraise(this, state, FALSE);
+    ios_base_clear_reraise(this, state, FALSE);
 }
 
 /* ?clear@ios_base@std@@QAEXI@Z */
@@ -370,7 +370,7 @@ void __thiscall ios_base_clear(ios_base *this, IOSB_iostate state)
 DEFINE_THISCALL_WRAPPER(ios_base_clear_unsigned, 8)
 void __thiscall ios_base_clear_unsigned(ios_base *this, unsigned int state)
 {
-    return ios_base_clear_reraise(this, (IOSB_iostate)state, FALSE);
+    ios_base_clear_reraise(this, (IOSB_iostate)state, FALSE);
 }
 
 /* ?copyfmt@ios_base@std@@QAEAAV12@ABV12@@Z */

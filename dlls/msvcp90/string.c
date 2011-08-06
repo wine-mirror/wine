@@ -566,7 +566,7 @@ void __thiscall basic_string_char_tidy(basic_string_char *this,
 DEFINE_THISCALL_WRAPPER(basic_string_char_tidy_built, 8)
 void __thiscall basic_string_char_tidy_built(basic_string_char *this, MSVCP_bool built)
 {
-    return basic_string_char_tidy(this, built, 0);
+    basic_string_char_tidy(this, built, 0);
 }
 
 /* ?_Grow@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAE_NI_N@Z */
