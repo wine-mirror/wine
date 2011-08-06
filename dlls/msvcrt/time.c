@@ -655,12 +655,12 @@ int CDECL MSVCRT__ftime32_s(struct MSVCRT___timeb32 *buf)
 #ifdef _WIN64
 void CDECL MSVCRT__ftime(struct MSVCRT___timeb64 *buf)
 {
-    return MSVCRT__ftime64( buf );
+    MSVCRT__ftime64( buf );
 }
 #else
 void CDECL MSVCRT__ftime(struct MSVCRT___timeb32 *buf)
 {
-    return MSVCRT__ftime32( buf );
+    MSVCRT__ftime32( buf );
 }
 #endif
 

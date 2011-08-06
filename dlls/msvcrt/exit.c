@@ -139,7 +139,7 @@ static void DoMessageBox(const char *lead, const char *message)
   MSVCRT_mbstowcs(leadW, lead, 1024);
   MSVCRT_mbstowcs(messageW, message, 1024);
 
-  return DoMessageBoxW(leadW, messageW);
+  DoMessageBoxW(leadW, messageW);
 }
 
 /*********************************************************************
