@@ -59,7 +59,7 @@ static int output_string(int msg, ...)
     int len;
     va_list arguments;
 
-    LoadStringW(GetModuleHandleW(NULL), msg, fmt, sizeof(fmt));
+    LoadStringW(GetModuleHandleW(NULL), msg, fmt, sizeof(fmt)/sizeof(fmt[0]));
     va_start(arguments, msg);
     len = vsprintfW(str, fmt, arguments);
     output_write(str, len);
