@@ -995,7 +995,6 @@ void fill_cpu_info(void)
             {
                 if (isdigit(value[0]))
                 {
-                    value[1] = '\0'; /* Make sure we only get one character */
                     cached_sci.Level = atoi(value);
                 }
                 continue;
