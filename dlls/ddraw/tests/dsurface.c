@@ -3159,6 +3159,8 @@ static void GetDCTest(void)
     hr = IDirectDrawSurface4_ReleaseDC(surf4, dc);
     ok(SUCCEEDED(hr), "ReleaseDC failed, hr %#x.\n", hr);
 
+    IDirectDrawSurface_Release(tmp);
+
     dc = CreateCompatibleDC(NULL);
     ok(!!dc, "CreateCompatibleDC failed.\n");
 
@@ -3175,11 +3177,12 @@ static void GetDCTest(void)
     ok(!tmp, "Expected surface NULL, got %p.\n", tmp);
 
     IDirectDrawSurface4_Release(surf4);
+    IDirectDrawSurface_Release(surf);
     IDirectDraw4_Release(dd4);
 
     hr = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw7, (void **) &dd7);
     ok(hr == DD_OK, "IDirectDraw_QueryInterface failed: 0x%08x\n", hr);
-    surf = NULL;
+
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd2, &surf7, NULL);
     ok(hr == DD_OK, "IDirectDraw7_CreateSurface failed: 0x%08x\n", hr);
     dctest_surf((IDirectDrawSurface *) surf7, 2);
