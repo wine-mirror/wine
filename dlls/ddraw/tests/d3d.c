@@ -3006,7 +3006,7 @@ static void DeviceLoadTest(void)
     ok(hr==DDERR_NOPALETTEATTACHED, "IDirectDrawSurface7_GetPalette returned: %x\n", hr);
 
     hr = IDirectDrawSurface7_SetPalette(texture_levels[0][1], palettes[1]);
-    todo_wine ok(hr==DDERR_NOTONMIPMAPSUBLEVEL, "IDirectDrawSurface7_SetPalette returned: %x\n", hr);
+    ok(hr==DDERR_NOTONMIPMAPSUBLEVEL, "IDirectDrawSurface7_SetPalette returned: %x\n", hr);
     hr = IDirectDrawSurface7_SetPalette(texture_levels[1][0], palettes[2]);
     ok(hr==DD_OK, "IDirectDrawSurface7_SetPalette returned: %x\n", hr);
 

@@ -4233,6 +4233,11 @@ static HRESULT WINAPI ddraw_surface7_SetPalette(IDirectDrawSurface7 *iface, IDir
         return DDERR_INVALIDPIXELFORMAT;
     }
 
+    if (!This->is_complex_root)
+    {
+        return DDERR_NOTONMIPMAPSUBLEVEL;
+    }
+
     /* Find the old palette */
     EnterCriticalSection(&ddraw_cs);
     hr = IDirectDrawSurface_GetPalette(iface, &oldPal);
