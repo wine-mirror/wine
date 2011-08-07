@@ -1166,6 +1166,7 @@ void CDECL wined3d_buffer_unmap(struct wined3d_buffer *buffer)
 
         GL_EXTCALL(glUnmapBufferARB(buffer->buffer_type_hint));
         LEAVE_GL();
+        if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
         context_release(context);
 
         buffer->resource.allocatedMemory = NULL;
