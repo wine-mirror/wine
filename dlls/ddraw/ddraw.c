@@ -3471,10 +3471,6 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
         ddraw_create_gdi_swapchain(ddraw, object);
     }
 
-    /* Addref the ddraw interface to keep an reference for each surface */
-    IDirectDraw7_AddRef(&ddraw->IDirectDraw7_iface);
-    object->ifaceToRelease = (IUnknown *)&ddraw->IDirectDraw7_iface;
-
     /* Create a WineD3DTexture if a texture was requested */
     if (desc2.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
     {
@@ -3523,6 +3519,8 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface, DDSURFACEDESC2 *
     }
 
     *surface = &impl->IDirectDrawSurface7_iface;
+    IDirectDraw7_AddRef(iface);
+    impl->ifaceToRelease = (IUnknown *)iface;
 
     return hr;
 }
@@ -3563,7 +3561,6 @@ static HRESULT WINAPI ddraw4_CreateSurface(IDirectDraw4 *iface,
     }
 
     *surface = &impl->IDirectDrawSurface4_iface;
-    IDirectDraw7_Release(&This->IDirectDraw7_iface);
     IDirectDraw4_AddRef(iface);
     impl->ifaceToRelease = (IUnknown *)iface;
 
@@ -3606,7 +3603,6 @@ static HRESULT WINAPI ddraw3_CreateSurface(IDirectDraw3 *iface, DDSURFACEDESC *s
     }
 
     *surface = &impl->IDirectDrawSurface_iface;
-    IDirectDraw7_Release(&This->IDirectDraw7_iface);
     IDirectDraw3_AddRef(iface);
     impl->ifaceToRelease = (IUnknown *)iface;
 
@@ -3649,7 +3645,6 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
     }
 
     *surface = &impl->IDirectDrawSurface_iface;
-    IDirectDraw7_Release(&This->IDirectDraw7_iface);
     impl->ifaceToRelease = NULL;
 
     return hr;
@@ -3682,7 +3677,6 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
     }
 
     *surface = &impl->IDirectDrawSurface_iface;
-    IDirectDraw7_Release(&This->IDirectDraw7_iface);
     impl->ifaceToRelease = NULL;
 
     return hr;
