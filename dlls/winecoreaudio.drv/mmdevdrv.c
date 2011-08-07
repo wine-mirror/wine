@@ -127,7 +127,7 @@ struct ACImpl {
     UINT32 period_ms, bufsize_frames, inbuf_frames, written_frames;
     UINT64 last_time;
     AudioQueueBufferRef public_buffer;
-    BOOL getbuf_last;
+    UINT32 getbuf_last;
     int playing;
 
     AudioSession *session;
@@ -1602,6 +1602,7 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
 
     if(!data)
         return E_POINTER;
+    *data = NULL;
 
     OSSpinLockLock(&This->lock);
 
@@ -1611,7 +1612,6 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
     }
 
     if(!frames){
-        This->getbuf_last = TRUE;
         OSSpinLockUnlock(&This->lock);
         return S_OK;
     }
@@ -1656,7 +1656,7 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
 
     *data = This->public_buffer->mAudioData;
 
-    This->getbuf_last = TRUE;
+    This->getbuf_last = frames;
 
     OSSpinLockUnlock(&This->lock);
 
@@ -1673,9 +1673,25 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
 
     OSSpinLockLock(&This->lock);
 
+    if(!frames){
+        This->getbuf_last = 0;
+        if(This->public_buffer){
+            AQBuffer *buf = This->public_buffer->mUserData;
+            list_add_tail(&This->avail_buffers, &buf->entry);
+            This->public_buffer = NULL;
+        }
+        OSSpinLockUnlock(&This->lock);
+        return S_OK;
+    }
+
     if(!This->getbuf_last){
         OSSpinLockUnlock(&This->lock);
         return AUDCLNT_E_OUT_OF_ORDER;
+    }
+
+    if(frames > This->getbuf_last){
+        OSSpinLockUnlock(&This->lock);
+        return AUDCLNT_E_INVALID_SIZE;
     }
 
     if(flags & AUDCLNT_BUFFERFLAGS_SILENT){
@@ -1704,7 +1720,7 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         AudioQueuePrime(This->aqueue, 0, NULL);
 
     This->public_buffer = NULL;
-    This->getbuf_last = FALSE;
+    This->getbuf_last = 0;
     This->written_frames += frames;
     This->inbuf_frames += frames;
 
@@ -1795,7 +1811,7 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
     *flags = 0;
     This->written_frames += *frames;
     This->inbuf_frames -= *frames;
-    This->getbuf_last = TRUE;
+    This->getbuf_last = 1;
 
     if(devpos || qpcpos)
         AudioClock_GetPosition_nolock(This, devpos, qpcpos, FALSE);
@@ -1809,8 +1825,7 @@ static HRESULT WINAPI AudioCaptureClient_ReleaseBuffer(
         IAudioCaptureClient *iface, UINT32 done)
 {
     ACImpl *This = impl_from_IAudioCaptureClient(iface);
-    UINT32 pbuf_frames =
-        This->public_buffer->mAudioDataByteSize / This->fmt->nBlockAlign;
+    UINT32 pbuf_frames;
     OSStatus sc;
 
     TRACE("(%p)->(%u)\n", This, done);
@@ -1822,6 +1837,7 @@ static HRESULT WINAPI AudioCaptureClient_ReleaseBuffer(
         return AUDCLNT_E_OUT_OF_ORDER;
     }
 
+    pbuf_frames = This->public_buffer->mAudioDataByteSize / This->fmt->nBlockAlign;
     if(done != 0 && done != pbuf_frames){
         OSSpinLockUnlock(&This->lock);
         return AUDCLNT_E_INVALID_SIZE;
@@ -1835,7 +1851,7 @@ static HRESULT WINAPI AudioCaptureClient_ReleaseBuffer(
         This->public_buffer = NULL;
     }
 
-    This->getbuf_last = FALSE;
+    This->getbuf_last = 0;
 
     OSSpinLockUnlock(&This->lock);
 
