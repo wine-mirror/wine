@@ -2324,6 +2324,7 @@ static void test_select(void)
     fd_set readfds, writefds, exceptfds;
     unsigned int maxfd;
     int ret;
+    char buffer;
     struct timeval select_timeout;
     select_thread_params thread_params;
     HANDLE thread_handle;
@@ -2379,6 +2380,8 @@ static void test_select(void)
     ok ( (thread_params.ReadKilled) ||
          broken(thread_params.ReadKilled == 0), /*Win98*/
             "closesocket did not wakeup select\n");
+    ret = recv(fdRead, &buffer, 1, MSG_PEEK);
+    ok( (ret == -1), "peek at closed socket expected -1 got %d\n", ret);
 
     /* Test selecting invalid handles */
     FD_ZERO(&readfds);
@@ -3625,6 +3628,10 @@ static void test_events(int useMessages)
     /* Test simple send/recv */
     ret = send(dst, buffer, 100, 0);
     ok(ret == 100, "Failed to send buffer %d err %d\n", ret, GetLastError());
+    ok_event_seq(src, hEvent, read_seq, NULL, 0);
+
+    ret = recv(src, buffer, 1, MSG_PEEK);
+    ok(ret == 1, "Failed to peek at recv buffer %d err %d\n", ret, GetLastError());
     ok_event_seq(src, hEvent, read_seq, NULL, 0);
 
     ret = recv(src, buffer, 50, 0);
