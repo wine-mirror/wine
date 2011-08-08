@@ -1164,20 +1164,19 @@ static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             break;
         case LVN_ITEMCHANGED:
         {
-            NMITEMACTIVATE *nm;
+            WCHAR empty[] = { 0 };
+            NMITEMACTIVATE *nm = (NMITEMACTIVATE*)lp;
             HWND lv = GetDlgItem(hwnd, IDC_MGR_CERTS);
+            int numSelected = SendMessageW(lv, LVM_GETSELECTEDCOUNT, 0, 0);
 
-            nm = (NMITEMACTIVATE*)lp;
-            if (nm->uNewState & LVN_ITEMACTIVATE)
-            {
-                int numSelected = SendMessageW(lv, LVM_GETSELECTEDCOUNT, 0, 0);
-
-                EnableWindow(GetDlgItem(hwnd, IDC_MGR_EXPORT), numSelected > 0);
-                EnableWindow(GetDlgItem(hwnd, IDC_MGR_REMOVE), numSelected > 0);
-                EnableWindow(GetDlgItem(hwnd, IDC_MGR_VIEW), numSelected == 1);
-                if (numSelected == 1)
-                    cert_mgr_show_cert_usages(hwnd, nm->iItem);
-            }
+            EnableWindow(GetDlgItem(hwnd, IDC_MGR_EXPORT), numSelected > 0);
+            EnableWindow(GetDlgItem(hwnd, IDC_MGR_REMOVE), numSelected > 0);
+            EnableWindow(GetDlgItem(hwnd, IDC_MGR_VIEW), numSelected == 1);
+            if (numSelected == 1)
+                cert_mgr_show_cert_usages(hwnd, nm->iItem);
+            else
+                SendMessageW(GetDlgItem(hwnd, IDC_MGR_PURPOSES), WM_SETTEXT, 0,
+                 (LPARAM)empty);
             break;
         }
         case NM_DBLCLK:
