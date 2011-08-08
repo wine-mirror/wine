@@ -263,7 +263,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
         sizeof(SECURITY_IMPERSONATION_LEVEL), /* TokenImpersonationLevel */
         sizeof(TOKEN_STATISTICS), /* TokenStatistics */
         0,    /* TokenRestrictedSids */
-        0,    /* TokenSessionId */
+        sizeof(DWORD), /* TokenSessionId */
         0,    /* TokenGroupsAndPrivileges */
         0,    /* TokenSessionReference */
         0,    /* TokenSandBoxInert */
@@ -519,6 +519,12 @@ NTSTATUS WINAPI NtQueryInformationToken(
             TOKEN_ELEVATION *elevation = tokeninfo;
             FIXME("QueryInformationToken( ..., TokenElevation, ...) semi-stub\n");
             elevation->TokenIsElevated = TRUE;
+        }
+        break;
+    case TokenSessionId:
+        {
+            *((DWORD*)tokeninfo) = 0;
+            FIXME("QueryInformationToken( ..., TokenSessionId, ...) semi-stub\n");
         }
         break;
     default:
