@@ -497,6 +497,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(const char *key, IMMDevice *dev,
     int err;
     snd_pcm_stream_t stream;
     snd_config_t *lconf;
+    static int handle_underrun = 1;
 
     TRACE("\"%s\" %p %d %p\n", key, dev, dataflow, out);
 
@@ -520,27 +521,23 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(const char *key, IMMDevice *dev,
         return E_UNEXPECTED;
     }
 
-    lconf = make_handle_underrun_config(key);
-
     This->dataflow = dataflow;
-    if(lconf){
-        if((err = snd_pcm_open_lconf(&This->pcm_handle, key, stream,
-                        SND_PCM_NONBLOCK, lconf)) < 0){
-            snd_config_delete(lconf);
-            HeapFree(GetProcessHeap(), 0, This);
-            WARN("Unable to open PCM \"%s\": %d (%s)\n", key, err,
-                    snd_strerror(err));
-            return E_FAIL;
-        }
+    if(handle_underrun && ((lconf = make_handle_underrun_config(key)))){
+        err = snd_pcm_open_lconf(&This->pcm_handle, key, stream, SND_PCM_NONBLOCK, lconf);
+        TRACE("Opening PCM device \"%s\" with handle_underrun: %d\n", key, err);
         snd_config_delete(lconf);
-    }else{
-        if((err = snd_pcm_open(&This->pcm_handle, key, stream,
-                        SND_PCM_NONBLOCK)) < 0){
-            HeapFree(GetProcessHeap(), 0, This);
-            WARN("Unable to open PCM \"%s\": %d (%s)\n", key, err,
-                    snd_strerror(err));
-            return E_FAIL;
-        }
+        /* Pulse <= 2010 returns EINVAL, it does not know handle_underrun. */
+        if(err == -EINVAL)
+            handle_underrun = 0;
+    }else
+        err = -EINVAL;
+    if(err == -EINVAL){
+        err = snd_pcm_open(&This->pcm_handle, key, stream, SND_PCM_NONBLOCK);
+    }
+    if(err < 0){
+        HeapFree(GetProcessHeap(), 0, This);
+        WARN("Unable to open PCM \"%s\": %d (%s)\n", key, err, snd_strerror(err));
+        return E_FAIL;
     }
 
     This->hw_params = HeapAlloc(GetProcessHeap(), 0,
