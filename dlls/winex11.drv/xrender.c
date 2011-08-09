@@ -2440,8 +2440,8 @@ void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
   return;
 }
 
-BOOL XRender_AlphaBlend( X11DRV_PDEVICE *devDst, X11DRV_PDEVICE *devSrc,
-                         struct bitblt_coords *dst, struct bitblt_coords *src, BLENDFUNCTION blendfn )
+BOOL XRender_AlphaBlend( X11DRV_PDEVICE *devDst, struct bitblt_coords *dst,
+                         X11DRV_PDEVICE *devSrc, struct bitblt_coords *src, BLENDFUNCTION blendfn )
 {
   FIXME("not supported - XRENDER headers were missing at compile time\n");
   return FALSE;
