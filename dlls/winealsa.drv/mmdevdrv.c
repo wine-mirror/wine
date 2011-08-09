@@ -1994,15 +1994,16 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
     return S_OK;
 }
 
-static void alsa_wrap_buffer(ACImpl *This, BYTE *buffer, UINT32 written_bytes)
+static void alsa_wrap_buffer(ACImpl *This, BYTE *buffer, UINT32 written_frames)
 {
     snd_pcm_uframes_t write_offs_frames =
         (This->lcl_offs_frames + This->held_frames) % This->bufsize_frames;
     UINT32 write_offs_bytes = write_offs_frames * This->fmt->nBlockAlign;
     snd_pcm_uframes_t chunk_frames = This->bufsize_frames - write_offs_frames;
     UINT32 chunk_bytes = chunk_frames * This->fmt->nBlockAlign;
+    UINT32 written_bytes = written_frames * This->fmt->nBlockAlign;
 
-    if(written_bytes < chunk_bytes){
+    if(written_bytes <= chunk_bytes){
         memcpy(This->local_buffer + write_offs_bytes, buffer, written_bytes);
     }else{
         memcpy(This->local_buffer + write_offs_bytes, buffer, chunk_bytes);
@@ -2015,7 +2016,6 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         IAudioRenderClient *iface, UINT32 written_frames, DWORD flags)
 {
     ACImpl *This = impl_from_IAudioRenderClient(iface);
-    UINT32 written_bytes = written_frames * This->fmt->nBlockAlign;
     BYTE *buffer;
     HRESULT hr;
 
@@ -2048,7 +2048,7 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
 
     if(This->held_frames){
         if(This->buf_state == LOCKED_WRAPPED)
-            alsa_wrap_buffer(This, buffer, written_bytes);
+            alsa_wrap_buffer(This, buffer, written_frames);
 
         This->held_frames += written_frames;
     }else{
