@@ -149,16 +149,12 @@ static void test_mutex(void)
     SetLastError(0xdeadbeef);
     hOpened = OpenMutex(READ_CONTROL, FALSE, "WINETESTMUTEX");
     ok(!hOpened, "OpenMutex succeeded\n");
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
-       GetLastError() == ERROR_INVALID_NAME, /* win9x */
-       "wrong error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hOpened = OpenMutex(READ_CONTROL, FALSE, "winetestmutex");
     ok(!hOpened, "OpenMutex succeeded\n");
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
-       GetLastError() == ERROR_INVALID_NAME, /* win9x */
-       "wrong error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hOpened = CreateMutex(NULL, FALSE, "WineTestMutex");
@@ -328,9 +324,7 @@ static void test_event(void)
     SetLastError(0xdeadbeef);
     handle2 = OpenEventA( EVENT_ALL_ACCESS, FALSE, __FILE__ ": TEST EVENT");
     ok( !handle2, "OpenEvent succeeded\n");
-    ok( GetLastError() == ERROR_FILE_NOT_FOUND ||
-        GetLastError() == ERROR_INVALID_NAME, /* win9x */
-        "wrong error %u\n", GetLastError());
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
 
     CloseHandle( handle );
 }
@@ -366,9 +360,7 @@ static void test_semaphore(void)
     SetLastError(0xdeadbeef);
     handle2 = OpenSemaphoreA( SEMAPHORE_ALL_ACCESS, FALSE, __FILE__ ": TEST SEMAPHORE");
     ok( !handle2, "OpenSemaphore succeeded\n");
-    ok( GetLastError() == ERROR_FILE_NOT_FOUND ||
-        GetLastError() == ERROR_INVALID_NAME, /* win9x */
-        "wrong error %u\n", GetLastError());
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
 
     CloseHandle( handle );
 }
@@ -938,11 +930,6 @@ static void test_WaitForSingleObject(void)
     DWORD ret;
 
     signaled = CreateEventW(NULL, TRUE, TRUE, NULL);
-    if(signaled == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        win_skip("Handles work differently on win9x\n");
-        return;
-    }
     nonsignaled = CreateEventW(NULL, TRUE, FALSE, NULL);
     invalid = (HANDLE) 0xdeadbee0;
 

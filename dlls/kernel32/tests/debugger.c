@@ -337,14 +337,12 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
          */
         ok(exit_code == STATUS_DEBUGGER_INACTIVE ||
            broken(exit_code == STATUS_ACCESS_VIOLATION) || /* Intermittent Vista+ */
-           broken(exit_code == 0xffffffff) || /* Win9x */
            broken(exit_code == WAIT_ABANDONED), /* NT4, W2K */
            "wrong exit code : %08x\n", exit_code);
     }
     else
         ok(exit_code == STATUS_ACCESS_VIOLATION ||
-           broken(exit_code == WAIT_ABANDONED) || /* NT4, W2K, W2K3 */
-           broken(exit_code == 0xffffffff), /* Win9x, WinME */
+           broken(exit_code == WAIT_ABANDONED), /* NT4, W2K, W2K3 */
            "wrong exit code : %08x\n", exit_code);
     CloseHandle(info.hProcess);
 
@@ -478,10 +476,8 @@ static void test_ExitCode(void)
         crash_and_debug(hkey, test_exe, "dbg,none");
     else
         skip("\"none\" debugger test needs user interaction\n");
-    if (disposition == REG_CREATED_NEW_KEY)
-        win_skip("'dbg,event,order' test doesn't finish on Win9x/WinMe\n");
-    else
-        crash_and_debug(hkey, test_exe, "dbg,event,order");
+    ok(disposition == REG_OPENED_EXISTING_KEY, "expected REG_OPENED_EXISTING_KEY, got %d\n", disposition);
+    crash_and_debug(hkey, test_exe, "dbg,event,order");
     crash_and_debug(hkey, test_exe, "dbg,attach,event,code2");
     if (pDebugSetProcessKillOnExit)
         crash_and_debug(hkey, test_exe, "dbg,attach,event,nokill");
