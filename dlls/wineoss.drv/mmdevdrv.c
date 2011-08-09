@@ -1611,8 +1611,7 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         *data = This->tmp_buffer;
         This->buf_state = LOCKED_WRAPPED;
     }else{
-        *data = This->local_buffer +
-            This->lcl_offs_frames * This->fmt->nBlockAlign;
+        *data = This->local_buffer + write_pos * This->fmt->nBlockAlign;
         This->buf_state = LOCKED_NORMAL;
     }
 
@@ -1656,8 +1655,8 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
     }
 
     if(This->buf_state == LOCKED_NORMAL)
-        buffer = This->local_buffer +
-            This->lcl_offs_frames * This->fmt->nBlockAlign;
+        buffer = This->local_buffer + This->fmt->nBlockAlign *
+          ((This->lcl_offs_frames + This->held_frames) % This->bufsize_frames);
     else
         buffer = This->tmp_buffer;
 
