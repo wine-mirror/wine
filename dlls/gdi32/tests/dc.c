@@ -107,7 +107,10 @@ todo_wine
     ret = GetClipBox(hdc, &rc_clip);
     ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION), "GetClipBox returned %d instead of SIMPLEREGION\n", ret);
     SetRect(&rc, 0, 0, 50, 50);
-    ok(EqualRect(&rc, &rc_clip), "rects are not equal\n");
+    ok(EqualRect(&rc, &rc_clip),
+       "rects are not equal: (%d,%d-%d,%d) - (%d,%d-%d,%d)\n",
+       rc.left, rc.top, rc.right, rc.bottom,
+       rc_clip.left, rc_clip.top, rc_clip.right, rc_clip.bottom);
 
     ret = RestoreDC(hdc, 1);
     ok(ret, "ret = %d\n", ret);
@@ -115,7 +118,10 @@ todo_wine
     ret = GetClipBox(hdc, &rc_clip);
     ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION), "GetClipBox returned %d instead of SIMPLEREGION\n", ret);
     SetRect(&rc, 0, 0, 100, 100);
-    ok(EqualRect(&rc, &rc_clip), "rects are not equal\n");
+    ok(EqualRect(&rc, &rc_clip),
+       "rects are not equal: (%d,%d-%d,%d) - (%d,%d-%d,%d)\n",
+       rc.left, rc.top, rc.right, rc.bottom,
+       rc_clip.left, rc_clip.top, rc_clip.right, rc_clip.bottom);
 
     DeleteObject(hrgn);
     ReleaseDC(hwnd, hdc);
