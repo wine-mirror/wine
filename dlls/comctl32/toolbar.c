@@ -3066,8 +3066,8 @@ TOOLBAR_AutoSize (TOOLBAR_INFO *infoPtr)
 
         if (infoPtr->dwStyle & WS_BORDER)
         {
-            cy += 2 * GetSystemMetrics(SM_CXBORDER);
-            cx += 2 * GetSystemMetrics(SM_CYBORDER);
+            cx += 2 * GetSystemMetrics(SM_CXBORDER);
+            cy += 2 * GetSystemMetrics(SM_CYBORDER);
         }
 
         SetWindowPos(infoPtr->hwndSelf, NULL, x, y, cx, cy, uPosFlags);
