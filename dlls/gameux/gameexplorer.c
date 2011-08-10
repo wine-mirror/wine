@@ -774,29 +774,19 @@ HRESULT GAMEUX_FindGameInstanceId(
 
 typedef struct _GameExplorerImpl
 {
-    const struct IGameExplorerVtbl *lpGameExplorerVtbl;
-    const struct IGameExplorer2Vtbl *lpGameExplorer2Vtbl;
+    IGameExplorer IGameExplorer_iface;
+    IGameExplorer2 IGameExplorer2_iface;
     LONG ref;
 } GameExplorerImpl;
 
 static inline GameExplorerImpl *impl_from_IGameExplorer(IGameExplorer *iface)
 {
-    return (GameExplorerImpl*)((char*)iface - FIELD_OFFSET(GameExplorerImpl, lpGameExplorerVtbl));
-}
-
-static inline IGameExplorer* IGameExplorer_from_impl(GameExplorerImpl* This)
-{
-    return (struct IGameExplorer*)&This->lpGameExplorerVtbl;
+    return CONTAINING_RECORD(iface, GameExplorerImpl, IGameExplorer_iface);
 }
 
 static inline GameExplorerImpl *impl_from_IGameExplorer2(IGameExplorer2 *iface)
 {
-    return (GameExplorerImpl*)((char*)iface - FIELD_OFFSET(GameExplorerImpl, lpGameExplorer2Vtbl));
-}
-
-static inline IGameExplorer2* IGameExplorer2_from_impl(GameExplorerImpl* This)
-{
-    return (struct IGameExplorer2*)&This->lpGameExplorer2Vtbl;
+    return CONTAINING_RECORD(iface, GameExplorerImpl, IGameExplorer2_iface);
 }
 
 static HRESULT WINAPI GameExplorerImpl_QueryInterface(
@@ -813,11 +803,11 @@ static HRESULT WINAPI GameExplorerImpl_QueryInterface(
     if(IsEqualGUID(riid, &IID_IUnknown) ||
        IsEqualGUID(riid, &IID_IGameExplorer))
     {
-        *ppvObject = IGameExplorer_from_impl(This);
+        *ppvObject = &This->IGameExplorer_iface;
     }
     else if(IsEqualGUID(riid, &IID_IGameExplorer2))
     {
-        *ppvObject = IGameExplorer2_from_impl(This);
+        *ppvObject = &This->IGameExplorer2_iface;
     }
     else
     {
@@ -919,19 +909,19 @@ static HRESULT WINAPI GameExplorer2Impl_QueryInterface(
         void **ppvObject)
 {
     GameExplorerImpl *This = impl_from_IGameExplorer2(iface);
-    return GameExplorerImpl_QueryInterface(IGameExplorer_from_impl(This), riid, ppvObject);
+    return GameExplorerImpl_QueryInterface(&This->IGameExplorer_iface, riid, ppvObject);
 }
 
 static ULONG WINAPI GameExplorer2Impl_AddRef(IGameExplorer2 *iface)
 {
     GameExplorerImpl *This = impl_from_IGameExplorer2(iface);
-    return GameExplorerImpl_AddRef(IGameExplorer_from_impl(This));
+    return GameExplorerImpl_AddRef(&This->IGameExplorer_iface);
 }
 
 static ULONG WINAPI GameExplorer2Impl_Release(IGameExplorer2 *iface)
 {
     GameExplorerImpl *This = impl_from_IGameExplorer2(iface);
-    return GameExplorerImpl_Release(IGameExplorer_from_impl(This));
+    return GameExplorerImpl_Release(&This->IGameExplorer_iface);
 }
 
 static HRESULT WINAPI GameExplorer2Impl_CheckAccess(
@@ -1026,11 +1016,11 @@ HRESULT GameExplorer_create(
     if(!pGameExplorer)
         return E_OUTOFMEMORY;
 
-    pGameExplorer->lpGameExplorerVtbl = &GameExplorerImplVtbl;
-    pGameExplorer->lpGameExplorer2Vtbl = &GameExplorer2ImplVtbl;
+    pGameExplorer->IGameExplorer_iface.lpVtbl = &GameExplorerImplVtbl;
+    pGameExplorer->IGameExplorer2_iface.lpVtbl = &GameExplorer2ImplVtbl;
     pGameExplorer->ref = 1;
 
-    *ppObj = (IUnknown*)(&pGameExplorer->lpGameExplorerVtbl);
+    *ppObj = (IUnknown*)&pGameExplorer->IGameExplorer_iface;
 
     TRACE("returning iface: %p\n", *ppObj);
     return S_OK;
