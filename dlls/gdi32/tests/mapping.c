@@ -79,15 +79,10 @@ static DWORD (WINAPI *pSetVirtualResolution)(HDC, DWORD, DWORD, DWORD, DWORD);
 
 static void test_world_transform(void)
 {
-    BOOL is_win9x;
     HDC hdc;
     INT ret, size_cx, size_cy, res_x, res_y, dpi_x, dpi_y;
     XFORM xform;
     SIZE size;
-
-    SetLastError(0xdeadbeef);
-    GetWorldTransform(0, NULL);
-    is_win9x = GetLastError() == ERROR_CALL_NOT_IMPLEMENTED;
 
     hdc = CreateCompatibleDC(0);
 
@@ -118,22 +113,14 @@ static void test_world_transform(void)
     ret = SetMapMode(hdc, MM_LOMETRIC);
     ok(ret == MM_TEXT, "expected MM_TEXT, got %d\n", ret);
 
-    if (is_win9x)
-    {
-        expect_viewport_ext(hdc, dpi_x, dpi_y);
-        expect_window_ext(hdc, 254, -254);
-    }
-    else
-    {
-        expect_viewport_ext(hdc, res_x, -res_y);
-        ok( GetWindowExtEx( hdc, &size ), "GetWindowExtEx failed\n" );
-        ok( rough_match( size.cx, size_cx * 10 ) ||
-            rough_match( size.cx, MulDiv( res_x, 254, dpi_x )),  /* Vista uses a more precise method */
-            "expected cx %d or %d, got %d\n", size_cx * 10, MulDiv( res_x, 254, dpi_x ), size.cx );
-        ok( rough_match( size.cy, size_cy * 10 ) ||
-            rough_match( size.cy, MulDiv( res_y, 254, dpi_y )),  /* Vista uses a more precise method */
-            "expected cy %d or %d, got %d\n", size_cy * 10, MulDiv( res_y, 254, dpi_y ), size.cy );
-    }
+    expect_viewport_ext(hdc, res_x, -res_y);
+    ok( GetWindowExtEx( hdc, &size ), "GetWindowExtEx failed\n" );
+    ok( rough_match( size.cx, size_cx * 10 ) ||
+        rough_match( size.cx, MulDiv( res_x, 254, dpi_x )),  /* Vista uses a more precise method */
+        "expected cx %d or %d, got %d\n", size_cx * 10, MulDiv( res_x, 254, dpi_x ), size.cx );
+    ok( rough_match( size.cy, size_cy * 10 ) ||
+        rough_match( size.cy, MulDiv( res_y, 254, dpi_y )),  /* Vista uses a more precise method */
+        "expected cy %d or %d, got %d\n", size_cy * 10, MulDiv( res_y, 254, dpi_y ), size.cy );
     expect_world_transform(hdc, 1.0, 1.0);
     expect_LPtoDP(hdc, MulDiv(1000 / 10, res_x, size_cx), -MulDiv(1000 / 10, res_y, size_cy));
 
@@ -410,12 +397,7 @@ static void test_modify_world_transform(void)
     int ret;
 
     ret = SetGraphicsMode(hdc, GM_ADVANCED);
-    if(!ret) /* running in win9x so quit */
-    {
-        ReleaseDC(0, hdc);
-        skip("GM_ADVANCED is not supported on this platform\n");
-        return;
-    }
+    ok(ret, "ret = %d\n", ret);
 
     ret = ModifyWorldTransform(hdc, NULL, MWT_IDENTITY);
     ok(ret, "ret = %d\n", ret);
