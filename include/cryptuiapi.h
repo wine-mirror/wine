@@ -359,7 +359,7 @@ typedef struct _CRYPTUI_SELECTCERTIFICATE_STRUCTA
     DWORD               cStores;
     HCERTSTORE         *rghStores;
     DWORD               cPropSheetPages;
-    LPCPROPSHEETPAGEW   rgPropSheetPages;
+    LPCPROPSHEETPAGEA   rgPropSheetPages;
     HCERTSTORE          hSelectedCertStore;
 } CRYPTUI_SELECTCERTIFICATE_STRUCTA, *PCRYPTUI_SELECTCERTIFICATE_STRUCTA;
 typedef const CRYPTUI_SELECTCERTIFICATE_STRUCTA *
