@@ -1753,6 +1753,11 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
         return AUDCLNT_E_NOT_STOPPED;
     }
 
+    if(This->buf_state != NOT_LOCKED){
+        LeaveCriticalSection(&This->lock);
+        return AUDCLNT_E_BUFFER_OPERATION_PENDING;
+    }
+
     This->held_frames = 0;
     This->written_frames = 0;
     This->lcl_offs_frames = 0;

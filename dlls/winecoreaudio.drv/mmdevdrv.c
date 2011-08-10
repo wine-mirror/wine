@@ -1391,6 +1391,11 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
         return AUDCLNT_E_NOT_STOPPED;
     }
 
+    if(This->getbuf_last){
+        OSSpinLockUnlock(&This->lock);
+        return AUDCLNT_E_BUFFER_OPERATION_PENDING;
+    }
+
     This->written_frames = 0;
 
     hr = AudioClock_GetPosition_nolock(This, &This->last_time, NULL, TRUE);
