@@ -61,10 +61,8 @@ typedef struct IDxDiagContainerImpl_Property {
  * IDxDiagContainer implementation structure
  */
 struct IDxDiagContainerImpl {
-  /* IUnknown fields */
-  const IDxDiagContainerVtbl *lpVtbl;
-  LONG        ref;
-  /* IDxDiagContainer fields */
+  IDxDiagContainer IDxDiagContainer_iface;
+  LONG ref;
   IDxDiagContainerImpl_Container *cont;
   IDxDiagProvider *pProv;
 };
