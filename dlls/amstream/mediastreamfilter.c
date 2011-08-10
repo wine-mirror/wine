@@ -36,7 +36,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 
 typedef struct {
-    const IMediaStreamFilterVtbl *lpVtbl;
+    IMediaStreamFilter IMediaStreamFilter_iface;
     LONG ref;
     CRITICAL_SECTION csFilter;
     FILTER_STATE state;
@@ -44,6 +44,11 @@ typedef struct {
     IReferenceClock * pClock;
     FILTER_INFO filterInfo;
 } IMediaStreamFilterImpl;
+
+static inline IMediaStreamFilterImpl *impl_from_IMediaStreamFilter(IMediaStreamFilter *iface)
+{
+    return CONTAINING_RECORD(iface, IMediaStreamFilterImpl, IMediaStreamFilter_iface);
+}
 
 static const struct IMediaStreamFilterVtbl MediaStreamFilter_Vtbl;
 
@@ -63,7 +68,7 @@ HRESULT MediaStreamFilter_create(IUnknown *pUnkOuter, LPVOID *ppObj)
         return E_OUTOFMEMORY;
     }
 
-    object->lpVtbl = &MediaStreamFilter_Vtbl;
+    object->IMediaStreamFilter_iface.lpVtbl = &MediaStreamFilter_Vtbl;
     object->ref = 1;
 
     *ppObj = object;
@@ -73,9 +78,10 @@ HRESULT MediaStreamFilter_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
 /*** IUnknown methods ***/
 
-static HRESULT WINAPI MediaStreamFilterImpl_QueryInterface(IMediaStreamFilter * iface, REFIID riid, LPVOID * ppv)
+static HRESULT WINAPI MediaStreamFilterImpl_QueryInterface(IMediaStreamFilter *iface, REFIID riid,
+        void **ppv)
 {
-    IMediaStreamFilterImpl *This = (IMediaStreamFilterImpl *)iface;
+    IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
 
     TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
 
@@ -101,9 +107,9 @@ static HRESULT WINAPI MediaStreamFilterImpl_QueryInterface(IMediaStreamFilter * 
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI MediaStreamFilterImpl_AddRef(IMediaStreamFilter * iface)
+static ULONG WINAPI MediaStreamFilterImpl_AddRef(IMediaStreamFilter *iface)
 {
-    IMediaStreamFilterImpl *This = (IMediaStreamFilterImpl *)iface;
+    IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
 
     TRACE("(%p)->() AddRef from %d\n", iface, refCount - 1);
@@ -111,18 +117,15 @@ static ULONG WINAPI MediaStreamFilterImpl_AddRef(IMediaStreamFilter * iface)
     return refCount;
 }
 
-static ULONG WINAPI MediaStreamFilterImpl_Release(IMediaStreamFilter * iface)
+static ULONG WINAPI MediaStreamFilterImpl_Release(IMediaStreamFilter *iface)
 {
-    IMediaStreamFilterImpl *This = (IMediaStreamFilterImpl *)iface;
+    IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
 
     if (!refCount)
-    {
-        This->lpVtbl = NULL;
         HeapFree(GetProcessHeap(), 0, This);
-    }
 
     return refCount;
 }
