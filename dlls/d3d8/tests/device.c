@@ -1050,6 +1050,7 @@ static void test_reset(void)
     hr = IDirect3DDevice8_GetRenderTarget(device1, &surface);
     ok(SUCCEEDED(hr), "GetRenderTarget failed, hr %#x.\n", hr);
     hr = IDirect3DSurface8_GetDesc(surface, &surface_desc);
+    ok(hr == D3D_OK, "GetDesc failed, hr %#x.\n", hr);
     ok(surface_desc.Width == modes[i].w, "Back buffer width is %u, expected %u.\n",
             surface_desc.Width, modes[i].w);
     ok(surface_desc.Height == modes[i].h, "Back buffer height is %u, expected %u.\n",
@@ -1088,6 +1089,7 @@ static void test_reset(void)
     hr = IDirect3DDevice8_GetRenderTarget(device1, &surface);
     ok(SUCCEEDED(hr), "GetRenderTarget failed, hr %#x.\n", hr);
     hr = IDirect3DSurface8_GetDesc(surface, &surface_desc);
+    ok(hr == D3D_OK, "GetDesc failed, hr %#x.\n", hr);
     ok(surface_desc.Width == 400, "Back buffer width is %u, expected 400.\n",
             surface_desc.Width);
     ok(surface_desc.Height == 300, "Back buffer height is %u, expected 300.\n",
@@ -2600,15 +2602,18 @@ static void test_depth_stencil_size(void)
     ok(SUCCEEDED(hr), "IDirect3DDevice8_SetRenderTarget failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_GetRenderTarget(device, &surf);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetRenderTarget failed, hr %#x.\n", hr);
     ok(surf == rt, "The render target is %p, expected %p\n", surf, rt);
     IDirect3DSurface8_Release(surf);
     hr = IDirect3DDevice8_GetDepthStencilSurface(device, &surf);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetDepthStencilSurface failed, hr %#x.\n", hr);
     ok(surf == ds_bigger2, "The depth stencil is %p, expected %p\n", surf, ds_bigger2);
     IDirect3DSurface8_Release(surf);
 
     hr = IDirect3DDevice8_SetRenderTarget(device, NULL, NULL);
     ok(SUCCEEDED(hr), "IDirect3DDevice8_SetRenderTarget failed, hr %#x.\n", hr);
     hr = IDirect3DDevice8_GetDepthStencilSurface(device, &surf);
+    ok(FAILED(hr), "IDirect3DDevice8_GetDepthStencilSurface should have failed, hr %#x.\n", hr);
     ok(surf == NULL, "The depth stencil is %p, expected NULL\n", surf);
     if (surf) IDirect3DSurface8_Release(surf);
 
