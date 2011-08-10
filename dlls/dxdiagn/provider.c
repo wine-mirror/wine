@@ -67,10 +67,25 @@ static const WCHAR szRevisionId[] = {'s','z','R','e','v','i','s','i','o','n','I'
 static const WCHAR dwRefreshRate[] = {'d','w','R','e','f','r','e','s','h','R','a','t','e',0};
 static const WCHAR szManufacturer[] = {'s','z','M','a','n','u','f','a','c','t','u','r','e','r',0};
 
-/* IDxDiagProvider IUnknown parts follow: */
-static HRESULT WINAPI IDxDiagProviderImpl_QueryInterface(PDXDIAGPROVIDER iface, REFIID riid, LPVOID *ppobj)
+struct IDxDiagProviderImpl
 {
-    IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
+  IDxDiagProvider IDxDiagProvider_iface;
+  LONG ref;
+  BOOL init;
+  DXDIAG_INIT_PARAMS params;
+  IDxDiagContainerImpl_Container *info_root;
+};
+
+static inline IDxDiagProviderImpl *impl_from_IDxDiagProvider(IDxDiagProvider *iface)
+{
+     return CONTAINING_RECORD(iface, IDxDiagProviderImpl, IDxDiagProvider_iface);
+}
+
+/* IDxDiagProvider IUnknown parts follow: */
+static HRESULT WINAPI IDxDiagProviderImpl_QueryInterface(IDxDiagProvider *iface, REFIID riid,
+        void **ppobj)
+{
+    IDxDiagProviderImpl *This = impl_from_IDxDiagProvider(iface);
 
     if (!ppobj) return E_INVALIDARG;
 
@@ -86,8 +101,9 @@ static HRESULT WINAPI IDxDiagProviderImpl_QueryInterface(PDXDIAGPROVIDER iface, 
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDxDiagProviderImpl_AddRef(PDXDIAGPROVIDER iface) {
-    IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
+static ULONG WINAPI IDxDiagProviderImpl_AddRef(IDxDiagProvider *iface)
+{
+    IDxDiagProviderImpl *This = impl_from_IDxDiagProvider(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
 
     TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
@@ -97,8 +113,9 @@ static ULONG WINAPI IDxDiagProviderImpl_AddRef(PDXDIAGPROVIDER iface) {
     return refCount;
 }
 
-static ULONG WINAPI IDxDiagProviderImpl_Release(PDXDIAGPROVIDER iface) {
-    IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
+static ULONG WINAPI IDxDiagProviderImpl_Release(IDxDiagProvider *iface)
+{
+    IDxDiagProviderImpl *This = impl_from_IDxDiagProvider(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
@@ -114,8 +131,10 @@ static ULONG WINAPI IDxDiagProviderImpl_Release(PDXDIAGPROVIDER iface) {
 }
 
 /* IDxDiagProvider Interface follow: */
-static HRESULT WINAPI IDxDiagProviderImpl_Initialize(PDXDIAGPROVIDER iface, DXDIAG_INIT_PARAMS* pParams) {
-    IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
+static HRESULT WINAPI IDxDiagProviderImpl_Initialize(IDxDiagProvider *iface,
+        DXDIAG_INIT_PARAMS *pParams)
+{
+    IDxDiagProviderImpl *This = impl_from_IDxDiagProvider(iface);
     HRESULT hr;
 
     TRACE("(%p,%p)\n", iface, pParams);
@@ -140,8 +159,10 @@ static HRESULT WINAPI IDxDiagProviderImpl_Initialize(PDXDIAGPROVIDER iface, DXDI
     return S_OK;
 }
 
-static HRESULT WINAPI IDxDiagProviderImpl_GetRootContainer(PDXDIAGPROVIDER iface, IDxDiagContainer** ppInstance) {
-  IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
+static HRESULT WINAPI IDxDiagProviderImpl_GetRootContainer(IDxDiagProvider *iface,
+        IDxDiagContainer **ppInstance)
+{
+  IDxDiagProviderImpl *This = impl_from_IDxDiagProvider(iface);
 
   TRACE("(%p,%p)\n", iface, ppInstance);
 
@@ -150,7 +171,7 @@ static HRESULT WINAPI IDxDiagProviderImpl_GetRootContainer(PDXDIAGPROVIDER iface
   }
 
   return DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, This->info_root,
-                                      (IDxDiagProvider *)This, (void **)ppInstance);
+          &This->IDxDiagProvider_iface, (void **)ppInstance);
 }
 
 static const IDxDiagProviderVtbl DxDiagProvider_Vtbl =
@@ -172,9 +193,9 @@ HRESULT DXDiag_CreateDXDiagProvider(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, R
 
   provider = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDxDiagProviderImpl));
   if (NULL == provider) return E_OUTOFMEMORY;
-  provider->lpVtbl = &DxDiagProvider_Vtbl;
+  provider->IDxDiagProvider_iface.lpVtbl = &DxDiagProvider_Vtbl;
   provider->ref = 0; /* will be inited with QueryInterface */
-  return IDxDiagProviderImpl_QueryInterface ((PDXDIAGPROVIDER)provider, riid, ppobj);
+  return IDxDiagProviderImpl_QueryInterface(&provider->IDxDiagProvider_iface, riid, ppobj);
 }
 
 static void free_property_information(IDxDiagContainerImpl_Property *prop)

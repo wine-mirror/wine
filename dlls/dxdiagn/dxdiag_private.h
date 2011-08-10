@@ -37,23 +37,6 @@ typedef struct IDxDiagContainerImpl IDxDiagContainerImpl;
 typedef struct IDxDiagContainerImpl_Container IDxDiagContainerImpl_Container;
 
 /* ---------------- */
-/* IDxDiagProvider  */
-/* ---------------- */
-
-/*****************************************************************************
- * IDxDiagProvider implementation structure
- */
-struct IDxDiagProviderImpl {
-  /* IUnknown fields */
-  const IDxDiagProviderVtbl *lpVtbl;
-  LONG        ref;
-  /* IDxDiagProvider fields */
-  BOOL        init;
-  DXDIAG_INIT_PARAMS params;
-  IDxDiagContainerImpl_Container *info_root;
-};
-
-/* ---------------- */
 /* IDxDiagContainer  */
 /* ---------------- */
 
