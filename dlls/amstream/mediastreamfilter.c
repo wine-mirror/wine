@@ -50,32 +50,6 @@ static inline IMediaStreamFilterImpl *impl_from_IMediaStreamFilter(IMediaStreamF
     return CONTAINING_RECORD(iface, IMediaStreamFilterImpl, IMediaStreamFilter_iface);
 }
 
-static const struct IMediaStreamFilterVtbl MediaStreamFilter_Vtbl;
-
-HRESULT MediaStreamFilter_create(IUnknown *pUnkOuter, LPVOID *ppObj)
-{
-    IMediaStreamFilterImpl* object;
-
-    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
-
-    if( pUnkOuter )
-        return CLASS_E_NOAGGREGATION;
-
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IMediaStreamFilterImpl));
-    if (!object)
-    {
-        ERR("Out of memory\n");
-        return E_OUTOFMEMORY;
-    }
-
-    object->IMediaStreamFilter_iface.lpVtbl = &MediaStreamFilter_Vtbl;
-    object->ref = 1;
-
-    *ppObj = object;
-
-    return S_OK;
-}
-
 /*** IUnknown methods ***/
 
 static HRESULT WINAPI MediaStreamFilterImpl_QueryInterface(IMediaStreamFilter *iface, REFIID riid,
@@ -314,3 +288,27 @@ static const IMediaStreamFilterVtbl MediaStreamFilter_Vtbl =
     MediaStreamFilterImpl_Flush,
     MediaStreamFilterImpl_EndOfStream
 };
+
+HRESULT MediaStreamFilter_create(IUnknown *pUnkOuter, void **ppObj)
+{
+    IMediaStreamFilterImpl* object;
+
+    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
+
+    if( pUnkOuter )
+        return CLASS_E_NOAGGREGATION;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IMediaStreamFilterImpl));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->IMediaStreamFilter_iface.lpVtbl = &MediaStreamFilter_Vtbl;
+    object->ref = 1;
+
+    *ppObj = object;
+
+    return S_OK;
+}
