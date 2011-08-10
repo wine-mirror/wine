@@ -651,20 +651,15 @@ static HRESULT GAMEUX_loadGameStatistics(struct GAMEUX_STATS *pStats,
  */
 typedef struct _GameStatisticsImpl
 {
-    const struct IGameStatisticsVtbl *lpVtbl;
+    IGameStatistics IGameStatistics_iface;
     LONG ref;
     struct GAMEUX_STATS stats;
 } GameStatisticsImpl;
 
 static inline GameStatisticsImpl *impl_from_IGameStatistics( IGameStatistics *iface )
 {
-    return (GameStatisticsImpl *)((char*)iface - FIELD_OFFSET(GameStatisticsImpl, lpVtbl));
+    return CONTAINING_RECORD(iface, GameStatisticsImpl, IGameStatistics_iface);
 }
-static inline IGameStatistics *IGameStatistics_from_impl( GameStatisticsImpl* This )
-{
-    return (struct IGameStatistics*)&This->lpVtbl;
-}
-
 
 static HRESULT WINAPI GameStatisticsImpl_QueryInterface(
         IGameStatistics *iface,
@@ -1003,7 +998,7 @@ static HRESULT create_IGameStatistics(GameStatisticsImpl** ppStats)
     if(!(*ppStats))
         return E_OUTOFMEMORY;
 
-    (*ppStats)->lpVtbl = &GameStatisticsImplVtbl;
+    (*ppStats)->IGameStatistics_iface.lpVtbl = &GameStatisticsImplVtbl;
     (*ppStats)->ref = 1;
 
     TRACE("returning coclass: %p\n", *ppStats);
@@ -1015,13 +1010,13 @@ static HRESULT create_IGameStatistics(GameStatisticsImpl** ppStats)
  */
 typedef struct _GameStatisticsMgrImpl
 {
-    const struct IGameStatisticsMgrVtbl *lpVtbl;
+    IGameStatisticsMgr IGameStatisticsMgr_iface;
     LONG ref;
 } GameStatisticsMgrImpl;
 
 static inline GameStatisticsMgrImpl *impl_from_IGameStatisticsMgr( IGameStatisticsMgr *iface )
 {
-    return (GameStatisticsMgrImpl *)((char*)iface - FIELD_OFFSET(GameStatisticsMgrImpl, lpVtbl));
+    return CONTAINING_RECORD(iface, GameStatisticsMgrImpl, IGameStatisticsMgr_iface);
 }
 
 
@@ -1088,7 +1083,7 @@ static HRESULT STDMETHODCALLTYPE GameStatisticsMgrImpl_GetGameStatistics(
 {
     HRESULT hr;
     WCHAR lpApplicationId[49];
-    GameStatisticsImpl *statisticsImpl = NULL;
+    GameStatisticsImpl *statisticsImpl;
     IGameStatistics *output_iface;
 
     TRACE("(%p, %s, 0x%x, %p, %p)\n", iface, debugstr_w(GDFBinaryPath), openType, pOpenResult, ppiStats);
@@ -1100,7 +1095,7 @@ static HRESULT STDMETHODCALLTYPE GameStatisticsMgrImpl_GetGameStatistics(
 
     if(SUCCEEDED(hr))
     {
-        output_iface = IGameStatistics_from_impl(statisticsImpl);
+        output_iface = &statisticsImpl->IGameStatistics_iface;
         hr = GAMEUX_buildStatisticsFilePath(lpApplicationId, statisticsImpl->stats.sStatsFile);
     }
 
@@ -1161,10 +1156,10 @@ HRESULT GameStatistics_create(
     if( !pGameStatistics )
         return E_OUTOFMEMORY;
 
-    pGameStatistics->lpVtbl = &GameStatisticsMgrImplVtbl;
+    pGameStatistics->IGameStatisticsMgr_iface.lpVtbl = &GameStatisticsMgrImplVtbl;
     pGameStatistics->ref = 1;
 
-    *ppObj = (IUnknown*)(&pGameStatistics->lpVtbl);
+    *ppObj = (IUnknown*)&pGameStatistics->IGameStatisticsMgr_iface;
 
     TRACE("returning iface %p\n", *ppObj);
     return S_OK;
