@@ -139,8 +139,9 @@ static HRESULT STDMETHODCALLTYPE taskbar_list_SetProgressValue(ITaskbarList4 *if
                                                                ULONGLONG ullCompleted,
                                                                ULONGLONG ullTotal)
 {
-    FIXME("iface %p, hwnd %p, ullCompleted %s, ullTotal %s stub!\n", iface, hwnd,
-          wine_dbgstr_longlong(ullCompleted), wine_dbgstr_longlong(ullTotal));
+    static BOOL fixme_once;
+    if(!fixme_once++) FIXME("iface %p, hwnd %p, ullCompleted %s, ullTotal %s stub!\n", iface, hwnd,
+                            wine_dbgstr_longlong(ullCompleted), wine_dbgstr_longlong(ullTotal));
 
     return S_OK;
 }
@@ -149,7 +150,8 @@ static HRESULT STDMETHODCALLTYPE taskbar_list_SetProgressState(ITaskbarList4 *if
                                                                HWND hwnd,
                                                                TBPFLAG tbpFlags)
 {
-    FIXME("iface %p, hwnd %p, flags %x stub!\n", iface, hwnd, tbpFlags);
+    static BOOL fixme_once;
+    if(!fixme_once++) FIXME("iface %p, hwnd %p, flags %x stub!\n", iface, hwnd, tbpFlags);
 
     return S_OK;
 }
