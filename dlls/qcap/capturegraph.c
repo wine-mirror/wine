@@ -54,8 +54,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 */
 typedef struct CaptureGraphImpl
 {
-    const ICaptureGraphBuilder2Vtbl * lpVtbl2;
-    const ICaptureGraphBuilderVtbl * lpVtbl;
+    ICaptureGraphBuilder2 ICaptureGraphBuilder2_iface;
+    ICaptureGraphBuilder ICaptureGraphBuilder_iface;
     LONG ref;
     IGraphBuilder *mygraph;
 
@@ -65,22 +65,15 @@ typedef struct CaptureGraphImpl
 static const ICaptureGraphBuilderVtbl builder_Vtbl;
 static const ICaptureGraphBuilder2Vtbl builder2_Vtbl;
 
-static inline CaptureGraphImpl *impl_from_ICaptureGraphBuilder( ICaptureGraphBuilder *iface )
+static inline CaptureGraphImpl *impl_from_ICaptureGraphBuilder(ICaptureGraphBuilder *iface)
 {
-    return (CaptureGraphImpl *)((char*)iface - FIELD_OFFSET(CaptureGraphImpl, lpVtbl));
+    return CONTAINING_RECORD(iface, CaptureGraphImpl, ICaptureGraphBuilder_iface);
 }
 
-static inline CaptureGraphImpl *impl_from_ICaptureGraphBuilder2( ICaptureGraphBuilder2 *iface )
+static inline CaptureGraphImpl *impl_from_ICaptureGraphBuilder2(ICaptureGraphBuilder2 *iface)
 {
-    return (CaptureGraphImpl *)((char*)iface - FIELD_OFFSET(CaptureGraphImpl, lpVtbl2));
+    return CONTAINING_RECORD(iface, CaptureGraphImpl, ICaptureGraphBuilder2_iface);
 }
-
-/*
-  converts This to an interface pointer
-*/
-#define _IUnknown_(This)              (&(This)->lpVtbl2)
-#define _ICaptureGraphBuilder_(This)  (&(This)->lpVtbl)
-#define _ICaptureGraphBuilder2_(This) ((ICaptureGraphBuilder2*)&(This)->lpVtbl2)
 
 
 IUnknown * CALLBACK QCAP_createCaptureGraphBuilder2(IUnknown *pUnkOuter,
@@ -100,8 +93,8 @@ IUnknown * CALLBACK QCAP_createCaptureGraphBuilder2(IUnknown *pUnkOuter,
     pCapture = CoTaskMemAlloc(sizeof(CaptureGraphImpl));
     if (pCapture)
     {
-        pCapture->lpVtbl2 = &builder2_Vtbl;
-        pCapture->lpVtbl = &builder_Vtbl;
+        pCapture->ICaptureGraphBuilder2_iface.lpVtbl = &builder2_Vtbl;
+        pCapture->ICaptureGraphBuilder_iface.lpVtbl = &builder_Vtbl;
         pCapture->ref = 1;
         pCapture->mygraph = NULL;
         InitializeCriticalSection(&pCapture->csFilter);
@@ -109,7 +102,7 @@ IUnknown * CALLBACK QCAP_createCaptureGraphBuilder2(IUnknown *pUnkOuter,
         *phr = S_OK;
         ObjectRefCount(TRUE);
     }
-    return (IUnknown *)pCapture;
+    return (IUnknown *)&pCapture->ICaptureGraphBuilder_iface;
 }
 
 static HRESULT WINAPI
@@ -123,11 +116,11 @@ fnCaptureGraphBuilder2_QueryInterface(ICaptureGraphBuilder2 * iface,
 
     *ppv = NULL;
     if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = _IUnknown_(This);
+        *ppv = &This->ICaptureGraphBuilder2_iface;
     else if (IsEqualIID(riid, &IID_ICaptureGraphBuilder))
-        *ppv = _ICaptureGraphBuilder_(This);
+        *ppv = &This->ICaptureGraphBuilder_iface;
     else if (IsEqualIID(riid, &IID_ICaptureGraphBuilder2))
-        *ppv = _ICaptureGraphBuilder2_(This);
+        *ppv = &This->ICaptureGraphBuilder2_iface;
 
     if (*ppv)
     {
@@ -163,8 +156,6 @@ fnCaptureGraphBuilder2_Release(ICaptureGraphBuilder2 * iface)
         FIXME("Release IGraphFilter or w/e\n");
         This->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->csFilter);
-        This->lpVtbl = NULL;
-        This->lpVtbl2 = NULL;
         if (This->mygraph != NULL)
             IGraphBuilder_Release(This->mygraph);
         CoTaskMemFree(This);
@@ -483,7 +474,7 @@ fnCaptureGraphBuilder_QueryInterface(ICaptureGraphBuilder * iface,
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder(iface);
     TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
-    return IUnknown_QueryInterface(_ICaptureGraphBuilder2_(This), riid, ppv);
+    return IUnknown_QueryInterface(&This->ICaptureGraphBuilder2_iface, riid, ppv);
 }
 
 static ULONG WINAPI
@@ -491,7 +482,7 @@ fnCaptureGraphBuilder_AddRef(ICaptureGraphBuilder * iface)
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder(iface);
     TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
-    return IUnknown_AddRef(_ICaptureGraphBuilder2_(This));
+    return IUnknown_AddRef(&This->ICaptureGraphBuilder2_iface);
 }
 
 static ULONG WINAPI
@@ -499,7 +490,7 @@ fnCaptureGraphBuilder_Release(ICaptureGraphBuilder * iface)
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder(iface);
     TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
-    return IUnknown_Release(_ICaptureGraphBuilder2_(This));
+    return IUnknown_Release(&This->ICaptureGraphBuilder2_iface);
 }
 
 static HRESULT WINAPI
@@ -508,7 +499,7 @@ fnCaptureGraphBuilder_SetFiltergraph(ICaptureGraphBuilder * iface,
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder(iface);
     TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
-    return ICaptureGraphBuilder2_SetFiltergraph(_ICaptureGraphBuilder2_(This), pfg);
+    return ICaptureGraphBuilder2_SetFiltergraph(&This->ICaptureGraphBuilder2_iface, pfg);
 }
 
 static HRESULT WINAPI
@@ -517,7 +508,7 @@ fnCaptureGraphBuilder_GetFiltergraph(ICaptureGraphBuilder * iface,
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder(iface);
     TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
-    return ICaptureGraphBuilder2_GetFiltergraph(_ICaptureGraphBuilder2_(This), pfg);
+    return ICaptureGraphBuilder2_GetFiltergraph(&This->ICaptureGraphBuilder2_iface, pfg);
 }
 
 static HRESULT WINAPI
@@ -527,8 +518,8 @@ fnCaptureGraphBuilder_SetOutputFileName(ICaptureGraphBuilder * iface,
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder(iface);
     TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
-    return ICaptureGraphBuilder2_SetOutputFileName(_ICaptureGraphBuilder2_(This),
-                                                   pType, lpstrFile, ppf, ppSink);
+    return ICaptureGraphBuilder2_SetOutputFileName(&This->ICaptureGraphBuilder2_iface, pType,
+                                                   lpstrFile, ppf, ppSink);
 }
 
 static HRESULT WINAPI
@@ -538,8 +529,8 @@ fnCaptureGraphBuilder_FindInterface(ICaptureGraphBuilder * iface,
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder(iface);
     TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
-    return ICaptureGraphBuilder2_FindInterface(_ICaptureGraphBuilder2_(This),
-                                               pCategory, NULL, pf, riid, ppint);
+    return ICaptureGraphBuilder2_FindInterface(&This->ICaptureGraphBuilder2_iface, pCategory, NULL,
+                                               pf, riid, ppint);
 }
 
 static HRESULT WINAPI
@@ -549,9 +540,8 @@ fnCaptureGraphBuilder_RenderStream(ICaptureGraphBuilder * iface,
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder(iface);
     TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
-    return ICaptureGraphBuilder2_RenderStream(_ICaptureGraphBuilder2_(This),
-                                              pCategory, NULL, pSource,
-                                              pfCompressor, pfRenderer);
+    return ICaptureGraphBuilder2_RenderStream(&This->ICaptureGraphBuilder2_iface, pCategory, NULL,
+                                              pSource, pfCompressor, pfRenderer);
 }
 
 static HRESULT WINAPI
@@ -562,9 +552,8 @@ fnCaptureGraphBuilder_ControlStream(ICaptureGraphBuilder * iface,
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder(iface);
     TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
-    return ICaptureGraphBuilder2_ControlStream(_ICaptureGraphBuilder2_(This),
-                                               pCategory, NULL, pFilter, pstart, 
-                                               pstop, wStartCookie, wStopCookie);
+    return ICaptureGraphBuilder2_ControlStream(&This->ICaptureGraphBuilder2_iface, pCategory, NULL,
+                                               pFilter, pstart, pstop, wStartCookie, wStopCookie);
 }
 
 static HRESULT WINAPI
@@ -573,8 +562,7 @@ fnCaptureGraphBuilder_AllocCapFile(ICaptureGraphBuilder * iface,
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder(iface);
     TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
-    return ICaptureGraphBuilder2_AllocCapFile(_ICaptureGraphBuilder2_(This),
-                                              lpstr, dwlSize);
+    return ICaptureGraphBuilder2_AllocCapFile(&This->ICaptureGraphBuilder2_iface, lpstr, dwlSize);
 }
 
 static HRESULT WINAPI
@@ -585,9 +573,8 @@ fnCaptureGraphBuilder_CopyCaptureFile(ICaptureGraphBuilder * iface,
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder(iface);
     TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
-    return ICaptureGraphBuilder2_CopyCaptureFile(_ICaptureGraphBuilder2_(This),
-                                                 lpwstrOld, lpwstrNew,
-                                                 fAllowEscAbort, pCallback);
+    return ICaptureGraphBuilder2_CopyCaptureFile(&This->ICaptureGraphBuilder2_iface, lpwstrOld,
+                                                 lpwstrNew, fAllowEscAbort, pCallback);
 }
 
 static const ICaptureGraphBuilderVtbl builder_Vtbl =
