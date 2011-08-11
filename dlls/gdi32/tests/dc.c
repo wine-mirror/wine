@@ -605,6 +605,53 @@ static void test_desktop_colorres(void)
     ReleaseDC(NULL, hdc);
 }
 
+static void test_gamma(void)
+{
+    BOOL ret;
+    HDC hdc = GetDC(NULL);
+    WORD oldramp[3][256], ramp[3][256];
+    INT i;
+
+    ret = GetDeviceGammaRamp(hdc, &oldramp);
+    if (!ret)
+    {
+        win_skip("GetDeviceGammaRamp failed, skipping tests\n");
+        goto done;
+    }
+
+    /* try to set back old ramp */
+    ret = SetDeviceGammaRamp(hdc, &oldramp);
+    if (!ret)
+    {
+        win_skip("SetDeviceGammaRamp failed, skipping tests\n");
+        goto done;
+    }
+
+    memcpy(ramp, oldramp, sizeof(ramp));
+
+    /* set one color ramp to zeros */
+    memset(ramp[0], 0, sizeof(ramp[0]));
+    ret = SetDeviceGammaRamp(hdc, &ramp);
+    ok(!ret, "SetDeviceGammaRamp succeeded\n");
+
+    /* set one color ramp to a flat straight rising line */
+    for (i = 0; i < 256; i++) ramp[0][i] = i;
+    ret = SetDeviceGammaRamp(hdc, &ramp);
+    todo_wine ok(!ret, "SetDeviceGammaRamp succeeded\n");
+
+    /* set one color ramp to a steep straight rising line */
+    for (i = 0; i < 256; i++) ramp[0][i] = i * 256;
+    ret = SetDeviceGammaRamp(hdc, &ramp);
+    ok(ret, "SetDeviceGammaRamp failed\n");
+
+    /* cleanup: set old ramp again */
+    ret = SetDeviceGammaRamp(hdc, &oldramp);
+    ok(ret, "SetDeviceGammaRamp failed\n");
+
+done:
+    ReleaseDC(NULL, hdc);
+}
+
 START_TEST(dc)
 {
     test_savedc();
@@ -615,4 +662,5 @@ START_TEST(dc)
     test_DeleteDC();
     test_boundsrect_invalid();
     test_desktop_colorres();
+    test_gamma();
 }
