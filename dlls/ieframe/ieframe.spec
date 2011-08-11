@@ -5,4 +5,5 @@
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
+@ stdcall IEGetWriteableHKCU(ptr)
 @ stdcall OpenURL(long long str long)

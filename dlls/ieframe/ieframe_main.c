@@ -290,3 +290,12 @@ HRESULT WINAPI DllUnregisterServer(void)
     TRACE("()\n");
     return __wine_unregister_resources(ieframe_instance);
 }
+
+/***********************************************************************
+ *          IEGetWriteableHKCU (ieframe.@)
+ */
+HRESULT WINAPI IEGetWriteableHKCU(HKEY *pkey)
+{
+    FIXME("(%p) stub\n", pkey);
+    return E_NOTIMPL;
+}
