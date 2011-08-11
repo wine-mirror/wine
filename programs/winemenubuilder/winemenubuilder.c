@@ -2962,6 +2962,7 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
     IPropertyStorage *pPropStg;
     PROPSPEC ps[2];
     PROPVARIANT pv[2];
+    char *start_path = NULL;
 
     if ( !link )
     {
@@ -3001,6 +3002,13 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
     if (escaped_urlPath == NULL)
     {
         WINE_ERR("couldn't escape url, out of memory\n");
+        goto cleanup;
+    }
+
+    start_path = get_start_exe_path();
+    if (start_path == NULL)
+    {
+        WINE_ERR("out of memory\n");
         goto cleanup;
     }
 
@@ -3063,14 +3071,14 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
         location = heap_printf("%s/%s.desktop", xdg_desktop_dir, lastEntry);
         if (location)
         {
-            r = !write_desktop_entry(NULL, location, lastEntry, "winebrowser", escaped_urlPath, NULL, NULL, icon_name);
+            r = !write_desktop_entry(NULL, location, lastEntry, start_path, escaped_urlPath, NULL, NULL, icon_name);
             if (r == 0)
                 chmod(location, 0755);
             HeapFree(GetProcessHeap(), 0, location);
         }
     }
     else
-        r = !write_menu_entry(unix_link, link_name, "winebrowser", escaped_urlPath, NULL, NULL, icon_name);
+        r = !write_menu_entry(unix_link, link_name, start_path, escaped_urlPath, NULL, NULL, icon_name);
     ret = (r != 0);
     ReleaseSemaphore(hSem, 1, NULL);
 
