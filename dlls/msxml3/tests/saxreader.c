@@ -713,6 +713,7 @@ typedef struct mxwriter_write_test_t {
     const BYTE  *data;
     DWORD       cb;
     BOOL        null_written;
+    BOOL        fail_write;
 } mxwriter_write_test;
 
 typedef struct mxwriter_stream_test_t {
@@ -754,12 +755,16 @@ static HRESULT WINAPI istream_Read(IStream *iface, void *pv, ULONG cb, ULONG *pc
 
 static HRESULT WINAPI istream_Write(IStream *iface, const void *pv, ULONG cb, ULONG *pcbWritten)
 {
+    BOOL fail = FALSE;
+
     ok(pv != NULL, "pv == NULL\n");
 
     if(current_write_test->last) {
         ok(0, "Too many Write calls made on test %d\n", current_stream_test_index);
         return E_FAIL;
     }
+
+    fail = current_write_test->fail_write;
 
     ok(current_write_test->cb == cb, "Expected %d, but got %d on test %d\n",
         current_write_test->cb, cb, current_stream_test_index);
@@ -774,7 +779,7 @@ static HRESULT WINAPI istream_Write(IStream *iface, const void *pv, ULONG cb, UL
     if(pcbWritten)
         *pcbWritten = cb;
 
-    return S_OK;
+    return fail ? E_FAIL : S_OK;
 }
 
 static HRESULT WINAPI istream_Seek(IStream *iface, LARGE_INTEGER dlibMove, DWORD dwOrigin,
@@ -1541,19 +1546,30 @@ static const mxwriter_stream_test mxwriter_stream_tests[] = {
             {FALSE,(const BYTE*)szUtf16XML,sizeof(szUtf16XML)},
             {TRUE}
         }
+    },
+    {
+        VARIANT_TRUE,"UTF-16",
+        {
+            {FALSE,(const BYTE*)szUtf16BOM,sizeof(szUtf16BOM),TRUE,TRUE},
+            {FALSE,(const BYTE*)szUtf16XML,sizeof(szUtf16XML)},
+            {TRUE}
+        }
     }
 };
 
 static void test_mxwriter_stream(void)
 {
+    IMXWriter *writer;
+    ISAXContentHandler *content;
+    HRESULT hr;
+    VARIANT dest;
+    IStream *stream;
+    LARGE_INTEGER pos;
+    ULARGE_INTEGER pos2;
     DWORD test_count = sizeof(mxwriter_stream_tests)/sizeof(mxwriter_stream_tests[0]);
 
     for(current_stream_test_index = 0; current_stream_test_index < test_count; ++current_stream_test_index) {
         const mxwriter_stream_test *test = mxwriter_stream_tests+current_stream_test_index;
-        IMXWriter *writer;
-        ISAXContentHandler *content;
-        HRESULT hr;
-        VARIANT dest;
 
         hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
                 &IID_IMXWriter, (void**)&writer);
@@ -1588,6 +1604,96 @@ static void test_mxwriter_stream(void)
         todo_wine ok(current_write_test->last, "The last %d write calls on test %d were missed\n",
             current_write_test-test->expected_writes, current_stream_test_index);
     }
+
+    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+    ok(hr == S_OK, "CoCreateInstance failed: %08x\n", hr);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "CreateStreamOnHGlobal failed: %08x\n", hr);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
+    ok(hr == S_OK, "QueryInterface(ISAXContentHandler) failed: %08x\n", hr);
+
+    hr = IMXWriter_put_encoding(writer, _bstr_("UTF-8"));
+    ok(hr == S_OK, "put_encoding failed: %08x\n", hr);
+
+    V_VT(&dest) = VT_UNKNOWN;
+    V_UNKNOWN(&dest) = (IUnknown*)stream;
+    hr = IMXWriter_put_output(writer, dest);
+    ok(hr == S_OK, "put_output failed: %08x\n", hr);
+
+    hr = ISAXContentHandler_startDocument(content);
+    ok(hr == S_OK, "startDocument failed: %08x\n", hr);
+
+    /* Setting output of the mxwriter causes the current output to be flushed,
+     * and the writer to start over.
+     */
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_put_output(writer, dest);
+    ok(hr == S_OK, "put_output failed: %08x\n", hr);
+
+    pos.QuadPart = 0;
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_CUR, &pos2);
+    ok(hr == S_OK, "Seek failed: %08x\n", hr);
+    todo_wine ok(pos2.QuadPart != 0, "expected stream position moved\n");
+
+    hr = ISAXContentHandler_startDocument(content);
+    ok(hr == S_OK, "startDocument failed: %08x\n", hr);
+
+    hr = ISAXContentHandler_endDocument(content);
+    todo_wine ok(hr == S_OK, "endDocument failed: %08x\n", hr);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    ok(hr == S_OK, "get_output failed: %08x\n", hr);
+    ok(V_VT(&dest) == VT_BSTR, "Expected VT_BSTR, got %d\n", V_VT(&dest));
+    todo_wine ok(!lstrcmpW(_bstr_("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n"), V_BSTR(&dest)),
+            "Got wrong content: %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
+    ISAXContentHandler_Release(content);
+    IMXWriter_Release(writer);
+
+    free_bstrs();
+}
+
+static void test_mxwriter_encoding(void)
+{
+    IMXWriter *writer;
+    ISAXContentHandler *content;
+    HRESULT hr;
+    VARIANT dest;
+
+    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+    ok(hr == S_OK, "CoCreateInstance failed: %08x\n", hr);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
+    ok(hr == S_OK, "QueryInterface(ISAXContentHandler) failed: %08x\n", hr);
+
+    hr = IMXWriter_put_encoding(writer, _bstr_("UTF-8"));
+    ok(hr == S_OK, "put_encoding failed: %08x\n", hr);
+
+    hr = ISAXContentHandler_startDocument(content);
+    ok(hr == S_OK, "startDocument failed: %08x\n", hr);
+
+    hr = ISAXContentHandler_endDocument(content);
+    todo_wine ok(hr == S_OK, "endDocument failed: %08x\n", hr);
+
+    /* The content is always re-encoded to UTF-16 when the output is
+     * retrieved as a BSTR.
+     */
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    ok(hr == S_OK, "get_output failed: %08x\n", hr);
+    ok(V_VT(&dest) == VT_BSTR, "Expected VT_BSTR, got %d\n", V_VT(&dest));
+    todo_wine ok(!lstrcmpW(_bstr_("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n"), V_BSTR(&dest)),
+            "got wrong content: %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
+    ISAXContentHandler_Release(content);
+    IMXWriter_Release(writer);
 
     free_bstrs();
 }
@@ -1628,6 +1734,7 @@ START_TEST(saxreader)
         test_mxwriter_properties();
         test_mxwriter_flush();
         test_mxwriter_stream();
+        test_mxwriter_encoding();
     }
     else
         win_skip("MXXMLWriter not supported\n");
