@@ -33,6 +33,7 @@
 #include "wine/test.h"
 
 static const CHAR spooler[] = "Spooler"; /* Should be available on all platforms */
+static const CHAR* selfname;
 
 static BOOL (WINAPI *pChangeServiceConfig2A)(SC_HANDLE,DWORD,LPVOID);
 static BOOL (WINAPI *pEnumServicesStatusExA)(SC_HANDLE, SC_ENUM_TYPE, DWORD,
@@ -2053,6 +2054,123 @@ cleanup:
     CloseServiceHandle(scm_handle);
 }
 
+static DWORD try_start_stop(SC_HANDLE svc_handle, const char* name, int todo)
+{
+    BOOL ret;
+    DWORD needed, le1, le2;
+    SERVICE_STATUS status;
+    SERVICE_STATUS_PROCESS statusproc;
+
+    ret = StartServiceA(svc_handle, 0, NULL);
+    le1 = GetLastError();
+    ok(!ret, "%s: StartServiceA() should have failed\n", name);
+
+    ret = pQueryServiceStatusEx(svc_handle, SC_STATUS_PROCESS_INFO, (BYTE*)&statusproc, sizeof(statusproc), &needed);
+    ok(ret, "%s: QueryServiceStatusEx() failed le=%u\n", name, GetLastError());
+    todo_wine ok(statusproc.dwCurrentState == SERVICE_STOPPED, "%s: should be stopped state=%x\n", name, statusproc.dwCurrentState);
+    todo_wine ok(statusproc.dwProcessId == 0, "%s: ProcessId should be 0 instead of %x\n", name, statusproc.dwProcessId);
+
+    ret = StartServiceA(svc_handle, 0, NULL);
+    le2 = GetLastError();
+    ok(!ret, "%s: StartServiceA() should have failed\n", name);
+    if (todo)
+        todo_wine ok(le2 == le1, "%s: the second try should yield the same error: %u != %u\n", name, le1, le2);
+    else
+        ok(le2 == le1, "%s: the second try should yield the same error: %u != %u\n", name, le1, le2);
+
+    ret = ControlService(svc_handle, SERVICE_CONTROL_STOP, &status);
+    le2 = GetLastError();
+    ok(!ret, "%s: ControlService() should have failed\n", name);
+    todo_wine ok(le2 == ERROR_SERVICE_NOT_ACTIVE, "%s: %d != ERROR_SERVICE_NOT_ACTIVE\n", name, le2);
+    todo_wine ok(status.dwCurrentState == SERVICE_STOPPED, "%s: should be stopped state=%x\n", name, status.dwCurrentState);
+
+    return le1;
+}
+
+static void test_start_stop(void)
+{
+    BOOL ret;
+    SC_HANDLE scm_handle, svc_handle;
+    DWORD le;
+    static const char servicename[] = "Winetest";
+    char cmd[MAX_PATH+20];
+    const char* displayname;
+
+    SetLastError(0xdeadbeef);
+    scm_handle = OpenSCManagerA(NULL, NULL, GENERIC_ALL);
+    if (!scm_handle)
+    {
+	if(GetLastError() == ERROR_ACCESS_DENIED)
+            skip("Not enough rights to get a handle to the manager\n");
+        else
+            ok(FALSE, "Could not get a handle to the manager: %d\n", GetLastError());
+        return;
+    }
+
+    /* Do some cleanup in case a previous run crashed */
+    svc_handle = OpenServiceA(scm_handle, servicename, GENERIC_ALL);
+    if (svc_handle)
+    {
+        DeleteService(svc_handle);
+        CloseServiceHandle(svc_handle);
+    }
+
+    /* Create a dummy disabled service */
+    sprintf(cmd, "\"%s\" service exit", selfname);
+    displayname = "Winetest Disabled Service";
+    svc_handle = CreateServiceA(scm_handle, servicename, displayname,
+        GENERIC_ALL, SERVICE_INTERACTIVE_PROCESS | SERVICE_WIN32_OWN_PROCESS,
+        SERVICE_DISABLED, SERVICE_ERROR_IGNORE, cmd, NULL,
+        NULL, NULL, NULL, NULL);
+    if (!svc_handle)
+    {
+        if(GetLastError() == ERROR_ACCESS_DENIED)
+            skip("Not enough rights to create the service\n");
+        else
+            ok(FALSE, "Could not create the service: %d\n", GetLastError());
+        goto cleanup;
+    }
+    le = try_start_stop(svc_handle, displayname, 1);
+    todo_wine ok(le == ERROR_SERVICE_DISABLED, "%d != ERROR_SERVICE_DISABLED\n", le);
+
+    /* Then with a process that exits right away */
+    displayname = "Winetest Exit Service";
+    ret = ChangeServiceConfigA(svc_handle, SERVICE_NO_CHANGE, SERVICE_DEMAND_START, SERVICE_NO_CHANGE, NULL, NULL, NULL, NULL, NULL, NULL, displayname);
+    ok(ret, "ChangeServiceConfig() failed le=%u\n", GetLastError());
+    le = try_start_stop(svc_handle, displayname, 0);
+    todo_wine ok(le == ERROR_SERVICE_REQUEST_TIMEOUT, "%d != ERROR_SERVICE_REQUEST_TIMEOUT\n", le);
+
+    /* Again with a bad path */
+    displayname = "Winetest Bad Path";
+    ret = ChangeServiceConfigA(svc_handle, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, "no_such_file.exe", NULL, NULL, NULL, NULL, NULL, displayname);
+    ok(ret, "ChangeServiceConfig() failed le=%u\n", GetLastError());
+    try_start_stop(svc_handle, displayname, 0);
+
+    /* And finally with a service that plays dead, forcing a timeout.
+     * This time we will put no quotes. That should work too, even if there are
+     * spaces in the path.
+     */
+    sprintf(cmd, "%s service sleep", selfname);
+    displayname = "Winetest Sleep Service";
+    ret = ChangeServiceConfigA(svc_handle, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, cmd, NULL, NULL, NULL, NULL, NULL, displayname);
+    ok(ret, "ChangeServiceConfig() failed le=%u\n", GetLastError());
+
+    le = try_start_stop(svc_handle, displayname, 0);
+    todo_wine ok(le == ERROR_SERVICE_REQUEST_TIMEOUT, "%d != ERROR_SERVICE_REQUEST_TIMEOUT\n", le);
+
+cleanup:
+    if (svc_handle)
+    {
+        DeleteService(svc_handle);
+        CloseServiceHandle(svc_handle);
+    }
+
+    /* Wait a while. The following test does a CreateService again */
+    Sleep(1000);
+
+    CloseServiceHandle(scm_handle);
+}
+
 static void test_refcount(void)
 {
     SC_HANDLE scm_handle, svc_handle1, svc_handle2, svc_handle3, svc_handle4, svc_handle5;
@@ -2156,6 +2274,19 @@ static void test_refcount(void)
 START_TEST(service)
 {
     SC_HANDLE scm_handle;
+    int myARGC;
+    char** myARGV;
+
+    myARGC = winetest_get_mainargs(&myARGV);
+    selfname = myARGV[0];
+    if (myARGC >= 3)
+    {
+        if (strcmp(myARGV[2], "sleep") == 0)
+            /* Cause a service startup timeout */
+            Sleep(90000);
+        /* then, or if myARGV[2] == "exit", just exit */
+        return;
+    }
 
     /* Bail out if we are on win98 */
     SetLastError(0xdeadbeef);
@@ -2182,6 +2313,7 @@ START_TEST(service)
     /* Test the creation, querying and deletion of a service */
     test_sequence();
     test_queryconfig2();
+    test_start_stop();
     /* The main reason for this test is to check if any refcounting is used
      * and what the rules are
      */
