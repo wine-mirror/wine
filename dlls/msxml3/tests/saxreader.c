@@ -2,6 +2,7 @@
  * XML test
  *
  * Copyright 2008 Piotr Caban
+ * Copyright 2011 Thomas Mullaly
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -95,6 +96,17 @@ static const WCHAR szCarriageRetTest[] = {
 '\t','<','N','a','m','e','>','C','a','p','t','a','i','n',' ','A','h','a','b','<','/','N','a','m','e','>','\r','\n',
 '<','/','B','a','n','k','A','c','c','o','u','n','t','>','\0'
 };
+
+static const WCHAR szUtf16XML[] = {
+'<','?','x','m','l',' ','v','e','r','s','i','o','n','=','"','1','.','0','"',' ',
+'e','n','c','o','d','i','n','g','=','"','U','T','F','-','1','6','"',' ',
+'s','t','a','n','d','a','l','o','n','e','=','"','n','o','"','?','>','\r','\n'
+};
+
+static const CHAR szUtf16BOM[] = {0xff, 0xfe};
+
+static const CHAR szUtf8XML[] =
+"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\r\n";
 
 static const CHAR szTestXML[] =
 "<?xml version=\"1.0\" ?>\n"
@@ -695,6 +707,152 @@ static const ISAXAttributesVtbl SAXAttributesVtbl =
 };
 
 static ISAXAttributes saxattributes = { &SAXAttributesVtbl };
+
+typedef struct mxwriter_write_test_t {
+    BOOL        last;
+    const BYTE  *data;
+    DWORD       cb;
+    BOOL        null_written;
+} mxwriter_write_test;
+
+typedef struct mxwriter_stream_test_t {
+    VARIANT_BOOL        bom;
+    const char          *encoding;
+    mxwriter_write_test expected_writes[4];
+} mxwriter_stream_test;
+
+static const mxwriter_write_test *current_write_test;
+static DWORD current_stream_test_index;
+
+static HRESULT WINAPI istream_QueryInterface(IStream *iface, REFIID riid, void **ppvObject)
+{
+    *ppvObject = NULL;
+
+    if(IsEqualGUID(riid, &IID_IStream) || IsEqualGUID(riid, &IID_IUnknown))
+        *ppvObject = iface;
+    else
+        return E_NOINTERFACE;
+
+    return S_OK;
+}
+
+static ULONG WINAPI istream_AddRef(IStream *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI istream_Release(IStream *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI istream_Read(IStream *iface, void *pv, ULONG cb, ULONG *pcbRead)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI istream_Write(IStream *iface, const void *pv, ULONG cb, ULONG *pcbWritten)
+{
+    ok(pv != NULL, "pv == NULL\n");
+
+    if(current_write_test->last) {
+        ok(0, "Too many Write calls made on test %d\n", current_stream_test_index);
+        return E_FAIL;
+    }
+
+    ok(current_write_test->cb == cb, "Expected %d, but got %d on test %d\n",
+        current_write_test->cb, cb, current_stream_test_index);
+
+    if(!pcbWritten)
+        ok(current_write_test->null_written, "pcbWritten was NULL on test %d\n", current_stream_test_index);
+    else
+        ok(!memcmp(current_write_test->data, pv, cb), "Unexpected data on test %d\n", current_stream_test_index);
+
+    ++current_write_test;
+
+    if(pcbWritten)
+        *pcbWritten = cb;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI istream_Seek(IStream *iface, LARGE_INTEGER dlibMove, DWORD dwOrigin,
+        ULARGE_INTEGER *plibNewPosition)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI istream_SetSize(IStream *iface, ULARGE_INTEGER libNewSize)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI istream_CopyTo(IStream *iface, IStream *pstm, ULARGE_INTEGER cb,
+        ULARGE_INTEGER *pcbRead, ULARGE_INTEGER *plibWritten)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI istream_Commit(IStream *iface, DWORD grfCommitFlags)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI istream_Revert(IStream *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI istream_LockRegion(IStream *iface, ULARGE_INTEGER libOffset,
+        ULARGE_INTEGER cb, DWORD dwLockType)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI istream_UnlockRegion(IStream *iface, ULARGE_INTEGER libOffset,
+        ULARGE_INTEGER cb, DWORD dwLockType)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI istream_Stat(IStream *iface, STATSTG *pstatstg, DWORD grfStatFlag)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI istream_Clone(IStream *iface, IStream **ppstm)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IStreamVtbl StreamVtbl = {
+    istream_QueryInterface,
+    istream_AddRef,
+    istream_Release,
+    istream_Read,
+    istream_Write,
+    istream_Seek,
+    istream_SetSize,
+    istream_CopyTo,
+    istream_Commit,
+    istream_Revert,
+    istream_LockRegion,
+    istream_UnlockRegion,
+    istream_Stat,
+    istream_Clone
+};
+
+static IStream mxstream = { &StreamVtbl };
 
 static void test_saxreader(void)
 {
@@ -1349,6 +1507,91 @@ static void test_mxwriter_characters(void)
     free_bstrs();
 }
 
+static const mxwriter_stream_test mxwriter_stream_tests[] = {
+    {
+        VARIANT_TRUE,"UTF-16",
+        {
+            {FALSE,(const BYTE*)szUtf16BOM,sizeof(szUtf16BOM),TRUE},
+            {FALSE,(const BYTE*)szUtf16XML,sizeof(szUtf16XML)},
+            {TRUE}
+        }
+    },
+    {
+        VARIANT_FALSE,"UTF-16",
+        {
+            {FALSE,(const BYTE*)szUtf16XML,sizeof(szUtf16XML)},
+            {TRUE}
+        }
+    },
+    {
+        VARIANT_TRUE,"UTF-8",
+        {
+            {FALSE,(const BYTE*)szUtf8XML,sizeof(szUtf8XML)-1},
+            /* For some reason Windows makes an empty write call when UTF-8 encoding is used
+             * and the writer is released.
+             */
+            {FALSE,NULL,0},
+            {TRUE}
+        }
+    },
+    {
+        VARIANT_TRUE,"UTF-16",
+        {
+            {FALSE,(const BYTE*)szUtf16BOM,sizeof(szUtf16BOM),TRUE},
+            {FALSE,(const BYTE*)szUtf16XML,sizeof(szUtf16XML)},
+            {TRUE}
+        }
+    }
+};
+
+static void test_mxwriter_stream(void)
+{
+    DWORD test_count = sizeof(mxwriter_stream_tests)/sizeof(mxwriter_stream_tests[0]);
+
+    for(current_stream_test_index = 0; current_stream_test_index < test_count; ++current_stream_test_index) {
+        const mxwriter_stream_test *test = mxwriter_stream_tests+current_stream_test_index;
+        IMXWriter *writer;
+        ISAXContentHandler *content;
+        HRESULT hr;
+        VARIANT dest;
+
+        hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
+                &IID_IMXWriter, (void**)&writer);
+        ok(hr == S_OK, "CoCreateInstance failed: %08x\n", hr);
+
+        hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
+        ok(hr == S_OK, "QueryInterface(ISAXContentHandler) failed: %08x\n", hr);
+
+        hr = IMXWriter_put_encoding(writer, _bstr_(test->encoding));
+        ok(hr == S_OK, "put_encoding failed with %08x on test %d\n", hr, current_stream_test_index);
+
+        V_VT(&dest) = VT_UNKNOWN;
+        V_UNKNOWN(&dest) = (IUnknown*)&mxstream;
+        hr = IMXWriter_put_output(writer, dest);
+        ok(hr == S_OK, "put_output failed with %08x on test %d\n", hr, current_stream_test_index);
+        VariantClear(&dest);
+
+        hr = IMXWriter_put_byteOrderMark(writer, test->bom);
+        ok(hr == S_OK, "put_byteOrderMark failed with %08x on test %d\n", hr, current_stream_test_index);
+
+        current_write_test = test->expected_writes;
+
+        hr = ISAXContentHandler_startDocument(content);
+        ok(hr == S_OK, "startDocument failed with %08x on test %d\n", hr, current_stream_test_index);
+
+        hr = ISAXContentHandler_endDocument(content);
+        todo_wine ok(hr == S_OK, "endDocument failed with %08x on test %d\n", hr, current_stream_test_index);
+
+        ISAXContentHandler_Release(content);
+        IMXWriter_Release(writer);
+
+        todo_wine ok(current_write_test->last, "The last %d write calls on test %d were missed\n",
+            current_write_test-test->expected_writes, current_stream_test_index);
+    }
+
+    free_bstrs();
+}
+
 START_TEST(saxreader)
 {
     ISAXXMLReader *reader;
@@ -1384,6 +1627,7 @@ START_TEST(saxreader)
         test_mxwriter_characters();
         test_mxwriter_properties();
         test_mxwriter_flush();
+        test_mxwriter_stream();
     }
     else
         win_skip("MXXMLWriter not supported\n");
