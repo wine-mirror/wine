@@ -5157,8 +5157,6 @@ HRESULT CDECL wined3d_device_set_depth_stencil(struct wined3d_device *device, st
     device->fb.depth_stencil = depth_stencil;
     if (depth_stencil)
         wined3d_surface_incref(depth_stencil);
-    if (prev)
-        wined3d_surface_decref(prev);
 
     if (!prev != !depth_stencil)
     {
@@ -5172,6 +5170,8 @@ HRESULT CDECL wined3d_device_set_depth_stencil(struct wined3d_device *device, st
     {
         device_invalidate_state(device, STATE_RENDER(WINED3DRS_DEPTHBIAS));
     }
+    if (prev)
+        wined3d_surface_decref(prev);
 
     device_invalidate_state(device, STATE_FRAMEBUFFER);
 
