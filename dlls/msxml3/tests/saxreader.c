@@ -1238,15 +1238,13 @@ static void test_mxwriter_flush(void)
 
     /* flush() doesn't detach a stream */
     hr = IMXWriter_flush(writer);
-todo_wine {
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    EXPECT_REF(stream, 3);
-}
+    todo_wine EXPECT_REF(stream, 3);
 
     pos.QuadPart = 0;
     hr = IStream_Seek(stream, pos, STREAM_SEEK_CUR, &pos2);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(pos2.QuadPart == 0, "expected stream beginning\n");
+    ok(pos2.QuadPart == 0, "expected stream beginning");
 
     hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -1257,20 +1255,20 @@ todo_wine {
     pos.QuadPart = 0;
     hr = IStream_Seek(stream, pos, STREAM_SEEK_CUR, &pos2);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    todo_wine ok(pos2.QuadPart != 0, "expected stream beginning\n");
+    ok(pos2.QuadPart != 0, "expected stream beginning\n");
 
     /* already started */
     hr = ISAXContentHandler_startDocument(content);
     ok(hr == S_OK, "got %08x\n", hr);
 
     hr = ISAXContentHandler_endDocument(content);
-    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08x\n", hr);
 
     /* flushed on endDocument() */
     pos.QuadPart = 0;
     hr = IStream_Seek(stream, pos, STREAM_SEEK_CUR, &pos2);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    todo_wine ok(pos2.QuadPart != 0, "expected stream position moved\n");
+    ok(pos2.QuadPart != 0, "expected stream position moved\n");
 
     ISAXContentHandler_Release(content);
     IStream_Release(stream);
@@ -1295,7 +1293,7 @@ static void test_mxwriter_startenddocument(void)
     ok(hr == S_OK, "got %08x\n", hr);
 
     hr = ISAXContentHandler_endDocument(content);
-    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08x\n", hr);
 
     V_VT(&dest) = VT_EMPTY;
     hr = IMXWriter_get_output(writer, &dest);
@@ -1336,7 +1334,7 @@ static void test_mxwriter_startenddocument(void)
     ok(hr == S_OK, "got %08x\n", hr);
 
     hr = ISAXContentHandler_endDocument(content);
-    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08x\n", hr);
 
     V_VT(&dest) = VT_EMPTY;
     hr = IMXWriter_get_output(writer, &dest);
@@ -1458,7 +1456,7 @@ static void test_mxwriter_startendelement(void)
     ok(hr == S_OK, "got %08x\n", hr);
 
     hr = ISAXContentHandler_endDocument(content);
-    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08x\n", hr);
 
     ISAXContentHandler_Release(content);
     IMXWriter_Release(writer);
@@ -1504,7 +1502,7 @@ static void test_mxwriter_characters(void)
     VariantClear(&dest);
 
     hr = ISAXContentHandler_endDocument(content);
-    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08x\n", hr);
 
     ISAXContentHandler_Release(content);
     IMXWriter_Release(writer);
@@ -1596,12 +1594,12 @@ static void test_mxwriter_stream(void)
         ok(hr == S_OK, "startDocument failed with %08x on test %d\n", hr, current_stream_test_index);
 
         hr = ISAXContentHandler_endDocument(content);
-        todo_wine ok(hr == S_OK, "endDocument failed with %08x on test %d\n", hr, current_stream_test_index);
+        ok(hr == S_OK, "endDocument failed with %08x on test %d\n", hr, current_stream_test_index);
 
         ISAXContentHandler_Release(content);
         IMXWriter_Release(writer);
 
-        todo_wine ok(current_write_test->last, "The last %d write calls on test %d were missed\n",
+        ok(current_write_test->last, "The last %d write calls on test %d were missed\n",
             current_write_test-test->expected_writes, current_stream_test_index);
     }
 
@@ -1636,19 +1634,19 @@ static void test_mxwriter_stream(void)
     pos.QuadPart = 0;
     hr = IStream_Seek(stream, pos, STREAM_SEEK_CUR, &pos2);
     ok(hr == S_OK, "Seek failed: %08x\n", hr);
-    todo_wine ok(pos2.QuadPart != 0, "expected stream position moved\n");
+    ok(pos2.QuadPart != 0, "expected stream position moved\n");
 
     hr = ISAXContentHandler_startDocument(content);
     ok(hr == S_OK, "startDocument failed: %08x\n", hr);
 
     hr = ISAXContentHandler_endDocument(content);
-    todo_wine ok(hr == S_OK, "endDocument failed: %08x\n", hr);
+    ok(hr == S_OK, "endDocument failed: %08x\n", hr);
 
     V_VT(&dest) = VT_EMPTY;
     hr = IMXWriter_get_output(writer, &dest);
     ok(hr == S_OK, "get_output failed: %08x\n", hr);
     ok(V_VT(&dest) == VT_BSTR, "Expected VT_BSTR, got %d\n", V_VT(&dest));
-    todo_wine ok(!lstrcmpW(_bstr_("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n"), V_BSTR(&dest)),
+    ok(!lstrcmpW(_bstr_("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n"), V_BSTR(&dest)),
             "Got wrong content: %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
@@ -1679,15 +1677,15 @@ static void test_mxwriter_encoding(void)
     ok(hr == S_OK, "startDocument failed: %08x\n", hr);
 
     hr = ISAXContentHandler_endDocument(content);
-    todo_wine ok(hr == S_OK, "endDocument failed: %08x\n", hr);
+    ok(hr == S_OK, "endDocument failed: %08x\n", hr);
 
     /* The content is always re-encoded to UTF-16 when the output is
      * retrieved as a BSTR.
      */
     V_VT(&dest) = VT_EMPTY;
     hr = IMXWriter_get_output(writer, &dest);
-    ok(hr == S_OK, "get_output failed: %08x\n", hr);
-    ok(V_VT(&dest) == VT_BSTR, "Expected VT_BSTR, got %d\n", V_VT(&dest));
+    todo_wine ok(hr == S_OK, "get_output failed: %08x\n", hr);
+    todo_wine ok(V_VT(&dest) == VT_BSTR, "Expected VT_BSTR, got %d\n", V_VT(&dest));
     todo_wine ok(!lstrcmpW(_bstr_("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n"), V_BSTR(&dest)),
             "got wrong content: %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);

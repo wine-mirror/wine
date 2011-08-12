@@ -194,6 +194,22 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
     return ret;
 }
 
+static inline LPSTR heap_strdupWtoA(LPCWSTR str)
+{
+    LPSTR ret = NULL;
+
+    if(str) {
+        DWORD len = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
+        ret = heap_alloc(len+1);
+        if(!ret)
+            return NULL;
+
+        WideCharToMultiByte(CP_ACP, 0, str, -1, ret, len+1, NULL, NULL);
+    }
+
+    return ret;
+}
+
 #ifdef HAVE_LIBXML2
 
 extern void schemasInit(void) DECLSPEC_HIDDEN;
