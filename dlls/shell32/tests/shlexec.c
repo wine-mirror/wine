@@ -527,7 +527,7 @@ static void CALLBACK childTimeout(HWND wnd, UINT msg, UINT_PTR timer, DWORD time
 
 static void doChild(int argc, char** argv)
 {
-    char* filename;
+    char *filename, longpath[MAX_PATH] = "";
     HANDLE hFile, map;
     int i;
     int rc;
@@ -553,6 +553,8 @@ static void doChild(int argc, char** argv)
             trace("argvA%d=%s\n", i, argv[i]);
         childPrintf(hFile, "argvA%d=%s\r\n", i, encodeA(argv[i]));
     }
+    GetModuleFileNameA(GetModuleHandleA(NULL), longpath, MAX_PATH);
+    childPrintf(hFile, "longPath=%s\r\n", encodeA(longpath));
 
     map = OpenFileMappingA(FILE_MAP_READ, FALSE, "winetest_shlexec_dde_map");
     if (map != NULL)
@@ -774,6 +776,26 @@ static DWORD get_long_path_name(const char* shortpath, char* longpath, DWORD lon
     }
 
     return tmplen;
+}
+
+/***
+ *
+ * PathFindFileNameA equivalent that supports WinNT
+ *
+ ***/
+
+static LPSTR path_find_file_name(LPCSTR lpszPath)
+{
+  LPCSTR lastSlash = lpszPath;
+
+  while (lpszPath && *lpszPath)
+  {
+    if ((*lpszPath == '\\' || *lpszPath == '/' || *lpszPath == ':') &&
+        lpszPath[1] && lpszPath[1] != '\\' && lpszPath[1] != '/')
+      lastSlash = lpszPath + 1;
+    lpszPath = CharNext(lpszPath);
+  }
+  return (LPSTR)lastSlash;
 }
 
 /***
@@ -2179,6 +2201,37 @@ static void test_commandline(void)
     }
 }
 
+static void test_directory(void)
+{
+    char path[MAX_PATH], newdir[MAX_PATH];
+    char params[1024];
+    int rc;
+
+    /* copy this executable to a new folder and cd to it */
+    sprintf(newdir, "%s\\newfolder", tmpdir);
+    rc = CreateDirectoryA( newdir, NULL );
+    ok( rc, "failed to create %s err %u\n", path, GetLastError() );
+    sprintf(path, "%s\\%s", newdir, path_find_file_name(argv0));
+    CopyFileA(argv0, path, FALSE);
+    SetCurrentDirectory(tmpdir),
+
+    sprintf(params, "shlexec \"%s\" Exec", child_file);
+
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
+                        NULL, path_find_file_name(argv0), params, NULL);
+    todo_wine ok(rc == SE_ERR_FNF, "%s returned %d\n", shell_call, rc);
+
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
+                        NULL, path_find_file_name(argv0), params, newdir);
+    ok(rc > 32, "%s returned %d\n", shell_call, rc);
+    okChildInt("argcA", 4);
+    okChildString("argvA3", "Exec");
+    todo_wine okChildPath("longPath", path);
+
+    DeleteFile(path);
+    RemoveDirectoryA(newdir);
+}
+
 START_TEST(shlexec)
 {
 
@@ -2201,6 +2254,7 @@ START_TEST(shlexec)
     test_dde();
     test_dde_default_app();
     test_commandline();
+    test_directory();
 
     cleanup_test();
 }
