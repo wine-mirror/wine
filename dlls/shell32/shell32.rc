@@ -353,6 +353,10 @@ IDI_SHELL_MY_DOCUMENTS ICON mydocs.ico
 /* @makedep: mydocs.ico */
 IDI_SHELL_MY_NETWORK_PLACES ICON mydocs.ico
 
+/* FIXME: Following resource is not yet added */
+/* @makedep: mydocs.ico */
+IDI_SHELL_FAVORITES ICON mydocs.ico
+
 /* @makedep: idb_tb_large.bmp */
 IDB_TB_LARGE_LIGHT BITMAP idb_tb_large.bmp
 

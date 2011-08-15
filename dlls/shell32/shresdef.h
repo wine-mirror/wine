@@ -217,6 +217,7 @@
 #define IDI_SHELL_DEFAULT_REMOTE_PRINTER   169
 #define IDI_SHELL_DEFAULT_TO_FILE_PRINTER  170
 #define IDI_SHELL_MY_DOCUMENTS     235
+#define IDI_SHELL_FAVORITES        319
 
 /* 
 AVI resources, windows shell32 has 14 of them: 150-152 and 160-170
