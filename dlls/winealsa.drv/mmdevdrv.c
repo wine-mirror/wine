@@ -108,8 +108,8 @@ struct ACImpl {
     float *vols;
 
     BOOL initted, started;
-    UINT64 written_frames, held_frames, tmp_buffer_frames;
-    UINT32 bufsize_frames, period_us;
+    UINT64 written_frames;
+    UINT32 bufsize_frames, held_frames, tmp_buffer_frames, period_us;
     UINT32 lcl_offs_frames; /* offs into local_buffer where valid data starts */
 
     HANDLE timer;

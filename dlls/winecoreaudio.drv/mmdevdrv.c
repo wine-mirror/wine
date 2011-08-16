@@ -124,8 +124,8 @@ struct ACImpl {
     AudioQueueRef aqueue;
     AudioObjectPropertyScope scope;
     HANDLE timer;
-    UINT32 period_ms, bufsize_frames, inbuf_frames, written_frames;
-    UINT64 last_time;
+    UINT32 period_ms, bufsize_frames, inbuf_frames;
+    UINT64 last_time, written_frames;
     AudioQueueBufferRef public_buffer;
     UINT32 getbuf_last;
     int playing;

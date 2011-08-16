@@ -121,8 +121,8 @@ struct ACImpl {
     oss_audioinfo ai;
 
     BOOL initted, playing;
-    UINT64 written_frames, held_frames, tmp_buffer_frames, inbuf_frames;
-    UINT32 period_us, bufsize_frames;
+    UINT64 written_frames;
+    UINT32 period_us, bufsize_frames, held_frames, tmp_buffer_frames, inbuf_frames;
     UINT32 lcl_offs_frames; /* offs into local_buffer where valid data starts */
 
     BYTE *local_buffer, *tmp_buffer;
