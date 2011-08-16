@@ -36,162 +36,12 @@
 WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 
 typedef struct {
-    const IMediaStreamVtbl *lpVtbl;
-    LONG ref;
-    IMultiMediaStream* Parent;
-    MSPID PurposeId;
-    STREAM_TYPE StreamType;
-} IMediaStreamImpl;
-
-typedef struct {
     IDirectDrawMediaStream IDirectDrawMediaStream_iface;
     LONG ref;
     IMultiMediaStream* Parent;
     MSPID PurposeId;
     STREAM_TYPE StreamType;
 } IDirectDrawMediaStreamImpl;
-
-static const struct IMediaStreamVtbl MediaStream_Vtbl;
-
-HRESULT MediaStream_create(IMultiMediaStream* Parent, const MSPID* pPurposeId, STREAM_TYPE StreamType, IMediaStream** ppMediaStream)
-{
-    IMediaStreamImpl* object; 
-
-    TRACE("(%p,%s,%p)\n", Parent, debugstr_guid(pPurposeId), ppMediaStream);
-
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IMediaStreamImpl));
-    if (!object)
-    {
-        ERR("Out of memory\n");
-        return E_OUTOFMEMORY;
-    }
-
-    object->lpVtbl = &MediaStream_Vtbl;
-    object->ref = 1;
-
-    object->Parent = Parent;
-    object->PurposeId = *pPurposeId;
-    object->StreamType = StreamType;
-
-    *ppMediaStream = (IMediaStream*)object;
-
-    return S_OK;
-}
-
-/*** IUnknown methods ***/
-static HRESULT WINAPI IMediaStreamImpl_QueryInterface(IMediaStream* iface, REFIID riid, void** ppvObject)
-{
-    IMediaStreamImpl *This = (IMediaStreamImpl *)iface;
-
-    TRACE("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ppvObject);
-
-    if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IMediaStream))
-    {
-        IUnknown_AddRef(iface);
-        *ppvObject = This;
-        return S_OK;
-    }
-
-    ERR("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI IMediaStreamImpl_AddRef(IMediaStream* iface)
-{
-    IMediaStreamImpl *This = (IMediaStreamImpl *)iface;
-
-    TRACE("(%p/%p)\n", iface, This);
-
-    return InterlockedIncrement(&This->ref);
-}
-
-static ULONG WINAPI IMediaStreamImpl_Release(IMediaStream* iface)
-{
-    IMediaStreamImpl *This = (IMediaStreamImpl *)iface;
-    ULONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p/%p)\n", iface, This);
-
-    if (!ref)
-      HeapFree(GetProcessHeap(), 0, This);
-
-    return ref;
-}
-
-/*** IMediaStream methods ***/
-static HRESULT WINAPI IMediaStreamImpl_GetMultiMediaStream(IMediaStream* iface, IMultiMediaStream** ppMultiMediaStream)
-{
-    IMediaStreamImpl *This = (IMediaStreamImpl *)iface;
-
-    FIXME("(%p/%p)->(%p) stub!\n", This, iface, ppMultiMediaStream);
-
-    return S_FALSE;
-}
-
-
-static HRESULT WINAPI IMediaStreamImpl_GetInformation(IMediaStream* iface, MSPID* pPurposeId, STREAM_TYPE* pType)
-{
-    IMediaStreamImpl *This = (IMediaStreamImpl *)iface;
-
-    TRACE("(%p/%p)->(%p,%p)\n", This, iface, pPurposeId, pType);
-
-    if (pPurposeId)
-        *pPurposeId = This->PurposeId;
-    if (pType)
-        *pType = This->StreamType;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI IMediaStreamImpl_SetSameFormat(IMediaStream* iface, IMediaStream* pStreamThatHasDesiredFormat, DWORD dwFlags)
-{
-    IMediaStreamImpl *This = (IMediaStreamImpl *)iface;
-
-    FIXME("(%p/%p)->(%p,%x) stub!\n", This, iface, pStreamThatHasDesiredFormat, dwFlags);
-
-    return S_FALSE;
-}
-
-static HRESULT WINAPI IMediaStreamImpl_AllocateSample(IMediaStream* iface, DWORD dwFlags, IStreamSample** ppSample)
-{
-    IMediaStreamImpl *This = (IMediaStreamImpl *)iface;
-
-    FIXME("(%p/%p)->(%x,%p) stub!\n", This, iface, dwFlags, ppSample);
-
-    return S_FALSE;
-}
-
-static HRESULT WINAPI IMediaStreamImpl_CreateSharedSample(IMediaStream* iface, IStreamSample* pExistingSample, DWORD dwFlags, IStreamSample** ppSample)
-{
-    IMediaStreamImpl *This = (IMediaStreamImpl *)iface;
-
-    FIXME("(%p/%p)->(%p,%x,%p) stub!\n", This, iface, pExistingSample, dwFlags, ppSample);
-
-    return S_FALSE;
-}
-
-static HRESULT WINAPI IMediaStreamImpl_SendEndOfStream(IMediaStream* iface, DWORD dwFlags)
-{
-    IMediaStreamImpl *This = (IMediaStreamImpl *)iface;
-
-    FIXME("(%p/%p)->(%x) stub!\n", This, iface, dwFlags);
-
-    return S_FALSE;
-}
-
-static const struct IMediaStreamVtbl MediaStream_Vtbl =
-{
-    IMediaStreamImpl_QueryInterface,
-    IMediaStreamImpl_AddRef,
-    IMediaStreamImpl_Release,
-    IMediaStreamImpl_GetMultiMediaStream,
-    IMediaStreamImpl_GetInformation,
-    IMediaStreamImpl_SetSameFormat,
-    IMediaStreamImpl_AllocateSample,
-    IMediaStreamImpl_CreateSharedSample,
-    IMediaStreamImpl_SendEndOfStream
-};
 
 static inline IDirectDrawMediaStreamImpl *impl_from_IDirectDrawMediaStream(IDirectDrawMediaStream *iface)
 {
@@ -216,6 +66,94 @@ static HRESULT WINAPI IDirectDrawMediaStreamImpl_QueryInterface(IDirectDrawMedia
 
     ERR("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppv);
     return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IDirectDrawMediaStreamImpl_AddRef(IDirectDrawMediaStream *iface)
+{
+    IDirectDrawMediaStreamImpl *This = impl_from_IDirectDrawMediaStream(iface);
+
+    TRACE("(%p/%p)\n", iface, This);
+
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI IDirectDrawMediaStreamImpl_Release(IDirectDrawMediaStream *iface)
+{
+    IDirectDrawMediaStreamImpl *This = impl_from_IDirectDrawMediaStream(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p/%p)\n", iface, This);
+
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+/*** IMediaStream methods ***/
+static HRESULT WINAPI IDirectDrawMediaStreamImpl_GetMultiMediaStream(IDirectDrawMediaStream *iface,
+        IMultiMediaStream** ppMultiMediaStream)
+{
+    IDirectDrawMediaStreamImpl *This = impl_from_IDirectDrawMediaStream(iface);
+
+    FIXME("(%p/%p)->(%p) stub!\n", This, iface, ppMultiMediaStream);
+
+    return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectDrawMediaStreamImpl_GetInformation(IDirectDrawMediaStream *iface,
+        MSPID *pPurposeId, STREAM_TYPE *pType)
+{
+    IDirectDrawMediaStreamImpl *This = impl_from_IDirectDrawMediaStream(iface);
+
+    TRACE("(%p/%p)->(%p,%p)\n", This, iface, pPurposeId, pType);
+
+    if (pPurposeId)
+        *pPurposeId = This->PurposeId;
+    if (pType)
+        *pType = This->StreamType;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI IDirectDrawMediaStreamImpl_SetSameFormat(IDirectDrawMediaStream *iface,
+        IMediaStream *pStreamThatHasDesiredFormat, DWORD dwFlags)
+{
+    IDirectDrawMediaStreamImpl *This = impl_from_IDirectDrawMediaStream(iface);
+
+    FIXME("(%p/%p)->(%p,%x) stub!\n", This, iface, pStreamThatHasDesiredFormat, dwFlags);
+
+    return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectDrawMediaStreamImpl_AllocateSample(IDirectDrawMediaStream *iface,
+        DWORD dwFlags, IStreamSample **ppSample)
+{
+    IDirectDrawMediaStreamImpl *This = impl_from_IDirectDrawMediaStream(iface);
+
+    FIXME("(%p/%p)->(%x,%p) stub!\n", This, iface, dwFlags, ppSample);
+
+    return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectDrawMediaStreamImpl_CreateSharedSample(IDirectDrawMediaStream *iface,
+        IStreamSample *pExistingSample, DWORD dwFlags, IStreamSample **ppSample)
+{
+    IDirectDrawMediaStreamImpl *This = impl_from_IDirectDrawMediaStream(iface);
+
+    FIXME("(%p/%p)->(%p,%x,%p) stub!\n", This, iface, pExistingSample, dwFlags, ppSample);
+
+    return S_FALSE;
+}
+
+static HRESULT WINAPI IDirectDrawMediaStreamImpl_SendEndOfStream(IDirectDrawMediaStream *iface,
+        DWORD dwFlags)
+{
+    IDirectDrawMediaStreamImpl *This = impl_from_IDirectDrawMediaStream(iface);
+
+    FIXME("(%p/%p)->(%x) stub!\n", This, iface, dwFlags);
+
+    return S_FALSE;
 }
 
 static HRESULT WINAPI IDirectDrawMediaStreamImpl_GetFormat(IDirectDrawMediaStream *iface,
@@ -270,24 +208,17 @@ static HRESULT WINAPI IDirectDrawMediaStreamImpl_GetTimePerFrame(IDirectDrawMedi
     return E_NOTIMPL;
 }
 
-/* Note: Hack so we can reuse the old functions without compiler warnings */
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(DirectDrawMediaStream_Vtbl.fun))
-#else
-# define XCAST(fun)     (void*)
-#endif
-
 static const struct IDirectDrawMediaStreamVtbl DirectDrawMediaStream_Vtbl =
 {
     IDirectDrawMediaStreamImpl_QueryInterface,
-    XCAST(AddRef)IMediaStreamImpl_AddRef,
-    XCAST(Release)IMediaStreamImpl_Release,
-    XCAST(GetMultiMediaStream)IMediaStreamImpl_GetMultiMediaStream,
-    XCAST(GetInformation)IMediaStreamImpl_GetInformation,
-    XCAST(SetSameFormat)IMediaStreamImpl_SetSameFormat,
-    XCAST(AllocateSample)IMediaStreamImpl_AllocateSample,
-    XCAST(CreateSharedSample)IMediaStreamImpl_CreateSharedSample,
-    XCAST(SendEndOfStream)IMediaStreamImpl_SendEndOfStream,
+    IDirectDrawMediaStreamImpl_AddRef,
+    IDirectDrawMediaStreamImpl_Release,
+    IDirectDrawMediaStreamImpl_GetMultiMediaStream,
+    IDirectDrawMediaStreamImpl_GetInformation,
+    IDirectDrawMediaStreamImpl_SetSameFormat,
+    IDirectDrawMediaStreamImpl_AllocateSample,
+    IDirectDrawMediaStreamImpl_CreateSharedSample,
+    IDirectDrawMediaStreamImpl_SendEndOfStream,
     IDirectDrawMediaStreamImpl_GetFormat,
     IDirectDrawMediaStreamImpl_SetFormat,
     IDirectDrawMediaStreamImpl_GetDirectDraw,
@@ -295,16 +226,15 @@ static const struct IDirectDrawMediaStreamVtbl DirectDrawMediaStream_Vtbl =
     IDirectDrawMediaStreamImpl_CreateSample,
     IDirectDrawMediaStreamImpl_GetTimePerFrame
 };
-#undef XCAST
 
-HRESULT DirectDrawMediaStream_create(IMultiMediaStream *Parent, const MSPID *pPurposeId,
+HRESULT mediastream_create(IMultiMediaStream *Parent, const MSPID *pPurposeId,
         STREAM_TYPE StreamType, IMediaStream **ppMediaStream)
 {
     IDirectDrawMediaStreamImpl *object;
 
     TRACE("(%p,%s,%p)\n", Parent, debugstr_guid(pPurposeId), ppMediaStream);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IMediaStreamImpl));
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectDrawMediaStreamImpl));
     if (!object)
     {
         ERR("Out of memory\n");

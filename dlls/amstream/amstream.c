@@ -276,11 +276,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
 
     FIXME("(%p/%p)->(%p,%s,%x,%p) partial stub!\n", This, iface, pStreamObject, debugstr_guid(PurposeId), dwFlags, ppNewStream);
 
-    if (IsEqualGUID(PurposeId, &MSPID_PrimaryVideo))
-        hr = DirectDrawMediaStream_create((IMultiMediaStream*)iface, PurposeId, This->StreamType, &pStream);
-    else
-        hr = MediaStream_create((IMultiMediaStream*)iface, PurposeId, This->StreamType, &pStream);
-
+    hr = mediastream_create((IMultiMediaStream*)iface, PurposeId, This->StreamType, &pStream);
     if (SUCCEEDED(hr))
     {
         pNewStreams = CoTaskMemAlloc((This->nbStreams+1)*sizeof(IMediaStream*));
