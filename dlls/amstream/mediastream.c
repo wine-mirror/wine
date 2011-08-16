@@ -52,7 +52,6 @@ typedef struct {
 } IDirectDrawMediaStreamImpl;
 
 static const struct IMediaStreamVtbl MediaStream_Vtbl;
-static const struct IDirectDrawMediaStreamVtbl DirectDrawMediaStream_Vtbl;
 
 HRESULT MediaStream_create(IMultiMediaStream* Parent, const MSPID* pPurposeId, STREAM_TYPE StreamType, IMediaStream** ppMediaStream)
 {
@@ -194,31 +193,6 @@ static const struct IMediaStreamVtbl MediaStream_Vtbl =
     IMediaStreamImpl_SendEndOfStream
 };
 
-HRESULT DirectDrawMediaStream_create(IMultiMediaStream* Parent, const MSPID* pPurposeId, STREAM_TYPE StreamType, IMediaStream** ppMediaStream)
-{
-    IDirectDrawMediaStreamImpl* object;
-
-    TRACE("(%p,%s,%p)\n", Parent, debugstr_guid(pPurposeId), ppMediaStream);
-
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IMediaStreamImpl));
-    if (!object)
-    {
-        ERR("Out of memory\n");
-        return E_OUTOFMEMORY;
-    }
-
-    object->IDirectDrawMediaStream_iface.lpVtbl = &DirectDrawMediaStream_Vtbl;
-    object->ref = 1;
-
-    object->Parent = Parent;
-    object->PurposeId = *pPurposeId;
-    object->StreamType = StreamType;
-
-    *ppMediaStream = (IMediaStream*)&object->IDirectDrawMediaStream_iface;
-
-    return S_OK;
-}
-
 static inline IDirectDrawMediaStreamImpl *impl_from_IDirectDrawMediaStream(IDirectDrawMediaStream *iface)
 {
     return CONTAINING_RECORD(iface, IDirectDrawMediaStreamImpl, IDirectDrawMediaStream_iface);
@@ -322,3 +296,29 @@ static const struct IDirectDrawMediaStreamVtbl DirectDrawMediaStream_Vtbl =
     IDirectDrawMediaStreamImpl_GetTimePerFrame
 };
 #undef XCAST
+
+HRESULT DirectDrawMediaStream_create(IMultiMediaStream *Parent, const MSPID *pPurposeId,
+        STREAM_TYPE StreamType, IMediaStream **ppMediaStream)
+{
+    IDirectDrawMediaStreamImpl *object;
+
+    TRACE("(%p,%s,%p)\n", Parent, debugstr_guid(pPurposeId), ppMediaStream);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IMediaStreamImpl));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->IDirectDrawMediaStream_iface.lpVtbl = &DirectDrawMediaStream_Vtbl;
+    object->ref = 1;
+
+    object->Parent = Parent;
+    object->PurposeId = *pPurposeId;
+    object->StreamType = StreamType;
+
+    *ppMediaStream = (IMediaStream*)&object->IDirectDrawMediaStream_iface;
+
+    return S_OK;
+}
