@@ -2076,11 +2076,7 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         buffer = This->tmp_buffer;
 
     if(flags & AUDCLNT_BUFFERFLAGS_SILENT){
-        WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)This->fmt;
-        if((This->fmt->wFormatTag == WAVE_FORMAT_PCM ||
-                (This->fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-                 IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))) &&
-                This->fmt->wBitsPerSample == 8)
+        if(This->fmt->wBitsPerSample == 8)
             memset(buffer, 128, written_frames * This->fmt->nBlockAlign);
         else
             memset(buffer, 0, written_frames * This->fmt->nBlockAlign);
