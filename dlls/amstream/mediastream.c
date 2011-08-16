@@ -44,7 +44,7 @@ typedef struct {
 } IMediaStreamImpl;
 
 typedef struct {
-    const IDirectDrawMediaStreamVtbl *lpVtbl;
+    IDirectDrawMediaStream IDirectDrawMediaStream_iface;
     LONG ref;
     IMultiMediaStream* Parent;
     MSPID PurposeId;
@@ -207,77 +207,89 @@ HRESULT DirectDrawMediaStream_create(IMultiMediaStream* Parent, const MSPID* pPu
         return E_OUTOFMEMORY;
     }
 
-    object->lpVtbl = &DirectDrawMediaStream_Vtbl;
+    object->IDirectDrawMediaStream_iface.lpVtbl = &DirectDrawMediaStream_Vtbl;
     object->ref = 1;
 
     object->Parent = Parent;
     object->PurposeId = *pPurposeId;
     object->StreamType = StreamType;
 
-    *ppMediaStream = (IMediaStream*)object;
+    *ppMediaStream = (IMediaStream*)&object->IDirectDrawMediaStream_iface;
 
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectDrawMediaStreamImpl_QueryInterface(IDirectDrawMediaStream* iface, REFIID riid, void** ppvObject)
+static inline IDirectDrawMediaStreamImpl *impl_from_IDirectDrawMediaStream(IDirectDrawMediaStream *iface)
 {
-    IMediaStreamImpl *This = (IMediaStreamImpl *)iface;
+    return CONTAINING_RECORD(iface, IDirectDrawMediaStreamImpl, IDirectDrawMediaStream_iface);
+}
 
-    TRACE("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ppvObject);
+static HRESULT WINAPI IDirectDrawMediaStreamImpl_QueryInterface(IDirectDrawMediaStream *iface,
+        REFIID riid, void **ppv)
+{
+    IDirectDrawMediaStreamImpl *This = impl_from_IDirectDrawMediaStream(iface);
+
+    TRACE("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ppv);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IMediaStream) ||
         IsEqualGUID(riid, &IID_IDirectDrawMediaStream))
     {
         IUnknown_AddRef(iface);
-        *ppvObject = This;
+        *ppv = This;
         return S_OK;
     }
 
-    ERR("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
+    ERR("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppv);
     return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI IDirectDrawMediaStreamImpl_GetFormat(IDirectDrawMediaStream* iface, DDSURFACEDESC *pDDSDCurrent,
-                                                           IDirectDrawPalette **ppDirectDrawPalette, DDSURFACEDESC *pDDSDDesired, DWORD *pdwFlags)
+static HRESULT WINAPI IDirectDrawMediaStreamImpl_GetFormat(IDirectDrawMediaStream *iface,
+        DDSURFACEDESC *pDDSDCurrent, IDirectDrawPalette **ppDirectDrawPalette,
+        DDSURFACEDESC *pDDSDDesired, DWORD *pdwFlags)
 {
-    FIXME("(%p)->(%p,%p,%p,%p) stub!\n", iface, pDDSDCurrent, ppDirectDrawPalette, pDDSDDesired, pdwFlags);
+    FIXME("(%p)->(%p,%p,%p,%p) stub!\n", iface, pDDSDCurrent, ppDirectDrawPalette, pDDSDDesired,
+            pdwFlags);
 
     return E_NOTIMPL;
 
 }
 
-static HRESULT WINAPI IDirectDrawMediaStreamImpl_SetFormat(IDirectDrawMediaStream* iface, const DDSURFACEDESC *pDDSurfaceDesc,
-                                                          IDirectDrawPalette *pDirectDrawPalette)
+static HRESULT WINAPI IDirectDrawMediaStreamImpl_SetFormat(IDirectDrawMediaStream *iface,
+        const DDSURFACEDESC *pDDSurfaceDesc, IDirectDrawPalette *pDirectDrawPalette)
 {
     FIXME("(%p)->(%p,%p) stub!\n", iface, pDDSurfaceDesc, pDirectDrawPalette);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectDrawMediaStreamImpl_GetDirectDraw(IDirectDrawMediaStream* iface, IDirectDraw **ppDirectDraw)
+static HRESULT WINAPI IDirectDrawMediaStreamImpl_GetDirectDraw(IDirectDrawMediaStream *iface,
+        IDirectDraw **ppDirectDraw)
 {
     FIXME("(%p)->(%p) stub!\n", iface, ppDirectDraw);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectDrawMediaStreamImpl_SetDirectDraw(IDirectDrawMediaStream* iface, IDirectDraw *pDirectDraw)
+static HRESULT WINAPI IDirectDrawMediaStreamImpl_SetDirectDraw(IDirectDrawMediaStream *iface,
+        IDirectDraw *pDirectDraw)
 {
     FIXME("(%p)->(%p) stub!\n", iface, pDirectDraw);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectDrawMediaStreamImpl_CreateSample(IDirectDrawMediaStream* iface, IDirectDrawSurface *pSurface, const RECT *pRect,
-                                                             DWORD dwFlags, IDirectDrawStreamSample **ppSample)
+static HRESULT WINAPI IDirectDrawMediaStreamImpl_CreateSample(IDirectDrawMediaStream *iface,
+        IDirectDrawSurface *pSurface, const RECT *pRect, DWORD dwFlags,
+        IDirectDrawStreamSample **ppSample)
 {
     FIXME("(%p)->(%p,%p,%x,%p) stub!\n", iface, pSurface, pRect, dwFlags, ppSample);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectDrawMediaStreamImpl_GetTimePerFrame(IDirectDrawMediaStream* iface, STREAM_TIME *pFrameTime)
+static HRESULT WINAPI IDirectDrawMediaStreamImpl_GetTimePerFrame(IDirectDrawMediaStream *iface,
+        STREAM_TIME *pFrameTime)
 {
     FIXME("(%p)->(%p) stub!\n", iface, pFrameTime);
 
