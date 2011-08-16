@@ -279,15 +279,12 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
     hr = mediastream_create((IMultiMediaStream*)iface, PurposeId, This->StreamType, &pStream);
     if (SUCCEEDED(hr))
     {
-        pNewStreams = CoTaskMemAlloc((This->nbStreams+1)*sizeof(IMediaStream*));
+        pNewStreams = CoTaskMemRealloc(This->pStreams, (This->nbStreams+1) * sizeof(IMediaStream*));
         if (!pNewStreams)
         {
             IMediaStream_Release(pStream);
             return E_OUTOFMEMORY;
         }
-        if (This->nbStreams)
-            CopyMemory(pNewStreams, This->pStreams, This->nbStreams*sizeof(IMediaStream*));
-        CoTaskMemFree(This->pStreams);
         This->pStreams = pNewStreams;
         This->pStreams[This->nbStreams] = pStream;
         This->nbStreams++;
