@@ -68,6 +68,27 @@ typedef struct ID3DXMeshImpl
     D3DXATTRIBUTERANGE *attrib_table;
 } ID3DXMeshImpl;
 
+const UINT d3dx_decltype_size[] =
+{
+   /* D3DDECLTYPE_FLOAT1    */ sizeof(FLOAT),
+   /* D3DDECLTYPE_FLOAT2    */ sizeof(D3DXVECTOR2),
+   /* D3DDECLTYPE_FLOAT3    */ sizeof(D3DXVECTOR3),
+   /* D3DDECLTYPE_FLOAT4    */ sizeof(D3DXVECTOR4),
+   /* D3DDECLTYPE_D3DCOLOR  */ sizeof(D3DCOLOR),
+   /* D3DDECLTYPE_UBYTE4    */ 4 * sizeof(BYTE),
+   /* D3DDECLTYPE_SHORT2    */ 2 * sizeof(SHORT),
+   /* D3DDECLTYPE_SHORT4    */ 4 * sizeof(SHORT),
+   /* D3DDECLTYPE_UBYTE4N   */ 4 * sizeof(BYTE),
+   /* D3DDECLTYPE_SHORT2N   */ 2 * sizeof(SHORT),
+   /* D3DDECLTYPE_SHORT4N   */ 4 * sizeof(SHORT),
+   /* D3DDECLTYPE_USHORT2N  */ 2 * sizeof(USHORT),
+   /* D3DDECLTYPE_USHORT4N  */ 4 * sizeof(USHORT),
+   /* D3DDECLTYPE_UDEC3     */ 4, /* 3 * 10 bits + 2 padding */
+   /* D3DDECLTYPE_DEC3N     */ 4,
+   /* D3DDECLTYPE_FLOAT16_2 */ 2 * sizeof(D3DXFLOAT16),
+   /* D3DDECLTYPE_FLOAT16_4 */ 4 * sizeof(D3DXFLOAT16),
+};
+
 static inline ID3DXMeshImpl *impl_from_ID3DXMesh(ID3DXMesh *iface)
 {
     return CONTAINING_RECORD(iface, ID3DXMeshImpl, ID3DXMesh_iface);
@@ -263,6 +284,399 @@ static HRESULT WINAPI ID3DXMeshImpl_CloneMeshFVF(ID3DXMesh *iface, DWORD options
     return iface->lpVtbl->CloneMesh(iface, options, declaration, device, clone_mesh);
 }
 
+static FLOAT scale_clamp_ubyten(FLOAT value)
+{
+    value = value * UCHAR_MAX;
+
+    if (value < 0.0f)
+    {
+        return 0.0f;
+    }
+    else
+    {
+        if (value > UCHAR_MAX) /* Clamp at 255 */
+            return UCHAR_MAX;
+        else
+            return value;
+    }
+}
+
+static FLOAT scale_clamp_shortn(FLOAT value)
+{
+    value = value * SHRT_MAX;
+
+    /* The tests show that the range is SHRT_MIN + 1 to SHRT_MAX. */
+    if (value <= SHRT_MIN)
+    {
+        return SHRT_MIN + 1;
+    }
+    else if (value > SHRT_MAX)
+    {
+         return SHRT_MAX;
+    }
+    else
+    {
+        return value;
+    }
+}
+
+static FLOAT scale_clamp_ushortn(FLOAT value)
+{
+    value = value * USHRT_MAX;
+
+    if (value < 0.0f)
+    {
+        return 0.0f;
+    }
+    else
+    {
+        if (value > USHRT_MAX) /* Clamp at 65535 */
+            return USHRT_MAX;
+        else
+            return value;
+    }
+}
+
+static INT simple_round(FLOAT value)
+{
+    int res = (INT)(value + 0.5f);
+
+    return res;
+}
+
+static void convert_float4(BYTE *dst, CONST D3DXVECTOR4 *src, D3DDECLTYPE type_dst)
+{
+    BOOL fixme_once = FALSE;
+
+    switch (type_dst)
+    {
+        case D3DDECLTYPE_FLOAT1:
+        {
+            FLOAT *dst_ptr = (FLOAT*)dst;
+            *dst_ptr = src->x;
+            break;
+        }
+        case D3DDECLTYPE_FLOAT2:
+        {
+            D3DXVECTOR2 *dst_ptr = (D3DXVECTOR2*)dst;
+            dst_ptr->x = src->x;
+            dst_ptr->y = src->y;
+            break;
+        }
+        case D3DDECLTYPE_FLOAT3:
+        {
+            D3DXVECTOR3 *dst_ptr = (D3DXVECTOR3*)dst;
+            dst_ptr->x = src->x;
+            dst_ptr->y = src->y;
+            dst_ptr->z = src->z;
+            break;
+        }
+        case D3DDECLTYPE_FLOAT4:
+        {
+            D3DXVECTOR4 *dst_ptr = (D3DXVECTOR4*)dst;
+            dst_ptr->x = src->x;
+            dst_ptr->y = src->y;
+            dst_ptr->z = src->z;
+            dst_ptr->w = src->w;
+            break;
+        }
+        case D3DDECLTYPE_D3DCOLOR:
+        {
+            dst[0] = (BYTE)simple_round(scale_clamp_ubyten(src->z));
+            dst[1] = (BYTE)simple_round(scale_clamp_ubyten(src->y));
+            dst[2] = (BYTE)simple_round(scale_clamp_ubyten(src->x));
+            dst[3] = (BYTE)simple_round(scale_clamp_ubyten(src->w));
+            break;
+        }
+        case D3DDECLTYPE_UBYTE4:
+        {
+            dst[0] = src->x < 0.0f ? 0 : (BYTE)simple_round(src->x);
+            dst[1] = src->y < 0.0f ? 0 : (BYTE)simple_round(src->y);
+            dst[2] = src->z < 0.0f ? 0 : (BYTE)simple_round(src->z);
+            dst[3] = src->w < 0.0f ? 0 : (BYTE)simple_round(src->w);
+            break;
+        }
+        case D3DDECLTYPE_SHORT2:
+        {
+            SHORT *dst_ptr = (SHORT*)dst;
+            dst_ptr[0] = (SHORT)simple_round(src->x);
+            dst_ptr[1] = (SHORT)simple_round(src->y);
+            break;
+        }
+        case D3DDECLTYPE_SHORT4:
+        {
+            SHORT *dst_ptr = (SHORT*)dst;
+            dst_ptr[0] = (SHORT)simple_round(src->x);
+            dst_ptr[1] = (SHORT)simple_round(src->y);
+            dst_ptr[2] = (SHORT)simple_round(src->z);
+            dst_ptr[3] = (SHORT)simple_round(src->w);
+            break;
+        }
+        case D3DDECLTYPE_UBYTE4N:
+        {
+            dst[0] = (BYTE)simple_round(scale_clamp_ubyten(src->x));
+            dst[1] = (BYTE)simple_round(scale_clamp_ubyten(src->y));
+            dst[2] = (BYTE)simple_round(scale_clamp_ubyten(src->z));
+            dst[3] = (BYTE)simple_round(scale_clamp_ubyten(src->w));
+            break;
+        }
+        case D3DDECLTYPE_SHORT2N:
+        {
+            SHORT *dst_ptr = (SHORT*)dst;
+            dst_ptr[0] = (SHORT)simple_round(scale_clamp_shortn(src->x));
+            dst_ptr[1] = (SHORT)simple_round(scale_clamp_shortn(src->y));
+            break;
+        }
+        case D3DDECLTYPE_SHORT4N:
+        {
+            SHORT *dst_ptr = (SHORT*)dst;
+            dst_ptr[0] = (SHORT)simple_round(scale_clamp_shortn(src->x));
+            dst_ptr[1] = (SHORT)simple_round(scale_clamp_shortn(src->y));
+            dst_ptr[2] = (SHORT)simple_round(scale_clamp_shortn(src->z));
+            dst_ptr[3] = (SHORT)simple_round(scale_clamp_shortn(src->w));
+            break;
+        }
+        case D3DDECLTYPE_USHORT2N:
+        {
+            USHORT *dst_ptr = (USHORT*)dst;
+            dst_ptr[0] = (USHORT)simple_round(scale_clamp_ushortn(src->x));
+            dst_ptr[1] = (USHORT)simple_round(scale_clamp_ushortn(src->y));
+            break;
+        }
+        case D3DDECLTYPE_USHORT4N:
+        {
+            USHORT *dst_ptr = (USHORT*)dst;
+            dst_ptr[0] = (USHORT)simple_round(scale_clamp_ushortn(src->x));
+            dst_ptr[1] = (USHORT)simple_round(scale_clamp_ushortn(src->y));
+            dst_ptr[2] = (USHORT)simple_round(scale_clamp_ushortn(src->z));
+            dst_ptr[3] = (USHORT)simple_round(scale_clamp_ushortn(src->w));
+            break;
+        }
+        case D3DDECLTYPE_FLOAT16_2:
+        {
+            D3DXFloat32To16Array((D3DXFLOAT16*)dst, (FLOAT*)src, 2);
+            break;
+        }
+        case D3DDECLTYPE_FLOAT16_4:
+        {
+            D3DXFloat32To16Array((D3DXFLOAT16*)dst, (FLOAT*)src, 4);
+            break;
+        }
+        default:
+            if (!fixme_once++)
+                FIXME("Conversion from D3DDECLTYPE_FLOAT4 to %d not implemented.\n", type_dst);
+            break;
+    }
+}
+
+static void convert_component(BYTE *dst, BYTE *src, D3DDECLTYPE type_dst, D3DDECLTYPE type_src)
+{
+    BOOL fixme_once = FALSE;
+
+    switch (type_src)
+    {
+        case D3DDECLTYPE_FLOAT1:
+        {
+            FLOAT *src_ptr = (FLOAT*)src;
+            D3DXVECTOR4 src_float4 = {*src_ptr, 0.0f, 0.0f, 1.0f};
+            convert_float4(dst, &src_float4, type_dst);
+            break;
+        }
+        case D3DDECLTYPE_FLOAT2:
+        {
+            D3DXVECTOR2 *src_ptr = (D3DXVECTOR2*)src;
+            D3DXVECTOR4 src_float4 = {src_ptr->x, src_ptr->y, 0.0f, 1.0f};
+            convert_float4(dst, &src_float4, type_dst);
+            break;
+        }
+        case D3DDECLTYPE_FLOAT3:
+        {
+            D3DXVECTOR3 *src_ptr = (D3DXVECTOR3*)src;
+            D3DXVECTOR4 src_float4 = {src_ptr->x, src_ptr->y, src_ptr->z, 1.0f};
+            convert_float4(dst, &src_float4, type_dst);
+            break;
+        }
+        case D3DDECLTYPE_FLOAT4:
+        {
+            D3DXVECTOR4 *src_ptr = (D3DXVECTOR4*)src;
+            D3DXVECTOR4 src_float4 = {src_ptr->x, src_ptr->y, src_ptr->z, src_ptr->w};
+            convert_float4(dst, &src_float4, type_dst);
+            break;
+        }
+        case D3DDECLTYPE_D3DCOLOR:
+        {
+            D3DXVECTOR4 src_float4 =
+            {
+                (FLOAT)src[2]/UCHAR_MAX,
+                (FLOAT)src[1]/UCHAR_MAX,
+                (FLOAT)src[0]/UCHAR_MAX,
+                (FLOAT)src[3]/UCHAR_MAX
+            };
+            convert_float4(dst, &src_float4, type_dst);
+            break;
+        }
+        case D3DDECLTYPE_UBYTE4:
+        {
+            D3DXVECTOR4 src_float4 = {src[0], src[1], src[2], src[3]};
+            convert_float4(dst, &src_float4, type_dst);
+            break;
+        }
+        case D3DDECLTYPE_SHORT2:
+        {
+            SHORT *src_ptr = (SHORT*)src;
+            D3DXVECTOR4 src_float4 = {src_ptr[0], src_ptr[1], 0.0f, 1.0f};
+            convert_float4(dst, &src_float4, type_dst);
+            break;
+        }
+        case D3DDECLTYPE_SHORT4:
+        {
+            SHORT *src_ptr = (SHORT*)src;
+            D3DXVECTOR4 src_float4 = {src_ptr[0], src_ptr[1], src_ptr[2], src_ptr[3]};
+            convert_float4(dst, &src_float4, type_dst);
+            break;
+        }
+        case D3DDECLTYPE_UBYTE4N:
+        {
+            D3DXVECTOR4 src_float4 =
+            {
+                (FLOAT)src[0]/UCHAR_MAX,
+                (FLOAT)src[1]/UCHAR_MAX,
+                (FLOAT)src[2]/UCHAR_MAX,
+                (FLOAT)src[3]/UCHAR_MAX
+            };
+            convert_float4(dst, &src_float4, type_dst);
+            break;
+        }
+        case D3DDECLTYPE_SHORT2N:
+        {
+            SHORT *src_ptr = (SHORT*)src;
+            D3DXVECTOR4 src_float4 = {(FLOAT)src_ptr[0]/SHRT_MAX, (FLOAT)src_ptr[1]/SHRT_MAX, 0.0f, 1.0f};
+            convert_float4(dst, &src_float4, type_dst);
+            break;
+        }
+        case D3DDECLTYPE_SHORT4N:
+        {
+            SHORT *src_ptr = (SHORT*)src;
+            D3DXVECTOR4 src_float4 =
+            {
+                (FLOAT)src_ptr[0]/SHRT_MAX,
+                (FLOAT)src_ptr[1]/SHRT_MAX,
+                (FLOAT)src_ptr[2]/SHRT_MAX,
+                (FLOAT)src_ptr[3]/SHRT_MAX
+            };
+            convert_float4(dst, &src_float4, type_dst);
+            break;
+        }
+        case D3DDECLTYPE_FLOAT16_2:
+        {
+            D3DXVECTOR4 src_float4 = {0.0f, 0.0f, 0.0f, 1.0f};
+            D3DXFloat16To32Array((FLOAT*)&src_float4, (D3DXFLOAT16*)src, 2);
+            convert_float4(dst, &src_float4, type_dst);
+            break;
+        }
+        case D3DDECLTYPE_FLOAT16_4:
+        {
+            D3DXVECTOR4 src_float4;
+            D3DXFloat16To32Array((FLOAT*)&src_float4, (D3DXFLOAT16*)src, 4);
+            convert_float4(dst, &src_float4, type_dst);
+            break;
+        }
+        default:
+            if (!fixme_once++)
+                FIXME("Conversion of D3DDECLTYPE %d to %d not implemented.\n", type_src, type_dst);
+            break;
+    }
+}
+
+static INT get_equivalent_declaration_index(D3DVERTEXELEMENT9 orig_declaration, D3DVERTEXELEMENT9 *declaration)
+{
+    INT i;
+
+    for (i = 0; declaration[i].Stream != 0xff; i++)
+    {
+        if (orig_declaration.Usage == declaration[i].Usage
+            && orig_declaration.UsageIndex == declaration[i].UsageIndex)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+static HRESULT convert_vertex_buffer(ID3DXMesh *mesh_dst, ID3DXMesh *mesh_src)
+{
+    HRESULT hr;
+    D3DVERTEXELEMENT9 orig_declaration[MAX_FVF_DECL_SIZE] = {D3DDECL_END()};
+    D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE] = {D3DDECL_END()};
+    BYTE *vb_dst = NULL;
+    BYTE *vb_src = NULL;
+    UINT i;
+    UINT num_vertices = mesh_src->lpVtbl->GetNumVertices(mesh_src);
+    UINT dst_vertex_size = mesh_dst->lpVtbl->GetNumBytesPerVertex(mesh_dst);
+    UINT src_vertex_size = mesh_src->lpVtbl->GetNumBytesPerVertex(mesh_src);
+
+    hr = mesh_src->lpVtbl->GetDeclaration(mesh_src, orig_declaration);
+    if (FAILED(hr)) return hr;
+    hr = mesh_dst->lpVtbl->GetDeclaration(mesh_dst, declaration);
+    if (FAILED(hr)) return hr;
+
+    hr = mesh_src->lpVtbl->LockVertexBuffer(mesh_src, D3DLOCK_READONLY, (void**)&vb_src);
+    if (FAILED(hr)) goto cleanup;
+    hr = mesh_dst->lpVtbl->LockVertexBuffer(mesh_dst, 0, (void**)&vb_dst);
+    if (FAILED(hr)) goto cleanup;
+
+    /* Clear all new fields by clearing the entire vertex buffer. */
+    memset(vb_dst, 0, num_vertices * dst_vertex_size);
+
+    for (i = 0; orig_declaration[i].Stream != 0xff; i++)
+    {
+        INT eq_idx = get_equivalent_declaration_index(orig_declaration[i], declaration);
+
+        if (eq_idx >= 0)
+        {
+            UINT j;
+            for (j = 0; j < num_vertices; j++)
+            {
+                UINT idx_dst = dst_vertex_size * j + declaration[eq_idx].Offset;
+                UINT idx_src = src_vertex_size * j + orig_declaration[i].Offset;
+                UINT type_size = d3dx_decltype_size[orig_declaration[i].Type];
+
+                if (orig_declaration[i].Type == declaration[eq_idx].Type)
+                    memcpy(&vb_dst[idx_dst], &vb_src[idx_src], type_size);
+                else
+                   convert_component(&vb_dst[idx_dst], &vb_src[idx_src], declaration[eq_idx].Type, orig_declaration[i].Type);
+            }
+        }
+    }
+
+    hr = D3D_OK;
+cleanup:
+    if (vb_dst) mesh_dst->lpVtbl->UnlockVertexBuffer(mesh_dst);
+    if (vb_src) mesh_src->lpVtbl->UnlockVertexBuffer(mesh_src);
+
+    return hr;
+}
+
+static BOOL declaration_equals(CONST D3DVERTEXELEMENT9 *declaration1, CONST D3DVERTEXELEMENT9 *declaration2)
+{
+    UINT size1 = 0, size2 = 0;
+
+    /* Find the size of each declaration */
+    while (declaration1[size1].Stream != 0xff) size1++;
+    while (declaration2[size2].Stream != 0xff) size2++;
+
+    /* If not same size then they are definitely not equal */
+    if (size1 != size2)
+        return FALSE;
+
+    /* Check that all components are the same */
+    if (memcmp(declaration1, declaration2, size1*sizeof(*declaration1)) == 0)
+        return TRUE;
+
+    return FALSE;
+}
+
 static HRESULT WINAPI ID3DXMeshImpl_CloneMesh(ID3DXMesh *iface, DWORD options, CONST D3DVERTEXELEMENT9 *declaration, LPDIRECT3DDEVICE9 device,
                                               LPD3DXMESH *clone_mesh_out)
 {
@@ -274,6 +688,7 @@ static HRESULT WINAPI ID3DXMeshImpl_CloneMesh(ID3DXMesh *iface, DWORD options, C
     DWORD vertex_size;
     HRESULT hr;
     int i;
+    BOOL same_declaration;
 
     TRACE("(%p)->(%x,%p,%p,%p)\n", This, options, declaration, device, clone_mesh_out);
 
@@ -283,30 +698,24 @@ static HRESULT WINAPI ID3DXMeshImpl_CloneMesh(ID3DXMesh *iface, DWORD options, C
     hr = iface->lpVtbl->GetDeclaration(iface, orig_declaration);
     if (FAILED(hr)) return hr;
 
-    for (i = 0; orig_declaration[i].Stream != 0xff; i++) {
-        if (memcmp(&orig_declaration[i], &declaration[i], sizeof(*declaration)))
-        {
-            FIXME("Vertex buffer conversion not implemented.\n");
-            return E_NOTIMPL;
-        }
-    }
-
     hr = D3DXCreateMesh(This->numfaces, This->numvertices, options & ~D3DXMESH_VB_SHARE,
                         declaration, device, &clone_mesh);
     if (FAILED(hr)) return hr;
 
     cloned_this = impl_from_ID3DXMesh(clone_mesh);
     vertex_size = clone_mesh->lpVtbl->GetNumBytesPerVertex(clone_mesh);
+    same_declaration = declaration_equals(declaration, orig_declaration);
 
     if (options & D3DXMESH_VB_SHARE) {
+        if (!same_declaration) goto error;
         IDirect3DVertexBuffer9_AddRef(This->vertex_buffer);
         /* FIXME: refactor to avoid creating a new vertex buffer */
         IDirect3DVertexBuffer9_Release(cloned_this->vertex_buffer);
         cloned_this->vertex_buffer = This->vertex_buffer;
-    } else {
+    } else if (same_declaration) {
         hr = iface->lpVtbl->LockVertexBuffer(iface, D3DLOCK_READONLY, &data_in);
         if (FAILED(hr)) goto error;
-        hr = clone_mesh->lpVtbl->LockVertexBuffer(clone_mesh, D3DLOCK_DISCARD, &data_out);
+        hr = clone_mesh->lpVtbl->LockVertexBuffer(clone_mesh, 0, &data_out);
         if (FAILED(hr)) {
             iface->lpVtbl->UnlockVertexBuffer(iface);
             goto error;
@@ -314,11 +723,14 @@ static HRESULT WINAPI ID3DXMeshImpl_CloneMesh(ID3DXMesh *iface, DWORD options, C
         memcpy(data_out, data_in, This->numvertices * vertex_size);
         clone_mesh->lpVtbl->UnlockVertexBuffer(clone_mesh);
         iface->lpVtbl->UnlockVertexBuffer(iface);
+    } else {
+        hr = convert_vertex_buffer(clone_mesh, iface);
+        if (FAILED(hr)) goto error;
     }
 
     hr = iface->lpVtbl->LockIndexBuffer(iface, D3DLOCK_READONLY, &data_in);
     if (FAILED(hr)) goto error;
-    hr = clone_mesh->lpVtbl->LockIndexBuffer(clone_mesh, D3DLOCK_DISCARD, &data_out);
+    hr = clone_mesh->lpVtbl->LockIndexBuffer(clone_mesh, 0, &data_out);
     if (FAILED(hr)) {
         iface->lpVtbl->UnlockIndexBuffer(iface);
         goto error;
@@ -1605,27 +2017,6 @@ HRESULT WINAPI D3DXComputeBoundingSphere(CONST D3DXVECTOR3* pfirstposition, DWOR
     }
     return D3D_OK;
 }
-
-static const UINT d3dx_decltype_size[D3DDECLTYPE_UNUSED] =
-{
-   /* D3DDECLTYPE_FLOAT1    */ 1 * 4,
-   /* D3DDECLTYPE_FLOAT2    */ 2 * 4,
-   /* D3DDECLTYPE_FLOAT3    */ 3 * 4,
-   /* D3DDECLTYPE_FLOAT4    */ 4 * 4,
-   /* D3DDECLTYPE_D3DCOLOR  */ 4 * 1,
-   /* D3DDECLTYPE_UBYTE4    */ 4 * 1,
-   /* D3DDECLTYPE_SHORT2    */ 2 * 2,
-   /* D3DDECLTYPE_SHORT4    */ 4 * 2,
-   /* D3DDECLTYPE_UBYTE4N   */ 4 * 1,
-   /* D3DDECLTYPE_SHORT2N   */ 2 * 2,
-   /* D3DDECLTYPE_SHORT4N   */ 4 * 2,
-   /* D3DDECLTYPE_USHORT2N  */ 2 * 2,
-   /* D3DDECLTYPE_USHORT4N  */ 4 * 2,
-   /* D3DDECLTYPE_UDEC3     */ 4, /* 3 * 10 bits + 2 padding */
-   /* D3DDECLTYPE_DEC3N     */ 4,
-   /* D3DDECLTYPE_FLOAT16_2 */ 2 * 2,
-   /* D3DDECLTYPE_FLOAT16_4 */ 4 * 2,
-};
 
 static void append_decl_element(D3DVERTEXELEMENT9 *declaration, UINT *idx, UINT *offset,
         D3DDECLTYPE type, D3DDECLUSAGE usage, UINT usage_idx)
