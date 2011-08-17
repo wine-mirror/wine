@@ -333,4 +333,4 @@
 @ stdcall D3DXVec4Normalize(ptr ptr)
 @ stdcall D3DXVec4Transform(ptr ptr ptr)
 @ stdcall D3DXVec4TransformArray(ptr long ptr long ptr long)
-@ stub D3DXWeldVertices(ptr long ptr ptr ptr ptr ptr)
+@ stdcall D3DXWeldVertices(ptr long ptr ptr ptr ptr ptr)

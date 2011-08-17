@@ -29,6 +29,9 @@
 #define COBJMACROS
 #define NONAMELESSUNION
 #include <assert.h>
+#ifdef HAVE_FLOAT_H
+# include <float.h>
+#endif
 #include "windef.h"
 #include "wingdi.h"
 #include "d3dx9.h"
@@ -5538,6 +5541,756 @@ error:
     HeapFree(GetProcessHeap(), 0, raw_outline);
     if (oldfont) SelectObject(hdc, oldfont);
     if (font) DeleteObject(font);
+
+    return hr;
+}
+
+static BOOL weld_float1(void *to, void *from, FLOAT epsilon)
+{
+    FLOAT *v1 = to;
+    FLOAT *v2 = from;
+
+    if (fabsf(*v1 - *v2) <= epsilon)
+    {
+        *v1 = *v2;
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL weld_float2(void *to, void *from, FLOAT epsilon)
+{
+    D3DXVECTOR2 *v1 = to;
+    D3DXVECTOR2 *v2 = from;
+    FLOAT diff_x = fabsf(v1->x - v2->x);
+    FLOAT diff_y = fabsf(v1->y - v2->y);
+    FLOAT max_abs_diff = max(diff_x, diff_y);
+
+    if (max_abs_diff <= epsilon)
+    {
+        memcpy(to, from, sizeof(D3DXVECTOR2));
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL weld_float3(void *to, void *from, FLOAT epsilon)
+{
+    D3DXVECTOR3 *v1 = to;
+    D3DXVECTOR3 *v2 = from;
+    FLOAT diff_x = fabsf(v1->x - v2->x);
+    FLOAT diff_y = fabsf(v1->y - v2->y);
+    FLOAT diff_z = fabsf(v1->z - v2->z);
+    FLOAT max_abs_diff = max(diff_x, diff_y);
+    max_abs_diff = max(diff_z, max_abs_diff);
+
+    if (max_abs_diff <= epsilon)
+    {
+        memcpy(to, from, sizeof(D3DXVECTOR3));
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL weld_float4(void *to, void *from, FLOAT epsilon)
+{
+    D3DXVECTOR4 *v1 = to;
+    D3DXVECTOR4 *v2 = from;
+    FLOAT diff_x = fabsf(v1->x - v2->x);
+    FLOAT diff_y = fabsf(v1->y - v2->y);
+    FLOAT diff_z = fabsf(v1->z - v2->z);
+    FLOAT diff_w = fabsf(v1->w - v2->w);
+    FLOAT max_abs_diff = fmax(diff_x, diff_y);
+    max_abs_diff = max(diff_z, max_abs_diff);
+    max_abs_diff = max(diff_w, max_abs_diff);
+
+    if (max_abs_diff <= epsilon)
+    {
+        memcpy(to, from, sizeof(D3DXVECTOR4));
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL weld_ubyte4(void *to, void *from, FLOAT epsilon)
+{
+    BYTE *b1 = to;
+    BYTE *b2 = from;
+    BYTE truncated_epsilon = (BYTE)epsilon;
+    BYTE diff_x = b1[0] > b2[0] ? b1[0] - b2[0] : b2[0] - b1[0];
+    BYTE diff_y = b1[1] > b2[1] ? b1[1] - b2[1] : b2[1] - b1[1];
+    BYTE diff_z = b1[2] > b2[2] ? b1[2] - b2[2] : b2[2] - b1[2];
+    BYTE diff_w = b1[3] > b2[3] ? b1[3] - b2[3] : b2[3] - b1[3];
+    BYTE max_diff = max(diff_x, diff_y);
+    max_diff = max(diff_z, max_diff);
+    max_diff = max(diff_w, max_diff);
+
+    if (max_diff <= truncated_epsilon)
+    {
+        memcpy(to, from, 4 * sizeof(BYTE));
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL weld_ubyte4n(void *to, void *from, FLOAT epsilon)
+{
+    return weld_ubyte4(to, from, epsilon * UCHAR_MAX);
+}
+
+static BOOL weld_d3dcolor(void *to, void *from, FLOAT epsilon)
+{
+    return weld_ubyte4n(to, from, epsilon);
+}
+
+static BOOL weld_short2(void *to, void *from, FLOAT epsilon)
+{
+    SHORT *s1 = to;
+    SHORT *s2 = from;
+    SHORT truncated_epsilon = (SHORT)epsilon;
+    SHORT diff_x = abs(s1[0] - s2[0]);
+    SHORT diff_y = abs(s1[1] - s2[1]);
+    SHORT max_abs_diff = max(diff_x, diff_y);
+
+    if (max_abs_diff <= truncated_epsilon)
+    {
+        memcpy(to, from, 2 * sizeof(SHORT));
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL weld_short2n(void *to, void *from, FLOAT epsilon)
+{
+    return weld_short2(to, from, epsilon * SHRT_MAX);
+}
+
+static BOOL weld_short4(void *to, void *from, FLOAT epsilon)
+{
+    SHORT *s1 = to;
+    SHORT *s2 = from;
+    SHORT truncated_epsilon = (SHORT)epsilon;
+    SHORT diff_x = abs(s1[0] - s2[0]);
+    SHORT diff_y = abs(s1[1] - s2[1]);
+    SHORT diff_z = abs(s1[2] - s2[2]);
+    SHORT diff_w = abs(s1[3] - s2[3]);
+    SHORT max_abs_diff = max(diff_x, diff_y);
+    max_abs_diff = max(diff_z, max_abs_diff);
+    max_abs_diff = max(diff_w, max_abs_diff);
+
+    if (max_abs_diff <= truncated_epsilon)
+    {
+        memcpy(to, from, 4 * sizeof(SHORT));
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL weld_short4n(void *to, void *from, FLOAT epsilon)
+{
+    return weld_short4(to, from, epsilon * SHRT_MAX);
+}
+
+static BOOL weld_ushort2n(void *to, void *from, FLOAT epsilon)
+{
+    USHORT *s1 = to;
+    USHORT *s2 = from;
+    USHORT scaled_epsilon = (USHORT)(epsilon * USHRT_MAX);
+    USHORT diff_x = s1[0] > s2[0] ? s1[0] - s2[0] : s2[0] - s1[0];
+    USHORT diff_y = s1[1] > s2[1] ? s1[1] - s2[1] : s2[1] - s1[1];
+    USHORT max_diff = max(diff_x, diff_y);
+
+    if (max_diff <= scaled_epsilon)
+    {
+        memcpy(to, from, 2 * sizeof(USHORT));
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL weld_ushort4n(void *to, void *from, FLOAT epsilon)
+{
+    USHORT *s1 = to;
+    USHORT *s2 = from;
+    USHORT scaled_epsilon = (USHORT)(epsilon * USHRT_MAX);
+    USHORT diff_x = s1[0] > s2[0] ? s1[0] - s2[0] : s2[0] - s1[0];
+    USHORT diff_y = s1[1] > s2[1] ? s1[1] - s2[1] : s2[1] - s1[1];
+    USHORT diff_z = s1[2] > s2[2] ? s1[2] - s2[2] : s2[2] - s1[2];
+    USHORT diff_w = s1[3] > s2[3] ? s1[3] - s2[3] : s2[3] - s1[3];
+    USHORT max_diff = max(diff_x, diff_y);
+    max_diff = max(diff_z, max_diff);
+    max_diff = max(diff_w, max_diff);
+
+    if (max_diff <= scaled_epsilon)
+    {
+        memcpy(to, from, 4 * sizeof(USHORT));
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+struct udec3
+{
+    UINT x;
+    UINT y;
+    UINT z;
+    UINT w;
+};
+
+static struct udec3 dword_to_udec3(DWORD d)
+{
+    struct udec3 v;
+
+    v.x = d & 0x3ff;
+    v.y = (d & 0xffc00) >> 10;
+    v.z = (d & 0x3ff00000) >> 20;
+    v.w = (d & 0xc0000000) >> 30;
+
+    return v;
+}
+
+static BOOL weld_udec3(void *to, void *from, FLOAT epsilon)
+{
+    DWORD *d1 = to;
+    DWORD *d2 = from;
+    struct udec3 v1 = dword_to_udec3(*d1);
+    struct udec3 v2 = dword_to_udec3(*d2);
+    UINT truncated_epsilon = (UINT)epsilon;
+    UINT diff_x = v1.x > v2.x ? v1.x - v2.x : v2.x - v1.x;
+    UINT diff_y = v1.y > v2.y ? v1.y - v2.y : v2.y - v1.y;
+    UINT diff_z = v1.z > v2.z ? v1.z - v2.z : v2.z - v1.z;
+    UINT diff_w = v1.w > v2.w ? v1.w - v2.w : v2.w - v1.w;
+    UINT max_diff = max(diff_x, diff_y);
+    max_diff = max(diff_z, max_diff);
+    max_diff = max(diff_w, max_diff);
+
+    if (max_diff <= truncated_epsilon)
+    {
+        memcpy(to, from, sizeof(DWORD));
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+struct dec3n
+{
+    INT x;
+    INT y;
+    INT z;
+    INT w;
+};
+
+static struct dec3n dword_to_dec3n(DWORD d)
+{
+    struct dec3n v;
+
+    v.x = d & 0x3ff;
+    v.y = (d & 0xffc00) >> 10;
+    v.z = (d & 0x3ff00000) >> 20;
+    v.w = (d & 0xc0000000) >> 30;
+
+    return v;
+}
+
+static BOOL weld_dec3n(void *to, void *from, FLOAT epsilon)
+{
+    const UINT MAX_DEC3N = 511;
+    DWORD *d1 = to;
+    DWORD *d2 = from;
+    struct dec3n v1 = dword_to_dec3n(*d1);
+    struct dec3n v2 = dword_to_dec3n(*d2);
+    INT scaled_epsilon = (INT)(epsilon * MAX_DEC3N);
+    INT diff_x = abs(v1.x - v2.x);
+    INT diff_y = abs(v1.y - v2.y);
+    INT diff_z = abs(v1.z - v2.z);
+    INT diff_w = abs(v1.w - v2.w);
+    INT max_abs_diff = max(diff_x, diff_y);
+    max_abs_diff = max(diff_z, max_abs_diff);
+    max_abs_diff = max(diff_w, max_abs_diff);
+
+    if (max_abs_diff <= scaled_epsilon)
+    {
+        memcpy(to, from, sizeof(DWORD));
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL weld_float16_2(void *to, void *from, FLOAT epsilon)
+{
+    D3DXFLOAT16 *v1_float16 = to;
+    D3DXFLOAT16 *v2_float16 = from;
+    FLOAT diff_x;
+    FLOAT diff_y;
+    FLOAT max_abs_diff;
+    const UINT NUM_ELEM = 2;
+    FLOAT v1[NUM_ELEM];
+    FLOAT v2[NUM_ELEM];
+
+    D3DXFloat16To32Array(v1, v1_float16, NUM_ELEM);
+    D3DXFloat16To32Array(v2, v2_float16, NUM_ELEM);
+
+    diff_x = fabsf(v1[0] - v2[0]);
+    diff_y = fabsf(v1[1] - v2[1]);
+    max_abs_diff = max(diff_x, diff_y);
+
+    if (max_abs_diff <= epsilon)
+    {
+        memcpy(to, from, NUM_ELEM * sizeof(D3DXFLOAT16));
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL weld_float16_4(void *to, void *from, FLOAT epsilon)
+{
+    D3DXFLOAT16 *v1_float16 = to;
+    D3DXFLOAT16 *v2_float16 = from;
+    FLOAT diff_x;
+    FLOAT diff_y;
+    FLOAT diff_z;
+    FLOAT diff_w;
+    FLOAT max_abs_diff;
+    const UINT NUM_ELEM = 4;
+    FLOAT v1[NUM_ELEM];
+    FLOAT v2[NUM_ELEM];
+
+    D3DXFloat16To32Array(v1, v1_float16, NUM_ELEM);
+    D3DXFloat16To32Array(v2, v2_float16, NUM_ELEM);
+
+    diff_x = fabsf(v1[0] - v2[0]);
+    diff_y = fabsf(v1[1] - v2[1]);
+    diff_z = fabsf(v1[2] - v2[2]);
+    diff_w = fabsf(v1[3] - v2[3]);
+    max_abs_diff = max(diff_x, diff_y);
+    max_abs_diff = max(diff_z, max_abs_diff);
+    max_abs_diff = max(diff_w, max_abs_diff);
+
+    if (max_abs_diff <= epsilon)
+    {
+        memcpy(to, from, NUM_ELEM * sizeof(D3DXFLOAT16));
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/* Sets the vertex components to the same value if they are within epsilon. */
+static BOOL weld_component(void *to, void *from, D3DDECLTYPE type, FLOAT epsilon)
+{
+    /* Quiet FIXMEs as this is in a loop with potentially thousand of iterations. */
+    BOOL fixme_once_unused = FALSE;
+    BOOL fixme_once_unknown = FALSE;
+
+    switch (type)
+    {
+        case D3DDECLTYPE_FLOAT1:
+            return weld_float1(to, from, epsilon);
+
+        case D3DDECLTYPE_FLOAT2:
+            return weld_float2(to, from, epsilon);
+
+        case D3DDECLTYPE_FLOAT3:
+            return weld_float3(to, from, epsilon);
+
+        case D3DDECLTYPE_FLOAT4:
+            return weld_float4(to, from, epsilon);
+
+        case D3DDECLTYPE_D3DCOLOR:
+            return weld_d3dcolor(to, from, epsilon);
+
+        case D3DDECLTYPE_UBYTE4:
+            return weld_ubyte4(to, from, epsilon);
+
+        case D3DDECLTYPE_SHORT2:
+            return weld_short2(to, from, epsilon);
+
+        case D3DDECLTYPE_SHORT4:
+            return weld_short4(to, from, epsilon);
+
+        case D3DDECLTYPE_UBYTE4N:
+            return weld_ubyte4n(to, from, epsilon);
+
+        case D3DDECLTYPE_SHORT2N:
+            return weld_short2n(to, from, epsilon);
+
+        case D3DDECLTYPE_SHORT4N:
+            return weld_short4n(to, from, epsilon);
+
+        case D3DDECLTYPE_USHORT2N:
+            return weld_ushort2n(to, from, epsilon);
+
+        case D3DDECLTYPE_USHORT4N:
+            return weld_ushort4n(to, from, epsilon);
+
+        case D3DDECLTYPE_UDEC3:
+            return weld_udec3(to, from, epsilon);
+
+        case D3DDECLTYPE_DEC3N:
+            return weld_dec3n(to, from, epsilon);
+
+        case D3DDECLTYPE_FLOAT16_2:
+            return weld_float16_2(to, from, epsilon);
+
+        case D3DDECLTYPE_FLOAT16_4:
+            return weld_float16_4(to, from, epsilon);
+
+        case D3DDECLTYPE_UNUSED:
+            if (!fixme_once_unused++)
+                FIXME("D3DDECLTYPE_UNUSED welding not implemented.\n");
+            break;
+
+        default:
+            if (!fixme_once_unknown++)
+                FIXME("Welding of unknown declaration type %d is not implemented.\n", type);
+            break;
+    }
+
+    return FALSE;
+}
+
+static FLOAT get_component_epsilon(const D3DVERTEXELEMENT9 *decl_ptr, const D3DXWELDEPSILONS *epsilons)
+{
+    FLOAT epsilon = 0.0f;
+    /* Quiet FIXMEs as this is in a loop with potentially thousand of iterations. */
+    static BOOL fixme_once_blendindices = FALSE;
+    static BOOL fixme_once_positiont = FALSE;
+    static BOOL fixme_once_fog = FALSE;
+    static BOOL fixme_once_depth = FALSE;
+    static BOOL fixme_once_sample = FALSE;
+    static BOOL fixme_once_unknown = FALSE;
+
+    switch (decl_ptr->Usage)
+    {
+        case D3DDECLUSAGE_POSITION:
+            epsilon = epsilons->Position;
+            break;
+        case D3DDECLUSAGE_BLENDWEIGHT:
+            epsilon = epsilons->BlendWeights;
+            break;
+        case D3DDECLUSAGE_NORMAL:
+            epsilon = epsilons->Normals;
+            break;
+        case D3DDECLUSAGE_PSIZE:
+            epsilon = epsilons->PSize;
+            break;
+        case D3DDECLUSAGE_TEXCOORD:
+        {
+            BYTE usage_index = decl_ptr->UsageIndex;
+            if (usage_index > 7)
+                usage_index = 7;
+            epsilon = epsilons->Texcoords[usage_index];
+            break;
+        }
+        case D3DDECLUSAGE_TANGENT:
+            epsilon = epsilons->Tangent;
+            break;
+        case D3DDECLUSAGE_BINORMAL:
+            epsilon = epsilons->Binormal;
+            break;
+        case D3DDECLUSAGE_TESSFACTOR:
+            epsilon = epsilons->TessFactor;
+            break;
+        case D3DDECLUSAGE_COLOR:
+            if (decl_ptr->UsageIndex == 0)
+                epsilon = epsilons->Diffuse;
+            else if (decl_ptr->UsageIndex == 1)
+                epsilon = epsilons->Specular;
+            else
+                epsilon = 1e-6f;
+            break;
+        case D3DDECLUSAGE_BLENDINDICES:
+            if (!fixme_once_blendindices++)
+                FIXME("D3DDECLUSAGE_BLENDINDICES welding not implemented.\n");
+            break;
+        case D3DDECLUSAGE_POSITIONT:
+            if (!fixme_once_positiont++)
+                FIXME("D3DDECLUSAGE_POSITIONT welding not implemented.\n");
+            break;
+        case D3DDECLUSAGE_FOG:
+            if (!fixme_once_fog++)
+                FIXME("D3DDECLUSAGE_FOG welding not implemented.\n");
+            break;
+        case D3DDECLUSAGE_DEPTH:
+            if (!fixme_once_depth++)
+                FIXME("D3DDECLUSAGE_DEPTH welding not implemented.\n");
+            break;
+        case D3DDECLUSAGE_SAMPLE:
+            if (!fixme_once_sample++)
+                FIXME("D3DDECLUSAGE_SAMPLE welding not implemented.\n");
+            break;
+        default:
+            if (!fixme_once_unknown++)
+                FIXME("Unknown usage %x\n", decl_ptr->Usage);
+            break;
+    }
+
+    return epsilon;
+}
+
+/* Helper function for reading a 32-bit index buffer. */
+static inline DWORD read_ib(void *index_buffer, BOOL indices_are_32bit,
+                            DWORD index)
+{
+    if (indices_are_32bit)
+    {
+        DWORD *indices = index_buffer;
+        return indices[index];
+    }
+    else
+    {
+        WORD *indices = index_buffer;
+        return indices[index];
+    }
+}
+
+/* Helper function for writing to a 32-bit index buffer. */
+static inline void write_ib(void *index_buffer, BOOL indices_are_32bit,
+                            DWORD index, DWORD value)
+{
+    if (indices_are_32bit)
+    {
+        DWORD *indices = index_buffer;
+        indices[index] = value;
+    }
+    else
+    {
+        WORD *indices = index_buffer;
+        indices[index] = value;
+    }
+}
+
+/*************************************************************************
+ * D3DXWeldVertices    (D3DX9_36.@)
+ *
+ * Welds together similar vertices. The similarity between vert-
+ * ices can be the position and other components such as
+ * normal and color.
+ *
+ * PARAMS
+ *   mesh             [I] Mesh which vertices will be welded together.
+ *   flags            [I] D3DXWELDEPSILONSFLAGS specifying how to weld.
+ *   epsilons         [I] How similar a component needs to be for welding.
+ *   adjacency        [I] Which faces are adjacent to other faces.
+ *   adjacency_out    [O] Updated adjacency after welding.
+ *   face_remap_out   [O] Which faces the old faces have been mapped to.
+ *   vertex_remap_out [O] Which vertices the old vertices have been mapped to.
+ *
+ * RETURNS
+ *   Success: D3D_OK.
+ *   Failure: D3DERR_INVALIDCALL, E_OUTOFMEMORY.
+ *
+ * BUGS
+ *   Attribute sorting not implemented.
+ *
+ */
+HRESULT WINAPI D3DXWeldVertices(LPD3DXMESH mesh,
+                                DWORD flags,
+                                CONST D3DXWELDEPSILONS *epsilons,
+                                CONST DWORD *adjacency,
+                                DWORD *adjacency_out,
+                                DWORD *face_remap_out,
+                                LPD3DXBUFFER *vertex_remap_out)
+{
+    DWORD *adjacency_generated = NULL;
+    const DWORD *adjacency_ptr;
+    DWORD *attributes = NULL;
+    const FLOAT DEFAULT_EPSILON = 1.0e-6f;
+    HRESULT hr;
+    DWORD i;
+    void *indices = NULL;
+    BOOL indices_are_32bit = mesh->lpVtbl->GetOptions(mesh) & D3DXMESH_32BIT;
+    DWORD optimize_flags;
+    DWORD *point_reps = NULL;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(mesh);
+    DWORD *vertex_face_map = NULL;
+    ID3DXBuffer *vertex_remap = NULL;
+    BYTE *vertices = NULL;
+
+    TRACE("(%p, %x, %p, %p, %p, %p, %p)\n", mesh, flags, epsilons,
+           adjacency, adjacency_out, face_remap_out, vertex_remap_out);
+
+    if (flags == 0)
+    {
+        WARN("No flags is undefined. Using D3DXWELDEPSILONS_WELDPARTIALMATCHES instead.\n");
+        flags = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    }
+
+    if (adjacency) /* Use supplied adjacency. */
+    {
+        adjacency_ptr = adjacency;
+    }
+    else /* Adjacency has to be generated. */
+    {
+        adjacency_generated = HeapAlloc(GetProcessHeap(), 0, 3 * This->numfaces * sizeof(*adjacency_generated));
+        if (!adjacency_generated)
+        {
+            ERR("Couldn't allocate memory for adjacency_generated.\n");
+            hr = E_OUTOFMEMORY;
+            goto cleanup;
+        }
+        hr = mesh->lpVtbl->GenerateAdjacency(mesh, DEFAULT_EPSILON, adjacency_generated);
+        if (FAILED(hr))
+        {
+            ERR("Couldn't generate adjacency.\n");
+            goto cleanup;
+        }
+        adjacency_ptr = adjacency_generated;
+    }
+
+    /* Point representation says which vertices can be replaced. */
+    point_reps = HeapAlloc(GetProcessHeap(), 0, This->numvertices * sizeof(*point_reps));
+    if (!point_reps)
+    {
+        hr = E_OUTOFMEMORY;
+        ERR("Couldn't allocate memory for point_reps.\n");
+        goto cleanup;
+    }
+    hr = mesh->lpVtbl->ConvertAdjacencyToPointReps(mesh, adjacency_ptr, point_reps);
+    if (FAILED(hr))
+    {
+        ERR("ConvertAdjacencyToPointReps failed.\n");
+        goto cleanup;
+    }
+
+    hr = mesh->lpVtbl->LockIndexBuffer(mesh, 0, &indices);
+    if (FAILED(hr))
+    {
+        ERR("Couldn't lock index buffer.\n");
+        goto cleanup;
+    }
+
+    hr = mesh->lpVtbl->LockAttributeBuffer(mesh, 0, &attributes);
+    if (FAILED(hr))
+    {
+        ERR("Couldn't lock attribute buffer.\n");
+        goto cleanup;
+    }
+    vertex_face_map = HeapAlloc(GetProcessHeap(), 0, This->numvertices * sizeof(*vertex_face_map));
+    if (!vertex_face_map)
+    {
+        hr = E_OUTOFMEMORY;
+        ERR("Couldn't allocate memory for vertex_face_map.\n");
+        goto cleanup;
+    }
+    /* Build vertex face map, so that a vertex's face can be looked up. */
+    for (i = 0; i < This->numfaces; i++)
+    {
+        DWORD j;
+        for (j = 0; j < 3; j++)
+        {
+            DWORD index = read_ib(indices, indices_are_32bit, 3*i + j);
+            vertex_face_map[index] = i;
+        }
+    }
+
+    if (flags & D3DXWELDEPSILONS_WELDPARTIALMATCHES)
+    {
+        hr = mesh->lpVtbl->LockVertexBuffer(mesh, 0, (void**)&vertices);
+        if (FAILED(hr))
+        {
+            ERR("Couldn't lock vertex buffer.\n");
+            goto cleanup;
+        }
+        /* For each vertex that can be removed, compare its vertex components
+         * with the vertex components from the vertex that can replace it. A
+         * vertex is only fully replaced if all the components match and the
+         * flag D3DXWELDEPSILONS_DONOTREMOVEVERTICES is not set, and they
+         * belong to the same attribute group. Otherwise the vertex components
+         * that are within epsilon are set to the same value.
+         */
+        for (i = 0; i < 3 * This->numfaces; i++)
+        {
+            D3DVERTEXELEMENT9 *decl_ptr;
+            DWORD vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
+            DWORD num_vertex_components;
+            INT matches = 0;
+            BOOL all_match;
+            DWORD index = read_ib(indices, indices_are_32bit, i);
+
+            for (decl_ptr = This->cached_declaration, num_vertex_components = 0; decl_ptr->Stream != 0xFF; decl_ptr++, num_vertex_components++)
+            {
+                BYTE *to = &vertices[vertex_size*index + decl_ptr->Offset];
+                BYTE *from = &vertices[vertex_size*point_reps[index] + decl_ptr->Offset];
+                FLOAT epsilon = get_component_epsilon(decl_ptr, epsilons);
+
+                if (weld_component(to, from, decl_ptr->Type, epsilon))
+                    matches++;
+            }
+
+            all_match = (num_vertex_components == matches);
+            if (all_match && !(flags & D3DXWELDEPSILONS_DONOTREMOVEVERTICES))
+            {
+                DWORD to_face = vertex_face_map[index];
+                DWORD from_face = vertex_face_map[point_reps[index]];
+                if(attributes[to_face] != attributes[from_face] && !(flags & D3DXWELDEPSILONS_DONOTSPLIT))
+                    continue;
+                write_ib(indices, indices_are_32bit, i, point_reps[index]);
+            }
+        }
+        mesh->lpVtbl->UnlockVertexBuffer(mesh);
+        vertices = NULL;
+    }
+    else if (flags & D3DXWELDEPSILONS_WELDALL)
+    {
+        for (i = 0; i < 3 * This->numfaces; i++)
+        {
+            DWORD index = read_ib(indices, indices_are_32bit, i);
+            DWORD to_face = vertex_face_map[index];
+            DWORD from_face = vertex_face_map[point_reps[index]];
+            if(attributes[to_face] != attributes[from_face] && !(flags & D3DXWELDEPSILONS_DONOTSPLIT))
+                continue;
+            write_ib(indices, indices_are_32bit, i, point_reps[index]);
+        }
+    }
+    mesh->lpVtbl->UnlockAttributeBuffer(mesh);
+    attributes = NULL;
+    mesh->lpVtbl->UnlockIndexBuffer(mesh);
+    indices = NULL;
+
+    /* Compact mesh using OptimizeInplace */
+    optimize_flags = D3DXMESHOPT_COMPACT;
+    hr = mesh->lpVtbl->OptimizeInplace(mesh, optimize_flags, adjacency_ptr, adjacency_out, face_remap_out, vertex_remap_out);
+    if (FAILED(hr))
+    {
+        ERR("Couldn't compact mesh.\n");
+        goto cleanup;
+    }
+
+    hr = D3D_OK;
+cleanup:
+    HeapFree(GetProcessHeap(), 0, adjacency_generated);
+    HeapFree(GetProcessHeap(), 0, point_reps);
+    HeapFree(GetProcessHeap(), 0, vertex_face_map);
+    if (attributes) mesh->lpVtbl->UnlockAttributeBuffer(mesh);
+    if (indices) mesh->lpVtbl->UnlockIndexBuffer(mesh);
+    if (vertex_remap) ID3DXBuffer_Release(vertex_remap);
+    if (vertices) mesh->lpVtbl->UnlockVertexBuffer(mesh);
 
     return hr;
 }
