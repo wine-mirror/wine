@@ -22,6 +22,7 @@
 #define COBJMACROS
 #include <stdio.h>
 #include <float.h>
+#include <limits.h>
 #include "wine/test.h"
 #include "d3dx9.h"
 
@@ -6151,6 +6152,7 @@ static void check_vertex_components(int line, int mesh_number, int vertex_number
         "sample"
     };
     D3DVERTEXELEMENT9 *decl_ptr;
+    const float PRECISION = 1e-5f;
 
     for (decl_ptr = declaration; decl_ptr->Stream != 0xFF; decl_ptr++)
     {
@@ -6161,7 +6163,7 @@ static void check_vertex_components(int line, int mesh_number, int vertex_number
                 FLOAT *got = (FLOAT*)(got_ptr + decl_ptr->Offset);
                 FLOAT *exp = (FLOAT*)(exp_ptr + decl_ptr->Offset);
                 FLOAT diff = fabsf(*got - *exp);
-                ok_(__FILE__,line)(diff <= FLT_EPSILON, "Mesh %d: Got %f for vertex %d %s, expected %f.\n",
+                ok_(__FILE__,line)(diff <= PRECISION, "Mesh %d: Got %f for vertex %d %s, expected %f.\n",
                     mesh_number, *got, vertex_number, usage_strings[decl_ptr->Usage], *exp);
                 break;
             }
@@ -6170,7 +6172,7 @@ static void check_vertex_components(int line, int mesh_number, int vertex_number
                 D3DXVECTOR2 *got = (D3DXVECTOR2*)(got_ptr + decl_ptr->Offset);
                 D3DXVECTOR2 *exp = (D3DXVECTOR2*)(exp_ptr + decl_ptr->Offset);
                 FLOAT diff = max(fabsf(got->x - exp->x), fabsf(got->y - exp->y));
-                ok_(__FILE__,line)(diff <= FLT_EPSILON, "Mesh %d: Got (%f, %f) for vertex %d %s, expected (%f, %f).\n",
+                ok_(__FILE__,line)(diff <= PRECISION, "Mesh %d: Got (%f, %f) for vertex %d %s, expected (%f, %f).\n",
                     mesh_number, got->x, got->y, vertex_number, usage_strings[decl_ptr->Usage], exp->x, exp->y);
                 break;
             }
@@ -6180,7 +6182,7 @@ static void check_vertex_components(int line, int mesh_number, int vertex_number
                 D3DXVECTOR3 *exp = (D3DXVECTOR3*)(exp_ptr + decl_ptr->Offset);
                 FLOAT diff = max(fabsf(got->x - exp->x), fabsf(got->y - exp->y));
                 diff = max(diff, fabsf(got->z - exp->z));
-                ok_(__FILE__,line)(diff <= FLT_EPSILON, "Mesh %d: Got (%f, %f, %f) for vertex %d %s, expected (%f, %f, %f).\n",
+                ok_(__FILE__,line)(diff <= PRECISION, "Mesh %d: Got (%f, %f, %f) for vertex %d %s, expected (%f, %f, %f).\n",
                     mesh_number, got->x, got->y, got->z, vertex_number, usage_strings[decl_ptr->Usage], exp->x, exp->y, exp->z);
                 break;
             }
@@ -6191,7 +6193,7 @@ static void check_vertex_components(int line, int mesh_number, int vertex_number
                 FLOAT diff = max(fabsf(got->x - exp->x), fabsf(got->y - exp->y));
                 diff = max(diff, fabsf(got->z - exp->z));
                 diff = max(diff, fabsf(got->w - exp->w));
-                ok_(__FILE__,line)(diff <= FLT_EPSILON, "Mesh %d: Got (%f, %f, %f, %f) for vertex %d %s, expected (%f, %f, %f, %f).\n",
+                ok_(__FILE__,line)(diff <= PRECISION, "Mesh %d: Got (%f, %f, %f, %f) for vertex %d %s, expected (%f, %f, %f, %f).\n",
                     mesh_number, got->x, got->y, got->z, got->w, vertex_number, usage_strings[decl_ptr->Usage], exp->x, exp->y, exp->z, got->w);
                 break;
             }
@@ -8168,6 +8170,1677 @@ cleanup:
     free_test_context(test_context);
 }
 
+static void test_clone_mesh(void)
+{
+    HRESULT hr;
+    struct test_context *test_context = NULL;
+    const DWORD options = D3DXMESH_32BIT | D3DXMESH_SYSTEMMEM;
+    D3DVERTEXELEMENT9 declaration_pn[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_pntc[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        {0, 24, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_ptcn[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        {0, 20, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_ptc[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_ptc_float16_2[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT16_2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_ptc_float16_4[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT16_4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_ptc_float1[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_ptc_float3[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_ptc_float4[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_ptc_d3dcolor[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_ptc_ubyte4[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_ptc_ubyte4n[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_UBYTE4N, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_ptc_short2[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_SHORT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_ptc_short4[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_SHORT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_ptc_short2n[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_SHORT2N, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_ptc_short4n[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_SHORT4N, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_ptc_ushort2n[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_USHORT2N, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_ptc_ushort4n[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_USHORT4N, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_ptc_float16_2_partialu[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT16_2, D3DDECLMETHOD_PARTIALU, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_pntc1[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        {0, 24, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 1},
+        D3DDECL_END()
+    };
+    const unsigned int VERTS_PER_FACE = 3;
+    BYTE *vertices = NULL;
+    INT i;
+    struct vertex_pn
+    {
+        D3DXVECTOR3 position;
+        D3DXVECTOR3 normal;
+    };
+    struct vertex_pntc
+    {
+        D3DXVECTOR3 position;
+        D3DXVECTOR3 normal;
+        D3DXVECTOR2 texcoords;
+    };
+    struct vertex_ptcn
+    {
+        D3DXVECTOR3 position;
+        D3DXVECTOR2 texcoords;
+        D3DXVECTOR3 normal;
+    };
+    struct vertex_ptc
+    {
+        D3DXVECTOR3 position;
+        D3DXVECTOR2 texcoords;
+    };
+    struct vertex_ptc_float16_2
+    {
+        D3DXVECTOR3 position;
+        WORD texcoords[2]; /* float16_2 */
+    };
+    struct vertex_ptc_float16_4
+    {
+        D3DXVECTOR3 position;
+        WORD texcoords[4]; /* float16_4 */
+    };
+    struct vertex_ptc_float1
+    {
+        D3DXVECTOR3 position;
+        FLOAT texcoords;
+    };
+    struct vertex_ptc_float3
+    {
+        D3DXVECTOR3 position;
+        FLOAT texcoords[3];
+    };
+    struct vertex_ptc_float4
+    {
+        D3DXVECTOR3 position;
+        FLOAT texcoords[4];
+    };
+    struct vertex_ptc_d3dcolor
+    {
+        D3DXVECTOR3 position;
+        BYTE texcoords[4];
+    };
+    struct vertex_ptc_ubyte4
+    {
+        D3DXVECTOR3 position;
+        BYTE texcoords[4];
+    };
+    struct vertex_ptc_ubyte4n
+    {
+        D3DXVECTOR3 position;
+        BYTE texcoords[4];
+    };
+    struct vertex_ptc_short2
+    {
+        D3DXVECTOR3 position;
+        SHORT texcoords[2];
+    };
+    struct vertex_ptc_short4
+    {
+        D3DXVECTOR3 position;
+        SHORT texcoords[4];
+    };
+    struct vertex_ptc_ushort2n
+    {
+        D3DXVECTOR3 position;
+        USHORT texcoords[2];
+    };
+    struct vertex_ptc_ushort4n
+    {
+        D3DXVECTOR3 position;
+        USHORT texcoords[4];
+    };
+    struct vertex_ptc_udec3
+    {
+        D3DXVECTOR3 position;
+        DWORD texcoords;
+    };
+    struct vertex_ptc_dec3n
+    {
+        D3DXVECTOR3 position;
+        DWORD texcoords;
+    };
+    D3DXVECTOR3 up = {0.0f, 0.0f, 1.0f};
+    D3DXVECTOR2 zero_vec2 = {0.0f, 0.0f};
+    /* Test 0. Check that a mesh can be cloned if the new declaration is the
+     * same as the one used to create the mesh.
+     *
+     * 0--1 3
+     * | / /|
+     * |/ / |
+     * 2 5--4
+     */
+    const struct vertex_pn vertices0[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 3.0f,  3.0f,  0.f}, up},
+        {{ 3.0f,  0.0f,  0.f}, up},
+        {{ 1.0f,  0.0f,  0.f}, up},
+    };
+    const UINT num_vertices0 = ARRAY_SIZE(vertices0);
+    const UINT num_faces0 = ARRAY_SIZE(vertices0) / VERTS_PER_FACE;
+    const UINT vertex_size0 = sizeof(*vertices0);
+    /* Test 1. Check that 16-bit indices are handled. */
+    const DWORD options_16bit = D3DXMESH_SYSTEMMEM;
+    /* Test 2. Check that the size of each vertex is increased and the data
+     * moved if the new declaration adds an element after the original elements.
+     */
+    const struct vertex_pntc exp_vertices2[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up, zero_vec2},
+        {{ 2.0f,  3.0f,  0.f}, up, zero_vec2},
+        {{ 0.0f,  0.0f,  0.f}, up, zero_vec2},
+
+        {{ 3.0f,  3.0f,  0.f}, up, zero_vec2},
+        {{ 3.0f,  0.0f,  0.f}, up, zero_vec2},
+        {{ 1.0f,  0.0f,  0.f}, up, zero_vec2},
+    };
+    const UINT exp_vertex_size2 = sizeof(*exp_vertices2);
+    /* Test 3. Check that the size of each vertex is increased and the data
+     * moved if the new declaration adds an element between the original
+     * elements.
+     */
+    const struct vertex_ptcn exp_vertices3[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, zero_vec2, up},
+        {{ 2.0f,  3.0f,  0.f}, zero_vec2, up},
+        {{ 0.0f,  0.0f,  0.f}, zero_vec2, up},
+
+        {{ 3.0f,  3.0f,  0.f}, zero_vec2, up},
+        {{ 3.0f,  0.0f,  0.f}, zero_vec2, up},
+        {{ 1.0f,  0.0f,  0.f}, zero_vec2, up},
+    };
+    const UINT exp_vertex_size3 = sizeof(*exp_vertices3);
+    /* Test 4. Test that data types can be converted, e.g. FLOAT2 to FLOAT16_2. */
+    const struct vertex_ptc vertices4[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 1.0f,  1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, { 0.5f,  0.7f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.2f, -0.3f}},
+
+        {{ 3.0f,  3.0f,  0.f}, { 0.2f,  0.3f}},
+        {{ 3.0f,  0.0f,  0.f}, { 1.0f,  1.0f}},
+        {{ 1.0f,  0.0f,  0.f}, { 0.1f,  0.2f}},
+    };
+    const UINT num_vertices4 = ARRAY_SIZE(vertices4);
+    const UINT num_faces4 = ARRAY_SIZE(vertices4) / VERTS_PER_FACE;
+    const UINT vertex_size4 = sizeof(*vertices4);
+    const struct vertex_ptc_float16_2 exp_vertices4[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0x3c00, 0x3c00}}, /* {1.0f, 1.0f} */
+        {{ 2.0f,  3.0f,  0.f}, {0x3800, 0x399a}}, /* {0.5f, 0.7f} */
+        {{ 0.0f,  0.0f,  0.f}, {0xb266, 0xb4cd}}, /* {-0.2f, -0.3f} */
+
+        {{ 3.0f,  3.0f,  0.f}, {0x3266, 0x34cd}}, /* {0.2f, 0.3f} */
+        {{ 3.0f,  0.0f,  0.f}, {0x3c00, 0x3c00}}, /* {1.0f, 1.0f} */
+        {{ 1.0f,  0.0f,  0.f}, {0x2e66, 0x3266}}, /* {0.1f, 0.2f} */
+    };
+    const UINT exp_vertex_size4 = sizeof(*exp_vertices4);
+    /* Test 5. Convert FLOAT2 to FLOAT16_4. */
+    const struct vertex_ptc vertices5[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 1.0f,  1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, { 0.5f,  0.7f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.2f, -0.3f}},
+
+        {{ 3.0f,  3.0f,  0.f}, { 0.2f,  0.3f}},
+        {{ 3.0f,  0.0f,  0.f}, { 1.0f,  1.0f}},
+        {{ 1.0f,  0.0f,  0.f}, { 0.1f,  0.2f}},
+    };
+    const UINT num_vertices5 = ARRAY_SIZE(vertices5);
+    const UINT num_faces5 = ARRAY_SIZE(vertices5) / VERTS_PER_FACE;
+    const UINT vertex_size5 = sizeof(*vertices5);
+    const struct vertex_ptc_float16_4 exp_vertices5[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0x3c00, 0x3c00, 0, 0x3c00}}, /* {1.0f, 1.0f, 0.0f, 1.0f} */
+        {{ 2.0f,  3.0f,  0.f}, {0x3800, 0x399a, 0, 0x3c00}}, /* {0.5f, 0.7f, 0.0f, 1.0f} */
+        {{ 0.0f,  0.0f,  0.f}, {0xb266, 0xb4cd, 0, 0x3c00}}, /* {-0.2f, -0.3f, 0.0f, 1.0f} */
+
+        {{ 3.0f,  3.0f,  0.f}, {0x3266, 0x34cd, 0, 0x3c00}}, /* {0.2f, 0.3f, 0.0f, 1.0f} */
+        {{ 3.0f,  0.0f,  0.f}, {0x3c00, 0x3c00, 0, 0x3c00}}, /* {1.0f, 1.0f, 0.0f, 1.0f} */
+        {{ 1.0f,  0.0f,  0.f}, {0x2e66, 0x3266, 0, 0x3c00}}, /* {0.1f, 0.2f, 0.0f, 1.0f} */
+    };
+    const UINT exp_vertex_size5 = sizeof(*exp_vertices5);
+    /* Test 6. Convert FLOAT2 to FLOAT1. */
+    const struct vertex_ptc vertices6[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 1.0f,  1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, { 0.5f,  0.7f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.2f, -0.3f}},
+
+        {{ 3.0f,  3.0f,  0.f}, { 0.2f,  0.3f}},
+        {{ 3.0f,  0.0f,  0.f}, { 1.0f,  1.0f}},
+        {{ 1.0f,  0.0f,  0.f}, { 0.1f,  0.2f}},
+    };
+    const UINT num_vertices6 = ARRAY_SIZE(vertices6);
+    const UINT num_faces6 = ARRAY_SIZE(vertices6) / VERTS_PER_FACE;
+    const UINT vertex_size6 = sizeof(*vertices6);
+    const struct vertex_ptc_float1 exp_vertices6[] =
+    {
+        {{ 0.0f,  3.0f,  0.f},  1.0f},
+        {{ 2.0f,  3.0f,  0.f},  0.5f},
+        {{ 0.0f,  0.0f,  0.f}, -0.2f},
+
+        {{ 3.0f,  3.0f,  0.f},  0.2f},
+        {{ 3.0f,  0.0f,  0.f},  1.0f},
+        {{ 1.0f,  0.0f,  0.f},  0.1f},
+    };
+    const UINT exp_vertex_size6 = sizeof(*exp_vertices6);
+    /* Test 7. Convert FLOAT2 to FLOAT3. */
+    const struct vertex_ptc vertices7[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 1.0f,  1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, { 0.5f,  0.7f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.2f, -0.3f}},
+
+        {{ 3.0f,  3.0f,  0.f}, { 0.2f,  0.3f}},
+        {{ 3.0f,  0.0f,  0.f}, { 1.0f,  1.0f}},
+        {{ 1.0f,  0.0f,  0.f}, { 0.1f,  0.2f}},
+    };
+    const UINT num_vertices7 = ARRAY_SIZE(vertices7);
+    const UINT num_faces7 = ARRAY_SIZE(vertices7) / VERTS_PER_FACE;
+    const UINT vertex_size7 = sizeof(*vertices7);
+    const struct vertex_ptc_float3 exp_vertices7[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 1.0f,  1.0f, 0.0f}},
+        {{ 2.0f,  3.0f,  0.f}, { 0.5f,  0.7f, 0.0f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.2f, -0.3f, 0.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, { 0.2f,  0.3f, 0.0f}},
+        {{ 3.0f,  0.0f,  0.f}, { 1.0f,  1.0f, 0.0f}},
+        {{ 1.0f,  0.0f,  0.f}, { 0.1f,  0.2f, 0.0f}},
+    };
+    const UINT exp_vertex_size7 = sizeof(*exp_vertices7);
+    /* Test 8. Convert FLOAT2 to FLOAT4. */
+    const struct vertex_ptc vertices8[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 1.0f,  1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, { 0.5f,  0.7f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.2f, -0.3f}},
+
+        {{ 3.0f,  3.0f,  0.f}, { 0.2f,  0.3f}},
+        {{ 3.0f,  0.0f,  0.f}, { 1.0f,  1.0f}},
+        {{ 1.0f,  0.0f,  0.f}, { 0.1f,  0.2f}},
+    };
+    const UINT num_vertices8 = ARRAY_SIZE(vertices8);
+    const UINT num_faces8 = ARRAY_SIZE(vertices8) / VERTS_PER_FACE;
+    const UINT vertex_size8 = sizeof(*vertices8);
+    const struct vertex_ptc_float4 exp_vertices8[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 1.0f,  1.0f, 0.0f, 1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, { 0.5f,  0.7f, 0.0f, 1.0f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.2f, -0.3f, 0.0f, 1.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, { 0.2f,  0.3f, 0.0f, 1.0f}},
+        {{ 3.0f,  0.0f,  0.f}, { 1.0f,  1.0f, 0.0f, 1.0f}},
+        {{ 1.0f,  0.0f,  0.f}, { 0.1f,  0.2f, 0.0f, 1.0f}},
+    };
+    const UINT exp_vertex_size8 = sizeof(*exp_vertices8);
+    /* Test 9. Convert FLOAT2 to D3DCOLOR. */
+    const struct vertex_ptc vertices9[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 1.0f,  1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, { 0.5f,  0.7f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.4f, -0.6f}},
+
+        {{ 3.0f,  3.0f,  0.f}, { 0.2f,  0.3f}},
+        {{ 3.0f,  0.0f,  0.f}, { 2.0f, 256.0f}},
+        {{ 1.0f,  0.0f,  0.f}, { 0.11f,  0.2f}},
+    };
+    const UINT num_vertices9 = ARRAY_SIZE(vertices9);
+    const UINT num_faces9 = ARRAY_SIZE(vertices9) / VERTS_PER_FACE;
+    const UINT vertex_size9 = sizeof(*vertices9);
+    const struct vertex_ptc_d3dcolor exp_vertices9[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0, 255, 255, 255}},
+        {{ 2.0f,  3.0f,  0.f}, {0, 179, 128, 255}},
+        {{ 0.0f,  0.0f,  0.f}, {0, 0, 0, 255}},
+
+        {{ 3.0f,  3.0f,  0.f}, {0, 77, 51, 255}},
+        {{ 3.0f,  0.0f,  0.f}, {0, 255, 255, 255}},
+        {{ 1.0f,  0.0f,  0.f}, {0, 51, 28, 255}},
+    };
+    const UINT exp_vertex_size9 = sizeof(*exp_vertices9);
+    /* Test 10. Convert FLOAT2 to UBYTE4. */
+    const struct vertex_ptc vertices10[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 0.0f,  1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, { 2.0f,  3.0f}},
+        {{ 0.0f,  0.0f,  0.f}, { 254.0f,  255.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, { 256.0f, 257.0f}},
+        {{ 3.0f,  0.0f,  0.f}, { 1.4f, 1.5f}},
+        {{ 1.0f,  0.0f,  0.f}, {-4.0f, -5.0f}},
+    };
+    const UINT num_vertices10 = ARRAY_SIZE(vertices10);
+    const UINT num_faces10 = ARRAY_SIZE(vertices10) / VERTS_PER_FACE;
+    const UINT vertex_size10 = sizeof(*vertices10);
+    const struct vertex_ptc_ubyte4 exp_vertices10[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0, 1, 0, 1}},
+        {{ 2.0f,  3.0f,  0.f}, {2, 3, 0, 1}},
+        {{ 0.0f,  0.0f,  0.f}, {254, 255, 0, 1}},
+
+        {{ 3.0f,  3.0f,  0.f}, {0, 1, 0, 1}},
+        {{ 3.0f,  0.0f,  0.f}, {1, 2, 0, 1}},
+        {{ 1.0f,  0.0f,  0.f}, {0, 0, 0, 1}},
+    };
+    const UINT exp_vertex_size10 = sizeof(*exp_vertices10);
+    /* Test 11. Convert FLOAT2 to SHORT2. */
+    const struct vertex_ptc vertices11[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 1.0f, -1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, { 0.4f,  0.5f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.5f, -5.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {SHRT_MAX, SHRT_MIN}},
+        {{ 3.0f,  0.0f,  0.f}, {SHRT_MAX + 1.0f, SHRT_MIN - 1.0f}},
+        {{ 1.0f,  0.0f,  0.f}, {SHRT_MAX + 2.0f, SHRT_MIN - 2.0f}},
+
+        {{ 4.0f,  3.0f,  0.f}, {2 * SHRT_MAX, 2 * SHRT_MIN}},
+        {{ 6.0f,  0.0f,  0.f}, {3 * SHRT_MAX, 3 * SHRT_MIN}},
+        {{ 4.0f,  0.0f,  0.f}, {4 * SHRT_MAX, 4 * SHRT_MIN}},
+    };
+    const UINT num_vertices11 = ARRAY_SIZE(vertices11);
+    const UINT num_faces11 = ARRAY_SIZE(vertices11) / VERTS_PER_FACE;
+    const UINT vertex_size11 = sizeof(*vertices11);
+    const struct vertex_ptc_short2 exp_vertices11[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {1, 0}},
+        {{ 2.0f,  3.0f,  0.f}, {0, 1}},
+        {{ 0.0f,  0.0f,  0.f}, {0, -4}},
+
+        {{ 3.0f,  3.0f,  0.f}, {SHRT_MAX, SHRT_MIN + 1}},
+        {{ 3.0f,  0.0f,  0.f}, {SHRT_MIN, SHRT_MIN}},
+        {{ 1.0f,  0.0f,  0.f}, {SHRT_MIN + 1, SHRT_MAX}},
+
+        {{ 4.0f,  3.0f,  0.f}, {-2, 1}},
+        {{ 6.0f,  0.0f,  0.f}, {32765, -32767}},
+        {{ 4.0f,  0.0f,  0.f}, {-4, 1}},
+    };
+    const UINT exp_vertex_size11 = sizeof(*exp_vertices11);
+    /* Test 12. Convert FLOAT2 to SHORT4. */
+    const struct vertex_ptc vertices12[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 1.0f, -1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, { 0.4f,  0.5f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.5f, -5.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {SHRT_MAX, SHRT_MIN}},
+        {{ 3.0f,  0.0f,  0.f}, {SHRT_MAX + 1.0f, SHRT_MIN - 1.0f}},
+        {{ 1.0f,  0.0f,  0.f}, {SHRT_MAX + 2.0f, SHRT_MIN - 2.0f}},
+
+        {{ 4.0f,  3.0f,  0.f}, {2 * SHRT_MAX, 2 * SHRT_MIN}},
+        {{ 6.0f,  0.0f,  0.f}, {3 * SHRT_MAX, 3 * SHRT_MIN}},
+        {{ 4.0f,  0.0f,  0.f}, {4 * SHRT_MAX, 4 * SHRT_MIN}},
+    };
+    const UINT num_vertices12 = ARRAY_SIZE(vertices12);
+    const UINT num_faces12 = ARRAY_SIZE(vertices12) / VERTS_PER_FACE;
+    const UINT vertex_size12 = sizeof(*vertices12);
+    const struct vertex_ptc_short4 exp_vertices12[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {1, 0, 0, 1}},
+        {{ 2.0f,  3.0f,  0.f}, {0, 1, 0, 1}},
+        {{ 0.0f,  0.0f,  0.f}, {0, -4, 0, 1}},
+
+        {{ 3.0f,  3.0f,  0.f}, {SHRT_MAX, SHRT_MIN + 1, 0, 1}},
+        {{ 3.0f,  0.0f,  0.f}, {SHRT_MIN, SHRT_MIN, 0, 1}},
+        {{ 1.0f,  0.0f,  0.f}, {SHRT_MIN + 1, SHRT_MAX, 0, 1}},
+
+        {{ 4.0f,  3.0f,  0.f}, {-2, 1, 0, 1}},
+        {{ 6.0f,  0.0f,  0.f}, {32765, -32767, 0, 1}},
+        {{ 4.0f,  0.0f,  0.f}, {-4, 1, 0, 1}},
+    };
+    const UINT exp_vertex_size12 = sizeof(*exp_vertices12);
+    /* Test 13. Convert FLOAT2 to UBYTE4N. */
+    const struct vertex_ptc vertices13[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 1.0f,  2.0f}},
+        {{ 2.0f,  3.0f,  0.f}, { 0.5f,  0.7f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.4f, -0.5f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {-0.6f,  -1.0f}},
+        {{ 3.0f,  0.0f,  0.f}, {UCHAR_MAX,  UCHAR_MAX + 1}},
+        {{ 1.0f,  0.0f,  0.f}, {2 * UCHAR_MAX, -UCHAR_MAX}},
+    };
+    const UINT num_vertices13 = ARRAY_SIZE(vertices13);
+    const UINT num_faces13 = ARRAY_SIZE(vertices13) / VERTS_PER_FACE;
+    const UINT vertex_size13 = sizeof(*vertices13);
+    const struct vertex_ptc_ubyte4n exp_vertices13[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {255, 255, 0, 255}},
+        {{ 2.0f,  3.0f,  0.f}, {128, 179, 0, 255}},
+        {{ 0.0f,  0.0f,  0.f}, {0, 0, 0, 255}},
+
+        {{ 3.0f,  3.0f,  0.f}, {0, 0, 0, 255}},
+        {{ 3.0f,  0.0f,  0.f}, {255, 255, 0, 255}},
+        {{ 1.0f,  0.0f,  0.f}, {255, 0, 0, 255}},
+    };
+    const UINT exp_vertex_size13 = sizeof(*exp_vertices13);
+    /* Test 14. Convert FLOAT2 to SHORT2N. */
+    const struct vertex_ptc vertices14[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {1.0f,  2.0f}},
+        {{ 2.0f,  3.0f,  0.f}, {0.4f,  0.5f}},
+        {{ 0.0f,  0.0f,  0.f}, {0.6f, -1.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {-0.4f, -0.5f}},
+        {{ 3.0f,  0.0f,  0.f}, {-0.9f, -0.99997}},
+        {{ 1.0f,  0.0f,  0.f}, {SHRT_MAX, SHRT_MIN}},
+    };
+    const UINT num_vertices14 = ARRAY_SIZE(vertices14);
+    const UINT num_faces14 = ARRAY_SIZE(vertices14) / VERTS_PER_FACE;
+    const UINT vertex_size14 = sizeof(*vertices14);
+    const struct vertex_ptc_short2 exp_vertices14[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {SHRT_MAX, SHRT_MAX}},
+        {{ 2.0f,  3.0f,  0.f}, {13107, 16384}},
+        {{ 0.0f,  0.0f,  0.f}, {19660, SHRT_MIN + 2}},
+
+        {{ 3.0f,  3.0f,  0.f}, {-13106, -16383}},
+        {{ 3.0f,  0.0f,  0.f}, {-29489, SHRT_MIN + 3}},
+        {{ 1.0f,  0.0f,  0.f}, {SHRT_MAX, SHRT_MIN + 2}},
+    };
+    const UINT exp_vertex_size14 = sizeof(*exp_vertices14);
+    /* Test 15. Convert FLOAT2 to SHORT4N. */
+    const struct vertex_ptc vertices15[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {1.0f,  2.0f}},
+        {{ 2.0f,  3.0f,  0.f}, {0.4f,  0.5f}},
+        {{ 0.0f,  0.0f,  0.f}, {0.6f, -1.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {-0.4f, -0.5f}},
+        {{ 3.0f,  0.0f,  0.f}, {-0.9f, -0.99997}},
+        {{ 1.0f,  0.0f,  0.f}, {SHRT_MAX, SHRT_MIN}},
+    };
+    const UINT num_vertices15 = ARRAY_SIZE(vertices15);
+    const UINT num_faces15 = ARRAY_SIZE(vertices15) / VERTS_PER_FACE;
+    const UINT vertex_size15 = sizeof(*vertices15);
+    const struct vertex_ptc_short4 exp_vertices15[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {SHRT_MAX, SHRT_MAX, 0, SHRT_MAX}},
+        {{ 2.0f,  3.0f,  0.f}, {13107, 16384, 0, SHRT_MAX}},
+        {{ 0.0f,  0.0f,  0.f}, {19660, SHRT_MIN + 2, 0, SHRT_MAX}},
+
+        {{ 3.0f,  3.0f,  0.f}, {-13106, -16383, 0, SHRT_MAX}},
+        {{ 3.0f,  0.0f,  0.f}, {-29489, SHRT_MIN + 3, 0, SHRT_MAX}},
+        {{ 1.0f,  0.0f,  0.f}, {SHRT_MAX, SHRT_MIN + 2, 0, SHRT_MAX}},
+    };
+    const UINT exp_vertex_size15 = sizeof(*exp_vertices15);
+    /* Test 16. Convert FLOAT2 to USHORT2N. */
+    const struct vertex_ptc vertices16[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {1.0f,  2.0f}},
+        {{ 2.0f,  3.0f,  0.f}, {0.4f,  0.5f}},
+        {{ 0.0f,  0.0f,  0.f}, {0.6f, -1.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {-0.4f, -0.5f}},
+        {{ 3.0f,  0.0f,  0.f}, {-0.9f,  0.99998f}},
+        {{ 1.0f,  0.0f,  0.f}, {USHRT_MAX, 0.0f}},
+    };
+    const UINT num_vertices16 = ARRAY_SIZE(vertices16);
+    const UINT num_faces16 = ARRAY_SIZE(vertices16) / VERTS_PER_FACE;
+    const UINT vertex_size16 = sizeof(*vertices16);
+    const struct vertex_ptc_ushort2n exp_vertices16[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {USHRT_MAX, USHRT_MAX}},
+        {{ 2.0f,  3.0f,  0.f}, {26214, 32768}},
+        {{ 0.0f,  0.0f,  0.f}, {39321, 0}},
+
+        {{ 3.0f,  3.0f,  0.f}, {0, 0}},
+        {{ 3.0f,  0.0f,  0.f}, {0, USHRT_MAX - 1}},
+        {{ 1.0f,  0.0f,  0.f}, {USHRT_MAX, 0}},
+    };
+    const UINT exp_vertex_size16 = sizeof(*exp_vertices16);
+    /* Test 17. Convert FLOAT2 to USHORT4N. */
+    const struct vertex_ptc vertices17[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {1.0f,  2.0f}},
+        {{ 2.0f,  3.0f,  0.f}, {0.4f,  0.5f}},
+        {{ 0.0f,  0.0f,  0.f}, {0.6f, -1.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {-0.4f, -0.5f}},
+        {{ 3.0f,  0.0f,  0.f}, {-0.9f,  0.99998f}},
+        {{ 1.0f,  0.0f,  0.f}, {USHRT_MAX, 0.0f}},
+    };
+    const UINT num_vertices17 = ARRAY_SIZE(vertices17);
+    const UINT num_faces17 = ARRAY_SIZE(vertices17) / VERTS_PER_FACE;
+    const UINT vertex_size17 = sizeof(*vertices17);
+    const struct vertex_ptc_ushort4n exp_vertices17[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {USHRT_MAX, USHRT_MAX, 0, USHRT_MAX}},
+        {{ 2.0f,  3.0f,  0.f}, {26214, 32768, 0, USHRT_MAX}},
+        {{ 0.0f,  0.0f,  0.f}, {39321, 0, 0, USHRT_MAX}},
+
+        {{ 3.0f,  3.0f,  0.f}, {0, 0, 0, USHRT_MAX}},
+        {{ 3.0f,  0.0f,  0.f}, {0, USHRT_MAX - 1, 0, USHRT_MAX}},
+        {{ 1.0f,  0.0f,  0.f}, {USHRT_MAX, 0, 0, USHRT_MAX}},
+    };
+    const UINT exp_vertex_size17 = sizeof(*exp_vertices17);
+    /* Test 18. Test that the method field is compared by converting a FLOAT2 to
+     * FLOAT16_2. where the method field has been change from
+     * D3DDECLMETHOD_DEFAULT to D3DDECLMETHOD_PARTIALU. */
+    const struct vertex_ptc vertices18[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 1.0f,  1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, { 0.5f,  0.7f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.2f, -0.3f}},
+
+        {{ 3.0f,  3.0f,  0.f}, { 0.2f,  0.3f}},
+        {{ 3.0f,  0.0f,  0.f}, { 1.0f,  1.0f}},
+        {{ 1.0f,  0.0f,  0.f}, { 0.1f,  0.2f}},
+    };
+    const UINT num_vertices18 = ARRAY_SIZE(vertices18);
+    const UINT num_faces18 = ARRAY_SIZE(vertices18) / VERTS_PER_FACE;
+    const UINT vertex_size18 = sizeof(*vertices18);
+    const struct vertex_ptc_float16_2 exp_vertices18[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0x3c00, 0x3c00}}, /* {1.0f, 1.0f} */
+        {{ 2.0f,  3.0f,  0.f}, {0x3800, 0x399a}}, /* {0.5f, 0.7f} */
+        {{ 0.0f,  0.0f,  0.f}, {0xb266, 0xb4cd}}, /* {-0.2f, -0.3f} */
+
+        {{ 3.0f,  3.0f,  0.f}, {0x3266, 0x34cd}}, /* {0.2f, 0.3f} */
+        {{ 3.0f,  0.0f,  0.f}, {0x3c00, 0x3c00}}, /* {1.0f, 1.0f} */
+        {{ 1.0f,  0.0f,  0.f}, {0x2e66, 0x3266}}, /* {0.1f, 0.2f} */
+    };
+    const UINT exp_vertex_size18 = sizeof(*exp_vertices18);
+    /* Test 19. Test that data is lost if usage index changes, e.g. TEXCOORD0
+     * TEXCOORD1. */
+    const struct vertex_pntc vertices19[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up, { 1.0f,  1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, up, { 0.5f,  0.7f}},
+        {{ 0.0f,  0.0f,  0.f}, up, {-0.2f, -0.3f}},
+
+        {{ 3.0f,  3.0f,  0.f}, up, { 0.2f,  0.3f}},
+        {{ 3.0f,  0.0f,  0.f}, up, { 1.0f,  1.0f}},
+        {{ 1.0f,  0.0f,  0.f}, up, { 0.1f,  0.2f}},
+    };
+    const UINT num_vertices19 = ARRAY_SIZE(vertices19);
+    const UINT num_faces19 = ARRAY_SIZE(vertices19) / VERTS_PER_FACE;
+    const UINT vertex_size19 = sizeof(*vertices19);
+    const struct vertex_pntc exp_vertices19[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up, zero_vec2},
+        {{ 2.0f,  3.0f,  0.f}, up, zero_vec2},
+        {{ 0.0f,  0.0f,  0.f}, up, zero_vec2},
+
+        {{ 3.0f,  3.0f,  0.f}, up, zero_vec2},
+        {{ 3.0f,  0.0f,  0.f}, up, zero_vec2},
+        {{ 1.0f,  0.0f,  0.f}, up, zero_vec2},
+    };
+    const UINT exp_vertex_size19 = sizeof(*exp_vertices19);
+    /* Test 20. Another test that data is lost if usage index changes, e.g.
+     * TEXCOORD1 to TEXCOORD0. */
+    const struct vertex_pntc vertices20[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up, { 1.0f,  1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, up, { 0.5f,  0.7f}},
+        {{ 0.0f,  0.0f,  0.f}, up, {-0.2f, -0.3f}},
+
+        {{ 3.0f,  3.0f,  0.f}, up, { 0.2f,  0.3f}},
+        {{ 3.0f,  0.0f,  0.f}, up, { 1.0f,  1.0f}},
+        {{ 1.0f,  0.0f,  0.f}, up, { 0.1f,  0.2f}},
+    };
+    const UINT num_vertices20 = ARRAY_SIZE(vertices20);
+    const UINT num_faces20 = ARRAY_SIZE(vertices20) / VERTS_PER_FACE;
+    const UINT vertex_size20 = sizeof(*vertices20);
+    const struct vertex_pntc exp_vertices20[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up, zero_vec2},
+        {{ 2.0f,  3.0f,  0.f}, up, zero_vec2},
+        {{ 0.0f,  0.0f,  0.f}, up, zero_vec2},
+
+        {{ 3.0f,  3.0f,  0.f}, up, zero_vec2},
+        {{ 3.0f,  0.0f,  0.f}, up, zero_vec2},
+        {{ 1.0f,  0.0f,  0.f}, up, zero_vec2},
+    };
+    const UINT exp_vertex_size20 = sizeof(*exp_vertices20);
+    /* Test 21. Convert FLOAT1 to FLOAT2. */
+    const struct vertex_ptc_float1 vertices21[] =
+    {
+        {{ 0.0f,  3.0f,  0.f},  1.0f},
+        {{ 2.0f,  3.0f,  0.f},  0.5f},
+        {{ 0.0f,  0.0f,  0.f}, -0.2f},
+
+        {{ 3.0f,  3.0f,  0.f},  0.2f},
+        {{ 3.0f,  0.0f,  0.f},  1.0f},
+        {{ 1.0f,  0.0f,  0.f},  0.1f},
+    };
+    const UINT num_vertices21 = ARRAY_SIZE(vertices21);
+    const UINT num_faces21 = ARRAY_SIZE(vertices21) / VERTS_PER_FACE;
+    const UINT vertex_size21 = sizeof(*vertices21);
+    const struct vertex_ptc exp_vertices21[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 1.0f, 0.0f}},
+        {{ 2.0f,  3.0f,  0.f}, { 0.5f, 0.0f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.2f, 0.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, { 0.2f, 0.0f}},
+        {{ 3.0f,  0.0f,  0.f}, { 1.0f, 0.0f}},
+        {{ 1.0f,  0.0f,  0.f}, { 0.1f, 0.0f}},
+    };
+    const UINT exp_vertex_size21 = sizeof(*exp_vertices21);
+    /* Test 22. Convert FLOAT1 to FLOAT3. */
+    const struct vertex_ptc_float1 vertices22[] =
+    {
+        {{ 0.0f,  3.0f,  0.f},  1.0f},
+        {{ 2.0f,  3.0f,  0.f},  0.5f},
+        {{ 0.0f,  0.0f,  0.f}, -0.2f},
+
+        {{ 3.0f,  3.0f,  0.f},  0.2f},
+        {{ 3.0f,  0.0f,  0.f},  1.0f},
+        {{ 1.0f,  0.0f,  0.f},  0.1f},
+    };
+    const UINT num_vertices22 = ARRAY_SIZE(vertices22);
+    const UINT num_faces22 = ARRAY_SIZE(vertices22) / VERTS_PER_FACE;
+    const UINT vertex_size22 = sizeof(*vertices22);
+    const struct vertex_ptc_float3 exp_vertices22[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 1.0f, 0.0f, 0.0f}},
+        {{ 2.0f,  3.0f,  0.f}, { 0.5f, 0.0f, 0.0f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.2f, 0.0f, 0.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, { 0.2f, 0.0f, 0.0f}},
+        {{ 3.0f,  0.0f,  0.f}, { 1.0f, 0.0f, 0.0f}},
+        {{ 1.0f,  0.0f,  0.f}, { 0.1f, 0.0f, 0.0f}},
+    };
+    const UINT exp_vertex_size22 = sizeof(*exp_vertices22);
+    /* Test 23. Convert FLOAT1 to FLOAT4. */
+    const struct vertex_ptc_float1 vertices23[] =
+    {
+        {{ 0.0f,  3.0f,  0.f},  1.0f},
+        {{ 2.0f,  3.0f,  0.f},  0.5f},
+        {{ 0.0f,  0.0f,  0.f}, -0.2f},
+
+        {{ 3.0f,  3.0f,  0.f},  0.2f},
+        {{ 3.0f,  0.0f,  0.f},  1.0f},
+        {{ 1.0f,  0.0f,  0.f},  0.1f},
+    };
+    const UINT num_vertices23 = ARRAY_SIZE(vertices23);
+    const UINT num_faces23 = ARRAY_SIZE(vertices23) / VERTS_PER_FACE;
+    const UINT vertex_size23 = sizeof(*vertices23);
+    const struct vertex_ptc_float4 exp_vertices23[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 1.0f, 0.0f, 0.0f, 1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, { 0.5f, 0.0f, 0.0f, 1.0f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.2f, 0.0f, 0.0f, 1.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, { 0.2f, 0.0f, 0.0f, 1.0f}},
+        {{ 3.0f,  0.0f,  0.f}, { 1.0f, 0.0f, 0.0f, 1.0f}},
+        {{ 1.0f,  0.0f,  0.f}, { 0.1f, 0.0f, 0.0f, 1.0f}},
+    };
+    const UINT exp_vertex_size23 = sizeof(*exp_vertices23);
+    /* Test 24. Convert FLOAT1 to D3DCOLOR. */
+    const struct vertex_ptc_float1 vertices24[] =
+    {
+        {{ 0.0f,  3.0f,  0.f},  1.0f},
+        {{ 2.0f,  3.0f,  0.f},  0.5f},
+        {{ 0.0f,  0.0f,  0.f}, -0.2f},
+
+        {{ 3.0f,  3.0f,  0.f},  0.2f},
+        {{ 3.0f,  0.0f,  0.f},  1.0f},
+        {{ 1.0f,  0.0f,  0.f},  0.11f},
+    };
+    const UINT num_vertices24 = ARRAY_SIZE(vertices24);
+    const UINT num_faces24 = ARRAY_SIZE(vertices24) / VERTS_PER_FACE;
+    const UINT vertex_size24 = sizeof(*vertices24);
+    const struct vertex_ptc_d3dcolor exp_vertices24[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0, 0, 255, 255}},
+        {{ 2.0f,  3.0f,  0.f}, {0, 0, 128, 255}},
+        {{ 0.0f,  0.0f,  0.f}, {0, 0, 0, 255}},
+
+        {{ 3.0f,  3.0f,  0.f}, {0, 0, 51, 255}},
+        {{ 3.0f,  0.0f,  0.f}, {0, 0, 255, 255}},
+        {{ 1.0f,  0.0f,  0.f}, {0, 0, 28, 255}},
+    };
+    const UINT exp_vertex_size24 = sizeof(*exp_vertices24);
+    /* Test 25. Convert FLOAT1 to ubyte4. */
+    const struct vertex_ptc_float1 vertices25[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, 0.0f},
+        {{ 2.0f,  3.0f,  0.f}, 1.4f},
+        {{ 0.0f,  0.0f,  0.f}, 1.5f},
+
+        {{ 3.0f,  3.0f,  0.f}, 255.0f},
+        {{ 3.0f,  0.0f,  0.f}, 256.0f},
+        {{ 1.0f,  0.0f,  0.f}, -1.0f},
+    };
+    const UINT num_vertices25 = ARRAY_SIZE(vertices25);
+    const UINT num_faces25 = ARRAY_SIZE(vertices25) / VERTS_PER_FACE;
+    const UINT vertex_size25 = sizeof(*vertices25);
+    const struct vertex_ptc_ubyte4 exp_vertices25[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0, 0, 0, 1}},
+        {{ 2.0f,  3.0f,  0.f}, {1, 0, 0, 1}},
+        {{ 0.0f,  0.0f,  0.f}, {2, 0, 0, 1}},
+
+        {{ 3.0f,  3.0f,  0.f}, {255, 0, 0, 1}},
+        {{ 3.0f,  0.0f,  0.f}, {0, 0, 0, 1}},
+        {{ 1.0f,  0.0f,  0.f}, {0, 0, 0, 1}},
+    };
+    const UINT exp_vertex_size25 = sizeof(*exp_vertices25);
+    /* Test 26. Convert FLOAT4 to D3DCOLOR. */
+    const struct vertex_ptc_float4 vertices26[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0.0f, 1.0f, 0.4f, 0.5f}},
+        {{ 2.0f,  3.0f,  0.f}, {-0.4f, -0.5f, -1.0f, -2.0f}},
+        {{ 0.0f,  0.0f,  0.f}, {254.0f, 255.0f, 256.0f, 257.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {0.1f, 0.2f, 0.3f, 0.4f}},
+        {{ 3.0f,  0.0f,  0.f}, {0.5f, 0.6f, 0.7f, 0.8f}},
+        {{ 1.0f,  0.0f,  0.f}, {0.9f, 0.99f, 0.995f, 0.999f}},
+    };
+    const UINT num_vertices26 = ARRAY_SIZE(vertices26);
+    const UINT num_faces26 = ARRAY_SIZE(vertices26) / VERTS_PER_FACE;
+    const UINT vertex_size26 = sizeof(*vertices26);
+    const struct vertex_ptc_d3dcolor exp_vertices26[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {102, 255, 0, 128}},
+        {{ 2.0f,  3.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 0.0f,  0.0f,  0.f}, {255, 255, 255, 255}},
+
+        {{ 3.0f,  3.0f,  0.f}, {77, 51, 26, 102}},
+        {{ 3.0f,  0.0f,  0.f}, {179, 153, 128, 204}},
+        {{ 1.0f,  0.0f,  0.f}, {254, 252, 230, 255}},
+    };
+    const UINT exp_vertex_size26 = sizeof(*exp_vertices26);
+    /* Test 27. Convert D3DCOLOR to FLOAT4. */
+    const struct vertex_ptc_d3dcolor vertices27[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {102, 255, 0, 128}},
+        {{ 2.0f,  3.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 0.0f,  0.0f,  0.f}, {255, 255, 255, 255}},
+
+        {{ 3.0f,  3.0f,  0.f}, {77, 51, 26, 102}},
+        {{ 3.0f,  0.0f,  0.f}, {179, 153, 128, 204}},
+        {{ 1.0f,  0.0f,  0.f}, {254, 252, 230, 255}},
+    };
+    const UINT num_vertices27 = ARRAY_SIZE(vertices27);
+    const UINT num_faces27 = ARRAY_SIZE(vertices27) / VERTS_PER_FACE;
+    const UINT vertex_size27 = sizeof(*vertices27);
+    const struct vertex_ptc_float4 exp_vertices27[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0.0f, 1.0f, 0.4f, 0.501961f}},
+        {{ 2.0f,  3.0f,  0.f}, {0.0f, 0.0f, 0.0f, 0.0f}},
+        {{ 0.0f,  0.0f,  0.f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {0.101961f, 0.2f, 0.301961f, 0.4f}},
+        {{ 3.0f,  0.0f,  0.f}, {0.501961f, 0.6f, 0.701961f, 0.8f}},
+        {{ 1.0f,  0.0f,  0.f}, {0.901961f, 0.988235f, 0.996078f, 1.0f}},
+    };
+    const UINT exp_vertex_size27 = sizeof(*exp_vertices27);
+    /* Test 28. Convert UBYTE4 to FLOAT4. */
+    const struct vertex_ptc_ubyte4 vertices28[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 2.0f,  3.0f,  0.f}, {1, 1, 1, 1}},
+        {{ 0.0f,  0.0f,  0.f}, {1, 0, 1, 0}},
+
+        {{ 3.0f,  3.0f,  0.f}, {0, 1, 0, 1}},
+        {{ 3.0f,  0.0f,  0.f}, {10, 20, 30, 40}},
+        {{ 1.0f,  0.0f,  0.f}, {50, 60, 127, 255}},
+    };
+    const UINT num_vertices28 = ARRAY_SIZE(vertices28);
+    const UINT num_faces28 = ARRAY_SIZE(vertices28) / VERTS_PER_FACE;
+    const UINT vertex_size28 = sizeof(*vertices28);
+    const struct vertex_ptc_float4 exp_vertices28[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0.0f, 0.0f, 0.0f, 0.0f}},
+        {{ 2.0f,  3.0f,  0.f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+        {{ 0.0f,  0.0f,  0.f}, {1.0f,  0.0f, 1.0f, 0.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {0.0f, 1.0f, 0.0f, 1.0f}},
+        {{ 3.0f,  0.0f,  0.f}, {10.0f, 20.0f, 30.0f, 40.0f}},
+        {{ 1.0f,  0.0f,  0.f}, {50.0f, 60.0f, 127.0f, 255.0f}},
+    };
+    const UINT exp_vertex_size28 = sizeof(*exp_vertices28);
+    /* Test 29. Convert SHORT2 to FLOAT4. */
+    const struct vertex_ptc_short2 vertices29[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0, 0}},
+        {{ 2.0f,  3.0f,  0.f}, {0, 1}},
+        {{ 0.0f,  0.0f,  0.f}, {1, 0}},
+
+        {{ 3.0f,  3.0f,  0.f}, {1, 1}},
+        {{ 3.0f,  0.0f,  0.f}, {SHRT_MIN, SHRT_MAX}},
+        {{ 1.0f,  0.0f,  0.f}, {-42, 42}},
+    };
+    const UINT num_vertices29 = ARRAY_SIZE(vertices29);
+    const UINT num_faces29 = ARRAY_SIZE(vertices29) / VERTS_PER_FACE;
+    const UINT vertex_size29 = sizeof(*vertices29);
+    const struct vertex_ptc_float4 exp_vertices29[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0.0f, 0.0f, 0.0f, 1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, {0.0f, 1.0f, 0.0f, 1.0f }},
+        {{ 0.0f,  0.0f,  0.f}, {1.0f, 0.0f, 0.0f, 1.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {1.0f, 1.0f, 0.0f, 1.0f}},
+        {{ 3.0f,  0.0f,  0.f}, {SHRT_MIN, SHRT_MAX, 0.0f, 1.0f}},
+        {{ 1.0f,  0.0f,  0.f}, {-42.0f, 42.0f, 0.0f, 1.0f}},
+    };
+    const UINT exp_vertex_size29 = sizeof(*exp_vertices29);
+    /* Test 29. Convert SHORT4 to FLOAT4. */
+    const struct vertex_ptc_short4 vertices30[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 2.0f,  3.0f,  0.f}, {0, 1, 0, 1}},
+        {{ 0.0f,  0.0f,  0.f}, {1, 0, 1, 0}},
+
+        {{ 3.0f,  3.0f,  0.f}, {1, 1, 1, 1}},
+        {{ 3.0f,  0.0f,  0.f}, {SHRT_MIN, SHRT_MAX, 1, 0}},
+        {{ 1.0f,  0.0f,  0.f}, {-42, 42, SHRT_MAX, SHRT_MIN}},
+    };
+    const UINT num_vertices30 = ARRAY_SIZE(vertices30);
+    const UINT num_faces30 = ARRAY_SIZE(vertices30) / VERTS_PER_FACE;
+    const UINT vertex_size30 = sizeof(*vertices30);
+    const struct vertex_ptc_float4 exp_vertices30[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0.0f, 0.0f, 0.0f, 0.0f}},
+        {{ 2.0f,  3.0f,  0.f}, {0.0f, 1.0f, 0.0f, 1.0f }},
+        {{ 0.0f,  0.0f,  0.f}, {1.0f, 0.0f, 1.0f, 0.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+        {{ 3.0f,  0.0f,  0.f}, {SHRT_MIN, SHRT_MAX, 1.0f, 0.0f}},
+        {{ 1.0f,  0.0f,  0.f}, {-42.0f, 42.0f, SHRT_MAX, SHRT_MIN}},
+    };
+    const UINT exp_vertex_size30 = sizeof(*exp_vertices30);
+    /* Test 31. Convert UBYTE4N to FLOAT4. */
+    const struct vertex_ptc_ubyte4n vertices31[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 2.0f,  3.0f,  0.f}, {1, 1, 1, 1}},
+        {{ 0.0f,  0.0f,  0.f}, {1, 0, 1, 0}},
+
+        {{ 3.0f,  3.0f,  0.f}, {0, 1, 0, 1}},
+        {{ 3.0f,  0.0f,  0.f}, {10, 20, 30, 40}},
+        {{ 1.0f,  0.0f,  0.f}, {50, 60, 70, UCHAR_MAX}},
+    };
+    const UINT num_vertices31 = ARRAY_SIZE(vertices31);
+    const UINT num_faces31 = ARRAY_SIZE(vertices31) / VERTS_PER_FACE;
+    const UINT vertex_size31 = sizeof(*vertices31);
+    const struct vertex_ptc_float4 exp_vertices31[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0.0f, 0.0f, 0.0f, 0.0f}},
+        {{ 2.0f,  3.0f,  0.f}, {(FLOAT)1/UCHAR_MAX, (FLOAT)1/UCHAR_MAX, (FLOAT)1/UCHAR_MAX, (FLOAT)1/UCHAR_MAX}},
+        {{ 0.0f,  0.0f,  0.f}, {(FLOAT)1/UCHAR_MAX, 0.0f, (FLOAT)1/UCHAR_MAX, 0.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {0.0f, (FLOAT)1/UCHAR_MAX, 0.0f, (FLOAT)1/UCHAR_MAX}},
+        {{ 3.0f,  0.0f,  0.f}, {(FLOAT)10/UCHAR_MAX, (FLOAT)20/UCHAR_MAX, (FLOAT)30/UCHAR_MAX, (FLOAT)40/UCHAR_MAX}},
+        {{ 1.0f,  0.0f,  0.f}, {(FLOAT)50/UCHAR_MAX, (FLOAT)60/UCHAR_MAX, (FLOAT)70/UCHAR_MAX, 1.0f}},
+    };
+    const UINT exp_vertex_size31 = sizeof(*exp_vertices31);
+    /* Test 32. Convert SHORT2N to FLOAT4. */
+    const struct vertex_ptc_short2 vertices32[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0, 0}},
+        {{ 2.0f,  3.0f,  0.f}, {0, 1}},
+        {{ 0.0f,  0.0f,  0.f}, {1, 0}},
+
+        {{ 3.0f,  3.0f,  0.f}, {1, 1}},
+        {{ 3.0f,  0.0f,  0.f}, {SHRT_MIN + 1, SHRT_MAX}},
+        {{ 1.0f,  0.0f,  0.f}, {-42, 42}},
+    };
+    const UINT num_vertices32 = ARRAY_SIZE(vertices32);
+    const UINT num_faces32 = ARRAY_SIZE(vertices32) / VERTS_PER_FACE;
+    const UINT vertex_size32 = sizeof(*vertices32);
+    const struct vertex_ptc_float4 exp_vertices32[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0.0f, 0.0f, 0.0f, 1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, {0.0f, 1.0f/SHRT_MAX, 0.0f, 1.0f}},
+        {{ 0.0f,  0.0f,  0.f}, {1.0f/SHRT_MAX, 0.0f, 0.0f, 1.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {1.0f/SHRT_MAX, 1.0f/SHRT_MAX, 0.0f, 1.0f}},
+        {{ 3.0f,  0.0f,  0.f}, {-1.0f, 1.0f, 0.0f, 1.0f}},
+        {{ 1.0f,  0.0f,  0.f}, {-42.0f/SHRT_MAX, 42.0f/SHRT_MAX, 0.0f, 1.0f}},
+    };
+    const UINT exp_vertex_size32 = sizeof(*exp_vertices32);
+    /* Test 33. Convert SHORT4N to FLOAT4. */
+    const struct vertex_ptc_short4 vertices33[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 2.0f,  3.0f,  0.f}, {0, 1, 0, 1}},
+        {{ 0.0f,  0.0f,  0.f}, {1, 0, 1, 0}},
+
+        {{ 3.0f,  3.0f,  0.f}, {1, 1, 1, 1}},
+        {{ 3.0f,  0.0f,  0.f}, {SHRT_MIN + 1, SHRT_MAX, SHRT_MIN + 1, SHRT_MAX}},
+        {{ 1.0f,  0.0f,  0.f}, {-42, 42, 1, 1}},
+    };
+    const UINT num_vertices33 = ARRAY_SIZE(vertices33);
+    const UINT num_faces33 = ARRAY_SIZE(vertices33) / VERTS_PER_FACE;
+    const UINT vertex_size33 = sizeof(*vertices33);
+    const struct vertex_ptc_float4 exp_vertices33[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0.0f, 0.0f, 0.0f, 0.0f}},
+        {{ 2.0f,  3.0f,  0.f}, {0.0f, 1.0f/SHRT_MAX, 0.0f, 1.0f/SHRT_MAX}},
+        {{ 0.0f,  0.0f,  0.f}, {1.0f/SHRT_MAX, 0.0f, 1.0f/SHRT_MAX, 0.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {1.0f/SHRT_MAX, 1.0f/SHRT_MAX, 1.0f/SHRT_MAX, 1.0f/SHRT_MAX}},
+        {{ 3.0f,  0.0f,  0.f}, {-1.0f, 1.0f, -1.0f, 1.0f}},
+        {{ 1.0f,  0.0f,  0.f}, {-42.0f/SHRT_MAX, 42.0f/SHRT_MAX, 1.0f/SHRT_MAX, 1.0f/SHRT_MAX}},
+    };
+    const UINT exp_vertex_size33 = sizeof(*exp_vertices33);
+    /* Test 34. Convert FLOAT16_2 to FLOAT4. */
+    const struct vertex_ptc_float16_2 vertices34[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0x3c00, 0x3c00}}, /* {1.0f, 1.0f} */
+        {{ 2.0f,  3.0f,  0.f}, {0x3800, 0x399a}}, /* {0.5f, 0.7f} */
+        {{ 0.0f,  0.0f,  0.f}, {0xb266, 0xb4cd}}, /* {-0.2f, -0.3f} */
+
+        {{ 3.0f,  3.0f,  0.f}, {0x3266, 0x34cd}}, /* {0.2f, 0.3f} */
+        {{ 3.0f,  0.0f,  0.f}, {0x3c00, 0x3c00}}, /* {1.0f, 1.0f} */
+        {{ 1.0f,  0.0f,  0.f}, {0x2e66, 0x3266}}, /* {0.1f, 0.2f} */
+    };
+    const UINT num_vertices34 = ARRAY_SIZE(vertices34);
+    const UINT num_faces34 = ARRAY_SIZE(vertices34) / VERTS_PER_FACE;
+    const UINT vertex_size34 = sizeof(*vertices34);
+    const struct vertex_ptc_float4 exp_vertices34[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {1.0f, 1.0f, 0.0f, 1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, {0.5f, 0.700195f, 0.0f, 1.0f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.199951f, -0.300049f, 0.0f, 1.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {0.199951f, 0.300049f, 0.0f, 1.0f}},
+        {{ 3.0f,  0.0f,  0.f}, {1.0f, 1.0f, 0.0f, 1.0f}},
+        {{ 1.0f,  0.0f,  0.f}, {0.099976f, 0.199951f, 0.0f, 1.0f}},
+    };
+    const UINT exp_vertex_size34 = sizeof(*exp_vertices34);
+    /* Test 35. Convert FLOAT16_4 to FLOAT4. */
+    const struct vertex_ptc_float16_4 vertices35[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0x0000, 0x0000, 0x0000, 0x0000}},
+        {{ 2.0f,  3.0f,  0.f}, {0x3c00, 0x3c00, 0x3c00, 0x3c00}},
+        {{ 0.0f,  0.0f,  0.f}, {0x3c00, 0x0000, 0x3c00, 0x0000}},
+
+        {{ 3.0f,  3.0f,  0.f}, {0x0000, 0x3c00, 0x0000, 0x3c00}},
+        {{ 3.0f,  0.0f,  0.f}, {0x3800, 0x399a, 0xb266, 0xb4cd}},
+        {{ 1.0f,  0.0f,  0.f}, {0x2e66, 0x3266, 0x2e66, 0x3266}},
+    };
+    const UINT num_vertices35 = ARRAY_SIZE(vertices35);
+    const UINT num_faces35 = ARRAY_SIZE(vertices35) / VERTS_PER_FACE;
+    const UINT vertex_size35 = sizeof(*vertices35);
+    const struct vertex_ptc_float4 exp_vertices35[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0.0f, 0.0f, 0.0f, 0.0f}},
+        {{ 2.0f,  3.0f,  0.f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+        {{ 0.0f,  0.0f,  0.f}, {1.0f, 0.0f, 1.0f, 0.0f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {0.0f, 1.0f, 0.0f, 1.0f}},
+        {{ 3.0f,  0.0f,  0.f}, {0.5f, 0.700195f, -0.199951f, -0.300049f}},
+        {{ 1.0f,  0.0f,  0.f}, {0.099976f, 0.199951f, 0.099976f, 0.199951f}},
+    };
+    const UINT exp_vertex_size35 = sizeof(*exp_vertices35);
+    /* Common mesh data */
+    ID3DXMesh *mesh = NULL;
+    ID3DXMesh *mesh_clone = NULL;
+    struct
+    {
+        const BYTE *vertices;
+        const DWORD *indices;
+        const DWORD *attributes;
+        const UINT num_vertices;
+        const UINT num_faces;
+        const UINT vertex_size;
+        const DWORD options;
+        D3DVERTEXELEMENT9 *declaration;
+        D3DVERTEXELEMENT9 *new_declaration;
+        const BYTE *exp_vertices;
+        const UINT exp_vertex_size;
+    }
+    tc[] =
+    {
+        {
+            (BYTE*)vertices0,
+            NULL,
+            NULL,
+            num_vertices0,
+            num_faces0,
+            vertex_size0,
+            options,
+            declaration_pn,
+            declaration_pn,
+            (BYTE*)vertices0,
+            vertex_size0
+        },
+        {
+            (BYTE*)vertices0,
+            NULL,
+            NULL,
+            num_vertices0,
+            num_faces0,
+            vertex_size0,
+            options_16bit,
+            declaration_pn,
+            declaration_pn,
+            (BYTE*)vertices0,
+            vertex_size0
+        },
+        {
+            (BYTE*)vertices0,
+            NULL,
+            NULL,
+            num_vertices0,
+            num_faces0,
+            vertex_size0,
+            options,
+            declaration_pn,
+            declaration_pntc,
+            (BYTE*)exp_vertices2,
+            exp_vertex_size2
+        },
+        {
+            (BYTE*)vertices0,
+            NULL,
+            NULL,
+            num_vertices0,
+            num_faces0,
+            vertex_size0,
+            options,
+            declaration_pn,
+            declaration_ptcn,
+            (BYTE*)exp_vertices3,
+            exp_vertex_size3
+        },
+        {
+            (BYTE*)vertices4,
+            NULL,
+            NULL,
+            num_vertices4,
+            num_faces4,
+            vertex_size4,
+            options,
+            declaration_ptc,
+            declaration_ptc_float16_2,
+            (BYTE*)exp_vertices4,
+            exp_vertex_size4
+        },
+        {
+            (BYTE*)vertices5,
+            NULL,
+            NULL,
+            num_vertices5,
+            num_faces5,
+            vertex_size5,
+            options,
+            declaration_ptc,
+            declaration_ptc_float16_4,
+            (BYTE*)exp_vertices5,
+            exp_vertex_size5
+        },
+        {
+            (BYTE*)vertices6,
+            NULL,
+            NULL,
+            num_vertices6,
+            num_faces6,
+            vertex_size6,
+            options,
+            declaration_ptc,
+            declaration_ptc_float1,
+            (BYTE*)exp_vertices6,
+            exp_vertex_size6
+        },
+        {
+            (BYTE*)vertices7,
+            NULL,
+            NULL,
+            num_vertices7,
+            num_faces7,
+            vertex_size7,
+            options,
+            declaration_ptc,
+            declaration_ptc_float3,
+            (BYTE*)exp_vertices7,
+            exp_vertex_size7
+        },
+        {
+            (BYTE*)vertices8,
+            NULL,
+            NULL,
+            num_vertices8,
+            num_faces8,
+            vertex_size8,
+            options,
+            declaration_ptc,
+            declaration_ptc_float4,
+            (BYTE*)exp_vertices8,
+            exp_vertex_size8
+        },
+        {
+            (BYTE*)vertices9,
+            NULL,
+            NULL,
+            num_vertices9,
+            num_faces9,
+            vertex_size9,
+            options,
+            declaration_ptc,
+            declaration_ptc_d3dcolor,
+            (BYTE*)exp_vertices9,
+            exp_vertex_size9
+        },
+        {
+            (BYTE*)vertices10,
+            NULL,
+            NULL,
+            num_vertices10,
+            num_faces10,
+            vertex_size10,
+            options,
+            declaration_ptc,
+            declaration_ptc_ubyte4,
+            (BYTE*)exp_vertices10,
+            exp_vertex_size10
+        },
+        {
+            (BYTE*)vertices11,
+            NULL,
+            NULL,
+            num_vertices11,
+            num_faces11,
+            vertex_size11,
+            options,
+            declaration_ptc,
+            declaration_ptc_short2,
+            (BYTE*)exp_vertices11,
+            exp_vertex_size11
+        },
+        {
+            (BYTE*)vertices12,
+            NULL,
+            NULL,
+            num_vertices12,
+            num_faces12,
+            vertex_size12,
+            options,
+            declaration_ptc,
+            declaration_ptc_short4,
+            (BYTE*)exp_vertices12,
+            exp_vertex_size12
+        },
+        {
+            (BYTE*)vertices13,
+            NULL,
+            NULL,
+            num_vertices13,
+            num_faces13,
+            vertex_size13,
+            options,
+            declaration_ptc,
+            declaration_ptc_ubyte4n,
+            (BYTE*)exp_vertices13,
+            exp_vertex_size13
+        },
+        {
+            (BYTE*)vertices14,
+            NULL,
+            NULL,
+            num_vertices14,
+            num_faces14,
+            vertex_size14,
+            options,
+            declaration_ptc,
+            declaration_ptc_short2n,
+            (BYTE*)exp_vertices14,
+            exp_vertex_size14
+        },
+        {
+            (BYTE*)vertices15,
+            NULL,
+            NULL,
+            num_vertices15,
+            num_faces15,
+            vertex_size15,
+            options,
+            declaration_ptc,
+            declaration_ptc_short4n,
+            (BYTE*)exp_vertices15,
+            exp_vertex_size15
+        },
+        {
+            (BYTE*)vertices16,
+            NULL,
+            NULL,
+            num_vertices16,
+            num_faces16,
+            vertex_size16,
+            options,
+            declaration_ptc,
+            declaration_ptc_ushort2n,
+            (BYTE*)exp_vertices16,
+            exp_vertex_size16
+        },
+        {
+            (BYTE*)vertices17,
+            NULL,
+            NULL,
+            num_vertices17,
+            num_faces17,
+            vertex_size17,
+            options,
+            declaration_ptc,
+            declaration_ptc_ushort4n,
+            (BYTE*)exp_vertices17,
+            exp_vertex_size17
+        },
+        {
+            (BYTE*)vertices18,
+            NULL,
+            NULL,
+            num_vertices18,
+            num_faces18,
+            vertex_size18,
+            options,
+            declaration_ptc,
+            declaration_ptc_float16_2_partialu,
+            (BYTE*)exp_vertices18,
+            exp_vertex_size18
+        },
+        {
+            (BYTE*)vertices19,
+            NULL,
+            NULL,
+            num_vertices19,
+            num_faces19,
+            vertex_size19,
+            options,
+            declaration_pntc,
+            declaration_pntc1,
+            (BYTE*)exp_vertices19,
+            exp_vertex_size19
+        },
+        {
+            (BYTE*)vertices20,
+            NULL,
+            NULL,
+            num_vertices20,
+            num_faces20,
+            vertex_size20,
+            options,
+            declaration_pntc1,
+            declaration_pntc,
+            (BYTE*)exp_vertices20,
+            exp_vertex_size20
+        },
+        {
+            (BYTE*)vertices21,
+            NULL,
+            NULL,
+            num_vertices21,
+            num_faces21,
+            vertex_size21,
+            options,
+            declaration_ptc_float1,
+            declaration_ptc,
+            (BYTE*)exp_vertices21,
+            exp_vertex_size21
+        },
+        {
+            (BYTE*)vertices22,
+            NULL,
+            NULL,
+            num_vertices22,
+            num_faces22,
+            vertex_size22,
+            options,
+            declaration_ptc_float1,
+            declaration_ptc_float3,
+            (BYTE*)exp_vertices22,
+            exp_vertex_size22
+        },
+        {
+            (BYTE*)vertices23,
+            NULL,
+            NULL,
+            num_vertices23,
+            num_faces23,
+            vertex_size23,
+            options,
+            declaration_ptc_float1,
+            declaration_ptc_float4,
+            (BYTE*)exp_vertices23,
+            exp_vertex_size23
+        },
+        {
+            (BYTE*)vertices24,
+            NULL,
+            NULL,
+            num_vertices24,
+            num_faces24,
+            vertex_size24,
+            options,
+            declaration_ptc_float1,
+            declaration_ptc_d3dcolor,
+            (BYTE*)exp_vertices24,
+            exp_vertex_size24
+        },
+        {
+            (BYTE*)vertices25,
+            NULL,
+            NULL,
+            num_vertices25,
+            num_faces25,
+            vertex_size25,
+            options,
+            declaration_ptc_float1,
+            declaration_ptc_ubyte4,
+            (BYTE*)exp_vertices25,
+            exp_vertex_size25
+        },
+        {
+            (BYTE*)vertices26,
+            NULL,
+            NULL,
+            num_vertices26,
+            num_faces26,
+            vertex_size26,
+            options,
+            declaration_ptc_float4,
+            declaration_ptc_d3dcolor,
+            (BYTE*)exp_vertices26,
+            exp_vertex_size26
+        },
+        {
+            (BYTE*)vertices27,
+            NULL,
+            NULL,
+            num_vertices27,
+            num_faces27,
+            vertex_size27,
+            options,
+            declaration_ptc_d3dcolor,
+            declaration_ptc_float4,
+            (BYTE*)exp_vertices27,
+            exp_vertex_size27
+        },
+        {
+            (BYTE*)vertices28,
+            NULL,
+            NULL,
+            num_vertices28,
+            num_faces28,
+            vertex_size28,
+            options,
+            declaration_ptc_ubyte4,
+            declaration_ptc_float4,
+            (BYTE*)exp_vertices28,
+            exp_vertex_size28
+        },
+        {
+            (BYTE*)vertices29,
+            NULL,
+            NULL,
+            num_vertices29,
+            num_faces29,
+            vertex_size29,
+            options,
+            declaration_ptc_short2,
+            declaration_ptc_float4,
+            (BYTE*)exp_vertices29,
+            exp_vertex_size29
+        },
+        {
+            (BYTE*)vertices30,
+            NULL,
+            NULL,
+            num_vertices30,
+            num_faces30,
+            vertex_size30,
+            options,
+            declaration_ptc_short4,
+            declaration_ptc_float4,
+            (BYTE*)exp_vertices30,
+            exp_vertex_size30
+        },
+        {
+            (BYTE*)vertices31,
+            NULL,
+            NULL,
+            num_vertices31,
+            num_faces31,
+            vertex_size31,
+            options,
+            declaration_ptc_ubyte4n,
+            declaration_ptc_float4,
+            (BYTE*)exp_vertices31,
+            exp_vertex_size31
+        },
+        {
+            (BYTE*)vertices32,
+            NULL,
+            NULL,
+            num_vertices32,
+            num_faces32,
+            vertex_size32,
+            options,
+            declaration_ptc_short2n,
+            declaration_ptc_float4,
+            (BYTE*)exp_vertices32,
+            exp_vertex_size32
+        },
+        {
+            (BYTE*)vertices33,
+            NULL,
+            NULL,
+            num_vertices33,
+            num_faces33,
+            vertex_size33,
+            options,
+            declaration_ptc_short4n,
+            declaration_ptc_float4,
+            (BYTE*)exp_vertices33,
+            exp_vertex_size33
+        },
+        {
+            (BYTE*)vertices34,
+            NULL,
+            NULL,
+            num_vertices34,
+            num_faces34,
+            vertex_size34,
+            options,
+            declaration_ptc_float16_2,
+            declaration_ptc_float4,
+            (BYTE*)exp_vertices34,
+            exp_vertex_size34
+        },
+        {
+            (BYTE*)vertices35,
+            NULL,
+            NULL,
+            num_vertices35,
+            num_faces35,
+            vertex_size35,
+            options,
+            declaration_ptc_float16_4,
+            declaration_ptc_float4,
+            (BYTE*)exp_vertices35,
+            exp_vertex_size35
+        },
+    };
+
+    test_context = new_test_context();
+    if (!test_context)
+    {
+        skip("Couldn't create test context\n");
+        goto cleanup;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tc); i++)
+    {
+        UINT j;
+        D3DVERTEXELEMENT9 new_declaration[MAX_FVF_DECL_SIZE];
+        UINT exp_new_decl_length, new_decl_length;
+        UINT exp_new_decl_size, new_decl_size;
+
+        hr = init_test_mesh(tc[i].num_faces, tc[i].num_vertices,
+                              tc[i].options,
+                              tc[i].declaration,
+                              test_context->device, &mesh,
+                              tc[i].vertices, tc[i].vertex_size,
+                              tc[i].indices, tc[i].attributes);
+        if (FAILED(hr))
+        {
+            skip("Couldn't initialize test mesh %d. Got %x expected D3D_OK\n", i, hr);
+            goto cleanup;
+        }
+
+        hr = mesh->lpVtbl->CloneMesh(mesh, tc[i].options, tc[i].new_declaration,
+                                     test_context->device, &mesh_clone);
+        ok(hr == D3D_OK, "CloneMesh test case %d failed. Got %x\n, expected D3D_OK\n", i, hr);
+
+        hr = mesh_clone->lpVtbl->GetDeclaration(mesh_clone, new_declaration);
+        ok(hr == D3D_OK, "GetDeclaration test case %d failed. Got %x\n, expected D3D_OK\n", i, hr);
+        /* Check declaration elements */
+        for (j = 0; tc[i].new_declaration[j].Stream != 0xFF; j++)
+        {
+            ok(memcmp(&tc[i].new_declaration[j], &new_declaration[j], sizeof(*new_declaration)) == 0,
+               "Test case %d failed. Declaration element %d did not match.", i, j);
+        }
+
+        /* Check declaration length */
+        exp_new_decl_length = D3DXGetDeclLength(tc[i].new_declaration);
+        new_decl_length = D3DXGetDeclLength(new_declaration);
+        ok(new_decl_length == exp_new_decl_length,
+           "Test case %d failed. Got new declaration length %d, expected %d\n",
+           i, new_decl_length, exp_new_decl_length);
+
+        /* Check declaration size */
+        exp_new_decl_size = D3DXGetDeclVertexSize(tc[i].new_declaration, 0);
+        new_decl_size = D3DXGetDeclVertexSize(new_declaration, 0);
+        ok(new_decl_size == exp_new_decl_size,
+           "Test case %d failed. Got new declaration size %d, expected %d\n",
+           i, new_decl_size, exp_new_decl_size);
+
+        /* Check vertex data in cloned mesh */
+        hr = mesh_clone->lpVtbl->LockVertexBuffer(mesh_clone, 0, (void**)&vertices);
+        if (FAILED(hr))
+        {
+            skip("Couldn't lock cloned vertex buffer.\n");
+            goto cleanup;
+        }
+        for (j = 0; j < tc[i].num_vertices; j++)
+        {
+            UINT index = tc[i].exp_vertex_size * j;
+            check_vertex_components(__LINE__, i, j, &vertices[index], &tc[i].exp_vertices[index], tc[i].new_declaration);
+        }
+        hr = mesh_clone->lpVtbl->UnlockVertexBuffer(mesh_clone);
+        if (FAILED(hr))
+        {
+            skip("Couldn't unlock vertex buffer.\n");
+            goto cleanup;
+        }
+        vertices = NULL;
+        mesh->lpVtbl->Release(mesh);
+        mesh = NULL;
+        mesh_clone->lpVtbl->Release(mesh_clone);
+        mesh_clone = NULL;
+    }
+
+cleanup:
+    if (vertices) mesh->lpVtbl->UnlockVertexBuffer(mesh);
+    if (mesh) mesh->lpVtbl->Release(mesh);
+    if (mesh_clone) mesh_clone->lpVtbl->Release(mesh_clone);
+    free_test_context(test_context);
+}
+
 START_TEST(mesh)
 {
     D3DXBoundProbeTest();
@@ -8191,4 +9864,5 @@ START_TEST(mesh)
     test_convert_adjacency_to_point_reps();
     test_convert_point_reps_to_adjacency();
     test_weld_vertices();
+    test_clone_mesh();
 }
