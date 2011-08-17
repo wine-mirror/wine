@@ -5968,6 +5968,2205 @@ cleanup:
     free_test_context(test_context);
 }
 
+static HRESULT init_test_mesh(const DWORD num_faces, const DWORD num_vertices,
+                              const DWORD options,
+                              const D3DVERTEXELEMENT9 *declaration,
+                              IDirect3DDevice9 *device, ID3DXMesh **mesh_ptr,
+                              const void *vertices, const DWORD vertex_size,
+                              const DWORD *indices, const DWORD *attributes)
+{
+    HRESULT hr;
+    void *vertex_buffer;
+    void *index_buffer;
+    DWORD *attributes_buffer;
+    ID3DXMesh *mesh = NULL;
+
+    hr = D3DXCreateMesh(num_faces, num_vertices, options, declaration, device, mesh_ptr);
+    if (FAILED(hr))
+    {
+        skip("Couldn't create mesh. Got %x expected D3D_OK\n", hr);
+        goto cleanup;
+    }
+    mesh = *mesh_ptr;
+
+    hr = mesh->lpVtbl->LockVertexBuffer(mesh, 0, &vertex_buffer);
+    if (FAILED(hr))
+    {
+        skip("Couldn't lock vertex buffer.\n");
+        goto cleanup;
+    }
+    memcpy(vertex_buffer, vertices, num_vertices * vertex_size);
+    hr = mesh->lpVtbl->UnlockVertexBuffer(mesh);
+    if (FAILED(hr))
+    {
+        skip("Couldn't unlock vertex buffer.\n");
+        goto cleanup;
+    }
+
+    hr = mesh->lpVtbl->LockIndexBuffer(mesh, 0, &index_buffer);
+    if (FAILED(hr))
+    {
+        skip("Couldn't lock index buffer.\n");
+        goto cleanup;
+    }
+    if (options & D3DXMESH_32BIT)
+    {
+        if (indices)
+            memcpy(index_buffer, indices, 3 * num_faces * sizeof(DWORD));
+        else
+        {
+            /* Fill index buffer with 0, 1, 2, ...*/
+            DWORD *indices_32bit = (DWORD*)index_buffer;
+            UINT i;
+            for (i = 0; i < 3 * num_faces; i++)
+                indices_32bit[i] = i;
+        }
+    }
+    else
+    {
+        if (indices)
+            memcpy(index_buffer, indices, 3 * num_faces * sizeof(WORD));
+        else
+        {
+            /* Fill index buffer with 0, 1, 2, ...*/
+            WORD *indices_16bit = (WORD*)index_buffer;
+            UINT i;
+            for (i = 0; i < 3 * num_faces; i++)
+                indices_16bit[i] = i;
+        }
+    }
+    hr = mesh->lpVtbl->UnlockIndexBuffer(mesh);
+    if (FAILED(hr)) {
+        skip("Couldn't unlock index buffer.\n");
+        goto cleanup;
+    }
+
+    hr = mesh->lpVtbl->LockAttributeBuffer(mesh, 0, &attributes_buffer);
+    if (FAILED(hr))
+    {
+        skip("Couldn't lock attributes buffer.\n");
+        goto cleanup;
+    }
+
+    if (attributes)
+        memcpy(attributes_buffer, attributes, num_faces * sizeof(*attributes));
+    else
+        memset(attributes_buffer, 0, num_faces * sizeof(*attributes));
+
+    hr = mesh->lpVtbl->UnlockAttributeBuffer(mesh);
+    if (FAILED(hr))
+    {
+        skip("Couldn't unlock attributes buffer.\n");
+        goto cleanup;
+    }
+
+    hr = D3D_OK;
+cleanup:
+    return hr;
+}
+
+/* Using structs instead of bit-fields in order to avoid compiler issues. */
+struct udec3
+{
+    UINT x;
+    UINT y;
+    UINT z;
+    UINT w;
+};
+
+struct dec3n
+{
+    INT x;
+    INT y;
+    INT z;
+    INT w;
+};
+
+static DWORD init_udec3_dword(UINT x, UINT y, UINT z, UINT w)
+{
+    DWORD d = 0;
+
+    d |= x & 0x3ff;
+    d |= (y << 10) & 0xffc00;
+    d |= (z << 20) & 0x3ff00000;
+    d |= (w << 30) & 0xc0000000;
+
+    return d;
+}
+
+static DWORD init_dec3n_dword(INT x, INT y, INT z, INT w)
+{
+    DWORD d = 0;
+
+    d |= x & 0x3ff;
+    d |= (y << 10) & 0xffc00;
+    d |= (z << 20) & 0x3ff00000;
+    d |= (w << 30) & 0xc0000000;
+
+    return d;
+}
+
+static struct udec3 dword_to_udec3(DWORD d)
+{
+    struct udec3 v;
+
+    v.x = d & 0x3ff;
+    v.y = (d & 0xffc00) >> 10;
+    v.z = (d & 0x3ff00000) >> 20;
+    v.w = (d & 0xc0000000) >> 30;
+
+    return v;
+}
+
+static struct dec3n dword_to_dec3n(DWORD d)
+{
+    struct dec3n v;
+
+    v.x = d & 0x3ff;
+    v.y = (d & 0xffc00) >> 10;
+    v.z = (d & 0x3ff00000) >> 20;
+    v.w = (d & 0xc0000000) >> 30;
+
+    return v;
+}
+
+static void check_vertex_components(int line, int mesh_number, int vertex_number, BYTE *got_ptr, const BYTE *exp_ptr, D3DVERTEXELEMENT9 *declaration)
+{
+    const char *usage_strings[] =
+    {
+        "position",
+        "blend weight",
+        "blend indices",
+        "normal",
+        "point size",
+        "texture coordinates",
+        "tangent",
+        "binormal",
+        "tessellation factor",
+        "position transformed",
+        "color",
+        "fog",
+        "depth",
+        "sample"
+    };
+    D3DVERTEXELEMENT9 *decl_ptr;
+
+    for (decl_ptr = declaration; decl_ptr->Stream != 0xFF; decl_ptr++)
+    {
+        switch (decl_ptr->Type)
+        {
+            case D3DDECLTYPE_FLOAT1:
+            {
+                FLOAT *got = (FLOAT*)(got_ptr + decl_ptr->Offset);
+                FLOAT *exp = (FLOAT*)(exp_ptr + decl_ptr->Offset);
+                FLOAT diff = fabsf(*got - *exp);
+                ok_(__FILE__,line)(diff <= FLT_EPSILON, "Mesh %d: Got %f for vertex %d %s, expected %f.\n",
+                    mesh_number, *got, vertex_number, usage_strings[decl_ptr->Usage], *exp);
+                break;
+            }
+            case D3DDECLTYPE_FLOAT2:
+            {
+                D3DXVECTOR2 *got = (D3DXVECTOR2*)(got_ptr + decl_ptr->Offset);
+                D3DXVECTOR2 *exp = (D3DXVECTOR2*)(exp_ptr + decl_ptr->Offset);
+                FLOAT diff = fmaxf(fabsf(got->x - exp->x), fabsf(got->y - exp->y));
+                ok_(__FILE__,line)(diff <= FLT_EPSILON, "Mesh %d: Got (%f, %f) for vertex %d %s, expected (%f, %f).\n",
+                    mesh_number, got->x, got->y, vertex_number, usage_strings[decl_ptr->Usage], exp->x, exp->y);
+                break;
+            }
+            case D3DDECLTYPE_FLOAT3:
+            {
+                D3DXVECTOR3 *got = (D3DXVECTOR3*)(got_ptr + decl_ptr->Offset);
+                D3DXVECTOR3 *exp = (D3DXVECTOR3*)(exp_ptr + decl_ptr->Offset);
+                FLOAT diff = fmaxf(fabsf(got->x - exp->x), fabsf(got->y - exp->y));
+                diff = fmaxf(diff, fabsf(got->z - exp->z));
+                ok_(__FILE__,line)(diff <= FLT_EPSILON, "Mesh %d: Got (%f, %f, %f) for vertex %d %s, expected (%f, %f, %f).\n",
+                    mesh_number, got->x, got->y, got->z, vertex_number, usage_strings[decl_ptr->Usage], exp->x, exp->y, exp->z);
+                break;
+            }
+            case D3DDECLTYPE_FLOAT4:
+            {
+                D3DXVECTOR4 *got = (D3DXVECTOR4*)(got_ptr + decl_ptr->Offset);
+                D3DXVECTOR4 *exp = (D3DXVECTOR4*)(exp_ptr + decl_ptr->Offset);
+                FLOAT diff = fmaxf(fabsf(got->x - exp->x), fabsf(got->y - exp->y));
+                diff = fmaxf(diff, fabsf(got->z - exp->z));
+                diff = fmaxf(diff, fabsf(got->w - exp->w));
+                ok_(__FILE__,line)(diff <= FLT_EPSILON, "Mesh %d: Got (%f, %f, %f, %f) for vertex %d %s, expected (%f, %f, %f, %f).\n",
+                    mesh_number, got->x, got->y, got->z, got->w, vertex_number, usage_strings[decl_ptr->Usage], exp->x, exp->y, exp->z, got->w);
+                break;
+            }
+            case D3DDECLTYPE_D3DCOLOR:
+            {
+                BYTE *got = got_ptr + decl_ptr->Offset;
+                const BYTE *exp = exp_ptr + decl_ptr->Offset;
+                BOOL same_color = got[0] == exp[0] && got[1] == exp[1]
+                                  && got[2] == exp[2] && got[3] == exp[3];
+                const char *color_types[] = {"diffuse", "specular", "undefined color"};
+                BYTE usage_index = decl_ptr->UsageIndex;
+                if (usage_index > 1) usage_index = 2;
+                ok_(__FILE__,line)(same_color, "Mesh %d: Got (%u, %u, %u, %u) for vertex %d %s, expected (%u, %u, %u, %u).\n",
+                    mesh_number, got[0], got[1], got[2], got[3], vertex_number, color_types[usage_index], exp[0], exp[1], exp[2], exp[3]);
+                break;
+            }
+            case D3DDECLTYPE_UBYTE4:
+            case D3DDECLTYPE_UBYTE4N:
+            {
+                BYTE *got = got_ptr + decl_ptr->Offset;
+                const BYTE *exp = exp_ptr + decl_ptr->Offset;
+                BOOL same = got[0] == exp[0] && got[1] == exp[1]
+                            && got[2] == exp[2] && got[3] == exp[3];
+                ok_(__FILE__,line)(same, "Mesh %d: Got (%u, %u, %u, %u) for vertex %d %s, expected (%u, %u, %u, %u).\n",
+                    mesh_number, got[0], got[1], got[2], got[3], vertex_number, usage_strings[decl_ptr->Usage], exp[0], exp[1], exp[2], exp[3]);
+                break;
+            }
+            case D3DDECLTYPE_SHORT2:
+            case D3DDECLTYPE_SHORT2N:
+            {
+                SHORT *got = (SHORT*)(got_ptr + decl_ptr->Offset);
+                SHORT *exp = (SHORT*)(exp_ptr + decl_ptr->Offset);
+                BOOL same = got[0] == exp[0] && got[1] == exp[1];
+                ok_(__FILE__,line)(same, "Mesh %d: Got (%hd, %hd) for vertex %d %s, expected (%hd, %hd).\n",
+                    mesh_number, got[0], got[1], vertex_number, usage_strings[decl_ptr->Usage], exp[0], exp[1]);
+                break;
+            }
+            case D3DDECLTYPE_SHORT4:
+            case D3DDECLTYPE_SHORT4N:
+            {
+                SHORT *got = (SHORT*)(got_ptr + decl_ptr->Offset);
+                SHORT *exp = (SHORT*)(exp_ptr + decl_ptr->Offset);
+                BOOL same = got[0] == exp[0] && got[1] == exp[1]
+                            && got[2] == exp[2] && got[3] == exp[3];
+                ok_(__FILE__,line)(same, "Mesh %d: Got (%hd, %hd, %hd, %hd) for vertex %d %s, expected (%hd, %hd, %hd, %hd).\n",
+                    mesh_number, got[0], got[1], got[2], got[3], vertex_number, usage_strings[decl_ptr->Usage], exp[0], exp[1], exp[2], exp[3]);
+                break;
+            }
+            case D3DDECLTYPE_USHORT2N:
+            {
+                USHORT *got = (USHORT*)(got_ptr + decl_ptr->Offset);
+                USHORT *exp = (USHORT*)(exp_ptr + decl_ptr->Offset);
+                BOOL same = got[0] == exp[0] && got[1] == exp[1];
+                ok_(__FILE__,line)(same, "Mesh %d: Got (%hu, %hu) for vertex %d %s, expected (%hu, %hu).\n",
+                    mesh_number, got[0], got[1], vertex_number, usage_strings[decl_ptr->Usage], exp[0], exp[1]);
+                break;
+            }
+            case D3DDECLTYPE_USHORT4N:
+            {
+                USHORT *got = (USHORT*)(got_ptr + decl_ptr->Offset);
+                USHORT *exp = (USHORT*)(exp_ptr + decl_ptr->Offset);
+                BOOL same = got[0] == exp[0] && got[1] == exp[1]
+                            && got[2] == exp[2] && got[3] == exp[3];
+                ok_(__FILE__,line)(same, "Mesh %d: Got (%hu, %hu, %hu, %hu) for vertex %d %s, expected (%hu, %hu, %hu, %hu).\n",
+                    mesh_number, got[0], got[1], got[2], got[3], vertex_number, usage_strings[decl_ptr->Usage], exp[0], exp[1], exp[2], exp[3]);
+                break;
+            }
+            case D3DDECLTYPE_UDEC3:
+            {
+                DWORD *got = (DWORD*)(got_ptr + decl_ptr->Offset);
+                DWORD *exp = (DWORD*)(exp_ptr + decl_ptr->Offset);
+                BOOL same = memcmp(got, exp, sizeof(*got)) == 0;
+                struct udec3 got_udec3 = dword_to_udec3(*got);
+                struct udec3 exp_udec3 = dword_to_udec3(*exp);
+                ok_(__FILE__,line)(same, "Mesh %d: Got (%u, %u, %u, %u) for vertex %d %s, expected (%u, %u, %u, %u).\n",
+                    mesh_number, got_udec3.x, got_udec3.y, got_udec3.z, got_udec3.w, vertex_number, usage_strings[decl_ptr->Usage], exp_udec3.x, exp_udec3.y, exp_udec3.z, exp_udec3.w);
+
+                break;
+            }
+            case D3DDECLTYPE_DEC3N:
+            {
+                DWORD *got = (DWORD*)(got_ptr + decl_ptr->Offset);
+                DWORD *exp = (DWORD*)(exp_ptr + decl_ptr->Offset);
+                BOOL same = memcmp(got, exp, sizeof(*got)) == 0;
+                struct dec3n got_dec3n = dword_to_dec3n(*got);
+                struct dec3n exp_dec3n = dword_to_dec3n(*exp);
+                ok_(__FILE__,line)(same, "Mesh %d: Got (%d, %d, %d, %d) for vertex %d %s, expected (%d, %d, %d, %d).\n",
+                    mesh_number, got_dec3n.x, got_dec3n.y, got_dec3n.z, got_dec3n.w, vertex_number, usage_strings[decl_ptr->Usage], exp_dec3n.x, exp_dec3n.y, exp_dec3n.z, exp_dec3n.w);
+                break;
+            }
+            case D3DDECLTYPE_FLOAT16_2:
+            {
+                WORD *got = (WORD*)(got_ptr + decl_ptr->Offset);
+                WORD *exp = (WORD*)(exp_ptr + decl_ptr->Offset);
+                BOOL same = got[0] == exp[0] && got[1] == exp[1];
+                ok_(__FILE__,line)(same, "Mesh %d: Got (%hx, %hx) for vertex %d %s, expected (%hx, %hx).\n",
+                    mesh_number, got[0], got[1], vertex_number, usage_strings[decl_ptr->Usage], exp[0], exp[1]);
+                break;
+            }
+            case D3DDECLTYPE_FLOAT16_4:
+            {
+                WORD *got = (WORD*)(got_ptr + decl_ptr->Offset);
+                WORD *exp = (WORD*)(exp_ptr + decl_ptr->Offset);
+                BOOL same = got[0] == exp[0] && got[1] == exp[1]
+                            && got[2] == exp[2] && got[3] == exp[3];
+                ok_(__FILE__,line)(same, "Mesh %d: Got (%hx, %hx, %hx, %hx) for vertex %d %s, expected (%hx, %hx, %hx, %hx).\n",
+                    mesh_number, got[0], got[1], got[2], got[3], vertex_number, usage_strings[decl_ptr->Usage], exp[0], exp[1], exp[3], exp[4]);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+}
+
+static void test_weld_vertices(void)
+{
+    HRESULT hr;
+    struct test_context *test_context = NULL;
+    DWORD i;
+    const DWORD options = D3DXMESH_32BIT | D3DXMESH_SYSTEMMEM;
+    const DWORD options_16bit = D3DXMESH_SYSTEMMEM;
+    BYTE *vertices = NULL;
+    DWORD *indices = NULL;
+    WORD *indices_16bit = NULL;
+    const UINT VERTS_PER_FACE = 3;
+    const D3DXVECTOR3 up = {0.0f, 0.0f, 1.0f};
+    struct vertex_normal
+    {
+        D3DXVECTOR3 position;
+        D3DXVECTOR3 normal;
+    };
+    struct vertex_blendweight
+    {
+        D3DXVECTOR3 position;
+        FLOAT blendweight;
+    };
+    struct vertex_texcoord
+    {
+        D3DXVECTOR3 position;
+        D3DXVECTOR2 texcoord;
+    };
+    struct vertex_color
+    {
+        D3DXVECTOR3 position;
+        DWORD color;
+    };
+    struct vertex_color_ubyte4
+    {
+        D3DXVECTOR3 position;
+        BYTE color[4];
+    };
+    struct vertex_texcoord_short2
+    {
+        D3DXVECTOR3 position;
+        SHORT texcoord[2];
+    };
+    struct vertex_texcoord_ushort2n
+    {
+        D3DXVECTOR3 position;
+        USHORT texcoord[2];
+    };
+    struct vertex_normal_short4
+    {
+        D3DXVECTOR3 position;
+        SHORT normal[4];
+    };
+    struct vertex_color_float4
+    {
+        D3DXVECTOR3 position;
+        D3DXVECTOR4 color;
+    };
+    struct vertex_texcoord_float16_2
+    {
+        D3DXVECTOR3 position;
+        WORD texcoord[2];
+    };
+    struct vertex_texcoord_float16_4
+    {
+        D3DXVECTOR3 position;
+        WORD texcoord[4];
+    };
+    struct vertex_normal_udec3
+    {
+        D3DXVECTOR3 position;
+        DWORD normal;
+    };
+    struct vertex_normal_dec3n
+    {
+        D3DXVECTOR3 position;
+        DWORD normal;
+    };
+    UINT vertex_size_normal = sizeof(struct vertex_normal);
+    UINT vertex_size_blendweight = sizeof(struct vertex_blendweight);
+    UINT vertex_size_texcoord = sizeof(struct vertex_texcoord);
+    UINT vertex_size_color = sizeof(struct vertex_color);
+    UINT vertex_size_color_ubyte4 = sizeof(struct vertex_color_ubyte4);
+    UINT vertex_size_texcoord_short2 = sizeof(struct vertex_texcoord_short2);
+    UINT vertex_size_normal_short4 = sizeof(struct vertex_normal_short4);
+    UINT vertex_size_color_float4 = sizeof(struct vertex_color_float4);
+    UINT vertex_size_texcoord_float16_2 = sizeof(struct vertex_texcoord_float16_2);
+    UINT vertex_size_texcoord_float16_4 = sizeof(struct vertex_texcoord_float16_4);
+    UINT vertex_size_normal_udec3 = sizeof(struct vertex_normal_udec3);
+    UINT vertex_size_normal_dec3n = sizeof(struct vertex_normal_dec3n);
+    D3DVERTEXELEMENT9 declaration_normal[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_normal3[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 3},
+        {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_blendweight[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDWEIGHT, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_texcoord[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_color[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_color_ubyte4n[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_UBYTE4N, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_color_ubyte4[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_texcoord_short2[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_SHORT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_texcoord_short2n[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_SHORT2N, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_texcoord_ushort2n[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_USHORT2N, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_normal_short4[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_SHORT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_normal_short4n[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_SHORT4N, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_normal_ushort4n[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_USHORT4N, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_texcoord10[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 10},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_color2[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 2},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_color2_float4[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 2},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_texcoord_float16_2[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT16_2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_texcoord_float16_4[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT16_4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_normal_udec3[] =
+   {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_UDEC3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        D3DDECL_END()
+    };
+    D3DVERTEXELEMENT9 declaration_normal_dec3n[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_DEC3N, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        D3DDECL_END()
+    };
+    /* Test 0. One face and no welding.
+     *
+     * 0--1
+     * | /
+     * |/
+     * 2
+     */
+    const struct vertex vertices0[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+    };
+    const DWORD indices0[] = {0, 1, 2};
+    const DWORD attributes0[] = {0};
+    const DWORD exp_indices0[] = {0, 1, 2};
+    const UINT num_vertices0 = ARRAY_SIZE(vertices0);
+    const UINT num_faces0 = ARRAY_SIZE(indices0) / VERTS_PER_FACE;
+    const DWORD flags0 = D3DXWELDEPSILONS_WELDALL;
+    /* epsilons0 is NULL */
+    const DWORD adjacency0[] = {-1, -1, -1};
+    const struct vertex exp_vertices0[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+    };
+    const DWORD exp_face_remap0[] = {0};
+    const DWORD exp_vertex_remap0[] = {0, 1, 2};
+    const DWORD exp_new_num_vertices0 = ARRAY_SIZE(exp_vertices0);
+    /* Test 1. Two vertices should be removed without regard to epsilon.
+     *
+     * 0--1 3
+     * | / /|
+     * |/ / |
+     * 2 5--4
+     */
+    const struct vertex_normal vertices1[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 3.0f,  3.0f,  0.f}, up},
+        {{ 3.0f,  0.0f,  0.f}, up},
+        {{ 1.0f,  0.0f,  0.f}, up},
+    };
+    const DWORD indices1[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes1[] = {0, 0};
+    const UINT num_vertices1 = ARRAY_SIZE(vertices1);
+    const UINT num_faces1 = ARRAY_SIZE(indices1) / VERTS_PER_FACE;
+    const DWORD flags1 = D3DXWELDEPSILONS_WELDALL;
+    /* epsilons1 is NULL */
+    const DWORD adjacency1[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_normal exp_vertices1[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 3.0f,  0.0f,  0.f}, up}
+    };
+    const DWORD exp_indices1[] = {0, 1, 2, 1, 3, 2};
+    const DWORD exp_face_remap1[] = {0, 1};
+    const DWORD exp_vertex_remap1[] = {0, 1, 2, 4, -1, -1};
+    const DWORD exp_new_num_vertices1 = ARRAY_SIZE(exp_vertices1);
+    /* Test 2. Two faces. No vertices should be removed because of normal
+     * epsilon, but the positions should be replaced. */
+    const struct vertex_normal vertices2[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 3.0f,  3.0f,  0.f}, {0.0f, 0.5f, 0.5f}},
+        {{ 3.0f,  0.0f,  0.f}, up},
+        {{ 1.0f,  0.0f,  0.f}, {0.2f, 0.4f, 0.4f}},
+    };
+    const DWORD indices2[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes2[] = {0, 0};
+    const UINT num_vertices2 = ARRAY_SIZE(vertices2);
+    const UINT num_faces2 = ARRAY_SIZE(indices2) / VERTS_PER_FACE;
+    DWORD flags2 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons2 = {1.0f, 0.0f, 0.499999f, 0.0f, 0.0f, 0.0f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency2[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_normal exp_vertices2[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 2.0f,  3.0f,  0.f}, {0.0f, 0.5f, 0.5f}},
+        {{ 3.0f,  0.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, {0.2f, 0.4f, 0.4f}},
+    };
+    const DWORD exp_indices2[] = {0, 1, 2, 3, 4, 5};
+    const DWORD exp_face_remap2[] = {0, 1};
+    const DWORD exp_vertex_remap2[] = {0, 1, 2, 3, 4, 5};
+    const DWORD exp_new_num_vertices2 = ARRAY_SIZE(exp_vertices2);
+    /* Test 3. Two faces. One vertex should be removed because of normal epsilon. */
+    const struct vertex_normal vertices3[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 3.0f,  3.0f,  0.f}, {0.0f, 0.5f, 0.5f}},
+        {{ 3.0f,  0.0f,  0.f}, up},
+        {{ 1.0f,  0.0f,  0.f}, {0.2f, 0.4f, 0.4f}},
+    };
+    const DWORD indices3[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes3[] = {0, 0};
+    const UINT num_vertices3 = ARRAY_SIZE(vertices3);
+    const UINT num_faces3 = ARRAY_SIZE(indices3) / VERTS_PER_FACE;
+    DWORD flags3 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons3 = {1.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency3[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_normal exp_vertices3[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 3.0f,  0.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, {0.2f, 0.4f, 0.4f}},
+    };
+    const DWORD exp_indices3[] = {0, 1, 2, 1, 3, 4};
+    const DWORD exp_face_remap3[] = {0, 1};
+    const DWORD exp_vertex_remap3[] = {0, 1, 2, 4, 5, -1};
+    const DWORD exp_new_num_vertices3 = ARRAY_SIZE(exp_vertices3);
+    /* Test 4  Two faces. Two vertices should be removed. */
+    const struct vertex_normal vertices4[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 3.0f,  3.0f,  0.f}, {0.0f, 0.5f, 0.5f}},
+        {{ 3.0f,  0.0f,  0.f}, up},
+        {{ 1.0f,  0.0f,  0.f}, {0.2f, 0.4f, 0.4f}},
+    };
+    const DWORD indices4[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes4[] = {0, 0};
+    const UINT num_vertices4 = ARRAY_SIZE(vertices4);
+    const UINT num_faces4 = ARRAY_SIZE(indices4) / VERTS_PER_FACE;
+    DWORD flags4 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons4 = {1.0f, 0.0f, 0.6f, 0.0f, 0.0f, 0.0f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency4[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_normal exp_vertices4[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 3.0f,  0.0f,  0.f}, up},
+    };
+    const DWORD exp_indices4[] = {0, 1, 2, 1, 3, 2};
+    const DWORD exp_face_remap4[] = {0, 1};
+    const DWORD exp_vertex_remap4[] = {0, 1, 2, 4, -1, -1};
+    const DWORD exp_new_num_vertices4 = ARRAY_SIZE(exp_vertices4);
+    /* Test 5. Odd face ordering.
+     *
+     * 0--1 6 3
+     * | / /| |\
+     * |/ / | | \
+     * 2 8--7 5--4
+     */
+    const struct vertex_normal vertices5[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 3.0f,  3.0f,  0.f}, up},
+        {{ 3.0f,  0.0f,  0.f}, up},
+        {{ 1.0f,  0.0f,  0.f}, up},
+
+        {{ 4.0f,  3.0f,  0.f}, up},
+        {{ 6.0f,  0.0f,  0.f}, up},
+        {{ 4.0f,  0.0f,  0.f}, up},
+    };
+    const DWORD indices5[] = {0, 1, 2, 6, 7, 8, 3, 4, 5};
+    const DWORD exp_indices5[] = {0, 1, 2, 1, 4, 2, 1, 3, 4};
+    const DWORD attributes5[] = {0, 0, 0};
+    const UINT num_vertices5 = ARRAY_SIZE(vertices5);
+    const UINT num_faces5 = ARRAY_SIZE(indices5) / VERTS_PER_FACE;
+    DWORD flags5 = D3DXWELDEPSILONS_WELDALL;
+    const DWORD adjacency5[] = {-1, 1, -1, 2, -1, 0, -1, -1, 1};
+    const struct vertex_normal exp_vertices5[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 3.0f,  0.0f,  0.f}, up},
+        {{ 1.0f,  0.0f,  0.f}, up},
+    };
+    const DWORD exp_face_remap5[] = {0, 1, 2};
+    const DWORD exp_vertex_remap5[] = {0, 1, 2, 4, 5, -1, -1, -1, -1};
+    const DWORD exp_new_num_vertices5 = ARRAY_SIZE(exp_vertices5);
+    /* Test 6. Two faces. Do not remove flag is used, so no vertices should be
+     * removed. */
+    const struct vertex_normal vertices6[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 3.0f,  3.0f,  0.f}, {0.0f, 0.5f, 0.5f}},
+        {{ 3.0f,  0.0f,  0.f}, up},
+        {{ 1.0f,  0.0f,  0.f}, {0.2f, 0.4f, 0.4f}},
+    };
+    const DWORD indices6[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes6[] = {0, 0};
+    const UINT num_vertices6 = ARRAY_SIZE(vertices6);
+    const UINT num_faces6 = ARRAY_SIZE(indices6) / VERTS_PER_FACE;
+    DWORD flags6 = D3DXWELDEPSILONS_WELDPARTIALMATCHES | D3DXWELDEPSILONS_DONOTREMOVEVERTICES;
+    const D3DXWELDEPSILONS epsilons6 = {1.0f, 0.0f, 0.6f, 0.0f, 0.0f, 0.0f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency6[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_normal exp_vertices6[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 3.0f,  0.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+    };
+    const DWORD exp_indices6[] = {0, 1, 2, 3, 4, 5};
+    const DWORD exp_face_remap6[] = {0, 1};
+    const DWORD exp_vertex_remap6[] = {0, 1, 2, 3, 4, 5};
+    const DWORD exp_new_num_vertices6 = ARRAY_SIZE(exp_vertices6);
+    /* Test 7. Same as test 6 but with 16 bit indices. */
+    const WORD indices6_16bit[] = {0, 1, 2, 3, 4, 5};
+    /* Test 8. No flags. Same result as D3DXWELDEPSILONS_WELDPARTIALMATCHES. */
+    const struct vertex_normal vertices8[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 3.0f,  3.0f,  0.f}, {0.0f, 0.5f, 0.5f}},
+        {{ 3.0f,  0.0f,  0.f}, up},
+        {{ 1.0f,  0.0f,  0.f}, {0.2f, 0.4f, 0.4f}},
+    };
+    const DWORD indices8[] = {0, 1, 2, 1, 3, 4};
+    const DWORD attributes8[] = {0, 0};
+    const UINT num_vertices8 = ARRAY_SIZE(vertices8);
+    const UINT num_faces8 = ARRAY_SIZE(indices8) / VERTS_PER_FACE;
+    DWORD flags8 = 0;
+    const D3DXWELDEPSILONS epsilons8 = {1.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency8[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_normal exp_vertices8[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 3.0f,  3.0f,  0.f}, {0.0f, 0.5f, 0.5f}},
+        {{ 3.0f,  0.0f,  0.f}, up},
+    };
+    const DWORD exp_indices8[] = {0, 1, 2, 1, 3, 4};
+    const DWORD exp_face_remap8[] = {0, 1};
+    const DWORD exp_vertex_remap8[] = {0, 1, 2, 3, 4, -1};
+    const DWORD exp_new_num_vertices8 = ARRAY_SIZE(exp_vertices8);
+    /* Test 9. Vertices are removed even though they belong to separate
+     * attribute groups if D3DXWELDEPSILONS_DONOTSPLIT is set. */
+    const struct vertex_normal vertices9[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 3.0f,  3.0f,  0.f}, {0.0f, 0.5f, 0.5f}},
+        {{ 3.0f,  0.0f,  0.f}, up},
+        {{ 1.0f,  0.0f,  0.f}, {0.2f, 0.4f, 0.4f}},
+    };
+    const DWORD indices9[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes9[] = {0, 1};
+    const UINT num_vertices9 = ARRAY_SIZE(vertices9);
+    const UINT num_faces9 = ARRAY_SIZE(indices9) / VERTS_PER_FACE;
+    DWORD flags9 = D3DXWELDEPSILONS_WELDPARTIALMATCHES | D3DXWELDEPSILONS_DONOTSPLIT;
+    const D3DXWELDEPSILONS epsilons9 = {1.0f, 0.0f, 0.6f, 0.0f, 0.0f, 0.0f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency9[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_normal exp_vertices9[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 3.0f,  0.0f,  0.f}, up},
+    };
+    const DWORD exp_indices9[] = {0, 1, 2, 1, 3, 2};
+    const DWORD exp_face_remap9[] = {0, 1};
+    const DWORD exp_vertex_remap9[] = {0, 1, 2, 4, -1, -1};
+    const DWORD exp_new_num_vertices9 = ARRAY_SIZE(exp_vertices9);
+    /* Test 10. Weld blendweight (FLOAT1). */
+    const struct vertex_blendweight vertices10[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, 1.0f},
+        {{ 2.0f,  3.0f,  0.f}, 1.0f},
+        {{ 0.0f,  0.0f,  0.f}, 1.0f},
+
+        {{ 3.0f,  3.0f,  0.f}, 0.9},
+        {{ 3.0f,  0.0f,  0.f}, 1.0},
+        {{ 1.0f,  0.0f,  0.f}, 0.4},
+    };
+    const DWORD indices10[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes10[] = {0, 0};
+    const UINT num_vertices10 = ARRAY_SIZE(vertices10);
+    const UINT num_faces10 = ARRAY_SIZE(indices10) / VERTS_PER_FACE;
+    DWORD flags10 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons10 = {1.0f, 0.1f + FLT_EPSILON, 0.0f, 0.0f, 0.0f, 0.0f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency10[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_blendweight exp_vertices10[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, 1.0f},
+        {{ 2.0f,  3.0f,  0.f}, 1.0f},
+        {{ 0.0f,  0.0f,  0.f}, 1.0f},
+
+        {{ 3.0f,  0.0f,  0.f}, 1.0},
+        {{ 0.0f,  0.0f,  0.f}, 0.4},
+    };
+    const DWORD exp_indices10[] = {0, 1, 2, 1, 3, 4};
+    const DWORD exp_face_remap10[] = {0, 1};
+    const DWORD exp_vertex_remap10[] = {0, 1, 2, 4, 5, -1};
+    const DWORD exp_new_num_vertices10 = ARRAY_SIZE(exp_vertices10);
+    /* Test 11. Weld texture coordinates. */
+    const struct vertex_texcoord vertices11[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {1.0f, 1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, {0.5f, 0.7f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.2f, -0.3f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {0.2f, 0.3f}},
+        {{ 3.0f,  0.0f,  0.f}, {1.0f, 1.0f}},
+        {{ 1.0f,  0.0f,  0.f}, {0.1f, 0.2f}}
+    };
+    const DWORD indices11[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes11[] = {0, 0};
+    const UINT num_vertices11 = ARRAY_SIZE(vertices11);
+    const UINT num_faces11 = ARRAY_SIZE(indices11) / VERTS_PER_FACE;
+    DWORD flags11 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons11 = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, {0.4f + FLT_EPSILON, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency11[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_texcoord exp_vertices11[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {1.0f, 1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, {0.5f, 0.7f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.2f, -0.3f}},
+
+        {{ 3.0f,  0.0f,  0.f}, {1.0f, 1.0f}},
+        {{ 0.0f,  0.0f,  0.f}, {0.1f, 0.2f}},
+    };
+    const DWORD exp_indices11[] = {0, 1, 2, 1, 3, 4};
+    const DWORD exp_face_remap11[] = {0, 1};
+    const DWORD exp_vertex_remap11[] = {0, 1, 2, 4, 5, -1};
+    const DWORD exp_new_num_vertices11 = ARRAY_SIZE(exp_vertices11);
+    /* Test 12. Weld with color. */
+    const struct vertex_color vertices12[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, 0xFFFFFFFF},
+        {{ 2.0f,  3.0f,  0.f}, 0xFFFFFFFF},
+        {{ 0.0f,  0.0f,  0.f}, 0xFFFFFFFF},
+
+        {{ 3.0f,  3.0f,  0.f}, 0x00000000},
+        {{ 3.0f,  0.0f,  0.f}, 0xFFFFFFFF},
+        {{ 1.0f,  0.0f,  0.f}, 0x88888888},
+    };
+    const DWORD indices12[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes12[] = {0, 0};
+    const UINT num_vertices12 = ARRAY_SIZE(vertices12);
+    const UINT num_faces12 = ARRAY_SIZE(indices12) / VERTS_PER_FACE;
+    DWORD flags12 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons12 = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency12[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_color exp_vertices12[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, 0xFFFFFFFF},
+        {{ 2.0f,  3.0f,  0.f}, 0xFFFFFFFF},
+        {{ 0.0f,  0.0f,  0.f}, 0xFFFFFFFF},
+
+        {{ 2.0f,  3.0f,  0.f}, 0x00000000},
+        {{ 3.0f,  0.0f,  0.f}, 0xFFFFFFFF},
+    };
+    const DWORD exp_indices12[] = {0, 1, 2, 3, 4, 2};
+    const DWORD exp_face_remap12[] = {0, 1};
+    const DWORD exp_vertex_remap12[] = {0, 1, 2, 3, 4, -1};
+    const DWORD exp_new_num_vertices12 = ARRAY_SIZE(exp_vertices12);
+    /* Test 13. Two faces. One vertex should be removed because of normal epsilon.
+     * This is similar to test 3, but the declaration has been changed to NORMAL3.
+     */
+    const struct vertex_normal vertices13[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 3.0f,  3.0f,  0.f}, {0.0f, 0.5f, 0.5f}},
+        {{ 3.0f,  0.0f,  0.f}, up},
+        {{ 1.0f,  0.0f,  0.f}, {0.2f, 0.4f, 0.4f}},
+    };
+    const DWORD indices13[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes13[] = {0, 0};
+    const UINT num_vertices13 = ARRAY_SIZE(vertices3);
+    const UINT num_faces13 = ARRAY_SIZE(indices3) / VERTS_PER_FACE;
+    DWORD flags13 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons13 = {1.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency13[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_normal exp_vertices13[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+
+        {{ 3.0f,  0.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, {0.2f, 0.4f, 0.4f}},
+    };
+    const DWORD exp_indices13[] = {0, 1, 2, 1, 3, 4};
+    const DWORD exp_face_remap13[] = {0, 1};
+    const DWORD exp_vertex_remap13[] = {0, 1, 2, 4, 5, -1};
+    const DWORD exp_new_num_vertices13 = ARRAY_SIZE(exp_vertices13);
+    /* Test 14. Another test for welding with color. */
+    const struct vertex_color vertices14[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, 0xFFFFFFFF},
+        {{ 2.0f,  3.0f,  0.f}, 0xFFFFFFFF},
+        {{ 0.0f,  0.0f,  0.f}, 0xFFFFFFFF},
+
+        {{ 3.0f,  3.0f,  0.f}, 0x00000000},
+        {{ 3.0f,  0.0f,  0.f}, 0xFFFFFFFF},
+        {{ 1.0f,  0.0f,  0.f}, 0x01010101},
+    };
+    const DWORD indices14[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes14[] = {0, 0};
+    const UINT num_vertices14 = ARRAY_SIZE(vertices14);
+    const UINT num_faces14 = ARRAY_SIZE(indices14) / VERTS_PER_FACE;
+    DWORD flags14 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons14 = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 254.0f/255.0f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency14[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_color exp_vertices14[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, 0xFFFFFFFF},
+        {{ 2.0f,  3.0f,  0.f}, 0xFFFFFFFF},
+        {{ 0.0f,  0.0f,  0.f}, 0xFFFFFFFF},
+
+        {{ 2.0f,  3.0f,  0.f}, 0x00000000},
+        {{ 3.0f,  0.0f,  0.f}, 0xFFFFFFFF},
+    };
+    const DWORD exp_indices14[] = {0, 1, 2, 3, 4, 2};
+    const DWORD exp_face_remap14[] = {0, 1};
+    const DWORD exp_vertex_remap14[] = {0, 1, 2, 3, 4, -1};
+    const DWORD exp_new_num_vertices14 = ARRAY_SIZE(exp_vertices14);
+    /* Test 15. Weld with color, but as UBYTE4N instead of D3DCOLOR. It shows
+     * that UBYTE4N and D3DCOLOR are compared the same way.
+     */
+    const struct vertex_color_ubyte4 vertices15[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {255, 255, 255, 255}},
+        {{ 2.0f,  3.0f,  0.f}, {255, 255, 255, 255}},
+        {{ 0.0f,  0.0f,  0.f}, {255, 255, 255, 255}},
+
+        {{ 3.0f,  3.0f,  0.f}, {  0,   0,   0,   0}},
+        {{ 3.0f,  0.0f,  0.f}, {255, 255, 255, 255}},
+        {{ 1.0f,  0.0f,  0.f}, {  1,   1,   1,   1}},
+    };
+    const DWORD indices15[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes15[] = {0, 0};
+    const UINT num_vertices15 = ARRAY_SIZE(vertices15);
+    const UINT num_faces15 = ARRAY_SIZE(indices15) / VERTS_PER_FACE;
+    DWORD flags15 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons15 = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 254.0f/255.0f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency15[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_color_ubyte4 exp_vertices15[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {255, 255, 255, 255}},
+        {{ 2.0f,  3.0f,  0.f}, {255, 255, 255, 255}},
+        {{ 0.0f,  0.0f,  0.f}, {255, 255, 255, 255}},
+
+        {{ 2.0f,  3.0f,  0.f}, {  0,   0,   0,   0}},
+        {{ 3.0f,  0.0f,  0.f}, {255, 255, 255, 255}},
+    };
+    const DWORD exp_indices15[] = {0, 1, 2, 3, 4, 2};
+    const DWORD exp_face_remap15[] = {0, 1};
+    const DWORD exp_vertex_remap15[] = {0, 1, 2, 3, 4, -1};
+    const DWORD exp_new_num_vertices15 = ARRAY_SIZE(exp_vertices15);
+    /* Test 16. Weld with color, but as UBYTE4 instead of D3DCOLOR. It shows
+     * that UBYTE4 is not normalized and that epsilon is truncated and compared
+     * directly to each of the four bytes.
+     */
+    const struct vertex_color_ubyte4 vertices16[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {255, 255, 255, 255}},
+        {{ 2.0f,  3.0f,  0.f}, {255, 255, 255, 255}},
+        {{ 0.0f,  0.0f,  0.f}, {255, 255, 255, 255}},
+
+        {{ 3.0f,  3.0f,  0.f}, {  0,   0,   0,   0}},
+        {{ 3.0f,  0.0f,  0.f}, {255, 255, 255, 255}},
+        {{ 1.0f,  0.0f,  0.f}, {  1,   1,   1,   1}},
+    };
+    const DWORD indices16[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes16[] = {0, 0};
+    const UINT num_vertices16 = ARRAY_SIZE(vertices16);
+    const UINT num_faces16 = ARRAY_SIZE(indices16) / VERTS_PER_FACE;
+    DWORD flags16 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons16 = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 254.9f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency16[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_color_ubyte4 exp_vertices16[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {255, 255, 255, 255}},
+        {{ 2.0f,  3.0f,  0.f}, {255, 255, 255, 255}},
+        {{ 0.0f,  0.0f,  0.f}, {255, 255, 255, 255}},
+
+        {{ 2.0f,  3.0f,  0.f}, {  0,   0,   0,   0}},
+        {{ 3.0f,  0.0f,  0.f}, {255, 255, 255, 255}},
+    };
+    const DWORD exp_indices16[] = {0, 1, 2, 3, 4, 2};
+    const DWORD exp_face_remap16[] = {0, 1};
+    const DWORD exp_vertex_remap16[] = {0, 1, 2, 3, 4, -1};
+    const DWORD exp_new_num_vertices16 = ARRAY_SIZE(exp_vertices16);
+    /* Test 17. Weld texture coordinates but as SHORT2 instead of D3DXVECTOR2.*/
+    const struct vertex_texcoord_short2 vertices17[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 0, 0}},
+        {{ 2.0f,  3.0f,  0.f}, { 0, 0}},
+        {{ 0.0f,  0.0f,  0.f}, { 0, 0}},
+
+        {{ 3.0f,  3.0f,  0.f}, {32767, 32767}},
+        {{ 3.0f,  0.0f,  0.f}, {0, 0}},
+        {{ 1.0f,  0.0f,  0.f}, {32766, 32766}},
+    };
+    const DWORD indices17[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes17[] = {0, 0};
+    const UINT num_vertices17 = ARRAY_SIZE(vertices17);
+    const UINT num_faces17 = ARRAY_SIZE(indices17) / VERTS_PER_FACE;
+    DWORD flags17 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons17 = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, {32766.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency17[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_texcoord_short2 exp_vertices17[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 0, 0}},
+        {{ 2.0f,  3.0f,  0.f}, { 0, 0}},
+        {{ 0.0f,  0.0f,  0.f}, { 0, 0}},
+
+        {{ 2.0f,  3.0f,  0.f}, {32767, 32767}},
+        {{ 3.0f,  0.0f,  0.f}, {0, 0}},
+    };
+    const DWORD exp_indices17[] = {0, 1, 2, 3, 4, 2};
+    const DWORD exp_face_remap17[] = {0, 1};
+    const DWORD exp_vertex_remap17[] = {0, 1, 2, 3, 4, -1};
+    const DWORD exp_new_num_vertices17 = ARRAY_SIZE(exp_vertices17);
+    /* Test 18. Weld texture coordinates but as SHORT2N instead of D3DXVECTOR2. */
+    const struct vertex_texcoord_short2 vertices18[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 0, 0}},
+        {{ 2.0f,  3.0f,  0.f}, { 0, 0}},
+        {{ 0.0f,  0.0f,  0.f}, { 0, 0}},
+
+        {{ 3.0f,  3.0f,  0.f}, {32767, 32767}},
+        {{ 3.0f,  0.0f,  0.f}, {0, 0}},
+        {{ 1.0f,  0.0f,  0.f}, {32766, 32766}},
+    };
+    const DWORD indices18[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes18[] = {0, 0};
+    const UINT num_vertices18 = ARRAY_SIZE(vertices18);
+    const UINT num_faces18 = ARRAY_SIZE(indices18) / VERTS_PER_FACE;
+    DWORD flags18 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons18 = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, {32766.0f/32767.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency18[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_texcoord_short2 exp_vertices18[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 0, 0}},
+        {{ 2.0f,  3.0f,  0.f}, { 0, 0}},
+        {{ 0.0f,  0.0f,  0.f}, { 0, 0}},
+
+        {{ 2.0f,  3.0f,  0.f}, {32767, 32767}},
+        {{ 3.0f,  0.0f,  0.f}, {0, 0}},
+    };
+    const DWORD exp_indices18[] = {0, 1, 2, 3, 4, 2};
+    const DWORD exp_face_remap18[] = {0, 1};
+    const DWORD exp_vertex_remap18[] = {0, 1, 2, 3, 4, -1};
+    const DWORD exp_new_num_vertices18 = ARRAY_SIZE(exp_vertices18);
+    /* Test 19.  Weld texture coordinates but as USHORT2N instead of D3DXVECTOR2. */
+    const struct vertex_texcoord_ushort2n vertices19[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 0, 0}},
+        {{ 2.0f,  3.0f,  0.f}, { 0, 0}},
+        {{ 0.0f,  0.0f,  0.f}, { 0, 0}},
+
+        {{ 3.0f,  3.0f,  0.f}, {65535, 65535}},
+        {{ 3.0f,  0.0f,  0.f}, {0, 0}},
+        {{ 1.0f,  0.0f,  0.f}, {65534, 65534}},
+    };
+    const DWORD indices19[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes19[] = {0, 0};
+    const UINT num_vertices19 = ARRAY_SIZE(vertices19);
+    const UINT num_faces19 = ARRAY_SIZE(indices19) / VERTS_PER_FACE;
+    DWORD flags19 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons19 = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, {65534.0f/65535.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency19[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_texcoord_ushort2n exp_vertices19[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, { 0, 0}},
+        {{ 2.0f,  3.0f,  0.f}, { 0, 0}},
+        {{ 0.0f,  0.0f,  0.f}, { 0, 0}},
+
+        {{ 2.0f,  3.0f,  0.f}, {65535, 65535}},
+        {{ 3.0f,  0.0f,  0.f}, {0, 0}},
+    };
+    const DWORD exp_indices19[] = {0, 1, 2, 3, 4, 2};
+    const DWORD exp_face_remap19[] = {0, 1};
+    const DWORD exp_vertex_remap19[] = {0, 1, 2, 3, 4, -1};
+    const DWORD exp_new_num_vertices19 = ARRAY_SIZE(exp_vertices19);
+    /* Test 20.  Weld normal as SHORT4 instead of D3DXVECTOR3. */
+    const struct vertex_normal_short4 vertices20[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 2.0f,  3.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 0.0f,  0.0f,  0.f}, {0, 0, 0, 0}},
+
+        {{ 3.0f,  3.0f,  0.f}, {32767, 32767, 32767, 32767}},
+        {{ 3.0f,  0.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 1.0f,  0.0f,  0.f}, {32766, 32766, 32766, 32766}},
+    };
+    const DWORD indices20[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes20[] = {0, 0};
+    const UINT num_vertices20 = ARRAY_SIZE(vertices20);
+    const UINT num_faces20 = ARRAY_SIZE(indices20) / VERTS_PER_FACE;
+    DWORD flags20 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons20 = {1.0f, 0.0f, 32766.0f, 0.0f, 0.0f, 0.0f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency20[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_normal_short4 exp_vertices20[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 2.0f,  3.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 0.0f,  0.0f,  0.f}, {0, 0, 0, 0}},
+
+        {{ 2.0f,  3.0f,  0.f}, {32767, 32767, 32767, 32767}},
+        {{ 3.0f,  0.0f,  0.f}, {0, 0, 0, 0}},
+    };
+    const DWORD exp_indices20[] = {0, 1, 2, 3, 4, 2};
+    const DWORD exp_face_remap20[] = {0, 1};
+    const DWORD exp_vertex_remap20[] = {0, 1, 2, 3, 4, -1};
+    const DWORD exp_new_num_vertices20 = ARRAY_SIZE(exp_vertices20);
+    /* Test 21.  Weld normal as SHORT4N instead of D3DXVECTOR3. */
+    const struct vertex_normal_short4 vertices21[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 2.0f,  3.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 0.0f,  0.0f,  0.f}, {0, 0, 0, 0}},
+
+        {{ 3.0f,  3.0f,  0.f}, {32767, 32767, 32767, 32767}},
+        {{ 3.0f,  0.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 1.0f,  0.0f,  0.f}, {32766, 32766, 32766, 32766}},
+    };
+    const DWORD indices21[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes21[] = {0, 0};
+    const UINT num_vertices21 = ARRAY_SIZE(vertices21);
+    const UINT num_faces21 = ARRAY_SIZE(indices21) / VERTS_PER_FACE;
+    DWORD flags21 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons21 = {1.0f, 0.0f, 32766.0f/32767.0f, 0.0f, 0.0f, 0.0f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency21[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_normal_short4 exp_vertices21[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 2.0f,  3.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 0.0f,  0.0f,  0.f}, {0, 0, 0, 0}},
+
+        {{ 2.0f,  3.0f,  0.f}, {32767, 32767, 32767, 32767}},
+        {{ 3.0f,  0.0f,  0.f}, {0, 0, 0, 0}},
+    };
+    const DWORD exp_indices21[] = {0, 1, 2, 3, 4, 2};
+    const DWORD exp_face_remap21[] = {0, 1};
+    const DWORD exp_vertex_remap21[] = {0, 1, 2, 3, 4, -1};
+    const DWORD exp_new_num_vertices21 = ARRAY_SIZE(exp_vertices21);
+    /* Test 22.  Weld normal as USHORT4N instead of D3DXVECTOR3. */
+    const struct vertex_normal_short4 vertices22[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 2.0f,  3.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 0.0f,  0.0f,  0.f}, {0, 0, 0, 0}},
+
+        {{ 3.0f,  3.0f,  0.f}, {65535, 65535, 65535, 65535}},
+        {{ 3.0f,  0.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 1.0f,  0.0f,  0.f}, {65534, 65534, 65534, 65534}},
+    };
+    const DWORD indices22[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes22[] = {0, 0};
+    const UINT num_vertices22 = ARRAY_SIZE(vertices22);
+    const UINT num_faces22 = ARRAY_SIZE(indices22) / VERTS_PER_FACE;
+    DWORD flags22 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons22 = {1.0f, 0.0f, 65534.0f/65535.0f, 0.0f, 0.0f, 0.0f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency22[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_normal_short4 exp_vertices22[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 2.0f,  3.0f,  0.f}, {0, 0, 0, 0}},
+        {{ 0.0f,  0.0f,  0.f}, {0, 0, 0, 0}},
+
+        {{ 2.0f,  3.0f,  0.f}, {65535, 65535, 65535, 65535}},
+        {{ 3.0f,  0.0f,  0.f}, {0, 0, 0, 0}},
+    };
+    const DWORD exp_indices22[] = {0, 1, 2, 3, 4, 2};
+    const DWORD exp_face_remap22[] = {0, 1};
+    const DWORD exp_vertex_remap22[] = {0, 1, 2, 3, 4, -1};
+    const DWORD exp_new_num_vertices22 = ARRAY_SIZE(exp_vertices22);
+    /* Test 23. Weld texture coordinates as FLOAT16_2. Similar to test 11, but
+     * with texture coordinates converted to float16 in hex. */
+    const struct vertex_texcoord_float16_2 vertices23[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0x3c00, 0x3c00}}, /* {1.0f, 1.0f} */
+        {{ 2.0f,  3.0f,  0.f}, {0x3800, 0x399a}}, /* {0.5f, 0.7f} */
+        {{ 0.0f,  0.0f,  0.f}, {0xb266, 0xb4cd}}, /* {-0.2f, -0.3f} */
+
+        {{ 3.0f,  3.0f,  0.f}, {0x3266, 0x34cd}}, /* {0.2f, 0.3f} */
+        {{ 3.0f,  0.0f,  0.f}, {0x3c00, 0x3c00}}, /* {1.0f, 1.0f} */
+        {{ 1.0f,  0.0f,  0.f}, {0x2e66, 0x3266}}, /* {0.1f, 0.2f} */
+    };
+    const DWORD indices23[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes23[] = {0, 0};
+    const UINT num_vertices23 = ARRAY_SIZE(vertices23);
+    const UINT num_faces23 = ARRAY_SIZE(indices23) / VERTS_PER_FACE;
+    DWORD flags23 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons23 = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, {0.41f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency23[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_texcoord_float16_2 exp_vertices23[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0x3c00, 0x3c00}}, /* {1.0f, 1.0f} */
+        {{ 2.0f,  3.0f,  0.f}, {0x3800, 0x399a}}, /* {0.5f, 0.7f} */
+        {{ 0.0f,  0.0f,  0.f}, {0xb266, 0xb4cd}}, /* {-0.2f, -0.3f} */
+
+        {{ 3.0f,  0.0f,  0.f}, {0x3c00, 0x3c00}}, /* {1.0f, 1.0f} */
+        {{ 0.0f,  0.0f,  0.f}, {0x2e66, 0x3266}}, /* {0.1f, 0.2f} */
+    };
+    const DWORD exp_indices23[] = {0, 1, 2, 1, 3, 4};
+    const DWORD exp_face_remap23[] = {0, 1};
+    const DWORD exp_vertex_remap23[] = {0, 1, 2, 4, 5, -1};
+    const DWORD exp_new_num_vertices23 = ARRAY_SIZE(exp_vertices23);
+    /* Test 24. Weld texture coordinates as FLOAT16_4. Similar to test 24. */
+    const struct vertex_texcoord_float16_4 vertices24[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0x3c00, 0x3c00, 0x3c00, 0x3c00}},
+        {{ 2.0f,  3.0f,  0.f}, {0x3800, 0x399a, 0x3800, 0x399a}},
+        {{ 0.0f,  0.0f,  0.f}, {0xb266, 0xb4cd, 0xb266, 0xb4cd}},
+
+        {{ 3.0f,  3.0f,  0.f}, {0x3266, 0x34cd, 0x3266, 0x34cd}},
+        {{ 3.0f,  0.0f,  0.f}, {0x3c00, 0x3c00, 0x3c00, 0x3c00}},
+        {{ 1.0f,  0.0f,  0.f}, {0x2e66, 0x3266, 0x2e66, 0x3266}},
+    };
+    const DWORD indices24[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes24[] = {0, 0};
+    const UINT num_vertices24 = ARRAY_SIZE(vertices24);
+    const UINT num_faces24 = ARRAY_SIZE(indices24) / VERTS_PER_FACE;
+    DWORD flags24 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons24 = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, {0.41f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency24[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_texcoord_float16_4 exp_vertices24[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {0x3c00, 0x3c00, 0x3c00, 0x3c00}},
+        {{ 2.0f,  3.0f,  0.f}, {0x3800, 0x399a, 0x3800, 0x399a}},
+        {{ 0.0f,  0.0f,  0.f}, {0xb266, 0xb4cd, 0xb266, 0xb4cd}},
+
+        {{ 3.0f,  0.0f,  0.f}, {0x3c00, 0x3c00, 0x3c00, 0x3c00}},
+        {{ 0.0f,  0.0f,  0.f}, {0x2e66, 0x3266, 0x2e66, 0x3266}},
+    };
+    const DWORD exp_indices24[] = {0, 1, 2, 1, 3, 4};
+    const DWORD exp_face_remap24[] = {0, 1};
+    const DWORD exp_vertex_remap24[] = {0, 1, 2, 4, 5, -1};
+    const DWORD exp_new_num_vertices24 = ARRAY_SIZE(exp_vertices24);
+    /* Test 25. Weld texture coordinates with usage index 10 (TEXCOORD10). The
+     * usage index is capped at 7, so the epsilon for TEXCOORD7 is used instead.
+     */
+    const struct vertex_texcoord vertices25[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {1.0f, 1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, {0.5f, 0.7f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.2f, -0.3f}},
+
+        {{ 3.0f,  3.0f,  0.f}, {0.2f, 0.3f}},
+        {{ 3.0f,  0.0f,  0.f}, {1.0f, 1.0f}},
+        {{ 1.0f,  0.0f,  0.f}, {0.1f, 0.2f}}
+    };
+    const DWORD indices25[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes25[] = {0, 0};
+    const UINT num_vertices25 = ARRAY_SIZE(vertices25);
+    const UINT num_faces25 = ARRAY_SIZE(indices25) / VERTS_PER_FACE;
+    DWORD flags25 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons25 = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.4f + FLT_EPSILON}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency25[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_texcoord exp_vertices25[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, {1.0f, 1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, {0.5f, 0.7f}},
+        {{ 0.0f,  0.0f,  0.f}, {-0.2f, -0.3f}},
+
+        {{ 3.0f,  0.0f,  0.f}, {1.0f, 1.0f}},
+        {{ 0.0f,  0.0f,  0.f}, {0.1f, 0.2f}},
+    };
+    const DWORD exp_indices25[] = {0, 1, 2, 1, 3, 4};
+    const DWORD exp_face_remap25[] = {0, 1};
+    const DWORD exp_vertex_remap25[] = {0, 1, 2, 4, 5, -1};
+    const DWORD exp_new_num_vertices25 = ARRAY_SIZE(exp_vertices25);
+    /* Test 26. Weld color with usage index larger than 1. Shows that none of
+     * the epsilon values are used. */
+    const struct vertex_color vertices26[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, 0xFFFFFFFF},
+        {{ 2.0f,  3.0f,  0.f}, 0xFFFFFFFF},
+        {{ 0.0f,  0.0f,  0.f}, 0xFFFFFFFF},
+
+        {{ 3.0f,  3.0f,  0.f}, 0x00000000},
+        {{ 3.0f,  0.0f,  0.f}, 0xFFFFFFFF},
+        {{ 1.0f,  0.0f,  0.f}, 0x01010101},
+    };
+    const DWORD indices26[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes26[] = {0, 0};
+    const UINT num_vertices26 = ARRAY_SIZE(vertices26);
+    const UINT num_faces26 = ARRAY_SIZE(indices26) / VERTS_PER_FACE;
+    DWORD flags26 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons26 = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f}, 1.0f, 1.0f, 1.0f};
+    const DWORD adjacency26[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_color exp_vertices26[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, 0xFFFFFFFF},
+        {{ 2.0f,  3.0f,  0.f}, 0xFFFFFFFF},
+        {{ 0.0f,  0.0f,  0.f}, 0xFFFFFFFF},
+
+        {{ 2.0f,  3.0f,  0.f}, 0x00000000},
+        {{ 3.0f,  0.0f,  0.f}, 0xFFFFFFFF},
+        {{ 0.0f,  0.0f,  0.f}, 0x01010101},
+    };
+    const DWORD exp_indices26[] = {0, 1, 2, 3, 4, 5};
+    const DWORD exp_face_remap26[] = {0, 1};
+    const DWORD exp_vertex_remap26[] = {0, 1, 2, 3, 4, 5};
+    const DWORD exp_new_num_vertices26 = ARRAY_SIZE(exp_vertices26);
+    /* Test 27. Weld color with usage index larger than 1. Check that the
+     * default epsilon of 1e-6f is used. */
+    D3DXVECTOR4 zero_float4 = {0.0f, 0.0f, 0.0f, 0.0f};
+    D3DXVECTOR4 almost_zero_float4 = {0.0f + FLT_EPSILON, 0.0f + FLT_EPSILON, 0.0f + FLT_EPSILON, 0.0f + FLT_EPSILON};
+    const struct vertex_color_float4 vertices27[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, zero_float4},
+        {{ 2.0f,  3.0f,  0.f}, zero_float4},
+        {{ 0.0f,  0.0f,  0.f}, zero_float4},
+
+        {{ 3.0f,  3.0f,  0.f}, almost_zero_float4},
+        {{ 3.0f,  0.0f,  0.f}, zero_float4},
+        {{ 1.0f,  0.0f,  0.f}, almost_zero_float4},
+    };
+    const DWORD indices27[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes27[] = {0, 0};
+    const UINT num_vertices27 = ARRAY_SIZE(vertices27);
+    const UINT num_faces27 = ARRAY_SIZE(indices27) / VERTS_PER_FACE;
+    DWORD flags27 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons27 = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency27[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_color_float4 exp_vertices27[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, zero_float4},
+        {{ 2.0f,  3.0f,  0.f}, zero_float4},
+        {{ 0.0f,  0.0f,  0.f}, zero_float4},
+
+        {{ 3.0f,  0.0f,  0.f}, zero_float4},
+    };
+    const DWORD exp_indices27[] = {0, 1, 2, 1, 3, 2};
+    const DWORD exp_face_remap27[] = {0, 1};
+    const DWORD exp_vertex_remap27[] = {0, 1, 2, 4, -1, -1};
+    const DWORD exp_new_num_vertices27 = ARRAY_SIZE(exp_vertices27);
+    /* Test 28. Weld one normal with UDEC3. */
+    const DWORD dword_udec3_zero = init_udec3_dword(0, 0, 0, 1);
+    const DWORD dword_udec3_1023 = init_udec3_dword(1023, 1023, 1023, 1);
+    const DWORD dword_udec3_1022 = init_udec3_dword(1022, 1022, 1022, 1);
+    const struct vertex_normal_udec3 vertices28[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, dword_udec3_zero},
+        {{ 2.0f,  3.0f,  0.f}, dword_udec3_zero},
+        {{ 0.0f,  0.0f,  0.f}, dword_udec3_zero},
+
+        {{ 3.0f,  3.0f,  0.f}, dword_udec3_1023},
+        {{ 3.0f,  0.0f,  0.f}, dword_udec3_zero},
+        {{ 1.0f,  0.0f,  0.f}, dword_udec3_1022},
+    };
+    const DWORD indices28[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes28[] = {0, 0};
+    const UINT num_vertices28 = ARRAY_SIZE(vertices28);
+    const UINT num_faces28 = ARRAY_SIZE(indices28) / VERTS_PER_FACE;
+    DWORD flags28 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons28 = {1.0f, 0.0f, 1022.0f, 0.0f, 0.0f, 0.0f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency28[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_normal_udec3 exp_vertices28[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, dword_udec3_zero},
+        {{ 2.0f,  3.0f,  0.f}, dword_udec3_zero},
+        {{ 0.0f,  0.0f,  0.f}, dword_udec3_zero},
+
+        {{ 2.0f,  3.0f,  0.f}, dword_udec3_1023},
+        {{ 3.0f,  0.0f,  0.f}, dword_udec3_zero},
+    };
+    const DWORD exp_indices28[] = {0, 1, 2, 3, 4, 2};
+    const DWORD exp_face_remap28[] = {0, 1};
+    const DWORD exp_vertex_remap28[] = {0, 1, 2, 3, 4, -1};
+    const DWORD exp_new_num_vertices28 = ARRAY_SIZE(exp_vertices28);
+    /* Test 29. Weld one normal with DEC3N. */
+    const DWORD dword_dec3n_zero = init_dec3n_dword(0, 0, 0, 1);
+    const DWORD dword_dec3n_511 = init_dec3n_dword(511, 511, 511, 1);
+    const DWORD dword_dec3n_510 = init_dec3n_dword(510, 510, 510, 1);
+    const struct vertex_normal_dec3n vertices29[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, dword_dec3n_zero},
+        {{ 2.0f,  3.0f,  0.f}, dword_dec3n_zero},
+        {{ 0.0f,  0.0f,  0.f}, dword_dec3n_zero},
+
+        {{ 3.0f,  3.0f,  0.f}, dword_dec3n_511},
+        {{ 3.0f,  0.0f,  0.f}, dword_dec3n_zero},
+        {{ 1.0f,  0.0f,  0.f}, dword_dec3n_510},
+    };
+    const DWORD indices29[] = {0, 1, 2, 3, 4, 5};
+    const DWORD attributes29[] = {0, 0};
+    const UINT num_vertices29 = ARRAY_SIZE(vertices29);
+    const UINT num_faces29 = ARRAY_SIZE(indices29) / VERTS_PER_FACE;
+    DWORD flags29 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
+    const D3DXWELDEPSILONS epsilons29 = {1.0f, 0.0f, 510.0f/511.0f, 0.0f, 0.0f, 0.0f, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, .0f}, 0.0f, 0.0f, 0.0f};
+    const DWORD adjacency29[] = {-1, 1, -1, -1, -1, 0};
+    const struct vertex_normal_dec3n exp_vertices29[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, dword_dec3n_zero},
+        {{ 2.0f,  3.0f,  0.f}, dword_dec3n_zero},
+        {{ 0.0f,  0.0f,  0.f}, dword_dec3n_zero},
+
+        {{ 2.0f,  3.0f,  0.f}, dword_dec3n_511},
+        {{ 3.0f,  0.0f,  0.f}, dword_dec3n_zero},
+    };
+    const DWORD exp_indices29[] = {0, 1, 2, 3, 4, 2};
+    const DWORD exp_face_remap29[] = {0, 1};
+    const DWORD exp_vertex_remap29[] = {0, 1, 2, 3, 4, -1};
+    const DWORD exp_new_num_vertices29 = ARRAY_SIZE(exp_vertices29);
+    /* All mesh data */
+    DWORD *adjacency_out = NULL;
+    DWORD *face_remap = NULL;
+    ID3DXMesh *mesh = NULL;
+    ID3DXBuffer *vertex_remap = NULL;
+    struct
+    {
+        const BYTE *vertices;
+        const DWORD *indices;
+        const DWORD *attributes;
+        const DWORD num_vertices;
+        const DWORD num_faces;
+        const DWORD options;
+        D3DVERTEXELEMENT9 *declaration;
+        const UINT vertex_size;
+        const DWORD flags;
+        const D3DXWELDEPSILONS *epsilons;
+        const DWORD *adjacency;
+        const BYTE *exp_vertices;
+        const DWORD *exp_indices;
+        const DWORD *exp_face_remap;
+        const DWORD *exp_vertex_remap;
+        const DWORD exp_new_num_vertices;
+    }
+    tc[] =
+    {
+        {
+            (BYTE*)vertices0,
+            indices0,
+            attributes0,
+            num_vertices0,
+            num_faces0,
+            options,
+            declaration_normal,
+            vertex_size_normal,
+            flags0,
+            NULL,
+            adjacency0,
+            (BYTE*)exp_vertices0,
+            exp_indices0,
+            exp_face_remap0,
+            exp_vertex_remap0,
+            exp_new_num_vertices0
+        },
+        {
+            (BYTE*)vertices1,
+            indices1,
+            attributes1,
+            num_vertices1,
+            num_faces1,
+            options,
+            declaration_normal,
+            vertex_size_normal,
+            flags1,
+            NULL,
+            adjacency1,
+            (BYTE*)exp_vertices1,
+            exp_indices1,
+            exp_face_remap1,
+            exp_vertex_remap1,
+            exp_new_num_vertices1
+        },
+        {
+            (BYTE*)vertices2,
+            indices2,
+            attributes2,
+            num_vertices2,
+            num_faces2,
+            options,
+            declaration_normal,
+            vertex_size_normal,
+            flags2,
+            &epsilons2,
+            adjacency2,
+            (BYTE*)exp_vertices2,
+            exp_indices2,
+            exp_face_remap2,
+            exp_vertex_remap2,
+            exp_new_num_vertices2
+        },
+        {
+            (BYTE*)vertices3,
+            indices3,
+            attributes3,
+            num_vertices3,
+            num_faces3,
+            options,
+            declaration_normal,
+            vertex_size_normal,
+            flags3,
+            &epsilons3,
+            adjacency3,
+            (BYTE*)exp_vertices3,
+            exp_indices3,
+            exp_face_remap3,
+            exp_vertex_remap3,
+            exp_new_num_vertices3
+        },
+        {
+            (BYTE*)vertices4,
+            indices4,
+            attributes4,
+            num_vertices4,
+            num_faces4,
+            options,
+            declaration_normal,
+            vertex_size_normal,
+            flags4,
+            &epsilons4,
+            adjacency4,
+            (BYTE*)exp_vertices4,
+            exp_indices4,
+            exp_face_remap4,
+            exp_vertex_remap4,
+            exp_new_num_vertices4
+        },
+        /* Unusual ordering. */
+        {
+            (BYTE*)vertices5,
+            indices5,
+            attributes5,
+            num_vertices5,
+            num_faces5,
+            options,
+            declaration_normal,
+            vertex_size_normal,
+            flags5,
+            NULL,
+            adjacency5,
+            (BYTE*)exp_vertices5,
+            exp_indices5,
+            exp_face_remap5,
+            exp_vertex_remap5,
+            exp_new_num_vertices5
+        },
+        {
+            (BYTE*)vertices6,
+            indices6,
+            attributes6,
+            num_vertices6,
+            num_faces6,
+            options,
+            declaration_normal,
+            vertex_size_normal,
+            flags6,
+            &epsilons6,
+            adjacency6,
+            (BYTE*)exp_vertices6,
+            exp_indices6,
+            exp_face_remap6,
+            exp_vertex_remap6,
+            exp_new_num_vertices6
+        },
+        {
+            (BYTE*)vertices6,
+            (DWORD*)indices6_16bit,
+            attributes6,
+            num_vertices6,
+            num_faces6,
+            options_16bit,
+            declaration_normal,
+            vertex_size_normal,
+            flags6,
+            &epsilons6,
+            adjacency6,
+            (BYTE*)exp_vertices6,
+            exp_indices6,
+            exp_face_remap6,
+            exp_vertex_remap6,
+            exp_new_num_vertices6
+        },
+        {
+            (BYTE*)vertices8,
+            indices8,
+            attributes8,
+            num_vertices8,
+            num_faces8,
+            options,
+            declaration_normal,
+            vertex_size_normal,
+            flags8,
+            &epsilons8,
+            adjacency8,
+            (BYTE*)exp_vertices8,
+            exp_indices8,
+            exp_face_remap8,
+            exp_vertex_remap8,
+            exp_new_num_vertices8
+        },
+        {
+            (BYTE*)vertices9,
+            indices9,
+            attributes9,
+            num_vertices9,
+            num_faces9,
+            options,
+            declaration_normal,
+            vertex_size_normal,
+            flags9,
+            &epsilons9,
+            adjacency9,
+            (BYTE*)exp_vertices9,
+            exp_indices9,
+            exp_face_remap9,
+            exp_vertex_remap9,
+            exp_new_num_vertices9
+        },
+        {
+            (BYTE*)vertices10,
+            indices10,
+            attributes10,
+            num_vertices10,
+            num_faces10,
+            options,
+            declaration_blendweight,
+            vertex_size_blendweight,
+            flags10,
+            &epsilons10,
+            adjacency10,
+            (BYTE*)exp_vertices10,
+            exp_indices10,
+            exp_face_remap10,
+            exp_vertex_remap10,
+            exp_new_num_vertices10
+        },
+        {
+            (BYTE*)vertices11,
+            indices11,
+            attributes11,
+            num_vertices11,
+            num_faces11,
+            options,
+            declaration_texcoord,
+            vertex_size_texcoord,
+            flags11,
+            &epsilons11,
+            adjacency11,
+            (BYTE*)exp_vertices11,
+            exp_indices11,
+            exp_face_remap11,
+            exp_vertex_remap11,
+            exp_new_num_vertices11
+        },
+        {
+            (BYTE*)vertices12,
+            indices12,
+            attributes12,
+            num_vertices12,
+            num_faces12,
+            options,
+            declaration_color,
+            vertex_size_color,
+            flags12,
+            &epsilons12,
+            adjacency12,
+            (BYTE*)exp_vertices12,
+            exp_indices12,
+            exp_face_remap12,
+            exp_vertex_remap12,
+            exp_new_num_vertices12
+        },
+        {
+            (BYTE*)vertices13,
+            indices13,
+            attributes13,
+            num_vertices13,
+            num_faces13,
+            options,
+            declaration_normal3,
+            vertex_size_normal,
+            flags13,
+            &epsilons13,
+            adjacency13,
+            (BYTE*)exp_vertices13,
+            exp_indices13,
+            exp_face_remap13,
+            exp_vertex_remap13,
+            exp_new_num_vertices13
+        },
+        {
+            (BYTE*)vertices14,
+            indices14,
+            attributes14,
+            num_vertices14,
+            num_faces14,
+            options,
+            declaration_color,
+            vertex_size_color,
+            flags14,
+            &epsilons14,
+            adjacency14,
+            (BYTE*)exp_vertices14,
+            exp_indices14,
+            exp_face_remap14,
+            exp_vertex_remap14,
+            exp_new_num_vertices14
+        },
+        {
+            (BYTE*)vertices15,
+            indices15,
+            attributes15,
+            num_vertices15,
+            num_faces15,
+            options,
+            declaration_color_ubyte4n,
+            vertex_size_color_ubyte4, /* UBYTE4 same size as UBYTE4N */
+            flags15,
+            &epsilons15,
+            adjacency15,
+            (BYTE*)exp_vertices15,
+            exp_indices15,
+            exp_face_remap15,
+            exp_vertex_remap15,
+            exp_new_num_vertices15
+        },
+        {
+            (BYTE*)vertices16,
+            indices16,
+            attributes16,
+            num_vertices16,
+            num_faces16,
+            options,
+            declaration_color_ubyte4,
+            vertex_size_color_ubyte4,
+            flags16,
+            &epsilons16,
+            adjacency16,
+            (BYTE*)exp_vertices16,
+            exp_indices16,
+            exp_face_remap16,
+            exp_vertex_remap16,
+            exp_new_num_vertices16
+        },
+        {
+            (BYTE*)vertices17,
+            indices17,
+            attributes17,
+            num_vertices17,
+            num_faces17,
+            options,
+            declaration_texcoord_short2,
+            vertex_size_texcoord_short2,
+            flags17,
+            &epsilons17,
+            adjacency17,
+            (BYTE*)exp_vertices17,
+            exp_indices17,
+            exp_face_remap17,
+            exp_vertex_remap17,
+            exp_new_num_vertices17
+        },
+        {
+            (BYTE*)vertices18,
+            indices18,
+            attributes18,
+            num_vertices18,
+            num_faces18,
+            options,
+            declaration_texcoord_short2n,
+            vertex_size_texcoord_short2, /* SHORT2 same size as SHORT2N */
+            flags18,
+            &epsilons18,
+            adjacency18,
+            (BYTE*)exp_vertices18,
+            exp_indices18,
+            exp_face_remap18,
+            exp_vertex_remap18,
+            exp_new_num_vertices18
+        },
+        {
+            (BYTE*)vertices19,
+            indices19,
+            attributes19,
+            num_vertices19,
+            num_faces19,
+            options,
+            declaration_texcoord_ushort2n,
+            vertex_size_texcoord_short2, /* SHORT2 same size as USHORT2N */
+            flags19,
+            &epsilons19,
+            adjacency19,
+            (BYTE*)exp_vertices19,
+            exp_indices19,
+            exp_face_remap19,
+            exp_vertex_remap19,
+            exp_new_num_vertices19
+        },
+        {
+            (BYTE*)vertices20,
+            indices20,
+            attributes20,
+            num_vertices20,
+            num_faces20,
+            options,
+            declaration_normal_short4,
+            vertex_size_normal_short4,
+            flags20,
+            &epsilons20,
+            adjacency20,
+            (BYTE*)exp_vertices20,
+            exp_indices20,
+            exp_face_remap20,
+            exp_vertex_remap20,
+            exp_new_num_vertices20
+        },
+        {
+            (BYTE*)vertices21,
+            indices21,
+            attributes21,
+            num_vertices21,
+            num_faces21,
+            options,
+            declaration_normal_short4n,
+            vertex_size_normal_short4, /* SHORT4 same size as SHORT4N */
+            flags21,
+            &epsilons21,
+            adjacency21,
+            (BYTE*)exp_vertices21,
+            exp_indices21,
+            exp_face_remap21,
+            exp_vertex_remap21,
+            exp_new_num_vertices21
+        },
+        {
+            (BYTE*)vertices22,
+            indices22,
+            attributes22,
+            num_vertices22,
+            num_faces22,
+            options,
+            declaration_normal_ushort4n,
+            vertex_size_normal_short4, /* SHORT4 same size as USHORT4N */
+            flags22,
+            &epsilons22,
+            adjacency22,
+            (BYTE*)exp_vertices22,
+            exp_indices22,
+            exp_face_remap22,
+            exp_vertex_remap22,
+            exp_new_num_vertices22
+        },
+        {
+            (BYTE*)vertices23,
+            indices23,
+            attributes23,
+            num_vertices23,
+            num_faces23,
+            options,
+            declaration_texcoord_float16_2,
+            vertex_size_texcoord_float16_2,
+            flags23,
+            &epsilons23,
+            adjacency23,
+            (BYTE*)exp_vertices23,
+            exp_indices23,
+            exp_face_remap23,
+            exp_vertex_remap23,
+            exp_new_num_vertices23
+        },
+        {
+            (BYTE*)vertices24,
+            indices24,
+            attributes24,
+            num_vertices24,
+            num_faces24,
+            options,
+            declaration_texcoord_float16_4,
+            vertex_size_texcoord_float16_4,
+            flags24,
+            &epsilons24,
+            adjacency24,
+            (BYTE*)exp_vertices24,
+            exp_indices24,
+            exp_face_remap24,
+            exp_vertex_remap24,
+            exp_new_num_vertices24
+        },
+        {
+            (BYTE*)vertices25,
+            indices25,
+            attributes25,
+            num_vertices25,
+            num_faces25,
+            options,
+            declaration_texcoord10,
+            vertex_size_texcoord,
+            flags25,
+            &epsilons25,
+            adjacency25,
+            (BYTE*)exp_vertices25,
+            exp_indices25,
+            exp_face_remap25,
+            exp_vertex_remap25,
+            exp_new_num_vertices25
+        },
+        {
+            (BYTE*)vertices26,
+            indices26,
+            attributes26,
+            num_vertices26,
+            num_faces26,
+            options,
+            declaration_color2,
+            vertex_size_color,
+            flags26,
+            &epsilons26,
+            adjacency26,
+            (BYTE*)exp_vertices26,
+            exp_indices26,
+            exp_face_remap26,
+            exp_vertex_remap26,
+            exp_new_num_vertices26
+        },
+        {
+            (BYTE*)vertices27,
+            indices27,
+            attributes27,
+            num_vertices27,
+            num_faces27,
+            options,
+            declaration_color2_float4,
+            vertex_size_color_float4,
+            flags27,
+            &epsilons27,
+            adjacency27,
+            (BYTE*)exp_vertices27,
+            exp_indices27,
+            exp_face_remap27,
+            exp_vertex_remap27,
+            exp_new_num_vertices27
+        },
+        {
+            (BYTE*)vertices28,
+            indices28,
+            attributes28,
+            num_vertices28,
+            num_faces28,
+            options,
+            declaration_normal_udec3,
+            vertex_size_normal_udec3,
+            flags28,
+            &epsilons28,
+            adjacency28,
+            (BYTE*)exp_vertices28,
+            exp_indices28,
+            exp_face_remap28,
+            exp_vertex_remap28,
+            exp_new_num_vertices28
+        },
+        {
+            (BYTE*)vertices29,
+            indices29,
+            attributes29,
+            num_vertices29,
+            num_faces29,
+            options,
+            declaration_normal_dec3n,
+            vertex_size_normal_dec3n,
+            flags29,
+            &epsilons29,
+            adjacency29,
+            (BYTE*)exp_vertices29,
+            exp_indices29,
+            exp_face_remap29,
+            exp_vertex_remap29,
+            exp_new_num_vertices29
+        }
+    };
+
+    test_context = new_test_context();
+    if (!test_context)
+    {
+        skip("Couldn't create test context\n");
+        goto cleanup;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tc); i++)
+    {
+        DWORD j;
+        DWORD *vertex_remap_ptr;
+        DWORD new_num_vertices;
+
+        hr = init_test_mesh(tc[i].num_faces, tc[i].num_vertices, tc[i].options,
+                            tc[i].declaration, test_context->device, &mesh,
+                            tc[i].vertices, tc[i].vertex_size,
+                            tc[i].indices, tc[i].attributes);
+        if (FAILED(hr))
+        {
+            skip("Couldn't initialize test mesh %d.\n", i);
+            goto cleanup;
+        }
+
+        /* Allocate out parameters */
+        adjacency_out = HeapAlloc(GetProcessHeap(), 0, VERTS_PER_FACE * tc[i].num_faces * sizeof(*adjacency_out));
+        if (!adjacency_out)
+        {
+            skip("Couldn't allocate adjacency_out array.\n");
+            goto cleanup;
+        }
+        face_remap = HeapAlloc(GetProcessHeap(), 0, tc[i].num_faces * sizeof(*face_remap));
+        if (!adjacency_out)
+        {
+            skip("Couldn't allocate face_remap array.\n");
+            goto cleanup;
+        }
+        hr = D3DXCreateBuffer(tc[i].num_vertices * sizeof(DWORD), &vertex_remap);
+        if (FAILED(hr))
+        {
+            skip("Couldn't create vertex_remap buffer.\n");
+            goto cleanup;
+        }
+
+        hr = D3DXWeldVertices(mesh, tc[i].flags, tc[i].epsilons, tc[i].adjacency,
+                              adjacency_out, face_remap, &vertex_remap);
+        ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+        /* Check number of vertices*/
+        new_num_vertices = mesh->lpVtbl->GetNumVertices(mesh);
+        ok(new_num_vertices == tc[i].exp_new_num_vertices,
+           "Mesh %d: new_num_vertices == %d, expected %d.\n",
+           i, new_num_vertices, tc[i].exp_new_num_vertices);
+        /* Check index buffer */
+        if (tc[i].options & D3DXMESH_32BIT)
+        {
+            hr = mesh->lpVtbl->LockIndexBuffer(mesh, 0, (void**)&indices);
+            if (FAILED(hr))
+            {
+                skip("Couldn't lock index buffer.\n");
+                goto cleanup;
+            }
+            for (j = 0; j < VERTS_PER_FACE * tc[i].num_faces; j++)
+            {
+                ok(indices[j] == tc[i].exp_indices[j],
+                   "Mesh %d: indices[%d] == %d, expected %d\n",
+                   i, j, indices[j], tc[i].exp_indices[j]);
+            }
+        }
+        else
+        {
+            hr = mesh->lpVtbl->LockIndexBuffer(mesh, 0, (void**)&indices_16bit);
+            if (FAILED(hr))
+            {
+                skip("Couldn't lock index buffer.\n");
+                goto cleanup;
+            }
+            for (j = 0; j < VERTS_PER_FACE * tc[i].num_faces; j++)
+            {
+                ok(indices_16bit[j] == tc[i].exp_indices[j],
+                   "Mesh %d: indices_16bit[%d] == %d, expected %d\n",
+                   i, j, indices_16bit[j], tc[i].exp_indices[j]);
+            }
+        }
+        mesh->lpVtbl->UnlockIndexBuffer(mesh);
+        indices = NULL;
+        indices_16bit = NULL;
+        /* Check adjacency_out */
+        for (j = 0; j < VERTS_PER_FACE * tc[i].num_faces; j++)
+        {
+            ok(adjacency_out[j] == tc[i].adjacency[j],
+               "Mesh %d: adjacency_out[%d] == %d, expected %d\n",
+               i, j, adjacency_out[j], tc[i].adjacency[j]);
+        }
+        /* Check face_remap */
+        for (j = 0; j < tc[i].num_faces; j++)
+        {
+            ok(face_remap[j] == tc[i].exp_face_remap[j],
+               "Mesh %d: face_remap[%d] == %d, expected %d\n",
+               i, j, face_remap[j], tc[i].exp_face_remap[j]);
+        }
+        /* Check vertex_remap */
+        vertex_remap_ptr = vertex_remap->lpVtbl->GetBufferPointer(vertex_remap);
+        for (j = 0; j < VERTS_PER_FACE * tc[i].num_faces; j++)
+        {
+            ok(vertex_remap_ptr[j] == tc[i].exp_vertex_remap[j],
+               "Mesh %d: vertex_remap_ptr[%d] == %d, expected %d\n",
+               i, j, vertex_remap_ptr[j], tc[i].exp_vertex_remap[j]);
+        }
+        /* Check vertex buffer */
+        hr = mesh->lpVtbl->LockVertexBuffer(mesh, 0, (void*)&vertices);
+        if (FAILED(hr))
+        {
+            skip("Couldn't lock vertex buffer.\n");
+            goto cleanup;
+        }
+        /* Check contents of re-ordered vertex buffer */
+        for (j = 0; j < tc[i].exp_new_num_vertices; j++)
+        {
+            int index = tc[i].vertex_size*j;
+            check_vertex_components(__LINE__, i, j, &vertices[index], &tc[i].exp_vertices[index], tc[i].declaration);
+        }
+        mesh->lpVtbl->UnlockVertexBuffer(mesh);
+        vertices = NULL;
+
+        /* Free mesh and output data */
+        HeapFree(GetProcessHeap(), 0, adjacency_out);
+        adjacency_out = NULL;
+        HeapFree(GetProcessHeap(), 0, face_remap);
+        face_remap = NULL;
+        vertex_remap->lpVtbl->Release(vertex_remap);
+        vertex_remap = NULL;
+        mesh->lpVtbl->Release(mesh);
+        mesh = NULL;
+    }
+
+cleanup:
+    HeapFree(GetProcessHeap(), 0, adjacency_out);
+    HeapFree(GetProcessHeap(), 0, face_remap);
+    if (indices) mesh->lpVtbl->UnlockIndexBuffer(mesh);
+    if (indices_16bit) mesh->lpVtbl->UnlockIndexBuffer(mesh);
+    if (mesh) mesh->lpVtbl->Release(mesh);
+    if (vertex_remap) vertex_remap->lpVtbl->Release(vertex_remap);
+    if (vertices) mesh->lpVtbl->UnlockVertexBuffer(mesh);
+    free_test_context(test_context);
+}
+
 START_TEST(mesh)
 {
     D3DXBoundProbeTest();
@@ -5990,4 +8189,5 @@ START_TEST(mesh)
     test_create_skin_info();
     test_convert_adjacency_to_point_reps();
     test_convert_point_reps_to_adjacency();
+    test_weld_vertices();
 }
