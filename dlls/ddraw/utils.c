@@ -228,7 +228,7 @@ void PixelFormat_WineD3DtoDD(DDPIXELFORMAT *DDPixelFormat, enum wined3d_format_i
             DDPixelFormat->dwFourCC = 0;
             DDPixelFormat->u1.dwZBufferBitDepth = 32;
             DDPixelFormat->u2.dwStencilBitDepth = 0;
-            DDPixelFormat->u3.dwZBitMask = 0x00FFFFFFFF;
+            DDPixelFormat->u3.dwZBitMask = 0x00FFFFFF;
             DDPixelFormat->u4.dwStencilBitMask = 0x00000000;
             DDPixelFormat->u5.dwRGBAlphaBitMask = 0x0;
             break;
