@@ -4242,11 +4242,21 @@ HRESULT CDECL wined3d_device_draw_primitive_strided(struct wined3d_device *devic
      * baseVertexIndex because that call is only called by ddraw which does
      * not need that value. */
     device_invalidate_state(device, STATE_VDECL);
+    device_invalidate_state(device, STATE_STREAMSRC);
     device_invalidate_state(device, STATE_INDEXBUFFER);
+
     device->stateBlock->state.base_vertex_index = 0;
     device->up_strided = strided_data;
     drawPrimitive(device, vertex_count, 0, 0, NULL);
     device->up_strided = NULL;
+
+    /* Invalidate the states again to make sure the values from the stateblock
+     * are properly applied in the next regular draw. Note that the application-
+     * provided strided data has ovwritten pretty much the entire vertex and
+     * and index stream related states */
+    device_invalidate_state(device, STATE_VDECL);
+    device_invalidate_state(device, STATE_STREAMSRC);
+    device_invalidate_state(device, STATE_INDEXBUFFER);
     return WINED3D_OK;
 }
 
@@ -4261,12 +4271,18 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive_strided(struct wined3d_devic
      * that value.
      */
     device_invalidate_state(device, STATE_VDECL);
+    device_invalidate_state(device, STATE_STREAMSRC);
     device_invalidate_state(device, STATE_INDEXBUFFER);
+
     device->stateBlock->state.user_stream = TRUE;
     device->stateBlock->state.base_vertex_index = 0;
     device->up_strided = strided_data;
     drawPrimitive(device, index_count, 0, index_size, index_data);
     device->up_strided = NULL;
+
+    device_invalidate_state(device, STATE_VDECL);
+    device_invalidate_state(device, STATE_STREAMSRC);
+    device_invalidate_state(device, STATE_INDEXBUFFER);
     return WINED3D_OK;
 }
 
