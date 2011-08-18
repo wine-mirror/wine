@@ -37,7 +37,7 @@ typedef struct RuntimeHost RuntimeHost;
 
 typedef struct CLRRuntimeInfo
 {
-    const struct ICLRRuntimeInfoVtbl *ICLRRuntimeInfo_vtbl;
+    ICLRRuntimeInfo ICLRRuntimeInfo_iface;
     LPCWSTR mono_libdir;
     DWORD major;
     DWORD minor;

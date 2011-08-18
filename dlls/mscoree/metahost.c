@@ -51,9 +51,9 @@ static const struct ICLRRuntimeInfoVtbl CLRRuntimeInfoVtbl;
 #define NUM_RUNTIMES 3
 
 static struct CLRRuntimeInfo runtimes[NUM_RUNTIMES] = {
-    {&CLRRuntimeInfoVtbl, net_11_subdir, 1, 1, 4322, 0},
-    {&CLRRuntimeInfoVtbl, net_20_subdir, 2, 0, 50727, 0},
-    {&CLRRuntimeInfoVtbl, net_40_subdir, 4, 0, 30319, 0}
+    {{&CLRRuntimeInfoVtbl}, net_11_subdir, 1, 1, 4322, 0},
+    {{&CLRRuntimeInfoVtbl}, net_20_subdir, 2, 0, 50727, 0},
+    {{&CLRRuntimeInfoVtbl}, net_40_subdir, 4, 0, 30319, 0}
 };
 
 static int runtimes_initialized;
@@ -311,6 +311,11 @@ void expect_no_runtimes(void)
     }
 }
 
+static inline CLRRuntimeInfo *impl_from_ICLRRuntimeInfo(ICLRRuntimeInfo *iface)
+{
+    return CONTAINING_RECORD(iface, CLRRuntimeInfo, ICLRRuntimeInfo_iface);
+}
+
 static HRESULT WINAPI CLRRuntimeInfo_QueryInterface(ICLRRuntimeInfo* iface,
         REFIID riid,
         void **ppvObject)
@@ -346,7 +351,7 @@ static ULONG WINAPI CLRRuntimeInfo_Release(ICLRRuntimeInfo* iface)
 static HRESULT WINAPI CLRRuntimeInfo_GetVersionString(ICLRRuntimeInfo* iface,
     LPWSTR pwzBuffer, DWORD *pcchBuffer)
 {
-    struct CLRRuntimeInfo *This = (struct CLRRuntimeInfo*)iface;
+    struct CLRRuntimeInfo *This = impl_from_ICLRRuntimeInfo(iface);
     DWORD buffer_size = *pcchBuffer;
     HRESULT hr = S_OK;
     char version[11];
@@ -475,7 +480,7 @@ static HRESULT WINAPI CLRRuntimeInfo_GetProcAddress(ICLRRuntimeInfo* iface,
 static HRESULT WINAPI CLRRuntimeInfo_GetInterface(ICLRRuntimeInfo* iface,
     REFCLSID rclsid, REFIID riid, LPVOID *ppUnk)
 {
-    struct CLRRuntimeInfo *This = (struct CLRRuntimeInfo*)iface;
+    struct CLRRuntimeInfo *This = impl_from_ICLRRuntimeInfo(iface);
     RuntimeHost *host;
     HRESULT hr;
 
@@ -548,9 +553,9 @@ static const struct ICLRRuntimeInfoVtbl CLRRuntimeInfoVtbl = {
 
 HRESULT ICLRRuntimeInfo_GetRuntimeHost(ICLRRuntimeInfo *iface, RuntimeHost **result)
 {
-    struct CLRRuntimeInfo *This = (struct CLRRuntimeInfo*)iface;
+    struct CLRRuntimeInfo *This = impl_from_ICLRRuntimeInfo(iface);
 
-    assert(This->ICLRRuntimeInfo_vtbl == &CLRRuntimeInfoVtbl);
+    assert(This->ICLRRuntimeInfo_iface.lpVtbl == &CLRRuntimeInfoVtbl);
 
     return CLRRuntimeInfo_GetRuntimeHost(This, result);
 }
@@ -839,7 +844,7 @@ static HRESULT WINAPI InstalledRuntimeEnum_Next(IEnumUnknown *iface, ULONG celt,
         }
         if (runtimes[This->pos].mono_abi_version)
         {
-            item = (IUnknown*)&runtimes[This->pos];
+            item = (IUnknown*)&runtimes[This->pos].ICLRRuntimeInfo_iface;
             IUnknown_AddRef(item);
             rgelt[num_fetched] = item;
             num_fetched++;
@@ -1022,7 +1027,8 @@ static HRESULT WINAPI CLRMetaHost_GetRuntime(ICLRMetaHost* iface,
             runtimes[i].build == build)
         {
             if (runtimes[i].mono_abi_version)
-                return IUnknown_QueryInterface((IUnknown*)&runtimes[i], iid, ppRuntime);
+                return ICLRRuntimeInfo_QueryInterface(&runtimes[i].ICLRRuntimeInfo_iface, iid,
+                        ppRuntime);
             else
             {
                 missing_runtime_message(&runtimes[i]);
@@ -1315,8 +1321,8 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
         while (i--)
         {
             if (runtimes[i].mono_abi_version)
-                return IUnknown_QueryInterface((IUnknown*)&runtimes[i],
-                    &IID_ICLRRuntimeInfo, (void**)result);
+                return ICLRRuntimeInfo_QueryInterface(&runtimes[i].ICLRRuntimeInfo_iface,
+                        &IID_ICLRRuntimeInfo, (void **)result);
         }
 
         if (legacy)
