@@ -3242,6 +3242,18 @@ static BOOL CheckDepthStencilCapability(const struct wined3d_adapter *adapter,
     /* Only allow depth/stencil formats */
     if (!(ds_format->depth_size || ds_format->stencil_size)) return FALSE;
 
+    /* Blacklist formats not supported on Windows */
+    switch (ds_format->id)
+    {
+        case WINED3DFMT_S1_UINT_D15_UNORM: /* Breaks the shadowvol2 dx7 sdk sample */
+        case WINED3DFMT_S4X4_UINT_D24_UNORM:
+            TRACE_(d3d_caps)("[FAILED] - not supported on windows\n");
+            return FALSE;
+
+        default:
+            break;
+    }
+
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         /* With FBOs WGL limitations do not apply, but the format needs to be FBO attachable */
@@ -3425,9 +3437,7 @@ static BOOL CheckTextureCapability(const struct wined3d_adapter *adapter, const 
          */
         case WINED3DFMT_D16_LOCKABLE:
         case WINED3DFMT_D16_UNORM:
-        case WINED3DFMT_S1_UINT_D15_UNORM:
         case WINED3DFMT_X8D24_UNORM:
-        case WINED3DFMT_S4X4_UINT_D24_UNORM:
         case WINED3DFMT_D24_UNORM_S8_UINT:
         case WINED3DFMT_S8_UINT_D24_FLOAT:
         case WINED3DFMT_D32_UNORM:
@@ -3438,6 +3448,12 @@ static BOOL CheckTextureCapability(const struct wined3d_adapter *adapter, const 
             if (gl_info->supported[EXT_PACKED_DEPTH_STENCIL]
                     || gl_info->supported[ARB_FRAMEBUFFER_OBJECT])
                 return TRUE;
+            return FALSE;
+
+        /* Not supported on Windows */
+        case WINED3DFMT_S1_UINT_D15_UNORM:
+        case WINED3DFMT_S4X4_UINT_D24_UNORM:
+            TRACE_(d3d_caps)("[FAILED] - not supported on windows\n");
             return FALSE;
 
         /*****
