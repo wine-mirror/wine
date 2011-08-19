@@ -5344,11 +5344,11 @@ HRESULT WINAPI D3DXCreateTextW(LPDIRECT3DDEVICE9 device,
     if (FAILED(hr))
         goto error;
 
-    hr = mesh->lpVtbl->LockVertexBuffer(mesh, D3DLOCK_DISCARD, (LPVOID *)&vertices);
+    hr = mesh->lpVtbl->LockVertexBuffer(mesh, 0, (LPVOID *)&vertices);
     if (FAILED(hr))
         goto error;
 
-    hr = mesh->lpVtbl->LockIndexBuffer(mesh, D3DLOCK_DISCARD, (LPVOID *)&faces);
+    hr = mesh->lpVtbl->LockIndexBuffer(mesh, 0, (LPVOID *)&faces);
     if (FAILED(hr))
         goto error;
 
