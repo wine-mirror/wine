@@ -535,6 +535,7 @@ LONG WINAPI SetBitmapBits(
     int i, src_stride, dst_stride;
     struct bitblt_coords src, dst;
     struct gdi_image_bits src_bits;
+    HRGN clip = NULL;
 
     if (!bits) return 0;
 
@@ -548,17 +549,30 @@ LONG WINAPI SetBitmapBits(
 
     if (bmp->dib) src_stride = get_bitmap_stride( bmp->dib->dsBmih.biWidth, bmp->dib->dsBmih.biBitCount );
     else src_stride = get_bitmap_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
+    count = min( count, src_stride * bmp->bitmap.bmHeight );
 
     dst_stride = get_dib_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
 
     src.visrect.left   = src.x = 0;
     src.visrect.top    = src.y = 0;
     src.visrect.right  = src.width = bmp->bitmap.bmWidth;
-    src.visrect.bottom = src.height = min( count / src_stride, bmp->bitmap.bmHeight );
+    src.visrect.bottom = src.height = (count + src_stride - 1 ) / src_stride;
     dst = src;
 
-    /* Only set entire lines */
-    count = src.height * src_stride;
+    if (count % src_stride)
+    {
+        HRGN last_row;
+        int extra_pixels = ((count % src_stride) << 3) / bmp->bitmap.bmBitsPixel;
+
+        if ((count % src_stride << 3) % bmp->bitmap.bmBitsPixel)
+            FIXME( "Unhandled partial pixel\n" );
+        clip = CreateRectRgn( src.visrect.left, src.visrect.top,
+                              src.visrect.right, src.visrect.bottom - 1 );
+        last_row = CreateRectRgn( src.visrect.left, src.visrect.bottom - 1,
+                                  src.visrect.left + extra_pixels, src.visrect.bottom );
+        CombineRgn( clip, clip, last_row, RGN_OR );
+        DeleteObject( last_row );
+    }
 
     TRACE("(%p, %d, %p) %dx%d %d bpp fetched height: %d\n",
           hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
@@ -579,8 +593,10 @@ LONG WINAPI SetBitmapBits(
         }
         src_bits.is_copy = TRUE;
         src_bits.free = free_heap_bits;
-        for (i = 0; i < dst.height; i++)
+        for (i = 0; i < count / src_stride; i++)
             memcpy( (char *)src_bits.ptr + i * dst_stride, (char *)bits + i * src_stride, src_stride );
+        if (count % src_stride)
+            memcpy( (char *)src_bits.ptr + i * dst_stride, (char *)bits + i * src_stride, count % src_stride );
     }
 
     /* query the color info */
@@ -604,10 +620,11 @@ LONG WINAPI SetBitmapBits(
         info->bmiHeader.biWidth         = bmp->bitmap.bmWidth;
         info->bmiHeader.biHeight        = -dst.height;
         info->bmiHeader.biSizeImage     = dst.height * dst_stride;
-        err = bmp->funcs->pPutImage( NULL, hbitmap, 0, info, &src_bits, &src, &dst, SRCCOPY );
+        err = bmp->funcs->pPutImage( NULL, hbitmap, clip, info, &src_bits, &src, &dst, SRCCOPY );
     }
     if (err) count = 0;
 
+    if (clip) DeleteObject( clip );
     if (src_bits.free) src_bits.free( &src_bits );
     GDI_ReleaseObj( hbitmap );
     return count;
