@@ -2966,7 +2966,7 @@ static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
     hr = D3DXCreateMeshFVF(mesh_data.num_tri_faces, total_vertices, options, mesh_data.fvf, device, &d3dxmesh);
     if (FAILED(hr)) goto cleanup;
 
-    hr = d3dxmesh->lpVtbl->LockVertexBuffer(d3dxmesh, D3DLOCK_DISCARD, &vertices);
+    hr = d3dxmesh->lpVtbl->LockVertexBuffer(d3dxmesh, 0, &vertices);
     if (FAILED(hr)) goto cleanup;
 
     out_ptr = vertices;
@@ -3008,7 +3008,7 @@ static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
     }
     d3dxmesh->lpVtbl->UnlockVertexBuffer(d3dxmesh);
 
-    hr = d3dxmesh->lpVtbl->LockIndexBuffer(d3dxmesh, D3DLOCK_DISCARD, (void**)&indices);
+    hr = d3dxmesh->lpVtbl->LockIndexBuffer(d3dxmesh, 0, (void**)&indices);
     if (FAILED(hr)) goto cleanup;
 
     index_in_ptr = mesh_data.indices;
@@ -3037,7 +3037,7 @@ static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
 
     if (mesh_data.material_indices) {
         DWORD *attrib_buffer = NULL;
-        hr = d3dxmesh->lpVtbl->LockAttributeBuffer(d3dxmesh, D3DLOCK_DISCARD, &attrib_buffer);
+        hr = d3dxmesh->lpVtbl->LockAttributeBuffer(d3dxmesh, 0, &attrib_buffer);
         if (FAILED(hr)) goto cleanup;
         for (i = 0; i < mesh_data.num_poly_faces; i++)
         {
