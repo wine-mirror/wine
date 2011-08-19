@@ -1211,7 +1211,7 @@ void WCMD_execute (WCHAR *command, WCHAR *redirects,
                                 STD_ERROR_HANDLE};
     BOOL piped = FALSE;
 
-    WINE_TRACE("command on entry:%s (%p), with '%s'='%s'\n",
+    WINE_TRACE("command on entry:%s (%p), with forVariable '%s'='%s'\n",
                wine_dbgstr_w(command), cmdList,
                wine_dbgstr_w(forVariable), wine_dbgstr_w(forValue));
 

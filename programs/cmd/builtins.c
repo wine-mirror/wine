@@ -1219,7 +1219,7 @@ void WCMD_part_execute(CMD_LIST **cmdList, WCHAR *firstcmd, WCHAR *variable,
   CMD_LIST *curPosition = *cmdList;
   int myDepth = (*cmdList)->bracketDepth;
 
-  WINE_TRACE("cmdList(%p), firstCmd(%p), with '%s'='%s', doIt(%d)\n",
+  WINE_TRACE("cmdList(%p), firstCmd(%p), with variable '%s'='%s', doIt(%d)\n",
              cmdList, wine_dbgstr_w(firstcmd),
              wine_dbgstr_w(variable), wine_dbgstr_w(value),
              conditionTRUE);
