@@ -976,7 +976,9 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   while (*curPos && *curPos==' ') curPos++;
 
   /* Ensure line continues with IN */
-  if (!*curPos || lstrcmpiW (curPos, inW)) {
+  if (!*curPos
+       || CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                         curPos, 3, inW, -1) != CSTR_EQUAL) {
       WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
       return;
   }

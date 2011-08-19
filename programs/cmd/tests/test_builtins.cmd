@@ -318,6 +318,7 @@ for %%i in (A B C) do echo %%j
 for %%i in (A B C) do call :forTestFun1 %%i
 for %%i in (1,4,1) do echo %%i
 for %%i in (A, B,C) do echo %%i
+for %%i in  (X) do echo %%i
 goto :endForTestFun1
 :forTestFun1
 echo %1
