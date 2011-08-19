@@ -417,7 +417,7 @@ static void WCMD_show_prompt (void) {
  * WCMD_strdupW
  *    A wide version of strdup as its missing from unicode.h
  */
-WCHAR *WCMD_strdupW(WCHAR *input) {
+WCHAR *WCMD_strdupW(const WCHAR *input) {
    int len=strlenW(input)+1;
    WCHAR *result = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
    memcpy(result, input, len * sizeof(WCHAR));
@@ -430,7 +430,7 @@ WCHAR *WCMD_strdupW(WCHAR *input) {
  *    It's up to the caller to ensure there is enough space in the
  *    destination buffer.
  */
-void WCMD_strsubstW(WCHAR* start, WCHAR* next, WCHAR* insert, int len) {
+void WCMD_strsubstW(WCHAR *start, const WCHAR *next, const WCHAR *insert, int len) {
 
    if (len < 0)
       len=insert ? lstrlenW(insert) : 0;
@@ -511,7 +511,8 @@ static inline BOOL WCMD_is_magic_envvar(const WCHAR *s, const WCHAR *magicvar)
  *
  *	Expands environment variables, allowing for WCHARacter substitution
  */
-static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forVar, WCHAR *forVal) {
+static WCHAR *WCMD_expand_envvar(WCHAR *start,
+                                 const WCHAR *forVar, const WCHAR *forVal) {
     WCHAR *endOfVar = NULL, *s;
     WCHAR *colonpos = NULL;
     WCHAR thisVar[MAXSTRING];
@@ -765,7 +766,8 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forVar, WCHAR *forVal) {
  * read in and not again, except for 'for' variable substitution.
  * eg. As evidence, "echo %1 && shift && echo %1" or "echo %%path%%"
  */
-static void handleExpansion(WCHAR *cmd, BOOL justFors, WCHAR *forVariable, WCHAR *forValue) {
+static void handleExpansion(WCHAR *cmd, BOOL justFors,
+                            const WCHAR *forVariable, const WCHAR *forValue) {
 
   /* For commands in a context (batch program):                  */
   /*   Expand environment variables in a batch file %{0-9} first */
@@ -841,7 +843,7 @@ static void handleExpansion(WCHAR *cmd, BOOL justFors, WCHAR *forVariable, WCHAR
  *	second in p2. Any subsequent non-qualifier strings are lost.
  *	Parameters in quotes are handled.
  */
-static void WCMD_parse (WCHAR *s, WCHAR *q, WCHAR *p1, WCHAR *p2)
+static void WCMD_parse (const WCHAR *s, WCHAR *q, WCHAR *p1, WCHAR *p2)
 {
   int p = 0;
 
@@ -1191,8 +1193,8 @@ void WCMD_run_program (WCHAR *command, int called) {
  * Process one command. If the command is EXIT this routine does not return.
  * We will recurse through here executing batch files.
  */
-void WCMD_execute (WCHAR *command, WCHAR *redirects,
-                   WCHAR *forVariable, WCHAR *forValue,
+void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
+                   const WCHAR *forVariable, const WCHAR *forValue,
                    CMD_LIST **cmdList)
 {
     WCHAR *cmd, *p, *redir;
@@ -1673,7 +1675,7 @@ static void WCMD_addCommand(WCHAR *command, int *commandLen,
  *   Returns TRUE if this is an end quote, and FALSE if it is not.
  *
  */
-static BOOL WCMD_IsEndQuote(WCHAR *quote, int quoteIndex)
+static BOOL WCMD_IsEndQuote(const WCHAR *quote, int quoteIndex)
 {
     int quoteCount = quoteIndex;
     int i;
@@ -1725,7 +1727,7 @@ static BOOL WCMD_IsEndQuote(WCHAR *quote, int quoteIndex)
  *     - Anything else gets put into the command string (including
  *            redirects)
  */
-WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readFrom) {
+WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE readFrom) {
 
     WCHAR    *curPos;
     int       inQuotes = 0;
@@ -2156,7 +2158,7 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
  * Process all the commands read in so far
  */
 CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket,
-                                WCHAR *var, WCHAR *val) {
+                                const WCHAR *var, const WCHAR *val) {
 
     int bdepth = -1;
 

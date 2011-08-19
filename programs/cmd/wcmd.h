@@ -48,11 +48,11 @@ typedef struct _CMD_LIST {
   WCHAR               pipeFile[MAX_PATH]; /* Where to get input from for pipes */
 } CMD_LIST;
 
-void WCMD_assoc (WCHAR *, BOOL);
+void WCMD_assoc (const WCHAR *, BOOL);
 void WCMD_batch (WCHAR *, WCHAR *, int, WCHAR *, HANDLE);
 void WCMD_call (WCHAR *command);
 void WCMD_change_tty (void);
-void WCMD_choice (WCHAR *);
+void WCMD_choice (const WCHAR *);
 void WCMD_clear_screen (void);
 void WCMD_color (void);
 void WCMD_copy (void);
@@ -64,7 +64,7 @@ void WCMD_endlocal (void);
 void WCMD_enter_paged_mode(const WCHAR *);
 void WCMD_exit (CMD_LIST **cmdList);
 void WCMD_for (WCHAR *, CMD_LIST **cmdList);
-void WCMD_give_help (WCHAR *command);
+void WCMD_give_help (const WCHAR *command);
 void WCMD_goto (CMD_LIST **cmdList);
 void WCMD_if (WCHAR *, CMD_LIST **cmdList);
 void WCMD_leave_paged_mode(void);
@@ -82,36 +82,38 @@ void WCMD_run_program (WCHAR *command, int called);
 void WCMD_setlocal (const WCHAR *command);
 void WCMD_setshow_attrib (void);
 void WCMD_setshow_date (void);
-void WCMD_setshow_default (WCHAR *command);
+void WCMD_setshow_default (const WCHAR *command);
 void WCMD_setshow_env (WCHAR *command);
-void WCMD_setshow_path (WCHAR *command);
+void WCMD_setshow_path (const WCHAR *command);
 void WCMD_setshow_prompt (void);
 void WCMD_setshow_time (void);
-void WCMD_shift (WCHAR *command);
-void WCMD_title (WCHAR *);
+void WCMD_shift (const WCHAR *command);
+void WCMD_title (const WCHAR *);
 void WCMD_type (WCHAR *);
-void WCMD_verify (WCHAR *command);
+void WCMD_verify (const WCHAR *command);
 void WCMD_version (void);
-int  WCMD_volume (int mode, WCHAR *command);
+int  WCMD_volume (int mode, const WCHAR *command);
 
 WCHAR *WCMD_fgets (WCHAR *s, int n, HANDLE stream);
 WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where);
 WCHAR *WCMD_skip_leading_spaces (WCHAR *string);
-void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable, WCHAR *forValue, BOOL justFors);
+void WCMD_HandleTildaModifiers(WCHAR **start, const WCHAR *forVariable, const WCHAR *forValue, BOOL justFors);
 
 void WCMD_splitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext);
 void WCMD_opt_s_strip_quotes(WCHAR *cmd);
 WCHAR *WCMD_LoadMessage(UINT id);
-WCHAR *WCMD_strdupW(WCHAR *input);
-void WCMD_strsubstW(WCHAR *start, WCHAR* next, WCHAR* insert, int len);
+WCHAR *WCMD_strdupW(const WCHAR *input);
+void WCMD_strsubstW(WCHAR *start, const WCHAR* next, const WCHAR* insert, int len);
 BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars,
                    LPDWORD charsRead, const LPOVERLAPPED unused);
 
-WCHAR    *WCMD_ReadAndParseLine(WCHAR *initialcmd, CMD_LIST **output, HANDLE readFrom);
-CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket, WCHAR *var, WCHAR *val);
+WCHAR    *WCMD_ReadAndParseLine(const WCHAR *initialcmd, CMD_LIST **output, HANDLE readFrom);
+CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket,
+                                const WCHAR *var, const WCHAR *val);
 void      WCMD_free_commands(CMD_LIST *cmds);
-void      WCMD_execute (WCHAR *orig_command, WCHAR *redirects, WCHAR *parameter,
-                        WCHAR *substitution, CMD_LIST **cmdList);
+void      WCMD_execute (const WCHAR *orig_command, const WCHAR *redirects,
+                        const WCHAR *parameter, const WCHAR *substitution,
+                        CMD_LIST **cmdList);
 
 /*	Data structure to hold context when executing batch files */
 

@@ -291,7 +291,8 @@ void WCMD_splitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHA
  *  Hence search forwards until find an invalid modifier, and then
  *  backwards until find for variable or 0-9
  */
-void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable, WCHAR *forValue, BOOL justFors) {
+void WCMD_HandleTildaModifiers(WCHAR **start, const WCHAR *forVariable,
+                               const WCHAR *forValue, BOOL justFors) {
 
 #define NUMMODIFIERS 11
   static const WCHAR validmodifiers[NUMMODIFIERS] = {

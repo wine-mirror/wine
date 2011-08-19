@@ -41,8 +41,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
-static void WCMD_part_execute(CMD_LIST **commands, WCHAR *firstcmd, WCHAR *variable,
-                               WCHAR *value, BOOL isIF, BOOL conditionTRUE);
+static void WCMD_part_execute(CMD_LIST **commands, const WCHAR *firstcmd,
+                              const WCHAR *variable, const WCHAR *value,
+                              BOOL isIF, BOOL conditionTRUE);
 
 struct env_stack *saved_environment;
 struct env_stack *pushd_directories;
@@ -77,7 +78,8 @@ static const WCHAR nullW[] = {'\0'};
  *                   set to TRUE
  *
  */
-static BOOL WCMD_ask_confirm (WCHAR *message, BOOL showSureText, BOOL *optionAll) {
+static BOOL WCMD_ask_confirm (const WCHAR *message, BOOL showSureText,
+                              const BOOL *optionAll) {
 
     WCHAR  msgbuffer[MAXSTRING];
     WCHAR  Ybuffer[MAXSTRING];
@@ -164,7 +166,7 @@ void WCMD_change_tty (void) {
  *
  */
 
-void WCMD_choice (WCHAR * command) {
+void WCMD_choice (const WCHAR * command) {
 
     static const WCHAR bellW[] = {7,0};
     static const WCHAR commaW[] = {',',0};
@@ -186,7 +188,7 @@ void WCMD_choice (WCHAR * command) {
     have_console = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &oldmode);
     errorlevel = 0;
 
-    my_command = WCMD_strdupW(WCMD_skip_leading_spaces(command));
+    my_command = WCMD_strdupW(WCMD_skip_leading_spaces((WCHAR*) command));
     if (!my_command)
         return;
 
@@ -587,7 +589,7 @@ static void WCMD_delete_parse_attributes(DWORD *wantSet, DWORD *wantClear) {
  * *pPrompted is set to TRUE if the user is prompted.
  * (If /P supplied, del will prompt for individual files later.)
  */
-static BOOL WCMD_delete_confirm_wildcard(WCHAR *filename, BOOL *pPrompted) {
+static BOOL WCMD_delete_confirm_wildcard(const WCHAR *filename, BOOL *pPrompted) {
     static const WCHAR parmP[] = {'/','P','\0'};
     static const WCHAR parmQ[] = {'/','Q','\0'};
 
@@ -627,7 +629,7 @@ static BOOL WCMD_delete_confirm_wildcard(WCHAR *filename, BOOL *pPrompted) {
  * If /S was given, does it recursively.
  * Returns TRUE if a file was deleted.
  */
-static BOOL WCMD_delete_one (WCHAR *thisArg) {
+static BOOL WCMD_delete_one (const WCHAR *thisArg) {
 
     static const WCHAR parmP[] = {'/','P','\0'};
     static const WCHAR parmS[] = {'/','S','\0'};
@@ -1215,8 +1217,9 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
  * first command to be executed may not be at the front of the
  * commands->thiscommand string (eg. it may point after a DO or ELSE)
  */
-void WCMD_part_execute(CMD_LIST **cmdList, WCHAR *firstcmd, WCHAR *variable,
-                       WCHAR *value, BOOL isIF, BOOL conditionTRUE) {
+static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
+                              const WCHAR *variable, const WCHAR *value,
+                              BOOL isIF, BOOL conditionTRUE) {
 
   CMD_LIST *curPosition = *cmdList;
   int myDepth = (*cmdList)->bracketDepth;
@@ -1311,11 +1314,11 @@ void WCMD_part_execute(CMD_LIST **cmdList, WCHAR *firstcmd, WCHAR *variable,
  *	Simple on-line help. Help text is stored in the resource file.
  */
 
-void WCMD_give_help (WCHAR *command) {
+void WCMD_give_help (const WCHAR *command) {
 
   int i;
 
-  command = WCMD_skip_leading_spaces(command);
+  command = WCMD_skip_leading_spaces((WCHAR*) command);
   if (strlenW(command) == 0) {
     WCMD_output_asis (WCMD_LoadMessage(WCMD_ALLHELP));
   }
@@ -2077,7 +2080,7 @@ void WCMD_setshow_attrib (void) {
  *	Set/Show the current default directory
  */
 
-void WCMD_setshow_default (WCHAR *command) {
+void WCMD_setshow_default (const WCHAR *command) {
 
   BOOL status;
   WCHAR string[1024];
@@ -2361,7 +2364,7 @@ void WCMD_setshow_env (WCHAR *s) {
  * Set/Show the path environment variable
  */
 
-void WCMD_setshow_path (WCHAR *command) {
+void WCMD_setshow_path (const WCHAR *command) {
 
   WCHAR string[1024];
   DWORD status;
@@ -2452,7 +2455,7 @@ void WCMD_setshow_time (void) {
  * Optional /n says where to start shifting (n=0-8)
  */
 
-void WCMD_shift (WCHAR *command) {
+void WCMD_shift (const WCHAR *command) {
   int start;
 
   if (context != NULL) {
@@ -2483,7 +2486,7 @@ void WCMD_shift (WCHAR *command) {
  *
  * Set the console title
  */
-void WCMD_title (WCHAR *command) {
+void WCMD_title (const WCHAR *command) {
   SetConsoleTitleW(command);
 }
 
@@ -2663,7 +2666,7 @@ void WCMD_more (WCHAR *command) {
  * it...
  */
 
-void WCMD_verify (WCHAR *command) {
+void WCMD_verify (const WCHAR *command) {
 
   int count;
 
@@ -2702,7 +2705,7 @@ void WCMD_version (void) {
  * Display volume info and/or set volume label. Returns 0 if error.
  */
 
-int WCMD_volume (int mode, WCHAR *path) {
+int WCMD_volume (int mode, const WCHAR *path) {
 
   DWORD count, serial;
   WCHAR string[MAX_PATH], label[MAX_PATH], curdir[MAX_PATH];
@@ -2780,7 +2783,7 @@ void WCMD_exit (CMD_LIST **cmdList) {
  *	Lists or sets file associations  (assoc = TRUE)
  *      Lists or sets file types         (assoc = FALSE)
  */
-void WCMD_assoc (WCHAR *command, BOOL assoc) {
+void WCMD_assoc (const WCHAR *command, BOOL assoc) {
 
     HKEY    key;
     DWORD   accessOptions = KEY_READ;

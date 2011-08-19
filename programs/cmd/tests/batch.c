@@ -283,7 +283,7 @@ cleanup:
     HeapFree(GetProcessHeap(), 0, (LPVOID)actual_cmd_data);
 }
 
-static void run_from_file(char *file_name)
+static void run_from_file(const char *file_name)
 {
     char out_name[MAX_PATH];
     const char *test_data, *out_data;
