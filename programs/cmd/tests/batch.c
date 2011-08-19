@@ -25,10 +25,11 @@
 static char workdir[MAX_PATH];
 static DWORD workdir_len;
 
-/* Convert to DOS line endings, and substitute escaped spaces with real ones */
+/* Convert to DOS line endings, and substitute escaped whitespace chars with real ones */
 static const char* convert_input_data(const char *data, DWORD size, DWORD *new_size)
 {
     static const char escaped_space[] = {'@','s','p','a','c','e','@'};
+    static const char escaped_tab[]   = {'@','t','a','b','@'};
     DWORD i, eol_count = 0;
     char *ptr, *new_data;
 
@@ -48,6 +49,10 @@ static const char* convert_input_data(const char *data, DWORD size, DWORD *new_s
                         && !memcmp(data + i, escaped_space, sizeof(escaped_space))) {
                     *ptr++ = ' ';
                     i += sizeof(escaped_space) - 1;
+                } else if (data + i + sizeof(escaped_tab) - 1 < data + size
+                        && !memcmp(data + i, escaped_tab, sizeof(escaped_tab))) {
+                    *ptr++ = '\t';
+                    i += sizeof(escaped_tab) - 1;
                 } else {
                     *ptr++ = data[i];
                 }
@@ -150,6 +155,7 @@ static const char *compare_line(const char *out_line, const char *out_end, const
 
     static const char pwd_cmd[] = {'@','p','w','d','@'};
     static const char space_cmd[] = {'@','s','p','a','c','e','@'};
+    static const char tab_cmd[]   = {'@','t','a','b','@'};
     static const char or_broken_cmd[] = {'@','o','r','_','b','r','o','k','e','n','@'};
 
     while(exp_ptr < exp_end) {
@@ -174,7 +180,15 @@ static const char *compare_line(const char *out_line, const char *out_end, const
                 } else {
                     err = out_end;
                 }
-
+            }else if(exp_ptr+sizeof(tab_cmd) <= exp_end
+                    && !memcmp(exp_ptr, tab_cmd, sizeof(tab_cmd))) {
+                exp_ptr += sizeof(tab_cmd);
+                if(out_ptr < out_end && *out_ptr == '\t') {
+                    out_ptr++;
+                    continue;
+                } else {
+                    err = out_end;
+                }
             }else if(exp_ptr+sizeof(or_broken_cmd) <= exp_end
                      && !memcmp(exp_ptr, or_broken_cmd, sizeof(or_broken_cmd))) {
                 if(out_ptr == out_end)
