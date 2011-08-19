@@ -96,7 +96,7 @@ int  WCMD_volume (int mode, WCHAR *command);
 
 WCHAR *WCMD_fgets (WCHAR *s, int n, HANDLE stream);
 WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where);
-WCHAR *WCMD_strtrim_leading_spaces (WCHAR *string);
+WCHAR *WCMD_skip_leading_spaces (WCHAR *string);
 void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable, WCHAR *forValue, BOOL justFors);
 
 void WCMD_splitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext);

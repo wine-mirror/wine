@@ -441,12 +441,12 @@ void WCMD_strsubstW(WCHAR* start, WCHAR* next, WCHAR* insert, int len) {
 }
 
 /***************************************************************************
- * WCMD_strtrim_leading_spaces
+ * WCMD_skip_leading_spaces
  *
- *	Remove leading spaces from a string. Return a pointer to the first
- *	non-space character. Does not modify the input string
+ *  Return a pointer to the first non-space character of string.
+ *  Does not modify the input string.
  */
-WCHAR *WCMD_strtrim_leading_spaces (WCHAR *string) {
+WCHAR *WCMD_skip_leading_spaces (WCHAR *string) {
 
   WCHAR *ptr;
 
@@ -1392,7 +1392,7 @@ void WCMD_execute (WCHAR *command, WCHAR *redirects,
 /*
  * Strip leading whitespaces, and a '@' if supplied
  */
-    whichcmd = WCMD_strtrim_leading_spaces(cmd);
+    whichcmd = WCMD_skip_leading_spaces(cmd);
     WINE_TRACE("Command: '%s'\n", wine_dbgstr_w(cmd));
     if (whichcmd[0] == '@') whichcmd++;
 
@@ -1409,7 +1409,7 @@ void WCMD_execute (WCHAR *command, WCHAR *redirects,
       if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
         whichcmd, count, inbuilt[i], -1) == CSTR_EQUAL) break;
     }
-    p = WCMD_strtrim_leading_spaces (&whichcmd[count]);
+    p = WCMD_skip_leading_spaces (&whichcmd[count]);
     WCMD_parse (p, quals, param1, param2);
     WINE_TRACE("param1: %s, param2: %s\n", wine_dbgstr_w(param1), wine_dbgstr_w(param2));
 

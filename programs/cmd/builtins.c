@@ -186,11 +186,11 @@ void WCMD_choice (WCHAR * command) {
     have_console = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &oldmode);
     errorlevel = 0;
 
-    my_command = WCMD_strdupW(WCMD_strtrim_leading_spaces(command));
+    my_command = WCMD_strdupW(WCMD_skip_leading_spaces(command));
     if (!my_command)
         return;
 
-    ptr = WCMD_strtrim_leading_spaces(my_command);
+    ptr = WCMD_skip_leading_spaces(my_command);
     while (*ptr == '/') {
         switch (toupperW(ptr[1])) {
             case 'C':
@@ -213,19 +213,19 @@ void WCMD_choice (WCHAR * command) {
                 if (*ptr) {
                     /* terminate allowed chars */
                     *ptr = 0;
-                    ptr = WCMD_strtrim_leading_spaces(&ptr[1]);
+                    ptr = WCMD_skip_leading_spaces(&ptr[1]);
                 }
                 WINE_TRACE("answer-list: %s\n", wine_dbgstr_w(opt_c));
                 break;
 
             case 'N':
                 opt_n = TRUE;
-                ptr = WCMD_strtrim_leading_spaces(&ptr[2]);
+                ptr = WCMD_skip_leading_spaces(&ptr[2]);
                 break;
 
             case 'S':
                 opt_s = TRUE;
-                ptr = WCMD_strtrim_leading_spaces(&ptr[2]);
+                ptr = WCMD_skip_leading_spaces(&ptr[2]);
                 break;
 
             case 'T':
@@ -252,7 +252,7 @@ void WCMD_choice (WCHAR * command) {
                 answer[count] = 0;
                 opt_timeout = atoiW(answer);
 
-                ptr = WCMD_strtrim_leading_spaces(ptr);
+                ptr = WCMD_skip_leading_spaces(ptr);
                 break;
 
             default:
@@ -1315,7 +1315,7 @@ void WCMD_give_help (WCHAR *command) {
 
   int i;
 
-  command = WCMD_strtrim_leading_spaces(command);
+  command = WCMD_skip_leading_spaces(command);
   if (strlenW(command) == 0) {
     WCMD_output_asis (WCMD_LoadMessage(WCMD_ALLHELP));
   }
