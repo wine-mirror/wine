@@ -773,9 +773,9 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pPolyBezierTo */
     NULL,                               /* pPolyDraw */
     NULL,                               /* pPolyPolygon */
-    NULL,                               /* pPolyPolyline */
+    dibdrv_PolyPolyline,                /* pPolyPolyline */
     NULL,                               /* pPolygon */
-    NULL,                               /* pPolyline */
+    dibdrv_Polyline,                    /* pPolyline */
     NULL,                               /* pPolylineTo */
     dibdrv_PutImage,                    /* pPutImage */
     NULL,                               /* pRealizeDefaultPalette */

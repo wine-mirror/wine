@@ -147,6 +147,61 @@ BOOL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
 }
 
 /***********************************************************************
+ *           dibdrv_PolyPolyline
+ */
+BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polylines )
+{
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPolyPolyline );
+    DWORD max_points = 0, i;
+    POINT *points;
+
+    if (defer_pen( pdev )) return next->funcs->pPolyPolyline( next, pt, counts, polylines );
+
+    for (i = 0; i < polylines; i++) max_points = max( counts[i], max_points );
+
+    points = HeapAlloc( GetProcessHeap(), 0, max_points * sizeof(*pt) );
+    if (!points) return FALSE;
+
+    for (i = 0; i < polylines; i++)
+    {
+        memcpy( points, pt, counts[i] * sizeof(*pt) );
+        pt += counts[i];
+        LPtoDP( dev->hdc, points, counts[i] );
+
+        reset_dash_origin( pdev );
+        pdev->pen_lines( pdev, counts[i], points );
+    }
+
+    HeapFree( GetProcessHeap(), 0, points );
+    return TRUE;
+}
+
+/***********************************************************************
+ *           dibdrv_Polyline
+ */
+BOOL dibdrv_Polyline( PHYSDEV dev, const POINT* pt, INT count )
+{
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPolyline );
+    POINT *points;
+
+    if (defer_pen( pdev )) return next->funcs->pPolyline( next, pt, count );
+
+    points = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*pt) );
+    if (!points) return FALSE;
+
+    memcpy( points, pt, count * sizeof(*pt) );
+    LPtoDP( dev->hdc, points, count );
+
+    reset_dash_origin( pdev );
+    pdev->pen_lines( pdev, count, points );
+
+    HeapFree( GetProcessHeap(), 0, points );
+    return TRUE;
+}
+
+/***********************************************************************
  *           dibdrv_Rectangle
  */
 BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
