@@ -647,6 +647,18 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
     return TRUE;
 }
 
+static BOOL solid_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts)
+{
+    int i;
+
+    assert( num >= 2 );
+    for (i = 0; i < num - 1; i++)
+        if (!solid_pen_line( pdev, pts + i, pts + i + 1 ))
+            return FALSE;
+
+    return TRUE;
+}
+
 void reset_dash_origin(dibdrv_physdev *pdev)
 {
     pdev->dash_pos.cur_dash = 0;
@@ -920,7 +932,19 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
     return TRUE;
 }
 
-static BOOL null_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
+static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts)
+{
+    int i;
+
+    assert( num >= 2 );
+    for (i = 0; i < num - 1; i++)
+        if (!dashed_pen_line( pdev, pts + i, pts + i + 1 ))
+            return FALSE;
+
+    return TRUE;
+}
+
+static BOOL null_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts)
 {
     return TRUE;
 }
@@ -984,7 +1008,7 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
     case PS_SOLID:
         if(logpen.lopnStyle & PS_GEOMETRIC) break;
         if(logpen.lopnWidth.x > 1) break;
-        pdev->pen_line = solid_pen_line;
+        pdev->pen_lines = solid_pen_lines;
         pdev->defer &= ~DEFER_PEN;
         break;
 
@@ -994,13 +1018,13 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
     case PS_DASHDOTDOT:
         if(logpen.lopnStyle & PS_GEOMETRIC) break;
         if(logpen.lopnWidth.x > 1) break;
-        pdev->pen_line = dashed_pen_line;
+        pdev->pen_lines = dashed_pen_lines;
         pdev->pen_pattern = dash_patterns[style];
         pdev->defer &= ~DEFER_PEN;
         break;
 
     case PS_NULL:
-        pdev->pen_line = null_pen_line;
+        pdev->pen_lines = null_pen_lines;
         pdev->defer &= ~DEFER_PEN;
         break;
 

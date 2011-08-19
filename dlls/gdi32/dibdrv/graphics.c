@@ -73,7 +73,7 @@ BOOL dibdrv_LineTo( PHYSDEV dev, INT x, INT y )
 
     reset_dash_origin(pdev);
 
-    if(defer_pen(pdev) || !pdev->pen_line(pdev, pts, pts + 1))
+    if(defer_pen(pdev) || !pdev->pen_lines(pdev, 2, pts))
         return next->funcs->pLineTo( next, x, y );
 
     return TRUE;
@@ -154,7 +154,7 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pRectangle );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     RECT rect = get_device_rect( dev->hdc, left, top, right, bottom, TRUE );
-    POINT pts[4];
+    POINT pts[5];
 
     TRACE("(%p, %d, %d, %d, %d)\n", dev, left, top, right, bottom);
 
@@ -170,11 +170,9 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
     pts[0].y = pts[1].y = rect.top;
     pts[1].x = pts[2].x = rect.left;
     pts[2].y = pts[3].y = rect.bottom - 1;
+    pts[4] = pts[0];
 
-    pdev->pen_line(pdev, pts    , pts + 1);
-    pdev->pen_line(pdev, pts + 1, pts + 2);
-    pdev->pen_line(pdev, pts + 2, pts + 3);
-    pdev->pen_line(pdev, pts + 3, pts    );
+    pdev->pen_lines(pdev, 5, pts);
 
     /* FIXME: Will need updating when we support wide pens */
 

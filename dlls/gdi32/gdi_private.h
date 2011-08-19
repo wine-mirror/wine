@@ -136,7 +136,7 @@ typedef struct dibdrv_physdev
     DWORD pen_color, pen_and, pen_xor;
     dash_pattern pen_pattern;
     dash_pos dash_pos;
-    BOOL   (* pen_line)(struct dibdrv_physdev *pdev, POINT *start, POINT *end);
+    BOOL   (* pen_lines)(struct dibdrv_physdev *pdev, int num, POINT *pts);
 
     /* brush */
     UINT brush_style;
