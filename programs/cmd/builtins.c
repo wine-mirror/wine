@@ -1003,7 +1003,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   WINE_TRACE("Looking for 'do' in %p\n", *cmdList);
   if ((*cmdList == NULL) ||
       (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                            (*cmdList)->command, 3, doW, -1) != 2)) {
+                            (*cmdList)->command, 3, doW, -1) != CSTR_EQUAL)) {
       WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
       return;
   }
@@ -1277,7 +1277,7 @@ void WCMD_part_execute(CMD_LIST **cmdList, WCHAR *firstcmd, WCHAR *variable,
       } else {
         if (isIF && CompareStringW(LOCALE_USER_DEFAULT,
                                    NORM_IGNORECASE | SORT_STRINGSORT,
-                           (*cmdList)->command, 5, ifElse, -1) == 2) {
+                           (*cmdList)->command, 5, ifElse, -1) == CSTR_EQUAL) {
 
           /* Swap between if and else processing */
           processThese = !processThese;
@@ -1320,7 +1320,7 @@ void WCMD_give_help (WCHAR *command) {
   else {
     for (i=0; i<=WCMD_EXIT; i++) {
       if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-	  command, -1, inbuilt[i], -1) == 2) {
+	  command, -1, inbuilt[i], -1) == CSTR_EQUAL) {
 	WCMD_output_asis (WCMD_LoadMessage(i));
 	return;
       }
@@ -2090,7 +2090,7 @@ void WCMD_setshow_default (WCHAR *command) {
   /* Skip /D and trailing whitespace if on the front of the command line */
   if (CompareStringW(LOCALE_USER_DEFAULT,
                      NORM_IGNORECASE | SORT_STRINGSORT,
-                     command, 2, parmD, -1) == 2) {
+                     command, 2, parmD, -1) == CSTR_EQUAL) {
     command += 2;
     while (*command && *command==' ') command++;
   }
@@ -2262,7 +2262,7 @@ static int WCMD_setshow_sortenv(const WCHAR *s, const WCHAR *stub)
   for( i=0; i<count; i++ ) {
     if (!stub || CompareStringW(LOCALE_USER_DEFAULT,
                                 NORM_IGNORECASE | SORT_STRINGSORT,
-                                str[i], stublen, stub, -1) == 2) {
+                                str[i], stublen, stub, -1) == CSTR_EQUAL) {
       /* Don't display special internal variables */
       if (str[i][0] != '=') {
         WCMD_output_asis(str[i]);
@@ -2298,7 +2298,7 @@ void WCMD_setshow_env (WCHAR *s) {
   /* See if /P supplied, and if so echo the prompt, and read in a reply */
   if (CompareStringW(LOCALE_USER_DEFAULT,
                      NORM_IGNORECASE | SORT_STRINGSORT,
-                     s, 2, parmP, -1) == 2) {
+                     s, 2, parmP, -1) == CSTR_EQUAL) {
     WCHAR string[MAXSTRING];
     DWORD count;
 

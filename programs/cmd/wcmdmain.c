@@ -597,7 +597,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forVar, WCHAR *forVal) {
                                SORT_STRINGSORT,
                                thisVar,
                                (colonpos - thisVar) - 1,
-                               forVar, -1) == 2)) {
+                               forVar, -1) == CSTR_EQUAL)) {
       strcpyW(thisVarContents, forVal);
       len = strlenW(thisVarContents);
 
@@ -817,7 +817,7 @@ static void handleExpansion(WCHAR *cmd, BOOL justFors, WCHAR *forVariable, WCHAR
                                SORT_STRINGSORT,
                                p,
                                strlenW(forVariable),
-                               forVariable, -1) == 2)) {
+                               forVariable, -1) == CSTR_EQUAL)) {
       WCMD_strsubstW(p, p + strlenW(forVariable), forValue, -1);
 
     } else if (!justFors) {
@@ -1828,12 +1828,12 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
 
         /* If command starts with 'rem', ignore any &&, ( etc */
         if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-          curPos, 4, remCmd, -1) == 2) {
+          curPos, 4, remCmd, -1) == CSTR_EQUAL) {
           inRem = TRUE;
 
         /* If command starts with 'for', handle ('s mid line after IN or DO */
         } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-          curPos, 4, forCmd, -1) == 2) {
+          curPos, 4, forCmd, -1) == CSTR_EQUAL) {
           inFor = TRUE;
 
         /* If command starts with 'if' or 'else', handle ('s mid line. We should ensure this
@@ -1843,11 +1843,11 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
                                         echo they equal
                                       )" will be parsed wrong */
         } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-          curPos, 3, ifCmd, -1) == 2) {
+          curPos, 3, ifCmd, -1) == CSTR_EQUAL) {
           inIf = TRUE;
 
         } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-          curPos, 5, ifElse, -1) == 2) {
+          curPos, 5, ifElse, -1) == CSTR_EQUAL) {
           inElse = TRUE;
           lastWasElse = TRUE;
           onlyWhiteSpace = TRUE;
@@ -1861,7 +1861,7 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
            is then 0, and all whitespace is skipped                                */
         } else if (inFor &&
                    (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                    curPos, 3, forDO, -1) == 2)) {
+                    curPos, 3, forDO, -1) == CSTR_EQUAL)) {
           WINE_TRACE("Found DO\n");
           lastWasDo = TRUE;
           onlyWhiteSpace = TRUE;
@@ -1879,7 +1879,7 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
           WINE_TRACE("Found 'FOR', comparing next parm: '%s'\n", wine_dbgstr_w(curPos));
 
           if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-              curPos, 3, forIN, -1) == 2) {
+              curPos, 3, forIN, -1) == CSTR_EQUAL) {
             WINE_TRACE("Found IN\n");
             lastWasIn = TRUE;
             onlyWhiteSpace = TRUE;
