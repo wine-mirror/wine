@@ -4060,14 +4060,14 @@ HRESULT WINAPI D3DXCreateSphere(LPDIRECT3DDEVICE9 device, FLOAT radius, UINT sli
         return hr;
     }
 
-    hr = sphere->lpVtbl->LockVertexBuffer(sphere, D3DLOCK_DISCARD, (LPVOID *)&vertices);
+    hr = sphere->lpVtbl->LockVertexBuffer(sphere, 0, (LPVOID *)&vertices);
     if (FAILED(hr))
     {
         sphere->lpVtbl->Release(sphere);
         return hr;
     }
 
-    hr = sphere->lpVtbl->LockIndexBuffer(sphere, D3DLOCK_DISCARD, (LPVOID *)&faces);
+    hr = sphere->lpVtbl->LockIndexBuffer(sphere, 0, (LPVOID *)&faces);
     if (FAILED(hr))
     {
         sphere->lpVtbl->UnlockVertexBuffer(sphere);
