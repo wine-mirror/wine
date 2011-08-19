@@ -463,8 +463,10 @@ LONG WINAPI GetBitmapBits(
     struct bitblt_coords src;
     int dst_stride, max, ret;
     BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
+    const struct gdi_dc_funcs *funcs;
 
     if (!bmp) return 0;
+    funcs = get_bitmap_funcs( bmp );
 
     if (bmp->dib) dst_stride = get_bitmap_stride( bmp->dib->dsBmih.biWidth, bmp->dib->dsBmih.biBitCount );
     else dst_stride = get_bitmap_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
@@ -482,7 +484,7 @@ LONG WINAPI GetBitmapBits(
     src.width = src.visrect.right - src.visrect.left;
     src.height = src.visrect.bottom - src.visrect.top;
 
-    if (!bmp->funcs->pGetImage( NULL, hbitmap, info, &src_bits, &src ))
+    if (!funcs->pGetImage( NULL, hbitmap, info, &src_bits, &src ))
     {
         const char *src_ptr = src_bits.ptr;
         int src_stride = get_dib_stride( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );
@@ -536,11 +538,14 @@ LONG WINAPI SetBitmapBits(
     struct bitblt_coords src, dst;
     struct gdi_image_bits src_bits;
     HRGN clip = NULL;
+    const struct gdi_dc_funcs *funcs;
 
     if (!bits) return 0;
 
     bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
     if (!bmp) return 0;
+
+    funcs = get_bitmap_funcs( bmp );
 
     if (count < 0) {
 	WARN("(%d): Negative number of bytes passed???\n", count );
@@ -611,7 +616,7 @@ LONG WINAPI SetBitmapBits(
     info->bmiHeader.biWidth         = 0;
     info->bmiHeader.biHeight        = 0;
     info->bmiHeader.biSizeImage     = 0;
-    err = bmp->funcs->pPutImage( NULL, hbitmap, 0, info, NULL, NULL, NULL, SRCCOPY );
+    err = funcs->pPutImage( NULL, hbitmap, 0, info, NULL, NULL, NULL, SRCCOPY );
 
     if (!err || err == ERROR_BAD_FORMAT)
     {
@@ -620,7 +625,7 @@ LONG WINAPI SetBitmapBits(
         info->bmiHeader.biWidth         = bmp->bitmap.bmWidth;
         info->bmiHeader.biHeight        = -dst.height;
         info->bmiHeader.biSizeImage     = dst.height * dst_stride;
-        err = bmp->funcs->pPutImage( NULL, hbitmap, clip, info, &src_bits, &src, &dst, SRCCOPY );
+        err = funcs->pPutImage( NULL, hbitmap, clip, info, &src_bits, &src, &dst, SRCCOPY );
     }
     if (err) count = 0;
 
