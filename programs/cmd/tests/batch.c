@@ -168,9 +168,13 @@ static const char *compare_line(const char *out_line, const char *out_end, const
             }else if(exp_ptr+sizeof(space_cmd) <= exp_end
                     && !memcmp(exp_ptr, space_cmd, sizeof(space_cmd))) {
                 exp_ptr += sizeof(space_cmd);
-                if(out_ptr < out_end && *out_ptr == ' ')
+                if(out_ptr < out_end && *out_ptr == ' ') {
                     out_ptr++;
-                continue;
+                    continue;
+                } else {
+                    err = out_end;
+                }
+
             }else if(exp_ptr+sizeof(or_broken_cmd) <= exp_end
                      && !memcmp(exp_ptr, or_broken_cmd, sizeof(or_broken_cmd))) {
                 if(out_ptr == out_end)
