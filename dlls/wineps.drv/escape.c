@@ -528,7 +528,9 @@ INT PSDRV_EndDoc( PHYSDEV dev )
         WARN("Somebody forgot an EndPage\n");
 	PSDRV_EndPage( dev );
     }
-    PSDRV_WriteFooter( dev );
+
+    if (physDev->job.PageNo)
+        PSDRV_WriteFooter( dev );
 
     ret = EndDocPrinter(physDev->job.hprinter);
     ClosePrinter(physDev->job.hprinter);
