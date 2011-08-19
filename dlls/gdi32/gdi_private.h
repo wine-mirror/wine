@@ -146,7 +146,7 @@ typedef struct dibdrv_physdev
     DWORD brush_color, brush_and, brush_xor;
     dib_info brush_dib;
     void *brush_and_bits, *brush_xor_bits;
-    BOOL   (* brush_rects)(struct dibdrv_physdev *pdev, int num, RECT *rects);
+    BOOL   (* brush_rects)(struct dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects, HRGN clip);
 
     /* background */
     DWORD bkgnd_color, bkgnd_and, bkgnd_xor;

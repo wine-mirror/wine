@@ -1059,10 +1059,16 @@ COLORREF dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
  * Fill a number of rectangles with the solid brush
  * FIXME: Should we insist l < r && t < b?  Currently we assume this.
  */
-static BOOL solid_brush(dibdrv_physdev *pdev, int num, RECT *rects)
+static BOOL solid_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects, HRGN region)
 {
     int i, j;
-    const WINEREGION *clip = get_wine_region(pdev->clip);
+    const WINEREGION *clip = get_wine_region( region );
+
+    if (!clip)
+    {
+        dib->funcs->solid_rects( dib, num, rects, pdev->brush_and, pdev->brush_xor );
+        return TRUE;
+    }
 
     for(i = 0; i < num; i++)
     {
@@ -1074,7 +1080,7 @@ static BOOL solid_brush(dibdrv_physdev *pdev, int num, RECT *rects)
             if(clip->rects[j].top <= rect.top && clip->rects[j].bottom >= rect.bottom &&
                clip->rects[j].left <= rect.left && clip->rects[j].right >= rect.right)
             {
-                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, pdev->brush_and, pdev->brush_xor);
+                dib->funcs->solid_rects( dib, 1, &rect, pdev->brush_and, pdev->brush_xor );
                 break;
             }
 
@@ -1088,11 +1094,11 @@ static BOOL solid_brush(dibdrv_physdev *pdev, int num, RECT *rects)
                 rect.right  = min(rect.right,  clip->rects[j].right);
                 rect.bottom = min(rect.bottom, clip->rects[j].bottom);
 
-                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, pdev->brush_and, pdev->brush_xor);
+                dib->funcs->solid_rects( dib, 1, &rect, pdev->brush_and, pdev->brush_xor );
             }
         }
     }
-    release_wine_region(pdev->clip);
+    release_wine_region( region );
     return TRUE;
 }
 
@@ -1205,7 +1211,7 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev)
  * Fill a number of rectangles with the pattern brush
  * FIXME: Should we insist l < r && t < b?  Currently we assume this.
  */
-static BOOL pattern_brush(dibdrv_physdev *pdev, int num, RECT *rects)
+static BOOL pattern_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects, HRGN region)
 {
     int i, j;
     const WINEREGION *clip;
@@ -1233,7 +1239,14 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, int num, RECT *rects)
 
     GetBrushOrgEx(pdev->dev.hdc, &origin);
 
-    clip = get_wine_region(pdev->clip);
+    clip = get_wine_region( region );
+
+    if (!clip)
+    {
+        dib->funcs->pattern_rects( dib, num, rects, &origin, &pdev->brush_dib, pdev->brush_and_bits, pdev->brush_xor_bits );
+        return TRUE;
+    }
+
     for(i = 0; i < num; i++)
     {
         for(j = 0; j < clip->numRects; j++)
@@ -1244,7 +1257,7 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, int num, RECT *rects)
             if(clip->rects[j].top <= rect.top && clip->rects[j].bottom >= rect.bottom &&
                clip->rects[j].left <= rect.left && clip->rects[j].right >= rect.right)
             {
-                pdev->dib.funcs->pattern_rects(&pdev->dib, 1, &rect, &origin, &pdev->brush_dib, pdev->brush_and_bits, pdev->brush_xor_bits);
+                dib->funcs->pattern_rects( dib, 1, &rect, &origin, &pdev->brush_dib, pdev->brush_and_bits, pdev->brush_xor_bits );
                 break;
             }
 
@@ -1258,15 +1271,15 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, int num, RECT *rects)
                 rect.right  = min(rect.right,  clip->rects[j].right);
                 rect.bottom = min(rect.bottom, clip->rects[j].bottom);
 
-                pdev->dib.funcs->pattern_rects(&pdev->dib, 1, &rect, &origin, &pdev->brush_dib, pdev->brush_and_bits, pdev->brush_xor_bits);
+                dib->funcs->pattern_rects( dib, 1, &rect, &origin, &pdev->brush_dib, pdev->brush_and_bits, pdev->brush_xor_bits );
             }
         }
     }
-    release_wine_region(pdev->clip);
+    release_wine_region( region );
     return TRUE;
 }
 
-static BOOL null_brush(dibdrv_physdev *pdev, int num, RECT *rects)
+static BOOL null_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects, HRGN region)
 {
     return TRUE;
 }
@@ -1391,4 +1404,9 @@ COLORREF dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
     }
 
     return next->funcs->pSetDCBrushColor( next, color );
+}
+
+BOOL brush_rects(dibdrv_physdev *pdev, int num, const RECT *rects)
+{
+    return pdev->brush_rects( pdev, &pdev->dib, num, rects, pdev->clip );
 }
