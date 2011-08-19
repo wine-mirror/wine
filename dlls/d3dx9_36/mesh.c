@@ -1293,7 +1293,7 @@ static HRESULT WINAPI ID3DXMeshImpl_OptimizeInplace(ID3DXMesh *iface, DWORD flag
         hr = IDirect3DVertexBuffer9_Lock(This->vertex_buffer, 0, 0, (void**)&orig_vertices, D3DLOCK_READONLY);
         if (FAILED(hr)) goto cleanup;
 
-        hr = IDirect3DVertexBuffer9_Lock(vertex_buffer, 0, 0, (void**)&new_vertices, D3DLOCK_DISCARD);
+        hr = IDirect3DVertexBuffer9_Lock(vertex_buffer, 0, 0, (void**)&new_vertices, 0);
         if (FAILED(hr)) {
             IDirect3DVertexBuffer9_Unlock(This->vertex_buffer);
             goto cleanup;
