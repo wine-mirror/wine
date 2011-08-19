@@ -583,8 +583,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
     physdev = GET_DC_PHYSDEV( dc, pCreateBitmap );
     if (!BITMAP_SetOwnerDC( hbitmap, physdev )) goto done;
 
-    funcs = bitmap->funcs;
-    if (bitmap->dib) funcs = dc->dibdrv.dev.funcs;
+    funcs = get_bitmap_funcs( bitmap );
 
     result = lines;
 
@@ -947,8 +946,7 @@ INT WINAPI GetDIBits(
 	return 0;
     }
 
-    funcs = bmp->funcs;
-    if (bmp->dib) funcs = dc->dibdrv.dev.funcs;
+    funcs = get_bitmap_funcs( bmp );
 
     if (dst_info->bmiHeader.biBitCount == 0) /* query bitmap info only */
     {
