@@ -1060,7 +1060,7 @@ static inline BOOL bit_fields_match(const dib_info *d1, const dib_info *d2)
 
 static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
-    DWORD *dst_start = dst->bits, *dst_pixel, src_val;
+    DWORD *dst_start = get_pixel_ptr_32(dst, 0, 0), *dst_pixel, src_val;
     int x, y, pad_size = (dst->width - (src_rect->right - src_rect->left)) * 4;
 
     switch(src->bit_count)
@@ -1071,7 +1071,7 @@ static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
         if(src->funcs == &funcs_8888)
         {
             if(src->stride > 0 && dst->stride > 0 && src_rect->left == 0 && src_rect->right == src->width)
-                memcpy(dst->bits, src_start, (src_rect->bottom - src_rect->top) * src->stride);
+                memcpy(dst_start, src_start, (src_rect->bottom - src_rect->top) * src->stride);
             else
             {
                 for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -1283,7 +1283,7 @@ static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
 
 static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
-    DWORD *dst_start = dst->bits, *dst_pixel, src_val;
+    DWORD *dst_start = get_pixel_ptr_32(dst, 0, 0), *dst_pixel, src_val;
     int x, y, pad_size = (dst->width - (src_rect->right - src_rect->left)) * 4;
 
     switch(src->bit_count)
@@ -1313,7 +1313,7 @@ static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
         else if(bit_fields_match(src, dst))
         {
             if(src->stride > 0 && dst->stride > 0 && src_rect->left == 0 && src_rect->right == src->width)
-                memcpy(dst->bits, src_start, (src_rect->bottom - src_rect->top) * src->stride);
+                memcpy(dst_start, src_start, (src_rect->bottom - src_rect->top) * src->stride);
             else
             {
                 for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -1535,7 +1535,7 @@ static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
 
 static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
-    BYTE *dst_start = dst->bits, *dst_pixel;
+    BYTE *dst_start = get_pixel_ptr_24(dst, 0, 0), *dst_pixel;
     DWORD src_val;
     int x, y, pad_size = ((dst->width * 3 + 3) & ~3) - (src_rect->right - src_rect->left) * 3;
 
@@ -1593,7 +1593,7 @@ static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
         BYTE *src_start = get_pixel_ptr_24(src, src_rect->left, src_rect->top);
 
         if(src->stride > 0 && dst->stride > 0 && src_rect->left == 0 && src_rect->right == src->width)
-            memcpy(dst->bits, src_start, (src_rect->bottom - src_rect->top) * src->stride);
+            memcpy(dst_start, src_start, (src_rect->bottom - src_rect->top) * src->stride);
         else
         {
             for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -1763,7 +1763,7 @@ static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
 
 static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
-    WORD *dst_start = dst->bits, *dst_pixel;
+    WORD *dst_start = get_pixel_ptr_16(dst, 0, 0), *dst_pixel;
     INT x, y, pad_size = ((dst->width + 1) & ~1) * 2 - (src_rect->right - src_rect->left) * 2;
     DWORD src_val;
 
@@ -1849,7 +1849,7 @@ static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
         if(src->funcs == &funcs_555)
         {
             if(src->stride > 0 && dst->stride > 0 && src_rect->left == 0 && src_rect->right == src->width)
-                memcpy(dst->bits, src_start, (src_rect->bottom - src_rect->top) * src->stride);
+                memcpy(dst_start, src_start, (src_rect->bottom - src_rect->top) * src->stride);
             else
             {
                 for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -1990,7 +1990,7 @@ static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
 
 static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
-    WORD *dst_start = dst->bits, *dst_pixel;
+    WORD *dst_start = get_pixel_ptr_16(dst, 0, 0), *dst_pixel;
     INT x, y, pad_size = ((dst->width + 1) & ~1) * 2 - (src_rect->right - src_rect->left) * 2;
     DWORD src_val;
 
@@ -2094,7 +2094,7 @@ static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
         else if(bit_fields_match(src, dst))
         {
             if(src->stride > 0 && dst->stride > 0 && src_rect->left == 0 && src_rect->right == src->width)
-                memcpy(dst->bits, src_start, (src_rect->bottom - src_rect->top) * src->stride);
+                memcpy(dst_start, src_start, (src_rect->bottom - src_rect->top) * src->stride);
             else
             {
                 for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -2250,7 +2250,7 @@ static inline BOOL color_tables_match(const dib_info *d1, const dib_info *d2)
 
 static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
-    BYTE *dst_start = dst->bits, *dst_pixel;
+    BYTE *dst_start = get_pixel_ptr_8(dst, 0, 0), *dst_pixel;
     INT x, y, pad_size = ((dst->width + 3) & ~3) - (src_rect->right - src_rect->left);
     DWORD src_val;
 
@@ -2408,7 +2408,7 @@ static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
         if(color_tables_match(dst, src))
         {
             if(src->stride > 0 && dst->stride > 0 && src_rect->left == 0 && src_rect->right == src->width)
-                memcpy(dst->bits, src_start, (src_rect->bottom - src_rect->top) * src->stride);
+                memcpy(dst_start, src_start, (src_rect->bottom - src_rect->top) * src->stride);
             else
             {
                 for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -2499,7 +2499,7 @@ static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
 
 static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
-    BYTE *dst_start = dst->bits, *dst_pixel, dst_val;
+    BYTE *dst_start = get_pixel_ptr_4(dst, 0, 0), *dst_pixel, dst_val;
     INT x, y, pad_size = ((dst->width + 7) & ~7) / 2 - (src_rect->right - src_rect->left + 1) / 2;
     DWORD src_val;
 
@@ -2758,7 +2758,7 @@ static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
         if(color_tables_match(dst, src) && (src_rect->left & 1) == 0)
         {
             if(src->stride > 0 && dst->stride > 0 && src_rect->left == 0 && src_rect->right == src->width)
-                memcpy(dst->bits, src_start, (src_rect->bottom - src_rect->top) * src->stride);
+                memcpy(dst_start, src_start, (src_rect->bottom - src_rect->top) * src->stride);
             else
             {
                 for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -2850,7 +2850,7 @@ static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
 
 static BOOL convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
-    BYTE *dst_start = dst->bits, *dst_pixel, dst_val;
+    BYTE *dst_start = get_pixel_ptr_1(dst, 0, 0), *dst_pixel, dst_val;
     INT x, y, pad_size = ((dst->width + 31) & ~31) / 8 - (src_rect->right - src_rect->left + 7) / 8;
     DWORD src_val;
     int bit_pos;
@@ -3210,7 +3210,7 @@ static BOOL convert_to_null(dib_info *dst, const dib_info *src, const RECT *src_
 
 static BOOL create_rop_masks_32(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
 {
-    BYTE *hatch_start = hatch->bits, *hatch_ptr;
+    BYTE *hatch_start = get_pixel_ptr_1(hatch, 0, 0), *hatch_ptr;
     DWORD mask_start = 0, mask_offset;
     DWORD *and_bits = bits->and, *xor_bits = bits->xor;
     int x, y;
@@ -3243,7 +3243,7 @@ static BOOL create_rop_masks_32(const dib_info *dib, const dib_info *hatch, cons
 
 static BOOL create_rop_masks_24(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
 {
-    BYTE *hatch_start = hatch->bits, *hatch_ptr;
+    BYTE *hatch_start = get_pixel_ptr_1(hatch, 0, 0), *hatch_ptr;
     DWORD mask_start = 0, mask_offset;
     BYTE *and_bits = bits->and, *xor_bits = bits->xor;
     int x, y;
@@ -3283,7 +3283,7 @@ static BOOL create_rop_masks_24(const dib_info *dib, const dib_info *hatch, cons
 
 static BOOL create_rop_masks_16(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
 {
-    BYTE *hatch_start = hatch->bits, *hatch_ptr;
+    BYTE *hatch_start = get_pixel_ptr_1(hatch, 0, 0), *hatch_ptr;
     DWORD mask_start = 0, mask_offset;
     WORD *and_bits = bits->and, *xor_bits = bits->xor;
     int x, y;
@@ -3316,7 +3316,7 @@ static BOOL create_rop_masks_16(const dib_info *dib, const dib_info *hatch, cons
 
 static BOOL create_rop_masks_8(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
 {
-    BYTE *hatch_start = hatch->bits, *hatch_ptr;
+    BYTE *hatch_start = get_pixel_ptr_1(hatch, 0, 0), *hatch_ptr;
     DWORD mask_start = 0, mask_offset;
     BYTE *and_bits = bits->and, *xor_bits = bits->xor;
     int x, y;
@@ -3349,7 +3349,7 @@ static BOOL create_rop_masks_8(const dib_info *dib, const dib_info *hatch, const
 
 static BOOL create_rop_masks_4(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
 {
-    BYTE *hatch_start = hatch->bits, *hatch_ptr;
+    BYTE *hatch_start = get_pixel_ptr_1(hatch, 0, 0), *hatch_ptr;
     DWORD mask_start = 0, mask_offset;
     BYTE *and_bits = bits->and, *xor_bits = bits->xor;
     const rop_mask *rop_mask;
@@ -3389,7 +3389,7 @@ static BOOL create_rop_masks_4(const dib_info *dib, const dib_info *hatch, const
 
 static BOOL create_rop_masks_1(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
 {
-    BYTE *hatch_start = hatch->bits, *hatch_ptr;
+    BYTE *hatch_start = get_pixel_ptr_1(hatch, 0, 0), *hatch_ptr;
     DWORD mask_start = 0, mask_offset;
     BYTE *and_bits = bits->and, *xor_bits = bits->xor;
     rop_mask rop_mask;
