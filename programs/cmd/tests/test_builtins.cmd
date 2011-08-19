@@ -17,6 +17,14 @@ echo:word
 echo :word
 echo word@space@
 echo word@space@@space@
+ echo word
+echo@tab@word
+echo@tab@word @tab@
+echo@tab@word@tab@@space@
+@tab@echo word
+echo @tab@word
+echo  @tab@word
+echo@tab@@tab@word
 
 @echo off
 echo ------------ Testing 'echo' [OFF] --------------
@@ -35,6 +43,14 @@ echo:word
 echo :word
 echo word@space@
 echo word@space@@space@
+ echo word
+echo@tab@word
+echo@tab@word @tab@
+echo@tab@word@tab@@space@
+@tab@echo word
+echo @tab@word
+echo  @tab@word
+echo@tab@@tab@word
 
 echo ------------ Testing redirection operators --------------
 mkdir foobar & cd foobar
@@ -140,6 +156,14 @@ set BAZ%=
 echo set "FOO=bar" should not include the quotes in the variable value
 set "FOO=bar"
 echo %FOO%
+set@tab@FOO=foo
+echo %FOO%
+set@tab@FOO=
+echo '%FOO%'
+set FOO=foo@space@
+echo '%FOO%'
+set FOO=foo@tab@
+echo '%FOO%'
 set FOO=
 
 echo ------------ Testing variable expansion --------------
@@ -266,11 +290,17 @@ cd..@space@
 cd
 if not exist foobar (cd ..)
 cd foobar
+cd@tab@..@tab@@space@@tab@
+cd
+if not exist foobar (cd ..)
+cd foobar
 mkdir "bar bak"
 cd "bar bak"
 cd
 cd ..
 cd bar bak
+cd
+cd "bar bak@space@"@tab@@space@
 cd
 cd ..\..
 cd
@@ -282,7 +312,7 @@ echo bar> foobaz
 type foobaz
 echo ***
 @echo off
-type foobaz
+type foobaz@tab@
 echo ***
 del foobaz
 
@@ -296,7 +326,7 @@ dir /b /a-d
 echo foo > nul
 dir /b /a-d
 echo foo > NuL
-dir /b /a-d
+@tab@dir /b@tab@/a-d
 del bar
 rem NUL not special everywhere
 call :setError 123
@@ -351,6 +381,11 @@ for %%i in (A B C) do call :forTestFun1 %%i
 for %%i in (1,4,1) do echo %%i
 for %%i in (A, B,C) do echo %%i
 for %%i in  (X) do echo %%i
+for@tab@%%i in  (X2) do echo %%i
+for %%i in@tab@(X3) do echo %%i
+for %%i in (@tab@ foo@tab@) do echo %%i
+for@tab@ %%i in@tab@(@tab@M) do echo %%i
+for %%i@tab@in (X)@tab@do@tab@echo %%i
 goto :endForTestFun1
 :forTestFun1
 echo %1

@@ -47,6 +47,30 @@ word@space@
 
 @pwd@>echo word@space@@space@@space@
 word@space@@space@
+
+@todo_wine@@pwd@>echo word@space@
+word
+
+@pwd@>echo@tab@word@space@
+@todo_wine@word
+
+@pwd@>echo@tab@word@space@@tab@@space@
+@todo_wine@word@space@@tab@
+
+@pwd@>echo@tab@word@tab@@space@@space@
+@todo_wine@word@tab@@space@
+
+@todo_wine@@pwd@>echo word@space@
+word
+
+@pwd@>echo@space@@tab@word@space@
+@tab@word
+
+@pwd@>echo@space@@space@@tab@word@space@
+@space@@tab@word
+
+@pwd@>echo@tab@@tab@word@space@
+@todo_wine@@tab@word
 ------------ Testing 'echo' [OFF] --------------
 word
 'singlequotedword'
@@ -63,6 +87,14 @@ word
 :word
 word@space@
 word@space@@space@
+word
+@todo_wine@word
+@todo_wine@word@space@@tab@
+@todo_wine@word@tab@@space@
+word
+@tab@word
+@space@@tab@word
+@todo_wine@@tab@word
 ------------ Testing redirection operators --------------
 ...stdout redirection
 foo
@@ -126,6 +158,10 @@ BAZ=bazbaz
 bazbaz
 set "FOO=bar" should not include the quotes in the variable value
 bar
+@todo_wine@foo
+@todo_wine@''
+'foo@space@'
+'foo@tab@'
 ------------ Testing variable expansion --------------
 ~dp0 should be directory containing batch file
 @pwd@\
@@ -189,6 +225,8 @@ Current dir: @pwd@\foobar@or_broken@Current dir:@space@
 @pwd@\foobar
 @pwd@
 @todo_wine@@pwd@
+@todo_wine@@pwd@
+@pwd@\foobar\bar bak
 @pwd@\foobar\bar bak
 @pwd@\foobar\bar bak
 @pwd@
@@ -237,6 +275,11 @@ A
 B
 C
 X
+@todo_wine@X2
+@todo_wine@X3
+foo
+@todo_wine@M
+@todo_wine@X
 ...imbricated FORs
 @todo_wine@X Y
 @todo_wine@X Y
