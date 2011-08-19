@@ -74,6 +74,7 @@ STDAPI CIState(WCHAR const *, WCHAR const *, CI_STATE *);
 STDAPI LocateCatalogsA(CHAR const *, ULONG, CHAR *, ULONG *, CHAR *, ULONG *);
 STDAPI LocateCatalogsW(WCHAR const *, ULONG, WCHAR *, ULONG *, WCHAR *, ULONG *);
 #define LocateCatalogs WINELIB_NAME_AW(LocateCatalogs)
+STDAPI LoadIFilter(WCHAR const *, IUnknown *, void **);
 
 #ifdef __cplusplus
 }
