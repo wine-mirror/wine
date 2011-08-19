@@ -216,6 +216,8 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 
     if (!physBitmap || !GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return FALSE;
 
+    X11DRV_DIB_Lock( physBitmap, DIB_Status_GdiMod );
+
     if ((physDev->depth == 1) && (physBitmap->pixmap_depth != 1))
     {
         wine_tsx11_lock();
@@ -232,6 +234,8 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
         /* XRender is needed because of possible depth conversion */
         X11DRV_XRender_CopyBrush(physDev, physBitmap, bitmap.bmWidth, bitmap.bmHeight);
     }
+
+    X11DRV_DIB_Unlock( physBitmap, TRUE );
 
     if (physBitmap->pixmap_depth > 1)
     {
