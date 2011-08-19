@@ -916,34 +916,13 @@ static int BITBLT_GetSrcAreaStretch( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE 
     RECT rectDst = dst->visrect;
     int fg, bg;
 
-    rectSrc.left   -= src->x;
-    rectSrc.right  -= src->x;
-    rectSrc.top    -= src->y;
-    rectSrc.bottom -= src->y;
-    rectDst.left   -= dst->x;
-    rectDst.right  -= dst->x;
-    rectDst.top    -= dst->y;
-    rectDst.bottom -= dst->y;
-    if (src->width < 0)
-    {
-        rectSrc.left  -= src->width;
-        rectSrc.right -= src->width;
-    }
-    if (dst->width < 0)
-    {
-        rectDst.left  -= dst->width;
-        rectDst.right -= dst->width;
-    }
-    if (src->height < 0)
-    {
-        rectSrc.top    -= src->height;
-        rectSrc.bottom -= src->height;
-    }
-    if (dst->height < 0)
-    {
-        rectDst.top    -= dst->height;
-        rectDst.bottom -= dst->height;
-    }
+    OffsetRect( &rectSrc, -src->x, -src->y );
+    OffsetRect( &rectDst, -dst->x, -dst->y );
+
+    if (src->width < 0)  OffsetRect( &rectSrc, -src->width, 0 );
+    if (dst->width < 0)  OffsetRect( &rectDst, -dst->width, 0 );
+    if (src->height < 0) OffsetRect( &rectSrc, 0, -src->height );
+    if (dst->height < 0) OffsetRect( &rectDst, 0, -dst->height );
 
     get_colors(physDevDst, physDevSrc, &fg, &bg);
     wine_tsx11_lock();
