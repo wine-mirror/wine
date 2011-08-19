@@ -179,6 +179,19 @@ foo4
 @todo_wine@...on failure conditional ||
 @todo_wine@foo5
 @todo_wine@foo6@space@
+------------ Testing cd ------------
+singleFile
+Current dir: @pwd@\foobar@or_broken@Current dir:@space@
+@pwd@\foobar
+@pwd@
+@pwd@\foobar
+@pwd@
+@pwd@\foobar
+@pwd@
+@todo_wine@@pwd@
+@pwd@\foobar\bar bak
+@pwd@\foobar\bar bak
+@pwd@
 ------------ Testing type ------------
 
 @pwd@>type foobaz@space@

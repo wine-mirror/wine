@@ -244,6 +244,38 @@ if exist bar6 (
     del bar6
 )
 
+echo ------------ Testing cd ------------
+mkdir foobar
+cd foobar
+echo blabla > singleFile
+dir /b
+echo Current dir: %CD%
+cd
+cd ..
+cd
+cd foobar@space@
+cd
+cd ..
+cd
+cd @space@foobar
+cd
+cd..
+cd
+cd foobar
+cd..@space@
+cd
+if not exist foobar (cd ..)
+cd foobar
+mkdir "bar bak"
+cd "bar bak"
+cd
+cd ..
+cd bar bak
+cd
+cd ..\..
+cd
+rd /Q/s foobar
+
 echo ------------ Testing type ------------
 echo bar> foobaz
 @echo on
