@@ -1089,7 +1089,7 @@ void free_pattern_brush( dibdrv_physdev *pdev )
 static BOOL create_pattern_brush_bits(dibdrv_physdev *pdev)
 {
     DWORD size = pdev->brush_dib.height * abs(pdev->brush_dib.stride);
-    DWORD *brush_bits = pdev->brush_dib.bits;
+    DWORD *brush_bits = pdev->brush_dib.bits.ptr;
     DWORD *and_bits, *xor_bits;
 
     assert(pdev->brush_and_bits == NULL);
@@ -1161,7 +1161,9 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev)
     hatch.bit_count = 1;
     hatch.height = hatch.width = 8;
     hatch.stride = 4;
-    hatch.bits = (void *) hatches[pdev->brush_hatch];
+    hatch.bits.ptr = (void *) hatches[pdev->brush_hatch];
+    hatch.bits.free = hatch.bits.param = NULL;
+    hatch.bits.is_copy = FALSE;
 
     fg_mask.and = pdev->brush_and;
     fg_mask.xor = pdev->brush_xor;
@@ -1306,8 +1308,12 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
             pdev->brush_dib.height = orig_dib.height;
             pdev->brush_dib.width  = orig_dib.width;
             pdev->brush_dib.stride = get_dib_stride( pdev->brush_dib.width, pdev->brush_dib.bit_count );
-            pdev->brush_dib.ptr_to_free = HeapAlloc( GetProcessHeap(), 0, pdev->brush_dib.height * pdev->brush_dib.stride );
-            pdev->brush_dib.bits = pdev->brush_dib.ptr_to_free;
+
+            pdev->brush_dib.bits.param   = NULL;
+            pdev->brush_dib.bits.ptr     = HeapAlloc( GetProcessHeap(), 0,
+                                                      pdev->brush_dib.height * pdev->brush_dib.stride );
+            pdev->brush_dib.bits.is_copy = TRUE;
+            pdev->brush_dib.bits.free    = free_heap_bits;
 
             rect.left = rect.top = 0;
             rect.right = orig_dib.width;

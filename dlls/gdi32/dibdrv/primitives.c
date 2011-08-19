@@ -29,37 +29,37 @@ WINE_DEFAULT_DEBUG_CHANNEL(dib);
 
 static inline DWORD *get_pixel_ptr_32(const dib_info *dib, int x, int y)
 {
-    return (DWORD *)((BYTE*)dib->bits + y * dib->stride + x * 4);
+    return (DWORD *)((BYTE*)dib->bits.ptr + y * dib->stride + x * 4);
 }
 
 static inline DWORD *get_pixel_ptr_24_dword(const dib_info *dib, int x, int y)
 {
-    return (DWORD *)((BYTE*)dib->bits + y * dib->stride) + x * 3 / 4;
+    return (DWORD *)((BYTE*)dib->bits.ptr + y * dib->stride) + x * 3 / 4;
 }
 
 static inline BYTE *get_pixel_ptr_24(const dib_info *dib, int x, int y)
 {
-    return (BYTE*)dib->bits + y * dib->stride + x * 3;
+    return (BYTE*)dib->bits.ptr + y * dib->stride + x * 3;
 }
 
 static inline WORD *get_pixel_ptr_16(const dib_info *dib, int x, int y)
 {
-    return (WORD *)((BYTE*)dib->bits + y * dib->stride + x * 2);
+    return (WORD *)((BYTE*)dib->bits.ptr + y * dib->stride + x * 2);
 }
 
 static inline BYTE *get_pixel_ptr_8(const dib_info *dib, int x, int y)
 {
-    return (BYTE*)dib->bits + y * dib->stride + x;
+    return (BYTE*)dib->bits.ptr + y * dib->stride + x;
 }
 
 static inline BYTE *get_pixel_ptr_4(const dib_info *dib, int x, int y)
 {
-    return (BYTE*)dib->bits + y * dib->stride + x / 2;
+    return (BYTE*)dib->bits.ptr + y * dib->stride + x / 2;
 }
 
 static inline BYTE *get_pixel_ptr_1(const dib_info *dib, int x, int y)
 {
-    return (BYTE*)dib->bits + y * dib->stride + x / 8;
+    return (BYTE*)dib->bits.ptr + y * dib->stride + x / 8;
 }
 
 static const BYTE pixel_masks_1[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};

@@ -69,13 +69,15 @@ static void init_bit_fields(dib_info *dib, const DWORD *bit_fields)
 static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit_fields,
                           RGBQUAD *color_table, int color_table_size, void *bits, enum dib_info_flags flags)
 {
-    dib->bit_count = bi->biBitCount;
-    dib->width     = bi->biWidth;
-    dib->height    = bi->biHeight;
-    dib->stride    = get_dib_stride( dib->width, dib->bit_count );
-    dib->bits      = bits;
-    dib->ptr_to_free = NULL;
-    dib->flags     = flags;
+    dib->bit_count    = bi->biBitCount;
+    dib->width        = bi->biWidth;
+    dib->height       = bi->biHeight;
+    dib->stride       = get_dib_stride( dib->width, dib->bit_count );
+    dib->bits.ptr     = bits;
+    dib->bits.is_copy = FALSE;
+    dib->bits.free    = NULL;
+    dib->bits.param   = NULL;
+    dib->flags        = flags;
 
     if(dib->height < 0) /* top-down */
     {
@@ -84,7 +86,7 @@ static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
     else /* bottom-up */
     {
         /* bits always points to the top-left corner and the stride is -ve */
-        dib->bits    = (BYTE*)dib->bits + (dib->height - 1) * dib->stride;
+        dib->bits.ptr = (BYTE*)dib->bits.ptr + (dib->height - 1) * dib->stride;
         dib->stride  = -dib->stride;
     }
 
@@ -211,8 +213,9 @@ BOOL init_dib_info_from_bitmapinfo(dib_info *dib, const BITMAPINFO *info, void *
 static void clear_dib_info(dib_info *dib)
 {
     dib->color_table = NULL;
-    dib->bits = NULL;
-    dib->ptr_to_free = NULL;
+    dib->bits.ptr    = NULL;
+    dib->bits.free   = NULL;
+    dib->bits.param  = NULL;
 }
 
 /**********************************************************************
@@ -224,11 +227,9 @@ void free_dib_info(dib_info *dib)
 {
     if (dib->flags & private_color_table)
         HeapFree(GetProcessHeap(), 0, dib->color_table);
-    dib->color_table = NULL;
 
-    HeapFree(GetProcessHeap(), 0, dib->ptr_to_free);
-    dib->ptr_to_free = NULL;
-    dib->bits = NULL;
+    if (dib->bits.free) dib->bits.free( &dib->bits );
+    clear_dib_info( dib );
 }
 
 void copy_dib_color_info(dib_info *dst, const dib_info *src)
@@ -423,7 +424,7 @@ static DWORD dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
 
     if (bits)
     {
-        bits->ptr = dib->bits;
+        bits->ptr = dib->bits.ptr;
         if (dib->stride < 0)
             bits->ptr = (char *)bits->ptr + (dib->height - 1) * dib->stride;
         bits->is_copy = FALSE;
@@ -478,6 +479,7 @@ static inline BOOL rop_uses_pat(DWORD rop)
 {
     return ((rop >> 4) & 0x0f0000) != (rop & 0x0f0000);
 }
+
 
 /***********************************************************************
  *           dibdrv_PutImage
@@ -541,6 +543,7 @@ static DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINF
     }
 
     init_dib_info_from_bitmapinfo( &src_dib, info, bits->ptr, 0 );
+    src_dib.bits.is_copy = bits->is_copy;
 
     origin.x = src->visrect.left;
     origin.y = src->visrect.top;
