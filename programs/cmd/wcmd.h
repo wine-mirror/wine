@@ -76,7 +76,6 @@ void WCMD_pause (void);
 void WCMD_popd (void);
 void WCMD_print_error (void);
 void WCMD_pushd (WCHAR *);
-int  WCMD_read_console (WCHAR *string, int str_len);
 void WCMD_remove_dir (WCHAR *command);
 void WCMD_rename (void);
 void WCMD_run_program (WCHAR *command, int called);
