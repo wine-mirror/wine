@@ -490,7 +490,7 @@ static DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINF
     DWORD ret;
     POINT origin;
     dib_info src_dib;
-    HRGN total_clip, saved_clip = NULL;
+    HRGN saved_clip = NULL;
     dibdrv_physdev *pdev = NULL;
     const WINEREGION *clip_data;
     int i, rop2;
@@ -518,6 +518,7 @@ static DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINF
             goto done;
         }
         dib = &stand_alone;
+        rop = SRCCOPY;
     }
     else
     {
@@ -544,22 +545,18 @@ static DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINF
     origin.x = src->visrect.left;
     origin.y = src->visrect.top;
 
-    if (hbitmap)
-    {
-        total_clip = clip;
-        rop2 = R2_COPYPEN;
-    }
-    else
+    if (!hbitmap)
     {
         if (clip) saved_clip = add_extra_clipping_region( pdev, clip );
-        total_clip = pdev->clip;
-        rop2 =  ((rop >> 16) & 0xf) + 1;
+        clip = pdev->clip;
     }
 
-    if (total_clip == NULL) dib->funcs->copy_rect( dib, &dst->visrect, &src_dib, &origin, rop2 );
+    rop2 = ((rop >> 16) & 0xf) + 1;
+
+    if (clip == NULL) dib->funcs->copy_rect( dib, &dst->visrect, &src_dib, &origin, rop2 );
     else
     {
-        clip_data = get_wine_region( total_clip );
+        clip_data = get_wine_region( clip );
         for (i = 0; i < clip_data->numRects; i++)
         {
             RECT clipped_rect;
@@ -571,7 +568,7 @@ static DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINF
                 dib->funcs->copy_rect( dib, &clipped_rect, &src_dib, &origin, rop2 );
             }
         }
-        release_wine_region( total_clip );
+        release_wine_region( clip );
     }
     ret = ERROR_SUCCESS;
 
