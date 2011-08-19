@@ -4232,14 +4232,14 @@ HRESULT WINAPI D3DXCreateCylinder(LPDIRECT3DDEVICE9 device, FLOAT radius1, FLOAT
         return hr;
     }
 
-    hr = cylinder->lpVtbl->LockVertexBuffer(cylinder, D3DLOCK_DISCARD, (LPVOID *)&vertices);
+    hr = cylinder->lpVtbl->LockVertexBuffer(cylinder, 0, (LPVOID *)&vertices);
     if (FAILED(hr))
     {
         cylinder->lpVtbl->Release(cylinder);
         return hr;
     }
 
-    hr = cylinder->lpVtbl->LockIndexBuffer(cylinder, D3DLOCK_DISCARD, (LPVOID *)&faces);
+    hr = cylinder->lpVtbl->LockIndexBuffer(cylinder, 0, (LPVOID *)&faces);
     if (FAILED(hr))
     {
         cylinder->lpVtbl->UnlockVertexBuffer(cylinder);
