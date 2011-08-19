@@ -3722,7 +3722,7 @@ HRESULT WINAPI D3DXLoadMeshFromXInMemory(LPCVOID memory,
 
     concat_vertex_size = D3DXGetDeclVertexSize(concat_decl, 0);
 
-    hr = concat_mesh->lpVtbl->LockVertexBuffer(concat_mesh, D3DLOCK_DISCARD, (void**)&concat_vertices);
+    hr = concat_mesh->lpVtbl->LockVertexBuffer(concat_mesh, 0, (void**)&concat_vertices);
     if (FAILED(hr)) goto cleanup;
 
     LIST_FOR_EACH_ENTRY(container_ptr, &container_list, struct mesh_container, entry)
@@ -3775,7 +3775,7 @@ HRESULT WINAPI D3DXLoadMeshFromXInMemory(LPCVOID memory,
     concat_mesh->lpVtbl->UnlockVertexBuffer(concat_mesh);
     concat_vertices = NULL;
 
-    hr = concat_mesh->lpVtbl->LockIndexBuffer(concat_mesh, D3DLOCK_DISCARD, &concat_indices);
+    hr = concat_mesh->lpVtbl->LockIndexBuffer(concat_mesh, 0, &concat_indices);
     if (FAILED(hr)) goto cleanup;
 
     index_offset = 0;
@@ -3814,7 +3814,7 @@ HRESULT WINAPI D3DXLoadMeshFromXInMemory(LPCVOID memory,
         DWORD *concat_attrib_buffer = NULL;
         DWORD offset = 0;
 
-        hr = concat_mesh->lpVtbl->LockAttributeBuffer(concat_mesh, D3DLOCK_DISCARD, &concat_attrib_buffer);
+        hr = concat_mesh->lpVtbl->LockAttributeBuffer(concat_mesh, 0, &concat_attrib_buffer);
         if (FAILED(hr)) goto cleanup;
 
         LIST_FOR_EACH_ENTRY(container_ptr, &container_list, struct mesh_container, entry)
