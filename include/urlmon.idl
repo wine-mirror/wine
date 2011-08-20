@@ -28,6 +28,7 @@ cpp_quote("#undef SetPort")
 cpp_quote("#endif")
 
 interface IInternetProtocolSink;
+interface IUri;
 
 /*****************************************************************************
  * IInternet interface
@@ -1064,6 +1065,76 @@ cpp_quote("#define MAX_SIZE_SECURITY_ID 512")
         [in] DWORD dwZone,
         [out] IEnumString **ppenumString,
         [in] DWORD dwFlags);
+}
+
+/*****************************************************************************
+ * IInternetSecurityManagerEx interface
+ */
+cpp_quote("#define SID_SInternetSecurityManagerEx IID_IInternetSecurityManagerEx")
+
+[
+    object,
+    uuid(f164edf1-cc7c-4f0d-9a94-34222625C393),
+    pointer_default(unique)
+]
+interface IInternetSecurityManagerEx : IInternetSecurityManager
+{
+    HRESULT ProcessUrlActionEx(
+        [in] LPCWSTR pwszUrl,
+        [in] DWORD dwAction,
+        [out] BYTE *pPolicy,
+        [in] DWORD cbPolicy,
+        [in] BYTE *pContext,
+        [in] DWORD cbContext,
+        [in] DWORD dwFlags,
+        [in] DWORD dwReserved,
+        [out] DWORD *pdwOutFlags);
+}
+
+/*****************************************************************************
+ * IInternetSecurityManagerEx2 interface
+ */
+cpp_quote("#define SID_SInternetSecurityManagerEx2 IID_IInternetSecurityManagerEx2")
+
+[
+    object,
+    uuid(f1e50292-a795-4117-8e09-2b560a72ac60),
+    pointer_default(unique)
+]
+interface IInternetSecurityManagerEx2 : IInternetSecurityManagerEx
+{
+    HRESULT MapUrlToZoneEx2(
+        [in] IUri *pUri,
+        [out] DWORD *pdwZone,
+        [in] DWORD dwFlags,
+        [out] LPWSTR *ppwszMappedUrl,
+        [out] DWORD *pdwOutFlags);
+
+    HRESULT ProcessUrlActionEx2(
+        [in] IUri *pUri,
+        [in] DWORD dwAction,
+        [out] BYTE *pPolicy,
+        [in] DWORD cbPolicy,
+        [in] BYTE *pContext,
+        [in] DWORD cbContext,
+        [in] DWORD dwFlags,
+        [in] DWORD_PTR dwReserved,
+        [out] DWORD *pdwOutFlags);
+
+    HRESULT GetSecurityIdEx2(
+        [in] IUri *pUri,
+        [out] BYTE *pbSecurityId,
+        [in, out] DWORD *pcbSecurityId,
+        [in] DWORD_PTR dwReserved);
+
+    HRESULT QueryCustomPolicyEx2(
+        [in] IUri *pUri,
+        [in] REFGUID guidKey,
+        [out] BYTE **ppPolicy,
+        [out] DWORD *pcbPolicy,
+        [in] BYTE *pContext,
+        [in] DWORD cbContext,
+        [in] DWORD_PTR dwReserved);
 }
 
 /*****************************************************************************
