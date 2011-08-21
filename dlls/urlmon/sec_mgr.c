@@ -657,7 +657,7 @@ static HRESULT get_action_policy(DWORD zone, DWORD action, BYTE *policy, DWORD s
  *
  */
 typedef struct {
-    IInternetSecurityManager IInternetSecurityManager_iface;
+    IInternetSecurityManagerEx2 IInternetSecurityManagerEx2_iface;
 
     LONG ref;
 
@@ -665,14 +665,14 @@ typedef struct {
     IInternetSecurityManager *custom_manager;
 } SecManagerImpl;
 
-static inline SecManagerImpl *impl_from_IInternetSecurityManager(IInternetSecurityManager *iface)
+static inline SecManagerImpl *impl_from_IInternetSecurityManagerEx2(IInternetSecurityManagerEx2 *iface)
 {
-    return CONTAINING_RECORD(iface, SecManagerImpl, IInternetSecurityManager_iface);
+    return CONTAINING_RECORD(iface, SecManagerImpl, IInternetSecurityManagerEx2_iface);
 }
 
-static HRESULT WINAPI SecManagerImpl_QueryInterface(IInternetSecurityManager* iface,REFIID riid,void** ppvObject)
+static HRESULT WINAPI SecManagerImpl_QueryInterface(IInternetSecurityManagerEx2* iface,REFIID riid,void** ppvObject)
 {
-    SecManagerImpl *This = impl_from_IInternetSecurityManager(iface);
+    SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
 
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppvObject);
 
@@ -685,7 +685,9 @@ static HRESULT WINAPI SecManagerImpl_QueryInterface(IInternetSecurityManager* if
 
     /* Compare the riid with the interface IDs implemented by this object.*/
     if (IsEqualIID(&IID_IUnknown, riid) ||
-        IsEqualIID(&IID_IInternetSecurityManager, riid))
+        IsEqualIID(&IID_IInternetSecurityManager, riid) ||
+        IsEqualIID(&IID_IInternetSecurityManagerEx, riid) ||
+        IsEqualIID(&IID_IInternetSecurityManagerEx2, riid))
         *ppvObject = iface;
 
     /* Check that we obtained an interface.*/
@@ -700,9 +702,9 @@ static HRESULT WINAPI SecManagerImpl_QueryInterface(IInternetSecurityManager* if
     return S_OK;
 }
 
-static ULONG WINAPI SecManagerImpl_AddRef(IInternetSecurityManager* iface)
+static ULONG WINAPI SecManagerImpl_AddRef(IInternetSecurityManagerEx2* iface)
 {
-    SecManagerImpl *This = impl_from_IInternetSecurityManager(iface);
+    SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%u\n", This, refCount);
@@ -710,9 +712,9 @@ static ULONG WINAPI SecManagerImpl_AddRef(IInternetSecurityManager* iface)
     return refCount;
 }
 
-static ULONG WINAPI SecManagerImpl_Release(IInternetSecurityManager* iface)
+static ULONG WINAPI SecManagerImpl_Release(IInternetSecurityManagerEx2* iface)
 {
-    SecManagerImpl *This = impl_from_IInternetSecurityManager(iface);
+    SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%u\n", This, refCount);
@@ -732,10 +734,10 @@ static ULONG WINAPI SecManagerImpl_Release(IInternetSecurityManager* iface)
     return refCount;
 }
 
-static HRESULT WINAPI SecManagerImpl_SetSecuritySite(IInternetSecurityManager *iface,
+static HRESULT WINAPI SecManagerImpl_SetSecuritySite(IInternetSecurityManagerEx2 *iface,
                                                      IInternetSecurityMgrSite *pSite)
 {
-    SecManagerImpl *This = impl_from_IInternetSecurityManager(iface);
+    SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
 
     TRACE("(%p)->(%p)\n", This, pSite);
 
@@ -767,10 +769,10 @@ static HRESULT WINAPI SecManagerImpl_SetSecuritySite(IInternetSecurityManager *i
     return S_OK;
 }
 
-static HRESULT WINAPI SecManagerImpl_GetSecuritySite(IInternetSecurityManager *iface,
+static HRESULT WINAPI SecManagerImpl_GetSecuritySite(IInternetSecurityManagerEx2 *iface,
                                                      IInternetSecurityMgrSite **ppSite)
 {
-    SecManagerImpl *This = impl_from_IInternetSecurityManager(iface);
+    SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
 
     TRACE("(%p)->(%p)\n", This, ppSite);
 
@@ -784,11 +786,11 @@ static HRESULT WINAPI SecManagerImpl_GetSecuritySite(IInternetSecurityManager *i
     return S_OK;
 }
 
-static HRESULT WINAPI SecManagerImpl_MapUrlToZone(IInternetSecurityManager *iface,
+static HRESULT WINAPI SecManagerImpl_MapUrlToZone(IInternetSecurityManagerEx2 *iface,
                                                   LPCWSTR pwszUrl, DWORD *pdwZone,
                                                   DWORD dwFlags)
 {
-    SecManagerImpl *This = impl_from_IInternetSecurityManager(iface);
+    SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
     HRESULT hres;
 
     TRACE("(%p)->(%s %p %08x)\n", iface, debugstr_w(pwszUrl), pdwZone, dwFlags);
@@ -811,10 +813,10 @@ static HRESULT WINAPI SecManagerImpl_MapUrlToZone(IInternetSecurityManager *ifac
     return map_url_to_zone(pwszUrl, pdwZone, NULL);
 }
 
-static HRESULT WINAPI SecManagerImpl_GetSecurityId(IInternetSecurityManager *iface, 
+static HRESULT WINAPI SecManagerImpl_GetSecurityId(IInternetSecurityManagerEx2 *iface,
         LPCWSTR pwszUrl, BYTE *pbSecurityId, DWORD *pcbSecurityId, DWORD_PTR dwReserved)
 {
-    SecManagerImpl *This = impl_from_IInternetSecurityManager(iface);
+    SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
     LPWSTR url, ptr, ptr2;
     DWORD zone, len;
     HRESULT hres;
@@ -888,13 +890,13 @@ static HRESULT WINAPI SecManagerImpl_GetSecurityId(IInternetSecurityManager *ifa
 }
 
 
-static HRESULT WINAPI SecManagerImpl_ProcessUrlAction(IInternetSecurityManager *iface,
+static HRESULT WINAPI SecManagerImpl_ProcessUrlAction(IInternetSecurityManagerEx2 *iface,
                                                       LPCWSTR pwszUrl, DWORD dwAction,
                                                       BYTE *pPolicy, DWORD cbPolicy,
                                                       BYTE *pContext, DWORD cbContext,
                                                       DWORD dwFlags, DWORD dwReserved)
 {
-    SecManagerImpl *This = impl_from_IInternetSecurityManager(iface);
+    SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
     DWORD zone, policy;
     HRESULT hres;
 
@@ -943,13 +945,13 @@ static HRESULT WINAPI SecManagerImpl_ProcessUrlAction(IInternetSecurityManager *
 }
                                                
 
-static HRESULT WINAPI SecManagerImpl_QueryCustomPolicy(IInternetSecurityManager *iface,
+static HRESULT WINAPI SecManagerImpl_QueryCustomPolicy(IInternetSecurityManagerEx2 *iface,
                                                        LPCWSTR pwszUrl, REFGUID guidKey,
                                                        BYTE **ppPolicy, DWORD *pcbPolicy,
                                                        BYTE *pContext, DWORD cbContext,
                                                        DWORD dwReserved)
 {
-    SecManagerImpl *This = impl_from_IInternetSecurityManager(iface);
+    SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
     HRESULT hres;
 
     TRACE("(%p)->(%s %s %p %p %p %08x %08x )\n", iface, debugstr_w(pwszUrl), debugstr_guid(guidKey),
@@ -966,10 +968,10 @@ static HRESULT WINAPI SecManagerImpl_QueryCustomPolicy(IInternetSecurityManager 
     return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
 }
 
-static HRESULT WINAPI SecManagerImpl_SetZoneMapping(IInternetSecurityManager *iface,
+static HRESULT WINAPI SecManagerImpl_SetZoneMapping(IInternetSecurityManagerEx2 *iface,
                                                     DWORD dwZone, LPCWSTR pwszPattern, DWORD dwFlags)
 {
-    SecManagerImpl *This = impl_from_IInternetSecurityManager(iface);
+    SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
     HRESULT hres;
 
     TRACE("(%p)->(%08x %s %08x)\n", iface, dwZone, debugstr_w(pwszPattern),dwFlags);
@@ -985,10 +987,10 @@ static HRESULT WINAPI SecManagerImpl_SetZoneMapping(IInternetSecurityManager *if
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI SecManagerImpl_GetZoneMappings(IInternetSecurityManager *iface,
+static HRESULT WINAPI SecManagerImpl_GetZoneMappings(IInternetSecurityManagerEx2 *iface,
         DWORD dwZone, IEnumString **ppenumString, DWORD dwFlags)
 {
-    SecManagerImpl *This = impl_from_IInternetSecurityManager(iface);
+    SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
     HRESULT hres;
 
     TRACE("(%p)->(%08x %p %08x)\n", iface, dwZone, ppenumString,dwFlags);
@@ -1004,7 +1006,53 @@ static HRESULT WINAPI SecManagerImpl_GetZoneMappings(IInternetSecurityManager *i
     return E_NOTIMPL;
 }
 
-static const IInternetSecurityManagerVtbl VT_SecManagerImpl =
+static HRESULT WINAPI SecManagerImpl_ProcessUrlActionEx(IInternetSecurityManagerEx2 *iface,
+        LPCWSTR pwszUrl, DWORD dwAction, BYTE *pPolicy, DWORD cbPolicy, BYTE *pContext, DWORD cbContext,
+        DWORD dwFlags, DWORD dwReserved, DWORD *pdwOutFlags)
+{
+    SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
+    FIXME("(%p)->(%s %08x %p %d %p %d %08x %08x %p) stub\n", This, debugstr_w(pwszUrl), dwAction, pPolicy, cbPolicy,
+          pContext, cbContext, dwFlags, dwReserved, pdwOutFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SecManagerImpl_MapUrlToZoneEx2(IInternetSecurityManagerEx2 *iface,
+        IUri *pUri, DWORD *pdwZone, DWORD dwFlags, LPWSTR *ppwszMappedUrl, DWORD *pdwOutFlags)
+{
+    SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
+    FIXME("(%p)->(%p %p %08x %p %p) stub\n", This, pUri, pdwZone, dwFlags, ppwszMappedUrl, pdwOutFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SecManagerImpl_ProcessUrlActionEx2(IInternetSecurityManagerEx2 *iface,
+        IUri *pUri, DWORD dwAction, BYTE *pPolicy, DWORD cbPolicy, BYTE *pContext, DWORD cbContext,
+        DWORD dwFlags, DWORD_PTR dwReserved, DWORD *pdwOutFlags)
+{
+    SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
+    FIXME("(%p)->(%p %08x %p %d %p %d %08x %08x %p) stub\n", This, pUri, dwAction, pPolicy,
+          cbPolicy, pContext, cbContext, dwFlags, (DWORD)dwReserved, pdwOutFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SecManagerImpl_GetSecurityIdEx2(IInternetSecurityManagerEx2 *iface,
+        IUri *pUri, BYTE *pbSecurityId, DWORD *pcbSecurityId, DWORD_PTR dwReserved)
+{
+    SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
+    FIXME("(%p)->(%p %p %p %08x) stub\n", This, pUri, pbSecurityId, pcbSecurityId, (DWORD)dwReserved);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SecManagerImpl_QueryCustomPolicyEx2(IInternetSecurityManagerEx2 *iface,
+        IUri *pUri, REFGUID guidKey, BYTE **ppPolicy, DWORD *pcbPolicy, BYTE *pContext,
+        DWORD cbContext, DWORD_PTR dwReserved)
+{
+    SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
+    FIXME("(%p)->(%p %s %p %p %p %d %08x) stub\n", This, pUri, debugstr_guid(guidKey), ppPolicy, pcbPolicy,
+          pContext, cbContext, (DWORD)dwReserved);
+    return E_NOTIMPL;
+}
+
+static const IInternetSecurityManagerEx2Vtbl VT_SecManagerImpl =
 {
     SecManagerImpl_QueryInterface,
     SecManagerImpl_AddRef,
@@ -1016,7 +1064,12 @@ static const IInternetSecurityManagerVtbl VT_SecManagerImpl =
     SecManagerImpl_ProcessUrlAction,
     SecManagerImpl_QueryCustomPolicy,
     SecManagerImpl_SetZoneMapping,
-    SecManagerImpl_GetZoneMappings
+    SecManagerImpl_GetZoneMappings,
+    SecManagerImpl_ProcessUrlActionEx,
+    SecManagerImpl_MapUrlToZoneEx2,
+    SecManagerImpl_ProcessUrlActionEx2,
+    SecManagerImpl_GetSecurityIdEx2,
+    SecManagerImpl_QueryCustomPolicyEx2
 };
 
 HRESULT SecManagerImpl_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
@@ -1027,7 +1080,7 @@ HRESULT SecManagerImpl_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
     This = heap_alloc(sizeof(*This));
 
     /* Initialize the virtual function table. */
-    This->IInternetSecurityManager_iface.lpVtbl = &VT_SecManagerImpl;
+    This->IInternetSecurityManagerEx2_iface.lpVtbl = &VT_SecManagerImpl;
 
     This->ref = 1;
     This->mgrsite = NULL;
