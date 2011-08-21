@@ -697,32 +697,18 @@ static HRESULT WINAPI OLEFontImpl_put_Name(
   IFont* iface,
   BSTR name)
 {
-  OLEFontImpl *this = impl_from_IFont(iface);
-  TRACE("(%p)->(%p)\n", this, name);
+  OLEFontImpl *This = impl_from_IFont(iface);
+  TRACE("(%p)->(%p)\n", This, name);
 
   if (!name)
     return CTL_E_INVALIDPROPERTYVALUE;
 
-  if (this->description.lpstrName==0)
-  {
-    this->description.lpstrName = HeapAlloc(GetProcessHeap(),
-					    0,
-					    (lstrlenW(name)+1) * sizeof(WCHAR));
-  }
-  else
-  {
-    this->description.lpstrName = HeapReAlloc(GetProcessHeap(),
-					      0,
-					      this->description.lpstrName,
-					      (lstrlenW(name)+1) * sizeof(WCHAR));
-  }
+  HeapFree(GetProcessHeap(), 0, This->description.lpstrName);
+  This->description.lpstrName = strdupW(name);
+  if (!This->description.lpstrName) return E_OUTOFMEMORY;
 
-  if (this->description.lpstrName==0)
-    return E_OUTOFMEMORY;
-
-  strcpyW(this->description.lpstrName, name);
-  TRACE("new name %s\n", debugstr_w(this->description.lpstrName));
-  OLEFont_SendNotify(this, DISPID_FONT_NAME);
+  TRACE("new name %s\n", debugstr_w(This->description.lpstrName));
+  OLEFont_SendNotify(This, DISPID_FONT_NAME);
   return S_OK;
 }
 
@@ -1025,15 +1011,8 @@ static HRESULT WINAPI OLEFontImpl_Clone(
     return E_OUTOFMEMORY;
 
   *newObject = *this;
-
-  /* We need to alloc new memory for the string, otherwise
-   * we free memory twice.
-   */
-  newObject->description.lpstrName = HeapAlloc(
-	GetProcessHeap(),0,
-	(1+strlenW(this->description.lpstrName))*2
-  );
-  strcpyW(newObject->description.lpstrName, this->description.lpstrName);
+  /* allocate separate buffer */
+  newObject->description.lpstrName = strdupW(this->description.lpstrName);
 
   /* Increment internal ref in hfont item list */
   if(newObject->gdiFont) inc_int_ref(newObject->gdiFont);
@@ -2246,10 +2225,7 @@ static OLEFontImpl* OLEFontImpl_Construct(const FONTDESC *fontDesc)
   newObject->ref = 1;
 
   newObject->description.cbSizeofstruct = sizeof(FONTDESC);
-  newObject->description.lpstrName = HeapAlloc(GetProcessHeap(),
-					       0,
-					       (lstrlenW(fontDesc->lpstrName)+1) * sizeof(WCHAR));
-  strcpyW(newObject->description.lpstrName, fontDesc->lpstrName);
+  newObject->description.lpstrName      = strdupW(fontDesc->lpstrName);
   newObject->description.cySize         = fontDesc->cySize;
   newObject->description.sWeight        = fontDesc->sWeight;
   newObject->description.sCharset       = fontDesc->sCharset;
@@ -2264,8 +2240,8 @@ static OLEFontImpl* OLEFontImpl_Construct(const FONTDESC *fontDesc)
   newObject->pPropertyNotifyCP = NULL;
   newObject->pFontEventsCP = NULL;
 
-  CreateConnectionPoint((IUnknown*)newObject, &IID_IPropertyNotifySink, &newObject->pPropertyNotifyCP);
-  CreateConnectionPoint((IUnknown*)newObject, &IID_IFontEventsDisp, &newObject->pFontEventsCP);
+  CreateConnectionPoint((IUnknown*)&newObject->IFont_iface, &IID_IPropertyNotifySink, &newObject->pPropertyNotifyCP);
+  CreateConnectionPoint((IUnknown*)&newObject->IFont_iface, &IID_IFontEventsDisp, &newObject->pFontEventsCP);
 
   if (!newObject->pPropertyNotifyCP || !newObject->pFontEventsCP)
   {
