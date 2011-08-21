@@ -584,88 +584,85 @@ static int CALLBACK font_enum_proc(const LOGFONTW *elf, const TEXTMETRICW *ntm, 
 
 static void realize_font(OLEFontImpl *This)
 {
-    if (This->dirty)
+    LOGFONTW logFont;
+    INT fontHeight;
+    WCHAR text_face[LF_FACESIZE];
+    HDC hdc = get_dc();
+    HFONT old_font;
+    TEXTMETRICW tm;
+
+    if (!This->dirty) return;
+
+    text_face[0] = 0;
+
+    if(This->gdiFont)
     {
-        LOGFONTW logFont;
-        INT fontHeight;
-        WCHAR text_face[LF_FACESIZE];
-        HDC hdc = get_dc();
-        HFONT old_font;
-        TEXTMETRICW tm;
-
-        text_face[0] = 0;
-
-        if(This->gdiFont)
-        {
-            old_font = SelectObject(hdc, This->gdiFont);
-            GetTextFaceW(hdc, sizeof(text_face) / sizeof(text_face[0]), text_face);
-            SelectObject(hdc, old_font);
-            dec_int_ref(This->gdiFont);
-            This->gdiFont = 0;
-        }
-
-        memset(&logFont, 0, sizeof(LOGFONTW));
-
-        lstrcpynW(logFont.lfFaceName, This->description.lpstrName, LF_FACESIZE);
-        logFont.lfCharSet         = This->description.sCharset;
-
-        /* If the font name has been changed then enumerate all charsets
-           and pick one that'll result in the font specified being selected */
-        if(text_face[0] && lstrcmpiW(text_face, This->description.lpstrName))
-        {
-            enum_data data;
-            data.orig_cs = This->description.sCharset;
-            data.avail_cs = -1;
-            logFont.lfCharSet = DEFAULT_CHARSET;
-            EnumFontFamiliesExW(get_dc(), &logFont, font_enum_proc, (LPARAM)&data, 0);
-            if(data.avail_cs != -1) logFont.lfCharSet = data.avail_cs;
-        }
-
-
-        /*
-         * The height of the font returned by the get_Size property is the
-         * height of the font in points multiplied by 10000... Using some
-         * simple conversions and the ratio given by the application, it can
-         * be converted to a height in pixels.
-         *
-         * Standard ratio is 72 / 2540, or 18 / 635 in lowest terms.
-         * Ratio is applied here relative to the standard.
-         */
-
-        fontHeight = MulDiv( This->description.cySize.s.Lo, This->cyLogical*635, This->cyHimetric*18 );
-
-
-        logFont.lfHeight          = ((fontHeight%10000L)>5000L) ? (-fontHeight/10000L) - 1 :
-                                                                  (-fontHeight/10000L);
-        logFont.lfItalic          = This->description.fItalic;
-        logFont.lfUnderline       = This->description.fUnderline;
-        logFont.lfStrikeOut       = This->description.fStrikethrough;
-        logFont.lfWeight          = This->description.sWeight;
-        logFont.lfOutPrecision    = OUT_CHARACTER_PRECIS;
-        logFont.lfClipPrecision   = CLIP_DEFAULT_PRECIS;
-        logFont.lfQuality         = DEFAULT_QUALITY;
-        logFont.lfPitchAndFamily  = DEFAULT_PITCH;
-
-        This->gdiFont = CreateFontIndirectW(&logFont);
-        This->dirty = FALSE;
-
-        add_hfontitem(This->gdiFont);
-
-        /* Fixup the name and charset properties so that they match the
-           selected font */
-        old_font = SelectObject(get_dc(), This->gdiFont);
+        old_font = SelectObject(hdc, This->gdiFont);
         GetTextFaceW(hdc, sizeof(text_face) / sizeof(text_face[0]), text_face);
-        if(lstrcmpiW(text_face, This->description.lpstrName))
-        {
-            HeapFree(GetProcessHeap(), 0, This->description.lpstrName);
-            This->description.lpstrName = strdupW(text_face);
-        }
-        GetTextMetricsW(hdc, &tm);
-        This->description.sCharset = tm.tmCharSet;
-        /* While we have it handy, stash the realized font height for use by get_Size() */
-        This->nRealHeight = tm.tmHeight - tm.tmInternalLeading; /* corresponds to LOGFONT lfHeight */
         SelectObject(hdc, old_font);
+        dec_int_ref(This->gdiFont);
+        This->gdiFont = 0;
     }
+
+    memset(&logFont, 0, sizeof(LOGFONTW));
+
+    lstrcpynW(logFont.lfFaceName, This->description.lpstrName, LF_FACESIZE);
+    logFont.lfCharSet = This->description.sCharset;
+
+    /* If the font name has been changed then enumerate all charsets
+       and pick one that'll result in the font specified being selected */
+    if(text_face[0] && lstrcmpiW(text_face, This->description.lpstrName))
+    {
+        enum_data data;
+        data.orig_cs = This->description.sCharset;
+        data.avail_cs = -1;
+        logFont.lfCharSet = DEFAULT_CHARSET;
+        EnumFontFamiliesExW(get_dc(), &logFont, font_enum_proc, (LPARAM)&data, 0);
+        if(data.avail_cs != -1) logFont.lfCharSet = data.avail_cs;
+    }
+
+    /*
+     * The height of the font returned by the get_Size property is the
+     * height of the font in points multiplied by 10000... Using some
+     * simple conversions and the ratio given by the application, it can
+     * be converted to a height in pixels.
+     *
+     * Standard ratio is 72 / 2540, or 18 / 635 in lowest terms.
+     * Ratio is applied here relative to the standard.
+     */
+
+    fontHeight = MulDiv( This->description.cySize.s.Lo, This->cyLogical*635, This->cyHimetric*18 );
+
+    logFont.lfHeight          = ((fontHeight%10000L)>5000L) ? (-fontHeight/10000L) - 1 :
+                                                                  (-fontHeight/10000L);
+    logFont.lfItalic          = This->description.fItalic;
+    logFont.lfUnderline       = This->description.fUnderline;
+    logFont.lfStrikeOut       = This->description.fStrikethrough;
+    logFont.lfWeight          = This->description.sWeight;
+    logFont.lfOutPrecision    = OUT_CHARACTER_PRECIS;
+    logFont.lfClipPrecision   = CLIP_DEFAULT_PRECIS;
+    logFont.lfQuality         = DEFAULT_QUALITY;
+    logFont.lfPitchAndFamily  = DEFAULT_PITCH;
+
+    This->gdiFont = CreateFontIndirectW(&logFont);
+    This->dirty = FALSE;
+
+    add_hfontitem(This->gdiFont);
+
+    /* Fixup the name and charset properties so that they match the
+       selected font */
+    old_font = SelectObject(get_dc(), This->gdiFont);
+    GetTextFaceW(hdc, sizeof(text_face) / sizeof(text_face[0]), text_face);
+    if(lstrcmpiW(text_face, This->description.lpstrName))
+    {
+        HeapFree(GetProcessHeap(), 0, This->description.lpstrName);
+        This->description.lpstrName = strdupW(text_face);
+    }
+    GetTextMetricsW(hdc, &tm);
+    This->description.sCharset = tm.tmCharSet;
+    /* While we have it handy, stash the realized font height for use by get_Size() */
+    This->nRealHeight = tm.tmHeight - tm.tmInternalLeading; /* corresponds to LOGFONT lfHeight */
+    SelectObject(hdc, old_font);
 }
 
 /************************************************************************
@@ -683,7 +680,7 @@ static HRESULT WINAPI OLEFontImpl_get_Name(
   if (pname==0)
     return E_POINTER;
 
-  if(this->dirty) realize_font(this);
+  realize_font(this);
 
   if (this->description.lpstrName!=0)
     *pname = SysAllocString(this->description.lpstrName);
@@ -741,7 +738,7 @@ static HRESULT WINAPI OLEFontImpl_get_Size(
 
   if (!psize) return E_POINTER;
 
-  if(this->dirty) realize_font(this);
+  realize_font(this);
 
   /*
    * Convert realized font height in pixels to points descaled by current
@@ -785,7 +782,7 @@ static HRESULT WINAPI OLEFontImpl_get_Bold(
 
   if (!pbold) return E_POINTER;
 
-  if(this->dirty) realize_font(this);
+  realize_font(this);
 
   *pbold = this->description.sWeight > 550;
 
@@ -820,7 +817,7 @@ static HRESULT WINAPI OLEFontImpl_get_Italic(
   if (pitalic==0)
     return E_POINTER;
 
-  if(this->dirty) realize_font(this);
+  realize_font(this);
 
   *pitalic = this->description.fItalic;
 
@@ -856,7 +853,7 @@ static HRESULT WINAPI OLEFontImpl_get_Underline(
   if (punderline==0)
     return E_POINTER;
 
-  if(this->dirty) realize_font(this);
+  realize_font(this);
 
   *punderline = this->description.fUnderline;
 
@@ -892,7 +889,7 @@ static HRESULT WINAPI OLEFontImpl_get_Strikethrough(
   if (pstrikethrough==0)
     return E_POINTER;
 
-  if(this->dirty) realize_font(this);
+  realize_font(this);
 
   *pstrikethrough = this->description.fStrikethrough;
 
@@ -928,7 +925,7 @@ static HRESULT WINAPI OLEFontImpl_get_Weight(
   if (pweight==0)
     return E_POINTER;
 
-  if(this->dirty) realize_font(this);
+  realize_font(this);
 
   *pweight = this->description.sWeight;
 
@@ -964,7 +961,7 @@ static HRESULT WINAPI OLEFontImpl_get_Charset(
   if (pcharset==0)
     return E_POINTER;
 
-  if(this->dirty) realize_font(this);
+  realize_font(this);
 
   *pcharset = this->description.sCharset;
 
@@ -999,7 +996,7 @@ static HRESULT WINAPI OLEFontImpl_get_hFont(
   if (phfont==NULL)
     return E_POINTER;
 
-  if(this->dirty) realize_font(this);
+  realize_font(this);
 
   *phfont = this->gdiFont;
   TRACE("Returning %p\n", *phfont);
