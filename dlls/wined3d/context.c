@@ -1811,59 +1811,6 @@ static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *
     context_invalidate_state(context, STATE_TRANSFORM(WINED3DTS_PROJECTION));
 }
 
-/* Do not call while under the GL lock. */
-static struct wined3d_context *FindContext(const struct wined3d_device *device, const struct wined3d_surface *target)
-{
-    struct wined3d_context *current_context = context_get_current();
-    struct wined3d_context *context;
-
-    if (current_context && current_context->destroyed) current_context = NULL;
-
-    if (!target)
-    {
-        if (current_context
-                && current_context->current_rt
-                && current_context->swapchain->device == device)
-        {
-            target = current_context->current_rt;
-        }
-        else
-        {
-            struct wined3d_swapchain *swapchain = device->swapchains[0];
-            if (swapchain->back_buffers) target = swapchain->back_buffers[0];
-            else target = swapchain->front_buffer;
-        }
-    }
-
-    if (current_context && current_context->current_rt == target)
-    {
-        context_update_window(current_context);
-        return current_context;
-    }
-
-    if (target->container.type == WINED3D_CONTAINER_SWAPCHAIN)
-    {
-        TRACE("Rendering onscreen\n");
-
-        context = swapchain_get_context(target->container.u.swapchain);
-    }
-    else
-    {
-        TRACE("Rendering offscreen\n");
-
-        /* Stay with the current context if possible. Otherwise use the
-         * context for the primary swapchain. */
-        if (current_context && current_context->swapchain->device == device)
-            context = current_context;
-        else
-            context = swapchain_get_context(device->swapchains[0]);
-    }
-
-    context_update_window(context);
-
-    return context;
-}
-
 static inline BOOL is_rt_mask_onscreen(DWORD rt_mask)
 {
     return rt_mask & (1 << 31);
@@ -2290,7 +2237,6 @@ static void context_setup_target(struct wined3d_device *device,
 {
     BOOL old_render_offscreen = context->render_offscreen, render_offscreen;
 
-    if (!target) return;
     render_offscreen = surface_is_offscreen(target);
     if (context->current_rt == target && render_offscreen == old_render_offscreen) return;
 
@@ -2347,7 +2293,50 @@ struct wined3d_context *context_acquire(struct wined3d_device *device, struct wi
 
     TRACE("device %p, target %p.\n", device, target);
 
-    context = FindContext(device, target);
+    if (current_context && current_context->destroyed)
+        current_context = NULL;
+
+    if (!target)
+    {
+        if (current_context
+                && current_context->current_rt
+                && current_context->swapchain->device == device)
+        {
+            target = current_context->current_rt;
+        }
+        else
+        {
+            struct wined3d_swapchain *swapchain = device->swapchains[0];
+            if (swapchain->back_buffers)
+                target = swapchain->back_buffers[0];
+            else
+                target = swapchain->front_buffer;
+        }
+    }
+
+    if (current_context && current_context->current_rt == target)
+    {
+        context = current_context;
+    }
+    else if (target->container.type == WINED3D_CONTAINER_SWAPCHAIN)
+    {
+        TRACE("Rendering onscreen.\n");
+
+        context = swapchain_get_context(target->container.u.swapchain);
+    }
+    else
+    {
+        TRACE("Rendering offscreen.\n");
+
+        /* Stay with the current context if possible. Otherwise use the
+         * context for the primary swapchain. */
+        if (current_context && current_context->swapchain->device == device)
+            context = current_context;
+        else
+            context = swapchain_get_context(device->swapchains[0]);
+    }
+
+    context_update_window(context);
     context_setup_target(device, context, target);
     context_enter(context);
     if (!context->valid) return context;
