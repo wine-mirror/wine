@@ -3199,6 +3199,8 @@ static void convert_r5g6b5_x8r8g8b8(const BYTE *src, BYTE *dst,
     }
 }
 
+/* We use this for both B8G8R8A8 -> B8G8R8X8 and B8G8R8X8 -> B8G8R8A8, since
+ * in both cases we're just setting the X / Alpha channel to 0xff. */
 static void convert_a8r8g8b8_x8r8g8b8(const BYTE *src, BYTE *dst,
         DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h)
 {
@@ -3317,6 +3319,7 @@ static const struct d3dfmt_convertor_desc convertors[] =
     {WINED3DFMT_R32_FLOAT,      WINED3DFMT_R16_FLOAT,       convert_r32_float_r16_float},
     {WINED3DFMT_B5G6R5_UNORM,   WINED3DFMT_B8G8R8X8_UNORM,  convert_r5g6b5_x8r8g8b8},
     {WINED3DFMT_B8G8R8A8_UNORM, WINED3DFMT_B8G8R8X8_UNORM,  convert_a8r8g8b8_x8r8g8b8},
+    {WINED3DFMT_B8G8R8X8_UNORM, WINED3DFMT_B8G8R8A8_UNORM,  convert_a8r8g8b8_x8r8g8b8},
     {WINED3DFMT_YUY2,           WINED3DFMT_B8G8R8X8_UNORM,  convert_yuy2_x8r8g8b8},
     {WINED3DFMT_YUY2,           WINED3DFMT_B5G6R5_UNORM,    convert_yuy2_r5g6b5},
 };
