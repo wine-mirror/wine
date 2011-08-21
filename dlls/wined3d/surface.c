@@ -6569,21 +6569,46 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
             wined3d_surface_map(dst_surface, &dlock, NULL, 0);
     }
 
-    if (src_format->flags & dst_format->flags & WINED3DFMT_FLAG_FOURCC)
-    {
-        if (!dst_rect || src_surface == dst_surface)
-        {
-            memcpy(dlock.pBits, slock.pBits, dst_surface->resource.size);
-            goto release;
-        }
-    }
-
     bpp = dst_surface->resource.format->byte_count;
     srcheight = xsrc.bottom - xsrc.top;
     srcwidth = xsrc.right - xsrc.left;
     dstheight = xdst.bottom - xdst.top;
     dstwidth = xdst.right - xdst.left;
     width = (xdst.right - xdst.left) * bpp;
+
+    if (src_format->flags & dst_format->flags & WINED3DFMT_FLAG_COMPRESSED)
+    {
+        UINT row_block_count;
+
+        if (flags || src_surface == dst_surface)
+        {
+            FIXME("Only plain blits supported on compressed surfaces.\n");
+            hr = E_NOTIMPL;
+            goto release;
+        }
+
+        TRACE("%s -> %s copy.\n", debug_d3dformat(src_format->id), debug_d3dformat(dst_format->id));
+
+        if (srcheight != dstheight || srcwidth != dstwidth)
+        {
+            WARN("Stretching not supported on compressed surfaces.\n");
+            hr = WINED3DERR_INVALIDCALL;
+            goto release;
+        }
+
+        dbuf = dlock.pBits;
+        sbuf = slock.pBits;
+
+        row_block_count = (dstwidth + dst_format->block_width - 1) / dst_format->block_width;
+        for (y = 0; y < dstheight; y += dst_format->block_height)
+        {
+            memcpy(dbuf, sbuf, row_block_count * dst_format->block_byte_count);
+            dbuf += dlock.Pitch;
+            sbuf += slock.Pitch;
+        }
+
+        goto release;
+    }
 
     if (dst_rect && src_surface != dst_surface)
         dbuf = dlock.pBits;
