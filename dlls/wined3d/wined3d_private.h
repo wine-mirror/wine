@@ -1944,6 +1944,7 @@ struct fbo_entry
     struct wined3d_surface **render_targets;
     struct wined3d_surface *depth_stencil;
     DWORD location;
+    DWORD rt_mask;
     BOOL attached;
     GLuint id;
 };
