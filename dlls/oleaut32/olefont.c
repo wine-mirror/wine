@@ -287,13 +287,6 @@ struct OLEFontImpl
   IConnectionPoint *pFontEventsCP;
 };
 
-/*
- * Here, I define utility macros to help with the casting of the
- * "this" parameter.
- * There is a version to accommodate all of the VTables implemented
- * by this object.
- */
-
 static inline OLEFontImpl *impl_from_IFont(IFont *iface)
 {
     return CONTAINING_RECORD(iface, OLEFontImpl, IFont_iface);
@@ -1626,80 +1619,50 @@ static HRESULT WINAPI OLEFontImpl_Load(
   IPersistStream*  iface,
   IStream*         pLoadStream)
 {
-  char  readBuffer[0x100];
+  OLEFontImpl *this = impl_from_IPersistStream(iface);
+  BYTE  version, attributes, string_size;
+  char readBuffer[0x100];
   ULONG cbRead;
-  BYTE  bVersion;
-  BYTE  bAttributes;
-  BYTE  bStringSize;
   INT len;
 
-  OLEFontImpl *this = impl_from_IPersistStream(iface);
+  /* Version */
+  IStream_Read(pLoadStream, &version, sizeof(BYTE), &cbRead);
+  if ((cbRead != sizeof(BYTE)) || (version != 0x01)) return E_FAIL;
 
-  /*
-   * Read the version byte
-   */
-  IStream_Read(pLoadStream, &bVersion, 1, &cbRead);
+  /* Charset */
+  IStream_Read(pLoadStream, &this->description.sCharset, sizeof(WORD), &cbRead);
+  if (cbRead != sizeof(WORD)) return E_FAIL;
 
-  if ( (cbRead!=1) ||
-       (bVersion!=0x01) )
-    return E_FAIL;
+  /* Attributes */
+  IStream_Read(pLoadStream, &attributes, sizeof(BYTE), &cbRead);
+  if (cbRead != sizeof(BYTE)) return E_FAIL;
 
-  /*
-   * Charset
-   */
-  IStream_Read(pLoadStream, &this->description.sCharset, 2, &cbRead);
+  this->description.fItalic        = (attributes & FONTPERSIST_ITALIC) != 0;
+  this->description.fStrikethrough = (attributes & FONTPERSIST_STRIKETHROUGH) != 0;
+  this->description.fUnderline     = (attributes & FONTPERSIST_UNDERLINE) != 0;
 
-  if (cbRead!=2)
-    return E_FAIL;
+  /* Weight */
+  IStream_Read(pLoadStream, &this->description.sWeight, sizeof(WORD), &cbRead);
+  if (cbRead != sizeof(WORD)) return E_FAIL;
 
-  /*
-   * Attributes
-   */
-  IStream_Read(pLoadStream, &bAttributes, 1, &cbRead);
-
-  if (cbRead!=1)
-    return E_FAIL;
-
-  this->description.fItalic        = (bAttributes & FONTPERSIST_ITALIC) != 0;
-  this->description.fStrikethrough = (bAttributes & FONTPERSIST_STRIKETHROUGH) != 0;
-  this->description.fUnderline     = (bAttributes & FONTPERSIST_UNDERLINE) != 0;
-
-  /*
-   * Weight
-   */
-  IStream_Read(pLoadStream, &this->description.sWeight, 2, &cbRead);
-
-  if (cbRead!=2)
-    return E_FAIL;
-
-  /*
-   * Size
-   */
-  IStream_Read(pLoadStream, &this->description.cySize.s.Lo, 4, &cbRead);
-
-  if (cbRead!=4)
-    return E_FAIL;
+  /* Size */
+  IStream_Read(pLoadStream, &this->description.cySize.s.Lo, sizeof(DWORD), &cbRead);
+  if (cbRead != sizeof(DWORD)) return E_FAIL;
 
   this->description.cySize.s.Hi = 0;
 
-  /*
-   * FontName
-   */
-  IStream_Read(pLoadStream, &bStringSize, 1, &cbRead);
+  /* Name */
+  IStream_Read(pLoadStream, &string_size, sizeof(BYTE), &cbRead);
+  if (cbRead != sizeof(BYTE)) return E_FAIL;
 
-  if (cbRead!=1)
-    return E_FAIL;
-
-  IStream_Read(pLoadStream, readBuffer, bStringSize, &cbRead);
-
-  if (cbRead!=bStringSize)
-    return E_FAIL;
+  IStream_Read(pLoadStream, readBuffer, string_size, &cbRead);
+  if (cbRead != string_size) return E_FAIL;
 
   HeapFree(GetProcessHeap(), 0, this->description.lpstrName);
 
-  len = MultiByteToWideChar( CP_ACP, 0, readBuffer, bStringSize, NULL, 0 );
+  len = MultiByteToWideChar( CP_ACP, 0, readBuffer, string_size, NULL, 0 );
   this->description.lpstrName = HeapAlloc( GetProcessHeap(), 0, (len+1) * sizeof(WCHAR) );
-  MultiByteToWideChar( CP_ACP, 0, readBuffer, bStringSize, this->description.lpstrName, len );
+  MultiByteToWideChar( CP_ACP, 0, readBuffer, string_size, this->description.lpstrName, len );
   this->description.lpstrName[len] = 0;
 
   /* Ensure use of this font causes a new one to be created */
@@ -1718,91 +1681,66 @@ static HRESULT WINAPI OLEFontImpl_Save(
   IStream*         pOutStream,
   BOOL             fClearDirty)
 {
-  char* writeBuffer = NULL;
-  ULONG cbWritten;
-  BYTE  bVersion = 0x01;
-  BYTE  bAttributes;
-  BYTE  bStringSize;
-
   OLEFontImpl *this = impl_from_IPersistStream(iface);
+  BYTE  attributes, string_size;
+  const BYTE version = 0x01;
+  char* writeBuffer = NULL;
+  ULONG written;
 
-  /*
-   * Read the version byte
-   */
-  IStream_Write(pOutStream, &bVersion, 1, &cbWritten);
+  TRACE("(%p)->(%p %d)\n", this, pOutStream, fClearDirty);
 
-  if (cbWritten!=1)
-    return E_FAIL;
+  /* Version */
+  IStream_Write(pOutStream, &version, sizeof(BYTE), &written);
+  if (written != sizeof(BYTE)) return E_FAIL;
 
-  /*
-   * Charset
-   */
-  IStream_Write(pOutStream, &this->description.sCharset, 2, &cbWritten);
+  /* Charset */
+  IStream_Write(pOutStream, &this->description.sCharset, sizeof(WORD), &written);
+  if (written != sizeof(WORD)) return E_FAIL;
 
-  if (cbWritten!=2)
-    return E_FAIL;
-
-  /*
-   * Attributes
-   */
-  bAttributes = 0;
+  /* Attributes */
+  attributes = 0;
 
   if (this->description.fItalic)
-    bAttributes |= FONTPERSIST_ITALIC;
+    attributes |= FONTPERSIST_ITALIC;
 
   if (this->description.fStrikethrough)
-    bAttributes |= FONTPERSIST_STRIKETHROUGH;
+    attributes |= FONTPERSIST_STRIKETHROUGH;
 
   if (this->description.fUnderline)
-    bAttributes |= FONTPERSIST_UNDERLINE;
+    attributes |= FONTPERSIST_UNDERLINE;
 
-  IStream_Write(pOutStream, &bAttributes, 1, &cbWritten);
+  IStream_Write(pOutStream, &attributes, sizeof(BYTE), &written);
+  if (written != sizeof(BYTE)) return E_FAIL;
 
-  if (cbWritten!=1)
-    return E_FAIL;
+  /* Weight */
+  IStream_Write(pOutStream, &this->description.sWeight, sizeof(WORD), &written);
+  if (written != sizeof(WORD)) return E_FAIL;
 
-  /*
-   * Weight
-   */
-  IStream_Write(pOutStream, &this->description.sWeight, 2, &cbWritten);
+  /* Size */
+  IStream_Write(pOutStream, &this->description.cySize.s.Lo, sizeof(DWORD), &written);
+  if (written != sizeof(DWORD)) return E_FAIL;
 
-  if (cbWritten!=2)
-    return E_FAIL;
-
-  /*
-   * Size
-   */
-  IStream_Write(pOutStream, &this->description.cySize.s.Lo, 4, &cbWritten);
-
-  if (cbWritten!=4)
-    return E_FAIL;
-
-  /*
-   * FontName
-   */
-  if (this->description.lpstrName!=0)
-    bStringSize = WideCharToMultiByte( CP_ACP, 0, this->description.lpstrName,
+  /* FontName */
+  if (this->description.lpstrName)
+    string_size = WideCharToMultiByte( CP_ACP, 0, this->description.lpstrName,
                                        strlenW(this->description.lpstrName), NULL, 0, NULL, NULL );
   else
-    bStringSize = 0;
+    string_size = 0;
 
-  IStream_Write(pOutStream, &bStringSize, 1, &cbWritten);
+  IStream_Write(pOutStream, &string_size, sizeof(BYTE), &written);
+  if (written != sizeof(BYTE)) return E_FAIL;
 
-  if (cbWritten!=1)
-    return E_FAIL;
-
-  if (bStringSize!=0)
+  if (string_size)
   {
-      if (!(writeBuffer = HeapAlloc( GetProcessHeap(), 0, bStringSize ))) return E_OUTOFMEMORY;
+      if (!(writeBuffer = HeapAlloc( GetProcessHeap(), 0, string_size ))) return E_OUTOFMEMORY;
       WideCharToMultiByte( CP_ACP, 0, this->description.lpstrName,
                            strlenW(this->description.lpstrName),
-                           writeBuffer, bStringSize, NULL, NULL );
+                           writeBuffer, string_size, NULL, NULL );
 
-    IStream_Write(pOutStream, writeBuffer, bStringSize, &cbWritten);
-    HeapFree(GetProcessHeap(), 0, writeBuffer);
+      IStream_Write(pOutStream, writeBuffer, string_size, &written);
+      HeapFree(GetProcessHeap(), 0, writeBuffer);
 
-    if (cbWritten!=bStringSize)
-      return E_FAIL;
+      if (written != string_size) return E_FAIL;
   }
 
   return S_OK;
