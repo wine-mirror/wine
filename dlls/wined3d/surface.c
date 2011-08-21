@@ -1171,6 +1171,127 @@ static void wined3d_surface_depth_blt_fbo(struct wined3d_device *device, struct 
     context_release(context);
 }
 
+/* Blit between surface locations. Onscreen on different swapchains is not supported.
+ * Depth / stencil is not supported. */
+static void surface_blt_fbo(struct wined3d_device *device, const WINED3DTEXTUREFILTERTYPE filter,
+        struct wined3d_surface *src_surface, DWORD src_location, const RECT *src_rect_in,
+        struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect_in)
+{
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context *context;
+    RECT src_rect, dst_rect;
+    GLenum gl_filter;
+    GLenum buffer;
+
+    TRACE("device %p, filter %s,\n", device, debug_d3dtexturefiltertype(filter));
+    TRACE("src_surface %p, src_location %s, src_rect %s,\n",
+            src_surface, debug_surflocation(src_location), wine_dbgstr_rect(src_rect_in));
+    TRACE("dst_surface %p, dst_location %s, dst_rect %s.\n",
+            dst_surface, debug_surflocation(dst_location), wine_dbgstr_rect(dst_rect_in));
+
+    src_rect = *src_rect_in;
+    dst_rect = *dst_rect_in;
+
+    switch (filter)
+    {
+        case WINED3DTEXF_LINEAR:
+            gl_filter = GL_LINEAR;
+            break;
+
+        default:
+            FIXME("Unsupported filter mode %s (%#x).\n", debug_d3dtexturefiltertype(filter), filter);
+        case WINED3DTEXF_NONE:
+        case WINED3DTEXF_POINT:
+            gl_filter = GL_NEAREST;
+            break;
+    }
+
+    if (src_location == SFLAG_INDRAWABLE && surface_is_offscreen(src_surface))
+        src_location = SFLAG_INTEXTURE;
+    if (dst_location == SFLAG_INDRAWABLE && surface_is_offscreen(dst_surface))
+        dst_location = SFLAG_INTEXTURE;
+
+    /* Make sure the locations are up-to-date. Loading the destination
+     * surface isn't required if the entire surface is overwritten. (And is
+     * in fact harmful if we're being called by surface_load_location() with
+     * the purpose of loading the destination surface.) */
+    surface_load_location(src_surface, src_location, NULL);
+    if (!surface_is_full_rect(dst_surface, &dst_rect))
+        surface_load_location(dst_surface, dst_location, NULL);
+
+    if (src_location == SFLAG_INDRAWABLE) context = context_acquire(device, src_surface);
+    else if (dst_location == SFLAG_INDRAWABLE) context = context_acquire(device, dst_surface);
+    else context = context_acquire(device, NULL);
+
+    if (!context->valid)
+    {
+        context_release(context);
+        WARN("Invalid context, skipping blit.\n");
+        return;
+    }
+
+    gl_info = context->gl_info;
+
+    if (src_location == SFLAG_INDRAWABLE)
+    {
+        TRACE("Source surface %p is onscreen.\n", src_surface);
+        buffer = surface_get_gl_buffer(src_surface);
+        surface_translate_drawable_coords(src_surface, context->win_handle, &src_rect);
+    }
+    else
+    {
+        TRACE("Source surface %p is offscreen.\n", src_surface);
+        buffer = GL_COLOR_ATTACHMENT0;
+    }
+
+    ENTER_GL();
+    context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, src_surface, NULL, src_location);
+    glReadBuffer(buffer);
+    checkGLcall("glReadBuffer()");
+    context_check_fbo_status(context, GL_READ_FRAMEBUFFER);
+    LEAVE_GL();
+
+    if (dst_location == SFLAG_INDRAWABLE)
+    {
+        TRACE("Destination surface %p is onscreen.\n", dst_surface);
+        buffer = surface_get_gl_buffer(dst_surface);
+        surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
+    }
+    else
+    {
+        TRACE("Destination surface %p is offscreen.\n", dst_surface);
+        buffer = GL_COLOR_ATTACHMENT0;
+    }
+
+    ENTER_GL();
+    context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER, dst_surface, NULL, dst_location);
+    context_set_draw_buffer(context, buffer);
+    context_check_fbo_status(context, GL_DRAW_FRAMEBUFFER);
+    context_invalidate_state(context, STATE_FRAMEBUFFER);
+
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
+
+    glDisable(GL_SCISSOR_TEST);
+    context_invalidate_state(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+
+    gl_info->fbo_ops.glBlitFramebuffer(src_rect.left, src_rect.top, src_rect.right, src_rect.bottom,
+            dst_rect.left, dst_rect.top, dst_rect.right, dst_rect.bottom, GL_COLOR_BUFFER_BIT, gl_filter);
+    checkGLcall("glBlitFramebuffer()");
+
+    LEAVE_GL();
+
+    if (wined3d_settings.strict_draw_ordering
+            || (dst_location == SFLAG_INDRAWABLE
+            && dst_surface->container.u.swapchain->front_buffer == dst_surface))
+        wglFlush();
+
+    context_release(context);
+}
+
 static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
         const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,
         const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format *dst_format)
@@ -1544,6 +1665,23 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
 
             if (SUCCEEDED(surface_color_fill(dst_surface, &dst_rect, &color)))
                 return WINED3D_OK;
+        }
+        else
+        {
+            TRACE("Color blit.\n");
+
+            if (fbo_blit_supported(&device->adapter->gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
+                    &src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
+                    &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format))
+            {
+                TRACE("Using FBO blit.\n");
+
+                surface_blt_fbo(device, filter,
+                        src_surface, SFLAG_INDRAWABLE, &src_rect,
+                        dst_surface, SFLAG_INDRAWABLE, &dst_rect);
+                surface_modify_location(dst_surface, SFLAG_INDRAWABLE, TRUE);
+                return WINED3D_OK;
+            }
         }
     }
 
@@ -5045,127 +5183,6 @@ void surface_translate_drawable_coords(const struct wined3d_surface *surface, HW
     rect->bottom = drawable_height - rect->bottom;
 }
 
-/* blit between surface locations. onscreen on different swapchains is not supported.
- * depth / stencil is not supported. */
-static void surface_blt_fbo(struct wined3d_device *device, const WINED3DTEXTUREFILTERTYPE filter,
-        struct wined3d_surface *src_surface, DWORD src_location, const RECT *src_rect_in,
-        struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect_in)
-{
-    const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context;
-    RECT src_rect, dst_rect;
-    GLenum gl_filter;
-    GLenum buffer;
-
-    TRACE("device %p, filter %s,\n", device, debug_d3dtexturefiltertype(filter));
-    TRACE("src_surface %p, src_location %s, src_rect %s,\n",
-            src_surface, debug_surflocation(src_location), wine_dbgstr_rect(src_rect_in));
-    TRACE("dst_surface %p, dst_location %s, dst_rect %s.\n",
-            dst_surface, debug_surflocation(dst_location), wine_dbgstr_rect(dst_rect_in));
-
-    src_rect = *src_rect_in;
-    dst_rect = *dst_rect_in;
-
-    switch (filter)
-    {
-        case WINED3DTEXF_LINEAR:
-            gl_filter = GL_LINEAR;
-            break;
-
-        default:
-            FIXME("Unsupported filter mode %s (%#x).\n", debug_d3dtexturefiltertype(filter), filter);
-        case WINED3DTEXF_NONE:
-        case WINED3DTEXF_POINT:
-            gl_filter = GL_NEAREST;
-            break;
-    }
-
-    if (src_location == SFLAG_INDRAWABLE && surface_is_offscreen(src_surface))
-        src_location = SFLAG_INTEXTURE;
-    if (dst_location == SFLAG_INDRAWABLE && surface_is_offscreen(dst_surface))
-        dst_location = SFLAG_INTEXTURE;
-
-    /* Make sure the locations are up-to-date. Loading the destination
-     * surface isn't required if the entire surface is overwritten. (And is
-     * in fact harmful if we're being called by surface_load_location() with
-     * the purpose of loading the destination surface.) */
-    surface_load_location(src_surface, src_location, NULL);
-    if (!surface_is_full_rect(dst_surface, &dst_rect))
-        surface_load_location(dst_surface, dst_location, NULL);
-
-    if (src_location == SFLAG_INDRAWABLE) context = context_acquire(device, src_surface);
-    else if (dst_location == SFLAG_INDRAWABLE) context = context_acquire(device, dst_surface);
-    else context = context_acquire(device, NULL);
-
-    if (!context->valid)
-    {
-        context_release(context);
-        WARN("Invalid context, skipping blit.\n");
-        return;
-    }
-
-    gl_info = context->gl_info;
-
-    if (src_location == SFLAG_INDRAWABLE)
-    {
-        TRACE("Source surface %p is onscreen.\n", src_surface);
-        buffer = surface_get_gl_buffer(src_surface);
-        surface_translate_drawable_coords(src_surface, context->win_handle, &src_rect);
-    }
-    else
-    {
-        TRACE("Source surface %p is offscreen.\n", src_surface);
-        buffer = GL_COLOR_ATTACHMENT0;
-    }
-
-    ENTER_GL();
-    context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, src_surface, NULL, src_location);
-    glReadBuffer(buffer);
-    checkGLcall("glReadBuffer()");
-    context_check_fbo_status(context, GL_READ_FRAMEBUFFER);
-    LEAVE_GL();
-
-    if (dst_location == SFLAG_INDRAWABLE)
-    {
-        TRACE("Destination surface %p is onscreen.\n", dst_surface);
-        buffer = surface_get_gl_buffer(dst_surface);
-        surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
-    }
-    else
-    {
-        TRACE("Destination surface %p is offscreen.\n", dst_surface);
-        buffer = GL_COLOR_ATTACHMENT0;
-    }
-
-    ENTER_GL();
-    context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER, dst_surface, NULL, dst_location);
-    context_set_draw_buffer(context, buffer);
-    context_check_fbo_status(context, GL_DRAW_FRAMEBUFFER);
-    context_invalidate_state(context, STATE_FRAMEBUFFER);
-
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
-
-    glDisable(GL_SCISSOR_TEST);
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
-
-    gl_info->fbo_ops.glBlitFramebuffer(src_rect.left, src_rect.top, src_rect.right, src_rect.bottom,
-            dst_rect.left, dst_rect.top, dst_rect.right, dst_rect.bottom, GL_COLOR_BUFFER_BIT, gl_filter);
-    checkGLcall("glBlitFramebuffer()");
-
-    LEAVE_GL();
-
-    if (wined3d_settings.strict_draw_ordering
-            || (dst_location == SFLAG_INDRAWABLE
-            && dst_surface->container.u.swapchain->front_buffer == dst_surface))
-        wglFlush();
-
-    context_release(context);
-}
-
 static void surface_blt_to_drawable(struct wined3d_device *device,
         WINED3DTEXTUREFILTERTYPE filter, BOOL color_key,
         struct wined3d_surface *src_surface, const RECT *src_rect_in,
@@ -5455,21 +5472,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
          *    than the frame buffer, draw an upside down scaled image onto the fb, read it back and restore the
          *    back buffer. This is slower than reading line per line, thus not used for flipping
          * -> If the app wants a scaled image with a dest rect that is bigger than the fb, it has to be copied
-         *    pixel by pixel
-         *
-         * If EXT_framebuffer_blit is supported that can be used instead. Note that EXT_framebuffer_blit implies
-         * FBO support, so it doesn't really make sense to try and make it work with different offscreen rendering
-         * backends. */
-        if (fbo_blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
-                src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
-                dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format))
-        {
-            surface_blt_fbo(device, Filter,
-                    src_surface, SFLAG_INDRAWABLE, src_rect,
-                    dst_surface, SFLAG_INDRAWABLE, dst_rect);
-            surface_modify_location(dst_surface, SFLAG_INDRAWABLE, TRUE);
-        }
-        else if (!stretchx || dst_rect->right - dst_rect->left > src_surface->resource.width
+         *    pixel by pixel. */
+        if (!stretchx || dst_rect->right - dst_rect->left > src_surface->resource.width
                 || dst_rect->bottom - dst_rect->top > src_surface->resource.height)
         {
             TRACE("No stretching in x direction, using direct framebuffer -> texture copy\n");
@@ -5499,23 +5503,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
         WINEDDCOLORKEY oldBltCKey = src_surface->SrcBltCKey;
 
         TRACE("Blt from surface %p to rendertarget %p\n", src_surface, dst_surface);
-
-        if (!(flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE))
-                && fbo_blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
-                        src_rect, src_surface->resource.usage, src_surface->resource.pool,
-                        src_surface->resource.format,
-                        dst_rect, dst_surface->resource.usage, dst_surface->resource.pool,
-                        dst_surface->resource.format))
-        {
-            TRACE("Using surface_blt_fbo.\n");
-            /* The source is always a texture, but never the currently active render target, and the texture
-             * contents are never upside down. */
-            surface_blt_fbo(device, Filter,
-                    src_surface, SFLAG_INDRAWABLE, src_rect,
-                    dst_surface, SFLAG_INDRAWABLE, dst_rect);
-            surface_modify_location(dst_surface, SFLAG_INDRAWABLE, TRUE);
-            return WINED3D_OK;
-        }
 
         if (!(flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE))
                 && arbfp_blit.blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
