@@ -1307,15 +1307,18 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
 
     surface_get_rect(dst_surface, dst_rect_in, &dst_rect);
 
-    /* The destination rect can be out of bounds on the condition
-     * that a clipper is set for the surface. */
-    if (!dst_surface->clipper && (dst_rect.left >= dst_rect.right || dst_rect.top >= dst_rect.bottom
+    if (dst_rect.left >= dst_rect.right || dst_rect.top >= dst_rect.bottom
             || dst_rect.left > dst_surface->resource.width || dst_rect.left < 0
             || dst_rect.top > dst_surface->resource.height || dst_rect.top < 0
             || dst_rect.right > dst_surface->resource.width || dst_rect.right < 0
-            || dst_rect.bottom > dst_surface->resource.height || dst_rect.bottom < 0))
+            || dst_rect.bottom > dst_surface->resource.height || dst_rect.bottom < 0)
     {
-        WARN("Application gave us bad destination rectangle for blit without a clipper set.\n");
+        /* The destination rect can be out of bounds on the condition
+         * that a clipper is set for the surface. */
+        if (dst_surface->clipper)
+            FIXME("Blit clipping not implemented.\n");
+        else
+            WARN("The application gave us a bad destination rectangle without a clipper set.\n");
         return WINEDDERR_INVALIDRECT;
     }
 
