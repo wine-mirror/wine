@@ -1950,32 +1950,38 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
     }
 
     if(This->public_buffer){
-        *data = This->public_buffer->mAudioData;
         *frames =
             This->public_buffer->mAudioDataByteSize / This->fmt->nBlockAlign;
     }else{
         struct list *head = list_head(&This->avail_buffers);
         if(!head){
-            *data = NULL;
             *frames = 0;
         }else{
             AQBuffer *buf = LIST_ENTRY(head, AQBuffer, entry);
             This->public_buffer = buf->buf;
-            *data = This->public_buffer->mAudioData;
             *frames =
                 This->public_buffer->mAudioDataByteSize / This->fmt->nBlockAlign;
             list_remove(&buf->entry);
+            if(!*frames){
+                OSStatus sc = AudioQueueEnqueueBuffer(This->aqueue, This->public_buffer, 0, NULL);
+                if(sc != noErr)
+                    ERR("Unable to enqueue buffer: %lx\n", sc);
+                This->public_buffer = NULL;
+                WARN("empty packet\n");
+            }
         }
     }
 
-    *flags = 0;
-    This->written_frames += *frames;
-    This->inbuf_frames -= *frames;
-    This->getbuf_last = 1;
+    if((This->getbuf_last = *frames)){
+        UINT64 pos;
+        *flags = 0;
+        *data = This->public_buffer->mAudioData;
 
-    if(devpos || qpcpos)
-        AudioClock_GetPosition_nolock(This, devpos, qpcpos);
-
+        if(devpos)
+            *devpos = This->written_frames;
+        if(qpcpos) /* fixme: qpc of recording time */
+            AudioClock_GetPosition_nolock(This, &pos, qpcpos);
+    }
     OSSpinLockUnlock(&This->lock);
 
     return *frames ? S_OK : AUDCLNT_S_BUFFER_EMPTY;
@@ -1985,33 +1991,41 @@ static HRESULT WINAPI AudioCaptureClient_ReleaseBuffer(
         IAudioCaptureClient *iface, UINT32 done)
 {
     ACImpl *This = impl_from_IAudioCaptureClient(iface);
-    UINT32 pbuf_frames;
     OSStatus sc;
 
     TRACE("(%p)->(%u)\n", This, done);
 
     OSSpinLockLock(&This->lock);
 
+    if(!done){
+        This->getbuf_last = 0;
+        OSSpinLockUnlock(&This->lock);
+        return S_OK;
+    }
+
     if(!This->getbuf_last){
         OSSpinLockUnlock(&This->lock);
         return AUDCLNT_E_OUT_OF_ORDER;
     }
 
-    pbuf_frames = This->public_buffer->mAudioDataByteSize / This->fmt->nBlockAlign;
-    if(done != 0 && done != pbuf_frames){
+    if(This->getbuf_last != done){
         OSSpinLockUnlock(&This->lock);
         return AUDCLNT_E_INVALID_SIZE;
     }
 
-    if(done){
-        sc = AudioQueueEnqueueBuffer(This->aqueue, This->public_buffer,
-                0, NULL);
-        if(sc != noErr)
-            WARN("Unable to enqueue buffer: %lx\n", sc);
-        This->public_buffer = NULL;
-    }
-
+    This->written_frames += done;
+    This->inbuf_frames -= done;
     This->getbuf_last = 0;
+
+    sc = AudioQueueEnqueueBuffer(This->aqueue, This->public_buffer, 0, NULL);
+    if(sc != noErr){
+        OSSpinLockUnlock(&This->lock);
+        /* fixme: can't zero public_buffer or we lose memory, but then
+         * GetBuffer will see that packet again and again. */
+        ERR("Unable to enqueue buffer: %lx\n", sc);
+        return AUDCLNT_E_DEVICE_INVALIDATED;
+    }
+    This->public_buffer = NULL;
 
     OSSpinLockUnlock(&This->lock);
 
