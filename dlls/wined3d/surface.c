@@ -7024,12 +7024,13 @@ release:
 static HRESULT cpu_blit_color_fill(struct wined3d_device *device, struct wined3d_surface *dst_surface,
         const RECT *dst_rect, const WINED3DCOLORVALUE *color)
 {
+    static const RECT src_rect;
     WINEDDBLTFX BltFx;
 
     memset(&BltFx, 0, sizeof(BltFx));
     BltFx.dwSize = sizeof(BltFx);
     BltFx.u5.dwFillColor = wined3d_format_convert_from_float(dst_surface, color);
-    return wined3d_surface_blt(dst_surface, dst_rect, NULL, NULL,
+    return surface_cpu_blt(dst_surface, dst_rect, NULL, &src_rect,
             WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
 }
 
