@@ -39,14 +39,38 @@
 #include "msxml_private.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
+
+struct ns
+{
+    BSTR prefix;
+    BSTR uri;
+};
+
+struct nscontext
+{
+    struct list entry;
+
+    struct ns *ns;
+    int   count;
+    int   max_alloc;
+};
+
+#define DEFAULT_PREFIX_ALLOC_COUNT 16
+
+static const WCHAR xmlW[] = {'x','m','l',0};
+static const WCHAR xmluriW[] = {'h','t','t','p',':','/','/','w','w','w','.','w','3','.','o','r','g',
+    '/','X','M','L','/','1','9','9','8','/','n','a','m','e','s','p','a','c','e',0};
 
 typedef struct
 {
     IMXNamespaceManager   IMXNamespaceManager_iface;
     IVBMXNamespaceManager IVBMXNamespaceManager_iface;
     LONG ref;
+
+    struct list ctxts;
 } namespacemanager;
 
 static inline namespacemanager *impl_from_IMXNamespaceManager( IMXNamespaceManager *iface )
@@ -57,6 +81,65 @@ static inline namespacemanager *impl_from_IMXNamespaceManager( IMXNamespaceManag
 static inline namespacemanager *impl_from_IVBMXNamespaceManager( IVBMXNamespaceManager *iface )
 {
     return CONTAINING_RECORD(iface, namespacemanager, IVBMXNamespaceManager_iface);
+}
+
+static HRESULT declare_prefix(struct nscontext *ctxt, const WCHAR *prefix, const WCHAR *uri)
+{
+    if (ctxt->count == ctxt->max_alloc)
+    {
+        ctxt->max_alloc *= 2;
+        ctxt->ns = heap_realloc(ctxt->ns, ctxt->max_alloc*sizeof(*ctxt->ns));
+    }
+
+    ctxt->ns[ctxt->count].prefix = SysAllocString(prefix);
+    ctxt->ns[ctxt->count].uri = SysAllocString(uri);
+    ctxt->count++;
+
+    return S_OK;
+}
+
+/* returned stored pointer, caller needs to copy it */
+static HRESULT get_declared_prefix_idx(const struct nscontext *ctxt, LONG index, BSTR *prefix)
+{
+    if (index >= ctxt->count || index < 0) return E_FAIL;
+
+    if (index > 0) index = ctxt->count - index;
+    *prefix = ctxt->ns[index].prefix;
+
+    return S_OK;
+}
+
+static struct nscontext* alloc_ns_context(void)
+{
+    struct nscontext *ctxt;
+
+    ctxt = heap_alloc(sizeof(*ctxt));
+    if (!ctxt) return NULL;
+
+    ctxt->count = 0;
+    ctxt->max_alloc = DEFAULT_PREFIX_ALLOC_COUNT;
+    ctxt->ns = heap_alloc(ctxt->max_alloc*sizeof(*ctxt->ns));
+
+    /* first allocated prefix is always 'xml' */
+    ctxt->ns[0].prefix = SysAllocString(xmlW);
+    ctxt->ns[0].uri = SysAllocString(xmluriW);
+    ctxt->count++;
+
+    return ctxt;
+}
+
+static void free_ns_context(struct nscontext *ctxt)
+{
+    int i;
+
+    for (i = 0; i < ctxt->count; i++)
+    {
+        SysFreeString(ctxt->ns[i].prefix);
+        SysFreeString(ctxt->ns[i].uri);
+    }
+
+    heap_free(ctxt->ns);
+    heap_free(ctxt);
 }
 
 static HRESULT WINAPI namespacemanager_QueryInterface(IMXNamespaceManager *iface, REFIID riid, void **ppvObject)
@@ -119,17 +202,47 @@ static HRESULT WINAPI namespacemanager_popContext(IMXNamespaceManager *iface)
 static HRESULT WINAPI namespacemanager_declarePrefix(IMXNamespaceManager *iface,
     const WCHAR *prefix, const WCHAR *namespaceURI)
 {
+    static const WCHAR xmlnsW[] = {'x','m','l','n','s',0};
+
     namespacemanager *This = impl_from_IMXNamespaceManager( iface );
-    FIXME("(%p)->(%s %s): stub\n", This, debugstr_w(prefix), debugstr_w(namespaceURI));
-    return E_NOTIMPL;
+    struct nscontext *ctxt;
+
+    TRACE("(%p)->(%s %s)\n", This, debugstr_w(prefix), debugstr_w(namespaceURI));
+
+    if (!prefix) return E_FAIL;
+
+    if (!strcmpW(prefix, xmlW) || !strcmpW(prefix, xmlnsW) || (prefix && !namespaceURI))
+        return E_INVALIDARG;
+
+    ctxt = LIST_ENTRY(list_head(&This->ctxts), struct nscontext, entry);
+    return declare_prefix(ctxt, prefix, namespaceURI);
 }
 
 static HRESULT WINAPI namespacemanager_getDeclaredPrefix(IMXNamespaceManager *iface,
     LONG index, WCHAR *prefix, int *prefix_len)
 {
     namespacemanager *This = impl_from_IMXNamespaceManager( iface );
-    FIXME("(%p)->(%d %p %p): stub\n", This, index, prefix, prefix_len);
-    return E_NOTIMPL;
+    struct nscontext *ctxt;
+    HRESULT hr;
+    BSTR prfx;
+
+    TRACE("(%p)->(%d %p %p)\n", This, index, prefix, prefix_len);
+
+    if (!prefix_len) return E_POINTER;
+
+    ctxt = LIST_ENTRY(list_head(&This->ctxts), struct nscontext, entry);
+    hr = get_declared_prefix_idx(ctxt, index, &prfx);
+    if (hr != S_OK) return hr;
+
+    if (prefix)
+    {
+        if (*prefix_len < (INT)SysStringLen(prfx)) return E_XML_BUFFERTOOSMALL;
+        strcpyW(prefix, prfx);
+    }
+
+    *prefix_len = SysStringLen(prfx);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI namespacemanager_getPrefix(IMXNamespaceManager *iface,
@@ -208,7 +321,17 @@ static ULONG WINAPI vbnamespacemanager_Release(IVBMXNamespaceManager *iface)
     TRACE("(%p)->(%u)\n", This, ref );
 
     if ( ref == 0 )
+    {
+        struct nscontext *ctxt, *ctxt2;
+
+        LIST_FOR_EACH_ENTRY_SAFE(ctxt, ctxt2, &This->ctxts, struct nscontext, entry)
+        {
+            list_remove(&ctxt->entry);
+            free_ns_context(ctxt);
+        }
+
         heap_free( This );
+    }
 
     return ref;
 }
@@ -327,8 +450,7 @@ static HRESULT WINAPI vbnamespacemanager_declarePrefix(IVBMXNamespaceManager *if
     BSTR prefix, BSTR namespaceURI)
 {
     namespacemanager *This = impl_from_IVBMXNamespaceManager( iface );
-    FIXME("(%p)->(%s %s): stub\n", This, debugstr_w(prefix), debugstr_w(namespaceURI));
-    return E_NOTIMPL;
+    return IMXNamespaceManager_declarePrefix(&This->IMXNamespaceManager_iface, prefix, namespaceURI);
 }
 
 static HRESULT WINAPI vbnamespacemanager_getDeclaredPrefixes(IVBMXNamespaceManager *iface,
@@ -388,6 +510,7 @@ static const struct IVBMXNamespaceManagerVtbl VBMXNamespaceManagerVtbl =
 HRESULT MXNamespaceManager_create(IUnknown *outer, void **obj)
 {
     namespacemanager *ns;
+    struct nscontext *ctxt;
 
     TRACE("(%p, %p)\n", outer, obj);
 
@@ -398,6 +521,10 @@ HRESULT MXNamespaceManager_create(IUnknown *outer, void **obj)
     ns->IMXNamespaceManager_iface.lpVtbl = &MXNamespaceManagerVtbl;
     ns->IVBMXNamespaceManager_iface.lpVtbl = &VBMXNamespaceManagerVtbl;
     ns->ref = 1;
+
+    list_init(&ns->ctxts);
+    ctxt = alloc_ns_context();
+    list_add_head(&ns->ctxts, &ctxt->entry);
 
     *obj = &ns->IMXNamespaceManager_iface;
 

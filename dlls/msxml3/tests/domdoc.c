@@ -10148,7 +10148,7 @@ todo_wine {
     /* prefix already added */
     hr = IMXNamespaceManager_declarePrefix(nsmgr, NULL, _bstr_("ns0 uri"));
     EXPECT_HR(hr, S_FALSE);
-
+}
     hr = IMXNamespaceManager_declarePrefix(nsmgr, _bstr_("ns0"), NULL);
     EXPECT_HR(hr, E_INVALIDARG);
 
@@ -10158,10 +10158,10 @@ todo_wine {
 
     hr = IMXNamespaceManager_declarePrefix(nsmgr, _bstr_("xmlns"), _bstr_("uri1"));
     EXPECT_HR(hr, E_INVALIDARG);
-
+todo_wine {
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, -1, NULL, NULL);
     EXPECT_HR(hr, E_FAIL);
-
+}
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 0, NULL, NULL);
     EXPECT_HR(hr, E_POINTER);
 
@@ -10169,23 +10169,98 @@ todo_wine {
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 0, NULL, &len);
     EXPECT_HR(hr, S_OK);
     ok(len == 3, "got %d\n", len);
-}
 
     len = -1;
     buffW[0] = 0x1;
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 0, buffW, &len);
-    todo_wine EXPECT_HR(hr, E_XML_BUFFERTOOSMALL);
+    EXPECT_HR(hr, E_XML_BUFFERTOOSMALL);
     ok(len == -1, "got %d\n", len);
     ok(buffW[0] == 0x1, "got %x\n", buffW[0]);
 
     len = 10;
     buffW[0] = 0x1;
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 0, buffW, &len);
-todo_wine {
     EXPECT_HR(hr, S_OK);
     ok(len == 3, "got %d\n", len);
     ok(!lstrcmpW(buffW, _bstr_("xml")), "got prefix %s\n", wine_dbgstr_w(buffW));
+
+    IMXNamespaceManager_Release(nsmgr);
+
+    free_bstrs();
 }
+
+static void test_nsnamespacemanager_override(void)
+{
+    IMXNamespaceManager *nsmgr;
+    WCHAR buffW[250];
+    HRESULT hr;
+    INT len;
+
+    hr = CoCreateInstance(&CLSID_MXNamespaceManager40, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IMXNamespaceManager, (void**)&nsmgr);
+    if (hr != S_OK)
+    {
+        win_skip("MXNamespaceManager is not available\n");
+        return;
+    }
+
+    len = sizeof(buffW)/sizeof(WCHAR);
+    buffW[0] = 0;
+    hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 0, buffW, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(buffW, _bstr_("xml")), "got prefix %s\n", wine_dbgstr_w(buffW));
+
+    len = sizeof(buffW)/sizeof(WCHAR);
+    buffW[0] = 0;
+    hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 1, buffW, &len);
+    EXPECT_HR(hr, E_FAIL);
+
+    hr = IMXNamespaceManager_putAllowOverride(nsmgr, VARIANT_FALSE);
+    todo_wine EXPECT_HR(hr, S_OK);
+
+    hr = IMXNamespaceManager_declarePrefix(nsmgr, NULL, _bstr_("ns0 uri"));
+    todo_wine EXPECT_HR(hr, S_OK);
+
+    hr = IMXNamespaceManager_declarePrefix(nsmgr, _bstr_("ns0"), _bstr_("ns0 uri"));
+    EXPECT_HR(hr, S_OK);
+
+    len = sizeof(buffW)/sizeof(WCHAR);
+    buffW[0] = 0;
+    hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 0, buffW, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(buffW, _bstr_("xml")), "got prefix %s\n", wine_dbgstr_w(buffW));
+
+    len = sizeof(buffW)/sizeof(WCHAR);
+    buffW[0] = 0;
+    hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 1, buffW, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(buffW, _bstr_("ns0")), "got prefix %s\n", wine_dbgstr_w(buffW));
+
+    len = sizeof(buffW)/sizeof(WCHAR);
+    buffW[0] = 0;
+    hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 2, buffW, &len);
+    todo_wine EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(buffW, _bstr_("")), "got prefix %s\n", wine_dbgstr_w(buffW));
+
+    /* new prefix placed at index 1 always */
+    hr = IMXNamespaceManager_declarePrefix(nsmgr, _bstr_("ns1"), _bstr_("ns1 uri"));
+    EXPECT_HR(hr, S_OK);
+
+    len = sizeof(buffW)/sizeof(WCHAR);
+    buffW[0] = 0;
+    hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 1, buffW, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(buffW, _bstr_("ns1")), "got prefix %s\n", wine_dbgstr_w(buffW));
+
+    hr = IMXNamespaceManager_declarePrefix(nsmgr, _bstr_(""), NULL);
+    todo_wine EXPECT_HR(hr, E_FAIL);
+
+    hr = IMXNamespaceManager_declarePrefix(nsmgr, NULL, NULL);
+    EXPECT_HR(hr, E_FAIL);
+
+    hr = IMXNamespaceManager_declarePrefix(nsmgr, NULL, _bstr_("ns0 uri"));
+    EXPECT_HR(hr, E_FAIL);
+
     IMXNamespaceManager_Release(nsmgr);
 
     free_bstrs();
@@ -10266,6 +10341,7 @@ START_TEST(domdoc)
     test_xsltemplate();
 
     test_nsnamespacemanager();
+    test_nsnamespacemanager_override();
 
     CoUninitialize();
 }
