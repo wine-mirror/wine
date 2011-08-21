@@ -509,16 +509,27 @@ static ULONG WINAPI AudioClient_Release(IAudioClient *iface)
     ref = InterlockedDecrement(&This->ref);
     TRACE("(%p) Refcount now %u\n", This, ref);
     if(!ref){
-        IAudioClient_Stop(iface);
-        if(This->aqueue)
+        if(This->aqueue){
+            AQBuffer *buf, *next;
+            if(This->public_buffer){
+                buf = This->public_buffer->mUserData;
+                list_add_tail(&This->avail_buffers, &buf->entry);
+            }
+            IAudioClient_Stop(iface);
+            AudioQueueStop(This->aqueue, 1);
+            /* Stopped synchronously, all buffers returned. */
+            LIST_FOR_EACH_ENTRY_SAFE(buf, next, &This->avail_buffers, AQBuffer, entry){
+                AudioQueueFreeBuffer(This->aqueue, buf->buf);
+                HeapFree(GetProcessHeap(), 0, buf);
+            }
             AudioQueueDispose(This->aqueue, 1);
+        }
         if(This->session){
             EnterCriticalSection(&g_sessions_lock);
             list_remove(&This->entry);
             LeaveCriticalSection(&g_sessions_lock);
         }
         HeapFree(GetProcessHeap(), 0, This->vols);
-        HeapFree(GetProcessHeap(), 0, This->public_buffer);
         CoTaskMemFree(This->fmt);
         IMMDevice_Release(This->parent);
         HeapFree(GetProcessHeap(), 0, This);
