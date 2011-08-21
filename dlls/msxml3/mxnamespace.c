@@ -71,6 +71,8 @@ typedef struct
     LONG ref;
 
     struct list ctxts;
+
+    VARIANT_BOOL override;
 } namespacemanager;
 
 static inline namespacemanager *impl_from_IMXNamespaceManager( IMXNamespaceManager *iface )
@@ -83,17 +85,46 @@ static inline namespacemanager *impl_from_IVBMXNamespaceManager( IVBMXNamespaceM
     return CONTAINING_RECORD(iface, namespacemanager, IVBMXNamespaceManager_iface);
 }
 
-static HRESULT declare_prefix(struct nscontext *ctxt, const WCHAR *prefix, const WCHAR *uri)
+static HRESULT declare_prefix(namespacemanager *This, const WCHAR *prefix, const WCHAR *uri)
 {
+    struct nscontext *ctxt = LIST_ENTRY(list_head(&This->ctxts), struct nscontext, entry);
+    static const WCHAR emptyW[] = {0};
+    struct ns *ns;
+    int i;
+
     if (ctxt->count == ctxt->max_alloc)
     {
         ctxt->max_alloc *= 2;
         ctxt->ns = heap_realloc(ctxt->ns, ctxt->max_alloc*sizeof(*ctxt->ns));
     }
 
-    ctxt->ns[ctxt->count].prefix = SysAllocString(prefix);
-    ctxt->ns[ctxt->count].uri = SysAllocString(uri);
-    ctxt->count++;
+    if (!prefix) prefix = emptyW;
+
+    ns = NULL;
+    for (i = 0; i < ctxt->count; i++)
+        if (!strcmpW(ctxt->ns[i].prefix, prefix))
+        {
+            ns = &ctxt->ns[i];
+            break;
+        }
+
+    if (ns)
+    {
+        if (This->override == VARIANT_TRUE)
+        {
+            SysFreeString(ns->uri);
+            ns->uri = SysAllocString(uri);
+            return S_FALSE;
+        }
+        else
+            return E_FAIL;
+    }
+    else
+    {
+        ctxt->ns[ctxt->count].prefix = SysAllocString(prefix);
+        ctxt->ns[ctxt->count].uri = SysAllocString(uri);
+        ctxt->count++;
+    }
 
     return S_OK;
 }
@@ -222,17 +253,13 @@ static HRESULT WINAPI namespacemanager_declarePrefix(IMXNamespaceManager *iface,
     static const WCHAR xmlnsW[] = {'x','m','l','n','s',0};
 
     namespacemanager *This = impl_from_IMXNamespaceManager( iface );
-    struct nscontext *ctxt;
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(prefix), debugstr_w(namespaceURI));
 
-    if (!prefix) return E_FAIL;
-
-    if (!strcmpW(prefix, xmlW) || !strcmpW(prefix, xmlnsW) || (prefix && !namespaceURI))
+    if (prefix && (!strcmpW(prefix, xmlW) || !strcmpW(prefix, xmlnsW) || !namespaceURI))
         return E_INVALIDARG;
 
-    ctxt = LIST_ENTRY(list_head(&This->ctxts), struct nscontext, entry);
-    return declare_prefix(ctxt, prefix, namespaceURI);
+    return declare_prefix(This, prefix, namespaceURI);
 }
 
 static HRESULT WINAPI namespacemanager_getDeclaredPrefix(IMXNamespaceManager *iface,
@@ -451,16 +478,24 @@ static HRESULT WINAPI vbnamespacemanager_put_allowOverride(IVBMXNamespaceManager
     VARIANT_BOOL override)
 {
     namespacemanager *This = impl_from_IVBMXNamespaceManager( iface );
-    FIXME("(%p)->(%d): stub\n", This, override);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, override);
+    This->override = override;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI vbnamespacemanager_get_allowOverride(IVBMXNamespaceManager *iface,
     VARIANT_BOOL *override)
 {
     namespacemanager *This = impl_from_IVBMXNamespaceManager( iface );
-    FIXME("(%p)->(%p): stub\n", This, override);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, override);
+
+    if (!override) return E_POINTER;
+    *override = This->override;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI vbnamespacemanager_reset(IVBMXNamespaceManager *iface)
@@ -571,6 +606,8 @@ HRESULT MXNamespaceManager_create(IUnknown *outer, void **obj)
     list_init(&ns->ctxts);
     ctxt = alloc_ns_context();
     list_add_head(&ns->ctxts, &ctxt->entry);
+
+    ns->override = VARIANT_TRUE;
 
     *obj = &ns->IMXNamespaceManager_iface;
 

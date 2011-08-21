@@ -10142,14 +10142,13 @@ static void test_nsnamespacemanager(void)
     EXPECT_HR(hr, S_OK);
     IVBMXNamespaceManager_Release(mgr2);
 
-todo_wine {
     hr = IMXNamespaceManager_declarePrefix(nsmgr, NULL, NULL);
     EXPECT_HR(hr, S_OK);
 
     /* prefix already added */
     hr = IMXNamespaceManager_declarePrefix(nsmgr, NULL, _bstr_("ns0 uri"));
     EXPECT_HR(hr, S_FALSE);
-}
+
     hr = IMXNamespaceManager_declarePrefix(nsmgr, _bstr_("ns0"), NULL);
     EXPECT_HR(hr, E_INVALIDARG);
 
@@ -10238,6 +10237,7 @@ static void test_nsnamespacemanager_override(void)
 {
     IMXNamespaceManager *nsmgr;
     WCHAR buffW[250];
+    VARIANT_BOOL b;
     HRESULT hr;
     INT len;
 
@@ -10260,11 +10260,25 @@ static void test_nsnamespacemanager_override(void)
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 1, buffW, &len);
     EXPECT_HR(hr, E_FAIL);
 
+    hr = IMXNamespaceManager_getAllowOverride(nsmgr, NULL);
+    EXPECT_HR(hr, E_POINTER);
+
+    b = VARIANT_FALSE;
+    hr = IMXNamespaceManager_getAllowOverride(nsmgr, &b);
+    EXPECT_HR(hr, S_OK);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+
     hr = IMXNamespaceManager_putAllowOverride(nsmgr, VARIANT_FALSE);
-    todo_wine EXPECT_HR(hr, S_OK);
+    EXPECT_HR(hr, S_OK);
 
     hr = IMXNamespaceManager_declarePrefix(nsmgr, NULL, _bstr_("ns0 uri"));
-    todo_wine EXPECT_HR(hr, S_OK);
+    EXPECT_HR(hr, S_OK);
+
+    len = sizeof(buffW)/sizeof(WCHAR);
+    buffW[0] = 0;
+    hr = IMXNamespaceManager_getURI(nsmgr, _bstr_(""), NULL, buffW, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(buffW, _bstr_("ns0 uri")), "got uri %s\n", wine_dbgstr_w(buffW));
 
     hr = IMXNamespaceManager_declarePrefix(nsmgr, _bstr_("ns0"), _bstr_("ns0 uri"));
     EXPECT_HR(hr, S_OK);
@@ -10284,7 +10298,7 @@ static void test_nsnamespacemanager_override(void)
     len = sizeof(buffW)/sizeof(WCHAR);
     buffW[0] = 0;
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 2, buffW, &len);
-    todo_wine EXPECT_HR(hr, S_OK);
+    EXPECT_HR(hr, S_OK);
     ok(!lstrcmpW(buffW, _bstr_("")), "got prefix %s\n", wine_dbgstr_w(buffW));
 
     /* new prefix placed at index 1 always */
@@ -10305,6 +10319,24 @@ static void test_nsnamespacemanager_override(void)
 
     hr = IMXNamespaceManager_declarePrefix(nsmgr, NULL, _bstr_("ns0 uri"));
     EXPECT_HR(hr, E_FAIL);
+
+    hr = IMXNamespaceManager_putAllowOverride(nsmgr, VARIANT_TRUE);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXNamespaceManager_declarePrefix(nsmgr, NULL, _bstr_("ns0 uri override"));
+    EXPECT_HR(hr, S_FALSE);
+
+    len = sizeof(buffW)/sizeof(WCHAR);
+    buffW[0] = 0;
+    hr = IMXNamespaceManager_getURI(nsmgr, _bstr_(""), NULL, buffW, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(buffW, _bstr_("ns0 uri override")), "got uri %s\n", wine_dbgstr_w(buffW));
+
+    len = sizeof(buffW)/sizeof(WCHAR);
+    buffW[0] = 0;
+    hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 3, buffW, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(buffW, _bstr_("")), "got prefix %s\n", wine_dbgstr_w(buffW));
 
     IMXNamespaceManager_Release(nsmgr);
 
