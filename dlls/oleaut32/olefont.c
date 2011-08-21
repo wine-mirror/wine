@@ -476,32 +476,42 @@ static HRESULT WINAPI OLEFontImpl_QueryInterface(
 
   *ppvObject = 0;
 
-  if (IsEqualGUID(&IID_IUnknown, riid))
-    *ppvObject = this;
-  if (IsEqualGUID(&IID_IFont, riid))
-    *ppvObject = this;
-  if (IsEqualGUID(&IID_IDispatch, riid))
-    *ppvObject = &this->IDispatch_iface;
-  if (IsEqualGUID(&IID_IFontDisp, riid))
-    *ppvObject = &this->IDispatch_iface;
-  if (IsEqualIID(&IID_IPersist, riid) || IsEqualGUID(&IID_IPersistStream, riid))
-    *ppvObject = &this->IPersistStream_iface;
-  if (IsEqualGUID(&IID_IConnectionPointContainer, riid))
-    *ppvObject = &this->IConnectionPointContainer_iface;
-  if (IsEqualGUID(&IID_IPersistPropertyBag, riid))
-    *ppvObject = &this->IPersistPropertyBag_iface;
-  if (IsEqualGUID(&IID_IPersistStreamInit, riid))
-    *ppvObject = &this->IPersistStreamInit_iface;
-
-  /*
-   * Check that we obtained an interface.
-   */
-  if ((*ppvObject)==0)
+  if (IsEqualGUID(&IID_IUnknown, riid) ||
+      IsEqualGUID(&IID_IFont, riid))
   {
-    FIXME("() : asking for unsupported interface %s\n",debugstr_guid(riid));
+    *ppvObject = this;
+  }
+  else if (IsEqualGUID(&IID_IDispatch, riid) ||
+           IsEqualGUID(&IID_IFontDisp, riid))
+  {
+    *ppvObject = &this->IDispatch_iface;
+  }
+  else if (IsEqualGUID(&IID_IPersist, riid) ||
+           IsEqualGUID(&IID_IPersistStream, riid))
+  {
+    *ppvObject = &this->IPersistStream_iface;
+  }
+  else if (IsEqualGUID(&IID_IConnectionPointContainer, riid))
+  {
+    *ppvObject = &this->IConnectionPointContainer_iface;
+  }
+  else if (IsEqualGUID(&IID_IPersistPropertyBag, riid))
+  {
+    *ppvObject = &this->IPersistPropertyBag_iface;
+  }
+  else if (IsEqualGUID(&IID_IPersistStreamInit, riid))
+  {
+    *ppvObject = &this->IPersistStreamInit_iface;
+  }
+
+  if (!*ppvObject)
+  {
+    FIXME("() : asking for unsupported interface %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
   }
-  OLEFontImpl_AddRef(&this->IFont_iface);
+
+  IFont_AddRef(iface);
+
   return S_OK;
 }
 
@@ -1124,7 +1134,7 @@ static HRESULT      WINAPI OLEFontImpl_QueryTextMetrics(
   HFONT hOldFont, hNewFont;
 
   hdcRef = GetDC(0);
-  OLEFontImpl_get_hFont(iface, &hNewFont);
+  IFont_get_hFont(iface, &hNewFont);
   hOldFont = SelectObject(hdcRef, hNewFont);
   GetTextMetricsW(hdcRef, ptm);
   SelectObject(hdcRef, hOldFont);
@@ -1304,7 +1314,7 @@ static HRESULT WINAPI OLEFontImpl_GetIDsOfNames(
 
   if (cNames == 0) return E_INVALIDARG;
 
-  hres = OLEFontImpl_GetTypeInfo(iface, 0, lcid, &pTInfo);
+  hres = IDispatch_GetTypeInfo(iface, 0, lcid, &pTInfo);
   if (FAILED(hres))
   {
     ERR("GetTypeInfo failed.\n");
@@ -1484,7 +1494,7 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
   case DISPID_FONT_SIZE:
     if (wFlags & DISPATCH_PROPERTYGET) {
       V_VT(pVarResult) = VT_CY;
-      return OLEFontImpl_get_Size(&this->IFont_iface, &V_CY(pVarResult));
+      return IFont_get_Size(&this->IFont_iface, &V_CY(pVarResult));
     } else {
       VARIANTARG vararg;
 
@@ -1502,7 +1512,7 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
   case DISPID_FONT_WEIGHT:
     if (wFlags & DISPATCH_PROPERTYGET) {
       V_VT(pVarResult) = VT_I2;
-      return OLEFontImpl_get_Weight(&this->IFont_iface, &V_I2(pVarResult));
+      return IFont_get_Weight(&this->IFont_iface, &V_I2(pVarResult));
     } else {
       VARIANTARG vararg;
 
