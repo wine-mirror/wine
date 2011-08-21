@@ -2245,11 +2245,6 @@ static OLEFontImpl* OLEFontImpl_Construct(const FONTDESC *fontDesc)
 
   newObject->ref = 1;
 
-  /*
-   * Copy the description of the font in the object.
-   */
-  assert(fontDesc->cbSizeofstruct >= sizeof(FONTDESC));
-
   newObject->description.cbSizeofstruct = sizeof(FONTDESC);
   newObject->description.lpstrName = HeapAlloc(GetProcessHeap(),
 					       0,

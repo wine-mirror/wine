@@ -1104,6 +1104,42 @@ static void test_realization(void)
     IFont_Release(font);
 }
 
+static void test_OleCreateFontIndirect(void)
+{
+    FONTDESC fontdesc;
+    IFont *font;
+    HRESULT hr;
+
+    fontdesc.cbSizeofstruct = sizeof(fontdesc);
+    fontdesc.lpstrName = arial_font;
+    fontdesc.cySize.int64 = 12 * 10000; /* 12 pt */
+    fontdesc.sWeight = FW_NORMAL;
+    fontdesc.sCharset = ANSI_CHARSET;
+    fontdesc.fItalic = FALSE;
+    fontdesc.fUnderline = FALSE;
+    fontdesc.fStrikethrough = FALSE;
+
+    hr = pOleCreateFontIndirect(&fontdesc, &IID_IFont, (void**)&font);
+    EXPECT_HR(hr, S_OK);
+    IFont_Release(font);
+
+    /* play with cbSizeofstruct value */
+    fontdesc.cbSizeofstruct = sizeof(fontdesc)-1;
+    hr = pOleCreateFontIndirect(&fontdesc, &IID_IFont, (void**)&font);
+    EXPECT_HR(hr, S_OK);
+    IFont_Release(font);
+
+    fontdesc.cbSizeofstruct = sizeof(fontdesc)+1;
+    hr = pOleCreateFontIndirect(&fontdesc, &IID_IFont, (void**)&font);
+    EXPECT_HR(hr, S_OK);
+    IFont_Release(font);
+
+    fontdesc.cbSizeofstruct = 0;
+    hr = pOleCreateFontIndirect(&fontdesc, &IID_IFont, (void**)&font);
+    EXPECT_HR(hr, S_OK);
+    IFont_Release(font);
+}
+
 START_TEST(olefont)
 {
     hOleaut32 = GetModuleHandleA("oleaut32.dll");
@@ -1126,4 +1162,5 @@ START_TEST(olefont)
     test_returns();
     test_hfont_lifetime();
     test_realization();
+    test_OleCreateFontIndirect();
 }
