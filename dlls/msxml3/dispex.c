@@ -114,6 +114,7 @@ static REFIID tid_ids[] = {
     &IID_IMXAttributes,
     &IID_IMXReaderControl,
     &IID_IMXWriter,
+    &IID_IVBMXNamespaceManager
 };
 
 HRESULT get_typeinfo(enum tid_t tid, ITypeInfo **typeinfo)

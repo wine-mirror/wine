@@ -74,6 +74,7 @@ typedef enum tid_t {
     IMXAttributes_tid,
     IMXReaderControl_tid,
     IMXWriter_tid,
+    IVBMXNamespaceManager_tid,
     LAST_tid
 } tid_t;
 
