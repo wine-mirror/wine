@@ -101,12 +101,29 @@ static HRESULT declare_prefix(struct nscontext *ctxt, const WCHAR *prefix, const
 /* returned stored pointer, caller needs to copy it */
 static HRESULT get_declared_prefix_idx(const struct nscontext *ctxt, LONG index, BSTR *prefix)
 {
+    *prefix = NULL;
+
     if (index >= ctxt->count || index < 0) return E_FAIL;
 
     if (index > 0) index = ctxt->count - index;
     *prefix = ctxt->ns[index].prefix;
 
     return S_OK;
+}
+
+static HRESULT get_uri_from_prefix(const struct nscontext *ctxt, const WCHAR *prefix, BSTR *uri)
+{
+    int i;
+
+    for (i = 0; i < ctxt->count; i++)
+        if (!strcmpW(ctxt->ns[i].prefix, prefix))
+        {
+            *uri = ctxt->ns[i].uri;
+            return S_OK;
+        }
+
+    *uri = NULL;
+    return S_FALSE;
 }
 
 static struct nscontext* alloc_ns_context(void)
@@ -257,8 +274,37 @@ static HRESULT WINAPI namespacemanager_getURI(IMXNamespaceManager *iface,
     const WCHAR *prefix, IXMLDOMNode *node, WCHAR *uri, int *uri_len)
 {
     namespacemanager *This = impl_from_IMXNamespaceManager( iface );
-    FIXME("(%p)->(%s %p %p %p): stub\n", This, debugstr_w(prefix), node, uri, uri_len);
-    return E_NOTIMPL;
+    struct nscontext *ctxt;
+    HRESULT hr;
+    BSTR urib;
+
+    TRACE("(%p)->(%s %p %p %p)\n", This, debugstr_w(prefix), node, uri, uri_len);
+
+    if (!prefix) return E_INVALIDARG;
+    if (!uri_len) return E_POINTER;
+
+    if (node)
+    {
+        FIXME("namespaces from DOM node not supported\n");
+        return E_NOTIMPL;
+    }
+
+    ctxt = LIST_ENTRY(list_head(&This->ctxts), struct nscontext, entry);
+    hr = get_uri_from_prefix(ctxt, prefix, &urib);
+    if (hr == S_OK)
+    {
+        if (uri)
+        {
+           if (*uri_len < (INT)SysStringLen(urib)) return E_XML_BUFFERTOOSMALL;
+           strcpyW(uri, urib);
+        }
+    }
+    else
+        if (uri) *uri = 0;
+
+    *uri_len = SysStringLen(urib);
+
+    return hr;
 }
 
 static const struct IMXNamespaceManagerVtbl MXNamespaceManagerVtbl =

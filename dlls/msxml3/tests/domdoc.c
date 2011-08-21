@@ -10117,6 +10117,7 @@ static void test_load(void)
 
 static void test_nsnamespacemanager(void)
 {
+    static const char xmluriA[] = "http://www.w3.org/XML/1998/namespace";
     IMXNamespaceManager *nsmgr;
     IVBMXNamespaceManager *mgr2;
     IDispatch *disp;
@@ -10183,6 +10184,50 @@ todo_wine {
     EXPECT_HR(hr, S_OK);
     ok(len == 3, "got %d\n", len);
     ok(!lstrcmpW(buffW, _bstr_("xml")), "got prefix %s\n", wine_dbgstr_w(buffW));
+
+    /* getURI */
+    hr = IMXNamespaceManager_getURI(nsmgr, NULL, NULL, NULL, NULL);
+    EXPECT_HR(hr, E_INVALIDARG);
+
+    len = -1;
+    hr = IMXNamespaceManager_getURI(nsmgr, NULL, NULL, NULL, &len);
+    EXPECT_HR(hr, E_INVALIDARG);
+    ok(len == -1, "got %d\n", len);
+
+    hr = IMXNamespaceManager_getURI(nsmgr, _bstr_("xml"), NULL, NULL, NULL);
+    EXPECT_HR(hr, E_POINTER);
+
+    len = -1;
+    hr = IMXNamespaceManager_getURI(nsmgr, _bstr_("xml"), NULL, NULL, &len);
+    EXPECT_HR(hr, S_OK);
+    /* length of "xml" uri is constant */
+    ok(len == strlen(xmluriA), "got %d\n", len);
+
+    len = 100;
+    hr = IMXNamespaceManager_getURI(nsmgr, _bstr_("xml"), NULL, buffW, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(len == strlen(xmluriA), "got %d\n", len);
+    ok(!lstrcmpW(buffW, _bstr_(xmluriA)), "got prefix %s\n", wine_dbgstr_w(buffW));
+
+    len = strlen(xmluriA)-1;
+    buffW[0] = 0x1;
+    hr = IMXNamespaceManager_getURI(nsmgr, _bstr_("xml"), NULL, buffW, &len);
+    EXPECT_HR(hr, E_XML_BUFFERTOOSMALL);
+    ok(len == strlen(xmluriA)-1, "got %d\n", len);
+    ok(buffW[0] == 0x1, "got %x\n", buffW[0]);
+
+    /* prefix xml1 not defined */
+    len = -1;
+    hr = IMXNamespaceManager_getURI(nsmgr, _bstr_("xml1"), NULL, NULL, &len);
+    EXPECT_HR(hr, S_FALSE);
+    ok(len == 0, "got %d\n", len);
+
+    len = 100;
+    buffW[0] = 0x1;
+    hr = IMXNamespaceManager_getURI(nsmgr, _bstr_("xml1"), NULL, buffW, &len);
+    EXPECT_HR(hr, S_FALSE);
+    ok(buffW[0] == 0, "got %x\n", buffW[0]);
+    ok(len == 0, "got %d\n", len);
 
     IMXNamespaceManager_Release(nsmgr);
 
