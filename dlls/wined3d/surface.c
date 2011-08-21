@@ -1210,6 +1210,73 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
     return TRUE;
 }
 
+/* This function checks if the primary render target uses the 8bit paletted format. */
+static BOOL primary_render_target_is_p8(const struct wined3d_device *device)
+{
+    if (device->fb.render_targets && device->fb.render_targets[0])
+    {
+        const struct wined3d_surface *render_target = device->fb.render_targets[0];
+        if ((render_target->resource.usage & WINED3DUSAGE_RENDERTARGET)
+                && (render_target->resource.format->id == WINED3DFMT_P8_UINT))
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static BOOL surface_convert_color_to_float(const struct wined3d_surface *surface,
+        DWORD color, WINED3DCOLORVALUE *float_color)
+{
+    const struct wined3d_format *format = surface->resource.format;
+    const struct wined3d_device *device = surface->resource.device;
+
+    switch (format->id)
+    {
+        case WINED3DFMT_P8_UINT:
+            if (surface->palette)
+            {
+                float_color->r = surface->palette->palents[color].peRed / 255.0f;
+                float_color->g = surface->palette->palents[color].peGreen / 255.0f;
+                float_color->b = surface->palette->palents[color].peBlue / 255.0f;
+            }
+            else
+            {
+                float_color->r = 0.0f;
+                float_color->g = 0.0f;
+                float_color->b = 0.0f;
+            }
+            float_color->a = primary_render_target_is_p8(device) ? color / 255.0f : 1.0f;
+            break;
+
+        case WINED3DFMT_B5G6R5_UNORM:
+            float_color->r = ((color >> 11) & 0x1f) / 31.0f;
+            float_color->g = ((color >> 5) & 0x3f) / 63.0f;
+            float_color->b = (color & 0x1f) / 31.0f;
+            float_color->a = 1.0f;
+            break;
+
+        case WINED3DFMT_B8G8R8_UNORM:
+        case WINED3DFMT_B8G8R8X8_UNORM:
+            float_color->r = D3DCOLOR_R(color);
+            float_color->g = D3DCOLOR_G(color);
+            float_color->b = D3DCOLOR_B(color);
+            float_color->a = 1.0f;
+            break;
+
+        case WINED3DFMT_B8G8R8A8_UNORM:
+            float_color->r = D3DCOLOR_R(color);
+            float_color->g = D3DCOLOR_G(color);
+            float_color->b = D3DCOLOR_B(color);
+            float_color->a = D3DCOLOR_A(color);
+            break;
+
+        default:
+            ERR("Unhandled conversion from %s to floating point.\n", debug_d3dformat(format->id));
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 static BOOL surface_convert_depth_to_float(const struct wined3d_surface *surface, DWORD depth, float *float_depth)
 {
     const struct wined3d_format *format = surface->resource.format;
@@ -1461,6 +1528,21 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
             }
 
             if (SUCCEEDED(wined3d_surface_depth_blt(src_surface, &src_rect, dst_surface, &dst_rect)))
+                return WINED3D_OK;
+        }
+    }
+    else
+    {
+        if (flags & WINEDDBLT_COLORFILL)
+        {
+            WINED3DCOLORVALUE color;
+
+            TRACE("Color fill.\n");
+
+            if (!surface_convert_color_to_float(dst_surface, fx->u5.dwFillColor, &color))
+                goto fallback;
+
+            if (SUCCEEDED(surface_color_fill(dst_surface, &dst_rect, &color)))
                 return WINED3D_OK;
         }
     }
@@ -2029,19 +2111,6 @@ void surface_bind(struct wined3d_surface *surface, const struct wined3d_gl_info 
     }
 }
 
-/* This function checks if the primary render target uses the 8bit paletted format. */
-static BOOL primary_render_target_is_p8(const struct wined3d_device *device)
-{
-    if (device->fb.render_targets && device->fb.render_targets[0])
-    {
-        const struct wined3d_surface *render_target = device->fb.render_targets[0];
-        if ((render_target->resource.usage & WINED3DUSAGE_RENDERTARGET)
-                && (render_target->resource.format->id == WINED3DFMT_P8_UINT))
-            return TRUE;
-    }
-    return FALSE;
-}
-
 /* This call just downloads data, the caller is responsible for binding the
  * correct texture. */
 /* Context activation is done by the caller. */
@@ -2521,60 +2590,6 @@ void surface_add_dirty_rect(struct wined3d_surface *surface, const WINED3DBOX *d
         TRACE("Passing to container.\n");
         wined3d_texture_set_dirty(surface->container.u.texture, TRUE);
     }
-}
-
-static BOOL surface_convert_color_to_float(const struct wined3d_surface *surface,
-        DWORD color, WINED3DCOLORVALUE *float_color)
-{
-    const struct wined3d_format *format = surface->resource.format;
-    const struct wined3d_device *device = surface->resource.device;
-
-    switch (format->id)
-    {
-        case WINED3DFMT_P8_UINT:
-            if (surface->palette)
-            {
-                float_color->r = surface->palette->palents[color].peRed / 255.0f;
-                float_color->g = surface->palette->palents[color].peGreen / 255.0f;
-                float_color->b = surface->palette->palents[color].peBlue / 255.0f;
-            }
-            else
-            {
-                float_color->r = 0.0f;
-                float_color->g = 0.0f;
-                float_color->b = 0.0f;
-            }
-            float_color->a = primary_render_target_is_p8(device) ? color / 255.0f : 1.0f;
-            break;
-
-        case WINED3DFMT_B5G6R5_UNORM:
-            float_color->r = ((color >> 11) & 0x1f) / 31.0f;
-            float_color->g = ((color >> 5) & 0x3f) / 63.0f;
-            float_color->b = (color & 0x1f) / 31.0f;
-            float_color->a = 1.0f;
-            break;
-
-        case WINED3DFMT_B8G8R8_UNORM:
-        case WINED3DFMT_B8G8R8X8_UNORM:
-            float_color->r = D3DCOLOR_R(color);
-            float_color->g = D3DCOLOR_G(color);
-            float_color->b = D3DCOLOR_B(color);
-            float_color->a = 1.0f;
-            break;
-
-        case WINED3DFMT_B8G8R8A8_UNORM:
-            float_color->r = D3DCOLOR_R(color);
-            float_color->g = D3DCOLOR_G(color);
-            float_color->b = D3DCOLOR_B(color);
-            float_color->a = D3DCOLOR_A(color);
-            break;
-
-        default:
-            ERR("Unhandled conversion from %s to floating point.\n", debug_d3dformat(format->id));
-            return FALSE;
-    }
-
-    return TRUE;
 }
 
 HRESULT surface_load(struct wined3d_surface *surface, BOOL srgb)
@@ -5551,22 +5566,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
         surface_modify_location(dst_surface, SFLAG_INDRAWABLE, TRUE);
 
         return WINED3D_OK;
-    }
-    else
-    {
-        /* Source-Less Blit to render target */
-        if (flags & WINEDDBLT_COLORFILL)
-        {
-            WINED3DCOLORVALUE color;
-
-            TRACE("Colorfill\n");
-
-            /* The color as given in the Blt function is in the surface format. */
-            if (!surface_convert_color_to_float(dst_surface, DDBltFx->u5.dwFillColor, &color))
-                return WINED3DERR_INVALIDCALL;
-
-            return surface_color_fill(dst_surface, dst_rect, &color);
-        }
     }
 
     /* Default: Fall back to the generic blt. Not an error, a TRACE is enough */
