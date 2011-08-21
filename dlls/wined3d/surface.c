@@ -6367,11 +6367,19 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
             return FALSE;
 
         case WINED3D_BLIT_OP_COLOR_FILL:
-            if (!(dst_usage & WINED3DUSAGE_RENDERTARGET))
+            if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+            {
+                if (!((dst_format->flags & WINED3DFMT_FLAG_FBO_ATTACHABLE) || (dst_usage & WINED3DUSAGE_RENDERTARGET)))
+                    return FALSE;
+            }
+            else if (!(dst_usage & WINED3DUSAGE_RENDERTARGET))
             {
                 TRACE("Color fill not supported\n");
                 return FALSE;
             }
+
+            /* FIXME: We should reject color fills on formats with fixups,
+             * but this would break P8 color fills for example. */
 
             return TRUE;
 
