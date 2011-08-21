@@ -19,6 +19,7 @@ C_SRCS = \
 	factory.c \
 	httprequest.c \
 	main.c \
+	mxnamespace.c \
 	mxwriter.c \
 	node.c \
 	nodelist.c \

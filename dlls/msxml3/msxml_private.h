@@ -435,6 +435,7 @@ extern HRESULT SAXXMLReader_create(IUnknown*, void**) DECLSPEC_HIDDEN;
 extern HRESULT XMLHTTPRequest_create(IUnknown*, void **) DECLSPEC_HIDDEN;
 extern HRESULT XSLTemplate_create(IUnknown*, void**) DECLSPEC_HIDDEN;
 extern HRESULT MXWriter_create(IUnknown*,void**) DECLSPEC_HIDDEN;
+extern HRESULT MXNamespaceManager_create(IUnknown*,void**) DECLSPEC_HIDDEN;
 
 static inline const CLSID* DOMDocument_version(MSXML_VERSION v)
 {

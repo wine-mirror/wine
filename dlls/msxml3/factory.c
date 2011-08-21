@@ -224,6 +224,7 @@ static ClassFactory saxreadcf = { { &ClassFactoryVtbl }, SAXXMLReader_create };
 static ClassFactory httpreqcf = { { &ClassFactoryVtbl }, XMLHTTPRequest_create };
 static ClassFactory xsltemplatecf = { { &ClassFactoryVtbl }, XSLTemplate_create };
 static ClassFactory mxwritercf = { { &ClassFactoryVtbl }, MXWriter_create };
+static ClassFactory mxnsmanagercf = { {&ClassFactoryVtbl }, MXNamespaceManager_create };
 
 /******************************************************************
  *		DllGetClassObject (MSXML3.@)
@@ -294,6 +295,12 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
              IsEqualCLSID( rclsid, &CLSID_MXXMLWriter60 ) )
     {
         cf = &mxwritercf.IClassFactory_iface;
+    }
+    else if( IsEqualCLSID( rclsid, &CLSID_MXNamespaceManager ) ||
+             IsEqualCLSID( rclsid, &CLSID_MXNamespaceManager40 ) ||
+             IsEqualCLSID( rclsid, &CLSID_MXNamespaceManager60 ) )
+    {
+        cf = &mxnsmanagercf.IClassFactory_iface;
     }
 
     if ( !cf )
