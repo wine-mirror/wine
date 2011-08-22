@@ -1682,6 +1682,16 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
                 surface_modify_location(dst_surface, SFLAG_INDRAWABLE, TRUE);
                 return WINED3D_OK;
             }
+
+            if (arbfp_blit.blit_supported(&device->adapter->gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
+                    &src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
+                    &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format))
+            {
+                TRACE("Using arbfp blit.\n");
+
+                if (SUCCEEDED(arbfp_blit_surface(device, filter, src_surface, &src_rect, dst_surface, &dst_rect)))
+                    return WINED3D_OK;
+            }
         }
     }
 
@@ -5503,14 +5513,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
         WINEDDCOLORKEY oldBltCKey = src_surface->SrcBltCKey;
 
         TRACE("Blt from surface %p to rendertarget %p\n", src_surface, dst_surface);
-
-        if (!(flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE))
-                && arbfp_blit.blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
-                        src_rect, src_surface->resource.usage, src_surface->resource.pool,
-                        src_surface->resource.format,
-                        dst_rect, dst_surface->resource.usage, dst_surface->resource.pool,
-                        dst_surface->resource.format))
-            return arbfp_blit_surface(device, Filter, src_surface, src_rect, dst_surface, dst_rect);
 
         if (!device->blitter->blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
                 src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
