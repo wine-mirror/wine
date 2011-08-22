@@ -7166,6 +7166,9 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info, enum win
         return FALSE;
     }
 
+    if (src_pool == WINED3DPOOL_SYSTEMMEM || dst_pool == WINED3DPOOL_SYSTEMMEM)
+        return FALSE;
+
     src_fixup = get_complex_fixup(src_format->color_fixup);
     if (TRACE_ON(d3d_shader) && TRACE_ON(d3d))
     {
