@@ -48,9 +48,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(thread);
 /***********************************************************************
  *           CreateThread   (KERNEL32.@)
  */
-HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, SIZE_T stack,
-                            LPTHREAD_START_ROUTINE start, LPVOID param,
-                            DWORD flags, LPDWORD id )
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateThread( SECURITY_ATTRIBUTES *sa, SIZE_T stack, LPTHREAD_START_ROUTINE start,
+                                              LPVOID param, DWORD flags, LPDWORD id )
 {
      return CreateRemoteThread( GetCurrentProcess(),
                                 sa, stack, start, param, flags, id );
