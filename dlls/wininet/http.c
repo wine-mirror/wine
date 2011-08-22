@@ -1648,34 +1648,39 @@ static BOOL HTTP_InsertAuthorization( http_request_t *request, struct HttpAuthIn
 
 static WCHAR *HTTP_BuildProxyRequestUrl(http_request_t *req)
 {
+    static const WCHAR slash[] = { '/',0 };
+    static const WCHAR format[] = { 'h','t','t','p',':','/','/','%','s',':','%','u',0 };
+    static const WCHAR formatSSL[] = { 'h','t','t','p','s',':','/','/','%','s',':','%','u',0 };
+    http_session_t *session = req->session;
     WCHAR new_location[INTERNET_MAX_URL_LENGTH], *url;
     DWORD size;
 
     size = sizeof(new_location);
     if (HTTP_HttpQueryInfoW(req, HTTP_QUERY_LOCATION, new_location, &size, NULL) == ERROR_SUCCESS)
     {
+        URL_COMPONENTSW UrlComponents;
+
         if (!(url = heap_alloc(size + sizeof(WCHAR)))) return NULL;
         strcpyW( url, new_location );
+
+        ZeroMemory(&UrlComponents,sizeof(URL_COMPONENTSW));
+        if(InternetCrackUrlW(url, 0, 0, &UrlComponents)) goto done;
+        heap_free(url);
     }
+
+    size = 16; /* "https://" + sizeof(port#) + ":/\0" */
+    size += strlenW( session->hostName ) + strlenW( req->path );
+
+    if (!(url = heap_alloc(size * sizeof(WCHAR)))) return NULL;
+
+    if (req->hdr.dwFlags & INTERNET_FLAG_SECURE)
+        sprintfW( url, formatSSL, session->hostName, session->hostPort );
     else
-    {
-        static const WCHAR slash[] = { '/',0 };
-        static const WCHAR format[] = { 'h','t','t','p',':','/','/','%','s',':','%','u',0 };
-        static const WCHAR formatSSL[] = { 'h','t','t','p','s',':','/','/','%','s',':','%','u',0 };
-        http_session_t *session = req->session;
+        sprintfW( url, format, session->hostName, session->hostPort );
+    if (req->path[0] != '/') strcatW( url, slash );
+    strcatW( url, req->path );
 
-        size = 16; /* "https://" + sizeof(port#) + ":/\0" */
-        size += strlenW( session->hostName ) + strlenW( req->path );
-
-        if (!(url = heap_alloc(size * sizeof(WCHAR)))) return NULL;
-
-        if (req->hdr.dwFlags & INTERNET_FLAG_SECURE)
-            sprintfW( url, formatSSL, session->hostName, session->hostPort );
-        else
-            sprintfW( url, format, session->hostName, session->hostPort );
-        if (req->path[0] != '/') strcatW( url, slash );
-        strcatW( url, req->path );
-    }
+done:
     TRACE("url=%s\n", debugstr_w(url));
     return url;
 }
