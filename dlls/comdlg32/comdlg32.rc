@@ -88,7 +88,7 @@ Please install one and retry."
     PD32_NR_OF_DOCUMENTS_IN_QUEUE         "There are %d documents in the queue"
     PD32_MARGINS_IN_INCHES                "Margins [inches]"
     PD32_MARGINS_IN_MILLIMETERS           "Margins [mm]"
-    PD32_MILLIMETERS                      "mm"
+    PD32_MILLIMETERS                      "#msgctxt#unit: millimeters#mm"
 
     PD32_PRINTER_STATUS_READY             "Ready"
     PD32_PRINTER_STATUS_PAUSED            "Paused; "

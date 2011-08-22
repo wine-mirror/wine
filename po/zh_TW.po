@@ -562,7 +562,8 @@ msgstr "邊緣空白 [英寸]"
 msgid "Margins [mm]"
 msgstr "邊緣空白 [毫米]"
 
-#: comdlg32.rc:91
+#: comdlg32.rc:91 sane.rc:33
+msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "毫米"
 
@@ -6144,11 +6145,6 @@ msgstr "px"
 msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
-
-#: sane.rc:33
-msgctxt "unit: millimeters"
-msgid "mm"
-msgstr "mm"
 
 #: sane.rc:34
 msgctxt "unit: dots/inch"

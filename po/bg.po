@@ -553,7 +553,9 @@ msgstr "Граници [инчове]"
 msgid "Margins [mm]"
 msgstr "Граници [мм]"
 
-#: comdlg32.rc:91
+#: comdlg32.rc:91 sane.rc:33
+#, fuzzy
+msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "мм"
 
@@ -6025,12 +6027,6 @@ msgstr ""
 msgctxt "unit: bits"
 msgid "b"
 msgstr ""
-
-#: sane.rc:33
-#, fuzzy
-msgctxt "unit: millimeters"
-msgid "mm"
-msgstr "мм"
 
 #: sane.rc:34
 msgctxt "unit: dots/inch"

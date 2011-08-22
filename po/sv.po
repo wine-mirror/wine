@@ -548,9 +548,10 @@ msgstr "Marginaler [tum]"
 msgid "Margins [mm]"
 msgstr "Marginaler [millimeter]"
 
-#: comdlg32.rc:91
+#: comdlg32.rc:91 sane.rc:33
+msgctxt "unit: millimeters"
 msgid "mm"
-msgstr "millimeter"
+msgstr "mm"
 
 #: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 msgid "Print"
@@ -5924,11 +5925,6 @@ msgstr "px"
 msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
-
-#: sane.rc:33
-msgctxt "unit: millimeters"
-msgid "mm"
-msgstr "mm"
 
 #: sane.rc:34
 msgctxt "unit: dots/inch"

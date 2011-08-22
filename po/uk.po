@@ -543,7 +543,8 @@ msgstr "Межі  [дюйми]"
 msgid "Margins [mm]"
 msgstr "Межі [мм]"
 
-#: comdlg32.rc:91
+#: comdlg32.rc:91 sane.rc:33
+msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "мм"
 
@@ -5907,11 +5908,6 @@ msgstr "px"
 msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
-
-#: sane.rc:33
-msgctxt "unit: millimeters"
-msgid "mm"
-msgstr "мм"
 
 #: sane.rc:34
 msgctxt "unit: dots/inch"

@@ -542,7 +542,9 @@ msgstr "ขอบกระดาษ [นิ้ว]"
 msgid "Margins [mm]"
 msgstr "ขอบกระดาษ [มม.]"
 
-#: comdlg32.rc:91
+#: comdlg32.rc:91 sane.rc:33
+#, fuzzy
+msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "มม."
 
@@ -5926,12 +5928,6 @@ msgstr ""
 msgctxt "unit: bits"
 msgid "b"
 msgstr ""
-
-#: sane.rc:33
-#, fuzzy
-msgctxt "unit: millimeters"
-msgid "mm"
-msgstr "มม."
 
 #: sane.rc:34
 msgctxt "unit: dots/inch"

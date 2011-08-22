@@ -545,7 +545,8 @@ msgstr "余白 [インチ]"
 msgid "Margins [mm]"
 msgstr "余白 [mm]"
 
-#: comdlg32.rc:91
+#: comdlg32.rc:91 sane.rc:33
+msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
 
@@ -5907,11 +5908,6 @@ msgstr "px"
 msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
-
-#: sane.rc:33
-msgctxt "unit: millimeters"
-msgid "mm"
-msgstr "mm"
 
 #: sane.rc:34
 msgctxt "unit: dots/inch"

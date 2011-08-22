@@ -525,7 +525,8 @@ msgstr ""
 msgid "Margins [mm]"
 msgstr ""
 
-#: comdlg32.rc:91
+#: comdlg32.rc:91 sane.rc:33
+msgctxt "unit: millimeters"
 msgid "mm"
 msgstr ""
 
@@ -5806,11 +5807,6 @@ msgstr ""
 #: sane.rc:32
 msgctxt "unit: bits"
 msgid "b"
-msgstr ""
-
-#: sane.rc:33
-msgctxt "unit: millimeters"
-msgid "mm"
 msgstr ""
 
 #: sane.rc:34
