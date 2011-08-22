@@ -6325,6 +6325,9 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
     switch (blit_op)
     {
         case WINED3D_BLIT_OP_COLOR_BLIT:
+            if (src_pool == WINED3DPOOL_SYSTEMMEM || dst_pool == WINED3DPOOL_SYSTEMMEM)
+                return FALSE;
+
             src_fixup = get_complex_fixup(src_format->color_fixup);
             if (TRACE_ON(d3d_surface) && TRACE_ON(d3d))
             {
