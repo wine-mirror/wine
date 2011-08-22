@@ -1871,9 +1871,9 @@ static HMODULE16 create_dummy_module( HMODULE module32 )
     HMODULE16 hModule;
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegment;
-    char *pStr,*s;
+    char *pStr;
     unsigned int len;
-    const char* basename;
+    const char *basename, *s;
     OFSTRUCT *ofs;
     int of_size, size;
     char filename[MAX_PATH];
