@@ -1326,6 +1326,7 @@ int main(int argc, char **argv)
 	    {
 		case 'B':
 		    str = strdup(option_arg);
+		    if (strendswith(str, "/")) str[strlen(str) - 1] = 0;
 		    if (strendswith(str, "/tools/winebuild"))
                     {
                         char *objdir = strdup(str);
@@ -1334,7 +1335,6 @@ int main(int argc, char **argv)
                         /* don't pass it to the compiler, this generates warnings */
                         raw_compiler_arg = raw_linker_arg = 0;
                     }
-		    if (strendswith(str, "/")) str[strlen(str) - 1] = 0;
                     if (!opts.prefix) opts.prefix = strarray_alloc();
                     strarray_add(opts.prefix, str);
 		    break;
