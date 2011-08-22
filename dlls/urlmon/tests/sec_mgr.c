@@ -1609,6 +1609,88 @@ static void test_InternetGetSecurityUrlEx_Pluggable(void)
     if(uri) IUri_Release(uri);
 }
 
+static const struct {
+    const char  *uri;
+    DWORD       create_flags;
+    HRESULT     map_hres;
+    DWORD       zone;
+    BOOL        map_todo;
+} sec_mgr_ex2_tests[] = {
+    {"res://mshtml.dll/blank.htm",0,S_OK,URLZONE_LOCAL_MACHINE,TRUE},
+    {"index.htm",Uri_CREATE_ALLOW_RELATIVE,0,URLZONE_INTERNET,TRUE},
+    {"file://c:\\Index.html",0,0,URLZONE_LOCAL_MACHINE,TRUE},
+    {"http://www.zone3.winetest/",0,0,URLZONE_INTERNET,TRUE},
+    {"about:blank",0,0,URLZONE_INTERNET,TRUE},
+    {"ftp://zone3.winetest/file.test",0,0,URLZONE_INTERNET,TRUE}
+};
+
+static void test_SecurityManagerEx2(void)
+{
+    HRESULT hres;
+    DWORD i, zone;
+    IInternetSecurityManager *sec_mgr;
+    IInternetSecurityManagerEx2 *sec_mgr2;
+    IUri *uri = NULL;
+
+    if(!pCreateUri) {
+        win_skip("Skipping SecurityManagerEx2, IE is too old\n");
+        return;
+    }
+
+    trace("Testing SecurityManagerEx2...\n");
+
+    hres = pCoInternetCreateSecurityManager(NULL, &sec_mgr, 0);
+    ok(hres == S_OK, "CoInternetCreateSecurityManager failed: %08x\n", hres);
+
+    hres = IInternetSecurityManager_QueryInterface(sec_mgr, &IID_IInternetSecurityManagerEx2, (void**)&sec_mgr2);
+    ok(hres == S_OK, "QueryInterface(IID_IInternetSecurityManagerEx2) failed: %08x\n", hres);
+
+    zone = 0xdeadbeef;
+
+    hres = IInternetSecurityManagerEx2_MapUrlToZoneEx2(sec_mgr2, NULL, &zone, 0, NULL, NULL);
+    todo_wine ok(hres == E_INVALIDARG, "MapUrlToZoneEx2 returned %08x, expected E_INVALIDARG\n", hres);
+    todo_wine ok(zone == URLZONE_INVALID, "zone was %d\n", zone);
+
+    hres = pCreateUri(url5, 0, 0, &uri);
+    ok(hres == S_OK, "CreateUri failed: %08x\n", hres);
+
+    hres = IInternetSecurityManagerEx2_MapUrlToZoneEx2(sec_mgr2, uri, NULL, 0, NULL, NULL);
+    todo_wine ok(hres == E_INVALIDARG, "MapToUrlZoneEx2 returned %08x, expected E_INVALIDARG\n", hres);
+
+    IUri_Release(uri);
+
+    for(i = 0; i < sizeof(sec_mgr_ex2_tests)/sizeof(sec_mgr_ex2_tests[0]); ++i) {
+        LPWSTR uriW = a2w(sec_mgr_ex2_tests[i].uri);
+
+        uri = NULL;
+        zone = URLZONE_INVALID;
+
+        hres = pCreateUri(uriW, sec_mgr_ex2_tests[i].create_flags, 0, &uri);
+        ok(hres == S_OK, "CreateUri returned %08x on test %d\n", hres, i);
+
+        hres = IInternetSecurityManagerEx2_MapUrlToZoneEx2(sec_mgr2, uri, &zone, 0, NULL, NULL);
+        if(sec_mgr_ex2_tests[i].map_todo) {
+            todo_wine
+                ok(hres == sec_mgr_ex2_tests[i].map_hres, "MapUrlZoneToEx2 returned %08x, expected %08x on test %d\n",
+                    hres, sec_mgr_ex2_tests[i].map_hres, i);
+            todo_wine
+                ok(zone == sec_mgr_ex2_tests[i].zone, "Expected zone %d, but got %d on test %d\n", sec_mgr_ex2_tests[i].zone,
+                    zone, i);
+        } else {
+            ok(hres == sec_mgr_ex2_tests[i].map_hres, "MapUrlToZoneEx2 returned %08x, expected %08x on test %d\n",
+                hres, sec_mgr_ex2_tests[i].map_hres, i);
+            ok(zone == sec_mgr_ex2_tests[i].zone, "Expected zone %d, but got %d on test %d\n", sec_mgr_ex2_tests[i].zone,
+                zone, i);
+        }
+
+        heap_free(uriW);
+        IUri_Release(uri);
+    }
+
+    IInternetSecurityManagerEx2_Release(sec_mgr2);
+    IInternetSecurityManager_Release(sec_mgr);
+}
+
 START_TEST(sec_mgr)
 {
     HMODULE hurlmon;
@@ -1648,6 +1730,7 @@ START_TEST(sec_mgr)
     }
 
     test_SecurityManager();
+    test_SecurityManagerEx2();
     test_polices();
     test_zone_domains();
     test_CoInternetCreateZoneManager();
