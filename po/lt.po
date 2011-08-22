@@ -1426,7 +1426,7 @@ msgstr "Liudijimo politika"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr "Politiko identifikatorius:"
+msgstr "Politikos identifikatorius: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -2281,7 +2281,7 @@ msgstr "Konfigūruokite Wine interneto naršyklės ir susijusias nuostatas"
 
 #: inetcpl.rc:30
 msgid "Security settings for zone: "
-msgstr "Saugumo nuostatos zonai:"
+msgstr "Saugumo nuostatos zonai: "
 
 #: inetcpl.rc:31
 msgid "Custom"
@@ -11110,7 +11110,7 @@ msgstr "&Visada viršuje"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&Informacija..."
+msgstr "&Apie Wine žinyną..."
 
 #: winhlp32.rc:64
 msgid "Annotation..."
@@ -11262,7 +11262,7 @@ msgstr "&Apie Wine Wordpad"
 
 #: wordpad.rc:130
 msgid "Automatic"
-msgstr "Automatic"
+msgstr "Automatinė"
 
 #: wordpad.rc:136
 msgid "All documents (*.*)"
