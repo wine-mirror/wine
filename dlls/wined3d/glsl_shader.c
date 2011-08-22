@@ -4086,7 +4086,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
 
 /* GL locking is done by the caller */
 static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context,
-        struct wined3d_shader_buffer *buffer, struct wined3d_shader *shader,
+        struct wined3d_shader_buffer *buffer, const struct wined3d_shader *shader,
         const struct vs_compile_args *args)
 {
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
