@@ -1053,8 +1053,8 @@ void context_invalidate_state(struct wined3d_context *context, DWORD state)
     context->isStateDirty[idx] |= (1 << shift);
 }
 
-/* This function takes care of WineD3D pixel format selection. */
-static int WineD3D_ChoosePixelFormat(struct wined3d_device *device, HDC hdc,
+/* This function takes care of wined3d pixel format selection. */
+static int context_choose_pixel_format(struct wined3d_device *device, HDC hdc,
         const struct wined3d_format *color_format, const struct wined3d_format *ds_format,
         BOOL auxBuffers, int numSamples, BOOL findCompatible)
 {
@@ -1290,14 +1290,14 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     }
 
     /* Try to find a pixel format which matches our requirements. */
-    pixel_format = WineD3D_ChoosePixelFormat(device, hdc, color_format, ds_format,
+    pixel_format = context_choose_pixel_format(device, hdc, color_format, ds_format,
             auxBuffers, numSamples, FALSE /* findCompatible */);
 
     /* Try to locate a compatible format if we weren't able to find anything. */
     if (!pixel_format)
     {
         TRACE("Trying to locate a compatible pixel format because an exact match failed.\n");
-        pixel_format = WineD3D_ChoosePixelFormat(device, hdc, color_format, ds_format,
+        pixel_format = context_choose_pixel_format(device, hdc, color_format, ds_format,
                 auxBuffers, 0 /* numSamples */, TRUE /* findCompatible */);
     }
 
