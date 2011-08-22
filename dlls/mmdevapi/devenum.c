@@ -445,6 +445,9 @@ static HRESULT load_driver_devices(EDataFlow flow)
     UINT num, def, i;
     HRESULT hr;
 
+    if(!drvs.pGetEndpointIDs)
+        return S_OK;
+
     hr = drvs.pGetEndpointIDs(flow, &ids, &keys, &num, &def);
     if(FAILED(hr))
         return hr;
@@ -823,9 +826,6 @@ static const IMMDeviceCollectionVtbl MMDevColVtbl =
 HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
 {
     MMDevEnumImpl *This = MMDevEnumerator;
-
-    if(!drvs.pGetAudioEndpoint)
-        return AUDCLNT_E_SERVICE_NOT_RUNNING;
 
     if (!This)
     {

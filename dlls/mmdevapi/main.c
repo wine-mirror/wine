@@ -104,8 +104,11 @@ static BOOL init_driver(void)
         DWORD size = sizeof(driver_name);
 
         if(RegQueryValueExW(key, drv_value, 0, NULL, (BYTE*)driver_name,
-                    &size) == ERROR_SUCCESS && driver_name[0] != '\0'){
+                    &size) == ERROR_SUCCESS){
             RegCloseKey(key);
+
+            if(driver_name[0] == '\0')
+                return TRUE;
 
             for(next = p = driver_name; next; p = next + 1){
                 next = strchrW(p, ',');
