@@ -213,7 +213,7 @@ static LCID MSVCRT_locale_to_LCID(const char *locale)
 {
     LCID lcid;
     locale_search_t search;
-    char *cp, *region;
+    const char *cp, *region;
 
     memset(&search, 0, sizeof(locale_search_t));
 
@@ -676,7 +676,7 @@ MSVCRT__locale_t MSVCRT__create_locale(int category, const char *locale)
     else if(!locale[0])
         lcid[0] = GetSystemDefaultLCID();
     else if (locale[0] == 'L' && locale[1] == 'C' && locale[2] == '_') {
-        char *p;
+        const char *p;
 
         while(1) {
             locale += 3; /* LC_ */
