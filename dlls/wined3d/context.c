@@ -2066,7 +2066,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
         }
         else
         {
-            rt_mask = context_generate_rt_mask_no_fbo(device, rts[0]);
+            rt_mask = context_generate_rt_mask_no_fbo(device, rt_count ? rts[0] : NULL);
         }
     }
     else if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
@@ -2079,7 +2079,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
     }
     else
     {
-        rt_mask = context_generate_rt_mask_no_fbo(device, rts[0]);
+        rt_mask = context_generate_rt_mask_no_fbo(device, rt_count ? rts[0] : NULL);
     }
 
     old_mask = context->current_fbo ? context->current_fbo->rt_mask : context->draw_buffers_mask;
