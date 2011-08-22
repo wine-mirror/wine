@@ -803,6 +803,39 @@ static const struct wined3d_swapchain_ops swapchain_gdi_ops =
     swapchain_gdi_present,
 };
 
+void swapchain_update_render_to_fbo(struct wined3d_swapchain *swapchain)
+{
+    RECT client_rect;
+
+    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+        return;
+
+    if (!swapchain->presentParms.BackBufferCount)
+    {
+        TRACE("Single buffered rendering.\n");
+        swapchain->render_to_fbo = FALSE;
+        return;
+    }
+
+    GetClientRect(swapchain->win_handle, &client_rect);
+
+    TRACE("Backbuffer %ux%u, window %ux%u.\n",
+            swapchain->presentParms.BackBufferWidth,
+            swapchain->presentParms.BackBufferHeight,
+            client_rect.right, client_rect.bottom);
+
+    if (swapchain->presentParms.BackBufferWidth == client_rect.right
+            && swapchain->presentParms.BackBufferHeight == client_rect.bottom)
+    {
+        TRACE("Backbuffer dimensions match window dimensions, rendering onscreen.\n");
+        swapchain->render_to_fbo = FALSE;
+        return;
+    }
+
+    TRACE("Rendering to FBO.\n");
+    swapchain->render_to_fbo = TRUE;
+}
+
 /* Do not call while under the GL lock. */
 static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTYPE surface_type,
         struct wined3d_device *device, WINED3DPRESENT_PARAMETERS *present_parameters,
@@ -885,18 +918,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTY
         }
     }
     swapchain->presentParms = *present_parameters;
-
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
-            && present_parameters->BackBufferCount
-            && (present_parameters->BackBufferWidth != client_rect.right
-            || present_parameters->BackBufferHeight != client_rect.bottom))
-    {
-        TRACE("Rendering to FBO. Backbuffer %ux%u, window %ux%u.\n",
-                present_parameters->BackBufferWidth,
-                present_parameters->BackBufferHeight,
-                client_rect.right, client_rect.bottom);
-        swapchain->render_to_fbo = TRUE;
-    }
+    swapchain_update_render_to_fbo(swapchain);
 
     TRACE("Creating front buffer.\n");
     hr = device->device_parent->ops->create_rendertarget(device->device_parent, parent,

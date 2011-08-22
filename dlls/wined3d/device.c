@@ -5879,31 +5879,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
     stateblock_init_default_state(device->stateBlock);
 
-    if(wined3d_settings.offscreen_rendering_mode == ORM_FBO)
-    {
-        RECT client_rect;
-        GetClientRect(swapchain->win_handle, &client_rect);
-
-        if(!swapchain->presentParms.BackBufferCount)
-        {
-            TRACE("Single buffered rendering\n");
-            swapchain->render_to_fbo = FALSE;
-        }
-        else if(swapchain->presentParms.BackBufferWidth  != client_rect.right  ||
-                swapchain->presentParms.BackBufferHeight != client_rect.bottom )
-        {
-            TRACE("Rendering to FBO. Backbuffer %ux%u, window %ux%u\n",
-                    swapchain->presentParms.BackBufferWidth,
-                    swapchain->presentParms.BackBufferHeight,
-                    client_rect.right, client_rect.bottom);
-            swapchain->render_to_fbo = TRUE;
-        }
-        else
-        {
-            TRACE("Rendering directly to GL_BACK\n");
-            swapchain->render_to_fbo = FALSE;
-        }
-    }
+    swapchain_update_render_to_fbo(swapchain);
 
     hr = create_primary_opengl_context(device, swapchain);
     wined3d_swapchain_decref(swapchain);
