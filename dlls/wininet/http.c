@@ -139,10 +139,6 @@ static const WCHAR szVia[] = { 'V','i','a',0 };
 static const WCHAR szWarning[] = { 'W','a','r','n','i','n','g',0 };
 static const WCHAR szWWW_Authenticate[] = { 'W','W','W','-','A','u','t','h','e','n','t','i','c','a','t','e',0 };
 
-#define MAXHOSTNAME 100
-#define MAX_FIELD_VALUE_LEN 256
-#define MAX_FIELD_LEN 256
-
 #define HTTP_REFERER    szReferer
 #define HTTP_ACCEPT     szAccept
 #define HTTP_USERAGENT  szUser_Agent
@@ -1689,10 +1685,10 @@ static WCHAR *HTTP_BuildProxyRequestUrl(http_request_t *req)
  */
 static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_request_t *request)
 {
-    WCHAR buf[MAXHOSTNAME];
-    WCHAR protoProxy[MAXHOSTNAME + 15];
-    DWORD protoProxyLen = sizeof(protoProxy) / sizeof(protoProxy[0]);
-    WCHAR proxy[MAXHOSTNAME + 15]; /* 15 == "http://" + sizeof(port#) + ":/\0" */
+    WCHAR buf[INTERNET_MAX_HOST_NAME_LENGTH];
+    WCHAR protoProxy[INTERNET_MAX_URL_LENGTH];
+    DWORD protoProxyLen = INTERNET_MAX_URL_LENGTH;
+    WCHAR proxy[INTERNET_MAX_URL_LENGTH];
     static WCHAR szNul[] = { 0 };
     URL_COMPONENTSW UrlComponents;
     static const WCHAR protoHttp[] = { 'h','t','t','p',0 };
@@ -1702,7 +1698,7 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_req
     memset( &UrlComponents, 0, sizeof UrlComponents );
     UrlComponents.dwStructSize = sizeof UrlComponents;
     UrlComponents.lpszHostName = buf;
-    UrlComponents.dwHostNameLength = MAXHOSTNAME;
+    UrlComponents.dwHostNameLength = INTERNET_MAX_HOST_NAME_LENGTH;
 
     if (!INTERNET_FindProxyForProtocol(hIC->proxy, protoHttp, protoProxy, &protoProxyLen))
         return FALSE;
@@ -3758,7 +3754,7 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
     http_session_t *session = request->session;
     appinfo_t *hIC = session->appInfo;
     BOOL using_proxy = hIC->proxy && hIC->proxy[0];
-    WCHAR path[INTERNET_MAX_URL_LENGTH];
+    WCHAR path[INTERNET_MAX_PATH_LENGTH];
     int index;
 
     if(lpszUrl[0]=='/')
@@ -3769,7 +3765,9 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
     else
     {
         URL_COMPONENTSW urlComponents;
-        WCHAR protocol[32], hostName[MAXHOSTNAME], userName[1024];
+        WCHAR protocol[INTERNET_MAX_SCHEME_LENGTH];
+        WCHAR hostName[INTERNET_MAX_HOST_NAME_LENGTH];
+        WCHAR userName[INTERNET_MAX_USER_NAME_LENGTH];
         static WCHAR szHttp[] = {'h','t','t','p',0};
         static WCHAR szHttps[] = {'h','t','t','p','s',0};
 
@@ -3779,15 +3777,15 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
 
         urlComponents.dwStructSize = sizeof(URL_COMPONENTSW);
         urlComponents.lpszScheme = protocol;
-        urlComponents.dwSchemeLength = 32;
+        urlComponents.dwSchemeLength = INTERNET_MAX_SCHEME_LENGTH;
         urlComponents.lpszHostName = hostName;
-        urlComponents.dwHostNameLength = MAXHOSTNAME;
+        urlComponents.dwHostNameLength = INTERNET_MAX_HOST_NAME_LENGTH;
         urlComponents.lpszUserName = userName;
-        urlComponents.dwUserNameLength = 1024;
+        urlComponents.dwUserNameLength = INTERNET_MAX_USER_NAME_LENGTH;
         urlComponents.lpszPassword = NULL;
         urlComponents.dwPasswordLength = 0;
         urlComponents.lpszUrlPath = path;
-        urlComponents.dwUrlPathLength = 2048;
+        urlComponents.dwUrlPathLength = INTERNET_MAX_PATH_LENGTH;
         urlComponents.lpszExtraInfo = NULL;
         urlComponents.dwExtraInfoLength = 0;
         if(!InternetCrackUrlW(lpszUrl, strlenW(lpszUrl), 0, &urlComponents))

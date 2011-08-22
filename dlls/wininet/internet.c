@@ -29,8 +29,6 @@
 #include "config.h"
 #include "wine/port.h"
 
-#define MAXHOSTNAME 100 /* from http.c */
-
 #if defined(__MINGW32__) || defined (_MSC_VER)
 #include <ws2tcpip.h>
 #endif
@@ -3161,7 +3159,7 @@ BOOL WINAPI InternetCheckConnectionW( LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRe
   static const CHAR ping[] = "ping -c 1 ";
   static const CHAR redirect[] = " >/dev/null 2>/dev/null";
   CHAR *command = NULL;
-  WCHAR hostW[1024];
+  WCHAR hostW[INTERNET_MAX_HOST_NAME_LENGTH];
   DWORD len;
   INTERNET_PORT port;
   int status = -1;
@@ -3189,7 +3187,7 @@ BOOL WINAPI InternetCheckConnectionW( LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRe
 
      ZeroMemory(&components,sizeof(URL_COMPONENTSW));
      components.lpszHostName = (LPWSTR)hostW;
-     components.dwHostNameLength = 1024;
+     components.dwHostNameLength = INTERNET_MAX_HOST_NAME_LENGTH;
 
      if (!InternetCrackUrlW(lpszUrl,0,0,&components))
        goto End;
@@ -3286,8 +3284,12 @@ static HINTERNET INTERNET_InternetOpenUrlW(appinfo_t *hIC, LPCWSTR lpszUrl,
     LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD_PTR dwContext)
 {
     URL_COMPONENTSW urlComponents;
-    WCHAR protocol[32], hostName[MAXHOSTNAME], userName[1024];
-    WCHAR password[1024], path[2048], extra[1024];
+    WCHAR protocol[INTERNET_MAX_SCHEME_LENGTH];
+    WCHAR hostName[INTERNET_MAX_HOST_NAME_LENGTH];
+    WCHAR userName[INTERNET_MAX_USER_NAME_LENGTH];
+    WCHAR password[INTERNET_MAX_PASSWORD_LENGTH];
+    WCHAR path[INTERNET_MAX_PATH_LENGTH];
+    WCHAR extra[1024];
     HINTERNET client = NULL, client1 = NULL;
     DWORD res;
     
@@ -3296,15 +3298,15 @@ static HINTERNET INTERNET_InternetOpenUrlW(appinfo_t *hIC, LPCWSTR lpszUrl,
     
     urlComponents.dwStructSize = sizeof(URL_COMPONENTSW);
     urlComponents.lpszScheme = protocol;
-    urlComponents.dwSchemeLength = 32;
+    urlComponents.dwSchemeLength = INTERNET_MAX_SCHEME_LENGTH;
     urlComponents.lpszHostName = hostName;
-    urlComponents.dwHostNameLength = MAXHOSTNAME;
+    urlComponents.dwHostNameLength = INTERNET_MAX_HOST_NAME_LENGTH;
     urlComponents.lpszUserName = userName;
-    urlComponents.dwUserNameLength = 1024;
+    urlComponents.dwUserNameLength = INTERNET_MAX_USER_NAME_LENGTH;
     urlComponents.lpszPassword = password;
-    urlComponents.dwPasswordLength = 1024;
+    urlComponents.dwPasswordLength = INTERNET_MAX_PASSWORD_LENGTH;
     urlComponents.lpszUrlPath = path;
-    urlComponents.dwUrlPathLength = 2048;
+    urlComponents.dwUrlPathLength = INTERNET_MAX_PATH_LENGTH;
     urlComponents.lpszExtraInfo = extra;
     urlComponents.dwExtraInfoLength = 1024;
     if(!InternetCrackUrlW(lpszUrl, strlenW(lpszUrl), 0, &urlComponents))
