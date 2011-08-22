@@ -5455,16 +5455,8 @@ static HRESULT updateSurfaceDesc(struct wined3d_surface *surface,
         while (surface->pow2Height < pPresentationParameters->BackBufferHeight) surface->pow2Height <<= 1;
     }
 
-    if (surface->texture_name)
-    {
-        struct wined3d_context *context = context_acquire(device, NULL);
-        ENTER_GL();
-        glDeleteTextures(1, &surface->texture_name);
-        LEAVE_GL();
-        context_release(context);
-        surface->texture_name = 0;
-        surface->flags &= ~SFLAG_CLIENT;
-    }
+    surface->resource.resource_ops->resource_unload(&surface->resource);
+
     if (surface->pow2Width != pPresentationParameters->BackBufferWidth
             || surface->pow2Height != pPresentationParameters->BackBufferHeight)
     {
