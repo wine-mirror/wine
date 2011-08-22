@@ -1396,7 +1396,7 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
     }
     access |= SYNCHRONIZE;
     if (dwOpenMode & FILE_FLAG_WRITE_THROUGH) options |= FILE_WRITE_THROUGH;
-    if (!(dwOpenMode & FILE_FLAG_OVERLAPPED)) options |= FILE_SYNCHRONOUS_IO_ALERT;
+    if (!(dwOpenMode & FILE_FLAG_OVERLAPPED)) options |= FILE_SYNCHRONOUS_IO_NONALERT;
     pipe_type = (dwPipeMode & PIPE_TYPE_MESSAGE) ? TRUE : FALSE;
     read_mode = (dwPipeMode & PIPE_READMODE_MESSAGE) ? TRUE : FALSE;
     non_block = (dwPipeMode & PIPE_NOWAIT) ? TRUE : FALSE;
@@ -1848,7 +1848,7 @@ BOOL WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
         RtlInitUnicodeString(&nt_name, name);
         status = NtCreateNamedPipeFile(&hr, GENERIC_READ | SYNCHRONIZE, &attr, &iosb,
                                        0, FILE_OVERWRITE_IF,
-                                       FILE_SYNCHRONOUS_IO_ALERT | FILE_PIPE_INBOUND,
+                                       FILE_SYNCHRONOUS_IO_NONALERT | FILE_PIPE_INBOUND,
                                        FALSE, FALSE, FALSE, 
                                        1, size, size, &timeout);
         if (status)
@@ -1861,7 +1861,7 @@ BOOL WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
     if (hr == INVALID_HANDLE_VALUE) return FALSE;
 
     status = NtOpenFile(&hw, GENERIC_WRITE | SYNCHRONIZE, &attr, &iosb, 0,
-                        FILE_SYNCHRONOUS_IO_ALERT | FILE_NON_DIRECTORY_FILE);
+                        FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE);
 
     if (status) 
     {
