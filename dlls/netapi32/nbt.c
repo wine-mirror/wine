@@ -1497,13 +1497,17 @@ void NetBTInit(void)
                NetBTNameEncode */
             char *ptr, *lenPtr;
 
-            for (ptr = gScopeID + 1; ptr - gScopeID < sizeof(gScopeID) && *ptr; )
+            for (ptr = gScopeID + 1, lenPtr = gScopeID; ptr - gScopeID < sizeof(gScopeID) && *ptr; ++ptr)
             {
-                for (lenPtr = ptr - 1, *lenPtr = 0;
-                     ptr - gScopeID < sizeof(gScopeID) && *ptr && *ptr != '.';
-                     ptr++)
-                    *lenPtr += 1;
-                ptr++;
+                if (*ptr == '.')
+                {
+                    lenPtr = ptr;
+                    *lenPtr = 0;
+                }
+                else
+                {
+                    ++*lenPtr;
+                }
             }
         }
         if (RegQueryValueExW(hKey, CacheTimeoutW, NULL, NULL,
