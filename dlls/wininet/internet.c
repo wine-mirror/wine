@@ -621,9 +621,46 @@ static BOOL INTERNET_ConfigureProxy( appinfo_t *lpwai )
 
     if (wpi.proxyEnabled)
     {
-        lpwai->accessType = INTERNET_OPEN_TYPE_PROXY;
-        lpwai->proxy = wpi.proxy;
-        return TRUE;
+        WCHAR proxyurl[INTERNET_MAX_URL_LENGTH];
+        WCHAR username[INTERNET_MAX_USER_NAME_LENGTH];
+        WCHAR password[INTERNET_MAX_PASSWORD_LENGTH];
+        WCHAR hostname[INTERNET_MAX_HOST_NAME_LENGTH];
+        URL_COMPONENTSW UrlComponents;
+
+        UrlComponents.dwStructSize = sizeof UrlComponents;
+        UrlComponents.dwSchemeLength = 0;
+        UrlComponents.lpszHostName = hostname;
+        UrlComponents.dwHostNameLength = INTERNET_MAX_HOST_NAME_LENGTH;
+        UrlComponents.lpszUserName = username;
+        UrlComponents.dwUserNameLength = INTERNET_MAX_USER_NAME_LENGTH;
+        UrlComponents.lpszPassword = password;
+        UrlComponents.dwPasswordLength = INTERNET_MAX_PASSWORD_LENGTH;
+        UrlComponents.dwExtraInfoLength = 0;
+
+        if(InternetCrackUrlW(wpi.proxy, 0, 0, &UrlComponents))
+        {
+            static const WCHAR szFormat[] = { 'h','t','t','p',':','/','/','%','s',':','%','u',0 };
+
+            if(UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
+                UrlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
+            sprintfW(proxyurl, szFormat, hostname, UrlComponents.nPort);
+
+            lpwai->accessType = INTERNET_OPEN_TYPE_PROXY;
+            lpwai->proxy = heap_strdupW(proxyurl);
+            if (UrlComponents.dwUserNameLength)
+            {
+                lpwai->proxyUsername = heap_strdupW(UrlComponents.lpszUserName);
+                lpwai->proxyPassword = heap_strdupW(UrlComponents.lpszPassword);
+            }
+
+            TRACE("http proxy = %s\n", debugstr_w(lpwai->proxy));
+            return TRUE;
+        }
+        else
+        {
+            TRACE("Failed to parse proxy: %s\n", debugstr_w(wpi.proxy));
+            lpwai->proxy = NULL;
+        }
     }
 
     lpwai->accessType = INTERNET_OPEN_TYPE_DIRECT;
