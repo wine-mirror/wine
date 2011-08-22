@@ -45,7 +45,7 @@ static HRESULT navigate_anchor(HTMLAnchorElement *This)
 {
     nsAString href_str, target_str;
     nsresult nsres;
-    HRESULT hres;
+    HRESULT hres = E_FAIL;
 
     nsAString_Init(&target_str, NULL);
     nsres = nsIDOMHTMLAnchorElement_GetTarget(This->nsanchor, &target_str);
