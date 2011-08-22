@@ -203,6 +203,18 @@ typedef struct {
 typedef struct {
     WORD SubstFormat; /* = 1 */
     WORD Coverage;
+    WORD SequenceCount;
+    WORD Sequence[1];
+}GSUB_MultipleSubstFormat1;
+
+typedef struct {
+    WORD GlyphCount;
+    WORD Substitute[1];
+}GSUB_Sequence;
+
+typedef struct {
+    WORD SubstFormat; /* = 1 */
+    WORD Coverage;
     WORD LigSetCount;
     WORD LigatureSet[1];
 }GSUB_LigatureSubstFormat1;
@@ -733,6 +745,54 @@ static INT GSUB_apply_SingleSubst(const GSUB_LookupTable *look, WORD *glyphs, IN
     return GSUB_E_NOGLYPH;
 }
 
+static INT GSUB_apply_MultipleSubst(const GSUB_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
+{
+    int j;
+    TRACE("Multiple Substitution Subtable\n");
+
+    for (j = 0; j < GET_BE_WORD(look->SubTableCount); j++)
+    {
+        int offset, index;
+        const GSUB_MultipleSubstFormat1 *msf1;
+        offset = GET_BE_WORD(look->SubTable[j]);
+        msf1 = (const GSUB_MultipleSubstFormat1*)((const BYTE*)look+offset);
+
+        offset = GET_BE_WORD(msf1->Coverage);
+        index = GSUB_is_glyph_covered((const BYTE*)msf1+offset, glyphs[glyph_index]);
+        if (index != -1)
+        {
+            const GSUB_Sequence *seq;
+            int sub_count;
+            int j;
+            offset = GET_BE_WORD(msf1->Sequence[index]);
+            seq = (const GSUB_Sequence*)((const BYTE*)msf1+offset);
+            sub_count = GET_BE_WORD(seq->GlyphCount);
+            TRACE("  Glyph 0x%x (+%i)->",glyphs[glyph_index],(sub_count-1));
+
+            for (j = (*glyph_count)+(sub_count-1); j > glyph_index; j--)
+                    glyphs[j] =glyphs[j-(sub_count-1)];
+
+            for (j = 0; j < sub_count; j++)
+                    if (write_dir < 0)
+                        glyphs[glyph_index + (sub_count-1) - j] = GET_BE_WORD(seq->Substitute[j]);
+                    else
+                        glyphs[glyph_index + j] = GET_BE_WORD(seq->Substitute[j]);
+
+            *glyph_count = *glyph_count + (sub_count - 1);
+
+            if (TRACE_ON(uniscribe))
+            {
+                for (j = 0; j < sub_count; j++)
+                    TRACE(" 0x%x",glyphs[glyph_index+j]);
+                TRACE("\n");
+            }
+
+            return glyph_index + sub_count;
+        }
+    }
+    return GSUB_E_NOGLYPH;
+}
+
 static INT GSUB_apply_AlternateSubst(const GSUB_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
 {
     int j;
@@ -943,6 +1003,8 @@ static INT GSUB_apply_lookup(const GSUB_LookupList* lookup, INT lookup_index, WO
     {
         case 1:
             return GSUB_apply_SingleSubst(look, glyphs, glyph_index, write_dir, glyph_count);
+        case 2:
+            return GSUB_apply_MultipleSubst(look, glyphs, glyph_index, write_dir, glyph_count);
         case 3:
             return GSUB_apply_AlternateSubst(look, glyphs, glyph_index, write_dir, glyph_count);
         case 4:
@@ -1261,28 +1323,41 @@ static void UpdateClusters(int nextIndex, int changeCount, int write_dir, int ch
     {
         int i;
         int target_glyph = nextIndex - 1;
+        int seeking_glyph;
         int target_index = -1;
         int replacing_glyph = -1;
         int changed = 0;
 
-        if (write_dir > 0)
-            for (i = 0; i < chars; i++)
-            {
-                if (pwLogClust[i] == target_glyph)
+
+        if (changeCount > 0)
+            target_glyph = nextIndex - (changeCount+1);
+
+        seeking_glyph = target_glyph;
+
+        do {
+            if (write_dir > 0)
+                for (i = 0; i < chars; i++)
                 {
-                    target_index = i;
-                    break;
+                    if (pwLogClust[i] == seeking_glyph)
+                    {
+                        target_index = i;
+                        break;
+                    }
                 }
-            }
-        else
-            for (i = chars - 1; i >= 0; i--)
-            {
-                if (pwLogClust[i] == target_glyph)
+            else
+                for (i = chars - 1; i >= 0; i--)
                 {
-                    target_index = i;
-                    break;
+                    if (pwLogClust[i] == seeking_glyph)
+                    {
+                        target_index = i;
+                        break;
+                    }
                 }
-            }
+            if (target_index == -1)
+                seeking_glyph ++;
+        }
+        while (target_index == -1 && seeking_glyph < chars);
+
         if (target_index == -1)
         {
             ERR("Unable to find target glyph\n");
@@ -1310,13 +1385,18 @@ static void UpdateClusters(int nextIndex, int changeCount, int write_dir, int ch
                         break;
                 }
             }
-        }
 
-        /* renumber trailing indexes*/
-        for(i = target_index; i < chars && i >= 0; i+=write_dir)
+            /* renumber trailing indexes*/
+            for(i = target_index; i < chars && i >= 0; i+=write_dir)
+            {
+                if (pwLogClust[i] != target_glyph)
+                    pwLogClust[i] += changeCount;
+            }
+        }
+        else
         {
-            if (pwLogClust[i] != target_glyph)
-                pwLogClust[i] += changeCount;
+            for(i = target_index; i < chars && i >= 0; i+=write_dir)
+                    pwLogClust[i] += changeCount;
         }
     }
 }
