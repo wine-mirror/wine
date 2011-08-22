@@ -3726,9 +3726,9 @@ static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_sh
     }
 }
 
-static struct glsl_shader_prog_link *get_glsl_program_entry(struct shader_glsl_priv *priv,
+static struct glsl_shader_prog_link *get_glsl_program_entry(const struct shader_glsl_priv *priv,
         const struct wined3d_shader *vshader, const struct wined3d_shader *pshader,
-        struct vs_compile_args *vs_args, struct ps_compile_args *ps_args)
+        const struct vs_compile_args *vs_args, const struct ps_compile_args *ps_args)
 {
     struct wine_rb_entry *entry;
     struct glsl_program_key key;
