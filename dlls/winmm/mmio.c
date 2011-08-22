@@ -380,8 +380,8 @@ static FOURCC MMIO_ParseExtA(LPCSTR szFileName)
     FOURCC ret = 0;
 
     /* Note that ext{Start,End} point to the . and + respectively */
-    LPSTR extEnd;
-    LPSTR extStart;
+    LPCSTR extEnd;
+    LPCSTR extStart;
 
     CHAR ext[5];
 
