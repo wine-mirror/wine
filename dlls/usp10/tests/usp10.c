@@ -1808,80 +1808,107 @@ static void test_ScriptTextOut3(HDC hdc)
     }
 }
 
+#define test_item_ScriptXtoX(a,b,c,d,e,f) (winetest_set_location(__FILE__,__LINE__), 0) ? 0 : _test_item_ScriptXtoX(a,b,c,d,e,f)
+
+static void _test_item_ScriptXtoX(SCRIPT_ANALYSIS *psa, int cChars, int cGlyphs, const int* offsets, const WORD *pwLogClust, const int* piAdvance )
+{
+    int iX, iCP;
+    int icChars, icGlyphs;
+    int piCP, piX;
+    HRESULT hr;
+    SCRIPT_VISATTR psva[10];
+    int piTrailing;
+    BOOL fTrailing;
+    int direction;
+
+    memset(psva,0,sizeof(psva));
+    direction = (psa->fRTL)?-1:+1;
+
+    for(iCP = 0; iCP < cChars; iCP++)
+    {
+        iX = offsets[iCP];
+        icChars = cChars;
+        icGlyphs = cGlyphs;
+        hr = ScriptXtoCP(iX, icChars, icGlyphs, pwLogClust, psva, piAdvance, psa, &piCP, &piTrailing);
+        winetest_ok(hr == S_OK, "ScriptXtoCP: should return S_OK not %08x\n", hr);
+        winetest_ok(piCP == iCP, "ScriptXtoCP: iX=%d should return piCP=%d not %d\n", iX, iCP, piCP);
+        winetest_ok(piTrailing == 0, "ScriptXtoCP: iX=%d should return piTrailing=0 not %d\n", iX, piTrailing);
+    }
+
+    for(iCP = 0; iCP < cChars; iCP++)
+    {
+        iX = offsets[iCP]+direction;
+        icChars = cChars;
+        icGlyphs = cGlyphs;
+        hr = ScriptXtoCP(iX, icChars, icGlyphs, pwLogClust, psva, piAdvance, psa, &piCP, &piTrailing);
+        winetest_ok(hr == S_OK, "ScriptXtoCP leading: should return S_OK not %08x\n", hr);
+        winetest_ok(piCP == iCP, "ScriptXtoCP leading: iX=%d should return piCP=%d not %d\n", iX, iCP, piCP);
+        winetest_ok(piTrailing == 0, "ScriptXtoCP leading: iX=%d should return piTrailing=0 not %d\n", iX, piTrailing);
+    }
+
+    for(iCP = 0; iCP < cChars; iCP++)
+    {
+        iX = offsets[iCP+1]-direction;
+        icChars = cChars;
+        icGlyphs = cGlyphs;
+        hr = ScriptXtoCP(iX, icChars, icGlyphs, pwLogClust, psva, piAdvance, psa, &piCP, &piTrailing);
+        winetest_ok(hr == S_OK, "ScriptXtoCP trailing: should return S_OK not %08x\n", hr);
+        winetest_ok(piCP == iCP, "ScriptXtoCP trailing: iX=%d should return piCP=%d not %d\n", iX, iCP, piCP);
+        winetest_ok(piTrailing == 1, "ScriptXtoCP trailing: iX=%d should return piTrailing=1 not %d\n", iX, piTrailing);
+    }
+
+    for(iCP = 0; iCP <= cChars+1; iCP++)
+    {
+        fTrailing = FALSE;
+        icChars = cChars;
+        icGlyphs = cGlyphs;
+        hr = ScriptCPtoX(iCP, fTrailing, icChars, icGlyphs, pwLogClust, psva, piAdvance, psa, &piX);
+        winetest_ok(hr == S_OK, "ScriptCPtoX: should return S_OK not %08x\n", hr);
+        winetest_ok(piX == offsets[iCP],
+           "ScriptCPtoX: iCP=%d should return piX=%d not %d\n", iCP, offsets[iCP], piX);
+    }
+
+    for(iCP = 0; iCP <= cChars+1; iCP++)
+    {
+        fTrailing = TRUE;
+        icChars = cChars;
+        icGlyphs = cGlyphs;
+        hr = ScriptCPtoX(iCP, fTrailing, icChars, icGlyphs, pwLogClust, psva, piAdvance, psa, &piX);
+        winetest_ok(hr == S_OK, "ScriptCPtoX trailing: should return S_OK not %08x\n", hr);
+        winetest_ok(piX == offsets[iCP+1],
+           "ScriptCPtoX trailing: iCP=%d should return piX=%d not %d\n", iCP, offsets[iCP+direction], piX);
+    }
+}
+
 static void test_ScriptXtoX(void)
 /****************************************************************************************
  *  This routine tests the ScriptXtoCP and ScriptCPtoX functions using static variables *
  ****************************************************************************************/
 {
-    static const WCHAR test[] = {'t', 'e', 's', 't',0};
-    SCRIPT_ITEM items[2];
-    int iX, iCP;
-    int cChars;
-    int cGlyphs;
     WORD pwLogClust[10] = {0, 0, 0, 1, 1, 2, 2, 3, 3, 3};
     WORD pwLogClust_RTL[10] = {3, 3, 3, 2, 2, 1, 1, 0, 0, 0};
+    int piAdvance[10] = {201, 190, 210, 180, 170, 204, 189, 195, 212, 203};
+    static const int offsets[13] = {0, 67, 134, 201, 296, 391, 496, 601, 1052, 1503, 1954, 1954, 1954};
+    static const int offsets_RTL[13] = {781, 721, 661, 601, 496, 391, 296, 201, 134, 67, 0, 0, 0};
     SCRIPT_VISATTR psva[10];
-    int piAdvance[10] = {200, 190, 210, 180, 170, 204, 189, 195, 212, 203};
-    int piCP, piX;
+    SCRIPT_ANALYSIS sa;
+    int iX;
+    int piCP;
     int piTrailing;
-    BOOL fTrailing;
     HRESULT hr;
-    static const int offsets[13] = {0, 66, 133, 200, 295, 390, 495, 600, 1051, 1502, 1953, 1953, 1953};
-    static const int offsets_RTL[13] = {780, 720, 660, 600, 495, 390, 295, 200, 133, 66, 0, 0, 0};
 
-    hr = ScriptItemize(test, lstrlenW(test), sizeof(items)/sizeof(items[0]), NULL, NULL, items, NULL);
-    ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
+    memset(&sa, 0 , sizeof(SCRIPT_ANALYSIS));
 
-    iX = -1;
-    cChars = 10;
-    cGlyphs = 10;
-    hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &items[0].a, &piCP, &piTrailing);
+    sa.fRTL = FALSE;
+    hr = ScriptXtoCP(-1, 10, 10, pwLogClust, psva, piAdvance, &sa, &piCP, &piTrailing);
     ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
     if (piTrailing)
         ok(piCP == -1, "Negative iX should return piCP=-1 not %d\n", piCP);
     else /* win2k3 */
         ok(piCP == 10, "Negative iX should return piCP=10 not %d\n", piCP);
 
-    for(iCP = 0; iCP < 10; iCP++)
-    {
-        iX = offsets[iCP]+1;
-        cChars = 10;
-        cGlyphs = 10;
-        hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &items[0].a, &piCP, &piTrailing);
-        ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
-        ok(piCP == iCP, "iX=%d should return piCP=%d not %d\n", iX, iCP, piCP);
-        ok(piTrailing == 0, "iX=%d should return piTrailing=0 not %d\n", iX, piTrailing);
-    }
-
-    for(iCP = 0; iCP < 10; iCP++)
-    {
-        iX = offsets[iCP+1]-1;
-        cChars = 10;
-        cGlyphs = 10;
-        hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &items[0].a, &piCP, &piTrailing);
-        ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
-        ok(piCP == iCP, "iX=%d should return piCP=%d not %d\n", iX, iCP, piCP);
-        ok(piTrailing == 1, "iX=%d should return piTrailing=1 not %d\n", iX, piTrailing);
-    }
-
-    /* 0,1,2 are actually fractional offsets meaning that they will not be reporting the same iCP as comes in so don't test those */
-    for(iCP = 3; iCP < 10; iCP++)
-    {
-        iX = offsets[iCP];
-        cChars = 10;
-        cGlyphs = 10;
-        hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &items[0].a, &piCP, &piTrailing);
-        ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
-        ok(piCP == iCP, "iX=%d should return piCP=%d not %d\n", iX, iCP, piCP);
-        ok(piTrailing == 0, "iX=%d should return piTrailing=0 not %d\n", iX, piTrailing);
-    }
-
-    items[0].a.fRTL = TRUE;
-
-    iX = -1;
-    cChars = 10;
-    cGlyphs = 10;
-    hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust_RTL, psva, piAdvance, &items[0].a, &piCP, &piTrailing);
+    sa.fRTL = TRUE;
+    hr = ScriptXtoCP(-1, 10, 10, pwLogClust_RTL, psva, piAdvance, &sa, &piCP, &piTrailing);
     ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
     if (piTrailing)
         ok(piCP == -1, "Negative iX should return piCP=-1 not %d\n", piCP);
@@ -1889,93 +1916,15 @@ static void test_ScriptXtoX(void)
         ok(piCP == 10, "Negative iX should return piCP=10 not %d\n", piCP);
 
     iX = 1954;
-    cChars = 10;
-    cGlyphs = 10;
-    hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust_RTL, psva, piAdvance, &items[0].a, &piCP, &piTrailing);
+    hr = ScriptXtoCP(1954, 10, 10, pwLogClust_RTL, psva, piAdvance, &sa, &piCP, &piTrailing);
     ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
     ok(piCP == -1, "iX=%d should return piCP=-1 not %d\n", iX, piCP);
     ok(piTrailing == 1, "iX=%d should return piTrailing=1 not %d\n", iX, piTrailing);
 
-    for(iCP = 0; iCP < 10; iCP++)
-    {
-        iX = offsets_RTL[iCP]-1;
-        cChars = 10;
-        cGlyphs = 10;
-        hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust_RTL, psva, piAdvance, &items[0].a, &piCP, &piTrailing);
-        ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
-        ok(piCP == iCP, "iX=%d should return piCP=%d not %d\n", iX, iCP, piCP);
-        ok(piTrailing == 0, "iX=%d should return piTrailing=0 not %d\n", iX, piTrailing);
-    }
-
-    for(iCP = 0; iCP < 10; iCP++)
-    {
-        iX = offsets_RTL[iCP+1]+1;
-        cChars = 10;
-        cGlyphs = 10;
-        hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust_RTL, psva, piAdvance, &items[0].a, &piCP, &piTrailing);
-        ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
-        ok(piCP == iCP, "iX=%d should return piCP=%d not %d\n", iX, iCP, piCP);
-        ok(piTrailing == 1, "iX=%d should return piTrailing=1 not %d\n", iX, piTrailing);
-    }
-
-    for(iCP = 0; iCP < 10; iCP++)
-    {
-        iX = offsets_RTL[iCP];
-        cChars = 10;
-        cGlyphs = 10;
-        hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust_RTL, psva, piAdvance, &items[0].a, &piCP, &piTrailing);
-        ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
-        ok(piCP == iCP, "iX=%d should return piCP=%d not %d\n", iX, iCP, piCP);
-        ok(piTrailing == 0, "iX=%d should return piTrailing=0 not %d\n", iX, piTrailing);
-    }
-
-    items[0].a.fRTL = FALSE;
-
-    for(iCP = 0; iCP <= 11; iCP++)
-    {
-        fTrailing = FALSE;
-        cChars = 10;
-        cGlyphs = 10;
-        hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance, &items[0].a, &piX);
-        ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08x\n", hr);
-        ok(piX == offsets[iCP],
-           "iCP=%d should return piX=%d not %d\n", iCP, offsets[iCP], piX);
-    }
-
-    for(iCP = 0; iCP <= 11; iCP++)
-    {
-        fTrailing = TRUE;
-        cChars = 10;
-        cGlyphs = 10;
-        hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance, &items[0].a, &piX);
-        ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08x\n", hr);
-        ok(piX == offsets[iCP+1],
-           "iCP=%d should return piX=%d not %d\n", iCP, offsets[iCP+1], piX);
-    }
-
-    items[0].a.fRTL = TRUE;
-
-    for(iCP = 0; iCP <= 11; iCP++)
-    {
-        fTrailing = FALSE;
-        cChars = 10;
-        cGlyphs = 10;
-        hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust_RTL, psva, piAdvance, &items[0].a, &piX);
-        ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08x\n", hr);
-        ok(piX == offsets_RTL[iCP],
-           "iCP=%d should return piX=%d not %d\n", iCP, offsets_RTL[iCP], piX);
-    }
-
-    for(iCP = 0; iCP <= 11; iCP++)
-    {
-        fTrailing = TRUE;
-        cChars = 10;
-        cGlyphs = 10;
-        hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust_RTL, psva, piAdvance, &items[0].a, &piX);
-        ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08x\n", hr);
-        ok(piX == offsets_RTL[iCP+1],
-           "iCP=%d should return piX=%d not %d\n", iCP, offsets_RTL[iCP+1], piX);
-    }
+    sa.fRTL = FALSE;
+    test_item_ScriptXtoX(&sa, 10, 10, offsets, pwLogClust, piAdvance);
+    sa.fRTL = TRUE;
+    test_item_ScriptXtoX(&sa, 10, 10, offsets_RTL, pwLogClust_RTL, piAdvance);
 }
 
 static void test_ScriptString(HDC hdc)
