@@ -9842,10 +9842,6 @@ msgstr "&Bring To Front"
 msgid "&About Task Manager"
 msgstr "&About Task Manager"
 
-#: taskmgr.rc:106 taskmgr.rc:118 taskmgr.rc:136 taskmgr.rc:147
-msgid "DUMMY"
-msgstr "DUMMY"
-
 #: taskmgr.rc:120
 msgid "&Switch To"
 msgstr "&Switch To"

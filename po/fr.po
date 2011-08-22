@@ -9959,10 +9959,6 @@ msgstr "Toujours &visible"
 msgid "&About Task Manager"
 msgstr "À &propos du Gestionnaire des tâches"
 
-#: taskmgr.rc:106 taskmgr.rc:118 taskmgr.rc:136 taskmgr.rc:147
-msgid "DUMMY"
-msgstr "DUMMY"
-
 #: taskmgr.rc:120
 msgid "&Switch To"
 msgstr "&Basculer vers"

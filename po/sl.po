@@ -9905,10 +9905,6 @@ msgstr "V &ospredje"
 msgid "&About Task Manager"
 msgstr "&O Upravljalniku opravil"
 
-#: taskmgr.rc:106 taskmgr.rc:118 taskmgr.rc:136 taskmgr.rc:147
-msgid "DUMMY"
-msgstr "PREIZKUSNO"
-
 #: taskmgr.rc:120
 msgid "&Switch To"
 msgstr "&Preklopi na"

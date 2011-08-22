@@ -10512,10 +10512,6 @@ msgstr "Vizi&bil mereu"
 msgid "&About Task Manager"
 msgstr "Despre &Administratorul de sarcini"
 
-#: taskmgr.rc:106 taskmgr.rc:118 taskmgr.rc:136 taskmgr.rc:147
-msgid "DUMMY"
-msgstr "DUMMY"
-
 #: taskmgr.rc:120
 msgid "&Switch To"
 msgstr "C&omută la"

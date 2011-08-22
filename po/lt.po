@@ -9863,10 +9863,6 @@ msgstr "Perkelti į &priekį"
 msgid "&About Task Manager"
 msgstr "&Apie užduočių tvarkytuvę"
 
-#: taskmgr.rc:106 taskmgr.rc:118 taskmgr.rc:136 taskmgr.rc:147
-msgid "DUMMY"
-msgstr "DUMMY"
-
 #: taskmgr.rc:120
 msgid "&Switch To"
 msgstr "Per&jungti į"

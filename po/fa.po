@@ -9472,10 +9472,6 @@ msgstr ""
 msgid "&About Task Manager"
 msgstr "&درباره نت‌پد"
 
-#: taskmgr.rc:106 taskmgr.rc:118 taskmgr.rc:136 taskmgr.rc:147
-msgid "DUMMY"
-msgstr ""
-
 #: taskmgr.rc:120
 msgid "&Switch To"
 msgstr ""

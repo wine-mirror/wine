@@ -102,7 +102,7 @@ END
 
 IDR_APPLICATION_PAGE_CONTEXT1 MENU
 BEGIN
-    POPUP "DUMMY"
+    POPUP ""
     BEGIN
         MENUITEM "&New Task (Run...)",          ID_FILE_NEW
         MENUITEM SEPARATOR
@@ -114,7 +114,7 @@ END
 
 IDR_APPLICATION_PAGE_CONTEXT2 MENU
 BEGIN
-    POPUP "DUMMY"
+    POPUP ""
     BEGIN
         MENUITEM "&Switch To",                  ID_APPLICATION_PAGE_SWITCHTO
         MENUITEM "&Bring To Front",             ID_WINDOWS_BRINGTOFRONT
@@ -132,7 +132,7 @@ END
 
 IDR_TRAY_POPUP MENU
 BEGIN
-    POPUP "DUMMY"
+    POPUP ""
     BEGIN
         MENUITEM "#msgctxt#window#&Restore",    ID_RESTORE
         MENUITEM "&Close",                      ID_FILE_EXIT
@@ -143,7 +143,7 @@ END
 
 IDR_PROCESS_PAGE_CONTEXT MENU
 BEGIN
-    POPUP "DUMMY"
+    POPUP ""
     BEGIN
         MENUITEM "&End Process",                ID_PROCESS_PAGE_ENDPROCESS
         MENUITEM "End Process &Tree",           ID_PROCESS_PAGE_ENDPROCESSTREE

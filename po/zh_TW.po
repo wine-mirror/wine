@@ -9873,10 +9873,6 @@ msgstr "移到最前面(&B)"
 msgid "&About Task Manager"
 msgstr "關於任務管理器(&A)"
 
-#: taskmgr.rc:106 taskmgr.rc:118 taskmgr.rc:136 taskmgr.rc:147
-msgid "DUMMY"
-msgstr "DUMMY"
-
 #: taskmgr.rc:120
 msgid "&Switch To"
 msgstr "轉到(&S)"

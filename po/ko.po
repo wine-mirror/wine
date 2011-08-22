@@ -9798,10 +9798,6 @@ msgstr "앞으로 가져오기(&B)"
 msgid "&About Task Manager"
 msgstr "작업관리자에 관하여(&A)"
 
-#: taskmgr.rc:106 taskmgr.rc:118 taskmgr.rc:136 taskmgr.rc:147
-msgid "DUMMY"
-msgstr "더미"
-
 #: taskmgr.rc:120
 msgid "&Switch To"
 msgstr "전환(&S)"
