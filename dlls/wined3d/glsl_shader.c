@@ -3985,7 +3985,7 @@ static void hardcode_local_constants(const struct wined3d_shader *shader,
 
 /* GL locking is done by the caller */
 static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context,
-        struct wined3d_shader_buffer *buffer, struct wined3d_shader *shader,
+        struct wined3d_shader_buffer *buffer, const struct wined3d_shader *shader,
         const struct ps_compile_args *args, struct ps_np2fixup_info *np2fixup_info)
 {
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
