@@ -486,55 +486,6 @@ static void set_lang(nsIPrefBranch *pref)
     set_string_pref(pref, "intl.accept_languages", langs);
 }
 
-static void set_proxy(nsIPrefBranch *pref)
-{
-    char proxy[512];
-    char * proxy_port;
-    int proxy_port_num;
-    DWORD enabled = 0, res, size, type;
-    HKEY hkey;
-
-    static const WCHAR proxy_keyW[] =
-        {'S','o','f','t','w','a','r','e',
-         '\\','M','i','c','r','o','s','o','f','t',
-         '\\','W','i','n','d','o','w','s',
-         '\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',
-         '\\','I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s',0};
-
-    res = RegOpenKeyW(HKEY_CURRENT_USER, proxy_keyW, &hkey);
-    if(res != ERROR_SUCCESS)
-        return;
-
-    size = sizeof(enabled);
-    res = RegQueryValueExA(hkey, "ProxyEnable", 0, &type, (LPBYTE)&enabled, &size);
-    if(res != ERROR_SUCCESS || type != REG_DWORD || enabled == 0)
-    {
-        RegCloseKey(hkey);
-        return;
-    }
-
-    size = sizeof(proxy);
-    res = RegQueryValueExA(hkey, "ProxyServer", 0, &type, (LPBYTE)proxy, &size);
-    RegCloseKey(hkey);
-    if(res != ERROR_SUCCESS || type != REG_SZ)
-        return;
-
-    proxy_port = strchr(proxy, ':');
-    if (!proxy_port)
-        return;
-
-    *proxy_port = 0;
-    proxy_port_num = atoi(proxy_port + 1);
-    TRACE("Setting proxy to %s, port %d\n", debugstr_a(proxy), proxy_port_num);
-
-    set_string_pref(pref, "network.proxy.http", proxy);
-    set_string_pref(pref, "network.proxy.ssl", proxy);
-
-    set_int_pref(pref, "network.proxy.type", 1);
-    set_int_pref(pref, "network.proxy.http_port", proxy_port_num);
-    set_int_pref(pref, "network.proxy.ssl_port", proxy_port_num);
-}
-
 static void set_preferences(void)
 {
     nsIPrefBranch *pref;
@@ -548,7 +499,6 @@ static void set_preferences(void)
     }
 
     set_lang(pref);
-    set_proxy(pref);
     set_bool_pref(pref, "security.warn_entering_secure", FALSE);
     set_bool_pref(pref, "security.warn_submit_insecure", FALSE);
     set_int_pref(pref, "layout.spellcheckDefault", 0);
