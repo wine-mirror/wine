@@ -100,11 +100,19 @@ static ULONG getRefcount(IUnknown *iface)
     return IUnknown_Release(iface);
 }
 
+static HRESULT WINAPI SurfaceCounter(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *desc, void *context)
+{
+    UINT *num = context;
+    (*num)++;
+    IDirectDrawSurface_Release(surface);
+    return DDENUMRET_OK;
+}
 
 static BOOL CreateDirect3D(void)
 {
     HRESULT rc;
     DDSURFACEDESC2 ddsd;
+    UINT num;
 
     rc = pDirectDrawCreateEx(NULL, (void**)&lpDD,
         &IID_IDirectDraw7, NULL);
@@ -130,6 +138,10 @@ static BOOL CreateDirect3D(void)
     rc = IDirectDraw7_CreateSurface(lpDD, &ddsd, &lpDDS, NULL);
     if (FAILED(rc))
         return FALSE;
+
+    num = 0;
+    IDirectDraw7_EnumSurfaces(lpDD, DDENUMSURFACES_ALL | DDENUMSURFACES_DOESEXIST, NULL, &num, SurfaceCounter);
+    ok(num == 1, "Has %d surfaces, expected 1\n", num);
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);

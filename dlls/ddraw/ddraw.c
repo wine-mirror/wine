@@ -2939,8 +2939,8 @@ static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw, IDirectDrawSurfac
     localParameters.SwapEffect = WINED3DSWAPEFFECT_COPY;
     localParameters.hDeviceWindow = window;
     localParameters.Windowed = !(ddraw->cooperative_level & DDSCL_FULLSCREEN);
-    localParameters.EnableAutoDepthStencil = TRUE;
-    localParameters.AutoDepthStencilFormat = WINED3DFMT_D16_UNORM;
+    localParameters.EnableAutoDepthStencil = FALSE;
+    localParameters.AutoDepthStencilFormat = WINED3DFMT_UNKNOWN;
     localParameters.Flags = 0;
     localParameters.FullScreen_RefreshRateInHz = WINED3DPRESENT_RATE_DEFAULT;
     localParameters.PresentationInterval = WINED3DPRESENT_INTERVAL_DEFAULT;
@@ -5923,50 +5923,8 @@ static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_pa
         UINT width, UINT height, enum wined3d_format_id format, WINED3DMULTISAMPLE_TYPE multisample_type,
         DWORD multisample_quality, BOOL discard, struct wined3d_surface **surface)
 {
-    struct IDirectDrawImpl *ddraw = ddraw_from_device_parent(device_parent);
-    IDirectDrawSurface7 *ddraw7;
-    IDirectDrawSurfaceImpl *ddraw_surface;
-    DDSURFACEDESC2 ddsd;
-    HRESULT hr;
-
-    TRACE("device_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
-            "\tmultisample_quality %u, discard %u, surface %p.\n",
-            device_parent, width, height, format, multisample_type, multisample_quality, discard, surface);
-
-    *surface = NULL;
-
-    /* Create a DirectDraw surface */
-    memset(&ddsd, 0, sizeof(ddsd));
-    ddsd.dwSize = sizeof(ddsd);
-    ddsd.u4.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
-    ddsd.dwFlags = DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-    ddsd.dwHeight = height;
-    ddsd.dwWidth = width;
-    if (format)
-    {
-        PixelFormat_WineD3DtoDD(&ddsd.u4.ddpfPixelFormat, format);
-    }
-    else
-    {
-        ddsd.dwFlags ^= DDSD_PIXELFORMAT;
-    }
-
-    ddraw->depthstencil = TRUE;
-    hr = IDirectDraw7_CreateSurface(&ddraw->IDirectDraw7_iface, &ddsd, &ddraw7, NULL);
-    ddraw->depthstencil = FALSE;
-    if (FAILED(hr))
-    {
-        WARN("Failed to create depth/stencil surface, hr %#x.\n", hr);
-        return hr;
-    }
-
-    ddraw_surface = impl_from_IDirectDrawSurface7(ddraw7);
-    *surface = ddraw_surface->wined3d_surface;
-    wined3d_surface_incref(*surface);
-    IDirectDrawSurface7_Release(&ddraw_surface->IDirectDrawSurface7_iface);
-
-    return D3D_OK;
+    ERR("DirectDraw doesn't have and shoudn't try creating implicit depth buffers.\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT CDECL device_parent_create_volume(struct wined3d_device_parent *device_parent,
