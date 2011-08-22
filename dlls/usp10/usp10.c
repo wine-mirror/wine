@@ -1320,7 +1320,7 @@ HRESULT WINAPI ScriptCPtoX(int iCP,
     }
 
     iPosX = 0.0;
-    for (item=0; item < iCP && item < cGlyphs; item++)
+    for (item=0; item < iCP && item < cChars; item++)
     {
         if (iSpecial == -1 && (iCluster == -1 || (iCluster != -1 && iCluster+clust_size <= item)))
         {
@@ -1330,7 +1330,7 @@ HRESULT WINAPI ScriptCPtoX(int iCP,
             clust_size = 1;
             iCluster = -1;
 
-            for (check = item+1; check < cGlyphs; check++)
+            for (check = item+1; check < cChars; check++)
             {
                 if (pwLogClust[check] == clust)
                 {
@@ -1341,9 +1341,9 @@ HRESULT WINAPI ScriptCPtoX(int iCP,
                 else break;
             }
 
-            if (check >= cGlyphs && !iMaxPos)
+            if (check >= cChars && !iMaxPos)
             {
-                for (check = clust; check < cGlyphs; check++)
+                for (check = clust; check < cChars; check++)
                     special_size += piAdvance[check];
                 iSpecial = item;
                 special_size /= (cChars - item);
@@ -1406,12 +1406,12 @@ HRESULT WINAPI ScriptXtoCP(int iX,
 
         if (iX < 0)
         {
-            *piCP = cGlyphs;
+            *piCP = cChars;
             *piTrailing = 0;
             return S_OK;
         }
 
-        for (item=0; item < cGlyphs; item++)
+        for (item=0; item < cChars; item++)
             if (pwLogClust[item] > max_clust)
             {
                 ERR("We do not handle non reversed clusters properly\n");
@@ -1430,8 +1430,8 @@ HRESULT WINAPI ScriptXtoCP(int iX,
     if (direction > 0)
         item = 0;
     else
-        item = cGlyphs - 1;
-    for (; iPosX <= iX && item < cGlyphs && item >= 0; item+=direction)
+        item = cChars - 1;
+    for (; iPosX <= iX && item < cChars && item >= 0; item+=direction)
     {
         iLastPosX = iPosX;
         if (iSpecial == -1 &&
@@ -1449,7 +1449,7 @@ HRESULT WINAPI ScriptXtoCP(int iX,
             clust_size = 1;
             iCluster = -1;
 
-            for (check = item+direction; check < cGlyphs && check >= 0; check+=direction)
+            for (check = item+direction; check < cChars && check >= 0; check+=direction)
             {
                 if (pwLogClust[check] == clust)
                 {
@@ -1460,9 +1460,9 @@ HRESULT WINAPI ScriptXtoCP(int iX,
                 else break;
             }
 
-            if (check >= cGlyphs && direction > 0)
+            if (check >= cChars && direction > 0)
             {
-                for (check = clust; check < cGlyphs; check++)
+                for (check = clust; check < cChars; check++)
                     special_size += piAdvance[check];
                 iSpecial = item;
                 special_size /= (cChars - item);
@@ -1481,7 +1481,7 @@ HRESULT WINAPI ScriptXtoCP(int iX,
     {
         if (iPosX > iX)
             item--;
-        if (item < cGlyphs && ((iPosX - iLastPosX) / 2.0) + iX > iPosX)
+        if (item < cChars && ((iPosX - iLastPosX) / 2.0) + iX > iPosX)
             *piTrailing = 1;
         else
             *piTrailing = 0;
