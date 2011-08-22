@@ -999,28 +999,64 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
     return DI_OK;
 }
 
-static HRESULT WINAPI IDirectInput8AImpl_ConfigureDevices(
-      LPDIRECTINPUT8A iface, LPDICONFIGUREDEVICESCALLBACK lpdiCallback,
-      LPDICONFIGUREDEVICESPARAMSA lpdiCDParams, DWORD dwFlags, LPVOID pvRefData
-)
-{
-      IDirectInputImpl *This = impl_from_IDirectInput8A( iface );
-
-      FIXME("(this=%p,%p,%p,%04x,%p): stub\n", This, lpdiCallback, lpdiCDParams,
-            dwFlags, pvRefData);
-      return 0;
-}
-
 static HRESULT WINAPI IDirectInput8WImpl_ConfigureDevices(
       LPDIRECTINPUT8W iface, LPDICONFIGUREDEVICESCALLBACK lpdiCallback,
       LPDICONFIGUREDEVICESPARAMSW lpdiCDParams, DWORD dwFlags, LPVOID pvRefData
 )
 {
-      IDirectInputImpl *This = impl_from_IDirectInput8W( iface );
+    IDirectInputImpl *This = impl_from_IDirectInput8W(iface);
 
-      FIXME("(this=%p,%p,%p,%04x,%p): stub\n", This, lpdiCallback, lpdiCDParams,
-            dwFlags, pvRefData);
-      return 0;
+    FIXME("(this=%p,%p,%p,%04x,%p): stub\n", This, lpdiCallback, lpdiCDParams, dwFlags, pvRefData);
+
+    return DI_OK;
+}
+
+static HRESULT WINAPI IDirectInput8AImpl_ConfigureDevices(
+      LPDIRECTINPUT8A iface, LPDICONFIGUREDEVICESCALLBACK lpdiCallback,
+      LPDICONFIGUREDEVICESPARAMSA lpdiCDParams, DWORD dwFlags, LPVOID pvRefData
+)
+{
+    IDirectInputImpl *This = impl_from_IDirectInput8A(iface);
+    DIACTIONFORMATW diafW;
+    DICONFIGUREDEVICESPARAMSW diCDParamsW;
+    HRESULT hr;
+    int i;
+
+     FIXME("(this=%p,%p,%p,%04x,%p): stub\n", This, lpdiCallback, lpdiCDParams, dwFlags, pvRefData);
+
+    /* Copy parameters */
+    diCDParamsW.dwSize = sizeof(DICONFIGUREDEVICESPARAMSW);
+    diCDParamsW.dwcFormats = lpdiCDParams->dwcFormats;
+    diCDParamsW.lprgFormats = &diafW;
+    diCDParamsW.hwnd = lpdiCDParams->hwnd;
+
+    diafW.rgoAction = HeapAlloc(GetProcessHeap(), 0, sizeof(DIACTIONW)*lpdiCDParams->lprgFormats->dwNumActions);
+    _copy_diactionformatAtoW(&diafW, lpdiCDParams->lprgFormats);
+
+    /* Copy action names */
+    for (i=0; i < diafW.dwNumActions; i++)
+    {
+        const char* from = lpdiCDParams->lprgFormats->rgoAction[i].u.lptszActionName;
+        int len = MultiByteToWideChar(CP_ACP, 0, from , -1, NULL , 0);
+        WCHAR *to = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*len);
+
+        MultiByteToWideChar(CP_ACP, 0, from , -1, to , len);
+        diafW.rgoAction[i].u.lptszActionName = to;
+    }
+
+    hr = IDirectInput8WImpl_ConfigureDevices(&This->IDirectInput8W_iface, lpdiCallback, &diCDParamsW, dwFlags, pvRefData);
+
+    /* Copy back configuration */
+    if (SUCCEEDED(hr))
+        _copy_diactionformatWtoA(lpdiCDParams->lprgFormats, &diafW);
+
+    /* Free memory */
+    for (i=0; i < diafW.dwNumActions; i++)
+        HeapFree(GetProcessHeap(), 0, (void*) diafW.rgoAction[i].u.lptszActionName);
+
+    HeapFree(GetProcessHeap(), 0, diafW.rgoAction);
+
+    return hr;
 }
 
 static const IDirectInput7AVtbl ddi7avt = {
