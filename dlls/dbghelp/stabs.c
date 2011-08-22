@@ -583,7 +583,7 @@ static int stabs_pts_read_range(struct ParseTypedefData* ptd, const char* typena
 static inline int stabs_pts_read_method_info(struct ParseTypedefData* ptd)
 {
     struct symt*        dt;
-    char*               tmp;
+    const char*         tmp;
     char                mthd;
 
     do
@@ -740,7 +740,7 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
             break;
         case ':':
             {
-                char* tmp;
+                const char* tmp;
                 /* method parameters... terminated by ';' */
                 PTS_ABORTIF(ptd, !(tmp = strchr(ptd->ptr, ';')));
                 ptd->ptr = tmp + 1;
