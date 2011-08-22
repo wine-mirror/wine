@@ -5762,8 +5762,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     wined3d_stateblock_decref(device->updateStateBlock);
     wined3d_stateblock_decref(device->stateBlock);
 
-    delete_opengl_contexts(device, swapchain);
-
     if (present_parameters->Windowed)
     {
         mode.Width = swapchain->orig_width;
@@ -5818,6 +5816,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
             }
         }
     }
+
+    delete_opengl_contexts(device, swapchain);
 
     if (!present_parameters->Windowed != !swapchain->presentParms.Windowed
             || DisplayModeChanged)
