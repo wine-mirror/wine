@@ -1686,9 +1686,9 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
                 TRACE("Using FBO blit.\n");
 
                 surface_blt_fbo(device, filter,
-                        src_surface, SFLAG_INDRAWABLE, &src_rect,
-                        dst_surface, SFLAG_INDRAWABLE, &dst_rect);
-                surface_modify_location(dst_surface, SFLAG_INDRAWABLE, TRUE);
+                        src_surface, src_surface->draw_binding, &src_rect,
+                        dst_surface, dst_surface->draw_binding, &dst_rect);
+                surface_modify_location(dst_surface, dst_surface->draw_binding, TRUE);
                 return WINED3D_OK;
             }
 
