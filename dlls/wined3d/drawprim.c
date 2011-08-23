@@ -65,7 +65,7 @@ static void drawStridedFast(const struct wined3d_gl_info *gl_info, GLenum primit
  */
 
 /* GL locking is done by the caller */
-static void drawStridedSlow(struct wined3d_device *device, const struct wined3d_context *context,
+static void drawStridedSlow(const struct wined3d_device *device, const struct wined3d_context *context,
         const struct wined3d_stream_info *si, UINT NumVertexes, GLenum glPrimType,
         const void *idxData, UINT idxSize, UINT startIdx)
 {
