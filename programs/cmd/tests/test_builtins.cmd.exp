@@ -52,13 +52,13 @@ word@space@@space@
 word
 
 @pwd@>echo@tab@word@space@
-@todo_wine@word
+word
 
 @pwd@>echo@tab@word@space@@tab@@space@
-@todo_wine@word@space@@tab@
+word@space@@tab@
 
 @pwd@>echo@tab@word@tab@@space@@space@
-@todo_wine@word@tab@@space@
+word@tab@@space@
 
 @todo_wine@@pwd@>echo word@space@
 word
@@ -70,7 +70,7 @@ word
 @space@@tab@word
 
 @pwd@>echo@tab@@tab@word@space@
-@todo_wine@@tab@word
+@tab@word
 ------------ Testing 'echo' [OFF] --------------
 word
 'singlequotedword'
@@ -88,13 +88,13 @@ word
 word@space@
 word@space@@space@
 word
-@todo_wine@word
-@todo_wine@word@space@@tab@
-@todo_wine@word@tab@@space@
+word
+word@space@@tab@
+word@tab@@space@
 word
 @tab@word
 @space@@tab@word
-@todo_wine@@tab@word
+@tab@word
 ------------ Testing redirection operators --------------
 ...stdout redirection
 foo

@@ -864,7 +864,7 @@ void WCMD_echo (const WCHAR *command) {
   int count;
   const WCHAR *origcommand = command;
 
-  if (command[0]==' ' || command[0]=='.' || command[0]==':')
+  if (command[0]==' ' || command[0]=='\t' || command[0]=='.' || command[0]==':')
     command++;
   count = strlenW(command);
   if (count == 0 && origcommand[0]!='.' && origcommand[0]!=':') {
