@@ -47,5 +47,6 @@ WScript.Interactive = false;
 ok(WScript.Interactive === false, "WScript.Interactive = " + WScript.Interactive);
 WScript.Interactive = true;
 ok(WScript.Interactive === true, "WScript.Interactive = " + WScript.Interactive);
+ok(WScript.Application === WScript, "WScript.Application = " + WScript.Application);
 
 winetest.reportSuccess();

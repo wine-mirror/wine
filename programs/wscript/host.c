@@ -110,8 +110,10 @@ static HRESULT WINAPI Host_get_Name(IHost *iface, BSTR *out_Name)
 
 static HRESULT WINAPI Host_get_Application(IHost *iface, IDispatch **out_Dispatch)
 {
-    WINE_FIXME("(%p)\n", out_Dispatch);
-    return E_NOTIMPL;
+    WINE_TRACE("(%p)\n", out_Dispatch);
+
+    *out_Dispatch = (IDispatch*)&host_obj;
+    return S_OK;
 }
 
 static HRESULT WINAPI Host_get_FullName(IHost *iface, BSTR *out_Path)
