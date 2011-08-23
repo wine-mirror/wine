@@ -8746,7 +8746,7 @@ msgstr "%s      %s      %s      Ressources ouvertes : %lu\n"
 
 #: net.rc:45
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: net.rc:46
 msgid "Paused"
@@ -8754,15 +8754,15 @@ msgstr "En pause"
 
 #: net.rc:47
 msgid "Disconnected"
-msgstr "Déconnecté\n"
+msgstr "Déconnecté"
 
 #: net.rc:48
 msgid "A network error occurred"
-msgstr "Une erreur réseau s'est produite."
+msgstr "Une erreur réseau s'est produite"
 
 #: net.rc:49
 msgid "Connection is being made"
-msgstr "Connexion en cours\n"
+msgstr "Connexion en cours"
 
 #: net.rc:50
 msgid "Reconnecting"
@@ -9059,11 +9059,11 @@ msgstr "OleView"
 
 #: oleview.rc:98
 msgid "ITypeLib viewer"
-msgstr "Visionneur d'ITypeLib"
+msgstr "Visionneuse d'ITypeLib"
 
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
-msgstr "OleView - Visionneur d'objets OLE/COM"
+msgstr "OleView - Visionneuse d'objets OLE/COM"
 
 #: oleview.rc:97
 msgid "version 1.0"
@@ -9114,7 +9114,7 @@ msgstr ""
 
 #: oleview.rc:112
 msgid "Display the viewer for the selected item"
-msgstr "Afficher le visionneur pour l'élément sélectionné"
+msgstr "Afficher la visionneuse pour l'élément sélectionné"
 
 #: oleview.rc:117
 msgid "Toggle between expert and novice display mode"
