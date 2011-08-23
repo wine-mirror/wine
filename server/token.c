@@ -1295,19 +1295,30 @@ DECL_HANDLER(get_token_groups)
                                                  &token_ops )))
     {
         size_t size_needed = sizeof(struct token_groups);
+        size_t sid_size = 0;
         unsigned int group_count = 0;
         const struct group *group;
 
         LIST_FOR_EACH_ENTRY( group, &token->groups, const struct group, entry )
         {
             group_count++;
-            size_needed += FIELD_OFFSET(SID, SubAuthority[group->sid.SubAuthorityCount]);
+            sid_size += FIELD_OFFSET(SID, SubAuthority[group->sid.SubAuthorityCount]);
         }
+        size_needed += sid_size;
+        /* attributes size */
         size_needed += sizeof(unsigned int) * group_count;
 
-        reply->user_len = size_needed;
+        /* reply buffer contains size_needed bytes formatted as:
 
-        if (size_needed <= get_reply_max_size())
+           unsigned int count;
+           unsigned int attrib[count];
+           char sid_data[];
+
+           user_len includes extra data needed for TOKEN_GROUPS representation,
+           required caller buffer size calculated here to avoid extra server call */
+        reply->user_len = FIELD_OFFSET( TOKEN_GROUPS, Groups[group_count] ) + sid_size;
+
+        if (reply->user_len <= get_reply_max_size())
         {
             struct token_groups *tg = set_reply_data_size( size_needed );
             if (tg)

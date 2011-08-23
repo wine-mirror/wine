@@ -1442,6 +1442,24 @@ static void test_token_attr(void)
     ok(ret, "OpenProcessToken failed with error %d\n", GetLastError());
 
     /* groups */
+    /* insufficient buffer length */
+    SetLastError(0xdeadbeef);
+    Size2 = 0;
+    ret = GetTokenInformation(Token, TokenGroups, NULL, 0, &Size2);
+    ok(Size2 > 1, "got %d\n", Size2);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+        "%d with error %d\n", ret, GetLastError());
+    Size2 -= 1;
+    Groups = HeapAlloc(GetProcessHeap(), 0, Size2);
+    memset(Groups, 0xcc, Size2);
+    Size = 0;
+    ret = GetTokenInformation(Token, TokenGroups, Groups, Size2, &Size);
+    ok(Size > 1, "got %d\n", Size);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+        "%d with error %d\n", ret, GetLastError());
+    ok(*((BYTE*)Groups) == 0xcc, "buffer altered\n");
+    HeapFree(GetProcessHeap(), 0, Groups);
+
     SetLastError(0xdeadbeef);
     ret = GetTokenInformation(Token, TokenGroups, NULL, 0, &Size);
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
