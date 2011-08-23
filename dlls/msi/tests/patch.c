@@ -286,7 +286,7 @@ static void set_suminfo( const char *filename )
     r = MsiSummaryInfoSetProperty( hsi, 7, VT_LPSTR, 0, NULL, ";1033" );
     ok( r == ERROR_SUCCESS, "failed to set summary info %u\n", r );
 
-    r = MsiSummaryInfoSetProperty( hsi, 9, VT_LPSTR, 0, NULL, "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}" );
+    r = MsiSummaryInfoSetProperty( hsi, 9, VT_LPSTR, 0, NULL, "{E528DDD6-4801-4BEC-BBB6-C5EE0FD097E9}" );
     ok( r == ERROR_SUCCESS, "failed to set summary info %u\n", r );
 
     r = MsiSummaryInfoSetProperty( hsi, 14, VT_I4, 100, NULL, NULL );
