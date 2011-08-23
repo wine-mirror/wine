@@ -54,6 +54,7 @@ UINT msi_locate_product(LPCWSTR szProduct, MSIINSTALLCONTEXT *context)
     HKEY hkey = NULL;
 
     *context = MSIINSTALLCONTEXT_NONE;
+    if (!szProduct) return ERROR_UNKNOWN_PRODUCT;
 
     if (MSIREG_OpenProductKey(szProduct, NULL, MSIINSTALLCONTEXT_USERMANAGED,
                               &hkey, FALSE) == ERROR_SUCCESS)

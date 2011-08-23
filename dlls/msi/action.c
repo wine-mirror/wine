@@ -488,14 +488,15 @@ static BOOL needs_ui_sequence(MSIPACKAGE *package)
 
 UINT msi_set_context(MSIPACKAGE *package)
 {
-    int num;
-
-    package->Context = MSIINSTALLCONTEXT_USERUNMANAGED;
-
-    num = msi_get_property_int(package->db, szAllUsers, 0);
-    if (num == 1 || num == 2)
-        package->Context = MSIINSTALLCONTEXT_MACHINE;
-
+    UINT r = msi_locate_product( package->ProductCode, &package->Context );
+    if (r != ERROR_SUCCESS)
+    {
+        int num = msi_get_property_int( package->db, szAllUsers, 0 );
+        if (num == 1 || num == 2)
+            package->Context = MSIINSTALLCONTEXT_MACHINE;
+        else
+            package->Context = MSIINSTALLCONTEXT_USERUNMANAGED;
+    }
     return ERROR_SUCCESS;
 }
 
