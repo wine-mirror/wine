@@ -5880,6 +5880,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     stateblock_init_default_state(device->stateBlock);
 
     swapchain_update_render_to_fbo(swapchain);
+    swapchain_update_draw_bindings(swapchain);
 
     hr = create_primary_opengl_context(device, swapchain);
     wined3d_swapchain_decref(swapchain);

@@ -518,6 +518,7 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
         surface_load_location(swapchain->back_buffers[0], SFLAG_INTEXTURE, NULL);
         surface_modify_location(swapchain->back_buffers[0], SFLAG_INDRAWABLE, FALSE);
         swapchain->render_to_fbo = TRUE;
+        swapchain_update_draw_bindings(swapchain);
     }
 
     if (swapchain->render_to_fbo)
@@ -1244,4 +1245,16 @@ HDC swapchain_get_backup_dc(struct wined3d_swapchain *swapchain)
     }
 
     return swapchain->backup_dc;
+}
+
+void swapchain_update_draw_bindings(struct wined3d_swapchain *swapchain)
+{
+    UINT i;
+
+    surface_update_draw_binding(swapchain->front_buffer);
+
+    for (i = 0; i < swapchain->presentParms.BackBufferCount; ++i)
+    {
+        surface_update_draw_binding(swapchain->back_buffers[i]);
+    }
 }

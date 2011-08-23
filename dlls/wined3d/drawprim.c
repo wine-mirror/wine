@@ -591,8 +591,8 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
             struct wined3d_surface *target = device->fb.render_targets[i];
             if (target)
             {
-                surface_load_location(target, SFLAG_INDRAWABLE, NULL);
-                surface_modify_location(target, SFLAG_INDRAWABLE, TRUE);
+                surface_load_location(target, target->draw_binding, NULL);
+                surface_modify_location(target, target->draw_binding, TRUE);
             }
         }
     }
@@ -638,7 +638,7 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
             if (state->render_states[WINED3DRS_ZWRITEENABLE])
             {
                 surface_modify_ds_location(ds, location, ds->ds_current_size.cx, ds->ds_current_size.cy);
-                surface_modify_location(ds, SFLAG_INDRAWABLE, TRUE);
+                surface_modify_location(ds, ds->draw_binding, TRUE);
             }
         }
     }

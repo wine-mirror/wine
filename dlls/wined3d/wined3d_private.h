@@ -1996,6 +1996,7 @@ struct wined3d_surface
     struct wined3d_subresource_container container;
     struct wined3d_palette *palette; /* D3D7 style palette handling */
     PALETTEENTRY              *palette9; /* D3D8/9 style palette handling */
+    DWORD draw_binding;
 
     DWORD flags;
 
@@ -2080,6 +2081,7 @@ void surface_set_container(struct wined3d_surface *surface,
 void surface_set_texture_name(struct wined3d_surface *surface, GLuint name, BOOL srgb_name) DECLSPEC_HIDDEN;
 void surface_set_texture_target(struct wined3d_surface *surface, GLenum target) DECLSPEC_HIDDEN;
 void surface_translate_drawable_coords(const struct wined3d_surface *surface, HWND window, RECT *rect) DECLSPEC_HIDDEN;
+void surface_update_draw_binding(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 void surface_upload_data(const struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
         const struct wined3d_format *format, const RECT *src_rect, UINT src_w, const POINT *dst_point,
         BOOL srgb, const struct wined3d_bo_address *data) DECLSPEC_HIDDEN;
@@ -2442,6 +2444,7 @@ void x11_copy_to_screen(const struct wined3d_swapchain *swapchain, const RECT *r
 struct wined3d_context *swapchain_get_context(struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 void swapchain_destroy_contexts(struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 HDC swapchain_get_backup_dc(struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
+void swapchain_update_draw_bindings(struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 void swapchain_update_render_to_fbo(struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 
 #define DEFAULT_REFRESH_RATE 0

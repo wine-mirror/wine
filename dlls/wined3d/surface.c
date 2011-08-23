@@ -100,6 +100,14 @@ static void surface_cleanup(struct wined3d_surface *surface)
     resource_cleanup(&surface->resource);
 }
 
+void surface_update_draw_binding(struct wined3d_surface *surface)
+{
+    if (!surface_is_offscreen(surface) || wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+        surface->draw_binding = SFLAG_INDRAWABLE;
+    else
+        surface->draw_binding = SFLAG_INTEXTURE;
+}
+
 void surface_set_container(struct wined3d_surface *surface, enum wined3d_container_type type, void *container)
 {
     TRACE("surface %p, container %p.\n", surface, container);
@@ -131,6 +139,7 @@ void surface_set_container(struct wined3d_surface *surface, enum wined3d_contain
 
     surface->container.type = type;
     surface->container.u.base = container;
+    surface_update_draw_binding(surface);
 }
 
 struct blt_info
