@@ -47,6 +47,7 @@
 #include <alsa/asoundlib.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(alsa);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
@@ -540,8 +541,11 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(const char *key, IMMDevice *dev,
         TRACE("Opening PCM device \"%s\" with handle_underrun: %d\n", key, err);
         snd_config_delete(lconf);
         /* Pulse <= 2010 returns EINVAL, it does not know handle_underrun. */
-        if(err == -EINVAL)
+        if(err == -EINVAL){
+            ERR_(winediag)("PulseAudio \"%s\" %d without handle_underrun. Audio may hang."
+                           " Please upgrade to alsa_plugins >= 1.0.24\n", key, err);
             handle_underrun = 0;
+        }
     }else
         err = -EINVAL;
     if(err == -EINVAL){
