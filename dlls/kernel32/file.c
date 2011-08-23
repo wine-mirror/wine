@@ -1361,7 +1361,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
     if (attributes & FILE_FLAG_NO_BUFFERING)
         options |= FILE_NO_INTERMEDIATE_BUFFERING;
     if (!(attributes & FILE_FLAG_OVERLAPPED))
-        options |= FILE_SYNCHRONOUS_IO_ALERT;
+        options |= FILE_SYNCHRONOUS_IO_NONALERT;
     if (attributes & FILE_FLAG_RANDOM_ACCESS)
         options |= FILE_RANDOM_ACCESS;
     attributes &= FILE_ATTRIBUTE_VALID_FLAGS;

@@ -38,6 +38,7 @@ static BOOL (WINAPI *pReplaceFileA)(LPCSTR, LPCSTR, LPCSTR, DWORD, LPVOID, LPVOI
 static BOOL (WINAPI *pReplaceFileW)(LPCWSTR, LPCWSTR, LPCWSTR, DWORD, LPVOID, LPVOID);
 static UINT (WINAPI *pGetSystemWindowsDirectoryA)(LPSTR, UINT);
 static BOOL (WINAPI *pGetVolumeNameForVolumeMountPointA)(LPCSTR, LPSTR, DWORD);
+static DWORD WINAPI (*pQueueUserAPC)(PAPCFUNC pfnAPC, HANDLE hThread, ULONG_PTR dwData);
 
 /* keep filename and filenameW the same */
 static const char filename[] = "testfile.xxx";
@@ -71,6 +72,7 @@ static void InitFunctionPointers(void)
     pReplaceFileW=(void*)GetProcAddress(hkernel32, "ReplaceFileW");
     pGetSystemWindowsDirectoryA=(void*)GetProcAddress(hkernel32, "GetSystemWindowsDirectoryA");
     pGetVolumeNameForVolumeMountPointA = (void *) GetProcAddress(hkernel32, "GetVolumeNameForVolumeMountPointA");
+    pQueueUserAPC = (void *) GetProcAddress(hkernel32, "QueueUserAPC");
 }
 
 static void test__hread( void )
@@ -2362,6 +2364,12 @@ static void test_async_file_errors(void)
     HeapFree(GetProcessHeap(), 0, lpBuffer);
 }
 
+static BOOL user_apc_ran;
+static void CALLBACK user_apc(ULONG_PTR param)
+{
+    user_apc_ran = TRUE;
+}
+
 static void test_read_write(void)
 {
     DWORD bytes, ret, old_prot;
@@ -2381,6 +2389,12 @@ static void test_read_write(void)
     hFile = CreateFileA(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
                         CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS, 0);
     ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA: error %d\n", GetLastError());
+
+    user_apc_ran = FALSE;
+    if (pQueueUserAPC) {
+        trace("Queueing an user APC\n"); /* verify the file is non alerable */
+        ok(pQueueUserAPC(&user_apc, GetCurrentThread(), 0), "QueueUserAPC failed: %d\n", GetLastError());
+    }
 
     SetLastError(12345678);
     bytes = 12345678;
@@ -2417,6 +2431,10 @@ static void test_read_write(void)
 		GetLastError() == ERROR_INVALID_PARAMETER), /* Win9x */
 	"ret = %d, error %d\n", ret, GetLastError());
     ok(!bytes, "bytes = %d\n", bytes);
+
+    ok(user_apc_ran == FALSE, "UserAPC ran, file using alertable io mode\n");
+    if (pQueueUserAPC)
+        SleepEx(0, TRUE); /* get rid of apc */
 
     /* test passing protected memory as buffer */
 
