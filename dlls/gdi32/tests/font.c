@@ -3733,6 +3733,28 @@ static void test_EnumFonts(void)
     DeleteDC(hdc);
 }
 
+static INT CALLBACK is_font_installed_fullname_proc(const LOGFONT *lf, const TEXTMETRIC *ntm, DWORD type, LPARAM lParam)
+{
+    const ENUMLOGFONT *elf = (const ENUMLOGFONT *)lf;
+    const char *fullname = (const char *)lParam;
+
+    if (!strcmp((const char *)elf->elfFullName, fullname)) return 0;
+
+    return 1;
+}
+
+static BOOL is_font_installed_fullname(const char *family, const char *fullname)
+{
+    HDC hdc = GetDC(0);
+    BOOL ret = FALSE;
+
+    if(!EnumFontFamiliesA(hdc, family, is_font_installed_fullname_proc, (LPARAM)fullname))
+        ret = TRUE;
+
+    ReleaseDC(0, hdc);
+    return ret;
+}
+
 static void test_fullname(void)
 {
     static const char *TestName[] = {"Lucida Sans Demibold Roman", "Lucida Sans Italic"};
@@ -3741,13 +3763,6 @@ static void test_fullname(void)
     LOGFONTA lf;
     HDC hdc;
     int i;
-
-    /* Lucida Sans comes with XP SP2 or later */
-    if (!is_truetype_font_installed("Lucida Sans"))
-    {
-        skip("Lucida Sans is not installed\n");
-        return;
-    }
 
     hdc = CreateCompatibleDC(0);
     ok(hdc != NULL, "CreateCompatibleDC failed\n");
@@ -3763,6 +3778,12 @@ static void test_fullname(void)
 
     for (i = 0; i < sizeof(TestName) / sizeof(TestName[0]); i++)
     {
+        if (!is_font_installed_fullname("Lucida Sans", TestName[i]))
+        {
+            skip("%s is not installed\n", TestName[i]);
+            continue;
+        }
+
         lstrcpyA(lf.lfFaceName, TestName[i]);
         hfont = CreateFontIndirectA(&lf);
         ok(hfont != 0, "CreateFontIndirectA failed\n");
