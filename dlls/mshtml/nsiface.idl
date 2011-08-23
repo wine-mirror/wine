@@ -110,7 +110,6 @@ typedef nsISupports nsIWidget;
 typedef nsISupports nsIDOMBarProp;
 typedef nsISupports nsIPrompt;
 typedef nsISupports nsIAuthPrompt;
-typedef nsISupports nsIDOMNamedNodeMap;
 typedef nsISupports nsIDOMDocumentType;
 typedef nsISupports nsIDOMDOMImplementation;
 typedef nsISupports nsIDOMCDATASection;
@@ -643,6 +642,23 @@ interface nsIDOM3Node : nsISupports
     nsresult GetFeature(const nsAString *feature, const nsAString *version, nsISupports **_retval);
     nsresult SetUserData(const nsAString *key, nsIVariant *data, nsIDOMUserDataHandler *handler, nsIVariant **_retval);
     nsresult GetUserData(const nsAString *key, nsIVariant **_retval);
+}
+
+[
+    object,
+    uuid(a6cf907b-15b3-11d2-932e-00805f8add32),
+    local
+]
+interface nsIDOMNamedNodeMap : nsISupports
+{
+    nsresult GetNamedItem(const nsAString *name, nsIDOMNode **_retval);
+    nsresult SetNamedItem(nsIDOMNode *arg, nsIDOMNode **_retval);
+    nsresult RemoveNamedItem(const nsAString *name, nsIDOMNode **_retval);
+    nsresult Item(PRUint32 index, nsIDOMNode **_retval);
+    nsresult GetLength(PRUint32 *aLength);
+    nsresult GetNamedItemNS(const nsAString *namespaceURI, const nsAString *localName, nsIDOMNode **_retval);
+    nsresult SetNamedItemNS(nsIDOMNode *arg, nsIDOMNode **_retval);
+    nsresult RemoveNamedItemNS(const nsAString *namespaceURI, const nsAString *localName, nsIDOMNode **_retval);
 }
 
 [
