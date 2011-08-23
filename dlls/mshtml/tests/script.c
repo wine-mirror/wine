@@ -1951,6 +1951,9 @@ static void test_script_run(void)
     SysFreeString(tmp);
     ok(hres == S_OK, "GetDispID(document) failed: %08x\n", hres);
 
+    hres = IDispatchEx_DeleteMemberByDispID(document, id);
+    ok(hres == E_NOTIMPL, "DeleteMemberByDispID failed = %08x\n", hres);
+
     VariantInit(&var);
     memset(&dp, 0, sizeof(dp));
     memset(&ei, 0, sizeof(ei));

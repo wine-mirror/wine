@@ -1009,7 +1009,10 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bst
 static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
 {
     DispatchEx *This = impl_from_IDispatchEx(iface);
-    FIXME("(%p)->(%x)\n", This, id);
+
+    TRACE("(%p)->(%x)\n", This, id);
+
+    /* Not implemented by IE */
     return E_NOTIMPL;
 }
 
