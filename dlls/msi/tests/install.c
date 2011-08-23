@@ -5980,6 +5980,7 @@ static void test_icon_table(void)
 
     res = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(res == ERROR_SUCCESS, "Failed to uninstall per-user\n");
+    ok(!file_exists(path), "Per-user icon file not removed (%s)\n", path);
 
     /* system-wide */
     res = MsiInstallProductA(msifile, "PUBLISH_PRODUCT=1 ALLUSERS=1");
@@ -5994,6 +5995,7 @@ static void test_icon_table(void)
 
     res = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(res == ERROR_SUCCESS, "Failed to uninstall system-wide\n");
+    ok(!file_exists(path), "System-wide icon file not removed (%s)\n", path);
 
     delete_pfmsitest_files();
     DeleteFile(msifile);

@@ -4896,6 +4896,45 @@ static UINT ACTION_InstallExecute(MSIPACKAGE *package)
     return execute_script(package,INSTALL_SCRIPT);
 }
 
+static UINT ITERATE_UnpublishIcon( MSIRECORD *row, LPVOID param )
+{
+    MSIPACKAGE *package = param;
+    const WCHAR *icon = MSI_RecordGetString( row, 1 );
+    WCHAR *p, *icon_path;
+
+    if (!icon) return ERROR_SUCCESS;
+    if ((icon_path = msi_build_icon_path( package, icon )))
+    {
+        TRACE("removing icon file %s\n", debugstr_w(icon_path));
+        DeleteFileW( icon_path );
+        if ((p = strrchrW( icon_path, '\\' )))
+        {
+            *p = 0;
+            RemoveDirectoryW( icon_path );
+        }
+        msi_free( icon_path );
+    }
+    return ERROR_SUCCESS;
+}
+
+static UINT msi_unpublish_icons( MSIPACKAGE *package )
+{
+    static const WCHAR query[]= {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`','I','c','o','n','`',0};
+    MSIQUERY *view;
+    UINT r;
+
+    r = MSI_DatabaseOpenViewW( package->db, query, &view );
+    if (r == ERROR_SUCCESS)
+    {
+        r = MSI_IterateRecords( view, NULL, ITERATE_UnpublishIcon, package );
+        msiobj_release( &view->hdr );
+        if (r != ERROR_SUCCESS)
+            return r;
+    }
+    return ERROR_SUCCESS;
+}
+
 static UINT msi_unpublish_product( MSIPACKAGE *package, const WCHAR *remove )
 {
     static const WCHAR szUpgradeCode[] = {'U','p','g','r','a','d','e','C','o','d','e',0};
@@ -4948,6 +4987,8 @@ static UINT msi_unpublish_product( MSIPACKAGE *package, const WCHAR *remove )
     }
     TRACE("removing local package %s\n", debugstr_w(package->localfile));
     package->delete_on_close = TRUE;
+
+    msi_unpublish_icons( package );
     return ERROR_SUCCESS;
 }
 
