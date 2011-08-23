@@ -4149,6 +4149,58 @@ methods:
 }
 
 /*****************************************************************************
+ *    IHTMLAttributeCollection interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f4c3-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLAttributeCollection : IDispatch
+{
+    [propget, id(DISPID_IHTMLATTRIBUTECOLLECTION_LENGTH)]
+    HRESULT length(
+            [retval, out] long *p);
+
+    [propget, id(DISPID_IHTMLATTRIBUTECOLLECTION__NEWENUM), hidden, restricted]
+    HRESULT _newEnum(
+            [retval, out] IUnknown **p);
+
+    [id(DISPID_IHTMLATTRIBUTECOLLECTION_ITEM)]
+    HRESULT item(
+            [optional, in] VARIANT *name,
+            [retval, out] IDispatch **pdisp);
+}
+
+/*****************************************************************************
+ *    IHTMLAttributeCollection2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f80a-98b5-11cf-bb82-00aa00bdce0b)
+    ]
+interface IHTMLAttributeCollection2 : IDispatch
+{
+    [id(DISPID_IHTMLATTRIBUTECOLLECTION2_GETNAMEDITEM)]
+    HRESULT getNamedItem(
+            [in] BSTR bstrName,
+            [retval, out] IHTMLDOMAttribute **newretNode);
+
+    [id(DISPID_IHTMLATTRIBUTECOLLECTION2_SETNAMEDITEM)]
+    HRESULT setNamedItem(
+            [in] IHTMLDOMAttribute *ppNode,
+            [retval, out] IHTMLDOMAttribute **newretNode);
+
+    [id(DISPID_IHTMLATTRIBUTECOLLECTION2_REMOVENAMEDITEM)]
+    HRESULT removeNamedItem(
+            [in] BSTR bstrName,
+            [retval, out] IHTMLDOMAttribute **newretNode);
+}
+
+/*****************************************************************************
  *    IHTMLAttributeCollection3 interface
  */
 [
@@ -4181,6 +4233,54 @@ interface IHTMLAttributeCollection3 : IDispatch
 
     [propget, id(DISPID_IHTMLATTRIBUTECOLLECTION3_IE8_LENGTH)]
     HRESULT length([retval, out] long *p);
+}
+
+/*****************************************************************************
+ *    DispHTMLAttributeCollection dispinterface
+ */
+[
+    hidden,
+    uuid(3050f56c-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLAttributeCollection
+{
+properties:
+methods:
+    [propget, id(DISPID_IHTMLATTRIBUTECOLLECTION_LENGTH)]
+    long length();
+
+    [propget, id(DISPID_IHTMLATTRIBUTECOLLECTION__NEWENUM), hidden, restricted]
+    IUnknown *_newEnum();
+
+    [id(DISPID_IHTMLATTRIBUTECOLLECTION_ITEM)]
+    IDispatch *item([optional, in] VARIANT *name);
+
+    [id(DISPID_IHTMLATTRIBUTECOLLECTION2_GETNAMEDITEM)]
+    IHTMLDOMAttribute *getNamedItem([in] BSTR bstrName);
+
+    [id(DISPID_IHTMLATTRIBUTECOLLECTION2_SETNAMEDITEM)]
+    IHTMLDOMAttribute *setNamedItem([in] IHTMLDOMAttribute *ppNode);
+
+    [id(DISPID_IHTMLATTRIBUTECOLLECTION2_REMOVENAMEDITEM)]
+    IHTMLDOMAttribute *removeNamedItem([in] BSTR bstrName);
+
+    [id(DISPID_IHTMLATTRIBUTECOLLECTION3_IE8_GETNAMEDITEM)]
+    IHTMLDOMAttribute *ie8_getNamedItem([in] BSTR bstrName);
+
+    [id(DISPID_IHTMLATTRIBUTECOLLECTION3_IE8_SETNAMEDITEM)]
+    IHTMLDOMAttribute *ie8_setNamedItem([in] IHTMLDOMAttribute *pNodeIn);
+
+    [id(DISPID_IHTMLATTRIBUTECOLLECTION3_IE8_REMOVENAMEDITEM)]
+    IHTMLDOMAttribute *ie8_removeNamedItem([in] BSTR bstrName);
+
+    [id(DISPID_IHTMLATTRIBUTECOLLECTION3_IE8_ITEM)]
+    IHTMLDOMAttribute *ie8_item([in] long index);
+
+    [propget, id(DISPID_IHTMLATTRIBUTECOLLECTION3_IE8_LENGTH)]
+    long ie8_length();
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
+    IDispatch *constructor();
 }
 
 /*****************************************************************************
