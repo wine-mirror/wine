@@ -154,8 +154,10 @@ static HRESULT WINAPI Host_get_Interactive(IHost *iface, VARIANT_BOOL *out_Inter
 
 static HRESULT WINAPI Host_put_Interactive(IHost *iface, VARIANT_BOOL v)
 {
-    WINE_FIXME("(%x)\n", v);
-    return E_NOTIMPL;
+    WINE_TRACE("(%x)\n", v);
+
+    wshInteractive = v;
+    return S_OK;
 }
 
 static HRESULT WINAPI Host_Quit(IHost *iface, int ExitCode)

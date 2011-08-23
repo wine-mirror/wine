@@ -43,5 +43,9 @@ try {
 ok(WScript.Arguments.Count() === 3, "WScript.Arguments.Count() = " + WScript.Arguments.Count());
 ok(WScript.Arguments.length === 3, "WScript.Arguments.length = " + WScript.Arguments.length);
 ok(WScript.Interactive === true, "WScript.Interactive = " + WScript.Interactive);
+WScript.Interactive = false;
+ok(WScript.Interactive === false, "WScript.Interactive = " + WScript.Interactive);
+WScript.Interactive = true;
+ok(WScript.Interactive === true, "WScript.Interactive = " + WScript.Interactive);
 
 winetest.reportSuccess();
