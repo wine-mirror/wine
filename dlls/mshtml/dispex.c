@@ -923,7 +923,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         DWORD idx = id - DISPID_DYNPROP_0;
         dynamic_prop_t *prop;
 
-        if(!This->dynamic_data || This->dynamic_data->prop_cnt <= idx)
+        if(!get_dynamic_data(This) || This->dynamic_data->prop_cnt <= idx)
             return DISP_E_UNKNOWNNAME;
 
         prop = This->dynamic_data->props+idx;
@@ -1039,7 +1039,7 @@ static HRESULT WINAPI DispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BS
     if(is_dynamic_dispid(id)) {
         DWORD idx = id - DISPID_DYNPROP_0;
 
-        if(!This->dynamic_data || This->dynamic_data->prop_cnt <= idx)
+        if(!get_dynamic_data(This) || This->dynamic_data->prop_cnt <= idx)
             return DISP_E_UNKNOWNNAME;
 
         *pbstrName = SysAllocString(This->dynamic_data->props[idx].name);
@@ -1075,7 +1075,7 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex,
     if(is_dynamic_dispid(id)) {
         DWORD idx = id - DISPID_DYNPROP_0;
 
-        if(!This->dynamic_data || This->dynamic_data->prop_cnt <= idx)
+        if(!get_dynamic_data(This) || This->dynamic_data->prop_cnt <= idx)
             return DISP_E_UNKNOWNNAME;
 
         while(++idx < This->dynamic_data->prop_cnt && This->dynamic_data->props[idx].flags & DYNPROP_DELETED);
@@ -1111,7 +1111,7 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex,
         func++;
     }
 
-    if(This->dynamic_data && This->dynamic_data->prop_cnt) {
+    if(get_dynamic_data(This) && This->dynamic_data->prop_cnt) {
         *pid = DISPID_DYNPROP_0;
         return S_OK;
     }
