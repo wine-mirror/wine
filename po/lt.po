@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-08-01 21:57+0300\n"
+"PO-Revision-Date: 2011-08-23 21:32+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -8765,13 +8765,12 @@ msgstr ""
 "Prašome naudoti kitą tekstų rengyklę."
 
 #: notepad.rc:81
-#, fuzzy
 msgid ""
 "You did not enter any text.\n"
 "Please type something and try again."
 msgstr ""
 "Jūs neįvedėte jokio teksto.\n"
-"Prašome ką nors įvesti ir mėginti dar kartą"
+"Prašome ką nors įvesti ir mėginti dar kartą."
 
 #: notepad.rc:83
 msgid ""
@@ -8861,21 +8860,19 @@ msgstr "&CoCreateInstance žymos bitai"
 
 #: oleview.rc:41
 msgid "&In-process server"
-msgstr ""
+msgstr "&Serveris procese"
 
 #: oleview.rc:42
 msgid "In-process &handler"
-msgstr ""
+msgstr "&Doroklė procese"
 
 #: oleview.rc:43
-#, fuzzy
 msgid "&Local server"
-msgstr "Vietinė klaida"
+msgstr "&Vietinis serveris"
 
 #: oleview.rc:44
-#, fuzzy
 msgid "&Remote server"
-msgstr "Pa&šalinti"
+msgstr "&Nutolęs serveris"
 
 #: oleview.rc:47
 msgid "View &Type information"
@@ -9020,21 +9017,19 @@ msgstr "Parodo programos informaciją, versijos numerį ir autoriaus teises"
 
 #: oleview.rc:113
 msgid "Ask for an in-process server when calling CoGetClassObject"
-msgstr ""
+msgstr "Prašyti serverio procese, kai kreipiamasi į CoGetClassObject"
 
 #: oleview.rc:114
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr ""
+msgstr "Prašyti doroklės procese, kai kreipiamasi į CoGetClassObject"
 
 #: oleview.rc:115
-#, fuzzy
 msgid "Ask for a local server when calling CoGetClassObject"
-msgstr "Naudoti CLSCTX_LOCAL_SERVER iškviečiant CoGetClassObject"
+msgstr "Prašyti vietinio serverio, kai kreipiamasi į CoGetClassObject"
 
 #: oleview.rc:116
-#, fuzzy
 msgid "Ask for a remote server when calling CoGetClassObject"
-msgstr "Naudoti CLSCTX_LOCAL_SERVER iškviečiant CoGetClassObject"
+msgstr "Prašyti nutolusio serverio, kai kreipiamasi į CoGetClassObject"
 
 #: oleview.rc:128
 msgid "ObjectClasses"
