@@ -322,6 +322,28 @@ static void run_script(const WCHAR *filename, IActiveScript *script, IActiveScri
         WINE_FIXME("SetScriptState failed: %08x\n", hres);
 }
 
+static BOOL set_host_properties(const WCHAR *prop)
+{
+    static const WCHAR iactive[] = {'i',0};
+    static const WCHAR batch[] = {'b',0};
+
+    if(*prop == '/') {
+        ++prop;
+        if(*prop == '/')
+            ++prop;
+    }
+    else
+        ++prop;
+
+    if(strcmpiW(prop, iactive) == 0)
+        wshInteractive = VARIANT_TRUE;
+    else if(strcmpiW(prop, batch) == 0)
+        wshInteractive = VARIANT_FALSE;
+    else
+        return FALSE;
+    return TRUE;
+}
+
 int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cmdshow)
 {
     const WCHAR *ext, *filename = NULL;
@@ -340,7 +362,8 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
 
     for(i=0; i<argc; i++) {
         if(*argv[i] == '/' || *argv[i] == '-') {
-            WINE_FIXME("Unsupported argument %s\n", wine_dbgstr_w(argv[i]));
+            if(!set_host_properties(argv[i]))
+                return 1;
         }else {
             filename = argv[i];
             argums = argv+i+1;

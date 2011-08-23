@@ -31,3 +31,5 @@ extern WCHAR scriptFullName[];
 extern WCHAR **argums;
 
 extern int numOfArgs;
+
+extern VARIANT_BOOL wshInteractive;

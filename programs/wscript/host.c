@@ -34,6 +34,7 @@
 
 static const WCHAR wshNameW[] = {'W','i','n','d','o','w','s',' ','S','c','r','i','p','t',' ','H','o','s','t',0};
 static const WCHAR wshVersionW[] = {'5','.','8'};
+VARIANT_BOOL wshInteractive = VARIANT_TRUE;
 
 WINE_DEFAULT_DEBUG_CHANNEL(wscript);
 
@@ -145,8 +146,10 @@ static HRESULT WINAPI Host_get_Path(IHost *iface, BSTR *out_Path)
 
 static HRESULT WINAPI Host_get_Interactive(IHost *iface, VARIANT_BOOL *out_Interactive)
 {
-    WINE_FIXME("(%p)\n", out_Interactive);
-    return E_NOTIMPL;
+    WINE_TRACE("(%p)\n", out_Interactive);
+
+    *out_Interactive = wshInteractive;
+    return S_OK;
 }
 
 static HRESULT WINAPI Host_put_Interactive(IHost *iface, VARIANT_BOOL v)
