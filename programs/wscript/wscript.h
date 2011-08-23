@@ -27,3 +27,7 @@ extern ITypeInfo *host_ti;
 extern ITypeInfo *arguments_ti;
 
 extern WCHAR scriptFullName[];
+
+extern WCHAR **argums;
+
+extern int numOfArgs;

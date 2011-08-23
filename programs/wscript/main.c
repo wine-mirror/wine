@@ -343,6 +343,8 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
             WINE_FIXME("Unsupported argument %s\n", wine_dbgstr_w(argv[i]));
         }else {
             filename = argv[i];
+            argums = argv+i+1;
+            numOfArgs = argc-i-1;
             break;
         }
     }

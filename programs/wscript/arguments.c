@@ -31,6 +31,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wscript);
 
+WCHAR **argums;
+int numOfArgs;
+
 static HRESULT WINAPI Arguments2_QueryInterface(IArguments2 *iface, REFIID riid, void **ppv)
 {
     WINE_TRACE("(%s %p)\n", wine_dbgstr_guid(riid), ppv);
@@ -95,8 +98,14 @@ static HRESULT WINAPI Arguments2_Invoke(IArguments2 *iface, DISPID dispIdMember,
 
 static HRESULT WINAPI Arguments2_Item(IArguments2 *iface, LONG index, BSTR *out_Value)
 {
-    WINE_FIXME("(%d %p)\n", index, out_Value);
-    return E_NOTIMPL;
+    WINE_TRACE("(%d %p)\n", index, out_Value);
+
+    if(index<0 || index >= numOfArgs)
+        return E_INVALIDARG;
+    if(!(*out_Value = SysAllocString(argums[index])))
+        return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI Arguments2_Count(IArguments2 *iface, LONG *out_Count)

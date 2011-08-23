@@ -336,7 +336,7 @@ static void run_test(const char *file_name)
     BOOL bres;
 
     script_name = file_name;
-    sprintf(command, "wscript.exe %s", file_name);
+    sprintf(command, "wscript.exe %s arg1 2 ar3", file_name);
 
     SET_EXPECT(reportSuccess);
 

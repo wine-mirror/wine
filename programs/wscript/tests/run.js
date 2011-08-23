@@ -33,5 +33,12 @@ ok(WScript.Path === winetest.wscriptPath, "WScript.Path = ", WScript.Path);
 ok(WScript.ScriptName === winetest.wscriptScriptName, "WScript.ScriptName = " + WScript.ScriptName);
 ok(WScript.ScriptFullName === winetest.wscriptScriptFullName, "WScript.ScriptFullName = " + WScript.ScriptFullName);
 ok(typeof(WScript.Arguments) === "object", "typeof(WScript.Arguments) = " + typeof(WScript.Arguments));
+ok(WScript.Arguments.Item(0) === "arg1", "WScript.Arguments.Item(0) = " + WScript.Arguments.Item(0));
+ok(WScript.Arguments.Item(1) === "2", "WScript.Arguments.Item(1) = " + WScript.Arguments.Item(1));
+ok(WScript.Arguments.Item(2) === "ar3", "WScript.Arguments.Item(2) = " + WScript.Arguments.Item(2));
+try {
+    WScript.Arguments.Item(3);
+    ok(false, "expected exception");
+}catch(e) {}
 
 winetest.reportSuccess();
