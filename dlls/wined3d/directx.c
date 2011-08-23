@@ -1362,7 +1362,8 @@ static DWORD wined3d_parse_gl_version(const char *gl_version)
     return MAKEDWORD_VERSION(major, minor);
 }
 
-static enum wined3d_gl_vendor wined3d_guess_gl_vendor(struct wined3d_gl_info *gl_info, const char *gl_vendor_string, const char *gl_renderer)
+static enum wined3d_gl_vendor wined3d_guess_gl_vendor(const struct wined3d_gl_info *gl_info,
+        const char *gl_vendor_string, const char *gl_renderer)
 {
 
     /* MacOS has various specialities in the extensions it advertises. Some have to be loaded from
