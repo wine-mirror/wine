@@ -668,7 +668,9 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
     {
         for (i = 0; i < rt_count; ++i)
         {
-            if (fb->render_targets[i]) surface_load_location(fb->render_targets[i], SFLAG_INDRAWABLE, NULL);
+            struct wined3d_surface *rt = fb->render_targets[i];
+            if (rt)
+                surface_load_location(rt, rt->draw_binding, NULL);
         }
     }
 
@@ -727,7 +729,7 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
 
     if (flags & WINED3DCLEAR_ZBUFFER)
     {
-        surface_modify_location(fb->depth_stencil, SFLAG_INDRAWABLE, TRUE);
+        surface_modify_location(fb->depth_stencil, fb->depth_stencil->draw_binding, TRUE);
 
         glDepthMask(GL_TRUE);
         context_invalidate_state(context, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
@@ -740,7 +742,10 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
     {
         for (i = 0; i < rt_count; ++i)
         {
-            if (fb->render_targets[i]) surface_modify_location(fb->render_targets[i], SFLAG_INDRAWABLE, TRUE);
+            struct wined3d_surface *rt = fb->render_targets[i];
+
+            if (rt)
+                surface_modify_location(rt, rt->draw_binding, TRUE);
         }
 
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
