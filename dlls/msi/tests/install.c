@@ -4754,7 +4754,7 @@ static void test_MsiConfigureProductEx(void)
     LONG res;
     DWORD type, size;
     HKEY props, source;
-    CHAR keypath[MAX_PATH * 2], localpack[MAX_PATH];
+    CHAR keypath[MAX_PATH * 2], localpackage[MAX_PATH], packagename[MAX_PATH];
     REGSAM access = KEY_ALL_ACCESS;
 
     if (is_process_limited())
@@ -4886,7 +4886,7 @@ static void test_MsiConfigureProductEx(void)
 
     DeleteFileA(msifile);
 
-    /* local msifile is removed */
+    /* msifile is removed */
     r = MsiConfigureProductExA("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}",
                                INSTALLLEVEL_DEFAULT, INSTALLSTATE_ABSENT,
                                "PROPVAR=42");
@@ -4915,6 +4915,12 @@ static void test_MsiConfigureProductEx(void)
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, access, &props);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
+    type = REG_SZ;
+    size = MAX_PATH;
+    res = RegQueryValueExA(props, "LocalPackage", NULL, &type,
+                           (LPBYTE)localpackage, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
     res = RegSetValueExA(props, "LocalPackage", 0, REG_SZ,
                          (const BYTE *)"C:\\idontexist.msi", 18);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -4933,7 +4939,7 @@ static void test_MsiConfigureProductEx(void)
     RegCloseKey(props);
     create_database(msifile, mcp_tables, sizeof(mcp_tables) / sizeof(msi_table));
 
-    /* LastUsedSource (local msi package) can be used as a last resort */
+    /* LastUsedSource can be used as a last resort */
     r = MsiConfigureProductExA("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}",
                                INSTALLLEVEL_DEFAULT, INSTALLSTATE_ABSENT,
                                "PROPVAR=42");
@@ -4942,6 +4948,7 @@ static void test_MsiConfigureProductEx(void)
     ok(!delete_pf("msitest\\helium", TRUE), "File not removed\n");
     ok(!delete_pf("msitest\\lithium", TRUE), "File not removed\n");
     ok(!delete_pf("msitest", FALSE), "Directory not removed\n");
+    DeleteFileA( localpackage );
 
     /* install the product, machine */
     r = MsiInstallProductA(msifile, "ALLUSERS=1 INSTALLLEVEL=10 PROPVAR=42");
@@ -4958,6 +4965,12 @@ static void test_MsiConfigureProductEx(void)
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, access, &props);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
+    type = REG_SZ;
+    size = MAX_PATH;
+    res = RegQueryValueExA(props, "LocalPackage", NULL, &type,
+                           (LPBYTE)localpackage, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
     res = RegSetValueExA(props, "LocalPackage", 0, REG_SZ,
                          (const BYTE *)"C:\\idontexist.msi", 18);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -4971,7 +4984,7 @@ static void test_MsiConfigureProductEx(void)
     type = REG_SZ;
     size = MAX_PATH;
     res = RegQueryValueExA(source, "PackageName", NULL, &type,
-                           (LPBYTE)localpack, &size);
+                           (LPBYTE)packagename, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     res = RegSetValueExA(source, "PackageName", 0, REG_SZ,
@@ -4989,9 +5002,14 @@ static void test_MsiConfigureProductEx(void)
     ok(pf_exists("msitest\\lithium"), "File not installed\n");
     ok(pf_exists("msitest"), "File not installed\n");
 
-    /* restore the SourceList */
+    /* restore PackageName */
     res = RegSetValueExA(source, "PackageName", 0, REG_SZ,
-                         (const BYTE *)localpack, lstrlenA(localpack) + 1);
+                         (const BYTE *)packagename, lstrlenA(packagename) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* restore LocalPackage */
+    res = RegSetValueExA(props, "LocalPackage", 0, REG_SZ,
+                         (const BYTE *)localpackage, lstrlenA(localpackage) + 1);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* finally remove the product */

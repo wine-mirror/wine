@@ -47,6 +47,7 @@ static const WCHAR szUpgradeCode[] = { '{','C','E','0','6','7','E','8','D','-','
 static const WCHAR szProductInfoException[] = { 'P','r','o','d','u','c','t','I','n','f','o',',','P','r','o','d','u','c','t',',','A','t','t','r','i','b','u','t','e',0 };
 static const WCHAR WINE_INSTALLPROPERTY_PACKAGENAMEW[] = {'P','a','c','k','a','g','e','N','a','m','e',0};
 static const WCHAR WINE_INSTALLPROPERTY_PRODUCTNAMEW[] = {'P','r','o','d','u','c','t','N','a','m','e',0};
+static const WCHAR WINE_INSTALLPROPERTY_LOCALPACKAGEW[] = {'L','o','c','a','l','P','a','c','k','a','g','e',0};
 static FILETIME systemtime;
 static CHAR CURR_DIR[MAX_PATH];
 static EXCEPINFO excepinfo;
@@ -2485,6 +2486,10 @@ static void test_Installer_InstallProduct(void)
         IDispatch_Release(pStringList);
     }
 
+    hr = Installer_ProductInfo(szProductCode, WINE_INSTALLPROPERTY_LOCALPACKAGEW, szString);
+    ok(hr == S_OK, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
+    DeleteFileW( szString );
+
     /* Check & clean up installed files & registry keys */
     ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
     ok(delete_pf("msitest\\cabout\\new", FALSE), "File not installed\n");
@@ -2563,7 +2568,7 @@ static void test_Installer_InstallProduct(void)
 
     RegCloseKey(hkey);
 
-    /* Delete installation files we installed */
+    /* Delete installation files we created */
     delete_test_files();
 }
 
