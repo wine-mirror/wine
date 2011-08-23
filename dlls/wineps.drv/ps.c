@@ -655,7 +655,7 @@ BOOL PSDRV_WriteIndexColorSpaceEnd(PHYSDEV dev)
     return PSDRV_WriteSpool(dev, buf, sizeof(buf) - 1);
 }
 
-BOOL PSDRV_WriteRGB(PHYSDEV dev, COLORREF *map, int number)
+static BOOL PSDRV_WriteRGB(PHYSDEV dev, COLORREF *map, int number)
 {
     char *buf = HeapAlloc(PSDRV_Heap, 0, number * 7 + 1), *ptr;
     int i;
