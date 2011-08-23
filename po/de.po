@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-08-13 16:35+0200\n"
+"PO-Revision-Date: 2011-08-23 23:41+0200\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -2239,13 +2239,8 @@ msgid "&Favorites"
 msgstr "&Favoriten"
 
 #: ieframe.rc:52 regedit.rc:73
-#, fuzzy
 msgid "&Add to Favorites..."
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"&Zu den Favoriten hinzufügen...\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Zu den Favoriten &hinzufügen..."
+msgstr "Zu den Favoriten &hinzufügen..."
 
 #: ieframe.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 oleview.rc:69
 #: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
@@ -9033,21 +9028,19 @@ msgstr "&CoCreateInstance Flag"
 
 #: oleview.rc:41
 msgid "&In-process server"
-msgstr ""
+msgstr "&In-Prozess Server"
 
 #: oleview.rc:42
 msgid "In-process &handler"
-msgstr ""
+msgstr "In-Prozess &Handler"
 
 #: oleview.rc:43
-#, fuzzy
 msgid "&Local server"
-msgstr "Lokaler Fehler"
+msgstr "&Lokaler Server"
 
 #: oleview.rc:44
-#, fuzzy
 msgid "&Remote server"
-msgstr "&Entfernen"
+msgstr "&Entfernter Server"
 
 #: oleview.rc:47
 msgid "View &Type information"
@@ -9199,21 +9192,19 @@ msgstr "Programm-Information, -Version und -Copyright anzeigen"
 
 #: oleview.rc:113
 msgid "Ask for an in-process server when calling CoGetClassObject"
-msgstr ""
+msgstr "Für Aufruf von CoGetClassObject nach In-Prozess Server fragen"
 
 #: oleview.rc:114
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr ""
+msgstr "Für Aufruf von CoGetClassObject nach In-Prozess Handler fragen"
 
 #: oleview.rc:115
-#, fuzzy
 msgid "Ask for a local server when calling CoGetClassObject"
-msgstr "CLSCTX_LOCAL_SERVER für Aufruf von CoGetClassObject benutzen"
+msgstr "Für Aufruf von CoGetClassObject nach lokalem Server fragen"
 
 #: oleview.rc:116
-#, fuzzy
 msgid "Ask for a remote server when calling CoGetClassObject"
-msgstr "CLSCTX_LOCAL_SERVER für Aufruf von CoGetClassObject benutzen"
+msgstr "Für Aufruf von CoGetClassObject nach entferntem Server fragen"
 
 #: oleview.rc:128
 msgid "ObjectClasses"
@@ -10830,7 +10821,7 @@ msgstr "Inaktiver Titelleistentext"
 
 #: winecfg.rc:133
 msgid "Message Box Text"
-msgstr "Message Box Text"
+msgstr "Dialogfeldtext"
 
 #: winecfg.rc:134
 msgid "Application Workspace"
@@ -11401,7 +11392,7 @@ msgstr "&System\tStrg+1"
 
 #: wordpad.rc:88
 msgid "&Pale yellow\tCtrl+2"
-msgstr "&PostIt-Notiz\tStrg+2"
+msgstr "&Blassgelb\tStrg+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
