@@ -384,7 +384,7 @@ unsigned short wine_ldt_alloc_fs(void)
             if (errno != ENOSYS) perror( "set_thread_area" );
         }
         else global_fs_sel = (ldt_info.entry_number << 3) | 3;
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__)
         global_fs_sel = GSEL( GUFS_SEL, SEL_UPL );
 #endif
     }

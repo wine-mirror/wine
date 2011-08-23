@@ -824,7 +824,7 @@ case $host_os in
         *i[[3456789]]86* | x86_64)
           WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7bf00400],
                           [case $host_os in
-                           freebsd*)  LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x60000400" ;;
+                           freebsd* | kfreebsd*-gnu) LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x60000400" ;;
                            *) LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400" ;;
                            esac
                           ])

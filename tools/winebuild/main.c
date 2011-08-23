@@ -65,7 +65,7 @@ enum target_cpu target_cpu = CPU_ARM;
 
 #ifdef __APPLE__
 enum target_platform target_platform = PLATFORM_APPLE;
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 enum target_platform target_platform = PLATFORM_FREEBSD;
 #elif defined(__sun)
 enum target_platform target_platform = PLATFORM_SOLARIS;
