@@ -373,7 +373,7 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
 
     if( FAILED( r ) || !stg )
     {
-        FIXME("open failed r = %08x for %s\n", r, debugstr_w(szDBPath));
+        WARN("open failed r = %08x for %s\n", r, debugstr_w(szDBPath));
         return ERROR_FUNCTION_FAILED;
     }
 
