@@ -614,14 +614,12 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
         if (ptr)
         {
             err = convert_bitmapinfo( src_info, src_bits.ptr, &src, dst_info, ptr );
-            {
-                if (src_bits.free) src_bits.free( &src_bits );
-                src_bits.ptr = ptr;
-                src_bits.is_copy = TRUE;
-                src_bits.free = free_heap_bits;
-                if (!err)
-                    err = funcs->pPutImage( NULL, hbitmap, clip, dst_info, &src_bits, &src, &dst, 0 );
-            }
+            if (src_bits.free) src_bits.free( &src_bits );
+            src_bits.ptr = ptr;
+            src_bits.is_copy = TRUE;
+            src_bits.free = free_heap_bits;
+            if (!err)
+                err = funcs->pPutImage( NULL, hbitmap, clip, dst_info, &src_bits, &src, &dst, 0 );
         }
         else err = ERROR_OUTOFMEMORY;
     }
