@@ -57,6 +57,11 @@ static const WCHAR wszZoneMapDomainsKey[] = {'S','o','f','t','w','a','r','e','\\
                                              'Z','o','n','e','M','a','p','\\',
                                              'D','o','m','a','i','n','s',0};
 
+static inline BOOL is_drive_path(const WCHAR *path)
+{
+    return isalphaW(*path) && *(path+1) == ':';
+}
+
 /********************************************************************
  * get_string_from_reg [internal]
  *
@@ -501,45 +506,37 @@ static HRESULT get_zone_from_domains(LPCWSTR url, LPCWSTR schema, DWORD *zone)
     return hres;
 }
 
-static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone, LPWSTR *ret_url)
+static HRESULT map_security_uri_to_zone(IUri *uri, DWORD *zone)
 {
-    LPWSTR secur_url;
-    WCHAR schema[64];
-    DWORD size=0;
     HRESULT hres;
+    BSTR scheme;
 
     *zone = URLZONE_INVALID;
 
-    hres = CoInternetGetSecurityUrl(url, &secur_url, PSU_SECURITY_URL_ONLY, 0);
-    if(hres != S_OK) {
-        size = strlenW(url)*sizeof(WCHAR);
+    hres = IUri_GetSchemeName(uri, &scheme);
+    if(FAILED(hres))
+        return hres;
 
-        secur_url = CoTaskMemAlloc(size);
-        if(!secur_url)
-            return E_OUTOFMEMORY;
+    if(!strcmpiW(scheme, fileW)) {
+        BSTR path;
+        WCHAR *ptr, *path_start, root[20];
 
-        memcpy(secur_url, url, size);
-    }
+        hres = IUri_GetPath(uri, &path);
+        if(FAILED(hres)) {
+            SysFreeString(scheme);
+            return hres;
+        }
 
-    hres = CoInternetParseUrl(secur_url, PARSE_SCHEMA, 0, schema, sizeof(schema)/sizeof(WCHAR), &size, 0);
-    if(FAILED(hres) || !*schema) {
-        CoTaskMemFree(secur_url);
-        return E_INVALIDARG;
-    }
+        if(*path == '/' && is_drive_path(path+1))
+            path_start = path+1;
+        else
+            path_start = path;
 
-    /* file protocol is a special case */
-    if(!strcmpW(schema, fileW)) {
-        WCHAR path[MAX_PATH], root[20];
-        WCHAR *ptr;
-
-        hres = CoInternetParseUrl(secur_url, PARSE_PATH_FROM_URL, 0, path,
-                sizeof(path)/sizeof(WCHAR), &size, 0);
-
-        if(SUCCEEDED(hres) && (ptr = strchrW(path, '\\')) && ptr-path < sizeof(root)/sizeof(WCHAR)) {
+        if(((ptr = strchrW(path_start, '\\')) || (ptr = strchrW(path_start, '/'))) && ptr-path_start < sizeof(root)/sizeof(WCHAR)) {
             UINT type;
 
-            memcpy(root, path, (ptr-path)*sizeof(WCHAR));
-            root[ptr-path] = 0;
+            memcpy(root, path_start, (ptr-path_start)*sizeof(WCHAR));
+            root[ptr-path_start] = 0;
 
             type = GetDriveTypeW(root);
 
@@ -562,18 +559,75 @@ static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone, LPWSTR *ret_url)
                 FIXME("unsupported drive type %d\n", type);
             }
         }
+        SysFreeString(path);
     }
 
     if(*zone == URLZONE_INVALID) {
-        hres = get_zone_from_domains(secur_url, schema, zone);
+        BSTR secur_url;
+
+        hres = IUri_GetDisplayUri(uri, &secur_url);
+        if(FAILED(hres)) {
+            SysFreeString(scheme);
+            return hres;
+        }
+
+        hres = get_zone_from_domains(secur_url, scheme, zone);
+        SysFreeString(secur_url);
         if(hres == S_FALSE)
-            hres = get_zone_from_reg(schema, zone);
+            hres = get_zone_from_reg(scheme, zone);
     }
+
+    SysFreeString(scheme);
+    return hres;
+}
+
+static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone, LPWSTR *ret_url)
+{
+    IUri *secur_uri;
+    LPWSTR secur_url;
+    HRESULT hres;
+
+    *zone = URLZONE_INVALID;
+
+    hres = CoInternetGetSecurityUrl(url, &secur_url, PSU_SECURITY_URL_ONLY, 0);
+    if(hres != S_OK) {
+        DWORD size = strlenW(url)*sizeof(WCHAR);
+
+        secur_url = CoTaskMemAlloc(size);
+        if(!secur_url)
+            return E_OUTOFMEMORY;
+
+        memcpy(secur_url, url, size);
+    }
+
+    hres = CreateUri(secur_url, 0, 0, &secur_uri);
+    if(FAILED(hres)) {
+        CoTaskMemFree(secur_url);
+        return hres;
+    }
+
+    hres = map_security_uri_to_zone(secur_uri, zone);
+    IUri_Release(secur_uri);
 
     if(FAILED(hres) || !ret_url)
         CoTaskMemFree(secur_url);
     else
         *ret_url = secur_url;
+
+    return hres;
+}
+
+static HRESULT map_uri_to_zone(IUri *uri, DWORD *zone)
+{
+    HRESULT hres;
+    IUri *secur_uri;
+
+    hres = CoInternetGetSecurityUrlEx(uri, &secur_uri, PSU_SECURITY_URL_ONLY, 0);
+    if(FAILED(hres))
+        return hres;
+
+    hres = map_security_uri_to_zone(secur_uri, zone);
+    IUri_Release(secur_uri);
 
     return hres;
 }
@@ -1033,8 +1087,21 @@ static HRESULT WINAPI SecManagerImpl_MapUrlToZoneEx2(IInternetSecurityManagerEx2
         IUri *pUri, DWORD *pdwZone, DWORD dwFlags, LPWSTR *ppwszMappedUrl, DWORD *pdwOutFlags)
 {
     SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
-    FIXME("(%p)->(%p %p %08x %p %p) stub\n", This, pUri, pdwZone, dwFlags, ppwszMappedUrl, pdwOutFlags);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %p %08x %p %p)\n", This, pUri, pdwZone, dwFlags, ppwszMappedUrl, pdwOutFlags);
+
+    if(!pdwZone)
+        return E_INVALIDARG;
+
+    if(!pUri) {
+        *pdwZone = URLZONE_INVALID;
+        return E_INVALIDARG;
+    }
+
+    if(dwFlags)
+        FIXME("Unsupported flags: %08x\n", dwFlags);
+
+    return map_uri_to_zone(pUri, pdwZone);
 }
 
 static HRESULT WINAPI SecManagerImpl_ProcessUrlActionEx2(IInternetSecurityManagerEx2 *iface,

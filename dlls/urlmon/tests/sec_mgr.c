@@ -1620,12 +1620,16 @@ static const struct {
     DWORD       zone;
     BOOL        map_todo;
 } sec_mgr_ex2_tests[] = {
-    {"res://mshtml.dll/blank.htm",0,S_OK,URLZONE_LOCAL_MACHINE,TRUE},
-    {"index.htm",Uri_CREATE_ALLOW_RELATIVE,0,URLZONE_INTERNET,TRUE},
-    {"file://c:\\Index.html",0,0,URLZONE_LOCAL_MACHINE,TRUE},
-    {"http://www.zone3.winetest/",0,0,URLZONE_INTERNET,TRUE},
-    {"about:blank",0,0,URLZONE_INTERNET,TRUE},
-    {"ftp://zone3.winetest/file.test",0,0,URLZONE_INTERNET,TRUE}
+    {"res://mshtml.dll/blank.htm",0,S_OK,URLZONE_LOCAL_MACHINE},
+    {"index.htm",Uri_CREATE_ALLOW_RELATIVE,0,URLZONE_INTERNET},
+    {"file://c:\\Index.html",0,0,URLZONE_LOCAL_MACHINE},
+    {"http://www.zone3.winetest/",0,0,URLZONE_INTERNET},
+    {"about:blank",0,0,URLZONE_INTERNET},
+    {"ftp://zone3.winetest/file.test",0,0,URLZONE_INTERNET},
+    {"/file/testing/test.test",Uri_CREATE_ALLOW_RELATIVE,0,URLZONE_INTERNET},
+    {"file/testing/test.test",Uri_CREATE_ALLOW_RELATIVE,0,URLZONE_INTERNET},
+    {"zip://testing.com/",0,0,URLZONE_INTERNET},
+    {"zip:testing.com",0,0,URLZONE_INTERNET}
 };
 
 static void test_SecurityManagerEx2(void)
@@ -1652,14 +1656,14 @@ static void test_SecurityManagerEx2(void)
     zone = 0xdeadbeef;
 
     hres = IInternetSecurityManagerEx2_MapUrlToZoneEx2(sec_mgr2, NULL, &zone, 0, NULL, NULL);
-    todo_wine ok(hres == E_INVALIDARG, "MapUrlToZoneEx2 returned %08x, expected E_INVALIDARG\n", hres);
-    todo_wine ok(zone == URLZONE_INVALID, "zone was %d\n", zone);
+    ok(hres == E_INVALIDARG, "MapUrlToZoneEx2 returned %08x, expected E_INVALIDARG\n", hres);
+    ok(zone == URLZONE_INVALID, "zone was %d\n", zone);
 
     hres = pCreateUri(url5, 0, 0, &uri);
     ok(hres == S_OK, "CreateUri failed: %08x\n", hres);
 
     hres = IInternetSecurityManagerEx2_MapUrlToZoneEx2(sec_mgr2, uri, NULL, 0, NULL, NULL);
-    todo_wine ok(hres == E_INVALIDARG, "MapToUrlZoneEx2 returned %08x, expected E_INVALIDARG\n", hres);
+    ok(hres == E_INVALIDARG, "MapToUrlZoneEx2 returned %08x, expected E_INVALIDARG\n", hres);
 
     IUri_Release(uri);
 
