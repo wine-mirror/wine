@@ -135,7 +135,7 @@ static const StrFormatSizeResult StrFormatSize_results[] = {
   { 0, NULL, NULL }
 };
 
-/* StrFormatByteSize64/StrFormatKBSize results */
+/* StrFromTimeIntervalA/StrFromTimeIntervalW results */
 typedef struct tagStrFromTimeIntervalResult
 {
   DWORD ms;
