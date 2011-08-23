@@ -38,10 +38,10 @@ IDM_MENU MENU
     {
         POPUP "&CoCreateInstance Flag"
         {
-            MENUITEM "CLSCTX_&INPROC_SERVER",    IDM_FLAG_INSERV,CHECKED
-            MENUITEM "CLSCTX_INPROC_&HANDLER",    IDM_FLAG_INHANDL
-            MENUITEM "CLSCTX_&LOCAL_SERVER",        IDM_FLAG_LOCSERV,CHECKED
-            MENUITEM "CLSCTX_&REMOTE_SERVER",    IDM_FLAG_REMSERV
+            MENUITEM "&In-process server",   IDM_FLAG_INSERV,CHECKED
+            MENUITEM "In-process &handler",  IDM_FLAG_INHANDL
+            MENUITEM "&Local server",        IDM_FLAG_LOCSERV,CHECKED
+            MENUITEM "&Remote server",       IDM_FLAG_REMSERV
         }
         MENUITEM SEPARATOR
         MENUITEM "View &Type information",    IDM_TYPEINFO, GRAYED
@@ -110,10 +110,10 @@ STRINGTABLE
     IDM_RELEASEINST,       "Release the currently selected object instance"
     IDM_COPYCLSID,         "Copy the GUID of the currently selected item to the clipboard"
     IDM_VIEW,              "Display the viewer for the selected item"
-    IDM_FLAG_INSERV,       "Use CLSCTX_INPROC_SERVER when calling CoGetClassObject"
-    IDM_FLAG_INHANDL,      "Use CLSCTX_INPROC_HANDLER when calling CoGetClassObject"
-    IDM_FLAG_LOCSERV,      "Use CLSCTX_LOCAL_SERVER when calling CoGetClassObject"
-    IDM_FLAG_REMSERV,      "Use CLSCTX_REMOTE_SERVER when calling CoGetClassObject"
+    IDM_FLAG_INSERV,       "Ask for an in-process server when calling CoGetClassObject"
+    IDM_FLAG_INHANDL,      "Ask for an in-process handler when calling CoGetClassObject"
+    IDM_FLAG_LOCSERV,      "Ask for a local server when calling CoGetClassObject"
+    IDM_FLAG_REMSERV,      "Ask for a remote server when calling CoGetClassObject"
     IDM_EXPERT,            "Toggle between expert and novice display mode"
     IDM_HIDDEN,            "Toggle the display of component categories that are not meant to be visible"
     IDM_TOOLBAR,           "Show or hide the toolbar"

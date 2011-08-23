@@ -8732,20 +8732,22 @@ msgid "&CoCreateInstance Flag"
 msgstr "דגלון &CoCreateInstance"
 
 #: oleview.rc:41
-msgid "CLSCTX_&INPROC_SERVER"
-msgstr "CLSCTX_&INPROC_SERVER"
+msgid "&In-process server"
+msgstr ""
 
 #: oleview.rc:42
-msgid "CLSCTX_INPROC_&HANDLER"
-msgstr "CLSCTX_INPROC_&HANDLER"
+msgid "In-process &handler"
+msgstr ""
 
 #: oleview.rc:43
-msgid "CLSCTX_&LOCAL_SERVER"
-msgstr "CLSCTX_&LOCAL_SERVER"
+#, fuzzy
+msgid "&Local server"
+msgstr "שגיאה מקומית"
 
 #: oleview.rc:44
-msgid "CLSCTX_&REMOTE_SERVER"
-msgstr "CLSCTX_&REMOTE_SERVER"
+#, fuzzy
+msgid "&Remote server"
+msgstr "ה&סרה..."
 
 #: oleview.rc:47
 msgid "View &Type information"
@@ -8889,20 +8891,22 @@ msgid "Display program information, version number and copyright"
 msgstr "הצגת פרטי התכנית, מספר הגרסה וזכויות היוצרים"
 
 #: oleview.rc:113
-msgid "Use CLSCTX_INPROC_SERVER when calling CoGetClassObject"
-msgstr "שימוש ב־CLSCTX_INPROC_SERVER בעת קריאה ל־CoGetClassObject"
+msgid "Ask for an in-process server when calling CoGetClassObject"
+msgstr ""
 
 #: oleview.rc:114
-msgid "Use CLSCTX_INPROC_HANDLER when calling CoGetClassObject"
-msgstr "שימוש ב־CLSCTX_INPROC_HANDLER בעת קריאה ל־CoGetClassObject"
+msgid "Ask for an in-process handler when calling CoGetClassObject"
+msgstr ""
 
 #: oleview.rc:115
-msgid "Use CLSCTX_LOCAL_SERVER when calling CoGetClassObject"
+#, fuzzy
+msgid "Ask for a local server when calling CoGetClassObject"
 msgstr "שימוש ב־CLSCTX_LOCAL_SERVER בעת קריאה ל־CoGetClassObject"
 
 #: oleview.rc:116
-msgid "Use CLSCTX_REMOTE_SERVER when calling CoGetClassObject"
-msgstr "שימוש ב־CLSCTX_REMOTE_SERVER בעת קריאה ל־CoGetClassObject"
+#, fuzzy
+msgid "Ask for a remote server when calling CoGetClassObject"
+msgstr "שימוש ב־CLSCTX_LOCAL_SERVER בעת קריאה ל־CoGetClassObject"
 
 #: oleview.rc:128
 msgid "ObjectClasses"

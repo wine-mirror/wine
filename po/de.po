@@ -9079,20 +9079,22 @@ msgid "&CoCreateInstance Flag"
 msgstr "&CoCreateInstance Flag"
 
 #: oleview.rc:41
-msgid "CLSCTX_&INPROC_SERVER"
-msgstr "CLSCTX_&INPROC_SERVER"
+msgid "&In-process server"
+msgstr ""
 
 #: oleview.rc:42
-msgid "CLSCTX_INPROC_&HANDLER"
-msgstr "CLSCTX_INPROC_&HANDLER"
+msgid "In-process &handler"
+msgstr ""
 
 #: oleview.rc:43
-msgid "CLSCTX_&LOCAL_SERVER"
-msgstr "CLSCTX_&LOCAL_SERVER"
+#, fuzzy
+msgid "&Local server"
+msgstr "Lokaler Fehler"
 
 #: oleview.rc:44
-msgid "CLSCTX_&REMOTE_SERVER"
-msgstr "CLSCTX_&REMOTE_SERVER"
+#, fuzzy
+msgid "&Remote server"
+msgstr "&Entfernen"
 
 #: oleview.rc:47
 msgid "View &Type information"
@@ -9243,20 +9245,22 @@ msgid "Display program information, version number and copyright"
 msgstr "Programm-Information, -Version und -Copyright anzeigen"
 
 #: oleview.rc:113
-msgid "Use CLSCTX_INPROC_SERVER when calling CoGetClassObject"
-msgstr "CLSCTX_INPROC_SERVER für Aufruf von CoGetClassObject benutzen"
+msgid "Ask for an in-process server when calling CoGetClassObject"
+msgstr ""
 
 #: oleview.rc:114
-msgid "Use CLSCTX_INPROC_HANDLER when calling CoGetClassObject"
-msgstr "CLSCTX_INPROC_HANDLER für Aufruf von CoGetClassObject benutzen"
+msgid "Ask for an in-process handler when calling CoGetClassObject"
+msgstr ""
 
 #: oleview.rc:115
-msgid "Use CLSCTX_LOCAL_SERVER when calling CoGetClassObject"
+#, fuzzy
+msgid "Ask for a local server when calling CoGetClassObject"
 msgstr "CLSCTX_LOCAL_SERVER für Aufruf von CoGetClassObject benutzen"
 
 #: oleview.rc:116
-msgid "Use CLSCTX_REMOTE_SERVER when calling CoGetClassObject"
-msgstr "CLSCTX_REMOTE_SERVER für Aufruf von CoGetClassObject benutzen"
+#, fuzzy
+msgid "Ask for a remote server when calling CoGetClassObject"
+msgstr "CLSCTX_LOCAL_SERVER für Aufruf von CoGetClassObject benutzen"
 
 #: oleview.rc:128
 msgid "ObjectClasses"

@@ -8610,19 +8610,20 @@ msgid "&CoCreateInstance Flag"
 msgstr ""
 
 #: oleview.rc:41
-msgid "CLSCTX_&INPROC_SERVER"
+msgid "&In-process server"
 msgstr ""
 
 #: oleview.rc:42
-msgid "CLSCTX_INPROC_&HANDLER"
+msgid "In-process &handler"
 msgstr ""
 
 #: oleview.rc:43
-msgid "CLSCTX_&LOCAL_SERVER"
-msgstr ""
+#, fuzzy
+msgid "&Local server"
+msgstr "ฮาร์ดดิสก์เครื่องส่วนตัว"
 
 #: oleview.rc:44
-msgid "CLSCTX_&REMOTE_SERVER"
+msgid "&Remote server"
 msgstr ""
 
 #: oleview.rc:47
@@ -8770,19 +8771,19 @@ msgid "Display program information, version number and copyright"
 msgstr ""
 
 #: oleview.rc:113
-msgid "Use CLSCTX_INPROC_SERVER when calling CoGetClassObject"
+msgid "Ask for an in-process server when calling CoGetClassObject"
 msgstr ""
 
 #: oleview.rc:114
-msgid "Use CLSCTX_INPROC_HANDLER when calling CoGetClassObject"
+msgid "Ask for an in-process handler when calling CoGetClassObject"
 msgstr ""
 
 #: oleview.rc:115
-msgid "Use CLSCTX_LOCAL_SERVER when calling CoGetClassObject"
+msgid "Ask for a local server when calling CoGetClassObject"
 msgstr ""
 
 #: oleview.rc:116
-msgid "Use CLSCTX_REMOTE_SERVER when calling CoGetClassObject"
+msgid "Ask for a remote server when calling CoGetClassObject"
 msgstr ""
 
 #: oleview.rc:128
