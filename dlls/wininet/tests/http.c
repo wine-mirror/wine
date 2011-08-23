@@ -2697,6 +2697,27 @@ static void test_options(int port)
     ok(ret, "InternetQueryOption failed %u\n", GetLastError());
     ok(ctx == 3, "expected 3 got %lu\n", ctx);
 
+    /* INTERNET_OPTION_PROXY */
+    SetLastError(0xdeadbeef);
+    ret = InternetQueryOptionA(ses, INTERNET_OPTION_PROXY, NULL, NULL);
+    error = GetLastError();
+    ok(!ret, "InternetQueryOption succeeded\n");
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = InternetQueryOptionA(ses, INTERNET_OPTION_PROXY, &ctx, NULL);
+    error = GetLastError();
+    ok(!ret, "InternetQueryOption succeeded\n");
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = InternetQueryOptionA(ses, INTERNET_OPTION_PROXY, NULL, &size);
+    error = GetLastError();
+    ok(!ret, "InternetQueryOption succeeded\n");
+    ok(error == ERROR_INSUFFICIENT_BUFFER, "expected ERROR_INSUFFICIENT_BUFFER, got %u\n", error);
+    ok(size >= sizeof(INTERNET_PROXY_INFOA), "expected size to be greater or equal to the struct size\n");
+
     InternetCloseHandle(req);
     InternetCloseHandle(con);
     InternetCloseHandle(ses);

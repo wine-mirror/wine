@@ -802,6 +802,7 @@ static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffe
     }
 
     case INTERNET_OPTION_PROXY:
+        if(!size) return ERROR_INVALID_PARAMETER;
         if (unicode) {
             INTERNET_PROXY_INFOW *pi = (INTERNET_PROXY_INFOW *)buffer;
             DWORD proxyBytesRequired = 0, proxyBypassBytesRequired = 0;
