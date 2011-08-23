@@ -18,12 +18,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+extern DWORD    dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
+                                 struct gdi_image_bits *bits, struct bitblt_coords *src ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_LineTo( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts,
                                      DWORD polylines ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_Polyline( PHYSDEV dev, const POINT* pt, INT count ) DECLSPEC_HIDDEN;
+extern DWORD    dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info,
+                                 const struct gdi_image_bits *bits, struct bitblt_coords *src,
+                                 struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern HBRUSH   dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush ) DECLSPEC_HIDDEN;
 extern HPEN     dibdrv_SelectPen( PHYSDEV dev, HPEN hpen ) DECLSPEC_HIDDEN;
@@ -69,13 +74,20 @@ extern void get_rop_codes(INT rop, struct rop_codes *codes);
 extern void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor) DECLSPEC_HIDDEN;
 extern void update_brush_rop( dibdrv_physdev *pdev, INT rop ) DECLSPEC_HIDDEN;
 extern void reset_dash_origin(dibdrv_physdev *pdev) DECLSPEC_HIDDEN;
+extern BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit_fields,
+                          RGBQUAD *color_table, int color_table_size, void *bits,
+                          enum dib_info_flags flags) DECLSPEC_HIDDEN;
 extern BOOL init_dib_info_from_packed(dib_info *dib, const BITMAPINFOHEADER *bi, WORD usage, HPALETTE pal) DECLSPEC_HIDDEN;
+extern BOOL init_dib_info_from_bitmapinfo(dib_info *dib, const BITMAPINFO *info, void *bits,
+                                          enum dib_info_flags flags) DECLSPEC_HIDDEN;
 extern void free_dib_info(dib_info *dib) DECLSPEC_HIDDEN;
 extern void free_pattern_brush(dibdrv_physdev *pdev) DECLSPEC_HIDDEN;
 extern void copy_dib_color_info(dib_info *dst, const dib_info *src) DECLSPEC_HIDDEN;
 extern BOOL convert_dib(dib_info *dst, const dib_info *src) DECLSPEC_HIDDEN;
 extern DWORD get_fg_color(dibdrv_physdev *pdev, COLORREF color) DECLSPEC_HIDDEN;
 extern BOOL brush_rects( dibdrv_physdev *pdev, int num, const RECT *rects ) DECLSPEC_HIDDEN;
+extern HRGN add_extra_clipping_region( dibdrv_physdev *pdev, HRGN rgn ) DECLSPEC_HIDDEN;
+extern void restore_clipping_region( dibdrv_physdev *pdev, HRGN rgn ) DECLSPEC_HIDDEN;
 
 static inline BOOL defer_pen(dibdrv_physdev *pdev)
 {
