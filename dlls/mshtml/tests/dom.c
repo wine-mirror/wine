@@ -55,6 +55,7 @@ static const char elem_test_str[] =
     "<img id=\"imgid\" name=\"WineImg\"/>"
     "<iframe src=\"about:blank\" id=\"ifr\"></iframe>"
     "<form id=\"frm\"></form>"
+    "<div id=\"attr\" attr1=\"attr1\" attr2 attr3=\"attr3\"></div>"
     "</body></html>";
 static const char elem_test2_str[] =
     "<html><head><title>test</title><style>.body { margin-right: 0px; }</style>"
@@ -2336,6 +2337,49 @@ static void _test_img_name(unsigned line, IUnknown *unk, const char *pValue)
     ok_(__FILE__,line) (!strcmp_wa (sName, pValue), "expected '%s' got '%s'\n", pValue, wine_dbgstr_w(sName));
     IHTMLImgElement_Release(img);
     SysFreeString(sName);
+}
+
+static void test_dynamic_properties(IHTMLElement *elem)
+{
+    static const WCHAR attr1W[] = {'a','t','t','r','1',0};
+    IDispatchEx *dispex;
+    BSTR name, attr1 = SysAllocString(attr1W);
+    VARIANT_BOOL succ;
+    VARIANT val;
+    int checked_no = 0;
+    DISPID id = DISPID_STARTENUM;
+    HRESULT hres;
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "QueryInterface failed: %08x\n", hres);
+
+    hres = IHTMLElement_removeAttribute(elem, attr1, 0, &succ);
+    ok(hres == S_OK, "removeAttribute failed: %08x\n", hres);
+    ok(succ, "removeAttribute set succ to FALSE\n");
+
+    while(1) {
+        hres = IDispatchEx_GetNextDispID(dispex, fdexEnumAll, id, &id);
+        ok(hres==S_OK || hres==S_FALSE, "GetNextDispID failed: %08x\n", hres);
+        if(hres != S_OK)
+            break;
+
+        hres = IDispatchEx_GetMemberName(dispex, id, &name);
+        ok(hres == S_OK, "GetMemberName failed: %08x\n", hres);
+
+        if(!strcmp_wa(name, "attr1"))
+            ok(0, "attr1 should be removed\n");
+        else if(!strcmp_wa(name, "attr2") || !strcmp_wa(name, "attr3"))
+            checked_no++;
+        SysFreeString(name);
+    }
+    ok(checked_no == 2, "checked_no=%d, expected 2\n", checked_no);
+    IDispatchEx_Release(dispex);
+
+    V_VT(&val) = VT_BSTR;
+    V_BSTR(&val) = attr1;
+    hres = IHTMLElement_setAttribute(elem, attr1, val, 0);
+    ok(hres == S_OK, "setAttribute failed: %08x\n", hres);
+    SysFreeString(attr1);
 }
 
 #define test_input_type(i,t) _test_input_type(__LINE__,i,t)
@@ -4664,7 +4708,8 @@ static void test_elems(IHTMLDocument2 *doc)
         ET_EMBED,
         ET_IMG,
         ET_IFRAME,
-        ET_FORM
+        ET_FORM,
+        ET_DIV
     };
 
     static const elem_type_t item_types[] = {
@@ -4908,6 +4953,12 @@ static void test_elems(IHTMLDocument2 *doc)
         test_img_alt((IUnknown*)elem, NULL);
         test_img_set_alt((IUnknown*)elem, "alt test");
         test_img_name((IUnknown*)elem, "WineImg");
+        IHTMLElement_Release(elem);
+    }
+
+    elem = get_elem_by_id(doc, "attr", TRUE);
+    if(elem) {
+        test_dynamic_properties(elem);
         IHTMLElement_Release(elem);
     }
 
