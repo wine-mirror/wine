@@ -7247,7 +7247,7 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
 
     context_release(context);
 
-    surface_modify_location(dst_surface, SFLAG_INDRAWABLE, TRUE);
+    surface_modify_location(dst_surface, dst_surface->draw_binding, TRUE);
     return WINED3D_OK;
 }
 
