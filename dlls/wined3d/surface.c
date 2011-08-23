@@ -1783,17 +1783,21 @@ static HRESULT surface_set_mem(struct wined3d_surface *surface, void *mem)
     }
     else if (surface->flags & SFLAG_USERPTR)
     {
-        /* Map and GetDC will re-create the dib section and allocated memory. */
-        surface->resource.allocatedMemory = NULL;
         /* HeapMemory should be NULL already. */
         if (surface->resource.heapMemory)
             ERR("User pointer surface has heap memory allocated.\n");
-        surface->flags &= ~(SFLAG_USERPTR | SFLAG_INSYSMEM);
 
-        if (surface->flags & SFLAG_CLIENT)
-            surface_release_client_storage(surface);
+        if (!mem)
+        {
+            surface->resource.allocatedMemory = NULL;
+            surface->flags &= ~(SFLAG_USERPTR | SFLAG_INSYSMEM);
 
-        surface_prepare_system_memory(surface);
+            if (surface->flags & SFLAG_CLIENT)
+                surface_release_client_storage(surface);
+
+            surface_prepare_system_memory(surface);
+        }
+
         surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
     }
 
