@@ -261,7 +261,7 @@ struct wined3d_fake_gl_ctx
     HGLRC restore_gl_ctx;
 };
 
-static void WineD3D_ReleaseFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
+static void WineD3D_ReleaseFakeGLContext(const struct wined3d_fake_gl_ctx *ctx)
 {
     TRACE_(d3d_caps)("Destroying fake GL context.\n");
 
