@@ -4938,6 +4938,11 @@ static UINT msi_unpublish_product( MSIPACKAGE *package, const WCHAR *remove )
     LIST_FOR_EACH_ENTRY(patch, &package->patches, MSIPATCHINFO, entry)
     {
         MSIREG_DeleteUserDataPatchKey(patch->patchcode, package->Context);
+        if (!strcmpW( package->ProductCode, patch->products ))
+        {
+            TRACE("removing local patch package %s\n", debugstr_w(patch->localfile));
+            patch->delete_on_close = TRUE;
+        }
         /* FIXME: remove local patch package if this is the last product */
     }
     TRACE("removing local package %s\n", debugstr_w(package->localfile));

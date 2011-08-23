@@ -170,10 +170,12 @@ typedef struct tagMSIPATCHINFO
 {
     struct list entry;
     LPWSTR patchcode;
+    LPWSTR products;
     LPWSTR transforms;
     LPWSTR filename;
     LPWSTR localfile;
     MSIPATCHSTATE state;
+    BOOL delete_on_close;
 } MSIPATCHINFO;
 
 typedef struct tagMSIBINARY
@@ -770,6 +772,7 @@ extern UINT msi_apply_transforms( MSIPACKAGE *package ) DECLSPEC_HIDDEN;
 extern UINT msi_check_patch_applicable( MSIPACKAGE *package, MSISUMMARYINFO *si ) DECLSPEC_HIDDEN;
 extern UINT msi_apply_patches( MSIPACKAGE *package ) DECLSPEC_HIDDEN;
 extern UINT msi_apply_registered_patch( MSIPACKAGE *package, LPCWSTR patch_code ) DECLSPEC_HIDDEN;
+extern void msi_free_patchinfo( MSIPATCHINFO *patch ) DECLSPEC_HIDDEN;
 
 /* action internals */
 extern UINT MSI_InstallPackage( MSIPACKAGE *, LPCWSTR, LPCWSTR ) DECLSPEC_HIDDEN;

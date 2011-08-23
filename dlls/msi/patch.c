@@ -184,10 +184,16 @@ static UINT msi_parse_patch_summary( MSISUMMARYINFO *si, MSIPATCHINFO **patch )
         p[1] = 0;
     }
     TRACE("patch code %s\n", debugstr_w(pi->patchcode));
-
+    if (!(pi->products = msi_suminfo_dup_string( si, PID_TEMPLATE )))
+    {
+        msi_free( pi->patchcode );
+        msi_free( pi );
+        return ERROR_OUTOFMEMORY;
+    }
     if (!(pi->transforms = msi_suminfo_dup_string( si, PID_LASTAUTHOR )))
     {
         msi_free( pi->patchcode );
+        msi_free( pi->products );
         msi_free( pi );
         return ERROR_OUTOFMEMORY;
     }
@@ -597,6 +603,16 @@ static UINT msi_apply_patch_db( MSIPACKAGE *package, MSIDATABASE *patch_db, MSIP
     return ERROR_SUCCESS;
 }
 
+void msi_free_patchinfo( MSIPATCHINFO *patch )
+{
+    msi_free( patch->patchcode );
+    msi_free( patch->products );
+    msi_free( patch->transforms );
+    msi_free( patch->filename );
+    msi_free( patch->localfile );
+    msi_free( patch );
+}
+
 static UINT msi_apply_patch_package( MSIPACKAGE *package, const WCHAR *file )
 {
     static const WCHAR dotmsp[] = {'.','m','s','p',0};
@@ -646,11 +662,8 @@ done:
     msiobj_release( &patch_db->hdr );
     if (patch && r != ERROR_SUCCESS)
     {
-        msi_free( patch->patchcode );
-        msi_free( patch->transforms );
-        msi_free( patch->filename );
-        msi_free( patch->localfile );
-        msi_free( patch );
+        DeleteFileW( patch->localfile );
+        msi_free_patchinfo( patch );
     }
     return r;
 }
@@ -756,6 +769,7 @@ UINT msi_apply_registered_patch( MSIPACKAGE *package, LPCWSTR patch_code )
     if (!patch_info->localfile)
     {
         msiobj_release( &patch_db->hdr );
+        msi_free_patchinfo( patch_info );
         return ERROR_OUTOFMEMORY;
     }
     r = msi_apply_patch_db( package, patch_db, patch_info );
@@ -763,10 +777,7 @@ UINT msi_apply_registered_patch( MSIPACKAGE *package, LPCWSTR patch_code )
     if (r != ERROR_SUCCESS)
     {
         ERR("failed to apply patch %u\n", r);
-        msi_free( patch_info->patchcode );
-        msi_free( patch_info->transforms );
-        msi_free( patch_info->localfile );
-        msi_free( patch_info );
+        msi_free_patchinfo( patch_info );
     }
     return r;
 }

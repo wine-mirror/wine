@@ -293,18 +293,6 @@ static void free_package_structures( MSIPACKAGE *package )
         msi_free( package->script );
     }
 
-    LIST_FOR_EACH_SAFE( item, cursor, &package->patches )
-    {
-        MSIPATCHINFO *patch = LIST_ENTRY( item, MSIPATCHINFO, entry );
-
-        list_remove( &patch->entry );
-        msi_free( patch->patchcode );
-        msi_free( patch->transforms );
-        msi_free( patch->localfile );
-        msi_free( patch->filename );
-        msi_free( patch );
-    }
-
     LIST_FOR_EACH_SAFE( item, cursor, &package->binaries )
     {
         MSIBINARY *binary = LIST_ENTRY( item, MSIBINARY, entry );
@@ -327,6 +315,18 @@ static void free_package_structures( MSIPACKAGE *package )
         IStorage_Release( cab->storage );
         msi_free( cab->stream );
         msi_free( cab );
+    }
+
+    LIST_FOR_EACH_SAFE( item, cursor, &package->patches )
+    {
+        MSIPATCHINFO *patch = LIST_ENTRY( item, MSIPATCHINFO, entry );
+
+        list_remove( &patch->entry );
+        if (patch->delete_on_close && !DeleteFileW( patch->localfile ))
+        {
+            ERR("failed to delete %s (%u)\n", debugstr_w(patch->localfile), GetLastError());
+        }
+        msi_free_patchinfo( patch );
     }
 
     msi_free( package->BaseURL );
