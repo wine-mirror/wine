@@ -19,6 +19,7 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "msvcp90.h"
 #include "windef.h"
@@ -97,8 +98,37 @@ typedef struct _ios_base {
 } ios_base;
 
 typedef struct {
+    streamoff off;
+    __int64 DECLSPEC_ALIGN(8) pos;
+    int state;
+} fpos_int;
+
+static inline const char* debugstr_fpos_int(fpos_int *fpos)
+{
+    return wine_dbg_sprintf("fpos(%lu %s %d)", fpos->off, wine_dbgstr_longlong(fpos->pos), fpos->state);
+}
+
+typedef struct {
+    const vtable_ptr *vtable;
+    mutex lock;
+    char *rbuf;
+    char *wbuf;
+    char **prbuf;
+    char **pwbuf;
+    char *rpos;
+    char *wpos;
+    char **prpos;
+    char **pwpos;
+    int rsize;
+    int wsize;
+    int *prsize;
+    int *pwsize;
+    locale *loc;
+} basic_streambuf_char;
+
+typedef struct {
     ios_base child;
-    /*basic_streambuf_char*/void *strbuf;
+    basic_streambuf_char *strbuf;
     /*basic_ostream_char*/void *stream;
     char fillch;
 } basic_ios_char;
@@ -108,6 +138,9 @@ extern const vtable_ptr MSVCP_ios_base_vtable;
 
 /* ??_7?$basic_ios@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ios_char_vtable;
+
+/* ??_7?$basic_streambuf@DU?$char_traits@D@std@@@std@@6B@ */
+extern const vtable_ptr MSVCP_basic_streambuf_char_vtable;
 
 static const type_info ios_base_type_info = {
     &MSVCP_ios_base_vtable,
@@ -194,11 +227,61 @@ const rtti_object_locator basic_ios_char_rtti = {
     &basic_ios_char_hierarchy
 };
 
+static const type_info basic_streambuf_char_type_info = {
+    &MSVCP_basic_streambuf_char_vtable,
+    NULL,
+    ".?AV?$basic_streambuf@DU?$char_traits@D@std@@@std@@"
+};
+
+static const rtti_base_descriptor basic_streambuf_char_rtti_base_descriptor = {
+    &basic_streambuf_char_type_info,
+    0,
+    { 0, -1, 0},
+    64
+};
+
+static const rtti_base_array basic_streambuf_char_rtti_base_array = {
+    {
+        &basic_streambuf_char_rtti_base_descriptor,
+        NULL,
+        NULL
+    }
+};
+
+static const rtti_object_hierarchy basic_streambuf_char_hierarchy = {
+    0,
+    0,
+    1,
+    &basic_streambuf_char_rtti_base_array
+};
+
+const rtti_object_locator basic_streambuf_char_rtti = {
+    0,
+    0,
+    0,
+    &basic_streambuf_char_type_info,
+    &basic_streambuf_char_hierarchy
+};
+
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
     __ASM_VTABLE(ios_base, "");
     __ASM_VTABLE(basic_ios_char, "");
+    __ASM_VTABLE(basic_streambuf_char,
+            "\t.long " THISCALL_NAME(basic_streambuf_char_overflow) "\n"
+            "\t.long " THISCALL_NAME(basic_streambuf_char_pbackfail) "\n"
+            "\t.long " THISCALL_NAME(basic_streambuf_char_showmanyc) "\n"
+            "\t.long " THISCALL_NAME(basic_streambuf_char_underflow) "\n"
+            "\t.long " THISCALL_NAME(basic_streambuf_char_uflow) "\n"
+            "\t.long " THISCALL_NAME(basic_streambuf_char_xsgetn) "\n"
+            "\t.long " THISCALL_NAME(basic_streambuf_char__Xsgetn_s) "\n"
+            "\t.long " THISCALL_NAME(basic_streambuf_char_xsputn) "\n"
+            "\t.long " THISCALL_NAME(basic_streambuf_char_seekoff) "\n"
+            "\t.long " THISCALL_NAME(basic_streambuf_char_seekpos) "\n"
+            "\t.long " THISCALL_NAME(basic_streambuf_char_setbuf) "\n"
+            "\t.long " THISCALL_NAME(basic_streambuf_char_sync) "\n"
+            "\t.long " THISCALL_NAME(basic_streambuf_char_imbue) "\n");
 #ifndef __GNUC__
 }
 #endif
@@ -708,7 +791,7 @@ locale __thiscall basic_ios_char_imbue(basic_ios_char *this)
 /* ?init@?$basic_ios@DU?$char_traits@D@std@@@std@@IAEXPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@_N@Z */
 /* ?init@?$basic_ios@DU?$char_traits@D@std@@@std@@IEAAXPEAV?$basic_streambuf@DU?$char_traits@D@std@@@2@_N@Z */
 DEFINE_THISCALL_WRAPPER(basic_ios_char_init, 12)
-void __thiscall basic_ios_char_init(basic_ios_char *this, /*basic_streambuf_char*/void *streambuf, MSVCP_bool isstd)
+void __thiscall basic_ios_char_init(basic_ios_char *this, basic_streambuf_char *streambuf, MSVCP_bool isstd)
 {
     FIXME("(%p %p %x) stub\n", this, streambuf, isstd);
 }
@@ -725,7 +808,7 @@ char __thiscall basic_ios_char_narrow(basic_ios_char *this, char ch, char def)
 /* ?rdbuf@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PAV32@@Z */
 /* ?rdbuf@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAPEAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PEAV32@@Z */
 DEFINE_THISCALL_WRAPPER(basic_ios_char_rdbuf_set, 8)
-/*basic_streambuf_char*/void* __thiscall basic_ios_char_rdbuf_set(basic_ios_char *this, /*basic_streambuf_char*/void *streambuf)
+basic_streambuf_char* __thiscall basic_ios_char_rdbuf_set(basic_ios_char *this, basic_streambuf_char *streambuf)
 {
     FIXME("(%p %p) stub\n", this, streambuf);
     return NULL;
@@ -734,7 +817,7 @@ DEFINE_THISCALL_WRAPPER(basic_ios_char_rdbuf_set, 8)
 /* ?rdbuf@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@XZ */
 /* ?rdbuf@?$basic_ios@DU?$char_traits@D@std@@@std@@QEBAPEAV?$basic_streambuf@DU?$char_traits@D@std@@@2@XZ */
 DEFINE_THISCALL_WRAPPER(basic_ios_char_rdbuf_get, 4)
-/*basic_streambuf_char*/void* __thiscall basic_ios_char_rdbuf_get(const basic_ios_char *this)
+basic_streambuf_char* __thiscall basic_ios_char_rdbuf_get(const basic_ios_char *this)
 {
     FIXME("(%p) stub\n", this);
     return NULL;
@@ -780,5 +863,525 @@ DEFINE_THISCALL_WRAPPER(basic_ios_char_widen, 8)
 char __thiscall basic_ios_char_widen(basic_ios_char *this, char ch)
 {
     FIXME("(%p %c)\n", this, ch);
+    return 0;
+}
+
+/* ??0?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAE@W4_Uninitialized@1@@Z */
+/* ??0?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAA@W4_Uninitialized@1@@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_ctor_uninitialized, 8)
+basic_streambuf_char* __thiscall basic_streambuf_char_ctor_uninitialized(basic_streambuf_char *this, int uninitialized)
+{
+    FIXME("(%p %d) stub\n", this, uninitialized);
+    return NULL;
+}
+
+/* ??0?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAE@XZ */
+/* ??0?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAA@XZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_ctor, 4)
+basic_streambuf_char* __thiscall basic_streambuf_char_ctor(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ??1?$basic_streambuf@DU?$char_traits@D@std@@@std@@UAE@XZ */
+/* ??1?$basic_streambuf@DU?$char_traits@D@std@@@std@@UEAA@XZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_dtor, 4)
+void __thiscall basic_streambuf_char_dtor(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_streambuf_char_vector_dtor, 8)
+basic_streambuf_char* __thiscall MSVCP_basic_streambuf_char_vector_dtor(basic_streambuf_char *this, unsigned int flags)
+{
+    TRACE("(%p %x) stub\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            basic_streambuf_char_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        basic_streambuf_char_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ?_Gnavail@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEHXZ */
+/* ?_Gnavail@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEBA_JXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Gnavail, 4)
+streamsize __thiscall basic_streambuf_char__Gnavail(const basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?_Gndec@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEPADXZ */
+/* ?_Gndec@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAPEADXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Gndec, 4)
+char* __thiscall basic_streambuf_char__Gndec(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?_Gninc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEPADXZ */
+/* ?_Gninc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAPEADXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Gninc, 4)
+char* __thiscall basic_streambuf_char__Gninc(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?_Gnpreinc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEPADXZ */
+/* ?_Gnpreinc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAPEADXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Gnpreinc, 4)
+char* __thiscall basic_streambuf_char__Gnpreinc(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?_Init@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAPAD0PAH001@Z */
+/* ?_Init@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAXPEAPEAD0PEAH001@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Init, 28)
+void __thiscall basic_streambuf_char__Init(basic_streambuf_char *this, char **gf, char **gn, int *gc, char **pf, char **pn, int *pc)
+{
+    FIXME("(%p %p %p %p %p %p %p) stub\n", this, gf, gn, gc, pf, pn, pc);
+}
+
+/* ?_Init@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXXZ */
+/* ?_Init@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAXXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Init_empty, 4)
+void __thiscall basic_streambuf_char__Init_empty(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?_Lock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEXXZ */
+/* ?_Lock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Lock, 4)
+void __thiscall basic_streambuf_char__Lock(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?_Pnavail@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEHXZ */
+/* ?_Pnavail@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEBA_JXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Pnavail, 4)
+streamsize __thiscall basic_streambuf_char__Pnavail(const basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?_Pninc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEPADXZ */
+/* ?_Pninc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAPEADXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Pninc, 4)
+char* __thiscall basic_streambuf_char__Pninc(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?_Sgetn_s@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHPADIH@Z */
+/* ?_Sgetn_s@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA_JPEAD_K_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Sgetn_s, 16)
+streamsize __thiscall basic_streambuf_char__Sgetn_s(basic_streambuf_char *this, char *ptr, MSVCP_size_t size, streamsize count)
+{
+    FIXME("(%p %p %lu %lu) stub\n", this, ptr, size, count);
+    return 0;
+}
+
+/* ?_Unlock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEXXZ */
+/* ?_Unlock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Unlock, 4)
+void __thiscall basic_streambuf_char__Unlock(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?_Xsgetn_s@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHPADIH@Z */
+/* ?_Xsgetn_s@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAA_JPEAD_K_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Xsgetn_s, 16)
+streamsize __thiscall basic_streambuf_char__Xsgetn_s(basic_streambuf_char *this, char *ptr, MSVCP_size_t size, streamsize count)
+{
+    FIXME("(%p %p %lu %lu) stub\n", this, ptr, size, count);
+    return 0;
+}
+
+/* ?eback@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ */
+/* ?eback@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEBAPEADXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_eback, 4)
+char* __thiscall basic_streambuf_char_eback(const basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?egptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ */
+/* ?egptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEBAPEADXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_egptr, 4)
+char* __thiscall basic_streambuf_char_egptr(const basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?epptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ */
+/* ?epptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEBAPEADXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_epptr, 4)
+char* __thiscall basic_streambuf_char_epptr(const basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?gbump@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXH@Z */
+/* ?gbump@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAXH@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_gbump, 8)
+void __thiscall basic_streambuf_char_gbump(basic_streambuf_char *this, int off)
+{
+    FIXME("(%p %d) stub\n", this, off);
+}
+
+/* ?getloc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QBE?AVlocale@2@XZ */
+/* ?getloc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEBA?AVlocale@2@XZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_getloc, 4)
+locale __thiscall basic_streambuf_char_getloc(const basic_streambuf_char *this)
+{
+    locale ret = { 0 }; /* FIXME */
+    FIXME("(%p) stub\n", this);
+    return ret;
+}
+
+/* ?gptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ */
+/* ?gptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEBAPEADXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_gptr, 4)
+char* __thiscall basic_streambuf_char_gptr(const basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?imbue@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEXABVlocale@2@@Z */
+/* ?imbue@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAXAEBVlocale@2@@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_imbue, 8)
+void __thiscall basic_streambuf_char_imbue(basic_streambuf_char *this, const locale *loc)
+{
+    FIXME("(%p %p) stub\n", this, loc);
+}
+
+/* ?in_avail@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHXZ */
+/* ?in_avail@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA_JXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_in_avail, 4)
+streamsize __thiscall basic_streambuf_char_in_avail(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?overflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHH@Z */
+/* ?overflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHH@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_overflow, 8)
+int __thiscall basic_streambuf_char_overflow(basic_streambuf_char *this, int ch)
+{
+    FIXME("(%p %d) stub\n", this, ch);
+    return 0;
+}
+
+/* ?pbackfail@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHH@Z */
+/* ?pbackfail@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHH@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_pbackfail, 8)
+int __thiscall basic_streambuf_char_pbackfail(basic_streambuf_char *this, int ch)
+{
+    FIXME("(%p %d) stub\n", this, ch);
+    return 0;
+}
+
+/* ?pbase@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ */
+/* ?pbase@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEBAPEADXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_pbase, 4)
+char* __thiscall basic_streambuf_char_pbase(const basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?pbump@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXH@Z */
+/* ?pbump@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAXH@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_pbump, 8)
+void __thiscall basic_streambuf_char_pbump(basic_streambuf_char *this, int off)
+{
+    FIXME("(%p %d) stub\n", this, off);
+}
+
+/* ?pptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ */
+/* ?pptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEBAPEADXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_pptr, 4)
+char* __thiscall basic_streambuf_char_pptr(const basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?pubimbue@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAE?AVlocale@2@ABV32@@Z */
+/* ?pubimbue@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA?AVlocale@2@AEBV32@@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_pubimbue, 8)
+locale __thiscall basic_streambuf_char_pubimbue(basic_streambuf_char *this, const locale *loc)
+{
+    locale ret = { 0 }; /* FIXME */
+    FIXME("(%p %p) stub\n", this, loc);
+    return ret;
+}
+
+/* ?pubseekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAE?AV?$fpos@H@2@JHH@Z */
+/* ?pubseekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA?AV?$fpos@H@2@_JHH@Z */
+DEFINE_THISCALL_WRAPPER_RETPTR(basic_streambuf_char_pubseekoff, 16)
+fpos_int __thiscall basic_streambuf_char_pubseekoff(basic_streambuf_char *this, streamoff off, int way, int mode)
+{
+    fpos_int ret = { 0 }; /* FIXME */
+    FIXME("(%p %lu %d %d) stub\n", this, off, way, mode);
+    return ret;
+}
+
+/* ?pubseekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAE?AV?$fpos@H@2@JII@Z */
+/* ?pubseekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA?AV?$fpos@H@2@_JII@Z */
+DEFINE_THISCALL_WRAPPER_RETPTR(basic_streambuf_char_pubseekoff_old, 16)
+fpos_int __thiscall basic_streambuf_char_pubseekoff_old(basic_streambuf_char *this, streamoff off, unsigned int way, unsigned int mode)
+{
+    fpos_int ret = { 0 }; /* FIXME */
+    FIXME("(%p %lu %d %d) stub\n", this, off, way, mode);
+    return ret;
+}
+
+/* ?pubseekpos@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAE?AV?$fpos@H@2@V32@H@Z */
+/* ?pubseekpos@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA?AV?$fpos@H@2@V32@H@Z */
+DEFINE_THISCALL_WRAPPER_RETPTR(basic_streambuf_char_pubseekpos, 32)
+fpos_int __thiscall basic_streambuf_char_pubseekpos(basic_streambuf_char *this, fpos_int pos, int mode)
+{
+    fpos_int ret = { 0 }; /* FIXME */
+    FIXME("(%p %s %d) stub\n", this, debugstr_fpos_int(&pos), mode);
+    return ret;
+}
+
+/* ?pubseekpos@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAE?AV?$fpos@H@2@V32@I@Z */
+/* ?pubseekpos@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA?AV?$fpos@H@2@V32@I@Z */
+DEFINE_THISCALL_WRAPPER_RETPTR(basic_streambuf_char_pubseekpos_old, 32)
+fpos_int __thiscall basic_streambuf_char_pubseekpos_old(basic_streambuf_char *this, fpos_int pos, unsigned int mode)
+{
+    fpos_int ret = { 0 }; /* FIXME */
+    FIXME("(%p %s %d) stub\n", this, debugstr_fpos_int(&pos), mode);
+    return ret;
+}
+
+/* ?pubsetbuf@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEPAV12@PADH@Z */
+/* ?pubsetbuf@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAPEAV12@PEAD_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_pubsetbuf, 12)
+basic_streambuf_char* __thiscall basic_streambuf_char_pubsetbuf(basic_streambuf_char *this, char *buf, streamsize count)
+{
+    FIXME("(%p %p %lu) stub\n", this, buf, count);
+    return NULL;
+}
+
+/* ?pubsync@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHXZ */
+/* ?pubsync@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAHXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_pubsync, 4)
+int __thiscall basic_streambuf_char_pubsync(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?sbumpc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHXZ */
+/* ?sbumpc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAHXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_sbumpc, 4)
+int __thiscall basic_streambuf_char_sbumpc(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?seekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAE?AV?$fpos@H@2@JHH@Z */
+/* ?seekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
+DEFINE_THISCALL_WRAPPER_RETPTR(basic_streambuf_char_seekoff, 16)
+fpos_int __thiscall basic_streambuf_char_seekoff(basic_streambuf_char *this, streamoff off, int way, int mode)
+{
+    fpos_int ret = { 0 }; /* FIXME */
+    FIXME("(%p %lu %d %d) stub\n", this, off, way, mode);
+    return ret;
+}
+
+/* ?seekpos@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAE?AV?$fpos@H@2@V32@H@Z */
+/* ?seekpos@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAA?AV?$fpos@H@2@V32@H@Z */
+DEFINE_THISCALL_WRAPPER_RETPTR(basic_streambuf_char_seekpos, 32)
+fpos_int __thiscall basic_streambuf_char_seekpos(basic_streambuf_char *this, fpos_int pos, int mode)
+{
+    fpos_int ret = { 0 }; /* FIXME */
+    FIXME("(%p %s %d) stub\n", this, debugstr_fpos_int(&pos), mode);
+    return ret;
+}
+
+/* ?setbuf@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEPAV12@PADH@Z */
+/* ?setbuf@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAPEAV12@PEAD_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_setbuf, 12)
+basic_streambuf_char* __thiscall basic_streambuf_char_setbuf(basic_streambuf_char *this, char *buf, streamsize count)
+{
+    FIXME("(%p %p %lu) stub\n", this, buf, count);
+    return NULL;
+}
+
+/* ?setg@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAD00@Z */
+/* ?setg@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAXPEAD00@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_setg, 16)
+void __thiscall basic_streambuf_char_setg(basic_streambuf_char *this, char *first, char *next, char *last)
+{
+    FIXME("(%p %p %p %p) stub\n", this, first, next, last);
+}
+
+/* ?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAD00@Z */
+/* ?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAXPEAD00@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_setp_next, 16)
+void __thiscall basic_streambuf_char_setp_next(basic_streambuf_char *this, char *first, char *next, char *last)
+{
+    FIXME("(%p %p %p %p) stub\n", this, first, next, last);
+}
+
+/* ?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAD0@Z */
+/* ?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAXPEAD0@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_setp, 12)
+void __thiscall basic_streambuf_char_setp(basic_streambuf_char *this, char *first, char *last)
+{
+    FIXME("(%p %p %p) stub\n", this, first, last);
+}
+
+/* ?sgetc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHXZ */
+/* ?sgetc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAHXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_sgetc, 4)
+int __thiscall basic_streambuf_char_sgetc(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?sgetn@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHPADH@Z */
+/* ?sgetn@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA_JPEAD_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_sgetn, 12)
+streamsize __thiscall basic_streambuf_char_sgetn(basic_streambuf_char *this, char *ptr, streamsize count)
+{
+    FIXME("(%p %p %lu) stub\n", this, ptr, count);
+    return 0;
+}
+
+/* ?showmanyc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHXZ */
+/* ?showmanyc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAA_JXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_showmanyc, 4)
+streamsize __thiscall basic_streambuf_char_showmanyc(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?snextc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHXZ */
+/* ?snextc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAHXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_snextc, 4)
+int __thiscall basic_streambuf_char_snextc(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?sputbackc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHD@Z */
+/* ?sputbackc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAHD@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_sputbackc, 8)
+int __thiscall basic_streambuf_char_sputbackc(basic_streambuf_char *this, char ch)
+{
+    FIXME("(%p %d) stub\n", this, ch);
+    return 0;
+}
+
+/* ?sputc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHD@Z */
+/* ?sputc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAHD@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_sputc, 8)
+int __thiscall basic_streambuf_char_sputc(basic_streambuf_char *this, char ch)
+{
+    FIXME("(%p %d) stub\n", this, ch);
+    return 0;
+}
+
+/* ?sputn@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHPBDH@Z */
+/* ?sputn@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA_JPEBD_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_sputn, 12)
+streamsize __thiscall basic_streambuf_char_sputn(basic_streambuf_char *this, const char *ptr, streamsize count)
+{
+    FIXME("(%p %p %lu) stub\n", this, ptr, count);
+    return 0;
+}
+
+/* ?stossc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEXXZ */
+/* ?stossc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_stossc, 4)
+void __thiscall basic_streambuf_char_stossc(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?sungetc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHXZ */
+/* ?sungetc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAHXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_sungetc, 4)
+int __thiscall basic_streambuf_char_sungetc(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?sync@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHXZ */
+/* ?sync@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_sync, 4)
+int __thiscall basic_streambuf_char_sync(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?uflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHXZ */
+/* ?uflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_uflow, 4)
+int __thiscall basic_streambuf_char_uflow(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?underflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHXZ */
+/* ?underflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHXZ */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_underflow, 4)
+int __thiscall basic_streambuf_char_underflow(basic_streambuf_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?xsgetn@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHPADH@Z */
+/* ?xsgetn@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAA_JPEAD_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_xsgetn, 12)
+streamsize __thiscall basic_streambuf_char_xsgetn(basic_streambuf_char *this, char *ptr, streamsize count)
+{
+    FIXME("(%p %p %lu) stub\n", this, ptr, count);
+    return 0;
+}
+
+/* ?xsputn@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHPBDH@Z */
+/* ?xsputn@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAA_JPEBD_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_xsputn, 12)
+streamsize __thiscall basic_streambuf_char_xsputn(basic_streambuf_char *this, const char *ptr, streamsize count)
+{
+    FIXME("(%p %p %lu) stub\n", this, ptr, count);
     return 0;
 }

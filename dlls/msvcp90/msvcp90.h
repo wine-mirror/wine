@@ -22,6 +22,8 @@
 typedef unsigned char MSVCP_bool;
 typedef int MSVCP_long;
 typedef SIZE_T MSVCP_size_t;
+typedef SIZE_T streamoff;
+typedef SIZE_T streamsize;
 
 void __cdecl _invalid_parameter(const wchar_t*, const wchar_t*,
         const wchar_t*, unsigned int, uintptr_t);
@@ -201,3 +203,8 @@ typedef struct {
 
 void init_lockit(void);
 void free_lockit(void);
+
+/* class mutex */
+typedef struct {
+        void *mutex;
+} mutex;

@@ -26,10 +26,6 @@
 #include "windef.h"
 #include "winbase.h"
 
-typedef struct {
-    void *mutex;
-} mutex;
-
 /* ??0_Mutex@std@@QAE@XZ */
 /* ??0_Mutex@std@@QEAA@XZ */
 DEFINE_THISCALL_WRAPPER(mutex_ctor, 4)
