@@ -8796,9 +8796,10 @@ msgstr ""
 "請使用別的編輯器。"
 
 #: notepad.rc:81
+#, fuzzy
 msgid ""
-"You didn't enter any text.\n"
-"Please type something and try again"
+"You did not enter any text.\n"
+"Please type something and try again."
 msgstr ""
 "您沒有輸入任何文本。\n"
 "請輸入一些再試"

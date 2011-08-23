@@ -8440,9 +8440,10 @@ msgstr ""
 " Eployoz on ôte aspougneu di tekse."
 
 #: notepad.rc:81
+#, fuzzy
 msgid ""
-"You didn't enter any text.\n"
-"Please type something and try again"
+"You did not enter any text.\n"
+"Please type something and try again."
 msgstr ""
 "Vos n' avoz rén sicrît. \n"
 "Tapez ene sacwe èt rasayez"

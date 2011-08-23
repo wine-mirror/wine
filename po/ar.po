@@ -8415,9 +8415,10 @@ msgstr ""
 "من فضلك استخدم محررا آخر."
 
 #: notepad.rc:81
+#, fuzzy
 msgid ""
-"You didn't enter any text.\n"
-"Please type something and try again"
+"You did not enter any text.\n"
+"Please type something and try again."
 msgstr ""
 "لم تكتب أي نص.\n"
 "من فضلك اكتب أي شيء ثم حاول ثانيا"

@@ -77,8 +77,8 @@ STRING_TEXT_FILES_TXT,                  "Text files (*.txt)"
 
 STRING_TOOLARGE,                                "File '%s' is too large for notepad.\n\
 Please use a different editor."
-STRING_NOTEXT,                                  "You didn't enter any text.\
-\nPlease type something and try again"
+STRING_NOTEXT,                                  "You did not enter any text.\
+\nPlease type something and try again."
 STRING_DOESNOTEXIST,                            "File '%s' does not exist.\n\n\
 Do you want to create a new file?"
 STRING_NOTSAVED,                                "File '%s' has been modified.\n\n\

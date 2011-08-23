@@ -8604,9 +8604,10 @@ msgstr ""
 " Oni konsilas uzi alian redaktilon."
 
 #: notepad.rc:81
+#, fuzzy
 msgid ""
-"You didn't enter any text.\n"
-"Please type something and try again"
+"You did not enter any text.\n"
+"Please type something and try again."
 msgstr ""
 "Ne estas enmetita teksto. \n"
 "Oni konsilas skribi devove kaj reprovi"

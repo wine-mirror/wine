@@ -9043,9 +9043,10 @@ msgstr ""
 "Brug en anden editor til at redigere filen."
 
 #: notepad.rc:81
+#, fuzzy
 msgid ""
-"You didn't enter any text.\n"
-"Please type something and try again"
+"You did not enter any text.\n"
+"Please type something and try again."
 msgstr ""
 "Du har ikke skrevet noget tekst. \n"
 "Skriv noget tekst, og prøv så igen"

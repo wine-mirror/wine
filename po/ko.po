@@ -8714,9 +8714,10 @@ msgstr ""
 " 다른 편집기를 사용하십시오."
 
 #: notepad.rc:81
+#, fuzzy
 msgid ""
-"You didn't enter any text.\n"
-"Please type something and try again"
+"You did not enter any text.\n"
+"Please type something and try again."
 msgstr ""
 "입력한 내용이 없습니다.\n"
 "내용을 입력한 후 재시도하십시오"

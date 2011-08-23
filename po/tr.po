@@ -9145,9 +9145,10 @@ msgstr ""
 " Lütfen değişik bir düzenleyici kullanın."
 
 #: notepad.rc:81
+#, fuzzy
 msgid ""
-"You didn't enter any text.\n"
-"Please type something and try again"
+"You did not enter any text.\n"
+"Please type something and try again."
 msgstr ""
 "Hiçbir metin yazmadınız. \n"
 "Lütfen birşey yazın ve tekrar deneyin"

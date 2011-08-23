@@ -8764,9 +8764,10 @@ msgstr ""
 " Используйте другой редактор."
 
 #: notepad.rc:81
+#, fuzzy
 msgid ""
-"You didn't enter any text.\n"
-"Please type something and try again"
+"You did not enter any text.\n"
+"Please type something and try again."
 msgstr ""
 "Вы не ввели никакого текста. \n"
 "Введите что-нибудь и попробуйте еще."

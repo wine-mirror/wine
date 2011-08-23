@@ -9128,9 +9128,10 @@ msgstr ""
 " Per favore usare un altro editor."
 
 #: notepad.rc:81
+#, fuzzy
 msgid ""
-"You didn't enter any text.\n"
-"Please type something and try again"
+"You did not enter any text.\n"
+"Please type something and try again."
 msgstr ""
 "Non è stato inserito alcun testo. \n"
 "Per favore digitare qualcosa e riprovare"

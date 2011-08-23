@@ -8811,9 +8811,10 @@ msgstr ""
 "Koristite drugi uređivač teksta."
 
 #: notepad.rc:81
+#, fuzzy
 msgid ""
-"You didn't enter any text.\n"
-"Please type something and try again"
+"You did not enter any text.\n"
+"Please type something and try again."
 msgstr ""
 "Niste uneli nikakav tekst.\n"
 "Unesite nešto i pokušajte ponovo"
