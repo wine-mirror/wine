@@ -39,6 +39,7 @@ static const WCHAR wshW[] = {'W','S','H',0};
 WCHAR scriptFullName[MAX_PATH];
 
 ITypeInfo *host_ti;
+ITypeInfo *arguments_ti;
 
 static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface,
                                                       REFIID riid, void **ppv)
@@ -166,6 +167,8 @@ static BOOL load_typelib(void)
         return FALSE;
 
     hres = ITypeLib_GetTypeInfoOfGuid(typelib, &IID_IHost, &host_ti);
+    if(SUCCEEDED(hres))
+        hres = ITypeLib_GetTypeInfoOfGuid(typelib, &IID_IArguments2, &arguments_ti);
 
     ITypeLib_Release(typelib);
     return SUCCEEDED(hres);

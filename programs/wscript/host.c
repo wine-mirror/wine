@@ -185,8 +185,10 @@ static HRESULT WINAPI Host_get_ScriptFullName(IHost *iface, BSTR *out_ScriptFull
 
 static HRESULT WINAPI Host_get_Arguments(IHost *iface, IArguments2 **out_Arguments)
 {
-    WINE_FIXME("(%p)\n", out_Arguments);
-    return E_NOTIMPL;
+    WINE_TRACE("(%p)\n", out_Arguments);
+
+    *out_Arguments = &arguments_obj;
+    return S_OK;
 }
 
 static HRESULT WINAPI Host_get_Version(IHost *iface, BSTR *out_Version)

@@ -32,5 +32,6 @@ ok(WScript.FullName === winetest.wscriptFullName, "WScript.FullName = ", WScript
 ok(WScript.Path === winetest.wscriptPath, "WScript.Path = ", WScript.Path);
 ok(WScript.ScriptName === winetest.wscriptScriptName, "WScript.ScriptName = " + WScript.ScriptName);
 ok(WScript.ScriptFullName === winetest.wscriptScriptFullName, "WScript.ScriptFullName = " + WScript.ScriptFullName);
+ok(typeof(WScript.Arguments) === "object", "typeof(WScript.Arguments) = " + typeof(WScript.Arguments));
 
 winetest.reportSuccess();

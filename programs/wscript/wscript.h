@@ -20,6 +20,10 @@
 
 extern IHost host_obj;
 
+extern IArguments2 arguments_obj;
+
 extern ITypeInfo *host_ti;
+
+extern ITypeInfo *arguments_ti;
 
 extern WCHAR scriptFullName[];
