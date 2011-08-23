@@ -118,8 +118,10 @@ static HRESULT WINAPI Arguments2_Count(IArguments2 *iface, LONG *out_Count)
 
 static HRESULT WINAPI Arguments2_get_length(IArguments2 *iface, LONG *out_Count)
 {
-    WINE_FIXME("(%p)\n", out_Count);
-    return E_NOTIMPL;
+    WINE_TRACE("(%p)\n", out_Count);
+
+    *out_Count = numOfArgs;
+    return S_OK;
 }
 
 static const IArguments2Vtbl Arguments2Vtbl = {
