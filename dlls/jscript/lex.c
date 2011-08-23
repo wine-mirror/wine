@@ -361,7 +361,7 @@ static int parse_string_literal(parser_ctx_t *ctx, const WCHAR **ret, WCHAR endc
     len = ctx->ptr-ptr;
 
     *ret = wstr = parser_alloc(ctx, (len+1)*sizeof(WCHAR));
-    memcpy(wstr, ptr, (len+1)*sizeof(WCHAR));
+    memcpy(wstr, ptr, len*sizeof(WCHAR));
     wstr[len] = 0;
 
     ctx->ptr++;
