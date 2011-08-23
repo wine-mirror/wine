@@ -40,5 +40,6 @@ try {
     WScript.Arguments.Item(3);
     ok(false, "expected exception");
 }catch(e) {}
+ok(WScript.Arguments.Count() === 3, "WScript.Arguments.Count() = " + WScript.Arguments.Count());
 
 winetest.reportSuccess();
