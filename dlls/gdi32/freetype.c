@@ -4085,7 +4085,7 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
                  (WCHAR*)((char*)font->potm + (ULONG_PTR)font->potm->otmpFamilyName),
                  LF_FACESIZE);
         lstrcpynW(pelf->elfFullName,
-                 (WCHAR*)((char*)font->potm + (ULONG_PTR)font->potm->otmpFaceName),
+                 (WCHAR*)((char*)font->potm + (ULONG_PTR)font->potm->otmpFullName),
                  LF_FULLFACESIZE);
         lstrcpynW(pelf->elfStyle,
                  (WCHAR*)((char*)font->potm + (ULONG_PTR)font->potm->otmpStyleName),
@@ -4098,7 +4098,10 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
         pntm->ntmTm.ntmSizeEM = pntm->ntmTm.tmHeight - pntm->ntmTm.tmInternalLeading;
 
         lstrcpynW(pelf->elfLogFont.lfFaceName, face->family->FamilyName, LF_FACESIZE);
-        lstrcpynW(pelf->elfFullName, face->family->FamilyName, LF_FULLFACESIZE);
+        if (face->FullName)
+            lstrcpynW(pelf->elfFullName, face->FullName, LF_FULLFACESIZE);
+        else
+            lstrcpynW(pelf->elfFullName, face->family->FamilyName, LF_FULLFACESIZE);
         lstrcpynW(pelf->elfStyle, face->StyleName, LF_FACESIZE);
     }
 
