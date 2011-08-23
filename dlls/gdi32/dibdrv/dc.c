@@ -23,6 +23,7 @@
 #include "gdi_private.h"
 #include "dibdrv.h"
 
+#include "wine/exception.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dib);
@@ -272,7 +273,16 @@ DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
     if ( !init_dib_info_from_bitmapinfo( &dst_dib, dst_info, dst_bits, 0 ) )
         return ERROR_BAD_FORMAT;
 
-    ret = dst_dib.funcs->convert_to( &dst_dib, &src_dib, &src->visrect );
+    __TRY
+    {
+        ret = dst_dib.funcs->convert_to( &dst_dib, &src_dib, &src->visrect );
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        WARN( "invalid bits pointer %p\n", src_bits );
+        ret = FALSE;
+    }
+    __ENDTRY
 
     /* We shared the color tables, so there's no need to free the dib_infos here */
     if(!ret) return ERROR_BAD_FORMAT;
