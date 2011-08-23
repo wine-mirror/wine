@@ -1742,7 +1742,8 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     CMD_DELIMITERS prevDelim = CMD_NONE;
     static WCHAR    *extraSpace = NULL;  /* Deliberately never freed */
     const WCHAR remCmd[] = {'r','e','m',' ','\0'};
-    const WCHAR forCmd[] = {'f','o','r',' ','\0'};
+    const WCHAR forCmd[]    = {'f','o','r',' ' ,'\0'};
+    const WCHAR forTabCmd[] = {'f','o','r','\t','\0'};
     const WCHAR ifCmd[]  = {'i','f',' ','\0'};
     const WCHAR ifElse[] = {'e','l','s','e',' ','\0'};
     BOOL      inRem = FALSE;
@@ -1826,7 +1827,8 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
 
       /* Certain commands need special handling */
       if (curStringLen == 0 && curCopyTo == curString) {
-        const WCHAR forDO[]  = {'d','o',' ','\0'};
+        const WCHAR forDO[]     = {'d','o',' ' ,'\0'};
+        const WCHAR forDOTab[]  = {'d','o','\t','\0'};
 
         /* If command starts with 'rem', ignore any &&, ( etc */
         if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
@@ -1835,7 +1837,9 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
 
         /* If command starts with 'for', handle ('s mid line after IN or DO */
         } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-          curPos, 4, forCmd, -1) == CSTR_EQUAL) {
+                                  curPos, 4, forCmd, -1) == CSTR_EQUAL
+                || CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                                  curPos, 4, forTabCmd, -1) == CSTR_EQUAL) {
           inFor = TRUE;
 
         /* If command starts with 'if' or 'else', handle ('s mid line. We should ensure this
@@ -1863,7 +1867,9 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
            is then 0, and all whitespace is skipped                                */
         } else if (inFor &&
                    (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                    curPos, 3, forDO, -1) == CSTR_EQUAL)) {
+                                   curPos, 3, forDO, -1) == CSTR_EQUAL
+                 || CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                                   curPos, 3, forDOTab, -1) == CSTR_EQUAL)) {
           WINE_TRACE("Found DO\n");
           lastWasDo = TRUE;
           onlyWhiteSpace = TRUE;
@@ -1876,12 +1882,15 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
 
         /* Special handling for the 'FOR' command */
         if (inFor && lastWasWhiteSpace) {
-          const WCHAR forIN[] = {'i','n',' ','\0'};
+          const WCHAR forIN[]    = {'i','n',' ' ,'\0'};
+          const WCHAR forINTab[] = {'i','n','\t','\0'};
 
           WINE_TRACE("Found 'FOR', comparing next parm: '%s'\n", wine_dbgstr_w(curPos));
 
           if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-              curPos, 3, forIN, -1) == CSTR_EQUAL) {
+                             curPos, 3, forIN, -1) == CSTR_EQUAL
+           || CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                             curPos, 3, forINTab, -1) == CSTR_EQUAL) {
             WINE_TRACE("Found IN\n");
             lastWasIn = TRUE;
             onlyWhiteSpace = TRUE;
@@ -2106,7 +2115,8 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
       /* At various times we need to know if we have only skipped whitespace,
          so reset this variable and then it will remain true until a non
          whitespace is found                                               */
-      if ((thisChar != ' ') && (thisChar != '\n')) onlyWhiteSpace = FALSE;
+      if ((thisChar != ' ') && (thisChar != '\t') && (thisChar != '\n'))
+        onlyWhiteSpace = FALSE;
 
       /* Flag end of interest in FOR DO and IN parms once something has been processed */
       if (!lastWasWhiteSpace) {

@@ -902,8 +902,10 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   WIN32_FIND_DATAW fd;
   HANDLE hff;
   int i;
-  const WCHAR inW[] = {'i', 'n', ' ', '\0'};
-  const WCHAR doW[] = {'d', 'o', ' ', '\0'};
+  const WCHAR inW[]    = {'i', 'n', ' ',  '\0'};
+  const WCHAR inTabW[] = {'i', 'n', '\t', '\0'};
+  const WCHAR doW[]    = {'d', 'o', ' ',  '\0'};
+  const WCHAR doTabW[] = {'d', 'o', '\t', '\0'};
   CMD_LIST *setStart, *thisSet, *cmdStart, *cmdEnd;
   WCHAR variable[4];
   WCHAR *firstCmd;
@@ -938,7 +940,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
               /* Skip whitespace */
               curPos++;
-              while (*curPos && *curPos==' ') curPos++;
+              while (*curPos && (*curPos==' ' || *curPos=='\t')) curPos++;
 
               /* Next parm is either qualifier, path/options or variable -
                  only care about it if it is the path/options              */
@@ -954,11 +956,11 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
       }
 
       /* Skip whitespace between qualifiers */
-      while (*curPos && *curPos==' ') curPos++;
+      while (*curPos && (*curPos==' ' || *curPos=='\t')) curPos++;
   }
 
   /* Skip whitespace before variable */
-  while (*curPos && *curPos==' ') curPos++;
+  while (*curPos && (*curPos==' ' || *curPos=='\t')) curPos++;
 
   /* Ensure line continues with variable */
   if (!*curPos || *curPos != '%') {
@@ -968,19 +970,21 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
   /* Variable should follow */
   i = 0;
-  while (curPos[i] && curPos[i]!=' ') i++;
+  while (curPos[i] && curPos[i]!=' ' && curPos[i]!='\t') i++;
   memcpy(&variable[0], curPos, i*sizeof(WCHAR));
   variable[i] = 0x00;
   WINE_TRACE("Variable identified as %s\n", wine_dbgstr_w(variable));
   curPos = &curPos[i];
 
   /* Skip whitespace before IN */
-  while (*curPos && *curPos==' ') curPos++;
+  while (*curPos && (*curPos==' ' || *curPos=='\t')) curPos++;
 
   /* Ensure line continues with IN */
   if (!*curPos
-       || CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                         curPos, 3, inW, -1) != CSTR_EQUAL) {
+       || (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                         curPos, 3, inW, -1) != CSTR_EQUAL
+           && CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                         curPos, 3, inTabW, -1) != CSTR_EQUAL)) {
       WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
       return;
   }
@@ -1005,9 +1009,11 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   /* Syntax error if missing close bracket, or nothing following it
      and once we have the complete set, we expect a DO              */
   WINE_TRACE("Looking for 'do' in %p\n", *cmdList);
-  if ((*cmdList == NULL) ||
-      (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                            (*cmdList)->command, 3, doW, -1) != CSTR_EQUAL)) {
+  if ((*cmdList == NULL)
+       || (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                         (*cmdList)->command, 3, doW, -1) != CSTR_EQUAL
+           && CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                         (*cmdList)->command, 3, doTabW, -1) != CSTR_EQUAL)) {
       WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
       return;
   }

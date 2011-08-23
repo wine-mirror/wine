@@ -275,11 +275,14 @@ A
 B
 C
 X
-@todo_wine@X2
-@todo_wine@X3
+X2
+X3
 foo
-@todo_wine@M
-@todo_wine@X
+M
+X
+M
+N
+O
 ...imbricated FORs
 @todo_wine@X Y
 @todo_wine@X Y

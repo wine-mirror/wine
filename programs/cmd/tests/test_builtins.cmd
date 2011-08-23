@@ -386,6 +386,7 @@ for %%i in@tab@(X3) do echo %%i
 for %%i in (@tab@ foo@tab@) do echo %%i
 for@tab@ %%i in@tab@(@tab@M) do echo %%i
 for %%i@tab@in (X)@tab@do@tab@echo %%i
+for@tab@ %%j in@tab@(@tab@M, N, O@tab@) do echo %%j
 goto :endForTestFun1
 :forTestFun1
 echo %1
