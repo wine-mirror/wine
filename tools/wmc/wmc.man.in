@@ -1,7 +1,7 @@
 .\" -*- nroff -*-
 .TH WMC 1 "October 2005" "@PACKAGE_STRING@" "Wine Developers Manual"
 .SH NAME
-wrc \- Wine Message Compiler
+wmc \- Wine Message Compiler
 .SH SYNOPSIS
 .BI "wmc " "[options] " "[inputfile]"
 .SH DESCRIPTION
