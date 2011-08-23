@@ -5952,10 +5952,6 @@ msgstr "Kopiuj pliki z:"
 msgid "Type the path where the file is located, and then click OK."
 msgstr "Podaj ścieżkę do pliku, a następnie naciśnij przycisk OK."
 
-#: shdoclc.rc:36
-msgid "Default"
-msgstr "Domyślnie"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "&Dalej"
@@ -6004,10 +6000,6 @@ msgstr "&Kodowanie"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "D&rukuj"
-
-#: shdoclc.rc:61
-msgid "Image"
-msgstr "Obrazek"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6072,10 +6064,6 @@ msgstr "Kopiuj &skrót"
 msgid "P&roperties"
 msgstr "Właś&ciwości"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr "Sterowanie"
-
 #: shdoclc.rc:88 user32.rc:55
 msgid "&Undo"
 msgstr "&Confij"
@@ -6083,10 +6071,6 @@ msgstr "&Confij"
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
 msgstr "&Usuń"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr "Tabela"
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
@@ -6116,10 +6100,6 @@ msgstr "Właściwości &komórki"
 msgid "&Table Properties"
 msgstr "Właściwości &tabeli"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr "1DSite Select"
-
 #: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
 msgstr "Wkl&ej"
@@ -6127,10 +6107,6 @@ msgstr "Wkl&ej"
 #: shdoclc.rc:118
 msgid "&Print"
 msgstr "&Drukuj"
-
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr "Kotwica"
 
 #: shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
@@ -6144,14 +6120,6 @@ msgstr "Otwórz w &nowym oknie"
 msgid "Cut"
 msgstr "Wy&tnij"
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr "Kontekst nieznany"
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr "Obraz DYNSRC"
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "Zapisz &wideo jako..."
@@ -6160,17 +6128,9 @@ msgstr "Zapisz &wideo jako..."
 msgid "Play"
 msgstr "Odtwórz"
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr "Obraz ART"
-
 #: shdoclc.rc:189
 msgid "Rewind"
 msgstr "Przewiń"
-
-#: shdoclc.rc:194
-msgid "Debug"
-msgstr "Debuguj"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6232,10 +6192,6 @@ msgstr "Przeglą&daj widok"
 msgid "&Edit View"
 msgstr "&Edytuj widok"
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr "Pionowy pasek przewijania"
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "Przewiń tutaj"
@@ -6263,10 +6219,6 @@ msgstr "Przewiń w górę"
 #: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "Przewiń w dół"
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
-msgstr "Poziomy pasek przewijania"
 
 #: shdoclc.rc:232
 msgid "Left Edge"

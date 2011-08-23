@@ -6272,10 +6272,6 @@ msgstr ""
 msgid "Type the path where the file is located, and then click OK."
 msgstr ""
 
-#: shdoclc.rc:36
-msgid "Default"
-msgstr "Default"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "İ&leri"
@@ -6329,10 +6325,6 @@ msgstr "&Kodlama"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "Ya&zdır"
-
-#: shdoclc.rc:61
-msgid "Image"
-msgstr "Image"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6407,10 +6399,6 @@ msgstr "&Kısayol Kopyala"
 msgid "P&roperties"
 msgstr "Ö&zellikler"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr "Control"
-
 #: shdoclc.rc:88 user32.rc:55
 msgid "&Undo"
 msgstr "&Geri Al"
@@ -6418,10 +6406,6 @@ msgstr "&Geri Al"
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
 msgstr "&Sil"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr "Table"
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
@@ -6451,10 +6435,6 @@ msgstr "&Hücre Özellikleri"
 msgid "&Table Properties"
 msgstr "&Tablo Özellikleri"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr "1DSite Select"
-
 #: shdoclc.rc:116 shell32.rc:61
 #, fuzzy
 msgid "Paste"
@@ -6473,10 +6453,6 @@ msgstr ""
 "#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
 "Ya&zdır"
 
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr "Anchor"
-
 #: shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
 msgstr "&Aç"
@@ -6489,14 +6465,6 @@ msgstr "&Yeni Pencerede Aç"
 msgid "Cut"
 msgstr "&Kes"
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr "Context Unknown"
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr "DYNSRC Image"
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "&Vidyoyu Farklı Kaydet..."
@@ -6505,17 +6473,9 @@ msgstr "&Vidyoyu Farklı Kaydet..."
 msgid "Play"
 msgstr "Yürüt"
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr "ART Image"
-
 #: shdoclc.rc:189
 msgid "Rewind"
 msgstr "Geri Çevir"
-
-#: shdoclc.rc:194
-msgid "Debug"
-msgstr "Debug"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6577,10 +6537,6 @@ msgstr "&Browse View"
 msgid "&Edit View"
 msgstr "&Edit View"
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr "Vertical Scrollbar"
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "Buraya Kaydır"
@@ -6608,10 +6564,6 @@ msgstr "Yukarı Kaydır"
 #: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "Aşağı Kaydır"
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
-msgstr "Horizontal Scrollbar"
 
 #: shdoclc.rc:232
 msgid "Left Edge"

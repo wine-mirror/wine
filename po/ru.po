@@ -5944,10 +5944,6 @@ msgstr "Копировать файлы из:"
 msgid "Type the path where the file is located, and then click OK."
 msgstr "Введите путь к файлу и нажмите OK."
 
-#: shdoclc.rc:36
-msgid "Default"
-msgstr "Default"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "&Вперед"
@@ -5996,10 +5992,6 @@ msgstr "&Кодировка"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "Пе&чать"
-
-#: shdoclc.rc:61
-msgid "Image"
-msgstr "Image"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6064,10 +6056,6 @@ msgstr "Копировать &ярлык"
 msgid "P&roperties"
 msgstr "Сво&йства"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr "Control"
-
 #: shdoclc.rc:88 user32.rc:55
 msgid "&Undo"
 msgstr "&Отменить"
@@ -6075,10 +6063,6 @@ msgstr "&Отменить"
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
 msgstr "&Удалить"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr "Table"
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
@@ -6108,10 +6092,6 @@ msgstr "Свойства &ячейки"
 msgid "&Table Properties"
 msgstr "Сво&йства таблицы"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr "1DSite Select"
-
 #: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
 msgstr "&Вставить"
@@ -6119,10 +6099,6 @@ msgstr "&Вставить"
 #: shdoclc.rc:118
 msgid "&Print"
 msgstr "&Печать"
-
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr "Anchor"
 
 #: shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
@@ -6136,14 +6112,6 @@ msgstr "Открыть в &новом окне"
 msgid "Cut"
 msgstr "&Вырезать"
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr "Context Unknown"
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr "DYNSRC Image"
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "Со&хранить рисунок как..."
@@ -6152,17 +6120,9 @@ msgstr "Со&хранить рисунок как..."
 msgid "Play"
 msgstr "Воспроизвести"
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr "ART Image"
-
 #: shdoclc.rc:189
 msgid "Rewind"
 msgstr "Перемотать"
-
-#: shdoclc.rc:194
-msgid "Debug"
-msgstr "Debug"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6224,10 +6184,6 @@ msgstr "Вид об&зора"
 msgid "&Edit View"
 msgstr "Из&менить вид"
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr "Vertical Scrollbar"
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "Прокрутка на месте"
@@ -6255,10 +6211,6 @@ msgstr "Прокрутка вверх"
 #: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "Прокрутка вниз"
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
-msgstr "Horizontal Scrollbar"
 
 #: shdoclc.rc:232
 msgid "Left Edge"

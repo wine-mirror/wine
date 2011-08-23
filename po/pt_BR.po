@@ -6168,10 +6168,6 @@ msgstr "Copiar arquivos de:"
 msgid "Type the path where the file is located, and then click OK."
 msgstr "Insira o caminho onde se encontram os arquivos, depois clique em OK."
 
-#: shdoclc.rc:36
-msgid "Default"
-msgstr "Padrão"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "&Avançar"
@@ -6225,10 +6221,6 @@ msgstr "Co&dificação"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "I&mprimir"
-
-#: shdoclc.rc:61
-msgid "Image"
-msgstr "Imagem"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6298,10 +6290,6 @@ msgstr "Copiar atal&ho"
 msgid "P&roperties"
 msgstr "&Propriedades"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr "Controle"
-
 #: shdoclc.rc:88 user32.rc:55
 #, fuzzy
 msgid "&Undo"
@@ -6314,10 +6302,6 @@ msgstr ""
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
 msgstr "&Limpar"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr "Tabela"
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
@@ -6347,10 +6331,6 @@ msgstr "Propriedades da &célula"
 msgid "&Table Properties"
 msgstr "Propriedades da &tabela"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr "1DSite Select"
-
 #: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
 msgstr "Co&lar"
@@ -6358,10 +6338,6 @@ msgstr "Co&lar"
 #: shdoclc.rc:118
 msgid "&Print"
 msgstr "&Imprimir"
-
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr "Âncora"
 
 #: shdoclc.rc:124 shell32.rc:96
 #, fuzzy
@@ -6380,14 +6356,6 @@ msgstr "A&brir numa nova janela"
 msgid "Cut"
 msgstr "&Cortar"
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr "Contexto Desconhecido"
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr "Imagem DYNSRC"
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "Sal&var vídeo como..."
@@ -6396,17 +6364,9 @@ msgstr "Sal&var vídeo como..."
 msgid "Play"
 msgstr "I&niciar"
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr "Imagem ART"
-
 #: shdoclc.rc:189
 msgid "Rewind"
 msgstr "R&ecomeçar"
-
-#: shdoclc.rc:194
-msgid "Debug"
-msgstr "Debug"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6468,10 +6428,6 @@ msgstr "&Browse View"
 msgid "&Edit View"
 msgstr "&Edit View"
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr "Barra de Rolagem Vertical"
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "Rolar aqui"
@@ -6499,10 +6455,6 @@ msgstr "Rolar para cima"
 #: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "Rolar para baixo"
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
-msgstr "Barra de Rolagem Horizontal"
 
 #: shdoclc.rc:232
 msgid "Left Edge"

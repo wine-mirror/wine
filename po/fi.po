@@ -6102,15 +6102,6 @@ msgstr ""
 msgid "Type the path where the file is located, and then click OK."
 msgstr ""
 
-#: shdoclc.rc:36
-#, fuzzy
-msgid "Default"
-msgstr ""
-"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
-"Oletus\n"
-"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
-"Default"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "&Eteenpäin"
@@ -6164,10 +6155,6 @@ msgstr "Koo&daus"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "Tul&osta"
-
-#: shdoclc.rc:61
-msgid "Image"
-msgstr "Kuva"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6237,10 +6224,6 @@ msgstr "Kopioi Pikakuvak&e"
 msgid "P&roperties"
 msgstr "Ominaisuu&det"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr "Hallinta"
-
 #: shdoclc.rc:88 user32.rc:55
 msgid "&Undo"
 msgstr "K&umoa"
@@ -6253,10 +6236,6 @@ msgstr ""
 "P&oista\n"
 "#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
 "&Poista"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr "Taulukko"
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
@@ -6286,10 +6265,6 @@ msgstr "S&olun Ominaisuudet"
 msgid "&Table Properties"
 msgstr "Ta&ulukon Ominaisuudet"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr "1DSivun Valinta"
-
 #: shdoclc.rc:116 shell32.rc:61
 #, fuzzy
 msgid "Paste"
@@ -6302,10 +6277,6 @@ msgstr ""
 #: shdoclc.rc:118
 msgid "&Print"
 msgstr "&Tulosta"
-
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr "Ankkuri"
 
 #: shdoclc.rc:124 shell32.rc:96
 #, fuzzy
@@ -6324,14 +6295,6 @@ msgstr "A&vaa Uudessa Ikkunassa"
 msgid "Cut"
 msgstr "&Leikkaa"
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr "Context Unknown"
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr "DYNSRC Kuva"
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "Tallenna Vi&deo Nimellä..."
@@ -6340,17 +6303,9 @@ msgstr "Tallenna Vi&deo Nimellä..."
 msgid "Play"
 msgstr "&Toista"
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr "ART Kuva"
-
 #: shdoclc.rc:189
 msgid "Rewind"
 msgstr "Al&kuun"
-
-#: shdoclc.rc:194
-msgid "Debug"
-msgstr "Debug"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6412,10 +6367,6 @@ msgstr "&Browse View"
 msgid "&Edit View"
 msgstr "&Edit View"
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr "Pystysuora Vierityspalkki"
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "Vieritä Tänne"
@@ -6443,10 +6394,6 @@ msgstr "Vieritä Ylös"
 #: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "Vieritä Alas"
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
-msgstr "Vaakasuora Vierityspalkki"
 
 #: shdoclc.rc:232
 msgid "Left Edge"

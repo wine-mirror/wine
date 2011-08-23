@@ -6432,10 +6432,6 @@ msgstr "Copiază fișierele din:"
 msgid "Type the path where the file is located, and then click OK."
 msgstr "Introduceți calea unde fișierul poate fi găsit și apăsați OK."
 
-#: shdoclc.rc:36
-msgid "Default"
-msgstr "Implicit"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "Î&nainte"
@@ -6489,10 +6485,6 @@ msgstr "Codificar&e"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "&Tipărește"
-
-#: shdoclc.rc:61
-msgid "Image"
-msgstr "Imagine"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6557,10 +6549,6 @@ msgstr "Copiază scur&tătura"
 msgid "P&roperties"
 msgstr "P&roprietăți"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr "Control"
-
 #: shdoclc.rc:88 user32.rc:55
 #, fuzzy
 msgid "&Undo"
@@ -6573,10 +6561,6 @@ msgstr ""
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
 msgstr "&Șterge"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr "Tabel"
 
 #: shdoclc.rc:100 shell32.rc:94
 #, fuzzy
@@ -6611,10 +6595,6 @@ msgstr "Proprietăți &celulă"
 msgid "&Table Properties"
 msgstr "Proprietăți &tabel"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr "Selecție Pagini1D"
-
 #: shdoclc.rc:116 shell32.rc:61
 #, fuzzy
 msgid "Paste"
@@ -6627,10 +6607,6 @@ msgstr ""
 #: shdoclc.rc:118
 msgid "&Print"
 msgstr "&Tipărește"
-
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr "Ancorare"
 
 #: shdoclc.rc:124 shell32.rc:96
 #, fuzzy
@@ -6649,14 +6625,6 @@ msgstr "Deschide legătura într-o fereastră &nouă"
 msgid "Cut"
 msgstr "&Taie"
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr "Context necunoscut"
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr "Imagine DYNSRC"
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "&Salvează videoul ca..."
@@ -6665,17 +6633,9 @@ msgstr "&Salvează videoul ca..."
 msgid "Play"
 msgstr "Redă"
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr "Imagine ART"
-
 #: shdoclc.rc:189
 msgid "Rewind"
 msgstr "Derulează înapoi"
-
-#: shdoclc.rc:194
-msgid "Debug"
-msgstr "Depanare"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6737,10 +6697,6 @@ msgstr "&Răsfoiește vizualizarea"
 msgid "&Edit View"
 msgstr "Editează vizualizarea"
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr "Bara de defilare verticală"
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "Derulează aici"
@@ -6768,10 +6724,6 @@ msgstr "Defilare în sus"
 #: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "Defilare în jos"
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
-msgstr "Bara de defilare orizontală"
 
 #: shdoclc.rc:232
 msgid "Left Edge"

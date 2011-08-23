@@ -5957,10 +5957,6 @@ msgstr "Kopiera filer från:"
 msgid "Type the path where the file is located, and then click OK."
 msgstr "Skriv sökvägen där filen finns och klicka sedan OK."
 
-#: shdoclc.rc:36
-msgid "Default"
-msgstr "Standard"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "&Framåt"
@@ -6009,10 +6005,6 @@ msgstr "Tecken&kodning"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "Skriv &ut"
-
-#: shdoclc.rc:61
-msgid "Image"
-msgstr "Bild"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6077,10 +6069,6 @@ msgstr "Kopier&a genväg"
 msgid "P&roperties"
 msgstr "&Egenskaper"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr "Kontroll"
-
 #: shdoclc.rc:88 user32.rc:55
 msgid "&Undo"
 msgstr "&Ångra"
@@ -6088,10 +6076,6 @@ msgstr "&Ångra"
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
 msgstr "&Ta bort"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr "Tabell"
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
@@ -6121,10 +6105,6 @@ msgstr "&Cellegenskaper"
 msgid "&Table Properties"
 msgstr "&Tabellegenskaper"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr "1DSite Select"
-
 #: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
 msgstr "Klistra in"
@@ -6132,10 +6112,6 @@ msgstr "Klistra in"
 #: shdoclc.rc:118
 msgid "&Print"
 msgstr "Skriv &ut"
-
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr "Ankare"
 
 #: shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
@@ -6149,14 +6125,6 @@ msgstr "Öppna i nytt &fönster"
 msgid "Cut"
 msgstr "&Klipp ut"
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr "Context Unknown"
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr "DYNSRC-bild"
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "Spara bil&d som..."
@@ -6165,17 +6133,9 @@ msgstr "Spara bil&d som..."
 msgid "Play"
 msgstr "Spela upp"
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr "ART-bild"
-
 #: shdoclc.rc:189
 msgid "Rewind"
 msgstr "Spola tillbaka"
-
-#: shdoclc.rc:194
-msgid "Debug"
-msgstr "Debug"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6237,10 +6197,6 @@ msgstr "&Bläddra vy"
 msgid "&Edit View"
 msgstr "R&edigera vy"
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr "Vertikal rullningslist"
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "Rulla hit"
@@ -6268,10 +6224,6 @@ msgstr "Rulla uppåt"
 #: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "Rulla nedåt"
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
-msgstr "Horisontell rullningslist"
 
 #: shdoclc.rc:232
 msgid "Left Edge"

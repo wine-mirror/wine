@@ -5933,10 +5933,6 @@ msgstr "복사할 파일이 위치한 곳:"
 msgid "Type the path where the file is located, and then click OK."
 msgstr "파일이 위치한 경로를 입력하고, 확인을 클릭하십시오."
 
-#: shdoclc.rc:36
-msgid "Default"
-msgstr "기본"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "앞으로(&O)"
@@ -5985,10 +5981,6 @@ msgstr "인코딩(&E)"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "인쇄(&I)"
-
-#: shdoclc.rc:61
-msgid "Image"
-msgstr "이미지"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6053,10 +6045,6 @@ msgstr "바로 가기 복사(&T)"
 msgid "P&roperties"
 msgstr "속성(&R)"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr "제어"
-
 #: shdoclc.rc:88 user32.rc:55
 msgid "&Undo"
 msgstr "되돌리기(&U)"
@@ -6064,10 +6052,6 @@ msgstr "되돌리기(&U)"
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
 msgstr "지우기(&D)"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr "표"
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
@@ -6097,10 +6081,6 @@ msgstr "가로줄 속성(&C)"
 msgid "&Table Properties"
 msgstr "표 속성(&T)"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr "1DSite 선택"
-
 #: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
 msgstr "붙여넣기"
@@ -6108,10 +6088,6 @@ msgstr "붙여넣기"
 #: shdoclc.rc:118
 msgid "&Print"
 msgstr "인쇄(&P)"
-
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr "닻"
 
 #: shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
@@ -6125,14 +6101,6 @@ msgstr "새 창에 열기(&N)"
 msgid "Cut"
 msgstr "잘라내기"
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr "알수 없는 내용"
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr "DYNSRC 그림"
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "비디오 다른 이름으로 저장(&S)..."
@@ -6141,17 +6109,9 @@ msgstr "비디오 다른 이름으로 저장(&S)..."
 msgid "Play"
 msgstr "재생"
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr "ART 그림"
-
 #: shdoclc.rc:189
 msgid "Rewind"
 msgstr "다시 감기"
-
-#: shdoclc.rc:194
-msgid "Debug"
-msgstr "디버그"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6213,10 +6173,6 @@ msgstr "보기 상태(&B)"
 msgid "&Edit View"
 msgstr "편집 상태(&E)"
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr "세로 스크롤바"
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "여기서 스크롤"
@@ -6244,10 +6200,6 @@ msgstr "위로 스크롤"
 #: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "아래로 스크롤"
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
-msgstr "가로 스크롤바"
 
 #: shdoclc.rc:232
 msgid "Left Edge"

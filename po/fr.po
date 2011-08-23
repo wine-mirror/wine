@@ -5960,10 +5960,6 @@ msgstr "Copier les fichiers depuis :"
 msgid "Type the path where the file is located, and then click OK."
 msgstr "Saisissez le chemin du fichier, puis cliquez sur OK."
 
-#: shdoclc.rc:36
-msgid "Default"
-msgstr "Standard"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "Page &suivante"
@@ -6012,10 +6008,6 @@ msgstr "Coda&ge"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "&Imprimer"
-
-#: shdoclc.rc:61
-msgid "Image"
-msgstr "Image"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6080,10 +6072,6 @@ msgstr "Copier le r&accourci"
 msgid "P&roperties"
 msgstr "Propri&étés"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr "Contrôle"
-
 #: shdoclc.rc:88 user32.rc:55
 msgid "&Undo"
 msgstr "&Annuler"
@@ -6091,10 +6079,6 @@ msgstr "&Annuler"
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
 msgstr "&Supprimer"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr "Table"
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
@@ -6124,10 +6108,6 @@ msgstr "Propriétés de la &cellule"
 msgid "&Table Properties"
 msgstr "Propriétés de la &table"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr "1DSite Select"
-
 #: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
 msgstr "Coller"
@@ -6135,10 +6115,6 @@ msgstr "Coller"
 #: shdoclc.rc:118
 msgid "&Print"
 msgstr "&Imprimer"
-
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr "Ancre"
 
 #: shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
@@ -6152,14 +6128,6 @@ msgstr "Ouvrir dans une &nouvelle fenêtre"
 msgid "Cut"
 msgstr "Couper"
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr "Contexte inconnu"
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr "Image DYNSRC"
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "Enregistrer la vidéo &sous..."
@@ -6168,17 +6136,9 @@ msgstr "Enregistrer la vidéo &sous..."
 msgid "Play"
 msgstr "Lecture"
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr "Image ART"
-
 #: shdoclc.rc:189
 msgid "Rewind"
 msgstr "Retour arrière"
-
-#: shdoclc.rc:194
-msgid "Debug"
-msgstr "Débogage"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6241,10 +6201,6 @@ msgstr "Vue de &navigation"
 msgid "&Edit View"
 msgstr "Vue d'&édition"
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr "Barre de défilement verticale"
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "Défilement ici"
@@ -6272,10 +6228,6 @@ msgstr "Défilement vers le haut"
 #: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "Défilement vers le bas"
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
-msgstr "Barre de défilement horizontale"
 
 #: shdoclc.rc:232
 msgid "Left Edge"

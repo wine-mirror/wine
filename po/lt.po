@@ -5948,10 +5948,6 @@ msgstr "Kopijuoti failus iš:"
 msgid "Type the path where the file is located, and then click OK."
 msgstr "Įveskite kelią iki failo, o tada spauskite Gerai."
 
-#: shdoclc.rc:36
-msgid "Default"
-msgstr "Numatyta"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "&Pirmyn"
@@ -6000,10 +5996,6 @@ msgstr "&Koduotė"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "&Spausdinti"
-
-#: shdoclc.rc:61
-msgid "Image"
-msgstr "Paveikslas"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6068,10 +6060,6 @@ msgstr "Kopi&juoti adresą"
 msgid "P&roperties"
 msgstr "Savy&bės"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr "Valdiklis"
-
 #: shdoclc.rc:88 user32.rc:55
 msgid "&Undo"
 msgstr "&Atšaukti"
@@ -6079,10 +6067,6 @@ msgstr "&Atšaukti"
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
 msgstr "&Šalinti"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr "Lentelė"
 
 #: shdoclc.rc:100 shell32.rc:94
 #, fuzzy
@@ -6113,10 +6097,6 @@ msgstr "Lan&gelio savybės"
 msgid "&Table Properties"
 msgstr "&Lentelės savybės"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr "1DPuslapio žymėjimas"
-
 #: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
 msgstr "Į&dėti"
@@ -6124,10 +6104,6 @@ msgstr "Į&dėti"
 #: shdoclc.rc:118
 msgid "&Print"
 msgstr "&Spausdinti"
-
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr "Žymė"
 
 #: shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
@@ -6141,14 +6117,6 @@ msgstr "Atverti &naujame lange"
 msgid "Cut"
 msgstr "&Iškirpti"
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr "Nežinomas kontekstas"
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr "DYNSRC paveikslas"
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "Įrašyti pa&veikslą kaip..."
@@ -6157,17 +6125,9 @@ msgstr "Įrašyti pa&veikslą kaip..."
 msgid "Play"
 msgstr "Leisti"
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr "ART paveikslas"
-
 #: shdoclc.rc:189
 msgid "Rewind"
 msgstr "Perleisti"
-
-#: shdoclc.rc:194
-msgid "Debug"
-msgstr "Derinimas"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6229,10 +6189,6 @@ msgstr "&Naršyti rodinį"
 msgid "&Edit View"
 msgstr "&Redaguoti rodinį"
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr "Stačioji slankjuostė"
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "Slinkti čia"
@@ -6260,10 +6216,6 @@ msgstr "Slinkti aukštyn"
 #: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "Slinkti žemyn"
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
-msgstr "Gulsčioji slankjuostė"
 
 #: shdoclc.rc:232
 msgid "Left Edge"

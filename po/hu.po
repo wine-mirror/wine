@@ -6302,10 +6302,6 @@ msgid "Type the path where the file is located, and then click OK."
 msgstr ""
 "Írja be az útvonalat ahol a fájl található majd nyomja meg az OK gombot."
 
-#: shdoclc.rc:36
-msgid "Default"
-msgstr ""
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "El&őre"
@@ -6359,10 +6355,6 @@ msgstr "K&ódolás"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "&Nyomtatás"
-
-#: shdoclc.rc:61
-msgid "Image"
-msgstr "Image"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6432,10 +6424,6 @@ msgstr "Parancs&ikon másolása"
 msgid "P&roperties"
 msgstr "Tula&jdonságok"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr ""
-
 #: shdoclc.rc:88 user32.rc:55
 msgid "&Undo"
 msgstr "&Visszavonás"
@@ -6448,10 +6436,6 @@ msgstr ""
 "&Törlés\n"
 "#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
 "Tö&rlés"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr ""
 
 #: shdoclc.rc:100 shell32.rc:94
 #, fuzzy
@@ -6486,10 +6470,6 @@ msgstr "&Cella tulajdonságai"
 msgid "&Table Properties"
 msgstr "&Tábla tulajdonságai"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr "1DSite Select"
-
 #: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
 msgstr "Beillesztés"
@@ -6497,10 +6477,6 @@ msgstr "Beillesztés"
 #: shdoclc.rc:118
 msgid "&Print"
 msgstr "&Nyomtatás"
-
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr ""
 
 #: shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
@@ -6514,14 +6490,6 @@ msgstr "Megnyitás &új ablakban"
 msgid "Cut"
 msgstr "Kivágás"
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr ""
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr "DYNSRC Image"
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "&Video mentése..."
@@ -6530,17 +6498,9 @@ msgstr "&Video mentése..."
 msgid "Play"
 msgstr "Lejátszás"
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr "ART Image"
-
 #: shdoclc.rc:189
 msgid "Rewind"
 msgstr "Visszatekerés"
-
-#: shdoclc.rc:194
-msgid "Debug"
-msgstr ""
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6602,10 +6562,6 @@ msgstr "&Nézet tallózása"
 msgid "&Edit View"
 msgstr "N&ézet szerkesztése"
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr ""
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "Görgetés itt"
@@ -6633,10 +6589,6 @@ msgstr "Görgetés fel"
 #: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "Görgetés le"
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
-msgstr ""
 
 #: shdoclc.rc:232
 msgid "Left Edge"

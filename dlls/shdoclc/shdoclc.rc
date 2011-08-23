@@ -33,7 +33,7 @@ STRINGTABLE
 
 IDR_BROWSE_CONTEXT_MENU MENU
 {
-    POPUP "Default"
+    POPUP "" /* Default */
     {
         MENUITEM "&Back",                  IDM_GOBACKWARD
         MENUITEM "F&orward",               IDM_GOFORWARD
@@ -58,7 +58,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "&Properties",            IDM_PROPERTIES
     }
 
-    POPUP "Image"
+    POPUP "" /* Image */
     {
         MENUITEM "&Open Link",               IDM_FOLLOWLINKC
         MENUITEM "Open Link in &New Window", IDM_FOLLOWLINKN
@@ -83,7 +83,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "P&roperties",              IDM_PROPERTIES
     }
 
-    POPUP "Control"
+    POPUP "" /* Control */
     {
         MENUITEM "&Undo",       IDM_UNDO
         MENUITEM SEPARATOR
@@ -95,7 +95,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Select &All", IDM_SELECTALL
     }
 
-    POPUP "Table"
+    POPUP "" /* Table */
     {
         POPUP "&Select"
         {
@@ -109,7 +109,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "&Table Properties", IDM_TABLEPROPERTIES
     }
 
-    POPUP "1DSite Select"
+    POPUP "" /* 1DSite Select */
     {
         MENUITEM "Cu&t",        IDM_CUT
         MENUITEM "&Copy",       IDM_COPY
@@ -119,7 +119,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM SEPARATOR
     }
 
-    POPUP "Anchor"
+    POPUP "" /* Anchor */
     {
         MENUITEM "&Open",                IDM_FOLLOWLINKC
         MENUITEM "Open in &New Window",  IDM_FOLLOWLINKN
@@ -136,12 +136,12 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "P&roperties",          IDM_PROPERTIES
     }
 
-    POPUP "Context Unknown"
+    POPUP "" /* Context Unknown */
     {
         MENUITEM SEPARATOR
     }
 
-    POPUP "DYNSRC Image"
+    POPUP "" /* DYNSRC Image */
     {
         MENUITEM "&Open Link",               IDM_FOLLOWLINKC
         MENUITEM "Open Link in &New Window", IDM_FOLLOWLINKN
@@ -165,7 +165,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "P&roperties",              IDM_PROPERTIES
     }
 
-    POPUP "ART Image"
+    POPUP "" /* ART Image */
     {
         MENUITEM "&Open Link",               IDM_FOLLOWLINKC
         MENUITEM "Open Link in &New Window", IDM_FOLLOWLINKN
@@ -191,7 +191,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "P&roperties",              IDM_PROPERTIES
     }
 
-    POPUP "Debug"
+    POPUP "" /* Debug */
     {
         MENUITEM "Trace Tags",         IDM_TRACETAGS
         MENUITEM "Resource Failures",  IDM_RESOURCEFAILURES
@@ -211,7 +211,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "&Edit View",         IDM_EDITMODE
     }
 
-    POPUP "Vertical Scrollbar"
+    POPUP "" /* Vertical Scrollbar */
     {
         MENUITEM "Scroll Here",  IDM_SCROLL_HERE
         MENUITEM SEPARATOR
@@ -225,7 +225,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Scroll Down",  IDM_SCROLL_DOWN
     }
 
-    POPUP "Horizontal Scrollbar"
+    POPUP "" /* Horizontal Scrollbar */
     {
         MENUITEM "Scroll Here",  IDM_SCROLL_HERE
         MENUITEM SEPARATOR

@@ -6198,10 +6198,6 @@ msgid "Type the path where the file is located, and then click OK."
 msgstr ""
 "Унесите путању где су датотеке смештене, па кликните на дугме „У реду“."
 
-#: shdoclc.rc:36
-msgid "Default"
-msgstr "Подразумевано"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "Н&апред"
@@ -6250,10 +6246,6 @@ msgstr "&Кодни распоред"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "&Штампај"
-
-#: shdoclc.rc:61
-msgid "Image"
-msgstr "Слика"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6318,10 +6310,6 @@ msgstr "Умножи &пречицу"
 msgid "P&roperties"
 msgstr "&Својства"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr "Контрола"
-
 #: shdoclc.rc:88 user32.rc:55
 #, fuzzy
 msgid "&Undo"
@@ -6334,10 +6322,6 @@ msgstr ""
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
 msgstr "Из&бриши"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr "Табела"
 
 #: shdoclc.rc:100 shell32.rc:94
 #, fuzzy
@@ -6372,10 +6356,6 @@ msgstr "Својства &ћелије"
 msgid "&Table Properties"
 msgstr "Својства &табеле"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr "1DSite избор"
-
 #: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
 msgstr "Убаци"
@@ -6383,10 +6363,6 @@ msgstr "Убаци"
 #: shdoclc.rc:118
 msgid "&Print"
 msgstr "&Штампај"
-
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr "Везник"
 
 #: shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
@@ -6400,14 +6376,6 @@ msgstr "Отвори у &новом прозору"
 msgid "Cut"
 msgstr "Исеци"
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr "Непознат контекст"
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr "DYNSRC слика"
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "&Сачувај видео снимак као..."
@@ -6416,17 +6384,9 @@ msgstr "&Сачувај видео снимак као..."
 msgid "Play"
 msgstr "Репродукуј"
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr "ART слика"
-
 #: shdoclc.rc:189
 msgid "Rewind"
 msgstr "Премотај"
-
-#: shdoclc.rc:194
-msgid "Debug"
-msgstr "Отклањач грешака"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6488,10 +6448,6 @@ msgstr "&Разгледање"
 msgid "&Edit View"
 msgstr "&Уређивање"
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr "Усправни клизач"
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "Клизај овде"
@@ -6519,10 +6475,6 @@ msgstr "Помери нагоре"
 #: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "Помери надоле"
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
-msgstr "Водоравни клизач"
 
 #: shdoclc.rc:232
 msgid "Left Edge"

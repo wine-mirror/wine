@@ -5974,10 +5974,6 @@ msgstr ""
 msgid "Type the path where the file is located, and then click OK."
 msgstr ""
 
-#: shdoclc.rc:36
-msgid "Default"
-msgstr "Default"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr ""
@@ -6025,10 +6021,6 @@ msgstr ""
 
 #: shdoclc.rc:55
 msgid "Pr&int"
-msgstr ""
-
-#: shdoclc.rc:61
-msgid "Image"
 msgstr ""
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
@@ -6100,10 +6092,6 @@ msgstr ""
 msgid "P&roperties"
 msgstr "&Vlastnosti"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr ""
-
 #: shdoclc.rc:88 user32.rc:55
 msgid "&Undo"
 msgstr "&Späť"
@@ -6116,10 +6104,6 @@ msgstr ""
 "&Delete\n"
 "#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
 "&Vymazať"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr ""
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
@@ -6151,10 +6135,6 @@ msgstr "&Vlastnosti"
 msgid "&Table Properties"
 msgstr "&Vlastnosti"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr ""
-
 #: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
 msgstr ""
@@ -6162,10 +6142,6 @@ msgstr ""
 #: shdoclc.rc:118
 msgid "&Print"
 msgstr "&Tlačiť"
-
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr ""
 
 #: shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
@@ -6179,14 +6155,6 @@ msgstr ""
 msgid "Cut"
 msgstr ""
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr ""
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr ""
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr ""
@@ -6195,16 +6163,8 @@ msgstr ""
 msgid "Play"
 msgstr ""
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr ""
-
 #: shdoclc.rc:189
 msgid "Rewind"
-msgstr ""
-
-#: shdoclc.rc:194
-msgid "Debug"
 msgstr ""
 
 #: shdoclc.rc:196
@@ -6267,10 +6227,6 @@ msgstr ""
 msgid "&Edit View"
 msgstr ""
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr ""
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr ""
@@ -6297,10 +6253,6 @@ msgstr ""
 
 #: shdoclc.rc:225
 msgid "Scroll Down"
-msgstr ""
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
 msgstr ""
 
 #: shdoclc.rc:232

@@ -6141,15 +6141,6 @@ msgstr "Kopiere filer fra:"
 msgid "Type the path where the file is located, and then click OK."
 msgstr "Skriv den sti, hvor filen er placeret, og klik derefter på OK."
 
-#: shdoclc.rc:36
-#, fuzzy
-msgid "Default"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Standard\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Default"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "&Frem"
@@ -6203,10 +6194,6 @@ msgstr "K&oding"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "Udskr&iv"
-
-#: shdoclc.rc:61
-msgid "Image"
-msgstr "Billede"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6276,10 +6263,6 @@ msgstr "Kopier gen&vej"
 msgid "P&roperties"
 msgstr "Egenskabe&r"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr "Control"
-
 #: shdoclc.rc:88 user32.rc:55
 msgid "&Undo"
 msgstr "&Fortryd"
@@ -6287,10 +6270,6 @@ msgstr "&Fortryd"
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
 msgstr "&Slet"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr "Tabel"
 
 #: shdoclc.rc:100 shell32.rc:94
 #, fuzzy
@@ -6325,10 +6304,6 @@ msgstr "Egenskaper for &celle"
 msgid "&Table Properties"
 msgstr "Egenskaper for &tabel"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr "1DSidevælging"
-
 #: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
 msgstr "Indsæt"
@@ -6341,10 +6316,6 @@ msgstr ""
 "&Udskriv\n"
 "#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
 "&Udskriv emne"
-
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr "Anker"
 
 #: shdoclc.rc:124 shell32.rc:96
 #, fuzzy
@@ -6363,14 +6334,6 @@ msgstr "Åben i &nyt vindue"
 msgid "Cut"
 msgstr "&Klip"
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr "Ukendt sammenhæng"
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr "DYNSRC-billede"
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "Gem video &som..."
@@ -6379,17 +6342,9 @@ msgstr "Gem video &som..."
 msgid "Play"
 msgstr "Afspil"
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr "ART-bilde"
-
 #: shdoclc.rc:189
 msgid "Rewind"
 msgstr "Spol tilbage"
-
-#: shdoclc.rc:194
-msgid "Debug"
-msgstr "Fejlsøgning"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6451,10 +6406,6 @@ msgstr "&Gennemse visning"
 msgid "&Edit View"
 msgstr "R&edigerings visning"
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr "Lodret rullefelt"
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "Rul her"
@@ -6482,10 +6433,6 @@ msgstr "Rul op"
 #: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "Rul ne"
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
-msgstr "Vandret rullefelt"
 
 #: shdoclc.rc:232
 msgid "Left Edge"

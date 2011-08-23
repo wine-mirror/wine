@@ -6207,10 +6207,6 @@ msgstr "Copia i file da:"
 msgid "Type the path where the file is located, and then click OK."
 msgstr "Scrivi il percorso del file, poi clicca OK."
 
-#: shdoclc.rc:36
-msgid "Default"
-msgstr "Predefinito"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "&Avanti"
@@ -6264,10 +6260,6 @@ msgstr "&Codifica"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "S&tampa"
-
-#: shdoclc.rc:61
-msgid "Image"
-msgstr "Immagine"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6337,10 +6329,6 @@ msgstr "Copia co&llegamento"
 msgid "P&roperties"
 msgstr "P&roprietà"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr "Controllo"
-
 #: shdoclc.rc:88 user32.rc:55
 msgid "&Undo"
 msgstr "&Annulla"
@@ -6353,10 +6341,6 @@ msgstr ""
 "&Elimina\n"
 "#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
 "Ca&ncella"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr "Tabella"
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
@@ -6386,10 +6370,6 @@ msgstr "Proprietà &cella"
 msgid "&Table Properties"
 msgstr "Proprietà &tabella"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr "1DSite Seleziona"
-
 #: shdoclc.rc:116 shell32.rc:61
 #, fuzzy
 msgid "Paste"
@@ -6408,10 +6388,6 @@ msgstr ""
 "#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
 "S&tampa"
 
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr "Anchor"
-
 #: shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
 msgstr "&Apri"
@@ -6424,14 +6400,6 @@ msgstr "Apri in una &Nuova Finestra"
 msgid "Cut"
 msgstr "Taglia"
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr "Contesto sconosciuto"
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr "Immagine DYNSRC"
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "Salva &video come..."
@@ -6440,17 +6408,9 @@ msgstr "Salva &video come..."
 msgid "Play"
 msgstr "Riproduci"
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr "Immagine ART"
-
 #: shdoclc.rc:189
 msgid "Rewind"
 msgstr "Indietro"
-
-#: shdoclc.rc:194
-msgid "Debug"
-msgstr "Debug"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6512,10 +6472,6 @@ msgstr "&Vista Navigazione"
 msgid "&Edit View"
 msgstr "&Vista Modifica"
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr "Barra di scorrimento verticale"
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "Scorri qua"
@@ -6543,10 +6499,6 @@ msgstr "Scorri su"
 #: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "Scorri giù"
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
-msgstr "Barra di scorrimento orizzontale"
 
 #: shdoclc.rc:232
 msgid "Left Edge"

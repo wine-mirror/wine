@@ -6054,10 +6054,6 @@ msgstr "Kopieer bestanden van:"
 msgid "Type the path where the file is located, and then click OK."
 msgstr "Voer het pad in waar het bestand zich bevind, en klik dan op OK."
 
-#: shdoclc.rc:36
-msgid "Default"
-msgstr "Standaard"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "V&ooruit"
@@ -6106,10 +6102,6 @@ msgstr "&Tekstcodering"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "Af&drukken"
-
-#: shdoclc.rc:61
-msgid "Image"
-msgstr "Afbeelding"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6174,10 +6166,6 @@ msgstr "&Snelkoppeling kopiëren"
 msgid "P&roperties"
 msgstr "&Eigenschappen"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr "Besturing"
-
 #: shdoclc.rc:88 user32.rc:55
 msgid "&Undo"
 msgstr "&Ongedaan maken"
@@ -6185,10 +6173,6 @@ msgstr "&Ongedaan maken"
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
 msgstr "Ver&wijderen"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr "Tabellen"
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
@@ -6218,10 +6202,6 @@ msgstr "Cel&eigenschappen"
 msgid "&Table Properties"
 msgstr "Tabelei&genschappen"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr "1DPaginakeuze"
-
 #: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
 msgstr "Plakken"
@@ -6229,10 +6209,6 @@ msgstr "Plakken"
 #: shdoclc.rc:118
 msgid "&Print"
 msgstr "Af&drukken"
-
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr "Anker"
 
 #: shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
@@ -6246,14 +6222,6 @@ msgstr "In nieuw &venster openen"
 msgid "Cut"
 msgstr "K&nippen"
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr "Context Onbekend"
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr "DYNSRC Afbeelding"
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "Af&beelding opslaan als..."
@@ -6262,17 +6230,9 @@ msgstr "Af&beelding opslaan als..."
 msgid "Play"
 msgstr "Afspelen"
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr "ART Afbeelding"
-
 #: shdoclc.rc:189
 msgid "Rewind"
 msgstr "Terugspoelen"
-
-#: shdoclc.rc:194
-msgid "Debug"
-msgstr "Debug"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6334,10 +6294,6 @@ msgstr "&Bladeren Beeld"
 msgid "&Edit View"
 msgstr "&Wijzigen Beeld"
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr "Verticale scrollbalk"
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "Scroll hier"
@@ -6365,10 +6321,6 @@ msgstr "Scroll omhoog"
 #: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "Scroll omlaag"
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
-msgstr "Horizontale scrollbalk"
 
 #: shdoclc.rc:232
 msgid "Left Edge"

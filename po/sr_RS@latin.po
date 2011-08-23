@@ -6241,15 +6241,6 @@ msgid "Type the path where the file is located, and then click OK."
 msgstr ""
 "Unesite putanju gde su datoteke smeštene, pa kliknite na dugme „U redu“."
 
-#: shdoclc.rc:36
-#, fuzzy
-msgid "Default"
-msgstr ""
-"#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
-"Podrazumevano\n"
-"#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
-"Osnovno"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "N&apred"
@@ -6298,10 +6289,6 @@ msgstr "&Kodni raspored"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "&Štampaj"
-
-#: shdoclc.rc:61
-msgid "Image"
-msgstr "Slika"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6366,10 +6353,6 @@ msgstr "Umnoži &prečicu"
 msgid "P&roperties"
 msgstr "&Svojstva"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr "Kontrola"
-
 #: shdoclc.rc:88 user32.rc:55
 #, fuzzy
 msgid "&Undo"
@@ -6382,10 +6365,6 @@ msgstr ""
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
 msgstr "Iz&briši"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr "Tabela"
 
 #: shdoclc.rc:100 shell32.rc:94
 #, fuzzy
@@ -6420,10 +6399,6 @@ msgstr "Svojstva &ćelije"
 msgid "&Table Properties"
 msgstr "Svojstva &tabele"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr "1DSite izbor"
-
 #: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
 msgstr "Ubaci"
@@ -6431,10 +6406,6 @@ msgstr "Ubaci"
 #: shdoclc.rc:118
 msgid "&Print"
 msgstr "&Štampaj"
-
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr "Veznik"
 
 #: shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
@@ -6448,14 +6419,6 @@ msgstr "Otvori u &novom prozoru"
 msgid "Cut"
 msgstr "Iseci"
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr "Nepoznat kontekst"
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr "DYNSRC slika"
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "&Sačuvaj video snimak kao..."
@@ -6464,17 +6427,9 @@ msgstr "&Sačuvaj video snimak kao..."
 msgid "Play"
 msgstr "Reprodukuj"
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr "ART slika"
-
 #: shdoclc.rc:189
 msgid "Rewind"
 msgstr "Premotaj"
-
-#: shdoclc.rc:194
-msgid "Debug"
-msgstr "Otklanjač grešaka"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6536,10 +6491,6 @@ msgstr "&Razgledanje"
 msgid "&Edit View"
 msgstr "&Uređivanje"
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr "Uspravni klizač"
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "Klizaj ovde"
@@ -6567,10 +6518,6 @@ msgstr "Pomeri nagore"
 #: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "Pomeri nadole"
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
-msgstr "Vodoravni klizač"
 
 #: shdoclc.rc:232
 msgid "Left Edge"

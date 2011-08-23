@@ -6167,10 +6167,6 @@ msgstr ""
 msgid "Type the path where the file is located, and then click OK."
 msgstr ""
 
-#: shdoclc.rc:36
-msgid "Default"
-msgstr "默认"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "向前(&O)"
@@ -6219,10 +6215,6 @@ msgstr "语言编码(&E)"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "打印(&I)"
-
-#: shdoclc.rc:61
-msgid "Image"
-msgstr "图片"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6287,10 +6279,6 @@ msgstr "复制捷径(&T)"
 msgid "P&roperties"
 msgstr "属性(&R)"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr "控制"
-
 #: shdoclc.rc:88 user32.rc:55
 #, fuzzy
 msgid "&Undo"
@@ -6303,10 +6291,6 @@ msgstr ""
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
 msgstr "删除(&D)"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr "表格"
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
@@ -6336,10 +6320,6 @@ msgstr "格属性(&C)"
 msgid "&Table Properties"
 msgstr "表格属性(&T)"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr "1DSite Select"
-
 #: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
 msgstr "粘贴"
@@ -6347,10 +6327,6 @@ msgstr "粘贴"
 #: shdoclc.rc:118
 msgid "&Print"
 msgstr "打印(&P)"
-
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr "Anchor"
 
 #: shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
@@ -6364,14 +6340,6 @@ msgstr "打开新窗口(&N)"
 msgid "Cut"
 msgstr "剪下"
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr "Context Unknown"
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr "DYNSRC 图片"
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "将视频存为(&V)..."
@@ -6380,17 +6348,9 @@ msgstr "将视频存为(&V)..."
 msgid "Play"
 msgstr "播放"
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr "ART 图片"
-
 #: shdoclc.rc:189
 msgid "Rewind"
 msgstr "倒回"
-
-#: shdoclc.rc:194
-msgid "Debug"
-msgstr "调试"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6452,10 +6412,6 @@ msgstr "浏览(&B)"
 msgid "&Edit View"
 msgstr "编辑(&E)"
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr "垂直滚动条"
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "滚动这里"
@@ -6483,10 +6439,6 @@ msgstr "向上滚动"
 #: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "向下滚动"
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
-msgstr "水平滚动条"
 
 #: shdoclc.rc:232
 msgid "Left Edge"

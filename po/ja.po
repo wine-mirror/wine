@@ -5940,10 +5940,6 @@ msgstr "コピー元:"
 msgid "Type the path where the file is located, and then click OK."
 msgstr "このファイルがあるパスを入力し、[OK]をクリックしてください。"
 
-#: shdoclc.rc:36
-msgid "Default"
-msgstr "Default"
-
 #: shdoclc.rc:39
 msgid "F&orward"
 msgstr "進む(&O)"
@@ -5992,10 +5988,6 @@ msgstr "エンコード(&E)"
 #: shdoclc.rc:55
 msgid "Pr&int"
 msgstr "印刷(&I)"
-
-#: shdoclc.rc:61
-msgid "Image"
-msgstr "Image"
 
 #: shdoclc.rc:63 shdoclc.rc:146 shdoclc.rc:170
 msgid "&Open Link"
@@ -6060,10 +6052,6 @@ msgstr "ショートカットのコピー(&T)"
 msgid "P&roperties"
 msgstr "プロパティ(&R)"
 
-#: shdoclc.rc:86
-msgid "Control"
-msgstr "Control"
-
 #: shdoclc.rc:88 user32.rc:55
 msgid "&Undo"
 msgstr "元に戻す(&U)"
@@ -6071,10 +6059,6 @@ msgstr "元に戻す(&U)"
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
 msgstr "削除(&D)"
-
-#: shdoclc.rc:98
-msgid "Table"
-msgstr "Table"
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
@@ -6104,10 +6088,6 @@ msgstr "セルのプロパティ(&C)"
 msgid "&Table Properties"
 msgstr "表のプロパティ(&T)"
 
-#: shdoclc.rc:112
-msgid "1DSite Select"
-msgstr "1DSite Select"
-
 #: shdoclc.rc:116 shell32.rc:61
 msgid "Paste"
 msgstr "貼り付け"
@@ -6115,10 +6095,6 @@ msgstr "貼り付け"
 #: shdoclc.rc:118
 msgid "&Print"
 msgstr "印刷(&P)"
-
-#: shdoclc.rc:122
-msgid "Anchor"
-msgstr "Anchor"
 
 #: shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
@@ -6132,14 +6108,6 @@ msgstr "新しいウィンドウで開く(&N)"
 msgid "Cut"
 msgstr "切り取り"
 
-#: shdoclc.rc:139
-msgid "Context Unknown"
-msgstr "Context Unknown"
-
-#: shdoclc.rc:144
-msgid "DYNSRC Image"
-msgstr "DYNSRC Image"
-
 #: shdoclc.rc:152
 msgid "&Save Video As..."
 msgstr "ビデオの保存(&S)..."
@@ -6148,17 +6116,9 @@ msgstr "ビデオの保存(&S)..."
 msgid "Play"
 msgstr "再生"
 
-#: shdoclc.rc:168
-msgid "ART Image"
-msgstr "ART Image"
-
 #: shdoclc.rc:189
 msgid "Rewind"
 msgstr "巻き戻し"
-
-#: shdoclc.rc:194
-msgid "Debug"
-msgstr "Debug"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
@@ -6220,10 +6180,6 @@ msgstr "表示ビュー(&B)"
 msgid "&Edit View"
 msgstr "編集ビュー(&E)"
 
-#: shdoclc.rc:214
-msgid "Vertical Scrollbar"
-msgstr "Vertical Scrollbar"
-
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
 msgstr "ここにスクロール"
@@ -6251,10 +6207,6 @@ msgstr "上にスクロール"
 #: shdoclc.rc:225
 msgid "Scroll Down"
 msgstr "下にスクロール"
-
-#: shdoclc.rc:228
-msgid "Horizontal Scrollbar"
-msgstr "Horizontal Scrollbar"
 
 #: shdoclc.rc:232
 msgid "Left Edge"
