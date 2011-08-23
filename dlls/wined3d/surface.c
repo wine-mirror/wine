@@ -1461,7 +1461,7 @@ static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, co
 
     surface_modify_ds_location(dst_surface, SFLAG_DS_OFFSCREEN,
             dst_surface->ds_current_size.cx, dst_surface->ds_current_size.cy);
-    surface_modify_location(dst_surface, SFLAG_INDRAWABLE, TRUE);
+    surface_modify_location(dst_surface, SFLAG_INTEXTURE, TRUE);
 
     return WINED3D_OK;
 }
