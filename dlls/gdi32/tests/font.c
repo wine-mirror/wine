@@ -3757,7 +3757,7 @@ static BOOL is_font_installed_fullname(const char *family, const char *fullname)
 
 static void test_fullname(void)
 {
-    static const char *TestName[] = {"Lucida Sans Demibold Roman", "Lucida Sans Italic"};
+    static const char *TestName[] = {"Lucida Sans Demibold Roman", "Lucida Sans Italic", "Lucida Sans Regular"};
     char buf[LF_FULLFACESIZE];
     HFONT hfont, of;
     LOGFONTA lf;
