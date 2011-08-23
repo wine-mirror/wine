@@ -4857,19 +4857,6 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         goto done;
 
-    if (!msi_get_property_int( package->db, szInstalled, 0 ))
-    {
-        msi_reg_set_val_str( props, INSTALLPROPERTY_LOCALPACKAGEW, package->localfile );
-        if (!CopyFileW( package->PackagePath, package->localfile, FALSE ))
-        {
-            rc = GetLastError();
-            ERR("Unable to copy package %u\n", rc);
-            goto done;
-        }
-    }
-    msi_free( package->localfile );
-    package->localfile = NULL;
-
     rc = msi_publish_install_properties(package, hkey);
     if (rc != ERROR_SUCCESS)
         goto done;
@@ -4890,6 +4877,8 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
         }
         msi_free( upgrade_code );
     }
+    msi_reg_set_val_str( props, INSTALLPROPERTY_LOCALPACKAGEW, package->localfile );
+    package->delete_on_close = FALSE;
 
 done:
     uirow = MSI_CreateRecord( 1 );
@@ -4951,12 +4940,8 @@ static UINT msi_unpublish_product( MSIPACKAGE *package, const WCHAR *remove )
         MSIREG_DeleteUserDataPatchKey(patch->patchcode, package->Context);
         /* FIXME: remove local patch package if this is the last product */
     }
-
     TRACE("removing local package %s\n", debugstr_w(package->localfile));
-    DeleteFileW( package->localfile );
-    msi_free( package->localfile );
-    package->localfile = NULL;
-
+    package->delete_on_close = TRUE;
     return ERROR_SUCCESS;
 }
 
@@ -7394,15 +7379,6 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     msi_adjust_privilege_properties( package );
     msi_set_context( package );
 
-    if (msi_get_property_int( package->db, szInstalled, 0 ))
-    {
-        HKEY hkey;
-        DeleteFileW( package->localfile );
-        msi_free( package->localfile );
-        MSIREG_OpenInstallProps( package->ProductCode, package->Context, NULL, &hkey, FALSE );
-        package->localfile = msi_reg_get_val_str( hkey, INSTALLPROPERTY_LOCALPACKAGEW );
-        RegCloseKey( hkey );
-    }
     if (msi_get_property_int( package->db, szDisableRollback, 0 ))
     {
         TRACE("disabling rollback\n");

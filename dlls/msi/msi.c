@@ -49,7 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
 static const WCHAR installerW[] = {'\\','I','n','s','t','a','l','l','e','r',0};
 
-static UINT msi_locate_product(LPCWSTR szProduct, MSIINSTALLCONTEXT *context)
+UINT msi_locate_product(LPCWSTR szProduct, MSIINSTALLCONTEXT *context)
 {
     HKEY hkey = NULL;
 

@@ -358,11 +358,8 @@ static void MSI_FreePackage( MSIOBJECTHDR *arg)
         if (package->cache_net[i]) IAssemblyCache_Release( package->cache_net[i] );
     if (package->cache_sxs) IAssemblyCache_Release( package->cache_sxs );
 
-    if (package->localfile)
-    {
-        DeleteFileW( package->localfile );
-        msi_free( package->localfile );
-    }
+    if (package->delete_on_close) DeleteFileW( package->localfile );
+    msi_free( package->localfile );
 }
 
 static UINT create_temp_property_table(MSIPACKAGE *package)
@@ -1189,39 +1186,7 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
 
         package->log_file = INVALID_HANDLE_VALUE;
     }
-
     return package;
-}
-
-/*
- * copy_package_to_temp   [internal]
- *
- * copy the msi file to a temp file to prevent locking a CD
- * with a multi disc install 
- *
- * FIXME: I think this is wrong, and instead of copying the package,
- *        we should read all the tables to memory, then open the
- *        database to read binary streams on demand.
- */ 
-static UINT copy_package_to_temp( LPCWSTR szPackage, LPWSTR filename )
-{
-    WCHAR path[MAX_PATH];
-
-    GetTempPathW( MAX_PATH, path );
-    GetTempFileNameW( path, szMsi, 0, filename );
-
-    if( !CopyFileW( szPackage, filename, FALSE ) )
-    {
-        UINT error = GetLastError();
-        if ( error == ERROR_FILE_NOT_FOUND )
-            ERR("can't find %s\n", debugstr_w(szPackage));
-        else
-            ERR("failed to copy package %s to %s (%u)\n", debugstr_w(szPackage), debugstr_w(filename), error);
-        DeleteFileW( filename );
-        return error;
-    }
-
-    return ERROR_SUCCESS;
 }
 
 UINT msi_download_file( LPCWSTR szUrl, LPWSTR filename )
@@ -1260,7 +1225,7 @@ UINT msi_download_file( LPCWSTR szUrl, LPWSTR filename )
     return ERROR_SUCCESS;
 }
 
-UINT msi_get_local_package_name( LPWSTR path, LPCWSTR suffix )
+UINT msi_create_empty_local_file( LPWSTR path, LPCWSTR suffix )
 {
     static const WCHAR szInstaller[] = {
         '\\','I','n','s','t','a','l','l','e','r','\\',0};
@@ -1410,18 +1375,136 @@ int msi_track_tempfile( MSIPACKAGE *package, const WCHAR *path )
     return 0;
 }
 
+static WCHAR *get_product_code( MSIDATABASE *db )
+{
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','`','V','a','l','u','e','`',' ',
+        'F','R','O','M',' ','`','P','r','o','p','e','r','t','y','`',' ',
+        'W','H','E','R','E',' ','`','P','r','o','p','e','r','t','y','`','=',
+        '\'','P','r','o','d','u','c','t','C','o','d','e','\'',0};
+    MSIQUERY *view;
+    MSIRECORD *rec;
+    WCHAR *ret = NULL;
+
+    if (MSI_DatabaseOpenViewW( db, query, &view ) != ERROR_SUCCESS)
+    {
+        return NULL;
+    }
+    if (MSI_ViewExecute( view, 0 ) != ERROR_SUCCESS)
+    {
+        MSI_ViewClose( view );
+        msiobj_release( &view->hdr );
+        return NULL;
+    }
+    if (MSI_ViewFetch( view, &rec ) == ERROR_SUCCESS)
+    {
+        ret = strdupW( MSI_RecordGetString( rec, 1 ) );
+        msiobj_release( &rec->hdr );
+    }
+    MSI_ViewClose( view );
+    msiobj_release( &view->hdr );
+    return ret;
+}
+
+static UINT get_registered_local_package( const WCHAR *product, const WCHAR *package, WCHAR *localfile )
+{
+    MSIINSTALLCONTEXT context;
+    HKEY product_key, props_key;
+    WCHAR *registered_package = NULL, unsquashed[GUID_SIZE];
+    UINT r;
+
+    r = msi_locate_product( product, &context );
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    r = MSIREG_OpenProductKey( product, NULL, context, &product_key, FALSE );
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    r = MSIREG_OpenInstallProps( product, context, NULL, &props_key, FALSE );
+    if (r != ERROR_SUCCESS)
+    {
+        RegCloseKey( product_key );
+        return r;
+    }
+    r = ERROR_FUNCTION_FAILED;
+    registered_package = msi_reg_get_val_str( product_key, INSTALLPROPERTY_PACKAGECODEW );
+    if (!registered_package)
+        goto done;
+
+    unsquash_guid( registered_package, unsquashed );
+    if (!strcmpiW( package, unsquashed ))
+    {
+        WCHAR *filename = msi_reg_get_val_str( props_key, INSTALLPROPERTY_LOCALPACKAGEW );
+        strcpyW( localfile, filename );
+        msi_free( filename );
+        r = ERROR_SUCCESS;
+    }
+done:
+    msi_free( registered_package );
+    RegCloseKey( props_key );
+    RegCloseKey( product_key );
+    return r;
+}
+
+static WCHAR *get_package_code( MSIDATABASE *db )
+{
+    WCHAR *ret;
+    MSISUMMARYINFO *si;
+
+    if (!(si = MSI_GetSummaryInformationW( db->storage, 0 )))
+    {
+        WARN("failed to load summary info\n");
+        return NULL;
+    }
+    ret = msi_suminfo_dup_string( si, PID_REVNUMBER );
+    msiobj_release( &si->hdr );
+    return ret;
+}
+
+static UINT get_local_package( const WCHAR *filename, WCHAR *localfile )
+{
+    WCHAR *product_code, *package_code;
+    MSIDATABASE *db;
+    UINT r;
+
+    if ((r = MSI_OpenDatabaseW( filename, MSIDBOPEN_READONLY, &db )) != ERROR_SUCCESS)
+    {
+        if (GetFileAttributesW( filename ) == INVALID_FILE_ATTRIBUTES)
+            return ERROR_FILE_NOT_FOUND;
+        return r;
+    }
+    if (!(product_code = get_product_code( db )))
+    {
+        msiobj_release( &db->hdr );
+        return ERROR_INSTALL_PACKAGE_INVALID;
+    }
+    if (!(package_code = get_package_code( db )))
+    {
+        msi_free( product_code );
+        msiobj_release( &db->hdr );
+        return ERROR_INSTALL_PACKAGE_INVALID;
+    }
+    r = get_registered_local_package( product_code, package_code, localfile );
+    msi_free( package_code );
+    msi_free( product_code );
+    msiobj_release( &db->hdr );
+    return r;
+}
+
 UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 {
     static const WCHAR dotmsi[] = {'.','m','s','i',0};
-    MSIDATABASE *db = NULL;
+    MSIDATABASE *db;
     MSIPACKAGE *package;
     MSIHANDLE handle;
     LPWSTR ptr, base_url = NULL;
     UINT r;
-    WCHAR temppath[MAX_PATH], localfile[MAX_PATH], cachefile[MAX_PATH];
+    WCHAR localfile[MAX_PATH], cachefile[MAX_PATH];
     LPCWSTR file = szPackage;
     DWORD index = 0;
     MSISUMMARYINFO *si;
+    BOOL delete_on_close = FALSE;
 
     TRACE("%s %p\n", debugstr_w(szPackage), pPackage);
 
@@ -1448,65 +1531,45 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         if ( UrlIsW( szPackage, URLIS_URL ) )
         {
             r = msi_download_file( szPackage, cachefile );
-            if ( r != ERROR_SUCCESS )
+            if (r != ERROR_SUCCESS)
                 return r;
 
-            r = copy_package_to_temp( cachefile, temppath );
-            if ( r != ERROR_SUCCESS )
-                return r;
-
-            file = temppath;
+            file = cachefile;
 
             base_url = strdupW( szPackage );
-            if ( !base_url )
+            if (!base_url)
                 return ERROR_OUTOFMEMORY;
 
             ptr = strrchrW( base_url, '/' );
             if (ptr) *(ptr + 1) = '\0';
         }
-        else
+        r = get_local_package( file, localfile );
+        if (r != ERROR_SUCCESS || GetFileAttributesW( localfile ) == INVALID_FILE_ATTRIBUTES)
         {
-            r = copy_package_to_temp( szPackage, temppath );
-            if ( r != ERROR_SUCCESS )
+            r = msi_create_empty_local_file( localfile, dotmsi );
+            if (r != ERROR_SUCCESS)
                 return r;
 
-            file = temppath;
+            if (!CopyFileW( file, localfile, FALSE ))
+            {
+                r = GetLastError();
+                WARN("unable to copy package %s to %s (%u)\n", debugstr_w(file), debugstr_w(localfile), r);
+                DeleteFileW( localfile );
+                return r;
+            }
+            delete_on_close = TRUE;
         }
-        TRACE("Opening relocated package %s\n", debugstr_w( file ));
-
-        /* transforms that add binary streams require that we open the database
-         * read/write, which is safe because we always create a copy that is thrown
-         * away when we're done.
-         */
-        r = MSI_OpenDatabaseW( file, MSIDBOPEN_TRANSACT, &db );
-        if( r != ERROR_SUCCESS )
-        {
-            if (file != szPackage)
-                DeleteFileW( file );
-
-            if (GetFileAttributesW(szPackage) == INVALID_FILE_ATTRIBUTES)
-                return ERROR_FILE_NOT_FOUND;
-
+        TRACE("opening package %s\n", debugstr_w( localfile ));
+        r = MSI_OpenDatabaseW( localfile, MSIDBOPEN_TRANSACT, &db );
+        if (r != ERROR_SUCCESS)
             return r;
-        }
     }
-
-    r = msi_get_local_package_name( localfile, dotmsi );
-    if (r != ERROR_SUCCESS)
-        return r;
-
     package = MSI_CreatePackage( db, base_url );
     msi_free( base_url );
     msiobj_release( &db->hdr );
-    if( !package )
-    {
-        if (file != szPackage)
-            DeleteFileW( file );
-
-        return ERROR_INSTALL_PACKAGE_INVALID;
-    }
-    if (file != szPackage) msi_track_tempfile( package, file );
+    if (!package) return ERROR_INSTALL_PACKAGE_INVALID;
     package->localfile = strdupW( localfile );
+    package->delete_on_close = delete_on_close;
 
     si = MSI_GetSummaryInformationW( db->storage, 0 );
     if (!si)
@@ -1515,7 +1578,6 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         msiobj_release( &package->hdr );
         return ERROR_INSTALL_PACKAGE_INVALID;
     }
-
     r = msi_parse_summary( si, package );
     msiobj_release( &si->hdr );
     if (r != ERROR_SUCCESS)
@@ -1524,7 +1586,6 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         msiobj_release( &package->hdr );
         return r;
     }
-
     r = validate_package( package );
     if (r != ERROR_SUCCESS)
     {
@@ -1544,7 +1605,6 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         GetFullPathNameW( szPackage, MAX_PATH, fullpath, NULL );
         msi_set_property( package->db, szOriginalDatabase, fullpath );
     }
-
     msi_set_context( package );
 
     while (1)
@@ -1564,20 +1624,16 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
             msiobj_release( &package->hdr );
             return r;
         }
-
         index++;
     }
-
     if (index)
     {
         msi_clone_properties( package );
         msi_adjust_privilege_properties( package );
     }
-
     if (gszLogFile)
         package->log_file = CreateFileW( gszLogFile, GENERIC_WRITE, FILE_SHARE_WRITE, NULL,
                                          OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
-
     *pPackage = package;
     return ERROR_SUCCESS;
 }

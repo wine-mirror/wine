@@ -383,6 +383,7 @@ typedef struct tagMSIPACKAGE
     LPWSTR PackagePath;
     LPWSTR ProductCode;
     LPWSTR localfile;
+    BOOL delete_on_close;
 
     UINT CurrentInstallState;
     msi_dialog *dialog;
@@ -894,7 +895,7 @@ extern UINT MSIREG_DeleteClassesUpgradeCodesKey(LPCWSTR szUpgradeCode) DECLSPEC_
 extern UINT MSIREG_OpenClassesUpgradeCodesKey(LPCWSTR szUpgradeCode, HKEY* key, BOOL create) DECLSPEC_HIDDEN;
 extern UINT MSIREG_DeleteLocalClassesProductKey(LPCWSTR szProductCode) DECLSPEC_HIDDEN;
 extern UINT MSIREG_DeleteLocalClassesFeaturesKey(LPCWSTR szProductCode) DECLSPEC_HIDDEN;
-
+extern UINT msi_locate_product(LPCWSTR szProduct, MSIINSTALLCONTEXT *context) DECLSPEC_HIDDEN;
 extern LPWSTR msi_reg_get_val_str( HKEY hkey, LPCWSTR name ) DECLSPEC_HIDDEN;
 extern BOOL msi_reg_get_val_dword( HKEY hkey, LPCWSTR name, DWORD *val) DECLSPEC_HIDDEN;
 
@@ -1012,7 +1013,7 @@ extern BOOL msi_action_is_unique(const MSIPACKAGE *, const WCHAR *) DECLSPEC_HID
 extern WCHAR *msi_build_error_string(MSIPACKAGE *, UINT, DWORD, ...) DECLSPEC_HIDDEN;
 extern UINT msi_set_last_used_source(LPCWSTR product, LPCWSTR usersid,
                         MSIINSTALLCONTEXT context, DWORD options, LPCWSTR value) DECLSPEC_HIDDEN;
-extern UINT msi_get_local_package_name(LPWSTR path, LPCWSTR suffix) DECLSPEC_HIDDEN;
+extern UINT msi_create_empty_local_file(LPWSTR path, LPCWSTR suffix) DECLSPEC_HIDDEN;
 extern UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace) DECLSPEC_HIDDEN;
 extern MSIASSEMBLY *msi_load_assembly(MSIPACKAGE *, MSICOMPONENT *) DECLSPEC_HIDDEN;
 extern UINT msi_install_assembly(MSIPACKAGE *, MSICOMPONENT *) DECLSPEC_HIDDEN;

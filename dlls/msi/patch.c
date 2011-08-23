@@ -630,7 +630,7 @@ static UINT msi_apply_patch_package( MSIPACKAGE *package, const WCHAR *file )
     if ( r != ERROR_SUCCESS )
         goto done;
 
-    r = msi_get_local_package_name( localfile, dotmsp );
+    r = msi_create_empty_local_file( localfile, dotmsp );
     if ( r != ERROR_SUCCESS )
         goto done;
 
