@@ -2138,10 +2138,6 @@ msgstr "Definições Predefinidas"
 msgid "%uMB used, %uMB available"
 msgstr ""
 
-#: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
-msgid "Options"
-msgstr "Opções"
-
 #: hhctrl.rc:70
 msgid "S&ync"
 msgstr ""
@@ -2251,6 +2247,10 @@ msgstr "Início"
 #: hhctrl.rc:45
 msgid "Sync"
 msgstr "Sincronizar"
+
+#: hhctrl.rc:47 wordpad.rc:155
+msgid "Options"
+msgstr "Opções"
 
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"

@@ -1988,10 +1988,6 @@ msgstr ""
 msgid "%uMB used, %uMB available"
 msgstr ""
 
-#: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
-msgid "Options"
-msgstr "Επιλογές"
-
 #: hhctrl.rc:70
 msgid "S&ync"
 msgstr ""
@@ -2080,6 +2076,10 @@ msgstr "Home"
 #: hhctrl.rc:45
 msgid "Sync"
 msgstr "Sync"
+
+#: hhctrl.rc:47 wordpad.rc:155
+msgid "Options"
+msgstr "Επιλογές"
 
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"

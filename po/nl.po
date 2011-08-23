@@ -2042,10 +2042,6 @@ msgstr "Standaardinstellingen"
 msgid "%uMB used, %uMB available"
 msgstr ""
 
-#: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
-msgid "Options"
-msgstr "Instellingen"
-
 #: hhctrl.rc:70
 msgid "S&ync"
 msgstr "S&ynchroniseer"
@@ -2129,6 +2125,10 @@ msgstr "Startpagina"
 #: hhctrl.rc:45
 msgid "Sync"
 msgstr "Synchroniseren"
+
+#: hhctrl.rc:47 wordpad.rc:155
+msgid "Options"
+msgstr "Instellingen"
 
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"

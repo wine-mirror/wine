@@ -2020,10 +2020,6 @@ msgstr "地域の設定"
 msgid "%uMB used, %uMB available"
 msgstr "%u MB 使用中、%u MB 使用可能"
 
-#: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
-msgid "Options"
-msgstr "オプション"
-
 #: hhctrl.rc:70
 msgid "S&ync"
 msgstr "同期(&Y)"
@@ -2105,6 +2101,10 @@ msgstr "ホーム"
 #: hhctrl.rc:45
 msgid "Sync"
 msgstr "同期"
+
+#: hhctrl.rc:47 wordpad.rc:155
+msgid "Options"
+msgstr "オプション"
 
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"

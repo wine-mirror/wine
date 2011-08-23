@@ -64,7 +64,7 @@ END
 
 MENU_POPUP MENU
 {
-    POPUP "Options"
+    POPUP "" /* Options */
     {
         MENUITEM "", IDTB_EXPAND,
         MENUITEM "S&ync", IDTB_SYNC

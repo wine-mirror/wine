@@ -2013,10 +2013,6 @@ msgstr "默认设置"
 msgid "%uMB used, %uMB available"
 msgstr ""
 
-#: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
-msgid "Options"
-msgstr "选项"
-
 #: hhctrl.rc:70
 msgid "S&ync"
 msgstr ""
@@ -2112,6 +2108,10 @@ msgstr "首页"
 #: hhctrl.rc:45
 msgid "Sync"
 msgstr "同步"
+
+#: hhctrl.rc:47 wordpad.rc:155
+msgid "Options"
+msgstr "选项"
 
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"

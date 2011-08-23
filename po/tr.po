@@ -2029,10 +2029,6 @@ msgstr "Öntanımlı Ayarlar"
 msgid "%uMB used, %uMB available"
 msgstr ""
 
-#: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
-msgid "Options"
-msgstr "Seçenekler"
-
 #: hhctrl.rc:70
 msgid "S&ync"
 msgstr ""
@@ -2132,6 +2128,10 @@ msgstr "Ev"
 #: hhctrl.rc:45
 msgid "Sync"
 msgstr "Eşitle"
+
+#: hhctrl.rc:47 wordpad.rc:155
+msgid "Options"
+msgstr "Seçenekler"
 
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"

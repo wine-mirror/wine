@@ -2031,10 +2031,6 @@ msgstr "Regiono nuostatos"
 msgid "%uMB used, %uMB available"
 msgstr "%u MB sunaudota, %u MB laisva"
 
-#: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
-msgid "Options"
-msgstr "Parinktys"
-
 #: hhctrl.rc:70
 msgid "S&ync"
 msgstr "S&inchronizuoti"
@@ -2116,6 +2112,10 @@ msgstr "Į pradžią"
 #: hhctrl.rc:45
 msgid "Sync"
 msgstr "Sinchronizuoti"
+
+#: hhctrl.rc:47 wordpad.rc:155
+msgid "Options"
+msgstr "Parinktys"
 
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"

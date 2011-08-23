@@ -2025,10 +2025,6 @@ msgstr "Regionale Einstellungen"
 msgid "%uMB used, %uMB available"
 msgstr "%uMB benutzt, %uMB verfügbar"
 
-#: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
-msgid "Options"
-msgstr "Einstellungen"
-
 #: hhctrl.rc:70
 msgid "S&ync"
 msgstr "S&ync"
@@ -2110,6 +2106,10 @@ msgstr "Übersicht"
 #: hhctrl.rc:45
 msgid "Sync"
 msgstr "Synchronisieren"
+
+#: hhctrl.rc:47 wordpad.rc:155
+msgid "Options"
+msgstr "Einstellungen"
 
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"

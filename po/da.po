@@ -2050,15 +2050,6 @@ msgstr "Standard indstillinger"
 msgid "%uMB used, %uMB available"
 msgstr ""
 
-#: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
-#, fuzzy
-msgid "Options"
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Indstillinger\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Alternativer"
-
 #: hhctrl.rc:70
 msgid "S&ync"
 msgstr ""
@@ -2154,6 +2145,15 @@ msgstr "Hjem"
 #: hhctrl.rc:45
 msgid "Sync"
 msgstr "Synkroniser"
+
+#: hhctrl.rc:47 wordpad.rc:155
+#, fuzzy
+msgid "Options"
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Indstillinger\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Alternativer"
 
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"

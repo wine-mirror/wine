@@ -2021,10 +2021,6 @@ msgstr "지역 설정"
 msgid "%uMB used, %uMB available"
 msgstr "%uMB 사용됨, %uMB 가능함"
 
-#: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
-msgid "Options"
-msgstr "옵션"
-
 #: hhctrl.rc:70
 msgid "S&ync"
 msgstr "동기화(&Y)"
@@ -2106,6 +2102,10 @@ msgstr "홈"
 #: hhctrl.rc:45
 msgid "Sync"
 msgstr "동기화"
+
+#: hhctrl.rc:47 wordpad.rc:155
+msgid "Options"
+msgstr "옵션"
 
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"
