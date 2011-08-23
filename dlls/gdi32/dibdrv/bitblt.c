@@ -27,6 +27,35 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dib);
 
+static DWORD copy_rect( dib_info *dst, const RECT *dst_rect, const dib_info *src, const RECT *src_rect,
+                        HRGN clip, INT rop2 )
+{
+    POINT origin;
+    RECT clipped_rect;
+    const WINEREGION *clip_data;
+    int i;
+
+    origin.x = src_rect->left;
+    origin.y = src_rect->top;
+
+    if (clip == NULL) dst->funcs->copy_rect( dst, dst_rect, src, &origin, rop2 );
+    else
+    {
+        clip_data = get_wine_region( clip );
+        for (i = 0; i < clip_data->numRects; i++)
+        {
+            if (intersect_rect( &clipped_rect, dst_rect, clip_data->rects + i ))
+            {
+                origin.x = src_rect->left + clipped_rect.left - dst_rect->left;
+                origin.y = src_rect->top  + clipped_rect.top  - dst_rect->top;
+                dst->funcs->copy_rect( dst, &clipped_rect, src, &origin, rop2 );
+            }
+        }
+        release_wine_region( clip );
+    }
+    return ERROR_SUCCESS;
+}
+
 static void set_color_info( const dib_info *dib, BITMAPINFO *info )
 {
     DWORD *masks = (DWORD *)info->bmiColors;
@@ -182,8 +211,7 @@ DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
     dib_info src_dib;
     HRGN saved_clip = NULL;
     dibdrv_physdev *pdev = NULL;
-    const WINEREGION *clip_data;
-    int i, rop2;
+    int rop2;
 
     TRACE( "%p %p %p\n", dev, hbitmap, info );
 
@@ -244,24 +272,7 @@ DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
 
     rop2 = ((rop >> 16) & 0xf) + 1;
 
-    if (clip == NULL) dib->funcs->copy_rect( dib, &dst->visrect, &src_dib, &origin, rop2 );
-    else
-    {
-        clip_data = get_wine_region( clip );
-        for (i = 0; i < clip_data->numRects; i++)
-        {
-            RECT clipped_rect;
-
-            if (intersect_rect( &clipped_rect, &dst->visrect, clip_data->rects + i ))
-            {
-                origin.x = src->visrect.left + clipped_rect.left - dst->visrect.left;
-                origin.y = src->visrect.top + clipped_rect.top  - dst->visrect.top;
-                dib->funcs->copy_rect( dib, &clipped_rect, &src_dib, &origin, rop2 );
-            }
-        }
-        release_wine_region( clip );
-    }
-    ret = ERROR_SUCCESS;
+    ret = copy_rect( dib, &dst->visrect, &src_dib, &src->visrect, clip, rop2 );
 
     if (saved_clip) restore_clipping_region( pdev, saved_clip );
 
