@@ -345,6 +345,20 @@ static void test_var_call2( int line, HRESULT (WINAPI *func)(LPVARIANT,LPVARIANT
     VariantClear( &result );
 }
 
+static int strcmp_wa(const WCHAR *strw, const char *stra)
+{
+    WCHAR buf[512];
+    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf));
+    return lstrcmpW(strw, buf);
+}
+
+#define test_bstr_var(a,b) _test_bstr_var(__LINE__,a,b)
+static void _test_bstr_var(unsigned line, const VARIANT *v, const char *str)
+{
+    ok_(__FILE__,line)(V_VT(v) == VT_BSTR, "unexpected vt=%d\n", V_VT(v));
+    if(V_VT(v) == VT_BSTR)
+        ok(!strcmp_wa(V_BSTR(v), str), "v=%s, expected %s\n", wine_dbgstr_w(V_BSTR(v)), str);
+}
 
 static void test_VariantInit(void)
 {
@@ -5645,6 +5659,30 @@ static void test_VarCat(void)
     VariantClear(&right);
     VariantClear(&result);
     VariantClear(&expected);
+
+    /* Test boolean conversion */
+    V_VT(&left) = VT_BOOL;
+    V_BOOL(&left) = VARIANT_TRUE;
+    V_VT(&right) = VT_BSTR;
+    V_BSTR(&right) = SysAllocStringLen(NULL,0);
+    hres = VarCat(&left, &right, &result);
+    ok(hres == S_OK, "VarCat failed: %08x\n", hres);
+    if(!strcmp_wa(V_BSTR(&result), "True")) {
+        V_VT(&right) = VT_BOOL;
+        V_BOOL(&right) = 100;
+        hres = VarCat(&left, &right, &result);
+        ok(hres == S_OK, "VarCat failed: %08x\n", hres);
+        test_bstr_var(&result, "TrueTrue");
+        VariantClear(&result);
+
+        V_BOOL(&right) = VARIANT_FALSE;
+        hres = VarCat(&left, &right, &result);
+        ok(hres == S_OK, "VarCat failed: %08x\n", hres);
+        test_bstr_var(&result, "TrueFalse");
+        VariantClear(&result);
+    }else {
+        skip("Got %s as True, assuming non-English locale\n", wine_dbgstr_w(V_BSTR(&result)));
+    }
 }
 
 static HRESULT (WINAPI *pVarAnd)(LPVARIANT,LPVARIANT,LPVARIANT);

@@ -2624,7 +2624,7 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
             {
                 /* Bools are handled as localized True/False strings instead of 0/-1 as in MSDN */
                 V_VT(&bstrvar_left) = VT_BSTR;
-                if (V_BOOL(left) == TRUE)
+                if (V_BOOL(left))
                     V_BSTR(&bstrvar_left) = SysAllocString(str_true);
                 else
                     V_BSTR(&bstrvar_left) = SysAllocString(str_false);
@@ -2664,7 +2664,7 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
             {
                 /* Bools are handled as localized True/False strings instead of 0/-1 as in MSDN */
                 V_VT(&bstrvar_right) = VT_BSTR;
-                if (V_BOOL(right) == TRUE)
+                if (V_BOOL(right))
                     V_BSTR(&bstrvar_right) = SysAllocString(str_true);
                 else
                     V_BSTR(&bstrvar_right) = SysAllocString(str_false);
