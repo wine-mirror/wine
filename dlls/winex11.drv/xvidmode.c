@@ -339,6 +339,11 @@ static BOOL ComputeGammaFromRamp(WORD ramp[256], float *gamma)
     ERR("ramp not uniform (max=%f, min=%f, avg=%f), rejected\n", g_max, g_min, g_avg);
     return FALSE;
   }
+  /* check that the gamma is not too bright */
+  if (g_avg < 0.2) {
+    ERR("too bright gamma ( %5.3f), rejected\n", g_avg);
+    return FALSE;
+  }
   /* ok, now we're pretty sure we can set the desired gamma ramp,
    * so go for it */
   *gamma = 1/g_avg;

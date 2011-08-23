@@ -644,6 +644,13 @@ static void test_gamma(void)
     ret = SetDeviceGammaRamp(hdc, &ramp);
     ok(ret, "SetDeviceGammaRamp failed\n");
 
+    /* try a bright gamma ramp */
+    ramp[0][0] = 0;
+    ramp[0][1] = 0x7FFF;
+    for (i = 2; i < 256; i++) ramp[0][i] = 0xFFFF;
+    ret = SetDeviceGammaRamp(hdc, &ramp);
+    ok(!ret, "SetDeviceGammaRamp succeeded\n");
+
     /* cleanup: set old ramp again */
     ret = SetDeviceGammaRamp(hdc, &oldramp);
     ok(ret, "SetDeviceGammaRamp failed\n");
