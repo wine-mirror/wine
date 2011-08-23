@@ -907,6 +907,11 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         return E_INVALIDARG;
     }
 
+    if(mode == AUDCLNT_SHAREMODE_EXCLUSIVE && flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK){
+        FIXME("EXCLUSIVE mode with EVENTCALLBACK\n");
+        return AUDCLNT_E_DEVICE_IN_USE;
+    }
+
     EnterCriticalSection(&This->lock);
 
     if(This->initted){
