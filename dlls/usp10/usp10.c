@@ -907,6 +907,8 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
 {
     HRESULT hr = E_OUTOFMEMORY;
     StringAnalysis *analysis = NULL;
+    SCRIPT_CONTROL sControl;
+    SCRIPT_STATE sState;
     int i, num_items = 255;
 
     TRACE("(%p,%p,%d,%d,%d,0x%x,%d,%p,%p,%p,%p,%p,%p)\n",
@@ -928,7 +930,17 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
     analysis->clip_len = cString;
     analysis->hdc = hdc;
 
-    hr = ScriptItemize(pString, cString, num_items, psControl, psState, analysis->pItem,
+    if (psState)
+        sState = *psState;
+    else
+        memset(&sState, 0, sizeof(SCRIPT_STATE));
+
+    if (psControl)
+        sControl = *psControl;
+    else
+        memset(&sControl, 0, sizeof(SCRIPT_CONTROL));
+
+    hr = ScriptItemize(pString, cString, num_items, &sControl, &sState, analysis->pItem,
                        &analysis->numItems);
 
     while (hr == E_OUTOFMEMORY)
