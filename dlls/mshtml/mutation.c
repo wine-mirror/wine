@@ -549,7 +549,7 @@ static void NSAPI nsDocumentObserver_EndLoad(nsIDocumentObserver *iface, nsIDocu
 }
 
 static void NSAPI nsDocumentObserver_ContentStatesChanged(nsIDocumentObserver *iface, nsIDocument *aDocument,
-        nsIContent *aContent1, nsIContent *aContent2, nsEventStates aStateMask)
+        nsIContent *aContent, nsEventStates aStateMask)
 {
 }
 

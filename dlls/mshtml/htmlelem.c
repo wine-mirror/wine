@@ -104,7 +104,6 @@ static const tag_desc_t *get_tag_desc(const WCHAR *tag_name)
 HRESULT replace_node_by_html(nsIDOMHTMLDocument *nsdoc, nsIDOMNode *nsnode, const WCHAR *html)
 {
     nsIDOMDocumentFragment *nsfragment;
-    nsIDOMDocumentRange *nsdocrange;
     nsIDOMNSRange *nsrange;
     nsIDOMNode *nsparent;
     nsIDOMRange *range;
@@ -112,12 +111,7 @@ HRESULT replace_node_by_html(nsIDOMHTMLDocument *nsdoc, nsIDOMNode *nsnode, cons
     nsresult nsres;
     HRESULT hres = S_OK;
 
-    nsres = nsIDOMHTMLDocument_QueryInterface(nsdoc, &IID_nsIDOMDocumentRange, (void**)&nsdocrange);
-    if(NS_FAILED(nsres))
-        return E_FAIL;
-
-    nsres = nsIDOMDocumentRange_CreateRange(nsdocrange, &range);
-    nsIDOMDocumentRange_Release(nsdocrange);
+    nsres = nsIDOMHTMLDocument_CreateRange(nsdoc, &range);
     if(NS_FAILED(nsres)) {
         ERR("CreateRange failed: %08x\n", nsres);
         return E_FAIL;
@@ -1260,7 +1254,6 @@ static HRESULT WINAPI HTMLElement_insertAdjacentHTML(IHTMLElement *iface, BSTR w
                                                      BSTR html)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    nsIDOMDocumentRange *nsdocrange;
     nsIDOMRange *range;
     nsIDOMNSRange *nsrange;
     nsIDOMNode *nsnode;
@@ -1275,14 +1268,7 @@ static HRESULT WINAPI HTMLElement_insertAdjacentHTML(IHTMLElement *iface, BSTR w
         return E_UNEXPECTED;
     }
 
-    nsres = nsIDOMDocument_QueryInterface(This->node.doc->nsdoc, &IID_nsIDOMDocumentRange, (void **)&nsdocrange);
-    if(NS_FAILED(nsres))
-    {
-        ERR("getting nsIDOMDocumentRange failed: %08x\n", nsres);
-        return E_FAIL;
-    }
-    nsres = nsIDOMDocumentRange_CreateRange(nsdocrange, &range);
-    nsIDOMDocumentRange_Release(nsdocrange);
+    nsres = nsIDOMHTMLDocument_CreateRange(This->node.doc->nsdoc, &range);
     if(NS_FAILED(nsres))
     {
         ERR("CreateRange failed: %08x\n", nsres);

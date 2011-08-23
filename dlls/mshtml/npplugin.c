@@ -96,29 +96,21 @@ static nsIDOMElement *get_dom_element(NPP instance)
 {
     nsISupports *instance_unk = (nsISupports*)instance->ndata;
     nsIPluginInstance *plugin_instance;
-    nsIPluginInstanceOwner *owner;
-    nsIPluginTagInfo *tag_info;
     nsIDOMElement *elem;
     nsresult nsres;
 
     nsres = nsISupports_QueryInterface(instance_unk, &IID_nsIPluginInstance, (void**)&plugin_instance);
-    if(NS_FAILED(nsres))
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIPluginInstance interface: %08x\n", nsres);
         return NULL;
+    }
 
-    nsres = nsIPluginInstance_GetOwner(plugin_instance, &owner);
-    nsIPluginInstance_Release(instance_unk);
-    if(NS_FAILED(nsres) || !owner)
+    nsres = nsIPluginInstance_GetDOMElement(plugin_instance, &elem);
+    nsIPluginInstance_Release(plugin_instance);
+    if(NS_FAILED(nsres)) {
+        ERR("GetDOMElement failed: %08x\n", nsres);
         return NULL;
-
-    nsres = nsISupports_QueryInterface(owner, &IID_nsIPluginTagInfo, (void**)&tag_info);
-    nsISupports_Release(owner);
-    if(NS_FAILED(nsres))
-        return NULL;
-
-    nsres = nsIPluginTagInfo_GetDOMElement(tag_info, &elem);
-    nsIPluginTagInfo_Release(tag_info);
-    if(NS_FAILED(nsres))
-        return NULL;
+    }
 
     return elem;
 }

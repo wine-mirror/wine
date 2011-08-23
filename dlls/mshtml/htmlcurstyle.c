@@ -892,9 +892,7 @@ static dispex_static_data_t HTMLCurrentStyle_dispex = {
 HRESULT HTMLCurrentStyle_Create(HTMLElement *elem, IHTMLCurrentStyle **p)
 {
     nsIDOMCSSStyleDeclaration *nsstyle;
-    nsIDOMDocumentView *nsdocview;
-    nsIDOMAbstractView *nsview;
-    nsIDOMViewCSS *nsviewcss;
+    nsIDOMWindow *nsview;
     nsAString nsempty_str;
     HTMLCurrentStyle *ret;
     nsresult nsres;
@@ -904,29 +902,14 @@ HRESULT HTMLCurrentStyle_Create(HTMLElement *elem, IHTMLCurrentStyle **p)
         return E_UNEXPECTED;
     }
 
-    nsres = nsIDOMHTMLDocument_QueryInterface(elem->node.doc->nsdoc, &IID_nsIDOMDocumentView, (void**)&nsdocview);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMDocumentView: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    nsres = nsIDOMDocumentView_GetDefaultView(nsdocview, &nsview);
-    nsIDOMDocumentView_Release(nsdocview);
+    nsres = nsIDOMHTMLDocument_GetDefaultView(elem->node.doc->nsdoc, &nsview);
     if(NS_FAILED(nsres)) {
         ERR("GetDefaultView failed: %08x\n", nsres);
         return E_FAIL;
     }
 
-    nsres = nsIDOMAbstractView_QueryInterface(nsview, &IID_nsIDOMViewCSS, (void**)&nsviewcss);
-    nsIDOMAbstractView_Release(nsview);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMViewCSS: %08x\n", nsres);
-        return E_FAIL;
-    }
-
     nsAString_Init(&nsempty_str, NULL);
-    nsres = nsIDOMViewCSS_GetComputedStyle(nsviewcss, (nsIDOMElement*)elem->nselem, &nsempty_str, &nsstyle);
-    nsIDOMViewCSS_Release(nsviewcss);
+    nsres = nsIDOMWindow_GetComputedStyle(nsview, (nsIDOMElement*)elem->nselem, &nsempty_str, &nsstyle);
     nsAString_Finish(&nsempty_str);
     if(NS_FAILED(nsres)) {
         ERR("GetComputedStyle failed: %08x\n", nsres);

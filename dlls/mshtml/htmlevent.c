@@ -777,19 +777,12 @@ static HTMLEventObj *create_event(HTMLDOMNode *target, eventid_t eid, nsIDOMEven
     if(nsevent) {
         nsIDOMEvent_AddRef(nsevent);
     }else if(event_types[event_info[eid].type]) {
-        nsIDOMDocumentEvent *doc_event;
+        nsAString type_str;
         nsresult nsres;
 
-        nsres = nsIDOMHTMLDocument_QueryInterface(target->doc->nsdoc, &IID_nsIDOMDocumentEvent,
-                 (void**)&doc_event);
-        if(NS_SUCCEEDED(nsres)) {
-            nsAString type_str;
-
-            nsAString_InitDepend(&type_str, event_types[event_info[eid].type]);
-            nsres = nsIDOMDocumentEvent_CreateEvent(doc_event, &type_str, &ret->nsevent);
-            nsAString_Finish(&type_str);
-            nsIDOMDocumentEvent_Release(doc_event);
-        }
+        nsAString_InitDepend(&type_str, event_types[event_info[eid].type]);
+        nsres = nsIDOMHTMLDocument_CreateEvent(target->doc->nsdoc, &type_str, &ret->nsevent);
+        nsAString_Finish(&type_str);
         if(NS_FAILED(nsres)) {
             ERR("Could not create event: %08x\n", nsres);
             IHTMLEventObj_Release(&ret->IHTMLEventObj_iface);

@@ -716,18 +716,13 @@ static HRESULT WINAPI HTMLElement2_get_tabIndex(IHTMLElement2 *iface, short *p)
 static HRESULT WINAPI HTMLElement2_focus(IHTMLElement2 *iface)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    nsIDOMNSHTMLElement *nselem;
     nsresult nsres;
 
     TRACE("(%p)\n", This);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMNSHTMLElement, (void**)&nselem);
-    if(NS_SUCCEEDED(nsres)) {
-        nsIDOMNSHTMLElement_Focus(nselem);
-        nsIDOMNSHTMLElement_Release(nselem);
-    }else {
-        ERR("Could not get nsIDOMHTMLNSElement: %08x\n", nsres);
-    }
+    nsres = nsIDOMHTMLElement_Focus(This->nselem);
+    if(NS_FAILED(nsres))
+        ERR("Focus failed: %08x\n", nsres);
 
     return S_OK;
 }

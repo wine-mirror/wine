@@ -85,29 +85,12 @@ static void window_set_docnode(HTMLWindow *window, HTMLDocumentNode *doc_node)
 
 nsIDOMWindow *get_nsdoc_window(nsIDOMDocument *nsdoc)
 {
-    nsIDOMDocumentView *nsdocview;
-    nsIDOMAbstractView *nsview;
     nsIDOMWindow *nswindow;
     nsresult nsres;
 
-    nsres = nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMDocumentView, (void**)&nsdocview);
-    nsIDOMDocument_Release(nsdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMDocumentView iface: %08x\n", nsres);
-        return NULL;
-    }
-
-    nsres = nsIDOMDocumentView_GetDefaultView(nsdocview, &nsview);
-    nsIDOMDocumentView_Release(nsdocview);
+    nsres = nsIDOMDocument_GetDefaultView(nsdoc, &nswindow);
     if(NS_FAILED(nsres)) {
         ERR("GetDefaultView failed: %08x\n", nsres);
-        return NULL;
-    }
-
-    nsres = nsIDOMAbstractView_QueryInterface(nsview, &IID_nsIDOMWindow, (void**)&nswindow);
-    nsIDOMAbstractView_Release(nsview);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMWindow iface: %08x\n", nsres);
         return NULL;
     }
 

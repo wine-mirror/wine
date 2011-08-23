@@ -660,7 +660,6 @@ static HRESULT WINAPI HTMLBodyElement_get_onbeforeunload(IHTMLBodyElement *iface
 static HRESULT WINAPI HTMLBodyElement_createTextRange(IHTMLBodyElement *iface, IHTMLTxtRange **range)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
-    nsIDOMDocumentRange *nsdocrange;
     nsIDOMRange *nsrange = NULL;
     nsresult nsres;
     HRESULT hres;
@@ -672,14 +671,7 @@ static HRESULT WINAPI HTMLBodyElement_createTextRange(IHTMLBodyElement *iface, I
         return E_UNEXPECTED;
     }
 
-    nsres = nsIDOMDocument_QueryInterface(This->textcont.element.node.doc->nsdoc, &IID_nsIDOMDocumentRange,
-            (void**)&nsdocrange);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMDocumentRabge iface: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    nsres = nsIDOMDocumentRange_CreateRange(nsdocrange, &nsrange);
+    nsres = nsIDOMHTMLDocument_CreateRange(This->textcont.element.node.doc->nsdoc, &nsrange);
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIDOMRange_SelectNodeContents(nsrange, This->textcont.element.node.nsnode);
         if(NS_FAILED(nsres))
@@ -687,8 +679,6 @@ static HRESULT WINAPI HTMLBodyElement_createTextRange(IHTMLBodyElement *iface, I
     }else {
         ERR("CreateRange failed: %08x\n", nsres);
     }
-
-    nsIDOMDocumentRange_Release(nsdocrange);
 
     hres = HTMLTxtRange_Create(This->textcont.element.node.doc->basedoc.doc_node, nsrange, range);
 

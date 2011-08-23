@@ -1507,6 +1507,51 @@ static nsresult NSAPI nsHttpChannelInternal_SetChannelIsForDownload(nsIHttpChann
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
+static nsresult NSAPI nsHttpChannelInternal_GetLocalAddress(nsIHttpChannelInternal *iface, nsACString *aLocalAddress)
+{
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
+
+    FIXME("(%p)->(%p)\n", This, aLocalAddress);
+
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsHttpChannelInternal_GetLocalPort(nsIHttpChannelInternal *iface, PRInt32 *aLocalPort)
+{
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
+
+    FIXME("(%p)->(%p)\n", This, aLocalPort);
+
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsHttpChannelInternal_GetRemoteAddress(nsIHttpChannelInternal *iface, nsACString *aRemoteAddress)
+{
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
+
+    FIXME("(%p)->(%p)\n", This, aRemoteAddress);
+
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsHttpChannelInternal_GetRemotePort(nsIHttpChannelInternal *iface, PRInt32 *aRemotePort)
+{
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
+
+    FIXME("(%p)->(%p)\n", This, aRemotePort);
+
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsHttpChannelInternal_SetCacheKeysRedirectChain(nsIHttpChannelInternal *iface, void *cacheKeys)
+{
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
+
+    FIXME("(%p)->(%p)\n", This, cacheKeys);
+
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 static const nsIHttpChannelInternalVtbl nsHttpChannelInternalVtbl = {
     nsHttpChannelInternal_QueryInterface,
     nsHttpChannelInternal_AddRef,
@@ -1521,7 +1566,12 @@ static const nsIHttpChannelInternalVtbl nsHttpChannelInternalVtbl = {
     nsHttpChannelInternal_SetForceAllowThirdPartyCookie,
     nsHttpChannelInternal_GetCanceled,
     nsHttpChannelInternal_GetChannelIsForDownload,
-    nsHttpChannelInternal_SetChannelIsForDownload
+    nsHttpChannelInternal_SetChannelIsForDownload,
+    nsHttpChannelInternal_GetLocalAddress,
+    nsHttpChannelInternal_GetLocalPort,
+    nsHttpChannelInternal_GetRemoteAddress,
+    nsHttpChannelInternal_GetRemotePort,
+    nsHttpChannelInternal_SetCacheKeysRedirectChain
 };
 
 
@@ -2038,6 +2088,57 @@ static nsresult NSAPI nsURI_SetPath(nsIURL *iface, const nsACString *aPath)
     return NS_OK;
 }
 
+static nsresult NSAPI nsURL_GetRef(nsIURL *iface, nsACString *aRef)
+{
+    nsWineURI *This = impl_from_nsIURL(iface);
+    char *refa = NULL;
+    BSTR ref;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, aRef);
+
+    if(!ensure_uri(This))
+        return NS_ERROR_UNEXPECTED;
+
+    hres = IUri_GetFragment(This->uri, &ref);
+    if(FAILED(hres))
+        return NS_ERROR_UNEXPECTED;
+
+    refa = heap_strdupWtoA(ref);
+    SysFreeString(ref);
+    if(ref && !refa)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    nsACString_SetData(aRef, refa && *refa == '#' ? refa+1 : refa);
+    heap_free(refa);
+    return NS_OK;
+}
+
+static nsresult NSAPI nsURL_SetRef(nsIURL *iface, const nsACString *aRef)
+{
+    nsWineURI *This = impl_from_nsIURL(iface);
+    const char *refa;
+    WCHAR *ref;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aRef));
+
+    if(!ensure_uri_builder(This))
+        return NS_ERROR_UNEXPECTED;
+
+    nsACString_GetData(aRef, &refa);
+    ref = heap_strdupAtoW(refa);
+    if(!ref)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    hres = IUriBuilder_SetFragment(This->uri_builder, ref);
+    heap_free(ref);
+    if(FAILED(hres))
+        return NS_ERROR_UNEXPECTED;
+
+    return NS_OK;
+}
+
 static nsresult NSAPI nsURI_Equals(nsIURL *iface, nsIURI *other, PRBool *_retval)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
@@ -2063,6 +2164,13 @@ static nsresult NSAPI nsURI_Equals(nsIURL *iface, nsIURI *other, PRBool *_retval
 
     nsIURI_Release(&other_obj->nsIURL_iface);
     return nsres;
+}
+
+static nsresult NSAPI nsURI_EqualsExceptRef(nsIURL *iface, nsIURI *other, PRBool *_retval)
+{
+    nsWineURI *This = impl_from_nsIURL(iface);
+    FIXME("(%p)->(%p %p)\n", This, other, _retval);
+    return nsIURL_Equals(&This->nsIURL_iface, other, _retval);
 }
 
 static nsresult NSAPI nsURI_SchemeIs(nsIURL *iface, const char *scheme, PRBool *_retval)
@@ -2115,6 +2223,13 @@ static nsresult NSAPI nsURI_Clone(nsIURL *iface, nsIURI **_retval)
 
     *_retval = (nsIURI*)&wine_uri->nsIURL_iface;
     return NS_OK;
+}
+
+static nsresult NSAPI nsURI_CloneIgnoreRef(nsIURL *iface, nsIURI **_retval)
+{
+    nsWineURI *This = impl_from_nsIURL(iface);
+    FIXME("(%p)->(%p)\n", This, _retval);
+    return nsIURL_Clone(&This->nsIURL_iface, _retval);
 }
 
 static nsresult NSAPI nsURI_Resolve(nsIURL *iface, const nsACString *aRelativePath,
@@ -2265,57 +2380,6 @@ static nsresult NSAPI nsURL_SetQuery(nsIURL *iface, const nsACString *aQuery)
 
     hres = IUriBuilder_SetQuery(This->uri_builder, query);
     heap_free(query);
-    if(FAILED(hres))
-        return NS_ERROR_UNEXPECTED;
-
-    return NS_OK;
-}
-
-static nsresult NSAPI nsURL_GetRef(nsIURL *iface, nsACString *aRef)
-{
-    nsWineURI *This = impl_from_nsIURL(iface);
-    char *refa = NULL;
-    BSTR ref;
-    HRESULT hres;
-
-    TRACE("(%p)->(%p)\n", This, aRef);
-
-    if(!ensure_uri(This))
-        return NS_ERROR_UNEXPECTED;
-
-    hres = IUri_GetFragment(This->uri, &ref);
-    if(FAILED(hres))
-        return NS_ERROR_UNEXPECTED;
-
-    refa = heap_strdupWtoA(ref);
-    SysFreeString(ref);
-    if(ref && !refa)
-        return NS_ERROR_OUT_OF_MEMORY;
-
-    nsACString_SetData(aRef, refa && *refa == '#' ? refa+1 : refa);
-    heap_free(refa);
-    return NS_OK;
-}
-
-static nsresult NSAPI nsURL_SetRef(nsIURL *iface, const nsACString *aRef)
-{
-    nsWineURI *This = impl_from_nsIURL(iface);
-    const char *refa;
-    WCHAR *ref;
-    HRESULT hres;
-
-    TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aRef));
-
-    if(!ensure_uri_builder(This))
-        return NS_ERROR_UNEXPECTED;
-
-    nsACString_GetData(aRef, &refa);
-    ref = heap_strdupAtoW(refa);
-    if(!ref)
-        return NS_ERROR_OUT_OF_MEMORY;
-
-    hres = IUriBuilder_SetFragment(This->uri_builder, ref);
-    heap_free(ref);
     if(FAILED(hres))
         return NS_ERROR_UNEXPECTED;
 
@@ -2499,9 +2563,13 @@ static const nsIURLVtbl nsURLVtbl = {
     nsURI_SetPort,
     nsURI_GetPath,
     nsURI_SetPath,
+    nsURL_GetRef,
+    nsURL_SetRef,
     nsURI_Equals,
+    nsURI_EqualsExceptRef,
     nsURI_SchemeIs,
     nsURI_Clone,
+    nsURI_CloneIgnoreRef,
     nsURI_Resolve,
     nsURI_GetAsciiSpec,
     nsURI_GetAsciiHost,
@@ -2512,8 +2580,6 @@ static const nsIURLVtbl nsURLVtbl = {
     nsURL_SetParam,
     nsURL_GetQuery,
     nsURL_SetQuery,
-    nsURL_GetRef,
-    nsURL_SetRef,
     nsURL_GetDirectory,
     nsURL_SetDirectory,
     nsURL_GetFileName,
