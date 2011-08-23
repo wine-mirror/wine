@@ -901,14 +901,14 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
 
     if((err = snd_pcm_hw_params_any(This->pcm_handle, This->hw_params)) < 0){
         WARN("Unable to get hw_params: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
+        hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
 
     if((err = snd_pcm_hw_params_set_access(This->pcm_handle, This->hw_params,
                 SND_PCM_ACCESS_RW_INTERLEAVED)) < 0){
         WARN("Unable to set access: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
+        hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
 
@@ -922,7 +922,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
                 format)) < 0){
         WARN("Unable to set ALSA format to %u: %d (%s)\n", format, err,
                 snd_strerror(err));
-        hr = E_FAIL;
+        hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
         goto exit;
     }
 
@@ -933,7 +933,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
                 &rate, NULL)) < 0){
         WARN("Unable to set rate to %u: %d (%s)\n", rate, err,
                 snd_strerror(err));
-        hr = E_FAIL;
+        hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
         goto exit;
     }
 
@@ -941,7 +941,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
                 fmt->nChannels)) < 0){
         WARN("Unable to set channels to %u: %d (%s)\n", fmt->nChannels, err,
                 snd_strerror(err));
-        hr = E_FAIL;
+        hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
         goto exit;
     }
 
@@ -972,21 +972,21 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
 
     if((err = snd_pcm_hw_params(This->pcm_handle, This->hw_params)) < 0){
         WARN("Unable to set hw params: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
+        hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
 
     if((err = snd_pcm_hw_params_get_period_size(This->hw_params,
                     &This->alsa_period_frames, NULL)) < 0){
         WARN("Unable to get period size: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
+        hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
 
     if((err = snd_pcm_hw_params_get_buffer_size(This->hw_params,
                     &This->alsa_bufsize_frames)) < 0){
         WARN("Unable to get buffer size: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
+        hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
 
@@ -998,14 +998,14 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
 
     if((err = snd_pcm_sw_params_current(This->pcm_handle, sw_params)) < 0){
         WARN("Unable to get sw_params: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
+        hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
 
     if((err = snd_pcm_sw_params_set_start_threshold(This->pcm_handle,
                     sw_params, 1)) < 0){
         WARN("Unable set start threshold to 0: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
+        hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
 
@@ -1013,19 +1013,19 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
                     sw_params, This->alsa_bufsize_frames)) < 0){
         WARN("Unable set stop threshold to %lu: %d (%s)\n",
                 This->alsa_bufsize_frames, err, snd_strerror(err));
-        hr = E_FAIL;
+        hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
 
     if((err = snd_pcm_sw_params(This->pcm_handle, sw_params)) < 0){
-        WARN("Unable set sw params: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
+        WARN("Unable to set sw params: %d (%s)\n", err, snd_strerror(err));
+        hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
 
     if((err = snd_pcm_prepare(This->pcm_handle)) < 0){
         WARN("Unable to prepare device: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
+        hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
 
