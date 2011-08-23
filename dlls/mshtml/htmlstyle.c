@@ -3063,6 +3063,7 @@ static HRESULT HTMLStyle_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, 
 static const dispex_static_data_vtbl_t HTMLStyle_dispex_vtbl = {
     NULL,
     HTMLStyle_get_dispid,
+    NULL,
     NULL
 };
 

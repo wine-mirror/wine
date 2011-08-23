@@ -260,7 +260,8 @@ static HRESULT HTMLDOMChildrenCollection_invoke(DispatchEx *dispex, DISPID id, L
 static const dispex_static_data_vtbl_t HTMLDOMChildrenCollection_dispex_vtbl = {
     NULL,
     HTMLDOMChildrenCollection_get_dispid,
-    HTMLDOMChildrenCollection_invoke
+    HTMLDOMChildrenCollection_invoke,
+    NULL
 };
 
 static const tid_t HTMLDOMChildrenCollection_iface_tids[] = {

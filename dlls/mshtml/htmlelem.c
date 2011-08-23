@@ -1778,6 +1778,88 @@ static HRESULT HTMLElement_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
     return E_NOTIMPL;
 }
 
+static HRESULT HTMLElement_populate_props(DispatchEx *dispex)
+{
+    HTMLElement *This = impl_from_DispatchEx(dispex);
+    nsIDOMNamedNodeMap *attrs;
+    nsIDOMNode *node;
+    nsAString nsstr;
+    const PRUnichar *str;
+    BSTR name;
+    VARIANT value;
+    unsigned i;
+    PRUint32 len;
+    DISPID id;
+    nsresult nsres;
+    HRESULT hres;
+
+    if(!This->nselem)
+        return S_FALSE;
+
+    nsres = nsIDOMHTMLElement_GetAttributes(This->nselem, &attrs);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    nsres = nsIDOMNamedNodeMap_GetLength(attrs, &len);
+    if(NS_FAILED(nsres)) {
+        nsIDOMNamedNodeMap_Release(attrs);
+        return E_FAIL;
+    }
+
+    nsAString_Init(&nsstr, NULL);
+    for(i=0; i<len; i++) {
+        nsres = nsIDOMNamedNodeMap_Item(attrs, i, &node);
+        if(NS_FAILED(nsres))
+            continue;
+
+        nsres = nsIDOMNode_GetNodeName(node, &nsstr);
+        if(NS_FAILED(nsres)) {
+            nsIDOMNode_Release(node);
+            continue;
+        }
+
+        nsAString_GetData(&nsstr, &str);
+        name = SysAllocString(str);
+        if(!name) {
+            nsIDOMNode_Release(node);
+            continue;
+        }
+
+        hres = IDispatchEx_GetDispID(&dispex->IDispatchEx_iface, name, fdexNameCaseInsensitive, &id);
+        if(hres != DISP_E_UNKNOWNNAME) {
+            nsIDOMNode_Release(node);
+            SysFreeString(name);
+            continue;
+        }
+
+        nsres = nsIDOMNode_GetNodeValue(node, &nsstr);
+        nsIDOMNode_Release(node);
+        if(NS_FAILED(nsres)) {
+            SysFreeString(name);
+            continue;
+        }
+
+        nsAString_GetData(&nsstr, &str);
+        V_VT(&value) = VT_BSTR;
+        if(*str) {
+            V_BSTR(&value) = SysAllocString(str);
+            if(!V_BSTR(&value)) {
+                SysFreeString(name);
+                continue;
+            }
+        } else
+            V_BSTR(&value) = NULL;
+
+        IHTMLElement_setAttribute(&This->IHTMLElement_iface, name, value, 0);
+        SysFreeString(name);
+        VariantClear(&value);
+    }
+    nsAString_Finish(&nsstr);
+
+    nsIDOMNamedNodeMap_Release(attrs);
+    return S_OK;
+}
+
 static const tid_t HTMLElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     0
@@ -1786,7 +1868,8 @@ static const tid_t HTMLElement_iface_tids[] = {
 static dispex_static_data_vtbl_t HTMLElement_dispex_vtbl = {
     NULL,
     HTMLElement_get_dispid,
-    HTMLElement_invoke
+    HTMLElement_invoke,
+    HTMLElement_populate_props
 };
 
 static dispex_static_data_t HTMLElement_dispex = {
@@ -2017,7 +2100,8 @@ static HRESULT HTMLFiltersCollection_invoke(DispatchEx *dispex, DISPID id, LCID 
 static const dispex_static_data_vtbl_t HTMLFiltersCollection_dispex_vtbl = {
     NULL,
     HTMLFiltersCollection_get_dispid,
-    HTMLFiltersCollection_invoke
+    HTMLFiltersCollection_invoke,
+    NULL
 };
 
 static const tid_t HTMLFiltersCollection_iface_tids[] = {

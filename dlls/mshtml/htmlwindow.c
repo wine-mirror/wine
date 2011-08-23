@@ -2330,7 +2330,8 @@ static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
 static const dispex_static_data_vtbl_t HTMLWindow_dispex_vtbl = {
     NULL,
     NULL,
-    HTMLWindow_invoke
+    HTMLWindow_invoke,
+    NULL
 };
 
 static const tid_t HTMLWindow_iface_tids[] = {

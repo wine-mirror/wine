@@ -2119,7 +2119,8 @@ static HRESULT HTMLDocumentNode_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
 static const dispex_static_data_vtbl_t HTMLDocumentNode_dispex_vtbl = {
     NULL,
     NULL,
-    HTMLDocumentNode_invoke
+    HTMLDocumentNode_invoke,
+    NULL
 };
 
 static const NodeImplVtbl HTMLDocumentFragmentImplVtbl = {

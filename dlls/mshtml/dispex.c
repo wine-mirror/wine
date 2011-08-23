@@ -366,11 +366,19 @@ static HRESULT variant_copy(VARIANT *dest, VARIANT *src)
     return VariantCopy(dest, src);
 }
 
-static inline dispex_dynamic_data_t *get_dynamic_data(DispatchEx *This, BOOL alloc)
+static inline dispex_dynamic_data_t *get_dynamic_data(DispatchEx *This)
 {
-    return !alloc || This->dynamic_data
-        ? This->dynamic_data
-        : (This->dynamic_data = heap_alloc_zero(sizeof(dispex_dynamic_data_t)));
+    if(This->dynamic_data)
+        return This->dynamic_data;
+
+    This->dynamic_data = heap_alloc_zero(sizeof(dispex_dynamic_data_t));
+    if(!This->dynamic_data)
+        return NULL;
+
+    if(This->data->vtbl && This->data->vtbl->populate_props)
+        This->data->vtbl->populate_props(This);
+
+    return This->dynamic_data;
 }
 
 static HRESULT get_dynamic_prop(DispatchEx *This, const WCHAR *name, DWORD flags, dynamic_prop_t **ret)
@@ -379,14 +387,9 @@ static HRESULT get_dynamic_prop(DispatchEx *This, const WCHAR *name, DWORD flags
     dispex_dynamic_data_t *data;
     dynamic_prop_t *prop;
 
-    data = get_dynamic_data(This, alloc);
-    if(!data) {
-        if(alloc)
-            return E_OUTOFMEMORY;
-
-        TRACE("not found %s\n", debugstr_w(name));
-        return DISP_E_UNKNOWNNAME;
-    }
+    data = get_dynamic_data(This);
+    if(!data)
+        return E_OUTOFMEMORY;
 
     for(prop = data->props; prop < data->props+data->prop_cnt; prop++) {
         if(flags & fdexNameCaseInsensitive ? !strcmpiW(prop->name, name) : !strcmpW(prop->name, name)) {
@@ -570,6 +573,7 @@ static HRESULT function_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
 static const dispex_static_data_vtbl_t function_dispex_vtbl = {
     function_value,
     NULL,
+    NULL,
     NULL
 };
 
@@ -625,7 +629,7 @@ static HRESULT function_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
             return S_OK;
         }
 
-        dynamic_data = get_dynamic_data(This, TRUE);
+        dynamic_data = get_dynamic_data(This);
         if(!dynamic_data)
             return E_OUTOFMEMORY;
 

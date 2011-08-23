@@ -921,6 +921,7 @@ static const tid_t HTMLImageElementFactory_iface_tids[] = {
 static const dispex_static_data_vtbl_t HTMLImageElementFactory_dispex_vtbl = {
     HTMLImageElementFactory_value,
     NULL,
+    NULL,
     NULL
 };
 
