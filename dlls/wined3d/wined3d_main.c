@@ -86,6 +86,7 @@ struct wined3d_settings wined3d_settings =
     NULL,           /* No wine logo by default */
     FALSE,          /* Disable multisampling for now due to Nvidia driver bugs which happens for some users */
     FALSE,          /* No strict draw ordering. */
+    FALSE,          /* Try to render onscreen by default. */
 };
 
 /* Do not call while under the GL lock. */
@@ -339,6 +340,12 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
         {
             TRACE("Enforcing strict draw ordering.\n");
             wined3d_settings.strict_draw_ordering = TRUE;
+        }
+        if (!get_config_key(hkey, appkey, "AlwaysOffscreen", buffer, size)
+                && !strcmp(buffer,"enabled"))
+        {
+            TRACE("Always rendering backbuffers offscreen.\n");
+            wined3d_settings.always_offscreen = TRUE;
         }
     }
     if (wined3d_settings.vs_mode == VS_HW)

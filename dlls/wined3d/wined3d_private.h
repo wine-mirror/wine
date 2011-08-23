@@ -271,6 +271,7 @@ struct wined3d_settings
     char *logo;
     int allow_multisampling;
     BOOL strict_draw_ordering;
+    BOOL always_offscreen;
 };
 
 extern struct wined3d_settings wined3d_settings DECLSPEC_HIDDEN;

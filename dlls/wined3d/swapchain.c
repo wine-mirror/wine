@@ -824,7 +824,8 @@ void swapchain_update_render_to_fbo(struct wined3d_swapchain *swapchain)
             swapchain->presentParms.BackBufferHeight,
             client_rect.right, client_rect.bottom);
 
-    if (swapchain->presentParms.BackBufferWidth == client_rect.right
+    if (!wined3d_settings.always_offscreen
+            && swapchain->presentParms.BackBufferWidth == client_rect.right
             && swapchain->presentParms.BackBufferHeight == client_rect.bottom)
     {
         TRACE("Backbuffer dimensions match window dimensions, rendering onscreen.\n");
