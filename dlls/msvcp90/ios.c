@@ -923,6 +923,7 @@ basic_streambuf_char* __thiscall basic_streambuf_char_ctor_uninitialized(basic_s
 {
     TRACE("(%p %d)\n", this, uninitialized);
     this->vtable = &MSVCP_basic_streambuf_char_vtable;
+    mutex_ctor(&this->lock);
     return this;
 }
 
@@ -934,6 +935,7 @@ basic_streambuf_char* __thiscall basic_streambuf_char_ctor(basic_streambuf_char 
     TRACE("(%p)\n", this);
 
     this->vtable = &MSVCP_basic_streambuf_char_vtable;
+    mutex_ctor(&this->lock);
     this->loc = MSVCRT_operator_new(sizeof(locale));
     locale_ctor(this->loc);
     basic_streambuf_char__Init_empty(this);
@@ -948,6 +950,7 @@ void __thiscall basic_streambuf_char_dtor(basic_streambuf_char *this)
 {
     TRACE("(%p)\n", this);
 
+    mutex_dtor(&this->lock);
     locale_dtor(this->loc);
     MSVCRT_operator_delete(this->loc);
 }
@@ -1051,7 +1054,8 @@ void __thiscall basic_streambuf_char__Init_empty(basic_streambuf_char *this)
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Lock, 4)
 void __thiscall basic_streambuf_char__Lock(basic_streambuf_char *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    mutex_lock(&this->lock);
 }
 
 /* ?_Pnavail@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEHXZ */
@@ -1087,7 +1091,8 @@ streamsize __thiscall basic_streambuf_char__Sgetn_s(basic_streambuf_char *this, 
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Unlock, 4)
 void __thiscall basic_streambuf_char__Unlock(basic_streambuf_char *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    mutex_unlock(&this->lock);
 }
 
 /* ?_Xsgetn_s@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHPADIH@Z */
