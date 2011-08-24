@@ -250,8 +250,6 @@ locale__Locimp* __thiscall locale__Locimp_ctor_transparent(locale__Locimp *this,
 
 /* ??0_Locimp@locale@std@@AAE@ABV012@@Z */
 /* ??0_Locimp@locale@std@@AEAA@AEBV012@@Z */
-/* ?_Locimp_ctor@_Locimp@locale@std@@CAXPAV123@ABV123@@Z */
-/* ?_Locimp_ctor@_Locimp@locale@std@@CAXPEAV123@AEBV123@@Z */
 DEFINE_THISCALL_WRAPPER(locale__Locimp_copy_ctor, 8)
 locale__Locimp* __thiscall locale__Locimp_copy_ctor(locale__Locimp *this, const locale__Locimp *copy)
 {
@@ -259,12 +257,25 @@ locale__Locimp* __thiscall locale__Locimp_copy_ctor(locale__Locimp *this, const 
     return NULL;
 }
 
+/* ?_Locimp_ctor@_Locimp@locale@std@@CAXPAV123@ABV123@@Z */
+/* ?_Locimp_ctor@_Locimp@locale@std@@CAXPEAV123@AEBV123@@Z */
+locale__Locimp* __cdecl locale__Locimp__Locimp_ctor(locale__Locimp *this, const locale__Locimp *copy)
+{
+    FIXME("(%p %p) stub\n", this, copy);
+    return NULL;
+}
+
 /* ??1_Locimp@locale@std@@MAE@XZ */
 /* ??1_Locimp@locale@std@@MEAA@XZ */
-/* ?_Locimp_dtor@_Locimp@locale@std@@CAXPAV123@@Z */
-/* ?_Locimp_dtor@_Locimp@locale@std@@CAXPEAV123@@Z */
 DEFINE_THISCALL_WRAPPER(locale__Locimp_dtor, 4)
 void __thiscall locale__Locimp_dtor(locale__Locimp *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?_Locimp_dtor@_Locimp@locale@std@@CAXPAV123@@Z */
+/* ?_Locimp_dtor@_Locimp@locale@std@@CAXPEAV123@@Z */
+void __cdecl locale__Locimp__Locimp_dtor(locale__Locimp *this)
 {
     FIXME("(%p) stub\n", this);
 }

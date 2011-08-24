@@ -2577,10 +2577,10 @@
 @ stub ?_Isnan@?$_Ctraits@O@std@@SA_NO@Z
 @ cdecl -arch=win32 ?_Locimp_Addfac@_Locimp@locale@std@@CAXPAV123@PAVfacet@23@I@Z(ptr ptr long) locale__Locimp__Locimp_Addfac
 @ cdecl -arch=win64 ?_Locimp_Addfac@_Locimp@locale@std@@CAXPEAV123@PEAVfacet@23@_K@Z(ptr ptr long) locale__Locimp__Locimp_Addfac
-@ cdecl -arch=win32 ?_Locimp_ctor@_Locimp@locale@std@@CAXPAV123@ABV123@@Z(ptr ptr) locale__Locimp_copy_ctor
-@ cdecl -arch=win64 ?_Locimp_ctor@_Locimp@locale@std@@CAXPEAV123@AEBV123@@Z(ptr ptr) locale__Locimp_copy_ctor
-@ cdecl -arch=win32 ?_Locimp_dtor@_Locimp@locale@std@@CAXPAV123@@Z(ptr) locale__Locimp_dtor
-@ cdecl -arch=win64 ?_Locimp_dtor@_Locimp@locale@std@@CAXPEAV123@@Z(ptr) locale__Locimp_dtor
+@ cdecl -arch=win32 ?_Locimp_ctor@_Locimp@locale@std@@CAXPAV123@ABV123@@Z(ptr ptr) locale__Locimp__Locimp_ctor
+@ cdecl -arch=win64 ?_Locimp_ctor@_Locimp@locale@std@@CAXPEAV123@AEBV123@@Z(ptr ptr) locale__Locimp__Locimp_ctor
+@ cdecl -arch=win32 ?_Locimp_dtor@_Locimp@locale@std@@CAXPAV123@@Z(ptr) locale__Locimp__Locimp_dtor
+@ cdecl -arch=win64 ?_Locimp_dtor@_Locimp@locale@std@@CAXPEAV123@@Z(ptr) locale__Locimp__Locimp_dtor
 @ cdecl -arch=win32 ?_Locinfo_Addcats@_Locinfo@std@@SAAAV12@PAV12@HPBD@Z(ptr long str) _Locinfo__Locinfo_Addcats
 @ cdecl -arch=win64 ?_Locinfo_Addcats@_Locinfo@std@@SAAEAV12@PEAV12@HPEBD@Z(ptr long str) _Locinfo__Locinfo_Addcats
 @ cdecl -arch=win32 ?_Locinfo_ctor@_Locinfo@std@@SAXPAV12@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z(ptr ptr) _Locinfo__Locinfo_ctor_bstr
