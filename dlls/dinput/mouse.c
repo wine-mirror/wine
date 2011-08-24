@@ -808,57 +808,9 @@ static HRESULT WINAPI SysMouseWImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
                                                  LPCWSTR lpszUserName,
                                                  DWORD dwFlags)
 {
-    SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
-    DIDATAFORMAT data_format;
-    DIOBJECTDATAFORMAT *obj_df = NULL;
-    int i, action = 0, num_actions = 0;
-    unsigned int offset = 0;
+    FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
 
-    if (This->base.acquired) return DIERR_ACQUIRED;
-
-    /* count the actions */
-    for (i=0; i < lpdiaf->dwNumActions; i++)
-        if (IsEqualGUID(&This->base.guid, &lpdiaf->rgoAction[i].guidInstance))
-            num_actions++;
-
-    if (num_actions == 0) return DI_NOEFFECT;
-
-    data_format.dwSize = sizeof(data_format);
-    data_format.dwObjSize = sizeof(DIOBJECTDATAFORMAT);
-    data_format.dwFlags = DIDF_ABSAXIS;
-    data_format.dwDataSize = lpdiaf->dwDataSize;
-
-    This->base.num_actions = num_actions;
-
-    /* Constructing the dataformat and actionmap */
-    obj_df = HeapAlloc(GetProcessHeap(), 0, sizeof(DIOBJECTDATAFORMAT)*num_actions);
-    data_format.rgodf = (LPDIOBJECTDATAFORMAT)obj_df;
-    data_format.dwNumObjs = num_actions;
-
-    This->base.action_map = HeapAlloc(GetProcessHeap(), 0, sizeof(ActionMap)*num_actions);
-
-    for (i = 0; i < lpdiaf->dwNumActions; i++)
-    {
-
-        if (IsEqualGUID(&This->base.guid, &lpdiaf->rgoAction[i].guidInstance))
-        {
-            int instance = DIDFT_GETINSTANCE(lpdiaf->rgoAction[i].dwObjID);
-            memcpy(&obj_df[action], &c_dfDIMouse.rgodf[instance], c_dfDIMouse.dwObjSize);
-
-            This->base.action_map[action].uAppData = lpdiaf->rgoAction[i].uAppData;
-            This->base.action_map[action].offset = offset;
-            obj_df[action].dwOfs = offset;
-            offset += (obj_df[action].dwType & DIDFT_BUTTON) ? 1 : 4;
-
-            action++;
-        }
-    }
-
-    IDirectInputDevice8_SetDataFormat(iface, &data_format);
-
-    HeapFree(GetProcessHeap(), 0, obj_df);
-
-    return IDirectInputDevice8WImpl_SetActionMap(iface, lpdiaf, lpszUserName, dwFlags);
+    return _set_action_map(iface, lpdiaf, lpszUserName, dwFlags, &c_dfDIMouse2);
 }
 
 static HRESULT WINAPI SysMouseAImpl_SetActionMap(LPDIRECTINPUTDEVICE8A iface,

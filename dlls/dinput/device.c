@@ -640,6 +640,87 @@ HRESULT _build_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf,
     return  IDirectInputDevice8WImpl_BuildActionMap(iface, lpdiaf, lpszUserName, dwFlags);
 }
 
+HRESULT _set_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf, LPCWSTR lpszUserName, DWORD dwFlags, LPCDIDATAFORMAT df)
+{
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    DIDATAFORMAT data_format;
+    DIOBJECTDATAFORMAT *obj_df = NULL;
+    DIPROPDWORD dp;
+    DIPROPRANGE dpr;
+    int i, action = 0, num_actions = 0;
+    unsigned int offset = 0;
+
+    if (This->acquired) return DIERR_ACQUIRED;
+
+    data_format.dwSize = sizeof(data_format);
+    data_format.dwObjSize = sizeof(DIOBJECTDATAFORMAT);
+    data_format.dwFlags = DIDF_RELAXIS;
+    data_format.dwDataSize = lpdiaf->dwDataSize;
+
+    /* Count the actions */
+    for (i=0; i < lpdiaf->dwNumActions; i++)
+        if (IsEqualGUID(&This->guid, &lpdiaf->rgoAction[i].guidInstance))
+            num_actions++;
+
+    if (num_actions == 0) return DI_NOEFFECT;
+
+    This->num_actions = num_actions;
+
+    /* Construct the dataformat and actionmap */
+    obj_df = HeapAlloc(GetProcessHeap(), 0, sizeof(DIOBJECTDATAFORMAT)*num_actions);
+    data_format.rgodf = (LPDIOBJECTDATAFORMAT)obj_df;
+    data_format.dwNumObjs = num_actions;
+
+    This->action_map = HeapAlloc(GetProcessHeap(), 0, sizeof(ActionMap)*num_actions);
+
+    for (i = 0; i < lpdiaf->dwNumActions; i++)
+    {
+        if (IsEqualGUID(&This->guid, &lpdiaf->rgoAction[i].guidInstance))
+        {
+            DWORD inst = DIDFT_GETINSTANCE(lpdiaf->rgoAction[i].dwObjID);
+            DWORD type = DIDFT_GETTYPE(lpdiaf->rgoAction[i].dwObjID);
+            LPDIOBJECTDATAFORMAT obj;
+
+            if (type == DIDFT_PSHBUTTON) type = DIDFT_BUTTON;
+            if (type == DIDFT_RELAXIS) type = DIDFT_AXIS;
+
+            obj = dataformat_to_odf_by_type(df, inst, type);
+
+            memcpy(&obj_df[action], obj, df->dwObjSize);
+
+            This->action_map[action].uAppData = lpdiaf->rgoAction[i].uAppData;
+            This->action_map[action].offset = offset;
+            obj_df[action].dwOfs = offset;
+            offset += (type & DIDFT_BUTTON) ? 1 : 4;
+
+            action++;
+        }
+    }
+
+    IDirectInputDevice8_SetDataFormat(iface, &data_format);
+
+    HeapFree(GetProcessHeap(), 0, obj_df);
+
+    /* Set the device properties according to the action format */
+    dpr.diph.dwSize = sizeof(DIPROPRANGE);
+    dpr.lMin = lpdiaf->lAxisMin;
+    dpr.lMax = lpdiaf->lAxisMax;
+    dpr.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    dpr.diph.dwHow = DIPH_DEVICE;
+    IDirectInputDevice8_SetProperty(iface, DIPROP_RANGE, &dpr.diph);
+
+    if (lpdiaf->dwBufferSize > 0)
+    {
+        dp.diph.dwSize = sizeof(DIPROPDWORD);
+        dp.dwData = lpdiaf->dwBufferSize;
+        dp.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+        dp.diph.dwHow = DIPH_DEVICE;
+        IDirectInputDevice8_SetProperty(iface, DIPROP_BUFFERSIZE, &dp.diph);
+    }
+
+    return IDirectInputDevice8WImpl_SetActionMap(iface, lpdiaf, lpszUserName, dwFlags);
+}
+
 /******************************************************************************
  *	queue_event - add new event to the ring queue
  */
@@ -1483,30 +1564,11 @@ HRESULT WINAPI IDirectInputDevice8WImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W ifa
 }
 
 HRESULT WINAPI IDirectInputDevice8WImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
-						     LPDIACTIONFORMATW lpdiaf,
-						     LPCWSTR lpszUserName,
-						     DWORD dwFlags)
+                                                     LPDIACTIONFORMATW lpdiaf,
+                                                     LPCWSTR lpszUserName,
+                                                     DWORD dwFlags)
 {
-    DIPROPDWORD dp;
-    DIPROPRANGE dpr;
-
     FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
-
-    dpr.diph.dwSize = sizeof(DIPROPRANGE);
-    dpr.lMin = lpdiaf->lAxisMin;
-    dpr.lMax = lpdiaf->lAxisMax;
-    dpr.diph.dwHeaderSize = sizeof(DIPROPHEADER);
-    dpr.diph.dwHow = DIPH_DEVICE;
-    IDirectInputDevice8_SetProperty(iface, DIPROP_RANGE, &dpr.diph);
-
-    if (lpdiaf->dwBufferSize > 0)
-    {
-        dp.diph.dwSize = sizeof(DIPROPDWORD);
-        dp.dwData = lpdiaf->dwBufferSize;
-        dp.diph.dwHeaderSize = sizeof(DIPROPHEADER);
-        dp.diph.dwHow = DIPH_DEVICE;
-        IDirectInputDevice8_SetProperty(iface, DIPROP_BUFFERSIZE, &dp.diph);
-    }
 
     return DI_OK;
 }
