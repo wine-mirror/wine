@@ -974,6 +974,7 @@ end:
 
 static HRESULT open_file_type_icon(LPCWSTR szFileName, IStream **ppStream)
 {
+    static const WCHAR openW[] = {'o','p','e','n',0};
     WCHAR *extension;
     WCHAR *icon = NULL;
     WCHAR *comma;
@@ -999,7 +1000,7 @@ static HRESULT open_file_type_icon(LPCWSTR szFileName, IStream **ppStream)
     }
     else
     {
-        executable = assoc_query(ASSOCSTR_EXECUTABLE, extension, NULL);
+        executable = assoc_query(ASSOCSTR_EXECUTABLE, extension, openW);
         if (executable)
             hr = open_icon(executable, 0, FALSE, ppStream);
     }
@@ -2612,7 +2613,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             if (executableW)
                 openWithIconA = extract_icon(executableW, 0, NULL, FALSE);
 
-            friendlyAppNameW = assoc_query(ASSOCSTR_FRIENDLYAPPNAME, extensionW, NULL);
+            friendlyAppNameW = assoc_query(ASSOCSTR_FRIENDLYAPPNAME, extensionW, openW);
             if (friendlyAppNameW)
             {
                 friendlyAppNameA = wchars_to_utf8_chars(friendlyAppNameW);
