@@ -36,14 +36,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msidb);
 
-#define MSI_HASH_TABLE_SIZE 37
-
-typedef struct tagMSIHASHENTRY
+typedef struct tagMSIROWENTRY
 {
-    struct tagMSIHASHENTRY *next;
     UINT value;
-    UINT row;
-} MSIHASHENTRY;
+} MSIROWENTRY;
 
 /* below is the query interface to a table */
 
@@ -53,73 +49,84 @@ typedef struct tagMSIWHEREVIEW
     MSIDATABASE   *db;
     MSIVIEW       *table;
     UINT           row_count;
-    MSIHASHENTRY **reorder;
+    MSIROWENTRY  **reorder;
+    UINT           reorder_size; /* number of entries available in reorder */
     struct expr   *cond;
     UINT           rec_index;
 } MSIWHEREVIEW;
 
-static void free_hash_table(MSIHASHENTRY **table)
+#define INITIAL_REORDER_SIZE 16
+
+static UINT init_reorder(MSIWHEREVIEW *wv)
 {
-    MSIHASHENTRY *new, *old;
-    int i;
+    MSIROWENTRY **new = msi_alloc_zero(sizeof(MSIROWENTRY *) * INITIAL_REORDER_SIZE);
+    if (!new)
+        return ERROR_OUTOFMEMORY;
 
-    if (!table)
-        return;
+    if (wv->reorder)
+        msi_free(wv->reorder);
 
-    for (i = 0; i < MSI_HASH_TABLE_SIZE; i++)
-    {
-        new = table[i];
+    wv->reorder = new;
+    wv->reorder_size = INITIAL_REORDER_SIZE;
+    wv->row_count = 0;
 
-        while (new)
-        {
-            old = new;
-            new = old->next;
-            msi_free(old);
-        }
-
-        table[i] = NULL;
-    }
-
-    msi_free(table);
-}
-
-static UINT find_entry_in_hash(MSIHASHENTRY **table, UINT row, UINT *val)
-{
-    MSIHASHENTRY *entry;
-
-    if (!table)
-        return ERROR_SUCCESS;
-
-    if (!(entry = table[row % MSI_HASH_TABLE_SIZE]))
-    {
-        WARN("Row not found in hash table!\n");
-        return ERROR_FUNCTION_FAILED;
-    }
-
-    while (entry && entry->row != row)
-        entry = entry->next;
-
-    if (entry) *val = entry->value;
     return ERROR_SUCCESS;
 }
 
-static UINT add_entry_to_hash(MSIHASHENTRY **table, UINT row, UINT val)
+static void free_reorder(MSIWHEREVIEW *wv)
 {
-    MSIHASHENTRY *new = msi_alloc(sizeof(MSIHASHENTRY));
-    MSIHASHENTRY *prev;
+    UINT i;
+
+    if (!wv->reorder)
+        return;
+
+    for (i = 0; i < wv->row_count; i++)
+        msi_free(wv->reorder[i]);
+
+    msi_free( wv->reorder );
+    wv->reorder = NULL;
+    wv->reorder_size = 0;
+    wv->row_count = 0;
+}
+
+static inline UINT find_row(MSIWHEREVIEW *wv, UINT row, UINT *value)
+{
+    if (row >= wv->row_count)
+    {
+        *value = -2;
+        return ERROR_NO_MORE_ITEMS;
+    }
+
+    *value = wv->reorder[row]->value;
+
+    return ERROR_SUCCESS;
+}
+
+static UINT add_row(MSIWHEREVIEW *wv, UINT val)
+{
+    MSIROWENTRY *new;
+
+    if (wv->reorder_size <= wv->row_count)
+    {
+        MSIROWENTRY **new_reorder;
+        UINT newsize = wv->reorder_size * 2;
+
+        new_reorder = msi_realloc_zero(wv->reorder, sizeof(MSIROWENTRY *) * newsize);
+        if (!new_reorder)
+            return ERROR_OUTOFMEMORY;
+
+        wv->reorder = new_reorder;
+        wv->reorder_size = newsize;
+    }
+
+    new = msi_alloc(sizeof(MSIROWENTRY));
 
     if (!new)
         return ERROR_OUTOFMEMORY;
 
-    new->next = NULL;
+    wv->reorder[wv->row_count++] = new;
+
     new->value = val;
-    new->row = row;
-
-    prev = table[row % MSI_HASH_TABLE_SIZE];
-    if (prev)
-        new->next = prev;
-
-    table[row % MSI_HASH_TABLE_SIZE] = new;
 
     return ERROR_SUCCESS;
 }
@@ -134,10 +141,7 @@ static UINT WHERE_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT *
     if( !wv->table )
         return ERROR_FUNCTION_FAILED;
 
-    if( row > wv->row_count )
-        return ERROR_NO_MORE_ITEMS;
-
-    r = find_entry_in_hash(wv->reorder, row, &row);
+    r = find_row(wv, row, &row);
     if (r != ERROR_SUCCESS)
         return r;
 
@@ -154,10 +158,7 @@ static UINT WHERE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
     if( !wv->table )
         return ERROR_FUNCTION_FAILED;
 
-    if( row > wv->row_count )
-        return ERROR_NO_MORE_ITEMS;
-
-    r = find_entry_in_hash(wv->reorder, row, &row);
+    r = find_row(wv, row, &row);
     if (r != ERROR_SUCCESS)
         return r;
 
@@ -174,10 +175,7 @@ static UINT WHERE_get_row( struct tagMSIVIEW *view, UINT row, MSIRECORD **rec )
     if (!wv->table)
         return ERROR_FUNCTION_FAILED;
 
-    if (row > wv->row_count)
-        return ERROR_NO_MORE_ITEMS;
-
-    r = find_entry_in_hash(wv->reorder, row, &row);
+    r = find_row(wv, row, &row);
     if (r != ERROR_SUCCESS)
         return r;
 
@@ -194,10 +192,7 @@ static UINT WHERE_set_row( struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UI
     if( !wv->table )
          return ERROR_FUNCTION_FAILED;
 
-    if( row > wv->row_count )
-        return ERROR_NO_MORE_ITEMS;
-
-    r = find_entry_in_hash(wv->reorder, row, &row);
+    r = find_row(wv, row, &row);
     if (r != ERROR_SUCCESS)
         return r;
 
@@ -214,10 +209,7 @@ static UINT WHERE_delete_row(struct tagMSIVIEW *view, UINT row)
     if ( !wv->table )
         return ERROR_FUNCTION_FAILED;
 
-    if ( row > wv->row_count )
-        return ERROR_NO_MORE_ITEMS;
-
-    r = find_entry_in_hash( wv->reorder, row, &row );
+    r = find_row( wv, row, &row );
     if ( r != ERROR_SUCCESS )
         return r;
 
@@ -396,12 +388,9 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
     if( r != ERROR_SUCCESS )
         return r;
 
-    free_hash_table(wv->reorder);
-    wv->reorder = msi_alloc_zero(MSI_HASH_TABLE_SIZE * sizeof(MSIHASHENTRY *));
-    if( !wv->reorder )
-        return ERROR_OUTOFMEMORY;
-
-    wv->row_count = 0;
+    r = init_reorder(wv);
+    if( r != ERROR_SUCCESS )
+        return r;
 
 if (0) /* disable optimization, there's no guarantee that strings are in the string table */
 {
@@ -439,7 +428,7 @@ if (0) /* disable optimization, there's no guarantee that strings are in the str
             {
                 r = table->ops->find_matching_rows(table, col, value, &row, &handle);
                 if (r == ERROR_SUCCESS)
-                    add_entry_to_hash(wv->reorder, wv->row_count++, row);
+                    add_row(wv, row);
             } while (r == ERROR_SUCCESS);
 
             if (r == ERROR_NO_MORE_ITEMS)
@@ -459,7 +448,7 @@ if (0) /* disable optimization, there's no guarantee that strings are in the str
         if( r != ERROR_SUCCESS )
             return r;
         if( val )
-            add_entry_to_hash( wv->reorder, wv->row_count++, i );
+            add_row( wv, i );
     }
 
     return ERROR_SUCCESS;
@@ -517,7 +506,7 @@ static UINT WHERE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
 
     TRACE("%p %d %p\n", wv, eModifyMode, rec);
 
-    find_entry_in_hash(wv->reorder, row - 1, &row);
+    find_row(wv, row - 1, &row);
     row++;
 
     return wv->table->ops->modify( wv->table, eModifyMode, rec, row );
@@ -533,9 +522,7 @@ static UINT WHERE_delete( struct tagMSIVIEW *view )
         wv->table->ops->delete( wv->table );
     wv->table = 0;
 
-    free_hash_table(wv->reorder);
-    wv->reorder = NULL;
-    wv->row_count = 0;
+    free_reorder(wv);
 
     msiobj_release( &wv->db->hdr );
     msi_free( wv );
@@ -558,10 +545,7 @@ static UINT WHERE_find_matching_rows( struct tagMSIVIEW *view, UINT col,
     if (r != ERROR_SUCCESS)
         return r;
 
-    if( *row > wv->row_count )
-        return ERROR_NO_MORE_ITEMS;
-
-    return find_entry_in_hash(wv->reorder, *row, row);
+    return find_row(wv, *row, row);
 }
 
 static UINT WHERE_sort(struct tagMSIVIEW *view, column_info *columns)
