@@ -126,6 +126,10 @@ typedef struct {
     locale *loc;
 } basic_streambuf_char;
 
+void __thiscall basic_streambuf_char__Init_empty(basic_streambuf_char*);
+void __thiscall basic_streambuf_char_setp(basic_streambuf_char*, char*, char*);
+void __thiscall basic_streambuf_char_setg(basic_streambuf_char*, char*, char*, char*);
+
 typedef struct {
     ios_base child;
     basic_streambuf_char *strbuf;
@@ -917,8 +921,9 @@ char __thiscall basic_ios_char_widen(basic_ios_char *this, char ch)
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_ctor_uninitialized, 8)
 basic_streambuf_char* __thiscall basic_streambuf_char_ctor_uninitialized(basic_streambuf_char *this, int uninitialized)
 {
-    FIXME("(%p %d) stub\n", this, uninitialized);
-    return NULL;
+    TRACE("(%p %d)\n", this, uninitialized);
+    this->vtable = &MSVCP_basic_streambuf_char_vtable;
+    return this;
 }
 
 /* ??0?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAE@XZ */
@@ -926,8 +931,14 @@ basic_streambuf_char* __thiscall basic_streambuf_char_ctor_uninitialized(basic_s
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_ctor, 4)
 basic_streambuf_char* __thiscall basic_streambuf_char_ctor(basic_streambuf_char *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+
+    this->vtable = &MSVCP_basic_streambuf_char_vtable;
+    this->loc = MSVCRT_operator_new(sizeof(locale));
+    locale_ctor(this->loc);
+    basic_streambuf_char__Init_empty(this);
+
+    return this;
 }
 
 /* ??1?$basic_streambuf@DU?$char_traits@D@std@@@std@@UAE@XZ */
@@ -935,13 +946,16 @@ basic_streambuf_char* __thiscall basic_streambuf_char_ctor(basic_streambuf_char 
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_dtor, 4)
 void __thiscall basic_streambuf_char_dtor(basic_streambuf_char *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+
+    locale_dtor(this->loc);
+    MSVCRT_operator_delete(this->loc);
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_streambuf_char_vector_dtor, 8)
 basic_streambuf_char* __thiscall MSVCP_basic_streambuf_char_vector_dtor(basic_streambuf_char *this, unsigned int flags)
 {
-    TRACE("(%p %x) stub\n", this, flags);
+    TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
         int i, *ptr = (int *)this-1;
@@ -999,7 +1013,14 @@ char* __thiscall basic_streambuf_char__Gnpreinc(basic_streambuf_char *this)
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Init, 28)
 void __thiscall basic_streambuf_char__Init(basic_streambuf_char *this, char **gf, char **gn, int *gc, char **pf, char **pn, int *pc)
 {
-    FIXME("(%p %p %p %p %p %p %p) stub\n", this, gf, gn, gc, pf, pn, pc);
+    TRACE("(%p %p %p %p %p %p %p)\n", this, gf, gn, gc, pf, pn, pc);
+
+    this->prbuf = gf;
+    this->pwbuf = pf;
+    this->prpos = gn;
+    this->pwpos = pn;
+    this->prsize = gc;
+    this->pwsize = pc;
 }
 
 /* ?_Init@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXXZ */
@@ -1007,7 +1028,17 @@ void __thiscall basic_streambuf_char__Init(basic_streambuf_char *this, char **gf
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Init_empty, 4)
 void __thiscall basic_streambuf_char__Init_empty(basic_streambuf_char *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+
+    this->prbuf = &this->rbuf;
+    this->pwbuf = &this->wbuf;
+    this->prpos = &this->rpos;
+    this->pwpos = &this->wpos;
+    this->prsize = &this->rsize;
+    this->pwsize = &this->wsize;
+
+    basic_streambuf_char_setp(this, NULL, NULL);
+    basic_streambuf_char_setg(this, NULL, NULL, NULL);
 }
 
 /* ?_Lock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEXXZ */
@@ -1288,7 +1319,11 @@ basic_streambuf_char* __thiscall basic_streambuf_char_setbuf(basic_streambuf_cha
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_setg, 16)
 void __thiscall basic_streambuf_char_setg(basic_streambuf_char *this, char *first, char *next, char *last)
 {
-    FIXME("(%p %p %p %p) stub\n", this, first, next, last);
+    TRACE("(%p %p %p %p)\n", this, first, next, last);
+
+    this->rbuf = first;
+    this->rpos = next;
+    this->rsize = last-next;
 }
 
 /* ?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAD00@Z */
@@ -1296,7 +1331,11 @@ void __thiscall basic_streambuf_char_setg(basic_streambuf_char *this, char *firs
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_setp_next, 16)
 void __thiscall basic_streambuf_char_setp_next(basic_streambuf_char *this, char *first, char *next, char *last)
 {
-    FIXME("(%p %p %p %p) stub\n", this, first, next, last);
+    TRACE("(%p %p %p %p)\n", this, first, next, last);
+
+    this->wbuf = first;
+    this->wpos = next;
+    this->wsize = last-next;
 }
 
 /* ?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAD0@Z */
@@ -1304,7 +1343,7 @@ void __thiscall basic_streambuf_char_setp_next(basic_streambuf_char *this, char 
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_setp, 12)
 void __thiscall basic_streambuf_char_setp(basic_streambuf_char *this, char *first, char *last)
 {
-    FIXME("(%p %p %p) stub\n", this, first, last);
+    basic_streambuf_char_setp_next(this, first, first, last);
 }
 
 /* ?sgetc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHXZ */

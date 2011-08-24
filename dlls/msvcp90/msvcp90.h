@@ -195,6 +195,9 @@ typedef struct
     struct locale__Locimp *ptr;
 } locale;
 
+locale* __thiscall locale_ctor(locale*);
+void __thiscall locale_dtor(locale*);
+
 /* class _Lockit */
 typedef struct {
     int locktype;
