@@ -40,26 +40,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 /* ItemMoniker data structure */
 typedef struct ItemMonikerImpl{
-
-    const IMonikerVtbl*  lpvtbl1;  /* VTable relative to the IMoniker interface.*/
-
-    /* The ROT (RunningObjectTable implementation) uses the IROTData interface to test whether
-     * two monikers are equal. That's whay IROTData interface is implemented by monikers.
-     */
-    const IROTDataVtbl*  lpvtbl2;  /* VTable relative to the IROTData interface.*/
-
-    LONG ref; /* reference counter for this object */
-
+    IMoniker IMoniker_iface;  /* VTable relative to the IMoniker interface.*/
+    IROTData IROTData_iface;  /* VTable relative to the IROTData interface.*/
+    LONG ref;
     LPOLESTR itemName; /* item name identified by this ItemMoniker */
-
     LPOLESTR itemDelimiter; /* Delimiter string */
-
     IUnknown *pMarshal; /* custom marshaler */
 } ItemMonikerImpl;
 
-static inline IMoniker *impl_from_IROTData( IROTData *iface )
+static inline ItemMonikerImpl *impl_from_IMoniker(IMoniker *iface)
 {
-    return (IMoniker *)((char*)iface - FIELD_OFFSET(ItemMonikerImpl, lpvtbl2));
+    return CONTAINING_RECORD(iface, ItemMonikerImpl, IMoniker_iface);
+}
+
+static inline ItemMonikerImpl *impl_from_IROTData(IROTData *iface)
+{
+    return CONTAINING_RECORD(iface, ItemMonikerImpl, IROTData_iface);
 }
 
 static HRESULT ItemMonikerImpl_Destroy(ItemMonikerImpl* iface);
@@ -69,7 +65,7 @@ static HRESULT ItemMonikerImpl_Destroy(ItemMonikerImpl* iface);
  *******************************************************************************/
 static HRESULT WINAPI ItemMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
 {
-    ItemMonikerImpl *This = (ItemMonikerImpl *)iface;
+    ItemMonikerImpl *This = impl_from_IMoniker(iface);
 
   TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppvObject);
 
@@ -89,7 +85,7 @@ static HRESULT WINAPI ItemMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid
       *ppvObject = iface;
 
     else if (IsEqualIID(&IID_IROTData, riid))
-        *ppvObject = &This->lpvtbl2;
+        *ppvObject = &This->IROTData_iface;
     else if (IsEqualIID(&IID_IMarshal, riid))
     {
         HRESULT hr = S_OK;
@@ -115,7 +111,7 @@ static HRESULT WINAPI ItemMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid
  ******************************************************************************/
 static ULONG WINAPI ItemMonikerImpl_AddRef(IMoniker* iface)
 {
-    ItemMonikerImpl *This = (ItemMonikerImpl *)iface;
+    ItemMonikerImpl *This = impl_from_IMoniker(iface);
 
     TRACE("(%p)\n",This);
 
@@ -127,7 +123,7 @@ static ULONG WINAPI ItemMonikerImpl_AddRef(IMoniker* iface)
  ******************************************************************************/
 static ULONG WINAPI ItemMonikerImpl_Release(IMoniker* iface)
 {
-    ItemMonikerImpl *This = (ItemMonikerImpl *)iface;
+    ItemMonikerImpl *This = impl_from_IMoniker(iface);
     ULONG ref;
 
     TRACE("(%p)\n",This);
@@ -174,8 +170,7 @@ static HRESULT WINAPI ItemMonikerImpl_IsDirty(IMoniker* iface)
  ******************************************************************************/
 static HRESULT WINAPI ItemMonikerImpl_Load(IMoniker* iface,IStream* pStm)
 {
-
-    ItemMonikerImpl *This = (ItemMonikerImpl *)iface;
+    ItemMonikerImpl *This = impl_from_IMoniker(iface);
     HRESULT res;
     DWORD delimiterLength,nameLength,lenW;
     CHAR *itemNameA,*itemDelimiterA;
@@ -241,11 +236,9 @@ static HRESULT WINAPI ItemMonikerImpl_Load(IMoniker* iface,IStream* pStm)
 /******************************************************************************
  *        ItemMoniker_Save
  ******************************************************************************/
-static HRESULT WINAPI ItemMonikerImpl_Save(IMoniker* iface,
-                                           IStream* pStm,/* pointer to the stream where the object is to be saved */
-                                           BOOL fClearDirty)/* Specifies whether to clear the dirty flag */
+static HRESULT WINAPI ItemMonikerImpl_Save(IMoniker* iface, IStream* pStm, BOOL fClearDirty)
 {
-    ItemMonikerImpl *This = (ItemMonikerImpl *)iface;
+    ItemMonikerImpl *This = impl_from_IMoniker(iface);
     HRESULT res;
     CHAR *itemNameA,*itemDelimiterA;
 
@@ -277,10 +270,9 @@ static HRESULT WINAPI ItemMonikerImpl_Save(IMoniker* iface,
 /******************************************************************************
  *        ItemMoniker_GetSizeMax
  ******************************************************************************/
-static HRESULT WINAPI ItemMonikerImpl_GetSizeMax(IMoniker* iface,
-                                                 ULARGE_INTEGER* pcbSize)/* Pointer to size of stream needed to save object */
+static HRESULT WINAPI ItemMonikerImpl_GetSizeMax(IMoniker* iface, ULARGE_INTEGER* pcbSize)
 {
-    ItemMonikerImpl *This = (ItemMonikerImpl *)iface;
+    ItemMonikerImpl *This = impl_from_IMoniker(iface);
     DWORD delimiterLength=lstrlenW(This->itemDelimiter)+1;
     DWORD nameLength=lstrlenW(This->itemName)+1;
 
@@ -310,8 +302,7 @@ static HRESULT WINAPI ItemMonikerImpl_BindToObject(IMoniker* iface,
                                                    REFIID riid,
                                                    VOID** ppvResult)
 {
-    ItemMonikerImpl *This = (ItemMonikerImpl *)iface;
-
+    ItemMonikerImpl *This = impl_from_IMoniker(iface);
     HRESULT   res;
     IID    refid=IID_IOleItemContainer;
     IOleItemContainer *poic=0;
@@ -347,8 +338,7 @@ static HRESULT WINAPI ItemMonikerImpl_BindToStorage(IMoniker* iface,
                                                     REFIID riid,
                                                     VOID** ppvResult)
 {
-    ItemMonikerImpl *This = (ItemMonikerImpl *)iface;
-
+    ItemMonikerImpl *This = impl_from_IMoniker(iface);
     HRESULT   res;
     IOleItemContainer *poic=0;
 
@@ -519,7 +509,7 @@ static HRESULT WINAPI ItemMonikerImpl_IsEqual(IMoniker* iface,IMoniker* pmkOther
  ******************************************************************************/
 static HRESULT WINAPI ItemMonikerImpl_Hash(IMoniker* iface,DWORD* pdwHash)
 {
-    ItemMonikerImpl *This = (ItemMonikerImpl *)iface;
+    ItemMonikerImpl *This = impl_from_IMoniker(iface);
     DWORD h = 0;
     int  i,len;
     int  off = 0;
@@ -547,10 +537,10 @@ static HRESULT WINAPI ItemMonikerImpl_IsRunning(IMoniker* iface,
                                                 IMoniker* pmkToLeft,
                                                 IMoniker* pmkNewlyRunning)
 {
+    ItemMonikerImpl *This = impl_from_IMoniker(iface);
     IRunningObjectTable* rot;
     HRESULT res;
     IOleItemContainer *poic=0;
-    ItemMonikerImpl *This = (ItemMonikerImpl *)iface;
 
     TRACE("(%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,pmkNewlyRunning);
 
@@ -695,7 +685,7 @@ static HRESULT WINAPI ItemMonikerImpl_GetDisplayName(IMoniker* iface,
                                                      IMoniker* pmkToLeft,
                                                      LPOLESTR *ppszDisplayName)
 {
-    ItemMonikerImpl *This = (ItemMonikerImpl *)iface;
+    ItemMonikerImpl *This = impl_from_IMoniker(iface);
 
     TRACE("(%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,ppszDisplayName);
 
@@ -729,11 +719,11 @@ static HRESULT WINAPI ItemMonikerImpl_ParseDisplayName(IMoniker* iface,
                                                        ULONG* pchEaten,
                                                        IMoniker** ppmkOut)
 {
+    ItemMonikerImpl *This = impl_from_IMoniker(iface);
     IOleItemContainer* poic=0;
     IParseDisplayName* ppdn=0;
     LPOLESTR displayName;
     HRESULT res;
-    ItemMonikerImpl *This = (ItemMonikerImpl *)iface;
 
     TRACE("%s\n", debugstr_w(pszDisplayName));
 
@@ -781,14 +771,15 @@ static HRESULT WINAPI ItemMonikerImpl_IsSystemMoniker(IMoniker* iface,DWORD* pwd
 /*******************************************************************************
  *        ItemMonikerIROTData_QueryInterface
  *******************************************************************************/
-static HRESULT WINAPI ItemMonikerROTDataImpl_QueryInterface(IROTData *iface,REFIID riid,VOID** ppvObject)
+static HRESULT WINAPI ItemMonikerROTDataImpl_QueryInterface(IROTData *iface,REFIID riid,
+                                                            void **ppvObject)
 {
 
-    IMoniker *This = impl_from_IROTData(iface);
+    ItemMonikerImpl *This = impl_from_IROTData(iface);
 
     TRACE("(%p,%p,%p)\n",iface,riid,ppvObject);
 
-    return ItemMonikerImpl_QueryInterface(This, riid, ppvObject);
+    return ItemMonikerImpl_QueryInterface(&This->IMoniker_iface, riid, ppvObject);
 }
 
 /***********************************************************************
@@ -796,11 +787,11 @@ static HRESULT WINAPI ItemMonikerROTDataImpl_QueryInterface(IROTData *iface,REFI
  */
 static ULONG   WINAPI ItemMonikerROTDataImpl_AddRef(IROTData *iface)
 {
-    IMoniker *This = impl_from_IROTData(iface);
+    ItemMonikerImpl *This = impl_from_IROTData(iface);
 
     TRACE("(%p)\n",iface);
 
-    return ItemMonikerImpl_AddRef(This);
+    return ItemMonikerImpl_AddRef(&This->IMoniker_iface);
 }
 
 /***********************************************************************
@@ -808,11 +799,11 @@ static ULONG   WINAPI ItemMonikerROTDataImpl_AddRef(IROTData *iface)
  */
 static ULONG   WINAPI ItemMonikerROTDataImpl_Release(IROTData* iface)
 {
-    IMoniker *This = impl_from_IROTData(iface);
+    ItemMonikerImpl *This = impl_from_IROTData(iface);
 
     TRACE("(%p)\n",iface);
 
-    return ItemMonikerImpl_Release(This);
+    return ItemMonikerImpl_Release(&This->IMoniker_iface);
 }
 
 /******************************************************************************
@@ -823,9 +814,8 @@ static HRESULT WINAPI ItemMonikerROTDataImpl_GetComparisonData(IROTData* iface,
                                                                ULONG cbMax,
                                                                ULONG* pcbData)
 {
-    IMoniker *This = impl_from_IROTData(iface);
-    ItemMonikerImpl *This1 = (ItemMonikerImpl *)This;
-    int len = (strlenW(This1->itemName)+1);
+    ItemMonikerImpl *This = impl_from_IROTData(iface);
+    int len = (strlenW(This->itemName)+1);
     int i;
     LPWSTR pszItemName;
     LPWSTR pszItemDelimiter;
@@ -840,11 +830,11 @@ static HRESULT WINAPI ItemMonikerROTDataImpl_GetComparisonData(IROTData* iface,
     memcpy(pbData, &CLSID_ItemMoniker, sizeof(CLSID));
     /* write delimiter */
     pszItemDelimiter = (LPWSTR)(pbData+sizeof(CLSID));
-    *pszItemDelimiter = *This1->itemDelimiter;
+    *pszItemDelimiter = *This->itemDelimiter;
     /* write name */
     pszItemName = pszItemDelimiter + 1;
     for (i = 0; i < len; i++)
-        pszItemName[i] = toupperW(This1->itemName[i]);
+        pszItemName[i] = toupperW(This->itemName[i]);
 
     return S_OK;
 }
@@ -902,8 +892,8 @@ static HRESULT ItemMonikerImpl_Construct(ItemMonikerImpl* This, LPCOLESTR lpszDe
     TRACE("(%p,%s,%s)\n",This,debugstr_w(lpszDelim),debugstr_w(lpszItem));
 
     /* Initialize the virtual function table. */
-    This->lpvtbl1      = &VT_ItemMonikerImpl;
-    This->lpvtbl2      = &VT_ROTDataImpl;
+    This->IMoniker_iface.lpVtbl = &VT_ItemMonikerImpl;
+    This->IROTData_iface.lpVtbl = &VT_ROTDataImpl;
     This->ref          = 0;
     This->pMarshal     = NULL;
 
@@ -945,7 +935,7 @@ static HRESULT ItemMonikerImpl_Destroy(ItemMonikerImpl* This)
 /******************************************************************************
  *        CreateItemMoniker	[OLE32.@]
  ******************************************************************************/
-HRESULT WINAPI CreateItemMoniker(LPCOLESTR lpszDelim,LPCOLESTR  lpszItem, LPMONIKER * ppmk)
+HRESULT WINAPI CreateItemMoniker(LPCOLESTR lpszDelim, LPCOLESTR  lpszItem, IMoniker **ppmk)
 {
     ItemMonikerImpl* newItemMoniker;
     HRESULT        hr;
@@ -965,7 +955,8 @@ HRESULT WINAPI CreateItemMoniker(LPCOLESTR lpszDelim,LPCOLESTR  lpszItem, LPMONI
     return hr;
     }
 
-    return ItemMonikerImpl_QueryInterface((IMoniker*)newItemMoniker,&IID_IMoniker,(void**)ppmk);
+    return ItemMonikerImpl_QueryInterface(&newItemMoniker->IMoniker_iface,&IID_IMoniker,
+                                          (void**)ppmk);
 }
 
 static HRESULT WINAPI ItemMonikerCF_QueryInterface(LPCLASSFACTORY iface,
@@ -1012,7 +1003,7 @@ static HRESULT WINAPI ItemMonikerCF_CreateInstance(LPCLASSFACTORY iface,
     hr = ItemMonikerImpl_Construct(newItemMoniker, wszEmpty, wszEmpty);
 
     if (SUCCEEDED(hr))
-	hr = ItemMonikerImpl_QueryInterface((IMoniker*)newItemMoniker, riid, ppv);
+        hr = ItemMonikerImpl_QueryInterface(&newItemMoniker->IMoniker_iface, riid, ppv);
     if (FAILED(hr))
         HeapFree(GetProcessHeap(),0,newItemMoniker);
 
