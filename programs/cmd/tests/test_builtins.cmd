@@ -52,6 +52,20 @@ echo @tab@word
 echo  @tab@word
 echo@tab@@tab@word
 
+echo ------------ Testing rem --------------
+rem Hello
+rem  Hello
+rem   Hello || foo
+rem echo lol
+rem echo foo & echo bar
+@echo on
+rem Hello
+rem  Hello
+rem   Hello || foo
+rem echo lol
+rem echo foo & echo bar
+@echo off
+
 echo ------------ Testing redirection operators --------------
 mkdir foobar & cd foobar
 echo ...stdout redirection

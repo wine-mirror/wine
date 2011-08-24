@@ -95,6 +95,17 @@ word
 @tab@word
 @space@@tab@word
 @tab@word
+------------ Testing rem --------------
+
+@pwd@>rem Hello@space@
+
+@pwd@>rem  Hello@space@
+
+@pwd@>rem   Hello || foo@space@
+
+@pwd@>rem echo lol@space@
+
+@pwd@>rem echo foo & echo bar@space@
 ------------ Testing redirection operators --------------
 ...stdout redirection
 foo
