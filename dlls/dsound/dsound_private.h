@@ -159,9 +159,7 @@ HRESULT DirectSoundDevice_VerifyCertification(DirectSoundDevice * device,
  */
 struct IDirectSoundBufferImpl
 {
-    /* FIXME: document */
-    /* IUnknown fields */
-    const IDirectSoundBuffer8Vtbl *lpVtbl;
+    IDirectSoundBuffer8         IDirectSoundBuffer8_iface;
     LONG                        ref;
     /* IDirectSoundBufferImpl fields */
     SecondaryBufferImpl*        secondary;
