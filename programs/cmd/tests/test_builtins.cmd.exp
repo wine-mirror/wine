@@ -106,6 +106,12 @@ word
 @pwd@>rem echo lol@space@
 
 @pwd@>rem echo foo & echo bar@space@
+
+@pwd@>rem @tab@  Hello@space@
+
+@pwd@>rem@tab@  Hello@space@
+
+@pwd@>rem@tab@echo foo & echo bar@space@
 ------------ Testing redirection operators --------------
 ...stdout redirection
 foo

@@ -1753,7 +1753,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     CMD_LIST *lastEntry = NULL;
     CMD_DELIMITERS prevDelim = CMD_NONE;
     static WCHAR    *extraSpace = NULL;  /* Deliberately never freed */
-    const WCHAR remCmd[] = {'r','e','m',' ','\0'};
+    const WCHAR remCmd[] = {'r','e','m'};
     const WCHAR forCmd[] = {'f','o','r'};
     const WCHAR ifCmd[]  = {'i','f',' ','\0'};
     const WCHAR ifElse[] = {'e','l','s','e',' ','\0'};
@@ -1840,9 +1840,8 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
       if (curStringLen == 0 && curCopyTo == curString) {
         const WCHAR forDO[] = {'d','o'};
 
-        /* If command starts with 'rem', ignore any &&, ( etc */
-        if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-          curPos, 4, remCmd, -1) == CSTR_EQUAL) {
+        /* If command starts with 'rem ', ignore any &&, ( etc. */
+        if (WCMD_keyword_ws_found(remCmd, sizeof(remCmd)/sizeof(remCmd[0]), curPos)) {
           inRem = TRUE;
 
         } else if (WCMD_keyword_ws_found(forCmd, sizeof(forCmd)/sizeof(forCmd[0]), curPos)) {

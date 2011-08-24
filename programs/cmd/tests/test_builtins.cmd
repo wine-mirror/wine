@@ -58,12 +58,18 @@ rem  Hello
 rem   Hello || foo
 rem echo lol
 rem echo foo & echo bar
+rem @tab@  Hello
+rem@tab@  Hello
+rem@tab@echo foo & echo bar
 @echo on
 rem Hello
 rem  Hello
 rem   Hello || foo
 rem echo lol
 rem echo foo & echo bar
+rem @tab@  Hello
+rem@tab@  Hello
+rem@tab@echo foo & echo bar
 @echo off
 
 echo ------------ Testing redirection operators --------------
