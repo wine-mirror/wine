@@ -8715,7 +8715,6 @@ msgstr ""
 " 다른 편집기를 사용하십시오."
 
 #: notepad.rc:81
-#, fuzzy
 msgid ""
 "You did not enter any text.\n"
 "Please type something and try again."
@@ -8810,21 +8809,19 @@ msgstr "&CoCreateInstance 플래그"
 
 #: oleview.rc:41
 msgid "&In-process server"
-msgstr ""
+msgstr "인-프로세스 서버(&I)"
 
 #: oleview.rc:42
 msgid "In-process &handler"
-msgstr ""
+msgstr "인-프로세스 핸들러(&H)"
 
 #: oleview.rc:43
-#, fuzzy
 msgid "&Local server"
-msgstr "로컬 오류"
+msgstr "지역 서버(&L)"
 
 #: oleview.rc:44
-#, fuzzy
 msgid "&Remote server"
-msgstr "제거(&R)"
+msgstr "서버 제거(&R)"
 
 #: oleview.rc:47
 msgid "View &Type information"
@@ -8969,21 +8966,19 @@ msgstr "프로그램 정보, 버젼, 저작권 보여주기"
 
 #: oleview.rc:113
 msgid "Ask for an in-process server when calling CoGetClassObject"
-msgstr ""
+msgstr "CoGetClassObject을 호출 할때 인-프로세스 서버에 묻기"
 
 #: oleview.rc:114
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr ""
+msgstr "CoGetClassObject을 호출 할때 인-프로세스 핸들러에 묻기"
 
 #: oleview.rc:115
-#, fuzzy
 msgid "Ask for a local server when calling CoGetClassObject"
-msgstr "CoGetClassObject이 호출될 때 CLSCTX_LOCAL_SERVER 사용"
+msgstr "CoGetClassObject을 호출할 때 지역 서버에 묻기"
 
 #: oleview.rc:116
-#, fuzzy
 msgid "Ask for a remote server when calling CoGetClassObject"
-msgstr "CoGetClassObject이 호출될 때 CLSCTX_LOCAL_SERVER 사용"
+msgstr "CoGetClassObject을 호출할 때 원격 서버에 묻기"
 
 #: oleview.rc:128
 msgid "ObjectClasses"
