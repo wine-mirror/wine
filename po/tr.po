@@ -812,7 +812,7 @@ msgid "Initials"
 msgstr ""
 
 #: crypt32.rc:80
-msgid "Sur Name"
+msgid "Surname"
 msgstr ""
 
 #: crypt32.rc:81
@@ -10743,7 +10743,8 @@ msgid "Drives"
 msgstr "Sürücüler"
 
 #: winecfg.rc:41
-msgid "Select the unix target directory, please."
+#, fuzzy
+msgid "Select the Unix target directory, please."
 msgstr "Lütfen haritalanacak unix dizinini seçin."
 
 #: winecfg.rc:43

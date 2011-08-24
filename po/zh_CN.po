@@ -809,7 +809,7 @@ msgid "Initials"
 msgstr ""
 
 #: crypt32.rc:80
-msgid "Sur Name"
+msgid "Surname"
 msgstr ""
 
 #: crypt32.rc:81
@@ -10258,7 +10258,8 @@ msgid "Drives"
 msgstr "驱动器"
 
 #: winecfg.rc:41
-msgid "Select the unix target directory, please."
+#, fuzzy
+msgid "Select the Unix target directory, please."
 msgstr "请选择目标 unix 文件夹。"
 
 #: winecfg.rc:43

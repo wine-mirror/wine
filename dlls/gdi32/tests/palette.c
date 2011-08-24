@@ -53,7 +53,7 @@ static void test_DIB_PAL_COLORS(void) {
     COLORREF setColor, chkColor, getColor;
     int i;
 
-    /* Initalize the logical palette with a few colours */
+    /* Initialize the logical palette with a few colours */
     logpalette->palVersion = 0x300;
     logpalette->palNumEntries = 8;
     memcpy( logpalette->palPalEntry, logpalettedata, sizeof(logpalettedata) );
@@ -129,7 +129,7 @@ static void test_palette_entries(void)
     PALETTEENTRY palEntry = { 0x1, 0x2, 0x3, 0xff };
     PALETTEENTRY getEntryResult;
 
-    /* Initalize the logical palette with a few colours */
+    /* Initialize the logical palette with a few colours */
     logpalette->palVersion = 0x300;
     logpalette->palNumEntries = 8;
     memcpy( logpalette->palPalEntry, logpalettedata, sizeof(logpalettedata) );

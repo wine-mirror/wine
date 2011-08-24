@@ -868,8 +868,9 @@ msgid "Initials"
 msgstr "Inițiale"
 
 #: crypt32.rc:80
-msgid "Sur Name"
-msgstr "Nume"
+#, fuzzy
+msgid "Surname"
+msgstr "Nume utilizator"
 
 #: crypt32.rc:81
 msgid "Domain Component"
@@ -10967,7 +10968,8 @@ msgid "Drives"
 msgstr "Dispozitive"
 
 #: winecfg.rc:41
-msgid "Select the unix target directory, please."
+#, fuzzy
+msgid "Select the Unix target directory, please."
 msgstr "Selectați vă rog dosarul unix destinație."
 
 #: winecfg.rc:43

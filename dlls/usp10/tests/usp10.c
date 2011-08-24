@@ -1760,7 +1760,7 @@ static void test_ScriptTextOut3(HDC hdc)
     ABC             pABC[256];
     RECT            rect;
 
-    /* This is to ensure that non existing glyphs are translated into a valid glyph number */
+    /* This is to ensure that nonexistent glyphs are translated into a valid glyph number */
     cInChars = 2;
     cMaxItems = 255;
     hr = ScriptItemize(TestItem1, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
@@ -2065,7 +2065,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
             hr = ScriptStringCPtoX(ssa, Cp, FALSE, &lead);
             ok(hr == S_OK, "ScriptStringCPtoX should return S_OK not %08x\n", hr);
             if (rtl[Cp])
-                ok(lead > trail, "Leading values should be after trialing for rtl characters(%i)\n",Cp);
+                ok(lead > trail, "Leading values should be after trailing for rtl characters(%i)\n",Cp);
             else
                 ok(lead < trail, "Trailing values should be after leading for ltr characters(%i)\n",Cp);
 

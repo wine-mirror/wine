@@ -808,8 +808,9 @@ msgid "Initials"
 msgstr "Inicialai"
 
 #: crypt32.rc:80
-msgid "Sur Name"
-msgstr "Pavardė"
+#, fuzzy
+msgid "Surname"
+msgstr "Naudotojas"
 
 #: crypt32.rc:81
 msgid "Domain Component"
@@ -10310,7 +10311,8 @@ msgid "Drives"
 msgstr "Diskai"
 
 #: winecfg.rc:41
-msgid "Select the unix target directory, please."
+#, fuzzy
+msgid "Select the Unix target directory, please."
 msgstr "Prašome išsirinkti unix paskirties aplanką."
 
 #: winecfg.rc:43

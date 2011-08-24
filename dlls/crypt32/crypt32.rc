@@ -77,7 +77,7 @@ STRINGTABLE
     IDS_TITLE "Title"
     IDS_GIVEN_NAME "Given Name"
     IDS_INITIALS "Initials"
-    IDS_SUR_NAME "Sur Name"
+    IDS_SUR_NAME "Surname"
     IDS_DOMAIN_COMPONENT "Domain Component"
     IDS_STREET_ADDRESS "Street Address"
     IDS_SERIAL_NUMBER "Serial Number"

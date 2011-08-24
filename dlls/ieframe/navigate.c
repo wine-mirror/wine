@@ -755,7 +755,7 @@ static HRESULT async_doc_navigate(DocHost *This, LPCWSTR url, LPCWSTR headers, P
 
         on_before_navigate2(This, task->url, task->post_data, task->headers, &cancel);
         if(cancel) {
-            TRACE("Navigation calnceled\n");
+            TRACE("Navigation canceled\n");
             doc_navigate_task_destr(&task->header);
             return S_OK;
         }

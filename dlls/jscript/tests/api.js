@@ -752,7 +752,7 @@ arr[2] = "aa";
 arr.sort = Array.prototype.sort;
 tmp = arr.sort();
 ok(arr === tmp, "tmp !== arr");
-ok(arr[0]===1 && arr[1]==="aa" && arr[2]===undefined, "arr is sorted incorectly");
+ok(arr[0]===1 && arr[1]==="aa" && arr[2]===undefined, "arr is sorted incorrectly");
 
 tmp = [["bb","aa"],["ab","aa"]].sort().toString();
 ok(tmp === "ab,aa,bb,aa", "sort() = " + tmp);

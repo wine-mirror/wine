@@ -803,8 +803,9 @@ msgid "Initials"
 msgstr "Initials"
 
 #: crypt32.rc:80
-msgid "Sur Name"
-msgstr "Sur Name"
+#, fuzzy
+msgid "Surname"
+msgstr "ユーザー名"
 
 #: crypt32.rc:81
 msgid "Domain Component"
@@ -10290,7 +10291,8 @@ msgid "Drives"
 msgstr "ドライブ"
 
 #: winecfg.rc:41
-msgid "Select the unix target directory, please."
+#, fuzzy
+msgid "Select the Unix target directory, please."
 msgstr "unix の対象ディレクトリを選択してください。"
 
 #: winecfg.rc:43

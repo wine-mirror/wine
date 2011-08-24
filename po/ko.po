@@ -802,8 +802,9 @@ msgid "Initials"
 msgstr "머릿글자"
 
 #: crypt32.rc:80
-msgid "Sur Name"
-msgstr "성"
+#, fuzzy
+msgid "Surname"
+msgstr "사용자 이름"
 
 #: crypt32.rc:81
 msgid "Domain Component"
@@ -10245,7 +10246,8 @@ msgid "Drives"
 msgstr "드라이브"
 
 #: winecfg.rc:41
-msgid "Select the unix target directory, please."
+#, fuzzy
+msgid "Select the Unix target directory, please."
 msgstr "유닉스 목적 폴더를 선택하십시오."
 
 #: winecfg.rc:43

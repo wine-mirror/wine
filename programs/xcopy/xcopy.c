@@ -1100,13 +1100,13 @@ int XCOPY_wprintf(const WCHAR *format, ...) {
       return 0;
     }
 
-    /* Try to write as unicode all the time we think its a console */
+    /* Try to write as unicode whenever we think it's a console */
     if (toConsole) {
       res = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE),
                           output_bufW, len, &nOut, NULL);
     }
 
-    /* If writing to console has failed (ever) we assume its file
+    /* If writing to console has failed (ever) we assume it's file
        i/o so convert to OEM codepage and output                  */
     if (!res) {
       BOOL usedDefaultChar = FALSE;

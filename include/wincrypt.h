@@ -4215,9 +4215,9 @@ BOOL WINAPI CertGetEnhancedKeyUsage(PCCERT_CONTEXT pCertContext, DWORD dwFlags,
 BOOL WINAPI CertSetEnhancedKeyUsage(PCCERT_CONTEXT pCertContext,
  PCERT_ENHKEY_USAGE pUsage);
 BOOL WINAPI CertAddEnhancedKeyUsageIdentifier(PCCERT_CONTEXT pCertContext,
- LPCSTR pszUsageIdentifer);
+ LPCSTR pszUsageIdentifier);
 BOOL WINAPI CertRemoveEnhancedKeyUsageIdentifier(PCCERT_CONTEXT pCertContext,
- LPCSTR pszUsageIdentifer);
+ LPCSTR pszUsageIdentifier);
 BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
  int *cNumOIDs, LPSTR *rghOIDs, DWORD *pcbOIDs);
 

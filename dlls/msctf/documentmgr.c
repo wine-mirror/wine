@@ -344,7 +344,7 @@ HRESULT DocumentMgr_Constructor(ITfThreadMgrEventSink *ThreadMgrSink, ITfDocumen
 }
 
 /**************************************************
- * IEnumTfContexts implementaion
+ * IEnumTfContexts implementation
  **************************************************/
 static void EnumTfContext_Destructor(EnumTfContext *This)
 {

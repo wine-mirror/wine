@@ -2416,7 +2416,7 @@ BOOL WINAPI PathCanonicalizeW(LPWSTR lpszBuf, LPCWSTR lpszPath)
       else if (lpszSrc[1] == '.' && (lpszDst == lpszBuf || lpszDst[-1] == '\\'))
       {
         /* \.. backs up a directory, over the root if it has no \ following X:.
-         * .. is ignored if it would remove a UNC server name or inital \\
+         * .. is ignored if it would remove a UNC server name or initial \\
          */
         if (lpszDst != lpszBuf)
         {

@@ -793,7 +793,7 @@ msgid "Initials"
 msgstr ""
 
 #: crypt32.rc:80
-msgid "Sur Name"
+msgid "Surname"
 msgstr ""
 
 #: crypt32.rc:81
@@ -9903,7 +9903,7 @@ msgid "Drives"
 msgstr ""
 
 #: winecfg.rc:41
-msgid "Select the unix target directory, please."
+msgid "Select the Unix target directory, please."
 msgstr ""
 
 #: winecfg.rc:43

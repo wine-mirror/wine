@@ -809,8 +809,9 @@ msgid "Initials"
 msgstr ""
 
 #: crypt32.rc:80
-msgid "Sur Name"
-msgstr ""
+#, fuzzy
+msgid "Surname"
+msgstr "שם משתמש"
 
 #: crypt32.rc:81
 msgid "Domain Component"
@@ -10085,7 +10086,7 @@ msgstr "כוננים"
 
 #: winecfg.rc:41
 #, fuzzy
-msgid "Select the unix target directory, please."
+msgid "Select the Unix target directory, please."
 msgstr "נא לבחור את תיקיית היעד בלינוקס בבקשה."
 
 #: winecfg.rc:43

@@ -1251,7 +1251,7 @@ static LRESULT handle_findmsg(LPFINDREPLACEW pFr)
         flags = FR_DOWN | (pFr->Flags & (FR_MATCHCASE | FR_WHOLEWORD));
         ft.lpstrText = pFr->lpstrFindWhat;
 
-        /* Only replace existing selectino if it is an exact match. */
+        /* Only replace the existing selection if it is an exact match. */
         if (sel.cpMin != sel.cpMax &&
             (pFr->Flags & FR_REPLACE || pFr->Flags & FR_REPLACEALL))
         {

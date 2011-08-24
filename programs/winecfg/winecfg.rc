@@ -38,7 +38,7 @@ BEGIN
     IDS_TAB_APPLICATIONS    "Applications"
     IDS_TAB_DLLS            "Libraries"
     IDS_TAB_DRIVES          "Drives"
-    IDS_CHOOSE_PATH         "Select the unix target directory, please."
+    IDS_CHOOSE_PATH         "Select the Unix target directory, please."
     IDS_HIDE_ADVANCED       "Hide &Advanced"
     IDS_SHOW_ADVANCED       "Show &Advanced"
     IDS_NOTHEME             "(No Theme)"

@@ -1313,7 +1313,7 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
 }
 
 /**************************************************
- * IEnumTfDocumentMgrs implementaion
+ * IEnumTfDocumentMgrs implementation
  **************************************************/
 static void EnumTfDocumentMgr_Destructor(EnumTfDocumentMgr *This)
 {

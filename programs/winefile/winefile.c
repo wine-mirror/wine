@@ -3176,7 +3176,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 
 	col++;
 
-	/* ouput file name */
+	/* output file name */
 	if (calcWidthCol == -1)
 		output_text(pane, dis, col, entry->data.cFileName, 0);
 	else if (calcWidthCol==col || calcWidthCol==COLUMNS)

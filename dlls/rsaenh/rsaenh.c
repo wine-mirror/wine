@@ -1804,7 +1804,7 @@ BOOL WINAPI RSAENH_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
 /******************************************************************************
  * CPCreateHash (RSAENH.@)
  *
- * CPCreateHash creates and initalizes a new hash object.
+ * CPCreateHash creates and initializes a new hash object.
  *
  * PARAMS
  *  hProv   [I] Handle to the key container to which the new hash will belong.
@@ -1932,7 +1932,7 @@ BOOL WINAPI RSAENH_CPCreateHash(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey, 
 /******************************************************************************
  * CPDestroyHash (RSAENH.@)
  * 
- * Releases the handle to a hash object. The object is destroyed if it's reference
+ * Releases the handle to a hash object. The object is destroyed if its reference
  * count reaches zero.
  *
  * PARAMS
@@ -1965,7 +1965,7 @@ BOOL WINAPI RSAENH_CPDestroyHash(HCRYPTPROV hProv, HCRYPTHASH hHash)
 /******************************************************************************
  * CPDestroyKey (RSAENH.@)
  *
- * Releases the handle to a key object. The object is destroyed if it's reference
+ * Releases the handle to a key object. The object is destroyed if its reference
  * count reaches zero.
  *
  * PARAMS
@@ -1998,7 +1998,7 @@ BOOL WINAPI RSAENH_CPDestroyKey(HCRYPTPROV hProv, HCRYPTKEY hKey)
 /******************************************************************************
  * CPDuplicateHash (RSAENH.@)
  *
- * Clones a hash object including it's current state.
+ * Clones a hash object including its current state.
  *
  * PARAMS
  *  hUID        [I] Handle to the key container the hash belongs to.
@@ -2054,7 +2054,7 @@ BOOL WINAPI RSAENH_CPDuplicateHash(HCRYPTPROV hUID, HCRYPTHASH hHash, DWORD *pdw
 /******************************************************************************
  * CPDuplicateKey (RSAENH.@)
  *
- * Clones a key object including it's current state.
+ * Clones a key object including its current state.
  *
  * PARAMS
  *  hUID        [I] Handle to the key container the hash belongs to.

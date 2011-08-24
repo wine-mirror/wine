@@ -306,13 +306,13 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
 }
 /*******************************************************************************
  * GAMEUX_buildStatisticsFilePath
- * Creates path to file contaning statistics of game with given id.
+ * Creates path to file containing statistics of game with given id.
  *
  * Parameters:
  *  lpApplicationId                         [I]     application id of game,
  *                                                  as string
  *  lpStatisticsFile                        [O]     array where path will be
- *                                                  stored. It's size must be
+ *                                                  stored. Its size must be
  *                                                  at least MAX_PATH
  */
 static HRESULT GAMEUX_buildStatisticsFilePath(

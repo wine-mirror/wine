@@ -829,8 +829,9 @@ msgid "Initials"
 msgstr ""
 
 #: crypt32.rc:80
-msgid "Sur Name"
-msgstr ""
+#, fuzzy
+msgid "Surname"
+msgstr "Naziv domaćina"
 
 #: crypt32.rc:81
 msgid "Domain Component"
@@ -10360,7 +10361,8 @@ msgid "Drives"
 msgstr "Drajvovi"
 
 #: winecfg.rc:41
-msgid "Select the unix target directory, please."
+#, fuzzy
+msgid "Select the Unix target directory, please."
 msgstr "Izaberite unix glavni direktorijum, molim."
 
 #: winecfg.rc:43

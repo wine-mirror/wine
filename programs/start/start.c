@@ -46,8 +46,9 @@ static void output(const WCHAR *message)
 
 	res = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), message, wlen, &count, NULL);
 
-	/* If writing to console fails, assume its file
-	i/o so convert to OEM codepage and output                  */
+	/* If writing to console fails, assume it's file
+         * i/o so convert to OEM codepage and output
+         */
 	if (!res)
 	{
 		DWORD len;

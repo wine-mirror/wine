@@ -144,7 +144,7 @@ static HDDEDATA CALLBACK DdeCallback(
  * can use them.
  *
  * PARAMS
- *  bInit [I] TRUE to initialize the services, FALSE to uninitalize.
+ *  bInit [I] TRUE to initialize the services, FALSE to uninitialize.
  *
  * RETURNS
  *  Nothing.

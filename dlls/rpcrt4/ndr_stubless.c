@@ -806,7 +806,7 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                 }
             }
 
-            /* convert strings, floating point values and endianess into our
+            /* convert strings, floating point values and endianness into our
              * preferred format */
             if ((rpcMsg.DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
                 NdrConvert(&stubMsg, pFormat);
@@ -1337,7 +1337,7 @@ LONG WINAPI NdrStubCall2(
                                     NdrCorrCache, sizeof(NdrCorrCache), &number_of_params );
     }
 
-    /* convert strings, floating point values and endianess into our
+    /* convert strings, floating point values and endianness into our
      * preferred format */
     if ((pRpcMsg->DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
         NdrConvert(&stubMsg, pFormat);

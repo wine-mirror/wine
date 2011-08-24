@@ -459,7 +459,7 @@ static void WINAPI ITextHostImpl_TxImmReleaseContext(ITextHost *iface, HIMC himc
 }
 
 /* This function must set the variable pointed to by *lSelBarWidth.
-   Otherwise an uninitalized value will be used to calculate
+   Otherwise an uninitialized value will be used to calculate
    positions and sizes even if E_NOTIMPL is returned. */
 static HRESULT WINAPI ITextHostImpl_TxGetSelectionBarWidth(ITextHost *iface,
                                                            LONG *lSelBarWidth)
