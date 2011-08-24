@@ -791,14 +791,24 @@ static HRESULT WINAPI SysMouseAImpl_BuildActionMap(LPDIRECTINPUTDEVICE8A iface,
     SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
     DIACTIONFORMATW diafW;
     HRESULT hr;
+    WCHAR *lpszUserNameW = NULL;
+    int username_size;
 
     diafW.rgoAction = HeapAlloc(GetProcessHeap(), 0, sizeof(DIACTIONW)*lpdiaf->dwNumActions);
     _copy_diactionformatAtoW(&diafW, lpdiaf);
 
-    hr = SysMouseWImpl_BuildActionMap(&This->base.IDirectInputDevice8W_iface, &diafW, NULL, dwFlags);
+    if (lpszUserName != NULL)
+    {
+        username_size = MultiByteToWideChar(CP_ACP, 0, lpszUserName, -1, NULL, 0);
+        lpszUserNameW = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*username_size);
+        MultiByteToWideChar(CP_ACP, 0, lpszUserName, -1, lpszUserNameW, username_size);
+    }
+
+    hr = SysMouseWImpl_BuildActionMap(&This->base.IDirectInputDevice8W_iface, &diafW, lpszUserNameW, dwFlags);
 
     _copy_diactionformatWtoA(lpdiaf, &diafW);
     HeapFree(GetProcessHeap(), 0, diafW.rgoAction);
+    HeapFree(GetProcessHeap(), 0, lpszUserNameW);
 
     return hr;
 }
@@ -821,13 +831,23 @@ static HRESULT WINAPI SysMouseAImpl_SetActionMap(LPDIRECTINPUTDEVICE8A iface,
     SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
     DIACTIONFORMATW diafW;
     HRESULT hr;
+    WCHAR *lpszUserNameW = NULL;
+    int username_size;
 
     diafW.rgoAction = HeapAlloc(GetProcessHeap(), 0, sizeof(DIACTIONW)*lpdiaf->dwNumActions);
     _copy_diactionformatAtoW(&diafW, lpdiaf);
 
-    hr = SysMouseWImpl_SetActionMap(&This->base.IDirectInputDevice8W_iface, &diafW, NULL, dwFlags);
+    if (lpszUserName != NULL)
+    {
+        username_size = MultiByteToWideChar(CP_ACP, 0, lpszUserName, -1, NULL, 0);
+        lpszUserNameW = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*username_size);
+        MultiByteToWideChar(CP_ACP, 0, lpszUserName, -1, lpszUserNameW, username_size);
+    }
+
+    hr = SysMouseWImpl_SetActionMap(&This->base.IDirectInputDevice8W_iface, &diafW, lpszUserNameW, dwFlags);
 
     HeapFree(GetProcessHeap(), 0, diafW.rgoAction);
+    HeapFree(GetProcessHeap(), 0, lpszUserNameW);
 
     return hr;
 }
