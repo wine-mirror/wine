@@ -185,8 +185,8 @@ typedef struct {
               0,                         /* biYPelsPerMeter */ \
               0,                         /* biClrUsed */ \
               0                          /* biClrImportant */ \
-        }, \
-        { /* DIB data: left uninitialized */ } \
+        } \
+        /* DIB data: left uninitialized */ \
     } \
 }
 
