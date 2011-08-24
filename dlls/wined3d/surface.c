@@ -5565,7 +5565,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
         src_surface->CKeyFlags = oldCKeyFlags;
         src_surface->SrcBltCKey = oldBltCKey;
 
-        surface_modify_location(dst_surface, SFLAG_INDRAWABLE, TRUE);
+        surface_modify_location(dst_surface, dst_surface->draw_binding, TRUE);
 
         return WINED3D_OK;
     }
