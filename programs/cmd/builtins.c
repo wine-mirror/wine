@@ -1250,7 +1250,7 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
     if (isIF) processThese = conditionTRUE;
 
     while (*cmdList) {
-      const WCHAR ifElse[] = {'e','l','s','e',' ','\0'};
+      const WCHAR ifElse[] = {'e','l','s','e'};
 
       /* execute all appropriate commands */
       curPosition = *cmdList;
@@ -1280,16 +1280,17 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
 
       /* End of the command - does 'ELSE ' follow as the next command? */
       } else {
-        if (isIF && CompareStringW(LOCALE_USER_DEFAULT,
-                                   NORM_IGNORECASE | SORT_STRINGSORT,
-                           (*cmdList)->command, 5, ifElse, -1) == CSTR_EQUAL) {
+        if (isIF
+            && WCMD_keyword_ws_found(ifElse, sizeof(ifElse)/sizeof(ifElse[0]),
+                                     (*cmdList)->command)) {
 
           /* Swap between if and else processing */
           processThese = !processThese;
 
           /* Process the ELSE part */
           if (processThese) {
-            WCHAR *cmd = ((*cmdList)->command) + strlenW(ifElse);
+            const int keyw_len = sizeof(ifElse)/sizeof(ifElse[0]) + 1;
+            WCHAR *cmd = ((*cmdList)->command) + keyw_len;
 
             /* Skip leading whitespace between condition and the command */
             while (*cmd && (*cmd==' ' || *cmd=='\t')) cmd++;

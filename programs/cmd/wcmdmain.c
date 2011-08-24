@@ -1755,8 +1755,8 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     static WCHAR    *extraSpace = NULL;  /* Deliberately never freed */
     const WCHAR remCmd[] = {'r','e','m'};
     const WCHAR forCmd[] = {'f','o','r'};
-    const WCHAR ifCmd[]  = {'i','f',' ','\0'};
-    const WCHAR ifElse[] = {'e','l','s','e',' ','\0'};
+    const WCHAR ifCmd[]  = {'i','f'};
+    const WCHAR ifElse[] = {'e','l','s','e'};
     BOOL      inRem = FALSE;
     BOOL      inFor = FALSE;
     BOOL      inIn  = FALSE;
@@ -1847,24 +1847,23 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
         } else if (WCMD_keyword_ws_found(forCmd, sizeof(forCmd)/sizeof(forCmd[0]), curPos)) {
           inFor = TRUE;
 
-        /* If command starts with 'if' or 'else', handle ('s mid line. We should ensure this
+        /* If command starts with 'if ' or 'else ', handle ('s mid line. We should ensure this
            is only true in the command portion of the IF statement, but this
            should suffice for now
             FIXME: Silly syntax like "if 1(==1( (
                                         echo they equal
                                       )" will be parsed wrong */
-        } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-          curPos, 3, ifCmd, -1) == CSTR_EQUAL) {
+        } else if (WCMD_keyword_ws_found(ifCmd, sizeof(ifCmd)/sizeof(ifCmd[0]), curPos)) {
           inIf = TRUE;
 
-        } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-          curPos, 5, ifElse, -1) == CSTR_EQUAL) {
+        } else if (WCMD_keyword_ws_found(ifElse, sizeof(ifElse)/sizeof(ifElse[0]), curPos)) {
+          const int keyw_len = sizeof(ifElse)/sizeof(ifElse[0]) + 1;
           inElse = TRUE;
           lastWasElse = TRUE;
           onlyWhiteSpace = TRUE;
-          memcpy(&curCopyTo[*curLen], curPos, 5*sizeof(WCHAR));
-          (*curLen)+=5;
-          curPos+=5;
+          memcpy(&curCopyTo[*curLen], curPos, keyw_len*sizeof(WCHAR));
+          (*curLen)+=keyw_len;
+          curPos+=keyw_len;
           continue;
 
         /* In a for loop, the DO command will follow a close bracket followed by

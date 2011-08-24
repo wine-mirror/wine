@@ -391,6 +391,13 @@ if /i foo==FOO echo if /i seems to work
 if /i not foo==FOO echo if /i seems to be broken
 if /I foo==FOO echo if /I seems to work
 if /I not foo==FOO echo if /I seems to be broken
+if@tab@1==1 echo doom
+if @tab@1==1 echo doom
+if 1==1 (echo doom) else@tab@echo quake
+if@tab@not @tab@1==@tab@0 @tab@echo lol
+if 1==0@tab@(echo doom) else echo quake
+if 1==0 (echo doom)@tab@else echo quake
+if 1==0 (echo doom) else@tab@echo quake
 
 echo -----------Testing for -----------
 echo ...plain FOR
