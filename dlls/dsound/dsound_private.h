@@ -58,7 +58,6 @@ typedef struct IDirectSound3DListenerImpl    IDirectSound3DListenerImpl;
 typedef struct IDirectSound3DBufferImpl      IDirectSound3DBufferImpl;
 typedef struct IKsBufferPropertySetImpl      IKsBufferPropertySetImpl;
 typedef struct PrimaryBufferImpl             PrimaryBufferImpl;
-typedef struct SecondaryBufferImpl           SecondaryBufferImpl;
 typedef struct DirectSoundDevice             DirectSoundDevice;
 typedef struct DirectSoundCaptureDevice      DirectSoundCaptureDevice;
 
@@ -162,7 +161,6 @@ struct IDirectSoundBufferImpl
     IDirectSoundBuffer8         IDirectSoundBuffer8_iface;
     LONG                        ref;
     /* IDirectSoundBufferImpl fields */
-    SecondaryBufferImpl*        secondary;
     DirectSoundDevice*          device;
     RTL_RWLOCK                  lock;
     PIDSDRIVERBUFFER            hwbuf;
@@ -208,20 +206,6 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     DirectSoundDevice *device,
     IDirectSoundBufferImpl **ppdsb,
     IDirectSoundBufferImpl *pdsb) DECLSPEC_HIDDEN;
-
-/*****************************************************************************
- * SecondaryBuffer implementation structure
- */
-struct SecondaryBufferImpl
-{
-    const IDirectSoundBuffer8Vtbl *lpVtbl;
-    LONG                        ref;
-    IDirectSoundBufferImpl*     dsb;
-};
-
-HRESULT SecondaryBufferImpl_Create(
-    IDirectSoundBufferImpl *dsb,
-    SecondaryBufferImpl **pdsb) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * PrimaryBuffer implementation structure

@@ -710,8 +710,6 @@ HRESULT IDirectSound3DBufferImpl_Create(
 
 	ds3db->dsb->ds3db_need_recalc = TRUE;
 
-	IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)dsb);
-
 	*pds3db = ds3db;
 	return S_OK;
 }

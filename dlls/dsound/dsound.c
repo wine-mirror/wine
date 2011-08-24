@@ -1630,15 +1630,10 @@ HRESULT DirectSoundDevice_CreateSoundBuffer(
         }
 
         hres = IDirectSoundBufferImpl_Create(device, &dsb, dsbd);
-        if (dsb) {
-            hres = SecondaryBufferImpl_Create(dsb, (SecondaryBufferImpl**)ppdsb);
-            if (*ppdsb) {
-                dsb->secondary = (SecondaryBufferImpl*)*ppdsb;
-                IDirectSoundBuffer_AddRef(*ppdsb);
-            } else
-                WARN("SecondaryBufferImpl_Create failed\n");
-        } else
-           WARN("IDirectSoundBufferImpl_Create failed\n");
+        if (dsb)
+            *ppdsb = (IDirectSoundBuffer*)&dsb->IDirectSoundBuffer8_iface;
+        else
+            WARN("IDirectSoundBufferImpl_Create failed\n");
    }
 
    return hres;
@@ -1676,18 +1671,11 @@ HRESULT DirectSoundDevice_DuplicateSoundBuffer(
     }
 
     /* duplicate the actual buffer implementation */
-    hres = IDirectSoundBufferImpl_Duplicate(device, &dsb,
-                                           ((SecondaryBufferImpl *)psb)->dsb);
-
-    if (hres == DS_OK) {
-        /* create a new secondary buffer using the new implementation */
-        hres = SecondaryBufferImpl_Create(dsb, (SecondaryBufferImpl**)ppdsb);
-        if (*ppdsb) {
-            dsb->secondary = (SecondaryBufferImpl*)*ppdsb;
-            IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)*ppdsb);
-        } else
-            WARN("SecondaryBufferImpl_Create failed\n");
-    }
+    hres = IDirectSoundBufferImpl_Duplicate(device, &dsb, (IDirectSoundBufferImpl*)psb);
+    if (hres == DS_OK)
+        *ppdsb = (IDirectSoundBuffer*)&dsb->IDirectSoundBuffer8_iface;
+    else
+        WARN("IDirectSoundBufferImpl_Duplicate failed\n");
 
     return hres;
 }
