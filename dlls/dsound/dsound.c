@@ -1685,11 +1685,8 @@ HRESULT DirectSoundDevice_DuplicateSoundBuffer(
         if (*ppdsb) {
             dsb->secondary = (SecondaryBufferImpl*)*ppdsb;
             IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)*ppdsb);
-        } else {
+        } else
             WARN("SecondaryBufferImpl_Create failed\n");
-            IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)dsb);
-            IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER8)dsb);
-        }
     }
 
     return hres;
