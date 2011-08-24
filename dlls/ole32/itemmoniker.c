@@ -67,23 +67,17 @@ static HRESULT WINAPI ItemMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid
 {
     ItemMonikerImpl *This = impl_from_IMoniker(iface);
 
-  TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppvObject);
+    TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppvObject);
 
-  /* Perform a sanity check on the parameters.*/
-    if ( (This==0) || (ppvObject==0) )
-	return E_INVALIDARG;
+    if (!ppvObject)
+        return E_INVALIDARG;
 
-  /* Initialize the return parameter */
-  *ppvObject = 0;
-
-  /* Compare the riid with the interface IDs implemented by this object.*/
-  if (IsEqualIID(&IID_IUnknown, riid) ||
-      IsEqualIID(&IID_IPersist, riid) ||
-      IsEqualIID(&IID_IPersistStream, riid) ||
-      IsEqualIID(&IID_IMoniker, riid)
-     )
-      *ppvObject = iface;
-
+    /* Compare the riid with the interface IDs implemented by this object.*/
+    if (IsEqualIID(&IID_IUnknown, riid) ||
+        IsEqualIID(&IID_IPersist, riid) ||
+        IsEqualIID(&IID_IPersistStream, riid) ||
+        IsEqualIID(&IID_IMoniker, riid))
+        *ppvObject = iface;
     else if (IsEqualIID(&IID_IROTData, riid))
         *ppvObject = &This->IROTData_iface;
     else if (IsEqualIID(&IID_IMarshal, riid))
@@ -95,15 +89,14 @@ static HRESULT WINAPI ItemMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid
             return hr;
         return IUnknown_QueryInterface(This->pMarshal, riid, ppvObject);
     }
-
-  /* Check that we obtained an interface.*/
-    if ((*ppvObject)==0)
+    else
+    {
+        *ppvObject = NULL;
         return E_NOINTERFACE;
+    }
 
-   /* Query Interface always increases the reference count by one when it is successful */
-  IMoniker_AddRef(iface);
-
-  return S_OK;
+    IMoniker_AddRef(iface);
+    return S_OK;
 }
 
 /******************************************************************************
