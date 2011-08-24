@@ -1947,6 +1947,7 @@ static DWORD context_generate_rt_mask_no_fbo(const struct wined3d_device *device
 /* Context activation is done by the caller. */
 void context_apply_blit_state(struct wined3d_context *context, struct wined3d_device *device)
 {
+    struct wined3d_surface *rt = context->current_rt;
     DWORD rt_mask, old_mask;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
@@ -1955,12 +1956,12 @@ void context_apply_blit_state(struct wined3d_context *context, struct wined3d_de
 
         if (context->render_offscreen)
         {
-            surface_internal_preload(context->current_rt, SRGB_RGB);
+            surface_internal_preload(rt, SRGB_RGB);
 
             ENTER_GL();
-            context_apply_fbo_state_blit(context, GL_FRAMEBUFFER, context->current_rt, NULL, SFLAG_INTEXTURE);
+            context_apply_fbo_state_blit(context, GL_FRAMEBUFFER, rt, NULL, rt->draw_binding);
             LEAVE_GL();
-            if (context->current_rt && context->current_rt->resource.format->id != WINED3DFMT_NULL)
+            if (rt && rt->resource.format->id != WINED3DFMT_NULL)
                 rt_mask = 1;
             else
                 rt_mask = 0;
@@ -1970,12 +1971,12 @@ void context_apply_blit_state(struct wined3d_context *context, struct wined3d_de
             ENTER_GL();
             context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
             LEAVE_GL();
-            rt_mask = context_generate_rt_mask_from_surface(context->current_rt);
+            rt_mask = context_generate_rt_mask_from_surface(rt);
         }
     }
     else
     {
-        rt_mask = context_generate_rt_mask_no_fbo(device, context->current_rt);
+        rt_mask = context_generate_rt_mask_no_fbo(device, rt);
     }
 
     old_mask = context->current_fbo ? context->current_fbo->rt_mask : context->draw_buffers_mask;
