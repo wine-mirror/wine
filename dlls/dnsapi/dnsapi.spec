@@ -35,6 +35,7 @@
 @ stub DnsFlushResolverCacheEntry_A
 @ stub DnsFlushResolverCacheEntry_UTF8
 @ stub DnsFlushResolverCacheEntry_W
+@ stdcall DnsFree(ptr long)
 @ stub DnsFreeAdapterInformation
 @ stub DnsFreeNetworkInformation
 @ stub DnsFreeSearchInformation
