@@ -614,7 +614,7 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
          * the texture / sysmem copy needs to be reloaded from the drawable
          */
         if (swapchain->presentParms.SwapEffect == WINED3DSWAPEFFECT_FLIP)
-            surface_modify_location(swapchain->back_buffers[0], SFLAG_INDRAWABLE, TRUE);
+            surface_modify_location(swapchain->back_buffers[0], swapchain->back_buffers[0]->draw_binding, TRUE);
     }
 
     if (fb->depth_stencil)
