@@ -1044,6 +1044,8 @@ void fill_cpu_info(void)
                     user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE128] = TRUE;
                 if (strstr(value, "mmx"))
                     user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+                if (strstr(value, "nx"))
+                    user_shared_data->ProcessorFeatures[PF_NX_ENABLED] = TRUE;
                 if (strstr(value, "tsc"))
                     user_shared_data->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
                 if (strstr(value, "3dnow"))
