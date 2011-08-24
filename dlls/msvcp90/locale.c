@@ -139,9 +139,10 @@ int* __cdecl locale_id__Id_cnt_func(void)
 DEFINE_THISCALL_WRAPPER(locale_facet_ctor, 4)
 locale_facet* __thiscall locale_facet_ctor(locale_facet *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
     this->vtable = MSVCP_locale_facet_vtable;
-    return NULL;
+    this->refs = 0;
+    return this;
 }
 
 /* ??0facet@locale@std@@IAE@I@Z */
@@ -149,8 +150,10 @@ locale_facet* __thiscall locale_facet_ctor(locale_facet *this)
 DEFINE_THISCALL_WRAPPER(locale_facet_ctor_refs, 8)
 locale_facet* __thiscall locale_facet_ctor_refs(locale_facet *this, MSVCP_size_t refs)
 {
-    FIXME("(%p %lu) stub\n", this, refs);
-    return NULL;
+    TRACE("(%p %lu)\n", this, refs);
+    this->vtable = MSVCP_locale_facet_vtable;
+    this->refs = refs;
+    return this;
 }
 
 /* ??1facet@locale@std@@UAE@XZ */
@@ -158,13 +161,13 @@ locale_facet* __thiscall locale_facet_ctor_refs(locale_facet *this, MSVCP_size_t
 DEFINE_THISCALL_WRAPPER(locale_facet_dtor, 4)
 void __thiscall locale_facet_dtor(locale_facet *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_locale_facet_vector_dtor, 8)
 locale_facet* __thiscall MSVCP_locale_facet_vector_dtor(locale_facet *this, unsigned int flags)
 {
-    TRACE("(%p %x) stub\n", this, flags);
+    TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
         int i, *ptr = (int *)this-1;
@@ -186,7 +189,13 @@ locale_facet* __thiscall MSVCP_locale_facet_vector_dtor(locale_facet *this, unsi
 DEFINE_THISCALL_WRAPPER(locale_facet__Incref, 4)
 void __thiscall locale_facet__Incref(locale_facet *this)
 {
-    FIXME("(%p) stub\n", this);
+    _Lockit lock;
+
+    TRACE("(%p)\n", this);
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    this->refs++;
+    _Lockit_dtor(&lock);
 }
 
 /* ?_Decref@facet@locale@std@@QAEPAV123@XZ */
@@ -194,16 +203,27 @@ void __thiscall locale_facet__Incref(locale_facet *this)
 DEFINE_THISCALL_WRAPPER(locale_facet__Decref, 4)
 locale_facet* __thiscall locale_facet__Decref(locale_facet *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    _Lockit lock;
+    locale_facet *ret;
+
+    TRACE("(%p)\n", this);
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    if(this->refs)
+        this->refs--;
+
+    ret = this->refs ? this : NULL;
+    _Lockit_dtor(&lock);
+
+    return ret;
 }
 
 /* ?_Getcat@facet@locale@std@@SAIPAPBV123@PBV23@@Z */
 /* ?_Getcat@facet@locale@std@@SA_KPEAPEBV123@PEBV23@@Z */
 MSVCP_size_t __cdecl locale_facet__Getcat(const locale_facet **facet, const locale *loc)
 {
-    FIXME("(%p %p) stub\n", facet, loc);
-    return 0;
+    TRACE("(%p %p)\n", facet, loc);
+    return -1;
 }
 
 static const vtable_ptr MSVCP_locale_facet_vtable[] = {
