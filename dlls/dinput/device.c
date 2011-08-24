@@ -674,6 +674,7 @@ HRESULT _set_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf, L
     data_format.rgodf = (LPDIOBJECTDATAFORMAT)obj_df;
     data_format.dwNumObjs = num_actions;
 
+    HeapFree(GetProcessHeap(), 0, This->action_map);
     This->action_map = HeapAlloc(GetProcessHeap(), 0, sizeof(ActionMap)*num_actions);
 
     for (i = 0; i < lpdiaf->dwNumActions; i++)
