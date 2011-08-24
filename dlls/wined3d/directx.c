@@ -2152,11 +2152,11 @@ static const struct fragment_pipeline *select_fragment_implementation(const stru
     else return &ffp_fragment_pipeline;
 }
 
-static const struct wined3d_shader_backend_ops *select_shader_backend(struct wined3d_adapter *adapter)
+static const struct wined3d_shader_backend_ops *select_shader_backend(const struct wined3d_gl_info *gl_info)
 {
     int vs_selected_mode, ps_selected_mode;
 
-    select_shader_mode(&adapter->gl_info, &ps_selected_mode, &vs_selected_mode);
+    select_shader_mode(gl_info, &ps_selected_mode, &vs_selected_mode);
     if (vs_selected_mode == SHADER_GLSL || ps_selected_mode == SHADER_GLSL) return &glsl_shader_backend;
     if (vs_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_ARB) return &arb_program_shader_backend;
     return &none_shader_backend;
@@ -2599,7 +2599,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     LEAVE_GL();
 
     adapter->fragment_pipe = select_fragment_implementation(gl_info);
-    adapter->shader_backend = select_shader_backend(adapter);
+    adapter->shader_backend = select_shader_backend(gl_info);
     adapter->blitter = select_blit_implementation(adapter);
 
     adapter->fragment_pipe->get_caps(gl_info, &fragment_caps);
