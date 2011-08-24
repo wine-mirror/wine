@@ -2402,24 +2402,6 @@ static void check_reg_dword(HKEY prodkey, LPCSTR name, DWORD expected, DWORD lin
     ok_(__FILE__, line)(val == expected, "Expected %d, got %d\n", expected, val);
 }
 
-static void check_reg_dword3(HKEY prodkey, LPCSTR name, DWORD expected1, DWORD expected2, DWORD expected3, DWORD line)
-{
-    DWORD val, size, type;
-    LONG res;
-
-    size = sizeof(DWORD);
-    res = RegQueryValueExA(prodkey, name, NULL, &type, (LPBYTE)&val, &size);
-
-    if (res != ERROR_SUCCESS || type != REG_DWORD)
-    {
-        ok_(__FILE__, line)(FALSE, "Key doesn't exist or wrong type\n");
-        return;
-    }
-
-    ok_(__FILE__, line)(val == expected1 || val == expected2 || val == expected3,
-                        "Expected %d, %d or %d, got %d\n", expected1, expected2, expected3, val);
-}
-
 static void check_reg_dword4(HKEY prodkey, LPCSTR name, DWORD expected1, DWORD expected2, DWORD expected3,
                              DWORD expected4, DWORD line)
 {
@@ -2436,7 +2418,27 @@ static void check_reg_dword4(HKEY prodkey, LPCSTR name, DWORD expected1, DWORD e
     }
 
     ok_(__FILE__, line)(val == expected1 || val == expected2 || val == expected3 || val == expected4,
-        "Expected %d, %d or %d or %d, got %d\n", expected1, expected2, expected3, expected4, val);
+        "Expected %d, %d, %d or %d, got %d\n", expected1, expected2, expected3, expected4, val);
+}
+
+static void check_reg_dword5(HKEY prodkey, LPCSTR name, DWORD expected1, DWORD expected2, DWORD expected3,
+                             DWORD expected4, DWORD expected5, DWORD line)
+{
+    DWORD val, size, type;
+    LONG res;
+
+    size = sizeof(DWORD);
+    res = RegQueryValueExA(prodkey, name, NULL, &type, (LPBYTE)&val, &size);
+
+    if (res != ERROR_SUCCESS || type != REG_DWORD)
+    {
+        ok_(__FILE__, line)(FALSE, "Key doesn't exist or wrong type\n");
+        return;
+    }
+
+    ok_(__FILE__, line)(val == expected1 || val == expected2 || val == expected3 || val == expected4 ||
+        val == expected5,
+        "Expected %d, %d, %d, %d or %d, got %d\n", expected1, expected2, expected3, expected4, expected5, val);
 }
 
 #define CHECK_REG_STR(prodkey, name, expected) \
@@ -2467,15 +2469,11 @@ static void check_reg_dword4(HKEY prodkey, LPCSTR name, DWORD expected1, DWORD e
     check_reg_dword2(prodkey, name, expected1, expected2, __LINE__); \
     RegDeleteValueA(prodkey, name);
 
-#define CHECK_REG_DWORD3(prodkey, name, expected1, expected2, expected3) \
-    check_reg_dword3(prodkey, name, expected1, expected2, expected3, __LINE__);
+#define CHECK_REG_DWORD4(prodkey, name, expected1, expected2, expected3, expected4) \
+    check_reg_dword4(prodkey, name, expected1, expected2, expected3, expected4, __LINE__);
 
-#define CHECK_DEL_REG_DWORD3(prodkey, name, expected1, expected2, expected3) \
-    check_reg_dword3(prodkey, name, expected1, expected2, expected3, __LINE__); \
-    RegDeleteValueA(prodkey, name);
-
-#define CHECK_DEL_REG_DWORD4(prodkey, name, expected1, expected2, expected3, expected4) \
-    check_reg_dword4(prodkey, name, expected1, expected2, expected3, expected4, __LINE__); \
+#define CHECK_DEL_REG_DWORD5(prodkey, name, expected1, expected2, expected3, expected4 ,expected5) \
+    check_reg_dword5(prodkey, name, expected1, expected2, expected3, expected4, expected5, __LINE__); \
     RegDeleteValueA(prodkey, name);
 
 static void get_date_str(LPSTR date)
@@ -2579,7 +2577,7 @@ static void test_register_product(void)
     CHECK_DEL_REG_DWORD(hkey, "WindowsInstaller", 1);
     todo_wine
     {
-        CHECK_DEL_REG_DWORD4(hkey, "EstimatedSize", 12, -12, 4, 10);
+        CHECK_DEL_REG_DWORD5(hkey, "EstimatedSize", 12, -12, 4, 10, 24);
     }
 
     delete_key(hkey, "", access);
@@ -2621,7 +2619,7 @@ static void test_register_product(void)
     CHECK_DEL_REG_DWORD(props, "WindowsInstaller", 1);
     todo_wine
     {
-        CHECK_DEL_REG_DWORD4(props, "EstimatedSize", 12, -12, 4, 10);
+        CHECK_DEL_REG_DWORD5(props, "EstimatedSize", 12, -12, 4, 10, 24);
     }
 
     delete_key(props, "", access);
@@ -2690,7 +2688,7 @@ static void test_register_product(void)
     CHECK_DEL_REG_DWORD(hkey, "WindowsInstaller", 1);
     todo_wine
     {
-        CHECK_DEL_REG_DWORD4(hkey, "EstimatedSize", 12, -12, 4, 10);
+        CHECK_DEL_REG_DWORD5(hkey, "EstimatedSize", 12, -12, 4, 10, 24);
     }
 
     delete_key(hkey, "", access);
@@ -2732,7 +2730,7 @@ static void test_register_product(void)
     CHECK_DEL_REG_DWORD(props, "WindowsInstaller", 1);
     todo_wine
     {
-        CHECK_DEL_REG_DWORD4(props, "EstimatedSize", 12, -12, 4, 10);
+        CHECK_DEL_REG_DWORD5(props, "EstimatedSize", 12, -12, 4, 10, 24);
     }
 
     delete_key(props, "", access);
@@ -3575,7 +3573,7 @@ static void test_publish(void)
     CHECK_REG_DWORD(prodkey, "WindowsInstaller", 1);
     todo_wine
     {
-        CHECK_REG_DWORD3(prodkey, "EstimatedSize", 12, -12, 10);
+        CHECK_REG_DWORD4(prodkey, "EstimatedSize", 12, -12, 10, 24);
     }
 
     RegCloseKey(prodkey);
@@ -3657,7 +3655,7 @@ static void test_publish(void)
     CHECK_REG_DWORD(prodkey, "WindowsInstaller", 1);
     todo_wine
     {
-        CHECK_REG_DWORD3(prodkey, "EstimatedSize", 12, -12, 10);
+        CHECK_REG_DWORD4(prodkey, "EstimatedSize", 12, -12, 10, 24);
     }
 
     RegCloseKey(prodkey);
@@ -3740,7 +3738,7 @@ static void test_publish(void)
     CHECK_REG_DWORD(prodkey, "WindowsInstaller", 1);
     todo_wine
     {
-        CHECK_REG_DWORD3(prodkey, "EstimatedSize", 12, -12, 10);
+        CHECK_REG_DWORD4(prodkey, "EstimatedSize", 12, -12, 10, 24);
     }
 
     RegCloseKey(prodkey);
@@ -3800,7 +3798,7 @@ static void test_publish(void)
     CHECK_REG_DWORD(prodkey, "WindowsInstaller", 1);
     todo_wine
     {
-        CHECK_REG_DWORD3(prodkey, "EstimatedSize", 12, -12, 10);
+        CHECK_REG_DWORD4(prodkey, "EstimatedSize", 12, -12, 10, 24);
     }
 
     RegCloseKey(prodkey);
@@ -3860,7 +3858,7 @@ static void test_publish(void)
     CHECK_REG_DWORD(prodkey, "WindowsInstaller", 1);
     todo_wine
     {
-        CHECK_REG_DWORD3(prodkey, "EstimatedSize", 12, -20, 10);
+        CHECK_REG_DWORD4(prodkey, "EstimatedSize", 12, -20, 10, 24);
     }
 
     RegCloseKey(prodkey);
@@ -3943,7 +3941,7 @@ static void test_publish(void)
     CHECK_REG_DWORD(prodkey, "WindowsInstaller", 1);
     todo_wine
     {
-        CHECK_REG_DWORD3(prodkey, "EstimatedSize", 12, -12, 10);
+        CHECK_REG_DWORD4(prodkey, "EstimatedSize", 12, -12, 10, 24);
     }
 
     RegCloseKey(prodkey);
