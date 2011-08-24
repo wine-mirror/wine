@@ -609,7 +609,6 @@ HRESULT create_document_fragment(nsIDOMNode*,HTMLDocumentNode*,HTMLDocumentNode*
 HRESULT HTMLWindow_Create(HTMLDocumentObj*,nsIDOMWindow*,HTMLWindow*,HTMLWindow**) DECLSPEC_HIDDEN;
 void update_window_doc(HTMLWindow*) DECLSPEC_HIDDEN;
 HTMLWindow *nswindow_to_window(const nsIDOMWindow*) DECLSPEC_HIDDEN;
-nsIDOMWindow *get_nsdoc_window(nsIDOMDocument*) DECLSPEC_HIDDEN;
 HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLWindow*) DECLSPEC_HIDDEN;
 HTMLImageElementFactory *HTMLImageElementFactory_Create(HTMLWindow*) DECLSPEC_HIDDEN;
 HRESULT HTMLLocation_Create(HTMLWindow*,HTMLLocation**) DECLSPEC_HIDDEN;

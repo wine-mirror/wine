@@ -126,9 +126,9 @@ static HTMLWindow *get_elem_window(nsIDOMElement *elem)
     if(NS_FAILED(nsres))
         return NULL;
 
-    nswindow = get_nsdoc_window(nsdoc);
+    nsres = nsIDOMDocument_GetDefaultView(nsdoc, &nswindow);
     nsIDOMDocument_Release(nsdoc);
-    if(!nswindow)
+    if(NS_FAILED(nsres) || !nswindow)
         return NULL;
 
     window = nswindow_to_window(nswindow);

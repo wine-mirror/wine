@@ -83,20 +83,6 @@ static void window_set_docnode(HTMLWindow *window, HTMLDocumentNode *doc_node)
     }
 }
 
-nsIDOMWindow *get_nsdoc_window(nsIDOMDocument *nsdoc)
-{
-    nsIDOMWindow *nswindow;
-    nsresult nsres;
-
-    nsres = nsIDOMDocument_GetDefaultView(nsdoc, &nswindow);
-    if(NS_FAILED(nsres)) {
-        ERR("GetDefaultView failed: %08x\n", nsres);
-        return NULL;
-    }
-
-    return nswindow;
-}
-
 static void release_children(HTMLWindow *This)
 {
     HTMLWindow *child;

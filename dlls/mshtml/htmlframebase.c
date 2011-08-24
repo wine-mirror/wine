@@ -39,13 +39,14 @@ HRESULT set_frame_doc(HTMLFrameBase *frame, nsIDOMDocument *nsdoc)
 {
     nsIDOMWindow *nswindow;
     HTMLWindow *window;
+    nsresult nsres;
     HRESULT hres = S_OK;
 
     if(frame->content_window)
         return S_OK;
 
-    nswindow = get_nsdoc_window(nsdoc);
-    if(!nswindow)
+    nsres = nsIDOMDocument_GetDefaultView(nsdoc, &nswindow);
+    if(NS_FAILED(nsres) || !nswindow)
         return E_FAIL;
 
     window = nswindow_to_window(nswindow);
