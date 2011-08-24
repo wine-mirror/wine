@@ -193,8 +193,6 @@ DNS_STATUS WINAPI DnsValidateName_W( PCWSTR name, DNS_NAME_FORMAT format )
     {
     case DnsNameDomain:
     {
-        if (!(state & HAS_NON_NUMERIC) && (state & HAS_NUMERIC))
-            return DNS_ERROR_NUMERIC_NAME;
         if ((state & HAS_EXTENDED) || (state & HAS_UNDERSCORE))
             return DNS_ERROR_NON_RFC_NAME;
         if ((state & HAS_SPACE) ||
@@ -214,8 +212,6 @@ DNS_STATUS WINAPI DnsValidateName_W( PCWSTR name, DNS_NAME_FORMAT format )
     }
     case DnsNameHostnameFull:
     {
-        if (!(state & HAS_NON_NUMERIC) && (state & HAS_NUMERIC))
-            return DNS_ERROR_NUMERIC_NAME;
         if ((state & HAS_EXTENDED) || (state & HAS_UNDERSCORE))
             return DNS_ERROR_NON_RFC_NAME;
         if ((state & HAS_SPACE) ||
@@ -226,8 +222,6 @@ DNS_STATUS WINAPI DnsValidateName_W( PCWSTR name, DNS_NAME_FORMAT format )
     case DnsNameHostnameLabel:
     {
         if (state & HAS_DOT) return ERROR_INVALID_NAME;
-        if (!(state & HAS_NON_NUMERIC) && (state & HAS_NUMERIC))
-            return DNS_ERROR_NUMERIC_NAME;
         if ((state & HAS_EXTENDED) || (state & HAS_UNDERSCORE))
             return DNS_ERROR_NON_RFC_NAME;
         if ((state & HAS_SPACE) ||
