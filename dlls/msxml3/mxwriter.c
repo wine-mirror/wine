@@ -62,6 +62,7 @@ typedef struct _mxwriter
     ISAXContentHandler ISAXContentHandler_iface;
 
     LONG ref;
+    MSXML_VERSION class_version;
 
     VARIANT_BOOL props[MXWriter_LastProp];
     BOOL prop_changed;
@@ -881,7 +882,7 @@ static const struct ISAXContentHandlerVtbl mxwriter_saxcontent_vtbl =
     mxwriter_saxcontent_skippedEntity
 };
 
-HRESULT MXWriter_create(IUnknown *pUnkOuter, void **ppObj)
+HRESULT MXWriter_create(MSXML_VERSION version, IUnknown *pUnkOuter, void **ppObj)
 {
     static const WCHAR version10W[] = {'1','.','0',0};
     mxwriter *This;
@@ -897,6 +898,7 @@ HRESULT MXWriter_create(IUnknown *pUnkOuter, void **ppObj)
     This->IMXWriter_iface.lpVtbl = &mxwriter_vtbl;
     This->ISAXContentHandler_iface.lpVtbl = &mxwriter_saxcontent_vtbl;
     This->ref = 1;
+    This->class_version = version;
 
     This->props[MXWriter_BOM] = VARIANT_TRUE;
     This->props[MXWriter_DisableEscaping] = VARIANT_FALSE;
@@ -921,7 +923,7 @@ HRESULT MXWriter_create(IUnknown *pUnkOuter, void **ppObj)
 
 #else
 
-HRESULT MXWriter_create(IUnknown *pUnkOuter, void **obj)
+HRESULT MXWriter_create(MSXML_VERSION version, IUnknown *pUnkOuter, void **obj)
 {
     MESSAGE("This program tried to use a MXXMLWriter object, but\n"
             "libxml2 support was not present at compile time.\n");

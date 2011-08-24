@@ -75,7 +75,12 @@ static const struct clsid_version_t clsid_versions_table[] =
     { &CLSID_XMLSchemaCache26, MSXML_DEFAULT },
     { &CLSID_XMLSchemaCache30, MSXML3 },
     { &CLSID_XMLSchemaCache40, MSXML4 },
-    { &CLSID_XMLSchemaCache60, MSXML6 }
+    { &CLSID_XMLSchemaCache60, MSXML6 },
+
+    { &CLSID_MXXMLWriter,   MSXML_DEFAULT },
+    { &CLSID_MXXMLWriter30, MSXML3 },
+    { &CLSID_MXXMLWriter40, MSXML4 },
+    { &CLSID_MXXMLWriter60, MSXML6 }
 };
 
 static MSXML_VERSION get_msxml_version(const GUID *clsid)
@@ -264,7 +269,6 @@ static ClassFactory xmldoccf = { { &ClassFactoryVtbl }, XMLDocument_create };
 static ClassFactory saxreadcf = { { &ClassFactoryVtbl }, SAXXMLReader_create };
 static ClassFactory httpreqcf = { { &ClassFactoryVtbl }, XMLHTTPRequest_create };
 static ClassFactory xsltemplatecf = { { &ClassFactoryVtbl }, XSLTemplate_create };
-static ClassFactory mxwritercf = { { &ClassFactoryVtbl }, MXWriter_create };
 static ClassFactory mxnsmanagercf = { {&ClassFactoryVtbl }, MXNamespaceManager_create };
 
 /******************************************************************
@@ -335,7 +339,7 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
              IsEqualCLSID( rclsid, &CLSID_MXXMLWriter40 ) ||
              IsEqualCLSID( rclsid, &CLSID_MXXMLWriter60 ) )
     {
-        cf = &mxwritercf.IClassFactory_iface;
+        return DOMClassFactory_Create(rclsid, riid, ppv, MXWriter_create);
     }
     else if( IsEqualCLSID( rclsid, &CLSID_MXNamespaceManager ) ||
              IsEqualCLSID( rclsid, &CLSID_MXNamespaceManager40 ) ||
