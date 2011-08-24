@@ -356,6 +356,8 @@ static HRESULT test_dsound8(LPGUID lpGuid)
                                             &IID_IDirectSoundBuffer8,
                                             (void **)&buffer8);
             if (rc==DS_OK && buffer8!=NULL) {
+                ok(buffer8==(IDirectSoundBuffer8*)secondary,
+                   "IDirectSoundBuffer8 iface different from IDirectSoundBuffer.\n");
                 ref=IDirectSoundBuffer8_AddRef(buffer8);
                 ok(ref==3,"IDirectSoundBuffer8_AddRef() has %d references, "
                    "should have 3\n",ref);
