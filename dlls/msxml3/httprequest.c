@@ -848,7 +848,7 @@ static HRESULT WINAPI httprequest_get_responseXML(IXMLHTTPRequest *iface, IDispa
     if (!body) return E_INVALIDARG;
     if (This->state != READYSTATE_COMPLETE) return E_FAIL;
 
-    hr = DOMDocument_create(&CLSID_DOMDocument, NULL, (void**)&doc);
+    hr = DOMDocument_create(MSXML_DEFAULT, NULL, (void**)&doc);
     if (hr != S_OK) return hr;
 
     hr = IXMLHTTPRequest_get_responseText(iface, &str);

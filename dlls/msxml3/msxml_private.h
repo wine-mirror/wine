@@ -253,7 +253,7 @@ xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type ) DE
 /* helpers */
 extern xmlChar *xmlChar_from_wchar( LPCWSTR str ) DECLSPEC_HIDDEN;
 
-extern void xmldoc_init( xmlDocPtr doc, const GUID *clsid ) DECLSPEC_HIDDEN;
+extern void xmldoc_init( xmlDocPtr doc, MSXML_VERSION version ) DECLSPEC_HIDDEN;
 extern LONG xmldoc_add_ref( xmlDocPtr doc ) DECLSPEC_HIDDEN;
 extern LONG xmldoc_release( xmlDocPtr doc ) DECLSPEC_HIDDEN;
 extern HRESULT xmldoc_add_orphan( xmlDocPtr doc, xmlNodePtr node ) DECLSPEC_HIDDEN;
@@ -429,8 +429,8 @@ static inline xmlChar *xmlchar_from_wchar( const WCHAR *str )
 
 extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,
                                              LONG line, LONG linepos, LONG filepos ) DECLSPEC_HIDDEN;
-extern HRESULT DOMDocument_create(const GUID*, IUnknown*, void**) DECLSPEC_HIDDEN;
-extern HRESULT SchemaCache_create(const GUID*, IUnknown*, void**) DECLSPEC_HIDDEN;
+extern HRESULT DOMDocument_create(MSXML_VERSION, IUnknown*, void**) DECLSPEC_HIDDEN;
+extern HRESULT SchemaCache_create(MSXML_VERSION, IUnknown*, void**) DECLSPEC_HIDDEN;
 extern HRESULT XMLDocument_create(IUnknown*, void**) DECLSPEC_HIDDEN;
 extern HRESULT SAXXMLReader_create(IUnknown*, void**) DECLSPEC_HIDDEN;
 extern HRESULT XMLHTTPRequest_create(IUnknown*, void **) DECLSPEC_HIDDEN;

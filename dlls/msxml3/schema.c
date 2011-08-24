@@ -842,7 +842,7 @@ static cache_entry* cache_entry_from_xsd_doc(xmlDocPtr doc, xmlChar const* nsURI
 
     if ((entry->schema = Schema_parse(spctx)))
     {
-        xmldoc_init(entry->schema->doc, DOMDocument_version(v));
+        xmldoc_init(entry->schema->doc, v);
         entry->doc = entry->schema->doc;
         xmldoc_add_ref(entry->doc);
     }
@@ -857,7 +857,7 @@ static cache_entry* cache_entry_from_xsd_doc(xmlDocPtr doc, xmlChar const* nsURI
     return entry;
 }
 
-static cache_entry* cache_entry_from_xdr_doc(xmlDocPtr doc, xmlChar const* nsURI, MSXML_VERSION v)
+static cache_entry* cache_entry_from_xdr_doc(xmlDocPtr doc, xmlChar const* nsURI, MSXML_VERSION version)
 {
     cache_entry* entry = heap_alloc(sizeof(cache_entry));
     xmlSchemaParserCtxtPtr spctx;
@@ -872,8 +872,8 @@ static cache_entry* cache_entry_from_xdr_doc(xmlDocPtr doc, xmlChar const* nsURI
     if ((entry->schema = Schema_parse(spctx)))
     {
         entry->doc = new_doc;
-        xmldoc_init(entry->schema->doc, DOMDocument_version(v));
-        xmldoc_init(entry->doc, DOMDocument_version(v));
+        xmldoc_init(entry->schema->doc, version);
+        xmldoc_init(entry->doc, version);
         xmldoc_add_ref(entry->doc);
         xmldoc_add_ref(entry->schema->doc);
     }
@@ -890,12 +890,12 @@ static cache_entry* cache_entry_from_xdr_doc(xmlDocPtr doc, xmlChar const* nsURI
     return entry;
 }
 
-static cache_entry* cache_entry_from_url(VARIANT url, xmlChar const* nsURI, MSXML_VERSION v)
+static cache_entry* cache_entry_from_url(VARIANT url, xmlChar const* nsURI, MSXML_VERSION version)
 {
     cache_entry* entry;
     IXMLDOMDocument3* domdoc = NULL;
     xmlDocPtr doc = NULL;
-    HRESULT hr = DOMDocument_create(DOMDocument_version(v), NULL, (void**)&domdoc);
+    HRESULT hr = DOMDocument_create(version, NULL, (void**)&domdoc);
     VARIANT_BOOL b = VARIANT_FALSE;
     SCHEMA_TYPE type = SCHEMA_TYPE_INVALID;
 
@@ -924,10 +924,10 @@ static cache_entry* cache_entry_from_url(VARIANT url, xmlChar const* nsURI, MSXM
     switch (type)
     {
         case SCHEMA_TYPE_XSD:
-            entry = cache_entry_from_xsd_doc(doc, nsURI, v);
+            entry = cache_entry_from_xsd_doc(doc, nsURI, version);
             break;
         case SCHEMA_TYPE_XDR:
-            entry = cache_entry_from_xdr_doc(doc, nsURI, v);
+            entry = cache_entry_from_xdr_doc(doc, nsURI, version);
             break;
         case SCHEMA_TYPE_INVALID:
             entry = NULL;
@@ -1414,7 +1414,7 @@ XDR_DT SchemaCache_get_node_dt(IXMLDOMSchemaCollection2* iface, xmlNodePtr node)
     return dt;
 }
 
-HRESULT SchemaCache_create(const GUID *clsid, IUnknown* pUnkOuter, void** ppObj)
+HRESULT SchemaCache_create(MSXML_VERSION version, IUnknown* pUnkOuter, void** ppObj)
 {
     schema_cache* This = heap_alloc(sizeof(schema_cache));
     if (!This)
@@ -1423,15 +1423,7 @@ HRESULT SchemaCache_create(const GUID *clsid, IUnknown* pUnkOuter, void** ppObj)
     This->lpVtbl = &schema_cache_vtbl;
     This->cache = xmlHashCreate(DEFAULT_HASHTABLE_SIZE);
     This->ref = 1;
-
-    if (IsEqualCLSID(clsid, &CLSID_XMLSchemaCache30))
-        This->version = MSXML3;
-    else if (IsEqualCLSID(clsid, &CLSID_DOMDocument40))
-        This->version = MSXML4;
-    else if (IsEqualCLSID(clsid, &CLSID_DOMDocument60))
-        This->version = MSXML6;
-    else
-        This->version = MSXML_DEFAULT;
+    This->version = version;
 
     *ppObj = &This->lpVtbl;
     return S_OK;
@@ -1439,7 +1431,7 @@ HRESULT SchemaCache_create(const GUID *clsid, IUnknown* pUnkOuter, void** ppObj)
 
 #else
 
-HRESULT SchemaCache_create(const GUID *clsid, IUnknown* pUnkOuter, void** ppObj)
+HRESULT SchemaCache_create(MSXML_VERSION version, IUnknown* pUnkOuter, void** ppObj)
 {
     MESSAGE("This program tried to use a SchemaCache object, but\n"
             "libxml2 support was not present at compile time.\n");

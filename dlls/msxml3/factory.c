@@ -46,8 +46,49 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
-typedef HRESULT (*ClassFactoryCreateInstanceFunc)(IUnknown *pUnkOuter, LPVOID *ppObj);
-typedef HRESULT (*DOMFactoryCreateInstanceFunc)(const GUID *clsid, IUnknown *pUnkOuter, LPVOID *ppObj);
+typedef HRESULT (*ClassFactoryCreateInstanceFunc)(IUnknown*, void**);
+typedef HRESULT (*DOMFactoryCreateInstanceFunc)(MSXML_VERSION, IUnknown*, void**);
+
+struct clsid_version_t
+{
+    const GUID *clsid;
+    MSXML_VERSION version;
+};
+
+static const struct clsid_version_t clsid_versions_table[] =
+{
+    { &CLSID_DOMDocument,   MSXML_DEFAULT },
+    { &CLSID_DOMDocument2,  MSXML_DEFAULT },
+    { &CLSID_DOMDocument26, MSXML_DEFAULT },
+    { &CLSID_DOMDocument30, MSXML3 },
+    { &CLSID_DOMDocument40, MSXML4 },
+    { &CLSID_DOMDocument60, MSXML6 },
+
+    { &CLSID_DOMFreeThreadedDocument,   MSXML_DEFAULT },
+    { &CLSID_FreeThreadedDOMDocument,   MSXML_DEFAULT },
+    { &CLSID_FreeThreadedDOMDocument26, MSXML_DEFAULT },
+    { &CLSID_FreeThreadedDOMDocument30, MSXML3 },
+    { &CLSID_FreeThreadedDOMDocument40, MSXML4 },
+    { &CLSID_FreeThreadedDOMDocument60, MSXML6 },
+
+    { &CLSID_XMLSchemaCache,   MSXML_DEFAULT },
+    { &CLSID_XMLSchemaCache26, MSXML_DEFAULT },
+    { &CLSID_XMLSchemaCache30, MSXML3 },
+    { &CLSID_XMLSchemaCache40, MSXML4 },
+    { &CLSID_XMLSchemaCache60, MSXML6 }
+};
+
+static MSXML_VERSION get_msxml_version(const GUID *clsid)
+{
+    int i;
+
+    for (i = 0; i < sizeof(clsid_versions_table)/sizeof(struct clsid_version_t); i++)
+        if (IsEqualGUID(clsid, clsid_versions_table[i].clsid))
+            return clsid_versions_table[i].version;
+
+    ERR("unknown clsid=%s\n", debugstr_guid(clsid));
+    return MSXML_DEFAULT;
+}
 
 /******************************************************************************
  * MSXML ClassFactory
@@ -63,7 +104,7 @@ typedef struct
     IClassFactory IClassFactory_iface;
     LONG ref;
     DOMFactoryCreateInstanceFunc pCreateInstance;
-    GUID clsid;
+    MSXML_VERSION version;
 } DOMFactory;
 
 static inline ClassFactory *ClassFactory_from_IClassFactory(IClassFactory *iface)
@@ -174,7 +215,7 @@ static HRESULT WINAPI DOMClassFactory_CreateInstance(
     if (pOuter)
         return CLASS_E_NOAGGREGATION;
 
-    r = This->pCreateInstance( &This->clsid, pOuter, (void**) &punk );
+    r = This->pCreateInstance( This->version, pOuter, (void**) &punk );
     if (FAILED(r))
         return r;
 
@@ -208,7 +249,7 @@ static HRESULT DOMClassFactory_Create(const GUID *clsid, REFIID riid, void **ppv
 
     ret->IClassFactory_iface.lpVtbl = &DOMClassFactoryVtbl;
     ret->ref = 0;
-    ret->clsid = *clsid;
+    ret->version = get_msxml_version(clsid);
     ret->pCreateInstance = fnCreateInstance;
 
     hres = IClassFactory_QueryInterface(&ret->IClassFactory_iface, riid, ppv);

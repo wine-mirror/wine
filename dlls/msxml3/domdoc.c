@@ -287,7 +287,7 @@ static xmldoc_priv * create_priv(void)
     return priv;
 }
 
-static domdoc_properties * create_properties(const GUID *clsid)
+static domdoc_properties * create_properties(MSXML_VERSION version)
 {
     domdoc_properties *properties = heap_alloc(sizeof(domdoc_properties));
 
@@ -298,26 +298,8 @@ static domdoc_properties * create_properties(const GUID *clsid)
     properties->selectNsStr_len = 0;
 
     /* properties that are dependent on object versions */
-    if (IsEqualCLSID(clsid, &CLSID_DOMDocument30))
-    {
-        properties->version = MSXML3;
-        properties->XPath = FALSE;
-    }
-    else if (IsEqualCLSID(clsid, &CLSID_DOMDocument40))
-    {
-        properties->version = MSXML4;
-        properties->XPath = TRUE;
-    }
-    else if (IsEqualCLSID(clsid, &CLSID_DOMDocument60))
-    {
-        properties->version = MSXML6;
-        properties->XPath = TRUE;
-    }
-    else
-    {
-        properties->version = MSXML_DEFAULT;
-        properties->XPath = FALSE;
-    }
+    properties->version = version;
+    properties->XPath = (version == MSXML4 || version == MSXML6);
 
     return properties;
 }
@@ -556,10 +538,10 @@ static xmlDocPtr doparse(domdoc* This, char const* ptr, int len, xmlCharEncoding
     return doc;
 }
 
-void xmldoc_init(xmlDocPtr doc, const GUID *clsid)
+void xmldoc_init(xmlDocPtr doc, MSXML_VERSION version)
 {
     doc->_private = create_priv();
-    priv_from_xmlDocPtr(doc)->properties = create_properties(clsid);
+    priv_from_xmlDocPtr(doc)->properties = create_properties(version);
 }
 
 LONG xmldoc_add_ref(xmlDocPtr doc)
@@ -3516,19 +3498,19 @@ HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document)
     return S_OK;
 }
 
-HRESULT DOMDocument_create(const GUID *clsid, IUnknown *pUnkOuter, void **ppObj)
+HRESULT DOMDocument_create(MSXML_VERSION version, IUnknown *pUnkOuter, void **ppObj)
 {
     xmlDocPtr xmldoc;
     HRESULT hr;
 
-    TRACE("(%s, %p, %p)\n", debugstr_guid(clsid), pUnkOuter, ppObj);
+    TRACE("(%d, %p, %p)\n", version, pUnkOuter, ppObj);
 
     xmldoc = xmlNewDoc(NULL);
     if(!xmldoc)
         return E_OUTOFMEMORY;
 
     xmldoc->_private = create_priv();
-    priv_from_xmlDocPtr(xmldoc)->properties = create_properties(clsid);
+    priv_from_xmlDocPtr(xmldoc)->properties = create_properties(version);
 
     hr = get_domdoc_from_xmldoc(xmldoc, (IXMLDOMDocument3**)ppObj);
     if(FAILED(hr))
@@ -3558,7 +3540,7 @@ IUnknown* create_domdoc( xmlNodePtr document )
 
 #else
 
-HRESULT DOMDocument_create(const GUID *clsid, IUnknown *pUnkOuter, void **ppObj)
+HRESULT DOMDocument_create(MSXML_VERSION version, IUnknown *pUnkOuter, void **ppObj)
 {
     MESSAGE("This program tried to use a DOMDocument object, but\n"
             "libxml2 support was not present at compile time.\n");
