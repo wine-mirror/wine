@@ -1,0 +1,9 @@
+EXTRADEFS = -DWINE_NO_UNICODE_MACROS
+MODULE    = presentationfontcache.exe
+APPMODE   = -mconsole -municode
+IMPORTS   = advapi32
+
+C_SRCS = \
+	main.c
+
+@MAKE_PROG_RULES@

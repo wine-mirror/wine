@@ -131,6 +131,7 @@ AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
 AddService=PlugPlay,0,PlugPlayService
+AddService=FontCache3.0.0.0,0,FontCacheService
 
 [DefaultInstall.NT.Services]
 AddService=BITS,0,BITSService
@@ -140,6 +141,7 @@ AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
 AddService=PlugPlay,0,PlugPlayService
+AddService=FontCache3.0.0.0,0,FontCacheService
 
 [DefaultInstall.ntamd64.Services]
 AddService=BITS,0,BITSService
@@ -149,6 +151,7 @@ AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
 AddService=PlugPlay,0,PlugPlayService
+AddService=FontCache3.0.0.0,0,FontCacheService
 
 [Strings]
 MciExtStr="Software\Microsoft\Windows NT\CurrentVersion\MCI Extensions"
@@ -2576,6 +2579,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 10,Microsoft.NET\Framework\v2.0.50727,ngen.exe
 10,Microsoft.NET\Framework\v2.0.50727,fusion.dll
 10,Microsoft.NET\Framework\v3.0\windows communication foundation,servicemodelreg.exe
+10,Microsoft.NET\Framework\v3.0\wpf,presentationfontcache.exe
 10,Microsoft.NET\Framework\v4.0.30319,ngen.exe
 10,Microsoft.NET\Framework\v4.0.30319,fusion.dll
 11,gecko\plugin,npmshtml.dll
@@ -3026,6 +3030,14 @@ DisplayName="Plug and Play Service"
 ServiceBinary="%11%\plugplay.exe"
 ServiceType=32
 StartType=2
+ErrorControl=1
+
+[FontCacheService]
+Description="Windows Presentation Foundation font cache service"
+DisplayName="Windows Presentation Foundation Font Cache 3.0.0.0"
+ServiceBinary="%10%\Microsoft.Net\Framework\v3.0\wpf\presentationfontcache.exe"
+ServiceType=16
+StartType=3
 ErrorControl=1
 
 [Services]
