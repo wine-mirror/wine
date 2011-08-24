@@ -2138,9 +2138,8 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
     return CARD_NVIDIA_RIVA_128;
 }
 
-static const struct fragment_pipeline *select_fragment_implementation(struct wined3d_adapter *adapter)
+static const struct fragment_pipeline *select_fragment_implementation(const struct wined3d_gl_info *gl_info)
 {
-    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
     int vs_selected_mode, ps_selected_mode;
 
     select_shader_mode(gl_info, &ps_selected_mode, &vs_selected_mode);
@@ -2599,7 +2598,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
 
     LEAVE_GL();
 
-    adapter->fragment_pipe = select_fragment_implementation(adapter);
+    adapter->fragment_pipe = select_fragment_implementation(gl_info);
     adapter->shader_backend = select_shader_backend(adapter);
     adapter->blitter = select_blit_implementation(adapter);
 
