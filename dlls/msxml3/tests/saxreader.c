@@ -1272,7 +1272,7 @@ static void test_mxwriter_flush(void)
     pos.QuadPart = 0;
     hr = IStream_Seek(stream, pos, STREAM_SEEK_CUR, &pos2);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(pos2.QuadPart == 0, "expected stream beginning");
+    ok(pos2.QuadPart == 0, "expected stream beginning\n");
 
     hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
     ok(hr == S_OK, "got %08x\n", hr);
