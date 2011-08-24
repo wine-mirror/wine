@@ -977,8 +977,8 @@ basic_streambuf_char* __thiscall MSVCP_basic_streambuf_char_vector_dtor(basic_st
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Gnavail, 4)
 streamsize __thiscall basic_streambuf_char__Gnavail(const basic_streambuf_char *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return *this->prpos ? *this->prsize : 0;
 }
 
 /* ?_Gndec@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEPADXZ */
@@ -986,8 +986,10 @@ streamsize __thiscall basic_streambuf_char__Gnavail(const basic_streambuf_char *
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Gndec, 4)
 char* __thiscall basic_streambuf_char__Gndec(basic_streambuf_char *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    (*this->prsize)++;
+    (*this->prpos)--;
+    return *this->prpos;
 }
 
 /* ?_Gninc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEPADXZ */
@@ -995,8 +997,9 @@ char* __thiscall basic_streambuf_char__Gndec(basic_streambuf_char *this)
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Gninc, 4)
 char* __thiscall basic_streambuf_char__Gninc(basic_streambuf_char *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    (*this->prsize)--;
+    return (*this->prpos)++;
 }
 
 /* ?_Gnpreinc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEPADXZ */
@@ -1004,8 +1007,10 @@ char* __thiscall basic_streambuf_char__Gninc(basic_streambuf_char *this)
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Gnpreinc, 4)
 char* __thiscall basic_streambuf_char__Gnpreinc(basic_streambuf_char *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    (*this->prsize)--;
+    (*this->prpos)++;
+    return *this->prpos;
 }
 
 /* ?_Init@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAPAD0PAH001@Z */
@@ -1054,8 +1059,8 @@ void __thiscall basic_streambuf_char__Lock(basic_streambuf_char *this)
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Pnavail, 4)
 streamsize __thiscall basic_streambuf_char__Pnavail(const basic_streambuf_char *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return *this->pwpos ? *this->pwsize : 0;
 }
 
 /* ?_Pninc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEPADXZ */
@@ -1063,8 +1068,9 @@ streamsize __thiscall basic_streambuf_char__Pnavail(const basic_streambuf_char *
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Pninc, 4)
 char* __thiscall basic_streambuf_char__Pninc(basic_streambuf_char *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    (*this->pwsize)--;
+    return (*this->pwpos)++;
 }
 
 /* ?_Sgetn_s@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHPADIH@Z */
