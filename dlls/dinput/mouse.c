@@ -778,31 +778,9 @@ static HRESULT WINAPI SysMouseWImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W iface,
                                                    LPCWSTR lpszUserName,
                                                    DWORD dwFlags)
 {
-    SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
-    int i, has_actions = 0;
+    FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
 
-    for (i=0; i < lpdiaf->dwNumActions; i++)
-    {
-        if ((lpdiaf->rgoAction[i].dwSemantic & DIMOUSE_MASK) == DIMOUSE_MASK)
-        {
-            DWORD obj_id = semantic_to_obj_id(&This->base, lpdiaf->rgoAction[i].dwSemantic);
-
-            lpdiaf->rgoAction[i].dwObjID = obj_id;
-            lpdiaf->rgoAction[i].guidInstance = This->base.guid;
-            lpdiaf->rgoAction[i].dwHow = DIAH_DEFAULT;
-            has_actions = 1;
-        }
-        else if (!(dwFlags & DIDBAM_PRESERVE))
-        {
-            /* we must clear action data belonging to other devices */
-            memset(&lpdiaf->rgoAction[i].guidInstance, 0, sizeof(GUID));
-            lpdiaf->rgoAction[i].dwHow = DIAH_UNMAPPED;
-        }
-    }
-
-    if (!has_actions) return DI_NOEFFECT;
-
-    return IDirectInputDevice8WImpl_BuildActionMap(iface, lpdiaf, lpszUserName, dwFlags);
+    return _build_action_map(iface, lpdiaf, lpszUserName, dwFlags, DIMOUSE_MASK, &c_dfDIMouse2);
 }
 
 static HRESULT WINAPI SysMouseAImpl_BuildActionMap(LPDIRECTINPUTDEVICE8A iface,

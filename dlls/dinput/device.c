@@ -598,6 +598,48 @@ DWORD semantic_to_obj_id(IDirectInputDeviceImpl* This, DWORD dwSemantic)
     return type | (0x0000ff00 & (obj_instance << 8));
 }
 
+HRESULT _build_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf, LPCWSTR lpszUserName, DWORD dwFlags, DWORD devMask, LPCDIDATAFORMAT df)
+{
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    int i, has_actions = 0;
+
+    for (i=0; i < lpdiaf->dwNumActions; i++)
+    {
+        if ((lpdiaf->rgoAction[i].dwSemantic & devMask) == devMask)
+        {
+            DWORD obj_id = semantic_to_obj_id(This, lpdiaf->rgoAction[i].dwSemantic);
+            DWORD type = DIDFT_GETTYPE(obj_id);
+            DWORD inst = DIDFT_GETINSTANCE(obj_id);
+
+            LPDIOBJECTDATAFORMAT odf;
+
+            if (type == DIDFT_PSHBUTTON) type = DIDFT_BUTTON;
+            if (type == DIDFT_RELAXIS) type = DIDFT_AXIS;
+
+            /* Assure that the object exists */
+            odf = dataformat_to_odf_by_type(df, inst, type);
+
+            if (odf != NULL)
+            {
+                lpdiaf->rgoAction[i].dwObjID = obj_id;
+                lpdiaf->rgoAction[i].guidInstance = This->guid;
+                lpdiaf->rgoAction[i].dwHow = DIAH_DEFAULT;
+                has_actions = 1;
+            }
+        }
+        else if (!(dwFlags & DIDBAM_PRESERVE))
+        {
+            /* we must clear action data belonging to other devices */
+            memset(&lpdiaf->rgoAction[i].guidInstance, 0, sizeof(GUID));
+            lpdiaf->rgoAction[i].dwHow = DIAH_UNMAPPED;
+        }
+    }
+
+    if (!has_actions) return DI_NOEFFECT;
+
+    return  IDirectInputDevice8WImpl_BuildActionMap(iface, lpdiaf, lpszUserName, dwFlags);
+}
+
 /******************************************************************************
  *	queue_event - add new event to the ring queue
  */
