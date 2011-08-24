@@ -158,8 +158,8 @@ BAZ=bazbaz
 bazbaz
 set "FOO=bar" should not include the quotes in the variable value
 bar
-@todo_wine@foo
-@todo_wine@''
+foo
+''
 'foo@space@'
 'foo@tab@'
 ------------ Testing variable expansion --------------

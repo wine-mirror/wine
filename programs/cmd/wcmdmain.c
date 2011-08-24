@@ -443,7 +443,7 @@ void WCMD_strsubstW(WCHAR *start, const WCHAR *next, const WCHAR *insert, int le
 /***************************************************************************
  * WCMD_skip_leading_spaces
  *
- *  Return a pointer to the first non-space character of string.
+ *  Return a pointer to the first non-whitespace character of string.
  *  Does not modify the input string.
  */
 WCHAR *WCMD_skip_leading_spaces (WCHAR *string) {
@@ -451,7 +451,7 @@ WCHAR *WCMD_skip_leading_spaces (WCHAR *string) {
   WCHAR *ptr;
 
   ptr = string;
-  while (*ptr == ' ') ptr++;
+  while (*ptr == ' ' || *ptr == '\t') ptr++;
   return ptr;
 }
 
