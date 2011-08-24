@@ -56,7 +56,7 @@ static const char usage[] =
 	"   -D, --define id[=val]      Define preprocessor identifier id=val\n"
 	"   --debug=nn                 Set debug level to 'nn'\n"
 	"   -E                         Preprocess only\n"
-	"   --endianess=e              Set output byte-order e={n[ative], l[ittle], b[ig]}\n"
+	"   --endianness=e             Set output byte-order e={n[ative], l[ittle], b[ig]}\n"
 	"                              (win32 only; default is " ENDIAN "-endian)\n"
 	"   -F TARGET                  Synonym for -b for compatibility with windres\n"
 	"   -fo FILE                   Synonym for -o for compatibility with windres\n"
@@ -176,7 +176,7 @@ enum long_options_values
     LONG_OPT_PREPROCESSOR,
     LONG_OPT_VERSION,
     LONG_OPT_DEBUG,
-    LONG_OPT_ENDIANESS,
+    LONG_OPT_ENDIANNESS,
     LONG_OPT_PEDANTIC,
     LONG_OPT_VERIFY_TRANSL
 };
@@ -186,7 +186,7 @@ static const char short_options[] =
 static const struct option long_options[] = {
 	{ "debug", 1, NULL, LONG_OPT_DEBUG },
 	{ "define", 1, NULL, 'D' },
-	{ "endianess", 1, NULL, LONG_OPT_ENDIANESS },
+	{ "endianness", 1, NULL, LONG_OPT_ENDIANNESS },
 	{ "help", 0, NULL, 'h' },
 	{ "include-dir", 1, NULL, 'I' },
 	{ "input", 1, NULL, 'i' },
@@ -396,7 +396,7 @@ int main(int argc,char *argv[])
 		case LONG_OPT_DEBUG:
 			debuglevel = strtol(optarg, NULL, 0);
 			break;
-		case LONG_OPT_ENDIANESS:
+		case LONG_OPT_ENDIANNESS:
 			switch(optarg[0])
 			{
 			case 'n':

@@ -37,7 +37,7 @@ Set debug level to \fInn\fR. The value is a bitmask consisting of
 1=verbose, 2=dump internals, 4=resource parser trace, 8=preprocessor
 messages, 16=preprocessor scanner and 32=preprocessor parser trace.
 .TP
-.I \fB\-\-endianess\fR=\fIe\fR
+.I \fB\-\-endianness\fR=\fIe\fR
 Win32 only; set output byte\-ordering, where \fIe\fR is one of n[ative],
 l[ittle] or b[ig].  Only resources in source-form can be reordered. Native
 ordering depends on the system on which \fBwrc\fR was built. You can see
