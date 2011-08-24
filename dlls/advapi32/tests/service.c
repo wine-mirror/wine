@@ -949,6 +949,12 @@ static void test_query_svc(void)
     CloseServiceHandle(svc_handle);
 
     /* More or less the same tests for QueryServiceStatusEx */
+    if (!pQueryServiceStatusEx)
+    {
+        win_skip( "QueryServiceStatusEx not available\n" );
+        CloseServiceHandle(scm_handle);
+        return;
+    }
 
     /* Open service with not enough rights to query the status */
     svc_handle = OpenServiceA(scm_handle, spooler, STANDARD_RIGHTS_READ);
@@ -2065,10 +2071,13 @@ static DWORD try_start_stop(SC_HANDLE svc_handle, const char* name, int todo)
     le1 = GetLastError();
     ok(!ret, "%s: StartServiceA() should have failed\n", name);
 
-    ret = pQueryServiceStatusEx(svc_handle, SC_STATUS_PROCESS_INFO, (BYTE*)&statusproc, sizeof(statusproc), &needed);
-    ok(ret, "%s: QueryServiceStatusEx() failed le=%u\n", name, GetLastError());
-    todo_wine ok(statusproc.dwCurrentState == SERVICE_STOPPED, "%s: should be stopped state=%x\n", name, statusproc.dwCurrentState);
-    todo_wine ok(statusproc.dwProcessId == 0, "%s: ProcessId should be 0 instead of %x\n", name, statusproc.dwProcessId);
+    if (pQueryServiceStatusEx)
+    {
+        ret = pQueryServiceStatusEx(svc_handle, SC_STATUS_PROCESS_INFO, (BYTE*)&statusproc, sizeof(statusproc), &needed);
+        ok(ret, "%s: QueryServiceStatusEx() failed le=%u\n", name, GetLastError());
+        todo_wine ok(statusproc.dwCurrentState == SERVICE_STOPPED, "%s: should be stopped state=%x\n", name, statusproc.dwCurrentState);
+        todo_wine ok(statusproc.dwProcessId == 0, "%s: ProcessId should be 0 instead of %x\n", name, statusproc.dwProcessId);
+    }
 
     ret = StartServiceA(svc_handle, 0, NULL);
     le2 = GetLastError();
