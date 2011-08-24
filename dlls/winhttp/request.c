@@ -2175,6 +2175,7 @@ struct winhttp_request
     DWORD bytes_read;
     DWORD error;
     DWORD logon_policy;
+    DWORD disable_feature;
     LONG resolve_timeout;
     LONG connect_timeout;
     LONG send_timeout;
@@ -2479,6 +2480,8 @@ static void initialize_request( struct winhttp_request *request )
     request->bytes_available = 0;
     request->bytes_read = 0;
     request->error = ERROR_SUCCESS;
+    request->logon_policy = WINHTTP_AUTOLOGON_SECURITY_LEVEL_MEDIUM;
+    request->disable_feature = WINHTTP_DISABLE_AUTHENTICATION;
     request->proxy.dwAccessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
     request->proxy.lpszProxy = NULL;
     request->proxy.lpszProxyBypass = NULL;
@@ -2507,7 +2510,7 @@ static HRESULT WINAPI winhttp_request_Open(
     HINTERNET hsession = NULL, hconnect = NULL, hrequest;
     URL_COMPONENTS uc;
     WCHAR *hostname, *path = NULL, *verb = NULL;
-    DWORD err = ERROR_OUTOFMEMORY, len, flags = 0, request_flags = 0, disable_flags;
+    DWORD err = ERROR_OUTOFMEMORY, len, flags = 0, request_flags = 0;
 
     TRACE("%p, %s, %s, %s\n", request, debugstr_w(method), debugstr_w(url),
           debugstr_variant(&async));
@@ -2555,12 +2558,6 @@ static HRESULT WINAPI winhttp_request_Open(
         request_flags |= WINHTTP_FLAG_SECURE;
     }
     if (!(hrequest = WinHttpOpenRequest( hconnect, method, path, NULL, NULL, acceptW, request_flags )))
-    {
-        err = get_last_error();
-        goto error;
-    }
-    disable_flags = WINHTTP_DISABLE_AUTHENTICATION;
-    if (!WinHttpSetOption( hrequest, WINHTTP_OPTION_DISABLE_FEATURE, &disable_flags, sizeof(disable_flags) ))
     {
         err = get_last_error();
         goto error;
@@ -2851,6 +2848,11 @@ static HRESULT request_send( struct winhttp_request *request )
     {
         return HRESULT_FROM_WIN32( get_last_error() );
     }
+    if (!WinHttpSetOption( request->hrequest, WINHTTP_OPTION_DISABLE_FEATURE, &request->disable_feature,
+                           sizeof(request->disable_feature) ))
+    {
+        return HRESULT_FROM_WIN32( get_last_error() );
+    }
     if (!WinHttpSetTimeouts( request->hrequest,
                              request->resolve_timeout,
                              request->connect_timeout,
@@ -3127,8 +3129,29 @@ static HRESULT WINAPI winhttp_request_put_Option(
     WinHttpRequestOption option,
     VARIANT value )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    HRESULT hr = S_OK;
+
+    TRACE("%p, %u, %s\n", request, option, debugstr_variant(&value));
+
+    EnterCriticalSection( &request->cs );
+    switch (option)
+    {
+    case WinHttpRequestOption_EnableRedirects:
+    {
+        if (V_BOOL( &value ))
+            request->disable_feature &= ~WINHTTP_DISABLE_REDIRECTS;
+        else
+            request->disable_feature |= WINHTTP_DISABLE_REDIRECTS;
+        break;
+    }
+    default:
+        FIXME("unimplemented option %u\n", option);
+        hr = E_NOTIMPL;
+        break;
+    }
+    LeaveCriticalSection( &request->cs );
+    return hr;
 }
 
 /* critical section must be held */
