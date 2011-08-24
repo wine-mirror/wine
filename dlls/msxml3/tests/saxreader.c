@@ -1191,6 +1191,34 @@ static void test_mxwriter_properties(void)
     ok(!lstrcmpW(str, _bstr_("1.0")), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
+    /* store version string as is */
+    hr = IMXWriter_put_version(writer, NULL);
+    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+
+    hr = IMXWriter_put_version(writer, _bstr_("1.0"));
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IMXWriter_put_version(writer, _bstr_(""));
+    ok(hr == S_OK, "got %08x\n", hr);
+    hr = IMXWriter_get_version(writer, &str);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(!lstrcmpW(str, _bstr_("")), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hr = IMXWriter_put_version(writer, _bstr_("a.b"));
+    ok(hr == S_OK, "got %08x\n", hr);
+    hr = IMXWriter_get_version(writer, &str);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(!lstrcmpW(str, _bstr_("a.b")), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hr = IMXWriter_put_version(writer, _bstr_("2.0"));
+    ok(hr == S_OK, "got %08x\n", hr);
+    hr = IMXWriter_get_version(writer, &str);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(!lstrcmpW(str, _bstr_("2.0")), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
     IMXWriter_Release(writer);
     free_bstrs();
 }

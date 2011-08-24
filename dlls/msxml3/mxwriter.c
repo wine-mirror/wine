@@ -1,7 +1,7 @@
 /*
  *    MXWriter implementation
  *
- * Copyright 2011 Nikolay Sivov for CodeWeaversы
+ * Copyright 2011 Nikolay Sivov for CodeWeavers
  * Copyright 2011 Thomas Mullaly
  *
  * This library is free software; you can redistribute it and/or
@@ -525,8 +525,15 @@ static HRESULT WINAPI mxwriter_get_omitXMLDeclaration(IMXWriter *iface, VARIANT_
 static HRESULT WINAPI mxwriter_put_version(IMXWriter *iface, BSTR version)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
-    FIXME("(%p)->(%s)\n", This, debugstr_w(version));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(version));
+
+    if (!version) return E_INVALIDARG;
+
+    SysFreeString(This->version);
+    This->version = SysAllocString(version);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mxwriter_get_version(IMXWriter *iface, BSTR *version)
