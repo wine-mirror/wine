@@ -2162,9 +2162,8 @@ static const struct wined3d_shader_backend_ops *select_shader_backend(const stru
     return &none_shader_backend;
 }
 
-static const struct blit_shader *select_blit_implementation(struct wined3d_adapter *adapter)
+static const struct blit_shader *select_blit_implementation(const struct wined3d_gl_info *gl_info)
 {
-    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
     int vs_selected_mode, ps_selected_mode;
 
     select_shader_mode(gl_info, &ps_selected_mode, &vs_selected_mode);
@@ -2600,7 +2599,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
 
     adapter->fragment_pipe = select_fragment_implementation(gl_info);
     adapter->shader_backend = select_shader_backend(gl_info);
-    adapter->blitter = select_blit_implementation(adapter);
+    adapter->blitter = select_blit_implementation(gl_info);
 
     adapter->fragment_pipe->get_caps(gl_info, &fragment_caps);
     gl_info->limits.texture_stages = fragment_caps.MaxTextureBlendStages;
