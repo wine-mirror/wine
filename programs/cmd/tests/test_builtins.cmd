@@ -325,6 +325,11 @@ cd
 cd ..\..
 cd
 rd /Q/s foobar
+mkdir foobar
+cd /d@tab@foobar
+cd
+cd ..
+rd /q/s foobar
 
 echo ------------ Testing type ------------
 echo bar> foobaz
@@ -465,6 +470,7 @@ rd /s/Q foobar
 echo ...for /L
 rem Some cases loop forever writing 0s, like e.g. (1,0,1), (1,a,3) or (a,b,c); those can't be tested here
 for /L %%i in (1,2,0) do echo %%i
+for@tab@/L %%i in (1,2,0) do echo %%i
 for /L %%i in (1,2,6) do echo %%i
 for /l %%i in (1 ,2,6) do echo %%i
 for /L %%i in (a,2,3) do echo %%i

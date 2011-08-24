@@ -247,6 +247,7 @@ Current dir: @pwd@\foobar@or_broken@Current dir:@space@
 @pwd@\foobar\bar bak
 @pwd@\foobar\bar bak
 @pwd@
+@pwd@\foobar
 ------------ Testing type ------------
 
 @pwd@>type foobaz@space@

@@ -2098,7 +2098,8 @@ void WCMD_setshow_default (const WCHAR *command) {
                      NORM_IGNORECASE | SORT_STRINGSORT,
                      command, 2, parmD, -1) == CSTR_EQUAL) {
     command += 2;
-    while (*command && *command==' ') command++;
+    while (*command && (*command==' ' || *command=='\t'))
+      command++;
   }
 
   GetCurrentDirectoryW(sizeof(cwd)/sizeof(WCHAR), cwd);
@@ -2309,7 +2310,7 @@ void WCMD_setshow_env (WCHAR *s) {
     DWORD count;
 
     s += 2;
-    while (*s && *s==' ') s++;
+    while (*s && (*s==' ' || *s=='\t')) s++;
     if (*s=='\"')
         WCMD_opt_s_strip_quotes(s);
 
@@ -2406,7 +2407,7 @@ void WCMD_setshow_prompt (void) {
   }
   else {
     s = param1;
-    while ((*s == '=') || (*s == ' ')) s++;
+    while ((*s == '=') || (*s == ' ') || (*s == '\t')) s++;
     if (strlenW(s) == 0) {
       SetEnvironmentVariableW(promptW, NULL);
     }
