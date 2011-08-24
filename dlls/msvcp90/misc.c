@@ -87,11 +87,6 @@ void CDECL mutex_mutex_dtor(mutex *m)
     mutex_dtor(m);
 }
 
-#define _LOCK_LOCALE 0
-#define _LOCK_MALLOC 1
-#define _LOCK_STREAM 2
-#define _LOCK_DEBUG 3
-#define _MAX_LOCK 4
 static CRITICAL_SECTION lockit_cs[_MAX_LOCK];
 
 /* ?_Lockit_ctor@_Lockit@std@@SAXH@Z */

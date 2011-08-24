@@ -91,8 +91,10 @@ static const vtable_ptr MSVCP_locale_facet_vtable[];
 DEFINE_THISCALL_WRAPPER(locale_id_ctor_id, 8)
 locale_id* __thiscall locale_id_ctor_id(locale_id *this, MSVCP_size_t id)
 {
-    FIXME("(%p %lu) stub\n", this, id);
-    return NULL;
+    TRACE("(%p %lu)\n", this, id);
+
+    this->id = id;
+    return this;
 }
 
 /* ??_Fid@locale@std@@QAEXXZ */
@@ -100,8 +102,10 @@ locale_id* __thiscall locale_id_ctor_id(locale_id *this, MSVCP_size_t id)
 DEFINE_THISCALL_WRAPPER(locale_id_ctor, 4)
 locale_id* __thiscall locale_id_ctor(locale_id *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+
+    this->id = 0;
+    return this;
 }
 
 /* ??Bid@locale@std@@QAEIXZ */
@@ -109,16 +113,25 @@ locale_id* __thiscall locale_id_ctor(locale_id *this)
 DEFINE_THISCALL_WRAPPER(locale_id_operator_size_t, 4)
 MSVCP_size_t __thiscall locale_id_operator_size_t(locale_id *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    _Lockit lock;
+
+    TRACE("(%p)\n", this);
+
+    if(!this->id) {
+        _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+        this->id = ++locale_id__Id_cnt;
+        _Lockit_dtor(&lock);
+    }
+
+    return this->id;
 }
 
 /* ?_Id_cnt_func@id@locale@std@@CAAAHXZ */
 /* ?_Id_cnt_func@id@locale@std@@CAAEAHXZ */
 int* __cdecl locale_id__Id_cnt_func(void)
 {
-    FIXME("stub\n");
-    return NULL;
+    TRACE("\n");
+    return &locale_id__Id_cnt;
 }
 
 /* ??_Ffacet@locale@std@@QAEXXZ */
