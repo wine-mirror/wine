@@ -811,7 +811,7 @@ static void surface_realize_palette(struct wined3d_surface *surface)
 
     /* Propagate the changes to the drawable when we have a palette. */
     if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
-        surface_load_location(surface, SFLAG_INDRAWABLE, NULL);
+        surface_load_location(surface, surface->draw_binding, NULL);
 }
 
 static HRESULT surface_draw_overlay(struct wined3d_surface *surface)
