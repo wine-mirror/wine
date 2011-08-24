@@ -1830,7 +1830,7 @@ static const WCHAR szGuid[] = { '{','0','1','0','2','0','3','0','4','-',
 static const WCHAR szGuid2[] = { '{','0','1','0','2','0','3','0','4','-',
   '0','5','0','6','-'  ,'0','7','0','8','-','0','9','0','A','-',
   '0','B','0','C','0','D','0','E','0','F','0','A',']','\0' };
-DEFINE_GUID(IID_Endianess, 0x01020304, 0x0506, 0x0708, 0x09, 0x0A, 0x0B,
+DEFINE_GUID(IID_Endianness, 0x01020304, 0x0506, 0x0708, 0x09, 0x0A, 0x0B,
             0x0C, 0x0D, 0x0E, 0x0F, 0x0A);
 
 static void test_RtlGUIDFromString(void)
@@ -1844,7 +1844,7 @@ static void test_RtlGUIDFromString(void)
 
   ret = pRtlGUIDFromString(&str, &guid);
   ok(ret == 0, "expected ret=0, got 0x%0x\n", ret);
-  ok(IsEqualGUID(&guid, &IID_Endianess), "Endianess broken\n");
+  ok(IsEqualGUID(&guid, &IID_Endianness), "Endianness broken\n");
 
   str.Length = str.MaximumLength = sizeof(szGuid2) - sizeof(WCHAR);
   str.Buffer = (LPWSTR)szGuid2;
@@ -1861,9 +1861,9 @@ static void test_RtlStringFromGUID(void)
   str.Length = str.MaximumLength = 0;
   str.Buffer = NULL;
 
-  ret = pRtlStringFromGUID(&IID_Endianess, &str);
+  ret = pRtlStringFromGUID(&IID_Endianness, &str);
   ok(ret == 0, "expected ret=0, got 0x%0x\n", ret);
-  ok(str.Buffer && !lstrcmpiW(str.Buffer, szGuid), "Endianess broken\n");
+  ok(str.Buffer && !lstrcmpiW(str.Buffer, szGuid), "Endianness broken\n");
   pRtlFreeUnicodeString(&str);
 }
 
