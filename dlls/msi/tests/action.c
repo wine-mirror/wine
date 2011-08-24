@@ -4721,6 +4721,12 @@ static void test_create_remove_folder(void)
 {
     UINT r;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     CreateDirectoryA("msitest", NULL);
     CreateDirectoryA("msitest\\first", NULL);
     CreateDirectoryA("msitest\\second", NULL);
