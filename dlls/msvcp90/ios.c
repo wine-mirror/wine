@@ -129,9 +129,14 @@ typedef struct {
 typedef struct {
     ios_base child;
     basic_streambuf_char *strbuf;
-    /*basic_ostream_char*/void *stream;
+    struct basic_ostream_char *stream;
     char fillch;
 } basic_ios_char;
+
+typedef struct {
+    const vtable_ptr *vtable;
+    basic_ios_char child;
+} basic_ostream_char;
 
 /* ??_7ios_base@std@@6B@ */
 extern const vtable_ptr MSVCP_ios_base_vtable;
@@ -141,6 +146,9 @@ extern const vtable_ptr MSVCP_basic_ios_char_vtable;
 
 /* ??_7?$basic_streambuf@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_streambuf_char_vtable;
+
+/* ??_7?$basic_ostream@DU?$char_traits@D@std@@@std@@6B@ */
+extern const vtable_ptr MSVCP_basic_ostream_char_vtable;
 
 static const type_info ios_base_type_info = {
     &MSVCP_ios_base_vtable,
@@ -263,6 +271,43 @@ const rtti_object_locator basic_streambuf_char_rtti = {
     &basic_streambuf_char_hierarchy
 };
 
+static const type_info basic_ostream_char_type_info = {
+    &MSVCP_basic_ostream_char_vtable,
+    NULL,
+    ".?AV?$basic_ostream@DU?$char_traits@D@std@@@std@@"
+};
+
+static const rtti_base_descriptor basic_ostream_char_rtti_base_descriptor = {
+    &basic_ostream_char_type_info,
+    3,
+    { 0, -1, 0},
+    64
+};
+
+static const rtti_base_array basic_ostream_char_rtti_base_array = {
+    {
+        &basic_ostream_char_rtti_base_descriptor,
+        &basic_ios_char_rtti_base_descriptor,
+        &ios_base_rtti_base_descriptor,
+        &iosb_rtti_base_descriptor
+    }
+};
+
+static const rtti_object_hierarchy basic_ostream_char_hierarchy = {
+        0,
+        0,
+        4,
+        &basic_ostream_char_rtti_base_array
+};
+
+const rtti_object_locator basic_ostream_char_rtti = {
+    0,
+    4,
+    0,
+    &basic_ostream_char_type_info,
+    &basic_ostream_char_hierarchy
+};
+
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
@@ -282,6 +327,7 @@ void __asm_dummy_vtables(void) {
             "\t.long " THISCALL_NAME(basic_streambuf_char_setbuf) "\n"
             "\t.long " THISCALL_NAME(basic_streambuf_char_sync) "\n"
             "\t.long " THISCALL_NAME(basic_streambuf_char_imbue) "\n");
+    __ASM_VTABLE(basic_ostream_char, "");
 #ifndef __GNUC__
 }
 #endif
@@ -558,7 +604,7 @@ locale __thiscall ios_base_imbue(ios_base *this, const locale *loc)
 /* ?iword@ios_base@std@@QAEAAJH@Z */
 /* ?iword@ios_base@std@@QEAAAEAJH@Z */
 DEFINE_THISCALL_WRAPPER(ios_base_iword, 8)
-MSVCP_long* __thiscall ios_base_iword(ios_base *this, int index)
+LONG* __thiscall ios_base_iword(ios_base *this, int index)
 {
     FIXME("(%p %d) stub\n", this, index);
     return NULL;
@@ -842,7 +888,7 @@ void __thiscall basic_ios_char_setstate(basic_ios_char *this, unsigned int state
 /* ?tie@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEPAV?$basic_ostream@DU?$char_traits@D@std@@@2@PAV32@@Z */
 /* ?tie@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAPEAV?$basic_ostream@DU?$char_traits@D@std@@@2@PEAV32@@Z */
 DEFINE_THISCALL_WRAPPER(basic_ios_char_tie_set, 8)
-/*basic_ostream_char*/void* __thiscall basic_ios_char_tie_set(basic_ios_char *this, /*basic_ostream_char*/void *ostream)
+basic_ostream_char* __thiscall basic_ios_char_tie_set(basic_ios_char *this, basic_ostream_char *ostream)
 {
     FIXME("(%p %p) stub\n", this, ostream);
     return NULL;
@@ -851,7 +897,7 @@ DEFINE_THISCALL_WRAPPER(basic_ios_char_tie_set, 8)
 /* ?tie@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEPAV?$basic_ostream@DU?$char_traits@D@std@@@2@XZ */
 /* ?tie@?$basic_ios@DU?$char_traits@D@std@@@std@@QEBAPEAV?$basic_ostream@DU?$char_traits@D@std@@@2@XZ */
 DEFINE_THISCALL_WRAPPER(basic_ios_char_tie_get, 4)
-/*basic_ostream_char*/void* __thiscall basic_ios_char_tie_get(const basic_ios_char *this)
+basic_ostream_char* __thiscall basic_ios_char_tie_get(const basic_ios_char *this)
 {
     FIXME("(%p)\n", this);
     return NULL;
@@ -1384,4 +1430,250 @@ streamsize __thiscall basic_streambuf_char_xsputn(basic_streambuf_char *this, co
 {
     FIXME("(%p %p %lu) stub\n", this, ptr, count);
     return 0;
+}
+
+/* ??0?$basic_ostream@DU?$char_traits@D@std@@@std@@QAE@PAV?$basic_streambuf@DU?$char_traits@D@std@@@1@_N@Z */
+/* ??0?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAA@PEAV?$basic_streambuf@DU?$char_traits@D@std@@@1@_N@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_ctor, 12)
+basic_ostream_char* __thiscall basic_ostream_char_ctor(basic_ostream_char *this, basic_streambuf_char *strbuf, MSVCP_bool isstd)
+{
+    FIXME("(%p %p %d) stub\n", this, strbuf, isstd);
+
+    this->vtable = &MSVCP_basic_ostream_char_vtable+1;
+    this->child.child.vtable = &MSVCP_basic_ostream_char_vtable;
+    return NULL;
+}
+
+/* ??0?$basic_ostream@DU?$char_traits@D@std@@@std@@QAE@W4_Uninitialized@1@_N@Z */
+/* ??0?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAA@W4_Uninitialized@1@_N@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_uninitialized, 12)
+basic_ostream_char* __thiscall basic_ostream_char_uninitialized(basic_ostream_char *this, int uninitialized, MSVCP_bool addstd)
+{
+    FIXME("(%p %d %x) stub\n", this, uninitialized, addstd);
+    return NULL;
+}
+
+/* ??1?$basic_ostream@DU?$char_traits@D@std@@@std@@UAE@XZ */
+/* ??1?$basic_ostream@DU?$char_traits@D@std@@@std@@UEAA@XZ */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_dtor, 4)
+void __thiscall basic_ostream_char_dtor(basic_ostream_char *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_ostream_char_vector_dtor, 8)
+basic_ostream_char* __thiscall MSVCP_basic_ostream_char_vector_dtor(basic_ostream_char *this, unsigned int flags)
+{
+    TRACE("(%p %x) stub\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            basic_ostream_char_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        basic_ostream_char_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@F@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@F@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_short, 8)
+basic_ostream_char* __thiscall basic_ostream_char_print_short(basic_ostream_char *this, short val)
+{
+    FIXME("(%p %d) stub\n", this, val);
+    return NULL;
+}
+
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@G@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@G@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_ushort, 8)
+basic_ostream_char* __thiscall basic_ostream_char_print_ushort(basic_ostream_char *this, unsigned short val)
+{
+    FIXME("(%p %d) stub\n", this, val);
+    return NULL;
+}
+
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@H@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@H@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_int, 8)
+basic_ostream_char* __thiscall basic_ostream_char_print_int(basic_ostream_char *this, int val)
+{
+    FIXME("(%p %d) stub\n", this, val);
+    return NULL;
+}
+
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@I@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@I@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_uint, 8)
+basic_ostream_char* __thiscall basic_ostream_char_print_uint(basic_ostream_char *this, unsigned int val)
+{
+    FIXME("(%p %d) stub\n", this, val);
+    return NULL;
+}
+
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@J@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@J@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_long, 8)
+basic_ostream_char* __thiscall basic_ostream_char_print_long(basic_ostream_char *this, LONG val)
+{
+    FIXME("(%p %d) stub\n", this, val);
+    return NULL;
+}
+
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@K@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@K@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_ulong, 8)
+basic_ostream_char* __thiscall basic_ostream_char_print_ulong(basic_ostream_char *this, ULONG val)
+{
+    FIXME("(%p %d) stub\n", this, val);
+    return NULL;
+}
+
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@M@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@M@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_float, 8)
+basic_ostream_char* __thiscall basic_ostream_char_print_float(basic_ostream_char *this, float val)
+{
+    FIXME("(%p %f) stub\n", this, val);
+    return NULL;
+}
+
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@N@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@N@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_double, 12)
+basic_ostream_char* __thiscall basic_ostream_char_print_double(basic_ostream_char *this, double val)
+{
+    FIXME("(%p %lf) stub\n", this, val);
+    return NULL;
+}
+
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@PAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@PEAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_streambuf, 8)
+basic_ostream_char* __thiscall basic_ostream_char_print_streambuf(basic_ostream_char *this, basic_streambuf_char *val)
+{
+    FIXME("(%p %p) stub\n", this, val);
+    return NULL;
+}
+
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@PBX@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@PEBX@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_ptr, 8)
+basic_ostream_char* __thiscall basic_ostream_char_print_ptr(basic_ostream_char *this, const void *val)
+{
+    FIXME("(%p %p) stub\n", this, val);
+    return NULL;
+}
+
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@_J@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_int64, 12)
+basic_ostream_char* __thiscall basic_ostream_char_print_int64(basic_ostream_char *this, __int64 val)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@_K@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@_K@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_uint64, 12)
+basic_ostream_char* __thiscall basic_ostream_char_print_uint64(basic_ostream_char *this, unsigned __int64 val)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@_N@Z */
+/* ??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@_N@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_print_bool, 8)
+basic_ostream_char* __thiscall basic_ostream_char_print_bool(basic_ostream_char *this, MSVCP_bool val)
+{
+    FIXME("(%p %x) stub\n", this, val);
+    return NULL;
+}
+
+/* ?_Osfx@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEXXZ */
+/* ?_Osfx@?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char__Osfx, 4)
+void __thiscall basic_ostream_char__Osfx(basic_ostream_char *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?flush@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV12@XZ */
+/* ?flush@?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV12@XZ */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_flush, 4)
+basic_ostream_char* __thiscall basic_ostream_char_flush(basic_ostream_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?opfx@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAE_NXZ */
+/* ?opfx@?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAA_NXZ */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_opfx, 4)
+MSVCP_bool __thiscall basic_ostream_char_opfx(basic_ostream_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?osfx@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEXXZ */
+/* ?osfx@?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_osfx, 4)
+void __thiscall basic_ostream_char_osfx(basic_ostream_char *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?put@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV12@D@Z */
+/* ?put@?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV12@D@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_put, 8)
+basic_ostream_char* __thiscall basic_ostream_char_put(basic_ostream_char *this, char ch)
+{
+    FIXME("(%p %c) stub\n", this, ch);
+    return NULL;
+}
+
+/* ?seekp@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV12@JH@Z */
+/* ?seekp@?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV12@_JH@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_seekp, 12)
+basic_ostream_char* __thiscall basic_ostream_char_seekp(basic_ostream_char *this, streamoff off, int way)
+{
+    FIXME("(%p %lu %d) stub\n", this, off, way);
+    return NULL;
+}
+
+/* ?seekp@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV12@V?$fpos@H@2@@Z */
+/* ?seekp@?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV12@V?$fpos@H@2@@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_seekp_fpos, 28)
+basic_ostream_char* __thiscall basic_ostream_char_seekp_fpos(basic_ostream_char *this, fpos_int pos)
+{
+    FIXME("(%p %s) stub\n", this, debugstr_fpos_int(&pos));
+    return NULL;
+}
+
+/* ?tellp@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAE?AV?$fpos@H@2@XZ */
+/* ?tellp@?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAA?AV?$fpos@H@2@XZ */
+DEFINE_THISCALL_WRAPPER_RETPTR(basic_ostream_char_tellp, 4)
+fpos_int __thiscall basic_ostream_char_tellp(basic_ostream_char *this)
+{
+    fpos_int ret = { 0 }; /* FIXME */
+    FIXME("(%p) stub\n", this);
+    return ret;
+}
+
+/* ?write@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV12@PBDH@Z */
+/* ?write@?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV12@PEBD_J@Z */
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_write, 12)
+basic_ostream_char* __thiscall basic_ostream_char_write(basic_ostream_char *this, const char *str, streamsize count)
+{
+    FIXME("(%p %s %lu) stub\n", this, debugstr_a(str), count);
+    return NULL;
 }

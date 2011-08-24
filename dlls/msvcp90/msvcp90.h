@@ -20,7 +20,6 @@
 #include "windef.h"
 
 typedef unsigned char MSVCP_bool;
-typedef int MSVCP_long;
 typedef SIZE_T MSVCP_size_t;
 typedef SIZE_T streamoff;
 typedef SIZE_T streamsize;
@@ -135,7 +134,7 @@ typedef struct _rtti_base_descriptor
 
 typedef struct _rtti_base_array
 {
-    const rtti_base_descriptor *bases[3]; /* First element is the class itself */
+    const rtti_base_descriptor *bases[4]; /* First element is the class itself */
 } rtti_base_array;
 
 typedef struct _rtti_object_hierarchy
