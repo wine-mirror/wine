@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-07-26 20:25+0100\n"
+"PO-Revision-Date: 2011-08-24 14:25+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -8843,13 +8843,12 @@ msgstr ""
 "Veuillez utiliser un autre éditeur."
 
 #: notepad.rc:81
-#, fuzzy
 msgid ""
 "You did not enter any text.\n"
 "Please type something and try again."
 msgstr ""
 "Vous n'avez pas entré de texte.\n"
-"Veuillez taper quelque chose et recommencer"
+"Veuillez taper quelque chose et recommencer."
 
 #: notepad.rc:83
 msgid ""
@@ -8937,21 +8936,19 @@ msgstr "Indicateur &CoCreateInstance"
 
 #: oleview.rc:41
 msgid "&In-process server"
-msgstr ""
+msgstr "&Serveur intégré au processus"
 
 #: oleview.rc:42
 msgid "In-process &handler"
-msgstr ""
+msgstr "&Gestionnaire intégré au processus"
 
 #: oleview.rc:43
-#, fuzzy
 msgid "&Local server"
-msgstr "Erreur locale"
+msgstr "Serveur &local"
 
 #: oleview.rc:44
-#, fuzzy
 msgid "&Remote server"
-msgstr "&Supprimer"
+msgstr "Serveur &distant"
 
 #: oleview.rc:47
 msgid "View &Type information"
@@ -9105,20 +9102,21 @@ msgstr ""
 #: oleview.rc:113
 msgid "Ask for an in-process server when calling CoGetClassObject"
 msgstr ""
+"Requérir un serveur intégré au processus lors de l'appel à CoGetClassObject"
 
 #: oleview.rc:114
 msgid "Ask for an in-process handler when calling CoGetClassObject"
 msgstr ""
+"Requérir un gestionnaire intégré au processus lors de l'appel à "
+"CoGetClassObject"
 
 #: oleview.rc:115
-#, fuzzy
 msgid "Ask for a local server when calling CoGetClassObject"
-msgstr "Utiliser CLSCTX_LOCAL_SERVER lors de l'appel à CoGetClassObject"
+msgstr "Requérir un serveur local lors de l'appel à CoGetClassObject"
 
 #: oleview.rc:116
-#, fuzzy
 msgid "Ask for a remote server when calling CoGetClassObject"
-msgstr "Utiliser CLSCTX_LOCAL_SERVER lors de l'appel à CoGetClassObject"
+msgstr "Requérir un serveur distant lors de l'appel à CoGetClassObject"
 
 #: oleview.rc:128
 msgid "ObjectClasses"
