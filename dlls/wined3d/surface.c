@@ -1866,7 +1866,7 @@ static void surface_unload(struct wined3d_resource *resource)
     {
         /* Load the surface into system memory */
         surface_load_location(surface, SFLAG_INSYSMEM, NULL);
-        surface_modify_location(surface, SFLAG_INDRAWABLE, FALSE);
+        surface_modify_location(surface, surface->draw_binding, FALSE);
     }
     surface_modify_location(surface, SFLAG_INTEXTURE, FALSE);
     surface_modify_location(surface, SFLAG_INSRGBTEX, FALSE);
