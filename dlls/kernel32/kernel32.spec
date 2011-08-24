@@ -236,8 +236,8 @@
 @ stdcall CreateJobObjectW(ptr wstr)
 # @ stub CreateJobSet
 @ stub CreateKernelThread
-@ stdcall CreateMailslotA(ptr long long ptr)
-@ stdcall CreateMailslotW(ptr long long ptr)
+@ stdcall CreateMailslotA(str long long ptr)
+@ stdcall CreateMailslotW(wstr long long ptr)
 @ stdcall CreateMemoryResourceNotification(long)
 @ stdcall CreateMutexA(ptr long str)
 @ stdcall CreateMutexExA(ptr str long long)
