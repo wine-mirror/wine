@@ -984,7 +984,7 @@ static void surface_unmap(struct wined3d_surface *surface)
             surface->flags |= SFLAG_INSYSMEM;
         }
 
-        surface_load_location(surface, SFLAG_INDRAWABLE, fullsurface ? NULL : &surface->dirtyRect);
+        surface_load_location(surface, surface->draw_binding, fullsurface ? NULL : &surface->dirtyRect);
 
         /* Partial rectangle tracking is not commonly implemented, it is only
          * done for render targets. INSYSMEM was set before to tell
