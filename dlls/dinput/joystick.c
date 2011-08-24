@@ -445,6 +445,9 @@ HRESULT WINAPI JoystickWGenericImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W iface,
         DWORD type = 0x000000ff & (lpdiaf->rgoAction[i].dwSemantic >> 8);
         DWORD genre = 0xff000000 & lpdiaf->rgoAction[i].dwSemantic;
 
+        /* Don't touch an user configured action */
+        if (lpdiaf->rgoAction[i].dwHow == DIAH_USERCONFIG) continue;
+
         /* Only consider actions of the right genre */
         if (lpdiaf->dwGenre != genre && genre != DIGENRE_ANY) continue;
 

@@ -605,6 +605,9 @@ HRESULT _build_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf,
 
     for (i=0; i < lpdiaf->dwNumActions; i++)
     {
+        /* Don't touch an user configured action */
+        if (lpdiaf->rgoAction[i].dwHow == DIAH_USERCONFIG) continue;
+
         if ((lpdiaf->rgoAction[i].dwSemantic & devMask) == devMask)
         {
             DWORD obj_id = semantic_to_obj_id(This, lpdiaf->rgoAction[i].dwSemantic);
