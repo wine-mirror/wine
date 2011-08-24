@@ -476,6 +476,26 @@ foo removed
 bar removed
 foobar removed
 bar\baz removed
+------------ Testing attrib --------------
+@todo_wine@A            @pwd@\foobar\foo@or_broken@A          @pwd@\foobar\foo
+... read-only attribute
+@todo_wine@A    R       @pwd@\foobar\foo@or_broken@A    R     @pwd@\foobar\foo
+foo
+foo original contents
+Read-only file not deleted
+Read-only file forcibly deleted
+... recursive behaviour
+@todo_wine@A            @pwd@\foobar\baz\level2@or_broken@A          @pwd@\foobar\baz\level2
+@todo_wine@A    R       @pwd@\foobar\level1@or_broken@A    R     @pwd@\foobar\level1
+@todo_wine@A    R       @pwd@\foobar\baz\level2@or_broken@A    R     @pwd@\foobar\baz\level2
+@todo_wine@A            @pwd@\foobar\bar@or_broken@A          @pwd@\foobar\bar
+... folders processing
+@todo_wine@             @pwd@\foobar@or_broken@           @pwd@\foobar
+@todo_wine@     R       @pwd@\foobar\baz@or_broken@     R     @pwd@\foobar\baz@or_broken@           @pwd@\foobar\baz
+@todo_wine@A            @pwd@\foobar\baz\toto@or_broken@A          @pwd@\foobar\baz\toto
+toto
+lulu
+file created in read-only dir
 ------------ Testing CALL --------------
 foo@space@
 @todo_wine@foo 8

@@ -786,6 +786,67 @@ if not exist bar\baz (echo bar\baz removed) else echo bar\baz not removed!
 cd ..
 rd /s/q foobaz
 
+echo ------------ Testing attrib --------------
+rem FIXME Add tests for archive, hidden and system attributes + mixed attributes modifications
+mkdir foobar & cd foobar
+echo foo original contents> foo
+attrib foo
+echo > bar
+echo ... read-only attribute
+rem Read-only files cannot be altered or deleted, unless forced
+attrib +R foo
+attrib foo
+dir /Ar /B
+echo bar>> foo
+type foo
+del foo > NUL 2>&1
+if exist foo (
+    echo Read-only file not deleted
+) else (
+    echo Should not delete read-only file!
+)
+del /F foo
+if not exist foo (
+    echo Read-only file forcibly deleted
+) else (
+    echo Should delete read-only file with del /F!
+    attrib -r foo
+    del foo
+)
+cd ..
+rd /s/q foobar
+echo ... recursive behaviour
+mkdir foobar\baz & cd foobar
+echo > level1
+echo > whatever
+echo > baz\level2
+attrib baz\level2
+cd ..
+attrib +R l*vel? /S > nul 2>&1
+cd foobar
+attrib level1
+attrib baz\level2
+echo > bar
+attrib bar
+cd ..
+rd /s/q foobar
+echo ... folders processing
+mkdir foobar
+attrib foobar
+cd foobar
+mkdir baz
+echo toto> baz\toto
+attrib +r baz /s /d > nul 2>&1
+attrib baz
+attrib baz\toto
+echo lulu>>baz\toto
+type baz\toto
+echo > baz\lala
+rem Oddly windows allows file creation in a read-only directory...
+if exist baz\lala (echo file created in read-only dir) else echo file not created
+cd ..
+rd /s/q foobar
+
 echo ------------ Testing CALL --------------
 mkdir foobar & cd foobar
 rem External script
