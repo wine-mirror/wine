@@ -42,6 +42,9 @@ word
 @pwd@>echo :word@space@
 :word
 
+@pwd@>echo off now@space@
+off now
+
 @pwd@>echo word@space@@space@
 word@space@
 
@@ -85,6 +88,7 @@ word
 :
 word
 :word
+on again
 word@space@
 word@space@@space@
 word

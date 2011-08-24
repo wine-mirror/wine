@@ -15,6 +15,7 @@ echo:
 echo :
 echo:word
 echo :word
+echo off now
 echo word@space@
 echo word@space@@space@
  echo word
@@ -41,6 +42,7 @@ echo:
 echo :
 echo:word
 echo :word
+echo on again
 echo word@space@
 echo word@space@@space@
  echo word
