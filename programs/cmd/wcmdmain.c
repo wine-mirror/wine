@@ -455,6 +455,18 @@ WCHAR *WCMD_skip_leading_spaces (WCHAR *string) {
   return ptr;
 }
 
+/***************************************************************************
+ * WCMD_keyword_ws_found
+ *
+ *  Checks if the string located at ptr matches a keyword (of length len)
+ *  followed by a whitespace character (space or tab)
+ */
+BOOL WCMD_keyword_ws_found(const WCHAR *keyword, int len, const WCHAR *ptr) {
+    return (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                           ptr, len, keyword, len) == CSTR_EQUAL)
+            && ((*(ptr + len) == ' ') || (*(ptr + len) == '\t'));
+}
+
 /*************************************************************************
  * WCMD_opt_s_strip_quotes
  *
@@ -1742,8 +1754,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     CMD_DELIMITERS prevDelim = CMD_NONE;
     static WCHAR    *extraSpace = NULL;  /* Deliberately never freed */
     const WCHAR remCmd[] = {'r','e','m',' ','\0'};
-    const WCHAR forCmd[]    = {'f','o','r',' ' ,'\0'};
-    const WCHAR forTabCmd[] = {'f','o','r','\t','\0'};
+    const WCHAR forCmd[] = {'f','o','r'};
     const WCHAR ifCmd[]  = {'i','f',' ','\0'};
     const WCHAR ifElse[] = {'e','l','s','e',' ','\0'};
     BOOL      inRem = FALSE;
@@ -1827,19 +1838,14 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
 
       /* Certain commands need special handling */
       if (curStringLen == 0 && curCopyTo == curString) {
-        const WCHAR forDO[]     = {'d','o',' ' ,'\0'};
-        const WCHAR forDOTab[]  = {'d','o','\t','\0'};
+        const WCHAR forDO[] = {'d','o'};
 
         /* If command starts with 'rem', ignore any &&, ( etc */
         if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
           curPos, 4, remCmd, -1) == CSTR_EQUAL) {
           inRem = TRUE;
 
-        /* If command starts with 'for', handle ('s mid line after IN or DO */
-        } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                                  curPos, 4, forCmd, -1) == CSTR_EQUAL
-                || CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                                  curPos, 4, forTabCmd, -1) == CSTR_EQUAL) {
+        } else if (WCMD_keyword_ws_found(forCmd, sizeof(forCmd)/sizeof(forCmd[0]), curPos)) {
           inFor = TRUE;
 
         /* If command starts with 'if' or 'else', handle ('s mid line. We should ensure this
@@ -1866,37 +1872,32 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
            whitespace, followed by DO, ie closeBracket inserts a NULL entry, curLen
            is then 0, and all whitespace is skipped                                */
         } else if (inFor &&
-                   (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                                   curPos, 3, forDO, -1) == CSTR_EQUAL
-                 || CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                                   curPos, 3, forDOTab, -1) == CSTR_EQUAL)) {
-          WINE_TRACE("Found DO\n");
+                   WCMD_keyword_ws_found(forDO, sizeof(forDO)/sizeof(forDO[0]), curPos)) {
+          const int keyw_len = sizeof(forDO)/sizeof(forDO[0]) + 1;
+          WINE_TRACE("Found 'DO '\n");
           lastWasDo = TRUE;
           onlyWhiteSpace = TRUE;
-          memcpy(&curCopyTo[*curLen], curPos, 3*sizeof(WCHAR));
-          (*curLen)+=3;
-          curPos+=3;
+          memcpy(&curCopyTo[*curLen], curPos, keyw_len*sizeof(WCHAR));
+          (*curLen)+=keyw_len;
+          curPos+=keyw_len;
           continue;
         }
       } else if (curCopyTo == curString) {
 
         /* Special handling for the 'FOR' command */
         if (inFor && lastWasWhiteSpace) {
-          const WCHAR forIN[]    = {'i','n',' ' ,'\0'};
-          const WCHAR forINTab[] = {'i','n','\t','\0'};
+          const WCHAR forIN[] = {'i','n'};
 
-          WINE_TRACE("Found 'FOR', comparing next parm: '%s'\n", wine_dbgstr_w(curPos));
+          WINE_TRACE("Found 'FOR ', comparing next parm: '%s'\n", wine_dbgstr_w(curPos));
 
-          if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                             curPos, 3, forIN, -1) == CSTR_EQUAL
-           || CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                             curPos, 3, forINTab, -1) == CSTR_EQUAL) {
-            WINE_TRACE("Found IN\n");
+          if (WCMD_keyword_ws_found(forIN, sizeof(forIN)/sizeof(forIN[0]), curPos)) {
+            const int keyw_len = sizeof(forIN)/sizeof(forIN[0]) + 1;
+            WINE_TRACE("Found 'IN '\n");
             lastWasIn = TRUE;
             onlyWhiteSpace = TRUE;
-            memcpy(&curCopyTo[*curLen], curPos, 3*sizeof(WCHAR));
-            (*curLen)+=3;
-            curPos+=3;
+            memcpy(&curCopyTo[*curLen], curPos, keyw_len*sizeof(WCHAR));
+            (*curLen)+=keyw_len;
+            curPos+=keyw_len;
             continue;
           }
         }
