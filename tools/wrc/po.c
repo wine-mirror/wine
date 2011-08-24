@@ -503,6 +503,7 @@ static po_file_t read_po_file( const char *name )
 static void add_po_string( po_file_t po, const string_t *msgid, const string_t *msgstr,
                            const language_t *lang )
 {
+    static const char dnt[] = "do not translate";
     po_message_t msg;
     po_message_iterator_t iterator;
     int codepage;
@@ -512,6 +513,12 @@ static void add_po_string( po_file_t po, const string_t *msgid, const string_t *
 
     id_buffer = id = convert_msgid_ascii( msgid, 1 );
     context = get_message_context( &id );
+    if (context && strcmp(context, dnt) == 0)
+    {
+        /* This string should not be translated */
+        free( id_buffer );
+        return;
+    }
 
     if (msgstr)
     {
