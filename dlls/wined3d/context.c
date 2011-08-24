@@ -415,15 +415,15 @@ static void context_apply_fbo_state(struct wined3d_context *context, GLenum targ
         context->rebind_fbo = FALSE;
     }
 
-    if (render_targets)
-    {
-        context->current_fbo = context_find_fbo_entry(context, target, render_targets, depth_stencil, location);
-        context_apply_fbo_entry(context, target, context->current_fbo);
-    }
-    else
+    if (location == SFLAG_INDRAWABLE)
     {
         context->current_fbo = NULL;
         context_bind_fbo(context, target, NULL);
+    }
+    else
+    {
+        context->current_fbo = context_find_fbo_entry(context, target, render_targets, depth_stencil, location);
+        context_apply_fbo_entry(context, target, context->current_fbo);
     }
 }
 
