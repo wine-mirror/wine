@@ -5908,6 +5908,12 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
     UINT byte_count;
     BYTE *mem;
 
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && surface_is_offscreen(surface))
+    {
+        ERR("Trying to load offscreen surface into SFLAG_INDRAWABLE.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
     if (wined3d_settings.rendertargetlock_mode == RTL_READTEX)
         surface_load_location(surface, SFLAG_INTEXTURE, NULL);
 
@@ -6140,7 +6146,6 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, c
 {
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    BOOL in_fbo = FALSE;
     HRESULT hr;
 
     TRACE("surface %p, location %s, rect %s.\n", surface, debug_surflocation(location), wine_dbgstr_rect(rect));
@@ -6158,22 +6163,6 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, c
         {
             FIXME("Unimplemented location %s for depth/stencil buffers.\n", debug_surflocation(location));
             return WINED3DERR_INVALIDCALL;
-        }
-    }
-
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
-    {
-        if (surface_is_offscreen(surface))
-        {
-            /* With ORM_FBO, SFLAG_INTEXTURE and SFLAG_INDRAWABLE are the same
-             * for offscreen targets. Prefer SFLAG_INTEXTURE. */
-            if (location == SFLAG_INDRAWABLE)
-                location = SFLAG_INTEXTURE;
-            in_fbo = TRUE;
-        }
-        else
-        {
-            TRACE("Surface %p is an onscreen surface.\n", surface);
         }
     }
 
@@ -6229,12 +6218,6 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, c
 
         if (location != SFLAG_INSYSMEM && (surface->flags & SFLAG_INSYSMEM))
             surface_evict_sysmem(surface);
-    }
-
-    if (in_fbo && (surface->flags & (SFLAG_INTEXTURE | SFLAG_INDRAWABLE)))
-    {
-        /* With ORM_FBO, SFLAG_INTEXTURE and SFLAG_INDRAWABLE are the same for offscreen targets. */
-        surface->flags |= (SFLAG_INTEXTURE | SFLAG_INDRAWABLE);
     }
 
     if (surface->flags & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)
