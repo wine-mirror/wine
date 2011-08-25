@@ -902,8 +902,8 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   WIN32_FIND_DATAW fd;
   HANDLE hff;
   int i;
-  const WCHAR inW[] = {'i','n'};
-  const WCHAR doW[] = {'d','o'};
+  static const WCHAR inW[] = {'i','n'};
+  static const WCHAR doW[] = {'d','o'};
   CMD_LIST *setStart, *thisSet, *cmdStart, *cmdEnd;
   WCHAR variable[4];
   WCHAR *firstCmd;
@@ -1250,7 +1250,7 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
     if (isIF) processThese = conditionTRUE;
 
     while (*cmdList) {
-      const WCHAR ifElse[] = {'e','l','s','e'};
+      static const WCHAR ifElse[] = {'e','l','s','e'};
 
       /* execute all appropriate commands */
       curPosition = *cmdList;
@@ -1615,7 +1615,7 @@ void WCMD_move (void) {
         else if (strstrW (quals, parmY))
           force = TRUE;
         else {
-          const WCHAR copyCmdW[] = {'C','O','P','Y','C','M','D','\0'};
+          static const WCHAR copyCmdW[] = {'C','O','P','Y','C','M','D','\0'};
           len = GetEnvironmentVariableW(copyCmdW, copycmd, sizeof(copycmd)/sizeof(WCHAR));
           force = (len && len < (sizeof(copycmd)/sizeof(WCHAR))
                        && ! lstrcmpiW (copycmd, parmY));

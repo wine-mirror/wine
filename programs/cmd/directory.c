@@ -878,7 +878,7 @@ void WCMD_directory (WCHAR *cmd) {
             strcatW (path, starW);
           }
           else {
-            const WCHAR slashStarW[]  = {'\\','*','\0'};
+            static const WCHAR slashStarW[]  = {'\\','*','\0'};
             strcatW (path, slashStarW);
           }
         }

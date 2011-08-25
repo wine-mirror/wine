@@ -321,7 +321,7 @@ static void WCMD_show_prompt (void) {
   len = GetEnvironmentVariableW(envPrompt, prompt_string,
                                 sizeof(prompt_string)/sizeof(WCHAR));
   if ((len == 0) || (len >= (sizeof(prompt_string)/sizeof(WCHAR)))) {
-    const WCHAR dfltPrompt[] = {'$','P','$','G','\0'};
+    static const WCHAR dfltPrompt[] = {'$','P','$','G','\0'};
     strcpyW (prompt_string, dfltPrompt);
   }
   p = prompt_string;
@@ -1048,7 +1048,7 @@ void WCMD_run_program (WCHAR *command, int called) {
     WCHAR  thisDir[MAX_PATH] = {'\0'};
     WCHAR *pos               = NULL;
     BOOL  found             = FALSE;
-    const WCHAR slashW[] = {'\\','\0'};
+    static const WCHAR slashW[] = {'\\','\0'};
 
     /* Work on the first directory on the search path */
     pos = strchrW(pathposn, ';');
@@ -1753,10 +1753,10 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     CMD_LIST *lastEntry = NULL;
     CMD_DELIMITERS prevDelim = CMD_NONE;
     static WCHAR    *extraSpace = NULL;  /* Deliberately never freed */
-    const WCHAR remCmd[] = {'r','e','m'};
-    const WCHAR forCmd[] = {'f','o','r'};
-    const WCHAR ifCmd[]  = {'i','f'};
-    const WCHAR ifElse[] = {'e','l','s','e'};
+    static const WCHAR remCmd[] = {'r','e','m'};
+    static const WCHAR forCmd[] = {'f','o','r'};
+    static const WCHAR ifCmd[]  = {'i','f'};
+    static const WCHAR ifElse[] = {'e','l','s','e'};
     BOOL      inRem = FALSE;
     BOOL      inFor = FALSE;
     BOOL      inIn  = FALSE;
@@ -1799,9 +1799,9 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     if (context) handleExpansion(extraSpace, FALSE, NULL, NULL);
     /* Show prompt before batch line IF echo is on and in batch program */
     if (context && echo_mode && extraSpace[0] && (extraSpace[0] != '@')) {
-      const WCHAR spc[]={' ','\0'};
-      const WCHAR echoDot[] = {'e','c','h','o','.'};
-      const WCHAR echoCol[] = {'e','c','h','o',':'};
+      static const WCHAR spc[]={' ','\0'};
+      static const WCHAR echoDot[] = {'e','c','h','o','.'};
+      static const WCHAR echoCol[] = {'e','c','h','o',':'};
       const DWORD len = sizeof(echoDot)/sizeof(echoDot[0]);
       DWORD curr_size = strlenW(extraSpace);
       DWORD min_len = (curr_size < len ? curr_size : len);
@@ -1838,7 +1838,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
 
       /* Certain commands need special handling */
       if (curStringLen == 0 && curCopyTo == curString) {
-        const WCHAR forDO[] = {'d','o'};
+        static const WCHAR forDO[] = {'d','o'};
 
         /* If command starts with 'rem ', ignore any &&, ( etc. */
         if (WCMD_keyword_ws_found(remCmd, sizeof(remCmd)/sizeof(remCmd[0]), curPos)) {
@@ -1884,7 +1884,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
 
         /* Special handling for the 'FOR' command */
         if (inFor && lastWasWhiteSpace) {
-          const WCHAR forIN[] = {'i','n'};
+          static const WCHAR forIN[] = {'i','n'};
 
           WINE_TRACE("Found 'FOR ', comparing next parm: '%s'\n", wine_dbgstr_w(curPos));
 
@@ -2296,7 +2296,7 @@ int wmain (int argc, WCHAR *argvW[])
   }
 
   if (opt_q) {
-    const WCHAR eoff[] = {'O','F','F','\0'};
+    static const WCHAR eoff[] = {'O','F','F','\0'};
     WCMD_echo(eoff);
   }
 
