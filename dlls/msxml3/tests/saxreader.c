@@ -32,6 +32,9 @@
 
 #include "wine/test.h"
 
+#define EXPECT_HR(hr,hr_exp) \
+    ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
+
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG ref, int line)
 {
@@ -1377,6 +1380,163 @@ static void test_mxwriter_startenddocument(void)
     free_bstrs();
 }
 
+struct writer_startelement_t {
+    const GUID *clsid;
+    const char *uri;
+    const char *local_name;
+    const char *qname;
+    const char *output;
+    HRESULT hr;
+};
+
+static const struct writer_startelement_t writer_startelement[] = {
+    /* 0 */
+    { &CLSID_MXXMLWriter,   NULL, NULL, NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter30, NULL, NULL, NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter40, NULL, NULL, NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter60, NULL, NULL, NULL, "<>", S_OK },
+    { &CLSID_MXXMLWriter,   "uri", NULL, NULL, NULL, E_INVALIDARG },
+    /* 5 */
+    { &CLSID_MXXMLWriter30, "uri", NULL, NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter40, "uri", NULL, NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter60, "uri", NULL, NULL, "<>", S_OK },
+    { &CLSID_MXXMLWriter,   NULL, "local", NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter30, NULL, "local", NULL, NULL, E_INVALIDARG },
+    /* 10 */
+    { &CLSID_MXXMLWriter40, NULL, "local", NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter60, NULL, "local", NULL, "<>", S_OK },
+    { &CLSID_MXXMLWriter,   NULL, NULL, "qname", NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter30, NULL, NULL, "qname", NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter40, NULL, NULL, "qname", NULL, E_INVALIDARG },
+    /* 15 */
+    { &CLSID_MXXMLWriter60, NULL, NULL, "qname", "<qname>", S_OK },
+    { &CLSID_MXXMLWriter,   "uri", "local", "qname", "<qname>", S_OK },
+    { &CLSID_MXXMLWriter30, "uri", "local", "qname", "<qname>", S_OK },
+    { &CLSID_MXXMLWriter40, "uri", "local", "qname", "<qname>", S_OK },
+    { &CLSID_MXXMLWriter60, "uri", "local", "qname", "<qname>", S_OK },
+    /* 20 */
+    { &CLSID_MXXMLWriter,   "uri", "local", NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter30, "uri", "local", NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter40, "uri", "local", NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter60, "uri", "local", NULL, "<>", S_OK },
+    { &CLSID_MXXMLWriter,   "uri", "local", "uri:local", "<uri:local>", S_OK },
+    /* 25 */
+    { &CLSID_MXXMLWriter30, "uri", "local", "uri:local", "<uri:local>", S_OK },
+    { &CLSID_MXXMLWriter40, "uri", "local", "uri:local", "<uri:local>", S_OK },
+    { &CLSID_MXXMLWriter60, "uri", "local", "uri:local", "<uri:local>", S_OK },
+    { &CLSID_MXXMLWriter,   "uri", "local", "uri:local2", "<uri:local2>", S_OK },
+    { &CLSID_MXXMLWriter30, "uri", "local", "uri:local2", "<uri:local2>", S_OK },
+    /* 30 */
+    { &CLSID_MXXMLWriter40, "uri", "local", "uri:local2", "<uri:local2>", S_OK },
+    { &CLSID_MXXMLWriter60, "uri", "local", "uri:local2", "<uri:local2>", S_OK },
+    { NULL }
+};
+
+struct msxmlsupported_data_t
+{
+    const GUID *clsid;
+    const char *name;
+    BOOL supported;
+};
+
+static struct msxmlsupported_data_t msxmlsupported_data[] =
+{
+    { &CLSID_MXXMLWriter,   "MXXMLWriter" },
+    { &CLSID_MXXMLWriter30, "MXXMLWriter30" },
+    { &CLSID_MXXMLWriter40, "MXXMLWriter40" },
+    { &CLSID_MXXMLWriter60, "MXXMLWriter60" },
+    { NULL }
+};
+
+static void get_supported_mxwriter_data(struct msxmlsupported_data_t *table)
+{
+    while (table->clsid)
+    {
+        IMXWriter *writer;
+        HRESULT hr;
+
+        hr = CoCreateInstance(table->clsid, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+        if (hr == S_OK) IMXWriter_Release(writer);
+
+        table->supported = hr == S_OK;
+        if (hr != S_OK) win_skip("class %s not supported\n", table->name);
+
+        table++;
+    }
+}
+
+static BOOL is_mxwriter_supported(const GUID *clsid, const struct msxmlsupported_data_t *table)
+{
+    while (table->clsid)
+    {
+        if (table->clsid == clsid) return table->supported;
+        table++;
+    }
+    return FALSE;
+}
+
+static void test_mxwriter_startelement(const struct writer_startelement_t *table)
+{
+    int i;
+
+    get_supported_mxwriter_data(msxmlsupported_data);
+
+    i = 0;
+    while (table->clsid)
+    {
+        ISAXContentHandler *content;
+        IMXWriter *writer;
+        HRESULT hr;
+
+        if (!is_mxwriter_supported(table->clsid, msxmlsupported_data))
+        {
+            table++;
+            i++;
+            continue;
+        }
+
+        hr = CoCreateInstance(table->clsid, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+        EXPECT_HR(hr, S_OK);
+
+        hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
+        EXPECT_HR(hr, S_OK);
+
+        hr = IMXWriter_put_omitXMLDeclaration(writer, VARIANT_TRUE);
+        EXPECT_HR(hr, S_OK);
+
+        hr = ISAXContentHandler_startDocument(content);
+        EXPECT_HR(hr, S_OK);
+
+        hr = ISAXContentHandler_startElement(content, _bstr_(table->uri), lstrlen(table->uri),
+            _bstr_(table->local_name), lstrlen(table->local_name), _bstr_(table->qname), lstrlen(table->qname), NULL);
+        ok(hr == table->hr, "test %d: got 0x%08x, expected 0x%08x\n", i, hr, table->hr);
+
+        /* test output */
+        if (hr == S_OK)
+        {
+            VARIANT dest;
+
+            V_VT(&dest) = VT_EMPTY;
+            hr = IMXWriter_get_output(writer, &dest);
+            EXPECT_HR(hr, S_OK);
+            ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+            ok(!lstrcmpW(_bstr_(table->output), V_BSTR(&dest)),
+                "test %d: got wrong content %s, expected %s\n", i, wine_dbgstr_w(V_BSTR(&dest)), table->output);
+            VariantClear(&dest);
+        }
+
+        ISAXContentHandler_Release(content);
+        IMXWriter_Release(writer);
+
+        table++;
+        i++;
+    }
+
+    free_bstrs();
+}
+
 static void test_mxwriter_startendelement(void)
 {
     static const char winehqA[] = "http://winehq.org";
@@ -1384,6 +1544,8 @@ static void test_mxwriter_startendelement(void)
     IMXWriter *writer;
     VARIANT dest;
     HRESULT hr;
+
+    test_mxwriter_startelement(writer_startelement);
 
     hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMXWriter, (void**)&writer);
@@ -1397,21 +1559,6 @@ static void test_mxwriter_startendelement(void)
 
     hr = ISAXContentHandler_startDocument(content);
     ok(hr == S_OK, "got %08x\n", hr);
-
-    /* qualified name without defined namespace */
-    hr = ISAXContentHandler_startElement(content, NULL, 0, NULL, 0, _bstr_("a:b"), 3, NULL);
-    ok(hr == E_INVALIDARG, "got %08x\n", hr);
-
-    hr = ISAXContentHandler_startElement(content, NULL, 0, _bstr_("b"), 1, _bstr_("a:b"), 3, NULL);
-    ok(hr == E_INVALIDARG, "got %08x\n", hr);
-
-    /* only local name is an error too */
-    hr = ISAXContentHandler_startElement(content, NULL, 0, _bstr_("b"), 1, NULL, 0, NULL);
-    ok(hr == E_INVALIDARG, "got %08x\n", hr);
-
-    /* only local name is an error too */
-    hr = ISAXContentHandler_startElement(content, _bstr_(""), 0, _bstr_("b"), 1, NULL, 0, NULL);
-    ok(hr == E_INVALIDARG, "got %08x\n", hr);
 
     /* all string pointers should be not null */
     hr = ISAXContentHandler_startElement(content, _bstr_(""), 0, _bstr_("b"), 1, _bstr_(""), 0, NULL);

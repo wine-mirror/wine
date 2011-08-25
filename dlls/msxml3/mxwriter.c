@@ -737,7 +737,8 @@ static HRESULT WINAPI mxwriter_saxcontent_startElement(
     TRACE("(%p)->(%s %s %s %p)\n", This, debugstr_wn(namespaceUri, nnamespaceUri),
         debugstr_wn(local_name, nlocal_name), debugstr_wn(QName, nQName), attr);
 
-    if (!namespaceUri || !local_name || !QName) return E_INVALIDARG;
+    if ((!namespaceUri || !local_name || !QName) && This->class_version != MSXML6)
+        return E_INVALIDARG;
 
     xmlOutputBufferWriteString(This->buffer, "<");
     s = xmlchar_from_wchar(QName);
