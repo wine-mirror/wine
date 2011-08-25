@@ -557,6 +557,7 @@
 @ stub pSetupAppendStringToMultiSz
 @ stub pSetupDestroyRunOnceNodeList
 @ stub pSetupDirectoryIdToPath
+@ stdcall pSetupFree(ptr) MyFree
 @ stdcall pSetupGetField(ptr long)
 @ stdcall pSetupGetGlobalFlags()
 @ stub pSetupGetOsLoaderDriveAndPath
@@ -567,6 +568,8 @@
 @ stdcall pSetupInstallCatalog(wstr wstr ptr)
 @ stdcall pSetupIsUserAdmin() IsUserAdmin
 @ stub pSetupMakeSurePathExists
+@ stdcall pSetupMalloc(long) MyMalloc
+@ stdcall pSetupRealloc(ptr long) MyRealloc
 @ stdcall pSetupSetGlobalFlags(long)
 @ stdcall pSetupSetQueueFlags(ptr long)
 @ stub pSetupSetSystemSourceFlags
