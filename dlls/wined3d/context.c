@@ -431,17 +431,12 @@ static void context_apply_fbo_state(struct wined3d_context *context, GLenum targ
 void context_apply_fbo_state_blit(struct wined3d_context *context, GLenum target,
         struct wined3d_surface *render_target, struct wined3d_surface *depth_stencil, DWORD location)
 {
-    if (location != SFLAG_INDRAWABLE || surface_is_offscreen(render_target))
-    {
-        UINT clear_size = (context->gl_info->limits.buffers - 1) * sizeof(*context->blit_targets);
-        context->blit_targets[0] = render_target;
-        if (clear_size) memset(&context->blit_targets[1], 0, clear_size);
-        context_apply_fbo_state(context, target, context->blit_targets, depth_stencil, location);
-    }
-    else
-    {
-        context_apply_fbo_state(context, target, NULL, NULL, location);
-    }
+    UINT clear_size = (context->gl_info->limits.buffers - 1) * sizeof(*context->blit_targets);
+
+    context->blit_targets[0] = render_target;
+    if (clear_size)
+        memset(&context->blit_targets[1], 0, clear_size);
+    context_apply_fbo_state(context, target, context->blit_targets, depth_stencil, location);
 }
 
 /* Context activation is done by the caller. */
