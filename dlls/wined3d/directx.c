@@ -4,7 +4,7 @@
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
  * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
- * Copyright 2009-2010 Henri Verbeet for CodeWeavers
+ * Copyright 2009-2011 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2631,6 +2631,11 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         gl_info->fbo_ops.glGetFramebufferAttachmentParameteriv = gl_info->glGetFramebufferAttachmentParameteriv;
         gl_info->fbo_ops.glBlitFramebuffer = gl_info->glBlitFramebuffer;
         gl_info->fbo_ops.glGenerateMipmap = gl_info->glGenerateMipmap;
+        if (wined3d_settings.allow_multisampling)
+        {
+            glGetIntegerv(GL_MAX_SAMPLES, &gl_max);
+            gl_info->limits.samples = gl_max;
+        }
     }
     else
     {
@@ -2666,6 +2671,11 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         if (gl_info->supported[EXT_FRAMEBUFFER_MULTISAMPLE])
         {
             gl_info->fbo_ops.glRenderbufferStorageMultisample = gl_info->glRenderbufferStorageMultisampleEXT;
+            if (wined3d_settings.allow_multisampling)
+            {
+                glGetIntegerv(GL_MAX_SAMPLES, &gl_max);
+                gl_info->limits.samples = gl_max;
+            }
         }
     }
 
@@ -3127,6 +3137,8 @@ HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3
         WINED3DDEVTYPE device_type, enum wined3d_format_id surface_format_id, BOOL windowed,
         WINED3DMULTISAMPLE_TYPE multisample_type, DWORD *quality_levels)
 {
+    const struct wined3d_gl_info *gl_info;
+
     TRACE_(d3d_caps)("wined3d %p, adapter_idx %u, device_type %s, surface_format %s,\n"
             "windowed %#x, multisample_type %#x, quality_levels %p.\n",
             wined3d, adapter_idx, debug_d3ddevicetype(device_type), debug_d3dformat(surface_format_id),
@@ -3135,13 +3147,27 @@ HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3
     if (adapter_idx >= wined3d->adapter_count)
         return WINED3DERR_INVALIDCALL;
 
-    if (WINED3DMULTISAMPLE_NONE == multisample_type)
+    gl_info = &wined3d->adapters[adapter_idx].gl_info;
+
+    if (multisample_type > gl_info->limits.samples)
     {
-        if (quality_levels) *quality_levels = 1;
-        return WINED3D_OK;
+        TRACE("Returning not supported.\n");
+        if (quality_levels)
+            *quality_levels = 0;
+
+        return WINED3DERR_NOTAVAILABLE;
     }
 
-    return WINED3DERR_NOTAVAILABLE;
+    if (quality_levels)
+    {
+        if (multisample_type == WINED3DMULTISAMPLE_NONMASKABLE)
+            /* FIXME: This is probably wrong. */
+            *quality_levels = gl_info->limits.samples;
+        else
+            *quality_levels = 1;
+    }
+
+    return WINED3D_OK;
 }
 
 /* Check if we support bumpmapping for a format */

@@ -44,7 +44,9 @@ static void surface_cleanup(struct wined3d_surface *surface)
 {
     TRACE("surface %p.\n", surface);
 
-    if (surface->texture_name || (surface->flags & SFLAG_PBO) || !list_empty(&surface->renderbuffers))
+    if (surface->texture_name || (surface->flags & SFLAG_PBO)
+             || surface->rb_multisample || surface->rb_resolved
+             || !list_empty(&surface->renderbuffers))
     {
         struct wined3d_renderbuffer_entry *entry, *entry2;
         const struct wined3d_gl_info *gl_info;
@@ -65,6 +67,18 @@ static void surface_cleanup(struct wined3d_surface *surface)
         {
             TRACE("Deleting PBO %u.\n", surface->pbo);
             GL_EXTCALL(glDeleteBuffersARB(1, &surface->pbo));
+        }
+
+        if (surface->rb_multisample)
+        {
+            TRACE("Deleting multisample renderbuffer %u.\n", surface->rb_multisample);
+            gl_info->fbo_ops.glDeleteRenderbuffers(1, &surface->rb_multisample);
+        }
+
+        if (surface->rb_resolved)
+        {
+            TRACE("Deleting resolved renderbuffer %u.\n", surface->rb_resolved);
+            gl_info->fbo_ops.glDeleteRenderbuffers(1, &surface->rb_resolved);
         }
 
         LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &surface->renderbuffers, struct wined3d_renderbuffer_entry, entry)
@@ -104,6 +118,8 @@ void surface_update_draw_binding(struct wined3d_surface *surface)
 {
     if (!surface_is_offscreen(surface) || wined3d_settings.offscreen_rendering_mode != ORM_FBO)
         surface->draw_binding = SFLAG_INDRAWABLE;
+    else if (surface->resource.multisample_type)
+        surface->draw_binding = SFLAG_INRB_MULTISAMPLE;
     else
         surface->draw_binding = SFLAG_INTEXTURE;
 }
@@ -1207,6 +1223,13 @@ static void surface_blt_fbo(struct wined3d_device *device, const WINED3DTEXTUREF
             break;
     }
 
+    /* Resolve the source surface first if needed. */
+    if (src_location == SFLAG_INRB_MULTISAMPLE
+            && (src_surface->resource.format->id != dst_surface->resource.format->id
+                || abs(src_rect.bottom - src_rect.top) != abs(dst_rect.bottom - dst_rect.top)
+                || abs(src_rect.right - src_rect.left) != abs(dst_rect.right - dst_rect.left)))
+        src_location = SFLAG_INRB_RESOLVED;
+
     /* Make sure the locations are up-to-date. Loading the destination
      * surface isn't required if the entire surface is overwritten. (And is
      * in fact harmful if we're being called by surface_load_location() with
@@ -1881,17 +1904,29 @@ static void surface_unload(struct wined3d_resource *resource)
     list_init(&surface->renderbuffers);
     surface->current_renderbuffer = NULL;
 
+    ENTER_GL();
+
     /* If we're in a texture, the texture name belongs to the texture.
      * Otherwise, destroy it. */
     if (surface->container.type != WINED3D_CONTAINER_TEXTURE)
     {
-        ENTER_GL();
         glDeleteTextures(1, &surface->texture_name);
         surface->texture_name = 0;
         glDeleteTextures(1, &surface->texture_name_srgb);
         surface->texture_name_srgb = 0;
-        LEAVE_GL();
     }
+    if (surface->rb_multisample)
+    {
+        gl_info->fbo_ops.glDeleteRenderbuffers(1, &surface->rb_multisample);
+        surface->rb_multisample = 0;
+    }
+    if (surface->rb_resolved)
+    {
+        gl_info->fbo_ops.glDeleteRenderbuffers(1, &surface->rb_resolved);
+        surface->rb_resolved = 0;
+    }
+
+    LEAVE_GL();
 
     context_release(context);
 
@@ -4250,6 +4285,32 @@ void surface_prepare_texture(struct wined3d_surface *surface, struct wined3d_con
     surface_prepare_texture_internal(surface, context, srgb);
 }
 
+void surface_prepare_rb(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info, BOOL multisample)
+{
+    if (multisample)
+    {
+        if (surface->rb_multisample)
+            return;
+
+        gl_info->fbo_ops.glGenRenderbuffers(1, &surface->rb_multisample);
+        gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, surface->rb_multisample);
+        gl_info->fbo_ops.glRenderbufferStorageMultisample(GL_RENDERBUFFER, surface->resource.multisample_type,
+                surface->resource.format->glInternal, surface->pow2Width, surface->pow2Height);
+        TRACE("Created multisample rb %u.\n", surface->rb_multisample);
+    }
+    else
+    {
+        if (surface->rb_resolved)
+            return;
+
+        gl_info->fbo_ops.glGenRenderbuffers(1, &surface->rb_resolved);
+        gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, surface->rb_resolved);
+        gl_info->fbo_ops.glRenderbufferStorage(GL_RENDERBUFFER, surface->resource.format->glInternal,
+                surface->pow2Width, surface->pow2Height);
+        TRACE("Created resolved rb %u.\n", surface->rb_resolved);
+    }
+}
+
 static void flush_to_framebuffer_drawpixels(struct wined3d_surface *surface,
         const RECT *rect, GLenum fmt, GLenum type, UINT bpp, const BYTE *mem)
 {
@@ -4758,6 +4819,14 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back)
         tmp = back->texture_name_srgb;
         back->texture_name_srgb = front->texture_name_srgb;
         front->texture_name_srgb = tmp;
+
+        tmp = back->rb_multisample;
+        back->rb_multisample = front->rb_multisample;
+        front->rb_multisample = tmp;
+
+        tmp = back->rb_resolved;
+        back->rb_resolved = front->rb_resolved;
+        front->rb_resolved = tmp;
 
         resource_unload(&back->resource);
         resource_unload(&front->resource);
@@ -5848,6 +5917,8 @@ static DWORD resource_access_from_location(DWORD location)
         case SFLAG_INDRAWABLE:
         case SFLAG_INSRGBTEX:
         case SFLAG_INTEXTURE:
+        case SFLAG_INRB_MULTISAMPLE:
+        case SFLAG_INRB_RESOLVED:
             return WINED3D_RESOURCE_ACCESS_GPU;
 
         default:
@@ -6126,6 +6197,17 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     return WINED3D_OK;
 }
 
+static void surface_multisample_resolve(struct wined3d_surface *surface)
+{
+    RECT rect = {0, 0, surface->resource.width, surface->resource.height};
+
+    if (!(surface->flags & SFLAG_INRB_MULTISAMPLE))
+        ERR("Trying to resolve multisampled surface %p, but location SFLAG_INRB_MULTISAMPLE not current.\n", surface);
+
+    surface_blt_fbo(surface->resource.device, WINED3DTEXF_POINT,
+            surface, SFLAG_INRB_MULTISAMPLE, &rect, surface, SFLAG_INRB_RESOLVED, &rect);
+}
+
 HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, const RECT *rect)
 {
     struct wined3d_device *device = surface->resource.device;
@@ -6183,6 +6265,10 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, c
         case SFLAG_INDRAWABLE:
             if (FAILED(hr = surface_load_drawable(surface, gl_info, rect)))
                 return hr;
+            break;
+
+        case SFLAG_INRB_RESOLVED:
+            surface_multisample_resolve(surface);
             break;
 
         case SFLAG_INTEXTURE:

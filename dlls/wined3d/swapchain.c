@@ -301,8 +301,16 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
 
     if (gl_info->fbo_ops.glBlitFramebuffer && is_identity_fixup(backbuffer->resource.format->color_fixup))
     {
+        DWORD location = SFLAG_INTEXTURE;
+
+        if (backbuffer->resource.multisample_type)
+        {
+            location = SFLAG_INRB_RESOLVED;
+            surface_load_location(backbuffer, location, NULL);
+        }
+
         ENTER_GL();
-        context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, backbuffer, NULL, SFLAG_INTEXTURE);
+        context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, backbuffer, NULL, location);
         glReadBuffer(GL_COLOR_ATTACHMENT0);
         context_check_fbo_status(context, GL_READ_FRAMEBUFFER);
 
@@ -824,8 +832,11 @@ void swapchain_update_render_to_fbo(struct wined3d_swapchain *swapchain)
             swapchain->presentParms.BackBufferWidth,
             swapchain->presentParms.BackBufferHeight,
             client_rect.right, client_rect.bottom);
+    TRACE("Multisample type %#x, quality %#x.\n",
+            swapchain->presentParms.MultiSampleType,
+            swapchain->presentParms.MultiSampleQuality);
 
-    if (!wined3d_settings.always_offscreen
+    if (!wined3d_settings.always_offscreen && !swapchain->presentParms.MultiSampleType
             && swapchain->presentParms.BackBufferWidth == client_rect.right
             && swapchain->presentParms.BackBufferHeight == client_rect.bottom)
     {

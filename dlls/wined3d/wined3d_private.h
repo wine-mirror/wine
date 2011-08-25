@@ -1453,6 +1453,7 @@ struct wined3d_gl_limits
     UINT blends;
     UINT anisotropy;
     float shininess;
+    UINT samples;
 
     UINT glsl_varyings;
     UINT glsl_vs_float_constants;
@@ -2012,6 +2013,8 @@ struct wined3d_surface
 
     /* PBO */
     GLuint                    pbo;
+    GLuint rb_multisample;
+    GLuint rb_resolved;
     GLuint texture_name;
     GLuint texture_name_srgb;
     GLint texture_level;
@@ -2075,6 +2078,8 @@ void surface_load_ds_location(struct wined3d_surface *surface,
 HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, const RECT *rect) DECLSPEC_HIDDEN;
 void surface_modify_ds_location(struct wined3d_surface *surface, DWORD location, UINT w, UINT h) DECLSPEC_HIDDEN;
 void surface_modify_location(struct wined3d_surface *surface, DWORD location, BOOL persistent) DECLSPEC_HIDDEN;
+void surface_prepare_rb(struct wined3d_surface *surface,
+        const struct wined3d_gl_info *gl_info, BOOL multisample) DECLSPEC_HIDDEN;
 void surface_prepare_texture(struct wined3d_surface *surface,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void surface_set_compatible_renderbuffer(struct wined3d_surface *surface,
@@ -2098,29 +2103,31 @@ void draw_textured_quad(const struct wined3d_surface *src_surface, const RECT *s
 void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) DECLSPEC_HIDDEN;
 
 /* Surface flags: */
-#define SFLAG_CONVERTED     0x00000002 /* Converted for color keying or Palettized */
-#define SFLAG_DIBSECTION    0x00000004 /* Has a DIB section attached for GetDC */
-#define SFLAG_LOCKABLE      0x00000008 /* Surface can be locked */
-#define SFLAG_DISCARD       0x00000010 /* ??? */
-#define SFLAG_LOCKED        0x00000020 /* Surface is locked atm */
-#define SFLAG_INTEXTURE     0x00000040 /* The GL texture contains the newest surface content */
-#define SFLAG_INSRGBTEX     0x00000080 /* The GL srgb texture contains the newest surface content */
-#define SFLAG_INDRAWABLE    0x00000100 /* The gl drawable contains the most up to date data */
-#define SFLAG_INSYSMEM      0x00000200 /* The system memory copy is most up to date */
-#define SFLAG_NONPOW2       0x00000400 /* Surface sizes are not a power of 2 */
-#define SFLAG_DYNLOCK       0x00000800 /* Surface is often locked by the app */
-#define SFLAG_DCINUSE       0x00001000 /* Set between GetDC and ReleaseDC calls */
-#define SFLAG_LOST          0x00002000 /* Surface lost flag for DDraw */
-#define SFLAG_USERPTR       0x00004000 /* The application allocated the memory for this surface */
-#define SFLAG_GLCKEY        0x00008000 /* The gl texture was created with a color key */
-#define SFLAG_CLIENT        0x00010000 /* GL_APPLE_client_storage is used on that texture */
-#define SFLAG_ALLOCATED     0x00020000 /* A gl texture is allocated for this surface */
-#define SFLAG_SRGBALLOCATED 0x00040000 /* A srgb gl texture is allocated for this surface */
-#define SFLAG_PBO           0x00080000 /* Has a PBO attached for speeding up data transfers for dynamically locked surfaces */
-#define SFLAG_NORMCOORD     0x00100000 /* Set if the GL texture coords are normalized(non-texture rectangle) */
-#define SFLAG_DS_ONSCREEN   0x00200000 /* Is a depth stencil, last modified onscreen */
-#define SFLAG_DS_OFFSCREEN  0x00400000 /* Is a depth stencil, last modified offscreen */
-#define SFLAG_INOVERLAYDRAW 0x00800000 /* Overlay drawing is in progress. Recursion prevention */
+#define SFLAG_CONVERTED         0x00000001 /* Converted for color keying or palettized. */
+#define SFLAG_DISCARD           0x00000002 /* ??? */
+#define SFLAG_NONPOW2           0x00000004 /* Surface sizes are not a power of 2 */
+#define SFLAG_NORMCOORD         0x00000008 /* Set if GL texture coordinates are normalized (non-texture rectangle). */
+#define SFLAG_LOCKABLE          0x00000010 /* Surface can be locked. */
+#define SFLAG_DYNLOCK           0x00000020 /* Surface is often locked by the application. */
+#define SFLAG_LOCKED            0x00000040 /* Surface is currently locked. */
+#define SFLAG_DCINUSE           0x00000080 /* Set between GetDC and ReleaseDC calls. */
+#define SFLAG_LOST              0x00000100 /* Surface lost flag for ddraw. */
+#define SFLAG_GLCKEY            0x00000200 /* The GL texture was created with a color key. */
+#define SFLAG_CLIENT            0x00000400 /* GL_APPLE_client_storage is used with this surface. */
+#define SFLAG_INOVERLAYDRAW     0x00000800 /* Overlay drawing is in progress. Recursion prevention. */
+#define SFLAG_DIBSECTION        0x00001000 /* Has a DIB section attached for GetDC. */
+#define SFLAG_USERPTR           0x00002000 /* The application allocated the memory for this surface. */
+#define SFLAG_ALLOCATED         0x00004000 /* A GL texture is allocated for this surface. */
+#define SFLAG_SRGBALLOCATED     0x00008000 /* A sRGB GL texture is allocated for this surface. */
+#define SFLAG_PBO               0x00010000 /* The surface has a PBO. */
+#define SFLAG_INSYSMEM          0x00020000 /* The system memory copy is current. */
+#define SFLAG_INTEXTURE         0x00040000 /* The GL texture is current. */
+#define SFLAG_INSRGBTEX         0x00080000 /* The GL sRGB texture is current. */
+#define SFLAG_INDRAWABLE        0x00100000 /* The GL drawable is current. */
+#define SFLAG_INRB_MULTISAMPLE  0x00200000 /* The multisample renderbuffer is current. */
+#define SFLAG_INRB_RESOLVED     0x00400000 /* The resolved renderbuffer is current. */
+#define SFLAG_DS_ONSCREEN       0x00800000 /* This is a depth / stencil surface, last modified onscreen. */
+#define SFLAG_DS_OFFSCREEN      0x01000000 /* This is a depth / stencil surface, last modified offscreen. */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_CONVERTED: Converting the data back would take too long
@@ -2130,18 +2137,20 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
  * SFLAG_PBO: PBOs don't use 'normal' memory. It is either allocated by the driver or must be NULL.
  * SFLAG_CLIENT: OpenGL uses our memory as backup
  */
-#define SFLAG_DONOTFREE     (SFLAG_CONVERTED  | \
-                             SFLAG_DIBSECTION | \
-                             SFLAG_LOCKED     | \
-                             SFLAG_DYNLOCK    | \
-                             SFLAG_USERPTR    | \
-                             SFLAG_PBO        | \
-                             SFLAG_CLIENT)
+#define SFLAG_DONOTFREE     (SFLAG_CONVERTED        | \
+                             SFLAG_DYNLOCK          | \
+                             SFLAG_LOCKED           | \
+                             SFLAG_CLIENT           | \
+                             SFLAG_DIBSECTION       | \
+                             SFLAG_USERPTR          | \
+                             SFLAG_PBO)
 
-#define SFLAG_LOCATIONS     (SFLAG_INSYSMEM   | \
-                             SFLAG_INTEXTURE  | \
-                             SFLAG_INDRAWABLE | \
-                             SFLAG_INSRGBTEX)
+#define SFLAG_LOCATIONS     (SFLAG_INSYSMEM         | \
+                             SFLAG_INTEXTURE        | \
+                             SFLAG_INSRGBTEX        | \
+                             SFLAG_INDRAWABLE       | \
+                             SFLAG_INRB_MULTISAMPLE | \
+                             SFLAG_INRB_RESOLVED)
 
 #define SFLAG_DS_LOCATIONS  (SFLAG_DS_ONSCREEN | \
                              SFLAG_DS_OFFSCREEN)

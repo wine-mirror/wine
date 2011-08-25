@@ -169,6 +169,18 @@ static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
                     }
                     break;
 
+                case SFLAG_INRB_MULTISAMPLE:
+                    surface_prepare_rb(depth_stencil, gl_info, TRUE);
+                    context_attach_depth_stencil_rb(gl_info, fbo_target,
+                            format_flags, depth_stencil->rb_multisample);
+                    break;
+
+                case SFLAG_INRB_RESOLVED:
+                    surface_prepare_rb(depth_stencil, gl_info, FALSE);
+                    context_attach_depth_stencil_rb(gl_info, fbo_target,
+                            format_flags, depth_stencil->rb_resolved);
+                    break;
+
                 default:
                     ERR("Unsupported location %s (%#x).\n", debug_surflocation(location), location);
                     break;
@@ -218,13 +230,27 @@ static void context_attach_surface_fbo(struct wined3d_context *context,
                 gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_COLOR_ATTACHMENT0 + idx,
                         surface->texture_target, surface_get_texture_name(surface, gl_info, srgb),
                         surface->texture_level);
+                checkGLcall("glFramebufferTexture2D()");
+                break;
+
+            case SFLAG_INRB_MULTISAMPLE:
+                surface_prepare_rb(surface, gl_info, TRUE);
+                gl_info->fbo_ops.glFramebufferRenderbuffer(fbo_target, GL_COLOR_ATTACHMENT0 + idx,
+                        GL_RENDERBUFFER, surface->rb_multisample);
+                checkGLcall("glFramebufferRenderbuffer()");
+                break;
+
+            case SFLAG_INRB_RESOLVED:
+                surface_prepare_rb(surface, gl_info, FALSE);
+                gl_info->fbo_ops.glFramebufferRenderbuffer(fbo_target, GL_COLOR_ATTACHMENT0 + idx,
+                        GL_RENDERBUFFER, surface->rb_resolved);
+                checkGLcall("glFramebufferRenderbuffer()");
                 break;
 
             default:
                 ERR("Unsupported location %s (%#x).\n", debug_surflocation(location), location);
                 break;
         }
-        checkGLcall("glFramebufferTexture2D()");
     }
     else
     {
@@ -2049,7 +2075,8 @@ BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_d
                     context->blit_targets[i] = NULL;
                     ++i;
                 }
-                context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets, fb->depth_stencil, SFLAG_INTEXTURE);
+                context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets, fb->depth_stencil,
+                        rt_count ? rts[0]->draw_binding : SFLAG_INTEXTURE);
                 glReadBuffer(GL_NONE);
                 checkGLcall("glReadBuffer");
             }
@@ -2163,7 +2190,8 @@ void context_state_fb(struct wined3d_context *context, const struct wined3d_stat
         }
         else
         {
-            context_apply_fbo_state(context, GL_FRAMEBUFFER, fb->render_targets, fb->depth_stencil, SFLAG_INTEXTURE);
+            context_apply_fbo_state(context, GL_FRAMEBUFFER, fb->render_targets, fb->depth_stencil,
+                    fb->render_targets[0]->draw_binding);
             glReadBuffer(GL_NONE);
             checkGLcall("glReadBuffer");
         }

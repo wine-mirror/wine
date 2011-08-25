@@ -2382,10 +2382,12 @@ const char *debug_surflocation(DWORD flag) {
     char buf[128];
 
     buf[0] = 0;
-    if(flag & SFLAG_INSYSMEM) strcat(buf, " | SFLAG_INSYSMEM");
-    if(flag & SFLAG_INDRAWABLE) strcat(buf, " | SFLAG_INDRAWABLE");
-    if(flag & SFLAG_INTEXTURE) strcat(buf, " | SFLAG_INTEXTURE");
-    if(flag & SFLAG_INSRGBTEX) strcat(buf, " | SFLAG_INSRGBTEX");
+    if (flag & SFLAG_INSYSMEM) strcat(buf, " | SFLAG_INSYSMEM");                    /* 17 */
+    if (flag & SFLAG_INDRAWABLE) strcat(buf, " | SFLAG_INDRAWABLE");                /* 19 */
+    if (flag & SFLAG_INTEXTURE) strcat(buf, " | SFLAG_INTEXTURE");                  /* 18 */
+    if (flag & SFLAG_INSRGBTEX) strcat(buf, " | SFLAG_INSRGBTEX");                  /* 18 */
+    if (flag & SFLAG_INRB_MULTISAMPLE) strcat(buf, " | SFLAG_INRB_MULTISAMPLE");    /* 25 */
+    if (flag & SFLAG_INRB_RESOLVED) strcat(buf, " | SFLAG_INRB_RESOLVED");          /* 22 */
     return wine_dbg_sprintf("%s", buf[0] ? buf + 3 : "0");
 }
 

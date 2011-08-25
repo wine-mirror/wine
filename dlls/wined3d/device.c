@@ -5452,6 +5452,9 @@ static HRESULT updateSurfaceDesc(struct wined3d_surface *surface,
         while (surface->pow2Height < pPresentationParameters->BackBufferHeight) surface->pow2Height <<= 1;
     }
 
+    surface->resource.multisample_type = pPresentationParameters->MultiSampleType;
+    surface->resource.multisample_quality = pPresentationParameters->MultiSampleQuality;
+
     surface->resource.resource_ops->resource_unload(&surface->resource);
 
     if (surface->pow2Width != pPresentationParameters->BackBufferWidth
@@ -5627,6 +5630,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     struct wined3d_resource *resource, *cursor;
     struct wined3d_swapchain *swapchain;
     BOOL DisplayModeChanged = FALSE;
+    BOOL update_desc = FALSE;
     WINED3DDISPLAYMODE mode;
     unsigned int i;
     HRESULT hr;
@@ -5771,15 +5775,27 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
             && (present_parameters->BackBufferWidth != swapchain->presentParms.BackBufferWidth
             || present_parameters->BackBufferHeight != swapchain->presentParms.BackBufferHeight))
     {
-        UINT i;
-
         if (!present_parameters->Windowed)
             DisplayModeChanged = TRUE;
 
         swapchain->presentParms.BackBufferWidth = present_parameters->BackBufferWidth;
         swapchain->presentParms.BackBufferHeight = present_parameters->BackBufferHeight;
+        update_desc = TRUE;
+    }
 
-        hr = updateSurfaceDesc(swapchain->front_buffer, present_parameters);
+    if (present_parameters->MultiSampleType != swapchain->presentParms.MultiSampleType
+            || present_parameters->MultiSampleQuality != swapchain->presentParms.MultiSampleQuality)
+    {
+        swapchain->presentParms.MultiSampleType = present_parameters->MultiSampleType;
+        swapchain->presentParms.MultiSampleQuality = present_parameters->MultiSampleQuality;
+        update_desc = TRUE;
+    }
+
+    if (update_desc)
+    {
+        UINT i;
+
+        hr = updateSurfaceDesc(swapchain->front_buffer, &swapchain->presentParms);
         if (FAILED(hr))
         {
             wined3d_swapchain_decref(swapchain);
@@ -5788,7 +5804,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
         for (i = 0; i < swapchain->presentParms.BackBufferCount; ++i)
         {
-            hr = updateSurfaceDesc(swapchain->back_buffers[i], present_parameters);
+            hr = updateSurfaceDesc(swapchain->back_buffers[i], &swapchain->presentParms);
             if (FAILED(hr))
             {
                 wined3d_swapchain_decref(swapchain);
@@ -5797,7 +5813,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         }
         if (device->auto_depth_stencil)
         {
-            hr = updateSurfaceDesc(device->auto_depth_stencil, present_parameters);
+            hr = updateSurfaceDesc(device->auto_depth_stencil, &swapchain->presentParms);
             if (FAILED(hr))
             {
                 wined3d_swapchain_decref(swapchain);
