@@ -111,6 +111,22 @@ static void context_destroy_fbo(struct wined3d_context *context, GLuint *fbo)
     checkGLcall("glDeleteFramebuffers()");
 }
 
+static void context_attach_depth_stencil_rb(const struct wined3d_gl_info *gl_info,
+        GLenum fbo_target, DWORD format_flags, GLuint rb)
+{
+    if (format_flags & WINED3DFMT_FLAG_DEPTH)
+    {
+        gl_info->fbo_ops.glFramebufferRenderbuffer(fbo_target, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rb);
+        checkGLcall("glFramebufferRenderbuffer()");
+    }
+
+    if (format_flags & WINED3DFMT_FLAG_STENCIL)
+    {
+        gl_info->fbo_ops.glFramebufferRenderbuffer(fbo_target, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rb);
+        checkGLcall("glFramebufferRenderbuffer()");
+    }
+}
+
 /* GL locking is done by the caller */
 static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         GLenum fbo_target, struct wined3d_surface *depth_stencil, DWORD location)
@@ -125,19 +141,8 @@ static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
 
         if (depth_stencil->current_renderbuffer)
         {
-            if (format_flags & WINED3DFMT_FLAG_DEPTH)
-            {
-                gl_info->fbo_ops.glFramebufferRenderbuffer(fbo_target, GL_DEPTH_ATTACHMENT,
-                        GL_RENDERBUFFER, depth_stencil->current_renderbuffer->id);
-                checkGLcall("glFramebufferRenderbuffer()");
-            }
-
-            if (format_flags & WINED3DFMT_FLAG_STENCIL)
-            {
-                gl_info->fbo_ops.glFramebufferRenderbuffer(fbo_target, GL_STENCIL_ATTACHMENT,
-                        GL_RENDERBUFFER, depth_stencil->current_renderbuffer->id);
-                checkGLcall("glFramebufferRenderbuffer()");
-            }
+            context_attach_depth_stencil_rb(gl_info, fbo_target,
+                    format_flags, depth_stencil->current_renderbuffer->id);
         }
         else
         {
