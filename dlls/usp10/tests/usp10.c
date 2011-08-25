@@ -1876,7 +1876,7 @@ static void _test_item_ScriptXtoX(SCRIPT_ANALYSIS *psa, int cChars, int cGlyphs,
         hr = ScriptCPtoX(iCP, fTrailing, icChars, icGlyphs, pwLogClust, psva, piAdvance, psa, &piX);
         winetest_ok(hr == S_OK, "ScriptCPtoX trailing: should return S_OK not %08x\n", hr);
         winetest_ok(piX == offsets[iCP+1],
-           "ScriptCPtoX trailing: iCP=%d should return piX=%d not %d\n", iCP, offsets[iCP+direction], piX);
+           "ScriptCPtoX trailing: iCP=%d should return piX=%d not %d\n", iCP, offsets[iCP+1], piX);
     }
 }
 
@@ -1887,9 +1887,12 @@ static void test_ScriptXtoX(void)
 {
     WORD pwLogClust[10] = {0, 0, 0, 1, 1, 2, 2, 3, 3, 3};
     WORD pwLogClust_RTL[10] = {3, 3, 3, 2, 2, 1, 1, 0, 0, 0};
+    WORD pwLogClust_2[7] = {4, 3, 3, 2, 1, 0 ,0};
     int piAdvance[10] = {201, 190, 210, 180, 170, 204, 189, 195, 212, 203};
+    int piAdvance_2[5] = {39, 26, 19, 17, 11};
     static const int offsets[13] = {0, 67, 134, 201, 296, 391, 496, 601, 1052, 1503, 1954, 1954, 1954};
     static const int offsets_RTL[13] = {781, 721, 661, 601, 496, 391, 296, 201, 134, 67, 0, 0, 0};
+    static const int offsets_2[10] = {112, 101, 92, 84, 65, 39, 19, 0, 0, 0};
     SCRIPT_VISATTR psva[10];
     SCRIPT_ANALYSIS sa;
     int iX;
@@ -1925,6 +1928,7 @@ static void test_ScriptXtoX(void)
     test_item_ScriptXtoX(&sa, 10, 10, offsets, pwLogClust, piAdvance);
     sa.fRTL = TRUE;
     test_item_ScriptXtoX(&sa, 10, 10, offsets_RTL, pwLogClust_RTL, piAdvance);
+    test_item_ScriptXtoX(&sa, 7, 5, offsets_2, pwLogClust_2, piAdvance_2);
 }
 
 static void test_ScriptString(HDC hdc)
