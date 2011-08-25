@@ -2253,6 +2253,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     gl_info->limits.vertex_samplers = 0;
     gl_info->limits.combined_samplers = gl_info->limits.fragment_samplers + gl_info->limits.vertex_samplers;
     gl_info->limits.sampler_stages = 1;
+    gl_info->limits.vertex_attribs = 16;
     gl_info->limits.glsl_vs_float_constants = 0;
     gl_info->limits.glsl_ps_float_constants = 0;
     gl_info->limits.arb_vs_float_constants = 0;
@@ -2446,6 +2447,8 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
             gl_info->limits.vertex_samplers = tmp;
             glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB, &tmp);
             gl_info->limits.combined_samplers = tmp;
+            glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &tmp);
+            gl_info->limits.vertex_attribs = tmp;
 
             /* Loading GLSL sampler uniforms is much simpler if we can assume that the sampler setup
              * is known at shader link time. In a vertex shader + pixel shader combination this isn't

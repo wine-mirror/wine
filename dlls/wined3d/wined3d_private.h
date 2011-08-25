@@ -1456,6 +1456,7 @@ struct wined3d_gl_limits
     UINT anisotropy;
     float shininess;
     UINT samples;
+    UINT vertex_attribs;
 
     UINT glsl_varyings;
     UINT glsl_vs_float_constants;

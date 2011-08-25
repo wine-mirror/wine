@@ -3999,15 +3999,9 @@ static inline void unload_numbered_array(struct wined3d_context *context, int i)
 static void unload_numbered_arrays(struct wined3d_context *context)
 {
     /* disable any attribs (this is the same for both GLSL and ARB modes) */
-    GLint maxAttribs = 16;
     int i;
 
-    /* Leave all the attribs disabled */
-    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &maxAttribs);
-    /* MESA does not support it right not */
-    if (glGetError() != GL_NO_ERROR)
-        maxAttribs = 16;
-    for (i = 0; i < maxAttribs; ++i) {
+    for (i = 0; i < context->gl_info->limits.vertex_attribs; ++i) {
         unload_numbered_array(context, i);
     }
 }
