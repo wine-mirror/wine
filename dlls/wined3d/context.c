@@ -253,17 +253,17 @@ void context_check_fbo_status(const struct wined3d_context *context, GLenum targ
             attachment = context->current_fbo->render_targets[i];
             if (attachment)
             {
-                FIXME("\tColor attachment %d: (%p) %s %ux%u\n",
+                FIXME("\tColor attachment %d: (%p) %s %ux%u %u samples.\n",
                         i, attachment, debug_d3dformat(attachment->resource.format->id),
-                        attachment->pow2Width, attachment->pow2Height);
+                        attachment->pow2Width, attachment->pow2Height, attachment->resource.multisample_type);
             }
         }
         attachment = context->current_fbo->depth_stencil;
         if (attachment)
         {
-            FIXME("\tDepth attachment: (%p) %s %ux%u\n",
+            FIXME("\tDepth attachment: (%p) %s %ux%u %u samples.\n",
                     attachment, debug_d3dformat(attachment->resource.format->id),
-                    attachment->pow2Width, attachment->pow2Height);
+                    attachment->pow2Width, attachment->pow2Height, attachment->resource.multisample_type);
         }
     }
 }
