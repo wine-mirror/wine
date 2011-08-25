@@ -26,6 +26,8 @@ static char workdir[MAX_PATH];
 static DWORD workdir_len;
 static char drive[2];
 static const DWORD drive_len = sizeof(drive)/sizeof(drive[0]);
+static char path[MAX_PATH];
+static DWORD path_len;
 
 /* Convert to DOS line endings, and substitute escaped whitespace chars with real ones */
 static const char* convert_input_data(const char *data, DWORD size, DWORD *new_size)
@@ -157,6 +159,7 @@ static const char *compare_line(const char *out_line, const char *out_end, const
 
     static const char pwd_cmd[] = {'@','p','w','d','@'};
     static const char drive_cmd[] = {'@','d','r','i','v','e','@'};
+    static const char path_cmd[]  = {'@','p','a','t','h','@'};
     static const char space_cmd[] = {'@','s','p','a','c','e','@'};
     static const char tab_cmd[]   = {'@','t','a','b','@'};
     static const char or_broken_cmd[] = {'@','o','r','_','b','r','o','k','e','n','@'};
@@ -183,6 +186,17 @@ static const char *compare_line(const char *out_line, const char *out_end, const
                     err = out_ptr;
                 }else {
                     out_ptr += drive_len;
+                    continue;
+                }
+            } else if(exp_ptr+sizeof(path_cmd) <= exp_end
+                    && !memcmp(exp_ptr, path_cmd, sizeof(path_cmd))) {
+                exp_ptr += sizeof(path_cmd);
+                if(out_end-out_ptr < path_len
+                   || (CompareStringA(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
+                                      out_ptr, path_len, path, path_len) != CSTR_EQUAL)) {
+                    err = out_ptr;
+                }else {
+                    out_ptr += path_len;
                     continue;
                 }
             }else if(exp_ptr+sizeof(space_cmd) <= exp_end
@@ -407,6 +421,9 @@ START_TEST(batch)
     workdir_len = GetCurrentDirectoryA(sizeof(workdir), workdir);
     drive[0] = workdir[0];
     drive[1] = workdir[1]; /* Should be ':' */
+    memcpy(path, workdir + drive_len, (workdir_len - drive_len) * sizeof(drive[0]));
+    path[workdir_len - drive_len] = '\\';
+    path_len = workdir_len - drive_len + 1;
 
     argc = winetest_get_mainargs(&argv);
     if(argc > 2)
