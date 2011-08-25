@@ -6,4 +6,6 @@ EXTRAINCL = -I$(top_srcdir)/include/msvcrt
 C_SRCS = \
 	msvcr80.c
 
+RC_SRCS = msvcr80.rc
+
 @MAKE_DLL_RULES@
