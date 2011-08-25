@@ -121,8 +121,10 @@ static HRESULT WINAPI HTMLDOMAttribute_Invoke(IHTMLDOMAttribute *iface, DISPID d
 static HRESULT WINAPI HTMLDOMAttribute_get_nodeName(IHTMLDOMAttribute *iface, BSTR *p)
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return IDispatchEx_GetMemberName(&This->elem->node.dispex.IDispatchEx_iface, This->dispid, p);
 }
 
 static HRESULT WINAPI HTMLDOMAttribute_put_nodeName(IHTMLDOMAttribute *iface, VARIANT v)
