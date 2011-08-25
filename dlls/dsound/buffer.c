@@ -374,6 +374,10 @@ static ULONG WINAPI IDirectSoundBufferImpl_AddRef(IDirectSoundBuffer8 *iface)
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref was %d\n", This, ref - 1);
+
+    if(ref == 1)
+        InterlockedIncrement(&This->numIfaces);
+
     return ref;
 }
 
@@ -384,28 +388,9 @@ static ULONG WINAPI IDirectSoundBufferImpl_Release(IDirectSoundBuffer8 *iface)
 
     TRACE("(%p) ref was %d\n", This, ref + 1);
 
-    if (!ref) {
-	DirectSoundDevice_RemoveBuffer(This->device, This);
-	RtlDeleteResource(&This->lock);
+    if (!ref && !InterlockedDecrement(&This->numIfaces))
+        secondarybuffer_destroy(This);
 
-	if (This->hwbuf)
-		IDsDriverBuffer_Release(This->hwbuf);
-	if (!This->hwbuf || (This->device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY)) {
-		This->buffer->ref--;
-		list_remove(&This->entry);
-		if (This->buffer->ref==0) {
-			HeapFree(GetProcessHeap(),0,This->buffer->memory);
-			HeapFree(GetProcessHeap(),0,This->buffer);
-		}
-	}
-
-	HeapFree(GetProcessHeap(), 0, This->tmp_buffer);
-	HeapFree(GetProcessHeap(), 0, This->notifies);
-	HeapFree(GetProcessHeap(), 0, This->pwfx);
-	HeapFree(GetProcessHeap(), 0, This);
-
-	TRACE("(%p) released\n", This);
-    }
     return ref;
 }
 
@@ -971,6 +956,7 @@ HRESULT IDirectSoundBufferImpl_Create(
 	TRACE("Created buffer at %p\n", dsb);
 
         dsb->ref = 1;
+        dsb->numIfaces = 1;
 	dsb->device = device;
         dsb->IDirectSoundBuffer8_iface.lpVtbl = &dsbvt;
 	dsb->iks = NULL;
@@ -1123,6 +1109,30 @@ HRESULT IDirectSoundBufferImpl_Create(
 	return err;
 }
 
+void secondarybuffer_destroy(IDirectSoundBufferImpl *This)
+{
+    DirectSoundDevice_RemoveBuffer(This->device, This);
+    RtlDeleteResource(&This->lock);
+
+    if (This->hwbuf)
+        IDsDriverBuffer_Release(This->hwbuf);
+    if (!This->hwbuf || (This->device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY)) {
+        This->buffer->ref--;
+        list_remove(&This->entry);
+        if (This->buffer->ref == 0) {
+            HeapFree(GetProcessHeap(), 0, This->buffer->memory);
+            HeapFree(GetProcessHeap(), 0, This->buffer);
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, This->tmp_buffer);
+    HeapFree(GetProcessHeap(), 0, This->notifies);
+    HeapFree(GetProcessHeap(), 0, This->pwfx);
+    HeapFree(GetProcessHeap(), 0, This);
+
+    TRACE("(%p) released\n", This);
+}
+
 HRESULT IDirectSoundBufferImpl_Destroy(
     IDirectSoundBufferImpl *pdsb)
 {
@@ -1130,7 +1140,7 @@ HRESULT IDirectSoundBufferImpl_Destroy(
 
     /* This keeps the *_Destroy functions from possibly deleting
      * this object until it is ready to be deleted */
-    IDirectSoundBufferImpl_AddRef(&pdsb->IDirectSoundBuffer8_iface);
+    InterlockedIncrement(&pdsb->numIfaces);
 
     if (pdsb->iks) {
         WARN("iks not NULL\n");
@@ -1150,7 +1160,7 @@ HRESULT IDirectSoundBufferImpl_Destroy(
         pdsb->notify = NULL;
     }
 
-    while (IDirectSoundBuffer8_Release(&pdsb->IDirectSoundBuffer8_iface) > 0);
+    secondarybuffer_destroy(pdsb);
 
     return S_OK;
 }
@@ -1196,6 +1206,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     dsb->buffer->ref++;
     list_add_head(&dsb->buffer->buffers, &dsb->entry);
     dsb->ref = 1;
+    dsb->numIfaces = 1;
     dsb->state = STATE_STOPPED;
     dsb->buf_mixpos = dsb->sec_mixpos = 0;
     dsb->notify = NULL;

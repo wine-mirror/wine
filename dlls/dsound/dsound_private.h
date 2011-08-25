@@ -159,6 +159,7 @@ HRESULT DirectSoundDevice_VerifyCertification(DirectSoundDevice * device,
 struct IDirectSoundBufferImpl
 {
     IDirectSoundBuffer8         IDirectSoundBuffer8_iface;
+    LONG                        numIfaces; /* "in use interfaces" refcount */
     LONG                        ref;
     /* IDirectSoundBufferImpl fields */
     DirectSoundDevice*          device;
@@ -206,6 +207,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     DirectSoundDevice *device,
     IDirectSoundBufferImpl **ppdsb,
     IDirectSoundBufferImpl *pdsb) DECLSPEC_HIDDEN;
+void secondarybuffer_destroy(IDirectSoundBufferImpl *This) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * PrimaryBuffer implementation structure

@@ -335,7 +335,12 @@ static ULONG WINAPI IDirectSound3DBufferImpl_AddRef(LPDIRECTSOUND3DBUFFER iface)
 {
     IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
+
     TRACE("(%p) ref was %d\n", This, ref - 1);
+
+    if(ref == 1)
+        InterlockedIncrement(&This->dsb->numIfaces);
+
     return ref;
 }
 
@@ -347,7 +352,8 @@ static ULONG WINAPI IDirectSound3DBufferImpl_Release(LPDIRECTSOUND3DBUFFER iface
 
     if (!ref) {
         This->dsb->ds3db = NULL;
-        IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER8)This->dsb);
+        if (!InterlockedDecrement(&This->dsb->numIfaces))
+            secondarybuffer_destroy(This->dsb);
         HeapFree(GetProcessHeap(), 0, This);
         TRACE("(%p) released\n", This);
     }
