@@ -6174,10 +6174,6 @@ msgstr ""
 msgid "&w&bPage &p"
 msgstr ""
 
-#: shdoclc.rc:31
-msgid "&u&b&d"
-msgstr ""
-
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252
 msgid "Lar&ge Icons"

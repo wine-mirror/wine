@@ -6262,10 +6262,6 @@ msgstr "Wine Internet Explorer"
 msgid "&w&bPage &p"
 msgstr "&w&bStran &p"
 
-#: shdoclc.rc:31
-msgid "&u&b&d"
-msgstr "&u&b&d"
-
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252
 msgid "Lar&ge Icons"
