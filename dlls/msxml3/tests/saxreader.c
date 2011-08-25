@@ -1380,8 +1380,15 @@ static void test_mxwriter_startenddocument(void)
     free_bstrs();
 }
 
-struct writer_startelement_t {
+enum startendtype
+{
+    StartElement,
+    EndElement
+};
+
+struct writer_startendelement_t {
     const GUID *clsid;
+    enum startendtype type;
     const char *uri;
     const char *local_name;
     const char *qname;
@@ -1389,46 +1396,85 @@ struct writer_startelement_t {
     HRESULT hr;
 };
 
-static const struct writer_startelement_t writer_startelement[] = {
+static const struct writer_startendelement_t writer_startendelement[] = {
     /* 0 */
-    { &CLSID_MXXMLWriter,   NULL, NULL, NULL, NULL, E_INVALIDARG },
-    { &CLSID_MXXMLWriter30, NULL, NULL, NULL, NULL, E_INVALIDARG },
-    { &CLSID_MXXMLWriter40, NULL, NULL, NULL, NULL, E_INVALIDARG },
-    { &CLSID_MXXMLWriter60, NULL, NULL, NULL, "<>", S_OK },
-    { &CLSID_MXXMLWriter,   "uri", NULL, NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter,   StartElement, NULL, NULL, NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter30, StartElement, NULL, NULL, NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter40, StartElement, NULL, NULL, NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter60, StartElement, NULL, NULL, NULL, "<>", S_OK },
+    { &CLSID_MXXMLWriter,   StartElement, "uri", NULL, NULL, NULL, E_INVALIDARG },
     /* 5 */
-    { &CLSID_MXXMLWriter30, "uri", NULL, NULL, NULL, E_INVALIDARG },
-    { &CLSID_MXXMLWriter40, "uri", NULL, NULL, NULL, E_INVALIDARG },
-    { &CLSID_MXXMLWriter60, "uri", NULL, NULL, "<>", S_OK },
-    { &CLSID_MXXMLWriter,   NULL, "local", NULL, NULL, E_INVALIDARG },
-    { &CLSID_MXXMLWriter30, NULL, "local", NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter30, StartElement, "uri", NULL, NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter40, StartElement, "uri", NULL, NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter60, StartElement, "uri", NULL, NULL, "<>", S_OK },
+    { &CLSID_MXXMLWriter,   StartElement, NULL, "local", NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter30, StartElement, NULL, "local", NULL, NULL, E_INVALIDARG },
     /* 10 */
-    { &CLSID_MXXMLWriter40, NULL, "local", NULL, NULL, E_INVALIDARG },
-    { &CLSID_MXXMLWriter60, NULL, "local", NULL, "<>", S_OK },
-    { &CLSID_MXXMLWriter,   NULL, NULL, "qname", NULL, E_INVALIDARG },
-    { &CLSID_MXXMLWriter30, NULL, NULL, "qname", NULL, E_INVALIDARG },
-    { &CLSID_MXXMLWriter40, NULL, NULL, "qname", NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter40, StartElement, NULL, "local", NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter60, StartElement, NULL, "local", NULL, "<>", S_OK },
+    { &CLSID_MXXMLWriter,   StartElement, NULL, NULL, "qname", NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter30, StartElement, NULL, NULL, "qname", NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter40, StartElement, NULL, NULL, "qname", NULL, E_INVALIDARG },
     /* 15 */
-    { &CLSID_MXXMLWriter60, NULL, NULL, "qname", "<qname>", S_OK },
-    { &CLSID_MXXMLWriter,   "uri", "local", "qname", "<qname>", S_OK },
-    { &CLSID_MXXMLWriter30, "uri", "local", "qname", "<qname>", S_OK },
-    { &CLSID_MXXMLWriter40, "uri", "local", "qname", "<qname>", S_OK },
-    { &CLSID_MXXMLWriter60, "uri", "local", "qname", "<qname>", S_OK },
+    { &CLSID_MXXMLWriter60, StartElement, NULL, NULL, "qname", "<qname>", S_OK },
+    { &CLSID_MXXMLWriter,   StartElement, "uri", "local", "qname", "<qname>", S_OK },
+    { &CLSID_MXXMLWriter30, StartElement, "uri", "local", "qname", "<qname>", S_OK },
+    { &CLSID_MXXMLWriter40, StartElement, "uri", "local", "qname", "<qname>", S_OK },
+    { &CLSID_MXXMLWriter60, StartElement, "uri", "local", "qname", "<qname>", S_OK },
     /* 20 */
-    { &CLSID_MXXMLWriter,   "uri", "local", NULL, NULL, E_INVALIDARG },
-    { &CLSID_MXXMLWriter30, "uri", "local", NULL, NULL, E_INVALIDARG },
-    { &CLSID_MXXMLWriter40, "uri", "local", NULL, NULL, E_INVALIDARG },
-    { &CLSID_MXXMLWriter60, "uri", "local", NULL, "<>", S_OK },
-    { &CLSID_MXXMLWriter,   "uri", "local", "uri:local", "<uri:local>", S_OK },
+    { &CLSID_MXXMLWriter,   StartElement, "uri", "local", NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter30, StartElement, "uri", "local", NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter40, StartElement, "uri", "local", NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter60, StartElement, "uri", "local", NULL, "<>", S_OK },
+    { &CLSID_MXXMLWriter,   StartElement, "uri", "local", "uri:local", "<uri:local>", S_OK },
     /* 25 */
-    { &CLSID_MXXMLWriter30, "uri", "local", "uri:local", "<uri:local>", S_OK },
-    { &CLSID_MXXMLWriter40, "uri", "local", "uri:local", "<uri:local>", S_OK },
-    { &CLSID_MXXMLWriter60, "uri", "local", "uri:local", "<uri:local>", S_OK },
-    { &CLSID_MXXMLWriter,   "uri", "local", "uri:local2", "<uri:local2>", S_OK },
-    { &CLSID_MXXMLWriter30, "uri", "local", "uri:local2", "<uri:local2>", S_OK },
+    { &CLSID_MXXMLWriter30, StartElement, "uri", "local", "uri:local", "<uri:local>", S_OK },
+    { &CLSID_MXXMLWriter40, StartElement, "uri", "local", "uri:local", "<uri:local>", S_OK },
+    { &CLSID_MXXMLWriter60, StartElement, "uri", "local", "uri:local", "<uri:local>", S_OK },
+    { &CLSID_MXXMLWriter,   StartElement, "uri", "local", "uri:local2", "<uri:local2>", S_OK },
+    { &CLSID_MXXMLWriter30, StartElement, "uri", "local", "uri:local2", "<uri:local2>", S_OK },
     /* 30 */
-    { &CLSID_MXXMLWriter40, "uri", "local", "uri:local2", "<uri:local2>", S_OK },
-    { &CLSID_MXXMLWriter60, "uri", "local", "uri:local2", "<uri:local2>", S_OK },
+    { &CLSID_MXXMLWriter40, StartElement, "uri", "local", "uri:local2", "<uri:local2>", S_OK },
+    { &CLSID_MXXMLWriter60, StartElement, "uri", "local", "uri:local2", "<uri:local2>", S_OK },
+    /* endElement tests */
+    { &CLSID_MXXMLWriter,   EndElement, NULL, NULL, NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter30, EndElement, NULL, NULL, NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter40, EndElement, NULL, NULL, NULL, NULL, E_INVALIDARG },
+    /* 35 */
+    { &CLSID_MXXMLWriter60, EndElement, NULL, NULL, NULL, "</>", S_OK },
+    { &CLSID_MXXMLWriter,   EndElement, "uri", NULL, NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter30, EndElement, "uri", NULL, NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter40, EndElement, "uri", NULL, NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter60, EndElement, "uri", NULL, NULL, "</>", S_OK },
+    /* 40 */
+    { &CLSID_MXXMLWriter,   EndElement, NULL, "local", NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter30, EndElement, NULL, "local", NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter40, EndElement, NULL, "local", NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter60, EndElement, NULL, "local", NULL, "</>", S_OK },
+    { &CLSID_MXXMLWriter,   EndElement, NULL, NULL, "qname", NULL, E_INVALIDARG },
+    /* 45 */
+    { &CLSID_MXXMLWriter30, EndElement, NULL, NULL, "qname", NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter40, EndElement, NULL, NULL, "qname", NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter60, EndElement, NULL, NULL, "qname", "</qname>", S_OK },
+    { &CLSID_MXXMLWriter,   EndElement, "uri", "local", "qname", "</qname>", S_OK },
+    { &CLSID_MXXMLWriter30, EndElement, "uri", "local", "qname", "</qname>", S_OK },
+    /* 50 */
+    { &CLSID_MXXMLWriter40, EndElement, "uri", "local", "qname", "</qname>", S_OK },
+    { &CLSID_MXXMLWriter60, EndElement, "uri", "local", "qname", "</qname>", S_OK },
+    { &CLSID_MXXMLWriter,   EndElement, "uri", "local", NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter30, EndElement, "uri", "local", NULL, NULL, E_INVALIDARG },
+    { &CLSID_MXXMLWriter40, EndElement, "uri", "local", NULL, NULL, E_INVALIDARG },
+    /* 55 */
+    { &CLSID_MXXMLWriter60, EndElement, "uri", "local", NULL, "</>", S_OK },
+    { &CLSID_MXXMLWriter,   EndElement, "uri", "local", "uri:local", "</uri:local>", S_OK },
+    { &CLSID_MXXMLWriter30, EndElement, "uri", "local", "uri:local", "</uri:local>", S_OK },
+    { &CLSID_MXXMLWriter40, EndElement, "uri", "local", "uri:local", "</uri:local>", S_OK },
+    { &CLSID_MXXMLWriter60, EndElement, "uri", "local", "uri:local", "</uri:local>", S_OK },
+    /* 60 */
+    { &CLSID_MXXMLWriter,   EndElement, "uri", "local", "uri:local2", "</uri:local2>", S_OK },
+    { &CLSID_MXXMLWriter30, EndElement, "uri", "local", "uri:local2", "</uri:local2>", S_OK },
+    { &CLSID_MXXMLWriter40, EndElement, "uri", "local", "uri:local2", "</uri:local2>", S_OK },
+    { &CLSID_MXXMLWriter60, EndElement, "uri", "local", "uri:local2", "</uri:local2>", S_OK },
     { NULL }
 };
 
@@ -1476,7 +1522,7 @@ static BOOL is_mxwriter_supported(const GUID *clsid, const struct msxmlsupported
     return FALSE;
 }
 
-static void test_mxwriter_startelement(const struct writer_startelement_t *table)
+static void test_mxwriter_startendelement_batch(const struct writer_startendelement_t *table)
 {
     int i;
 
@@ -1509,8 +1555,12 @@ static void test_mxwriter_startelement(const struct writer_startelement_t *table
         hr = ISAXContentHandler_startDocument(content);
         EXPECT_HR(hr, S_OK);
 
-        hr = ISAXContentHandler_startElement(content, _bstr_(table->uri), lstrlen(table->uri),
-            _bstr_(table->local_name), lstrlen(table->local_name), _bstr_(table->qname), lstrlen(table->qname), NULL);
+        if (table->type == StartElement)
+            hr = ISAXContentHandler_startElement(content, _bstr_(table->uri), lstrlen(table->uri),
+                _bstr_(table->local_name), lstrlen(table->local_name), _bstr_(table->qname), lstrlen(table->qname), NULL);
+        else
+            hr = ISAXContentHandler_endElement(content, _bstr_(table->uri), lstrlen(table->uri),
+                _bstr_(table->local_name), lstrlen(table->local_name), _bstr_(table->qname), lstrlen(table->qname));
         ok(hr == table->hr, "test %d: got 0x%08x, expected 0x%08x\n", i, hr, table->hr);
 
         /* test output */
@@ -1545,7 +1595,7 @@ static void test_mxwriter_startendelement(void)
     VARIANT dest;
     HRESULT hr;
 
-    test_mxwriter_startelement(writer_startelement);
+    test_mxwriter_startendelement_batch(writer_startendelement);
 
     hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMXWriter, (void**)&writer);
