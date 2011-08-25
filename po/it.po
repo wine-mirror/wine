@@ -5759,10 +5759,6 @@ msgstr "funzionalità da:"
 msgid "choose which folder contains %s"
 msgstr "selezionare la cartella che contiene %s"
 
-#: msrle32.rc:27
-msgid "WINE-MS-RLE"
-msgstr "WINE-MS-RLE"
-
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
 msgstr "Codec video MS-RLE di Wine"

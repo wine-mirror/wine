@@ -5506,10 +5506,6 @@ msgstr "機能の導入元:"
 msgid "choose which folder contains %s"
 msgstr "%s を含むフォルダを選択"
 
-#: msrle32.rc:27
-msgid "WINE-MS-RLE"
-msgstr "WINE-MS-RLE"
-
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
 msgstr "Wine MS-RLE ビデオコーデック"

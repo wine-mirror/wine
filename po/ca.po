@@ -5413,10 +5413,6 @@ msgstr ""
 msgid "choose which folder contains %s"
 msgstr ""
 
-#: msrle32.rc:27
-msgid "WINE-MS-RLE"
-msgstr ""
-
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
 msgstr ""

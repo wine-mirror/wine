@@ -24,7 +24,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-	IDS_NAME	"WINE-MS-RLE"
+	IDS_NAME	"#msgctxt#do not translate#WINE-MS-RLE"
 	IDS_DESCRIPTION	"Wine MS-RLE video codec"
 	IDS_ABOUT       "Wine MS-RLE video codec\nCopyright 2002 by Michael Guennewig"
 }

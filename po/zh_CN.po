@@ -5725,10 +5725,6 @@ msgstr "功能来自:"
 msgid "choose which folder contains %s"
 msgstr "选择包含 %s 的文件夹"
 
-#: msrle32.rc:27
-msgid "WINE-MS-RLE"
-msgstr ""
-
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
 msgstr ""

@@ -5499,10 +5499,6 @@ msgstr "부분(feature)에서:"
 msgid "choose which folder contains %s"
 msgstr "%s를 포함하는 폴더 선택"
 
-#: msrle32.rc:27
-msgid "WINE-MS-RLE"
-msgstr "WINE-MS-RLE"
-
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
 msgstr "Wine MS-RLE 비디오 코덱"

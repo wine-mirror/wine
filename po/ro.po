@@ -5989,10 +5989,6 @@ msgstr "caracteristică de la:"
 msgid "choose which folder contains %s"
 msgstr "selectați fișierul care conține %s"
 
-#: msrle32.rc:27
-msgid "WINE-MS-RLE"
-msgstr "WINE-MS-RLE"
-
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
 msgstr "Codecul video Wine MS-RLE"
