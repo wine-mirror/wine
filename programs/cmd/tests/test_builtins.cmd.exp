@@ -431,6 +431,36 @@ bar
 0
 @todo_wine@5@or_broken@0
 
+...for /F
+......string argument
+a
+a
+a
+a
+a
+......fileset argument
+.........basic blank handling
+a
+a
+a
+a
+a
+b
+.........multi-line with empty lines
+a
+b
+c
+.........multiple files
+a
+b
+c
+q
+kkk
+q
+kkk
+a
+b
+c
 -----------Testing del /a-----------
 not-r.test not found after delete, good
 r.test found before delete, good

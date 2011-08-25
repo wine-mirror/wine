@@ -585,6 +585,54 @@ set /a var=foo=19, foo %%= 4 + (bar %%= 7) & echo.
 set foo=
 set bar=
 set var=
+echo ...for /F
+mkdir foobar & cd foobar
+echo ......string argument
+for /F %%i in ("a b c") do echo %%i
+for /f %%i in ("a ") do echo %%i
+for /f %%i in ("a") do echo %%i
+fOr /f %%i in (" a") do echo %%i
+for /f %%i in (" a ") do echo %%i
+echo ......fileset argument
+echo .........basic blank handling
+echo a b c>foo
+for /f %%i in (foo) do echo %%i
+echo a >foo
+for /f %%i in (foo) do echo %%i
+echo a>foo
+for /f %%i in (foo) do echo %%i
+echo  a>foo
+for /f %%i in (foo) do echo %%i
+echo  a >foo
+for /f %%i in (foo) do echo %%i
+echo. > foo
+for /f %%i in (foo) do echo %%i
+echo. >> foo
+echo b > foo
+for /f %%i in (foo) do echo %%i
+echo .........multi-line with empty lines
+echo a Z f> foo
+echo. >> foo
+echo.>> foo
+echo b bC>> foo
+echo c>> foo
+echo. >> foo
+for /f %%b in (foo) do echo %%b
+echo .........multiple files
+echo q w > bar
+echo.>> bar
+echo kkk>>bar
+for /f %%k in (foo bar) do echo %%k
+for /f %%k in (bar foo) do echo %%k
+rem echo ......command argument
+rem Not implemented on NT4
+rem FIXME: Not testable right now in wine: not implemented and would need
+rem preliminary grep-like program implementation (e.g. like findstr or fc) even
+rem for a simple todo_wine test
+rem (for /f "usebackq" %%i in (`echo z a b`) do echo %%i) || echo not supported
+rem (for /f usebackq %%i in (`echo z a b`) do echo %%i) || echo not supported
+cd ..
+rd /s/q foobar
 
 echo -----------Testing del /a-----------
 del /f/q *.test > nul
