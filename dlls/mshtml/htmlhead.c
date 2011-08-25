@@ -156,6 +156,7 @@ static const NodeImplVtbl HTMLTitleElementImplVtbl = {
     HTMLTitleElement_QI,
     HTMLTitleElement_destructor,
     HTMLElement_clone,
+    HTMLElement_get_attr_col
 };
 
 static const tid_t HTMLTitleElement_iface_tids[] = {
@@ -312,7 +313,8 @@ static void HTMLHeadElement_destructor(HTMLDOMNode *iface)
 static const NodeImplVtbl HTMLHeadElementImplVtbl = {
     HTMLHeadElement_QI,
     HTMLHeadElement_destructor,
-    HTMLElement_clone
+    HTMLElement_clone,
+    HTMLElement_get_attr_col
 };
 
 static const tid_t HTMLHeadElement_iface_tids[] = {

@@ -1185,6 +1185,7 @@ static const NodeImplVtbl HTMLInputElementImplVtbl = {
     HTMLInputElement_QI,
     HTMLInputElement_destructor,
     HTMLElement_clone,
+    HTMLElement_get_attr_col,
     NULL,
     HTMLInputElementImpl_fire_event,
     NULL,

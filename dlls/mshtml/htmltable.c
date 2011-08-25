@@ -559,6 +559,7 @@ static const NodeImplVtbl HTMLTableImplVtbl = {
     HTMLTable_QI,
     HTMLTable_destructor,
     HTMLElement_clone,
+    HTMLElement_get_attr_col
 };
 
 static const tid_t HTMLTable_iface_tids[] = {

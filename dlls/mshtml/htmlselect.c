@@ -615,6 +615,7 @@ static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     HTMLSelectElement_QI,
     HTMLSelectElement_destructor,
     HTMLElement_clone,
+    HTMLElement_get_attr_col,
     NULL,
     NULL,
     NULL,

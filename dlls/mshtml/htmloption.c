@@ -343,7 +343,8 @@ static void HTMLOptionElement_destructor(HTMLDOMNode *iface)
 static const NodeImplVtbl HTMLOptionElementImplVtbl = {
     HTMLOptionElement_QI,
     HTMLOptionElement_destructor,
-    HTMLElement_clone
+    HTMLElement_clone,
+    HTMLElement_get_attr_col
 };
 
 static const tid_t HTMLOptionElement_iface_tids[] = {

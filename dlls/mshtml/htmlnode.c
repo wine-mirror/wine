@@ -472,8 +472,22 @@ static HRESULT WINAPI HTMLDOMNode_get_childNodes(IHTMLDOMNode *iface, IDispatch 
 static HRESULT WINAPI HTMLDOMNode_get_attributes(IHTMLDOMNode *iface, IDispatch **p)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    HTMLAttributeCollection *col;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->vtbl->get_attr_col) {
+        hres = This->vtbl->get_attr_col(This, &col);
+        if(FAILED(hres))
+            return hres;
+
+        *p = (IDispatch*)&col->IHTMLAttributeCollection_iface;
+        return S_OK;
+    }
+
+    *p = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMNode_insertBefore(IHTMLDOMNode *iface, IHTMLDOMNode *newChild,

@@ -633,6 +633,7 @@ static const NodeImplVtbl HTMLFormElementImplVtbl = {
     HTMLFormElement_QI,
     HTMLFormElement_destructor,
     HTMLElement_clone,
+    HTMLElement_get_attr_col,
     NULL,
     NULL,
     NULL,

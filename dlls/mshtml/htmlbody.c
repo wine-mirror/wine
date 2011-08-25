@@ -786,6 +786,7 @@ static const NodeImplVtbl HTMLBodyElementImplVtbl = {
     HTMLBodyElement_QI,
     HTMLBodyElement_destructor,
     HTMLElement_clone,
+    HTMLElement_get_attr_col,
     HTMLBodyElement_get_event_target
 };
 

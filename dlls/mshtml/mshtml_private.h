@@ -73,6 +73,7 @@ typedef struct event_target_t event_target_t;
     XDIID(DispCPlugins) \
     XDIID(DispDOMChildrenCollection) \
     XDIID(DispHTMLAnchorElement) \
+    XDIID(DispHTMLAttributeCollection) \
     XDIID(DispHTMLBody) \
     XDIID(DispHTMLCommentElement) \
     XDIID(DispHTMLCurrentStyle) \
@@ -106,6 +107,9 @@ typedef struct event_target_t event_target_t;
     XDIID(DispHTMLWindow2) \
     XDIID(HTMLDocumentEvents) \
     XIID(IHTMLAnchorElement) \
+    XIID(IHTMLAttributeCollection) \
+    XIID(IHTMLAttributeCollection2) \
+    XIID(IHTMLAttributeCollection3) \
     XIID(IHTMLBodyElement) \
     XIID(IHTMLBodyElement2) \
     XIID(IHTMLCommentElement) \
@@ -223,6 +227,7 @@ typedef struct HTMLDocumentNode HTMLDocumentNode;
 typedef struct HTMLDocumentObj HTMLDocumentObj;
 typedef struct HTMLFrameBase HTMLFrameBase;
 typedef struct NSContainer NSContainer;
+typedef struct HTMLAttributeCollection HTMLAttributeCollection;
 
 typedef enum {
     SCRIPTMODE_GECKO,
@@ -498,6 +503,7 @@ typedef struct {
     HRESULT (*qi)(HTMLDOMNode*,REFIID,void**);
     void (*destructor)(HTMLDOMNode*);
     HRESULT (*clone)(HTMLDOMNode*,nsIDOMNode*,HTMLDOMNode**);
+    HRESULT (*get_attr_col)(HTMLDOMNode*,HTMLAttributeCollection**);
     event_target_t **(*get_event_target)(HTMLDOMNode*);
     HRESULT (*fire_event)(HTMLDOMNode*,DWORD,BOOL*);
     HRESULT (*handle_event)(HTMLDOMNode*,DWORD,BOOL*);
@@ -712,6 +718,20 @@ HRESULT create_nselem(HTMLDocumentNode*,const WCHAR*,nsIDOMHTMLElement**) DECLSP
 
 HRESULT HTMLDOMTextNode_Create(HTMLDocumentNode*,nsIDOMNode*,HTMLDOMNode**) DECLSPEC_HIDDEN;
 
+struct HTMLAttributeCollection {
+    DispatchEx dispex;
+    IHTMLAttributeCollection IHTMLAttributeCollection_iface;
+    IHTMLAttributeCollection2 IHTMLAttributeCollection2_iface;
+    IHTMLAttributeCollection3 IHTMLAttributeCollection3_iface;
+
+    LONG ref;
+
+    HTMLElement *elem;
+    LONG size;
+    DISPID *collection;
+    struct list attrs;
+};
+
 typedef struct {
     DispatchEx dispex;
     IHTMLDOMAttribute IHTMLDOMAttribute_iface;
@@ -760,6 +780,7 @@ void HTMLDOMNode_destructor(HTMLDOMNode*) DECLSPEC_HIDDEN;
 HRESULT HTMLElement_QI(HTMLDOMNode*,REFIID,void**) DECLSPEC_HIDDEN;
 void HTMLElement_destructor(HTMLDOMNode*) DECLSPEC_HIDDEN;
 HRESULT HTMLElement_clone(HTMLDOMNode*,nsIDOMNode*,HTMLDOMNode**) DECLSPEC_HIDDEN;
+HRESULT HTMLElement_get_attr_col(HTMLDOMNode*,HTMLAttributeCollection**) DECLSPEC_HIDDEN;
 
 HRESULT HTMLFrameBase_QI(HTMLFrameBase*,REFIID,void**) DECLSPEC_HIDDEN;
 void HTMLFrameBase_destructor(HTMLFrameBase*) DECLSPEC_HIDDEN;
