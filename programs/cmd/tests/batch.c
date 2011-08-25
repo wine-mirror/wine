@@ -179,8 +179,7 @@ static const char *compare_line(const char *out_line, const char *out_end, const
                 exp_ptr += sizeof(drive_cmd);
                 if(out_end-out_ptr < drive_len
                    || (CompareStringA(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-out_ptr, drive_len,
-                       drive, drive_len) != CSTR_EQUAL)) {
+                                      out_ptr, drive_len, drive, drive_len) != CSTR_EQUAL)) {
                     err = out_ptr;
                 }else {
                     out_ptr += drive_len;
