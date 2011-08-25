@@ -639,6 +639,14 @@ for /f "eol=@" %%i in ("@y") do echo %%i > output_file
 if not exist output_file (echo no output) else (del output_file)
 for /f "eol==" %%i in ("=y") do echo %%i > output_file
 if not exist output_file (echo no output) else (del output_file)
+echo ......delims option
+for /f "delims=|" %%i in ("a|d") do echo %%i
+for /f "delims=|" %%i in ("a |d") do echo %%i
+for /f "delims=|" %%i in ("a d|") do echo %%i
+for /f "delims=| " %%i in ("a d|") do echo %%i
+for /f "delims==" %%i in ("C r=d|") do echo %%i
+for /f "delims=" %%i in ("foo bar baz") do echo %%i
+for /f "delims=" %%i in ("c:\foo bar baz\..") do echo %%~fi
 cd ..
 rd /s/q foobar
 

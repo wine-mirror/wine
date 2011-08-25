@@ -467,6 +467,14 @@ c
 @todo_wine@a|d
 @todo_wine@no output
 @todo_wine@no output
+......delims option
+@todo_wine@a
+@todo_wine@a@space@
+@todo_wine@a d
+@todo_wine@a
+@todo_wine@C r
+@todo_wine@foo bar baz
+@todo_wine@c:\
 -----------Testing del /a-----------
 not-r.test not found after delete, good
 r.test found before delete, good
