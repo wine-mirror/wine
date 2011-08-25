@@ -2134,7 +2134,8 @@ static HRESULT WINAPI HTMLAttributeCollection_QueryInterface(IHTMLAttributeColle
         TRACE("(%p)->(IID_IHTMLAttributeCollection %p)\n", This, ppv);
         *ppv = &This->IHTMLAttributeCollection_iface;
     }else if(IsEqualGUID(&IID_IHTMLAttributeCollection2, riid)) {
-        FIXME("(%p)->(IID_IHTMLAttributeCollection2 %p)\n", This, ppv);
+        TRACE("(%p)->(IID_IHTMLAttributeCollection2 %p)\n", This, ppv);
+        *ppv = &This->IHTMLAttributeCollection2_iface;
     }else if(IsEqualGUID(&IID_IHTMLAttributeCollection3, riid)) {
         FIXME("(%p)->(IID_IHTMLAttributeCollection3 %p)\n", This, ppv);
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
@@ -2239,6 +2240,96 @@ static const IHTMLAttributeCollectionVtbl HTMLAttributeCollectionVtbl = {
     HTMLAttributeCollection_item
 };
 
+static inline HTMLAttributeCollection *impl_from_IHTMLAttributeCollection2(IHTMLAttributeCollection2 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLAttributeCollection, IHTMLAttributeCollection2_iface);
+}
+
+static HRESULT WINAPI HTMLAttributeCollection2_QueryInterface(IHTMLAttributeCollection2 *iface, REFIID riid, void **ppv)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection2(iface);
+    return IHTMLAttributeCollection_QueryInterface(&This->IHTMLAttributeCollection_iface, riid, ppv);
+}
+
+static ULONG WINAPI HTMLAttributeCollection2_AddRef(IHTMLAttributeCollection2 *iface)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection2(iface);
+    return IHTMLAttributeCollection_AddRef(&This->IHTMLAttributeCollection_iface);
+}
+
+static ULONG WINAPI HTMLAttributeCollection2_Release(IHTMLAttributeCollection2 *iface)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection2(iface);
+    return IHTMLAttributeCollection_Release(&This->IHTMLAttributeCollection_iface);
+}
+
+static HRESULT WINAPI HTMLAttributeCollection2_GetTypeInfoCount(IHTMLAttributeCollection2 *iface, UINT *pctinfo)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection2(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI HTMLAttributeCollection2_GetTypeInfo(IHTMLAttributeCollection2 *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection2(iface);
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI HTMLAttributeCollection2_GetIDsOfNames(IHTMLAttributeCollection2 *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection2(iface);
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+            lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLAttributeCollection2_Invoke(IHTMLAttributeCollection2 *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+        VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection2(iface);
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLAttributeCollection2_getNamedItem(IHTMLAttributeCollection2 *iface, BSTR bstrName,
+        IHTMLDOMAttribute **newretNode)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection2(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_w(bstrName), newretNode);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLAttributeCollection2_setNamedItem(IHTMLAttributeCollection2 *iface,
+        IHTMLDOMAttribute *ppNode, IHTMLDOMAttribute **newretNode)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection2(iface);
+    FIXME("(%p)->(%p %p)\n", This, ppNode, newretNode);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLAttributeCollection2_removeNamedItem(IHTMLAttributeCollection2 *iface,
+        BSTR bstrName, IHTMLDOMAttribute **newretNode)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection2(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_w(bstrName), newretNode);
+    return E_NOTIMPL;
+}
+
+static const IHTMLAttributeCollection2Vtbl HTMLAttributeCollection2Vtbl = {
+    HTMLAttributeCollection2_QueryInterface,
+    HTMLAttributeCollection2_AddRef,
+    HTMLAttributeCollection2_Release,
+    HTMLAttributeCollection2_GetTypeInfoCount,
+    HTMLAttributeCollection2_GetTypeInfo,
+    HTMLAttributeCollection2_GetIDsOfNames,
+    HTMLAttributeCollection2_Invoke,
+    HTMLAttributeCollection2_getNamedItem,
+    HTMLAttributeCollection2_setNamedItem,
+    HTMLAttributeCollection2_removeNamedItem
+};
+
 static inline HTMLAttributeCollection *HTMLAttributeCollection_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLAttributeCollection, dispex);
@@ -2290,6 +2381,7 @@ HRESULT HTMLElement_get_attr_col(HTMLDOMNode *iface, HTMLAttributeCollection **a
         return E_OUTOFMEMORY;
 
     ret->IHTMLAttributeCollection_iface.lpVtbl = &HTMLAttributeCollectionVtbl;
+    ret->IHTMLAttributeCollection2_iface.lpVtbl = &HTMLAttributeCollection2Vtbl;
     ret->ref = 1;
 
     IHTMLElement_AddRef(&This->IHTMLElement_iface);
