@@ -214,6 +214,19 @@ echo P%ERRORLEVEL%
 echo %ERRORLEVEL%S
 echo P%ERRORLEVEL%S
 
+echo ------------ Testing variable substrings --------------
+set VAR=qwerty
+echo %VAR:~0,1%
+echo %VAR:~0,3%
+echo %VAR:~2,2%
+echo '%VAR:~-2,3%'
+echo '%VAR:~-2,1%'
+echo %VAR:~2,-1%
+echo %VAR:~2,-3%
+echo '%VAR:~-2,-4%'
+echo %VAR:~-3,-2%
+set VAR=
+
 echo ------------ Testing variable delayed expansion --------------
 rem NT4 doesn't support this
 echo ...default mode (load-time expansion)

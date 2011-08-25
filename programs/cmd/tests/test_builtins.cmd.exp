@@ -203,6 +203,16 @@ ERRORLEVEL
 P0
 0S
 P0S
+------------ Testing variable substrings --------------
+q
+qwe
+er
+@todo_wine@'ty'@or_broken@''
+'t'@or_broken@''
+ert@or_broken@qwerty
+e@or_broken@qwerty
+''@or_broken@'qwerty'
+r@or_broken@qwerty
 ------------ Testing variable delayed expansion --------------
 ...default mode (load-time expansion)
 foo
