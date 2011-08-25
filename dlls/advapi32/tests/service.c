@@ -1402,6 +1402,11 @@ static void test_enum_svc(void)
     CloseServiceHandle(scm_handle);
 
     /* More or less the same for EnumServicesStatusExA */
+    if (!pEnumServicesStatusExA)
+    {
+        win_skip( "EnumServicesStatusExA not available\n" );
+        return;
+    }
 
     /* All NULL or wrong */
     SetLastError(0xdeadbeef);
