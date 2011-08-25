@@ -944,7 +944,10 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
                  only care about it if it is the path/options              */
               if (*curPos && *curPos != '/' && *curPos != '%') {
                   if (isRecursive) WINE_FIXME("/R needs to handle supplied root\n");
-                  else WINE_FIXME("/F needs to handle options\n");
+                  else {
+                      static unsigned int once;
+                      if (!once++) WINE_FIXME("/F needs to handle options\n");
+                  }
               }
               break;
           }
