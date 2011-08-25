@@ -461,6 +461,12 @@ kkk
 a
 b
 c
+......eol option
+@todo_wine@ad
+@todo_wine@z@y
+@todo_wine@a|d
+@todo_wine@no output
+@todo_wine@no output
 -----------Testing del /a-----------
 not-r.test not found after delete, good
 r.test found before delete, good

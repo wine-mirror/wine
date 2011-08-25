@@ -631,6 +631,14 @@ rem preliminary grep-like program implementation (e.g. like findstr or fc) even
 rem for a simple todo_wine test
 rem (for /f "usebackq" %%i in (`echo z a b`) do echo %%i) || echo not supported
 rem (for /f usebackq %%i in (`echo z a b`) do echo %%i) || echo not supported
+echo ......eol option
+for /f "eol=@" %%i in ("    ad") do echo %%i
+for /f "eol=@" %%i in (" z@y") do echo %%i
+for /f "eol=|" %%i in ("a|d") do echo %%i
+for /f "eol=@" %%i in ("@y") do echo %%i > output_file
+if not exist output_file (echo no output) else (del output_file)
+for /f "eol==" %%i in ("=y") do echo %%i > output_file
+if not exist output_file (echo no output) else (del output_file)
 cd ..
 rd /s/q foobar
 
