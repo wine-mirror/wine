@@ -754,8 +754,6 @@ static HRESULT WINAPI mxwriter_saxcontent_startElement(
         hr = ISAXAttributes_getLength(attr, &length);
         if (FAILED(hr)) return hr;
 
-        if (length) xmlOutputBufferWriteString(This->buffer, " ");
-
         for (i = 0; i < length; i++)
         {
             const WCHAR *str;
@@ -763,6 +761,9 @@ static HRESULT WINAPI mxwriter_saxcontent_startElement(
 
             hr = ISAXAttributes_getQName(attr, i, &str, &len);
             if (FAILED(hr)) return hr;
+
+            /* space separator in front of every attribute */
+            xmlOutputBufferWriteString(This->buffer, " ");
 
             s = xmlchar_from_wchar(str);
             xmlOutputBufferWriteString(This->buffer, (char*)s);

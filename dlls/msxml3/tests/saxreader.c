@@ -1394,6 +1394,7 @@ struct writer_startendelement_t {
     const char *qname;
     const char *output;
     HRESULT hr;
+    ISAXAttributes *attr;
 };
 
 static const struct writer_startendelement_t writer_startendelement[] = {
@@ -1475,6 +1476,13 @@ static const struct writer_startendelement_t writer_startendelement[] = {
     { &CLSID_MXXMLWriter30, EndElement, "uri", "local", "uri:local2", "</uri:local2>", S_OK },
     { &CLSID_MXXMLWriter40, EndElement, "uri", "local", "uri:local2", "</uri:local2>", S_OK },
     { &CLSID_MXXMLWriter60, EndElement, "uri", "local", "uri:local2", "</uri:local2>", S_OK },
+
+    /* with attributes */
+    { &CLSID_MXXMLWriter,   StartElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\">", S_OK, &saxattributes },
+    /* 65 */
+    { &CLSID_MXXMLWriter30, StartElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\">", S_OK, &saxattributes },
+    { &CLSID_MXXMLWriter40, StartElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\">", S_OK, &saxattributes },
+    { &CLSID_MXXMLWriter60, StartElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\">", S_OK, &saxattributes },
     { NULL }
 };
 
@@ -1557,7 +1565,7 @@ static void test_mxwriter_startendelement_batch(const struct writer_startendelem
 
         if (table->type == StartElement)
             hr = ISAXContentHandler_startElement(content, _bstr_(table->uri), lstrlen(table->uri),
-                _bstr_(table->local_name), lstrlen(table->local_name), _bstr_(table->qname), lstrlen(table->qname), NULL);
+                _bstr_(table->local_name), lstrlen(table->local_name), _bstr_(table->qname), lstrlen(table->qname), table->attr);
         else
             hr = ISAXContentHandler_endElement(content, _bstr_(table->uri), lstrlen(table->uri),
                 _bstr_(table->local_name), lstrlen(table->local_name), _bstr_(table->qname), lstrlen(table->qname));
@@ -1675,10 +1683,6 @@ static void test_mxwriter_startendelement(void)
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
     todo_wine ok(!lstrcmpW(_bstr_("<><b></b><nspace:c/></a>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
-
-    /* try with attributes */
-    hr = ISAXContentHandler_startElement(content, _bstr_(""), 0, _bstr_(""), 0, _bstr_("b"), 1, &saxattributes);
-    ok(hr == S_OK, "got %08x\n", hr);
 
     hr = ISAXContentHandler_endDocument(content);
     ok(hr == S_OK, "got %08x\n", hr);
