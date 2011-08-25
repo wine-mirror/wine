@@ -5,13 +5,15 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-02-07 10:16-0600\n"
+"PO-Revision-Date: 2011-08-19 09:21+0300\n"
 "Last-Translator: Yaron Shahrabani <sh.yaron@gmail.com>\n"
 "Language-Team: Gezer (Hebrew)\n"
 "Language: Hebrew\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Virtaal 0.7.0-beta5\n"
+"X-Project-Style: default\n"
 
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
@@ -22,7 +24,7 @@ msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
 msgstr ""
-"תכנית זו מאפשר לך להתקין תכניות חדשות או להסיר תכניות קיימות מהמחשב שלך."
+"תכנית זו מאפשרת לך להתקין תכניות חדשות או להסיר תכניות קיימות מהמחשב שלך."
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:38
 msgid "Applications"
@@ -66,14 +68,12 @@ msgid "All files (*.*)"
 msgstr "כל הקבצים (*.*)"
 
 #: appwiz.rc:42
-#, fuzzy
 msgid "&Remove"
-msgstr "ה&סרה..."
+msgstr "ה&סרה"
 
 #: appwiz.rc:43
-#, fuzzy
 msgid "&Modify/Remove"
-msgstr "&שינוי/הסרה..."
+msgstr "&שינוי/הסרה"
 
 #: appwiz.rc:48
 msgid "Downloading..."
@@ -115,7 +115,7 @@ msgstr "%s %s מס׳ %d"
 
 #: avifil32.rc:34
 msgid "Wine AVI-default-filehandler"
-msgstr ""
+msgstr "Wine AVI-default-filehandler"
 
 #: avifil32.rc:35
 msgid "uncompressed"
@@ -130,7 +130,6 @@ msgid "Separator"
 msgstr "מפריד"
 
 #: comctl32.rc:44 progman.rc:78
-#, fuzzy
 msgctxt "hotkey"
 msgid "None"
 msgstr "ללא"
@@ -168,7 +167,6 @@ msgid "System Path"
 msgstr "נתיב המערכת"
 
 #: comdlg32.rc:34 shell32.rc:153 winecfg.rc:119 winefile.rc:103
-#, fuzzy
 msgctxt "display name"
 msgid "Desktop"
 msgstr "שולחן העבודה"
@@ -358,9 +356,8 @@ msgstr ""
 "נא להזין שוב את ערכי השוליים."
 
 #: comdlg32.rc:74
-#, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "הערך שצוין ב'מספר העותקים' לא יכול להישאר ריק."
+msgstr "הערך שצוין בשדה 'מספר העותקים' לא יכול להישאר ריק."
 
 #: comdlg32.rc:76
 msgid ""
@@ -427,13 +424,8 @@ msgid "Open File"
 msgstr "פתיחת קובץ"
 
 #: comdlg32.rc:93 oleview.rc:95
-#, fuzzy
 msgid "Ready"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"מוכן\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"מוכנה"
+msgstr "מוכן"
 
 #: comdlg32.rc:94
 msgid "Paused; "
@@ -1123,11 +1115,11 @@ msgstr ""
 
 #: crypt32.rc:158 cryptui.rc:136
 msgid "Key Recovery"
-msgstr ""
+msgstr "שחזור מפתח"
 
 #: crypt32.rc:159 cryptui.rc:137
 msgid "Document Signing"
-msgstr ""
+msgstr "חתימת מסמכים"
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
@@ -1135,7 +1127,7 @@ msgstr ""
 
 #: crypt32.rc:161 cryptui.rc:129
 msgid "File Recovery"
-msgstr ""
+msgstr "שחזור קובץ"
 
 #: crypt32.rc:162 cryptui.rc:134
 msgid "Root List Signer"
@@ -1143,7 +1135,7 @@ msgstr ""
 
 #: crypt32.rc:163
 msgid "All application policies"
-msgstr ""
+msgstr "מדיניות כלל היישומים"
 
 #: crypt32.rc:164 cryptui.rc:146
 msgid "Directory Service Email Replication"
@@ -1175,67 +1167,67 @@ msgstr ""
 
 #: crypt32.rc:175
 msgid "Other People"
-msgstr ""
+msgstr "אנשים אחרים"
 
 #: crypt32.rc:176
 msgid "Trusted Publishers"
-msgstr ""
+msgstr "מפיצים מהימנים"
 
 #: crypt32.rc:177
 msgid "Untrusted Certificates"
-msgstr ""
+msgstr "אישורים בלתי מהימנים"
 
 #: crypt32.rc:182
 msgid "KeyID="
-msgstr ""
+msgstr "KeyID="
 
 #: crypt32.rc:183
 msgid "Certificate Issuer"
-msgstr ""
+msgstr "מנפיק האישור"
 
 #: crypt32.rc:184
 msgid "Certificate Serial Number="
-msgstr ""
+msgstr "המספר הסידור של האישור="
 
 #: crypt32.rc:185
 msgid "Other Name="
-msgstr ""
+msgstr "שם אחר="
 
 #: crypt32.rc:186
 msgid "Email Address="
-msgstr ""
+msgstr "כתובת דוא״ל="
 
 #: crypt32.rc:187
 msgid "DNS Name="
-msgstr ""
+msgstr "שם ה־DNS="
 
 #: crypt32.rc:188
 msgid "Directory Address"
-msgstr ""
+msgstr "כתובת הספרייה"
 
 #: crypt32.rc:189
 msgid "URL="
-msgstr ""
+msgstr "כתובת="
 
 #: crypt32.rc:190
 msgid "IP Address="
-msgstr ""
+msgstr "כתובת IP="
 
 #: crypt32.rc:191
 msgid "Mask="
-msgstr ""
+msgstr "מסכה="
 
 #: crypt32.rc:192
 msgid "Registered ID="
-msgstr ""
+msgstr "מזהה רשום="
 
 #: crypt32.rc:193
 msgid "Unknown Key Usage"
-msgstr ""
+msgstr "שימוש בלתי ידוע במפתח"
 
 #: crypt32.rc:194
 msgid "Subject Type="
-msgstr ""
+msgstr "סוג המקבל="
 
 #: crypt32.rc:195
 msgid "CA"
@@ -1250,7 +1242,6 @@ msgid "Path Length Constraint="
 msgstr ""
 
 #: crypt32.rc:198
-#, fuzzy
 msgctxt "path length"
 msgid "None"
 msgstr "ללא"
@@ -1471,7 +1462,7 @@ msgstr "פרטי האישור"
 msgid ""
 "This certificate has an invalid signature.  The certificate may have been "
 "altered or corrupted."
-msgstr ""
+msgstr "לאישור זה ישנה חתימה בלתי תקפה.  האישור השתנה או שהושחת."
 
 #: cryptui.rc:30
 msgid ""
@@ -1497,11 +1488,11 @@ msgstr ""
 
 #: cryptui.rc:35
 msgid "Issued to: "
-msgstr ""
+msgstr "הונפק עבור:"
 
 #: cryptui.rc:36
 msgid "Issued by: "
-msgstr ""
+msgstr "הונפק על ידי:"
 
 #: cryptui.rc:37
 msgid "Valid from "
@@ -1521,7 +1512,7 @@ msgstr "אישור זה פג או שאינו תקף עוד."
 
 #: cryptui.rc:41
 msgid "This certificate's validity period exceeds that of its issuer."
-msgstr ""
+msgstr "תקופת תוקף האישור חורגת מזו שצוינה אצל המנפיק."
 
 #: cryptui.rc:42
 msgid "This certificate was revoked by its issuer."
@@ -1545,7 +1536,7 @@ msgstr "<הכול>"
 
 #: cryptui.rc:47
 msgid "Version 1 Fields Only"
-msgstr ""
+msgstr "שדות גרסה 1 בלבד"
 
 #: cryptui.rc:48
 msgid "Extensions Only"
@@ -1625,13 +1616,14 @@ msgstr ""
 
 #: cryptui.rc:68
 msgid "Certificate Import Wizard"
-msgstr ""
+msgstr "אשף יבוא אישורים"
 
 #: cryptui.rc:69
 msgid ""
 "The file contains objects that do not match the given criteria.  Please "
 "select another file."
 msgstr ""
+"הקובץ מכיל פריטים שאינם תואמים לקריטריונים שניתנו.  נא לבחור בקובץ אחר."
 
 #: cryptui.rc:70
 msgid "File to Import"
@@ -1701,7 +1693,7 @@ msgstr ""
 
 #: cryptui.rc:87
 msgid "Automatically determined by the program"
-msgstr ""
+msgstr "נקבע אוטומטית על ידי התכנית"
 
 #: cryptui.rc:88 shell32.rc:134
 msgid "File"
@@ -1713,11 +1705,11 @@ msgstr "תוכן"
 
 #: cryptui.rc:91
 msgid "Certificate Revocation List"
-msgstr ""
+msgstr "רשימת אישורים שנשללו"
 
 #: cryptui.rc:93
 msgid "CMS/PKCS #7 Message"
-msgstr ""
+msgstr "הודעת CMS/PKCS #7"
 
 #: cryptui.rc:94
 msgid "Personal Information Exchange"
@@ -1725,7 +1717,7 @@ msgstr ""
 
 #: cryptui.rc:96
 msgid "The import was successful."
-msgstr ""
+msgstr "היבוא הצליח."
 
 #: cryptui.rc:97
 msgid "The import failed."
@@ -1992,13 +1984,12 @@ msgid "Default MidiOut Device"
 msgstr "התקן ה־MidiOut כבררת מחדל"
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "תצורה - הגדרות בררת המחדל"
+msgstr "הגדרות אזוריות"
 
 #: dxdiagn.rc:26
 msgid "%uMB used, %uMB available"
-msgstr ""
+msgstr "%u מ״ב בשימוש, %u מ״ב זמינים"
 
 #: hhctrl.rc:70
 msgid "S&ync"
@@ -2013,7 +2004,6 @@ msgid "&Forward"
 msgstr "ק&דימה"
 
 #: hhctrl.rc:73
-#, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
 msgstr "&עמוד הבית"
@@ -2075,7 +2065,6 @@ msgid "Back"
 msgstr "חזרה"
 
 #: hhctrl.rc:44
-#, fuzzy
 msgctxt "table of contents"
 msgid "Home"
 msgstr "דף הבית"
@@ -2183,9 +2172,8 @@ msgid "Pr&int..."
 msgstr "ה&דפסה..."
 
 #: ieframe.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
-msgstr "הצגה &לפני הדפסה..."
+msgstr "הצגה &לפני הדפסה"
 
 #: ieframe.rc:39 shdoclc.rc:58 shell32.rc:105 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
@@ -2229,10 +2217,9 @@ msgstr "ע&זרה"
 #: ieframe.rc:57
 #, fuzzy
 msgid "&About Internet Explorer"
-msgstr "על &אודות Internet Explorer..."
+msgstr "על &אודות Internet Explorer"
 
 #: ieframe.rc:67
-#, fuzzy
 msgctxt "home page"
 msgid "Home"
 msgstr "דף הבית"
@@ -2254,39 +2241,34 @@ msgid "Configure Wine Internet Browser and related settings"
 msgstr "הגדרת דפדפן האינטרנט של Wine והגדרות שקשורות בו"
 
 #: inetcpl.rc:30
-#, fuzzy
 msgid "Security settings for zone: "
-msgstr "&שמירת ההגדרות עם היציאה"
+msgstr "הגדרות אבטחה עבור האזור"
 
 #: inetcpl.rc:31
-#, fuzzy
 msgid "Custom"
 msgstr "התאמה אישית"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr ""
+msgstr "נמוכה מאוד"
 
 #: inetcpl.rc:33
-#, fuzzy
 msgid "Low"
-msgstr "&נמוכה"
+msgstr "נמוכה"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr ""
+msgstr "בינונית"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "מוגברת"
 
 #: inetcpl.rc:36
-#, fuzzy
 msgid "High"
-msgstr "&גבוהה"
+msgstr "גבוהה"
 
 #: jscript.rc:25
-#, fuzzy
 msgid "Error converting object to primitive type"
 msgstr "שגיאה בהמרת הפריט לטיפוס פרימיטיבי"
 
@@ -2411,12 +2393,14 @@ msgid "Path not found\n"
 msgstr "PATH not found\n"
 
 #: winerror.mc:46
+#, fuzzy
 msgid "Too many open files\n"
-msgstr ""
+msgstr "יותר מדי קבצים פתוחים\n"
 
 #: winerror.mc:51
+#, fuzzy
 msgid "Access denied\n"
-msgstr ""
+msgstr "הגישה נדחתה\n"
 
 #: winerror.mc:56
 #, fuzzy
@@ -2424,85 +2408,99 @@ msgid "Invalid handle\n"
 msgstr "אפשרות שגויה"
 
 #: winerror.mc:61
+#, fuzzy
 msgid "Memory trashed\n"
-msgstr ""
+msgstr "הזיכרון התמלא בזבל\n"
 
 #: winerror.mc:66
 #, fuzzy
 msgid "Not enough memory\n"
-msgstr "הזיכרון אזל."
+msgstr "הזיכרון אזל\n"
 
 #: winerror.mc:71
 #, fuzzy
 msgid "Invalid block\n"
-msgstr "אפשרות שגויה"
+msgstr "מקטע שגוי\n"
 
 #: winerror.mc:76
+#, fuzzy
 msgid "Bad environment\n"
-msgstr ""
+msgstr "סביבה שגויה\n"
 
 #: winerror.mc:81
+#, fuzzy
 msgid "Bad format\n"
-msgstr ""
+msgstr "מבנה שגוי\n"
 
 #: winerror.mc:86
+#, fuzzy
 msgid "Invalid access\n"
-msgstr ""
+msgstr "גישה שגויה\n"
 
 #: winerror.mc:91
 #, fuzzy
 msgid "Invalid data\n"
-msgstr "אפשרות שגויה"
+msgstr "נתונים שגויים\n"
 
 #: winerror.mc:96
 #, fuzzy
 msgid "Out of memory\n"
-msgstr "הזיכרון אזל."
+msgstr "הזיכרון אזל\n"
 
 #: winerror.mc:101
 #, fuzzy
 msgid "Invalid drive\n"
-msgstr "אפשרות שגויה"
+msgstr "הכונן שגוי\n"
 
 #: winerror.mc:106
+#, fuzzy
 msgid "Can't delete current directory\n"
-msgstr ""
+msgstr "לא ניתן למחוק את התיקייה הנוכחית\n"
 
 #: winerror.mc:111
+#, fuzzy
 msgid "Not same device\n"
-msgstr ""
+msgstr "לא אותו ההתקן\n"
 
 #: winerror.mc:116
+#, fuzzy
 msgid "No more files\n"
-msgstr ""
+msgstr "אין עוד קבצים\n"
 
 #: winerror.mc:121
+#, fuzzy
 msgid "Write protected\n"
-msgstr ""
+msgstr "הגנה בפני כתיבה\n"
 
 #: winerror.mc:126
+#, fuzzy
 msgid "Bad unit\n"
-msgstr ""
+msgstr "יחידה שגויה\n"
 
 #: winerror.mc:131
+#, fuzzy
 msgid "Not ready\n"
-msgstr ""
+msgstr "לא מוכן\n"
 
 #: winerror.mc:136
+#, fuzzy
 msgid "Bad command\n"
-msgstr ""
+msgstr "פקודה שגויה\n"
 
 #: winerror.mc:141
+#, fuzzy
 msgid "CRC error\n"
-msgstr ""
+msgstr "שגיאת CRC\n"
 
 #: winerror.mc:146
+#, fuzzy
 msgid "Bad length\n"
-msgstr ""
+msgstr "אורך שגוי\n"
 
 #: winerror.mc:151 winerror.mc:526
+#, fuzzy
 msgid "Seek error\n"
-msgstr ""
+msgstr "Syntax error\n"
 
 #: winerror.mc:156
 msgid "Not DOS disk\n"
@@ -2682,8 +2680,9 @@ msgid "Invalid password\n"
 msgstr "אפשרות שגויה"
 
 #: winerror.mc:361
+#, fuzzy
 msgid "Invalid parameter\n"
-msgstr ""
+msgstr "Error: Invalid command line parameters\n"
 
 #: winerror.mc:366
 #, fuzzy
@@ -2779,8 +2778,9 @@ msgid "Insufficient buffer\n"
 msgstr "אין די הרשאות"
 
 #: winerror.mc:481
+#, fuzzy
 msgid "Invalid name\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:486
 msgid "Invalid level\n"
@@ -2796,8 +2796,9 @@ msgid "Module not found\n"
 msgstr "הקובץ לא נמצא"
 
 #: winerror.mc:501
+#, fuzzy
 msgid "Procedure not found\n"
-msgstr ""
+msgstr "PATH not found\n"
 
 #: winerror.mc:506
 msgid "No children to wait for\n"
@@ -2866,8 +2867,9 @@ msgid "Not toplevel directory\n"
 msgstr ""
 
 #: winerror.mc:591
+#, fuzzy
 msgid "Directory is not empty\n"
-msgstr ""
+msgstr "Directory &Only"
 
 #: winerror.mc:596
 msgid "Path is in use as a SUBST\n"
@@ -3021,8 +3023,9 @@ msgid "Dynlink from invalid ring\n"
 msgstr ""
 
 #: winerror.mc:776
+#, fuzzy
 msgid "IOPL not enabled\n"
-msgstr ""
+msgstr "IP routing enabled"
 
 #: winerror.mc:781
 msgid "Invalid SEGDPL in %1\n"
@@ -3045,16 +3048,18 @@ msgid "Infinite loop in relocation chain in %1\n"
 msgstr ""
 
 #: winerror.mc:806
+#, fuzzy
 msgid "Environment variable not found\n"
-msgstr ""
+msgstr "Environment variable %s not defined\n"
 
 #: winerror.mc:811
 msgid "No signal sent\n"
 msgstr ""
 
 #: winerror.mc:816
+#, fuzzy
 msgid "File name is too long\n"
-msgstr ""
+msgstr "The input line is too long.\n"
 
 #: winerror.mc:821
 msgid "Ring 2 stack in use\n"
@@ -3133,8 +3138,9 @@ msgid "Cannot use Copy API\n"
 msgstr ""
 
 #: winerror.mc:911
+#, fuzzy
 msgid "Directory name invalid\n"
-msgstr ""
+msgstr "Directory &Only"
 
 #: winerror.mc:916
 msgid "Extended attributes didn't fit\n"
@@ -3174,16 +3180,18 @@ msgid "The oplock wasn't granted\n"
 msgstr ""
 
 #: winerror.mc:961
+#, fuzzy
 msgid "Invalid oplock message received\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2\n"
 msgstr ""
 
 #: winerror.mc:971
+#, fuzzy
 msgid "Invalid address\n"
-msgstr ""
+msgstr "Physical address"
 
 #: winerror.mc:976
 msgid "Arithmetic overflow\n"
@@ -3219,16 +3227,18 @@ msgid "No access to memory location\n"
 msgstr ""
 
 #: winerror.mc:1016
+#, fuzzy
 msgid "Swap error\n"
-msgstr ""
+msgstr "Syntax error\n"
 
 #: winerror.mc:1021
 msgid "Stack overflow\n"
 msgstr ""
 
 #: winerror.mc:1026
+#, fuzzy
 msgid "Invalid message\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:1031
 msgid "Cannot complete\n"
@@ -3260,8 +3270,9 @@ msgid "Registry corrupt\n"
 msgstr "עורך רישום המערכת"
 
 #: winerror.mc:1066
+#, fuzzy
 msgid "Invalid key\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:1071
 #, fuzzy
@@ -3397,8 +3408,9 @@ msgid "Service login failed\n"
 msgstr ""
 
 #: winerror.mc:1226
+#, fuzzy
 msgid "Service start-hang\n"
-msgstr ""
+msgstr "The %s service is starting.\n"
 
 #: winerror.mc:1231
 msgid "Invalid service lock\n"
@@ -3429,8 +3441,9 @@ msgid "Service not started since last boot\n"
 msgstr ""
 
 #: winerror.mc:1266
+#, fuzzy
 msgid "Duplicate service name\n"
-msgstr ""
+msgstr "Specify service name to stop.\n"
 
 #: winerror.mc:1271
 msgid "Different service account\n"
@@ -3630,8 +3643,9 @@ msgid "DDE failure\n"
 msgstr ""
 
 #: winerror.mc:1511
+#, fuzzy
 msgid "DLL not found\n"
-msgstr ""
+msgstr "PATH not found\n"
 
 #: winerror.mc:1516
 #, fuzzy
@@ -3647,8 +3661,9 @@ msgid "The source element is empty\n"
 msgstr ""
 
 #: winerror.mc:1531
+#, fuzzy
 msgid "The destination element is full\n"
-msgstr ""
+msgstr "The operation completed successfully\n"
 
 #: winerror.mc:1536
 #, fuzzy
@@ -3664,8 +3679,9 @@ msgid "The device needs reinitialization\n"
 msgstr ""
 
 #: winerror.mc:1551
+#, fuzzy
 msgid "The device requires cleaning\n"
-msgstr ""
+msgstr "The %s service is starting.\n"
 
 #: winerror.mc:1556
 #, fuzzy
@@ -3678,20 +3694,24 @@ msgid "The device is not connected\n"
 msgstr "הקובץ לא נמצא"
 
 #: winerror.mc:1566
+#, fuzzy
 msgid "Element not found\n"
-msgstr ""
+msgstr "PATH not found\n"
 
 #: winerror.mc:1571
+#, fuzzy
 msgid "No match found\n"
-msgstr ""
+msgstr "PATH not found\n"
 
 #: winerror.mc:1576
+#, fuzzy
 msgid "Property set not found\n"
-msgstr ""
+msgstr "PATH not found\n"
 
 #: winerror.mc:1581
+#, fuzzy
 msgid "Point not found\n"
-msgstr ""
+msgstr "PATH not found\n"
 
 #: winerror.mc:1586
 msgid "No running tracking service\n"
@@ -3731,8 +3751,9 @@ msgid "The journal entry was deleted\n"
 msgstr ""
 
 #: winerror.mc:1631
+#, fuzzy
 msgid "Invalid device name\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:1636
 #, fuzzy
@@ -3768,36 +3789,44 @@ msgid "Extended error\n"
 msgstr ""
 
 #: winerror.mc:1676
+#, fuzzy
 msgid "Invalid group name\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:1681
+#, fuzzy
 msgid "Invalid computer name\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:1686
+#, fuzzy
 msgid "Invalid event name\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:1691
+#, fuzzy
 msgid "Invalid domain name\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:1696
+#, fuzzy
 msgid "Invalid service name\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:1701
+#, fuzzy
 msgid "Invalid network name\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:1706
+#, fuzzy
 msgid "Invalid share name\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:1716
+#, fuzzy
 msgid "Invalid message name\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:1721
 msgid "Invalid message destination\n"
@@ -4020,8 +4049,9 @@ msgid "Privilege not held\n"
 msgstr ""
 
 #: winerror.mc:1981
+#, fuzzy
 msgid "Invalid account name\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:1986
 #, fuzzy
@@ -4088,8 +4118,9 @@ msgid "Password expired\n"
 msgstr ""
 
 #: winerror.mc:2061
+#, fuzzy
 msgid "Account disabled\n"
-msgstr ""
+msgstr "Table"
 
 #: winerror.mc:2066
 msgid "No security ID mapped\n"
@@ -4127,8 +4158,9 @@ msgid "Bad inherited ACL\n"
 msgstr ""
 
 #: winerror.mc:2106
+#, fuzzy
 msgid "Server disabled\n"
-msgstr ""
+msgstr "Table"
 
 #: winerror.mc:2111
 msgid "Server not disabled\n"
@@ -4176,8 +4208,9 @@ msgid "Invalid server state\n"
 msgstr "תבנית המספרים שגויה"
 
 #: winerror.mc:2166
+#, fuzzy
 msgid "Invalid domain state\n"
-msgstr ""
+msgstr "Error: Invalid command line parameters\n"
 
 #: winerror.mc:2171
 msgid "Invalid domain role\n"
@@ -4201,8 +4234,9 @@ msgid "Internal database corruption\n"
 msgstr ""
 
 #: winerror.mc:2196
+#, fuzzy
 msgid "Internal error\n"
-msgstr ""
+msgstr "Syntax error\n"
 
 #: winerror.mc:2201
 msgid "Generic access types not mapped\n"
@@ -4474,8 +4508,9 @@ msgid "Invalid edit height\n"
 msgstr ""
 
 #: winerror.mc:2521
+#, fuzzy
 msgid "DC not found\n"
-msgstr ""
+msgstr "PATH not found\n"
 
 #: winerror.mc:2526
 msgid "Invalid hook filter\n"
@@ -4502,8 +4537,9 @@ msgid "Hook procedure not installed\n"
 msgstr ""
 
 #: winerror.mc:2556
+#, fuzzy
 msgid "Invalid list box message\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent\n"
@@ -4526,12 +4562,14 @@ msgid "Window has no system menu\n"
 msgstr ""
 
 #: winerror.mc:2586
+#, fuzzy
 msgid "Invalid message box style\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:2591
+#, fuzzy
 msgid "Invalid SPI parameter\n"
-msgstr ""
+msgstr "Error: Invalid command line parameters\n"
 
 #: winerror.mc:2596
 msgid "Screen already locked\n"
@@ -4610,8 +4648,9 @@ msgid "Invalid keyboard handle\n"
 msgstr "תבנית המספרים שגויה"
 
 #: winerror.mc:2686
+#, fuzzy
 msgid "Hook type not allowed\n"
-msgstr ""
+msgstr "Target to GOTO not found\n"
 
 #: winerror.mc:2691
 msgid "Interactive window station required\n"
@@ -4643,8 +4682,9 @@ msgid "Event log file changed\n"
 msgstr ""
 
 #: winerror.mc:2726
+#, fuzzy
 msgid "Installer service failed.\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:2731
 #, fuzzy
@@ -4667,8 +4707,9 @@ msgid "Unknown product\n"
 msgstr "שגיאה בלתי ידוע"
 
 #: winerror.mc:2751
+#, fuzzy
 msgid "Unknown feature\n"
-msgstr ""
+msgstr "Unknown feature in %s"
 
 #: winerror.mc:2756
 #, fuzzy
@@ -4799,8 +4840,9 @@ msgid "Installer not used\n"
 msgstr "הקובץ לא נמצא"
 
 #: winerror.mc:2896
+#, fuzzy
 msgid "Failed to open the patch package\n"
-msgstr ""
+msgstr "Failed to open '%s'\n"
 
 #: winerror.mc:2901
 #, fuzzy
@@ -4864,8 +4906,9 @@ msgid "Invalid network address\n"
 msgstr ""
 
 #: winerror.mc:2971
+#, fuzzy
 msgid "No endpoint found\n"
-msgstr ""
+msgstr "PATH not found\n"
 
 #: winerror.mc:2976
 #, fuzzy
@@ -5075,8 +5118,9 @@ msgid "Entry already exists\n"
 msgstr "הפתחה %s כבר קיימת"
 
 #: winerror.mc:3221
+#, fuzzy
 msgid "Entry not found\n"
-msgstr ""
+msgstr "PATH not found\n"
 
 #: winerror.mc:3226
 #, fuzzy
@@ -5097,8 +5141,9 @@ msgid "No security context available\n"
 msgstr ""
 
 #: winerror.mc:3246
+#, fuzzy
 msgid "RPCInternal error\n"
-msgstr ""
+msgstr "Parameter error\n"
 
 #: winerror.mc:3251
 msgid "RPC divide-by-zero\n"
@@ -5239,8 +5284,9 @@ msgid "Invalid priority\n"
 msgstr "אפשרות שגויה"
 
 #: winerror.mc:3416
+#, fuzzy
 msgid "Invalid printer name\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:3421
 #, fuzzy
@@ -5287,12 +5333,14 @@ msgid "Server has open handles\n"
 msgstr ""
 
 #: winerror.mc:3471
+#, fuzzy
 msgid "Resource data not found\n"
-msgstr ""
+msgstr "Target to GOTO not found\n"
 
 #: winerror.mc:3476
+#, fuzzy
 msgid "Resource type not found\n"
-msgstr ""
+msgstr "Target to GOTO not found\n"
 
 #: winerror.mc:3481
 msgid "Resource name not found\n"
@@ -5333,8 +5381,9 @@ msgid "No principal name registered\n"
 msgstr ""
 
 #: winerror.mc:3526
+#, fuzzy
 msgid "Not an RPC error\n"
-msgstr ""
+msgstr "Syntax error\n"
 
 #: winerror.mc:3531
 msgid "UUID is local only\n"
@@ -5393,8 +5442,9 @@ msgid "Invalid time\n"
 msgstr "אפשרות שגויה"
 
 #: winerror.mc:3596
+#, fuzzy
 msgid "Invalid form name\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: winerror.mc:3601
 #, fuzzy
@@ -5466,8 +5516,9 @@ msgid "Discipline error on RPC pipe\n"
 msgstr ""
 
 #: winerror.mc:3676
+#, fuzzy
 msgid "No data on RPC pipe\n"
-msgstr ""
+msgstr "Syntax error\n"
 
 #: winerror.mc:3681
 #, fuzzy
@@ -5494,37 +5545,37 @@ msgstr ""
 #: winerror.mc:3706
 #, fuzzy
 msgid "The interface could not be exported\n"
-msgstr "'%s' לא נמצא."
+msgstr "לא ניתן לייצא את המנשק\n"
 
 #: winerror.mc:3711
 #, fuzzy
 msgid "The profile could not be added\n"
-msgstr "'%s' לא נמצא."
+msgstr "לא ניתן להוסיף את הפרופיל\n"
 
 #: winerror.mc:3716
 #, fuzzy
 msgid "The profile element could not be added\n"
-msgstr "'%s' לא נמצא."
+msgstr "לא ניתן להוסיף את רכיב הפרופיל\n"
 
 #: winerror.mc:3721
 #, fuzzy
 msgid "The profile element could not be removed\n"
-msgstr "'%s' לא נמצא."
+msgstr "לא ניתן להסיר את רכיב הפרופיל\n"
 
 #: winerror.mc:3726
 #, fuzzy
 msgid "The group element could not be added\n"
-msgstr "'%s' לא נמצא."
+msgstr "לא ניתן להוסיף את רכיב הקבוצה\n"
 
 #: winerror.mc:3731
 #, fuzzy
 msgid "The group element could not be removed\n"
-msgstr "'%s' לא נמצא."
+msgstr "לא ניתן להסיר את רכיב הקבוצה\n"
 
 #: winerror.mc:3736
 #, fuzzy
 msgid "The username could not be found\n"
-msgstr "'%s' לא נמצא."
+msgstr "לא ניתן למצוא את שם המשתמש\n"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
@@ -5579,16 +5630,18 @@ msgid ""
 "The specified installation package could not be opened.  Please check the "
 "file path and try again."
 msgstr ""
+"לא ניתן לפתוח את חבילת ההתקנה שצוינה.  נא לבדוק את נתיב הקובץ ולנסות שוב."
 
 #: msi.rc:28
 msgid "path %s not found"
-msgstr ""
+msgstr "הנתיב %s לא נמצא"
 
 #: msi.rc:29
 msgid "insert disk %s"
-msgstr ""
+msgstr "נא להכניס את הדיסק %s"
 
 #: msi.rc:30
+#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -5620,10 +5673,39 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
+"Windows Installer %s\n"
+"\n"
+"Usage:\n"
+"msiexec command {required parameter} [optional parameter]\n"
+"\n"
+"Install a product:\n"
+"\t/i {package|product_code} [property]\n"
+"\t/package {package|product_code} [property]\n"
+"\t/a package [property]\n"
+"Repair an installation:\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {package|product_code}\n"
+"Uninstall a product:\n"
+"\t/uninstall {package|product_code} [property]\n"
+"\t/x {package|product_code} [property]\n"
+"Advertise a product:\n"
+"\t/j[u|m] package [/t transform] [/g languageid]\n"
+"Apply a patch:\n"
+"\t/p patch_package [property]\n"
+"\t/p patch_package /a package [property]\n"
+"Log and UI Modifiers for above commands:\n"
+"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
+"\t/q{|n|b|r|f|n+|b+|b-}\n"
+"Register MSI Service:\n"
+"\t/y\n"
+"Unregister MSI Service:\n"
+"\t/z\n"
+"Display this help:\n"
+"\t/help\n"
+"\t/?\n"
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
-msgstr ""
+msgstr "נא להזין את התיקייה המכילה את %s"
 
 #: msi.rc:58
 msgid "install source for feature missing"
@@ -5875,7 +5957,7 @@ msgstr ""
 
 #: oleacc.rc:78
 msgid "slider"
-msgstr ""
+msgstr "פס גלילה"
 
 #: oleacc.rc:79
 msgid "spin box"
@@ -5891,15 +5973,15 @@ msgstr "הנפשה"
 
 #: oleacc.rc:82
 msgid "equation"
-msgstr ""
+msgstr "משוואה"
 
 #: oleacc.rc:83
 msgid "drop down button"
-msgstr ""
+msgstr "לחצן רשימה נגללת"
 
 #: oleacc.rc:84
 msgid "menu button"
-msgstr ""
+msgstr "לחצן תפריט"
 
 #: oleacc.rc:85
 msgid "grid drop down button"
@@ -6445,14 +6527,13 @@ msgid "Properties"
 msgstr "מאפיינים"
 
 #: shell32.rc:82
-#, fuzzy
 msgctxt "recycle bin"
 msgid "&Restore"
 msgstr "&שחזור"
 
 #: shell32.rc:83
 msgid "&Erase"
-msgstr ""
+msgstr "מ&חיקה"
 
 #: shell32.rc:95
 msgid "E&xplore"
@@ -6476,9 +6557,8 @@ msgid "E&xit"
 msgstr "י&ציאה"
 
 #: shell32.rc:127
-#, fuzzy
 msgid "&About Control Panel"
-msgstr "על &אודות לוח הבקרה..."
+msgstr "על &אודות לוח הבקרה"
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:113
 msgid "Size"
@@ -6581,7 +6661,6 @@ msgid "My Videos"
 msgstr "הווידאו שלי"
 
 #: shell32.rc:207
-#, fuzzy
 msgctxt "directory"
 msgid "Desktop"
 msgstr "שולחן העבודה"
@@ -6824,15 +6903,15 @@ msgstr "לוח הבקרה של Wine"
 
 #: shell32.rc:191
 msgid "Unable to display Run File dialog box (internal error)"
-msgstr ""
+msgstr "Unable to display Run File dialog box (internal error)"
 
 #: shell32.rc:192
 msgid "Unable to display Browse dialog box (internal error)"
-msgstr ""
+msgstr "Unable to display Browse dialog box (internal error)"
 
 #: shell32.rc:194
 msgid "Executable files (*.exe)"
-msgstr "קובצי הפעלה (*.exe)"
+msgstr "קובצי הפעלה (‎*.exe)"
 
 #: shell32.rc:253
 msgid "There is no Windows program configured to open this type of file."
@@ -6931,7 +7010,6 @@ msgid " sec"
 msgstr " שניות"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
-#, fuzzy
 msgctxt "window"
 msgid "&Restore"
 msgstr "&שחזור"
@@ -6961,9 +7039,8 @@ msgid "&About Wine"
 msgstr "על &אודות Wine"
 
 #: user32.rc:46
-#, fuzzy
 msgid "&Close\tCtrl-F4"
-msgstr "&סגירה\tAlt-F4"
+msgstr "&סגירה\tCtrl-F4"
 
 #: user32.rc:48
 msgid "Nex&t\tCtrl-F6"
@@ -7508,39 +7585,39 @@ msgstr "שגיאה בפעולות"
 
 #: wldap32.rc:29
 msgid "Protocol Error"
-msgstr ""
+msgstr "שגיאה בפרוטוקול"
 
 #: wldap32.rc:30
 msgid "Time Limit Exceeded"
-msgstr ""
+msgstr "מגבלת הזמן נחרגה"
 
 #: wldap32.rc:31
 msgid "Size Limit Exceeded"
-msgstr ""
+msgstr "מגבלת הגודל נחרגה"
 
 #: wldap32.rc:32
 msgid "Compare False"
-msgstr ""
+msgstr "ההשוואה שגויה"
 
 #: wldap32.rc:33
 msgid "Compare True"
-msgstr ""
+msgstr "ההשוואה נכונה"
 
 #: wldap32.rc:34
 msgid "Authentication Method Not Supported"
-msgstr ""
+msgstr "שיטת האימות אינה נתמכת"
 
 #: wldap32.rc:35
 msgid "Strong Authentication Required"
-msgstr ""
+msgstr "נדרשת הצפנה חזקה"
 
 #: wldap32.rc:36
 msgid "Referral (v2)"
-msgstr ""
+msgstr "הפנייה (v2)"
 
 #: wldap32.rc:37
 msgid "Referral"
-msgstr ""
+msgstr "הפנייה"
 
 #: wldap32.rc:38
 msgid "Administration Limit Exceeded"
@@ -7769,7 +7846,7 @@ msgstr "תמיד &עליון"
 #: clock.rc:42
 #, fuzzy
 msgid "&About Clock"
-msgstr "על &אודות השעון..."
+msgstr "על &אודות השעון"
 
 #: clock.rc:48
 msgid "Clock"
@@ -7777,7 +7854,7 @@ msgstr "שעון"
 
 #: cmd.rc:30
 msgid "ATTRIB shows or changes DOS file attributes.\n"
-msgstr ""
+msgstr "ATTRIB shows or changes DOS file attributes.\n"
 
 #: cmd.rc:38
 msgid ""
@@ -7789,40 +7866,49 @@ msgid ""
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
 msgstr ""
+"CALL <batchfilename> is used within a batch file to execute commands\n"
+"from another batch file. When the batch file exits, control returns to\n"
+"the file which called it. The CALL command may supply parameters to the\n"
+"called procedure.\n"
+"\n"
+"Changes to default directory, environment variables etc made within a\n"
+"called procedure are inherited by the caller.\n"
 
 #: cmd.rc:41
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
+"CD <dir> is the short version of CHDIR. It changes the current\n"
+"default directory.\n"
 
 #: cmd.rc:42
 msgid "CHDIR <dir> changes the current default directory.\n"
-msgstr ""
+msgstr "CHDIR <dir> changes the current default directory.\n"
 
 #: cmd.rc:44
 msgid "CLS clears the console screen.\n"
-msgstr ""
+msgstr "CLS clears the console screen.\n"
 
 #: cmd.rc:46
 msgid "COPY <filename> copies a file.\n"
-msgstr ""
+msgstr "COPY <filename> copies a file.\n"
 
 #: cmd.rc:47
 msgid "CTTY changes the input/output device.\n"
-msgstr ""
+msgstr "CTTY changes the input/output device.\n"
 
 #: cmd.rc:48
 msgid "DATE shows or changes the system date.\n"
-msgstr ""
+msgstr "DATE shows or changes the system date.\n"
 
 #: cmd.rc:49
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr ""
+msgstr "DEL <filename> deletes a file or set of files.\n"
 
 #: cmd.rc:50
 msgid "DIR lists the contents of a directory.\n"
-msgstr ""
+msgstr "DIR lists the contents of a directory.\n"
 
 #: cmd.rc:60
 msgid ""
@@ -7835,10 +7921,18 @@ msgid ""
 "default). The ECHO OFF command can be prevented from displaying by\n"
 "preceding it with an @ sign.\n"
 msgstr ""
+"ECHO <string> displays <string> on the current terminal device.\n"
+"\n"
+"ECHO ON causes all subsequent commands in a batch file to be displayed\n"
+"on the terminal device before they are executed.\n"
+"\n"
+"ECHO OFF reverses the effect of a previous ECHO ON (ECHO is OFF by\n"
+"default). The ECHO OFF command can be prevented from displaying by\n"
+"preceding it with an @ sign.\n"
 
 #: cmd.rc:62
 msgid "ERASE <filename> deletes a file or set of files.\n"
-msgstr ""
+msgstr "ERASE <filename> deletes a file or set of files.\n"
 
 #: cmd.rc:70
 msgid ""
@@ -7849,6 +7943,12 @@ msgid ""
 "The requirement to double the % sign when using FOR in a batch file does\n"
 "not exist in wine's cmd.\n"
 msgstr ""
+"The FOR command is used to execute a command for each of a set of files.\n"
+"\n"
+"Syntax: FOR %variable IN (set) DO command\n"
+"\n"
+"The requirement to double the % sign when using FOR in a batch file does\n"
+"not exist in wine's cmd.\n"
 
 #: cmd.rc:82
 msgid ""
@@ -7863,12 +7963,24 @@ msgid ""
 "\n"
 "GOTO has no effect when used interactively.\n"
 msgstr ""
+"The GOTO command transfers execution to another statement within a\n"
+"batch file.\n"
+"\n"
+"The label which is the target of a GOTO may be up to 255 characters\n"
+"long but may not include spaces (this is different from other operating\n"
+"systems). If two or more identical labels exist in a batch file the\n"
+"first one will always be executed. Attempting to GOTO a nonexistent\n"
+"label terminates the batch file execution.\n"
+"\n"
+"GOTO has no effect when used interactively.\n"
 
 #: cmd.rc:85
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
 msgstr ""
+"HELP <command> shows brief help details on a topic.\n"
+"HELP without an argument shows all CMD built-in commands.\n"
 
 #: cmd.rc:95
 msgid ""
@@ -7881,6 +7993,14 @@ msgid ""
 "In the second form of the command, string1 and string2 must be in double\n"
 "quotes. The comparison is not case-sensitive.\n"
 msgstr ""
+"IF is used to conditionally execute a command.\n"
+"\n"
+"Syntax:\tIF [NOT] EXIST filename command\n"
+"IF [NOT] string1==string2 command\n"
+"IF [NOT] ERRORLEVEL number command\n"
+"\n"
+"In the second form of the command, string1 and string2 must be in double\n"
+"quotes. The comparison is not case-sensitive.\n"
 
 #: cmd.rc:101
 msgid ""
@@ -7890,14 +8010,19 @@ msgid ""
 "The command will prompt you for the new volume label for the given drive.\n"
 "You can display the disk volume label with the VOL command.\n"
 msgstr ""
+"LABEL is used to set a disk volume label.\n"
+"\n"
+"Syntax: LABEL [drive:]\n"
+"The command will prompt you for the new volume label for the given drive.\n"
+"You can display the disk volume label with the VOL command.\n"
 
 #: cmd.rc:104
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
-msgstr ""
+msgstr "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 
 #: cmd.rc:105
 msgid "MKDIR <name> creates a subdirectory.\n"
-msgstr ""
+msgstr "MKDIR <name> creates a subdirectory.\n"
 
 #: cmd.rc:112
 msgid ""
@@ -7909,6 +8034,13 @@ msgid ""
 "\n"
 "MOVE fails if the old and new locations are on different DOS drive letters.\n"
 msgstr ""
+"MOVE relocates a file or directory to a new point within the file system.\n"
+"\n"
+"If the item being moved is a directory then all the files and "
+"subdirectories\n"
+"below the item are moved as well.\n"
+"\n"
+"MOVE fails if the old and new locations are on different DOS drive letters.\n"
 
 #: cmd.rc:123
 msgid ""
@@ -7922,6 +8054,15 @@ msgid ""
 "variable, for example:\n"
 "PATH %PATH%;c:\\temp\n"
 msgstr ""
+"PATH displays or changes the cmd search path.\n"
+"\n"
+"Entering PATH will display the current PATH setting (initially taken\n"
+"from the registry). To change the setting follow the\n"
+"PATH command with the new value.\n"
+"\n"
+"It is also possible to modify the PATH by using the PATH environment\n"
+"variable, for example:\n"
+"PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:129
 msgid ""
@@ -7930,6 +8071,10 @@ msgid ""
 "batch files to allow the user to read the output of a previous command\n"
 "before it scrolls off the screen.\n"
 msgstr ""
+"PAUSE displays a message on the screen 'Press Return key to continue'\n"
+"and waits for the user to press the Return key. It is mainly useful in\n"
+"batch files to allow the user to read the output of a previous command\n"
+"before it scrolls off the screen.\n"
 
 #: cmd.rc:150
 msgid ""
@@ -7953,28 +8098,49 @@ msgid ""
 "The prompt can also be changed by altering the PROMPT environment variable,\n"
 "so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
 msgstr ""
+"PROMPT sets the command-line prompt.\n"
+"\n"
+"The string following the PROMPT command (and the space immediately after)\n"
+"appears at the beginning of the line when cmd is waiting for input.\n"
+"\n"
+"The following character strings have the special meaning shown:\n"
+"\n"
+"$$    Dollar sign         $_    Linefeed            $b    Pipe sign (|)\n"
+"$d    Current date        $e    Escape              $g    > sign\n"
+"$l    < sign              $n    Current drive       $p    Current path\n"
+"$q    Equal sign          $t    Current time        $v    cmd version\n"
+"\n"
+"Note that entering the PROMPT command without a prompt-string resets the\n"
+"prompt to the default, which is the current directory (which includes the\n"
+"current drive letter) followed by a greater-than (>) sign.\n"
+"(like a command PROMPT $p$g).\n"
+"\n"
+"The prompt can also be changed by altering the PROMPT environment variable,\n"
+"so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
 
 #: cmd.rc:154
 msgid ""
 "A command line beginning REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
 msgstr ""
+"A command line beginning REM (followed by a space) performs no\n"
+"action, and can therefore be used as a comment in a batch file.\n"
 
 #: cmd.rc:157
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
-msgstr ""
+msgstr "REN <filename> is the short version of RENAME. It renames a file.\n"
 
 #: cmd.rc:158
 msgid "RENAME <filename> renames a file.\n"
-msgstr ""
+msgstr "RENAME <filename> renames a file.\n"
 
 #: cmd.rc:160
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
-msgstr ""
+msgstr "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 
 #: cmd.rc:161
 msgid "RMDIR <dir> deletes a subdirectory.\n"
-msgstr ""
+msgstr "RMDIR <dir> deletes a subdirectory.\n"
 
 #: cmd.rc:179
 msgid ""
@@ -7995,6 +8161,22 @@ msgid ""
 "many more values than in a native Win32 implementation. Note that it is\n"
 "not possible to affect the operating system environment from within cmd.\n"
 msgstr ""
+"SET displays or changes the cmd environment variables.\n"
+"\n"
+"SET without parameters shows all of the current environment.\n"
+"\n"
+"To create or modify an environment variable the syntax is:\n"
+"\n"
+"SET <variable>=<value>\n"
+"\n"
+"where <variable> and <value> are character strings. There must be no\n"
+"spaces before the equals sign, nor can the variable name\n"
+"have embedded spaces.\n"
+"\n"
+"Under Wine, the environment of the underlying operating system is\n"
+"included into the Win32 environment, there will generally therefore be\n"
+"many more values than in a native Win32 implementation. Note that it is\n"
+"not possible to affect the operating system environment from within cmd.\n"
 
 #: cmd.rc:184
 msgid ""
@@ -8002,20 +8184,25 @@ msgid ""
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
 "if called from the command line.\n"
 msgstr ""
+"SHIFT is used in a batch file to remove one parameter from the head of\n"
+"the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
+"if called from the command line.\n"
 
 #: cmd.rc:186
 msgid "TIME sets or shows the current system time.\n"
-msgstr ""
+msgstr "TIME sets or shows the current system time.\n"
 
 #: cmd.rc:188
 msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
-msgstr ""
+msgstr "Sets the window title for the cmd window, syntax TITLE [string]\n"
 
 #: cmd.rc:192
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
 msgstr ""
+"TYPE <filename> copies <filename> to the console device (or elsewhere\n"
+"if redirected). No check is made that the file is readable text.\n"
 
 #: cmd.rc:201
 msgid ""
@@ -8027,20 +8214,29 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
+"VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
+"\n"
+"VERIFY ON\tSet the flag\n"
+"VERIFY OFF\tClear the flag\n"
+"VERIFY\t\tDisplays ON or OFF as appropriate.\n"
+"\n"
+"The verify flag has no function in Wine.\n"
 
 #: cmd.rc:204
 msgid "VER displays the version of cmd you are running.\n"
-msgstr ""
+msgstr "VER displays the version of cmd you are running.\n"
 
 #: cmd.rc:206
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr ""
+msgstr "VOL shows the volume label of a disk device.\n"
 
 #: cmd.rc:210
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
+"ENDLOCAL ends localization of environment changes in a batch file\n"
+"which were introduced by a preceding SETLOCAL.\n"
 
 #: cmd.rc:218
 msgid ""
@@ -8051,22 +8247,32 @@ msgid ""
 "file, whichever comes first), at which point the previous environment\n"
 "settings are restored.\n"
 msgstr ""
+"SETLOCAL starts localization of environment changes in a batch file.\n"
+"\n"
+"Environment changes done after a SETLOCAL are local to the batch file, and\n"
+"are preserved until the next ENDLOCAL is encountered (or at the end of the\n"
+"file, whichever comes first), at which point the previous environment\n"
+"settings are restored.\n"
 
 #: cmd.rc:221
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
+"PUSHD <directoryname> saves the current directory onto a\n"
+"stack, and then changes the current directory to the supplied one.\n"
 
 #: cmd.rc:224
 msgid ""
 "POPD changes current directory to the last one saved with\n"
 "PUSHD.\n"
 msgstr ""
+"POPD changes current directory to the last one saved with\n"
+"PUSHD.\n"
 
 #: cmd.rc:226
 msgid "MORE displays output of files or piped input in pages.\n"
-msgstr ""
+msgstr "MORE displays output of files or piped input in pages.\n"
 
 #: cmd.rc:230
 msgid ""
@@ -8074,12 +8280,17 @@ msgid ""
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
+"CHOICE displays a text and waits, until the User\n"
+"presses an allowed Key from a selectable list.\n"
+"CHOICE is mainly used to build a menu selection in a batch file.\n"
 
 #: cmd.rc:234
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
 msgstr ""
+"EXIT terminates the current command session and returns\n"
+"to the operating system or shell from which you invoked cmd.\n"
 
 #: cmd.rc:267
 msgid ""
@@ -8117,10 +8328,43 @@ msgid ""
 "\n"
 "Enter HELP <command> for further information on any of the above commands\n"
 msgstr ""
+"CMD built-in commands are:\n"
+"ATTRIB\t\tShow or change DOS file attributes\n"
+"CALL\t\tInvoke a batch file from inside another\n"
+"CD (CHDIR)\tChange current default directory\n"
+"CHOICE\t\tWait for an keypress from a selectable list\n"
+"CLS\t\tClear the console screen\n"
+"COPY\t\tCopy file\n"
+"CTTY\t\tChange input/output device\n"
+"DATE\t\tShow or change the system date\n"
+"DEL (ERASE)\tDelete a file or set of files\n"
+"DIR\t\tList the contents of a directory\n"
+"ECHO\t\tCopy text directly to the console output\n"
+"ENDLOCAL\tEnd localization of environment changes in a batch file\n"
+"HELP\t\tShow brief help details on a topic\n"
+"MD (MKDIR)\tCreate a subdirectory\n"
+"MORE\t\tDisplay output in pages\n"
+"MOVE\t\tMove a file, set of files or directory tree\n"
+"PATH\t\tSet or show the search path\n"
+"POPD\t\tRestores the directory to the last one saved with PUSHD\n"
+"PROMPT\t\tChange the command prompt\n"
+"PUSHD\t\tChanges to a new directory, saving the current one\n"
+"REN (RENAME)\tRename a file\n"
+"RD (RMDIR)\tDelete a subdirectory\n"
+"SET\t\tSet or show environment variables\n"
+"SETLOCAL\tStart localization of environment changes in a batch file\n"
+"TIME\t\tSet or show the current system time\n"
+"TITLE\t\tSet the window title for the CMD session\n"
+"TYPE\t\tType the contents of a text file\n"
+"VER\t\tShow the current version of CMD\n"
+"VOL\t\tShow the volume label of a disk device\n"
+"EXIT\t\tClose down CMD\n"
+"\n"
+"Enter HELP <command> for further information on any of the above commands\n"
 
 #: cmd.rc:269
 msgid "Are you sure"
-msgstr ""
+msgstr "Are you sure"
 
 #: cmd.rc:270 xcopy.rc:40
 msgctxt "Yes key"
@@ -8134,77 +8378,79 @@ msgstr "N"
 
 #: cmd.rc:272
 msgid "File association missing for extension %s\n"
-msgstr ""
+msgstr "File association missing for extension %s\n"
 
 #: cmd.rc:273
 msgid "No open command associated with file type '%s'\n"
-msgstr ""
+msgstr "No open command associated with file type '%s'\n"
 
 #: cmd.rc:274
 msgid "Overwrite %s"
-msgstr ""
+msgstr "Overwrite %s"
 
 #: cmd.rc:275
 msgid "More..."
-msgstr ""
+msgstr "More..."
 
 #: cmd.rc:276
 msgid "Line in Batch processing possibly truncated. Using:\n"
-msgstr ""
+msgstr "Line in Batch processing possibly truncated. Using:\n"
 
 #: cmd.rc:277
 msgid ""
 "Not Yet Implemented\n"
 "\n"
 msgstr ""
+"Not Yet Implemented\n"
+"\n"
 
 #: cmd.rc:278
 msgid "Argument missing\n"
-msgstr ""
+msgstr "Argument missing\n"
 
 #: cmd.rc:279
 msgid "Syntax error\n"
-msgstr ""
+msgstr "Syntax error\n"
 
 #: cmd.rc:280
 msgid "%s: File Not Found\n"
-msgstr ""
+msgstr "%s: File Not Found\n"
 
 #: cmd.rc:281
 msgid "No help available for %s\n"
-msgstr ""
+msgstr "No help available for %s\n"
 
 #: cmd.rc:282
 msgid "Target to GOTO not found\n"
-msgstr ""
+msgstr "Target to GOTO not found\n"
 
 #: cmd.rc:283
 msgid "Current Date is %s\n"
-msgstr ""
+msgstr "Current Date is %s\n"
 
 #: cmd.rc:284
 msgid "Current Time is %s\n"
-msgstr ""
+msgstr "Current Time is %s\n"
 
 #: cmd.rc:285
 msgid "Enter new date: "
-msgstr ""
+msgstr "Enter new date: "
 
 #: cmd.rc:286
 msgid "Enter new time: "
-msgstr ""
+msgstr "Enter new time: "
 
 #: cmd.rc:287
 msgid "Environment variable %s not defined\n"
-msgstr ""
+msgstr "Environment variable %s not defined\n"
 
 #: cmd.rc:288 xcopy.rc:38
 msgid "Failed to open '%s'\n"
-msgstr ""
+msgstr "Failed to open '%s'\n"
 
 #: cmd.rc:289
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr ""
+msgstr "Cannot call batch label outside of a batch script\n"
 
 #: cmd.rc:290 xcopy.rc:42
 msgctxt "All key"
@@ -8213,23 +8459,23 @@ msgstr "A"
 
 #: cmd.rc:291
 msgid "%s, Delete"
-msgstr ""
+msgstr "%s, Delete"
 
 #: cmd.rc:292
 msgid "Echo is %s\n"
-msgstr ""
+msgstr "Echo is %s\n"
 
 #: cmd.rc:293
 msgid "Verify is %s\n"
-msgstr ""
+msgstr "Verify is %s\n"
 
 #: cmd.rc:294
 msgid "Verify must be ON or OFF\n"
-msgstr ""
+msgstr "Verify must be ON or OFF\n"
 
 #: cmd.rc:295
 msgid "Parameter error\n"
-msgstr ""
+msgstr "Parameter error\n"
 
 #: cmd.rc:296
 msgid ""
@@ -8237,78 +8483,81 @@ msgid ""
 "Volume Serial Number is %04x-%04x\n"
 "\n"
 msgstr ""
+"Volume in drive %c is %s\n"
+"Volume Serial Number is %04x-%04x\n"
+"\n"
 
 #: cmd.rc:297
 msgid "Volume label (11 characters, ENTER for none)?"
-msgstr ""
+msgstr "Volume label (11 characters, ENTER for none)?"
 
 #: cmd.rc:298
 msgid "PATH not found\n"
-msgstr ""
+msgstr "PATH not found\n"
 
 #: cmd.rc:299
 msgid "Press Return key to continue: "
-msgstr ""
+msgstr "Press Return key to continue: "
 
 #: cmd.rc:300
 msgid "Wine Command Prompt"
-msgstr ""
+msgstr "Wine Command Prompt"
 
 #: cmd.rc:301
 msgid "CMD Version %s\n"
-msgstr ""
+msgstr "CMD Version %s\n"
 
 #: cmd.rc:302
 msgid "More? "
-msgstr ""
+msgstr "More? "
 
 #: cmd.rc:303
 msgid "The input line is too long.\n"
-msgstr ""
+msgstr "The input line is too long.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
-msgstr ""
+msgstr "כלי ניתוח ה־DirectX"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
-msgstr ""
+msgstr "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 
 #: explorer.rc:28
-#, fuzzy
 msgid "Wine Explorer"
-msgstr "Wine Internet Explorer"
+msgstr "הסייר של Wine"
 
 #: explorer.rc:29
-#, fuzzy
 msgid "Location:"
-msgstr "מיקום"
+msgstr "מיקום:"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr ""
+msgstr "Usage: hostname\n"
 
 #: hostname.rc:28
 msgid "Error: Invalid option '%c'.\n"
-msgstr ""
+msgstr "Error: Invalid option '%c'.\n"
 
 #: hostname.rc:29
 msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
 msgstr ""
+"Error: Setting the system hostname is not possible with the hostname "
+"utility.\n"
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
-msgstr ""
+msgstr "Usage: ipconfig [ /? | /all ]\n"
 
 #: ipconfig.rc:28
 msgid "Error: Unknown or invalid command line parameters specified\n"
-msgstr ""
+msgstr "Error: Unknown or invalid command line parameters specified\n"
 
 #: ipconfig.rc:29
 msgid "%s adapter %s\n"
-msgstr ""
+msgstr "%s adapter %s\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
@@ -8316,47 +8565,47 @@ msgstr "Ethernet"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
-msgstr ""
+msgstr "Connection-specific DNS suffix"
 
 #: ipconfig.rc:34
 msgid "Hostname"
-msgstr ""
+msgstr "Hostname"
 
 #: ipconfig.rc:35
 msgid "Node type"
-msgstr ""
+msgstr "Node type"
 
 #: ipconfig.rc:36
 msgid "Broadcast"
-msgstr ""
+msgstr "Broadcast"
 
 #: ipconfig.rc:37
 msgid "Peer-to-peer"
-msgstr ""
+msgstr "Peer-to-peer"
 
 #: ipconfig.rc:38
 msgid "Mixed"
-msgstr ""
+msgstr "Mixed"
 
 #: ipconfig.rc:39
 msgid "Hybrid"
-msgstr ""
+msgstr "Hybrid"
 
 #: ipconfig.rc:40
 msgid "IP routing enabled"
-msgstr ""
+msgstr "IP routing enabled"
 
 #: ipconfig.rc:42
 msgid "Physical address"
-msgstr ""
+msgstr "Physical address"
 
 #: ipconfig.rc:43
 msgid "DHCP enabled"
-msgstr ""
+msgstr "DHCP enabled"
 
 #: ipconfig.rc:46
 msgid "Default gateway"
-msgstr ""
+msgstr "Default gateway"
 
 #: net.rc:27
 msgid ""
@@ -8364,54 +8613,57 @@ msgid ""
 "\n"
 "NET [ HELP | START | STOP | USE ]\n"
 msgstr ""
+"The syntax of this command is:\n"
+"\n"
+"NET [ HELP | START | STOP | USE ]\n"
 
 #: net.rc:28
 msgid "Specify service name to start.\n"
-msgstr ""
+msgstr "Specify service name to start.\n"
 
 #: net.rc:29
 msgid "Specify service name to stop.\n"
-msgstr ""
+msgstr "Specify service name to stop.\n"
 
 #: net.rc:30
 msgid "Stopping dependent service: %s\n"
-msgstr ""
+msgstr "Stopping dependent service: %s\n"
 
 #: net.rc:31
 msgid "Could not stop service %s\n"
-msgstr ""
+msgstr "Could not stop service %s\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
-msgstr ""
+msgstr "Could not get handle to service control manager.\n"
 
 #: net.rc:33
 msgid "Could not get handle to service.\n"
-msgstr ""
+msgstr "Could not get handle to service.\n"
 
 #: net.rc:34
 msgid "The %s service is starting.\n"
-msgstr ""
+msgstr "The %s service is starting.\n"
 
 #: net.rc:35
 msgid "The %s service was started successfully.\n"
-msgstr ""
+msgstr "The %s service was started successfully.\n"
 
 #: net.rc:36
 msgid "The %s service failed to start.\n"
-msgstr ""
+msgstr "The %s service failed to start.\n"
 
 #: net.rc:37
 msgid "The %s service is stopping.\n"
-msgstr ""
+msgstr "The %s service is stopping.\n"
 
 #: net.rc:38
 msgid "The %s service was stopped successfully.\n"
-msgstr ""
+msgstr "The %s service was stopped successfully.\n"
 
 #: net.rc:39
 msgid "The %s service failed to stop.\n"
-msgstr ""
+msgstr "The %s service failed to stop.\n"
 
 #: net.rc:40
 msgid ""
@@ -8424,10 +8676,18 @@ msgid ""
 "   Commands available are:\n"
 "   NET HELP    NET START    NET STOP    NET USE\n"
 msgstr ""
+"The syntax of this command is:\n"
+"\n"
+"NET HELP command\n"
+"    -or-\n"
+"NET command /HELP\n"
+"\n"
+"   Commands available are:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
 
 #: net.rc:42
 msgid "There are no entries in the list.\n"
-msgstr ""
+msgstr "There are no entries in the list.\n"
 
 #: net.rc:43
 msgid ""
@@ -8435,39 +8695,37 @@ msgid ""
 "Status  Local   Remote\n"
 "---------------------------------------------------------------\n"
 msgstr ""
+"\n"
+"Status  Local   Remote\n"
+"---------------------------------------------------------------\n"
 
 #: net.rc:44
 msgid "%s      %s      %s      Open resources: %lu\n"
-msgstr ""
+msgstr "%s      %s      %s      Open resources: %lu\n"
 
 #: net.rc:45
 msgid "OK"
 msgstr ""
 
 #: net.rc:46
-#, fuzzy
 msgid "Paused"
-msgstr "&מושהית"
+msgstr "Paused"
 
 #: net.rc:47
-#, fuzzy
 msgid "Disconnected"
-msgstr "הקובץ לא נמצא"
+msgstr "Disconnected"
 
 #: net.rc:48
-#, fuzzy
 msgid "A network error occurred"
-msgstr "אירעה שגיאת מדפסת."
+msgstr "A network error occurred"
 
 #: net.rc:49
-#, fuzzy
 msgid "Connection is being made"
-msgstr "חיבור רשת מקומית"
+msgstr "Connection is being made"
 
 #: net.rc:50
-#, fuzzy
 msgid "Reconnecting"
-msgstr "בהליכי התחברות אל %s"
+msgstr "Reconnecting"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -8545,7 +8803,7 @@ msgstr "החל&פה...\tCtrl+H"
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
 #, fuzzy
 msgid "&Contents\tF1"
-msgstr "&תכנים"
+msgstr "&תכנים\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
@@ -8669,9 +8927,8 @@ msgid "&View TypeLib..."
 msgstr "צ&פייה ב־TypeLib..."
 
 #: oleview.rc:32
-#, fuzzy
 msgid "&System Configuration"
-msgstr "&תצורת המערכת..."
+msgstr "&תצורת המערכת"
 
 #: oleview.rc:33
 msgid "&Run the Registry Editor"
@@ -8701,7 +8958,7 @@ msgstr "שגיאה מקומית"
 #: oleview.rc:44
 #, fuzzy
 msgid "&Remote server"
-msgstr "ה&סרה..."
+msgstr "ה&סרה"
 
 #: oleview.rc:47
 msgid "View &Type information"
@@ -8959,18 +9216,16 @@ msgid "&Copy...\tF8"
 msgstr "הע&תקה...\tF8"
 
 #: progman.rc:35
-#, fuzzy
 msgid "&Properties\tAlt+Enter"
-msgstr "מ&אפייניםs...\tAlt+Enter"
+msgstr "מ&אפיינים\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
 msgstr "הפע&לה..."
 
 #: progman.rc:39
-#, fuzzy
 msgid "E&xit Windows"
-msgstr "י&ציאה מ־Windows..."
+msgstr "י&ציאה מ־Windows"
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
@@ -9006,23 +9261,23 @@ msgstr "&סידור סמלים"
 
 #: progman.rc:54
 msgid "&About Program Manager"
-msgstr ""
+msgstr "על &אודות מנהל התכניות"
 
 #: progman.rc:60
 msgid "Program Manager"
-msgstr "Program Manager"
+msgstr "מנהל התכניות"
 
 #: progman.rc:64
 msgid "Delete"
-msgstr ""
+msgstr "מחיקה"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr ""
+msgstr "האם למחוק את הקבוצה `%s' ?"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr ""
+msgstr "האם למחוק את התכנית `%s' ?"
 
 #: progman.rc:67 winhlp32.rc:82
 msgid "Not implemented"
@@ -9030,49 +9285,51 @@ msgstr "לא מוטמע"
 
 #: progman.rc:68
 msgid "Error reading `%s'."
-msgstr ""
+msgstr "Error reading `%s'."
 
 #: progman.rc:69
 msgid "Error writing `%s'."
-msgstr ""
+msgstr "Error writing `%s'."
 
 #: progman.rc:72
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
 msgstr ""
+"The group file `%s' cannot be opened.\n"
+"Should it be tried further on?"
 
 #: progman.rc:74
 msgid "Help not available."
-msgstr ""
+msgstr "Help not available."
 
 #: progman.rc:75
 msgid "Unknown feature in %s"
-msgstr ""
+msgstr "Unknown feature in %s"
 
 #: progman.rc:76
 msgid "File `%s' exists. Not overwritten."
-msgstr ""
+msgstr "File `%s' exists. Not overwritten."
 
 #: progman.rc:77
 msgid "Save group as `%s to prevent overwriting original files."
-msgstr ""
+msgstr "Save group as `%s to prevent overwriting original files."
 
 #: progman.rc:80
 msgid "Programs"
-msgstr ""
+msgstr "Programs"
 
 #: progman.rc:81
 msgid "Libraries (*.dll)"
-msgstr ""
+msgstr "Libraries (*.dll)"
 
 #: progman.rc:82
 msgid "Icon files"
-msgstr ""
+msgstr "Icon files"
 
 #: progman.rc:83
 msgid "Icons (*.ico)"
-msgstr ""
+msgstr "Icons (*.ico)"
 
 #: reg.rc:27
 msgid ""
@@ -9081,12 +9338,18 @@ msgid ""
 "REG [ ADD | DELETE | QUERY ]\n"
 "REG command /?\n"
 msgstr ""
+"The syntax of this command is:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG command /?\n"
 
 #: reg.rc:28
 msgid ""
 "REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
 "f]\n"
 msgstr ""
+"REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
+"f]\n"
 
 #: reg.rc:29
 msgid "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
@@ -9098,24 +9361,25 @@ msgstr "REG QUERY key_name [/v value_name | /ve] [/s]\n"
 
 #: reg.rc:31
 msgid "The operation completed successfully\n"
-msgstr ""
+msgstr "The operation completed successfully\n"
 
 #: reg.rc:32
 msgid "Error: Invalid key name\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: reg.rc:33
 msgid "Error: Invalid command line parameters\n"
-msgstr ""
+msgstr "Error: Invalid command line parameters\n"
 
 #: reg.rc:34
 msgid "Error: Unable to add keys to remote machine\n"
-msgstr ""
+msgstr "Error: Unable to add keys to remote machine\n"
 
 #: reg.rc:35
 msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr ""
+"Error: The system was unable to find the specified registry key or value\n"
 
 #: regedit.rc:31
 msgid "&Registry"
@@ -9130,9 +9394,8 @@ msgid "&Export Registry File..."
 msgstr "י&צוא קובץ מרישום המערכת..."
 
 #: regedit.rc:42 regedit.rc:87
-#, fuzzy
 msgid "&Modify..."
-msgstr "&שינוי"
+msgstr "&שינוי..."
 
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
@@ -9155,9 +9418,8 @@ msgid "&Multi String Value"
 msgstr "ערך מ&רובה מחרוזות"
 
 #: regedit.rc:52 regedit.rc:103
-#, fuzzy
 msgid "&Expandable String Value"
-msgstr "ערך &מחרוזת"
+msgstr "ערך &מחרוזת מתרחבת"
 
 #: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
@@ -9192,9 +9454,8 @@ msgid "&About Registry Editor"
 msgstr "על &אודות עורך רישום המערכת"
 
 #: regedit.rc:88
-#, fuzzy
 msgid "Modify Binary Data..."
-msgstr "שינוי נתונים בינריים"
+msgstr "שינוי נתונים בינריים..."
 
 #: regedit.rc:109
 msgid "&Export..."
@@ -9417,6 +9678,27 @@ msgid ""
 "This is free software, and you are welcome to redistribute it\n"
 "under certain conditions; run 'start /L' for details.\n"
 msgstr ""
+"Start a program, or open a document in the program normally used for files "
+"with that suffix.\n"
+"Usage:\n"
+"start [options] program_filename [...]\n"
+"start [options] document_filename\n"
+"\n"
+"Options:\n"
+"/M[inimized] Start the program minimized.\n"
+"/MAX[imized] Start the program maximized.\n"
+"/R[estored]  Start the program normally (neither minimized nor maximized).\n"
+"/W[ait]      Wait for started program to finish, then exit with its exit "
+"code.\n"
+"/Unix        Use a Unix filename and start the file like windows explorer.\n"
+"/ProgIDOpen  Open a document using the following progID.\n"
+"/L           Show end-user license.\n"
+"/?           Display this help and exit.\n"
+"\n"
+"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
+"Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n"
+"This is free software, and you are welcome to redistribute it\n"
+"under certain conditions; run 'start /L' for details.\n"
 
 #: start.rc:64
 msgid ""
@@ -9437,6 +9719,22 @@ msgid ""
 "\n"
 "See the COPYING.LIB file for license information.\n"
 msgstr ""
+"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
+"This program is free software; you can redistribute it and/or\n"
+"modify it under the terms of the GNU Lesser Public License\n"
+"as published by the Free Software Foundation; either version 2.1\n"
+"of the License, or (at your option) any later version.\n"
+"\n"
+"This program is distributed in the hope that it will be useful,\n"
+"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"GNU Lesser Public License for more details.\n"
+"\n"
+"You should have received a copy of the GNU Lesser Public License\n"
+"along with this program; if not, write to the Free Software\n"
+"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
+"\n"
+"See the COPYING.LIB file for license information.\n"
 
 #: start.rc:66
 msgid ""
@@ -9444,67 +9742,71 @@ msgid ""
 "specified file.\n"
 "ShellExecuteEx failed"
 msgstr ""
+"Application could not be started, or no application associated with the "
+"specified file.\n"
+"ShellExecuteEx failed"
 
 #: start.rc:68
 msgid "Could not translate the specified Unix filename to a DOS filename."
-msgstr ""
+msgstr "Could not translate the specified Unix filename to a DOS filename."
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
-msgstr ""
+msgstr "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
 
 #: taskkill.rc:28
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr ""
+msgstr "Error: Unknown or invalid command line option specified.\n"
 
 #: taskkill.rc:29
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr ""
+msgstr "Error: Invalid command line parameter specified.\n"
 
 #: taskkill.rc:30
 msgid "Error: One of options /im or /pid must be specified.\n"
-msgstr ""
+msgstr "Error: One of options /im or /pid must be specified.\n"
 
 #: taskkill.rc:31
 msgid "Error: Option %s expects a command line parameter.\n"
-msgstr ""
+msgstr "Error: Option %s expects a command line parameter.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr ""
+msgstr "Error: Options /im and /pid are mutually exclusive.\n"
 
 #: taskkill.rc:33
 msgid "Close message sent to top-level windows of process with PID %u.\n"
-msgstr ""
+msgstr "Close message sent to top-level windows of process with PID %u.\n"
 
 #: taskkill.rc:34
 msgid ""
 "Close message sent to top-level windows of process \"%s\" with PID %u.\n"
 msgstr ""
+"Close message sent to top-level windows of process \"%s\" with PID %u.\n"
 
 #: taskkill.rc:35
 msgid "Process with PID %u was forcibly terminated.\n"
-msgstr ""
+msgstr "Process with PID %u was forcibly terminated.\n"
 
 #: taskkill.rc:36
 msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
-msgstr ""
+msgstr "Process \"%s\" with PID %u was forcibly terminated.\n"
 
 #: taskkill.rc:37
 msgid "Error: Could not find process \"%s\".\n"
-msgstr ""
+msgstr "Error: Could not find process \"%s\".\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr ""
+msgstr "Error: Unable to enumerate the process list.\n"
 
 #: taskkill.rc:39
 msgid "Error: Unable to terminate process \"%s\".\n"
-msgstr ""
+msgstr "Error: Unable to terminate process \"%s\".\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr ""
+msgstr "Error: Process self-termination is not permitted.\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -10072,7 +10374,7 @@ msgstr "מציג קובצי על רגיל"
 #: winecfg.rc:32
 #, fuzzy
 msgid "Configure..."
-msgstr "תצורה"
+msgstr "תצורה..."
 
 #: winecfg.rc:39
 #, fuzzy
@@ -10206,8 +10508,9 @@ msgid "builtin, native"
 msgstr "מובנה, טבעי"
 
 #: winecfg.rc:66
+#, fuzzy
 msgid "disabled"
-msgstr ""
+msgstr "Table"
 
 #: winecfg.rc:67
 #, fuzzy
@@ -10607,25 +10910,27 @@ msgstr "זוהי בדיקה"
 
 #: wineconsole.rc:41
 msgid "wineconsole: Couldn't parse event id\n"
-msgstr ""
+msgstr "wineconsole: Couldn't parse event id\n"
 
 #: wineconsole.rc:42
 msgid "wineconsole: Invalid backend\n"
-msgstr ""
+msgstr "wineconsole: Invalid backend\n"
 
 #: wineconsole.rc:43
 msgid "wineconsole: Unrecognized command line option\n"
-msgstr ""
+msgstr "wineconsole: Unrecognized command line option\n"
 
 #: wineconsole.rc:44
 msgid "Starts a program in a Wine console\n"
-msgstr ""
+msgstr "Starts a program in a Wine console\n"
 
 #: wineconsole.rc:45
 msgid ""
 "wineconsole: Starting program %s failed.\n"
 "The command is invalid.\n"
 msgstr ""
+"wineconsole: Starting program %s failed.\n"
+"The command is invalid.\n"
 
 #: wineconsole.rc:48
 msgid ""
@@ -10635,6 +10940,11 @@ msgid ""
 "\n"
 "Options:\n"
 msgstr ""
+"\n"
+"Usage:\n"
+"  wineconsole [options] <command>\n"
+"\n"
+"Options:\n"
 
 #: wineconsole.rc:49
 msgid ""
@@ -10643,10 +10953,15 @@ msgid ""
 "                            try to setup the current terminal as a Wine "
 "console\n"
 msgstr ""
+"  --backend={user|curses}  Choosing user will spawn a new window, curses "
+"will\n"
+"                            try to setup the current terminal as a Wine "
+"console\n"
 
 #: wineconsole.rc:51
 msgid "  <command>                 The Wine program to launch in the console\n"
 msgstr ""
+"  <command>                 The Wine program to launch in the console\n"
 
 #: wineconsole.rc:52
 msgid ""
@@ -10656,18 +10971,23 @@ msgid ""
 "Starts the Wine command prompt in a Wine console\n"
 "\n"
 msgstr ""
+"\n"
+"Example:\n"
+"  wineconsole cmd\n"
+"Starts the Wine command prompt in a Wine console\n"
+"\n"
 
 #: winedbg.rc:35
 msgid "Wine program crash"
-msgstr ""
+msgstr "Wine program crash"
 
 #: winedbg.rc:36
 msgid "Internal errors - invalid parameters received"
-msgstr ""
+msgstr "Internal errors - invalid parameters received"
 
 #: winedbg.rc:37
 msgid "(unidentified)"
-msgstr ""
+msgstr "(unidentified)"
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
@@ -10678,9 +10998,8 @@ msgid "Re&name..."
 msgstr "&שינוי שם..."
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Propert&ies\tAlt+Enter"
-msgstr "מ&אפייניםs...\tAlt+Enter"
+msgstr "מ&אפיינים\tAlt+Enter"
 
 #: winefile.rc:33
 msgid "&Run..."
@@ -10699,9 +11018,8 @@ msgid "&Disk"
 msgstr "&כונן"
 
 #: winefile.rc:45
-#, fuzzy
 msgid "Connect &Network Drive..."
-msgstr "התחברות לכונן &רשת"
+msgstr "התחברות לכונן &רשת..."
 
 #: winefile.rc:46
 msgid "&Disconnect Network Drive"
@@ -10732,9 +11050,8 @@ msgid "Sort by &Date"
 msgstr "סידור לפי ת&אריך"
 
 #: winefile.rc:60
-#, fuzzy
 msgid "Filter by&..."
-msgstr "סינון לפי &..."
+msgstr "סינון לפי&..."
 
 #: winefile.rc:67
 msgid "&Drivebar"
@@ -10757,9 +11074,8 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "פריסה &אופקית\tCtrl+F4"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File"
-msgstr "על &אודות Winefile..."
+msgstr "על &אודות Winefile"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10823,7 +11139,7 @@ msgstr "%s מתוך %s פנויים"
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "מ&שחק"
 
 #: winemine.rc:35
 msgid "&New\tF2"
@@ -10831,7 +11147,7 @@ msgstr "&חדש\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "&סימני שאלה"
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -10850,14 +11166,12 @@ msgid "&Custom..."
 msgstr "ה&תאמה אישית..."
 
 #: winemine.rc:44
-#, fuzzy
 msgid "&Fastest Times"
-msgstr "&שיאים..."
+msgstr "&שיאים"
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "על &אודות Wine"
+msgstr "על &אודות שולה המוקשים"
 
 #: winemine.rc:27
 msgid "WineMine"
@@ -10904,9 +11218,8 @@ msgid "Large"
 msgstr "גדולים"
 
 #: winhlp32.rc:54
-#, fuzzy
 msgid "&Help on help\tF1"
-msgstr "ע&זרה לעזרה"
+msgstr "ע&זרה לעזרה\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
@@ -11057,7 +11370,6 @@ msgid "&System\tCtrl+1"
 msgstr "מ&ערכת\tCtrl+1"
 
 #: wordpad.rc:88
-#, fuzzy
 msgid "&Pale yellow\tCtrl+2"
 msgstr "צהבהב כמו ב&פתקיות\tCtrl+2"
 
@@ -11231,23 +11543,23 @@ msgstr "הפעלת הכתבן נכשלה"
 
 #: xcopy.rc:27
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr ""
+msgstr "Invalid number of parameters - Use xcopy /? for help\n"
 
 #: xcopy.rc:28
 msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
-msgstr ""
+msgstr "Invalid parameter '%s' -  Use xcopy /? for help\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
-msgstr ""
+msgstr "Press <enter> to begin copying\n"
 
 #: xcopy.rc:30
 msgid "%d file(s) would be copied\n"
-msgstr ""
+msgstr "%d file(s) would be copied\n"
 
 #: xcopy.rc:31
 msgid "%d file(s) copied\n"
-msgstr ""
+msgstr "%d file(s) copied\n"
 
 #: xcopy.rc:34
 msgid ""
@@ -11255,22 +11567,25 @@ msgid ""
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
+"Is '%s' a filename or directory\n"
+"on the target?\n"
+"(F - File, D - Directory)\n"
 
 #: xcopy.rc:35
 msgid "%s? (Yes|No)\n"
-msgstr ""
+msgstr "%s? (Yes|No)\n"
 
 #: xcopy.rc:36
 msgid "Overwrite %s? (Yes|No|All)\n"
-msgstr ""
+msgstr "Overwrite %s? (Yes|No|All)\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%s' to '%s' failed with r/c %d\n"
-msgstr ""
+msgstr "Copying of '%s' to '%s' failed with r/c %d\n"
 
 #: xcopy.rc:39
 msgid "Failed during reading of '%s'\n"
-msgstr ""
+msgstr "Failed during reading of '%s'\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
@@ -11317,3 +11632,35 @@ msgid ""
 "\t\tthan source\n"
 "\n"
 msgstr ""
+"XCOPY - Copies source files or directory trees to a destination\n"
+"\n"
+"Syntax:\n"
+"XCOPY source [dest] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Where:\n"
+"\n"
+"[/I]  Assume directory if destination does not exist and copying two or\n"
+"\tmore files\n"
+"[/S]  Copy directories and subdirectories\n"
+"[/E]  Copy directories and subdirectories, including any empty ones\n"
+"[/Q]  Do not list names during copy, ie quiet.\n"
+"[/F]  Show full source and destination names during copy\n"
+"[/L]  Simulate operation, showing names which would be copied\n"
+"[/W]  Prompts before beginning the copy operation\n"
+"[/T]  Creates empty directory structure but does not copy files\n"
+"[/Y]  Suppress prompting when overwriting files\n"
+"[/-Y] Enable prompting when overwriting files\n"
+"[/P]  Prompts on each source file before copying\n"
+"[/N]  Copy using short names\n"
+"[/U]  Copy only files which already exist in destination\n"
+"[/R]  Overwrite any read only files\n"
+"[/H]  Include hidden and system files in the copy\n"
+"[/C]  Continue even if an error occurs during the copy\n"
+"[/A]  Only copy files with archive attribute set\n"
+"[/M]  Only copy files with archive attribute set, removes\n"
+"\tarchive attribute\n"
+"[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
+"\t\tIf no date is supplied, only copy if destination is older\n"
+"\t\tthan source\n"
+"\n"
