@@ -213,6 +213,68 @@ ert@or_broken@qwerty
 e@or_broken@qwerty
 ''@or_broken@'qwerty'
 r@or_broken@qwerty
+------------ Testing variable substitution --------------
+...in FOR variables
+@todo_wine@"A B"
+C
+'A B'@or_broken@''
+'C'@or_broken@''
+@pwd@\C D@or_broken@%~ff
+@pwd@\E@or_broken@%~ff
+@drive@
+@drive@
+@path@@or_broken@%~pd
+@path@@or_broken@%~pd
+L M
+N
+'.OOL'
+'.TABC'
+''
+@todo_wine@'@drive@@shortpath@R S'@or_broken@''
+@todo_wine@'@drive@@shortpath@T'@or_broken@''
+@todo_wine@'@drive@@shortpath@ABCDEFGHIJK.LMNOP'@or_broken@''
+@todo_wine@''@or_broken@'%~ai'
+@todo_wine@''@or_broken@'%~ai'
+@todo_wine@'--a------'@or_broken@'%~ai'
+@todo_wine@''@or_broken@'%~ti'
+@todo_wine@''@or_broken@'%~ti'
+@todo_wine@''@or_broken@'%~zi'
+@todo_wine@''@or_broken@'%~zi'
+@drive@@path@
+@drive@@path@
+@drive@
+@drive@
+@drive@
+@drive@
+''
+'.eh'
+...in parameters
+@todo_wine@"A B"
+C
+@todo_wine@'A B'@or_broken@''
+'C'@or_broken@''
+@todo_wine@@pwd@\C D
+@pwd@\E
+@drive@
+@drive@
+@path@
+@path@
+@todo_wine@L M
+N
+@todo_wine@'.OOL'
+'.TABC'
+''
+@todo_wine@'@drive@@shortpath@R S'@or_broken@''
+@todo_wine@'@drive@@shortpath@T'@or_broken@''
+@todo_wine@'@drive@@shortpath@ABCDEFGHIJK.LMNOP'@or_broken@''
+@drive@@path@
+@drive@@path@
+@drive@
+@drive@
+@drive@
+@drive@
+''
+'.eh'@or_broken@''
 ------------ Testing variable delayed expansion --------------
 ...default mode (load-time expansion)
 foo

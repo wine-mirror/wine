@@ -227,6 +227,116 @@ echo '%VAR:~-2,-4%'
 echo %VAR:~-3,-2%
 set VAR=
 
+echo ------------ Testing variable substitution --------------
+echo ...in FOR variables
+for %%i in ("A B" C) do echo %%i
+rem quotes removal
+for %%i in ("A B" C) do echo '%%~i'
+rem fully qualified path
+for %%f in ("C D" E) do echo %%~ff
+rem drive letter
+for %%i in ("F G" H) do echo %%~di
+rem path
+for %%d in ("I J" K) do echo %%~pd
+rem filename
+for %%i in ("L M" N) do echo %%~ni
+rem file extension
+for %%i in ("O. P.OOL" Q.TABC hello) do echo '%%~xi'
+rem path with short path names
+for %%I in ("R S" T ABCDEFGHIJK.LMNOP) do echo '%%~sI'
+rem file attribute
+for %%i in ("U V" W) do echo '%%~ai'
+echo foo> foo
+for %%i in (foo) do echo '%%~ai'
+del foo
+rem file date/time
+rem Not fully testable, until we can grep dir's output to get foo's creation time in an envvar...
+for %%i in ("a b" c) do echo '%%~ti'
+rem file size
+rem Similar issues as above
+for %%i in ("a b" c) do echo '%%~zi'
+rem combined options
+for %%i in ("d e" f) do echo %%~dpi
+for %%i in ("g h" i) do echo %%~sdi
+for %%i in ("g h" i) do echo %%~dsi
+for %%i in ("j k" l.eh) do echo '%%~xsi'
+
+echo ...in parameters
+for %%i in ("A B" C) do call :echoFun %%i
+rem quotes removal
+for %%i in ("A B" C) do call :echoFunQ %%i
+rem fully qualified path
+for %%f in ("C D" E) do call :echoFunF %%f
+rem drive letter
+for %%i in ("F G" H) do call :echoFunD %%i
+rem path
+for %%d in ("I J" K) do call :echoFunP %%d
+rem filename
+for %%i in ("L M" N) do call :echoFunN %%i
+rem file extension
+for %%i in ("O. P.OOL" Q.TABC hello) do call :echoFunX %%i
+rem path with short path names
+for %%I in ("R S" T ABCDEFGHIJK.LMNOP) do call :echoFunS %%I
+rem NT4 aborts whole script execution when encountering ~a, ~t and ~z substitutions, preventing full testing
+rem combined options
+for %%i in ("d e" f) do call :echoFunDP %%i
+for %%i in ("g h" i) do call :echoFunSD %%i
+for %%i in ("g h" i) do call :echoFunDS %%i
+for %%i in ("j k" l.eh) do call :echoFunXS %%i
+
+goto :endEchoFuns
+:echoFun
+echo %1
+goto :eof
+
+:echoFunQ
+echo '%~1'
+goto :eof
+
+:echoFunF
+echo %~f1
+goto :eof
+
+:echoFunD
+echo %~d1
+goto :eof
+
+:echoFunP
+echo %~p1
+goto :eof
+
+:echoFunN
+echo %~n1
+goto :eof
+
+:echoFunX
+echo '%~x1'
+goto :eof
+
+:echoFunS
+rem some NT4 workaround
+set VAR='%~s1'
+echo %VAR%
+set VAR=
+goto :eof
+
+:echoFunDP
+echo %~dp1
+goto :eof
+
+:echoFunSD
+echo %~sd1
+goto :eof
+
+:echoFunDS
+echo %~ds1
+goto :eof
+
+:echoFunXS
+echo '%~xs1'
+goto :eof
+:endEchoFuns
+
 echo ------------ Testing variable delayed expansion --------------
 rem NT4 doesn't support this
 echo ...default mode (load-time expansion)
