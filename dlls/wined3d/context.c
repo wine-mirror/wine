@@ -1263,7 +1263,7 @@ static void bind_dummy_textures(const struct wined3d_device *device, struct wine
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
         checkGLcall("glActiveTextureARB");
 
-        glBindTexture(GL_TEXTURE_2D, device->dummyTextureName[i]);
+        glBindTexture(GL_TEXTURE_2D, device->dummy_texture_2d[i]);
         checkGLcall("glBindTexture");
 
         if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
@@ -1601,7 +1601,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     /* If this happens to be the first context for the device, dummy textures
      * are not created yet. In that case, they will be created (and bound) by
      * create_dummy_textures right after this context is initialized. */
-    if (device->dummyTextureName[0])
+    if (device->dummy_texture_2d[0])
         bind_dummy_textures(device, ret);
 
     LEAVE_GL();
@@ -1974,7 +1974,7 @@ void context_bind_texture(struct wined3d_context *context, GLenum target, GLuint
                 /* nothing to do */
                 break;
             case GL_TEXTURE_2D:
-                glBindTexture(GL_TEXTURE_2D, device->dummyTextureName[unit]);
+                glBindTexture(GL_TEXTURE_2D, device->dummy_texture_2d[unit]);
                 checkGLcall("glBindTexture");
                 break;
             case GL_TEXTURE_RECTANGLE_ARB:

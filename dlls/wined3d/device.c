@@ -992,11 +992,11 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
         /* Make appropriate texture active */
         context_active_texture(context, gl_info, i);
 
-        glGenTextures(1, &device->dummyTextureName[i]);
+        glGenTextures(1, &device->dummy_texture_2d[i]);
         checkGLcall("glGenTextures");
-        TRACE("Dummy 2D texture %u given name %u.\n", i, device->dummyTextureName[i]);
+        TRACE("Dummy 2D texture %u given name %u.\n", i, device->dummy_texture_2d[i]);
 
-        glBindTexture(GL_TEXTURE_2D, device->dummyTextureName[i]);
+        glBindTexture(GL_TEXTURE_2D, device->dummy_texture_2d[i]);
         checkGLcall("glBindTexture");
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &color);
@@ -1079,14 +1079,14 @@ static void destroy_dummy_textures(struct wined3d_device *device, const struct w
         checkGLcall("glDeleteTextures(count, device->dummy_texture_rect)");
     }
 
-    glDeleteTextures(count, device->dummyTextureName);
-    checkGLcall("glDeleteTextures(count, device->dummyTextureName)");
+    glDeleteTextures(count, device->dummy_texture_2d);
+    checkGLcall("glDeleteTextures(count, device->dummy_texture_2d)");
     LEAVE_GL();
 
     memset(device->dummy_texture_cube, 0, gl_info->limits.textures * sizeof(*device->dummy_texture_cube));
     memset(device->dummy_texture_3d, 0, gl_info->limits.textures * sizeof(*device->dummy_texture_3d));
     memset(device->dummy_texture_rect, 0, gl_info->limits.textures * sizeof(*device->dummy_texture_rect));
-    memset(device->dummyTextureName, 0, gl_info->limits.textures * sizeof(*device->dummyTextureName));
+    memset(device->dummy_texture_2d, 0, gl_info->limits.textures * sizeof(*device->dummy_texture_2d));
 }
 
 static LONG fullscreen_style(LONG style)

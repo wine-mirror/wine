@@ -1722,7 +1722,7 @@ struct wined3d_device
     struct wined3d_surface *logo_surface;
 
     /* Textures for when no other textures are mapped */
-    UINT                          dummyTextureName[MAX_COMBINED_SAMPLERS];
+    UINT dummy_texture_2d[MAX_COMBINED_SAMPLERS];
     UINT dummy_texture_rect[MAX_COMBINED_SAMPLERS];
     UINT dummy_texture_3d[MAX_COMBINED_SAMPLERS];
     UINT dummy_texture_cube[MAX_COMBINED_SAMPLERS];
