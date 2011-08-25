@@ -2002,16 +2002,19 @@ TMStubImpl_Invoke(
 
     if (This->dispatch_derivative && xmsg->iMethod < sizeof(IDispatchVtbl)/sizeof(void *))
     {
-        IPSFactoryBuffer *factory_buffer;
-        hres = get_facbuf_for_iid(&IID_IDispatch, &factory_buffer);
-        if (hres == S_OK)
+        if (!This->dispatch_stub)
         {
-            hres = IPSFactoryBuffer_CreateStub(factory_buffer, &IID_IDispatch,
-                This->pUnk, &This->dispatch_stub);
-            IPSFactoryBuffer_Release(factory_buffer);
+            IPSFactoryBuffer *factory_buffer;
+            hres = get_facbuf_for_iid(&IID_IDispatch, &factory_buffer);
+            if (hres == S_OK)
+            {
+                hres = IPSFactoryBuffer_CreateStub(factory_buffer, &IID_IDispatch,
+                    This->pUnk, &This->dispatch_stub);
+                IPSFactoryBuffer_Release(factory_buffer);
+            }
+            if (hres != S_OK)
+                return hres;
         }
-        if (hres != S_OK)
-            return hres;
         return IRpcStubBuffer_Invoke(This->dispatch_stub, xmsg, rpcchanbuf);
     }
 

@@ -1000,6 +1000,12 @@ static void test_typelibmarshal(void)
 
     IKindaEnumWidget_Release(pKEW);
 
+    /* call GetTypeInfoCount (direct) */
+    hr = IWidget_GetTypeInfoCount(pWidget, &uval);
+    ok_ole_success(hr, IWidget_GetTypeInfoCount);
+    hr = IWidget_GetTypeInfoCount(pWidget, &uval);
+    ok_ole_success(hr, IWidget_GetTypeInfoCount);
+
     hr = IWidget_QueryInterface(pWidget, &IID_IDispatch, (void **)&pDispatch);
     ok_ole_success(hr, IWidget_QueryInterface);
 
