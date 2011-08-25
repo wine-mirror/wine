@@ -5793,20 +5793,9 @@ void surface_modify_location(struct wined3d_surface *surface, DWORD location, BO
     TRACE("surface %p, location %s, persistent %#x.\n",
             surface, debug_surflocation(location), persistent);
 
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
-    {
-        if (surface_is_offscreen(surface))
-        {
-            /* With ORM_FBO, SFLAG_INTEXTURE and SFLAG_INDRAWABLE are the same
-             * for offscreen targets. */
-            if (location & (SFLAG_INTEXTURE | SFLAG_INDRAWABLE))
-                location |= (SFLAG_INTEXTURE | SFLAG_INDRAWABLE);
-        }
-        else
-        {
-            TRACE("Surface %p is an onscreen surface.\n", surface);
-        }
-    }
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && surface_is_offscreen(surface)
+            && (location & SFLAG_INDRAWABLE))
+        ERR("Trying to invalidate the SFLAG_INDRAWABLE location of an offscreen surface.\n");
 
     if (location & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)
             && gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
