@@ -1714,7 +1714,7 @@ static void test_mxwriter_encoding(void)
     hr = IMXWriter_get_output(writer, &dest);
     todo_wine ok(hr == S_OK, "get_output failed: %08x\n", hr);
     todo_wine ok(V_VT(&dest) == VT_BSTR, "Expected VT_BSTR, got %d\n", V_VT(&dest));
-    todo_wine ok(!lstrcmpW(_bstr_("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n"), V_BSTR(&dest)),
+    if (V_VT(&dest) == VT_BSTR) todo_wine ok(!lstrcmpW(_bstr_("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n"), V_BSTR(&dest)),
             "got wrong content: %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
