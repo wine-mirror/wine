@@ -322,6 +322,15 @@ X
 M
 N
 O
+`echo
+A
+B`
+'echo
+A
+B'
+@todo_wine@"echo A B"
+@todo_wine@"A B"
+C
 ...imbricated FORs
 @todo_wine@X Y
 @todo_wine@X Y
