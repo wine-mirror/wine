@@ -113,7 +113,7 @@ static void context_destroy_fbo(struct wined3d_context *context, GLuint *fbo)
 
 /* GL locking is done by the caller */
 static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
-        GLenum fbo_target, struct wined3d_surface *depth_stencil)
+        GLenum fbo_target, struct wined3d_surface *depth_stencil, DWORD location)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -141,22 +141,32 @@ static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         }
         else
         {
-            surface_prepare_texture(depth_stencil, context, FALSE);
-
-            if (format_flags & WINED3DFMT_FLAG_DEPTH)
+            switch (location)
             {
-                gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_DEPTH_ATTACHMENT,
-                        depth_stencil->texture_target, depth_stencil->texture_name,
-                        depth_stencil->texture_level);
-                checkGLcall("glFramebufferTexture2D()");
-            }
+                case SFLAG_INTEXTURE:
+                case SFLAG_INSRGBTEX:
+                    surface_prepare_texture(depth_stencil, context, FALSE);
 
-            if (format_flags & WINED3DFMT_FLAG_STENCIL)
-            {
-                gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_STENCIL_ATTACHMENT,
-                        depth_stencil->texture_target, depth_stencil->texture_name,
-                        depth_stencil->texture_level);
-                checkGLcall("glFramebufferTexture2D()");
+                    if (format_flags & WINED3DFMT_FLAG_DEPTH)
+                    {
+                        gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_DEPTH_ATTACHMENT,
+                                depth_stencil->texture_target, depth_stencil->texture_name,
+                                depth_stencil->texture_level);
+                        checkGLcall("glFramebufferTexture2D()");
+                    }
+
+                    if (format_flags & WINED3DFMT_FLAG_STENCIL)
+                    {
+                        gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_STENCIL_ATTACHMENT,
+                                depth_stencil->texture_target, depth_stencil->texture_name,
+                                depth_stencil->texture_level);
+                        checkGLcall("glFramebufferTexture2D()");
+                    }
+                    break;
+
+                default:
+                    ERR("Unsupported location %s (%#x).\n", debug_surflocation(location), location);
+                    break;
             }
         }
 
@@ -393,7 +403,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
     /* Apply depth targets */
     if (entry->depth_stencil)
         surface_set_compatible_renderbuffer(entry->depth_stencil, entry->render_targets[0]);
-    context_attach_depth_stencil_fbo(context, target, entry->depth_stencil);
+    context_attach_depth_stencil_fbo(context, target, entry->depth_stencil, entry->location);
 
     entry->attached = TRUE;
 }
