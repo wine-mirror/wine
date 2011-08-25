@@ -6005,10 +6005,6 @@ msgstr ""
 msgid "Full Frames (Uncompressed)"
 msgstr "Cadre întregi (necomprimate)"
 
-#: msvidc32.rc:25
-msgid "MS-CRAM"
-msgstr "MS-CRAM"
-
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
 msgstr "Codecul video Wine Video 1"
