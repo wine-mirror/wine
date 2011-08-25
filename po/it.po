@@ -9075,10 +9075,6 @@ msgstr ""
 msgid "&About Notepad"
 msgstr "&Informazioni sul Blocco Note"
 
-#: notepad.rc:65
-msgid "&f"
-msgstr "&f"
-
 #: notepad.rc:66
 msgid "Page &p"
 msgstr "Pagina &p"

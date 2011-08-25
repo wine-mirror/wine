@@ -8863,10 +8863,6 @@ msgstr "Help-onder&werpen"
 msgid "&About Notepad"
 msgstr "&Over Notepad"
 
-#: notepad.rc:65
-msgid "&f"
-msgstr "&f"
-
 #: notepad.rc:66
 msgid "Page &p"
 msgstr "Pagina &p"

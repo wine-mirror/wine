@@ -8276,10 +8276,6 @@ msgstr ""
 msgid "&About Notepad"
 msgstr ""
 
-#: notepad.rc:65
-msgid "&f"
-msgstr ""
-
 #: notepad.rc:66
 msgid "Page &p"
 msgstr ""

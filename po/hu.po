@@ -8847,10 +8847,6 @@ msgstr "&Tartalom"
 msgid "&About Notepad"
 msgstr ""
 
-#: notepad.rc:65
-msgid "&f"
-msgstr "&f"
-
 #: notepad.rc:66
 msgid "Page &p"
 msgstr "Oldalszám: &p."

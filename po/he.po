@@ -8801,10 +8801,6 @@ msgstr "&תכנים\tF1"
 msgid "&About Notepad"
 msgstr "על &אודות פנקס רשימות"
 
-#: notepad.rc:65
-msgid "&f"
-msgstr "&ע"
-
 #: notepad.rc:66
 msgid "Page &p"
 msgstr "עמוד &ת"

@@ -8366,10 +8366,6 @@ msgstr "الم&حتويات"
 msgid "&About Notepad"
 msgstr "&عن لوح الملاحظات"
 
-#: notepad.rc:65
-msgid "&f"
-msgstr "&f"
-
 #: notepad.rc:66
 msgid "Page &p"
 msgstr "صفحة &p"

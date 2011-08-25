@@ -8717,10 +8717,6 @@ msgstr "&Turinys\tF1"
 msgid "&About Notepad"
 msgstr "&Apie užrašinę"
 
-#: notepad.rc:65
-msgid "&f"
-msgstr "&f"
-
 #: notepad.rc:66
 msgid "Page &p"
 msgstr "Puslapis &p"

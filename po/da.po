@@ -8990,10 +8990,6 @@ msgstr "&Indhold"
 msgid "&About Notepad"
 msgstr "&Om Notesblok"
 
-#: notepad.rc:65
-msgid "&f"
-msgstr "&f"
-
 #: notepad.rc:66
 msgid "Page &p"
 msgstr "Page &p"

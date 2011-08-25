@@ -8742,10 +8742,6 @@ msgstr "內容(&C)"
 msgid "&About Notepad"
 msgstr "關於記事本(&A)"
 
-#: notepad.rc:65
-msgid "&f"
-msgstr "&f"
-
 #: notepad.rc:66
 msgid "Page &p"
 msgstr "&p 頁"

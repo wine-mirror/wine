@@ -8666,10 +8666,6 @@ msgstr "목차(&C)"
 msgid "&About Notepad"
 msgstr "노트패드 정보(&A)"
 
-#: notepad.rc:65
-msgid "&f"
-msgstr "&f"
-
 #: notepad.rc:66
 msgid "Page &p"
 msgstr "&p 페이지"

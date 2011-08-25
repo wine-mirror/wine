@@ -8694,10 +8694,6 @@ msgstr ""
 msgid "&About Notepad"
 msgstr "&О Бележници"
 
-#: notepad.rc:65
-msgid "&f"
-msgstr "&f"
-
 #: notepad.rc:66
 msgid "Page &p"
 msgstr "Страна &p"

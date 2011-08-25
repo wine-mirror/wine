@@ -8794,10 +8794,6 @@ msgstr "&Sommaire\tF1"
 msgid "&About Notepad"
 msgstr "À &propos du Bloc-notes"
 
-#: notepad.rc:65
-msgid "&f"
-msgstr "&f"
-
 #: notepad.rc:66
 msgid "Page &p"
 msgstr "Page &p"

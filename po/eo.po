@@ -8550,10 +8550,6 @@ msgstr "Enhavo"
 msgid "&About Notepad"
 msgstr "Pri Notepad"
 
-#: notepad.rc:65
-msgid "&f"
-msgstr "&f"
-
 #: notepad.rc:66
 msgid "Page &p"
 msgstr "Paøo &p"

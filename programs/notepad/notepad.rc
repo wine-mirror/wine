@@ -62,7 +62,7 @@ POPUP "&Help" {
 
 STRINGTABLE
 {
-STRING_PAGESETUP_HEADERVALUE,   "&f"
+STRING_PAGESETUP_HEADERVALUE,   "#msgctxt#do not translate#&f"
 STRING_PAGESETUP_FOOTERVALUE,   "Page &p"
 
 STRING_NOTEPAD,                                 "Notepad"

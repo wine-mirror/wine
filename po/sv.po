@@ -8726,10 +8726,6 @@ msgstr "&Innehåll\tF1"
 msgid "&About Notepad"
 msgstr "&Om Anteckningar"
 
-#: notepad.rc:65
-msgid "&f"
-msgstr "&f"
-
 #: notepad.rc:66
 msgid "Page &p"
 msgstr "Sida &p"

@@ -8748,10 +8748,6 @@ msgstr ""
 msgid "&About Notepad"
 msgstr "&O Beležnici"
 
-#: notepad.rc:65
-msgid "&f"
-msgstr "&f"
-
 #: notepad.rc:66
 msgid "Page &p"
 msgstr "Strana &p"
