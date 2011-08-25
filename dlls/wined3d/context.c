@@ -1909,6 +1909,16 @@ void context_active_texture(struct wined3d_context *context, const struct wined3
     context->active_texture = unit;
 }
 
+void context_bind_texture(struct wined3d_context *context, GLenum target, GLuint name)
+{
+    glBindTexture(target, name);
+    checkGLcall("glBindTexture");
+    if (name)
+        context->texture_type[context->active_texture] = target;
+    else
+        context->texture_type[context->active_texture] = GL_NONE;
+}
+
 static void context_set_render_offscreen(struct wined3d_context *context, BOOL offscreen)
 {
     if (context->render_offscreen == offscreen) return;

@@ -5281,8 +5281,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
             /* Create a new cursor texture */
             glGenTextures(1, &device->cursorTexture);
             checkGLcall("glGenTextures");
-            glBindTexture(GL_TEXTURE_2D, device->cursorTexture);
-            checkGLcall("glBindTexture");
+            context_bind_texture(context, GL_TEXTURE_2D, device->cursorTexture);
             /* Copy the bitmap memory into the cursor texture */
             glTexImage2D(GL_TEXTURE_2D, 0, intfmt, width, height, 0, gl_format, type, mem);
             checkGLcall("glTexImage2D");

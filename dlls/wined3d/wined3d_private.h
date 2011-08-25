@@ -1089,6 +1089,7 @@ struct wined3d_context
     UINT                    blit_w, blit_h;
     enum fogsource          fog_source;
     DWORD active_texture;
+    DWORD texture_type[MAX_COMBINED_SAMPLERS];
 
     char                    *vshader_const_dirty, *pshader_const_dirty;
 
@@ -1237,6 +1238,7 @@ void context_apply_fbo_state_blit(struct wined3d_context *context, GLenum target
         struct wined3d_surface *render_target, struct wined3d_surface *depth_stencil, DWORD location) DECLSPEC_HIDDEN;
 void context_active_texture(struct wined3d_context *context, const struct wined3d_gl_info *gl_info,
         unsigned int unit) DECLSPEC_HIDDEN;
+void context_bind_texture(struct wined3d_context *context, GLenum target, GLuint name) DECLSPEC_HIDDEN;
 void context_check_fbo_status(const struct wined3d_context *context, GLenum target) DECLSPEC_HIDDEN;
 struct wined3d_context *context_create(struct wined3d_swapchain *swapchain, struct wined3d_surface *target,
         const struct wined3d_format *ds_format) DECLSPEC_HIDDEN;
@@ -2098,8 +2100,8 @@ void get_drawable_size_swapchain(const struct wined3d_context *context, UINT *wi
 void get_drawable_size_backbuffer(const struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
 void get_drawable_size_fbo(const struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
 
-void draw_textured_quad(const struct wined3d_surface *src_surface, const RECT *src_rect,
-        const RECT *dst_rect, WINED3DTEXTUREFILTERTYPE Filter) DECLSPEC_HIDDEN;
+void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3d_context *context,
+        const RECT *src_rect, const RECT *dst_rect, WINED3DTEXTUREFILTERTYPE Filter) DECLSPEC_HIDDEN;
 void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) DECLSPEC_HIDDEN;
 
 /* Surface flags: */

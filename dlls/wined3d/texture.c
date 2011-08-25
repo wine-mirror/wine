@@ -189,8 +189,7 @@ static HRESULT wined3d_texture_bind(struct wined3d_texture *texture,
             /* This means double binding the texture at creation, but keeps
              * the code simpler all in all, and the run-time path free from
              * additional checks. */
-            glBindTexture(target, gl_tex->name);
-            checkGLcall("glBindTexture");
+            context_bind_texture(context, target, gl_tex->name);
             glTexParameteri(target, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
             checkGLcall("glTexParameteri(target, GL_GENERATE_MIPMAP_SGIS, GL_TRUE)");
         }
@@ -202,8 +201,7 @@ static HRESULT wined3d_texture_bind(struct wined3d_texture *texture,
 
     if (gl_tex->name)
     {
-        glBindTexture(target, gl_tex->name);
-        checkGLcall("glBindTexture");
+        context_bind_texture(context, target, gl_tex->name);
         if (new_texture)
         {
             /* For a new texture we have to set the texture levels after

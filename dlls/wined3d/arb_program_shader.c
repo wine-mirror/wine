@@ -7234,7 +7234,7 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
     ENTER_GL();
 
     /* Draw a textured quad */
-    draw_textured_quad(src_surface, src_rect, &dst_rect, filter);
+    draw_textured_quad(src_surface, context, src_rect, &dst_rect, filter);
 
     LEAVE_GL();
 

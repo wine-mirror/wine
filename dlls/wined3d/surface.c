@@ -311,8 +311,8 @@ static void surface_get_rect(const struct wined3d_surface *surface, const RECT *
 }
 
 /* GL locking and context activation is done by the caller */
-void draw_textured_quad(const struct wined3d_surface *src_surface, const RECT *src_rect,
-        const RECT *dst_rect, WINED3DTEXTUREFILTERTYPE Filter)
+void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3d_context *context,
+        const RECT *src_rect, const RECT *dst_rect, WINED3DTEXTUREFILTERTYPE Filter)
 {
     struct blt_info info;
 
@@ -321,9 +321,7 @@ void draw_textured_quad(const struct wined3d_surface *src_surface, const RECT *s
     glEnable(info.bind_target);
     checkGLcall("glEnable(bind_target)");
 
-    /* Bind the texture */
-    glBindTexture(info.bind_target, src_surface->texture_name);
-    checkGLcall("glBindTexture");
+    context_bind_texture(context, info.bind_target, src_surface->texture_name);
 
     /* Filtering for StretchRect */
     glTexParameteri(info.bind_target, GL_TEXTURE_MAG_FILTER,
@@ -353,8 +351,7 @@ void draw_textured_quad(const struct wined3d_surface *src_surface, const RECT *s
     glEnd();
 
     /* Unbind the texture */
-    glBindTexture(info.bind_target, 0);
-    checkGLcall("glBindTexture(info->bind_target, 0)");
+    context_bind_texture(context, info.bind_target, 0);
 
     /* We changed the filtering settings on the texture. Inform the
      * container about this to get the filters reset properly next draw. */
@@ -2275,8 +2272,7 @@ void surface_bind(struct wined3d_surface *surface, struct wined3d_context *conte
 
             TRACE("Surface %p given name %u.\n", surface, surface->texture_name);
 
-            glBindTexture(surface->texture_target, surface->texture_name);
-            checkGLcall("glBindTexture");
+            context_bind_texture(context, surface->texture_target, surface->texture_name);
             glTexParameteri(surface->texture_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(surface->texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             glTexParameteri(surface->texture_target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -2286,8 +2282,7 @@ void surface_bind(struct wined3d_surface *surface, struct wined3d_context *conte
         }
         else
         {
-            glBindTexture(surface->texture_target, surface->texture_name);
-            checkGLcall("glBindTexture");
+            context_bind_texture(context, surface->texture_target, surface->texture_name);
         }
 
         LEAVE_GL();
@@ -4867,8 +4862,7 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
     ENTER_GL();
 
     /* Bind the target texture */
-    glBindTexture(dst_surface->texture_target, dst_surface->texture_name);
-    checkGLcall("glBindTexture");
+    context_bind_texture(context, dst_surface->texture_target, dst_surface->texture_name);
     if (surface_is_offscreen(src_surface))
     {
         TRACE("Reading from an offscreen target\n");
@@ -5002,16 +4996,14 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
     if(noBackBufferBackup) {
         glGenTextures(1, &backup);
         checkGLcall("glGenTextures");
-        glBindTexture(GL_TEXTURE_2D, backup);
-        checkGLcall("glBindTexture(GL_TEXTURE_2D, backup)");
+        context_bind_texture(context, GL_TEXTURE_2D, backup);
         texture_target = GL_TEXTURE_2D;
     } else {
         /* Backup the back buffer and copy the source buffer into a texture to draw an upside down stretched quad. If
          * we are reading from the back buffer, the backup can be used as source texture
          */
         texture_target = src_surface->texture_target;
-        glBindTexture(texture_target, src_surface->texture_name);
-        checkGLcall("glBindTexture(texture_target, src_surface->texture_name)");
+        context_bind_texture(context, texture_target, src_surface->texture_name);
         glEnable(texture_target);
         checkGLcall("glEnable(texture_target)");
 
@@ -5070,8 +5062,7 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
 
         glGenTextures(1, &src);
         checkGLcall("glGenTextures(1, &src)");
-        glBindTexture(GL_TEXTURE_2D, src);
-        checkGLcall("glBindTexture(GL_TEXTURE_2D, src)");
+        context_bind_texture(context, GL_TEXTURE_2D, src);
 
         /* TODO: Only copy the part that will be read. Use src_rect->left, src_rect->bottom as origin, but with the width watch
          * out for power of 2 sizes
@@ -5157,8 +5148,7 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
     }
 
     /* Now read the stretched and upside down image into the destination texture */
-    glBindTexture(texture_target, dst_surface->texture_name);
-    checkGLcall("glBindTexture");
+    context_bind_texture(context, texture_target, dst_surface->texture_name);
     glCopyTexSubImage2D(texture_target,
                         0,
                         dst_rect.left, dst_rect.top, /* xoffset, yoffset */
@@ -5174,8 +5164,7 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
                 glEnable(GL_TEXTURE_2D);
                 texture_target = GL_TEXTURE_2D;
             }
-            glBindTexture(GL_TEXTURE_2D, backup);
-            checkGLcall("glBindTexture(GL_TEXTURE_2D, backup)");
+            context_bind_texture(context, GL_TEXTURE_2D, backup);
         }
         else
         {
@@ -5185,8 +5174,7 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
                 glEnable(src_surface->texture_target);
                 texture_target = src_surface->texture_target;
             }
-            glBindTexture(src_surface->texture_target, src_surface->texture_name);
-            checkGLcall("glBindTexture(src_surface->texture_target, src_surface->texture_name)");
+            context_bind_texture(context, src_surface->texture_target, src_surface->texture_name);
         }
 
         glBegin(GL_QUADS);
@@ -5311,7 +5299,7 @@ static void surface_blt_to_drawable(struct wined3d_device *device,
         checkGLcall("glDisable(GL_ALPHA_TEST)");
     }
 
-    draw_textured_quad(src_surface, &src_rect, &dst_rect, filter);
+    draw_textured_quad(src_surface, context, &src_rect, &dst_rect, filter);
 
     if (color_key)
     {

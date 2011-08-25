@@ -3578,8 +3578,7 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
                 state_alpha(context, state, WINED3DRS_COLORKEYENABLE);
             }
         } /* Otherwise tex_colorop disables the stage */
-        glBindTexture(GL_TEXTURE_2D, device->dummyTextureName[sampler]);
-        checkGLcall("glBindTexture(GL_TEXTURE_2D, device->dummyTextureName[sampler])");
+        context_bind_texture(context, GL_TEXTURE_2D, device->dummyTextureName[sampler]);
     }
 }
 
