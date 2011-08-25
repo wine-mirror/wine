@@ -1252,6 +1252,40 @@ static int context_choose_pixel_format(struct wined3d_device *device, HDC hdc,
     return iPixelFormat;
 }
 
+/* GL locking is done by the caller */
+static void bind_dummy_textures(const struct wined3d_device *device, struct wined3d_context *context)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    unsigned int i, count = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers);
+
+    for (i = 0; i < count; ++i)
+    {
+        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
+        checkGLcall("glActiveTextureARB");
+
+        glBindTexture(GL_TEXTURE_2D, device->dummyTextureName[i]);
+        checkGLcall("glBindTexture");
+
+        if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+        {
+            glBindTexture(GL_TEXTURE_RECTANGLE_ARB, device->dummy_texture_rect[i]);
+            checkGLcall("glBindTexture");
+        }
+
+        if (gl_info->supported[EXT_TEXTURE3D])
+        {
+            glBindTexture(GL_TEXTURE_3D, device->dummy_texture_3d[i]);
+            checkGLcall("glBindTexture");
+        }
+
+        if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+        {
+            glBindTexture(GL_TEXTURE_CUBE_MAP, device->dummy_texture_cube[i]);
+            checkGLcall("glBindTexture");
+        }
+    }
+}
+
 /* Do not call while under the GL lock. */
 struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         struct wined3d_surface *target, const struct wined3d_format *ds_format)
@@ -1563,6 +1597,12 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         GL_EXTCALL(glProvokingVertexEXT(GL_FIRST_VERTEX_CONVENTION_EXT));
     }
     device->frag_pipe->enable_extension(TRUE);
+
+    /* If this happens to be the first context for the device, dummy textures
+     * are not created yet. In that case, they will be created (and bound) by
+     * create_dummy_textures right after this context is initialized. */
+    if (device->dummyTextureName[0])
+        bind_dummy_textures(device, ret);
 
     LEAVE_GL();
 
@@ -1911,12 +1951,50 @@ void context_active_texture(struct wined3d_context *context, const struct wined3
 
 void context_bind_texture(struct wined3d_context *context, GLenum target, GLuint name)
 {
-    glBindTexture(target, name);
-    checkGLcall("glBindTexture");
+    DWORD unit = context->active_texture;
+    DWORD old_texture_type = context->texture_type[unit];
+
     if (name)
-        context->texture_type[context->active_texture] = target;
+    {
+        glBindTexture(target, name);
+        checkGLcall("glBindTexture");
+    }
     else
-        context->texture_type[context->active_texture] = GL_NONE;
+    {
+        target = GL_NONE;
+    }
+
+    if (old_texture_type != target)
+    {
+        const struct wined3d_device *device = context->swapchain->device;
+
+        switch (old_texture_type)
+        {
+            case GL_NONE:
+                /* nothing to do */
+                break;
+            case GL_TEXTURE_2D:
+                glBindTexture(GL_TEXTURE_2D, device->dummyTextureName[unit]);
+                checkGLcall("glBindTexture");
+                break;
+            case GL_TEXTURE_RECTANGLE_ARB:
+                glBindTexture(GL_TEXTURE_RECTANGLE_ARB, device->dummy_texture_rect[unit]);
+                checkGLcall("glBindTexture");
+                break;
+            case GL_TEXTURE_CUBE_MAP:
+                glBindTexture(GL_TEXTURE_CUBE_MAP, device->dummy_texture_cube[unit]);
+                checkGLcall("glBindTexture");
+                break;
+            case GL_TEXTURE_3D:
+                glBindTexture(GL_TEXTURE_3D, device->dummy_texture_3d[unit]);
+                checkGLcall("glBindTexture");
+                break;
+            default:
+                ERR("Unexpected texture target %#x\n", old_texture_type);
+        }
+
+        context->texture_type[unit] = target;
+    }
 }
 
 static void context_set_render_offscreen(struct wined3d_context *context, BOOL offscreen)

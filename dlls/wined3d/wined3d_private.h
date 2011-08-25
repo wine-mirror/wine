@@ -1722,7 +1722,10 @@ struct wined3d_device
     struct wined3d_surface *logo_surface;
 
     /* Textures for when no other textures are mapped */
-    UINT                          dummyTextureName[MAX_TEXTURES];
+    UINT                          dummyTextureName[MAX_COMBINED_SAMPLERS];
+    UINT dummy_texture_rect[MAX_COMBINED_SAMPLERS];
+    UINT dummy_texture_3d[MAX_COMBINED_SAMPLERS];
+    UINT dummy_texture_cube[MAX_COMBINED_SAMPLERS];
 
     /* DirectDraw stuff */
     DWORD ddraw_width, ddraw_height;

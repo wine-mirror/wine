@@ -3566,7 +3566,7 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
         if (!(texture->flags & WINED3D_TEXTURE_POW2_MAT_IDENT))
             device->shader_backend->shader_load_np2fixup_constants(device->shader_priv, gl_info, state);
     }
-    else if (mapped_stage < gl_info->limits.textures)
+    else
     {
         if (sampler < state->lowest_disabled_stage)
         {
@@ -3578,7 +3578,7 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
                 state_alpha(context, state, WINED3DRS_COLORKEYENABLE);
             }
         } /* Otherwise tex_colorop disables the stage */
-        context_bind_texture(context, GL_TEXTURE_2D, device->dummyTextureName[sampler]);
+        context_bind_texture(context, GL_NONE, 0);
     }
 }
 

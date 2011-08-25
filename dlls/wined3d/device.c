@@ -970,7 +970,7 @@ out:
 static void create_dummy_textures(struct wined3d_device *device, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    unsigned int i;
+    unsigned int i, j, count;
     /* Under DirectX you can sample even if no texture is bound, whereas
      * OpenGL will only allow that when a valid texture is bound.
      * We emulate this by creating dummy textures and binding them
@@ -984,25 +984,65 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
         checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
     }
 
-    for (i = 0; i < gl_info->limits.textures; ++i)
+    count = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers);
+    for (i = 0; i < count; ++i)
     {
         DWORD color = 0x000000ff;
 
         /* Make appropriate texture active */
         context_active_texture(context, gl_info, i);
 
-        /* Generate an opengl texture name */
         glGenTextures(1, &device->dummyTextureName[i]);
         checkGLcall("glGenTextures");
-        TRACE("Dummy Texture %d given name %d.\n", i, device->dummyTextureName[i]);
+        TRACE("Dummy 2D texture %u given name %u.\n", i, device->dummyTextureName[i]);
 
-        /* Generate a dummy 2d texture (not using 1d because they cause many
-        * DRI drivers fall back to sw) */
         glBindTexture(GL_TEXTURE_2D, device->dummyTextureName[i]);
         checkGLcall("glBindTexture");
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &color);
         checkGLcall("glTexImage2D");
+
+        if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+        {
+            glGenTextures(1, &device->dummy_texture_rect[i]);
+            checkGLcall("glGenTextures");
+            TRACE("Dummy rectangle texture %u given name %u.\n", i, device->dummy_texture_rect[i]);
+
+            glBindTexture(GL_TEXTURE_RECTANGLE_ARB, device->dummy_texture_rect[i]);
+            checkGLcall("glBindTexture");
+
+            glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &color);
+            checkGLcall("glTexImage2D");
+        }
+
+        if (gl_info->supported[EXT_TEXTURE3D])
+        {
+            glGenTextures(1, &device->dummy_texture_3d[i]);
+            checkGLcall("glGenTextures");
+            TRACE("Dummy 3D texture %u given name %u.\n", i, device->dummy_texture_3d[i]);
+
+            glBindTexture(GL_TEXTURE_3D, device->dummy_texture_3d[i]);
+            checkGLcall("glBindTexture");
+
+            GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D, 0, GL_RGBA8, 1, 1, 1, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &color));
+            checkGLcall("glTexImage3D");
+        }
+
+        if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+        {
+            glGenTextures(1, &device->dummy_texture_cube[i]);
+            checkGLcall("glGenTextures");
+            TRACE("Dummy cube texture %u given name %u.\n", i, device->dummy_texture_cube[i]);
+
+            glBindTexture(GL_TEXTURE_CUBE_MAP, device->dummy_texture_cube[i]);
+            checkGLcall("glBindTexture");
+
+            for (j = GL_TEXTURE_CUBE_MAP_POSITIVE_X; j <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z; ++j)
+            {
+                glTexImage2D(j, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &color);
+                checkGLcall("glTexImage2D");
+            }
+        }
     }
 
     if (gl_info->supported[APPLE_CLIENT_STORAGE])
@@ -1018,11 +1058,34 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
 /* Context activation is done by the caller. */
 static void destroy_dummy_textures(struct wined3d_device *device, const struct wined3d_gl_info *gl_info)
 {
+    unsigned int count = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers);
+
     ENTER_GL();
-    glDeleteTextures(gl_info->limits.textures, device->dummyTextureName);
-    checkGLcall("glDeleteTextures(gl_info->limits.textures, device->dummyTextureName)");
+    if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+    {
+        glDeleteTextures(count, device->dummy_texture_cube);
+        checkGLcall("glDeleteTextures(count, device->dummy_texture_cube)");
+    }
+
+    if (gl_info->supported[EXT_TEXTURE3D])
+    {
+        glDeleteTextures(count, device->dummy_texture_3d);
+        checkGLcall("glDeleteTextures(count, device->dummy_texture_3d)");
+    }
+
+    if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+    {
+        glDeleteTextures(count, device->dummy_texture_rect);
+        checkGLcall("glDeleteTextures(count, device->dummy_texture_rect)");
+    }
+
+    glDeleteTextures(count, device->dummyTextureName);
+    checkGLcall("glDeleteTextures(count, device->dummyTextureName)");
     LEAVE_GL();
 
+    memset(device->dummy_texture_cube, 0, gl_info->limits.textures * sizeof(*device->dummy_texture_cube));
+    memset(device->dummy_texture_3d, 0, gl_info->limits.textures * sizeof(*device->dummy_texture_3d));
+    memset(device->dummy_texture_rect, 0, gl_info->limits.textures * sizeof(*device->dummy_texture_rect));
     memset(device->dummyTextureName, 0, gl_info->limits.textures * sizeof(*device->dummyTextureName));
 }
 
