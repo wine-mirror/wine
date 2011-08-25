@@ -60,6 +60,9 @@ static void test_InternetExplorer(void)
             &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "Could not create InternetExplorer instance: %08x\n", hres);
 
+    if(hres != S_OK)
+        return;
+
     hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
     ok(hres == S_OK, "Could not get IWebBrowser2 interface: %08x\n", hres);
 
