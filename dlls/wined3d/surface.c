@@ -1207,11 +1207,6 @@ static void surface_blt_fbo(struct wined3d_device *device, const WINED3DTEXTUREF
             break;
     }
 
-    if (src_location == SFLAG_INDRAWABLE && surface_is_offscreen(src_surface))
-        src_location = SFLAG_INTEXTURE;
-    if (dst_location == SFLAG_INDRAWABLE && surface_is_offscreen(dst_surface))
-        dst_location = SFLAG_INTEXTURE;
-
     /* Make sure the locations are up-to-date. Loading the destination
      * surface isn't required if the entire surface is overwritten. (And is
      * in fact harmful if we're being called by surface_load_location() with
