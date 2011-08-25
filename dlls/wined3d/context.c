@@ -1066,7 +1066,7 @@ void context_invalidate_state(struct wined3d_context *context, DWORD state)
 /* This function takes care of wined3d pixel format selection. */
 static int context_choose_pixel_format(struct wined3d_device *device, HDC hdc,
         const struct wined3d_format *color_format, const struct wined3d_format *ds_format,
-        BOOL auxBuffers, int numSamples, BOOL findCompatible)
+        BOOL auxBuffers, BOOL findCompatible)
 {
     int iPixelFormat=0;
     unsigned int matchtry;
@@ -1099,9 +1099,9 @@ static int context_choose_pixel_format(struct wined3d_device *device, HDC hdc,
     int i = 0;
     int nCfgs = device->adapter->nCfgs;
 
-    TRACE("ColorFormat=%s, DepthStencilFormat=%s, auxBuffers=%d, numSamples=%d, findCompatible=%d\n",
-          debug_d3dformat(color_format->id), debug_d3dformat(ds_format->id),
-          auxBuffers, numSamples, findCompatible);
+    TRACE("device %p, dc %p, color_format %s, ds_format %s, aux_buffers %#x, find_compatible %#x.\n",
+            device, hdc, debug_d3dformat(color_format->id), debug_d3dformat(ds_format->id),
+            auxBuffers, findCompatible);
 
     if (!getColorBits(color_format, &redBits, &greenBits, &blueBits, &alphaBits, &colorBits))
     {
@@ -1171,7 +1171,7 @@ static int context_choose_pixel_format(struct wined3d_device *device, HDC hdc,
                 continue;
 
             /* Check multisampling support */
-            if(cfg->numSamples != numSamples)
+            if (cfg->numSamples)
                 continue;
 
             /* When we have passed all the checks then we have found a format which matches our
@@ -1236,7 +1236,6 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     struct wined3d_context *ret;
     PIXELFORMATDESCRIPTOR pfd;
     BOOL auxBuffers = FALSE;
-    int numSamples = 0;
     int pixel_format;
     unsigned int s;
     int swap_interval;
@@ -1287,28 +1286,14 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     if (color_format->id == WINED3DFMT_P8_UINT)
         color_format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
 
-    /* D3D only allows multisampling when SwapEffect is set to WINED3DSWAPEFFECT_DISCARD. */
-    if (swapchain->presentParms.MultiSampleType && (swapchain->presentParms.SwapEffect == WINED3DSWAPEFFECT_DISCARD))
-    {
-        if (!gl_info->supported[ARB_MULTISAMPLE])
-            WARN("The application is requesting multisampling without support.\n");
-        else
-        {
-            TRACE("Requesting multisample type %#x.\n", swapchain->presentParms.MultiSampleType);
-            numSamples = swapchain->presentParms.MultiSampleType;
-        }
-    }
-
     /* Try to find a pixel format which matches our requirements. */
-    pixel_format = context_choose_pixel_format(device, hdc, color_format, ds_format,
-            auxBuffers, numSamples, FALSE /* findCompatible */);
+    pixel_format = context_choose_pixel_format(device, hdc, color_format, ds_format, auxBuffers, FALSE);
 
     /* Try to locate a compatible format if we weren't able to find anything. */
     if (!pixel_format)
     {
         TRACE("Trying to locate a compatible pixel format because an exact match failed.\n");
-        pixel_format = context_choose_pixel_format(device, hdc, color_format, ds_format,
-                auxBuffers, 0 /* numSamples */, TRUE /* findCompatible */);
+        pixel_format = context_choose_pixel_format(device, hdc, color_format, ds_format, auxBuffers, TRUE);
     }
 
     /* If we still don't have a pixel format, something is very wrong as ChoosePixelFormat barely fails */

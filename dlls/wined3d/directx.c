@@ -3127,9 +3127,6 @@ HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3
         WINED3DDEVTYPE device_type, enum wined3d_format_id surface_format_id, BOOL windowed,
         WINED3DMULTISAMPLE_TYPE multisample_type, DWORD *quality_levels)
 {
-    const struct wined3d_adapter *adapter;
-    const struct wined3d_format *format;
-
     TRACE_(d3d_caps)("wined3d %p, adapter_idx %u, device_type %s, surface_format %s,\n"
             "windowed %#x, multisample_type %#x, quality_levels %p.\n",
             wined3d, adapter_idx, debug_d3ddevicetype(device_type), debug_d3dformat(surface_format_id),
@@ -3138,87 +3135,12 @@ HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3
     if (adapter_idx >= wined3d->adapter_count)
         return WINED3DERR_INVALIDCALL;
 
-    /* TODO: Handle windowed, add more quality levels. */
-
     if (WINED3DMULTISAMPLE_NONE == multisample_type)
     {
         if (quality_levels) *quality_levels = 1;
         return WINED3D_OK;
     }
 
-    /* By default multisampling is disabled right now as it causes issues
-     * on some Nvidia driver versions and it doesn't work well in combination
-     * with FBOs yet. */
-    if (!wined3d_settings.allow_multisampling)
-        return WINED3DERR_NOTAVAILABLE;
-
-    adapter = &wined3d->adapters[adapter_idx];
-    format = wined3d_get_format(&adapter->gl_info, surface_format_id);
-    if (!format) return WINED3DERR_INVALIDCALL;
-
-    if (format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
-    {
-        const struct wined3d_pixel_format *cfgs;
-        unsigned int i, cfg_count;
-
-        cfgs = adapter->cfgs;
-        cfg_count = adapter->nCfgs;
-        for (i = 0; i < cfg_count; ++i)
-        {
-            if(cfgs[i].numSamples != multisample_type)
-                continue;
-
-            if (!wined3d_check_pixel_format_depth(&adapter->gl_info, &cfgs[i], format))
-                continue;
-
-            TRACE("Found pixel format %u to support multisample_type %#x for format %s.\n",
-                    cfgs[i].iPixelFormat, multisample_type, debug_d3dformat(surface_format_id));
-
-            if (quality_levels) *quality_levels = 1;
-
-            return WINED3D_OK;
-        }
-    }
-    else if (format->flags & WINED3DFMT_FLAG_RENDERTARGET)
-    {
-        BYTE redSize, greenSize, blueSize, alphaSize, colorBits;
-        const struct wined3d_pixel_format *cfgs;
-        unsigned int i, cfg_count;
-
-        if (!getColorBits(format, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits))
-        {
-            ERR("Unable to get color bits for format %s, can't check multisampling capability.\n",
-                    debug_d3dformat(surface_format_id));
-            return WINED3DERR_NOTAVAILABLE;
-        }
-
-        cfgs = adapter->cfgs;
-        cfg_count = adapter->nCfgs;
-        for (i = 0; i < cfg_count; ++i)
-        {
-            if(cfgs[i].numSamples != multisample_type)
-                continue;
-            if(cfgs[i].redSize != redSize)
-                continue;
-            if(cfgs[i].greenSize != greenSize)
-                continue;
-            if(cfgs[i].blueSize != blueSize)
-                continue;
-            /* Not all drivers report alpha-less formats since they use 32-bit
-             * anyway, so accept alpha even if we didn't ask for it. */
-            if(alphaSize && cfgs[i].alphaSize != alphaSize)
-                continue;
-            if (cfgs[i].colorSize != (format->byte_count << 3))
-                continue;
-
-            TRACE("Found pixel format %u to support multisample_type %#x for format %s.\n",
-                    cfgs[i].iPixelFormat, multisample_type, debug_d3dformat(surface_format_id));
-
-            if (quality_levels) *quality_levels = 1;
-
-            return WINED3D_OK;
-        }
-    }
     return WINED3DERR_NOTAVAILABLE;
 }
 
