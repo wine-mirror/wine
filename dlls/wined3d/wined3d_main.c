@@ -84,7 +84,7 @@ struct wined3d_settings wined3d_settings =
     PCI_DEVICE_NONE,/* PCI Device ID */
     0,              /* The default of memory is set in init_driver_info */
     NULL,           /* No wine logo by default */
-    FALSE,          /* Multisampling disabled by default. */
+    TRUE,           /* Multisampling enabled by default. */
     FALSE,          /* No strict draw ordering. */
     FALSE,          /* Try to render onscreen by default. */
 };
@@ -329,10 +329,10 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
         }
         if ( !get_config_key( hkey, appkey, "Multisampling", buffer, size) )
         {
-            if (!strcmp(buffer,"enabled"))
+            if (!strcmp(buffer, "disabled"))
             {
-                TRACE("Allow multisampling\n");
-                wined3d_settings.allow_multisampling = TRUE;
+                TRACE("Multisampling disabled.\n");
+                wined3d_settings.allow_multisampling = FALSE;
             }
         }
         if (!get_config_key(hkey, appkey, "StrictDrawOrdering", buffer, size)
