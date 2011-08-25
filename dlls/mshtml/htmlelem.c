@@ -2171,6 +2171,7 @@ static ULONG WINAPI HTMLAttributeCollection_Release(IHTMLAttributeCollection *if
 
     if(!ref) {
         IHTMLElement_Release(&This->elem->IHTMLElement_iface);
+        heap_free(This->collection);
         heap_free(This);
     }
 
@@ -2210,8 +2211,48 @@ static HRESULT WINAPI HTMLAttributeCollection_Invoke(IHTMLAttributeCollection *i
 static HRESULT WINAPI HTMLAttributeCollection_get_length(IHTMLAttributeCollection *iface, LONG *p)
 {
     HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    IDispatchEx *dispex = &This->elem->node.dispex.IDispatchEx_iface;
+    DISPID id;
+    LONG len;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+    FIXME("filter non-enumerable attributes out\n");
+
+    heap_free(This->collection);
+    This->size = 0;
+    This->collection = NULL;
+
+    id = DISPID_STARTENUM;
+    len = 0;
+    while(1) {
+        hres = IDispatchEx_GetNextDispID(dispex, fdexEnumAll, id, &id);
+        if(FAILED(hres))
+            return hres;
+        else if(hres == S_FALSE)
+            break;
+
+        len++;
+    }
+
+    This->collection = heap_alloc(len*sizeof(DISPID));
+    if(!This->collection)
+        return E_OUTOFMEMORY;
+
+    id = DISPID_STARTENUM;
+    len = 0;
+    while(1) {
+        hres = IDispatchEx_GetNextDispID(dispex, fdexEnumAll, id, &id);
+        if(FAILED(hres))
+            return hres;
+        else if(hres == S_FALSE)
+            break;
+
+        This->collection[len++] = id;
+    }
+
+    *p = This->size = len;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLAttributeCollection__newEnum(IHTMLAttributeCollection *iface, IUnknown **p)
@@ -2418,8 +2459,7 @@ static HRESULT WINAPI HTMLAttributeCollection3_item(IHTMLAttributeCollection3 *i
 static HRESULT WINAPI HTMLAttributeCollection3_get_length(IHTMLAttributeCollection3 *iface, LONG *p)
 {
     HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection3(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    return IHTMLAttributeCollection_get_length(&This->IHTMLAttributeCollection_iface, p);
 }
 
 static const IHTMLAttributeCollection3Vtbl HTMLAttributeCollection3Vtbl = {
