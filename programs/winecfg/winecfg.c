@@ -645,7 +645,11 @@ static void process_setting(struct setting *s)
         {
             /* NULL name means remove that path/section entirely */
             if (s->name) RegDeleteValueW( key, s->name );
-            else RegDeleteTreeW( key, NULL );
+            else
+            {
+                RegDeleteTreeW( key, NULL );
+                RegDeleteKeyW( s->root, s->path );
+            }
             RegCloseKey( key );
         }
         if (needs_wow64)
@@ -654,7 +658,11 @@ static void process_setting(struct setting *s)
             if (!RegOpenKeyExW( s->root, s->path, 0, MAXIMUM_ALLOWED | KEY_WOW64_32KEY, &key ))
             {
                 if (s->name) RegDeleteValueW( key, s->name );
-                else RegDeleteTreeW( key, NULL );
+                else
+                {
+                    RegDeleteTreeW( key, NULL );
+                    RegDeleteKeyExW( s->root, s->path, KEY_WOW64_32KEY, 0 );
+                }
                 RegCloseKey( key );
             }
         }
