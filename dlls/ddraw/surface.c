@@ -2926,30 +2926,36 @@ static HRESULT WINAPI ddraw_surface3_Initialize(IDirectDrawSurface3 *iface,
         IDirectDraw *ddraw, DDSURFACEDESC *surface_desc)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
+    DDSURFACEDESC2 surface_desc2;
     TRACE("iface %p, ddraw %p, surface_desc %p.\n", iface, ddraw, surface_desc);
 
+    DDSD_to_DDSD2(surface_desc, &surface_desc2);
     return ddraw_surface7_Initialize(&This->IDirectDrawSurface7_iface,
-            ddraw, (DDSURFACEDESC2 *)surface_desc);
+            ddraw, &surface_desc2);
 }
 
 static HRESULT WINAPI ddraw_surface2_Initialize(IDirectDrawSurface2 *iface,
         IDirectDraw *ddraw, DDSURFACEDESC *surface_desc)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface2(iface);
+    DDSURFACEDESC2 surface_desc2;
     TRACE("iface %p, ddraw %p, surface_desc %p.\n", iface, ddraw, surface_desc);
 
+    DDSD_to_DDSD2(surface_desc, &surface_desc2);
     return ddraw_surface7_Initialize(&This->IDirectDrawSurface7_iface,
-            ddraw, (DDSURFACEDESC2 *)surface_desc);
+            ddraw, &surface_desc2);
 }
 
 static HRESULT WINAPI ddraw_surface1_Initialize(IDirectDrawSurface *iface,
         IDirectDraw *ddraw, DDSURFACEDESC *surface_desc)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface(iface);
+    DDSURFACEDESC2 surface_desc2;
     TRACE("iface %p, ddraw %p, surface_desc %p.\n", iface, ddraw, surface_desc);
 
+    DDSD_to_DDSD2(surface_desc, &surface_desc2);
     return ddraw_surface7_Initialize(&This->IDirectDrawSurface7_iface,
-            ddraw, (DDSURFACEDESC2 *)surface_desc);
+            ddraw, &surface_desc2);
 }
 
 /*****************************************************************************
@@ -3939,10 +3945,12 @@ static HRESULT WINAPI ddraw_surface3_SetSurfaceDesc(IDirectDrawSurface3 *iface,
         DDSURFACEDESC *surface_desc, DWORD flags)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
+    DDSURFACEDESC2 surface_desc2;
     TRACE("iface %p, surface_desc %p, flags %#x.\n", iface, surface_desc, flags);
 
+    DDSD_to_DDSD2(surface_desc, &surface_desc2);
     return ddraw_surface7_SetSurfaceDesc(&This->IDirectDrawSurface7_iface,
-            (DDSURFACEDESC2 *)surface_desc, flags);
+            &surface_desc2, flags);
 }
 
 /*****************************************************************************

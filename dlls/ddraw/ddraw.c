@@ -2299,6 +2299,7 @@ static HRESULT WINAPI ddraw3_EnumDisplayModes(IDirectDraw3 *iface, DWORD flags,
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw3(iface);
     struct displaymodescallback_context cbcontext;
+    DDSURFACEDESC2 surface_desc2;
 
     TRACE("iface %p, flags %#x, surface_desc %p, context %p, callback %p.\n",
             iface, flags, surface_desc, context, callback);
@@ -2306,7 +2307,8 @@ static HRESULT WINAPI ddraw3_EnumDisplayModes(IDirectDraw3 *iface, DWORD flags,
     cbcontext.func = callback;
     cbcontext.context = context;
 
-    return ddraw7_EnumDisplayModes(&This->IDirectDraw7_iface, flags, (DDSURFACEDESC2 *)surface_desc,
+    DDSD_to_DDSD2(surface_desc, &surface_desc2);
+    return ddraw7_EnumDisplayModes(&This->IDirectDraw7_iface, flags, &surface_desc2,
             &cbcontext, EnumDisplayModesCallbackThunk);
 }
 
@@ -2315,6 +2317,7 @@ static HRESULT WINAPI ddraw2_EnumDisplayModes(IDirectDraw2 *iface, DWORD flags,
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw2(iface);
     struct displaymodescallback_context cbcontext;
+    DDSURFACEDESC2 surface_desc2;
 
     TRACE("iface %p, flags %#x, surface_desc %p, context %p, callback %p.\n",
             iface, flags, surface_desc, context, callback);
@@ -2322,7 +2325,8 @@ static HRESULT WINAPI ddraw2_EnumDisplayModes(IDirectDraw2 *iface, DWORD flags,
     cbcontext.func = callback;
     cbcontext.context = context;
 
-    return ddraw7_EnumDisplayModes(&This->IDirectDraw7_iface, flags, (DDSURFACEDESC2 *)surface_desc,
+    DDSD_to_DDSD2(surface_desc, &surface_desc2);
+    return ddraw7_EnumDisplayModes(&This->IDirectDraw7_iface, flags, &surface_desc2,
             &cbcontext, EnumDisplayModesCallbackThunk);
 }
 
@@ -2331,6 +2335,7 @@ static HRESULT WINAPI ddraw1_EnumDisplayModes(IDirectDraw *iface, DWORD flags,
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw(iface);
     struct displaymodescallback_context cbcontext;
+    DDSURFACEDESC2 surface_desc2;
 
     TRACE("iface %p, flags %#x, surface_desc %p, context %p, callback %p.\n",
             iface, flags, surface_desc, context, callback);
@@ -2338,7 +2343,8 @@ static HRESULT WINAPI ddraw1_EnumDisplayModes(IDirectDraw *iface, DWORD flags,
     cbcontext.func = callback;
     cbcontext.context = context;
 
-    return ddraw7_EnumDisplayModes(&This->IDirectDraw7_iface, flags, (DDSURFACEDESC2 *)surface_desc,
+    DDSD_to_DDSD2(surface_desc, &surface_desc2);
+    return ddraw7_EnumDisplayModes(&This->IDirectDraw7_iface, flags, &surface_desc2,
             &cbcontext, EnumDisplayModesCallbackThunk);
 }
 
@@ -3399,6 +3405,7 @@ static HRESULT WINAPI ddraw3_CreateSurface(IDirectDraw3 *iface, DDSURFACEDESC *s
     IDirectDrawImpl *This = impl_from_IDirectDraw3(iface);
     IDirectDrawSurfaceImpl *impl;
     HRESULT hr;
+    DDSURFACEDESC2 surface_desc2;
 
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
             iface, surface_desc, surface, outer_unknown);
@@ -3408,6 +3415,7 @@ static HRESULT WINAPI ddraw3_CreateSurface(IDirectDraw3 *iface, DDSURFACEDESC *s
         WARN("Application supplied invalid surface descriptor\n");
         return DDERR_INVALIDPARAMS;
     }
+    DDSD_to_DDSD2(surface_desc, &surface_desc2);
 
     if(surface_desc->ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER))
     {
@@ -3421,7 +3429,7 @@ static HRESULT WINAPI ddraw3_CreateSurface(IDirectDraw3 *iface, DDSURFACEDESC *s
         return DDERR_INVALIDCAPS;
     }
 
-    hr = CreateSurface(This, (DDSURFACEDESC2 *)surface_desc, &impl, outer_unknown, 3);
+    hr = CreateSurface(This, &surface_desc2, &impl, outer_unknown, 3);
     if (FAILED(hr))
     {
         *surface = NULL;
@@ -3441,6 +3449,7 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
     IDirectDrawImpl *This = impl_from_IDirectDraw2(iface);
     IDirectDrawSurfaceImpl *impl;
     HRESULT hr;
+    DDSURFACEDESC2 surface_desc2;
 
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
             iface, surface_desc, surface, outer_unknown);
@@ -3451,6 +3460,7 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
         return DDERR_INVALIDPARAMS;
     }
 
+    DDSD_to_DDSD2(surface_desc, &surface_desc2);
     if(surface_desc->ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER))
     {
         if (TRACE_ON(ddraw))
@@ -3463,7 +3473,7 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
         return DDERR_INVALIDCAPS;
     }
 
-    hr = CreateSurface(This, (DDSURFACEDESC2 *)surface_desc, &impl, outer_unknown, 2);
+    hr = CreateSurface(This, &surface_desc2, &impl, outer_unknown, 2);
     if (FAILED(hr))
     {
         *surface = NULL;
@@ -3482,6 +3492,7 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
     IDirectDrawImpl *This = impl_from_IDirectDraw(iface);
     IDirectDrawSurfaceImpl *impl;
     HRESULT hr;
+    DDSURFACEDESC2 surface_desc2;
 
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
             iface, surface_desc, surface, outer_unknown);
@@ -3495,7 +3506,8 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
     /* Remove front buffer flag, this causes failure in v7, and its added to normal
      * primaries anyway. */
     surface_desc->ddsCaps.dwCaps &= ~DDSCAPS_FRONTBUFFER;
-    hr = CreateSurface(This, (DDSURFACEDESC2 *)surface_desc, &impl, outer_unknown, 1);
+    DDSD_to_DDSD2(surface_desc, &surface_desc2);
+    hr = CreateSurface(This, &surface_desc2, &impl, outer_unknown, 1);
     if (FAILED(hr))
     {
         *surface = NULL;
@@ -3738,7 +3750,7 @@ static HRESULT WINAPI ddraw4_EnumSurfaces(IDirectDraw4 *iface, DWORD flags,
     cbcontext.func = callback;
     cbcontext.context = context;
 
-    return ddraw7_EnumSurfaces(&This->IDirectDraw7_iface, flags, (DDSURFACEDESC2 *)surface_desc,
+    return ddraw7_EnumSurfaces(&This->IDirectDraw7_iface, flags, surface_desc,
             &cbcontext, EnumSurfacesCallback2Thunk);
 }
 
@@ -3747,6 +3759,7 @@ static HRESULT WINAPI ddraw3_EnumSurfaces(IDirectDraw3 *iface, DWORD flags,
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw3(iface);
     struct surfacescallback_context cbcontext;
+    DDSURFACEDESC2 surface_desc2;
 
     TRACE("iface %p, flags %#x, surface_desc %p, context %p, callback %p.\n",
             iface, flags, surface_desc, context, callback);
@@ -3754,7 +3767,8 @@ static HRESULT WINAPI ddraw3_EnumSurfaces(IDirectDraw3 *iface, DWORD flags,
     cbcontext.func = callback;
     cbcontext.context = context;
 
-    return ddraw7_EnumSurfaces(&This->IDirectDraw7_iface, flags, (DDSURFACEDESC2 *)surface_desc,
+    DDSD_to_DDSD2(surface_desc, &surface_desc2);
+    return ddraw7_EnumSurfaces(&This->IDirectDraw7_iface, flags, &surface_desc2,
             &cbcontext, EnumSurfacesCallbackThunk);
 }
 
@@ -3763,6 +3777,7 @@ static HRESULT WINAPI ddraw2_EnumSurfaces(IDirectDraw2 *iface, DWORD flags,
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw2(iface);
     struct surfacescallback_context cbcontext;
+    DDSURFACEDESC2 surface_desc2;
 
     TRACE("iface %p, flags %#x, surface_desc %p, context %p, callback %p.\n",
             iface, flags, surface_desc, context, callback);
@@ -3770,7 +3785,8 @@ static HRESULT WINAPI ddraw2_EnumSurfaces(IDirectDraw2 *iface, DWORD flags,
     cbcontext.func = callback;
     cbcontext.context = context;
 
-    return ddraw7_EnumSurfaces(&This->IDirectDraw7_iface, flags, (DDSURFACEDESC2 *)surface_desc,
+    DDSD_to_DDSD2(surface_desc, &surface_desc2);
+    return ddraw7_EnumSurfaces(&This->IDirectDraw7_iface, flags, &surface_desc2,
             &cbcontext, EnumSurfacesCallbackThunk);
 }
 
@@ -3779,6 +3795,7 @@ static HRESULT WINAPI ddraw1_EnumSurfaces(IDirectDraw *iface, DWORD flags,
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw(iface);
     struct surfacescallback_context cbcontext;
+    DDSURFACEDESC2 surface_desc2;
 
     TRACE("iface %p, flags %#x, surface_desc %p, context %p, callback %p.\n",
             iface, flags, surface_desc, context, callback);
@@ -3786,7 +3803,8 @@ static HRESULT WINAPI ddraw1_EnumSurfaces(IDirectDraw *iface, DWORD flags,
     cbcontext.func = callback;
     cbcontext.context = context;
 
-    return ddraw7_EnumSurfaces(&This->IDirectDraw7_iface, flags, (DDSURFACEDESC2 *)surface_desc,
+    DDSD_to_DDSD2(surface_desc, &surface_desc2);
+    return ddraw7_EnumSurfaces(&This->IDirectDraw7_iface, flags, &surface_desc2,
             &cbcontext, EnumSurfacesCallbackThunk);
 }
 

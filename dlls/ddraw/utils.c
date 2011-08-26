@@ -1181,3 +1181,41 @@ hr_ddraw_from_wined3d(HRESULT hr)
         default: return hr;
     }
 }
+
+/* Note that this function writes the full sizeof(DDSURFACEDESC2) size, don't use it
+ * for writing into application-provided DDSURFACEDESC2 structures if the size may
+ * be different */
+void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out)
+{
+    /* The output of this function is never passed to the application directly, so
+     * the memset is not strictly needed. CreateSurface still has problems with this
+     * though. Don't forget to set ddsCaps.dwCaps2/3/4 to 0 when removing this */
+    memset(out, 0x00, sizeof(*out));
+    out->dwSize = sizeof(*out);
+    out->dwFlags = in->dwFlags;
+    if (in->dwFlags & DDSD_WIDTH) out->dwWidth = in->dwWidth;
+    if (in->dwFlags & DDSD_HEIGHT) out->dwHeight = in->dwHeight;
+    if (in->dwFlags & DDSD_PIXELFORMAT) out->u4.ddpfPixelFormat = in->ddpfPixelFormat;
+    /* ddsCaps is read even without DDSD_CAPS set. See dsurface:no_ddsd_caps_test */
+    out->ddsCaps.dwCaps = in->ddsCaps.dwCaps;
+    if (in->dwFlags & DDSD_PITCH) out->u1.lPitch = in->u1.lPitch;
+    if (in->dwFlags & DDSD_BACKBUFFERCOUNT) out->dwBackBufferCount = in->dwBackBufferCount;
+    if (in->dwFlags & DDSD_ZBUFFERBITDEPTH)
+    {
+        /* FIXME: Convert into a DDPIXELFORMAT */
+        out->u2.dwMipMapCount = in->u2.dwZBufferBitDepth; /* same union */
+    }
+    if (in->dwFlags & DDSD_ALPHABITDEPTH) out->dwAlphaBitDepth = in->dwAlphaBitDepth;
+    /* DDraw(native, and wine) does not set the DDSD_LPSURFACE, so always copy */
+    out->lpSurface = in->lpSurface;
+    if (in->dwFlags & DDSD_CKDESTOVERLAY) out->u3.ddckCKDestOverlay = in->ddckCKDestOverlay;
+    if (in->dwFlags & DDSD_CKDESTBLT) out->ddckCKDestBlt = in->ddckCKDestBlt;
+    if (in->dwFlags & DDSD_CKSRCOVERLAY) out->ddckCKSrcOverlay = in->ddckCKSrcOverlay;
+    if (in->dwFlags & DDSD_CKSRCBLT) out->ddckCKSrcBlt = in->ddckCKSrcBlt;
+    if (in->dwFlags & DDSD_MIPMAPCOUNT) out->u2.dwMipMapCount = in->u2.dwMipMapCount;
+    if (in->dwFlags & DDSD_REFRESHRATE) out->u2.dwRefreshRate = in->u2.dwRefreshRate;
+    if (in->dwFlags & DDSD_LINEARSIZE) out->u1.dwLinearSize = in->u1.dwLinearSize;
+    /* Does not exist in DDSURFACEDESC:
+     * DDSD_TEXTURESTAGE, DDSD_FVF, DDSD_SRCVBHANDLE,
+     */
+}
