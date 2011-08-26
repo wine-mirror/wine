@@ -715,6 +715,7 @@ static void read_file_test(void)
     ResetEvent( event );
     status = pNtWriteFile( handle, event, apc, &apc_count, &iosb, text, strlen(text), &offset, NULL );
     ok( status == STATUS_SUCCESS || status == STATUS_PENDING, "wrong status %x\n", status );
+    if (status == STATUS_PENDING) WaitForSingleObject( event, 1000 );
     ok( U(iosb).Status == STATUS_SUCCESS, "wrong status %x\n", U(iosb).Status );
     ok( iosb.Information == strlen(text), "wrong info %lu\n", iosb.Information );
     ok( is_signaled( event ), "event is signaled\n" );
@@ -731,6 +732,7 @@ static void read_file_test(void)
     ok( status == STATUS_SUCCESS ||
         status == STATUS_PENDING, /* vista */
         "wrong status %x\n", status );
+    if (status == STATUS_PENDING) WaitForSingleObject( event, 1000 );
     ok( U(iosb).Status == STATUS_SUCCESS, "wrong status %x\n", U(iosb).Status );
     ok( iosb.Information == strlen(text), "wrong info %lu\n", iosb.Information );
     ok( is_signaled( event ), "event is signaled\n" );
@@ -746,6 +748,7 @@ static void read_file_test(void)
     status = pNtReadFile( handle, event, apc, &apc_count, &iosb, buffer, 2, &offset, NULL );
     if (status == STATUS_PENDING)  /* vista */
     {
+        WaitForSingleObject( event, 1000 );
         ok( U(iosb).Status == STATUS_END_OF_FILE, "wrong status %x\n", U(iosb).Status );
         ok( iosb.Information == 0, "wrong info %lu\n", iosb.Information );
         ok( is_signaled( event ), "event is signaled\n" );
@@ -776,6 +779,7 @@ static void read_file_test(void)
         status == STATUS_SUCCESS ||
         status == STATUS_PENDING,  /* vista */
         "wrong status %x\n", status );
+    if (status == STATUS_PENDING) WaitForSingleObject( event, 1000 );
     ok( U(iosb).Status == STATUS_SUCCESS, "wrong status %x\n", U(iosb).Status );
     ok( iosb.Information == strlen(text), "wrong info %lu\n", iosb.Information );
     ok( is_signaled( event ), "event is signaled\n" );
@@ -846,7 +850,7 @@ static void append_file_test(void)
 
     if (status == STATUS_PENDING)
     {
-        WaitForSingleObject( handle, INFINITE );
+        WaitForSingleObject( handle, 1000 );
         status = U(iosb).Status;
     }
     written = iosb.Information;
