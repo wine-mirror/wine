@@ -3256,6 +3256,7 @@ static void test_GetDIBits_top_down(int bpp)
     int *picture;
     int statusCode;
 
+    memset( &bi, 0, sizeof(bi) );
     bi.bmiHeader.biSize=sizeof(bi.bmiHeader);
     bi.bmiHeader.biWidth=2;
     bi.bmiHeader.biHeight=2;
