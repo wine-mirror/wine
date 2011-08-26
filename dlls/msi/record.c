@@ -994,6 +994,34 @@ MSIRECORD *MSI_CloneRecord(MSIRECORD *rec)
     return clone;
 }
 
+BOOL MSI_RecordsAreFieldsEqual(MSIRECORD *a, MSIRECORD *b, UINT field)
+{
+    if (a->fields[field].type != b->fields[field].type)
+        return FALSE;
+
+    switch (a->fields[field].type)
+    {
+        case MSIFIELD_NULL:
+            break;
+
+        case MSIFIELD_INT:
+            if (a->fields[field].u.iVal != b->fields[field].u.iVal)
+                return FALSE;
+            break;
+
+        case MSIFIELD_WSTR:
+            if (strcmpW(a->fields[field].u.szwVal, b->fields[field].u.szwVal))
+                return FALSE;
+            break;
+
+        case MSIFIELD_STREAM:
+        default:
+            return FALSE;
+    }
+    return TRUE;
+}
+
+
 BOOL MSI_RecordsAreEqual(MSIRECORD *a, MSIRECORD *b)
 {
     UINT i;
@@ -1003,28 +1031,8 @@ BOOL MSI_RecordsAreEqual(MSIRECORD *a, MSIRECORD *b)
 
     for (i = 0; i <= a->count; i++)
     {
-        if (a->fields[i].type != b->fields[i].type)
+        if (!MSI_RecordsAreFieldsEqual( a, b, i ))
             return FALSE;
-
-        switch (a->fields[i].type)
-        {
-            case MSIFIELD_NULL:
-                break;
-
-            case MSIFIELD_INT:
-                if (a->fields[i].u.iVal != b->fields[i].u.iVal)
-                    return FALSE;
-                break;
-
-            case MSIFIELD_WSTR:
-                if (strcmpW(a->fields[i].u.szwVal, b->fields[i].u.szwVal))
-                    return FALSE;
-                break;
-
-            case MSIFIELD_STREAM:
-            default:
-                return FALSE;
-        }
     }
 
     return TRUE;
