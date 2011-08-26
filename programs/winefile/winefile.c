@@ -1353,8 +1353,8 @@ static ChildWnd* alloc_child_window(LPCWSTR path, LPITEMIDLIST pidl, HWND hwnd)
 {
 	WCHAR drv[_MAX_DRIVE+1], dir[_MAX_DIR], name[_MAX_FNAME], ext[_MAX_EXT];
 	WCHAR dir_path[MAX_PATH];
-	WCHAR b1[BUFFER_LEN];
 	static const WCHAR sAsterics[] = {'*', '\0'};
+	static const WCHAR sTitleFmt[] = {'%','s',' ','-',' ','%','s','\0'};
 
 	ChildWnd* child = HeapAlloc(GetProcessHeap(), 0, sizeof(ChildWnd));
 	Root* root = &child->root;
@@ -1406,7 +1406,7 @@ static ChildWnd* alloc_child_window(LPCWSTR path, LPITEMIDLIST pidl, HWND hwnd)
 		load_string(root->entry.data.cFileName, sizeof(root->entry.data.cFileName)/sizeof(root->entry.data.cFileName[0]), IDS_DESKTOP);
 	else
 #endif
-		wsprintfW(root->entry.data.cFileName, RS(b1,IDS_TITLEFMT), drv, root->fs);
+		wsprintfW(root->entry.data.cFileName, sTitleFmt, drv, root->fs);
 
 	root->entry.data.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
 

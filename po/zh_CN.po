@@ -37,7 +37,7 @@ msgstr "不能运行卸载程序 '%s'. 你想把这个卸载程序从注册表�
 msgid "Not specified"
 msgstr "没指定"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:112
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:111
 msgid "Name"
 msgstr "名称"
 
@@ -6587,7 +6587,7 @@ msgstr ""
 msgid "&About Control Panel"
 msgstr "关于控制面板(&A)..."
 
-#: shell32.rc:135 shell32.rc:139 winefile.rc:113
+#: shell32.rc:135 shell32.rc:139 winefile.rc:112
 msgid "Size"
 msgstr "大小"
 
@@ -6599,7 +6599,7 @@ msgstr "类型"
 msgid "Modified"
 msgstr "修改"
 
-#: shell32.rc:138 winefile.rc:119
+#: shell32.rc:138 winefile.rc:118
 msgid "Attributes"
 msgstr "属性"
 
@@ -6773,7 +6773,7 @@ msgstr "Program Files (x86)\\Common Files"
 msgid "Contacts"
 msgstr "Contacts"
 
-#: shell32.rc:228 winefile.rc:118
+#: shell32.rc:228 winefile.rc:117
 msgid "Links"
 msgstr "Links"
 
@@ -10879,10 +10879,6 @@ msgid "Shell"
 msgstr ""
 
 #: winefile.rc:105
-msgid "%s - %s"
-msgstr ""
-
-#: winefile.rc:106
 #, fuzzy
 msgid "Not yet implemented"
 msgstr ""
@@ -10891,36 +10887,36 @@ msgstr ""
 "#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
 "未实现"
 
-#: winefile.rc:107
+#: winefile.rc:106
 #, fuzzy
 msgid "Wine File"
 msgstr "Wine地雷"
 
-#: winefile.rc:114
+#: winefile.rc:113
 #, fuzzy
 msgid "CDate"
 msgstr "日期(&D)"
 
-#: winefile.rc:115
+#: winefile.rc:114
 #, fuzzy
 msgid "ADate"
 msgstr "日期(&D)"
 
-#: winefile.rc:116
+#: winefile.rc:115
 #, fuzzy
 msgid "MDate"
 msgstr "日期(&D)"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "Index/Inode"
 msgstr ""
 
-#: winefile.rc:120
+#: winefile.rc:119
 #, fuzzy
 msgid "Security"
 msgstr "安全(&S)"
 
-#: winefile.rc:122
+#: winefile.rc:121
 msgid "%s of %s free"
 msgstr ""
 

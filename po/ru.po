@@ -40,7 +40,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Отсутствует"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:112
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:111
 msgid "Name"
 msgstr "Имя"
 
@@ -6339,7 +6339,7 @@ msgstr "В&ыйти"
 msgid "&About Control Panel"
 msgstr "&О Панели Управления"
 
-#: shell32.rc:135 shell32.rc:139 winefile.rc:113
+#: shell32.rc:135 shell32.rc:139 winefile.rc:112
 msgid "Size"
 msgstr "Размер"
 
@@ -6351,7 +6351,7 @@ msgstr "Тип"
 msgid "Modified"
 msgstr "Изменён"
 
-#: shell32.rc:138 winefile.rc:119
+#: shell32.rc:138 winefile.rc:118
 msgid "Attributes"
 msgstr "Атрибуты"
 
@@ -6525,7 +6525,7 @@ msgstr "Program Files (x86)\\Common Files"
 msgid "Contacts"
 msgstr "Контакты"
 
-#: shell32.rc:228 winefile.rc:118
+#: shell32.rc:228 winefile.rc:117
 msgid "Links"
 msgstr "Ссылки"
 
@@ -10926,38 +10926,34 @@ msgid "Shell"
 msgstr "Shell"
 
 #: winefile.rc:105
-msgid "%s - %s"
-msgstr "%s - %s"
-
-#: winefile.rc:106
 msgid "Not yet implemented"
 msgstr "Ещё не реализовано"
 
-#: winefile.rc:107
+#: winefile.rc:106
 msgid "Wine File"
 msgstr "Wine File"
 
-#: winefile.rc:114
+#: winefile.rc:113
 msgid "CDate"
 msgstr "Дата создания"
 
-#: winefile.rc:115
+#: winefile.rc:114
 msgid "ADate"
 msgstr "Дата последнего доступа"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "MDate"
 msgstr "Дата последнего изменения"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "Index/Inode"
 msgstr "Index/Inode"
 
-#: winefile.rc:120
+#: winefile.rc:119
 msgid "Security"
 msgstr "Безопасность"
 
-#: winefile.rc:122
+#: winefile.rc:121
 msgid "%s of %s free"
 msgstr "%s из %s свободно"
 

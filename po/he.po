@@ -42,7 +42,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "לא מוגדר"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:112
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:111
 msgid "Name"
 msgstr "שם"
 
@@ -6548,7 +6548,7 @@ msgstr "י&ציאה"
 msgid "&About Control Panel"
 msgstr "על &אודות לוח הבקרה"
 
-#: shell32.rc:135 shell32.rc:139 winefile.rc:113
+#: shell32.rc:135 shell32.rc:139 winefile.rc:112
 msgid "Size"
 msgstr "גודל"
 
@@ -6560,7 +6560,7 @@ msgstr "סוג"
 msgid "Modified"
 msgstr "תאריך השינוי"
 
-#: shell32.rc:138 winefile.rc:119
+#: shell32.rc:138 winefile.rc:118
 msgid "Attributes"
 msgstr "מאפיינים"
 
@@ -6733,7 +6733,7 @@ msgstr "Program Files (x86)\\Common Files"
 msgid "Contacts"
 msgstr "אנשי קשר"
 
-#: shell32.rc:228 winefile.rc:118
+#: shell32.rc:228 winefile.rc:117
 msgid "Links"
 msgstr "קישורים"
 
@@ -11086,38 +11086,34 @@ msgid "Shell"
 msgstr "מעטפת"
 
 #: winefile.rc:105
-msgid "%s - %s"
-msgstr "%s - %s"
-
-#: winefile.rc:106
 msgid "Not yet implemented"
 msgstr "לא מוטמע עדיין"
 
-#: winefile.rc:107
+#: winefile.rc:106
 msgid "Wine File"
 msgstr "קובץ Wine"
 
-#: winefile.rc:114
+#: winefile.rc:113
 msgid "CDate"
 msgstr "ת.יצירה"
 
-#: winefile.rc:115
+#: winefile.rc:114
 msgid "ADate"
 msgstr "ת.גישה"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "MDate"
 msgstr "ת.שינוי"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "Index/Inode"
 msgstr "מפתח/Inode"
 
-#: winefile.rc:120
+#: winefile.rc:119
 msgid "Security"
 msgstr "אבטחה"
 
-#: winefile.rc:122
+#: winefile.rc:121
 msgid "%s of %s free"
 msgstr "%s מתוך %s פנויים"
 

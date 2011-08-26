@@ -114,7 +114,6 @@
 #define IDS_UNIXFS                      1203
 #define IDS_DESKTOP                     1204
 #define IDS_SHELL                       1205
-#define IDS_TITLEFMT                    1206
 #define IDS_NO_IMPL                     1207
 #define IDS_WINE_FILE                   1208
 
