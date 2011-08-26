@@ -8359,9 +8359,10 @@ msgstr ""
 msgid ""
 "The syntax of this command is:\n"
 "\n"
-"NET START service\n"
+"NET START [service]\n"
 "\n"
-"Where 'service' is the name of the service to start.\n"
+"Displays the list of running services if 'service' is omitted. Otherwise "
+"'service' is the name of the service to start.\n"
 msgstr ""
 
 #: net.rc:29
@@ -8413,49 +8414,57 @@ msgstr ""
 msgid "The %s service failed to stop.\n"
 msgstr ""
 
-#: net.rc:40
+#: net.rc:42
 msgid "There are no entries in the list.\n"
 msgstr ""
 
-#: net.rc:41
+#: net.rc:43
 msgid ""
 "\n"
 "Status  Local   Remote\n"
 "---------------------------------------------------------------\n"
 msgstr ""
 
-#: net.rc:42
+#: net.rc:44
 msgid "%s      %s      %s      Open resources: %lu\n"
 msgstr ""
 
-#: net.rc:43
+#: net.rc:45
 msgid "OK"
 msgstr ""
 
-#: net.rc:44
+#: net.rc:46
 #, fuzzy
 msgid "Paused"
 msgstr "Paýse; "
 
-#: net.rc:45
+#: net.rc:47
 #, fuzzy
 msgid "Disconnected"
 msgstr "Dosiero ne estis trovita"
 
-#: net.rc:46
+#: net.rc:48
 #, fuzzy
 msgid "A network error occurred"
 msgstr "Okazis printila eroro."
 
-#: net.rc:47
+#: net.rc:49
 #, fuzzy
 msgid "Connection is being made"
 msgstr "LAN Interkonekto"
 
-#: net.rc:48
+#: net.rc:50
 #, fuzzy
 msgid "Reconnecting"
 msgstr "Defaýltaj Agordoj"
+
+#: net.rc:40
+msgid "The following services are running:\n"
+msgstr ""
+
+#: net.rc:41
+msgid "    %s\n"
+msgstr ""
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"

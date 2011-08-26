@@ -8481,9 +8481,10 @@ msgstr ""
 msgid ""
 "The syntax of this command is:\n"
 "\n"
-"NET START service\n"
+"NET START [service]\n"
 "\n"
-"Where 'service' is the name of the service to start.\n"
+"Displays the list of running services if 'service' is omitted. Otherwise "
+"'service' is the name of the service to start.\n"
 msgstr ""
 
 #: net.rc:29
@@ -8535,11 +8536,11 @@ msgstr "%s 서비스 정지 성공.\n"
 msgid "The %s service failed to stop.\n"
 msgstr "%s 서비스 정지 실패.\n"
 
-#: net.rc:40
+#: net.rc:42
 msgid "There are no entries in the list.\n"
 msgstr "리스트가 비어 있습니다.\n"
 
-#: net.rc:41
+#: net.rc:43
 msgid ""
 "\n"
 "Status  Local   Remote\n"
@@ -8549,33 +8550,42 @@ msgstr ""
 "상태  로컬   원격\n"
 "---------------------------------------------------------------\n"
 
-#: net.rc:42
+#: net.rc:44
 msgid "%s      %s      %s      Open resources: %lu\n"
 msgstr "%s      %s      %s      열린 리소스: %lu\n"
 
-#: net.rc:43
+#: net.rc:45
 msgid "OK"
 msgstr "확인"
 
-#: net.rc:44
+#: net.rc:46
 msgid "Paused"
 msgstr "정지됨"
 
-#: net.rc:45
+#: net.rc:47
 msgid "Disconnected"
 msgstr "연결이 끊어짐"
 
-#: net.rc:46
+#: net.rc:48
 msgid "A network error occurred"
 msgstr "네트워크 오류가 발생함"
 
-#: net.rc:47
+#: net.rc:49
 msgid "Connection is being made"
 msgstr "연결이 활성화됨"
 
-#: net.rc:48
+#: net.rc:50
 msgid "Reconnecting"
 msgstr "다시 연결중"
+
+#: net.rc:40
+#, fuzzy
+msgid "The following services are running:\n"
+msgstr "의존하고 있는 서비스가 실행중입니다\n"
+
+#: net.rc:41
+msgid "    %s\n"
+msgstr ""
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"

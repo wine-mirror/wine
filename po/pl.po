@@ -8536,9 +8536,10 @@ msgstr ""
 msgid ""
 "The syntax of this command is:\n"
 "\n"
-"NET START service\n"
+"NET START [service]\n"
 "\n"
-"Where 'service' is the name of the service to start.\n"
+"Displays the list of running services if 'service' is omitted. Otherwise "
+"'service' is the name of the service to start.\n"
 msgstr ""
 
 #: net.rc:29
@@ -8590,11 +8591,11 @@ msgstr "Serwis %s został pomyślnie zatrzymany.\n"
 msgid "The %s service failed to stop.\n"
 msgstr "Zatrzymanie serwisu %s nie powiodło się.\n"
 
-#: net.rc:40
+#: net.rc:42
 msgid "There are no entries in the list.\n"
 msgstr "Brak pozycji na liście.\n"
 
-#: net.rc:41
+#: net.rc:43
 msgid ""
 "\n"
 "Status  Local   Remote\n"
@@ -8604,38 +8605,47 @@ msgstr ""
 "Status    Lokalny  Zdalny\n"
 "---------------------------------------------------------------\n"
 
-#: net.rc:42
+#: net.rc:44
 msgid "%s      %s      %s      Open resources: %lu\n"
 msgstr "%s      %s      %s      Otwarte zasoby: %lu\n"
 
-#: net.rc:43
+#: net.rc:45
 msgid "OK"
 msgstr ""
 
-#: net.rc:44
+#: net.rc:46
 #, fuzzy
 msgid "Paused"
 msgstr "&Wstrzymana"
 
-#: net.rc:45
+#: net.rc:47
 #, fuzzy
 msgid "Disconnected"
 msgstr "Symbol potoku podłączony\n"
 
-#: net.rc:46
+#: net.rc:48
 #, fuzzy
 msgid "A network error occurred"
 msgstr "Błąd drukowania."
 
-#: net.rc:47
+#: net.rc:49
 #, fuzzy
 msgid "Connection is being made"
 msgstr "Połączenie jest aktywne\n"
 
-#: net.rc:48
+#: net.rc:50
 #, fuzzy
 msgid "Reconnecting"
 msgstr "Łączenie z %s"
+
+#: net.rc:40
+#, fuzzy
+msgid "The following services are running:\n"
+msgstr "Zależne usługi są uruchomione\n"
+
+#: net.rc:41
+msgid "    %s\n"
+msgstr ""
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"

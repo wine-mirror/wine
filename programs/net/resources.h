@@ -40,3 +40,5 @@
 #define STRING_NETERR		  121
 #define STRING_CONN		  122
 #define STRING_RECONN		  123
+#define STRING_RUNNING_HEADER	  124
+#define STRING_RUNNING		  125

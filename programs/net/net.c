@@ -19,8 +19,11 @@
 #include <windows.h>
 #include <lm.h>
 #include <wine/unicode.h>
+#include <wine/debug.h>
 
 #include "resources.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(net);
 
 #define NET_START 0001
 #define NET_STOP  0002
@@ -129,6 +132,49 @@ static BOOL net_use(int argc, const WCHAR* argv[])
     }
 
     return FALSE;
+}
+
+static BOOL net_enum_services(void)
+{
+    SC_HANDLE SCManager;
+    LPENUM_SERVICE_STATUS_PROCESSW services;
+    DWORD size, i, count, resume;
+    BOOL success = FALSE;
+
+    SCManager = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    if(!SCManager)
+    {
+        output_string(STRING_NO_SCM);
+        return FALSE;
+    }
+
+    EnumServicesStatusExW(SCManager, SC_ENUM_PROCESS_INFO, SERVICE_WIN32, SERVICE_ACTIVE, NULL, 0, &size, &count, NULL, NULL);
+    if(GetLastError() != ERROR_MORE_DATA)
+    {
+        output_error_string(GetLastError());
+        goto end;
+    }
+    services = HeapAlloc(GetProcessHeap(), 0, size);
+    resume = 0;
+    if(!EnumServicesStatusExW(SCManager, SC_ENUM_PROCESS_INFO, SERVICE_WIN32, SERVICE_ACTIVE, (LPBYTE)services, size, &size, &count, &resume, NULL))
+    {
+        output_error_string(GetLastError());
+        goto end;
+    }
+    output_string(STRING_RUNNING_HEADER);
+    for(i = 0; i < count; i++)
+    {
+        output_string(STRING_RUNNING, services[i].lpDisplayName);
+        WINE_TRACE("service=%s state=%d controls=%x\n",
+                   wine_dbgstr_w(services[i].lpServiceName),
+                   services[i].ServiceStatusProcess.dwCurrentState,
+                   services[i].ServiceStatusProcess.dwControlsAccepted);
+    }
+    success = TRUE;
+
+ end:
+    CloseServiceHandle(SCManager);
+    return success;
 }
 
 static BOOL StopService(SC_HANDLE SCManager, SC_HANDLE serviceHandle)
@@ -256,12 +302,17 @@ int wmain(int argc, const WCHAR* argv[])
     }
     else if(arg_is(argv[1], startW))
     {
-        if(argc != 3)
+        if(argc > 3)
         {
             output_string(STRING_START_USAGE);
             return 1;
         }
-        if(arg_is(argv[2], shelpW))
+        if (argc == 2)
+        {
+            if (!net_enum_services())
+                return 1;
+        }
+        else if(arg_is(argv[2], shelpW))
             output_string(STRING_START_USAGE);
         else if(!net_service(NET_START, argv[2]))
             return 1;
