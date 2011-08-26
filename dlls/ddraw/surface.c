@@ -5215,7 +5215,6 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
         return hr;
     }
 
-    surface->surface_desc.dwFlags |= DDSD_PIXELFORMAT;
     wined3d_resource = wined3d_surface_get_resource(surface->wined3d_surface);
     wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
 
@@ -5224,7 +5223,6 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     {
         FIXME("IWineD3DSurface::GetDesc returned WINED3DFMT_UNKNOWN.\n");
     }
-    PixelFormat_WineD3DtoDD(&surface->surface_desc.u4.ddpfPixelFormat, format);
 
     /* Anno 1602 stores the pitch right after surface creation, so make sure
      * it's there. TODO: Test other fourcc formats. */
