@@ -1088,6 +1088,113 @@ static void test_mxwriter_contenthandler(void)
     IMXWriter_Release(writer);
 }
 
+struct msxmlsupported_data_t
+{
+    const GUID *clsid;
+    const char *name;
+    BOOL supported;
+};
+
+static struct msxmlsupported_data_t msxmlsupported_data[] =
+{
+    { &CLSID_MXXMLWriter,   "MXXMLWriter" },
+    { &CLSID_MXXMLWriter30, "MXXMLWriter30" },
+    { &CLSID_MXXMLWriter40, "MXXMLWriter40" },
+    { &CLSID_MXXMLWriter60, "MXXMLWriter60" },
+    { NULL }
+};
+
+static BOOL is_mxwriter_supported(const GUID *clsid, const struct msxmlsupported_data_t *table)
+{
+    while (table->clsid)
+    {
+        if (table->clsid == clsid) return table->supported;
+        table++;
+    }
+    return FALSE;
+}
+
+struct mxwriter_props_t
+{
+    const GUID *clsid;
+    VARIANT_BOOL bom;
+    VARIANT_BOOL disable_escape;
+    VARIANT_BOOL indent;
+    VARIANT_BOOL omitdecl;
+    VARIANT_BOOL standalone;
+    const char *encoding;
+};
+
+static const struct mxwriter_props_t mxwriter_default_props[] =
+{
+    { &CLSID_MXXMLWriter,   VARIANT_TRUE, VARIANT_FALSE, VARIANT_FALSE, VARIANT_FALSE, VARIANT_FALSE, "UTF-16" },
+    { &CLSID_MXXMLWriter30, VARIANT_TRUE, VARIANT_FALSE, VARIANT_FALSE, VARIANT_FALSE, VARIANT_FALSE, "UTF-16" },
+    { &CLSID_MXXMLWriter40, VARIANT_TRUE, VARIANT_FALSE, VARIANT_FALSE, VARIANT_FALSE, VARIANT_FALSE, "UTF-16" },
+    { &CLSID_MXXMLWriter60, VARIANT_TRUE, VARIANT_FALSE, VARIANT_FALSE, VARIANT_FALSE, VARIANT_FALSE, "UTF-16" },
+    { NULL }
+};
+
+static void test_mxwriter_default_properties(const struct mxwriter_props_t *table)
+{
+    int i = 0;
+
+    while (table->clsid)
+    {
+        IMXWriter *writer;
+        VARIANT_BOOL b;
+        BSTR encoding;
+        HRESULT hr;
+
+        if (!is_mxwriter_supported(table->clsid, msxmlsupported_data))
+        {
+            table++;
+            i++;
+            continue;
+        }
+
+        hr = CoCreateInstance(table->clsid, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+        EXPECT_HR(hr, S_OK);
+
+        b = !table->bom;
+        hr = IMXWriter_get_byteOrderMark(writer, &b);
+        EXPECT_HR(hr, S_OK);
+        ok(table->bom == b, "test %d: got BOM %d, expected %d\n", i, b, table->bom);
+
+        b = !table->disable_escape;
+        hr = IMXWriter_get_disableOutputEscaping(writer, &b);
+        EXPECT_HR(hr, S_OK);
+        ok(table->disable_escape == b, "test %d: got disable escape %d, expected %d\n", i, b,
+           table->disable_escape);
+
+        b = !table->indent;
+        hr = IMXWriter_get_indent(writer, &b);
+        EXPECT_HR(hr, S_OK);
+        ok(table->indent == b, "test %d: got indent %d, expected %d\n", i, b, table->indent);
+
+        b = !table->omitdecl;
+        hr = IMXWriter_get_omitXMLDeclaration(writer, &b);
+        EXPECT_HR(hr, S_OK);
+        ok(table->omitdecl == b, "test %d: got omitdecl %d, expected %d\n", i, b, table->omitdecl);
+
+        b = !table->standalone;
+        hr = IMXWriter_get_standalone(writer, &b);
+        EXPECT_HR(hr, S_OK);
+        ok(table->standalone == b, "test %d: got standalone %d, expected %d\n", i, b, table->standalone);
+
+        hr = IMXWriter_get_encoding(writer, &encoding);
+        EXPECT_HR(hr, S_OK);
+        ok(!lstrcmpW(encoding, _bstr_(table->encoding)), "test %d: got encoding %s, expected %s\n",
+            i, wine_dbgstr_w(encoding), table->encoding);
+        SysFreeString(encoding);
+
+        IMXWriter_Release(writer);
+
+        table++;
+        i++;
+    }
+}
+
 static void test_mxwriter_properties(void)
 {
     static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
@@ -1098,6 +1205,8 @@ static void test_mxwriter_properties(void)
     HRESULT hr;
     BSTR str, str2;
 
+    test_mxwriter_default_properties(mxwriter_default_props);
+
     hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMXWriter, (void**)&writer);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
@@ -1105,42 +1214,17 @@ static void test_mxwriter_properties(void)
     hr = IMXWriter_get_disableOutputEscaping(writer, NULL);
     ok(hr == E_POINTER, "got %08x\n", hr);
 
-    b = VARIANT_TRUE;
-    hr = IMXWriter_get_disableOutputEscaping(writer, &b);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(b == VARIANT_FALSE, "got %d\n", b);
-
     hr = IMXWriter_get_byteOrderMark(writer, NULL);
     ok(hr == E_POINTER, "got %08x\n", hr);
-
-    b = VARIANT_FALSE;
-    hr = IMXWriter_get_byteOrderMark(writer, &b);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(b == VARIANT_TRUE, "got %d\n", b);
 
     hr = IMXWriter_get_indent(writer, NULL);
     ok(hr == E_POINTER, "got %08x\n", hr);
 
-    b = VARIANT_TRUE;
-    hr = IMXWriter_get_indent(writer, &b);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(b == VARIANT_FALSE, "got %d\n", b);
-
     hr = IMXWriter_get_omitXMLDeclaration(writer, NULL);
     ok(hr == E_POINTER, "got %08x\n", hr);
 
-    b = VARIANT_TRUE;
-    hr = IMXWriter_get_omitXMLDeclaration(writer, &b);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(b == VARIANT_FALSE, "got %d\n", b);
-
     hr = IMXWriter_get_standalone(writer, NULL);
     ok(hr == E_POINTER, "got %08x\n", hr);
-
-    b = VARIANT_TRUE;
-    hr = IMXWriter_get_standalone(writer, &b);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(b == VARIANT_FALSE, "got %d\n", b);
 
     /* set and check */
     hr = IMXWriter_put_standalone(writer, VARIANT_TRUE);
@@ -1177,7 +1261,7 @@ static void test_mxwriter_properties(void)
     str = (void*)0xdeadbeef;
     hr = IMXWriter_get_encoding(writer, &str);
     ok(hr == S_OK, "got %08x\n", hr);
-    ok(lstrcmpW(str, utf16W) == 0, "expected empty string, got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, emptyW) == 0, "expected empty string, got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     /* invalid encoding name */
@@ -1486,22 +1570,6 @@ static const struct writer_startendelement_t writer_startendelement[] = {
     { NULL }
 };
 
-struct msxmlsupported_data_t
-{
-    const GUID *clsid;
-    const char *name;
-    BOOL supported;
-};
-
-static struct msxmlsupported_data_t msxmlsupported_data[] =
-{
-    { &CLSID_MXXMLWriter,   "MXXMLWriter" },
-    { &CLSID_MXXMLWriter30, "MXXMLWriter30" },
-    { &CLSID_MXXMLWriter40, "MXXMLWriter40" },
-    { &CLSID_MXXMLWriter60, "MXXMLWriter60" },
-    { NULL }
-};
-
 static void get_supported_mxwriter_data(struct msxmlsupported_data_t *table)
 {
     while (table->clsid)
@@ -1520,23 +1588,10 @@ static void get_supported_mxwriter_data(struct msxmlsupported_data_t *table)
     }
 }
 
-static BOOL is_mxwriter_supported(const GUID *clsid, const struct msxmlsupported_data_t *table)
-{
-    while (table->clsid)
-    {
-        if (table->clsid == clsid) return table->supported;
-        table++;
-    }
-    return FALSE;
-}
-
 static void test_mxwriter_startendelement_batch(const struct writer_startendelement_t *table)
 {
-    int i;
+    int i = 0;
 
-    get_supported_mxwriter_data(msxmlsupported_data);
-
-    i = 0;
     while (table->clsid)
     {
         ISAXContentHandler *content;
@@ -1928,7 +1983,6 @@ static void test_mxwriter_encoding(void)
 START_TEST(saxreader)
 {
     ISAXXMLReader *reader;
-    IMXWriter *writer;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -1948,12 +2002,10 @@ START_TEST(saxreader)
     test_saxreader();
     test_encoding();
 
-    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IMXWriter, (void**)&writer);
-    if (hr == S_OK)
+    /* MXXMLWriter tests */
+    get_supported_mxwriter_data(msxmlsupported_data);
+    if (is_mxwriter_supported(&CLSID_MXXMLWriter, msxmlsupported_data))
     {
-        IMXWriter_Release(writer);
-
         test_mxwriter_contenthandler();
         test_mxwriter_startenddocument();
         test_mxwriter_startendelement();
