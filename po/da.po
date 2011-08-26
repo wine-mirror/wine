@@ -8756,22 +8756,42 @@ msgid "Default gateway"
 msgstr ""
 
 #: net.rc:27
+#, fuzzy
 msgid ""
 "The syntax of this command is:\n"
 "\n"
-"NET [ HELP | START | STOP | USE ]\n"
-msgstr ""
-"Sådan bruges programmet:\n"
+"NET command [arguments]\n"
+"    -or-\n"
+"NET command /HELP\n"
 "\n"
-"NET [ HELP | START | STOP | USE ]\n"
+"Where 'command' is one of HELP, START, STOP or USE\n"
+msgstr ""
+"Sådan for du hjælp:\n"
+"\n"
+"NET HELP kommando\n"
+"    -eller-\n"
+"NET kommando /HELP\n"
+"\n"
+"   Tilgængelige kommandoer:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
 
 #: net.rc:28
-msgid "Specify service name to start.\n"
-msgstr "Angiv navnet på servicen som skal startes.\n"
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET START service\n"
+"\n"
+"Where 'service' is the name of the service to start.\n"
+msgstr ""
 
 #: net.rc:29
-msgid "Specify service name to stop.\n"
-msgstr "Angiv navnet på servicen som skal stoppes.\n"
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET STOP service\n"
+"\n"
+"Where 'service' is the name of the service to stop.\n"
+msgstr ""
 
 #: net.rc:30
 msgid "Stopping dependent service: %s\n"
@@ -8814,30 +8834,10 @@ msgid "The %s service failed to stop.\n"
 msgstr "Kunne ikke stoppe tjenesten «%s».\n"
 
 #: net.rc:40
-msgid ""
-"The syntax of this command is:\n"
-"\n"
-"NET HELP command\n"
-"    -or-\n"
-"NET command /HELP\n"
-"\n"
-"   Commands available are:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
-msgstr ""
-"Sådan for du hjælp:\n"
-"\n"
-"NET HELP kommando\n"
-"    -eller-\n"
-"NET kommando /HELP\n"
-"\n"
-"   Tilgængelige kommandoer:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
-
-#: net.rc:42
 msgid "There are no entries in the list.\n"
 msgstr "Det er ingen indskrivning i listen.\n"
 
-#: net.rc:43
+#: net.rc:41
 msgid ""
 "\n"
 "Status  Local   Remote\n"
@@ -8847,35 +8847,35 @@ msgstr ""
 "Status    Lokal   Remote\n"
 "---------------------------------------------------------------\n"
 
-#: net.rc:44
+#: net.rc:42
 msgid "%s      %s      %s      Open resources: %lu\n"
 msgstr "%s      %s      %s      Åbne resourser: %lu\n"
 
-#: net.rc:45
+#: net.rc:43
 msgid "OK"
 msgstr ""
 
-#: net.rc:46
+#: net.rc:44
 #, fuzzy
 msgid "Paused"
 msgstr "&Pause"
 
-#: net.rc:47
+#: net.rc:45
 #, fuzzy
 msgid "Disconnected"
 msgstr "Rør forbundet\n"
 
-#: net.rc:48
+#: net.rc:46
 #, fuzzy
 msgid "A network error occurred"
 msgstr "Der opstod en printer fejl."
 
-#: net.rc:49
+#: net.rc:47
 #, fuzzy
 msgid "Connection is being made"
 msgstr "Forbindelsen er aktiv\n"
 
-#: net.rc:50
+#: net.rc:48
 #, fuzzy
 msgid "Reconnecting"
 msgstr "Tilslutter til %s"

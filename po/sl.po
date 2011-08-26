@@ -8534,22 +8534,42 @@ msgid "Default gateway"
 msgstr "Privzeti prehod"
 
 #: net.rc:27
+#, fuzzy
 msgid ""
 "The syntax of this command is:\n"
 "\n"
-"NET [ HELP | START | STOP | USE ]\n"
-msgstr ""
-"Skladnja ukaza:\n"
+"NET command [arguments]\n"
+"    -or-\n"
+"NET command /HELP\n"
 "\n"
-"NET [ HELP | START | STOP | USE ]\n"
+"Where 'command' is one of HELP, START, STOP or USE\n"
+msgstr ""
+"Skladnja tega ukaza je:\n"
+"\n"
+"NET HELP ukaz\n"
+"    -ali-\n"
+"NET ukaz /HELP\n"
+"\n"
+"   Razpoložljivi ukazi so:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
 
 #: net.rc:28
-msgid "Specify service name to start.\n"
-msgstr "Navedite ime storitve za zagon.\n"
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET START service\n"
+"\n"
+"Where 'service' is the name of the service to start.\n"
+msgstr ""
 
 #: net.rc:29
-msgid "Specify service name to stop.\n"
-msgstr "Navedite ime storitve za zaustavitev.\n"
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET STOP service\n"
+"\n"
+"Where 'service' is the name of the service to stop.\n"
+msgstr ""
 
 #: net.rc:30
 msgid "Stopping dependent service: %s\n"
@@ -8592,30 +8612,10 @@ msgid "The %s service failed to stop.\n"
 msgstr "Ustavljanje storitve %s ni uspelo.\n"
 
 #: net.rc:40
-msgid ""
-"The syntax of this command is:\n"
-"\n"
-"NET HELP command\n"
-"    -or-\n"
-"NET command /HELP\n"
-"\n"
-"   Commands available are:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
-msgstr ""
-"Skladnja tega ukaza je:\n"
-"\n"
-"NET HELP ukaz\n"
-"    -ali-\n"
-"NET ukaz /HELP\n"
-"\n"
-"   Razpoložljivi ukazi so:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
-
-#: net.rc:42
 msgid "There are no entries in the list.\n"
 msgstr "Na seznamu ni vnosov.\n"
 
-#: net.rc:43
+#: net.rc:41
 msgid ""
 "\n"
 "Status  Local   Remote\n"
@@ -8625,35 +8625,35 @@ msgstr ""
 "Stanje  Krajevno   Oddaljeno\n"
 "---------------------------------------------------------------\n"
 
-#: net.rc:44
+#: net.rc:42
 msgid "%s      %s      %s      Open resources: %lu\n"
 msgstr "%s      %s      %s      Odprta sredstva: %lu\n"
 
-#: net.rc:45
+#: net.rc:43
 msgid "OK"
 msgstr ""
 
-#: net.rc:46
+#: net.rc:44
 #, fuzzy
 msgid "Paused"
 msgstr "V &premoru"
 
-#: net.rc:47
+#: net.rc:45
 #, fuzzy
 msgid "Disconnected"
 msgstr "Cev je povezana\n"
 
-#: net.rc:48
+#: net.rc:46
 #, fuzzy
 msgid "A network error occurred"
 msgstr "Prišlo je do napake tiskanja."
 
-#: net.rc:49
+#: net.rc:47
 #, fuzzy
 msgid "Connection is being made"
 msgstr "Povezava je dejavna\n"
 
-#: net.rc:50
+#: net.rc:48
 #, fuzzy
 msgid "Reconnecting"
 msgstr "Povezovanje z %s"

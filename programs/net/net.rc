@@ -24,9 +24,9 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-    STRING_USAGE, "The syntax of this command is:\n\nNET [ HELP | START | STOP | USE ]\n"
-    STRING_START_USAGE, "Specify service name to start.\n"
-    STRING_STOP_USAGE, "Specify service name to stop.\n"
+    STRING_USAGE, "The syntax of this command is:\n\nNET command [arguments]\n    -or-\nNET command /HELP\n\nWhere 'command' is one of HELP, START, STOP or USE\n"
+    STRING_START_USAGE, "The syntax of this command is:\n\nNET START service\n\nWhere 'service' is the name of the service to start.\n"
+    STRING_STOP_USAGE, "The syntax of this command is:\n\nNET STOP service\n\nWhere 'service' is the name of the service to stop.\n"
     STRING_STOP_DEP, "Stopping dependent service: %s\n"
     STRING_CANT_STOP, "Could not stop service %s\n"
     STRING_NO_SCM, "Could not get handle to service control manager.\n"
@@ -37,8 +37,6 @@ STRINGTABLE
     STRING_STOP_SVC, "The %s service is stopping.\n"
     STRING_STOP_SVC_SUCCESS, "The %s service was stopped successfully.\n"
     STRING_STOP_SVC_FAIL, "The %s service failed to stop.\n"
-    STRING_HELP_USAGE, "The syntax of this command is:\n\nNET HELP command\n    -or-\nNET command /HELP\n\n"\
-                       "   Commands available are:\n   NET HELP    NET START    NET STOP    NET USE\n"
     STRING_NO_ENTRIES, "There are no entries in the list.\n"
     STRING_USE_HEADER, "\nStatus  Local   Remote\n---------------------------------------------------------------\n"
     STRING_USE_ENTRY,  "%s      %s      %s      Open resources: %lu\n"

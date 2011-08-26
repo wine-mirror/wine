@@ -8846,22 +8846,42 @@ msgid "Default gateway"
 msgstr "Gateway predefinito"
 
 #: net.rc:27
+#, fuzzy
 msgid ""
 "The syntax of this command is:\n"
 "\n"
-"NET [ HELP | START | STOP | USE ]\n"
+"NET command [arguments]\n"
+"    -or-\n"
+"NET command /HELP\n"
+"\n"
+"Where 'command' is one of HELP, START, STOP or USE\n"
 msgstr ""
 "La sintassi di questo comando è:\n"
 "\n"
-"NET [ HELP | START | STOP | USE ]\n"
+"NET HELP comando\n"
+"    -o-\n"
+"NET comando /HELP\n"
+"\n"
+"   Comandi disponibili:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
 
 #: net.rc:28
-msgid "Specify service name to start.\n"
-msgstr "Specificare il nome del servizio da avviare.\n"
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET START service\n"
+"\n"
+"Where 'service' is the name of the service to start.\n"
+msgstr ""
 
 #: net.rc:29
-msgid "Specify service name to stop.\n"
-msgstr "Specificare il nome del servizio da fermare.\n"
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET STOP service\n"
+"\n"
+"Where 'service' is the name of the service to stop.\n"
+msgstr ""
 
 #: net.rc:30
 msgid "Stopping dependent service: %s\n"
@@ -8905,30 +8925,10 @@ msgid "The %s service failed to stop.\n"
 msgstr "Impossibile fermare il servizio %s.\n"
 
 #: net.rc:40
-msgid ""
-"The syntax of this command is:\n"
-"\n"
-"NET HELP command\n"
-"    -or-\n"
-"NET command /HELP\n"
-"\n"
-"   Commands available are:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
-msgstr ""
-"La sintassi di questo comando è:\n"
-"\n"
-"NET HELP comando\n"
-"    -o-\n"
-"NET comando /HELP\n"
-"\n"
-"   Comandi disponibili:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
-
-#: net.rc:42
 msgid "There are no entries in the list.\n"
 msgstr "Non ci sono elementi nella lista.\n"
 
-#: net.rc:43
+#: net.rc:41
 msgid ""
 "\n"
 "Status  Local   Remote\n"
@@ -8938,35 +8938,35 @@ msgstr ""
 "Stato  locale   remoto\n"
 "---------------------------------------------------------------\n"
 
-#: net.rc:44
+#: net.rc:42
 msgid "%s      %s      %s      Open resources: %lu\n"
 msgstr "%s      %s      %s      Risorse aperte: %lu\n"
 
-#: net.rc:45
+#: net.rc:43
 msgid "OK"
 msgstr ""
 
-#: net.rc:46
+#: net.rc:44
 #, fuzzy
 msgid "Paused"
 msgstr "&In pausa"
 
-#: net.rc:47
+#: net.rc:45
 #, fuzzy
 msgid "Disconnected"
 msgstr "Pipe connessa\n"
 
-#: net.rc:48
+#: net.rc:46
 #, fuzzy
 msgid "A network error occurred"
 msgstr "Si è verificato un errore della stampante."
 
-#: net.rc:49
+#: net.rc:47
 #, fuzzy
 msgid "Connection is being made"
 msgstr "Connessione attiva\n"
 
-#: net.rc:50
+#: net.rc:48
 #, fuzzy
 msgid "Reconnecting"
 msgstr "Connettendo a %s"

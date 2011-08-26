@@ -8491,22 +8491,42 @@ msgid "Default gateway"
 msgstr "Шлюз за замовчуванням"
 
 #: net.rc:27
+#, fuzzy
 msgid ""
 "The syntax of this command is:\n"
 "\n"
-"NET [ HELP | START | STOP | USE ]\n"
+"NET command [arguments]\n"
+"    -or-\n"
+"NET command /HELP\n"
+"\n"
+"Where 'command' is one of HELP, START, STOP or USE\n"
 msgstr ""
 "Синтаксис цієї команди:\n"
 "\n"
-"NET [ HELP | START | STOP | USE ]\n"
+"NET HELP команда\n"
+"    -чи-\n"
+"NET команда /HELP\n"
+"\n"
+"   Доступні команди:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
 
 #: net.rc:28
-msgid "Specify service name to start.\n"
-msgstr "Вказіть службу для запуску.\n"
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET START service\n"
+"\n"
+"Where 'service' is the name of the service to start.\n"
+msgstr ""
 
 #: net.rc:29
-msgid "Specify service name to stop.\n"
-msgstr "Вказіть службу для зупинки.\n"
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET STOP service\n"
+"\n"
+"Where 'service' is the name of the service to stop.\n"
+msgstr ""
 
 #: net.rc:30
 msgid "Stopping dependent service: %s\n"
@@ -8549,30 +8569,10 @@ msgid "The %s service failed to stop.\n"
 msgstr "Помилка зупинки служби %s .\n"
 
 #: net.rc:40
-msgid ""
-"The syntax of this command is:\n"
-"\n"
-"NET HELP command\n"
-"    -or-\n"
-"NET command /HELP\n"
-"\n"
-"   Commands available are:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
-msgstr ""
-"Синтаксис цієї команди:\n"
-"\n"
-"NET HELP команда\n"
-"    -чи-\n"
-"NET команда /HELP\n"
-"\n"
-"   Доступні команди:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
-
-#: net.rc:42
 msgid "There are no entries in the list.\n"
 msgstr "Список порожній.\n"
 
-#: net.rc:43
+#: net.rc:41
 msgid ""
 "\n"
 "Status  Local   Remote\n"
@@ -8582,35 +8582,35 @@ msgstr ""
 "Статус  Локальний   Віддалений\n"
 "---------------------------------------------------------------\n"
 
-#: net.rc:44
+#: net.rc:42
 msgid "%s      %s      %s      Open resources: %lu\n"
 msgstr "%s      %s      %s      Відкритих ресурсів: %lu\n"
 
-#: net.rc:45
+#: net.rc:43
 msgid "OK"
 msgstr ""
 
-#: net.rc:46
+#: net.rc:44
 #, fuzzy
 msgid "Paused"
 msgstr "&Призупинити"
 
-#: net.rc:47
+#: net.rc:45
 #, fuzzy
 msgid "Disconnected"
 msgstr "Pipe connected\n"
 
-#: net.rc:48
+#: net.rc:46
 #, fuzzy
 msgid "A network error occurred"
 msgstr "Виникла помилка принтера."
 
-#: net.rc:49
+#: net.rc:47
 #, fuzzy
 msgid "Connection is being made"
 msgstr "З'єднання активне\n"
 
-#: net.rc:50
+#: net.rc:48
 #, fuzzy
 msgid "Reconnecting"
 msgstr "Під'єднуюсь до %s"

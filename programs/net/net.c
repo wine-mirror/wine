@@ -227,9 +227,11 @@ static int arg_is(const WCHAR* str1, const WCHAR* str2)
 int wmain(int argc, const WCHAR* argv[])
 {
     static const WCHAR helpW[]={'h','e','l','p',0};
+    static const WCHAR shelpW[]={'/','h','e','l','p',0};
     static const WCHAR startW[]={'s','t','a','r','t',0};
     static const WCHAR stopW[]={'s','t','o','p',0};
     static const WCHAR useW[]={'u','s','e',0};
+
     if (argc < 2)
     {
         output_string(STRING_USAGE);
@@ -238,43 +240,50 @@ int wmain(int argc, const WCHAR* argv[])
 
     if(arg_is(argv[1], helpW))
     {
-        output_string(STRING_HELP_USAGE);
+        if(argc > 3)
+        {
+            output_string(STRING_USAGE);
+            return 1;
+        }
+        if(argc == 2)
+            output_string(STRING_USAGE);
+        else if(arg_is(argv[2], startW))
+            output_string(STRING_START_USAGE);
+        else if(arg_is(argv[2], stopW))
+            output_string(STRING_STOP_USAGE);
+        else
+            output_string(STRING_USAGE);
     }
-
-    if(arg_is(argv[1], startW))
+    else if(arg_is(argv[1], startW))
     {
-        if(argc < 3)
+        if(argc != 3)
         {
             output_string(STRING_START_USAGE);
             return 1;
         }
-
-        if(!net_service(NET_START, argv[2]))
-        {
+        if(arg_is(argv[2], shelpW))
+            output_string(STRING_START_USAGE);
+        else if(!net_service(NET_START, argv[2]))
             return 1;
-        }
-        return 0;
     }
-
-    if(arg_is(argv[1], stopW))
+    else if(arg_is(argv[1], stopW))
     {
-        if(argc < 3)
+        if(argc != 3)
         {
             output_string(STRING_STOP_USAGE);
             return 1;
         }
-
-        if(!net_service(NET_STOP, argv[2]))
-        {
+        if(arg_is(argv[2], shelpW))
+            output_string(STRING_STOP_USAGE);
+        else if(!net_service(NET_STOP, argv[2]))
             return 1;
-        }
-        return 0;
     }
-
-    if(arg_is(argv[1], useW))
+    else if(arg_is(argv[1], useW))
     {
         if(!net_use(argc, argv)) return 1;
     }
+    else
+        output_string(STRING_USAGE);
 
     return 0;
 }

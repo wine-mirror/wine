@@ -8382,15 +8382,29 @@ msgstr ""
 msgid ""
 "The syntax of this command is:\n"
 "\n"
-"NET [ HELP | START | STOP | USE ]\n"
+"NET command [arguments]\n"
+"    -or-\n"
+"NET command /HELP\n"
+"\n"
+"Where 'command' is one of HELP, START, STOP or USE\n"
 msgstr ""
 
 #: net.rc:28
-msgid "Specify service name to start.\n"
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET START service\n"
+"\n"
+"Where 'service' is the name of the service to start.\n"
 msgstr ""
 
 #: net.rc:29
-msgid "Specify service name to stop.\n"
+msgid ""
+"The syntax of this command is:\n"
+"\n"
+"NET STOP service\n"
+"\n"
+"Where 'service' is the name of the service to stop.\n"
 msgstr ""
 
 #: net.rc:30
@@ -8434,56 +8448,44 @@ msgid "The %s service failed to stop.\n"
 msgstr ""
 
 #: net.rc:40
-msgid ""
-"The syntax of this command is:\n"
-"\n"
-"NET HELP command\n"
-"    -or-\n"
-"NET command /HELP\n"
-"\n"
-"   Commands available are:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
-msgstr ""
-
-#: net.rc:42
 msgid "There are no entries in the list.\n"
 msgstr ""
 
-#: net.rc:43
+#: net.rc:41
 msgid ""
 "\n"
 "Status  Local   Remote\n"
 "---------------------------------------------------------------\n"
 msgstr ""
 
-#: net.rc:44
+#: net.rc:42
 msgid "%s      %s      %s      Open resources: %lu\n"
 msgstr ""
 
-#: net.rc:45
+#: net.rc:43
 msgid "OK"
 msgstr ""
 
-#: net.rc:46
+#: net.rc:44
 #, fuzzy
 msgid "Paused"
 msgstr "Pozastavená; "
 
-#: net.rc:47
+#: net.rc:45
 #, fuzzy
 msgid "Disconnected"
 msgstr "Súbor nenájdený"
 
-#: net.rc:48
+#: net.rc:46
 #, fuzzy
 msgid "A network error occurred"
 msgstr "A printer error occurred"
 
-#: net.rc:49
+#: net.rc:47
 msgid "Connection is being made"
 msgstr ""
 
-#: net.rc:50
+#: net.rc:48
 #, fuzzy
 msgid "Reconnecting"
 msgstr "Default"
