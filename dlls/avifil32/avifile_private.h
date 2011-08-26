@@ -49,7 +49,6 @@
 #define IDS_ALLFILES         0x0185
 #define IDS_VIDEO            0x0189
 #define IDS_AUDIO            0x0190
-#define IDS_AVISTREAMFORMAT  0x0191
 #define IDS_AVIFILETYPE      0x0192
 #define IDS_UNCOMPRESSED     0x0193
 

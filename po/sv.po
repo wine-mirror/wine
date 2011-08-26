@@ -112,14 +112,10 @@ msgid "audio"
 msgstr "ljud"
 
 #: avifil32.rc:33
-msgid "%s %s #%d"
-msgstr "%s %s #%d"
-
-#: avifil32.rc:34
 msgid "Wine AVI-default-filehandler"
 msgstr "Wine AVI-standardfilhanterare"
 
-#: avifil32.rc:35
+#: avifil32.rc:34
 msgid "uncompressed"
 msgstr "okomprimerad"
 

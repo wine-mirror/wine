@@ -30,7 +30,6 @@ STRINGTABLE
   IDS_ALLFILES		"All files (*.*)"
   IDS_VIDEO		"video"
   IDS_AUDIO		"audio"
-  IDS_AVISTREAMFORMAT	"%s %s #%d"
   IDS_AVIFILETYPE	"Wine AVI-default-filehandler"
   IDS_UNCOMPRESSED      "uncompressed"
 }
