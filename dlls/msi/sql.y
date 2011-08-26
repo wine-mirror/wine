@@ -478,13 +478,13 @@ selcollist:
 
 from:
     fromtable
-  | fromtable TK_WHERE expr
+  | TK_FROM tablelist TK_WHERE expr
         {
             SQL_input* sql = (SQL_input*) info;
             MSIVIEW* where = NULL;
             UINT r;
 
-            r = WHERE_CreateView( sql->db, &where, $1, $3 );
+            r = WHERE_CreateView( sql->db, &where, $2, $4 );
             if( r != ERROR_SUCCESS )
                 YYABORT;
 
@@ -877,8 +877,8 @@ static struct expr * EXPR_column( void *info, const column_info *column )
     if( e )
     {
         e->type = EXPR_COLUMN;
-        e->u.column.column = column->column;
-        e->u.column.table = column->table;
+        e->u.column.unparsed.column = column->column;
+        e->u.column.unparsed.table = column->table;
     }
     return e;
 }

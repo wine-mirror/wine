@@ -68,10 +68,19 @@ struct complex_expr
     struct expr *right;
 };
 
-struct ext_column
+struct tagJOINTABLE;
+union ext_column
 {
-    LPCWSTR column;
-    LPCWSTR table;
+    struct
+    {
+        LPCWSTR column;
+        LPCWSTR table;
+    } unparsed;
+    struct
+    {
+        UINT column;
+        struct tagJOINTABLE *table;
+    } parsed;
 };
 
 struct expr
@@ -83,8 +92,7 @@ struct expr
         INT   ival;
         UINT  uval;
         LPCWSTR sval;
-        struct ext_column column;
-        UINT col_number;
+        union ext_column column;
     } u;
 };
 
@@ -101,7 +109,7 @@ UINT DISTINCT_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table ) DECL
 UINT ORDER_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table,
                        column_info *columns ) DECLSPEC_HIDDEN;
 
-UINT WHERE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table,
+UINT WHERE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR tables,
                        struct expr *cond ) DECLSPEC_HIDDEN;
 
 UINT CREATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR table,
@@ -110,7 +118,7 @@ UINT CREATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR table,
 UINT INSERT_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR table,
                         column_info *columns, column_info *values, BOOL temp ) DECLSPEC_HIDDEN;
 
-UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR table,
+UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
                         column_info *list, struct expr *expr ) DECLSPEC_HIDDEN;
 
 UINT DELETE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table ) DECLSPEC_HIDDEN;

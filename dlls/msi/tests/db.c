@@ -3895,7 +3895,7 @@ static void test_join(void)
 
     /* primary key cannot be updated */
     r = MsiViewModify(hview, MSIMODIFY_UPDATE, hrec);
-    todo_wine ok( r == ERROR_FUNCTION_FAILED, "failed to update row: %d\n", r );
+    ok( r == ERROR_FUNCTION_FAILED, "failed to update row: %d\n", r );
 
     MsiCloseHandle(hrec);
     MsiViewClose(hview);

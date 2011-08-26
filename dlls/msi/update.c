@@ -225,31 +225,22 @@ static const MSIVIEWOPS update_ops =
     NULL,
 };
 
-UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR table,
+UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
                         column_info *columns, struct expr *expr )
 {
     MSIUPDATEVIEW *uv = NULL;
     UINT r;
-    MSIVIEW *tv = NULL, *sv = NULL, *wv = NULL;
+    MSIVIEW *sv = NULL, *wv = NULL;
 
     TRACE("%p\n", uv );
 
-    r = TABLE_CreateView( db, table, &tv );
+    if (expr)
+        r = WHERE_CreateView( db, &wv, table, expr );
+    else
+        r = TABLE_CreateView( db, table, &wv );
+
     if( r != ERROR_SUCCESS )
         return r;
-
-    if (expr)
-    {
-        /* add conditions first */
-        r = WHERE_CreateView( db, &wv, tv, expr );
-        if( r != ERROR_SUCCESS )
-        {
-            tv->ops->delete( tv );
-            return r;
-        }
-    }
-    else
-       wv = tv;
 
     /* then select the columns we want */
     r = SELECT_CreateView( db, &sv, wv, columns );
