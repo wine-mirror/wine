@@ -5120,6 +5120,24 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
             }
         }
     }
+
+    /* Historically some windows drivers used dwZBufferBitDepth=24 for WINED3DFMT_X8D24_UNORM,
+     * while others used dwZBufferBitDepth=32. In either case the pitch matches a 32 bits per
+     * pixel format, so we use dwZBufferBitDepth=32. Some games expect 24. Windows Vista and
+     * newer enumerate both versions, so we do the same(bug 22434) */
+    hr = wined3d_check_device_format(This->wineD3D, WINED3DADAPTER_DEFAULT, type, d3ddm.Format,
+            WINED3DUSAGE_DEPTHSTENCIL, WINED3DRTYPE_SURFACE, WINED3DFMT_X8D24_UNORM, SURFACE_OPENGL);
+    if (SUCCEEDED(hr))
+    {
+        DDPIXELFORMAT x8d24 =
+        {
+            sizeof(x8d24), DDPF_ZBUFFER, 0,
+            {24}, {0x00000000}, {0x00ffffff}, {0x00000000}
+        };
+        TRACE("Enumerating WINED3DFMT_X8D24_UNORM, dwZBufferBitDepth=24 version\n");
+        callback(&x8d24, context);
+    }
+
     TRACE("End of enumeration.\n");
 
     LeaveCriticalSection(&ddraw_cs);

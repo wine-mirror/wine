@@ -559,7 +559,8 @@ enum wined3d_format_id PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat
                     return WINED3DFMT_D16_UNORM;
 
                 case 24:
-                    FIXME("24 Bit depth buffer, treating like a 32 bit one\n");
+                    return WINED3DFMT_X8D24_UNORM;
+
                 case 32:
                     if(DDPixelFormat->u3.dwZBitMask == 0x00FFFFFF) {
                         return WINED3DFMT_X8D24_UNORM;

@@ -4361,6 +4361,110 @@ done:
     UnregisterClassA("d3d7_test_wndproc_wc", GetModuleHandleA(NULL));
 }
 
+static void dump_format(const DDPIXELFORMAT *fmt)
+{
+    trace("dwFlags %08x, FourCC %08x, dwZBufferBitDepth %u, stencil %08x\n", fmt->dwFlags, fmt->dwFourCC,
+            fmt->dwZBufferBitDepth, fmt->dwStencilBitDepth);
+    trace("dwZBitMask %08x, dwStencilBitMask %08x, dwRGBZBitMask %08x\n", fmt->dwZBitMask,
+            fmt->dwStencilBitMask, fmt->dwRGBZBitMask);
+}
+
+HRESULT WINAPI enum_z_fmt_cb(DDPIXELFORMAT *fmt, void *ctx)
+{
+    static const DDPIXELFORMAT formats[] =
+    {
+        {
+            sizeof(DDPIXELFORMAT), DDPF_ZBUFFER, 0,
+            {16}, {0}, {0x0000ffff}, {0x00000000}, {0x00000000}
+        },
+        {
+            sizeof(DDPIXELFORMAT), DDPF_ZBUFFER, 0,
+            {32}, {0}, {0xffffff00}, {0x00000000}, {0x00000000}
+        },
+        {
+            sizeof(DDPIXELFORMAT), DDPF_ZBUFFER | DDPF_STENCILBUFFER, 0,
+            {32}, {8}, {0xffffff00}, {0x000000ff}, {0x00000000}
+        },
+        {
+            sizeof(DDPIXELFORMAT), DDPF_ZBUFFER, 0,
+            {32}, {0}, {0x00ffffff}, {0x00000000}, {0x00000000}
+        },
+        {
+            sizeof(DDPIXELFORMAT), DDPF_ZBUFFER | DDPF_STENCILBUFFER, 0,
+            {32}, {8}, {0x00ffffff}, {0xff000000}, {0x00000000}
+        },
+        {
+            sizeof(DDPIXELFORMAT), DDPF_ZBUFFER, 0,
+            {24}, {0}, {0x00ffffff}, {0x00000000}, {0x00000000}
+        },
+        {
+            sizeof(DDPIXELFORMAT), DDPF_ZBUFFER, 0,
+            {32}, {0}, {0xffffffff}, {0x00000000}, {0x00000000}
+        },
+    };
+    unsigned int *count = ctx, i, expected_pitch;
+    DDSURFACEDESC2 ddsd;
+    IDirectDrawSurface7 *surface;
+    HRESULT hr;
+    (*count)++;
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+    ddsd.ddpfPixelFormat = *fmt;
+    ddsd.dwWidth = 1024;
+    ddsd.dwHeight = 1024;
+    hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &surface, NULL);
+    ok(SUCCEEDED(hr), "IDirectDraw7_CreateSurface failed, hr %#x.\n", hr);
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &ddsd);
+    ok(SUCCEEDED(hr), "IDirectDrawSurface7_GetSurfaceDesc failed, hr %#x.\n", hr);
+    IDirectDrawSurface7_Release(surface);
+
+    ok(ddsd.dwFlags & DDSD_PIXELFORMAT, "DDSD_PIXELFORMAT is not set\n");
+    ok(!(ddsd.dwFlags & DDSD_ZBUFFERBITDEPTH), "DDSD_ZBUFFERBITDEPTH is set\n");
+
+    /* 24 bit unpadded depth buffers are actually padded(Geforce 9600, Win7,
+     * Radeon 9000M WinXP) */
+    if (fmt->dwZBufferBitDepth == 24) expected_pitch = ddsd.dwWidth * 4;
+    else expected_pitch = ddsd.dwWidth * fmt->dwZBufferBitDepth / 8;
+
+    /* Some formats(16 bit depth without stencil) return pitch 0 */
+    if (ddsd.lPitch != 0 && ddsd.lPitch != expected_pitch)
+    {
+        ok(0, "Z buffer pitch is %u, expected %u\n", ddsd.lPitch, expected_pitch);
+        dump_format(fmt);
+    }
+
+    for (i = 0; i < (sizeof(formats)/sizeof(*formats)); i++)
+    {
+        if (memcmp(&formats[i], fmt, fmt->dwSize) == 0) return DDENUMRET_OK;
+    }
+
+    ok(0, "Unexpected Z format enumerated\n");
+    dump_format(fmt);
+
+    return DDENUMRET_OK;
+}
+
+static void z_format_test(void)
+{
+    unsigned int count = 0;
+    HRESULT hr;
+
+    hr = IDirect3D7_EnumZBufferFormats(lpD3D, &IID_IDirect3DHALDevice, enum_z_fmt_cb, &count);
+    if (hr == DDERR_NOZBUFFERHW)
+    {
+        skip("Z buffers not supported, skipping Z buffer format test\n");
+        return;
+    }
+
+    ok(SUCCEEDED(hr), "IDirect3D7_EnumZBufferFormats failed, hr %#x.\n", hr);
+    ok(count, "Expected at least one supported Z Buffer format\n");
+}
+
 START_TEST(d3d)
 {
     init_function_pointers();
@@ -4387,6 +4491,7 @@ START_TEST(d3d)
         DeviceLoadTest();
         SetRenderTargetTest();
         VertexBufferLockRest();
+        z_format_test();
         ReleaseDirect3D();
     }
 
