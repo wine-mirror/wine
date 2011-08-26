@@ -5112,8 +5112,6 @@ HRESULT ddraw_surface_create_texture(IDirectDrawSurfaceImpl *surface)
 HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddraw,
         DDSURFACEDESC2 *desc, UINT mip_level, WINED3DSURFTYPE surface_type, UINT version)
 {
-    struct wined3d_resource_desc wined3d_desc;
-    struct wined3d_resource *wined3d_resource;
     WINED3DPOOL pool = WINED3DPOOL_DEFAULT;
     enum wined3d_format_id format;
     DWORD usage = 0;
@@ -5215,15 +5213,6 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
         return hr;
     }
 
-    wined3d_resource = wined3d_surface_get_resource(surface->wined3d_surface);
-    wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
-
-    format = wined3d_desc.format;
-    if (format == WINED3DFMT_UNKNOWN)
-    {
-        FIXME("IWineD3DSurface::GetDesc returned WINED3DFMT_UNKNOWN.\n");
-    }
-
     /* Anno 1602 stores the pitch right after surface creation, so make sure
      * it's there. TODO: Test other fourcc formats. */
     if (format == WINED3DFMT_DXT1 || format == WINED3DFMT_DXT2 || format == WINED3DFMT_DXT3
@@ -5232,11 +5221,11 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
         surface->surface_desc.dwFlags |= DDSD_LINEARSIZE;
         if (format == WINED3DFMT_DXT1)
         {
-            surface->surface_desc.u1.dwLinearSize = max(4, wined3d_desc.width) * max(4, wined3d_desc.height) / 2;
+            surface->surface_desc.u1.dwLinearSize = max(4, desc->dwWidth) * max(4, desc->dwHeight) / 2;
         }
         else
         {
-            surface->surface_desc.u1.dwLinearSize = max(4, wined3d_desc.width) * max(4, wined3d_desc.height);
+            surface->surface_desc.u1.dwLinearSize = max(4, desc->dwWidth) * max(4, desc->dwHeight);
         }
     }
     else
