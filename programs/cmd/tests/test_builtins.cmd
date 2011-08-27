@@ -54,6 +54,17 @@ echo @tab@word
 echo  @tab@word
 echo@tab@@tab@word
 
+echo ------------ Testing mixed echo modes --------------
+echo @echo on> mixedEchoModes.cmd
+echo if 1==1 echo foo>> mixedEchoModes.cmd
+echo if 1==1 @echo bar>> mixedEchoModes.cmd
+echo @echo off>> mixedEchoModes.cmd
+echo if 1==1 echo foo2>> mixedEchoModes.cmd
+echo if 1==1 @echo bar2>> mixedEchoModes.cmd
+type mixedEchoModes.cmd
+cmd /c mixedEchoModes.cmd
+del mixedEchoModes.cmd
+
 echo ------------ Testing rem --------------
 rem Hello
 rem  Hello
