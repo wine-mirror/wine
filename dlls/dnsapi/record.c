@@ -645,7 +645,7 @@ VOID WINAPI DnsRecordListFree( PDNS_RECORD list, DNS_FREE_TYPE type )
  */
 void WINAPI DnsFree( PVOID data, DNS_FREE_TYPE type )
 {
-    return DnsRecordListFree( data, type );
+    DnsRecordListFree( data, type );
 }
 
 /******************************************************************************
