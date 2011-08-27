@@ -45,6 +45,7 @@ static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
 static const WCHAR utf8W[]  = {'U','T','F','-','8',0};
 
 static const char crlfA[] = "\r\n";
+static const WCHAR emptyW[] = {0};
 
 typedef enum
 {
@@ -68,6 +69,10 @@ typedef struct _mxwriter
     BOOL prop_changed;
     xmlCharEncoding encoding;
     BSTR version;
+
+    /* contains a pending (or not closed yet) element name or NULL if
+       we don't have to close */
+    BSTR element;
 
     IStream *dest;
     ULONG   dest_written;
@@ -142,8 +147,24 @@ static HRESULT write_data_to_stream(mxwriter *This)
     return hres;
 }
 
+/* Newly added element start tag left unclosed cause for empty elements
+   we have to close it differently. */
+static void close_element_starttag(const mxwriter *This)
+{
+    if (!This->element) return;
+    xmlOutputBufferWriteString(This->buffer, ">");
+}
+
+static void set_element_name(mxwriter *This, const WCHAR *name)
+{
+    SysFreeString(This->element);
+    This->element = SysAllocString(name);
+}
+
 static inline HRESULT flush_output_buffer(mxwriter *This)
 {
+    close_element_starttag(This);
+    set_element_name(This, NULL);
     xmlOutputBufferFlush(This->buffer);
     return write_data_to_stream(This);
 }
@@ -221,6 +242,7 @@ static ULONG WINAPI mxwriter_Release(IMXWriter *iface)
         SysFreeString(This->version);
 
         xmlOutputBufferClose(This->buffer);
+        SysFreeString(This->element);
         heap_free(This);
     }
 
@@ -740,6 +762,9 @@ static HRESULT WINAPI mxwriter_saxcontent_startElement(
     if ((!namespaceUri || !local_name || !QName) && This->class_version != MSXML6)
         return E_INVALIDARG;
 
+    close_element_starttag(This);
+    set_element_name(This, QName ? QName : emptyW);
+
     xmlOutputBufferWriteString(This->buffer, "<");
     s = xmlchar_from_wchar(QName);
     xmlOutputBufferWriteString(This->buffer, (char*)s);
@@ -782,8 +807,6 @@ static HRESULT WINAPI mxwriter_saxcontent_startElement(
         }
     }
 
-    xmlOutputBufferWriteString(This->buffer, ">");
-
     return S_OK;
 }
 
@@ -805,11 +828,21 @@ static HRESULT WINAPI mxwriter_saxcontent_endElement(
     if ((!namespaceUri || !local_name || !QName) && This->class_version != MSXML6)
         return E_INVALIDARG;
 
-    xmlOutputBufferWriteString(This->buffer, "</");
     s = xmlchar_from_wchar(QName);
-    xmlOutputBufferWriteString(This->buffer, (char*)s);
+
+    if (This->element && QName && !strcmpW(This->element, QName))
+    {
+        xmlOutputBufferWriteString(This->buffer, "/>");
+    }
+    else
+    {
+        xmlOutputBufferWriteString(This->buffer, "</");
+        xmlOutputBufferWriteString(This->buffer, (char*)s);
+        xmlOutputBufferWriteString(This->buffer, ">");
+    }
+
     heap_free(s);
-    xmlOutputBufferWriteString(This->buffer, ">");
+    set_element_name(This, NULL);
 
     return S_OK;
 }
@@ -824,6 +857,9 @@ static HRESULT WINAPI mxwriter_saxcontent_characters(
     TRACE("(%p)->(%s:%d)\n", This, debugstr_wn(chars, nchars), nchars);
 
     if (!chars) return E_INVALIDARG;
+
+    close_element_starttag(This);
+    set_element_name(This, NULL);
 
     if (nchars)
     {
@@ -911,6 +947,8 @@ HRESULT MXWriter_create(MSXML_VERSION version, IUnknown *pUnkOuter, void **ppObj
     This->prop_changed = FALSE;
     This->encoding   = xmlParseCharEncoding("UTF-16");
     This->version    = SysAllocString(version10W);
+
+    This->element = NULL;
 
     This->dest = NULL;
     This->dest_written = 0;

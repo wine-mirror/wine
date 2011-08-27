@@ -51,7 +51,7 @@ static BSTR alloc_str_from_narrow(const char *str)
     return ret;
 }
 
-static BSTR alloced_bstrs[256];
+static BSTR alloced_bstrs[512];
 static int alloced_bstrs_count;
 
 static BSTR _bstr_(const char *str)
@@ -1467,7 +1467,8 @@ static void test_mxwriter_startenddocument(void)
 enum startendtype
 {
     StartElement,
-    EndElement
+    EndElement,
+    StartEndElement
 };
 
 struct writer_startendelement_t {
@@ -1567,6 +1568,17 @@ static const struct writer_startendelement_t writer_startendelement[] = {
     { &CLSID_MXXMLWriter30, StartElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\">", S_OK, &saxattributes },
     { &CLSID_MXXMLWriter40, StartElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\">", S_OK, &saxattributes },
     { &CLSID_MXXMLWriter60, StartElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\">", S_OK, &saxattributes },
+    /* empty elements */
+    { &CLSID_MXXMLWriter,   StartEndElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\"/>", S_OK, &saxattributes },
+    { &CLSID_MXXMLWriter30, StartEndElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\"/>", S_OK, &saxattributes },
+    /* 70 */
+    { &CLSID_MXXMLWriter40, StartEndElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\"/>", S_OK, &saxattributes },
+    { &CLSID_MXXMLWriter60, StartEndElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\"/>", S_OK, &saxattributes },
+    { &CLSID_MXXMLWriter,   StartEndElement, "", "", "", "</>", S_OK },
+    { &CLSID_MXXMLWriter30, StartEndElement, "", "", "", "</>", S_OK },
+    { &CLSID_MXXMLWriter40, StartEndElement, "", "", "", "</>", S_OK },
+    /* 75 */
+    { &CLSID_MXXMLWriter60, StartEndElement, "", "", "", "</>", S_OK },
     { NULL }
 };
 
@@ -1619,12 +1631,26 @@ static void test_mxwriter_startendelement_batch(const struct writer_startendelem
         EXPECT_HR(hr, S_OK);
 
         if (table->type == StartElement)
+        {
             hr = ISAXContentHandler_startElement(content, _bstr_(table->uri), lstrlen(table->uri),
                 _bstr_(table->local_name), lstrlen(table->local_name), _bstr_(table->qname), lstrlen(table->qname), table->attr);
-        else
+            ok(hr == table->hr, "test %d: got 0x%08x, expected 0x%08x\n", i, hr, table->hr);
+        }
+        else if (table->type == EndElement)
+        {
             hr = ISAXContentHandler_endElement(content, _bstr_(table->uri), lstrlen(table->uri),
                 _bstr_(table->local_name), lstrlen(table->local_name), _bstr_(table->qname), lstrlen(table->qname));
-        ok(hr == table->hr, "test %d: got 0x%08x, expected 0x%08x\n", i, hr, table->hr);
+            ok(hr == table->hr, "test %d: got 0x%08x, expected 0x%08x\n", i, hr, table->hr);
+        }
+        else
+        {
+            hr = ISAXContentHandler_startElement(content, _bstr_(table->uri), lstrlen(table->uri),
+                _bstr_(table->local_name), lstrlen(table->local_name), _bstr_(table->qname), lstrlen(table->qname), table->attr);
+            ok(hr == table->hr, "test %d: got 0x%08x, expected 0x%08x\n", i, hr, table->hr);
+            hr = ISAXContentHandler_endElement(content, _bstr_(table->uri), lstrlen(table->uri),
+                _bstr_(table->local_name), lstrlen(table->local_name), _bstr_(table->qname), lstrlen(table->qname));
+            ok(hr == table->hr, "test %d: got 0x%08x, expected 0x%08x\n", i, hr, table->hr);
+        }
 
         /* test output */
         if (hr == S_OK)
@@ -1652,7 +1678,6 @@ static void test_mxwriter_startendelement_batch(const struct writer_startendelem
 
 static void test_mxwriter_startendelement(void)
 {
-    static const char winehqA[] = "http://winehq.org";
     ISAXContentHandler *content;
     IMXWriter *writer;
     VARIANT dest;
@@ -1714,31 +1739,6 @@ static void test_mxwriter_startendelement(void)
     ok(!lstrcmpW(_bstr_("<><b></b>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
-    /* some with namespace URI */
-    hr = ISAXContentHandler_startElement(content, _bstr_(winehqA), sizeof(winehqA), _bstr_(""), 0, _bstr_("nspace:c"), 8, NULL);
-    ok(hr == S_OK, "got %08x\n", hr);
-
-    hr = ISAXContentHandler_endElement(content, _bstr_(winehqA), sizeof(winehqA), _bstr_(""), 0, _bstr_("nspace:c"), 8);
-    ok(hr == S_OK, "got %08x\n", hr);
-
-    V_VT(&dest) = VT_EMPTY;
-    hr = IMXWriter_get_output(writer, &dest);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    todo_wine ok(!lstrcmpW(_bstr_("<><b></b><nspace:c/>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
-    VariantClear(&dest);
-
-    /* try to end element that wasn't open */
-    hr = ISAXContentHandler_endElement(content, _bstr_(""), 0, _bstr_(""), 0, _bstr_("a"), 1);
-    ok(hr == S_OK, "got %08x\n", hr);
-
-    V_VT(&dest) = VT_EMPTY;
-    hr = IMXWriter_get_output(writer, &dest);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    todo_wine ok(!lstrcmpW(_bstr_("<><b></b><nspace:c/></a>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
-    VariantClear(&dest);
-
     hr = ISAXContentHandler_endDocument(content);
     ok(hr == S_OK, "got %08x\n", hr);
 
@@ -1758,35 +1758,68 @@ static void test_mxwriter_characters(void)
 
     hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMXWriter, (void**)&writer);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
 
     hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
-    ok(hr == S_OK, "got %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
 
     hr = IMXWriter_put_omitXMLDeclaration(writer, VARIANT_TRUE);
-    ok(hr == S_OK, "got %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
 
     hr = ISAXContentHandler_startDocument(content);
-    ok(hr == S_OK, "got %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
 
     hr = ISAXContentHandler_characters(content, NULL, 0);
-    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    EXPECT_HR(hr, E_INVALIDARG);
 
     hr = ISAXContentHandler_characters(content, chardataW, 0);
-    ok(hr == S_OK, "got %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
 
     hr = ISAXContentHandler_characters(content, chardataW, sizeof(chardataW)/sizeof(WCHAR) - 1);
-    ok(hr == S_OK, "got %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
 
     V_VT(&dest) = VT_EMPTY;
     hr = IMXWriter_get_output(writer, &dest);
-    ok(hr == S_OK, "got %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
     ok(!lstrcmpW(_bstr_("TESTCHARDATA ."), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     hr = ISAXContentHandler_endDocument(content);
-    ok(hr == S_OK, "got %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
+
+    ISAXContentHandler_Release(content);
+    IMXWriter_Release(writer);
+
+    /* try empty characters data to see if element is closed */
+    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_put_omitXMLDeclaration(writer, VARIANT_TRUE);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_startDocument(content);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_startElement(content, _bstr_(""), 0, _bstr_(""), 0, _bstr_("a"), 1, NULL);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_characters(content, chardataW, 0);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_endElement(content, _bstr_(""), 0, _bstr_(""), 0, _bstr_("a"), 1);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(!lstrcmpW(_bstr_("<a></a>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
 
     ISAXContentHandler_Release(content);
     IMXWriter_Release(writer);
