@@ -427,7 +427,7 @@ static HRESULT parse_config(VARIANT input, parsed_config_file *result)
     return S_OK;
 }
 
-extern HRESULT parse_config_file(LPCWSTR filename, parsed_config_file *result)
+HRESULT parse_config_file(LPCWSTR filename, parsed_config_file *result)
 {
     IStream *stream;
     VARIANT var;

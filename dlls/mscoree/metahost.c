@@ -1147,7 +1147,7 @@ static struct CLRMetaHost GlobalCLRMetaHost = {
     { &CLRMetaHost_vtbl }
 };
 
-extern HRESULT CLRMetaHost_CreateInstance(REFIID riid, void **ppobj)
+HRESULT CLRMetaHost_CreateInstance(REFIID riid, void **ppobj)
 {
     return ICLRMetaHost_QueryInterface(&GlobalCLRMetaHost.ICLRMetaHost_iface, riid, ppobj);
 }
