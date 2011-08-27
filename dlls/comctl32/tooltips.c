@@ -2014,7 +2014,7 @@ TOOLTIPS_SetFont (TOOLTIPS_INFO *infoPtr, HFONT hFont, BOOL redraw)
     lf.lfWeight = FW_BOLD;
     infoPtr->hTitleFont = CreateFontIndirectW(&lf);
 
-    if (redraw & (infoPtr->nCurrentTool != -1)) {
+    if (redraw && infoPtr->nCurrentTool != -1) {
 	FIXME("full redraw needed!\n");
     }
 
