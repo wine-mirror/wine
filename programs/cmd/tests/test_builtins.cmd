@@ -120,6 +120,35 @@ del foo
 echo foo> foo
 echo foo7 7>> foo || (echo not supported & del foo)
 if exist foo (type foo) else echo not supported
+echo ...redirections within IF statements
+if 1==1 echo foo1>bar
+type bar & del bar
+if 1==1 (echo foo2>bar) else echo baz2>bar
+type bar & del bar
+if 1==1 (echo foo3) else echo baz3>bar
+type bar || echo file does not exist, ok
+if 1==1 (echo foo4>bar) else echo baz4>bar
+type bar & del bar
+if 1==0 (echo foo5>bar) else echo baz5>bar
+type bar & del bar
+if 1==0 (echo foo6) else echo baz6 1>bar
+type bar & del bar
+if 1==0 (echo foo7 1>bar) else echo baz7>bar
+type bar & del bar
+if 1==0 (echo foo8 1>bar) else echo baz8>bak
+type bak
+if 1==1 (echo foo>bar & echo baz)
+type bar
+if 1==1 (
+   echo foo>bar
+   echo baz
+)
+type bar
+(if 1==1 (echo A) else echo B) > C
+type C
+(if 1==0 (echo A) else echo B) > C
+type C
+(if 1==0 (echo A > B) else echo C)
 cd .. & rd /s/q foobar
 
 echo ------------ Testing ^^ escape character --------------

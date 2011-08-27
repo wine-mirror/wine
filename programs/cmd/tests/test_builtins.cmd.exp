@@ -144,6 +144,23 @@ food2
 food21
 @todo_wine@foo7@space@@space@@or_broken@not supported@space@
 @todo_wine@foo@or_broken@not supported
+...redirections within IF statements
+@todo_wine@foo1
+@todo_wine@foo2
+@todo_wine@foo3
+file does not exist, ok
+foo4
+baz5
+baz6@space@
+baz7
+baz8
+baz
+foo@space@
+baz
+foo
+A
+B
+C
 @todo_wine@------------ Testing ^ escape character --------------
 @todo_wine@hello, world
 @todo_wine@hello, world
