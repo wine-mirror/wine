@@ -155,16 +155,16 @@ static void close_element_starttag(const mxwriter *This)
     xmlOutputBufferWriteString(This->buffer, ">");
 }
 
-static void set_element_name(mxwriter *This, const WCHAR *name)
+static void set_element_name(mxwriter *This, const WCHAR *name, int len)
 {
     SysFreeString(This->element);
-    This->element = SysAllocString(name);
+    This->element = name ? SysAllocStringLen(name, len) : NULL;
 }
 
 static inline HRESULT flush_output_buffer(mxwriter *This)
 {
     close_element_starttag(This);
-    set_element_name(This, NULL);
+    set_element_name(This, NULL, 0);
     xmlOutputBufferFlush(This->buffer);
     return write_data_to_stream(This);
 }
@@ -763,10 +763,11 @@ static HRESULT WINAPI mxwriter_saxcontent_startElement(
         return E_INVALIDARG;
 
     close_element_starttag(This);
-    set_element_name(This, QName ? QName : emptyW);
+    set_element_name(This, QName ? QName  : emptyW,
+                           QName ? nQName : 0);
 
     xmlOutputBufferWriteString(This->buffer, "<");
-    s = xmlchar_from_wchar(QName);
+    s = xmlchar_from_wcharn(QName, nQName);
     xmlOutputBufferWriteString(This->buffer, (char*)s);
     heap_free(s);
 
@@ -843,7 +844,7 @@ static HRESULT WINAPI mxwriter_saxcontent_endElement(
     }
 
     heap_free(s);
-    set_element_name(This, NULL);
+    set_element_name(This, NULL, 0);
 
     return S_OK;
 }
@@ -860,7 +861,7 @@ static HRESULT WINAPI mxwriter_saxcontent_characters(
     if (!chars) return E_INVALIDARG;
 
     close_element_starttag(This);
-    set_element_name(This, NULL);
+    set_element_name(This, NULL, 0);
 
     if (nchars)
     {

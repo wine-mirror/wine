@@ -1720,27 +1720,44 @@ static void test_mxwriter_startendelement(void)
     VariantClear(&dest);
 
     hr = ISAXContentHandler_endElement(content, NULL, 0, NULL, 0, _bstr_("a:b"), 3);
-    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    EXPECT_HR(hr, E_INVALIDARG);
 
     hr = ISAXContentHandler_endElement(content, NULL, 0, _bstr_("b"), 1, _bstr_("a:b"), 3);
-    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    EXPECT_HR(hr, E_INVALIDARG);
 
     /* only local name is an error too */
     hr = ISAXContentHandler_endElement(content, NULL, 0, _bstr_("b"), 1, NULL, 0);
-    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    EXPECT_HR(hr, E_INVALIDARG);
 
     hr = ISAXContentHandler_endElement(content, _bstr_(""), 0, _bstr_(""), 0, _bstr_("b"), 1);
-    ok(hr == S_OK, "got %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
 
     V_VT(&dest) = VT_EMPTY;
     hr = IMXWriter_get_output(writer, &dest);
-    ok(hr == S_OK, "got %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
     ok(!lstrcmpW(_bstr_("<><b></b>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     hr = ISAXContentHandler_endDocument(content);
-    ok(hr == S_OK, "got %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_put_output(writer, dest);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_startDocument(content);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_startElement(content, _bstr_(""), 0, _bstr_(""), 0, _bstr_("abcdef"), 3, NULL);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(!lstrcmpW(_bstr_("<abc>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
 
     ISAXContentHandler_Release(content);
     IMXWriter_Release(writer);
