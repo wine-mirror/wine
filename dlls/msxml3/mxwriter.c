@@ -782,7 +782,7 @@ static HRESULT WINAPI mxwriter_saxcontent_startElement(
         for (i = 0; i < length; i++)
         {
             const WCHAR *str;
-            INT len;
+            INT len = 0;
 
             hr = ISAXAttributes_getQName(attr, i, &str, &len);
             if (FAILED(hr)) return hr;
@@ -790,16 +790,17 @@ static HRESULT WINAPI mxwriter_saxcontent_startElement(
             /* space separator in front of every attribute */
             xmlOutputBufferWriteString(This->buffer, " ");
 
-            s = xmlchar_from_wchar(str);
+            s = xmlchar_from_wcharn(str, len);
             xmlOutputBufferWriteString(This->buffer, (char*)s);
             heap_free(s);
 
             xmlOutputBufferWriteString(This->buffer, "=\"");
 
+            len = 0;
             hr = ISAXAttributes_getValue(attr, i, &str, &len);
             if (FAILED(hr)) return hr;
 
-            s = xmlchar_from_wchar(str);
+            s = xmlchar_from_wcharn(str, len);
             xmlOutputBufferWriteString(This->buffer, (char*)s);
             heap_free(s);
 

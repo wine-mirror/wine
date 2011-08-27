@@ -567,13 +567,13 @@ static HRESULT WINAPI isaxattributes_getQName(
     const WCHAR **pQName,
     int *pQNameLength)
 {
-    static const WCHAR attr1W[] = {'a',':','a','t','t','r','1',0};
-    static const WCHAR attr2W[] = {'a','t','t','r','2',0};
+    static const WCHAR attr1W[] = {'a',':','a','t','t','r','1','j','u','n','k',0};
+    static const WCHAR attr2W[] = {'a','t','t','r','2','j','u','n','k',0};
 
     ok(nIndex == 0 || nIndex == 1, "invalid index received %d\n", nIndex);
 
     *pQName = (nIndex == 0) ? attr1W : attr2W;
-    *pQNameLength = lstrlenW(*pQName);
+    *pQNameLength = (nIndex == 0) ? 7 : 5;
 
     return S_OK;
 }
@@ -654,13 +654,13 @@ static HRESULT WINAPI isaxattributes_getValue(
     const WCHAR ** pValue,
     int * nValue)
 {
-    static const WCHAR attrval1W[] = {'a','1',0};
-    static const WCHAR attrval2W[] = {'a','2',0};
+    static const WCHAR attrval1W[] = {'a','1','j','u','n','k',0};
+    static const WCHAR attrval2W[] = {'a','2','j','u','n','k',0};
 
     ok(nIndex == 0 || nIndex == 1, "invalid index received %d\n", nIndex);
 
     *pValue = (nIndex == 0) ? attrval1W : attrval2W;
-    *nValue = lstrlenW(*pValue);
+    *nValue = 2;
 
     return S_OK;
 }
