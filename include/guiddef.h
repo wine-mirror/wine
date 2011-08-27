@@ -83,7 +83,7 @@ extern "C++" {
 #define _GUIDDEF_H_
 
 #ifndef __LPGUID_DEFINED__
-#define __LPGUID_DEFINED___
+#define __LPGUID_DEFINED__
 typedef GUID *LPGUID;
 #endif
 
