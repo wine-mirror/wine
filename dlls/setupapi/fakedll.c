@@ -595,9 +595,9 @@ static BOOL next_xml_attr(xmlbuf_t* xmlbuf, xmlstr_t* name, xmlstr_t* value,
 }
 
 static void get_manifest_filename( const xmlstr_t *arch, const xmlstr_t *name, const xmlstr_t *key,
-                                   const xmlstr_t *version, WCHAR *buffer, DWORD size )
+                                   const xmlstr_t *version, const xmlstr_t *lang, WCHAR *buffer, DWORD size )
 {
-    static const WCHAR trailerW[] = {'_','n','o','n','e','_','d','e','a','d','b','e','e','f',0};
+    static const WCHAR trailerW[] = {'_','d','e','a','d','b','e','e','f',0};
     DWORD pos;
 
     pos = MultiByteToWideChar( CP_UTF8, 0, arch->ptr, arch->len, buffer, size );
@@ -607,12 +607,14 @@ static void get_manifest_filename( const xmlstr_t *arch, const xmlstr_t *name, c
     pos += MultiByteToWideChar( CP_UTF8, 0, key->ptr, key->len, buffer + pos, size - pos );
     buffer[pos++] = '_';
     pos += MultiByteToWideChar( CP_UTF8, 0, version->ptr, version->len, buffer + pos, size - pos );
+    buffer[pos++] = '_';
+    pos += MultiByteToWideChar( CP_UTF8, 0, lang->ptr, lang->len, buffer + pos, size - pos );
     memcpy( buffer + pos, trailerW, sizeof(trailerW) );
     strlwrW( buffer );
 }
 
 static BOOL create_winsxs_dll( const WCHAR *dll_name, const xmlstr_t *arch, const xmlstr_t *name,
-                               const xmlstr_t *key, const xmlstr_t *version,
+                               const xmlstr_t *key, const xmlstr_t *version, const xmlstr_t *lang,
                                const void *dll_data, size_t dll_size )
 {
     static const WCHAR winsxsW[] = {'w','i','n','s','x','s','\\'};
@@ -633,7 +635,7 @@ static BOOL create_winsxs_dll( const WCHAR *dll_name, const xmlstr_t *arch, cons
     path[pos++] = '\\';
     memcpy( path + pos, winsxsW, sizeof(winsxsW) );
     pos += sizeof(winsxsW) / sizeof(WCHAR);
-    get_manifest_filename( arch, name, key, version, path + pos, path_len - pos );
+    get_manifest_filename( arch, name, key, version, lang, path + pos, path_len - pos );
     pos += strlenW( path + pos );
     path[pos++] = '\\';
     strcpyW( path + pos, filename );
@@ -651,7 +653,7 @@ static BOOL create_winsxs_dll( const WCHAR *dll_name, const xmlstr_t *arch, cons
 }
 
 static BOOL create_manifest( const xmlstr_t *arch, const xmlstr_t *name, const xmlstr_t *key,
-                             const xmlstr_t *version, const void *data, DWORD len )
+                             const xmlstr_t *version, const xmlstr_t *lang, const void *data, DWORD len )
 {
     static const WCHAR winsxsW[] = {'w','i','n','s','x','s','\\','m','a','n','i','f','e','s','t','s','\\'};
     static const WCHAR extensionW[] = {'.','m','a','n','i','f','e','s','t',0};
@@ -668,7 +670,7 @@ static BOOL create_manifest( const xmlstr_t *arch, const xmlstr_t *name, const x
     path[pos++] = '\\';
     memcpy( path + pos, winsxsW, sizeof(winsxsW) );
     pos += sizeof(winsxsW) / sizeof(WCHAR);
-    get_manifest_filename( arch, name, key, version, path + pos, MAX_PATH - pos );
+    get_manifest_filename( arch, name, key, version, lang, path + pos, MAX_PATH - pos );
     strcatW( path + pos, extensionW );
     handle = CreateFileW( path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL );
     if (handle == INVALID_HANDLE_VALUE && GetLastError() == ERROR_PATH_NOT_FOUND)
@@ -701,13 +703,13 @@ static void register_manifest( const WCHAR *dll_name, const char *manifest, DWOR
 #endif
     xmlbuf_t buffer;
     xmlstr_t elem, attr_name, attr_value;
-    xmlstr_t name, version, arch, key;
+    xmlstr_t name, version, arch, key, lang;
     BOOL end = FALSE, error;
 
     buffer.ptr = manifest;
     buffer.end = manifest + len;
-    name.ptr = version.ptr = arch.ptr = key.ptr = NULL;
-    name.len = version.len = arch.len = key.len = 0;
+    name.ptr = version.ptr = arch.ptr = key.ptr = lang.ptr = NULL;
+    name.len = version.len = arch.len = key.len = lang.len = 0;
 
     while (next_xml_elem( &buffer, &elem ))
     {
@@ -718,9 +720,15 @@ static void register_manifest( const WCHAR *dll_name, const char *manifest, DWOR
             else if (xmlstr_cmp(&attr_name, "version")) version = attr_value;
             else if (xmlstr_cmp(&attr_name, "processorArchitecture")) arch = attr_value;
             else if (xmlstr_cmp(&attr_name, "publicKeyToken")) key = attr_value;
+            else if (xmlstr_cmp(&attr_name, "language")) lang = attr_value;
         }
         if (!error && name.ptr && version.ptr && arch.ptr && key.ptr)
         {
+            if (!lang.ptr)
+            {
+                lang.ptr = "none";
+                lang.len = strlen( lang.ptr );
+            }
             if (!arch.len)  /* fixup the architecture */
             {
                 char *new_buffer = HeapAlloc( GetProcessHeap(), 0, len + sizeof(current_arch) );
@@ -729,14 +737,14 @@ static void register_manifest( const WCHAR *dll_name, const char *manifest, DWOR
                 memcpy( new_buffer + strlen(new_buffer), arch.ptr, len - (arch.ptr - manifest) );
                 arch.ptr = current_arch;
                 arch.len = strlen( current_arch );
-                if (create_winsxs_dll( dll_name, &arch, &name, &key, &version, dll_data, dll_size ))
-                    create_manifest( &arch, &name, &key, &version, new_buffer, len + arch.len );
+                if (create_winsxs_dll( dll_name, &arch, &name, &key, &version, &lang, dll_data, dll_size ))
+                    create_manifest( &arch, &name, &key, &version, &lang, new_buffer, len + arch.len );
                 HeapFree( GetProcessHeap(), 0, new_buffer );
             }
             else
             {
-                if (create_winsxs_dll( dll_name, &arch, &name, &key, &version, dll_data, dll_size ))
-                    create_manifest( &arch, &name, &key, &version, manifest, len );
+                if (create_winsxs_dll( dll_name, &arch, &name, &key, &version, &lang, dll_data, dll_size ))
+                    create_manifest( &arch, &name, &key, &version, &lang, manifest, len );
             }
         }
     }
