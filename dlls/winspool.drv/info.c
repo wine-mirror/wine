@@ -503,7 +503,7 @@ static BOOL CUPS_LoadPrinters(void)
             haddefault = TRUE;
         }
     }
-    if (hadprinter & !haddefault) {
+    if (hadprinter && !haddefault) {
         MultiByteToWideChar(CP_UNIXCP, 0, dests[0].name, -1, nameW, sizeof(nameW) / sizeof(WCHAR));
         SetDefaultPrinterW(nameW);
     }
