@@ -81,6 +81,12 @@ echo foo>foo
 type foo
 echo foo 1> foo
 type foo
+echo foo@tab@1> foo
+type foo
+echo foo 1>@tab@foo
+type foo
+echo foo@tab@1>@tab@foo
+type foo
 echo foo7 7> foo
 type foo
 echo foo9 9> foo
@@ -90,6 +96,9 @@ type foo
 echo foo11> foo
 type foo
 echo foo12> foo
+type foo
+del foo
+echo1>foo
 type foo
 echo ...stdout appending
 echo foo>foo

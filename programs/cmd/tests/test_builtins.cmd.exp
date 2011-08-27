@@ -120,11 +120,14 @@ word
 ...stdout redirection
 foo
 foo@space@
-foo7@space@@or_broken@foo@space@
-foo9@space@@or_broken@foo@space@
-@todo_wine@foo1
-@todo_wine@foo11
-@todo_wine@foo12
+foo@tab@
+foo@space@
+foo@tab@
+foo7@space@@or_broken@foo@tab@
+foo9@space@@or_broken@foo@tab@
+foo1
+foo11
+foo12
 ...stdout appending
 foo
 foo@space@
@@ -133,12 +136,12 @@ foob@space@
 fooc@space@
 foob@space@
 fooc@space@
-@todo_wine@food1
-@todo_wine@foob@space@
-@todo_wine@fooc@space@
-@todo_wine@food1
-@todo_wine@food2
-@todo_wine@food21
+food1
+foob@space@
+fooc@space@
+food1
+food2
+food21
 @todo_wine@foo7@space@@space@@or_broken@not supported@space@
 @todo_wine@foo@or_broken@not supported
 @todo_wine@------------ Testing ^ escape character --------------
@@ -621,7 +624,7 @@ lulu
 file created in read-only dir
 ------------ Testing CALL --------------
 foo@space@
-@todo_wine@foo 8
+foo 8
 foo@space@@space@
 foo bar@space@
 @todo_wine@foo ""@space@
