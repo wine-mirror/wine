@@ -711,7 +711,6 @@ DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
 {
     dib_info *dib, stand_alone;
     DWORD ret;
-    POINT origin;
     dib_info src_dib;
     HRGN saved_clip = NULL;
     dibdrv_physdev *pdev = NULL;
@@ -756,9 +755,6 @@ DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
 
     init_dib_info_from_bitmapinfo( &src_dib, info, bits->ptr, 0 );
     src_dib.bits.is_copy = bits->is_copy;
-
-    origin.x = src->visrect.left;
-    origin.y = src->visrect.top;
 
     if (!hbitmap)
     {
