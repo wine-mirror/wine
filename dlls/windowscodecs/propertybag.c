@@ -136,7 +136,7 @@ static const IPropertyBag2Vtbl PropertyBag_Vtbl = {
     PropertyBag_LoadObject
 };
 
-extern HRESULT CreatePropertyBag2(IPropertyBag2 **ppPropertyBag2)
+HRESULT CreatePropertyBag2(IPropertyBag2 **ppPropertyBag2)
 {
     PropertyBag *This;
 
