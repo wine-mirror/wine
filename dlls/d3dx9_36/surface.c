@@ -328,7 +328,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(LPDIRECT3DSURFACE9 pDestSurface,
     TRACE("(%p, %p, %p, %p, %d, %p, %d, %x, %p)\n", pDestSurface, pDestPalette, pDestRect, pSrcData,
         SrcDataSize, pSrcRect, dwFilter, Colorkey, pSrcInfo);
 
-    if (!pDestSurface || !pSrcData | !SrcDataSize)
+    if (!pDestSurface || !pSrcData || !SrcDataSize)
         return D3DERR_INVALIDCALL;
 
     hr = D3DXGetImageInfoFromFileInMemory(pSrcData, SrcDataSize, &imginfo);
