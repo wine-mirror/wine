@@ -120,6 +120,8 @@ word
 ...stdout redirection
 foo
 foo@space@
+foo7@space@@or_broken@foo@space@
+foo9@space@@or_broken@foo@space@
 @todo_wine@foo1
 @todo_wine@foo11
 @todo_wine@foo12
@@ -137,6 +139,8 @@ fooc@space@
 @todo_wine@food1
 @todo_wine@food2
 @todo_wine@food21
+@todo_wine@foo7@space@@space@@or_broken@not supported@space@
+@todo_wine@foo@or_broken@not supported
 @todo_wine@------------ Testing ^ escape character --------------
 @todo_wine@hello, world
 @todo_wine@hello, world

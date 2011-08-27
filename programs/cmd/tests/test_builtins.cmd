@@ -81,6 +81,10 @@ echo foo>foo
 type foo
 echo foo 1> foo
 type foo
+echo foo7 7> foo
+type foo
+echo foo9 9> foo
+type foo
 echo foo1> foo
 type foo
 echo foo11> foo
@@ -103,6 +107,10 @@ type foo
 del foo
 echo food21>>foo
 type foo
+del foo
+echo foo> foo
+echo foo7 7>> foo || (echo not supported & del foo)
+if exist foo (type foo) else echo not supported
 cd .. & rd /s/q foobar
 
 echo ------------ Testing ^^ escape character --------------
