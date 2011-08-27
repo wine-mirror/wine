@@ -1801,6 +1801,7 @@ static WCHAR *lookup_manifest_file( HANDLE dir, struct assembly_identity *ai )
     static const WCHAR lookup_fmtW[] =
         {'%','s','_','%','s','_','%','s','_','%','u','.','%','u','.','*','.','*','_',
          '%','s','_','*','.','m','a','n','i','f','e','s','t',0};
+    static const WCHAR wine_trailerW[] = {'d','e','a','d','b','e','e','f','.','m','a','n','i','f','e','s','t',0};
 
     WCHAR *lookup, *ret = NULL;
     UNICODE_STRING lookup_us;
@@ -1852,8 +1853,21 @@ static WCHAR *lookup_manifest_file( HANDLE dir, struct assembly_identity *ai )
             tmp = strchrW(tmp, '.') + 1;
             revision = atoiW(tmp);
             if (build == min_build && revision < min_revision) continue;
-            ai->version.build = min_build = build;
-            ai->version.revision = min_revision = revision;
+            tmp = strchrW(tmp, '_') + 1;
+            tmp = strchrW(tmp, '_') + 1;
+            if (!strcmpiW( tmp, wine_trailerW ))
+            {
+                /* prefer a non-Wine manifest if we already have one */
+                /* we'll still load the builtin dll if specified through DllOverrides */
+                if (ret) continue;
+            }
+            else
+            {
+                min_build = build;
+                min_revision = revision;
+            }
+            ai->version.build = build;
+            ai->version.revision = revision;
             RtlFreeHeap( GetProcessHeap(), 0, ret );
             if ((ret = RtlAllocateHeap( GetProcessHeap(), 0, dir_info->FileNameLength + sizeof(WCHAR) )))
             {
