@@ -182,6 +182,7 @@ struct actctx_loader
     unsigned int              allocated_dependencies;
 };
 
+static const WCHAR wildcardW[] = {'*',0};
 static const WCHAR assemblyW[] = {'a','s','s','e','m','b','l','y',0};
 static const WCHAR assemblyIdentityW[] = {'a','s','s','e','m','b','l','y','I','d','e','n','t','i','t','y',0};
 static const WCHAR bindingRedirectW[] = {'b','i','n','d','i','n','g','R','e','d','i','r','e','c','t',0};
@@ -208,6 +209,7 @@ static const WCHAR iidW[] = {'i','i','d',0};
 static const WCHAR languageW[] = {'l','a','n','g','u','a','g','e',0};
 static const WCHAR manifestVersionW[] = {'m','a','n','i','f','e','s','t','V','e','r','s','i','o','n',0};
 static const WCHAR nameW[] = {'n','a','m','e',0};
+static const WCHAR neutralW[] = {'n','e','u','t','r','a','l',0};
 static const WCHAR newVersionW[] = {'n','e','w','V','e','r','s','i','o','n',0};
 static const WCHAR oldVersionW[] = {'o','l','d','V','e','r','s','i','o','n',0};
 static const WCHAR optionalW[] = {'o','p','t','i','o','n','a','l',0};
@@ -423,7 +425,6 @@ static BOOL is_matching_identity( const struct assembly_identity *id1,
 
     if (id1->language && id2->language && strcmpiW( id1->language, id2->language ))
     {
-        static const WCHAR wildcardW[] = {'*',0};
         if (strcmpW( wildcardW, id1->language ) && strcmpW( wildcardW, id2->language ))
             return FALSE;
     }
@@ -1799,12 +1800,12 @@ static WCHAR *lookup_manifest_file( HANDLE dir, struct assembly_identity *ai )
 {
     static const WCHAR lookup_fmtW[] =
         {'%','s','_','%','s','_','%','s','_','%','u','.','%','u','.','*','.','*','_',
-         '*', /* FIXME */
-         '.','m','a','n','i','f','e','s','t',0};
+         '%','s','_','*','.','m','a','n','i','f','e','s','t',0};
 
     WCHAR *lookup, *ret = NULL;
     UNICODE_STRING lookup_us;
     IO_STATUS_BLOCK io;
+    const WCHAR *lang = ai->language;
     unsigned int data_pos = 0, data_len;
     char buffer[8192];
 
@@ -1814,7 +1815,9 @@ static WCHAR *lookup_manifest_file( HANDLE dir, struct assembly_identity *ai )
                                     + sizeof(lookup_fmtW) )))
         return NULL;
 
-    sprintfW( lookup, lookup_fmtW, ai->arch, ai->name, ai->public_key, ai->version.major, ai->version.minor);
+    if (!lang || !strcmpiW( lang, neutralW )) lang = wildcardW;
+    sprintfW( lookup, lookup_fmtW, ai->arch, ai->name, ai->public_key,
+              ai->version.major, ai->version.minor, lang );
     RtlInitUnicodeString( &lookup_us, lookup );
 
     NtQueryDirectoryFile( dir, 0, NULL, NULL, &io, buffer, sizeof(buffer),
