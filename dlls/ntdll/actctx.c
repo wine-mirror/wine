@@ -1824,6 +1824,7 @@ static WCHAR *lookup_manifest_file( HANDLE dir, struct assembly_identity *ai )
                           FileBothDirectoryInformation, FALSE, &lookup_us, TRUE );
     if (io.u.Status == STATUS_SUCCESS)
     {
+        ULONG min_build = ai->version.build, min_revision = ai->version.revision;
         FILE_BOTH_DIR_INFORMATION *dir_info;
         WCHAR *tmp;
         ULONG build, revision;
@@ -1847,19 +1848,18 @@ static WCHAR *lookup_manifest_file( HANDLE dir, struct assembly_identity *ai )
 
             tmp = (WCHAR *)dir_info->FileName + (strchrW(lookup, '*') - lookup);
             build = atoiW(tmp);
-            if (build < ai->version.build) continue;
+            if (build < min_build) continue;
             tmp = strchrW(tmp, '.') + 1;
             revision = atoiW(tmp);
-            if (build == ai->version.build && revision < ai->version.revision)
-                continue;
-            ai->version.build = build;
-            ai->version.revision = revision;
+            if (build == min_build && revision < min_revision) continue;
+            ai->version.build = min_build = build;
+            ai->version.revision = min_revision = revision;
+            RtlFreeHeap( GetProcessHeap(), 0, ret );
             if ((ret = RtlAllocateHeap( GetProcessHeap(), 0, dir_info->FileNameLength + sizeof(WCHAR) )))
             {
                 memcpy( ret, dir_info->FileName, dir_info->FileNameLength );
                 ret[dir_info->FileNameLength/sizeof(WCHAR)] = 0;
             }
-            break;
         }
     }
     else WARN("no matching file for %s\n", debugstr_w(lookup));
