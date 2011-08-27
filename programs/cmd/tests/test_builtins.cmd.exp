@@ -300,7 +300,7 @@ foo
 foo1
 bar2@space@
 foo2
-@todo_wine@foobar deleted
+foobar deleted
 @todo_wine@...on success conditional &&
 @todo_wine@foo3 not created
 bar4@space@
@@ -317,8 +317,8 @@ Current dir: @pwd@\foobar@or_broken@Current dir:@space@
 @pwd@
 @pwd@\foobar
 @pwd@
-@todo_wine@@pwd@
-@todo_wine@@pwd@
+@pwd@
+@pwd@
 @pwd@\foobar\bar bak
 @pwd@\foobar\bar bak
 @pwd@\foobar\bar bak

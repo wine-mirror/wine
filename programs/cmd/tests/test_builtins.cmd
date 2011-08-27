@@ -103,8 +103,7 @@ type foo
 del foo
 echo food21>>foo
 type foo
-cd ..
-rd /s/q foobar
+cd .. & rd /s/q foobar
 
 echo ------------ Testing ^^ escape character --------------
 rem Using something like "echo foo^" asks for an additional char after a "More?" prompt on the following line; it's not possible to currently test that non-interactively
@@ -494,8 +493,7 @@ if exist foo (
 ) else (
     echo ***
 )
-cd ..
-rd foobar
+cd .. & rd foobar
 
 echo ------------ Testing if/else --------------
 echo if/else should work with blocks
@@ -594,8 +592,7 @@ rem del tmp
 rem for /d %%i in (*) do echo %%i>> tmp
 rem sort < tmp
 rem del tmp
-cd ..
-rd /s/Q foobar
+cd .. & rd /s/Q foobar
 echo ...for /L
 rem Some cases loop forever writing 0s, like e.g. (1,0,1), (1,a,3) or (a,b,c); those can't be tested here
 for /L %%i in (1,2,0) do echo %%i
@@ -899,8 +896,7 @@ if exist foo (echo foo created) else echo foo not created!
 if exist bar (echo bar created) else echo bar not created!
 if exist foobar (echo foobar created) else echo foobar not created!
 if exist bar\baz (echo bar\baz created) else echo bar\baz not created!
-cd ..
-rd /s/q foobaz
+cd .. & rd /s/q foobaz
 call :setError 0
 mkdir foo\*
 echo mkdir foo\* errorlevel %ErrorLevel%
@@ -970,8 +966,7 @@ if not exist foo (echo foo removed) else echo foo not removed!
 if not exist bar (echo bar removed) else echo bar not removed!
 if not exist foobar (echo foobar removed) else echo foobar not removed!
 if not exist bar\baz (echo bar\baz removed) else echo bar\baz not removed!
-cd ..
-rd /s/q foobaz
+cd .. & rd /s/q foobaz
 
 echo ------------ Testing attrib --------------
 rem FIXME Add tests for archive, hidden and system attributes + mixed attributes modifications
@@ -1000,8 +995,7 @@ if not exist foo (
     attrib -r foo
     del foo
 )
-cd ..
-rd /s/q foobar
+cd .. & rd /s/q foobar
 echo ... recursive behaviour
 mkdir foobar\baz & cd foobar
 echo > level1
@@ -1015,8 +1009,7 @@ attrib level1
 attrib baz\level2
 echo > bar
 attrib bar
-cd ..
-rd /s/q foobar
+cd .. & rd /s/q foobar
 echo ... folders processing
 mkdir foobar
 attrib foobar
@@ -1031,8 +1024,7 @@ type baz\toto
 echo > baz\lala
 rem Oddly windows allows file creation in a read-only directory...
 if exist baz\lala (echo file created in read-only dir) else echo file not created
-cd ..
-rd /s/q foobar
+cd .. & rd /s/q foobar
 
 echo ------------ Testing CALL --------------
 mkdir foobar & cd foobar
@@ -1091,8 +1083,7 @@ echo %ErrorLevel%
 rem First look for programs in the path before trying a builtin
 echo echo non-builtin dir> dir.cmd
 call dir /b
-cd ..
-rd /s/q foobar
+cd .. & rd /s/q foobar
 
 echo ------------ Testing setlocal/endlocal ------------
 call :setError 0
@@ -1133,8 +1124,7 @@ set VAR=globalval
 call test.cmd
 echo %VAR%
 set VAR=
-cd ..
-rd /q/s foobar
+cd .. & rd /q/s foobar
 
 echo -----------Testing Errorlevel-----------
 rem WARNING: Do *not* add tests using ErrorLevel after this section

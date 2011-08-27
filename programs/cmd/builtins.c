@@ -2118,6 +2118,8 @@ void WCMD_setshow_default (const WCHAR *command) {
       if (*command != '"') *pos++ = *command;
       command++;
     }
+    while (pos > command && (*(pos-1) == ' ' || *(pos-1) == '\t'))
+      pos--;
     *pos = 0x00;
 
     /* Search for appropriate directory */
