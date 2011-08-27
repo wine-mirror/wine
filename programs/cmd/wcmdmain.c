@@ -1354,11 +1354,10 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
     while (redir != NULL && ((p = strchrW(redir,'>')) != NULL)) {
       int handle = 0;
 
-      if (*(p-1)!='2') {
-        handle = 1;
-      } else {
+      if (p > redir && (*(p-1)=='2'))
         handle = 2;
-      }
+      else
+        handle = 1;
 
       p++;
       if ('>' == *p) {
