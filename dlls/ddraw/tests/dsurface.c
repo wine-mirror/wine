@@ -4184,6 +4184,45 @@ static void test_ddsd(DDSURFACEDESC *ddsd, BOOL expect_pf, BOOL expect_zd, const
         ok(!(out.dwFlags & DDSD_ZBUFFERBITDEPTH), "%s surface: Expected DDSD_ZBUFFERBITDEPTH not to be set\n", name);
     }
 
+    reset_ddsd(&out);
+    hr = IDirectDrawSurface_Lock(surface, NULL, &out, 0, NULL);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDirectDrawSurface_Unlock(surface, NULL);
+        ok(SUCCEEDED(hr), "IDirectDrawSurface_GetSurfaceDesc failed, hr %#x.\n", hr);
+
+        /* DDSD_ZBUFFERBITDEPTH is never set on Nvidia, but follows GetSurfaceDesc rules on AMD */
+        if (!expect_zd)
+        {
+            ok(!(out.dwFlags & DDSD_ZBUFFERBITDEPTH),
+                "Lock %s surface: Expected DDSD_ZBUFFERBITDEPTH not to be set\n", name);
+        }
+
+        /* DDSD_PIXELFORMAT follows GetSurfaceDesc rules */
+        if (expect_pf)
+        {
+            ok(out.dwFlags & DDSD_PIXELFORMAT, "%s surface: Expected DDSD_PIXELFORMAT to be set\n", name);
+        }
+        else
+        {
+            ok(!(out.dwFlags & DDSD_PIXELFORMAT),
+                "Lock %s surface: Expected DDSD_PIXELFORMAT not to be set\n", name);
+        }
+    }
+
+    hr = IDirectDrawSurface7_Lock(surface7, NULL, &out2, 0, NULL);
+    ok(SUCCEEDED(hr), "IDirectDrawSurface7_Lock failed, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDirectDrawSurface7_Unlock(surface7, NULL);
+        ok(SUCCEEDED(hr), "IDirectDrawSurface7_Unlock failed, hr %#x.\n", hr);
+        /* DDSD_PIXELFORMAT is always set, DDSD_ZBUFFERBITDEPTH never */
+        ok(out2.dwFlags & DDSD_PIXELFORMAT,
+                "Lock %s surface: Expected DDSD_PIXELFORMAT to be set in DDSURFACEDESC2\n", name);
+        ok(!(out2.dwFlags & DDSD_ZBUFFERBITDEPTH),
+                "Lock %s surface: Did not expect DDSD_ZBUFFERBITDEPTH to be set in DDSURFACEDESC2\n", name);
+    }
+
     IDirectDrawSurface7_Release(surface7);
     IDirectDrawSurface_Release(surface);
 }
