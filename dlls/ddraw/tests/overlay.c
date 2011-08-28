@@ -212,7 +212,7 @@ static void yv12_test(void)
     ok(desc.ddsCaps.dwCaps == (DDSCAPS_OVERLAY | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM) ||
        desc.ddsCaps.dwCaps == (DDSCAPS_OVERLAY | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM | DDSCAPS_HWCODEC),
        "Unexpected desc.ddsCaps.dwCaps 0x%08x\n", desc.ddsCaps.dwCaps);
-    ok(desc.dwWidth == 256 && desc.dwHeight == 256, "Expected size 64x64, got %ux%u\n",
+    ok(desc.dwWidth == 256 && desc.dwHeight == 256, "Expected size 256x256, got %ux%u\n",
        desc.dwWidth, desc.dwHeight);
     /* The overlay pitch seems to have 256 byte alignment */
     ok(U1(desc).lPitch == 256, "Unexpected pitch %u, expected 256\n", U1(desc).lPitch);
