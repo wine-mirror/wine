@@ -2713,6 +2713,7 @@ static void shader_glsl_lit(const struct wined3d_shader_instruction *ins)
      * if(src.x > 0.0 && src.y > 0.0) dst.z = pow(src.y, power);
      * else dst.z = 0.0;
      * dst.w = 1.0;
+     * (where power = src.w clamped between -128 and 128)
      *
      * Obviously that has quite a few conditionals in it which we don't like. So the first step is this:
      * dst.x = 1.0                                  ... No further explanation needed
@@ -2725,11 +2726,17 @@ static void shader_glsl_lit(const struct wined3d_shader_instruction *ins)
      *
      * step(0.0, x) will return 1 if src.x > 0.0, and 0 otherwise. So if y is 0 we get pow(0.0 * 1.0, power),
      * which sets dst.z to 0. If y > 0, but x = 0.0, we get pow(y * 0.0, power), which results in 0 too.
-     * if both x and y are > 0, we get pow(y * 1.0, power), as it is supposed to
+     * if both x and y are > 0, we get pow(y * 1.0, power), as it is supposed to.
+     *
+     * Unfortunately pow(0.0 ^ 0.0) returns NaN on most GPUs, but lit with src.y = 0 and src.w = 0 returns
+     * a non-NaN value in dst.z. What we return doesn't matter, as long as it is not NaN. Return 0, which is
+     * what all Windows HW drivers and GL_ARB_vertex_program's LIT do.
      */
     shader_addline(ins->ctx->buffer,
-            "vec4(1.0, max(%s, 0.0), pow(max(0.0, %s) * step(0.0, %s), clamp(%s, -128.0, 128.0)), 1.0)%s);\n",
-            src0_param.param_str, src1_param.param_str, src0_param.param_str, src3_param.param_str, dst_mask);
+            "vec4(1.0, max(%s, 0.0), %s == 0.0 ? 0.0 : "
+            "pow(max(0.0, %s) * step(0.0, %s), clamp(%s, -128.0, 128.0)), 1.0)%s);\n",
+            src0_param.param_str, src3_param.param_str, src1_param.param_str,
+            src0_param.param_str, src3_param.param_str, dst_mask);
 }
 
 /** Process the WINED3DSIO_DST instruction in GLSL:
