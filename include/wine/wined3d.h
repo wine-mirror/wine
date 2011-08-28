@@ -2271,7 +2271,7 @@ HRESULT __cdecl wined3d_device_get_vs_consts_f(struct wined3d_device *device,
         UINT start_register, float *constants, UINT vector4f_count);
 HRESULT __cdecl wined3d_device_get_vs_consts_i(struct wined3d_device *device,
         UINT start_register, int *constants, UINT vector4i_count);
-HRESULT __cdecl wined3d_device_get_wined3d(struct wined3d_device *device, struct wined3d **d3d);
+HRESULT __cdecl wined3d_device_get_wined3d(const struct wined3d_device *device, struct wined3d **wined3d);
 ULONG __cdecl wined3d_device_incref(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_init_3d(struct wined3d_device *device, WINED3DPRESENT_PARAMETERS *present_parameters);
 HRESULT __cdecl wined3d_device_init_gdi(struct wined3d_device *device, WINED3DPRESENT_PARAMETERS *present_parameters);

@@ -1684,7 +1684,7 @@ HRESULT CDECL wined3d_device_set_display_mode(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_wined3d(struct wined3d_device *device, struct wined3d **wined3d)
+HRESULT CDECL wined3d_device_get_wined3d(const struct wined3d_device *device, struct wined3d **wined3d)
 {
     TRACE("device %p, wined3d %p.\n", device, wined3d);
 
