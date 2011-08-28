@@ -1147,6 +1147,6 @@ START_TEST(eventlog)
     {
         test_readwrite();
         test_autocreation();
+        cleanup_eventlog();
     }
-    cleanup_eventlog();
 }
