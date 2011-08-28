@@ -2252,7 +2252,7 @@ HRESULT __cdecl wined3d_device_get_stream_source(struct wined3d_device *device,
 HRESULT __cdecl wined3d_device_get_stream_source_freq(struct wined3d_device *device, UINT stream_idx, UINT *divider);
 HRESULT __cdecl wined3d_device_get_surface_from_dc(struct wined3d_device *device,
         HDC dc, struct wined3d_surface **surface);
-HRESULT __cdecl wined3d_device_get_swapchain(struct wined3d_device *device,
+HRESULT __cdecl wined3d_device_get_swapchain(const struct wined3d_device *device,
         UINT swapchain_idx, struct wined3d_swapchain **swapchain);
 UINT __cdecl wined3d_device_get_swapchain_count(const struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_texture(struct wined3d_device *device,

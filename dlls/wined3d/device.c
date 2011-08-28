@@ -886,7 +886,7 @@ UINT CDECL wined3d_device_get_swapchain_count(const struct wined3d_device *devic
     return device->swapchain_count;
 }
 
-HRESULT CDECL wined3d_device_get_swapchain(struct wined3d_device *device,
+HRESULT CDECL wined3d_device_get_swapchain(const struct wined3d_device *device,
         UINT swapchain_idx, struct wined3d_swapchain **swapchain)
 {
     TRACE("device %p, swapchain_idx %u, swapchain %p.\n",
