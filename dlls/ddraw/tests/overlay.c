@@ -96,17 +96,18 @@ static BOOL CreateDirectDraw(void)
 
 static void rectangle_settings(void) {
     IDirectDrawSurface7 *overlay = create_overlay(64, 64, MAKEFOURCC('U','Y','V','Y'));
-    HRESULT hr;
+    HRESULT hr, hr2;
     RECT rect = {0, 0, 64, 64};
     LONG posx, posy;
 
-    /* The dx sdk sort of implies that rect must be set when DDOVER_SHOW is used. Show that this is wrong */
+    /* The dx sdk sort of implies that rect must be set when DDOVER_SHOW is used. This is not true
+     * in Windows Vista and earlier, but changed in Win7 */
     hr = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, primary, &rect, DDOVER_SHOW, NULL);
     ok(hr == DD_OK, "IDirectDrawSurface7_UpdateOverlay failed with hr=0x%08x\n", hr);
     hr = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, primary, NULL, DDOVER_HIDE, NULL);
     ok(hr == DD_OK, "IDirectDrawSurface7_UpdateOverlay failed with hr=0x%08x\n", hr);
     hr = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, primary, NULL, DDOVER_SHOW, NULL);
-    ok(hr == DD_OK, "IDirectDrawSurface7_UpdateOverlay failed with hr=0x%08x\n", hr);
+    ok(hr == DD_OK || hr == DDERR_INVALIDPARAMS, "IDirectDrawSurface7_UpdateOverlay failed with hr=0x%08x\n", hr);
 
     /* Show that the overlay position is the (top, left) coordinate of the dest rectangle */
     rect.top += 16;
@@ -122,13 +123,21 @@ static void rectangle_settings(void) {
        posx, posy, rect.left, rect.top);
 
     /* Passing a NULL dest rect sets the position to 0/0 . Visually it can be seen that the overlay overlays the whole primary(==screen)*/
-    hr = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, primary, NULL, 0, NULL);
-    ok(hr == DD_OK, "IDirectDrawSurface7_UpdateOverlay failed with hr=0x%08x\n", hr);
+    hr2 = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, primary, NULL, 0, NULL);
+    ok(hr2 == DD_OK || hr2 == DDERR_INVALIDPARAMS, "IDirectDrawSurface7_UpdateOverlay failed with hr=0x%08x\n", hr);
     hr = IDirectDrawSurface7_GetOverlayPosition(overlay, &posx, &posy);
     ok(hr == DD_OK, "IDirectDrawSurface7_GetOverlayPosition failed with hr=0x%08x\n", hr);
-    ok(posx == 0 && posy == 0, "Overlay position is (%d, %d), expected (%d, %d)\n",
-       posx, posy, 0, 0);
-
+    if (SUCCEEDED(hr2))
+    {
+        ok(posx == 0 && posy == 0, "Overlay position is (%d, %d), expected (%d, %d)\n",
+                posx, posy, 0, 0);
+    }
+    else
+    {
+        /* Otherwise the position remains untouched */
+        ok(posx == 32 && posy == 16, "Overlay position is (%d, %d), expected (%d, %d)\n",
+                posx, posy, 32, 16);
+    }
     /* The position cannot be retrieved when the overlay is not shown */
     hr = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, primary, &rect, DDOVER_HIDE, NULL);
     ok(hr == DD_OK, "IDirectDrawSurface7_UpdateOverlay failed with hr=0x%08x\n", hr);
