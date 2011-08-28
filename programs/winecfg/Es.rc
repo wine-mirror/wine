@@ -2,7 +2,7 @@
  * WineCfg resources
  * Spanish Language Support
  *
- * Copyright 2003-2009 José Manuel Ferrer Ortiz
+ * Copyright 2003-2011 José Manuel Ferrer Ortiz
  * Copyright 2010 José Rostagno
  *
  * This library is free software; you can redistribute it and/or
@@ -37,9 +37,9 @@ BEGIN
     LTEXT           "This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
                     IDC_ABT_LICENSE_TEXT,105,64,145,60
     GROUPBOX        " Información de Registro de Windows ", IDC_STATIC, 15, 155, 230, 55
-    LTEXT           "Propietario:", IDC_STATIC, 22, 171, 40, 20
+    LTEXT           "&Propietario:", IDC_STATIC, 22, 171, 40, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 171, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "Organización:", IDC_STATIC, 22, 185, 50, 20
+    LTEXT           "&Organización:", IDC_STATIC, 22, 185, 50, 20
     EDITTEXT        IDC_ABT_ORG, 75, 185, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 
@@ -63,10 +63,10 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX    " Configuración de ventanas ",IDC_STATIC,8,4,244,84
-    CONTROL     "Automatically capture the &mouse in full-screen windows",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
-    CONTROL     "Permitir al gestor de ventanas decorar las ventanas",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
-    CONTROL     "Permitir al gestor de ventanas controlar las ventanas",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
-    CONTROL     "Emular un escritorio virtual",IDC_ENABLE_DESKTOP,"Button",
+    CONTROL     "Capturar el &ratón automáticamente en pantalla completa",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "Permitir al gestor de ventanas &decorar las ventanas",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
+    CONTROL     "Permitir al gestor de ventanas &controlar las ventanas",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "&Emular un escritorio virtual",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
     LTEXT       "Dimensiones:",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
     LTEXT       "X",IDC_DESKTOP_BY,109,70,8,8,WS_DISABLED
@@ -74,9 +74,9 @@ BEGIN
     EDITTEXT    IDC_DESKTOP_HEIGHT,117,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
     GROUPBOX    " Direct3D ",IDC_STATIC,8,95,244,49
-    LTEXT       "Soporte Vertex Shader: ",IDC_STATIC,15,110,80,32
+    LTEXT       "Soporte &Vertex Shader: ",IDC_STATIC,15,110,80,32
     COMBOBOX    IDC_D3D_VSHADER_MODE,100,108,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL     "Permitir Pixel Shader (si hay soporte por hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
+    CONTROL     "Permitir &Pixel Shader (si hay soporte por hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
 
     GROUPBOX    " Resolución de pantalla ",IDC_STATIC,8,151,244,63
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
@@ -92,10 +92,10 @@ BEGIN
     GROUPBOX        " Reemplazos de DLL ",IDC_STATIC,8,4,244,210
     LTEXT           "Cada librería de enlace dinámico se puede especificar para que sea la interna (proporcionada por Wine) o la nativa (obtenida de Windows o proporcionada por la aplicación)."
                     ,IDC_STATIC,16,16,220,32
-    LTEXT           "Nuevo reemplazo para librería:",IDC_STATIC,16,58,100,8
+    LTEXT           "&Nuevo reemplazo para librería:",IDC_STATIC,16,58,100,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
     PUSHBUTTON      "&Añadir",IDC_DLLS_ADDDLL, 164,68,82,13
-    LTEXT           "Reemplazos existentes:",IDC_STATIC,16,86,100,8
+    LTEXT           "&Reemplazos existentes:",IDC_STATIC,16,86,100,8
     LISTBOX         IDC_DLLS_LIST,16,96,140,112,WS_BORDER | WS_TABSTOP | WS_VSCROLL
     PUSHBUTTON      "&Editar",IDC_DLLS_EDITDLL,164,96,82,14
     PUSHBUTTON      "E&liminar",IDC_DLLS_REMOVEDLL,164,114,82,14
@@ -151,7 +151,7 @@ BEGIN
     EDITTEXT        IDC_EDIT_DEVICE,45,150,150,13,ES_AUTOHSCROLL | WS_TABSTOP
     PUSHBUTTON      "E&xaminar...",IDC_BUTTON_BROWSE_DEVICE,200,150,46,13
 
-    LTEXT           "&Etiqueta:",IDC_STATIC_LABEL,15,168,29,12
+    LTEXT           "Eti&queta:",IDC_STATIC_LABEL,15,168,29,12
     EDITTEXT        IDC_EDIT_LABEL,45,165,78,13,ES_AUTOHSCROLL | WS_TABSTOP
     LTEXT           "&Nº serie:",IDC_STATIC_SERIAL,15,183,29,12
     EDITTEXT        IDC_EDIT_SERIAL,45,180,78,13,ES_AUTOHSCROLL | WS_TABSTOP
@@ -163,17 +163,17 @@ IDD_AUDIOCFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Selección de controlador ",IDC_STATIC,8,4,244,160
-    LTEXT           " Seleccione un controlador de sonido marcando la casilla del deseado. Para deshabilitar el sonido no seleccione ninguno. No se recomienda la selección de más de un controlador. Para configurar un controlador haga doble click sobre él.",IDC_STATIC,15,15,227,35
+    GROUPBOX        " Selección de controlador ",IDC_STATIC,8,4,244,160
+    LTEXT           "Seleccione un controlador de sonido marcando la casilla del deseado. Para deshabilitar el sonido no seleccione ninguno. No se recomienda la selección de más de un controlador. Para configurar un controlador haga doble clic sobre él.",IDC_STATIC,15,15,227,35
     CONTROL         "Dispositivos",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,105
-    PUSHBUTTON      "Probar sonido",IDC_AUDIO_TEST,170,50,59,14
-    PUSHBUTTON      "Panel de control",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
+    PUSHBUTTON      "Probar &sonido",IDC_AUDIO_TEST,170,50,59,14
+    PUSHBUTTON      "&Panel de control",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,170,244,45
-    LTEXT           "Aceleración Hardware: ",IDC_STATIC,15,180,90,10
+    LTEXT           "Aceleración &Hardware: ",IDC_STATIC,15,180,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,178,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Frecuencia muestreo:",IDC_STATIC,15,197,70,8
+    LTEXT           "&Frecuencia muestreo:",IDC_STATIC,15,197,70,8
     COMBOBOX        IDC_DSOUND_RATES,90,195,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Bits por muestra:",IDC_STATIC,137,197,80,8
+    LTEXT           "&Bits por muestra:",IDC_STATIC,137,197,80,8
     COMBOBOX        IDC_DSOUND_BITS,220,195,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
@@ -182,25 +182,25 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Apariencia ",IDC_STATIC,8,4,244,106
-    LTEXT           "Tema:",IDC_STATIC,15,16,130,8
+    LTEXT           "&Tema:",IDC_STATIC,15,16,130,8
     COMBOBOX        IDC_THEME_THEMECOMBO,15,24,130,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Instalar tema...",IDC_THEME_INSTALL,152,23,93,14
+    PUSHBUTTON      "&Instalar tema...",IDC_THEME_INSTALL,152,23,93,14
     LTEXT           "Color:",IDC_THEME_COLORTEXT,15,40,112,8
     COMBOBOX        IDC_THEME_COLORCOMBO,15,48,112,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Tamaño:",IDC_THEME_SIZETEXT,135,40,110,8
     COMBOBOX        IDC_THEME_SIZECOMBO,135,48,110,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Elemento:",IDC_STATIC,15,64,112,8
+    LTEXT           "&Elemento:",IDC_STATIC,15,64,112,8
     COMBOBOX        IDC_SYSPARAM_COMBO,15,74,112,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | CBS_SORT
     LTEXT           "Color:",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
     PUSHBUTTON      "",IDC_SYSPARAM_COLOR,135,74,25,13,WS_DISABLED | BS_OWNERDRAW
     LTEXT           "Tamaño:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
     EDITTEXT        IDC_SYSPARAM_SIZE,166,74,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
     CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
-    PUSHBUTTON      "Fuente",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
+    PUSHBUTTON      "&Fuente",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
     GROUPBOX        " Carpetas del sistema ",IDC_STATIC,8,114,244,100
     CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
-    CONTROL         "Enlace a:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
+    CONTROL         "E&nlace a:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
     EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
-    PUSHBUTTON      "Explorar",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
+    PUSHBUTTON      "E&xplorar",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
 END
