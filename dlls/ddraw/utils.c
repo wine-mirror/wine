@@ -519,31 +519,22 @@ enum wined3d_format_id PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat
         {
             switch(DDPixelFormat->u1.dwZBufferBitDepth)
             {
-                case 8:
-                    FIXME("8 Bits Z+Stencil buffer pixelformat is not supported. Returning WINED3DFMT_UNKNOWN\n");
-                    return WINED3DFMT_UNKNOWN;
-
-                case 15:
-                    FIXME("15 bit depth buffer not handled yet, assuming 16 bit\n");
                 case 16:
-                    if(DDPixelFormat->u2.dwStencilBitDepth == 1)
-                        return WINED3DFMT_S1_UINT_D15_UNORM;
-
-                    FIXME("Don't know how to handle a 16 bit Z buffer with %d bit stencil buffer pixelformat\n", DDPixelFormat->u2.dwStencilBitDepth);
+                    if (DDPixelFormat->u2.dwStencilBitDepth == 1) return WINED3DFMT_S1_UINT_D15_UNORM;
+                    WARN("Unknown depth stenil format: 16 z bits, %u stencil bits\n",
+                            DDPixelFormat->u2.dwStencilBitDepth);
                     return WINED3DFMT_UNKNOWN;
-
-                case 24:
-                    FIXME("Don't know how to handle a 24 bit depth buffer with stencil bits\n");
-                    return WINED3DFMT_D24_UNORM_S8_UINT;
 
                 case 32:
-                    if(DDPixelFormat->u2.dwStencilBitDepth == 8)
-                        return WINED3DFMT_D24_UNORM_S8_UINT;
-                    else
-                        return WINED3DFMT_S4X4_UINT_D24_UNORM;
+                    if (DDPixelFormat->u2.dwStencilBitDepth == 8) return WINED3DFMT_D24_UNORM_S8_UINT;
+                    else if (DDPixelFormat->u2.dwStencilBitDepth == 4) return WINED3DFMT_S4X4_UINT_D24_UNORM;
+                    WARN("Unknown depth stenil format: 32 z bits, %u stencil bits\n",
+                            DDPixelFormat->u2.dwStencilBitDepth);
+                    return WINED3DFMT_UNKNOWN;
 
                 default:
-                    ERR("Unknown Z buffer depth %d\n", DDPixelFormat->u1.dwZBufferBitDepth);
+                    WARN("Unknown depth stenil format: %u z bits, %u stencil bits\n",
+                            DDPixelFormat->u1.dwZBufferBitDepth, DDPixelFormat->u2.dwStencilBitDepth);
                     return WINED3DFMT_UNKNOWN;
             }
         }
@@ -551,10 +542,6 @@ enum wined3d_format_id PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat
         {
             switch(DDPixelFormat->u1.dwZBufferBitDepth)
             {
-                case 8:
-                    ERR("8 Bit Z buffers are not supported. Trying a 16 Bit one\n");
-                    return WINED3DFMT_D16_UNORM;
-
                 case 16:
                     return WINED3DFMT_D16_UNORM;
 
@@ -562,16 +549,16 @@ enum wined3d_format_id PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat
                     return WINED3DFMT_X8D24_UNORM;
 
                 case 32:
-                    if(DDPixelFormat->u3.dwZBitMask == 0x00FFFFFF) {
-                        return WINED3DFMT_X8D24_UNORM;
-                    } else if(DDPixelFormat->u3.dwZBitMask == 0xFFFFFFFF) {
-                        return WINED3DFMT_D32_UNORM;
-                    }
-                    FIXME("Unhandled 32 bit depth buffer bitmasks, returning WINED3DFMT_D24X8\n");
-                    return WINED3DFMT_X8D24_UNORM; /* That's most likely to make games happy */
+                    if (DDPixelFormat->u3.dwZBitMask == 0x00FFFFFF) return WINED3DFMT_X8D24_UNORM;
+                    else if (DDPixelFormat->u3.dwZBitMask == 0xFFFFFF00) return WINED3DFMT_X8D24_UNORM;
+                    else if (DDPixelFormat->u3.dwZBitMask == 0xFFFFFFFF) return WINED3DFMT_D32_UNORM;
+                    WARN("Unknown depth-only format: 32 z bits, mask 0x%08x\n",
+                            DDPixelFormat->u3.dwZBitMask);
+                    return WINED3DFMT_UNKNOWN;
 
                 default:
-                    ERR("Unsupported Z buffer depth %d\n", DDPixelFormat->u1.dwZBufferBitDepth);
+                    WARN("Unknown depth-only format: %u z bits, mask 0x%08x\n",
+                            DDPixelFormat->u1.dwZBufferBitDepth, DDPixelFormat->u3.dwZBitMask);
                     return WINED3DFMT_UNKNOWN;
             }
         }
