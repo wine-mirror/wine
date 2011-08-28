@@ -369,12 +369,10 @@ fail:
 }
 
 /* Adjust the amount of used texture memory */
-unsigned int WineD3DAdapterChangeGLRam(struct wined3d_device *device, int glram)
+unsigned int adapter_adjust_memory(struct wined3d_adapter *adapter, int amount)
 {
-    struct wined3d_adapter *adapter = device->adapter;
-
-    adapter->UsedTextureRam += glram;
-    TRACE("Adjusted gl ram by %d to %d\n", glram, adapter->UsedTextureRam);
+    adapter->UsedTextureRam += amount;
+    TRACE("Adjusted adapter memory by %d to %d.\n", amount, adapter->UsedTextureRam);
     return adapter->UsedTextureRam;
 }
 

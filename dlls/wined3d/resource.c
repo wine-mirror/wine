@@ -131,7 +131,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
             HeapFree(GetProcessHeap(), 0, resource->heapMemory);
             return WINED3DERR_OUTOFVIDEOMEMORY;
         }
-        WineD3DAdapterChangeGLRam(device, size);
+        adapter_adjust_memory(device->adapter, size);
     }
 
     device_resource_add(device, resource);
@@ -150,7 +150,7 @@ void resource_cleanup(struct wined3d_resource *resource)
     if (resource->pool == WINED3DPOOL_DEFAULT)
     {
         TRACE("Decrementing device memory pool by %u.\n", resource->size);
-        WineD3DAdapterChangeGLRam(resource->device,  0 - resource->size);
+        adapter_adjust_memory(resource->device->adapter, 0 - resource->size);
     }
 
     LIST_FOR_EACH_SAFE(e1, e2, &resource->privateData)
