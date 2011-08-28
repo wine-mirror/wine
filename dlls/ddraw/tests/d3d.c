@@ -706,20 +706,35 @@ static void SceneTest(void)
     /* Test a normal BeginScene / EndScene pair, this should work */
     hr = IDirect3DDevice7_BeginScene(lpD3DDevice);
     ok(hr == D3D_OK, "IDirect3DDevice7_BeginScene failed with %08x\n", hr);
-    if(SUCCEEDED(hr))
+    if (SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice7_EndScene(lpD3DDevice);
+        ok(hr == D3D_OK, "IDirect3DDevice7_EndScene failed with %08x\n", hr);
+    }
+
+    if (lpDDSdepth)
     {
         DDBLTFX fx;
         memset(&fx, 0, sizeof(fx));
         fx.dwSize = sizeof(fx);
 
-        if(lpDDSdepth) {
+        hr = IDirectDrawSurface7_Blt(lpDDSdepth, NULL, NULL, NULL, DDBLT_DEPTHFILL, &fx);
+        ok(hr == D3D_OK, "Depthfill failed outside a BeginScene / EndScene pair, hr 0x%08x\n", hr);
+
+        hr = IDirect3DDevice7_BeginScene(lpD3DDevice);
+        ok(hr == D3D_OK, "IDirect3DDevice7_BeginScene failed with %08x\n", hr);
+        if (SUCCEEDED(hr))
+        {
             hr = IDirectDrawSurface7_Blt(lpDDSdepth, NULL, NULL, NULL, DDBLT_DEPTHFILL, &fx);
-            ok(hr == D3D_OK, "Depthfill failed in a BeginScene / EndScene pair\n");
-        } else {
-            skip("Depth stencil creation failed at startup, skipping\n");
+            ok(hr == D3D_OK || broken(hr == E_FAIL),
+                    "Depthfill failed in a BeginScene / EndScene pair, hr 0x%08x\n", hr);
+            hr = IDirect3DDevice7_EndScene(lpD3DDevice);
+            ok(hr == D3D_OK, "IDirect3DDevice7_EndScene failed with %08x\n", hr);
         }
-        hr = IDirect3DDevice7_EndScene(lpD3DDevice);
-        ok(hr == D3D_OK, "IDirect3DDevice7_EndScene failed with %08x\n", hr);
+    }
+    else
+    {
+        skip("Depth stencil creation failed at startup, skipping depthfill test\n");
     }
 
     /* Test another EndScene without having begun a new scene. Should return an error */
