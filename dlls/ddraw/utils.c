@@ -1219,3 +1219,38 @@ void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out)
      * DDSD_TEXTURESTAGE, DDSD_FVF, DDSD_SRCVBHANDLE,
      */
 }
+
+/* Note that this function writes the full sizeof(DDSURFACEDESC) size, don't use it
+ * for writing into application-provided DDSURFACEDESC structures if the size may
+ * be different */
+void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out)
+{
+    memset(out, 0, sizeof(*out));
+    out->dwSize = sizeof(*out);
+    out->dwFlags = in->dwFlags;
+    if (in->dwFlags & DDSD_WIDTH) out->dwWidth = in->dwWidth;
+    if (in->dwFlags & DDSD_HEIGHT) out->dwHeight = in->dwHeight;
+    if (in->dwFlags & DDSD_PIXELFORMAT) out->ddpfPixelFormat = in->u4.ddpfPixelFormat;
+    /* ddsCaps is read even without DDSD_CAPS set. See dsurface:no_ddsd_caps_test */
+    out->ddsCaps.dwCaps = in->ddsCaps.dwCaps;
+    if (in->dwFlags & DDSD_PITCH) out->u1.lPitch = in->u1.lPitch;
+    if (in->dwFlags & DDSD_BACKBUFFERCOUNT) out->dwBackBufferCount = in->dwBackBufferCount;
+    if (in->dwFlags & DDSD_ZBUFFERBITDEPTH) out->u2.dwZBufferBitDepth = in->u2.dwMipMapCount; /* same union */
+    if (in->dwFlags & DDSD_ALPHABITDEPTH) out->dwAlphaBitDepth = in->dwAlphaBitDepth;
+    /* DDraw(native, and wine) does not set the DDSD_LPSURFACE, so always copy */
+    out->lpSurface = in->lpSurface;
+    if (in->dwFlags & DDSD_CKDESTOVERLAY) out->ddckCKDestOverlay = in->u3.ddckCKDestOverlay;
+    if (in->dwFlags & DDSD_CKDESTBLT) out->ddckCKDestBlt = in->ddckCKDestBlt;
+    if (in->dwFlags & DDSD_CKSRCOVERLAY) out->ddckCKSrcOverlay = in->ddckCKSrcOverlay;
+    if (in->dwFlags & DDSD_CKSRCBLT) out->ddckCKSrcBlt = in->ddckCKSrcBlt;
+    if (in->dwFlags & DDSD_MIPMAPCOUNT) out->u2.dwMipMapCount = in->u2.dwMipMapCount;
+    if (in->dwFlags & DDSD_REFRESHRATE) out->u2.dwRefreshRate = in->u2.dwRefreshRate;
+    if (in->dwFlags & DDSD_LINEARSIZE) out->u1.dwLinearSize = in->u1.dwLinearSize;
+    /* Does not exist in DDSURFACEDESC:
+     * DDSD_TEXTURESTAGE, DDSD_FVF, DDSD_SRCVBHANDLE,
+     */
+    if (in->dwFlags & DDSD_TEXTURESTAGE) WARN("Does not exist in DDSURFACEDESC: DDSD_TEXTURESTAGE\n");
+    if (in->dwFlags & DDSD_FVF) WARN("Does not exist in DDSURFACEDESC: DDSD_FVF\n");
+    if (in->dwFlags & DDSD_SRCVBHANDLE) WARN("Does not exist in DDSURFACEDESC: DDSD_SRCVBHANDLE\n");
+    out->dwFlags &= ~(DDSD_TEXTURESTAGE | DDSD_FVF | DDSD_SRCVBHANDLE);
+}

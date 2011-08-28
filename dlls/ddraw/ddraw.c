@@ -1328,6 +1328,7 @@ static HRESULT WINAPI ddraw3_GetDisplayMode(IDirectDraw3 *iface, DDSURFACEDESC *
 
     TRACE("iface %p, surface_desc %p.\n", iface, surface_desc);
 
+    /* FIXME: Test sizes, properly convert surface_desc */
     return ddraw7_GetDisplayMode(&This->IDirectDraw7_iface, (DDSURFACEDESC2 *)surface_desc);
 }
 
@@ -1337,6 +1338,7 @@ static HRESULT WINAPI ddraw2_GetDisplayMode(IDirectDraw2 *iface, DDSURFACEDESC *
 
     TRACE("iface %p, surface_desc %p.\n", iface, surface_desc);
 
+    /* FIXME: Test sizes, properly convert surface_desc */
     return ddraw7_GetDisplayMode(&This->IDirectDraw7_iface, (DDSURFACEDESC2 *)surface_desc);
 }
 
@@ -1346,6 +1348,7 @@ static HRESULT WINAPI ddraw1_GetDisplayMode(IDirectDraw *iface, DDSURFACEDESC *s
 
     TRACE("iface %p, surface_desc %p.\n", iface, surface_desc);
 
+    /* FIXME: Test sizes, properly convert surface_desc */
     return ddraw7_GetDisplayMode(&This->IDirectDraw7_iface, (DDSURFACEDESC2 *)surface_desc);
 }
 
@@ -2118,9 +2121,7 @@ static HRESULT CALLBACK EnumDisplayModesCallbackThunk(DDSURFACEDESC2 *surface_de
     struct displaymodescallback_context *cbcontext = context;
     DDSURFACEDESC desc;
 
-    memcpy(&desc, surface_desc, sizeof(desc));
-    desc.dwSize = sizeof(desc);
-
+    DDSD2_to_DDSD(surface_desc, &desc);
     return cbcontext->func(&desc, cbcontext->context);
 }
 

@@ -972,6 +972,8 @@ static HRESULT WINAPI ddraw_surface3_Lock(IDirectDrawSurface3 *iface, RECT *rect
     TRACE("iface %p, rect %s, surface_desc %p, flags %#x, h %p.\n",
             iface, wine_dbgstr_rect(rect), surface_desc, flags, h);
 
+    /* All versions of Lock() accept both sizeof(DDSURFACEDESC) and
+     * sizeof(DDSURFACEDESC2) structures and do not touch the dwSize member */
     return ddraw_surface7_Lock(&This->IDirectDrawSurface7_iface,
             rect, (DDSURFACEDESC2 *)surface_desc, flags, h);
 }
@@ -983,6 +985,10 @@ static HRESULT WINAPI ddraw_surface2_Lock(IDirectDrawSurface2 *iface, RECT *rect
     TRACE("iface %p, rect %s, surface_desc %p, flags %#x, h %p.\n",
             iface, wine_dbgstr_rect(rect), surface_desc, flags, h);
 
+    /* All versions of Lock() accept both sizeof(DDSURFACEDESC) and
+     * sizeof(DDSURFACEDESC2) structures and do not touch the dwSize member
+     *
+     * TODO: Test DDSD_ZBUFFERBITDEPTH behavior */
     return ddraw_surface7_Lock(&This->IDirectDrawSurface7_iface,
             rect, (DDSURFACEDESC2 *)surface_desc, flags, h);
 }
@@ -994,6 +1000,8 @@ static HRESULT WINAPI ddraw_surface1_Lock(IDirectDrawSurface *iface, RECT *rect,
     TRACE("iface %p, rect %s, surface_desc %p, flags %#x, h %p.\n",
             iface, wine_dbgstr_rect(rect), surface_desc, flags, h);
 
+    /* All versions of Lock() accept both sizeof(DDSURFACEDESC) and
+     * sizeof(DDSURFACEDESC2) structures and do not touch the dwSize member */
     return ddraw_surface7_Lock(&This->IDirectDrawSurface7_iface,
             rect, (DDSURFACEDESC2 *)surface_desc, flags, h);
 }
@@ -2310,6 +2318,7 @@ static HRESULT CALLBACK EnumCallback(IDirectDrawSurface7 *surface, DDSURFACEDESC
     ddraw_surface1_AddRef(&surface_impl->IDirectDrawSurface_iface);
     ddraw_surface7_Release(surface);
 
+    /* FIXME: Check surface_test.dwSize */
     return info->callback(&surface_impl->IDirectDrawSurface_iface,
             (DDSURFACEDESC *)surface_desc, info->context);
 }
@@ -2863,7 +2872,7 @@ static HRESULT WINAPI ddraw_surface3_GetSurfaceDesc(IDirectDrawSurface3 *iface, 
     }
 
     EnterCriticalSection(&ddraw_cs);
-    DD_STRUCT_COPY_BYSIZE(surface_desc, (DDSURFACEDESC *)&This->surface_desc);
+    DDSD2_to_DDSD(&This->surface_desc, surface_desc);
     TRACE("Returning surface desc:\n");
     if (TRACE_ON(ddraw))
     {

@@ -556,6 +556,7 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) DECLSPEC_HIDDEN;
 void DDRAW_dump_DDSCAPS2(const DDSCAPS2 *in) DECLSPEC_HIDDEN;
 void DDRAW_dump_cooperativelevel(DWORD cooplevel) DECLSPEC_HIDDEN;
 void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out) DECLSPEC_HIDDEN;
+void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out) DECLSPEC_HIDDEN;
 
 /* This only needs to be here as long the processvertices functionality of
  * IDirect3DExecuteBuffer isn't in WineD3D */
