@@ -581,7 +581,7 @@ void device_switch_onscreen_ds(struct wined3d_device *device,
     wined3d_surface_incref(device->onscreen_depth_stencil);
 }
 
-static BOOL is_full_clear(struct wined3d_surface *target, const RECT *draw_rect, const RECT *clear_rect)
+static BOOL is_full_clear(const struct wined3d_surface *target, const RECT *draw_rect, const RECT *clear_rect)
 {
     /* partial draw rect */
     if (draw_rect->left || draw_rect->top
