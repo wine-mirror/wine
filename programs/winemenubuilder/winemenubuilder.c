@@ -179,6 +179,7 @@ struct xdg_mime_type
 {
     char *mimeType;
     char *glob;
+    char *lower_glob;
     struct list entry;
 };
 
@@ -1994,12 +1995,20 @@ static BOOL add_mimes(const char *xdg_data_dir, struct list *mime_types)
                         *pos = 0;
                         mime_type_entry->mimeType = strdupA(line);
                         mime_type_entry->glob = strdupA(pos + 1);
-                        if (mime_type_entry->mimeType && mime_type_entry->glob)
+                        mime_type_entry->lower_glob = strdupA(pos + 1);
+                        if (mime_type_entry->lower_glob)
+                        {
+                            char *l;
+                            for (l = mime_type_entry->lower_glob; *l; l++)
+                                *l = tolower(*l);
+                        }
+                        if (mime_type_entry->mimeType && mime_type_entry->glob && mime_type_entry->lower_glob)
                             list_add_tail(mime_types, &mime_type_entry->entry);
                         else
                         {
                             HeapFree(GetProcessHeap(), 0, mime_type_entry->mimeType);
                             HeapFree(GetProcessHeap(), 0, mime_type_entry->glob);
+                            HeapFree(GetProcessHeap(), 0, mime_type_entry->lower_glob);
                             HeapFree(GetProcessHeap(), 0, mime_type_entry);
                             ret = FALSE;
                         }
@@ -2026,6 +2035,7 @@ static void free_native_mime_types(struct list *native_mime_types)
     {
         list_remove(&mime_type_entry->entry);
         HeapFree(GetProcessHeap(), 0, mime_type_entry->glob);
+        HeapFree(GetProcessHeap(), 0, mime_type_entry->lower_glob);
         HeapFree(GetProcessHeap(), 0, mime_type_entry->mimeType);
         HeapFree(GetProcessHeap(), 0, mime_type_entry);
     }
@@ -2084,7 +2094,7 @@ static BOOL build_native_mime_types(const char *xdg_data_home, struct list **mim
 }
 
 static BOOL match_glob(struct list *native_mime_types, const char *extension,
-                       char **match)
+                       int ignoreGlobCase, char **match)
 {
 #ifdef HAVE_FNMATCH
     struct xdg_mime_type *mime_type_entry;
@@ -2094,12 +2104,13 @@ static BOOL match_glob(struct list *native_mime_types, const char *extension,
 
     LIST_FOR_EACH_ENTRY(mime_type_entry, native_mime_types, struct xdg_mime_type, entry)
     {
-        if (fnmatch(mime_type_entry->glob, extension, 0) == 0)
+        const char *glob = ignoreGlobCase ? mime_type_entry->lower_glob : mime_type_entry->glob;
+        if (fnmatch(glob, extension, 0) == 0)
         {
-            if (*match == NULL || matchLength < strlen(mime_type_entry->glob))
+            if (*match == NULL || matchLength < strlen(glob))
             {
                 *match = mime_type_entry->mimeType;
-                matchLength = strlen(mime_type_entry->glob);
+                matchLength = strlen(glob);
             }
         }
     }
@@ -2123,7 +2134,7 @@ static BOOL freedesktop_mime_type_for_extension(struct list *native_mime_types,
 {
     WCHAR *lower_extensionW;
     INT len;
-    BOOL ret = match_glob(native_mime_types, extensionA, mime_type);
+    BOOL ret = match_glob(native_mime_types, extensionA, 0, mime_type);
     if (ret == FALSE || *mime_type != NULL)
         return ret;
     len = strlenW(extensionW);
@@ -2136,7 +2147,7 @@ static BOOL freedesktop_mime_type_for_extension(struct list *native_mime_types,
         lower_extensionA = wchars_to_utf8_chars(lower_extensionW);
         if (lower_extensionA)
         {
-            ret = match_glob(native_mime_types, lower_extensionA, mime_type);
+            ret = match_glob(native_mime_types, lower_extensionA, 1, mime_type);
             HeapFree(GetProcessHeap(), 0, lower_extensionA);
         }
         else
