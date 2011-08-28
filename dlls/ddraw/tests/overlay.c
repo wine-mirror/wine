@@ -215,7 +215,7 @@ static void yv12_test(void)
     ok(desc.dwWidth == 256 && desc.dwHeight == 256, "Expected size 256x256, got %ux%u\n",
        desc.dwWidth, desc.dwHeight);
     /* The overlay pitch seems to have 256 byte alignment */
-    ok(U1(desc).lPitch == 256, "Unexpected pitch %u, expected 256\n", U1(desc).lPitch);
+    ok((U1(desc).lPitch & 0xff) == 0, "Expected 256 byte aligned pitch, got %u\n", U1(desc).lPitch);
 
     hr = IDirectDrawSurface7_Unlock(surface, NULL);
     ok(hr == DD_OK, "IDirectDrawSurface7_Unlock returned 0x%08x, expected DD_OK\n", hr);
