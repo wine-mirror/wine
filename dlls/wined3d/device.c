@@ -879,7 +879,7 @@ ULONG CDECL wined3d_device_decref(struct wined3d_device *device)
     return refcount;
 }
 
-UINT CDECL wined3d_device_get_swapchain_count(struct wined3d_device *device)
+UINT CDECL wined3d_device_get_swapchain_count(const struct wined3d_device *device)
 {
     TRACE("device %p.\n", device);
 
