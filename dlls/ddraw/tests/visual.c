@@ -210,16 +210,24 @@ out:
     return ret;
 }
 
-/*
- * Helper function to get and set the viewport - needed on geforce 8800 on XP - driver bug?
- * This is needed after IDirect3DDevice7_SetRenderTarget in combination with offscreen to backbuffer rendering.
- */
-static void set_the_same_viewport_again(IDirect3DDevice7 *device)
+static void set_viewport_size(IDirect3DDevice7 *device)
 {
     D3DVIEWPORT7 vp = {0};
+    DDSURFACEDESC2 ddsd;
     HRESULT hr;
-    hr = IDirect3DDevice7_GetViewport(device,&vp);
-    ok(hr == D3D_OK && vp.dwWidth == 640 && vp.dwHeight == 480, "IDirect3DDevice7_SetViewport returned %08x\n", hr);
+    IDirectDrawSurface7 *target;
+
+    hr = IDirect3DDevice7_GetRenderTarget(device, &target);
+    ok(hr == D3D_OK, "IDirect3DDevice7_GetRenderTarget returned %08x\n", hr);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    IDirectDrawSurface7_GetSurfaceDesc(target, &ddsd);
+    ok(hr == D3D_OK, "IDirectDrawSurface7_GetSurfaceDesc returned %08x\n", hr);
+    IDirectDrawSurface7_Release(target);
+
+    vp.dwWidth = ddsd.dwWidth;
+    vp.dwHeight = ddsd.dwHeight;
     hr = IDirect3DDevice7_SetViewport(device, &vp);
     ok(hr == D3D_OK, "IDirect3DDevice7_SetViewport returned %08x\n", hr);
     return;
@@ -831,6 +839,7 @@ static void offscreen_test(IDirect3DDevice7 *device)
     if(IDirect3DDevice7_BeginScene(device) == D3D_OK) {
         hr = IDirect3DDevice7_SetRenderTarget(device, offscreen, 0);
         ok(hr == D3D_OK, "SetRenderTarget failed, hr = %08x\n", hr);
+        set_viewport_size(device);
         hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
         ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
 
@@ -840,7 +849,7 @@ static void offscreen_test(IDirect3DDevice7 *device)
 
         hr = IDirect3DDevice7_SetRenderTarget(device, backbuffer, 0);
         ok(hr == D3D_OK, "SetRenderTarget failed, hr = %08x\n", hr);
-        set_the_same_viewport_again(device);
+        set_viewport_size(device);
 
         hr = IDirect3DDevice7_SetTexture(device, 0, offscreen);
         ok(hr == D3D_OK, "SetTexture failed, %08x\n", hr);
@@ -987,7 +996,8 @@ static void alpha_test(IDirect3DDevice7 *device)
          * vertices
          */
         hr = IDirect3DDevice7_SetRenderTarget(device, offscreen, 0);
-        ok(hr == D3D_OK, "Can't get back buffer, hr = %08x\n", hr);
+        ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderTarget failed, hr = %08x\n", hr);
+        set_viewport_size(device);
         hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x80ff0000, 0.0, 0);
         ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
 
@@ -1006,8 +1016,8 @@ static void alpha_test(IDirect3DDevice7 *device)
         ok(hr == D3D_OK, "DrawPrimitive failed, hr = %08x\n", hr);
 
         hr = IDirect3DDevice7_SetRenderTarget(device, backbuffer, 0);
-        ok(hr == D3D_OK, "Can't get back buffer, hr = %08x\n", hr);
-        set_the_same_viewport_again(device);
+        ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderTarget failed, hr = %08x\n", hr);
+        set_viewport_size(device);
 
         /* Render the offscreen texture onto the frame buffer to be able to compare it regularly.
          * Disable alpha blending for the final composition
