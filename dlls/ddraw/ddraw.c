@@ -717,12 +717,6 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
             return DDERR_INVALIDPARAMS;
         }
     }
-    else if( !(cooplevel & DDSCL_NORMAL) )
-    {
-        TRACE("(%p) SetCooperativeLevel needs at least SetFocusWindow or Exclusive or Normal mode\n", This);
-        LeaveCriticalSection(&ddraw_cs);
-        return DDERR_INVALIDPARAMS;
-    }
 
     if ((This->cooperative_level & DDSCL_EXCLUSIVE)
             && (hwnd != window || !(cooplevel & DDSCL_EXCLUSIVE)))
