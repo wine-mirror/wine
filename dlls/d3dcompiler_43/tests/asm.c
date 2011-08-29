@@ -1440,7 +1440,7 @@ static HRESULT WINAPI testD3DInclude_open(ID3DInclude *iface, D3D_INCLUDE_TYPE i
     char include3[] = "vs.1.1\n";
 
     trace("filename %s\n", filename);
-    trace("parent_data (%p) -> %s\n", parent_data, (char *)parent_data);
+    trace("parent_data (%p) -> %s\n", parent_data, parent_data ? (char *)parent_data : "(null)");
 
     if (!strcmp(filename, "incl.vsh"))
     {
