@@ -2574,7 +2574,7 @@ int CDECL X11DRV_AcquireClipboard(HWND hWndClipWindow)
     else
     {
         HANDLE event = CreateEventW(NULL, FALSE, FALSE, NULL);
-        selectionThread = CreateThread(NULL, 0, &selection_thread_proc, event, 0, NULL);
+        selectionThread = CreateThread(NULL, 0, selection_thread_proc, event, 0, NULL);
 
         if (!selectionThread)
         {
