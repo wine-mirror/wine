@@ -32,6 +32,7 @@
 #include <windows.h>
 #include <shobjidl.h>
 #include <shlobj.h>
+#include <shlwapi.h>
 #include <commoncontrols.h>
 #include <commctrl.h>
 
@@ -755,6 +756,9 @@ int WINAPI wWinMain(HINSTANCE hinstance,
         WINE_ERR("Could not initialize COM\n");
         ExitProcess(EXIT_FAILURE);
     }
+    if(parameters.root[0] && !PathIsDirectoryW(parameters.root))
+        if(ShellExecuteW(NULL,NULL,parameters.root,NULL,NULL,SW_SHOWDEFAULT) > (HINSTANCE)32)
+            ExitProcess(EXIT_SUCCESS);
     init_info.dwSize = sizeof(INITCOMMONCONTROLSEX);
     init_info.dwICC = ICC_USEREX_CLASSES | ICC_BAR_CLASSES | ICC_COOL_CLASSES;
     if(!InitCommonControlsEx(&init_info))
