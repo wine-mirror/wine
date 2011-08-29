@@ -1083,6 +1083,36 @@ rem Oddly windows allows file creation in a read-only directory...
 if exist baz\lala (echo file created in read-only dir) else echo file not created
 cd .. & rd /s/q foobar
 
+echo ------------ Testing assoc --------------
+rem FIXME Can't test error messages in the current test system, so we have to use some kludges
+rem FIXME Revise once || conditional execution is fixed
+mkdir foobar & cd foobar
+echo ...setting association
+assoc .foo > baz
+type baz
+echo ***
+
+assoc .foo=bar
+assoc .foo
+
+rem association set system-wide
+echo @echo off> tmp.cmd
+echo echo +++>> tmp.cmd
+echo assoc .foo>> tmp.cmd
+cmd /c tmp.cmd
+
+echo ...resetting association
+assoc .foo=
+assoc .foo > baz
+type baz
+echo ***
+
+rem association removal set system-wide
+cmd /c tmp.cmd > baz
+type baz
+echo ***
+cd .. & rd /s/q foobar
+
 echo ------------ Testing CALL --------------
 mkdir foobar & cd foobar
 rem External script

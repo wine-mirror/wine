@@ -654,6 +654,17 @@ Read-only file forcibly deleted
 toto
 lulu
 file created in read-only dir
+------------ Testing assoc --------------
+...setting association
+***
+.foo=bar
+@todo_wine@.foo=bar
++++
+@todo_wine@.foo=bar
+...resetting association
+***
++++
+***
 ------------ Testing CALL --------------
 foo@space@
 foo 8
