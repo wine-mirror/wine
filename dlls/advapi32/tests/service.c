@@ -2065,7 +2065,7 @@ cleanup:
     CloseServiceHandle(scm_handle);
 }
 
-static DWORD try_start_stop(SC_HANDLE svc_handle, const char* name, int todo, DWORD is_nt4)
+static DWORD try_start_stop(SC_HANDLE svc_handle, const char* name, DWORD is_nt4)
 {
     BOOL ret;
     DWORD le1, le2;
@@ -2082,24 +2082,21 @@ static DWORD try_start_stop(SC_HANDLE svc_handle, const char* name, int todo, DW
 
         ret = pQueryServiceStatusEx(svc_handle, SC_STATUS_PROCESS_INFO, (BYTE*)&statusproc, sizeof(statusproc), &needed);
         ok(ret, "%s: QueryServiceStatusEx() failed le=%u\n", name, GetLastError());
-        todo_wine ok(statusproc.dwCurrentState == SERVICE_STOPPED, "%s: should be stopped state=%x\n", name, statusproc.dwCurrentState);
-        todo_wine ok(statusproc.dwProcessId == 0, "%s: ProcessId should be 0 instead of %x\n", name, statusproc.dwProcessId);
+        ok(statusproc.dwCurrentState == SERVICE_STOPPED, "%s: should be stopped state=%x\n", name, statusproc.dwCurrentState);
+        ok(statusproc.dwProcessId == 0, "%s: ProcessId should be 0 instead of %x\n", name, statusproc.dwProcessId);
     }
 
     ret = StartServiceA(svc_handle, 0, NULL);
     le2 = GetLastError();
     ok(!ret, "%s: StartServiceA() should have failed\n", name);
-    if (todo)
-        todo_wine ok(le2 == le1, "%s: the second try should yield the same error: %u != %u\n", name, le1, le2);
-    else
-        ok(le2 == le1, "%s: the second try should yield the same error: %u != %u\n", name, le1, le2);
+    ok(le2 == le1, "%s: the second try should yield the same error: %u != %u\n", name, le1, le2);
 
     status.dwCurrentState = 0xdeadbeef;
     ret = ControlService(svc_handle, SERVICE_CONTROL_STOP, &status);
     le2 = GetLastError();
     ok(!ret, "%s: ControlService() should have failed\n", name);
     todo_wine ok(le2 == ERROR_SERVICE_NOT_ACTIVE, "%s: %d != ERROR_SERVICE_NOT_ACTIVE\n", name, le2);
-    todo_wine ok(status.dwCurrentState == SERVICE_STOPPED ||
+    ok(status.dwCurrentState == SERVICE_STOPPED ||
        broken(is_nt4), /* NT4 returns a random value */
        "%s: should be stopped state=%x\n", name, status.dwCurrentState);
 
@@ -2153,14 +2150,14 @@ static void test_start_stop(void)
             ok(FALSE, "Could not create the service: %d\n", GetLastError());
         goto cleanup;
     }
-    le = try_start_stop(svc_handle, displayname, 1, is_nt4);
+    le = try_start_stop(svc_handle, displayname, is_nt4);
     todo_wine ok(le == ERROR_SERVICE_DISABLED, "%d != ERROR_SERVICE_DISABLED\n", le);
 
     /* Then one with a bad path */
     displayname = "Winetest Bad Path";
     ret = ChangeServiceConfigA(svc_handle, SERVICE_NO_CHANGE, SERVICE_DEMAND_START, SERVICE_NO_CHANGE, "c:\\no_such_file.exe", NULL, NULL, NULL, NULL, NULL, displayname);
     ok(ret, "ChangeServiceConfig() failed le=%u\n", GetLastError());
-    try_start_stop(svc_handle, displayname, 0, is_nt4);
+    try_start_stop(svc_handle, displayname, is_nt4);
 
     if (is_nt4)
     {
@@ -2175,8 +2172,8 @@ static void test_start_stop(void)
     displayname = "Winetest Exit Service";
     ret = ChangeServiceConfigA(svc_handle, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, cmd, NULL, NULL, NULL, NULL, NULL, displayname);
     ok(ret, "ChangeServiceConfig() failed le=%u\n", GetLastError());
-    le = try_start_stop(svc_handle, displayname, 0, is_nt4);
-    todo_wine ok(le == ERROR_SERVICE_REQUEST_TIMEOUT, "%d != ERROR_SERVICE_REQUEST_TIMEOUT\n", le);
+    le = try_start_stop(svc_handle, displayname, is_nt4);
+    ok(le == ERROR_SERVICE_REQUEST_TIMEOUT, "%d != ERROR_SERVICE_REQUEST_TIMEOUT\n", le);
 
     /* And finally with a service that plays dead, forcing a timeout.
      * This time we will put no quotes. That should work too, even if there are
@@ -2187,8 +2184,8 @@ static void test_start_stop(void)
     ret = ChangeServiceConfigA(svc_handle, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, cmd, NULL, NULL, NULL, NULL, NULL, displayname);
     ok(ret, "ChangeServiceConfig() failed le=%u\n", GetLastError());
 
-    le = try_start_stop(svc_handle, displayname, 0, is_nt4);
-    todo_wine ok(le == ERROR_SERVICE_REQUEST_TIMEOUT, "%d != ERROR_SERVICE_REQUEST_TIMEOUT\n", le);
+    le = try_start_stop(svc_handle, displayname, is_nt4);
+    ok(le == ERROR_SERVICE_REQUEST_TIMEOUT, "%d != ERROR_SERVICE_REQUEST_TIMEOUT\n", le);
 
 cleanup:
     if (svc_handle)

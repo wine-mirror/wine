@@ -772,25 +772,43 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
     {
         WINE_ERR("failed to create pipe for %s, error = %d\n",
             wine_dbgstr_w(service->name), GetLastError());
-        scmdatabase_unlock_startup(service->db);
-        return GetLastError();
+        err = GetLastError();
     }
-
-    err = service_start_process(service, &process_handle);
-
-    if (err == ERROR_SUCCESS)
+    else
     {
-        if (!service_send_start_message(service, process_handle, service_argv, service_argc))
-            err = ERROR_SERVICE_REQUEST_TIMEOUT;
+        err = service_start_process(service, &process_handle);
+        if (err == ERROR_SUCCESS)
+        {
+            if (!service_send_start_message(service, process_handle, service_argv, service_argc))
+                err = ERROR_SERVICE_REQUEST_TIMEOUT;
+        }
+
+        if (err == ERROR_SUCCESS)
+            err = service_wait_for_startup(service, process_handle);
+
+        if (process_handle)
+            CloseHandle(process_handle);
     }
 
     if (err == ERROR_SUCCESS)
-        err = service_wait_for_startup(service, process_handle);
+        ReleaseMutex(service->control_mutex);
+    else
+    {
+        CloseHandle(service->overlapped_event);
+        service->overlapped_event = NULL;
+        CloseHandle(service->status_changed_event);
+        service->status_changed_event = NULL;
+        CloseHandle(service->control_mutex);
+        service->control_mutex = NULL;
+        if (service->control_pipe != INVALID_HANDLE_VALUE)
+            CloseHandle(service->control_pipe);
+        service->control_pipe = INVALID_HANDLE_VALUE;
 
-    if (process_handle)
-        CloseHandle(process_handle);
-
-    ReleaseMutex(service->control_mutex);
+        service->status.dwProcessId = 0;
+        service_lock_exclusive(service);
+        service->status.dwCurrentState = SERVICE_STOPPED;
+        service_unlock(service);
+    }
     scmdatabase_unlock_startup(service->db);
 
     WINE_TRACE("returning %d\n", err);
