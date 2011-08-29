@@ -1,0 +1,7 @@
+TESTDLL   = dpnet.dll
+IMPORTS   = dpnet ole32
+
+C_SRCS = \
+	peer.c
+
+@MAKE_TEST_RULES@

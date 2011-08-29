@@ -14800,6 +14800,7 @@ wine_fn_config_dll dplayx enable_dplayx implib
 wine_fn_config_test dlls/dplayx/tests dplayx_test
 wine_fn_config_dll dpnaddr enable_dpnaddr
 wine_fn_config_dll dpnet enable_dpnet implib
+wine_fn_config_test dlls/dpnet/tests dpnet_test
 wine_fn_config_dll dpnhpast enable_dpnhpast
 wine_fn_config_dll dpnlobby enable_dpnlobby
 wine_fn_config_dll dpwsockx enable_dpwsockx
