@@ -334,6 +334,7 @@ typedef struct {
     StringGlyphs* glyphs;
     SCRIPT_LOGATTR* logattrs;
     SIZE* sz;
+    int* logical2visual;
 } StringAnalysis;
 
 static inline void *heap_alloc(SIZE_T size)
@@ -910,6 +911,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
     SCRIPT_CONTROL sControl;
     SCRIPT_STATE sState;
     int i, num_items = 255;
+    BYTE   *BidiLevel;
 
     TRACE("(%p,%p,%d,%d,%d,0x%x,%d,%p,%p,%p,%p,%p,%p)\n",
           hdc, pString, cString, cGlyphs, iCharset, dwFlags, iReqWidth,
@@ -965,6 +967,11 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
     if (!(analysis->glyphs = heap_alloc_zero(sizeof(StringGlyphs) * analysis->numItems)))
         goto error;
 
+    if (!(analysis->logical2visual = heap_alloc_zero(sizeof(int) * analysis->numItems)))
+        goto error;
+    if (!(BidiLevel = heap_alloc_zero(analysis->numItems)))
+        goto error;
+
     for (i = 0; i < analysis->numItems; i++)
     {
         SCRIPT_CACHE *sc = (SCRIPT_CACHE *)&analysis->sc;
@@ -994,7 +1001,12 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
         analysis->glyphs[i].pGoffset = pGoffset;
         analysis->glyphs[i].abc = abc;
         analysis->glyphs[i].iMaxPosX= -1;
+
+        BidiLevel[i] = analysis->pItem[i].a.s.uBidiLevel;
     }
+
+    ScriptLayout(analysis->numItems, BidiLevel, NULL, analysis->logical2visual);
+    heap_free(BidiLevel);
 
     *pssa = analysis;
     return S_OK;
@@ -1003,6 +1015,7 @@ error:
     heap_free(analysis->glyphs);
     heap_free(analysis->logattrs);
     heap_free(analysis->pItem);
+    heap_free(analysis->logical2visual);
     heap_free(analysis->sc);
     heap_free(analysis);
     return hr;
@@ -1064,24 +1077,23 @@ HRESULT WINAPI ScriptStringOut(SCRIPT_STRING_ANALYSIS ssa,
     uOptions |= ETO_GLYPH_INDEX;
     analysis->pItem[0].a.fNoGlyphIndex = FALSE; /* say that we have glyphs */
 
+    TRACE("numItems %d\n", analysis->numItems);
+
     /*
      * Copy the string items into the output buffer
      */
-
-    TRACE("numItems %d\n", analysis->numItems);
-
     cnt = 0;
     for (item = 0; item < analysis->numItems; item++)
     {
-        memcpy(&glyphs[cnt], analysis->glyphs[item].glyphs,
-              sizeof(WCHAR) * analysis->glyphs[item].numGlyphs);
+        memcpy(&glyphs[cnt], analysis->glyphs[analysis->logical2visual[item]].glyphs,
+              sizeof(WCHAR) * analysis->glyphs[analysis->logical2visual[item]].numGlyphs);
 
-        TRACE("Item %d, Glyphs %d ", item, analysis->glyphs[item].numGlyphs);
-        for (x = cnt; x < analysis->glyphs[item].numGlyphs + cnt; x ++)
+        TRACE("Item %d, Glyphs %d ", analysis->logical2visual[item], analysis->glyphs[analysis->logical2visual[item]].numGlyphs);
+        for (x = cnt; x < analysis->glyphs[analysis->logical2visual[item]].numGlyphs + cnt; x ++)
             TRACE("%04x", glyphs[x]);
         TRACE("\n");
 
-        cnt += analysis->glyphs[item].numGlyphs; /* point to the end of the copied text */
+        cnt += analysis->glyphs[analysis->logical2visual[item]].numGlyphs; /* point to the end of the copied text */
     }
 
     hr = ScriptTextOut(analysis->hdc, (SCRIPT_CACHE *)&analysis->sc, iX, iY,
@@ -1102,7 +1114,7 @@ HRESULT WINAPI ScriptStringOut(SCRIPT_STRING_ANALYSIS ssa,
  */
 HRESULT WINAPI ScriptStringCPtoX(SCRIPT_STRING_ANALYSIS ssa, int icp, BOOL fTrailing, int* pX)
 {
-    int i;
+    int item;
     int runningX = 0;
     StringAnalysis* analysis = ssa;
 
@@ -1117,10 +1129,13 @@ HRESULT WINAPI ScriptStringCPtoX(SCRIPT_STRING_ANALYSIS ssa, int icp, BOOL fTrai
         return E_INVALIDARG;
     }
 
-    for(i=0; i<analysis->numItems; i++)
+    for(item=0; item<analysis->numItems; item++)
     {
-        int CP = analysis->pItem[i+1].iCharPos - analysis->pItem[i].iCharPos;
+        int CP, i;
         int offset;
+
+        i = analysis->logical2visual[item];
+        CP = analysis->pItem[i+1].iCharPos - analysis->pItem[i].iCharPos;
         /* initialize max extents for uninitialized runs */
         if (analysis->glyphs[i].iMaxPosX == -1)
         {
@@ -1134,13 +1149,13 @@ HRESULT WINAPI ScriptStringCPtoX(SCRIPT_STRING_ANALYSIS ssa, int icp, BOOL fTrai
                             &analysis->pItem[i].a, &analysis->glyphs[i].iMaxPosX);
         }
 
-        if (icp >= CP)
+        if (icp >= analysis->pItem[i+1].iCharPos || icp < analysis->pItem[i].iCharPos)
         {
             runningX += analysis->glyphs[i].iMaxPosX;
-            icp -= CP;
             continue;
         }
 
+        icp -= analysis->pItem[i].iCharPos;
         ScriptCPtoX(icp, fTrailing, CP, analysis->glyphs[i].numGlyphs, analysis->glyphs[i].pwLogClust,
                     analysis->glyphs[i].psva, analysis->glyphs[i].piAdvance,
                     &analysis->pItem[i].a, &offset);
@@ -1162,8 +1177,7 @@ HRESULT WINAPI ScriptStringCPtoX(SCRIPT_STRING_ANALYSIS ssa, int icp, BOOL fTrai
 HRESULT WINAPI ScriptStringXtoCP(SCRIPT_STRING_ANALYSIS ssa, int iX, int* piCh, int* piTrailing)
 {
     StringAnalysis* analysis = ssa;
-    int i;
-    int runningCp = 0;
+    int item;
 
     TRACE("(%p), %d, (%p), (%p)\n", ssa, iX, piCh, piTrailing);
 
@@ -1185,9 +1199,15 @@ HRESULT WINAPI ScriptStringXtoCP(SCRIPT_STRING_ANALYSIS ssa, int iX, int* piCh, 
         return S_OK;
     }
 
-    for(i=0; i<analysis->numItems; i++)
+    for(item=0; item<analysis->numItems; item++)
     {
-        int CP = analysis->pItem[i+1].iCharPos - analysis->pItem[i].iCharPos;
+        int i;
+        int CP;
+
+        for (i = 0; i < analysis->numItems && analysis->logical2visual[i] != item; i++)
+        /* nothing */;
+
+        CP = analysis->pItem[i+1].iCharPos - analysis->pItem[i].iCharPos;
         /* initialize max extents for uninitialized runs */
         if (analysis->glyphs[i].iMaxPosX == -1)
         {
@@ -1204,14 +1224,13 @@ HRESULT WINAPI ScriptStringXtoCP(SCRIPT_STRING_ANALYSIS ssa, int iX, int* piCh, 
         if (iX > analysis->glyphs[i].iMaxPosX)
         {
             iX -= analysis->glyphs[i].iMaxPosX;
-            runningCp += CP;
             continue;
         }
 
         ScriptXtoCP(iX, CP, analysis->glyphs[i].numGlyphs, analysis->glyphs[i].pwLogClust,
                     analysis->glyphs[i].psva, analysis->glyphs[i].piAdvance,
                     &analysis->pItem[i].a, piCh, piTrailing);
-        *piCh += runningCp;
+        *piCh += analysis->pItem[i].iCharPos;
 
         return S_OK;
     }
@@ -1264,6 +1283,7 @@ HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa)
     heap_free(analysis->logattrs);
     heap_free(analysis->sz);
     heap_free(analysis->sc);
+    heap_free(analysis->logical2visual);
     heap_free(analysis);
 
     if (invalid) return E_INVALIDARG;
