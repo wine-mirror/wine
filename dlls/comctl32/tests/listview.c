@@ -372,7 +372,7 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
               /* always accept new item text */
               NMLVDISPINFO *di = (NMLVDISPINFO*)lParam;
               g_editbox_disp_info = *di;
-              trace("LVN_ENDLABELEDIT: text=%s\n", di->item.pszText);
+              trace("LVN_ENDLABELEDIT: text=%s\n", di->item.pszText ? di->item.pszText : "(null)");
 
               /* edit control still available from this notification */
               edit = (HWND)SendMessageA(((NMHDR*)lParam)->hwndFrom, LVM_GETEDITCONTROL, 0, 0);
