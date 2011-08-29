@@ -1021,6 +1021,81 @@ error:
     return hr;
 }
 
+static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
+                           int iX,
+                           int iY,
+                           int iItem,
+                           int cStart,
+                           int cEnd,
+                           UINT uOptions,
+                           const RECT *prc,
+                           BOOL fDisabled)
+{
+    StringAnalysis *analysis;
+    int off_x = 0;
+    HRESULT hr;
+    INT runStart, runEnd;
+    INT iGlyph, cGlyphs;
+
+    TRACE("(%p,%d,%d,%d,%d,%d, 0x%1x, %d)\n",
+         ssa, iX, iY, iItem, cStart, cEnd, uOptions, fDisabled);
+
+    if (!(analysis = ssa)) return E_INVALIDARG;
+
+    if ((cStart >= 0 && analysis->pItem[iItem+1].iCharPos <= cStart) ||
+         (cEnd >= 0 && analysis->pItem[iItem].iCharPos >= cEnd))
+            return S_OK;
+
+    uOptions |= ETO_GLYPH_INDEX;
+    analysis->pItem[0].a.fNoGlyphIndex = FALSE; /* say that we have glyphs */
+
+    if (cStart >= 0 && analysis->pItem[iItem+1].iCharPos > cStart && analysis->pItem[iItem].iCharPos <= cStart)
+        runStart = cStart - analysis->pItem[iItem].iCharPos;
+    else
+        runStart =  0;
+    if (cEnd >= 0 && analysis->pItem[iItem+1].iCharPos > cEnd && analysis->pItem[iItem].iCharPos <= cEnd)
+        runEnd = (cEnd-1) - analysis->pItem[iItem].iCharPos;
+    else
+        runEnd = (analysis->pItem[iItem+1].iCharPos - analysis->pItem[iItem].iCharPos) - 1;
+
+    if (analysis->pItem[iItem].a.fRTL)
+    {
+        if (cEnd >= 0 && cEnd < analysis->pItem[iItem+1].iCharPos)
+            ScriptStringCPtoX(ssa, cEnd, FALSE, &off_x);
+        else
+            ScriptStringCPtoX(ssa, analysis->pItem[iItem+1].iCharPos-1, TRUE, &off_x);
+    }
+    else
+    {
+        if (cStart >=0 && runStart)
+            ScriptStringCPtoX(ssa, cStart, FALSE, &off_x);
+        else
+            ScriptStringCPtoX(ssa, analysis->pItem[iItem].iCharPos, FALSE, &off_x);
+    }
+
+    if (analysis->pItem[iItem].a.fRTL)
+        iGlyph = analysis->glyphs[iItem].pwLogClust[runEnd];
+    else
+        iGlyph = analysis->glyphs[iItem].pwLogClust[runStart];
+
+    if (analysis->pItem[iItem].a.fRTL)
+        cGlyphs = analysis->glyphs[iItem].pwLogClust[runStart] - iGlyph;
+    else
+        cGlyphs = analysis->glyphs[iItem].pwLogClust[runEnd] - iGlyph;
+
+    cGlyphs++;
+
+    hr = ScriptTextOut(analysis->hdc, (SCRIPT_CACHE *)&analysis->sc, iX + off_x,
+                       iY, uOptions, prc, &analysis->pItem[iItem].a, NULL, 0,
+                       &analysis->glyphs[iItem].glyphs[iGlyph], cGlyphs,
+                       &analysis->glyphs[iItem].piAdvance[iGlyph], NULL,
+                       &analysis->glyphs[iItem].pGoffset[iGlyph]);
+
+    TRACE("ScriptTextOut hr=%08x\n", hr);
+
+    return hr;
+}
+
 /***********************************************************************
  *      ScriptStringOut (USP10.@)
  *
@@ -1052,8 +1127,7 @@ HRESULT WINAPI ScriptStringOut(SCRIPT_STRING_ANALYSIS ssa,
                                BOOL fDisabled)
 {
     StringAnalysis *analysis;
-    WORD *glyphs;
-    int   item, cnt, x;
+    int   item;
     HRESULT hr;
 
     TRACE("(%p,%d,%d,0x%1x,%p,%d,%d,%d)\n",
@@ -1061,51 +1135,14 @@ HRESULT WINAPI ScriptStringOut(SCRIPT_STRING_ANALYSIS ssa,
 
     if (!(analysis = ssa)) return E_INVALIDARG;
 
-    /*
-     * Get storage for the output buffer for the consolidated strings
-     */
-    cnt = 0;
     for (item = 0; item < analysis->numItems; item++)
     {
-        cnt += analysis->glyphs[item].numGlyphs;
-    }
-    if (!(glyphs = heap_alloc(sizeof(WCHAR) * cnt))) return E_OUTOFMEMORY;
-
-    /*
-     * ScriptStringOut only processes glyphs hence set ETO_GLYPH_INDEX
-     */
-    uOptions |= ETO_GLYPH_INDEX;
-    analysis->pItem[0].a.fNoGlyphIndex = FALSE; /* say that we have glyphs */
-
-    TRACE("numItems %d\n", analysis->numItems);
-
-    /*
-     * Copy the string items into the output buffer
-     */
-    cnt = 0;
-    for (item = 0; item < analysis->numItems; item++)
-    {
-        memcpy(&glyphs[cnt], analysis->glyphs[analysis->logical2visual[item]].glyphs,
-              sizeof(WCHAR) * analysis->glyphs[analysis->logical2visual[item]].numGlyphs);
-
-        TRACE("Item %d, Glyphs %d ", analysis->logical2visual[item], analysis->glyphs[analysis->logical2visual[item]].numGlyphs);
-        for (x = cnt; x < analysis->glyphs[analysis->logical2visual[item]].numGlyphs + cnt; x ++)
-            TRACE("%04x", glyphs[x]);
-        TRACE("\n");
-
-        cnt += analysis->glyphs[analysis->logical2visual[item]].numGlyphs; /* point to the end of the copied text */
+        hr = SS_ItemOut( ssa, iX, iY, analysis->logical2visual[item], -1, -1, uOptions, prc, fDisabled);
+        if (FAILED(hr))
+            return hr;
     }
 
-    hr = ScriptTextOut(analysis->hdc, (SCRIPT_CACHE *)&analysis->sc, iX, iY,
-                       uOptions, prc, &analysis->pItem->a, NULL, 0, glyphs, cnt,
-                       analysis->glyphs->piAdvance, NULL, analysis->glyphs->pGoffset);
-    TRACE("ScriptTextOut hr=%08x\n", hr);
-
-    /*
-     * Free the output buffer and script cache
-     */
-    heap_free(glyphs);
-    return hr;
+    return S_OK;
 }
 
 /***********************************************************************
