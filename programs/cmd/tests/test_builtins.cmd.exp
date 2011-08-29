@@ -658,9 +658,9 @@ file created in read-only dir
 ...setting association
 ***
 .foo=bar
-@todo_wine@.foo=bar
+.foo=bar
 +++
-@todo_wine@.foo=bar
+.foo=bar
 ...resetting association
 ***
 +++

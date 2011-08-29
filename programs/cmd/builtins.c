@@ -2943,7 +2943,8 @@ void WCMD_assoc (const WCHAR *command, BOOL assoc) {
                               accessOptions, NULL, &readKey, NULL);
           if (rc == ERROR_SUCCESS) {
             rc = RegSetValueExW(readKey, NULL, 0, REG_SZ,
-                                 (LPBYTE)newValue, strlenW(newValue));
+                                (LPBYTE)newValue,
+                                sizeof(WCHAR) * (strlenW(newValue) + 1));
             RegCloseKey(readKey);
           }
 
