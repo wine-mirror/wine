@@ -2594,7 +2594,7 @@ static INT LISTVIEW_MapIdToIndex(const LISTVIEW_INFO *infoPtr, UINT iID)
     if (infoPtr->nItemCount == 0) return -1;
 
     ID.id = iID;
-    index = DPA_Search(infoPtr->hdpaItemIds, &ID, -1, &MapIdSearchCompare, 0, DPAS_SORTED);
+    index = DPA_Search(infoPtr->hdpaItemIds, &ID, -1, MapIdSearchCompare, 0, DPAS_SORTED);
 
     if (index != -1)
     {
