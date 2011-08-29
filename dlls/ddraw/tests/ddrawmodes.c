@@ -407,8 +407,8 @@ static void enumdisplaymodes(void)
     ddsd.dwFlags = DDSD_PIXELFORMAT;
     ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
     U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 16;
-    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x7C00;
-    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x03E0;
+    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0xf800;
+    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x07e0;
     U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x001F;
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
