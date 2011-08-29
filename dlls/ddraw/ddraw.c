@@ -596,6 +596,31 @@ static ULONG WINAPI d3d1_Release(IDirect3D *iface)
  * IDirectDraw methods
  *****************************************************************************/
 
+static HRESULT ddraw_set_focus_window(IDirectDrawImpl *ddraw, HWND window)
+{
+    /* FIXME: This looks wrong, exclusive mode should imply a destination
+     * window. */
+    if ((ddraw->cooperative_level & DDSCL_EXCLUSIVE) && ddraw->dest_window)
+    {
+        TRACE("Setting DDSCL_SETFOCUSWINDOW with an already set window, returning DDERR_HWNDALREADYSET.\n");
+        return DDERR_HWNDALREADYSET;
+    }
+
+    ddraw->focuswindow = window;
+
+    /* Use the focus window for drawing too. */
+    ddraw->dest_window = ddraw->focuswindow;
+
+    /* Destroy the device window, if we have one. */
+    if (ddraw->devicewindow)
+    {
+        DestroyWindow(ddraw->devicewindow);
+        ddraw->devicewindow = NULL;
+    }
+
+    return DD_OK;
+}
+
 /*****************************************************************************
  * IDirectDraw7::SetCooperativeLevel
  *
@@ -644,6 +669,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw7(iface);
     HWND window;
+    HRESULT hr;
 
     TRACE("iface %p, window %p, flags %#x.\n", iface, hwnd, cooplevel);
     DDRAW_dump_cooperativelevel(cooplevel);
@@ -683,29 +709,9 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
             return DDERR_INVALIDPARAMS;
         }
 
-        if( (This->cooperative_level & DDSCL_EXCLUSIVE) && window )
-        {
-            TRACE("Setting DDSCL_SETFOCUSWINDOW with an already set window, returning DDERR_HWNDALREADYSET\n");
-            LeaveCriticalSection(&ddraw_cs);
-            return DDERR_HWNDALREADYSET;
-        }
-
-        This->focuswindow = hwnd;
-        /* Won't use the hwnd param for anything else */
-        hwnd = NULL;
-
-        /* Use the focus window for drawing too */
-        This->dest_window = This->focuswindow;
-
-        /* Destroy the device window, if we have one */
-        if(This->devicewindow)
-        {
-            DestroyWindow(This->devicewindow);
-            This->devicewindow = NULL;
-        }
-
+        hr = ddraw_set_focus_window(This, hwnd);
         LeaveCriticalSection(&ddraw_cs);
-        return DD_OK;
+        return hr;
     }
 
     if(cooplevel & DDSCL_EXCLUSIVE)
@@ -740,7 +746,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
     if ((cooplevel & DDSCL_EXCLUSIVE)
             && (hwnd != window || !(This->cooperative_level & DDSCL_EXCLUSIVE)))
     {
-        HRESULT hr = wined3d_device_acquire_focus_window(This->wined3d_device, hwnd);
+        hr = wined3d_device_acquire_focus_window(This->wined3d_device, hwnd);
         if (FAILED(hr))
         {
             ERR("Failed to acquire focus window, hr %#x.\n", hr);
