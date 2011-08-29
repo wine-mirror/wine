@@ -147,7 +147,7 @@ static void find_default_printer(VOID)
         needed = sizeof(buffer);
         res = pGetDefaultPrinterA(buffer, &needed);
         if(res)  default_printer = buffer;
-        trace("default_printer: '%s'\n", default_printer);
+        trace("default_printer: '%s'\n", default_printer ? default_printer : "(null)");
     }
     if (default_printer == NULL)
     {
@@ -170,7 +170,7 @@ static void find_default_printer(VOID)
             }
             RegCloseKey(hwindows);
         }
-        trace("default_printer: '%s'\n", default_printer);
+        trace("default_printer: '%s'\n", default_printer ? default_printer : "(null)");
     }
     if (default_printer == NULL)
     {
@@ -184,7 +184,7 @@ static void find_default_printer(VOID)
                 default_printer = buffer;
             }
         }
-        trace("default_printer: '%s'\n", default_printer);
+        trace("default_printer: '%s'\n", default_printer ? default_printer : "(null)");
     }
 }
 
