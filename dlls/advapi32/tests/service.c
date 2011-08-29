@@ -2095,7 +2095,7 @@ static DWORD try_start_stop(SC_HANDLE svc_handle, const char* name, DWORD is_nt4
     ret = ControlService(svc_handle, SERVICE_CONTROL_STOP, &status);
     le2 = GetLastError();
     ok(!ret, "%s: ControlService() should have failed\n", name);
-    todo_wine ok(le2 == ERROR_SERVICE_NOT_ACTIVE, "%s: %d != ERROR_SERVICE_NOT_ACTIVE\n", name, le2);
+    ok(le2 == ERROR_SERVICE_NOT_ACTIVE, "%s: %d != ERROR_SERVICE_NOT_ACTIVE\n", name, le2);
     ok(status.dwCurrentState == SERVICE_STOPPED ||
        broken(is_nt4), /* NT4 returns a random value */
        "%s: should be stopped state=%x\n", name, status.dwCurrentState);

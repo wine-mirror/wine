@@ -1023,12 +1023,6 @@ DWORD __cdecl svcctl_ControlService(
         lpServiceStatus->dwWaitHint = service->service_entry->status.dwWaitHint;
     }
 
-    if (!service_accepts_control(service->service_entry, dwControl))
-    {
-        service_unlock(service->service_entry);
-        return ERROR_INVALID_SERVICE_CONTROL;
-    }
-
     switch (service->service_entry->status.dwCurrentState)
     {
     case SERVICE_STOPPED:
@@ -1041,6 +1035,12 @@ DWORD __cdecl svcctl_ControlService(
     case SERVICE_STOP_PENDING:
         service_unlock(service->service_entry);
         return ERROR_SERVICE_CANNOT_ACCEPT_CTRL;
+    }
+
+    if (!service_accepts_control(service->service_entry, dwControl))
+    {
+        service_unlock(service->service_entry);
+        return ERROR_INVALID_SERVICE_CONTROL;
     }
 
     /* prevent races by caching these variables and clearing them on
