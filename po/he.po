@@ -8266,11 +8266,25 @@ msgid ""
 "association, if any.\n"
 msgstr ""
 
-#: cmd.rc:234
+#: cmd.rc:243
+msgid ""
+"FTYPE shows or modifies open commands associated with file types\n"
+"\n"
+"Syntax: FTYPE [fileType[=[openCommand]]]\n"
+"\n"
+"Without parameters, shows the file types for which open command strings are "
+"currently defined.\n"
+"If used with only a file type, displays the associated open command string, "
+"if any.\n"
+"Specifying no open command after the equal sign removes the command string "
+"associated to the specified file type.\n"
+msgstr ""
+
+#: cmd.rc:245
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE displays output of files or piped input in pages.\n"
 
-#: cmd.rc:238
+#: cmd.rc:249
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -8280,7 +8294,7 @@ msgstr ""
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 
-#: cmd.rc:242
+#: cmd.rc:253
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -8288,7 +8302,7 @@ msgstr ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
 
-#: cmd.rc:276
+#: cmd.rc:288
 #, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
@@ -8305,6 +8319,7 @@ msgid ""
 "DIR\t\tList the contents of a directory\n"
 "ECHO\t\tCopy text directly to the console output\n"
 "ENDLOCAL\tEnd localization of environment changes in a batch file\n"
+"FTYPE\t\tShow or modify open commands associated with file types\n"
 "HELP\t\tShow brief help details on a topic\n"
 "MD (MKDIR)\tCreate a subdirectory\n"
 "MORE\t\tDisplay output in pages\n"
@@ -8360,41 +8375,41 @@ msgstr ""
 "\n"
 "Enter HELP <command> for further information on any of the above commands\n"
 
-#: cmd.rc:278
+#: cmd.rc:290
 msgid "Are you sure"
 msgstr "Are you sure"
 
-#: cmd.rc:279 xcopy.rc:40
+#: cmd.rc:291 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "Y"
 
-#: cmd.rc:280 xcopy.rc:41
+#: cmd.rc:292 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:281
+#: cmd.rc:293
 msgid "File association missing for extension %s\n"
 msgstr "File association missing for extension %s\n"
 
-#: cmd.rc:282
+#: cmd.rc:294
 msgid "No open command associated with file type '%s'\n"
 msgstr "No open command associated with file type '%s'\n"
 
-#: cmd.rc:283
+#: cmd.rc:295
 msgid "Overwrite %s"
 msgstr "Overwrite %s"
 
-#: cmd.rc:284
+#: cmd.rc:296
 msgid "More..."
 msgstr "More..."
 
-#: cmd.rc:285
+#: cmd.rc:297
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Line in Batch processing possibly truncated. Using:\n"
 
-#: cmd.rc:286
+#: cmd.rc:298
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -8402,80 +8417,80 @@ msgstr ""
 "Not Yet Implemented\n"
 "\n"
 
-#: cmd.rc:287
+#: cmd.rc:299
 msgid "Argument missing\n"
 msgstr "Argument missing\n"
 
-#: cmd.rc:288
+#: cmd.rc:300
 msgid "Syntax error\n"
 msgstr "Syntax error\n"
 
-#: cmd.rc:289
+#: cmd.rc:301
 msgid "%s: File Not Found\n"
 msgstr "%s: File Not Found\n"
 
-#: cmd.rc:290
+#: cmd.rc:302
 msgid "No help available for %s\n"
 msgstr "No help available for %s\n"
 
-#: cmd.rc:291
+#: cmd.rc:303
 msgid "Target to GOTO not found\n"
 msgstr "Target to GOTO not found\n"
 
-#: cmd.rc:292
+#: cmd.rc:304
 msgid "Current Date is %s\n"
 msgstr "Current Date is %s\n"
 
-#: cmd.rc:293
+#: cmd.rc:305
 msgid "Current Time is %s\n"
 msgstr "Current Time is %s\n"
 
-#: cmd.rc:294
+#: cmd.rc:306
 msgid "Enter new date: "
 msgstr "Enter new date: "
 
-#: cmd.rc:295
+#: cmd.rc:307
 msgid "Enter new time: "
 msgstr "Enter new time: "
 
-#: cmd.rc:296
+#: cmd.rc:308
 msgid "Environment variable %s not defined\n"
 msgstr "Environment variable %s not defined\n"
 
-#: cmd.rc:297 xcopy.rc:38
+#: cmd.rc:309 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr "Failed to open '%s'\n"
 
-#: cmd.rc:298
+#: cmd.rc:310
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Cannot call batch label outside of a batch script\n"
 
-#: cmd.rc:299 xcopy.rc:42
+#: cmd.rc:311 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:300
+#: cmd.rc:312
 msgid "%s, Delete"
 msgstr "%s, Delete"
 
-#: cmd.rc:301
+#: cmd.rc:313
 msgid "Echo is %s\n"
 msgstr "Echo is %s\n"
 
-#: cmd.rc:302
+#: cmd.rc:314
 msgid "Verify is %s\n"
 msgstr "Verify is %s\n"
 
-#: cmd.rc:303
+#: cmd.rc:315
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify must be ON or OFF\n"
 
-#: cmd.rc:304
+#: cmd.rc:316
 msgid "Parameter error\n"
 msgstr "Parameter error\n"
 
-#: cmd.rc:305
+#: cmd.rc:317
 msgid ""
 "Volume in drive %c is %s\n"
 "Volume Serial Number is %04x-%04x\n"
@@ -8485,31 +8500,31 @@ msgstr ""
 "Volume Serial Number is %04x-%04x\n"
 "\n"
 
-#: cmd.rc:306
+#: cmd.rc:318
 msgid "Volume label (11 characters, ENTER for none)?"
 msgstr "Volume label (11 characters, ENTER for none)?"
 
-#: cmd.rc:307
+#: cmd.rc:319
 msgid "PATH not found\n"
 msgstr "PATH not found\n"
 
-#: cmd.rc:308
+#: cmd.rc:320
 msgid "Press Return key to continue: "
 msgstr "Press Return key to continue: "
 
-#: cmd.rc:309
+#: cmd.rc:321
 msgid "Wine Command Prompt"
 msgstr "Wine Command Prompt"
 
-#: cmd.rc:310
+#: cmd.rc:322
 msgid "CMD Version %s\n"
 msgstr "CMD Version %s\n"
 
-#: cmd.rc:311
+#: cmd.rc:323
 msgid "More? "
 msgstr "More? "
 
-#: cmd.rc:312
+#: cmd.rc:324
 msgid "The input line is too long.\n"
 msgstr "The input line is too long.\n"
 

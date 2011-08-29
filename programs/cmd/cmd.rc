@@ -231,6 +231,17 @@ ASSOC without parameters displays current file associations.\n\
 If used with only a file extension, displays the current association.\n\
 Specifying no file type after the equal sign removes the current association, if any.\n"
 
+  WCMD_FTYPE,   "FTYPE shows or modifies open commands associated with file types\n\
+\n\
+Syntax: FTYPE [fileType[=[openCommand]]]\n\
+\n\
+Without parameters, shows the file types for which open command strings \
+are currently defined.\n\
+If used with only a file type, displays the associated open command string, \
+if any.\n\
+Specifying no open command after the equal sign removes the command string \
+associated to the specified file type.\n"
+
   WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
 
   WCMD_CHOICE, "CHOICE displays a text and waits, until the User\n\
@@ -255,6 +266,7 @@ DEL (ERASE)\tDelete a file or set of files\n\
 DIR\t\tList the contents of a directory\n\
 ECHO\t\tCopy text directly to the console output\n\
 ENDLOCAL\tEnd localization of environment changes in a batch file\n\
+FTYPE\t\tShow or modify open commands associated with file types\n\
 HELP\t\tShow brief help details on a topic\n\
 MD (MKDIR)\tCreate a subdirectory\n\
 MORE\t\tDisplay output in pages\n\
