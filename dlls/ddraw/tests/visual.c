@@ -54,13 +54,24 @@ static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
     return TRUE;
 }
 
+static HRESULT WINAPI enum_z_fmt(DDPIXELFORMAT *fmt, void *ctx)
+{
+    DDPIXELFORMAT *zfmt = ctx;
+
+    if(U1(fmt)->dwZBufferBitDepth > U1(zfmt)->dwZBufferBitDepth)
+    {
+        *zfmt = *fmt;
+    }
+    return DDENUMRET_OK;
+}
+
 static BOOL createObjects(void)
 {
     HRESULT hr;
     HMODULE hmod = GetModuleHandleA("ddraw.dll");
     WNDCLASS wc = {0};
     DDSURFACEDESC2 ddsd;
-
+    DDPIXELFORMAT zfmt;
 
     if(!hmod) return FALSE;
     pDirectDrawCreateEx = (void*)GetProcAddress(hmod, "DirectDrawCreateEx");
@@ -106,14 +117,16 @@ static BOOL createObjects(void)
     hr = IDirectDraw7_CreateSurface(DirectDraw, &ddsd, &Surface, NULL);
     if(FAILED(hr)) goto err;
 
+    memset(&zfmt, 0, sizeof(zfmt));
+    hr = IDirect3D7_EnumZBufferFormats(Direct3D, &IID_IDirect3DTnLHalDevice, enum_z_fmt, &zfmt);
+    if (FAILED(hr)) goto err;
+    if (zfmt.dwSize == 0) goto err;
+
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
     ddsd.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
-    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
-    U1(U4(ddsd).ddpfPixelFormat).dwZBufferBitDepth = 32;
-    U3(U4(ddsd).ddpfPixelFormat).dwZBitMask = 0x00ffffff;
+    U4(ddsd).ddpfPixelFormat = zfmt;
     ddsd.dwWidth = 640;
     ddsd.dwHeight = 480;
     hr = IDirectDraw7_CreateSurface(DirectDraw, &ddsd, &depth_buffer, NULL);
