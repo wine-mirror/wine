@@ -8145,11 +8145,23 @@ msgstr ""
 "POPD は PUSHD で最後に保存されたディレクトリにカレント ディレクトリを変\n"
 "更します。\n"
 
-#: cmd.rc:226
+#: cmd.rc:232
+msgid ""
+"ASSOC shows or modifies file extension associations\n"
+"\n"
+"Syntax: ASSOC [.ext[=[fileType]]]\n"
+"\n"
+"ASSOC without parameters displays current file associations.\n"
+"If used with only a file extension, displays the current association.\n"
+"Specifying no file type after the equal sign removes the current "
+"association, if any.\n"
+msgstr ""
+
+#: cmd.rc:234
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE はファイルの出力やパイプ化された入力を表示します。\n"
 
-#: cmd.rc:230
+#: cmd.rc:238
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -8159,7 +8171,7 @@ msgstr ""
 "すまで待機します。\n"
 "CHOICE は主にバッチ ファイルでメニュー選択を構築するために使われます。\n"
 
-#: cmd.rc:234
+#: cmd.rc:242
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -8167,10 +8179,11 @@ msgstr ""
 "EXIT は現在のコマンドセッションを終了してcmdを呼び出したOSまたはシェルに戻し"
 "ます。\n"
 
-#: cmd.rc:267
+#: cmd.rc:276
 #, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
+"ASSOC\t\tShow or modify file extension associations\n"
 "ATTRIB\t\tShow or change DOS file attributes\n"
 "CALL\t\tInvoke a batch file from inside another\n"
 "CD (CHDIR)\tChange current default directory\n"
@@ -8237,41 +8250,41 @@ msgstr ""
 "上記のコマンドに関する詳細を表示するには HELP <コマンド名> と入力して下さ"
 "い。\n"
 
-#: cmd.rc:269
+#: cmd.rc:278
 msgid "Are you sure"
 msgstr "よろしいですか"
 
-#: cmd.rc:270 xcopy.rc:40
+#: cmd.rc:279 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "Y"
 
-#: cmd.rc:271 xcopy.rc:41
+#: cmd.rc:280 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:272
+#: cmd.rc:281
 msgid "File association missing for extension %s\n"
 msgstr "拡張子 %s に対するファイル関連付けがありません。\n"
 
-#: cmd.rc:273
+#: cmd.rc:282
 msgid "No open command associated with file type '%s'\n"
 msgstr "ファイル タイプ '%s' に関連付けられた開くコマンドがありません。\n"
 
-#: cmd.rc:274
+#: cmd.rc:283
 msgid "Overwrite %s"
 msgstr "上書き %s"
 
-#: cmd.rc:275
+#: cmd.rc:284
 msgid "More..."
 msgstr "More..."
 
-#: cmd.rc:276
+#: cmd.rc:285
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "バッチ処理の行が切り落とされた可能性があります。対象行:\n"
 
-#: cmd.rc:277
+#: cmd.rc:286
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -8279,80 +8292,80 @@ msgstr ""
 "まだ実装されていません\n"
 "\n"
 
-#: cmd.rc:278
+#: cmd.rc:287
 msgid "Argument missing\n"
 msgstr "引数がありません\n"
 
-#: cmd.rc:279
+#: cmd.rc:288
 msgid "Syntax error\n"
 msgstr "文法エラー\n"
 
-#: cmd.rc:280
+#: cmd.rc:289
 msgid "%s: File Not Found\n"
 msgstr "%s: ファイルが見つかりません\n"
 
-#: cmd.rc:281
+#: cmd.rc:290
 msgid "No help available for %s\n"
 msgstr "%s に対するヘルプはありません\n"
 
-#: cmd.rc:282
+#: cmd.rc:291
 msgid "Target to GOTO not found\n"
 msgstr "GOTO の対象が見つかりません\n"
 
-#: cmd.rc:283
+#: cmd.rc:292
 msgid "Current Date is %s\n"
 msgstr "現在の日付は %s\n"
 
-#: cmd.rc:284
+#: cmd.rc:293
 msgid "Current Time is %s\n"
 msgstr "現在の時刻は %s\n"
 
-#: cmd.rc:285
+#: cmd.rc:294
 msgid "Enter new date: "
 msgstr "新しい日付を入力してください: "
 
-#: cmd.rc:286
+#: cmd.rc:295
 msgid "Enter new time: "
 msgstr "新しい時刻を入力してください: "
 
-#: cmd.rc:287
+#: cmd.rc:296
 msgid "Environment variable %s not defined\n"
 msgstr "環境変数 %s は定義されていません\n"
 
-#: cmd.rc:288 xcopy.rc:38
+#: cmd.rc:297 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr "'%s' を開けません\n"
 
-#: cmd.rc:289
+#: cmd.rc:298
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "バッチ スクリプトの外からバッチ ラベルを呼び出すことはできません\n"
 
-#: cmd.rc:290 xcopy.rc:42
+#: cmd.rc:299 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:291
+#: cmd.rc:300
 msgid "%s, Delete"
 msgstr "%s, 削除"
 
-#: cmd.rc:292
+#: cmd.rc:301
 msgid "Echo is %s\n"
 msgstr "Echo は %s\n"
 
-#: cmd.rc:293
+#: cmd.rc:302
 msgid "Verify is %s\n"
 msgstr "Verify は %s\n"
 
-#: cmd.rc:294
+#: cmd.rc:303
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify は ON か OFF で指定してください\n"
 
-#: cmd.rc:295
+#: cmd.rc:304
 msgid "Parameter error\n"
 msgstr "パラメータ エラー\n"
 
-#: cmd.rc:296
+#: cmd.rc:305
 msgid ""
 "Volume in drive %c is %s\n"
 "Volume Serial Number is %04x-%04x\n"
@@ -8362,31 +8375,31 @@ msgstr ""
 "ボリューム シリアル番号は %04x-%04x\n"
 "\n"
 
-#: cmd.rc:297
+#: cmd.rc:306
 msgid "Volume label (11 characters, ENTER for none)?"
 msgstr "ボリューム ラベル(半角11文字, ENTER で無指定)?"
 
-#: cmd.rc:298
+#: cmd.rc:307
 msgid "PATH not found\n"
 msgstr "PATH が見つかりません\n"
 
-#: cmd.rc:299
+#: cmd.rc:308
 msgid "Press Return key to continue: "
 msgstr "続けるにはリターンキーを押して下さい: "
 
-#: cmd.rc:300
+#: cmd.rc:309
 msgid "Wine Command Prompt"
 msgstr "Wine コマンド プロンプト"
 
-#: cmd.rc:301
+#: cmd.rc:310
 msgid "CMD Version %s\n"
 msgstr "CMD バージョン %s\n"
 
-#: cmd.rc:302
+#: cmd.rc:311
 msgid "More? "
 msgstr "More? "
 
-#: cmd.rc:303
+#: cmd.rc:312
 msgid "The input line is too long.\n"
 msgstr "入力行が長すぎます。\n"
 

@@ -223,6 +223,14 @@ stack, and then changes the current directory to the supplied one.\n"
   WCMD_POPD,   "POPD changes current directory to the last one saved with\n\
 PUSHD.\n"
 
+  WCMD_ASSOC,   "ASSOC shows or modifies file extension associations\n\
+\n\
+Syntax: ASSOC [.ext[=[fileType]]]\n\
+\n\
+ASSOC without parameters displays current file associations.\n\
+If used with only a file extension, displays the current association.\n\
+Specifying no file type after the equal sign removes the current association, if any.\n"
+
   WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
 
   WCMD_CHOICE, "CHOICE displays a text and waits, until the User\n\
@@ -234,6 +242,7 @@ CHOICE is mainly used to build a menu selection in a batch file.\n"
 to the operating system or shell from which you invoked cmd.\n"
 
   WCMD_ALLHELP, "CMD built-in commands are:\n\
+ASSOC\t\tShow or modify file extension associations\n\
 ATTRIB\t\tShow or change DOS file attributes\n\
 CALL\t\tInvoke a batch file from inside another\n\
 CD (CHDIR)\tChange current default directory\n\

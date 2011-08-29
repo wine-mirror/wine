@@ -8121,12 +8121,24 @@ msgid ""
 "PUSHD.\n"
 msgstr "POPD는 현재 디렉토리를 PUSH로 마지막으로 저장했던 것으로 바꾼다.\n"
 
-#: cmd.rc:226
+#: cmd.rc:232
+msgid ""
+"ASSOC shows or modifies file extension associations\n"
+"\n"
+"Syntax: ASSOC [.ext[=[fileType]]]\n"
+"\n"
+"ASSOC without parameters displays current file associations.\n"
+"If used with only a file extension, displays the current association.\n"
+"Specifying no file type after the equal sign removes the current "
+"association, if any.\n"
+msgstr ""
+
+#: cmd.rc:234
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr ""
 "MORE는 파일 출력을 보여주거나 페이지의 파이프로도 된 입력을 보여준다.\n"
 
-#: cmd.rc:230
+#: cmd.rc:238
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -8136,7 +8148,7 @@ msgstr ""
 "허용하는 키를 누를 때까지 기다립니다.\n"
 "CHOICE는 주로 배치 파일에서 메뉴 선택을 넣는 데 사용됩니다..\n"
 
-#: cmd.rc:234
+#: cmd.rc:242
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -8144,9 +8156,11 @@ msgstr ""
 "EXIT는 현재 명령 세션을 중단시키고 운영체제로 돌아가거나 cmd를\n"
 "호출한 셀로 돌아갑니다.\n"
 
-#: cmd.rc:267
+#: cmd.rc:276
+#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
+"ASSOC\t\tShow or modify file extension associations\n"
 "ATTRIB\t\tShow or change DOS file attributes\n"
 "CALL\t\tInvoke a batch file from inside another\n"
 "CD (CHDIR)\tChange current default directory\n"
@@ -8212,41 +8226,41 @@ msgstr ""
 "\n"
 "HELP <명령>을 치면 그 명령의 상세한 정보를 보여줌\n"
 
-#: cmd.rc:269
+#: cmd.rc:278
 msgid "Are you sure"
 msgstr "당신은 확신합니까?"
 
-#: cmd.rc:270 xcopy.rc:40
+#: cmd.rc:279 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "예"
 
-#: cmd.rc:271 xcopy.rc:41
+#: cmd.rc:280 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "아니오"
 
-#: cmd.rc:272
+#: cmd.rc:281
 msgid "File association missing for extension %s\n"
 msgstr "이 파일확장자 %s에 연결된 풀그림이 없습니다.\n"
 
-#: cmd.rc:273
+#: cmd.rc:282
 msgid "No open command associated with file type '%s'\n"
 msgstr "이 파일 형식 '%s'과 연결된 어떠한 명령도 없습니다.'\n"
 
-#: cmd.rc:274
+#: cmd.rc:283
 msgid "Overwrite %s"
 msgstr "%s 덮어쓰기"
 
-#: cmd.rc:275
+#: cmd.rc:284
 msgid "More..."
 msgstr "더 많이..."
 
-#: cmd.rc:276
+#: cmd.rc:285
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "배치 작업의 줄은 아마도 불완전한 것 같습니다. 사용법:\n"
 
-#: cmd.rc:277
+#: cmd.rc:286
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -8254,80 +8268,80 @@ msgstr ""
 "아직 구현되지 않았습니다\n"
 "\n"
 
-#: cmd.rc:278
+#: cmd.rc:287
 msgid "Argument missing\n"
 msgstr "인수가 없습니다\n"
 
-#: cmd.rc:279
+#: cmd.rc:288
 msgid "Syntax error\n"
 msgstr "문법 오류\n"
 
-#: cmd.rc:280
+#: cmd.rc:289
 msgid "%s: File Not Found\n"
 msgstr "%s :파일을 찾을 수 없습니다\n"
 
-#: cmd.rc:281
+#: cmd.rc:290
 msgid "No help available for %s\n"
 msgstr "%s를 위한 어떠한 도움말도 찾을 수 없습니다\n"
 
-#: cmd.rc:282
+#: cmd.rc:291
 msgid "Target to GOTO not found\n"
 msgstr "GOTO 타겟을 찾을 수 없습니다\n"
 
-#: cmd.rc:283
+#: cmd.rc:292
 msgid "Current Date is %s\n"
 msgstr "현재 날짜는 %s\n"
 
-#: cmd.rc:284
+#: cmd.rc:293
 msgid "Current Time is %s\n"
 msgstr "현재 시간은 %s\n"
 
-#: cmd.rc:285
+#: cmd.rc:294
 msgid "Enter new date: "
 msgstr "새 날짜 입력: "
 
-#: cmd.rc:286
+#: cmd.rc:295
 msgid "Enter new time: "
 msgstr "새 시간 입력: "
 
-#: cmd.rc:287
+#: cmd.rc:296
 msgid "Environment variable %s not defined\n"
 msgstr "환경 변수 %s 는 정의되지 않았습니다\n"
 
-#: cmd.rc:288 xcopy.rc:38
+#: cmd.rc:297 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr "'%s' 열기 실패\n"
 
-#: cmd.rc:289
+#: cmd.rc:298
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "배치 스크립트 밖의 배치 라벨은 불러올수 없습니다\n"
 
-#: cmd.rc:290 xcopy.rc:42
+#: cmd.rc:299 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:291
+#: cmd.rc:300
 msgid "%s, Delete"
 msgstr "%s, 삭제"
 
-#: cmd.rc:292
+#: cmd.rc:301
 msgid "Echo is %s\n"
 msgstr "에코(Echo)는 %s\n"
 
-#: cmd.rc:293
+#: cmd.rc:302
 msgid "Verify is %s\n"
 msgstr "검증(Verify)은 %s\n"
 
-#: cmd.rc:294
+#: cmd.rc:303
 msgid "Verify must be ON or OFF\n"
 msgstr "검증(Verify)은 반드시 ON 이나 OFF가 되어야 합니다.\n"
 
-#: cmd.rc:295
+#: cmd.rc:304
 msgid "Parameter error\n"
 msgstr "매개변수 오류\n"
 
-#: cmd.rc:296
+#: cmd.rc:305
 msgid ""
 "Volume in drive %c is %s\n"
 "Volume Serial Number is %04x-%04x\n"
@@ -8337,31 +8351,31 @@ msgstr ""
 " 볼륨 시리얼 번호는 %04x-%04x\n"
 "\n"
 
-#: cmd.rc:297
+#: cmd.rc:306
 msgid "Volume label (11 characters, ENTER for none)?"
 msgstr "볼륨 라벨 (11 글자, ENTER는 없음과 같음)?"
 
-#: cmd.rc:298
+#: cmd.rc:307
 msgid "PATH not found\n"
 msgstr "PATH를 찾을 수 없습니다\n"
 
-#: cmd.rc:299
+#: cmd.rc:308
 msgid "Press Return key to continue: "
 msgstr "리턴 키를 누르면 계속: "
 
-#: cmd.rc:300
+#: cmd.rc:309
 msgid "Wine Command Prompt"
 msgstr "Wine 명령 입력대기"
 
-#: cmd.rc:301
+#: cmd.rc:310
 msgid "CMD Version %s\n"
 msgstr "CMD 버젼 %s\n"
 
-#: cmd.rc:302
+#: cmd.rc:311
 msgid "More? "
 msgstr " 더? "
 
-#: cmd.rc:303
+#: cmd.rc:312
 msgid "The input line is too long.\n"
 msgstr "이 출력 줄은 너무 깁니다.\n"
 

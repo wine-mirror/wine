@@ -8421,19 +8421,31 @@ msgid ""
 "PUSHD.\n"
 msgstr "POPD ændrer arbejdskatalog til det som sidst blev brugt med PUSHD.\n"
 
-#: cmd.rc:226
+#: cmd.rc:232
+msgid ""
+"ASSOC shows or modifies file extension associations\n"
+"\n"
+"Syntax: ASSOC [.ext[=[fileType]]]\n"
+"\n"
+"ASSOC without parameters displays current file associations.\n"
+"If used with only a file extension, displays the current association.\n"
+"Specifying no file type after the equal sign removes the current "
+"association, if any.\n"
+msgstr ""
+
+#: cmd.rc:234
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr ""
 "MORE lader dig bladre gennem indholdet af filer eller inddata fra en pipe.\n"
 
-#: cmd.rc:230
+#: cmd.rc:238
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
 
-#: cmd.rc:234
+#: cmd.rc:242
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -8441,10 +8453,11 @@ msgstr ""
 "EXIT afslutter gældende CMD og returnerer til operativsystemet eller det\n"
 "program CMD blev startet af.\n"
 
-#: cmd.rc:267
+#: cmd.rc:276
 #, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
+"ASSOC\t\tShow or modify file extension associations\n"
 "ATTRIB\t\tShow or change DOS file attributes\n"
 "CALL\t\tInvoke a batch file from inside another\n"
 "CD (CHDIR)\tChange current default directory\n"
@@ -8509,41 +8522,41 @@ msgstr ""
 "\n"
 "Skriv «HELP <kommando>» for mere information om kommandoerne ovenover\n"
 
-#: cmd.rc:269
+#: cmd.rc:278
 msgid "Are you sure"
 msgstr "Er du sikker"
 
-#: cmd.rc:270 xcopy.rc:40
+#: cmd.rc:279 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "J"
 
-#: cmd.rc:271 xcopy.rc:41
+#: cmd.rc:280 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:272
+#: cmd.rc:281
 msgid "File association missing for extension %s\n"
 msgstr "Manglende filtilknytning for efternavnet %s\n"
 
-#: cmd.rc:273
+#: cmd.rc:282
 msgid "No open command associated with file type '%s'\n"
 msgstr "Ingen åbnekommando er tilknyttet filtypene '%s'\n"
 
-#: cmd.rc:274
+#: cmd.rc:283
 msgid "Overwrite %s"
 msgstr "Overskriv %s"
 
-#: cmd.rc:275
+#: cmd.rc:284
 msgid "More..."
 msgstr "Mere..."
 
-#: cmd.rc:276
+#: cmd.rc:285
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Linie i batchfil muligvis forkortet. Using:\n"
 
-#: cmd.rc:277
+#: cmd.rc:286
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -8551,80 +8564,80 @@ msgstr ""
 "Ikke implementeret endnu\n"
 "\n"
 
-#: cmd.rc:278
+#: cmd.rc:287
 msgid "Argument missing\n"
 msgstr "Argument mangler\n"
 
-#: cmd.rc:279
+#: cmd.rc:288
 msgid "Syntax error\n"
 msgstr "Syntaks fejl\n"
 
-#: cmd.rc:280
+#: cmd.rc:289
 msgid "%s: File Not Found\n"
 msgstr "%s : Filen ikke fundet\n"
 
-#: cmd.rc:281
+#: cmd.rc:290
 msgid "No help available for %s\n"
 msgstr "Ingen hjælp tilgængelig for %s\n"
 
-#: cmd.rc:282
+#: cmd.rc:291
 msgid "Target to GOTO not found\n"
 msgstr "GOTO Destination ikke fundet\n"
 
-#: cmd.rc:283
+#: cmd.rc:292
 msgid "Current Date is %s\n"
 msgstr "Nuværende Dato er %s\n"
 
-#: cmd.rc:284
+#: cmd.rc:293
 msgid "Current Time is %s\n"
 msgstr "Nuværende Tid er %s\n"
 
-#: cmd.rc:285
+#: cmd.rc:294
 msgid "Enter new date: "
 msgstr "Skriv ny dato: "
 
-#: cmd.rc:286
+#: cmd.rc:295
 msgid "Enter new time: "
 msgstr "Skriv ny tid: "
 
-#: cmd.rc:287
+#: cmd.rc:296
 msgid "Environment variable %s not defined\n"
 msgstr "Miljøvariable %s ikke defineret\n"
 
-#: cmd.rc:288 xcopy.rc:38
+#: cmd.rc:297 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr "Kunne ikke åbne «%s»\n"
 
-#: cmd.rc:289
+#: cmd.rc:298
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Kunn ikke kalde batch label udefra batchskriptet\n"
 
-#: cmd.rc:290 xcopy.rc:42
+#: cmd.rc:299 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:291
+#: cmd.rc:300
 msgid "%s, Delete"
 msgstr "%s, Slet"
 
-#: cmd.rc:292
+#: cmd.rc:301
 msgid "Echo is %s\n"
 msgstr "Echo er %s\n"
 
-#: cmd.rc:293
+#: cmd.rc:302
 msgid "Verify is %s\n"
 msgstr "Verify er %s\n"
 
-#: cmd.rc:294
+#: cmd.rc:303
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify skal være ON eller OFF\n"
 
-#: cmd.rc:295
+#: cmd.rc:304
 msgid "Parameter error\n"
 msgstr "Parameter fejl\n"
 
-#: cmd.rc:296
+#: cmd.rc:305
 msgid ""
 "Volume in drive %c is %s\n"
 "Volume Serial Number is %04x-%04x\n"
@@ -8634,31 +8647,31 @@ msgstr ""
 "Volume Seriel Nummer is %04x-%04x\n"
 "\n"
 
-#: cmd.rc:297
+#: cmd.rc:306
 msgid "Volume label (11 characters, ENTER for none)?"
 msgstr "Volumen's label (11 karaktere, ENTER for ingen)?"
 
-#: cmd.rc:298
+#: cmd.rc:307
 msgid "PATH not found\n"
 msgstr "PATH ikke fundet\n"
 
-#: cmd.rc:299
+#: cmd.rc:308
 msgid "Press Return key to continue: "
 msgstr "Tryk Return for at fortsætte: "
 
-#: cmd.rc:300
+#: cmd.rc:309
 msgid "Wine Command Prompt"
 msgstr "Wine Command Prompt"
 
-#: cmd.rc:301
+#: cmd.rc:310
 msgid "CMD Version %s\n"
 msgstr "CMD Version %s\n"
 
-#: cmd.rc:302
+#: cmd.rc:311
 msgid "More? "
 msgstr "Mere? "
 
-#: cmd.rc:303
+#: cmd.rc:312
 msgid "The input line is too long.\n"
 msgstr "The input line is too long.\n"
 

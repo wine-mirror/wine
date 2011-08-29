@@ -8241,11 +8241,23 @@ msgstr ""
 "POPD remplace le répertoire courant par le dernier enregistré à l'aide de\n"
 "PUSHD.\n"
 
-#: cmd.rc:226
+#: cmd.rc:232
+msgid ""
+"ASSOC shows or modifies file extension associations\n"
+"\n"
+"Syntax: ASSOC [.ext[=[fileType]]]\n"
+"\n"
+"ASSOC without parameters displays current file associations.\n"
+"If used with only a file extension, displays the current association.\n"
+"Specifying no file type after the equal sign removes the current "
+"association, if any.\n"
+msgstr ""
+
+#: cmd.rc:234
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE affiche le contenu de fichiers ou l'entrée standard par pages.\n"
 
-#: cmd.rc:230
+#: cmd.rc:238
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -8256,7 +8268,7 @@ msgstr ""
 "CHOICE est principalement utilisé pour construire une sélection de menu dans "
 "un fichier batch.\n"
 
-#: cmd.rc:234
+#: cmd.rc:242
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -8264,9 +8276,11 @@ msgstr ""
 "EXIT termine la session de ligne de commande et retourne\n"
 "au système d'exploitation ou au shell où vous avez invoqué cmd.\n"
 
-#: cmd.rc:267
+#: cmd.rc:276
+#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
+"ASSOC\t\tShow or modify file extension associations\n"
 "ATTRIB\t\tShow or change DOS file attributes\n"
 "CALL\t\tInvoke a batch file from inside another\n"
 "CD (CHDIR)\tChange current default directory\n"
@@ -8337,42 +8351,42 @@ msgstr ""
 "\n"
 "Entrez HELP <commande> pour plus d'informations sur les commandes ci-dessus\n"
 
-#: cmd.rc:269
+#: cmd.rc:278
 msgid "Are you sure"
 msgstr "Êtes-vous sûr(e)"
 
-#: cmd.rc:270 xcopy.rc:40
+#: cmd.rc:279 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "O"
 
-#: cmd.rc:271 xcopy.rc:41
+#: cmd.rc:280 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:272
+#: cmd.rc:281
 msgid "File association missing for extension %s\n"
 msgstr "Association de fichier manquante pour l'extension %s\n"
 
-#: cmd.rc:273
+#: cmd.rc:282
 msgid "No open command associated with file type '%s'\n"
 msgstr ""
 "Aucune commande d'ouverture n'est associée avec le type de fichier « %s »\n"
 
-#: cmd.rc:274
+#: cmd.rc:283
 msgid "Overwrite %s"
 msgstr "Écraser %s"
 
-#: cmd.rc:275
+#: cmd.rc:284
 msgid "More..."
 msgstr "Plus..."
 
-#: cmd.rc:276
+#: cmd.rc:285
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Ligne du processus batch probablement tronquée. Utilisation de :\n"
 
-#: cmd.rc:277
+#: cmd.rc:286
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -8380,80 +8394,80 @@ msgstr ""
 "Pas encore implémenté\n"
 "\n"
 
-#: cmd.rc:278
+#: cmd.rc:287
 msgid "Argument missing\n"
 msgstr "Argument manquant\n"
 
-#: cmd.rc:279
+#: cmd.rc:288
 msgid "Syntax error\n"
 msgstr "Erreur de syntaxe\n"
 
-#: cmd.rc:280
+#: cmd.rc:289
 msgid "%s: File Not Found\n"
 msgstr "%s : fichier non trouvé\n"
 
-#: cmd.rc:281
+#: cmd.rc:290
 msgid "No help available for %s\n"
 msgstr "Pas d'aide disponible pour %s\n"
 
-#: cmd.rc:282
+#: cmd.rc:291
 msgid "Target to GOTO not found\n"
 msgstr "La destination de l'instruction GOTO n'a pas été trouvée\n"
 
-#: cmd.rc:283
+#: cmd.rc:292
 msgid "Current Date is %s\n"
 msgstr "La date courante est %s\n"
 
-#: cmd.rc:284
+#: cmd.rc:293
 msgid "Current Time is %s\n"
 msgstr "L'heure courante est %s\n"
 
-#: cmd.rc:285
+#: cmd.rc:294
 msgid "Enter new date: "
 msgstr "Saisissez la nouvelle date : "
 
-#: cmd.rc:286
+#: cmd.rc:295
 msgid "Enter new time: "
 msgstr "Saisissez la nouvelle heure : "
 
-#: cmd.rc:287
+#: cmd.rc:296
 msgid "Environment variable %s not defined\n"
 msgstr "La variable d'environnement %s n'est pas définie\n"
 
-#: cmd.rc:288 xcopy.rc:38
+#: cmd.rc:297 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr "Impossible d'ouvrir « %s »\n"
 
-#: cmd.rc:289
+#: cmd.rc:298
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Impossible d'appeler une étiquette de batch hors d'un script batch\n"
 
-#: cmd.rc:290 xcopy.rc:42
+#: cmd.rc:299 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "T"
 
-#: cmd.rc:291
+#: cmd.rc:300
 msgid "%s, Delete"
 msgstr "%s, Supprimer"
 
-#: cmd.rc:292
+#: cmd.rc:301
 msgid "Echo is %s\n"
 msgstr "Echo est %s\n"
 
-#: cmd.rc:293
+#: cmd.rc:302
 msgid "Verify is %s\n"
 msgstr "Verify est %s\n"
 
-#: cmd.rc:294
+#: cmd.rc:303
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify doit être ON ou OFF\n"
 
-#: cmd.rc:295
+#: cmd.rc:304
 msgid "Parameter error\n"
 msgstr "Erreur de paramètre\n"
 
-#: cmd.rc:296
+#: cmd.rc:305
 msgid ""
 "Volume in drive %c is %s\n"
 "Volume Serial Number is %04x-%04x\n"
@@ -8463,31 +8477,31 @@ msgstr ""
 "Le numéro de série du volume est %04x-%04x\n"
 "\n"
 
-#: cmd.rc:297
+#: cmd.rc:306
 msgid "Volume label (11 characters, ENTER for none)?"
 msgstr "Étiquette du volume (11 caractères, ENTRÉE pour aucun) ?"
 
-#: cmd.rc:298
+#: cmd.rc:307
 msgid "PATH not found\n"
 msgstr "PATH non trouvé\n"
 
-#: cmd.rc:299
+#: cmd.rc:308
 msgid "Press Return key to continue: "
 msgstr "Appuyez sur ENTRÉE pour continuer : "
 
-#: cmd.rc:300
+#: cmd.rc:309
 msgid "Wine Command Prompt"
 msgstr "Invite de commande Wine"
 
-#: cmd.rc:301
+#: cmd.rc:310
 msgid "CMD Version %s\n"
 msgstr "CMD version %s\n"
 
-#: cmd.rc:302
+#: cmd.rc:311
 msgid "More? "
 msgstr "Plus ? "
 
-#: cmd.rc:303
+#: cmd.rc:312
 msgid "The input line is too long.\n"
 msgstr "La ligne d'entrée est trop longue.\n"
 
