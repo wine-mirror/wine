@@ -316,29 +316,13 @@ static void *map_fileW( LPCWSTR name, LPDWORD filesize )
 
 
 /***********************************************************************
- *          get_dib_width_bytes
+ *          get_dib_image_size
  *
- * Return the width of a DIB bitmap in bytes. DIB bitmap data is 32-bit aligned.
+ * Return the size of a DIB bitmap in bytes.
  */
-static int get_dib_width_bytes( int width, int depth )
+static int get_dib_image_size( int width, int height, int depth )
 {
-    int words;
-
-    switch(depth)
-    {
-    case 1:  words = (width + 31) / 32; break;
-    case 4:  words = (width + 7) / 8; break;
-    case 8:  words = (width + 3) / 4; break;
-    case 15:
-    case 16: words = (width + 1) / 2; break;
-    case 24: words = (width * 3 + 3)/4; break;
-    default:
-        WARN("(%d): Unsupported depth\n", depth );
-        /* fall through */
-    case 32:
-        words = width;
-    }
-    return 4 * words;
+    return (((width * depth + 31) / 8) & ~3) * abs( height );
 }
 
 
@@ -866,8 +850,7 @@ static HICON create_icon_from_bmi( BITMAPINFO *bmi, HMODULE module, LPCWSTR resn
 
     color_bits = (const char*)bmi + size;
     mask_bits = (const char*)color_bits +
-        get_dib_width_bytes( bmi->bmiHeader.biWidth,
-                             bmi->bmiHeader.biBitCount ) * abs(bmi_copy->bmiHeader.biHeight);
+        get_dib_image_size( bmi->bmiHeader.biWidth, bmi_copy->bmiHeader.biHeight, bmi->bmiHeader.biBitCount );
 
     alpha = 0;
     if (monochrome)
@@ -2084,7 +2067,7 @@ static void stretch_blt_icon( HDC hdc_dst, int dst_x, int dst_y, int dst_width, 
         info->bmiHeader.biPlanes = GetDeviceCaps( hdc_dst, PLANES );
         info->bmiHeader.biBitCount = GetDeviceCaps( hdc_dst, BITSPIXEL );
         info->bmiHeader.biCompression = BI_RGB;
-        info->bmiHeader.biSizeImage = height * get_dib_width_bytes( width, info->bmiHeader.biBitCount );
+        info->bmiHeader.biSizeImage = get_dib_image_size( width, height, info->bmiHeader.biBitCount );
         info->bmiHeader.biXPelsPerMeter = 0;
         info->bmiHeader.biYPelsPerMeter = 0;
         info->bmiHeader.biClrUsed = 0;
