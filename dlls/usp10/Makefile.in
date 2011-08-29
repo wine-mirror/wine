@@ -1,6 +1,6 @@
 MODULE    = usp10.dll
 IMPORTLIB = usp10
-IMPORTS   = gdi32
+IMPORTS   = user32 gdi32
 
 C_SRCS = \
 	bidi.c \

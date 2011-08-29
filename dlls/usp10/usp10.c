@@ -1029,16 +1029,20 @@ static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
                            int cEnd,
                            UINT uOptions,
                            const RECT *prc,
+                           BOOL fSelected,
                            BOOL fDisabled)
 {
     StringAnalysis *analysis;
     int off_x = 0;
     HRESULT hr;
+    COLORREF BkColor = 0x0;
+    COLORREF TextColor = 0x0;
+    INT BkMode = 0;
     INT runStart, runEnd;
     INT iGlyph, cGlyphs;
 
-    TRACE("(%p,%d,%d,%d,%d,%d, 0x%1x, %d)\n",
-         ssa, iX, iY, iItem, cStart, cEnd, uOptions, fDisabled);
+    TRACE("(%p,%d,%d,%d,%d,%d, 0x%1x, %d, %d)\n",
+         ssa, iX, iY, iItem, cStart, cEnd, uOptions, fSelected, fDisabled);
 
     if (!(analysis = ssa)) return E_INVALIDARG;
 
@@ -1048,6 +1052,20 @@ static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
 
     uOptions |= ETO_GLYPH_INDEX;
     analysis->pItem[0].a.fNoGlyphIndex = FALSE; /* say that we have glyphs */
+
+    if (fSelected)
+    {
+        BkMode = GetBkMode(analysis->hdc);
+        SetBkMode( analysis->hdc, OPAQUE);
+        BkColor = GetBkColor(analysis->hdc);
+        SetBkColor(analysis->hdc, GetSysColor(COLOR_HIGHLIGHT));
+        if (!fDisabled)
+        {
+            TextColor = GetTextColor(analysis->hdc);
+            SetTextColor(analysis->hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
+        }
+
+    }
 
     if (cStart >= 0 && analysis->pItem[iItem+1].iCharPos > cStart && analysis->pItem[iItem].iCharPos <= cStart)
         runStart = cStart - analysis->pItem[iItem].iCharPos;
@@ -1093,6 +1111,14 @@ static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
 
     TRACE("ScriptTextOut hr=%08x\n", hr);
 
+    if (fSelected)
+    {
+        SetBkColor(analysis->hdc, BkColor);
+        SetBkMode( analysis->hdc, BkMode);
+        if (!fDisabled)
+            SetTextColor(analysis->hdc, TextColor);
+    }
+
     return hr;
 }
 
@@ -1137,9 +1163,21 @@ HRESULT WINAPI ScriptStringOut(SCRIPT_STRING_ANALYSIS ssa,
 
     for (item = 0; item < analysis->numItems; item++)
     {
-        hr = SS_ItemOut( ssa, iX, iY, analysis->logical2visual[item], -1, -1, uOptions, prc, fDisabled);
+        hr = SS_ItemOut( ssa, iX, iY, analysis->logical2visual[item], -1, -1, uOptions, prc, FALSE, fDisabled);
         if (FAILED(hr))
             return hr;
+    }
+
+    if (iMinSel < iMaxSel && (iMinSel > 0 || iMaxSel > 0))
+    {
+        if (iMaxSel > 0 &&  iMinSel < 0)
+            iMinSel = 0;
+        for (item = 0; item < analysis->numItems; item++)
+        {
+            hr = SS_ItemOut( ssa, iX, iY, analysis->logical2visual[item], iMinSel, iMaxSel, uOptions, prc, TRUE, fDisabled);
+            if (FAILED(hr))
+                return hr;
+        }
     }
 
     return S_OK;
