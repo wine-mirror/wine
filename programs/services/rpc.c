@@ -961,6 +961,9 @@ DWORD __cdecl svcctl_StartServiceW(
     if ((err = validate_service_handle(hService, SERVICE_START, &service)) != 0)
         return err;
 
+    if (service->service_entry->config.dwStartType == SERVICE_DISABLED)
+        return ERROR_SERVICE_DISABLED;
+
     err = service_start(service->service_entry, dwNumServiceArgs, lpServiceArgVectors);
 
     return err;

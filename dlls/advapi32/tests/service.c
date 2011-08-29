@@ -2151,7 +2151,7 @@ static void test_start_stop(void)
         goto cleanup;
     }
     le = try_start_stop(svc_handle, displayname, is_nt4);
-    todo_wine ok(le == ERROR_SERVICE_DISABLED, "%d != ERROR_SERVICE_DISABLED\n", le);
+    ok(le == ERROR_SERVICE_DISABLED, "%d != ERROR_SERVICE_DISABLED\n", le);
 
     /* Then one with a bad path */
     displayname = "Winetest Bad Path";
