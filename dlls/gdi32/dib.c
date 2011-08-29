@@ -895,6 +895,22 @@ static void fill_default_color_table( BITMAPINFO *info )
     }
 }
 
+void get_ddb_bitmapinfo( BITMAPOBJ *bmp, BITMAPINFO *info )
+{
+    info->bmiHeader.biSize          = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth         = bmp->bitmap.bmWidth;
+    info->bmiHeader.biHeight        = -bmp->bitmap.bmHeight;
+    info->bmiHeader.biPlanes        = 1;
+    info->bmiHeader.biBitCount      = bmp->bitmap.bmBitsPixel;
+    info->bmiHeader.biCompression   = BI_RGB;
+    info->bmiHeader.biXPelsPerMeter = 0;
+    info->bmiHeader.biYPelsPerMeter = 0;
+    info->bmiHeader.biClrUsed       = 0;
+    info->bmiHeader.biClrImportant  = 0;
+    if (info->bmiHeader.biBitCount <= 8) fill_default_color_table( info );
+}
+
+
 /******************************************************************************
  * GetDIBits [GDI32.@]
  *

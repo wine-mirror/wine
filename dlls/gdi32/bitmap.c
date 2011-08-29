@@ -54,55 +54,31 @@ DWORD nulldrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
                         struct gdi_image_bits *bits, struct bitblt_coords *src )
 {
     BITMAPOBJ *bmp;
-    int height, width_bytes;
+    DWORD ret;
 
     if (!hbitmap) return ERROR_NOT_SUPPORTED;
     if (!(bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP ))) return ERROR_INVALID_HANDLE;
 
-    info->bmiHeader.biSize          = sizeof(info->bmiHeader);
-    info->bmiHeader.biPlanes        = 1;
-    info->bmiHeader.biBitCount      = bmp->bitmap.bmBitsPixel;
-    info->bmiHeader.biCompression   = BI_RGB;
-    info->bmiHeader.biXPelsPerMeter = 0;
-    info->bmiHeader.biYPelsPerMeter = 0;
-    info->bmiHeader.biClrUsed       = 0;
-    info->bmiHeader.biClrImportant  = 0;
-    if (bmp->bitmap.bmBitsPixel == 16)
+    if (bmp->bitmap.bmBits || !bits)
     {
-        DWORD *masks = (DWORD *)info->bmiColors;
-        masks[0] = 0x7c00;
-        masks[1] = 0x03e0;
-        masks[2] = 0x001f;
-        info->bmiHeader.biCompression = BI_BITFIELDS;
+        ret = dib_driver.pGetImage( 0, hbitmap, info, bits, src );
     }
-    if (!bits) goto done;
-
-    height = src->visrect.bottom - src->visrect.top;
-    width_bytes = get_dib_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
-    info->bmiHeader.biWidth     = bmp->bitmap.bmWidth;
-    info->bmiHeader.biHeight    = -height;
-    info->bmiHeader.biSizeImage = height * width_bytes;
-
-    /* make the source rectangle relative to the returned bits */
-    src->y -= src->visrect.top;
-    offset_rect( &src->visrect, 0, -src->visrect.top );
-
-    if (bmp->bitmap.bmBits)
+    else if (!(ret = dib_driver.pGetImage( 0, hbitmap, info, NULL, src )))
     {
-        bits->ptr = (char *)bmp->bitmap.bmBits + src->visrect.top * width_bytes;
-        bits->is_copy = FALSE;
-        bits->free = NULL;
-    }
-    else
-    {
+        info->bmiHeader.biHeight = -(src->visrect.bottom - src->visrect.top);
+        info->bmiHeader.biSizeImage = get_dib_image_size( info );
+
+        /* make the source rectangle relative to the returned bits */
+        src->y -= src->visrect.top;
+        offset_rect( &src->visrect, 0, -src->visrect.top );
+
         /* return all-zero bits */
         bits->ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, info->bmiHeader.biSizeImage );
         bits->is_copy = TRUE;
         bits->free = free_heap_bits;
     }
-done:
     GDI_ReleaseObj( hbitmap );
-    return ERROR_SUCCESS;
+    return ret;
 }
 
 DWORD nulldrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info,

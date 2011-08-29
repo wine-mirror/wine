@@ -213,7 +213,14 @@ BOOL init_dib_info_from_bitmapinfo(dib_info *dib, const BITMAPINFO *info, void *
 
 BOOL init_dib_info_from_bitmapobj(dib_info *dib, BITMAPOBJ *bmp, enum dib_info_flags flags)
 {
-    assert(bmp->dib);
+    if (!bmp->dib)
+    {
+        char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+        BITMAPINFO *info = (BITMAPINFO *)buffer;
+
+        get_ddb_bitmapinfo( bmp, info );
+        return init_dib_info_from_bitmapinfo( dib, info, bmp->bitmap.bmBits, flags );
+    }
     return init_dib_info( dib, &bmp->dib->dsBmih, bmp->dib->dsBitfields,
                           bmp->color_table, bmp->nb_colors, bmp->dib->dsBm.bmBits, flags );
 }
