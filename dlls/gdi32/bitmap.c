@@ -87,7 +87,7 @@ DWORD nulldrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
     src->y -= src->visrect.top;
     offset_rect( &src->visrect, 0, -src->visrect.top );
 
-    if (bmp->bitmap.bmBits && bmp->bitmap.bmWidthBytes == width_bytes)
+    if (bmp->bitmap.bmBits)
     {
         bits->ptr = (char *)bmp->bitmap.bmBits + src->visrect.top * width_bytes;
         bits->is_copy = FALSE;
@@ -95,20 +95,10 @@ DWORD nulldrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
     }
     else
     {
-        bits->ptr = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage );
+        /* return all-zero bits */
+        bits->ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, info->bmiHeader.biSizeImage );
         bits->is_copy = TRUE;
         bits->free = free_heap_bits;
-        if (bmp->bitmap.bmBits)
-        {
-            /* fixup the line alignment */
-            char *src = bmp->bitmap.bmBits, *dst = bits->ptr;
-            for ( ; height > 0; height--, src += bmp->bitmap.bmWidthBytes, dst += width_bytes)
-            {
-                memcpy( dst, src, bmp->bitmap.bmWidthBytes );
-                memset( dst + bmp->bitmap.bmWidthBytes, 0, width_bytes - bmp->bitmap.bmWidthBytes );
-            }
-        }
-        else memset( bits->ptr, 0, info->bmiHeader.biSizeImage );
     }
 done:
     GDI_ReleaseObj( hbitmap );
@@ -153,12 +143,13 @@ DWORD nulldrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *inf
         }
 
         if (!bmp->bitmap.bmBits &&
-            !(bmp->bitmap.bmBits = HeapAlloc( GetProcessHeap(), 0,
-                                              bmp->bitmap.bmHeight * bmp->bitmap.bmWidthBytes )))
+            !(bmp->bitmap.bmBits = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                              bmp->bitmap.bmHeight * width_bytes )))
         {
             GDI_ReleaseObj( hbitmap );
             return ERROR_OUTOFMEMORY;
         }
+        dst_bits = (unsigned char *)bmp->bitmap.bmBits + dst->visrect.top * width_bytes;
         src_bits = bits->ptr;
         if (info->bmiHeader.biHeight > 0)
         {
@@ -168,14 +159,13 @@ DWORD nulldrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *inf
         else
             src_bits += src->visrect.top * width_bytes;
 
-        dst_bits = (unsigned char *)bmp->bitmap.bmBits + dst->visrect.top * bmp->bitmap.bmWidthBytes;
         if (width_bytes != bmp->bitmap.bmWidthBytes)
         {
             for (i = 0; i < dst->visrect.bottom - dst->visrect.top; i++)
             {
-                memcpy( dst_bits, src_bits, min( abs(width_bytes), bmp->bitmap.bmWidthBytes ));
+                memcpy( dst_bits, src_bits, bmp->bitmap.bmWidthBytes );
                 src_bits += width_bytes;
-                dst_bits += bmp->bitmap.bmWidthBytes;
+                dst_bits += abs(width_bytes);
             }
         }
         else memcpy( dst_bits, src_bits, width_bytes * (dst->visrect.bottom - dst->visrect.top) );
@@ -691,8 +681,54 @@ HBITMAP BITMAP_CopyBitmap(HBITMAP hbitmap)
 
 static void set_initial_bitmap_bits( HBITMAP hbitmap, BITMAPOBJ *bmp )
 {
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
+    DWORD err;
+    int width_bytes;
+    struct bitblt_coords src, dst;
+    struct gdi_image_bits bits;
+
     if (!bmp->bitmap.bmBits) return;
-    SetBitmapBits( hbitmap, bmp->bitmap.bmHeight * bmp->bitmap.bmWidthBytes, bmp->bitmap.bmBits );
+    if (bmp->funcs->pPutImage == nulldrv_PutImage) return;
+
+    width_bytes = get_dib_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
+
+    src.visrect.left   = src.x = 0;
+    src.visrect.top    = src.y = 0;
+    src.visrect.right  = src.width = bmp->bitmap.bmWidth;
+    src.visrect.bottom = src.height = bmp->bitmap.bmHeight;
+    dst = src;
+
+    bits.ptr = bmp->bitmap.bmBits;
+    bits.is_copy = TRUE;
+    bits.free = free_heap_bits;
+    bmp->bitmap.bmBits = NULL;
+
+    /* query the color info */
+    info->bmiHeader.biSize          = sizeof(info->bmiHeader);
+    info->bmiHeader.biPlanes        = 1;
+    info->bmiHeader.biBitCount      = bmp->bitmap.bmBitsPixel;
+    info->bmiHeader.biCompression   = BI_RGB;
+    info->bmiHeader.biXPelsPerMeter = 0;
+    info->bmiHeader.biYPelsPerMeter = 0;
+    info->bmiHeader.biClrUsed       = 0;
+    info->bmiHeader.biClrImportant  = 0;
+    info->bmiHeader.biWidth         = 0;
+    info->bmiHeader.biHeight        = 0;
+    info->bmiHeader.biSizeImage     = 0;
+    err = bmp->funcs->pPutImage( NULL, hbitmap, 0, info, NULL, NULL, NULL, SRCCOPY );
+
+    if (!err || err == ERROR_BAD_FORMAT)
+    {
+        info->bmiHeader.biPlanes    = 1;
+        info->bmiHeader.biBitCount  = bmp->bitmap.bmBitsPixel;
+        info->bmiHeader.biWidth     = bmp->bitmap.bmWidth;
+        info->bmiHeader.biHeight    = -dst.height;
+        info->bmiHeader.biSizeImage = dst.height * width_bytes;
+        bmp->funcs->pPutImage( NULL, hbitmap, 0, info, &bits, &src, &dst, SRCCOPY );
+    }
+
+    if (bits.free) bits.free( &bits );
 }
 
 /***********************************************************************
