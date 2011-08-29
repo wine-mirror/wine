@@ -52,7 +52,7 @@ static HRESULT WINAPI testD3DXInclude_open(ID3DXInclude *iface,
     const char include3[] = "vs.1.1\n";
 
     trace("filename = %s\n", filename);
-    trace("parent_data = (%p) -> %s\n", parent_data, (char *)parent_data);
+    trace("parent_data (%p) -> %s\n", parent_data, parent_data ? (char *)parent_data : "(null)");
 
     if(!strcmp(filename,"incl.vsh")) {
         buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include));
