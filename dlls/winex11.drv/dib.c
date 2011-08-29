@@ -154,23 +154,7 @@ static inline int X11DRV_DIB_GetXImageWidthBytes( int width, int depth )
  */
 static int X11DRV_DIB_GetDIBWidthBytes( int width, int depth )
 {
-    int words;
-
-    switch(depth)
-    {
-    case 1:  words = (width + 31) / 32; break;
-    case 4:  words = (width + 7) / 8; break;
-    case 8:  words = (width + 3) / 4; break;
-    case 15:
-    case 16: words = (width + 1) / 2; break;
-    case 24: words = (width * 3 + 3) / 4; break;
-    default:
-        WARN("(%d): Unsupported depth\n", depth );
-        /* fall through */
-    case 32:
-        words = width;
-    }
-    return 4 * words;
+    return ((width * depth + 31) / 8) & ~3;
 }
 
 
