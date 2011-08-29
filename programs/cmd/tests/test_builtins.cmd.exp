@@ -665,6 +665,16 @@ file created in read-only dir
 ***
 +++
 ***
+------------ Testing ftype --------------
+...setting association
+***
+footype=foo_opencmd
+.foo=footype
+footype=foo_opencmd
++++
+footype=foo_opencmd
+...resetting association
+@todo_wine@original value@or_broken@buggyXP@or_broken@!FOO!
 ------------ Testing CALL --------------
 foo@space@
 foo 8

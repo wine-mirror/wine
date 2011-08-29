@@ -1113,6 +1113,48 @@ type baz
 echo ***
 cd .. & rd /s/q foobar
 
+echo ------------ Testing ftype --------------
+rem FIXME Can't test error messages in the current test system, so we have to use some kludges
+rem FIXME Revise once || conditional execution is fixed
+mkdir foobar & cd foobar
+echo ...setting association
+ftype footype> baz
+type baz
+echo ***
+
+ftype footype=foo_opencmd
+assoc .foo=footype
+ftype footype
+
+rem association set system-wide
+echo @echo off> tmp.cmd
+echo echo +++>> tmp.cmd
+echo ftype footype>> tmp.cmd
+cmd /c tmp.cmd
+
+echo ...resetting association
+assoc .foo=
+
+rem Removing a file type association doesn't work on XP due to a bug, so a workaround is needed
+setlocal EnableDelayedExpansion
+set FOO=original value
+ftype footype=
+ftype footype > baz
+for /F %%i in ('type baz') do (set FOO=buggyXP)
+rem Resetting actually works on wine/NT4, but is reported as failing due to the peculiar test (and non-support for EnabledDelayedExpansion)
+rem FIXME Revisit once a grep-like program like ftype is implemented
+rem (e.g. to check baz's size using dir /b instead)
+echo !FOO!
+
+rem cleanup registry
+echo REGEDIT4> regCleanup.reg
+echo.>> regCleanup.reg
+echo [-HKEY_CLASSES_ROOT\footype]>> regCleanup.reg
+regedit /s regCleanup.reg
+set FOO=
+endlocal
+cd .. & rd /s/q foobar
+
 echo ------------ Testing CALL --------------
 mkdir foobar & cd foobar
 rem External script
