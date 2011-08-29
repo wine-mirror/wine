@@ -594,8 +594,10 @@ static void test_RpcStringBindingParseA(void)
     ok(!strcmp((char *)protseq, "ncacn_np"), "protseq should have been ncacn_np instead of %s\n", protseq);
     ok(!strcmp((char *)network_addr, "."), "network_addr should have been . instead of %s\n", network_addr);
     ok(!strcmp((char *)endpoint, "pipetest"), "endpoint should have been pipetest instead of %s\n", endpoint);
-    todo_wine
-    ok(options && !strcmp((char *)options, ""), "options should have been \"\" of \"%s\"\n", options);
+    if (options)
+        ok(!strcmp((char *)options, ""), "options should have been \"\" of \"%s\"\n", options);
+    else
+        todo_wine ok(FALSE, "options is NULL\n");
     RpcStringFreeA(&uuid);
     RpcStringFreeA(&protseq);
     RpcStringFreeA(&network_addr);
@@ -609,8 +611,10 @@ static void test_RpcStringBindingParseA(void)
     ok(!strcmp((char *)protseq, "ncacn_np"), "protseq should have been ncacn_np instead of %s\n", protseq);
     ok(!strcmp((char *)network_addr, "."), "network_addr should have been . instead of %s\n", network_addr);
     ok(!strcmp((char *)endpoint, "pipetest"), "endpoint should have been pipetest instead of %s\n", endpoint);
-    todo_wine
-    ok(options && !strcmp((char *)options, ""), "options should have been \"\" of \"%s\"\n", options);
+    if (options)
+        ok(!strcmp((char *)options, ""), "options should have been \"\" of \"%s\"\n", options);
+    else
+        todo_wine ok(FALSE, "options is NULL\n");
     RpcStringFreeA(&uuid);
     RpcStringFreeA(&protseq);
     RpcStringFreeA(&network_addr);
