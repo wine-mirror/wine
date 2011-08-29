@@ -610,7 +610,7 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
     MSIWHEREVIEW *wv = (MSIWHEREVIEW*)view;
     UINT r;
     JOINTABLE *table = wv->tables;
-    UINT rows[wv->table_count];
+    UINT *rows;
 
     TRACE("%p %p\n", wv, record);
 
@@ -638,6 +638,7 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
     }
     while ((table = table->next));
 
+    rows = msi_alloc( wv->table_count * sizeof(*rows) );
     r =  check_condition(wv, record, wv->tables, rows);
 
     if (wv->order_info)
@@ -647,7 +648,7 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 
     if (wv->order_info)
         r = wv->order_info->error;
-
+    msi_free( rows );
     return r;
 }
 
