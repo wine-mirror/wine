@@ -621,10 +621,7 @@ DWORD dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
         BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
 
         if (!bmp) return ERROR_INVALID_HANDLE;
-        assert(bmp->dib);
-
-        if (!init_dib_info( &stand_alone, &bmp->dib->dsBmih, bmp->dib->dsBitfields,
-                            bmp->color_table, bmp->nb_colors, bmp->dib->dsBm.bmBits, 0 ))
+        if (!init_dib_info_from_bitmapobj( &stand_alone, bmp, 0 ))
         {
             ret = ERROR_BAD_FORMAT;
             goto done;
@@ -722,10 +719,7 @@ DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
         BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
 
         if (!bmp) return ERROR_INVALID_HANDLE;
-        assert(bmp->dib);
-
-        if (!init_dib_info( &stand_alone, &bmp->dib->dsBmih, bmp->dib->dsBitfields,
-                            bmp->color_table, bmp->nb_colors, bmp->dib->dsBm.bmBits, 0 ))
+        if (!init_dib_info_from_bitmapobj( &stand_alone, bmp, 0 ))
         {
             ret = ERROR_BAD_FORMAT;
             goto done;

@@ -211,6 +211,13 @@ BOOL init_dib_info_from_bitmapinfo(dib_info *dib, const BITMAPINFO *info, void *
     return init_dib_info( dib, &info->bmiHeader, bitfields, colors ? colorptr : NULL, colors, bits, flags );
 }
 
+BOOL init_dib_info_from_bitmapobj(dib_info *dib, BITMAPOBJ *bmp, enum dib_info_flags flags)
+{
+    assert(bmp->dib);
+    return init_dib_info( dib, &bmp->dib->dsBmih, bmp->dib->dsBitfields,
+                          bmp->color_table, bmp->nb_colors, bmp->dib->dsBm.bmBits, flags );
+}
+
 static void clear_dib_info(dib_info *dib)
 {
     dib->color_table = NULL;
@@ -368,8 +375,7 @@ static HBITMAP dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
     clear_dib_info(&pdev->brush_dib);
     pdev->brush_and_bits = pdev->brush_xor_bits = NULL;
 
-    if(!init_dib_info(&pdev->dib, &bmp->dib->dsBmih, bmp->dib->dsBitfields,
-                      bmp->color_table, bmp->nb_colors, bmp->dib->dsBm.bmBits, private_color_table))
+    if(!init_dib_info_from_bitmapobj(&pdev->dib, bmp, private_color_table))
         pdev->defer |= DEFER_FORMAT;
 
     GDI_ReleaseObj( bitmap );
