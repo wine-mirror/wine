@@ -2732,12 +2732,11 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
                     memcpy(bi, &ds.dsBmih, sizeof(BITMAPINFOHEADER));
                 }
 
-                /* Get the color table or the color masks */
-                GetDIBits(dc, hnd, 0, ds.dsBm.bmHeight, NULL, bi, DIB_RGB_COLORS);
-
                 bi->bmiHeader.biWidth  = desiredx;
                 bi->bmiHeader.biHeight = desiredy;
-                bi->bmiHeader.biSizeImage = 0;
+
+                /* Get the color table or the color masks */
+                GetDIBits(dc, hnd, 0, ds.dsBm.bmHeight, NULL, bi, DIB_RGB_COLORS);
 
                 res = CreateDIBSection(dc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
                 DeleteDC(dc);
@@ -2753,8 +2752,8 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
                     /* The source bitmap is a DIB section.
                        Get its attributes */
                     HDC dc = CreateCompatibleDC(NULL);
-                    bi->bmiHeader.biSize = sizeof(bi->bmiHeader);
-                    bi->bmiHeader.biBitCount = ds.dsBm.bmBitsPixel;
+                    bi->bmiHeader.biWidth  = ds.dsBm.bmWidth;
+                    bi->bmiHeader.biHeight = ds.dsBm.bmHeight;
                     GetDIBits(dc, hnd, 0, ds.dsBm.bmHeight, NULL, bi, DIB_RGB_COLORS);
                     DeleteDC(dc);
 
