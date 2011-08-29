@@ -1341,6 +1341,7 @@ DWORD WINAPI VerInstallFileA(
 	    flags,srcfilename,destfilename,srcdir,destdir,curdir,tmpfile,*tmpfilelen
     );
     xret = 0;
+    if (!srcdir || !srcfilename) return VIF_CANNOTREADSRC;
     sprintf(srcfn,"%s\\%s",srcdir,srcfilename);
     if (!destdir || !*destdir) pdest = srcdir;
     else pdest = destdir;
