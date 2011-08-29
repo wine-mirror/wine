@@ -2892,7 +2892,7 @@ void WCMD_assoc (const WCHAR *command, BOOL assoc) {
             LoadStringW(hinst, WCMD_NOFTYPE, msgbuffer, sizeof(msgbuffer)/sizeof(WCHAR));
           }
           wsprintfW(outbuffer, msgbuffer, keyValue);
-          WCMD_output_asis(outbuffer);
+          WCMD_output_asis_stderr(outbuffer);
           errorlevel = 2;
         }
 
@@ -2933,7 +2933,7 @@ void WCMD_assoc (const WCHAR *command, BOOL assoc) {
                           sizeof(msgbuffer)/sizeof(WCHAR));
             }
             wsprintfW(outbuffer, msgbuffer, keyValue);
-            WCMD_output_asis(outbuffer);
+            WCMD_output_asis_stderr(outbuffer);
             errorlevel = 2;
           }
 
