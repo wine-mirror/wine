@@ -240,13 +240,15 @@ BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars,
 }
 
 /*******************************************************************
- * WCMD_output_asis - send output to current standard output device.
- *        without formatting eg. when message contains '%'
+ * WCMD_output_asis_handle
+ *
+ * Send output to specified handle without formatting e.g. when message contains '%'
  */
-void WCMD_output_asis (const WCHAR *message) {
+static void WCMD_output_asis_handle (DWORD std_handle, const WCHAR *message) {
   DWORD count;
   const WCHAR* ptr;
   WCHAR string[1024];
+  HANDLE handle = GetStdHandle(std_handle);
 
   if (paged_mode) {
     do {
@@ -256,23 +258,40 @@ void WCMD_output_asis (const WCHAR *message) {
         ptr++;
       };
       if (*ptr == '\n') ptr++;
-      WCMD_output_asis_len(message, (ptr) ? ptr - message : strlenW(message),
-                           GetStdHandle(STD_OUTPUT_HANDLE));
+      WCMD_output_asis_len(message, (ptr) ? ptr - message : strlenW(message), handle);
       if (ptr) {
         numChars = 0;
         if (++line_count >= max_height - 1) {
           line_count = 0;
-          WCMD_output_asis_len(pagedMessage, strlenW(pagedMessage),
-                               GetStdHandle(STD_OUTPUT_HANDLE));
+          WCMD_output_asis_len(pagedMessage, strlenW(pagedMessage), handle);
           WCMD_ReadFile (GetStdHandle(STD_INPUT_HANDLE), string,
                          sizeof(string)/sizeof(WCHAR), &count, NULL);
         }
       }
     } while (((message = ptr) != NULL) && (*ptr));
   } else {
-    WCMD_output_asis_len(message, lstrlenW(message),
-                         GetStdHandle(STD_OUTPUT_HANDLE));
+    WCMD_output_asis_len(message, lstrlenW(message), handle);
   }
+}
+
+/*******************************************************************
+ * WCMD_output_asis
+ *
+ * Send output to current standard output device, without formatting
+ * e.g. when message contains '%'
+ */
+void WCMD_output_asis (const WCHAR *message) {
+    WCMD_output_asis_handle(STD_OUTPUT_HANDLE, message);
+}
+
+/*******************************************************************
+ * WCMD_output_asis_stderr
+ *
+ * Send output to current standard error device, without formatting
+ * e.g. when message contains '%'
+ */
+void WCMD_output_asis_stderr (const WCHAR *message) {
+    WCMD_output_asis_handle(STD_ERROR_HANDLE, message);
 }
 
 /****************************************************************************
