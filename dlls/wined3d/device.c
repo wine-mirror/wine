@@ -1696,7 +1696,7 @@ HRESULT CDECL wined3d_device_get_wined3d(const struct wined3d_device *device, st
     return WINED3D_OK;
 }
 
-UINT CDECL wined3d_device_get_available_texture_mem(struct wined3d_device *device)
+UINT CDECL wined3d_device_get_available_texture_mem(const struct wined3d_device *device)
 {
     TRACE("device %p.\n", device);
 
