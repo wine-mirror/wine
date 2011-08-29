@@ -3886,6 +3886,7 @@ static HRESULT WINAPI ddraw7_EnumSurfaces(IDirectDraw7 *iface, DWORD Flags,
         surf = LIST_ENTRY(entry, IDirectDrawSurfaceImpl, surface_list_entry);
         if (all || (nomatch != ddraw_match_surface_desc(DDSD, &surf->surface_desc)))
         {
+            TRACE("Enumerating surface %p.\n", surf);
             desc = surf->surface_desc;
             IDirectDrawSurface7_AddRef(&surf->IDirectDrawSurface7_iface);
             if (Callback(&surf->IDirectDrawSurface7_iface, &desc, Context) != DDENUMRET_OK)
