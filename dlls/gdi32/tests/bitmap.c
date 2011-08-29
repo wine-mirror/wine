@@ -884,9 +884,27 @@ static void test_dib_formats(void)
                 case 32: expect_ok = (compr == BI_RGB || compr == BI_BITFIELDS); break;
                 default: expect_ok = FALSE; break;
                 }
-                if (!planes) expect_ok = FALSE;
                 todo = (compr == BI_BITFIELDS);  /* wine doesn't like strange bitfields */
 
+                memset( bi, 0, sizeof(bi->bmiHeader) );
+                bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+                bi->bmiHeader.biWidth = 2;
+                bi->bmiHeader.biHeight = 2;
+                bi->bmiHeader.biPlanes = planes;
+                bi->bmiHeader.biBitCount = bpp;
+                bi->bmiHeader.biCompression = compr;
+                bi->bmiHeader.biSizeImage = 0;
+                memset( bi->bmiColors, 0xaa, sizeof(RGBQUAD) * 256 );
+                ret = GetDIBits(hdc, hbmp, 0, 0, data, bi, DIB_RGB_COLORS);
+                if (expect_ok || (!bpp && compr != BI_JPEG && compr != BI_PNG) ||
+                    (bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8))
+                    ok( ret, "GetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
+                else
+                    ok( !ret || broken(!bpp && (compr == BI_JPEG || compr == BI_PNG)), /* nt4 */
+                        "GetDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
+
+                /* all functions check planes except GetDIBits with 0 lines */
+                if (!planes) expect_ok = FALSE;
                 memset( bi, 0, sizeof(bi->bmiHeader) );
                 bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
                 bi->bmiHeader.biWidth = 2;
@@ -947,9 +965,27 @@ static void test_dib_formats(void)
                         broken((bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8)), /* nt4 */
                         "StretchDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
 
+                ret = GetDIBits(hdc, hbmp, 0, 2, data, bi, DIB_RGB_COLORS);
+                if (expect_ok)
+                    ok( ret, "GetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
+                else
+                    ok( !ret, "GetDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
+                ok( bi->bmiHeader.biBitCount == bpp, "GetDIBits modified bpp %u/%u\n",
+                    bpp, bi->bmiHeader.biBitCount );
+
+                bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+                bi->bmiHeader.biWidth = 2;
+                bi->bmiHeader.biHeight = 2;
+                bi->bmiHeader.biPlanes = planes;
+                bi->bmiHeader.biBitCount = bpp;
+                bi->bmiHeader.biCompression = compr;
                 bi->bmiHeader.biSizeImage = 1;
+                memset( bi->bmiColors, 0xaa, sizeof(RGBQUAD) * 256 );
+                /* RLE allowed with valid biSizeImage */
+                if ((bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8)) expect_ok = TRUE;
+
                 ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
-                if (expect_ok || (bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8))
+                if (expect_ok)
                 {
                     if (todo)
                         todo_wine ok( ret, "SetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
@@ -959,12 +995,12 @@ static void test_dib_formats(void)
                 else
                     ok( !ret, "SetDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
                 ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_RGB_COLORS );
-                if (expect_ok || (bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8))
+                if (expect_ok)
                     ok( ret, "SetDIBitsToDevice failed for %u/%u/%u\n", bpp, planes, compr );
                 else
                     ok( !ret, "SetDIBitsToDevice succeeded for %u/%u/%u\n", bpp, planes, compr );
                 ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
-                if (expect_ok || (bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8))
+                if (expect_ok)
                 {
                     if (todo)
                         todo_wine ok( ret, "StretchDIBits failed for %u/%u/%u\n", bpp, planes, compr );
@@ -973,6 +1009,13 @@ static void test_dib_formats(void)
                 }
                 else
                     ok( !ret, "StretchDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
+
+                bi->bmiHeader.biSizeImage = 0;
+                ret = GetDIBits(hdc, hbmp, 0, 2, NULL, bi, DIB_RGB_COLORS);
+                if (expect_ok || !bpp)
+                    ok( ret, "GetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
+                else
+                    ok( !ret, "GetDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
             }
         }
     }
@@ -1001,6 +1044,17 @@ static void test_dib_formats(void)
     ok( ret, "SetDIBitsToDevice failed with null bitfields\n" );
     ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
     todo_wine ok( ret, "StretchDIBits failed with null bitfields\n" );
+    ret = GetDIBits(hdc, hbmp, 0, 2, data, bi, DIB_RGB_COLORS);
+    ok( ret, "GetDIBits failed with null bitfields\n" );
+    bi->bmiHeader.biPlanes = 1;
+    bi->bmiHeader.biBitCount = 16;
+    bi->bmiHeader.biCompression = BI_BITFIELDS;
+    bi->bmiHeader.biSizeImage = 0;
+    *(DWORD *)&bi->bmiColors[0] = 0;
+    *(DWORD *)&bi->bmiColors[1] = 0;
+    *(DWORD *)&bi->bmiColors[2] = 0;
+    ret = GetDIBits(hdc, hbmp, 0, 2, NULL, bi, DIB_RGB_COLORS);
+    ok( ret, "GetDIBits failed with null bitfields\n" );
 
     /* all fields must be non-zero */
     *(DWORD *)&bi->bmiColors[0] = 3;
@@ -1035,6 +1089,14 @@ static void test_dib_formats(void)
     ok( !ret, "SetDIBitsToDevice succeeded with negative width\n" );
     ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
     ok( !ret, "StretchDIBits succeeded with negative width\n" );
+    ret = GetDIBits(hdc, hbmp, 0, 2, data, bi, DIB_RGB_COLORS);
+    ok( !ret, "GetDIBits succeeded with negative width\n" );
+    bi->bmiHeader.biWidth = -2;
+    bi->bmiHeader.biHeight = 2;
+    bi->bmiHeader.biBitCount = 32;
+    bi->bmiHeader.biCompression = BI_RGB;
+    ret = GetDIBits(hdc, hbmp, 0, 2, NULL, bi, DIB_RGB_COLORS);
+    ok( !ret || broken(ret), /* nt4 */ "GetDIBits succeeded with negative width\n" );
 
     bi->bmiHeader.biWidth = 0;
     bi->bmiHeader.biHeight = 2;
@@ -1051,6 +1113,14 @@ static void test_dib_formats(void)
     ok( !ret || broken(ret), /* nt4 */ "SetDIBitsToDevice succeeded with zero width\n" );
     ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
     ok( !ret || broken(ret), /* nt4 */ "StretchDIBits succeeded with zero width\n" );
+    ret = GetDIBits(hdc, hbmp, 0, 2, data, bi, DIB_RGB_COLORS);
+    ok( !ret, "GetDIBits succeeded with zero width\n" );
+    bi->bmiHeader.biWidth = 0;
+    bi->bmiHeader.biHeight = 2;
+    bi->bmiHeader.biBitCount = 32;
+    bi->bmiHeader.biCompression = BI_RGB;
+    ret = GetDIBits(hdc, hbmp, 0, 2, NULL, bi, DIB_RGB_COLORS);
+    ok( !ret || broken(ret), /* nt4 */ "GetDIBits succeeded with zero width\n" );
 
     bi->bmiHeader.biWidth = 2;
     bi->bmiHeader.biHeight = 0;
@@ -1067,6 +1137,14 @@ static void test_dib_formats(void)
     ok( !ret, "SetDIBitsToDevice succeeded with zero height\n" );
     ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
     ok( !ret, "StretchDIBits succeeded with zero height\n" );
+    ret = GetDIBits(hdc, hbmp, 0, 2, data, bi, DIB_RGB_COLORS);
+    ok( !ret || broken(ret), /* nt4 */ "GetDIBits succeeded with zero height\n" );
+    bi->bmiHeader.biWidth = 2;
+    bi->bmiHeader.biHeight = 0;
+    bi->bmiHeader.biBitCount = 32;
+    bi->bmiHeader.biCompression = BI_RGB;
+    ret = GetDIBits(hdc, hbmp, 0, 2, NULL, bi, DIB_RGB_COLORS);
+    ok( !ret || broken(ret), /* nt4 */ "GetDIBits succeeded with zero height\n" );
 
     DeleteDC( memdc );
     DeleteObject( hbmp );

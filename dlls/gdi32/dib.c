@@ -180,7 +180,7 @@ static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *
     src_colors = (char *)info + info->bmiHeader.biSize;
     colors = get_dib_num_of_colors( dst );
 
-    if (info->bmiHeader.biCompression == BI_BITFIELDS)
+    if (dst->bmiHeader.biCompression == BI_BITFIELDS)
     {
         /* bitfields are always at bmiColors even in larger structures */
         memcpy( dst->bmiColors, info->bmiColors, 3 * sizeof(DWORD) );
@@ -929,6 +929,9 @@ INT WINAPI GetDIBits(
     /* Since info may be a BITMAPCOREINFO or any of the larger BITMAPINFO structures, we'll use our
        own copy and transfer the colour info back at the end */
     if (!bitmapinfoheader_from_user_bitmapinfo( &dst_info->bmiHeader, &info->bmiHeader )) return 0;
+    if (bits &&
+        (dst_info->bmiHeader.biCompression == BI_JPEG || dst_info->bmiHeader.biCompression == BI_PNG))
+        return 0;
     dst_info->bmiHeader.biClrUsed = 0;
     dst_info->bmiHeader.biClrImportant = 0;
 
@@ -946,12 +949,6 @@ INT WINAPI GetDIBits(
 
     funcs = get_bitmap_funcs( bmp );
 
-    if (dst_info->bmiHeader.biBitCount == 0) /* query bitmap info only */
-    {
-        ret = fill_query_info( info, bmp );
-        goto done;
-    }
-
     src.visrect.left   = 0;
     src.visrect.top    = 0;
     src.visrect.right  = bmp->bitmap.bmWidth;
@@ -964,6 +961,45 @@ INT WINAPI GetDIBits(
 
     if (lines == 0 || startscan >= dst.visrect.bottom)
         bits = NULL;
+
+    if (!bits && dst_info->bmiHeader.biBitCount == 0) /* query bitmap info only */
+    {
+        ret = fill_query_info( info, bmp );
+        goto done;
+    }
+
+    /* validate parameters */
+
+    if (dst_info->bmiHeader.biWidth <= 0) goto done;
+    if (dst_info->bmiHeader.biHeight == 0) goto done;
+
+    switch (dst_info->bmiHeader.biCompression)
+    {
+    case BI_RLE4:
+        if (dst_info->bmiHeader.biBitCount != 4) goto done;
+        if (dst_info->bmiHeader.biHeight < 0) goto done;
+        if (bits) goto done;  /* can't retrieve compressed bits */
+        break;
+    case BI_RLE8:
+        if (dst_info->bmiHeader.biBitCount != 8) goto done;
+        if (dst_info->bmiHeader.biHeight < 0) goto done;
+        if (bits) goto done;  /* can't retrieve compressed bits */
+        break;
+    case BI_BITFIELDS:
+        if (dst_info->bmiHeader.biBitCount != 16 && dst_info->bmiHeader.biBitCount != 32) goto done;
+        /* fall through */
+    case BI_RGB:
+        if (lines && !dst_info->bmiHeader.biPlanes) goto done;
+        if (dst_info->bmiHeader.biBitCount == 1) break;
+        if (dst_info->bmiHeader.biBitCount == 4) break;
+        if (dst_info->bmiHeader.biBitCount == 8) break;
+        if (dst_info->bmiHeader.biBitCount == 16) break;
+        if (dst_info->bmiHeader.biBitCount == 24) break;
+        if (dst_info->bmiHeader.biBitCount == 32) break;
+        /* fall through */
+    default:
+        goto done;
+    }
 
     if (bits)
     {
