@@ -1509,7 +1509,11 @@ struct wined3d_adapter
 {
     UINT ordinal;
     BOOL                    opengl;
-    POINT                   monitorPoint;
+
+    POINT monitorPoint;
+    SIZE screen_size;
+    enum wined3d_format_id screen_format;
+
     struct wined3d_gl_info  gl_info;
     struct wined3d_driver_info driver_info;
     WCHAR                   DeviceName[CCHDEVICENAME]; /* DeviceName for use with e.g. ChangeDisplaySettings */
@@ -1728,10 +1732,6 @@ struct wined3d_device
     UINT dummy_texture_rect[MAX_COMBINED_SAMPLERS];
     UINT dummy_texture_3d[MAX_COMBINED_SAMPLERS];
     UINT dummy_texture_cube[MAX_COMBINED_SAMPLERS];
-
-    /* DirectDraw stuff */
-    DWORD ddraw_width, ddraw_height;
-    enum wined3d_format_id ddraw_format;
 
     /* With register combiners we can skip junk texture stages */
     DWORD                     texUnitMap[MAX_COMBINED_SAMPLERS];

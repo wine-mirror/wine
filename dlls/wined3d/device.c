@@ -1627,7 +1627,8 @@ void CDECL wined3d_device_set_multithreaded(struct wined3d_device *device)
 HRESULT CDECL wined3d_device_set_display_mode(struct wined3d_device *device,
         UINT swapchain_idx, const WINED3DDISPLAYMODE *mode)
 {
-    const struct wined3d_format *format = wined3d_get_format(&device->adapter->gl_info, mode->Format);
+    struct wined3d_adapter *adapter = device->adapter;
+    const struct wined3d_format *format = wined3d_get_format(&adapter->gl_info, mode->Format);
     DEVMODEW devmode;
     LONG ret;
     RECT clip_rc;
@@ -1653,8 +1654,8 @@ HRESULT CDECL wined3d_device_set_display_mode(struct wined3d_device *device,
         devmode.dmFields |= DM_DISPLAYFREQUENCY;
 
     /* Only change the mode if necessary */
-    if (device->ddraw_width == mode->Width && device->ddraw_height == mode->Height
-            && device->ddraw_format == mode->Format && !mode->RefreshRate)
+    if (adapter->screen_size.cx == mode->Width && adapter->screen_size.cy == mode->Height
+            && adapter->screen_format == mode->Format && !mode->RefreshRate)
         return WINED3D_OK;
 
     ret = ChangeDisplaySettingsExW(NULL, &devmode, NULL, CDS_FULLSCREEN, NULL);
@@ -1673,9 +1674,9 @@ HRESULT CDECL wined3d_device_set_display_mode(struct wined3d_device *device,
     }
 
     /* Store the new values */
-    device->ddraw_width = mode->Width;
-    device->ddraw_height = mode->Height;
-    device->ddraw_format = mode->Format;
+    adapter->screen_size.cx = mode->Width;
+    adapter->screen_size.cy = mode->Height;
+    adapter->screen_format = mode->Format;
 
     /* And finally clip mouse to our screen */
     SetRect(&clip_rc, 0, 0, mode->Width, mode->Height);
@@ -3939,6 +3940,8 @@ HRESULT CDECL wined3d_device_get_display_mode(struct wined3d_device *device,
     }
     else
     {
+        const struct wined3d_adapter *adapter = device->adapter;
+
         /* Don't read the real display mode, but return the stored mode
          * instead. X11 can't change the color depth, and some apps are
          * pretty angry if they SetDisplayMode from 24 to 16 bpp and find out
@@ -3946,9 +3949,9 @@ HRESULT CDECL wined3d_device_get_display_mode(struct wined3d_device *device,
          *
          * Also don't relay to the swapchain because with ddraw it's possible
          * that there isn't a swapchain at all. */
-        mode->Width = device->ddraw_width;
-        mode->Height = device->ddraw_height;
-        mode->Format = device->ddraw_format;
+        mode->Width = adapter->screen_size.cx;
+        mode->Height = adapter->screen_size.cy;
+        mode->Format = adapter->screen_format;
         mode->RefreshRate = 0;
         hr = WINED3D_OK;
     }
@@ -5291,12 +5294,12 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
         }
 
         /* MSDN: Cursor must be smaller than the display mode */
-        if (cursor_image->resource.width > device->ddraw_width
-                || cursor_image->resource.height > device->ddraw_height)
+        if (cursor_image->resource.width > device->adapter->screen_size.cx
+                || cursor_image->resource.height > device->adapter->screen_size.cy)
         {
             WARN("Surface %p dimensions are %ux%u, but screen dimensions are %ux%u.\n",
                     cursor_image, cursor_image->resource.width, cursor_image->resource.height,
-                    device->ddraw_width, device->ddraw_height);
+                    device->adapter->screen_size.cx, device->adapter->screen_size.cy);
             return WINED3DERR_INVALIDCALL;
         }
 
@@ -6190,9 +6193,9 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
         wined3d_decref(device->wined3d);
         return hr;
     }
-    device->ddraw_width = mode.Width;
-    device->ddraw_height = mode.Height;
-    device->ddraw_format = mode.Format;
+    adapter->screen_size.cx = mode.Width;
+    adapter->screen_size.cy = mode.Height;
+    adapter->screen_format = mode.Format;
 
     /* Save the creation parameters. */
     device->createParms.AdapterOrdinal = adapter_idx;
