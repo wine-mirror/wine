@@ -8664,11 +8664,11 @@ msgstr "Le service %s a été arrêté avec succès.\n"
 msgid "The %s service failed to stop.\n"
 msgstr "Le service %s n'a pas pu être arrêté.\n"
 
-#: net.rc:42
+#: net.rc:41
 msgid "There are no entries in the list.\n"
 msgstr "Il n'y a aucune entrée dans la liste.\n"
 
-#: net.rc:43
+#: net.rc:42
 msgid ""
 "\n"
 "Status  Local   Remote\n"
@@ -8678,31 +8678,31 @@ msgstr ""
 "Statut  Local   Distant\n"
 "---------------------------------------------------------------\n"
 
-#: net.rc:44
+#: net.rc:43
 msgid "%s      %s      %s      Open resources: %lu\n"
 msgstr "%s      %s      %s      Ressources ouvertes : %lu\n"
 
-#: net.rc:45
+#: net.rc:44
 msgid "OK"
 msgstr "OK"
 
-#: net.rc:46
+#: net.rc:45
 msgid "Paused"
 msgstr "En pause"
 
-#: net.rc:47
+#: net.rc:46
 msgid "Disconnected"
 msgstr "Déconnecté"
 
-#: net.rc:48
+#: net.rc:47
 msgid "A network error occurred"
 msgstr "Une erreur réseau s'est produite"
 
-#: net.rc:49
+#: net.rc:48
 msgid "Connection is being made"
 msgstr "Connexion en cours"
 
-#: net.rc:50
+#: net.rc:49
 msgid "Reconnecting"
 msgstr "Reconnexion"
 
@@ -8710,10 +8710,6 @@ msgstr "Reconnexion"
 #, fuzzy
 msgid "The following services are running:\n"
 msgstr "Les services dépendants sont en cours d'exécution\n"
-
-#: net.rc:41
-msgid "    %s\n"
-msgstr ""
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"

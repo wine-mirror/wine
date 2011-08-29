@@ -8462,11 +8462,11 @@ msgstr "The %s service was stopped successfully.\n"
 msgid "The %s service failed to stop.\n"
 msgstr "The %s service failed to stop.\n"
 
-#: net.rc:42
+#: net.rc:41
 msgid "There are no entries in the list.\n"
 msgstr "There are no entries in the list.\n"
 
-#: net.rc:43
+#: net.rc:42
 msgid ""
 "\n"
 "Status  Local   Remote\n"
@@ -8476,41 +8476,37 @@ msgstr ""
 "Status  Local   Remote\n"
 "---------------------------------------------------------------\n"
 
-#: net.rc:44
+#: net.rc:43
 msgid "%s      %s      %s      Open resources: %lu\n"
 msgstr "%s      %s      %s      Open resources: %lu\n"
 
-#: net.rc:45
+#: net.rc:44
 msgid "OK"
 msgstr ""
 
-#: net.rc:46
+#: net.rc:45
 msgid "Paused"
 msgstr ""
 
-#: net.rc:47
+#: net.rc:46
 msgid "Disconnected"
 msgstr "Disconnected"
 
-#: net.rc:48
+#: net.rc:47
 msgid "A network error occurred"
 msgstr "A network error occurred"
 
-#: net.rc:49
+#: net.rc:48
 msgid "Connection is being made"
 msgstr "Connection is being made"
 
-#: net.rc:50
+#: net.rc:49
 msgid "Reconnecting"
 msgstr "Reconnecting"
 
 #: net.rc:40
 msgid "The following services are running:\n"
 msgstr "The following services are running:\n"
-
-#: net.rc:41
-msgid "    %s\n"
-msgstr ""
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"

@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(net);
 #define NET_START 0001
 #define NET_STOP  0002
 
-static int output_write(WCHAR* str, int len)
+static int output_write(const WCHAR* str, int len)
 {
     DWORD ret, count;
     ret = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, len, &count, NULL);
@@ -55,17 +55,37 @@ static int output_write(WCHAR* str, int len)
     return count;
 }
 
+static int output_vprintf(const WCHAR* fmt, va_list va_args)
+{
+    WCHAR str[8192];
+    int len;
+
+    len = vsnprintfW(str, sizeof(str)/sizeof(*str), fmt, va_args);
+    if (len < 0)
+        WINE_FIXME("String too long.\n");
+    else
+        output_write(str, len);
+    return 0;
+}
+
+static int output_printf(const WCHAR* fmt, ...)
+{
+    va_list arguments;
+
+    va_start(arguments, fmt);
+    output_vprintf(fmt, arguments);
+    va_end(arguments);
+    return 0;
+}
+
 static int output_string(int msg, ...)
 {
     WCHAR fmt[8192];
-    WCHAR str[8192];
-    int len;
     va_list arguments;
 
     LoadStringW(GetModuleHandleW(NULL), msg, fmt, sizeof(fmt)/sizeof(fmt[0]));
     va_start(arguments, msg);
-    len = vsprintfW(str, fmt, arguments);
-    output_write(str, len);
+    output_vprintf(fmt, arguments);
     va_end(arguments);
     return 0;
 }
@@ -136,6 +156,7 @@ static BOOL net_use(int argc, const WCHAR* argv[])
 
 static BOOL net_enum_services(void)
 {
+    static const WCHAR runningW[]={' ',' ',' ',' ','%','s','\n',0};
     SC_HANDLE SCManager;
     LPENUM_SERVICE_STATUS_PROCESSW services;
     DWORD size, i, count, resume;
@@ -164,7 +185,7 @@ static BOOL net_enum_services(void)
     output_string(STRING_RUNNING_HEADER);
     for(i = 0; i < count; i++)
     {
-        output_string(STRING_RUNNING, services[i].lpDisplayName);
+        output_printf(runningW, services[i].lpDisplayName);
         WINE_TRACE("service=%s state=%d controls=%x\n",
                    wine_dbgstr_w(services[i].lpServiceName),
                    services[i].ServiceStatusProcess.dwCurrentState,

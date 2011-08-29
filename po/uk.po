@@ -8569,11 +8569,11 @@ msgstr "Служба %s успішно зупинена.\n"
 msgid "The %s service failed to stop.\n"
 msgstr "Помилка зупинки служби %s .\n"
 
-#: net.rc:42
+#: net.rc:41
 msgid "There are no entries in the list.\n"
 msgstr "Список порожній.\n"
 
-#: net.rc:43
+#: net.rc:42
 msgid ""
 "\n"
 "Status  Local   Remote\n"
@@ -8583,35 +8583,35 @@ msgstr ""
 "Статус  Локальний   Віддалений\n"
 "---------------------------------------------------------------\n"
 
-#: net.rc:44
+#: net.rc:43
 msgid "%s      %s      %s      Open resources: %lu\n"
 msgstr "%s      %s      %s      Відкритих ресурсів: %lu\n"
 
-#: net.rc:45
+#: net.rc:44
 msgid "OK"
 msgstr ""
 
-#: net.rc:46
+#: net.rc:45
 #, fuzzy
 msgid "Paused"
 msgstr "&Призупинити"
 
-#: net.rc:47
+#: net.rc:46
 #, fuzzy
 msgid "Disconnected"
 msgstr "Pipe connected\n"
 
-#: net.rc:48
+#: net.rc:47
 #, fuzzy
 msgid "A network error occurred"
 msgstr "Виникла помилка принтера."
 
-#: net.rc:49
+#: net.rc:48
 #, fuzzy
 msgid "Connection is being made"
 msgstr "З'єднання активне\n"
 
-#: net.rc:50
+#: net.rc:49
 #, fuzzy
 msgid "Reconnecting"
 msgstr "Під'єднуюсь до %s"
@@ -8620,10 +8620,6 @@ msgstr "Під'єднуюсь до %s"
 #, fuzzy
 msgid "The following services are running:\n"
 msgstr "Dependent services are running\n"
-
-#: net.rc:41
-msgid "    %s\n"
-msgstr ""
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"

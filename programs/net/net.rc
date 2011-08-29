@@ -38,7 +38,6 @@ STRINGTABLE
     STRING_STOP_SVC_SUCCESS, "The %s service was stopped successfully.\n"
     STRING_STOP_SVC_FAIL, "The %s service failed to stop.\n"
     STRING_RUNNING_HEADER, "The following services are running:\n"
-    STRING_RUNNING, "    %s\n"
     STRING_NO_ENTRIES, "There are no entries in the list.\n"
     STRING_USE_HEADER, "\nStatus  Local   Remote\n---------------------------------------------------------------\n"
     STRING_USE_ENTRY,  "%s      %s      %s      Open resources: %lu\n"
