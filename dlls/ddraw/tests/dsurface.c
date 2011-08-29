@@ -3987,7 +3987,7 @@ static void zbufferbitdepth_test(void)
             }
         },
         {
-            24, ZFMT_SUPPORTED_ALWAYS,
+            24, ZFMT_SUPPORTED_HWDEPENDENT,
             {
                 sizeof(DDPIXELFORMAT), DDPF_ZBUFFER, 0,
                 {24}, {0}, {0x00ffffff}, {0x00000000}, {0x00000000}
