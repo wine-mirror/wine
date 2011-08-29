@@ -2061,41 +2061,13 @@ ImageList_Merge (HIMAGELIST himl1, INT i1, HIMAGELIST himl2, INT i2,
 
 
 /***********************************************************************
- *           DIB_GetDIBWidthBytes
- *
- * Return the width of a DIB bitmap in bytes. DIB bitmap data is 32-bit aligned.
- */
-static int DIB_GetDIBWidthBytes( int width, int depth )
-{
-    int words;
-
-    switch(depth)
-    {
-    case 1:  words = (width + 31) / 32; break;
-    case 4:  words = (width + 7) / 8; break;
-    case 8:  words = (width + 3) / 4; break;
-    case 15:
-    case 16: words = (width + 1) / 2; break;
-    case 24: words = (width * 3 + 3)/4; break;
-
-    default:
-        WARN("(%d): Unsupported depth\n", depth );
-        /* fall through */
-    case 32:
-        words = width;
-        break;
-    }
-    return 4 * words;
-}
-
-/***********************************************************************
  *           DIB_GetDIBImageBytes
  *
  * Return the number of bytes used to hold the image in a DIB bitmap.
  */
 static int DIB_GetDIBImageBytes( int width, int height, int depth )
 {
-    return DIB_GetDIBWidthBytes( width, depth ) * abs( height );
+    return (((width * depth + 31) / 8) & ~3) * abs( height );
 }
 
 

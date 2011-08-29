@@ -738,24 +738,7 @@ static struct my_IStream Test_Stream = { { &Test_Stream_Vtbl }, 0, 0 };
 
 static INT DIB_GetWidthBytes( int width, int bpp )
 {
-    int words;
-
-    switch (bpp)
-    {
-	case 1:  words = (width + 31) / 32; break;
-	case 4:  words = (width + 7) / 8; break;
-	case 8:  words = (width + 3) / 4; break;
-	case 15:
-	case 16: words = (width + 1) / 2; break;
-	case 24: words = (width * 3 + 3)/4; break;
-	case 32: words = width; break;
-
-        default:
-            trace("Unknown depth %d, please report.\n", bpp );
-            assert(0);
-            return -1;
-    }
-    return 4 * words;
+    return ((width * bpp + 31) / 8) & ~3;
 }
 
 static void check_bitmap_data(const char *bm_data, ULONG bm_data_size,
