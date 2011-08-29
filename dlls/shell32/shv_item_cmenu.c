@@ -382,7 +382,7 @@ static BOOL DoCopyOrCut(ItemCmImpl *This, HWND hwnd, BOOL bCut)
  * Used by DoOpenProperties through SHCreatePropSheetExtArrayEx to add
  * propertysheet pages from shell extensions.
  */
-static BOOL Properties_AddPropSheetCallback(HPROPSHEETPAGE hpage, LPARAM lparam)
+static BOOL CALLBACK Properties_AddPropSheetCallback(HPROPSHEETPAGE hpage, LPARAM lparam)
 {
 	LPPROPSHEETHEADERW psh = (LPPROPSHEETHEADERW) lparam;
 	psh->u3.phpage[psh->nPages++] = hpage;
@@ -476,17 +476,13 @@ static void DoOpenProperties(ItemCmImpl *This, HWND hwnd)
 	    hpsxa = SHCreatePropSheetExtArrayEx(HKEY_CLASSES_ROOT, wszFiletype, MAX_PROP_PAGES - psh.nPages, lpDo);
 	    if (hpsxa != NULL)
 	    {
-		SHAddFromPropSheetExtArray((HPSXA)hpsxa,
-					   (LPFNADDPROPSHEETPAGE)&Properties_AddPropSheetCallback,
-					   (LPARAM)&psh);
+		SHAddFromPropSheetExtArray(hpsxa, Properties_AddPropSheetCallback, (LPARAM)&psh);
 		SHDestroyPropSheetExtArray(hpsxa);
 	    }
 	    hpsxa = SHCreatePropSheetExtArrayEx(HKEY_CLASSES_ROOT, wszFiletypeAll, MAX_PROP_PAGES - psh.nPages, lpDo);
 	    if (hpsxa != NULL)
 	    {
-		SHAddFromPropSheetExtArray((HPSXA)hpsxa,
-					   (LPFNADDPROPSHEETPAGE)&Properties_AddPropSheetCallback,
-					   (LPARAM)&psh);
+		SHAddFromPropSheetExtArray(hpsxa, Properties_AddPropSheetCallback, (LPARAM)&psh);
 		SHDestroyPropSheetExtArray(hpsxa);
 	    }
 	    IDataObject_Release(lpDo);
