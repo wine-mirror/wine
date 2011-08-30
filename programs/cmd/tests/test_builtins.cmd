@@ -854,6 +854,7 @@ rmdir del_q_dir
 echo ------------ Testing del /s --------------
 mkdir "foo bar"
 cd "foo bar"
+mkdir "foo:"
 echo hi > file1.dat
 echo there > file2.dat
 echo bub > file3.dat
@@ -868,6 +869,7 @@ for %%f in (1 2 3) do if exist file%%f.dat echo Del /s failed on file%%f
 for %%f in (1 2 3) do if exist file%%f.dat del file%%f.dat
 if exist "file with spaces.dat" echo Del /s failed on "file with spaces.dat"
 if exist "file with spaces.dat" del "file with spaces.dat"
+rmdir "foo:"
 cd ..
 rmdir "foo bar"
 
