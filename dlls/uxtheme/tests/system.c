@@ -192,8 +192,7 @@ static void test_OpenThemeData(void)
     SetLastError(0xdeadbeef);
     hTheme = pOpenThemeData(NULL, NULL);
     ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
-    todo_wine
-        ok( GetLastError() == E_POINTER,
+    ok( GetLastError() == E_POINTER,
             "Expected GLE() to be E_POINTER, got 0x%08x\n",
             GetLastError());
 
@@ -232,8 +231,7 @@ static void test_OpenThemeData(void)
     SetLastError(0xdeadbeef);
     hTheme = pOpenThemeData(hWnd, NULL);
     ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
-    todo_wine
-        ok( GetLastError() == E_POINTER,
+    ok( GetLastError() == E_POINTER,
             "Expected GLE() to be E_POINTER, got 0x%08x\n",
             GetLastError());
 
@@ -359,8 +357,7 @@ static void test_OpenThemeDataEx(void)
     SetLastError(0xdeadbeef);
     hTheme = pOpenThemeDataEx(NULL, NULL, 0);
     ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
-    todo_wine
-        ok( GetLastError() == E_POINTER,
+    ok( GetLastError() == E_POINTER,
             "Expected GLE() to be E_POINTER, got 0x%08x\n",
             GetLastError());
 
@@ -399,8 +396,7 @@ static void test_OpenThemeDataEx(void)
     SetLastError(0xdeadbeef);
     hTheme = pOpenThemeDataEx(hWnd, NULL, 0);
     ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
-    todo_wine
-        ok( GetLastError() == E_POINTER,
+    ok( GetLastError() == E_POINTER,
             "Expected GLE() to be E_POINTER, got 0x%08x\n",
             GetLastError());
 

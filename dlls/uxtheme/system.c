@@ -641,6 +641,12 @@ HTHEME WINAPI OpenThemeDataEx(HWND hwnd, LPCWSTR pszClassList, DWORD flags)
     HTHEME hTheme = NULL;
     TRACE("(%p,%s, %x)\n", hwnd, debugstr_w(pszClassList), flags);
 
+    if(!pszClassList)
+    {
+        SetLastError(E_POINTER);
+        return NULL;
+    }
+
     if(flags)
         FIXME("unhandled flags: %x\n", flags);
 
