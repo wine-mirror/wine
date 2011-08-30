@@ -783,7 +783,6 @@ typedef enum _WINED3DDECLUSAGE
 
 typedef enum _WINED3DSURFTYPE
 {
-    SURFACE_UNKNOWN                         = 0,    /* Default / Unknown surface type */
     SURFACE_OPENGL,                                 /* OpenGL surface: Renders using libGL, needed for 3D */
     SURFACE_GDI,                                    /* User surface. No 3D, DirectDraw rendering with GDI */
 } WINED3DSURFTYPE;

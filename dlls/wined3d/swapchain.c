@@ -886,8 +886,8 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTY
             swapchain->swapchain_ops = &swapchain_gl_ops;
             break;
 
-        case SURFACE_UNKNOWN:
-            FIXME("Caller tried to create a SURFACE_UNKNOWN swapchain.\n");
+        default:
+            ERR("Invalid surface type %#x.\n", surface_type);
             return WINED3DERR_INVALIDCALL;
     }
 

@@ -426,13 +426,6 @@ static void ddraw_surface_cleanup(IDirectDrawSurfaceImpl *surface)
 
         surface->wined3d_swapchain = NULL;
 
-        /* Reset to the default surface implementation type. This is needed
-         * if applications use non render target surfaces and expect blits to
-         * work after destroying the render target.
-         *
-         * TODO: Recreate existing offscreen surfaces. */
-        ddraw->ImplType = DefaultSurfaceType;
-
         TRACE("D3D unloaded.\n");
     }
 
@@ -2998,18 +2991,6 @@ static HRESULT WINAPI ddraw_surface7_IsLost(IDirectDrawSurface7 *iface)
     TRACE("iface %p.\n", iface);
 
     EnterCriticalSection(&ddraw_cs);
-    /* We lose the surface if the implementation was changed */
-    if(This->ImplType != This->ddraw->ImplType)
-    {
-        /* But this shouldn't happen. When we change the implementation,
-         * all surfaces are re-created automatically, and their content
-         * is copied
-         */
-        ERR(" (%p) Implementation was changed from %d to %d\n", This, This->ImplType, This->ddraw->ImplType);
-        LeaveCriticalSection(&ddraw_cs);
-        return DDERR_SURFACELOST;
-    }
-
     hr = wined3d_surface_is_lost(This->wined3d_surface);
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
@@ -3073,12 +3054,6 @@ static HRESULT WINAPI ddraw_surface7_Restore(IDirectDrawSurface7 *iface)
     TRACE("iface %p.\n", iface);
 
     EnterCriticalSection(&ddraw_cs);
-    if(This->ImplType != This->ddraw->ImplType)
-    {
-        /* Call the recreation callback. Make sure to AddRef first */
-        IDirectDrawSurface_AddRef(iface);
-        ddraw_recreate_surfaces_cb(iface, &This->surface_desc, NULL /* Not needed */);
-    }
     hr = wined3d_surface_restore(This->wined3d_surface);
     LeaveCriticalSection(&ddraw_cs);
     return hr;

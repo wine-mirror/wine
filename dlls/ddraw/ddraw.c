@@ -206,20 +206,7 @@ static HRESULT WINAPI ddraw7_QueryInterface(IDirectDraw7 *iface, REFIID refiid, 
               IsEqualGUID( &IID_IDirect3D7 , refiid ) )
     {
         /* Check the surface implementation */
-        if(This->ImplType == SURFACE_UNKNOWN)
-        {
-            /* Apps may create the IDirect3D Interface before the primary surface.
-             * set the surface implementation */
-            This->ImplType = SURFACE_OPENGL;
-            TRACE("(%p) Choosing OpenGL surfaces because a Direct3D interface was requested\n", This);
-        }
-        else if(This->ImplType != SURFACE_OPENGL && DefaultSurfaceType == SURFACE_UNKNOWN)
-        {
-            ERR("(%p) The App is requesting a D3D device, but a non-OpenGL surface type was chosen. Prepare for trouble!\n", This);
-            ERR(" (%p) You may want to contact wine-devel for help\n", This);
-            /* Should I assert(0) here??? */
-        }
-        else if(This->ImplType != SURFACE_OPENGL)
+        if (This->ImplType != SURFACE_OPENGL)
         {
             WARN("The app requests a Direct3D interface, but non-opengl surfaces where set in winecfg\n");
             /* Do not abort here, only reject 3D Device creation */
@@ -1398,8 +1385,6 @@ static HRESULT WINAPI ddraw7_GetFourCCCodes(IDirectDraw7 *iface, DWORD *NumCodes
     wined3d_device_get_display_mode(This->wined3d_device, 0, &d3ddm);
 
     outsize = NumCodes && Codes ? *NumCodes : 0;
-
-    if(type == SURFACE_UNKNOWN) type = SURFACE_GDI;
 
     for (i = 0; i < (sizeof(formats) / sizeof(formats[0])); ++i)
     {
@@ -2599,113 +2584,6 @@ static HRESULT WINAPI ddraw7_StartModeTest(IDirectDraw7 *iface, SIZE *Modes, DWO
 }
 
 /*****************************************************************************
- * ddraw_recreate_surfaces_cb
- *
- * Enumeration callback for ddraw_recreate_surface.
- * It re-recreates the WineD3DSurface. It's pretty straightforward
- *
- *****************************************************************************/
-HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDESC2 *desc, void *Context)
-{
-    IDirectDrawSurfaceImpl *surfImpl = impl_from_IDirectDrawSurface7(surf);
-    struct wined3d_resource_desc wined3d_desc;
-    struct wined3d_resource *wined3d_resource;
-    IDirectDrawImpl *This = surfImpl->ddraw;
-    struct wined3d_surface *wined3d_surface;
-    struct wined3d_swapchain *swapchain;
-    struct wined3d_clipper *clipper;
-    void *parent;
-    HRESULT hr;
-
-    TRACE("surface %p, surface_desc %p, context %p.\n",
-            surf, desc, Context);
-
-    /* For the enumeration */
-    IDirectDrawSurface7_Release(surf);
-
-    if(surfImpl->ImplType == This->ImplType) return DDENUMRET_OK; /* Continue */
-
-    /* Get the objects */
-    swapchain = surfImpl->wined3d_swapchain;
-    surfImpl->wined3d_swapchain = NULL;
-    wined3d_surface = surfImpl->wined3d_surface;
-
-    /* get the clipper */
-    clipper = wined3d_surface_get_clipper(wined3d_surface);
-
-    /* Get the surface properties */
-    wined3d_resource = wined3d_surface_get_resource(wined3d_surface);
-    wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
-
-    parent = wined3d_surface_get_parent(wined3d_surface);
-    hr = wined3d_surface_create(This->wined3d_device, wined3d_desc.width, wined3d_desc.height,
-            wined3d_desc.format, TRUE, FALSE, surfImpl->mipmap_level, wined3d_desc.usage, wined3d_desc.pool,
-            wined3d_desc.multisample_type, wined3d_desc.multisample_quality, This->ImplType,
-            parent, &ddraw_surface_wined3d_parent_ops, &surfImpl->wined3d_surface);
-    if (FAILED(hr))
-    {
-        surfImpl->wined3d_surface = wined3d_surface;
-        return hr;
-    }
-
-    wined3d_surface_set_clipper(surfImpl->wined3d_surface, clipper);
-
-    /* TODO: Copy the surface content, except for render targets */
-
-    /* If there's a swapchain, it owns the wined3d surfaces. So Destroy
-     * the swapchain
-     */
-    if (swapchain)
-    {
-        /* The backbuffers have the swapchain set as well, but the primary
-         * owns it and destroys it. */
-        if (surfImpl->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-            wined3d_device_uninit_gdi(This->wined3d_device);
-        surfImpl->isRenderTarget = FALSE;
-    }
-    else
-    {
-        if (!wined3d_surface_decref(wined3d_surface))
-            TRACE("Surface released successful, next surface\n");
-        else
-            ERR("Something's still holding the old WineD3DSurface\n");
-    }
-
-    surfImpl->ImplType = This->ImplType;
-
-    return DDENUMRET_OK;
-}
-
-/*****************************************************************************
- * ddraw_recreate_surfaces
- *
- * A function, that converts all wineD3DSurfaces to the new implementation type
- * It enumerates all surfaces with IWineD3DDevice::EnumSurfaces, creates a
- * new WineD3DSurface, copies the content and releases the old surface
- *
- *****************************************************************************/
-static HRESULT ddraw_recreate_surfaces(IDirectDrawImpl *This)
-{
-    DDSURFACEDESC2 desc;
-    TRACE("(%p): Switch to implementation %d\n", This, This->ImplType);
-
-    if(This->ImplType != SURFACE_OPENGL && This->d3d_initialized)
-    {
-        /* Should happen almost never */
-        FIXME("(%p) Switching to non-opengl surfaces with d3d started. Is this a bug?\n", This);
-        /* Shutdown d3d */
-        wined3d_device_uninit_3d(This->wined3d_device);
-    }
-    /* Contrary: D3D starting is handled by the caller, because it knows the render target */
-
-    memset(&desc, 0, sizeof(desc));
-    desc.dwSize = sizeof(desc);
-
-    return IDirectDraw7_EnumSurfaces(&This->IDirectDraw7_iface, 0, &desc, This,
-            ddraw_recreate_surfaces_cb);
-}
-
-/*****************************************************************************
  * ddraw_create_surface
  *
  * A helper function for IDirectDraw7::CreateSurface. It creates a new surface
@@ -2734,59 +2612,10 @@ static HRESULT ddraw_create_surface(IDirectDrawImpl *This, DDSURFACEDESC2 *pDDSD
         DDRAW_dump_surface_desc(pDDSD);
     }
 
-    /* Select the surface type, if it wasn't chosen yet */
-    if(ImplType == SURFACE_UNKNOWN)
+    if ((pDDSD->ddsCaps.dwCaps & DDSCAPS_3DDEVICE) && This->ImplType != SURFACE_OPENGL)
     {
-        /* Use GL Surfaces if a D3DDEVICE Surface is requested */
-        if(pDDSD->ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
-        {
-            TRACE("(%p) Choosing GL surfaces because a 3DDEVICE Surface was requested\n", This);
-            ImplType = SURFACE_OPENGL;
-        }
-
-        /* Otherwise use GDI surfaces for now */
-        else
-        {
-            TRACE("(%p) Choosing GDI surfaces for 2D rendering\n", This);
-            ImplType = SURFACE_GDI;
-        }
-
-        /* Policy if all surface implementations are available:
-         * First, check if a default type was set with winecfg. If not,
-         * try Xrender surfaces, and use them if they work. Next, check if
-         * accelerated OpenGL is available, and use GL surfaces in this
-         * case. If all else fails, use GDI surfaces. If a 3DDEVICE surface
-         * was created, always use OpenGL surfaces.
-         *
-         * (Note: Xrender surfaces are not implemented for now, the
-         * unaccelerated implementation uses GDI to render in Software)
-         */
-
-        /* Store the type. If it needs to be changed, all WineD3DSurfaces have to
-         * be re-created. This could be done with IDirectDrawSurface7::Restore
-         */
-        This->ImplType = ImplType;
-    }
-    else
-    {
-        if ((pDDSD->ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
-                && (This->ImplType != SURFACE_OPENGL)
-                && DefaultSurfaceType == SURFACE_UNKNOWN)
-        {
-            /* We have to change to OpenGL,
-             * and re-create all WineD3DSurfaces
-             */
-            ImplType = SURFACE_OPENGL;
-            This->ImplType = ImplType;
-            TRACE("(%p) Re-creating all surfaces\n", This);
-            ddraw_recreate_surfaces(This);
-            TRACE("(%p) Done recreating all surfaces\n", This);
-        }
-        else if(This->ImplType != SURFACE_OPENGL && pDDSD->ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
-        {
-            WARN("The application requests a 3D capable surface, but a non-opengl surface was set in the registry\n");
-            /* Do not fail surface creation, only fail 3D device creation */
-        }
+        WARN("The application requests a 3D capable surface, but a non-OpenGL surface type was set in the registry.\n");
+        /* Do not fail surface creation, only fail 3D device creation. */
     }
 
     /* Create the Surface object */
