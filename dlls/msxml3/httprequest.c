@@ -1131,7 +1131,8 @@ static HRESULT WINAPI httprequest_Safety_SetInterfaceSafetyOptions(IObjectSafety
     if ((mask & ~SAFETY_SUPPORTED_OPTIONS) != 0)
         return E_FAIL;
 
-    This->safeopt = enabled & mask & SAFETY_SUPPORTED_OPTIONS;
+    This->safeopt = (This->safeopt & ~mask) | (mask & enabled);
+
     return S_OK;
 }
 

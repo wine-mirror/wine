@@ -3430,7 +3430,8 @@ static HRESULT WINAPI domdoc_Safety_SetInterfaceSafetyOptions(IObjectSafety *ifa
     if ((mask & ~SAFETY_SUPPORTED_OPTIONS) != 0)
         return E_FAIL;
 
-    This->safeopt = enabled & mask & SAFETY_SUPPORTED_OPTIONS;
+    This->safeopt = (This->safeopt & ~mask) | (mask & enabled);
+
     return S_OK;
 }
 
