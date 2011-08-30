@@ -3801,6 +3801,50 @@ static void CreateSurfaceBadCapsSizeTest(void)
     IDirectDraw7_Release(dd7);
 }
 
+static void reset_ddsd(DDSURFACEDESC *ddsd)
+{
+    memset(ddsd, 0, sizeof(*ddsd));
+    ddsd->dwSize = sizeof(*ddsd);
+}
+
+static void no_ddsd_caps_test(void)
+{
+    DDSURFACEDESC ddsd;
+    HRESULT hr;
+    IDirectDrawSurface *surface;
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT;
+    ddsd.dwWidth = 128;
+    ddsd.dwHeight = 128;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &surface, NULL);
+    ok(SUCCEEDED(hr), "IDirectDraw_CreateSurface failed, hr %#x.\n", hr);
+    reset_ddsd(&ddsd);
+    hr = IDirectDrawSurface_GetSurfaceDesc(surface, &ddsd);
+    IDirectDrawSurface_Release(surface);
+    ok(ddsd.dwFlags & DDSD_CAPS, "DDSD_CAPS is not set\n");
+    ok(ddsd.ddsCaps.dwCaps & DDSCAPS_OFFSCREENPLAIN, "DDSCAPS_OFFSCREENPLAIN is not set\n");
+
+    reset_ddsd(&ddsd);
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &surface, NULL);
+    ok(SUCCEEDED(hr), "IDirectDraw_CreateSurface failed, hr %#x.\n", hr);
+    reset_ddsd(&ddsd);
+    hr = IDirectDrawSurface_GetSurfaceDesc(surface, &ddsd);
+    IDirectDrawSurface_Release(surface);
+    ok(ddsd.dwFlags & DDSD_CAPS, "DDSD_CAPS is not set\n");
+    ok(ddsd.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE, "DDSCAPS_OFFSCREENPLAIN is not set\n");
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT;
+    ddsd.dwWidth = 128;
+    ddsd.dwHeight = 128;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
+    hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &surface, NULL);
+    ok(hr == DDERR_INVALIDCAPS, "IDirectDraw_CreateSurface returned %#x, expected DDERR_INVALIDCAPS.\n", hr);
+}
+
 START_TEST(dsurface)
 {
     HRESULT ret;
@@ -3857,5 +3901,6 @@ START_TEST(dsurface)
     BackBufferCreateSurfaceTest();
     BackBufferAttachmentFlipTest();
     CreateSurfaceBadCapsSizeTest();
+    no_ddsd_caps_test();
     ReleaseDirectDraw();
 }
