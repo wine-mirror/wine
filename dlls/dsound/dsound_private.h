@@ -336,6 +336,7 @@ HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave) DECLSPEC_
 HRESULT primarybuffer_create(DirectSoundDevice *device, IDirectSoundBufferImpl **ppdsb,
     const DSBUFFERDESC *dsbd) DECLSPEC_HIDDEN;
 void primarybuffer_destroy(IDirectSoundBufferImpl *This) DECLSPEC_HIDDEN;
+HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex) DECLSPEC_HIDDEN;
 
 /* duplex.c */
  

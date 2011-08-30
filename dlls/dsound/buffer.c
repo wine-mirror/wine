@@ -187,15 +187,24 @@ static inline IDirectSoundBufferImpl *impl_from_IDirectSoundBuffer8(IDirectSound
     return CONTAINING_RECORD(iface, IDirectSoundBufferImpl, IDirectSoundBuffer8_iface);
 }
 
+static inline BOOL is_primary_buffer(IDirectSoundBufferImpl *This)
+{
+    return This->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER ? TRUE : FALSE;
+}
+
 static HRESULT WINAPI IDirectSoundBufferImpl_SetFormat(IDirectSoundBuffer8 *iface,
         LPCWAVEFORMATEX wfex)
 {
-        IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer8(iface);
+    IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer8(iface);
 
-	TRACE("(%p,%p)\n",This,wfex);
-	/* This method is not available on secondary buffers */
-	WARN("invalid call\n");
-	return DSERR_INVALIDCALL;
+    TRACE("(%p,%p)\n", iface, wfex);
+
+    if (is_primary_buffer(This))
+        return primarybuffer_SetFormat(This->device, wfex);
+    else {
+        WARN("not available for secondary buffers.\n");
+        return DSERR_INVALIDCALL;
+    }
 }
 
 static HRESULT WINAPI IDirectSoundBufferImpl_SetVolume(IDirectSoundBuffer8 *iface, LONG vol)

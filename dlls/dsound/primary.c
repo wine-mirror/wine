@@ -472,12 +472,14 @@ LPWAVEFORMATEX DSOUND_CopyFormat(LPCWAVEFORMATEX wfex)
 	return pwfx;
 }
 
-static HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex, BOOL forced)
+HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex)
 {
 	HRESULT err = DSERR_BUFFERLOST;
 	int i;
 	DWORD nSamplesPerSec, bpp, chans;
 	LPWAVEFORMATEX oldpwfx;
+        BOOL forced = device->priolevel == DSSCL_WRITEPRIMARY;
+
 	TRACE("(%p,%p)\n", device, wfex);
 
 	if (device->priolevel == DSSCL_NORMAL) {
@@ -628,9 +630,8 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
     LPCWAVEFORMATEX wfex)
 {
     IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer(iface);
-    DirectSoundDevice *device = This->device;
     TRACE("(%p,%p)\n", iface, wfex);
-    return DSOUND_PrimarySetFormat(device, wfex, device->priolevel == DSSCL_WRITEPRIMARY);
+    return primarybuffer_SetFormat(This->device, wfex);
 }
 
 static HRESULT WINAPI PrimaryBufferImpl_SetVolume(
