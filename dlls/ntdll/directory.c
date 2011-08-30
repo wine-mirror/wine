@@ -1547,9 +1547,9 @@ static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, U
     else
     {
         old_pos = lseek( fd, 0, SEEK_CUR );
-        if (old_pos == -1 && errno == ENOENT)
+        if (old_pos == -1)
         {
-            io->u.Status = STATUS_NO_MORE_FILES;
+            io->u.Status = (errno == ENOENT) ? STATUS_NO_MORE_FILES : FILE_GetNtStatus();
             res = 0;
             goto done;
         }
