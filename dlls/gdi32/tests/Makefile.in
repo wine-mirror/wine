@@ -17,4 +17,6 @@ C_SRCS = \
 	path.c \
 	pen.c
 
+RC_SRCS = resource.rc
+
 @MAKE_TEST_RULES@

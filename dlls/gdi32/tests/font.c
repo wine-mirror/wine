@@ -48,6 +48,8 @@ static BOOL  (WINAPI *pGdiRealizationInfo)(HDC hdc, DWORD *);
 static HFONT (WINAPI *pCreateFontIndirectExA)(const ENUMLOGFONTEXDV *);
 static HANDLE (WINAPI *pAddFontMemResourceEx)(PVOID, DWORD, PVOID, DWORD *);
 static BOOL  (WINAPI *pRemoveFontMemResourceEx)(HANDLE);
+static INT   (WINAPI *pAddFontResourceExA)(LPCSTR, DWORD, PVOID);
+static BOOL  (WINAPI *pRemoveFontResourceExA)(LPCSTR, DWORD, PVOID);
 
 static HMODULE hgdi32 = 0;
 static const MAT2 mat = { {0,1}, {0,0}, {0,0}, {0,1} };
@@ -68,6 +70,8 @@ static void init(void)
     pCreateFontIndirectExA = (void *)GetProcAddress(hgdi32, "CreateFontIndirectExA");
     pAddFontMemResourceEx = (void *)GetProcAddress(hgdi32, "AddFontMemResourceEx");
     pRemoveFontMemResourceEx = (void *)GetProcAddress(hgdi32, "RemoveFontMemResourceEx");
+    pAddFontResourceExA = (void *)GetProcAddress(hgdi32, "AddFontResourceExA");
+    pRemoveFontResourceExA = (void *)GetProcAddress(hgdi32, "RemoveFontResourceExA");
 }
 
 static INT CALLBACK is_truetype_font_installed_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DWORD type, LPARAM lParam)
@@ -3799,6 +3803,190 @@ static void test_fullname(void)
     DeleteDC(hdc);
 }
 
+static BOOL write_ttf_file(char *tmp_name)
+{
+    char tmp_path[MAX_PATH];
+    HRSRC rsrc;
+    void *rsrc_data;
+    DWORD rsrc_size;
+    HANDLE hfile;
+    BOOL ret;
+
+    SetLastError(0xdeadbeef);
+    rsrc = FindResource(GetModuleHandle(0), "wine_test.ttf", RT_RCDATA);
+    ok(rsrc != 0, "FindResource error %d\n", GetLastError());
+    if (!rsrc) return FALSE;
+    SetLastError(0xdeadbeef);
+    rsrc_data = LockResource(LoadResource(GetModuleHandle(0), rsrc));
+    ok(rsrc_data != 0, "LockResource error %d\n", GetLastError());
+    if (!rsrc_data) return FALSE;
+    SetLastError(0xdeadbeef);
+    rsrc_size = SizeofResource(GetModuleHandle(0), rsrc);
+    ok(rsrc_size != 0, "SizeofResource error %d\n", GetLastError());
+    if (!rsrc_size) return FALSE;
+
+    SetLastError(0xdeadbeef);
+    ret = GetTempPath(MAX_PATH, tmp_path);
+    ok(ret, "GetTempPath() error %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = GetTempFileName(tmp_path, "ttf", 0, tmp_name);
+    ok(ret, "GetTempFileName() error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hfile = CreateFile(tmp_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "CreateFile() error %d\n", GetLastError());
+    if (hfile == INVALID_HANDLE_VALUE) return FALSE;
+
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(hfile, rsrc_data, rsrc_size, &rsrc_size, NULL);
+    ok(ret, "WriteFile() error %d\n", GetLastError());
+
+    CloseHandle(hfile);
+    return ret;
+}
+
+static void test_CreateScalableFontResource(void)
+{
+    char ttf_name[MAX_PATH];
+    char tmp_path[MAX_PATH];
+    char fot_name[MAX_PATH];
+    char *file_part;
+    DWORD ret;
+
+    if (!pAddFontResourceExA || !pRemoveFontResourceExA)
+    {
+        win_skip("AddFontResourceExA is not available on this platform\n");
+        return;
+    }
+
+    if (!write_ttf_file(ttf_name))
+    {
+        skip("Failed to create ttf file for testing\n");
+        return;
+    }
+
+    trace("created %s\n", ttf_name);
+
+    ret = is_truetype_font_installed("wine_test");
+    ok(!ret, "font wine_test should not be enumerated\n");
+
+    ret = GetTempPath(MAX_PATH, tmp_path);
+    ok(ret, "GetTempPath() error %d\n", GetLastError());
+    ret = GetTempFileName(tmp_path, "fot", 0, fot_name);
+    ok(ret, "GetTempFileName() error %d\n", GetLastError());
+
+    ret = GetFileAttributes(fot_name);
+    ok(ret != INVALID_FILE_ATTRIBUTES, "file %s does not exist\n", fot_name);
+
+    SetLastError(0xdeadbeef);
+    ret = CreateScalableFontResource(0, fot_name, ttf_name, NULL);
+    ok(!ret, "CreateScalableFontResource() should fail\n");
+    ok(GetLastError() == ERROR_FILE_EXISTS, "not expected error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = CreateScalableFontResource(0, fot_name, ttf_name, "");
+    ok(!ret, "CreateScalableFontResource() should fail\n");
+    ok(GetLastError() == ERROR_FILE_EXISTS, "not expected error %d\n", GetLastError());
+
+    file_part = strrchr(ttf_name, '\\');
+    SetLastError(0xdeadbeef);
+    ret = CreateScalableFontResource(0, fot_name, file_part, tmp_path);
+    ok(!ret, "CreateScalableFontResource() should fail\n");
+    ok(GetLastError() == ERROR_FILE_EXISTS, "not expected error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = CreateScalableFontResource(0, fot_name, "random file name", tmp_path);
+    ok(!ret, "CreateScalableFontResource() should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "not expected error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = CreateScalableFontResource(0, fot_name, NULL, ttf_name);
+    ok(!ret, "CreateScalableFontResource() should fail\n");
+todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "not expected error %d\n", GetLastError());
+
+    ret = DeleteFile(fot_name);
+    ok(ret, "DeleteFile() error %d\n", GetLastError());
+
+    ret = pRemoveFontResourceExA(fot_name, 0, 0);
+todo_wine
+    ok(!ret, "RemoveFontResourceEx() should fail\n");
+
+    /* FIXME: since CreateScalableFontResource is a stub further testing is impossible */
+    if (ret) return;
+
+    /* test public font resource */
+    SetLastError(0xdeadbeef);
+    ret = CreateScalableFontResource(0, fot_name, ttf_name, NULL);
+    ok(ret, "CreateScalableFontResource() error %d\n", GetLastError());
+
+    ret = is_truetype_font_installed("wine_test");
+    ok(!ret, "font wine_test should not be enumerated\n");
+
+    SetLastError(0xdeadbeef);
+    ret = pAddFontResourceExA(fot_name, 0, 0);
+    ok(ret, "AddFontResourceEx() error %d\n", GetLastError());
+
+    ret = is_truetype_font_installed("wine_test");
+    ok(ret, "font wine_test should be enumerated\n");
+
+    ret = pRemoveFontResourceExA(fot_name, FR_PRIVATE, 0);
+    ok(!ret, "RemoveFontResourceEx() with not matching flags should fail\n");
+
+    SetLastError(0xdeadbeef);
+    ret = pRemoveFontResourceExA(fot_name, 0, 0);
+todo_wine
+    ok(ret, "RemoveFontResourceEx() error %d\n", GetLastError());
+
+    ret = is_truetype_font_installed("wine_test");
+todo_wine
+    ok(!ret, "font wine_test should not be enumerated\n");
+
+    /* FIXME: since RemoveFontResource is a stub correct testing is impossible */
+    if (ret)
+    {
+        /* remove once RemoveFontResource is implemented */
+        DeleteFile(fot_name);
+        DeleteFile(ttf_name);
+        return;
+    }
+
+    ret = pRemoveFontResourceExA(fot_name, 0, 0);
+    ok(!ret, "RemoveFontResourceEx() should fail\n");
+
+    DeleteFile(fot_name);
+
+    /* test hidden font resource */
+    SetLastError(0xdeadbeef);
+    ret = CreateScalableFontResource(1, fot_name, ttf_name, NULL);
+    ok(ret, "CreateScalableFontResource() error %d\n", GetLastError());
+
+    ret = is_truetype_font_installed("wine_test");
+    ok(!ret, "font wine_test should not be enumerated\n");
+
+    SetLastError(0xdeadbeef);
+    ret = pAddFontResourceExA(fot_name, 0, 0);
+    ok(ret, "AddFontResourceEx() error %d\n", GetLastError());
+
+    ret = is_truetype_font_installed("wine_test");
+    ok(!ret, "font wine_test should not be enumerated\n");
+
+    /* XP allows removing a private font added with 0 flags */
+    SetLastError(0xdeadbeef);
+    ret = pRemoveFontResourceExA(fot_name, FR_PRIVATE, 0);
+    ok(ret, "RemoveFontResourceEx() error %d\n", GetLastError());
+
+    ret = is_truetype_font_installed("wine_test");
+    ok(!ret, "font wine_test should not be enumerated\n");
+
+    ret = pRemoveFontResourceExA(fot_name, 0, 0);
+    ok(!ret, "RemoveFontResourceEx() should fail\n");
+
+    DeleteFile(fot_name);
+    DeleteFile(ttf_name);
+}
+
 START_TEST(font)
 {
     init();
@@ -3851,4 +4039,9 @@ START_TEST(font)
     test_CreateFontIndirectEx();
     test_oemcharset();
     test_fullname();
+
+    /* CreateScalableFontResource should be last test until RemoveFontResource
+     * is properly implemented.
+     */
+    test_CreateScalableFontResource();
 }
