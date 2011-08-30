@@ -202,6 +202,7 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
 	    mr->rdParm[1] = DIB_RGB_COLORS;
             dst_info = (BITMAPINFO *)(mr->rdParm + 2);
             dst_info->bmiHeader = src_info->bmiHeader;
+            dst_info->bmiHeader.biClrUsed = 0;
 	    cref = GetTextColor( dev->hdc );
             dst_info->bmiColors[0].rgbRed = GetRValue(cref);
             dst_info->bmiColors[0].rgbGreen = GetGValue(cref);

@@ -88,73 +88,23 @@ DWORD nulldrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *inf
     BITMAPOBJ *bmp;
 
     if (!hbitmap) return ERROR_SUCCESS;
-    if (!(bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP ))) return ERROR_INVALID_HANDLE;
-
-    if (info->bmiHeader.biPlanes != 1) goto update_format;
-    if (info->bmiHeader.biBitCount != bmp->bitmap.bmBitsPixel) goto update_format;
-    /* FIXME: check color masks */
 
     if (bits)
     {
-        int i, width_bytes = get_dib_stride( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );
-        unsigned char *dst_bits, *src_bits;
-
-        if ((src->width != dst->width) || (src->height != dst->height))
+        if (!(bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP ))) return ERROR_INVALID_HANDLE;
+        if (!bmp->bitmap.bmBits)
         {
-            GDI_ReleaseObj( hbitmap );
-            return ERROR_TRANSFORM_NOT_SUPPORTED;
-        }
-        if (src->visrect.left > 0 || src->visrect.right < bmp->bitmap.bmWidth ||
-            dst->visrect.left > 0 || dst->visrect.right < bmp->bitmap.bmWidth)
-        {
-            FIXME( "setting partial rows not supported\n" );
-            GDI_ReleaseObj( hbitmap );
-            return ERROR_NOT_SUPPORTED;
-        }
-        if (clip)
-        {
-            FIXME( "clip region not supported\n" );
-            GDI_ReleaseObj( hbitmap );
-            return ERROR_NOT_SUPPORTED;
-        }
-
-        if (!bmp->bitmap.bmBits &&
-            !(bmp->bitmap.bmBits = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                              bmp->bitmap.bmHeight * width_bytes )))
-        {
-            GDI_ReleaseObj( hbitmap );
-            return ERROR_OUTOFMEMORY;
-        }
-        dst_bits = (unsigned char *)bmp->bitmap.bmBits + dst->visrect.top * width_bytes;
-        src_bits = bits->ptr;
-        if (info->bmiHeader.biHeight > 0)
-        {
-            src_bits += (info->bmiHeader.biHeight - 1 - src->visrect.top) * width_bytes;
-            width_bytes = -width_bytes;
-        }
-        else
-            src_bits += src->visrect.top * width_bytes;
-
-        if (width_bytes != bmp->bitmap.bmWidthBytes)
-        {
-            for (i = 0; i < dst->visrect.bottom - dst->visrect.top; i++)
+            int width_bytes = get_dib_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
+            if (!(bmp->bitmap.bmBits = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                                  bmp->bitmap.bmHeight * width_bytes )))
             {
-                memcpy( dst_bits, src_bits, bmp->bitmap.bmWidthBytes );
-                src_bits += width_bytes;
-                dst_bits += abs(width_bytes);
+                GDI_ReleaseObj( hbitmap );
+                return ERROR_OUTOFMEMORY;
             }
         }
-        else memcpy( dst_bits, src_bits, width_bytes * (dst->visrect.bottom - dst->visrect.top) );
+        GDI_ReleaseObj( hbitmap );
     }
-    GDI_ReleaseObj( hbitmap );
-    return ERROR_SUCCESS;
-
-update_format:
-    info->bmiHeader.biPlanes   = 1;
-    info->bmiHeader.biBitCount = bmp->bitmap.bmBitsPixel;
-    if (info->bmiHeader.biHeight > 0) info->bmiHeader.biHeight = -info->bmiHeader.biHeight;
-    GDI_ReleaseObj( hbitmap );
-    return ERROR_BAD_FORMAT;
+    return dib_driver.pPutImage( NULL, hbitmap, clip, info, bits, src, dst, rop );
 }
 
 
