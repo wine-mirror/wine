@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-08-24 14:25+0100\n"
+"PO-Revision-Date: 2011-08-30 20:11+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -803,9 +803,8 @@ msgid "Initials"
 msgstr "Initiales"
 
 #: crypt32.rc:80
-#, fuzzy
 msgid "Surname"
-msgstr "Utilisateur"
+msgstr "Nom de famille"
 
 #: crypt32.rc:81
 msgid "Domain Component"
@@ -8252,6 +8251,16 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
+"ASSOC affiche ou modifie les associations d'extensions de fichiers\n"
+"\n"
+"Syntaxe : ASSOC [.ext[=[typeFichier]]]\n"
+"\n"
+"ASSOC sans paramètre affiche les associations d'extensions de fichiers en "
+"cours.\n"
+"Si utilisé uniquement avec une extension de fichier, affiche l'association "
+"actuelle.\n"
+"Si aucun type de fichiers n'est spécifié après le signe égal, supprimer "
+"l'association courante, si elle existe.\n"
 
 #: cmd.rc:243
 msgid ""
@@ -8266,6 +8275,17 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 msgstr ""
+"FTYPE affiche ou modifie les commandes d'ouvertures associées à des types de "
+"fichiers\n"
+"\n"
+"Syntaxe : FTYPE [typeFichier[=[commandeOuverture]]]\n"
+"\n"
+"Sans paramètre, affiche les types de fichiers pour lesquels des chaînes de "
+"commande d'ouverture sont actuellement définies.\n"
+"Si seul un type de fichier est utilisé, affiche la chaîne de commande "
+"d'ouverture associée, si elle existe.\n"
+"Ne spécifier aucune commande après le signe égal supprime la commande "
+"d'ouverture associée au type de fichier spécifié.\n"
 
 #: cmd.rc:245
 msgid "MORE displays output of files or piped input in pages.\n"
@@ -8291,7 +8311,6 @@ msgstr ""
 "au système d'exploitation ou au shell où vous avez invoqué cmd.\n"
 
 #: cmd.rc:288
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -8330,6 +8349,7 @@ msgid ""
 "Enter HELP <command> for further information on any of the above commands\n"
 msgstr ""
 "Les commandes intégrées de CMD sont :\n"
+"ASSOC\t\tAffiche ou modifie les associations d'extensions de fichiers\n"
 "ATTRIB\t\tAffiche ou modifie les attributs de fichiers DOS\n"
 "CALL\t\tInvoque un fichier batch à l'intérieur d'un autre\n"
 "CD (CHDIR)\tChange le répertoire courant\n"
@@ -8343,6 +8363,8 @@ msgstr ""
 "ECHO\t\tAffiche du texte sur la console\n"
 "ENDLOCAL\tMet fin aux modifications locales de l'environnement dans un\n"
 "\t\tfichier batch\n"
+"FTYPE\t\tAffiche ou modifie les commandes d'ouvertures associées à des\n"
+"\t\ttypes de fichiers\n"
 "HELP\t\tAffiche de brefs détails sur l'utilisation d'une commande\n"
 "MD (MKDIR)\tCrée un répertoire\n"
 "MORE\t\tAffiche du texte par pages\n"
@@ -8615,7 +8637,6 @@ msgid "Default gateway"
 msgstr "Passerelle par défaut"
 
 #: net.rc:27
-#, fuzzy
 msgid ""
 "The syntax of this command is:\n"
 "\n"
@@ -8627,12 +8648,11 @@ msgid ""
 msgstr ""
 "La syntaxe de cette commande est :\n"
 "\n"
-"NET HELP commande\n"
+"NET commande [arguments]\n"
 "    -ou-\n"
 "NET commande /HELP\n"
 "\n"
-"   Les commandes disponibles sont :\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
+"où « commande » peut être HELP, START, STOP ou USE\n"
 
 #: net.rc:28
 msgid ""
@@ -8643,6 +8663,12 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
+"La syntaxe de cette commande est :\n"
+"\n"
+"NET START [service]\n"
+"\n"
+"Affiche la liste des services en cours d'exécution si « service » est omis. "
+"Sinon, « service » est le nom du service à démarrer.\n"
 
 #: net.rc:29
 msgid ""
@@ -8652,6 +8678,11 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
+"La syntaxe de cette commande est :\n"
+"\n"
+"NET STOP service\n"
+"\n"
+"où « service » est le nom du service à arrêter.\n"
 
 #: net.rc:30
 msgid "Stopping dependent service: %s\n"
@@ -8736,9 +8767,8 @@ msgid "Reconnecting"
 msgstr "Reconnexion"
 
 #: net.rc:40
-#, fuzzy
 msgid "The following services are running:\n"
-msgstr "Les services dépendants sont en cours d'exécution\n"
+msgstr "Les services suivants sont en cours d'exécution :\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -10428,7 +10458,6 @@ msgid "Drives"
 msgstr "Lecteurs"
 
 #: winecfg.rc:41
-#, fuzzy
 msgid "Select the Unix target directory, please."
 msgstr "Veuillez sélectionner le répertoire Unix cible."
 
