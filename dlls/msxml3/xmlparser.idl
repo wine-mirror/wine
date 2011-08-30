@@ -324,9 +324,15 @@ interface IXMLParser : IXMLNodeSource
     HRESULT GetSecureBaseURL([out] const WCHAR** ppwcBuf);
 };
 
+}
 
 [
-    uuid(f5078f19-c551-11d3-89b9-0000f81fe221)
+    helpstring("XML Parser"),
+    uuid(f5078f19-c551-11d3-89b9-0000f81fe221),
+    threading(both),
+    progid("Msxml2.XMLParser"),
+    vi_progid("Msxml2.XMLParser"),
+    version(3.0)
 ]
 coclass XMLParser
 {
@@ -334,7 +340,12 @@ coclass XMLParser
 };
 
 [
-    uuid(f5078f20-c551-11d3-89b9-0000f81fe221)
+    helpstring("XML Parser 2.6"),
+    uuid(f5078f20-c551-11d3-89b9-0000f81fe221),
+    threading(both),
+    progid("Msxml2.XMLParser.2.6"),
+    vi_progid("Msxml2.XMLParser"),
+    version(2.6)
 ]
 coclass XMLParser26
 {
@@ -342,11 +353,14 @@ coclass XMLParser26
 };
 
 [
-    uuid(f5078f31-c551-11d3-89b9-0000f81fe221)
+    helpstring("XML Parser 3.0"),
+    uuid(f5078f31-c551-11d3-89b9-0000f81fe221),
+    threading(both),
+    progid("Msxml2.XMLParser.3.0"),
+    vi_progid("Msxml2.XMLParser"),
+    version(3.0)
 ]
 coclass XMLParser30
 {
     [default] interface IXMLParser;
 };
-
-}

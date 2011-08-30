@@ -34,7 +34,8 @@ C_SRCS = \
 	uuid.c \
 	xdr.c \
 	xmldoc.c \
-	xmlelem.c
+	xmlelem.c \
+	xmlparser.c
 
 LEX_SRCS = xslpattern.l
 
@@ -43,6 +44,8 @@ BISON_SRCS = xslpattern.y
 RC_SRCS = \
 	schemas.rc \
 	version.rc
+
+IDL_R_SRCS = xmlparser.idl
 
 IDL_H_SRCS = xmlparser.idl
 

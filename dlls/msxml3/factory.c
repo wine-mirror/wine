@@ -35,6 +35,7 @@
 #include "ole2.h"
 #include "msxml.h"
 #include "msxml2.h"
+#include "xmlparser.h"
 
 /* undef the #define in msxml2 so that we can access the v.2 version
    independent CLSID as well as the v.3 one. */
@@ -270,6 +271,7 @@ static ClassFactory saxreadcf = { { &ClassFactoryVtbl }, SAXXMLReader_create };
 static ClassFactory httpreqcf = { { &ClassFactoryVtbl }, XMLHTTPRequest_create };
 static ClassFactory xsltemplatecf = { { &ClassFactoryVtbl }, XSLTemplate_create };
 static ClassFactory mxnsmanagercf = { {&ClassFactoryVtbl }, MXNamespaceManager_create };
+static ClassFactory xmlparsercf = { { &ClassFactoryVtbl }, XMLParser_create };
 
 /******************************************************************
  *		DllGetClassObject (MSXML3.@)
@@ -346,6 +348,12 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
              IsEqualCLSID( rclsid, &CLSID_MXNamespaceManager60 ) )
     {
         cf = &mxnsmanagercf.IClassFactory_iface;
+    }
+    else if( IsEqualCLSID( rclsid, &CLSID_XMLParser )  ||
+             IsEqualCLSID( rclsid, &CLSID_XMLParser26 ) ||
+             IsEqualCLSID( rclsid, &CLSID_XMLParser30 )  )
+    {
+        cf = &xmlparsercf.IClassFactory_iface;
     }
 
     if ( !cf )
