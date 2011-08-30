@@ -769,7 +769,16 @@ static ULONG WINAPI PrimaryBufferImpl_AddRef(LPDIRECTSOUNDBUFFER iface)
     IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer(iface);
     ULONG ref = InterlockedIncrement(&(This->ref));
     TRACE("(%p) ref was %d\n", This, ref - 1);
+    if(ref == 1)
+        InterlockedIncrement(&This->numIfaces);
     return ref;
+}
+
+void primarybuffer_destroy(IDirectSoundBufferImpl *This)
+{
+    This->device->primary = NULL;
+    HeapFree(GetProcessHeap(), 0, This);
+    TRACE("(%p) released\n", This);
 }
 
 static ULONG WINAPI PrimaryBufferImpl_Release(LPDIRECTSOUNDBUFFER iface)
@@ -778,11 +787,8 @@ static ULONG WINAPI PrimaryBufferImpl_Release(LPDIRECTSOUNDBUFFER iface)
     DWORD ref = InterlockedDecrement(&(This->ref));
     TRACE("(%p) ref was %d\n", This, ref + 1);
 
-    if (!ref) {
-        This->device->primary = NULL;
-        HeapFree(GetProcessHeap(), 0, This);
-        TRACE("(%p) released\n", This);
-    }
+    if (!ref && !InterlockedDecrement(&This->numIfaces))
+        primarybuffer_destroy(This);
     return ref;
 }
 
@@ -1248,7 +1254,8 @@ HRESULT primarybuffer_create(DirectSoundDevice *device, IDirectSoundBufferImpl *
 		return DSERR_OUTOFMEMORY;
 	}
 
-	dsb->ref = 0;
+        dsb->ref = 1;
+        dsb->numIfaces = 1;
 	dsb->device = device;
 	dsb->IDirectSoundBuffer8_iface.lpVtbl = (IDirectSoundBuffer8Vtbl *)&dspbvt;
 

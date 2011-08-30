@@ -757,13 +757,9 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_QueryInterface(
 	}
 
 	if ( IsEqualGUID(riid, &IID_IDirectSoundBuffer) ) {
-		if (!This->device->primary)
-			primarybuffer_create(This->device, &This->device->primary, &This->device->dsbd);
-		if (This->device->primary) {
-			*ppobj = This->device->primary;
-			IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)*ppobj);
-			return S_OK;
-		}
+                *ppobj = &This->device->primary->IDirectSoundBuffer8_iface;
+                IDirectSoundBuffer8_AddRef(&This->device->primary->IDirectSoundBuffer8_iface);
+                return S_OK;
 	}
 
         FIXME( "Unknown IID %s\n", debugstr_guid( riid ) );
@@ -774,7 +770,12 @@ static ULONG WINAPI IDirectSound3DListenerImpl_AddRef(LPDIRECTSOUND3DLISTENER if
 {
     IDirectSound3DListenerImpl *This = (IDirectSound3DListenerImpl *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
+
     TRACE("(%p) ref was %d\n", This, ref - 1);
+
+    if(ref == 1)
+        InterlockedIncrement(&This->device->primary->numIfaces);
+
     return ref;
 }
 
@@ -787,6 +788,8 @@ static ULONG WINAPI IDirectSound3DListenerImpl_Release(LPDIRECTSOUND3DLISTENER i
     if (!ref) {
         This->device->listener = 0;
         HeapFree(GetProcessHeap(), 0, This);
+        if (!InterlockedDecrement(&This->device->primary->numIfaces))
+            primarybuffer_destroy(This->device->primary);
         TRACE("(%p) released\n", This);
     }
     return ref;
