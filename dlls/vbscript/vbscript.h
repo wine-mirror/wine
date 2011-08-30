@@ -19,17 +19,6 @@
 #include "activscp.h"
 #include "vbscript_classes.h"
 
-struct VBScript {
-    IActiveScript IActiveScript_iface;
-    IActiveScriptParse IActiveScriptParse_iface;
-
-    LONG ref;
-
-    IActiveScriptSite *site;
-    LONG thread_id;
-    LCID lcid;
-};
-
 HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
 
 static inline void *heap_alloc(size_t len)

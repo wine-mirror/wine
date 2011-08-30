@@ -44,6 +44,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
 #endif
 
+struct VBScript {
+    IActiveScript IActiveScript_iface;
+    IActiveScriptParse IActiveScriptParse_iface;
+
+    LONG ref;
+
+    IActiveScriptSite *site;
+    LONG thread_id;
+    LCID lcid;
+};
+
 static inline VBScript *impl_from_IActiveScript(IActiveScript *iface)
 {
     return CONTAINING_RECORD(iface, VBScript, IActiveScript_iface);
