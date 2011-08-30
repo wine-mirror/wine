@@ -284,6 +284,11 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(IDirectSoundBuffer8 *i
 
 	TRACE("(%p,%d)\n",This,freq);
 
+        if (is_primary_buffer(This)) {
+                WARN("not available for primary buffers.\n");
+                return DSERR_CONTROLUNAVAIL;
+        }
+
 	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLFREQUENCY)) {
 		WARN("control unavailable\n");
 		return DSERR_CONTROLUNAVAIL;
@@ -397,9 +402,12 @@ static ULONG WINAPI IDirectSoundBufferImpl_Release(IDirectSoundBuffer8 *iface)
 
     TRACE("(%p) ref was %d\n", This, ref + 1);
 
-    if (!ref && !InterlockedDecrement(&This->numIfaces))
-        secondarybuffer_destroy(This);
-
+    if (!ref && !InterlockedDecrement(&This->numIfaces)) {
+        if (is_primary_buffer(This))
+            primarybuffer_destroy(This);
+        else
+            secondarybuffer_destroy(This);
+    }
     return ref;
 }
 
