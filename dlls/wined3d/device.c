@@ -1775,7 +1775,7 @@ HRESULT CDECL wined3d_device_set_stream_source(struct wined3d_device *device, UI
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_stream_source(struct wined3d_device *device,
+HRESULT CDECL wined3d_device_get_stream_source(const struct wined3d_device *device,
         UINT stream_idx, struct wined3d_buffer **buffer, UINT *offset, UINT *stride)
 {
     struct wined3d_stream_state *stream;

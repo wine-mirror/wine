@@ -2246,7 +2246,7 @@ HRESULT __cdecl wined3d_device_get_sampler_state(struct wined3d_device *device,
         UINT sampler_idx, WINED3DSAMPLERSTATETYPE state, DWORD *value);
 HRESULT __cdecl wined3d_device_get_scissor_rect(struct wined3d_device *device, RECT *rect);
 BOOL __cdecl wined3d_device_get_software_vertex_processing(struct wined3d_device *device);
-HRESULT __cdecl wined3d_device_get_stream_source(struct wined3d_device *device,
+HRESULT __cdecl wined3d_device_get_stream_source(const struct wined3d_device *device,
         UINT stream_idx, struct wined3d_buffer **buffer, UINT *offset, UINT *stride);
 HRESULT __cdecl wined3d_device_get_stream_source_freq(struct wined3d_device *device, UINT stream_idx, UINT *divider);
 HRESULT __cdecl wined3d_device_get_surface_from_dc(struct wined3d_device *device,
