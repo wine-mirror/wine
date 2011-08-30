@@ -37,7 +37,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /* The configured default surface */
-WINED3DSURFTYPE DefaultSurfaceType = SURFACE_UNKNOWN;
+WINED3DSURFTYPE DefaultSurfaceType = SURFACE_OPENGL;
 
 /* DDraw list and critical section */
 static struct list global_ddraw_list = LIST_INIT(global_ddraw_list);
