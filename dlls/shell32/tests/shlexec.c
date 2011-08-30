@@ -680,6 +680,11 @@ static void _okChildString(const char* file, int line, const char* key, const ch
 {
     char* result;
     result=getChildString("Arguments", key);
+    if (!result)
+    {
+        ok_(file, line)(FALSE, "%s expected '%s', but key not found or empty\n", key, expected);
+        return;
+    }
     ok_(file, line)(lstrcmpiA(result, expected) == 0,
                     "%s expected '%s', got '%s'\n", key, expected, result);
 }
@@ -688,6 +693,11 @@ static void _okChildPath(const char* file, int line, const char* key, const char
 {
     char* result;
     result=getChildString("Arguments", key);
+    if (!result)
+    {
+        ok_(file, line)(FALSE, "%s expected '%s', but key not found or empty\n", key, expected);
+        return;
+    }
     ok_(file, line)(StrCmpPath(result, expected) == 0,
                     "%s expected '%s', got '%s'\n", key, expected, result);
 }
