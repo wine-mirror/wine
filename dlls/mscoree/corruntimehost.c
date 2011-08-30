@@ -149,7 +149,7 @@ static void RuntimeHost_DeleteDomain(RuntimeHost *This, MonoDomain *domain)
 static HRESULT RuntimeHost_GetIUnknownForDomain(RuntimeHost *This, MonoDomain *domain, IUnknown **punk)
 {
     HRESULT hr;
-    void *args[0];
+    void *args[1];
     MonoAssembly *assembly;
     MonoImage *image;
     MonoClass *klass;
