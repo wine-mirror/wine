@@ -57,7 +57,6 @@ typedef struct IDirectSoundCaptureNotifyImpl IDirectSoundCaptureNotifyImpl;
 typedef struct IDirectSound3DListenerImpl    IDirectSound3DListenerImpl;
 typedef struct IDirectSound3DBufferImpl      IDirectSound3DBufferImpl;
 typedef struct IKsBufferPropertySetImpl      IKsBufferPropertySetImpl;
-typedef struct PrimaryBufferImpl             PrimaryBufferImpl;
 typedef struct DirectSoundDevice             DirectSoundDevice;
 typedef struct DirectSoundCaptureDevice      DirectSoundCaptureDevice;
 
@@ -93,7 +92,7 @@ struct DirectSoundDevice
     IDirectSoundBufferImpl**    buffers;
     RTL_RWLOCK                  buffer_list_lock;
     CRITICAL_SECTION            mixlock;
-    PrimaryBufferImpl*          primary;
+    IDirectSoundBufferImpl     *primary;
     DSBUFFERDESC                dsbd;
     DWORD                       speaker_config;
     LPBYTE                      tmp_buffer, mix_buffer;
@@ -208,21 +207,6 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     IDirectSoundBufferImpl **ppdsb,
     IDirectSoundBufferImpl *pdsb) DECLSPEC_HIDDEN;
 void secondarybuffer_destroy(IDirectSoundBufferImpl *This) DECLSPEC_HIDDEN;
-
-/*****************************************************************************
- * PrimaryBuffer implementation structure
- */
-struct PrimaryBufferImpl
-{
-    const IDirectSoundBufferVtbl *lpVtbl;
-    LONG                        ref;
-    DirectSoundDevice*          device;
-};
-
-HRESULT PrimaryBufferImpl_Create(
-    DirectSoundDevice * device,
-    PrimaryBufferImpl **ppdsb,
-    LPCDSBUFFERDESC dsbd) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * DirectSoundCaptureDevice implementation structure
@@ -350,6 +334,8 @@ HRESULT DSOUND_PrimaryStop(DirectSoundDevice *device) DECLSPEC_HIDDEN;
 HRESULT DSOUND_PrimaryGetPosition(DirectSoundDevice *device, LPDWORD playpos, LPDWORD writepos) DECLSPEC_HIDDEN;
 LPWAVEFORMATEX DSOUND_CopyFormat(LPCWAVEFORMATEX wfex) DECLSPEC_HIDDEN;
 HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave) DECLSPEC_HIDDEN;
+HRESULT primarybuffer_create(DirectSoundDevice *device, IDirectSoundBufferImpl **ppdsb,
+    const DSBUFFERDESC *dsbd) DECLSPEC_HIDDEN;
 
 /* duplex.c */
  

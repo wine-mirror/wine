@@ -1557,12 +1557,12 @@ HRESULT DirectSoundDevice_CreateSoundBuffer(
            if (device->hwbuf)
                device->dsbd.dwFlags |= DSBCAPS_LOCHARDWARE;
            else device->dsbd.dwFlags |= DSBCAPS_LOCSOFTWARE;
-           hres = PrimaryBufferImpl_Create(device, &(device->primary), &(device->dsbd));
+           hres = primarybuffer_create(device, &(device->primary), &(device->dsbd));
            if (device->primary) {
                IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)(device->primary));
                *ppdsb = (LPDIRECTSOUNDBUFFER)(device->primary);
            } else
-               WARN("PrimaryBufferImpl_Create failed\n");
+               WARN("primarybuffer_create() failed\n");
         }
     } else {
         IDirectSoundBufferImpl * dsb;
@@ -1664,7 +1664,7 @@ HRESULT DirectSoundDevice_DuplicateSoundBuffer(
     }
 
     /* make sure we have a secondary buffer */
-    if ((PrimaryBufferImpl *)psb == device->primary) {
+    if (psb == (IDirectSoundBuffer *)&device->primary->IDirectSoundBuffer8_iface) {
         WARN("trying to duplicate primary buffer\n");
         *ppdsb = NULL;
         return DSERR_INVALIDCALL;

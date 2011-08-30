@@ -758,7 +758,7 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_QueryInterface(
 
 	if ( IsEqualGUID(riid, &IID_IDirectSoundBuffer) ) {
 		if (!This->device->primary)
-			PrimaryBufferImpl_Create(This->device, &(This->device->primary), &(This->device->dsbd));
+			primarybuffer_create(This->device, &This->device->primary, &This->device->dsbd);
 		if (This->device->primary) {
 			*ppobj = This->device->primary;
 			IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)*ppobj);
