@@ -154,7 +154,7 @@ static void start_dosbox( const char *appname, const char *args )
     const char *config_dir = wine_get_config_dir();
     WCHAR path[MAX_PATH], config[MAX_PATH];
     HANDLE file;
-    char *p, *buffer;
+    char *p, *buffer, app[MAX_PATH];
     int i;
     int ret = 1;
     DWORD written, drives = GetLogicalDrives();
@@ -164,6 +164,8 @@ static void start_dosbox( const char *appname, const char *args )
     if (!GetTempPathW( MAX_PATH, path )) return;
     if (!GetTempFileNameW( path, cfgW, 0, config )) return;
     if (!GetCurrentDirectoryW( MAX_PATH, path )) return;
+    if (!GetShortPathNameA( appname, app, MAX_PATH )) return;
+    if (!GetShortPathNameW( path, path, MAX_PATH )) return;
     file = CreateFileW( config, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
     if (file == INVALID_HANDLE_VALUE) return;
 
@@ -171,7 +173,7 @@ static void start_dosbox( const char *appname, const char *args )
                         sizeof("mount -z c") + sizeof("config -securemode") +
                         25 * (strlen(config_dir) + sizeof("mount c /dosdevices/c:")) +
                         4 * strlenW( path ) +
-                        6 + strlen( appname ) + strlen( args ) + 20 );
+                        6 + strlen( app ) + strlen( args ) + 20 );
     p = buffer;
     p += sprintf( p, "[autoexec]\n" );
     for (i = 25; i >= 0; i--)
@@ -186,7 +188,7 @@ static void start_dosbox( const char *appname, const char *args )
     p += sprintf( p, "%c:\ncd ", path[0] );
     p += WideCharToMultiByte( CP_UNIXCP, 0, path + 2, -1, p, 4 * strlenW(path), NULL, NULL ) - 1;
     p += sprintf( p, "\nconfig -securemode\n" );
-    p += sprintf( p, "%s %s\n", appname, args );
+    p += sprintf( p, "%s %s\n", app, args );
     p += sprintf( p, "exit\n" );
     if (WriteFile( file, buffer, strlen(buffer), &written, NULL ) && written == strlen(buffer))
     {
