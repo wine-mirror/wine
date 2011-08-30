@@ -1083,7 +1083,7 @@ static HRESULT STDMETHODCALLTYPE GameStatisticsMgrImpl_GetGameStatistics(
 {
     HRESULT hr;
     WCHAR lpApplicationId[49];
-    GameStatisticsImpl *statisticsImpl;
+    GameStatisticsImpl *statisticsImpl = NULL;
     IGameStatistics *output_iface;
 
     TRACE("(%p, %s, 0x%x, %p, %p)\n", iface, debugstr_w(GDFBinaryPath), openType, pOpenResult, ppiStats);
