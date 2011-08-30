@@ -207,15 +207,17 @@ static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *
     return TRUE;
 }
 
-static int fill_color_table_from_palette( BITMAPINFO *info, DC *dc )
+static int fill_color_table_from_palette( BITMAPINFO *info, HDC hdc )
 {
     PALETTEENTRY palEntry[256];
+    HPALETTE palette = GetCurrentObject( hdc, OBJ_PAL );
     int i, colors = get_dib_num_of_colors( info );
 
+    if (!palette) return 0;
     if (!colors) return 0;
 
     memset( palEntry, 0, sizeof(palEntry) );
-    if (!GetPaletteEntries( dc->hPalette, 0, colors, palEntry ))
+    if (!GetPaletteEntries( palette, 0, colors, palEntry ))
         return 0;
 
     for (i = 0; i < colors; i++)
@@ -498,8 +500,6 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 		      UINT lines, LPCVOID bits, const BITMAPINFO *info,
 		      UINT coloruse )
 {
-    DC *dc = get_dc_ptr( hdc );
-    BOOL delete_hdc = FALSE;
     BITMAPOBJ *bitmap;
     char src_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *src_info = (BITMAPINFO *)src_bmibuf;
@@ -524,26 +524,9 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
     src_bits.free = NULL;
     src_bits.param = NULL;
 
-    if (coloruse == DIB_RGB_COLORS && !dc)
-    {
-        hdc = CreateCompatibleDC(0);
-        dc = get_dc_ptr( hdc );
-        delete_hdc = TRUE;
-    }
+    if (coloruse == DIB_PAL_COLORS && !fill_color_table_from_palette( src_info, hdc )) return 0;
 
-    if (!dc) return 0;
-
-    update_dc( dc );
-
-    if (!(bitmap = GDI_GetObjPtr( hbitmap, OBJ_BITMAP )))
-    {
-        release_dc_ptr( dc );
-        if (delete_hdc) DeleteDC(hdc);
-        return 0;
-    }
-
-    if (coloruse == DIB_PAL_COLORS)
-        if (!fill_color_table_from_palette( src_info, dc )) goto done;
+    if (!(bitmap = GDI_GetObjPtr( hbitmap, OBJ_BITMAP ))) return 0;
 
     if (src_info->bmiHeader.biCompression == BI_RLE4 || src_info->bmiHeader.biCompression == BI_RLE8)
     {
@@ -623,8 +606,6 @@ done:
     if (src_bits.free) src_bits.free( &src_bits );
     if (clip) DeleteObject( clip );
     GDI_ReleaseObj( hbitmap );
-    release_dc_ptr( dc );
-    if (delete_hdc) DeleteDC(hdc);
     return result;
 }
 
@@ -1104,7 +1085,7 @@ INT WINAPI GetDIBits(
     {
         if( coloruse == DIB_PAL_COLORS )
         {
-            if (!fill_color_table_from_palette( dst_info, dc )) goto done;
+            if (!fill_color_table_from_palette( dst_info, hdc )) goto done;
         }
         else
         {
