@@ -1196,15 +1196,21 @@ void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out)
     if (in->dwFlags & DDSD_WIDTH) out->dwWidth = in->dwWidth;
     if (in->dwFlags & DDSD_HEIGHT) out->dwHeight = in->dwHeight;
     if (in->dwFlags & DDSD_PIXELFORMAT) out->u4.ddpfPixelFormat = in->ddpfPixelFormat;
+    else if(in->dwFlags & DDSD_ZBUFFERBITDEPTH)
+    {
+        out->dwFlags |= DDSD_PIXELFORMAT;
+        memset(&out->u4.ddpfPixelFormat, 0, sizeof(out->u4.ddpfPixelFormat));
+        out->u4.ddpfPixelFormat.dwSize = sizeof(out->u4.ddpfPixelFormat);
+        out->u4.ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+        out->u4.ddpfPixelFormat.u1.dwZBufferBitDepth = in->u2.dwZBufferBitDepth;
+        /* 0 is not a valid DDSURFACEDESC / DDPIXELFORMAT on either side of the
+         * conversion */
+        out->u4.ddpfPixelFormat.u3.dwZBitMask = ~0U >> (32 - in->u2.dwZBufferBitDepth);
+    }
     /* ddsCaps is read even without DDSD_CAPS set. See dsurface:no_ddsd_caps_test */
     out->ddsCaps.dwCaps = in->ddsCaps.dwCaps;
     if (in->dwFlags & DDSD_PITCH) out->u1.lPitch = in->u1.lPitch;
     if (in->dwFlags & DDSD_BACKBUFFERCOUNT) out->dwBackBufferCount = in->dwBackBufferCount;
-    if (in->dwFlags & DDSD_ZBUFFERBITDEPTH)
-    {
-        /* FIXME: Convert into a DDPIXELFORMAT */
-        out->u2.dwMipMapCount = in->u2.dwZBufferBitDepth; /* same union */
-    }
     if (in->dwFlags & DDSD_ALPHABITDEPTH) out->dwAlphaBitDepth = in->dwAlphaBitDepth;
     /* DDraw(native, and wine) does not set the DDSD_LPSURFACE, so always copy */
     out->lpSurface = in->lpSurface;

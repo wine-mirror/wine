@@ -3845,6 +3845,188 @@ static void no_ddsd_caps_test(void)
     ok(hr == DDERR_INVALIDCAPS, "IDirectDraw_CreateSurface returned %#x, expected DDERR_INVALIDCAPS.\n", hr);
 }
 
+static void dump_format(const DDPIXELFORMAT *fmt)
+{
+    trace("dwFlags %08x, FourCC %08x, dwZBufferBitDepth %u, stencil %u\n", fmt->dwFlags, fmt->dwFourCC,
+            fmt->dwZBufferBitDepth, fmt->dwStencilBitDepth);
+    trace("dwZBitMask %08x, dwStencilBitMask %08x, dwRGBZBitMask %08x\n", fmt->dwZBitMask,
+            fmt->dwStencilBitMask, fmt->dwRGBZBitMask);
+}
+
+static void zbufferbitdepth_test(void)
+{
+    enum zfmt_succeed
+    {
+        ZFMT_SUPPORTED_ALWAYS,
+        ZFMT_SUPPORTED_NEVER,
+        ZFMT_SUPPORTED_HWDEPENDENT
+    };
+    struct
+    {
+        DWORD depth;
+        enum zfmt_succeed supported;
+        DDPIXELFORMAT pf;
+    }
+    test_data[] =
+    {
+        {
+            16, ZFMT_SUPPORTED_ALWAYS,
+            {
+                sizeof(DDPIXELFORMAT), DDPF_ZBUFFER, 0,
+                {16}, {0}, {0x0000ffff}, {0x00000000}, {0x00000000}
+            }
+        },
+        {
+            24, ZFMT_SUPPORTED_ALWAYS,
+            {
+                sizeof(DDPIXELFORMAT), DDPF_ZBUFFER, 0,
+                {24}, {0}, {0x00ffffff}, {0x00000000}, {0x00000000}
+            }
+        },
+        {
+            32, ZFMT_SUPPORTED_HWDEPENDENT,
+            {
+                sizeof(DDPIXELFORMAT), DDPF_ZBUFFER, 0,
+                {32}, {0}, {0xffffffff}, {0x00000000}, {0x00000000}
+            }
+        },
+        /* Returns DDERR_INVALIDPARAMS instead of DDERR_INVALIDPIXELFORMAT.
+         * Disabled for now
+        {
+            0, ZFMT_SUPPORTED_NEVER
+        },
+        */
+        {
+            15, ZFMT_SUPPORTED_NEVER
+        },
+        {
+            28, ZFMT_SUPPORTED_NEVER
+        },
+        {
+            40, ZFMT_SUPPORTED_NEVER
+        },
+    };
+
+    DDSURFACEDESC ddsd;
+    IDirectDrawSurface *surface;
+    HRESULT hr;
+    unsigned int i;
+    DDCAPS caps;
+
+    memset(&caps, 0, sizeof(caps));
+    caps.dwSize = sizeof(caps);
+    hr = IDirectDraw_GetCaps(lpDD, &caps, NULL);
+    ok(SUCCEEDED(hr), "IDirectDraw_GetCaps failed, hr %#x.\n", hr);
+    if (!(caps.ddsCaps.dwCaps & DDSCAPS_ZBUFFER))
+    {
+        skip("Z buffers not supported, skipping DDSD_ZBUFFERBITDEPTH test\n");
+        return;
+    }
+
+    for (i = 0; i < (sizeof(test_data) / sizeof(*test_data)); i++)
+    {
+        reset_ddsd(&ddsd);
+        ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_ZBUFFERBITDEPTH;
+        ddsd.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+        ddsd.dwWidth = 256;
+        ddsd.dwHeight = 256;
+        ddsd.dwZBufferBitDepth = test_data[i].depth;
+
+        hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &surface, NULL);
+        if (test_data[i].supported == ZFMT_SUPPORTED_ALWAYS)
+        {
+            ok(SUCCEEDED(hr), "IDirectDraw_CreateSurface failed, hr %#x.\n", hr);
+        }
+        else if (test_data[i].supported == ZFMT_SUPPORTED_NEVER)
+        {
+            ok(hr == DDERR_INVALIDPIXELFORMAT, "IDirectDraw_CreateSurface returned %#x, expected %x.\n",
+               hr, DDERR_INVALIDPIXELFORMAT);
+        }
+        if (!surface) continue;
+
+        reset_ddsd(&ddsd);
+        hr = IDirectDrawSurface_GetSurfaceDesc(surface, &ddsd);
+        ok(SUCCEEDED(hr), "IDirectDrawSurface_GetSurfaceDesc failed, hr %#x.\n", hr);
+        IDirectDrawSurface_Release(surface);
+
+        ok(ddsd.dwFlags & DDSD_ZBUFFERBITDEPTH, "DDSD_ZBUFFERBITDEPTH is not set\n");
+        todo_wine ok(!(ddsd.dwFlags & DDSD_PIXELFORMAT), "DDSD_PIXELFORMAT is set\n");
+        /* Yet the ddpfPixelFormat member contains valid data */
+        if (memcmp(&ddsd.ddpfPixelFormat, &test_data[i].pf, ddsd.ddpfPixelFormat.dwSize))
+        {
+            ok(0, "Unexpected format for depth %u\n", test_data[i].depth);
+            dump_format(&ddsd.ddpfPixelFormat);
+        }
+    }
+
+    /* DDSD_ZBUFFERBITDEPTH vs DDSD_PIXELFORMAT? */
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_ZBUFFERBITDEPTH;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+    ddsd.dwWidth = 256;
+    ddsd.dwHeight = 256;
+    ddsd.dwZBufferBitDepth = 24;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+    ddsd.ddpfPixelFormat.dwZBufferBitDepth = 16;
+    ddsd.ddpfPixelFormat.dwZBitMask = 0x0000ffff;
+
+    surface = NULL;
+    hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &surface, NULL);
+    ok(SUCCEEDED(hr), "IDirectDraw_CreateSurface failed, hr %#x.\n", hr);
+    if (!surface) return;
+    reset_ddsd(&ddsd);
+    hr = IDirectDrawSurface_GetSurfaceDesc(surface, &ddsd);
+    ok(SUCCEEDED(hr), "IDirectDrawSurface_GetSurfaceDesc failed, hr %#x.\n", hr);
+    IDirectDrawSurface_Release(surface);
+    ok(ddsd.ddpfPixelFormat.dwZBufferBitDepth == 16, "Expected a 16bpp depth buffer, got %ubpp\n",
+        ddsd.ddpfPixelFormat.dwZBufferBitDepth);
+    ok(ddsd.dwFlags & DDSD_ZBUFFERBITDEPTH, "DDSD_ZBUFFERBITDEPTH is not set\n");
+    todo_wine ok(!(ddsd.dwFlags & DDSD_PIXELFORMAT), "DDSD_PIXELFORMAT is set\n");
+    todo_wine ok(ddsd.dwZBufferBitDepth == 16, "Expected dwZBufferBitDepth=16, got %u\n",
+        ddsd.dwZBufferBitDepth);
+
+    /* DDSD_PIXELFORMAT vs invalid ZBUFFERBITDEPTH */
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_ZBUFFERBITDEPTH | DDSD_PIXELFORMAT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+    ddsd.dwWidth = 256;
+    ddsd.dwHeight = 256;
+    ddsd.dwZBufferBitDepth = 40;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+    ddsd.ddpfPixelFormat.dwZBufferBitDepth = 16;
+    ddsd.ddpfPixelFormat.dwZBitMask = 0x0000ffff;
+    surface = NULL;
+    hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &surface, NULL);
+    ok(SUCCEEDED(hr), "IDirectDraw_CreateSurface failed, hr %#x.\n", hr);
+    if (surface) IDirectDrawSurface_Release(surface);
+
+    /* Create a PIXELFORMAT-only surface, see if ZBUFFERBITDEPTH is set */
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+    ddsd.dwWidth = 256;
+    ddsd.dwHeight = 256;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+    ddsd.ddpfPixelFormat.dwZBufferBitDepth = 16;
+    ddsd.ddpfPixelFormat.dwZBitMask = 0x0000ffff;
+    surface = NULL;
+    hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &surface, NULL);
+    ok(SUCCEEDED(hr), "IDirectDrawSurface_GetSurfaceDesc failed, hr %#x.\n", hr);
+    reset_ddsd(&ddsd);
+    hr = IDirectDrawSurface_GetSurfaceDesc(surface, &ddsd);
+    ok(SUCCEEDED(hr), "IDirectDrawSurface_GetSurfaceDesc failed, hr %#x.\n", hr);
+    IDirectDrawSurface_Release(surface);
+    ok(ddsd.ddpfPixelFormat.dwZBufferBitDepth == 16, "Expected a 16bpp depth buffer, got %ubpp\n",
+        ddsd.ddpfPixelFormat.dwZBufferBitDepth);
+    todo_wine ok(ddsd.dwFlags & DDSD_ZBUFFERBITDEPTH, "DDSD_ZBUFFERBITDEPTH is not set\n");
+    todo_wine ok(!(ddsd.dwFlags & DDSD_PIXELFORMAT), "DDSD_PIXELFORMAT is set\n");
+    todo_wine ok(ddsd.dwZBufferBitDepth == 16, "Expected dwZBufferBitDepth=16, got %u\n",
+        ddsd.dwZBufferBitDepth);
+}
+
 START_TEST(dsurface)
 {
     HRESULT ret;
@@ -3902,5 +4084,6 @@ START_TEST(dsurface)
     BackBufferAttachmentFlipTest();
     CreateSurfaceBadCapsSizeTest();
     no_ddsd_caps_test();
+    zbufferbitdepth_test();
     ReleaseDirectDraw();
 }

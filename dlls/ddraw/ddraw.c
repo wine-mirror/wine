@@ -3074,31 +3074,7 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
         desc2.dwFlags |= DDSD_PIXELFORMAT;
         desc2.u4.ddpfPixelFormat.dwSize=sizeof(DDPIXELFORMAT);
 
-        /* Wait: It could be a Z buffer */
-        if(desc2.ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
-        {
-            switch(desc2.u2.dwMipMapCount) /* Who had this glorious idea? */
-            {
-                case 15:
-                    PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, WINED3DFMT_S1_UINT_D15_UNORM);
-                    break;
-                case 16:
-                    PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, WINED3DFMT_D16_UNORM);
-                    break;
-                case 24:
-                    PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, WINED3DFMT_X8D24_UNORM);
-                    break;
-                case 32:
-                    PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, WINED3DFMT_D32_UNORM);
-                    break;
-                default:
-                    ERR("Unknown Z buffer bit depth\n");
-            }
-        }
-        else
-        {
-            PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, Mode.Format);
-        }
+        PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, Mode.Format);
     }
 
     /* No Width or no Height? Use the original screen size
