@@ -206,7 +206,7 @@ static HRESULT WINAPI ddraw7_QueryInterface(IDirectDraw7 *iface, REFIID refiid, 
               IsEqualGUID( &IID_IDirect3D7 , refiid ) )
     {
         /* Check the surface implementation */
-        if (This->ImplType != SURFACE_OPENGL)
+        if (DefaultSurfaceType != SURFACE_OPENGL)
         {
             WARN("The app requests a Direct3D interface, but non-opengl surfaces where set in winecfg\n");
             /* Do not abort here, only reject 3D Device creation */
@@ -1378,7 +1378,6 @@ static HRESULT WINAPI ddraw7_GetFourCCCodes(IDirectDraw7 *iface, DWORD *NumCodes
     DWORD count = 0, i, outsize;
     HRESULT hr;
     WINED3DDISPLAYMODE d3ddm;
-    WINED3DSURFTYPE type = This->ImplType;
 
     TRACE("iface %p, codes_count %p, codes %p.\n", iface, NumCodes, Codes);
 
@@ -1389,7 +1388,7 @@ static HRESULT WINAPI ddraw7_GetFourCCCodes(IDirectDraw7 *iface, DWORD *NumCodes
     for (i = 0; i < (sizeof(formats) / sizeof(formats[0])); ++i)
     {
         hr = wined3d_check_device_format(This->wineD3D, WINED3DADAPTER_DEFAULT, WINED3DDEVTYPE_HAL,
-                d3ddm.Format, 0, WINED3DRTYPE_SURFACE, formats[i], type);
+                d3ddm.Format, 0, WINED3DRTYPE_SURFACE, formats[i], DefaultSurfaceType);
         if (SUCCEEDED(hr))
         {
             if (count < outsize)
@@ -2600,7 +2599,6 @@ static HRESULT WINAPI ddraw7_StartModeTest(IDirectDraw7 *iface, SIZE *Modes, DWO
 static HRESULT ddraw_create_surface(IDirectDrawImpl *This, DDSURFACEDESC2 *pDDSD,
         IDirectDrawSurfaceImpl **ppSurf, UINT level, UINT version)
 {
-    WINED3DSURFTYPE ImplType = This->ImplType;
     HRESULT hr;
 
     TRACE("ddraw %p, surface_desc %p, surface %p, level %u.\n",
@@ -2612,7 +2610,7 @@ static HRESULT ddraw_create_surface(IDirectDrawImpl *This, DDSURFACEDESC2 *pDDSD
         DDRAW_dump_surface_desc(pDDSD);
     }
 
-    if ((pDDSD->ddsCaps.dwCaps & DDSCAPS_3DDEVICE) && This->ImplType != SURFACE_OPENGL)
+    if ((pDDSD->ddsCaps.dwCaps & DDSCAPS_3DDEVICE) && DefaultSurfaceType != SURFACE_OPENGL)
     {
         WARN("The application requests a 3D capable surface, but a non-OpenGL surface type was set in the registry.\n");
         /* Do not fail surface creation, only fail 3D device creation. */
@@ -2626,7 +2624,7 @@ static HRESULT ddraw_create_surface(IDirectDrawImpl *This, DDSURFACEDESC2 *pDDSD
         return DDERR_OUTOFVIDEOMEMORY;
     }
 
-    hr = ddraw_surface_init(*ppSurf, This, pDDSD, level, ImplType, version);
+    hr = ddraw_surface_init(*ppSurf, This, pDDSD, level, version);
     if (FAILED(hr))
     {
         WARN("Failed to initialize surface, hr %#x.\n", hr);
@@ -3248,10 +3246,9 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
      * The only case I can think of where this doesn't apply is when a
      * 2D app was configured by the user to run with OpenGL and it didn't create
      * the render target as first surface. In this case the render target creation
-     * will cause the 3D init.
-     */
-    if( (ddraw->ImplType == SURFACE_OPENGL) && !(ddraw->d3d_initialized) &&
-        desc2.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE) )
+     * will cause the 3D init. */
+    if (DefaultSurfaceType == SURFACE_OPENGL && !ddraw->d3d_initialized
+            && desc2.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE))
     {
         IDirectDrawSurfaceImpl *target = object, *surface;
         struct list *entry;
@@ -4695,7 +4692,7 @@ static HRESULT WINAPI d3d7_CreateDevice(IDirect3D7 *iface, REFCLSID riid,
     *device = NULL;
 
     /* Fail device creation if non-opengl surfaces are used. */
-    if (This->ImplType != SURFACE_OPENGL)
+    if (DefaultSurfaceType != SURFACE_OPENGL)
     {
         ERR("The application wants to create a Direct3D device, but non-opengl surfaces are set in the registry.\n");
         ERR("Please set the surface implementation to opengl or autodetection to allow 3D rendering.\n");
@@ -5799,7 +5796,7 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
     TRACE("device_parent %p, present_parameters %p, swapchain %p.\n", device_parent, present_parameters, swapchain);
 
     hr = wined3d_swapchain_create(ddraw->wined3d_device, present_parameters,
-            ddraw->ImplType, NULL, &ddraw_null_wined3d_parent_ops, swapchain);
+            DefaultSurfaceType, NULL, &ddraw_null_wined3d_parent_ops, swapchain);
     if (FAILED(hr))
     {
         WARN("Failed to create swapchain, hr %#x.\n", hr);
@@ -5845,10 +5842,6 @@ HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type)
     ddraw->device_parent.ops = &ddraw_wined3d_device_parent_ops;
     ddraw->numIfaces = 1;
     ddraw->ref7 = 1;
-
-    /* See comments in IDirectDrawImpl_CreateNewSurface for a description of
-     * this field. */
-    ddraw->ImplType = DefaultSurfaceType;
 
     /* Get the current screen settings. */
     hDC = GetDC(0);

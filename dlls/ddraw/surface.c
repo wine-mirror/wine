@@ -5085,7 +5085,7 @@ HRESULT ddraw_surface_create_texture(IDirectDrawSurfaceImpl *surface)
 }
 
 HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddraw,
-        DDSURFACEDESC2 *desc, UINT mip_level, WINED3DSURFTYPE surface_type, UINT version)
+        DDSURFACEDESC2 *desc, UINT mip_level, UINT version)
 {
     WINED3DPOOL pool = WINED3DPOOL_DEFAULT;
     enum wined3d_format_id format;
@@ -5176,11 +5176,10 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     copy_to_surfacedesc2(&surface->surface_desc, desc);
 
     surface->first_attached = surface;
-    surface->ImplType = surface_type;
 
     hr = wined3d_surface_create(ddraw->wined3d_device, desc->dwWidth, desc->dwHeight, format,
             TRUE /* Lockable */, FALSE /* Discard */, mip_level, usage, pool,
-            WINED3DMULTISAMPLE_NONE, 0 /* MultiSampleQuality */, surface_type, surface,
+            WINED3DMULTISAMPLE_NONE, 0 /* MultiSampleQuality */, DefaultSurfaceType, surface,
             &ddraw_surface_wined3d_parent_ops, &surface->wined3d_surface);
     if (FAILED(hr))
     {

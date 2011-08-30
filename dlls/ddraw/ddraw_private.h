@@ -111,9 +111,6 @@ struct IDirectDrawImpl
     HWND                    devicewindow;
     HWND                    dest_window;
 
-    /* The surface type to request */
-    WINED3DSURFTYPE         ImplType;
-
     /* Helpers for surface creation */
     IDirectDrawSurfaceImpl *tex_root;
     BOOL                    depthstencil;
@@ -194,7 +191,6 @@ struct IDirectDrawSurfaceImpl
     /* Misc things */
     DWORD                   uniqueness_value;
     UINT                    mipmap_level;
-    WINED3DSURFTYPE         ImplType;
 
     /* For D3DDevice creation */
     BOOL                    isRenderTarget;
@@ -211,7 +207,7 @@ struct IDirectDrawSurfaceImpl
 HRESULT ddraw_surface_create_texture(IDirectDrawSurfaceImpl *surface) DECLSPEC_HIDDEN;
 void ddraw_surface_destroy(IDirectDrawSurfaceImpl *surface) DECLSPEC_HIDDEN;
 HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddraw,
-        DDSURFACEDESC2 *desc, UINT mip_level, WINED3DSURFTYPE surface_type, UINT version) DECLSPEC_HIDDEN;
+        DDSURFACEDESC2 *desc, UINT mip_level, UINT version) DECLSPEC_HIDDEN;
 ULONG ddraw_surface_release_iface(IDirectDrawSurfaceImpl *This) DECLSPEC_HIDDEN;
 
 static inline IDirectDrawSurfaceImpl *impl_from_IDirect3DTexture(IDirect3DTexture *iface)
