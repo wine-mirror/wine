@@ -1839,7 +1839,8 @@ HRESULT CDECL wined3d_device_set_stream_source_freq(struct wined3d_device *devic
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_stream_source_freq(struct wined3d_device *device, UINT stream_idx, UINT *divider)
+HRESULT CDECL wined3d_device_get_stream_source_freq(const struct wined3d_device *device,
+        UINT stream_idx, UINT *divider)
 {
     struct wined3d_stream_state *stream;
 
