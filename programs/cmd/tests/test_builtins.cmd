@@ -1027,6 +1027,39 @@ if not exist foobar (echo foobar removed) else echo foobar not removed!
 if not exist bar\baz (echo bar\baz removed) else echo bar\baz not removed!
 cd .. & rd /s/q foobaz
 
+echo ----------- Testing pushd/popd -----------
+cd
+echo ...popd is no-op when dir stack is empty
+popd
+cd
+echo ...pushing non-existing dir
+pushd foobar
+cd
+echo ...basic behaviour
+mkdir foobar\baz
+pushd foobar
+cd
+popd
+cd
+pushd foobar
+pushd baz
+cd
+popd
+cd
+pushd baz
+popd
+cd
+popd
+cd
+pushd .
+cd foobar\baz
+pushd ..
+cd
+popd
+popd
+cd
+rd /s/q foobar
+
 echo ------------ Testing attrib --------------
 rem FIXME Add tests for archive, hidden and system attributes + mixed attributes modifications
 mkdir foobar & cd foobar

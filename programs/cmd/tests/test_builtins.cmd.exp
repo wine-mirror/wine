@@ -634,6 +634,21 @@ foo removed
 bar removed
 foobar removed
 bar\baz removed
+----------- Testing pushd/popd -----------
+@pwd@
+...popd is no-op when dir stack is empty
+@pwd@
+...pushing non-existing dir
+@pwd@
+...basic behaviour
+@pwd@\foobar
+@pwd@
+@pwd@\foobar\baz
+@pwd@\foobar
+@pwd@\foobar
+@pwd@
+@pwd@\foobar
+@pwd@
 ------------ Testing attrib --------------
 @todo_wine@A            @pwd@\foobar\foo@or_broken@A          @pwd@\foobar\foo@or_broken@A       I    @pwd@\foobar\foo
 ... read-only attribute
