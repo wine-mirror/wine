@@ -3950,7 +3950,7 @@ static void zbufferbitdepth_test(void)
         IDirectDrawSurface_Release(surface);
 
         ok(ddsd.dwFlags & DDSD_ZBUFFERBITDEPTH, "DDSD_ZBUFFERBITDEPTH is not set\n");
-        todo_wine ok(!(ddsd.dwFlags & DDSD_PIXELFORMAT), "DDSD_PIXELFORMAT is set\n");
+        ok(!(ddsd.dwFlags & DDSD_PIXELFORMAT), "DDSD_PIXELFORMAT is set\n");
         /* Yet the ddpfPixelFormat member contains valid data */
         if (memcmp(&ddsd.ddpfPixelFormat, &test_data[i].pf, ddsd.ddpfPixelFormat.dwSize))
         {
@@ -3982,8 +3982,8 @@ static void zbufferbitdepth_test(void)
     ok(ddsd.ddpfPixelFormat.dwZBufferBitDepth == 16, "Expected a 16bpp depth buffer, got %ubpp\n",
         ddsd.ddpfPixelFormat.dwZBufferBitDepth);
     ok(ddsd.dwFlags & DDSD_ZBUFFERBITDEPTH, "DDSD_ZBUFFERBITDEPTH is not set\n");
-    todo_wine ok(!(ddsd.dwFlags & DDSD_PIXELFORMAT), "DDSD_PIXELFORMAT is set\n");
-    todo_wine ok(ddsd.dwZBufferBitDepth == 16, "Expected dwZBufferBitDepth=16, got %u\n",
+    ok(!(ddsd.dwFlags & DDSD_PIXELFORMAT), "DDSD_PIXELFORMAT is set\n");
+    ok(ddsd.dwZBufferBitDepth == 16, "Expected dwZBufferBitDepth=16, got %u\n",
         ddsd.dwZBufferBitDepth);
 
     /* DDSD_PIXELFORMAT vs invalid ZBUFFERBITDEPTH */
@@ -4021,9 +4021,9 @@ static void zbufferbitdepth_test(void)
     IDirectDrawSurface_Release(surface);
     ok(ddsd.ddpfPixelFormat.dwZBufferBitDepth == 16, "Expected a 16bpp depth buffer, got %ubpp\n",
         ddsd.ddpfPixelFormat.dwZBufferBitDepth);
-    todo_wine ok(ddsd.dwFlags & DDSD_ZBUFFERBITDEPTH, "DDSD_ZBUFFERBITDEPTH is not set\n");
-    todo_wine ok(!(ddsd.dwFlags & DDSD_PIXELFORMAT), "DDSD_PIXELFORMAT is set\n");
-    todo_wine ok(ddsd.dwZBufferBitDepth == 16, "Expected dwZBufferBitDepth=16, got %u\n",
+    ok(ddsd.dwFlags & DDSD_ZBUFFERBITDEPTH, "DDSD_ZBUFFERBITDEPTH is not set\n");
+    ok(!(ddsd.dwFlags & DDSD_PIXELFORMAT), "DDSD_PIXELFORMAT is set\n");
+    ok(ddsd.dwZBufferBitDepth == 16, "Expected dwZBufferBitDepth=16, got %u\n",
         ddsd.dwZBufferBitDepth);
 }
 

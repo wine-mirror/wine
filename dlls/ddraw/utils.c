@@ -1192,7 +1192,7 @@ void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out)
      * though. Don't forget to set ddsCaps.dwCaps2/3/4 to 0 when removing this */
     memset(out, 0x00, sizeof(*out));
     out->dwSize = sizeof(*out);
-    out->dwFlags = in->dwFlags;
+    out->dwFlags = in->dwFlags & ~DDSD_ZBUFFERBITDEPTH;
     if (in->dwFlags & DDSD_WIDTH) out->dwWidth = in->dwWidth;
     if (in->dwFlags & DDSD_HEIGHT) out->dwHeight = in->dwHeight;
     if (in->dwFlags & DDSD_PIXELFORMAT) out->u4.ddpfPixelFormat = in->ddpfPixelFormat;
@@ -1236,7 +1236,18 @@ void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out)
     out->dwFlags = in->dwFlags;
     if (in->dwFlags & DDSD_WIDTH) out->dwWidth = in->dwWidth;
     if (in->dwFlags & DDSD_HEIGHT) out->dwHeight = in->dwHeight;
-    if (in->dwFlags & DDSD_PIXELFORMAT) out->ddpfPixelFormat = in->u4.ddpfPixelFormat;
+    if (in->dwFlags & DDSD_PIXELFORMAT)
+    {
+        out->ddpfPixelFormat = in->u4.ddpfPixelFormat;
+        if ((in->dwFlags & DDSD_CAPS) && (in->ddsCaps.dwCaps & DDSCAPS_ZBUFFER))
+        {
+            /* Z buffers have DDSD_ZBUFFERBITDEPTH set, but not DDSD_PIXELFORMAT. They do
+             * have valid data in ddpfPixelFormat though */
+            out->dwFlags &= ~DDSD_PIXELFORMAT;
+            out->dwFlags |= DDSD_ZBUFFERBITDEPTH;
+            out->u2.dwZBufferBitDepth = in->u4.ddpfPixelFormat.u1.dwZBufferBitDepth;
+        }
+    }
     /* ddsCaps is read even without DDSD_CAPS set. See dsurface:no_ddsd_caps_test */
     out->ddsCaps.dwCaps = in->ddsCaps.dwCaps;
     if (in->dwFlags & DDSD_PITCH) out->u1.lPitch = in->u1.lPitch;
