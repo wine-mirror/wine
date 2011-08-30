@@ -642,7 +642,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetVolume(
         HRESULT hres = DS_OK;
 	TRACE("(%p,%d)\n", iface, vol);
 
-	if (!(device->dsbd.dwFlags & DSBCAPS_CTRLVOLUME)) {
+	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLVOLUME)) {
 		WARN("control unavailable\n");
 		return DSERR_CONTROLUNAVAIL;
 	}
@@ -686,7 +686,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetVolume(
 	DWORD ampfactors;
 	TRACE("(%p,%p)\n", iface, vol);
 
-	if (!(device->dsbd.dwFlags & DSBCAPS_CTRLVOLUME)) {
+	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLVOLUME)) {
 		WARN("control unavailable\n");
 		return DSERR_CONTROLUNAVAIL;
 	}
@@ -985,7 +985,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetPan(
         HRESULT hres = DS_OK;
 	TRACE("(%p,%d)\n", iface, pan);
 
-	if (!(device->dsbd.dwFlags & DSBCAPS_CTRLPAN)) {
+	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLPAN)) {
 		WARN("control unavailable\n");
 		return DSERR_CONTROLUNAVAIL;
 	}
@@ -1032,7 +1032,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetPan(
 	DWORD ampfactors;
 	TRACE("(%p,%p)\n", iface, pan);
 
-	if (!(device->dsbd.dwFlags & DSBCAPS_CTRLPAN)) {
+	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLPAN)) {
 		WARN("control unavailable\n");
 		return DSERR_CONTROLUNAVAIL;
 	}
@@ -1102,7 +1102,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetFrequency(
 		return DSERR_INVALIDPARAM;
 	}
 
-	if (!(device->dsbd.dwFlags & DSBCAPS_CTRLFREQUENCY)) {
+	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLFREQUENCY)) {
 		WARN("control unavailable\n");
 		return DSERR_CONTROLUNAVAIL;
 	}
@@ -1138,7 +1138,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetCaps(
 		return DSERR_INVALIDPARAM;
 	}
 
-	caps->dwFlags = device->dsbd.dwFlags;
+	caps->dwFlags = This->dsbd.dwFlags;
 	caps->dwBufferBytes = device->buflen;
 
 	/* Windows reports these as zero */
@@ -1258,8 +1258,7 @@ HRESULT primarybuffer_create(DirectSoundDevice *device, IDirectSoundBufferImpl *
         dsb->numIfaces = 1;
 	dsb->device = device;
 	dsb->IDirectSoundBuffer8_iface.lpVtbl = (IDirectSoundBuffer8Vtbl *)&dspbvt;
-
-	device->dsbd = *dsbd;
+	dsb->dsbd = *dsbd;
 
 	TRACE("Created primary buffer at %p\n", dsb);
 	TRACE("(formattag=0x%04x,chans=%d,samplerate=%d,"

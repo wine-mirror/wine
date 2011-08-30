@@ -93,7 +93,6 @@ struct DirectSoundDevice
     RTL_RWLOCK                  buffer_list_lock;
     CRITICAL_SECTION            mixlock;
     IDirectSoundBufferImpl     *primary;
-    DSBUFFERDESC                dsbd;
     DWORD                       speaker_config;
     LPBYTE                      tmp_buffer, mix_buffer;
     DWORD                       tmp_buffer_len, mix_buffer_len;
