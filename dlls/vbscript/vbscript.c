@@ -89,8 +89,11 @@ static ULONG WINAPI VBScript_Release(IActiveScript *iface)
 
     TRACE("(%p) ref=%d\n", iface, ref);
 
-    if(!ref)
+    if(!ref) {
+        if(This->site)
+            IActiveScriptSite_Release(This->site);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -98,7 +101,27 @@ static ULONG WINAPI VBScript_Release(IActiveScript *iface)
 static HRESULT WINAPI VBScript_SetScriptSite(IActiveScript *iface, IActiveScriptSite *pass)
 {
     VBScript *This = impl_from_IActiveScript(iface);
-    FIXME("(%p)->(%p)\n", This, pass);
+    LCID lcid;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, pass);
+
+    if(!pass)
+        return E_POINTER;
+
+    if(This->site)
+        return E_UNEXPECTED;
+
+    if(InterlockedCompareExchange(&This->thread_id, GetCurrentThreadId(), 0))
+        return E_UNEXPECTED;
+
+    This->site = pass;
+    IActiveScriptSite_AddRef(This->site);
+
+    hres = IActiveScriptSite_GetLCID(This->site, &lcid);
+    if(hres == S_OK)
+        This->lcid = lcid;
+
     return S_OK;
 }
 

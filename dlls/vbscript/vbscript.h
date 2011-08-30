@@ -24,6 +24,10 @@ struct VBScript {
     IActiveScriptParse IActiveScriptParse_iface;
 
     LONG ref;
+
+    IActiveScriptSite *site;
+    LONG thread_id;
+    LCID lcid;
 };
 
 HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
