@@ -4027,6 +4027,94 @@ static void zbufferbitdepth_test(void)
         ddsd.dwZBufferBitDepth);
 }
 
+static void test_ddsd(DDSURFACEDESC *ddsd, BOOL expect_pf, BOOL expect_zd, const char *name)
+{
+    IDirectDrawSurface *surface;
+    IDirectDrawSurface7 *surface7;
+    HRESULT hr;
+    DDSURFACEDESC out;
+    DDSURFACEDESC2 out2;
+
+    hr = IDirectDraw_CreateSurface(lpDD, ddsd, &surface, NULL);
+    if (hr == DDERR_NOZBUFFERHW)
+    {
+        skip("Z buffers not supported, skipping Z flag test\n");
+        return;
+    }
+    ok(SUCCEEDED(hr), "IDirectDraw_CreateSurface failed, hr %#x.\n", hr);
+    hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirectDrawSurface7, (void **) &surface7);
+    ok(SUCCEEDED(hr), "IDirectDrawSurface_QueryInterface failed, hr %#x.\n", hr);
+
+    reset_ddsd(&out);
+    hr = IDirectDrawSurface_GetSurfaceDesc(surface, &out);
+    ok(SUCCEEDED(hr), "IDirectDrawSurface_GetSurfaceDesc failed, hr %#x.\n", hr);
+    memset(&out2, 0, sizeof(out2));
+    out2.dwSize = sizeof(out2);
+    hr = IDirectDrawSurface7_GetSurfaceDesc(surface7, &out2);
+    ok(SUCCEEDED(hr), "IDirectDrawSurface_GetSurfaceDesc failed, hr %#x.\n", hr);
+
+    if (expect_pf)
+    {
+        ok(out.dwFlags & DDSD_PIXELFORMAT, "%s surface: Expected DDSD_PIXELFORMAT to be set\n", name);
+    }
+    else
+    {
+        ok(!(out.dwFlags & DDSD_PIXELFORMAT), "%s surface: Expected DDSD_PIXELFORMAT not to be set\n", name);
+        ok(out2.dwFlags & DDSD_PIXELFORMAT,
+                "%s surface: Expected DDSD_PIXELFORMAT to be set in DDSURFACEDESC2\n", name);
+    }
+    if (expect_zd)
+    {
+        ok(out.dwFlags & DDSD_ZBUFFERBITDEPTH, "%s surface: Expected DDSD_ZBUFFERBITDEPTH to be set\n", name);
+        ok(!(out2.dwFlags & DDSD_ZBUFFERBITDEPTH),
+                "%s surface: Did not expect DDSD_ZBUFFERBITDEPTH to be set in DDSURFACEDESC2\n", name);
+    }
+    else
+    {
+        ok(!(out.dwFlags & DDSD_ZBUFFERBITDEPTH), "%s surface: Expected DDSD_ZBUFFERBITDEPTH not to be set\n", name);
+    }
+
+    IDirectDrawSurface7_Release(surface7);
+    IDirectDrawSurface_Release(surface);
+}
+
+static void pixelformat_flag_test(void)
+{
+    DDSURFACEDESC ddsd;
+    DDCAPS caps;
+    HRESULT hr;
+
+    memset(&caps, 0, sizeof(caps));
+    caps.dwSize = sizeof(caps);
+    hr = IDirectDraw_GetCaps(lpDD, &caps, NULL);
+    ok(SUCCEEDED(hr), "IDirectDraw_GetCaps failed, hr %#x.\n", hr);
+    if (!(caps.ddsCaps.dwCaps & DDSCAPS_ZBUFFER))
+    {
+        skip("Z buffers not supported, skipping DDSD_PIXELFORMAT test\n");
+        return;
+    }
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    ddsd.dwWidth = 64;
+    ddsd.dwHeight = 64;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    test_ddsd(&ddsd, TRUE, FALSE, "offscreen plain");
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    test_ddsd(&ddsd, TRUE, FALSE, "primary");
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_ZBUFFERBITDEPTH;
+    ddsd.dwWidth = 64;
+    ddsd.dwHeight = 64;
+    ddsd.dwZBufferBitDepth = 16;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+    test_ddsd(&ddsd, FALSE, TRUE, "Z buffer");
+}
+
 START_TEST(dsurface)
 {
     HRESULT ret;
@@ -4085,5 +4173,6 @@ START_TEST(dsurface)
     CreateSurfaceBadCapsSizeTest();
     no_ddsd_caps_test();
     zbufferbitdepth_test();
+    pixelformat_flag_test();
     ReleaseDirectDraw();
 }
