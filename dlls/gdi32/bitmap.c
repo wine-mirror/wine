@@ -609,52 +609,14 @@ static void set_initial_bitmap_bits( HBITMAP hbitmap, BITMAPOBJ *bmp )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
-    DWORD err;
-    int width_bytes;
-    struct bitblt_coords src, dst;
-    struct gdi_image_bits bits;
 
     if (!bmp->bitmap.bmBits) return;
     if (bmp->funcs->pPutImage == nulldrv_PutImage) return;
 
-    width_bytes = get_dib_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
-
-    src.visrect.left   = src.x = 0;
-    src.visrect.top    = src.y = 0;
-    src.visrect.right  = src.width = bmp->bitmap.bmWidth;
-    src.visrect.bottom = src.height = bmp->bitmap.bmHeight;
-    dst = src;
-
-    bits.ptr = bmp->bitmap.bmBits;
-    bits.is_copy = TRUE;
-    bits.free = free_heap_bits;
+    get_ddb_bitmapinfo( bmp, info );
+    SetDIBits( 0, hbitmap, 0, bmp->bitmap.bmHeight, bmp->bitmap.bmBits, info, DIB_RGB_COLORS );
+    HeapFree( GetProcessHeap(), 0, bmp->bitmap.bmBits );
     bmp->bitmap.bmBits = NULL;
-
-    /* query the color info */
-    info->bmiHeader.biSize          = sizeof(info->bmiHeader);
-    info->bmiHeader.biPlanes        = 1;
-    info->bmiHeader.biBitCount      = bmp->bitmap.bmBitsPixel;
-    info->bmiHeader.biCompression   = BI_RGB;
-    info->bmiHeader.biXPelsPerMeter = 0;
-    info->bmiHeader.biYPelsPerMeter = 0;
-    info->bmiHeader.biClrUsed       = 0;
-    info->bmiHeader.biClrImportant  = 0;
-    info->bmiHeader.biWidth         = 0;
-    info->bmiHeader.biHeight        = 0;
-    info->bmiHeader.biSizeImage     = 0;
-    err = bmp->funcs->pPutImage( NULL, hbitmap, 0, info, NULL, NULL, NULL, SRCCOPY );
-
-    if (!err || err == ERROR_BAD_FORMAT)
-    {
-        info->bmiHeader.biPlanes    = 1;
-        info->bmiHeader.biBitCount  = bmp->bitmap.bmBitsPixel;
-        info->bmiHeader.biWidth     = bmp->bitmap.bmWidth;
-        info->bmiHeader.biHeight    = -dst.height;
-        info->bmiHeader.biSizeImage = dst.height * width_bytes;
-        bmp->funcs->pPutImage( NULL, hbitmap, 0, info, &bits, &src, &dst, SRCCOPY );
-    }
-
-    if (bits.free) bits.free( &bits );
 }
 
 /***********************************************************************
