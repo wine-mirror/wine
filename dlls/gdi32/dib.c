@@ -500,7 +500,6 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 {
     DC *dc = get_dc_ptr( hdc );
     BOOL delete_hdc = FALSE;
-    PHYSDEV physdev;
     BITMAPOBJ *bitmap;
     char src_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *src_info = (BITMAPINFO *)src_bmibuf;
@@ -577,11 +576,6 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
         /* Unlike the bottom-up case, Windows doesn't limit lines. */
         if (lines < src.visrect.bottom) src.visrect.bottom = lines;
     }
-
-    /* Hack to ensure we don't get the nulldrv if the bmp hasn't been selected
-       into a dc yet */
-    physdev = GET_DC_PHYSDEV( dc, pCreateBitmap );
-    if (!BITMAP_SetOwnerDC( hbitmap, physdev )) goto done;
 
     funcs = get_bitmap_funcs( bitmap );
 
