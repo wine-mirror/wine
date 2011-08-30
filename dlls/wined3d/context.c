@@ -2076,7 +2076,7 @@ void context_apply_blit_state(struct wined3d_context *context, struct wined3d_de
             ENTER_GL();
             context_apply_fbo_state_blit(context, GL_FRAMEBUFFER, rt, NULL, rt->draw_binding);
             LEAVE_GL();
-            if (rt && rt->resource.format->id != WINED3DFMT_NULL)
+            if (rt->resource.format->id != WINED3DFMT_NULL)
                 rt_mask = 1;
             else
                 rt_mask = 0;
