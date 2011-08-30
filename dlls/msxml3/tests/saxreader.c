@@ -1934,7 +1934,7 @@ static void test_mxwriter_stream(void)
         IMXWriter_Release(writer);
 
         ok(current_write_test->last, "The last %d write calls on test %d were missed\n",
-            current_write_test-test->expected_writes, current_stream_test_index);
+            (int)(current_write_test-test->expected_writes), current_stream_test_index);
     }
 
     hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
