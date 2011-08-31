@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-08-23 21:32+0300\n"
+"PO-Revision-Date: 2011-08-31 18:41+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -804,9 +804,8 @@ msgid "Initials"
 msgstr "Inicialai"
 
 #: crypt32.rc:80
-#, fuzzy
 msgid "Surname"
-msgstr "Naudotojas"
+msgstr "Pavardė"
 
 #: crypt32.rc:81
 msgid "Domain Component"
@@ -8125,6 +8124,14 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
+"ASSOC parodo ar modifikuoja failų prievardžių sąsajas\n"
+"\n"
+"Sintaksė: ASSOC [.prv[=[failoTipas]]]\n"
+"\n"
+"ASSOC be parametrų parodo dabartines failų sąsajas.\n"
+"Jei naudojama tik su failo prievardžiu, parodo dabartinę sąsają.\n"
+"Po lygybės ženklo nenurodžius failo tipo pašalina dabartinę sąsają, jei "
+"yra.\n"
 
 #: cmd.rc:243
 msgid ""
@@ -8139,6 +8146,16 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 msgstr ""
+"FTYPE parodo ar modifikuoja atvėrimo komandas susietas su failų tipais\n"
+"\n"
+"Sintaksė: FTYPE [failoTipas[=[atvėrimoKomanda]]]\n"
+"\n"
+"Be parametrų parodo failų tipus, kuriems apibrėžtos atvėrimo komandų "
+"eilutės.\n"
+"Jei naudojama tik su failų tipu, parodo susietą atvėrimo komandos eilutę, "
+"jei yra.\n"
+"Po lygybės ženklo nenurodžius atvėrimo komandos pašalina su nurodytu failo "
+"tipu susietą komandos eilutę.\n"
 
 #: cmd.rc:245
 msgid "MORE displays output of files or piped input in pages.\n"
@@ -8163,7 +8180,6 @@ msgstr ""
 "ar apvalkalą iš kur CMD buvo iškviestas.\n"
 
 #: cmd.rc:288
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -8202,6 +8218,7 @@ msgid ""
 "Enter HELP <command> for further information on any of the above commands\n"
 msgstr ""
 "CMD įtaisytos komandos yra:\n"
+"ASSOC\t\tRodyti ar modifikuoti failų prievardžių sąsajas\n"
 "ATTRIB\t\tRodyti ar keisti DOS failo požymius\n"
 "CALL\t\tKviesti komandų failą iš kito komandų failo\n"
 "CD (CHDIR)\tPakeisti dabartinį numatytą katalogą\n"
@@ -8214,6 +8231,7 @@ msgstr ""
 "DIR\t\tPateikti katalogo turinį\n"
 "ECHO\t\tKopijuoti tekstą tiesiai į pulto išvedimą\n"
 "ENDLOCAL\tBaigia aplinkos pakeitimų lokalizavimą komandų faile\n"
+"FTYPE\t\tRodyti ar modifikuoti atvėrimo komandas susietas su failų tipais\n"
 "HELP\t\tParodyti trumpą pagalbą apie temą\n"
 "MD (MKDIR)\tSukurti pakatalogį\n"
 "MORE\t\tRodyti išvedimą puslapiais\n"
@@ -8482,7 +8500,6 @@ msgid "Default gateway"
 msgstr "Numatytasis šliuzas"
 
 #: net.rc:27
-#, fuzzy
 msgid ""
 "The syntax of this command is:\n"
 "\n"
@@ -8494,12 +8511,11 @@ msgid ""
 msgstr ""
 "Šios komandos sintaksė yra:\n"
 "\n"
-"NET HELP komanda\n"
+"NET komanda [argumentai]\n"
 "    -arba-\n"
 "NET komanda /HELP\n"
 "\n"
-"   Galimos komandos yra:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
+"Kur „komanda“ yra viena iš HELP, START, STOP ar USE\n"
 
 #: net.rc:28
 msgid ""
@@ -8510,6 +8526,12 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
+"Šios komandos sintaksė yra:\n"
+"\n"
+"NET START [tarnyba]\n"
+"\n"
+"Parodo vykdomų tarnybų sąrašą, jei „tarnyba“ praleista. Priešingu atveju "
+"„tarnyba“ yra paleidžiamos tarnybos pavadinimas.\n"
 
 #: net.rc:29
 msgid ""
@@ -8519,6 +8541,11 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
+"Šios komandos sintaksė yra:\n"
+"\n"
+"NET STOP tarnyba\n"
+"\n"
+"Kur „tarnyba“ yra stabdomos tarnybos pavadinimas.\n"
 
 #: net.rc:30
 msgid "Stopping dependent service: %s\n"
@@ -8603,9 +8630,8 @@ msgid "Reconnecting"
 msgstr "Jungiamasi iš naujo"
 
 #: net.rc:40
-#, fuzzy
 msgid "The following services are running:\n"
-msgstr "Priklausomos tarnybos yra vykdomos\n"
+msgstr "Šios tarnybos yra vykdomos:\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -10270,9 +10296,8 @@ msgid "Drives"
 msgstr "Diskai"
 
 #: winecfg.rc:41
-#, fuzzy
 msgid "Select the Unix target directory, please."
-msgstr "Prašome išsirinkti unix paskirties aplanką."
+msgstr "Prašome išsirinkti Unix paskirties aplanką."
 
 #: winecfg.rc:43
 msgid "Show &Advanced"
