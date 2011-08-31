@@ -23,6 +23,9 @@
 #include "config.h"
 #include "wine/port.h"
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+#define COBJMACROS
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -30,9 +33,15 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "winnls.h"
 #include "winemm.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
+
+#include "wingdi.h"
+#include "ole2.h"
+#include "devpkey.h"
+#include "mmdeviceapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winmm);
 
@@ -509,34 +518,67 @@ static	BOOL	MMDRV_Install(LPCSTR drvRegName, LPCSTR drvFileName, BOOL bIsMapper)
  */
 static void MMDRV_Init(void)
 {
-    HKEY	hKey;
-    char	driver_buffer[256];
-    char *p, *next;
+    IMMDeviceEnumerator *devenum;
+    IMMDevice *device;
+    IPropertyStore *ps;
+    PROPVARIANT pv;
+    DWORD size;
+    char *drvA;
+    HRESULT init_hr, hr;
+
+    static const WCHAR wine_info_deviceW[] = {'W','i','n','e',' ',
+        'i','n','f','o',' ','d','e','v','i','c','e',0};
+
     TRACE("()\n");
 
-    strcpy(driver_buffer, WINE_DEFAULT_WINMM_DRIVER);
+    init_hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
-    /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
-    if (!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Drivers", &hKey))
-    {
-        DWORD size = sizeof(driver_buffer);
-        if (RegQueryValueExA(hKey, "Audio", 0, NULL, (BYTE*)driver_buffer, &size))
-            strcpy(driver_buffer, WINE_DEFAULT_WINMM_DRIVER);
+    hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
+            CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&devenum);
+    if(FAILED(hr)){
+        ERR("CoCreateInstance failed: %08x\n", hr);
+        goto exit;
     }
 
-    for (p = driver_buffer; p; p = next)
-    {
-        char filename[sizeof(driver_buffer)+10];
-        next = strchr(p, ',');
-        if (next) *next++ = 0;
-        sprintf( filename, "wine%s.drv", p );
-        if (MMDRV_Install(filename, filename, FALSE))
-            break;
-        p = next;
+    hr = IMMDeviceEnumerator_GetDevice(devenum, wine_info_deviceW, &device);
+    IMMDeviceEnumerator_Release(devenum);
+    if(FAILED(hr)){
+        ERR("GetDevice failed: %08x\n", hr);
+        goto exit;
     }
+
+    hr = IMMDevice_OpenPropertyStore(device, STGM_READ, &ps);
+    if(FAILED(hr)){
+        ERR("OpenPropertyStore failed: %08x\n", hr);
+        IMMDevice_Release(device);
+        goto exit;
+    }
+
+    hr = IPropertyStore_GetValue(ps,
+            (const PROPERTYKEY *)&DEVPKEY_Device_Driver, &pv);
+    IPropertyStore_Release(ps);
+    IMMDevice_Release(device);
+    if(FAILED(hr)){
+        ERR("GetValue failed: %08x\n", hr);
+        goto exit;
+    }
+
+    size = WideCharToMultiByte(CP_ACP, 0, pv.u.pwszVal, -1,
+            NULL, 0, NULL, NULL);
+    drvA = HeapAlloc(GetProcessHeap(), 0, size);
+    WideCharToMultiByte(CP_ACP, 0, pv.u.pwszVal, -1, drvA, size, NULL, NULL);
+
+    MMDRV_Install(drvA, drvA, FALSE);
+
+    HeapFree(GetProcessHeap(), 0, drvA);
+    PropVariantClear(&pv);
 
     MMDRV_Install("wavemapper", "msacm32.drv", TRUE);
     MMDRV_Install("midimapper", "midimap.dll", TRUE);
+
+exit:
+    if(SUCCEEDED(init_hr))
+        CoUninitialize();
 }
 
 /******************************************************************

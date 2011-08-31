@@ -79,6 +79,7 @@ static BOOL load_driver(const WCHAR *name)
     LDFC(GetAudioSessionManager);
 #undef LDFC
 
+    lstrcpyW(drvs.module_name, driver_module);
     TRACE("Successfully loaded %s\n", wine_dbgstr_w(driver_module));
 
     return TRUE;

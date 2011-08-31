@@ -27,6 +27,7 @@ extern HRESULT MMDevice_GetPropValue(const GUID *devguid, DWORD flow, REFPROPERT
 
 typedef struct _DriverFuncs {
     HMODULE module;
+    WCHAR module_name[64];
 
     /* ids gets an array of human-friendly endpoint names
      * keys gets an array of driver-specific stuff that is used

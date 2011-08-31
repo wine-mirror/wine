@@ -85,6 +85,8 @@ static const IMMDeviceVtbl MMDeviceVtbl;
 static const IPropertyStoreVtbl MMDevPropVtbl;
 static const IMMEndpointVtbl MMEndpointVtbl;
 
+static IMMDevice info_device;
+
 typedef struct MMDevColImpl
 {
     IMMDeviceCollection IMMDeviceCollection_iface;
@@ -935,10 +937,19 @@ static HRESULT WINAPI MMDevEnum_GetDevice(IMMDeviceEnumerator *iface, const WCHA
     DWORD i=0;
     IMMDevice *dev = NULL;
 
+    static const WCHAR wine_info_deviceW[] = {'W','i','n','e',' ',
+        'i','n','f','o',' ','d','e','v','i','c','e',0};
+
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_w(name), device);
+
     if(!name || !device)
         return E_POINTER;
 
-    TRACE("(%p)->(%s,%p)\n", This, debugstr_w(name), device);
+    if(!lstrcmpW(name, wine_info_deviceW)){
+        *device = &info_device;
+        return S_OK;
+    }
+
     for (i = 0; i < MMDevice_count; ++i)
     {
         WCHAR *str;
@@ -1210,4 +1221,86 @@ static const IPropertyBagVtbl PB_Vtbl =
     PB_Release,
     PB_Read,
     PB_Write
+};
+
+static ULONG WINAPI info_device_ps_AddRef(IPropertyStore *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI info_device_ps_Release(IPropertyStore *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI info_device_ps_GetValue(IPropertyStore *iface,
+        REFPROPERTYKEY key, PROPVARIANT *pv)
+{
+    MMDevPropStore *This = impl_from_IPropertyStore(iface);
+
+    if (!key || !pv)
+        return E_POINTER;
+    if (This->access != STGM_READ
+        && This->access != STGM_READWRITE)
+        return STG_E_ACCESSDENIED;
+
+    if (IsEqualPropertyKey(*key, DEVPKEY_Device_Driver))
+    {
+        pv->vt = VT_LPWSTR;
+        pv->u.pwszVal = CoTaskMemAlloc(lstrlenW(drvs.module_name) * sizeof(WCHAR));
+        if (!pv->u.pwszVal)
+            return E_OUTOFMEMORY;
+        lstrcpyW(pv->u.pwszVal, drvs.module_name);
+        return S_OK;
+    }
+
+    return E_INVALIDARG;
+}
+
+static const IPropertyStoreVtbl info_device_ps_Vtbl =
+{
+    NULL,
+    info_device_ps_AddRef,
+    info_device_ps_Release,
+    NULL,
+    NULL,
+    info_device_ps_GetValue,
+    NULL,
+    NULL
+};
+
+static IPropertyStore info_device_ps = {
+    &info_device_ps_Vtbl
+};
+
+static ULONG WINAPI info_device_AddRef(IMMDevice *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI info_device_Release(IMMDevice *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI info_device_OpenPropertyStore(IMMDevice *iface,
+        DWORD access, IPropertyStore **ppv)
+{
+    *ppv = &info_device_ps;
+    return S_OK;
+}
+
+static const IMMDeviceVtbl info_device_Vtbl =
+{
+    NULL,
+    info_device_AddRef,
+    info_device_Release,
+    NULL,
+    info_device_OpenPropertyStore,
+    NULL,
+    NULL
+};
+
+static IMMDevice info_device = {
+    &info_device_Vtbl
 };
