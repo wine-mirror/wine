@@ -1899,7 +1899,7 @@ HRESULT CDECL wined3d_device_set_transform(struct wined3d_device *device,
 
 }
 
-HRESULT CDECL wined3d_device_get_transform(struct wined3d_device *device,
+HRESULT CDECL wined3d_device_get_transform(const struct wined3d_device *device,
         WINED3DTRANSFORMSTATETYPE state, WINED3DMATRIX *matrix)
 {
     TRACE("device %p, state %s, matrix %p.\n", device, debug_d3dtstype(state), matrix);
