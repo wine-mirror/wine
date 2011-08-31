@@ -1998,7 +1998,6 @@ struct wined3d_surface_ops
     void (*surface_unmap)(struct wined3d_surface *surface);
     HRESULT (*surface_getdc)(struct wined3d_surface *surface);
     HRESULT (*surface_flip)(struct wined3d_surface *surface, struct wined3d_surface *override);
-    HRESULT (*surface_set_mem)(struct wined3d_surface *surface, void *mem);
 };
 
 struct wined3d_surface

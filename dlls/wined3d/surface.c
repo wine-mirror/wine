@@ -1759,67 +1759,6 @@ HRESULT CDECL wined3d_surface_bltfast(struct wined3d_surface *dst_surface, DWORD
     return wined3d_surface_blt(dst_surface, &dst_rect, src_surface, &src_rect, flags, NULL, WINED3DTEXF_POINT);
 }
 
-static HRESULT surface_set_mem(struct wined3d_surface *surface, void *mem)
-{
-    TRACE("surface %p, mem %p.\n", surface, mem);
-
-    if (mem && mem != surface->resource.allocatedMemory)
-    {
-        void *release = NULL;
-
-        /* Do I have to copy the old surface content? */
-        if (surface->flags & SFLAG_DIBSECTION)
-        {
-            SelectObject(surface->hDC, surface->dib.holdbitmap);
-            DeleteDC(surface->hDC);
-            /* Release the DIB section. */
-            DeleteObject(surface->dib.DIBsection);
-            surface->dib.bitmap_data = NULL;
-            surface->resource.allocatedMemory = NULL;
-            surface->hDC = NULL;
-            surface->flags &= ~SFLAG_DIBSECTION;
-        }
-        else if (!(surface->flags & SFLAG_USERPTR))
-        {
-            release = surface->resource.heapMemory;
-            surface->resource.heapMemory = NULL;
-        }
-        surface->resource.allocatedMemory = mem;
-        surface->flags |= SFLAG_USERPTR;
-
-        /* Now the surface memory is most up do date. Invalidate drawable and texture. */
-        surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
-
-        /* For client textures OpenGL has to be notified. */
-        if (surface->flags & SFLAG_CLIENT)
-            surface_release_client_storage(surface);
-
-        /* Now free the old memory if any. */
-        HeapFree(GetProcessHeap(), 0, release);
-    }
-    else if (surface->flags & SFLAG_USERPTR)
-    {
-        /* HeapMemory should be NULL already. */
-        if (surface->resource.heapMemory)
-            ERR("User pointer surface has heap memory allocated.\n");
-
-        if (!mem)
-        {
-            surface->resource.allocatedMemory = NULL;
-            surface->flags &= ~(SFLAG_USERPTR | SFLAG_INSYSMEM);
-
-            if (surface->flags & SFLAG_CLIENT)
-                surface_release_client_storage(surface);
-
-            surface_prepare_system_memory(surface);
-        }
-
-        surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
-    }
-
-    return WINED3D_OK;
-}
-
 /* Context activation is done by the caller. */
 static void surface_remove_pbo(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
 {
@@ -1946,7 +1885,6 @@ static const struct wined3d_surface_ops surface_ops =
     surface_unmap,
     surface_getdc,
     surface_flip,
-    surface_set_mem,
 };
 
 /*****************************************************************************
@@ -2129,53 +2067,6 @@ static HRESULT gdi_surface_flip(struct wined3d_surface *surface, struct wined3d_
     return WINED3D_OK;
 }
 
-static HRESULT gdi_surface_set_mem(struct wined3d_surface *surface, void *mem)
-{
-    TRACE("surface %p, mem %p.\n", surface, mem);
-
-    /* Render targets depend on their hdc, and we can't create an hdc on a user pointer. */
-    if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
-    {
-        ERR("Not supported on render targets.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (mem && mem != surface->resource.allocatedMemory)
-    {
-        void *release = NULL;
-
-        /* Do I have to copy the old surface content? */
-        if (surface->flags & SFLAG_DIBSECTION)
-        {
-            SelectObject(surface->hDC, surface->dib.holdbitmap);
-            DeleteDC(surface->hDC);
-            /* Release the DIB section. */
-            DeleteObject(surface->dib.DIBsection);
-            surface->dib.bitmap_data = NULL;
-            surface->resource.allocatedMemory = NULL;
-            surface->hDC = NULL;
-            surface->flags &= ~SFLAG_DIBSECTION;
-        }
-        else if (!(surface->flags & SFLAG_USERPTR))
-        {
-            release = surface->resource.allocatedMemory;
-        }
-        surface->resource.allocatedMemory = mem;
-        surface->flags |= SFLAG_USERPTR | SFLAG_INSYSMEM;
-
-        /* Now free the old memory, if any. */
-        HeapFree(GetProcessHeap(), 0, release);
-    }
-    else if (surface->flags & SFLAG_USERPTR)
-    {
-        /* Map() and GetDC() will re-create the dib section and allocated memory. */
-        surface->resource.allocatedMemory = NULL;
-        surface->flags &= ~SFLAG_USERPTR;
-    }
-
-    return WINED3D_OK;
-}
-
 static const struct wined3d_surface_ops gdi_surface_ops =
 {
     gdi_surface_private_setup,
@@ -2187,7 +2078,6 @@ static const struct wined3d_surface_ops gdi_surface_ops =
     gdi_surface_unmap,
     gdi_surface_getdc,
     gdi_surface_flip,
-    gdi_surface_set_mem,
 };
 
 void surface_set_texture_name(struct wined3d_surface *surface, GLuint new_name, BOOL srgb)
@@ -3159,7 +3049,68 @@ HRESULT CDECL wined3d_surface_set_mem(struct wined3d_surface *surface, void *mem
         return WINED3DERR_INVALIDCALL;
     }
 
-    return surface->surface_ops->surface_set_mem(surface, mem);
+    /* Render targets depend on their hdc, and we can't create an hdc on a user pointer. */
+    if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
+    {
+        ERR("Not supported on render targets.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if (mem && mem != surface->resource.allocatedMemory)
+    {
+        void *release = NULL;
+
+        /* Do I have to copy the old surface content? */
+        if (surface->flags & SFLAG_DIBSECTION)
+        {
+            SelectObject(surface->hDC, surface->dib.holdbitmap);
+            DeleteDC(surface->hDC);
+            /* Release the DIB section. */
+            DeleteObject(surface->dib.DIBsection);
+            surface->dib.bitmap_data = NULL;
+            surface->resource.allocatedMemory = NULL;
+            surface->hDC = NULL;
+            surface->flags &= ~SFLAG_DIBSECTION;
+        }
+        else if (!(surface->flags & SFLAG_USERPTR))
+        {
+            release = surface->resource.heapMemory;
+            surface->resource.heapMemory = NULL;
+        }
+        surface->resource.allocatedMemory = mem;
+        surface->flags |= SFLAG_USERPTR;
+
+        /* Now the surface memory is most up do date. Invalidate drawable and texture. */
+        surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
+
+        /* For client textures OpenGL has to be notified. */
+        if (surface->flags & SFLAG_CLIENT)
+            surface_release_client_storage(surface);
+
+        /* Now free the old memory if any. */
+        HeapFree(GetProcessHeap(), 0, release);
+    }
+    else if (surface->flags & SFLAG_USERPTR)
+    {
+        /* HeapMemory should be NULL already. */
+        if (surface->resource.heapMemory)
+            ERR("User pointer surface has heap memory allocated.\n");
+
+        if (!mem)
+        {
+            surface->resource.allocatedMemory = NULL;
+            surface->flags &= ~(SFLAG_USERPTR | SFLAG_INSYSMEM);
+
+            if (surface->flags & SFLAG_CLIENT)
+                surface_release_client_storage(surface);
+
+            surface_prepare_system_memory(surface);
+        }
+
+        surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
+    }
+
+    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_surface_set_overlay_position(struct wined3d_surface *surface, LONG x, LONG y)
