@@ -7974,6 +7974,7 @@ msgid "Clock"
 msgstr "Hodiny"
 
 #: cmd.rc:30
+#, fuzzy
 msgid "ATTRIB shows or changes DOS file attributes.\n"
 msgstr "Nápověda k ATTRIB\n"
 
@@ -7997,12 +7998,14 @@ msgstr ""
 "volanou procedurou jsou zděděny volajícím.\n"
 
 #: cmd.rc:41
+#, fuzzy
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr "Nápověda k CD\n"
 
 #: cmd.rc:42
+#, fuzzy
 msgid "CHDIR <dir> changes the current default directory.\n"
 msgstr "Nápověda k CHDIR\n"
 
@@ -8011,22 +8014,27 @@ msgid "CLS clears the console screen.\n"
 msgstr "CLS vymaže obrazovku terminálu\n"
 
 #: cmd.rc:46
+#, fuzzy
 msgid "COPY <filename> copies a file.\n"
 msgstr "Nápověda k COPY\n"
 
 #: cmd.rc:47
+#, fuzzy
 msgid "CTTY changes the input/output device.\n"
 msgstr "Nápověda k CTTY\n"
 
 #: cmd.rc:48
+#, fuzzy
 msgid "DATE shows or changes the system date.\n"
 msgstr "Nápověda k DATE\n"
 
 #: cmd.rc:49
+#, fuzzy
 msgid "DEL <filename> deletes a file or set of files.\n"
 msgstr "Nápověda k DEL\n"
 
 #: cmd.rc:50
+#, fuzzy
 msgid "DIR lists the contents of a directory.\n"
 msgstr "Nápověda k DIR\n"
 
@@ -8051,6 +8059,7 @@ msgstr ""
 "na terminálové zařízení.\n"
 
 #: cmd.rc:62
+#, fuzzy
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "Nápověda k ERASE\n"
 
@@ -8096,6 +8105,7 @@ msgstr ""
 "GOTO se nedá použít interaktivně.\n"
 
 #: cmd.rc:85
+#, fuzzy
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -8136,10 +8146,12 @@ msgstr ""
 "Jmenovku si můžete zobrazit příkazem VOL.\n"
 
 #: cmd.rc:104
+#, fuzzy
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "Nápověda k MD\n"
 
 #: cmd.rc:105
+#, fuzzy
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "Nápověda k MKDIR\n"
 
@@ -8246,6 +8258,7 @@ msgstr ""
 "nejsou vykonány. REM je proto používán jako komentářový příkaz.\n"
 
 #: cmd.rc:157
+#, fuzzy
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "Nápověda k REN\n"
 
@@ -8255,10 +8268,12 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "Nápověda k RENAME\n"
 
 #: cmd.rc:160
+#, fuzzy
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgstr "Nápověda k RD\n"
 
 #: cmd.rc:161
+#, fuzzy
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "Nápověda k RMDIR\n"
 
@@ -8310,6 +8325,7 @@ msgstr ""
 "efekt, je-li zadán na příkazovou řádku.\n"
 
 #: cmd.rc:186
+#, fuzzy
 msgid "TIME sets or shows the current system time.\n"
 msgstr "Nápověda k TIME\n"
 
@@ -8350,6 +8366,7 @@ msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER zobrazí verzi spuštěného programu cmd.\n"
 
 #: cmd.rc:206
+#, fuzzy
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "Nápověda k VOL\n"
 
