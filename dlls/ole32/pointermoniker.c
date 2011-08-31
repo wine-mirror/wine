@@ -370,7 +370,7 @@ static HRESULT WINAPI PointerMonikerImpl_Hash(IMoniker* iface,DWORD* pdwHash)
     if (pdwHash==NULL)
         return E_POINTER;
 
-    *pdwHash = (DWORD)This->pObject;
+    *pdwHash = PtrToUlong(This->pObject);
 
     return S_OK;
 }

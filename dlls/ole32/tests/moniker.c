@@ -1780,9 +1780,9 @@ static void test_pointer_moniker(void)
     /* Hashing */
     hr = IMoniker_Hash(moniker, &hash);
     ok_ole_success(hr, IMoniker_Hash);
-    ok(hash == (DWORD)&Test_ClassFactory,
+    ok(hash == PtrToUlong(&Test_ClassFactory),
         "Hash value should have been 0x%08x, instead of 0x%08x\n",
-        (DWORD)&Test_ClassFactory, hash);
+        PtrToUlong(&Test_ClassFactory), hash);
 
     /* IsSystemMoniker test */
     hr = IMoniker_IsSystemMoniker(moniker, &moniker_type);
