@@ -1678,7 +1678,7 @@ static BOOL WINAPI fpAddPortEx(LPWSTR pName, DWORD level, LPBYTE pBuffer, LPWSTR
     else
     {
         FIXME("not implemented for %s (monitor %p: %s)\n",
-            debugstr_w(pMonitorName), pm, pm ? debugstr_w(pm->dllname) : NULL);
+            debugstr_w(pMonitorName), pm, pm ? debugstr_w(pm->dllname) : "(null)");
             SetLastError(ERROR_INVALID_PARAMETER);
             res = FALSE;
     }
