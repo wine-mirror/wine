@@ -216,8 +216,17 @@ static HRESULT WINAPI VBScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE 
 static HRESULT WINAPI VBScript_GetScriptState(IActiveScript *iface, SCRIPTSTATE *pssState)
 {
     VBScript *This = impl_from_IActiveScript(iface);
-    FIXME("(%p)->(%p)\n", This, pssState);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pssState);
+
+    if(!pssState)
+        return E_POINTER;
+
+    if(This->thread_id && This->thread_id != GetCurrentThreadId())
+        return E_UNEXPECTED;
+
+    *pssState = This->state;
+    return S_OK;
 }
 
 static HRESULT WINAPI VBScript_Close(IActiveScript *iface)

@@ -64,6 +64,17 @@ DEFINE_EXPECT(OnLeaveScript);
 
 DEFINE_GUID(CLSID_VBScript, 0xb54f3741, 0x5b07, 0x11cf, 0xa4,0xb0, 0x00,0xaa,0x00,0x4a,0x55,0xe8);
 
+#define test_state(s,ss) _test_state(__LINE__,s,ss)
+static void _test_state(unsigned line, IActiveScript *script, SCRIPTSTATE exstate)
+{
+    SCRIPTSTATE state = -1;
+    HRESULT hres;
+
+    hres = IActiveScript_GetScriptState(script, &state);
+    ok_(__FILE__,line) (hres == S_OK, "GetScriptState failed: %08x\n", hres);
+    ok_(__FILE__,line) (state == exstate, "state=%d, expected %d\n", state, exstate);
+}
+
 static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -201,15 +212,21 @@ static void test_vbscript(void)
     hres = IActiveScript_QueryInterface(vbscript, &IID_IActiveScriptParse, (void**)&parser);
     ok(hres == S_OK, "Could not get IActiveScriptParse iface: %08x\n", hres);
 
+    test_state(vbscript, SCRIPTSTATE_UNINITIALIZED);
+
     SET_EXPECT(GetLCID);
     hres = IActiveScript_SetScriptSite(vbscript, &ActiveScriptSite);
     ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
     CHECK_CALLED(GetLCID);
 
+    test_state(vbscript, SCRIPTSTATE_UNINITIALIZED);
+
     SET_EXPECT(OnStateChange_INITIALIZED);
     hres = IActiveScriptParse64_InitNew(parser);
     ok(hres == S_OK, "InitNew failed: %08x\n", hres);
     CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    test_state(vbscript, SCRIPTSTATE_INITIALIZED);
 
     hres = IActiveScriptParse64_InitNew(parser);
     ok(hres == E_UNEXPECTED, "InitNew failed: %08x, expected E_UNEXPECTED\n", hres);
@@ -218,6 +235,8 @@ static void test_vbscript(void)
     hres = IActiveScript_Close(vbscript);
     ok(hres == S_OK, "Close failed: %08x\n", hres);
     CHECK_CALLED(OnStateChange_CLOSED);
+
+    test_state(vbscript, SCRIPTSTATE_CLOSED);
 
     IActiveScriptParse64_Release(parser);
 
