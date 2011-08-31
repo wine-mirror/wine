@@ -2091,7 +2091,7 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device, UINT light
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_light(struct wined3d_device *device, UINT light_idx, WINED3DLIGHT *light)
+HRESULT CDECL wined3d_device_get_light(const struct wined3d_device *device, UINT light_idx, WINED3DLIGHT *light)
 {
     UINT hash_idx = LIGHTMAP_HASHFUNC(light_idx);
     struct wined3d_light_info *light_info = NULL;
