@@ -19,6 +19,7 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -83,6 +84,37 @@ static void destroy_script(script_ctx_t *ctx)
     if(ctx->site)
         IActiveScriptSite_Release(ctx->site);
     heap_free(ctx);
+}
+
+static void decrease_state(VBScript *This, SCRIPTSTATE state)
+{
+    switch(This->state) {
+    case SCRIPTSTATE_CONNECTED:
+    case SCRIPTSTATE_STARTED:
+    case SCRIPTSTATE_DISCONNECTED:
+        FIXME("unimplemented state %d\n", This->state);
+        if(state == SCRIPTSTATE_INITIALIZED)
+            break;
+        /* FALLTHROUGH */
+    case SCRIPTSTATE_INITIALIZED:
+        destroy_script(This->ctx);
+        This->ctx = NULL;
+        This->thread_id = 0;
+
+        change_state(This, state);
+        if(state == SCRIPTSTATE_UNINITIALIZED)
+            break;
+        /* FALLTHROUGH */
+    case SCRIPTSTATE_UNINITIALIZED:
+        if(This->site) {
+            IActiveScriptSite_Release(This->site);
+            This->site = NULL;
+        }
+
+        break;
+    default:
+        assert(0);
+    }
 }
 
 static inline VBScript *impl_from_IActiveScript(IActiveScript *iface)
@@ -191,8 +223,14 @@ static HRESULT WINAPI VBScript_GetScriptState(IActiveScript *iface, SCRIPTSTATE 
 static HRESULT WINAPI VBScript_Close(IActiveScript *iface)
 {
     VBScript *This = impl_from_IActiveScript(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->()\n", This);
+
+    if(This->thread_id && This->thread_id != GetCurrentThreadId())
+        return E_UNEXPECTED;
+
+    decrease_state(This, SCRIPTSTATE_CLOSED);
+    return S_OK;
 }
 
 static HRESULT WINAPI VBScript_AddNamedItem(IActiveScript *iface, LPCOLESTR pstrName, DWORD dwFlags)
