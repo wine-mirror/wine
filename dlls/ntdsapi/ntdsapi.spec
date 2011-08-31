@@ -80,8 +80,8 @@
 @ stub DsReplicaUpdateRefsW
 @ stub DsReplicaVerifyObjectsA
 @ stub DsReplicaVerifyObjectsW
-@ stub DsServerRegisterSpnA
-@ stub DsServerRegisterSpnW
+@ stdcall DsServerRegisterSpnA(long str str)
+@ stdcall DsServerRegisterSpnW(long wstr wstr)
 @ stub DsUnBindA
 @ stub DsUnBindW
 @ stub DsUnquoteRdnValueA

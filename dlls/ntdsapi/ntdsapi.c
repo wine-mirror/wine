@@ -165,3 +165,23 @@ DWORD WINAPI DsGetSpnA(DS_SPN_NAME_TYPE ServType, LPCSTR Servlass, LPCSTR ServNa
 
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ *             DsServerRegisterSpnA (NTDSAPI.@)
+ */
+DWORD WINAPI DsServerRegisterSpnA(DS_SPN_WRITE_OP operation, LPCSTR ServiceClass, LPCSTR UserObjectDN)
+{
+    FIXME("(%d,%s,%s): stub!\n", operation,
+            debugstr_a(ServiceClass), debugstr_a(UserObjectDN));
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ *             DsServerRegisterSpnW (NTDSAPI.@)
+ */
+DWORD WINAPI DsServerRegisterSpnW(DS_SPN_WRITE_OP operation, LPCWSTR ServiceClass, LPCWSTR UserObjectDN)
+{
+    FIXME("(%d,%s,%s): stub!\n", operation,
+            debugstr_w(ServiceClass), debugstr_w(UserObjectDN));
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
