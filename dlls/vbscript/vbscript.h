@@ -19,6 +19,11 @@
 #include "activscp.h"
 #include "vbscript_classes.h"
 
+typedef struct {
+    IActiveScriptSite *site;
+    LCID lcid;
+} script_ctx_t;
+
 HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
 
 static inline void *heap_alloc(size_t len)

@@ -50,10 +50,40 @@ struct VBScript {
 
     LONG ref;
 
+    SCRIPTSTATE state;
     IActiveScriptSite *site;
+    script_ctx_t *ctx;
     LONG thread_id;
     LCID lcid;
 };
+
+static void change_state(VBScript *This, SCRIPTSTATE state)
+{
+    if(This->state == state)
+        return;
+
+    This->state = state;
+    if(This->site)
+        IActiveScriptSite_OnStateChange(This->site, state);
+}
+
+static HRESULT set_ctx_site(VBScript *This)
+{
+    This->ctx->lcid = This->lcid;
+
+    IActiveScriptSite_AddRef(This->site);
+    This->ctx->site = This->site;
+
+    change_state(This, SCRIPTSTATE_INITIALIZED);
+    return S_OK;
+}
+
+static void destroy_script(script_ctx_t *ctx)
+{
+    if(ctx->site)
+        IActiveScriptSite_Release(ctx->site);
+    heap_free(ctx);
+}
 
 static inline VBScript *impl_from_IActiveScript(IActiveScript *iface)
 {
@@ -133,7 +163,7 @@ static HRESULT WINAPI VBScript_SetScriptSite(IActiveScript *iface, IActiveScript
     if(hres == S_OK)
         This->lcid = lcid;
 
-    return S_OK;
+    return This->ctx ? set_ctx_site(This) : S_OK;
 }
 
 static HRESULT WINAPI VBScript_GetScriptSite(IActiveScript *iface, REFIID riid,
@@ -271,8 +301,24 @@ static ULONG WINAPI VBScriptParse_Release(IActiveScriptParse *iface)
 static HRESULT WINAPI VBScriptParse_InitNew(IActiveScriptParse *iface)
 {
     VBScript *This = impl_from_IActiveScriptParse(iface);
-    FIXME("(%p)\n", This);
-    return S_OK;
+    script_ctx_t *ctx;
+
+    TRACE("(%p)\n", This);
+
+    if(This->ctx)
+        return E_UNEXPECTED;
+
+    ctx = heap_alloc_zero(sizeof(script_ctx_t));
+    if(!ctx)
+        return E_OUTOFMEMORY;
+
+    ctx = InterlockedCompareExchangePointer((void**)&This->ctx, ctx, NULL);
+    if(ctx) {
+        destroy_script(ctx);
+        return E_UNEXPECTED;
+    }
+
+    return This->site ? set_ctx_site(This) : S_OK;
 }
 
 static HRESULT WINAPI VBScriptParse_AddScriptlet(IActiveScriptParse *iface,
@@ -325,6 +371,7 @@ HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pU
     ret->IActiveScriptParse_iface.lpVtbl = &VBScriptParseVtbl;
 
     ret->ref = 1;
+    ret->state = SCRIPTSTATE_UNINITIALIZED;
 
     hres = IActiveScript_QueryInterface(&ret->IActiveScript_iface, riid, ppv);
     IActiveScript_Release(&ret->IActiveScript_iface);
