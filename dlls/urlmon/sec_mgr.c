@@ -514,7 +514,7 @@ static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone, LPWSTR *ret_url)
     if(hres != S_OK) {
         size = strlenW(url)*sizeof(WCHAR);
 
-        secur_url = heap_alloc(size);
+        secur_url = CoTaskMemAlloc(size);
         if(!secur_url)
             return E_OUTOFMEMORY;
 
@@ -523,7 +523,7 @@ static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone, LPWSTR *ret_url)
 
     hres = CoInternetParseUrl(secur_url, PARSE_SCHEMA, 0, schema, sizeof(schema)/sizeof(WCHAR), &size, 0);
     if(FAILED(hres) || !*schema) {
-        heap_free(secur_url);
+        CoTaskMemFree(secur_url);
         return E_INVALIDARG;
     }
 
@@ -571,7 +571,7 @@ static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone, LPWSTR *ret_url)
     }
 
     if(FAILED(hres) || !ret_url)
-        heap_free(secur_url);
+        CoTaskMemFree(secur_url);
     else
         *ret_url = secur_url;
 
@@ -849,7 +849,7 @@ static HRESULT WINAPI SecManagerImpl_GetSecurityId(IInternetSecurityManagerEx2 *
 
         static const BYTE secidFile[] = {'f','i','l','e',':'};
 
-        heap_free(url);
+        CoTaskMemFree(url);
 
         if(*pcbSecurityId < sizeof(secidFile)+sizeof(zone))
             return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
@@ -875,12 +875,12 @@ static HRESULT WINAPI SecManagerImpl_GetSecurityId(IInternetSecurityManagerEx2 *
     len = WideCharToMultiByte(CP_ACP, 0, url, -1, NULL, 0, NULL, NULL)-1;
 
     if(len+sizeof(DWORD) > *pcbSecurityId) {
-        heap_free(url);
+        CoTaskMemFree(url);
         return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
     }
 
     WideCharToMultiByte(CP_ACP, 0, url, -1, (LPSTR)pbSecurityId, len, NULL, NULL);
-    heap_free(url);
+    CoTaskMemFree(url);
 
     *(DWORD*)(pbSecurityId+len) = zone;
 
