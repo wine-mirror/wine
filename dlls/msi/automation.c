@@ -47,9 +47,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
  *                    called from AutomationObject::Invoke, and pass this function to create_automation_object.
  */
 
-typedef interface AutomationObject AutomationObject;
+typedef struct AutomationObject AutomationObject;
 
-interface AutomationObject {
+struct AutomationObject {
     /*
      * VTables - We provide IDispatch, IProvideClassInfo, IProvideClassInfo2, IProvideMultipleClassInfo
      */
@@ -87,9 +87,7 @@ interface AutomationObject {
  * ListEnumerator - IEnumVARIANT implementation for MSI automation lists.
  */
 
-typedef interface ListEnumerator ListEnumerator;
-
-interface ListEnumerator {
+typedef struct {
     /* VTables */
     const IEnumVARIANTVtbl *lpVtbl;
 
@@ -99,7 +97,7 @@ interface ListEnumerator {
     /* Current position and pointer to AutomationObject that stores actual data */
     ULONG ulPos;
     AutomationObject *pObj;
-};
+} ListEnumerator;
 
 /*
  * Structures for additional data required by specific automation objects
