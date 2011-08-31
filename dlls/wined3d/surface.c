@@ -4197,7 +4197,6 @@ static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *r
 static void read_from_framebuffer_texture(struct wined3d_surface *surface, BOOL srgb)
 {
     struct wined3d_device *device = surface->resource.device;
-    const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
 
     if (!surface_is_offscreen(surface))
@@ -4214,7 +4213,6 @@ static void read_from_framebuffer_texture(struct wined3d_surface *surface, BOOL 
      * states in the stateblock, and no driver was found yet that had bugs in that regard.
      */
     context = context_acquire(device, surface);
-    gl_info = context->gl_info;
     device_invalidate_state(device, STATE_FRAMEBUFFER);
 
     surface_prepare_texture(surface, context, srgb);
