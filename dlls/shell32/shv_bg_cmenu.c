@@ -49,30 +49,9 @@ typedef struct
     UINT                    verb_offset;
 } BgCmImpl;
 
-
-static const IContextMenu2Vtbl cmvt;
-
 static inline BgCmImpl *impl_from_IContextMenu2(IContextMenu2 *iface)
 {
     return CONTAINING_RECORD(iface, BgCmImpl, IContextMenu2_iface);
-}
-
-/**************************************************************************
-*   ISVBgCm_Constructor()
-*/
-IContextMenu2 *ISvBgCm_Constructor(IShellFolder* pSFParent, BOOL bDesktop)
-{
-	BgCmImpl* cm;
-
-	cm = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(BgCmImpl));
-        cm->IContextMenu2_iface.lpVtbl = &cmvt;
-	cm->ref = 1;
-	cm->pSFParent = pSFParent;
-	cm->bDesktop = bDesktop;
-	if(pSFParent) IShellFolder_AddRef(pSFParent);
-
-	TRACE("(%p)->()\n",cm);
-        return &cm->IContextMenu2_iface;
 }
 
 /**************************************************************************
@@ -461,3 +440,18 @@ static const IContextMenu2Vtbl cmvt =
 	ISVBgCm_fnGetCommandString,
 	ISVBgCm_fnHandleMenuMsg
 };
+
+IContextMenu2 *ISvBgCm_Constructor(IShellFolder *pSFParent, BOOL bDesktop)
+{
+    BgCmImpl *cm;
+
+    cm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*cm));
+    cm->IContextMenu2_iface.lpVtbl = &cmvt;
+    cm->ref = 1;
+    cm->pSFParent = pSFParent;
+    cm->bDesktop = bDesktop;
+    if(pSFParent) IShellFolder_AddRef(pSFParent);
+
+    TRACE("(%p)->()\n", cm);
+    return &cm->IContextMenu2_iface;
+}
