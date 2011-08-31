@@ -25,7 +25,7 @@ msgstr ""
 "新しいソフトウェアをインストールすることや、既存のソフトウェアを削除すること"
 "ができます。"
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:38
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "アプリケーション"
 
@@ -163,7 +163,7 @@ msgstr "お気に入り"
 msgid "System Path"
 msgstr "システム パス"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:119 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:97 winefile.rc:103
 msgctxt "display name"
 msgid "Desktop"
 msgstr "デスクトップ"
@@ -10236,92 +10236,72 @@ msgstr "下(&D)"
 msgid "Regular Metafile Viewer"
 msgstr "標準メタファイル ビュアー"
 
-#: winecfg.rc:32
-msgid "Configure..."
-msgstr "設定..."
-
-#: winecfg.rc:39
+#: winecfg.rc:31
 msgid "Libraries"
 msgstr "ライブラリ"
 
-#: winecfg.rc:40
+#: winecfg.rc:32
 msgid "Drives"
 msgstr "ドライブ"
 
-#: winecfg.rc:41
+#: winecfg.rc:33
 #, fuzzy
 msgid "Select the Unix target directory, please."
 msgstr "unix の対象ディレクトリを選択してください。"
 
-#: winecfg.rc:43
+#: winecfg.rc:35
 msgid "Show &Advanced"
 msgstr "詳細を表示"
 
-#: winecfg.rc:42
+#: winecfg.rc:34
 msgid "Hide &Advanced"
 msgstr "詳細を隠す"
 
-#: winecfg.rc:44
+#: winecfg.rc:36
 msgid "(No Theme)"
 msgstr "(テーマ無し)"
 
-#: winecfg.rc:45
+#: winecfg.rc:37
 msgid "Graphics"
 msgstr "画面"
 
-#: winecfg.rc:46
+#: winecfg.rc:38
 msgid "Desktop Integration"
 msgstr "デスクトップ統合"
 
-#: winecfg.rc:47
+#: winecfg.rc:39
 msgid "Audio"
 msgstr "オーディオ"
 
-#: winecfg.rc:48
+#: winecfg.rc:40
 msgid "About"
 msgstr "Wineについて"
 
-#: winecfg.rc:49
+#: winecfg.rc:41
 msgid "Wine configuration"
 msgstr "Wine設定"
 
-#: winecfg.rc:51
+#: winecfg.rc:43
 msgid "Theme files (*.msstyles; *.theme)"
 msgstr "テーマファイル (*.msstyles; *.theme)"
 
-#: winecfg.rc:52
+#: winecfg.rc:44
 msgid "Select a theme file"
 msgstr "テーマファイルを選んでください"
 
-#: winecfg.rc:54
+#: winecfg.rc:45
 msgid "Folder"
 msgstr "シェルフォルダ"
 
-#: winecfg.rc:55
+#: winecfg.rc:46
 msgid "Links to"
 msgstr "リンク先"
 
-#: winecfg.rc:50
+#: winecfg.rc:42
 msgid "Wine configuration for %s"
 msgstr "Wine設定 %s用"
 
-#: winecfg.rc:53
-msgid ""
-"There is no audio driver currently specified in the registry.\n"
-"\n"
-"A recommended driver has been selected for you.\n"
-"You can use this driver or select another driver if available.\n"
-"\n"
-"You must click Apply for the selection to take effect."
-msgstr ""
-"レジストリでオーディオドライバが指定されていません。\n"
-"\n"
-"推奨するドライバが自動的に選択されました。\n"
-"このドライバを使うか、利用可能ならば他のドライバを選択できます。\n"
-"\n"
-"選択を有効にするには [適用] をクリックする必要があります。"
-
-#: winecfg.rc:60
+#: winecfg.rc:51
 msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
@@ -10329,76 +10309,76 @@ msgstr ""
 "このライブラリの読み込み順序を変更することは推奨されません。\n"
 "本当に変更しますか?"
 
-#: winecfg.rc:61
+#: winecfg.rc:52
 msgid "Warning: system library"
 msgstr "警告: システムライブラリ"
 
-#: winecfg.rc:62
+#: winecfg.rc:53
 msgid "native"
 msgstr "native"
 
-#: winecfg.rc:63
+#: winecfg.rc:54
 msgid "builtin"
 msgstr "builtin"
 
-#: winecfg.rc:64
+#: winecfg.rc:55
 msgid "native, builtin"
 msgstr "native, builtin"
 
-#: winecfg.rc:65
+#: winecfg.rc:56
 msgid "builtin, native"
 msgstr "builtin, native"
 
-#: winecfg.rc:66
+#: winecfg.rc:57
 msgid "disabled"
 msgstr "無効"
 
-#: winecfg.rc:67
+#: winecfg.rc:58
 msgid "Default Settings"
 msgstr "既定の設定"
 
-#: winecfg.rc:68
+#: winecfg.rc:59
 msgid "Wine Programs (*.exe,*.exe.so)"
 msgstr "Wine プログラム (*.exe,*.exe.so)"
 
-#: winecfg.rc:69
+#: winecfg.rc:60
 msgid "Use global settings"
 msgstr "全体設定を使う"
 
-#: winecfg.rc:70
+#: winecfg.rc:61
 msgid "Select an executable file"
 msgstr "実行可能ファイルを選択"
 
-#: winecfg.rc:75
+#: winecfg.rc:66
 msgid "Hardware"
 msgstr "ハードウェア"
 
-#: winecfg.rc:76
+#: winecfg.rc:67
 msgctxt "vertex shader mode"
 msgid "None"
 msgstr "なし"
 
-#: winecfg.rc:81
+#: winecfg.rc:72
 msgid "Autodetect..."
 msgstr "自動検出..."
 
-#: winecfg.rc:82
+#: winecfg.rc:73
 msgid "Local hard disk"
 msgstr "ローカルハードディスク"
 
-#: winecfg.rc:83
+#: winecfg.rc:74
 msgid "Network share"
 msgstr "ネットワーク共有"
 
-#: winecfg.rc:84
+#: winecfg.rc:75
 msgid "Floppy disk"
 msgstr "フロッピーディスク"
 
-#: winecfg.rc:85
+#: winecfg.rc:76
 msgid "CD-ROM"
 msgstr "CD-ROM"
 
-#: winecfg.rc:86
+#: winecfg.rc:77
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -10409,11 +10389,11 @@ msgstr ""
 "各ドライブは A から Z までの 1 字を使う必要があるので、26 を超えることはでき"
 "ません。"
 
-#: winecfg.rc:87
+#: winecfg.rc:78
 msgid "System drive"
 msgstr "システムドライブ"
 
-#: winecfg.rc:88
+#: winecfg.rc:79
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -10426,15 +10406,15 @@ msgstr ""
 "ので、存在しない場合めちゃくちゃな死に方をするでしょう。続行するならば、再作"
 "成するのを忘れないでください!"
 
-#: winecfg.rc:89
+#: winecfg.rc:80
 msgid "Letter"
 msgstr "レター"
 
-#: winecfg.rc:90
+#: winecfg.rc:81
 msgid "Drive Mapping"
 msgstr "ドライブの割り当て"
 
-#: winecfg.rc:91
+#: winecfg.rc:82
 msgid ""
 "You don't have a drive C. This is not so great.\n"
 "\n"
@@ -10445,201 +10425,143 @@ msgstr ""
 "C ドライブを作成するためにドライブタブ内の [追加] を忘れずにクリックしてくだ"
 "さい!\n"
 
-#: winecfg.rc:96
+#: winecfg.rc:87
 msgid "Full"
 msgstr "完全"
 
-#: winecfg.rc:97
+#: winecfg.rc:88
 msgid "Standard"
 msgstr "標準"
 
-#: winecfg.rc:98
+#: winecfg.rc:89
 msgid "Basic"
 msgstr "基本"
 
-#: winecfg.rc:99
+#: winecfg.rc:90
 msgid "Emulation"
 msgstr "エミュレーション"
 
-#: winecfg.rc:100
-msgid "ALSA Driver"
-msgstr "ALSA ドライバ"
-
-#: winecfg.rc:101
-msgid "OSS Driver"
-msgstr "OSS ドライバ"
-
-#: winecfg.rc:102
-msgid "CoreAudio Driver"
-msgstr "CoreAudio ドライバ"
-
-#: winecfg.rc:103
-msgid "Couldn't open %s!"
-msgstr "%sをオープンできません!"
-
-#: winecfg.rc:104
-msgid "Sound Drivers"
-msgstr "サウンドドライバ"
-
-#: winecfg.rc:105
-msgid "Wave Out Devices"
-msgstr "Wave 出力デバイス"
-
-#: winecfg.rc:106
-msgid "Wave In Devices"
-msgstr "Wave 入力デバイス"
-
-#: winecfg.rc:107
-msgid "MIDI Out Devices"
-msgstr "MIDI 出力デバイス"
-
-#: winecfg.rc:108
-msgid "MIDI In Devices"
-msgstr "MIDI 入力デバイス"
-
-#: winecfg.rc:109
-msgid "Aux Devices"
-msgstr "補助デバイス"
-
-#: winecfg.rc:110
-msgid "Mixer Devices"
-msgstr "ミキサーデバイス"
-
-#: winecfg.rc:111
-msgid ""
-"Found driver in registry that is not available!\n"
-"\n"
-"Remove '%s' from registry?"
-msgstr ""
-"利用できないドライバをレジストリ内に見つけました!\n"
-"\n"
-"レジストリから \"%s\" を削除しますか?"
-
-#: winecfg.rc:112
-msgid "Warning"
-msgstr "警告"
-
-#: winecfg.rc:117
+#: winecfg.rc:95
 msgid "Controls Background"
 msgstr "コントロールの背景"
 
-#: winecfg.rc:118
+#: winecfg.rc:96
 msgid "Controls Text"
 msgstr "コントロールのテキスト"
 
-#: winecfg.rc:120
+#: winecfg.rc:98
 msgid "Menu Background"
 msgstr "メニューの背景"
 
-#: winecfg.rc:121
+#: winecfg.rc:99
 msgid "Menu Text"
 msgstr "メニューのテキスト"
 
-#: winecfg.rc:122
+#: winecfg.rc:100
 msgid "Scrollbar"
 msgstr "スクロールバー"
 
-#: winecfg.rc:123
+#: winecfg.rc:101
 msgid "Selection Background"
 msgstr "選択項目の背景"
 
-#: winecfg.rc:124
+#: winecfg.rc:102
 msgid "Selection Text"
 msgstr "選択項目のテキスト"
 
-#: winecfg.rc:125
+#: winecfg.rc:103
 msgid "ToolTip Background"
 msgstr "ヒントの背景"
 
-#: winecfg.rc:126
+#: winecfg.rc:104
 msgid "ToolTip Text"
 msgstr "ヒントのテキスト"
 
-#: winecfg.rc:127
+#: winecfg.rc:105
 msgid "Window Background"
 msgstr "ウィンドウの背景"
 
-#: winecfg.rc:128
+#: winecfg.rc:106
 msgid "Window Text"
 msgstr "ウィンドウのテキスト"
 
-#: winecfg.rc:129
+#: winecfg.rc:107
 msgid "Active Title Bar"
 msgstr "アクティブ タイトル バー"
 
-#: winecfg.rc:130
+#: winecfg.rc:108
 msgid "Active Title Text"
 msgstr "アクティブ タイトルのテキスト"
 
-#: winecfg.rc:131
+#: winecfg.rc:109
 msgid "Inactive Title Bar"
 msgstr "非アクティブ タイトル バー"
 
-#: winecfg.rc:132
+#: winecfg.rc:110
 msgid "Inactive Title Text"
 msgstr "非アクティブ タイトルのテキスト"
 
-#: winecfg.rc:133
+#: winecfg.rc:111
 msgid "Message Box Text"
 msgstr "メッセージ ボックスのテキスト"
 
-#: winecfg.rc:134
+#: winecfg.rc:112
 msgid "Application Workspace"
 msgstr "アプリケーション作業域"
 
-#: winecfg.rc:135
+#: winecfg.rc:113
 msgid "Window Frame"
 msgstr "ウィンドウの境界"
 
-#: winecfg.rc:136
+#: winecfg.rc:114
 msgid "Active Border"
 msgstr "アクティブ境界"
 
-#: winecfg.rc:137
+#: winecfg.rc:115
 msgid "Inactive Border"
 msgstr "非アクティブ境界"
 
-#: winecfg.rc:138
+#: winecfg.rc:116
 msgid "Controls Shadow"
 msgstr "Controls Shadow"
 
-#: winecfg.rc:139
+#: winecfg.rc:117
 msgid "Gray Text"
 msgstr "Gray Text"
 
-#: winecfg.rc:140
+#: winecfg.rc:118
 msgid "Controls Highlight"
 msgstr "Controls Highlight"
 
-#: winecfg.rc:141
+#: winecfg.rc:119
 msgid "Controls Dark Shadow"
 msgstr "Controls Dark Shadow"
 
-#: winecfg.rc:142
+#: winecfg.rc:120
 msgid "Controls Light"
 msgstr "Controls Light"
 
-#: winecfg.rc:143
+#: winecfg.rc:121
 msgid "Controls Alternate Background"
 msgstr "Controls Alternate Background"
 
-#: winecfg.rc:144
+#: winecfg.rc:122
 msgid "Hot Tracked Item"
 msgstr "Hot Tracked Item"
 
-#: winecfg.rc:145
+#: winecfg.rc:123
 msgid "Active Title Bar Gradient"
 msgstr "Active Title Bar Gradient"
 
-#: winecfg.rc:146
+#: winecfg.rc:124
 msgid "Inactive Title Bar Gradient"
 msgstr "Inactive Title Bar Gradient"
 
-#: winecfg.rc:147
+#: winecfg.rc:125
 msgid "Menu Highlight"
 msgstr "Menu Highlight"
 
-#: winecfg.rc:148
+#: winecfg.rc:126
 msgid "Menu Bar"
 msgstr "メニュー バー"
 

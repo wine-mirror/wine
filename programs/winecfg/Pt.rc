@@ -333,18 +333,14 @@ IDD_AUDIOCFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Seleção de Driver ",IDC_STATIC,8,4,244,160
-    LTEXT           "Selecione um driver de som selecionando a caixa do driver desejado. Não marque nenhuma opção para desabilitar o som. Não é recomendado selecionar mais de um driver. Configure um driver clicando com o botão direito sobre ele.:",IDC_STATIC,15,18,227,35
-    CONTROL         "Dispositivos",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,55,140,105
-    PUSHBUTTON      "&Testar Som",IDC_AUDIO_TEST,170,55,65,14
-    PUSHBUTTON	    "Painel de &Controle",IDC_AUDIO_CONTROL_PANEL,170,75,65,14
-    GROUPBOX        " DirectSound ",IDC_STATIC,8,170,244,45
-    LTEXT	    "Aceleração via &Hardware: ",IDC_STATIC,15,180,90,10
-    COMBOBOX	    IDC_DSOUND_HW_ACCEL,110,178,140,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Taxa de Amo&stra:",IDC_STATIC,15,197,70,8
-    COMBOBOX        IDC_DSOUND_RATES,90,195,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "&Bits por Amostra:",IDC_STATIC,137,197,80,8
-    COMBOBOX        IDC_DSOUND_BITS,220,195,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " DirectSound ",IDC_STATIC,8,4,244,45
+    LTEXT	    "Aceleração via &Hardware: ",IDC_STATIC,15,14,90,10
+    COMBOBOX	    IDC_DSOUND_HW_ACCEL,110,12,140,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Taxa de Amo&stra:",IDC_STATIC,15,31,70,8
+    COMBOBOX        IDC_DSOUND_RATES,90,29,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&Bits por Amostra:",IDC_STATIC,137,31,80,8
+    COMBOBOX        IDC_DSOUND_BITS,220,29,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Testar Som",IDC_AUDIO_TEST,8,51,65,14
 END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -353,18 +349,14 @@ IDD_AUDIOCFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Selecção do Controlador ",IDC_STATIC,8,4,244,160
-    LTEXT           "Seleccione um controlador de som marcando o desejado. Desactive o som não seleccionado qualquer controlador. Não é recomendada a selecção de vários controladores . Configure um controlador seleccionado-o com o clique direito.",IDC_STATIC,15,18,227,35
-    CONTROL         "Dispositivos",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,55,140,105
-    PUSHBUTTON      "&Testar Som",IDC_AUDIO_TEST,170,55,65,14
-    PUSHBUTTON	    "Painel de &Controlo",IDC_AUDIO_CONTROL_PANEL,170,75,65,14
-    GROUPBOX        " DirectSound ",IDC_STATIC,8,170,244,45
-    LTEXT	    "Aceleração do &Material: ",IDC_STATIC,15,180,90,10
-    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,178,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Taxa de Amo&stra Predefinida:",IDC_STATIC,15,197,70,8
-    COMBOBOX        IDC_DSOUND_RATES,90,195,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "&Bits Predefinidos por Amostra:",IDC_STATIC,137,197,80,8
-    COMBOBOX        IDC_DSOUND_BITS,220,195,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " DirectSound ",IDC_STATIC,8,4,244,45
+    LTEXT	    "Aceleração do &Material: ",IDC_STATIC,15,14,90,10
+    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,12,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Taxa de Amo&stra Predefinida:",IDC_STATIC,15,31,70,8
+    COMBOBOX        IDC_DSOUND_RATES,90,29,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&Bits Predefinidos por Amostra:",IDC_STATIC,137,31,80,8
+    COMBOBOX        IDC_DSOUND_BITS,220,29,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Testar Som",IDC_AUDIO_TEST,8,51,65,14
 END
 
 

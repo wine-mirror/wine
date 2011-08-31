@@ -166,18 +166,14 @@ IDD_AUDIOCFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Stuurprogrammaselectie ",IDC_STATIC,8,4,244,160
-    LTEXT           "Selecteer een geluidsstuurprogramma door het gewenste stuurprogramma aan te vinken. Zet het geluid uit door geen stuurprogramma te selecteren. Het selecteren van meerdere stuurprogramma's wordt niet aanbevolen. Rechtsklik op een stuurprogramma om het te configureren.",IDC_STATIC,15,20,227,45
-    CONTROL         "Apparaten",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,65,140,90
-    PUSHBUTTON      "Geluidstest",IDC_AUDIO_TEST,165,65,79,14
-    PUSHBUTTON	    "Configuratiescherm",IDC_AUDIO_CONTROL_PANEL,165,85,79,14
-    GROUPBOX        " DirectSound ",IDC_STATIC,8,170,244,45
-    LTEXT	    "Hardwareversnelling: ",IDC_STATIC,15,180,90,10
-    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,178,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Samplefrequentie:",IDC_STATIC,15,197,70,8
-    COMBOBOX        IDC_DSOUND_RATES,90,195,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Bits per sample:",IDC_STATIC,157,197,60,8
-    COMBOBOX        IDC_DSOUND_BITS,220,195,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " DirectSound ",IDC_STATIC,8,4,244,45
+    LTEXT	    "Hardwareversnelling: ",IDC_STATIC,15,14,90,10
+    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,12,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Samplefrequentie:",IDC_STATIC,15,31,70,8
+    COMBOBOX        IDC_DSOUND_RATES,90,29,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Bits per sample:",IDC_STATIC,157,31,60,8
+    COMBOBOX        IDC_DSOUND_BITS,220,29,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Geluidstest",IDC_AUDIO_TEST,8,51,79,14
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG  0, 0, 260, 220

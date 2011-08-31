@@ -164,18 +164,14 @@ IDD_AUDIOCFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Driver Selection ",IDC_STATIC,8,4,244,160
-    LTEXT           "Select a sound driver by checking the box of the desired driver.  Disable sound by not selecting any driver. Selection of multiple drivers is not recommended. Configure a driver by right-clicking on it.",IDC_STATIC,15,20,227,30
-    CONTROL         "Devices",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,155,105
-    PUSHBUTTON      "&Test Sound",IDC_AUDIO_TEST,180,50,59,14
-    PUSHBUTTON	    "&Control Panel",IDC_AUDIO_CONTROL_PANEL,180,70,59,14
-    GROUPBOX        " DirectSound ",IDC_STATIC,8,170,244,44
-    LTEXT	    "&Hardware Acceleration: ",IDC_STATIC,15,180,90,10
-    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,178,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Default &Sample Rate:",IDC_STATIC,15,197,70,8
-    COMBOBOX        IDC_DSOUND_RATES,90,195,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Default &Bits Per Sample:",IDC_STATIC,137,197,80,8
-    COMBOBOX        IDC_DSOUND_BITS,220,195,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " DirectSound ",IDC_STATIC,8,4,244,44
+    LTEXT	    "&Hardware Acceleration: ",IDC_STATIC,15,14,90,10
+    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,12,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Default &Sample Rate:",IDC_STATIC,15,31,70,8
+    COMBOBOX        IDC_DSOUND_RATES,90,29,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Default &Bits Per Sample:",IDC_STATIC,137,31,80,8
+    COMBOBOX        IDC_DSOUND_BITS,220,29,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Test Sound",IDC_AUDIO_TEST,8,50,59,14
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG  0, 0, 260, 220

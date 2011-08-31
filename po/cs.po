@@ -23,7 +23,7 @@ msgid ""
 "computer."
 msgstr ""
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:38
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "Programy"
 
@@ -177,7 +177,7 @@ msgstr "Oblíbené"
 msgid "System Path"
 msgstr "Systémový adresář"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:119 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:97 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -10509,93 +10509,72 @@ msgstr "&Dolů"
 msgid "Regular Metafile Viewer"
 msgstr "Obyčejný prohlížeč metasouborů"
 
-#: winecfg.rc:32
-#, fuzzy
-msgid "Configure..."
-msgstr "Upravit"
-
-#: winecfg.rc:39
+#: winecfg.rc:31
 msgid "Libraries"
 msgstr "Knihovny"
 
-#: winecfg.rc:40
+#: winecfg.rc:32
 msgid "Drives"
 msgstr "Disky"
 
-#: winecfg.rc:41
+#: winecfg.rc:33
 #, fuzzy
 msgid "Select the Unix target directory, please."
 msgstr "Vyberte prosím unixový cílový adresář."
 
-#: winecfg.rc:43
+#: winecfg.rc:35
 msgid "Show &Advanced"
 msgstr "Zobrazit rozšířené možnosti"
 
-#: winecfg.rc:42
+#: winecfg.rc:34
 msgid "Hide &Advanced"
 msgstr "Schovat rozšířené možnosti"
 
-#: winecfg.rc:44
+#: winecfg.rc:36
 msgid "(No Theme)"
 msgstr "(Bez tématu)"
 
-#: winecfg.rc:45
+#: winecfg.rc:37
 msgid "Graphics"
 msgstr "Obraz"
 
-#: winecfg.rc:46
+#: winecfg.rc:38
 msgid "Desktop Integration"
 msgstr "Začlenění do pracovní plochy"
 
-#: winecfg.rc:47
+#: winecfg.rc:39
 msgid "Audio"
 msgstr "Zvuk"
 
-#: winecfg.rc:48
+#: winecfg.rc:40
 msgid "About"
 msgstr "O programu"
 
-#: winecfg.rc:49
+#: winecfg.rc:41
 msgid "Wine configuration"
 msgstr "Konfigurace Wine"
 
-#: winecfg.rc:51
+#: winecfg.rc:43
 msgid "Theme files (*.msstyles; *.theme)"
 msgstr "Soubory s tématy vzhledu (*.msstyles; *.theme)"
 
-#: winecfg.rc:52
+#: winecfg.rc:44
 msgid "Select a theme file"
 msgstr "Zvolte soubor s tématem vzhledu"
 
-#: winecfg.rc:54
+#: winecfg.rc:45
 msgid "Folder"
 msgstr "Domácí adresáře"
 
-#: winecfg.rc:55
+#: winecfg.rc:46
 msgid "Links to"
 msgstr "Odkaz na"
 
-#: winecfg.rc:50
+#: winecfg.rc:42
 msgid "Wine configuration for %s"
 msgstr "Úprava Wine pro %s"
 
-#: winecfg.rc:53
-msgid ""
-"There is no audio driver currently specified in the registry.\n"
-"\n"
-"A recommended driver has been selected for you.\n"
-"You can use this driver or select another driver if available.\n"
-"\n"
-"You must click Apply for the selection to take effect."
-msgstr ""
-"V registrech chybí záznam o vybraném zvukovém ovladači.\n"
-"\n"
-"Automaticky byl zvolen doporučený ovladač.\n"
-"Můžete použít tento ovladač nebo si z ostatních dostupných vybrat jiný.\n"
-"\n"
-"Dokud nekliknete na tlačítko Provést, nebude vybraný ovladač použit."
-
-#: winecfg.rc:60
+#: winecfg.rc:51
 msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
@@ -10603,51 +10582,51 @@ msgstr ""
 "Nedoporučuje se měnit pořadí nahrávání této knihovny.\n"
 "Určitě to chcete udělat?"
 
-#: winecfg.rc:61
+#: winecfg.rc:52
 msgid "Warning: system library"
 msgstr "Varování: systémová knihovna"
 
-#: winecfg.rc:62
+#: winecfg.rc:53
 msgid "native"
 msgstr "nativní"
 
-#: winecfg.rc:63
+#: winecfg.rc:54
 msgid "builtin"
 msgstr "vestavěná"
 
-#: winecfg.rc:64
+#: winecfg.rc:55
 msgid "native, builtin"
 msgstr "nativní, vestavěná"
 
-#: winecfg.rc:65
+#: winecfg.rc:56
 msgid "builtin, native"
 msgstr "vestavěná, nativní"
 
-#: winecfg.rc:66
+#: winecfg.rc:57
 msgid "disabled"
 msgstr "zakázat"
 
-#: winecfg.rc:67
+#: winecfg.rc:58
 msgid "Default Settings"
 msgstr "Standardní nastavení"
 
-#: winecfg.rc:68
+#: winecfg.rc:59
 msgid "Wine Programs (*.exe,*.exe.so)"
 msgstr "Programy Wine (*.exe,*.exe.so)"
 
-#: winecfg.rc:69
+#: winecfg.rc:60
 msgid "Use global settings"
 msgstr "Použít všeobecná nastavení"
 
-#: winecfg.rc:70
+#: winecfg.rc:61
 msgid "Select an executable file"
 msgstr "Zvolte spustitelný soubor"
 
-#: winecfg.rc:75
+#: winecfg.rc:66
 msgid "Hardware"
 msgstr "Hardwarový"
 
-#: winecfg.rc:76
+#: winecfg.rc:67
 #, fuzzy
 msgctxt "vertex shader mode"
 msgid "None"
@@ -10657,28 +10636,28 @@ msgstr ""
 "#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
 "Žádný"
 
-#: winecfg.rc:81
+#: winecfg.rc:72
 #, fuzzy
 msgid "Autodetect..."
 msgstr "Autodetekce"
 
-#: winecfg.rc:82
+#: winecfg.rc:73
 msgid "Local hard disk"
 msgstr "Místní pevný disk"
 
-#: winecfg.rc:83
+#: winecfg.rc:74
 msgid "Network share"
 msgstr "Síťový disk"
 
-#: winecfg.rc:84
+#: winecfg.rc:75
 msgid "Floppy disk"
 msgstr "Disketa"
 
-#: winecfg.rc:85
+#: winecfg.rc:76
 msgid "CD-ROM"
 msgstr "CD-ROM"
 
-#: winecfg.rc:86
+#: winecfg.rc:77
 #, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
@@ -10690,11 +10669,11 @@ msgstr ""
 "Každý disk musí mít přiřazeno písmeno od A do Z, takže nelze mít více než 26 "
 "disků"
 
-#: winecfg.rc:87
+#: winecfg.rc:78
 msgid "System drive"
 msgstr "Systémový disk"
 
-#: winecfg.rc:88
+#: winecfg.rc:79
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -10707,15 +10686,15 @@ msgstr ""
 "případě, že tomu tak není. Pokud smažete disk C, nezapomeňte jej znovu "
 "vytvořit!"
 
-#: winecfg.rc:89
+#: winecfg.rc:80
 msgid "Letter"
 msgstr "Písmeno"
 
-#: winecfg.rc:90
+#: winecfg.rc:81
 msgid "Drive Mapping"
 msgstr "Přípojný bod"
 
-#: winecfg.rc:91
+#: winecfg.rc:82
 msgid ""
 "You don't have a drive C. This is not so great.\n"
 "\n"
@@ -10725,212 +10704,154 @@ msgstr ""
 "\n"
 "Klikněte na ‘Přidat...’ v záložce Disky a vytvořte ho!\n"
 
-#: winecfg.rc:96
+#: winecfg.rc:87
 msgid "Full"
 msgstr "Plná"
 
-#: winecfg.rc:97
+#: winecfg.rc:88
 msgid "Standard"
 msgstr "Standardní"
 
-#: winecfg.rc:98
+#: winecfg.rc:89
 msgid "Basic"
 msgstr "Základní"
 
-#: winecfg.rc:99
+#: winecfg.rc:90
 msgid "Emulation"
 msgstr "Emulace"
 
-#: winecfg.rc:100
-msgid "ALSA Driver"
-msgstr "Ovladač ALSA"
-
-#: winecfg.rc:101
-msgid "OSS Driver"
-msgstr "Ovladač OSS"
-
-#: winecfg.rc:102
-msgid "CoreAudio Driver"
-msgstr "Ovladač CoreAudio"
-
-#: winecfg.rc:103
-msgid "Couldn't open %s!"
-msgstr "Nemohu otevřít %s!"
-
-#: winecfg.rc:104
-msgid "Sound Drivers"
-msgstr "Ovladače zvuku"
-
-#: winecfg.rc:105
-msgid "Wave Out Devices"
-msgstr "Zařízení Wave Výstup"
-
-#: winecfg.rc:106
-msgid "Wave In Devices"
-msgstr "Zařízení Wave Vstup"
-
-#: winecfg.rc:107
-msgid "MIDI Out Devices"
-msgstr "Zařízení MIDI Výstup"
-
-#: winecfg.rc:108
-msgid "MIDI In Devices"
-msgstr "Zařízení MIDI Vstup"
-
-#: winecfg.rc:109
-msgid "Aux Devices"
-msgstr "Zařízení Aux"
-
-#: winecfg.rc:110
-msgid "Mixer Devices"
-msgstr "Zařízení Míchání"
-
-#: winecfg.rc:111
-msgid ""
-"Found driver in registry that is not available!\n"
-"\n"
-"Remove '%s' from registry?"
-msgstr ""
-"V registru byl nalezen ovladač, který není k dispozici!\n"
-"\n"
-"Odstranit “%s” z registru?"
-
-#: winecfg.rc:112
-msgid "Warning"
-msgstr "Varování"
-
-#: winecfg.rc:117
+#: winecfg.rc:95
 msgid "Controls Background"
 msgstr "Pozadí ovládacích prvků"
 
-#: winecfg.rc:118
+#: winecfg.rc:96
 msgid "Controls Text"
 msgstr "Písmo ovládacích prvků"
 
-#: winecfg.rc:120
+#: winecfg.rc:98
 msgid "Menu Background"
 msgstr "Pozadí menu"
 
-#: winecfg.rc:121
+#: winecfg.rc:99
 msgid "Menu Text"
 msgstr "Písmo menu"
 
-#: winecfg.rc:122
+#: winecfg.rc:100
 msgid "Scrollbar"
 msgstr "Rolovací pruh"
 
-#: winecfg.rc:123
+#: winecfg.rc:101
 msgid "Selection Background"
 msgstr "Pozadí výběru"
 
-#: winecfg.rc:124
+#: winecfg.rc:102
 msgid "Selection Text"
 msgstr "Písmo výběru"
 
-#: winecfg.rc:125
+#: winecfg.rc:103
 msgid "ToolTip Background"
 msgstr "Pozadí tipu"
 
-#: winecfg.rc:126
+#: winecfg.rc:104
 msgid "ToolTip Text"
 msgstr "Písmo tipu"
 
-#: winecfg.rc:127
+#: winecfg.rc:105
 msgid "Window Background"
 msgstr "Pozadí okna"
 
-#: winecfg.rc:128
+#: winecfg.rc:106
 msgid "Window Text"
 msgstr "Písmo okna"
 
-#: winecfg.rc:129
+#: winecfg.rc:107
 msgid "Active Title Bar"
 msgstr "Pozadí titulku aktivního okna"
 
-#: winecfg.rc:130
+#: winecfg.rc:108
 msgid "Active Title Text"
 msgstr "Písmo titulku aktivního okna"
 
-#: winecfg.rc:131
+#: winecfg.rc:109
 msgid "Inactive Title Bar"
 msgstr "Pozadí titulku neaktivného okna"
 
-#: winecfg.rc:132
+#: winecfg.rc:110
 msgid "Inactive Title Text"
 msgstr "Písmo titulku neaktivního okna"
 
-#: winecfg.rc:133
+#: winecfg.rc:111
 msgid "Message Box Text"
 msgstr ""
 
-#: winecfg.rc:134
+#: winecfg.rc:112
 #, fuzzy
 msgid "Application Workspace"
 msgstr "Programy"
 
-#: winecfg.rc:135
+#: winecfg.rc:113
 #, fuzzy
 msgid "Window Frame"
 msgstr "Písmo okna"
 
-#: winecfg.rc:136
+#: winecfg.rc:114
 #, fuzzy
 msgid "Active Border"
 msgstr "Pozadí titulku aktivního okna"
 
-#: winecfg.rc:137
+#: winecfg.rc:115
 #, fuzzy
 msgid "Inactive Border"
 msgstr "Pozadí titulku neaktivného okna"
 
-#: winecfg.rc:138
+#: winecfg.rc:116
 #, fuzzy
 msgid "Controls Shadow"
 msgstr "Pozadí ovládacích prvků"
 
-#: winecfg.rc:139
+#: winecfg.rc:117
 msgid "Gray Text"
 msgstr ""
 
-#: winecfg.rc:140
+#: winecfg.rc:118
 #, fuzzy
 msgid "Controls Highlight"
 msgstr "Písmo ovládacích prvků"
 
-#: winecfg.rc:141
+#: winecfg.rc:119
 #, fuzzy
 msgid "Controls Dark Shadow"
 msgstr "Pozadí ovládacích prvků"
 
-#: winecfg.rc:142
+#: winecfg.rc:120
 #, fuzzy
 msgid "Controls Light"
 msgstr "Písmo ovládacích prvků"
 
-#: winecfg.rc:143
+#: winecfg.rc:121
 #, fuzzy
 msgid "Controls Alternate Background"
 msgstr "Pozadí ovládacích prvků"
 
-#: winecfg.rc:144
+#: winecfg.rc:122
 msgid "Hot Tracked Item"
 msgstr ""
 
-#: winecfg.rc:145
+#: winecfg.rc:123
 #, fuzzy
 msgid "Active Title Bar Gradient"
 msgstr "Pozadí titulku aktivního okna"
 
-#: winecfg.rc:146
+#: winecfg.rc:124
 #, fuzzy
 msgid "Inactive Title Bar Gradient"
 msgstr "Pozadí titulku neaktivného okna"
 
-#: winecfg.rc:147
+#: winecfg.rc:125
 msgid "Menu Highlight"
 msgstr ""
 
-#: winecfg.rc:148
+#: winecfg.rc:126
 #, fuzzy
 msgid "Menu Bar"
 msgstr "Pozadí menu"

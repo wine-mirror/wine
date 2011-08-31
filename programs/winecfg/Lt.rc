@@ -165,18 +165,14 @@ IDD_AUDIOCFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Tvarkyklių parinkimas ",IDC_STATIC,8,4,244,144
-    LTEXT           "Pasirinkite garso tvarkyklę pažymėdami norimos tvarkyklės langelį. Garsą išjungti galima nepažymint nė vienos tvarkyklės. Kelių tvarkyklių pasirinkimas yra nerekomenduojamas. Tvarkyklę konfigūruoti galima spustelėjus dešiniuoju pelės klavišu.",IDC_STATIC,15,15,227,35
-    CONTROL         "Įrenginiai",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,89
-    PUSHBUTTON      "&Testuoti garsą",IDC_AUDIO_TEST,170,50,63,14
-    PUSHBUTTON      "Valdymo &skydelis",IDC_AUDIO_CONTROL_PANEL,170,70,63,14
-    GROUPBOX        " DirectSound ",IDC_STATIC,8,154,244,60
-    LTEXT           "&Aparatinis spartinimas: ",IDC_STATIC,15,165,90,10
-    COMBOBOX        IDC_DSOUND_HW_ACCEL,100,163,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Numatytasis garso elemento &dažnis:",IDC_STATIC,15,180,140,8
-    COMBOBOX        IDC_DSOUND_RATES,160,178,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Numatytasis garso elemento &bitų skaičius:",IDC_STATIC,15,195,140,8
-    COMBOBOX        IDC_DSOUND_BITS,160,193,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " DirectSound ",IDC_STATIC,8,4,244,60
+    LTEXT           "&Aparatinis spartinimas: ",IDC_STATIC,15,15,90,10
+    COMBOBOX        IDC_DSOUND_HW_ACCEL,100,13,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Numatytasis garso elemento &dažnis:",IDC_STATIC,15,30,140,8
+    COMBOBOX        IDC_DSOUND_RATES,160,28,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Numatytasis garso elemento &bitų skaičius:",IDC_STATIC,15,45,140,8
+    COMBOBOX        IDC_DSOUND_BITS,160,43,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Testuoti garsą",IDC_AUDIO_TEST,8,66,63,14
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG  0, 0, 260, 220

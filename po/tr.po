@@ -23,7 +23,7 @@ msgid ""
 "computer."
 msgstr ""
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:38
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 #, fuzzy
 msgid "Applications"
 msgstr "Seçenekler"
@@ -170,7 +170,7 @@ msgstr "Sık Kullanılanlar"
 msgid "System Path"
 msgstr "Sistem Yolu"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:119 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:97 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -10688,93 +10688,72 @@ msgstr "A&şağı"
 msgid "Regular Metafile Viewer"
 msgstr "Regular Metafile Viewer"
 
-#: winecfg.rc:32
-#, fuzzy
-msgid "Configure..."
-msgstr "Yapılandır"
-
-#: winecfg.rc:39
+#: winecfg.rc:31
 msgid "Libraries"
 msgstr "Kitaplıklar"
 
-#: winecfg.rc:40
+#: winecfg.rc:32
 msgid "Drives"
 msgstr "Sürücüler"
 
-#: winecfg.rc:41
+#: winecfg.rc:33
 #, fuzzy
 msgid "Select the Unix target directory, please."
 msgstr "Lütfen haritalanacak unix dizinini seçin."
 
-#: winecfg.rc:43
+#: winecfg.rc:35
 msgid "Show &Advanced"
 msgstr "Gelişmiş Ayarlar"
 
-#: winecfg.rc:42
+#: winecfg.rc:34
 msgid "Hide &Advanced"
 msgstr "Temel Ayarlar"
 
-#: winecfg.rc:44
+#: winecfg.rc:36
 msgid "(No Theme)"
 msgstr "(Tema Yok)"
 
-#: winecfg.rc:45
+#: winecfg.rc:37
 msgid "Graphics"
 msgstr "Grafik"
 
-#: winecfg.rc:46
+#: winecfg.rc:38
 msgid "Desktop Integration"
 msgstr "Masaüstü Entegrasyonu"
 
-#: winecfg.rc:47
+#: winecfg.rc:39
 msgid "Audio"
 msgstr "Ses"
 
-#: winecfg.rc:48
+#: winecfg.rc:40
 msgid "About"
 msgstr "Hakkında"
 
-#: winecfg.rc:49
+#: winecfg.rc:41
 msgid "Wine configuration"
 msgstr "Wine yapılandırması"
 
-#: winecfg.rc:51
+#: winecfg.rc:43
 msgid "Theme files (*.msstyles; *.theme)"
 msgstr "Tema dosyaları (*.msstyles; *.theme)"
 
-#: winecfg.rc:52
+#: winecfg.rc:44
 msgid "Select a theme file"
 msgstr "Tema dosyası seçin"
 
-#: winecfg.rc:54
+#: winecfg.rc:45
 msgid "Folder"
 msgstr "Klasör"
 
-#: winecfg.rc:55
+#: winecfg.rc:46
 msgid "Links to"
 msgstr "Hedef Dizin"
 
-#: winecfg.rc:50
+#: winecfg.rc:42
 msgid "Wine configuration for %s"
 msgstr "%s için Wine yapılandırması"
 
-#: winecfg.rc:53
-msgid ""
-"There is no audio driver currently specified in the registry.\n"
-"\n"
-"A recommended driver has been selected for you.\n"
-"You can use this driver or select another driver if available.\n"
-"\n"
-"You must click Apply for the selection to take effect."
-msgstr ""
-"Sistem kaydında belirlenmiş bir ses sürücüsü yok.\n"
-"\n"
-"Önerilen bir sürücü sizin için seçildi.\n"
-"Bu sürücüyü kullanabilir veya varsa başka bir sürücüyü seçebilirsiniz.\n"
-"\n"
-"Seçimin etkili olabilmesi için Uygula'yı tıklamalısınız."
-
-#: winecfg.rc:60
+#: winecfg.rc:51
 msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
@@ -10782,78 +10761,78 @@ msgstr ""
 "Bu kitaplığın yükleme sırasının değiştirilmesi önerilmez.\n"
 "Bunu yapmak istediğinizden emin misiniz?"
 
-#: winecfg.rc:61
+#: winecfg.rc:52
 msgid "Warning: system library"
 msgstr "Uyarı: sistem kitaplığı"
 
-#: winecfg.rc:62
+#: winecfg.rc:53
 msgid "native"
 msgstr "doğal"
 
-#: winecfg.rc:63
+#: winecfg.rc:54
 msgid "builtin"
 msgstr "yerleşik"
 
-#: winecfg.rc:64
+#: winecfg.rc:55
 msgid "native, builtin"
 msgstr "doğal, yerleşik"
 
-#: winecfg.rc:65
+#: winecfg.rc:56
 msgid "builtin, native"
 msgstr "yerleşik, doğal"
 
-#: winecfg.rc:66
+#: winecfg.rc:57
 msgid "disabled"
 msgstr "devre dışı"
 
-#: winecfg.rc:67
+#: winecfg.rc:58
 msgid "Default Settings"
 msgstr "Öntanımlı Ayarlar"
 
-#: winecfg.rc:68
+#: winecfg.rc:59
 msgid "Wine Programs (*.exe,*.exe.so)"
 msgstr "Wine Programları (*.exe,*.exe.so)"
 
-#: winecfg.rc:69
+#: winecfg.rc:60
 msgid "Use global settings"
 msgstr "Genel ayarları kullan"
 
-#: winecfg.rc:70
+#: winecfg.rc:61
 msgid "Select an executable file"
 msgstr "Çalıştırılabilir bir dosya seçin"
 
-#: winecfg.rc:75
+#: winecfg.rc:66
 msgid "Hardware"
 msgstr "Donanım"
 
-#: winecfg.rc:76
+#: winecfg.rc:67
 #, fuzzy
 msgctxt "vertex shader mode"
 msgid "None"
 msgstr "Hiçbiri"
 
-#: winecfg.rc:81
+#: winecfg.rc:72
 #, fuzzy
 msgid "Autodetect..."
 msgstr "Otomatik Algıla"
 
-#: winecfg.rc:82
+#: winecfg.rc:73
 msgid "Local hard disk"
 msgstr "Yerel sabit disk"
 
-#: winecfg.rc:83
+#: winecfg.rc:74
 msgid "Network share"
 msgstr "Ağ paylaşımı"
 
-#: winecfg.rc:84
+#: winecfg.rc:75
 msgid "Floppy disk"
 msgstr "Disket sürücü"
 
-#: winecfg.rc:85
+#: winecfg.rc:76
 msgid "CD-ROM"
 msgstr "CD-ROM"
 
-#: winecfg.rc:86
+#: winecfg.rc:77
 #, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
@@ -10865,11 +10844,11 @@ msgstr ""
 "Her sürücünün A-Z aralığında bir harfi olmalıdır. Dolayısıyla 26'dan fazla "
 "tanımlayamazsınız."
 
-#: winecfg.rc:87
+#: winecfg.rc:78
 msgid "System drive"
 msgstr "Sistem sürücüsü"
 
-#: winecfg.rc:88
+#: winecfg.rc:79
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -10882,15 +10861,15 @@ msgstr ""
 "istenmeyen bir şekilde sonlanır. Eğer devam ederseniz, daha sonra yeniden "
 "oluşturmayı unutmayın!"
 
-#: winecfg.rc:89
+#: winecfg.rc:80
 msgid "Letter"
 msgstr "Harf"
 
-#: winecfg.rc:90
+#: winecfg.rc:81
 msgid "Drive Mapping"
 msgstr "Sürücü Eşleme"
 
-#: winecfg.rc:91
+#: winecfg.rc:82
 msgid ""
 "You don't have a drive C. This is not so great.\n"
 "\n"
@@ -10900,217 +10879,159 @@ msgstr ""
 "\n"
 "Bir tane oluşturmak için Sürücüler sekmesinden Ekle'yi tıklamayı unutmayın!\n"
 
-#: winecfg.rc:96
+#: winecfg.rc:87
 msgid "Full"
 msgstr "Tam"
 
-#: winecfg.rc:97
+#: winecfg.rc:88
 msgid "Standard"
 msgstr "Standart"
 
-#: winecfg.rc:98
+#: winecfg.rc:89
 msgid "Basic"
 msgstr "Temel"
 
-#: winecfg.rc:99
+#: winecfg.rc:90
 msgid "Emulation"
 msgstr "Taklit"
 
-#: winecfg.rc:100
-msgid "ALSA Driver"
-msgstr "ALSA Sürücüsü"
-
-#: winecfg.rc:101
-msgid "OSS Driver"
-msgstr "OSS Sürücüsü"
-
-#: winecfg.rc:102
-msgid "CoreAudio Driver"
-msgstr "CoreAudio Sürücüsü"
-
-#: winecfg.rc:103
-msgid "Couldn't open %s!"
-msgstr "%s açılamadı!"
-
-#: winecfg.rc:104
-msgid "Sound Drivers"
-msgstr "Ses Sürücüleri"
-
-#: winecfg.rc:105
-msgid "Wave Out Devices"
-msgstr "Dalga Çıkış Aygıtları"
-
-#: winecfg.rc:106
-msgid "Wave In Devices"
-msgstr "Dalga Giriş Aygıtları"
-
-#: winecfg.rc:107
-msgid "MIDI Out Devices"
-msgstr "MIDI Çıkış Aygıtları"
-
-#: winecfg.rc:108
-msgid "MIDI In Devices"
-msgstr "MIDI Giriş Aygıtları"
-
-#: winecfg.rc:109
-msgid "Aux Devices"
-msgstr "Aux Aygıtları"
-
-#: winecfg.rc:110
-msgid "Mixer Devices"
-msgstr "Mixer Aygıtları"
-
-#: winecfg.rc:111
-msgid ""
-"Found driver in registry that is not available!\n"
-"\n"
-"Remove '%s' from registry?"
-msgstr ""
-"Sistem kaydında kullanılabilir olmayan bir sürücü bulundu!\n"
-"\n"
-"\"%s\" girişi sistem kaydından silinsin mi?"
-
-#: winecfg.rc:112
-msgid "Warning"
-msgstr "Uyarı"
-
-#: winecfg.rc:117
+#: winecfg.rc:95
 #, fuzzy
 msgid "Controls Background"
 msgstr "Arkaplanı Ko&pyala"
 
-#: winecfg.rc:118
+#: winecfg.rc:96
 #, fuzzy
 msgid "Controls Text"
 msgstr "Control"
 
-#: winecfg.rc:120
+#: winecfg.rc:98
 #, fuzzy
 msgid "Menu Background"
 msgstr "&Arkaplan"
 
-#: winecfg.rc:121
+#: winecfg.rc:99
 msgid "Menu Text"
 msgstr ""
 
-#: winecfg.rc:122
+#: winecfg.rc:100
 #, fuzzy
 msgid "Scrollbar"
 msgstr "Buraya Kaydır"
 
-#: winecfg.rc:123
+#: winecfg.rc:101
 #, fuzzy
 msgid "Selection Background"
 msgstr "Arka&plan Yap"
 
-#: winecfg.rc:124
+#: winecfg.rc:102
 #, fuzzy
 msgid "Selection Text"
 msgstr "Seçim &bilgisi"
 
-#: winecfg.rc:125
+#: winecfg.rc:103
 #, fuzzy
 msgid "ToolTip Background"
 msgstr "Arkaplanı Ko&pyala"
 
-#: winecfg.rc:126
+#: winecfg.rc:104
 msgid "ToolTip Text"
 msgstr ""
 
-#: winecfg.rc:127
+#: winecfg.rc:105
 #, fuzzy
 msgid "Window Background"
 msgstr "Arkaplanı Ko&pyala"
 
-#: winecfg.rc:128
+#: winecfg.rc:106
 #, fuzzy
 msgid "Window Text"
 msgstr "&Pencere"
 
-#: winecfg.rc:129
+#: winecfg.rc:107
 #, fuzzy
 msgid "Active Title Bar"
 msgstr "&Başlık Çubuğunu Kaldır"
 
-#: winecfg.rc:130
+#: winecfg.rc:108
 msgid "Active Title Text"
 msgstr ""
 
-#: winecfg.rc:131
+#: winecfg.rc:109
 msgid "Inactive Title Bar"
 msgstr ""
 
-#: winecfg.rc:132
+#: winecfg.rc:110
 msgid "Inactive Title Text"
 msgstr ""
 
-#: winecfg.rc:133
+#: winecfg.rc:111
 msgid "Message Box Text"
 msgstr ""
 
-#: winecfg.rc:134
+#: winecfg.rc:112
 #, fuzzy
 msgid "Application Workspace"
 msgstr "Seçenekler"
 
-#: winecfg.rc:135
+#: winecfg.rc:113
 #, fuzzy
 msgid "Window Frame"
 msgstr "&Pencere"
 
-#: winecfg.rc:136
+#: winecfg.rc:114
 msgid "Active Border"
 msgstr ""
 
-#: winecfg.rc:137
+#: winecfg.rc:115
 msgid "Inactive Border"
 msgstr ""
 
-#: winecfg.rc:138
+#: winecfg.rc:116
 #, fuzzy
 msgid "Controls Shadow"
 msgstr "Control Panel"
 
-#: winecfg.rc:139
+#: winecfg.rc:117
 #, fuzzy
 msgid "Gray Text"
 msgstr "Gri"
 
-#: winecfg.rc:140
+#: winecfg.rc:118
 msgid "Controls Highlight"
 msgstr ""
 
-#: winecfg.rc:141
+#: winecfg.rc:119
 #, fuzzy
 msgid "Controls Dark Shadow"
 msgstr "Controls Debug Channels"
 
-#: winecfg.rc:142
+#: winecfg.rc:120
 #, fuzzy
 msgid "Controls Light"
 msgstr "Control"
 
-#: winecfg.rc:143
+#: winecfg.rc:121
 msgid "Controls Alternate Background"
 msgstr ""
 
-#: winecfg.rc:144
+#: winecfg.rc:122
 msgid "Hot Tracked Item"
 msgstr ""
 
-#: winecfg.rc:145
+#: winecfg.rc:123
 msgid "Active Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:146
+#: winecfg.rc:124
 msgid "Inactive Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:147
+#: winecfg.rc:125
 msgid "Menu Highlight"
 msgstr ""
 
-#: winecfg.rc:148
+#: winecfg.rc:126
 msgid "Menu Bar"
 msgstr ""
 

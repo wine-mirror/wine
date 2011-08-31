@@ -165,18 +165,14 @@ IDD_AUDIOCFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Odabir drivera ",IDC_STATIC,8,4,244,160
-    LTEXT           "Izaberi drajver za zvuk čekiranjem kockice željenog drivera.  Isključi zvuk tako što ne izabereš nijedan drajver. Odavir više drivera se ne preporučuje. Podesi driver sa desnim klikom na njega.",IDC_STATIC,15,20,227,30
-    CONTROL         "Naprave",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,155,105
-    PUSHBUTTON      "&Probaj zvuk",IDC_AUDIO_TEST,180,50,59,14
-    PUSHBUTTON      "&Kontorlni prozor",IDC_AUDIO_CONTROL_PANEL,180,70,59,14
-    GROUPBOX        " DirectSound ",IDC_STATIC,8,170,244,44
-    LTEXT           "&Ubrzanje hardvera: ",IDC_STATIC,15,180,90,10
-    COMBOBOX        IDC_DSOUND_HW_ACCEL,100,178,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Osnovni &zvuk:",IDC_STATIC,15,197,70,8
-    COMBOBOX        IDC_DSOUND_RATES,90,195,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Iskljuci &Bitove po zvuku:",IDC_STATIC,137,197,80,8
-    COMBOBOX        IDC_DSOUND_BITS,220,195,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " DirectSound ",IDC_STATIC,8,4,244,44
+    LTEXT           "&Ubrzanje hardvera: ",IDC_STATIC,15,14,90,10
+    COMBOBOX        IDC_DSOUND_HW_ACCEL,100,12,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Osnovni &zvuk:",IDC_STATIC,15,31,70,8
+    COMBOBOX        IDC_DSOUND_RATES,90,29,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Iskljuci &Bitove po zvuku:",IDC_STATIC,137,31,80,8
+    COMBOBOX        IDC_DSOUND_BITS,220,29,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Probaj zvuk",IDC_AUDIO_TEST,8,50,59,14
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG  0, 0, 260, 220

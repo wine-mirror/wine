@@ -164,18 +164,14 @@ IDD_AUDIOCFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Selectare driver ",IDC_STATIC,8,4,244,160
-    LTEXT           "Alegeți un driver de sunet prin bifarea căsuței corespunzătoare.  Sunetul este dezactivat dacă nu alegeți un driver. Selecționarea mai multor drivere nu este recomandată. Configurați un driver cu un clic dreapta pe el.",IDC_STATIC,15,20,227,30
-    CONTROL         "Dispozitive",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,105
-    PUSHBUTTON      "&Testează sunetul",IDC_AUDIO_TEST,170,50,59,14
-    PUSHBUTTON      "Panou de &control",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
-    GROUPBOX        " DirectSound ",IDC_STATIC,8,170,244,45
-    LTEXT           "Accelerație &hardware: ",IDC_STATIC,15,180,90,10
-    COMBOBOX        IDC_DSOUND_HW_ACCEL,100,178,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "R&ata de eșantionare implicită:",IDC_STATIC,15,197,70,8
-    COMBOBOX        IDC_DSOUND_RATES,90,195,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Nr. implicit &biți/eșantion:",IDC_STATIC,137,197,80,8
-    COMBOBOX        IDC_DSOUND_BITS,220,195,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " DirectSound ",IDC_STATIC,8,4,244,45
+    LTEXT           "Accelerație &hardware: ",IDC_STATIC,15,14,90,10
+    COMBOBOX        IDC_DSOUND_HW_ACCEL,100,12,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "R&ata de eșantionare implicită:",IDC_STATIC,15,31,70,8
+    COMBOBOX        IDC_DSOUND_RATES,90,29,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Nr. implicit &biți/eșantion:",IDC_STATIC,137,31,80,8
+    COMBOBOX        IDC_DSOUND_BITS,220,29,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Testează sunetul",IDC_AUDIO_TEST,8,51,59,14
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG  0, 0, 260, 220

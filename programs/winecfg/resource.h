@@ -169,15 +169,8 @@
 #define IDC_APP_REMOVEAPP               1202
 
 /* audio tab */
-#define IDC_AUDIO_CONFIGURE             1300
 #define IDC_AUDIO_TEST                  1301
-#define IDC_AUDIO_CONTROL_PANEL         1302
 #define IDC_DSOUND_HW_ACCEL             1303
-#define IDC_AUDIO_TREE			1305
-#define IDR_WINECFG			1306
-#define IDB_CHECKBOX                    1307
-#define IDB_DEVICE                      1308
-#define IDS_AUDIO_MISSING               1309
 #define IDC_DSOUND_RATES                1310
 #define IDC_DSOUND_BITS                 1311
 #define IDW_TESTSOUND                   1312
@@ -185,21 +178,6 @@
 #define IDS_ACCEL_STANDARD              8301
 #define IDS_ACCEL_BASIC                 8302
 #define IDS_ACCEL_EMULATION             8303
-#define IDS_DRIVER_ALSA                 8304
-
-#define IDS_DRIVER_OSS                  8307
-
-#define IDS_DRIVER_COREAUDIO            8311
-#define IDS_OPEN_DRIVER_ERROR           8312
-#define IDS_SOUNDDRIVERS                8313
-#define IDS_DEVICES_WAVEOUT             8314
-#define IDS_DEVICES_WAVEIN              8315
-#define IDS_DEVICES_MIDIOUT             8316
-#define IDS_DEVICES_MIDIIN              8317
-#define IDS_DEVICES_AUX                 8318
-#define IDS_DEVICES_MIXER               8319
-#define IDS_UNAVAILABLE_DRIVER          8320
-#define IDS_WARNING                     8321
 
 /* desktop integration tab */
 #define IDC_THEME_COLORCOMBO            1401

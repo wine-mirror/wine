@@ -23,7 +23,7 @@ msgid ""
 "computer."
 msgstr ""
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:38
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "Приложения"
 
@@ -164,7 +164,7 @@ msgstr "Отметки"
 msgid "System Path"
 msgstr "Системен път"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:119 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:97 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -10054,93 +10054,72 @@ msgstr ""
 msgid "Regular Metafile Viewer"
 msgstr ""
 
-#: winecfg.rc:32
-#, fuzzy
-msgid "Configure..."
-msgstr "Настройка"
-
-#: winecfg.rc:39
+#: winecfg.rc:31
 msgid "Libraries"
 msgstr "Библиотеки"
 
-#: winecfg.rc:40
+#: winecfg.rc:32
 msgid "Drives"
 msgstr "Устройства"
 
-#: winecfg.rc:41
+#: winecfg.rc:33
 #, fuzzy
 msgid "Select the Unix target directory, please."
 msgstr "Изберете Unix директория"
 
-#: winecfg.rc:43
+#: winecfg.rc:35
 msgid "Show &Advanced"
 msgstr "Покажи допълнителните"
 
-#: winecfg.rc:42
+#: winecfg.rc:34
 msgid "Hide &Advanced"
 msgstr "Скрий допълнителните"
 
-#: winecfg.rc:44
+#: winecfg.rc:36
 msgid "(No Theme)"
 msgstr "(без тема)"
 
-#: winecfg.rc:45
+#: winecfg.rc:37
 msgid "Graphics"
 msgstr "Графика"
 
-#: winecfg.rc:46
+#: winecfg.rc:38
 msgid "Desktop Integration"
 msgstr "Интеграция"
 
-#: winecfg.rc:47
+#: winecfg.rc:39
 msgid "Audio"
 msgstr "Звук"
 
-#: winecfg.rc:48
+#: winecfg.rc:40
 msgid "About"
 msgstr "Относно"
 
-#: winecfg.rc:49
+#: winecfg.rc:41
 msgid "Wine configuration"
 msgstr "Настройки на Wine"
 
-#: winecfg.rc:51
+#: winecfg.rc:43
 msgid "Theme files (*.msstyles; *.theme)"
 msgstr "Файлове с теми (*.msstyles; *.theme)"
 
-#: winecfg.rc:52
+#: winecfg.rc:44
 msgid "Select a theme file"
 msgstr "Изберете файл с тема"
 
-#: winecfg.rc:54
+#: winecfg.rc:45
 msgid "Folder"
 msgstr "Папка"
 
-#: winecfg.rc:55
+#: winecfg.rc:46
 msgid "Links to"
 msgstr "Връзка към"
 
-#: winecfg.rc:50
+#: winecfg.rc:42
 msgid "Wine configuration for %s"
 msgstr "Настройки на Wine за %s"
 
-#: winecfg.rc:53
-msgid ""
-"There is no audio driver currently specified in the registry.\n"
-"\n"
-"A recommended driver has been selected for you.\n"
-"You can use this driver or select another driver if available.\n"
-"\n"
-"You must click Apply for the selection to take effect."
-msgstr ""
-"Няма настроен звуков драйвер.\n"
-"\n"
-"За вас беше избран драйвер по подразбиране.\n"
-"Може да го използвате или да изберете друг.\n"
-"\n"
-"Трябва да щракнете на Потвърди, за да влезе в сила избора."
-
-#: winecfg.rc:60
+#: winecfg.rc:51
 msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
@@ -10148,88 +10127,88 @@ msgstr ""
 "Промяната на реда на зареждане не е препоръчителна.\n"
 "Сигурни ли сте, че искате да направите това?"
 
-#: winecfg.rc:61
+#: winecfg.rc:52
 msgid "Warning: system library"
 msgstr "Внимание: системна библиотека"
 
-#: winecfg.rc:62
+#: winecfg.rc:53
 msgid "native"
 msgstr "собствена"
 
-#: winecfg.rc:63
+#: winecfg.rc:54
 msgid "builtin"
 msgstr "вградена"
 
-#: winecfg.rc:64
+#: winecfg.rc:55
 msgid "native, builtin"
 msgstr "собствена, вградена"
 
-#: winecfg.rc:65
+#: winecfg.rc:56
 msgid "builtin, native"
 msgstr "вградена, собствена"
 
-#: winecfg.rc:66
+#: winecfg.rc:57
 msgid "disabled"
 msgstr "забранена"
 
-#: winecfg.rc:67
+#: winecfg.rc:58
 msgid "Default Settings"
 msgstr ""
 
-#: winecfg.rc:68
+#: winecfg.rc:59
 msgid "Wine Programs (*.exe,*.exe.so)"
 msgstr ""
 
-#: winecfg.rc:69
+#: winecfg.rc:60
 msgid "Use global settings"
 msgstr ""
 
-#: winecfg.rc:70
+#: winecfg.rc:61
 msgid "Select an executable file"
 msgstr ""
 
-#: winecfg.rc:75
+#: winecfg.rc:66
 msgid "Hardware"
 msgstr ""
 
-#: winecfg.rc:76
+#: winecfg.rc:67
 #, fuzzy
 msgctxt "vertex shader mode"
 msgid "None"
 msgstr "Нищо"
 
-#: winecfg.rc:81
+#: winecfg.rc:72
 msgid "Autodetect..."
 msgstr ""
 
-#: winecfg.rc:82
+#: winecfg.rc:73
 msgid "Local hard disk"
 msgstr ""
 
-#: winecfg.rc:83
+#: winecfg.rc:74
 msgid "Network share"
 msgstr ""
 
-#: winecfg.rc:84
+#: winecfg.rc:75
 msgid "Floppy disk"
 msgstr ""
 
-#: winecfg.rc:85
+#: winecfg.rc:76
 msgid "CD-ROM"
 msgstr "CD-ROM"
 
-#: winecfg.rc:86
+#: winecfg.rc:77
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
 "Each drive must have a letter, from A to Z, so you cannot have more than 26."
 msgstr ""
 
-#: winecfg.rc:87
+#: winecfg.rc:78
 msgid "System drive"
 msgstr ""
 
-#: winecfg.rc:88
+#: winecfg.rc:79
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -10237,224 +10216,169 @@ msgid ""
 "it doesn't. If you proceed remember to recreate it!"
 msgstr ""
 
-#: winecfg.rc:89
+#: winecfg.rc:80
 msgid "Letter"
 msgstr ""
 
-#: winecfg.rc:90
+#: winecfg.rc:81
 msgid "Drive Mapping"
 msgstr ""
 
-#: winecfg.rc:91
+#: winecfg.rc:82
 msgid ""
 "You don't have a drive C. This is not so great.\n"
 "\n"
 "Remember to click 'Add' in the Drives tab to create one!\n"
 msgstr ""
 
-#: winecfg.rc:96
+#: winecfg.rc:87
 msgid "Full"
 msgstr ""
 
-#: winecfg.rc:97
+#: winecfg.rc:88
 msgid "Standard"
 msgstr ""
 
-#: winecfg.rc:98
+#: winecfg.rc:89
 msgid "Basic"
 msgstr ""
 
-#: winecfg.rc:99
+#: winecfg.rc:90
 msgid "Emulation"
 msgstr ""
 
-#: winecfg.rc:100
-msgid "ALSA Driver"
-msgstr ""
-
-#: winecfg.rc:101
-msgid "OSS Driver"
-msgstr ""
-
-#: winecfg.rc:102
-msgid "CoreAudio Driver"
-msgstr ""
-
-#: winecfg.rc:103
-msgid "Couldn't open %s!"
-msgstr ""
-
-#: winecfg.rc:104
-msgid "Sound Drivers"
-msgstr ""
-
-#: winecfg.rc:105
-msgid "Wave Out Devices"
-msgstr ""
-
-#: winecfg.rc:106
-msgid "Wave In Devices"
-msgstr ""
-
-#: winecfg.rc:107
-msgid "MIDI Out Devices"
-msgstr ""
-
-#: winecfg.rc:108
-msgid "MIDI In Devices"
-msgstr ""
-
-#: winecfg.rc:109
-msgid "Aux Devices"
-msgstr ""
-
-#: winecfg.rc:110
-msgid "Mixer Devices"
-msgstr ""
-
-#: winecfg.rc:111
-msgid ""
-"Found driver in registry that is not available!\n"
-"\n"
-"Remove '%s' from registry?"
-msgstr ""
-
-#: winecfg.rc:112
-msgid "Warning"
-msgstr ""
-
-#: winecfg.rc:117
+#: winecfg.rc:95
 #, fuzzy
 msgid "Controls Background"
 msgstr "&Копирай фона"
 
-#: winecfg.rc:118
+#: winecfg.rc:96
 #, fuzzy
 msgid "Controls Text"
 msgstr "Control"
 
-#: winecfg.rc:120
+#: winecfg.rc:98
 #, fuzzy
 msgid "Menu Background"
 msgstr "&Копирай фона"
 
-#: winecfg.rc:121
+#: winecfg.rc:99
 msgid "Menu Text"
 msgstr ""
 
-#: winecfg.rc:122
+#: winecfg.rc:100
 #, fuzzy
 msgid "Scrollbar"
 msgstr "Превърти тук"
 
-#: winecfg.rc:123
+#: winecfg.rc:101
 #, fuzzy
 msgid "Selection Background"
 msgstr "Постави като &фон на работния плот"
 
-#: winecfg.rc:124
+#: winecfg.rc:102
 #, fuzzy
 msgid "Selection Text"
 msgstr "Маркирай &всичко"
 
-#: winecfg.rc:125
+#: winecfg.rc:103
 #, fuzzy
 msgid "ToolTip Background"
 msgstr "&Копирай фона"
 
-#: winecfg.rc:126
+#: winecfg.rc:104
 msgid "ToolTip Text"
 msgstr ""
 
-#: winecfg.rc:127
+#: winecfg.rc:105
 #, fuzzy
 msgid "Window Background"
 msgstr "&Копирай фона"
 
-#: winecfg.rc:128
+#: winecfg.rc:106
 msgid "Window Text"
 msgstr ""
 
-#: winecfg.rc:129
+#: winecfg.rc:107
 msgid "Active Title Bar"
 msgstr ""
 
-#: winecfg.rc:130
+#: winecfg.rc:108
 msgid "Active Title Text"
 msgstr ""
 
-#: winecfg.rc:131
+#: winecfg.rc:109
 msgid "Inactive Title Bar"
 msgstr ""
 
-#: winecfg.rc:132
+#: winecfg.rc:110
 msgid "Inactive Title Text"
 msgstr ""
 
-#: winecfg.rc:133
+#: winecfg.rc:111
 msgid "Message Box Text"
 msgstr ""
 
-#: winecfg.rc:134
+#: winecfg.rc:112
 #, fuzzy
 msgid "Application Workspace"
 msgstr "Приложения"
 
-#: winecfg.rc:135
+#: winecfg.rc:113
 msgid "Window Frame"
 msgstr ""
 
-#: winecfg.rc:136
+#: winecfg.rc:114
 msgid "Active Border"
 msgstr ""
 
-#: winecfg.rc:137
+#: winecfg.rc:115
 msgid "Inactive Border"
 msgstr ""
 
-#: winecfg.rc:138
+#: winecfg.rc:116
 #, fuzzy
 msgid "Controls Shadow"
 msgstr "Control Panel"
 
-#: winecfg.rc:139
+#: winecfg.rc:117
 msgid "Gray Text"
 msgstr ""
 
-#: winecfg.rc:140
+#: winecfg.rc:118
 msgid "Controls Highlight"
 msgstr ""
 
-#: winecfg.rc:141
+#: winecfg.rc:119
 msgid "Controls Dark Shadow"
 msgstr ""
 
-#: winecfg.rc:142
+#: winecfg.rc:120
 #, fuzzy
 msgid "Controls Light"
 msgstr "Control"
 
-#: winecfg.rc:143
+#: winecfg.rc:121
 msgid "Controls Alternate Background"
 msgstr ""
 
-#: winecfg.rc:144
+#: winecfg.rc:122
 msgid "Hot Tracked Item"
 msgstr ""
 
-#: winecfg.rc:145
+#: winecfg.rc:123
 msgid "Active Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:146
+#: winecfg.rc:124
 msgid "Inactive Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:147
+#: winecfg.rc:125
 msgid "Menu Highlight"
 msgstr ""
 
-#: winecfg.rc:148
+#: winecfg.rc:126
 msgid "Menu Bar"
 msgstr ""
 

@@ -163,18 +163,14 @@ IDD_AUDIOCFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Selección de controlador ",IDC_STATIC,8,4,244,160
-    LTEXT           "Seleccione un controlador de sonido marcando la casilla del deseado. Para deshabilitar el sonido no seleccione ninguno. No se recomienda la selección de más de un controlador. Para configurar un controlador haga doble clic sobre él.",IDC_STATIC,15,15,227,35
-    CONTROL         "Dispositivos",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,105
-    PUSHBUTTON      "Probar &sonido",IDC_AUDIO_TEST,170,50,59,14
-    PUSHBUTTON      "&Panel de control",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
-    GROUPBOX        " DirectSound ",IDC_STATIC,8,170,244,45
-    LTEXT           "Aceleración &Hardware: ",IDC_STATIC,15,180,90,10
-    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,178,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "&Frecuencia muestreo:",IDC_STATIC,15,197,70,8
-    COMBOBOX        IDC_DSOUND_RATES,90,195,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "&Bits por muestra:",IDC_STATIC,137,197,80,8
-    COMBOBOX        IDC_DSOUND_BITS,220,195,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " DirectSound ",IDC_STATIC,8,4,244,45
+    LTEXT           "Aceleración &Hardware: ",IDC_STATIC,15,14,90,10
+    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,12,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&Frecuencia muestreo:",IDC_STATIC,15,31,70,8
+    COMBOBOX        IDC_DSOUND_RATES,90,29,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&Bits por muestra:",IDC_STATIC,137,31,80,8
+    COMBOBOX        IDC_DSOUND_BITS,220,29,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Probar &sonido",IDC_AUDIO_TEST,8,51,59,14
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG  0, 0, 260, 220

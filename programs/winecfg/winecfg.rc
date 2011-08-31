@@ -25,14 +25,6 @@
 
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
-IDR_WINECFG MENU
-BEGIN
-    POPUP ""
-    BEGIN
-        MENUITEM "Configure...", IDC_AUDIO_CONFIGURE
-    END
-END
-
 STRINGTABLE
 BEGIN
     IDS_TAB_APPLICATIONS    "Applications"
@@ -50,7 +42,6 @@ BEGIN
     IDS_WINECFG_TITLE_APP   "Wine configuration for %s"
     IDS_THEMEFILE           "Theme files (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "Select a theme file"
-    IDS_AUDIO_MISSING       "There is no audio driver currently specified in the registry.\n\nA recommended driver has been selected for you.\nYou can use this driver or select another driver if available.\n\nYou must click Apply for the selection to take effect."
     IDS_SHELL_FOLDER        "Folder"
     IDS_LINKS_TO            "Links to"
 END
@@ -97,19 +88,6 @@ BEGIN
     IDS_ACCEL_STANDARD          "Standard"
     IDS_ACCEL_BASIC             "Basic"
     IDS_ACCEL_EMULATION         "Emulation"
-    IDS_DRIVER_ALSA             "ALSA Driver"
-    IDS_DRIVER_OSS              "OSS Driver"
-    IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
-    IDS_OPEN_DRIVER_ERROR       "Couldn't open %s!"
-    IDS_SOUNDDRIVERS            "Sound Drivers"
-    IDS_DEVICES_WAVEOUT         "Wave Out Devices"
-    IDS_DEVICES_WAVEIN          "Wave In Devices"
-    IDS_DEVICES_MIDIOUT         "MIDI Out Devices"
-    IDS_DEVICES_MIDIIN          "MIDI In Devices"
-    IDS_DEVICES_AUX             "Aux Devices"
-    IDS_DEVICES_MIXER           "Mixer Devices"
-    IDS_UNAVAILABLE_DRIVER      "Found driver in registry that is not available!\n\nRemove '%s' from registry?"
-    IDS_WARNING                 "Warning"
 END
 
 STRINGTABLE
@@ -155,9 +133,6 @@ IDI_WINECFG ICON winecfg.ico
 
 /* @makedep: logo.ico */
 IDI_LOGO ICON logo.ico
-
-/* @makedep: idb_checkbox.bmp */
-IDB_CHECKBOX BITMAP idb_checkbox.bmp
 
 /* @makedep: idw_testsound.wav */
 IDW_TESTSOUND WAVE idw_testsound.wav

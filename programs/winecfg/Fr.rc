@@ -166,18 +166,14 @@ IDD_AUDIOCFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Sélection du pilote ",IDC_STATIC,8,4,244,160
-    LTEXT           "Sélectionnez un pilote audio en cochant la case en regard du pilote désiré. Désactivez le son en ne sélectionnant aucun pilote. La sélection de pilotes multiples n'est pas recommandée. Configurez le pilote en effectuant un clic droit dessus.",IDC_STATIC,15,20,227,35
-    CONTROL         "Matériel",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,55,140,105
-    PUSHBUTTON      "&Tester le son",IDC_AUDIO_TEST,159,56,89,14
-    PUSHBUTTON	    "Panneau de &configuration",IDC_AUDIO_CONTROL_PANEL,159,76,89,14
-    GROUPBOX        " DirectSound ",IDC_STATIC,8,170,244,45
-    LTEXT	    "Accélération matérielle : ",IDC_STATIC,15,180,80,10
-    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,178,148,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Échantillonage (défaut) :",IDC_STATIC,15,195,80,8
-    COMBOBOX        IDC_DSOUND_RATES,100,193,38,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Bits par échantillon :",IDC_STATIC,153,195,80,8
-    COMBOBOX        IDC_DSOUND_BITS,223,193,25,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " DirectSound ",IDC_STATIC,8,4,244,45
+    LTEXT	    "Accélération matérielle : ",IDC_STATIC,15,14,80,10
+    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,12,148,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Échantillonage (défaut) :",IDC_STATIC,15,29,80,8
+    COMBOBOX        IDC_DSOUND_RATES,100,27,38,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Bits par échantillon :",IDC_STATIC,153,29,80,8
+    COMBOBOX        IDC_DSOUND_BITS,223,27,25,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Tester le son",IDC_AUDIO_TEST,8,51,89,14
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG  0, 0, 260, 220

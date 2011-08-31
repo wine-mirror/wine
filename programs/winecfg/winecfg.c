@@ -759,9 +759,6 @@ int initialize(HINSTANCE hInstance)
 	return 1;
     }
 
-    /* load any menus */
-    hPopupMenus = LoadMenu(hInstance, MAKEINTRESOURCE(IDR_WINECFG));
-
     /* we could probably just have the list as static data  */
     settings = HeapAlloc(GetProcessHeap(), 0, sizeof(struct list));
     list_init(settings);
