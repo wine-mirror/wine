@@ -2020,11 +2020,11 @@ msgstr "預設設定"
 msgid "%uMB used, %uMB available"
 msgstr ""
 
-#: hhctrl.rc:70
+#: hhctrl.rc:56
 msgid "S&ync"
 msgstr ""
 
-#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:86
+#: hhctrl.rc:57 shdoclc.rc:38 winhlp32.rc:86
 #, fuzzy
 msgid "&Back"
 msgstr ""
@@ -2033,27 +2033,27 @@ msgstr ""
 "#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
 "返回(&B)"
 
-#: hhctrl.rc:72
+#: hhctrl.rc:58
 #, fuzzy
 msgid "&Forward"
 msgstr "向前"
 
-#: hhctrl.rc:73
+#: hhctrl.rc:59
 #, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
 msgstr "首頁"
 
-#: hhctrl.rc:74
+#: hhctrl.rc:60
 #, fuzzy
 msgid "&Stop"
 msgstr "停止"
 
-#: hhctrl.rc:75 shdoclc.rc:56
+#: hhctrl.rc:61 shdoclc.rc:56
 msgid "&Refresh"
 msgstr "刷新(&R)"
 
-#: hhctrl.rc:76 winhlp32.rc:31
+#: hhctrl.rc:62 winhlp32.rc:31
 msgid "&Print..."
 msgstr "列印(&P)..."
 
@@ -2118,62 +2118,6 @@ msgstr "選項"
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"
 msgstr "向前"
-
-#: hhctrl.rc:49
-msgid "IDTB_NOTES"
-msgstr "說明"
-
-#: hhctrl.rc:50
-msgid "IDTB_BROWSE_FWD"
-msgstr "向前"
-
-#: hhctrl.rc:51
-msgid "IDT_BROWSE_BACK"
-msgstr "向後"
-
-#: hhctrl.rc:52
-msgid "IDTB_CONTENTS"
-msgstr "內容"
-
-#: hhctrl.rc:53
-msgid "IDTB_INDEX"
-msgstr "目錄"
-
-#: hhctrl.rc:54
-msgid "IDTB_SEARCH"
-msgstr "搜尋"
-
-#: hhctrl.rc:55
-msgid "IDTB_HISTORY"
-msgstr "歷史"
-
-#: hhctrl.rc:56
-msgid "IDTB_FAVORITES"
-msgstr "最愛"
-
-#: hhctrl.rc:57
-msgid "Jump1"
-msgstr "Jump1"
-
-#: hhctrl.rc:58
-msgid "Jump2"
-msgstr "Jump2"
-
-#: hhctrl.rc:59
-msgid "Customize"
-msgstr "個性化"
-
-#: hhctrl.rc:60
-msgid "Zoom"
-msgstr "放大"
-
-#: hhctrl.rc:61
-msgid "IDTB_TOC_NEXT"
-msgstr "後一項"
-
-#: hhctrl.rc:62
-msgid "IDTB_TOC_PREV"
-msgstr "前一項"
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"

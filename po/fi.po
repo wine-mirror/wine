@@ -1999,26 +1999,26 @@ msgstr "Default Settings"
 msgid "%uMB used, %uMB available"
 msgstr ""
 
-#: hhctrl.rc:70
+#: hhctrl.rc:56
 msgid "S&ync"
 msgstr ""
 
-#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:86
+#: hhctrl.rc:57 shdoclc.rc:38 winhlp32.rc:86
 msgid "&Back"
 msgstr "&Takaisin"
 
-#: hhctrl.rc:72
+#: hhctrl.rc:58
 #, fuzzy
 msgid "&Forward"
 msgstr "Seuraava"
 
-#: hhctrl.rc:73
+#: hhctrl.rc:59
 #, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
 msgstr "Alkuun"
 
-#: hhctrl.rc:74
+#: hhctrl.rc:60
 #, fuzzy
 msgid "&Stop"
 msgstr ""
@@ -2027,11 +2027,11 @@ msgstr ""
 "#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
 "P&ysäytä"
 
-#: hhctrl.rc:75 shdoclc.rc:56
+#: hhctrl.rc:61 shdoclc.rc:56
 msgid "&Refresh"
 msgstr "P&äivitä"
 
-#: hhctrl.rc:76 winhlp32.rc:31
+#: hhctrl.rc:62 winhlp32.rc:31
 #, fuzzy
 msgid "&Print..."
 msgstr "Tulosta"
@@ -2107,62 +2107,6 @@ msgstr "Valinnat"
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"
 msgstr "Seuraava"
-
-#: hhctrl.rc:49
-msgid "IDTB_NOTES"
-msgstr "IDTB_NOTES"
-
-#: hhctrl.rc:50
-msgid "IDTB_BROWSE_FWD"
-msgstr "IDTB_BROWSE_FWD"
-
-#: hhctrl.rc:51
-msgid "IDT_BROWSE_BACK"
-msgstr "IDT_BROWSE_BACK"
-
-#: hhctrl.rc:52
-msgid "IDTB_CONTENTS"
-msgstr "IDTB_CONTENTS"
-
-#: hhctrl.rc:53
-msgid "IDTB_INDEX"
-msgstr "IDTB_INDEX"
-
-#: hhctrl.rc:54
-msgid "IDTB_SEARCH"
-msgstr "IDTB_SEARCH"
-
-#: hhctrl.rc:55
-msgid "IDTB_HISTORY"
-msgstr "IDTB_HISTORY"
-
-#: hhctrl.rc:56
-msgid "IDTB_FAVORITES"
-msgstr "IDTB_FAVORITES"
-
-#: hhctrl.rc:57
-msgid "Jump1"
-msgstr "Hyppää1"
-
-#: hhctrl.rc:58
-msgid "Jump2"
-msgstr "Hyppää2"
-
-#: hhctrl.rc:59
-msgid "Customize"
-msgstr "Räätälöi"
-
-#: hhctrl.rc:60
-msgid "Zoom"
-msgstr "Suurenna"
-
-#: hhctrl.rc:61
-msgid "IDTB_TOC_NEXT"
-msgstr "IDTB_TOC_NEXT"
-
-#: hhctrl.rc:62
-msgid "IDTB_TOC_PREV"
-msgstr "IDTB_TOC_PREV"
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"

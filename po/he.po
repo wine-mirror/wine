@@ -1987,32 +1987,32 @@ msgstr "הגדרות אזוריות"
 msgid "%uMB used, %uMB available"
 msgstr "%u מ״ב בשימוש, %u מ״ב זמינים"
 
-#: hhctrl.rc:70
+#: hhctrl.rc:56
 msgid "S&ync"
 msgstr "&סנכרון"
 
-#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:86
+#: hhctrl.rc:57 shdoclc.rc:38 winhlp32.rc:86
 msgid "&Back"
 msgstr "ח&זרה"
 
-#: hhctrl.rc:72
+#: hhctrl.rc:58
 msgid "&Forward"
 msgstr "ק&דימה"
 
-#: hhctrl.rc:73
+#: hhctrl.rc:59
 msgctxt "table of contents"
 msgid "&Home"
 msgstr "&עמוד הבית"
 
-#: hhctrl.rc:74
+#: hhctrl.rc:60
 msgid "&Stop"
 msgstr "ע&צירה"
 
-#: hhctrl.rc:75 shdoclc.rc:56
+#: hhctrl.rc:61 shdoclc.rc:56
 msgid "&Refresh"
 msgstr "&רענון"
 
-#: hhctrl.rc:76 winhlp32.rc:31
+#: hhctrl.rc:62 winhlp32.rc:31
 msgid "&Print..."
 msgstr "ה&דפסה..."
 
@@ -2076,62 +2076,6 @@ msgstr "אפשרויות"
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"
 msgstr "קדימה"
-
-#: hhctrl.rc:49
-msgid "IDTB_NOTES"
-msgstr "IDTB_NOTES"
-
-#: hhctrl.rc:50
-msgid "IDTB_BROWSE_FWD"
-msgstr "IDTB_BROWSE_FWD"
-
-#: hhctrl.rc:51
-msgid "IDT_BROWSE_BACK"
-msgstr "IDT_BROWSE_BACK"
-
-#: hhctrl.rc:52
-msgid "IDTB_CONTENTS"
-msgstr "IDTB_CONTENTS"
-
-#: hhctrl.rc:53
-msgid "IDTB_INDEX"
-msgstr "IDTB_INDEX"
-
-#: hhctrl.rc:54
-msgid "IDTB_SEARCH"
-msgstr "IDTB_SEARCH"
-
-#: hhctrl.rc:55
-msgid "IDTB_HISTORY"
-msgstr "IDTB_HISTORY"
-
-#: hhctrl.rc:56
-msgid "IDTB_FAVORITES"
-msgstr "IDTB_FAVORITES"
-
-#: hhctrl.rc:57
-msgid "Jump1"
-msgstr "מעבר 1"
-
-#: hhctrl.rc:58
-msgid "Jump2"
-msgstr "מעבר 2"
-
-#: hhctrl.rc:59
-msgid "Customize"
-msgstr "התאמה אישית"
-
-#: hhctrl.rc:60
-msgid "Zoom"
-msgstr "תקריב"
-
-#: hhctrl.rc:61
-msgid "IDTB_TOC_NEXT"
-msgstr "IDTB_TOC_NEXT"
-
-#: hhctrl.rc:62
-msgid "IDTB_TOC_PREV"
-msgstr "IDTB_TOC_PREV"
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"

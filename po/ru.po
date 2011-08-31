@@ -2023,33 +2023,33 @@ msgstr "Региональные настройки"
 msgid "%uMB used, %uMB available"
 msgstr "%uМБ используется, %uМБ доступно"
 
-#: hhctrl.rc:70
+#: hhctrl.rc:56
 msgid "S&ync"
 msgstr "С&инхронизировать"
 
-#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:86
+#: hhctrl.rc:57 shdoclc.rc:38 winhlp32.rc:86
 msgid "&Back"
 msgstr "&Назад"
 
-#: hhctrl.rc:72
+#: hhctrl.rc:58
 msgid "&Forward"
 msgstr "&Вперёд"
 
-#: hhctrl.rc:73
+#: hhctrl.rc:59
 #, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
 msgstr "&Домашняя страница"
 
-#: hhctrl.rc:74
+#: hhctrl.rc:60
 msgid "&Stop"
 msgstr "Останов&ить"
 
-#: hhctrl.rc:75 shdoclc.rc:56
+#: hhctrl.rc:61 shdoclc.rc:56
 msgid "&Refresh"
 msgstr "О&бновить"
 
-#: hhctrl.rc:76 winhlp32.rc:31
+#: hhctrl.rc:62 winhlp32.rc:31
 msgid "&Print..."
 msgstr "&Печатать..."
 
@@ -2114,62 +2114,6 @@ msgstr "Настройки"
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"
 msgstr "Вперёд"
-
-#: hhctrl.rc:49
-msgid "IDTB_NOTES"
-msgstr "Записки"
-
-#: hhctrl.rc:50
-msgid "IDTB_BROWSE_FWD"
-msgstr "Просмотр вперёд"
-
-#: hhctrl.rc:51
-msgid "IDT_BROWSE_BACK"
-msgstr "Просмотр назад"
-
-#: hhctrl.rc:52
-msgid "IDTB_CONTENTS"
-msgstr "Содержание"
-
-#: hhctrl.rc:53
-msgid "IDTB_INDEX"
-msgstr "Оглавление"
-
-#: hhctrl.rc:54
-msgid "IDTB_SEARCH"
-msgstr "Поиск"
-
-#: hhctrl.rc:55
-msgid "IDTB_HISTORY"
-msgstr "История"
-
-#: hhctrl.rc:56
-msgid "IDTB_FAVORITES"
-msgstr "Избранное"
-
-#: hhctrl.rc:57
-msgid "Jump1"
-msgstr "Переход 1"
-
-#: hhctrl.rc:58
-msgid "Jump2"
-msgstr "Переход 2"
-
-#: hhctrl.rc:59
-msgid "Customize"
-msgstr "Персонализовать"
-
-#: hhctrl.rc:60
-msgid "Zoom"
-msgstr "Масштаб"
-
-#: hhctrl.rc:61
-msgid "IDTB_TOC_NEXT"
-msgstr "Следующая глава"
-
-#: hhctrl.rc:62
-msgid "IDTB_TOC_PREV"
-msgstr "Предыдущая глава"
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"

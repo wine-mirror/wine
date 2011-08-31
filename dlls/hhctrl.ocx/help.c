@@ -750,6 +750,14 @@ static void TB_OnClick(HWND hWnd, DWORD dwID)
         case IDTB_OPTIONS:
             DisplayPopupMenu(info);
             break;
+        case IDTB_NOTES:
+        case IDTB_CONTENTS:
+        case IDTB_INDEX:
+        case IDTB_SEARCH:
+        case IDTB_HISTORY:
+        case IDTB_FAVORITES:
+            /* These are officially unimplemented as of the Windows 7 SDK */
+            break;
         case IDTB_BROWSE_FWD:
         case IDTB_BROWSE_BACK:
         case IDTB_JUMP1:
@@ -826,21 +834,6 @@ static void TB_AddButtonsFromFlags(HHInfo *pHHInfo, TBBUTTON *pButtons, DWORD dw
 
     if (dwButtonFlags & HHWIN_BUTTON_PRINT)
         TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_PRINT, nStdBitmaps + STD_PRINT);
-
-    if (dwButtonFlags & HHWIN_BUTTON_JUMP1)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_JUMP1, nStdBitmaps + STD_PRINT);
-
-    if (dwButtonFlags & HHWIN_BUTTON_JUMP2)
-        TB_AddButton(pButtons,(*pdwNumButtons)++, IDTB_JUMP2, nStdBitmaps + STD_PRINT);
-
-    if (dwButtonFlags & HHWIN_BUTTON_ZOOM)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_ZOOM, nStdBitmaps + STD_PRINT);
-
-    if (dwButtonFlags & HHWIN_BUTTON_TOC_NEXT)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_TOC_NEXT, nStdBitmaps + STD_PRINT);
-
-    if (dwButtonFlags & HHWIN_BUTTON_TOC_PREV)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_TOC_PREV, nStdBitmaps + STD_PRINT);
 }
 
 static BOOL HH_AddToolbar(HHInfo *pHHInfo)

@@ -1973,32 +1973,32 @@ msgstr "Default"
 msgid "%uMB used, %uMB available"
 msgstr ""
 
-#: hhctrl.rc:70
+#: hhctrl.rc:56
 msgid "S&ync"
 msgstr ""
 
-#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:86
+#: hhctrl.rc:57 shdoclc.rc:38 winhlp32.rc:86
 msgid "&Back"
 msgstr "&Inavo"
 
-#: hhctrl.rc:72
+#: hhctrl.rc:58
 msgid "&Forward"
 msgstr ""
 
-#: hhctrl.rc:73
+#: hhctrl.rc:59
 msgctxt "table of contents"
 msgid "&Home"
 msgstr ""
 
-#: hhctrl.rc:74
+#: hhctrl.rc:60
 msgid "&Stop"
 msgstr ""
 
-#: hhctrl.rc:75 shdoclc.rc:56
+#: hhctrl.rc:61 shdoclc.rc:56
 msgid "&Refresh"
 msgstr ""
 
-#: hhctrl.rc:76 winhlp32.rc:31
+#: hhctrl.rc:62 winhlp32.rc:31
 #, fuzzy
 msgid "&Print..."
 msgstr "&Stampar tema"
@@ -2065,62 +2065,6 @@ msgstr "&Options"
 
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"
-msgstr ""
-
-#: hhctrl.rc:49
-msgid "IDTB_NOTES"
-msgstr ""
-
-#: hhctrl.rc:50
-msgid "IDTB_BROWSE_FWD"
-msgstr ""
-
-#: hhctrl.rc:51
-msgid "IDT_BROWSE_BACK"
-msgstr ""
-
-#: hhctrl.rc:52
-msgid "IDTB_CONTENTS"
-msgstr ""
-
-#: hhctrl.rc:53
-msgid "IDTB_INDEX"
-msgstr ""
-
-#: hhctrl.rc:54
-msgid "IDTB_SEARCH"
-msgstr ""
-
-#: hhctrl.rc:55
-msgid "IDTB_HISTORY"
-msgstr ""
-
-#: hhctrl.rc:56
-msgid "IDTB_FAVORITES"
-msgstr ""
-
-#: hhctrl.rc:57
-msgid "Jump1"
-msgstr ""
-
-#: hhctrl.rc:58
-msgid "Jump2"
-msgstr ""
-
-#: hhctrl.rc:59
-msgid "Customize"
-msgstr ""
-
-#: hhctrl.rc:60
-msgid "Zoom"
-msgstr ""
-
-#: hhctrl.rc:61
-msgid "IDTB_TOC_NEXT"
-msgstr ""
-
-#: hhctrl.rc:62
-msgid "IDTB_TOC_PREV"
 msgstr ""
 
 #: iccvid.rc:25 iccvid.rc:26
