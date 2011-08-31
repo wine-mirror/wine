@@ -873,7 +873,7 @@ static BOOL create_ie_window(LPCSTR cmdline)
     return TRUE;
 }
 
-static ULONG open_dde_url(WCHAR *dde_url)
+static HDDEDATA open_dde_url(WCHAR *dde_url)
 {
     InternetExplorer *ie = NULL, *iter;
     WCHAR *url, *url_end;
@@ -928,7 +928,7 @@ static ULONG open_dde_url(WCHAR *dde_url)
         return 0;
 
     IWebBrowser2_Release(&ie->IWebBrowser2_iface);
-    return DDE_FACK;
+    return ULongToHandle(DDE_FACK);
 }
 
 static HDDEDATA WINAPI dde_proc(UINT type, UINT uFmt, HCONV hConv, HSZ hsz1, HSZ hsz2, HDDEDATA data,
@@ -937,7 +937,7 @@ static HDDEDATA WINAPI dde_proc(UINT type, UINT uFmt, HCONV hConv, HSZ hsz1, HSZ
     switch(type) {
     case XTYP_CONNECT:
         TRACE("XTYP_CONNECT %p\n", hsz1);
-        return (HDDEDATA)!DdeCmpStringHandles(hsz1, ddestr_openurl);
+        return ULongToHandle(!DdeCmpStringHandles(hsz1, ddestr_openurl));
 
     case XTYP_EXECUTE: {
         WCHAR *url;
@@ -961,7 +961,7 @@ static HDDEDATA WINAPI dde_proc(UINT type, UINT uFmt, HCONV hConv, HSZ hsz1, HSZ
             break;
         }
 
-        ret = (HDDEDATA)open_dde_url(url);
+        ret = open_dde_url(url);
 
         heap_free(url);
         return ret;
@@ -999,7 +999,7 @@ static void init_dde(void)
     if(!ddestr_openurl)
         WARN("Failed to create string handle: %u\n", DdeGetLastError(dde_inst));
 
-    res = (ULONG)DdeNameService(dde_inst, ddestr_iexplore, 0, DNS_REGISTER);
+    res = HandleToULong(DdeNameService(dde_inst, ddestr_iexplore, 0, DNS_REGISTER));
     if(res != DMLERR_NO_ERROR)
         WARN("DdeNameService failed: %u\n", res);
 }
