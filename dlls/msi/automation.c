@@ -67,7 +67,7 @@ struct AutomationObject {
     MSIHANDLE msiHandle;
 
     /* A function that is called from AutomationObject::Invoke, specific to this type of object. */
-    HRESULT (STDMETHODCALLTYPE *funcInvoke)(
+    HRESULT (*funcInvoke)(
         AutomationObject* This,
         DISPID dispIdMember,
         REFIID riid,
@@ -80,7 +80,7 @@ struct AutomationObject {
 
     /* A function that is called from AutomationObject::Release when the object is being freed to free any private
      * data structures (or NULL) */
-    void (STDMETHODCALLTYPE *funcFree)(AutomationObject* This);
+    void (*funcFree)(AutomationObject* This);
 };
 
 /*
@@ -151,11 +151,9 @@ HRESULT load_type_info(IDispatch *iface, ITypeInfo **pptinfo, REFIID clsid, LCID
 
 /* Create the automation object, placing the result in the pointer ppObj. The automation object is created
  * with the appropriate clsid and invocation function. */
-static HRESULT create_automation_object(MSIHANDLE msiHandle, IUnknown *pUnkOuter, LPVOID *ppObj, REFIID clsid,
-            HRESULT (STDMETHODCALLTYPE *funcInvoke)(AutomationObject*,DISPID,REFIID,LCID,WORD,DISPPARAMS*,
-                                                    VARIANT*,EXCEPINFO*,UINT*),
-                                 void (STDMETHODCALLTYPE *funcFree)(AutomationObject*),
-                                 SIZE_T sizetPrivateData)
+static HRESULT create_automation_object(MSIHANDLE msiHandle, IUnknown *pUnkOuter, void **ppObj, REFIID clsid,
+        HRESULT (*funcInvoke)(AutomationObject*,DISPID,REFIID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,UINT*),
+        void (*funcFree)(AutomationObject*), SIZE_T sizetPrivateData)
 {
     AutomationObject *object;
     HRESULT hr;
@@ -732,7 +730,7 @@ static HRESULT DispGetParam_CopyOnly(
                         &pdispparams->rgvarg[pos]);
 }
 
-static HRESULT WINAPI SummaryInfoImpl_Invoke(
+static HRESULT SummaryInfoImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
         REFIID riid,
@@ -884,7 +882,7 @@ static HRESULT WINAPI SummaryInfoImpl_Invoke(
     return S_OK;
 }
 
-static HRESULT WINAPI RecordImpl_Invoke(
+static HRESULT RecordImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
         REFIID riid,
@@ -975,7 +973,7 @@ static HRESULT WINAPI RecordImpl_Invoke(
     return S_OK;
 }
 
-static HRESULT WINAPI ListImpl_Invoke(
+static HRESULT ListImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
         REFIID riid,
@@ -1034,7 +1032,7 @@ static HRESULT WINAPI ListImpl_Invoke(
     return S_OK;
 }
 
-static void WINAPI ListImpl_Free(AutomationObject *This)
+static void ListImpl_Free(AutomationObject *This)
 {
     ListData *data = private_data(This);
     ULONG idx;
@@ -1044,7 +1042,7 @@ static void WINAPI ListImpl_Free(AutomationObject *This)
     msi_free(data->pVars);
 }
 
-static HRESULT WINAPI ViewImpl_Invoke(
+static HRESULT ViewImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
         REFIID riid,
@@ -1151,7 +1149,7 @@ static HRESULT DatabaseImpl_LastErrorRecord(WORD wFlags,
     return S_OK;
 }
 
-static HRESULT WINAPI DatabaseImpl_Invoke(
+static HRESULT DatabaseImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
         REFIID riid,
@@ -1236,7 +1234,7 @@ static HRESULT WINAPI DatabaseImpl_Invoke(
     return S_OK;
 }
 
-static HRESULT WINAPI SessionImpl_Invoke(
+static HRESULT SessionImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
         REFIID riid,
@@ -2306,7 +2304,7 @@ done:
     return hr;
 }
 
-static HRESULT WINAPI InstallerImpl_Invoke(
+static HRESULT InstallerImpl_Invoke(
         AutomationObject* This,
         DISPID dispIdMember,
         REFIID riid,
