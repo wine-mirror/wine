@@ -1057,31 +1057,6 @@ static HRESULT surface_getdc(struct wined3d_surface *surface)
     return hr;
 }
 
-static HRESULT surface_flip(struct wined3d_surface *surface, struct wined3d_surface *override)
-{
-    TRACE("surface %p, override %p.\n", surface, override);
-
-    /* Flipping is only supported on render targets and overlays. */
-    if (!(surface->resource.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_OVERLAY)))
-    {
-        WARN("Tried to flip a non-render target, non-overlay surface.\n");
-        return WINEDDERR_NOTFLIPPABLE;
-    }
-
-    if (surface->resource.usage & WINED3DUSAGE_OVERLAY)
-    {
-        flip_surface(surface, override);
-
-        /* Update the overlay if it is visible */
-        if (surface->overlay_dest)
-            return surface->surface_ops->surface_draw_overlay(surface);
-        else
-            return WINED3D_OK;
-    }
-
-    return WINED3D_OK;
-}
-
 static BOOL surface_is_full_rect(const struct wined3d_surface *surface, const RECT *r)
 {
     if ((r->left && r->right) || abs(r->right - r->left) != surface->resource.width)
@@ -1884,7 +1859,6 @@ static const struct wined3d_surface_ops surface_ops =
     surface_map,
     surface_unmap,
     surface_getdc,
-    surface_flip,
 };
 
 /*****************************************************************************
@@ -2060,13 +2034,6 @@ static HRESULT gdi_surface_getdc(struct wined3d_surface *surface)
     return hr;
 }
 
-static HRESULT gdi_surface_flip(struct wined3d_surface *surface, struct wined3d_surface *override)
-{
-    TRACE("surface %p, override %p.\n", surface, override);
-
-    return WINED3D_OK;
-}
-
 static const struct wined3d_surface_ops gdi_surface_ops =
 {
     gdi_surface_private_setup,
@@ -2077,7 +2044,6 @@ static const struct wined3d_surface_ops gdi_surface_ops =
     gdi_surface_map,
     gdi_surface_unmap,
     gdi_surface_getdc,
-    gdi_surface_flip,
 };
 
 void surface_set_texture_name(struct wined3d_surface *surface, GLuint new_name, BOOL srgb)
@@ -3779,10 +3745,11 @@ HRESULT CDECL wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc)
 HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined3d_surface *override, DWORD flags)
 {
     struct wined3d_swapchain *swapchain;
-    HRESULT hr;
 
     TRACE("surface %p, override %p, flags %#x.\n", surface, override, flags);
 
+    /* FIXME: This will also prevent overlay flips, since overlays aren't on
+     * a swapchain either. */
     if (surface->container.type != WINED3D_CONTAINER_SWAPCHAIN)
     {
         ERR("Flipped surface is not on a swapchain.\n");
@@ -3790,9 +3757,23 @@ HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined
     }
     swapchain = surface->container.u.swapchain;
 
-    hr = surface->surface_ops->surface_flip(surface, override);
-    if (FAILED(hr))
-        return hr;
+    /* Flipping is only supported on render targets and overlays. */
+    if (!(surface->resource.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_OVERLAY)))
+    {
+        WARN("Tried to flip a non-render target, non-overlay surface.\n");
+        return WINEDDERR_NOTFLIPPABLE;
+    }
+
+    if (surface->resource.usage & WINED3DUSAGE_OVERLAY)
+    {
+        flip_surface(surface, override);
+
+        /* Update the overlay if it is visible */
+        if (surface->overlay_dest)
+            return surface->surface_ops->surface_draw_overlay(surface);
+        else
+            return WINED3D_OK;
+    }
 
     /* Just overwrite the swapchain presentation interval. This is ok because
      * only ddraw apps can call Flip, and only d3d8 and d3d9 applications
