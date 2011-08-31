@@ -652,6 +652,69 @@ static HRESULT get_action_policy(DWORD zone, DWORD action, BYTE *policy, DWORD s
     return hres;
 }
 
+static HRESULT get_security_id(LPCWSTR url, BYTE *secid, DWORD *secid_len)
+{
+    LPWSTR secur_url, ptr, ptr2;
+    DWORD zone, len;
+    HRESULT hres;
+
+    static const WCHAR wszFile[] = {'f','i','l','e',':'};
+
+    hres = map_url_to_zone(url, &zone, &secur_url);
+    if(FAILED(hres))
+        return hres == 0x80041001 ? E_INVALIDARG : hres;
+
+    /* file protocol is a special case */
+    if(strlenW(secur_url) >= sizeof(wszFile)/sizeof(WCHAR)
+            && !memcmp(secur_url, wszFile, sizeof(wszFile))) {
+        WCHAR path[MAX_PATH];
+        len = sizeof(path)/sizeof(WCHAR);
+
+        hres = CoInternetParseUrl(secur_url, PARSE_PATH_FROM_URL, 0, path, len, &len, 0);
+        if(hres == S_OK && !PathIsNetworkPathW(path)) {
+            static const BYTE secidFile[] = {'f','i','l','e',':'};
+
+            CoTaskMemFree(secur_url);
+
+            if(*secid_len < sizeof(secidFile)+sizeof(zone))
+                return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+
+            memcpy(secid, secidFile, sizeof(secidFile));
+            *(DWORD*)(secid+sizeof(secidFile)) = zone;
+
+            *secid_len = sizeof(secidFile)+sizeof(zone);
+            return S_OK;
+        }
+    }
+
+    ptr = strchrW(secur_url, ':');
+    ptr2 = ++ptr;
+    while(*ptr2 == '/')
+        ptr2++;
+    if(ptr2 != ptr)
+        memmove(ptr, ptr2, (strlenW(ptr2)+1)*sizeof(WCHAR));
+
+    ptr = strchrW(ptr, '/');
+    if(ptr)
+        *ptr = 0;
+
+    len = WideCharToMultiByte(CP_ACP, 0, secur_url, -1, NULL, 0, NULL, NULL)-1;
+
+    if(len+sizeof(DWORD) > *secid_len) {
+        CoTaskMemFree(secur_url);
+        return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+    }
+
+    WideCharToMultiByte(CP_ACP, 0, secur_url, -1, (LPSTR)secid, len, NULL, NULL);
+    CoTaskMemFree(secur_url);
+
+    *(DWORD*)(secid+len) = zone;
+
+    *secid_len = len+sizeof(DWORD);
+
+    return S_OK;
+}
+
 /***********************************************************************
  *           InternetSecurityManager implementation
  *
@@ -817,16 +880,13 @@ static HRESULT WINAPI SecManagerImpl_GetSecurityId(IInternetSecurityManagerEx2 *
         LPCWSTR pwszUrl, BYTE *pbSecurityId, DWORD *pcbSecurityId, DWORD_PTR dwReserved)
 {
     SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
-    LPWSTR url, ptr, ptr2;
-    DWORD zone, len;
-    HRESULT hres;
-
-    static const WCHAR wszFile[] = {'f','i','l','e',':'};
 
     TRACE("(%p)->(%s %p %p %08lx)\n", iface, debugstr_w(pwszUrl), pbSecurityId,
           pcbSecurityId, dwReserved);
 
     if(This->custom_manager) {
+        HRESULT hres;
+
         hres = IInternetSecurityManager_GetSecurityId(This->custom_manager,
                 pwszUrl, pbSecurityId, pcbSecurityId, dwReserved);
         if(hres != INET_E_DEFAULT_ACTION)
@@ -839,54 +899,7 @@ static HRESULT WINAPI SecManagerImpl_GetSecurityId(IInternetSecurityManagerEx2 *
     if(dwReserved)
         FIXME("dwReserved is not supported\n");
 
-    hres = map_url_to_zone(pwszUrl, &zone, &url);
-    if(FAILED(hres))
-        return hres == 0x80041001 ? E_INVALIDARG : hres;
-
-    /* file protocol is a special case */
-    if(strlenW(url) >= sizeof(wszFile)/sizeof(WCHAR)
-            && !memcmp(url, wszFile, sizeof(wszFile)) && strchrW(url, '\\')) {
-
-        static const BYTE secidFile[] = {'f','i','l','e',':'};
-
-        CoTaskMemFree(url);
-
-        if(*pcbSecurityId < sizeof(secidFile)+sizeof(zone))
-            return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
-
-        memcpy(pbSecurityId, secidFile, sizeof(secidFile));
-        *(DWORD*)(pbSecurityId+sizeof(secidFile)) = zone;
-
-        *pcbSecurityId = sizeof(secidFile)+sizeof(zone);
-        return S_OK;
-    }
-
-    ptr = strchrW(url, ':');
-    ptr2 = ++ptr;
-    while(*ptr2 == '/')
-        ptr2++;
-    if(ptr2 != ptr)
-        memmove(ptr, ptr2, (strlenW(ptr2)+1)*sizeof(WCHAR));
-
-    ptr = strchrW(ptr, '/');
-    if(ptr)
-        *ptr = 0;
-
-    len = WideCharToMultiByte(CP_ACP, 0, url, -1, NULL, 0, NULL, NULL)-1;
-
-    if(len+sizeof(DWORD) > *pcbSecurityId) {
-        CoTaskMemFree(url);
-        return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
-    }
-
-    WideCharToMultiByte(CP_ACP, 0, url, -1, (LPSTR)pbSecurityId, len, NULL, NULL);
-    CoTaskMemFree(url);
-
-    *(DWORD*)(pbSecurityId+len) = zone;
-
-    *pcbSecurityId = len+sizeof(DWORD);
-
-    return S_OK;
+    return get_security_id(pwszUrl, pbSecurityId, pcbSecurityId);
 }
 
 
