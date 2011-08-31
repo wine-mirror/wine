@@ -42,7 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 */
 typedef struct
 {
-    const IContextMenu2Vtbl *lpVtbl;
+    IContextMenu2           IContextMenu2_iface;
     IShellFolder*           pSFParent;
     LONG                    ref;
     BOOL                    bDesktop;
@@ -52,6 +52,11 @@ typedef struct
 
 static const IContextMenu2Vtbl cmvt;
 
+static inline BgCmImpl *impl_from_IContextMenu2(IContextMenu2 *iface)
+{
+    return CONTAINING_RECORD(iface, BgCmImpl, IContextMenu2_iface);
+}
+
 /**************************************************************************
 *   ISVBgCm_Constructor()
 */
@@ -60,14 +65,14 @@ IContextMenu2 *ISvBgCm_Constructor(IShellFolder* pSFParent, BOOL bDesktop)
 	BgCmImpl* cm;
 
 	cm = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(BgCmImpl));
-	cm->lpVtbl = &cmvt;
+        cm->IContextMenu2_iface.lpVtbl = &cmvt;
 	cm->ref = 1;
 	cm->pSFParent = pSFParent;
 	cm->bDesktop = bDesktop;
 	if(pSFParent) IShellFolder_AddRef(pSFParent);
 
 	TRACE("(%p)->()\n",cm);
-	return (IContextMenu2*)cm;
+        return &cm->IContextMenu2_iface;
 }
 
 /**************************************************************************
@@ -75,7 +80,7 @@ IContextMenu2 *ISvBgCm_Constructor(IShellFolder* pSFParent, BOOL bDesktop)
 */
 static HRESULT WINAPI ISVBgCm_fnQueryInterface(IContextMenu2 *iface, REFIID riid, LPVOID *ppvObj)
 {
-	BgCmImpl *This = (BgCmImpl *)iface;
+        BgCmImpl *This = impl_from_IContextMenu2(iface);
 
 	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
@@ -107,7 +112,7 @@ static HRESULT WINAPI ISVBgCm_fnQueryInterface(IContextMenu2 *iface, REFIID riid
 */
 static ULONG WINAPI ISVBgCm_fnAddRef(IContextMenu2 *iface)
 {
-	BgCmImpl *This = (BgCmImpl *)iface;
+        BgCmImpl *This = impl_from_IContextMenu2(iface);
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
 	TRACE("(%p)->(count=%u)\n", This, refCount - 1);
@@ -120,7 +125,7 @@ static ULONG WINAPI ISVBgCm_fnAddRef(IContextMenu2 *iface)
 */
 static ULONG WINAPI ISVBgCm_fnRelease(IContextMenu2 *iface)
 {
-	BgCmImpl *This = (BgCmImpl *)iface;
+        BgCmImpl *This = impl_from_IContextMenu2(iface);
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
 	TRACE("(%p)->(count=%i)\n", This, refCount + 1);
@@ -149,11 +154,10 @@ static HRESULT WINAPI ISVBgCm_fnQueryContextMenu(
 	UINT idCmdLast,
 	UINT uFlags)
 {
-    HMENU	hMyMenu;
-    UINT	idMax;
+    BgCmImpl *This = impl_from_IContextMenu2(iface);
+    HMENU hMyMenu;
+    UINT idMax;
     HRESULT hr;
-
-    BgCmImpl *This = (BgCmImpl *)iface;
 
     TRACE("(%p)->(hmenu=%p indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",
           This, hMenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
@@ -318,9 +322,8 @@ static HRESULT WINAPI ISVBgCm_fnInvokeCommand(
 	IContextMenu2 *iface,
 	LPCMINVOKECOMMANDINFO lpcmi)
 {
-	BgCmImpl *This = (BgCmImpl *)iface;
-
-	LPSHELLBROWSER	lpSB;
+        BgCmImpl *This = impl_from_IContextMenu2(iface);
+        LPSHELLBROWSER lpSB;
 	LPSHELLVIEW lpSV = NULL;
 	HWND hWndSV = 0;
 
@@ -405,7 +408,7 @@ static HRESULT WINAPI ISVBgCm_fnGetCommandString(
 	LPSTR lpszName,
 	UINT uMaxNameLen)
 {
-	BgCmImpl *This = (BgCmImpl *)iface;
+        BgCmImpl *This = impl_from_IContextMenu2(iface);
 
 	TRACE("(%p)->(idcom=%lx flags=%x %p name=%p len=%x)\n",This, idCommand, uFlags, lpReserved, lpszName, uMaxNameLen);
 
@@ -437,7 +440,7 @@ static HRESULT WINAPI ISVBgCm_fnHandleMenuMsg(
 	WPARAM wParam,
 	LPARAM lParam)
 {
-	BgCmImpl *This = (BgCmImpl *)iface;
+        BgCmImpl *This = impl_from_IContextMenu2(iface);
 
 	FIXME("(%p)->(msg=%x wp=%lx lp=%lx)\n",This, uMsg, wParam, lParam);
 
