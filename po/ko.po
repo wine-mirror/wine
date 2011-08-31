@@ -8076,6 +8076,14 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
+"ASSOC는 파일 확장자 연결보여주거나 고침\n"
+"\n"
+"형식:ASSOC[파일확장자[=[파일종류]]\n"
+"\n"
+"매개변수가 없으면, 현재 파일 연결을 보여줍니다\n"
+"만약 파일 확장자만 사용된다면, 현재 연결 상태를 보여줍니다.\n"
+"= 다음에 파일 종류가 지정되지 않으면 현재 연결상태에 가능한 것을 제거합니"
+"다.\n"
 
 #: cmd.rc:243
 msgid ""
@@ -8090,6 +8098,15 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 msgstr ""
+"FTYPE은 파일 형식과 관련한 열기 명령을 보여주거나 고침\n"
+"\n"
+"형식:FSTYPE[파일형식[=[열기명령]]]\n"
+"\n"
+"매개변수가 없으면, 열기 명령 문자열에 현재 정의된 파일 형식을 보여 줍니다\n"
+"만약 파일 형식만 사용된다면, 열기 명령 문자열에 연결된 가능 한 것을 보여줍니"
+"다.\n"
+"= 다음에 열기 명령이 지정되지 않으면 지정된 파일 형식에 연결된 명령어 문자열"
+"을 제거 합니다.\n"
 
 #: cmd.rc:245
 msgid "MORE displays output of files or piped input in pages.\n"
@@ -8115,7 +8132,6 @@ msgstr ""
 "호출한 셀로 돌아갑니다.\n"
 
 #: cmd.rc:288
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -8430,7 +8446,6 @@ msgid "Default gateway"
 msgstr "기본 게이트웨이"
 
 #: net.rc:27
-#, fuzzy
 msgid ""
 "The syntax of this command is:\n"
 "\n"
@@ -8442,12 +8457,11 @@ msgid ""
 msgstr ""
 "명령어 문법:\n"
 "\n"
-"NET HELP 명령어\n"
+"NET 명령어[매개변수]\n"
 "    -or-\n"
 "NET 명령어  /HELP\n"
 "\n"
-"    가능한 명령어:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
+"명령어에 들어갈 수 있는 것은  HELP, START, STOP이나 USE중의 하나임\n"
 
 #: net.rc:28
 msgid ""
@@ -8458,6 +8472,12 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
+"명령어의 문법:\n"
+"\n"
+"NET START [서비스]\n"
+"\n"
+" '서비스'가 생략하는 경우 실행 중인 서비스 목록을 표시합니다. 그렇지 않으면  "
+"'서비스'는  시작할 서비스의 이름입니다.\n"
 
 #: net.rc:29
 msgid ""
@@ -8467,6 +8487,11 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
+"명령어의 문법:\n"
+"\n"
+"NET STOP 서비스\n"
+"\n"
+"'서비스'는  정지할 서비스의 이름입니다.\n"
 
 #: net.rc:30
 msgid "Stopping dependent service: %s\n"
@@ -8551,9 +8576,8 @@ msgid "Reconnecting"
 msgstr "다시 연결중"
 
 #: net.rc:40
-#, fuzzy
 msgid "The following services are running:\n"
-msgstr "의존하고 있는 서비스가 실행중입니다\n"
+msgstr "의존하고 있는 서비스가 실행중임\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
