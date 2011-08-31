@@ -84,7 +84,37 @@ int locale_id__Id_cnt = 0;
 /* ?_Clocptr@_Locimp@locale@std@@0PEAV123@EA */
 locale__Locimp *locale__Locimp__Clocptr = NULL;
 
-static const vtable_ptr MSVCP_locale_facet_vtable[];
+/* ??1facet@locale@std@@UAE@XZ */
+/* ??1facet@locale@std@@UEAA@XZ */
+DEFINE_THISCALL_WRAPPER(locale_facet_dtor, 4)
+void __thiscall locale_facet_dtor(locale_facet *this)
+{
+    TRACE("(%p)\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_locale_facet_vector_dtor, 8)
+locale_facet* __thiscall MSVCP_locale_facet_vector_dtor(locale_facet *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            locale_facet_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        locale_facet_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+static const vtable_ptr MSVCP_locale_facet_vtable[] = {
+    (vtable_ptr)THISCALL_NAME(MSVCP_locale_facet_vector_dtor)
+};
 
 /* ??0id@locale@std@@QAE@I@Z */
 /* ??0id@locale@std@@QEAA@_K@Z */
@@ -156,34 +186,6 @@ locale_facet* __thiscall locale_facet_ctor_refs(locale_facet *this, MSVCP_size_t
     return this;
 }
 
-/* ??1facet@locale@std@@UAE@XZ */
-/* ??1facet@locale@std@@UEAA@XZ */
-DEFINE_THISCALL_WRAPPER(locale_facet_dtor, 4)
-void __thiscall locale_facet_dtor(locale_facet *this)
-{
-    TRACE("(%p)\n", this);
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCP_locale_facet_vector_dtor, 8)
-locale_facet* __thiscall MSVCP_locale_facet_vector_dtor(locale_facet *this, unsigned int flags)
-{
-    TRACE("(%p %x)\n", this, flags);
-    if(flags & 2) {
-        /* we have an array, with the number of elements stored before the first object */
-        int i, *ptr = (int *)this-1;
-
-        for(i=*ptr-1; i>=0; i--)
-            locale_facet_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
-    } else {
-        locale_facet_dtor(this);
-        if(flags & 1)
-            MSVCRT_operator_delete(this);
-    }
-
-    return this;
-}
-
 /* ?_Incref@facet@locale@std@@QAEXXZ */
 /* ?_Incref@facet@locale@std@@QEAAXXZ */
 DEFINE_THISCALL_WRAPPER(locale_facet__Incref, 4)
@@ -225,10 +227,6 @@ MSVCP_size_t __cdecl locale_facet__Getcat(const locale_facet **facet, const loca
     TRACE("(%p %p)\n", facet, loc);
     return -1;
 }
-
-static const vtable_ptr MSVCP_locale_facet_vtable[] = {
-    (vtable_ptr)THISCALL_NAME(MSVCP_locale_facet_vector_dtor)
-};
 
 /* ??_F_Locimp@locale@std@@QAEXXZ */
 /* ??_F_Locimp@locale@std@@QEAAXXZ */
