@@ -189,10 +189,9 @@ static HRESULT WINAPI ISVBgCm_fnQueryContextMenu(
 * DoNewFolder
 */
 static void DoNewFolder(
-	IContextMenu2 *iface,
+        BgCmImpl *This,
 	IShellView *psv)
 {
-	BgCmImpl *This = (BgCmImpl *)iface;
 	ISFHelper * psfhlp;
 	WCHAR wszName[MAX_PATH];
 
@@ -220,9 +219,8 @@ static void DoNewFolder(
 * DoPaste
 */
 static BOOL DoPaste(
-	IContextMenu2 *iface)
+        BgCmImpl *This)
 {
-	BgCmImpl *This = (BgCmImpl *)iface;
 	BOOL bSuccess = FALSE;
 	IDataObject * pda;
 
@@ -343,7 +341,7 @@ static HRESULT WINAPI ISVBgCm_fnInvokeCommand(
 
 	    if (! strcmp(lpcmi->lpVerb,CMDSTR_NEWFOLDERA))
 	    {
-                DoNewFolder(iface, lpSV);
+                DoNewFolder(This, lpSV);
 	    }
 	    else if (! strcmp(lpcmi->lpVerb,CMDSTR_VIEWLISTA))
 	    {
@@ -367,11 +365,11 @@ static HRESULT WINAPI ISVBgCm_fnInvokeCommand(
 	        break;
 
 	      case FCIDM_SHVIEW_NEWFOLDER:
-	        DoNewFolder(iface, lpSV);
+                DoNewFolder(This, lpSV);
 		break;
 
 	      case FCIDM_SHVIEW_INSERT:
-	        DoPaste(iface);
+                DoPaste(This);
 	        break;
 
 	      case FCIDM_SHVIEW_PROPERTIES:
