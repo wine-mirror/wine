@@ -223,6 +223,19 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     return TRUE;
 }
 
+/* From <dlls/mmdevapi/mmdevapi.h> */
+enum DriverPriority {
+    Priority_Unavailable = 0,
+    Priority_Low,
+    Priority_Neutral,
+    Priority_Preferred
+};
+
+int WINAPI AUDDRV_GetPriority(void)
+{
+    return Priority_Neutral;
+}
+
 static HRESULT alsa_get_card_devices(EDataFlow flow, WCHAR **ids, char **keys,
         UINT *num, snd_ctl_t *ctl, int card, const WCHAR *cardnameW)
 {

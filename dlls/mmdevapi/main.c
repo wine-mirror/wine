@@ -53,7 +53,22 @@ static HINSTANCE instance;
 
 DriverFuncs drvs;
 
-static BOOL load_driver(const WCHAR *name)
+static const char *get_priority_string(int prio)
+{
+    switch(prio){
+    case Priority_Unavailable:
+        return "Unavailable";
+    case Priority_Low:
+        return "Low";
+    case Priority_Neutral:
+        return "Neutral";
+    case Priority_Preferred:
+        return "Preferred";
+    }
+    return "Invalid";
+}
+
+static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
 {
     WCHAR driver_module[264];
     static const WCHAR wineW[] = {'w','i','n','e',0};
@@ -65,75 +80,89 @@ static BOOL load_driver(const WCHAR *name)
 
     TRACE("Attempting to load %s\n", wine_dbgstr_w(driver_module));
 
-    drvs.module = LoadLibraryW(driver_module);
-    if(!drvs.module){
+    driver->module = LoadLibraryW(driver_module);
+    if(!driver->module){
         TRACE("Unable to load %s: %u\n", wine_dbgstr_w(driver_module),
                 GetLastError());
         return FALSE;
     }
 
-#define LDFC(n) do { drvs.p##n = (void*)GetProcAddress(drvs.module, #n);\
-        if(!drvs.p##n) { FreeLibrary(drvs.module); return FALSE; } } while(0)
+#define LDFC(n) do { driver->p##n = (void*)GetProcAddress(driver->module, #n);\
+        if(!driver->p##n) { FreeLibrary(driver->module); return FALSE; } } while(0)
+    LDFC(GetPriority);
     LDFC(GetEndpointIDs);
     LDFC(GetAudioEndpoint);
     LDFC(GetAudioSessionManager);
 #undef LDFC
 
-    lstrcpyW(drvs.module_name, driver_module);
-    TRACE("Successfully loaded %s\n", wine_dbgstr_w(driver_module));
+    driver->priority = driver->pGetPriority();
+    lstrcpyW(driver->module_name, driver_module);
+
+    TRACE("Successfully loaded %s with priority %s\n",
+            wine_dbgstr_w(driver_module), get_priority_string(driver->priority));
 
     return TRUE;
 }
 
 static BOOL init_driver(void)
 {
-    static const WCHAR alsaW[] = {'a','l','s','a',0};
-    static const WCHAR ossW[] = {'o','s','s',0};
-    static const WCHAR coreaudioW[] = {'c','o','r','e','a','u','d','i','o',0};
-    static const WCHAR *default_drivers[] = { alsaW, coreaudioW, ossW };
     static const WCHAR drv_key[] = {'S','o','f','t','w','a','r','e','\\',
         'W','i','n','e','\\','D','r','i','v','e','r','s',0};
     static const WCHAR drv_value[] = {'A','u','d','i','o',0};
+
+    static WCHAR default_list[] = {'a','l','s','a',',','o','s','s',',',
+        'c','o','r','e','a','u','d','i','o',0};
+
+    DriverFuncs driver;
     HKEY key;
-    UINT i;
+    WCHAR reg_list[256], *p, *next, *driver_list = default_list;
 
     if(drvs.module)
         return TRUE;
 
     if(RegOpenKeyW(HKEY_CURRENT_USER, drv_key, &key) == ERROR_SUCCESS){
-        WCHAR driver_name[256], *p, *next;
-        DWORD size = sizeof(driver_name);
+        DWORD size = sizeof(reg_list);
 
-        if(RegQueryValueExW(key, drv_value, 0, NULL, (BYTE*)driver_name,
+        if(RegQueryValueExW(key, drv_value, 0, NULL, (BYTE*)reg_list,
                     &size) == ERROR_SUCCESS){
-            RegCloseKey(key);
-
-            if(driver_name[0] == '\0')
+            if(reg_list[0] == '\0'){
+                TRACE("User explicitly chose no driver\n");
+                RegCloseKey(key);
                 return TRUE;
-
-            for(next = p = driver_name; next; p = next + 1){
-                next = strchrW(p, ',');
-                if(next)
-                    *next = '\0';
-
-                if(load_driver(p))
-                    return TRUE;
-
-                TRACE("Failed to load driver: %s\n", wine_dbgstr_w(driver_name));
             }
 
-            ERR("No drivers in the registry loaded successfully!\n");
-            return FALSE;
+            driver_list = reg_list;
         }
 
         RegCloseKey(key);
     }
 
-    for(i = 0; i < sizeof(default_drivers)/sizeof(*default_drivers); ++i)
-        if(load_driver(default_drivers[i]))
-            return TRUE;
+    TRACE("Loading driver list %s\n", wine_dbgstr_w(driver_list));
+    for(next = p = driver_list; next; p = next + 1){
+        next = strchrW(p, ',');
+        if(next)
+            *next = '\0';
 
-    return FALSE;
+        driver.priority = Priority_Unavailable;
+        if(load_driver(p, &driver)){
+            if(driver.priority == Priority_Unavailable)
+                FreeLibrary(driver.module);
+            else if(!drvs.module || driver.priority > drvs.priority){
+                TRACE("Selecting driver %s with priority %s\n",
+                        wine_dbgstr_w(p), get_priority_string(driver.priority));
+                if(drvs.module)
+                    FreeLibrary(drvs.module);
+                drvs = driver;
+            }else
+                FreeLibrary(driver.module);
+        }else
+            TRACE("Failed to load driver %s\n", wine_dbgstr_w(p));
+
+        if(next)
+            *next = ',';
+    }
+
+    return drvs.module ? TRUE : FALSE;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)

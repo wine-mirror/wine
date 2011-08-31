@@ -242,6 +242,19 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     return TRUE;
 }
 
+/* From <dlls/mmdevapi/mmdevapi.h> */
+enum DriverPriority {
+    Priority_Unavailable = 0,
+    Priority_Low,
+    Priority_Neutral,
+    Priority_Preferred
+};
+
+int WINAPI AUDDRV_GetPriority(void)
+{
+    return Priority_Neutral;
+}
+
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
         AudioDeviceID ***keys, UINT *num, UINT *def_index)
 {

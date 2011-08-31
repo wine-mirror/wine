@@ -233,6 +233,54 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     return TRUE;
 }
 
+/* From <dlls/mmdevapi/mmdevapi.h> */
+enum DriverPriority {
+    Priority_Unavailable = 0,
+    Priority_Low,
+    Priority_Neutral,
+    Priority_Preferred
+};
+
+int WINAPI AUDDRV_GetPriority(void)
+{
+    int mixer_fd;
+    oss_sysinfo sysinfo;
+
+    /* Attempt to determine if we are running on OSS or ALSA's OSS
+     * compatibility layer. There is no official way to do that, so just check
+     * for validity as best as possible, without rejecting valid OSS
+     * implementations. */
+
+    mixer_fd = open("/dev/mixer", O_RDONLY, 0);
+    if(mixer_fd < 0){
+        TRACE("Priority_Unavailable: open failed\n");
+        return Priority_Unavailable;
+    }
+
+    sysinfo.version[0] = 0xFF;
+    sysinfo.versionnum = ~0;
+    if(ioctl(mixer_fd, SNDCTL_SYSINFO, &sysinfo) < 0){
+        TRACE("Priority_Unavailable: ioctl failed\n");
+        close(mixer_fd);
+        return Priority_Unavailable;
+    }
+
+    close(mixer_fd);
+
+    if(sysinfo.version[0] < '4' || sysinfo.version[0] > '9'){
+        TRACE("Priority_Low: sysinfo.version[0]: %x\n", sysinfo.version[0]);
+        return Priority_Low;
+    }
+    if(sysinfo.versionnum & 0x80000000){
+        TRACE("Priority_Low: sysinfo.versionnum: %x\n", sysinfo.versionnum);
+        return Priority_Low;
+    }
+
+    TRACE("Priority_Preferred: Seems like valid OSS!\n");
+
+    return Priority_Preferred;
+}
+
 static UINT get_default_index(EDataFlow flow, char **keys, UINT num)
 {
     int fd = -1, err, i;

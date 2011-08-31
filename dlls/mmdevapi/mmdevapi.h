@@ -25,9 +25,24 @@ extern void MMDevEnum_Free(void) DECLSPEC_HIDDEN;
 
 extern HRESULT MMDevice_GetPropValue(const GUID *devguid, DWORD flow, REFPROPERTYKEY key, PROPVARIANT *pv) DECLSPEC_HIDDEN;
 
+/* Changes to this enum must be synced in drivers. */
+enum _DriverPriority {
+    Priority_Unavailable = 0, /* driver won't work */
+    Priority_Low, /* driver may work, but unlikely */
+    Priority_Neutral, /* driver makes no judgment */
+    Priority_Preferred /* driver thinks it's correct */
+};
+
 typedef struct _DriverFuncs {
     HMODULE module;
     WCHAR module_name[64];
+    int priority;
+
+    /* Returns a "priority" value for the driver. Highest priority wins.
+     * If multiple drivers think they are valid, they will return a
+     * priority value reflecting the likelihood that they are actually
+     * valid. See enum _DriverPriority. */
+    int WINAPI (*pGetPriority)(void);
 
     /* ids gets an array of human-friendly endpoint names
      * keys gets an array of driver-specific stuff that is used
