@@ -1246,11 +1246,12 @@ static HRESULT WINAPI info_device_ps_GetValue(IPropertyStore *iface,
 
     if (IsEqualPropertyKey(*key, DEVPKEY_Device_Driver))
     {
+        INT size = (lstrlenW(drvs.module_name) + 1) * sizeof(WCHAR);
         pv->vt = VT_LPWSTR;
-        pv->u.pwszVal = CoTaskMemAlloc(lstrlenW(drvs.module_name) * sizeof(WCHAR));
+        pv->u.pwszVal = CoTaskMemAlloc(size);
         if (!pv->u.pwszVal)
             return E_OUTOFMEMORY;
-        lstrcpyW(pv->u.pwszVal, drvs.module_name);
+        memcpy(pv->u.pwszVal, drvs.module_name, size);
         return S_OK;
     }
 
