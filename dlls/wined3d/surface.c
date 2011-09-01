@@ -3748,6 +3748,15 @@ HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined
 
     TRACE("surface %p, override %p, flags %#x.\n", surface, override, flags);
 
+    if (flags)
+    {
+        static UINT once;
+        if (!once++)
+            FIXME("Ignoring flags %#x.\n", flags);
+        else
+            WARN("Ignoring flags %#x.\n", flags);
+    }
+
     /* FIXME: This will also prevent overlay flips, since overlays aren't on
      * a swapchain either. */
     if (surface->container.type != WINED3D_CONTAINER_SWAPCHAIN)
@@ -3774,20 +3783,6 @@ HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined
         else
             return WINED3D_OK;
     }
-
-    /* Just overwrite the swapchain presentation interval. This is ok because
-     * only ddraw apps can call Flip, and only d3d8 and d3d9 applications
-     * specify the presentation interval. */
-    if (!(flags & (WINEDDFLIP_NOVSYNC | WINEDDFLIP_INTERVAL2 | WINEDDFLIP_INTERVAL3 | WINEDDFLIP_INTERVAL4)))
-        swapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_ONE;
-    else if (flags & WINEDDFLIP_NOVSYNC)
-        swapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_IMMEDIATE;
-    else if (flags & WINEDDFLIP_INTERVAL2)
-        swapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_TWO;
-    else if (flags & WINEDDFLIP_INTERVAL3)
-        swapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_THREE;
-    else
-        swapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_FOUR;
 
     return wined3d_swapchain_present(swapchain, NULL, NULL, swapchain->win_handle, NULL, 0);
 }
