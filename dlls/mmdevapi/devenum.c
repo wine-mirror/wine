@@ -1237,6 +1237,7 @@ static HRESULT WINAPI info_device_ps_GetValue(IPropertyStore *iface,
         REFPROPERTYKEY key, PROPVARIANT *pv)
 {
     MMDevPropStore *This = impl_from_IPropertyStore(iface);
+    TRACE("(%p)->(\"%s,%u\", %p)\n", This, debugstr_guid(&key->fmtid), key ? key->pid : 0, pv);
 
     if (!key || !pv)
         return E_POINTER;
