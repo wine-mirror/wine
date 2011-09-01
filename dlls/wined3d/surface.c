@@ -5411,14 +5411,21 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
 
         TRACE("Unsupported blit between buffers on the same swapchain\n");
         return WINED3DERR_INVALIDCALL;
-    } else if(dstSwapchain && dstSwapchain == srcSwapchain) {
+    }
+
+    if (dstSwapchain && dstSwapchain == srcSwapchain)
+    {
         FIXME("Implement hardware blit between two surfaces on the same swapchain\n");
         return WINED3DERR_INVALIDCALL;
-    } else if(dstSwapchain && srcSwapchain) {
+    }
+
+    if (dstSwapchain && srcSwapchain)
+    {
         FIXME("Implement hardware blit between two different swapchains\n");
         return WINED3DERR_INVALIDCALL;
     }
-    else if (dstSwapchain)
+
+    if (dstSwapchain)
     {
         /* Handled with regular texture -> swapchain blit */
         if (src_surface == device->fb.render_targets[0])
