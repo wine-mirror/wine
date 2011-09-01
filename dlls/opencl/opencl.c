@@ -276,10 +276,8 @@ cl_int WINAPI wine_clGetCommandQueueInfo(cl_command_queue command_queue, cl_comm
 cl_int WINAPI wine_clSetCommandQueueProperty(cl_command_queue command_queue, cl_command_queue_properties properties, cl_bool enable,
                                              cl_command_queue_properties * old_properties)
 {
-    cl_int ret;
-    TRACE("%p, 0x%lx, %d, %p\n", command_queue, (long unsigned int)properties, enable, old_properties);
-    ret = clSetCommandQueueProperty(command_queue, properties, enable, old_properties);
-    return ret;
+    FIXME("(%p, 0x%lx, %d, %p): deprecated\n", command_queue, (long unsigned int)properties, enable, old_properties);
+    return CL_INVALID_QUEUE_PROPERTIES;
 }
 
 
