@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-08-23 23:41+0200\n"
+"PO-Revision-Date: 2011-09-01 18:05+0200\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -796,9 +796,8 @@ msgid "Initials"
 msgstr "Initialen"
 
 #: crypt32.rc:80
-#, fuzzy
 msgid "Surname"
-msgstr "Benutzername"
+msgstr "Nachname"
 
 #: crypt32.rc:81
 msgid "Domain Component"
@@ -3087,9 +3086,8 @@ msgid "The oplock wasn't granted\n"
 msgstr "Oplock nicht gestattet\n"
 
 #: winerror.mc:961
-#, fuzzy
 msgid "Invalid oplock message received\n"
-msgstr "Ungültiger Nachrichtenname\n"
+msgstr "Ungültige Oplock Nachricht erhalten\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2\n"
@@ -3289,7 +3287,7 @@ msgstr "Dienst-spezifischer Fehler\n"
 
 #: winerror.mc:1211
 msgid "Process aborted\n"
-msgstr "Prozess fehlgeschlagen\n"
+msgstr "Prozess abgebrochen\n"
 
 #: winerror.mc:1216
 msgid "Service dependency failed\n"
@@ -3346,9 +3344,8 @@ msgid "Driver failure cannot be detected\n"
 msgstr "Treiberfehler nicht gefunden\n"
 
 #: winerror.mc:1281
-#, fuzzy
 msgid "Process abort cannot be detected\n"
-msgstr "Prozess fehlgeschlagen\n"
+msgstr "Prozessabbruch konnte nicht festgestellt werden\n"
 
 #: winerror.mc:1286
 msgid "No recovery program for service\n"
@@ -3547,14 +3544,12 @@ msgid "The source element is empty\n"
 msgstr "Das Quellelement is leer\n"
 
 #: winerror.mc:1531
-#, fuzzy
 msgid "The destination element is full\n"
-msgstr "Der Vorgang wurde erfolgreich abgeschlossen\n"
+msgstr "Das Zielelement ist voll\n"
 
 #: winerror.mc:1536
-#, fuzzy
 msgid "The element address is invalid\n"
-msgstr "Das angegebende Gerätehandle ist ungültig."
+msgstr "Die Elementadresse ist ungültig\n"
 
 #: winerror.mc:1541
 msgid "The magazine is not present\n"
@@ -3565,49 +3560,40 @@ msgid "The device needs reinitialization\n"
 msgstr "Das Gerät muss neu initialisiert werden\n"
 
 #: winerror.mc:1551
-#, fuzzy
 msgid "The device requires cleaning\n"
-msgstr "Der %s Dienst startet.\n"
+msgstr "Das Gerät muss gereinigt werden\n"
 
 #: winerror.mc:1556
-#, fuzzy
 msgid "The device door is open\n"
-msgstr "Druckergehäuse ist offen; "
+msgstr "Das Druckergehäuse ist offen\n"
 
 #: winerror.mc:1561
-#, fuzzy
 msgid "The device is not connected\n"
-msgstr "Pipe nicht verbunden\n"
+msgstr "Das Gerät ist nicht verbunden\n"
 
 #: winerror.mc:1566
-#, fuzzy
 msgid "Element not found\n"
-msgstr "Eintrag nicht gefunden\n"
+msgstr "Element nicht gefunden\n"
 
 #: winerror.mc:1571
-#, fuzzy
 msgid "No match found\n"
-msgstr "Pfad nicht gefunden\n"
+msgstr "Keine Übereinstimmung\n"
 
 #: winerror.mc:1576
-#, fuzzy
 msgid "Property set not found\n"
-msgstr "Prozedur nicht gefunden\n"
+msgstr "Eigenschaften nicht gefunden\n"
 
 #: winerror.mc:1581
-#, fuzzy
 msgid "Point not found\n"
-msgstr "Pfad nicht gefunden\n"
+msgstr "Punkt nicht gefunden\n"
 
 #: winerror.mc:1586
-#, fuzzy
 msgid "No running tracking service\n"
-msgstr "Unbekannter Authorisierungs-Dienst\n"
+msgstr "Kein laufender Tracking Dienst\n"
 
 #: winerror.mc:1591
-#, fuzzy
 msgid "No such volume ID\n"
-msgstr "Kein solcher Benutzer\n"
+msgstr "Keine derartige Datenträger ID\n"
 
 #: winerror.mc:1596
 msgid "Unable to remove the file to be replaced\n"
@@ -3622,14 +3608,12 @@ msgid "Moving the replacement file failed\n"
 msgstr "Konnte die ersetzende Datei nicht verschieben\n"
 
 #: winerror.mc:1611
-#, fuzzy
 msgid "The journal is being deleted\n"
-msgstr "Netzwerkname gelöscht\n"
+msgstr "Das Journal wird gelöscht\n"
 
 #: winerror.mc:1616
-#, fuzzy
 msgid "The journal is not active\n"
-msgstr "Dienst nicht aktiv\n"
+msgstr "Das Journal ist nicht aktiv\n"
 
 #: winerror.mc:1621
 msgid "Potential matching file found\n"
@@ -3832,28 +3816,24 @@ msgid "No more local devices\n"
 msgstr "Keine weiteren lokalen Geräte\n"
 
 #: winerror.mc:1876
-#, fuzzy
 msgid "The site does not exist\n"
-msgstr "Gerät existiert nicht\n"
+msgstr "Die Seite existiert nicht\n"
 
 #: winerror.mc:1881
-#, fuzzy
 msgid "The domain controller already exists\n"
-msgstr "Domäne existiert bereits\n"
+msgstr "Der Domänencontroller existiert bereits\n"
 
 #: winerror.mc:1886
-#, fuzzy
 msgid "Supported only when connected\n"
-msgstr "Pipe nicht verbunden\n"
+msgstr "Nur im verbundenen Zustand unterstützt\n"
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed\n"
 msgstr "Operation durchführen, auch wenn sich nichts ändert\n"
 
 #: winerror.mc:1896
-#, fuzzy
 msgid "The user profile is invalid\n"
-msgstr "Das angegebende Gerätehandle ist ungültig."
+msgstr "Das Benutzerprofil ist ungültig."
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server\n"
@@ -4236,14 +4216,12 @@ msgid "Licence quota exceeded\n"
 msgstr "Lizenz-Quota überschritten\n"
 
 #: winerror.mc:2381
-#, fuzzy
 msgid "Wrong target name\n"
-msgstr "Kein Eintrags-Name\n"
+msgstr "Falscher Zielname\n"
 
 #: winerror.mc:2386
-#, fuzzy
 msgid "Mutual authentication failed\n"
-msgstr "Ungültige Authentifizierungs-Identität\n"
+msgstr "Einvernehmliche Authentifizierung gescheitert\n"
 
 #: winerror.mc:2391
 msgid "Time skew between client and server\n"
@@ -4314,7 +4292,6 @@ msgid "Private dialog index\n"
 msgstr "Private dialog index\n"
 
 #: winerror.mc:2476
-#, fuzzy
 msgid "List box ID not found\n"
 msgstr "Listbox-ID nicht gefunden\n"
 
@@ -4379,7 +4356,6 @@ msgid "Hook procedure not installed\n"
 msgstr "Hook-Prozedur nicht installiert\n"
 
 #: winerror.mc:2556
-#, fuzzy
 msgid "Invalid list box message\n"
 msgstr "Ungültige Listbox-Nachricht\n"
 
@@ -4388,7 +4364,6 @@ msgid "Invalid LB_SETCOUNT sent\n"
 msgstr "Ungültige LB_SETCOUNT gesendet\n"
 
 #: winerror.mc:2566
-#, fuzzy
 msgid "No tab stops on this list box\n"
 msgstr "Keine Tabstops in dieser Listbox\n"
 
@@ -4405,7 +4380,6 @@ msgid "Window has no system menu\n"
 msgstr "Fenster hat kein System-Menü\n"
 
 #: winerror.mc:2586
-#, fuzzy
 msgid "Invalid message box style\n"
 msgstr "Ungültiger Stil für Meldungsfenster\n"
 
@@ -4458,9 +4432,8 @@ msgid "No system resources\n"
 msgstr "Keine Systemressourcen\n"
 
 #: winerror.mc:2651
-#, fuzzy
 msgid "No non-paged system resources\n"
-msgstr "Keine nonpaged Systemressourcen\n"
+msgstr "Keine non-paged Systemressourcen\n"
 
 #: winerror.mc:2656
 msgid "No paged system resources\n"
@@ -4471,9 +4444,8 @@ msgid "No working set quota\n"
 msgstr "Keine Quota für Working Set\n"
 
 #: winerror.mc:2666
-#, fuzzy
 msgid "No page file quota\n"
-msgstr "Keine Quota für Pagefile\n"
+msgstr "Keine Sollvorgabe für Pagefile\n"
 
 #: winerror.mc:2671
 msgid "Exceeded commitment limit\n"
@@ -4484,28 +4456,24 @@ msgid "Menu item not found\n"
 msgstr "Menü-Eintrag nicht gefunden\n"
 
 #: winerror.mc:2681
-#, fuzzy
 msgid "Invalid keyboard handle\n"
-msgstr "Ungültiges Ziel-Handle\n"
+msgstr "Tastatur-Handle ungültig\n"
 
 #: winerror.mc:2686
-#, fuzzy
 msgid "Hook type not allowed\n"
-msgstr "Logon-Typ nicht zugestanden\n"
+msgstr "Hook-Typ nicht erlaubt\n"
 
 #: winerror.mc:2691
 msgid "Interactive window station required\n"
 msgstr "Interaktive Fensterposition nötig\n"
 
 #: winerror.mc:2696
-#, fuzzy
 msgid "Timeout\n"
-msgstr "Zeitüberschreitung"
+msgstr "Zeitüberschreitung\n"
 
 #: winerror.mc:2701
-#, fuzzy
 msgid "Invalid monitor handle\n"
-msgstr "Ungültiges Menü-Handle\n"
+msgstr "Ungültiges Bildschirm-Handle\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt\n"
@@ -4524,102 +4492,84 @@ msgid "Event log file changed\n"
 msgstr "Ereignisprotokolldatei verändert\n"
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed.\n"
-msgstr "Ungültiger Dienstname\n"
+msgstr "Installer Dienst gescheitert.\n"
 
 #: winerror.mc:2731
-#, fuzzy
 msgid "Installation aborted by user\n"
 msgstr "Setup-Programme"
 
 #: winerror.mc:2736
-#, fuzzy
 msgid "Installation failure\n"
-msgstr "Partitionsfehler\n"
+msgstr "Installationsfehler\n"
 
 #: winerror.mc:2741
-#, fuzzy
 msgid "Installation suspended\n"
-msgstr "Setup-Programme"
+msgstr "Installation aufgeschoben\n"
 
 #: winerror.mc:2746
-#, fuzzy
 msgid "Unknown product\n"
-msgstr "Unbekannter Anschluss\n"
+msgstr "Unbekanntes Produkt\n"
 
 #: winerror.mc:2751
-#, fuzzy
 msgid "Unknown feature\n"
-msgstr "Unbekannte Eigenschaft in %s"
+msgstr "Unbekanntes Feature\n"
 
 #: winerror.mc:2756
-#, fuzzy
 msgid "Unknown component\n"
-msgstr "Unbekannter Anschluss\n"
+msgstr "Unbekannte Komponente\n"
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknown property\n"
-msgstr "Unbekannter Anschluss\n"
+msgstr "Unbekannte Eigenschaft\n"
 
 #: winerror.mc:2766
-#, fuzzy
 msgid "Invalid handle state\n"
-msgstr "Ungültiges Handle\n"
+msgstr "Ungültiger Handle Zustand\n"
 
 #: winerror.mc:2771
-#, fuzzy
 msgid "Bad configuration\n"
-msgstr "Wine-Konfiguration"
+msgstr "Fehlerhafte Konfiguration\n"
 
 #: winerror.mc:2776
 msgid "Index is missing\n"
 msgstr "Index fehlt\n"
 
 #: winerror.mc:2781
-#, fuzzy
 msgid "Installation source is missing\n"
-msgstr "Die Installationsquelle für das Feature fehlt."
+msgstr "Die Installationsquelle fehlt\n"
 
 #: winerror.mc:2786
-#, fuzzy
 msgid "Wrong installation package version\n"
-msgstr "Fehlerhafte Serialisierungs-Paket-Version\n"
+msgstr "Fehlerhafte Paket-Version für Installation\n"
 
 #: winerror.mc:2791
-#, fuzzy
 msgid "Product uninstalled\n"
-msgstr "Hook-Prozedur nicht installiert\n"
+msgstr "Produkt nicht installiert\n"
 
 #: winerror.mc:2796
-#, fuzzy
 msgid "Invalid query syntax\n"
-msgstr "Ungültige Namens-Syntax\n"
+msgstr "Ungültige Abfrage-Syntax\n"
 
 #: winerror.mc:2801
-#, fuzzy
 msgid "Invalid field\n"
-msgstr "Ungültige Zeit\n"
+msgstr "Ungültiges Feld\n"
 
 #: winerror.mc:2806
-#, fuzzy
 msgid "Device removed\n"
-msgstr "Gerät wird bereits errinnert\n"
+msgstr "Gerät entfernt\n"
 
 #: winerror.mc:2811
-#, fuzzy
 msgid "Installation already running\n"
-msgstr "Dienst läuft bereits\n"
+msgstr "Installation läuft bereits\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open\n"
 msgstr "Installationspaket konnte nicht geöffnet werden\n"
 
 #: winerror.mc:2821
-#, fuzzy
 msgid "Installation package is invalid\n"
-msgstr "Setup-Programme"
+msgstr "Installationspaket ist ungültig\n"
 
 #: winerror.mc:2826
 msgid "Installer user interface failed\n"
@@ -4630,87 +4580,72 @@ msgid "Failed to open installation log file\n"
 msgstr "Konnte Installations Logdatei nicht öffnen\n"
 
 #: winerror.mc:2836
-#, fuzzy
 msgid "Installation language not supported\n"
-msgstr "Operation nicht unterstützt\n"
+msgstr "Installationssprache nicht unterstützt\n"
 
 #: winerror.mc:2841
 msgid "Installation transform failed to apply\n"
 msgstr "Installationsumwandlung konnte nicht angewendet werden\n"
 
 #: winerror.mc:2846
-#, fuzzy
 msgid "Installation package rejected\n"
-msgstr "Setup-Programme"
+msgstr "Installationspaket abgelehnt\n"
 
 #: winerror.mc:2851
-#, fuzzy
 msgid "Function could not be called\n"
-msgstr "Verbindungslimit erreicht\n"
+msgstr "Funktion konnte nicht aufgerufen werden\n"
 
 #: winerror.mc:2856
-#, fuzzy
 msgid "Function failed\n"
-msgstr "Funktion erwartet"
+msgstr "Funktion gescheitert\n"
 
 #: winerror.mc:2861
-#, fuzzy
 msgid "Invalid table\n"
-msgstr "Ungültiges Tag\n"
+msgstr "Ungültige Tabelle\n"
 
 #: winerror.mc:2866
-#, fuzzy
 msgid "Data type mismatch\n"
-msgstr "Maschinen-Typ nicht übereinstimmend\n"
+msgstr "Datentyp nicht übereinstimmend\n"
 
 #: winerror.mc:2871 winerror.mc:3081
 msgid "Unsupported type\n"
 msgstr "Nicht unterstützter Typ\n"
 
 #: winerror.mc:2876
-#, fuzzy
 msgid "Creation failed\n"
-msgstr "Öffnen fehlgeschlagen\n"
+msgstr "Erstellung fehlgeschlagen\n"
 
 #: winerror.mc:2881
-#, fuzzy
 msgid "Temporary directory not writable\n"
-msgstr "Datei oder Verzeichnis beschädigt\n"
+msgstr "Temporäres Verzeichnis kann nicht beschrieben werden\n"
 
 #: winerror.mc:2886
-#, fuzzy
 msgid "Installation platform not supported\n"
-msgstr "Operation nicht unterstützt\n"
+msgstr "Installationsplattform nicht unterstützt\n"
 
 #: winerror.mc:2891
-#, fuzzy
 msgid "Installer not used\n"
-msgstr "Interface nicht gefunden\n"
+msgstr "Installer wird nicht genutzt\n"
 
 #: winerror.mc:2896
-#, fuzzy
 msgid "Failed to open the patch package\n"
-msgstr "'%s' konnte nicht geöffnet werden\n"
+msgstr "Patch Paket konnte nicht geöffnet werden\n"
 
 #: winerror.mc:2901
-#, fuzzy
 msgid "Invalid patch package\n"
-msgstr "Ungültiges Tag\n"
+msgstr "Ungültiges Patch Paket\n"
 
 #: winerror.mc:2906
-#, fuzzy
 msgid "Unsupported patch package\n"
-msgstr "Nicht unterstützter Typ\n"
+msgstr "Nicht unterstütztes Patch Paket\n"
 
 #: winerror.mc:2911
-#, fuzzy
 msgid "Another version is installed\n"
-msgstr "Druckertreiber bereits installiert\n"
+msgstr "Eine andere Version ist bereits installiert\n"
 
 #: winerror.mc:2916
-#, fuzzy
 msgid "Invalid command line\n"
-msgstr "Ungültiger GW-Befehl\n"
+msgstr "Ungültige Kommandozeile\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed\n"
@@ -5117,7 +5052,6 @@ msgid "Invalid printer command\n"
 msgstr "Ungültiger Druckerbefehl\n"
 
 #: winerror.mc:3431
-#, fuzzy
 msgid "Invalid data type\n"
 msgstr "Ungültiger Datentyp\n"
 
@@ -5290,92 +5224,76 @@ msgid "Invalid driver\n"
 msgstr "Ungültiger Treiber\n"
 
 #: winerror.mc:3646
-#, fuzzy
 msgid "Invalid object resolver set\n"
-msgstr "Ungültiges Objekt\n"
+msgstr "Ungültiger Objektwandler gesetzt\n"
 
 #: winerror.mc:3651
-#, fuzzy
 msgid "Incomplete RPC send\n"
-msgstr "Unvollständiger Name\n"
+msgstr "Unvollständiger RPC gesendet\n"
 
 #: winerror.mc:3656
-#, fuzzy
 msgid "Invalid asynchronous RPC handle\n"
-msgstr "Ungültiges Hook-Handle\n"
+msgstr "Ungültiges asynchrones RPC-Handle\n"
 
 #: winerror.mc:3661
-#, fuzzy
 msgid "Invalid asynchronous RPC call\n"
-msgstr "Ungültiges Hook-Handle\n"
+msgstr "Ungültiger asynchroner RPC-Aufruf\n"
 
 #: winerror.mc:3666
-#, fuzzy
 msgid "RPC pipe closed\n"
-msgstr "Pipe geschlossen\n"
+msgstr "RPC-Pipe geschlossen\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe\n"
 msgstr "Verfahrensfehler in RPC Pipe\n"
 
 #: winerror.mc:3676
-#, fuzzy
 msgid "No data on RPC pipe\n"
-msgstr "Kein RPC-Fehler\n"
+msgstr "Keine Daten auf RPC-Pipe\n"
 
 #: winerror.mc:3681
-#, fuzzy
 msgid "No site name available\n"
-msgstr "Kein Sicherheits-Kontext verfügbar\n"
+msgstr "Kein Seitenname verfügbar\n"
 
 #: winerror.mc:3686
 msgid "The file cannot be accessed\n"
 msgstr "Auf die Datei kann nicht zugegriffen werden\n"
 
 #: winerror.mc:3691
-#, fuzzy
 msgid "The filename cannot be resolved\n"
-msgstr "Der Benutzername konnte nicht gefunden werden\n"
+msgstr "Der Dateiname konnte nicht gefunden werden\n"
 
 #: winerror.mc:3696
-#, fuzzy
 msgid "RPC entry type mismatch\n"
-msgstr "Maschinen-Typ nicht übereinstimmend\n"
+msgstr "Falscher Typ von RPC Eintrag\n"
 
 #: winerror.mc:3701
-#, fuzzy
 msgid "Not all objects could be exported\n"
-msgstr "Nicht alle Objekte unexportiert\n"
+msgstr "Nicht alle Objekte konnten exportiert werden\n"
 
 #: winerror.mc:3706
-#, fuzzy
 msgid "The interface could not be exported\n"
-msgstr "Der Benutzername konnte nicht gefunden werden\n"
+msgstr "Die Schnittstelle konnte nicht exportiert werden\n"
 
 #: winerror.mc:3711
-#, fuzzy
 msgid "The profile could not be added\n"
-msgstr "Der Benutzername konnte nicht gefunden werden\n"
+msgstr "Das Profil konnte nicht hinzugefügt werden\n"
 
 #: winerror.mc:3716
-#, fuzzy
 msgid "The profile element could not be added\n"
-msgstr "Der Benutzername konnte nicht gefunden werden\n"
+msgstr "Das Profilelement konnte nicht hinzugefügt werden\n"
 
 #: winerror.mc:3721
-#, fuzzy
 msgid "The profile element could not be removed\n"
-msgstr "Der Benutzername konnte nicht gefunden werden\n"
+msgstr "Das Profilelement konnte nicht entfernt werden\n"
 
 #: winerror.mc:3726
-#, fuzzy
 msgid "The group element could not be added\n"
-msgstr "Der Benutzername konnte nicht gefunden werden\n"
+msgstr "Das Gruppenelement konnte nicht hinzugefügt werden\n"
 
 #: winerror.mc:3731
-#, fuzzy
 msgid "The group element could not be removed\n"
-msgstr "Der Benutzername konnte nicht gefunden werden\n"
+msgstr "Das Gruppenelement konnte nicht entfernt werden\n"
 
 #: winerror.mc:3736
 msgid "The username could not be found\n"
@@ -8767,9 +8685,8 @@ msgid "Reconnecting"
 msgstr "Erneuter Verbindungsaufbau"
 
 #: net.rc:40
-#, fuzzy
 msgid "The following services are running:\n"
-msgstr "Abhängige Dienste laufen\n"
+msgstr "Die folgenden Dienste laufen:\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -8889,14 +8806,12 @@ msgstr ""
 " Benutzen Sie bitte einen anderen Editor, um diese Datei zu bearbeiten."
 
 #: notepad.rc:81
-#, fuzzy
 msgid ""
 "You did not enter any text.\n"
 "Please type something and try again."
 msgstr ""
-"Sie haben keinen Text eingegeben, der gespeichert\n"
-" werden könnte. Geben Sie Text ein, und versuchen Sie es \n"
-"erneut."
+"Sie haben keinen Text eingegeben.\n"
+"Bitte geben Sie etwas ein und versuchen Sie es erneut."
 
 #: notepad.rc:83
 msgid ""
@@ -10445,7 +10360,6 @@ msgid "Drives"
 msgstr "Laufwerke"
 
 #: winecfg.rc:33
-#, fuzzy
 msgid "Select the Unix target directory, please."
 msgstr "Bitte wählen Sie das Ziel-Unix-Verzeichnis."
 
