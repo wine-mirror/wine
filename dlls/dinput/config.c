@@ -110,6 +110,11 @@ static void init_listview_columns(HWND dialog)
     SendDlgItemMessageW(dialog, IDC_DEVICEOBJECTSLIST, LVM_INSERTCOLUMNW, 1, (LPARAM) &listColumn);
 }
 
+static int lv_get_cur_item(HWND dialog)
+{
+    return SendDlgItemMessageW(dialog, IDC_DEVICEOBJECTSLIST, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+}
+
 static void lv_set_action(HWND dialog, int item, int action, LPDIACTIONFORMATW lpdiaf)
 {
     static const WCHAR no_action[] = {'-','\0'};
@@ -225,6 +230,37 @@ static void fill_device_object_list(HWND dialog)
     }
 }
 
+static void show_suitable_actions(HWND dialog)
+{
+    DeviceData *device = get_cur_device(dialog);
+    LPDIACTIONFORMATW lpdiaf = get_cur_lpdiaf(dialog);
+    int i, added = 0;
+    int obj = lv_get_cur_item(dialog);
+
+    if (obj < 0) return;
+
+    SendDlgItemMessageW(dialog, IDC_ACTIONLIST, LB_RESETCONTENT, 0, 0);
+
+    for (i=0; i < lpdiaf->dwNumActions; i++)
+    {
+        /* Skip keyboard actions for non keyboards */
+        if (GET_DIDEVICE_TYPE(device->ddi.dwDevType) != DI8DEVTYPE_KEYBOARD &&
+            (lpdiaf->rgoAction[i].dwSemantic & DIKEYBOARD_MASK) == DIKEYBOARD_MASK) continue;
+
+        /* Skip mouse actions for non mouses */
+        if (GET_DIDEVICE_TYPE(device->ddi.dwDevType) != DI8DEVTYPE_MOUSE &&
+            (lpdiaf->rgoAction[i].dwSemantic & DIMOUSE_MASK) == DIMOUSE_MASK) continue;
+
+        /* Add action string and index in the action format to the list entry */
+        if (DIDFT_GETINSTANCE(lpdiaf->rgoAction[i].dwSemantic) & DIDFT_GETTYPE(device->ddo[obj].dwType))
+        {
+            SendDlgItemMessageW(dialog, IDC_ACTIONLIST, LB_ADDSTRING, 0, (LPARAM)lpdiaf->rgoAction[i].lptszActionName);
+            SendDlgItemMessageW(dialog, IDC_ACTIONLIST, LB_SETITEMDATA, added, (LPARAM) i);
+            added++;
+        }
+    }
+}
+
 static INT_PTR CALLBACK ConfigureDevicesDlgProc(HWND dialog, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch(uMsg)
@@ -243,6 +279,18 @@ static INT_PTR CALLBACK ConfigureDevicesDlgProc(HWND dialog, UINT uMsg, WPARAM w
 
             break;
         }
+
+        case WM_NOTIFY:
+
+            switch (((LPNMHDR)lParam)->code)
+            {
+                case LVN_ITEMCHANGED:
+                    show_suitable_actions(dialog);
+                    break;
+            }
+            break;
+
+
         case WM_COMMAND:
 
             switch(LOWORD(wParam))
