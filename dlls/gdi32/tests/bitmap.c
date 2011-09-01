@@ -4364,6 +4364,15 @@ static void test_SetDIBitsToDevice(void)
     for (i = 0; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
     memset( dib_bits, 0xaa, 64 * 4 );
 
+    ret = SetDIBitsToDevice( hdc, 5, -7, 8, 16, -2, -4, 0, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 12, "got %d\n", ret );
+    for (i = 0; i < 64; i++)
+        if (i == 31 || i == 39 || i == 47 || i == 55 || i == 63)
+            ok( dib_bits[i] == inverted_data[i + 1], "%d: got %08x\n", i, dib_bits[i] );
+        else
+            ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
     info->bmiHeader.biHeight = -5;
     ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 1, 2, data, info, DIB_RGB_COLORS );
     ok( ret == 2, "got %d\n", ret );
@@ -4420,6 +4429,15 @@ static void test_SetDIBitsToDevice(void)
     for (i = 56; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
     memset( dib_bits, 0xaa, 64 * 4 );
 
+    ret = SetDIBitsToDevice( hdc, 5, -7, 8, 16, -1, -8, 0, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 12, "got %d\n", ret );
+    for (i = 0; i < 64; i++)
+        if (i == 6 || i == 7)
+            ok( dib_bits[i] == data[i + 82], "%d: got %08x\n", i, dib_bits[i] );
+        else
+            ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
     info->bmiHeader.biHeight = -5;
     ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 1, 2, data, info, DIB_RGB_COLORS );
     ok( ret == 2, "got %d\n", ret );
@@ -4462,6 +4480,29 @@ static void test_SetDIBitsToDevice(void)
     ok( ret == 7, "got %d\n", ret );
     for (i = 0; i < 56; i++) ok( dib_bits[i] == inverted_data[i + 72], "%d: got %08x\n", i, dib_bits[i] );
     for (i = 56; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBitsToDevice( hdc, 4, 4, 8, 8, 0, -4, 1, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 3, "got %d\n", ret );
+    for (i = 0; i < 64; i++)
+        if ((i >= 36 && i <= 39) || (i >= 44 && i <= 47) || (i >= 52 && i <= 55))
+            ok( dib_bits[i] == inverted_data[i + 68], "%d: got %08x\n", i, dib_bits[i] );
+        else
+            ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBitsToDevice( hdc, 4, 4, 8, 8, -30, -30, 1, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 0, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBitsToDevice( hdc, 5, -5, 8, 16, -2, -4, 4, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    for (i = 0; i < 64; i++)
+        if (i == 7 || i == 15 || i == 23)
+            ok( dib_bits[i] == inverted_data[i + 97], "%d: got %08x\n", i, dib_bits[i] );
+        else
+            ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
     memset( dib_bits, 0xaa, 64 * 4 );
 
     info->bmiHeader.biHeight = 5;

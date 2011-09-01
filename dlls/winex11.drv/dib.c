@@ -3764,14 +3764,21 @@ INT X11DRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDest, DWORD cx, DWORD
     }
     else
     {
-        if (ySrc >= startscan + lines) return lines;
+        if (ySrc >= startscan + lines) return 0;
         pt.y += ySrc + cy - (startscan + lines);
         cy = startscan + lines - ySrc;
         ySrc = 0;
         if (cy > lines) cy = lines;
     }
     if (xSrc >= info->bmiHeader.biWidth) return lines;
+    if (xSrc + cx <= 0) return lines;
     if (xSrc + cx >= info->bmiHeader.biWidth) cx = info->bmiHeader.biWidth - xSrc;
+    if (xSrc < 0)
+    {
+        pt.x -= xSrc;
+        cx += xSrc;
+        xSrc = 0;
+    }
     if (!cx || !cy) return lines;
 
     /* Update the pixmap from the DIB section */
