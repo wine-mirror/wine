@@ -1446,6 +1446,7 @@ struct wined3d_gl_limits
     UINT lights;
     UINT textures;
     UINT texture_stages;
+    UINT texture_coords;
     UINT fragment_samplers;
     UINT vertex_samplers;
     UINT combined_samplers;

@@ -2287,6 +2287,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     gl_info->limits.blends = 1;
     gl_info->limits.buffers = 1;
     gl_info->limits.textures = 1;
+    gl_info->limits.texture_coords = 1;
     gl_info->limits.fragment_samplers = 1;
     gl_info->limits.vertex_samplers = 0;
     gl_info->limits.combined_samplers = gl_info->limits.fragment_samplers + gl_info->limits.vertex_samplers;
@@ -2465,6 +2466,9 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
         gl_info->limits.textures = min(MAX_TEXTURES, gl_max);
         TRACE_(d3d_caps)("Max textures: %d.\n", gl_info->limits.textures);
+        glGetIntegerv(GL_MAX_TEXTURE_COORDS_ARB, &gl_max);
+        gl_info->limits.texture_coords = min(MAX_TEXTURES, gl_max);
+        TRACE_(d3d_caps)("Max texture coords: %d.\n", gl_info->limits.texture_coords);
 
         if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
         {

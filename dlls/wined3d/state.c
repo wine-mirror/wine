@@ -3222,7 +3222,7 @@ static void unload_tex_coords(const struct wined3d_gl_info *gl_info)
 {
     unsigned int texture_idx;
 
-    for (texture_idx = 0; texture_idx < gl_info->limits.texture_stages; ++texture_idx)
+    for (texture_idx = 0; texture_idx < gl_info->limits.texture_coords; ++texture_idx)
     {
         GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + texture_idx));
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -3243,6 +3243,12 @@ static void load_tex_coords(const struct wined3d_context *context, const struct 
 
         mapped_stage = device->texUnitMap[textureNo];
         if (mapped_stage == WINED3D_UNMAPPED_STAGE) continue;
+
+        if (mapped_stage >= gl_info->limits.texture_coords)
+        {
+            FIXME("Attempted to load unsupported texture coordinate %u\n", mapped_stage);
+            continue;
+        }
 
         if (coordIdx < MAX_TEXTURES && (si->use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coordIdx))))
         {
