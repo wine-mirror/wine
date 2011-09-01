@@ -41,6 +41,7 @@ typedef struct {
     IDirectInput8W *lpDI;
     LPDIACTIONFORMATW lpdiaf;
     DIDevicesData devices_data;
+    int display_only;
 } ConfigureDevicesData;
 
 /*
@@ -115,6 +116,21 @@ static int lv_get_cur_item(HWND dialog)
     return SendDlgItemMessageW(dialog, IDC_DEVICEOBJECTSLIST, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
 }
 
+static int lv_get_item_data(HWND dialog, int index)
+{
+    LVITEMW item;
+
+    if (index < 0) return -1;
+
+    item.mask = LVIF_PARAM;
+    item.iItem = index;
+    item.iSubItem = 0;
+
+    SendDlgItemMessageW(dialog, IDC_DEVICEOBJECTSLIST, LVM_GETITEMW , 0, (LPARAM)&item);
+
+    return item.lParam;
+}
+
 static void lv_set_action(HWND dialog, int item, int action, LPDIACTIONFORMATW lpdiaf)
 {
     static const WCHAR no_action[] = {'-','\0'};
@@ -159,6 +175,12 @@ static LPDIACTIONFORMATW get_cur_lpdiaf(HWND dialog)
 {
     ConfigureDevicesData *data = (ConfigureDevicesData*) GetWindowLongPtrW(dialog, DWLP_USER);
     return data->lpdiaf;
+}
+
+static int dialog_display_only(HWND dialog)
+{
+    ConfigureDevicesData *data = (ConfigureDevicesData*) GetWindowLongPtrW(dialog, DWLP_USER);
+    return data->display_only;
 }
 
 static void init_devices(HWND dialog, IDirectInput8W *lpDI, DIDevicesData *data, LPDIACTIONFORMATW lpdiaf)
@@ -261,6 +283,46 @@ static void show_suitable_actions(HWND dialog)
     }
 }
 
+static void assign_action(HWND dialog)
+{
+    DeviceData *device = get_cur_device(dialog);
+    LPDIACTIONFORMATW lpdiaf = get_cur_lpdiaf(dialog);
+    LVFINDINFOW lvFind;
+    int sel = SendDlgItemMessageW(dialog, IDC_ACTIONLIST, LB_GETCURSEL, 0, 0);
+    int action = SendDlgItemMessageW(dialog, IDC_ACTIONLIST, LB_GETITEMDATA, sel, 0);
+    int obj = lv_get_cur_item(dialog);
+    int old_action = lv_get_item_data(dialog, obj);
+    int used_obj;
+
+    DIDEVICEOBJECTINSTANCEW ddo = device->ddo[obj];
+
+    if (old_action == action) return;
+
+    /* Clear old action */
+    if (old_action != -1)
+    {
+        lpdiaf->rgoAction[old_action].dwObjID = 0;
+        lpdiaf->rgoAction[old_action].guidInstance = GUID_NULL;
+        lpdiaf->rgoAction[old_action].dwHow = DIAH_UNMAPPED;
+    }
+
+    /* Find if action text is already set for other object and unset it */
+    lvFind.flags = LVFI_PARAM;
+    lvFind.lParam = action;
+
+    used_obj = SendDlgItemMessageW(dialog, IDC_DEVICEOBJECTSLIST, LVM_FINDITEMW, -1, (LPARAM) &lvFind);
+
+    lv_set_action(dialog, used_obj, -1, lpdiaf);
+
+    /* Set new action */
+    lpdiaf->rgoAction[action].dwObjID = ddo.dwType;
+    lpdiaf->rgoAction[action].guidInstance = device->ddi.guidInstance;
+    lpdiaf->rgoAction[action].dwHow = DIAH_USERCONFIG;
+
+    /* Set new action in the list */
+    lv_set_action(dialog, obj, action, lpdiaf);
+}
+
 static INT_PTR CALLBACK ConfigureDevicesDlgProc(HWND dialog, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch(uMsg)
@@ -295,6 +357,19 @@ static INT_PTR CALLBACK ConfigureDevicesDlgProc(HWND dialog, UINT uMsg, WPARAM w
 
             switch(LOWORD(wParam))
             {
+
+                case IDC_ACTIONLIST:
+
+                    switch (HIWORD(wParam))
+                    {
+                        case LBN_DBLCLK:
+                            /* Ignore this if app did not ask for editing */
+                            if (dialog_display_only(dialog)) break;
+
+                            assign_action(dialog);
+                            break;
+                    }
+                    break;
 
                 case IDC_CONTROLLERCOMBO:
 
@@ -335,6 +410,7 @@ HRESULT _configure_devices(IDirectInput8W *iface,
     ConfigureDevicesData data;
     data.lpDI = iface;
     data.lpdiaf = lpdiCDParams->lprgFormats;
+    data.display_only = !(dwFlags & DICD_EDIT);
 
     InitCommonControls();
 
