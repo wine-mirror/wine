@@ -4287,6 +4287,20 @@ static void test_SetDIBitsToDevice(void)
     memset( dib_bits, 0xaa, 64 * 4 );
     SetMapMode( hdc, MM_TEXT );
 
+    if (pSetLayout)
+    {
+        pSetLayout( hdc, LAYOUT_RTL );
+        ret = SetDIBitsToDevice( hdc, 1, 2, 3, 2, 1, 2, 1, 5, data, info, DIB_RGB_COLORS );
+        ok( ret == 3, "got %d\n", ret );
+        for (i = 0; i < 64; i++)
+            if (i == 36 || i == 37 || i == 38 || i == 44 || i == 45 || i == 46)
+                ok( dib_bits[i] == data[i - 27], "%d: got %08x\n", i, dib_bits[i] );
+            else
+                ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+        memset( dib_bits, 0xaa, 64 * 4 );
+        pSetLayout( hdc, LAYOUT_LTR );
+    }
+
     /* t-d -> b-u */
     info->bmiHeader.biHeight = -8;
     ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 0, 8, data, info, DIB_RGB_COLORS );

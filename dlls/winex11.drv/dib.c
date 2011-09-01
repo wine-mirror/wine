@@ -3737,6 +3737,7 @@ INT X11DRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDest, DWORD cx, DWORD
     pt.x = xDest;
     pt.y = yDest;
     LPtoDP(dev->hdc, &pt, 1);
+    if (GetLayout( dev->hdc ) & LAYOUT_RTL) pt.x -= cx - 1;
 
     if (!lines || (startscan >= height)) return 0;
     if (!top_down && startscan + lines > height) lines = height - startscan;
