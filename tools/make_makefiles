@@ -51,7 +51,6 @@ my %bin_install =
 my %dont_install =
 (
   "cmdlgtst" => 1,
-  "view" => 1,
   "winetest" => 1,
 );
 

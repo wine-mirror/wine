@@ -15256,7 +15256,7 @@ wine_fn_config_program taskmgr enable_taskmgr install,po
 wine_fn_config_program termsv enable_termsv install
 wine_fn_config_program uninstaller enable_uninstaller install,po
 wine_fn_config_program unlodctr enable_unlodctr install
-wine_fn_config_program view enable_view po
+wine_fn_config_program view enable_view install,po
 wine_fn_config_program wineboot enable_wineboot install,installbin,manpage
 wine_fn_config_program winebrowser enable_winebrowser install
 wine_fn_config_program winecfg enable_winecfg install,installbin,manpage,po
