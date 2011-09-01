@@ -1024,7 +1024,7 @@ then
         if test "$ac_cv_header_X11_extensions_Xrandr_h" = "yes" -a "x$ac_cv_lib_soname_Xrender" != "x"
         then
                 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <X11/Xlib.h>
-#include <X11/extensions/Xrandr.h>]], [[static typeof(XRRSetScreenConfigAndRate) * func;]])],
+#include <X11/extensions/Xrandr.h>]], [[static typeof(XRRSetScreenConfigAndRate) * func; if (func) return 0;]])],
                   [WINE_CHECK_SONAME(Xrandr,XRRQueryExtension,,,[$X_LIBS $XLIB $X_EXTRA_LIBS])])
         fi
         WINE_NOTICE_WITH(xrandr,[test "x$ac_cv_lib_soname_Xrandr" = "x"],
@@ -1034,7 +1034,7 @@ then
         if test "$ac_cv_header_X11_extensions_Xinerama_h" = "yes"
         then
                 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <X11/Xlib.h>
-#include <X11/extensions/Xinerama.h>]], [[static typeof(XineramaQueryScreens) * func;]])],
+#include <X11/extensions/Xinerama.h>]], [[static typeof(XineramaQueryScreens) * func; if (func) return 0;]])],
                   [WINE_CHECK_SONAME(Xinerama,XineramaQueryScreens,,,[$X_LIBS $XLIB $X_EXTRA_LIBS])])
         fi
         WINE_NOTICE_WITH(xinerama,[test "x$ac_cv_lib_soname_Xinerama" = "x"],
@@ -1068,7 +1068,7 @@ then
 	then
 	    dnl Check for some problems due to old Mesa versions
 	    AC_CACHE_CHECK([for up-to-date OpenGL version], wine_cv_opengl_header_version_OK,
-	      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <GL/gl.h>]], [[GLenum test = GL_UNSIGNED_SHORT_5_6_5;]])],
+	      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <GL/gl.h>]], [[GLenum test = GL_UNSIGNED_SHORT_5_6_5;  return (test == GL_UNSIGNED_SHORT_5_6_5);]])],
 		[wine_cv_opengl_header_version_OK="yes"],
 		[wine_cv_opengl_header_version_OK="no"]))
 
@@ -1235,7 +1235,7 @@ then
         CPPFLAGS="$CPPFLAGS $ac_gnutls_cflags"
     fi
     AC_CHECK_HEADER(gnutls/gnutls.h,
-        [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <gnutls/gnutls.h>]], [[typeof(gnutls_mac_get_key_size) *pfunc;]])],
+        [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <gnutls/gnutls.h>]], [[static typeof(gnutls_mac_get_key_size) *func; if (func) return 0;]])],
             [WINE_CHECK_SONAME(gnutls,gnutls_global_init,
                 [AC_SUBST(GNUTLSINCL,"$ac_gnutls_cflags")],,[$ac_gnutls_libs])])])
     CPPFLAGS="$ac_save_CPPFLAGS"
@@ -1458,7 +1458,7 @@ then
           [AC_CHECK_HEADER([gst/app/gstappsink.h],
              [AC_MSG_CHECKING([whether gint64 defined by gst/app/gstappsink.h is indeed 64-bit])
               AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <gst/app/gstappsink.h>]],
-                                                 [[int a[sizeof(gint64) > 4 ? 1 : -1]]])],
+                                                 [[static int a[sizeof(gint64) > 4 ? 1 : -1]; if (a[0]) return 0;]])],
                 [AC_MSG_RESULT([yes])
                  AC_CHECK_LIB(gstreamer-0.10,gst_pad_get_caps_reffed,
                    [AC_CHECK_LIB(gstapp-0.10,gst_app_buffer_new,

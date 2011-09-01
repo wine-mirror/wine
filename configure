@@ -8425,7 +8425,7 @@ fi
 int
 main ()
 {
-static typeof(XRRSetScreenConfigAndRate) * func;
+static typeof(XRRSetScreenConfigAndRate) * func; if (func) return 0;
   ;
   return 0;
 }
@@ -8502,7 +8502,7 @@ fi
 int
 main ()
 {
-static typeof(XineramaQueryScreens) * func;
+static typeof(XineramaQueryScreens) * func; if (func) return 0;
   ;
   return 0;
 }
@@ -8691,7 +8691,7 @@ else
 int
 main ()
 {
-GLenum test = GL_UNSIGNED_SHORT_5_6_5;
+GLenum test = GL_UNSIGNED_SHORT_5_6_5;  return (test == GL_UNSIGNED_SHORT_5_6_5);
   ;
   return 0;
 }
@@ -9520,7 +9520,7 @@ if test "x$ac_cv_header_gnutls_gnutls_h" = xyes; then :
 int
 main ()
 {
-typeof(gnutls_mac_get_key_size) *pfunc;
+static typeof(gnutls_mac_get_key_size) *func; if (func) return 0;
   ;
   return 0;
 }
@@ -10535,7 +10535,7 @@ $as_echo_n "checking whether gint64 defined by gst/app/gstappsink.h is indeed 64
 int
 main ()
 {
-int a[sizeof(gint64) > 4 ? 1 : -1]
+static int a[sizeof(gint64) > 4 ? 1 : -1]; if (a[0]) return 0;
   ;
   return 0;
 }
