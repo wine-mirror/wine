@@ -666,7 +666,7 @@ static void test_FindMimeFromData(void)
         hres = pFindMimeFromData(NULL, mime_tests[i].url, NULL, 0, NULL, 0, &mime, 0);
         if(mime_tests[i].mime) {
             ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
-            ok(!lstrcmpW(mime, mime_tests[i].mime), "[%d] wrong mime\n", i);
+            ok(!lstrcmpW(mime, mime_tests[i].mime), "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
             CoTaskMemFree(mime);
         }else {
             ok(hres == E_FAIL || hres == mime_tests[i].hres,
@@ -678,13 +678,13 @@ static void test_FindMimeFromData(void)
         mime = (LPWSTR)0xf0f0f0f0;
         hres = pFindMimeFromData(NULL, mime_tests[i].url, NULL, 0, mimeTextPlain, 0, &mime, 0);
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
-        ok(!lstrcmpW(mime, mimeTextPlain), "[%d] wrong mime\n", i);
+        ok(!lstrcmpW(mime, mimeTextPlain), "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
         CoTaskMemFree(mime);
 
         mime = (LPWSTR)0xf0f0f0f0;
         hres = pFindMimeFromData(NULL, mime_tests[i].url, NULL, 0, mimeAppOctetStream, 0, &mime, 0);
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
-        ok(!lstrcmpW(mime, mimeAppOctetStream), "[%d] wrong mime\n", i);
+        ok(!lstrcmpW(mime, mimeAppOctetStream), "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
         CoTaskMemFree(mime);
     }
 
@@ -700,16 +700,16 @@ static void test_FindMimeFromData(void)
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
         if(!lstrcmpW(mimeAppOctetStream, mime_tests2[i].mime)
            || !lstrcmpW(mimeTextPlain, mime_tests2[i].mime))
-            ok(!lstrcmpW(mime, mimeTextHtml), "[%d] wrong mime\n", i);
+            ok(!lstrcmpW(mime, mimeTextHtml), "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
         else
-            ok(!lstrcmpW(mime, mime_tests2[i].mime), "[%d] wrong mime\n", i);
+            ok(!lstrcmpW(mime, mime_tests2[i].mime), "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
         CoTaskMemFree(mime);
 
         hres = pFindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
                 mimeImagePjpeg, 0, &mime, 0);
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
         if(!lstrcmpW(mimeAppOctetStream, mime_tests2[i].mime) || i == 17)
-            ok(!lstrcmpW(mime, mimeImagePjpeg), "[%d] wrong mime\n", i);
+            ok(!lstrcmpW(mime, mimeImagePjpeg), "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
         else
             ok(!lstrcmpW(mime, mime_tests2[i].mime) ||
                     (mime_tests2[i].mime_alt && !lstrcmpW(mime, mime_tests2[i].mime_alt)),
@@ -720,17 +720,17 @@ static void test_FindMimeFromData(void)
 
     hres = pFindMimeFromData(NULL, url1, data1, sizeof(data1), NULL, 0, &mime, 0);
     ok(hres == S_OK, "FindMimeFromData failed: %08x\n", hres);
-    ok(!lstrcmpW(mime, mimeTextPlain), "wrong mime\n");
+    ok(!lstrcmpW(mime, mimeTextPlain), "wrong mime: %s\n", wine_dbgstr_w(mime));
     CoTaskMemFree(mime);
 
     hres = pFindMimeFromData(NULL, url1, data1, sizeof(data1), mimeAppOctetStream, 0, &mime, 0);
     ok(hres == S_OK, "FindMimeFromData failed: %08x\n", hres);
-    ok(!lstrcmpW(mime, mimeTextPlain), "wrong mime\n");
+    ok(!lstrcmpW(mime, mimeTextPlain), "wrong mime: %s\n", wine_dbgstr_w(mime));
     CoTaskMemFree(mime);
 
     hres = pFindMimeFromData(NULL, url4, data1, sizeof(data1), mimeAppOctetStream, 0, &mime, 0);
     ok(hres == S_OK, "FindMimeFromData failed: %08x\n", hres);
-    ok(!lstrcmpW(mime, mimeTextPlain), "wrong mime\n");
+    ok(!lstrcmpW(mime, mimeTextPlain), "wrong mime: %s\n", wine_dbgstr_w(mime));
     CoTaskMemFree(mime);
 
     hres = pFindMimeFromData(NULL, NULL, NULL, 0, NULL, 0, &mime, 0);
@@ -747,7 +747,7 @@ static void test_FindMimeFromData(void)
 
     hres = pFindMimeFromData(NULL, NULL, data1, 0, mimeTextPlain, 0, &mime, 0);
     ok(hres == S_OK, "FindMimeFromData failed: %08x\n", hres);
-    ok(!lstrcmpW(mime, mimeTextPlain), "wrong mime\n");
+    ok(!lstrcmpW(mime, mimeTextPlain), "wrong mime: %s\n", wine_dbgstr_w(mime));
     CoTaskMemFree(mime);
 
     hres = pFindMimeFromData(NULL, NULL, data1, 0, mimeTextPlain, 0, NULL, 0);
