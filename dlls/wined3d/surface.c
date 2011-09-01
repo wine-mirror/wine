@@ -5312,8 +5312,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* The only case where both surfaces on a swapchain are supported is a back buffer -> front buffer blit on the same swapchain */
-    if (dstSwapchain && dstSwapchain == srcSwapchain && dstSwapchain->back_buffers
+    /* The only case where both surfaces on a swapchain are supported is a
+     * back buffer -> front buffer blit on the same swapchain. */
+    if (dstSwapchain && dstSwapchain->back_buffers
             && dst_surface == dstSwapchain->front_buffer
             && src_surface == dstSwapchain->back_buffers[0])
     {
