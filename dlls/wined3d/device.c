@@ -2278,7 +2278,7 @@ HRESULT CDECL wined3d_device_set_clip_plane(struct wined3d_device *device, UINT 
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_clip_plane(struct wined3d_device *device, UINT plane_idx, float *plane)
+HRESULT CDECL wined3d_device_get_clip_plane(const struct wined3d_device *device, UINT plane_idx, float *plane)
 {
     TRACE("device %p, plane_idx %u, plane %p.\n", device, plane_idx, plane);
 
