@@ -348,7 +348,7 @@ static ULONG WINAPI VBScriptParse_Release(IActiveScriptParse *iface)
 static HRESULT WINAPI VBScriptParse_InitNew(IActiveScriptParse *iface)
 {
     VBScript *This = impl_from_IActiveScriptParse(iface);
-    script_ctx_t *ctx;
+    script_ctx_t *ctx, *old_ctx;
 
     TRACE("(%p)\n", This);
 
@@ -359,8 +359,8 @@ static HRESULT WINAPI VBScriptParse_InitNew(IActiveScriptParse *iface)
     if(!ctx)
         return E_OUTOFMEMORY;
 
-    ctx = InterlockedCompareExchangePointer((void**)&This->ctx, ctx, NULL);
-    if(ctx) {
+    old_ctx = InterlockedCompareExchangePointer((void**)&This->ctx, ctx, NULL);
+    if(old_ctx) {
         destroy_script(ctx);
         return E_UNEXPECTED;
     }
