@@ -238,9 +238,9 @@ static HRESULT WINAPI RecycleBinMenu_InvokeCommand(IContextMenu2 *iface,
 {
     RecycleBinMenu *This = impl_from_IContextMenu2(iface);
     LPCSTR verb = pici->lpVerb;
-    if(!HIWORD(verb))
+    if(IS_INTRESOURCE(verb))
     {
-        switch((UINT)verb)
+        switch(LOWORD(verb))
         {
         case IDM_RECYCLEBIN_ERASE:
             DoErase(This);
