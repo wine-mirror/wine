@@ -40,6 +40,7 @@ typedef struct {
 typedef struct {
     IDirectInput8W *lpDI;
     LPDIACTIONFORMATW lpdiaf;
+    LPDIACTIONFORMATW original_lpdiaf;
     DIDevicesData devices_data;
     int display_only;
 } ConfigureDevicesData;
@@ -201,16 +202,21 @@ static void init_devices(HWND dialog, IDirectInput8W *lpDI, DIDevicesData *data,
         SendDlgItemMessageW(dialog, IDC_CONTROLLERCOMBO, CB_ADDSTRING, 0, (LPARAM) data->devices[i].ddi.tszProductName );
 }
 
-static void destroy_devices(HWND dialog)
+static void destroy_data(HWND dialog)
 {
     int i;
     ConfigureDevicesData *data = (ConfigureDevicesData*) GetWindowLongPtrW(dialog, DWLP_USER);
     DIDevicesData *devices_data = &data->devices_data;
 
+    /* Free the devices */
     for (i=0; i < devices_data->ndevices; i++)
         IDirectInputDevice8_Release(devices_data->devices[i].lpdid);
 
     HeapFree(GetProcessHeap(), 0, devices_data->devices);
+
+    /* Free the backup LPDIACTIONFORMATW  */
+    HeapFree(GetProcessHeap(), 0, data->original_lpdiaf->rgoAction);
+    HeapFree(GetProcessHeap(), 0, data->original_lpdiaf);
 }
 
 static void fill_device_object_list(HWND dialog)
@@ -323,6 +329,26 @@ static void assign_action(HWND dialog)
     lv_set_action(dialog, obj, action, lpdiaf);
 }
 
+static void copy_actions(LPDIACTIONFORMATW to, LPDIACTIONFORMATW from)
+{
+    int i;
+    for (i=0; i < from->dwNumActions; i++)
+    {
+        to->rgoAction[i].guidInstance = from->rgoAction[i].guidInstance;
+        to->rgoAction[i].dwObjID = from->rgoAction[i].dwObjID;
+        to->rgoAction[i].dwHow = from->rgoAction[i].dwHow;
+        to->rgoAction[i].lptszActionName = from->rgoAction[i].lptszActionName;
+    }
+}
+
+static void reset_actions(HWND dialog)
+{
+    ConfigureDevicesData *data = (ConfigureDevicesData*) GetWindowLongPtrW(dialog, DWLP_USER);
+    LPDIACTIONFORMATW to = data->lpdiaf, from = data->original_lpdiaf;
+
+    copy_actions(to, from);
+}
+
 static INT_PTR CALLBACK ConfigureDevicesDlgProc(HWND dialog, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch(uMsg)
@@ -338,6 +364,12 @@ static INT_PTR CALLBACK ConfigureDevicesDlgProc(HWND dialog, UINT uMsg, WPARAM w
             SetWindowLongPtrW(dialog, DWLP_USER, (LONG_PTR) data);
 
             init_listview_columns(dialog);
+
+            /* Create a backup action format for CANCEL and RESET operations */
+            data->original_lpdiaf = HeapAlloc(GetProcessHeap(), 0, sizeof(LPDIACTIONFORMATW));
+            data->original_lpdiaf->dwNumActions = data->lpdiaf->dwNumActions;
+            data->original_lpdiaf->rgoAction = HeapAlloc(GetProcessHeap(), 0, sizeof(DIACTIONW)*data->lpdiaf->dwNumActions);
+            copy_actions(data->original_lpdiaf, data->lpdiaf);
 
             break;
         }
@@ -383,15 +415,18 @@ static INT_PTR CALLBACK ConfigureDevicesDlgProc(HWND dialog, UINT uMsg, WPARAM w
 
                 case IDOK:
                     EndDialog(dialog, 0);
-                    destroy_devices(dialog);
+                    destroy_data(dialog);
                     break;
 
                 case IDCANCEL:
+                    reset_actions(dialog);
                     EndDialog(dialog, 0);
-                    destroy_devices(dialog);
+                    destroy_data(dialog);
                     break;
 
                 case IDC_RESET:
+                    reset_actions(dialog);
+                    fill_device_object_list(dialog);
                     break;
             }
         break;
