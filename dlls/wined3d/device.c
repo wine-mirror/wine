@@ -2213,7 +2213,7 @@ HRESULT CDECL wined3d_device_set_light_enable(struct wined3d_device *device, UIN
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_light_enable(struct wined3d_device *device, UINT light_idx, BOOL *enable)
+HRESULT CDECL wined3d_device_get_light_enable(const struct wined3d_device *device, UINT light_idx, BOOL *enable)
 {
     UINT hash_idx = LIGHTMAP_HASHFUNC(light_idx);
     struct wined3d_light_info *light_info = NULL;
