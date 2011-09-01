@@ -1955,6 +1955,14 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
+#: dinput.rc:34
+msgid "Action"
+msgstr ""
+
+#: dinput.rc:35
+msgid "Object"
+msgstr ""
+
 #: dxdiagn.rc:25
 msgid "Regional Setting"
 msgstr ""

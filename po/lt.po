@@ -2025,6 +2025,16 @@ msgstr "Numatytasis WaveOut įrenginys"
 msgid "Default MidiOut Device"
 msgstr "Numatytasis MidiOut įrenginys"
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "Aktyvinimas"
+
+#: dinput.rc:35
+#, fuzzy
+msgid "Object"
+msgstr "&Objektas"
+
 #: dxdiagn.rc:25
 msgid "Regional Setting"
 msgstr "Regiono nuostatos"

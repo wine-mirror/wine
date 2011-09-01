@@ -2037,6 +2037,15 @@ msgstr "Standardní zařízení WaveOut"
 msgid "Default MidiOut Device"
 msgstr "Standardní zařízení MidiOut"
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "Volby"
+
+#: dinput.rc:35
+msgid "Object"
+msgstr ""
+
 #: dxdiagn.rc:25
 #, fuzzy
 msgid "Regional Setting"

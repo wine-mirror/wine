@@ -1967,6 +1967,15 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "&Options"
+
+#: dinput.rc:35
+msgid "Object"
+msgstr ""
+
 #: dxdiagn.rc:25
 #, fuzzy
 msgid "Regional Setting"

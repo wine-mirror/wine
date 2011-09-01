@@ -2015,6 +2015,16 @@ msgstr "デフォルト WaveOut デバイス"
 msgid "Default MidiOut Device"
 msgstr "デフォルト MidiOut デバイス"
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "Activation"
+
+#: dinput.rc:35
+#, fuzzy
+msgid "Object"
+msgstr "オブジェクト(&O)"
+
 #: dxdiagn.rc:25
 msgid "Regional Setting"
 msgstr "地域の設定"

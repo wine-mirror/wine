@@ -2010,6 +2010,16 @@ msgstr "Подразумевани WaveOut уређај"
 msgid "Default MidiOut Device"
 msgstr "Подразумевани MidiOut уређај"
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "Локација"
+
+#: dinput.rc:35
+#, fuzzy
+msgid "Object"
+msgstr "Не постоји такав објекат"
+
 #: dxdiagn.rc:25
 #, fuzzy
 msgid "Regional Setting"

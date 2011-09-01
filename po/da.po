@@ -2042,6 +2042,16 @@ msgstr "Standard WaveOut Enhed"
 msgid "Default MidiOut Device"
 msgstr "Standard MidiOut Enhed"
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "Aktivering"
+
+#: dinput.rc:35
+#, fuzzy
+msgid "Object"
+msgstr "&Objekt"
+
 #: dxdiagn.rc:25
 #, fuzzy
 msgid "Regional Setting"

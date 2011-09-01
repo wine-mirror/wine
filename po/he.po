@@ -1984,6 +1984,16 @@ msgstr "התקן ה־WaveOut כבררת מחדל"
 msgid "Default MidiOut Device"
 msgstr "התקן ה־MidiOut כבררת מחדל"
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "הפעלה"
+
+#: dinput.rc:35
+#, fuzzy
+msgid "Object"
+msgstr "&עצם"
+
 #: dxdiagn.rc:25
 msgid "Regional Setting"
 msgstr "הגדרות אזוריות"

@@ -2028,6 +2028,16 @@ msgstr "Périphérique WaveOut par défaut"
 msgid "Default MidiOut Device"
 msgstr "Périphérique MidiOut par défaut"
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "Activation"
+
+#: dinput.rc:35
+#, fuzzy
+msgid "Object"
+msgstr "&Objet"
+
 #: dxdiagn.rc:25
 msgid "Regional Setting"
 msgstr "Paramètres régionaux"

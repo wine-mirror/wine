@@ -2015,6 +2015,16 @@ msgstr "기본 웨이브 출력 장치"
 msgid "Default MidiOut Device"
 msgstr "기본 미디출력 장치"
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "Activation"
+
+#: dinput.rc:35
+#, fuzzy
+msgid "Object"
+msgstr "객체(&O)"
+
 #: dxdiagn.rc:25
 msgid "Regional Setting"
 msgstr "지역 설정"

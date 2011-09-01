@@ -2177,6 +2177,16 @@ msgstr "Dispozitiv WaveOut implicit"
 msgid "Default MidiOut Device"
 msgstr "Dispozitiv MidiOut implicit"
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "Activare"
+
+#: dinput.rc:35
+#, fuzzy
+msgid "Object"
+msgstr "&Obiect"
+
 #: dxdiagn.rc:25
 #, fuzzy
 msgid "Regional Setting"

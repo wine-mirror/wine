@@ -2020,6 +2020,16 @@ msgstr "Звуковий пристрій виводу по замовчуван
 msgid "Default MidiOut Device"
 msgstr "Пристрій виводу Midi по замовчуванні"
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "Активація"
+
+#: dinput.rc:35
+#, fuzzy
+msgid "Object"
+msgstr "&Об'єкт"
+
 #: dxdiagn.rc:25
 msgid "Regional Setting"
 msgstr "Регіональні Налаштування"

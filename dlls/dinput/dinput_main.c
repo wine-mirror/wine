@@ -1008,7 +1008,8 @@ static HRESULT WINAPI IDirectInput8WImpl_ConfigureDevices(
 
     FIXME("(this=%p,%p,%p,%04x,%p): stub\n", This, lpdiCallback, lpdiCDParams, dwFlags, pvRefData);
 
-    return DI_OK;
+    /* Call helper function in config.c to do the real work */
+    return _configure_devices(iface, lpdiCallback, lpdiCDParams, dwFlags, pvRefData);
 }
 
 static HRESULT WINAPI IDirectInput8AImpl_ConfigureDevices(

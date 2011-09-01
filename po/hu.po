@@ -2060,6 +2060,16 @@ msgstr "Alapértelmezett WaveOut eszköz"
 msgid "Default MidiOut Device"
 msgstr "Alapértelmezett MidiOut eszköz"
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "Hely"
+
+#: dinput.rc:35
+#, fuzzy
+msgid "Object"
+msgstr "Tárgy típus="
+
 #: dxdiagn.rc:25
 msgid "Regional Setting"
 msgstr ""

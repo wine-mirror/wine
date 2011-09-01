@@ -1,5 +1,5 @@
 /*
- * Copyright 2001 Ove Kaaven
+ * Copyright (c) 2011 Lucas Fialho Zawacki
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,11 +16,25 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define WINE_FILEDESCRIPTION_STR "Wine DirectInput"
-#define WINE_FILENAME_STR "dinput.dll"
-#define WINE_FILEVERSION 5,1,2600,881
-#define WINE_FILEVERSION_STR "5.1.2600.881"
-#define WINE_PRODUCTVERSION 5,1,2600,881
-#define WINE_PRODUCTVERSION_STR "5.1"
+#include "wine/debug.h"
+#include "wine/unicode.h"
+#include "objbase.h"
+#include "dinput_private.h"
+#include "device_private.h"
+#include "resource.h"
 
-#include "wine/wine_common_ver.rc"
+WINE_DEFAULT_DEBUG_CHANNEL(dinput);
+
+HRESULT _configure_devices(IDirectInput8W *iface,
+                           LPDICONFIGUREDEVICESCALLBACK lpdiCallback,
+                           LPDICONFIGUREDEVICESPARAMSW lpdiCDParams,
+                           DWORD dwFlags,
+                           LPVOID pvRefData
+)
+{
+    InitCommonControls();
+
+    DialogBoxParamW(GetModuleHandleA("dinput.dll"), (LPCWSTR) MAKEINTRESOURCE(IDD_CONFIGUREDEVICES), lpdiCDParams->hwnd, 0, 0);
+
+    return DI_OK;
+}

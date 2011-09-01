@@ -1,9 +1,10 @@
 MODULE    = dinput.dll
 IMPORTLIB = dinput
-IMPORTS   = dxguid uuid ole32 user32 advapi32
+IMPORTS   = dxguid uuid comctl32 ole32 user32 advapi32
 EXTRALIBS = @IOKITLIB@
 
 C_SRCS = \
+	config.c \
 	data_formats.c \
 	device.c \
 	dinput_main.c \
@@ -19,6 +20,10 @@ IMPLIB_SRCS = data_formats.c
 
 IDL_R_SRCS = dinput_classes.idl
 
-RC_SRCS = version.rc
+PO_SRCS = dinput.rc
+
+RC_SRCS = \
+	dinput.rc \
+	dinput_En.rc
 
 @MAKE_DLL_RULES@

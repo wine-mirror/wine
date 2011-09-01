@@ -2019,6 +2019,16 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "LAN Bağlantısı"
+
+#: dinput.rc:35
+#, fuzzy
+msgid "Object"
+msgstr "Böyle Bir Nesne Yok"
+
 #: dxdiagn.rc:25
 #, fuzzy
 msgid "Regional Setting"

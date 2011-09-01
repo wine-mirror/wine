@@ -2014,6 +2014,16 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "激活"
+
+#: dinput.rc:35
+#, fuzzy
+msgid "Object"
+msgstr "對象(&O)"
+
 #: dxdiagn.rc:25
 #, fuzzy
 msgid "Regional Setting"

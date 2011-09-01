@@ -2033,6 +2033,16 @@ msgstr "Dispositivo WaveOut por defecto"
 msgid "Default MidiOut Device"
 msgstr "Dispositivo MidiOut por defecto"
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "Ubicación"
+
+#: dinput.rc:35
+#, fuzzy
+msgid "Object"
+msgstr "No existe dicho objeto"
+
 #: dxdiagn.rc:25
 #, fuzzy
 msgid "Regional Setting"

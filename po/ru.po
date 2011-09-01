@@ -2021,6 +2021,16 @@ msgstr "Звуковое устройство вывода по умолчани
 msgid "Default MidiOut Device"
 msgstr "Устройство вывода MIDI по умолчанию"
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "Activation"
+
+#: dinput.rc:35
+#, fuzzy
+msgid "Object"
+msgstr "&Объект"
+
 #: dxdiagn.rc:25
 msgid "Regional Setting"
 msgstr "Региональные настройки"

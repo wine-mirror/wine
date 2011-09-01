@@ -2019,6 +2019,16 @@ msgstr "Standard WaveOut - Gerät"
 msgid "Default MidiOut Device"
 msgstr "Standard MidiOut - Gerät"
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "Aktivierung"
+
+#: dinput.rc:35
+#, fuzzy
+msgid "Object"
+msgstr "&Objekt"
+
 #: dxdiagn.rc:25
 msgid "Regional Setting"
 msgstr "Regionale Einstellungen"

@@ -2132,6 +2132,16 @@ msgstr "Dispositivo padrão WaveOut"
 msgid "Default MidiOut Device"
 msgstr "Dispositivo padrão MidiOut"
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "Activação"
+
+#: dinput.rc:35
+#, fuzzy
+msgid "Object"
+msgstr "&Objecto"
+
 #: dxdiagn.rc:25
 #, fuzzy
 msgid "Regional Setting"

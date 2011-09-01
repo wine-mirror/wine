@@ -2030,6 +2030,16 @@ msgstr "Privzeta naprava WaveIzh"
 msgid "Default MidiOut Device"
 msgstr "Privzeta naprava MidiIzh"
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "Omogočenje"
+
+#: dinput.rc:35
+#, fuzzy
+msgid "Object"
+msgstr "&Predmet"
+
 #: dxdiagn.rc:25
 #, fuzzy
 msgid "Regional Setting"

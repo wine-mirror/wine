@@ -2028,6 +2028,16 @@ msgstr "Förvald WaveOut-enhet"
 msgid "Default MidiOut Device"
 msgstr "Förvald MidiOut-enhet"
 
+#: dinput.rc:34
+#, fuzzy
+msgid "Action"
+msgstr "Aktivering"
+
+#: dinput.rc:35
+#, fuzzy
+msgid "Object"
+msgstr "&Objekt"
+
 #: dxdiagn.rc:25
 msgid "Regional Setting"
 msgstr "Regional inställning"
