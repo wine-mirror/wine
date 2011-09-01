@@ -785,6 +785,7 @@ static void TB_AddButtonsFromFlags(HHInfo *pHHInfo, TBBUTTON *pButtons, DWORD dw
     int nHistBitmaps = 0, nStdBitmaps = 0, nHHBitmaps = 0;
     HWND hToolbar = pHHInfo->WinType.hwndToolBar;
     TBADDBITMAP tbAB;
+    DWORD unsupported;
 
     /* Common bitmaps */
     tbAB.hInst = HINST_COMMCTRL;
@@ -798,6 +799,14 @@ static void TB_AddButtonsFromFlags(HHInfo *pHHInfo, TBBUTTON *pButtons, DWORD dw
     nHHBitmaps = SendMessageW(hToolbar, TB_ADDBITMAP, 0, (LPARAM)&tbAB);
 
     *pdwNumButtons = 0;
+
+    unsupported = dwButtonFlags & (HHWIN_BUTTON_BROWSE_FWD |
+        HHWIN_BUTTON_BROWSE_BCK | HHWIN_BUTTON_NOTES | HHWIN_BUTTON_CONTENTS |
+        HHWIN_BUTTON_INDEX | HHWIN_BUTTON_SEARCH | HHWIN_BUTTON_HISTORY |
+        HHWIN_BUTTON_FAVORITES | HHWIN_BUTTON_JUMP1 | HHWIN_BUTTON_JUMP2 |
+        HHWIN_BUTTON_ZOOM | HHWIN_BUTTON_TOC_NEXT | HHWIN_BUTTON_TOC_PREV);
+    if (unsupported)
+        FIXME("got asked for unsupported buttons: %06x\n", unsupported);
 
     if (dwButtonFlags & HHWIN_BUTTON_EXPAND)
     {
