@@ -4508,7 +4508,7 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
     else
     {
         args->ps_signature = ~0;
-        if (!device->vs_clipping)
+        if (!device->vs_clipping && device->adapter->fragment_pipe == &arbfp_fragment_pipeline)
         {
             args->clip.boolclip.clip_texcoord = ffp_clip_emul(state) ? gl_info->limits.texture_stages : 0;
         }
