@@ -943,7 +943,7 @@ static HRESULT WINAPI JScriptSafety_SetInterfaceSafetyOptions(IObjectSafety *ifa
     if(dwOptionSetMask & ~SUPPORTED_OPTIONS)
         return E_FAIL;
 
-    This->safeopt = dwEnabledOptions & dwEnabledOptions;
+    This->safeopt = (dwEnabledOptions & dwOptionSetMask) | (This->safeopt & ~dwOptionSetMask) | INTERFACE_USES_DISPEX;
     return S_OK;
 }
 

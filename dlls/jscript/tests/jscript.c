@@ -329,6 +329,38 @@ static void test_safety(IUnknown *unk)
     ok(enabled == (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER),
        "enabled=%x\n", enabled);
 
+    hres = IObjectSafety_SetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse, INTERFACESAFE_FOR_UNTRUSTED_DATA, 0);
+    ok(hres == S_OK, "SetInterfaceSafetyOptions failed: %08x\n", hres);
+
+    supported = enabled = 0xdeadbeef;
+    hres = IObjectSafety_GetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse, &supported, &enabled);
+    ok(hres == S_OK, "GetInterfaceSafetyOptions failed: %08x\n", hres);
+    ok(supported == (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER),
+       "supported=%x\n", supported);
+    ok(enabled == (INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER), "enabled=%x\n", enabled);
+
+    hres = IObjectSafety_SetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse,
+            INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER, 0);
+    ok(hres == S_OK, "SetInterfaceSafetyOptions failed: %08x\n", hres);
+
+    supported = enabled = 0xdeadbeef;
+    hres = IObjectSafety_GetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse, &supported, &enabled);
+    ok(hres == S_OK, "GetInterfaceSafetyOptions failed: %08x\n", hres);
+    ok(supported == (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER),
+       "supported=%x\n", supported);
+    ok(enabled == INTERFACE_USES_DISPEX, "enabled=%x\n", enabled);
+
+    hres = IObjectSafety_SetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse,
+            INTERFACE_USES_DISPEX, 0);
+    ok(hres == S_OK, "SetInterfaceSafetyOptions failed: %08x\n", hres);
+
+    supported = enabled = 0xdeadbeef;
+    hres = IObjectSafety_GetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse, &supported, &enabled);
+    ok(hres == S_OK, "GetInterfaceSafetyOptions failed: %08x\n", hres);
+    ok(supported == (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER),
+       "supported=%x\n", supported);
+    ok(enabled == INTERFACE_USES_DISPEX, "enabled=%x\n", enabled);
+
     IObjectSafety_Release(safety);
 }
 
