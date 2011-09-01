@@ -46,6 +46,16 @@ typedef struct {
 /*
  * Enumeration callback functions
  */
+static BOOL CALLBACK collect_objects(LPCDIDEVICEOBJECTINSTANCEW lpddo, LPVOID pvRef)
+{
+    DeviceData *data = (DeviceData*) pvRef;
+
+    data->ddo[data->nobjects] = *lpddo;
+
+    data->nobjects++;
+    return DIENUM_CONTINUE;
+}
+
 static BOOL CALLBACK count_devices(LPCDIDEVICEINSTANCEW lpddi, IDirectInputDevice8W *lpdid, DWORD dwFlags, DWORD dwRemaining, LPVOID pvRef)
 {
     DIDevicesData *data = (DIDevicesData*) pvRef;
@@ -63,13 +73,89 @@ static BOOL CALLBACK collect_devices(LPCDIDEVICEINSTANCEW lpddi, IDirectInputDev
 
     IDirectInputDevice_AddRef(lpdid);
 
+    device->nobjects = 0;
+    IDirectInputDevice_EnumObjects(lpdid, collect_objects, (LPVOID) device, DIDFT_ALL);
+
     data->ndevices++;
     return DIENUM_CONTINUE;
 }
 
 /*
+ * Listview utility functions
+ */
+static void init_listview_columns(HWND dialog)
+{
+    HINSTANCE hinstance = (HINSTANCE) GetWindowLongPtrW(dialog, GWLP_HINSTANCE);
+    LVCOLUMNW listColumn;
+    RECT viewRect;
+    int width;
+    WCHAR column[MAX_PATH];
+
+    GetClientRect(GetDlgItem(dialog, IDC_DEVICEOBJECTSLIST), &viewRect);
+    width = (viewRect.right - viewRect.left)/2;
+
+    LoadStringW(hinstance, IDS_OBJECTCOLUMN, column, sizeof(column)/sizeof(column[0]));
+    listColumn.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
+    listColumn.pszText = column;
+    listColumn.cchTextMax = lstrlenW(listColumn.pszText);
+    listColumn.cx = width;
+
+    SendDlgItemMessageW (dialog, IDC_DEVICEOBJECTSLIST, LVM_INSERTCOLUMNW, 0, (LPARAM) &listColumn);
+
+    LoadStringW(hinstance, IDS_ACTIONCOLUMN, column, sizeof(column)/sizeof(column[0]));
+    listColumn.cx = width;
+    listColumn.pszText = column;
+    listColumn.cchTextMax = lstrlenW(listColumn.pszText);
+
+    SendDlgItemMessageW(dialog, IDC_DEVICEOBJECTSLIST, LVM_INSERTCOLUMNW, 1, (LPARAM) &listColumn);
+}
+
+static void lv_set_action(HWND dialog, int item, int action, LPDIACTIONFORMATW lpdiaf)
+{
+    static const WCHAR no_action[] = {'-','\0'};
+    const WCHAR *action_text = no_action;
+    LVITEMW lvItem;
+
+    if (item < 0) return;
+
+    if (action != -1)
+        action_text = lpdiaf->rgoAction[action].lptszActionName;
+
+    /* Keep the action and text in the listview item */
+    lvItem.iItem = item;
+
+    lvItem.mask = LVIF_PARAM;
+    lvItem.iSubItem = 0;
+    lvItem.lParam = (LPARAM) action;
+
+    /* Action index */
+    SendDlgItemMessageW(dialog, IDC_DEVICEOBJECTSLIST, LVM_SETITEMW, 0, (LPARAM) &lvItem);
+
+    lvItem.mask = LVIF_TEXT;
+    lvItem.iSubItem = 1;
+    lvItem.pszText = (WCHAR *)action_text;
+    lvItem.cchTextMax = lstrlenW(lvItem.pszText);
+
+    /* Text */
+    SendDlgItemMessageW(dialog, IDC_DEVICEOBJECTSLIST, LVM_SETITEMW, 0, (LPARAM) &lvItem);
+}
+
+/*
  * Utility functions
  */
+static DeviceData* get_cur_device(HWND dialog)
+{
+    ConfigureDevicesData *data = (ConfigureDevicesData*) GetWindowLongPtrW(dialog, DWLP_USER);
+    int sel = SendDlgItemMessageW(dialog, IDC_CONTROLLERCOMBO, CB_GETCURSEL, 0, 0);
+    return &data->devices_data.devices[sel];
+}
+
+static LPDIACTIONFORMATW get_cur_lpdiaf(HWND dialog)
+{
+    ConfigureDevicesData *data = (ConfigureDevicesData*) GetWindowLongPtrW(dialog, DWLP_USER);
+    return data->lpdiaf;
+}
+
 static void init_devices(HWND dialog, IDirectInput8W *lpDI, DIDevicesData *data, LPDIACTIONFORMATW lpdiaf)
 {
     int i;
@@ -100,6 +186,45 @@ static void destroy_devices(HWND dialog)
     HeapFree(GetProcessHeap(), 0, devices_data->devices);
 }
 
+static void fill_device_object_list(HWND dialog)
+{
+    DeviceData *device = get_cur_device(dialog);
+    LPDIACTIONFORMATW lpdiaf = get_cur_lpdiaf(dialog);
+    LVITEMW item;
+    int i, j;
+
+    /* Clean the listview */
+    SendDlgItemMessageW(dialog, IDC_DEVICEOBJECTSLIST, LVM_DELETEALLITEMS, 0, 0);
+
+    /* Add each object */
+    for (i=0; i < device->nobjects; i++)
+    {
+        int action = -1;
+
+        item.mask = LVIF_TEXT | LVIF_PARAM;
+        item.iItem = i;
+        item.iSubItem = 0;
+        item.pszText = device->ddo[i].tszName;
+        item.cchTextMax = lstrlenW(item.pszText);
+
+        /* Add the item */
+        SendDlgItemMessageW(dialog, IDC_DEVICEOBJECTSLIST, LVM_INSERTITEMW, 0, (LPARAM) &item);
+
+        /* Search for an assigned action  for this device */
+        for (j=0; j < lpdiaf->dwNumActions; j++)
+        {
+            if (IsEqualGUID(&lpdiaf->rgoAction[j].guidInstance, &device->ddi.guidInstance) &&
+                lpdiaf->rgoAction[j].dwObjID == device->ddo[i].dwType)
+            {
+                action = j;
+                break;
+            }
+        }
+
+        lv_set_action(dialog, i, action, lpdiaf);
+    }
+}
+
 static INT_PTR CALLBACK ConfigureDevicesDlgProc(HWND dialog, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch(uMsg)
@@ -114,12 +239,25 @@ static INT_PTR CALLBACK ConfigureDevicesDlgProc(HWND dialog, UINT uMsg, WPARAM w
             /* Store information in the window */
             SetWindowLongPtrW(dialog, DWLP_USER, (LONG_PTR) data);
 
+            init_listview_columns(dialog);
+
             break;
         }
         case WM_COMMAND:
 
             switch(LOWORD(wParam))
             {
+
+                case IDC_CONTROLLERCOMBO:
+
+                    switch (HIWORD(wParam))
+                    {
+                        case CBN_SELCHANGE:
+                            fill_device_object_list(dialog);
+                            break;
+                    }
+                    break;
+
                 case IDOK:
                     EndDialog(dialog, 0);
                     destroy_devices(dialog);
