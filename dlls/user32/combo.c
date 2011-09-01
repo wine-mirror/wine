@@ -2112,14 +2112,24 @@ LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 		return SendMessageW(lphc->hWndLBox, LB_GETLOCALE, 0, 0);
 	case CB_SETLOCALE:
 		return SendMessageW(lphc->hWndLBox, LB_SETLOCALE, wParam, 0);
+	case CB_SETDROPPEDWIDTH:
+		if( (CB_GETTYPE(lphc) == CBS_SIMPLE) ||
+		    (INT)wParam >= 32768 )
+		    return CB_ERR;
+		/* new value must be higher than combobox width */
+		if((INT)wParam >= lphc->droppedRect.right - lphc->droppedRect.left)
+		    lphc->droppedWidth = wParam;
+		else if(wParam)
+		    lphc->droppedWidth = 0;
+
+		/* recalculate the combobox area */
+		CBCalcPlacement(hwnd, lphc, &lphc->textRect, &lphc->buttonRect, &lphc->droppedRect );
+
+		/* fall through */
 	case CB_GETDROPPEDWIDTH:
 		if( lphc->droppedWidth )
                     return  lphc->droppedWidth;
 		return  lphc->droppedRect.right - lphc->droppedRect.left;
-	case CB_SETDROPPEDWIDTH:
-		if( (CB_GETTYPE(lphc) != CBS_SIMPLE) &&
-		    (INT)wParam < 32768 ) lphc->droppedWidth = (INT)wParam;
-		return  CB_ERR;
 	case CB_GETDROPPEDCONTROLRECT:
 		if( lParam ) CBGetDroppedControlRect(lphc, (LPRECT)lParam );
 		return  CB_OKAY;
