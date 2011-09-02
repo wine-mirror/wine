@@ -2413,6 +2413,54 @@ static void test_dynamic_properties(IHTMLElement *elem)
     SysFreeString(attr1);
 }
 
+static void test_attr_collection_disp(IDispatch *disp)
+{
+    IDispatchEx *dispex;
+    IHTMLDOMAttribute *attr;
+    DISPPARAMS dp = {NULL, NULL, 0, 0};
+    VARIANT var;
+    EXCEPINFO ei;
+    DISPID id;
+    BSTR bstr;
+    HRESULT hres;
+
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "QueryInterface failed: %08x\n", hres);
+
+    bstr = a2bstr("0");
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &id);
+    ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
+    SysFreeString(bstr);
+
+    VariantInit(&var);
+    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, INVOKE_PROPERTYGET, &dp, &var, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH, "V_VT(var)=%d\n", V_VT(&var));
+    ok(V_DISPATCH(&var) != NULL, "V_DISPATCH(var) == NULL\n");
+    VariantClear(&var);
+
+    bstr = a2bstr("attr1");
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &id);
+    ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
+    SysFreeString(bstr);
+
+    VariantInit(&var);
+    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, INVOKE_PROPERTYGET, &dp, &var, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH, "V_VT(var)=%d\n", V_VT(&var));
+    ok(V_DISPATCH(&var) != NULL, "V_DISPATCH(var) == NULL\n");
+    hres = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IHTMLDOMAttribute, (void**)&attr);
+    ok(hres == S_OK, "QueryInterface failed: %08x\n", hres);
+    hres = IHTMLDOMAttribute_get_nodeName(attr, &bstr);
+    ok(hres == S_OK, "get_nodeName failed: %08x\n", hres);
+    ok(!strcmp_wa(bstr, "attr1"), "node name is %s, expected attr1\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    IHTMLDOMAttribute_Release(attr);
+    VariantClear(&var);
+
+    IDispatchEx_Release(dispex);
+}
+
 static void test_attr_collection(IHTMLElement *elem)
 {
     static const WCHAR testW[] = {'t','e','s','t',0};
@@ -2515,6 +2563,8 @@ static void test_attr_collection(IHTMLElement *elem)
     hres = IHTMLAttributeCollection_item(attr_col, &id, &attr);
     ok(hres == E_INVALIDARG, "item failed: %08x\n", hres);
     VariantClear(&id);
+
+    test_attr_collection_disp(disp);
 
     IDispatch_Release(disp);
     IHTMLAttributeCollection_Release(attr_col);
