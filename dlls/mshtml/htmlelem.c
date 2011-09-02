@@ -2403,8 +2403,26 @@ static HRESULT WINAPI HTMLAttributeCollection2_getNamedItem(IHTMLAttributeCollec
         IHTMLDOMAttribute **newretNode)
 {
     HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection2(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(bstrName), newretNode);
-    return E_NOTIMPL;
+    HTMLDOMAttribute *attr;
+    DISPID id;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrName), newretNode);
+
+    hres = get_attr_dispid_by_name(This, bstrName, &id);
+    if(hres == DISP_E_UNKNOWNNAME) {
+        *newretNode = NULL;
+        return S_OK;
+    } else if(FAILED(hres)) {
+        return hres;
+    }
+
+    hres = get_domattr(This->elem, id, &attr);
+    if(FAILED(hres))
+        return hres;
+
+    *newretNode = &attr->IHTMLDOMAttribute_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLAttributeCollection2_setNamedItem(IHTMLAttributeCollection2 *iface,
@@ -2493,8 +2511,7 @@ static HRESULT WINAPI HTMLAttributeCollection3_getNamedItem(IHTMLAttributeCollec
         IHTMLDOMAttribute **ppNodeOut)
 {
     HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection3(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(bstrName), ppNodeOut);
-    return E_NOTIMPL;
+    return IHTMLAttributeCollection2_getNamedItem(&This->IHTMLAttributeCollection2_iface, bstrName, ppNodeOut);
 }
 
 static HRESULT WINAPI HTMLAttributeCollection3_setNamedItem(IHTMLAttributeCollection3 *iface,
