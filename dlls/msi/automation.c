@@ -88,10 +88,7 @@ struct AutomationObject {
  */
 
 typedef struct {
-    /* VTables */
-    const IEnumVARIANTVtbl *lpVtbl;
-
-    /* Object reference count */
+    IEnumVARIANT IEnumVARIANT_iface;
     LONG ref;
 
     /* Current position and pointer to AutomationObject that stores actual data */
@@ -202,7 +199,7 @@ static HRESULT create_list_enumerator(IUnknown *pUnkOuter, LPVOID *ppObj, Automa
     object = msi_alloc_zero( sizeof(ListEnumerator) );
 
     /* Set all the VTable references */
-    object->lpVtbl = &ListEnumerator_Vtbl;
+    object->IEnumVARIANT_iface.lpVtbl = &ListEnumerator_Vtbl;
     object->ref = 1;
 
     /* Store data that was passed */
@@ -560,10 +557,16 @@ static const IProvideMultipleClassInfoVtbl AutomationObject_IProvideMultipleClas
  * ListEnumerator methods
  */
 
-/*** IUnknown methods ***/
-static HRESULT WINAPI ListEnumerator_QueryInterface(IEnumVARIANT* iface, REFIID riid, void** ppvObject)
+static inline ListEnumerator *impl_from_IEnumVARIANT(IEnumVARIANT* iface)
 {
-    ListEnumerator *This = (ListEnumerator *)iface;
+    return CONTAINING_RECORD(iface, ListEnumerator, IEnumVARIANT_iface);
+}
+
+/*** IUnknown methods ***/
+static HRESULT WINAPI ListEnumerator_QueryInterface(IEnumVARIANT* iface, REFIID riid,
+        void** ppvObject)
+{
+    ListEnumerator *This = impl_from_IEnumVARIANT(iface);
 
     TRACE("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ppvObject);
 
@@ -586,7 +589,7 @@ static HRESULT WINAPI ListEnumerator_QueryInterface(IEnumVARIANT* iface, REFIID 
 
 static ULONG WINAPI ListEnumerator_AddRef(IEnumVARIANT* iface)
 {
-    ListEnumerator *This = (ListEnumerator *)iface;
+    ListEnumerator *This = impl_from_IEnumVARIANT(iface);
 
     TRACE("(%p/%p)\n", iface, This);
 
@@ -595,7 +598,7 @@ static ULONG WINAPI ListEnumerator_AddRef(IEnumVARIANT* iface)
 
 static ULONG WINAPI ListEnumerator_Release(IEnumVARIANT* iface)
 {
-    ListEnumerator *This = (ListEnumerator *)iface;
+    ListEnumerator *This = impl_from_IEnumVARIANT(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p/%p)\n", iface, This);
@@ -611,9 +614,10 @@ static ULONG WINAPI ListEnumerator_Release(IEnumVARIANT* iface)
 
 /* IEnumVARIANT methods */
 
-static HRESULT WINAPI ListEnumerator_Next(IEnumVARIANT* iface, ULONG celt, VARIANT *rgVar, ULONG *pCeltFetched)
+static HRESULT WINAPI ListEnumerator_Next(IEnumVARIANT* iface, ULONG celt, VARIANT* rgVar,
+        ULONG* pCeltFetched)
 {
-    ListEnumerator *This = (ListEnumerator *)iface;
+    ListEnumerator *This = impl_from_IEnumVARIANT(iface);
     ListData *data = private_data(This->pObj);
     ULONG idx, local;
 
@@ -640,7 +644,7 @@ static HRESULT WINAPI ListEnumerator_Next(IEnumVARIANT* iface, ULONG celt, VARIA
 
 static HRESULT WINAPI ListEnumerator_Skip(IEnumVARIANT* iface, ULONG celt)
 {
-    ListEnumerator *This = (ListEnumerator *)iface;
+    ListEnumerator *This = impl_from_IEnumVARIANT(iface);
     ListData *data = private_data(This->pObj);
 
     TRACE("(%p,%uld)\n", iface, celt);
@@ -656,7 +660,7 @@ static HRESULT WINAPI ListEnumerator_Skip(IEnumVARIANT* iface, ULONG celt)
 
 static HRESULT WINAPI ListEnumerator_Reset(IEnumVARIANT* iface)
 {
-    ListEnumerator *This = (ListEnumerator *)iface;
+    ListEnumerator *This = impl_from_IEnumVARIANT(iface);
 
     TRACE("(%p)\n", iface);
 
@@ -666,7 +670,7 @@ static HRESULT WINAPI ListEnumerator_Reset(IEnumVARIANT* iface)
 
 static HRESULT WINAPI ListEnumerator_Clone(IEnumVARIANT* iface, IEnumVARIANT **ppEnum)
 {
-    ListEnumerator *This = (ListEnumerator *)iface;
+    ListEnumerator *This = impl_from_IEnumVARIANT(iface);
     HRESULT hr;
 
     TRACE("(%p,%p)\n", iface, ppEnum);
