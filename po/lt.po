@@ -2339,15 +2339,20 @@ msgstr "Tikėtasi JScript objekto"
 msgid "Syntax error in regular expression"
 msgstr "Sintaksės klaida reguliariajame reiškinyje"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "URI to be encoded contains invalid characters"
 msgstr "Koduotiname URI yra netinkamų simbolių"
 
-#: jscript.rc:49
+#: jscript.rc:48
+#, fuzzy
+msgid "URI to be decoded is incorrect"
+msgstr "Koduotiname URI yra netinkamų simbolių"
+
+#: jscript.rc:50
 msgid "Array length must be a finite positive integer"
 msgstr "Masyvo dydis turi būti teigiamas sveikasis skaičius"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Array object expected"
 msgstr "Tikėtasi masyvo objekto"
 

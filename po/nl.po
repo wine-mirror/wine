@@ -2360,15 +2360,20 @@ msgstr "JScript object verwacht"
 msgid "Syntax error in regular expression"
 msgstr "Syntax fout in reguliere expressie"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "URI to be encoded contains invalid characters"
 msgstr "De te coderen URI bevat ongeldige tekens"
 
-#: jscript.rc:49
+#: jscript.rc:48
+#, fuzzy
+msgid "URI to be decoded is incorrect"
+msgstr "De te coderen URI bevat ongeldige tekens"
+
+#: jscript.rc:50
 msgid "Array length must be a finite positive integer"
 msgstr "Array lengte moet een eindig, positief geheel getal zijn"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Array object expected"
 msgstr "Array object verwacht"
 

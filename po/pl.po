@@ -2342,15 +2342,20 @@ msgstr "Oczekiwany obiekt JScript"
 msgid "Syntax error in regular expression"
 msgstr "Błąd składni w regularnym wyrażeniu"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "URI to be encoded contains invalid characters"
 msgstr "Kodowane URI zawiera niewłaściwe znaki"
 
-#: jscript.rc:49
+#: jscript.rc:48
+#, fuzzy
+msgid "URI to be decoded is incorrect"
+msgstr "Kodowane URI zawiera niewłaściwe znaki"
+
+#: jscript.rc:50
 msgid "Array length must be a finite positive integer"
 msgstr "Długość tablicy musi być skończoną dodatnią liczbą stałą"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Array object expected"
 msgstr "Oczekiwany obiekt tablicowy"
 

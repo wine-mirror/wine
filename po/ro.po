@@ -2525,15 +2525,20 @@ msgstr "Se așteaptă un obiect JScript"
 msgid "Syntax error in regular expression"
 msgstr "Eroare de sintaxă în expresia regulată"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI care trebuie codificat conține caractere nevalide"
 
-#: jscript.rc:49
+#: jscript.rc:48
+#, fuzzy
+msgid "URI to be decoded is incorrect"
+msgstr "URI care trebuie codificat conține caractere nevalide"
+
+#: jscript.rc:50
 msgid "Array length must be a finite positive integer"
 msgstr "Lungimea unei matrice trebuie să fie un număr întreg pozitiv"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Array object expected"
 msgstr "Se așteaptă un obiect matrice"
 

@@ -2338,15 +2338,20 @@ msgstr "Ожидается объект типа 'JScript'"
 msgid "Syntax error in regular expression"
 msgstr "Синтаксическая ошибка в регулярном выражении"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI содержит неверные символы"
 
-#: jscript.rc:49
+#: jscript.rc:48
+#, fuzzy
+msgid "URI to be decoded is incorrect"
+msgstr "URI содержит неверные символы"
+
+#: jscript.rc:50
 msgid "Array length must be a finite positive integer"
 msgstr "Длиной массива должно быть конечное положительное число"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Array object expected"
 msgstr "Ожидается объект типа 'Array'"
 

@@ -2343,15 +2343,20 @@ msgstr "Objet JScript attendu"
 msgid "Syntax error in regular expression"
 msgstr "Erreur de syntaxe dans l'expression rationnelle"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "URI to be encoded contains invalid characters"
 msgstr "L'URI à coder contient des caractères invalides"
 
-#: jscript.rc:49
+#: jscript.rc:48
+#, fuzzy
+msgid "URI to be decoded is incorrect"
+msgstr "L'URI à coder contient des caractères invalides"
+
+#: jscript.rc:50
 msgid "Array length must be a finite positive integer"
 msgstr "La longueur d'un tableau doit être un entier positif"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Array object expected"
 msgstr "Objet tableau attendu"
 

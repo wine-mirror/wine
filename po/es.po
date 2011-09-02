@@ -2387,15 +2387,20 @@ msgstr "Objeto JScript esperado"
 msgid "Syntax error in regular expression"
 msgstr "Error de sintaxis en la expresion regular"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI a codificar contiene caracteres no válidos"
 
-#: jscript.rc:49
+#: jscript.rc:48
+#, fuzzy
+msgid "URI to be decoded is incorrect"
+msgstr "URI a codificar contiene caracteres no válidos"
+
+#: jscript.rc:50
 msgid "Array length must be a finite positive integer"
 msgstr "La longitud del arreglo debe ser un entero positivo finito"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Array object expected"
 msgstr "Objeto Arreglo esperado"
 

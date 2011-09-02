@@ -2425,15 +2425,20 @@ msgstr "JScript objektumot vártam"
 msgid "Syntax error in regular expression"
 msgstr "Szinttaktikai hiba a reguláris kifejezésben"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "URI to be encoded contains invalid characters"
 msgstr "A kódolandó URI érvénytelen karaktereket tartalmaz"
 
-#: jscript.rc:49
+#: jscript.rc:48
+#, fuzzy
+msgid "URI to be decoded is incorrect"
+msgstr "A kódolandó URI érvénytelen karaktereket tartalmaz"
+
+#: jscript.rc:50
 msgid "Array length must be a finite positive integer"
 msgstr "A tömb hosszának egy véges pozitív egész számnak kell lennie"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Array object expected"
 msgstr "Tömb objektumot vártam"
 

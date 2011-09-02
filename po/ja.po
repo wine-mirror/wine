@@ -2329,15 +2329,20 @@ msgstr "JScript オブジェクトを期待していました"
 msgid "Syntax error in regular expression"
 msgstr "正規表現に文法誤りがあります"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "URI to be encoded contains invalid characters"
 msgstr "エンコードされるURIに無効な文字が含まれています"
 
-#: jscript.rc:49
+#: jscript.rc:48
+#, fuzzy
+msgid "URI to be decoded is incorrect"
+msgstr "エンコードされるURIに無効な文字が含まれています"
+
+#: jscript.rc:50
 msgid "Array length must be a finite positive integer"
 msgstr "配列の長さは有限の正整数でなければなりません"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Array object expected"
 msgstr "配列オブジェクトを期待していました"
 

@@ -845,9 +845,9 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         }
     }
 
+    TRACE("%s -> %s\n", debugstr_w(str), debugstr_w(ret));
     SysFreeString(str);
 
-    TRACE("%s -> %s\n", debugstr_w(str), debugstr_w(ret));
     if(retv) {
         V_VT(retv) = VT_BSTR;
         V_BSTR(retv) = ret;
@@ -860,8 +860,97 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 static HRESULT JSGlobal_decodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR str, ret;
+    WCHAR *ptr;
+    int i, len = 0, val, res;
+    char buf[4];
+    WCHAR out;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(!arg_cnt(dp)) {
+        if(retv) {
+            ret = SysAllocString(undefinedW);
+            if(!ret)
+                return E_OUTOFMEMORY;
+
+            V_VT(retv) = VT_BSTR;
+            V_BSTR(retv) = ret;
+        }
+
+        return S_OK;
+    }
+
+    hres = to_string(ctx, get_arg(dp,0), ei, &str);
+    if(FAILED(hres))
+        return hres;
+
+    for(ptr=str; *ptr; ptr++) {
+        if(*ptr != '%') {
+            len++;
+        }else {
+            res = 0;
+            for(i=0; i<4; i++) {
+                if(ptr[i*3]!='%' || hex_to_int(ptr[i*3+1])==-1 || (val=hex_to_int(ptr[i*3+2]))==-1)
+                    break;
+                val += hex_to_int(ptr[i*3+1])<<4;
+                buf[i] = val;
+
+                res = MultiByteToWideChar(CP_UTF8, 0, buf, i+1, &out, 1);
+                if(res)
+                    break;
+            }
+
+            if(!res) {
+                SysFreeString(str);
+                return throw_uri_error(ctx, ei, JS_E_INVALID_URI_CODING, NULL);
+            }
+
+            ptr += i*3+2;
+            len++;
+        }
+    }
+
+    ret = SysAllocStringLen(NULL, len);
+    if(!ret) {
+        SysFreeString(str);
+        return E_OUTOFMEMORY;
+    }
+
+    len = 0;
+    for(ptr=str; *ptr; ptr++) {
+        if(*ptr != '%') {
+            ret[len] = *ptr;
+            len++;
+        }else {
+            for(i=0; i<4; i++) {
+                if(ptr[i*3]!='%' || hex_to_int(ptr[i*3+1])==-1 || (val=hex_to_int(ptr[i*3+2]))==-1)
+                    break;
+                val += hex_to_int(ptr[i*3+1])<<4;
+                buf[i] = val;
+
+                res = MultiByteToWideChar(CP_UTF8, 0, buf, i+1, ret+len, 1);
+                if(res)
+                    break;
+            }
+
+            ptr += i*3+2;
+            len++;
+        }
+    }
+
+    TRACE("%s -> %s\n", debugstr_w(str), debugstr_w(ret));
+    SysFreeString(str);
+
+    if(retv) {
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = ret;
+    }else {
+        SysFreeString(ret);
+    }
+
+    return S_OK;
 }
 
 static HRESULT JSGlobal_encodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
