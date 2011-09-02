@@ -53,6 +53,7 @@ struct VBScript {
 
     LONG ref;
 
+    DWORD safeopt;
     SCRIPTSTATE state;
     IActiveScriptSite *site;
     script_ctx_t *ctx;
@@ -431,6 +432,8 @@ static ULONG WINAPI VBScriptSafety_Release(IObjectSafety *iface)
     return IActiveScript_Release(&This->IActiveScript_iface);
 }
 
+#define SUPPORTED_OPTIONS (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER)
+
 static HRESULT WINAPI VBScriptSafety_GetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
         DWORD *pdwSupportedOptions, DWORD *pdwEnabledOptions)
 {
@@ -443,8 +446,14 @@ static HRESULT WINAPI VBScriptSafety_SetInterfaceSafetyOptions(IObjectSafety *if
         DWORD dwOptionSetMask, DWORD dwEnabledOptions)
 {
     VBScript *This = impl_from_IObjectSafety(iface);
-    FIXME("(%p)->(%s %x %x)\n", This, debugstr_guid(riid), dwOptionSetMask, dwEnabledOptions);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %x %x)\n", This, debugstr_guid(riid), dwOptionSetMask, dwEnabledOptions);
+
+    if(dwOptionSetMask & ~SUPPORTED_OPTIONS)
+        return E_FAIL;
+
+    This->safeopt = (dwEnabledOptions & dwOptionSetMask) | (This->safeopt & ~dwOptionSetMask) | INTERFACE_USES_DISPEX;
+    return S_OK;
 }
 
 static const IObjectSafetyVtbl VBScriptSafetyVtbl = {
@@ -472,6 +481,7 @@ HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pU
 
     ret->ref = 1;
     ret->state = SCRIPTSTATE_UNINITIALIZED;
+    ret->safeopt = INTERFACE_USES_DISPEX;
 
     hres = IActiveScript_QueryInterface(&ret->IActiveScript_iface, riid, ppv);
     IActiveScript_Release(&ret->IActiveScript_iface);
