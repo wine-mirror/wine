@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "ole2.h"
+#include "objsafe.h"
 
 #include "vbscript.h"
 
@@ -48,6 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 struct VBScript {
     IActiveScript IActiveScript_iface;
     IActiveScriptParse IActiveScriptParse_iface;
+    IObjectSafety IObjectSafety_iface;
 
     LONG ref;
 
@@ -135,6 +137,9 @@ static HRESULT WINAPI VBScript_QueryInterface(IActiveScript *iface, REFIID riid,
     }else if(IsEqualGUID(riid, &IID_IActiveScriptParse)) {
         TRACE("(%p)->(IID_IActiveScriptParse %p)\n", This, ppv);
         *ppv = &This->IActiveScriptParse_iface;
+    }else if(IsEqualGUID(riid, &IID_IObjectSafety)) {
+        TRACE("(%p)->(IID_IObjectSafety %p)\n", This, ppv);
+        *ppv = &This->IObjectSafety_iface;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -403,6 +408,53 @@ static const IActiveScriptParseVtbl VBScriptParseVtbl = {
     VBScriptParse_ParseScriptText
 };
 
+static inline VBScript *impl_from_IObjectSafety(IObjectSafety *iface)
+{
+    return CONTAINING_RECORD(iface, VBScript, IObjectSafety_iface);
+}
+
+static HRESULT WINAPI VBScriptSafety_QueryInterface(IObjectSafety *iface, REFIID riid, void **ppv)
+{
+    VBScript *This = impl_from_IObjectSafety(iface);
+    return IActiveScript_QueryInterface(&This->IActiveScript_iface, riid, ppv);
+}
+
+static ULONG WINAPI VBScriptSafety_AddRef(IObjectSafety *iface)
+{
+    VBScript *This = impl_from_IObjectSafety(iface);
+    return IActiveScript_AddRef(&This->IActiveScript_iface);
+}
+
+static ULONG WINAPI VBScriptSafety_Release(IObjectSafety *iface)
+{
+    VBScript *This = impl_from_IObjectSafety(iface);
+    return IActiveScript_Release(&This->IActiveScript_iface);
+}
+
+static HRESULT WINAPI VBScriptSafety_GetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
+        DWORD *pdwSupportedOptions, DWORD *pdwEnabledOptions)
+{
+    VBScript *This = impl_from_IObjectSafety(iface);
+    FIXME("(%p)->(%s %p %p)\n", This, debugstr_guid(riid), pdwSupportedOptions, pdwEnabledOptions);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VBScriptSafety_SetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
+        DWORD dwOptionSetMask, DWORD dwEnabledOptions)
+{
+    VBScript *This = impl_from_IObjectSafety(iface);
+    FIXME("(%p)->(%s %x %x)\n", This, debugstr_guid(riid), dwOptionSetMask, dwEnabledOptions);
+    return E_NOTIMPL;
+}
+
+static const IObjectSafetyVtbl VBScriptSafetyVtbl = {
+    VBScriptSafety_QueryInterface,
+    VBScriptSafety_AddRef,
+    VBScriptSafety_Release,
+    VBScriptSafety_GetInterfaceSafetyOptions,
+    VBScriptSafety_SetInterfaceSafetyOptions
+};
+
 HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppv)
 {
     VBScript *ret;
@@ -416,6 +468,7 @@ HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pU
 
     ret->IActiveScript_iface.lpVtbl = &VBScriptVtbl;
     ret->IActiveScriptParse_iface.lpVtbl = &VBScriptParseVtbl;
+    ret->IObjectSafety_iface.lpVtbl = &VBScriptSafetyVtbl;
 
     ret->ref = 1;
     ret->state = SCRIPTSTATE_UNINITIALIZED;

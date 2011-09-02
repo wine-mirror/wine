@@ -27,6 +27,7 @@
 #include "initguid.h"
 
 #include "ole2.h"
+#include "objsafe.h"
 #include "rpcproxy.h"
 #include "vbscript.h"
 #include "vbscript_classes.h"
