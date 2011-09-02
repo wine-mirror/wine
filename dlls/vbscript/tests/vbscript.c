@@ -22,8 +22,11 @@
 #include <initguid.h>
 #include <ole2.h>
 #include <activscp.h>
+#include <objsafe.h>
 
 #include "wine/test.h"
+
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -188,6 +191,97 @@ static const IActiveScriptSiteVtbl ActiveScriptSiteVtbl = {
 
 static IActiveScriptSite ActiveScriptSite = { &ActiveScriptSiteVtbl };
 
+static void test_safety(IActiveScript *script)
+{
+    IObjectSafety *safety;
+    DWORD supported, enabled;
+    HRESULT hres;
+
+    hres = IActiveScript_QueryInterface(script, &IID_IObjectSafety, (void**)&safety);
+    ok(hres == S_OK, "Could not get IObjectSafety: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IObjectSafety_GetInterfaceSafetyOptions(safety, &IID_NULL, &supported, NULL);
+    ok(hres == E_POINTER, "GetInterfaceSafetyOptions failed: %08x, expected E_POINTER\n", hres);
+    hres = IObjectSafety_GetInterfaceSafetyOptions(safety, &IID_NULL, NULL, &enabled);
+    ok(hres == E_POINTER, "GetInterfaceSafetyOptions failed: %08x, expected E_POINTER\n", hres);
+
+    supported = enabled = 0xdeadbeef;
+    hres = IObjectSafety_GetInterfaceSafetyOptions(safety, &IID_NULL, &supported, &enabled);
+    ok(hres == S_OK, "GetInterfaceSafetyOptions failed: %08x\n", hres);
+    ok(supported == (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER),
+       "supported=%x\n", supported);
+    ok(enabled == INTERFACE_USES_DISPEX, "enabled=%x\n", enabled);
+
+    supported = enabled = 0xdeadbeef;
+    hres = IObjectSafety_GetInterfaceSafetyOptions(safety, &IID_IActiveScript, &supported, &enabled);
+    ok(hres == S_OK, "GetInterfaceSafetyOptions failed: %08x\n", hres);
+    ok(supported == (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER),
+       "supported=%x\n", supported);
+    ok(enabled == INTERFACE_USES_DISPEX, "enabled=%x\n", enabled);
+
+    supported = enabled = 0xdeadbeef;
+    hres = IObjectSafety_GetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse, &supported, &enabled);
+    ok(hres == S_OK, "GetInterfaceSafetyOptions failed: %08x\n", hres);
+    ok(supported == (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER),
+       "supported=%x\n", supported);
+    ok(enabled == INTERFACE_USES_DISPEX, "enabled=%x\n", enabled);
+
+    hres = IObjectSafety_SetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse,
+            INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER
+                |INTERFACESAFE_FOR_UNTRUSTED_CALLER,
+            INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER);
+    ok(hres == E_FAIL, "SetInterfaceSafetyOptions failed: %08x, expected E_FAIL\n", hres);
+
+    hres = IObjectSafety_SetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse,
+            INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER,
+            INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER);
+    ok(hres == S_OK, "SetInterfaceSafetyOptions failed: %08x\n", hres);
+
+    supported = enabled = 0xdeadbeef;
+    hres = IObjectSafety_GetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse, &supported, &enabled);
+    ok(hres == S_OK, "GetInterfaceSafetyOptions failed: %08x\n", hres);
+    ok(supported == (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER),
+       "supported=%x\n", supported);
+    ok(enabled == (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER),
+       "enabled=%x\n", enabled);
+
+    hres = IObjectSafety_SetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse, INTERFACESAFE_FOR_UNTRUSTED_DATA, 0);
+    ok(hres == S_OK, "SetInterfaceSafetyOptions failed: %08x\n", hres);
+
+    supported = enabled = 0xdeadbeef;
+    hres = IObjectSafety_GetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse, &supported, &enabled);
+    ok(hres == S_OK, "GetInterfaceSafetyOptions failed: %08x\n", hres);
+    ok(supported == (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER),
+       "supported=%x\n", supported);
+    ok(enabled == (INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER), "enabled=%x\n", enabled);
+
+    hres = IObjectSafety_SetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse,
+            INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER, 0);
+    ok(hres == S_OK, "SetInterfaceSafetyOptions failed: %08x\n", hres);
+
+    supported = enabled = 0xdeadbeef;
+    hres = IObjectSafety_GetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse, &supported, &enabled);
+    ok(hres == S_OK, "GetInterfaceSafetyOptions failed: %08x\n", hres);
+    ok(supported == (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER),
+       "supported=%x\n", supported);
+    ok(enabled == INTERFACE_USES_DISPEX, "enabled=%x\n", enabled);
+
+    hres = IObjectSafety_SetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse,
+            INTERFACE_USES_DISPEX, 0);
+    ok(hres == S_OK, "SetInterfaceSafetyOptions failed: %08x\n", hres);
+
+    supported = enabled = 0xdeadbeef;
+    hres = IObjectSafety_GetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse, &supported, &enabled);
+    ok(hres == S_OK, "GetInterfaceSafetyOptions failed: %08x\n", hres);
+    ok(supported == (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER),
+       "supported=%x\n", supported);
+    ok(enabled == INTERFACE_USES_DISPEX, "enabled=%x\n", enabled);
+
+    IObjectSafety_Release(safety);
+}
+
 static IActiveScript *create_vbscript(void)
 {
     IActiveScript *ret;
@@ -213,6 +307,7 @@ static void test_vbscript(void)
     ok(hres == S_OK, "Could not get IActiveScriptParse iface: %08x\n", hres);
 
     test_state(vbscript, SCRIPTSTATE_UNINITIALIZED);
+    test_safety(vbscript);
 
     SET_EXPECT(GetLCID);
     hres = IActiveScript_SetScriptSite(vbscript, &ActiveScriptSite);
@@ -243,7 +338,6 @@ static void test_vbscript(void)
     ref = IActiveScript_Release(vbscript);
     ok(!ref, "ref = %d\n", ref);
 }
-
 
 static BOOL check_vbscript(void)
 {
