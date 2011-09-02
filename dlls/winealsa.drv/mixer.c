@@ -344,7 +344,7 @@ static void filllines(mixer *mmixer, snd_mixer_elem_t *mastelem, snd_mixer_elem_
         mline->elem = mastelem;
         mline->chans = chans(mmixer, mastelem, 0);
 
-        snd_mixer_elem_set_callback(mastelem, &elem_callback);
+        snd_mixer_elem_set_callback(mastelem, elem_callback);
         snd_mixer_elem_set_callback_private(mastelem, mmixer);
     } else {
         MultiByteToWideChar(CP_UNIXCP, 0, "Empty Master Element", -1, mline->name, sizeof(mline->name)/sizeof(WCHAR));
@@ -366,7 +366,7 @@ static void filllines(mixer *mmixer, snd_mixer_elem_t *mastelem, snd_mixer_elem_
         mline->elem = captelem;
         mline->chans = chans(mmixer, captelem, 1);
 
-        snd_mixer_elem_set_callback(captelem, &elem_callback);
+        snd_mixer_elem_set_callback(captelem, elem_callback);
         snd_mixer_elem_set_callback_private(captelem, mmixer);
     }
 
@@ -397,7 +397,7 @@ static void filllines(mixer *mmixer, snd_mixer_elem_t *mastelem, snd_mixer_elem_
                 mline->chans = chans(mmixer, elem, 1);
             }
 
-            snd_mixer_elem_set_callback(elem, &elem_callback);
+            snd_mixer_elem_set_callback(elem, elem_callback);
             snd_mixer_elem_set_callback_private(elem, mmixer);
         }
 }
@@ -413,7 +413,7 @@ static void filllines_no_master(mixer *mmixer, snd_mixer_elem_t *captelem, int c
     mline->elem = captelem;
     mline->chans = chans(mmixer, captelem, 1);
 
-    snd_mixer_elem_set_callback(captelem, &elem_callback);
+    snd_mixer_elem_set_callback(captelem, elem_callback);
     snd_mixer_elem_set_callback_private(captelem, mmixer);
 }
 
