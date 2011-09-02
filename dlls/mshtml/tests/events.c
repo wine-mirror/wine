@@ -1437,6 +1437,20 @@ static void test_onclick(IHTMLDocument2 *doc)
     hres = IHTMLElement_put_onclick(div, v);
     ok(hres == E_NOTIMPL, "put_onclick failed: %08x\n", hres);
 
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("function();");
+    hres = IHTMLElement_put_onclick(div, v);
+    todo_wine ok(hres == S_OK, "put_onclick failed: %08x\n", hres);
+
+    if(hres == S_OK) {
+        V_VT(&v) = VT_EMPTY;
+        hres = IHTMLElement_get_onclick(div, &v);
+        ok(hres == S_OK, "get_onclick failed: %08x\n", hres);
+        ok(V_VT(&v) == VT_BSTR, "V_VT(onclick) = %d\n", V_VT(&v));
+        ok(!strcmp_wa(V_BSTR(&v), "function();"), "V_BSTR(onclick) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    }
+    VariantClear(&v);
+
     V_VT(&v) = VT_DISPATCH;
     V_DISPATCH(&v) = (IDispatch*)&div_onclick_obj;
     hres = IHTMLElement_put_onclick(div, v);
