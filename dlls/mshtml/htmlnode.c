@@ -241,7 +241,7 @@ static HRESULT HTMLDOMChildrenCollection_invoke(DispatchEx *dispex, DISPID id, L
 
         hres = IHTMLDOMChildrenCollection_item(&This->IHTMLDOMChildrenCollection_iface,
                 id - DISPID_CHILDCOL_0, &disp);
-        if(0&&FAILED(hres))
+        if(FAILED(hres))
             return hres;
 
         V_VT(res) = VT_DISPATCH;
