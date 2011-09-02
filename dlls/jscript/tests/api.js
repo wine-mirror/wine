@@ -2053,6 +2053,7 @@ testException(function() {RegExp(/a/, "g");}, "E_REGEXP_SYNTAX_ERROR");
 
 // URIError tests
 testException(function() {encodeURI('\udcaa');}, "E_URI_INVALID_CHAR");
+testException(function() {encodeURIComponent('\udcaa');}, "E_URI_INVALID_CHAR");
 
 function testThisExcept(func, e) {
     testException(function() {func.call(new Object())}, e);

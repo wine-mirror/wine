@@ -899,8 +899,7 @@ static HRESULT JSGlobal_encodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
             size = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, NULL, 0, NULL, NULL);
             if(!size) {
                 SysFreeString(str);
-                FIXME("throw Error\n");
-                return E_FAIL;
+                return throw_uri_error(ctx, ei, JS_E_INVALID_URI_CHAR, NULL);
             }
             len += size*3;
         }
