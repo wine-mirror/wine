@@ -124,7 +124,6 @@ extern void _dump_OBJECTINSTANCEW(const DIDEVICEOBJECTINSTANCEW *ddoi)  DECLSPEC
 extern void _dump_DIDATAFORMAT(const DIDATAFORMAT *df)  DECLSPEC_HIDDEN;
 extern const char *_dump_dinput_GUID(const GUID *guid)  DECLSPEC_HIDDEN;
 
-extern DWORD semantic_to_obj_id(IDirectInputDeviceImpl* This, DWORD dwSemantic)  DECLSPEC_HIDDEN;
 extern LPDIOBJECTDATAFORMAT dataformat_to_odf_by_type(LPCDIDATAFORMAT df, int n, DWORD type)   DECLSPEC_HIDDEN;
 
 extern HRESULT _build_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf, LPCWSTR lpszUserName, DWORD dwFlags, DWORD devMask, LPCDIDATAFORMAT df)  DECLSPEC_HIDDEN;

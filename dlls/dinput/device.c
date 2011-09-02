@@ -570,7 +570,7 @@ int find_property(const DataFormat *df, LPCDIPROPHEADER ph)
     return -1;
 }
 
-DWORD semantic_to_obj_id(IDirectInputDeviceImpl* This, DWORD dwSemantic)
+static DWORD semantic_to_obj_id(IDirectInputDeviceImpl* This, DWORD dwSemantic)
 {
     DWORD type = (0x0000ff00 & dwSemantic) >> 8;
     DWORD offset = 0x000000ff & dwSemantic;
