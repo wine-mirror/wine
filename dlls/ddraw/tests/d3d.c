@@ -4369,7 +4369,7 @@ static void dump_format(const DDPIXELFORMAT *fmt)
             fmt->dwStencilBitMask, fmt->dwRGBZBitMask);
 }
 
-HRESULT WINAPI enum_z_fmt_cb(DDPIXELFORMAT *fmt, void *ctx)
+static HRESULT WINAPI enum_z_fmt_cb(DDPIXELFORMAT *fmt, void *ctx)
 {
     static const DDPIXELFORMAT formats[] =
     {
