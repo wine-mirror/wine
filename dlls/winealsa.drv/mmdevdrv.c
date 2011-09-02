@@ -1139,25 +1139,21 @@ static DWORD get_channel_mask(unsigned int channels)
     case 0:
         return 0;
     case 1:
-        return SPEAKER_FRONT_CENTER;
+        return KSAUDIO_SPEAKER_MONO;
     case 2:
-        return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
+        return KSAUDIO_SPEAKER_STEREO;
     case 3:
-        return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
-            SPEAKER_LOW_FREQUENCY;
+        return KSAUDIO_SPEAKER_STEREO | SPEAKER_LOW_FREQUENCY;
     case 4:
-        return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_BACK_LEFT |
-            SPEAKER_BACK_RIGHT;
+        return KSAUDIO_SPEAKER_QUAD;    /* not _SURROUND */
     case 5:
-        return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_BACK_LEFT |
-            SPEAKER_BACK_RIGHT | SPEAKER_LOW_FREQUENCY;
+        return KSAUDIO_SPEAKER_QUAD | SPEAKER_LOW_FREQUENCY;
     case 6:
-        return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_BACK_LEFT |
-            SPEAKER_BACK_RIGHT | SPEAKER_LOW_FREQUENCY | SPEAKER_FRONT_CENTER;
+        return KSAUDIO_SPEAKER_5POINT1; /* not 5POINT1_SURROUND */
     case 7:
-        return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_BACK_LEFT |
-            SPEAKER_BACK_RIGHT | SPEAKER_LOW_FREQUENCY | SPEAKER_FRONT_CENTER |
-            SPEAKER_BACK_CENTER;
+        return KSAUDIO_SPEAKER_5POINT1 | SPEAKER_BACK_CENTER;
+    case 8:
+        return KSAUDIO_SPEAKER_7POINT1; /* not 7POINT1_SURROUND */
     }
     FIXME("Unknown speaker configuration: %u\n", channels);
     return 0;
@@ -1296,7 +1292,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
         WARN("Unable to get max channels: %d (%s)\n", err, snd_strerror(err));
         goto exit;
     }
-    if(max > 7)
+    if(max > 8)
         max = 2;
     if(fmt->nChannels > max){
         hr = S_FALSE;
