@@ -438,8 +438,15 @@ static HRESULT WINAPI VBScriptSafety_GetInterfaceSafetyOptions(IObjectSafety *if
         DWORD *pdwSupportedOptions, DWORD *pdwEnabledOptions)
 {
     VBScript *This = impl_from_IObjectSafety(iface);
-    FIXME("(%p)->(%s %p %p)\n", This, debugstr_guid(riid), pdwSupportedOptions, pdwEnabledOptions);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %p %p)\n", This, debugstr_guid(riid), pdwSupportedOptions, pdwEnabledOptions);
+
+    if(!pdwSupportedOptions || !pdwEnabledOptions)
+        return E_POINTER;
+
+    *pdwSupportedOptions = SUPPORTED_OPTIONS;
+    *pdwEnabledOptions = This->safeopt;
+    return S_OK;
 }
 
 static HRESULT WINAPI VBScriptSafety_SetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
