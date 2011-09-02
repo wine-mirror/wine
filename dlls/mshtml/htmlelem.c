@@ -2171,7 +2171,6 @@ static ULONG WINAPI HTMLAttributeCollection_Release(IHTMLAttributeCollection *if
 
     if(!ref) {
         IHTMLElement_Release(&This->elem->IHTMLElement_iface);
-        heap_free(This->collection);
         heap_free(This);
     }
 
@@ -2208,23 +2207,15 @@ static HRESULT WINAPI HTMLAttributeCollection_Invoke(IHTMLAttributeCollection *i
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
-static HRESULT WINAPI HTMLAttributeCollection_get_length(IHTMLAttributeCollection *iface, LONG *p)
+static HRESULT get_attr_dispid_by_idx(HTMLAttributeCollection *This, LONG *idx, DISPID *dispid)
 {
-    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection(iface);
     IDispatchEx *dispex = &This->elem->node.dispex.IDispatchEx_iface;
-    DISPID id;
-    LONG len;
+    DISPID id = DISPID_STARTENUM;
+    LONG len = -1;
     HRESULT hres;
 
-    TRACE("(%p)->(%p)\n", This, p);
     FIXME("filter non-enumerable attributes out\n");
 
-    heap_free(This->collection);
-    This->size = 0;
-    This->collection = NULL;
-
-    id = DISPID_STARTENUM;
-    len = 0;
     while(1) {
         hres = IDispatchEx_GetNextDispID(dispex, fdexEnumAll, id, &id);
         if(FAILED(hres))
@@ -2233,41 +2224,16 @@ static HRESULT WINAPI HTMLAttributeCollection_get_length(IHTMLAttributeCollectio
             break;
 
         len++;
-    }
-
-    This->collection = heap_alloc(len*sizeof(DISPID));
-    if(!This->collection)
-        return E_OUTOFMEMORY;
-
-    id = DISPID_STARTENUM;
-    len = 0;
-    while(1) {
-        hres = IDispatchEx_GetNextDispID(dispex, fdexEnumAll, id, &id);
-        if(FAILED(hres))
-            return hres;
-        else if(hres == S_FALSE)
+        if(len == *idx)
             break;
-
-        This->collection[len++] = id;
     }
 
-    *p = This->size = len;
-    return S_OK;
-}
+    if(dispid) {
+        *dispid = id;
+        return *idx==len ? S_OK : DISP_E_UNKNOWNNAME;
+    }
 
-static HRESULT WINAPI HTMLAttributeCollection__newEnum(IHTMLAttributeCollection *iface, IUnknown **p)
-{
-    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
-}
-
-static inline HRESULT get_attr_dispid_by_idx(HTMLAttributeCollection *This, LONG index, DISPID *id)
-{
-    if(index<0 || index>=This->size)
-        return DISP_E_UNKNOWNNAME;
-
-    *id = This->collection[index];
+    *idx = len+1;
     return S_OK;
 }
 
@@ -2281,7 +2247,7 @@ static inline HRESULT get_attr_dispid_by_name(HTMLAttributeCollection *This, BST
 
         idx = strtoulW(name, &end_ptr, 10);
         if(!*end_ptr) {
-            hres = get_attr_dispid_by_idx(This, idx, id);
+            hres = get_attr_dispid_by_idx(This, &idx, id);
             if(SUCCEEDED(hres))
                 return hres;
         }
@@ -2315,6 +2281,25 @@ static inline HRESULT get_domattr(HTMLElement *elem, DISPID id, HTMLDOMAttribute
     return S_OK;
 }
 
+static HRESULT WINAPI HTMLAttributeCollection_get_length(IHTMLAttributeCollection *iface, LONG *p)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection(iface);
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = -1;
+    hres = get_attr_dispid_by_idx(This, p, NULL);
+    return hres;
+}
+
+static HRESULT WINAPI HTMLAttributeCollection__newEnum(IHTMLAttributeCollection *iface, IUnknown **p)
+{
+    HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
 static HRESULT WINAPI HTMLAttributeCollection_item(IHTMLAttributeCollection *iface, VARIANT *name, IDispatch **ppItem)
 {
     HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection(iface);
@@ -2326,7 +2311,7 @@ static HRESULT WINAPI HTMLAttributeCollection_item(IHTMLAttributeCollection *ifa
 
     switch(V_VT(name)) {
     case VT_I4:
-        hres = get_attr_dispid_by_idx(This, V_I4(name), &id);
+        hres = get_attr_dispid_by_idx(This, &V_I4(name), &id);
         break;
     case VT_BSTR:
         hres = get_attr_dispid_by_name(This, V_BSTR(name), &id);
@@ -2537,7 +2522,7 @@ static HRESULT WINAPI HTMLAttributeCollection3_item(IHTMLAttributeCollection3 *i
 
     TRACE("(%p)->(%d %p)\n", This, index, ppNodeOut);
 
-    hres = get_attr_dispid_by_idx(This, index, &id);
+    hres = get_attr_dispid_by_idx(This, &index, &id);
     if(hres == DISP_E_UNKNOWNNAME)
         return E_INVALIDARG;
     if(FAILED(hres))

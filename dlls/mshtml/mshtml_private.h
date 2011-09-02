@@ -727,8 +727,6 @@ struct HTMLAttributeCollection {
     LONG ref;
 
     HTMLElement *elem;
-    LONG size;
-    DISPID *collection;
     struct list attrs;
 };
 
