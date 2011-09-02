@@ -66,7 +66,7 @@ struct gdi_dc_funcs
     BOOL     (*pCloseFigure)(PHYSDEV);
     BOOL     (*pCreateBitmap)(PHYSDEV,HBITMAP);
     BOOL     (*pCreateDC)(HDC,PHYSDEV *,LPCWSTR,LPCWSTR,LPCWSTR,const DEVMODEW*);
-    HBITMAP  (*pCreateDIBSection)(PHYSDEV,HBITMAP,const BITMAPINFO *,UINT);
+    HBITMAP  (*pCreateDIBSection)(PHYSDEV,HBITMAP,BITMAPINFO *,UINT);
     BOOL     (*pDeleteBitmap)(HBITMAP);
     BOOL     (*pDeleteDC)(PHYSDEV);
     BOOL     (*pDeleteObject)(PHYSDEV,HGDIOBJ);
@@ -141,7 +141,7 @@ struct gdi_dc_funcs
     COLORREF (*pSetDCBrushColor)(PHYSDEV, COLORREF);
     COLORREF (*pSetDCPenColor)(PHYSDEV, COLORREF);
     UINT     (*pSetDIBColorTable)(PHYSDEV,UINT,UINT,const RGBQUAD*);
-    INT      (*pSetDIBitsToDevice)(PHYSDEV,INT,INT,DWORD,DWORD,INT,INT,UINT,UINT,LPCVOID,const BITMAPINFO*,UINT);
+    INT      (*pSetDIBitsToDevice)(PHYSDEV,INT,INT,DWORD,DWORD,INT,INT,UINT,UINT,LPCVOID,BITMAPINFO*,UINT);
     VOID     (*pSetDeviceClipping)(PHYSDEV,HRGN,HRGN);
     BOOL     (*pSetDeviceGammaRamp)(PHYSDEV,LPVOID);
     DWORD    (*pSetLayout)(PHYSDEV,DWORD);
@@ -165,7 +165,7 @@ struct gdi_dc_funcs
     INT      (*pStartDoc)(PHYSDEV,const DOCINFOW*);
     INT      (*pStartPage)(PHYSDEV);
     BOOL     (*pStretchBlt)(PHYSDEV,struct bitblt_coords*,PHYSDEV,struct bitblt_coords*,DWORD);
-    INT      (*pStretchDIBits)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT,const void*,const BITMAPINFO*,UINT,DWORD);
+    INT      (*pStretchDIBits)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT,const void*,BITMAPINFO*,UINT,DWORD);
     BOOL     (*pStrokeAndFillPath)(PHYSDEV);
     BOOL     (*pStrokePath)(PHYSDEV);
     BOOL     (*pSwapBuffers)(PHYSDEV);

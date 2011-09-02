@@ -133,7 +133,7 @@ BOOL MFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
 INT MFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
                          INT heightDst, INT xSrc, INT ySrc, INT widthSrc,
                          INT heightSrc, const void *bits,
-                         const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
+                         BITMAPINFO *info, UINT wUsage, DWORD dwRop )
 {
     DWORD infosize = bitmap_info_size(info, wUsage);
     DWORD len = sizeof(METARECORD) + 10 * sizeof(WORD) + infosize + info->bmiHeader.biSizeImage;
@@ -166,8 +166,7 @@ INT MFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
  */
 INT MFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD cx,
                              DWORD cy, INT xSrc, INT ySrc, UINT startscan,
-                             UINT lines, LPCVOID bits, const BITMAPINFO *info,
-                             UINT coloruse )
+                             UINT lines, LPCVOID bits, BITMAPINFO *info, UINT coloruse )
 
 {
     DWORD infosize = bitmap_info_size(info, coloruse);

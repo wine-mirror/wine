@@ -3719,7 +3719,7 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
  */
 INT X11DRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDest, DWORD cx, DWORD cy,
                               INT xSrc, INT ySrc, UINT startscan, UINT lines, LPCVOID bits,
-                              const BITMAPINFO *info, UINT coloruse )
+                              BITMAPINFO *info, UINT coloruse )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     X11DRV_DIB_IMAGEBITS_DESCR descr;
@@ -4359,7 +4359,7 @@ static Bool X11DRV_DIB_QueryXShm( Bool *pixmaps )
 /***********************************************************************
  *           X11DRV_CreateDIBSection   (X11DRV.@)
  */
-HBITMAP X11DRV_CreateDIBSection( PHYSDEV dev, HBITMAP hbitmap, const BITMAPINFO *bmi, UINT usage )
+HBITMAP X11DRV_CreateDIBSection( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *bmi, UINT usage )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     X_PHYSBITMAP *physBitmap;

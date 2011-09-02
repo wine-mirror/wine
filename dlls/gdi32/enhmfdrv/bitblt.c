@@ -171,7 +171,7 @@ BOOL EMFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
 
 INT EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
                           INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
-                          const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
+                          BITMAPINFO *info, UINT wUsage, DWORD dwRop )
 {
     EMRSTRETCHDIBITS *emr;
     BOOL ret;
@@ -228,7 +228,7 @@ INT EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT hei
 
 INT EMFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD width, DWORD height,
                               INT xSrc, INT ySrc, UINT startscan, UINT lines,
-                              LPCVOID bits, const BITMAPINFO *info, UINT wUsage )
+                              LPCVOID bits, BITMAPINFO *info, UINT wUsage )
 {
     EMRSETDIBITSTODEVICE* pEMR;
     DWORD bmiSize = bitmap_info_size(info, wUsage);

@@ -510,7 +510,7 @@ extern BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
                                 PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop ) DECLSPEC_HIDDEN;
 extern INT  nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
                                    INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
-                                   const BITMAPINFO *info, UINT coloruse, DWORD rop ) DECLSPEC_HIDDEN;
+                                   BITMAPINFO *info, UINT coloruse, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL nulldrv_StrokeAndFillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL nulldrv_StrokePath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL nulldrv_WidenPath( PHYSDEV dev ) DECLSPEC_HIDDEN;

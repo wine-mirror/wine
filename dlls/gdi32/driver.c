@@ -225,7 +225,7 @@ static BOOL nulldrv_CreateDC( HDC hdc, PHYSDEV *dev, LPCWSTR driver, LPCWSTR dev
     return FALSE;
 }
 
-static HBITMAP nulldrv_CreateDIBSection( PHYSDEV dev, HBITMAP bitmap, const BITMAPINFO *info, UINT usage )
+static HBITMAP nulldrv_CreateDIBSection( PHYSDEV dev, HBITMAP bitmap, BITMAPINFO *info, UINT usage )
 {
     return bitmap;
 }
@@ -504,7 +504,7 @@ static UINT nulldrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, const R
 
 static INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD width, DWORD height,
                                       INT x_src, INT y_src, UINT start, UINT lines,
-                                      const void *bits, const BITMAPINFO *info, UINT coloruse )
+                                      const void *bits, BITMAPINFO *info, UINT coloruse )
 {
     return 0;
 }

@@ -120,7 +120,7 @@ extern COLORREF EMFDRV_SetDCBrushColor( PHYSDEV dev, COLORREF color ) DECLSPEC_H
 extern COLORREF EMFDRV_SetDCPenColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern INT      EMFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDest, DWORD cx, DWORD cy, INT xSrc,
                                           INT ySrc, UINT startscan, UINT lines, LPCVOID bits,
-                                          const BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
+                                          BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
 extern DWORD    EMFDRV_SetLayout( PHYSDEV dev, DWORD layout ) DECLSPEC_HIDDEN;
 extern INT      EMFDRV_SetMapMode( PHYSDEV dev, INT mode ) DECLSPEC_HIDDEN;
 extern DWORD    EMFDRV_SetMapperFlags( PHYSDEV dev, DWORD flags ) DECLSPEC_HIDDEN;
@@ -140,8 +140,7 @@ extern BOOL     EMFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
                                    PHYSDEV devSrc, struct bitblt_coords *src, DWORD rop ) DECLSPEC_HIDDEN;
 extern INT      EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
                                       INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
-                                      const void *bits, const BITMAPINFO *info,
-                                      UINT wUsage, DWORD dwRop ) DECLSPEC_HIDDEN;
+                                      const void *bits, BITMAPINFO *info, UINT wUsage, DWORD dwRop ) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_StrokeAndFillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_StrokePath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_WidenPath( PHYSDEV dev ) DECLSPEC_HIDDEN;

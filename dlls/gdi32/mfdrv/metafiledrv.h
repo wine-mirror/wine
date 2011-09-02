@@ -134,11 +134,10 @@ extern BOOL MFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern INT  MFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDest, DWORD cx,
                                      DWORD cy, INT xSrc, INT ySrc,
                                      UINT startscan, UINT lines, LPCVOID bits,
-                                     const BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
+                                     BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
 extern INT  MFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
                                  INT heightDst, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
-                                 const void *bits, const BITMAPINFO *info, UINT wUsage,
-                                 DWORD dwRop ) DECLSPEC_HIDDEN;
+                                 const void *bits, BITMAPINFO *info, UINT wUsage, DWORD dwRop ) DECLSPEC_HIDDEN;
 extern BOOL MFDRV_StrokeAndFillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL MFDRV_StrokePath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL MFDRV_WidenPath( PHYSDEV dev ) DECLSPEC_HIDDEN;

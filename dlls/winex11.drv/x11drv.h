@@ -189,7 +189,7 @@ extern BOOL X11DRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                           INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 extern HBITMAP X11DRV_CreateDIBSection( PHYSDEV dev, HBITMAP hbitmap,
-                                        const BITMAPINFO *bmi, UINT usage ) DECLSPEC_HIDDEN;
+                                        BITMAPINFO *bmi, UINT usage ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_DeleteBitmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf,
@@ -237,7 +237,7 @@ extern void X11DRV_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
 extern BOOL X11DRV_SetDeviceGammaRamp( PHYSDEV dev, LPVOID ramp ) DECLSPEC_HIDDEN;
 extern UINT X11DRV_SetDIBColorTable( PHYSDEV dev, UINT start, UINT count, const RGBQUAD *colors ) DECLSPEC_HIDDEN;
 extern INT X11DRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDest, DWORD cx, DWORD cy, INT xSrc, INT ySrc,
-                                     UINT startscan, UINT lines, LPCVOID bits, const BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
+                                     UINT startscan, UINT lines, LPCVOID bits, BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
 extern COLORREF X11DRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_SetPixelFormat(PHYSDEV dev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd) DECLSPEC_HIDDEN;
 extern COLORREF X11DRV_SetTextColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;

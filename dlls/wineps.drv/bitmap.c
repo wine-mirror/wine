@@ -288,7 +288,7 @@ update_format:
  */
 INT PSDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
                          INT heightDst, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
-                         const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
+                         BITMAPINFO *info, UINT wUsage, DWORD dwRop )
 {
     INT stride;
     INT line;

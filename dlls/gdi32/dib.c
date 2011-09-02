@@ -385,7 +385,7 @@ fail:
 /* nulldrv fallback implementation using SetDIBits/StretchBlt */
 INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
                            INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
-                           const BITMAPINFO *info, UINT coloruse, DWORD rop )
+                           BITMAPINFO *info, UINT coloruse, DWORD rop )
 {
     DC *dc = get_nulldrv_dc( dev );
     INT ret;
