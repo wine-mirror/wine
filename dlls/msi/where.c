@@ -149,7 +149,7 @@ static UINT add_row(MSIWHEREVIEW *wv, UINT vals[])
     return ERROR_SUCCESS;
 }
 
-JOINTABLE *find_table(MSIWHEREVIEW *wv, UINT col, UINT *table_col)
+static JOINTABLE *find_table(MSIWHEREVIEW *wv, UINT col, UINT *table_col)
 {
     JOINTABLE *table = wv->tables;
 
