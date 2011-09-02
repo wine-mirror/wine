@@ -1427,6 +1427,37 @@ static void _test_comment_text(unsigned line, IUnknown *unk, const char *extext)
     SysFreeString(text);
 }
 
+#define test_comment_attrs(c) _test_comment_attrs(__LINE__,c)
+static void _test_comment_attrs(unsigned line, IUnknown *unk)
+{
+    IHTMLCommentElement *comment = _get_comment_iface(__LINE__,unk);
+    IHTMLElement *elem = _get_elem_iface(__LINE__,unk);
+    IHTMLElement4 *elem4 = _get_elem4_iface(__LINE__,unk);
+    IHTMLDOMAttribute *attr;
+    BSTR name = a2bstr("test");
+    VARIANT val;
+    HRESULT hres;
+
+    hres = IHTMLElement4_getAttributeNode(elem4, name, &attr);
+    ok(hres == S_OK, "getAttributeNode failed: %08x\n", hres);
+    ok(attr == NULL, "attr != NULL\n");
+
+    V_VT(&val) = VT_I4;
+    V_I4(&val) = 1234;
+    hres = IHTMLElement_setAttribute(elem, name, val, 0);
+    ok(hres == S_OK, "setAttribute failed: %08x\n", hres);
+
+    hres = IHTMLElement4_getAttributeNode(elem4, name, &attr);
+    ok(hres == S_OK, "getAttributeNode failed: %08x\n", hres);
+    ok(attr != NULL, "attr == NULL\n");
+
+    IHTMLDOMAttribute_Release(attr);
+    IHTMLCommentElement_Release(comment);
+    IHTMLElement_Release(elem);
+    IHTMLElement4_Release(elem);
+    SysFreeString(name);
+}
+
 #define test_object_vspace(u,s) _test_object_vspace(__LINE__,u,s)
 static void _test_object_vspace(unsigned line, IUnknown *unk, LONG exl)
 {
@@ -5412,6 +5443,7 @@ static void test_create_elems(IHTMLDocument2 *doc)
             test_elem_title((IUnknown*)comment, "comment title");
             test_comment_text((IUnknown*)comment, "<!--testing-->");
             test_elem_outerhtml((IUnknown*)comment, "<!--testing-->");
+            test_comment_attrs((IUnknown*)comment);
 
             IHTMLDOMNode_Release(comment);
         }
