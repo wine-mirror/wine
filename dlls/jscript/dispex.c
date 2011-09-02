@@ -42,6 +42,7 @@ typedef enum {
 
 struct _dispex_prop_t {
     WCHAR *name;
+    unsigned hash;
     prop_type_t type;
     DWORD flags;
 
@@ -139,7 +140,7 @@ static inline HRESULT resize_props(jsdisp_t *This)
     for(i=1; i<This->prop_cnt; i++) {
         props = This->props+i;
 
-        bucket = get_props_idx(This, string_hash(props->name));
+        bucket = get_props_idx(This, props->hash);
         props->bucket_next = This->props[bucket].bucket_head;
         This->props[bucket].bucket_head = i;
     }
@@ -161,8 +162,9 @@ static inline dispex_prop_t* alloc_prop(jsdisp_t *This, const WCHAR *name, prop_
         return NULL;
     prop->type = type;
     prop->flags = flags;
+    prop->hash = string_hash(name);
 
-    bucket = get_props_idx(This, string_hash(name));
+    bucket = get_props_idx(This, prop->hash);
     prop->bucket_next = This->props[bucket].bucket_head;
     This->props[bucket].bucket_head = This->prop_cnt++;
     return prop;
@@ -180,13 +182,13 @@ static dispex_prop_t *alloc_protref(jsdisp_t *This, const WCHAR *name, DWORD ref
     return ret;
 }
 
-static HRESULT find_prop_name(jsdisp_t *This, const WCHAR *name, dispex_prop_t **ret)
+static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, dispex_prop_t **ret)
 {
     const builtin_prop_t *builtin;
     unsigned bucket, pos, prev = 0;
     dispex_prop_t *prop;
 
-    bucket = get_props_idx(This, string_hash(name));
+    bucket = get_props_idx(This, hash);
     pos = This->props[bucket].bucket_head;
     while(pos != 0) {
         if(!strcmpW(name, This->props[pos].name)) {
@@ -219,12 +221,12 @@ static HRESULT find_prop_name(jsdisp_t *This, const WCHAR *name, dispex_prop_t *
     return S_OK;
 }
 
-static HRESULT find_prop_name_prot(jsdisp_t *This, const WCHAR *name, dispex_prop_t **ret)
+static HRESULT find_prop_name_prot(jsdisp_t *This, unsigned hash, const WCHAR *name, dispex_prop_t **ret)
 {
     dispex_prop_t *prop, *del=NULL;
     HRESULT hres;
 
-    hres = find_prop_name(This, name, &prop);
+    hres = find_prop_name(This, hash, name, &prop);
     if(FAILED(hres))
         return hres;
     if(prop && prop->type==PROP_DELETED) {
@@ -235,7 +237,7 @@ static HRESULT find_prop_name_prot(jsdisp_t *This, const WCHAR *name, dispex_pro
     }
 
     if(This->prototype) {
-        hres = find_prop_name_prot(This->prototype, name, &prop);
+        hres = find_prop_name_prot(This->prototype, hash, name, &prop);
         if(FAILED(hres))
             return hres;
         if(prop) {
@@ -265,9 +267,9 @@ static HRESULT ensure_prop_name(jsdisp_t *This, const WCHAR *name, BOOL search_p
     HRESULT hres;
 
     if(search_prot)
-        hres = find_prop_name_prot(This, name, &prop);
+        hres = find_prop_name_prot(This, string_hash(name), name, &prop);
     else
-        hres = find_prop_name(This, name, &prop);
+        hres = find_prop_name(This, string_hash(name), name, &prop);
     if(SUCCEEDED(hres) && (!prop || prop->type==PROP_DELETED)) {
         TRACE("creating prop %s\n", debugstr_w(name));
 
@@ -482,7 +484,7 @@ static HRESULT fill_protrefs(jsdisp_t *This)
     for(iter = This->prototype->props; iter < This->prototype->props+This->prototype->prop_cnt; iter++) {
         if(!iter->name)
             continue;
-        hres = find_prop_name(This, iter->name, &prop);
+        hres = find_prop_name(This, iter->hash, iter->name, &prop);
         if(FAILED(hres))
             return hres;
         if(!prop || prop->type==PROP_DELETED) {
@@ -716,7 +718,7 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bst
     if(grfdex & ~(fdexNameCaseSensitive|fdexNameEnsure|fdexNameImplicit|FDEX_VERSION_MASK))
         FIXME("Unsupported grfdex %x\n", grfdex);
 
-    hres = find_prop_name(This, bstrName, &prop);
+    hres = find_prop_name(This, string_hash(bstrName), bstrName, &prop);
     if(FAILED(hres))
         return hres;
     if(!prop) {
@@ -890,7 +892,7 @@ HRESULT init_dispex_from_constr(jsdisp_t *dispex, script_ctx_t *ctx, const built
     static const WCHAR constructorW[] = {'c','o','n','s','t','r','u','c','t','o','r',0};
     static const WCHAR prototypeW[] = {'p','r','o','t','o','t','y','p','e',0};
 
-    hres = find_prop_name_prot(constr, prototypeW, &prop);
+    hres = find_prop_name_prot(constr, string_hash(prototypeW), prototypeW, &prop);
     if(SUCCEEDED(hres) && prop && prop->type!=PROP_DELETED) {
         jsexcept_t jsexcept;
         VARIANT var;
@@ -950,7 +952,7 @@ HRESULT jsdisp_get_id(jsdisp_t *jsdisp, const WCHAR *name, DWORD flags, DISPID *
     if(flags & fdexNameEnsure)
         hres = ensure_prop_name(jsdisp, name, TRUE, PROPF_ENUM, &prop);
     else
-        hres = find_prop_name_prot(jsdisp, name, &prop);
+        hres = find_prop_name_prot(jsdisp, string_hash(name), name, &prop);
     if(FAILED(hres))
         return hres;
 
@@ -997,7 +999,7 @@ HRESULT jsdisp_call_name(jsdisp_t *disp, const WCHAR *name, WORD flags, DISPPARA
     dispex_prop_t *prop;
     HRESULT hres;
 
-    hres = find_prop_name_prot(disp, name, &prop);
+    hres = find_prop_name_prot(disp, string_hash(name), name, &prop);
     if(FAILED(hres))
         return hres;
 
@@ -1123,7 +1125,7 @@ HRESULT jsdisp_propget_name(jsdisp_t *obj, const WCHAR *name, VARIANT *var, jsex
     dispex_prop_t *prop;
     HRESULT hres;
 
-    hres = find_prop_name_prot(obj, name, &prop);
+    hres = find_prop_name_prot(obj, string_hash(name), name, &prop);
     if(FAILED(hres))
         return hres;
 
@@ -1145,7 +1147,7 @@ HRESULT jsdisp_get_idx(jsdisp_t *obj, DWORD idx, VARIANT *var, jsexcept_t *ei, I
 
     sprintfW(name, formatW, idx);
 
-    hres = find_prop_name_prot(obj, name, &prop);
+    hres = find_prop_name_prot(obj, string_hash(name), name, &prop);
     if(FAILED(hres))
         return hres;
 
@@ -1206,7 +1208,7 @@ HRESULT jsdisp_delete_idx(jsdisp_t *obj, DWORD idx)
 
     sprintfW(buf, formatW, idx);
 
-    hres = find_prop_name(obj, buf, &prop);
+    hres = find_prop_name(obj, string_hash(buf), buf, &prop);
     if(FAILED(hres) || !prop)
         return hres;
 
@@ -1218,7 +1220,7 @@ VARIANT_BOOL jsdisp_is_own_prop(jsdisp_t *obj, BSTR name)
     dispex_prop_t *prop;
     HRESULT hres;
 
-    hres = find_prop_name(obj, name, &prop);
+    hres = find_prop_name(obj, string_hash(name), name, &prop);
     if(FAILED(hres))
         return VARIANT_FALSE;
     else if(!prop)
