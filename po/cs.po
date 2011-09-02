@@ -210,7 +210,7 @@ msgstr "Soubor nebyl nalezen"
 
 #: comdlg32.rc:44
 msgid "Please verify that the correct file name was given"
-msgstr "Ověřte prosím, že název souboru byl zadán správně."
+msgstr "Ověřte prosím, že název souboru byl zadán správně"
 
 #: comdlg32.rc:45
 msgid ""
@@ -218,7 +218,7 @@ msgid ""
 "Do you want to create file?"
 msgstr ""
 "Soubor neexistuje.\n"
-"Chcete ho vytvořit ?"
+"Chcete ho vytvořit?"
 
 #: comdlg32.rc:46
 msgid ""
@@ -226,11 +226,11 @@ msgid ""
 "Do you want to replace it?"
 msgstr ""
 "Soubor již existuje.\n"
-"Chcete ho přepsat novým ?"
+"Chcete ho přepsat novým?"
 
 #: comdlg32.rc:47
 msgid "Invalid character(s) in path"
-msgstr "Nedovolený(é) znak(y) v cestě k souboru."
+msgstr "Nedovolený(é) znak(y) v cestě k souboru"
 
 #: comdlg32.rc:48
 msgid ""
@@ -6897,7 +6897,7 @@ msgid ""
 "Do you want to replace it?"
 msgstr ""
 "Soubor již existuje.\n"
-"Chcete ho přepsat novým ?"
+"Chcete ho přepsat novým?"
 
 #: shell32.rc:259
 #, fuzzy
@@ -6907,7 +6907,7 @@ msgid ""
 "Do you want to replace it?"
 msgstr ""
 "Soubor již existuje.\n"
-"Chcete ho přepsat novým ?"
+"Chcete ho přepsat novým?"
 
 #: shell32.rc:260
 #, fuzzy
@@ -7959,7 +7959,7 @@ msgstr "Nápověda k CHDIR\n"
 
 #: cmd.rc:44
 msgid "CLS clears the console screen.\n"
-msgstr "CLS vymaže obrazovku terminálu\n"
+msgstr "CLS vymaže obrazovku terminálu.\n"
 
 #: cmd.rc:46
 #, fuzzy
@@ -8388,9 +8388,8 @@ msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
 msgstr ""
-"EXIT ukončí běžící sezení a vrátí kontrolu\n"
-"operačnímu systému nebo příkazovému interpretu,\n"
-"ze kterého byl cmd spuštěn.\n"
+"EXIT ukončí běžící sezení a vrátí kontrolu operačnímu systému\n"
+"nebo příkazovému interpretu, ze kterého byl cmd spuštěn.\n"
 
 #: cmd.rc:288
 #, fuzzy
@@ -8950,7 +8949,7 @@ msgid ""
 "You did not enter any text.\n"
 "Please type something and try again."
 msgstr ""
-"Nebyl zadán žádný text. \n"
+"Nebyl zadán žádný text.\n"
 "Please type something and try again"
 
 #: notepad.rc:83
@@ -8959,10 +8958,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"Soubor '%s'\n"
-"neexistuje.\n"
+"Soubor '%s' neexistuje.\n"
 "\n"
-" Chcete ho vytvořit ?"
+"Chcete ho vytvořit?"
 
 #: notepad.rc:85
 msgid ""
@@ -8970,10 +8968,9 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"Soubor '%s'\n"
-"byl změněn.\n"
+"Soubor '%s' byl změněn.\n"
 "\n"
-" Chcete uložit změny ?"
+"Chcete uložit změny?"
 
 #: notepad.rc:86
 msgid "'%s' could not be found."
@@ -8984,9 +8981,8 @@ msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
 msgstr ""
-"Není dost paměti na dokončení této úlohy. \n"
-"Uzavřete jednu či více aplikací abyste získali více\n"
-"volné paměti."
+"Není dost paměti na dokončení této úlohy.\n"
+"Uzavřete jednu či více aplikací abyste získali více volné paměti."
 
 #: notepad.rc:90
 msgid "Unicode (UTF-16)"
@@ -9405,11 +9401,11 @@ msgstr "Smazat"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr "Smazat skupinu `%s' ?"
+msgstr "Smazat skupinu `%s'?"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr "Smazat program `%s' ?"
+msgstr "Smazat program `%s'?"
 
 #: progman.rc:67 winhlp32.rc:82
 #, fuzzy
@@ -9434,7 +9430,7 @@ msgid ""
 "Should it be tried further on?"
 msgstr ""
 "Soubor skupiny `%s' nemůže být otevřen.\n"
-"Mám to zkusit znovu ?"
+"Mám to zkusit znovu?"
 
 #: progman.rc:74
 msgid "Help not available."
@@ -10894,7 +10890,7 @@ msgstr "Chyba nastavení"
 
 #: wineconsole.rc:39
 msgid "Screen buffer size must be greater or equal to the window's one"
-msgstr "Zásobník obrazovky musí být větší nebo stejně velký jakzásobník okna."
+msgstr "Zásobník obrazovky musí být větší nebo stejně velký jakzásobník okna"
 
 #: wineconsole.rc:34
 msgid "Each character is %ld pixels wide on %ld pixels high"
@@ -11147,7 +11143,7 @@ msgstr ""
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr "&Dle libosti"
+msgstr "&Dle libosti..."
 
 #: winemine.rc:44
 #, fuzzy
@@ -11214,7 +11210,7 @@ msgstr "Vždy na &vrchu"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&Informace..."
+msgstr "&Informace"
 
 #: winhlp32.rc:64
 #, fuzzy
