@@ -2269,9 +2269,10 @@ static inline HRESULT get_attr_dispid_by_name(HTMLAttributeCollection *This, BST
     return hres;
 }
 
-static inline HRESULT get_domattr(HTMLAttributeCollection *This, DISPID id, HTMLDOMAttribute **attr)
+static inline HRESULT get_domattr(HTMLAttributeCollection *This, DISPID id, LONG *list_pos, HTMLDOMAttribute **attr)
 {
     HTMLDOMAttribute *iter;
+    LONG pos = 0;
     HRESULT hres;
 
     *attr = NULL;
@@ -2280,6 +2281,7 @@ static inline HRESULT get_domattr(HTMLAttributeCollection *This, DISPID id, HTML
             *attr = iter;
             break;
         }
+        pos++;
     }
 
     if(!*attr) {
@@ -2288,12 +2290,15 @@ static inline HRESULT get_domattr(HTMLAttributeCollection *This, DISPID id, HTML
             return E_UNEXPECTED;
         }
 
+        pos++;
         hres = HTMLDOMAttribute_Create(This->elem, id, attr);
         if(FAILED(hres))
             return hres;
     }
 
     IHTMLDOMAttribute_AddRef(&(*attr)->IHTMLDOMAttribute_iface);
+    if(list_pos)
+        *list_pos = pos;
     return S_OK;
 }
 
@@ -2341,7 +2346,7 @@ static HRESULT WINAPI HTMLAttributeCollection_item(IHTMLAttributeCollection *ifa
     if(FAILED(hres))
         return hres;
 
-    hres = get_domattr(This, id, &attr);
+    hres = get_domattr(This, id, NULL, &attr);
     if(FAILED(hres))
         return hres;
 
@@ -2433,7 +2438,7 @@ static HRESULT WINAPI HTMLAttributeCollection2_getNamedItem(IHTMLAttributeCollec
         return hres;
     }
 
-    hres = get_domattr(This, id, &attr);
+    hres = get_domattr(This, id, NULL, &attr);
     if(FAILED(hres))
         return hres;
 
@@ -2561,7 +2566,7 @@ static HRESULT WINAPI HTMLAttributeCollection3_item(IHTMLAttributeCollection3 *i
     if(FAILED(hres))
         return hres;
 
-    hres = get_domattr(This, id, &attr);
+    hres = get_domattr(This, id, NULL, &attr);
     if(FAILED(hres))
         return hres;
 
@@ -2598,8 +2603,23 @@ static inline HTMLAttributeCollection *HTMLAttributeCollection_from_DispatchEx(D
 static HRESULT HTMLAttributeCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
 {
     HTMLAttributeCollection *This = HTMLAttributeCollection_from_DispatchEx(dispex);
-    FIXME("(%p)->(%s %x %p)\n", This, debugstr_w(name), flags, dispid);
-    return E_NOTIMPL;
+    HTMLDOMAttribute *attr;
+    LONG pos;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(name), flags, dispid);
+
+    hres = get_attr_dispid_by_name(This, name, dispid);
+    if(FAILED(hres))
+        return hres;
+
+    hres = get_domattr(This, *dispid, &pos, &attr);
+    if(FAILED(hres))
+        return hres;
+    IHTMLDOMAttribute_Release(&attr->IHTMLDOMAttribute_iface);
+
+    *dispid = MSHTML_DISPID_CUSTOM_MIN+pos;
+    return S_OK;
 }
 
 static HRESULT HTMLAttributeCollection_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
