@@ -2413,6 +2413,113 @@ static void test_dynamic_properties(IHTMLElement *elem)
     SysFreeString(attr1);
 }
 
+static void test_attr_collection(IHTMLElement *elem)
+{
+    static const WCHAR testW[] = {'t','e','s','t',0};
+
+    IHTMLDOMNode *node;
+    IDispatch *disp, *attr;
+    IHTMLDOMAttribute *dom_attr;
+    IHTMLAttributeCollection *attr_col;
+    BSTR name = SysAllocString(testW);
+    VARIANT id, val;
+    LONG i, len, checked;
+    HRESULT hres;
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLDOMNode, (void**)&node);
+    ok(hres == S_OK, "QueryInterface failed: %08x\n", hres);
+
+    hres = IHTMLDOMNode_get_attributes(node, &disp);
+    ok(hres == S_OK, "get_attributes failed: %08x\n", hres);
+
+    hres = IHTMLDOMNode_get_attributes(node, &attr);
+    ok(hres == S_OK, "get_attributes failed: %08x\n", hres);
+    ok(iface_cmp((IUnknown*)disp, (IUnknown*)attr), "disp != attr\n");
+    IDispatch_Release(attr);
+    IHTMLDOMNode_Release(node);
+
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLAttributeCollection, (void**)&attr_col);
+    ok(hres == S_OK, "QueryInterface failed: %08x\n", hres);
+
+    hres = IHTMLAttributeCollection_get_length(attr_col, &i);
+    ok(hres == S_OK, "get_length failed: %08x\n", hres);
+
+    V_VT(&val) = VT_I4;
+    V_I4(&val) = 1;
+    hres = IHTMLElement_setAttribute(elem, name, val, 0);
+    ok(hres == S_OK, "setAttribute failed: %08x\n", hres);
+    SysFreeString(name);
+
+    hres = IHTMLAttributeCollection_get_length(attr_col, &len);
+    ok(hres == S_OK, "get_length failed: %08x\n", hres);
+    ok(len == i+1, "get_length returned %d, expected %d\n", len, i+1);
+
+    checked = 0;
+    for(i=0; i<len; i++) {
+        V_VT(&id) = VT_I4;
+        V_I4(&id) = i;
+        hres = IHTMLAttributeCollection_item(attr_col, &id, &attr);
+        ok(hres == S_OK, "%d) item failed: %08x\n", i, hres);
+
+        hres = IDispatch_QueryInterface(attr, &IID_IHTMLDOMAttribute, (void**)&dom_attr);
+        ok(hres == S_OK, "%d) QueryInterface failed: %08x\n", i, hres);
+        IDispatch_Release(attr);
+
+        hres = IHTMLDOMAttribute_get_nodeName(dom_attr, &name);
+        ok(hres == S_OK, "%d) get_nodeName failed: %08x\n", i, hres);
+
+        if(!strcmp_wa(name, "id")) {
+            checked++;
+            hres = IHTMLDOMAttribute_get_nodeValue(dom_attr, &val);
+            ok(hres == S_OK, "%d) get_nodeValue failed: %08x\n", i, hres);
+            ok(V_VT(&val) == VT_BSTR, "id: V_VT(&val) = %d\n", V_VT(&val));
+            ok(!strcmp_wa(V_BSTR(&val), "attr"), "id: V_BSTR(&val) = %s\n", wine_dbgstr_w(V_BSTR(&val)));
+        } else if(!strcmp_wa(name, "attr1")) {
+            checked++;
+            hres = IHTMLDOMAttribute_get_nodeValue(dom_attr, &val);
+            ok(hres == S_OK, "%d) get_nodeValue failed: %08x\n", i, hres);
+            ok(V_VT(&val) == VT_BSTR, "attr1: V_VT(&val) = %d\n", V_VT(&val));
+            ok(!strcmp_wa(V_BSTR(&val), "attr1"), "attr1: V_BSTR(&val) = %s\n", wine_dbgstr_w(V_BSTR(&val)));
+        } else if(!strcmp_wa(name, "attr2")) {
+            checked++;
+            hres = IHTMLDOMAttribute_get_nodeValue(dom_attr, &val);
+            ok(hres == S_OK, "%d) get_nodeValue failed: %08x\n", i, hres);
+            ok(V_VT(&val) == VT_BSTR, "attr2: V_VT(&val) = %d\n", V_VT(&val));
+            ok(!V_BSTR(&val), "attr2: V_BSTR(&val) != NULL\n");
+        } else if(!strcmp_wa(name, "attr3")) {
+            checked++;
+            hres = IHTMLDOMAttribute_get_nodeValue(dom_attr, &val);
+            ok(hres == S_OK, "%d) get_nodeValue failed: %08x\n", i, hres);
+            ok(V_VT(&val) == VT_BSTR, "attr3: V_VT(&val) = %d\n", V_VT(&val));
+            ok(!strcmp_wa(V_BSTR(&val), "attr3"), "attr3: V_BSTR(&val) = %s\n", wine_dbgstr_w(V_BSTR(&val)));
+        } else if(!strcmp_wa(name, "test")) {
+            checked++;
+            hres = IHTMLDOMAttribute_get_nodeValue(dom_attr, &val);
+            ok(hres == S_OK, "%d) get_nodeValue failed: %08x\n", i, hres);
+            ok(V_VT(&val) == VT_I4, "test: V_VT(&val) = %d\n", V_VT(&val));
+            ok(V_I4(&val) == 1, "test: V_I4(&val) = %d\n", V_I4(&val));
+        }
+
+        IHTMLDOMAttribute_Release(dom_attr);
+        SysFreeString(name);
+        VariantClear(&val);
+    }
+    ok(checked==5, "invalid number of specified attributes (%d)\n", checked);
+
+    V_I4(&id) = len;
+    hres = IHTMLAttributeCollection_item(attr_col, &id, &attr);
+    ok(hres == E_INVALIDARG, "item failed: %08x\n", hres);
+
+    V_VT(&id) = VT_BSTR;
+    V_BSTR(&id) = a2bstr("nonexisting");
+    hres = IHTMLAttributeCollection_item(attr_col, &id, &attr);
+    ok(hres == E_INVALIDARG, "item failed: %08x\n", hres);
+    VariantClear(&id);
+
+    IDispatch_Release(disp);
+    IHTMLAttributeCollection_Release(attr_col);
+}
+
 #define test_input_type(i,t) _test_input_type(__LINE__,i,t)
 static void _test_input_type(unsigned line, IHTMLInputElement *input, const char *extype)
 {
@@ -4990,6 +5097,7 @@ static void test_elems(IHTMLDocument2 *doc)
     elem = get_elem_by_id(doc, "attr", TRUE);
     if(elem) {
         test_dynamic_properties(elem);
+        test_attr_collection(elem);
         IHTMLElement_Release(elem);
     }
 
@@ -5073,6 +5181,10 @@ static void test_elems(IHTMLDocument2 *doc)
         test_node_get_value_str((IUnknown*)node, "text test");
         test_node_put_value_str((IUnknown*)elem, "test text");
         test_node_get_value_str((IUnknown*)node, "text test");
+
+        hres = IHTMLDOMNode_get_attributes(node, &disp);
+        ok(hres == S_OK, "get_attributes failed: %08x\n", hres);
+        ok(!disp, "disp != NULL\n");
 
         IHTMLDOMNode_Release(node);
     }
