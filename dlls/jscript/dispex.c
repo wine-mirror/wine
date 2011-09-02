@@ -1132,3 +1132,17 @@ HRESULT jsdisp_delete_idx(jsdisp_t *obj, DWORD idx)
 
     return delete_prop(prop);
 }
+
+VARIANT_BOOL jsdisp_is_own_prop(jsdisp_t *obj, BSTR name)
+{
+    dispex_prop_t *prop;
+    HRESULT hres;
+
+    hres = find_prop_name(obj, name, &prop);
+    if(FAILED(hres))
+        return VARIANT_FALSE;
+    else if(!prop)
+        return VARIANT_FALSE;
+
+    return prop->type==PROP_VARIANT ? VARIANT_TRUE : VARIANT_FALSE;
+}

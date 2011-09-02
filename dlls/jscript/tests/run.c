@@ -64,6 +64,8 @@ DEFINE_EXPECT(global_propput_i);
 DEFINE_EXPECT(global_success_d);
 DEFINE_EXPECT(global_success_i);
 DEFINE_EXPECT(global_notexists_d);
+DEFINE_EXPECT(puredisp_prop_d);
+DEFINE_EXPECT(puredisp_noprop_d);
 DEFINE_EXPECT(testobj_delete);
 DEFINE_EXPECT(testobj_value);
 DEFINE_EXPECT(testobj_prop_d);
@@ -173,6 +175,18 @@ static HRESULT WINAPI DispatchEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
                                                 LPOLESTR *rgszNames, UINT cNames,
                                                 LCID lcid, DISPID *rgDispId)
 {
+    ok(IsEqualGUID(riid, &IID_NULL), "Expected IID_NULL\n");
+    ok(cNames==1, "cNames = %d\n", cNames);
+
+    if(!strcmp_wa(*rgszNames, "prop")) {
+        CHECK_EXPECT(puredisp_prop_d);
+        *rgDispId = DISPID_TESTOBJ_PROP;
+        return S_OK;
+    } else if(!strcmp_wa(*rgszNames, "noprop")) {
+        CHECK_EXPECT(puredisp_noprop_d);
+        return DISP_E_UNKNOWNNAME;
+    }
+
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
@@ -1475,6 +1489,22 @@ static void run_tests(void)
     SET_EXPECT(testobj_noprop_d);
     parse_script_a("ok(('noprop' in testObj) === false, 'noprop is in testObj');");
     CHECK_CALLED(testobj_noprop_d);
+
+    SET_EXPECT(testobj_prop_d);
+    parse_script_a("ok(Object.prototype.hasOwnProperty.call(testObj, 'prop') === true, 'hasOwnProperty(\\\"prop\\\") returned false');");
+    CHECK_CALLED(testobj_prop_d);
+
+    SET_EXPECT(testobj_noprop_d);
+    parse_script_a("ok(Object.prototype.hasOwnProperty.call(testObj, 'noprop') === false, 'hasOwnProperty(\\\"noprop\\\") returned true');");
+    CHECK_CALLED(testobj_noprop_d);
+
+    SET_EXPECT(puredisp_prop_d);
+    parse_script_a("ok(Object.prototype.hasOwnProperty.call(pureDisp, 'prop') === true, 'hasOwnProperty(\\\"noprop\\\") returned false');");
+    CHECK_CALLED(puredisp_prop_d);
+
+    SET_EXPECT(puredisp_noprop_d);
+    parse_script_a("ok(Object.prototype.hasOwnProperty.call(pureDisp, 'noprop') === false, 'hasOwnProperty(\\\"noprop\\\") returned true');");
+    CHECK_CALLED(puredisp_noprop_d);
 
     SET_EXPECT(testobj_value);
     parse_script_a("ok(String(testObj) === '1', 'wrong testObj value');");

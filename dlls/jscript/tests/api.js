@@ -1864,10 +1864,21 @@ ok(err.message === 4, "err.message = " + err.message);
 ok(!("number" in Error), "number is in Error");
 
 tmp = new Object();
+ok(tmp.hasOwnProperty("toString") === false, "toString property should be inherited");
 tmp.toString = function() { return "test"; };
+ok(tmp.hasOwnProperty("toString") === true, "toString own property should exist");
+ok(tmp.hasOwnProperty("nonExisting") === false, "nonExisting property should not exist");
 
 tmp = Error.prototype.toString.call(tmp);
 ok(tmp === "[object Error]", "Error.prototype.toString.call(tmp) = " + tmp);
+
+tmp = function() { return 0; };
+tmp[0] = true;
+ok(tmp.hasOwnProperty("toString") === false, "toString property should be inherited");
+ok(tmp.hasOwnProperty("0") === true, "hasOwnProperty(0) returned false");
+ok(tmp.hasOwnProperty() === false, "hasOwnProperty() returned true");
+
+ok(Object.prototype.hasOwnProperty.call(testObj) === false, "hasOwnProperty without name returned true");
 
 if(invokeVersion >= 2) {
     obj = new Object();

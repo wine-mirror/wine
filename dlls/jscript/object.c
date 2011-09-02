@@ -111,8 +111,47 @@ static HRESULT Object_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
 static HRESULT Object_hasOwnProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR name;
+    BOOL result;
+    DISPID id;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(!arg_cnt(dp)) {
+        if(retv) {
+            V_VT(retv) = VT_BOOL;
+            V_BOOL(retv) = VARIANT_FALSE;
+        }
+
+        return S_OK;
+    }
+
+    hres = to_string(ctx, get_arg(dp, 0), ei, &name);
+    if(FAILED(hres))
+        return hres;
+
+    if(is_jsdisp(jsthis)) {
+        result = jsdisp_is_own_prop(jsthis->u.jsdisp, name);
+        if(retv) {
+            V_VT(retv) = VT_BOOL;
+            V_BOOL(retv) = result;
+        }
+
+        return S_OK;
+    } else if(is_dispex(jsthis)) {
+        hres = IDispatchEx_GetDispID(jsthis->u.dispex, name,
+                make_grfdex(ctx, fdexNameCaseSensitive), &id);
+    } else {
+        hres = IDispatch_GetIDsOfNames(jsthis->u.disp, &IID_NULL,
+                &name, 1, ctx->lcid, &id);
+    }
+
+    if(retv) {
+        V_VT(retv) = VT_BOOL;
+        V_BOOL(retv) = SUCCEEDED(hres) ? VARIANT_TRUE : VARIANT_FALSE;
+    }
+    return S_OK;
 }
 
 static HRESULT Object_propertyIsEnumerable(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
