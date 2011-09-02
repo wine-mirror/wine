@@ -559,36 +559,18 @@ static HRESULT WINAPI HTMLElement4_normalize(IHTMLElement4 *iface)
 static HRESULT WINAPI HTMLElement4_getAttributeNode(IHTMLElement4 *iface, BSTR bstrname, IHTMLDOMAttribute **ppAttribute)
 {
     HTMLElement *This = impl_from_IHTMLElement4(iface);
-    HTMLDOMAttribute *attr = NULL, *iter;
-    DISPID dispid;
+    HTMLAttributeCollection *attrs;
     HRESULT hres;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrname), ppAttribute);
 
-    hres = IDispatchEx_GetDispID(&This->node.dispex.IDispatchEx_iface, bstrname, fdexNameCaseInsensitive, &dispid);
-    if(hres == DISP_E_UNKNOWNNAME) {
-        *ppAttribute = NULL;
-        return S_OK;
-    }else if(FAILED(hres)) {
+    hres = HTMLElement_get_attr_col(&This->node, &attrs);
+    if(FAILED(hres))
         return hres;
-    }
 
-    LIST_FOR_EACH_ENTRY(iter, &This->attrs, HTMLDOMAttribute, entry) {
-        if(iter->dispid == dispid) {
-            attr = iter;
-            break;
-        }
-    }
-
-    if(!attr) {
-        hres = HTMLDOMAttribute_Create(This, dispid, &attr);
-        if(FAILED(hres))
-            return hres;
-    }
-
-    IHTMLDOMAttribute_AddRef(&attr->IHTMLDOMAttribute_iface);
-    *ppAttribute = &attr->IHTMLDOMAttribute_iface;
-    return S_OK;
+    hres = IHTMLAttributeCollection2_getNamedItem(&attrs->IHTMLAttributeCollection2_iface, bstrname, ppAttribute);
+    IHTMLAttributeCollection_Release(&attrs->IHTMLAttributeCollection_iface);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLElement4_setAttributeNode(IHTMLElement4 *iface, IHTMLDOMAttribute *pattr,

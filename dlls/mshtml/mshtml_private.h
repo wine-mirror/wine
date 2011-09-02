@@ -543,7 +543,7 @@ typedef struct {
 
     nsIDOMHTMLElement *nselem;
     HTMLStyle *style;
-    struct list attrs;
+    HTMLAttributeCollection *attrs;
 } HTMLElement;
 
 #define HTMLELEMENT_TIDS    \

@@ -1693,15 +1693,6 @@ HRESULT HTMLElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 void HTMLElement_destructor(HTMLDOMNode *iface)
 {
     HTMLElement *This = impl_from_HTMLDOMNode(iface);
-    HTMLDOMAttribute *attr;
-
-    while(!list_empty(&This->attrs)) {
-        attr = LIST_ENTRY(list_head(&This->attrs), HTMLDOMAttribute, entry);
-
-        list_remove(&attr->entry);
-        attr->elem = NULL;
-        IHTMLDOMAttribute_Release(&attr->IHTMLDOMAttribute_iface);
-    }
 
     ConnectionPointContainer_Destroy(&This->cp_container);
 
@@ -1709,6 +1700,15 @@ void HTMLElement_destructor(HTMLDOMNode *iface)
         nsIDOMHTMLElement_Release(This->nselem);
     if(This->style)
         IHTMLStyle_Release(&This->style->IHTMLStyle_iface);
+    if(This->attrs) {
+        HTMLDOMAttribute *attr;
+
+        LIST_FOR_EACH_ENTRY(attr, &This->attrs->attrs, HTMLDOMAttribute, entry)
+            attr->elem = NULL;
+
+        This->attrs->elem = NULL;
+        IHTMLAttributeCollection_Release(&This->attrs->IHTMLAttributeCollection_iface);
+    }
 
     HTMLDOMNode_destructor(&This->node);
 }
@@ -1881,7 +1881,6 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMHTMLElemen
     if(nselem)
         nsIDOMHTMLElement_AddRef(nselem);
     This->nselem = nselem;
-    list_init(&This->attrs);
 
     HTMLDOMNode_Init(doc, &This->node, (nsIDOMNode*)nselem);
 
@@ -2170,7 +2169,14 @@ static ULONG WINAPI HTMLAttributeCollection_Release(IHTMLAttributeCollection *if
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        IHTMLElement_Release(&This->elem->IHTMLElement_iface);
+        while(!list_empty(&This->attrs)) {
+            HTMLDOMAttribute *attr = LIST_ENTRY(list_head(&This->attrs), HTMLDOMAttribute, entry);
+
+            list_remove(&attr->entry);
+            attr->elem = NULL;
+            IHTMLDOMAttribute_Release(&attr->IHTMLDOMAttribute_iface);
+        }
+
         heap_free(This);
     }
 
@@ -2253,18 +2259,23 @@ static inline HRESULT get_attr_dispid_by_name(HTMLAttributeCollection *This, BST
         }
     }
 
+    if(!This->elem) {
+        WARN("NULL elem\n");
+        return E_UNEXPECTED;
+    }
+
     hres = IDispatchEx_GetDispID(&This->elem->node.dispex.IDispatchEx_iface,
             name, fdexNameCaseInsensitive, id);
     return hres;
 }
 
-static inline HRESULT get_domattr(HTMLElement *elem, DISPID id, HTMLDOMAttribute **attr)
+static inline HRESULT get_domattr(HTMLAttributeCollection *This, DISPID id, HTMLDOMAttribute **attr)
 {
     HTMLDOMAttribute *iter;
     HRESULT hres;
 
     *attr = NULL;
-    LIST_FOR_EACH_ENTRY(iter, &elem->attrs, HTMLDOMAttribute, entry) {
+    LIST_FOR_EACH_ENTRY(iter, &This->attrs, HTMLDOMAttribute, entry) {
         if(iter->dispid == id) {
             *attr = iter;
             break;
@@ -2272,7 +2283,12 @@ static inline HRESULT get_domattr(HTMLElement *elem, DISPID id, HTMLDOMAttribute
     }
 
     if(!*attr) {
-        hres = HTMLDOMAttribute_Create(elem, id, attr);
+        if(!This->elem) {
+            WARN("NULL elem\n");
+            return E_UNEXPECTED;
+        }
+
+        hres = HTMLDOMAttribute_Create(This->elem, id, attr);
         if(FAILED(hres))
             return hres;
     }
@@ -2325,7 +2341,7 @@ static HRESULT WINAPI HTMLAttributeCollection_item(IHTMLAttributeCollection *ifa
     if(FAILED(hres))
         return hres;
 
-    hres = get_domattr(This->elem, id, &attr);
+    hres = get_domattr(This, id, &attr);
     if(FAILED(hres))
         return hres;
 
@@ -2417,7 +2433,7 @@ static HRESULT WINAPI HTMLAttributeCollection2_getNamedItem(IHTMLAttributeCollec
         return hres;
     }
 
-    hres = get_domattr(This->elem, id, &attr);
+    hres = get_domattr(This, id, &attr);
     if(FAILED(hres))
         return hres;
 
@@ -2545,7 +2561,7 @@ static HRESULT WINAPI HTMLAttributeCollection3_item(IHTMLAttributeCollection3 *i
     if(FAILED(hres))
         return hres;
 
-    hres = get_domattr(This->elem, id, &attr);
+    hres = get_domattr(This, id, &attr);
     if(FAILED(hres))
         return hres;
 
@@ -2618,23 +2634,27 @@ static dispex_static_data_t HTMLAttributeCollection_dispex = {
 HRESULT HTMLElement_get_attr_col(HTMLDOMNode *iface, HTMLAttributeCollection **ac)
 {
     HTMLElement *This = impl_from_HTMLDOMNode(iface);
-    HTMLAttributeCollection *ret;
 
-    ret = heap_alloc_zero(sizeof(*ret));
-    if(!ret)
+    if(This->attrs) {
+        IHTMLAttributeCollection_AddRef(&This->attrs->IHTMLAttributeCollection_iface);
+        *ac = This->attrs;
+        return S_OK;
+    }
+
+    This->attrs = heap_alloc_zero(sizeof(HTMLAttributeCollection));
+    if(!This->attrs)
         return E_OUTOFMEMORY;
 
-    ret->IHTMLAttributeCollection_iface.lpVtbl = &HTMLAttributeCollectionVtbl;
-    ret->IHTMLAttributeCollection2_iface.lpVtbl = &HTMLAttributeCollection2Vtbl;
-    ret->IHTMLAttributeCollection3_iface.lpVtbl = &HTMLAttributeCollection3Vtbl;
-    ret->ref = 1;
+    This->attrs->IHTMLAttributeCollection_iface.lpVtbl = &HTMLAttributeCollectionVtbl;
+    This->attrs->IHTMLAttributeCollection2_iface.lpVtbl = &HTMLAttributeCollection2Vtbl;
+    This->attrs->IHTMLAttributeCollection3_iface.lpVtbl = &HTMLAttributeCollection3Vtbl;
+    This->attrs->ref = 2;
 
-    IHTMLElement_AddRef(&This->IHTMLElement_iface);
-    ret->elem = This;
-
-    init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLAttributeCollection_iface,
+    This->attrs->elem = This;
+    list_init(&This->attrs->attrs);
+    init_dispex(&This->attrs->dispex, (IUnknown*)&This->attrs->IHTMLAttributeCollection_iface,
             &HTMLAttributeCollection_dispex);
 
-    *ac = ret;
+    *ac = This->attrs;
     return S_OK;
 }
