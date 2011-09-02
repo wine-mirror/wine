@@ -4225,7 +4225,7 @@ static HRESULT WINAPI ddraw_surface7_SetPalette(IDirectDrawSurface7 *iface, IDir
         return DDERR_INVALIDPIXELFORMAT;
     }
 
-    if (!This->is_complex_root)
+    if (This->surface_desc.ddsCaps.dwCaps2 & DDSCAPS2_MIPMAPSUBLEVEL)
     {
         return DDERR_NOTONMIPMAPSUBLEVEL;
     }

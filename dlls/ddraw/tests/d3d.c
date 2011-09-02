@@ -3029,6 +3029,9 @@ static void DeviceLoadTest(void)
     hr = IDirect3DDevice7_Load(lpD3DDevice, texture_levels[1][0], NULL, texture_levels[0][0], NULL, 0);
     ok(hr==D3D_OK, "IDirect3DDevice7_Load returned: %x\n",hr);
 
+    hr = IDirectDrawSurface7_GetPalette(texture_levels[0][1], &palettes[4]);
+    ok(hr==DDERR_NOPALETTEATTACHED, "IDirectDrawSurface7_GetPalette returned: %x\n", hr);
+
     hr = IDirectDrawSurface7_GetPalette(texture_levels[1][0], &palettes[4]);
     ok(hr==DDERR_NOPALETTEATTACHED, "IDirectDrawSurface7_GetPalette returned: %x\n", hr);
 

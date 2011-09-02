@@ -1632,6 +1632,21 @@ struct compare
     UINT mips;
 };
 
+static HRESULT WINAPI CubeTestPaletteEnum(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *desc, void *context)
+{
+    HRESULT hr;
+
+    hr = IDirectDrawSurface7_SetPalette(surface, context);
+    if (desc->dwWidth == 64) /* This is for first mimpmap */
+        ok(hr == DDERR_NOTONMIPMAPSUBLEVEL, "SetPalette returned: %x\n",hr);
+    else
+        ok(hr == DD_OK, "SetPalette returned: %x\n",hr);
+
+    IDirectDrawSurface7_Release(surface);
+
+    return DDENUMRET_OK;
+}
+
 static HRESULT WINAPI CubeTestLvl2Enum(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *desc, void *context)
 {
     UINT *mips = context;
@@ -1710,10 +1725,22 @@ static void CubeMapTest(void)
 {
     IDirectDraw7 *dd7 = NULL;
     IDirectDrawSurface7 *cubemap = NULL;
+    IDirectDrawPalette *palette = NULL;
     DDSURFACEDESC2 ddsd;
     HRESULT hr;
+    PALETTEENTRY Table[256];
+    int i;
     UINT num = 0;
+    UINT ref;
     struct enumstruct ctx;
+
+    for(i=0; i<256; i++)
+    {
+        Table[i].peRed   = 0xff;
+        Table[i].peGreen = 0;
+        Table[i].peBlue  = 0;
+        Table[i].peFlags = 0;
+    }
 
     hr = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw7, (void **) &dd7);
     ok(hr == DD_OK, "IDirectDraw::QueryInterface returned %08x\n", hr);
@@ -1813,6 +1840,41 @@ static void CubeMapTest(void)
 
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &cubemap, NULL);
     ok(hr == DDERR_INVALIDCAPS, "IDirectDraw7::CreateSurface returned %08x\n", hr);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
+    ddsd.dwWidth = 128;
+    ddsd.dwHeight = 128;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP | DDSCAPS_SYSTEMMEMORY;
+    ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES;
+
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED8;
+    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 8;
+
+    hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &cubemap, NULL);
+    if (FAILED(hr))
+    {
+        skip("Can't create palletized cubemap surface\n");
+        goto err;
+    }
+
+    hr = IDirectDraw7_CreatePalette(dd7, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, Table, &palette, NULL);
+    ok(hr == DD_OK, "CreatePalette failed with %08x\n", hr);
+
+    hr = IDirectDrawSurface7_EnumAttachedSurfaces(cubemap, palette, CubeTestPaletteEnum);
+    ok(hr == DD_OK, "EnumAttachedSurfaces failed\n");
+
+    ref = getRefcount((IUnknown *) palette);
+    ok(ref == 6, "Refcount is %u, expected 1\n", ref);
+
+    IDirectDrawSurface7_Release(cubemap);
+
+    ref = getRefcount((IUnknown *) palette);
+    todo_wine ok(ref == 1, "Refcount is %u, expected 1\n", ref);
+
+    IDirectDrawPalette_Release(palette);
 
     /* Make sure everything is cleaned up properly. Use the enumSurfaces test infrastructure */
     memset(&ctx, 0, sizeof(ctx));
@@ -2656,6 +2718,8 @@ static void PaletteTest(void)
 {
     HRESULT hr;
     LPDIRECTDRAWSURFACE lpSurf = NULL;
+    IDirectDrawSurface *backbuffer = NULL;
+    DDSCAPS ddscaps;
     DDSURFACEDESC ddsd;
     IDirectDrawPalette *palette = NULL;
     PALETTEENTRY Table[256];
@@ -2760,6 +2824,43 @@ static void PaletteTest(void)
 
     if (lpSurf) IDirectDrawSurface_Release(lpSurf);
     if (palette) IDirectDrawPalette_Release(palette);
+
+    hr = IDirectDraw_CreatePalette(lpDD, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, Table, &palette, NULL);
+    ok(hr == DD_OK, "CreatePalette failed with %08x\n", hr);
+
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_BACKBUFFERCOUNT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
+    ddsd.dwWidth = 64;
+    ddsd.dwHeight = 64;
+    ddsd.dwBackBufferCount = 1;
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED8;
+    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 8;
+
+    hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpSurf, NULL);
+    ok(hr==DD_OK, "CreateSurface returned: %x\n",hr);
+    if (FAILED(hr))
+    {
+        skip("failed to create surface\n");
+        return;
+    }
+
+    ddscaps.dwCaps = DDSCAPS_BACKBUFFER;
+    hr = IDirectDrawSurface_GetAttachedSurface(lpSurf, &ddscaps, &backbuffer);
+    ok(hr == DD_OK, "GetAttachedSurface returned: %x\n",hr);
+
+    hr = IDirectDrawSurface_SetPalette(backbuffer, palette);
+    ok(hr == DD_OK, "SetPalette returned: %x\n",hr);
+
+    IDirectDrawPalette_Release(palette);
+    palette = NULL;
+
+    hr = IDirectDrawSurface_GetPalette(backbuffer, &palette);
+    ok(hr == DD_OK, "CreateSurface returned: %x\n",hr);
+
+    IDirectDrawSurface_Release(backbuffer);
+    IDirectDrawSurface_Release(lpSurf);
 }
 
 static void StructSizeTest(void)
