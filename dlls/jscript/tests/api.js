@@ -101,10 +101,33 @@ tmp = encodeURI("\xffff");
 ok(tmp.length === 8, "encodeURI('\\xffff').length = " + tmp.length);
 tmp = encodeURI("abcABC123;/?:@&=+$,-_.!~*'()");
 ok(tmp === "abcABC123;/?:@&=+$,-_.!~*'()", "encodeURI('abcABC123;/?:@&=+$,-_.!~*'()') = " + tmp);
+tmp = encodeURI("%");
+ok(tmp === "%25", "encodeURI('%') = " + tmp);
 tmp = encodeURI();
 ok(tmp === "undefined", "encodeURI() = " + tmp);
 tmp = encodeURI("abc", "test");
 ok(tmp === "abc", "encodeURI('abc') = " + tmp);
+
+tmp = decodeURI("abc");
+ok(tmp === "abc", "decodeURI('abc') = " + tmp);
+tmp = decodeURI("{abc}");
+ok(tmp === "{abc}", "decodeURI('{abc}') = " + tmp);
+tmp = decodeURI("");
+ok(tmp === "", "decodeURI('') = " + tmp);
+tmp = decodeURI("\01\02\03\04");
+ok(tmp === "\01\02\03\04", "decodeURI('\\01\\02\\03\\04') = " + tmp);
+tmp = decodeURI();
+ok(tmp === "undefined", "decodeURI() = " + tmp);
+tmp = decodeURI("abc", "test");
+ok(tmp === "abc", "decodeURI('abc') = " + tmp);
+tmp = decodeURI("%7babc%7d");
+ok(tmp === "{abc}", "decodeURI('%7Babc%7D') = " + tmp);
+tmp = decodeURI("%01%02%03%04");
+ok(tmp === "\01\02\03\04", "decodeURI('%01%02%03%04') = " + tmp);
+tmp = decodeURI("%C2%A1%20");
+ok(tmp === "\xa1 ", "decodeURI('%C2%A1%20') = " + tmp);
+tmp = decodeURI("%C3%BFff");
+ok(tmp.length === 3, "decodeURI('%C3%BFff').length = " + tmp.length);
 
 tmp = encodeURIComponent("abc");
 ok(tmp === "abc", "encodeURIComponent('abc') = " + tmp);
@@ -1960,7 +1983,8 @@ var exception_array = {
 
     E_REGEXP_SYNTAX_ERROR:  { type: "RegExpError", number: -2146823271 },
 
-    E_URI_INVALID_CHAR:  { type: "URIError", number: -2146823264 }
+    E_URI_INVALID_CHAR:     { type: "URIError", number: -2146823264 },
+    E_URI_INVALID_CODING:   { type: "URIError", number: -2146823263 }
 };
 
 function testException(func, id) {
@@ -2054,6 +2078,8 @@ testException(function() {RegExp(/a/, "g");}, "E_REGEXP_SYNTAX_ERROR");
 // URIError tests
 testException(function() {encodeURI('\udcaa');}, "E_URI_INVALID_CHAR");
 testException(function() {encodeURIComponent('\udcaa');}, "E_URI_INVALID_CHAR");
+testException(function() {decodeURI('%');}, "E_URI_INVALID_CODING");
+testException(function() {decodeURI('%aaaa');}, "E_URI_INVALID_CODING");
 
 function testThisExcept(func, e) {
     testException(function() {func.call(new Object())}, e);
