@@ -4382,9 +4382,9 @@ done:
 static void dump_format(const DDPIXELFORMAT *fmt)
 {
     trace("dwFlags %08x, FourCC %08x, dwZBufferBitDepth %u, stencil %08x\n", fmt->dwFlags, fmt->dwFourCC,
-            fmt->dwZBufferBitDepth, fmt->dwStencilBitDepth);
-    trace("dwZBitMask %08x, dwStencilBitMask %08x, dwRGBZBitMask %08x\n", fmt->dwZBitMask,
-            fmt->dwStencilBitMask, fmt->dwRGBZBitMask);
+          U1(*fmt).dwZBufferBitDepth, U2(*fmt).dwStencilBitDepth);
+    trace("dwZBitMask %08x, dwStencilBitMask %08x, dwRGBZBitMask %08x\n", U3(*fmt).dwZBitMask,
+          U4(*fmt).dwStencilBitMask, U5(*fmt).dwRGBZBitMask);
 }
 
 static HRESULT WINAPI enum_z_fmt_cb(DDPIXELFORMAT *fmt, void *ctx)
@@ -4430,7 +4430,7 @@ static HRESULT WINAPI enum_z_fmt_cb(DDPIXELFORMAT *fmt, void *ctx)
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
     ddsd.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-    ddsd.ddpfPixelFormat = *fmt;
+    U4(ddsd).ddpfPixelFormat = *fmt;
     ddsd.dwWidth = 1024;
     ddsd.dwHeight = 1024;
     hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &surface, NULL);
@@ -4446,13 +4446,13 @@ static HRESULT WINAPI enum_z_fmt_cb(DDPIXELFORMAT *fmt, void *ctx)
 
     /* 24 bit unpadded depth buffers are actually padded(Geforce 9600, Win7,
      * Radeon 9000M WinXP) */
-    if (fmt->dwZBufferBitDepth == 24) expected_pitch = ddsd.dwWidth * 4;
-    else expected_pitch = ddsd.dwWidth * fmt->dwZBufferBitDepth / 8;
+    if (U1(*fmt).dwZBufferBitDepth == 24) expected_pitch = ddsd.dwWidth * 4;
+    else expected_pitch = ddsd.dwWidth * U1(*fmt).dwZBufferBitDepth / 8;
 
     /* Some formats(16 bit depth without stencil) return pitch 0 */
-    if (ddsd.lPitch != 0 && ddsd.lPitch != expected_pitch)
+    if (U1(ddsd).lPitch != 0 && U1(ddsd).lPitch != expected_pitch)
     {
-        ok(0, "Z buffer pitch is %u, expected %u\n", ddsd.lPitch, expected_pitch);
+        ok(0, "Z buffer pitch is %u, expected %u\n", U1(ddsd).lPitch, expected_pitch);
         dump_format(fmt);
     }
 
