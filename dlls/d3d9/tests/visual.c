@@ -1284,6 +1284,98 @@ static void fog_test(IDirect3DDevice9 *device)
         skip("D3DPRASTERCAPS_FOGTABLE not supported, skipping some fog tests\n");
     }
 
+    /* Test RANGEFOG vs FOGTABLEMODE */
+    if ((caps.RasterCaps & (D3DPRASTERCAPS_FOGTABLE | D3DPRASTERCAPS_FOGRANGE)) ==
+            (D3DPRASTERCAPS_FOGTABLE | D3DPRASTERCAPS_FOGRANGE))
+    {
+        struct sVertex untransformed_3[] =
+        {
+            {-1.0,-1.0,   0.4999f,      0xFFFF0000,     0xFF000000  },
+            {-1.0, 1.0,   0.4999f,      0xFFFF0000,     0xFF000000  },
+            { 1.0,-1.0,   0.4999f,      0xFFFF0000,     0xFF000000  },
+            { 1.0, 1.0,   0.4999f,      0xFFFF0000,     0xFF000000  },
+        };
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_Clear failed, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_SPECULAR);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_SetFVF failed, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_RANGEFOGENABLE, TRUE);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
+
+        /* z=0.4999, set the fogstart to 0.5 and fogend slightly higher. If range fog
+         * is not used, the fog coordinate will be equal to fogstart and the quad not
+         * fogged. If range fog is used the fog coordinate will be slightly higher and
+         * the fog coordinate will be > fogend, so we get a fully fogged quad. The fog
+         * is calculated per vertex and interpolated, so even the center of the screen
+         * where the difference doesn't matter will be fogged, but check the corners in
+         * case a d3d/gl implementation decides to calculate the fog factor per fragment */
+        start = 0.5f;
+        end = 0.50001f;
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGSTART, *((DWORD *) &start));
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGEND, *((DWORD *) &end));
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
+
+        /* Table fog: Range fog is not used */
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_BeginScene failed, hr %#x.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGTABLEMODE, D3DFOG_LINEAR);
+            ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, untransformed_3, sizeof(*untransformed_3));
+            ok(SUCCEEDED(hr), "IDirect3DDevice9_DrawPrimitiveUP failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_EndScene(device);
+            ok(SUCCEEDED(hr), "IDirect3DDevice9_EndScene failed, hr %#x.\n", hr);
+        }
+        color = getPixelColor(device, 10, 10);
+        ok(color == 0x00ff0000, "Rangefog with table fog returned color 0x%08x\n", color);
+        color = getPixelColor(device, 630, 10);
+        ok(color == 0x00ff0000, "Rangefog with table fog returned color 0x%08x\n", color);
+        color = getPixelColor(device, 10, 470);
+        ok(color == 0x00ff0000, "Rangefog with table fog returned color 0x%08x\n", color);
+        color = getPixelColor(device, 630, 470);
+        ok(color == 0x00ff0000, "Rangefog with table fog returned color 0x%08x\n", color);
+
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_Present failed, hr %#x.\n", hr);
+
+        /* Vertex fog: Rangefog is used */
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP returned %#08x\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGTABLEMODE, D3DFOG_NONE);
+            ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
+            ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, untransformed_3, sizeof(*untransformed_3));
+            ok(SUCCEEDED(hr), "IDirect3DDevice9_DrawPrimitiveUP failed, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_EndScene(device);
+            ok(SUCCEEDED(hr), "IDirect3DDevice9_EndScene failed, hr %#x.\n", hr);
+        }
+        color = getPixelColor(device, 10, 10);
+        ok(color == 0x0000ff00, "Rangefog with vertex fog returned color 0x%08x\n", color);
+        color = getPixelColor(device, 630, 10);
+        ok(color == 0x0000ff00, "Rangefog with vertex fog returned color 0x%08x\n", color);
+        color = getPixelColor(device, 10, 470);
+        ok(color == 0x0000ff00, "Rangefog with vertex fog returned color 0x%08x\n", color);
+        color = getPixelColor(device, 630, 470);
+        ok(color == 0x0000ff00, "Rangefog with vertex fog returned color 0x%08x\n", color);
+
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_Present failed, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_RANGEFOGENABLE, FALSE);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
+    }
+    else
+    {
+        skip("Range fog or table fog not supported, skipping range fog tests\n");
+    }
+
     /* Turn off the fog master switch to avoid confusing other tests */
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
     ok(hr == D3D_OK, "Turning off fog calculations returned %08x\n", hr);
