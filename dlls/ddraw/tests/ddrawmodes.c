@@ -501,7 +501,11 @@ static void enumdisplaymodes(void)
         ok(rc==DD_OK,"EnumDisplayModes returned: %x\n",rc);
         ok(modes16bpp_cnt == refresh_count, "Expected %d modes got %d\n", refresh_count, modes16bpp_cnt);
     }
+
+    rc = IDirectDraw_EnumDisplayModes(lpDD, 0, NULL, 0, enummodescallback);
+    ok(rc==DD_OK, "EnumDisplayModes returned: %x\n",rc);
 }
+
 
 static void setdisplaymode(int i)
 {

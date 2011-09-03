@@ -2938,9 +2938,9 @@ static HRESULT WINAPI ddraw_surface3_Initialize(IDirectDrawSurface3 *iface,
     DDSURFACEDESC2 surface_desc2;
     TRACE("iface %p, ddraw %p, surface_desc %p.\n", iface, ddraw, surface_desc);
 
-    DDSD_to_DDSD2(surface_desc, &surface_desc2);
+    if (surface_desc) DDSD_to_DDSD2(surface_desc, &surface_desc2);
     return ddraw_surface7_Initialize(&This->IDirectDrawSurface7_iface,
-            ddraw, &surface_desc2);
+            ddraw, surface_desc ? &surface_desc2 : NULL);
 }
 
 static HRESULT WINAPI ddraw_surface2_Initialize(IDirectDrawSurface2 *iface,
@@ -2950,9 +2950,9 @@ static HRESULT WINAPI ddraw_surface2_Initialize(IDirectDrawSurface2 *iface,
     DDSURFACEDESC2 surface_desc2;
     TRACE("iface %p, ddraw %p, surface_desc %p.\n", iface, ddraw, surface_desc);
 
-    DDSD_to_DDSD2(surface_desc, &surface_desc2);
+    if (surface_desc) DDSD_to_DDSD2(surface_desc, &surface_desc2);
     return ddraw_surface7_Initialize(&This->IDirectDrawSurface7_iface,
-            ddraw, &surface_desc2);
+            ddraw, surface_desc ? &surface_desc2 : NULL);
 }
 
 static HRESULT WINAPI ddraw_surface1_Initialize(IDirectDrawSurface *iface,
@@ -2962,9 +2962,9 @@ static HRESULT WINAPI ddraw_surface1_Initialize(IDirectDrawSurface *iface,
     DDSURFACEDESC2 surface_desc2;
     TRACE("iface %p, ddraw %p, surface_desc %p.\n", iface, ddraw, surface_desc);
 
-    DDSD_to_DDSD2(surface_desc, &surface_desc2);
+    if (surface_desc) DDSD_to_DDSD2(surface_desc, &surface_desc2);
     return ddraw_surface7_Initialize(&This->IDirectDrawSurface7_iface,
-            ddraw, &surface_desc2);
+            ddraw, surface_desc ? &surface_desc2 : NULL);
 }
 
 /*****************************************************************************
@@ -3873,8 +3873,16 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
 
     TRACE("iface %p, surface_desc %p, flags %#x.\n", iface, DDSD, Flags);
 
-    if(!DDSD)
+    if (!DDSD)
+    {
+        WARN("DDSD is NULL, returning DDERR_INVALIDPARAMS\n");
         return DDERR_INVALIDPARAMS;
+    }
+    if (Flags)
+    {
+        WARN("Flags is %x, returning DDERR_INVALIDPARAMS\n", Flags);
+        return DDERR_INVALIDPARAMS;
+    }
 
     EnterCriticalSection(&ddraw_cs);
     if (DDSD->dwFlags & DDSD_PIXELFORMAT)
@@ -3957,9 +3965,9 @@ static HRESULT WINAPI ddraw_surface3_SetSurfaceDesc(IDirectDrawSurface3 *iface,
     DDSURFACEDESC2 surface_desc2;
     TRACE("iface %p, surface_desc %p, flags %#x.\n", iface, surface_desc, flags);
 
-    DDSD_to_DDSD2(surface_desc, &surface_desc2);
+    if (surface_desc) DDSD_to_DDSD2(surface_desc, &surface_desc2);
     return ddraw_surface7_SetSurfaceDesc(&This->IDirectDrawSurface7_iface,
-            &surface_desc2, flags);
+            surface_desc ? &surface_desc2 : NULL, flags);
 }
 
 /*****************************************************************************

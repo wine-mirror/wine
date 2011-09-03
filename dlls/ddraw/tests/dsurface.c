@@ -1217,6 +1217,11 @@ static void EnumTest(void)
     ok(rc == DD_OK, "IDirectDraw_EnumSurfaces returned %08x\n", rc);
     ok(ctx.count == 3, "%d surfaces enumerated, expected 3\n", ctx.count);
 
+    ctx.count = 0;
+    rc = IDirectDraw_EnumSurfaces(lpDD, DDENUMSURFACES_DOESEXIST | DDENUMSURFACES_ALL, NULL, &ctx, enumCB);
+    ok(rc == DD_OK, "IDirectDraw_EnumSurfaces returned %08x\n", rc);
+    ok(ctx.count == 3, "%d surfaces enumerated, expected 3\n", ctx.count);
+
     IDirectDrawSurface_Release(ctx.expected[2]);
     IDirectDrawSurface_Release(ctx.expected[1]);
     IDirectDrawSurface_Release(surface);
@@ -1943,6 +1948,10 @@ static void test_lockrect_invalid(void)
             skip("failed to create surface\n");
             continue;
         }
+
+        hr = IDirectDrawSurface_Lock(surface, NULL, NULL, DDLOCK_WAIT, NULL);
+        ok(hr == DDERR_INVALIDPARAMS, "Lock returned 0x%08x for NULL DDSURFACEDESC,"
+                " expected DDERR_INVALIDPARAMS (0x%08x)\n", hr, DDERR_INVALIDPARAMS);
 
         for (i = 0; i < (sizeof(valid) / sizeof(*valid)); ++i)
         {
@@ -4216,6 +4225,58 @@ static void pixelformat_flag_test(void)
     test_ddsd(&ddsd, FALSE, TRUE, "Z buffer");
 }
 
+static void set_surface_desc_test(void)
+{
+    HRESULT hr;
+    DDSURFACEDESC ddsd;
+    IDirectDrawSurface *surface;
+    IDirectDrawSurface3 *surface3;
+    BYTE data[8*8*4];
+
+    hr = IDirectDraw_CreateSurface(lpDD, NULL, &surface, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "CreateSurface with a NULL DDSD returned %#x,"
+            " expected DDERR_INVALIDPARAMS(%#x)\n", hr, DDERR_INVALIDPARAMS);
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
+    ddsd.dwWidth = 8;
+    ddsd.dwHeight = 8;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;
+
+    hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &surface, NULL);
+    ok(SUCCEEDED(hr), "IDirectDraw_CreateSurface failed, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirectDrawSurface3, (void **) &surface3);
+    ok(SUCCEEDED(hr), "IDirectDrawSurface_QueryInterface failed, hr %#x.\n", hr);
+    IDirectDrawSurface_Release(surface);
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_LPSURFACE;
+    ddsd.lpSurface = data;
+    hr = IDirectDrawSurface3_SetSurfaceDesc(surface3, &ddsd, 0);
+    ok(SUCCEEDED(hr), "IDirectDrawSurface3_SetSurfaceDesc failed, hr %#x.\n", hr);
+
+    /* Redundantly setting the same lpSurface is not an error */
+    hr = IDirectDrawSurface3_SetSurfaceDesc(surface3, &ddsd, 0);
+    ok(SUCCEEDED(hr), "IDirectDrawSurface3_SetSurfaceDesc failed, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface3_SetSurfaceDesc(surface3, &ddsd, 1);
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDrawSurface3_SetSurfaceDesc returned %#x, expected"
+            " DDERR_INVALIDPARAMS(%#x)\n", hr, DDERR_INVALIDPARAMS);
+
+    hr = IDirectDrawSurface3_SetSurfaceDesc(surface3, NULL, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDrawSurface3_SetSurfaceDesc returned %#x, expected"
+            " DDERR_INVALIDPARAMS(%#x)\n", hr, DDERR_INVALIDPARAMS);
+
+    IDirectDrawSurface_Release(surface3);
+}
+
 START_TEST(dsurface)
 {
     HRESULT ret;
@@ -4275,5 +4336,6 @@ START_TEST(dsurface)
     no_ddsd_caps_test();
     zbufferbitdepth_test();
     pixelformat_flag_test();
+    set_surface_desc_test();
     ReleaseDirectDraw();
 }
