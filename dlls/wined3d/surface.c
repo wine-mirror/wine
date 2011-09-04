@@ -5321,61 +5321,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
         /* Half-Life does a Blt from the back buffer to the front buffer,
          * Full surface size, no flags... Use present instead
          *
-         * This path will only be entered for d3d7 and ddraw apps, because d3d8/9 offer no way to blit TO the front buffer
-         */
-
-        /* Check rects - wined3d_swapchain_present() doesn't handle them. */
+         * This path will only be entered for d3d7 and ddraw apps, because
+         * d3d8/9 offer no way to blit to the front buffer. */
         for (;;)
         {
-            TRACE("Looking if a Present can be done...\n");
-            /* Source Rectangle must be full surface */
-            if (src_rect->left || src_rect->top
-                    || src_rect->right != src_surface->resource.width
-                    || src_rect->bottom != src_surface->resource.height)
-            {
-                TRACE("No, Source rectangle doesn't match\n");
-                break;
-            }
-
-            /* No stretching may occur */
-            if (src_rect->right != dst_rect->right - dst_rect->left
-                    || src_rect->bottom != dst_rect->bottom - dst_rect->top)
-            {
-                TRACE("No, stretching is done\n");
-                break;
-            }
-
-            /* Destination must be full surface or match the clipping rectangle */
-            if (dst_surface->clipper && dst_surface->clipper->hWnd)
-            {
-                RECT cliprect;
-                POINT pos[2];
-                GetClientRect(dst_surface->clipper->hWnd, &cliprect);
-                pos[0].x = dst_rect->left;
-                pos[0].y = dst_rect->top;
-                pos[1].x = dst_rect->right;
-                pos[1].y = dst_rect->bottom;
-                MapWindowPoints(GetDesktopWindow(), dst_surface->clipper->hWnd, pos, 2);
-
-                if (pos[0].x != cliprect.left || pos[0].y != cliprect.top
-                        || pos[1].x != cliprect.right || pos[1].y != cliprect.bottom)
-                {
-                    TRACE("No, dest rectangle doesn't match(clipper)\n");
-                    TRACE("Clip rect at %s\n", wine_dbgstr_rect(&cliprect));
-                    TRACE("Blt dest: %s\n", wine_dbgstr_rect(dst_rect));
-                    break;
-                }
-            }
-            else if (dst_rect->left || dst_rect->top
-                    || dst_rect->right != dst_surface->resource.width
-                    || dst_rect->bottom != dst_surface->resource.height)
-            {
-                TRACE("No, dest rectangle doesn't match(surface size)\n");
-                break;
-            }
-
-            TRACE("Yes\n");
-
             /* These flags are unimportant for the flag check, remove them */
             if (!(flags & ~(WINEDDBLT_DONOTWAIT | WINEDDBLT_WAIT)))
             {
