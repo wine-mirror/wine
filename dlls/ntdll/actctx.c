@@ -182,7 +182,8 @@ struct actctx_loader
     unsigned int              allocated_dependencies;
 };
 
-static const WCHAR wildcardW[] = {'*',0};
+static const WCHAR asmv1W[] = {'a','s','m','v','1',':',0};
+static const WCHAR asmv2W[] = {'a','s','m','v','2',':',0};
 static const WCHAR assemblyW[] = {'a','s','s','e','m','b','l','y',0};
 static const WCHAR assemblyIdentityW[] = {'a','s','s','e','m','b','l','y','I','d','e','n','t','i','t','y',0};
 static const WCHAR bindingRedirectW[] = {'b','i','n','d','i','n','g','R','e','d','i','r','e','c','t',0};
@@ -195,14 +196,13 @@ static const WCHAR dependencyW[] = {'d','e','p','e','n','d','e','n','c','y',0};
 static const WCHAR dependentAssemblyW[] = {'d','e','p','e','n','d','e','n','t','A','s','s','e','m','b','l','y',0};
 static const WCHAR descriptionW[] = {'d','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR fileW[] = {'f','i','l','e',0};
-static const WCHAR asmv2hashW[] = {'a','s','m','v','2',':','h','a','s','h',0};
+static const WCHAR hashW[] = {'h','a','s','h',0};
 static const WCHAR noInheritW[] = {'n','o','I','n','h','e','r','i','t',0};
 static const WCHAR noInheritableW[] = {'n','o','I','n','h','e','r','i','t','a','b','l','e',0};
 static const WCHAR typelibW[] = {'t','y','p','e','l','i','b',0};
 static const WCHAR windowClassW[] = {'w','i','n','d','o','w','C','l','a','s','s',0};
 
 static const WCHAR clsidW[] = {'c','l','s','i','d',0};
-static const WCHAR hashW[] = {'h','a','s','h',0};
 static const WCHAR hashalgW[] = {'h','a','s','h','a','l','g',0};
 static const WCHAR helpdirW[] = {'h','e','l','p','d','i','r',0};
 static const WCHAR iidW[] = {'i','i','d',0};
@@ -226,6 +226,7 @@ static const WCHAR manifestv3W[] = {'u','r','n',':','s','c','h','e','m','a','s',
 
 static const WCHAR dotManifestW[] = {'.','m','a','n','i','f','e','s','t',0};
 static const WCHAR version_formatW[] = {'%','u','.','%','u','.','%','u','.','%','u',0};
+static const WCHAR wildcardW[] = {'*',0};
 
 static ACTIVATION_CONTEXT system_actctx = { ACTCTX_MAGIC, 1 };
 static ACTIVATION_CONTEXT *process_actctx = &system_actctx;
@@ -265,6 +266,27 @@ static inline BOOL xmlstr_cmp_end(const xmlstr_t* xmlstr, const WCHAR *str)
 {
     return (xmlstr->len && xmlstr->ptr[0] == '/' &&
             !strncmpW(xmlstr->ptr + 1, str, xmlstr->len - 1) && !str[xmlstr->len - 1]);
+}
+
+static inline BOOL xml_elem_cmp(const xmlstr_t *elem, const WCHAR *str, const WCHAR *namespace)
+{
+    UINT len = strlenW( namespace );
+
+    if (!strncmpW(elem->ptr, str, elem->len) && !str[elem->len]) return TRUE;
+    return (elem->len > len && !strncmpW(elem->ptr, namespace, len) &&
+            !strncmpW(elem->ptr + len, str, elem->len - len) && !str[elem->len - len]);
+}
+
+static inline BOOL xml_elem_cmp_end(const xmlstr_t *elem, const WCHAR *str, const WCHAR *namespace)
+{
+    if (elem->len && elem->ptr[0] == '/')
+    {
+        xmlstr_t elem_end;
+        elem_end.ptr = elem->ptr + 1;
+        elem_end.len = elem->len - 1;
+        return xml_elem_cmp( &elem_end, str, namespace );
+    }
+    return FALSE;
 }
 
 static inline BOOL isxmlspace( WCHAR ch )
@@ -784,11 +806,11 @@ error:
     return FALSE;
 }
 
-static BOOL parse_expect_elem(xmlbuf_t* xmlbuf, const WCHAR* name)
+static BOOL parse_expect_elem(xmlbuf_t* xmlbuf, const WCHAR* name, const WCHAR *namespace)
 {
     xmlstr_t    elem;
     if (!next_xml_elem(xmlbuf, &elem)) return FALSE;
-    if (xmlstr_cmp(&elem, name)) return TRUE;
+    if (xml_elem_cmp(&elem, name, namespace)) return TRUE;
     FIXME( "unexpected element %s\n", debugstr_xmlstr(&elem) );
     return FALSE;
 }
@@ -812,11 +834,11 @@ static BOOL parse_end_element(xmlbuf_t *xmlbuf)
     return parse_expect_no_attr(xmlbuf, &end) && !end;
 }
 
-static BOOL parse_expect_end_elem(xmlbuf_t *xmlbuf, const WCHAR *name)
+static BOOL parse_expect_end_elem(xmlbuf_t *xmlbuf, const WCHAR *name, const WCHAR *namespace)
 {
     xmlstr_t    elem;
     if (!next_xml_elem(xmlbuf, &elem)) return FALSE;
-    if (!xmlstr_cmp_end(&elem, name))
+    if (!xml_elem_cmp_end(&elem, name, namespace))
     {
         FIXME( "unexpected element %s\n", debugstr_xmlstr(&elem) );
         return FALSE;
@@ -889,7 +911,7 @@ static BOOL parse_assembly_identity_elem(xmlbuf_t* xmlbuf, ACTIVATION_CONTEXT* a
            debugstr_w(ai->name), debugstr_version(&ai->version), debugstr_w(ai->arch) );
 
     if (error || end) return end;
-    return parse_expect_end_elem(xmlbuf, assemblyIdentityW);
+    return parse_expect_end_elem(xmlbuf, assemblyIdentityW, asmv1W);
 }
 
 static BOOL parse_com_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
@@ -957,7 +979,7 @@ static BOOL parse_cominterface_proxy_stub_elem(xmlbuf_t* xmlbuf, struct dll_redi
     }
 
     if (error || end) return end;
-    return parse_expect_end_elem(xmlbuf, comInterfaceProxyStubW);
+    return parse_expect_end_elem(xmlbuf, comInterfaceProxyStubW, asmv1W);
 }
 
 static BOOL parse_typelib_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
@@ -990,7 +1012,7 @@ static BOOL parse_typelib_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
     }
 
     if (error || end) return end;
-    return parse_expect_end_elem(xmlbuf, typelibW);
+    return parse_expect_end_elem(xmlbuf, typelibW, asmv1W);
 }
 
 static BOOL parse_window_class_elem(xmlbuf_t* xmlbuf, struct dll_redirect* dll)
@@ -1048,7 +1070,7 @@ static BOOL parse_binding_redirect_elem(xmlbuf_t* xmlbuf)
     }
 
     if (error || end) return end;
-    return parse_expect_end_elem(xmlbuf, bindingRedirectW);
+    return parse_expect_end_elem(xmlbuf, bindingRedirectW, asmv1W);
 }
 
 static BOOL parse_description_elem(xmlbuf_t* xmlbuf)
@@ -1106,7 +1128,7 @@ static BOOL parse_com_interface_external_proxy_stub_elem(xmlbuf_t* xmlbuf,
     }
 
     if (error || end) return end;
-    return parse_expect_end_elem(xmlbuf, comInterfaceExternalProxyStubW);
+    return parse_expect_end_elem(xmlbuf, comInterfaceExternalProxyStubW, asmv1W);
 }
 
 static BOOL parse_clr_class_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
@@ -1135,7 +1157,7 @@ static BOOL parse_clr_class_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
     }
 
     if (error || end) return end;
-    return parse_expect_end_elem(xmlbuf, clrClassW);
+    return parse_expect_end_elem(xmlbuf, clrClassW, asmv1W);
 }
 
 static BOOL parse_clr_surrogate_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
@@ -1164,7 +1186,7 @@ static BOOL parse_clr_surrogate_elem(xmlbuf_t* xmlbuf, struct assembly* assembly
     }
 
     if (error || end) return end;
-    return parse_expect_end_elem(xmlbuf, clrSurrogateW);
+    return parse_expect_end_elem(xmlbuf, clrSurrogateW, asmv1W);
 }
 
 static BOOL parse_dependent_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl, BOOL optional)
@@ -1178,7 +1200,7 @@ static BOOL parse_dependent_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader
     memset(&ai, 0, sizeof(ai));
     ai.optional = optional;
 
-    if (!parse_expect_elem(xmlbuf, assemblyIdentityW) ||
+    if (!parse_expect_elem(xmlbuf, assemblyIdentityW, asmv1W) ||
         !parse_assembly_identity_elem(xmlbuf, acl->actctx, &ai))
         return FALSE;
 
@@ -1254,7 +1276,7 @@ static BOOL parse_noinherit_elem(xmlbuf_t* xmlbuf)
     BOOL end = FALSE;
 
     if (!parse_expect_no_attr(xmlbuf, &end)) return FALSE;
-    return end || parse_expect_end_elem(xmlbuf, noInheritW);
+    return end || parse_expect_end_elem(xmlbuf, noInheritW, asmv1W);
 }
 
 static BOOL parse_noinheritable_elem(xmlbuf_t* xmlbuf)
@@ -1262,7 +1284,7 @@ static BOOL parse_noinheritable_elem(xmlbuf_t* xmlbuf)
     BOOL end = FALSE;
 
     if (!parse_expect_no_attr(xmlbuf, &end)) return FALSE;
-    return end || parse_expect_end_elem(xmlbuf, noInheritableW);
+    return end || parse_expect_end_elem(xmlbuf, noInheritableW, asmv1W);
 }
 
 static BOOL parse_file_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
@@ -1314,9 +1336,9 @@ static BOOL parse_file_elem(xmlbuf_t* xmlbuf, struct assembly* assembly)
         {
             ret = parse_cominterface_proxy_stub_elem(xmlbuf, dll);
         }
-        else if (xmlstr_cmp(&elem, asmv2hashW))
+        else if (xml_elem_cmp(&elem, hashW, asmv2W))
         {
-            WARN("asmv2hash (undocumented) not supported\n");
+            WARN("asmv2:hash (undocumented) not supported\n");
             ret = parse_unknown_elem(xmlbuf, &elem);
         }
         else if (xmlstr_cmp(&elem, typelibW))
@@ -1383,7 +1405,7 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
         assembly->no_inherit = TRUE;
     }
 
-    if (xmlstr_cmp(&elem, noInheritableW))
+    if (xml_elem_cmp(&elem, noInheritableW, asmv1W))
     {
         if (!parse_noinheritable_elem(xmlbuf) || !next_xml_elem(xmlbuf, &elem))
             return FALSE;
@@ -1394,36 +1416,36 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
 
     while (ret)
     {
-        if (xmlstr_cmp_end(&elem, assemblyW))
+        if (xml_elem_cmp_end(&elem, assemblyW, asmv1W))
         {
             ret = parse_end_element(xmlbuf);
             break;
         }
-        else if (xmlstr_cmp(&elem, descriptionW))
+        else if (xml_elem_cmp(&elem, descriptionW, asmv1W))
         {
             ret = parse_description_elem(xmlbuf);
         }
-        else if (xmlstr_cmp(&elem, comInterfaceExternalProxyStubW))
+        else if (xml_elem_cmp(&elem, comInterfaceExternalProxyStubW, asmv1W))
         {
             ret = parse_com_interface_external_proxy_stub_elem(xmlbuf, assembly);
         }
-        else if (xmlstr_cmp(&elem, dependencyW))
+        else if (xml_elem_cmp(&elem, dependencyW, asmv1W))
         {
             ret = parse_dependency_elem(xmlbuf, acl);
         }
-        else if (xmlstr_cmp(&elem, fileW))
+        else if (xml_elem_cmp(&elem, fileW, asmv1W))
         {
             ret = parse_file_elem(xmlbuf, assembly);
         }
-        else if (xmlstr_cmp(&elem, clrClassW))
+        else if (xml_elem_cmp(&elem, clrClassW, asmv1W))
         {
             ret = parse_clr_class_elem(xmlbuf, assembly);
         }
-        else if (xmlstr_cmp(&elem, clrSurrogateW))
+        else if (xml_elem_cmp(&elem, clrSurrogateW, asmv1W))
         {
             ret = parse_clr_surrogate_elem(xmlbuf, assembly);
         }
-        else if (xmlstr_cmp(&elem, assemblyIdentityW))
+        else if (xml_elem_cmp(&elem, assemblyIdentityW, asmv1W))
         {
             if (!parse_assembly_identity_elem(xmlbuf, acl->actctx, &assembly->id)) return FALSE;
 
@@ -1474,7 +1496,7 @@ static NTSTATUS parse_manifest_buffer( struct actctx_loader* acl, struct assembl
         (!parse_xml_header(xmlbuf) || !next_xml_elem(xmlbuf, &elem)))
         return STATUS_SXS_CANT_GEN_ACTCTX;
 
-    if (!xmlstr_cmp(&elem, assemblyW))
+    if (!xml_elem_cmp(&elem, assemblyW, asmv1W))
     {
         FIXME("root element is %s, not <assembly>\n", debugstr_xmlstr(&elem));
         return STATUS_SXS_CANT_GEN_ACTCTX;
