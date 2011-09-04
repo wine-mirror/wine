@@ -52,6 +52,7 @@
 #define WINED3D_QUIRK_NV_CLIP_BROKEN            0x00000010
 #define WINED3D_QUIRK_FBO_TEX_UPDATE            0x00000020
 #define WINED3D_QUIRK_BROKEN_RGBA16             0x00000040
+#define WINED3D_QUIRK_INFO_LOG_SPAM             0x00000080
 
 /* Texture format fixups */
 

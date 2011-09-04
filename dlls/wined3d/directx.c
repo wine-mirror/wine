@@ -774,6 +774,12 @@ static BOOL match_broken_rgba16(const struct wined3d_gl_info *gl_info, const cha
     return size < 16;
 }
 
+static BOOL match_fglrx(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+{
+    return gl_vendor == GL_VENDOR_FGLRX;
+}
+
 static void quirk_arb_constants(struct wined3d_gl_info *gl_info)
 {
     TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL.\n", gl_info->limits.arb_vs_native_constants);
@@ -891,6 +897,11 @@ static void quirk_broken_rgba16(struct wined3d_gl_info *gl_info)
     gl_info->quirks |= WINED3D_QUIRK_BROKEN_RGBA16;
 }
 
+static void quirk_infolog_spam(struct wined3d_gl_info *gl_info)
+{
+    gl_info->quirks |= WINED3D_QUIRK_INFO_LOG_SPAM;
+}
+
 struct driver_quirk
 {
     BOOL (*match)(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
@@ -974,6 +985,11 @@ static const struct driver_quirk quirk_table[] =
         match_broken_rgba16,
         quirk_broken_rgba16,
         "True RGBA16 is not available"
+    },
+    {
+        match_fglrx,
+        quirk_infolog_spam,
+        "Not printing GLSL infolog"
     },
 };
 

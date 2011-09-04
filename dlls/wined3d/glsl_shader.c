@@ -198,26 +198,9 @@ static void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLhandleA
 {
     int infologLength = 0;
     char *infoLog;
-    unsigned int i;
-    BOOL is_spam;
 
-    static const char * const spam[] =
-    {
-        "Vertex shader was successfully compiled to run on hardware.\n",    /* fglrx          */
-        "Fragment shader was successfully compiled to run on hardware.\n",  /* fglrx, with \n */
-        "Fragment shader was successfully compiled to run on hardware.",    /* fglrx, no \n   */
-        "Fragment shader(s) linked, vertex shader(s) linked. \n ",          /* fglrx, with \n */
-        "Fragment shader(s) linked, vertex shader(s) linked. \n",           /* fglrx, with \n */
-        "Fragment shader(s) linked, vertex shader(s) linked.",              /* fglrx, no \n   */
-        "Vertex shader(s) linked, no fragment shader(s) defined. \n ",      /* fglrx, with \n */
-        "Vertex shader(s) linked, no fragment shader(s) defined. \n",       /* fglrx, with \n */
-        "Vertex shader(s) linked, no fragment shader(s) defined.",          /* fglrx, no \n   */
-        "Fragment shader(s) linked, no vertex shader(s) defined. \n ",      /* fglrx, with \n */
-        "Fragment shader(s) linked, no vertex shader(s) defined. \n",       /* fglrx, with \n */
-        "Fragment shader(s) linked, no vertex shader(s) defined.",          /* fglrx, no \n   */
-    };
-
-    if (!TRACE_ON(d3d_shader) && !FIXME_ON(d3d_shader)) return;
+    if (!WARN_ON(d3d_shader) && !FIXME_ON(d3d_shader))
+        return;
 
     GL_EXTCALL(glGetObjectParameterivARB(obj,
                GL_OBJECT_INFO_LOG_LENGTH_ARB,
@@ -229,31 +212,23 @@ static void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLhandleA
     {
         char *ptr, *line;
 
-        /* Fglrx doesn't terminate the string properly, but it tells us the proper length.
-         * So use HEAP_ZERO_MEMORY to avoid uninitialized bytes
-         */
-        infoLog = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, infologLength);
+        infoLog = HeapAlloc(GetProcessHeap(), 0, infologLength);
+        /* The info log is supposed to be zero-terminated, but at least some
+         * versions of fglrx don't terminate the string properly. The reported
+         * length does include the terminator, so explicitly set it to zero
+         * here. */
+        infoLog[infologLength - 1] = 0;
         GL_EXTCALL(glGetInfoLogARB(obj, infologLength, NULL, infoLog));
-        is_spam = FALSE;
-
-        for (i = 0; i < sizeof(spam) / sizeof(*spam); ++i)
-        {
-            if (!strcmp(infoLog, spam[i]))
-            {
-                is_spam = TRUE;
-                break;
-            }
-        }
 
         ptr = infoLog;
-        if (is_spam)
+        if (gl_info->quirks & WINED3D_QUIRK_INFO_LOG_SPAM)
         {
-            TRACE("Spam received from GLSL shader #%u:\n", obj);
-            while ((line = get_info_log_line(&ptr))) TRACE("    %s\n", line);
+            WARN("Info log received from GLSL shader #%u:\n", obj);
+            while ((line = get_info_log_line(&ptr))) WARN("    %s\n", line);
         }
         else
         {
-            FIXME("Error received from GLSL shader #%u:\n", obj);
+            FIXME("Info log received from GLSL shader #%u:\n", obj);
             while ((line = get_info_log_line(&ptr))) FIXME("    %s\n", line);
         }
         HeapFree(GetProcessHeap(), 0, infoLog);
