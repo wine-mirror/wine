@@ -2224,7 +2224,7 @@ void __cdecl wined3d_device_get_gamma_ramp(struct wined3d_device *device, UINT s
 HRESULT __cdecl wined3d_device_get_index_buffer(struct wined3d_device *device, struct wined3d_buffer **index_buffer);
 HRESULT __cdecl wined3d_device_get_light(const struct wined3d_device *device, UINT light_idx, WINED3DLIGHT *light);
 HRESULT __cdecl wined3d_device_get_light_enable(const struct wined3d_device *device, UINT light_idx, BOOL *enable);
-HRESULT __cdecl wined3d_device_get_material(struct wined3d_device *device, WINED3DMATERIAL *material);
+HRESULT __cdecl wined3d_device_get_material(const struct wined3d_device *device, WINED3DMATERIAL *material);
 float __cdecl wined3d_device_get_npatch_mode(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_palette_entries(struct wined3d_device *device,
         UINT palette_idx, PALETTEENTRY *entries);

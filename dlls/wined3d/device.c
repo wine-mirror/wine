@@ -2336,7 +2336,7 @@ HRESULT CDECL wined3d_device_set_material(struct wined3d_device *device, const W
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_material(struct wined3d_device *device, WINED3DMATERIAL *material)
+HRESULT CDECL wined3d_device_get_material(const struct wined3d_device *device, WINED3DMATERIAL *material)
 {
     TRACE("device %p, material %p.\n", device, material);
 
