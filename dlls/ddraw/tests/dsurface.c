@@ -4137,7 +4137,7 @@ static void zbufferbitdepth_test(void)
        U2(ddsd).dwZBufferBitDepth);
 }
 
-static void test_ddsd(DDSURFACEDESC *ddsd, BOOL expect_pf, BOOL expect_zd, const char *name)
+static void test_ddsd(DDSURFACEDESC *ddsd, BOOL expect_pf, BOOL expect_zd, const char *name, DWORD z_bit_depth)
 {
     IDirectDrawSurface *surface;
     IDirectDrawSurface7 *surface7;
@@ -4166,6 +4166,8 @@ static void test_ddsd(DDSURFACEDESC *ddsd, BOOL expect_pf, BOOL expect_zd, const
     if (expect_pf)
     {
         ok(out.dwFlags & DDSD_PIXELFORMAT, "%s surface: Expected DDSD_PIXELFORMAT to be set\n", name);
+        ok(out2.dwFlags & DDSD_PIXELFORMAT,
+                "%s surface: Expected DDSD_PIXELFORMAT to be set in DDSURFACEDESC2\n", name);
     }
     else
     {
@@ -4176,12 +4178,20 @@ static void test_ddsd(DDSURFACEDESC *ddsd, BOOL expect_pf, BOOL expect_zd, const
     if (expect_zd)
     {
         ok(out.dwFlags & DDSD_ZBUFFERBITDEPTH, "%s surface: Expected DDSD_ZBUFFERBITDEPTH to be set\n", name);
+        ok(U2(out).dwZBufferBitDepth == z_bit_depth, "ZBufferBitDepth is %u, expected %u\n",
+                U2(out).dwZBufferBitDepth, z_bit_depth);
         ok(!(out2.dwFlags & DDSD_ZBUFFERBITDEPTH),
                 "%s surface: Did not expect DDSD_ZBUFFERBITDEPTH to be set in DDSURFACEDESC2\n", name);
+        /* dwMipMapCount and dwZBufferBitDepth share the same union */
+        ok(U2(out2).dwMipMapCount == 0, "dwMipMapCount is %u, expected 0\n", U2(out2).dwMipMapCount);
     }
     else
     {
         ok(!(out.dwFlags & DDSD_ZBUFFERBITDEPTH), "%s surface: Expected DDSD_ZBUFFERBITDEPTH not to be set\n", name);
+        ok(U2(out).dwZBufferBitDepth == 0, "ZBufferBitDepth is %u, expected 0\n", U2(out).dwZBufferBitDepth);
+        ok(!(out2.dwFlags & DDSD_ZBUFFERBITDEPTH),
+                "%s surface: Did not expect DDSD_ZBUFFERBITDEPTH to be set in DDSURFACEDESC2\n", name);
+        ok(U2(out2).dwMipMapCount == 0, "dwMipMapCount is %u, expected 0\n", U2(out2).dwMipMapCount);
     }
 
     reset_ddsd(&out);
@@ -4208,6 +4218,11 @@ static void test_ddsd(DDSURFACEDESC *ddsd, BOOL expect_pf, BOOL expect_zd, const
             ok(!(out.dwFlags & DDSD_PIXELFORMAT),
                 "Lock %s surface: Expected DDSD_PIXELFORMAT not to be set\n", name);
         }
+        if (out.dwFlags & DDSD_ZBUFFERBITDEPTH)
+            ok(U2(out).dwZBufferBitDepth == z_bit_depth, "ZBufferBitDepth is %u, expected %u\n",
+                    U2(out).dwZBufferBitDepth, z_bit_depth);
+        else
+            ok(U2(out).dwZBufferBitDepth == 0, "ZBufferBitDepth is %u, expected 0\n", U2(out).dwZBufferBitDepth);
     }
 
     hr = IDirectDrawSurface7_Lock(surface7, NULL, &out2, 0, NULL);
@@ -4221,6 +4236,7 @@ static void test_ddsd(DDSURFACEDESC *ddsd, BOOL expect_pf, BOOL expect_zd, const
                 "Lock %s surface: Expected DDSD_PIXELFORMAT to be set in DDSURFACEDESC2\n", name);
         ok(!(out2.dwFlags & DDSD_ZBUFFERBITDEPTH),
                 "Lock %s surface: Did not expect DDSD_ZBUFFERBITDEPTH to be set in DDSURFACEDESC2\n", name);
+        ok(U2(out2).dwMipMapCount == 0, "dwMipMapCount is %u, expected 0\n", U2(out2).dwMipMapCount);
     }
 
     IDirectDrawSurface7_Release(surface7);
@@ -4248,12 +4264,12 @@ static void pixelformat_flag_test(void)
     ddsd.dwWidth = 64;
     ddsd.dwHeight = 64;
     ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-    test_ddsd(&ddsd, TRUE, FALSE, "offscreen plain");
+    test_ddsd(&ddsd, TRUE, FALSE, "offscreen plain", ~0U);
 
     reset_ddsd(&ddsd);
     ddsd.dwFlags = DDSD_CAPS;
     ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
-    test_ddsd(&ddsd, TRUE, FALSE, "primary");
+    test_ddsd(&ddsd, TRUE, FALSE, "primary", ~0U);
 
     reset_ddsd(&ddsd);
     ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_ZBUFFERBITDEPTH;
@@ -4261,7 +4277,7 @@ static void pixelformat_flag_test(void)
     ddsd.dwHeight = 64;
     U2(ddsd).dwZBufferBitDepth = 16;
     ddsd.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-    test_ddsd(&ddsd, FALSE, TRUE, "Z buffer");
+    test_ddsd(&ddsd, FALSE, TRUE, "Z buffer", 16);
 }
 
 static void set_surface_desc_test(void)
