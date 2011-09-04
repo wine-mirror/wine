@@ -2209,7 +2209,7 @@ HRESULT __cdecl wined3d_device_get_back_buffer(struct wined3d_device *device, UI
         UINT backbuffer_idx, WINED3DBACKBUFFER_TYPE backbuffer_type, struct wined3d_surface **backbuffer);
 INT __cdecl wined3d_device_get_base_vertex_index(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_clip_plane(const struct wined3d_device *device, UINT plane_idx, float *plane);
-HRESULT __cdecl wined3d_device_get_clip_status(struct wined3d_device *device, WINED3DCLIPSTATUS *clip_status);
+HRESULT __cdecl wined3d_device_get_clip_status(const struct wined3d_device *device, WINED3DCLIPSTATUS *clip_status);
 HRESULT __cdecl wined3d_device_get_creation_parameters(struct wined3d_device *device,
         WINED3DDEVICE_CREATION_PARAMETERS *creation_parameters);
 HRESULT __cdecl wined3d_device_get_current_texture_palette(struct wined3d_device *device, UINT *palette_idx);
