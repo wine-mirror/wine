@@ -2046,7 +2046,11 @@ static BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DW
     }
     SERVER_END_REQ;
 
-    if(status != STATUS_PENDING) HeapFree( GetProcessHeap(), 0, wsa );
+    if(status != STATUS_PENDING)
+    {
+        HeapFree( GetProcessHeap(), 0, wsa->read );
+        HeapFree( GetProcessHeap(), 0, wsa );
+    }
 
     SetLastError( NtStatusToWSAError(status) );
     return FALSE;
