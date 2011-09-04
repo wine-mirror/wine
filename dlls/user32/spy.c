@@ -39,6 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(message);
 
 #define SPY_MAX_MSGNUM   WM_USER
 #define SPY_INDENT_UNIT  4  /* 4 spaces */
+#define ARRAYSIZE(a) ((sizeof(a) / sizeof((a)[0])))
 
 #define DEBUG_SPY 0
 
@@ -1419,9 +1420,9 @@ typedef struct
 
 typedef struct
 {
-const WCHAR      *classname;  /* class name to match                  */
-const USER_MSG   *classmsg;   /* pointer to first USER_MSG for class  */
-const USER_MSG   *lastmsg;    /* pointer to last USER_MSG for class   */
+    const WCHAR      *classname;  /* class name to match */
+    const USER_MSG   *classmsg;   /* pointer to first USER_MSG for class */
+    UINT              count;      /* number of entries */
 } CONTROL_CLASS;
 
 #define USM(a,b) { #a ,a,b}
@@ -1469,7 +1470,7 @@ static const USER_MSG rebar_array[] = {
           USM(RB_SETPALETTE,           0),
           USM(RB_GETPALETTE,           0),
           USM(RB_MOVEBAND,             0),
-          {0,0,0} };
+};
 
 static const USER_MSG toolbar_array[] = {
           USM(TB_ENABLEBUTTON          ,0),
@@ -1564,7 +1565,7 @@ static const USER_MSG toolbar_array[] = {
           USM(TB_GETIMAGELISTCOUNT     ,0),
           USM(TB_GETIDEALSIZE          ,8),
           USM(TB_UNKWN464              ,0),
-          {0,0,0} };
+};
 
 static const USER_MSG tooltips_array[] = {
           USM(TTM_ACTIVATE             ,0),
@@ -1605,7 +1606,7 @@ static const USER_MSG tooltips_array[] = {
           USM(TTM_UPDATETIPTEXTW       ,0),
           USM(TTM_ENUMTOOLSW           ,0),
           USM(TTM_GETCURRENTTOOLW      ,0),
-          {0,0,0} };
+};
 
 static const USER_MSG comboex_array[] = {
           USM(CBEM_INSERTITEMA        ,0),
@@ -1622,7 +1623,7 @@ static const USER_MSG comboex_array[] = {
           USM(CBEM_SETITEMW           ,0),
           USM(CBEM_GETITEMW           ,0),
           USM(CBEM_SETEXTENDEDSTYLE   ,0),
-          {0,0,0} };
+};
 
 static const USER_MSG propsht_array[] = {
           USM(PSM_SETCURSEL           ,0),
@@ -1645,7 +1646,7 @@ static const USER_MSG propsht_array[] = {
           USM(PSM_GETCURRENTPAGEHWND  ,0),
           USM(PSM_SETTITLEW           ,0),
           USM(PSM_SETFINISHTEXTW      ,0),
-          {0,0,0} };
+};
 static const WCHAR PropSheetInfoStr[] =
     {'P','r','o','p','e','r','t','y','S','h','e','e','t','I','n','f','o',0 };
 
@@ -1664,7 +1665,7 @@ static const USER_MSG updown_array[] = {
           USM(UDM_GETRANGE32          ,0),
           USM(UDM_SETPOS32            ,0),
           USM(UDM_GETPOS32            ,0),
-          {0,0,0} };
+};
 
 /* generated from:
  * $ for i in `grep EM_ include/richedit.h | cut -d' ' -f2 | cut -f1`; do echo -e "          USM($i\t\t,0),"; done
@@ -1747,19 +1748,19 @@ static const USER_MSG richedit_array[] = {
           USM(EM_SETFONTSIZE            ,0),
           USM(EM_GETZOOM                ,0),
           USM(EM_SETZOOM                ,0),
-          {0,0,0} };
+};
 
 #undef SZOF
 #undef USM
 
-static CONTROL_CLASS  cc_array[] = {
-    {WC_COMBOBOXEXW,    comboex_array,  0},
-    {WC_PROPSHEETW,     propsht_array,  0},
-    {REBARCLASSNAMEW,   rebar_array,    0},
-    {TOOLBARCLASSNAMEW, toolbar_array,  0},
-    {TOOLTIPS_CLASSW,   tooltips_array, 0},
-    {UPDOWN_CLASSW,     updown_array,   0},
-    {RICHEDIT_CLASS20W, richedit_array, 0},
+static const CONTROL_CLASS cc_array[] = {
+    {WC_COMBOBOXEXW,    comboex_array,  ARRAYSIZE(comboex_array) },
+    {WC_PROPSHEETW,     propsht_array,  ARRAYSIZE(propsht_array) },
+    {REBARCLASSNAMEW,   rebar_array,    ARRAYSIZE(rebar_array) },
+    {TOOLBARCLASSNAMEW, toolbar_array,  ARRAYSIZE(toolbar_array) },
+    {TOOLTIPS_CLASSW,   tooltips_array, ARRAYSIZE(tooltips_array) },
+    {UPDOWN_CLASSW,     updown_array,   ARRAYSIZE(updown_array) },
+    {RICHEDIT_CLASS20W, richedit_array, ARRAYSIZE(richedit_array) },
     {0, 0, 0} };
 
 
@@ -1994,10 +1995,8 @@ static const SPY_NOTIFY spnfy_array[] = {
     /* Pager          0U-900U  to  0U-950U  */
     SPNFY(PGN_SCROLL,            NMPGSCROLL),
     SPNFY(PGN_CALCSIZE,          NMPGCALCSIZE),
-    {0,0,0}};
-static const SPY_NOTIFY *end_spnfy_array;     /* ptr to last good entry in array */
+};
 #undef SPNFY
-
 
 static unsigned char SPY_Exclude[SPY_MAX_MSGNUM+1];
 static unsigned char SPY_ExcludeDWP = 0;
@@ -2073,33 +2072,18 @@ static const char *SPY_GetMsgInternal( UINT msg )
 /***********************************************************************
  *           SPY_Bsearch_Msg
  */
-static const USER_MSG *SPY_Bsearch_Msg( const USER_MSG *first, const USER_MSG *last, UINT code)
+static const USER_MSG *SPY_Bsearch_Msg( const USER_MSG *msgs, UINT count, UINT code)
 {
-    INT count;
-    const USER_MSG *test;
+    int low = 0, high = count - 1;
 
-    while (last >= first) {
-        count = 1 + last - first;
-        if (count < 3) {
-#if DEBUG_SPY
-            TRACE("code=%d, f-value=%d, f-name=%s, l-value=%d, l-name=%s, l-len=%d,\n",
-               code, first->value, first->name, last->value, last->name, last->len);
-#endif
-            if (first->value == code) return first;
-            if (last->value == code) return last;
-            return NULL;
-        }
-        count = count / 2;
-        test = first + count;
-#if DEBUG_SPY
-        TRACE("first=%p, last=%p, test=%p, t-value=%d, code=%d, count=%d\n",
-           first, last, test, test->value, code, count);
-#endif
-        if (test->value == code) return test;
-        if (test->value > code)
-            last = test - 1;
+    while (low <= high)
+    {
+        int idx = (low + high) / 2;
+        if (msgs[idx].value == code) return msgs + idx;
+        if (msgs[idx].value > code)
+            high = idx - 1;
         else
-            first = test + 1;
+            low = idx + 1;
     }
     return NULL;
 }
@@ -2178,8 +2162,7 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
                   debugstr_w(cc_array[i].classname), cc_array[i].classmsg,
                   cc_array[i].lastmsg);
 #endif
-            p = SPY_Bsearch_Msg (cc_array[i].classmsg, cc_array[i].lastmsg,
-                                 sp_e->msgnum);
+            p = SPY_Bsearch_Msg (cc_array[i].classmsg, cc_array[i].count, sp_e->msgnum);
             if (p) {
                 lstrcpynA (sp_e->msg_name, p->name, sizeof(sp_e->msg_name));
                 sp_e->data_len = p->len;
@@ -2263,33 +2246,18 @@ const char *SPY_GetVKeyName(WPARAM wParam)
 /***********************************************************************
  *           SPY_Bsearch_Notify
  */
-static const SPY_NOTIFY *SPY_Bsearch_Notify( const SPY_NOTIFY *first, const SPY_NOTIFY *last, UINT code)
+static const SPY_NOTIFY *SPY_Bsearch_Notify( UINT code)
 {
-    INT count;
-    const SPY_NOTIFY *test;
+    int low = 0, high = ARRAYSIZE(spnfy_array) - 1;
 
-    while (last >= first) {
-        count = 1 + last - first;
-        if (count < 3) {
-#if DEBUG_SPY
-            TRACE("code=%d, f-value=%d, f-name=%s, l-value=%d, l-name=%s, l-len=%d,\n",
-               code, first->value, first->name, last->value, last->name, last->len);
-#endif
-            if (first->value == code) return first;
-            if (last->value == code) return last;
-            return NULL;
-        }
-        count = count / 2;
-        test = first + count;
-#if DEBUG_SPY
-        TRACE("first=%p, last=%p, test=%p, t-value=%d, code=%d, count=%d\n",
-           first, last, test, test->value, code, count);
-#endif
-        if (test->value == code) return test;
-        if (test->value < code)
-            last = test - 1;
+    while (low <= high)
+    {
+        int idx = (low + high) / 2;
+        if (spnfy_array[idx].value == code) return spnfy_array + idx;
+        if (spnfy_array[idx].value < code)
+            high = idx - 1;
         else
-            first = test + 1;
+            low = idx + 1;
     }
     return NULL;
 }
@@ -2518,8 +2486,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
                 WCHAR from_class[60];
                 DWORD save_error;
 
-                p = SPY_Bsearch_Notify (&spnfy_array[0], end_spnfy_array,
-                                        pnmh->code);
+                p = SPY_Bsearch_Notify( pnmh->code );
                 if (p) {
                     TRACE("NMHDR hwndFrom=%p idFrom=0x%08lx code=%s<0x%08x>, extra=0x%x\n",
                           pnmh->hwndFrom, pnmh->idFrom, p->name, pnmh->code, p->len);
@@ -2660,10 +2627,7 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
 int SPY_Init(void)
 {
     int i;
-    UINT j;
     char buffer[1024];
-    const SPY_NOTIFY *p;
-    const USER_MSG *q;
     HKEY hkey;
 
     if (!TRACE_ON(message)) return TRUE;
@@ -2701,47 +2665,6 @@ int SPY_Init(void)
             SPY_ExcludeDWP = atoi(buffer);
 
         RegCloseKey(hkey);
-    }
-
-    /* find last good entry in spy notify array and save addr for b-search */
-    p = &spnfy_array[0];
-    j = 0xffffffff;
-    while (p->name) {
-        if (p->value > j) {
-            ERR("Notify message array out of order\n");
-            ERR("  between values [%08x] %s and [%08x] %s\n",
-                j, (p-1)->name, p->value, p->name);
-            break;
-        }
-        j = p->value;
-        p++;
-    }
-    p--;
-    end_spnfy_array = p;
-
-    /* find last good entry in each common control message array
-     *  and save addr for b-search.
-     */
-    i = 0;
-    while (cc_array[i].classname) {
-
-        j = 0x0400; /* minimum entry in array */
-        q = cc_array[i].classmsg;
-        while(q->name) {
-            if (q->value <= j) {
-                ERR("Class message array out of order for class %s\n",
-                    debugstr_w(cc_array[i].classname));
-                ERR("  between values [%04x] %s and [%04x] %s\n",
-                    j, (q-1)->name, q->value, q->name);
-                break;
-            }
-            j = q->value;
-            q++;
-        }
-        q--;
-        cc_array[i].lastmsg = q;
-
-        i++;
     }
 
     return 1;
