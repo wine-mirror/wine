@@ -583,16 +583,25 @@ static BOOL CRYPT_CrackUrl(LPCWSTR pszURL, URL_COMPONENTSW *components)
 
     memset(components, 0, sizeof(*components));
     components->dwStructSize = sizeof(*components);
-    components->lpszHostName = CryptMemAlloc(MAX_PATH * sizeof(WCHAR));
-    components->dwHostNameLength = MAX_PATH;
-    components->lpszUrlPath = CryptMemAlloc(MAX_PATH * 2 * sizeof(WCHAR));
-    components->dwUrlPathLength = 2 * MAX_PATH;
+    components->lpszHostName = CryptMemAlloc(INTERNET_MAX_HOST_NAME_LENGTH * sizeof(WCHAR));
+    components->dwHostNameLength = INTERNET_MAX_HOST_NAME_LENGTH;
+    if (!components->lpszHostName)
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+    components->lpszUrlPath = CryptMemAlloc(INTERNET_MAX_PATH_LENGTH * sizeof(WCHAR));
+    components->dwUrlPathLength = INTERNET_MAX_PATH_LENGTH;
+    if (!components->lpszUrlPath)
+    {
+        CryptMemFree(components->lpszHostName);
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+
     ret = InternetCrackUrlW(pszURL, 0, ICU_DECODE, components);
     if (ret)
     {
-        if ((components->dwUrlPathLength == 2 * MAX_PATH - 1) ||
-            (components->dwHostNameLength == MAX_PATH - 1))
-            FIXME("Buffers are too small\n");
         switch (components->nScheme)
         {
         case INTERNET_SCHEME_FTP:
@@ -1025,15 +1034,18 @@ static BOOL WINAPI File_RetrieveEncodedObjectW(LPCWSTR pszURL,
     *ppfnFreeObject = CRYPT_FreeBlob;
     *ppvFreeContext = NULL;
 
-    components.lpszUrlPath = CryptMemAlloc(MAX_PATH * 2 * sizeof(WCHAR));
-    components.dwUrlPathLength = 2 * MAX_PATH;
+    components.lpszUrlPath = CryptMemAlloc(INTERNET_MAX_PATH_LENGTH * sizeof(WCHAR));
+    components.dwUrlPathLength = INTERNET_MAX_PATH_LENGTH;
+    if (!components.lpszUrlPath)
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+
     ret = InternetCrackUrlW(pszURL, 0, ICU_DECODE, &components);
     if (ret)
     {
         LPWSTR path;
-
-        if (components.dwUrlPathLength == 2 * MAX_PATH - 1)
-            FIXME("Buffers are too small\n");
 
         /* 3 == lstrlenW(L"c:") + 1 */
         path = CryptMemAlloc((components.dwUrlPathLength + 3) * sizeof(WCHAR));
@@ -1086,6 +1098,11 @@ static BOOL WINAPI File_RetrieveEncodedObjectW(LPCWSTR pszURL,
             else
                 ret = FALSE;
             CryptMemFree(path);
+        }
+        else
+        {
+            SetLastError(ERROR_OUTOFMEMORY);
+            ret = FALSE;
         }
     }
     CryptMemFree(components.lpszUrlPath);
