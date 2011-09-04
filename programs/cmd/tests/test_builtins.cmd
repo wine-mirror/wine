@@ -576,6 +576,12 @@ if /i foo==FOO echo if /i seems to work
 if /i not foo==FOO echo if /i seems to be broken
 if /I foo==FOO echo if /I seems to work
 if /I not foo==FOO echo if /I seems to be broken
+echo Testing string comparisons
+if abc == abc  (echo equal) else echo non equal
+if abc =="abc" (echo equal) else echo non equal
+if "abc"== abc (echo equal) else echo non equal
+if "abc"== "abc" (echo equal) else echo non equal
+echo Testing tabs handling
 if@tab@1==1 echo doom
 if @tab@1==1 echo doom
 if 1==1 (echo doom) else@tab@echo quake

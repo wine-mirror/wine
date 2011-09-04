@@ -387,6 +387,12 @@ Testing case sensitivity with and without /i option
 if seems to default to case sensitivity
 if /i seems to work
 if /I seems to work
+Testing string comparisons
+equal
+@todo_wine@non equal
+@todo_wine@non equal
+equal
+Testing tabs handling
 doom
 doom
 doom
