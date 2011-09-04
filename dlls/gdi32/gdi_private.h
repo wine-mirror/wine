@@ -258,7 +258,6 @@ typedef struct tagDC
 
   /* DC flags */
 #define DC_BOUNDS_ENABLE 0x0008   /* Bounding rectangle tracking is enabled */
-#define DC_BOUNDS_SET    0x0010   /* Bounding rectangle has been set */
 
 /* Certain functions will do no further processing if the driver returns this.
    Used by mfdrv for example. */

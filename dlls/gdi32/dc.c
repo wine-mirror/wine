@@ -1399,7 +1399,7 @@ HCOLORSPACE WINAPI SetColorSpace( HDC hDC, HCOLORSPACE hColorSpace )
  */
 UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
 {
-    UINT ret;
+    UINT ret = 0;
     DC *dc = get_dc_ptr( hdc );
 
     if ( !dc ) return 0;
@@ -1407,18 +1407,15 @@ UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
     if (rect)
     {
         *rect = dc->BoundsRect;
-        ret = ((dc->flags & DC_BOUNDS_SET) ? DCB_SET : DCB_RESET);
+        ret = is_rect_empty( rect ) ? DCB_RESET : DCB_SET;
+        DPtoLP( hdc, (POINT *)rect, 2 );
     }
-    else
-        ret = 0;
-
     if (flags & DCB_RESET)
     {
         dc->BoundsRect.left   = 0;
         dc->BoundsRect.top    = 0;
         dc->BoundsRect.right  = 0;
         dc->BoundsRect.bottom = 0;
-        dc->flags &= ~DC_BOUNDS_SET;
     }
     release_dc_ptr( dc );
     return ret;
@@ -1437,7 +1434,7 @@ UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
     if (!(dc = get_dc_ptr( hdc ))) return 0;
 
     ret = ((dc->flags & DC_BOUNDS_ENABLE) ? DCB_ENABLE : DCB_DISABLE) |
-          ((dc->flags & DC_BOUNDS_SET) ? DCB_SET : DCB_RESET);
+           (is_rect_empty( &dc->BoundsRect ) ? DCB_RESET : DCB_SET);
 
     if (flags & DCB_RESET)
     {
@@ -1445,22 +1442,23 @@ UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
         dc->BoundsRect.top    = 0;
         dc->BoundsRect.right  = 0;
         dc->BoundsRect.bottom = 0;
-        dc->flags &= ~DC_BOUNDS_SET;
     }
 
-    if ((flags & DCB_ACCUMULATE) && rect && rect->left < rect->right && rect->top < rect->bottom)
+    if ((flags & DCB_ACCUMULATE) && rect)
     {
-        if (dc->flags & DC_BOUNDS_SET)
+        RECT rc = *rect;
+
+        LPtoDP( hdc, (POINT *)&rc, 2 );
+        if (!is_rect_empty( &rc ))
         {
-            dc->BoundsRect.left   = min( dc->BoundsRect.left, rect->left );
-            dc->BoundsRect.top    = min( dc->BoundsRect.top, rect->top );
-            dc->BoundsRect.right  = max( dc->BoundsRect.right, rect->right );
-            dc->BoundsRect.bottom = max( dc->BoundsRect.bottom, rect->bottom );
-        }
-        else
-        {
-            dc->BoundsRect = *rect;
-            dc->flags |= DC_BOUNDS_SET;
+            if (!is_rect_empty( &dc->BoundsRect))
+            {
+                dc->BoundsRect.left   = min( dc->BoundsRect.left, rc.left );
+                dc->BoundsRect.top    = min( dc->BoundsRect.top, rc.top );
+                dc->BoundsRect.right  = max( dc->BoundsRect.right, rc.right );
+                dc->BoundsRect.bottom = max( dc->BoundsRect.bottom, rc.bottom );
+            }
+            else dc->BoundsRect = rc;
         }
     }
 
