@@ -26,6 +26,9 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 
 #include "wine/debug.h"
 #include "wine/library.h"
@@ -186,9 +189,19 @@ static void debug_usage(void)
 static void debug_init(void)
 {
     char *wine_debug;
+    struct stat st1, st2;
 
     if (nb_debug_options != -1) return;  /* already initialized */
     nb_debug_options = 0;
+
+    /* check for stderr pointing to /dev/null */
+    if (!fstat( 2, &st1 ) && S_ISCHR(st1.st_mode) &&
+        !stat( "/dev/null", &st2 ) && S_ISCHR(st2.st_mode) &&
+        st1.st_rdev == st2.st_rdev)
+    {
+        default_flags = 0;
+        return;
+    }
     if ((wine_debug = getenv("WINEDEBUG")))
     {
         if (!strcmp( wine_debug, "help" )) debug_usage();
