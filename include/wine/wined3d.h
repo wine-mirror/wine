@@ -2207,7 +2207,7 @@ void __cdecl wined3d_device_evict_managed_resources(struct wined3d_device *devic
 UINT __cdecl wined3d_device_get_available_texture_mem(const struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_back_buffer(struct wined3d_device *device, UINT swapchain_idx,
         UINT backbuffer_idx, WINED3DBACKBUFFER_TYPE backbuffer_type, struct wined3d_surface **backbuffer);
-INT __cdecl wined3d_device_get_base_vertex_index(struct wined3d_device *device);
+INT __cdecl wined3d_device_get_base_vertex_index(const struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_clip_plane(const struct wined3d_device *device, UINT plane_idx, float *plane);
 HRESULT __cdecl wined3d_device_get_clip_status(const struct wined3d_device *device, WINED3DCLIPSTATUS *clip_status);
 HRESULT __cdecl wined3d_device_get_creation_parameters(struct wined3d_device *device,

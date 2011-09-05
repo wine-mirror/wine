@@ -2437,7 +2437,7 @@ HRESULT CDECL wined3d_device_set_base_vertex_index(struct wined3d_device *device
     return WINED3D_OK;
 }
 
-INT CDECL wined3d_device_get_base_vertex_index(struct wined3d_device *device)
+INT CDECL wined3d_device_get_base_vertex_index(const struct wined3d_device *device)
 {
     TRACE("device %p.\n", device);
 
