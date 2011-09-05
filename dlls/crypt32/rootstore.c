@@ -31,6 +31,9 @@
 #endif
 #include <errno.h>
 #include <limits.h>
+#ifdef HAVE_SECURITY_SECURITY_H
+#include <Security/Security.h>
+#endif
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -40,9 +43,6 @@
 #include "winternl.h"
 #include "wine/debug.h"
 #include "crypt32_private.h"
-#ifdef HAVE_SECURITY_SECURITY_H
-#include <Security/Security.h>
-#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
