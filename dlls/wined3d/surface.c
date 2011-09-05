@@ -5346,7 +5346,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
                     */
 
                 dstSwapchain->presentParms.SwapEffect = WINED3DSWAPEFFECT_COPY;
-                dstSwapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_IMMEDIATE;
 
                 TRACE("Full screen back buffer -> front buffer blt, performing a flip instead.\n");
                 wined3d_swapchain_present(dstSwapchain, NULL, NULL, dstSwapchain->win_handle, NULL, 0);
