@@ -48,6 +48,7 @@
 #  include <jpeglib.h>
 # undef HAVE_STDLIB_H
 # define HAVE_STDLIB_H 1
+# undef UINT8
 # undef UINT16
 #endif
 

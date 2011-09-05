@@ -28,9 +28,6 @@
 #endif
 #include <stdlib.h>
 
-#include "windef.h"
-#include "winbase.h"
-#include "twain.h"
 #include "gphoto2_i.h"
 #include "wine/debug.h"
 

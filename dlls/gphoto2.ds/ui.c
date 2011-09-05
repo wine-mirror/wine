@@ -26,16 +26,13 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "windef.h"
-#include "winbase.h"
+#include "gphoto2_i.h"
 #include "winuser.h"
 #include "winnls.h"
 #include "wingdi.h"
 #include "winreg.h"
 #include "commctrl.h"
 #include "prsht.h"
-#include "twain.h"
-#include "gphoto2_i.h"
 #include "wine/debug.h"
 #include "resource.h"
 

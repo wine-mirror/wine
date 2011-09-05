@@ -20,17 +20,14 @@
 
 #include "config.h"
 #include "wine/port.h"
-#include "wine/library.h"
 
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "windef.h"
-#include "winbase.h"
+#include "gphoto2_i.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "twain.h"
-#include "gphoto2_i.h"
+#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
