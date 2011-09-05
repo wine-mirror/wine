@@ -121,7 +121,7 @@ static void test_title(void)
     hpsp[0] = CreatePropertySheetPageA(&psp);
 
     memset(&psh, 0, sizeof(psh));
-    psh.dwSize = CCSIZEOF_STRUCT(PROPSHEETHEADERA, pfnCallback);
+    psh.dwSize = PROPSHEETHEADERA_V1_SIZE;
     psh.dwFlags = PSH_MODELESS | PSH_USECALLBACK;
     psh.pszCaption = "test caption";
     psh.nPages = 1;
@@ -160,7 +160,7 @@ static void test_nopage(void)
     hpsp[0] = CreatePropertySheetPageA(&psp);
 
     memset(&psh, 0, sizeof(psh));
-    psh.dwSize = CCSIZEOF_STRUCT(PROPSHEETHEADERA, pfnCallback);
+    psh.dwSize = PROPSHEETHEADERA_V1_SIZE;
     psh.dwFlags = PSH_MODELESS | PSH_USECALLBACK;
     psh.pszCaption = "test caption";
     psh.nPages = 1;
@@ -237,7 +237,7 @@ static void test_disableowner(void)
     hpsp[0] = CreatePropertySheetPageA(&psp);
 
     memset(&psh, 0, sizeof(psh));
-    psh.dwSize = sizeof(psh);
+    psh.dwSize = PROPSHEETHEADERA_V1_SIZE;
     psh.dwFlags = PSH_USECALLBACK;
     psh.pszCaption = "test caption";
     psh.nPages = 1;
@@ -317,7 +317,7 @@ static void test_wiznavigation(void)
 
     /* set up the property sheet dialog */
     memset(&psh, 0, sizeof(psh));
-    psh.dwSize = CCSIZEOF_STRUCT(PROPSHEETHEADERA, pfnCallback);
+    psh.dwSize = PROPSHEETHEADERA_V1_SIZE;
     psh.dwFlags = PSH_MODELESS | PSH_WIZARD;
     psh.pszCaption = "A Wizard";
     psh.nPages = 4;
@@ -420,7 +420,7 @@ static void test_buttons(void)
     hpsp[0] = CreatePropertySheetPageA(&psp);
 
     memset(&psh, 0, sizeof(psh));
-    psh.dwSize = CCSIZEOF_STRUCT(PROPSHEETHEADERA, pfnCallback);
+    psh.dwSize = PROPSHEETHEADERA_V1_SIZE;
     psh.dwFlags = PSH_MODELESS | PSH_USECALLBACK;
     psh.pszCaption = "test caption";
     psh.nPages = 1;
@@ -499,7 +499,7 @@ static void test_custom_default_button(void)
     psp[0].pszTitle = "Page1";
     psp[0].lParam = 0;
 
-    psh.dwSize = sizeof (PROPSHEETHEADERA);
+    psh.dwSize = PROPSHEETHEADERA_V1_SIZE;
     psh.dwFlags = PSH_PROPSHEETPAGE | PSH_MODELESS;
     psh.hwndParent = GetDesktopWindow();
     psh.hInstance = GetModuleHandleA(NULL);
@@ -729,7 +729,7 @@ static void test_messages(void)
     hpsp[0] = CreatePropertySheetPageA(&psp);
 
     memset(&psh, 0, sizeof(psh));
-    psh.dwSize = CCSIZEOF_STRUCT(PROPSHEETHEADERA, pfnCallback);
+    psh.dwSize = PROPSHEETHEADERA_V1_SIZE;
     psh.dwFlags = PSH_NOAPPLYNOW | PSH_WIZARD | PSH_USECALLBACK
                   | PSH_MODELESS | PSH_USEICONID;
     psh.pszCaption = "test caption";
@@ -772,7 +772,7 @@ static void test_PSM_ADDPAGE(void)
     hpsp[2] = CreatePropertySheetPageA(&psp);
 
     memset(&psh, 0, sizeof(psh));
-    psh.dwSize = sizeof(psh);
+    psh.dwSize = PROPSHEETHEADERA_V1_SIZE;
     psh.dwFlags = PSH_MODELESS;
     psh.pszCaption = "test caption";
     psh.nPages = 1;
