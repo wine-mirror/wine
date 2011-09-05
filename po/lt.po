@@ -696,6 +696,8 @@ msgid "Prefer Signed Data"
 msgstr "Teikti pirmenybę pasirašytiems duomenims"
 
 #: crypt32.rc:53 cryptdlg.rc:31
+#, fuzzy
+msgctxt "Certification Practice Statement"
 msgid "CPS"
 msgstr "Sertifikavimo Veiklos Nuostatos (CPS)"
 
@@ -1232,6 +1234,8 @@ msgid "Subject Type="
 msgstr "Subjekto tipas="
 
 #: crypt32.rc:195
+#, fuzzy
+msgctxt "Certificate Authority"
 msgid "CA"
 msgstr "LĮ"
 
@@ -1261,6 +1265,8 @@ msgid "Access Method="
 msgstr "Prieigos metodas="
 
 #: crypt32.rc:202
+#, fuzzy
+msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
 msgstr "OCSP"
 

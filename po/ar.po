@@ -680,6 +680,7 @@ msgid "Prefer Signed Data"
 msgstr ""
 
 #: crypt32.rc:53 cryptdlg.rc:31
+msgctxt "Certification Practice Statement"
 msgid "CPS"
 msgstr ""
 
@@ -1218,6 +1219,7 @@ msgid "Subject Type="
 msgstr ""
 
 #: crypt32.rc:195
+msgctxt "Certificate Authority"
 msgid "CA"
 msgstr ""
 
@@ -1248,6 +1250,7 @@ msgid "Access Method="
 msgstr ""
 
 #: crypt32.rc:202
+msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
 msgstr ""
 

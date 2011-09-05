@@ -689,8 +689,10 @@ msgid "Prefer Signed Data"
 msgstr ""
 
 #: crypt32.rc:53 cryptdlg.rc:31
+#, fuzzy
+msgctxt "Certification Practice Statement"
 msgid "CPS"
-msgstr ""
+msgstr "שימוש במעבד"
 
 #: crypt32.rc:54 cryptdlg.rc:32
 msgid "User Notice"
@@ -1226,8 +1228,10 @@ msgid "Subject Type="
 msgstr "סוג המקבל="
 
 #: crypt32.rc:195
+#, fuzzy
+msgctxt "Certificate Authority"
 msgid "CA"
-msgstr ""
+msgstr "A"
 
 #: crypt32.rc:196
 msgid "End Entity"
@@ -1255,6 +1259,7 @@ msgid "Access Method="
 msgstr ""
 
 #: crypt32.rc:202
+msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
 msgstr ""
 

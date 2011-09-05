@@ -712,6 +712,8 @@ msgid "Prefer Signed Data"
 msgstr "Fortrekk signert data"
 
 #: crypt32.rc:53 cryptdlg.rc:31
+#, fuzzy
+msgctxt "Certification Practice Statement"
 msgid "CPS"
 msgstr "CPS"
 
@@ -1319,6 +1321,8 @@ msgid "Subject Type="
 msgstr "Emnetype="
 
 #: crypt32.rc:195
+#, fuzzy
+msgctxt "Certificate Authority"
 msgid "CA"
 msgstr "CA"
 
@@ -1349,6 +1353,8 @@ msgid "Access Method="
 msgstr "Tilgangsmetode="
 
 #: crypt32.rc:202
+#, fuzzy
+msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
 msgstr "OCSP"
 
