@@ -87,6 +87,18 @@ static HRESULT set_ctx_site(VBScript *This)
 
 static void destroy_script(script_ctx_t *ctx)
 {
+    while(!list_empty(&ctx->named_items)) {
+        named_item_t *iter = LIST_ENTRY(list_head(&ctx->named_items), named_item_t, entry);
+
+        list_remove(&iter->entry);
+        if(iter->disp)
+            IDispatch_Release(iter->disp);
+        heap_free(iter->name);
+        heap_free(iter);
+    }
+
+    if(ctx->host_global)
+        IDispatch_Release(ctx->host_global);
     if(ctx->site)
         IActiveScriptSite_Release(ctx->site);
     if(ctx->script_obj)
@@ -295,7 +307,55 @@ static HRESULT WINAPI VBScript_Close(IActiveScript *iface)
 static HRESULT WINAPI VBScript_AddNamedItem(IActiveScript *iface, LPCOLESTR pstrName, DWORD dwFlags)
 {
     VBScript *This = impl_from_IActiveScript(iface);
-    FIXME("(%p)->(%s %x)\n", This, debugstr_w(pstrName), dwFlags);
+    named_item_t *item;
+    IDispatch *disp = NULL;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %x)\n", This, debugstr_w(pstrName), dwFlags);
+
+    if(This->thread_id != GetCurrentThreadId() || !This->ctx || This->state == SCRIPTSTATE_CLOSED)
+        return E_UNEXPECTED;
+
+    if(dwFlags & SCRIPTITEM_GLOBALMEMBERS) {
+        IUnknown *unk;
+
+        hres = IActiveScriptSite_GetItemInfo(This->site, pstrName, SCRIPTINFO_IUNKNOWN, &unk, NULL);
+        if(FAILED(hres)) {
+            WARN("GetItemInfo failed: %08x\n", hres);
+            return hres;
+        }
+
+        hres = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&disp);
+        IUnknown_Release(unk);
+        if(FAILED(hres)) {
+            WARN("object does not implement IDispatch\n");
+            return hres;
+        }
+
+        if(This->ctx->host_global)
+            IDispatch_Release(This->ctx->host_global);
+        IDispatch_AddRef(disp);
+        This->ctx->host_global = disp;
+    }
+
+    item = heap_alloc(sizeof(*item));
+    if(!item) {
+        if(disp)
+            IDispatch_Release(disp);
+        return E_OUTOFMEMORY;
+    }
+
+    item->disp = disp;
+    item->flags = dwFlags;
+    item->name = heap_strdupW(pstrName);
+    if(!item->name) {
+        if(disp)
+            IDispatch_Release(disp);
+        heap_free(item);
+        return E_OUTOFMEMORY;
+    }
+
+    list_add_tail(&This->ctx->named_items, &item->entry);
     return S_OK;
 }
 
@@ -420,6 +480,8 @@ static HRESULT WINAPI VBScriptParse_InitNew(IActiveScriptParse *iface)
     ctx = heap_alloc_zero(sizeof(script_ctx_t));
     if(!ctx)
         return E_OUTOFMEMORY;
+
+    list_init(&ctx->named_items);
 
     old_ctx = InterlockedCompareExchangePointer((void**)&This->ctx, ctx, NULL);
     if(old_ctx) {

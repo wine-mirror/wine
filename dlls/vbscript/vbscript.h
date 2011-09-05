@@ -28,6 +28,17 @@
 
 #include "vbscript_classes.h"
 
+#include "wine/list.h"
+#include "wine/unicode.h"
+
+typedef struct named_item_t {
+    IDispatch *disp;
+    DWORD flags;
+    LPWSTR name;
+
+    struct list entry;
+} named_item_t;
+
 typedef struct {
     IDispatchEx IDispatchEx_iface;
 
@@ -38,7 +49,11 @@ typedef struct {
     IActiveScriptSite *site;
     LCID lcid;
 
+    IDispatch *host_global;
+
     vbdisp_t *script_obj;
+
+    struct list named_items;
 } script_ctx_t;
 
 HRESULT init_global(script_ctx_t*);
@@ -58,4 +73,20 @@ static inline void *heap_alloc_zero(size_t len)
 static inline BOOL heap_free(void *mem)
 {
     return HeapFree(GetProcessHeap(), 0, mem);
+}
+
+static inline LPWSTR heap_strdupW(LPCWSTR str)
+{
+    LPWSTR ret = NULL;
+
+    if(str) {
+        DWORD size;
+
+        size = (strlenW(str)+1)*sizeof(WCHAR);
+        ret = heap_alloc(size);
+        if(ret)
+            memcpy(ret, str, size);
+    }
+
+    return ret;
 }
