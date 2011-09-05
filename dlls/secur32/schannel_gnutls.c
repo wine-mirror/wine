@@ -331,7 +331,7 @@ SECURITY_STATUS schan_imp_get_session_peer_certificate(schan_imp_session session
 }
 
 SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
-                               size_t *length)
+                               SIZE_T *length)
 {
     gnutls_session_t s = (gnutls_session_t)session;
     ssize_t ret = pgnutls_record_send(s, buffer, *length);
@@ -349,7 +349,7 @@ SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
 }
 
 SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
-                               size_t *length)
+                               SIZE_T *length)
 {
     gnutls_session_t s = (gnutls_session_t)session;
     ssize_t ret = pgnutls_record_recv(s, buffer, *length);

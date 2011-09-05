@@ -378,15 +378,14 @@ static ALG_ID schan_get_kx_algid(const struct cipher_suite* c)
  *      other error code for failure.
  */
 static OSStatus schan_pull_adapter(SSLConnectionRef transport, void *buff,
-                                   size_t *buff_len)
+                                   SIZE_T *buff_len)
 {
     struct mac_session *s = (struct mac_session*)transport;
     size_t requested = *buff_len;
     int status;
     OSStatus ret;
 
-    TRACE("(%p/%p, %p, %p/%lu)\n", s, s->transport, buff, buff_len,
-          (unsigned long)*buff_len);
+    TRACE("(%p/%p, %p, %p/%lu)\n", s, s->transport, buff, buff_len, *buff_len);
 
     status = schan_pull(s->transport, buff, buff_len);
     if (status == 0)
@@ -398,12 +397,12 @@ static OSStatus schan_pull_adapter(SSLConnectionRef transport, void *buff,
         }
         else if (*buff_len < requested)
         {
-            TRACE("Pulled %lu bytes before would block\n", (unsigned long)*buff_len);
+            TRACE("Pulled %lu bytes before would block\n", *buff_len);
             ret = errSSLWouldBlock;
         }
         else
         {
-            TRACE("Pulled %lu bytes\n", (unsigned long)*buff_len);
+            TRACE("Pulled %lu bytes\n", *buff_len);
             ret = noErr;
         }
     }
@@ -439,19 +438,18 @@ static OSStatus schan_pull_adapter(SSLConnectionRef transport, void *buff,
  *      other error code for failure.
  */
 static OSStatus schan_push_adapter(SSLConnectionRef transport, const void *buff,
-                                       size_t *buff_len)
+                                       SIZE_T *buff_len)
 {
     struct mac_session *s = (struct mac_session*)transport;
     int status;
     OSStatus ret;
 
-    TRACE("(%p/%p, %p, %p/%lu)\n", s, s->transport, buff, buff_len,
-          (unsigned long)*buff_len);
+    TRACE("(%p/%p, %p, %p/%lu)\n", s, s->transport, buff, buff_len, *buff_len);
 
     status = schan_push(s->transport, buff, buff_len);
     if (status == 0)
     {
-        TRACE("Pushed %lu bytes\n", (unsigned long)*buff_len);
+        TRACE("Pushed %lu bytes\n", *buff_len);
         ret = noErr;
     }
     else if (status == EAGAIN)
@@ -707,16 +705,16 @@ SECURITY_STATUS schan_imp_get_session_peer_certificate(schan_imp_session session
 }
 
 SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
-                               size_t *length)
+                               SIZE_T *length)
 {
     struct mac_session* s = (struct mac_session*)session;
     OSStatus status;
 
-    TRACE("(%p/%p, %p, %p/%lu)\n", s, s->context, buffer, length, (unsigned long)*length);
+    TRACE("(%p/%p, %p, %p/%lu)\n", s, s->context, buffer, length, *length);
 
     status = SSLWrite(s->context, buffer, *length, length);
     if (status == noErr)
-        TRACE("Wrote %lu bytes\n", (unsigned long)*length);
+        TRACE("Wrote %lu bytes\n", *length);
     else if (status == errSSLWouldBlock)
     {
         if (!*length)
@@ -725,7 +723,7 @@ SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
             return SEC_I_CONTINUE_NEEDED;
         }
         else
-            TRACE("Wrote %lu bytes before would block\n", (unsigned long)*length);
+            TRACE("Wrote %lu bytes before would block\n", *length);
     }
     else
     {
@@ -737,16 +735,16 @@ SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
 }
 
 SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
-                               size_t *length)
+                               SIZE_T *length)
 {
     struct mac_session* s = (struct mac_session*)session;
     OSStatus status;
 
-    TRACE("(%p/%p, %p, %p/%lu)\n", s, s->context, buffer, length, (unsigned long)*length);
+    TRACE("(%p/%p, %p, %p/%lu)\n", s, s->context, buffer, length, *length);
 
     status = SSLRead(s->context, buffer, *length, length);
     if (status == noErr)
-        TRACE("Read %lu bytes\n", (unsigned long)*length);
+        TRACE("Read %lu bytes\n", *length);
     else if (status == errSSLWouldBlock)
     {
         if (!*length)
@@ -755,7 +753,7 @@ SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
             return SEC_I_CONTINUE_NEEDED;
         }
         else
-            TRACE("Read %lu bytes before would block\n", (unsigned long)*length);
+            TRACE("Read %lu bytes before would block\n", *length);
     }
     else
     {

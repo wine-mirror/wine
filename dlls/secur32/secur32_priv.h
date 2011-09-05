@@ -201,9 +201,9 @@ extern SECURITY_STATUS schan_imp_get_connection_info(schan_imp_session session,
 extern SECURITY_STATUS schan_imp_get_session_peer_certificate(schan_imp_session session,
                                                               PCCERT_CONTEXT *cert) DECLSPEC_HIDDEN;
 extern SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
-                                      size_t *length) DECLSPEC_HIDDEN;
+                                      SIZE_T *length) DECLSPEC_HIDDEN;
 extern SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
-                                      size_t *length) DECLSPEC_HIDDEN;
+                                      SIZE_T *length) DECLSPEC_HIDDEN;
 extern BOOL schan_imp_allocate_certificate_credentials(schan_imp_certificate_credentials *c) DECLSPEC_HIDDEN;
 extern void schan_imp_free_certificate_credentials(schan_imp_certificate_credentials c) DECLSPEC_HIDDEN;
 extern BOOL schan_imp_init(void) DECLSPEC_HIDDEN;

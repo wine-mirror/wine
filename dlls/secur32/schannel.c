@@ -496,7 +496,7 @@ static void schan_resize_current_buffer(const struct schan_buffers *s, SIZE_T mi
     b->pvBuffer = new_data;
 }
 
-static char *schan_get_buffer(const struct schan_transport *t, struct schan_buffers *s, size_t *count)
+static char *schan_get_buffer(const struct schan_transport *t, struct schan_buffers *s, SIZE_T *count)
 {
     SIZE_T max_count;
     PSecBuffer buffer;
@@ -566,9 +566,9 @@ static char *schan_get_buffer(const struct schan_transport *t, struct schan_buff
 int schan_pull(struct schan_transport *t, void *buff, size_t *buff_len)
 {
     char *b;
-    size_t local_len = *buff_len;
+    SIZE_T local_len = *buff_len;
 
-    TRACE("Pull %zu bytes\n", local_len);
+    TRACE("Pull %lu bytes\n", local_len);
 
     *buff_len = 0;
 
@@ -586,7 +586,7 @@ int schan_pull(struct schan_transport *t, void *buff, size_t *buff_len)
     memcpy(buff, b, local_len);
     t->in.offset += local_len;
 
-    TRACE("Read %zu bytes\n", local_len);
+    TRACE("Read %lu bytes\n", local_len);
 
     *buff_len = local_len;
     return 0;
@@ -612,9 +612,9 @@ int schan_pull(struct schan_transport *t, void *buff, size_t *buff_len)
 int schan_push(struct schan_transport *t, const void *buff, size_t *buff_len)
 {
     char *b;
-    size_t local_len = *buff_len;
+    SIZE_T local_len = *buff_len;
 
-    TRACE("Push %zu bytes\n", local_len);
+    TRACE("Push %lu bytes\n", local_len);
 
     *buff_len = 0;
 
@@ -625,7 +625,7 @@ int schan_push(struct schan_transport *t, const void *buff, size_t *buff_len)
     memcpy(b, buff, local_len);
     t->out.offset += local_len;
 
-    TRACE("Wrote %zu bytes\n", local_len);
+    TRACE("Wrote %lu bytes\n", local_len);
 
     *buff_len = local_len;
     return 0;
@@ -819,10 +819,10 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
             if (status == SEC_E_OK)
             {
                 SecPkgContext_StreamSizes *stream_sizes = buffer;
-                size_t mac_size = info.dwHashStrength;
+                SIZE_T mac_size = info.dwHashStrength;
                 unsigned int block_size = schan_imp_get_session_cipher_block_size(ctx->session);
 
-                TRACE("Using %zu mac bytes, block size %u\n", mac_size, block_size);
+                TRACE("Using %lu mac bytes, block size %u\n", mac_size, block_size);
 
                 /* These are defined by the TLS RFC */
                 stream_sizes->cbHeader = 5;
@@ -926,7 +926,7 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
     SecBuffer *buffer;
     SIZE_T data_size;
     char *data;
-    ssize_t sent = 0;
+    SSIZE_T sent = 0;
     int idx;
 
     TRACE("context_handle %p, quality %d, message %p, message_seq_no %d\n",
@@ -959,7 +959,7 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
 
     while (sent < data_size)
     {
-        size_t length = data_size - sent;
+        SIZE_T length = data_size - sent;
         SECURITY_STATUS status = schan_imp_send(ctx->session, data + sent, &length);
         if (status == SEC_I_CONTINUE_NEEDED)
             break;
@@ -973,7 +973,7 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
         sent += length;
     }
 
-    TRACE("Sent %zd bytes\n", sent);
+    TRACE("Sent %ld bytes\n", sent);
 
     b = &transport.out;
     b->desc->pBuffers[b->current_buffer_idx].cbBuffer = b->offset;
@@ -1055,7 +1055,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
     SIZE_T data_size;
     char *data;
     unsigned expected_size;
-    ssize_t received = 0;
+    SSIZE_T received = 0;
     int idx;
     unsigned char *buf_ptr;
 
@@ -1101,7 +1101,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
 
     while (received < data_size)
     {
-        size_t length = data_size - received;
+        SIZE_T length = data_size - received;
         SECURITY_STATUS status = schan_imp_recv(ctx->session, data + received, &length);
         if (status == SEC_I_CONTINUE_NEEDED)
         {
@@ -1125,7 +1125,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
         received += length;
     }
 
-    TRACE("Received %zd bytes\n", received);
+    TRACE("Received %ld bytes\n", received);
 
     memcpy(buf_ptr + 5, data, received);
     HeapFree(GetProcessHeap(), 0, data);
