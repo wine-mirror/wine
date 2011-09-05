@@ -2537,7 +2537,7 @@ static void test_register_product(void)
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
-    ok(delete_pf("msitest", FALSE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
     res = RegOpenKeyA(HKEY_CURRENT_USER, userugkey, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
@@ -2648,7 +2648,7 @@ static void test_register_product(void)
     r = MsiInstallProductA(msifile, "REGISTER_PRODUCT=1 ALLUSERS=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
-    ok(delete_pf("msitest", FALSE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, userugkey, 0, access, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
@@ -2818,7 +2818,7 @@ static void test_publish_product(void)
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
-    ok(delete_pf("msitest", FALSE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, badprod, 0, access, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
@@ -2915,7 +2915,7 @@ currentuser:
         goto machprod;
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
-    ok(delete_pf("msitest", FALSE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, badprod, 0, access, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
@@ -3052,7 +3052,7 @@ static void test_publish_features(void)
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
-    ok(delete_pf("msitest", FALSE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, featkey, 0, access, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
@@ -3089,7 +3089,7 @@ static void test_publish_features(void)
     r = MsiInstallProductA(msifile, "PUBLISH_FEATURES=1 ALLUSERS=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
-    ok(delete_pf("msitest", FALSE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, featkey, 0, access, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
@@ -3238,7 +3238,7 @@ static void test_register_user(void)
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
-    ok(delete_pf("msitest", FALSE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
     sprintf(keypath, keypropsfmt, usersid);
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, access, &props);
@@ -3260,7 +3260,7 @@ static void test_register_user(void)
     r = MsiInstallProductA(msifile, "REGISTER_USER=1 ALLUSERS=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
-    ok(delete_pf("msitest", FALSE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
     sprintf(keypath, keypropsfmt, "S-1-5-18");
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, access, &props);
@@ -3334,7 +3334,7 @@ static void test_process_components(void)
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
-    ok(delete_pf("msitest", FALSE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
     sprintf(keypath, keyfmt, usersid, "CBABC2FDCCB35E749A8944D8C1C098B5");
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, access, &comp);
@@ -3380,7 +3380,7 @@ static void test_process_components(void)
     r = MsiInstallProductA(msifile, "PROCESS_COMPONENTS=1 ALLUSERS=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
-    ok(delete_pf("msitest", FALSE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
     sprintf(keypath, keyfmt, "S-1-5-18", "CBABC2FDCCB35E749A8944D8C1C098B5");
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, access, &comp);
@@ -4239,7 +4239,7 @@ static void test_remove_files(void)
     ok(!pf_exists("msitest\\hydrogen"), "File not deleted\n");
     ok(!pf_exists("msitest\\helium"), "File not deleted\n");
     ok(delete_pf("msitest\\lithium", TRUE), "File deleted\n");
-    ok(delete_pf("msitest", FALSE), "File deleted\n");
+    ok(delete_pf("msitest", FALSE), "Directory deleted\n");
 
     create_pf("msitest", FALSE);
     create_pf("msitest\\hydrogen", TRUE);
@@ -4258,7 +4258,7 @@ static void test_remove_files(void)
     ok(!pf_exists("msitest\\hydrogen"), "File not deleted\n");
     ok(delete_pf("msitest\\helium", TRUE), "File deleted\n");
     ok(delete_pf("msitest\\lithium", TRUE), "File deleted\n");
-    ok(delete_pf("msitest", FALSE), "File deleted\n");
+    ok(delete_pf("msitest", FALSE), "Directory deleted\n");
 
     create_pf("msitest", FALSE);
     create_pf("msitest\\furlong", TRUE);
@@ -4428,7 +4428,7 @@ static void test_move_files(void)
     ok(delete_pf("msitest\\bar", TRUE), "File not moved\n");
     ok(delete_pf("msitest\\bur", TRUE), "File not moved\n");
     ok(!delete_pf("msitest\\bird", TRUE), "File moved\n");
-    ok(delete_pf("msitest", FALSE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
     ok(DeleteFileA("cameroon"), "File moved\n");
     ok(!DeleteFileA("djibouti"), "File not moved\n");
     ok(DeleteFileA("egypt"), "File moved\n");
@@ -4512,10 +4512,10 @@ static void test_duplicate_files(void)
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest\\augustus", TRUE), "File not duplicated\n");
     ok(delete_pf("msitest\\this\\doesnot\\exist\\maximus", TRUE), "File not duplicated\n");
-    ok(delete_pf("msitest\\this\\doesnot\\exist", FALSE), "File not duplicated\n");
-    ok(delete_pf("msitest\\this\\doesnot", FALSE), "File not duplicated\n");
-    ok(delete_pf("msitest\\this", FALSE), "File not duplicated\n");
-    ok(delete_pf("msitest", FALSE), "File not installed\n");
+    ok(delete_pf("msitest\\this\\doesnot\\exist", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\this\\doesnot", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\this", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
 error:
     DeleteFile("msitest\\maximus");
@@ -4552,7 +4552,7 @@ static void test_write_registry_values(void)
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_pf("msitest\\augustus", TRUE), "File installed\n");
-    ok(delete_pf("msitest", FALSE), "File installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
     if (is_64bit)
         res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wow6432Node\\Wine\\msitest", 0, KEY_ALL_ACCESS, &hkey);
