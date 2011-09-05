@@ -19,26 +19,23 @@
  */
 
 #include "config.h"
-
 #include "wine/port.h"
-#include "wine/debug.h"
 
 #include <stdarg.h>
+#ifdef HAVE_LDAP_H
+#include <ldap.h>
+#endif
+#ifndef LDAP_MAXINT
+#define LDAP_MAXINT  2147483647
+#endif
 
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 
-#ifdef HAVE_LDAP_H
-#include <ldap.h>
-#endif
-
 #include "winldap_private.h"
 #include "wldap32.h"
-
-#ifndef LDAP_MAXINT
-#define LDAP_MAXINT  2147483647
-#endif
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
