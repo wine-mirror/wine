@@ -2252,11 +2252,8 @@ int wmain (int argc, WCHAR *argvW[])
   WCHAR  *cmd   = NULL;
   WCHAR string[1024];
   WCHAR envvar[4];
-  HANDLE h;
   int opt_q;
   int opt_t = 0;
-  static const WCHAR autoexec[] = {'\\','a','u','t','o','e','x','e','c','.',
-                                   'b','a','t','\0'};
   static const WCHAR promptW[] = {'P','R','O','M','P','T','\0'};
   static const WCHAR defaultpromptW[] = {'$','P','$','G','\0'};
   char ansiVersion[100];
@@ -2572,19 +2569,6 @@ int wmain (int argc, WCHAR *argvW[])
       WCMD_free_commands(toExecute);
       toExecute = NULL;
       HeapFree(GetProcessHeap(), 0, cmd);
-  }
-
-/*
- *	If there is an AUTOEXEC.BAT file, try to execute it.
- */
-
-  GetFullPathNameW (autoexec, sizeof(string)/sizeof(WCHAR), string, NULL);
-  h = CreateFileW(string, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-  if (h != INVALID_HANDLE_VALUE) {
-    CloseHandle (h);
-#if 0
-    WCMD_batch (autoexec, autoexec, 0, NULL, INVALID_HANDLE_VALUE);
-#endif
   }
 
 /*
