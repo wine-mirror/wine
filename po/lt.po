@@ -6733,14 +6733,20 @@ msgid "%ld bytes"
 msgstr "%ld baitai"
 
 #: shlwapi.rc:28
+#, fuzzy
+msgctxt "time unit: hours"
 msgid " hr"
 msgstr " val"
 
 #: shlwapi.rc:29
+#, fuzzy
+msgctxt "time unit: minutes"
 msgid " min"
 msgstr " min"
 
 #: shlwapi.rc:30
+#, fuzzy
+msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " sek"
 

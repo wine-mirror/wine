@@ -6997,14 +6997,20 @@ msgid "%ld bytes"
 msgstr "%ld бајтова"
 
 #: shlwapi.rc:28
+#, fuzzy
+msgctxt "time unit: hours"
 msgid " hr"
 msgstr " ч."
 
 #: shlwapi.rc:29
+#, fuzzy
+msgctxt "time unit: minutes"
 msgid " min"
 msgstr " мин."
 
 #: shlwapi.rc:30
+#, fuzzy
+msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " сек."
 

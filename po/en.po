@@ -6625,14 +6625,17 @@ msgid "%ld bytes"
 msgstr ""
 
 #: shlwapi.rc:28
+msgctxt "time unit: hours"
 msgid " hr"
 msgstr ""
 
 #: shlwapi.rc:29
+msgctxt "time unit: minutes"
 msgid " min"
 msgstr ""
 
 #: shlwapi.rc:30
+msgctxt "time unit: seconds"
 msgid " sec"
 msgstr ""
 

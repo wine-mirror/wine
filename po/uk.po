@@ -6728,14 +6728,20 @@ msgid "%ld bytes"
 msgstr "%ld байт"
 
 #: shlwapi.rc:28
+#, fuzzy
+msgctxt "time unit: hours"
 msgid " hr"
 msgstr " год"
 
 #: shlwapi.rc:29
+#, fuzzy
+msgctxt "time unit: minutes"
 msgid " min"
 msgstr " хв"
 
 #: shlwapi.rc:30
+#, fuzzy
+msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " сек."
 

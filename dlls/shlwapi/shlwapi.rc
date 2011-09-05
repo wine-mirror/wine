@@ -25,9 +25,9 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 STRINGTABLE
 {
     IDS_BYTES_FORMAT    "%ld bytes"
-    IDS_TIME_INTERVAL_HOURS    " hr"
-    IDS_TIME_INTERVAL_MINUTES  " min"
-    IDS_TIME_INTERVAL_SECONDS  " sec"
+    IDS_TIME_INTERVAL_HOURS    "#msgctxt#time unit: hours# hr"
+    IDS_TIME_INTERVAL_MINUTES  "#msgctxt#time unit: minutes# min"
+    IDS_TIME_INTERVAL_SECONDS  "#msgctxt#time unit: seconds# sec"
 }
 
 #define WINE_FILENAME_STR "shlwapi.dll"
