@@ -30,7 +30,7 @@
 #include <ctype.h>
 #include <wine/unicode.h>
 
-/*	Data structure to hold commands to be processed */
+/* Data structure to hold commands delimitors/separators */
 
 typedef enum _CMDdelimiters {
   CMD_NONE,        /* End of line or single & */
@@ -38,6 +38,8 @@ typedef enum _CMDdelimiters {
   CMD_ONSUCCESS,   /* &&                      */
   CMD_PIPE         /* Single |                */
 } CMD_DELIMITERS;
+
+/* Data structure to hold commands to be processed */
 
 typedef struct _CMD_LIST {
   WCHAR              *command;     /* Command string to execute                */
@@ -117,7 +119,7 @@ void      WCMD_execute (const WCHAR *orig_command, const WCHAR *redirects,
                         const WCHAR *parameter, const WCHAR *substitution,
                         CMD_LIST **cmdList);
 
-/*	Data structure to hold context when executing batch files */
+/* Data structure to hold context when executing batch files */
 
 typedef struct {
   WCHAR *command;	/* The command which invoked the batch file */
@@ -129,7 +131,7 @@ typedef struct {
   CMD_LIST *toExecute;  /* Commands left to be executed */
 } BATCH_CONTEXT;
 
-/* Data structure to save setlocal and pushd information */
+/* Data structure to handle building lists during recursive calls */
 
 struct env_stack
 {
@@ -141,7 +143,7 @@ struct env_stack
   WCHAR *strings;
 };
 
-/* Data structure to handle building lists during recursive calls */
+/* Data structure to save setlocal and pushd information */
 
 typedef struct _DIRECTORY_STACK
 {
