@@ -8117,7 +8117,7 @@ msgid ""
 msgstr ""
 "FTYPE은 파일 형식과 관련한 열기 명령을 보여주거나 고침\n"
 "\n"
-"형식:FSTYPE[파일형식[=[열기명령]]]\n"
+"형식:FTYPE[파일형식[=[열기명령]]]\n"
 "\n"
 "매개변수가 없으면, 열기 명령 문자열에 현재 정의된 파일 형식을 보여 줍니다\n"
 "만약 파일 형식만 사용된다면, 열기 명령 문자열에 연결된 가능 한 것을 보여줍니"
@@ -8149,6 +8149,7 @@ msgstr ""
 "호출한 셀로 돌아갑니다.\n"
 
 #: cmd.rc:288
+#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -8593,6 +8594,7 @@ msgid "Reconnecting"
 msgstr "다시 연결중"
 
 #: net.rc:40
+#, fuzzy
 msgid "The following services are running:\n"
 msgstr "의존하고 있는 서비스가 실행중임\n"
 
