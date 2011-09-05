@@ -45,6 +45,16 @@ static int (__cdecl *p__fcvt_s)(char *buffer, size_t length, double number,
                                 int ndigits, int *decpt, int *sign);
 static unsigned int (__cdecl *p__get_output_format)(void);
 static int (__cdecl *p__vsprintf_p)(char*, size_t, const char*, __ms_va_list);
+static int (__cdecl *p_vswprintf)(wchar_t *str, const wchar_t *format, __ms_va_list valist);
+static int (__cdecl *p__vswprintf)(wchar_t *str, const wchar_t *format, __ms_va_list valist);
+static int (__cdecl *p__vswprintf_l)(wchar_t *str, const wchar_t *format,
+                                     void *locale, __ms_va_list valist);
+static int (__cdecl *p__vswprintf_c)(wchar_t *str, size_t size, const wchar_t *format,
+                                     __ms_va_list valist);
+static int (__cdecl *p__vswprintf_c_l)(wchar_t *str, size_t size, const wchar_t *format,
+                                       void *locale, __ms_va_list valist);
+static int (__cdecl *p__vswprintf_p_l)(wchar_t *str, size_t size, const wchar_t *format,
+                                       void *locale, __ms_va_list valist);
 
 static void init( void )
 {
@@ -57,6 +67,12 @@ static void init( void )
     p__fcvt_s = (void *)GetProcAddress(hmod, "_fcvt_s");
     p__get_output_format = (void *)GetProcAddress(hmod, "_get_output_format");
     p__vsprintf_p = (void*)GetProcAddress(hmod, "_vsprintf_p");
+    p_vswprintf = (void*)GetProcAddress(hmod, "vswprintf");
+    p__vswprintf = (void*)GetProcAddress(hmod, "_vswprintf");
+    p__vswprintf_l = (void*)GetProcAddress(hmod, "_vswprintf_l");
+    p__vswprintf_c = (void*)GetProcAddress(hmod, "_vswprintf_c");
+    p__vswprintf_c_l = (void*)GetProcAddress(hmod, "_vswprintf_c_l");
+    p__vswprintf_p_l = (void*)GetProcAddress(hmod, "_vswprintf_p_l");
 }
 
 static void test_sprintf( void )
@@ -943,6 +959,112 @@ static void test_vsnwprintf(void)
     ok( !strcmp(buf, "onetwothree"), "got %s expected 'onetwothree'\n", buf );
 }
 
+static int __cdecl vswprintf_wrapper(wchar_t *str, const wchar_t *format, ...)
+{
+    int ret;
+    __ms_va_list valist;
+    __ms_va_start(valist, format);
+    ret = p_vswprintf(str, format, valist);
+    __ms_va_end(valist);
+    return ret;
+}
+
+static int __cdecl _vswprintf_wrapper(wchar_t *str, const wchar_t *format, ...)
+{
+    int ret;
+    __ms_va_list valist;
+    __ms_va_start(valist, format);
+    ret = p__vswprintf(str, format, valist);
+    __ms_va_end(valist);
+    return ret;
+}
+
+static int __cdecl _vswprintf_l_wrapper(wchar_t *str, const wchar_t *format, void *locale, ...)
+{
+    int ret;
+    __ms_va_list valist;
+    __ms_va_start(valist, locale);
+    ret = p__vswprintf_l(str, format, locale, valist);
+    __ms_va_end(valist);
+    return ret;
+}
+
+static int __cdecl _vswprintf_c_wrapper(wchar_t *str, size_t size, const wchar_t *format, ...)
+{
+    int ret;
+    __ms_va_list valist;
+    __ms_va_start(valist, format);
+    ret = p__vswprintf_c(str, size, format, valist);
+    __ms_va_end(valist);
+    return ret;
+}
+
+static int __cdecl _vswprintf_c_l_wrapper(wchar_t *str, size_t size, const wchar_t *format, void *locale, ...)
+{
+    int ret;
+    __ms_va_list valist;
+    __ms_va_start(valist, locale);
+    ret = p__vswprintf_c_l(str, size, format, locale, valist);
+    __ms_va_end(valist);
+    return ret;
+}
+
+static int __cdecl _vswprintf_p_l_wrapper(wchar_t *str, size_t size, const wchar_t *format, void *locale, ...)
+{
+    int ret;
+    __ms_va_list valist;
+    __ms_va_start(valist, locale);
+    ret = p__vswprintf_p_l(str, size, format, locale, valist);
+    __ms_va_end(valist);
+    return ret;
+}
+
+static void test_vswprintf(void)
+{
+    const wchar_t format[] = {'%','s',' ','%','d',0};
+    const wchar_t number[] = {'n','u','m','b','e','r',0};
+    const wchar_t out[] = {'n','u','m','b','e','r',' ','1','2','3',0};
+    wchar_t buf[20];
+
+    int ret;
+
+    if (!p_vswprintf || !p__vswprintf || !p__vswprintf_l ||!p__vswprintf_c
+            || !p__vswprintf_c_l || !p__vswprintf_p_l)
+    {
+        win_skip("_vswprintf or vswprintf not available\n");
+        return;
+    }
+
+    ret = vswprintf_wrapper(buf, format, number, 123);
+    ok(ret == 10, "got %d, expected 10\n", ret);
+    ok(!memcmp(buf, out, sizeof(out)), "buf = %s\n", wine_dbgstr_w(buf));
+
+    memset(buf, 0, sizeof(buf));
+    ret = _vswprintf_wrapper(buf, format, number, 123);
+    ok(ret == 10, "got %d, expected 10\n", ret);
+    ok(!memcmp(buf, out, sizeof(out)), "buf = %s\n", wine_dbgstr_w(buf));
+
+    memset(buf, 0, sizeof(buf));
+    ret = _vswprintf_l_wrapper(buf, format, NULL, number, 123);
+    ok(ret == 10, "got %d, expected 10\n", ret);
+    ok(!memcmp(buf, out, sizeof(out)), "buf = %s\n", wine_dbgstr_w(buf));
+
+    memset(buf, 0, sizeof(buf));
+    ret = _vswprintf_c_wrapper(buf, 20, format, number, 123);
+    ok(ret == 10, "got %d, expected 10\n", ret);
+    ok(!memcmp(buf, out, sizeof(out)), "buf = %s\n", wine_dbgstr_w(buf));
+
+    memset(buf, 0, sizeof(buf));
+    ret = _vswprintf_c_l_wrapper(buf, 20, format, NULL, number, 123);
+    ok(ret == 10, "got %d, expected 10\n", ret);
+    ok(!memcmp(buf, out, sizeof(out)), "buf = %s\n", wine_dbgstr_w(buf));
+
+    memset(buf, 0, sizeof(buf));
+    ret = _vswprintf_p_l_wrapper(buf, 20, format, NULL, number, 123);
+    ok(ret == 10, "got %d, expected 10\n", ret);
+    ok(!memcmp(buf, out, sizeof(out)), "buf = %s\n", wine_dbgstr_w(buf));
+}
+
 static int __cdecl _vscprintf_wrapper(const char *format, ...)
 {
     int ret;
@@ -1120,6 +1242,7 @@ START_TEST(printf)
     test_vsnwprintf();
     test_vscprintf();
     test_vscwprintf();
+    test_vswprintf();
     test_vsnwprintf_s();
     test_vsprintf_p();
     test__get_output_format();
