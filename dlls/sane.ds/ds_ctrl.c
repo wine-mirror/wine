@@ -22,7 +22,6 @@
 # include <unistd.h>
 #endif
 #include <stdlib.h>
-#include "twain.h"
 #include "sane_i.h"
 #include "wine/debug.h"
 

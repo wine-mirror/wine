@@ -23,10 +23,19 @@
 # error You must include config.h first
 #endif
 
+#include <stdarg.h>
+
 #ifdef SONAME_LIBSANE
 # include <sane/sane.h>
 # include <sane/saneopts.h>
+#endif
 
+#include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
+#include "twain.h"
+
+#ifdef SONAME_LIBSANE
 #define MAKE_FUNCPTR(f) typeof(f) * p##f DECLSPEC_HIDDEN;
 MAKE_FUNCPTR(sane_init)
 MAKE_FUNCPTR(sane_exit)
@@ -43,14 +52,7 @@ MAKE_FUNCPTR(sane_set_io_mode)
 MAKE_FUNCPTR(sane_get_select_fd)
 MAKE_FUNCPTR(sane_strstatus)
 #undef MAKE_FUNCPTR
-
 #endif
-#include <stdarg.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "twain.h"
 
 extern HINSTANCE SANE_instance DECLSPEC_HIDDEN;
 

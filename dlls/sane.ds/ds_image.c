@@ -21,12 +21,9 @@
 
 #include <stdarg.h>
 
-#include "windef.h"
-#include "winbase.h"
+#include "sane_i.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "twain.h"
-#include "sane_i.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);

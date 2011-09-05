@@ -25,9 +25,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "windef.h"
-#include "winbase.h"
-#include "twain.h"
 #include "sane_i.h"
 #include "winnls.h"
 #include "wine/debug.h"

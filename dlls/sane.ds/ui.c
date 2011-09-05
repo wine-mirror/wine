@@ -26,14 +26,11 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "windef.h"
-#include "winbase.h"
+#include "sane_i.h"
 #include "winuser.h"
 #include "winnls.h"
 #include "wingdi.h"
 #include "prsht.h"
-#include "twain.h"
-#include "sane_i.h"
 #include "wine/debug.h"
 #include "resource.h"
 #include "wine/unicode.h"
