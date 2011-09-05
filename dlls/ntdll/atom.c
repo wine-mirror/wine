@@ -212,7 +212,7 @@ NTSTATUS WINAPI RtlAddAtomToAtomTable( RTL_ATOM_TABLE table, const WCHAR* name, 
     if (!table) status = STATUS_INVALID_PARAMETER;
     else
     {
-        size_t len = HIWORD(name) ? strlenW(name) : 0;
+        size_t len = IS_INTATOM(name) ?  0 : strlenW(name);
         status = is_integral_atom( name, len, atom );
         if (status == STATUS_MORE_ENTRIES)
         {
@@ -242,7 +242,7 @@ NTSTATUS WINAPI RtlLookupAtomInAtomTable( RTL_ATOM_TABLE table, const WCHAR* nam
     if (!table) status = STATUS_INVALID_PARAMETER;
     else
     {
-        size_t len = HIWORD(name) ? strlenW(name) : 0;
+        size_t len = IS_INTATOM(name) ? 0 : strlenW(name);
         status = is_integral_atom( name, len, atom );
         if (status == STATUS_MORE_ENTRIES)
         {
