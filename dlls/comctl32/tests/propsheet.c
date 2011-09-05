@@ -33,6 +33,24 @@ static LONG active_page = -1;
 
 #define IDC_APPLY_BUTTON 12321
 
+
+/* try to make sure pending X events have been processed before continuing */
+static void flush_events(void)
+{
+    MSG msg;
+    int diff = 200;
+    int min_timeout = 100;
+    DWORD time = GetTickCount() + diff;
+
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min_timeout, QS_ALLINPUT ) == WAIT_TIMEOUT) break;
+        while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+        diff = time - GetTickCount();
+    }
+}
+
+
 static int CALLBACK sheet_callback(HWND hwnd, UINT msg, LPARAM lparam)
 {
     switch(msg)
@@ -121,7 +139,8 @@ static void test_nopage(void)
     HPROPSHEETPAGE hpsp[1];
     PROPSHEETPAGEA psp;
     PROPSHEETHEADERA psh;
-    HWND hdlg;
+    HWND hdlg, hpage;
+    MSG msg;
 
     memset(&psp, 0, sizeof(psp));
     psp.dwSize = sizeof(psp);
@@ -148,7 +167,14 @@ static void test_nopage(void)
 
     ShowWindow(hdlg,SW_NORMAL);
     SendMessage(hdlg, PSM_REMOVEPAGE, 0, 0);
+    hpage = PropSheet_GetCurrentPageHwnd(hdlg);
+    ok(hpage == NULL, "expected no current page, got %p, index=%d\n", hpage, PropSheet_HwndToIndex(hdlg, hpage));
+    flush_events();
     RedrawWindow(hdlg,NULL,NULL,RDW_UPDATENOW|RDW_ERASENOW);
+
+    /* Check that the property sheet was fully redrawn */
+    ok(!PeekMessage(&msg, 0, WM_PAINT, WM_PAINT, PM_NOREMOVE),
+       "expected no pending WM_PAINT messages\n");
     DestroyWindow(hdlg);
 }
 
