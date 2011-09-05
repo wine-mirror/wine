@@ -444,50 +444,38 @@ static HRESULT search_for_domain_mapping(HKEY domains, LPCWSTR schema, LPCWSTR h
     return hres;
 }
 
-static HRESULT get_zone_from_domains(LPCWSTR url, LPCWSTR schema, DWORD *zone)
+static HRESULT get_zone_from_domains(IUri *uri, DWORD *zone)
 {
     HRESULT hres;
-    WCHAR *host_name;
-    DWORD host_len = lstrlenW(url)+1;
+    BSTR host, scheme;
     DWORD res;
     HKEY domains;
+    DWORD scheme_type;
 
-    host_name = heap_alloc(host_len*sizeof(WCHAR));
-    if(!host_name)
-        return E_OUTOFMEMORY;
-
-    hres = CoInternetParseUrl(url, PARSE_DOMAIN, 0, host_name, host_len, &host_len, 0);
-    if(hres == S_FALSE) {
-        WCHAR *tmp = heap_realloc(host_name, (host_len+1)*sizeof(WCHAR));
-        if(!tmp) {
-            heap_free(host_name);
-            return E_OUTOFMEMORY;
-        }
-
-        host_name = tmp;
-        hres = CoInternetParseUrl(url, PARSE_DOMAIN, 0, host_name, host_len+1, &host_len, 0);
-    }
+    hres = IUri_GetScheme(uri, &scheme_type);
+    if(FAILED(hres))
+        return hres;
 
     /* Windows doesn't play nice with unknown scheme types when it tries
      * to check if a host name maps into any domains.
-     *
-     * The reason is with how CoInternetParseUrl handles unknown scheme types
-     * when it's parsing the domain of a URL (IE it always returns E_FAIL).
-     *
-     * Windows doesn't compensate for this and simply doesn't check if
-     * the URL maps into any domains.
      */
-    if(hres != S_OK) {
-        heap_free(host_name);
-        if(hres == E_FAIL)
-            return S_FALSE;
+    if(scheme_type == URL_SCHEME_UNKNOWN)
+        return S_FALSE;
+
+    hres = IUri_GetHost(uri, &host);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IUri_GetSchemeName(uri, &scheme);
+    if(FAILED(hres)) {
+        SysFreeString(host);
         return hres;
     }
 
     /* First try CURRENT_USER. */
     res = RegOpenKeyW(HKEY_CURRENT_USER, wszZoneMapDomainsKey, &domains);
     if(res == ERROR_SUCCESS) {
-        hres = search_for_domain_mapping(domains, schema, host_name, host_len, zone);
+        hres = search_for_domain_mapping(domains, scheme, host, SysStringLen(host), zone);
         RegCloseKey(domains);
     } else
         WARN("Failed to open HKCU's %s key\n", debugstr_w(wszZoneMapDomainsKey));
@@ -496,13 +484,14 @@ static HRESULT get_zone_from_domains(LPCWSTR url, LPCWSTR schema, DWORD *zone)
     if(hres == S_FALSE) {
         res = RegOpenKeyW(HKEY_LOCAL_MACHINE, wszZoneMapDomainsKey, &domains);
         if(res == ERROR_SUCCESS) {
-            hres = search_for_domain_mapping(domains, schema, host_name, host_len, zone);
+            hres = search_for_domain_mapping(domains, scheme, host, SysStringLen(host), zone);
             RegCloseKey(domains);
         } else
             WARN("Failed to open HKLM's %s key\n", debugstr_w(wszZoneMapDomainsKey));
     }
 
-    heap_free(host_name);
+    SysFreeString(host);
+    SysFreeString(scheme);
     return hres;
 }
 
@@ -563,16 +552,7 @@ static HRESULT map_security_uri_to_zone(IUri *uri, DWORD *zone)
     }
 
     if(*zone == URLZONE_INVALID) {
-        BSTR secur_url;
-
-        hres = IUri_GetDisplayUri(uri, &secur_url);
-        if(FAILED(hres)) {
-            SysFreeString(scheme);
-            return hres;
-        }
-
-        hres = get_zone_from_domains(secur_url, scheme, zone);
-        SysFreeString(secur_url);
+        hres = get_zone_from_domains(uri, zone);
         if(hres == S_FALSE)
             hres = get_zone_from_reg(scheme, zone);
     }

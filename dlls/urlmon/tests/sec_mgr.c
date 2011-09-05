@@ -604,7 +604,8 @@ static const zone_domain_mapping zone_domain_mappings[] = {
     {"www.testing.com",NULL,"http",URLZONE_CUSTOM},
     {"www.testing.com","testing","http",URLZONE_CUSTOM2},
     {"org",NULL,"http",URLZONE_CUSTOM},
-    {"org","testing","http",URLZONE_CUSTOM2}
+    {"org","testing","http",URLZONE_CUSTOM2},
+    {"wine.testing",NULL,"*",URLZONE_CUSTOM2}
 };
 
 static void register_zone_domains(void)
@@ -751,7 +752,10 @@ static const zone_mapping_test zone_mapping_tests[] = {
     /* Tests for "org" zone mappings. */
     {"http://google.org/",URLZONE_INTERNET,FALSE,URLZONE_CUSTOM},
     {"http://org/",URLZONE_CUSTOM},
-    {"http://testing.org/",URLZONE_CUSTOM2}
+    {"http://testing.org/",URLZONE_CUSTOM2},
+    /* Tests for "wine.testing" mapping */
+    {"*:wine.testing/test",URLZONE_CUSTOM2},
+    {"http://wine.testing/testing",URLZONE_CUSTOM2}
 };
 
 static void test_zone_domain_mappings(void)
