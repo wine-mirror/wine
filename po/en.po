@@ -9660,12 +9660,12 @@ msgid "&Realtime"
 msgstr ""
 
 #: taskmgr.rc:160
-msgid "&AboveNormal"
-msgstr ""
+msgid "&Above Normal"
+msgstr "&Above Normal"
 
 #: taskmgr.rc:164
-msgid "&BelowNormal"
-msgstr ""
+msgid "&Below Normal"
+msgstr "&Below Normal"
 
 #: taskmgr.rc:169
 msgid "Set &Affinity..."

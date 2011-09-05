@@ -9892,11 +9892,13 @@ msgid "&Realtime"
 msgstr "&זמן אמת"
 
 #: taskmgr.rc:160
-msgid "&AboveNormal"
+#, fuzzy
+msgid "&Above Normal"
 msgstr "יותר &מרגילה"
 
 #: taskmgr.rc:164
-msgid "&BelowNormal"
+#, fuzzy
+msgid "&Below Normal"
 msgstr "&פחות מרגילה"
 
 #: taskmgr.rc:169

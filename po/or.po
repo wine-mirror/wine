@@ -9297,11 +9297,11 @@ msgid "&Realtime"
 msgstr ""
 
 #: taskmgr.rc:160
-msgid "&AboveNormal"
+msgid "&Above Normal"
 msgstr ""
 
 #: taskmgr.rc:164
-msgid "&BelowNormal"
+msgid "&Below Normal"
 msgstr ""
 
 #: taskmgr.rc:169

@@ -9621,12 +9621,14 @@ msgid "&Realtime"
 msgstr ""
 
 #: taskmgr.rc:160
-msgid "&AboveNormal"
-msgstr ""
+#, fuzzy
+msgid "&Above Normal"
+msgstr "Normal"
 
 #: taskmgr.rc:164
-msgid "&BelowNormal"
-msgstr ""
+#, fuzzy
+msgid "&Below Normal"
+msgstr "Normal"
 
 #: taskmgr.rc:169
 msgid "Set &Affinity..."

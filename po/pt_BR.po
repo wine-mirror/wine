@@ -10179,11 +10179,13 @@ msgid "&Realtime"
 msgstr "&Tempo Real"
 
 #: taskmgr.rc:160
-msgid "&AboveNormal"
+#, fuzzy
+msgid "&Above Normal"
 msgstr "A&cima do Normal"
 
 #: taskmgr.rc:164
-msgid "&BelowNormal"
+#, fuzzy
+msgid "&Below Normal"
 msgstr "Aba&ixo do Normal"
 
 #: taskmgr.rc:169

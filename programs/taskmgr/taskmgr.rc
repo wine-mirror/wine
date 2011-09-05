@@ -156,11 +156,11 @@ BEGIN
 
             MENUITEM "&High",                       ID_PROCESS_PAGE_SETPRIORITY_HIGH
 
-            MENUITEM "&AboveNormal",                ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL
+            MENUITEM "&Above Normal",               ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL
 
             MENUITEM "&Normal",                     ID_PROCESS_PAGE_SETPRIORITY_NORMAL
 
-            MENUITEM "&BelowNormal",                ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
+            MENUITEM "&Below Normal",               ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
 
             MENUITEM "&Low",                        ID_PROCESS_PAGE_SETPRIORITY_LOW
 

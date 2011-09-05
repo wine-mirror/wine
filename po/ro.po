@@ -10466,11 +10466,13 @@ msgid "&Realtime"
 msgstr "Timp &real"
 
 #: taskmgr.rc:160
-msgid "&AboveNormal"
+#, fuzzy
+msgid "&Above Normal"
 msgstr "Peste norm&al"
 
 #: taskmgr.rc:164
-msgid "&BelowNormal"
+#, fuzzy
+msgid "&Below Normal"
 msgstr "Su&b normal"
 
 #: taskmgr.rc:169

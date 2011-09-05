@@ -9859,11 +9859,13 @@ msgid "&Realtime"
 msgstr "&Realnočasosvna"
 
 #: taskmgr.rc:160
-msgid "&AboveNormal"
+#, fuzzy
+msgid "&Above Normal"
 msgstr "&Nadpovprečna"
 
 #: taskmgr.rc:164
-msgid "&BelowNormal"
+#, fuzzy
+msgid "&Below Normal"
 msgstr "Po&dpovprečna"
 
 #: taskmgr.rc:169

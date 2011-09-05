@@ -9839,11 +9839,13 @@ msgid "&Realtime"
 msgstr "&Tikralaikis"
 
 #: taskmgr.rc:160
-msgid "&AboveNormal"
+#, fuzzy
+msgid "&Above Normal"
 msgstr "&ViršNormalaus"
 
 #: taskmgr.rc:164
-msgid "&BelowNormal"
+#, fuzzy
+msgid "&Below Normal"
 msgstr "&ŽemiauNormalaus"
 
 #: taskmgr.rc:169

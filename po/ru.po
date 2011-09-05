@@ -9813,11 +9813,13 @@ msgid "&Realtime"
 msgstr "&Реального времени"
 
 #: taskmgr.rc:160
-msgid "&AboveNormal"
+#, fuzzy
+msgid "&Above Normal"
 msgstr "В&ыше среднего"
 
 #: taskmgr.rc:164
-msgid "&BelowNormal"
+#, fuzzy
+msgid "&Below Normal"
 msgstr "Н&иже среднего"
 
 #: taskmgr.rc:169

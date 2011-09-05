@@ -9370,12 +9370,12 @@ msgstr ""
 
 #: taskmgr.rc:160
 #, fuzzy
-msgid "&AboveNormal"
+msgid "&Above Normal"
 msgstr "Normal"
 
 #: taskmgr.rc:164
 #, fuzzy
-msgid "&BelowNormal"
+msgid "&Below Normal"
 msgstr "Normal"
 
 #: taskmgr.rc:169
