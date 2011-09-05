@@ -11134,18 +11134,22 @@ msgid "Pages"
 msgstr "Sivu Ylös"
 
 #: wordpad.rc:172
+msgctxt "unit: centimeter"
 msgid "cm"
 msgstr ""
 
 #: wordpad.rc:173
+#, fuzzy
+msgctxt "unit: inch"
 msgid "in"
-msgstr ""
+msgstr " min"
 
 #: wordpad.rc:174
 msgid "inch"
 msgstr ""
 
 #: wordpad.rc:175
+msgctxt "unit: point"
 msgid "pt"
 msgstr ""
 

@@ -11171,10 +11171,14 @@ msgid "Pages"
 msgstr "Сторінки"
 
 #: wordpad.rc:172
+#, fuzzy
+msgctxt "unit: centimeter"
 msgid "cm"
 msgstr "см"
 
 #: wordpad.rc:173
+#, fuzzy
+msgctxt "unit: inch"
 msgid "in"
 msgstr "дй"
 
@@ -11183,6 +11187,8 @@ msgid "inch"
 msgstr "дюйм"
 
 #: wordpad.rc:175
+#, fuzzy
+msgctxt "unit: point"
 msgid "pt"
 msgstr "тч"
 

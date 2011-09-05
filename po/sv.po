@@ -11206,10 +11206,14 @@ msgid "Pages"
 msgstr "Sidor"
 
 #: wordpad.rc:172
+#, fuzzy
+msgctxt "unit: centimeter"
 msgid "cm"
 msgstr "cm"
 
 #: wordpad.rc:173
+#, fuzzy
+msgctxt "unit: inch"
 msgid "in"
 msgstr "in"
 
@@ -11218,6 +11222,8 @@ msgid "inch"
 msgstr "tum"
 
 #: wordpad.rc:175
+#, fuzzy
+msgctxt "unit: point"
 msgid "pt"
 msgstr "pt"
 

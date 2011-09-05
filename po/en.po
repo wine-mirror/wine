@@ -10989,10 +10989,12 @@ msgid "Pages"
 msgstr "Pages"
 
 #: wordpad.rc:172
+msgctxt "unit: centimeter"
 msgid "cm"
 msgstr ""
 
 #: wordpad.rc:173
+msgctxt "unit: inch"
 msgid "in"
 msgstr ""
 
@@ -11001,6 +11003,7 @@ msgid "inch"
 msgstr ""
 
 #: wordpad.rc:175
+msgctxt "unit: point"
 msgid "pt"
 msgstr ""
 

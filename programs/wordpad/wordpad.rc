@@ -169,10 +169,10 @@ BEGIN
     STRING_PREVIEW_CLOSE,            "Close"
     STRING_PREVIEW_PAGE,             "Page"
     STRING_PREVIEW_PAGES,            "Pages"
-    STRING_UNITS_CM,                 "cm"
-    STRING_UNITS_IN,                 "in"
+    STRING_UNITS_CM,                 "#msgctxt#unit: centimeter#cm"
+    STRING_UNITS_IN,                 "#msgctxt#unit: inch#in"
     STRING_UNITS_INCH,               "inch"
-    STRING_UNITS_PT,                 "pt"
+    STRING_UNITS_PT,                 "#msgctxt#unit: point#pt"
 END
 
 STRINGTABLE

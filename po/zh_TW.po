@@ -11225,18 +11225,22 @@ msgid "Pages"
 msgstr "向上翻頁"
 
 #: wordpad.rc:172
+msgctxt "unit: centimeter"
 msgid "cm"
 msgstr ""
 
 #: wordpad.rc:173
+#, fuzzy
+msgctxt "unit: inch"
 msgid "in"
-msgstr ""
+msgstr " 分"
 
 #: wordpad.rc:174
 msgid "inch"
 msgstr ""
 
 #: wordpad.rc:175
+msgctxt "unit: point"
 msgid "pt"
 msgstr ""
 

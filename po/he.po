@@ -11334,10 +11334,14 @@ msgid "Pages"
 msgstr "עמודים"
 
 #: wordpad.rc:172
+#, fuzzy
+msgctxt "unit: centimeter"
 msgid "cm"
 msgstr "ס״מ"
 
 #: wordpad.rc:173
+#, fuzzy
+msgctxt "unit: inch"
 msgid "in"
 msgstr "אי׳"
 
@@ -11346,6 +11350,8 @@ msgid "inch"
 msgstr "אינטש"
 
 #: wordpad.rc:175
+#, fuzzy
+msgctxt "unit: point"
 msgid "pt"
 msgstr "נק׳"
 
