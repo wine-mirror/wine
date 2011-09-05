@@ -1508,6 +1508,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 
     TRACE("%s %p\n", debugstr_w(szPackage), pPackage);
 
+    localfile[0] = 0;
     if( szPackage[0] == '#' )
     {
         handle = atoiW(&szPackage[1]);
