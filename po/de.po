@@ -3843,6 +3843,7 @@ msgid "Perform operation even when nothing changed\n"
 msgstr "Operation durchführen, auch wenn sich nichts ändert\n"
 
 #: winerror.mc:1896
+#, fuzzy
 msgid "The user profile is invalid\n"
 msgstr "Das Benutzerprofil ist ungültig."
 
@@ -4507,6 +4508,7 @@ msgid "Installer service failed.\n"
 msgstr "Installer Dienst gescheitert.\n"
 
 #: winerror.mc:2731
+#, fuzzy
 msgid "Installation aborted by user\n"
 msgstr "Setup-Programme"
 
