@@ -282,7 +282,13 @@ typedef enum dwarf_type_e
   DW_ATE_unsigned                       = 0x7,
   DW_ATE_unsigned_char                  = 0x8,
   /* Dwarf3 new values */
-  DW_ATE_imaginary_float                = 0x9
+  DW_ATE_imaginary_float                = 0x9,
+  DW_ATE_packed_decimal                 = 0xa,
+  DW_ATE_numeric_string                 = 0xb,
+  DW_ATE_edited                         = 0xc,
+  DW_ATE_signed_fixed                   = 0xd,
+  DW_ATE_unsigned_fixed                 = 0xe,
+  DW_ATE_decimal_float                  = 0xf,
 } dwarf_type_t;
 
 typedef enum dwarf_operation_e
@@ -454,6 +460,11 @@ typedef enum dwarf_operation_e
   DW_OP_GNU_encoded_addr                = 0xf1,
   DW_OP_GNU_implicit_pointer            = 0xf2,
   DW_OP_GNU_entry_value                 = 0xf3,
+  DW_OP_GNU_const_type                  = 0xf4,
+  DW_OP_GNU_regval_type                 = 0xf5,
+  DW_OP_GNU_deref_type                  = 0xf6,
+  DW_OP_GNU_convert                     = 0xf7,
+  DW_OP_GNU_reinterpret                 = 0xf9,
 } dwarf_operation_t;
 
 enum dwarf_calling_convention
