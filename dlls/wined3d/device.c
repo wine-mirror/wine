@@ -2402,7 +2402,7 @@ HRESULT CDECL wined3d_device_set_index_buffer(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_index_buffer(struct wined3d_device *device, struct wined3d_buffer **buffer)
+HRESULT CDECL wined3d_device_get_index_buffer(const struct wined3d_device *device, struct wined3d_buffer **buffer)
 {
     TRACE("device %p, buffer %p.\n", device, buffer);
 
