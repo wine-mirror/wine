@@ -108,6 +108,7 @@ dlls/qmgr/qmgr_local_i.c
 dlls/qmgrprxy/qmgrprxy.h
 dlls/qmgrprxy/qmgrprxy_i.c
 dlls/qmgrprxy/qmgrprxy_p.c
+dlls/quartz/fil_data.h
 dlls/quartz/quartz_strmif.h
 dlls/quartz/quartz_strmif_p.c
 dlls/rpcrt4/epm.h

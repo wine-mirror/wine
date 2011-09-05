@@ -29,6 +29,7 @@ C_SRCS = \
 
 RC_SRCS = version.rc
 
+IDL_H_SRCS = fil_data.idl
 IDL_P_SRCS = quartz_strmif.idl
 IDL_R_SRCS = quartz_strmif.idl
 

@@ -36,55 +36,14 @@
 #include "strmif.h"
 #include "wine/unicode.h"
 #include "uuids.h"
+#include "initguid.h"
+#include "fil_data.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 #define ARRAYSIZE(array) (sizeof(array)/sizeof((array)[0]))
-
-/* Unexposed IAMFilterData interface */
-typedef struct IAMFilterData IAMFilterData;
-
-typedef struct IAMFilterDataVtbl
-{
-    BEGIN_INTERFACE
-
-    /*** IUnknown methods ***/
-    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
-        IAMFilterData *This,
-        REFIID riid,
-        void **ppvObject);
-
-    ULONG (STDMETHODCALLTYPE *AddRef)(
-        IAMFilterData *This);
-
-    ULONG (STDMETHODCALLTYPE *Release)(
-        IAMFilterData *This);
-
-    /*** IAMFilterData methods ***/
-    HRESULT (STDMETHODCALLTYPE *ParseFilterData)(
-        IAMFilterData *This,
-        BYTE *pData,
-        ULONG cb,
-        BYTE **ppRegFilter2);
-
-    HRESULT (STDMETHODCALLTYPE *CreateFilterData)(
-        IAMFilterData* This,
-        REGFILTER2 *prf2,
-        BYTE **pRegFilterData,
-        ULONG *pcb);
-
-    END_INTERFACE
-} IAMFilterDataVtbl;
-struct IAMFilterData
-{
-    const IAMFilterDataVtbl *lpVtbl;
-};
-static const GUID IID_IAMFilterData = {
- 0x97f7c4d4, 0x547b, 0x4a5f, { 0x83,0x32, 0x53,0x64,0x30,0xad,0x2e,0x4d }
-};
-
 
 typedef struct FilterMapper3Impl
 {
