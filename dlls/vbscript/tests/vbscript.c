@@ -282,6 +282,17 @@ static void test_safety(IActiveScript *script)
     IObjectSafety_Release(safety);
 }
 
+static void test_no_script_dispatch(IActiveScript *script)
+{
+    IDispatch *disp;
+    HRESULT hres;
+
+    disp = (void*)0xdeadbeef;
+    hres = IActiveScript_GetScriptDispatch(script, NULL, &disp);
+    ok(hres == E_UNEXPECTED, "hres = %08x, expected E_UNEXPECTED\n", hres);
+    ok(!disp, "disp != NULL\n");
+}
+
 static IActiveScript *create_vbscript(void)
 {
     IActiveScript *ret;
@@ -345,6 +356,7 @@ static void test_vbscript(void)
     CHECK_CALLED(OnStateChange_CLOSED);
 
     test_state(vbscript, SCRIPTSTATE_CLOSED);
+    test_no_script_dispatch(vbscript);
 
     IActiveScriptParse64_Release(parser);
 

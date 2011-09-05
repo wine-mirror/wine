@@ -23,14 +23,25 @@
 #include "windef.h"
 #include "winbase.h"
 #include "ole2.h"
+#include "dispex.h"
 #include "activscp.h"
 
 #include "vbscript_classes.h"
 
 typedef struct {
+    IDispatchEx IDispatchEx_iface;
+
+    LONG ref;
+} vbdisp_t;
+
+typedef struct {
     IActiveScriptSite *site;
     LCID lcid;
+
+    vbdisp_t *script_obj;
 } script_ctx_t;
+
+HRESULT init_global(script_ctx_t*);
 
 HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
 

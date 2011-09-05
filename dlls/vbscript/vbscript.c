@@ -70,7 +70,13 @@ static void exec_queued_code(VBScript *This)
 
 static HRESULT set_ctx_site(VBScript *This)
 {
+    HRESULT hres;
+
     This->ctx->lcid = This->lcid;
+
+    hres = init_global(This->ctx);
+    if(FAILED(hres))
+        return hres;
 
     IActiveScriptSite_AddRef(This->site);
     This->ctx->site = This->site;
@@ -83,6 +89,8 @@ static void destroy_script(script_ctx_t *ctx)
 {
     if(ctx->site)
         IActiveScriptSite_Release(ctx->site);
+    if(ctx->script_obj)
+        IDispatchEx_Release(&ctx->script_obj->IDispatchEx_iface);
     heap_free(ctx);
 }
 
@@ -296,8 +304,20 @@ static HRESULT WINAPI VBScript_AddTypeLib(IActiveScript *iface, REFGUID rguidTyp
 static HRESULT WINAPI VBScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR pstrItemName, IDispatch **ppdisp)
 {
     VBScript *This = impl_from_IActiveScript(iface);
-    FIXME("(%p)->(%p)\n", This, ppdisp);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ppdisp);
+
+    if(!ppdisp)
+        return E_POINTER;
+
+    if(This->thread_id != GetCurrentThreadId() || !This->ctx->script_obj) {
+        *ppdisp = NULL;
+        return E_UNEXPECTED;
+    }
+
+    *ppdisp = (IDispatch*)&This->ctx->script_obj->IDispatchEx_iface;
+    IDispatch_AddRef(*ppdisp);
+    return S_OK;
 }
 
 static HRESULT WINAPI VBScript_GetCurrentScriptThreadID(IActiveScript *iface,
