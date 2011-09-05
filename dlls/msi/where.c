@@ -73,6 +73,7 @@ typedef struct tagMSIWHEREVIEW
     struct expr   *cond;
     UINT           rec_index;
     MSIORDERINFO  *order_info;
+    UINT           error;
 } MSIWHEREVIEW;
 
 #define INITIAL_REORDER_SIZE 16
@@ -617,6 +618,9 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
     if( !table )
          return ERROR_FUNCTION_FAILED;
 
+    if (wv->reorder)
+        return wv->error;
+
     r = init_reorder(wv);
     if (r != ERROR_SUCCESS)
         return r;
@@ -648,7 +652,9 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 
     if (wv->order_info)
         r = wv->order_info->error;
+
     msi_free( rows );
+    wv->error = r;
     return r;
 }
 
