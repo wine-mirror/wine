@@ -1462,7 +1462,7 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
         struct wined3d_surface *src_surface, const RECT *src_rect_in, DWORD flags,
         const WINEDDBLTFX *fx, WINED3DTEXTUREFILTERTYPE filter)
 {
-    const struct wined3d_swapchain *src_swapchain, *dst_swapchain;
+    struct wined3d_swapchain *src_swapchain, *dst_swapchain;
     struct wined3d_device *device = dst_surface->resource.device;
     DWORD src_ds_flags, dst_ds_flags;
     RECT src_rect, dst_rect;
@@ -1660,6 +1660,29 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
         else
         {
             TRACE("Color blit.\n");
+
+            /* Use present for back -> front blits. The idea behind this is
+             * that present is potentially faster than a blit, in particular
+             * when FBO blits aren't available. Some ddraw applications like
+             * Half-Life and Prince of Persia 3D use Blt() from the backbuffer
+             * to the frontbuffer instead of doing a Flip(). D3D8 and D3D9
+             * applications can't blit directly to the frontbuffer. */
+            if (dst_swapchain && dst_swapchain->back_buffers
+                    && dst_surface == dst_swapchain->front_buffer
+                    && src_surface == dst_swapchain->back_buffers[0])
+            {
+                WINED3DSWAPEFFECT swap_effect = dst_swapchain->presentParms.SwapEffect;
+
+                TRACE("Using present for backbuffer -> frontbuffer blit.\n");
+
+                /* Set the swap effect to COPY, we don't want the backbuffer
+                 * to become undefined. */
+                dst_swapchain->presentParms.SwapEffect = WINED3DSWAPEFFECT_COPY;
+                wined3d_swapchain_present(dst_swapchain, NULL, NULL, dst_swapchain->win_handle, NULL, 0);
+                dst_swapchain->presentParms.SwapEffect = swap_effect;
+
+                return WINED3D_OK;
+            }
 
             if (fbo_blit_supported(&device->adapter->gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
                     &src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
@@ -5309,55 +5332,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
     {
         /* Can we support that with glBlendFunc if blitting to the frame buffer? */
         TRACE("Destination color key not supported in accelerated Blit, falling back to software\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    /* The only case where both surfaces on a swapchain are supported is a
-     * back buffer -> front buffer blit on the same swapchain. */
-    if (dstSwapchain && dstSwapchain->back_buffers
-            && dst_surface == dstSwapchain->front_buffer
-            && src_surface == dstSwapchain->back_buffers[0])
-    {
-        /* Half-Life does a Blt from the back buffer to the front buffer,
-         * Full surface size, no flags... Use present instead
-         *
-         * This path will only be entered for d3d7 and ddraw apps, because
-         * d3d8/9 offer no way to blit to the front buffer. */
-        for (;;)
-        {
-            /* These flags are unimportant for the flag check, remove them */
-            if (!(flags & ~(WINEDDBLT_DONOTWAIT | WINEDDBLT_WAIT)))
-            {
-                WINED3DSWAPEFFECT orig_swap = dstSwapchain->presentParms.SwapEffect;
-
-                /* The idea behind this is that a glReadPixels and a glDrawPixels call
-                    * take very long, while a flip is fast.
-                    * This applies to Half-Life, which does such Blts every time it finished
-                    * a frame, and to Prince of Persia 3D, which uses this to draw at least the main
-                    * menu. This is also used by all apps when they do windowed rendering
-                    *
-                    * The problem is that flipping is not really the same as copying. After a
-                    * Blt the front buffer is a copy of the back buffer, and the back buffer is
-                    * untouched. Therefore it's necessary to override the swap effect
-                    * and to set it back after the flip.
-                    *
-                    * Windowed Direct3D < 7 apps do the same. The D3D7 sdk demos are nice
-                    * testcases.
-                    */
-
-                dstSwapchain->presentParms.SwapEffect = WINED3DSWAPEFFECT_COPY;
-
-                TRACE("Full screen back buffer -> front buffer blt, performing a flip instead.\n");
-                wined3d_swapchain_present(dstSwapchain, NULL, NULL, dstSwapchain->win_handle, NULL, 0);
-
-                dstSwapchain->presentParms.SwapEffect = orig_swap;
-
-                return WINED3D_OK;
-            }
-            break;
-        }
-
-        TRACE("Unsupported blit between buffers on the same swapchain\n");
         return WINED3DERR_INVALIDCALL;
     }
 
