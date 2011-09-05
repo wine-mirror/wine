@@ -2131,8 +2131,8 @@ static void test_IWinHttpRequest(void)
     hr = CoCreateInstance( &CLSID_WinHttpRequest, NULL, CLSCTX_INPROC_SERVER, &IID_IWinHttpRequest, (void **)&req );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    VariantInit( &empty );
     V_VT( &empty ) = VT_ERROR;
+    V_ERROR( &empty ) = 0xdeadbeef;
 
     V_VT( &async ) = VT_BOOL;
     V_BOOL( &async ) = VARIANT_FALSE;
