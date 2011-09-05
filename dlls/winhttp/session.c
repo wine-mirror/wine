@@ -206,6 +206,7 @@ HINTERNET WINAPI WinHttpOpen( LPCWSTR agent, DWORD access, LPCWSTR proxy, LPCWST
     session->hdr.flags = flags;
     session->hdr.refs = 1;
     session->hdr.redirect_policy = WINHTTP_OPTION_REDIRECT_POLICY_DISALLOW_HTTPS_TO_HTTP;
+    list_init( &session->hdr.children );
     session->resolve_timeout = DEFAULT_RESOLVE_TIMEOUT;
     session->connect_timeout = DEFAULT_CONNECT_TIMEOUT;
     session->send_timeout = DEFAULT_SEND_TIMEOUT;
@@ -498,6 +499,7 @@ HINTERNET WINAPI WinHttpConnect( HINTERNET hsession, LPCWSTR server, INTERNET_PO
     connect->hdr.callback = session->hdr.callback;
     connect->hdr.notify_mask = session->hdr.notify_mask;
     connect->hdr.context = session->hdr.context;
+    list_init( &connect->hdr.children );
 
     addref_object( &session->hdr );
     connect->session = session;
@@ -505,9 +507,7 @@ HINTERNET WINAPI WinHttpConnect( HINTERNET hsession, LPCWSTR server, INTERNET_PO
 
     if (!(connect->hostname = strdupW( server ))) goto end;
     connect->hostport = port;
-
-    if (!set_server_for_hostname( connect, server, port ))
-        goto end;
+    if (!set_server_for_hostname( connect, server, port )) goto end;
 
     if (!(hconnect = alloc_handle( &connect->hdr ))) goto end;
     connect->hdr.handle = hconnect;
@@ -516,7 +516,7 @@ HINTERNET WINAPI WinHttpConnect( HINTERNET hsession, LPCWSTR server, INTERNET_PO
 
 end:
     release_object( &connect->hdr );
-
+    release_object( &session->hdr );
     TRACE("returning %p\n", hconnect);
     return hconnect;
 }
@@ -930,6 +930,7 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
     request->hdr.callback = connect->hdr.callback;
     request->hdr.notify_mask = connect->hdr.notify_mask;
     request->hdr.context = connect->hdr.context;
+    list_init( &request->hdr.children );
 
     addref_object( &connect->hdr );
     request->connect = connect;
@@ -970,7 +971,7 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
 
 end:
     release_object( &request->hdr );
-
+    release_object( &connect->hdr );
     TRACE("returning %p\n", hrequest);
     return hrequest;
 }

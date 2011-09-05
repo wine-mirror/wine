@@ -2403,20 +2403,32 @@ static HRESULT WINAPI winhttp_request_SetProxy(
     {
     case HTTPREQUEST_PROXYSETTING_DEFAULT:
         request->proxy.dwAccessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
+        heap_free( (WCHAR *)request->proxy.lpszProxy );
+        heap_free( (WCHAR *)request->proxy.lpszProxyBypass );
         request->proxy.lpszProxy = NULL;
         request->proxy.lpszProxyBypass = NULL;
         break;
 
     case HTTPREQUEST_PROXYSETTING_DIRECT:
         request->proxy.dwAccessType = WINHTTP_ACCESS_TYPE_NO_PROXY;
+        heap_free( (WCHAR *)request->proxy.lpszProxy );
+        heap_free( (WCHAR *)request->proxy.lpszProxyBypass );
         request->proxy.lpszProxy = NULL;
         request->proxy.lpszProxyBypass = NULL;
         break;
 
     case HTTPREQUEST_PROXYSETTING_PROXY:
         request->proxy.dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
-        if (V_VT( &proxy_server ) == VT_BSTR) request->proxy.lpszProxy = strdupW( V_BSTR( &proxy_server ) );
-        if (V_VT( &bypass_list ) == VT_BSTR) request->proxy.lpszProxyBypass = strdupW( V_BSTR( &bypass_list ) );
+        if (V_VT( &proxy_server ) == VT_BSTR)
+        {
+            heap_free( (WCHAR *)request->proxy.lpszProxy );
+            request->proxy.lpszProxy = strdupW( V_BSTR( &proxy_server ) );
+        }
+        if (V_VT( &bypass_list ) == VT_BSTR)
+        {
+            heap_free( (WCHAR *)request->proxy.lpszProxyBypass );
+            request->proxy.lpszProxyBypass = strdupW( V_BSTR( &bypass_list ) );
+        }
         break;
 
     default:
@@ -3334,6 +3346,8 @@ HRESULT WinHttpRequest_create( IUnknown *unknown, void **obj )
     request->IWinHttpRequest_iface.lpVtbl = &winhttp_request_vtbl;
     request->refs = 1;
     request->state = REQUEST_STATE_UNINITIALIZED;
+    request->proxy.lpszProxy = NULL;
+    request->proxy.lpszProxyBypass = NULL;
     InitializeCriticalSection( &request->cs );
 
     *obj = &request->IWinHttpRequest_iface;
