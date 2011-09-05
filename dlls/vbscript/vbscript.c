@@ -63,6 +63,11 @@ static void change_state(VBScript *This, SCRIPTSTATE state)
         IActiveScriptSite_OnStateChange(This->site, state);
 }
 
+static void exec_queued_code(VBScript *This)
+{
+    FIXME("\n");
+}
+
 static HRESULT set_ctx_site(VBScript *This)
 {
     This->ctx->lcid = This->lcid;
@@ -207,7 +212,40 @@ static HRESULT WINAPI VBScript_GetScriptSite(IActiveScript *iface, REFIID riid,
 static HRESULT WINAPI VBScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE ss)
 {
     VBScript *This = impl_from_IActiveScript(iface);
-    FIXME("(%p)->(%d)\n", This, ss);
+
+    TRACE("(%p)->(%d)\n", This, ss);
+
+    if(This->thread_id && GetCurrentThreadId() != This->thread_id)
+        return E_UNEXPECTED;
+
+    if(ss == SCRIPTSTATE_UNINITIALIZED) {
+        if(This->state == SCRIPTSTATE_CLOSED)
+            return E_UNEXPECTED;
+
+        decrease_state(This, SCRIPTSTATE_UNINITIALIZED);
+        return S_OK;
+    }
+
+    if(!This->ctx)
+        return E_UNEXPECTED;
+
+    switch(ss) {
+    case SCRIPTSTATE_STARTED:
+    case SCRIPTSTATE_CONNECTED: /* FIXME */
+        if(This->state == SCRIPTSTATE_CLOSED)
+            return E_UNEXPECTED;
+
+        exec_queued_code(This);
+        break;
+    case SCRIPTSTATE_INITIALIZED:
+        FIXME("unimplemented SCRIPTSTATE_INITIALIZED\n");
+        return S_OK;
+    default:
+        FIXME("unimplemented state %d\n", ss);
+        return E_NOTIMPL;
+    }
+
+    change_state(This, ss);
     return S_OK;
 }
 

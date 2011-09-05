@@ -326,9 +326,22 @@ static void test_vbscript(void)
     hres = IActiveScriptParse64_InitNew(parser);
     ok(hres == E_UNEXPECTED, "InitNew failed: %08x, expected E_UNEXPECTED\n", hres);
 
+    SET_EXPECT(OnStateChange_CONNECTED);
+    hres = IActiveScript_SetScriptState(vbscript, SCRIPTSTATE_CONNECTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+
+    test_state(vbscript, SCRIPTSTATE_CONNECTED);
+
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
     SET_EXPECT(OnStateChange_CLOSED);
     hres = IActiveScript_Close(vbscript);
     ok(hres == S_OK, "Close failed: %08x\n", hres);
+    todo_wine
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    todo_wine
+    CHECK_CALLED(OnStateChange_INITIALIZED);
     CHECK_CALLED(OnStateChange_CLOSED);
 
     test_state(vbscript, SCRIPTSTATE_CLOSED);
