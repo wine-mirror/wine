@@ -21,17 +21,17 @@
 #include <stdarg.h>
 #include <time.h>
 
-#include "windef.h"
-#include "winbase.h"
-#include "winreg.h"
-#include "wincred.h"
-#include "winternl.h"
-
 #ifdef __APPLE__
 # include <Security/SecKeychain.h>
 # include <Security/SecKeychainItem.h>
 # include <Security/SecKeychainSearch.h>
 #endif
+
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
+#include "wincred.h"
+#include "winternl.h"
 
 #include "crypt.h"
 
