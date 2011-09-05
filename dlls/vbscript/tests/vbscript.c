@@ -23,6 +23,7 @@
 #include <ole2.h>
 #include <activscp.h>
 #include <objsafe.h>
+#include <dispex.h>
 
 #include "wine/test.h"
 
@@ -282,6 +283,24 @@ static void test_safety(IActiveScript *script)
     IObjectSafety_Release(safety);
 }
 
+static IDispatchEx *get_script_dispatch(IActiveScript *script)
+{
+    IDispatchEx *dispex;
+    IDispatch *disp;
+    HRESULT hres;
+
+    disp = (void*)0xdeadbeef;
+    hres = IActiveScript_GetScriptDispatch(script, NULL, &disp);
+    ok(hres == S_OK, "GetScriptDispatch failed: %08x\n", hres);
+    if(FAILED(hres))
+        return NULL;
+
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    IDispatch_Release(disp);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08x\n", hres);
+    return dispex;
+}
+
 static void test_no_script_dispatch(IActiveScript *script)
 {
     IDispatch *disp;
@@ -349,9 +368,7 @@ static void test_vbscript(void)
     SET_EXPECT(OnStateChange_CLOSED);
     hres = IActiveScript_Close(vbscript);
     ok(hres == S_OK, "Close failed: %08x\n", hres);
-    todo_wine
     CHECK_CALLED(OnStateChange_DISCONNECTED);
-    todo_wine
     CHECK_CALLED(OnStateChange_INITIALIZED);
     CHECK_CALLED(OnStateChange_CLOSED);
 
@@ -363,6 +380,106 @@ static void test_vbscript(void)
     ref = IActiveScript_Release(vbscript);
     ok(!ref, "ref = %d\n", ref);
 }
+
+static void test_vbscript_uninitializing(void)
+{
+    IActiveScriptParse *parse;
+    IActiveScript *script;
+    IDispatchEx *dispex;
+    ULONG ref;
+    HRESULT hres;
+
+    static const WCHAR script_textW[] =
+        {'F','u','n','c','t','i','o','n',' ','f','\n','E','n','d',' ','F','u','n','c','t','i','o','n','\n',0};
+
+    script = create_vbscript();
+
+    hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParse, (void**)&parse);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+
+    test_state(script, SCRIPTSTATE_UNINITIALIZED);
+
+    hres = IActiveScriptParse64_InitNew(parse);
+    ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+
+    SET_EXPECT(GetLCID);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+    CHECK_CALLED(GetLCID);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    test_state(script, SCRIPTSTATE_INITIALIZED);
+
+    hres = IActiveScriptParse64_ParseScriptText(parse, script_textW, NULL, NULL, NULL, 0, 1, 0x42, NULL, NULL);
+    todo_wine
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+
+    hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hres == E_UNEXPECTED, "SetScriptSite failed: %08x, expected E_UNEXPECTED\n", hres);
+
+    SET_EXPECT(OnStateChange_UNINITIALIZED);
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_UNINITIALIZED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_UNINITIALIZED);
+
+    test_state(script, SCRIPTSTATE_UNINITIALIZED);
+
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_UNINITIALIZED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08x\n", hres);
+
+    SET_EXPECT(GetLCID);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+    CHECK_CALLED(GetLCID);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    SET_EXPECT(OnStateChange_CONNECTED);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_CONNECTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+    todo_wine
+    CHECK_CALLED(OnEnterScript);
+    todo_wine
+    CHECK_CALLED(OnLeaveScript);
+
+    test_state(script, SCRIPTSTATE_CONNECTED);
+
+    dispex = get_script_dispatch(script);
+    ok(dispex != NULL, "dispex == NULL\n");
+    if(dispex)
+        IDispatchEx_Release(dispex);
+
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(OnStateChange_UNINITIALIZED);
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_UNINITIALIZED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(OnStateChange_UNINITIALIZED);
+
+    test_state(script, SCRIPTSTATE_UNINITIALIZED);
+
+    hres = IActiveScript_Close(script);
+    ok(hres == S_OK, "Close failed: %08x\n", hres);
+
+    test_state(script, SCRIPTSTATE_CLOSED);
+
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_UNINITIALIZED);
+    ok(hres == E_UNEXPECTED, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08x, expected E_UNEXPECTED\n", hres);
+
+    test_state(script, SCRIPTSTATE_CLOSED);
+
+    IUnknown_Release(parse);
+
+    ref = IActiveScript_Release(script);
+    ok(!ref, "ref = %d\n", ref);
+}
+
 
 static BOOL check_vbscript(void)
 {
@@ -381,10 +498,12 @@ START_TEST(vbscript)
 {
     CoInitialize(NULL);
 
-    if(check_vbscript())
+    if(check_vbscript()) {
         test_vbscript();
-    else
+        test_vbscript_uninitializing();
+    }else {
         win_skip("VBScript engine not available\n");
+    }
 
     CoUninitialize();
 }

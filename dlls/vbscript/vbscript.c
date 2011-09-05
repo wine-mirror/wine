@@ -98,25 +98,31 @@ static void decrease_state(VBScript *This, SCRIPTSTATE state)
 {
     switch(This->state) {
     case SCRIPTSTATE_CONNECTED:
+        change_state(This, SCRIPTSTATE_DISCONNECTED);
+        if(state == SCRIPTSTATE_DISCONNECTED)
+            return;
+        /* FALLTHROUGH */
     case SCRIPTSTATE_STARTED:
     case SCRIPTSTATE_DISCONNECTED:
-        FIXME("unimplemented state %d\n", This->state);
+        if(This->state == SCRIPTSTATE_DISCONNECTED)
+            change_state(This, SCRIPTSTATE_INITIALIZED);
         if(state == SCRIPTSTATE_INITIALIZED)
             break;
         /* FALLTHROUGH */
     case SCRIPTSTATE_INITIALIZED:
-        destroy_script(This->ctx);
-        This->ctx = NULL;
-        This->thread_id = 0;
-
-        change_state(This, state);
-        if(state == SCRIPTSTATE_UNINITIALIZED)
-            break;
-        /* FALLTHROUGH */
     case SCRIPTSTATE_UNINITIALIZED:
+        change_state(This, state);
+
         if(This->site) {
             IActiveScriptSite_Release(This->site);
             This->site = NULL;
+        }
+
+        This->thread_id = 0;
+
+        if(state == SCRIPTSTATE_CLOSED) {
+            destroy_script(This->ctx);
+            This->ctx = NULL;
         }
 
         break;
