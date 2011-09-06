@@ -2465,7 +2465,7 @@ HRESULT CDECL wined3d_device_set_viewport(struct wined3d_device *device, const W
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_viewport(struct wined3d_device *device, WINED3DVIEWPORT *viewport)
+HRESULT CDECL wined3d_device_get_viewport(const struct wined3d_device *device, WINED3DVIEWPORT *viewport)
 {
     TRACE("device %p, viewport %p.\n", device, viewport);
 
