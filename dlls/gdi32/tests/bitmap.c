@@ -929,7 +929,12 @@ static void test_dib_formats(void)
                         "SetDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
                 ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_RGB_COLORS );
                 if (expect_ok)
-                    ok( ret, "SetDIBitsToDevice failed for %u/%u/%u\n", bpp, planes, compr );
+                {
+                    if (todo)
+                        todo_wine ok( ret, "SetDIBitsToDevice failed for %u/%u/%u\n", bpp, planes, compr );
+                    else
+                        ok( ret, "SetDIBitsToDevice failed for %u/%u/%u\n", bpp, planes, compr );
+                }
                 else
                     ok( !ret ||
                         broken((bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8)), /* nt4 */
@@ -978,7 +983,12 @@ static void test_dib_formats(void)
                     ok( !ret, "SetDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
                 ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_RGB_COLORS );
                 if (expect_ok)
-                    ok( ret, "SetDIBitsToDevice failed for %u/%u/%u\n", bpp, planes, compr );
+                {
+                    if (todo)
+                        todo_wine ok( ret, "SetDIBitsToDevice failed for %u/%u/%u\n", bpp, planes, compr );
+                    else
+                        ok( ret, "SetDIBitsToDevice failed for %u/%u/%u\n", bpp, planes, compr );
+                }
                 else
                     ok( !ret, "SetDIBitsToDevice succeeded for %u/%u/%u\n", bpp, planes, compr );
                 ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
@@ -1023,7 +1033,7 @@ static void test_dib_formats(void)
     ok( hdib != NULL, "CreateDIBitmap failed with null bitfields\n" );
     DeleteObject( hdib );
     ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_RGB_COLORS );
-    ok( ret, "SetDIBitsToDevice failed with null bitfields\n" );
+    todo_wine ok( ret, "SetDIBitsToDevice failed with null bitfields\n" );
     ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
     todo_wine ok( ret, "StretchDIBits failed with null bitfields\n" );
     ret = GetDIBits(hdc, hbmp, 0, 2, data, bi, DIB_RGB_COLORS);

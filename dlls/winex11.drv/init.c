@@ -532,7 +532,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_SetDCBrushColor,             /* pSetDCBrushColor */
     X11DRV_SetDCPenColor,               /* pSetDCPenColor */
     X11DRV_SetDIBColorTable,            /* pSetDIBColorTable */
-    X11DRV_SetDIBitsToDevice,           /* pSetDIBitsToDevice */
+    NULL,                               /* pSetDIBitsToDevice */
     X11DRV_SetDeviceClipping,           /* pSetDeviceClipping */
     X11DRV_SetDeviceGammaRamp,          /* pSetDeviceGammaRamp */
     NULL,                               /* pSetLayout */

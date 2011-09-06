@@ -236,8 +236,6 @@ extern COLORREF X11DRV_SetDCPenColor( PHYSDEV dev, COLORREF crColor ) DECLSPEC_H
 extern void X11DRV_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_SetDeviceGammaRamp( PHYSDEV dev, LPVOID ramp ) DECLSPEC_HIDDEN;
 extern UINT X11DRV_SetDIBColorTable( PHYSDEV dev, UINT start, UINT count, const RGBQUAD *colors ) DECLSPEC_HIDDEN;
-extern INT X11DRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDest, DWORD cx, DWORD cy, INT xSrc, INT ySrc,
-                                     UINT startscan, UINT lines, LPCVOID bits, BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
 extern COLORREF X11DRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_SetPixelFormat(PHYSDEV dev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd) DECLSPEC_HIDDEN;
 extern COLORREF X11DRV_SetTextColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
