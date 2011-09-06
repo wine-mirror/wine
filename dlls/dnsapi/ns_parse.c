@@ -32,9 +32,14 @@
 #ifdef HAVE_RESOLV_H
 # include <resolv.h>
 #endif
+#include <stdarg.h>
 #include <string.h>
 
 #include "windef.h"
+#include "winbase.h"
+#include "winnls.h"
+
+#include "dnsapi.h"
 
 /* Forward. */
 
@@ -75,12 +80,11 @@ dns_ns_skiprr(const u_char *ptr, const u_char *eom, ns_sect section, int count) 
 	const u_char *optr = ptr;
 
 	while (count-- > 0) {
-		int b, rdlength;
+		int rdlength;
 
-		b = dn_skipname(ptr, eom);
-		if (b < 0)
+		if (dns_ns_name_skip(&ptr, eom) < 0)
 			RETERR(EMSGSIZE);
-		ptr += b/*Name*/ + NS_INT16SZ/*Type*/ + NS_INT16SZ/*Class*/;
+		ptr += NS_INT16SZ/*Type*/ + NS_INT16SZ/*Class*/;
 		if (section != ns_s_qd) {
 			if (ptr + NS_INT32SZ + NS_INT16SZ > eom)
 				RETERR(EMSGSIZE);
