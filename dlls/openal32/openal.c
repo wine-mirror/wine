@@ -25,10 +25,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "windef.h"
-#include "winbase.h"
-#include "wine/debug.h"
-
 #ifdef HAVE_AL_AL_H
 #include <AL/al.h>
 #include <AL/alc.h>
@@ -36,6 +32,10 @@
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
 #endif
+
+#include "windef.h"
+#include "winbase.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(openal32);
 
