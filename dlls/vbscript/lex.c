@@ -16,17 +16,41 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-typedef struct {
-    const WCHAR *code;
-    const WCHAR *ptr;
-    const WCHAR *end;
+#include <assert.h>
 
-    BOOL parse_complete;
-    HRESULT hres;
+#include "vbscript.h"
+#include "parse.h"
+#include "parser.tab.h"
 
-    int last_token;
-    unsigned last_nl;
-} parser_ctx_t;
+#include "wine/debug.h"
 
-HRESULT parse_script(parser_ctx_t*,const WCHAR*) DECLSPEC_HIDDEN;
-int parser_lex(void*,parser_ctx_t*) DECLSPEC_HIDDEN;
+WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
+
+static int parse_next_token(void *lval, parser_ctx_t *ctx)
+{
+    WCHAR c;
+
+    while(*ctx->ptr == ' ' || *ctx->ptr == '\t' || *ctx->ptr == '\r')
+        ctx->ptr++;
+    if(ctx->ptr == ctx->end)
+        return ctx->last_token == tNL ? tEOF : tNL;
+
+    c = *ctx->ptr;
+    FIXME("Unhandled char %c in %s\n", *ctx->ptr, debugstr_w(ctx->ptr));
+    return c;
+}
+
+int parser_lex(void *lval, parser_ctx_t *ctx)
+{
+    int ret;
+
+    while(1) {
+        ret = parse_next_token(lval, ctx);
+        if(ret != tNL || ctx->last_token != tNL)
+            break;
+
+        ctx->last_nl = ctx->ptr-ctx->code;
+    }
+
+    return (ctx->last_token = ret);
+}

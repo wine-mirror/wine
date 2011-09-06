@@ -33,12 +33,6 @@ static int parser_error(const char*);
 
 static void parse_complete(parser_ctx_t*);
 
-static int parser_lex(void *lval, parser_ctx_t *ctx)
-{
-    FIXME("\n");
-    return 0;
-}
-
 %}
 
 %pure_parser
@@ -49,6 +43,8 @@ static int parser_lex(void *lval, parser_ctx_t *ctx)
 %union {
     const WCHAR *string;
 }
+
+%token tNL
 
 %%
 
@@ -73,6 +69,9 @@ HRESULT parse_script(parser_ctx_t *ctx, const WCHAR *code)
 
     ctx->parse_complete = FALSE;
     ctx->hres = S_OK;
+
+    ctx->last_token = tNL;
+    ctx->last_nl = 0;
 
     parser_parse(ctx);
 
