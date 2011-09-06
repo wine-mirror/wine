@@ -2761,6 +2761,8 @@ static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw, IDirectDrawSurfac
     /* Store the future Render Target surface */
     ddraw->d3d_target = primary;
 
+    memset(&localParameters, 0, sizeof(localParameters));
+
     /* Use the surface description for the device parameters, not the device
      * settings. The application might render to an offscreen surface. */
     localParameters.BackBufferWidth = primary->surface_desc.dwWidth;
@@ -2768,17 +2770,9 @@ static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw, IDirectDrawSurfac
     localParameters.BackBufferFormat = PixelFormat_DD2WineD3D(&primary->surface_desc.u4.ddpfPixelFormat);
     localParameters.BackBufferCount = (primary->surface_desc.dwFlags & DDSD_BACKBUFFERCOUNT)
             ? primary->surface_desc.dwBackBufferCount : 0;
-    localParameters.MultiSampleType = WINED3DMULTISAMPLE_NONE;
-    localParameters.MultiSampleQuality = 0;
     localParameters.SwapEffect = WINED3DSWAPEFFECT_COPY;
     localParameters.hDeviceWindow = window;
     localParameters.Windowed = !(ddraw->cooperative_level & DDSCL_FULLSCREEN);
-    localParameters.EnableAutoDepthStencil = FALSE;
-    localParameters.AutoDepthStencilFormat = WINED3DFMT_UNKNOWN;
-    localParameters.Flags = 0;
-    localParameters.FullScreen_RefreshRateInHz = WINED3DPRESENT_RATE_DEFAULT;
-    localParameters.PresentationInterval = WINED3DPRESENT_INTERVAL_DEFAULT;
-    localParameters.AutoRestoreDisplayMode = FALSE;
 
     /* Set this NOW, otherwise creating the depth stencil surface will cause a
      * recursive loop until ram or emulated video memory is full. */
@@ -2823,17 +2817,9 @@ static HRESULT ddraw_create_gdi_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSur
     presentation_parameters.BackBufferFormat = PixelFormat_DD2WineD3D(&primary->surface_desc.u4.ddpfPixelFormat);
     presentation_parameters.BackBufferCount = (primary->surface_desc.dwFlags & DDSD_BACKBUFFERCOUNT)
             ? primary->surface_desc.dwBackBufferCount : 0;
-    presentation_parameters.MultiSampleType = WINED3DMULTISAMPLE_NONE;
-    presentation_parameters.MultiSampleQuality = 0;
     presentation_parameters.SwapEffect = WINED3DSWAPEFFECT_FLIP;
     presentation_parameters.hDeviceWindow = window;
     presentation_parameters.Windowed = !(ddraw->cooperative_level & DDSCL_FULLSCREEN);
-    presentation_parameters.EnableAutoDepthStencil = FALSE; /* Not on GDI swapchains */
-    presentation_parameters.AutoDepthStencilFormat = 0;
-    presentation_parameters.Flags = 0;
-    presentation_parameters.FullScreen_RefreshRateInHz = WINED3DPRESENT_RATE_DEFAULT;
-    presentation_parameters.PresentationInterval = WINED3DPRESENT_INTERVAL_DEFAULT;
-    presentation_parameters.AutoRestoreDisplayMode = FALSE;
 
     ddraw->d3d_target = primary;
     hr = wined3d_device_init_gdi(ddraw->wined3d_device, &presentation_parameters);
