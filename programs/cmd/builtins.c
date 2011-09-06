@@ -1525,9 +1525,18 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList) {
     WCMD_parameter(p, 2+negate, &command, NULL);
   }
   else if ((s = strstrW (p, eqeqW))) {
+    /* We need to get potential surrounding double quotes, so param1/2 can't be used */
+    WCHAR *leftPart, *leftPartEnd, *rightPart, *rightPartEnd;
     s += 2;
-    test = caseInsensitive ? (!lstrcmpiW(condition, WCMD_parameter(s, 0, NULL, NULL)))
-                           : (!lstrcmpW (condition, WCMD_parameter(s, 0, NULL, NULL)));
+    WCMD_parameter(p, 0+negate+caseInsensitive, &leftPart, &leftPartEnd);
+    WCMD_parameter(p, 1+negate+caseInsensitive, &rightPart, &rightPartEnd);
+    test = caseInsensitive
+            ? (CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
+                              leftPart, leftPartEnd-leftPart+1,
+                              rightPart, rightPartEnd-rightPart+1) == CSTR_EQUAL)
+            : (CompareStringW(LOCALE_SYSTEM_DEFAULT, 0,
+                              leftPart, leftPartEnd-leftPart+1,
+                              rightPart, rightPartEnd-rightPart+1) == CSTR_EQUAL);
     WCMD_parameter(s, 1, &command, NULL);
   }
   else {

@@ -382,15 +382,15 @@ NUL
 if/else should work with blocks
 if seems to work
 else seems to work
-@todo_wine@if seems not to detect /c as parameter
+if seems not to detect /c as parameter
 Testing case sensitivity with and without /i option
 if seems to default to case sensitivity
 if /i seems to work
 if /I seems to work
 Testing string comparisons
 equal
-@todo_wine@non equal
-@todo_wine@non equal
+non equal
+non equal
 equal
 Testing tabs handling
 doom
