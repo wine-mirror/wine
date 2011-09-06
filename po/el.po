@@ -141,11 +141,11 @@ msgstr "Μετάβαση στα σημερινά"
 
 #: comdlg32.rc:29
 msgid "&About FolderPicker Test"
-msgstr "&About FolderPicker Test"
+msgstr ""
 
 #: comdlg32.rc:30
 msgid "Document Folders"
-msgstr "Document Folders"
+msgstr ""
 
 #: comdlg32.rc:31 shell32.rc:199
 msgid "My Documents"
@@ -157,7 +157,7 @@ msgstr "Τα Αγαπημένα μου"
 
 #: comdlg32.rc:33
 msgid "System Path"
-msgstr "System Path"
+msgstr ""
 
 #: comdlg32.rc:34 shell32.rc:153 winecfg.rc:97 winefile.rc:103
 #, fuzzy
@@ -244,7 +244,7 @@ msgstr "Λεπτομέρειες"
 
 #: comdlg32.rc:59
 msgid "Browse to Desktop"
-msgstr "Browse to Desktop"
+msgstr ""
 
 #: comdlg32.rc:123
 msgid "Regular"
@@ -268,7 +268,7 @@ msgstr "Μαύρο"
 
 #: comdlg32.rc:132 wordpad.rc:115
 msgid "Maroon"
-msgstr "Maroon"
+msgstr ""
 
 #: comdlg32.rc:133 wordpad.rc:116
 msgid "Green"
@@ -276,11 +276,11 @@ msgstr "Πράσινο"
 
 #: comdlg32.rc:134 wordpad.rc:117
 msgid "Olive"
-msgstr "Olive"
+msgstr ""
 
 #: comdlg32.rc:135 wordpad.rc:118
 msgid "Navy"
-msgstr "Navy"
+msgstr ""
 
 #: comdlg32.rc:136 wordpad.rc:119
 msgid "Purple"
@@ -288,7 +288,7 @@ msgstr "Μωβ"
 
 #: comdlg32.rc:137 wordpad.rc:120
 msgid "Teal"
-msgstr "Teal"
+msgstr ""
 
 #: comdlg32.rc:138 wordpad.rc:121
 msgid "Gray"
@@ -304,7 +304,7 @@ msgstr "Κόκκινο"
 
 #: comdlg32.rc:141 wordpad.rc:124
 msgid "Lime"
-msgstr "Lime"
+msgstr ""
 
 #: comdlg32.rc:142 wordpad.rc:125
 msgid "Yellow"
@@ -316,11 +316,11 @@ msgstr "Μπλε"
 
 #: comdlg32.rc:144 wordpad.rc:127
 msgid "Fuchsia"
-msgstr "Fuchsia"
+msgstr ""
 
 #: comdlg32.rc:145 wordpad.rc:128
 msgid "Aqua"
-msgstr "Aqua"
+msgstr ""
 
 #: comdlg32.rc:146 wordpad.rc:129
 msgid "White"
@@ -335,33 +335,26 @@ msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %d and %d."
 msgstr ""
-"This value does not lie within the page range.\n"
-"Please enter a value between %d and %d."
 
 #: comdlg32.rc:70
 msgid "The 'from' entry cannot exceed the 'to' entry."
-msgstr "The 'from' entry cannot exceed the 'to' entry."
+msgstr ""
 
 #: comdlg32.rc:72
 msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
 msgstr ""
-"Margins overlap or fall outside Paper boundaries.\n"
-"Please reenter margins."
 
 #: comdlg32.rc:74
-#, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "The number of 'Number of copies' value cannot be empty."
+msgstr ""
 
 #: comdlg32.rc:76
 msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
 msgstr ""
-"This large number of copies is not supported by your printer.\n"
-"Please enter a value between 1 and %d."
 
 #: comdlg32.rc:77
 msgid "A printer error occurred."
@@ -377,7 +370,7 @@ msgstr "Δεν ήταν δυνατή η εύρεση του εκτυπωτή."
 
 #: comdlg32.rc:80 progman.rc:73
 msgid "Out of memory."
-msgstr "Out of memory."
+msgstr ""
 
 #: comdlg32.rc:81
 msgid "An error occurred."
@@ -392,8 +385,6 @@ msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
-"Before you can perform printer-related tasks such as page setup or printing "
-"a document, you need to install a printer. Please install one and retry."
 
 #: comdlg32.rc:151
 msgid "Select a font size between %d and %d points."
@@ -433,11 +424,11 @@ msgstr "Σφάλμα; "
 
 #: comdlg32.rc:96
 msgid "Pending deletion; "
-msgstr "Pending deletion; "
+msgstr ""
 
 #: comdlg32.rc:97
 msgid "Paper jam; "
-msgstr "Paper jam; "
+msgstr ""
 
 #: comdlg32.rc:98
 msgid "Out of paper; "
@@ -445,7 +436,7 @@ msgstr "Τέλος χαρτιού; "
 
 #: comdlg32.rc:99
 msgid "Feed paper manual; "
-msgstr "Feed paper manual; "
+msgstr ""
 
 #: comdlg32.rc:100
 msgid "Paper problem; "
@@ -457,7 +448,7 @@ msgstr "Εκτυπωτής αποσυνδεδεμένος; "
 
 #: comdlg32.rc:102
 msgid "I/O Active; "
-msgstr "I/O Active; "
+msgstr ""
 
 #: comdlg32.rc:103
 msgid "Busy; "
@@ -469,7 +460,7 @@ msgstr "Γίνεται εκτύπωση; "
 
 #: comdlg32.rc:105
 msgid "Output tray is full; "
-msgstr "Output tray is full; "
+msgstr ""
 
 #: comdlg32.rc:106
 msgid "Not available; "
@@ -481,7 +472,7 @@ msgstr "Αναμονή; "
 
 #: comdlg32.rc:108
 msgid "Processing; "
-msgstr "Processing; "
+msgstr ""
 
 #: comdlg32.rc:109
 msgid "Initialising; "
@@ -501,27 +492,27 @@ msgstr "Δεν υπάρχει τόνερ; "
 
 #: comdlg32.rc:113
 msgid "Page punt; "
-msgstr "Page punt; "
+msgstr ""
 
 #: comdlg32.rc:114
 msgid "Interrupted by user; "
-msgstr "Interrupted by user; "
+msgstr ""
 
 #: comdlg32.rc:115
 msgid "Out of memory; "
-msgstr "Out of memory; "
+msgstr ""
 
 #: comdlg32.rc:116
 msgid "The printer door is open; "
-msgstr "The printer door is open; "
+msgstr ""
 
 #: comdlg32.rc:117
 msgid "Print server unknown; "
-msgstr "Print server unknown; "
+msgstr ""
 
 #: comdlg32.rc:118
 msgid "Power save mode; "
-msgstr "Power save mode; "
+msgstr ""
 
 #: comdlg32.rc:87
 msgid "Default Printer; "
@@ -533,11 +524,11 @@ msgstr "Υπάρχουν %d έγγραφα στην ουρά"
 
 #: comdlg32.rc:89
 msgid "Margins [inches]"
-msgstr "Margins [inches]"
+msgstr ""
 
 #: comdlg32.rc:90
 msgid "Margins [mm]"
-msgstr "Margins [mm]"
+msgstr ""
 
 #: comdlg32.rc:91 sane.rc:33
 #, fuzzy
@@ -1872,9 +1863,8 @@ msgid "Certificate Export Wizard"
 msgstr ""
 
 #: cryptui.rc:148
-#, fuzzy
 msgid "Export Format"
-msgstr "Forward"
+msgstr ""
 
 #: cryptui.rc:149
 msgid "Choose the format in which the content will be saved."
@@ -1913,9 +1903,8 @@ msgid "Serialized Certificate Store (*.sst)"
 msgstr ""
 
 #: cryptui.rc:160
-#, fuzzy
 msgid "File Format"
-msgstr "Forward"
+msgstr ""
 
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
@@ -2006,15 +1995,13 @@ msgid "&Back"
 msgstr "Πίσω"
 
 #: hhctrl.rc:58
-#, fuzzy
 msgid "&Forward"
-msgstr "Forward"
+msgstr ""
 
 #: hhctrl.rc:59
-#, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
-msgstr "Home"
+msgstr ""
 
 #: hhctrl.rc:60
 #, fuzzy
@@ -2037,7 +2024,7 @@ msgstr "&Περιεχόμενα"
 
 #: hhctrl.rc:29
 msgid "I&ndex"
-msgstr "I&ndex"
+msgstr ""
 
 #: hhctrl.rc:30 notepad.rc:52
 msgid "&Search"
@@ -2076,10 +2063,9 @@ msgid "Back"
 msgstr "Πίσω"
 
 #: hhctrl.rc:44
-#, fuzzy
 msgctxt "table of contents"
 msgid "Home"
-msgstr "Home"
+msgstr ""
 
 #: hhctrl.rc:45
 msgid "Sync"
@@ -2091,7 +2077,7 @@ msgstr "Επιλογές"
 
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"
-msgstr "Forward"
+msgstr ""
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
@@ -2180,10 +2166,9 @@ msgid "&About Internet Explorer"
 msgstr ""
 
 #: ieframe.rc:67
-#, fuzzy
 msgctxt "home page"
 msgid "Home"
-msgstr "Home"
+msgstr ""
 
 #: ieframe.rc:68 winhlp32.rc:66
 #, fuzzy
@@ -2207,9 +2192,8 @@ msgid "Security settings for zone: "
 msgstr ""
 
 #: inetcpl.rc:31
-#, fuzzy
 msgid "Custom"
-msgstr "Customize"
+msgstr ""
 
 #: inetcpl.rc:32
 msgid "Very Low"
@@ -2374,9 +2358,8 @@ msgid "Memory trashed\n"
 msgstr ""
 
 #: winerror.mc:66
-#, fuzzy
 msgid "Not enough memory\n"
-msgstr "Out of memory."
+msgstr ""
 
 #: winerror.mc:71
 msgid "Invalid block\n"
@@ -2399,9 +2382,8 @@ msgid "Invalid data\n"
 msgstr ""
 
 #: winerror.mc:96
-#, fuzzy
 msgid "Out of memory\n"
-msgstr "Out of memory."
+msgstr ""
 
 #: winerror.mc:101
 msgid "Invalid drive\n"
@@ -3550,9 +3532,8 @@ msgid "DLL not found\n"
 msgstr "Το αρχείο δε βρέθηκε"
 
 #: winerror.mc:1516
-#, fuzzy
 msgid "Out of user handles\n"
-msgstr "Out of memory."
+msgstr ""
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls\n"
@@ -3583,9 +3564,8 @@ msgid "The device requires cleaning\n"
 msgstr ""
 
 #: winerror.mc:1556
-#, fuzzy
 msgid "The device door is open\n"
-msgstr "The printer door is open; "
+msgstr ""
 
 #: winerror.mc:1561
 #, fuzzy
@@ -4540,9 +4520,8 @@ msgid "Installer service failed.\n"
 msgstr ""
 
 #: winerror.mc:2731
-#, fuzzy
 msgid "Installation aborted by user\n"
-msgstr "Interrupted by user; "
+msgstr ""
 
 #: winerror.mc:2736
 msgid "Installation failure\n"
@@ -4805,9 +4784,8 @@ msgid "Can't create endpoint\n"
 msgstr ""
 
 #: winerror.mc:3036
-#, fuzzy
 msgid "Out of resources\n"
-msgstr "Out of memory."
+msgstr ""
 
 #: winerror.mc:3041
 msgid "RPC server unavailable\n"
@@ -5911,9 +5889,8 @@ msgid "Type the path where the file is located, and then click OK."
 msgstr ""
 
 #: shdoclc.rc:39
-#, fuzzy
 msgid "F&orward"
-msgstr "Forward"
+msgstr ""
 
 #: shdoclc.rc:41
 msgid "&Save Background As..."
@@ -6682,9 +6659,8 @@ msgid "Are you sure you wish to permanently delete these %1 items?"
 msgstr ""
 
 #: shell32.rc:257
-#, fuzzy
 msgid "Confirm deletion"
-msgstr "Pending deletion; "
+msgstr ""
 
 #: shell32.rc:258
 #, fuzzy
@@ -6707,9 +6683,8 @@ msgstr ""
 "Θέλετε να το αντικαταστήσετε;"
 
 #: shell32.rc:260
-#, fuzzy
 msgid "Confirm overwrite"
-msgstr "Pending deletion; "
+msgstr ""
 
 #: shell32.rc:277
 msgid ""
@@ -10520,9 +10495,8 @@ msgid "&Expert"
 msgstr ""
 
 #: winemine.rc:42
-#, fuzzy
 msgid "&Custom..."
-msgstr "Customize"
+msgstr ""
 
 #: winemine.rc:44
 msgid "&Fastest Times"
@@ -10609,9 +10583,8 @@ msgid "Summary"
 msgstr ""
 
 #: winhlp32.rc:84
-#, fuzzy
 msgid "&Index"
-msgstr "I&ndex"
+msgstr ""
 
 #: winhlp32.rc:88
 msgid "Help files (*.hlp)"
@@ -10707,9 +10680,8 @@ msgid "&Date and time..."
 msgstr ""
 
 #: wordpad.rc:79
-#, fuzzy
 msgid "F&ormat"
-msgstr "Forward"
+msgstr ""
 
 #: wordpad.rc:82 wordpad.rc:105
 msgid "&Bullet points"
@@ -10813,14 +10785,12 @@ msgid "One page"
 msgstr ""
 
 #: wordpad.rc:167
-#, fuzzy
 msgid "Zoom in"
-msgstr "Zoom"
+msgstr ""
 
 #: wordpad.rc:168
-#, fuzzy
 msgid "Zoom out"
-msgstr "Zoom"
+msgstr ""
 
 #: wordpad.rc:170
 msgid "Page"
