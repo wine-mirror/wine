@@ -138,59 +138,37 @@ void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HAN
  */
 
 WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where) {
+    int curParamNb = 0;
+    static WCHAR param[MAX_PATH];
+    WCHAR *p = s, *q;
+    BOOL quotesDelimited;
 
-  int i = 0;
-  static WCHAR param[MAX_PATH];
-  WCHAR *p;
+    if (where != NULL) *where = NULL;
+    param[0] = '\0';
+    while (TRUE) {
+        while (*p && ((*p == ' ') || (*p == ',') || (*p == '=') || (*p == '\t')))
+            p++;
+        if (*p == '\0') return param;
 
-  if (where != NULL) *where = NULL;
-  p = param;
-  while (TRUE) {
-    switch (*s) {
-      case ' ': /* Skip leading spaces */
-      case '\t': /* Treat tabs as spaces */
-	s++;
-	break;
-      case '"':
-        if (where != NULL && i==n) *where = s;
-	s++;
-	while ((*s != '\0') && (*s != '"')) {
-	  *p++ = *s++;
-	}
-        if (i == n) {
-          *p = '\0';
-          return param;
-        }
-	if (*s == '"') s++;
-          param[0] = '\0';
-          i++;
-        p = param;
-	break;
-      /* The code to handle bracketed parms is removed because it should no longer
-         be necessary after the multiline support has been added and the for loop
-         set of data is now parseable individually. */
-      case '\0':
-        return param;
-      default:
-        /* Only return where if it is for the right parameter */
-        if (where != NULL && i==n) *where = s;
-	while ((*s != '\0') && (*s != ' ') && (*s != ',') && (*s != '=') && (*s != '\t')) {
-	  *p++ = *s++;
-	}
-        if (i == n && (p!=param)) {
-          *p = '\0';
-          return param;
-        }
-        /* Skip double delimiters, eg. dir a.a,,,,,b.b */
-        if (p != param) {
-          param[0] = '\0';
-          i++;
+        quotesDelimited = (*p == '"');
+        if (where != NULL && curParamNb == n) *where = p;
+
+        if (quotesDelimited) {
+            q = ++p;
+            while (*p && *p != '"') p++;
         } else {
-          s++; /* Skip delimiter */
+            q = p;
+            while (*p && (*p != ' ') && (*p != ',') && (*p != '=') && (*p != '\t'))
+                p++;
         }
-        p = param;
+        if (curParamNb == n) {
+            memcpy(param, q, (p - q) * sizeof(WCHAR));
+            param[p-q] = '\0';
+            return param;
+        }
+        if (quotesDelimited && *p == '"') p++;
+        curParamNb++;
     }
-  }
 }
 
 /****************************************************************************
