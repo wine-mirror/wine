@@ -2239,7 +2239,7 @@ HRESULT __cdecl wined3d_device_get_ps_consts_i(struct wined3d_device *device,
         UINT start_register, int *constants, UINT vector4i_count);
 HRESULT __cdecl wined3d_device_get_raster_status(struct wined3d_device *device,
         UINT swapchain_idx, WINED3DRASTER_STATUS *raster_status);
-HRESULT __cdecl wined3d_device_get_render_state(struct wined3d_device *device,
+HRESULT __cdecl wined3d_device_get_render_state(const struct wined3d_device *device,
         WINED3DRENDERSTATETYPE state, DWORD *value);
 HRESULT __cdecl wined3d_device_get_render_target(struct wined3d_device *device,
         UINT render_target_idx, struct wined3d_surface **render_target);

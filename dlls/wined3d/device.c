@@ -2500,7 +2500,7 @@ HRESULT CDECL wined3d_device_set_render_state(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_render_state(struct wined3d_device *device,
+HRESULT CDECL wined3d_device_get_render_state(const struct wined3d_device *device,
         WINED3DRENDERSTATETYPE state, DWORD *value)
 {
     TRACE("device %p, state %s (%#x), value %p.\n", device, debug_d3drenderstate(state), state, value);
