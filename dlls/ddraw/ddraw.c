@@ -2817,7 +2817,7 @@ static HRESULT ddraw_create_gdi_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSur
     presentation_parameters.BackBufferFormat = PixelFormat_DD2WineD3D(&primary->surface_desc.u4.ddpfPixelFormat);
     presentation_parameters.BackBufferCount = (primary->surface_desc.dwFlags & DDSD_BACKBUFFERCOUNT)
             ? primary->surface_desc.dwBackBufferCount : 0;
-    presentation_parameters.SwapEffect = WINED3DSWAPEFFECT_FLIP;
+    presentation_parameters.SwapEffect = WINED3DSWAPEFFECT_COPY;
     presentation_parameters.hDeviceWindow = window;
     presentation_parameters.Windowed = !(ddraw->cooperative_level & DDSCL_FULLSCREEN);
 
