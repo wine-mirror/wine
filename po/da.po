@@ -56,7 +56,7 @@ msgstr "Udgiver"
 
 #: appwiz.rc:37 cryptui.rc:51
 msgid "Version"
-msgstr "Version"
+msgstr ""
 
 #: appwiz.rc:38
 msgid "Installation programs"
@@ -846,11 +846,8 @@ msgid "Serial Number"
 msgstr ""
 
 #: crypt32.rc:84
-#, fuzzy
 msgid "CA Version"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: crypt32.rc:85
 msgid "Cross CA Version"
@@ -873,11 +870,8 @@ msgid "Enrollment Name Value Pair"
 msgstr ""
 
 #: crypt32.rc:90
-#, fuzzy
 msgid "OS Version"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: crypt32.rc:91
 msgid "Enrollment CSP"
@@ -944,11 +938,8 @@ msgid "CMC Status Info"
 msgstr ""
 
 #: crypt32.rc:107
-#, fuzzy
 msgid "CMC Extensions"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: crypt32.rc:108
 msgid "CMC Attributes"
@@ -1143,9 +1134,8 @@ msgid "Smart Card Logon"
 msgstr ""
 
 #: crypt32.rc:156 cryptui.rc:139
-#, fuzzy
 msgid "Digital Rights"
-msgstr "&Digital"
+msgstr ""
 
 #: crypt32.rc:157 cryptui.rc:135
 msgid "Qualified Subordination"
@@ -1156,9 +1146,8 @@ msgid "Key Recovery"
 msgstr ""
 
 #: crypt32.rc:159 cryptui.rc:137
-#, fuzzy
 msgid "Document Signing"
-msgstr "Argument mangler\n"
+msgstr ""
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
@@ -1584,11 +1573,8 @@ msgid "Version 1 Fields Only"
 msgstr ""
 
 #: cryptui.rc:48
-#, fuzzy
 msgid "Extensions Only"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: cryptui.rc:49
 #, fuzzy
@@ -1648,7 +1634,7 @@ msgstr ""
 
 #: cryptui.rc:62 shell32.rc:251 ipconfig.rc:41
 msgid "Description"
-msgstr "Description"
+msgstr ""
 
 #: cryptui.rc:63
 #, fuzzy
@@ -1934,9 +1920,8 @@ msgid "Certificate Export Wizard"
 msgstr ""
 
 #: cryptui.rc:148
-#, fuzzy
 msgid "Export Format"
-msgstr "F&ormat"
+msgstr ""
 
 #: cryptui.rc:149
 msgid "Choose the format in which the content will be saved."
@@ -1975,9 +1960,8 @@ msgid "Serialized Certificate Store (*.sst)"
 msgstr ""
 
 #: cryptui.rc:160
-#, fuzzy
 msgid "File Format"
-msgstr "F&ormat"
+msgstr ""
 
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
@@ -2086,9 +2070,8 @@ msgid "&Home"
 msgstr "Hjem"
 
 #: hhctrl.rc:60
-#, fuzzy
 msgid "&Stop"
-msgstr "Stop"
+msgstr ""
 
 #: hhctrl.rc:61 shdoclc.rc:56
 msgid "&Refresh"
@@ -2282,9 +2265,8 @@ msgid "&Help"
 msgstr "&Hjælp"
 
 #: ieframe.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "Wine Internet Explorer"
+msgstr ""
 
 #: ieframe.rc:67
 #, fuzzy
@@ -3211,7 +3193,7 @@ msgstr "Ugyldig adresse\n"
 
 #: winerror.mc:976
 msgid "Arithmetic overflow\n"
-msgstr "Arithmetic overflow\n"
+msgstr ""
 
 #: winerror.mc:981
 msgid "Pipe connected\n"
@@ -4472,7 +4454,7 @@ msgstr "Ugyldig hook filter\n"
 
 #: winerror.mc:2531
 msgid "Invalid filter procedure\n"
-msgstr "Invalid filter procedure\n"
+msgstr ""
 
 #: winerror.mc:2536
 msgid "Hook procedure needs module handle\n"
@@ -5222,7 +5204,7 @@ msgstr "Ugyldigt printer navn\n"
 
 #: winerror.mc:3421
 msgid "Printer already exists\n"
-msgstr "Printer already exists\n"
+msgstr ""
 
 #: winerror.mc:3426
 msgid "Invalid printer command\n"
@@ -5559,7 +5541,6 @@ msgid "insert disk %s"
 msgstr "indsæt disk '%s'"
 
 #: msi.rc:30
-#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -5591,35 +5572,6 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
-"Windows Installer %s\n"
-"\n"
-"Usage:\n"
-"msiexec command {required parameter} [optional parammeter]\n"
-"\n"
-"Install a product:\n"
-"\t/i {package|productcode} [property]\n"
-"\t/package {package|productcode} [property]\n"
-"\t/a package [property]\n"
-"Repair an installation:\n"
-"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
-"Uninstall a product:\n"
-"\t/uninstall {package|productcode} [property]\n"
-"\t/x {package|productcode} [property]\n"
-"Advertise a product:\n"
-"\t/j[u|m] package [/t transform] [/g languageid]\n"
-"Apply a patch:\n"
-"\t/p patchpackage [property]\n"
-"\t/p patchpackage /a package [property]\n"
-"Log and UI Modifiers for above commands:\n"
-"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
-"\t/q{|n|b|r|f|n+|b+|b-}\n"
-"Register MSI Service:\n"
-"\t/y\n"
-"Unregister MSI Service:\n"
-"\t/z\n"
-"Display this help:\n"
-"\t/help\n"
-"\t/?\n"
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
@@ -5755,9 +5707,8 @@ msgid "grouping"
 msgstr ""
 
 #: oleacc.rc:48
-#, fuzzy
 msgid "separator"
-msgstr "Separator"
+msgstr ""
 
 #: oleacc.rc:49
 msgid "tool bar"
@@ -7704,7 +7655,7 @@ msgstr "Kunne ikke gemme filen."
 
 #: wldap32.rc:27
 msgid "Success"
-msgstr "Success"
+msgstr ""
 
 #: wldap32.rc:28
 msgid "Operations Error"
@@ -8676,7 +8627,7 @@ msgstr "Mere? "
 
 #: cmd.rc:323
 msgid "The input line is too long.\n"
-msgstr "The input line is too long.\n"
+msgstr ""
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -9006,7 +8957,7 @@ msgstr "&Om Notesblok"
 
 #: notepad.rc:66
 msgid "Page &p"
-msgstr "Page &p"
+msgstr "Side &p"
 
 #: notepad.rc:68
 msgid "Notepad"
@@ -9692,7 +9643,7 @@ msgstr "Ændre binærdata"
 
 #: regedit.rc:109
 msgid "&Export..."
-msgstr "&Export..."
+msgstr ""
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
@@ -10198,7 +10149,7 @@ msgstr "Opgavebehandler"
 
 #: taskmgr.rc:182
 msgid "Create New Task"
-msgstr "Create New Task"
+msgstr ""
 
 #: taskmgr.rc:187
 msgid "Runs a new program"
@@ -10682,7 +10633,7 @@ msgstr "Shell folder"
 
 #: winecfg.rc:46
 msgid "Links to"
-msgstr "Links to"
+msgstr ""
 
 #: winecfg.rc:42
 msgid "Wine configuration for %s"
@@ -11340,7 +11291,7 @@ msgstr "Fejl ved indlæsning af filen `%s'"
 
 #: winhlp32.rc:85
 msgid "Summary"
-msgstr "Summary"
+msgstr ""
 
 #: winhlp32.rc:84
 msgid "&Index"
@@ -11473,7 +11424,7 @@ msgstr "&Om Wine Wordpad"
 
 #: wordpad.rc:130
 msgid "Automatic"
-msgstr "Automatic"
+msgstr ""
 
 #: wordpad.rc:136
 msgid "All documents (*.*)"
@@ -11545,11 +11496,11 @@ msgstr "Én side"
 
 #: wordpad.rc:167
 msgid "Zoom in"
-msgstr "Zoom in"
+msgstr ""
 
 #: wordpad.rc:168
 msgid "Zoom out"
-msgstr "Zoom out"
+msgstr ""
 
 #: wordpad.rc:170
 msgid "Page"
