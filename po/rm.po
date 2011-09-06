@@ -24,9 +24,8 @@ msgid ""
 msgstr ""
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
-#, fuzzy
 msgid "Applications"
-msgstr "&Options"
+msgstr ""
 
 #: appwiz.rc:32
 msgid ""
@@ -173,9 +172,8 @@ msgid "My Computer"
 msgstr ""
 
 #: comdlg32.rc:41
-#, fuzzy
 msgid "System Folders"
-msgstr "Use system colors"
+msgstr ""
 
 #: comdlg32.rc:42
 msgid "Local Hard Drives"
@@ -512,9 +510,8 @@ msgid "Power save mode; "
 msgstr ""
 
 #: comdlg32.rc:87
-#, fuzzy
 msgid "Default Printer; "
-msgstr "Default"
+msgstr ""
 
 #: comdlg32.rc:88
 msgid "There are %d documents in the queue"
@@ -1860,9 +1857,8 @@ msgid "Certificate Export Wizard"
 msgstr ""
 
 #: cryptui.rc:148
-#, fuzzy
 msgid "Export Format"
-msgstr "Normal"
+msgstr ""
 
 #: cryptui.rc:149
 msgid "Choose the format in which the content will be saved."
@@ -1901,9 +1897,8 @@ msgid "Serialized Certificate Store (*.sst)"
 msgstr ""
 
 #: cryptui.rc:160
-#, fuzzy
 msgid "File Format"
-msgstr "Normal"
+msgstr ""
 
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
@@ -1977,9 +1972,8 @@ msgid "Object"
 msgstr ""
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "Default"
+msgstr ""
 
 #: dxdiagn.rc:26
 msgid "%uMB used, %uMB available"
@@ -2071,9 +2065,8 @@ msgid "Sync"
 msgstr ""
 
 #: hhctrl.rc:47 wordpad.rc:155
-#, fuzzy
 msgid "Options"
-msgstr "&Options"
+msgstr ""
 
 #: hhctrl.rc:48 ieframe.rc:64
 msgid "Forward"
@@ -2440,14 +2433,12 @@ msgid "Out of paper\n"
 msgstr ""
 
 #: winerror.mc:171
-#, fuzzy
 msgid "Write fault\n"
-msgstr "Default"
+msgstr ""
 
 #: winerror.mc:176
-#, fuzzy
 msgid "Read fault\n"
-msgstr "Default"
+msgstr ""
 
 #: winerror.mc:181
 msgid "General failure\n"
@@ -2458,9 +2449,8 @@ msgid "Sharing violation\n"
 msgstr ""
 
 #: winerror.mc:191
-#, fuzzy
 msgid "Lock violation\n"
-msgstr "&Options"
+msgstr ""
 
 #: winerror.mc:196
 msgid "Wrong disk\n"
@@ -2599,9 +2589,8 @@ msgid "Invalid parameter\n"
 msgstr ""
 
 #: winerror.mc:366
-#, fuzzy
 msgid "Net write fault\n"
-msgstr "Default"
+msgstr ""
 
 #: winerror.mc:371
 msgid "No process slots\n"
@@ -3501,9 +3490,8 @@ msgid "Single-instance application\n"
 msgstr ""
 
 #: winerror.mc:1491
-#, fuzzy
 msgid "Real-mode application\n"
-msgstr "&Options"
+msgstr ""
 
 #: winerror.mc:1496
 msgid "Invalid DLL\n"
@@ -5487,9 +5475,8 @@ msgid "tool tip"
 msgstr ""
 
 #: oleacc.rc:41
-#, fuzzy
 msgid "application"
-msgstr "&Options"
+msgstr ""
 
 #: oleacc.rc:42
 msgid "document"
@@ -6195,9 +6182,8 @@ msgid "New &Link"
 msgstr "&Rivir"
 
 #: shell32.rc:71
-#, fuzzy
 msgid "Properties"
-msgstr "&Options"
+msgstr ""
 
 #: shell32.rc:82
 msgctxt "recycle bin"
@@ -6350,9 +6336,8 @@ msgid "Templates"
 msgstr ""
 
 #: shell32.rc:210
-#, fuzzy
 msgid "Application Data"
-msgstr "&Options"
+msgstr ""
 
 #: shell32.rc:211
 #, fuzzy
@@ -6444,9 +6429,8 @@ msgid "Status"
 msgstr ""
 
 #: shell32.rc:149
-#, fuzzy
 msgid "Location"
-msgstr "&Options"
+msgstr ""
 
 #: shell32.rc:150
 msgid "Model"
@@ -7516,9 +7500,8 @@ msgid "Digi&tal"
 msgstr ""
 
 #: clock.rc:32 notepad.rc:50 winefile.rc:64 wordpad.rc:81
-#, fuzzy
 msgid "&Font..."
-msgstr "Fonts"
+msgstr ""
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -8065,9 +8048,8 @@ msgid "Wine Explorer"
 msgstr "Wine ag�d"
 
 #: explorer.rc:29
-#, fuzzy
 msgid "Location:"
-msgstr "&Options"
+msgstr ""
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
@@ -8140,9 +8122,8 @@ msgid "DHCP enabled"
 msgstr ""
 
 #: ipconfig.rc:46
-#, fuzzy
 msgid "Default gateway"
-msgstr "Default"
+msgstr ""
 
 #: net.rc:27
 msgid ""
@@ -8250,9 +8231,8 @@ msgid "Connection is being made"
 msgstr ""
 
 #: net.rc:49
-#, fuzzy
 msgid "Reconnecting"
-msgstr "Default"
+msgstr ""
 
 #: net.rc:40
 msgid "The following services are running:\n"
@@ -8651,9 +8631,8 @@ msgid "All Objects"
 msgstr ""
 
 #: oleview.rc:133
-#, fuzzy
 msgid "Application IDs"
-msgstr "&Options"
+msgstr ""
 
 #: oleview.rc:134
 msgid "Type Libraries"
@@ -8676,9 +8655,8 @@ msgid "Implementation"
 msgstr ""
 
 #: oleview.rc:140
-#, fuzzy
 msgid "Activation"
-msgstr "&Options"
+msgstr ""
 
 #: oleview.rc:142
 msgid "CoGetClassObject failed."
@@ -8730,9 +8708,8 @@ msgid "&Copy...\tF8"
 msgstr "Capchar"
 
 #: progman.rc:35
-#, fuzzy
 msgid "&Properties\tAlt+Enter"
-msgstr "&Options"
+msgstr ""
 
 #: progman.rc:37
 msgid "&Execute..."
@@ -8968,9 +8945,8 @@ msgid "Modify Binary Data..."
 msgstr ""
 
 #: regedit.rc:109
-#, fuzzy
 msgid "&Export..."
-msgstr "Fonts"
+msgstr ""
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
@@ -9023,9 +8999,8 @@ msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr ""
 
 #: regedit.rc:201
-#, fuzzy
 msgid "(Default)"
-msgstr "Default"
+msgstr ""
 
 #: regedit.rc:202
 msgid "(value not set)"
@@ -9313,9 +9288,8 @@ msgid "&High"
 msgstr ""
 
 #: taskmgr.rc:58 taskmgr.rc:162
-#, fuzzy
 msgid "&Normal"
-msgstr "Normal"
+msgstr ""
 
 #: taskmgr.rc:60 taskmgr.rc:166
 msgid "&Low"
@@ -9330,9 +9304,8 @@ msgid "&Select Columns..."
 msgstr ""
 
 #: taskmgr.rc:69 taskmgr.rc:258
-#, fuzzy
 msgid "&CPU History"
-msgstr "History"
+msgstr ""
 
 #: taskmgr.rc:71 taskmgr.rc:259
 msgid "&One Graph, All CPUs"
@@ -9403,14 +9376,12 @@ msgid "&Realtime"
 msgstr ""
 
 #: taskmgr.rc:160
-#, fuzzy
 msgid "&Above Normal"
-msgstr "Normal"
+msgstr ""
 
 #: taskmgr.rc:164
-#, fuzzy
 msgid "&Below Normal"
-msgstr "Normal"
+msgstr ""
 
 #: taskmgr.rc:169
 msgid "Set &Affinity..."
@@ -9934,9 +9905,8 @@ msgid "disabled"
 msgstr ""
 
 #: winecfg.rc:58
-#, fuzzy
 msgid "Default Settings"
-msgstr "Default"
+msgstr ""
 
 #: winecfg.rc:59
 msgid "Wine Programs (*.exe,*.exe.so)"
@@ -10095,9 +10065,8 @@ msgid "Message Box Text"
 msgstr ""
 
 #: winecfg.rc:112
-#, fuzzy
 msgid "Application Workspace"
-msgstr "&Options"
+msgstr ""
 
 #: winecfg.rc:113
 msgid "Window Frame"
@@ -10156,9 +10125,8 @@ msgid "Menu Bar"
 msgstr ""
 
 #: wineconsole.rc:26
-#, fuzzy
 msgid "Set &Defaults"
-msgstr "Default"
+msgstr ""
 
 #: wineconsole.rc:28
 msgid "&Mark"
@@ -10275,9 +10243,8 @@ msgid "Re&name..."
 msgstr "&Annotaziun..."
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Propert&ies\tAlt+Enter"
-msgstr "&Options"
+msgstr ""
 
 #: winefile.rc:33
 msgid "&Run..."
@@ -10483,19 +10450,19 @@ msgstr "&Definir..."
 
 #: winhlp32.rc:45
 msgid "History"
-msgstr "History"
+msgstr ""
 
 #: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
-msgstr "Small"
+msgstr ""
 
 #: winhlp32.rc:49 winhlp32.rc:70
 msgid "Normal"
-msgstr "Normal"
+msgstr ""
 
 #: winhlp32.rc:50 winhlp32.rc:71
 msgid "Large"
-msgstr "Large"
+msgstr ""
 
 #: winhlp32.rc:54
 #, fuzzy
@@ -10530,7 +10497,7 @@ msgstr "Sbagl cun leger la datoteca d'ag�d `%s'"
 
 #: winhlp32.rc:85
 msgid "Summary"
-msgstr "Summary"
+msgstr ""
 
 #: winhlp32.rc:84
 msgid "&Index"
@@ -10542,11 +10509,11 @@ msgstr "Datotecas d'ag�d (*.hlp)"
 
 #: winhlp32.rc:89
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr "Cannot find '%s'. Do you want to find this file yourself?"
+msgstr ""
 
 #: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
-msgstr "Cannot find a richedit implementation... Aborting"
+msgstr ""
 
 #: winhlp32.rc:91
 msgid "Help topics: "
@@ -10630,9 +10597,8 @@ msgid "&Date and time..."
 msgstr ""
 
 #: wordpad.rc:79
-#, fuzzy
 msgid "F&ormat"
-msgstr "Normal"
+msgstr ""
 
 #: wordpad.rc:82 wordpad.rc:105
 msgid "&Bullet points"
