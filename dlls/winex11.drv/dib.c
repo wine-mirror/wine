@@ -1243,71 +1243,6 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
 }
 
 /***********************************************************************
- *           X11DRV_DIB_SetImageBits_RLE4
- *
- * SetDIBits for a 4-bit deep compressed DIB.
- */
-static void X11DRV_DIB_SetImageBits_RLE4( int lines, const BYTE *bits,
-					  DWORD srcwidth, DWORD dstwidth,
-					  int left, int *colors,
-					  XImage *bmpImage )
-{
-    unsigned int x = 0, width = min(srcwidth, dstwidth);
-    int y = lines - 1, c, length;
-    const BYTE *begin = bits;
-
-    while (y >= 0)
-    {
-        length = *bits++;
-	if (length) {	/* encoded */
-	    c = *bits++;
-	    while (length--) {
-                if (x >= (left + width)) break;
-                if( x >= left) XPutPixel(bmpImage, x, y, colors[c >> 4]);
-                x++;
-                if (!length--) break;
-                if (x >= (left + width)) break;
-                if( x >= left) XPutPixel(bmpImage, x, y, colors[c & 0xf]);
-                x++;
-	    }
-	} else {
-	    length = *bits++;
-	    switch (length)
-            {
-            case RLE_EOL:
-                x = 0;
-                y--;
-                break;
-
-            case RLE_END:
-	        return;
-
-            case RLE_DELTA:
-                x += *bits++;
-                y -= *bits++;
-                break;
-
-	    default: /* absolute */
-	        while (length--) {
-		    c = *bits++;
-                    if (x >= left && x < (left + width))
-                        XPutPixel(bmpImage, x, y, colors[c >> 4]);
-                    x++;
-                    if (!length--) break;
-                    if (x >= left && x < (left + width))
-                        XPutPixel(bmpImage, x, y, colors[c & 0xf]);
-                    x++;
-		}
-		if ((bits - begin) & 1)
-		    bits++;
-	    }
-	}
-    }
-}
-
-
-
-/***********************************************************************
  *           X11DRV_DIB_SetImageBits_8
  *
  * SetDIBits for an 8-bit deep DIB.
@@ -1685,125 +1620,6 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
         break;
     }
 }
-
-/***********************************************************************
- *	      X11DRV_DIB_SetImageBits_RLE8
- *
- * SetDIBits for an 8-bit deep compressed DIB.
- *
- * This function rewritten 941113 by James Youngman.  WINE blew out when I
- * first ran it because my desktop wallpaper is a (large) RLE8 bitmap.
- *
- * This was because the algorithm assumed that all RLE8 bitmaps end with the
- * 'End of bitmap' escape code.  This code is very much laxer in what it
- * allows to end the expansion.  Possibly too lax.  See the note by
- * case RleDelta.  BTW, MS's documentation implies that a correct RLE8
- * bitmap should end with RleEnd, but on the other hand, software exists
- * that produces ones that don't and Windows 3.1 doesn't complain a bit
- * about it.
- *
- * (No) apologies for my English spelling.  [Emacs users: c-indent-level=4].
- *			James A. Youngman <mbcstjy@afs.man.ac.uk>
- *						[JAY]
- */
-static void X11DRV_DIB_SetImageBits_RLE8( int lines, const BYTE *bits,
-					  DWORD srcwidth, DWORD dstwidth,
-					  int left, int *colors,
-					  XImage *bmpImage )
-{
-    unsigned int x;		/* X-position on each line.  Increases. */
-    int y;			/* Line #.  Starts at lines-1, decreases */
-    const BYTE *pIn = bits;     /* Pointer to current position in bits */
-    BYTE length;		/* The length pf a run */
-    BYTE escape_code;		/* See enum Rle8_EscapeCodes.*/
-
-    /*
-     * Note that the bitmap data is stored by Windows starting at the
-     * bottom line of the bitmap and going upwards.  Within each line,
-     * the data is stored left-to-right.  That's the reason why line
-     * goes from lines-1 to 0.			[JAY]
-     */
-
-    x = 0;
-    y = lines - 1;
-    while (y >= 0)
-    {
-        length = *pIn++;
-
-        /*
-         * If the length byte is not zero (which is the escape value),
-         * We have a run of length pixels all the same colour.  The colour
-         * index is stored next.
-         *
-         * If the length byte is zero, we need to read the next byte to
-         * know what to do.			[JAY]
-         */
-        if (length != 0)
-        {
-            /*
-             * [Run-Length] Encoded mode
-             */
-            int color = colors[*pIn++];
-            while (length-- && x < (left + dstwidth)) {
-                if( x >= left) XPutPixel(bmpImage, x, y, color);
-                x++;
-            }
-        }
-        else
-        {
-            /*
-             * Escape codes (may be an absolute sequence though)
-             */
-            escape_code = (*pIn++);
-            switch(escape_code)
-            {
-            case RLE_EOL:
-                x = 0;
-                y--;
-                break;
-
-            case RLE_END:
-                /* Not all RLE8 bitmaps end with this code.  For
-                 * example, Paint Shop Pro produces some that don't.
-                 * That's (I think) what caused the previous
-                 * implementation to fail.  [JAY]
-                 */
-                return;
-
-            case RLE_DELTA:
-                x += (*pIn++);
-                y -= (*pIn++);
-                break;
-
-            default:  /* switch to absolute mode */
-                length = escape_code;
-                while (length--)
-                {
-                    int color = colors[*pIn++];
-                    if (x >= (left + dstwidth))
-                    {
-                        pIn += length;
-                        break;
-                    }
-                    if( x >= left) XPutPixel(bmpImage, x, y, color);
-                    x++;
-                }
-                /*
-                 * If you think for a moment you'll realise that the
-                 * only time we could ever possibly read an odd
-                 * number of bytes is when there is a 0x00 (escape),
-                 * a value >0x02 (absolute mode) and then an odd-
-                 * length run.  Therefore this is the only place we
-                 * need to worry about it.  Everywhere else the
-                 * bytes are always read in pairs.  [JAY]
-                 */
-                if (escape_code & 1) pIn++; /* Throw away the pad byte. */
-                break;
-            } /* switch (escape_code) : Escape sequence */
-        }
-    }
-}
-
 
 /***********************************************************************
  *           X11DRV_DIB_SetImageBits_16
@@ -3357,41 +3173,6 @@ static void X11DRV_DIB_GetImageBits_32( X11DRV_PDEVICE *physDev, int lines, BYTE
     }
 }
 
-static int XGetSubImageErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
-{
-    return (event->request_code == X_GetImage && event->error_code == BadMatch);
-}
-
-/***********************************************************************
- *           X11DRV_DIB_SetImageBits_GetSubImage
- *
- *  Helper for X11DRV_DIB_SetImageBits
- */
-static void X11DRV_DIB_SetImageBits_GetSubImage(
-        const X11DRV_DIB_IMAGEBITS_DESCR *descr, XImage *bmpImage)
-{
-    /* compressed bitmaps may contain gaps in them. So make a copy
-     * of the existing pixels first */
-    RECT bmprc, rc;
-
-    SetRect( &bmprc, descr->xDest, descr->yDest,
-             descr->xDest + descr->width , descr->yDest + descr->height );
-    GetRgnBox( descr->physDev->region, &rc );
-    /* convert from dc to drawable origin */
-    OffsetRect( &rc, descr->physDev->dc_rect.left, descr->physDev->dc_rect.top);
-    /* clip visible rect with bitmap */
-    if( IntersectRect( &rc, &rc, &bmprc))
-    {
-        X11DRV_expect_error( gdi_display, XGetSubImageErrorHandler, NULL );
-        XGetSubImage( gdi_display, descr->drawable, rc.left, rc.top,
-                      rc.right - rc.left, rc.bottom - rc.top, AllPlanes,
-                      ZPixmap, bmpImage,
-                      descr->xSrc + rc.left - bmprc.left,
-                      descr->ySrc + rc.top - bmprc.top);
-        X11DRV_check_error();
-    }
-}
-
 /***********************************************************************
  *           X11DRV_DIB_SetImageBits
  *
@@ -3459,32 +3240,17 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
                                        bmpImage, descr->dibpitch );
             break;
         case 4:
-            if (descr->compression) {
-                X11DRV_DIB_SetImageBits_GetSubImage( descr, bmpImage);
-                X11DRV_DIB_SetImageBits_RLE4( descr->lines, descr->bits,
-                                              descr->infoWidth, descr->width,
-                                              descr->xSrc, (int *)(descr->colorMap),
-                                              bmpImage );
-            } else
-                X11DRV_DIB_SetImageBits_4( descr->lines, descr->bits,
-                                           descr->infoWidth, descr->width,
-                                           descr->xSrc, (int*)(descr->colorMap),
-                                           bmpImage, descr->dibpitch );
+            X11DRV_DIB_SetImageBits_4( descr->lines, descr->bits,
+                                       descr->infoWidth, descr->width,
+                                       descr->xSrc, (int*)(descr->colorMap),
+                                       bmpImage, descr->dibpitch );
             break;
         case 8:
-            if (descr->compression) {
-                X11DRV_DIB_SetImageBits_GetSubImage( descr, bmpImage);
-                X11DRV_DIB_SetImageBits_RLE8( descr->lines, descr->bits,
-                                              descr->infoWidth, descr->width,
-                                              descr->xSrc, (int *)(descr->colorMap),
-                                              bmpImage );
-            } else
-                X11DRV_DIB_SetImageBits_8( descr->lines, descr->bits,
-                                           descr->infoWidth, descr->width,
-                                           descr->xSrc, (int *)(descr->colorMap),
-                                           bmpImage, descr->dibpitch );
+            X11DRV_DIB_SetImageBits_8( descr->lines, descr->bits,
+                                       descr->infoWidth, descr->width,
+                                       descr->xSrc, (int *)(descr->colorMap),
+                                       bmpImage, descr->dibpitch );
             break;
-        case 15:
         case 16:
             X11DRV_DIB_SetImageBits_16( descr->lines, descr->bits,
                                         descr->infoWidth, descr->width,
@@ -3657,28 +3423,17 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
        break;
 
     case 4:
-        if (descr->compression) {
-	   FIXME("Compression not yet supported!\n");
-           if(descr->sizeImage < X11DRV_DIB_GetDIBWidthBytes( descr->infoWidth, 4 ) * abs(descr->lines))
-               break;
-        }
         X11DRV_DIB_GetImageBits_4( descr->lines,(LPVOID)descr->bits,
                                    descr->infoWidth, descr->width,
                                    descr->colorMap, descr->palentry,
                                    bmpImage, descr->dibpitch );
         break;
     case 8:
-        if (descr->compression) {
-	   FIXME("Compression not yet supported!\n");
-           if(descr->sizeImage < X11DRV_DIB_GetDIBWidthBytes( descr->infoWidth, 8 ) * abs(descr->lines))
-               break;
-        }
         X11DRV_DIB_GetImageBits_8( descr->lines, (LPVOID)descr->bits,
                                    descr->infoWidth, descr->width,
                                    descr->colorMap, descr->palentry,
                                    bmpImage, descr->dibpitch );
         break;
-    case 15:
     case 16:
        X11DRV_DIB_GetImageBits_16( descr->physDev, descr->lines, (LPVOID)descr->bits,
 				   descr->infoWidth,descr->width,
