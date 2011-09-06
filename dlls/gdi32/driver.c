@@ -502,13 +502,6 @@ static UINT nulldrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, const R
     return 0;
 }
 
-static INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD width, DWORD height,
-                                      INT x_src, INT y_src, UINT start, UINT lines,
-                                      const void *bits, BITMAPINFO *info, UINT coloruse )
-{
-    return 0;
-}
-
 static void nulldrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
 {
 }

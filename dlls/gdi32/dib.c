@@ -610,6 +610,107 @@ done:
 }
 
 
+INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWORD cy,
+                               INT x_src, INT y_src, UINT startscan, UINT lines,
+                               const void *bits, BITMAPINFO *src_info, UINT coloruse )
+{
+    DC *dc = get_nulldrv_dc( dev );
+    char dst_buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *dst_info = (BITMAPINFO *)dst_buffer;
+    struct bitblt_coords src, dst;
+    struct gdi_image_bits src_bits;
+    DWORD err;
+    UINT height;
+    BOOL top_down;
+    POINT pt;
+    RECT rect;
+
+    top_down = (src_info->bmiHeader.biHeight < 0);
+    height = abs( src_info->bmiHeader.biHeight );
+
+    src_bits.ptr = (void *)bits;
+    src_bits.is_copy = FALSE;
+    src_bits.free = NULL;
+
+    if (coloruse == DIB_PAL_COLORS && !fill_color_table_from_palette( src_info, dev->hdc )) return 0;
+
+    if (!lines || (startscan >= height)) return 0;
+    if (!top_down && lines > height - startscan) lines = height - startscan;
+
+    /* map src to top-down coordinates with startscan as origin */
+    src.x = x_src;
+    src.y = startscan + lines - (y_src + cy);
+    src.width = cx;
+    src.height = cy;
+    if (src.y > 0)
+    {
+        if (!top_down)
+        {
+            /* get rid of unnecessary lines */
+            if (src.y >= lines) return 0;
+            lines -= src.y;
+            src.y = 0;
+        }
+        else if (src.y >= lines) return lines;
+    }
+    src_info->bmiHeader.biHeight = top_down ? -lines : lines;
+
+    src.visrect.left = src.x;
+    src.visrect.top = src.y;
+    src.visrect.right = src.x + cx;
+    src.visrect.bottom = src.y + cy;
+    rect.left = 0;
+    rect.top = 0;
+    rect.right = src_info->bmiHeader.biWidth;
+    rect.bottom = abs( src_info->bmiHeader.biHeight );
+    if (!intersect_rect( &src.visrect, &src.visrect, &rect )) return 0;
+
+    pt.x = x_dst;
+    pt.y = y_dst;
+    LPtoDP( dev->hdc, &pt, 1 );
+    dst.x = pt.x;
+    dst.y = pt.y;
+    dst.width = cx;
+    dst.height = cy;
+    if (GetLayout( dev->hdc ) & LAYOUT_RTL) dst.x -= cx - 1;
+
+    dst.visrect.left = dst.x;
+    dst.visrect.top = dst.y;
+    dst.visrect.right = dst.x + cx;
+    dst.visrect.bottom = dst.y + cy;
+    if (get_clip_box( dc, &rect )) intersect_rect( &dst.visrect, &dst.visrect, &rect );
+
+    offset_rect( &src.visrect, dst.x - src.x, dst.y - src.y );
+    intersect_rect( &rect, &src.visrect, &dst.visrect );
+    src.visrect = dst.visrect = rect;
+    offset_rect( &src.visrect, src.x - dst.x, src.y - dst.y );
+    if (is_rect_empty( &dst.visrect )) return lines;
+
+    dev = GET_DC_PHYSDEV( dc, pPutImage );
+    memcpy( dst_info, src_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
+    err = dev->funcs->pPutImage( dev, 0, 0, dst_info, &src_bits, &src, &dst, SRCCOPY );
+    if (err == ERROR_BAD_FORMAT)
+    {
+        void *ptr;
+
+        dst_info->bmiHeader.biWidth = src.visrect.right - src.visrect.left;
+        ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ));
+        if (ptr)
+        {
+            err = convert_bitmapinfo( src_info, src_bits.ptr, &src, dst_info, ptr );
+            if (src_bits.free) src_bits.free( &src_bits );
+            src_bits.ptr = ptr;
+            src_bits.is_copy = TRUE;
+            src_bits.free = free_heap_bits;
+            if (!err) err = dev->funcs->pPutImage( dev, 0, 0, dst_info, &src_bits, &src, &dst, SRCCOPY );
+        }
+        else err = ERROR_OUTOFMEMORY;
+    }
+    if (err) lines = 0;
+    if (src_bits.free) src_bits.free( &src_bits );
+    return lines;
+}
+
 /***********************************************************************
  *           SetDIBitsToDevice   (GDI32.@)
  */

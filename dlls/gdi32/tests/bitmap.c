@@ -4265,6 +4265,11 @@ static void test_SetDIBitsToDevice(void)
     for (i = 0; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
     memset( dib_bits, 0xaa, 64 * 4 );
 
+    ret = SetDIBitsToDevice( hdc, 0, 2, 8, 4, 0, -1, 3, 12, data, info, DIB_RGB_COLORS );
+    ok( ret == 0, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
     SetMapMode( hdc, MM_ANISOTROPIC );
     SetWindowExtEx( hdc, 3, 3, NULL );
     ret = SetDIBitsToDevice( hdc, 2, 2, 2, 2, 1, 2, 1, 5, data, info, DIB_RGB_COLORS );
