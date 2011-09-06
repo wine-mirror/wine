@@ -7923,6 +7923,7 @@ msgstr ""
 "넘치게 하는 이전 명령의 결과를 읽도록 한다\n"
 
 #: cmd.rc:149
+#, fuzzy
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -7942,7 +7943,7 @@ msgid ""
 "(like a command PROMPT $p$g).\n"
 "\n"
 "The prompt can also be changed by altering the PROMPT environment variable,\n"
-"so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
+"so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'.\n"
 msgstr ""
 "PROMPT  명령라인 프롬프트 설정.\n"
 "\n"
@@ -8183,6 +8184,7 @@ msgstr ""
 "호출한 셀로 돌아갑니다.\n"
 
 #: cmd.rc:287
+#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -8218,7 +8220,7 @@ msgid ""
 "VOL\t\tShow the volume label of a disk device\n"
 "EXIT\t\tClose down CMD\n"
 "\n"
-"Enter HELP <command> for further information on any of the above commands\n"
+"Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
 "CMD 내부 명령들:\n"
 "ASSOC\t\t파일 확장명 연결을 보여주거나 고치기\n"
