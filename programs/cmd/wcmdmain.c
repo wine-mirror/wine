@@ -1455,9 +1455,6 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
 
     switch (i) {
 
-      case WCMD_ATTRIB:
-        WCMD_setshow_attrib ();
-        break;
       case WCMD_CALL:
         WCMD_call (p);
         break;

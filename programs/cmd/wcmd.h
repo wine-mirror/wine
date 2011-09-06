@@ -83,7 +83,6 @@ void WCMD_remove_dir (WCHAR *command);
 void WCMD_rename (void);
 void WCMD_run_program (WCHAR *command, int called);
 void WCMD_setlocal (const WCHAR *command);
-void WCMD_setshow_attrib (void);
 void WCMD_setshow_date (void);
 void WCMD_setshow_default (const WCHAR *command);
 void WCMD_setshow_env (WCHAR *command);

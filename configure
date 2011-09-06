@@ -15204,7 +15204,7 @@ wine_fn_config_makefile libs/wine enable_libs_wine install-dev,install-lib
 wine_fn_config_makefile libs/wpp enable_libs_wpp
 wine_fn_config_makefile loader enable_loader install-lib,manpage
 wine_fn_config_program aspnet_regiis enable_aspnet_regiis install
-wine_fn_config_program attrib enable_attrib install
+wine_fn_config_program attrib enable_attrib install,po
 wine_fn_config_program cabarc enable_cabarc install
 wine_fn_config_program cacls enable_cacls install
 wine_fn_config_program clock enable_clock install,po

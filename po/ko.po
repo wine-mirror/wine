@@ -7641,6 +7641,41 @@ msgstr "리퍼럴을 다루는 동안의 루프"
 msgid "Referral hop limit exceeded"
 msgstr "리퍼럴 홉 제한에 도달했습니다"
 
+#: attrib.rc:27 cmd.rc:298
+msgid ""
+"Not Yet Implemented\n"
+"\n"
+msgstr ""
+"아직 구현되지 않았습니다\n"
+"\n"
+
+#: attrib.rc:28 cmd.rc:301
+msgid "%s: File Not Found\n"
+msgstr "%s :파일을 찾을 수 없습니다\n"
+
+#: attrib.rc:48
+msgid ""
+"ATTRIB - Displays or changes file attributes.\n"
+"\n"
+"Syntax:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [drive:][path][filename]\n"
+"\t     [/S [/D]]\n"
+"\n"
+"Where:\n"
+"\n"
+"+   Sets an attribute.\n"
+"-   Clears an attribute.\n"
+"R   Read-only file attribute\n"
+"A   Archive file attribute.\n"
+"S   System file attribute.\n"
+"H   Hidden file attribute.\n"
+"[drive:][path][filename]\n"
+"Specifies a file or files for attrib to process.\n"
+"/S  Processes matching files in the current folder\n"
+"and all subfolders.\n"
+"/D  Processes folders as well.\n"
+msgstr ""
+
 #: clock.rc:29
 msgid "Ana&log"
 msgstr "아날로그(&L)"
@@ -8263,14 +8298,6 @@ msgstr "더 많이..."
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "배치 작업의 줄은 아마도 불완전한 것 같습니다. 사용법:\n"
 
-#: cmd.rc:298
-msgid ""
-"Not Yet Implemented\n"
-"\n"
-msgstr ""
-"아직 구현되지 않았습니다\n"
-"\n"
-
 #: cmd.rc:299
 msgid "Argument missing\n"
 msgstr "인수가 없습니다\n"
@@ -8278,10 +8305,6 @@ msgstr "인수가 없습니다\n"
 #: cmd.rc:300
 msgid "Syntax error\n"
 msgstr "문법 오류\n"
-
-#: cmd.rc:301
-msgid "%s: File Not Found\n"
-msgstr "%s :파일을 찾을 수 없습니다\n"
 
 #: cmd.rc:302
 msgid "No help available for %s\n"

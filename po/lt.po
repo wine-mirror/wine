@@ -7688,6 +7688,41 @@ msgstr "Aptiktas ciklas apdorojant perdavimus"
 msgid "Referral hop limit exceeded"
 msgstr "Viršyta perdavimo šuolių riba"
 
+#: attrib.rc:27 cmd.rc:298
+msgid ""
+"Not Yet Implemented\n"
+"\n"
+msgstr ""
+"Dar nerealizuota\n"
+"\n"
+
+#: attrib.rc:28 cmd.rc:301
+msgid "%s: File Not Found\n"
+msgstr "%s: failas nerastas\n"
+
+#: attrib.rc:48
+msgid ""
+"ATTRIB - Displays or changes file attributes.\n"
+"\n"
+"Syntax:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [drive:][path][filename]\n"
+"\t     [/S [/D]]\n"
+"\n"
+"Where:\n"
+"\n"
+"+   Sets an attribute.\n"
+"-   Clears an attribute.\n"
+"R   Read-only file attribute\n"
+"A   Archive file attribute.\n"
+"S   System file attribute.\n"
+"H   Hidden file attribute.\n"
+"[drive:][path][filename]\n"
+"Specifies a file or files for attrib to process.\n"
+"/S  Processes matching files in the current folder\n"
+"and all subfolders.\n"
+"/D  Processes folders as well.\n"
+msgstr ""
+
 #: clock.rc:29
 msgid "Ana&log"
 msgstr "Ana&loginis"
@@ -8315,14 +8350,6 @@ msgstr "Daugiau..."
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Paketinio apdorojimo eilutė galimai nukirsta. Naudojama:\n"
 
-#: cmd.rc:298
-msgid ""
-"Not Yet Implemented\n"
-"\n"
-msgstr ""
-"Dar nerealizuota\n"
-"\n"
-
 #: cmd.rc:299
 msgid "Argument missing\n"
 msgstr "Trūksta argumento\n"
@@ -8330,10 +8357,6 @@ msgstr "Trūksta argumento\n"
 #: cmd.rc:300
 msgid "Syntax error\n"
 msgstr "Sintaksės klaida\n"
-
-#: cmd.rc:301
-msgid "%s: File Not Found\n"
-msgstr "%s: failas nerastas\n"
 
 #: cmd.rc:302
 msgid "No help available for %s\n"

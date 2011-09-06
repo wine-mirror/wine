@@ -7815,6 +7815,41 @@ msgstr "Lus gevonden bij het verwerken van verwijzingen"
 msgid "Referral hop limit exceeded"
 msgstr "Overschrijding van limiet op verwijzingen"
 
+#: attrib.rc:27 cmd.rc:298
+msgid ""
+"Not Yet Implemented\n"
+"\n"
+msgstr ""
+"Nog niet geïmplementeerd\n"
+"\n"
+
+#: attrib.rc:28 cmd.rc:301
+msgid "%s: File Not Found\n"
+msgstr "%s : Bestand Niet Gevonden\n"
+
+#: attrib.rc:48
+msgid ""
+"ATTRIB - Displays or changes file attributes.\n"
+"\n"
+"Syntax:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [drive:][path][filename]\n"
+"\t     [/S [/D]]\n"
+"\n"
+"Where:\n"
+"\n"
+"+   Sets an attribute.\n"
+"-   Clears an attribute.\n"
+"R   Read-only file attribute\n"
+"A   Archive file attribute.\n"
+"S   System file attribute.\n"
+"H   Hidden file attribute.\n"
+"[drive:][path][filename]\n"
+"Specifies a file or files for attrib to process.\n"
+"/S  Processes matching files in the current folder\n"
+"and all subfolders.\n"
+"/D  Processes folders as well.\n"
+msgstr ""
+
 #: clock.rc:29
 msgid "Ana&log"
 msgstr "&Analoog"
@@ -8434,14 +8469,6 @@ msgstr "Meer..."
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Regel in Batch proces mogelijk afgebroken. We gebruiken:\n"
 
-#: cmd.rc:298
-msgid ""
-"Not Yet Implemented\n"
-"\n"
-msgstr ""
-"Nog niet geïmplementeerd\n"
-"\n"
-
 #: cmd.rc:299
 msgid "Argument missing\n"
 msgstr "Argument ontbreekt\n"
@@ -8449,10 +8476,6 @@ msgstr "Argument ontbreekt\n"
 #: cmd.rc:300
 msgid "Syntax error\n"
 msgstr "Fout in de syntax\n"
-
-#: cmd.rc:301
-msgid "%s: File Not Found\n"
-msgstr "%s : Bestand Niet Gevonden\n"
 
 #: cmd.rc:302
 msgid "No help available for %s\n"

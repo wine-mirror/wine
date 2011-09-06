@@ -8098,6 +8098,41 @@ msgstr "Bucle al manejar remisiones"
 msgid "Referral hop limit exceeded"
 msgstr "Límite de saltos de remisiones excedido"
 
+#: attrib.rc:27 cmd.rc:298
+msgid ""
+"Not Yet Implemented\n"
+"\n"
+msgstr ""
+"No implementado\n"
+"\n"
+
+#: attrib.rc:28 cmd.rc:301
+msgid "%s: File Not Found\n"
+msgstr "%s : Archivo no encontrado\n"
+
+#: attrib.rc:48
+msgid ""
+"ATTRIB - Displays or changes file attributes.\n"
+"\n"
+"Syntax:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [drive:][path][filename]\n"
+"\t     [/S [/D]]\n"
+"\n"
+"Where:\n"
+"\n"
+"+   Sets an attribute.\n"
+"-   Clears an attribute.\n"
+"R   Read-only file attribute\n"
+"A   Archive file attribute.\n"
+"S   System file attribute.\n"
+"H   Hidden file attribute.\n"
+"[drive:][path][filename]\n"
+"Specifies a file or files for attrib to process.\n"
+"/S  Processes matching files in the current folder\n"
+"and all subfolders.\n"
+"/D  Processes folders as well.\n"
+msgstr ""
+
 #: clock.rc:29
 msgid "Ana&log"
 msgstr "&Analógico"
@@ -8713,14 +8748,6 @@ msgstr "Más..."
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Línea en procesamiento por lotes posiblemente truncada. Usando:\n"
 
-#: cmd.rc:298
-msgid ""
-"Not Yet Implemented\n"
-"\n"
-msgstr ""
-"No implementado\n"
-"\n"
-
 #: cmd.rc:299
 msgid "Argument missing\n"
 msgstr "Argumento faltante\n"
@@ -8728,10 +8755,6 @@ msgstr "Argumento faltante\n"
 #: cmd.rc:300
 msgid "Syntax error\n"
 msgstr "Error de sintaxis\n"
-
-#: cmd.rc:301
-msgid "%s: File Not Found\n"
-msgstr "%s : Archivo no encontrado\n"
 
 #: cmd.rc:302
 msgid "No help available for %s\n"

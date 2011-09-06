@@ -8060,6 +8060,42 @@ msgstr "Başvuruları işlerken dön"
 msgid "Referral hop limit exceeded"
 msgstr "Paketin gönderildiği yönlendirici sınırı aşıldı"
 
+#: attrib.rc:27 cmd.rc:298
+msgid ""
+"Not Yet Implemented\n"
+"\n"
+msgstr ""
+"Not Yet Implemented\n"
+"\n"
+
+#: attrib.rc:28 cmd.rc:301
+#, fuzzy
+msgid "%s: File Not Found\n"
+msgstr "%s : File Not Found\n"
+
+#: attrib.rc:48
+msgid ""
+"ATTRIB - Displays or changes file attributes.\n"
+"\n"
+"Syntax:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [drive:][path][filename]\n"
+"\t     [/S [/D]]\n"
+"\n"
+"Where:\n"
+"\n"
+"+   Sets an attribute.\n"
+"-   Clears an attribute.\n"
+"R   Read-only file attribute\n"
+"A   Archive file attribute.\n"
+"S   System file attribute.\n"
+"H   Hidden file attribute.\n"
+"[drive:][path][filename]\n"
+"Specifies a file or files for attrib to process.\n"
+"/S  Processes matching files in the current folder\n"
+"and all subfolders.\n"
+"/D  Processes folders as well.\n"
+msgstr ""
+
 #: clock.rc:29
 msgid "Ana&log"
 msgstr "Ana&log"
@@ -8662,14 +8698,6 @@ msgstr "More..."
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Line in Batch processing possibly truncated. Using:\n"
 
-#: cmd.rc:298
-msgid ""
-"Not Yet Implemented\n"
-"\n"
-msgstr ""
-"Not Yet Implemented\n"
-"\n"
-
 #: cmd.rc:299
 msgid "Argument missing\n"
 msgstr "Argument missing\n"
@@ -8677,11 +8705,6 @@ msgstr "Argument missing\n"
 #: cmd.rc:300
 msgid "Syntax error\n"
 msgstr "Syntax error\n"
-
-#: cmd.rc:301
-#, fuzzy
-msgid "%s: File Not Found\n"
-msgstr "%s : File Not Found\n"
 
 #: cmd.rc:302
 msgid "No help available for %s\n"
