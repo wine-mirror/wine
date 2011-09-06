@@ -5,6 +5,9 @@ C_SRCS = \
 	vbscript.c \
 	vbscript_main.c
 
+BISON_SRCS = \
+	parser.y
+
 RC_SRCS = vbscript.rc
 
 IDL_H_SRCS = vbscript_classes.idl

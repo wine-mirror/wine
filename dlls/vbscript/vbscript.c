@@ -20,6 +20,8 @@
 #include <assert.h>
 
 #include "vbscript.h"
+#include "parse.h"
+
 #include "objsafe.h"
 
 #include "wine/debug.h"
@@ -512,9 +514,18 @@ static HRESULT WINAPI VBScriptParse_ParseScriptText(IActiveScriptParse *iface,
         DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
 {
     VBScript *This = impl_from_IActiveScriptParse(iface);
-    FIXME("(%p)->(%s %s %p %s %s %u %x %p %p)\n", This, debugstr_w(pstrCode),
+    parser_ctx_t parser;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %s %p %s %s %u %x %p %p)\n", This, debugstr_w(pstrCode),
           debugstr_w(pstrItemName), punkContext, debugstr_w(pstrDelimiter),
           wine_dbgstr_longlong(dwSourceContextCookie), ulStartingLine, dwFlags, pvarResult, pexcepinfo);
+
+    hres = parse_script(&parser, pstrCode);
+    if(FAILED(hres))
+        return hres;
+
+    FIXME("compiling script not implemented\n");
     return E_NOTIMPL;
 }
 

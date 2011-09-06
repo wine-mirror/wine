@@ -121,6 +121,8 @@ dlls/sti/sti_wia.h
 dlls/sti/sti_wia_p.c
 dlls/urlmon/urlmon_urlmon.h
 dlls/urlmon/urlmon_urlmon_p.c
+dlls/vbscript/parser.tab.c
+dlls/vbscript/parser.tab.h
 dlls/vbscript/vbscript_classes.h
 dlls/windowscodecs/windowscodecs_wincodec.h
 dlls/windowscodecs/windowscodecs_wincodec_p.c
