@@ -619,6 +619,7 @@ INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWOR
     BITMAPINFO *dst_info = (BITMAPINFO *)dst_buffer;
     struct bitblt_coords src, dst;
     struct gdi_image_bits src_bits;
+    HRGN clip = 0;
     DWORD err;
     UINT height;
     BOOL top_down;
@@ -632,28 +633,45 @@ INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWOR
     src_bits.is_copy = FALSE;
     src_bits.free = NULL;
 
+    if (!lines) return 0;
     if (coloruse == DIB_PAL_COLORS && !fill_color_table_from_palette( src_info, dev->hdc )) return 0;
 
-    if (!lines || (startscan >= height)) return 0;
-    if (!top_down && lines > height - startscan) lines = height - startscan;
-
-    /* map src to top-down coordinates with startscan as origin */
-    src.x = x_src;
-    src.y = startscan + lines - (y_src + cy);
-    src.width = cx;
-    src.height = cy;
-    if (src.y > 0)
+    if (src_info->bmiHeader.biCompression == BI_RLE4 || src_info->bmiHeader.biCompression == BI_RLE8)
     {
-        if (!top_down)
-        {
-            /* get rid of unnecessary lines */
-            if (src.y >= lines) return 0;
-            lines -= src.y;
-            src.y = 0;
-        }
-        else if (src.y >= lines) return lines;
+        startscan = 0;
+        lines = height;
+        src_info->bmiHeader.biWidth = x_src + cx;
+        src_info->bmiHeader.biHeight = y_src + cy;
+        if (src_info->bmiHeader.biWidth <= 0 || src_info->bmiHeader.biHeight <= 0) return 0;
+        src.x = x_src;
+        src.y = 0;
+        src.width = cx;
+        src.height = cy;
+        if (!build_rle_bitmap( src_info, &src_bits, &clip )) return 0;
     }
-    src_info->bmiHeader.biHeight = top_down ? -lines : lines;
+    else
+    {
+        if (startscan >= height) return 0;
+        if (!top_down && lines > height - startscan) lines = height - startscan;
+
+        /* map src to top-down coordinates with startscan as origin */
+        src.x = x_src;
+        src.y = startscan + lines - (y_src + cy);
+        src.width = cx;
+        src.height = cy;
+        if (src.y > 0)
+        {
+            if (!top_down)
+            {
+                /* get rid of unnecessary lines */
+                if (src.y >= lines) return 0;
+                lines -= src.y;
+                src.y = 0;
+            }
+            else if (src.y >= lines) return lines;
+        }
+        src_info->bmiHeader.biHeight = top_down ? -lines : lines;
+    }
 
     src.visrect.left = src.x;
     src.visrect.top = src.y;
@@ -663,7 +681,11 @@ INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWOR
     rect.top = 0;
     rect.right = src_info->bmiHeader.biWidth;
     rect.bottom = abs( src_info->bmiHeader.biHeight );
-    if (!intersect_rect( &src.visrect, &src.visrect, &rect )) return 0;
+    if (!intersect_rect( &src.visrect, &src.visrect, &rect ))
+    {
+        lines = 0;
+        goto done;
+    }
 
     pt.x = x_dst;
     pt.y = y_dst;
@@ -684,11 +706,12 @@ INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWOR
     intersect_rect( &rect, &src.visrect, &dst.visrect );
     src.visrect = dst.visrect = rect;
     offset_rect( &src.visrect, src.x - dst.x, src.y - dst.y );
-    if (is_rect_empty( &dst.visrect )) return lines;
+    if (is_rect_empty( &dst.visrect )) goto done;
+    if (clip) OffsetRgn( clip, dst.x - src.x, dst.y - src.y );
 
     dev = GET_DC_PHYSDEV( dc, pPutImage );
     memcpy( dst_info, src_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
-    err = dev->funcs->pPutImage( dev, 0, 0, dst_info, &src_bits, &src, &dst, SRCCOPY );
+    err = dev->funcs->pPutImage( dev, 0, clip, dst_info, &src_bits, &src, &dst, SRCCOPY );
     if (err == ERROR_BAD_FORMAT)
     {
         void *ptr;
@@ -702,12 +725,15 @@ INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWOR
             src_bits.ptr = ptr;
             src_bits.is_copy = TRUE;
             src_bits.free = free_heap_bits;
-            if (!err) err = dev->funcs->pPutImage( dev, 0, 0, dst_info, &src_bits, &src, &dst, SRCCOPY );
+            if (!err) err = dev->funcs->pPutImage( dev, 0, clip, dst_info, &src_bits, &src, &dst, SRCCOPY );
         }
         else err = ERROR_OUTOFMEMORY;
     }
     if (err) lines = 0;
+
+done:
     if (src_bits.free) src_bits.free( &src_bits );
+    if (clip) DeleteObject( clip );
     return lines;
 }
 

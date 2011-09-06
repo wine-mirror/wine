@@ -4537,6 +4537,227 @@ static void test_SetDIBitsToDevice(void)
     DeleteObject( dib );
 }
 
+static void test_SetDIBitsToDevice_RLE8(void)
+{
+    char bmi_buf[ FIELD_OFFSET( BITMAPINFO, bmiColors[256] ) ];
+    BITMAPINFO *info = (BITMAPINFO *)bmi_buf;
+    DWORD *dib_bits;
+    HDC hdc = CreateCompatibleDC( 0 );
+    BYTE rle8_data[20] = { 0x04, 0x02, 0x03, 0xf0, 0x00, 0x00,     /* 2, 2, 2, 2, f0, f0, f0, <eol> */
+                           0x00, 0x03, 0x04, 0x05, 0x06, 0x00,     /* 4, 5, 6, <pad> */
+                           0x00, 0x02, 0x01, 0x02, 0x05, 0x80,     /* dx=1, dy=2, 80, 80, 80, 80, (80) */
+                           0x00, 0x01 };                           /* <eod> */
+    HBITMAP dib;
+    int i, ret;
+    DWORD bottom_up[64] = { 0x00020202, 0x00020202, 0x00020202, 0x00020202, 0x00f0f0f0, 0x00f0f0f0, 0x00f0f0f0, 0xaaaaaaaa,
+                            0x00040404, 0x00050505, 0x00060606, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0x00808080, 0x00808080, 0x00808080, 0x00808080,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa };
+    DWORD top_down[64]  = { 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0x00808080, 0x00808080, 0x00808080, 0x00808080,
+                            0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0x00040404, 0x00050505, 0x00060606, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+                            0x00020202, 0x00020202, 0x00020202, 0x00020202, 0x00f0f0f0, 0x00f0f0f0, 0x00f0f0f0, 0xaaaaaaaa };
+
+    memset( info, 0, sizeof(bmi_buf) );
+
+    info->bmiHeader.biSize        = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth       = 8;
+    info->bmiHeader.biHeight      = 8;
+    info->bmiHeader.biPlanes      = 1;
+    info->bmiHeader.biBitCount    = 32;
+    info->bmiHeader.biCompression = BI_RGB;
+
+    dib = CreateDIBSection( NULL, info, DIB_RGB_COLORS, (void**)&dib_bits, NULL, 0 );
+    memset( dib_bits, 0xaa, 64 * 4 );
+    SelectObject( hdc, dib );
+
+    info->bmiHeader.biBitCount    = 8;
+    info->bmiHeader.biCompression = BI_RLE8;
+    info->bmiHeader.biSizeImage   = sizeof(rle8_data);
+
+    for (i = 0; i < 256; i++)
+    {
+        info->bmiColors[i].rgbRed      = i;
+        info->bmiColors[i].rgbGreen    = i;
+        info->bmiColors[i].rgbBlue     = i;
+        info->bmiColors[i].rgbReserved = 0;
+    }
+
+    ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( dib_bits[i] == bottom_up[i], "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    /* startscan and lines are ignored, unless lines == 0 */
+    ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 1, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( dib_bits[i] == bottom_up[i], "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 1, 1, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( dib_bits[i] == bottom_up[i], "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 1, 0, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 0, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biWidth = 2;
+    ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( dib_bits[i] == bottom_up[i], "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biWidth  = 8;
+    info->bmiHeader.biHeight = 2;
+    ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 2, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( dib_bits[i] == bottom_up[i], "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biHeight = 9;
+    ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 9, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( dib_bits[i] == bottom_up[i], "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 0, 9, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 9, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( dib_bits[i] == bottom_up[i], "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biHeight = 8;
+    ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 1, 9, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( dib_bits[i] == bottom_up[i], "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBitsToDevice( hdc, 0, 3, 8, 8, 0, 0, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    for (i = 0; i < 40; i++) ok( dib_bits[i] == bottom_up[i + 24], "%d: got %08x\n", i, dib_bits[i] );
+    for (i = 40; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBitsToDevice( hdc, 0, 3, 4, 4, 0, 0, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    for (i = 0; i < 8; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    for (i = 8; i < 40; i++)
+        if (i & 4) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+        else ok( dib_bits[i] == bottom_up[i - 8], "%d: got %08x\n", i, dib_bits[i] );
+    for (i = 40; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBitsToDevice( hdc, 3, 3, 8, 4, 0, 0, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    for (i = 0; i < 8; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    for (i = 8; i < 40; i++)
+        if ((i & 7) < 3) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+        else ok( dib_bits[i] == bottom_up[i - 11], "%d: got %08x\n", i, dib_bits[i] );
+    for (i = 40; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBitsToDevice( hdc, 2, 3, 8, 4, 2, 0, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    for (i = 0; i < 8; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    for (i = 8; i < 40; i++)
+        if ((i & 7) < 2) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+        else ok( dib_bits[i] == bottom_up[i - 8], "%d: got %08x\n", i, dib_bits[i] );
+    for (i = 40; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biWidth = 37;
+    info->bmiHeader.biHeight = 37;
+    ret = SetDIBitsToDevice( hdc, -2, 1, 10, 5, 2, -1, 12, 24, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 37, "got %d\n", ret );
+    for (i = 0; i < 24; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    for (i = 24; i < 64; i++)
+        if (i == 52) ok( dib_bits[i] == 0x00808080, "%d: got %08x\n", i, dib_bits[i] );
+        else if (i & 4) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+        else ok( dib_bits[i] == bottom_up[i - 20], "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    /* top-down compressed dibs are invalid */
+    info->bmiHeader.biWidth = 8;
+    info->bmiHeader.biHeight = -8;
+    SetLastError( 0xdeadbeef );
+    ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 0, "got %d\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %x\n", GetLastError() );
+
+    /* top-down dst */
+
+    info->bmiHeader.biHeight      = -8;
+    info->bmiHeader.biBitCount    = 32;
+    info->bmiHeader.biCompression = BI_RGB;
+    info->bmiHeader.biSizeImage   = 0;
+
+    dib = CreateDIBSection( NULL, info, DIB_RGB_COLORS, (void**)&dib_bits, NULL, 0 );
+    memset( dib_bits, 0xaa, 16 * 16 * 4 );
+    DeleteObject( SelectObject( hdc, dib ));
+
+    info->bmiHeader.biHeight      = 8;
+    info->bmiHeader.biBitCount    = 8;
+    info->bmiHeader.biCompression = BI_RLE8;
+    info->bmiHeader.biSizeImage   = sizeof(rle8_data);
+
+    ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( dib_bits[i] == top_down[i], "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 0, 9, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( dib_bits[i] == top_down[i], "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biHeight = 4;
+    ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 4, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( dib_bits[i] == top_down[i], "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biHeight = 9;
+    ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 9, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( dib_bits[i] == top_down[i], "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 0, 9, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 9, "got %d\n", ret );
+    for (i = 0; i < 64; i++) ok( dib_bits[i] == top_down[i], "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    ret = SetDIBitsToDevice( hdc, 2, 3, 8, 6, 2, 2, 0, 8, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 9, "got %d\n", ret );
+    for (i = 0; i < 24; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    for (i = 24; i < 64; i++) ok( dib_bits[i] == top_down[i - 24], "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    info->bmiHeader.biWidth = 37;
+    info->bmiHeader.biHeight = 37;
+    ret = SetDIBitsToDevice( hdc, -2, 1, 10, 5, 2, -1, 12, 24, rle8_data, info, DIB_RGB_COLORS );
+    ok( ret == 37, "got %d\n", ret );
+    for (i = 0; i < 40; i++)
+        if (i == 12) ok( dib_bits[i] == 0x00808080, "%d: got %08x\n", i, dib_bits[i] );
+        else if (i & 4) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+        else ok( dib_bits[i] == top_down[i + 28], "%d: got %08x\n", i, dib_bits[i] );
+    for (i = 40; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    DeleteDC( hdc );
+    DeleteObject( dib );
+}
+
 START_TEST(bitmap)
 {
     HMODULE hdll;
@@ -4577,4 +4798,5 @@ START_TEST(bitmap)
     test_SetDIBits_RLE4();
     test_SetDIBits_RLE8();
     test_SetDIBitsToDevice();
+    test_SetDIBitsToDevice_RLE8();
 }
