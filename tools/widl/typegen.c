@@ -1488,8 +1488,6 @@ static void write_procformatstring_stmts(FILE *file, int indent, const statement
                 write_procformatstring_func( file, indent, iface, func, offset, count++ );
             }
         }
-        else if (stmt->type == STMT_LIBRARY)
-            write_procformatstring_stmts(file, indent, stmt->u.lib->stmts, pred, offset);
     }
 }
 
@@ -3624,12 +3622,7 @@ static unsigned int process_tfs_stmts(FILE *file, const statement_list_t *stmts,
         const type_t *iface;
         const statement_t *stmt_func;
 
-        if (stmt->type == STMT_LIBRARY)
-        {
-            process_tfs_stmts(file, stmt->u.lib->stmts, pred, typeformat_offset);
-            continue;
-        }
-        else if (stmt->type != STMT_TYPE || type_get_type(stmt->u.type) != TYPE_INTERFACE)
+        if (stmt->type != STMT_TYPE || type_get_type(stmt->u.type) != TYPE_INTERFACE)
             continue;
 
         iface = stmt->u.type;
@@ -4510,12 +4503,7 @@ unsigned int get_size_procformatstring(const statement_list_t *stmts, type_pred_
         const type_t *iface;
         const statement_t *stmt_func;
 
-        if (stmt->type == STMT_LIBRARY)
-        {
-            size += get_size_procformatstring(stmt->u.lib->stmts, pred) - 1;
-            continue;
-        }
-        else if (stmt->type != STMT_TYPE || type_get_type(stmt->u.type) != TYPE_INTERFACE)
+        if (stmt->type != STMT_TYPE || type_get_type(stmt->u.type) != TYPE_INTERFACE)
             continue;
 
         iface = stmt->u.type;

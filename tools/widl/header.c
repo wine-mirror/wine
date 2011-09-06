@@ -987,8 +987,6 @@ static void write_local_stubs_stmts(FILE *local_stubs, const statement_list_t *s
   {
     if (stmt->type == STMT_TYPE && type_get_type(stmt->u.type) == TYPE_INTERFACE)
       write_locals(local_stubs, stmt->u.type, TRUE);
-    else if (stmt->type == STMT_LIBRARY)
-      write_local_stubs_stmts(local_stubs, stmt->u.lib->stmts);
   }
 }
 

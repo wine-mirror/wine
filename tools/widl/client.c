@@ -472,8 +472,6 @@ static void write_client_ifaces(const statement_list_t *stmts, int expr_eval_rou
                 write_stubdescriptor(iface, expr_eval_routines);
             }
         }
-        else if (stmt->type == STMT_LIBRARY)
-            write_client_ifaces(stmt->u.lib->stmts, expr_eval_routines, proc_offset);
     }
 }
 
