@@ -55,11 +55,8 @@ msgid "Publisher"
 msgstr ""
 
 #: appwiz.rc:37 cryptui.rc:51
-#, fuzzy
 msgid "Version"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: appwiz.rc:38
 msgid "Installation programs"
@@ -835,11 +832,8 @@ msgid "Serial Number"
 msgstr ""
 
 #: crypt32.rc:84
-#, fuzzy
 msgid "CA Version"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: crypt32.rc:85
 msgid "Cross CA Version"
@@ -862,11 +856,8 @@ msgid "Enrollment Name Value Pair"
 msgstr ""
 
 #: crypt32.rc:90
-#, fuzzy
 msgid "OS Version"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: crypt32.rc:91
 msgid "Enrollment CSP"
@@ -933,11 +924,8 @@ msgid "CMC Status Info"
 msgstr ""
 
 #: crypt32.rc:107
-#, fuzzy
 msgid "CMC Extensions"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: crypt32.rc:108
 msgid "CMC Attributes"
@@ -1145,9 +1133,8 @@ msgid "Key Recovery"
 msgstr ""
 
 #: crypt32.rc:159 cryptui.rc:137
-#, fuzzy
 msgid "Document Signing"
-msgstr "Argument missing\n"
+msgstr ""
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
@@ -1577,18 +1564,12 @@ msgid "Version 1 Fields Only"
 msgstr ""
 
 #: cryptui.rc:48
-#, fuzzy
 msgid "Extensions Only"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: cryptui.rc:49
-#, fuzzy
 msgid "Critical Extensions Only"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: cryptui.rc:50
 #, fuzzy
@@ -2344,9 +2325,8 @@ msgid "Argument not optional"
 msgstr ""
 
 #: jscript.rc:32
-#, fuzzy
 msgid "Syntax error"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: jscript.rc:33
 msgid "Expected ';'"
@@ -2438,9 +2418,8 @@ msgid "File not found\n"
 msgstr "Soubor nebyl nalezen"
 
 #: winerror.mc:41
-#, fuzzy
 msgid "Path not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:46
 msgid "Too many open files\n"
@@ -2530,18 +2509,16 @@ msgid "Bad command\n"
 msgstr ""
 
 #: winerror.mc:141
-#, fuzzy
 msgid "CRC error\n"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: winerror.mc:146
 msgid "Bad length\n"
 msgstr ""
 
 #: winerror.mc:151 winerror.mc:526
-#, fuzzy
 msgid "Seek error\n"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: winerror.mc:156
 msgid "Not DOS disk\n"
@@ -2558,14 +2535,12 @@ msgid "Out of paper\n"
 msgstr "Došel papír; "
 
 #: winerror.mc:171
-#, fuzzy
 msgid "Write fault\n"
-msgstr "Default"
+msgstr ""
 
 #: winerror.mc:176
-#, fuzzy
 msgid "Read fault\n"
-msgstr "Default"
+msgstr ""
 
 #: winerror.mc:181
 msgid "General failure\n"
@@ -2657,9 +2632,8 @@ msgid "Print cancelled\n"
 msgstr ""
 
 #: winerror.mc:286
-#, fuzzy
 msgid "Network name deleted\n"
-msgstr "Date deleted"
+msgstr ""
 
 #: winerror.mc:291
 msgid "Network access denied\n"
@@ -2839,9 +2813,8 @@ msgid "Module not found\n"
 msgstr "Soubor nebyl nalezen"
 
 #: winerror.mc:501
-#, fuzzy
 msgid "Procedure not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:506
 msgid "No children to wait for\n"
@@ -3021,9 +2994,8 @@ msgid "Invalid flag number\n"
 msgstr ""
 
 #: winerror.mc:726
-#, fuzzy
 msgid "Semaphore name not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:731
 msgid "Invalid starting code segment for %1\n"
@@ -3086,18 +3058,16 @@ msgid "Infinite loop in relocation chain in %1\n"
 msgstr ""
 
 #: winerror.mc:806
-#, fuzzy
 msgid "Environment variable not found\n"
-msgstr "Environment variable %s not defined\n"
+msgstr ""
 
 #: winerror.mc:811
 msgid "No signal sent\n"
 msgstr ""
 
 #: winerror.mc:816
-#, fuzzy
 msgid "File name is too long\n"
-msgstr "The input line is too long.\n"
+msgstr ""
 
 #: winerror.mc:821
 msgid "Ring 2 stack in use\n"
@@ -3261,9 +3231,8 @@ msgid "No access to memory location\n"
 msgstr ""
 
 #: winerror.mc:1016
-#, fuzzy
 msgid "Swap error\n"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: winerror.mc:1021
 msgid "Stack overflow\n"
@@ -3340,9 +3309,8 @@ msgid "Not registry file\n"
 msgstr "&Importovat soubor registru..."
 
 #: winerror.mc:1106
-#, fuzzy
 msgid "Key deleted\n"
-msgstr "Date deleted"
+msgstr ""
 
 #: winerror.mc:1111
 msgid "No registry log space\n"
@@ -3674,9 +3642,8 @@ msgid "DDE failure\n"
 msgstr ""
 
 #: winerror.mc:1511
-#, fuzzy
 msgid "DLL not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:1516
 #, fuzzy
@@ -3728,24 +3695,20 @@ msgid "The device is not connected\n"
 msgstr "Soubor nebyl nalezen"
 
 #: winerror.mc:1566
-#, fuzzy
 msgid "Element not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:1571
-#, fuzzy
 msgid "No match found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:1576
-#, fuzzy
 msgid "Property set not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:1581
-#, fuzzy
 msgid "Point not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:1586
 msgid "No running tracking service\n"
@@ -3768,9 +3731,8 @@ msgid "Moving the replacement file failed\n"
 msgstr ""
 
 #: winerror.mc:1611
-#, fuzzy
 msgid "The journal is being deleted\n"
-msgstr "Date deleted"
+msgstr ""
 
 #: winerror.mc:1616
 msgid "The journal is not active\n"
@@ -4247,9 +4209,8 @@ msgid "Internal database corruption\n"
 msgstr ""
 
 #: winerror.mc:2196
-#, fuzzy
 msgid "Internal error\n"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: winerror.mc:2201
 msgid "Generic access types not mapped\n"
@@ -4473,9 +4434,8 @@ msgid "Private dialog index\n"
 msgstr ""
 
 #: winerror.mc:2476
-#, fuzzy
 msgid "List box ID not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:2481
 msgid "No wildcard characters\n"
@@ -4495,9 +4455,8 @@ msgid "Not a dialog window\n"
 msgstr ""
 
 #: winerror.mc:2501
-#, fuzzy
 msgid "Control ID not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:2506
 msgid "Invalid combobox message\n"
@@ -4512,9 +4471,8 @@ msgid "Invalid edit height\n"
 msgstr ""
 
 #: winerror.mc:2521
-#, fuzzy
 msgid "DC not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:2526
 msgid "Invalid hook filter\n"
@@ -4836,9 +4794,8 @@ msgid "Installer not used\n"
 msgstr "Soubor nebyl nalezen"
 
 #: winerror.mc:2896
-#, fuzzy
 msgid "Failed to open the patch package\n"
-msgstr "Failed to open '%s'\n"
+msgstr ""
 
 #: winerror.mc:2901
 #, fuzzy
@@ -4899,18 +4856,16 @@ msgid "Invalid network address\n"
 msgstr ""
 
 #: winerror.mc:2971
-#, fuzzy
 msgid "No endpoint found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:2976
 msgid "Invalid timeout value\n"
 msgstr ""
 
 #: winerror.mc:2981
-#, fuzzy
 msgid "Object UUID not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:2986
 msgid "UUID already registered\n"
@@ -5107,9 +5062,8 @@ msgid "Entry already exists\n"
 msgstr ""
 
 #: winerror.mc:3221
-#, fuzzy
 msgid "Entry not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:3226
 #, fuzzy
@@ -5130,18 +5084,16 @@ msgid "No security context available\n"
 msgstr ""
 
 #: winerror.mc:3246
-#, fuzzy
 msgid "RPCInternal error\n"
-msgstr "Parameter error\n"
+msgstr ""
 
 #: winerror.mc:3251
 msgid "RPC divide-by-zero\n"
 msgstr ""
 
 #: winerror.mc:3256
-#, fuzzy
 msgid "Address error\n"
-msgstr "Parameter error\n"
+msgstr ""
 
 #: winerror.mc:3261
 msgid "Floating-point divide-by-zero\n"
@@ -5317,14 +5269,12 @@ msgid "Server has open handles\n"
 msgstr ""
 
 #: winerror.mc:3471
-#, fuzzy
 msgid "Resource data not found\n"
-msgstr "Target to GOTO not found\n"
+msgstr ""
 
 #: winerror.mc:3476
-#, fuzzy
 msgid "Resource type not found\n"
-msgstr "Target to GOTO not found\n"
+msgstr ""
 
 #: winerror.mc:3481
 msgid "Resource name not found\n"
@@ -5368,9 +5318,8 @@ msgid "No principal name registered\n"
 msgstr ""
 
 #: winerror.mc:3526
-#, fuzzy
 msgid "Not an RPC error\n"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: winerror.mc:3531
 msgid "UUID is local only\n"
@@ -5409,9 +5358,8 @@ msgid "Wrong pipe version\n"
 msgstr ""
 
 #: winerror.mc:3576
-#, fuzzy
 msgid "Group member not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:3581
 msgid "Can't create endpoint mapper DB\n"
@@ -5438,9 +5386,8 @@ msgid "Already awaiting printer handle\n"
 msgstr ""
 
 #: winerror.mc:3611
-#, fuzzy
 msgid "Printer deleted\n"
-msgstr "Date deleted"
+msgstr ""
 
 #: winerror.mc:3616
 #, fuzzy
@@ -5494,9 +5441,8 @@ msgid "Discipline error on RPC pipe\n"
 msgstr ""
 
 #: winerror.mc:3676
-#, fuzzy
 msgid "No data on RPC pipe\n"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: winerror.mc:3681
 #, fuzzy
@@ -5592,9 +5538,8 @@ msgid "HTML rendering is currently disabled."
 msgstr ""
 
 #: mshtml.rc:32
-#, fuzzy
 msgid "HTML Document"
-msgstr "Argument missing\n"
+msgstr ""
 
 #: mshtml.rc:26
 msgid "Downloading from %s..."
@@ -5611,9 +5556,8 @@ msgid ""
 msgstr ""
 
 #: msi.rc:28
-#, fuzzy
 msgid "path %s not found"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: msi.rc:29
 msgid "insert disk %s"
@@ -5757,9 +5701,8 @@ msgid "application"
 msgstr "Volby"
 
 #: oleacc.rc:42
-#, fuzzy
 msgid "document"
-msgstr "Argument missing\n"
+msgstr ""
 
 #: oleacc.rc:43
 msgid "pane"
@@ -6673,9 +6616,8 @@ msgid "Program Files\\Common Files"
 msgstr ""
 
 #: shell32.rc:221 shell32.rc:147 shell32.rc:243
-#, fuzzy
 msgid "Documents"
-msgstr "Argument missing\n"
+msgstr ""
 
 #: shell32.rc:222
 msgid "Start Menu\\Programs\\Administrative Tools"
@@ -6961,9 +6903,8 @@ msgstr ""
 "Přečtěte si soubor COPYING.LIB pro získání informací o licenci.\n"
 
 #: shell32.rc:265
-#, fuzzy
 msgid "Wine License"
-msgstr "WineMine"
+msgstr ""
 
 #: shell32.rc:155
 msgid "Trash"
@@ -7863,9 +7804,8 @@ msgid "User Cancelled"
 msgstr ""
 
 #: wldap32.rc:116
-#, fuzzy
 msgid "Parameter Error"
-msgstr "Parameter error\n"
+msgstr ""
 
 #: wldap32.rc:117
 msgid "No Memory"
@@ -8191,6 +8131,7 @@ msgstr ""
 "PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:129
+#, fuzzy
 msgid ""
 "PAUSE displays a message on the screen 'Press Return key to continue'\n"
 "and waits for the user to press the Return key. It is mainly useful in\n"
@@ -8638,7 +8579,7 @@ msgstr ""
 
 #: cmd.rc:322
 msgid "CMD Version %s\n"
-msgstr "CMD Version %s\n"
+msgstr ""
 
 #: cmd.rc:323
 msgid "More? "
@@ -8943,7 +8884,7 @@ msgstr "&Obsah"
 
 #: notepad.rc:59
 msgid "&About Notepad"
-msgstr "&About Notepad..."
+msgstr ""
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -9115,9 +9056,8 @@ msgid "Copy &HTML object Tag to clipboard"
 msgstr ""
 
 #: oleview.rc:60
-#, fuzzy
 msgid "&Expert mode"
-msgstr "&Expert"
+msgstr ""
 
 #: oleview.rc:62
 msgid "&Hidden component categories"
@@ -9172,11 +9112,8 @@ msgid "OleView - OLE/COM Object Viewer"
 msgstr ""
 
 #: oleview.rc:97
-#, fuzzy
 msgid "version 1.0"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: oleview.rc:100
 msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
@@ -9687,9 +9624,8 @@ msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr ""
 
 #: regedit.rc:201
-#, fuzzy
 msgid "(Default)"
-msgstr "Default"
+msgstr ""
 
 #: regedit.rc:202
 msgid "(value not set)"
@@ -9878,6 +9814,7 @@ msgstr ""
 "under certain conditions; run 'start /L' for details.\n"
 
 #: start.rc:64
+#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -10125,9 +10062,8 @@ msgid "Edit Debug &Channels..."
 msgstr ""
 
 #: taskmgr.rc:180 taskmgr.rc:181
-#, fuzzy
 msgid "Task Manager"
-msgstr "Program manager"
+msgstr ""
 
 #: taskmgr.rc:182
 msgid "Create New Task"
@@ -10362,11 +10298,8 @@ msgid "I/O Read Bytes"
 msgstr ""
 
 #: taskmgr.rc:283
-#, fuzzy
 msgid "Session ID"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: taskmgr.rc:284
 msgid "Username"
@@ -11529,9 +11462,8 @@ msgid "pt"
 msgstr ""
 
 #: wordpad.rc:180
-#, fuzzy
 msgid "Document"
-msgstr "Argument missing\n"
+msgstr ""
 
 #: wordpad.rc:181
 msgid "Save changes to '%s'?"
@@ -11625,18 +11557,16 @@ msgid "%s? (Yes|No)\n"
 msgstr ""
 
 #: xcopy.rc:36
-#, fuzzy
 msgid "Overwrite %s? (Yes|No|All)\n"
-msgstr "Overwrite %s"
+msgstr ""
 
 #: xcopy.rc:37
 msgid "Copying of '%s' to '%s' failed with r/c %d\n"
 msgstr ""
 
 #: xcopy.rc:39
-#, fuzzy
 msgid "Failed during reading of '%s'\n"
-msgstr "Failed to open '%s'\n"
+msgstr ""
 
 #: xcopy.rc:43
 msgctxt "File key"
