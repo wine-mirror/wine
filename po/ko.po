@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-02-08 18:50+0900\n"
+"PO-Revision-Date: 2011-09-06 18:50+0900\n"
 "Last-Translator: YunSong Hwang <hys545@dreamwiz.com>\n"
 "Language-Team: none\n"
 "Language: Korean\n"
@@ -690,7 +690,6 @@ msgid "Prefer Signed Data"
 msgstr "선호하는 사인된 데이타"
 
 #: crypt32.rc:53 cryptdlg.rc:31
-#, fuzzy
 msgctxt "Certification Practice Statement"
 msgid "CPS"
 msgstr "CPS"
@@ -1228,7 +1227,6 @@ msgid "Subject Type="
 msgstr "제목 형식="
 
 #: crypt32.rc:195
-#, fuzzy
 msgctxt "Certificate Authority"
 msgid "CA"
 msgstr "CA"
@@ -1259,7 +1257,6 @@ msgid "Access Method="
 msgstr "접근 방법="
 
 #: crypt32.rc:202
-#, fuzzy
 msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
 msgstr "OCSP"
@@ -2350,9 +2347,8 @@ msgid "URI to be encoded contains invalid characters"
 msgstr "URI 는 올바르지 않은 문자를 포함해서 인코딩되었음"
 
 #: jscript.rc:48
-#, fuzzy
 msgid "URI to be decoded is incorrect"
-msgstr "URI 는 올바르지 않은 문자를 포함해서 인코딩되었음"
+msgstr "해독하는 URI가 올바르지 않음"
 
 #: jscript.rc:50
 msgid "Array length must be a finite positive integer"
@@ -5848,12 +5844,12 @@ msgstr "내가 만든 프로그램"
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"
-msgstr "px"
+msgstr "픽셀"
 
 #: sane.rc:32
 msgctxt "unit: bits"
 msgid "b"
-msgstr "b"
+msgstr "비트"
 
 #: sane.rc:34
 msgctxt "unit: dots/inch"
@@ -5863,12 +5859,12 @@ msgstr "dpi"
 #: sane.rc:35
 msgctxt "unit: percent"
 msgid "%"
-msgstr "%"
+msgstr "퍼센트"
 
 #: sane.rc:36
 msgctxt "unit: microseconds"
 msgid "us"
-msgstr "µs"
+msgstr "마이크로초"
 
 #: setupapi.rc:28
 msgid "The file '%s' on %s is needed"
@@ -6722,19 +6718,16 @@ msgid "%ld bytes"
 msgstr "%ld 바이트"
 
 #: shlwapi.rc:28
-#, fuzzy
 msgctxt "time unit: hours"
 msgid " hr"
 msgstr "시"
 
 #: shlwapi.rc:29
-#, fuzzy
 msgctxt "time unit: minutes"
 msgid " min"
 msgstr "분"
 
 #: shlwapi.rc:30
-#, fuzzy
 msgctxt "time unit: seconds"
 msgid " sec"
 msgstr "초"
@@ -8190,7 +8183,6 @@ msgstr ""
 "호출한 셀로 돌아갑니다.\n"
 
 #: cmd.rc:287
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -8229,6 +8221,7 @@ msgid ""
 "Enter HELP <command> for further information on any of the above commands\n"
 msgstr ""
 "CMD 내부 명령들:\n"
+"ASSOC\t\t파일 확장명 연결을 보여주거나 고치기\n"
 "ATTRIB\t\t도스 파일 속성 보여주거나 바꾸기\n"
 "CALL\t\tI배치 파일 안에서 다른 파일  불러오기\n"
 "CD (CHDIR)\t현재 기본 디렉토리 바꾸기\n"
@@ -8240,6 +8233,8 @@ msgstr ""
 "DEL (ERASE)\t하나의 파일이나 여러 파일을 지우기\n"
 "DIR\t\t디렉토리 내용 보여주기\n"
 "ECHO\t\t문자를 바로 화면 출력으로 복사\n"
+"ENDLOCAL\t배치파일에서 환경변수의 지역화의 끝을 알려줌\n"
+"FTYPE\t\t파일 형식과 관련된 열기 명령어를 표시 또는 고치기\n"
 "HELP\t\t 목차의 짤막한 도움말 항목 보여줌\n"
 "MD (MKDIR)\t하위 디렉토리 만들기\n"
 "MORE\t\t페이지 출력 보여주기\n"
@@ -8247,10 +8242,11 @@ msgstr ""
 "PATH\t\t탐색 경로 보여주거나 설정하기\n"
 "POPD\t\tPUSHD로 마지막으로 저장했던 디렉토리로 돌아가기\n"
 "PROMPT\t\t명령 프롬프트 바꾸기\n"
-"PUSHD\t\t현재 디렉토리를 저장하고, 새 디렉토리롤 바꾸기\n"
+"PUSHD\t\t현재 디렉토리를 저장하고, 새 디렉토리로 바꾸기\n"
 "REN (RENAME)\t파일 이름 바꾸기\n"
 "RD (RMDIR)\t하위 디렉토리 지우기\n"
 "SET\t\t환경 변수 보여주거나 바꾸기\n"
+"SETLOCAL\t배치 파일에서 환경변수의 지역화 시작을 알려줌\n"
 "TIME\t\t시스템 날짜 바꾸거나 보여주기\n"
 "TITLE\t\tCMD  세션의 창 제목 설정\n"
 "TYPE\t\t텍스트 파일의 내용 보여주기\n"
@@ -8616,16 +8612,15 @@ msgstr "네트워크 오류가 발생함"
 
 #: net.rc:48
 msgid "Connection is being made"
-msgstr "연결이 활성화됨"
+msgstr "연결이 만들어짐"
 
 #: net.rc:49
 msgid "Reconnecting"
 msgstr "다시 연결중"
 
 #: net.rc:40
-#, fuzzy
 msgid "The following services are running:\n"
-msgstr "의존하고 있는 서비스가 실행중임\n"
+msgstr "다음 서비스가 실행중임:\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -9814,18 +9809,16 @@ msgid "&Realtime"
 msgstr "실시간(&R)"
 
 #: taskmgr.rc:160
-#, fuzzy
 msgid "&Above Normal"
 msgstr "보통보다 위(&A)"
 
 #: taskmgr.rc:164
-#, fuzzy
 msgid "&Below Normal"
 msgstr "보통보다 아래(&B)"
 
 #: taskmgr.rc:169
 msgid "Set &Affinity..."
-msgstr "친화도 설정(&A)..."
+msgstr "선호도 설정(&A)..."
 
 #: taskmgr.rc:170
 msgid "Edit Debug &Channels..."
@@ -11182,26 +11175,23 @@ msgid "Pages"
 msgstr "페이지들"
 
 #: wordpad.rc:172
-#, fuzzy
 msgctxt "unit: centimeter"
 msgid "cm"
-msgstr "cm"
+msgstr "센치미터"
 
 #: wordpad.rc:173
-#, fuzzy
 msgctxt "unit: inch"
 msgid "in"
-msgstr "in"
+msgstr "인치"
 
 #: wordpad.rc:174
 msgid "inch"
 msgstr "인치"
 
 #: wordpad.rc:175
-#, fuzzy
 msgctxt "unit: point"
 msgid "pt"
-msgstr "pt"
+msgstr "포인트"
 
 #: wordpad.rc:180
 msgid "Document"
