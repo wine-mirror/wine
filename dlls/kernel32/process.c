@@ -41,6 +41,13 @@
 # include <sys/prctl.h>
 #endif
 #include <sys/types.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+#ifdef __APPLE__
+#include <CoreFoundation/CoreFoundation.h>
+#include <pthread.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -57,9 +64,6 @@ WINE_DECLARE_DEBUG_CHANNEL(file);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 #ifdef __APPLE__
-#include <CoreFoundation/CoreFoundation.h>
-#include <pthread.h>
-#include <unistd.h>
 extern char **__wine_get_main_environment(void);
 #else
 extern char **__wine_main_environ;
