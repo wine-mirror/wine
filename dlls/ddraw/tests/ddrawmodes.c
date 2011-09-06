@@ -104,13 +104,6 @@ static void releasedirectdraw(void)
     }
 }
 
-static BOOL WINAPI crash_callbackA(GUID *lpGUID, LPSTR lpDriverDescription,
-                                  LPSTR lpDriverName, LPVOID lpContext)
-{
-    *(volatile char*)0 = 2;
-    return TRUE;
-}
-
 static BOOL WINAPI test_nullcontext_callbackA(GUID *lpGUID, LPSTR lpDriverDescription,
                                               LPSTR lpDriverName, LPVOID lpContext)
 {
@@ -146,19 +139,6 @@ static void test_DirectDrawEnumerateA(void)
     /* Test with NULL callback parameter. */
     ret = pDirectDrawEnumerateA(NULL, NULL);
     ok(ret == DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, got %d\n", ret);
-
-    /* Test with invalid callback parameter. */
-    ret = pDirectDrawEnumerateA((LPDDENUMCALLBACKA)0xdeadbeef, NULL);
-    ok(ret == DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, got %d\n", ret);
-
-    if (pDirectDrawEnumerateExA)
-    {
-        /* Test with callback that crashes. */
-        ret = pDirectDrawEnumerateA(crash_callbackA, NULL);
-        ok(ret == DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, got %d\n", ret);
-    }
-    else
-        win_skip("Test would crash on older ddraw\n");
 
     /* Test with valid callback parameter and NULL context parameter. */
     trace("Calling DirectDrawEnumerateA with test_nullcontext_callbackA callback and NULL context.\n");
@@ -207,14 +187,6 @@ static void test_DirectDrawEnumerateW(void)
     ok(ret == DDERR_UNSUPPORTED, "Expected DDERR_UNSUPPORTED, got %d\n", ret);
 }
 
-static BOOL WINAPI crash_callbackExA(GUID *lpGUID, LPSTR lpDriverDescription,
-                                     LPSTR lpDriverName, LPVOID lpContext,
-                                     HMONITOR hm)
-{
-    *(volatile char*)0 = 2;
-    return TRUE;
-}
-
 static BOOL WINAPI test_nullcontext_callbackExA(GUID *lpGUID, LPSTR lpDriverDescription,
                                                 LPSTR lpDriverName, LPVOID lpContext,
                                                 HMONITOR hm)
@@ -251,14 +223,6 @@ static void test_DirectDrawEnumerateExA(void)
 
     /* Test with NULL callback parameter. */
     ret = pDirectDrawEnumerateExA(NULL, NULL, 0);
-    ok(ret == DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, got %d\n", ret);
-
-    /* Test with invalid callback parameter. */
-    ret = pDirectDrawEnumerateExA((LPDDENUMCALLBACKEXA)0xdeadbeef, NULL, 0);
-    ok(ret == DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, got %d\n", ret);
-
-    /* Test with callback that crashes. */
-    ret = pDirectDrawEnumerateExA(crash_callbackExA, NULL, 0);
     ok(ret == DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, got %d\n", ret);
 
     /* Test with valid callback parameter and invalid flags */
