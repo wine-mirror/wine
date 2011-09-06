@@ -1050,9 +1050,6 @@ static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
          (cEnd >= 0 && analysis->pItem[iItem].iCharPos >= cEnd))
             return S_OK;
 
-    uOptions |= ETO_GLYPH_INDEX;
-    analysis->pItem[0].a.fNoGlyphIndex = FALSE; /* say that we have glyphs */
-
     if (fSelected)
     {
         BkMode = GetBkMode(analysis->hdc);
@@ -1728,6 +1725,13 @@ HRESULT WINAPI ScriptShapeOpenType( HDC hdc, SCRIPT_CACHE *psc,
     ((ScriptCache *)*psc)->userScript = tagScript;
     ((ScriptCache *)*psc)->userLang = tagLangSys;
 
+    /* set fNoGlyphIndex for symbolic, and device fonts or non truetype fonts */
+    if (!psa->fNoGlyphIndex &&
+        (!(get_cache_pitch_family(psc) & TMPF_TRUETYPE) ||
+         (get_cache_pitch_family(psc) & TMPF_DEVICE) ||
+         (((ScriptCache *)*psc)->tm.tmCharSet == SYMBOL_CHARSET)))
+        psa->fNoGlyphIndex = TRUE;
+
     /* Initialize a SCRIPT_VISATTR and LogClust for each char in this run */
     for (i = 0; i < cChars; i++)
     {
@@ -1773,12 +1777,9 @@ HRESULT WINAPI ScriptShapeOpenType( HDC hdc, SCRIPT_CACHE *psc,
             rChars[i] = chInput;
         }
 
-        if (get_cache_pitch_family(psc) & TMPF_TRUETYPE)
-        {
-            SHAPE_ContextualShaping(hdc, (ScriptCache *)*psc, psa, rChars, cChars, pwOutGlyphs, pcGlyphs, cMaxGlyphs, pwLogClust);
-            SHAPE_ApplyDefaultOpentypeFeatures(hdc, (ScriptCache *)*psc, psa, pwOutGlyphs, pcGlyphs, cMaxGlyphs, cChars, pwLogClust);
-            SHAPE_CharGlyphProp(hdc, (ScriptCache *)*psc, psa, pwcChars, cChars, pwOutGlyphs, *pcGlyphs, pwLogClust, pCharProps, pOutGlyphProps);
-        }
+        SHAPE_ContextualShaping(hdc, (ScriptCache *)*psc, psa, rChars, cChars, pwOutGlyphs, pcGlyphs, cMaxGlyphs, pwLogClust);
+        SHAPE_ApplyDefaultOpentypeFeatures(hdc, (ScriptCache *)*psc, psa, pwOutGlyphs, pcGlyphs, cMaxGlyphs, cChars, pwLogClust);
+        SHAPE_CharGlyphProp(hdc, (ScriptCache *)*psc, psa, pwcChars, cChars, pwOutGlyphs, *pcGlyphs, pwLogClust, pCharProps, pOutGlyphProps);
         heap_free(rChars);
     }
     else
