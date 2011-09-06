@@ -383,8 +383,14 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
         if (!(ptr = RtlAllocateHeap(GetProcessHeap(), 0, sz))) return FALSE;
         sz = RtlGetFullPathName_U(dos_path, sz, ptr, file_part);
     }
+    sz += (1 /* NUL */ + 4 /* unc\ */ + 4 /* \??\ */) * sizeof(WCHAR);
+    if (sz > MAXWORD)
+    {
+        if (ptr != local) RtlFreeHeap(GetProcessHeap(), 0, ptr);
+        return FALSE;
+    }
 
-    ntpath->MaximumLength = sz + (4 /* unc\ */ + 4 /* \??\ */) * sizeof(WCHAR);
+    ntpath->MaximumLength = sz;
     ntpath->Buffer = RtlAllocateHeap(GetProcessHeap(), 0, ntpath->MaximumLength);
     if (!ntpath->Buffer)
     {
