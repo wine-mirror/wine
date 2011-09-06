@@ -26,6 +26,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/time.h>
+#ifdef HAVE_DISKARBITRATION_DISKARBITRATION_H
+#include <DiskArbitration/DiskArbitration.h>
+#endif
 
 #include "mountmgr.h"
 #include "wine/debug.h"
@@ -33,8 +36,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
 
 #ifdef HAVE_DISKARBITRATION_DISKARBITRATION_H
-
-#include <DiskArbitration/DiskArbitration.h>
 
 static void appeared_callback( DADiskRef disk, void *context )
 {

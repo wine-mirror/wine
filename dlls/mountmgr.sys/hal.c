@@ -26,6 +26,10 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/time.h>
+#ifdef SONAME_LIBHAL
+# include <dbus/dbus.h>
+# include <hal/libhal.h>
+#endif
 
 #include "mountmgr.h"
 #include "winnls.h"
@@ -38,9 +42,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
 
 #ifdef SONAME_LIBHAL
-
-#include <dbus/dbus.h>
-#include <hal/libhal.h>
 
 #define DBUS_FUNCS \
     DO_FUNC(dbus_bus_get); \
