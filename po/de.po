@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-09-01 18:05+0200\n"
+"PO-Revision-Date: 2011-09-06 08:07+0200\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -688,7 +688,6 @@ msgid "Prefer Signed Data"
 msgstr "Signierte Daten bevorzugen"
 
 #: crypt32.rc:53 cryptdlg.rc:31
-#, fuzzy
 msgctxt "Certification Practice Statement"
 msgid "CPS"
 msgstr "CPS"
@@ -1226,7 +1225,6 @@ msgid "Subject Type="
 msgstr "Subject Typ="
 
 #: crypt32.rc:195
-#, fuzzy
 msgctxt "Certificate Authority"
 msgid "CA"
 msgstr "Zertifikationsautorität"
@@ -1257,7 +1255,6 @@ msgid "Access Method="
 msgstr "Zugriffsmethode="
 
 #: crypt32.rc:202
-#, fuzzy
 msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
 msgstr "OCSP"
@@ -2354,9 +2351,8 @@ msgid "URI to be encoded contains invalid characters"
 msgstr "Zu verschlüsselnde URI enthält ungültige Zeichen"
 
 #: jscript.rc:48
-#, fuzzy
 msgid "URI to be decoded is incorrect"
-msgstr "Zu verschlüsselnde URI enthält ungültige Zeichen"
+msgstr "Zu entschlüsselnde URI ist ungültig"
 
 #: jscript.rc:50
 msgid "Array length must be a finite positive integer"
@@ -3853,9 +3849,8 @@ msgid "Perform operation even when nothing changed\n"
 msgstr "Operation durchführen, auch wenn sich nichts ändert\n"
 
 #: winerror.mc:1896
-#, fuzzy
 msgid "The user profile is invalid\n"
-msgstr "Das Benutzerprofil ist ungültig."
+msgstr "Das Benutzerprofil ist ungültig\n"
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server\n"
@@ -4518,9 +4513,8 @@ msgid "Installer service failed.\n"
 msgstr "Installer Dienst gescheitert.\n"
 
 #: winerror.mc:2731
-#, fuzzy
 msgid "Installation aborted by user\n"
-msgstr "Setup-Programme"
+msgstr "Installation von Benutzer abgebrochen\n"
 
 #: winerror.mc:2736
 msgid "Installation failure\n"
@@ -5922,13 +5916,8 @@ msgid "Set as &Desktop Item"
 msgstr "Als Desktopelement einrichten..."
 
 #: shdoclc.rc:46 shdoclc.rc:95 shdoclc.rc:117 user32.rc:62
-#, fuzzy
 msgid "Select &All"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Alles &auswählen\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"&Alles markieren"
+msgstr "&Alles markieren"
 
 #: shdoclc.rc:47 shdoclc.rc:79 shdoclc.rc:92 shdoclc.rc:132 shdoclc.rc:159
 #: shdoclc.rc:183 user32.rc:59 wineconsole.rc:30 wordpad.rc:103
@@ -6037,13 +6026,8 @@ msgid "&Delete"
 msgstr "&Löschen"
 
 #: shdoclc.rc:100 shell32.rc:94
-#, fuzzy
 msgid "&Select"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"&Auswählen\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Aus&wählen"
+msgstr "Aus&wählen"
 
 #: shdoclc.rc:102
 msgid "&Cell"
@@ -6769,19 +6753,16 @@ msgid "%ld bytes"
 msgstr "%ld Bytes"
 
 #: shlwapi.rc:28
-#, fuzzy
 msgctxt "time unit: hours"
 msgid " hr"
 msgstr " Std"
 
 #: shlwapi.rc:29
-#, fuzzy
 msgctxt "time unit: minutes"
 msgid " min"
 msgstr " Min"
 
 #: shlwapi.rc:30
-#, fuzzy
 msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " Sek"
@@ -9951,12 +9932,10 @@ msgid "&Realtime"
 msgstr "&Echtzeit"
 
 #: taskmgr.rc:160
-#, fuzzy
 msgid "&Above Normal"
 msgstr "&Höher als Normal"
 
 #: taskmgr.rc:164
-#, fuzzy
 msgid "&Below Normal"
 msgstr "N&iedriger als Normal"
 
@@ -11333,13 +11312,11 @@ msgid "Pages"
 msgstr "Seiten"
 
 #: wordpad.rc:172
-#, fuzzy
 msgctxt "unit: centimeter"
 msgid "cm"
 msgstr "cm"
 
 #: wordpad.rc:173
-#, fuzzy
 msgctxt "unit: inch"
 msgid "in"
 msgstr "in"
@@ -11349,7 +11326,6 @@ msgid "inch"
 msgstr "Zoll"
 
 #: wordpad.rc:175
-#, fuzzy
 msgctxt "unit: point"
 msgid "pt"
 msgstr "pt"
