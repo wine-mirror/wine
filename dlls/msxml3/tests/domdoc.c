@@ -4458,10 +4458,10 @@ static void _test_IObjectSafety_common(unsigned line, IObjectSafety *safety)
     hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, &enabled);
     ok_(__FILE__,line)(hr == S_OK, "ret %08x\n", hr );
     ok_(__FILE__,line)(enabled == INTERFACESAFE_FOR_UNTRUSTED_CALLER, "Expected INTERFACESAFE_FOR_UNTRUSTED_CALLER got %08x\n", enabled);
-    ok_(__FILE__,line)(broken(supported == INTERFACESAFE_FOR_UNTRUSTED_CALLER) ||
+    ok_(__FILE__,line)(broken(supported == (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA)) ||
        supported == (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA | INTERFACE_USES_SECURITY_MANAGER) /* msxml3 SP8+ */,
-         "Expected (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA | INTERFACE_USES_SECURITY_MANAGER), "
-         "got %08x\n", supported);
+        "Expected (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA | INTERFACE_USES_SECURITY_MANAGER), "
+             "got %08x\n", supported);
 
     hr = IObjectSafety_SetInterfaceSafetyOptions(safety, NULL,
                                                          INTERFACESAFE_FOR_UNTRUSTED_DATA,
@@ -4469,12 +4469,13 @@ static void _test_IObjectSafety_common(unsigned line, IObjectSafety *safety)
     ok_(__FILE__,line)(hr == S_OK, "ret %08x\n", hr );
     hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, &enabled);
     ok_(__FILE__,line)(hr == S_OK, "ret %08x\n", hr );
-    ok_(__FILE__,line)(enabled == (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA),
-                       "expected INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA got %08x\n", enabled);
-    ok_(__FILE__,line)(broken(supported == INTERFACESAFE_FOR_UNTRUSTED_DATA) ||
+    ok_(__FILE__,line)(broken(enabled == INTERFACESAFE_FOR_UNTRUSTED_DATA) ||
+                       enabled == (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA),
+                       "Expected (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA) got %08x\n", enabled);
+    ok_(__FILE__,line)(broken(supported == (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA)) ||
        supported == (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA | INTERFACE_USES_SECURITY_MANAGER) /* msxml3 SP8+ */,
         "Expected (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA | INTERFACE_USES_SECURITY_MANAGER), "
-        "got %08x\n", supported);
+             "got %08x\n", supported);
 }
 
 static void test_XMLHTTP(void)
