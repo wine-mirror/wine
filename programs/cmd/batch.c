@@ -113,12 +113,28 @@ void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HAN
 }
 
 /*******************************************************************
- * WCMD_parameter - extract a parameter from a command line.
+ * WCMD_parameter
  *
- *	Returns the 'n'th delimited parameter on the command line (zero-based).
- *	Parameter is in static storage overwritten on the next call.
- *	Parameters in quotes (and brackets) are handled.
- *	Also returns a pointer to the location of the parameter in the command line.
+ * Extracts a delimited parameter from an input string
+ *
+ * PARAMS
+ *  s     [I] input string, non NULL
+ *  n     [I] # of the (possibly double quotes-delimited) parameter to return
+ *            Starts at 0
+ *  where [O] if non NULL, pointer to the start of the nth parameter in s,
+ *            potentially a " character
+ *
+ * RETURNS
+ *  Success: Returns the nth delimited parameter found in s.
+ *           *where points to the start of the param, possibly a starting
+ *           double quotes character
+ *  Failure: Returns an empty string if the param is not found.
+ *           *where is set to NULL
+ *
+ * NOTES
+ *  Return value is stored in static storage, hence is overwritten
+ *  after each call.
+ *  Doesn't include any potentially delimiting double quotes
  */
 
 WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where) {
