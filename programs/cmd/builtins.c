@@ -1497,7 +1497,8 @@ void WCMD_popd (void) {
 
 void WCMD_if (WCHAR *p, CMD_LIST **cmdList) {
 
-  int negate = 0, test = 0;
+  int negate; /* Negate condition */
+  int test;   /* Condition evaluation result */
   WCHAR condition[MAX_PATH], *command, *s;
   static const WCHAR notW[]    = {'n','o','t','\0'};
   static const WCHAR errlvlW[] = {'e','r','r','o','r','l','e','v','e','l','\0'};
@@ -1505,40 +1506,28 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList) {
   static const WCHAR defdW[]   = {'d','e','f','i','n','e','d','\0'};
   static const WCHAR eqeqW[]   = {'=','=','\0'};
   static const WCHAR parmI[]   = {'/','I','\0'};
+  int caseInsensitive = (strstrW(quals, parmI) != NULL);
 
-  if (!lstrcmpiW (param1, notW)) {
-    negate = 1;
-    strcpyW (condition, param2);
-  }
-  else {
-    strcpyW (condition, param1);
-  }
+  negate = !lstrcmpiW(param1,notW);
+  strcpyW(condition, (negate ? param2 : param1));
   WINE_TRACE("Condition: %s\n", wine_dbgstr_w(condition));
 
   if (!lstrcmpiW (condition, errlvlW)) {
-    if (errorlevel >= atoiW(WCMD_parameter (p, 1+negate, NULL))) test = 1;
+    test = (errorlevel >= atoiW(WCMD_parameter(p, 1+negate, NULL)));
     WCMD_parameter (p, 2+negate, &command);
   }
   else if (!lstrcmpiW (condition, existW)) {
-    if (GetFileAttributesW(WCMD_parameter (p, 1+negate, NULL)) != INVALID_FILE_ATTRIBUTES) {
-        test = 1;
-    }
+    test = (GetFileAttributesW(WCMD_parameter(p, 1+negate, NULL)) != INVALID_FILE_ATTRIBUTES);
     WCMD_parameter (p, 2+negate, &command);
   }
   else if (!lstrcmpiW (condition, defdW)) {
-    if (GetEnvironmentVariableW(WCMD_parameter (p, 1+negate, NULL), NULL, 0) > 0) {
-        test = 1;
-    }
+    test = (GetEnvironmentVariableW(WCMD_parameter(p, 1+negate, NULL), NULL, 0) > 0);
     WCMD_parameter (p, 2+negate, &command);
   }
   else if ((s = strstrW (p, eqeqW))) {
     s += 2;
-    if (strstrW (quals, parmI) == NULL) {
-        if (!lstrcmpW (condition, WCMD_parameter (s, 0, NULL))) test = 1;
-    }
-    else {
-        if (!lstrcmpiW (condition, WCMD_parameter (s, 0, NULL))) test = 1;
-    }
+    test = caseInsensitive ? (!lstrcmpiW(condition, WCMD_parameter(s, 0, NULL)))
+                           : (!lstrcmpW (condition, WCMD_parameter(s, 0, NULL)));
     WCMD_parameter (s, 1, &command);
   }
   else {
