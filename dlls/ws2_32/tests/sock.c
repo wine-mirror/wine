@@ -26,6 +26,7 @@
 #include <windows.h>
 #include <ws2tcpip.h>
 #include <mswsock.h>
+#include <mstcpip.h>
 #include <stdio.h>
 #include "wine/test.h"
 
@@ -2960,6 +2961,18 @@ static void test_ioctlsocket(void)
     ret = ioctlsocket(sock, SIOCATMARK, &arg);
     if(ret != SOCKET_ERROR)
         todo_wine ok(arg, "expected a non-zero value\n");
+
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &arg, 0, NULL, 0, &arg, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
+    ret = WSAGetLastError();
+    ok(ret == WSAEFAULT || broken(ret == WSAEINVAL), "expected WSAEFAULT, got %d instead\n", ret);
+
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, NULL, sizeof(struct tcp_keepalive), NULL, 0, &arg, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
+    ret = WSAGetLastError();
+    ok(ret == WSAEFAULT || broken(ret == WSAEINVAL), "expected WSAEFAULT, got %d instead\n", ret);
+
+    closesocket(sock);
 }
 
 static int drain_pause=0;

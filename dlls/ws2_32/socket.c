@@ -3365,16 +3365,19 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
    }
    case WS_SIO_KEEPALIVE_VALS:
    {
-        struct tcp_keepalive *k = in_buff;
-        int keepalive = k->onoff ? 1 : 0;
-        int keepidle = k->keepalivetime / 1000;
-        int keepintvl = k->keepaliveinterval / 1000;
+        struct tcp_keepalive *k;
+        int keepalive, keepidle, keepintvl;
 
-        if (!in_buff)
+        if (!in_buff || in_size < sizeof(struct tcp_keepalive))
         {
-            WSASetLastError(WSAEINVAL);
+            WSASetLastError(WSAEFAULT);
             return SOCKET_ERROR;
         }
+
+        k = in_buff;
+        keepalive = k->onoff ? 1 : 0;
+        keepidle = k->keepalivetime / 1000;
+        keepintvl = k->keepaliveinterval / 1000;
 
         TRACE("onoff: %d, keepalivetime: %d, keepaliveinterval: %d\n", keepalive, keepidle, keepintvl);
 
