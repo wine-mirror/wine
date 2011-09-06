@@ -123,6 +123,8 @@ void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HAN
  *            Starts at 0
  *  where [O] if non NULL, pointer to the start of the nth parameter in s,
  *            potentially a " character
+ *  end   [O] if non NULL, pointer to the last char of
+ *            the nth parameter in s, potentially a " character
  *
  * RETURNS
  *  Success: Returns the nth delimited parameter found in s.
@@ -136,14 +138,14 @@ void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HAN
  *  after each call.
  *  Doesn't include any potentially delimiting double quotes
  */
-
-WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where) {
+WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where, WCHAR **end) {
     int curParamNb = 0;
     static WCHAR param[MAX_PATH];
     WCHAR *p = s, *q;
     BOOL quotesDelimited;
 
     if (where != NULL) *where = NULL;
+    if (end != NULL) *end = NULL;
     param[0] = '\0';
     while (TRUE) {
         while (*p && ((*p == ' ') || (*p == ',') || (*p == '=') || (*p == '\t')))
@@ -164,6 +166,7 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where) {
         if (curParamNb == n) {
             memcpy(param, q, (p - q) * sizeof(WCHAR));
             param[p-q] = '\0';
+            if (end) *end = p - 1 + quotesDelimited;
             return param;
         }
         if (quotesDelimited && *p == '"') p++;
@@ -360,8 +363,9 @@ void WCMD_HandleTildaModifiers(WCHAR **start, const WCHAR *forVariable,
   if (*lastModifier == '0') {
     strcpyW(outputparam, context->batchfileW);
   } else if ((*lastModifier >= '1' && *lastModifier <= '9')) {
-    strcpyW(outputparam, WCMD_parameter (context -> command,
-                 *lastModifier-'0' + context -> shift_count[*lastModifier-'0'], NULL));
+    strcpyW(outputparam,
+            WCMD_parameter (context -> command, *lastModifier-'0' + context -> shift_count[*lastModifier-'0'],
+                            NULL, NULL));
   } else {
     strcpyW(outputparam, forValue);
   }

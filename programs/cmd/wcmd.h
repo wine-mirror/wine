@@ -97,7 +97,7 @@ void WCMD_version (void);
 int  WCMD_volume (int mode, const WCHAR *command);
 
 WCHAR *WCMD_fgets (WCHAR *s, int n, HANDLE stream);
-WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where);
+WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where, WCHAR **end);
 WCHAR *WCMD_skip_leading_spaces (WCHAR *string);
 BOOL WCMD_keyword_ws_found(const WCHAR *keyword, int len, const WCHAR *ptr);
 void WCMD_HandleTildaModifiers(WCHAR **start, const WCHAR *forVariable, const WCHAR *forValue, BOOL justFors);

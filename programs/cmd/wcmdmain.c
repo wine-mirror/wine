@@ -832,13 +832,13 @@ static void handleExpansion(WCHAR *cmd, BOOL justFors,
 
     /* Replace use of %0...%9 if in batch program*/
     } else if (!justFors && context && (i >= 0) && (i <= 9)) {
-      t = WCMD_parameter (context -> command, i + context -> shift_count[i], NULL);
+      t = WCMD_parameter(context -> command, i + context -> shift_count[i], NULL, NULL);
       WCMD_strsubstW(p, p+2, t, -1);
 
     /* Replace use of %* if in batch program*/
     } else if (!justFors && context && *(p+1)=='*') {
       WCHAR *startOfParms = NULL;
-      t = WCMD_parameter (context -> command, 1, &startOfParms);
+      t = WCMD_parameter(context -> command, 1, &startOfParms, NULL);
       if (startOfParms != NULL)
         WCMD_strsubstW(p, p+2, startOfParms, -1);
       else
@@ -1356,8 +1356,8 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
 
     /* Otherwise STDIN could come from a '<' redirect */
     } else if ((p = strchrW(new_redir,'<')) != NULL) {
-      h = CreateFileW(WCMD_parameter (++p, 0, NULL), GENERIC_READ, FILE_SHARE_READ, &sa, OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL, NULL);
+      h = CreateFileW(WCMD_parameter(++p, 0, NULL, NULL), GENERIC_READ, FILE_SHARE_READ,
+                      &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
       if (h == INVALID_HANDLE_VALUE) {
 	WCMD_print_error ();
         HeapFree( GetProcessHeap(), 0, cmd );
@@ -1401,7 +1401,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
         WINE_TRACE("Redirect %d (%p) to %d (%p)\n", handle, GetStdHandle(idx_stdhandles[idx]), idx, h);
 
       } else {
-        WCHAR *param = WCMD_parameter (p, 0, NULL);
+        WCHAR *param = WCMD_parameter(p, 0, NULL, NULL);
         h = CreateFileW(param, GENERIC_WRITE, 0, &sa, creationDisposition,
                         FILE_ATTRIBUTE_NORMAL, NULL);
         if (h == INVALID_HANDLE_VALUE) {
