@@ -3807,7 +3807,7 @@ HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined
             return WINED3D_OK;
     }
 
-    return wined3d_swapchain_present(swapchain, NULL, NULL, swapchain->win_handle, NULL, 0);
+    return wined3d_surface_blt(surface, NULL, override, NULL, 0, NULL, WINED3DTEXF_POINT);
 }
 
 /* Do not call while under the GL lock. */
