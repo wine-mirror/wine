@@ -4323,10 +4323,11 @@ HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc)
  */
 Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc )
 {
-    Pixmap pixmap;
+    Pixmap pixmap = 0;
     X_PHYSBITMAP *physBitmap;
     HBITMAP hBmp;
     LPBITMAPINFO pbmi;
+    HDC memdc;
 
     /* Create a DDB from the DIB */
 
@@ -4336,10 +4337,17 @@ Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc )
                           pbmi, DIB_RGB_COLORS);
     GlobalUnlock(hPackedDIB);
 
+    /* make sure it's owned by x11drv */
+    memdc = CreateCompatibleDC( hdc );
+    SelectObject( memdc, hBmp );
+    DeleteDC( memdc );
+
     /* clear the physBitmap so that we can steal its pixmap */
-    physBitmap = X11DRV_get_phys_bitmap( hBmp );
-    pixmap = physBitmap->pixmap;
-    physBitmap->pixmap = 0;
+    if ((physBitmap = X11DRV_get_phys_bitmap( hBmp )))
+    {
+        pixmap = physBitmap->pixmap;
+        physBitmap->pixmap = 0;
+    }
 
     /* Delete the DDB we created earlier now that we have stolen its pixmap */
     DeleteObject(hBmp);
