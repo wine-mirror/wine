@@ -265,20 +265,50 @@ static void test_GdiConvertToDevmodeW(void)
 static void test_CreateCompatibleDC(void)
 {
     BOOL bRet;
-    HDC hDC;
-    HDC hNewDC;
+    HDC hdc, hNewDC, hdcMetafile;
+    HBITMAP bitmap;
+    INT caps;
+
+    bitmap = CreateBitmap( 10, 10, 1, 1, NULL );
 
     /* Create a DC compatible with the screen */
-    hDC = CreateCompatibleDC(NULL);
-    ok(hDC != NULL, "CreateCompatibleDC returned %p\n", hDC);
+    hdc = CreateCompatibleDC(NULL);
+    ok(hdc != NULL, "CreateCompatibleDC returned %p\n", hdc);
+    ok( SelectObject( hdc, bitmap ) != 0, "SelectObject failed\n" );
+    caps = GetDeviceCaps( hdc, TECHNOLOGY );
+    ok( caps == DT_RASDISPLAY, "wrong caps %u\n", caps );
 
     /* Delete this DC, this should succeed */
-    bRet = DeleteDC(hDC);
+    bRet = DeleteDC(hdc);
     ok(bRet == TRUE, "DeleteDC returned %u\n", bRet);
 
     /* Try to create a DC compatible to the deleted DC. This has to fail */
-    hNewDC = CreateCompatibleDC(hDC);
+    hNewDC = CreateCompatibleDC(hdc);
     ok(hNewDC == NULL, "CreateCompatibleDC returned %p\n", hNewDC);
+
+    hdc = GetDC( 0 );
+    hdcMetafile = CreateEnhMetaFileA(hdc, NULL, NULL, NULL);
+    ok(hdcMetafile != 0, "CreateEnhMetaFileA failed\n");
+    hNewDC = CreateCompatibleDC( hdcMetafile );
+    ok(hNewDC != NULL, "CreateCompatibleDC failed\n");
+    ok( SelectObject( hNewDC, bitmap ) != 0, "SelectObject failed\n" );
+    caps = GetDeviceCaps( hdcMetafile, TECHNOLOGY );
+    ok( caps == DT_RASDISPLAY, "wrong caps %u\n", caps );
+    caps = GetDeviceCaps( hNewDC, TECHNOLOGY );
+    ok( caps == DT_RASDISPLAY, "wrong caps %u\n", caps );
+    DeleteDC( hNewDC );
+    DeleteEnhMetaFile( CloseEnhMetaFile( hdcMetafile ));
+    ReleaseDC( 0, hdc );
+
+    hdcMetafile = CreateMetaFileA(NULL);
+    ok(hdcMetafile != 0, "CreateEnhMetaFileA failed\n");
+    hNewDC = CreateCompatibleDC( hdcMetafile );
+    ok(hNewDC == NULL, "CreateCompatibleDC succeeded\n");
+    caps = GetDeviceCaps( hdcMetafile, TECHNOLOGY );
+    ok( caps == DT_METAFILE, "wrong caps %u\n", caps );
+    DeleteMetaFile( CloseMetaFile( hdcMetafile ));
+
+    DeleteObject( bitmap );
 }
 
 static void test_DC_bitmap(void)

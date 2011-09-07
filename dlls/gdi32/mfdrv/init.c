@@ -30,6 +30,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 
+static BOOL MFDRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev );
 static BOOL MFDRV_DeleteDC( PHYSDEV dev );
 
 
@@ -91,7 +92,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_Chord,                     /* pChord */
     MFDRV_CloseFigure,               /* pCloseFigure */
     NULL,                            /* pCreateBitmap */
-    NULL,                            /* pCreateCompatibleDC */
+    MFDRV_CreateCompatibleDC,        /* pCreateCompatibleDC */
     NULL,                            /* pCreateDC */
     NULL,                            /* pCreateDIBSection */
     NULL,                            /* pDeleteBitmap */
@@ -243,6 +244,16 @@ static DC *MFDRV_AllocMetaFile(void)
     SetVirtualResolution( physDev->dev.hdc, 0, 0, 0, 0);
 
     return dc;
+}
+
+
+/**********************************************************************
+ *	     MFDRV_CreateCompatibleDC
+ */
+static BOOL MFDRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
+{
+    /* not supported on metafile DCs */
+    return FALSE;
 }
 
 
