@@ -51,8 +51,8 @@ static LPWSTR   (WINAPIV *p_ultow)(ULONG, LPWSTR, INT);
 static LPWSTR   (WINAPIV *p_i64tow)(LONGLONG, LPWSTR, INT);
 static LPWSTR   (WINAPIV *p_ui64tow)(ULONGLONG, LPWSTR, INT);
 
-static long     (WINAPIV *pwcstol)(LPCWSTR, LPWSTR *, INT);
-static ULONG    (WINAPIV *pwcstoul)(LPCWSTR, LPWSTR *, INT);
+static LPWSTR   (__cdecl *p_wcslwr)(LPWSTR);
+static LPWSTR   (__cdecl *p_wcsupr)(LPWSTR);
 
 static LPWSTR   (WINAPIV *p_wcschr)(LPCWSTR, WCHAR);
 static LPWSTR   (WINAPIV *p_wcsrchr)(LPCWSTR, WCHAR);
@@ -89,8 +89,8 @@ static void InitFunctionPtrs(void)
 	p_i64tow = (void *)GetProcAddress(hntdll, "_i64tow");
 	p_ui64tow = (void *)GetProcAddress(hntdll, "_ui64tow");
 
-	pwcstol = (void *)GetProcAddress(hntdll, "wcstol");
-	pwcstoul = (void *)GetProcAddress(hntdll, "wcstoul");
+        p_wcslwr = (void *)GetProcAddress(hntdll, "_wcslwr");
+        p_wcsupr = (void *)GetProcAddress(hntdll, "_wcsupr");
 
 	p_wcschr= (void *)GetProcAddress(hntdll, "wcschr");
 	p_wcsrchr= (void *)GetProcAddress(hntdll, "wcsrchr");
@@ -1143,6 +1143,28 @@ static void test_wcsrchr(void)
        "wcsrchr should have returned NULL\n");
 }
 
+static void test_wcslwrupr(void)
+{
+    static WCHAR teststringW[] = {'a','b','r','a','c','a','d','a','b','r','a',0};
+    static WCHAR emptyW[1] = {0};
+    static const WCHAR constemptyW[1] = {0};
+
+    if (0) /* crashes on native */
+    {
+        static const WCHAR conststringW[] = {'a','b','r','a','c','a','d','a','b','r','a',0};
+        ok(p_wcslwr((LPWSTR)conststringW) == conststringW, "p_wcslwr returned different string\n");
+        ok(p_wcsupr((LPWSTR)conststringW) == conststringW, "p_wcsupr returned different string\n");
+        ok(p_wcslwr(NULL) == NULL, "p_wcslwr didn't returned NULL\n");
+        ok(p_wcsupr(NULL) == NULL, "p_wcsupr didn't returned NULL\n");
+    }
+    ok(p_wcslwr(teststringW) == teststringW, "p_wcslwr returned different string\n");
+    ok(p_wcsupr(teststringW) == teststringW, "p_wcsupr returned different string\n");
+    ok(p_wcslwr(emptyW) == emptyW, "p_wcslwr returned different string\n");
+    ok(p_wcsupr(emptyW) == emptyW, "p_wcsupr returned different string\n");
+    ok(p_wcslwr((LPWSTR)constemptyW) == constemptyW, "p_wcslwr returned different string\n");
+    ok(p_wcsupr((LPWSTR)constemptyW) == constemptyW, "p_wcsupr returned different string\n");
+}
+
 static __cdecl int intcomparefunc(const void *a, const void *b)
 {
     const int *p = a, *q = b;
@@ -1272,6 +1294,8 @@ START_TEST(string)
         test_wcschr();
     if (p_wcsrchr)
         test_wcsrchr();
+    if (p_wcslwr && p_wcsupr)
+        test_wcslwrupr();
     if (patoi)
         test_atoi();
     if (patol)
