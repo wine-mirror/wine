@@ -252,14 +252,40 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 
 
 /***********************************************************************
+ *           BRUSH_SelectDIBPatternBrush
+ */
+static BOOL BRUSH_SelectDIBPatternBrush( X11DRV_PDEVICE *physDev, HGLOBAL mem )
+{
+    BOOL ret;
+    HDC memdc;
+    BITMAPINFO *info = GlobalLock( mem );
+    HBITMAP bitmap = CreateDIBitmap( physDev->dev.hdc, &info->bmiHeader, CBM_INIT,
+                                     (LPBYTE)info + bitmap_info_size( info, DIB_RGB_COLORS ),
+                                     info, DIB_RGB_COLORS );
+
+    /* make sure it's owned by x11drv */
+    memdc = CreateCompatibleDC( physDev->dev.hdc );
+    SelectObject( memdc, bitmap );
+    DeleteDC( memdc );
+
+    if ((ret = BRUSH_SelectPatternBrush( physDev, bitmap )))
+    {
+        X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( bitmap );
+        physBitmap->pixmap = 0;  /* so it doesn't get freed */
+    }
+    DeleteObject( bitmap );
+    GlobalUnlock( mem );
+    return ret;
+}
+
+
+/***********************************************************************
  *           SelectBrush   (X11DRV.@)
  */
 HBRUSH X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     LOGBRUSH logbrush;
-    HBITMAP hBitmap;
-    BITMAPINFO * bmpInfo;
 
     if (!GetObjectA( hbrush, sizeof(logbrush), &logbrush )) return 0;
 
@@ -304,18 +330,7 @@ HBRUSH X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
 
       case BS_DIBPATTERN:
 	TRACE("BS_DIBPATTERN\n");
-        if ((bmpInfo = GlobalLock( (HGLOBAL)logbrush.lbHatch )))
-	{
-	    int size = bitmap_info_size( bmpInfo, logbrush.lbColor );
-	    hBitmap = CreateDIBitmap( dev->hdc, &bmpInfo->bmiHeader,
-                                        CBM_INIT, ((char *)bmpInfo) + size,
-                                        bmpInfo,
-                                        (WORD)logbrush.lbColor );
-	    BRUSH_SelectPatternBrush( physDev, hBitmap );
-	    DeleteObject( hBitmap );
-            GlobalUnlock( (HGLOBAL)logbrush.lbHatch );
-	}
-
+	if (!BRUSH_SelectDIBPatternBrush( physDev, (HGLOBAL)logbrush.lbHatch )) return 0;
 	break;
     }
     return hbrush;
