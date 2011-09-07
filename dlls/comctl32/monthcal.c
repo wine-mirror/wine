@@ -1665,12 +1665,8 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
   MCHITTESTINFO htinfo;
   SYSTEMTIME ht_month;
   INT day, calIdx;
-  UINT x, y;
 
   if(!lpht || lpht->cbSize < MCHITTESTINFO_V1_SIZE) return -1;
-
-  x = lpht->pt.x;
-  y = lpht->pt.y;
 
   htinfo.st = st_null;
 
