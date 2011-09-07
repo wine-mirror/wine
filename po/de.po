@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-09-06 08:07+0200\n"
+"PO-Revision-Date: 2011-09-07 23:43+0200\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -2017,14 +2017,12 @@ msgid "Default MidiOut Device"
 msgstr "Standard MidiOut - Gerät"
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "Aktivierung"
+msgstr "Aktion"
 
 #: dinput.rc:35
-#, fuzzy
 msgid "Object"
-msgstr "&Objekt"
+msgstr "Objekt"
 
 #: dxdiagn.rc:25
 msgid "Regional Setting"
@@ -10552,7 +10550,6 @@ msgstr ""
 "Laufwerk C neu zu erstellen!"
 
 #: winecfg.rc:80
-#, fuzzy
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Buchst."
@@ -10795,7 +10792,6 @@ msgstr ""
 "Optionen:\n"
 
 #: wineconsole.rc:49
-#, fuzzy
 msgid ""
 "  --backend={user|curses}  Choosing user will spawn a new window, curses "
 "will\n"
@@ -10805,16 +10801,14 @@ msgstr ""
 "  --backend={user|curses}  Auswahl von ‚user‘ erstellt ein neues Fenster,\n"
 "                            ‚curses‘ versucht das aktuelle Terminal als "
 "Wine-\n"
-"                            Konsole einzurichten\n"
+"                            Konsole einzurichten.\n"
 
 #: wineconsole.rc:51
-#, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr ""
-"  <Befehl>                  Das in der Konsole zu startende Wine-Programm\n"
+"  <Befehl>                  Das in der Konsole zu startende Wine-Programm.\n"
 
 #: wineconsole.rc:52
-#, fuzzy
 msgid ""
 "\n"
 "Example:\n"
@@ -10825,7 +10819,7 @@ msgstr ""
 "\n"
 "Bespiel:\n"
 "  wineconsole cmd\n"
-"Startet die Wine-Befehlszeile in einer Wine-Konsole\n"
+"Startet die Wine-Befehlszeile in einer Wine-Konsole.\n"
 "\n"
 
 #: winedbg.rc:35
