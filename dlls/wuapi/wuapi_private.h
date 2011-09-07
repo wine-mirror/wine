@@ -21,3 +21,4 @@ extern HRESULT UpdateSession_create( IUnknown *pUnkOuter, LPVOID *ppObj ) DECLSP
 extern HRESULT UpdateSearcher_create( IUnknown *pUnkOuter, LPVOID *ppObj ) DECLSPEC_HIDDEN;
 extern HRESULT UpdateDownloader_create( IUnknown *pUnkOuter, LPVOID *ppObj ) DECLSPEC_HIDDEN;
 extern HRESULT UpdateInstaller_create( IUnknown *pUnkOuter, LPVOID *ppObj ) DECLSPEC_HIDDEN;
+extern HRESULT SystemInformation_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;

@@ -114,6 +114,7 @@ static const struct IClassFactoryVtbl wucf_vtbl =
 
 static wucf sessioncf = { { &wucf_vtbl }, UpdateSession_create };
 static wucf updatescf = { { &wucf_vtbl }, AutomaticUpdates_create };
+static wucf sysinfocf = { { &wucf_vtbl }, SystemInformation_create };
 
 static HINSTANCE instance;
 
@@ -146,6 +147,10 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
     else if (IsEqualGUID( rclsid, &CLSID_AutomaticUpdates ))
     {
        cf = &updatescf.IClassFactory_iface;
+    }
+    else if (IsEqualGUID( rclsid, &CLSID_SystemInformation ))
+    {
+       cf = &sysinfocf.IClassFactory_iface;
     }
     if (!cf) return CLASS_E_CLASSNOTAVAILABLE;
     return IClassFactory_QueryInterface( cf, iid, ppv );
