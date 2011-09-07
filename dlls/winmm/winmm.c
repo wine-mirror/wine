@@ -1195,7 +1195,7 @@ start_header:
 	    /* do nothing, skip bytes */
 	    break;
 	case MEVT_LONGMSG:
-	    FIXME("NIY: MEVT_LONGMSG, aka sending Sysex event\n");
+	    midiOutLongMsg(lpMidiStrm->hDevice, lpMidiStrm->lpMidiHdr, MEVT_EVENTPARM(me->dwEvent));
 	    break;
 	case MEVT_NOP:
 	    break;
