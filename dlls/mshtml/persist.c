@@ -179,7 +179,7 @@ static void set_downloading_proc(task_t *_task)
         IDropTarget *drop_target = NULL;
 
         hres = IDocHostUIHandler_GetDropTarget(doc->hostui, NULL /* FIXME */, &drop_target);
-        if(drop_target) {
+        if(SUCCEEDED(hres)) {
             FIXME("Use IDropTarget\n");
             IDropTarget_Release(drop_target);
         }
