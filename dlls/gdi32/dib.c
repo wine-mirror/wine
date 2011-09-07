@@ -203,6 +203,7 @@ static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *
                 dst->bmiColors[i].rgbReserved = 0;
             }
         }
+        dst->bmiHeader.biClrUsed = colors;
     }
     return TRUE;
 }
@@ -995,6 +996,7 @@ static void fill_default_color_table( BITMAPINFO *info )
     default:
         ERR("called with bitcount %d\n", info->bmiHeader.biBitCount);
     }
+    info->bmiHeader.biClrUsed = 1 << info->bmiHeader.biBitCount;
 }
 
 void get_ddb_bitmapinfo( BITMAPOBJ *bmp, BITMAPINFO *info )
@@ -1180,10 +1182,7 @@ INT WINAPI GetDIBits(
 
     /* fill out the src colour table, if it needs one */
     if (src_info->bmiHeader.biBitCount <= 8 && src_info->bmiHeader.biClrUsed == 0)
-    {
         fill_default_color_table( src_info );
-        src_info->bmiHeader.biClrUsed = 1 << src_info->bmiHeader.biBitCount;
-    }
 
     /* if the src and dst are the same depth, copy the colour info across */
     if (dst_info->bmiHeader.biBitCount == src_info->bmiHeader.biBitCount && coloruse == DIB_RGB_COLORS )

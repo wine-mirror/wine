@@ -664,6 +664,7 @@ static BOOL matching_color_info( const dib_info *dib, const BITMAPINFO *info )
     case 8:
     {
         RGBQUAD *color_table = (RGBQUAD *)((char *)info + info->bmiHeader.biSize);
+        if (!info->bmiHeader.biClrUsed) return FALSE;
         if (dib->color_table_size != get_dib_num_of_colors( info )) return FALSE;
         return !memcmp( color_table, dib->color_table, dib->color_table_size * sizeof(RGBQUAD) );
     }
