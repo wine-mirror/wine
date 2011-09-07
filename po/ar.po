@@ -8188,7 +8188,7 @@ msgid ""
 "    -or-\n"
 "NET command /HELP\n"
 "\n"
-"Where 'command' is one of HELP, START, STOP or USE\n"
+"Where 'command' is one of HELP, START, STOP or USE.\n"
 msgstr ""
 
 #: net.rc:28

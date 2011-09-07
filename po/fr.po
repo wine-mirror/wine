@@ -8641,6 +8641,7 @@ msgid "Default gateway"
 msgstr "Passerelle par défaut"
 
 #: net.rc:27
+#, fuzzy
 msgid ""
 "The syntax of this command is:\n"
 "\n"
@@ -8648,7 +8649,7 @@ msgid ""
 "    -or-\n"
 "NET command /HELP\n"
 "\n"
-"Where 'command' is one of HELP, START, STOP or USE\n"
+"Where 'command' is one of HELP, START, STOP or USE.\n"
 msgstr ""
 "La syntaxe de cette commande est :\n"
 "\n"

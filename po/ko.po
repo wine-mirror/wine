@@ -8492,6 +8492,7 @@ msgid "Default gateway"
 msgstr "기본 게이트웨이"
 
 #: net.rc:27
+#, fuzzy
 msgid ""
 "The syntax of this command is:\n"
 "\n"
@@ -8499,7 +8500,7 @@ msgid ""
 "    -or-\n"
 "NET command /HELP\n"
 "\n"
-"Where 'command' is one of HELP, START, STOP or USE\n"
+"Where 'command' is one of HELP, START, STOP or USE.\n"
 msgstr ""
 "명령어 문법:\n"
 "\n"

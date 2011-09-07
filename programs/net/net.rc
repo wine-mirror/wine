@@ -24,7 +24,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-    STRING_USAGE, "The syntax of this command is:\n\nNET command [arguments]\n    -or-\nNET command /HELP\n\nWhere 'command' is one of HELP, START, STOP or USE\n"
+    STRING_USAGE, "The syntax of this command is:\n\nNET command [arguments]\n    -or-\nNET command /HELP\n\nWhere 'command' is one of HELP, START, STOP or USE.\n"
     STRING_START_USAGE, "The syntax of this command is:\n\nNET START [service]\n\nDisplays the list of running services if 'service' is omitted. Otherwise 'service' is the name of the service to start.\n"
     STRING_STOP_USAGE, "The syntax of this command is:\n\nNET STOP service\n\nWhere 'service' is the name of the service to stop.\n"
     STRING_STOP_DEP, "Stopping dependent service: %s\n"
