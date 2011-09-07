@@ -120,12 +120,12 @@ void      WCMD_execute (const WCHAR *orig_command, const WCHAR *redirects,
 
 /* Data structure to hold context when executing batch files */
 
-typedef struct {
+typedef struct _BATCH_CONTEXT {
   WCHAR *command;	/* The command which invoked the batch file */
   HANDLE h;             /* Handle to the open batch file */
   WCHAR *batchfileW;    /* Name of same */
   int shift_count[10];	/* Offset in terms of shifts for %0 - %9 */
-  void *prev_context;	/* Pointer to the previous context block */
+  struct _BATCH_CONTEXT *prev_context; /* Pointer to the previous context block */
   BOOL  skip_rest;      /* Skip the rest of the batch program and exit */
   CMD_LIST *toExecute;  /* Commands left to be executed */
 } BATCH_CONTEXT;
