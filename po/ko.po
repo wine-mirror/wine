@@ -10668,26 +10668,29 @@ msgstr ""
 "옵션:\n"
 
 #: wineconsole.rc:49
+#, fuzzy
 msgid ""
 "  --backend={user|curses}  Choosing user will spawn a new window, curses "
 "will\n"
-"                            try to setup the current terminal as a Wine "
-"console\n"
+"                           try to setup the current terminal as a Wine "
+"console.\n"
 msgstr ""
 "  --backend={user|curses}  사용자가 새 창을 열 것인지,\n"
 "                            curses가 Wine 콘솔처럼 현재 터미널에  나타낼 것인"
 "지 선택\n"
 
 #: wineconsole.rc:51
-msgid "  <command>                 The Wine program to launch in the console\n"
+#, fuzzy
+msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr "  <명령>                 The Wine 프로그램은 콘솔을 통해서 시작됨\n"
 
 #: wineconsole.rc:52
+#, fuzzy
 msgid ""
 "\n"
 "Example:\n"
 "  wineconsole cmd\n"
-"Starts the Wine command prompt in a Wine console\n"
+"Starts the Wine command prompt in a Wine console.\n"
 "\n"
 msgstr ""
 "\n"

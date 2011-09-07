@@ -10701,26 +10701,29 @@ msgstr ""
 "オプション:\n"
 
 #: wineconsole.rc:49
+#, fuzzy
 msgid ""
 "  --backend={user|curses}  Choosing user will spawn a new window, curses "
 "will\n"
-"                            try to setup the current terminal as a Wine "
-"console\n"
+"                           try to setup the current terminal as a Wine "
+"console.\n"
 msgstr ""
 "  --backend={user|curses}  Wine コンソールのバックエンドを選択する。\n"
 "                           user:   新しいウィンドウを生成する。\n"
 "                           curses: 現在の端末を利用する。\n"
 
 #: wineconsole.rc:51
-msgid "  <command>                 The Wine program to launch in the console\n"
+#, fuzzy
+msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr "  <コマンド>                コンソールで開始する Wine プログラム\n"
 
 #: wineconsole.rc:52
+#, fuzzy
 msgid ""
 "\n"
 "Example:\n"
 "  wineconsole cmd\n"
-"Starts the Wine command prompt in a Wine console\n"
+"Starts the Wine command prompt in a Wine console.\n"
 "\n"
 msgstr ""
 "\n"

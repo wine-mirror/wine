@@ -10717,11 +10717,12 @@ msgstr ""
 "Параметры:\n"
 
 #: wineconsole.rc:49
+#, fuzzy
 msgid ""
 "  --backend={user|curses}  Choosing user will spawn a new window, curses "
 "will\n"
-"                            try to setup the current terminal as a Wine "
-"console\n"
+"                           try to setup the current terminal as a Wine "
+"console.\n"
 msgstr ""
 "  --backend={user|curses}  Выбор 'user' откроет новое окно с полной "
 "поддержкой\n"
@@ -10730,16 +10731,18 @@ msgstr ""
 "                            текущее окно с ограниченной функциональностью\n"
 
 #: wineconsole.rc:51
-msgid "  <command>                 The Wine program to launch in the console\n"
+#, fuzzy
+msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr ""
 "  <команда>                Название программы для запуска в консоли Wine\n"
 
 #: wineconsole.rc:52
+#, fuzzy
 msgid ""
 "\n"
 "Example:\n"
 "  wineconsole cmd\n"
-"Starts the Wine command prompt in a Wine console\n"
+"Starts the Wine command prompt in a Wine console.\n"
 "\n"
 msgstr ""
 "\n"

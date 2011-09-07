@@ -10665,25 +10665,28 @@ msgstr ""
 "选项：\n"
 
 #: wineconsole.rc:49
+#, fuzzy
 msgid ""
 "  --backend={user|curses}  Choosing user will spawn a new window, curses "
 "will\n"
-"                            try to setup the current terminal as a Wine "
-"console\n"
+"                           try to setup the current terminal as a Wine "
+"console.\n"
 msgstr ""
 "  --backend={user|curses}   选 user 会打开新窗口；选 curses 会试图在当前\n"
 "                            终端中运行 Wine 控制台\n"
 
 #: wineconsole.rc:51
-msgid "  <command>                 The Wine program to launch in the console\n"
+#, fuzzy
+msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr "  <command>                 要在控制台运行的 Wine 程序\n"
 
 #: wineconsole.rc:52
+#, fuzzy
 msgid ""
 "\n"
 "Example:\n"
 "  wineconsole cmd\n"
-"Starts the Wine command prompt in a Wine console\n"
+"Starts the Wine command prompt in a Wine console.\n"
 "\n"
 msgstr ""
 "\n"
