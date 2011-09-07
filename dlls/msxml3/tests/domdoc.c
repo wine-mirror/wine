@@ -6978,8 +6978,11 @@ static void test_testTransforms(void)
 
         hr = IXMLDOMDocument_transformNode(doc, pNode, &bOut);
         ok(hr == S_OK, "ret %08x\n", hr );
-        ok( compareIgnoreReturns( bOut, _bstr_(szTransformOutput)), "Stylesheet output not correct\n");
-        SysFreeString(bOut);
+        if(hr == S_OK)
+        {
+            ok( compareIgnoreReturns( bOut, _bstr_(szTransformOutput)), "Stylesheet output not correct\n");
+            SysFreeString(bOut);
+        }
 
         IXMLDOMNode_Release(pNode);
     }
