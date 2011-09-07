@@ -196,7 +196,9 @@ NET_API_STATUS WINAPI NetLocalGroupGetMembers(
         *entriesread = 0;
 
         userNameLen = MAX_COMPUTERNAME_LENGTH + 1;
-        GetUserNameW(userName,&userNameLen);
+        if (!GetUserNameW(userName,&userNameLen))
+            return ERROR_NOT_ENOUGH_MEMORY;
+
         needlen = sizeof(LOCALGROUP_MEMBERS_INFO_3) +
              (userNameLen+2) * sizeof(WCHAR);
         if (prefmaxlen != MAX_PREFERRED_LENGTH)

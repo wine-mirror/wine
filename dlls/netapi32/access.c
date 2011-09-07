@@ -437,7 +437,10 @@ NetUserGetLocalGroups(LPCWSTR servername, LPCWSTR username, DWORD level,
 
     size = UNLEN + 1;
     NetApiBufferAllocate(size * sizeof(WCHAR), (LPVOID*)&currentuser);
-    GetUserNameW(currentuser, &size);
+    if (!GetUserNameW(currentuser, &size)) {
+        NetApiBufferFree(currentuser);
+        return ERROR_NOT_ENOUGH_MEMORY;
+    }
 
     if (lstrcmpiW(username, currentuser) && NETAPI_FindUser(username))
     {
