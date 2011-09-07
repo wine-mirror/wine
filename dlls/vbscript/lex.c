@@ -26,6 +26,31 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
+static inline BOOL is_identifier_char(WCHAR c)
+{
+    return isalnumW(c) || c == '_';
+}
+
+static int parse_identifier(parser_ctx_t *ctx, const WCHAR **ret)
+{
+    const WCHAR *ptr = ctx->ptr++;
+    WCHAR *str;
+    int len;
+
+    while(ctx->ptr < ctx->end && is_identifier_char(*ctx->ptr))
+        ctx->ptr++;
+    len = ctx->ptr-ptr;
+
+    str = parser_alloc(ctx, (len+1)*sizeof(WCHAR));
+    if(!str)
+        return 0;
+
+    memcpy(str, ptr, (len+1)*sizeof(WCHAR));
+    str[len] = 0;
+    *ret = str;
+    return tIdentifier;
+}
+
 static int parse_next_token(void *lval, parser_ctx_t *ctx)
 {
     WCHAR c;
@@ -36,6 +61,9 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
         return ctx->last_token == tNL ? tEOF : tNL;
 
     c = *ctx->ptr;
+
+    if(isalphaW(c))
+        return parse_identifier(ctx, lval);
 
     switch(c) {
     case '\n':

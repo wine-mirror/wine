@@ -38,13 +38,12 @@ static void parse_complete(parser_ctx_t*);
 %pure_parser
 %start Program
 
-%token tEOF
-
 %union {
     const WCHAR *string;
 }
 
-%token tNL
+%token tEOF tNL
+%token <string> tIdentifier
 
 %%
 
@@ -60,6 +59,17 @@ static int parser_error(const char *str)
 static void parse_complete(parser_ctx_t *ctx)
 {
     ctx->parse_complete = TRUE;
+}
+
+void *parser_alloc(parser_ctx_t *ctx, size_t size)
+{
+    void *ret;
+
+    /* FIXME: leaks! */
+    ret = heap_alloc(size);
+    if(!ret)
+        ctx->hres = E_OUTOFMEMORY;
+    return ret;
 }
 
 HRESULT parse_script(parser_ctx_t *ctx, const WCHAR *code)
