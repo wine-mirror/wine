@@ -2595,7 +2595,7 @@ HRESULT CDECL wined3d_device_set_scissor_rect(struct wined3d_device *device, con
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_scissor_rect(struct wined3d_device *device, RECT *rect)
+HRESULT CDECL wined3d_device_get_scissor_rect(const struct wined3d_device *device, RECT *rect)
 {
     TRACE("device %p, rect %p.\n", device, rect);
 
