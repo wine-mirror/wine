@@ -39,7 +39,7 @@ msgstr ""
 
 #: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:111
 msgid "Name"
-msgstr "Name"
+msgstr ""
 
 #: appwiz.rc:36
 msgid "Publisher"
@@ -165,16 +165,15 @@ msgstr ""
 
 #: comdlg32.rc:35 winhlp32.rc:46 winhlp32.rc:67
 msgid "Fonts"
-msgstr "Fonts"
+msgstr ""
 
 #: comdlg32.rc:36 shell32.rc:154 regedit.rc:200
 msgid "My Computer"
 msgstr ""
 
 #: comdlg32.rc:41
-#, fuzzy
 msgid "System Folders"
-msgstr "Use system colors"
+msgstr ""
 
 #: comdlg32.rc:42
 msgid "Local Hard Drives"
@@ -189,26 +188,16 @@ msgid "Please verify that the correct file name was given"
 msgstr ""
 
 #: comdlg32.rc:45
-#, fuzzy
 msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
 msgstr ""
-"File '%s'\n"
-"does not exist\n"
-"\n"
-" Do you want to create a new file ?"
 
 #: comdlg32.rc:46
-#, fuzzy
 msgid ""
 "File already exists.\n"
 "Do you want to replace it?"
 msgstr ""
-"File '%s'\n"
-"does not exist\n"
-"\n"
-" Do you want to create a new file ?"
 
 #: comdlg32.rc:47
 msgid "Invalid character(s) in path"
@@ -237,14 +226,12 @@ msgid "Create New Folder"
 msgstr ""
 
 #: comdlg32.rc:57
-#, fuzzy
 msgid "List"
-msgstr "&List"
+msgstr ""
 
 #: comdlg32.rc:58
-#, fuzzy
 msgid "Details"
-msgstr "&Details"
+msgstr ""
 
 #: comdlg32.rc:59
 msgid "Browse to Desktop"
@@ -525,9 +512,8 @@ msgid "Power save mode; "
 msgstr ""
 
 #: comdlg32.rc:87
-#, fuzzy
 msgid "Default Printer; "
-msgstr "Default"
+msgstr ""
 
 #: comdlg32.rc:88
 msgid "There are %d documents in the queue"
@@ -1590,7 +1576,7 @@ msgstr ""
 
 #: cryptui.rc:62 shell32.rc:251 ipconfig.rc:41
 msgid "Description"
-msgstr "Description"
+msgstr ""
 
 #: cryptui.rc:63
 #, fuzzy
@@ -1874,9 +1860,8 @@ msgid "Certificate Export Wizard"
 msgstr ""
 
 #: cryptui.rc:148
-#, fuzzy
 msgid "Export Format"
-msgstr "Normal"
+msgstr ""
 
 #: cryptui.rc:149
 msgid "Choose the format in which the content will be saved."
@@ -1915,9 +1900,8 @@ msgid "Serialized Certificate Store (*.sst)"
 msgstr ""
 
 #: cryptui.rc:160
-#, fuzzy
 msgid "File Format"
-msgstr "Normal"
+msgstr ""
 
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
@@ -1991,9 +1975,8 @@ msgid "Object"
 msgstr ""
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "Default"
+msgstr ""
 
 #: dxdiagn.rc:26
 msgid "%uMB used, %uMB available"
@@ -2172,9 +2155,8 @@ msgid "&Help"
 msgstr "&Aide"
 
 #: ieframe.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "&About Notepad"
+msgstr ""
 
 #: ieframe.rc:67
 msgctxt "home page"
@@ -2451,14 +2433,12 @@ msgid "Out of paper\n"
 msgstr ""
 
 #: winerror.mc:171
-#, fuzzy
 msgid "Write fault\n"
-msgstr "Default"
+msgstr ""
 
 #: winerror.mc:176
-#, fuzzy
 msgid "Read fault\n"
-msgstr "Default"
+msgstr ""
 
 #: winerror.mc:181
 msgid "General failure\n"
@@ -3588,9 +3568,8 @@ msgid "Property set not found\n"
 msgstr "'%s' pout nén esse trové."
 
 #: winerror.mc:1581
-#, fuzzy
 msgid "Point not found\n"
-msgstr "&About Control Panel..."
+msgstr ""
 
 #: winerror.mc:1586
 msgid "No running tracking service\n"
@@ -4298,9 +4277,8 @@ msgid "Private dialog index\n"
 msgstr ""
 
 #: winerror.mc:2476
-#, fuzzy
 msgid "List box ID not found\n"
-msgstr "&About Control Panel..."
+msgstr ""
 
 #: winerror.mc:2481
 msgid "No wildcard characters\n"
@@ -4319,9 +4297,8 @@ msgid "Not a dialog window\n"
 msgstr ""
 
 #: winerror.mc:2501
-#, fuzzy
 msgid "Control ID not found\n"
-msgstr "&About Control Panel..."
+msgstr ""
 
 #: winerror.mc:2506
 msgid "Invalid combobox message\n"
@@ -5983,7 +5960,7 @@ msgstr ""
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
-msgstr "&Select"
+msgstr ""
 
 #: shdoclc.rc:102
 msgid "&Cell"
@@ -6166,31 +6143,29 @@ msgstr ""
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252
 msgid "Lar&ge Icons"
-msgstr "Lar&ge Icons"
+msgstr ""
 
 #: shell32.rc:28 shell32.rc:43 shell32.rc:120 shell32.rc:160 taskmgr.rc:66
 #: taskmgr.rc:111 taskmgr.rc:253
 msgid "S&mall Icons"
-msgstr "S&mall Icons"
+msgstr ""
 
 #: shell32.rc:29 shell32.rc:44 shell32.rc:121 shell32.rc:161
 msgid "&List"
-msgstr "&List"
+msgstr ""
 
 #: shell32.rc:30 shell32.rc:45 shell32.rc:122 shell32.rc:162 taskmgr.rc:67
 #: taskmgr.rc:112 taskmgr.rc:254
 msgid "&Details"
-msgstr "&Details"
+msgstr ""
 
 #: shell32.rc:48 winefile.rc:81
-#, fuzzy
 msgid "Arrange &Icons"
-msgstr "Lar&ge Icons"
+msgstr ""
 
 #: shell32.rc:50
-#, fuzzy
 msgid "By &Name"
-msgstr "Name"
+msgstr ""
 
 #: shell32.rc:51
 msgid "By &Type"
@@ -6201,23 +6176,20 @@ msgid "By &Size"
 msgstr ""
 
 #: shell32.rc:53
-#, fuzzy
 msgid "By &Date"
-msgstr "&Date"
+msgstr ""
 
 #: shell32.rc:55
 msgid "&Auto Arrange"
 msgstr ""
 
 #: shell32.rc:57
-#, fuzzy
 msgid "Line up Icons"
-msgstr "Lar&ge Icons"
+msgstr ""
 
 #: shell32.rc:62
-#, fuzzy
 msgid "Paste as Link"
-msgstr "Create &Link"
+msgstr ""
 
 #: shell32.rc:64
 msgid "New"
@@ -6228,9 +6200,8 @@ msgid "New &Folder"
 msgstr ""
 
 #: shell32.rc:67
-#, fuzzy
 msgid "New &Link"
-msgstr "Create &Link"
+msgstr ""
 
 #: shell32.rc:71
 #, fuzzy
@@ -6249,19 +6220,19 @@ msgstr ""
 
 #: shell32.rc:95
 msgid "E&xplore"
-msgstr "E&xplore"
+msgstr ""
 
 #: shell32.rc:98
 msgid "C&ut"
-msgstr "C&ut"
+msgstr ""
 
 #: shell32.rc:101
 msgid "Create &Link"
-msgstr "Create &Link"
+msgstr ""
 
 #: shell32.rc:103 regedit.rc:91
 msgid "&Rename"
-msgstr "&Rename"
+msgstr ""
 
 #: shell32.rc:114 notepad.rc:36 oleview.rc:35 regedit.rc:38 view.rc:31
 #: winhlp32.rc:34 wordpad.rc:37
@@ -6269,9 +6240,8 @@ msgid "E&xit"
 msgstr "Moussî &Foû"
 
 #: shell32.rc:127
-#, fuzzy
 msgid "&About Control Panel"
-msgstr "&About Control Panel..."
+msgstr ""
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:112
 msgid "Size"
@@ -6316,14 +6286,12 @@ msgid "Date deleted"
 msgstr "&Rafacer\tDel"
 
 #: shell32.rc:156
-#, fuzzy
 msgid "Control Panel"
-msgstr "&About Control Panel..."
+msgstr ""
 
 #: shell32.rc:163
-#, fuzzy
 msgid "Select"
-msgstr "&Select"
+msgstr ""
 
 #: shell32.rc:164 oleview.rc:99
 #, fuzzy
@@ -6614,9 +6582,8 @@ msgid "New Folder"
 msgstr ""
 
 #: shell32.rc:249
-#, fuzzy
 msgid "Wine Control Panel"
-msgstr "&About Control Panel..."
+msgstr ""
 
 #: shell32.rc:191
 msgid "Unable to display Run File dialog box (internal error)"
@@ -6648,28 +6615,18 @@ msgid "Confirm deletion"
 msgstr ""
 
 #: shell32.rc:258
-#, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"File '%s'\n"
-"does not exist\n"
-"\n"
-" Do you want to create a new file ?"
 
 #: shell32.rc:259
-#, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"File '%s'\n"
-"does not exist\n"
-"\n"
-" Do you want to create a new file ?"
 
 #: shell32.rc:260
 msgid "Confirm overwrite"
@@ -6747,9 +6704,8 @@ msgid "&Close\tAlt-F4"
 msgstr "&Cloyu\tAlt-F4"
 
 #: user32.rc:35
-#, fuzzy
 msgid "&About Wine"
-msgstr "&About Notepad"
+msgstr ""
 
 #: user32.rc:46
 #, fuzzy
@@ -7592,7 +7548,7 @@ msgstr "&Segondes"
 
 #: clock.rc:37
 msgid "&Date"
-msgstr "&Date"
+msgstr ""
 
 #: clock.rc:39 taskmgr.rc:43 taskmgr.rc:141
 msgid "&Always on Top"
@@ -8121,9 +8077,8 @@ msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr ""
 
 #: explorer.rc:28
-#, fuzzy
 msgid "Wine Explorer"
-msgstr "E&xplore"
+msgstr ""
 
 #: explorer.rc:29
 #, fuzzy
@@ -8310,9 +8265,8 @@ msgid "Connection is being made"
 msgstr ""
 
 #: net.rc:49
-#, fuzzy
 msgid "Reconnecting"
-msgstr "Default"
+msgstr ""
 
 #: net.rc:40
 msgid "The following services are running:\n"
@@ -8398,7 +8352,7 @@ msgstr "Å&dvins"
 
 #: notepad.rc:59
 msgid "&About Notepad"
-msgstr "&About Notepad"
+msgstr ""
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -8451,10 +8405,6 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"File '%s'\n"
-"does not exist\n"
-"\n"
-" Do you want to create a new file ?"
 
 #: notepad.rc:85
 msgid ""
@@ -8549,9 +8499,8 @@ msgid "View &Type information"
 msgstr "Informåcion"
 
 #: oleview.rc:49
-#, fuzzy
 msgid "Create &Instance"
-msgstr "Create &Link"
+msgstr ""
 
 #: oleview.rc:50
 msgid "Create Instance &On..."
@@ -8590,9 +8539,8 @@ msgid "&Refresh\tF5"
 msgstr ""
 
 #: oleview.rc:71
-#, fuzzy
 msgid "&About OleView"
-msgstr "&About Notepad"
+msgstr ""
 
 #: oleview.rc:79
 #, fuzzy
@@ -8817,7 +8765,7 @@ msgstr "Å dfait di &Wine..."
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
-msgstr "&Options"
+msgstr ""
 
 #: progman.rc:42
 msgid "&Arrange automatically"
@@ -8848,9 +8796,8 @@ msgid "&Arrange Icons"
 msgstr ""
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "&About Notepad"
+msgstr ""
 
 #: progman.rc:60
 msgid "Program Manager"
@@ -9004,9 +8951,8 @@ msgid "&Expandable String Value"
 msgstr ""
 
 #: regedit.rc:56 regedit.rc:107
-#, fuzzy
 msgid "&Rename\tF2"
-msgstr "&Rename"
+msgstr ""
 
 #: regedit.rc:58 regedit.rc:110
 msgid "&Copy Key Name"
@@ -9102,9 +9048,8 @@ msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr ""
 
 #: regedit.rc:201
-#, fuzzy
 msgid "(Default)"
-msgstr "Default"
+msgstr ""
 
 #: regedit.rc:202
 msgid "(value not set)"
@@ -9444,9 +9389,8 @@ msgid "&Bring To Front"
 msgstr ""
 
 #: taskmgr.rc:90
-#, fuzzy
 msgid "&About Task Manager"
-msgstr "&About Notepad"
+msgstr ""
 
 #: taskmgr.rc:120
 msgid "&Switch To"
@@ -9952,9 +9896,8 @@ msgid "Audio"
 msgstr ""
 
 #: winecfg.rc:40
-#, fuzzy
 msgid "About"
-msgstr "&About Notepad"
+msgstr ""
 
 #: winecfg.rc:41
 #, fuzzy
@@ -10013,9 +9956,8 @@ msgid "disabled"
 msgstr ""
 
 #: winecfg.rc:58
-#, fuzzy
 msgid "Default Settings"
-msgstr "Default"
+msgstr ""
 
 #: winecfg.rc:59
 msgid "Wine Programs (*.exe,*.exe.so)"
@@ -10111,14 +10053,12 @@ msgid "Emulation"
 msgstr "Informåcion"
 
 #: winecfg.rc:95
-#, fuzzy
 msgid "Controls Background"
-msgstr "&About Control Panel..."
+msgstr ""
 
 #: winecfg.rc:96
-#, fuzzy
 msgid "Controls Text"
-msgstr "&About Control Panel..."
+msgstr ""
 
 #: winecfg.rc:98
 msgid "Menu Background"
@@ -10137,9 +10077,8 @@ msgid "Selection Background"
 msgstr ""
 
 #: winecfg.rc:102
-#, fuzzy
 msgid "Selection Text"
-msgstr "&Select"
+msgstr ""
 
 #: winecfg.rc:103
 msgid "ToolTip Background"
@@ -10195,9 +10134,8 @@ msgid "Inactive Border"
 msgstr ""
 
 #: winecfg.rc:116
-#, fuzzy
 msgid "Controls Shadow"
-msgstr "&About Control Panel..."
+msgstr ""
 
 #: winecfg.rc:117
 msgid "Gray Text"
@@ -10440,9 +10378,8 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "&Tchwezi totafwait"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File"
-msgstr "&About Notepad"
+msgstr ""
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10538,9 +10475,8 @@ msgid "&Fastest Times"
 msgstr ""
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "&About Notepad"
+msgstr ""
 
 #: winemine.rc:27
 msgid "WineMine"
@@ -10572,19 +10508,19 @@ msgstr "&Defini..."
 
 #: winhlp32.rc:45
 msgid "History"
-msgstr "History"
+msgstr ""
 
 #: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
-msgstr "Small"
+msgstr ""
 
 #: winhlp32.rc:49 winhlp32.rc:70
 msgid "Normal"
-msgstr "Normal"
+msgstr ""
 
 #: winhlp32.rc:50 winhlp32.rc:71
 msgid "Large"
-msgstr "Large"
+msgstr ""
 
 #: winhlp32.rc:54
 #, fuzzy
@@ -10619,7 +10555,7 @@ msgstr "Yåk n' a nén stî å moumint di lere li fitchî d' aide `%s'"
 
 #: winhlp32.rc:85
 msgid "Summary"
-msgstr "Summary"
+msgstr ""
 
 #: winhlp32.rc:84
 msgid "&Index"
@@ -10631,11 +10567,11 @@ msgstr "Fitchîs d' aide (*.hlp)"
 
 #: winhlp32.rc:89
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr "Cannot find '%s'. Do you want to find this file yourself?"
+msgstr ""
 
 #: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
-msgstr "Cannot find a richedit implementation... Aborting"
+msgstr ""
 
 #: winhlp32.rc:91
 msgid "Help topics: "
@@ -10722,9 +10658,8 @@ msgid "&Date and time..."
 msgstr ""
 
 #: wordpad.rc:79
-#, fuzzy
 msgid "F&ormat"
-msgstr "Normal"
+msgstr ""
 
 #: wordpad.rc:82 wordpad.rc:105
 msgid "&Bullet points"
