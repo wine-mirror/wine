@@ -16,6 +16,36 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+typedef enum {
+    EXPR_MEMBER
+} expression_type_t;
+
+typedef struct _expression_t {
+    expression_type_t type;
+    struct _expression_t *next;
+} expression_t;
+
+typedef struct {
+    expression_t expr;
+    expression_t *obj_expr;
+    const WCHAR *identifier;
+    expression_t *args;
+} member_expression_t;
+
+typedef enum {
+    STAT_CALL
+} statement_type_t;
+
+typedef struct _statement_t {
+    statement_type_t type;
+    struct _statement_t *next;
+} statement_t;
+
+typedef struct {
+    statement_t stat;
+    member_expression_t *expr;
+} call_statement_t;
+
 typedef struct {
     const WCHAR *code;
     const WCHAR *ptr;
@@ -26,6 +56,9 @@ typedef struct {
 
     int last_token;
     unsigned last_nl;
+
+    statement_t *stats;
+    statement_t *stats_tail;
 } parser_ctx_t;
 
 HRESULT parse_script(parser_ctx_t*,const WCHAR*) DECLSPEC_HIDDEN;

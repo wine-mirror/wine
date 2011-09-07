@@ -33,6 +33,12 @@ static int parser_error(const char*);
 
 static void parse_complete(parser_ctx_t*);
 
+static void source_add_statement(parser_ctx_t*,statement_t*);
+
+static member_expression_t *new_member_expression(parser_ctx_t*,expression_t*,const WCHAR*);
+
+static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
+
 %}
 
 %pure_parser
@@ -40,14 +46,34 @@ static void parse_complete(parser_ctx_t*);
 
 %union {
     const WCHAR *string;
+    statement_t *statement;
+    member_expression_t *member;
 }
 
-%token tEOF tNL
+%token tEOF tNL blah
 %token <string> tIdentifier
+
+%type <statement> Statement StatementNl
+%type <member> MemberExpression
 
 %%
 
-Program : tEOF      { parse_complete(ctx); }
+Program
+    : SourceElements tEOF           { parse_complete(ctx); }
+
+SourceElements
+    : /* empty */
+    | SourceElements StatementNl    { source_add_statement(ctx, $2); }
+
+StatementNl
+    : Statement tNL                 { $$ = $1; }
+
+Statement
+    : MemberExpression /* FIXME: Arguments_opt */   { $$ = new_call_statement(ctx, $1); }
+
+MemberExpression
+    : tIdentifier                   { $$ = new_member_expression(ctx, NULL, $1); }
+    /* FIXME: MemberExpressionArgs '.' tIdentifier */
 
 %%
 
@@ -56,9 +82,71 @@ static int parser_error(const char *str)
     return 0;
 }
 
+static void source_add_statement(parser_ctx_t *ctx, statement_t *stat)
+{
+    if(ctx->stats) {
+        ctx->stats_tail->next = stat;
+        ctx->stats_tail = stat;
+    }else {
+        ctx->stats = ctx->stats_tail = stat;
+    }
+}
+
 static void parse_complete(parser_ctx_t *ctx)
 {
     ctx->parse_complete = TRUE;
+}
+
+static void *new_expression(parser_ctx_t *ctx, expression_type_t type, unsigned size)
+{
+    expression_t *expr;
+
+    expr = parser_alloc(ctx, size ? size : sizeof(*expr));
+    if(expr) {
+        expr->type = type;
+        expr->next = NULL;
+    }
+
+    return expr;
+}
+
+static member_expression_t *new_member_expression(parser_ctx_t *ctx, expression_t *obj_expr, const WCHAR *identifier)
+{
+    member_expression_t *expr;
+
+    expr = new_expression(ctx, EXPR_MEMBER, sizeof(*expr));
+    if(!expr)
+        return NULL;
+
+    expr->obj_expr = obj_expr;
+    expr->identifier = identifier;
+    expr->args = NULL;
+    return expr;
+}
+
+static void *new_statement(parser_ctx_t *ctx, statement_type_t type, unsigned size)
+{
+    statement_t *stat;
+
+    stat = parser_alloc(ctx, size);
+    if(stat) {
+        stat->type = type;
+        stat->next = NULL;
+    }
+
+    return stat;
+}
+
+static statement_t *new_call_statement(parser_ctx_t *ctx, member_expression_t *expr)
+{
+    call_statement_t *stat;
+
+    stat = new_statement(ctx, STAT_CALL, sizeof(*stat));
+    if(!stat)
+        return NULL;
+
+    stat->expr = expr;
+    return &stat->stat;
 }
 
 void *parser_alloc(parser_ctx_t *ctx, size_t size)
@@ -82,6 +170,7 @@ HRESULT parse_script(parser_ctx_t *ctx, const WCHAR *code)
 
     ctx->last_token = tNL;
     ctx->last_nl = 0;
+    ctx->stats = ctx->stats_tail = NULL;
 
     parser_parse(ctx);
 

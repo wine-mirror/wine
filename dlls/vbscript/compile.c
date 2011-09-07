@@ -53,12 +53,17 @@ static unsigned push_instr(compile_ctx_t *ctx, vbsop_t op)
     return ctx->instr_cnt++;
 }
 
-static HRESULT compile_func(compile_ctx_t *ctx, function_t *func)
+static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *func)
 {
     func->code_off = ctx->instr_cnt;
 
     if(push_instr(ctx, OP_ret) == -1)
         return E_OUTOFMEMORY;
+
+    if(stat) {
+        FIXME("statements compilation not implemented\n");
+        return E_NOTIMPL;
+    }
 
     return S_OK;
 }
@@ -113,7 +118,7 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, vbscode_t **ret)
     if(!ctx.code)
         return E_OUTOFMEMORY;
 
-    hres = compile_func(&ctx, &ctx.code->global_code);
+    hres = compile_func(&ctx, ctx.parser.stats, &ctx.code->global_code);
     if(FAILED(hres)) {
         release_vbscode(ctx.code);
         return hres;
