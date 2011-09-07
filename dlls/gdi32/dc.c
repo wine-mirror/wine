@@ -181,7 +181,12 @@ void free_dc_ptr( DC *dc )
 {
     assert( dc->refcount == 1 );
 
-    while (dc->physDev != &dc->nulldrv) pop_dc_driver( dc, dc->physDev );
+    while (dc->physDev != &dc->nulldrv)
+    {
+        PHYSDEV physdev = dc->physDev;
+        pop_dc_driver( dc, physdev );
+        physdev->funcs->pDeleteDC( physdev );
+    }
     free_gdi_handle( dc->hSelf );
     free_dc_state( dc );
 }
@@ -266,7 +271,6 @@ void pop_dc_driver( DC * dc, PHYSDEV physdev )
     assert( physdev == dc->physDev );
     assert( physdev != &dc->nulldrv );
     dc->physDev = physdev->next;
-    physdev->funcs->pDeleteDC( physdev );
 }
 
 
