@@ -10456,6 +10456,8 @@ msgstr ""
 "成するのを忘れないでください!"
 
 #: winecfg.rc:80
+#, fuzzy
+msgctxt "Drive letter"
 msgid "Letter"
 msgstr "レター"
 

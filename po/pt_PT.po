@@ -10904,6 +10904,8 @@ msgstr ""
 "danificar-se se não existir. Se continuar lembre-se de recriar a unidade!"
 
 #: winecfg.rc:80
+#, fuzzy
+msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Letra"
 

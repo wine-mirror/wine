@@ -10619,6 +10619,8 @@ msgid ""
 msgstr ""
 
 #: winecfg.rc:80
+#, fuzzy
+msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Letter"
 

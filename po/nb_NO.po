@@ -10770,6 +10770,8 @@ msgstr ""
 "ikke er der. Husk å lage den på nytt hvis du fortsetter."
 
 #: winecfg.rc:80
+#, fuzzy
+msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Bokstav"
 

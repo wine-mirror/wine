@@ -10747,6 +10747,8 @@ msgstr ""
 "hvis det ikke gør. Hvis du forsætter, så husk at lave det igen!"
 
 #: winecfg.rc:80
+#, fuzzy
+msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Bogstav"
 

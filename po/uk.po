@@ -10460,6 +10460,8 @@ msgstr ""
 "вирішили видалити диск, не забудьте створити новий!"
 
 #: winecfg.rc:80
+#, fuzzy
+msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Буква"
 

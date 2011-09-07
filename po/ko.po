@@ -10424,6 +10424,8 @@ msgstr ""
 "다. 만약 당신이 계속 진행하기를 원한다면 반드시 다시 만드십시오!"
 
 #: winecfg.rc:80
+#, fuzzy
+msgctxt "Drive letter"
 msgid "Letter"
 msgstr "문자"
 

@@ -10502,6 +10502,8 @@ msgstr ""
 "neegzistuoja. Jei tęsite, nepamirškite atkurti C disko!"
 
 #: winecfg.rc:80
+#, fuzzy
+msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Raidė"
 

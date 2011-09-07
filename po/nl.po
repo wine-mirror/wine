@@ -10646,6 +10646,8 @@ msgstr ""
 "station C opnieuw aan te maken!"
 
 #: winecfg.rc:80
+#, fuzzy
+msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Letter"
 

@@ -77,7 +77,7 @@ BEGIN
     IDS_DRIVE_LETTERS_EXCEEDED  "You cannot add any more drives.\n\nEach drive must have a letter, from A to Z, so you cannot have more than 26."
     IDS_SYSTEM_DRIVE_LABEL      "System drive"
     IDS_CONFIRM_DELETE_C        "Are you sure you want to delete drive C?\n\nMost Windows applications expect drive C to exist, and will die messily if it doesn't. If you proceed remember to recreate it!"
-    IDS_COL_DRIVELETTER         "Letter"
+    IDS_COL_DRIVELETTER         "#msgctxt#Drive letter#Letter"
     IDS_COL_DRIVEMAPPING        "Drive Mapping"
     IDS_NO_DRIVE_C              "You don't have a drive C. This is not so great.\n\nRemember to click 'Add' in the Drives tab to create one!\n"
 END

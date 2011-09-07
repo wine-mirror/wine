@@ -10928,6 +10928,8 @@ msgstr ""
 "fallarán si no existe. ¡Si lo hace recuerde volver a crearla!"
 
 #: winecfg.rc:80
+#, fuzzy
+msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Letra"
 

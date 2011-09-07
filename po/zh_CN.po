@@ -10423,6 +10423,8 @@ msgstr ""
 "得重新建立一个！"
 
 #: winecfg.rc:80
+#, fuzzy
+msgctxt "Drive letter"
 msgid "Letter"
 msgstr "盘符"
 

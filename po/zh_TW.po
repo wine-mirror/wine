@@ -10485,6 +10485,8 @@ msgstr ""
 "除了它， 請記得要重新建立一個！"
 
 #: winecfg.rc:80
+#, fuzzy
+msgctxt "Drive letter"
 msgid "Letter"
 msgstr "字母"
 

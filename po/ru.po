@@ -10474,6 +10474,8 @@ msgstr ""
 "решили удалить диск, не забудьте создать новый!"
 
 #: winecfg.rc:80
+#, fuzzy
+msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Диск"
 

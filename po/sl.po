@@ -10525,6 +10525,8 @@ msgstr ""
 "boste pogon odstranili, ga pozneje ne pozabite ponovno dodati!"
 
 #: winecfg.rc:80
+#, fuzzy
+msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Črka"
 

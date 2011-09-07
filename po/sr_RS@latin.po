@@ -10527,6 +10527,8 @@ msgstr ""
 "postoji. Ako nastavite setite se da kreirate drajv C!"
 
 #: winecfg.rc:80
+#, fuzzy
+msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Slovo"
 

@@ -10489,6 +10489,8 @@ msgstr ""
 "ponownym jego utworzeniu!"
 
 #: winecfg.rc:80
+#, fuzzy
+msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Litera"
 

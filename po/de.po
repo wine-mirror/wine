@@ -10551,6 +10551,8 @@ msgstr ""
 "Laufwerk C neu zu erstellen!"
 
 #: winecfg.rc:80
+#, fuzzy
+msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Buchst."
 
