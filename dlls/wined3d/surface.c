@@ -1000,7 +1000,7 @@ static void surface_unmap(struct wined3d_surface *surface)
          * date because only a subrectangle was read in Map(). */
         if (!fullsurface)
         {
-            surface_modify_location(surface, SFLAG_INDRAWABLE, TRUE);
+            surface_modify_location(surface, surface->draw_binding, TRUE);
             surface_evict_sysmem(surface);
         }
 
