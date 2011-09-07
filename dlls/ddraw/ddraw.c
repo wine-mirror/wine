@@ -2833,6 +2833,47 @@ static HRESULT ddraw_create_gdi_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSur
     return hr;
 }
 
+static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurfaceImpl *surface)
+{
+    HRESULT hr = WINED3D_OK;
+
+    /* If the implementation is OpenGL and there's no d3ddevice, attach a
+     * d3ddevice. But attach the d3ddevice only if the currently created
+     * surface was a primary surface (2D app in 3D mode) or a 3DDEVICE surface
+     * (3D app). The only case I can think of where this doesn't apply is when
+     * a 2D app was configured by the user to run with OpenGL and it didn't
+     * create the render target as first surface. In this case the render
+     * target creation will cause the 3D init. */
+    if (DefaultSurfaceType == SURFACE_OPENGL)
+    {
+        IDirectDrawSurfaceImpl *target = surface, *primary;
+        struct list *entry;
+
+        /* Search for the primary to use as render target. */
+        LIST_FOR_EACH(entry, &ddraw->surface_list)
+        {
+            primary = LIST_ENTRY(entry, IDirectDrawSurfaceImpl, surface_list_entry);
+            if ((primary->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER))
+                    == (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER))
+            {
+                TRACE("Using primary %p as render target.\n", target);
+                target = primary;
+                break;
+            }
+        }
+
+        TRACE("Attaching a D3DDevice, rendertarget = %p.\n", target);
+        hr = ddraw_attach_d3d_device(ddraw, target);
+    }
+    else if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+    {
+        hr = ddraw_create_gdi_swapchain(ddraw, surface);
+    }
+
+    return hr;
+
+}
+
 /*****************************************************************************
  * IDirectDraw7::CreateSurface
  *
@@ -3211,42 +3252,7 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
 
     if (!ddraw->d3d_initialized && desc2.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE))
     {
-        HRESULT hr = WINED3D_OK;
-
-        /* If the implementation is OpenGL and there's no d3ddevice, attach a
-         * d3ddevice. But attach the d3ddevice only if the currently created
-         * surface was a primary surface (2D app in 3D mode) or a 3DDEVICE
-         * surface (3D app). The only case I can think of where this doesn't
-         * apply is when a 2D app was configured by the user to run with
-         * OpenGL and it didn't create the render target as first surface. In
-         * this case the render target creation will cause the 3D init. */
-        if (DefaultSurfaceType == SURFACE_OPENGL)
-        {
-            IDirectDrawSurfaceImpl *target = object, *surface;
-            struct list *entry;
-
-            /* Search for the primary to use as render target. */
-            LIST_FOR_EACH(entry, &ddraw->surface_list)
-            {
-                surface = LIST_ENTRY(entry, IDirectDrawSurfaceImpl, surface_list_entry);
-                if ((surface->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER))
-                        == (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER))
-                {
-                    TRACE("Using primary %p as render target.\n", target);
-                    target = surface;
-                    break;
-                }
-            }
-
-            TRACE("Attaching a D3DDevice, rendertarget = %p.\n", target);
-            hr = ddraw_attach_d3d_device(ddraw, target);
-        }
-        else if (desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-        {
-            hr = ddraw_create_gdi_swapchain(ddraw, object);
-        }
-
-        if (FAILED(hr))
+        if (FAILED(hr = ddraw_create_swapchain(ddraw, object)))
         {
             IDirectDrawSurfaceImpl *release_surf;
             ERR("Failed to create swapchain, hr %#x.\n", hr);
