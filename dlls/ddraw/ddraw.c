@@ -3209,49 +3209,57 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
         return hr;
     }
 
-    /* If the implementation is OpenGL and there's no d3ddevice, attach a d3ddevice
-     * But attach the d3ddevice only if the currently created surface was
-     * a primary surface (2D app in 3D mode) or a 3DDEVICE surface (3D app)
-     * The only case I can think of where this doesn't apply is when a
-     * 2D app was configured by the user to run with OpenGL and it didn't create
-     * the render target as first surface. In this case the render target creation
-     * will cause the 3D init. */
-    if (DefaultSurfaceType == SURFACE_OPENGL && !ddraw->d3d_initialized
-            && desc2.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE))
+    if (!ddraw->d3d_initialized && desc2.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE))
     {
-        IDirectDrawSurfaceImpl *target = object, *surface;
-        struct list *entry;
+        HRESULT hr = WINED3D_OK;
 
-        /* Search for the primary to use as render target */
-        LIST_FOR_EACH(entry, &ddraw->surface_list)
+        /* If the implementation is OpenGL and there's no d3ddevice, attach a
+         * d3ddevice. But attach the d3ddevice only if the currently created
+         * surface was a primary surface (2D app in 3D mode) or a 3DDEVICE
+         * surface (3D app). The only case I can think of where this doesn't
+         * apply is when a 2D app was configured by the user to run with
+         * OpenGL and it didn't create the render target as first surface. In
+         * this case the render target creation will cause the 3D init. */
+        if (DefaultSurfaceType == SURFACE_OPENGL)
         {
-            surface = LIST_ENTRY(entry, IDirectDrawSurfaceImpl, surface_list_entry);
-            if((surface->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER)) ==
-               (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER))
+            IDirectDrawSurfaceImpl *target = object, *surface;
+            struct list *entry;
+
+            /* Search for the primary to use as render target. */
+            LIST_FOR_EACH(entry, &ddraw->surface_list)
             {
-                /* found */
-                target = surface;
-                TRACE("Using primary %p as render target\n", target);
-                break;
+                surface = LIST_ENTRY(entry, IDirectDrawSurfaceImpl, surface_list_entry);
+                if ((surface->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER))
+                        == (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER))
+                {
+                    TRACE("Using primary %p as render target.\n", target);
+                    target = surface;
+                    break;
+                }
             }
+
+            TRACE("Attaching a D3DDevice, rendertarget = %p.\n", target);
+            hr = ddraw_attach_d3d_device(ddraw, target);
+        }
+        else if (desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+        {
+            hr = ddraw_create_gdi_swapchain(ddraw, object);
         }
 
-        TRACE("(%p) Attaching a D3DDevice, rendertarget = %p\n", ddraw, target);
-        hr = ddraw_attach_d3d_device(ddraw, target);
-        if (hr != D3D_OK)
+        if (FAILED(hr))
         {
             IDirectDrawSurfaceImpl *release_surf;
-            ERR("ddraw_attach_d3d_device failed, hr %#x\n", hr);
+            ERR("Failed to create swapchain, hr %#x.\n", hr);
             *Surf = NULL;
 
-            /* The before created surface structures are in an incomplete state here.
-             * WineD3D holds the reference on the IParents, and it released them on the failure
-             * already. So the regular release method implementation would fail on the attempt
-             * to destroy either the IParents or the swapchain. So free the surface here.
-             * The surface structure here is a list, not a tree, because onscreen targets
-             * cannot be cube textures
-             */
-            while(object)
+            /* The earlier created surface structures are in an incomplete
+             * state here. Wined3d holds the reference on the parents, and it
+             * released them on the failure already. So the regular release
+             * method implementation would fail on the attempt to destroy
+             * either the parents or the swapchain. So free the surface here.
+             * The surface structure here is a list, not a tree, because
+             * onscreen targets cannot be cube textures. */
+            while (object)
             {
                 release_surf = object;
                 object = object->complex_array[0];
@@ -3260,10 +3268,6 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
             LeaveCriticalSection(&ddraw_cs);
             return hr;
         }
-    }
-    else if(!(ddraw->d3d_initialized) && desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-    {
-        ddraw_create_gdi_swapchain(ddraw, object);
     }
 
     /* Create a WineD3DTexture if a texture was requested */
