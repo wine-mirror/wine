@@ -67,6 +67,10 @@ static const WCHAR parmY[] = {'/','Y','\0'};
 static const WCHAR parmNoY[] = {'/','-','Y','\0'};
 static const WCHAR nullW[] = {'\0'};
 
+const WCHAR externals[][10] = {
+        {'A','T','T','R','I','B','\0'}
+};
+
 /**************************************************************************
  * WCMD_ask_confirm
  *
@@ -1330,11 +1334,24 @@ void WCMD_give_help (const WCHAR *command) {
     WCMD_output_asis (WCMD_LoadMessage(WCMD_ALLHELP));
   }
   else {
+    /* Display help message for builtin command */
     for (i=0; i<=WCMD_EXIT; i++) {
       if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
 	  command, -1, inbuilt[i], -1) == CSTR_EQUAL) {
 	WCMD_output_asis (WCMD_LoadMessage(i));
 	return;
+      }
+    }
+    /* Launch the command with the /? option for external commands shipped with cmd.exe */
+    for (i = 0; i <= (sizeof(externals)/sizeof(externals[0])); i++) {
+      if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+	  command, -1, externals[i], -1) == CSTR_EQUAL) {
+        WCHAR cmd[128];
+        static const WCHAR helpW[] = {' ', '/','?','\0'};
+        strcpyW(cmd, command);
+        strcatW(cmd, helpW);
+        WCMD_run_program(cmd, 0);
+        return;
       }
     }
     WCMD_output (WCMD_LoadMessage(WCMD_NOCMDHELP), command);
