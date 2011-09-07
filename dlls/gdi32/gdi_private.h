@@ -342,7 +342,6 @@ extern DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, str
 /* driver.c */
 extern const DC_FUNCTIONS null_driver DECLSPEC_HIDDEN;
 extern const DC_FUNCTIONS dib_driver DECLSPEC_HIDDEN;
-extern const DC_FUNCTIONS *DRIVER_get_display_driver(void) DECLSPEC_HIDDEN;
 extern const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name ) DECLSPEC_HIDDEN;
 extern BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size ) DECLSPEC_HIDDEN;
 

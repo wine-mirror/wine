@@ -86,11 +86,11 @@ static struct graphics_driver *create_driver( HMODULE module )
 
 
 /**********************************************************************
- *	     DRIVER_get_display_driver
+ *	     get_display_driver
  *
  * Special case for loading the display driver: get the name from the config file
  */
-const DC_FUNCTIONS *DRIVER_get_display_driver(void)
+static const struct gdi_dc_funcs *get_display_driver(void)
 {
     struct graphics_driver *driver;
     char buffer[MAX_PATH], libname[32], *name, *next;
@@ -146,7 +146,7 @@ const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name )
     static const WCHAR display1W[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','1',0};
 
     /* display driver is a special case */
-    if (!strcmpiW( name, displayW ) || !strcmpiW( name, display1W )) return DRIVER_get_display_driver();
+    if (!strcmpiW( name, displayW ) || !strcmpiW( name, display1W )) return get_display_driver();
 
     if ((module = GetModuleHandleW( name )))
     {
@@ -216,6 +216,12 @@ static BOOL nulldrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom
 static BOOL nulldrv_CreateBitmap( PHYSDEV dev, HBITMAP bitmap )
 {
     return TRUE;
+}
+
+static BOOL nulldrv_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
+{
+    if (!display_driver || !display_driver->funcs->pCreateCompatibleDC) return TRUE;
+    return display_driver->funcs->pCreateCompatibleDC( NULL, pdev );
 }
 
 static BOOL nulldrv_CreateDC( HDC hdc, PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
@@ -664,6 +670,7 @@ const DC_FUNCTIONS null_driver =
     nulldrv_Chord,                      /* pChord */
     nulldrv_CloseFigure,                /* pCloseFigure */
     nulldrv_CreateBitmap,               /* pCreateBitmap */
+    nulldrv_CreateCompatibleDC,         /* pCreateCompatibleDC */
     nulldrv_CreateDC,                   /* pCreateDC */
     nulldrv_CreateDIBSection,           /* pCreateDIBSection */
     nulldrv_DeleteBitmap,               /* pDeleteBitmap */

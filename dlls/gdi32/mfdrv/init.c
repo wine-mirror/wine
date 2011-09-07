@@ -91,6 +91,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_Chord,                     /* pChord */
     MFDRV_CloseFigure,               /* pCloseFigure */
     NULL,                            /* pCreateBitmap */
+    NULL,                            /* pCreateCompatibleDC */
     NULL,                            /* pCreateDC */
     NULL,                            /* pCreateDIBSection */
     NULL,                            /* pDeleteBitmap */

@@ -719,7 +719,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
 {
     DC *dc, *origDC;
     HDC ret;
-    const DC_FUNCTIONS *funcs = NULL;
+    const struct gdi_dc_funcs *funcs = &null_driver;
     PHYSDEV physDev = NULL;
 
     GDI_CheckNotLock();
@@ -727,13 +727,10 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     if (hdc)
     {
         if (!(origDC = get_dc_ptr( hdc ))) return 0;
-        physDev = GET_DC_PHYSDEV( origDC, pCreateDC );
-        if (physDev != &origDC->nulldrv) funcs = physDev->funcs;
-        else physDev = NULL;
+        physDev = GET_DC_PHYSDEV( origDC, pCreateCompatibleDC );
+        funcs = physDev->funcs;
         release_dc_ptr( origDC );
     }
-
-    if (!funcs && !(funcs = DRIVER_get_display_driver())) return 0;
 
     if (!(dc = alloc_dc_ptr( OBJ_MEMDC ))) goto error;
 
@@ -748,17 +745,10 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
 
     ret = dc->hSelf;
 
-    /* Pass the driver-specific physical device info into
-     * the new DC. The driver may use this read-only info
-     * while creating the compatible DC. */
-    if (funcs->pCreateDC)
+    if (!funcs->pCreateCompatibleDC( physDev, &dc->physDev ))
     {
-        if (!funcs->pCreateDC( dc->hSelf, &physDev, NULL, NULL, NULL, NULL ))
-        {
-            WARN("creation aborted by device\n");
-            goto error;
-        }
-        push_dc_driver( &dc->physDev, physDev, funcs );
+        WARN("creation aborted by device\n");
+        goto error;
     }
     DC_InitDC( dc );
     release_dc_ptr( dc );

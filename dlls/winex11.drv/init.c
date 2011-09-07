@@ -51,6 +51,7 @@ unsigned int text_caps = (TC_OP_CHARACTER | TC_OP_STROKE | TC_CP_STROKE |
 static const WCHAR dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
 static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s','\0'};
 
+static const struct gdi_dc_funcs x11drv_funcs;
 
 /******************************************************************************
  *      get_dpi
@@ -115,50 +116,68 @@ void X11DRV_GDI_Finalize(void)
     /* XCloseDisplay( gdi_display ); */
 }
 
+
+static X11DRV_PDEVICE *create_x11_physdev( Drawable drawable )
+{
+    X11DRV_PDEVICE *physDev;
+
+    if (!device_init_done) device_init();
+
+    if (!(physDev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev) ))) return NULL;
+
+    if (!(physDev->region = CreateRectRgn( 0, 0, 0, 0 )))
+    {
+        HeapFree( GetProcessHeap(), 0, physDev );
+        return NULL;
+    }
+
+    wine_tsx11_lock();
+    physDev->drawable = drawable;
+    physDev->gc = XCreateGC( gdi_display, drawable, 0, NULL );
+    XSetGraphicsExposures( gdi_display, physDev->gc, False );
+    XSetSubwindowMode( gdi_display, physDev->gc, IncludeInferiors );
+    XFlush( gdi_display );
+    wine_tsx11_unlock();
+    return physDev;
+}
+
 /**********************************************************************
  *	     X11DRV_CreateDC
  */
 static BOOL X11DRV_CreateDC( HDC hdc, PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
                       LPCWSTR output, const DEVMODEW* initData )
 {
-    X11DRV_PDEVICE *physDev;
+    X11DRV_PDEVICE *physDev = create_x11_physdev( root_window );
 
-    if (!device_init_done) device_init();
-
-    physDev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev) );
     if (!physDev) return FALSE;
 
+    physDev->depth         = screen_depth;
+    physDev->color_shifts  = &X11DRV_PALETTE_default_shifts;
+    physDev->drawable_rect = virtual_screen_rect;
+    SetRect( &physDev->dc_rect, 0, 0, virtual_screen_rect.right - virtual_screen_rect.left,
+             virtual_screen_rect.bottom - virtual_screen_rect.top );
     *pdev = &physDev->dev;
+    return TRUE;
+}
 
-    if (GetObjectType( hdc ) == OBJ_MEMDC)
-    {
-        if (!BITMAP_stock_phys_bitmap.hbitmap)
-            BITMAP_stock_phys_bitmap.hbitmap = GetCurrentObject( hdc, OBJ_BITMAP );
-        physDev->bitmap    = &BITMAP_stock_phys_bitmap;
-        physDev->drawable  = BITMAP_stock_phys_bitmap.pixmap;
-        physDev->depth     = 1;
-        physDev->color_shifts = NULL;
-        SetRect( &physDev->drawable_rect, 0, 0, 1, 1 );
-        physDev->dc_rect = physDev->drawable_rect;
-    }
-    else
-    {
-        physDev->bitmap    = NULL;
-        physDev->drawable  = root_window;
-        physDev->depth     = screen_depth;
-        physDev->color_shifts = &X11DRV_PALETTE_default_shifts;
-        physDev->drawable_rect = virtual_screen_rect;
-        SetRect( &physDev->dc_rect, 0, 0, virtual_screen_rect.right - virtual_screen_rect.left,
-                 virtual_screen_rect.bottom - virtual_screen_rect.top );
-    }
-    physDev->region = CreateRectRgn( 0, 0, 0, 0 );
 
-    wine_tsx11_lock();
-    physDev->gc = XCreateGC( gdi_display, physDev->drawable, 0, NULL );
-    XSetGraphicsExposures( gdi_display, physDev->gc, False );
-    XSetSubwindowMode( gdi_display, physDev->gc, IncludeInferiors );
-    XFlush( gdi_display );
-    wine_tsx11_unlock();
+/**********************************************************************
+ *	     X11DRV_CreateCompatibleDC
+ */
+static BOOL X11DRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
+{
+    X11DRV_PDEVICE *physDev = create_x11_physdev( BITMAP_stock_phys_bitmap.pixmap );
+
+    if (!physDev) return FALSE;
+
+    if (!BITMAP_stock_phys_bitmap.hbitmap)
+        BITMAP_stock_phys_bitmap.hbitmap = GetCurrentObject( (*pdev)->hdc, OBJ_BITMAP );
+
+    physDev->bitmap = &BITMAP_stock_phys_bitmap;
+    physDev->depth  = 1;
+    SetRect( &physDev->drawable_rect, 0, 0, 1, 1 );
+    physDev->dc_rect = physDev->drawable_rect;
+    push_dc_driver( pdev, &physDev->dev, &x11drv_funcs );
     return TRUE;
 }
 
@@ -456,6 +475,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_Chord,                       /* pChord */
     NULL,                               /* pCloseFigure */
     X11DRV_CreateBitmap,                /* pCreateBitmap */
+    X11DRV_CreateCompatibleDC,          /* pCreateCompatibleDC */
     X11DRV_CreateDC,                    /* pCreateDC */
     X11DRV_CreateDIBSection,            /* pCreateDIBSection */
     X11DRV_DeleteBitmap,                /* pDeleteBitmap */

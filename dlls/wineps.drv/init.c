@@ -114,6 +114,7 @@ static const LOGFONTA DefaultLogFont = {
 };
 
 static const CHAR default_devmodeA[] = "Default DevMode";
+static const struct gdi_dc_funcs psdrv_funcs;
 
 /*********************************************************************
  *	     DllMain
@@ -298,6 +299,27 @@ static LPDEVMODEA DEVMODEdupWtoA(HANDLE heap, const DEVMODEW *dmW)
 }
 
 
+static PSDRV_PDEVICE *create_psdrv_physdev( PRINTERINFO *pi )
+{
+    PSDRV_PDEVICE *physDev;
+
+    physDev = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(*physDev) );
+    if (!physDev) return NULL;
+
+    physDev->Devmode = HeapAlloc( PSDRV_Heap, 0, sizeof(PSDRV_DEVMODEA) );
+    if (!physDev->Devmode)
+    {
+        HeapFree( PSDRV_Heap, 0, physDev );
+	return NULL;
+    }
+
+    *physDev->Devmode = *pi->Devmode;
+    physDev->pi = pi;
+    physDev->logPixelsX = pi->ppd->DefaultResolution;
+    physDev->logPixelsY = pi->ppd->DefaultResolution;
+    return physDev;
+}
+
 /**********************************************************************
  *	     PSDRV_CreateDC
  */
@@ -306,26 +328,18 @@ static BOOL PSDRV_CreateDC( HDC hdc, PHYSDEV *pdev, LPCWSTR driver, LPCWSTR devi
 {
     PSDRV_PDEVICE *physDev;
     PRINTERINFO *pi;
-
-    /* If no device name was specified, retrieve the device name
-     * from the PRINTERINFO structure from the DC's physDev.
-     * (See CreateCompatibleDC) */
-    if ( !device && *pdev )
-    {
-        pi = PSDRV_FindPrinterInfo(get_psdrv_dev(*pdev)->pi->FriendlyName);
-    }
-    else
-    {
-        DWORD len = WideCharToMultiByte(CP_ACP, 0, device, -1, NULL, 0, NULL, NULL);
-        char *deviceA = HeapAlloc(GetProcessHeap(), 0, len);
-        WideCharToMultiByte(CP_ACP, 0, device, -1, deviceA, len, NULL, NULL);
-        pi = PSDRV_FindPrinterInfo(deviceA);
-        HeapFree(GetProcessHeap(), 0, deviceA);
-    }
+    DWORD len;
+    char *deviceA;
 
     TRACE("(%s %s %s %p)\n", debugstr_w(driver), debugstr_w(device),
                              debugstr_w(output), initData);
 
+    if (!device) return FALSE;
+    len = WideCharToMultiByte(CP_ACP, 0, device, -1, NULL, 0, NULL, NULL);
+    deviceA = HeapAlloc(GetProcessHeap(), 0, len);
+    WideCharToMultiByte(CP_ACP, 0, device, -1, deviceA, len, NULL, NULL);
+    pi = PSDRV_FindPrinterInfo(deviceA);
+    HeapFree(GetProcessHeap(), 0, deviceA);
     if(!pi) return FALSE;
 
     if(!pi->Fonts) {
@@ -339,30 +353,14 @@ static BOOL PSDRV_CreateDC( HDC hdc, PHYSDEV *pdev, LPCWSTR driver, LPCWSTR devi
         }
     }
 
-    physDev = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(*physDev) );
-    if (!physDev) return FALSE;
+    if (!(physDev = create_psdrv_physdev( pi ))) return FALSE;
     *pdev = &physDev->dev;
-
-    physDev->pi = pi;
-
-    physDev->Devmode = HeapAlloc( PSDRV_Heap, 0, sizeof(PSDRV_DEVMODEA) );
-    if(!physDev->Devmode) {
-        HeapFree( PSDRV_Heap, 0, physDev );
-	return FALSE;
-    }
-
-    *physDev->Devmode = *pi->Devmode;
-
-    physDev->logPixelsX = physDev->pi->ppd->DefaultResolution;
-    physDev->logPixelsY = physDev->pi->ppd->DefaultResolution;
 
     if (output && *output) {
         INT len = WideCharToMultiByte( CP_ACP, 0, output, -1, NULL, 0, NULL, NULL );
         if ((physDev->job.output = HeapAlloc( PSDRV_Heap, 0, len )))
             WideCharToMultiByte( CP_ACP, 0, output, -1, physDev->job.output, len, NULL, NULL );
-    } else
-        physDev->job.output = NULL;
-    physDev->job.id = 0;
+    }
 
     if(initData) {
         DEVMODEA *devmodeA = DEVMODEdupWtoA(PSDRV_Heap, initData);
@@ -372,6 +370,24 @@ static BOOL PSDRV_CreateDC( HDC hdc, PHYSDEV *pdev, LPCWSTR driver, LPCWSTR devi
 
     PSDRV_UpdateDevCaps(physDev);
     SelectObject( hdc, PSDRV_DefaultFont );
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *	     PSDRV_CreateCompatibleDC
+ */
+static BOOL PSDRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
+{
+    HDC hdc = (*pdev)->hdc;
+    PSDRV_PDEVICE *physDev, *orig_dev = get_psdrv_dev( orig );
+    PRINTERINFO *pi = PSDRV_FindPrinterInfo( orig_dev->pi->FriendlyName );
+
+    if (!pi) return FALSE;
+    if (!(physDev = create_psdrv_physdev( pi ))) return FALSE;
+    PSDRV_UpdateDevCaps(physDev);
+    SelectObject( hdc, PSDRV_DefaultFont );
+    push_dc_driver( pdev, &physDev->dev, &psdrv_funcs );
     return TRUE;
 }
 
@@ -813,6 +829,7 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_Chord,                        /* pChord */
     NULL,                               /* pCloseFigure */
     NULL,                               /* pCreateBitmap */
+    PSDRV_CreateCompatibleDC,           /* pCreateCompatibleDC */
     PSDRV_CreateDC,                     /* pCreateDC */
     NULL,                               /* pCreateDIBSection */
     NULL,                               /* pDeleteBitmap */

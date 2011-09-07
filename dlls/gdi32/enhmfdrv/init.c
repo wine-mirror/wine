@@ -47,6 +47,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_Chord,                    /* pChord */
     EMFDRV_CloseFigure,              /* pCloseFigure */
     NULL,                            /* pCreateBitmap */
+    NULL,                            /* pCreateCompatibleDC */
     NULL,                            /* pCreateDC */
     NULL,                            /* pCreateDIBSection */
     NULL,                            /* pDeleteBitmap */

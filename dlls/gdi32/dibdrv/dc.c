@@ -493,6 +493,7 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pChord */
     NULL,                               /* pCloseFigure */
     NULL,                               /* pCreateBitmap */
+    NULL,                               /* pCreateCompatibleDC */
     NULL,                               /* pCreateDC */
     NULL,                               /* pCreateDIBSection */
     NULL,                               /* pDeleteBitmap */
