@@ -501,7 +501,8 @@ static UINT set_user_sid_prop( MSIPACKAGE *package )
     UINT r = ERROR_FUNCTION_FAILED;
 
     size = 0;
-    GetUserNameW( NULL, &size );
+    if (!GetUserNameW( NULL, &size ))
+	return r;
 
     user_name = msi_alloc( (size + 1) * sizeof(WCHAR) );
     if (!user_name)
