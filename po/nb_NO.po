@@ -523,7 +523,7 @@ msgstr "Ingen toner; "
 
 #: comdlg32.rc:113
 msgid "Page punt; "
-msgstr "Page punt; "
+msgstr ""
 
 #: comdlg32.rc:114
 msgid "Interrupted by user; "
@@ -3259,7 +3259,7 @@ msgstr "Ugyldig meldingsnavn\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2\n"
-msgstr "Message 0x%1 not found in file %2\n"
+msgstr ""
 
 #: winerror.mc:971
 msgid "Invalid address\n"
@@ -5717,7 +5717,7 @@ msgstr "Wine Video 1-videokodek"
 
 #: oleacc.rc:27
 msgid "unknown object"
-msgstr "unknown object"
+msgstr ""
 
 #: oleacc.rc:28
 msgid "title bar"
@@ -5809,7 +5809,7 @@ msgstr "verktøylinje"
 
 #: oleacc.rc:50
 msgid "status bar"
-msgstr "status bar"
+msgstr ""
 
 #: oleacc.rc:51
 msgid "table"
@@ -8572,7 +8572,7 @@ msgstr "Ingen åpnekommando er tilknyttet filtypene '%s'\n"
 
 #: cmd.rc:294
 msgid "Overwrite %s"
-msgstr "Overwrite %s"
+msgstr ""
 
 #: cmd.rc:295
 msgid "More..."
@@ -8580,43 +8580,43 @@ msgstr "Mer..."
 
 #: cmd.rc:296
 msgid "Line in Batch processing possibly truncated. Using:\n"
-msgstr "Line in Batch processing possibly truncated. Using:\n"
+msgstr ""
 
 #: cmd.rc:298
 msgid "Argument missing\n"
-msgstr "Argument missing\n"
+msgstr ""
 
 #: cmd.rc:299
 msgid "Syntax error\n"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: cmd.rc:301
 msgid "No help available for %s\n"
-msgstr "No help available for %s\n"
+msgstr ""
 
 #: cmd.rc:302
 msgid "Target to GOTO not found\n"
-msgstr "Target to GOTO not found\n"
+msgstr ""
 
 #: cmd.rc:303
 msgid "Current Date is %s\n"
-msgstr "Current Date is %s\n"
+msgstr ""
 
 #: cmd.rc:304
 msgid "Current Time is %s\n"
-msgstr "Current Time is %s\n"
+msgstr ""
 
 #: cmd.rc:305
 msgid "Enter new date: "
-msgstr "Enter new date: "
+msgstr ""
 
 #: cmd.rc:306
 msgid "Enter new time: "
-msgstr "Enter new time: "
+msgstr ""
 
 #: cmd.rc:307
 msgid "Environment variable %s not defined\n"
-msgstr "Environment variable %s not defined\n"
+msgstr ""
 
 #: cmd.rc:308 xcopy.rc:38
 msgid "Failed to open '%s'\n"
@@ -8624,7 +8624,7 @@ msgstr "Klarte ikke åpne «%s»\n"
 
 #: cmd.rc:309
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr "Cannot call batch label outside of a batch script\n"
+msgstr ""
 
 #: cmd.rc:310 xcopy.rc:42
 msgctxt "All key"
@@ -8633,23 +8633,23 @@ msgstr "A"
 
 #: cmd.rc:311
 msgid "%s, Delete"
-msgstr "%s, Delete"
+msgstr ""
 
 #: cmd.rc:312
 msgid "Echo is %s\n"
-msgstr "Echo is %s\n"
+msgstr ""
 
 #: cmd.rc:313
 msgid "Verify is %s\n"
-msgstr "Verify is %s\n"
+msgstr ""
 
 #: cmd.rc:314
 msgid "Verify must be ON or OFF\n"
-msgstr "Verify must be ON or OFF\n"
+msgstr ""
 
 #: cmd.rc:315
 msgid "Parameter error\n"
-msgstr "Parameter error\n"
+msgstr ""
 
 #: cmd.rc:316
 msgid ""
@@ -8657,21 +8657,18 @@ msgid ""
 "Volume Serial Number is %04x-%04x\n"
 "\n"
 msgstr ""
-"Volume in drive %c is %s\n"
-"Volume Serial Number is %04x-%04x\n"
-"\n"
 
 #: cmd.rc:317
 msgid "Volume label (11 characters, ENTER for none)?"
-msgstr "Volume label (11 characters, ENTER for none)?"
+msgstr ""
 
 #: cmd.rc:318
 msgid "PATH not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: cmd.rc:319
 msgid "Press Return key to continue: "
-msgstr "Press Return key to continue: "
+msgstr ""
 
 #: cmd.rc:320
 msgid "Wine Command Prompt"
@@ -8679,15 +8676,15 @@ msgstr "Wine Command Prompt"
 
 #: cmd.rc:321
 msgid "CMD Version %s\n"
-msgstr "CMD Version %s\n"
+msgstr ""
 
 #: cmd.rc:322
 msgid "More? "
-msgstr "More? "
+msgstr ""
 
 #: cmd.rc:323
 msgid "The input line is too long.\n"
-msgstr "The input line is too long.\n"
+msgstr ""
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10173,7 +10170,7 @@ msgstr "Oppgavebehandler"
 
 #: taskmgr.rc:182
 msgid "Create New Task"
-msgstr "Create New Task"
+msgstr ""
 
 #: taskmgr.rc:187
 msgid "Runs a new program"
