@@ -3767,8 +3767,6 @@ HRESULT CDECL wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc)
 
 HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined3d_surface *override, DWORD flags)
 {
-    struct wined3d_swapchain *swapchain;
-
     TRACE("surface %p, override %p, flags %#x.\n", surface, override, flags);
 
     if (flags)
@@ -3787,7 +3785,6 @@ HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined
         ERR("Flipped surface is not on a swapchain.\n");
         return WINEDDERR_NOTFLIPPABLE;
     }
-    swapchain = surface->container.u.swapchain;
 
     /* Flipping is only supported on render targets and overlays. */
     if (!(surface->resource.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_OVERLAY)))
