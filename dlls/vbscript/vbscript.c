@@ -20,8 +20,6 @@
 #include <assert.h>
 
 #include "vbscript.h"
-#include "parse.h"
-
 #include "objsafe.h"
 
 #include "wine/debug.h"
@@ -89,6 +87,9 @@ static HRESULT set_ctx_site(VBScript *This)
 
 static void destroy_script(script_ctx_t *ctx)
 {
+    while(!list_empty(&ctx->code_list))
+        release_vbscode(LIST_ENTRY(list_head(&ctx->code_list), vbscode_t, entry));
+
     while(!list_empty(&ctx->named_items)) {
         named_item_t *iter = LIST_ENTRY(list_head(&ctx->named_items), named_item_t, entry);
 
@@ -483,6 +484,7 @@ static HRESULT WINAPI VBScriptParse_InitNew(IActiveScriptParse *iface)
     if(!ctx)
         return E_OUTOFMEMORY;
 
+    list_init(&ctx->code_list);
     list_init(&ctx->named_items);
 
     old_ctx = InterlockedCompareExchangePointer((void**)&This->ctx, ctx, NULL);
@@ -514,18 +516,21 @@ static HRESULT WINAPI VBScriptParse_ParseScriptText(IActiveScriptParse *iface,
         DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
 {
     VBScript *This = impl_from_IActiveScriptParse(iface);
-    parser_ctx_t parser;
+    vbscode_t *code;
     HRESULT hres;
 
     TRACE("(%p)->(%s %s %p %s %s %u %x %p %p)\n", This, debugstr_w(pstrCode),
           debugstr_w(pstrItemName), punkContext, debugstr_w(pstrDelimiter),
           wine_dbgstr_longlong(dwSourceContextCookie), ulStartingLine, dwFlags, pvarResult, pexcepinfo);
 
-    hres = parse_script(&parser, pstrCode);
+    if(This->thread_id != GetCurrentThreadId() || This->state == SCRIPTSTATE_CLOSED)
+        return E_UNEXPECTED;
+
+    hres = compile_script(This->ctx, pstrCode, &code);
     if(FAILED(hres))
         return hres;
 
-    FIXME("compiling script not implemented\n");
+    FIXME("executing script not implemented\n");
     return E_NOTIMPL;
 }
 

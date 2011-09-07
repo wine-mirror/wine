@@ -31,6 +31,9 @@
 #include "wine/list.h"
 #include "wine/unicode.h"
 
+typedef struct _function_t function_t;
+typedef struct _vbscode_t vbscode_t;
+
 typedef struct named_item_t {
     IDispatch *disp;
     DWORD flags;
@@ -53,10 +56,43 @@ typedef struct {
 
     vbdisp_t *script_obj;
 
+    struct list code_list;
     struct list named_items;
 } script_ctx_t;
 
 HRESULT init_global(script_ctx_t*);
+
+#define OP_LIST \
+    X(ret, 0)
+
+typedef enum {
+#define X(x,n) OP_##x,
+OP_LIST
+#undef X
+    OP_LAST
+} vbsop_t;
+
+typedef struct {
+    vbsop_t op;
+} instr_t;
+
+struct _function_t {
+    unsigned code_off;
+    vbscode_t *code_ctx;
+};
+
+struct _vbscode_t {
+    instr_t *instrs;
+    WCHAR *source;
+
+    BOOL global_executed;
+    function_t global_code;
+
+    struct list entry;
+};
+
+void release_vbscode(vbscode_t*) DECLSPEC_HIDDEN;
+HRESULT compile_script(script_ctx_t*,const WCHAR*,vbscode_t**) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
 
@@ -68,6 +104,11 @@ static inline void *heap_alloc(size_t len)
 static inline void *heap_alloc_zero(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+}
+
+static inline void *heap_realloc(void *mem, size_t len)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, mem, len);
 }
 
 static inline BOOL heap_free(void *mem)
