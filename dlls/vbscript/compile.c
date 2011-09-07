@@ -34,6 +34,12 @@ typedef struct {
     vbscode_t *code;
 } compile_ctx_t;
 
+static inline instr_t *instr_ptr(compile_ctx_t *ctx, unsigned id)
+{
+    assert(id < ctx->instr_cnt);
+    return ctx->code->instrs + id;
+}
+
 static unsigned push_instr(compile_ctx_t *ctx, vbsop_t op)
 {
     assert(ctx->instr_size && ctx->instr_size >= ctx->instr_cnt);
@@ -53,17 +59,71 @@ static unsigned push_instr(compile_ctx_t *ctx, vbsop_t op)
     return ctx->instr_cnt++;
 }
 
+static HRESULT push_instr_str(compile_ctx_t *ctx, vbsop_t op, const WCHAR *arg)
+{
+    unsigned instr;
+
+    instr = push_instr(ctx, op);
+    if(instr == -1)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, instr)->arg1.str = arg;
+    return S_OK;
+}
+
+static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t *expr)
+{
+    HRESULT hres;
+
+    if(expr->args) {
+        FIXME("arguments not implemented\n");
+        return E_NOTIMPL;
+    }
+
+    if(expr->obj_expr) {
+        FIXME("obj_expr not implemented\n");
+        hres = E_NOTIMPL;
+    }else {
+        hres = push_instr_str(ctx, OP_icallv, expr->identifier);
+    }
+
+    return hres;
+}
+
+static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
+{
+    HRESULT hres;
+
+    while(stat) {
+        switch(stat->type) {
+        case STAT_CALL:
+            hres = compile_member_expression(ctx, ((call_statement_t*)stat)->expr);
+            break;
+        default:
+            FIXME("Unimplemented statement type %d\n", stat->type);
+            hres = E_NOTIMPL;
+        }
+
+        if(FAILED(hres))
+            return hres;
+        stat = stat->next;
+    }
+
+    return S_OK;
+}
+
 static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *func)
 {
+    HRESULT hres;
+
     func->code_off = ctx->instr_cnt;
+
+    hres = compile_statement(ctx, stat);
+    if(FAILED(hres))
+        return hres;
 
     if(push_instr(ctx, OP_ret) == -1)
         return E_OUTOFMEMORY;
-
-    if(stat) {
-        FIXME("statements compilation not implemented\n");
-        return E_NOTIMPL;
-    }
 
     return S_OK;
 }

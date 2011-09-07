@@ -33,6 +33,12 @@ typedef struct {
 
 typedef HRESULT (*instr_func_t)(exec_ctx_t*);
 
+static HRESULT interp_icallv(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT interp_ret(exec_ctx_t *ctx)
 {
     TRACE("\n");
@@ -42,13 +48,13 @@ static HRESULT interp_ret(exec_ctx_t *ctx)
 }
 
 static const instr_func_t op_funcs[] = {
-#define X(x,n) interp_ ## x,
+#define X(x,n,a,b) interp_ ## x,
 OP_LIST
 #undef X
 };
 
 static const unsigned op_move[] = {
-#define X(x,n) n,
+#define X(x,n,a,b) n,
 OP_LIST
 #undef X
 };

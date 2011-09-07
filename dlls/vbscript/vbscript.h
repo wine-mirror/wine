@@ -62,18 +62,30 @@ typedef struct {
 
 HRESULT init_global(script_ctx_t*);
 
-#define OP_LIST \
-    X(ret, 0)
+typedef enum {
+    ARG_NONE = 0,
+    ARG_STR
+} instr_arg_type_t;
+
+#define OP_LIST                                   \
+    X(icallv,         1, ARG_STR,     0)          \
+    X(ret,            0, 0,           0)
 
 typedef enum {
-#define X(x,n) OP_##x,
+#define X(x,n,a,b) OP_##x,
 OP_LIST
 #undef X
     OP_LAST
 } vbsop_t;
 
+typedef union {
+    const WCHAR *str;
+} instr_arg_t;
+
 typedef struct {
     vbsop_t op;
+    instr_arg_t arg1;
+    instr_arg_t arg2;
 } instr_t;
 
 struct _function_t {
