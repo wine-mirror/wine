@@ -703,12 +703,12 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
 
     old_physdev = GET_DC_PHYSDEV( dc, pSelectBitmap );
     if(old_physdev == &dc->dibdrv.dev)
-        pop_dc_driver( dc, old_physdev );
+        old_physdev = pop_dc_driver( &dc->physDev );
 
     if(bitmap->dib)
     {
         physdev = &dc->dibdrv.dev;
-        push_dc_driver( dc, physdev, physdev->funcs );
+        push_dc_driver( &dc->physDev, physdev, physdev->funcs );
     }
     else
         physdev = GET_DC_PHYSDEV( dc, pSelectBitmap );
@@ -742,8 +742,8 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
  done:
     if(!ret)
     {
-        if(physdev == &dc->dibdrv.dev) pop_dc_driver( dc, physdev );
-        if(old_physdev == &dc->dibdrv.dev) push_dc_driver( dc, old_physdev, old_physdev->funcs );
+        if(physdev == &dc->dibdrv.dev) pop_dc_driver( &dc->physDev );
+        if(old_physdev == &dc->dibdrv.dev) push_dc_driver( &dc->physDev, old_physdev, old_physdev->funcs );
     }
     release_dc_ptr( dc );
     return ret;

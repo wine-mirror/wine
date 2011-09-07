@@ -199,4 +199,19 @@ static inline PHYSDEV get_physdev_entry_point( PHYSDEV dev, size_t offset )
 #define GET_NEXT_PHYSDEV(dev,func) \
     get_physdev_entry_point( (dev)->next, FIELD_OFFSET(struct gdi_dc_funcs,func))
 
+static inline void push_dc_driver( PHYSDEV *dev, PHYSDEV physdev, const struct gdi_dc_funcs *funcs )
+{
+    physdev->funcs = funcs;
+    physdev->next = *dev;
+    physdev->hdc = (*dev)->hdc;
+    *dev = physdev;
+}
+
+static inline PHYSDEV pop_dc_driver( PHYSDEV *dev )
+{
+    PHYSDEV ret = *dev;
+    *dev = ret->next;
+    return ret;
+}
+
 #endif /* __WINE_WINE_GDI_DRIVER_H */

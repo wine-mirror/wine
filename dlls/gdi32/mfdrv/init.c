@@ -224,7 +224,7 @@ static DC *MFDRV_AllocMetaFile(void)
         return NULL;
     }
 
-    push_dc_driver( dc, &physDev->dev, &MFDRV_Funcs );
+    push_dc_driver( &dc->physDev, &physDev->dev, &MFDRV_Funcs );
 
     physDev->handles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, HANDLE_LIST_INC * sizeof(physDev->handles[0]));
     physDev->handles_size = HANDLE_LIST_INC;

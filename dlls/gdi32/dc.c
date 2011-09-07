@@ -183,8 +183,7 @@ void free_dc_ptr( DC *dc )
 
     while (dc->physDev != &dc->nulldrv)
     {
-        PHYSDEV physdev = dc->physDev;
-        pop_dc_driver( dc, physdev );
+        PHYSDEV physdev = pop_dc_driver( &dc->physDev );
         physdev->funcs->pDeleteDC( physdev );
     }
     free_gdi_handle( dc->hSelf );
@@ -244,33 +243,6 @@ void update_dc( DC *dc )
 {
     if (InterlockedExchange( &dc->dirty, 0 ) && dc->hookProc)
         dc->hookProc( dc->hSelf, DCHC_INVALIDVISRGN, dc->dwHookData, 0 );
-}
-
-
-/***********************************************************************
- *           push_dc_driver
- *
- * Push a driver on top of the DC driver stack.
- */
-void push_dc_driver( DC * dc, PHYSDEV physdev, const DC_FUNCTIONS *funcs )
-{
-    physdev->funcs = funcs;
-    physdev->next = dc->physDev;
-    physdev->hdc = dc->hSelf;
-    dc->physDev = physdev;
-}
-
-
-/***********************************************************************
- *           pop_dc_driver
- *
- * Pop the top driver from the DC driver stack.
- */
-void pop_dc_driver( DC * dc, PHYSDEV physdev )
-{
-    assert( physdev == dc->physDev );
-    assert( physdev != &dc->nulldrv );
-    dc->physDev = physdev->next;
 }
 
 
@@ -662,7 +634,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
             WARN("creation aborted by device\n" );
             goto error;
         }
-        push_dc_driver( dc, physdev, funcs );
+        push_dc_driver( &dc->physDev, physdev, funcs );
     }
 
     dc->vis_rect.left   = 0;
@@ -786,7 +758,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
             WARN("creation aborted by device\n");
             goto error;
         }
-        push_dc_driver( dc, physDev, funcs );
+        push_dc_driver( &dc->physDev, physDev, funcs );
     }
     DC_InitDC( dc );
     release_dc_ptr( dc );
