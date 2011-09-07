@@ -144,8 +144,8 @@ static X11DRV_PDEVICE *create_x11_physdev( Drawable drawable )
 /**********************************************************************
  *	     X11DRV_CreateDC
  */
-static BOOL X11DRV_CreateDC( HDC hdc, PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
-                      LPCWSTR output, const DEVMODEW* initData )
+static BOOL X11DRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
+                             LPCWSTR output, const DEVMODEW* initData )
 {
     X11DRV_PDEVICE *physDev = create_x11_physdev( root_window );
 
@@ -156,7 +156,7 @@ static BOOL X11DRV_CreateDC( HDC hdc, PHYSDEV *pdev, LPCWSTR driver, LPCWSTR dev
     physDev->drawable_rect = virtual_screen_rect;
     SetRect( &physDev->dc_rect, 0, 0, virtual_screen_rect.right - virtual_screen_rect.left,
              virtual_screen_rect.bottom - virtual_screen_rect.top );
-    *pdev = &physDev->dev;
+    push_dc_driver( pdev, &physDev->dev, &x11drv_funcs );
     return TRUE;
 }
 

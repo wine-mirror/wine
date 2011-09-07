@@ -224,7 +224,7 @@ static BOOL nulldrv_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
     return display_driver->funcs->pCreateCompatibleDC( NULL, pdev );
 }
 
-static BOOL nulldrv_CreateDC( HDC hdc, PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
+static BOOL nulldrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
                               LPCWSTR output, const DEVMODEW *devmode )
 {
     assert(0);  /* should never be called */

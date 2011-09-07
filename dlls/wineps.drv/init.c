@@ -323,8 +323,8 @@ static PSDRV_PDEVICE *create_psdrv_physdev( PRINTERINFO *pi )
 /**********************************************************************
  *	     PSDRV_CreateDC
  */
-static BOOL PSDRV_CreateDC( HDC hdc, PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
-                     LPCWSTR output, const DEVMODEW* initData )
+static BOOL PSDRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
+                            LPCWSTR output, const DEVMODEW* initData )
 {
     PSDRV_PDEVICE *physDev;
     PRINTERINFO *pi;
@@ -354,7 +354,6 @@ static BOOL PSDRV_CreateDC( HDC hdc, PHYSDEV *pdev, LPCWSTR driver, LPCWSTR devi
     }
 
     if (!(physDev = create_psdrv_physdev( pi ))) return FALSE;
-    *pdev = &physDev->dev;
 
     if (output && *output) {
         INT len = WideCharToMultiByte( CP_ACP, 0, output, -1, NULL, 0, NULL, NULL );
@@ -369,7 +368,8 @@ static BOOL PSDRV_CreateDC( HDC hdc, PHYSDEV *pdev, LPCWSTR driver, LPCWSTR devi
     }
 
     PSDRV_UpdateDevCaps(physDev);
-    SelectObject( hdc, PSDRV_DefaultFont );
+    SelectObject( (*pdev)->hdc, PSDRV_DefaultFont );
+    push_dc_driver( pdev, &physDev->dev, &psdrv_funcs );
     return TRUE;
 }
 

@@ -628,13 +628,11 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
 
     if (funcs->pCreateDC)
     {
-        PHYSDEV physdev;
-        if (!funcs->pCreateDC( hdc, &physdev, buf, device, output, initData ))
+        if (!funcs->pCreateDC( &dc->physDev, buf, device, output, initData ))
         {
             WARN("creation aborted by device\n" );
             goto error;
         }
-        push_dc_driver( &dc->physDev, physdev, funcs );
     }
 
     dc->vis_rect.left   = 0;
