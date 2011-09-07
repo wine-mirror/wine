@@ -392,7 +392,7 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
             PHYSDEV pattern_dev = physdev;
             /* FIXME: This will go away once the dib driver implements
                pattern brushes */
-            if(pattern_dev == &dc->dibdrv.dev)
+            if(pattern_dev == dc->dibdrv)
                 pattern_dev = GET_NEXT_PHYSDEV( physdev, pSelectBrush );
 
             BITMAP_SetOwnerDC( (HBITMAP)brush->logbrush.lbHatch, pattern_dev );

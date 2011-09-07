@@ -40,11 +40,6 @@ static inline dibdrv_physdev *get_dibdrv_pdev( PHYSDEV dev )
     return (dibdrv_physdev *)dev;
 }
 
-static inline DC *get_dibdrv_dc( PHYSDEV dev )
-{
-    return CONTAINING_RECORD( dev, DC, dibdrv );
-}
-
 typedef struct primitive_funcs
 {
     void        (* solid_rects)(const dib_info *dib, int num, const RECT *rc, DWORD and, DWORD xor);

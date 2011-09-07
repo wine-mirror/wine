@@ -79,8 +79,7 @@ DC *alloc_dc_ptr( WORD magic )
 
     dc->nulldrv.funcs       = &null_driver;
     dc->nulldrv.next        = NULL;
-    dc->dibdrv.dev.funcs    = &dib_driver;
-    dc->dibdrv.dev.next     = NULL;
+    dc->dibdrv              = NULL;
     dc->physDev             = &dc->nulldrv;
     dc->thread              = GetCurrentThreadId();
     dc->refcount            = 1;
@@ -185,7 +184,9 @@ void free_dc_ptr( DC *dc )
     {
         PHYSDEV physdev = pop_dc_driver( &dc->physDev );
         physdev->funcs->pDeleteDC( physdev );
+        if (physdev == dc->dibdrv) dc->dibdrv = NULL;
     }
+    if (dc->dibdrv) dc->dibdrv->funcs->pDeleteDC( dc->dibdrv );
     free_gdi_handle( dc->hSelf );
     free_dc_state( dc );
 }

@@ -349,6 +349,26 @@ void restore_clipping_region( dibdrv_physdev *pdev, HRGN rgn )
     pdev->clip = rgn;
 }
 
+/**********************************************************************
+ *	     dibdrv_CreateDC
+ */
+static BOOL dibdrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
+                             LPCWSTR output, const DEVMODEW *data )
+{
+    dibdrv_physdev *pdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pdev) );
+
+    if (!pdev) return FALSE;
+    if (!(pdev->clip = CreateRectRgn(0, 0, 0, 0)))
+    {
+        HeapFree( GetProcessHeap(), 0, pdev );
+        return FALSE;
+    }
+    clear_dib_info(&pdev->dib);
+    clear_dib_info(&pdev->brush_dib);
+    push_dc_driver( dev, &pdev->dev, &dib_driver );
+    return TRUE;
+}
+
 /***********************************************************************
  *           dibdrv_DeleteDC
  */
@@ -359,7 +379,8 @@ static BOOL dibdrv_DeleteDC( PHYSDEV dev )
     DeleteObject(pdev->clip);
     free_pattern_brush(pdev);
     free_dib_info(&pdev->dib);
-    return 0;
+    HeapFree( GetProcessHeap(), 0, pdev );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -375,13 +396,8 @@ static HBITMAP dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
     if (!bmp) return 0;
     assert(bmp->dib);
 
-    pdev->clip = CreateRectRgn(0, 0, 0, 0);
+    free_dib_info(&pdev->dib);
     pdev->defer = 0;
-
-    clear_dib_info(&pdev->dib);
-    clear_dib_info(&pdev->brush_dib);
-    pdev->brush_and_bits = pdev->brush_xor_bits = NULL;
-
     if(!init_dib_info_from_bitmapobj(&pdev->dib, bmp, private_color_table))
         pdev->defer |= DEFER_FORMAT;
 
@@ -494,7 +510,7 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pCloseFigure */
     NULL,                               /* pCreateBitmap */
     NULL,                               /* pCreateCompatibleDC */
-    NULL,                               /* pCreateDC */
+    dibdrv_CreateDC,                    /* pCreateDC */
     NULL,                               /* pCreateDIBSection */
     NULL,                               /* pDeleteBitmap */
     dibdrv_DeleteDC,                    /* pDeleteDC */

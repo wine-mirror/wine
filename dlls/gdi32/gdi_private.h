@@ -186,11 +186,11 @@ typedef struct tagDC
     GDIOBJHDR    header;
     HDC          hSelf;            /* Handle to this DC */
     struct gdi_physdev nulldrv;    /* physdev for the null driver */
-    struct dibdrv_physdev dibdrv;  /* physdev for the dib driver */
-    PHYSDEV      physDev;         /* Physical device (driver-specific) */
-    DWORD        thread;          /* thread owning the DC */
-    LONG         refcount;        /* thread refcount */
-    LONG         dirty;           /* dirty flag */
+    PHYSDEV      dibdrv;           /* physdev for the dib driver */
+    PHYSDEV      physDev;          /* current top of the physdev stack */
+    DWORD        thread;           /* thread owning the DC */
+    LONG         refcount;         /* thread refcount */
+    LONG         dirty;            /* dirty flag */
     INT          saveLevel;
     struct tagDC *saved_dc;
     DWORD_PTR    dwHookData;
