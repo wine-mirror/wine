@@ -2,6 +2,7 @@ MODULE    = vbscript.dll
 
 C_SRCS = \
 	compile.c \
+	interp.c \
 	lex.c \
 	vbdisp.c \
 	vbscript.c \

@@ -63,9 +63,34 @@ static void change_state(VBScript *This, SCRIPTSTATE state)
         IActiveScriptSite_OnStateChange(This->site, state);
 }
 
-static void exec_queued_code(VBScript *This)
+static inline BOOL is_started(VBScript *This)
 {
-    FIXME("\n");
+    return This->state == SCRIPTSTATE_STARTED
+        || This->state == SCRIPTSTATE_CONNECTED
+        || This->state == SCRIPTSTATE_DISCONNECTED;
+}
+
+static HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code)
+{
+    HRESULT hres;
+
+    code->global_executed = TRUE;
+
+    IActiveScriptSite_OnEnterScript(ctx->site);
+    hres = exec_script(ctx, &code->global_code);
+    IActiveScriptSite_OnLeaveScript(ctx->site);
+
+    return hres;
+}
+
+static void exec_queued_code(script_ctx_t *ctx)
+{
+    vbscode_t *iter;
+
+    LIST_FOR_EACH_ENTRY(iter, &ctx->code_list, vbscode_t, entry) {
+        if(!iter->global_executed)
+            exec_global_code(ctx, iter);
+    }
 }
 
 static HRESULT set_ctx_site(VBScript *This)
@@ -264,7 +289,7 @@ static HRESULT WINAPI VBScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE 
         if(This->state == SCRIPTSTATE_CLOSED)
             return E_UNEXPECTED;
 
-        exec_queued_code(This);
+        exec_queued_code(This->ctx);
         break;
     case SCRIPTSTATE_INITIALIZED:
         FIXME("unimplemented SCRIPTSTATE_INITIALIZED\n");
@@ -530,8 +555,7 @@ static HRESULT WINAPI VBScriptParse_ParseScriptText(IActiveScriptParse *iface,
     if(FAILED(hres))
         return hres;
 
-    FIXME("executing script not implemented\n");
-    return E_NOTIMPL;
+    return is_started(This) ? exec_global_code(This->ctx, code) : S_OK;
 }
 
 static const IActiveScriptParseVtbl VBScriptParseVtbl = {

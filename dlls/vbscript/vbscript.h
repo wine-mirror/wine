@@ -93,6 +93,7 @@ struct _vbscode_t {
 
 void release_vbscode(vbscode_t*) DECLSPEC_HIDDEN;
 HRESULT compile_script(script_ctx_t*,const WCHAR*,vbscode_t**) DECLSPEC_HIDDEN;
+HRESULT exec_script(script_ctx_t*,function_t*) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
 
