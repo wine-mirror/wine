@@ -1460,7 +1460,7 @@ void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
 
 
 /***********************************************************************
- *           virtual_create_system_view
+ *           virtual_create_builtin_view
  */
 NTSTATUS virtual_create_builtin_view( void *module )
 {
