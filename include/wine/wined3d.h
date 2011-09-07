@@ -2243,7 +2243,7 @@ HRESULT __cdecl wined3d_device_get_render_state(const struct wined3d_device *dev
         WINED3DRENDERSTATETYPE state, DWORD *value);
 HRESULT __cdecl wined3d_device_get_render_target(struct wined3d_device *device,
         UINT render_target_idx, struct wined3d_surface **render_target);
-HRESULT __cdecl wined3d_device_get_sampler_state(struct wined3d_device *device,
+HRESULT __cdecl wined3d_device_get_sampler_state(const struct wined3d_device *device,
         UINT sampler_idx, WINED3DSAMPLERSTATETYPE state, DWORD *value);
 HRESULT __cdecl wined3d_device_get_scissor_rect(struct wined3d_device *device, RECT *rect);
 BOOL __cdecl wined3d_device_get_software_vertex_processing(struct wined3d_device *device);

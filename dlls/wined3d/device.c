@@ -2550,7 +2550,7 @@ HRESULT CDECL wined3d_device_set_sampler_state(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_sampler_state(struct wined3d_device *device,
+HRESULT CDECL wined3d_device_get_sampler_state(const struct wined3d_device *device,
         UINT sampler_idx, WINED3DSAMPLERSTATETYPE state, DWORD *value)
 {
     TRACE("device %p, sampler_idx %u, state %s, value %p.\n",
