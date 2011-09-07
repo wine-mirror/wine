@@ -107,6 +107,7 @@ static void test_title(void)
     PROPSHEETPAGEA psp;
     PROPSHEETHEADERA psh;
     HWND hdlg;
+    DWORD style;
 
     memset(&psp, 0, sizeof(psp));
     psp.dwSize = sizeof(psp);
@@ -130,6 +131,12 @@ static void test_title(void)
 
     hdlg = (HWND)PropertySheetA(&psh);
     ok(hdlg != INVALID_HANDLE_VALUE, "got invalid handle value %p\n", hdlg);
+
+    style = GetWindowLong(hdlg, GWL_STYLE);
+    todo_wine
+    ok(style == (WS_POPUP|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CAPTION|WS_SYSMENU|
+                 DS_CONTEXTHELP|DS_MODALFRAME|DS_SETFONT|DS_3DLOOK),
+       "got unexpected style: %x\n", style);
 
     DestroyWindow(hdlg);
 }
@@ -276,6 +283,7 @@ static void test_wiznavigation(void)
     PROPSHEETHEADERA psh;
     HWND hdlg, control;
     LONG_PTR controlID;
+    DWORD style;
     LRESULT defidres;
     BOOL hwndtoindex_supported = TRUE;
     const INT nextID = 12324;
@@ -320,6 +328,12 @@ static void test_wiznavigation(void)
     ok(hdlg != INVALID_HANDLE_VALUE, "got invalid handle %p\n", hdlg);
 
     ok(active_page == 0, "Active page should be 0. Is: %d\n", active_page);
+
+    style = GetWindowLong(hdlg, GWL_STYLE) & ~(DS_CONTEXTHELP|WS_SYSMENU);
+    todo_wine
+    ok(style == (WS_POPUP|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CAPTION|
+                 DS_MODALFRAME|DS_SETFONT|DS_3DLOOK),
+       "got unexpected style: %x\n", style);
 
     control = GetFocus();
     controlID = GetWindowLongPtr(control, GWLP_ID);
