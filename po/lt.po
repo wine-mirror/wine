@@ -7688,7 +7688,7 @@ msgstr "Aptiktas ciklas apdorojant perdavimus"
 msgid "Referral hop limit exceeded"
 msgstr "Viršyta perdavimo šuolių riba"
 
-#: attrib.rc:27 cmd.rc:298
+#: attrib.rc:27 cmd.rc:297
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -7696,7 +7696,7 @@ msgstr ""
 "Dar nerealizuota\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:301
+#: attrib.rc:28 cmd.rc:300
 msgid "%s: File Not Found\n"
 msgstr "%s: failas nerastas\n"
 
@@ -7759,11 +7759,7 @@ msgstr "&Apie laikrodį"
 msgid "Clock"
 msgstr "Laikrodis"
 
-#: cmd.rc:30
-msgid "ATTRIB shows or changes DOS file attributes.\n"
-msgstr "ATTRIB parodo arba pakeičia DOS atributus.\n"
-
-#: cmd.rc:38
+#: cmd.rc:37
 msgid ""
 "CALL <batchfilename> is used within a batch file to execute commands\n"
 "from another batch file. When the batch file exits, control returns to\n"
@@ -7781,7 +7777,7 @@ msgstr ""
 "Numatytojo katalogo, aplinkos kintamųjų ir pan. pakeitimai atlikti\n"
 "iškviestoje procedūroje yra paveldimi kviečiančiosios procedūros.\n"
 
-#: cmd.rc:41
+#: cmd.rc:40
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
@@ -7789,35 +7785,35 @@ msgstr ""
 "CD <direktorija> yra trumpa CHDIR versija. Pakeičia dabartinį\n"
 "numatytą katalogą.\n"
 
-#: cmd.rc:42
+#: cmd.rc:41
 msgid "CHDIR <dir> changes the current default directory.\n"
 msgstr "CHDIR <direktorija> pakeičia dabartinį numatytą katalogą.\n"
 
-#: cmd.rc:44
+#: cmd.rc:43
 msgid "CLS clears the console screen.\n"
 msgstr "CLS išvalo pulto ekraną.\n"
 
-#: cmd.rc:46
+#: cmd.rc:45
 msgid "COPY <filename> copies a file.\n"
 msgstr "COPY <failas> kopijuoja failą.\n"
 
-#: cmd.rc:47
+#: cmd.rc:46
 msgid "CTTY changes the input/output device.\n"
 msgstr "CTTY pakeičia įvedimo/išvedimo įrenginį.\n"
 
-#: cmd.rc:48
+#: cmd.rc:47
 msgid "DATE shows or changes the system date.\n"
 msgstr "DATE parodo arba pakeičia sistemos datą.\n"
 
-#: cmd.rc:49
+#: cmd.rc:48
 msgid "DEL <filename> deletes a file or set of files.\n"
 msgstr "DEL <failas> pašalina failą ar failų rinkinį.\n"
 
-#: cmd.rc:50
+#: cmd.rc:49
 msgid "DIR lists the contents of a directory.\n"
 msgstr "DIR parodo katalogo turinį.\n"
 
-#: cmd.rc:60
+#: cmd.rc:59
 msgid ""
 "ECHO <string> displays <string> on the current terminal device.\n"
 "\n"
@@ -7837,11 +7833,11 @@ msgstr ""
 "numatyta). ECHO OFF komandos rodymo galima išvengti prieš ją pridedant\n"
 "simbolį @.\n"
 
-#: cmd.rc:62
+#: cmd.rc:61
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <failas> pašalina failą ar failų rinkinį.\n"
 
-#: cmd.rc:70
+#: cmd.rc:69
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
@@ -7858,7 +7854,7 @@ msgstr ""
 "Reikalavimas dubliuoti % simbolį naudojant FOR komandų faile neegzistuoja\n"
 "wine komandų interpretatoriuje.\n"
 
-#: cmd.rc:82
+#: cmd.rc:81
 msgid ""
 "The GOTO command transfers execution to another statement within a\n"
 "batch file.\n"
@@ -7881,7 +7877,7 @@ msgstr ""
 "\n"
 "GOTO neturi poveikio naudojant interaktyviai.\n"
 
-#: cmd.rc:85
+#: cmd.rc:84
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -7889,7 +7885,7 @@ msgstr ""
 "HELP <komanda> parodo trumpą informaciją apie komandą.\n"
 "HELP be argumentų parodo visas įtaisytas CMD komandas.\n"
 
-#: cmd.rc:95
+#: cmd.rc:94
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -7909,7 +7905,7 @@ msgstr ""
 "Antroje komandos formoje, eilutė1 ir eilutė2 privalo būti tarp dvigubų\n"
 "kabučių. Palyginimas neskiria didžiųjų ir mažųjų raidžių.\n"
 
-#: cmd.rc:101
+#: cmd.rc:100
 msgid ""
 "LABEL is used to set a disk volume label.\n"
 "\n"
@@ -7923,15 +7919,15 @@ msgstr ""
 "Komanda paklaus naujo tomo vardo duotam diskui.\n"
 "Parodyti disko tomo vardą galima su komanda VOL.\n"
 
-#: cmd.rc:104
+#: cmd.rc:103
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "MD <vardas> yra trumpa MKDIR versija. Sukuria katalogą.\n"
 
-#: cmd.rc:105
+#: cmd.rc:104
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "MKDIR <vardas> sukuria katalogą.\n"
 
-#: cmd.rc:112
+#: cmd.rc:111
 msgid ""
 "MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
@@ -7948,7 +7944,7 @@ msgstr ""
 "\n"
 "MOVE nepavyksta jei sena ir nauja vietos yra su skirtingomis DOS raidėmis.\n"
 
-#: cmd.rc:123
+#: cmd.rc:122
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
@@ -7970,7 +7966,7 @@ msgstr ""
 "pavyzdžiui:\n"
 "PATH %PATH%;c:\\laikinas\n"
 
-#: cmd.rc:129
+#: cmd.rc:128
 msgid ""
 "PAUSE displays a message on the screen 'Press Return key to continue'\n"
 "and waits for the user to press the Return key. It is mainly useful in\n"
@@ -7982,7 +7978,7 @@ msgstr ""
 "komandų failuose, kad leistų naudotojui perskaityti ankstesnės komandos\n"
 "rezultatą kol jis nepasislinko už ekrano ribų.\n"
 
-#: cmd.rc:150
+#: cmd.rc:149
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -8026,7 +8022,7 @@ msgstr ""
 "taigi, komanda „SET PROMPT=tekstas“ turi tą patį efektą kaip „PROMPT "
 "tekstas“.\n"
 
-#: cmd.rc:154
+#: cmd.rc:153
 msgid ""
 "A command line beginning REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
@@ -8034,23 +8030,23 @@ msgstr ""
 "Komandos eilutė prasidedanti REM (ir tarpu) neatlieka jokio veiksmo\n"
 "ir todėl gali būti naudojama kaip komentaras komandų faile.\n"
 
-#: cmd.rc:157
+#: cmd.rc:156
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "REN <failas> yra trumpa RENAME versija. Pervadina failą.\n"
 
-#: cmd.rc:158
+#: cmd.rc:157
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <failas> pervadina failą.\n"
 
-#: cmd.rc:160
+#: cmd.rc:159
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgstr "RD <katalogas> yra trumpa RMDIR versija. Pašalina katalogą.\n"
 
-#: cmd.rc:161
+#: cmd.rc:160
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <katalogas> pašalina katalogą.\n"
 
-#: cmd.rc:179
+#: cmd.rc:178
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -8085,7 +8081,7 @@ msgstr ""
 "Win32 realizacijoje. Pastebėkite, kad neįmanoma įtakoti operacinės sistemos\n"
 "aplinkos iš komandų interpretatoriaus.\n"
 
-#: cmd.rc:184
+#: cmd.rc:183
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
@@ -8095,15 +8091,15 @@ msgstr ""
 "priekio, taip parametras 2 tampa parametru 1 ir t. t. Ši komanda neturi\n"
 "jokio poveikio, kai kviečiama iš komandos eilutės.\n"
 
-#: cmd.rc:186
+#: cmd.rc:185
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME parodo arba nustato sistemos laiką.\n"
 
-#: cmd.rc:188
+#: cmd.rc:187
 msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
 msgstr "Nustato CMD lango antraštę, sintaksė TITLE [tekstas].\n"
 
-#: cmd.rc:192
+#: cmd.rc:191
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
@@ -8111,7 +8107,7 @@ msgstr ""
 "TYPE <failas> nukopijuoja <failą> į pulto įrenginį (arba kitur, jei\n"
 "nukreipta). Nėra tikrinama ar faile yra skaitomas tekstas.\n"
 
-#: cmd.rc:201
+#: cmd.rc:200
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -8130,15 +8126,15 @@ msgstr ""
 "\n"
 "Tikrinimo žymos bitas neturi jokios funkcijos Wine.\n"
 
-#: cmd.rc:204
+#: cmd.rc:203
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER parodo dabar vykdomo cmd versiją.\n"
 
-#: cmd.rc:206
+#: cmd.rc:205
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL parodo disko įrenginio tomo vardą.\n"
 
-#: cmd.rc:210
+#: cmd.rc:209
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
@@ -8146,7 +8142,7 @@ msgstr ""
 "ENDLOCAL komandų faile baigia aplinkos pakeitimų lokalizavimą,\n"
 "kuris buvo padarytas ankstesnio SETLOCAL.\n"
 
-#: cmd.rc:218
+#: cmd.rc:217
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -8161,7 +8157,7 @@ msgstr ""
 "išlaikomi iki kol sutinkamas kitas ENDLOCAL (arba failo pabaiga, kas\n"
 "pasitaiko pirmiau), tada atkuriami ankstesnės aplinkos nustatymai.\n"
 
-#: cmd.rc:221
+#: cmd.rc:220
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -8169,13 +8165,13 @@ msgstr ""
 "PUSHD <katalogas> išsaugo dabartinį katalogą į dėklą,\n"
 "o po to pakeičia dabartinį katalogą į nurodytą.\n"
 
-#: cmd.rc:224
+#: cmd.rc:223
 msgid ""
 "POPD changes current directory to the last one saved with\n"
 "PUSHD.\n"
 msgstr "POPD pakeičia dabartinį katalogą į paskutinį išsaugotą su PUSHD.\n"
 
-#: cmd.rc:232
+#: cmd.rc:231
 msgid ""
 "ASSOC shows or modifies file extension associations\n"
 "\n"
@@ -8195,7 +8191,7 @@ msgstr ""
 "Po lygybės ženklo nenurodžius failo tipo pašalina dabartinę sąsają, jei "
 "yra.\n"
 
-#: cmd.rc:243
+#: cmd.rc:242
 msgid ""
 "FTYPE shows or modifies open commands associated with file types\n"
 "\n"
@@ -8219,11 +8215,11 @@ msgstr ""
 "Po lygybės ženklo nenurodžius atvėrimo komandos pašalina su nurodytu failo "
 "tipu susietą komandos eilutę.\n"
 
-#: cmd.rc:245
+#: cmd.rc:244
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE parodo failo išvedimą ar kanalo įvedimą puslapiais.\n"
 
-#: cmd.rc:249
+#: cmd.rc:248
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -8233,7 +8229,7 @@ msgstr ""
 "paspaus leidžiamą klavišą iš pasirinkimų sąrašo.\n"
 "CHOICE dažniausiai naudojama pasirinkimo meniu konstravimui komandų faile.\n"
 
-#: cmd.rc:253
+#: cmd.rc:252
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -8241,7 +8237,7 @@ msgstr ""
 "EXIT baigia dabartinį komandų seansą ir grįžta į operacinę sistemą\n"
 "ar apvalkalą iš kur CMD buvo iškviestas.\n"
 
-#: cmd.rc:288
+#: cmd.rc:287
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -8316,110 +8312,110 @@ msgstr ""
 "Įveskite HELP <komanda> platesnei informacijai apie išvardintas komandas "
 "gauti.\n"
 
-#: cmd.rc:290
+#: cmd.rc:289
 msgid "Are you sure"
 msgstr "Ar tikrai"
 
-#: cmd.rc:291 xcopy.rc:40
+#: cmd.rc:290 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "T"
 
-#: cmd.rc:292 xcopy.rc:41
+#: cmd.rc:291 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:293
+#: cmd.rc:292
 msgid "File association missing for extension %s\n"
 msgstr "Trūksta failo susiejimo prievardžiui %s\n"
 
-#: cmd.rc:294
+#: cmd.rc:293
 msgid "No open command associated with file type '%s'\n"
 msgstr "Jokia atvėrimo komanda nesusieta su failo tipu „%s“\n"
 
-#: cmd.rc:295
+#: cmd.rc:294
 msgid "Overwrite %s"
 msgstr "Perrašyti %s"
 
-#: cmd.rc:296
+#: cmd.rc:295
 msgid "More..."
 msgstr "Daugiau..."
 
-#: cmd.rc:297
+#: cmd.rc:296
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Paketinio apdorojimo eilutė galimai nukirsta. Naudojama:\n"
 
-#: cmd.rc:299
+#: cmd.rc:298
 msgid "Argument missing\n"
 msgstr "Trūksta argumento\n"
 
-#: cmd.rc:300
+#: cmd.rc:299
 msgid "Syntax error\n"
 msgstr "Sintaksės klaida\n"
 
-#: cmd.rc:302
+#: cmd.rc:301
 msgid "No help available for %s\n"
 msgstr "Nėra informacijos apie %s\n"
 
-#: cmd.rc:303
+#: cmd.rc:302
 msgid "Target to GOTO not found\n"
 msgstr "GOTO tikslas nerastas\n"
 
-#: cmd.rc:304
+#: cmd.rc:303
 msgid "Current Date is %s\n"
 msgstr "Dabartinė data yra %s\n"
 
-#: cmd.rc:305
+#: cmd.rc:304
 msgid "Current Time is %s\n"
 msgstr "Dabartinis laikas yra %s\n"
 
-#: cmd.rc:306
+#: cmd.rc:305
 msgid "Enter new date: "
 msgstr "Įveskite naują datą: "
 
-#: cmd.rc:307
+#: cmd.rc:306
 msgid "Enter new time: "
 msgstr "Įveskite naują laiką: "
 
-#: cmd.rc:308
+#: cmd.rc:307
 msgid "Environment variable %s not defined\n"
 msgstr "Aplinkos kintamasis %s neapibrėžtas\n"
 
-#: cmd.rc:309 xcopy.rc:38
+#: cmd.rc:308 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr "Nepavyko atverti „%s“\n"
 
-#: cmd.rc:310
+#: cmd.rc:309
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Negalima iškviesti žymės esančios už komandos failo ribų\n"
 
-#: cmd.rc:311 xcopy.rc:42
+#: cmd.rc:310 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "V"
 
-#: cmd.rc:312
+#: cmd.rc:311
 msgid "%s, Delete"
 msgstr "%s, šalinti"
 
-#: cmd.rc:313
+#: cmd.rc:312
 msgid "Echo is %s\n"
 msgstr "ECHO yra %s\n"
 
-#: cmd.rc:314
+#: cmd.rc:313
 msgid "Verify is %s\n"
 msgstr "VERIFY yra %s\n"
 
-#: cmd.rc:315
+#: cmd.rc:314
 msgid "Verify must be ON or OFF\n"
 msgstr "VERIFY turi būti ON arba OFF\n"
 
-#: cmd.rc:316
+#: cmd.rc:315
 msgid "Parameter error\n"
 msgstr "Parametro klaida\n"
 
-#: cmd.rc:317
+#: cmd.rc:316
 msgid ""
 "Volume in drive %c is %s\n"
 "Volume Serial Number is %04x-%04x\n"
@@ -8429,31 +8425,31 @@ msgstr ""
 "Tomo serijos numeris yra %04x-%04x\n"
 "\n"
 
-#: cmd.rc:318
+#: cmd.rc:317
 msgid "Volume label (11 characters, ENTER for none)?"
 msgstr "Tomo vardas (11 simbolių, ĮVESTI – bevardis)?"
 
-#: cmd.rc:319
+#: cmd.rc:318
 msgid "PATH not found\n"
 msgstr "KELIAS nerastas\n"
 
-#: cmd.rc:320
+#: cmd.rc:319
 msgid "Press Return key to continue: "
 msgstr "Norėdami tęsti spauskite įvedimo klavišą: "
 
-#: cmd.rc:321
+#: cmd.rc:320
 msgid "Wine Command Prompt"
 msgstr "Wine komandų interpretatorius"
 
-#: cmd.rc:322
+#: cmd.rc:321
 msgid "CMD Version %s\n"
 msgstr "CMD versija %s\n"
 
-#: cmd.rc:323
+#: cmd.rc:322
 msgid "More? "
 msgstr "Daugiau? "
 
-#: cmd.rc:324
+#: cmd.rc:323
 msgid "The input line is too long.\n"
 msgstr "Įvedimo eilutė per ilga.\n"
 

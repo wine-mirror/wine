@@ -27,7 +27,6 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-  WCMD_ATTRIB, "ATTRIB shows or changes DOS file attributes.\n"
   WCMD_CALL,
 "CALL <batchfilename> is used within a batch file to execute commands\n\
 from another batch file. When the batch file exits, control returns to\n\

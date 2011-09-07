@@ -8060,7 +8060,7 @@ msgstr "Başvuruları işlerken dön"
 msgid "Referral hop limit exceeded"
 msgstr "Paketin gönderildiği yönlendirici sınırı aşıldı"
 
-#: attrib.rc:27 cmd.rc:298
+#: attrib.rc:27 cmd.rc:297
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -8068,7 +8068,7 @@ msgstr ""
 "Not Yet Implemented\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:301
+#: attrib.rc:28 cmd.rc:300
 #, fuzzy
 msgid "%s: File Not Found\n"
 msgstr "%s : File Not Found\n"
@@ -8138,11 +8138,7 @@ msgstr "&Saat Hakkında..."
 msgid "Clock"
 msgstr "Saat"
 
-#: cmd.rc:30
-msgid "ATTRIB shows or changes DOS file attributes.\n"
-msgstr "ATTRIB hakkında yardım\n"
-
-#: cmd.rc:38
+#: cmd.rc:37
 msgid ""
 "CALL <batchfilename> is used within a batch file to execute commands\n"
 "from another batch file. When the batch file exits, control returns to\n"
@@ -8160,41 +8156,41 @@ msgstr ""
 "Çağrılan bir yordamda değiştirilen dizinler, çevre değişkenleri vb.\n"
 "kendisini çağıran tarafından miras alınır.\n"
 
-#: cmd.rc:41
+#: cmd.rc:40
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr "CD hakkında yardım\n"
 
-#: cmd.rc:42
+#: cmd.rc:41
 msgid "CHDIR <dir> changes the current default directory.\n"
 msgstr "CHDIR hakkında yardım\n"
 
-#: cmd.rc:44
+#: cmd.rc:43
 msgid "CLS clears the console screen.\n"
 msgstr "CLS konsol ekranını temizler\n"
 
-#: cmd.rc:46
+#: cmd.rc:45
 msgid "COPY <filename> copies a file.\n"
 msgstr "COPY hakkında yardım\n"
 
-#: cmd.rc:47
+#: cmd.rc:46
 msgid "CTTY changes the input/output device.\n"
 msgstr "CTTY hakkında yardım\n"
 
-#: cmd.rc:48
+#: cmd.rc:47
 msgid "DATE shows or changes the system date.\n"
 msgstr "DATE hakkında yardım\n"
 
-#: cmd.rc:49
+#: cmd.rc:48
 msgid "DEL <filename> deletes a file or set of files.\n"
 msgstr "DEL hakkında yardım\n"
 
-#: cmd.rc:50
+#: cmd.rc:49
 msgid "DIR lists the contents of a directory.\n"
 msgstr "DIR hakkında yardım\n"
 
-#: cmd.rc:60
+#: cmd.rc:59
 msgid ""
 "ECHO <string> displays <string> on the current terminal device.\n"
 "\n"
@@ -8214,11 +8210,11 @@ msgstr ""
 "tersini yapar. ECHO OFF çıktısının görüntülenmesini başına @ işareti\n"
 "getirerek engelleyebilirsiniz.\n"
 
-#: cmd.rc:62
+#: cmd.rc:61
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE hakkında yardım\n"
 
-#: cmd.rc:70
+#: cmd.rc:69
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
@@ -8235,7 +8231,7 @@ msgstr ""
 "FOR kullanımı için toplu işlem dosyasında % işaretini çift kullanma\n"
 "gereksinimi cmd'de yoktur.\n"
 
-#: cmd.rc:82
+#: cmd.rc:81
 msgid ""
 "The GOTO command transfers execution to another statement within a\n"
 "batch file.\n"
@@ -8259,13 +8255,13 @@ msgstr ""
 "\n"
 "GOTO komutunun etkileşimli olarak kullanımının bir etkisi yoktur.\n"
 
-#: cmd.rc:85
+#: cmd.rc:84
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
 msgstr "HELP hakkında yardım\n"
 
-#: cmd.rc:95
+#: cmd.rc:94
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -8285,7 +8281,7 @@ msgstr ""
 "İkinci biçimde dize1 ve dize2 çift tırnak içerisinde olmalıdır.\n"
 "Karşılaştırma BÜYÜK/küçük harf duyarlı değildir.\n"
 
-#: cmd.rc:101
+#: cmd.rc:100
 msgid ""
 "LABEL is used to set a disk volume label.\n"
 "\n"
@@ -8299,15 +8295,15 @@ msgstr ""
 "Komut sizden verilen sürücü için yeni bir etiket girmenizi bekleyecektir.\n"
 "Disk bölüm etiketini VOL komutu ile gösterebilirsiniz.\n"
 
-#: cmd.rc:104
+#: cmd.rc:103
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "MD hakkında yardım\n"
 
-#: cmd.rc:105
+#: cmd.rc:104
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "MKDIR hakkında yardım\n"
 
-#: cmd.rc:112
+#: cmd.rc:111
 msgid ""
 "MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
@@ -8325,7 +8321,7 @@ msgstr ""
 "Eğer eski ve yeni konumlar farklı DOS sürücüleri üzerindeyse MOVE hata\n"
 "verecektir.\n"
 
-#: cmd.rc:123
+#: cmd.rc:122
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
@@ -8347,7 +8343,7 @@ msgstr ""
 "kullanabilirsiniz, örneğin:\n"
 "PATH %PATH%;c:\\temp\n"
 
-#: cmd.rc:129
+#: cmd.rc:128
 msgid ""
 "PAUSE displays a message on the screen 'Press Return key to continue'\n"
 "and waits for the user to press the Return key. It is mainly useful in\n"
@@ -8359,7 +8355,7 @@ msgstr ""
 "dosyalarında kullanıcıya önceki komutun çıktısını ekrandan çıkmadan\n"
 "önce okutmak için kullanılır.\n"
 
-#: cmd.rc:150
+#: cmd.rc:149
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -8402,7 +8398,7 @@ msgstr ""
 "belirlenebilir.\n"
 "Yani 'SET PROMPT=metin' ile 'PROMPT metin' aynı işi görür.\n"
 
-#: cmd.rc:154
+#: cmd.rc:153
 msgid ""
 "A command line beginning REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
@@ -8411,24 +8407,24 @@ msgstr ""
 "hiçbir işlevi yoktur; dolayısıyla toplu işlem dosyalarında\n"
 "açıklama olarak kullanılabilir.\n"
 
-#: cmd.rc:157
+#: cmd.rc:156
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "REN hakkında yardım\n"
 
-#: cmd.rc:158
+#: cmd.rc:157
 #, fuzzy
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME hakkında yardım\n"
 
-#: cmd.rc:160
+#: cmd.rc:159
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgstr "RD hakkında yardım\n"
 
-#: cmd.rc:161
+#: cmd.rc:160
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR hakkında yardım\n"
 
-#: cmd.rc:179
+#: cmd.rc:178
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -8463,7 +8459,7 @@ msgstr ""
 "değer bulunacaktır. cmd altında işletim sistemi çevresini değiştirmek\n"
 "mümkün değildir.\n"
 
-#: cmd.rc:184
+#: cmd.rc:183
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
@@ -8473,16 +8469,16 @@ msgstr ""
 "siler. Böylece 2. parametre 1. parametre olacaktır. Komut satırında\n"
 "çağrıldığında bir etkisi yoktur.\n"
 
-#: cmd.rc:186
+#: cmd.rc:185
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME hakkında yardım\n"
 
-#: cmd.rc:188
+#: cmd.rc:187
 msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
 msgstr ""
 "cmd penceresi için pencere başlığını değiştirir. Sözdizimi: TITLE [dize]\n"
 
-#: cmd.rc:192
+#: cmd.rc:191
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
@@ -8490,7 +8486,7 @@ msgstr ""
 "TYPE <dosyaadı> komutu <dosyaadı>'nı konsol aygıtına kopyalar (eğer\n"
 "yönlendirilmişse başka yere). Dosyanın okunabilirliği denetlenmez.\n"
 
-#: cmd.rc:201
+#: cmd.rc:200
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -8508,22 +8504,22 @@ msgstr ""
 "\n"
 "Doğrulama bayrağının Wine'da bir işlevi yoktur.\n"
 
-#: cmd.rc:204
+#: cmd.rc:203
 #, fuzzy
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER kullandığınız cmd sürümünü gösterir\n"
 
-#: cmd.rc:206
+#: cmd.rc:205
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL hakkında yardım\n"
 
-#: cmd.rc:210
+#: cmd.rc:209
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
 
-#: cmd.rc:218
+#: cmd.rc:217
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -8533,7 +8529,7 @@ msgid ""
 "settings are restored.\n"
 msgstr ""
 
-#: cmd.rc:221
+#: cmd.rc:220
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -8541,7 +8537,7 @@ msgstr ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 
-#: cmd.rc:224
+#: cmd.rc:223
 msgid ""
 "POPD changes current directory to the last one saved with\n"
 "PUSHD.\n"
@@ -8549,7 +8545,7 @@ msgstr ""
 "POPD changes current directory to the last one saved with\n"
 "PUSHD.\n"
 
-#: cmd.rc:232
+#: cmd.rc:231
 msgid ""
 "ASSOC shows or modifies file extension associations\n"
 "\n"
@@ -8561,7 +8557,7 @@ msgid ""
 "association, if any.\n"
 msgstr ""
 
-#: cmd.rc:243
+#: cmd.rc:242
 msgid ""
 "FTYPE shows or modifies open commands associated with file types\n"
 "\n"
@@ -8575,18 +8571,18 @@ msgid ""
 "associated to the specified file type.\n"
 msgstr ""
 
-#: cmd.rc:245
+#: cmd.rc:244
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE displays output of files or piped input in pages.\n"
 
-#: cmd.rc:249
+#: cmd.rc:248
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
 
-#: cmd.rc:253
+#: cmd.rc:252
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -8594,7 +8590,7 @@ msgstr ""
 "EXIT geçerli komut oturumunu sonlandırır ve cmd'yi çağırdığınız\n"
 "yerden işletim sistemine döner.\n"
 
-#: cmd.rc:288
+#: cmd.rc:287
 #, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
@@ -8664,110 +8660,110 @@ msgstr ""
 "\n"
 "Yukarıdaki komutlar hakkında daha fazla bilgi için HELP <komut> girin\n"
 
-#: cmd.rc:290
+#: cmd.rc:289
 msgid "Are you sure"
 msgstr "Are you sure"
 
-#: cmd.rc:291 xcopy.rc:40
+#: cmd.rc:290 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "Y"
 
-#: cmd.rc:292 xcopy.rc:41
+#: cmd.rc:291 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:293
+#: cmd.rc:292
 msgid "File association missing for extension %s\n"
 msgstr "File association missing for extension %s\n"
 
-#: cmd.rc:294
+#: cmd.rc:293
 msgid "No open command associated with file type '%s'\n"
 msgstr "No open command associated with file type '%s'\n"
 
-#: cmd.rc:295
+#: cmd.rc:294
 msgid "Overwrite %s"
 msgstr "Overwrite %s"
 
-#: cmd.rc:296
+#: cmd.rc:295
 msgid "More..."
 msgstr "More..."
 
-#: cmd.rc:297
+#: cmd.rc:296
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Line in Batch processing possibly truncated. Using:\n"
 
-#: cmd.rc:299
+#: cmd.rc:298
 msgid "Argument missing\n"
 msgstr "Argument missing\n"
 
-#: cmd.rc:300
+#: cmd.rc:299
 msgid "Syntax error\n"
 msgstr "Syntax error\n"
 
-#: cmd.rc:302
+#: cmd.rc:301
 msgid "No help available for %s\n"
 msgstr "No help available for %s\n"
 
-#: cmd.rc:303
+#: cmd.rc:302
 msgid "Target to GOTO not found\n"
 msgstr "Target to GOTO not found\n"
 
-#: cmd.rc:304
+#: cmd.rc:303
 msgid "Current Date is %s\n"
 msgstr "Current Date is %s\n"
 
-#: cmd.rc:305
+#: cmd.rc:304
 msgid "Current Time is %s\n"
 msgstr "Current Time is %s\n"
 
-#: cmd.rc:306
+#: cmd.rc:305
 msgid "Enter new date: "
 msgstr "Enter new date: "
 
-#: cmd.rc:307
+#: cmd.rc:306
 msgid "Enter new time: "
 msgstr "Enter new time: "
 
-#: cmd.rc:308
+#: cmd.rc:307
 msgid "Environment variable %s not defined\n"
 msgstr "Environment variable %s not defined\n"
 
-#: cmd.rc:309 xcopy.rc:38
+#: cmd.rc:308 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr "Failed to open '%s'\n"
 
-#: cmd.rc:310
+#: cmd.rc:309
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Cannot call batch label outside of a batch script\n"
 
-#: cmd.rc:311 xcopy.rc:42
+#: cmd.rc:310 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:312
+#: cmd.rc:311
 msgid "%s, Delete"
 msgstr "%s, Delete"
 
-#: cmd.rc:313
+#: cmd.rc:312
 msgid "Echo is %s\n"
 msgstr "Echo is %s\n"
 
-#: cmd.rc:314
+#: cmd.rc:313
 msgid "Verify is %s\n"
 msgstr "Verify is %s\n"
 
-#: cmd.rc:315
+#: cmd.rc:314
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify must be ON or OFF\n"
 
-#: cmd.rc:316
+#: cmd.rc:315
 msgid "Parameter error\n"
 msgstr "Parameter error\n"
 
-#: cmd.rc:317
+#: cmd.rc:316
 msgid ""
 "Volume in drive %c is %s\n"
 "Volume Serial Number is %04x-%04x\n"
@@ -8777,31 +8773,31 @@ msgstr ""
 "Volume Serial Number is %04x-%04x\n"
 "\n"
 
-#: cmd.rc:318
+#: cmd.rc:317
 msgid "Volume label (11 characters, ENTER for none)?"
 msgstr "Volume label (11 characters, ENTER for none)?"
 
-#: cmd.rc:319
+#: cmd.rc:318
 msgid "PATH not found\n"
 msgstr "PATH not found\n"
 
-#: cmd.rc:320
+#: cmd.rc:319
 msgid "Press Return key to continue: "
 msgstr "Press Return key to continue: "
 
-#: cmd.rc:321
+#: cmd.rc:320
 msgid "Wine Command Prompt"
 msgstr "Wine Command Prompt"
 
-#: cmd.rc:322
+#: cmd.rc:321
 msgid "CMD Version %s\n"
 msgstr "CMD Version %s\n"
 
-#: cmd.rc:323
+#: cmd.rc:322
 msgid "More? "
 msgstr "More? "
 
-#: cmd.rc:324
+#: cmd.rc:323
 msgid "The input line is too long.\n"
 msgstr "The input line is too long.\n"
 

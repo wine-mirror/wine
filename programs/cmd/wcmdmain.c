@@ -32,7 +32,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
 const WCHAR inbuilt[][10] = {
-        {'A','T','T','R','I','B','\0'},
         {'C','A','L','L','\0'},
         {'C','D','\0'},
         {'C','H','D','I','R','\0'},

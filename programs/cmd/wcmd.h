@@ -162,55 +162,54 @@ typedef struct _DIRECTORY_STACK
  *	Compiler won't accept resource IDs from enumerations :-(
  */
 
-#define WCMD_ATTRIB  0
-#define WCMD_CALL    1
-#define WCMD_CD      2
-#define WCMD_CHDIR   3
-#define WCMD_CLS     4
-#define WCMD_COPY    5
-#define WCMD_CTTY    6
-#define WCMD_DATE    7
-#define WCMD_DEL     8
-#define WCMD_DIR     9
-#define WCMD_ECHO   10
-#define	WCMD_ERASE  11
-#define WCMD_FOR    12
-#define WCMD_GOTO   13
-#define WCMD_HELP   14
-#define WCMD_IF     15
-#define WCMD_LABEL  16
-#define	WCMD_MD     17
-#define WCMD_MKDIR  18
-#define WCMD_MOVE   19
-#define WCMD_PATH   20
-#define WCMD_PAUSE  21
-#define WCMD_PROMPT 22
-#define	WCMD_REM    23
-#define WCMD_REN    24
-#define WCMD_RENAME 25
-#define WCMD_RD     26
-#define WCMD_RMDIR  27
-#define WCMD_SET    28
-#define	WCMD_SHIFT  29
-#define WCMD_TIME   30
-#define WCMD_TITLE  31
-#define WCMD_TYPE   32
-#define WCMD_VERIFY 33
-#define WCMD_VER    34
-#define WCMD_VOL    35
+#define WCMD_CALL      0
+#define WCMD_CD        1
+#define WCMD_CHDIR     2
+#define WCMD_CLS       3
+#define WCMD_COPY      4
+#define WCMD_CTTY      5
+#define WCMD_DATE      6
+#define WCMD_DEL       7
+#define WCMD_DIR       8
+#define WCMD_ECHO      9
+#define WCMD_ERASE    10
+#define WCMD_FOR      11
+#define WCMD_GOTO     12
+#define WCMD_HELP     13
+#define WCMD_IF       14
+#define WCMD_LABEL    15
+#define WCMD_MD       16
+#define WCMD_MKDIR    17
+#define WCMD_MOVE     18
+#define WCMD_PATH     19
+#define WCMD_PAUSE    20
+#define WCMD_PROMPT   21
+#define WCMD_REM      22
+#define WCMD_REN      23
+#define WCMD_RENAME   24
+#define WCMD_RD       25
+#define WCMD_RMDIR    26
+#define WCMD_SET      27
+#define WCMD_SHIFT    28
+#define WCMD_TIME     29
+#define WCMD_TITLE    30
+#define WCMD_TYPE     31
+#define WCMD_VERIFY   32
+#define WCMD_VER      33
+#define WCMD_VOL      34
 
-#define WCMD_ENDLOCAL 36
-#define WCMD_SETLOCAL 37
-#define WCMD_PUSHD  38
-#define WCMD_POPD   39
-#define WCMD_ASSOC  40
-#define WCMD_COLOR  41
-#define WCMD_FTYPE  42
-#define WCMD_MORE   43
-#define WCMD_CHOICE 44
+#define WCMD_ENDLOCAL 35
+#define WCMD_SETLOCAL 36
+#define WCMD_PUSHD    37
+#define WCMD_POPD     38
+#define WCMD_ASSOC    39
+#define WCMD_COLOR    40
+#define WCMD_FTYPE    41
+#define WCMD_MORE     42
+#define WCMD_CHOICE   43
 
 /* Must be last in list */
-#define WCMD_EXIT   45
+#define WCMD_EXIT     44
 
 /* Some standard messages */
 extern const WCHAR newline[];

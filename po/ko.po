@@ -7641,7 +7641,7 @@ msgstr "리퍼럴을 다루는 동안의 루프"
 msgid "Referral hop limit exceeded"
 msgstr "리퍼럴 홉 제한에 도달했습니다"
 
-#: attrib.rc:27 cmd.rc:298
+#: attrib.rc:27 cmd.rc:297
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -7649,7 +7649,7 @@ msgstr ""
 "아직 구현되지 않았습니다\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:301
+#: attrib.rc:28 cmd.rc:300
 msgid "%s: File Not Found\n"
 msgstr "%s :파일을 찾을 수 없습니다\n"
 
@@ -7712,11 +7712,7 @@ msgstr "시계 정보(&A)..."
 msgid "Clock"
 msgstr "시계"
 
-#: cmd.rc:30
-msgid "ATTRIB shows or changes DOS file attributes.\n"
-msgstr "ATTRIB는 도스 파일 속성을 보여주거나 고칩니다.\n"
-
-#: cmd.rc:38
+#: cmd.rc:37
 msgid ""
 "CALL <batchfilename> is used within a batch file to execute commands\n"
 "from another batch file. When the batch file exits, control returns to\n"
@@ -7734,7 +7730,7 @@ msgstr ""
 "된\n"
 "과정에만 적용됩니다.\n"
 
-#: cmd.rc:41
+#: cmd.rc:40
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
@@ -7742,35 +7738,35 @@ msgstr ""
 "CD <디렉토리> 는  CHDIR의 단축버젼입니다. 현재 기본 디렉토리를\n"
 "바꿉니다.\n"
 
-#: cmd.rc:42
+#: cmd.rc:41
 msgid "CHDIR <dir> changes the current default directory.\n"
 msgstr "CHDIR <디렉토리> 는 현재 기본 디렉토리를 바꿉니다.\n"
 
-#: cmd.rc:44
+#: cmd.rc:43
 msgid "CLS clears the console screen.\n"
 msgstr "CLS는 콘솔 화면을 깨끗하게 합니다.\n"
 
-#: cmd.rc:46
+#: cmd.rc:45
 msgid "COPY <filename> copies a file.\n"
 msgstr "COPY <파일이름> 은 파일을 복사합니다.\n"
 
-#: cmd.rc:47
+#: cmd.rc:46
 msgid "CTTY changes the input/output device.\n"
 msgstr "CTTY 는 입력/출력 장치를 바꿉니다.\n"
 
-#: cmd.rc:48
+#: cmd.rc:47
 msgid "DATE shows or changes the system date.\n"
 msgstr "DATE 는 시스템 날짜를 보여주거나 바꿉니다.\n"
 
-#: cmd.rc:49
+#: cmd.rc:48
 msgid "DEL <filename> deletes a file or set of files.\n"
 msgstr "DEL <파일이름> 은 하나의 파일이나 여러 파일을 지웁니다.\n"
 
-#: cmd.rc:50
+#: cmd.rc:49
 msgid "DIR lists the contents of a directory.\n"
 msgstr "DIR 는 디렉토리의 내용을 보여줍니다.\n"
 
-#: cmd.rc:60
+#: cmd.rc:59
 msgid ""
 "ECHO <string> displays <string> on the current terminal device.\n"
 "\n"
@@ -7789,11 +7785,11 @@ msgstr ""
 "ECHO OFF 는 ECHO ON과 반대의 일을 합니다. (ECHO 는 OFF가 기본)\n"
 "ECHO OFF 명령은  신호가 진행되는 걸 보여주는걸 막습니다.\n"
 
-#: cmd.rc:62
+#: cmd.rc:61
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <파일이름>은 하나의 파일이냐 여러 파일을 지웁니다.\n"
 
-#: cmd.rc:70
+#: cmd.rc:69
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
@@ -7809,7 +7805,7 @@ msgstr ""
 "wine의 cmd 안에서 존재하지 않는 배치 파일에 FOR를 사용할려면 두 개의 %가 필요"
 "합니다.\n"
 
-#: cmd.rc:82
+#: cmd.rc:81
 msgid ""
 "The GOTO command transfers execution to another statement within a\n"
 "batch file.\n"
@@ -7832,7 +7828,7 @@ msgstr ""
 "\n"
 "GOTO는 대화식으로 사용될 경우 아무 일도 안합니다.\n"
 
-#: cmd.rc:85
+#: cmd.rc:84
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -7840,7 +7836,7 @@ msgstr ""
 "HELP <명령>은  주제의 간단한 도움말 정보를 보여줍니 다.\n"
 "아무 매개변수가 없는 HELP눈 CMD의 모든 내장 명령을 보여줍니다.\n"
 
-#: cmd.rc:95
+#: cmd.rc:94
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -7860,7 +7856,7 @@ msgstr ""
 "명령의 첫번째 형식에서, string1 과 string2는 반드시 2개의 따옴표로\n"
 "둘려놓아야 합니다. 대소문자는 구분하지 않습니다.\n"
 
-#: cmd.rc:101
+#: cmd.rc:100
 msgid ""
 "LABEL is used to set a disk volume label.\n"
 "\n"
@@ -7874,16 +7870,16 @@ msgstr ""
 "이 명령은 당신이 주어진 드라이브에 새 볼륨 라벨울 넣을수 있도록 할것이다.\n"
 "VOL 명령으로 디스크 볼륨 라벨을 볼 수 있다.\n"
 
-#: cmd.rc:104
+#: cmd.rc:103
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr ""
 "MD <아름> 운 MKDIR의 단축 버젼입니다. 이것은 하위 디렉토리를 만듭니다 .\n"
 
-#: cmd.rc:105
+#: cmd.rc:104
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "MKDIR <명령> 운 하위 디렉토리를 만듭니다.\n"
 
-#: cmd.rc:112
+#: cmd.rc:111
 msgid ""
 "MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
@@ -7900,7 +7896,7 @@ msgstr ""
 "MOVE는 만약 오래되고 새로운 파일이 다른 도스 드라이브 문자를 가지고 있다면\n"
 "실패합니다.\n"
 
-#: cmd.rc:123
+#: cmd.rc:122
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
@@ -7922,7 +7918,7 @@ msgstr ""
 ",예를 들어:\n"
 "PATH %PATH%;c:\\temp\n"
 
-#: cmd.rc:129
+#: cmd.rc:128
 msgid ""
 "PAUSE displays a message on the screen 'Press Return key to continue'\n"
 "and waits for the user to press the Return key. It is mainly useful in\n"
@@ -7933,7 +7929,7 @@ msgstr ""
 "사용자가 리턴 키를 누를 때까지 기다림. 이것은 주로 배치파일에서  스크린을\n"
 "넘치게 하는 이전 명령의 결과를 읽도록 한다\n"
 
-#: cmd.rc:150
+#: cmd.rc:149
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -7975,7 +7971,7 @@ msgstr ""
 "이 프롬프트는 PROMPT 환경 변수 값의 변경에 의해 바뀔 수 있습니다,\n"
 "그래서 명령 'SET PROMPT=텍스트'는 'PROMPT 텍스트와 같은 일을 합니다\n"
 
-#: cmd.rc:154
+#: cmd.rc:153
 msgid ""
 "A command line beginning REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
@@ -7983,26 +7979,26 @@ msgstr ""
 "REM으로 시작하는 명령 라인 (공백뒤에 오는) 은 아무일도 안합니다\n"
 ", 그러므로 배치 파일에서 주석으로 사용됩니다\n"
 
-#: cmd.rc:157
+#: cmd.rc:156
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr ""
 "REN <파일이름> 은    REANME의 단축 버젼입니다.이것은 파일의 이름을 바꿉니"
 "다.\n"
 
-#: cmd.rc:158
+#: cmd.rc:157
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <파일이름> 은 파일의 이름을 바꿈\n"
 
-#: cmd.rc:160
+#: cmd.rc:159
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgstr ""
 "RD <디렉토리> 는 RMDIR의 단축버젼입니다. 이것은 하위 디렉토리를 지웁니다.\n"
 
-#: cmd.rc:161
+#: cmd.rc:160
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "RMDIR <디렉토리>는 하위 디렉토리를 지움.\n"
 
-#: cmd.rc:179
+#: cmd.rc:178
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -8037,7 +8033,7 @@ msgstr ""
 "의미합니다. 이것은 cmd안에서 운영체제 환경이 영향을 미치는거 것은\n"
 "가능하지 않다는 것을 기억하시오.\n"
 
-#: cmd.rc:184
+#: cmd.rc:183
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of\n"
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
@@ -8047,15 +8043,15 @@ msgstr ""
 "그래서 매개변수 2가 매개변수 1이 된다. 이것은 명령 라인에서 사용했을\n"
 "경우 아무 일도 안 합니다.\n"
 
-#: cmd.rc:186
+#: cmd.rc:185
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME 은 현재 시스템 시간을 보여 줍니다.\n"
 
-#: cmd.rc:188
+#: cmd.rc:187
 msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
 msgstr "cmd창의 창 제목 설정, 문법 TITLE [문자열]\n"
 
-#: cmd.rc:192
+#: cmd.rc:191
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
@@ -8063,7 +8059,7 @@ msgstr ""
 "TYPE <파일이름>  <파일 이름>를 콘솔 장치로 복사 (만약 방향이 재정의 된다면\n"
 "어디나). 아무 오류가 없으면 그 파일을 읽을 수 있는 텍스트입니다.\n"
 
-#: cmd.rc:201
+#: cmd.rc:200
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -8082,15 +8078,15 @@ msgstr ""
 "\n"
 "이 검증 플래그는 Wine에서는 아무 기능을 안함.\n"
 
-#: cmd.rc:204
+#: cmd.rc:203
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER  당신이 실행시킨 cmd 버젼 보여줌\n"
 
-#: cmd.rc:206
+#: cmd.rc:205
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL 은 디스크 장치의 볼륨 라벨을 보여줍니다.\n"
 
-#: cmd.rc:210
+#: cmd.rc:209
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
@@ -8098,7 +8094,7 @@ msgstr ""
 "ENDLOCAL은  배치파일에서 바꾼 지역 환경변수를 끝냅니다\n"
 "이것은 이전의 SETLOCAL로 시작되었습니다.\n"
 
-#: cmd.rc:218
+#: cmd.rc:217
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -8113,7 +8109,7 @@ msgstr ""
 "다음 ENDLOCAL이 나올 때까지만 보존되고(아니면 파일의 끝이든지,\n"
 "어느 똑이든 먼저 오는 지점이),이전의 환경 설정이 복원되는 지정입니다.\n"
 
-#: cmd.rc:221
+#: cmd.rc:220
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
@@ -8121,13 +8117,13 @@ msgstr ""
 "PUSHD <디렉토리 이름> 은 현재 디렉토리를 스택에 저장한다.\n"
 "그리고 현재 디렉토리를 요청한 디렉토리로 바꾼다.\n"
 
-#: cmd.rc:224
+#: cmd.rc:223
 msgid ""
 "POPD changes current directory to the last one saved with\n"
 "PUSHD.\n"
 msgstr "POPD는 현재 디렉토리를 PUSH로 마지막으로 저장했던 것으로 바꾼다.\n"
 
-#: cmd.rc:232
+#: cmd.rc:231
 msgid ""
 "ASSOC shows or modifies file extension associations\n"
 "\n"
@@ -8147,7 +8143,7 @@ msgstr ""
 "= 다음에 파일 종류가 지정되지 않으면 현재 연결상태에 가능한 것을 제거합니"
 "다.\n"
 
-#: cmd.rc:243
+#: cmd.rc:242
 msgid ""
 "FTYPE shows or modifies open commands associated with file types\n"
 "\n"
@@ -8170,12 +8166,12 @@ msgstr ""
 "= 다음에 열기 명령이 지정되지 않으면 지정된 파일 형식에 연결된 명령어 문자열"
 "을 제거 합니다.\n"
 
-#: cmd.rc:245
+#: cmd.rc:244
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr ""
 "MORE는 파일 출력을 보여주거나 페이지의 파이프로도 된 입력을 보여준다.\n"
 
-#: cmd.rc:249
+#: cmd.rc:248
 msgid ""
 "CHOICE displays a text and waits, until the User\n"
 "presses an allowed Key from a selectable list.\n"
@@ -8185,7 +8181,7 @@ msgstr ""
 "허용하는 키를 누를 때까지 기다립니다.\n"
 "CHOICE는 주로 배치 파일에서 메뉴 선택을 넣는 데 사용됩니다..\n"
 
-#: cmd.rc:253
+#: cmd.rc:252
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
@@ -8193,7 +8189,7 @@ msgstr ""
 "EXIT는 현재 명령 세션을 중단시키고 운영체제로 돌아가거나 cmd를\n"
 "호출한 셀로 돌아갑니다.\n"
 
-#: cmd.rc:288
+#: cmd.rc:287
 #, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
@@ -8264,110 +8260,110 @@ msgstr ""
 "\n"
 "HELP <명령>을 치면 그 명령의 상세한 정보를 보여줌\n"
 
-#: cmd.rc:290
+#: cmd.rc:289
 msgid "Are you sure"
 msgstr "당신은 확신합니까?"
 
-#: cmd.rc:291 xcopy.rc:40
+#: cmd.rc:290 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "예"
 
-#: cmd.rc:292 xcopy.rc:41
+#: cmd.rc:291 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "아니오"
 
-#: cmd.rc:293
+#: cmd.rc:292
 msgid "File association missing for extension %s\n"
 msgstr "이 파일확장자 %s에 연결된 풀그림이 없습니다.\n"
 
-#: cmd.rc:294
+#: cmd.rc:293
 msgid "No open command associated with file type '%s'\n"
 msgstr "이 파일 형식 '%s'과 연결된 어떠한 명령도 없습니다.'\n"
 
-#: cmd.rc:295
+#: cmd.rc:294
 msgid "Overwrite %s"
 msgstr "%s 덮어쓰기"
 
-#: cmd.rc:296
+#: cmd.rc:295
 msgid "More..."
 msgstr "더 많이..."
 
-#: cmd.rc:297
+#: cmd.rc:296
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "배치 작업의 줄은 아마도 불완전한 것 같습니다. 사용법:\n"
 
-#: cmd.rc:299
+#: cmd.rc:298
 msgid "Argument missing\n"
 msgstr "인수가 없습니다\n"
 
-#: cmd.rc:300
+#: cmd.rc:299
 msgid "Syntax error\n"
 msgstr "문법 오류\n"
 
-#: cmd.rc:302
+#: cmd.rc:301
 msgid "No help available for %s\n"
 msgstr "%s를 위한 어떠한 도움말도 찾을 수 없습니다\n"
 
-#: cmd.rc:303
+#: cmd.rc:302
 msgid "Target to GOTO not found\n"
 msgstr "GOTO 타겟을 찾을 수 없습니다\n"
 
-#: cmd.rc:304
+#: cmd.rc:303
 msgid "Current Date is %s\n"
 msgstr "현재 날짜는 %s\n"
 
-#: cmd.rc:305
+#: cmd.rc:304
 msgid "Current Time is %s\n"
 msgstr "현재 시간은 %s\n"
 
-#: cmd.rc:306
+#: cmd.rc:305
 msgid "Enter new date: "
 msgstr "새 날짜 입력: "
 
-#: cmd.rc:307
+#: cmd.rc:306
 msgid "Enter new time: "
 msgstr "새 시간 입력: "
 
-#: cmd.rc:308
+#: cmd.rc:307
 msgid "Environment variable %s not defined\n"
 msgstr "환경 변수 %s 는 정의되지 않았습니다\n"
 
-#: cmd.rc:309 xcopy.rc:38
+#: cmd.rc:308 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr "'%s' 열기 실패\n"
 
-#: cmd.rc:310
+#: cmd.rc:309
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "배치 스크립트 밖의 배치 라벨은 불러올수 없습니다\n"
 
-#: cmd.rc:311 xcopy.rc:42
+#: cmd.rc:310 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:312
+#: cmd.rc:311
 msgid "%s, Delete"
 msgstr "%s, 삭제"
 
-#: cmd.rc:313
+#: cmd.rc:312
 msgid "Echo is %s\n"
 msgstr "에코(Echo)는 %s\n"
 
-#: cmd.rc:314
+#: cmd.rc:313
 msgid "Verify is %s\n"
 msgstr "검증(Verify)은 %s\n"
 
-#: cmd.rc:315
+#: cmd.rc:314
 msgid "Verify must be ON or OFF\n"
 msgstr "검증(Verify)은 반드시 ON 이나 OFF가 되어야 합니다.\n"
 
-#: cmd.rc:316
+#: cmd.rc:315
 msgid "Parameter error\n"
 msgstr "매개변수 오류\n"
 
-#: cmd.rc:317
+#: cmd.rc:316
 msgid ""
 "Volume in drive %c is %s\n"
 "Volume Serial Number is %04x-%04x\n"
@@ -8377,31 +8373,31 @@ msgstr ""
 " 볼륨 시리얼 번호는 %04x-%04x\n"
 "\n"
 
-#: cmd.rc:318
+#: cmd.rc:317
 msgid "Volume label (11 characters, ENTER for none)?"
 msgstr "볼륨 라벨 (11 글자, ENTER는 없음과 같음)?"
 
-#: cmd.rc:319
+#: cmd.rc:318
 msgid "PATH not found\n"
 msgstr "PATH를 찾을 수 없습니다\n"
 
-#: cmd.rc:320
+#: cmd.rc:319
 msgid "Press Return key to continue: "
 msgstr "리턴 키를 누르면 계속: "
 
-#: cmd.rc:321
+#: cmd.rc:320
 msgid "Wine Command Prompt"
 msgstr "Wine 명령 입력대기"
 
-#: cmd.rc:322
+#: cmd.rc:321
 msgid "CMD Version %s\n"
 msgstr "CMD 버젼 %s\n"
 
-#: cmd.rc:323
+#: cmd.rc:322
 msgid "More? "
 msgstr " 더? "
 
-#: cmd.rc:324
+#: cmd.rc:323
 msgid "The input line is too long.\n"
 msgstr "이 출력 줄은 너무 깁니다.\n"
 
