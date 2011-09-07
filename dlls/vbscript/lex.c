@@ -36,8 +36,23 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
         return ctx->last_token == tNL ? tEOF : tNL;
 
     c = *ctx->ptr;
-    FIXME("Unhandled char %c in %s\n", *ctx->ptr, debugstr_w(ctx->ptr));
-    return c;
+
+    switch(c) {
+    case '\n':
+        ctx->ptr++;
+        return tNL;
+    case '\'':
+        ctx->ptr = strchrW(ctx->ptr, '\n');
+        if(ctx->ptr)
+            ctx->ptr++;
+        else
+            ctx->ptr = ctx->end;
+        return tNL;
+    default:
+        FIXME("Unhandled char %c in %s\n", *ctx->ptr, debugstr_w(ctx->ptr));
+    }
+
+    return 0;
 }
 
 int parser_lex(void *lval, parser_ctx_t *ctx)

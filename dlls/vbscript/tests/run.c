@@ -462,6 +462,7 @@ static void run_tests(void)
     strict_dispid_check = TRUE;
 
     parse_script_a("");
+    parse_script_a("' empty ;");
 }
 
 static BOOL check_vbscript(void)
