@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-08-30 20:11+0100\n"
+"PO-Revision-Date: 2011-09-06 22:11+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -694,7 +694,6 @@ msgid "Prefer Signed Data"
 msgstr "Préférer les données signées"
 
 #: crypt32.rc:53 cryptdlg.rc:31
-#, fuzzy
 msgctxt "Certification Practice Statement"
 msgid "CPS"
 msgstr "Énoncé des pratiques de certification (CPS)"
@@ -1233,7 +1232,6 @@ msgid "Subject Type="
 msgstr "Type de sujet ="
 
 #: crypt32.rc:195
-#, fuzzy
 msgctxt "Certificate Authority"
 msgid "CA"
 msgstr "AC"
@@ -1264,7 +1262,6 @@ msgid "Access Method="
 msgstr "Méthode d'accès ="
 
 #: crypt32.rc:202
-#, fuzzy
 msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
 msgstr "OCSP"
@@ -2029,14 +2026,12 @@ msgid "Default MidiOut Device"
 msgstr "Périphérique MidiOut par défaut"
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "Activation"
+msgstr "Action"
 
 #: dinput.rc:35
-#, fuzzy
 msgid "Object"
-msgstr "&Objet"
+msgstr "Objet"
 
 #: dxdiagn.rc:25
 msgid "Regional Setting"
@@ -2364,9 +2359,8 @@ msgid "URI to be encoded contains invalid characters"
 msgstr "L'URI à coder contient des caractères invalides"
 
 #: jscript.rc:48
-#, fuzzy
 msgid "URI to be decoded is incorrect"
-msgstr "L'URI à coder contient des caractères invalides"
+msgstr "L'URI à décoder est incorrecte"
 
 #: jscript.rc:50
 msgid "Array length must be a finite positive integer"
@@ -6760,19 +6754,16 @@ msgid "%ld bytes"
 msgstr "%ld octets"
 
 #: shlwapi.rc:28
-#, fuzzy
 msgctxt "time unit: hours"
 msgid " hr"
 msgstr " h"
 
 #: shlwapi.rc:29
-#, fuzzy
 msgctxt "time unit: minutes"
 msgid " min"
 msgstr " min"
 
 #: shlwapi.rc:30
-#, fuzzy
 msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " s"
@@ -7768,6 +7759,26 @@ msgid ""
 "and all subfolders.\n"
 "/D  Processes folders as well.\n"
 msgstr ""
+"ATTRIB - Affiche ou modifie les attributs de fichiers.\n"
+"\n"
+"Syntaxe :\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [lecteur:][chemin]"
+"[nomFichier]\n"
+"\t     [/S [/D]]\n"
+"\n"
+"où\n"
+"\n"
+"+   Définit un attribut.\n"
+"-   Supprime un attribut.\n"
+"R   Attribut de fichier en lecture seule.\n"
+"A   Attribut de fichier archive.\n"
+"S   Attribut de fichier système.\n"
+"H   Attribut de fichier caché.\n"
+"[lecteur:][chemin][nomFichier]\n"
+"Spécifie un ou plusieurs fichiers à faire traiter par attrib.\n"
+"/S  Traite les fichiers correspondants dans le dossier courant\n"
+"et tous les sous-dossiers.\n"
+"/D  Traite également les dossiers.\n"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -9983,12 +9994,10 @@ msgid "&Realtime"
 msgstr "Temps &réel"
 
 #: taskmgr.rc:160
-#, fuzzy
 msgid "&Above Normal"
 msgstr "&Supérieure à la normale"
 
 #: taskmgr.rc:164
-#, fuzzy
 msgid "&Below Normal"
 msgstr "&Inférieure à la normale"
 
@@ -11365,13 +11374,11 @@ msgid "Pages"
 msgstr "Pages"
 
 #: wordpad.rc:172
-#, fuzzy
 msgctxt "unit: centimeter"
 msgid "cm"
 msgstr "cm"
 
 #: wordpad.rc:173
-#, fuzzy
 msgctxt "unit: inch"
 msgid "in"
 msgstr "po"
@@ -11381,7 +11388,6 @@ msgid "inch"
 msgstr "pouces"
 
 #: wordpad.rc:175
-#, fuzzy
 msgctxt "unit: point"
 msgid "pt"
 msgstr "pt"
