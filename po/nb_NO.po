@@ -8146,12 +8146,13 @@ msgid ""
 msgstr "Hjelp til HELP\n"
 
 #: cmd.rc:94
+#, fuzzy
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
-"Syntax:\tIF [NOT] EXIST filename command\n"
-"IF [NOT] string1==string2 command\n"
-"IF [NOT] ERRORLEVEL number command\n"
+"Syntax: IF [NOT] EXIST filename command\n"
+"        IF [NOT] string1==string2 command\n"
+"        IF [NOT] ERRORLEVEL number command\n"
 "\n"
 "In the second form of the command, string1 and string2 must be in double\n"
 "quotes. The comparison is not case-sensitive.\n"
