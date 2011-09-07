@@ -133,7 +133,6 @@ static void test_title(void)
     ok(hdlg != INVALID_HANDLE_VALUE, "got invalid handle value %p\n", hdlg);
 
     style = GetWindowLong(hdlg, GWL_STYLE);
-    todo_wine
     ok(style == (WS_POPUP|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CAPTION|WS_SYSMENU|
                  DS_CONTEXTHELP|DS_MODALFRAME|DS_SETFONT|DS_3DLOOK),
        "got unexpected style: %x\n", style);
@@ -330,7 +329,6 @@ static void test_wiznavigation(void)
     ok(active_page == 0, "Active page should be 0. Is: %d\n", active_page);
 
     style = GetWindowLong(hdlg, GWL_STYLE) & ~(DS_CONTEXTHELP|WS_SYSMENU);
-    todo_wine
     ok(style == (WS_POPUP|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CAPTION|
                  DS_MODALFRAME|DS_SETFONT|DS_3DLOOK),
        "got unexpected style: %x\n", style);
