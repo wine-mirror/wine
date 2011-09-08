@@ -60,10 +60,13 @@ DEFINE_EXPECT(global_success_d);
 DEFINE_EXPECT(global_success_i);
 
 #define DISPID_GLOBAL_REPORTSUCCESS 1000
+#define DISPID_GLOBAL_TRACE         1001
+#define DISPID_GLOBAL_OK            1002
 
 static const WCHAR testW[] = {'t','e','s','t',0};
 
 static BOOL strict_dispid_check;
+static const char *test_name = "(null)";
 
 static BSTR a2bstr(const char *str)
 {
@@ -183,6 +186,16 @@ static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown
 
 static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
+    if(!strcmp_wa(bstrName, "ok")) {
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_GLOBAL_OK;
+        return S_OK;
+    }
+    if(!strcmp_wa(bstrName, "trace")) {
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_GLOBAL_TRACE;
+        return S_OK;
+    }
     if(!strcmp_wa(bstrName, "reportSuccess")) {
         CHECK_EXPECT(global_success_d);
         test_grfdex(grfdex, fdexNameCaseInsensitive);
@@ -199,6 +212,48 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     switch(id) {
+    case DISPID_GLOBAL_OK: {
+        VARIANT *b;
+
+        ok(wFlags == INVOKE_FUNC || wFlags == (INVOKE_FUNC|INVOKE_PROPERTYGET), "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 2, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        if(wFlags & INVOKE_PROPERTYGET)
+            ok(pvarRes != NULL, "pvarRes == NULL\n");
+        else
+            ok(!pvarRes, "pvarRes != NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        ok(V_VT(pdp->rgvarg) == VT_BSTR, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
+
+        b = pdp->rgvarg+1;
+        if(V_VT(b) == (VT_BYREF|VT_VARIANT))
+            b = V_BYREF(b);
+
+        ok(V_VT(b) == VT_BOOL, "V_VT(b) = %d\n", V_VT(b));
+
+        ok(V_BOOL(b), "%s: %s\n", test_name, wine_dbgstr_w(V_BSTR(pdp->rgvarg)));
+        return S_OK;
+    }
+
+     case DISPID_GLOBAL_TRACE:
+        ok(wFlags == INVOKE_FUNC, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(!pvarRes, "pvarRes != NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        ok(V_VT(pdp->rgvarg) == VT_BSTR, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
+        if(V_VT(pdp->rgvarg) == VT_BSTR)
+            trace("%s: %s\n", test_name, wine_dbgstr_w(V_BSTR(pdp->rgvarg)));
+
+        return S_OK;
     case DISPID_GLOBAL_REPORTSUCCESS:
         CHECK_EXPECT(global_success_i);
 
@@ -457,6 +512,37 @@ static void run_from_file(const char *filename)
     ok(hres == S_OK, "parse_script failed: %08x\n", hres);
 }
 
+static void run_from_res(const char *name)
+{
+    const char *data;
+    DWORD size, len;
+    BSTR str;
+    HRSRC src;
+    HRESULT hres;
+
+    strict_dispid_check = FALSE;
+    test_name = name;
+
+    src = FindResourceA(NULL, name, (LPCSTR)40);
+    ok(src != NULL, "Could not find resource %s\n", name);
+
+    size = SizeofResource(NULL, src);
+    data = LoadResource(NULL, src);
+
+    len = MultiByteToWideChar(CP_ACP, 0, data, size, NULL, 0);
+    str = SysAllocStringLen(NULL, len);
+    MultiByteToWideChar(CP_ACP, 0, data, size, str, len);
+
+    SET_EXPECT(global_success_d);
+    SET_EXPECT(global_success_i);
+    hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, str);
+    CHECK_CALLED(global_success_d);
+    CHECK_CALLED(global_success_i);
+
+    ok(hres == S_OK, "parse_script failed: %08x\n", hres);
+    SysFreeString(str);
+}
+
 static void run_tests(void)
 {
     strict_dispid_check = TRUE;
@@ -481,6 +567,8 @@ static void run_tests(void)
     parse_script_a("Call reportSuccess");
     CHECK_CALLED(global_success_d);
     CHECK_CALLED(global_success_i);
+
+    run_from_res("lang.vbs");
 }
 
 static BOOL check_vbscript(void)
