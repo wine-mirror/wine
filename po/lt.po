@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-08-31 18:41+0300\n"
+"PO-Revision-Date: 2011-09-08 19:21+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -696,10 +696,9 @@ msgid "Prefer Signed Data"
 msgstr "Teikti pirmenybę pasirašytiems duomenims"
 
 #: crypt32.rc:53 cryptdlg.rc:31
-#, fuzzy
 msgctxt "Certification Practice Statement"
 msgid "CPS"
-msgstr "Sertifikavimo Veiklos Nuostatos (CPS)"
+msgstr "CPS"
 
 #: crypt32.rc:54 cryptdlg.rc:32
 msgid "User Notice"
@@ -1234,10 +1233,9 @@ msgid "Subject Type="
 msgstr "Subjekto tipas="
 
 #: crypt32.rc:195
-#, fuzzy
 msgctxt "Certificate Authority"
 msgid "CA"
-msgstr "LĮ"
+msgstr "CA"
 
 #: crypt32.rc:196
 msgid "End Entity"
@@ -1265,7 +1263,6 @@ msgid "Access Method="
 msgstr "Prieigos metodas="
 
 #: crypt32.rc:202
-#, fuzzy
 msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
 msgstr "OCSP"
@@ -2026,14 +2023,12 @@ msgid "Default MidiOut Device"
 msgstr "Numatytasis MidiOut įrenginys"
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "Aktyvinimas"
+msgstr "Veiksmas"
 
 #: dinput.rc:35
-#, fuzzy
 msgid "Object"
-msgstr "&Objektas"
+msgstr "Objektas"
 
 #: dxdiagn.rc:25
 msgid "Regional Setting"
@@ -2360,9 +2355,8 @@ msgid "URI to be encoded contains invalid characters"
 msgstr "Koduotiname URI yra netinkamų simbolių"
 
 #: jscript.rc:48
-#, fuzzy
 msgid "URI to be decoded is incorrect"
-msgstr "Koduotiname URI yra netinkamų simbolių"
+msgstr "Dekoduojamas URI yra neteisingas"
 
 #: jscript.rc:50
 msgid "Array length must be a finite positive integer"
@@ -6743,22 +6737,19 @@ msgid "%ld bytes"
 msgstr "%ld baitai"
 
 #: shlwapi.rc:28
-#, fuzzy
 msgctxt "time unit: hours"
 msgid " hr"
-msgstr " val"
+msgstr " val."
 
 #: shlwapi.rc:29
-#, fuzzy
 msgctxt "time unit: minutes"
 msgid " min"
-msgstr " min"
+msgstr " min."
 
 #: shlwapi.rc:30
-#, fuzzy
 msgctxt "time unit: seconds"
 msgid " sec"
-msgstr " sek"
+msgstr " sek."
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
@@ -7722,6 +7713,25 @@ msgid ""
 "and all subfolders.\n"
 "/D  Processes folders as well.\n"
 msgstr ""
+"ATTRIB - Parodo ar pakeičia failų atributus.\n"
+"\n"
+"Sintaksė:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [diskas:][kelias][failas]\n"
+"\t     [/S [/D]]\n"
+"\n"
+"Kur:\n"
+"\n"
+"+   Nustato atributą.\n"
+"-   Išvalo atributą.\n"
+"R   Atributas „tik skaitomas“.\n"
+"A   Atributas „archyvuotinasis“.\n"
+"S   Atributas „sisteminis“.\n"
+"H   Atributas „slepiamasis“.\n"
+"[diskas:][kelias][failas]\n"
+"Nurodo failą ar failus attrib apdorojimui.\n"
+"/S  Apdoroja atitinkančius failus dabartiniame\n"
+"aplanke ir poaplankiuose.\n"
+"/D  Taip pat apdoroja aplankus."
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -7886,7 +7896,6 @@ msgstr ""
 "HELP be argumentų parodo visas įtaisytas CMD komandas.\n"
 
 #: cmd.rc:94
-#, fuzzy
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -7899,9 +7908,9 @@ msgid ""
 msgstr ""
 "IF yra naudojama vykdyti komandą su sąlyga.\n"
 "\n"
-"Sintaksė:\tIF [NOT] EXIST failas komanda\n"
-"IF [NOT] eilutė1==eilutė2 komanda\n"
-"IF [NOT] ERRORLEVEL skaičius komanda\n"
+"Sintaksė: IF [NOT] EXIST failas komanda\n"
+"          IF [NOT] eilutė1==eilutė2 komanda\n"
+"          IF [NOT] ERRORLEVEL skaičius komanda\n"
 "\n"
 "Antroje komandos formoje, eilutė1 ir eilutė2 privalo būti tarp dvigubų\n"
 "kabučių. Palyginimas neskiria didžiųjų ir mažųjų raidžių.\n"
@@ -7980,7 +7989,6 @@ msgstr ""
 "rezultatą kol jis nepasislinko už ekrano ribų.\n"
 
 #: cmd.rc:149
-#, fuzzy
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -8005,15 +8013,15 @@ msgstr ""
 "PROMPT nustato komandinės eilutės raginimą.\n"
 "\n"
 "Simbolių eilutė, einanti po PROMPT komandos (ir tarpas iškart po to),\n"
-"atsiranda eilutės pradžioje, kai CMD laukia įvedimo.\n"
+"atsiranda eilutės pradžioje, kai cmd laukia įvedimo.\n"
 "\n"
 "Šie simboliai turi nurodytą specialią reikšmę:\n"
 "\n"
 "$$    Dolerio ženklas     $_    Eilutės patraukimas $b    Status brūkšnys "
 "(|)\n"
-"$d    Dabartinė data      $e    Grįžimo klavišas    $g    > ženklas\n"
-"$l    < ženklas           $n    Dabartinis diskas   $p    Dabartinis kelias\n"
-"$q    Lygybės ženklas     $t    Dabartinis laikas   $v    CMD versija\n"
+"$d    Dabartinė data      $e    Grįžimo klavišas    $g    Ženklas >\n"
+"$l    Ženklas <           $n    Dabartinis diskas   $p    Dabartinis kelias\n"
+"$q    Lygybės ženklas     $t    Dabartinis laikas   $v    cmd versija\n"
 "\n"
 "Pastebėkite, kad PROMPT komandos be raginimo eilutės įvedimas atkuria\n"
 "numatytą raginimo reikšmę, kuri yra dabartinis kelias (įskaitant\n"
@@ -8240,7 +8248,6 @@ msgstr ""
 "ar apvalkalą iš kur CMD buvo iškviestas.\n"
 
 #: cmd.rc:287
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -8549,7 +8556,6 @@ msgid "Default gateway"
 msgstr "Numatytasis šliuzas"
 
 #: net.rc:27
-#, fuzzy
 msgid ""
 "The syntax of this command is:\n"
 "\n"
@@ -8565,7 +8571,7 @@ msgstr ""
 "    -arba-\n"
 "NET komanda /HELP\n"
 "\n"
-"Kur „komanda“ yra viena iš HELP, START, STOP ar USE\n"
+"Kur „komanda“ yra viena iš HELP, START, STOP ar USE.\n"
 
 #: net.rc:28
 msgid ""
@@ -9884,14 +9890,12 @@ msgid "&Realtime"
 msgstr "&Tikralaikis"
 
 #: taskmgr.rc:160
-#, fuzzy
 msgid "&Above Normal"
-msgstr "&ViršNormalaus"
+msgstr "&Virš normalaus"
 
 #: taskmgr.rc:164
-#, fuzzy
 msgid "&Below Normal"
-msgstr "&ŽemiauNormalaus"
+msgstr "&Žemiau normalaus"
 
 #: taskmgr.rc:169
 msgid "Set &Affinity..."
@@ -10504,7 +10508,6 @@ msgstr ""
 "neegzistuoja. Jei tęsite, nepamirškite atkurti C disko!"
 
 #: winecfg.rc:80
-#, fuzzy
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Raidė"
@@ -10746,7 +10749,6 @@ msgstr ""
 "Parametrai:\n"
 
 #: wineconsole.rc:49
-#, fuzzy
 msgid ""
 "  --backend={user|curses}  Choosing user will spawn a new window, curses "
 "will\n"
@@ -10755,15 +10757,13 @@ msgid ""
 msgstr ""
 "  --backend={user|curses}  „User“ sukurs naują langą, „curses“ mėgins\n"
 "                            sukonfigūruoti dabartinį terminalą kaip Wine "
-"pultą\n"
+"pultą.\n"
 
 #: wineconsole.rc:51
-#, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
-msgstr "  <komanda>                 Wine programa paleidimui pulte\n"
+msgstr "  <komanda>                Wine programa paleidimui pulte.\n"
 
 #: wineconsole.rc:52
-#, fuzzy
 msgid ""
 "\n"
 "Example:\n"
@@ -10774,7 +10774,7 @@ msgstr ""
 "\n"
 "Pavyzdys:\n"
 "  wineconsole cmd\n"
-"Paleidžia Wine komandų interpretatorių Wine pulte\n"
+"Paleidžia Wine komandų interpretatorių Wine pulte.\n"
 "\n"
 
 #: winedbg.rc:35
@@ -11262,13 +11262,11 @@ msgid "Pages"
 msgstr "Puslapiai"
 
 #: wordpad.rc:172
-#, fuzzy
 msgctxt "unit: centimeter"
 msgid "cm"
 msgstr "cm"
 
 #: wordpad.rc:173
-#, fuzzy
 msgctxt "unit: inch"
 msgid "in"
 msgstr "col."
@@ -11278,7 +11276,6 @@ msgid "inch"
 msgstr "coliai"
 
 #: wordpad.rc:175
-#, fuzzy
 msgctxt "unit: point"
 msgid "pt"
 msgstr "tašk."
@@ -11400,7 +11397,6 @@ msgid "D"
 msgstr "K"
 
 #: xcopy.rc:77
-#, fuzzy
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -11435,7 +11431,7 @@ msgid ""
 "\t\tthan source.\n"
 "\n"
 msgstr ""
-"XCOPY - Kopijuoja šaltinio failus ir katalogų medžius į paskirties vietą\n"
+"XCOPY - Kopijuoja šaltinio failus ir katalogų medžius į paskirties vietą.\n"
 "\n"
 "Sintaksė:\n"
 "XCOPY šaltinis [paskirtis] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
@@ -11444,27 +11440,27 @@ msgstr ""
 "Kur:\n"
 "\n"
 "[/I]  Tarti, kad katalogas, jei paskirtis neegzistuoja ir kopijuojami\n"
-"\t2 ar daugiau failų\n"
-"[/S]  Kopijuoti katalogus ir pakatalogius\n"
-"[/E]  Kopijuoti katalogus ir pakatalogius, taip pat ir tuščius\n"
+"\t2 ar daugiau failų.\n"
+"[/S]  Kopijuoti katalogus ir pakatalogius.\n"
+"[/E]  Kopijuoti katalogus ir pakatalogius, taip pat ir tuščius.\n"
 "[/Q]  Kopijuojant nerodyti vardų, kopijuoti tyliai.\n"
-"[/F]  Kopijuojant rodyti pilnus šaltinio ir paskirties vardus\n"
-"[/L]  Modeliuoti veikimą rodant failus, kurie būtų kopijuojami\n"
-"[/W]  Raginti prieš pradedant kopijavimo operaciją\n"
-"[/T]  Sukuria tuščią katalogų struktūrą, bet nekopijuoja jokių failų\n"
-"[/Y]  Nerodyti raginimų, kai perrašomi failai\n"
-"[/-Y] Įjungti raginimus, kai perrašomi failai\n"
-"[/P]  Ragina prieš kopijuojant kiekvieną šaltinio failą\n"
-"[/N]  Kopijuoti naudojant trumpus vardus\n"
-"[/U]  Kopijuoti tik tuos failus, kurie jau egzistuoja paskirties vietoje\n"
-"[/R]  Perrašyti visus nekeičiamus failus\n"
-"[/H]  Kopijuoti paslėptus ir sisteminius failus\n"
-"[/C]  Tęsti, net jei įvyksta klaida kopijuojant\n"
-"[/A]  Kopijuoti tik failus su nustatytu archyvavimo požymiu\n"
+"[/F]  Kopijuojant rodyti pilnus šaltinio ir paskirties vardus.\n"
+"[/L]  Modeliuoti veikimą rodant failus, kurie būtų kopijuojami.\n"
+"[/W]  Raginti prieš pradedant kopijavimo operaciją.\n"
+"[/T]  Sukuria tuščią katalogų struktūrą, bet nekopijuoja jokių failų.\n"
+"[/Y]  Nerodyti raginimų, kai perrašomi failai.\n"
+"[/-Y] Įjungti raginimus, kai perrašomi failai.\n"
+"[/P]  Ragina prieš kopijuojant kiekvieną šaltinio failą.\n"
+"[/N]  Kopijuoti naudojant trumpus vardus.\n"
+"[/U]  Kopijuoti tik tuos failus, kurie jau egzistuoja paskirties vietoje.\n"
+"[/R]  Perrašyti visus nekeičiamus failus.\n"
+"[/H]  Kopijuoti paslėptus ir sisteminius failus.\n"
+"[/C]  Tęsti, net jei įvyksta klaida kopijuojant.\n"
+"[/A]  Kopijuoti tik failus su nustatytu archyvavimo požymiu.\n"
 "[/M]  Kopijuoti tik failus su nustatytu archyvavimo požymiu, pašalinti\n"
-"\tarchyvavimo požymį\n"
+"\tarchyvavimo požymį.\n"
 "[/D | /D:m-d-y] Kopijuoti naujus failus arba modifikuotos po nurodytos "
 "datos.\n"
 "\t\tJei data nenurodyta, kopijuoti tik jei paskirties failas yra\n"
-"\t\tsenesnis už šaltinio failą\n"
+"\t\tsenesnis už šaltinio failą.\n"
 "\n"
