@@ -604,7 +604,7 @@ DWORD dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
                        struct gdi_image_bits *bits, struct bitblt_coords *src )
 {
     DWORD ret = ERROR_SUCCESS;
-    dib_info *dib, stand_alone;
+    dib_info *dib = NULL, stand_alone;
 
     TRACE( "%p %p %p\n", dev, hbitmap, info );
 
@@ -651,7 +651,12 @@ DWORD dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
     }
 
 done:
-   if (hbitmap) GDI_ReleaseObj( hbitmap );
+   if (hbitmap)
+   {
+       if (dib) free_dib_info( dib );
+       GDI_ReleaseObj( hbitmap );
+   }
+
    return ret;
 }
 
@@ -707,7 +712,7 @@ DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
                        const struct gdi_image_bits *bits, struct bitblt_coords *src,
                        struct bitblt_coords *dst, DWORD rop )
 {
-    dib_info *dib, stand_alone;
+    dib_info *dib = NULL, stand_alone;
     DWORD ret;
     dib_info src_dib;
     HRGN saved_clip = NULL;
@@ -780,7 +785,11 @@ update_format:
     ret = ERROR_BAD_FORMAT;
 
 done:
-    if (hbitmap) GDI_ReleaseObj( hbitmap );
+    if (hbitmap)
+    {
+       if (dib) free_dib_info( dib );
+       GDI_ReleaseObj( hbitmap );
+    }
 
     return ret;
 }
