@@ -107,24 +107,45 @@ static void stack_popn(exec_ctx_t *ctx, unsigned n)
         VariantClear(stack_pop(ctx));
 }
 
+static void vbstack_to_dp(exec_ctx_t *ctx, unsigned arg_cnt, DISPPARAMS *dp)
+{
+    dp->cArgs = arg_cnt;
+    dp->rgdispidNamedArgs = NULL;
+    dp->cNamedArgs = 0;
+
+    if(arg_cnt) {
+        VARIANT tmp;
+        unsigned i;
+
+        assert(ctx->top >= arg_cnt);
+
+        for(i=1; i*2 <= arg_cnt; i++) {
+            tmp = ctx->stack[ctx->top-i];
+            ctx->stack[ctx->top-i] = ctx->stack[ctx->top-arg_cnt+i-1];
+            ctx->stack[ctx->top-arg_cnt+i-1] = tmp;
+        }
+
+        dp->rgvarg = ctx->stack + ctx->top-arg_cnt;
+    }else {
+        dp->rgvarg = NULL;
+    }
+}
+
 static HRESULT interp_icallv(exec_ctx_t *ctx)
 {
     BSTR identifier = ctx->instr->arg1.bstr;
     const unsigned arg_cnt = ctx->instr->arg2.uint;
-    DISPPARAMS dp = {0};
-    ref_t ref;
+    ref_t ref = {0};
+    DISPPARAMS dp;
     HRESULT hres;
 
     TRACE("\n");
 
-    if(arg_cnt) {
-        FIXME("arguments not implemented\n");
-        return E_NOTIMPL;
-    }
-
     hres = lookup_identifier(ctx, identifier, &ref);
     if(FAILED(hres))
         return hres;
+
+    vbstack_to_dp(ctx, arg_cnt, &dp);
 
     switch(ref.type) {
     case REF_DISP:
@@ -137,6 +158,7 @@ static HRESULT interp_icallv(exec_ctx_t *ctx)
         return DISP_E_UNKNOWNNAME;
     }
 
+    stack_popn(ctx, arg_cnt);
     return S_OK;
 }
 
