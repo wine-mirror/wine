@@ -1554,6 +1554,15 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
         goto cpu;
     }
 
+    /* We want to avoid invalidating the sysmem location for converted
+     * surfaces, since otherwise we'd have to convert the data back when
+     * locking them. */
+    if (dst_surface->flags & SFLAG_CONVERTED)
+    {
+        WARN("Converted surface, using CPU blit.\n");
+        return surface_cpu_blt(dst_surface, &dst_rect, src_surface, &src_rect, flags, fx, filter);
+    }
+
     if (flags & ~simple_blit)
     {
         WARN("Using fallback for complex blit (%#x).\n", flags);
@@ -2181,7 +2190,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
     /* Only support read back of converted P8 surfaces. */
     if (surface->flags & SFLAG_CONVERTED && format->id != WINED3DFMT_P8_UINT)
     {
-        FIXME("Readback conversion not supported for format %s.\n", debug_d3dformat(format->id));
+        ERR("Trying to read back converted surface %p with format %s.\n", surface, debug_d3dformat(format->id));
         return;
     }
 
