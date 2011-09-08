@@ -35,6 +35,8 @@ static void parse_complete(parser_ctx_t*);
 
 static void source_add_statement(parser_ctx_t*,statement_t*);
 
+static expression_t *new_bool_expression(parser_ctx_t*,VARIANT_BOOL);
+
 static member_expression_t *new_member_expression(parser_ctx_t*,expression_t*,const WCHAR*);
 
 static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
@@ -69,8 +71,9 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 %token <string> tIdentifier
 
 %type <statement> Statement StatementNl
+%type <expression> Expression LiteralExpression
 %type <member> MemberExpression
-%type <expression> Arguments_opt ArgumentList_opt
+%type <expression> Arguments_opt ArgumentList_opt ArgumentList
 
 %%
 
@@ -98,7 +101,18 @@ Arguments_opt
 
 ArgumentList_opt
     : /* empty */                   { $$ = NULL; }
- /* | ArgumentList                  { $$ = $1; } */
+    | ArgumentList                  { $$ = $1; }
+
+ArgumentList
+    : Expression                    { $$ = $1; }
+    | Expression ',' ArgumentList   { $1->next = $3; $$ = $1; }
+
+Expression
+    : LiteralExpression /* FIXME */ { $$ = $1; }
+
+LiteralExpression
+    : tTRUE                         { $$ = new_bool_expression(ctx, VARIANT_TRUE); CHECK_ERROR; }
+    | tFALSE                        { $$ = new_bool_expression(ctx, VARIANT_FALSE); CHECK_ERROR; }
 
 %%
 
@@ -133,6 +147,18 @@ static void *new_expression(parser_ctx_t *ctx, expression_type_t type, unsigned 
     }
 
     return expr;
+}
+
+static expression_t *new_bool_expression(parser_ctx_t *ctx, VARIANT_BOOL value)
+{
+    bool_expression_t *expr;
+
+    expr = new_expression(ctx, EXPR_BOOL, sizeof(*expr));
+    if(!expr)
+        return NULL;
+
+    expr->value = value;
+    return &expr->expr;
 }
 
 static member_expression_t *new_member_expression(parser_ctx_t *ctx, expression_t *obj_expr, const WCHAR *identifier)
