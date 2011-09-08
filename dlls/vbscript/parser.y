@@ -39,6 +39,8 @@ static member_expression_t *new_member_expression(parser_ctx_t*,expression_t*,co
 
 static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 
+#define CHECK_ERROR if(((parser_ctx_t*)ctx)->hres != S_OK) YYABORT
+
 %}
 
 %pure_parser
@@ -47,6 +49,7 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 %union {
     const WCHAR *string;
     statement_t *statement;
+    expression_t *expression;
     member_expression_t *member;
 }
 
@@ -55,6 +58,7 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 
 %type <statement> Statement StatementNl
 %type <member> MemberExpression
+%type <expression> Arguments_opt ArgumentList_opt
 
 %%
 
@@ -69,11 +73,19 @@ StatementNl
     : Statement tNL                 { $$ = $1; }
 
 Statement
-    : MemberExpression /* FIXME: Arguments_opt */   { $$ = new_call_statement(ctx, $1); }
+    : MemberExpression Arguments_opt    { $1->args = $2; $$ = new_call_statement(ctx, $1); CHECK_ERROR; }
 
 MemberExpression
-    : tIdentifier                   { $$ = new_member_expression(ctx, NULL, $1); }
+    : tIdentifier                   { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
     /* FIXME: MemberExpressionArgs '.' tIdentifier */
+
+Arguments_opt
+    : /* empty */                   { $$ = NULL; }
+    | '(' ArgumentList_opt ')'      { $$ = $2; }
+
+ArgumentList_opt
+    : /* empty */                   { $$ = NULL; }
+ /* | ArgumentList                  { $$ = $1; } */
 
 %%
 
