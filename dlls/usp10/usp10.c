@@ -324,6 +324,7 @@ typedef struct {
 
 typedef struct {
     HDC hdc;
+    DWORD dwFlags;
     BOOL invalid;
     int clip_len;
     ScriptCache *sc;
@@ -931,6 +932,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
     /* FIXME: handle clipping */
     analysis->clip_len = cString;
     analysis->hdc = hdc;
+    analysis->dwFlags = dwFlags;
 
     if (psState)
         sState = *psState;
@@ -959,10 +961,16 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
     }
     if (hr != S_OK) goto error;
 
-    if ((analysis->logattrs = heap_alloc(sizeof(SCRIPT_LOGATTR) * cString)))
-        ScriptBreak(pString, cString, (SCRIPT_STRING_ANALYSIS)analysis, analysis->logattrs);
-    else
-        goto error;
+    if (dwFlags & SSA_BREAK)
+    {
+        if ((analysis->logattrs = heap_alloc(sizeof(SCRIPT_LOGATTR) * cString)))
+        {
+            for (i = 0; i < analysis->numItems; i++)
+                ScriptBreak(&((LPWSTR)pString)[analysis->pItem[i].iCharPos], analysis->pItem[i+1].iCharPos - analysis->pItem[i].iCharPos, &analysis->pItem[i].a, &analysis->logattrs[analysis->pItem[i].iCharPos]);
+        }
+        else
+            goto error;
+    }
 
     if (!(analysis->glyphs = heap_alloc_zero(sizeof(StringGlyphs) * analysis->numItems)))
         goto error;
@@ -2351,6 +2359,7 @@ const SCRIPT_LOGATTR * WINAPI ScriptString_pLogAttr(SCRIPT_STRING_ANALYSIS ssa)
     TRACE("(%p)\n", ssa);
 
     if (!analysis) return NULL;
+    if (!(analysis->dwFlags & SSA_BREAK)) return NULL;
     return analysis->logattrs;
 }
 
