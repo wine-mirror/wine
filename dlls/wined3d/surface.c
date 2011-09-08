@@ -332,6 +332,8 @@ void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3
     checkGLcall("glTexParameteri");
     glTexParameteri(info.bind_target, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(info.bind_target, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    if (context->gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+        glTexParameteri(info.bind_target, GL_TEXTURE_SRGB_DECODE_EXT, GL_SKIP_DECODE_EXT);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
     checkGLcall("glTexEnvi");
 
@@ -361,6 +363,7 @@ void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3
         texture->texture_rgb.states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_POINT;
         texture->texture_rgb.states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT;
         texture->texture_rgb.states[WINED3DTEXSTA_MIPFILTER] = WINED3DTEXF_NONE;
+        texture->texture_rgb.states[WINED3DTEXSTA_SRGBTEXTURE] = FALSE;
     }
 }
 
