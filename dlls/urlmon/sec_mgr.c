@@ -1070,6 +1070,30 @@ static HRESULT WINAPI SecManagerImpl_MapUrlToZoneEx2(IInternetSecurityManagerEx2
 
     TRACE("(%p)->(%p %p %08x %p %p)\n", This, pUri, pdwZone, dwFlags, ppwszMappedUrl, pdwOutFlags);
 
+    if(This->custom_manager) {
+        HRESULT hres;
+        IInternetSecurityManagerEx2 *sec_mgr2;
+
+        hres = IInternetSecurityManager_QueryInterface(This->custom_manager, &IID_IInternetSecurityManagerEx2,
+                (void**)&sec_mgr2);
+        if(SUCCEEDED(hres)) {
+            hres = IInternetSecurityManagerEx2_MapUrlToZoneEx2(sec_mgr2, pUri, pdwZone, dwFlags, ppwszMappedUrl, pdwOutFlags);
+            IInternetSecurityManagerEx2_Release(sec_mgr2);
+        } else {
+            BSTR url;
+
+            hres = IUri_GetDisplayUri(pUri, &url);
+            if(FAILED(hres))
+                return hres;
+
+            hres = IInternetSecurityManager_MapUrlToZone(This->custom_manager, url, pdwZone, dwFlags);
+            SysFreeString(url);
+        }
+
+        if(hres != INET_E_DEFAULT_ACTION)
+            return hres;
+    }
+
     if(!pdwZone)
         return E_INVALIDARG;
 
