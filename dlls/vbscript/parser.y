@@ -53,8 +53,19 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
     member_expression_t *member;
 }
 
-%token tEOF tNL blah
-%token tCALL
+%token tEOF tNL tREM
+%token tTRUE tFALSE
+%token tNOT tAND tOR tXOR tEQV tIMP tNEQ
+%token tIS tLTEQ tGTEQ tMOD
+%token tCALL tDIM tSUB tFUNCTION tPROPERTY tGET tLET
+%token tIF tELSE tELSEIF tEND tTHEN tEXIT
+%token tWHILE tWEND tDO tLOOP tUNTIL
+%token tBYREF tBYVAL
+%token tOPTION tEXPLICIT
+%token tSTOP
+%token tNOTHING tEMPTY tNULL
+%token tCLASS tSET tNEW tPUBLIC tPRIVATE tDEFAULT tME
+%token tERROR tNEXT tON tRESUME tGOTO
 %token <string> tIdentifier
 
 %type <statement> Statement StatementNl

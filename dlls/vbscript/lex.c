@@ -26,13 +26,109 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
+static const WCHAR andW[] = {'a','n','d',0};
+static const WCHAR byrefW[] = {'b','y','r','e','f',0};
+static const WCHAR byvalW[] = {'b','y','v','a','l',0};
 static const WCHAR callW[] = {'c','a','l','l',0};
+static const WCHAR classW[] = {'c','l','a','s','s',0};
+static const WCHAR defaultW[] = {'d','e','f','a','u','l','t',0};
+static const WCHAR dimW[] = {'d','i','m',0};
+static const WCHAR doW[] = {'d','o',0};
+static const WCHAR elseW[] = {'e','l','s','e',0};
+static const WCHAR elseifW[] = {'e','l','s','e','i','f',0};
+static const WCHAR emptyW[] = {'e','m','p','t','y',0};
+static const WCHAR endW[] = {'e','n','d',0};
+static const WCHAR eqvW[] = {'e','q','v',0};
+static const WCHAR errorW[] = {'e','r','r','o','r',0};
+static const WCHAR exitW[] = {'e','x','i','t',0};
+static const WCHAR explicitW[] = {'e','x','p','l','i','c','i','t',0};
+static const WCHAR falseW[] = {'f','a','l','s','e',0};
+static const WCHAR functionW[] = {'f','u','n','c','t','i','o','n',0};
+static const WCHAR getW[] = {'g','e','t',0};
+static const WCHAR gotoW[] = {'g','o','t','o',0};
+static const WCHAR ifW[] = {'i','f',0};
+static const WCHAR impW[] = {'i','m','p',0};
+static const WCHAR isW[] = {'i','s',0};
+static const WCHAR letW[] = {'l','e','t',0};
+static const WCHAR loopW[] = {'l','o','o','p',0};
+static const WCHAR meW[] = {'m','e',0};
+static const WCHAR modW[] = {'m','o','d',0};
+static const WCHAR newW[] = {'n','e','w',0};
+static const WCHAR nextW[] = {'n','e','x','t',0};
+static const WCHAR notW[] = {'n','o','t',0};
+static const WCHAR nothingW[] = {'n','o','t','h','i','n','g',0};
+static const WCHAR nullW[] = {'n','u','l','l',0};
+static const WCHAR onW[] = {'o','n',0};
+static const WCHAR optionW[] = {'o','p','t','i','o','n',0};
+static const WCHAR orW[] = {'o','r',0};
+static const WCHAR privateW[] = {'p','r','i','v','a','t','e',0};
+static const WCHAR propertyW[] = {'p','r','o','p','e','r','t','y',0};
+static const WCHAR publicW[] = {'p','u','b','l','i','c',0};
+static const WCHAR remW[] = {'r','e','m',0};
+static const WCHAR resumeW[] = {'r','e','s','u','m','e',0};
+static const WCHAR setW[] = {'s','e','t',0};
+static const WCHAR stopW[] = {'s','t','o','p',0};
+static const WCHAR subW[] = {'s','u','b',0};
+static const WCHAR thenW[] = {'t','h','e','n',0};
+static const WCHAR trueW[] = {'t','r','u','e',0};
+static const WCHAR untilW[] = {'u','n','t','i','l',0};
+static const WCHAR wendW[] = {'w','e','n','d',0};
+static const WCHAR whileW[] = {'w','h','i','l','e',0};
+static const WCHAR xorW[] = {'x','o','r',0};
 
 static const struct {
     const WCHAR *word;
     int token;
 } keywords[] = {
-    {callW, tCALL}
+    {andW,       tAND},
+    {byrefW,     tBYREF},
+    {byvalW,     tBYVAL},
+    {callW,      tCALL},
+    {classW,     tCLASS},
+    {defaultW,   tDEFAULT},
+    {dimW,       tDIM},
+    {doW,        tDO},
+    {elseW,      tELSE},
+    {elseifW,    tELSEIF},
+    {emptyW,     tEMPTY},
+    {endW,       tEND},
+    {eqvW,       tEQV},
+    {errorW,     tERROR},
+    {exitW,      tEXIT},
+    {explicitW,  tEXPLICIT},
+    {falseW,     tFALSE},
+    {functionW,  tFUNCTION},
+    {getW,       tGET},
+    {gotoW,      tGOTO},
+    {ifW,        tIF},
+    {impW,       tIMP},
+    {isW,        tIS},
+    {letW,       tLET},
+    {loopW,      tLOOP},
+    {meW,        tME},
+    {modW,       tMOD},
+    {newW,       tNEW},
+    {nextW,      tNEXT},
+    {notW,       tNOT},
+    {nothingW,   tNOTHING},
+    {nullW,      tNULL},
+    {onW,        tON},
+    {optionW,    tOPTION},
+    {orW,        tOR},
+    {privateW,   tPRIVATE},
+    {propertyW,  tPROPERTY},
+    {publicW,    tPUBLIC},
+    {remW,       tREM},
+    {resumeW,    tRESUME},
+    {setW,       tSET},
+    {stopW,      tSTOP},
+    {subW,       tSUB},
+    {thenW,      tTHEN},
+    {trueW,      tTRUE},
+    {untilW,     tUNTIL},
+    {wendW,      tWEND},
+    {whileW,     tWHILE},
+    {xorW,       tXOR}
 };
 
 static inline BOOL is_identifier_char(WCHAR c)
