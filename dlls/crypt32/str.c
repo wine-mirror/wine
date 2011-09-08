@@ -1209,8 +1209,11 @@ static DWORD cert_get_name_from_rdn_attr(DWORD encodingType,
     if (CryptDecodeObjectEx(encodingType, X509_NAME, name->pbData,
      name->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &nameInfo, &bytes))
     {
-        PCERT_RDN_ATTR nameAttr = CertFindRDNAttr(oid, nameInfo);
+        PCERT_RDN_ATTR nameAttr;
 
+        if (!oid)
+            oid = szOID_RSA_emailAddr;
+        nameAttr = CertFindRDNAttr(oid, nameInfo);
         if (nameAttr)
             ret = CertRDNValueToStrW(nameAttr->dwValueType, &nameAttr->Value,
              pszNameString, cchNameString);
@@ -1228,6 +1231,9 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
 
     TRACE("(%p, %d, %08x, %p, %p, %d)\n", pCertContext, dwType,
      dwFlags, pvTypePara, pszNameString, cchNameString);
+
+    if (!pCertContext)
+        goto done;
 
     if (dwFlags & CERT_NAME_ISSUER_FLAG)
     {
@@ -1268,9 +1274,12 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
         break;
     }
     case CERT_NAME_RDN_TYPE:
+    {
+        DWORD type = pvTypePara ? *(DWORD *)pvTypePara : 0;
+
         if (name->cbData)
             ret = CertNameToStrW(pCertContext->dwCertEncodingType, name,
-             *(DWORD *)pvTypePara, pszNameString, cchNameString);
+             type, pszNameString, cchNameString);
         else
         {
             CERT_ALT_NAME_INFO *info;
@@ -1279,12 +1288,12 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
 
             if (entry)
                 ret = CertNameToStrW(pCertContext->dwCertEncodingType,
-                 &entry->u.DirectoryName, *(DWORD *)pvTypePara, pszNameString,
-                 cchNameString);
+                 &entry->u.DirectoryName, type, pszNameString, cchNameString);
             if (info)
                 LocalFree(info);
         }
         break;
+    }
     case CERT_NAME_ATTR_TYPE:
         ret = cert_get_name_from_rdn_attr(pCertContext->dwCertEncodingType,
          name, pvTypePara, pszNameString, cchNameString);
@@ -1413,6 +1422,7 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
         FIXME("unimplemented for type %d\n", dwType);
         ret = 0;
     }
+done:
     if (!ret)
     {
         if (!pszNameString)

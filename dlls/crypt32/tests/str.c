@@ -199,6 +199,8 @@ typedef BOOL (WINAPI *CertStrToNameAFunc)(DWORD dwCertEncodingType,
 typedef BOOL (WINAPI *CertStrToNameWFunc)(DWORD dwCertEncodingType,
  LPCWSTR pszX500, DWORD dwStrType, void *pvReserved, BYTE *pbEncoded,
  DWORD *pcbEncoded, LPCWSTR *ppszError);
+typedef DWORD (WINAPI *CertGetNameStringAFunc)(PCCERT_CONTEXT cert, DWORD type,
+ DWORD flags, void *typePara, LPSTR str, DWORD cch);
 
 static HMODULE dll;
 static CertNameToStrAFunc pCertNameToStrA;
@@ -208,6 +210,7 @@ static CertRDNValueToStrAFunc pCertRDNValueToStrA;
 static CertRDNValueToStrWFunc pCertRDNValueToStrW;
 static CertStrToNameAFunc pCertStrToNameA;
 static CertStrToNameWFunc pCertStrToNameW;
+static CertGetNameStringAFunc pCertGetNameStringA;
 
 static void test_CertRDNValueToStrA(void)
 {
@@ -933,6 +936,162 @@ static void test_CertStrToNameW(void)
     }
 }
 
+static void test_CertGetNameStringA(void)
+{
+    PCCERT_CONTEXT context;
+
+    if (!pCertGetNameStringA)
+    {
+        win_skip("CertGetNameStringA is not available\n");
+        return;
+    }
+
+    context = CertCreateCertificateContext(X509_ASN_ENCODING, cert,
+     sizeof(cert));
+    ok(context != NULL, "CertCreateCertificateContext failed: %08x\n",
+     GetLastError());
+    if (context)
+    {
+        static const char aric[] = "aric@codeweavers.com";
+        static const char localhost[] = "localhost";
+        DWORD len, type;
+        LPSTR str;
+
+        /* Bad string types/types missing from the cert */
+        len = pCertGetNameStringA(NULL, 0, 0, NULL, NULL, 0);
+        ok(len == 1, "expected 1, got %d\n", len);
+        len = pCertGetNameStringA(context, 0, 0, NULL, NULL, 0);
+        ok(len == 1, "expected 1, got %d\n", len);
+        len = pCertGetNameStringA(context, CERT_NAME_URL_TYPE, 0, NULL, NULL,
+         0);
+        ok(len == 1, "expected 1, got %d\n", len);
+
+        len = pCertGetNameStringA(context, CERT_NAME_EMAIL_TYPE, 0, NULL, NULL,
+         0);
+        ok(len == strlen(aric) + 1, "unexpected length %d\n", len);
+        str = HeapAlloc(GetProcessHeap(), 0, len);
+        if (str)
+        {
+            len = pCertGetNameStringA(context, CERT_NAME_EMAIL_TYPE, 0, NULL,
+             str, len);
+            ok(!strcmp(str, aric), "unexpected value %s\n", str);
+            HeapFree(GetProcessHeap(), 0, str);
+        }
+
+        len = pCertGetNameStringA(context, CERT_NAME_RDN_TYPE, 0, NULL, NULL,
+         0);
+        ok(len == strlen(issuerStr) + 1, "unexpected length %d\n", len);
+        str = HeapAlloc(GetProcessHeap(), 0, len);
+        if (str)
+        {
+            len = pCertGetNameStringA(context, CERT_NAME_RDN_TYPE, 0, NULL,
+             str, len);
+            ok(!strcmp(str, issuerStr), "unexpected value %s\n", str);
+            HeapFree(GetProcessHeap(), 0, str);
+        }
+        type = 0;
+        len = pCertGetNameStringA(context, CERT_NAME_RDN_TYPE, 0, &type, NULL,
+         0);
+        ok(len == strlen(issuerStr) + 1, "unexpected length %d\n", len);
+        str = HeapAlloc(GetProcessHeap(), 0, len);
+        if (str)
+        {
+            len = pCertGetNameStringA(context, CERT_NAME_RDN_TYPE, 0, &type,
+             str, len);
+            ok(!strcmp(str, issuerStr), "unexpected value %s\n", str);
+            HeapFree(GetProcessHeap(), 0, str);
+        }
+        type = CERT_OID_NAME_STR;
+        len = pCertGetNameStringA(context, CERT_NAME_RDN_TYPE, 0, &type, NULL,
+         0);
+        ok(len == strlen(subjectStr) + 1, "unexpected length %d\n", len);
+        str = HeapAlloc(GetProcessHeap(), 0, len);
+        if (str)
+        {
+            len = pCertGetNameStringA(context, CERT_NAME_RDN_TYPE, 0, &type,
+             str, len);
+            ok(!strcmp(str, subjectStr), "unexpected value %s\n", str);
+            HeapFree(GetProcessHeap(), 0, str);
+        }
+
+        len = pCertGetNameStringA(context, CERT_NAME_ATTR_TYPE, 0, NULL, NULL,
+         0);
+        ok(len == strlen(aric) + 1, "unexpected length %d\n", len);
+        str = HeapAlloc(GetProcessHeap(), 0, len);
+        if (str)
+        {
+            len = pCertGetNameStringA(context, CERT_NAME_ATTR_TYPE, 0, NULL,
+             str, len);
+            ok(!strcmp(str, aric), "unexpected value %s\n", str);
+            HeapFree(GetProcessHeap(), 0, str);
+        }
+        len = pCertGetNameStringA(context, CERT_NAME_ATTR_TYPE, 0,
+         (void *)szOID_RSA_emailAddr, NULL, 0);
+        ok(len == strlen(aric) + 1, "unexpected length %d\n", len);
+        str = HeapAlloc(GetProcessHeap(), 0, len);
+        if (str)
+        {
+            len = pCertGetNameStringA(context, CERT_NAME_ATTR_TYPE, 0,
+             (void *)szOID_RSA_emailAddr, str, len);
+            ok(!strcmp(str, aric), "unexpected value %s\n", str);
+            HeapFree(GetProcessHeap(), 0, str);
+        }
+        len = pCertGetNameStringA(context, CERT_NAME_ATTR_TYPE, 0,
+         (void *)szOID_COMMON_NAME, NULL, 0);
+        ok(len == strlen(localhost) + 1, "unexpected length %d\n", len);
+        str = HeapAlloc(GetProcessHeap(), 0, len);
+        if (str)
+        {
+            len = pCertGetNameStringA(context, CERT_NAME_ATTR_TYPE, 0,
+             (void *)szOID_COMMON_NAME, str, len);
+            ok(!strcmp(str, localhost), "unexpected value %s\n", str);
+            HeapFree(GetProcessHeap(), 0, str);
+        }
+
+        len = pCertGetNameStringA(context, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0,
+         NULL, NULL, 0);
+        ok(len == strlen(localhost) + 1, "unexpected length %d\n", len);
+        str = HeapAlloc(GetProcessHeap(), 0, len);
+        if (str)
+        {
+            len = pCertGetNameStringA(context, CERT_NAME_SIMPLE_DISPLAY_TYPE,
+             0, NULL, str, len);
+            ok(!strcmp(str, localhost), "unexpected value %s\n", str);
+            HeapFree(GetProcessHeap(), 0, str);
+        }
+
+        len = pCertGetNameStringA(context, CERT_NAME_FRIENDLY_DISPLAY_TYPE, 0,
+         NULL, NULL, 0);
+        ok(len == strlen(localhost) + 1, "unexpected length %d\n", len);
+        str = HeapAlloc(GetProcessHeap(), 0, len);
+        if (str)
+        {
+            len = pCertGetNameStringA(context, CERT_NAME_FRIENDLY_DISPLAY_TYPE,
+             0, NULL, str, len);
+            ok(!strcmp(str, localhost), "unexpected value %s\n", str);
+            HeapFree(GetProcessHeap(), 0, str);
+        }
+
+        len = pCertGetNameStringA(context, CERT_NAME_DNS_TYPE, 0, NULL, NULL,
+         0);
+        ok(len == strlen(localhost) + 1 || broken(len == 1) /* NT4 */,
+         "unexpected length %d\n", len);
+        if (len > 1)
+        {
+            str = HeapAlloc(GetProcessHeap(), 0, len);
+            if (str)
+            {
+                len = pCertGetNameStringA(context, CERT_NAME_DNS_TYPE, 0, NULL,
+                 str, len);
+                ok(!strcmp(str, localhost), "unexpected value %s\n", str);
+                HeapFree(GetProcessHeap(), 0, str);
+            }
+        }
+
+        CertFreeCertificateContext(context);
+    }
+}
+
 START_TEST(str)
 {
     dll = GetModuleHandleA("Crypt32.dll");
@@ -947,6 +1106,8 @@ START_TEST(str)
      "CryptDecodeObject");
     pCertStrToNameA = (CertStrToNameAFunc)GetProcAddress(dll,"CertStrToNameA");
     pCertStrToNameW = (CertStrToNameWFunc)GetProcAddress(dll,"CertStrToNameW");
+    pCertGetNameStringA = (CertGetNameStringAFunc)GetProcAddress(dll,
+     "CertGetNameStringA");
 
     test_CertRDNValueToStrA();
     test_CertRDNValueToStrW();
@@ -954,4 +1115,5 @@ START_TEST(str)
     test_CertNameToStrW();
     test_CertStrToNameA();
     test_CertStrToNameW();
+    test_CertGetNameStringA();
 }
