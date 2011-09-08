@@ -162,8 +162,16 @@ static HRESULT interp_bool(exec_ctx_t *ctx)
 
 static HRESULT interp_string(exec_ctx_t *ctx)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT v;
+
+    TRACE("\n");
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(ctx->instr->arg1.str);
+    if(!V_BSTR(&v))
+        return E_OUTOFMEMORY;
+
+    return stack_push(ctx, &v);
 }
 
 static const instr_func_t op_funcs[] = {
