@@ -205,6 +205,8 @@ void	WINECON_GrabChanges(struct inner_data* data)
     int	i, num, ev_found;
     HANDLE h;
 
+    if (data->in_grab_changes) return;
+
     SERVER_START_REQ( get_console_renderer_events )
     {
         wine_server_set_reply( req, evts, sizeof(evts) );
@@ -258,6 +260,7 @@ void	WINECON_GrabChanges(struct inner_data* data)
 	ev_found = i;
     }
 
+    data->in_grab_changes = TRUE;
     for (i = 0; i < num; i++)
     {
 	switch (evts[i].event)
@@ -355,6 +358,7 @@ void	WINECON_GrabChanges(struct inner_data* data)
 	    WINE_FIXME("Unknown event type (%d)\n", evts[i].event);
 	}
     }
+    data->in_grab_changes = FALSE;
 }
 
 /******************************************************************

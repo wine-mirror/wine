@@ -61,6 +61,7 @@ struct inner_data {
     HWND		hWnd;           /* handle of 'user' window or NULL for 'curses' */
     INT                 nCmdShow;       /* argument of WinMain */
     BOOL                in_set_config;  /* to handle re-entrant calls to WINECON_SetConfig */
+    BOOL                in_grab_changes;/* to handle re-entrant calls to WINECON_GrabChanges */
     BOOL                dying;          /* to TRUE when we've been notified by server that child has died */
 
     int			(*fnMainLoop)(struct inner_data* data);
