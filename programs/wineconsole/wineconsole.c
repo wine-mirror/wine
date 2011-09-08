@@ -214,6 +214,7 @@ void	WINECON_GrabChanges(struct inner_data* data)
     }
     SERVER_END_REQ;
     if (!num) {WINE_WARN("hmm renderer signaled but no events available\n"); return;}
+    WINE_TRACE( "got %u events\n", num );
 
     /* FIXME: should do some event compression here (cursor pos, update) */
     /* step 1: keep only last cursor pos event */
@@ -223,7 +224,10 @@ void	WINECON_GrabChanges(struct inner_data* data)
         if (evts[i].event == CONSOLE_RENDERER_CURSOR_POS_EVENT)
         {
             if (ev_found != -1)
+            {
+		WINE_TRACE("%u/%u: curs-pos(%d,%d) ignoring\n", i+1, num, evts[i].u.cursor_pos.x, evts[i].u.cursor_pos.y);
 		evts[i].event = CONSOLE_RENDERER_NONE_EVENT;
+            }
 	    ev_found = i;
         }
     }
@@ -244,6 +248,7 @@ void	WINECON_GrabChanges(struct inner_data* data)
 	    !(evts[i       ].u.update.bottom + 1 < evts[ev_found].u.update.top ||
 	      evts[ev_found].u.update.bottom + 1 < evts[i       ].u.update.top))
 	{
+	    WINE_TRACE("%u/%u: update(%d,%d) merging with %u\n", ev_found+1, num, evts[i].u.update.top, evts[i].u.update.bottom, i+1);
 	    evts[i].u.update.top    = min(evts[i       ].u.update.top,
 					  evts[ev_found].u.update.top);
 	    evts[i].u.update.bottom = max(evts[i       ].u.update.bottom,
@@ -253,16 +258,15 @@ void	WINECON_GrabChanges(struct inner_data* data)
 	ev_found = i;
     }
 
-    WINE_TRACE("Events:");
     for (i = 0; i < num; i++)
     {
 	switch (evts[i].event)
 	{
 	case CONSOLE_RENDERER_NONE_EVENT:
-	    WINE_TRACE(" NOP");
+	    WINE_TRACE("%u/%u: NOP\n", i+1, num);
 	    break;
 	case CONSOLE_RENDERER_TITLE_EVENT:
-	    WINE_TRACE(" title()");
+	    WINE_TRACE("%u/%u: title()\n", i+1, num);
 	    data->fnSetTitle(data);
 	    break;
 	case CONSOLE_RENDERER_ACTIVE_SB_EVENT:
@@ -275,7 +279,7 @@ void	WINECON_GrabChanges(struct inner_data* data)
                 h = wine_server_call_err( req ) ? 0 : wine_server_ptr_handle(reply->handle);
 	    }
 	    SERVER_END_REQ;
-	    WINE_TRACE(" active(%p)", h);
+	    WINE_TRACE("%u/%u: active(%p)\n", i+1, num, h);
 	    if (h)
 	    {
 		CloseHandle(data->hConOut);
@@ -286,7 +290,7 @@ void	WINECON_GrabChanges(struct inner_data* data)
 	    if (data->curcfg.sb_width != evts[i].u.resize.width ||
 		data->curcfg.sb_height != evts[i].u.resize.height)
 	    {
-		WINE_TRACE(" resize(%d,%d)", evts[i].u.resize.width, evts[i].u.resize.height);
+		WINE_TRACE("%u/%u: resize(%d,%d)\n", i+1, num, evts[i].u.resize.width, evts[i].u.resize.height);
 		data->curcfg.sb_width  = evts[i].u.resize.width;
 		data->curcfg.sb_height = evts[i].u.resize.height;
 
@@ -299,13 +303,13 @@ void	WINECON_GrabChanges(struct inner_data* data)
 	    }
 	    break;
 	case CONSOLE_RENDERER_UPDATE_EVENT:
-	    WINE_TRACE(" update(%d,%d)", evts[i].u.update.top, evts[i].u.update.bottom);
+	    WINE_TRACE("%u/%u: update(%d,%d)\n", i+1, num, evts[i].u.update.top, evts[i].u.update.bottom);
 	    WINECON_FetchCells(data, evts[i].u.update.top, evts[i].u.update.bottom);
 	    break;
 	case CONSOLE_RENDERER_CURSOR_POS_EVENT:
 	    if (evts[i].u.cursor_pos.x != data->cursor.X || evts[i].u.cursor_pos.y != data->cursor.Y)
 	    {
-		WINE_TRACE(" curs-pos(%d,%d)",evts[i].u.cursor_pos.x, evts[i].u.cursor_pos.y);
+		WINE_TRACE("%u/%u: curs-pos(%d,%d)\n", i+1, num, evts[i].u.cursor_pos.x, evts[i].u.cursor_pos.y);
 		data->cursor.X = evts[i].u.cursor_pos.x;
 		data->cursor.Y = evts[i].u.cursor_pos.y;
 		data->fnPosCursor(data);
@@ -315,7 +319,7 @@ void	WINECON_GrabChanges(struct inner_data* data)
 	    if (evts[i].u.cursor_geom.size != data->curcfg.cursor_size ||
 		evts[i].u.cursor_geom.visible != data->curcfg.cursor_visible)
 	    {
-		WINE_TRACE(" curs-geom(%d,%d)",
+		WINE_TRACE("%u/%u: curs-geom(%d,%d)\n", i+1, num,
                            evts[i].u.cursor_geom.size, evts[i].u.cursor_geom.visible);
 		data->fnShapeCursor(data, evts[i].u.cursor_geom.size,
 				    evts[i].u.cursor_geom.visible, FALSE);
@@ -324,20 +328,20 @@ void	WINECON_GrabChanges(struct inner_data* data)
 	case CONSOLE_RENDERER_DISPLAY_EVENT:
 	    if (evts[i].u.display.left != data->curcfg.win_pos.X)
 	    {
-		WINE_TRACE(" h-scroll(%d)", evts[i].u.display.left);
+		WINE_TRACE("%u/%u: h-scroll(%d)\n", i+1, num, evts[i].u.display.left);
 		data->fnScroll(data, evts[i].u.display.left, TRUE);
 		data->fnPosCursor(data);
 	    }
 	    if (evts[i].u.display.top != data->curcfg.win_pos.Y)
 	    {
-		WINE_TRACE(" v-scroll(%d)", evts[i].u.display.top);
+		WINE_TRACE("%u/%u: v-scroll(%d)\n", i+1, num, evts[i].u.display.top);
 		data->fnScroll(data, evts[i].u.display.top, FALSE);
 		data->fnPosCursor(data);
 	    }
 	    if (evts[i].u.display.width != data->curcfg.win_width ||
 		evts[i].u.display.height != data->curcfg.win_height)
 	    {
-		WINE_TRACE(" win-size(%d,%d)", evts[i].u.display.width, evts[i].u.display.height);
+		WINE_TRACE("%u/%u: win-size(%d,%d)\n", i+1, num, evts[i].u.display.width, evts[i].u.display.height);
 		data->curcfg.win_width = evts[i].u.display.width;
 		data->curcfg.win_height = evts[i].u.display.height;
 		data->fnComputePositions(data);
@@ -345,14 +349,12 @@ void	WINECON_GrabChanges(struct inner_data* data)
 	    break;
 	case CONSOLE_RENDERER_EXIT_EVENT:
             data->dying = TRUE;
-	    WINE_TRACE(". Exit!!\n");
+	    WINE_TRACE("%u/%u: Exit!!\n", i+1, num);
 	    return;
 	default:
 	    WINE_FIXME("Unknown event type (%d)\n", evts[i].event);
 	}
     }
-
-    WINE_TRACE(".\n");
 }
 
 /******************************************************************
