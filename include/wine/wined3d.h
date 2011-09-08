@@ -2262,7 +2262,7 @@ HRESULT __cdecl wined3d_device_get_texture_stage_state(struct wined3d_device *de
         UINT stage, WINED3DTEXTURESTAGESTATETYPE state, DWORD *value);
 HRESULT __cdecl wined3d_device_get_transform(const struct wined3d_device *device,
         WINED3DTRANSFORMSTATETYPE state, WINED3DMATRIX *matrix);
-HRESULT __cdecl wined3d_device_get_vertex_declaration(struct wined3d_device *device,
+HRESULT __cdecl wined3d_device_get_vertex_declaration(const struct wined3d_device *device,
         struct wined3d_vertex_declaration **declaration);
 struct wined3d_shader * __cdecl wined3d_device_get_vertex_shader(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_viewport(const struct wined3d_device *device, WINED3DVIEWPORT *viewport);
