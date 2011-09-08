@@ -875,7 +875,7 @@ static HRESULT WINAPI ddraw_surface1_GetAttachedSurface(IDirectDrawSurface *ifac
  *  For more details, see IWineD3DSurface::LockRect
  *
  *****************************************************************************/
-static HRESULT WINAPI surface_lock(IDirectDrawSurfaceImpl *This,
+static HRESULT surface_lock(IDirectDrawSurfaceImpl *This,
         RECT *Rect, DDSURFACEDESC2 *DDSD, DWORD Flags, HANDLE h)
 {
     WINED3DLOCKED_RECT LockedRect;
