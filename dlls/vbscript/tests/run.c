@@ -463,6 +463,12 @@ static void run_tests(void)
 
     parse_script_a("");
     parse_script_a("' empty ;");
+
+    SET_EXPECT(global_success_d);
+    SET_EXPECT(global_success_i);
+    parse_script_a("reportSuccess");
+    CHECK_CALLED(global_success_d);
+    CHECK_CALLED(global_success_i);
 }
 
 static BOOL check_vbscript(void)
