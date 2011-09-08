@@ -1196,11 +1196,7 @@ static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient *iface,
 
 static void oss_silence_buffer(ACImpl *This, BYTE *buf, UINT32 frames)
 {
-    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)This->fmt;
-    if((This->fmt->wFormatTag == WAVE_FORMAT_PCM ||
-            (This->fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))) &&
-            This->fmt->wBitsPerSample == 8)
+    if(This->fmt->wBitsPerSample == 8)
         memset(buf, 128, frames * This->fmt->nBlockAlign);
     else
         memset(buf, 0, frames * This->fmt->nBlockAlign);
