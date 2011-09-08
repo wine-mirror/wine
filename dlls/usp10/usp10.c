@@ -972,45 +972,53 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
             goto error;
     }
 
-    if (!(analysis->glyphs = heap_alloc_zero(sizeof(StringGlyphs) * analysis->numItems)))
-        goto error;
-
     if (!(analysis->logical2visual = heap_alloc_zero(sizeof(int) * analysis->numItems)))
         goto error;
     if (!(BidiLevel = heap_alloc_zero(analysis->numItems)))
         goto error;
 
-    for (i = 0; i < analysis->numItems; i++)
+    if (dwFlags & SSA_GLYPHS)
     {
-        SCRIPT_CACHE *sc = (SCRIPT_CACHE *)&analysis->sc;
-        int cChar = analysis->pItem[i+1].iCharPos - analysis->pItem[i].iCharPos;
-        int numGlyphs = 1.5 * cChar + 16;
-        WORD *glyphs = heap_alloc_zero(sizeof(WORD) * numGlyphs);
-        WORD *pwLogClust = heap_alloc_zero(sizeof(WORD) * cChar);
-        int *piAdvance = heap_alloc_zero(sizeof(int) * numGlyphs);
-        SCRIPT_VISATTR *psva = heap_alloc_zero(sizeof(SCRIPT_VISATTR) * cChar);
-        GOFFSET *pGoffset = heap_alloc_zero(sizeof(GOFFSET) * numGlyphs);
-        ABC *abc = heap_alloc_zero(sizeof(ABC));
-        int numGlyphsReturned;
+        if (!(analysis->glyphs = heap_alloc_zero(sizeof(StringGlyphs) * analysis->numItems)))
+            goto error;
 
-        /* FIXME: non unicode strings */
-        const WCHAR* pStr = (const WCHAR*)pString;
-        hr = ScriptShape(hdc, sc, &pStr[analysis->pItem[i].iCharPos],
-                         cChar, numGlyphs, &analysis->pItem[i].a,
-                         glyphs, pwLogClust, psva, &numGlyphsReturned);
-        hr = ScriptPlace(hdc, sc, glyphs, numGlyphsReturned, psva, &analysis->pItem[i].a,
-                         piAdvance, pGoffset, abc);
+        for (i = 0; i < analysis->numItems; i++)
+        {
+            SCRIPT_CACHE *sc = (SCRIPT_CACHE *)&analysis->sc;
+            int cChar = analysis->pItem[i+1].iCharPos - analysis->pItem[i].iCharPos;
+            int numGlyphs = 1.5 * cChar + 16;
+            WORD *glyphs = heap_alloc_zero(sizeof(WORD) * numGlyphs);
+            WORD *pwLogClust = heap_alloc_zero(sizeof(WORD) * cChar);
+            int *piAdvance = heap_alloc_zero(sizeof(int) * numGlyphs);
+            SCRIPT_VISATTR *psva = heap_alloc_zero(sizeof(SCRIPT_VISATTR) * cChar);
+            GOFFSET *pGoffset = heap_alloc_zero(sizeof(GOFFSET) * numGlyphs);
+            ABC *abc = heap_alloc_zero(sizeof(ABC));
+            int numGlyphsReturned;
 
-        analysis->glyphs[i].numGlyphs = numGlyphsReturned;
-        analysis->glyphs[i].glyphs = glyphs;
-        analysis->glyphs[i].pwLogClust = pwLogClust;
-        analysis->glyphs[i].piAdvance = piAdvance;
-        analysis->glyphs[i].psva = psva;
-        analysis->glyphs[i].pGoffset = pGoffset;
-        analysis->glyphs[i].abc = abc;
-        analysis->glyphs[i].iMaxPosX= -1;
+            /* FIXME: non unicode strings */
+            const WCHAR* pStr = (const WCHAR*)pString;
+            hr = ScriptShape(hdc, sc, &pStr[analysis->pItem[i].iCharPos],
+                             cChar, numGlyphs, &analysis->pItem[i].a,
+                             glyphs, pwLogClust, psva, &numGlyphsReturned);
+            hr = ScriptPlace(hdc, sc, glyphs, numGlyphsReturned, psva, &analysis->pItem[i].a,
+                             piAdvance, pGoffset, abc);
 
-        BidiLevel[i] = analysis->pItem[i].a.s.uBidiLevel;
+            analysis->glyphs[i].numGlyphs = numGlyphsReturned;
+            analysis->glyphs[i].glyphs = glyphs;
+            analysis->glyphs[i].pwLogClust = pwLogClust;
+            analysis->glyphs[i].piAdvance = piAdvance;
+            analysis->glyphs[i].psva = psva;
+            analysis->glyphs[i].pGoffset = pGoffset;
+            analysis->glyphs[i].abc = abc;
+            analysis->glyphs[i].iMaxPosX= -1;
+
+            BidiLevel[i] = analysis->pItem[i].a.s.uBidiLevel;
+        }
+    }
+    else
+    {
+        for (i = 0; i < analysis->numItems; i++)
+            BidiLevel[i] = analysis->pItem[i].a.s.uBidiLevel;
     }
 
     ScriptLayout(analysis->numItems, BidiLevel, NULL, analysis->logical2visual);
@@ -1165,6 +1173,7 @@ HRESULT WINAPI ScriptStringOut(SCRIPT_STRING_ANALYSIS ssa,
          ssa, iX, iY, uOptions, prc, iMinSel, iMaxSel, fDisabled);
 
     if (!(analysis = ssa)) return E_INVALIDARG;
+    if (!(analysis->dwFlags & SSA_GLYPHS)) return E_INVALIDARG;
 
     for (item = 0; item < analysis->numItems; item++)
     {
@@ -1201,6 +1210,7 @@ HRESULT WINAPI ScriptStringCPtoX(SCRIPT_STRING_ANALYSIS ssa, int icp, BOOL fTrai
     TRACE("(%p), %d, %d, (%p)\n", ssa, icp, fTrailing, pX);
 
     if (!ssa || !pX) return S_FALSE;
+    if (!(analysis->dwFlags & SSA_GLYPHS)) return S_FALSE;
 
     /* icp out of range */
     if(icp < 0)
@@ -1262,6 +1272,7 @@ HRESULT WINAPI ScriptStringXtoCP(SCRIPT_STRING_ANALYSIS ssa, int iX, int* piCh, 
     TRACE("(%p), %d, (%p), (%p)\n", ssa, iX, piCh, piTrailing);
 
     if (!ssa || !piCh || !piTrailing) return S_FALSE;
+    if (!(analysis->dwFlags & SSA_GLYPHS)) return S_FALSE;
 
     /* out of range */
     if(iX < 0)
@@ -1348,17 +1359,20 @@ HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa)
     invalid = analysis->invalid;
     ScriptFreeCache((SCRIPT_CACHE *)&analysis->sc);
 
-    for (i = 0; i < analysis->numItems; i++)
+    if (analysis->glyphs)
     {
-        heap_free(analysis->glyphs[i].glyphs);
-        heap_free(analysis->glyphs[i].pwLogClust);
-        heap_free(analysis->glyphs[i].piAdvance);
-        heap_free(analysis->glyphs[i].psva);
-        heap_free(analysis->glyphs[i].pGoffset);
-        heap_free(analysis->glyphs[i].abc);
+        for (i = 0; i < analysis->numItems; i++)
+        {
+            heap_free(analysis->glyphs[i].glyphs);
+            heap_free(analysis->glyphs[i].pwLogClust);
+            heap_free(analysis->glyphs[i].piAdvance);
+            heap_free(analysis->glyphs[i].psva);
+            heap_free(analysis->glyphs[i].pGoffset);
+            heap_free(analysis->glyphs[i].abc);
+        }
+        heap_free(analysis->glyphs);
     }
 
-    heap_free(analysis->glyphs);
     heap_free(analysis->pItem);
     heap_free(analysis->logattrs);
     heap_free(analysis->sz);
@@ -2271,6 +2285,7 @@ HRESULT WINAPI ScriptStringGetLogicalWidths(SCRIPT_STRING_ANALYSIS ssa, int *piD
     TRACE("%p, %p\n", ssa, piDx);
 
     if (!analysis) return S_FALSE;
+    if (!(analysis->dwFlags & SSA_GLYPHS)) return S_FALSE;
 
     for (i = 0; i < analysis->numItems; i++)
     {
@@ -2326,6 +2341,7 @@ const SIZE * WINAPI ScriptString_pSize(SCRIPT_STRING_ANALYSIS ssa)
     TRACE("(%p)\n", ssa);
 
     if (!analysis) return NULL;
+    if (!(analysis->dwFlags & SSA_GLYPHS)) return NULL;
 
     if (!analysis->sz)
     {
@@ -2407,6 +2423,7 @@ HRESULT WINAPI ScriptStringGetOrder(SCRIPT_STRING_ANALYSIS ssa, UINT *order)
     TRACE("(%p)\n", ssa);
 
     if (!analysis) return S_FALSE;
+    if (!(analysis->dwFlags & SSA_GLYPHS)) return S_FALSE;
 
     /* FIXME: handle RTL scripts */
     for (i = 0, k = 0; i < analysis->numItems; i++)
