@@ -29,6 +29,10 @@ typedef struct {
     vbscode_t *code;
     instr_t *instr;
     script_ctx_t *script;
+
+    unsigned stack_size;
+    unsigned top;
+    VARIANT *stack;
 } exec_ctx_t;
 
 typedef HRESULT (*instr_func_t)(exec_ctx_t*);
@@ -70,6 +74,37 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, ref_t *ref)
 
     ref->type = REF_NONE;
     return S_OK;
+}
+
+static inline VARIANT *stack_pop(exec_ctx_t *ctx)
+{
+    assert(ctx->top);
+    return ctx->stack + --ctx->top;
+}
+
+static HRESULT stack_push(exec_ctx_t *ctx, VARIANT *v)
+{
+    if(ctx->stack_size == ctx->top) {
+        VARIANT *new_stack;
+
+        new_stack = heap_realloc(ctx->stack, ctx->stack_size*2);
+        if(!new_stack) {
+            VariantClear(v);
+            return E_OUTOFMEMORY;
+        }
+
+        ctx->stack = new_stack;
+        ctx->stack_size *= 2;
+    }
+
+    ctx->stack[ctx->top++] = *v;
+    return S_OK;
+}
+
+static void stack_popn(exec_ctx_t *ctx, unsigned n)
+{
+    while(n--)
+        VariantClear(stack_pop(ctx));
 }
 
 static HRESULT interp_icallv(exec_ctx_t *ctx)
@@ -115,8 +150,14 @@ static HRESULT interp_ret(exec_ctx_t *ctx)
 
 static HRESULT interp_bool(exec_ctx_t *ctx)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    const VARIANT_BOOL arg = ctx->instr->arg1.lng;
+    VARIANT v;
+
+    TRACE("%s\n", arg ? "true" : "false");
+
+    V_VT(&v) = VT_BOOL;
+    V_BOOL(&v) = arg;
+    return stack_push(ctx, &v);
 }
 
 static HRESULT interp_string(exec_ctx_t *ctx)
@@ -143,6 +184,12 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func)
     vbsop_t op;
     HRESULT hres = S_OK;
 
+    exec.stack_size = 16;
+    exec.top = 0;
+    exec.stack = heap_alloc(exec.stack_size * sizeof(VARIANT));
+    if(!exec.stack)
+        return E_OUTOFMEMORY;
+
     exec.code = func->code_ctx;
     exec.instr = exec.code->instrs + func->code_off;
     exec.script = ctx;
@@ -152,11 +199,15 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func)
         hres = op_funcs[op](&exec);
         if(FAILED(hres)) {
             FIXME("Failed %08x\n", hres);
+            stack_popn(&exec, exec.top);
             break;
         }
 
         exec.instr += op_move[op];
     }
+
+    assert(!exec.top);
+    heap_free(exec.stack);
 
     return hres;
 }
