@@ -74,7 +74,8 @@ StatementNl
     : Statement tNL                 { $$ = $1; }
 
 Statement
-    : MemberExpression Arguments_opt    { $1->args = $2; $$ = new_call_statement(ctx, $1); CHECK_ERROR; }
+    : MemberExpression Arguments_opt        { $1->args = $2; $$ = new_call_statement(ctx, $1); CHECK_ERROR; }
+    | tCALL MemberExpression Arguments_opt  { $2->args = $3; $$ = new_call_statement(ctx, $2); CHECK_ERROR; }
 
 MemberExpression
     : tIdentifier                   { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
