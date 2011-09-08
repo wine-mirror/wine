@@ -36,6 +36,7 @@ static void parse_complete(parser_ctx_t*);
 static void source_add_statement(parser_ctx_t*,statement_t*);
 
 static expression_t *new_bool_expression(parser_ctx_t*,VARIANT_BOOL);
+static expression_t *new_string_expression(parser_ctx_t*,const WCHAR*);
 
 static member_expression_t *new_member_expression(parser_ctx_t*,expression_t*,const WCHAR*);
 
@@ -113,6 +114,7 @@ Expression
 LiteralExpression
     : tTRUE                         { $$ = new_bool_expression(ctx, VARIANT_TRUE); CHECK_ERROR; }
     | tFALSE                        { $$ = new_bool_expression(ctx, VARIANT_FALSE); CHECK_ERROR; }
+    | tString                       { $$ = new_string_expression(ctx, $1); CHECK_ERROR; }
 
 %%
 
@@ -154,6 +156,18 @@ static expression_t *new_bool_expression(parser_ctx_t *ctx, VARIANT_BOOL value)
     bool_expression_t *expr;
 
     expr = new_expression(ctx, EXPR_BOOL, sizeof(*expr));
+    if(!expr)
+        return NULL;
+
+    expr->value = value;
+    return &expr->expr;
+}
+
+static expression_t *new_string_expression(parser_ctx_t *ctx, const WCHAR *value)
+{
+    string_expression_t *expr;
+
+    expr = new_expression(ctx, EXPR_STRING, sizeof(*expr));
     if(!expr)
         return NULL;
 
