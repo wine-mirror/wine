@@ -54,6 +54,7 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 }
 
 %token tEOF tNL blah
+%token tCALL
 %token <string> tIdentifier
 
 %type <statement> Statement StatementNl
