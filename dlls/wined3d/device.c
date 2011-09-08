@@ -2683,7 +2683,7 @@ HRESULT CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, st
     return WINED3D_OK;
 }
 
-struct wined3d_shader * CDECL wined3d_device_get_vertex_shader(struct wined3d_device *device)
+struct wined3d_shader * CDECL wined3d_device_get_vertex_shader(const struct wined3d_device *device)
 {
     struct wined3d_shader *shader;
 

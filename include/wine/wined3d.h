@@ -2264,7 +2264,7 @@ HRESULT __cdecl wined3d_device_get_transform(const struct wined3d_device *device
         WINED3DTRANSFORMSTATETYPE state, WINED3DMATRIX *matrix);
 HRESULT __cdecl wined3d_device_get_vertex_declaration(const struct wined3d_device *device,
         struct wined3d_vertex_declaration **declaration);
-struct wined3d_shader * __cdecl wined3d_device_get_vertex_shader(struct wined3d_device *device);
+struct wined3d_shader * __cdecl wined3d_device_get_vertex_shader(const struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_viewport(const struct wined3d_device *device, WINED3DVIEWPORT *viewport);
 HRESULT __cdecl wined3d_device_get_vs_consts_b(struct wined3d_device *device,
         UINT start_register, BOOL *constants, UINT bool_count);
