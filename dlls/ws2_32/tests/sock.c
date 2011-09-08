@@ -53,6 +53,11 @@
         ok ( cond tmp, msg, GetCurrentThreadId(), err); \
    } while (0);
 
+#define make_keepalive(k, enable, time, interval) \
+   k.onoff = enable; \
+   k.keepalivetime = time; \
+   k.keepaliveinterval = interval;
+
 /* Function pointers */
 static void   (WINAPI  *pFreeAddrInfoW)(PADDRINFOW) = 0;
 static int    (WINAPI  *pGetAddrInfoW)(LPCWSTR,LPCWSTR,const ADDRINFOW *,PADDRINFOW *) = 0;
@@ -2933,6 +2938,7 @@ static void test_addr_to_print(void)
 static void test_ioctlsocket(void)
 {
     SOCKET sock;
+    struct tcp_keepalive kalive;
     int ret;
     static const LONG cmds[] = {FIONBIO, FIONREAD, SIOCATMARK};
     UINT i;
@@ -2971,6 +2977,31 @@ static void test_ioctlsocket(void)
     ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
     ret = WSAGetLastError();
     ok(ret == WSAEFAULT || broken(ret == WSAEINVAL), "expected WSAEFAULT, got %d instead\n", ret);
+
+    /* broken used to catch W95, W98, NT4 */
+    make_keepalive(kalive, 0, 0, 0);
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(struct tcp_keepalive), NULL, 0, &arg, NULL, NULL);
+    ok(ret == 0 || broken(ret == SOCKET_ERROR), "WSAIoctl failed unexpectedly\n");
+
+    make_keepalive(kalive, 1, 0, 0);
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(struct tcp_keepalive), NULL, 0, &arg, NULL, NULL);
+    ok(ret == 0 || broken(ret == SOCKET_ERROR), "WSAIoctl failed unexpectedly\n");
+
+    make_keepalive(kalive, 1, 1000, 1000);
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(struct tcp_keepalive), NULL, 0, &arg, NULL, NULL);
+    ok(ret == 0 || broken(ret == SOCKET_ERROR), "WSAIoctl failed unexpectedly\n");
+
+    make_keepalive(kalive, 1, 10000, 10000);
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(struct tcp_keepalive), NULL, 0, &arg, NULL, NULL);
+    ok(ret == 0 || broken(ret == SOCKET_ERROR), "WSAIoctl failed unexpectedly\n");
+
+    make_keepalive(kalive, 1, 100, 100);
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(struct tcp_keepalive), NULL, 0, &arg, NULL, NULL);
+    ok(ret == 0 || broken(ret == SOCKET_ERROR), "WSAIoctl failed unexpectedly\n");
+
+    make_keepalive(kalive, 0, 100, 100);
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(struct tcp_keepalive), NULL, 0, &arg, NULL, NULL);
+    ok(ret == 0 || broken(ret == SOCKET_ERROR), "WSAIoctl failed unexpectedly\n");
 
     closesocket(sock);
 }

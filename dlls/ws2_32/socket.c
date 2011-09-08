@@ -3376,8 +3376,8 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
 
         k = in_buff;
         keepalive = k->onoff ? 1 : 0;
-        keepidle = k->keepalivetime / 1000;
-        keepintvl = k->keepaliveinterval / 1000;
+        keepidle = max( 1, (k->keepalivetime + 500) / 1000 );
+        keepintvl = max( 1, (k->keepaliveinterval + 500) / 1000 );
 
         TRACE("onoff: %d, keepalivetime: %d, keepaliveinterval: %d\n", keepalive, keepidle, keepintvl);
 
@@ -3385,10 +3385,14 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keepalive, sizeof(int)) == -1)
             status = WSAEINVAL;
 #if defined(TCP_KEEPIDLE) && defined(TCP_KEEPINTVL)
-        else if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, (void *)&keepidle, sizeof(int)) == -1)
-            status = WSAEINVAL;
-        else if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, (void *)&keepintvl, sizeof(int)) == -1)
-            status = WSAEINVAL;
+        /* these values need to be set only if SO_KEEPALIVE is enabled */
+        else if(keepalive)
+        {
+            if (keepidle && setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, (void *)&keepidle, sizeof(int)) == -1)
+                status = WSAEINVAL;
+            else if (keepintvl && setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, (void *)&keepintvl, sizeof(int)) == -1)
+                status = WSAEINVAL;
+        }
 #else
         else
             FIXME("ignoring keepalive interval and timeout\n");
