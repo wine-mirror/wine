@@ -76,6 +76,18 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
         else
             ctx->ptr = ctx->end;
         return tNL;
+    case '(':
+    case ')':
+    case ',':
+    case '=':
+    case '+':
+    case '-':
+    case '*':
+    case '/':
+    case '^':
+    case '\\':
+    case '.':
+        return *ctx->ptr++;
     default:
         FIXME("Unhandled char %c in %s\n", *ctx->ptr, debugstr_w(ctx->ptr));
     }
