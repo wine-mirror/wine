@@ -612,7 +612,7 @@ static DWORD VOLUME_GetSuperblockSerial( const UNICODE_STRING *device, HANDLE ha
              * Me$$ysoft chose to reverse the serial number in NT4/W2K.
              * It's true and nobody will ever be able to change it.
              */
-            if (GetVersion() & 0x80000000 || type == FS_UDF)
+            if ((GetVersion() & 0x80000000) || type == FS_UDF)
                 return (sum[3] << 24) | (sum[2] << 16) | (sum[1] << 8) | sum[0];
             else
                 return (sum[0] << 24) | (sum[1] << 16) | (sum[2] << 8) | sum[3];
