@@ -265,15 +265,15 @@ WINE_UNICODE_INLINE size_t strcspnW( const WCHAR *str, const WCHAR *reject )
 
 WINE_UNICODE_INLINE WCHAR *strlwrW( WCHAR *str )
 {
-    WCHAR *ret = str;
-    while ((*str = tolowerW(*str))) str++;
+    WCHAR *ret;
+    for (ret = str; *str; str++) *str = tolowerW(*str);
     return ret;
 }
 
 WINE_UNICODE_INLINE WCHAR *struprW( WCHAR *str )
 {
-    WCHAR *ret = str;
-    while ((*str = toupperW(*str))) str++;
+    WCHAR *ret;
+    for (ret = str; *str; str++) *str = toupperW(*str);
     return ret;
 }
 
