@@ -69,11 +69,14 @@ HRESULT init_global(script_ctx_t*);
 typedef enum {
     ARG_NONE = 0,
     ARG_STR,
-    ARG_BSTR
+    ARG_BSTR,
+    ARG_INT,
+    ARG_UINT
 } instr_arg_type_t;
 
 #define OP_LIST                                   \
-    X(icallv,         1, ARG_BSTR,    0)          \
+    X(bool,           1, ARG_INT,     0)          \
+    X(icallv,         1, ARG_BSTR,    ARG_UINT)   \
     X(ret,            0, 0,           0)
 
 typedef enum {
@@ -86,6 +89,8 @@ OP_LIST
 typedef union {
     const WCHAR *str;
     BSTR bstr;
+    unsigned uint;
+    LONG lng;
 } instr_arg_t;
 
 typedef struct {

@@ -75,11 +75,17 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, ref_t *ref)
 static HRESULT interp_icallv(exec_ctx_t *ctx)
 {
     BSTR identifier = ctx->instr->arg1.bstr;
+    const unsigned arg_cnt = ctx->instr->arg2.uint;
     DISPPARAMS dp = {0};
     ref_t ref;
     HRESULT hres;
 
     TRACE("\n");
+
+    if(arg_cnt) {
+        FIXME("arguments not implemented\n");
+        return E_NOTIMPL;
+    }
 
     hres = lookup_identifier(ctx, identifier, &ref);
     if(FAILED(hres))
@@ -105,6 +111,12 @@ static HRESULT interp_ret(exec_ctx_t *ctx)
 
     ctx->instr = NULL;
     return S_OK;
+}
+
+static HRESULT interp_bool(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static const instr_func_t op_funcs[] = {

@@ -34,6 +34,8 @@ typedef struct {
     vbscode_t *code;
 } compile_ctx_t;
 
+static HRESULT compile_expression(compile_ctx_t*,expression_t*);
+
 static inline instr_t *instr_ptr(compile_ctx_t *ctx, unsigned id)
 {
     assert(id < ctx->instr_cnt);
@@ -57,6 +59,18 @@ static unsigned push_instr(compile_ctx_t *ctx, vbsop_t op)
 
     ctx->code->instrs[ctx->instr_cnt].op = op;
     return ctx->instr_cnt++;
+}
+
+static HRESULT push_instr_int(compile_ctx_t *ctx, vbsop_t op, LONG arg)
+{
+    unsigned ret;
+
+    ret = push_instr(ctx, op);
+    if(ret == -1)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, ret)->arg1.lng = arg;
+    return S_OK;
 }
 
 static BSTR alloc_bstr_arg(compile_ctx_t *ctx, const WCHAR *str)
@@ -84,12 +98,12 @@ static BSTR alloc_bstr_arg(compile_ctx_t *ctx, const WCHAR *str)
     return ctx->code->bstr_pool[ctx->code->bstr_cnt++];
 }
 
-static HRESULT push_instr_bstr(compile_ctx_t *ctx, vbsop_t op, const WCHAR *arg)
+static HRESULT push_instr_bstr_uint(compile_ctx_t *ctx, vbsop_t op, const WCHAR *arg1, unsigned arg2)
 {
     unsigned instr;
     BSTR bstr;
 
-    bstr = alloc_bstr_arg(ctx, arg);
+    bstr = alloc_bstr_arg(ctx, arg1);
     if(!bstr)
         return E_OUTOFMEMORY;
 
@@ -98,26 +112,58 @@ static HRESULT push_instr_bstr(compile_ctx_t *ctx, vbsop_t op, const WCHAR *arg)
         return E_OUTOFMEMORY;
 
     instr_ptr(ctx, instr)->arg1.bstr = bstr;
+    instr_ptr(ctx, instr)->arg2.uint = arg2;
+    return S_OK;
+}
+
+static HRESULT compile_args(compile_ctx_t *ctx, expression_t *args, unsigned *ret)
+{
+    unsigned arg_cnt = 0;
+    HRESULT hres;
+
+    while(args) {
+        hres = compile_expression(ctx, args);
+        if(FAILED(hres))
+            return hres;
+
+        arg_cnt++;
+        args = args->next;
+    }
+
+    *ret = arg_cnt;
     return S_OK;
 }
 
 static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t *expr)
 {
+    unsigned arg_cnt = 0;
     HRESULT hres;
 
-    if(expr->args) {
-        FIXME("arguments not implemented\n");
-        return E_NOTIMPL;
-    }
+    hres = compile_args(ctx, expr->args, &arg_cnt);
+    if(FAILED(hres))
+        return hres;
 
     if(expr->obj_expr) {
         FIXME("obj_expr not implemented\n");
         hres = E_NOTIMPL;
     }else {
-        hres = push_instr_bstr(ctx, OP_icallv, expr->identifier);
+        hres = push_instr_bstr_uint(ctx, OP_icallv, expr->identifier, arg_cnt);
     }
 
     return hres;
+}
+
+static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
+{
+    switch(expr->type) {
+    case EXPR_BOOL:
+        return push_instr_int(ctx, OP_bool, ((bool_expression_t*)expr)->value);
+    default:
+        FIXME("Unimplemented expression type %d\n", expr->type);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
