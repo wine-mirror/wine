@@ -780,6 +780,16 @@ static BOOL match_fglrx(const struct wined3d_gl_info *gl_info, const char *gl_re
     return gl_vendor == GL_VENDOR_FGLRX;
 }
 
+static BOOL match_limited_vtf(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+{
+    /* Nvidia GeForce 6xxx and 7xxx support accelerated VTF only on a few
+       selected texture formats. As they are apparently the only DX9 class GPUs
+       supporting VTF, the check can be very simple. */
+    return gl_info->limits.vertex_samplers &&
+            !match_dx10_capable(gl_info, gl_renderer, gl_vendor, card_vendor, device);
+}
+
 static void quirk_arb_constants(struct wined3d_gl_info *gl_info)
 {
     TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL.\n", gl_info->limits.arb_vs_native_constants);
@@ -902,6 +912,11 @@ static void quirk_infolog_spam(struct wined3d_gl_info *gl_info)
     gl_info->quirks |= WINED3D_QUIRK_INFO_LOG_SPAM;
 }
 
+static void quirk_limited_vtf(struct wined3d_gl_info *gl_info)
+{
+    gl_info->quirks |= WINED3D_QUIRK_LIMITED_VTF;
+}
+
 struct driver_quirk
 {
     BOOL (*match)(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
@@ -990,6 +1005,11 @@ static const struct driver_quirk quirk_table[] =
         match_fglrx,
         quirk_infolog_spam,
         "Not printing GLSL infolog"
+    },
+    {
+        match_limited_vtf,
+        quirk_limited_vtf,
+        "Vertex textures support is limited"
     },
 };
 
@@ -3673,7 +3693,19 @@ static BOOL CheckSurfaceCapability(const struct wined3d_adapter *adapter,
 static BOOL CheckVertexTextureCapability(const struct wined3d_adapter *adapter,
         const struct wined3d_format *format)
 {
-    return adapter->gl_info.limits.vertex_samplers && (format->flags & WINED3DFMT_FLAG_VTF);
+    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
+
+    if (!gl_info->limits.vertex_samplers || !(format->flags & WINED3DFMT_FLAG_VTF))
+        return FALSE;
+
+    switch (format->id)
+    {
+        case WINED3DFMT_R32G32B32A32_FLOAT:
+        case WINED3DFMT_R32_FLOAT:
+            return TRUE;
+        default:
+            return !(gl_info->quirks & WINED3D_QUIRK_LIMITED_VTF);
+    }
 }
 
 HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT adapter_idx,
