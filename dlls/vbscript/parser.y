@@ -68,7 +68,7 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 %token tNOTHING tEMPTY tNULL
 %token tCLASS tSET tNEW tPUBLIC tPRIVATE tDEFAULT tME
 %token tERROR tNEXT tON tRESUME tGOTO
-%token <string> tIdentifier
+%token <string> tIdentifier tString
 
 %type <statement> Statement StatementNl
 %type <expression> Expression LiteralExpression

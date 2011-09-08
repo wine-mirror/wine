@@ -197,6 +197,49 @@ static int parse_identifier(parser_ctx_t *ctx, const WCHAR **ret)
     return tIdentifier;
 }
 
+static int parse_string_literal(parser_ctx_t *ctx, const WCHAR **ret)
+{
+    const WCHAR *ptr = ++ctx->ptr;
+    WCHAR *rptr;
+    int len = 0;
+
+    while(ctx->ptr < ctx->end) {
+        if(*ctx->ptr == '\n') {
+            FIXME("newline inside string literal\n");
+            return 0;
+        }
+
+       if(*ctx->ptr == '"') {
+            if(ctx->ptr[1] != '"')
+                break;
+            len--;
+            ctx->ptr++;
+        }
+        ctx->ptr++;
+    }
+
+    if(ctx->ptr == ctx->end) {
+        FIXME("unterminated string literal\n");
+        return 0;
+    }
+
+    len += ctx->ptr-ptr;
+
+    *ret = rptr = parser_alloc(ctx, (len+1)*sizeof(WCHAR));
+    if(!rptr)
+        return 0;
+
+    while(ptr < ctx->ptr) {
+        if(*ptr == '"')
+            ptr++;
+        *rptr++ = *ptr++;
+    }
+
+    *rptr = 0;
+    ctx->ptr++;
+    return tString;
+}
+
 static int parse_next_token(void *lval, parser_ctx_t *ctx)
 {
     WCHAR c;
@@ -238,6 +281,8 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
     case '\\':
     case '.':
         return *ctx->ptr++;
+    case '"':
+        return parse_string_literal(ctx, lval);
     default:
         FIXME("Unhandled char %c in %s\n", *ctx->ptr, debugstr_w(ctx->ptr));
     }
