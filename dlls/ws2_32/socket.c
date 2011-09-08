@@ -3388,9 +3388,9 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         /* these values need to be set only if SO_KEEPALIVE is enabled */
         else if(keepalive)
         {
-            if (keepidle && setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, (void *)&keepidle, sizeof(int)) == -1)
+            if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, (void *)&keepidle, sizeof(int)) == -1)
                 status = WSAEINVAL;
-            else if (keepintvl && setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, (void *)&keepintvl, sizeof(int)) == -1)
+            else if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, (void *)&keepintvl, sizeof(int)) == -1)
                 status = WSAEINVAL;
         }
 #else
