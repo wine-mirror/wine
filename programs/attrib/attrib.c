@@ -45,7 +45,7 @@ static WCHAR *ATTRIB_LoadMessage(UINT id) {
  *  and hence required WriteConsoleW to output it, however if file i/o is
  *  redirected, it needs to be WriteFile'd using OEM (not ANSI) format
  * ========================================================================= */
-int ATTRIB_wprintf(const WCHAR *format, ...) {
+static int ATTRIB_wprintf(const WCHAR *format, ...) {
 
     static WCHAR *output_bufW = NULL;
     static char  *output_bufA = NULL;
