@@ -77,7 +77,8 @@ typedef enum {
 #define OP_LIST                                   \
     X(bool,           1, ARG_INT,     0)          \
     X(icallv,         1, ARG_BSTR,    ARG_UINT)   \
-    X(ret,            0, 0,           0)
+    X(ret,            0, 0,           0)          \
+    X(string,         1, ARG_STR,     0)
 
 typedef enum {
 #define X(x,n,a,b) OP_##x,

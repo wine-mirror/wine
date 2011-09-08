@@ -119,6 +119,12 @@ static HRESULT interp_bool(exec_ctx_t *ctx)
     return E_NOTIMPL;
 }
 
+static HRESULT interp_string(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static const instr_func_t op_funcs[] = {
 #define X(x,n,a,b) interp_ ## x,
 OP_LIST

@@ -73,6 +73,18 @@ static HRESULT push_instr_int(compile_ctx_t *ctx, vbsop_t op, LONG arg)
     return S_OK;
 }
 
+static HRESULT push_instr_str(compile_ctx_t *ctx, vbsop_t op, const WCHAR *arg)
+{
+    unsigned ret;
+
+    ret = push_instr(ctx, op);
+    if(ret == -1)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, ret)->arg1.str = arg;
+    return S_OK;
+}
+
 static BSTR alloc_bstr_arg(compile_ctx_t *ctx, const WCHAR *str)
 {
     if(!ctx->code->bstr_pool_size) {
@@ -158,6 +170,8 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
     switch(expr->type) {
     case EXPR_BOOL:
         return push_instr_int(ctx, OP_bool, ((bool_expression_t*)expr)->value);
+    case EXPR_STRING:
+        return push_instr_str(ctx, OP_string, ((string_expression_t*)expr)->value);
     default:
         FIXME("Unimplemented expression type %d\n", expr->type);
         return E_NOTIMPL;
