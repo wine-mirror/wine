@@ -1228,7 +1228,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
                    CMD_LIST **cmdList)
 {
     WCHAR *cmd, *p, *redir;
-    int status, i;
+    int status, i, prev_echo_mode;
     DWORD count, creationDisposition;
     HANDLE h;
     WCHAR *whichcmd;
@@ -1581,7 +1581,9 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
         WCMD_exit (cmdList);
         break;
       default:
+        prev_echo_mode = echo_mode;
         WCMD_run_program (whichcmd, 0);
+        echo_mode = prev_echo_mode;
     }
     HeapFree( GetProcessHeap(), 0, cmd );
     HeapFree( GetProcessHeap(), 0, new_redir );
@@ -1594,6 +1596,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
       }
     }
 }
+
 /*************************************************************************
  * WCMD_LoadMessage
  *    Load a string from the resource file, handling any error
