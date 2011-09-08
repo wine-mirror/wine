@@ -2548,10 +2548,10 @@ static HRESULT parse_vertex_colors(IDirectXFileData *filedata, struct mesh_data 
         }
         memcpy(&color, data, sizeof(color));
         data += sizeof(color);
-        color.r = fminf(1.0f, fmaxf(0.0f, color.r));
-        color.g = fminf(1.0f, fmaxf(0.0f, color.g));
-        color.b = fminf(1.0f, fmaxf(0.0f, color.b));
-        color.a = fminf(1.0f, fmaxf(0.0f, color.a));
+        color.r = min(1.0f, max(0.0f, color.r));
+        color.g = min(1.0f, max(0.0f, color.g));
+        color.b = min(1.0f, max(0.0f, color.b));
+        color.a = min(1.0f, max(0.0f, color.a));
         mesh->vertex_colors[index] = D3DCOLOR_ARGB((BYTE)(color.a * 255.0f + 0.5f),
                                                    (BYTE)(color.r * 255.0f + 0.5f),
                                                    (BYTE)(color.g * 255.0f + 0.5f),
