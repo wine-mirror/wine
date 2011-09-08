@@ -1204,8 +1204,11 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
 
     dump_fmt(fmt);
 
-    if(out)
+    if(out){
         *out = NULL;
+        if(mode != AUDCLNT_SHAREMODE_SHARED)
+            out = NULL;
+    }
 
     EnterCriticalSection(&This->lock);
 
@@ -1338,6 +1341,9 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
 exit:
     LeaveCriticalSection(&This->lock);
     HeapFree(GetProcessHeap(), 0, formats);
+
+    if(hr == S_FALSE && !out)
+        hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
 
     if(hr == S_FALSE && out) {
         closest->nBlockAlign =

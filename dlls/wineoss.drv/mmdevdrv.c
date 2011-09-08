@@ -714,9 +714,6 @@ static HRESULT setup_oss_device(int fd, const WAVEFORMATEX *fmt,
     WAVEFORMATEXTENSIBLE *fmtex = (void*)fmt;
     WAVEFORMATEX *closest = NULL;
 
-    if(out)
-        *out = NULL;
-
     tmp = oss_format = get_oss_format(fmt);
     if(oss_format < 0)
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
@@ -766,6 +763,9 @@ static HRESULT setup_oss_device(int fd, const WAVEFORMATEX *fmt,
                 fmtex->dwChannelMask != mask)
             ret = S_FALSE;
     }
+
+    if(ret == S_FALSE && !out)
+        ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
 
     if(ret == S_FALSE && out){
         closest->nBlockAlign =
@@ -901,10 +901,6 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     }
 
     hr = setup_oss_device(This->fd, fmt, NULL, FALSE);
-    if(hr == S_FALSE){
-        LeaveCriticalSection(&This->lock);
-        return AUDCLNT_E_UNSUPPORTED_FORMAT;
-    }
     if(FAILED(hr)){
         LeaveCriticalSection(&This->lock);
         return hr;
@@ -1136,6 +1132,12 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
         return E_INVALIDARG;
 
     dump_fmt(pwfx);
+
+    if(outpwfx){
+        *outpwfx = NULL;
+        if(mode != AUDCLNT_SHAREMODE_SHARED)
+            outpwfx = NULL;
+    }
 
     if(This->dataflow == eRender)
         fd = open(This->devnode, O_WRONLY, 0);

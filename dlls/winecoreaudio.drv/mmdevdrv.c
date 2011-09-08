@@ -1145,6 +1145,9 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
 
     dump_fmt(pwfx);
 
+    if(outpwfx)
+        *outpwfx = NULL;
+
     if(pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
             fmtex->dwChannelMask != 0 &&
             fmtex->dwChannelMask != get_channel_mask(pwfx->nChannels))
@@ -1156,16 +1159,11 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
     if(SUCCEEDED(hr)){
         AudioQueueDispose(aqueue, 1);
         OSSpinLockUnlock(&This->lock);
-        if(outpwfx)
-            *outpwfx = NULL;
         TRACE("returning %08x\n", S_OK);
         return S_OK;
     }
 
     OSSpinLockUnlock(&This->lock);
-
-    if(outpwfx)
-        *outpwfx = NULL;
 
     TRACE("returning %08x\n", AUDCLNT_E_UNSUPPORTED_FORMAT);
     return AUDCLNT_E_UNSUPPORTED_FORMAT;
