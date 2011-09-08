@@ -33,6 +33,7 @@
 
 typedef struct _function_t function_t;
 typedef struct _vbscode_t vbscode_t;
+typedef struct _script_ctx_t script_ctx_t;
 
 typedef struct named_item_t {
     IDispatch *disp;
@@ -48,7 +49,10 @@ typedef struct {
     LONG ref;
 } vbdisp_t;
 
-typedef struct {
+HRESULT disp_get_id(IDispatch*,BSTR,DISPID*);
+HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*,VARIANT*);
+
+struct _script_ctx_t {
     IActiveScriptSite *site;
     LCID lcid;
 
@@ -58,7 +62,7 @@ typedef struct {
 
     struct list code_list;
     struct list named_items;
-} script_ctx_t;
+};
 
 HRESULT init_global(script_ctx_t*);
 

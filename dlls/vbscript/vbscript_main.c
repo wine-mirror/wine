@@ -27,6 +27,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+
 static HINSTANCE vbscript_hinstance;
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)

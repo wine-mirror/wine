@@ -203,3 +203,46 @@ HRESULT init_global(script_ctx_t *ctx)
 {
     return create_vbdisp(&ctx->script_obj);
 }
+
+HRESULT disp_get_id(IDispatch *disp, BSTR name, DISPID *id)
+{
+    IDispatchEx *dispex;
+    HRESULT hres;
+
+    if(disp->lpVtbl == (IDispatchVtbl*)&DispatchExVtbl)
+        FIXME("properly handle builtin objects\n");
+
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    if(FAILED(hres)) {
+        TRACE("unsing IDispatch\n");
+        return IDispatch_GetIDsOfNames(disp, &IID_NULL, &name, 1, 0, id);
+    }
+
+    hres = IDispatchEx_GetDispID(dispex, name, fdexNameCaseInsensitive, id);
+    IDispatchEx_Release(dispex);
+    return hres;
+}
+
+HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, DISPPARAMS *dp, VARIANT *retv)
+{
+    const WORD flags = DISPATCH_METHOD|(retv ? DISPATCH_PROPERTYGET : 0);
+    IDispatchEx *dispex;
+    EXCEPINFO ei;
+    HRESULT hres;
+
+    memset(&ei, 0, sizeof(ei));
+    if(retv)
+        V_VT(retv) = VT_EMPTY;
+
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    if(FAILED(hres)) {
+        UINT err = 0;
+
+        TRACE("using IDispatch\n");
+        return IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, flags, dp, retv, &ei, &err);
+    }
+
+    hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, flags, dp, retv, &ei, NULL /* CALLER_FIXME */);
+    IDispatchEx_Release(dispex);
+    return hres;
+}

@@ -28,15 +28,75 @@ WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 typedef struct {
     vbscode_t *code;
     instr_t *instr;
+    script_ctx_t *script;
 } exec_ctx_t;
-
 
 typedef HRESULT (*instr_func_t)(exec_ctx_t*);
 
+typedef enum {
+    REF_NONE,
+    REF_DISP
+} ref_type_t;
+
+typedef struct {
+    ref_type_t type;
+    union {
+        struct {
+            IDispatch *disp;
+            DISPID id;
+        } d;
+    } u;
+} ref_t;
+
+static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, ref_t *ref)
+{
+    named_item_t *item;
+    DISPID id;
+    HRESULT hres;
+
+    LIST_FOR_EACH_ENTRY(item, &ctx->script->named_items, named_item_t, entry) {
+        if(item->flags & SCRIPTITEM_GLOBALMEMBERS) {
+            hres = disp_get_id(item->disp, name, &id);
+            if(SUCCEEDED(hres)) {
+                ref->type = REF_DISP;
+                ref->u.d.disp = item->disp;
+                ref->u.d.id = id;
+                return S_OK;
+            }
+        }
+    }
+
+    FIXME("create if no option explicit\n");
+
+    ref->type = REF_NONE;
+    return S_OK;
+}
+
 static HRESULT interp_icallv(exec_ctx_t *ctx)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR identifier = ctx->instr->arg1.bstr;
+    DISPPARAMS dp = {0};
+    ref_t ref;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = lookup_identifier(ctx, identifier, &ref);
+    if(FAILED(hres))
+        return hres;
+
+    switch(ref.type) {
+    case REF_DISP:
+        hres = disp_call(ctx->script, ref.u.d.disp, ref.u.d.id, &dp, NULL);
+        if(FAILED(hres))
+            return hres;
+        break;
+    default:
+        FIXME("%s not found\n", debugstr_w(identifier));
+        return DISP_E_UNKNOWNNAME;
+    }
+
+    return S_OK;
 }
 
 static HRESULT interp_ret(exec_ctx_t *ctx)
@@ -67,6 +127,7 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func)
 
     exec.code = func->code_ctx;
     exec.instr = exec.code->instrs + func->code_off;
+    exec.script = ctx;
 
     while(exec.instr) {
         op = exec.instr->op;
