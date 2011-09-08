@@ -1,4 +1,5 @@
 MODULE    = vbscript.dll
+IMPORTS   = oleaut32
 
 C_SRCS = \
 	compile.c \

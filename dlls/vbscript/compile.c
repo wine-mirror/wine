@@ -59,15 +59,45 @@ static unsigned push_instr(compile_ctx_t *ctx, vbsop_t op)
     return ctx->instr_cnt++;
 }
 
-static HRESULT push_instr_str(compile_ctx_t *ctx, vbsop_t op, const WCHAR *arg)
+static BSTR alloc_bstr_arg(compile_ctx_t *ctx, const WCHAR *str)
+{
+    if(!ctx->code->bstr_pool_size) {
+        ctx->code->bstr_pool = heap_alloc(8 * sizeof(BSTR));
+        if(!ctx->code->bstr_pool)
+            return NULL;
+        ctx->code->bstr_pool_size = 8;
+    }else if(ctx->code->bstr_pool_size == ctx->code->bstr_cnt) {
+       BSTR *new_pool;
+
+        new_pool = heap_realloc(ctx->code->bstr_pool, ctx->code->bstr_pool_size*2*sizeof(BSTR));
+        if(!new_pool)
+            return NULL;
+
+        ctx->code->bstr_pool = new_pool;
+        ctx->code->bstr_pool_size *= 2;
+    }
+
+    ctx->code->bstr_pool[ctx->code->bstr_cnt] = SysAllocString(str);
+    if(!ctx->code->bstr_pool[ctx->code->bstr_cnt])
+        return NULL;
+
+    return ctx->code->bstr_pool[ctx->code->bstr_cnt++];
+}
+
+static HRESULT push_instr_bstr(compile_ctx_t *ctx, vbsop_t op, const WCHAR *arg)
 {
     unsigned instr;
+    BSTR bstr;
+
+    bstr = alloc_bstr_arg(ctx, arg);
+    if(!bstr)
+        return E_OUTOFMEMORY;
 
     instr = push_instr(ctx, op);
     if(instr == -1)
         return E_OUTOFMEMORY;
 
-    instr_ptr(ctx, instr)->arg1.str = arg;
+    instr_ptr(ctx, instr)->arg1.bstr = bstr;
     return S_OK;
 }
 
@@ -84,7 +114,7 @@ static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t
         FIXME("obj_expr not implemented\n");
         hres = E_NOTIMPL;
     }else {
-        hres = push_instr_str(ctx, OP_icallv, expr->identifier);
+        hres = push_instr_bstr(ctx, OP_icallv, expr->identifier);
     }
 
     return hres;
@@ -130,7 +160,14 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
 
 void release_vbscode(vbscode_t *code)
 {
+    unsigned i;
+
     list_remove(&code->entry);
+
+    for(i=0; i < code->bstr_cnt; i++)
+        SysFreeString(code->bstr_pool[i]);
+
+    heap_free(code->bstr_pool);
     heap_free(code->source);
     heap_free(code->instrs);
     heap_free(code);
@@ -158,6 +195,10 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source)
 
     ctx->instr_cnt = 0;
     ctx->instr_size = 32;
+
+    ret->bstr_pool = NULL;
+    ret->bstr_pool_size = 0;
+    ret->bstr_cnt = 0;
 
     ret->global_code.code_ctx = ret;
 
