@@ -6355,6 +6355,108 @@ static BOOL cpu_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
     return FALSE;
 }
 
+static HRESULT surface_cpu_blt_compressed(const BYTE *src_data, BYTE *dst_data,
+        UINT src_pitch, UINT dst_pitch, UINT update_w, UINT update_h,
+        const struct wined3d_format *format, DWORD flags, const WINEDDBLTFX *fx)
+{
+    UINT row_block_count;
+    const BYTE *src_row;
+    BYTE *dst_row;
+    UINT x, y;
+
+    src_row = src_data;
+    dst_row = dst_data;
+
+    row_block_count = (update_w + format->block_width - 1) / format->block_width;
+
+    if (!flags)
+    {
+        for (y = 0; y < update_h; y += format->block_height)
+        {
+            memcpy(dst_row, src_row, row_block_count * format->block_byte_count);
+            src_row += src_pitch;
+            dst_row += dst_pitch;
+        }
+
+        return WINED3D_OK;
+    }
+
+    if (flags == WINEDDBLT_DDFX && fx->dwDDFX == WINEDDBLTFX_MIRRORUPDOWN)
+    {
+        src_row += (((update_h / format->block_height) - 1) * src_pitch);
+
+        switch (format->id)
+        {
+            case WINED3DFMT_DXT1:
+                for (y = 0; y < update_h; y += format->block_height)
+                {
+                    struct block
+                    {
+                        WORD color[2];
+                        BYTE control_row[4];
+                    };
+
+                    const struct block *s = (const struct block *)src_row;
+                    struct block *d = (struct block *)dst_row;
+
+                    for (x = 0; x < row_block_count; ++x)
+                    {
+                        d[x].color[0] = s[x].color[0];
+                        d[x].color[1] = s[x].color[1];
+                        d[x].control_row[0] = s[x].control_row[3];
+                        d[x].control_row[1] = s[x].control_row[2];
+                        d[x].control_row[2] = s[x].control_row[1];
+                        d[x].control_row[3] = s[x].control_row[0];
+                    }
+                    src_row -= src_pitch;
+                    dst_row += dst_pitch;
+                }
+                return WINED3D_OK;
+
+            case WINED3DFMT_DXT3:
+                for (y = 0; y < update_h; y += format->block_height)
+                {
+                    struct block
+                    {
+                        WORD alpha_row[4];
+                        WORD color[2];
+                        BYTE control_row[4];
+                    };
+
+                    const struct block *s = (const struct block *)src_row;
+                    struct block *d = (struct block *)dst_row;
+
+                    for (x = 0; x < row_block_count; ++x)
+                    {
+                        d[x].alpha_row[0] = s[x].alpha_row[3];
+                        d[x].alpha_row[1] = s[x].alpha_row[2];
+                        d[x].alpha_row[2] = s[x].alpha_row[1];
+                        d[x].alpha_row[3] = s[x].alpha_row[0];
+                        d[x].color[0] = s[x].color[0];
+                        d[x].color[1] = s[x].color[1];
+                        d[x].control_row[0] = s[x].control_row[3];
+                        d[x].control_row[1] = s[x].control_row[2];
+                        d[x].control_row[2] = s[x].control_row[1];
+                        d[x].control_row[3] = s[x].control_row[0];
+                    }
+                    src_row -= src_pitch;
+                    dst_row += dst_pitch;
+                }
+                return WINED3D_OK;
+
+            default:
+                FIXME("Compressed flip not implemented for format %s.\n",
+                        debug_d3dformat(format->id));
+                return E_NOTIMPL;
+        }
+    }
+
+    FIXME("Unsupported blit on compressed surface (format %s, flags %#x, DDFX %#x).\n",
+            debug_d3dformat(format->id), flags, flags & WINEDDBLT_DDFX ? fx->dwDDFX : 0);
+
+    return E_NOTIMPL;
+}
+
 static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect,
         struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
         const WINEDDBLTFX *fx, WINED3DTEXTUREFILTERTYPE filter)
@@ -6490,16 +6592,14 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
 
     if (src_format->flags & dst_format->flags & WINED3DFMT_FLAG_COMPRESSED)
     {
-        UINT row_block_count;
+        TRACE("%s -> %s copy.\n", debug_d3dformat(src_format->id), debug_d3dformat(dst_format->id));
 
-        if (flags || src_surface == dst_surface)
+        if (src_surface == dst_surface)
         {
             FIXME("Only plain blits supported on compressed surfaces.\n");
             hr = E_NOTIMPL;
             goto release;
         }
-
-        TRACE("%s -> %s copy.\n", debug_d3dformat(src_format->id), debug_d3dformat(dst_format->id));
 
         if (srcheight != dstheight || srcwidth != dstwidth)
         {
@@ -6508,17 +6608,16 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
             goto release;
         }
 
-        dbuf = dlock.pBits;
-        sbuf = slock.pBits;
-
-        row_block_count = (dstwidth + dst_format->block_width - 1) / dst_format->block_width;
-        for (y = 0; y < dstheight; y += dst_format->block_height)
+        if (srcwidth & (src_format->block_width - 1) || srcheight & (src_format->block_height - 1))
         {
-            memcpy(dbuf, sbuf, row_block_count * dst_format->block_byte_count);
-            dbuf += dlock.Pitch;
-            sbuf += slock.Pitch;
+            WARN("Rectangle not block-aligned.\n");
+            hr = WINED3DERR_INVALIDCALL;
+            goto release;
         }
 
+        hr = surface_cpu_blt_compressed(slock.pBits, dlock.pBits,
+                slock.Pitch, dlock.Pitch, dstwidth, dstheight,
+                src_format, flags, fx);
         goto release;
     }
 
