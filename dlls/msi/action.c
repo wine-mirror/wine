@@ -7206,7 +7206,7 @@ StandardActions[] =
     { szRMCCPSearch, ACTION_RMCCPSearch, NULL },
     { szScheduleReboot, ACTION_ScheduleReboot, NULL },
     { szSelfRegModules, ACTION_SelfRegModules, szSelfUnregModules },
-    { szSelfUnregModules, ACTION_SelfUnregModules, szSelfUnregModules },
+    { szSelfUnregModules, ACTION_SelfUnregModules, szSelfRegModules },
     { szSetODBCFolders, ACTION_SetODBCFolders, NULL },
     { szStartServices, ACTION_StartServices, szStopServices },
     { szStopServices, ACTION_StopServices, szStartServices },
