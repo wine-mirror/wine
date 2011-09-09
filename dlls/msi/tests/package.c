@@ -753,7 +753,7 @@ static MSIHANDLE create_package_db(void)
     ok( res == ERROR_SUCCESS , "Failed to commit database\n" );
 
     res = set_summary_info(hdb);
-    ok( res == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", res);
+    ok( res == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", res);
 
     res = run_query( hdb,
             "CREATE TABLE `Directory` ( "
@@ -2467,12 +2467,12 @@ static void test_formatrecord2(void)
     buffer[0] = 0;
     sz = sizeof buffer;
     r = MsiFormatRecord( hpkg, hrec, buffer, &sz );
-    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", r);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
 
     r = MsiRecordSetString(hrec, 0, "[foo][1]");
-    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", r);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     r = MsiRecordSetString(hrec, 1, "hoo");
-    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", r);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     sz = sizeof buffer;
     r = MsiFormatRecord(hpkg, hrec, buffer, &sz);
     ok( sz == 3, "size wrong\n");
@@ -2480,7 +2480,7 @@ static void test_formatrecord2(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
 
     r = MsiRecordSetString(hrec, 0, "x[~]x");
-    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", r);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     sz = sizeof buffer;
     r = MsiFormatRecord(hpkg, hrec, buffer, &sz);
     ok( sz == 3, "size wrong\n");
@@ -2488,9 +2488,9 @@ static void test_formatrecord2(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
 
     r = MsiRecordSetString(hrec, 0, "[foo.$%}][1]");
-    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", r);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     r = MsiRecordSetString(hrec, 1, "hoo");
-    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", r);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     sz = sizeof buffer;
     r = MsiFormatRecord(hpkg, hrec, buffer, &sz);
     ok( sz == 3, "size wrong\n");
@@ -2498,7 +2498,7 @@ static void test_formatrecord2(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
 
     r = MsiRecordSetString(hrec, 0, "[\\[]");
-    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", r);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     sz = sizeof buffer;
     r = MsiFormatRecord(hpkg, hrec, buffer, &sz);
     ok( sz == 1, "size wrong\n");
@@ -2507,7 +2507,7 @@ static void test_formatrecord2(void)
 
     SetEnvironmentVariable("FOO", "BAR");
     r = MsiRecordSetString(hrec, 0, "[%FOO]");
-    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", r);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     sz = sizeof buffer;
     r = MsiFormatRecord(hpkg, hrec, buffer, &sz);
     ok( sz == 3, "size wrong\n");
@@ -2515,9 +2515,9 @@ static void test_formatrecord2(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
 
     r = MsiRecordSetString(hrec, 0, "[[1]]");
-    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", r);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     r = MsiRecordSetString(hrec, 1, "%FOO");
-    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", r);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     sz = sizeof buffer;
     r = MsiFormatRecord(hpkg, hrec, buffer, &sz);
     ok( sz == 3, "size wrong\n");
@@ -8442,13 +8442,13 @@ static void test_appsearch_reglocator(void)
     sprintf(path, "\"%s\\FileName1\" -option", CURR_DIR);
     res = RegSetValueExA(hklm, "value16", 0, REG_SZ,
                          (const BYTE *)path, lstrlenA(path) + 1);
-    ok( res == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", res);
+    ok( res == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", res);
 
     space = (strchr(CURR_DIR, ' ')) ? TRUE : FALSE;
     sprintf(path, "%s\\FileName1 -option", CURR_DIR);
     res = RegSetValueExA(hklm, "value17", 0, REG_SZ,
                          (const BYTE *)path, lstrlenA(path) + 1);
-    ok( res == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", res);
+    ok( res == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", res);
 
     hdb = create_package_db();
     ok(hdb, "Expected a valid database handle\n");
@@ -9659,7 +9659,7 @@ static void test_featureparents(void)
 
     /* msidbFeatureAttributesFavorLocal:msidbComponentAttributesOptional */
     r = add_component_entry( hdb, "'lepus', '', 'TARGETDIR', 2, '', 'lepus_file'" );
-    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", r);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
 
     r = add_feature_components_entry( hdb, "'zodiac', 'leo'" );
     ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
@@ -10108,19 +10108,19 @@ static void test_installprops(void)
 
     size = MAX_PATH;
     r = MsiGetProperty(hpkg, "UserLanguageID", buf, &size);
-    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", r);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     ok( !lstrcmpA(buf, path), "Expected \"%s\", got \"%s\"\n", path, buf);
 
     res = GetSystemMetrics(SM_CXSCREEN);
     size = MAX_PATH;
     r = MsiGetProperty(hpkg, "ScreenX", buf, &size);
-    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", r);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     ok(atol(buf) == res, "Expected %d, got %ld\n", res, atol(buf));
 
     res = GetSystemMetrics(SM_CYSCREEN);
     size = MAX_PATH;
     r = MsiGetProperty(hpkg, "ScreenY", buf, &size);
-    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", r);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     ok(atol(buf) == res, "Expected %d, got %ld\n", res, atol(buf));
 
     if (pGetSystemInfo && pSHGetFolderPathA)
