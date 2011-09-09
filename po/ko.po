@@ -2013,14 +2013,12 @@ msgid "Default MidiOut Device"
 msgstr "기본 미디출력 장치"
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "Activation"
+msgstr "행동"
 
 #: dinput.rc:35
-#, fuzzy
 msgid "Object"
-msgstr "객체(&O)"
+msgstr "객체"
 
 #: dxdiagn.rc:25
 msgid "Regional Setting"
@@ -2093,7 +2091,7 @@ msgstr "숨기기"
 
 #: hhctrl.rc:41 ieframe.rc:65 shdoclc.rc:164 shdoclc.rc:188
 msgid "Stop"
-msgstr "정지"
+msgstr "멈추기"
 
 #: hhctrl.rc:42 ieframe.rc:66 shell32.rc:59
 msgid "Refresh"
@@ -7668,6 +7666,25 @@ msgid ""
 "and all subfolders.\n"
 "/D  Processes folders as well.\n"
 msgstr ""
+"ATTRIB - 파일 속성을 보여주거나 바꿉니다.\n"
+"\n"
+"문법:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [드라이브:][경로][파일이름]\n"
+"\t     [/S [/D]]\n"
+"\n"
+"어디에:\n"
+"\n"
+"+      속성을 설정합니다.\n"
+"-       속성을  지웁니다.\n"
+"R   읽기-전용 파일 속성을 설정합니다\n"
+"A   압축 파일 속성을 설정합니다.\n"
+"S   시스템 파일 속성을 설정합니다.\n"
+"H   숨은 파일 속성을 설정합니다.\n"
+"[드라이브:][경로][파일이름]\n"
+"속성 작업을 할 파일이나 파일들을 지정합니다.\n"
+"/S  현재 폴더와 모든 하위 폴더에서 일치하는 파일들을 \n"
+"처리합니.\n"
+"/D  폴더를 함께 처리합니다.\n"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -7830,7 +7847,6 @@ msgstr ""
 "아무 매개변수가 없는 HELP눈 CMD의 모든 내장 명령을 보여줍니다.\n"
 
 #: cmd.rc:94
-#, fuzzy
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -7843,12 +7859,12 @@ msgid ""
 msgstr ""
 "IF는 명령을 선택적으로 실행 할 때 사용한다.\n"
 "\n"
-"Syntax:\tIF [NOT] EXIST 파일이름 명령\n"
-"IF [NOT] string1==string2 명령\n"
-"IF [NOT] ERRORLEVEL 숫자 명령\n"
+"문법:   IF [NOT] EXIST 파일이름 명령\n"
+"     IF [NOT] string1==string2 명령\n"
+"     IF [NOT] ERRORLEVEL 숫자 명령\n"
 "\n"
-"명령의 첫번째 형식에서, string1 과 string2는 반드시 2개의 따옴표로\n"
-"둘려놓아야 합니다. 대소문자는 구분하지 않습니다.\n"
+"명령의 두번째 형식에서, string1 과 string2는 반드시 2개의 따옴표로\n"
+"둘려놓아야 합니다.이 비교는 대소문자를 구분하지 않습니다.\n"
 
 #: cmd.rc:100
 msgid ""
@@ -7924,7 +7940,6 @@ msgstr ""
 "넘치게 하는 이전 명령의 결과를 읽도록 한다\n"
 
 #: cmd.rc:149
-#, fuzzy
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -7946,17 +7961,18 @@ msgid ""
 "The prompt can also be changed by altering the PROMPT environment variable,\n"
 "so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'.\n"
 msgstr ""
-"PROMPT  명령라인 프롬프트 설정.\n"
+"PROMPT  명령-라인 프롬프트 설정.\n"
 "\n"
 "이 문자는 cmd가 입력을 기다리고 있을 때 시작 줄에 나타나는 PROMPT\n"
 "명령(그리고 스페이스 다음에)에 뒤따른다.\n"
 "\n"
 "뒤의 문자의 문자열의 특별한 의미 설명:\n"
 "\n"
-"$$    달러 기호         $_   라인피드            $b    파이프 기호 (|)\n"
-"$d    C현재 날짜        $e    이스케이프         $g    > 기호\n"
+"$$       달러 기호         $_        라인피드            $b    파이프 기호 "
+"(|)\n"
+"$d    현재 날짜         $e   이스케이프           $g    > 기호\n"
 "$l    < 기호            $n    현재 드라이브      $p    현재 경로\n"
-"$q    등호 기호         $t    현재 시간          $v    cmd 버젼\n"
+"$q    등호 기호         $t    현재 시간            $v    cmd 버젼\n"
 "\n"
 "프롬프트가 기본상태인 채로 프롬프트문자를 재설정하지 않고 PROMPT 명령을\n"
 "사용했을 때 ,이것은 현재 디렉토리 (포함해서현재 드라이브 문자) 에 \"보다 큰"
@@ -8185,7 +8201,6 @@ msgstr ""
 "호출한 셀로 돌아갑니다.\n"
 
 #: cmd.rc:287
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -8492,7 +8507,6 @@ msgid "Default gateway"
 msgstr "기본 게이트웨이"
 
 #: net.rc:27
-#, fuzzy
 msgid ""
 "The syntax of this command is:\n"
 "\n"
@@ -8502,10 +8516,10 @@ msgid ""
 "\n"
 "Where 'command' is one of HELP, START, STOP or USE.\n"
 msgstr ""
-"명령어 문법:\n"
+"이 명령어의 문법은:\n"
 "\n"
 "NET 명령어[매개변수]\n"
-"    -or-\n"
+"       -나-\n"
 "NET 명령어  /HELP\n"
 "\n"
 "명령어에 들어갈 수 있는 것은  HELP, START, STOP이나 USE중의 하나임\n"
@@ -9047,15 +9061,15 @@ msgstr "인터페이스"
 
 #: oleview.rc:138
 msgid "Registry"
-msgstr "Registry"
+msgstr "레지스트리"
 
 #: oleview.rc:139
 msgid "Implementation"
-msgstr "Implementation"
+msgstr "구현"
 
 #: oleview.rc:140
 msgid "Activation"
-msgstr "Activation"
+msgstr "활성화"
 
 #: oleview.rc:142
 msgid "CoGetClassObject failed."
@@ -10426,7 +10440,6 @@ msgstr ""
 "다. 만약 당신이 계속 진행하기를 원한다면 반드시 다시 만드십시오!"
 
 #: winecfg.rc:80
-#, fuzzy
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "문자"
@@ -10668,7 +10681,6 @@ msgstr ""
 "옵션:\n"
 
 #: wineconsole.rc:49
-#, fuzzy
 msgid ""
 "  --backend={user|curses}  Choosing user will spawn a new window, curses "
 "will\n"
@@ -10676,16 +10688,14 @@ msgid ""
 "console.\n"
 msgstr ""
 "  --backend={user|curses}  사용자가 새 창을 열 것인지,\n"
-"                            curses가 Wine 콘솔처럼 현재 터미널에  나타낼 것인"
-"지 선택\n"
+"                            curses으로 Wine 콘솔처럼 현재 터미널에  나타낼 것"
+"인지 선택\n"
 
 #: wineconsole.rc:51
-#, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr "  <명령>                 The Wine 프로그램은 콘솔을 통해서 시작됨\n"
 
 #: wineconsole.rc:52
-#, fuzzy
 msgid ""
 "\n"
 "Example:\n"
@@ -11319,7 +11329,6 @@ msgid "D"
 msgstr "D"
 
 #: xcopy.rc:77
-#, fuzzy
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
