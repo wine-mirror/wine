@@ -118,7 +118,7 @@ msgstr ""
 
 #: comctl32.rc:39
 msgid "Separator"
-msgstr "Separator"
+msgstr ""
 
 #: comctl32.rc:44 progman.rc:78
 #, fuzzy
@@ -144,7 +144,7 @@ msgstr "เกี่ยวกับ FolderPicker Test"
 
 #: comdlg32.rc:30
 msgid "Document Folders"
-msgstr "Document Folders"
+msgstr ""
 
 #: comdlg32.rc:31 shell32.rc:199
 msgid "My Documents"
@@ -156,7 +156,7 @@ msgstr "ที่คั่นหนังสือ"
 
 #: comdlg32.rc:33
 msgid "System Path"
-msgstr "System Path"
+msgstr ""
 
 #: comdlg32.rc:34 shell32.rc:153 winecfg.rc:97 winefile.rc:103
 #, fuzzy
@@ -174,7 +174,7 @@ msgstr "เครื่องส่วนตัว"
 
 #: comdlg32.rc:41
 msgid "System Folders"
-msgstr "System Folders"
+msgstr ""
 
 #: comdlg32.rc:42
 msgid "Local Hard Drives"
@@ -186,27 +186,23 @@ msgstr "ไม่พบแฟ้ม"
 
 #: comdlg32.rc:44
 msgid "Please verify that the correct file name was given"
-msgstr "Please verify if the correct file name was given"
+msgstr ""
 
 #: comdlg32.rc:45
 msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
 msgstr ""
-"File does not exist\n"
-"Do you want to create file"
 
 #: comdlg32.rc:46
 msgid ""
 "File already exists.\n"
 "Do you want to replace it?"
 msgstr ""
-"File does already exist.\n"
-"Do you want to replace it?"
 
 #: comdlg32.rc:47
 msgid "Invalid character(s) in path"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: comdlg32.rc:48
 msgid ""
@@ -314,7 +310,7 @@ msgstr "สีฟ้า"
 
 #: comdlg32.rc:144 wordpad.rc:127
 msgid "Fuchsia"
-msgstr "Fuchsia"
+msgstr ""
 
 #: comdlg32.rc:145 wordpad.rc:128
 msgid "Aqua"
@@ -347,17 +343,14 @@ msgstr ""
 "กรุณาเลื่อกใหม่"
 
 #: comdlg32.rc:74
-#, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "The number of 'Number of copies' value cannot be empty."
+msgstr ""
 
 #: comdlg32.rc:76
 msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
 msgstr ""
-"This large nmuber of copies is not supported by your printer.\n"
-"Please enter a value between 1 and %d."
 
 #: comdlg32.rc:77
 msgid "A printer error occurred."
@@ -388,8 +381,6 @@ msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
-"Before you can perform printer-related tasks such as page setup or printing "
-"a document, you need to install a printer. Please install one and retry."
 
 #: comdlg32.rc:151
 msgid "Select a font size between %d and %d points."
@@ -444,11 +435,11 @@ msgstr "กระดาษหมด; "
 
 #: comdlg32.rc:99
 msgid "Feed paper manual; "
-msgstr "Feed paper manual; "
+msgstr ""
 
 #: comdlg32.rc:100
 msgid "Paper problem; "
-msgstr "Paper problem; "
+msgstr ""
 
 #: comdlg32.rc:101
 msgid "Printer offline; "
@@ -456,7 +447,7 @@ msgstr "เครื่องพิมพ์ปิด; "
 
 #: comdlg32.rc:102
 msgid "I/O Active; "
-msgstr "I/O Active; "
+msgstr ""
 
 #: comdlg32.rc:103
 msgid "Busy; "
@@ -500,7 +491,7 @@ msgstr "หมึกหมดแล้ว; "
 
 #: comdlg32.rc:113
 msgid "Page punt; "
-msgstr "Page punt; "
+msgstr ""
 
 #: comdlg32.rc:114
 msgid "Interrupted by user; "
@@ -2169,9 +2160,8 @@ msgid "&Help"
 msgstr "ช่วยเหลีอ"
 
 #: ieframe.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "&About Notepad"
+msgstr ""
 
 #: ieframe.rc:67
 msgctxt "home page"
@@ -2610,9 +2600,8 @@ msgid "Invalid password\n"
 msgstr ""
 
 #: winerror.mc:361
-#, fuzzy
 msgid "Invalid parameter\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:366
 msgid "Net write fault\n"
@@ -3685,9 +3674,8 @@ msgid "Invalid group name\n"
 msgstr ""
 
 #: winerror.mc:1681
-#, fuzzy
 msgid "Invalid computer name\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:1686
 msgid "Invalid event name\n"
@@ -3706,9 +3694,8 @@ msgid "Invalid network name\n"
 msgstr ""
 
 #: winerror.mc:1706
-#, fuzzy
 msgid "Invalid share name\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:1716
 msgid "Invalid message name\n"
@@ -4140,9 +4127,8 @@ msgid "Cannot impersonate\n"
 msgstr "ไม่พบเครื่องพิมพ์"
 
 #: winerror.mc:2246
-#, fuzzy
 msgid "Invalid transaction state\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2251
 msgid "Security DB commit failure\n"
@@ -4389,9 +4375,8 @@ msgid "Hook procedure not installed\n"
 msgstr ""
 
 #: winerror.mc:2556
-#, fuzzy
 msgid "Invalid list box message\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent\n"
@@ -4414,9 +4399,8 @@ msgid "Window has no system menu\n"
 msgstr ""
 
 #: winerror.mc:2586
-#, fuzzy
 msgid "Invalid message box style\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2591
 msgid "Invalid SPI parameter\n"
@@ -4492,9 +4476,8 @@ msgid "Menu item not found\n"
 msgstr "ไม่พบแฟ้ม"
 
 #: winerror.mc:2681
-#, fuzzy
 msgid "Invalid keyboard handle\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2686
 msgid "Hook type not allowed\n"
@@ -4509,9 +4492,8 @@ msgid "Timeout\n"
 msgstr ""
 
 #: winerror.mc:2701
-#, fuzzy
 msgid "Invalid monitor handle\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2706
 msgid "Event log file corrupt\n"
@@ -4567,9 +4549,8 @@ msgid "Unknown property\n"
 msgstr "ไม่รู้จักดไร์เวอร์์เครื่องพิมพ์"
 
 #: winerror.mc:2766
-#, fuzzy
 msgid "Invalid handle state\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2771
 #, fuzzy
@@ -4593,14 +4574,12 @@ msgid "Product uninstalled\n"
 msgstr ""
 
 #: winerror.mc:2796
-#, fuzzy
 msgid "Invalid query syntax\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2801
-#, fuzzy
 msgid "Invalid field\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2806
 msgid "Device removed\n"
@@ -4648,9 +4627,8 @@ msgid "Function failed\n"
 msgstr "แฟ้ม"
 
 #: winerror.mc:2861
-#, fuzzy
 msgid "Invalid table\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2866
 msgid "Data type mismatch\n"
@@ -4683,9 +4661,8 @@ msgid "Failed to open the patch package\n"
 msgstr ""
 
 #: winerror.mc:2901
-#, fuzzy
 msgid "Invalid patch package\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2906
 msgid "Unsupported patch package\n"
@@ -4696,9 +4673,8 @@ msgid "Another version is installed\n"
 msgstr ""
 
 #: winerror.mc:2916
-#, fuzzy
 msgid "Invalid command line\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed\n"
@@ -4921,9 +4897,8 @@ msgid "Incomplete name\n"
 msgstr ""
 
 #: winerror.mc:3196
-#, fuzzy
 msgid "Invalid version option\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:3201
 msgid "No more members\n"
@@ -5103,9 +5078,8 @@ msgid "Invalid priority\n"
 msgstr ""
 
 #: winerror.mc:3416
-#, fuzzy
 msgid "Invalid printer name\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:3421
 msgid "Printer already exists\n"
@@ -5116,9 +5090,8 @@ msgid "Invalid printer command\n"
 msgstr ""
 
 #: winerror.mc:3431
-#, fuzzy
 msgid "Invalid data type\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:3436
 msgid "Invalid environment\n"
@@ -5266,9 +5239,8 @@ msgid "Printer deleted\n"
 msgstr "ลบ\tDel"
 
 #: winerror.mc:3616
-#, fuzzy
 msgid "Invalid printer state\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:3621
 msgid "User must change password\n"
@@ -5292,9 +5264,8 @@ msgid "Invalid driver\n"
 msgstr ""
 
 #: winerror.mc:3646
-#, fuzzy
 msgid "Invalid object resolver set\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:3651
 msgid "Incomplete RPC send\n"
@@ -5596,9 +5567,8 @@ msgid "grouping"
 msgstr ""
 
 #: oleacc.rc:48
-#, fuzzy
 msgid "separator"
-msgstr "Separator"
+msgstr ""
 
 #: oleacc.rc:49
 msgid "tool bar"
@@ -6311,9 +6281,8 @@ msgid "E&xit"
 msgstr "ออก"
 
 #: shell32.rc:127
-#, fuzzy
 msgid "&About Control Panel"
-msgstr "&About Notepad"
+msgstr ""
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:112
 msgid "Size"
@@ -6689,24 +6658,18 @@ msgid "Confirm deletion"
 msgstr "กําลังจะลบ; "
 
 #: shell32.rc:258
-#, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"File does already exist.\n"
-"Do you want to replace it?"
 
 #: shell32.rc:259
-#, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"File does already exist.\n"
-"Do you want to replace it?"
 
 #: shell32.rc:260
 #, fuzzy
@@ -6783,9 +6746,8 @@ msgid "&Close\tAlt-F4"
 msgstr ""
 
 #: user32.rc:35
-#, fuzzy
 msgid "&About Wine"
-msgstr "&About Notepad"
+msgstr ""
 
 #: user32.rc:46
 #, fuzzy
@@ -8425,7 +8387,7 @@ msgstr "ค้นหาต่อไป\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
-msgstr "&Replace...\tCtrl+H"
+msgstr ""
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
 #, fuzzy
@@ -8434,7 +8396,7 @@ msgstr "เนื้อหา"
 
 #: notepad.rc:59
 msgid "&About Notepad"
-msgstr "&About Notepad"
+msgstr ""
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -8622,9 +8584,8 @@ msgid "&Refresh\tF5"
 msgstr ""
 
 #: oleview.rc:71
-#, fuzzy
 msgid "&About OleView"
-msgstr "&About Notepad"
+msgstr ""
 
 #: oleview.rc:79
 #, fuzzy
@@ -8879,9 +8840,8 @@ msgid "&Arrange Icons"
 msgstr ""
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "&About Notepad"
+msgstr ""
 
 #: progman.rc:60
 msgid "Program Manager"
@@ -9471,9 +9431,8 @@ msgid "&Bring To Front"
 msgstr ""
 
 #: taskmgr.rc:90
-#, fuzzy
 msgid "&About Task Manager"
-msgstr "&About Notepad"
+msgstr ""
 
 #: taskmgr.rc:120
 msgid "&Switch To"
@@ -9977,9 +9936,8 @@ msgid "Audio"
 msgstr ""
 
 #: winecfg.rc:40
-#, fuzzy
 msgid "About"
-msgstr "&About Notepad"
+msgstr ""
 
 #: winecfg.rc:41
 #, fuzzy
@@ -10462,9 +10420,8 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "เลือกทั้งหมด\tCtrl+A"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File"
-msgstr "&About Notepad"
+msgstr ""
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10558,9 +10515,8 @@ msgid "&Fastest Times"
 msgstr ""
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "&About Notepad"
+msgstr ""
 
 #: winemine.rc:27
 msgid "WineMine"
@@ -10618,9 +10574,8 @@ msgid "Always on &top"
 msgstr "ยูบนสุดเสมอ"
 
 #: winhlp32.rc:56
-#, fuzzy
 msgid "&About Wine Help"
-msgstr "&About Notepad"
+msgstr ""
 
 #: winhlp32.rc:64
 msgid "Annotation..."
@@ -10775,9 +10730,8 @@ msgid "&Pale yellow\tCtrl+2"
 msgstr "เลือกทั้งหมด\tCtrl+A"
 
 #: wordpad.rc:93
-#, fuzzy
 msgid "&About Wine Wordpad"
-msgstr "&About Notepad"
+msgstr ""
 
 #: wordpad.rc:130
 msgid "Automatic"
