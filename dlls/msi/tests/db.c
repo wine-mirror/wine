@@ -297,7 +297,7 @@ make_add_entry(binary,
 
 static void test_msiinsert(void)
 {
-    MSIHANDLE hdb = 0, hview = 0, hrec = 0;
+    MSIHANDLE hdb = 0, hview = 0, hview2 = 0, hrec = 0;
     UINT r;
     const char *query;
     char buf[80];
@@ -322,6 +322,14 @@ static void test_msiinsert(void)
     r = MsiCloseHandle(hview);
     ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
 
+    query = "SELECT * FROM phone WHERE number = '8675309'";
+    r = MsiDatabaseOpenView(hdb, query, &hview2);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+    r = MsiViewExecute(hview2, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+    r = MsiViewFetch(hview2, &hrec);
+    ok(r == ERROR_NO_MORE_ITEMS, "MsiViewFetch produced items\n");
+
     /* insert a value into it */
     query = "INSERT INTO `phone` ( `id`, `name`, `number` )"
         "VALUES('1', 'Abe', '8675309')";
@@ -332,6 +340,20 @@ static void test_msiinsert(void)
     r = MsiViewClose(hview);
     ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
     r = MsiCloseHandle(hview);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    r = MsiViewFetch(hview2, &hrec);
+    ok(r == ERROR_NO_MORE_ITEMS, "MsiViewFetch produced items\n");
+    r = MsiViewExecute(hview2, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+    r = MsiViewFetch(hview2, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed: %u\n", r);
+
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+    r = MsiViewClose(hview2);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(hview2);
     ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
 
     query = "SELECT * FROM `phone` WHERE `id` = 1";

@@ -73,26 +73,9 @@ typedef struct tagMSIWHEREVIEW
     struct expr   *cond;
     UINT           rec_index;
     MSIORDERINFO  *order_info;
-    UINT           error;
 } MSIWHEREVIEW;
 
 #define INITIAL_REORDER_SIZE 16
-
-static UINT init_reorder(MSIWHEREVIEW *wv)
-{
-    MSIROWENTRY **new = msi_alloc_zero(sizeof(MSIROWENTRY *) * INITIAL_REORDER_SIZE);
-    if (!new)
-        return ERROR_OUTOFMEMORY;
-
-    if (wv->reorder)
-        msi_free(wv->reorder);
-
-    wv->reorder = new;
-    wv->reorder_size = INITIAL_REORDER_SIZE;
-    wv->row_count = 0;
-
-    return ERROR_SUCCESS;
-}
 
 static void free_reorder(MSIWHEREVIEW *wv)
 {
@@ -108,6 +91,20 @@ static void free_reorder(MSIWHEREVIEW *wv)
     wv->reorder = NULL;
     wv->reorder_size = 0;
     wv->row_count = 0;
+}
+
+static UINT init_reorder(MSIWHEREVIEW *wv)
+{
+    MSIROWENTRY **new = msi_alloc_zero(sizeof(MSIROWENTRY *) * INITIAL_REORDER_SIZE);
+    if (!new)
+        return ERROR_OUTOFMEMORY;
+
+    free_reorder(wv);
+
+    wv->reorder = new;
+    wv->reorder_size = INITIAL_REORDER_SIZE;
+
+    return ERROR_SUCCESS;
 }
 
 static inline UINT find_row(MSIWHEREVIEW *wv, UINT row, UINT *(values[]))
@@ -618,9 +615,6 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
     if( !table )
          return ERROR_FUNCTION_FAILED;
 
-    if (wv->reorder)
-        return wv->error;
-
     r = init_reorder(wv);
     if (r != ERROR_SUCCESS)
         return r;
@@ -654,7 +648,6 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
         r = wv->order_info->error;
 
     msi_free( rows );
-    wv->error = r;
     return r;
 }
 
