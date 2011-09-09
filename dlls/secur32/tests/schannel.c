@@ -746,12 +746,15 @@ static void test_communication(void)
     buffers[0].pBuffers[1].BufferType = SECBUFFER_EMPTY;
     status = pDecryptMessage(&context, &buffers[0], 0, NULL);
     ok(status == SEC_E_OK, "DecryptMessage failed: %08x\n", status);
-    ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_STREAM_HEADER, "Expected first buffer to be SECBUFFER_STREAM_HEADER\n");
-    ok(buffers[0].pBuffers[1].BufferType == SECBUFFER_DATA, "Expected second buffer to be SECBUFFER_DATA\n");
-    ok(buffers[0].pBuffers[2].BufferType == SECBUFFER_STREAM_TRAILER, "Expected third buffer to be SECBUFFER_STREAM_TRAILER\n");
+    if (status == SEC_E_OK)
+    {
+        ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_STREAM_HEADER, "Expected first buffer to be SECBUFFER_STREAM_HEADER\n");
+        ok(buffers[0].pBuffers[1].BufferType == SECBUFFER_DATA, "Expected second buffer to be SECBUFFER_DATA\n");
+        ok(buffers[0].pBuffers[2].BufferType == SECBUFFER_STREAM_TRAILER, "Expected third buffer to be SECBUFFER_STREAM_TRAILER\n");
 
-    data = buffers[0].pBuffers[1].pvBuffer;
-    data[buffers[0].pBuffers[1].cbBuffer] = 0;
+        data = buffers[0].pBuffers[1].pvBuffer;
+        data[buffers[0].pBuffers[1].cbBuffer] = 0;
+    }
 
     pDeleteSecurityContext(&context);
     pFreeCredentialsHandle(&cred_handle);
