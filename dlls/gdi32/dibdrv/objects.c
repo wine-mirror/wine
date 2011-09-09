@@ -368,7 +368,7 @@ typedef struct
 static int clip_line(const POINT *start, const POINT *end, const RECT *clip,
                      const bres_params *params, POINT *pt1, POINT *pt2)
 {
-    unsigned int n, m;
+    int m, n;
     BOOL clipped = FALSE;
     DWORD start_oc, end_oc;
     const int bias = params->bias;
