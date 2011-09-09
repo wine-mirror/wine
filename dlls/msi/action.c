@@ -1048,10 +1048,9 @@ static UINT iterate_load_featurecomponents(MSIRECORD *row, LPVOID param)
     comp = msi_get_loaded_component( ilfs->package, component );
     if (!comp)
     {
-        ERR("unknown component %s\n", debugstr_w(component));
-        return ERROR_FUNCTION_FAILED;
+        WARN("ignoring unknown component %s\n", debugstr_w(component));
+        return ERROR_SUCCESS;
     }
-
     add_feature_component( ilfs->feature, comp );
     comp->Enabled = TRUE;
 
