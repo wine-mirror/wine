@@ -73,7 +73,7 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 %token <string> tIdentifier tString
 
 %type <statement> Statement StatementNl
-%type <expression> Expression LiteralExpression
+%type <expression> Expression LiteralExpression PrimaryExpression
 %type <member> MemberExpression
 %type <expression> Arguments_opt ArgumentList_opt ArgumentList
 %type <bool> OptionExplicit_opt
@@ -120,11 +120,15 @@ EmptyBrackets_opt
 
 Expression
     : LiteralExpression /* FIXME */ { $$ = $1; }
+    | PrimaryExpression /* FIXME */ { $$ = $1; }
 
 LiteralExpression
     : tTRUE                         { $$ = new_bool_expression(ctx, VARIANT_TRUE); CHECK_ERROR; }
     | tFALSE                        { $$ = new_bool_expression(ctx, VARIANT_FALSE); CHECK_ERROR; }
     | tString                       { $$ = new_string_expression(ctx, $1); CHECK_ERROR; }
+
+PrimaryExpression
+    : '(' Expression ')'            { $$ = $2; }
 
 %%
 
