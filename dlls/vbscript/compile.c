@@ -176,11 +176,28 @@ static HRESULT compile_unary_expression(compile_ctx_t *ctx, unary_expression_t *
     return push_instr(ctx, op) == -1 ? E_OUTOFMEMORY : S_OK;
 }
 
+static HRESULT compile_binary_expression(compile_ctx_t *ctx, binary_expression_t *expr, vbsop_t op)
+{
+    HRESULT hres;
+
+    hres = compile_expression(ctx, expr->left);
+    if(FAILED(hres))
+        return hres;
+
+    hres = compile_expression(ctx, expr->right);
+    if(FAILED(hres))
+        return hres;
+
+    return push_instr(ctx, op) == -1 ? E_OUTOFMEMORY : S_OK;
+}
+
 static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
 {
     switch(expr->type) {
     case EXPR_BOOL:
         return push_instr_int(ctx, OP_bool, ((bool_expression_t*)expr)->value);
+    case EXPR_EQUAL:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_equal);
     case EXPR_NOT:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_not);
     case EXPR_STRING:
