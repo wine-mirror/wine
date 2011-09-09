@@ -7731,7 +7731,7 @@ msgstr ""
 "Nurodo failą ar failus attrib apdorojimui.\n"
 "/S  Apdoroja atitinkančius failus dabartiniame\n"
 "aplanke ir poaplankiuose.\n"
-"/D  Taip pat apdoroja aplankus."
+"/D  Taip pat apdoroja aplankus.\n"
 
 #: clock.rc:29
 msgid "Ana&log"
