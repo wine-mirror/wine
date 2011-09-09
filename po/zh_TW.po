@@ -56,11 +56,11 @@ msgstr "版本"
 
 #: appwiz.rc:38
 msgid "Installation programs"
-msgstr "Installation Programs"
+msgstr ""
 
 #: appwiz.rc:39
 msgid "Programs (*.exe)"
-msgstr "Programs (*.exe)"
+msgstr ""
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:195 notepad.rc:75
 #: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
@@ -68,14 +68,12 @@ msgid "All files (*.*)"
 msgstr "所有檔案 (*.*)"
 
 #: appwiz.rc:42
-#, fuzzy
 msgid "&Remove"
-msgstr "&Remove..."
+msgstr ""
 
 #: appwiz.rc:43
-#, fuzzy
 msgid "&Modify/Remove"
-msgstr "&Modify/Remove..."
+msgstr ""
 
 #: appwiz.rc:48
 msgid "Downloading..."
@@ -2220,9 +2218,8 @@ msgid "&Help"
 msgstr "幫助(&H)"
 
 #: ieframe.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "Wine Internet Explorer"
+msgstr ""
 
 #: ieframe.rc:67
 #, fuzzy
@@ -3462,9 +3459,8 @@ msgid "No recovery program for service\n"
 msgstr ""
 
 #: winerror.mc:1291
-#, fuzzy
 msgid "Service not implemented by exe\n"
-msgstr "Printing not implemented"
+msgstr ""
 
 #: winerror.mc:1296
 msgid "End of media\n"
@@ -4665,19 +4661,16 @@ msgid "Installer service failed.\n"
 msgstr "剩餘空間"
 
 #: winerror.mc:2731
-#, fuzzy
 msgid "Installation aborted by user\n"
-msgstr "Installation Programs"
+msgstr ""
 
 #: winerror.mc:2736
-#, fuzzy
 msgid "Installation failure\n"
-msgstr "Installation Programs"
+msgstr ""
 
 #: winerror.mc:2741
-#, fuzzy
 msgid "Installation suspended\n"
-msgstr "Installation Programs"
+msgstr ""
 
 #: winerror.mc:2746
 #, fuzzy
@@ -4741,18 +4734,16 @@ msgid "Device removed\n"
 msgstr ""
 
 #: winerror.mc:2811
-#, fuzzy
 msgid "Installation already running\n"
-msgstr "Installation Programs"
+msgstr ""
 
 #: winerror.mc:2816
 msgid "Installation package failed to open\n"
 msgstr ""
 
 #: winerror.mc:2821
-#, fuzzy
 msgid "Installation package is invalid\n"
-msgstr "Installation Programs"
+msgstr ""
 
 #: winerror.mc:2826
 msgid "Installer user interface failed\n"
@@ -4772,9 +4763,8 @@ msgid "Installation transform failed to apply\n"
 msgstr ""
 
 #: winerror.mc:2846
-#, fuzzy
 msgid "Installation package rejected\n"
-msgstr "Installation Programs"
+msgstr ""
 
 #: winerror.mc:2851
 msgid "Function could not be called\n"
@@ -5335,9 +5325,8 @@ msgid "RPC call cancelled\n"
 msgstr ""
 
 #: winerror.mc:3506
-#, fuzzy
 msgid "Binding incomplete\n"
-msgstr "Printing not implemented"
+msgstr ""
 
 #: winerror.mc:3511
 msgid "RPC comm failure\n"
@@ -5606,7 +5595,6 @@ msgid "insert disk %s"
 msgstr "插入軟碟 %s"
 
 #: msi.rc:30
-#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -5638,35 +5626,6 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
-"Windows Installer %s\n"
-"\n"
-"Usage:\n"
-"msiexec command {required parameter} [optional parammeter]\n"
-"\n"
-"Install a product:\n"
-"\t/i {package|productcode} [property]\n"
-"\t/package {package|productcode} [property]\n"
-"\t/a package [property]\n"
-"Repair an installation:\n"
-"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
-"Uninstall a product:\n"
-"\t/uninstall {package|productcode} [property]\n"
-"\t/x {package|productcode} [property]\n"
-"Advertise a product:\n"
-"\t/j[u|m] package [/t transform] [/g languageid]\n"
-"Apply a patch:\n"
-"\t/p patchpackage [property]\n"
-"\t/p patchpackage /a package [property]\n"
-"Log and UI Modifiers for above commands:\n"
-"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
-"\t/q{|n|b|r|f|n+|b+|b-}\n"
-"Register MSI Service:\n"
-"\t/y\n"
-"Unregister MSI Service:\n"
-"\t/z\n"
-"Display this help:\n"
-"\t/help\n"
-"\t/?\n"
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
@@ -5771,9 +5730,8 @@ msgid "application"
 msgstr "運用程式"
 
 #: oleacc.rc:42
-#, fuzzy
 msgid "document"
-msgstr "Document"
+msgstr ""
 
 #: oleacc.rc:43
 msgid "pane"
@@ -6740,9 +6698,8 @@ msgid "Program Files\\Common Files"
 msgstr ""
 
 #: shell32.rc:221 shell32.rc:147 shell32.rc:243
-#, fuzzy
 msgid "Documents"
-msgstr "Document"
+msgstr ""
 
 #: shell32.rc:222
 msgid "Start Menu\\Programs\\Administrative Tools"
@@ -6767,9 +6724,8 @@ msgid "Local Settings\\Application Data\\Microsoft\\CD Burning"
 msgstr ""
 
 #: shell32.rc:217
-#, fuzzy
 msgid "Program Files (x86)"
-msgstr "Programs (*.exe)"
+msgstr ""
 
 #: shell32.rc:220
 msgid "Program Files (x86)\\Common Files"
@@ -6863,31 +6819,31 @@ msgstr ""
 
 #: shell32.rc:166
 msgid "Unable to create new Folder: Permission denied."
-msgstr "Unable to create new Folder: Permission denied."
+msgstr ""
 
 #: shell32.rc:167
 msgid "Error during creation of a new folder"
-msgstr "Error during creation of a new folder"
+msgstr ""
 
 #: shell32.rc:168
 msgid "Confirm file deletion"
-msgstr "Confirm file deletion"
+msgstr ""
 
 #: shell32.rc:169
 msgid "Confirm folder deletion"
-msgstr "Confirm folder deletion"
+msgstr ""
 
 #: shell32.rc:170
 msgid "Are you sure you want to delete '%1'?"
-msgstr "Are you sure you want to delete '%1'?"
+msgstr ""
 
 #: shell32.rc:171
 msgid "Are you sure you want to delete these %1 items?"
-msgstr "Are you sure you want to delete these %1 items?"
+msgstr ""
 
 #: shell32.rc:178
 msgid "Confirm file overwrite"
-msgstr "Confirm file overwrite"
+msgstr ""
 
 #: shell32.rc:177
 msgid ""
@@ -6895,32 +6851,27 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"This folder already contains a file called '%1'.\n"
-"\n"
-"Do you want to replace it?"
 
 #: shell32.rc:172
 msgid "Are you sure you want to delete the selected item(s)?"
-msgstr "Are you sure you want to delete the selected item(s)?"
+msgstr ""
 
 #: shell32.rc:174
 msgid ""
 "Are you sure that you want to send '%1' and all its content to the Trash?"
 msgstr ""
-"Are you sure that you want to send '%1' and all its content to the Trash?"
 
 #: shell32.rc:173
 msgid "Are you sure that you want to send '%1' to the Trash?"
-msgstr "Are you sure that you want to send '%1' to the Trash?"
+msgstr ""
 
 #: shell32.rc:175
 msgid "Are you sure that you want to send these %1 items to the Trash?"
-msgstr "Are you sure that you want to send these %1 items to the Trash?"
+msgstr ""
 
 #: shell32.rc:176
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 msgstr ""
-"The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 
 #: shell32.rc:179
 msgid ""
@@ -6930,15 +6881,10 @@ msgid ""
 "selected folder they will be replaced. Do you still want to move or copy\n"
 "the folder?"
 msgstr ""
-"This folder already contains a folder named '%1'.\n"
-"\n"
-"If the files in the destination folder have the same names as files in the\n"
-"selected folder they will be replaced. Do you still want to move or copy\n"
-"the folder?"
 
 #: shell32.rc:247
 msgid "New Folder"
-msgstr "New Folder"
+msgstr ""
 
 #: shell32.rc:249
 msgid "Wine Control Panel"
@@ -6962,19 +6908,16 @@ msgid "There is no Windows program configured to open this type of file."
 msgstr ""
 
 #: shell32.rc:255
-#, fuzzy
 msgid "Are you sure you wish to permanently delete '%1'?"
-msgstr "Are you sure you want to delete '%1'?"
+msgstr ""
 
 #: shell32.rc:256
-#, fuzzy
 msgid "Are you sure you wish to permanently delete these %1 items?"
-msgstr "Are you sure you want to delete these %1 items?"
+msgstr ""
 
 #: shell32.rc:257
-#, fuzzy
 msgid "Confirm deletion"
-msgstr "Confirm file deletion"
+msgstr ""
 
 #: shell32.rc:258
 #, fuzzy
@@ -6997,9 +6940,8 @@ msgstr ""
 "要替換嗎?"
 
 #: shell32.rc:260
-#, fuzzy
 msgid "Confirm overwrite"
-msgstr "Confirm file overwrite"
+msgstr ""
 
 #: shell32.rc:277
 msgid ""
@@ -7824,9 +7766,8 @@ msgid "Timeout"
 msgstr ""
 
 #: wldap32.rc:113
-#, fuzzy
 msgid "Auth Unknown"
-msgstr "Context Unknown"
+msgstr ""
 
 #: wldap32.rc:114
 msgid "Filter Error"
@@ -8900,9 +8841,8 @@ msgid "&Local server"
 msgstr "本地端口"
 
 #: oleview.rc:44
-#, fuzzy
 msgid "&Remote server"
-msgstr "&Remove..."
+msgstr ""
 
 #: oleview.rc:47
 msgid "View &Type information"
@@ -9623,7 +9563,7 @@ msgstr "添加一個新的多字符串值"
 
 #: regedit.rc:171
 msgid "Exports selected branch of the registry to a text file"
-msgstr "Exports selected branch of the registry to a text file"
+msgstr ""
 
 #: start.rc:46
 msgid ""
@@ -10051,7 +9991,7 @@ msgstr "將進程設為低優先級"
 
 #: taskmgr.rc:247
 msgid "Controls Debug Channels"
-msgstr "Controls Debug Channels"
+msgstr ""
 
 #: taskmgr.rc:263
 #, fuzzy
@@ -10247,9 +10187,8 @@ msgid "Task"
 msgstr "結束任務(&E)"
 
 #: taskmgr.rc:327
-#, fuzzy
 msgid "Debug Channels"
-msgstr "Controls Debug Channels"
+msgstr ""
 
 #: taskmgr.rc:328
 msgid "Fixme"
@@ -11248,11 +11187,11 @@ msgstr "單頁"
 
 #: wordpad.rc:167
 msgid "Zoom in"
-msgstr "Zoom in"
+msgstr ""
 
 #: wordpad.rc:168
 msgid "Zoom out"
-msgstr "Zoom out"
+msgstr ""
 
 #: wordpad.rc:170
 #, fuzzy
@@ -11286,7 +11225,7 @@ msgstr ""
 
 #: wordpad.rc:180
 msgid "Document"
-msgstr "Document"
+msgstr ""
 
 #: wordpad.rc:181
 msgid "Save changes to '%s'?"
@@ -11332,7 +11271,7 @@ msgstr "你沒有開啟檔案的權力."
 
 #: wordpad.rc:193
 msgid "Printing not implemented"
-msgstr "Printing not implemented"
+msgstr ""
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
