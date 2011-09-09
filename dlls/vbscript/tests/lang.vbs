@@ -17,5 +17,6 @@
 '
 
 call ok(true, "true is not true?")
+ok true, "true is not true?"
 
 reportSuccess()

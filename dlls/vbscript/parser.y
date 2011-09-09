@@ -56,7 +56,7 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
     member_expression_t *member;
 }
 
-%token tEOF tNL tREM
+%token tEOF tNL tREM tEMPTYBRACKETS
 %token tTRUE tFALSE
 %token tNOT tAND tOR tXOR tEQV tIMP tNEQ
 %token tIS tLTEQ tGTEQ tMOD
@@ -89,7 +89,7 @@ StatementNl
     : Statement tNL                 { $$ = $1; }
 
 Statement
-    : MemberExpression Arguments_opt        { $1->args = $2; $$ = new_call_statement(ctx, $1); CHECK_ERROR; }
+    : MemberExpression ArgumentList_opt     { $1->args = $2; $$ = new_call_statement(ctx, $1); CHECK_ERROR; }
     | tCALL MemberExpression Arguments_opt  { $2->args = $3; $$ = new_call_statement(ctx, $2); CHECK_ERROR; }
 
 MemberExpression
@@ -97,16 +97,20 @@ MemberExpression
     /* FIXME: MemberExpressionArgs '.' tIdentifier */
 
 Arguments_opt
-    : /* empty */                   { $$ = NULL; }
-    | '(' ArgumentList_opt ')'      { $$ = $2; }
+    : EmptyBrackets_opt             { $$ = NULL; }
+    | '(' ArgumentList ')'          { $$ = $2; }
 
 ArgumentList_opt
-    : /* empty */                   { $$ = NULL; }
+    : EmptyBrackets_opt             { $$ = NULL; }
     | ArgumentList                  { $$ = $1; }
 
 ArgumentList
     : Expression                    { $$ = $1; }
     | Expression ',' ArgumentList   { $1->next = $3; $$ = $1; }
+
+EmptyBrackets_opt
+    : /* empty */
+    | tEMPTYBRACKETS
 
 Expression
     : LiteralExpression /* FIXME */ { $$ = $1; }

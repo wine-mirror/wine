@@ -240,12 +240,17 @@ static int parse_string_literal(parser_ctx_t *ctx, const WCHAR **ret)
     return tString;
 }
 
+static void skip_spaces(parser_ctx_t *ctx)
+{
+    while(*ctx->ptr == ' ' || *ctx->ptr == '\t' || *ctx->ptr == '\r')
+        ctx->ptr++;
+}
+
 static int parse_next_token(void *lval, parser_ctx_t *ctx)
 {
     WCHAR c;
 
-    while(*ctx->ptr == ' ' || *ctx->ptr == '\t' || *ctx->ptr == '\r')
-        ctx->ptr++;
+    skip_spaces(ctx);
     if(ctx->ptr == ctx->end)
         return ctx->last_token == tNL ? tEOF : tNL;
 
@@ -269,7 +274,6 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
         else
             ctx->ptr = ctx->end;
         return tNL;
-    case '(':
     case ')':
     case ',':
     case '=':
@@ -281,6 +285,18 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
     case '\\':
     case '.':
         return *ctx->ptr++;
+    case '(':
+        /* NOTE:
+         * We resolve empty brackets in lexer instead of parser to avoid complex conflicts
+         * in call statement special case |f()| without 'call' keyword
+         */
+        ctx->ptr++;
+        skip_spaces(ctx);
+        if(*ctx->ptr == ')') {
+            ctx->ptr++;
+            return tEMPTYBRACKETS;
+        }
+        return '(';
     case '"':
         return parse_string_literal(ctx, lval);
     default:
