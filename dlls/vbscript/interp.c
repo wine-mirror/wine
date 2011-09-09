@@ -29,6 +29,7 @@ typedef struct {
     vbscode_t *code;
     instr_t *instr;
     script_ctx_t *script;
+    function_t *func;
 
     unsigned stack_size;
     unsigned top;
@@ -70,7 +71,8 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, ref_t *ref)
         }
     }
 
-    FIXME("create if no option explicit\n");
+    if(!ctx->func->code_ctx->option_explicit)
+        FIXME("create an attempt to set\n");
 
     ref->type = REF_NONE;
     return S_OK;
@@ -223,6 +225,7 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func)
     exec.code = func->code_ctx;
     exec.instr = exec.code->instrs + func->code_off;
     exec.script = ctx;
+    exec.func = func;
 
     while(exec.instr) {
         op = exec.instr->op;

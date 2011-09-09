@@ -31,7 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
 static int parser_error(const char*);
 
-static void parse_complete(parser_ctx_t*);
+ static void parse_complete(parser_ctx_t*,BOOL);
 
 static void source_add_statement(parser_ctx_t*,statement_t*);
 
@@ -54,6 +54,7 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
     statement_t *statement;
     expression_t *expression;
     member_expression_t *member;
+    BOOL bool;
 }
 
 %token tEOF tNL tREM tEMPTYBRACKETS
@@ -75,11 +76,16 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 %type <expression> Expression LiteralExpression
 %type <member> MemberExpression
 %type <expression> Arguments_opt ArgumentList_opt ArgumentList
+%type <bool> OptionExplicit_opt
 
 %%
 
 Program
-    : SourceElements tEOF           { parse_complete(ctx); }
+    : OptionExplicit_opt SourceElements tEOF    { parse_complete(ctx, $1); }
+
+OptionExplicit_opt
+    : /* empty */                { $$ = FALSE; }
+    | tOPTION tEXPLICIT tNL      { $$ = TRUE; }
 
 SourceElements
     : /* empty */
@@ -137,9 +143,10 @@ static void source_add_statement(parser_ctx_t *ctx, statement_t *stat)
     }
 }
 
-static void parse_complete(parser_ctx_t *ctx)
+static void parse_complete(parser_ctx_t *ctx, BOOL option_explicit)
 {
     ctx->parse_complete = TRUE;
+    ctx->option_explicit = option_explicit;
 }
 
 static void *new_expression(parser_ctx_t *ctx, expression_type_t type, unsigned size)
@@ -240,6 +247,7 @@ HRESULT parse_script(parser_ctx_t *ctx, const WCHAR *code)
     ctx->last_token = tNL;
     ctx->last_nl = 0;
     ctx->stats = ctx->stats_tail = NULL;
+    ctx->option_explicit = FALSE;
 
     parser_parse(ctx);
 

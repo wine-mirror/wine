@@ -16,6 +16,8 @@
 ' Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 '
 
+Option Explicit
+
 call ok(true, "true is not true?")
 ok true, "true is not true?"
 

@@ -256,6 +256,8 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source)
     ctx->instr_cnt = 0;
     ctx->instr_size = 32;
 
+    ret->option_explicit = ctx->parser.option_explicit;
+
     ret->bstr_pool = NULL;
     ret->bstr_pool_size = 0;
     ret->bstr_cnt = 0;

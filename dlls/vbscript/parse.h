@@ -63,6 +63,7 @@ typedef struct {
     const WCHAR *ptr;
     const WCHAR *end;
 
+    BOOL option_explicit;
     BOOL parse_complete;
     HRESULT hres;
 

@@ -109,6 +109,8 @@ struct _vbscode_t {
     instr_t *instrs;
     WCHAR *source;
 
+    BOOL option_explicit;
+
     BOOL global_executed;
     function_t global_code;
 
