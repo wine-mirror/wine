@@ -638,7 +638,7 @@ static HRESULT propagate_face_vertices(CONST DWORD *adjacency, DWORD *point_reps
     {
         DWORD adj_face = adjacency[face_base + edge];
         DWORD adj_face_base;
-        DWORD i,j;
+        DWORD i;
         if (adj_face == -1) /* No adjacent face. */
             continue;
         else if (adj_face >= numfaces)
@@ -659,9 +659,9 @@ static HRESULT propagate_face_vertices(CONST DWORD *adjacency, DWORD *point_reps
         }
 
         /* Replaces vertices in opposite edge with vertices from current edge. */
-        for (i = 0, j = 1; i < 2 && (j+1) > 0; i++, j--)
+        for (i = 0; i < 2; i++)
         {
-            DWORD from = face_base + (edge + j) % VERTS_PER_FACE;
+            DWORD from = face_base + (edge + (1 - i)) % VERTS_PER_FACE;
             DWORD to = adj_face_base + (opp_edge + i) % VERTS_PER_FACE;
 
             /* Propagate lowest index. */
@@ -759,9 +759,11 @@ static HRESULT WINAPI ID3DXMeshImpl_ConvertAdjacencyToPointReps(ID3DXMesh *iface
         if (FAILED(hr)) goto cleanup;
     }
     /* Go in opposite direction to catch all face orderings */
-    for (face = This->numfaces - 1; face + 1 > 0; face--)
+    for (face = 0; face < This->numfaces; face++)
     {
-        hr = propagate_face_vertices(adjacency, point_reps, indices, new_indices, face, This->numfaces);
+        hr = propagate_face_vertices(adjacency, point_reps,
+                                     indices, new_indices,
+                                     (This->numfaces - 1) - face, This->numfaces);
         if (FAILED(hr)) goto cleanup;
     }
 
