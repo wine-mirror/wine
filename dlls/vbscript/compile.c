@@ -204,6 +204,8 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
         return compile_member_expression(ctx, (member_expression_t*)expr, TRUE);
     case EXPR_NOT:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_not);
+    case EXPR_NULL:
+        return push_instr(ctx, OP_null) != -1 ? S_OK : E_OUTOFMEMORY;
     case EXPR_STRING:
         return push_instr_str(ctx, OP_string, ((string_expression_t*)expr)->value);
     default:

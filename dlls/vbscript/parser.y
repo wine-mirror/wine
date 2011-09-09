@@ -147,6 +147,7 @@ LiteralExpression
     | tFALSE                        { $$ = new_bool_expression(ctx, VARIANT_FALSE); CHECK_ERROR; }
     | tString                       { $$ = new_string_expression(ctx, $1); CHECK_ERROR; }
     | tEMPTY                        { $$ = new_expression(ctx, EXPR_EMPTY, 0); CHECK_ERROR; }
+    | tNULL                         { $$ = new_expression(ctx, EXPR_NULL, 0); CHECK_ERROR; }
 
 PrimaryExpression
     : '(' Expression ')'            { $$ = $2; }

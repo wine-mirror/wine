@@ -37,5 +37,6 @@ Call ok(getVT(true) = "VT_BOOL", "getVT(true) is not VT_BOOL")
 Call ok(getVT("") = "VT_BSTR", "getVT("""") is not VT_BSTR")
 Call ok(getVT("test") = "VT_BSTR", "getVT(""test"") is not VT_BSTR")
 Call ok(getVT(Empty) = "VT_EMPTY", "getVT(Empty) is not VT_EMPTY")
+Call ok(getVT(null) = "VT_NULL", "getVT(null) is not VT_NULL")
 
 reportSuccess()

@@ -22,6 +22,7 @@ typedef enum {
     EXPR_EQUAL,
     EXPR_MEMBER,
     EXPR_NOT,
+    EXPR_NULL,
     EXPR_STRING
 } expression_type_t;
 
