@@ -133,7 +133,7 @@ static void test_GetUrlCacheEntryInfoExA(void)
     ret = GetUrlCacheEntryInfoEx(TEST_URL, lpCacheEntryInfo, &cbCacheEntryInfo, NULL, NULL, NULL, 0);
     ok(ret, "GetUrlCacheEntryInfoEx failed with error %d\n", GetLastError());
 
-    check_cache_entry_infoA("GetUrlCacheEntryInfoEx", lpCacheEntryInfo);
+    if (ret) check_cache_entry_infoA("GetUrlCacheEntryInfoEx", lpCacheEntryInfo);
 
     cbCacheEntryInfo = 100000;
     SetLastError(0xdeadbeef);
@@ -428,7 +428,7 @@ static void test_urlcacheA(void)
     ret = RetrieveUrlCacheEntryFile(TEST_URL, lpCacheEntryInfo, &cbCacheEntryInfo, 0);
     ok(ret, "RetrieveUrlCacheEntryFile failed with error %d\n", GetLastError());
 
-    check_cache_entry_infoA("RetrieveUrlCacheEntryFile", lpCacheEntryInfo);
+    if (ret) check_cache_entry_infoA("RetrieveUrlCacheEntryFile", lpCacheEntryInfo);
 
     HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
 
