@@ -390,6 +390,13 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
     if(FAILED(hr))
         return hr;
 
+    if(*num == 0)
+    {
+        *ids = NULL;
+        *keys = NULL;
+        return S_OK;
+    }
+
     *ids = HeapAlloc(GetProcessHeap(), 0, (*num + 1) * sizeof(WCHAR *));
     *keys = HeapAlloc(GetProcessHeap(), 0, (*num + 1) * sizeof(char *));
     if(!*ids || !*keys){
