@@ -5149,11 +5149,11 @@ static UINT ACTION_ResolveSource(MSIPACKAGE* package)
         msg = msi_build_error_string(package, 1302, 1, prompt);
         while(attrib == INVALID_FILE_ATTRIBUTES)
         {
-            rc = MessageBoxW(NULL,msg,NULL,MB_OKCANCEL);
+            rc = MessageBoxW(NULL, msg, NULL, MB_OKCANCEL);
             if (rc == IDCANCEL)
             {
-                rc = ERROR_INSTALL_USEREXIT;
-                break;
+                msi_free(prompt);
+                return ERROR_INSTALL_USEREXIT;
             }
             attrib = GetFileAttributesW(package->db->path);
         }
