@@ -251,6 +251,16 @@ static HRESULT interp_string(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
+static HRESULT interp_empty(exec_ctx_t *ctx)
+{
+    VARIANT v;
+
+    TRACE("\n");
+
+    V_VT(&v) = VT_EMPTY;
+    return stack_push(ctx, &v);
+}
+
 static HRESULT interp_not(exec_ctx_t *ctx)
 {
     variant_val_t val;

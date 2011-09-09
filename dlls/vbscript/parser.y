@@ -35,6 +35,7 @@ static int parser_error(const char*);
 
 static void source_add_statement(parser_ctx_t*,statement_t*);
 
+static void *new_expression(parser_ctx_t*,expression_type_t,size_t);
 static expression_t *new_bool_expression(parser_ctx_t*,VARIANT_BOOL);
 static expression_t *new_string_expression(parser_ctx_t*,const WCHAR*);
 static expression_t *new_unary_expression(parser_ctx_t*,expression_type_t,expression_t*);
@@ -145,6 +146,7 @@ LiteralExpression
     : tTRUE                         { $$ = new_bool_expression(ctx, VARIANT_TRUE); CHECK_ERROR; }
     | tFALSE                        { $$ = new_bool_expression(ctx, VARIANT_FALSE); CHECK_ERROR; }
     | tString                       { $$ = new_string_expression(ctx, $1); CHECK_ERROR; }
+    | tEMPTY                        { $$ = new_expression(ctx, EXPR_EMPTY, 0); CHECK_ERROR; }
 
 PrimaryExpression
     : '(' Expression ')'            { $$ = $2; }
@@ -172,7 +174,7 @@ static void parse_complete(parser_ctx_t *ctx, BOOL option_explicit)
     ctx->option_explicit = option_explicit;
 }
 
-static void *new_expression(parser_ctx_t *ctx, expression_type_t type, unsigned size)
+static void *new_expression(parser_ctx_t *ctx, expression_type_t type, size_t size)
 {
     expression_t *expr;
 

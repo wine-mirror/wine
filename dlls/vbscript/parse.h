@@ -18,6 +18,7 @@
 
 typedef enum {
     EXPR_BOOL,
+    EXPR_EMPTY,
     EXPR_EQUAL,
     EXPR_MEMBER,
     EXPR_NOT,
