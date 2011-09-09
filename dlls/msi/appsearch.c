@@ -460,7 +460,7 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNAT
     switch (type & 0x0f)
     {
     case msidbLocatorTypeDirectory:
-        rc = ACTION_SearchDirectory(package, sig, ptr, 0, appValue);
+        ACTION_SearchDirectory(package, sig, ptr, 0, appValue);
         break;
     case msidbLocatorTypeFileName:
         *appValue = app_search_file(ptr, sig);
@@ -481,7 +481,6 @@ end:
     msi_free( deformatted );
 
     msiobj_release(&row->hdr);
-
     return ERROR_SUCCESS;
 }
 
@@ -961,7 +960,7 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNATU
     {
         MSISIGNATURE parentSig;
 
-        rc = ACTION_AppSearchSigName(package, parentName, &parentSig, &parent);
+        ACTION_AppSearchSigName(package, parentName, &parentSig, &parent);
         ACTION_FreeSignature(&parentSig);
         if (!parent)
         {

@@ -2467,12 +2467,11 @@ MSISelectionTree_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         tvhti.pt.y = (short)HIWORD( lParam );
         tvhti.flags = 0;
         tvhti.hItem = 0;
-        r = CallWindowProcW(info->oldproc, hWnd, TVM_HITTEST, 0, (LPARAM) &tvhti );
+        CallWindowProcW(info->oldproc, hWnd, TVM_HITTEST, 0, (LPARAM) &tvhti );
         if (tvhti.flags & TVHT_ONITEMSTATEICON)
             return msi_seltree_menu( hWnd, tvhti.hItem );
         break;
     }
-
     r = CallWindowProcW(info->oldproc, hWnd, msg, wParam, lParam);
 
     switch( msg )
