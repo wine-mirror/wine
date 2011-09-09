@@ -117,11 +117,8 @@ static void encodeAndCompareBase64_A(const BYTE *toEncode, DWORD toEncodeLen,
          "Expected %s, got %s\n", expected, ptr);
         ptr += strlen(expected);
         if (trailer)
-        {
             ok(!strncmp(trailer, ptr, strlen(trailer)),
              "Expected trailer %s, got %s\n", trailer, ptr);
-            ptr += strlen(trailer);
-        }
         HeapFree(GetProcessHeap(), 0, str);
     }
 }
