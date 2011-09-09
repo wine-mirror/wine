@@ -316,7 +316,7 @@ static INT wvsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec, __ms_va_list arg
     WPRINTF_FORMAT format;
     LPSTR p = buffer;
     UINT i, len, sign;
-    CHAR number[20];
+    CHAR number[21]; /* 64bit number can be 18446744073709551616 which is 20 chars. and a \0 */
     WPRINTF_DATA argData;
 
     TRACE("%p %u %s\n", buffer, maxlen, debugstr_a(spec));
@@ -421,7 +421,7 @@ static INT wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, __ms_va_list a
     WPRINTF_FORMAT format;
     LPWSTR p = buffer;
     UINT i, len, sign;
-    CHAR number[20];
+    CHAR number[21]; /* 64bit number can be 18446744073709551616 which is 20 chars. and a \0 */
     WPRINTF_DATA argData;
 
     TRACE("%p %u %s\n", buffer, maxlen, debugstr_w(spec));
