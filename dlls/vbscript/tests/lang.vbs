@@ -30,4 +30,9 @@ Call ok(false = false, "false = false is false")
 Call ok(not (true = false), "true = false is true")
 Call ok("x" = "x", """x"" = ""x"" is false")
 
+Call ok(getVT(false) = "VT_BOOL", "getVT(false) is not VT_BOOL")
+Call ok(getVT(true) = "VT_BOOL", "getVT(true) is not VT_BOOL")
+Call ok(getVT("") = "VT_BSTR", "getVT("""") is not VT_BSTR")
+Call ok(getVT("test") = "VT_BSTR", "getVT(""test"") is not VT_BSTR")
+
 reportSuccess()

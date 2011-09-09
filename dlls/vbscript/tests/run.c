@@ -62,6 +62,7 @@ DEFINE_EXPECT(global_success_i);
 #define DISPID_GLOBAL_REPORTSUCCESS 1000
 #define DISPID_GLOBAL_TRACE         1001
 #define DISPID_GLOBAL_OK            1002
+#define DISPID_GLOBAL_GETVT         1003
 
 static const WCHAR testW[] = {'t','e','s','t',0};
 
@@ -87,6 +88,38 @@ static int strcmp_wa(LPCWSTR strw, const char *stra)
     return lstrcmpA(buf, stra);
 }
 
+static const char *vt2a(VARIANT *v)
+{
+    if(V_VT(v) == (VT_BYREF|VT_VARIANT)) {
+        static char buf[64];
+        sprintf(buf, "%s*", vt2a(V_BYREF(v)));
+        return buf;
+    }
+
+    switch(V_VT(v)) {
+    case VT_EMPTY:
+        return "VT_EMPTY";
+    case VT_NULL:
+        return "VT_NULL";
+    case VT_I2:
+        return "VT_I2";
+    case VT_I4:
+        return "VT_I4";
+    case VT_R8:
+        return "VT_R8";
+    case VT_BSTR:
+        return "VT_BSTR";
+    case VT_DISPATCH:
+        return "VT_DISPATCH";
+    case VT_BOOL:
+        return "VT_BOOL";
+    case VT_ARRAY|VT_VARIANT:
+        return "VT_ARRAY|VT_VARIANT";
+    default:
+        ok(0, "unknown vt %d\n", V_VT(v));
+        return NULL;
+    }
+}
 
 #define test_grfdex(a,b) _test_grfdex(__LINE__,a,b)
 static void _test_grfdex(unsigned line, DWORD grfdex, DWORD expect)
@@ -202,6 +235,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_REPORTSUCCESS;
         return S_OK;
     }
+    if(!strcmp_wa(bstrName, "getVT")) {
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_GLOBAL_GETVT;
+        return S_OK;
+    }
 
     if(strict_dispid_check && strcmp_wa(bstrName, "x"))
         ok(0, "unexpected call %s %x\n", wine_dbgstr_w(bstrName), grfdex);
@@ -254,6 +292,7 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
             trace("%s: %s\n", test_name, wine_dbgstr_w(V_BSTR(pdp->rgvarg)));
 
         return S_OK;
+
     case DISPID_GLOBAL_REPORTSUCCESS:
         CHECK_EXPECT(global_success_i);
 
@@ -266,6 +305,20 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         ok(pei != NULL, "pei == NULL\n");
 
         return S_OK;
+
+    case DISPID_GLOBAL_GETVT:
+         ok(pdp != NULL, "pdp == NULL\n");
+         ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+         ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+         ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+         ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+         ok(pvarRes != NULL, "pvarRes == NULL\n");
+         ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+         ok(pei != NULL, "pei == NULL\n");
+
+         V_VT(pvarRes) = VT_BSTR;
+         V_BSTR(pvarRes) = a2bstr(vt2a(pdp->rgvarg));
+         return S_OK;
     }
 
     ok(0, "unexpected call %d\n", id);
