@@ -51,11 +51,8 @@ msgid "Publisher"
 msgstr ""
 
 #: appwiz.rc:37 cryptui.rc:51
-#, fuzzy
 msgid "Version"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: appwiz.rc:38
 #, fuzzy
@@ -98,11 +95,11 @@ msgstr ""
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
-msgstr "Waveform: %s"
+msgstr ""
 
 #: avifil32.rc:28
 msgid "Waveform"
-msgstr "Waveform"
+msgstr ""
 
 #: avifil32.rc:29
 msgid "All multimedia files"
@@ -452,7 +449,7 @@ msgstr "Silme bekleniyor; "
 
 #: comdlg32.rc:97
 msgid "Paper jam; "
-msgstr "Paper jam; "
+msgstr ""
 
 #: comdlg32.rc:98
 msgid "Out of paper; "
@@ -460,7 +457,7 @@ msgstr "Kağıt yok; "
 
 #: comdlg32.rc:99
 msgid "Feed paper manual; "
-msgstr "Feed paper manual; "
+msgstr ""
 
 #: comdlg32.rc:100
 msgid "Paper problem; "
@@ -504,19 +501,19 @@ msgstr "Hazırlanıyor; "
 
 #: comdlg32.rc:110
 msgid "Warming up; "
-msgstr "Warming up; "
+msgstr ""
 
 #: comdlg32.rc:111
 msgid "Toner low; "
-msgstr "Toner low; "
+msgstr ""
 
 #: comdlg32.rc:112
 msgid "No toner; "
-msgstr "No toner; "
+msgstr ""
 
 #: comdlg32.rc:113
 msgid "Page punt; "
-msgstr "Page punt; "
+msgstr ""
 
 #: comdlg32.rc:114
 msgid "Interrupted by user; "
@@ -825,11 +822,8 @@ msgid "Serial Number"
 msgstr ""
 
 #: crypt32.rc:84
-#, fuzzy
 msgid "CA Version"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: crypt32.rc:85
 msgid "Cross CA Version"
@@ -852,11 +846,8 @@ msgid "Enrollment Name Value Pair"
 msgstr ""
 
 #: crypt32.rc:90
-#, fuzzy
 msgid "OS Version"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: crypt32.rc:91
 msgid "Enrollment CSP"
@@ -923,11 +914,8 @@ msgid "CMC Status Info"
 msgstr ""
 
 #: crypt32.rc:107
-#, fuzzy
 msgid "CMC Extensions"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: crypt32.rc:108
 msgid "CMC Attributes"
@@ -1135,9 +1123,8 @@ msgid "Key Recovery"
 msgstr ""
 
 #: crypt32.rc:159 cryptui.rc:137
-#, fuzzy
 msgid "Document Signing"
-msgstr "Argument missing\n"
+msgstr ""
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
@@ -1563,11 +1550,8 @@ msgid "Version 1 Fields Only"
 msgstr ""
 
 #: cryptui.rc:48
-#, fuzzy
 msgid "Extensions Only"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: cryptui.rc:49
 #, fuzzy
@@ -1627,7 +1611,7 @@ msgstr ""
 
 #: cryptui.rc:62 shell32.rc:251 ipconfig.rc:41
 msgid "Description"
-msgstr "Description"
+msgstr ""
 
 #: cryptui.rc:63
 #, fuzzy
@@ -2184,9 +2168,8 @@ msgid "Pr&int..."
 msgstr "Yazdır"
 
 #: ieframe.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
-msgstr "Print previe&w..."
+msgstr ""
 
 #: ieframe.rc:39 shdoclc.rc:58 shell32.rc:105 clock.rc:28 wineconsole.rc:27
 #, fuzzy
@@ -2216,9 +2199,8 @@ msgstr ""
 "&Toolbar"
 
 #: ieframe.rc:46
-#, fuzzy
 msgid "&Standard bar"
-msgstr "&Statusbar"
+msgstr ""
 
 #: ieframe.rc:47
 msgid "&Address bar"
@@ -2331,9 +2313,8 @@ msgid "Argument not optional"
 msgstr ""
 
 #: jscript.rc:32
-#, fuzzy
 msgid "Syntax error"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: jscript.rc:33
 msgid "Expected ';'"
@@ -2445,9 +2426,8 @@ msgid "Invalid handle\n"
 msgstr "Geçersiz Sözdizimi"
 
 #: winerror.mc:61
-#, fuzzy
 msgid "Memory trashed\n"
-msgstr "Memory Monitor"
+msgstr ""
 
 #: winerror.mc:66
 #, fuzzy
@@ -2517,18 +2497,16 @@ msgid "Bad command\n"
 msgstr ""
 
 #: winerror.mc:141
-#, fuzzy
 msgid "CRC error\n"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: winerror.mc:146
 msgid "Bad length\n"
 msgstr ""
 
 #: winerror.mc:151 winerror.mc:526
-#, fuzzy
 msgid "Seek error\n"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: winerror.mc:156
 msgid "Not DOS disk\n"
@@ -2545,14 +2523,12 @@ msgid "Out of paper\n"
 msgstr "Kağıt yok; "
 
 #: winerror.mc:171
-#, fuzzy
 msgid "Write fault\n"
-msgstr "Default"
+msgstr ""
 
 #: winerror.mc:176
-#, fuzzy
 msgid "Read fault\n"
-msgstr "Default"
+msgstr ""
 
 #: winerror.mc:181
 msgid "General failure\n"
@@ -2835,9 +2811,8 @@ msgid "Module not found\n"
 msgstr "Dosya bulunamadı"
 
 #: winerror.mc:501
-#, fuzzy
 msgid "Procedure not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:506
 msgid "No children to wait for\n"
@@ -2987,9 +2962,8 @@ msgid "Lock failed\n"
 msgstr ""
 
 #: winerror.mc:691
-#, fuzzy
 msgid "Resource in use\n"
-msgstr "Resource Failures"
+msgstr ""
 
 #: winerror.mc:696
 #, fuzzy
@@ -3084,18 +3058,16 @@ msgid "Infinite loop in relocation chain in %1\n"
 msgstr ""
 
 #: winerror.mc:806
-#, fuzzy
 msgid "Environment variable not found\n"
-msgstr "Environment variable %s not defined\n"
+msgstr ""
 
 #: winerror.mc:811
 msgid "No signal sent\n"
 msgstr ""
 
 #: winerror.mc:816
-#, fuzzy
 msgid "File name is too long\n"
-msgstr "The input line is too long.\n"
+msgstr ""
 
 #: winerror.mc:821
 msgid "Ring 2 stack in use\n"
@@ -3262,9 +3234,8 @@ msgid "No access to memory location\n"
 msgstr ""
 
 #: winerror.mc:1016
-#, fuzzy
 msgid "Swap error\n"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: winerror.mc:1021
 msgid "Stack overflow\n"
@@ -3683,9 +3654,8 @@ msgid "DDE failure\n"
 msgstr ""
 
 #: winerror.mc:1511
-#, fuzzy
 msgid "DLL not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:1516
 #, fuzzy
@@ -3733,9 +3703,8 @@ msgid "The device is not connected\n"
 msgstr "Dosya bulunamadı"
 
 #: winerror.mc:1566
-#, fuzzy
 msgid "Element not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:1571
 #, fuzzy
@@ -3743,9 +3712,8 @@ msgid "No match found\n"
 msgstr "%s yolu bulunamadı"
 
 #: winerror.mc:1576
-#, fuzzy
 msgid "Property set not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:1581
 #, fuzzy
@@ -4276,9 +4244,8 @@ msgid "Internal database corruption\n"
 msgstr ""
 
 #: winerror.mc:2196
-#, fuzzy
 msgid "Internal error\n"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: winerror.mc:2201
 msgid "Generic access types not mapped\n"
@@ -4554,9 +4521,8 @@ msgid "Invalid edit height\n"
 msgstr "Geçersiz Belgeler"
 
 #: winerror.mc:2521
-#, fuzzy
 msgid "DC not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:2526
 msgid "Invalid hook filter\n"
@@ -4694,9 +4660,8 @@ msgid "Invalid keyboard handle\n"
 msgstr "Geçersiz Belgeler"
 
 #: winerror.mc:2686
-#, fuzzy
 msgid "Hook type not allowed\n"
-msgstr "Target to GOTO not found\n"
+msgstr ""
 
 #: winerror.mc:2691
 msgid "Interactive window station required\n"
@@ -4888,9 +4853,8 @@ msgid "Installer not used\n"
 msgstr "Dosya bulunamadı"
 
 #: winerror.mc:2896
-#, fuzzy
 msgid "Failed to open the patch package\n"
-msgstr "Failed to open '%s'\n"
+msgstr ""
 
 #: winerror.mc:2901
 #, fuzzy
@@ -4954,9 +4918,8 @@ msgid "Invalid network address\n"
 msgstr ""
 
 #: winerror.mc:2971
-#, fuzzy
 msgid "No endpoint found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:2976
 #, fuzzy
@@ -5170,9 +5133,8 @@ msgid "Entry already exists\n"
 msgstr "Zaten Var"
 
 #: winerror.mc:3221
-#, fuzzy
 msgid "Entry not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: winerror.mc:3226
 #, fuzzy
@@ -5193,18 +5155,16 @@ msgid "No security context available\n"
 msgstr ""
 
 #: winerror.mc:3246
-#, fuzzy
 msgid "RPCInternal error\n"
-msgstr "Parameter error\n"
+msgstr ""
 
 #: winerror.mc:3251
 msgid "RPC divide-by-zero\n"
 msgstr ""
 
 #: winerror.mc:3256
-#, fuzzy
 msgid "Address error\n"
-msgstr "Parameter error\n"
+msgstr ""
 
 #: winerror.mc:3261
 msgid "Floating-point divide-by-zero\n"
@@ -5384,14 +5344,12 @@ msgid "Server has open handles\n"
 msgstr ""
 
 #: winerror.mc:3471
-#, fuzzy
 msgid "Resource data not found\n"
-msgstr "Target to GOTO not found\n"
+msgstr ""
 
 #: winerror.mc:3476
-#, fuzzy
 msgid "Resource type not found\n"
-msgstr "Target to GOTO not found\n"
+msgstr ""
 
 #: winerror.mc:3481
 msgid "Resource name not found\n"
@@ -5435,9 +5393,8 @@ msgid "No principal name registered\n"
 msgstr ""
 
 #: winerror.mc:3526
-#, fuzzy
 msgid "Not an RPC error\n"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: winerror.mc:3531
 msgid "UUID is local only\n"
@@ -5570,9 +5527,8 @@ msgid "Discipline error on RPC pipe\n"
 msgstr ""
 
 #: winerror.mc:3676
-#, fuzzy
 msgid "No data on RPC pipe\n"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: winerror.mc:3681
 #, fuzzy
@@ -5685,8 +5641,6 @@ msgid ""
 "The specified installation package could not be opened.  Please check the "
 "file path and try again."
 msgstr ""
-"The specified installation package could not be opened.  Please check the "
-"file path and try again."
 
 #: msi.rc:28
 msgid "path %s not found"
@@ -5697,7 +5651,6 @@ msgid "insert disk %s"
 msgstr "%s nolu diski yerleştirin"
 
 #: msi.rc:30
-#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -5729,35 +5682,6 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
-"Windows Installer %s\n"
-"\n"
-"Usage:\n"
-"msiexec command {required parameter} [optional parammeter]\n"
-"\n"
-"Install a product:\n"
-"\t/i {package|productcode} [property]\n"
-"\t/package {package|productcode} [property]\n"
-"\t/a package [property]\n"
-"Repair an installation:\n"
-"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
-"Uninstall a product:\n"
-"\t/uninstall {package|productcode} [property]\n"
-"\t/x {package|productcode} [property]\n"
-"Advertise a product:\n"
-"\t/j[u|m] package [/t transform] [/g languageid]\n"
-"Apply a patch:\n"
-"\t/p patchpackage [property]\n"
-"\t/p patchpackage /a package [property]\n"
-"Log and UI Modifiers for above commands:\n"
-"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
-"\t/q{|n|b|r|f|n+|b+|b-}\n"
-"Register MSI Service:\n"
-"\t/y\n"
-"Unregister MSI Service:\n"
-"\t/z\n"
-"Display this help:\n"
-"\t/help\n"
-"\t/?\n"
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
@@ -5864,9 +5788,8 @@ msgid "application"
 msgstr "Seçenekler"
 
 #: oleacc.rc:42
-#, fuzzy
 msgid "document"
-msgstr "Argument missing\n"
+msgstr ""
 
 #: oleacc.rc:43
 msgid "pane"
@@ -5898,14 +5821,12 @@ msgid "tool bar"
 msgstr ""
 
 #: oleacc.rc:50
-#, fuzzy
 msgid "status bar"
-msgstr "&Statusbar"
+msgstr ""
 
 #: oleacc.rc:51
-#, fuzzy
 msgid "table"
-msgstr "Table"
+msgstr ""
 
 #: oleacc.rc:52
 msgid "column header"
@@ -6358,7 +6279,7 @@ msgstr "&Sil"
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
-msgstr "&Select"
+msgstr ""
 
 #: shdoclc.rc:102
 msgid "&Cell"
@@ -6428,63 +6349,63 @@ msgstr "Geri Çevir"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
-msgstr "Trace Tags"
+msgstr ""
 
 #: shdoclc.rc:197
 msgid "Resource Failures"
-msgstr "Resource Failures"
+msgstr ""
 
 #: shdoclc.rc:198
 msgid "Dump Tracking Info"
-msgstr "Dump Tracking Info"
+msgstr ""
 
 #: shdoclc.rc:199
 msgid "Debug Break"
-msgstr "Debug Break"
+msgstr ""
 
 #: shdoclc.rc:200
 msgid "Debug View"
-msgstr "Debug View"
+msgstr ""
 
 #: shdoclc.rc:201
 msgid "Dump Tree"
-msgstr "Dump Tree"
+msgstr ""
 
 #: shdoclc.rc:202
 msgid "Dump Lines"
-msgstr "Dump Lines"
+msgstr ""
 
 #: shdoclc.rc:203
 msgid "Dump DisplayTree"
-msgstr "Dump DisplayTree"
+msgstr ""
 
 #: shdoclc.rc:204
 msgid "Dump FormatCaches"
-msgstr "Dump FormatCaches"
+msgstr ""
 
 #: shdoclc.rc:205
 msgid "Dump LayoutRects"
-msgstr "Dump LayoutRects"
+msgstr ""
 
 #: shdoclc.rc:206
 msgid "Memory Monitor"
-msgstr "Memory Monitor"
+msgstr ""
 
 #: shdoclc.rc:207
 msgid "Performance Meters"
-msgstr "Performance Meters"
+msgstr ""
 
 #: shdoclc.rc:208
 msgid "Save HTML"
-msgstr "Save HTML"
+msgstr ""
 
 #: shdoclc.rc:210
 msgid "&Browse View"
-msgstr "&Browse View"
+msgstr ""
 
 #: shdoclc.rc:211
 msgid "&Edit View"
-msgstr "&Edit View"
+msgstr ""
 
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
@@ -6651,9 +6572,8 @@ msgstr ""
 "&Çık"
 
 #: shell32.rc:127
-#, fuzzy
 msgid "&About Control Panel"
-msgstr "&About Control Panel..."
+msgstr ""
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:112
 msgid "Size"
@@ -6968,9 +6888,6 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"This folder already contains a file called '%1'.\n"
-"\n"
-"Do you want to replace it?"
 
 #: shell32.rc:172
 msgid "Are you sure you want to delete the selected item(s)?"
@@ -7002,15 +6919,10 @@ msgid ""
 "selected folder they will be replaced. Do you still want to move or copy\n"
 "the folder?"
 msgstr ""
-"This folder already contains a folder named '%1'.\n"
-"\n"
-"If the files in the destination folder have the same names as files in the\n"
-"selected folder they will be replaced. Do you still want to move or copy\n"
-"the folder?"
 
 #: shell32.rc:247
 msgid "New Folder"
-msgstr "New Folder"
+msgstr ""
 
 #: shell32.rc:249
 msgid "Wine Control Panel"
@@ -7074,7 +6986,6 @@ msgid "Confirm overwrite"
 msgstr "Dosya Üzerine Yazmayı Onayla"
 
 #: shell32.rc:277
-#, fuzzy
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -7090,22 +7001,6 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
-"start.exe sürüm 0.2 Telif Hakkı (C) 2003, Dan Kegel\n"
-"This program is free software; you can redistribute it and/or\n"
-"modify it under the terms of the GNU Lesser Public License\n"
-"as published by the Free Software Foundation; either version 2.1\n"
-"of the License, or (at your option) any later version.\n"
-"\n"
-"This program is distributed in the hope that it will be useful,\n"
-"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-"GNU Lesser Public License for more details.\n"
-"\n"
-"You should have received a copy of the GNU Lesser Public License\n"
-"along with this program; if not, write to the Free Software\n"
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
-"\n"
-"See the COPYING.LIB file for license information.\n"
 
 #: shell32.rc:265
 #, fuzzy
@@ -7118,7 +7013,7 @@ msgstr "Çöp"
 
 #: shlwapi.rc:27
 msgid "%ld bytes"
-msgstr "%ld bytes"
+msgstr ""
 
 #: shlwapi.rc:28
 #, fuzzy
@@ -8536,16 +8431,12 @@ msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <directoryname> saves the current directory onto a\n"
-"stack, and then changes the current directory to the supplied one.\n"
 
 #: cmd.rc:223
 msgid ""
 "POPD changes current directory to the last one saved with\n"
 "PUSHD.\n"
 msgstr ""
-"POPD changes current directory to the last one saved with\n"
-"PUSHD.\n"
 
 #: cmd.rc:231
 msgid ""
@@ -8575,7 +8466,7 @@ msgstr ""
 
 #: cmd.rc:244
 msgid "MORE displays output of files or piped input in pages.\n"
-msgstr "MORE displays output of files or piped input in pages.\n"
+msgstr ""
 
 #: cmd.rc:248
 msgid ""
@@ -8664,7 +8555,7 @@ msgstr ""
 
 #: cmd.rc:289
 msgid "Are you sure"
-msgstr "Are you sure"
+msgstr ""
 
 #: cmd.rc:290 xcopy.rc:40
 msgctxt "Yes key"
@@ -8678,67 +8569,67 @@ msgstr "N"
 
 #: cmd.rc:292
 msgid "File association missing for extension %s\n"
-msgstr "File association missing for extension %s\n"
+msgstr ""
 
 #: cmd.rc:293
 msgid "No open command associated with file type '%s'\n"
-msgstr "No open command associated with file type '%s'\n"
+msgstr ""
 
 #: cmd.rc:294
 msgid "Overwrite %s"
-msgstr "Overwrite %s"
+msgstr ""
 
 #: cmd.rc:295
 msgid "More..."
-msgstr "More..."
+msgstr ""
 
 #: cmd.rc:296
 msgid "Line in Batch processing possibly truncated. Using:\n"
-msgstr "Line in Batch processing possibly truncated. Using:\n"
+msgstr ""
 
 #: cmd.rc:298
 msgid "Argument missing\n"
-msgstr "Argument missing\n"
+msgstr ""
 
 #: cmd.rc:299
 msgid "Syntax error\n"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: cmd.rc:301
 msgid "No help available for %s\n"
-msgstr "No help available for %s\n"
+msgstr ""
 
 #: cmd.rc:302
 msgid "Target to GOTO not found\n"
-msgstr "Target to GOTO not found\n"
+msgstr ""
 
 #: cmd.rc:303
 msgid "Current Date is %s\n"
-msgstr "Current Date is %s\n"
+msgstr ""
 
 #: cmd.rc:304
 msgid "Current Time is %s\n"
-msgstr "Current Time is %s\n"
+msgstr ""
 
 #: cmd.rc:305
 msgid "Enter new date: "
-msgstr "Enter new date: "
+msgstr ""
 
 #: cmd.rc:306
 msgid "Enter new time: "
-msgstr "Enter new time: "
+msgstr ""
 
 #: cmd.rc:307
 msgid "Environment variable %s not defined\n"
-msgstr "Environment variable %s not defined\n"
+msgstr ""
 
 #: cmd.rc:308 xcopy.rc:38
 msgid "Failed to open '%s'\n"
-msgstr "Failed to open '%s'\n"
+msgstr ""
 
 #: cmd.rc:309
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr "Cannot call batch label outside of a batch script\n"
+msgstr ""
 
 #: cmd.rc:310 xcopy.rc:42
 msgctxt "All key"
@@ -8747,23 +8638,23 @@ msgstr "A"
 
 #: cmd.rc:311
 msgid "%s, Delete"
-msgstr "%s, Delete"
+msgstr ""
 
 #: cmd.rc:312
 msgid "Echo is %s\n"
-msgstr "Echo is %s\n"
+msgstr ""
 
 #: cmd.rc:313
 msgid "Verify is %s\n"
-msgstr "Verify is %s\n"
+msgstr ""
 
 #: cmd.rc:314
 msgid "Verify must be ON or OFF\n"
-msgstr "Verify must be ON or OFF\n"
+msgstr ""
 
 #: cmd.rc:315
 msgid "Parameter error\n"
-msgstr "Parameter error\n"
+msgstr ""
 
 #: cmd.rc:316
 msgid ""
@@ -8771,21 +8662,18 @@ msgid ""
 "Volume Serial Number is %04x-%04x\n"
 "\n"
 msgstr ""
-"Volume in drive %c is %s\n"
-"Volume Serial Number is %04x-%04x\n"
-"\n"
 
 #: cmd.rc:317
 msgid "Volume label (11 characters, ENTER for none)?"
-msgstr "Volume label (11 characters, ENTER for none)?"
+msgstr ""
 
 #: cmd.rc:318
 msgid "PATH not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: cmd.rc:319
 msgid "Press Return key to continue: "
-msgstr "Press Return key to continue: "
+msgstr ""
 
 #: cmd.rc:320
 msgid "Wine Command Prompt"
@@ -8793,15 +8681,15 @@ msgstr "Wine Command Prompt"
 
 #: cmd.rc:321
 msgid "CMD Version %s\n"
-msgstr "CMD Version %s\n"
+msgstr ""
 
 #: cmd.rc:322
 msgid "More? "
-msgstr "More? "
+msgstr ""
 
 #: cmd.rc:323
 msgid "The input line is too long.\n"
-msgstr "The input line is too long.\n"
+msgstr ""
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -9100,7 +8988,7 @@ msgstr "&Sonrakini bul\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
-msgstr "&Replace...\tCtrl+H"
+msgstr ""
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
 #, fuzzy
@@ -9109,7 +8997,7 @@ msgstr "&İçindekiler"
 
 #: notepad.rc:59
 msgid "&About Notepad"
-msgstr "&About Notepad"
+msgstr ""
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -9343,11 +9231,8 @@ msgid "OleView - OLE/COM Object Viewer"
 msgstr ""
 
 #: oleview.rc:97
-#, fuzzy
 msgid "version 1.0"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: oleview.rc:100
 msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
@@ -9498,9 +9383,8 @@ msgid "Unknown error"
 msgstr "%s içinde bilinmeyen özellik"
 
 #: oleview.rc:146
-#, fuzzy
 msgid "bytes"
-msgstr "%ld bytes"
+msgstr ""
 
 #: oleview.rc:148
 msgid "LoadTypeLib( %s ) failed ($%x)"
@@ -9756,7 +9640,7 @@ msgstr "&Çift Sözcük Değeri"
 
 #: regedit.rc:51 regedit.rc:102
 msgid "&Multi String Value"
-msgstr "&Multi String Value"
+msgstr ""
 
 #: regedit.rc:52 regedit.rc:103
 #, fuzzy
@@ -9773,7 +9657,7 @@ msgstr "&Anahtar Adını Kopyala"
 
 #: regedit.rc:60 regedit.rc:112 wordpad.rc:50
 msgid "&Find...\tCtrl+F"
-msgstr "&Find...\tCtrl+F"
+msgstr ""
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
@@ -9807,7 +9691,7 @@ msgstr "İkili Veriyi Değiştir"
 
 #: regedit.rc:109
 msgid "&Export..."
-msgstr "&Export..."
+msgstr ""
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
@@ -9863,9 +9747,8 @@ msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr ""
 
 #: regedit.rc:201
-#, fuzzy
 msgid "(Default)"
-msgstr "Default"
+msgstr ""
 
 #: regedit.rc:202
 msgid "(value not set)"
@@ -9985,7 +9868,7 @@ msgstr "Arama dizesi '%s' bulunamadı"
 
 #: regedit.rc:183
 msgid "Are you sure you want to delete these values?"
-msgstr "Are you sure you want to delete these values?"
+msgstr ""
 
 #: regedit.rc:184
 msgid "New Key #%d"
@@ -10074,22 +9957,6 @@ msgid ""
 "\n"
 "See the COPYING.LIB file for license information.\n"
 msgstr ""
-"start.exe sürüm 0.2 Telif Hakkı (C) 2003, Dan Kegel\n"
-"This program is free software; you can redistribute it and/or\n"
-"modify it under the terms of the GNU Lesser Public License\n"
-"as published by the Free Software Foundation; either version 2.1\n"
-"of the License, or (at your option) any later version.\n"
-"\n"
-"This program is distributed in the hope that it will be useful,\n"
-"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-"GNU Lesser Public License for more details.\n"
-"\n"
-"You should have received a copy of the GNU Lesser Public License\n"
-"along with this program; if not, write to the Free Software\n"
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
-"\n"
-"See the COPYING.LIB file for license information.\n"
 
 #: start.rc:66
 msgid ""
@@ -10102,7 +9969,7 @@ msgstr ""
 
 #: start.rc:68
 msgid "Could not translate the specified Unix filename to a DOS filename."
-msgstr "Could not translate the specified Unix filename to a DOS filename."
+msgstr ""
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
@@ -10305,7 +10172,7 @@ msgstr "Görev Yöneticisi"
 
 #: taskmgr.rc:182
 msgid "Create New Task"
-msgstr "Create New Task"
+msgstr ""
 
 #: taskmgr.rc:187
 msgid "Runs a new program"
@@ -10470,7 +10337,7 @@ msgstr "Süreci DÜŞÜK öncelik sınıfında çalışmaya ayarlar"
 
 #: taskmgr.rc:247
 msgid "Controls Debug Channels"
-msgstr "Controls Debug Channels"
+msgstr ""
 
 #: taskmgr.rc:263
 #, fuzzy
@@ -10478,9 +10345,8 @@ msgid "Processes"
 msgstr "Süreci &Sonlandır"
 
 #: taskmgr.rc:264
-#, fuzzy
 msgid "Performance"
-msgstr "Performance Meters"
+msgstr ""
 
 #: taskmgr.rc:265
 msgid "CPU Usage: %3d%%"
@@ -10495,9 +10361,8 @@ msgid "Mem Usage: %dK / %dK"
 msgstr ""
 
 #: taskmgr.rc:272
-#, fuzzy
 msgid "Image Name"
-msgstr "Image"
+msgstr ""
 
 #: taskmgr.rc:273
 msgid "PID"
@@ -10542,11 +10407,8 @@ msgid "I/O Read Bytes"
 msgstr ""
 
 #: taskmgr.rc:283
-#, fuzzy
 msgid "Session ID"
 msgstr ""
-"CMD Version %s\n"
-"\n"
 
 #: taskmgr.rc:284
 msgid "Username"
@@ -10672,9 +10534,8 @@ msgid "Task"
 msgstr "&Görevi Sonlandır"
 
 #: taskmgr.rc:327
-#, fuzzy
 msgid "Debug Channels"
-msgstr "Controls Debug Channels"
+msgstr ""
 
 #: taskmgr.rc:328
 msgid "Fixme"
@@ -10689,9 +10550,8 @@ msgid "Warn"
 msgstr ""
 
 #: taskmgr.rc:331
-#, fuzzy
 msgid "Trace"
-msgstr "Trace Tags"
+msgstr ""
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
@@ -10732,7 +10592,7 @@ msgstr "A&şağı"
 
 #: view.rc:46
 msgid "Regular Metafile Viewer"
-msgstr "Regular Metafile Viewer"
+msgstr ""
 
 #: winecfg.rc:31
 msgid "Libraries"
@@ -10949,9 +10809,8 @@ msgid "Controls Background"
 msgstr "Arkaplanı Ko&pyala"
 
 #: winecfg.rc:96
-#, fuzzy
 msgid "Controls Text"
-msgstr "Control"
+msgstr ""
 
 #: winecfg.rc:98
 #, fuzzy
@@ -11036,9 +10895,8 @@ msgid "Inactive Border"
 msgstr ""
 
 #: winecfg.rc:116
-#, fuzzy
 msgid "Controls Shadow"
-msgstr "Control Panel"
+msgstr ""
 
 #: winecfg.rc:117
 #, fuzzy
@@ -11050,14 +10908,12 @@ msgid "Controls Highlight"
 msgstr ""
 
 #: winecfg.rc:119
-#, fuzzy
 msgid "Controls Dark Shadow"
-msgstr "Controls Debug Channels"
+msgstr ""
 
 #: winecfg.rc:120
-#, fuzzy
 msgid "Controls Light"
-msgstr "Control"
+msgstr ""
 
 #: winecfg.rc:121
 msgid "Controls Alternate Background"
@@ -11395,7 +11251,7 @@ msgstr "&Yazıcı ayarları..."
 
 #: winhlp32.rc:39
 msgid "&Annotate..."
-msgstr "&Annotate..."
+msgstr ""
 
 #: winhlp32.rc:41
 msgid "&Bookmark"
@@ -11407,19 +11263,19 @@ msgstr "&Tanımla..."
 
 #: winhlp32.rc:45
 msgid "History"
-msgstr "History"
+msgstr ""
 
 #: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
-msgstr "Small"
+msgstr ""
 
 #: winhlp32.rc:49 winhlp32.rc:70
 msgid "Normal"
-msgstr "Normal"
+msgstr ""
 
 #: winhlp32.rc:50 winhlp32.rc:71
 msgid "Large"
-msgstr "Large"
+msgstr ""
 
 #: winhlp32.rc:54
 #, fuzzy
@@ -11435,9 +11291,8 @@ msgid "&About Wine Help"
 msgstr "&Bilgi..."
 
 #: winhlp32.rc:64
-#, fuzzy
 msgid "Annotation..."
-msgstr "&Annotate..."
+msgstr ""
 
 #: winhlp32.rc:65
 #, fuzzy
@@ -11454,7 +11309,7 @@ msgstr "'%s' yardım dosyası açılırken hata"
 
 #: winhlp32.rc:85
 msgid "Summary"
-msgstr "Summary"
+msgstr ""
 
 #: winhlp32.rc:84
 msgid "&Index"
@@ -11466,11 +11321,11 @@ msgstr "Yardım dosyaları (*.hlp)"
 
 #: winhlp32.rc:89
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr "Cannot find '%s'. Do you want to find this file yourself?"
+msgstr ""
 
 #: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
-msgstr "Cannot find a richedit implementation... Aborting"
+msgstr ""
 
 #: winhlp32.rc:91
 msgid "Help topics: "
@@ -11494,7 +11349,7 @@ msgstr "&Tümünü seç\tCtrl+A"
 
 #: wordpad.rc:51
 msgid "Find &next\tF3"
-msgstr "Find &next\tF3"
+msgstr ""
 
 #: wordpad.rc:54
 msgid "Read-&only"
@@ -11530,27 +11385,27 @@ msgstr "&Metni al"
 
 #: wordpad.rc:69
 msgid "&Formatbar"
-msgstr "&Formatbar"
+msgstr ""
 
 #: wordpad.rc:70
 msgid "&Ruler"
-msgstr "&Ruler"
+msgstr ""
 
 #: wordpad.rc:71
 msgid "&Statusbar"
-msgstr "&Statusbar"
+msgstr ""
 
 #: wordpad.rc:73
 msgid "&Options..."
-msgstr "&Options..."
+msgstr ""
 
 #: wordpad.rc:75
 msgid "&Insert"
-msgstr "&Insert"
+msgstr ""
 
 #: wordpad.rc:77
 msgid "&Date and time..."
-msgstr "&Date and time..."
+msgstr ""
 
 #: wordpad.rc:79
 msgid "F&ormat"
@@ -11558,15 +11413,15 @@ msgstr "&Biçim"
 
 #: wordpad.rc:82 wordpad.rc:105
 msgid "&Bullet points"
-msgstr "&Bullet points"
+msgstr ""
 
 #: wordpad.rc:83 wordpad.rc:106
 msgid "&Paragraph..."
-msgstr "&Paragraph..."
+msgstr ""
 
 #: wordpad.rc:84
 msgid "&Tabs..."
-msgstr "&Tabs..."
+msgstr ""
 
 #: wordpad.rc:85
 msgid "Backgroun&d"
@@ -11583,11 +11438,11 @@ msgstr "&Sarımtırak\tCtrl+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
-msgstr "&About Wine Wordpad"
+msgstr ""
 
 #: wordpad.rc:130
 msgid "Automatic"
-msgstr "Automatic"
+msgstr ""
 
 #: wordpad.rc:136
 #, fuzzy
@@ -11703,9 +11558,8 @@ msgid "pt"
 msgstr ""
 
 #: wordpad.rc:180
-#, fuzzy
 msgid "Document"
-msgstr "Argument missing\n"
+msgstr ""
 
 #: wordpad.rc:181
 msgid "Save changes to '%s'?"
@@ -11799,18 +11653,16 @@ msgid "%s? (Yes|No)\n"
 msgstr ""
 
 #: xcopy.rc:36
-#, fuzzy
 msgid "Overwrite %s? (Yes|No|All)\n"
-msgstr "Overwrite %s"
+msgstr ""
 
 #: xcopy.rc:37
 msgid "Copying of '%s' to '%s' failed with r/c %d\n"
 msgstr ""
 
 #: xcopy.rc:39
-#, fuzzy
 msgid "Failed during reading of '%s'\n"
-msgstr "Failed to open '%s'\n"
+msgstr ""
 
 #: xcopy.rc:43
 msgctxt "File key"
