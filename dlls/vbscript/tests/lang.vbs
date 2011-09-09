@@ -25,4 +25,9 @@ call ok((true), "true is not true?")
 ok not false, "not false but not true?"
 ok not not true, "not not true but not true?"
 
+Call ok(true = true, "true = true is false")
+Call ok(false = false, "false = false is false")
+Call ok(not (true = false), "true = false is true")
+Call ok("x" = "x", """x"" = ""x"" is false")
+
 reportSuccess()

@@ -253,10 +253,38 @@ static HRESULT interp_not(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
+static HRESULT cmp_oper(exec_ctx_t *ctx)
+{
+    variant_val_t l, r;
+    HRESULT hres;
+
+    hres = stack_pop_val(ctx, &r);
+    if(FAILED(hres))
+        return hres;
+
+    hres = stack_pop_val(ctx, &l);
+    if(SUCCEEDED(hres))
+        hres = VarCmp(l.v, r.v, ctx->script->lcid, 0);
+
+    release_val(&r);
+    release_val(&l);
+    return hres;
+}
+
 static HRESULT interp_equal(exec_ctx_t *ctx)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = cmp_oper(ctx);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(&v) = VT_BOOL;
+    V_BOOL(&v) = hres == VARCMP_EQ ? VARIANT_TRUE : VARIANT_FALSE;
+    return stack_push(ctx, &v);
 }
 
 static const instr_func_t op_funcs[] = {
