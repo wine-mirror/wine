@@ -1377,13 +1377,14 @@ void WCMD_goto (CMD_LIST **cmdList) {
   /* Do not process any more parts of a processed multipart or multilines command */
   if (cmdList) *cmdList = NULL;
 
-  if (param1[0] == 0x00) {
-    WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
-    return;
-  }
   if (context != NULL) {
     WCHAR *paramStart = param1, *str;
     static const WCHAR eofW[] = {':','e','o','f','\0'};
+
+    if (param1[0] == 0x00) {
+      WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
+      return;
+    }
 
     /* Handle special :EOF label */
     if (lstrcmpiW (eofW, param1) == 0) {
