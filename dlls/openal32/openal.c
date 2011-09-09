@@ -79,13 +79,8 @@ static ALvoid (AL_APIENTRY*alGetAuxiliaryEffectSlotfv)(ALuint sid, ALenum param,
 static ALvoid (AL_APIENTRY*alGetAuxiliaryEffectSloti)(ALuint sid, ALenum param, ALint* value);
 static ALvoid (AL_APIENTRY*alGetAuxiliaryEffectSlotiv)(ALuint sid, ALenum param, ALint* values);
 
-struct FuncList {
-    const char *name;
-    void *proc;
-};
-
-static const struct FuncList ALCFuncs[];
-static const struct FuncList ALFuncs[];
+extern ALCvoid* CDECL wine_alcGetProcAddress(ALCdevice *, const ALCchar *);
+extern ALvoid*  CDECL wine_alGetProcAddress(const ALchar*);
 
 static CRITICAL_SECTION openal_cs;
 static CRITICAL_SECTION_DEBUG openal_cs_debug =
@@ -238,25 +233,6 @@ ALCboolean CDECL wine_alcIsExtensionPresent(ALCdevice *device, const ALCchar *ex
     return alcIsExtensionPresent(device, extname);
 }
 
-ALCvoid* CDECL wine_alcGetProcAddress(ALCdevice *device, const ALCchar *funcname)
-{
-    void *proc;
-    int i;
-
-    /* Make sure the host implementation has the requested function */
-    proc = alcGetProcAddress(device, funcname);
-    if(!proc)
-        return NULL;
-
-    for(i = 0;ALCFuncs[i].name;i++)
-    {
-        if(strcmp(funcname, ALCFuncs[i].name) == 0)
-            return ALCFuncs[i].proc;
-    }
-    FIXME("Could not find function in list: %s\n", funcname);
-    return NULL;
-}
-
 ALCenum CDECL wine_alcGetEnumValue(ALCdevice *device, const ALCchar *enumname)
 {
     return alcGetEnumValue(device, enumname);
@@ -342,27 +318,6 @@ ALenum CDECL wine_alGetError(ALvoid)
 ALboolean CDECL wine_alIsExtensionPresent(const ALchar* extname)
 {
     return alIsExtensionPresent(extname);
-}
-
-ALvoid* CDECL wine_alGetProcAddress(const ALchar* funcname)
-{
-    void *proc;
-    int i;
-
-    /* Make sure the host implementation has the requested function. This will
-     * also set the last AL error properly if the function should not be
-     * returned (eg. no current context). */
-    proc = alGetProcAddress(funcname);
-    if(!proc)
-        return NULL;
-
-    for(i = 0;ALFuncs[i].name;i++)
-    {
-        if(strcmp(funcname, ALFuncs[i].name) == 0)
-            return ALFuncs[i].proc;
-    }
-    FIXME("Could not find function in list: %s\n", funcname);
-    return NULL;
 }
 
 ALenum CDECL wine_alGetEnumValue(const ALchar* ename)
@@ -883,6 +838,10 @@ static ALCcontext* CDECL wine_alcGetThreadContext(ALCvoid)
     return alcGetThreadContext();
 }
 
+struct FuncList {
+    const char *name;
+    void *proc;
+};
 
 static const struct FuncList ALCFuncs[] = {
     { "alcCreateContext",           wine_alcCreateContext        },
@@ -1023,3 +982,45 @@ static const struct FuncList ALFuncs[] = {
 
     { NULL,                         NULL                         }
 };
+
+
+ALCvoid* CDECL wine_alcGetProcAddress(ALCdevice *device, const ALCchar *funcname)
+{
+    void *proc;
+    int i;
+
+    /* Make sure the host implementation has the requested function */
+    proc = alcGetProcAddress(device, funcname);
+    if(!proc)
+        return NULL;
+
+    for(i = 0;ALCFuncs[i].name;i++)
+    {
+        if(strcmp(funcname, ALCFuncs[i].name) == 0)
+            return ALCFuncs[i].proc;
+    }
+    FIXME("Could not find function in list: %s\n", funcname);
+    return NULL;
+}
+
+
+ALvoid* CDECL wine_alGetProcAddress(const ALchar* funcname)
+{
+    void *proc;
+    int i;
+
+    /* Make sure the host implementation has the requested function. This will
+     * also set the last AL error properly if the function should not be
+     * returned (eg. no current context). */
+    proc = alGetProcAddress(funcname);
+    if(!proc)
+        return NULL;
+
+    for(i = 0;ALFuncs[i].name;i++)
+    {
+        if(strcmp(funcname, ALFuncs[i].name) == 0)
+            return ALFuncs[i].proc;
+    }
+    FIXME("Could not find function in list: %s\n", funcname);
+    return NULL;
+}
