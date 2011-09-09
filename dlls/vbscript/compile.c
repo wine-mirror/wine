@@ -146,7 +146,7 @@ static HRESULT compile_args(compile_ctx_t *ctx, expression_t *args, unsigned *re
     return S_OK;
 }
 
-static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t *expr)
+static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t *expr, BOOL ret_val)
 {
     unsigned arg_cnt = 0;
     HRESULT hres;
@@ -159,7 +159,7 @@ static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t
         FIXME("obj_expr not implemented\n");
         hres = E_NOTIMPL;
     }else {
-        hres = push_instr_bstr_uint(ctx, OP_icallv, expr->identifier, arg_cnt);
+        hres = push_instr_bstr_uint(ctx, ret_val ? OP_icall : OP_icallv, expr->identifier, arg_cnt);
     }
 
     return hres;
@@ -198,6 +198,8 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
         return push_instr_int(ctx, OP_bool, ((bool_expression_t*)expr)->value);
     case EXPR_EQUAL:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_equal);
+    case EXPR_MEMBER:
+        return compile_member_expression(ctx, (member_expression_t*)expr, TRUE);
     case EXPR_NOT:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_not);
     case EXPR_STRING:
@@ -217,7 +219,7 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
     while(stat) {
         switch(stat->type) {
         case STAT_CALL:
-            hres = compile_member_expression(ctx, ((call_statement_t*)stat)->expr);
+            hres = compile_member_expression(ctx, ((call_statement_t*)stat)->expr, FALSE);
             break;
         default:
             FIXME("Unimplemented statement type %d\n", stat->type);

@@ -168,6 +168,12 @@ static void vbstack_to_dp(exec_ctx_t *ctx, unsigned arg_cnt, DISPPARAMS *dp)
     }
 }
 
+static HRESULT interp_icall(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT interp_icallv(exec_ctx_t *ctx)
 {
     BSTR identifier = ctx->instr->arg1.bstr;

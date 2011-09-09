@@ -75,7 +75,7 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 %token <string> tIdentifier tString
 
 %type <statement> Statement StatementNl
-%type <expression> Expression LiteralExpression PrimaryExpression EqualityExpression
+%type <expression> Expression LiteralExpression PrimaryExpression EqualityExpression CallExpression
 %type <expression> ConcatExpression
 %type <expression> NotExpression
 %type <member> MemberExpression
@@ -135,7 +135,11 @@ EqualityExpression
 
 ConcatExpression
     : LiteralExpression /* FIXME */ { $$ = $1; }
-    | PrimaryExpression /* FIXME */ { $$ = $1; }
+    | CallExpression /* FIXME */    { $$ = $1; }
+
+CallExpression
+    : PrimaryExpression                 { $$ = $1; }
+    | MemberExpression Arguments_opt    { $1->args = $2; $$ = &$1->expr; }
 
 LiteralExpression
     : tTRUE                         { $$ = new_bool_expression(ctx, VARIANT_TRUE); CHECK_ERROR; }
