@@ -8008,7 +8008,7 @@ msgstr "Loop nel gestire i rinvii"
 msgid "Referral hop limit exceeded"
 msgstr "Ecceduto il limite di salti di rinvio"
 
-#: attrib.rc:27 cmd.rc:297
+#: attrib.rc:27 cmd.rc:298
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -8016,7 +8016,7 @@ msgstr ""
 "Non ancora implementato\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:300
+#: attrib.rc:28 cmd.rc:301
 msgid "%s: File Not Found\n"
 msgstr "%s : File non trovato\n"
 
@@ -8557,7 +8557,7 @@ msgstr ""
 "EXIT termina la sessione corrente di cmd e torna al\n"
 "sistema operativo o alla shell dal quale hai chiamato cmd.\n"
 
-#: cmd.rc:287
+#: cmd.rc:288
 #, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
@@ -8592,6 +8592,7 @@ msgid ""
 "TYPE\t\tType the contents of a text file\n"
 "VER\t\tShow the current version of CMD\n"
 "VOL\t\tShow the volume label of a disk device\n"
+"XCOPY\t\tCopies source files or directory trees to a destination\n"
 "EXIT\t\tClose down CMD\n"
 "\n"
 "Enter HELP <command> for further information on any of the above commands.\n"
@@ -8629,110 +8630,110 @@ msgstr ""
 "Inserisci HELP <comando> per maggiori informazioni su ciascuno dei comandi "
 "soprastanti\n"
 
-#: cmd.rc:289
+#: cmd.rc:290
 msgid "Are you sure"
 msgstr "Sei sicuro"
 
-#: cmd.rc:290 xcopy.rc:40
+#: cmd.rc:291 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "S"
 
-#: cmd.rc:291 xcopy.rc:41
+#: cmd.rc:292 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:292
+#: cmd.rc:293
 msgid "File association missing for extension %s\n"
 msgstr "Associazione di file mancante per l'estensione %s\n"
 
-#: cmd.rc:293
+#: cmd.rc:294
 msgid "No open command associated with file type '%s'\n"
 msgstr "Nessun comando di apertura associato con il tipo di file '%s'\n"
 
-#: cmd.rc:294
+#: cmd.rc:295
 msgid "Overwrite %s"
 msgstr "Sovrascrivere %s"
 
-#: cmd.rc:295
+#: cmd.rc:296
 msgid "More..."
 msgstr "Di più..."
 
-#: cmd.rc:296
+#: cmd.rc:297
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Linea nell'elaborazione Batch probabilmente troncata. Uso:\n"
 
-#: cmd.rc:298
+#: cmd.rc:299
 msgid "Argument missing\n"
 msgstr "Manca un parametro\n"
 
-#: cmd.rc:299
+#: cmd.rc:300
 msgid "Syntax error\n"
 msgstr "Errore di sintassi\n"
 
-#: cmd.rc:301
+#: cmd.rc:302
 msgid "No help available for %s\n"
 msgstr "Nessun aiuto disponibile per %s\n"
 
-#: cmd.rc:302
+#: cmd.rc:303
 msgid "Target to GOTO not found\n"
 msgstr "Destinazione del GOTO non trovata\n"
 
-#: cmd.rc:303
+#: cmd.rc:304
 msgid "Current Date is %s\n"
 msgstr "La data attuale è  %s\n"
 
-#: cmd.rc:304
+#: cmd.rc:305
 msgid "Current Time is %s\n"
 msgstr "L'ora attuale è  %s\n"
 
-#: cmd.rc:305
+#: cmd.rc:306
 msgid "Enter new date: "
 msgstr "Inserisci una nuova data: "
 
-#: cmd.rc:306
+#: cmd.rc:307
 msgid "Enter new time: "
 msgstr "Inserisci una nuova ora: "
 
-#: cmd.rc:307
+#: cmd.rc:308
 msgid "Environment variable %s not defined\n"
 msgstr "Variabile d'ambiente %s non definita\n"
 
-#: cmd.rc:308 xcopy.rc:38
+#: cmd.rc:309 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr "Impossibile aprire '%s'\n"
 
-#: cmd.rc:309
+#: cmd.rc:310
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Impossibile chiamare un'etichetta batch fuori da uno script batch\n"
 
-#: cmd.rc:310 xcopy.rc:42
+#: cmd.rc:311 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "T"
 
-#: cmd.rc:311
+#: cmd.rc:312
 msgid "%s, Delete"
 msgstr "%s, Cancella"
 
-#: cmd.rc:312
+#: cmd.rc:313
 msgid "Echo is %s\n"
 msgstr "Echo è %s\n"
 
-#: cmd.rc:313
+#: cmd.rc:314
 msgid "Verify is %s\n"
 msgstr "Verify è %s\n"
 
-#: cmd.rc:314
+#: cmd.rc:315
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify deve essere ON o OFF\n"
 
-#: cmd.rc:315
+#: cmd.rc:316
 msgid "Parameter error\n"
 msgstr "Errore nel parametro\n"
 
-#: cmd.rc:316
+#: cmd.rc:317
 msgid ""
 "Volume in drive %c is %s\n"
 "Volume Serial Number is %04x-%04x\n"
@@ -8742,31 +8743,31 @@ msgstr ""
 "Il numero seriale del volume è %04x-%04x\n"
 "\n"
 
-#: cmd.rc:317
+#: cmd.rc:318
 msgid "Volume label (11 characters, ENTER for none)?"
 msgstr "Etichetta del volume (11 caratteri, Invio per nessuno)?"
 
-#: cmd.rc:318
+#: cmd.rc:319
 msgid "PATH not found\n"
 msgstr "PATH non trovato\n"
 
-#: cmd.rc:319
+#: cmd.rc:320
 msgid "Press Return key to continue: "
 msgstr "Premere Invio per continuare: "
 
-#: cmd.rc:320
+#: cmd.rc:321
 msgid "Wine Command Prompt"
 msgstr "Prompt dei comandi di Wine"
 
-#: cmd.rc:321
+#: cmd.rc:322
 msgid "CMD Version %s\n"
 msgstr "Versione di CMD %s\n"
 
-#: cmd.rc:322
+#: cmd.rc:323
 msgid "More? "
 msgstr "Di più? "
 
-#: cmd.rc:323
+#: cmd.rc:324
 msgid "The input line is too long.\n"
 msgstr "La linea di input è troppo lunga.\n"
 

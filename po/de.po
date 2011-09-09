@@ -7715,7 +7715,7 @@ msgstr "Schleife während der Abarbeitung von Weiterleitungen"
 msgid "Referral hop limit exceeded"
 msgstr "Überschreitung der maximalen Anzahl von Weiterleitungen"
 
-#: attrib.rc:27 cmd.rc:297
+#: attrib.rc:27 cmd.rc:298
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -7723,7 +7723,7 @@ msgstr ""
 "Noch nicht implementiert\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:300
+#: attrib.rc:28 cmd.rc:301
 msgid "%s: File Not Found\n"
 msgstr "%s : Datei nicht gefunden\n"
 
@@ -8283,7 +8283,7 @@ msgstr ""
 "EXIT beendet die aktuelle Befehlssitzung und kehrt zum\n"
 "Betriebssystem oder der Shell zurück, von der CMD gestart wurde.\n"
 
-#: cmd.rc:287
+#: cmd.rc:288
 #, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
@@ -8318,6 +8318,7 @@ msgid ""
 "TYPE\t\tType the contents of a text file\n"
 "VER\t\tShow the current version of CMD\n"
 "VOL\t\tShow the volume label of a disk device\n"
+"XCOPY\t\tCopies source files or directory trees to a destination\n"
 "EXIT\t\tClose down CMD\n"
 "\n"
 "Enter HELP <command> for further information on any of the above commands.\n"
@@ -8357,112 +8358,112 @@ msgstr ""
 "Geben Sie HELP <Befehl> ein, damit Sie weitere Informationen für einen der\n"
 "obigen Befehle erhalten.\n"
 
-#: cmd.rc:289
+#: cmd.rc:290
 msgid "Are you sure"
 msgstr "Sind sie sicher"
 
-#: cmd.rc:290 xcopy.rc:40
+#: cmd.rc:291 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr "J"
 
-#: cmd.rc:291 xcopy.rc:41
+#: cmd.rc:292 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:292
+#: cmd.rc:293
 msgid "File association missing for extension %s\n"
 msgstr "Verknüpfung für Dateiendung %s fehlt\n"
 
-#: cmd.rc:293
+#: cmd.rc:294
 msgid "No open command associated with file type '%s'\n"
 msgstr "Kein Befehl zum Öffnen für Dateityp '%s'\n"
 
-#: cmd.rc:294
+#: cmd.rc:295
 msgid "Overwrite %s"
 msgstr "%s überschreiben"
 
-#: cmd.rc:295
+#: cmd.rc:296
 msgid "More..."
 msgstr "Mehr..."
 
-#: cmd.rc:296
+#: cmd.rc:297
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr ""
 "Die Zeile bei der Batchverarbeitung ist möglicherweise abgeschnitten. "
 "Benutze:\n"
 
-#: cmd.rc:298
+#: cmd.rc:299
 msgid "Argument missing\n"
 msgstr "Argument fehlt\n"
 
-#: cmd.rc:299
+#: cmd.rc:300
 msgid "Syntax error\n"
 msgstr "Syntaxfehler\n"
 
-#: cmd.rc:301
+#: cmd.rc:302
 msgid "No help available for %s\n"
 msgstr "Hilfe für %s ist nicht verfügbar\n"
 
-#: cmd.rc:302
+#: cmd.rc:303
 msgid "Target to GOTO not found\n"
 msgstr "Das Sprungziel von GOTO wurde nicht gefunden\n"
 
-#: cmd.rc:303
+#: cmd.rc:304
 msgid "Current Date is %s\n"
 msgstr "Aktuelles Datum ist %s\n"
 
-#: cmd.rc:304
+#: cmd.rc:305
 msgid "Current Time is %s\n"
 msgstr "Aktuelle Zeit ist %s\n"
 
-#: cmd.rc:305
+#: cmd.rc:306
 msgid "Enter new date: "
 msgstr "Geben Sie das neue Datum ein: "
 
-#: cmd.rc:306
+#: cmd.rc:307
 msgid "Enter new time: "
 msgstr "Geben Sie die neue Zeit ein: "
 
-#: cmd.rc:307
+#: cmd.rc:308
 msgid "Environment variable %s not defined\n"
 msgstr "Die Umgebungsvariable %s ist nicht definiert\n"
 
-#: cmd.rc:308 xcopy.rc:38
+#: cmd.rc:309 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr "'%s' konnte nicht geöffnet werden\n"
 
-#: cmd.rc:309
+#: cmd.rc:310
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Kann kein Batch-Label außerhalb eines Batch-Scripts aufrufen\n"
 
-#: cmd.rc:310 xcopy.rc:42
+#: cmd.rc:311 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:311
+#: cmd.rc:312
 msgid "%s, Delete"
 msgstr "%s, löschen"
 
-#: cmd.rc:312
+#: cmd.rc:313
 msgid "Echo is %s\n"
 msgstr "Echo ist %s\n"
 
-#: cmd.rc:313
+#: cmd.rc:314
 msgid "Verify is %s\n"
 msgstr "Verify ist %s\n"
 
-#: cmd.rc:314
+#: cmd.rc:315
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify muß ON oder OFF sein\n"
 
-#: cmd.rc:315
+#: cmd.rc:316
 msgid "Parameter error\n"
 msgstr "Parameterfehler\n"
 
-#: cmd.rc:316
+#: cmd.rc:317
 msgid ""
 "Volume in drive %c is %s\n"
 "Volume Serial Number is %04x-%04x\n"
@@ -8472,31 +8473,31 @@ msgstr ""
 "Volumeseriennummer ist %04x-%04x\n"
 "\n"
 
-#: cmd.rc:317
+#: cmd.rc:318
 msgid "Volume label (11 characters, ENTER for none)?"
 msgstr "Volumebezeichnung (11 Zeichen, EINGABETASTE für keine)?"
 
-#: cmd.rc:318
+#: cmd.rc:319
 msgid "PATH not found\n"
 msgstr "PATH nicht gefunden\n"
 
-#: cmd.rc:319
+#: cmd.rc:320
 msgid "Press Return key to continue: "
 msgstr "Drücken Sie die Eingabetaste um fortzufahren: "
 
-#: cmd.rc:320
+#: cmd.rc:321
 msgid "Wine Command Prompt"
 msgstr "Wine Befehlsprozessor"
 
-#: cmd.rc:321
+#: cmd.rc:322
 msgid "CMD Version %s\n"
 msgstr "CMD Version %s\n"
 
-#: cmd.rc:322
+#: cmd.rc:323
 msgid "More? "
 msgstr "Mehr? "
 
-#: cmd.rc:323
+#: cmd.rc:324
 msgid "The input line is too long.\n"
 msgstr "Die Eingabezeile ist zu lang.\n"
 
