@@ -198,6 +198,12 @@ static HRESULT interp_string(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
+static HRESULT interp_not(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static const instr_func_t op_funcs[] = {
 #define X(x,n,a,b) interp_ ## x,
 OP_LIST
