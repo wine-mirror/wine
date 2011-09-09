@@ -773,7 +773,7 @@ static void test_edit_control_2(void)
     r = SetCaretPos(0, 0);
     todo_wine ok(0 == r, "SetCaretPos succeeded unexpectedly, expected: 0, got: %d\n", r);
     phwnd = SetFocus(hwndET2);
-    ok(phwnd != NULL, "SetFocus failed unexpectedly, expected non-zero, got NULL");
+    ok(phwnd != NULL, "SetFocus failed unexpectedly, expected non-zero, got NULL\n");
     r = SetCaretPos(0, 0);
     ok(1 == r, "SetCaretPos failed unexpectedly, expected: 1, got: %d\n", r);
     r = GetCaretPos(&cpos);
