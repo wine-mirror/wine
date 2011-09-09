@@ -506,7 +506,7 @@ msgstr "Ingen toner; "
 
 #: comdlg32.rc:113
 msgid "Page punt; "
-msgstr "Page punt; "
+msgstr ""
 
 #: comdlg32.rc:114
 msgid "Interrupted by user; "
@@ -591,7 +591,7 @@ msgstr "Caps Lock är på"
 
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
-msgstr "Authority Key Identifier"
+msgstr ""
 
 #: crypt32.rc:28
 msgid "Key Attributes"
@@ -603,11 +603,11 @@ msgstr "Nyckelanvändningsbegränsning"
 
 #: crypt32.rc:30
 msgid "Subject Alternative Name"
-msgstr "Subject Alternative Name"
+msgstr ""
 
 #: crypt32.rc:31
 msgid "Issuer Alternative Name"
-msgstr "Issuer Alternative Name"
+msgstr ""
 
 #: crypt32.rc:32
 msgid "Basic Constraints"
@@ -647,11 +647,11 @@ msgstr "Certifikattillägg"
 
 #: crypt32.rc:41
 msgid "Next Update Location"
-msgstr "Next Update Location"
+msgstr ""
 
 #: crypt32.rc:42
 msgid "Yes or No Trust"
-msgstr "Yes or No Trust"
+msgstr ""
 
 #: crypt32.rc:43
 msgid "Email Address"
@@ -679,16 +679,15 @@ msgstr "Counter Sign"
 
 #: crypt32.rc:49
 msgid "Challenge Password"
-msgstr "Challenge Password"
+msgstr ""
 
 #: crypt32.rc:50
 msgid "Unstructured Address"
 msgstr "Ostrukturerad adress"
 
 #: crypt32.rc:51
-#, fuzzy
 msgid "S/MIME Capabilities"
-msgstr "SMIME Capabilities"
+msgstr ""
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
@@ -714,7 +713,7 @@ msgstr "Certifikatauktoritetsutfärdare"
 
 #: crypt32.rc:57
 msgid "Certification Template Name"
-msgstr "Certification Template Name"
+msgstr ""
 
 #: crypt32.rc:58
 msgid "Certificate Type"
@@ -782,7 +781,7 @@ msgstr "Organisationsenhet"
 
 #: crypt32.rc:74
 msgid "Common Name"
-msgstr "Common Name"
+msgstr ""
 
 #: crypt32.rc:75
 msgid "Locality"
@@ -831,7 +830,7 @@ msgstr "Cross CA Version"
 
 #: crypt32.rc:86
 msgid "Serialized Signature Serial Number"
-msgstr "Serialized Signature Serial Number"
+msgstr ""
 
 #: crypt32.rc:87
 msgid "Principal Name"
@@ -843,7 +842,7 @@ msgstr "Windows produktuppdatering"
 
 #: crypt32.rc:89
 msgid "Enrollment Name Value Pair"
-msgstr "Enrollment Name Value Pair"
+msgstr ""
 
 #: crypt32.rc:90
 msgid "OS Version"
@@ -851,7 +850,7 @@ msgstr "OS-version"
 
 #: crypt32.rc:91
 msgid "Enrollment CSP"
-msgstr "Enrollment CSP"
+msgstr ""
 
 #: crypt32.rc:92
 msgid "CRL Number"
@@ -863,7 +862,7 @@ msgstr "Delta CRL Indicator"
 
 #: crypt32.rc:94
 msgid "Issuing Distribution Point"
-msgstr "Issuing Distribution Point"
+msgstr ""
 
 #: crypt32.rc:95
 msgid "Freshest CRL"
@@ -927,27 +926,27 @@ msgstr "PKCS 7 Data"
 
 #: crypt32.rc:110
 msgid "PKCS 7 Signed"
-msgstr "PKCS 7 Signed"
+msgstr ""
 
 #: crypt32.rc:111
 msgid "PKCS 7 Enveloped"
-msgstr "PKCS 7 Enveloped"
+msgstr ""
 
 #: crypt32.rc:112
 msgid "PKCS 7 Signed Enveloped"
-msgstr "PKCS 7 Signed Enveloped"
+msgstr ""
 
 #: crypt32.rc:113
 msgid "PKCS 7 Digested"
-msgstr "PKCS 7 Digested"
+msgstr ""
 
 #: crypt32.rc:114
 msgid "PKCS 7 Encrypted"
-msgstr "PKCS 7 Encrypted"
+msgstr ""
 
 #: crypt32.rc:115
 msgid "Previous CA Certificate Hash"
-msgstr "Previous CA Certificate Hash"
+msgstr ""
 
 #: crypt32.rc:116
 msgid "Virtual Base CRL Number"
@@ -955,7 +954,7 @@ msgstr "Virtual Base CRL Number"
 
 #: crypt32.rc:117
 msgid "Next CRL Publish"
-msgstr "Next CRL Publish"
+msgstr ""
 
 #: crypt32.rc:118
 msgid "CA Encryption Certificate"
@@ -987,7 +986,7 @@ msgstr "Publicerade CRL-platser"
 
 #: crypt32.rc:125
 msgid "Enforce Certificate Chain Policy"
-msgstr "Enforce Certificate Chain Policy"
+msgstr ""
 
 #: crypt32.rc:126
 msgid "Transaction Id"
@@ -1015,11 +1014,11 @@ msgstr "Hämta CRL"
 
 #: crypt32.rc:132
 msgid "Revoke Request"
-msgstr "Revoke Request"
+msgstr ""
 
 #: crypt32.rc:133
 msgid "Query Pending"
-msgstr "Query Pending"
+msgstr ""
 
 #: crypt32.rc:134 cryptui.rc:92
 msgid "Certificate Trust List"
@@ -1027,11 +1026,11 @@ msgstr "Lista över betrodda certifikat"
 
 #: crypt32.rc:135
 msgid "Archived Key Certificate Hash"
-msgstr "Archived Key Certificate Hash"
+msgstr ""
 
 #: crypt32.rc:136
 msgid "Private Key Usage Period"
-msgstr "Private Key Usage Period"
+msgstr ""
 
 #: crypt32.rc:137
 msgid "Client Information"
@@ -1059,23 +1058,23 @@ msgstr "Tidsstämpling"
 
 #: crypt32.rc:143
 msgid "Microsoft Trust List Signing"
-msgstr "Microsoft Trust List Signing"
+msgstr ""
 
 #: crypt32.rc:144
 msgid "Microsoft Time Stamping"
-msgstr "Microsoft Time Stamping"
+msgstr ""
 
 #: crypt32.rc:145
 msgid "IP security end system"
-msgstr "IP security end system"
+msgstr ""
 
 #: crypt32.rc:146
 msgid "IP security tunnel termination"
-msgstr "IP security tunnel termination"
+msgstr ""
 
 #: crypt32.rc:147
 msgid "IP security user"
-msgstr "IP security user"
+msgstr ""
 
 #: crypt32.rc:148
 msgid "Encrypting File System"
@@ -2678,7 +2677,7 @@ msgstr "För många semaforförfrågningar\n"
 
 #: winerror.mc:396
 msgid "Invalid at interrupt time\n"
-msgstr "Invalid at interrupt time\n"
+msgstr ""
 
 #: winerror.mc:401
 msgid "Semaphore owner died\n"
@@ -5014,23 +5013,23 @@ msgstr "Ej igenkänt media\n"
 
 #: winerror.mc:3341
 msgid "No trust secret\n"
-msgstr "No trust secret\n"
+msgstr ""
 
 #: winerror.mc:3346
 msgid "No trust SAM account\n"
-msgstr "No trust SAM account\n"
+msgstr ""
 
 #: winerror.mc:3351
 msgid "Trusted domain failure\n"
-msgstr "Trusted domain failure\n"
+msgstr ""
 
 #: winerror.mc:3356
 msgid "Trusted relationship failure\n"
-msgstr "Trusted relationship failure\n"
+msgstr ""
 
 #: winerror.mc:3361
 msgid "Trust logon failure\n"
-msgstr "Trust logon failure\n"
+msgstr ""
 
 #: winerror.mc:3366
 msgid "RPC call already in progress\n"
@@ -5098,19 +5097,19 @@ msgstr "Inga fler bindningar\n"
 
 #: winerror.mc:3446
 msgid "Can't logon with interdomain trust account\n"
-msgstr "Can't logon with interdomain trust account\n"
+msgstr ""
 
 #: winerror.mc:3451
 msgid "Can't logon with workstation trust account\n"
-msgstr "Can't logon with workstation trust account\n"
+msgstr ""
 
 #: winerror.mc:3456
 msgid "Can't logon with server trust account\n"
-msgstr "Can't logon with server trust account\n"
+msgstr ""
 
 #: winerror.mc:3461
 msgid "Domain trust information inconsistent\n"
-msgstr "Domain trust information inconsistent\n"
+msgstr ""
 
 #: winerror.mc:3466
 msgid "Server has open handles\n"
@@ -5785,8 +5784,6 @@ msgid ""
 "Insert the contents of the file as an object into your document so that you "
 "may activate it using the program which created it."
 msgstr ""
-"Insert the contents of the file as an object into your document so that you "
-"may activate it using the program which created it."
 
 #: oledlg.rc:27 shell32.rc:193
 msgid "Browse"
@@ -5797,32 +5794,26 @@ msgid ""
 "File does not appear to be a valid OLE module. Unable to register OLE "
 "control."
 msgstr ""
-"File does not appear to be a valid OLE module. Unable to register OLE "
-"control."
 
 #: oledlg.rc:29
 msgid "Add Control"
-msgstr "Add Control"
+msgstr ""
 
 #: oledlg.rc:34
 msgid "Inserts the contents of the clipboard into your document as %s."
-msgstr "Inserts the contents of the clipboard into your document as %s."
+msgstr ""
 
 #: oledlg.rc:35
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
 msgstr ""
-"Inserts the contents of the clipboard into your document so that you can "
-"activate it using %s."
 
 #: oledlg.rc:36
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s.  It will be displayed as an icon."
 msgstr ""
-"Inserts the contents of the clipboard into your document so that you can "
-"activate it using %s.  It will be displayed as an icon."
 
 #: oledlg.rc:37
 msgid ""
@@ -5830,9 +5821,6 @@ msgid ""
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
-"Inserts the contents of the clipboard into your document as %s.  The data is "
-"linked to the source file so that changes to the file will be reflected in "
-"your document."
 
 #: oledlg.rc:38
 msgid ""
@@ -5840,9 +5828,6 @@ msgid ""
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
-"Inserts a picture of the clipboard contents into your document.  The picture "
-"is linked to the source file so that changes to the file will be reflected "
-"in your document."
 
 #: oledlg.rc:39
 msgid ""
@@ -5850,25 +5835,22 @@ msgid ""
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
-"Inserts a shortcut which points to the location of the clipboard contents.  "
-"The shortcut is linked to the source file so that changes to the file will "
-"be reflected in your document."
 
 #: oledlg.rc:40
 msgid "Inserts the contents of the clipboard into your document."
-msgstr "Inserts the contents of the clipboard into your document."
+msgstr ""
 
 #: oledlg.rc:41
 msgid "Unknown Type"
-msgstr "Unknown Type"
+msgstr ""
 
 #: oledlg.rc:42
 msgid "Unknown Source"
-msgstr "Unknown Source"
+msgstr ""
 
 #: oledlg.rc:43
 msgid "the program which created it"
-msgstr "the program which created it"
+msgstr ""
 
 #: sane.rc:31
 msgctxt "unit: pixels"
@@ -6101,7 +6083,7 @@ msgstr "Resource Failures"
 
 #: shdoclc.rc:198
 msgid "Dump Tracking Info"
-msgstr "Dump Tracking Info"
+msgstr ""
 
 #: shdoclc.rc:199
 msgid "Debug Break"
@@ -6113,23 +6095,23 @@ msgstr "Debug View"
 
 #: shdoclc.rc:201
 msgid "Dump Tree"
-msgstr "Dump Tree"
+msgstr ""
 
 #: shdoclc.rc:202
 msgid "Dump Lines"
-msgstr "Dump Lines"
+msgstr ""
 
 #: shdoclc.rc:203
 msgid "Dump DisplayTree"
-msgstr "Dump DisplayTree"
+msgstr ""
 
 #: shdoclc.rc:204
 msgid "Dump FormatCaches"
-msgstr "Dump FormatCaches"
+msgstr ""
 
 #: shdoclc.rc:205
 msgid "Dump LayoutRects"
-msgstr "Dump LayoutRects"
+msgstr ""
 
 #: shdoclc.rc:206
 msgid "Memory Monitor"
@@ -7457,7 +7439,7 @@ msgstr "Lyckades"
 
 #: wldap32.rc:28
 msgid "Operations Error"
-msgstr "Operations Error"
+msgstr ""
 
 #: wldap32.rc:29
 msgid "Protocol Error"
@@ -7465,27 +7447,27 @@ msgstr "Protokollfel"
 
 #: wldap32.rc:30
 msgid "Time Limit Exceeded"
-msgstr "Time Limit Exceeded"
+msgstr ""
 
 #: wldap32.rc:31
 msgid "Size Limit Exceeded"
-msgstr "Size Limit Exceeded"
+msgstr ""
 
 #: wldap32.rc:32
 msgid "Compare False"
-msgstr "Compare False"
+msgstr ""
 
 #: wldap32.rc:33
 msgid "Compare True"
-msgstr "Compare True"
+msgstr ""
 
 #: wldap32.rc:34
 msgid "Authentication Method Not Supported"
-msgstr "Authentication Method Not Supported"
+msgstr ""
 
 #: wldap32.rc:35
 msgid "Strong Authentication Required"
-msgstr "Strong Authentication Required"
+msgstr ""
 
 #: wldap32.rc:36
 msgid "Referral (v2)"
@@ -7497,15 +7479,15 @@ msgstr "Referral"
 
 #: wldap32.rc:38
 msgid "Administration Limit Exceeded"
-msgstr "Administration Limit Exceeded"
+msgstr ""
 
 #: wldap32.rc:39
 msgid "Unavailable Critical Extension"
-msgstr "Unavailable Critical Extension"
+msgstr ""
 
 #: wldap32.rc:40
 msgid "Confidentiality Required"
-msgstr "Confidentiality Required"
+msgstr ""
 
 #: wldap32.rc:43
 msgid "No Such Attribute"
@@ -7517,11 +7499,11 @@ msgstr "Odefinierad typ"
 
 #: wldap32.rc:45
 msgid "Inappropriate Matching"
-msgstr "Inappropriate Matching"
+msgstr ""
 
 #: wldap32.rc:46
 msgid "Constraint Violation"
-msgstr "Constraint Violation"
+msgstr ""
 
 #: wldap32.rc:47
 msgid "Attribute Or Value Exists"
@@ -7541,27 +7523,27 @@ msgstr "Alias Problem"
 
 #: wldap32.rc:61
 msgid "Invalid DN Syntax"
-msgstr "Invalid DN Syntax"
+msgstr ""
 
 #: wldap32.rc:62
 msgid "Is Leaf"
-msgstr "Is Leaf"
+msgstr ""
 
 #: wldap32.rc:63
 msgid "Alias Dereference Problem"
-msgstr "Alias Dereference Problem"
+msgstr ""
 
 #: wldap32.rc:75
 msgid "Inappropriate Authentication"
-msgstr "Inappropriate Authentication"
+msgstr ""
 
 #: wldap32.rc:76
 msgid "Invalid Credentials"
-msgstr "Invalid Credentials"
+msgstr ""
 
 #: wldap32.rc:77
 msgid "Insufficient Rights"
-msgstr "Insufficient Rights"
+msgstr ""
 
 #: wldap32.rc:78
 msgid "Busy"
@@ -7573,35 +7555,35 @@ msgstr "Otillgänglig"
 
 #: wldap32.rc:80
 msgid "Unwilling To Perform"
-msgstr "Unwilling To Perform"
+msgstr ""
 
 #: wldap32.rc:81
 msgid "Loop Detected"
-msgstr "Loop Detected"
+msgstr ""
 
 #: wldap32.rc:87
 msgid "Sort Control Missing"
-msgstr "Sort Control Missing"
+msgstr ""
 
 #: wldap32.rc:88
 msgid "Index range error"
-msgstr "Index range error"
+msgstr ""
 
 #: wldap32.rc:91
 msgid "Naming Violation"
-msgstr "Naming Violation"
+msgstr ""
 
 #: wldap32.rc:92
 msgid "Object Class Violation"
-msgstr "Object Class Violation"
+msgstr ""
 
 #: wldap32.rc:93
 msgid "Not allowed on Non-leaf"
-msgstr "Not allowed on Non-leaf"
+msgstr ""
 
 #: wldap32.rc:94
 msgid "Not allowed on RDN"
-msgstr "Not allowed on RDN"
+msgstr ""
 
 #: wldap32.rc:95
 msgid "Already Exists"
@@ -7609,23 +7591,23 @@ msgstr "Finns redan"
 
 #: wldap32.rc:96
 msgid "No Object Class Mods"
-msgstr "No Object Class Mods"
+msgstr ""
 
 #: wldap32.rc:97
 msgid "Results Too Large"
-msgstr "Results Too Large"
+msgstr ""
 
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
-msgstr "Affects Multiple DSAs"
+msgstr ""
 
 #: wldap32.rc:107
 msgid "Other"
-msgstr "Other"
+msgstr ""
 
 #: wldap32.rc:108
 msgid "Server Down"
-msgstr "Server Down"
+msgstr ""
 
 #: wldap32.rc:109
 msgid "Local Error"
@@ -7633,11 +7615,11 @@ msgstr "Lokalt fel"
 
 #: wldap32.rc:110
 msgid "Encoding Error"
-msgstr "Encoding Error"
+msgstr ""
 
 #: wldap32.rc:111
 msgid "Decoding Error"
-msgstr "Decoding Error"
+msgstr ""
 
 #: wldap32.rc:112
 msgid "Timeout"
@@ -7645,51 +7627,51 @@ msgstr "Tidsgräns överstigen"
 
 #: wldap32.rc:113
 msgid "Auth Unknown"
-msgstr "Auth Unknown"
+msgstr ""
 
 #: wldap32.rc:114
 msgid "Filter Error"
-msgstr "Filter Error"
+msgstr ""
 
 #: wldap32.rc:115
 msgid "User Cancelled"
-msgstr "User Cancelled"
+msgstr ""
 
 #: wldap32.rc:116
 msgid "Parameter Error"
-msgstr "Parameter Error"
+msgstr ""
 
 #: wldap32.rc:117
 msgid "No Memory"
-msgstr "No Memory"
+msgstr ""
 
 #: wldap32.rc:118
 msgid "Can't connect to the LDAP server"
-msgstr "Can't connect to the LDAP server"
+msgstr ""
 
 #: wldap32.rc:119
 msgid "Operation not supported by this version of the LDAP protocol"
-msgstr "Operation not supported by this version of the LDAP protocol"
+msgstr ""
 
 #: wldap32.rc:120
 msgid "Specified control was not found in message"
-msgstr "Specified control was not found in message"
+msgstr ""
 
 #: wldap32.rc:121
 msgid "No result present in message"
-msgstr "No result present in message"
+msgstr ""
 
 #: wldap32.rc:122
 msgid "More results returned"
-msgstr "More results returned"
+msgstr ""
 
 #: wldap32.rc:123
 msgid "Loop while handling referrals"
-msgstr "Loop while handling referrals"
+msgstr ""
 
 #: wldap32.rc:124
 msgid "Referral hop limit exceeded"
-msgstr "Referral hop limit exceeded"
+msgstr ""
 
 #: attrib.rc:27 cmd.rc:297
 msgid ""
@@ -10086,7 +10068,7 @@ msgstr "Minne använt: %dK / %dK"
 
 #: taskmgr.rc:272
 msgid "Image Name"
-msgstr "Image Name"
+msgstr ""
 
 #: taskmgr.rc:273
 msgid "PID"
@@ -10290,9 +10272,6 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
-"Execution of uninstall command '%s' failed, perhaps due to missing "
-"executable.\n"
-"Do you want to remove the uninstall entry from the registry ?"
 
 #: view.rc:33
 msgid "&Pan"
@@ -10320,7 +10299,7 @@ msgstr "&Ner"
 
 #: view.rc:46
 msgid "Regular Metafile Viewer"
-msgstr "Regular Metafile viewer"
+msgstr ""
 
 #: winecfg.rc:31
 msgid "Libraries"
@@ -10686,7 +10665,7 @@ msgstr "Konfigurationsfel"
 
 #: wineconsole.rc:39
 msgid "Screen buffer size must be greater or equal to the window's one"
-msgstr "Screen buffer size must be greater or equal to the window's one"
+msgstr ""
 
 #: wineconsole.rc:34
 msgid "Each character is %ld pixels wide on %ld pixels high"
@@ -10698,15 +10677,15 @@ msgstr "Det här är ett test"
 
 #: wineconsole.rc:41
 msgid "wineconsole: Couldn't parse event id\n"
-msgstr "wineconsole: Couldn't parse event id\n"
+msgstr ""
 
 #: wineconsole.rc:42
 msgid "wineconsole: Invalid backend\n"
-msgstr "wineconsole: Invalid backend\n"
+msgstr ""
 
 #: wineconsole.rc:43
 msgid "wineconsole: Unrecognized command line option\n"
-msgstr "wineconsole: Unrecognized command line option\n"
+msgstr ""
 
 #: wineconsole.rc:44
 msgid "Starts a program in a Wine console\n"
@@ -11305,7 +11284,7 @@ msgstr "Ogiltigt talformat"
 
 #: wordpad.rc:188
 msgid "OLE storage documents are not supported"
-msgstr "OLE storage documents are not supported"
+msgstr ""
 
 #: wordpad.rc:189
 msgid "Could not save the file."
