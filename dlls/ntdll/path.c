@@ -751,7 +751,6 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
 
     memmove(buffer + reqsize / sizeof(WCHAR), name + dep, deplen + sizeof(WCHAR));
     if (reqsize) memcpy(buffer, ins_str, reqsize);
-    reqsize += deplen;
 
     if (ins_str != tmp && ins_str != cd->Buffer)
         RtlFreeHeap(GetProcessHeap(), 0, ins_str);

@@ -2617,7 +2617,6 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
             {
                 afdi->lpAssemblyDirectoryName = ptr;
                 memcpy(ptr, assembly->directory, ad_len * sizeof(WCHAR));
-                ptr += ad_len;
             }
             else afdi->lpAssemblyDirectoryName = NULL;
             RtlFreeHeap( GetProcessHeap(), 0, assembly_id );
