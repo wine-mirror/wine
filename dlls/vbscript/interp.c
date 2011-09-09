@@ -168,21 +168,13 @@ static void vbstack_to_dp(exec_ctx_t *ctx, unsigned arg_cnt, DISPPARAMS *dp)
     }
 }
 
-static HRESULT interp_icall(exec_ctx_t *ctx)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT interp_icallv(exec_ctx_t *ctx)
+static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
 {
     BSTR identifier = ctx->instr->arg1.bstr;
     const unsigned arg_cnt = ctx->instr->arg2.uint;
     ref_t ref = {0};
     DISPPARAMS dp;
     HRESULT hres;
-
-    TRACE("\n");
 
     hres = lookup_identifier(ctx, identifier, &ref);
     if(FAILED(hres))
@@ -192,7 +184,7 @@ static HRESULT interp_icallv(exec_ctx_t *ctx)
 
     switch(ref.type) {
     case REF_DISP:
-        hres = disp_call(ctx->script, ref.u.d.disp, ref.u.d.id, &dp, NULL);
+        hres = disp_call(ctx->script, ref.u.d.disp, ref.u.d.id, &dp, res);
         if(FAILED(hres))
             return hres;
         break;
@@ -203,6 +195,26 @@ static HRESULT interp_icallv(exec_ctx_t *ctx)
 
     stack_popn(ctx, arg_cnt);
     return S_OK;
+}
+
+static HRESULT interp_icall(exec_ctx_t *ctx)
+{
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = do_icall(ctx, &v);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push(ctx, &v);
+}
+
+static HRESULT interp_icallv(exec_ctx_t *ctx)
+{
+    TRACE("\n");
+    return do_icall(ctx, NULL);
 }
 
 static HRESULT interp_ret(exec_ctx_t *ctx)
