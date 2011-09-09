@@ -19,6 +19,7 @@
 typedef enum {
     EXPR_BOOL,
     EXPR_MEMBER,
+    EXPR_NOT,
     EXPR_STRING
 } expression_type_t;
 
@@ -36,6 +37,11 @@ typedef struct {
     expression_t expr;
     const WCHAR *value;
 } string_expression_t;
+
+typedef struct {
+    expression_t expr;
+    expression_t *subexpr;
+} unary_expression_t;
 
 typedef struct {
     expression_t expr;

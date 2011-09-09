@@ -37,6 +37,7 @@ static void source_add_statement(parser_ctx_t*,statement_t*);
 
 static expression_t *new_bool_expression(parser_ctx_t*,VARIANT_BOOL);
 static expression_t *new_string_expression(parser_ctx_t*,const WCHAR*);
+static expression_t *new_unary_expression(parser_ctx_t*,expression_type_t,expression_t*);
 
 static member_expression_t *new_member_expression(parser_ctx_t*,expression_t*,const WCHAR*);
 
@@ -74,6 +75,7 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 
 %type <statement> Statement StatementNl
 %type <expression> Expression LiteralExpression PrimaryExpression
+%type <expression> NotExpression
 %type <member> MemberExpression
 %type <expression> Arguments_opt ArgumentList_opt ArgumentList
 %type <bool> OptionExplicit_opt
@@ -119,8 +121,12 @@ EmptyBrackets_opt
     | tEMPTYBRACKETS
 
 Expression
+    : NotExpression                 { $$ = $1; }
+
+NotExpression
     : LiteralExpression /* FIXME */ { $$ = $1; }
     | PrimaryExpression /* FIXME */ { $$ = $1; }
+    | tNOT NotExpression            { $$ = new_unary_expression(ctx, EXPR_NOT, $2); CHECK_ERROR; }
 
 LiteralExpression
     : tTRUE                         { $$ = new_bool_expression(ctx, VARIANT_TRUE); CHECK_ERROR; }
@@ -187,6 +193,18 @@ static expression_t *new_string_expression(parser_ctx_t *ctx, const WCHAR *value
         return NULL;
 
     expr->value = value;
+    return &expr->expr;
+}
+
+static expression_t *new_unary_expression(parser_ctx_t *ctx, expression_type_t type, expression_t *subexpr)
+{
+    unary_expression_t *expr;
+
+    expr = new_expression(ctx, type, sizeof(*expr));
+    if(!expr)
+        return NULL;
+
+    expr->subexpr = subexpr;
     return &expr->expr;
 }
 
