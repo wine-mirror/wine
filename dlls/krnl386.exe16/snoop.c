@@ -99,7 +99,8 @@ static	HANDLE16		xsnr = 0;
 void
 SNOOP16_RegisterDLL(HMODULE16 hModule,LPCSTR name) {
 	SNOOP16_DLL	**dll = &(firstdll);
-	char		*s;
+	const char	*p;
+	char		*q;
 
 	if (!TRACE_ON(snoop)) return;
 
@@ -146,11 +147,11 @@ SNOOP16_RegisterDLL(HMODULE16 hModule,LPCSTR name) {
 
 	(*dll)->next	= NULL;
 	(*dll)->hmod	= hModule;
-	if ((s=strrchr(name,'\\')))
-		name = s+1;
+	if ((p=strrchr(name,'\\')))
+		name = p+1;
 	strcpy( (*dll)->name, name );
-	if ((s=strrchr((*dll)->name,'.')))
-		*s='\0';
+	if ((q=strrchr((*dll)->name,'.')))
+		*q='\0';
 	(*dll)->funhandle = GlobalHandleToSel16(GLOBAL_Alloc(GMEM_ZEROINIT,65535,0,WINE_LDT_FLAGS_CODE));
 	(*dll)->funs = GlobalLock16((*dll)->funhandle);
 	if (!(*dll)->funs) {
