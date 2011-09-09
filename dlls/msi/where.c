@@ -2,6 +2,7 @@
  * Implementation of the Microsoft Installer (msi.dll)
  *
  * Copyright 2002 Mike McCormack for CodeWeavers
+ * Copyright 2011 Bernhard Loos
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -75,7 +76,12 @@ typedef struct tagMSIWHEREVIEW
     MSIORDERINFO  *order_info;
 } MSIWHEREVIEW;
 
+static UINT WHERE_evaluate( MSIWHEREVIEW *wv, const UINT rows[],
+                            struct expr *cond, INT *val, MSIRECORD *record );
+
 #define INITIAL_REORDER_SIZE 16
+
+#define INVALID_ROW_INDEX (-1)
 
 static void free_reorder(MSIWHEREVIEW *wv)
 {
@@ -362,90 +368,170 @@ static UINT WHERE_delete_row(struct tagMSIVIEW *view, UINT row)
     return wv->tables->view->ops->delete_row(wv->tables->view, rows[0]);
 }
 
-static INT INT_evaluate_binary( INT lval, UINT op, INT rval )
+static INT INT_evaluate_binary( MSIWHEREVIEW *wv, const UINT rows[],
+                                const struct complex_expr *expr, INT *val, MSIRECORD *record )
 {
-    switch( op )
+    UINT rl, rr;
+    INT lval, rval;
+
+    rl = WHERE_evaluate(wv, rows, expr->left, &lval, record);
+    if (rl != ERROR_SUCCESS && rl != ERROR_CONTINUE)
+        return rl;
+    rr = WHERE_evaluate(wv, rows, expr->right, &rval, record);
+    if (rr != ERROR_SUCCESS && rr != ERROR_CONTINUE)
+        return rr;
+
+    if (rl == ERROR_CONTINUE || rr == ERROR_CONTINUE)
+    {
+        if (rl == rr)
+        {
+            *val = TRUE;
+            return ERROR_CONTINUE;
+        }
+
+        if (expr->op == OP_AND)
+        {
+            if ((rl == ERROR_CONTINUE && !rval) || (rr == ERROR_CONTINUE && !lval))
+            {
+                *val = FALSE;
+                return ERROR_SUCCESS;
+            }
+        }
+        else if (expr->op == OP_OR)
+        {
+            if ((rl == ERROR_CONTINUE && rval) || (rr == ERROR_CONTINUE && lval))
+            {
+                *val = TRUE;
+                return ERROR_SUCCESS;
+            }
+        }
+
+        *val = TRUE;
+        return ERROR_CONTINUE;
+    }
+
+    switch( expr->op )
     {
     case OP_EQ:
-        return ( lval == rval );
+        *val = ( lval == rval );
+        break;
     case OP_AND:
-        return ( lval && rval );
+        *val = ( lval && rval );
+        break;
     case OP_OR:
-        return ( lval || rval );
+        *val = ( lval || rval );
+        break;
     case OP_GT:
-        return ( lval > rval );
+        *val = ( lval > rval );
+        break;
     case OP_LT:
-        return ( lval < rval );
+        *val = ( lval < rval );
+        break;
     case OP_LE:
-        return ( lval <= rval );
+        *val = ( lval <= rval );
+        break;
     case OP_GE:
-        return ( lval >= rval );
+        *val = ( lval >= rval );
+        break;
     case OP_NE:
-        return ( lval != rval );
+        *val = ( lval != rval );
+        break;
     default:
-        ERR("Unknown operator %d\n", op );
+        ERR("Unknown operator %d\n", expr->op );
+        return ERROR_FUNCTION_FAILED;
     }
-    return 0;
+
+    return ERROR_SUCCESS;
 }
 
 static inline UINT expr_fetch_value(const union ext_column *expr, const UINT rows[], UINT *val)
 {
     JOINTABLE *table = expr->parsed.table;
 
+    if( rows[table->table_index] == INVALID_ROW_INDEX )
+    {
+        *val = 1;
+        return ERROR_CONTINUE;
+    }
     return table->view->ops->fetch_int(table->view, rows[table->table_index],
                                         expr->parsed.column, val);
 }
 
 
-static INT INT_evaluate_unary( INT lval, UINT op )
+static UINT INT_evaluate_unary( MSIWHEREVIEW *wv, const UINT rows[],
+                                const struct complex_expr *expr, INT *val, MSIRECORD *record )
 {
-    switch( op )
+    UINT r;
+    UINT lval;
+
+    r = expr_fetch_value(&expr->left->u.column, rows, &lval);
+    if(r != ERROR_SUCCESS)
+        return r;
+
+    switch( expr->op )
     {
     case OP_ISNULL:
-        return ( !lval );
+        *val = !lval;
+        break;
     case OP_NOTNULL:
-        return ( lval );
+        *val = lval;
+        break;
     default:
-        ERR("Unknown operator %d\n", op );
+        ERR("Unknown operator %d\n", expr->op );
+        return ERROR_FUNCTION_FAILED;
     }
-    return 0;
+    return ERROR_SUCCESS;
 }
 
-static const WCHAR *STRING_evaluate( MSIWHEREVIEW *wv, const UINT rows[],
+static UINT STRING_evaluate( MSIWHEREVIEW *wv, const UINT rows[],
                                      const struct expr *expr,
-                                     const MSIRECORD *record )
+                                     const MSIRECORD *record,
+                                     const WCHAR **str )
 {
-    UINT val = 0, r;
+    UINT val = 0, r = ERROR_SUCCESS;
 
     switch( expr->type )
     {
     case EXPR_COL_NUMBER_STRING:
         r = expr_fetch_value(&expr->u.column, rows, &val);
-        if( r != ERROR_SUCCESS )
-            return NULL;
-        return msi_string_lookup_id( wv->db->strings, val );
+        if (r == ERROR_SUCCESS)
+            *str =  msi_string_lookup_id(wv->db->strings, val);
+        else
+            *str = NULL;
+        break;
 
     case EXPR_SVAL:
-        return expr->u.sval;
+        *str = expr->u.sval;
+        break;
 
     case EXPR_WILDCARD:
-        return MSI_RecordGetString( record, ++wv->rec_index );
+        *str = MSI_RecordGetString(record, ++wv->rec_index);
+        break;
 
     default:
         ERR("Invalid expression type\n");
+        r = ERROR_FUNCTION_FAILED;
+        *str = NULL;
         break;
     }
-    return NULL;
+    return r;
 }
 
-static UINT STRCMP_Evaluate( MSIWHEREVIEW *wv, const UINT rows[], const struct expr *cond,
+static UINT STRCMP_Evaluate( MSIWHEREVIEW *wv, const UINT rows[], const struct complex_expr *expr,
                              INT *val, const MSIRECORD *record )
 {
     int sr;
     const WCHAR *l_str, *r_str;
+    UINT r;
 
-    l_str = STRING_evaluate( wv, rows, cond->u.expr.left, record );
-    r_str = STRING_evaluate( wv, rows, cond->u.expr.right, record );
+    *val = TRUE;
+    r = STRING_evaluate(wv, rows, expr->left, record, &l_str);
+    if (r == ERROR_CONTINUE)
+        return r;
+    r = STRING_evaluate(wv, rows, expr->right, record, &r_str);
+    if (r == ERROR_CONTINUE)
+        return r;
+
     if( l_str == r_str ||
         ((!l_str || !*l_str) && (!r_str || !*r_str)) )
         sr = 0;
@@ -456,8 +542,8 @@ static UINT STRCMP_Evaluate( MSIWHEREVIEW *wv, const UINT rows[], const struct e
     else
         sr = strcmpW( l_str, r_str );
 
-    *val = ( cond->u.expr.op == OP_EQ && ( sr == 0 ) ) ||
-           ( cond->u.expr.op == OP_NE && ( sr != 0 ) );
+    *val = ( expr->op == OP_EQ && ( sr == 0 ) ) ||
+           ( expr->op == OP_NE && ( sr != 0 ) );
 
     return ERROR_SUCCESS;
 }
@@ -466,7 +552,6 @@ static UINT WHERE_evaluate( MSIWHEREVIEW *wv, const UINT rows[],
                             struct expr *cond, INT *val, MSIRECORD *record )
 {
     UINT r, tval;
-    INT lval, rval;
 
     if( !cond )
     {
@@ -495,24 +580,13 @@ static UINT WHERE_evaluate( MSIWHEREVIEW *wv, const UINT rows[],
         return ERROR_SUCCESS;
 
     case EXPR_COMPLEX:
-        r = WHERE_evaluate( wv, rows, cond->u.expr.left, &lval, record );
-        if( r != ERROR_SUCCESS )
-            return r;
-        r = WHERE_evaluate( wv, rows, cond->u.expr.right, &rval, record );
-        if( r != ERROR_SUCCESS )
-            return r;
-        *val = INT_evaluate_binary( lval, cond->u.expr.op, rval );
-        return ERROR_SUCCESS;
+        return INT_evaluate_binary(wv, rows, &cond->u.expr, val, record);
 
     case EXPR_UNARY:
-        r = expr_fetch_value(&cond->u.expr.left->u.column, rows, &tval);
-        if( r != ERROR_SUCCESS )
-            return r;
-        *val = INT_evaluate_unary( tval, cond->u.expr.op );
-        return ERROR_SUCCESS;
+        return INT_evaluate_unary( wv, rows, &cond->u.expr, val, record );
 
     case EXPR_STRCMP:
-        return STRCMP_Evaluate( wv, rows, cond, val, record );
+        return STRCMP_Evaluate( wv, rows, &cond->u.expr, val, record );
 
     case EXPR_WILDCARD:
         *val = MSI_RecordGetInteger( record, ++wv->rec_index );
@@ -533,26 +607,30 @@ static UINT check_condition( MSIWHEREVIEW *wv, MSIRECORD *record, JOINTABLE *tab
     INT val;
 
     for (table_rows[table->table_index] = 0; table_rows[table->table_index] < table->row_count;
-          table_rows[table->table_index]++)
+         table_rows[table->table_index]++)
     {
-        if (table->next)
+        val = 0;
+        wv->rec_index = 0;
+        r = WHERE_evaluate( wv, table_rows, wv->cond, &val, record );
+        if (r != ERROR_SUCCESS && r != ERROR_CONTINUE)
+            break;
+        if (val)
         {
-            r = check_condition(wv, record, table->next, table_rows);
-            if(r != ERROR_SUCCESS)
-                break;
-        }
-        else
-        {
-            val = 0;
-            wv->rec_index = 0;
-            r = WHERE_evaluate (wv, table_rows, wv->cond, &val, record);
-            if(r != ERROR_SUCCESS)
-                break;
-            if (!val)
-                continue;
-            add_row(wv, table_rows);
+            if (table->next)
+            {
+                r = check_condition(wv, record, table->next, table_rows);
+                if (r != ERROR_SUCCESS)
+                    break;
+            }
+            else
+            {
+                if (r != ERROR_SUCCESS)
+                    break;
+                add_row (wv, table_rows);
+            }
         }
     }
+    table_rows[table->table_index] = INVALID_ROW_INDEX;
     return r;
 }
 
@@ -609,6 +687,7 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
     UINT r;
     JOINTABLE *table = wv->tables;
     UINT *rows;
+    int i;
 
     TRACE("%p %p\n", wv, record);
 
@@ -637,6 +716,9 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
     while ((table = table->next));
 
     rows = msi_alloc( wv->table_count * sizeof(*rows) );
+    for (i = 0; i < wv->table_count; i++)
+        rows[i] = INVALID_ROW_INDEX;
+
     r =  check_condition(wv, record, wv->tables, rows);
 
     if (wv->order_info)
