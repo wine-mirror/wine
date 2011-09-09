@@ -6198,7 +6198,7 @@ DWORD WineEngGetFontData(GdiFont *font, DWORD table, DWORD offset, LPVOID buf,
     if(!FT_IS_SFNT(ft_face))
         return GDI_ERROR;
 
-    if(!buf || !cbData)
+    if(!buf)
         len = 0;
     else
         len = cbData;
