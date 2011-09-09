@@ -2535,7 +2535,6 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,mui,
 11,gecko\plugin,npmshtml.dll
 11,wbem,mofcomp.exe
-11,,iexplore.exe,-
 11,,winetest.exe,-
 12,,mountmgr.sys,-
 ; registration order matters for these
@@ -2545,6 +2544,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,msxml4.dll
 11,,msxml6.dll
 11,,shdocvw.dll
+16422,Internet Explorer,iexplore.exe
 11,,*
 
 [FakeDlls]
