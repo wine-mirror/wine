@@ -22,4 +22,7 @@ call ok(true, "true is not true?")
 ok true, "true is not true?"
 call ok((true), "true is not true?")
 
+ok not false, "not false but not true?"
+ok not not true, "not not true but not true?"
+
 reportSuccess()

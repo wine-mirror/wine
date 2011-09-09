@@ -53,6 +53,12 @@ typedef struct {
     } u;
 } ref_t;
 
+typedef struct {
+    VARIANT *v;
+    VARIANT store;
+    BOOL owned;
+} variant_val_t;
+
 static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, ref_t *ref)
 {
     named_item_t *item;
@@ -107,6 +113,35 @@ static void stack_popn(exec_ctx_t *ctx, unsigned n)
 {
     while(n--)
         VariantClear(stack_pop(ctx));
+}
+
+static HRESULT stack_pop_val(exec_ctx_t *ctx, variant_val_t *v)
+{
+    VARIANT *var;
+
+    var = stack_pop(ctx);
+
+    if(V_VT(var) == (VT_BYREF|VT_VARIANT)) {
+        v->owned = FALSE;
+        var = V_VARIANTREF(var);
+    }else {
+        v->owned = TRUE;
+    }
+
+    if(V_VT(var) == VT_DISPATCH) {
+        FIXME("got dispatch - get its default value\n");
+        return E_NOTIMPL;
+    }else {
+        v->v = var;
+    }
+
+    return S_OK;
+}
+
+static inline void release_val(variant_val_t *v)
+{
+    if(v->owned)
+        VariantClear(v->v);
 }
 
 static void vbstack_to_dp(exec_ctx_t *ctx, unsigned arg_cnt, DISPPARAMS *dp)
@@ -200,8 +235,22 @@ static HRESULT interp_string(exec_ctx_t *ctx)
 
 static HRESULT interp_not(exec_ctx_t *ctx)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    variant_val_t val;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = stack_pop_val(ctx, &val);
+    if(FAILED(hres))
+        return hres;
+
+    hres = VarNot(val.v, &v);
+    release_val(&val);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push(ctx, &v);
 }
 
 static const instr_func_t op_funcs[] = {
