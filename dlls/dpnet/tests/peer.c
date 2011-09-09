@@ -52,7 +52,7 @@ static void test_init_dp(void)
     ok(hr == S_OK, "CoCreateInstance failed with 0x%x\n", hr);
 
     hr = IDirectPlay8Peer_Initialize(peer, NULL, DirectPlayMessageHandler, 0);
-    todo_wine ok(hr == S_OK, "IDirectPlay8Peer_Initialize failed with %x\n", hr);
+    ok(hr == S_OK, "IDirectPlay8Peer_Initialize failed with %x\n", hr);
 }
 
 static void test_enum_service_providers(void)

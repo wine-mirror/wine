@@ -85,9 +85,9 @@ static ULONG WINAPI IDirectPlay8PeerImpl_Release(IDirectPlay8Peer *iface)
 static HRESULT WINAPI IDirectPlay8PeerImpl_Initialize(IDirectPlay8Peer *iface,
         void * const pvUserContext, const PFNDPNMESSAGEHANDLER pfn, const DWORD dwFlags)
 {
-    FIXME("(%p)->(%p,%p,%x): stub\n", iface, pvUserContext, pfn, dwFlags);
+    TRACE("(%p)->(%p,%p,%x): stub\n", iface, pvUserContext, pfn, dwFlags);
 
-    return DPNERR_GENERIC;
+    return DPN_OK;
 }
 
 static HRESULT WINAPI IDirectPlay8PeerImpl_EnumServiceProviders(IDirectPlay8Peer *iface,
