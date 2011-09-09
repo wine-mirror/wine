@@ -424,10 +424,13 @@ static void on_winver_change(HWND dialog)
                      win_versions[selection].dwMinorVersion, win_versions[selection].dwBuildNumber);
             set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "VersionNumber", Buffer);
             set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "SubVersionNumber", win_versions[selection].szCSDVersion);
+            snprintf(Buffer, sizeof(Buffer), "Microsoft %s", win_versions[selection].szDescription);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "ProductName", Buffer);
 
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CSDVersion", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentVersion", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuildNumber", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "ProductName", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyProdNT, "ProductType", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyWindNT, "CSDVersion", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyEnvNT, "OS", NULL);
@@ -441,6 +444,8 @@ static void on_winver_change(HWND dialog)
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CSDVersion", win_versions[selection].szCSDVersion);
             snprintf(Buffer, sizeof(Buffer), "%d", win_versions[selection].dwBuildNumber);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuildNumber", Buffer);
+            snprintf(Buffer, sizeof(Buffer), "Microsoft %s", win_versions[selection].szDescription);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "ProductName", Buffer);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyProdNT, "ProductType", win_versions[selection].szProductType);
             set_reg_key_dword(HKEY_LOCAL_MACHINE, szKeyWindNT, "CSDVersion",
                               MAKEWORD( win_versions[selection].wServicePackMinor,
@@ -449,6 +454,7 @@ static void on_winver_change(HWND dialog)
 
             set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "VersionNumber", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "SubVersionNumber", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "ProductName", NULL);
             set_reg_key(config_key, keypath(""), "Version", NULL);
             break;
 
@@ -456,11 +462,13 @@ static void on_winver_change(HWND dialog)
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CSDVersion", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentVersion", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuildNumber", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "ProductName", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyProdNT, "ProductType", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyWindNT, "CSDVersion", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyEnvNT, "OS", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "VersionNumber", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "SubVersionNumber", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKey9x, "ProductName", NULL);
             set_reg_key(config_key, keypath(""), "Version", win_versions[selection].szVersion);
             break;
         }
