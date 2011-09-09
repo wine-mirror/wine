@@ -38,6 +38,7 @@ static void source_add_statement(parser_ctx_t*,statement_t*);
 static expression_t *new_bool_expression(parser_ctx_t*,VARIANT_BOOL);
 static expression_t *new_string_expression(parser_ctx_t*,const WCHAR*);
 static expression_t *new_unary_expression(parser_ctx_t*,expression_type_t,expression_t*);
+static expression_t *new_binary_expression(parser_ctx_t*,expression_type_t,expression_t*,expression_t*);
 
 static member_expression_t *new_member_expression(parser_ctx_t*,expression_t*,const WCHAR*);
 
@@ -74,7 +75,8 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 %token <string> tIdentifier tString
 
 %type <statement> Statement StatementNl
-%type <expression> Expression LiteralExpression PrimaryExpression
+%type <expression> Expression LiteralExpression PrimaryExpression EqualityExpression
+%type <expression> ConcatExpression
 %type <expression> NotExpression
 %type <member> MemberExpression
 %type <expression> Arguments_opt ArgumentList_opt ArgumentList
@@ -124,9 +126,16 @@ Expression
     : NotExpression                 { $$ = $1; }
 
 NotExpression
+    : EqualityExpression            { $$ = $1; }
+    | tNOT NotExpression            { $$ = new_unary_expression(ctx, EXPR_NOT, $2); CHECK_ERROR; }
+
+EqualityExpression
+    : ConcatExpression                          { $$ = $1; }
+    | EqualityExpression '=' ConcatExpression   { $$ = new_binary_expression(ctx, EXPR_EQUAL, $1, $3); CHECK_ERROR; }
+
+ConcatExpression
     : LiteralExpression /* FIXME */ { $$ = $1; }
     | PrimaryExpression /* FIXME */ { $$ = $1; }
-    | tNOT NotExpression            { $$ = new_unary_expression(ctx, EXPR_NOT, $2); CHECK_ERROR; }
 
 LiteralExpression
     : tTRUE                         { $$ = new_bool_expression(ctx, VARIANT_TRUE); CHECK_ERROR; }
@@ -205,6 +214,19 @@ static expression_t *new_unary_expression(parser_ctx_t *ctx, expression_type_t t
         return NULL;
 
     expr->subexpr = subexpr;
+    return &expr->expr;
+}
+
+static expression_t *new_binary_expression(parser_ctx_t *ctx, expression_type_t type, expression_t *left, expression_t *right)
+{
+    binary_expression_t *expr;
+
+    expr = new_expression(ctx, type, sizeof(*expr));
+    if(!expr)
+        return NULL;
+
+    expr->left = left;
+    expr->right = right;
     return &expr->expr;
 }
 

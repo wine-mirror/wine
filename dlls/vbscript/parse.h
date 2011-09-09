@@ -18,6 +18,7 @@
 
 typedef enum {
     EXPR_BOOL,
+    EXPR_EQUAL,
     EXPR_MEMBER,
     EXPR_NOT,
     EXPR_STRING
@@ -42,6 +43,12 @@ typedef struct {
     expression_t expr;
     expression_t *subexpr;
 } unary_expression_t;
+
+typedef struct {
+    expression_t expr;
+    expression_t *left;
+    expression_t *right;
+} binary_expression_t;
 
 typedef struct {
     expression_t expr;
