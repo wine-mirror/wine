@@ -1101,7 +1101,7 @@ DWORD WINAPI VerFindFileA(
     const char *destDir;
     unsigned int  curDirSizeReq;
     unsigned int  destDirSizeReq;
-    char  systemDir[MAX_PATH];
+    char winDir[MAX_PATH], systemDir[MAX_PATH];
 
     /* Print out debugging information */
     TRACE("flags = %x filename=%s windir=%s appdir=%s curdirlen=%p(%u) destdirlen=%p(%u)\n",
@@ -1132,17 +1132,20 @@ DWORD WINAPI VerFindFileA(
     }
     else /* not a shared file */
     {
-        if(lpszAppDir)
+        destDir = lpszAppDir ? lpszAppDir : "";
+        if(lpszFilename)
         {
-            destDir = lpszAppDir;
-            if(lpszFilename)
+            GetWindowsDirectoryA( winDir, MAX_PATH );
+            if(testFileExistenceA(destDir, lpszFilename, FALSE)) curDir = destDir;
+            else if(testFileExistenceA(winDir, lpszFilename, FALSE))
             {
-                if(testFileExistenceA(destDir, lpszFilename, FALSE)) curDir = destDir;
-                else if(testFileExistenceA(systemDir, lpszFilename, FALSE))
-                {
-                    curDir = systemDir;
-                    retval |= VFF_CURNEDEST;
-                }
+                curDir = winDir;
+                retval |= VFF_CURNEDEST;
+            }
+            else if(testFileExistenceA(systemDir, lpszFilename, FALSE))
+            {
+                curDir = systemDir;
+                retval |= VFF_CURNEDEST;
             }
         }
     }
@@ -1195,7 +1198,7 @@ DWORD WINAPI VerFindFileW( DWORD flags,LPCWSTR lpszFilename,LPCWSTR lpszWinDir,
     const WCHAR *destDir;
     unsigned int curDirSizeReq;
     unsigned int destDirSizeReq;
-    WCHAR systemDir[MAX_PATH];
+    WCHAR winDir[MAX_PATH], systemDir[MAX_PATH];
 
     /* Print out debugging information */
     TRACE("flags = %x filename=%s windir=%s appdir=%s curdirlen=%p(%u) destdirlen=%p(%u)\n",
@@ -1226,17 +1229,20 @@ DWORD WINAPI VerFindFileW( DWORD flags,LPCWSTR lpszFilename,LPCWSTR lpszWinDir,
     }
     else /* not a shared file */
     {
-        if(lpszAppDir)
+        destDir = lpszAppDir ? lpszAppDir : &emptyW;
+        if(lpszFilename)
         {
-            destDir = lpszAppDir;
-            if(lpszFilename)
+            GetWindowsDirectoryW( winDir, MAX_PATH );
+            if(testFileExistenceW(destDir, lpszFilename, FALSE)) curDir = destDir;
+            else if(testFileExistenceW(winDir, lpszFilename, FALSE))
             {
-                if(testFileExistenceW(destDir, lpszFilename, FALSE)) curDir = destDir;
-                else if(testFileExistenceW(systemDir, lpszFilename, FALSE))
-                {
-                    curDir = systemDir;
-                    retval |= VFF_CURNEDEST;
-                }
+                curDir = winDir;
+                retval |= VFF_CURNEDEST;
+            }
+            else if(testFileExistenceW(systemDir, lpszFilename, FALSE))
+            {
+                curDir = systemDir;
+                retval |= VFF_CURNEDEST;
             }
         }
     }
