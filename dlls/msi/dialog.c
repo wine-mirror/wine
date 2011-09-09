@@ -38,6 +38,7 @@
 #include "commctrl.h"
 #include "winreg.h"
 #include "shlwapi.h"
+#include "msiserver.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -3848,7 +3849,7 @@ UINT msi_dialog_run_message_loop( msi_dialog *dialog )
     return ERROR_SUCCESS;
 }
 
-void msi_dialog_do_preview( msi_dialog *dialog )
+static void msi_dialog_do_preview( msi_dialog *dialog )
 {
     TRACE("\n");
     dialog->attributes |= msidbDialogAttributesVisible;
@@ -4014,4 +4015,140 @@ done:
     msi_dialog_destroy( dialog );
 
     return r;
+}
+
+static void MSI_ClosePreview( MSIOBJECTHDR *arg )
+{
+    MSIPREVIEW *preview = (MSIPREVIEW *)arg;
+    msiobj_release( &preview->package->hdr );
+}
+
+static MSIPREVIEW *MSI_EnableUIPreview( MSIDATABASE *db )
+{
+    MSIPREVIEW *preview = NULL;
+    MSIPACKAGE *package;
+
+    package = MSI_CreatePackage( db, NULL );
+    if (package)
+    {
+        preview = alloc_msiobject( MSIHANDLETYPE_PREVIEW, sizeof(MSIPREVIEW), MSI_ClosePreview );
+        if (preview)
+        {
+            preview->package = package;
+            msiobj_addref( &package->hdr );
+        }
+        msiobj_release( &package->hdr );
+    }
+    return preview;
+}
+
+UINT WINAPI MsiEnableUIPreview( MSIHANDLE hdb, MSIHANDLE *phPreview )
+{
+    MSIDATABASE *db;
+    MSIPREVIEW *preview;
+    UINT r = ERROR_FUNCTION_FAILED;
+
+    TRACE("%d %p\n", hdb, phPreview);
+
+    db = msihandle2msiinfo( hdb, MSIHANDLETYPE_DATABASE );
+    if (!db)
+    {
+        IWineMsiRemoteDatabase *remote_database;
+
+        remote_database = (IWineMsiRemoteDatabase *)msi_get_remote( hdb );
+        if (!remote_database)
+            return ERROR_INVALID_HANDLE;
+
+        *phPreview = 0;
+
+        IWineMsiRemoteDatabase_Release( remote_database );
+        WARN("MsiEnableUIPreview not allowed during a custom action!\n");
+
+        return ERROR_FUNCTION_FAILED;
+    }
+    preview = MSI_EnableUIPreview( db );
+    if (preview)
+    {
+        *phPreview = alloc_msihandle( &preview->hdr );
+        msiobj_release( &preview->hdr );
+        r = ERROR_SUCCESS;
+        if (!*phPreview)
+            r = ERROR_NOT_ENOUGH_MEMORY;
+    }
+    msiobj_release( &db->hdr );
+    return r;
+}
+
+static UINT preview_event_handler( MSIPACKAGE *package, LPCWSTR event,
+                                   LPCWSTR argument, msi_dialog *dialog )
+{
+    MESSAGE("Preview dialog event '%s' (arg='%s')\n", debugstr_w(event), debugstr_w(argument));
+    return ERROR_SUCCESS;
+}
+
+static UINT MSI_PreviewDialogW( MSIPREVIEW *preview, LPCWSTR szDialogName )
+{
+    msi_dialog *dialog = NULL;
+    UINT r = ERROR_SUCCESS;
+
+    if (preview->dialog)
+        msi_dialog_destroy( preview->dialog );
+
+    /* an empty name means we should just destroy the current preview dialog */
+    if (szDialogName)
+    {
+        dialog = msi_dialog_create( preview->package, szDialogName, NULL, preview_event_handler );
+        if (dialog)
+            msi_dialog_do_preview( dialog );
+        else
+            r = ERROR_FUNCTION_FAILED;
+    }
+    preview->dialog = dialog;
+    return r;
+}
+
+UINT WINAPI MsiPreviewDialogW( MSIHANDLE hPreview, LPCWSTR szDialogName )
+{
+    MSIPREVIEW *preview;
+    UINT r;
+
+    TRACE("%d %s\n", hPreview, debugstr_w(szDialogName));
+
+    preview = msihandle2msiinfo( hPreview, MSIHANDLETYPE_PREVIEW );
+    if (!preview)
+        return ERROR_INVALID_HANDLE;
+
+    r = MSI_PreviewDialogW( preview, szDialogName );
+    msiobj_release( &preview->hdr );
+    return r;
+}
+
+UINT WINAPI MsiPreviewDialogA( MSIHANDLE hPreview, LPCSTR szDialogName )
+{
+    UINT r;
+    LPWSTR strW = NULL;
+
+    TRACE("%d %s\n", hPreview, debugstr_a(szDialogName));
+
+    if (szDialogName)
+    {
+        strW = strdupAtoW( szDialogName );
+        if (!strW)
+            return ERROR_OUTOFMEMORY;
+    }
+    r = MsiPreviewDialogW( hPreview, strW );
+    msi_free( strW );
+    return r;
+}
+
+UINT WINAPI MsiPreviewBillboardW( MSIHANDLE hPreview, LPCWSTR szControlName, LPCWSTR szBillboard )
+{
+    FIXME("%d %s %s\n", hPreview, debugstr_w(szControlName), debugstr_w(szBillboard));
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiPreviewBillboardA( MSIHANDLE hPreview, LPCSTR szControlName, LPCSTR szBillboard )
+{
+    FIXME("%d %s %s\n", hPreview, debugstr_a(szControlName), debugstr_a(szBillboard));
+    return ERROR_CALL_NOT_IMPLEMENTED;
 }

@@ -922,7 +922,6 @@ extern msi_dialog *msi_dialog_create( MSIPACKAGE*, LPCWSTR, msi_dialog*, msi_dia
 extern UINT msi_dialog_run_message_loop( msi_dialog* ) DECLSPEC_HIDDEN;
 extern void msi_dialog_end_dialog( msi_dialog* ) DECLSPEC_HIDDEN;
 extern void msi_dialog_check_messages( HANDLE ) DECLSPEC_HIDDEN;
-extern void msi_dialog_do_preview( msi_dialog* ) DECLSPEC_HIDDEN;
 extern void msi_dialog_destroy( msi_dialog* ) DECLSPEC_HIDDEN;
 extern void msi_dialog_unregister_class( void ) DECLSPEC_HIDDEN;
 extern void msi_dialog_handle_event( msi_dialog*, LPCWSTR, LPCWSTR, MSIRECORD * ) DECLSPEC_HIDDEN;

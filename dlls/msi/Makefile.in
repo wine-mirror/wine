@@ -31,7 +31,6 @@ C_SRCS = \
 	msiquery.c \
 	package.c \
 	patch.c \
-	preview.c \
 	record.c \
 	registry.c \
 	script.c \
