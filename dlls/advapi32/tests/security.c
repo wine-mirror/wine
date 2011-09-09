@@ -2913,8 +2913,8 @@ static void test_SetEntriesInAclA(void)
     ExplicitAccess.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
     ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
     ExplicitAccess.Trustee.ptstrName = EveryoneSid;
-    ExplicitAccess.Trustee.MultipleTrusteeOperation = 0xDEADBEEF;
-    ExplicitAccess.Trustee.pMultipleTrustee = (PVOID)0xDEADBEEF;
+    ExplicitAccess.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+    ExplicitAccess.Trustee.pMultipleTrustee = NULL;
     res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
     ok(res == ERROR_SUCCESS, "SetEntriesInAclA failed: %u\n", res);
     ok(NewAcl != NULL, "returned acl was NULL\n");
