@@ -898,6 +898,7 @@ static void state_stencilwrite(struct wined3d_context *context, const struct win
 static void state_fog_vertexpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
 
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
     if (!state->render_states[WINED3DRS_FOGENABLE])
@@ -911,6 +912,13 @@ static void state_fog_vertexpart(struct wined3d_context *context, const struct w
             glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
             checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
             context->fog_coord = FALSE;
+        }
+
+        /* Range fog is only used with per-vertex fog in d3d */
+        if (gl_info->supported[NV_FOG_DISTANCE])
+        {
+            glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_PLANE_ABSOLUTE_NV);
+            checkGLcall("glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_PLANE_ABSOLUTE_NV)");
         }
         return;
     }
@@ -926,12 +934,32 @@ static void state_fog_vertexpart(struct wined3d_context *context, const struct w
             checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT)");
             context->fog_coord = TRUE;
         }
-    } else {
+    }
+    else
+    {
         /* Otherwise, use the fragment depth */
         if(context->fog_coord) {
             glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
             checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)");
             context->fog_coord = FALSE;
+        }
+
+        if (state->render_states[WINED3DRS_RANGEFOGENABLE])
+        {
+            if (gl_info->supported[NV_FOG_DISTANCE])
+            {
+                glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_RADIAL_NV);
+                checkGLcall("glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_RADIAL_NV)");
+            }
+            else
+            {
+                WARN("Range fog enabled, but not supported by this GL implementation.\n");
+            }
+        }
+        else if (gl_info->supported[NV_FOG_DISTANCE])
+        {
+            glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_PLANE_ABSOLUTE_NV);
+            checkGLcall("glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_PLANE_ABSOLUTE_NV)");
         }
     }
 }
@@ -1134,24 +1162,6 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
     {
         context->fog_source = new_source;
         state_fogstartend(context, state, STATE_RENDER(WINED3DRS_FOGSTART));
-    }
-}
-
-static void state_rangefog_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    if (state->render_states[WINED3DRS_RANGEFOGENABLE])
-        WARN("Range fog enabled, but not supported by this GL implementation.\n");
-}
-
-static void state_rangefog(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    if (state->render_states[WINED3DRS_RANGEFOGENABLE])
-    {
-        glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_RADIAL_NV);
-        checkGLcall("glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_RADIAL_NV)");
-    } else {
-        glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_PLANE_ABSOLUTE_NV);
-        checkGLcall("glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_PLANE_ABSOLUTE_NV)");
     }
 }
 
@@ -5376,8 +5386,7 @@ const struct StateEntryTemplate ffp_vertexstate_template[] = {
     { STATE_RENDER(WINED3DRS_FOGENABLE),                  { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog_vertexpart}, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_FOGTABLEMODE),               { STATE_RENDER(WINED3DRS_FOGENABLE),                  NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_FOGVERTEXMODE),              { STATE_RENDER(WINED3DRS_FOGENABLE),                  NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_RANGEFOGENABLE),             { STATE_RENDER(WINED3DRS_RANGEFOGENABLE),             state_rangefog      }, NV_FOG_DISTANCE                 },
-    { STATE_RENDER(WINED3DRS_RANGEFOGENABLE),             { STATE_RENDER(WINED3DRS_RANGEFOGENABLE),             state_rangefog_w    }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3DRS_RANGEFOGENABLE),             { STATE_RENDER(WINED3DRS_FOGENABLE),                  NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_CLIPPING),                   { STATE_RENDER(WINED3DRS_CLIPPING),                   state_clipping      }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_CLIPPLANEENABLE),            { STATE_RENDER(WINED3DRS_CLIPPING),                   NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_LIGHTING),                   { STATE_RENDER(WINED3DRS_LIGHTING),                   state_lighting      }, WINED3D_GL_EXT_NONE             },
