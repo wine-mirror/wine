@@ -368,7 +368,7 @@ static INT_PTR CALLBACK ConfigureDevicesDlgProc(HWND dialog, UINT uMsg, WPARAM w
             init_listview_columns(dialog);
 
             /* Create a backup action format for CANCEL and RESET operations */
-            data->original_lpdiaf = HeapAlloc(GetProcessHeap(), 0, sizeof(LPDIACTIONFORMATW));
+            data->original_lpdiaf = HeapAlloc(GetProcessHeap(), 0, sizeof(*data->original_lpdiaf));
             data->original_lpdiaf->dwNumActions = data->lpdiaf->dwNumActions;
             data->original_lpdiaf->rgoAction = HeapAlloc(GetProcessHeap(), 0, sizeof(DIACTIONW)*data->lpdiaf->dwNumActions);
             copy_actions(data->original_lpdiaf, data->lpdiaf);
