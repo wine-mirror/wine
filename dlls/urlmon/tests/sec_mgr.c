@@ -1631,7 +1631,6 @@ static const struct {
     {"about:blank",0,0,URLZONE_INTERNET},
     {"ftp://zone3.winetest/file.test",0,0,URLZONE_INTERNET},
     {"/file/testing/test.test",Uri_CREATE_ALLOW_RELATIVE,0,URLZONE_INTERNET},
-    {"file/testing/test.test",Uri_CREATE_ALLOW_RELATIVE,0,URLZONE_INTERNET},
     {"zip://testing.com/",0,0,URLZONE_INTERNET},
     {"zip:testing.com",0,0,URLZONE_INTERNET}
 };
