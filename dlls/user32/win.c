@@ -3395,7 +3395,7 @@ UINT WINAPI GetWindowModuleFileNameW( HWND hwnd, LPWSTR module, UINT size )
  *
  * Note: tests show that Windows doesn't check cbSize of the structure.
  */
-BOOL WINAPI GetWindowInfo( HWND hwnd, PWINDOWINFO pwi)
+BOOL WINAPI DECLSPEC_HOTPATCH GetWindowInfo( HWND hwnd, PWINDOWINFO pwi)
 {
     if (!pwi) return FALSE;
     if (!WIN_GetRectangles( hwnd, COORDS_SCREEN, &pwi->rcWindow, &pwi->rcClient )) return FALSE;
