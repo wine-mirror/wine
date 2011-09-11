@@ -1677,21 +1677,21 @@ static void test_SecurityManagerEx2(void)
         zone = URLZONE_INVALID;
 
         hres = pCreateUri(uriW, sec_mgr_ex2_tests[i].create_flags, 0, &uri);
-        ok(hres == S_OK, "CreateUri returned %08x on test %d\n", hres, i);
+        ok(hres == S_OK, "CreateUri returned %08x for '%s'\n", hres, sec_mgr_ex2_tests[i].uri);
 
         hres = IInternetSecurityManagerEx2_MapUrlToZoneEx2(sec_mgr2, uri, &zone, 0, NULL, NULL);
         if(sec_mgr_ex2_tests[i].map_todo) {
             todo_wine
-                ok(hres == sec_mgr_ex2_tests[i].map_hres, "MapUrlZoneToEx2 returned %08x, expected %08x on test %d\n",
-                    hres, sec_mgr_ex2_tests[i].map_hres, i);
+                ok(hres == sec_mgr_ex2_tests[i].map_hres, "MapUrlZoneToEx2 returned %08x, expected %08x for '%s'\n",
+                    hres, sec_mgr_ex2_tests[i].map_hres, sec_mgr_ex2_tests[i].uri);
             todo_wine
-                ok(zone == sec_mgr_ex2_tests[i].zone, "Expected zone %d, but got %d on test %d\n", sec_mgr_ex2_tests[i].zone,
-                    zone, i);
+                ok(zone == sec_mgr_ex2_tests[i].zone, "Expected zone %d, but got %d for '%s'\n", sec_mgr_ex2_tests[i].zone,
+                    zone, sec_mgr_ex2_tests[i].uri);
         } else {
-            ok(hres == sec_mgr_ex2_tests[i].map_hres, "MapUrlToZoneEx2 returned %08x, expected %08x on test %d\n",
-                hres, sec_mgr_ex2_tests[i].map_hres, i);
-            ok(zone == sec_mgr_ex2_tests[i].zone, "Expected zone %d, but got %d on test %d\n", sec_mgr_ex2_tests[i].zone,
-                zone, i);
+            ok(hres == sec_mgr_ex2_tests[i].map_hres, "MapUrlToZoneEx2 returned %08x, expected %08x for '%s'\n",
+                hres, sec_mgr_ex2_tests[i].map_hres, sec_mgr_ex2_tests[i].uri);
+            ok(zone == sec_mgr_ex2_tests[i].zone, "Expected zone %d, but got %d for '%s'\n", sec_mgr_ex2_tests[i].zone,
+                zone, sec_mgr_ex2_tests[i].uri);
         }
 
         heap_free(uriW);
