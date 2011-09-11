@@ -723,6 +723,11 @@ foo ''
 @todo_wine@1
 @todo_wine@1
 non-builtin dir
+------------ Testing cmd invocation ------------
+... a batch file can delete itself ...
+@todo_wine@file correctly deleted
+... a batch file can alter itself ...
+@todo_wine@bar
 ------------ Testing setlocal/endlocal ------------
 ...enable/disable extensions
 @todo_wine@ErrLev:@space@

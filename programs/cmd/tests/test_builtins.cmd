@@ -1256,6 +1256,27 @@ echo echo non-builtin dir> dir.cmd
 call dir /b
 cd .. & rd /s/q foobar
 
+echo ------------ Testing cmd invocation ------------
+rem FIXME: only a stub ATM
+echo ... a batch file can delete itself ...
+echo del foo.cmd>foo.cmd
+cmd /q /c foo.cmd
+if not exist foo.cmd (
+    echo file correctly deleted
+) else (
+    echo file should be deleted!
+    del foo.cmd
+)
+echo ... a batch file can alter itself ...
+echo echo bar^>foo.cmd>foo.cmd
+cmd /q /c foo.cmd > NUL 2>&1
+if exist foo.cmd (
+    type foo.cmd
+    del foo.cmd
+) else (
+    echo file not created!
+)
+
 echo ------------ Testing setlocal/endlocal ------------
 call :setError 0
 rem Note: setlocal EnableDelayedExtension already tested in the variable delayed expansion test section
