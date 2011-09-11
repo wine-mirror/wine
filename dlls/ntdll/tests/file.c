@@ -160,8 +160,10 @@ static void create_file_test(void)
 {
     static const WCHAR systemrootW[] = {'\\','S','y','s','t','e','m','R','o','o','t',
                                         '\\','f','a','i','l','i','n','g',0};
+    static const WCHAR questionmarkInvalidNameW[] = {'a','f','i','l','e','?',0};
+    static const WCHAR pipeInvalidNameW[]  = {'a','|','b',0};
     NTSTATUS status;
-    HANDLE dir;
+    HANDLE dir, file;
     WCHAR path[MAX_PATH];
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
@@ -249,6 +251,35 @@ static void create_file_test(void)
     todo_wine
     ok( status == STATUS_INVALID_PARAMETER,
         "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
+
+    /* Invalid chars in file/dirnames */
+    pRtlDosPathNameToNtPathName_U(questionmarkInvalidNameW, &nameW, NULL, NULL);
+    attr.ObjectName = &nameW;
+    status = pNtCreateFile(&dir, GENERIC_READ|SYNCHRONIZE, &attr, &io, NULL, 0,
+                           FILE_SHARE_READ, FILE_CREATE,
+                           FILE_DIRECTORY_FILE|FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
+    ok(status == STATUS_OBJECT_NAME_INVALID,
+       "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status);
+
+    status = pNtCreateFile(&file, GENERIC_WRITE|SYNCHRONIZE, &attr, &io, NULL, 0,
+                           0, FILE_CREATE,
+                           FILE_NON_DIRECTORY_FILE|FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
+    ok(status == STATUS_OBJECT_NAME_INVALID,
+       "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status);
+
+    pRtlDosPathNameToNtPathName_U(pipeInvalidNameW, &nameW, NULL, NULL);
+    attr.ObjectName = &nameW;
+    status = pNtCreateFile(&dir, GENERIC_READ|SYNCHRONIZE, &attr, &io, NULL, 0,
+                           FILE_SHARE_READ, FILE_CREATE,
+                           FILE_DIRECTORY_FILE|FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
+    ok(status == STATUS_OBJECT_NAME_INVALID,
+       "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status);
+
+    status = pNtCreateFile(&file, GENERIC_WRITE|SYNCHRONIZE, &attr, &io, NULL, 0,
+                           0, FILE_CREATE,
+                           FILE_NON_DIRECTORY_FILE|FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
+    ok(status == STATUS_OBJECT_NAME_INVALID,
+       "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status);
 }
 
 static void open_file_test(void)
