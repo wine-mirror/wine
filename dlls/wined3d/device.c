@@ -2722,7 +2722,7 @@ HRESULT CDECL wined3d_device_set_vs_consts_b(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_vs_consts_b(struct wined3d_device *device,
+HRESULT CDECL wined3d_device_get_vs_consts_b(const struct wined3d_device *device,
         UINT start_register, BOOL *constants, UINT bool_count)
 {
     UINT count = min(bool_count, MAX_CONST_B - start_register);
