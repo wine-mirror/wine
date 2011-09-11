@@ -8043,38 +8043,45 @@ msgstr ""
 "prosedyren arves av påkalleren.\n"
 
 #: cmd.rc:40
+#, fuzzy
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
-msgstr "Hjelp til CD\n"
+msgstr "Hjelp til CD.\n"
 
 #: cmd.rc:41
+#, fuzzy
 msgid "CHDIR <dir> changes the current default directory.\n"
-msgstr "Hjelp til CHDIR\n"
+msgstr "Hjelp til CHDIR.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
 msgstr "CLS tømmer konsollskjermen\n"
 
 #: cmd.rc:45
+#, fuzzy
 msgid "COPY <filename> copies a file.\n"
-msgstr "Hjelp til COPY\n"
+msgstr "Hjelp til COPY.\n"
 
 #: cmd.rc:46
+#, fuzzy
 msgid "CTTY changes the input/output device.\n"
-msgstr "Hjelp til CTTY\n"
+msgstr "Hjelp til CTTY.\n"
 
 #: cmd.rc:47
+#, fuzzy
 msgid "DATE shows or changes the system date.\n"
-msgstr "Hjelp til DATE\n"
+msgstr "Hjelp til DATE.\n"
 
 #: cmd.rc:48
+#, fuzzy
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr "Hjelp til DEL\n"
+msgstr "Hjelp til DEL.\n"
 
 #: cmd.rc:49
+#, fuzzy
 msgid "DIR lists the contents of a directory.\n"
-msgstr "Hjelp til DIR\n"
+msgstr "Hjelp til DIR.\n"
 
 #: cmd.rc:59
 msgid ""
@@ -8097,8 +8104,9 @@ msgstr ""
 "et @-tegn foran den.\n"
 
 #: cmd.rc:61
+#, fuzzy
 msgid "ERASE <filename> deletes a file or set of files.\n"
-msgstr "Hjelp til ERASE\n"
+msgstr "Hjelp til ERASE.\n"
 
 #: cmd.rc:69
 msgid ""
@@ -8140,10 +8148,11 @@ msgstr ""
 "GOTO har ingen effekt når den brukes interaktivt.\n"
 
 #: cmd.rc:84
+#, fuzzy
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
-msgstr "Hjelp til HELP\n"
+msgstr "Hjelp til HELP.\n"
 
 #: cmd.rc:94
 #, fuzzy
@@ -8181,12 +8190,14 @@ msgstr ""
 "Du kan vise en stasjons volumnavn med VOL-kommandoen.\n"
 
 #: cmd.rc:103
+#, fuzzy
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
-msgstr "Hjelp til MD\n"
+msgstr "Hjelp til MD.\n"
 
 #: cmd.rc:104
+#, fuzzy
 msgid "MKDIR <name> creates a subdirectory.\n"
-msgstr "Hjelp til MKDIR\n"
+msgstr "Hjelp til MKDIR.\n"
 
 #: cmd.rc:111
 msgid ""
@@ -8294,21 +8305,24 @@ msgstr ""
 "fil.\n"
 
 #: cmd.rc:156
+#, fuzzy
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
-msgstr "Hjelp til REN\n"
+msgstr "Hjelp til REN.\n"
 
 #: cmd.rc:157
 #, fuzzy
 msgid "RENAME <filename> renames a file.\n"
-msgstr "Hjelp til RENAME\n"
+msgstr "Hjelp til RENAME.\n"
 
 #: cmd.rc:159
+#, fuzzy
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
-msgstr "Hjelp til RD\n"
+msgstr "Hjelp til RD.\n"
 
 #: cmd.rc:160
+#, fuzzy
 msgid "RMDIR <dir> deletes a subdirectory.\n"
-msgstr "Hjelp til RMDIR\n"
+msgstr "Hjelp til RMDIR.\n"
 
 #: cmd.rc:178
 msgid ""
@@ -8357,8 +8371,9 @@ msgstr ""
 "effekt hvis det brukes fra kommandolinjen.\n"
 
 #: cmd.rc:185
+#, fuzzy
 msgid "TIME sets or shows the current system time.\n"
-msgstr "Hjelp til TIME\n"
+msgstr "Hjelp til TIME.\n"
 
 #: cmd.rc:187
 msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
@@ -8400,8 +8415,9 @@ msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER viser versjonnummeret til CMD\n"
 
 #: cmd.rc:205
+#, fuzzy
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "Hjelp til VOL\n"
+msgstr "Hjelp til VOL.\n"
 
 #: cmd.rc:209
 msgid ""
