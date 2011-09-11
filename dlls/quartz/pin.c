@@ -726,9 +726,17 @@ HRESULT WINAPI PullPin_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt)
 
 HRESULT WINAPI PullPin_EndOfStream(IPin * iface)
 {
-    FIXME("(%p)->() stub\n", iface);
+    PullPin *This = (PullPin *)iface;
+    HRESULT hr = S_FALSE;
 
-    return SendFurther( iface, deliver_endofstream, NULL, NULL );
+    TRACE("(%p)->()\n", iface);
+
+    EnterCriticalSection(This->pin.pCritSec);
+    hr = SendFurther( iface, deliver_endofstream, NULL, NULL );
+    SetEvent(This->hEventStateChanged);
+    LeaveCriticalSection(This->pin.pCritSec);
+
+    return hr;
 }
 
 HRESULT WINAPI PullPin_BeginFlush(IPin * iface)
