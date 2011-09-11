@@ -8064,12 +8064,14 @@ msgstr ""
 "do procedimente chamado são herdados pelo chamador.\n"
 
 #: cmd.rc:40
+#, fuzzy
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr "Ajuda do comando CD\n"
 
 #: cmd.rc:41
+#, fuzzy
 msgid "CHDIR <dir> changes the current default directory.\n"
 msgstr "Ajuda do comando CHDIR\n"
 
@@ -8078,22 +8080,27 @@ msgid "CLS clears the console screen.\n"
 msgstr "CLS limpa a tela do console\n"
 
 #: cmd.rc:45
+#, fuzzy
 msgid "COPY <filename> copies a file.\n"
 msgstr "Ajuda do comando COPY\n"
 
 #: cmd.rc:46
+#, fuzzy
 msgid "CTTY changes the input/output device.\n"
 msgstr "Ajuda do comando CTTY\n"
 
 #: cmd.rc:47
+#, fuzzy
 msgid "DATE shows or changes the system date.\n"
 msgstr "Ajuda do comando DATE\n"
 
 #: cmd.rc:48
+#, fuzzy
 msgid "DEL <filename> deletes a file or set of files.\n"
 msgstr "Ajuda do comando DEL\n"
 
 #: cmd.rc:49
+#, fuzzy
 msgid "DIR lists the contents of a directory.\n"
 msgstr "Ajuda do comando DIR\n"
 
@@ -8118,6 +8125,7 @@ msgstr ""
 "símbolo @ precedendo o mesmo.\n"
 
 #: cmd.rc:61
+#, fuzzy
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "Ajuda do comando ERASE\n"
 
@@ -8166,6 +8174,7 @@ msgstr ""
 "GOTO não tem efeito quando usando interativamente.\n"
 
 #: cmd.rc:84
+#, fuzzy
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -8207,10 +8216,12 @@ msgstr ""
 "especificado. Você pode mostrar o rótulo do disco com o comando VOL.\n"
 
 #: cmd.rc:103
+#, fuzzy
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "Ajuda do comando MD\n"
 
 #: cmd.rc:104
+#, fuzzy
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "Ajuda do comando MKDIR\n"
 
@@ -8324,6 +8335,7 @@ msgstr ""
 "arquivo de lote\n"
 
 #: cmd.rc:156
+#, fuzzy
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "Ajuda do comando REN\n"
 
@@ -8333,10 +8345,12 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "Ajuda do comando RENAME\n"
 
 #: cmd.rc:159
+#, fuzzy
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgstr "Ajuda do comando RD\n"
 
 #: cmd.rc:160
+#, fuzzy
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "Ajuda do comando RMDIR\n"
 
@@ -8385,6 +8399,7 @@ msgstr ""
 "Isto não tem efeito se chamado a partir da linha de comando.\n"
 
 #: cmd.rc:185
+#, fuzzy
 msgid "TIME sets or shows the current system time.\n"
 msgstr "Ajuda do comando TIME\n"
 
@@ -8425,6 +8440,7 @@ msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER mostra a versão em execução do cmd.\n"
 
 #: cmd.rc:205
+#, fuzzy
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "Ajuda do comando VOL\n"
 
