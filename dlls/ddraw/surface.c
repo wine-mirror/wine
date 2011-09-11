@@ -5184,12 +5184,8 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
         usage |= WINED3DUSAGE_OVERLAY;
     }
 
-    if (ddraw->depthstencil || (desc->ddsCaps.dwCaps & DDSCAPS_ZBUFFER))
-    {
-        /* The depth stencil creation callback sets this flag. Set the
-         * wined3d usage to let it know it's a depth/stencil surface. */
+    if (desc->ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
         usage |= WINED3DUSAGE_DEPTHSTENCIL;
-    }
 
     if (desc->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
     {

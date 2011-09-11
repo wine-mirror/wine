@@ -113,7 +113,6 @@ struct IDirectDrawImpl
 
     /* Helpers for surface creation */
     IDirectDrawSurfaceImpl *tex_root;
-    BOOL                    depthstencil;
 
     /* For the dll unload cleanup code */
     struct list ddraw_list_entry;
