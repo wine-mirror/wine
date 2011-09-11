@@ -217,9 +217,14 @@ static HRESULT FillBuffer(MPEGSplitterImpl *This, IMediaSample *pCurrentSample)
                 IMediaSample_SetPreroll(sample, 0);
                 IMediaSample_SetDiscontinuity(sample, 0);
                 IMediaSample_SetSyncPoint(sample, 1);
-                pin->rtCurrent = rtSampleStart;
-                pin->rtNext = rtSampleStop;
                 hr = IAsyncReader_Request(pin->pReader, sample, 0);
+                if (SUCCEEDED(hr))
+                {
+                    pin->rtCurrent = rtSampleStart;
+                    pin->rtNext = rtSampleStop;
+                }
+                else
+                    IMediaSample_Release(sample);
             }
             if (FAILED(hr))
                 FIXME("o_Ox%08x\n", hr);
@@ -754,15 +759,19 @@ static HRESULT MPEGSplitter_first_request(LPVOID iface)
 
         hr = IMediaSample_SetTime(sample, &rtSampleStart, &rtSampleStop);
 
-        pin->rtCurrent = pin->rtNext;
-        pin->rtNext = rtSampleStop;
-
         IMediaSample_SetPreroll(sample, FALSE);
         IMediaSample_SetDiscontinuity(sample, TRUE);
         IMediaSample_SetSyncPoint(sample, 1);
         This->seek = 0;
 
         hr = IAsyncReader_Request(pin->pReader, sample, 0);
+        if (SUCCEEDED(hr))
+        {
+            pin->rtCurrent = pin->rtNext;
+            pin->rtNext = rtSampleStop;
+        }
+        else
+            IMediaSample_Release(sample);
     }
     if (FAILED(hr))
         ERR("Horsemen of the apocalypse came to bring error 0x%08x\n", hr);
