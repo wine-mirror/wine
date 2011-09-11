@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-07-13 23:02+0900\n"
+"PO-Revision-Date: 2011-09-11 22:43+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -691,7 +691,6 @@ msgid "Prefer Signed Data"
 msgstr "Prefer Signed Data"
 
 #: crypt32.rc:53 cryptdlg.rc:31
-#, fuzzy
 msgctxt "Certification Practice Statement"
 msgid "CPS"
 msgstr "CPS"
@@ -801,7 +800,6 @@ msgid "Initials"
 msgstr "Initials"
 
 #: crypt32.rc:80
-#, fuzzy
 msgid "Surname"
 msgstr "ユーザー名"
 
@@ -1230,7 +1228,6 @@ msgid "Subject Type="
 msgstr "Subject Type="
 
 #: crypt32.rc:195
-#, fuzzy
 msgctxt "Certificate Authority"
 msgid "CA"
 msgstr "CA"
@@ -1261,7 +1258,6 @@ msgid "Access Method="
 msgstr "Access Method="
 
 #: crypt32.rc:202
-#, fuzzy
 msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
 msgstr "OCSP"
@@ -2016,14 +2012,12 @@ msgid "Default MidiOut Device"
 msgstr "デフォルト MidiOut デバイス"
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "Activation"
+msgstr "動作"
 
 #: dinput.rc:35
-#, fuzzy
 msgid "Object"
-msgstr "オブジェクト(&O)"
+msgstr "対象"
 
 #: dxdiagn.rc:25
 msgid "Regional Setting"
@@ -2283,7 +2277,7 @@ msgstr "引数は省略できません"
 
 #: jscript.rc:32
 msgid "Syntax error"
-msgstr "文法エラー"
+msgstr "構文エラー"
 
 #: jscript.rc:33
 msgid "Expected ';'"
@@ -2343,16 +2337,15 @@ msgstr "JScript オブジェクトを期待していました"
 
 #: jscript.rc:47
 msgid "Syntax error in regular expression"
-msgstr "正規表現に文法誤りがあります"
+msgstr "正規表現に構文誤りがあります"
 
 #: jscript.rc:49
 msgid "URI to be encoded contains invalid characters"
 msgstr "エンコードされるURIに無効な文字が含まれています"
 
 #: jscript.rc:48
-#, fuzzy
 msgid "URI to be decoded is incorrect"
-msgstr "エンコードされるURIに無効な文字が含まれています"
+msgstr "デコードされるURIが正しくありません"
 
 #: jscript.rc:50
 msgid "Array length must be a finite positive integer"
@@ -6729,25 +6722,22 @@ msgstr "ごみ箱"
 
 #: shlwapi.rc:27
 msgid "%ld bytes"
-msgstr "%ld bytes"
+msgstr "%ld バイト"
 
 #: shlwapi.rc:28
-#, fuzzy
 msgctxt "time unit: hours"
 msgid " hr"
-msgstr " hr"
+msgstr " 時間"
 
 #: shlwapi.rc:29
-#, fuzzy
 msgctxt "time unit: minutes"
 msgid " min"
-msgstr " min"
+msgstr " 分"
 
 #: shlwapi.rc:30
-#, fuzzy
 msgctxt "time unit: seconds"
 msgid " sec"
-msgstr " sec"
+msgstr " 秒"
 
 #: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgctxt "window"
@@ -7699,6 +7689,26 @@ msgid ""
 "and all subfolders.\n"
 "/D  Processes folders as well.\n"
 msgstr ""
+"ATTRIB - ファイル属性を表示または変更します。\n"
+"\n"
+"構文:\n"
+"ATTRIB [+R | -R] [+A | -A] [+S | -S] [+H | -H] [ドライブ:][パス][ファイル"
+"名]\n"
+"\t     [/S [/D]]\n"
+"\n"
+"オプション:\n"
+"\n"
+"+   属性を設定します。\n"
+"-   属性を消去します。\n"
+"R   読み取り専用ファイル属性\n"
+"A   アーカイブ ファイル属性。\n"
+"S   システム ファイル属性。\n"
+"H   隠しファイル属性。\n"
+"[ドライブ:][パス][ファイル名]\n"
+"attribが処理するファイルやファイル群を指定します。\n"
+"/S  カレント フォルダとすべてのサブフォルダで\n"
+"マッチするファイルを処理します。\n"
+"/D  フォルダも同様に処理します。\n"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -7826,7 +7836,7 @@ msgstr ""
 "FOR コマンドはそれぞれのファイルに対してコマンドを実行する\n"
 "場合に使用します。\n"
 "\n"
-"文法: FOR %変数 IN (セット) DO コマンド\n"
+"構文: FOR %変数 IN (セット) DO コマンド\n"
 "\n"
 "cmd内に存在しないバッチファイル中でFORを使用する場合は%記号\n"
 "を二重にする必要があります。\n"
@@ -7864,7 +7874,6 @@ msgstr ""
 "引数なしの HELP はすべての CMD 内蔵コマンドを表示します。\n"
 
 #: cmd.rc:94
-#, fuzzy
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -7877,9 +7886,9 @@ msgid ""
 msgstr ""
 "IF は条件に基づいてコマンドを実行する場合に使用します。\n"
 "\n"
-"文法:\tIF [NOT] EXIST ファイル名 コマンド\n"
-"IF [NOT] 文字列1==文字列2 コマンド\n"
-"IF [NOT] ERRORLEVEL 番号 コマンド\n"
+"構文:   IF [NOT] EXIST ファイル名 コマンド\n"
+"        IF [NOT] 文字列1==文字列2 コマンド\n"
+"        IF [NOT] ERRORLEVEL 番号 コマンド\n"
 "\n"
 "二番目の形式において、文字列1と文字列2はダブルクオートで囲われ\n"
 "ていなければなりません。大文字と小文字は区別されません。\n"
@@ -7894,7 +7903,7 @@ msgid ""
 msgstr ""
 "LABEL はディスクのボリュームラベルを設定する場合に使用します。\n"
 "\n"
-"文法: LABEL [ドライブ:]\n"
+"構文: LABEL [ドライブ:]\n"
 "コマンドを実行すると指定したドライブの新しいボリューム名を要求します。\n"
 "ディスクのボリュームラベルはVOLコマンドで表示できます。\n"
 
@@ -7960,7 +7969,6 @@ msgstr ""
 "ルする前にユーザが読めるようにしたい場合に有用です。\n"
 
 #: cmd.rc:149
-#, fuzzy
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -8079,14 +8087,14 @@ msgstr "TIME は現在の時刻を設定または表示します。\n"
 
 #: cmd.rc:187
 msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
-msgstr "cmdウィンドウのウィンドウタイトルを設定します。文法 TITLE [文字列]\n"
+msgstr "cmdウィンドウのウィンドウタイトルを設定します。構文 TITLE [文字列]\n"
 
 #: cmd.rc:191
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
 msgstr ""
-"TYPE <ファイル名> は <ファイル名> をコンソールデバイス(又はリダイレクト\n"
+"TYPE <ファイル名> は <ファイル名> をコンソールデバイス(またはリダイレクト\n"
 "された所)にコピーします。ファイルが可読なテキストファイルかどうかチェック\n"
 "されません。\n"
 
@@ -8100,7 +8108,7 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
-"VERIFY はverifyフラグをセット、クリア、又はテストする時に使用します。有効な"
+"VERIFY はverifyフラグをセット、クリア、またはテストする時に使用します。有効な"
 "フォームは:\n"
 "\n"
 "VERIFY ON\tフラグをセット\n"
@@ -8122,6 +8130,8 @@ msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
+"ENDLOCAL は先行する SETLOCAL によって開始されたバッチ ファイルでの環境\n"
+"変更の局所化を終了します。\n"
 
 #: cmd.rc:217
 msgid ""
@@ -8132,6 +8142,11 @@ msgid ""
 "file, whichever comes first), at which point the previous environment\n"
 "settings are restored.\n"
 msgstr ""
+"SETLOCAL はバッチ ファイルでの環境変更の局所化を開始します。\n"
+"\n"
+"SETLOCAL 後になされた環境の変更はバッチ ファイルに局所適用され、次に\n"
+"ENDLOCAL が現れる(または、ファイルの終端に到達するかのいずれか早いほう)\n"
+"まで保持されます。終了時点で以前の環境設定が復元されます。\n"
 
 #: cmd.rc:220
 msgid ""
@@ -8160,6 +8175,14 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
+"ASSOC はファイル拡張子の関連付けを表示または変更します\n"
+"\n"
+"構文: ASSOC [.拡張子[=[ファイル タイプ]]\n"
+"\n"
+"ASSOC をパラメータなしで使うとファイルの関連付けを表示します。\n"
+"拡張子だけを指定すると拡張子に対する現在の関連付けを表示します。\n"
+"ファイル タイプを等号のあとに指定しない場合は現在の関連付けがあれば削除しま"
+"す。\n"
 
 #: cmd.rc:242
 msgid ""
@@ -8174,6 +8197,17 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 msgstr ""
+"FTYPE はファイル タイプに関連付けられたオープン コマンドを表示または変更しま"
+"す\n"
+"\n"
+"構文: FTYPE [ファイル タイプ[=[オープン コマンド]]\n"
+"\n"
+"パラメータを指定しない場合、オープン コマンド文字列が定義されているファイル "
+"タイプを表示します。\n"
+"ファイル タイプだけを指定した場合は、関連付けられたオープン コマンド文字列が"
+"あれば表示します。\n"
+"等号のあとに何もオープン コマンドを指定しない場合は、指定したファイル タイプ"
+"に対するコマンド文字列を削除します。\n"
 
 #: cmd.rc:244
 msgid "MORE displays output of files or piped input in pages.\n"
@@ -8198,7 +8232,6 @@ msgstr ""
 "ます。\n"
 
 #: cmd.rc:288
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -8238,33 +8271,38 @@ msgid ""
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
 "CMD 内蔵のコマンド:\n"
-"ATTRIB\t\tDOSファイルの属性を表示又は変更\n"
+"ASSOC\t\tファイル拡張子の関連付けを表示または変更\n"
+"ATTRIB\t\tDOSファイルの属性を表示または変更\n"
 "CALL\t\t外部のバッチファイルを呼び出し\n"
 "CD (CHDIR)\tカレントディレクトリを変更\n"
 "CHOISE\t\t選択リストのキー入力を待機\n"
 "CLS\t\tコンソール画面をクリア\n"
 "COPY\t\tファイルをコピー\n"
 "CTTY\t\t入力/出力デバイスを変更\n"
-"DATE\t\tシステムの日付を表示又は変更\n"
+"DATE\t\tシステムの日付を表示または変更\n"
 "DEL (ERASE)\tファイルを削除\n"
 "DIR\t\tディレクトリの内容を表示\n"
 "ECHO\t\t文字列を直接コンソール出力にコピー\n"
+"ENDLOCAL\tバッチファイルでの環境変更の局所化を終了\n"
+"FTYPE\t\tファイル タイプのオープン コマンドを表示または変更\n"
 "HELP\t\tトピックの詳細なヘルプを表示\n"
 "MD (MKDIR)\tサブディレクトリを作成\n"
 "MORE\t\t出力をページ区切りで表示\n"
 "MOVE\t\tファイルまたはディレクトリツリーを移動\n"
-"PATH\t\tパスを表示又は設定\n"
+"PATH\t\tパスを表示または設定\n"
 "POPD\t\tPUSHDで最後に保存したディレクトリに変更\n"
 "PROMPT\t\tコマンドプロンプトを変更\n"
 "PUSHD\t\t現在のディレクトリを保存し、新ディレクトリに変更\n"
 "REN (RENAME)\tファイルをリネーム\n"
 "RD (RMDIR)\tサブディレクトリを削除\n"
-"SET\t\t環境変数を設定又は表示\n"
-"TIME\t\tシステムの時刻を設定又は表示\n"
+"SET\t\t環境変数を設定または表示\n"
+"SETLOCAL\tバッチファイルでの環境変更の局所化を開始\n"
+"TIME\t\tシステムの時刻を設定または表示\n"
 "TITLE\t\tCMDセッションのウィンドウタイトルを設定\n"
 "TYPE\t\tテキストファイルの内容を出力\n"
 "VER\t\tCMDのバージョンを表示\n"
 "VOL\t\tディスクデバイスのボリュームラベルを表示\n"
+"XCOPY\t\t送り元のファイルやディレクトリ ツリーをあて先にコピー\n"
 "EXIT\t\tCMDを終了\n"
 "\n"
 "上記のコマンドに関する詳細を表示するには HELP <コマンド名> と入力して下さ"
@@ -8310,7 +8348,7 @@ msgstr "引数がありません\n"
 
 #: cmd.rc:300
 msgid "Syntax error\n"
-msgstr "文法エラー\n"
+msgstr "構文エラー\n"
 
 #: cmd.rc:302
 msgid "No help available for %s\n"
@@ -8503,7 +8541,6 @@ msgid "Default gateway"
 msgstr "デフォルト ゲートウェイ"
 
 #: net.rc:27
-#, fuzzy
 msgid ""
 "The syntax of this command is:\n"
 "\n"
@@ -8513,14 +8550,13 @@ msgid ""
 "\n"
 "Where 'command' is one of HELP, START, STOP or USE.\n"
 msgstr ""
-"このコマンドの文法:\n"
+"このコマンドの構文:\n"
 "\n"
-"NET HELP コマンド\n"
-"    -or-\n"
+"NET コマンド [引数]\n"
+"    -または-\n"
 "NET コマンド /HELP\n"
 "\n"
-"   利用可能なコマンド:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
+"コマンドは、HELP、START、STOP、USE のいずれかです\n"
 
 #: net.rc:28
 msgid ""
@@ -8531,6 +8567,12 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
+"このコマンドの構文:\n"
+"\n"
+"NET START [サービス]\n"
+"\n"
+"'サービス'が省略された場合は、実行中のサービスを表示します。指定した場合"
+"は、'サービス'は開始するサービスの名前です。\n"
 
 #: net.rc:29
 msgid ""
@@ -8540,6 +8582,11 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
+"このコマンドの構文:\n"
+"\n"
+"NET STOP サービス\n"
+"\n"
+"'サービス'は停止するサービスの名前です。\n"
 
 #: net.rc:30
 msgid "Stopping dependent service: %s\n"
@@ -8601,37 +8648,31 @@ msgstr "%s      %s       %s      リソース数: %lu\n"
 
 #: net.rc:44
 msgid "OK"
-msgstr ""
+msgstr "正常"
 
 #: net.rc:45
-#, fuzzy
 msgid "Paused"
-msgstr "一時停止(&P)"
+msgstr "中断"
 
 #: net.rc:46
-#, fuzzy
 msgid "Disconnected"
-msgstr "パイプは接続されています。\n"
+msgstr "切断"
 
 #: net.rc:47
-#, fuzzy
 msgid "A network error occurred"
-msgstr "プリンタ エラーが発生しました。"
+msgstr "ネットワーク エラーが発生しました"
 
 #: net.rc:48
-#, fuzzy
 msgid "Connection is being made"
-msgstr "接続はアクティブです。\n"
+msgstr "接続を確立中です"
 
 #: net.rc:49
-#, fuzzy
 msgid "Reconnecting"
-msgstr "%s に接続しています"
+msgstr "再接続中です"
 
 #: net.rc:40
-#, fuzzy
 msgid "The following services are running:\n"
-msgstr "依存しているサービスが実行中です。\n"
+msgstr "以下のサービスが実行中です:\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -8751,7 +8792,6 @@ msgstr ""
 " 別のエディタを使用して下さい。"
 
 #: notepad.rc:81
-#, fuzzy
 msgid ""
 "You did not enter any text.\n"
 "Please type something and try again."
@@ -8849,21 +8889,19 @@ msgstr "&CoCreateInstance フラグ"
 
 #: oleview.rc:41
 msgid "&In-process server"
-msgstr ""
+msgstr "イン プロセス サーバ(&I)"
 
 #: oleview.rc:42
 msgid "In-process &handler"
-msgstr ""
+msgstr "イン プロセス ハンドラ(&H)"
 
 #: oleview.rc:43
-#, fuzzy
 msgid "&Local server"
-msgstr "ローカル エラー"
+msgstr "ローカル サーバ(&L)"
 
 #: oleview.rc:44
-#, fuzzy
 msgid "&Remote server"
-msgstr "削除(&R)"
+msgstr "リモート サーバ(&R)"
 
 #: oleview.rc:47
 msgid "View &Type information"
@@ -8875,7 +8913,7 @@ msgstr "インスタンスの作成(&I)"
 
 #: oleview.rc:50
 msgid "Create Instance &On..."
-msgstr "Create Instance &On..."
+msgstr "リモートにインスタンスを作成(&O)..."
 
 #: oleview.rc:51
 msgid "&Release Instance"
@@ -8967,7 +9005,7 @@ msgstr "選択されたオブジェクトのインスタンスを作成します
 
 #: oleview.rc:109
 msgid "Create an instance of the selected object on a specific machine"
-msgstr "特定のマシン上の選択されたオブジェクトのインスタンスを作成します"
+msgstr "特定のマシン上に選択されたオブジェクトのインスタンスを作成します"
 
 #: oleview.rc:110
 msgid "Release the currently selected object instance"
@@ -9008,25 +9046,23 @@ msgstr "プログラム情報、バージョン番号と著作権を表示しま
 
 #: oleview.rc:113
 msgid "Ask for an in-process server when calling CoGetClassObject"
-msgstr ""
+msgstr "CoGetClassObject 呼び出し時にイン プロセス サーバに問い合せます"
 
 #: oleview.rc:114
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr ""
+msgstr "CoGetClassObject 呼び出し時にイン プロセス ハンドラに問い合せます"
 
 #: oleview.rc:115
-#, fuzzy
 msgid "Ask for a local server when calling CoGetClassObject"
-msgstr "CoGetClassObject を呼ぶときに CLSCTX_LOCAL_SERVER を使います"
+msgstr "CoGetClassObject の呼び出し時にローカル サーバに問い合せます"
 
 #: oleview.rc:116
-#, fuzzy
 msgid "Ask for a remote server when calling CoGetClassObject"
-msgstr "CoGetClassObject を呼ぶときに CLSCTX_LOCAL_SERVER を使います"
+msgstr "CoGetClassObject の呼び出し時にリモート サーバに問い合せます"
 
 #: oleview.rc:128
 msgid "ObjectClasses"
-msgstr "ObjectClasses"
+msgstr "オブジェクト クラス"
 
 #: oleview.rc:129
 msgid "Grouped by Component Category"
@@ -9837,12 +9873,10 @@ msgid "&Realtime"
 msgstr "リアルタイム(&R)"
 
 #: taskmgr.rc:160
-#, fuzzy
 msgid "&Above Normal"
 msgstr "通常以上(&A)"
 
 #: taskmgr.rc:164
-#, fuzzy
 msgid "&Below Normal"
 msgstr "通常以下(&B)"
 
@@ -10296,17 +10330,16 @@ msgid "Drives"
 msgstr "ドライブ"
 
 #: winecfg.rc:33
-#, fuzzy
 msgid "Select the Unix target directory, please."
-msgstr "unix の対象ディレクトリを選択してください。"
+msgstr "Unix の対象ディレクトリを選択してください。"
 
 #: winecfg.rc:35
 msgid "Show &Advanced"
-msgstr "詳細を表示"
+msgstr "詳細を表示(&A)"
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
-msgstr "詳細を隠す"
+msgstr "詳細を隠す(&A)"
 
 #: winecfg.rc:36
 msgid "(No Theme)"
@@ -10458,10 +10491,9 @@ msgstr ""
 "成するのを忘れないでください!"
 
 #: winecfg.rc:80
-#, fuzzy
 msgctxt "Drive letter"
 msgid "Letter"
-msgstr "レター"
+msgstr "文字"
 
 #: winecfg.rc:81
 msgid "Drive Mapping"
@@ -10702,24 +10734,21 @@ msgstr ""
 "オプション:\n"
 
 #: wineconsole.rc:49
-#, fuzzy
 msgid ""
 "  --backend={user|curses}  Choosing user will spawn a new window, curses "
 "will\n"
 "                           try to setup the current terminal as a Wine "
 "console.\n"
 msgstr ""
-"  --backend={user|curses}  Wine コンソールのバックエンドを選択する。\n"
-"                           user:   新しいウィンドウを生成する。\n"
-"                           curses: 現在の端末を利用する。\n"
+"  --backend={user|curses}  Wine コンソールのバックエンドを選択します。\n"
+"                           user:   新規ウィンドウを生成します。\n"
+"                           curses: 現在の端末を利用しようとします。\n"
 
 #: wineconsole.rc:51
-#, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
-msgstr "  <コマンド>                コンソールで開始する Wine プログラム\n"
+msgstr "  <コマンド>               コンソールで開始する Wine プログラム。\n"
 
 #: wineconsole.rc:52
-#, fuzzy
 msgid ""
 "\n"
 "Example:\n"
@@ -10730,7 +10759,7 @@ msgstr ""
 "\n"
 "例:\n"
 "  wineconsole cmd\n"
-"Wine コマンド プロンプトを Wine コンソールで開始します\n"
+"Wine コマンド プロンプトを Wine コンソールで開始します。\n"
 "\n"
 
 #: winedbg.rc:35
@@ -11218,13 +11247,11 @@ msgid "Pages"
 msgstr "ページ"
 
 #: wordpad.rc:172
-#, fuzzy
 msgctxt "unit: centimeter"
 msgid "cm"
 msgstr "cm"
 
 #: wordpad.rc:173
-#, fuzzy
 msgctxt "unit: inch"
 msgid "in"
 msgstr "in"
@@ -11234,7 +11261,6 @@ msgid "inch"
 msgstr "インチ"
 
 #: wordpad.rc:175
-#, fuzzy
 msgctxt "unit: point"
 msgid "pt"
 msgstr "pt"
@@ -11356,7 +11382,6 @@ msgid "D"
 msgstr "D"
 
 #: xcopy.rc:77
-#, fuzzy
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -11391,7 +11416,7 @@ msgid ""
 "\t\tthan source.\n"
 "\n"
 msgstr ""
-"XCOPY - 送り元のファイルやディレクトリを送り先にコピーします\n"
+"XCOPY - 送り元のファイルやディレクトリを送り先にコピーします。\n"
 "\n"
 "構文:\n"
 "XCOPY 送り元 [送り先] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
