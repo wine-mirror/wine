@@ -696,7 +696,8 @@ footype=foo_opencmd
 footype=foo_opencmd
 ...resetting association
 @todo_wine@original value@or_broken@buggyXP@or_broken@!FOO!
------------- Testing CALL --------------
+------------ Testing CALL ------------
+... external script ...
 foo@space@
 foo 8
 foo@space@@space@
@@ -705,6 +706,7 @@ foo bar@space@
 @todo_wine@"" bar@space@
 foo ''@space@
 '' bar@space@
+... internal routines ...
 bar :testRoutine
 foo@space@
 foo bar
@@ -712,6 +714,7 @@ foo bar
 @todo_wine@"" bar
 foo ''
 '' bar
+... with builtins ...
 @todo_wine@0
 @todo_wine@foo created
 @todo_wine@Should expand foobaz

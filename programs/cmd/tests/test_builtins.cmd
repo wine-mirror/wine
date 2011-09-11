@@ -1196,9 +1196,9 @@ set FOO=
 endlocal
 cd .. & rd /s/q foobar
 
-echo ------------ Testing CALL --------------
+echo ------------ Testing CALL ------------
 mkdir foobar & cd foobar
-rem External script
+echo ... external script ...
 echo echo foo %%1> foo.cmd
 call foo
 call foo.cmd 8
@@ -1210,7 +1210,8 @@ call foo.cmd "" bar
 call foo.cmd foo ''
 call foo.cmd '' bar
 del foo.cmd
-rem Internal routines
+
+echo ... internal routines ...
 call :testRoutine :testRoutine
 goto :endTestRoutine
 :testRoutine
@@ -1230,7 +1231,7 @@ echo %1 %2
 goto :eof
 :endTestRoutineArgs
 
-rem Should work for builtins...
+echo ... with builtins ...
 call mkdir foo
 echo %ErrorLevel%
 if exist foo (echo foo created) else echo foo should exist!
