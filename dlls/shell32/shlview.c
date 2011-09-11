@@ -752,6 +752,7 @@ static LRESULT ShellView_OnCreate(IShellViewImpl *This)
             This->hNotify = SHChangeNotifyRegister(This->hWnd, SHCNRF_InterruptLevel, SHCNE_ALLEVENTS,
                                                    SHV_CHANGE_NOTIFY, 1, &ntreg);
             SHFree((LPITEMIDLIST)ntreg.pidl);
+            SHFree(computer_pidl);
         }
         IPersistFolder2_Release(ppf2);
     }
