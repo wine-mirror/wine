@@ -2730,10 +2730,10 @@ CreateAdditionalSurfaces(IDirectDrawImpl *This,
  *  DDERR_* otherwise
  *
  *****************************************************************************/
-static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw, IDirectDrawSurfaceImpl *primary)
+static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw, IDirectDrawSurfaceImpl *primary,
+        WINED3DPRESENT_PARAMETERS *presentation_parameters)
 {
-    WINED3DPRESENT_PARAMETERS localParameters;
-    HWND window = ddraw->dest_window;
+    HWND window = presentation_parameters->hDeviceWindow;
     HRESULT hr;
 
     TRACE("ddraw %p, primary %p.\n", ddraw, primary);
@@ -2751,6 +2751,8 @@ static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw, IDirectDrawSurfac
 
         ShowWindow(window, SW_HIDE);   /* Just to be sure */
         WARN("No window for the Direct3DDevice, created hidden window %p.\n", window);
+
+        presentation_parameters->hDeviceWindow = window;
     }
     else
     {
@@ -2761,23 +2763,10 @@ static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw, IDirectDrawSurfac
     /* Store the future Render Target surface */
     ddraw->d3d_target = primary;
 
-    memset(&localParameters, 0, sizeof(localParameters));
-
-    /* Use the surface description for the device parameters, not the device
-     * settings. The application might render to an offscreen surface. */
-    localParameters.BackBufferWidth = primary->surface_desc.dwWidth;
-    localParameters.BackBufferHeight = primary->surface_desc.dwHeight;
-    localParameters.BackBufferFormat = PixelFormat_DD2WineD3D(&primary->surface_desc.u4.ddpfPixelFormat);
-    localParameters.BackBufferCount = (primary->surface_desc.dwFlags & DDSD_BACKBUFFERCOUNT)
-            ? primary->surface_desc.dwBackBufferCount : 0;
-    localParameters.SwapEffect = WINED3DSWAPEFFECT_COPY;
-    localParameters.hDeviceWindow = window;
-    localParameters.Windowed = !(ddraw->cooperative_level & DDSCL_FULLSCREEN);
-
     /* Set this NOW, otherwise creating the depth stencil surface will cause a
      * recursive loop until ram or emulated video memory is full. */
     ddraw->d3d_initialized = TRUE;
-    hr = wined3d_device_init_3d(ddraw->wined3d_device, &localParameters);
+    hr = wined3d_device_init_3d(ddraw->wined3d_device, presentation_parameters);
     if (FAILED(hr))
     {
         ddraw->d3d_target = NULL;
@@ -2800,29 +2789,13 @@ static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw, IDirectDrawSurfac
     return DD_OK;
 }
 
-static HRESULT ddraw_create_gdi_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurfaceImpl *primary)
+static HRESULT ddraw_create_gdi_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurfaceImpl *primary,
+        WINED3DPRESENT_PARAMETERS *presentation_parameters)
 {
-    WINED3DPRESENT_PARAMETERS presentation_parameters;
-    HWND window;
     HRESULT hr;
 
-    window = ddraw->dest_window;
-
-    memset(&presentation_parameters, 0, sizeof(presentation_parameters));
-
-    /* Use the surface description for the device parameters, not the device
-     * settings. The application might render to an offscreen surface. */
-    presentation_parameters.BackBufferWidth = primary->surface_desc.dwWidth;
-    presentation_parameters.BackBufferHeight = primary->surface_desc.dwHeight;
-    presentation_parameters.BackBufferFormat = PixelFormat_DD2WineD3D(&primary->surface_desc.u4.ddpfPixelFormat);
-    presentation_parameters.BackBufferCount = (primary->surface_desc.dwFlags & DDSD_BACKBUFFERCOUNT)
-            ? primary->surface_desc.dwBackBufferCount : 0;
-    presentation_parameters.SwapEffect = WINED3DSWAPEFFECT_COPY;
-    presentation_parameters.hDeviceWindow = window;
-    presentation_parameters.Windowed = !(ddraw->cooperative_level & DDSCL_FULLSCREEN);
-
     ddraw->d3d_target = primary;
-    hr = wined3d_device_init_gdi(ddraw->wined3d_device, &presentation_parameters);
+    hr = wined3d_device_init_gdi(ddraw->wined3d_device, presentation_parameters);
     ddraw->d3d_target = NULL;
     if (FAILED(hr))
     {
@@ -2835,7 +2808,33 @@ static HRESULT ddraw_create_gdi_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSur
 
 static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurfaceImpl *surface)
 {
+    WINED3DPRESENT_PARAMETERS presentation_parameters;
+    IDirectDrawSurfaceImpl *target = surface;
     HRESULT hr = WINED3D_OK;
+    struct list *entry;
+
+    /* Search for the primary to use as render target. */
+    LIST_FOR_EACH(entry, &ddraw->surface_list)
+    {
+        IDirectDrawSurfaceImpl *primary = LIST_ENTRY(entry, IDirectDrawSurfaceImpl, surface_list_entry);
+        if ((primary->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER))
+                == (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER))
+        {
+            TRACE("Using primary %p as render target.\n", target);
+            target = primary;
+            break;
+        }
+    }
+
+    memset(&presentation_parameters, 0, sizeof(presentation_parameters));
+    presentation_parameters.BackBufferWidth = target->surface_desc.dwWidth;
+    presentation_parameters.BackBufferHeight = target->surface_desc.dwHeight;
+    presentation_parameters.BackBufferFormat = PixelFormat_DD2WineD3D(&target->surface_desc.u4.ddpfPixelFormat);
+    presentation_parameters.BackBufferCount = (target->surface_desc.dwFlags & DDSD_BACKBUFFERCOUNT)
+            ? target->surface_desc.dwBackBufferCount : 0;
+    presentation_parameters.SwapEffect = WINED3DSWAPEFFECT_COPY;
+    presentation_parameters.hDeviceWindow = ddraw->dest_window;
+    presentation_parameters.Windowed = !(ddraw->cooperative_level & DDSCL_FULLSCREEN);
 
     /* If the implementation is OpenGL and there's no d3ddevice, attach a
      * d3ddevice. But attach the d3ddevice only if the currently created
@@ -2846,28 +2845,12 @@ static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurface
      * target creation will cause the 3D init. */
     if (DefaultSurfaceType == SURFACE_OPENGL)
     {
-        IDirectDrawSurfaceImpl *target = surface, *primary;
-        struct list *entry;
-
-        /* Search for the primary to use as render target. */
-        LIST_FOR_EACH(entry, &ddraw->surface_list)
-        {
-            primary = LIST_ENTRY(entry, IDirectDrawSurfaceImpl, surface_list_entry);
-            if ((primary->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER))
-                    == (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER))
-            {
-                TRACE("Using primary %p as render target.\n", target);
-                target = primary;
-                break;
-            }
-        }
-
         TRACE("Attaching a D3DDevice, rendertarget = %p.\n", target);
-        hr = ddraw_attach_d3d_device(ddraw, target);
+        hr = ddraw_attach_d3d_device(ddraw, target, &presentation_parameters);
     }
     else if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
-        hr = ddraw_create_gdi_swapchain(ddraw, surface);
+        hr = ddraw_create_gdi_swapchain(ddraw, target, &presentation_parameters);
     }
 
     return hr;
