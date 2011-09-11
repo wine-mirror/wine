@@ -8151,12 +8151,14 @@ msgstr ""
 "llamante.\n"
 
 #: cmd.rc:40
+#, fuzzy
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr "Ayuda sobre CD\n"
 
 #: cmd.rc:41
+#, fuzzy
 msgid "CHDIR <dir> changes the current default directory.\n"
 msgstr "Ayuda sobre CHDIR\n"
 
@@ -8165,22 +8167,27 @@ msgid "CLS clears the console screen.\n"
 msgstr "CLS limpia la pantalla de la consola\n"
 
 #: cmd.rc:45
+#, fuzzy
 msgid "COPY <filename> copies a file.\n"
 msgstr "Ayuda sobre COPY\n"
 
 #: cmd.rc:46
+#, fuzzy
 msgid "CTTY changes the input/output device.\n"
 msgstr "Ayuda sobre CTTY\n"
 
 #: cmd.rc:47
+#, fuzzy
 msgid "DATE shows or changes the system date.\n"
 msgstr "Ayuda sobre DATE\n"
 
 #: cmd.rc:48
+#, fuzzy
 msgid "DEL <filename> deletes a file or set of files.\n"
 msgstr "Ayuda sobre DEL\n"
 
 #: cmd.rc:49
+#, fuzzy
 msgid "DIR lists the contents of a directory.\n"
 msgstr "Ayuda sobre DIR\n"
 
@@ -8205,6 +8212,7 @@ msgstr ""
 "precediéndolo por un signo @.\n"
 
 #: cmd.rc:61
+#, fuzzy
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "Ayuda sobre ERASE\n"
 
@@ -8251,6 +8259,7 @@ msgstr ""
 "GOTO no tiene efecto cuando se usa interactivamente.\n"
 
 #: cmd.rc:84
+#, fuzzy
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -8293,10 +8302,12 @@ msgstr ""
 "Puede ver la etiqueta de volumen del disco con el comando VOL.\n"
 
 #: cmd.rc:103
+#, fuzzy
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "Ayuda sobre MD\n"
 
 #: cmd.rc:104
+#, fuzzy
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "Ayuda sobre MKDIR\n"
 
@@ -8411,6 +8422,7 @@ msgstr ""
 "comentario en un archivo por lotes.\n"
 
 #: cmd.rc:156
+#, fuzzy
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "Ayuda sobre REN\n"
 
@@ -8420,10 +8432,12 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "Ayuda sobre RENAME\n"
 
 #: cmd.rc:159
+#, fuzzy
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgstr "Ayuda sobre RD\n"
 
 #: cmd.rc:160
+#, fuzzy
 msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgstr "Ayuda sobre RMDIR\n"
 
@@ -8475,6 +8489,7 @@ msgstr ""
 "de comando.\n"
 
 #: cmd.rc:185
+#, fuzzy
 msgid "TIME sets or shows the current system time.\n"
 msgstr "Ayuda sobre TIME\n"
 
@@ -8516,6 +8531,7 @@ msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER muestra la versión de cmd que está ejecutando\n"
 
 #: cmd.rc:205
+#, fuzzy
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "Ayuda sobre VOL\n"
 
