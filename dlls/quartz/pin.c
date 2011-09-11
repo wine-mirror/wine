@@ -134,6 +134,8 @@ static HRESULT SendFurther( IPin *from, SendPinFunc fnMiddle, LPVOID arg, SendPi
     }
 
 out:
+    if (enumpins)
+        IEnumPins_Release( enumpins );
     if (pin_info.pFilter)
         IBaseFilter_Release( pin_info.pFilter );
     return hr;
