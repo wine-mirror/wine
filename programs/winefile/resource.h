@@ -115,7 +115,6 @@
 #define IDS_DESKTOP                     1204
 #define IDS_SHELL                       1205
 #define IDS_NO_IMPL                     1207
-#define IDS_WINE_FILE                   1208
 
 #define IDS_COL_NAME                    1210
 #define IDS_COL_SIZE                    1211

@@ -39,7 +39,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Није одређено"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:111
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:110
 #, fuzzy
 msgid "Name"
 msgstr ""
@@ -6562,7 +6562,7 @@ msgstr "&Излаз"
 msgid "&About Control Panel"
 msgstr "&О управљачком панелу..."
 
-#: shell32.rc:135 shell32.rc:139 winefile.rc:112
+#: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
 msgstr "Величина"
 
@@ -6574,7 +6574,7 @@ msgstr "Врста"
 msgid "Modified"
 msgstr "Измењено"
 
-#: shell32.rc:138 winefile.rc:118
+#: shell32.rc:138 winefile.rc:117
 msgid "Attributes"
 msgstr "Особине"
 
@@ -6748,7 +6748,7 @@ msgstr "Програми (x86)\\Заједничке датотеке"
 msgid "Contacts"
 msgstr "Контакти"
 
-#: shell32.rc:228 winefile.rc:117
+#: shell32.rc:228 winefile.rc:116
 msgid "Links"
 msgstr "Везе"
 
@@ -10818,7 +10818,7 @@ msgstr "Изабери &све\tCtrl+A"
 
 #: winefile.rc:87
 #, fuzzy
-msgid "&About Wine File"
+msgid "&About Wine File Manager"
 msgstr "&О Бележници"
 
 #: winefile.rc:93
@@ -10849,34 +10849,30 @@ msgstr ""
 msgid "Not yet implemented"
 msgstr ""
 
-#: winefile.rc:106
-msgid "Wine File"
-msgstr ""
-
-#: winefile.rc:113
+#: winefile.rc:112
 #, fuzzy
 msgid "CDate"
 msgstr "&Датум"
 
-#: winefile.rc:114
+#: winefile.rc:113
 #, fuzzy
 msgid "ADate"
 msgstr "&Датум"
 
-#: winefile.rc:115
+#: winefile.rc:114
 #, fuzzy
 msgid "MDate"
 msgstr "&Датум"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "Index/Inode"
 msgstr ""
 
-#: winefile.rc:119
+#: winefile.rc:118
 msgid "Security"
 msgstr ""
 
-#: winefile.rc:121
+#: winefile.rc:120
 msgid "%s of %s free"
 msgstr ""
 

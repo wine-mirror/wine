@@ -44,7 +44,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nenurodyta"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:111
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:110
 msgid "Name"
 msgstr "Vardas"
 
@@ -6297,7 +6297,7 @@ msgstr "Iš&eiti"
 msgid "&About Control Panel"
 msgstr "&Apie valdymo skydelį"
 
-#: shell32.rc:135 shell32.rc:139 winefile.rc:112
+#: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
 msgstr "Dydis"
 
@@ -6309,7 +6309,7 @@ msgstr "Tipas"
 msgid "Modified"
 msgstr "Modifikuotas"
 
-#: shell32.rc:138 winefile.rc:118
+#: shell32.rc:138 winefile.rc:117
 msgid "Attributes"
 msgstr "Požymiai"
 
@@ -6482,7 +6482,7 @@ msgstr "Programų failai (x86)\\Bendrieji failai"
 msgid "Contacts"
 msgstr "Kontaktai"
 
-#: shell32.rc:228 winefile.rc:117
+#: shell32.rc:228 winefile.rc:116
 msgid "Links"
 msgstr "Saitai"
 
@@ -10876,8 +10876,9 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Iškloti &stačiai\tVald+F4"
 
 #: winefile.rc:87
-msgid "&About Wine File"
-msgstr "&Apie Wine failų tvarkytuvę"
+#, fuzzy
+msgid "&About Wine File Manager"
+msgstr "Wine failų tvarkytuvė"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10907,31 +10908,27 @@ msgstr "Apvalkalas"
 msgid "Not yet implemented"
 msgstr "Dar nerealizuota"
 
-#: winefile.rc:106
-msgid "Wine File"
-msgstr "Wine failas"
-
-#: winefile.rc:113
+#: winefile.rc:112
 msgid "CDate"
 msgstr "KData"
 
-#: winefile.rc:114
+#: winefile.rc:113
 msgid "ADate"
 msgstr "PData"
 
-#: winefile.rc:115
+#: winefile.rc:114
 msgid "MDate"
 msgstr "MData"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "Index/Inode"
 msgstr "Indeksas/Inode"
 
-#: winefile.rc:119
+#: winefile.rc:118
 msgid "Security"
 msgstr "Saugumas"
 
-#: winefile.rc:121
+#: winefile.rc:120
 msgid "%s of %s free"
 msgstr "%s iš %s laisva"
 

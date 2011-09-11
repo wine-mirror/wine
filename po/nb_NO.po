@@ -39,7 +39,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Ikke oppgitt"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:111
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:110
 msgid "Name"
 msgstr "Navn"
 
@@ -6552,7 +6552,7 @@ msgstr "&Avslutt"
 msgid "&About Control Panel"
 msgstr "&Om Kontrollpanel..."
 
-#: shell32.rc:135 shell32.rc:139 winefile.rc:112
+#: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
 msgstr "Størrelse"
 
@@ -6564,7 +6564,7 @@ msgstr "Type"
 msgid "Modified"
 msgstr "Endret"
 
-#: shell32.rc:138 winefile.rc:118
+#: shell32.rc:138 winefile.rc:117
 #, fuzzy
 msgid "Attributes"
 msgstr ""
@@ -6746,7 +6746,7 @@ msgstr "Programfiler\\Fellesfiler"
 msgid "Contacts"
 msgstr "&Innhold"
 
-#: shell32.rc:228 winefile.rc:117
+#: shell32.rc:228 winefile.rc:116
 msgid "Links"
 msgstr "Koblinger"
 
@@ -11165,8 +11165,8 @@ msgstr "Still &loddrett\tCtrl+F4"
 
 #: winefile.rc:87
 #, fuzzy
-msgid "&About Wine File"
-msgstr "&Informasjon om Filbehandling..."
+msgid "&About Wine File Manager"
+msgstr "Filbehandling"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -11196,31 +11196,27 @@ msgstr "Skall"
 msgid "Not yet implemented"
 msgstr "Ikke implementert ennå"
 
-#: winefile.rc:106
-msgid "Wine File"
-msgstr "Filbehandling"
-
-#: winefile.rc:113
+#: winefile.rc:112
 msgid "CDate"
 msgstr "C-dato"
 
-#: winefile.rc:114
+#: winefile.rc:113
 msgid "ADate"
 msgstr "A-dato"
 
-#: winefile.rc:115
+#: winefile.rc:114
 msgid "MDate"
 msgstr "M-dato"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "Index/Inode"
 msgstr "Indeks/Inode"
 
-#: winefile.rc:119
+#: winefile.rc:118
 msgid "Security"
 msgstr "Sikkerhet"
 
-#: winefile.rc:121
+#: winefile.rc:120
 msgid "%s of %s free"
 msgstr "%s av %s ledig"
 

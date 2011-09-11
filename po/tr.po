@@ -42,7 +42,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Komut belirtilmemiş."
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:111
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:110
 msgid "Name"
 msgstr "Ad"
 
@@ -6575,7 +6575,7 @@ msgstr ""
 msgid "&About Control Panel"
 msgstr ""
 
-#: shell32.rc:135 shell32.rc:139 winefile.rc:112
+#: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
 msgstr "Boyut"
 
@@ -6587,7 +6587,7 @@ msgstr "Tür"
 msgid "Modified"
 msgstr "Düzenlenme"
 
-#: shell32.rc:138 winefile.rc:118
+#: shell32.rc:138 winefile.rc:117
 #, fuzzy
 msgid "Attributes"
 msgstr ""
@@ -6769,7 +6769,7 @@ msgstr "Program Files\\Common Files"
 msgid "Contacts"
 msgstr "&İçindekiler"
 
-#: shell32.rc:228 winefile.rc:117
+#: shell32.rc:228 winefile.rc:116
 msgid "Links"
 msgstr "Bağlantılar"
 
@@ -11137,8 +11137,8 @@ msgstr "Di&key Döşe\tCtrl+F4"
 
 #: winefile.rc:87
 #, fuzzy
-msgid "&About Wine File"
-msgstr "Winefile hakkında &bilgi..."
+msgid "&About Wine File Manager"
+msgstr "Winefile"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -11168,31 +11168,27 @@ msgstr "Kabuk"
 msgid "Not yet implemented"
 msgstr "Henüz tamamlanmadı"
 
-#: winefile.rc:106
-msgid "Wine File"
-msgstr "Wine Dosya Yöneticisi"
-
-#: winefile.rc:113
+#: winefile.rc:112
 msgid "CDate"
 msgstr "OTarihi"
 
-#: winefile.rc:114
+#: winefile.rc:113
 msgid "ADate"
 msgstr "ETarihi"
 
-#: winefile.rc:115
+#: winefile.rc:114
 msgid "MDate"
 msgstr "DTarihi"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "Index/Inode"
 msgstr "İndeks/Düğüm"
 
-#: winefile.rc:119
+#: winefile.rc:118
 msgid "Security"
 msgstr "Güvenlik"
 
-#: winefile.rc:121
+#: winefile.rc:120
 msgid "%s of %s free"
 msgstr "%s / %s boş"
 

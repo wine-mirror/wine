@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "指定されていません"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:111
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:110
 msgid "Name"
 msgstr "名前"
 
@@ -6288,7 +6288,7 @@ msgstr "終了(&X)"
 msgid "&About Control Panel"
 msgstr "バージョン情報(&A)..."
 
-#: shell32.rc:135 shell32.rc:139 winefile.rc:112
+#: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
 msgstr "サイズ"
 
@@ -6300,7 +6300,7 @@ msgstr "型"
 msgid "Modified"
 msgstr "更新日時"
 
-#: shell32.rc:138 winefile.rc:118
+#: shell32.rc:138 winefile.rc:117
 msgid "Attributes"
 msgstr "属性"
 
@@ -6473,7 +6473,7 @@ msgstr "Program Files (x86)\\Common Files"
 msgid "Contacts"
 msgstr "Contacts"
 
-#: shell32.rc:228 winefile.rc:117
+#: shell32.rc:228 winefile.rc:116
 msgid "Links"
 msgstr "Links"
 
@@ -10859,8 +10859,9 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "左右に並べて表示(&V)\tCtrl+F4"
 
 #: winefile.rc:87
-msgid "&About Wine File"
-msgstr "バージョン情報(&A)"
+#, fuzzy
+msgid "&About Wine File Manager"
+msgstr "Wine ファイルマネージャ"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10890,31 +10891,27 @@ msgstr "シェル"
 msgid "Not yet implemented"
 msgstr "未実装"
 
-#: winefile.rc:106
-msgid "Wine File"
-msgstr "Wine File"
-
-#: winefile.rc:113
+#: winefile.rc:112
 msgid "CDate"
 msgstr "作成日"
 
-#: winefile.rc:114
+#: winefile.rc:113
 msgid "ADate"
 msgstr "アクセス日"
 
-#: winefile.rc:115
+#: winefile.rc:114
 msgid "MDate"
 msgstr "変更日"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "Index/Inode"
 msgstr "Index/Inode"
 
-#: winefile.rc:119
+#: winefile.rc:118
 msgid "Security"
 msgstr "セキュリティ"
 
-#: winefile.rc:121
+#: winefile.rc:120
 msgid "%s of %s free"
 msgstr "%s の空き (全容量 %s)"
 

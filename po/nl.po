@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Niet gespecificeerd"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:111
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:110
 msgid "Name"
 msgstr "Naam"
 
@@ -6411,7 +6411,7 @@ msgstr "&Afsluiten"
 msgid "&About Control Panel"
 msgstr "&Over Configuratiescherm"
 
-#: shell32.rc:135 shell32.rc:139 winefile.rc:112
+#: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
 msgstr "Grootte"
 
@@ -6423,7 +6423,7 @@ msgstr "Type"
 msgid "Modified"
 msgstr "Gewijzigd"
 
-#: shell32.rc:138 winefile.rc:118
+#: shell32.rc:138 winefile.rc:117
 msgid "Attributes"
 msgstr "Attributen"
 
@@ -6597,7 +6597,7 @@ msgstr "Program Files (x86)\\Common Files"
 msgid "Contacts"
 msgstr "Contacten"
 
-#: shell32.rc:228 winefile.rc:117
+#: shell32.rc:228 winefile.rc:116
 msgid "Links"
 msgstr "Links"
 
@@ -11027,8 +11027,8 @@ msgstr "&Naast elkaar\tCtrl+F4"
 
 #: winefile.rc:87
 #, fuzzy
-msgid "&About Wine File"
-msgstr "&Over Winefile..."
+msgid "&About Wine File Manager"
+msgstr "Winefile"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -11058,31 +11058,27 @@ msgstr "Shell"
 msgid "Not yet implemented"
 msgstr "Nog niet geimplementeerd"
 
-#: winefile.rc:106
-msgid "Wine File"
-msgstr "Winefile"
-
-#: winefile.rc:113
+#: winefile.rc:112
 msgid "CDate"
 msgstr "CDatum"
 
-#: winefile.rc:114
+#: winefile.rc:113
 msgid "ADate"
 msgstr "ADatum"
 
-#: winefile.rc:115
+#: winefile.rc:114
 msgid "MDate"
 msgstr "MDatum"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "Index/Inode"
 msgstr "Index/Inode"
 
-#: winefile.rc:119
+#: winefile.rc:118
 msgid "Security"
 msgstr "Beveiliging"
 
-#: winefile.rc:121
+#: winefile.rc:120
 msgid "%s of %s free"
 msgstr "%s van %s vrij"
 

@@ -39,7 +39,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Not specified"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:111
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:110
 msgid "Name"
 msgstr "Name"
 
@@ -6210,7 +6210,7 @@ msgstr "E&xit"
 msgid "&About Control Panel"
 msgstr "&About Control Panel"
 
-#: shell32.rc:135 shell32.rc:139 winefile.rc:112
+#: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
 msgstr ""
 
@@ -6222,7 +6222,7 @@ msgstr ""
 msgid "Modified"
 msgstr ""
 
-#: shell32.rc:138 winefile.rc:118
+#: shell32.rc:138 winefile.rc:117
 msgid "Attributes"
 msgstr "Attributes"
 
@@ -6395,7 +6395,7 @@ msgstr ""
 msgid "Contacts"
 msgstr "Contacts"
 
-#: shell32.rc:228 winefile.rc:117
+#: shell32.rc:228 winefile.rc:116
 msgid "Links"
 msgstr ""
 
@@ -10637,8 +10637,8 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Tile &Vertically\tCtrl+F4"
 
 #: winefile.rc:87
-msgid "&About Wine File"
-msgstr "&About Wine File"
+msgid "&About Wine File Manager"
+msgstr "&About Wine File Manager"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10668,31 +10668,27 @@ msgstr ""
 msgid "Not yet implemented"
 msgstr "Not yet implemented"
 
-#: winefile.rc:106
-msgid "Wine File"
-msgstr "Wine File"
-
-#: winefile.rc:113
+#: winefile.rc:112
 msgid "CDate"
 msgstr "CDate"
 
-#: winefile.rc:114
+#: winefile.rc:113
 msgid "ADate"
 msgstr "ADate"
 
-#: winefile.rc:115
+#: winefile.rc:114
 msgid "MDate"
 msgstr "MDate"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "Index/Inode"
 msgstr ""
 
-#: winefile.rc:119
+#: winefile.rc:118
 msgid "Security"
 msgstr "Security"
 
-#: winefile.rc:121
+#: winefile.rc:120
 msgid "%s of %s free"
 msgstr ""
 

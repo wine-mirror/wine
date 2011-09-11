@@ -4566,7 +4566,7 @@ static BOOL show_frame(HWND hwndParent, int cmdshow, LPCWSTR path)
 
 
 	/* create main window */
-	Globals.hMainWnd = CreateWindowExW(0, MAKEINTRESOURCEW(Globals.hframeClass), RS(b1,IDS_WINE_FILE), WS_OVERLAPPEDWINDOW,
+	Globals.hMainWnd = CreateWindowExW(0, MAKEINTRESOURCEW(Globals.hframeClass), RS(b1,IDS_WINEFILE), WS_OVERLAPPEDWINDOW,
 					opts.start_x, opts.start_y, opts.width, opts.height,
 					hwndParent, Globals.hMenuFrame, Globals.hInstance, 0/*lpParam*/);
 

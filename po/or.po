@@ -37,7 +37,7 @@ msgstr ""
 msgid "Not specified"
 msgstr ""
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:111
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:110
 msgid "Name"
 msgstr ""
 
@@ -6194,7 +6194,7 @@ msgstr ""
 msgid "&About Control Panel"
 msgstr "ଘଡ଼ି ବିଷୟରେ (&A)..."
 
-#: shell32.rc:135 shell32.rc:139 winefile.rc:112
+#: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
 msgstr ""
 
@@ -6206,7 +6206,7 @@ msgstr ""
 msgid "Modified"
 msgstr ""
 
-#: shell32.rc:138 winefile.rc:118
+#: shell32.rc:138 winefile.rc:117
 msgid "Attributes"
 msgstr ""
 
@@ -6379,7 +6379,7 @@ msgstr ""
 msgid "Contacts"
 msgstr ""
 
-#: shell32.rc:228 winefile.rc:117
+#: shell32.rc:228 winefile.rc:116
 msgid "Links"
 msgstr ""
 
@@ -10273,7 +10273,7 @@ msgstr ""
 
 #: winefile.rc:87
 #, fuzzy
-msgid "&About Wine File"
+msgid "&About Wine File Manager"
 msgstr "ଘଡ଼ି ବିଷୟରେ (&A)..."
 
 #: winefile.rc:93
@@ -10304,34 +10304,30 @@ msgstr ""
 msgid "Not yet implemented"
 msgstr ""
 
-#: winefile.rc:106
-msgid "Wine File"
-msgstr ""
-
-#: winefile.rc:113
+#: winefile.rc:112
 #, fuzzy
 msgid "CDate"
 msgstr "ତାରିଖ (&D)"
 
-#: winefile.rc:114
+#: winefile.rc:113
 #, fuzzy
 msgid "ADate"
 msgstr "ତାରିଖ (&D)"
 
-#: winefile.rc:115
+#: winefile.rc:114
 #, fuzzy
 msgid "MDate"
 msgstr "ତାରିଖ (&D)"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "Index/Inode"
 msgstr ""
 
-#: winefile.rc:119
+#: winefile.rc:118
 msgid "Security"
 msgstr ""
 
-#: winefile.rc:121
+#: winefile.rc:120
 msgid "%s of %s free"
 msgstr ""
 

@@ -44,7 +44,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nije određeno"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:111
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:110
 #, fuzzy
 msgid "Name"
 msgstr ""
@@ -6610,7 +6610,7 @@ msgstr ""
 msgid "&About Control Panel"
 msgstr "&O upravljačkom panelu..."
 
-#: shell32.rc:135 shell32.rc:139 winefile.rc:112
+#: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
 msgstr "Veličina"
 
@@ -6622,7 +6622,7 @@ msgstr "Vrsta"
 msgid "Modified"
 msgstr "Izmenjeno"
 
-#: shell32.rc:138 winefile.rc:118
+#: shell32.rc:138 winefile.rc:117
 msgid "Attributes"
 msgstr "Osobine"
 
@@ -6796,7 +6796,7 @@ msgstr "Programi (x86)\\Zajedničke datoteke"
 msgid "Contacts"
 msgstr "Kontakti"
 
-#: shell32.rc:228 winefile.rc:117
+#: shell32.rc:228 winefile.rc:116
 msgid "Links"
 msgstr "Veze"
 
@@ -10893,7 +10893,7 @@ msgstr "Izaberi &sve\tCtrl+A"
 
 #: winefile.rc:87
 #, fuzzy
-msgid "&About Wine File"
+msgid "&About Wine File Manager"
 msgstr "&O Beležnici"
 
 #: winefile.rc:93
@@ -10925,35 +10925,30 @@ msgstr ""
 msgid "Not yet implemented"
 msgstr "Nije jos u programu"
 
-#: winefile.rc:106
-#, fuzzy
-msgid "Wine File"
-msgstr "Wine Pomoć"
-
-#: winefile.rc:113
+#: winefile.rc:112
 #, fuzzy
 msgid "CDate"
 msgstr "&Datum"
 
-#: winefile.rc:114
+#: winefile.rc:113
 #, fuzzy
 msgid "ADate"
 msgstr "&Datum"
 
-#: winefile.rc:115
+#: winefile.rc:114
 #, fuzzy
 msgid "MDate"
 msgstr "&Datum"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "Index/Inode"
 msgstr ""
 
-#: winefile.rc:119
+#: winefile.rc:118
 msgid "Security"
 msgstr ""
 
-#: winefile.rc:121
+#: winefile.rc:120
 msgid "%s of %s free"
 msgstr ""
 

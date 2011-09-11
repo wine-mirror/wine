@@ -40,7 +40,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Ne specificat"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:111
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:110
 msgid "Name"
 msgstr "Nume"
 
@@ -6833,7 +6833,7 @@ msgstr "Înc&hide"
 msgid "&About Control Panel"
 msgstr "&About Control Panel..."
 
-#: shell32.rc:135 shell32.rc:139 winefile.rc:112
+#: shell32.rc:135 shell32.rc:139 winefile.rc:111
 #, fuzzy
 msgid "Size"
 msgstr ""
@@ -6850,7 +6850,7 @@ msgstr "Tip"
 msgid "Modified"
 msgstr "Modificat"
 
-#: shell32.rc:138 winefile.rc:118
+#: shell32.rc:138 winefile.rc:117
 msgid "Attributes"
 msgstr "Atribute"
 
@@ -7031,7 +7031,7 @@ msgstr "Program Files\\Common Files"
 msgid "Contacts"
 msgstr "&Conținut"
 
-#: shell32.rc:228 winefile.rc:117
+#: shell32.rc:228 winefile.rc:116
 msgid "Links"
 msgstr "Legături"
 
@@ -11522,8 +11522,8 @@ msgstr "Mozaic &vertical\tCtrl+F4"
 
 #: winefile.rc:87
 #, fuzzy
-msgid "&About Wine File"
-msgstr "Des&pre Winefile..."
+msgid "&About Wine File Manager"
+msgstr "Administrator Wine File"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -11553,31 +11553,27 @@ msgstr "Shell"
 msgid "Not yet implemented"
 msgstr "Neimplementat încă"
 
-#: winefile.rc:106
-msgid "Wine File"
-msgstr "Wine File"
-
-#: winefile.rc:113
+#: winefile.rc:112
 msgid "CDate"
 msgstr "Ultima schimbare de stare (ctime)"
 
-#: winefile.rc:114
+#: winefile.rc:113
 msgid "ADate"
 msgstr "Ultima accesare"
 
-#: winefile.rc:115
+#: winefile.rc:114
 msgid "MDate"
 msgstr "Ultima modificare"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "Index/Inode"
 msgstr "Index/Inode"
 
-#: winefile.rc:119
+#: winefile.rc:118
 msgid "Security"
 msgstr "Securitate"
 
-#: winefile.rc:121
+#: winefile.rc:120
 msgid "%s of %s free"
 msgstr "%s din %s liber"
 

@@ -42,7 +42,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nincs megadva"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:111
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:110
 msgid "Name"
 msgstr "Név"
 
@@ -6683,7 +6683,7 @@ msgstr ""
 msgid "&About Control Panel"
 msgstr "&Vezérlőpult névjegye..."
 
-#: shell32.rc:135 shell32.rc:139 winefile.rc:112
+#: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
 msgstr "Méret"
 
@@ -6695,7 +6695,7 @@ msgstr "Típus"
 msgid "Modified"
 msgstr "Módosítva"
 
-#: shell32.rc:138 winefile.rc:118
+#: shell32.rc:138 winefile.rc:117
 msgid "Attributes"
 msgstr "Attribútumok"
 
@@ -6872,7 +6872,7 @@ msgstr "Program Files\\Common Files"
 msgid "Contacts"
 msgstr "&Tartalom"
 
-#: shell32.rc:228 winefile.rc:117
+#: shell32.rc:228 winefile.rc:116
 msgid "Links"
 msgstr ""
 
@@ -10989,7 +10989,7 @@ msgstr "Mozaikszerű elrendezés fü&ggőlegesen\tCtrl+F4"
 
 #: winefile.rc:87
 #, fuzzy
-msgid "&About Wine File"
+msgid "&About Wine File Manager"
 msgstr "&Winefile-ról..."
 
 #: winefile.rc:93
@@ -11021,36 +11021,31 @@ msgstr ""
 msgid "Not yet implemented"
 msgstr "Nincs implementálva"
 
-#: winefile.rc:106
-#, fuzzy
-msgid "Wine File"
-msgstr "Wine súgó"
-
-#: winefile.rc:113
+#: winefile.rc:112
 #, fuzzy
 msgid "CDate"
 msgstr "&Dátum"
 
-#: winefile.rc:114
+#: winefile.rc:113
 #, fuzzy
 msgid "ADate"
 msgstr "&Dátum"
 
-#: winefile.rc:115
+#: winefile.rc:114
 #, fuzzy
 msgid "MDate"
 msgstr "&Dátum"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "Index/Inode"
 msgstr ""
 
-#: winefile.rc:119
+#: winefile.rc:118
 #, fuzzy
 msgid "Security"
 msgstr "&Biztonság"
 
-#: winefile.rc:121
+#: winefile.rc:120
 msgid "%s of %s free"
 msgstr ""
 

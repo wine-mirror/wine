@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nie określone"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:111
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:110
 msgid "Name"
 msgstr "Nazwa"
 
@@ -6309,7 +6309,7 @@ msgstr "Za&kończ"
 msgid "&About Control Panel"
 msgstr "Panel sterowania - i&nformacje"
 
-#: shell32.rc:135 shell32.rc:139 winefile.rc:112
+#: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
 msgstr "Rozmiar"
 
@@ -6321,7 +6321,7 @@ msgstr "Typ"
 msgid "Modified"
 msgstr "Zmodyfikowany"
 
-#: shell32.rc:138 winefile.rc:118
+#: shell32.rc:138 winefile.rc:117
 msgid "Attributes"
 msgstr "Atrybuty"
 
@@ -6495,7 +6495,7 @@ msgstr "Program Files (x86)\\Common Files"
 msgid "Contacts"
 msgstr "Kontakty"
 
-#: shell32.rc:228 winefile.rc:117
+#: shell32.rc:228 winefile.rc:116
 msgid "Links"
 msgstr "Dowiązania"
 
@@ -10862,8 +10862,9 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "&Sąsiadująco w poziomie\tCtrl+F4"
 
 #: winefile.rc:87
-msgid "&About Wine File"
-msgstr "Menadżer plików Wine - i&nformacje"
+#, fuzzy
+msgid "&About Wine File Manager"
+msgstr "Menadżer plików Wine"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10893,31 +10894,27 @@ msgstr "Pulpit"
 msgid "Not yet implemented"
 msgstr "Jeszcze nie zaimplementowane"
 
-#: winefile.rc:106
-msgid "Wine File"
-msgstr "Wine File"
-
-#: winefile.rc:113
+#: winefile.rc:112
 msgid "CDate"
 msgstr "CDate"
 
-#: winefile.rc:114
+#: winefile.rc:113
 msgid "ADate"
 msgstr "ADate"
 
-#: winefile.rc:115
+#: winefile.rc:114
 msgid "MDate"
 msgstr "MDate"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "Index/Inode"
 msgstr "Indeks/inode"
 
-#: winefile.rc:119
+#: winefile.rc:118
 msgid "Security"
 msgstr "Prawa dostępu"
 
-#: winefile.rc:121
+#: winefile.rc:120
 msgid "%s of %s free"
 msgstr "%s z %s wolne"
 
