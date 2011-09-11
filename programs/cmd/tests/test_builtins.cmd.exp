@@ -757,4 +757,12 @@ goto with no leading space worked
 goto with a leading space worked
 goto with a leading tab worked
 goto with a following space worked
------------Done, jumping to EOF-----------
+---------- Testing combined CALLs/GOTOs -----------
+world
+cheball
+barbare
+bar
+foo
+baz
+cheball
+barbare

@@ -1353,6 +1353,53 @@ if d==d goto dest4
 :dest4@space@
 echo goto with a following space worked
 
+echo ---------- Testing combined CALLs/GOTOs -----------
+echo @echo off>foo.cmd
+echo goto :eof>>foot.cmd
+echo :eof>>foot.cmd
+echo echo world>>foo.cmd
+
+echo @echo off>foot.cmd
+echo echo cheball>>foot.cmd
+echo.>>foot.cmd
+echo call :bar>>foot.cmd
+echo if "%%1"=="deleteMe" (del foot.cmd)>>foot.cmd
+echo goto :eof>>foot.cmd
+echo.>>foot.cmd
+echo :bar>>foot.cmd
+echo echo barbare>>foot.cmd
+echo goto :eof>>foot.cmd
+
+call foo.cmd
+call foot
+call :bar
+del foo.cmd
+rem Script execution stops after the following line
+foot deleteMe
+call :foo
+call :foot
+goto :endFuns
+
+:foot
+echo foot
+
+:foo
+echo foo
+goto :eof
+
+:endFuns
+
+:bar
+echo bar
+call :foo
+
+:baz
+echo baz
+goto :eof
+
+echo Final message is not output since earlier 'foot' processing stops script execution
+echo Do NOT add any tests below this line
+
 echo -----------Done, jumping to EOF-----------
 goto :eof
 rem Subroutine to set errorlevel and return
