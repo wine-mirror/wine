@@ -1593,6 +1593,7 @@ static HRESULT WINAPI ddraw7_GetAvailableVidMem(IDirectDraw7 *iface, DDSCAPS2 *C
         DWORD *free)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw7(iface);
+    HRESULT hr = DD_OK;
 
     TRACE("iface %p, caps %p, total %p, free %p.\n", iface, Caps, total, free);
 
@@ -1614,13 +1615,18 @@ static HRESULT WINAPI ddraw7_GetAvailableVidMem(IDirectDraw7 *iface, DDSCAPS2 *C
         return DDERR_INVALIDPARAMS;
     }
 
-    if (total)
-        *total = This->total_vidmem;
     if (free)
         *free = wined3d_device_get_available_texture_mem(This->wined3d_device);
+    if (total)
+    {
+        WINED3DADAPTER_IDENTIFIER desc = {0};
+
+        hr = wined3d_get_adapter_identifier(This->wineD3D, WINED3DADAPTER_DEFAULT, 0, &desc);
+        *total = desc.video_memory;
+    }
 
     LeaveCriticalSection(&ddraw_cs);
-    return DD_OK;
+    return hr;
 }
 
 static HRESULT WINAPI ddraw4_GetAvailableVidMem(IDirectDraw4 *iface,
@@ -5840,9 +5846,6 @@ HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type)
         wined3d_decref(ddraw->wineD3D);
         return hr;
     }
-
-    /* Get the amount of video memory */
-    ddraw->total_vidmem = wined3d_device_get_available_texture_mem(ddraw->wined3d_device);
 
     list_init(&ddraw->surface_list);
 
