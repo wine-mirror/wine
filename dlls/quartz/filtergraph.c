@@ -2621,21 +2621,62 @@ static HRESULT WINAPI MediaPosition_Invoke(IMediaPosition* iface, DISPID dispIdM
     return E_NOTIMPL;
 }
 
+static HRESULT ConvertFromREFTIME(IMediaSeeking *seek, REFTIME time_in, LONGLONG *time_out)
+{
+    GUID time_format;
+    HRESULT hr;
+
+    hr = MediaSeeking_GetTimeFormat(seek, &time_format);
+    if (FAILED(hr))
+        return hr;
+    if (!IsEqualGUID(&TIME_FORMAT_MEDIA_TIME, &time_format))
+    {
+        FIXME("Unsupported time format.\n");
+        return E_NOTIMPL;
+    }
+
+    *time_out = (LONGLONG) (time_in * 10000000); /* convert from 1 second intervals to 100 ns intervals */
+    return S_OK;
+}
+
+static HRESULT ConvertToREFTIME(IMediaSeeking *seek, LONGLONG time_in, REFTIME *time_out)
+{
+    GUID time_format;
+    HRESULT hr;
+
+    hr = MediaSeeking_GetTimeFormat(seek, &time_format);
+    if (FAILED(hr))
+        return hr;
+    if (!IsEqualGUID(&TIME_FORMAT_MEDIA_TIME, &time_format))
+    {
+        FIXME("Unsupported time format.\n");
+        return E_NOTIMPL;
+    }
+
+    *time_out = (REFTIME)time_in / 10000000; /* convert from 100 ns intervals to 1 second intervals */
+    return S_OK;
+}
+
 /*** IMediaPosition methods ***/
 static HRESULT WINAPI MediaPosition_get_Duration(IMediaPosition * iface, REFTIME *plength)
 {
     LONGLONG duration;
     IFilterGraphImpl *This = impl_from_IMediaPosition( iface );
     HRESULT hr = IMediaSeeking_GetDuration(&This->IMediaSeeking_iface, &duration);
-    if (SUCCEEDED(hr)) *plength = duration;
-    return hr;
+    if (FAILED(hr))
+        return hr;
+    return ConvertToREFTIME(&This->IMediaSeeking_iface, duration, plength);
 }
 
 static HRESULT WINAPI MediaPosition_put_CurrentPosition(IMediaPosition * iface, REFTIME llTime)
 {
     IFilterGraphImpl *This = impl_from_IMediaPosition( iface );
-    LONGLONG reftime = llTime;
+    LONGLONG reftime;
+    HRESULT hr;
 
+    hr = ConvertFromREFTIME(&This->IMediaSeeking_iface, llTime, &reftime);
+    if (FAILED(hr))
+        return hr;
     return IMediaSeeking_SetPositions(&This->IMediaSeeking_iface, &reftime,
             AM_SEEKING_AbsolutePositioning, NULL, AM_SEEKING_NoPositioning);
 }
@@ -2644,9 +2685,12 @@ static HRESULT WINAPI MediaPosition_get_CurrentPosition(IMediaPosition * iface, 
 {
     IFilterGraphImpl *This = impl_from_IMediaPosition( iface );
     LONGLONG pos;
-    HRESULT hr = IMediaSeeking_GetCurrentPosition(&This->IMediaSeeking_iface, &pos);
-    if (SUCCEEDED(hr)) *pllTime = pos;
-    return hr;
+    HRESULT hr;
+
+    hr = IMediaSeeking_GetCurrentPosition(&This->IMediaSeeking_iface, &pos);
+    if (FAILED(hr))
+        return hr;
+    return ConvertToREFTIME(&This->IMediaSeeking_iface, pos, pllTime);
 }
 
 static HRESULT WINAPI MediaPosition_get_StopTime(IMediaPosition * iface, REFTIME *pllTime)
@@ -2654,15 +2698,20 @@ static HRESULT WINAPI MediaPosition_get_StopTime(IMediaPosition * iface, REFTIME
     IFilterGraphImpl *This = impl_from_IMediaPosition( iface );
     LONGLONG pos;
     HRESULT hr = IMediaSeeking_GetStopPosition(&This->IMediaSeeking_iface, &pos);
-    if (SUCCEEDED(hr)) *pllTime = pos;
-    return hr;
+    if (FAILED(hr))
+        return hr;
+    return ConvertToREFTIME(&This->IMediaSeeking_iface, pos, pllTime);
 }
 
 static HRESULT WINAPI MediaPosition_put_StopTime(IMediaPosition * iface, REFTIME llTime)
 {
     IFilterGraphImpl *This = impl_from_IMediaPosition( iface );
-    LONGLONG reftime = llTime;
+    LONGLONG reftime;
+    HRESULT hr;
 
+    hr = ConvertFromREFTIME(&This->IMediaSeeking_iface, llTime, &reftime);
+    if (FAILED(hr))
+        return hr;
     return IMediaSeeking_SetPositions(&This->IMediaSeeking_iface, NULL, AM_SEEKING_NoPositioning,
             &reftime, AM_SEEKING_AbsolutePositioning);
 }
