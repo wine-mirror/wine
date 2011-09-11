@@ -2974,7 +2974,7 @@ UINT WINAPI PathGetCharTypeW(WCHAR ch)
   {
      if (ch < 126)
      {
-       if ((ch & 0x1 && ch != ';') || !ch || isalnum(ch) || ch == '$' || ch == '&' || ch == '(' ||
+         if (((ch & 0x1) && ch != ';') || !ch || isalnum(ch) || ch == '$' || ch == '&' || ch == '(' ||
             ch == '.' || ch == '@' || ch == '^' ||
             ch == '\'' || ch == 130 || ch == '`')
          flags |= GCT_SHORTCHAR; /* All these are valid for DOS */
