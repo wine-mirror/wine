@@ -725,7 +725,7 @@ foo ''
 non-builtin dir
 ------------ Testing cmd invocation ------------
 ... a batch file can delete itself ...
-@todo_wine@file correctly deleted
+file correctly deleted
 ... a batch file can alter itself ...
 @todo_wine@bar
 ------------ Testing setlocal/endlocal ------------
