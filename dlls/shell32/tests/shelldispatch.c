@@ -84,10 +84,12 @@ static void test_namespace(void)
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = -1;
+    folder = (void*)0xdeadbeef;
     r = IShellDispatch_NameSpace(sd, var, &folder);
-    todo_wine
+    todo_wine {
     ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
-
+    ok(folder == NULL, "got %p\n", folder);
+}
     V_VT(&var) = VT_I4;
     V_I4(&var) = ssfPROGRAMFILES;
     r = IShellDispatch_NameSpace(sd, var, &folder);
