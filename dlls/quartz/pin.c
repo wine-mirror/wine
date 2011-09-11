@@ -478,14 +478,15 @@ static void PullPin_Thread_Process(PullPin *This)
         }
         else
         {
-            /* FIXME: This is not well handled yet! */
-            ERR("Processing error: %x\n", hr);
             if (hr == VFW_E_TIMEOUT)
             {
-                assert(!pSample);
+                if (pSample != NULL)
+                    WARN("Non-NULL sample returned with VFW_E_TIMEOUT.\n");
                 hr = S_OK;
-                continue;
             }
+            /* FIXME: Errors are not well handled yet! */
+            else
+                ERR("Processing error: %x\n", hr);
         }
 
         if (pSample)
