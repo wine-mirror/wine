@@ -217,10 +217,44 @@ static HRESULT interp_icallv(exec_ctx_t *ctx)
     return do_icall(ctx, NULL);
 }
 
+static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, VARIANT *val, BOOL own_val)
+{
+    ref_t ref;
+    HRESULT hres;
+
+    hres = lookup_identifier(ctx, name, &ref);
+    if(FAILED(hres))
+        return hres;
+
+    switch(ref.type) {
+    case REF_DISP:
+        hres = disp_propput(ctx->script, ref.u.d.disp, ref.u.d.id, val);
+        if(own_val)
+            VariantClear(val);
+        break;
+    case REF_NONE:
+        FIXME("%s not found\n", debugstr_w(name));
+        if(own_val)
+            VariantClear(val);
+        return DISP_E_UNKNOWNNAME;
+    }
+
+    return hres;
+}
+
 static HRESULT interp_assign_ident(exec_ctx_t *ctx)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    const BSTR arg = ctx->instr->arg1.bstr;
+    variant_val_t v;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_w(arg));
+
+    hres = stack_pop_val(ctx, &v);
+    if(FAILED(hres))
+        return hres;
+
+    return assign_ident(ctx, arg, v.v, v.owned);
 }
 
 static HRESULT interp_ret(exec_ctx_t *ctx)

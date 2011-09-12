@@ -63,6 +63,7 @@ typedef struct {
 
 HRESULT disp_get_id(IDispatch*,BSTR,DISPID*);
 HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*,VARIANT*);
+HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,VARIANT*);
 
 struct _script_ctx_t {
     IActiveScriptSite *site;
