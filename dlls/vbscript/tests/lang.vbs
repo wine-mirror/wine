@@ -70,4 +70,9 @@ Call ok(1 & 100000 = "1100000", "1 & 100000 = " & (1 & 100000))
 '    Call ok(true & false = "TrueFalse", "true & false = " & (true & false))
 'end if
 
+Call ok(2+2 = 4, "2+2 = " & (2+2))
+Call ok(false + 6 + true = 5, "false + 6 + true <> 5")
+Call ok(getVT(2+null) = "VT_NULL", "getVT(2+null) = " & getVT(2+null))
+Call ok(2+empty = 2, "2+empty = " & (2+empty))
+
 reportSuccess()
