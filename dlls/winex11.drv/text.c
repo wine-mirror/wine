@@ -50,9 +50,6 @@ BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     BOOL                result = TRUE;
     HRGN                saved_region = 0;
 
-    if(physDev->has_gdi_font)
-        return X11DRV_XRender_ExtTextOut(physDev, x, y, flags, lprect, wstr, count, lpDx);
-
     if (!X11DRV_SetupGCForText( physDev )) return TRUE;
 
     pfo = XFONT_GetFontObject( physDev->font );

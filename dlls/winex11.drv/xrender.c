@@ -828,7 +828,7 @@ static int AllocEntry(void)
   return mru;
 }
 
-static BOOL get_gasp_flags(X11DRV_PDEVICE *physDev, WORD *flags)
+static BOOL get_gasp_flags(struct xrender_physdev *physDev, WORD *flags)
 {
     DWORD size;
     WORD *gasp, *buffer;
@@ -846,7 +846,7 @@ static BOOL get_gasp_flags(X11DRV_PDEVICE *physDev, WORD *flags)
     GetFontData(physDev->dev.hdc, MS_GASP_TAG,  0, gasp, size);
 
     GetTextMetricsW(physDev->dev.hdc, &tm);
-    ppem = abs(X11DRV_YWStoDS(physDev, tm.tmAscent + tm.tmDescent - tm.tmInternalLeading));
+    ppem = abs(X11DRV_YWStoDS(physDev->x11dev, tm.tmAscent + tm.tmDescent - tm.tmInternalLeading));
 
     gasp++;
     num_recs = get_be_word(*gasp);
@@ -864,7 +864,7 @@ static BOOL get_gasp_flags(X11DRV_PDEVICE *physDev, WORD *flags)
     return TRUE;
 }
 
-static AA_Type get_antialias_type( X11DRV_PDEVICE *physDev, BOOL subpixel, BOOL hinter)
+static AA_Type get_antialias_type( struct xrender_physdev *physDev, BOOL subpixel, BOOL hinter)
 {
     AA_Type ret;
     WORD flags;
@@ -895,7 +895,7 @@ static AA_Type get_antialias_type( X11DRV_PDEVICE *physDev, BOOL subpixel, BOOL 
     return ret;
 }
 
-static int GetCacheEntry(X11DRV_PDEVICE *physDev, LFANDSIZE *plfsz)
+static int GetCacheEntry(struct xrender_physdev *physDev, LFANDSIZE *plfsz)
 {
     int ret;
     int format;
@@ -1126,7 +1126,7 @@ static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
     EnterCriticalSection(&xrender_cs);
     if (physdev->info.cache_index != -1)
         dec_ref_cache( physdev->info.cache_index );
-    physdev->info.cache_index = GetCacheEntry( physdev->x11dev, &lfsz );
+    physdev->info.cache_index = GetCacheEntry( physdev, &lfsz );
     LeaveCriticalSection(&xrender_cs);
     physdev->x11dev->has_gdi_font = TRUE;
     return 0;
@@ -1358,14 +1358,14 @@ BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel,
  *
  * Helper to ExtTextOut.  Must be called inside xrender_cs
  */
-static void UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
+static void UploadGlyph(struct xrender_physdev *physDev, int glyph, AA_Type format)
 {
     unsigned int buflen;
     char *buf;
     Glyph gid;
     GLYPHMETRICS gm;
     XGlyphInfo gi;
-    gsCacheEntry *entry = glyphsetCache + physDev->xrender->cache_index;
+    gsCacheEntry *entry = glyphsetCache + physDev->info.cache_index;
     gsCacheEntryFormat *formatEntry;
     UINT ggo_format = GGO_GLYPH_INDEX;
     WXRFormat wxr_format;
@@ -1586,7 +1586,7 @@ static void UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
     formatEntry->gis[glyph] = gi;
 }
 
-static void SharpGlyphMono(X11DRV_PDEVICE *physDev, INT x, INT y,
+static void SharpGlyphMono(struct xrender_physdev *physDev, INT x, INT y,
 			    void *bitmap, XGlyphInfo *gi)
 {
     unsigned char   *srcLine = bitmap, *src;
@@ -1627,8 +1627,8 @@ static void SharpGlyphMono(X11DRV_PDEVICE *physDev, INT x, INT y,
                         bitsMask = 0x80;
                     }
                 } while (bits & bitsMask);
-                XFillRectangle (gdi_display, physDev->drawable, 
-                                physDev->gc, xspan, y, lenspan, 1);
+                XFillRectangle (gdi_display, physDev->x11dev->drawable,
+                                physDev->x11dev->gc, xspan, y, lenspan, 1);
                 xspan += lenspan;
                 w -= lenspan;
             }
@@ -1653,7 +1653,7 @@ static void SharpGlyphMono(X11DRV_PDEVICE *physDev, INT x, INT y,
     }
 }
 
-static void SharpGlyphGray(X11DRV_PDEVICE *physDev, INT x, INT y,
+static void SharpGlyphGray(struct xrender_physdev *physDev, INT x, INT y,
 			    void *bitmap, XGlyphInfo *gi)
 {
     unsigned char   *srcLine = bitmap, *src, bits;
@@ -1685,8 +1685,8 @@ static void SharpGlyphGray(X11DRV_PDEVICE *physDev, INT x, INT y,
                         break;
                     bits = *src++;
                 } while (bits >= 0x80);
-                XFillRectangle (gdi_display, physDev->drawable, 
-                                physDev->gc, xspan, y, lenspan, 1);
+                XFillRectangle (gdi_display, physDev->x11dev->drawable,
+                                physDev->x11dev->gc, xspan, y, lenspan, 1);
                 xspan += lenspan;
                 w -= lenspan;
             }
@@ -1937,12 +1937,12 @@ static inline BOOL is_dib_with_colortable( X11DRV_PDEVICE *physDev )
 }
 
 /***********************************************************************
- *   X11DRV_XRender_ExtTextOut
+ *           xrenderdrv_ExtTextOut
  */
-BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
-				const RECT *lprect, LPCWSTR wstr, UINT count,
-				const INT *lpDx )
+BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
+                            const RECT *lprect, LPCWSTR wstr, UINT count, const INT *lpDx )
 {
+    struct xrender_physdev *physdev = get_xrender_dev( dev );
     XGCValues xgcval;
     gsCacheEntry *entry;
     gsCacheEntryFormat *formatEntry;
@@ -1952,26 +1952,31 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     BOOL disable_antialias = FALSE;
     AA_Type aa_type = AA_None;
     unsigned int idx;
-    const WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(physDev->depth, physDev->color_shifts);
     Picture tile_pict = 0;
 
-    if(is_dib_with_colortable( physDev ))
+    if (!physdev->x11dev->has_gdi_font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pExtTextOut );
+        dev->funcs->pExtTextOut( dev, x, y, flags, lprect, wstr, count, lpDx );
+    }
+
+    if(is_dib_with_colortable( physdev->x11dev ))
     {
         TRACE("Disabling antialiasing\n");
         disable_antialias = TRUE;
     }
 
     xgcval.function = GXcopy;
-    xgcval.background = physDev->backgroundPixel;
+    xgcval.background = physdev->x11dev->backgroundPixel;
     xgcval.fill_style = FillSolid;
     wine_tsx11_lock();
-    XChangeGC( gdi_display, physDev->gc, GCFunction | GCBackground | GCFillStyle, &xgcval );
+    XChangeGC( gdi_display, physdev->x11dev->gc, GCFunction | GCBackground | GCFillStyle, &xgcval );
     wine_tsx11_unlock();
 
-    X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod );
+    X11DRV_LockDIBSection( physdev->x11dev, DIB_Status_GdiMod );
 
-    if(physDev->depth == 1) {
-        if((physDev->textPixel & 0xffffff) == 0) {
+    if(physdev->x11dev->depth == 1) {
+        if((physdev->x11dev->textPixel & 0xffffff) == 0) {
 	    textPixel = 0;
 	    backgroundPixel = 1;
 	} else {
@@ -1979,16 +1984,16 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    backgroundPixel = 0;
 	}
     } else {
-        textPixel = physDev->textPixel;
-	backgroundPixel = physDev->backgroundPixel;
+        textPixel = physdev->x11dev->textPixel;
+	backgroundPixel = physdev->x11dev->backgroundPixel;
     }
 
     if(flags & ETO_OPAQUE)
     {
         wine_tsx11_lock();
-        XSetForeground( gdi_display, physDev->gc, backgroundPixel );
-        XFillRectangle( gdi_display, physDev->drawable, physDev->gc,
-                        physDev->dc_rect.left + lprect->left, physDev->dc_rect.top + lprect->top,
+        XSetForeground( gdi_display, physdev->x11dev->gc, backgroundPixel );
+        XFillRectangle( gdi_display, physdev->x11dev->drawable, physdev->x11dev->gc,
+                        physdev->x11dev->dc_rect.left + lprect->left, physdev->x11dev->dc_rect.top + lprect->top,
                         lprect->right - lprect->left, lprect->bottom - lprect->top );
         wine_tsx11_unlock();
     }
@@ -2002,26 +2007,26 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     if (flags & ETO_CLIPPED)
     {
         HRGN clip_region = CreateRectRgnIndirect( lprect );
-        saved_region = add_extra_clipping_region( physDev, clip_region );
+        saved_region = add_extra_clipping_region( physdev->x11dev, clip_region );
         DeleteObject( clip_region );
     }
 
     EnterCriticalSection(&xrender_cs);
 
-    entry = glyphsetCache + physDev->xrender->cache_index;
+    entry = glyphsetCache + physdev->info.cache_index;
     if( disable_antialias == FALSE )
         aa_type = entry->aa_default;
     formatEntry = entry->format[aa_type];
 
     for(idx = 0; idx < count; idx++) {
         if( !formatEntry ) {
-	    UploadGlyph(physDev, wstr[idx], aa_type);
+	    UploadGlyph(physdev, wstr[idx], aa_type);
             /* re-evaluate antialias since aa_default may have changed */
             if( disable_antialias == FALSE )
                 aa_type = entry->aa_default;
             formatEntry = entry->format[aa_type];
         } else if( wstr[idx] >= formatEntry->nrealized || formatEntry->realized[wstr[idx]] == FALSE) {
-	    UploadGlyph(physDev, wstr[idx], aa_type);
+	    UploadGlyph(physdev, wstr[idx], aa_type);
 	}
     }
     if (!formatEntry)
@@ -2032,7 +2037,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     }
 
     TRACE("Writing %s at %d,%d\n", debugstr_wn(wstr,count),
-          physDev->dc_rect.left + x, physDev->dc_rect.top + y);
+          physdev->x11dev->dc_rect.left + x, physdev->x11dev->dc_rect.top + y);
 
     if(X11DRV_XRender_Installed)
     {
@@ -2040,21 +2045,21 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         POINT offset = {0, 0};
         POINT desired, current;
         int render_op = PictOpOver;
-        Picture pict = get_xrender_picture(physDev);
+        Picture pict = get_xrender_picture(physdev->x11dev);
 
         /* There's a bug in XRenderCompositeText that ignores the xDst and yDst parameters.
            So we pass zeros to the function and move to our starting position using the first
            element of the elts array. */
 
-        desired.x = physDev->dc_rect.left + x;
-        desired.y = physDev->dc_rect.top + y;
+        desired.x = physdev->x11dev->dc_rect.left + x;
+        desired.y = physdev->x11dev->dc_rect.top + y;
         current.x = current.y = 0;
 
-        tile_pict = get_tile_pict(dst_format, physDev->textPixel);
+        tile_pict = get_tile_pict(physdev->info.format, physdev->x11dev->textPixel);
 
 	/* FIXME the mapping of Text/BkColor onto 1 or 0 needs investigation.
 	 */
-	if((dst_format->format == WXR_FORMAT_MONO) && (textPixel == 0))
+	if((physdev->info.format->format == WXR_FORMAT_MONO) && (textPixel == 0))
 	    render_op = PictOpOutReverse; /* This gives us 'black' text */
 
         for(idx = 0; idx < count; idx++)
@@ -2082,8 +2087,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
                 }
                 else
                     offset.x += lpDx[idx];
-                desired.x = physDev->dc_rect.left + x + offset.x;
-                desired.y = physDev->dc_rect.top  + y + offset.y;
+                desired.x = physdev->x11dev->dc_rect.left + x + offset.x;
+                desired.y = physdev->x11dev->dc_rect.top  + y + offset.y;
             }
         }
         wine_tsx11_lock();
@@ -2099,11 +2104,11 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     } else {
         POINT offset = {0, 0};
         wine_tsx11_lock();
-	XSetForeground( gdi_display, physDev->gc, textPixel );
+	XSetForeground( gdi_display, physdev->x11dev->gc, textPixel );
 
-        if(aa_type == AA_None || physDev->depth == 1)
+        if(aa_type == AA_None || physdev->x11dev->depth == 1)
         {
-            void (* sharp_glyph_fn)(X11DRV_PDEVICE *, INT, INT, void *, XGlyphInfo *);
+            void (* sharp_glyph_fn)(struct xrender_physdev *, INT, INT, void *, XGlyphInfo *);
 
             if(aa_type == AA_None)
                 sharp_glyph_fn = SharpGlyphMono;
@@ -2111,9 +2116,9 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
                 sharp_glyph_fn = SharpGlyphGray;
 
 	    for(idx = 0; idx < count; idx++) {
-                sharp_glyph_fn(physDev,
-                               physDev->dc_rect.left + x + offset.x,
-                               physDev->dc_rect.top  + y + offset.y,
+                sharp_glyph_fn(physdev,
+                               physdev->x11dev->dc_rect.left + x + offset.x,
+                               physdev->x11dev->dc_rect.top  + y + offset.y,
 			       formatEntry->bitmaps[wstr[idx]],
 			       &formatEntry->gis[wstr[idx]]);
                 if(lpDx)
@@ -2137,8 +2142,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    int image_x, image_y, image_off_x, image_off_y, image_w, image_h;
 	    RECT extents = {0, 0, 0, 0};
 	    POINT cur = {0, 0};
-            int w = physDev->drawable_rect.right - physDev->drawable_rect.left;
-            int h = physDev->drawable_rect.bottom - physDev->drawable_rect.top;
+            int w = physdev->x11dev->drawable_rect.right - physdev->x11dev->drawable_rect.left;
+            int h = physdev->x11dev->drawable_rect.bottom - physdev->x11dev->drawable_rect.top;
 
 	    TRACE("drawable %dx%d\n", w, h);
 
@@ -2169,52 +2174,52 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 		}
 	    }
 	    TRACE("glyph extents %d,%d - %d,%d drawable x,y %d,%d\n", extents.left, extents.top,
-		  extents.right, extents.bottom, physDev->dc_rect.left + x, physDev->dc_rect.top + y);
+		  extents.right, extents.bottom, physdev->x11dev->dc_rect.left + x, physdev->x11dev->dc_rect.top + y);
 
-	    if(physDev->dc_rect.left + x + extents.left >= 0) {
-	        image_x = physDev->dc_rect.left + x + extents.left;
+	    if(physdev->x11dev->dc_rect.left + x + extents.left >= 0) {
+	        image_x = physdev->x11dev->dc_rect.left + x + extents.left;
 		image_off_x = 0;
 	    } else {
 	        image_x = 0;
-		image_off_x = physDev->dc_rect.left + x + extents.left;
+		image_off_x = physdev->x11dev->dc_rect.left + x + extents.left;
 	    }
-	    if(physDev->dc_rect.top + y + extents.top >= 0) {
-	        image_y = physDev->dc_rect.top + y + extents.top;
+	    if(physdev->x11dev->dc_rect.top + y + extents.top >= 0) {
+	        image_y = physdev->x11dev->dc_rect.top + y + extents.top;
 		image_off_y = 0;
 	    } else {
 	        image_y = 0;
-		image_off_y = physDev->dc_rect.top + y + extents.top;
+		image_off_y = physdev->x11dev->dc_rect.top + y + extents.top;
 	    }
-	    if(physDev->dc_rect.left + x + extents.right < w)
-	        image_w = physDev->dc_rect.left + x + extents.right - image_x;
+	    if(physdev->x11dev->dc_rect.left + x + extents.right < w)
+	        image_w = physdev->x11dev->dc_rect.left + x + extents.right - image_x;
 	    else
 	        image_w = w - image_x;
-	    if(physDev->dc_rect.top + y + extents.bottom < h)
-	        image_h = physDev->dc_rect.top + y + extents.bottom - image_y;
+	    if(physdev->x11dev->dc_rect.top + y + extents.bottom < h)
+	        image_h = physdev->x11dev->dc_rect.top + y + extents.bottom - image_y;
 	    else
 	        image_h = h - image_y;
 
 	    if(image_w <= 0 || image_h <= 0) goto no_image;
 
 	    X11DRV_expect_error(gdi_display, XRenderErrorHandler, NULL);
-	    image = XGetImage(gdi_display, physDev->drawable,
+	    image = XGetImage(gdi_display, physdev->x11dev->drawable,
 			      image_x, image_y, image_w, image_h,
 			      AllPlanes, ZPixmap);
 	    X11DRV_check_error();
 
 	    TRACE("XGetImage(%p, %x, %d, %d, %d, %d, %lx, %x) depth = %d rets %p\n",
-		  gdi_display, (int)physDev->drawable, image_x, image_y,
+		  gdi_display, (int)physdev->x11dev->drawable, image_x, image_y,
 		  image_w, image_h, AllPlanes, ZPixmap,
-		  physDev->depth, image);
+		  physdev->x11dev->depth, image);
 	    if(!image) {
 	        Pixmap xpm = XCreatePixmap(gdi_display, root_window, image_w, image_h,
-					   physDev->depth);
+					   physdev->x11dev->depth);
 		GC gc;
 		XGCValues gcv;
 
 		gcv.graphics_exposures = False;
 		gc = XCreateGC(gdi_display, xpm, GCGraphicsExposures, &gcv);
-		XCopyArea(gdi_display, physDev->drawable, xpm, gc, image_x, image_y,
+		XCopyArea(gdi_display, physdev->x11dev->drawable, xpm, gc, image_x, image_y,
 			  image_w, image_h, 0, 0);
 		XFreeGC(gdi_display, gc);
 		X11DRV_expect_error(gdi_display, XRenderErrorHandler, NULL);
@@ -2235,7 +2240,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
                                 offset.y + image_off_y - extents.top,
 				formatEntry->bitmaps[wstr[idx]],
 				&formatEntry->gis[wstr[idx]],
-				physDev->textPixel);
+				physdev->x11dev->textPixel);
                 if(lpDx)
                 {
                     if(flags & ETO_PDY)
@@ -2252,7 +2257,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
                     offset.y += formatEntry->gis[wstr[idx]].yOff;
                 }
 	    }
-	    XPutImage(gdi_display, physDev->drawable, physDev->gc, image, 0, 0,
+	    XPutImage(gdi_display, physdev->x11dev->drawable, physdev->x11dev->gc, image, 0, 0,
 		      image_x, image_y, image_w, image_h);
 	    XDestroyImage(image);
 	}
@@ -2261,12 +2266,12 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     }
     LeaveCriticalSection(&xrender_cs);
 
-    if (saved_region) restore_clipping_region( physDev, saved_region );
+    if (saved_region) restore_clipping_region( physdev->x11dev, saved_region );
 
     retv = TRUE;
 
 done_unlock:
-    X11DRV_UnlockDIBSection( physDev, TRUE );
+    X11DRV_UnlockDIBSection( physdev->x11dev, TRUE );
     return retv;
 }
 
@@ -2563,7 +2568,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     xrenderdrv_ExtEscape,               /* pExtEscape */
     NULL,                               /* pExtFloodFill */
     NULL,                               /* pExtSelectClipRgn */
-    NULL,                               /* pExtTextOut */
+    xrenderdrv_ExtTextOut,              /* pExtTextOut */
     NULL,                               /* pFillPath */
     NULL,                               /* pFillRgn */
     NULL,                               /* pFlattenPath */
@@ -2670,14 +2675,6 @@ void X11DRV_XRender_SetDeviceClipping(X11DRV_PDEVICE *physDev, const RGNDATA *da
 {
     assert(0);
     return;
-}
-
-BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
-				const RECT *lprect, LPCWSTR wstr, UINT count,
-				const INT *lpDx )
-{
-  assert(0);
-  return FALSE;
 }
 
 BOOL XRender_AlphaBlend( X11DRV_PDEVICE *devDst, struct bitblt_coords *dst,
