@@ -251,6 +251,24 @@ static HRESULT interp_string(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
+static HRESULT interp_long(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT interp_short(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT interp_double(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT interp_empty(exec_ctx_t *ctx)
 {
     VARIANT v;

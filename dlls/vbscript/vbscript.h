@@ -83,18 +83,22 @@ typedef enum {
     ARG_STR,
     ARG_BSTR,
     ARG_INT,
-    ARG_UINT
+    ARG_UINT,
+    ARG_DOUBLE
 } instr_arg_type_t;
 
 #define OP_LIST                                   \
     X(bool,           1, ARG_INT,     0)          \
+    X(double,         1, ARG_DOUBLE,  0)          \
     X(empty,          1, 0,           0)          \
     X(equal,          1, 0,           0)          \
     X(icall,          1, ARG_BSTR,    ARG_UINT)   \
     X(icallv,         1, ARG_BSTR,    ARG_UINT)   \
+    X(long,           1, ARG_INT,     0)          \
     X(not,            1, 0,           0)          \
     X(null,           1, 0,           0)          \
     X(ret,            0, 0,           0)          \
+    X(short,          1, ARG_INT,     0)          \
     X(string,         1, ARG_STR,     0)
 
 typedef enum {
@@ -109,6 +113,7 @@ typedef union {
     BSTR bstr;
     unsigned uint;
     LONG lng;
+    double *dbl;
 } instr_arg_t;
 
 typedef struct {

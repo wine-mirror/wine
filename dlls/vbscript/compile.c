@@ -107,6 +107,24 @@ static HRESULT push_instr_str(compile_ctx_t *ctx, vbsop_t op, const WCHAR *arg)
     return S_OK;
 }
 
+static HRESULT push_instr_double(compile_ctx_t *ctx, vbsop_t op, double arg)
+{
+    unsigned instr;
+    double *d;
+
+    d = compiler_alloc(ctx->code, sizeof(double));
+    if(!d)
+        return E_OUTOFMEMORY;
+
+    instr = push_instr(ctx, op);
+    if(instr == -1)
+        return E_OUTOFMEMORY;
+
+    *d = arg;
+    instr_ptr(ctx, instr)->arg1.dbl = d;
+    return S_OK;
+}
+
 static BSTR alloc_bstr_arg(compile_ctx_t *ctx, const WCHAR *str)
 {
     if(!ctx->code->bstr_pool_size) {
@@ -218,6 +236,8 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
     switch(expr->type) {
     case EXPR_BOOL:
         return push_instr_int(ctx, OP_bool, ((bool_expression_t*)expr)->value);
+    case EXPR_DOUBLE:
+        return push_instr_double(ctx, OP_double, ((double_expression_t*)expr)->value);
     case EXPR_EMPTY:
         return push_instr(ctx, OP_empty) != -1 ? S_OK : E_OUTOFMEMORY;
     case EXPR_EQUAL:
@@ -230,6 +250,10 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
         return push_instr(ctx, OP_null) != -1 ? S_OK : E_OUTOFMEMORY;
     case EXPR_STRING:
         return push_instr_str(ctx, OP_string, ((string_expression_t*)expr)->value);
+    case EXPR_USHORT:
+        return push_instr_int(ctx, OP_short, ((int_expression_t*)expr)->value);
+    case EXPR_ULONG:
+        return push_instr_int(ctx, OP_long, ((int_expression_t*)expr)->value);
     default:
         FIXME("Unimplemented expression type %d\n", expr->type);
         return E_NOTIMPL;
