@@ -5496,12 +5496,12 @@
 @ stub -arch=win64 ?str@?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ
 @ stub -arch=win32 ?str@strstreambuf@std@@QAEPADXZ
 @ stub -arch=win64 ?str@strstreambuf@std@@QEAAPEADXZ
-@ stub -arch=win32 ?substr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AV12@II@Z
-@ stub -arch=win64 ?substr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA?AV12@_K0@Z
+@ thiscall -arch=win32 ?substr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AV12@II@Z(ptr ptr long long) MSVCP_basic_string_char_substr
+@ cdecl -arch=win64 ?substr@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA?AV12@_K0@Z(ptr ptr long long) MSVCP_basic_string_char_substr
 @ stub -arch=win32 ?substr@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBE?AV12@II@Z
 @ stub -arch=win64 ?substr@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA?AV12@_K0@Z
-@ stub -arch=win32 ?substr@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE?AV12@II@Z
-@ stub -arch=win64 ?substr@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA?AV12@_K0@Z
+@ thiscall -arch=win32 ?substr@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE?AV12@II@Z(ptr ptr long long) MSVCP_basic_string_wchar_substr
+@ cdecl -arch=win64 ?substr@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA?AV12@_K0@Z(ptr ptr long long) MSVCP_basic_string_wchar_substr
 @ thiscall -arch=win32 ?sungetc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHXZ(ptr) basic_streambuf_char_sungetc
 @ cdecl -arch=win64 ?sungetc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAHXZ(ptr) basic_streambuf_char_sungetc
 @ stub -arch=win32 ?sungetc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEGXZ
