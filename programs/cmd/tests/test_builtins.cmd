@@ -881,14 +881,14 @@ rmdir "foo bar"
 
 echo ----------- Testing mkdir -----------
 call :setError 0
-rem md and mkdir are synonymous
+echo ... md and mkdir are synonymous ...
 mkdir foobar
 echo %ErrorLevel%
 rmdir foobar
 md foobar
 echo %ErrorLevel%
 rmdir foobar
-rem Creating an already existing directory/file must fail
+echo ... creating an already existing directory/file must fail ...
 mkdir foobar
 md foobar
 echo %ErrorLevel%
@@ -897,7 +897,7 @@ echo > foobar
 mkdir foobar
 echo %ErrorLevel%
 del foobar
-rem Multi-level path creation
+echo ... multilevel path creation ...
 mkdir foo
 echo %ErrorLevel%
 mkdir foo\bar\baz
@@ -922,13 +922,13 @@ rmdir bar
 cd ..
 rmdir foo
 echo %ErrorLevel%
-rem Trailing backslashes
+echo ... trailing backslashes ...
 mkdir foo\\\\
 echo %ErrorLevel%
 if exist foo (rmdir foo & echo dir created
 ) else ( echo dir not created )
 echo %ErrorLevel%
-rem Invalid chars
+echo ... invalid chars ...
 mkdir ?
 echo mkdir ? gives errorlevel %ErrorLevel%
 call :setError 0
@@ -954,7 +954,7 @@ if not exist foo (
     cd ..
     rmdir foo
 )
-rem multiples directories at once
+echo ... multiple directories at once ...
 mkdir foobaz & cd foobaz
 mkdir foo bar\baz foobar
 if exist foo (echo foo created) else echo foo not created!

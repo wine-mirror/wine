@@ -595,27 +595,33 @@ del /q * succeeded on file1
 del /q * succeeded on file2.dat
 ------------ Testing del /s --------------
 ----------- Testing mkdir -----------
+... md and mkdir are synonymous ...
+0
+0
+... creating an already existing directory/file must fail ...
+1
+1
+... multilevel path creation ...
+0
+0
+0
 0
 0
 1
-1
 0
 0
-0
-0
-0
-1
-0
-0
+... trailing backslashes ...
 0
 dir created
 0
+... invalid chars ...
 mkdir ? gives errorlevel 1
 mkdir ?\foo gives errorlevel 1
 mkdir foo\? gives errorlevel 1
 ok, foo created
 mkdir foo\bar\? gives errorlevel 1
 ok, foo\bar created
+... multiple directories at once ...
 foo created
 bar created
 foobar created
