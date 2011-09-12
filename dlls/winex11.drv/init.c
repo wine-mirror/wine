@@ -193,8 +193,6 @@ static BOOL X11DRV_DeleteDC( PHYSDEV dev )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
 
-    if(physDev->xrender)
-      X11DRV_XRender_DeleteDC( physDev );
     DeleteObject( physDev->region );
     wine_tsx11_lock();
     XFreeGC( gdi_display, physDev->gc );

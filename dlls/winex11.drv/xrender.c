@@ -156,6 +156,7 @@ struct xrender_physdev
 {
     struct gdi_physdev dev;
     X11DRV_PDEVICE    *x11dev;
+    struct xrender_info info;
 };
 
 static inline struct xrender_physdev *get_xrender_dev( PHYSDEV dev )
@@ -620,6 +621,29 @@ static Picture get_xrender_picture_source(X11DRV_PDEVICE *physDev, BOOL repeat)
     }
 
     return info->pict_src;
+}
+
+static void free_xrender_picture( struct xrender_physdev *dev )
+{
+    if (dev->info.pict || dev->info.pict_src)
+    {
+        wine_tsx11_lock();
+        XFlush( gdi_display );
+        if (dev->info.pict)
+        {
+            TRACE("freeing pict = %lx dc = %p\n", dev->info.pict, dev->dev.hdc);
+            pXRenderFreePicture(gdi_display, dev->info.pict);
+            dev->info.pict = 0;
+        }
+        if(dev->info.pict_src)
+        {
+            TRACE("freeing pict = %lx dc = %p\n", dev->info.pict_src, dev->dev.hdc);
+            pXRenderFreePicture(gdi_display, dev->info.pict_src);
+            dev->info.pict_src = 0;
+        }
+        wine_tsx11_unlock();
+    }
+    dev->info.format = NULL;
 }
 
 /* return a mask picture used to force alpha to 0 */
@@ -1112,18 +1136,28 @@ void X11DRV_XRender_SetDeviceClipping(X11DRV_PDEVICE *physDev, const RGNDATA *da
     }
 }
 
+
+static BOOL create_xrender_dc( PHYSDEV *pdev )
+{
+    X11DRV_PDEVICE *x11dev = get_x11drv_dev( *pdev );
+    struct xrender_physdev *physdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physdev) );
+
+    if (!physdev) return FALSE;
+    physdev->x11dev = x11dev;
+    physdev->info.cache_index = -1;
+    physdev->info.format = get_xrender_format_from_color_shifts( x11dev->depth, x11dev->color_shifts );
+    x11dev->xrender = &physdev->info;
+    push_dc_driver( pdev, &physdev->dev, &xrender_funcs );
+    return TRUE;
+}
+
 /**********************************************************************
  *	     xrenderdrv_CreateDC
  */
 static BOOL xrenderdrv_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
                                  LPCWSTR output, const DEVMODEW* initData )
 {
-    struct xrender_physdev *physdev = HeapAlloc( GetProcessHeap(), 0, sizeof(*physdev) );
-
-    if (!physdev) return FALSE;
-    physdev->x11dev = get_x11drv_dev( *pdev );
-    push_dc_driver( pdev, &physdev->dev, &xrender_funcs );
-    return TRUE;
+    return create_xrender_dc( pdev );
 }
 
 /**********************************************************************
@@ -1131,8 +1165,6 @@ static BOOL xrenderdrv_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
  */
 static BOOL xrenderdrv_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 {
-    struct xrender_physdev *physdev;
-
     if (orig)  /* chain to x11drv first */
     {
         orig = GET_NEXT_PHYSDEV( orig, pCreateCompatibleDC );
@@ -1140,10 +1172,7 @@ static BOOL xrenderdrv_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
     }
     /* otherwise we have been called by x11drv */
 
-    if (!(physdev = HeapAlloc( GetProcessHeap(), 0, sizeof(*physdev) ))) return FALSE;
-    physdev->x11dev = get_x11drv_dev( *pdev );
-    push_dc_driver( pdev, &physdev->dev, &xrender_funcs );
-    return TRUE;
+    return create_xrender_dc( pdev );
 }
 
 /**********************************************************************
@@ -1152,25 +1181,16 @@ static BOOL xrenderdrv_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 static BOOL xrenderdrv_DeleteDC( PHYSDEV dev )
 {
     struct xrender_physdev *physdev = get_xrender_dev( dev );
+
+    free_xrender_picture( physdev );
+
+    EnterCriticalSection( &xrender_cs );
+    if (physdev->info.cache_index != -1) dec_ref_cache( physdev->info.cache_index );
+    LeaveCriticalSection( &xrender_cs );
+
+    physdev->x11dev->xrender = NULL;
     HeapFree( GetProcessHeap(), 0, physdev );
     return TRUE;
-}
-
-/***********************************************************************
- *   X11DRV_XRender_DeleteDC
- */
-void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE *physDev)
-{
-    X11DRV_XRender_UpdateDrawable(physDev);
-
-    EnterCriticalSection(&xrender_cs);
-    if(physDev->xrender->cache_index != -1)
-        dec_ref_cache(physDev->xrender->cache_index);
-    LeaveCriticalSection(&xrender_cs);
-
-    HeapFree(GetProcessHeap(), 0, physDev->xrender);
-    physDev->xrender = NULL;
-    return;
 }
 
 BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel, const DIBSECTION *dib)
@@ -2594,12 +2614,6 @@ BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
 {
   assert(0);
   return FALSE;
-}
-
-void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE *physDev)
-{
-  assert(0);
-  return;
 }
 
 void X11DRV_XRender_SetDeviceClipping(X11DRV_PDEVICE *physDev, const RGNDATA *data)
