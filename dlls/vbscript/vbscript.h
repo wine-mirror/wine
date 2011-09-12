@@ -89,6 +89,7 @@ typedef enum {
 
 #define OP_LIST                                   \
     X(bool,           1, ARG_INT,     0)          \
+    X(concat,         1, 0,           0)          \
     X(double,         1, ARG_DOUBLE,  0)          \
     X(empty,          1, 0,           0)          \
     X(equal,          1, 0,           0)          \

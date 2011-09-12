@@ -18,6 +18,7 @@
 
 typedef enum {
     EXPR_BOOL,
+    EXPR_CONCAT,
     EXPR_DOUBLE,
     EXPR_EMPTY,
     EXPR_EQUAL,
