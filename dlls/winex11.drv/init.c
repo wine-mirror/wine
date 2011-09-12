@@ -358,7 +358,6 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                 if (in_count >= sizeof(struct x11drv_escape_set_drawable))
                 {
                     const struct x11drv_escape_set_drawable *data = in_data;
-                    if(physDev->xrender) X11DRV_XRender_UpdateDrawable( physDev );
                     physDev->dc_rect = data->dc_rect;
                     physDev->drawable = data->drawable;
                     physDev->drawable_rect = data->drawable_rect;

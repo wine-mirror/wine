@@ -646,6 +646,13 @@ static void free_xrender_picture( struct xrender_physdev *dev )
     dev->info.format = NULL;
 }
 
+static void update_xrender_drawable( struct xrender_physdev *dev )
+{
+    free_xrender_picture( dev );
+    dev->info.format = get_xrender_format_from_color_shifts( dev->x11dev->depth,
+                                                             dev->x11dev->color_shifts );
+}
+
 /* return a mask picture used to force alpha to 0 */
 static Picture get_no_alpha_mask(void)
 {
@@ -1191,6 +1198,28 @@ static BOOL xrenderdrv_DeleteDC( PHYSDEV dev )
     physdev->x11dev->xrender = NULL;
     HeapFree( GetProcessHeap(), 0, physdev );
     return TRUE;
+}
+
+/**********************************************************************
+ *           xrenderdrv_ExtEscape
+ */
+static INT xrenderdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_data,
+                                 INT out_count, LPVOID out_data )
+{
+    struct xrender_physdev *physdev = get_xrender_dev( dev );
+
+    dev = GET_NEXT_PHYSDEV( dev, pExtEscape );
+
+    if (escape == X11DRV_ESCAPE && in_data && in_count >= sizeof(enum x11drv_escape_codes))
+    {
+        if (*(const enum x11drv_escape_codes *)in_data == X11DRV_SET_DRAWABLE)
+        {
+            BOOL ret = dev->funcs->pExtEscape( dev, escape, in_count, in_data, out_count, out_data );
+            if (ret) update_xrender_drawable( physdev );
+            return ret;
+        }
+    }
+    return dev->funcs->pExtEscape( dev, escape, in_count, in_data, out_count, out_data );
 }
 
 BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel, const DIBSECTION *dib)
@@ -2504,7 +2533,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pEnumICMProfiles */
     NULL,                               /* pExcludeClipRect */
     NULL,                               /* pExtDeviceMode */
-    NULL,                               /* pExtEscape */
+    xrenderdrv_ExtEscape,               /* pExtEscape */
     NULL,                               /* pExtFloodFill */
     NULL,                               /* pExtSelectClipRgn */
     NULL,                               /* pExtTextOut */
