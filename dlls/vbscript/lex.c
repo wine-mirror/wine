@@ -267,6 +267,35 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
     return tDouble;
 }
 
+static int hex_to_int(WCHAR c)
+{
+    if('0' <= c && c <= '9')
+        return c-'0';
+    if('a' <= c && c <= 'f')
+        return c+10-'a';
+    if('A' <= c && c <= 'F')
+        return c+10-'A';
+    return -1;
+}
+
+static int parse_hex_literal(parser_ctx_t *ctx, LONG *ret)
+{
+    const WCHAR *begin = ctx->ptr;
+    LONG l = 0, d;
+
+    while((d = hex_to_int(*++ctx->ptr)) != -1)
+        l = l*16 + d;
+
+    if(begin + 9 /* max digits+1 */ < ctx->ptr || *ctx->ptr != '&') {
+        FIXME("invalid literal\n");
+        return 0;
+    }
+
+    ctx->ptr++;
+    *ret = l;
+    return (short)l == l ? tShort : tLong;
+}
+
 static void skip_spaces(parser_ctx_t *ctx)
 {
     while(*ctx->ptr == ' ' || *ctx->ptr == '\t' || *ctx->ptr == '\r')
@@ -329,6 +358,10 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
         return '(';
     case '"':
         return parse_string_literal(ctx, lval);
+    case '&':
+        if(*++ctx->ptr == 'h' || *ctx->ptr == 'H')
+            return parse_hex_literal(ctx, lval);
+        return '&';
     case '<':
         switch(*++ctx->ptr) {
         case '>':
