@@ -1553,28 +1553,6 @@ done:
 }
 
 
-/***********************************************************************
- *           X11DRV_AlphaBlend
- */
-BOOL X11DRV_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                        PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION blendfn )
-{
-    X11DRV_PDEVICE *physDevDst = get_x11drv_dev( dst_dev );
-    X11DRV_PDEVICE *physDevSrc = get_x11drv_dev( src_dev ); /* FIXME: check that it's really an x11 dev */
-
-    if (src->x < 0 || src->y < 0 || src->width < 0 || src->height < 0 ||
-        src->width > physDevSrc->drawable_rect.right - physDevSrc->drawable_rect.left - src->x ||
-        src->height > physDevSrc->drawable_rect.bottom - physDevSrc->drawable_rect.top - src->y)
-    {
-        WARN( "Invalid src coords: (%d,%d), size %dx%d\n", src->x, src->y, src->width, src->height );
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-
-    return XRender_AlphaBlend( physDevDst, dst, physDevSrc, src, blendfn );
-}
-
-
 static void free_heap_bits( struct gdi_image_bits *bits )
 {
     HeapFree( GetProcessHeap(), 0, bits->ptr );

@@ -467,7 +467,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
 {
     NULL,                               /* pAbortDoc */
     NULL,                               /* pAbortPath */
-    X11DRV_AlphaBlend,                  /* pAlphaBlend */
+    NULL,                               /* pAlphaBlend */
     NULL,                               /* pAngleArc */
     X11DRV_Arc,                         /* pArc */
     NULL,                               /* pArcTo */

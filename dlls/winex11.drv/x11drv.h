@@ -180,9 +180,6 @@ extern GC get_bitmap_gc(int depth) DECLSPEC_HIDDEN;
 
 /* Wine driver X11 functions */
 
-extern BOOL X11DRV_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                               PHYSDEV src_dev, struct bitblt_coords *src,
-                               BLENDFUNCTION blendfn ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_Arc( PHYSDEV dev, INT left, INT top, INT right,
                         INT bottom, INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
@@ -309,9 +306,6 @@ extern BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits
 BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
                                       Pixmap pixmap, GC gc,
                                       const struct bitblt_coords *src, const struct bitblt_coords *dst ) DECLSPEC_HIDDEN;
-extern BOOL XRender_AlphaBlend( X11DRV_PDEVICE *devDst, struct bitblt_coords *dst,
-                                X11DRV_PDEVICE *devSrc, struct bitblt_coords *src,
-                                BLENDFUNCTION blendfn ) DECLSPEC_HIDDEN;
 
 extern Drawable get_glxdrawable(X11DRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
 extern BOOL destroy_glxpixmap(Display *display, XID glxpixmap) DECLSPEC_HIDDEN;

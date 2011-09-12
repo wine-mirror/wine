@@ -2335,28 +2335,39 @@ static void xrender_mono_blit( Picture src_pict, Picture mask_pict, Picture dst_
                       0, 0, x_offset, y_offset, 0, 0, width, height);
 }
 
-/******************************************************************************
- * AlphaBlend
+/***********************************************************************
+ *           xrenderdrv_AlphaBlend
  */
-BOOL XRender_AlphaBlend( X11DRV_PDEVICE *devDst, struct bitblt_coords *dst,
-                         X11DRV_PDEVICE *devSrc, struct bitblt_coords *src, BLENDFUNCTION blendfn )
+static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                                   PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION blendfn )
 {
+    struct xrender_physdev *physdev_dst = get_xrender_dev( dst_dev );
+    struct xrender_physdev *physdev_src = get_xrender_dev( src_dev );
     Picture dst_pict, src_pict = 0, mask_pict = 0, tmp_pict = 0;
-    struct xrender_info *src_info = get_xrender_info( devSrc );
     double xscale, yscale;
     BOOL use_repeat;
 
-    if(!X11DRV_XRender_Installed) {
-        FIXME("Unable to AlphaBlend without Xrender\n");
+    if (src->x < 0 || src->y < 0 || src->width < 0 || src->height < 0 ||
+        src->width > physdev_src->x11dev->drawable_rect.right - physdev_src->x11dev->drawable_rect.left - src->x ||
+        src->height > physdev_src->x11dev->drawable_rect.bottom - physdev_src->x11dev->drawable_rect.top - src->y)
+    {
+        WARN( "Invalid src coords: (%d,%d), size %dx%d\n", src->x, src->y, src->width, src->height );
+        SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
-    if (devSrc != devDst) X11DRV_LockDIBSection( devSrc, DIB_Status_GdiMod );
-    X11DRV_LockDIBSection( devDst, DIB_Status_GdiMod );
+    if (!X11DRV_XRender_Installed || src_dev->funcs != dst_dev->funcs)
+    {
+        dst_dev = GET_NEXT_PHYSDEV( dst_dev, pAlphaBlend );
+        return dst_dev->funcs->pAlphaBlend( dst_dev, dst, src_dev, src, blendfn );
+    }
 
-    dst_pict = get_xrender_picture( devDst );
+    if (physdev_src->x11dev != physdev_dst->x11dev) X11DRV_LockDIBSection( physdev_src->x11dev, DIB_Status_GdiMod );
+    X11DRV_LockDIBSection( physdev_dst->x11dev, DIB_Status_GdiMod );
 
-    use_repeat = use_source_repeat( devSrc );
+    dst_pict = get_xrender_picture( physdev_dst->x11dev );
+
+    use_repeat = use_source_repeat( physdev_src->x11dev );
     if (!use_repeat)
     {
         xscale = src->width / (double)dst->width;
@@ -2364,11 +2375,11 @@ BOOL XRender_AlphaBlend( X11DRV_PDEVICE *devDst, struct bitblt_coords *dst,
     }
     else xscale = yscale = 1;  /* no scaling needed with a repeating source */
 
-    if (!(blendfn.AlphaFormat & AC_SRC_ALPHA) && src_info->format)
+    if (!(blendfn.AlphaFormat & AC_SRC_ALPHA) && physdev_src->info.format)
     {
         /* we need a source picture with no alpha */
-        WXRFormat format = get_format_without_alpha( src_info->format->format );
-        if (format != src_info->format->format)
+        WXRFormat format = get_format_without_alpha( physdev_src->info.format->format );
+        if (format != physdev_src->info.format->format)
         {
             XRenderPictureAttributes pa;
             const WineXRenderFormat *fmt = get_xrender_format( format );
@@ -2376,30 +2387,32 @@ BOOL XRender_AlphaBlend( X11DRV_PDEVICE *devDst, struct bitblt_coords *dst,
             wine_tsx11_lock();
             pa.subwindow_mode = IncludeInferiors;
             pa.repeat = use_repeat ? RepeatNormal : RepeatNone;
-            tmp_pict = pXRenderCreatePicture( gdi_display, devSrc->drawable, fmt->pict_format,
+            tmp_pict = pXRenderCreatePicture( gdi_display, physdev_src->x11dev->drawable, fmt->pict_format,
                                               CPSubwindowMode|CPRepeat, &pa );
             wine_tsx11_unlock();
             src_pict = tmp_pict;
         }
     }
 
-    if (!src_pict) src_pict = get_xrender_picture_source( devSrc, use_repeat );
+    if (!src_pict) src_pict = get_xrender_picture_source( physdev_src->x11dev, use_repeat );
 
     EnterCriticalSection( &xrender_cs );
     mask_pict = get_mask_pict( blendfn.SourceConstantAlpha * 257 );
 
     wine_tsx11_lock();
     xrender_blit( PictOpOver, src_pict, mask_pict, dst_pict,
-                  devSrc->dc_rect.left + src->visrect.left, devSrc->dc_rect.top + src->visrect.top,
-                  devDst->dc_rect.left + dst->visrect.left, devDst->dc_rect.top + dst->visrect.top,
+                  physdev_src->x11dev->dc_rect.left + src->visrect.left,
+                  physdev_src->x11dev->dc_rect.top + src->visrect.top,
+                  physdev_dst->x11dev->dc_rect.left + dst->visrect.left,
+                  physdev_dst->x11dev->dc_rect.top + dst->visrect.top,
                   xscale, yscale,
                   dst->visrect.right - dst->visrect.left, dst->visrect.bottom - dst->visrect.top );
     if (tmp_pict) pXRenderFreePicture( gdi_display, tmp_pict );
     wine_tsx11_unlock();
 
     LeaveCriticalSection( &xrender_cs );
-    if (devSrc != devDst) X11DRV_UnlockDIBSection( devSrc, FALSE );
-    X11DRV_UnlockDIBSection( devDst, TRUE );
+    if (physdev_src->x11dev != physdev_dst->x11dev) X11DRV_UnlockDIBSection( physdev_src->x11dev, FALSE );
+    X11DRV_UnlockDIBSection( physdev_dst->x11dev, TRUE );
     return TRUE;
 }
 
@@ -2540,7 +2553,7 @@ static const struct gdi_dc_funcs xrender_funcs =
 {
     NULL,                               /* pAbortDoc */
     NULL,                               /* pAbortPath */
-    NULL,                               /* pAlphaBlend */
+    xrenderdrv_AlphaBlend,              /* pAlphaBlend */
     NULL,                               /* pAngleArc */
     NULL,                               /* pArc */
     NULL,                               /* pArcTo */
@@ -2675,13 +2688,6 @@ void X11DRV_XRender_SetDeviceClipping(X11DRV_PDEVICE *physDev, const RGNDATA *da
 {
     assert(0);
     return;
-}
-
-BOOL XRender_AlphaBlend( X11DRV_PDEVICE *devDst, struct bitblt_coords *dst,
-                         X11DRV_PDEVICE *devSrc, struct bitblt_coords *src, BLENDFUNCTION blendfn )
-{
-  FIXME("not supported - XRENDER headers were missing at compile time\n");
-  return FALSE;
 }
 
 void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap, int width, int height)
