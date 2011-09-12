@@ -2943,6 +2943,52 @@ static void test_copyto_recursive(void)
     ok( r == TRUE, "deleted file\n");
 }
 
+static void test_hglobal_storage_creation(void)
+{
+    ILockBytes *ilb = NULL;
+    IStorage *stg = NULL;
+    HRESULT r;
+    STATSTG stat;
+    char junk[512];
+    ULARGE_INTEGER offset;
+
+    r = CreateILockBytesOnHGlobal(NULL, TRUE, &ilb);
+    ok(r == S_OK, "CreateILockBytesOnHGlobal failed, hr=%x\n", r);
+
+    offset.QuadPart = 0;
+    memset(junk, 0xaa, 512);
+    r = ILockBytes_WriteAt(ilb, offset, junk, 512, NULL);
+    ok(r == S_OK, "ILockBytes_WriteAt failed, hr=%x\n", r);
+
+    offset.QuadPart = 2000;
+    r = ILockBytes_WriteAt(ilb, offset, junk, 512, NULL);
+    ok(r == S_OK, "ILockBytes_WriteAt failed, hr=%x\n", r);
+
+    r = StgCreateDocfileOnILockBytes(ilb, STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0,  &stg);
+    ok(r == S_OK, "StgCreateDocfileOnILockBytes failed, hr=%x\n", r);
+
+    IStorage_Release(stg);
+
+    r = StgOpenStorageOnILockBytes(ilb, NULL, STGM_READ|STGM_SHARE_EXCLUSIVE,
+        NULL, 0, &stg);
+    todo_wine ok(r == S_OK, "StgOpenStorageOnILockBytes failed, hr=%x\n", r);
+
+    if (SUCCEEDED(r))
+    {
+        r = IStorage_Stat(stg, &stat, STATFLAG_NONAME);
+        ok(r == S_OK, "StgOpenStorageOnILockBytes failed, hr=%x\n", r);
+        ok(IsEqualCLSID(&stat.clsid, &GUID_NULL), "unexpected CLSID value\n");
+
+        IStorage_Release(stg);
+    }
+
+    r = ILockBytes_Stat(ilb, &stat, STATFLAG_NONAME);
+    ok(r == S_OK, "ILockBytes_Stat failed, hr=%x\n", r);
+    ok(stat.cbSize.LowPart < 2512, "expected truncated size, got %d\n", stat.cbSize.LowPart);
+
+    ILockBytes_Release(ilb);
+}
+
 START_TEST(storage32)
 {
     CHAR temp[MAX_PATH];
@@ -2985,4 +3031,5 @@ START_TEST(storage32)
     test_substorage_enum();
     test_copyto_locking();
     test_copyto_recursive();
+    test_hglobal_storage_creation();
 }
