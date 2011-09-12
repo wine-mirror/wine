@@ -150,6 +150,23 @@ static BSTR alloc_bstr_arg(compile_ctx_t *ctx, const WCHAR *str)
     return ctx->code->bstr_pool[ctx->code->bstr_cnt++];
 }
 
+static HRESULT push_instr_bstr(compile_ctx_t *ctx, vbsop_t op, const WCHAR *arg)
+{
+    unsigned instr;
+    BSTR bstr;
+
+    bstr = alloc_bstr_arg(ctx, arg);
+    if(!bstr)
+        return E_OUTOFMEMORY;
+
+    instr = push_instr(ctx, op);
+    if(instr == -1)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, instr)->arg1.bstr = bstr;
+    return S_OK;
+}
+
 static HRESULT push_instr_bstr_uint(compile_ctx_t *ctx, vbsop_t op, const WCHAR *arg1, unsigned arg2)
 {
     unsigned instr;
@@ -272,12 +289,38 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
     return S_OK;
 }
 
+static HRESULT compile_assign_statement(compile_ctx_t *ctx, assign_statement_t *stat)
+{
+    HRESULT hres;
+
+    hres = compile_expression(ctx, stat->value_expr);
+    if(FAILED(hres))
+        return hres;
+
+    if(stat->member_expr->args) {
+        FIXME("arguments support not implemented\n");
+        return E_NOTIMPL;
+    }
+
+    if(stat->member_expr->obj_expr) {
+        FIXME("obj_expr not implemented\n");
+        hres = E_NOTIMPL;
+    }else {
+        hres = push_instr_bstr(ctx, OP_assign_ident, stat->member_expr->identifier);
+    }
+
+    return hres;
+}
+
 static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
 {
     HRESULT hres;
 
     while(stat) {
         switch(stat->type) {
+        case STAT_ASSIGN:
+            hres = compile_assign_statement(ctx, (assign_statement_t*)stat);
+            break;
         case STAT_CALL:
             hres = compile_member_expression(ctx, ((call_statement_t*)stat)->expr, FALSE);
             break;

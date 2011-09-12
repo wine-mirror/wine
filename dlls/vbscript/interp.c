@@ -217,6 +217,12 @@ static HRESULT interp_icallv(exec_ctx_t *ctx)
     return do_icall(ctx, NULL);
 }
 
+static HRESULT interp_assign_ident(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT interp_ret(exec_ctx_t *ctx)
 {
     TRACE("\n");
