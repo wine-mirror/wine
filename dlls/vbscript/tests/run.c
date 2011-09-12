@@ -58,12 +58,15 @@ extern const CLSID CLSID_VBScript;
 
 DEFINE_EXPECT(global_success_d);
 DEFINE_EXPECT(global_success_i);
+DEFINE_EXPECT(global_vbvar_d);
+DEFINE_EXPECT(global_vbvar_i);
 
 #define DISPID_GLOBAL_REPORTSUCCESS 1000
 #define DISPID_GLOBAL_TRACE         1001
 #define DISPID_GLOBAL_OK            1002
 #define DISPID_GLOBAL_GETVT         1003
 #define DISPID_GLOBAL_ISENGLOC      1004
+#define DISPID_GLOBAL_VBVAR         1005
 
 static const WCHAR testW[] = {'t','e','s','t',0};
 
@@ -252,6 +255,12 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_ISENGLOC;
         return S_OK;
     }
+    if(!strcmp_wa(bstrName, "vbvar")) {
+        CHECK_EXPECT(global_vbvar_d);
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_GLOBAL_VBVAR;
+        return S_OK;
+    }
 
     if(strict_dispid_check && strcmp_wa(bstrName, "x"))
         ok(0, "unexpected call %s %x\n", wine_dbgstr_w(bstrName), grfdex);
@@ -350,6 +359,23 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         }
         return S_OK;
 
+    case DISPID_GLOBAL_VBVAR:
+        CHECK_EXPECT(global_vbvar_i);
+
+        ok(wFlags == DISPATCH_PROPERTYPUT, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(pdp->rgdispidNamedArgs != NULL, "rgdispidNamedArgs == NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(pdp->cNamedArgs == 1, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pdp->rgdispidNamedArgs[0] == DISPID_PROPERTYPUT, "pdp->rgdispidNamedArgs[0] = %d\n", pdp->rgdispidNamedArgs[0]);
+        ok(!pvarRes, "pvarRes != NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        ok(V_VT(pdp->rgvarg) == VT_I2, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
+        ok(V_I2(pdp->rgvarg) == 3, "V_I2(psp->rgvargs) = %d\n", V_I2(pdp->rgvarg));
+
+        return S_OK;
     }
 
     ok(0, "unexpected call %d\n", id);
@@ -651,6 +677,18 @@ static void run_tests(void)
     parse_script_a("Call reportSuccess");
     CHECK_CALLED(global_success_d);
     CHECK_CALLED(global_success_i);
+
+    SET_EXPECT(global_vbvar_d);
+    SET_EXPECT(global_vbvar_i);
+    parse_script_a("Option Explicit\nvbvar = 3");
+    CHECK_CALLED(global_vbvar_d);
+    CHECK_CALLED(global_vbvar_i);
+
+    SET_EXPECT(global_vbvar_d);
+    SET_EXPECT(global_vbvar_i);
+    parse_script_a("Option Explicit\nvbvar() = 3");
+    CHECK_CALLED(global_vbvar_d);
+    CHECK_CALLED(global_vbvar_i);
 
     run_from_res("lang.vbs");
 }
