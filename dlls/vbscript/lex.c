@@ -299,6 +299,22 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
         return '(';
     case '"':
         return parse_string_literal(ctx, lval);
+    case '<':
+        switch(*++ctx->ptr) {
+        case '>':
+            ctx->ptr++;
+            return tNEQ;
+        case '=':
+            ctx->ptr++;
+            return tLTEQ;
+        }
+        return '<';
+    case '>':
+        if(*++ctx->ptr == '=') {
+            ctx->ptr++;
+            return tGTEQ;
+        }
+        return '>';
     default:
         FIXME("Unhandled char %c in %s\n", *ctx->ptr, debugstr_w(ctx->ptr));
     }
