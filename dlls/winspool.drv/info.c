@@ -516,6 +516,8 @@ static BOOL CUPS_LoadPrinters(void)
 static BOOL
 PRINTCAP_ParseEntry(const char *pent, BOOL isfirst) {
     PRINTER_INFO_2A	pinfo2a;
+    const char	*r;
+    size_t		name_len;
     char		*e,*s,*name,*prettyname,*devname;
     BOOL		ret = FALSE, set_default = FALSE;
     char *port = NULL, *env_default;
@@ -523,14 +525,17 @@ PRINTCAP_ParseEntry(const char *pent, BOOL isfirst) {
     WCHAR devnameW[MAX_PATH];
 
     while (isspace(*pent)) pent++;
-    s = strchr(pent,':');
-    if(s) *s='\0';
-    name = HeapAlloc(GetProcessHeap(), 0, strlen(pent) + 1);
-    strcpy(name,pent);
-    if(s) {
-        *s=':';
-        pent = s;
-    } else
+    r = strchr(pent,':');
+    if (r)
+        name_len = r - pent;
+    else
+        name_len = strlen(pent);
+    name = HeapAlloc(GetProcessHeap(), 0, name_len + 1);
+    memcpy(name, pent, name_len);
+    name[name_len] = '\0';
+    if (r)
+        pent = r;
+    else
         pent = "";
 
     TRACE("name=%s entry=%s\n",name, pent);
