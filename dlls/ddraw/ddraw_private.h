@@ -133,8 +133,6 @@ HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type) DECLSPEC_
 /* Utility functions */
 void DDRAW_Convert_DDSCAPS_1_To_2(const DDSCAPS *pIn, DDSCAPS2 *pOut) DECLSPEC_HIDDEN;
 void DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(const DDDEVICEIDENTIFIER2 *pIn, DDDEVICEIDENTIFIER *pOut) DECLSPEC_HIDDEN;
-HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf,
-        DDSURFACEDESC2 *desc, void *Context) DECLSPEC_HIDDEN;
 struct wined3d_vertex_declaration *ddraw_find_decl(IDirectDrawImpl *This, DWORD fvf) DECLSPEC_HIDDEN;
 
 /* The default surface type */
