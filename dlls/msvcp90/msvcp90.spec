@@ -3817,8 +3817,8 @@
 @ stub -arch=win64 ?fill@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAA_W_W@Z
 @ stub -arch=win32 ?fill@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QBE_WXZ
 @ stub -arch=win64 ?fill@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEBA_WXZ
-@ stub -arch=win32 ?find@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIABV12@I@Z
-@ stub -arch=win64 ?find@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KAEBV12@_K@Z
+@ thiscall -arch=win32 ?find@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIABV12@I@Z(ptr ptr long) MSVCP_basic_string_char_find_off
+@ cdecl -arch=win64 ?find@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KAEBV12@_K@Z(ptr ptr long) MSVCP_basic_string_char_find_off
 @ thiscall -arch=win32 ?find@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIDI@Z(ptr long long) MSVCP_basic_string_char_find_ch
 @ cdecl -arch=win64 ?find@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KD_K@Z(ptr long long) MSVCP_basic_string_char_find_ch
 @ thiscall -arch=win32 ?find@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDI@Z(ptr str long) MSVCP_basic_string_char_find_cstr_off
@@ -3833,8 +3833,8 @@
 @ stub -arch=win64 ?find@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KPEBG_K1@Z
 @ stub -arch=win32 ?find@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIPBGII@Z
 @ stub -arch=win64 ?find@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KPEBG_K@Z
-@ stub -arch=win32 ?find@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIABV12@I@Z
-@ stub -arch=win64 ?find@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KAEBV12@_K@Z
+@ thiscall -arch=win32 ?find@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIABV12@I@Z(ptr ptr long) MSVCP_basic_string_wchar_find_off
+@ cdecl -arch=win64 ?find@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KAEBV12@_K@Z(ptr ptr long) MSVCP_basic_string_wchar_find_off
 @ thiscall -arch=win32 ?find@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WI@Z(ptr wstr long) MSVCP_basic_string_wchar_find_cstr_off
 @ cdecl -arch=win64 ?find@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K1@Z(ptr wstr long long) MSVCP_basic_string_wchar_find_cstr_substr
 @ thiscall -arch=win32 ?find@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WII@Z(ptr wstr long long) MSVCP_basic_string_wchar_find_cstr_substr
