@@ -23,6 +23,7 @@ typedef enum {
     EXPR_EMPTY,
     EXPR_EQUAL,
     EXPR_MEMBER,
+    EXPR_NEG,
     EXPR_NOT,
     EXPR_NULL,
     EXPR_STRING,

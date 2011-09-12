@@ -84,7 +84,7 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 %type <statement> Statement StatementNl
 %type <expression> Expression LiteralExpression PrimaryExpression EqualityExpression CallExpression
 %type <expression> ConcatExpression AdditiveExpression
-%type <expression> NotExpression
+%type <expression> NotExpression UnaryExpression
 %type <member> MemberExpression
 %type <expression> Arguments_opt ArgumentList_opt ArgumentList
 %type <bool> OptionExplicit_opt
@@ -145,8 +145,13 @@ ConcatExpression
     | ConcatExpression '&' AdditiveExpression   { $$ = new_binary_expression(ctx, EXPR_CONCAT, $1, $3); CHECK_ERROR; }
 
 AdditiveExpression
-    : LiteralExpression /* FIXME */ { $$ = $1; }
-    | CallExpression /* FIXME */    { $$ = $1; }
+    : UnaryExpression /* FIXME */   { $$ = $1; }
+
+
+UnaryExpression
+    : LiteralExpression             { $$ = $1; }
+    | CallExpression                { $$ = $1; }
+    | '-' UnaryExpression           { $$ = new_unary_expression(ctx, EXPR_NEG, $2); CHECK_ERROR; }
 
 CallExpression
     : PrimaryExpression                 { $$ = $1; }

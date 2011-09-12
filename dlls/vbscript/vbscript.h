@@ -96,6 +96,7 @@ typedef enum {
     X(icall,          1, ARG_BSTR,    ARG_UINT)   \
     X(icallv,         1, ARG_BSTR,    ARG_UINT)   \
     X(long,           1, ARG_INT,     0)          \
+    X(neg,            1, 0,           0)          \
     X(not,            1, 0,           0)          \
     X(null,           1, 0,           0)          \
     X(ret,            0, 0,           0)          \
