@@ -40,6 +40,11 @@ Call ok(&hffFFffFF& = -1, "&hffFFffFF& <> -1")
 Call ok(--1 = 1, "--1 = " & --1)
 Call ok(-empty = 0, "-empty = " & (-empty))
 
+Call ok(true <> false, "true <> false is false")
+Call ok(not (true <> true), "true <> true is true")
+Call ok(not ("x" <> "x"), """x"" <> ""x"" is true")
+Call ok(not (empty <> empty), "empty <> empty is true")
+
 Call ok(getVT(false) = "VT_BOOL", "getVT(false) is not VT_BOOL")
 Call ok(getVT(true) = "VT_BOOL", "getVT(true) is not VT_BOOL")
 Call ok(getVT("") = "VT_BSTR", "getVT("""") is not VT_BSTR")

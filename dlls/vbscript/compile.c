@@ -250,6 +250,8 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
         return compile_member_expression(ctx, (member_expression_t*)expr, TRUE);
     case EXPR_NEG:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_neg);
+    case EXPR_NEQUAL:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_nequal);
     case EXPR_NOT:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_not);
     case EXPR_NULL:

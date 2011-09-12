@@ -367,6 +367,22 @@ static HRESULT interp_equal(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
+static HRESULT interp_nequal(exec_ctx_t *ctx)
+{
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = cmp_oper(ctx);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(&v) = VT_BOOL;
+    V_BOOL(&v) = hres != VARCMP_EQ ? VARIANT_TRUE : VARIANT_FALSE;
+    return stack_push(ctx, &v);
+}
+
 static HRESULT interp_concat(exec_ctx_t *ctx)
 {
     variant_val_t r, l;
