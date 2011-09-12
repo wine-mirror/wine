@@ -38,6 +38,8 @@ static void source_add_statement(parser_ctx_t*,statement_t*);
 static void *new_expression(parser_ctx_t*,expression_type_t,size_t);
 static expression_t *new_bool_expression(parser_ctx_t*,VARIANT_BOOL);
 static expression_t *new_string_expression(parser_ctx_t*,const WCHAR*);
+static expression_t *new_long_expression(parser_ctx_t*,expression_type_t,LONG);
+static expression_t *new_double_expression(parser_ctx_t*,double);
 static expression_t *new_unary_expression(parser_ctx_t*,expression_type_t,expression_t*);
 static expression_t *new_binary_expression(parser_ctx_t*,expression_type_t,expression_t*,expression_t*);
 
@@ -57,7 +59,9 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
     statement_t *statement;
     expression_t *expression;
     member_expression_t *member;
+    LONG lng;
     BOOL bool;
+    double dbl;
 }
 
 %token tEOF tNL tREM tEMPTYBRACKETS
@@ -148,6 +152,10 @@ LiteralExpression
     : tTRUE                         { $$ = new_bool_expression(ctx, VARIANT_TRUE); CHECK_ERROR; }
     | tFALSE                        { $$ = new_bool_expression(ctx, VARIANT_FALSE); CHECK_ERROR; }
     | tString                       { $$ = new_string_expression(ctx, $1); CHECK_ERROR; }
+    | tShort                        { $$ = new_long_expression(ctx, EXPR_USHORT, $1); CHECK_ERROR; }
+    | '0'                           { $$ = new_long_expression(ctx, EXPR_USHORT, 0); CHECK_ERROR; }
+    | tLong                         { $$ = new_long_expression(ctx, EXPR_ULONG, $1); CHECK_ERROR; }
+    | tDouble                       { $$ = new_double_expression(ctx, $1); CHECK_ERROR; }
     | tEMPTY                        { $$ = new_expression(ctx, EXPR_EMPTY, 0); CHECK_ERROR; }
     | tNULL                         { $$ = new_expression(ctx, EXPR_NULL, 0); CHECK_ERROR; }
 
@@ -207,6 +215,30 @@ static expression_t *new_string_expression(parser_ctx_t *ctx, const WCHAR *value
     string_expression_t *expr;
 
     expr = new_expression(ctx, EXPR_STRING, sizeof(*expr));
+    if(!expr)
+        return NULL;
+
+    expr->value = value;
+    return &expr->expr;
+}
+
+static expression_t *new_long_expression(parser_ctx_t *ctx, expression_type_t type, LONG value)
+{
+    int_expression_t *expr;
+
+    expr = new_expression(ctx, type, sizeof(*expr));
+    if(!expr)
+        return NULL;
+
+    expr->value = value;
+    return &expr->expr;
+}
+
+static expression_t *new_double_expression(parser_ctx_t *ctx, double value)
+{
+    double_expression_t *expr;
+
+    expr = new_expression(ctx, EXPR_DOUBLE, sizeof(*expr));
     if(!expr)
         return NULL;
 

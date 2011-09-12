@@ -18,12 +18,15 @@
 
 typedef enum {
     EXPR_BOOL,
+    EXPR_DOUBLE,
     EXPR_EMPTY,
     EXPR_EQUAL,
     EXPR_MEMBER,
     EXPR_NOT,
     EXPR_NULL,
-    EXPR_STRING
+    EXPR_STRING,
+    EXPR_ULONG,
+    EXPR_USHORT
 } expression_type_t;
 
 typedef struct _expression_t {
@@ -35,6 +38,16 @@ typedef struct {
     expression_t expr;
     VARIANT_BOOL value;
 } bool_expression_t;
+
+typedef struct {
+    expression_t expr;
+    LONG value;
+} int_expression_t;
+
+typedef struct {
+    expression_t expr;
+    double value;
+} double_expression_t;
 
 typedef struct {
     expression_t expr;
