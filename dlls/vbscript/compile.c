@@ -234,6 +234,8 @@ static HRESULT compile_binary_expression(compile_ctx_t *ctx, binary_expression_t
 static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
 {
     switch(expr->type) {
+    case EXPR_ADD:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_add);
     case EXPR_BOOL:
         return push_instr_int(ctx, OP_bool, ((bool_expression_t*)expr)->value);
     case EXPR_CONCAT:
@@ -254,6 +256,8 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
         return push_instr(ctx, OP_null) != -1 ? S_OK : E_OUTOFMEMORY;
     case EXPR_STRING:
         return push_instr_str(ctx, OP_string, ((string_expression_t*)expr)->value);
+    case EXPR_SUB:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_sub);
     case EXPR_USHORT:
         return push_instr_int(ctx, OP_short, ((int_expression_t*)expr)->value);
     case EXPR_ULONG:

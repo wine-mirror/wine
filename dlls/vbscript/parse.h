@@ -17,6 +17,7 @@
  */
 
 typedef enum {
+    EXPR_ADD,
     EXPR_BOOL,
     EXPR_CONCAT,
     EXPR_DOUBLE,
@@ -27,6 +28,7 @@ typedef enum {
     EXPR_NOT,
     EXPR_NULL,
     EXPR_STRING,
+    EXPR_SUB,
     EXPR_ULONG,
     EXPR_USHORT
 } expression_type_t;

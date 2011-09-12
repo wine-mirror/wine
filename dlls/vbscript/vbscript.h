@@ -88,6 +88,7 @@ typedef enum {
 } instr_arg_type_t;
 
 #define OP_LIST                                   \
+    X(add,            1, 0,           0)          \
     X(bool,           1, ARG_INT,     0)          \
     X(concat,         1, 0,           0)          \
     X(double,         1, ARG_DOUBLE,  0)          \
@@ -101,7 +102,8 @@ typedef enum {
     X(null,           1, 0,           0)          \
     X(ret,            0, 0,           0)          \
     X(short,          1, ARG_INT,     0)          \
-    X(string,         1, ARG_STR,     0)
+    X(string,         1, ARG_STR,     0)          \
+    X(sub,            1, 0,           0)
 
 typedef enum {
 #define X(x,n,a,b) OP_##x,
