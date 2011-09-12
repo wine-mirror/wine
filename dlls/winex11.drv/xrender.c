@@ -1222,6 +1222,60 @@ static INT xrenderdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID 
     return dev->funcs->pExtEscape( dev, escape, in_count, in_data, out_count, out_data );
 }
 
+/****************************************************************************
+ *	  xrenderdrv_CreateBitmap
+ */
+static BOOL xrenderdrv_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap )
+{
+    dev = GET_NEXT_PHYSDEV( dev, pCreateBitmap );
+    return dev->funcs->pCreateBitmap( dev, hbitmap );
+}
+
+/****************************************************************************
+ *	  xrenderdrv_DeleteBitmap
+ */
+static BOOL xrenderdrv_DeleteBitmap( HBITMAP hbitmap )
+{
+    return X11DRV_DeleteBitmap( hbitmap );
+}
+
+/***********************************************************************
+ *           xrenderdrv_SelectBitmap
+ */
+static HBITMAP xrenderdrv_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
+{
+    HBITMAP ret;
+    struct xrender_physdev *physdev = get_xrender_dev( dev );
+
+    dev = GET_NEXT_PHYSDEV( dev, pSelectBitmap );
+    ret = dev->funcs->pSelectBitmap( dev, hbitmap );
+    if (ret) update_xrender_drawable( physdev );
+    return ret;
+}
+
+/***********************************************************************
+ *           xrenderdrv_GetImage
+ */
+static DWORD xrenderdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
+                                  struct gdi_image_bits *bits, struct bitblt_coords *src )
+{
+    if (hbitmap) return X11DRV_GetImage( dev, hbitmap, info, bits, src );
+    dev = GET_NEXT_PHYSDEV( dev, pGetImage );
+    return dev->funcs->pGetImage( dev, hbitmap, info, bits, src );
+}
+
+/***********************************************************************
+ *           xrenderdrv_PutImage
+ */
+static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info,
+                                  const struct gdi_image_bits *bits, struct bitblt_coords *src,
+                                  struct bitblt_coords *dst, DWORD rop )
+{
+    if (hbitmap) return X11DRV_PutImage( dev, hbitmap, clip, info, bits, src, dst, rop );
+    dev = GET_NEXT_PHYSDEV( dev, pPutImage );
+    return dev->funcs->pPutImage( dev, hbitmap, clip, info, bits, src, dst, rop );
+}
+
 BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel, const DIBSECTION *dib)
 {
     const WineXRenderFormat *fmt;
@@ -1293,37 +1347,6 @@ BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel,
     physBitmap->trueColor = TRUE;
     physBitmap->pixmap_color_shifts = shifts;
     return TRUE;
-}
-
-/***********************************************************************
- *   X11DRV_XRender_UpdateDrawable
- *
- * Deletes the pict and tile when the drawable changes.
- */
-void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
-{
-    struct xrender_info *info = physDev->xrender;
-
-    if (info->pict || info->pict_src)
-    {
-        wine_tsx11_lock();
-        XFlush( gdi_display );
-        if (info->pict)
-        {
-            TRACE("freeing pict = %lx dc = %p\n", info->pict, physDev->dev.hdc);
-            pXRenderFreePicture(gdi_display, info->pict);
-            info->pict = 0;
-        }
-        if(info->pict_src)
-        {
-            TRACE("freeing pict = %lx dc = %p\n", info->pict_src, physDev->dev.hdc);
-            pXRenderFreePicture(gdi_display, info->pict_src);
-            info->pict_src = 0;
-        }
-        wine_tsx11_unlock();
-    }
-
-    info->format = NULL;
 }
 
 /************************************************************************
@@ -2516,11 +2539,11 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pChoosePixelFormat */
     NULL,                               /* pChord */
     NULL,                               /* pCloseFigure */
-    NULL,                               /* pCreateBitmap */
+    xrenderdrv_CreateBitmap,            /* pCreateBitmap */
     xrenderdrv_CreateCompatibleDC,      /* pCreateCompatibleDC */
     xrenderdrv_CreateDC,                /* pCreateDC */
     NULL,                               /* pCreateDIBSection */
-    NULL,                               /* pDeleteBitmap */
+    xrenderdrv_DeleteBitmap,            /* pDeleteBitmap */
     xrenderdrv_DeleteDC,                /* pDeleteDC */
     NULL,                               /* pDeleteObject */
     NULL,                               /* pDescribePixelFormat */
@@ -2546,7 +2569,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pGetDeviceCaps */
     NULL,                               /* pGetDeviceGammaRamp */
     NULL,                               /* pGetICMProfile */
-    NULL,                               /* pGetImage */
+    xrenderdrv_GetImage,                /* pGetImage */
     NULL,                               /* pGetNearestColor */
     NULL,                               /* pGetPixel */
     NULL,                               /* pGetPixelFormat */
@@ -2572,7 +2595,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pPolygon */
     NULL,                               /* pPolyline */
     NULL,                               /* pPolylineTo */
-    NULL,                               /* pPutImage */
+    xrenderdrv_PutImage,                /* pPutImage */
     NULL,                               /* pRealizeDefaultPalette */
     NULL,                               /* pRealizePalette */
     NULL,                               /* pRectangle */
@@ -2582,7 +2605,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pSaveDC */
     NULL,                               /* pScaleViewportExt */
     NULL,                               /* pScaleWindowExt */
-    NULL,                               /* pSelectBitmap */
+    xrenderdrv_SelectBitmap,            /* pSelectBitmap */
     NULL,                               /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
     NULL,                               /* pSelectFont */
@@ -2657,12 +2680,6 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 {
   assert(0);
   return FALSE;
-}
-
-void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
-{
-  assert(0);
-  return;
 }
 
 BOOL XRender_AlphaBlend( X11DRV_PDEVICE *devDst, struct bitblt_coords *dst,

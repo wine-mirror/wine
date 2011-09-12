@@ -95,9 +95,6 @@ HBITMAP X11DRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
 
     if (!GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return 0;
 
-    if(physDev->xrender)
-        X11DRV_XRender_UpdateDrawable( physDev );
-
     if (hbitmap == BITMAP_stock_phys_bitmap.hbitmap) physBitmap = &BITMAP_stock_phys_bitmap;
     else if (!(physBitmap = X11DRV_get_phys_bitmap( hbitmap ))) return 0;
 

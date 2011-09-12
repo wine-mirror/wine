@@ -313,7 +313,6 @@ extern BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits
 BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
                                       Pixmap pixmap, GC gc,
                                       const struct bitblt_coords *src, const struct bitblt_coords *dst ) DECLSPEC_HIDDEN;
-extern void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev) DECLSPEC_HIDDEN;
 extern BOOL XRender_AlphaBlend( X11DRV_PDEVICE *devDst, struct bitblt_coords *dst,
                                 X11DRV_PDEVICE *devSrc, struct bitblt_coords *src,
                                 BLENDFUNCTION blendfn ) DECLSPEC_HIDDEN;
