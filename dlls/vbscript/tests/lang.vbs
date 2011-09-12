@@ -52,5 +52,16 @@ Call ok(getVT(&h10&) = "VT_I2", "getVT(&h10&) is not VT_I2")
 Call ok(getVT(&h10000&) = "VT_I4", "getVT(&h10000&) is not VT_I4")
 Call ok(getVT(&H10000&) = "VT_I4", "getVT(&H10000&) is not VT_I4")
 Call ok(getVT(&hffFFffFF&) = "VT_I2", "getVT(&hffFFffFF&) is not VT_I2")
+Call ok(getVT(1 & 100000) = "VT_BSTR", "getVT(1 & 100000) is not VT_BSTR")
+
+Call ok("ab" & "cd" = "abcd", """ab"" & ""cd"" <> ""abcd""")
+Call ok("ab " & null = "ab ", """ab"" & null = " & ("ab " & null))
+Call ok("ab " & empty = "ab ", """ab"" & empty = " & ("ab " & empty))
+Call ok(1 & 100000 = "1100000", "1 & 100000 = " & (1 & 100000))
+
+'if(isEnglishLocale) then
+'    Call ok("" & true = "True", """"" & true = " & true)
+'    Call ok(true & false = "TrueFalse", "true & false = " & (true & false))
+'end if
 
 reportSuccess()

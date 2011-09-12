@@ -63,6 +63,7 @@ DEFINE_EXPECT(global_success_i);
 #define DISPID_GLOBAL_TRACE         1001
 #define DISPID_GLOBAL_OK            1002
 #define DISPID_GLOBAL_GETVT         1003
+#define DISPID_GLOBAL_ISENGLOC      1004
 
 static const WCHAR testW[] = {'t','e','s','t',0};
 
@@ -119,6 +120,12 @@ static const char *vt2a(VARIANT *v)
         ok(0, "unknown vt %d\n", V_VT(v));
         return NULL;
     }
+}
+
+static BOOL is_english(void)
+{
+    return PRIMARYLANGID(GetSystemDefaultLangID()) == LANG_ENGLISH
+        && PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH;
 }
 
 #define test_grfdex(a,b) _test_grfdex(__LINE__,a,b)
@@ -240,6 +247,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_GETVT;
         return S_OK;
     }
+    if(!strcmp_wa(bstrName, "isEnglishLocale")) {
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_GLOBAL_ISENGLOC;
+        return S_OK;
+    }
 
     if(strict_dispid_check && strcmp_wa(bstrName, "x"))
         ok(0, "unexpected call %s %x\n", wine_dbgstr_w(bstrName), grfdex);
@@ -319,6 +331,25 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
          V_VT(pvarRes) = VT_BSTR;
          V_BSTR(pvarRes) = a2bstr(vt2a(pdp->rgvarg));
          return S_OK;
+
+    case DISPID_GLOBAL_ISENGLOC:
+        ok(wFlags == (INVOKE_FUNC|INVOKE_PROPERTYGET), "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 0, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        V_VT(pvarRes) = VT_BOOL;
+        if(is_english()) {
+            V_BOOL(pvarRes) = VARIANT_TRUE;
+        }else {
+            skip("Skipping some test in non-English locale\n");
+            V_BOOL(pvarRes) = VARIANT_FALSE;
+        }
+        return S_OK;
+
     }
 
     ok(0, "unexpected call %d\n", id);
