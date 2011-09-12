@@ -2971,7 +2971,7 @@ static void test_hglobal_storage_creation(void)
 
     r = StgOpenStorageOnILockBytes(ilb, NULL, STGM_READ|STGM_SHARE_EXCLUSIVE,
         NULL, 0, &stg);
-    todo_wine ok(r == S_OK, "StgOpenStorageOnILockBytes failed, hr=%x\n", r);
+    ok(r == S_OK, "StgOpenStorageOnILockBytes failed, hr=%x\n", r);
 
     if (SUCCEEDED(r))
     {

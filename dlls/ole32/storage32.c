@@ -2740,6 +2740,10 @@ static HRESULT StorageImpl_Construct(
     ULARGE_INTEGER size;
     BYTE bigBlockBuffer[MAX_BIG_BLOCK_SIZE];
 
+    /* Discard any existing data. */
+    size.QuadPart = 0;
+    ILockBytes_SetSize(This->lockBytes, size);
+
     /*
      * Initialize all header variables:
      * - The big block depot consists of one block and it is at block 0
