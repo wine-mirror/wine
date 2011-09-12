@@ -67,11 +67,6 @@ static const WCHAR parmY[] = {'/','Y','\0'};
 static const WCHAR parmNoY[] = {'/','-','Y','\0'};
 static const WCHAR nullW[] = {'\0'};
 
-const WCHAR externals[][10] = {
-        {'A','T','T','R','I','B','\0'},
-        {'X','C','O','P','Y','\0'}
-};
-
 /**************************************************************************
  * WCMD_ask_confirm
  *
@@ -1335,7 +1330,7 @@ void WCMD_give_help (const WCHAR *command) {
     WCMD_output_asis (WCMD_LoadMessage(WCMD_ALLHELP));
   }
   else {
-    /* Display help message for builtin command */
+    /* Display help message for builtin commands */
     for (i=0; i<=WCMD_EXIT; i++) {
       if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
 	  command, -1, inbuilt[i], -1) == CSTR_EQUAL) {

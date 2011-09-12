@@ -79,6 +79,11 @@ const WCHAR inbuilt[][10] = {
         {'E','X','I','T','\0'}
 };
 
+const WCHAR externals[NUM_EXTERNALS][10] = {
+        {'A','T','T','R','I','B','\0'},
+        {'X','C','O','P','Y','\0'}
+};
+
 HINSTANCE hinst;
 DWORD errorlevel;
 int echo_mode = 1, verify_mode = 0, defaultColor = 7;
