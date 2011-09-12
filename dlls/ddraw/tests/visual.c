@@ -58,7 +58,7 @@ static HRESULT WINAPI enum_z_fmt(DDPIXELFORMAT *fmt, void *ctx)
 {
     DDPIXELFORMAT *zfmt = ctx;
 
-    if(U1(fmt)->dwZBufferBitDepth > U1(zfmt)->dwZBufferBitDepth)
+    if(U1(*fmt).dwZBufferBitDepth > U1(*zfmt).dwZBufferBitDepth)
     {
         *zfmt = *fmt;
     }
