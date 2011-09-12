@@ -426,7 +426,7 @@ enum wined3d_format_id PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat
                 {
                     return WINED3DFMT_B2G3R3A8_UNORM;
                 }
-                ERR("16 bit RGB Pixel format does not match\n");
+                WARN("16 bit RGB Pixel format does not match.\n");
                 return WINED3DFMT_UNKNOWN;
 
             case 24:
@@ -445,10 +445,10 @@ enum wined3d_format_id PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat
                         return WINED3DFMT_B8G8R8X8_UNORM;
 
                 }
-                ERR("32 bit RGB pixel format does not match\n");
+                WARN("32 bit RGB pixel format does not match.\n");
 
             default:
-                ERR("Invalid dwRGBBitCount in Pixelformat structure\n");
+                WARN("Invalid dwRGBBitCount in Pixelformat structure.\n");
                 return WINED3DFMT_UNKNOWN;
         }
     }
@@ -460,12 +460,12 @@ enum wined3d_format_id PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat
             case 1:
             case 2:
             case 4:
-                ERR("Unsupported Alpha-Only bit depth 0x%x\n", DDPixelFormat->u1.dwAlphaBitDepth);
+                FIXME("Unsupported Alpha-Only bit depth 0x%x.\n", DDPixelFormat->u1.dwAlphaBitDepth);
             case 8:
                 return WINED3DFMT_A8_UNORM;
 
             default:
-                ERR("Invalid AlphaBitDepth in Alpha-Only Pixelformat\n");
+                WARN("Invalid AlphaBitDepth in Alpha-Only Pixelformat.\n");
                 return WINED3DFMT_UNKNOWN;
         }
     }
@@ -480,17 +480,17 @@ enum wined3d_format_id PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat
                 case 4:
                     if(DDPixelFormat->u1.dwAlphaBitDepth == 4)
                         return WINED3DFMT_L4A4_UNORM;
-                    ERR("Unknown Alpha / Luminance bit depth combination\n");
+                    WARN("Unknown Alpha / Luminance bit depth combination.\n");
                     return WINED3DFMT_UNKNOWN;
 
                 case 6:
-                    ERR("A luminance Pixelformat shouldn't have 6 luminance bits. Returning D3DFMT_L6V5U5 for now!!\n");
+                    FIXME("A luminance Pixelformat shouldn't have 6 luminance bits. Returning D3DFMT_L6V5U5 for now.\n");
                     return WINED3DFMT_R5G5_SNORM_L6_UNORM;
 
                 case 8:
                     if(DDPixelFormat->u1.dwAlphaBitDepth == 8)
                         return WINED3DFMT_L8A8_UNORM;
-                    ERR("Unknown Alpha / Lumincase bit depth combination\n");
+                    WARN("Unknown Alpha / Lumincase bit depth combination.\n");
                     return WINED3DFMT_UNKNOWN;
             }
         }
@@ -500,14 +500,14 @@ enum wined3d_format_id PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat
             switch(DDPixelFormat->u1.dwLuminanceBitCount)
             {
                 case 6:
-                    ERR("A luminance Pixelformat shouldn't have 6 luminance bits. Returning D3DFMT_L6V5U5 for now!!\n");
+                    FIXME("A luminance Pixelformat shouldn't have 6 luminance bits. Returning D3DFMT_L6V5U5 for now.\n");
                     return WINED3DFMT_R5G5_SNORM_L6_UNORM;
 
                 case 8:
                     return WINED3DFMT_L8_UNORM;
 
                 default:
-                    ERR("Unknown luminance-only bit depth 0x%x\n", DDPixelFormat->u1.dwLuminanceBitCount);
+                    WARN("Unknown luminance-only bit depth 0x%x.\n", DDPixelFormat->u1.dwLuminanceBitCount);
                     return WINED3DFMT_UNKNOWN;
              }
         }
@@ -599,7 +599,7 @@ enum wined3d_format_id PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat
         }
     }
 
-    ERR("Unknown Pixelformat!\n");
+    WARN("Unknown Pixelformat.\n");
     return WINED3DFMT_UNKNOWN;
 }
 
