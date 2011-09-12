@@ -1382,8 +1382,8 @@
 @ cdecl -arch=win64 ??4?$allocator@_W@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_allocator_wchar_assign
 @ thiscall -arch=win32 ??4?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV01@ABV01@@Z(ptr ptr) MSVCP_basic_string_char_assign
 @ cdecl -arch=win64 ??4?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_basic_string_char_assign
-@ stub -arch=win32 ??4?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV01@D@Z
-@ stub -arch=win64 ??4?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV01@D@Z
+@ thiscall -arch=win32 ??4?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV01@D@Z(ptr long) MSVCP_basic_string_char_assign_ch
+@ cdecl -arch=win64 ??4?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV01@D@Z(ptr long) MSVCP_basic_string_char_assign_ch
 @ thiscall -arch=win32 ??4?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV01@PBD@Z(ptr ptr) MSVCP_basic_string_char_assign_cstr
 @ cdecl -arch=win64 ??4?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV01@PEBD@Z(ptr ptr) MSVCP_basic_string_char_assign_cstr
 @ stub -arch=win32 ??4?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV01@ABV01@@Z
@@ -1396,8 +1396,8 @@
 @ cdecl -arch=win64 ??4?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_basic_string_wchar_assign
 @ thiscall -arch=win32 ??4?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV01@PB_W@Z(ptr wstr) MSVCP_basic_string_wchar_assign_cstr
 @ cdecl -arch=win64 ??4?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV01@PEB_W@Z(ptr wstr) MSVCP_basic_string_wchar_assign_cstr
-@ stub -arch=win32 ??4?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV01@_W@Z
-@ stub -arch=win64 ??4?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV01@_W@Z
+@ thiscall -arch=win32 ??4?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV01@_W@Z(ptr long) MSVCP_basic_string_wchar_assign_ch
+@ cdecl -arch=win64 ??4?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV01@_W@Z(ptr long) MSVCP_basic_string_wchar_assign_ch
 @ stub -arch=win32 ??4?$char_traits@D@std@@QAEAAU01@ABU01@@Z
 @ stub -arch=win64 ??4?$char_traits@D@std@@QEAAAEAU01@AEBU01@@Z
 @ stub -arch=win32 ??4?$char_traits@G@std@@QAEAAU01@ABU01@@Z
