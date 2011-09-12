@@ -5748,7 +5748,7 @@ static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_pa
         UINT width, UINT height, enum wined3d_format_id format, WINED3DMULTISAMPLE_TYPE multisample_type,
         DWORD multisample_quality, BOOL discard, struct wined3d_surface **surface)
 {
-    ERR("DirectDraw doesn't have and shoudn't try creating implicit depth buffers.\n");
+    ERR("DirectDraw doesn't have and shouldn't try creating implicit depth buffers.\n");
     return E_NOTIMPL;
 }
 

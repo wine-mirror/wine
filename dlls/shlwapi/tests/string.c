@@ -953,7 +953,7 @@ if (0)
     {
         memset(buf, 0xbf, sizeof(buf));
         ret = pwnsprintfA(buf, 10, "%s", str1);
-        ok(broken(ret == 9) || ret == -1 /* Vista */, "Unexpected wsnprintfA return %d, expected 9 or -1\n", ret);
+        ok(broken(ret == 9) || ret == -1 /* Vista */, "Unexpected wnsprintfA return %d, expected 9 or -1\n", ret);
         expect_eq(buf[9], 0, CHAR, "%x");
         expect_eq(buf[10], (CHAR)0xbf, CHAR, "%x");
     }
@@ -964,7 +964,7 @@ if (0)
     {
         memset(wbuf, 0xbf, sizeof(wbuf));
         ret = pwnsprintfW(wbuf, 10, fmt, wstr1);
-        ok(broken(ret == 9) || ret == -1 /* Vista */, "Unexpected wsnprintfW return %d, expected 9 or -1\n", ret);
+        ok(broken(ret == 9) || ret == -1 /* Vista */, "Unexpected wnsprintfW return %d, expected 9 or -1\n", ret);
         expect_eq(wbuf[9], 0, WCHAR, "%x");
         expect_eq(wbuf[10], (WCHAR)0xbfbf, WCHAR, "%x");
     }

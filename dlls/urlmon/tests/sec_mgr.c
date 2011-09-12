@@ -1561,7 +1561,7 @@ static void test_InternetGetSecurityUrlEx_Pluggable(void)
     HRESULT hr;
     IUri *uri = NULL, *result;
 
-    trace("testing CoInternetGetSecurityUrlEx for plugable protocols...\n");
+    trace("testing CoInternetGetSecurityUrlEx for pluggable protocols...\n");
 
     hr = pCreateUri(security_urlW, 0, 0, &uri);
     ok(hr == S_OK, "CreateUri returned 0x%08x\n", hr);
