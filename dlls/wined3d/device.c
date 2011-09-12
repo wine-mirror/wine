@@ -2833,7 +2833,7 @@ HRESULT CDECL wined3d_device_get_vs_consts_f(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-static inline void markTextureStagesDirty(struct wined3d_device *device, DWORD stage)
+static void device_invalidate_texture_stage(const struct wined3d_device *device, DWORD stage)
 {
     DWORD i;
 
@@ -2913,7 +2913,7 @@ static void device_map_fixed_function_samplers(struct wined3d_device *device, co
             {
                 device_map_stage(device, i, i);
                 device_invalidate_state(device, STATE_SAMPLER(i));
-                markTextureStagesDirty(device, i);
+                device_invalidate_texture_stage(device, i);
             }
         }
         return;
@@ -2929,7 +2929,7 @@ static void device_map_fixed_function_samplers(struct wined3d_device *device, co
         {
             device_map_stage(device, i, tex);
             device_invalidate_state(device, STATE_SAMPLER(i));
-            markTextureStagesDirty(device, i);
+            device_invalidate_texture_stage(device, i);
         }
 
         ++tex;
@@ -2949,9 +2949,7 @@ static void device_map_psamplers(struct wined3d_device *device, const struct win
             device_map_stage(device, i, i);
             device_invalidate_state(device, STATE_SAMPLER(i));
             if (i < gl_info->limits.texture_stages)
-            {
-                markTextureStagesDirty(device, i);
-            }
+                device_invalidate_texture_stage(device, i);
         }
     }
 }
