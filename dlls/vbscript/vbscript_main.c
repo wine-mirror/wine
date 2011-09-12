@@ -31,6 +31,89 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static HINSTANCE vbscript_hinstance;
 
+#define MIN_BLOCK_SIZE  128
+
+static inline DWORD block_size(DWORD block)
+{
+    return MIN_BLOCK_SIZE << block;
+}
+
+void vbsheap_init(vbsheap_t *heap)
+{
+    memset(heap, 0, sizeof(*heap));
+    list_init(&heap->custom_blocks);
+}
+
+void *vbsheap_alloc(vbsheap_t *heap, size_t size)
+{
+    struct list *list;
+    void *tmp;
+
+    size = (size+3)&~3;
+
+    if(!heap->block_cnt) {
+        if(!heap->blocks) {
+            heap->blocks = heap_alloc(sizeof(void*));
+            if(!heap->blocks)
+                return NULL;
+        }
+
+        tmp = heap_alloc(block_size(0));
+        if(!tmp)
+            return NULL;
+
+        heap->blocks[0] = tmp;
+        heap->block_cnt = 1;
+    }
+
+    if(heap->offset + size <= block_size(heap->last_block)) {
+        tmp = ((BYTE*)heap->blocks[heap->last_block])+heap->offset;
+        heap->offset += size;
+        return tmp;
+    }
+
+    if(size <= block_size(heap->last_block+1)) {
+        if(heap->last_block+1 == heap->block_cnt) {
+            tmp = heap_realloc(heap->blocks, (heap->block_cnt+1)*sizeof(void*));
+            if(!tmp)
+                return NULL;
+
+            heap->blocks = tmp;
+            heap->blocks[heap->block_cnt] = heap_alloc(block_size(heap->block_cnt));
+            if(!heap->blocks[heap->block_cnt])
+                return NULL;
+
+            heap->block_cnt++;
+        }
+
+        heap->last_block++;
+        heap->offset = size;
+        return heap->blocks[heap->last_block];
+    }
+
+    list = heap_alloc(size + sizeof(struct list));
+    if(!list)
+        return NULL;
+
+    list_add_head(&heap->custom_blocks, list);
+    return list+1;
+}
+
+void vbsheap_free(vbsheap_t *heap)
+{
+    struct list *iter;
+    DWORD i;
+
+    while((iter = list_next(&heap->custom_blocks, &heap->custom_blocks))) {
+        list_remove(iter);
+        heap_free(iter);
+    }
+
+    for(i=0; i < heap->block_cnt; i++)
+        heap_free(heap->blocks[i]);
+    heap_free(heap->blocks);
+}
+
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;

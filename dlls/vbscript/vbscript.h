@@ -31,6 +31,18 @@
 #include "wine/list.h"
 #include "wine/unicode.h"
 
+typedef struct {
+    void **blocks;
+    DWORD block_cnt;
+    DWORD last_block;
+    DWORD offset;
+    struct list custom_blocks;
+} vbsheap_t;
+
+void vbsheap_init(vbsheap_t*) DECLSPEC_HIDDEN;
+void *vbsheap_alloc(vbsheap_t*,size_t) __WINE_ALLOC_SIZE(2) DECLSPEC_HIDDEN;
+void vbsheap_free(vbsheap_t*) DECLSPEC_HIDDEN;
+
 typedef struct _function_t function_t;
 typedef struct _vbscode_t vbscode_t;
 typedef struct _script_ctx_t script_ctx_t;
@@ -122,6 +134,7 @@ struct _vbscode_t {
     BSTR *bstr_pool;
     unsigned bstr_pool_size;
     unsigned bstr_cnt;
+    vbsheap_t heap;
 
     struct list entry;
 };

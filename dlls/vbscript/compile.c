@@ -36,6 +36,23 @@ typedef struct {
 
 static HRESULT compile_expression(compile_ctx_t*,expression_t*);
 
+static inline void *compiler_alloc(vbscode_t *vbscode, size_t size)
+{
+    return vbsheap_alloc(&vbscode->heap, size);
+}
+
+static WCHAR *compiler_alloc_string(vbscode_t *vbscode, const WCHAR *str)
+{
+    size_t size;
+    WCHAR *ret;
+
+    size = (strlenW(str)+1)*sizeof(WCHAR);
+    ret = compiler_alloc(vbscode, size);
+    if(ret)
+        memcpy(ret, str, size);
+    return ret;
+}
+
 static inline instr_t *instr_ptr(compile_ctx_t *ctx, unsigned id)
 {
     assert(id < ctx->instr_cnt);
@@ -75,13 +92,18 @@ static HRESULT push_instr_int(compile_ctx_t *ctx, vbsop_t op, LONG arg)
 
 static HRESULT push_instr_str(compile_ctx_t *ctx, vbsop_t op, const WCHAR *arg)
 {
-    unsigned ret;
+    unsigned instr;
+    WCHAR *str;
 
-    ret = push_instr(ctx, op);
-    if(ret == -1)
+    str = compiler_alloc_string(ctx->code, arg);
+    if(!str)
         return E_OUTOFMEMORY;
 
-    instr_ptr(ctx, ret)->arg1.str = arg;
+    instr = push_instr(ctx, op);
+    if(instr == -1)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, instr)->arg1.str = str;
     return S_OK;
 }
 
@@ -263,6 +285,8 @@ void release_vbscode(vbscode_t *code)
     for(i=0; i < code->bstr_cnt; i++)
         SysFreeString(code->bstr_pool[i]);
 
+    vbsheap_free(&code->heap);
+
     heap_free(code->bstr_pool);
     heap_free(code->source);
     heap_free(code->instrs);
@@ -291,6 +315,7 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source)
 
     ctx->instr_cnt = 0;
     ctx->instr_size = 32;
+    vbsheap_init(&ret->heap);
 
     ret->option_explicit = ctx->parser.option_explicit;
 
