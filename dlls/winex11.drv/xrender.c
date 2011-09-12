@@ -152,6 +152,19 @@ struct xrender_info
     const WineXRenderFormat *format;
 };
 
+struct xrender_physdev
+{
+    struct gdi_physdev dev;
+    X11DRV_PDEVICE    *x11dev;
+};
+
+static inline struct xrender_physdev *get_xrender_dev( PHYSDEV dev )
+{
+    return (struct xrender_physdev *)dev;
+}
+
+static const struct gdi_dc_funcs xrender_funcs;
+
 static gsCacheEntry *glyphsetCache = NULL;
 static DWORD glyphsetCacheSize = 0;
 static INT lastfree = -1;
@@ -341,7 +354,7 @@ static int load_xrender_formats(void)
  * Let's see if our XServer has the extension available
  *
  */
-void X11DRV_XRender_Init(void)
+const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
 {
     int event_base, i;
 
@@ -385,7 +398,7 @@ LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform)
                     "of libXrender.so .  Because of this client side font rendering\n"
                     "will be disabled.  Please upgrade this library.\n");
                 X11DRV_XRender_Installed = FALSE;
-                return;
+                return NULL;
             }
 
             if (!visual->red_mask || !visual->green_mask || !visual->blue_mask) {
@@ -439,8 +452,10 @@ sym_not_found:
 	    if(screen_depth <= 8 || !client_side_antialias_with_render)
 	        antialias = 0;
 	}
+        return &xrender_funcs;
     }
-    else TRACE("Using X11 core fonts\n");
+    TRACE("Using X11 core fonts\n");
+    return NULL;
 }
 
 /* Helper function to convert from a color packed in a 32-bit integer to a XRenderColor */
@@ -1095,6 +1110,50 @@ void X11DRV_XRender_SetDeviceClipping(X11DRV_PDEVICE *physDev, const RGNDATA *da
                                           (XRectangle *)data->Buffer, data->rdh.nCount );
         wine_tsx11_unlock();
     }
+}
+
+/**********************************************************************
+ *	     xrenderdrv_CreateDC
+ */
+static BOOL xrenderdrv_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
+                                 LPCWSTR output, const DEVMODEW* initData )
+{
+    struct xrender_physdev *physdev = HeapAlloc( GetProcessHeap(), 0, sizeof(*physdev) );
+
+    if (!physdev) return FALSE;
+    physdev->x11dev = get_x11drv_dev( *pdev );
+    push_dc_driver( pdev, &physdev->dev, &xrender_funcs );
+    return TRUE;
+}
+
+/**********************************************************************
+ *	     xrenderdrv_CreateCompatibleDC
+ */
+static BOOL xrenderdrv_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
+{
+    struct xrender_physdev *physdev;
+
+    if (orig)  /* chain to x11drv first */
+    {
+        orig = GET_NEXT_PHYSDEV( orig, pCreateCompatibleDC );
+        if (!orig->funcs->pCreateCompatibleDC( orig, pdev )) return FALSE;
+    }
+    /* otherwise we have been called by x11drv */
+
+    if (!(physdev = HeapAlloc( GetProcessHeap(), 0, sizeof(*physdev) ))) return FALSE;
+    physdev->x11dev = get_x11drv_dev( *pdev );
+    push_dc_driver( pdev, &physdev->dev, &xrender_funcs );
+    return TRUE;
+}
+
+/**********************************************************************
+ *	     xrenderdrv_DeleteDC
+ */
+static BOOL xrenderdrv_DeleteDC( PHYSDEV dev )
+{
+    struct xrender_physdev *physdev = get_xrender_dev( dev );
+    HeapFree( GetProcessHeap(), 0, physdev );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -2396,12 +2455,135 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
     return TRUE;
 }
 
+static const struct gdi_dc_funcs xrender_funcs =
+{
+    NULL,                               /* pAbortDoc */
+    NULL,                               /* pAbortPath */
+    NULL,                               /* pAlphaBlend */
+    NULL,                               /* pAngleArc */
+    NULL,                               /* pArc */
+    NULL,                               /* pArcTo */
+    NULL,                               /* pBeginPath */
+    NULL,                               /* pChoosePixelFormat */
+    NULL,                               /* pChord */
+    NULL,                               /* pCloseFigure */
+    NULL,                               /* pCreateBitmap */
+    xrenderdrv_CreateCompatibleDC,      /* pCreateCompatibleDC */
+    xrenderdrv_CreateDC,                /* pCreateDC */
+    NULL,                               /* pCreateDIBSection */
+    NULL,                               /* pDeleteBitmap */
+    xrenderdrv_DeleteDC,                /* pDeleteDC */
+    NULL,                               /* pDeleteObject */
+    NULL,                               /* pDescribePixelFormat */
+    NULL,                               /* pDeviceCapabilities */
+    NULL,                               /* pEllipse */
+    NULL,                               /* pEndDoc */
+    NULL,                               /* pEndPage */
+    NULL,                               /* pEndPath */
+    NULL,                               /* pEnumDeviceFonts */
+    NULL,                               /* pEnumICMProfiles */
+    NULL,                               /* pExcludeClipRect */
+    NULL,                               /* pExtDeviceMode */
+    NULL,                               /* pExtEscape */
+    NULL,                               /* pExtFloodFill */
+    NULL,                               /* pExtSelectClipRgn */
+    NULL,                               /* pExtTextOut */
+    NULL,                               /* pFillPath */
+    NULL,                               /* pFillRgn */
+    NULL,                               /* pFlattenPath */
+    NULL,                               /* pFrameRgn */
+    NULL,                               /* pGdiComment */
+    NULL,                               /* pGetCharWidth */
+    NULL,                               /* pGetDeviceCaps */
+    NULL,                               /* pGetDeviceGammaRamp */
+    NULL,                               /* pGetICMProfile */
+    NULL,                               /* pGetImage */
+    NULL,                               /* pGetNearestColor */
+    NULL,                               /* pGetPixel */
+    NULL,                               /* pGetPixelFormat */
+    NULL,                               /* pGetSystemPaletteEntries */
+    NULL,                               /* pGetTextExtentExPoint */
+    NULL,                               /* pGetTextMetrics */
+    NULL,                               /* pIntersectClipRect */
+    NULL,                               /* pInvertRgn */
+    NULL,                               /* pLineTo */
+    NULL,                               /* pModifyWorldTransform */
+    NULL,                               /* pMoveTo */
+    NULL,                               /* pOffsetClipRgn */
+    NULL,                               /* pOffsetViewportOrg */
+    NULL,                               /* pOffsetWindowOrg */
+    NULL,                               /* pPaintRgn */
+    NULL,                               /* pPatBlt */
+    NULL,                               /* pPie */
+    NULL,                               /* pPolyBezier */
+    NULL,                               /* pPolyBezierTo */
+    NULL,                               /* pPolyDraw */
+    NULL,                               /* pPolyPolygon */
+    NULL,                               /* pPolyPolyline */
+    NULL,                               /* pPolygon */
+    NULL,                               /* pPolyline */
+    NULL,                               /* pPolylineTo */
+    NULL,                               /* pPutImage */
+    NULL,                               /* pRealizeDefaultPalette */
+    NULL,                               /* pRealizePalette */
+    NULL,                               /* pRectangle */
+    NULL,                               /* pResetDC */
+    NULL,                               /* pRestoreDC */
+    NULL,                               /* pRoundRect */
+    NULL,                               /* pSaveDC */
+    NULL,                               /* pScaleViewportExt */
+    NULL,                               /* pScaleWindowExt */
+    NULL,                               /* pSelectBitmap */
+    NULL,                               /* pSelectBrush */
+    NULL,                               /* pSelectClipPath */
+    NULL,                               /* pSelectFont */
+    NULL,                               /* pSelectPalette */
+    NULL,                               /* pSelectPen */
+    NULL,                               /* pSetArcDirection */
+    NULL,                               /* pSetBkColor */
+    NULL,                               /* pSetBkMode */
+    NULL,                               /* pSetDCBrushColor */
+    NULL,                               /* pSetDCPenColor */
+    NULL,                               /* pSetDIBColorTable */
+    NULL,                               /* pSetDIBitsToDevice */
+    NULL,                               /* pSetDeviceClipping */
+    NULL,                               /* pSetDeviceGammaRamp */
+    NULL,                               /* pSetLayout */
+    NULL,                               /* pSetMapMode */
+    NULL,                               /* pSetMapperFlags */
+    NULL,                               /* pSetPixel */
+    NULL,                               /* pSetPixelFormat */
+    NULL,                               /* pSetPolyFillMode */
+    NULL,                               /* pSetROP2 */
+    NULL,                               /* pSetRelAbs */
+    NULL,                               /* pSetStretchBltMode */
+    NULL,                               /* pSetTextAlign */
+    NULL,                               /* pSetTextCharacterExtra */
+    NULL,                               /* pSetTextColor */
+    NULL,                               /* pSetTextJustification */
+    NULL,                               /* pSetViewportExt */
+    NULL,                               /* pSetViewportOrg */
+    NULL,                               /* pSetWindowExt */
+    NULL,                               /* pSetWindowOrg */
+    NULL,                               /* pSetWorldTransform */
+    NULL,                               /* pStartDoc */
+    NULL,                               /* pStartPage */
+    NULL,                               /* pStretchBlt */
+    NULL,                               /* pStretchDIBits */
+    NULL,                               /* pStrokeAndFillPath */
+    NULL,                               /* pStrokePath */
+    NULL,                               /* pSwapBuffers */
+    NULL,                               /* pUnrealizePalette */
+    NULL,                               /* pWidenPath */
+    /* OpenGL not supported */
+};
+
 #else /* SONAME_LIBXRENDER */
 
-void X11DRV_XRender_Init(void)
+const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
 {
     TRACE("XRender support not compiled in.\n");
-    return;
+    return NULL;
 }
 
 void X11DRV_XRender_Finalize(void)

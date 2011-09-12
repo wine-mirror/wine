@@ -52,6 +52,7 @@ static const WCHAR dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o
 static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s','\0'};
 
 static const struct gdi_dc_funcs x11drv_funcs;
+static const struct gdi_dc_funcs *xrender_funcs;
 
 /******************************************************************************
  *      get_dpi
@@ -88,7 +89,7 @@ static void device_init(void)
     device_init_done = TRUE;
 
     /* Initialize XRender */
-    X11DRV_XRender_Init();
+    xrender_funcs = X11DRV_XRender_Init();
 
     /* Init Xcursor */
     X11DRV_Xcursor_Init();
@@ -157,7 +158,8 @@ static BOOL X11DRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
     SetRect( &physDev->dc_rect, 0, 0, virtual_screen_rect.right - virtual_screen_rect.left,
              virtual_screen_rect.bottom - virtual_screen_rect.top );
     push_dc_driver( pdev, &physDev->dev, &x11drv_funcs );
-    return TRUE;
+    if (!xrender_funcs) return TRUE;
+    return xrender_funcs->pCreateDC( pdev, driver, device, output, initData );
 }
 
 
@@ -178,7 +180,9 @@ static BOOL X11DRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
     SetRect( &physDev->drawable_rect, 0, 0, 1, 1 );
     physDev->dc_rect = physDev->drawable_rect;
     push_dc_driver( pdev, &physDev->dev, &x11drv_funcs );
-    return TRUE;
+    if (orig) return TRUE;  /* we already went through Xrender if we have an orig device */
+    if (!xrender_funcs) return TRUE;
+    return xrender_funcs->pCreateCompatibleDC( NULL, pdev );
 }
 
 
