@@ -393,8 +393,20 @@ static HRESULT interp_concat(exec_ctx_t *ctx)
 
 static HRESULT interp_neg(exec_ctx_t *ctx)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    variant_val_t val;
+    VARIANT v;
+    HRESULT hres;
+
+    hres = stack_pop_val(ctx, &val);
+    if(FAILED(hres))
+        return hres;
+
+    hres = VarNeg(val.v, &v);
+    release_val(&val);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push(ctx, &v);
 }
 
 static const instr_func_t op_funcs[] = {
