@@ -816,10 +816,20 @@ GpStatus WINGDIPAPI GdipIsStyleAvailable(GDIPCONST GpFontFamily* family,
 GpStatus WINGDIPAPI GdipGetGenericFontFamilyMonospace(GpFontFamily **nativeFamily)
 {
     static const WCHAR CourierNew[] = {'C','o','u','r','i','e','r',' ','N','e','w','\0'};
+    static const WCHAR LiberationMono[] = {'L','i','b','e','r','a','t','i','o','n',' ','M','o','n','o','\0'};
+    GpStatus stat;
 
     if (nativeFamily == NULL) return InvalidParameter;
 
-    return GdipCreateFontFamilyFromName(CourierNew, NULL, nativeFamily);
+    stat = GdipCreateFontFamilyFromName(CourierNew, NULL, nativeFamily);
+
+    if (stat == FontFamilyNotFound)
+        stat = GdipCreateFontFamilyFromName(LiberationMono, NULL, nativeFamily);
+
+    if (stat == FontFamilyNotFound)
+        ERR("Missing 'Courier New' font\n");
+
+    return stat;
 }
 
 /*****************************************************************************
