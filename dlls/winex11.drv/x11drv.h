@@ -303,7 +303,6 @@ extern int client_side_antialias_with_render DECLSPEC_HIDDEN;
 extern int using_client_side_fonts DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs *X11DRV_XRender_Init(void) DECLSPEC_HIDDEN;
 extern void X11DRV_XRender_Finalize(void) DECLSPEC_HIDDEN;
-extern BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE*, HFONT) DECLSPEC_HIDDEN;
 extern void X11DRV_XRender_SetDeviceClipping(X11DRV_PDEVICE *physDev, const RGNDATA *data) DECLSPEC_HIDDEN;
 extern void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap, int width, int height) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_XRender_ExtTextOut(X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,

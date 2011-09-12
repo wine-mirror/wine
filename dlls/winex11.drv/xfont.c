@@ -3238,12 +3238,6 @@ HFONT X11DRV_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
 
     TRACE("gdiFont = %p\n", gdiFont);
 
-    if(gdiFont && using_client_side_fonts) {
-        X11DRV_XRender_SelectFont(physDev, hfont);
-        physDev->has_gdi_font = TRUE;
-	return FALSE;
-    }
-
     EnterCriticalSection( &crtsc_fonts_X11 );
 
     if(fontList == NULL) X11DRV_FONT_InitX11Metrics();

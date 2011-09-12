@@ -1091,24 +1091,30 @@ void X11DRV_XRender_Finalize(void)
     LeaveCriticalSection(&xrender_cs);
 }
 
-
-/***********************************************************************
- *   X11DRV_XRender_SelectFont
+/**********************************************************************
+ *	     xrenderdrv_SelectFont
  */
-BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
+static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
 {
+    struct xrender_physdev *physdev = get_xrender_dev( dev );
     LFANDSIZE lfsz;
-    struct xrender_info *info;
 
-    GetObjectW(hfont, sizeof(lfsz.lf), &lfsz.lf);
+    if (!GetObjectW( hfont, sizeof(lfsz.lf), &lfsz.lf )) return HGDI_ERROR;
+
+    if (!gdiFont)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pSelectFont );
+        return dev->funcs->pSelectFont( dev, hfont, gdiFont );
+    }
+
     TRACE("h=%d w=%d weight=%d it=%d charset=%d name=%s\n",
 	  lfsz.lf.lfHeight, lfsz.lf.lfWidth, lfsz.lf.lfWeight,
 	  lfsz.lf.lfItalic, lfsz.lf.lfCharSet, debugstr_w(lfsz.lf.lfFaceName));
     lfsz.lf.lfWidth = abs( lfsz.lf.lfWidth );
-    lfsz.devsize.cx = X11DRV_XWStoDS( physDev, lfsz.lf.lfWidth );
-    lfsz.devsize.cy = X11DRV_YWStoDS( physDev, lfsz.lf.lfHeight );
+    lfsz.devsize.cx = X11DRV_XWStoDS( physdev->x11dev, lfsz.lf.lfWidth );
+    lfsz.devsize.cy = X11DRV_YWStoDS( physdev->x11dev, lfsz.lf.lfHeight );
 
-    GetTransform( physDev->dev.hdc, 0x204, &lfsz.xform );
+    GetTransform( dev->hdc, 0x204, &lfsz.xform );
     TRACE("font transform %f %f %f %f\n", lfsz.xform.eM11, lfsz.xform.eM12,
           lfsz.xform.eM21, lfsz.xform.eM22);
 
@@ -1117,14 +1123,12 @@ BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
 
     lfsz_calc_hash(&lfsz);
 
-    info = get_xrender_info(physDev);
-    if (!info) return 0;
-
     EnterCriticalSection(&xrender_cs);
-    if(info->cache_index != -1)
-        dec_ref_cache(info->cache_index);
-    info->cache_index = GetCacheEntry(physDev, &lfsz);
+    if (physdev->info.cache_index != -1)
+        dec_ref_cache( physdev->info.cache_index );
+    physdev->info.cache_index = GetCacheEntry( physdev->x11dev, &lfsz );
     LeaveCriticalSection(&xrender_cs);
+    physdev->x11dev->has_gdi_font = TRUE;
     return 0;
 }
 
@@ -2608,7 +2612,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     xrenderdrv_SelectBitmap,            /* pSelectBitmap */
     NULL,                               /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
-    NULL,                               /* pSelectFont */
+    xrenderdrv_SelectFont,              /* pSelectFont */
     NULL,                               /* pSelectPalette */
     NULL,                               /* pSelectPen */
     NULL,                               /* pSetArcDirection */
@@ -2660,12 +2664,6 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
 
 void X11DRV_XRender_Finalize(void)
 {
-}
-
-BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
-{
-  assert(0);
-  return FALSE;
 }
 
 void X11DRV_XRender_SetDeviceClipping(X11DRV_PDEVICE *physDev, const RGNDATA *data)
