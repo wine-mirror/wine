@@ -240,6 +240,33 @@ static int parse_string_literal(parser_ctx_t *ctx, const WCHAR **ret)
     return tString;
 }
 
+static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
+{
+    double n = 0;
+
+    if(*ctx->ptr == '0' && !('0' <= ctx->ptr[1] && ctx->ptr[1] <= '9') && ctx->ptr[1] != '.')
+        return *ctx->ptr++;
+
+    do {
+        n = n*10 + *ctx->ptr++ - '0';
+    }while('0' <= *ctx->ptr && *ctx->ptr <= '9');
+
+    if(*ctx->ptr != '.') {
+        if((LONG)n == n) {
+            LONG l = n;
+            *(LONG*)ret = l;
+            return (short)l == l ? tShort : tLong;
+        }
+    }else {
+        double e = 1.0;
+        while('0' <= *++ctx->ptr && *ctx->ptr <= '9')
+            n += (e /= 10.0)*(*ctx->ptr-'0');
+    }
+
+    *(double*)ret = n;
+    return tDouble;
+}
+
 static void skip_spaces(parser_ctx_t *ctx)
 {
     while(*ctx->ptr == ' ' || *ctx->ptr == '\t' || *ctx->ptr == '\r')
@@ -255,6 +282,9 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
         return ctx->last_token == tNL ? tEOF : tNL;
 
     c = *ctx->ptr;
+
+    if('0' <= c && c <= '9')
+        return parse_numeric_literal(ctx, lval);
 
     if(isalphaW(c)) {
         int ret = check_keywords(ctx);

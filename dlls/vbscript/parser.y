@@ -74,6 +74,8 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 %token tCLASS tSET tNEW tPUBLIC tPRIVATE tDEFAULT tME
 %token tERROR tNEXT tON tRESUME tGOTO
 %token <string> tIdentifier tString
+%token <lng> tLong tShort
+%token <dbl> tDouble
 
 %type <statement> Statement StatementNl
 %type <expression> Expression LiteralExpression PrimaryExpression EqualityExpression CallExpression
