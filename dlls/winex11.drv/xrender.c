@@ -828,7 +828,7 @@ static int AllocEntry(void)
   return mru;
 }
 
-static BOOL get_gasp_flags(struct xrender_physdev *physDev, WORD *flags)
+static BOOL get_gasp_flags(HDC hdc, WORD *flags)
 {
     DWORD size;
     WORD *gasp, *buffer;
@@ -838,15 +838,15 @@ static BOOL get_gasp_flags(struct xrender_physdev *physDev, WORD *flags)
 
     *flags = 0;
 
-    size = GetFontData(physDev->dev.hdc, MS_GASP_TAG,  0, NULL, 0);
+    size = GetFontData(hdc, MS_GASP_TAG,  0, NULL, 0);
     if(size == GDI_ERROR)
         return FALSE;
 
     gasp = buffer = HeapAlloc(GetProcessHeap(), 0, size);
-    GetFontData(physDev->dev.hdc, MS_GASP_TAG,  0, gasp, size);
+    GetFontData(hdc, MS_GASP_TAG,  0, gasp, size);
 
-    GetTextMetricsW(physDev->dev.hdc, &tm);
-    ppem = abs(X11DRV_YWStoDS(physDev->x11dev, tm.tmAscent + tm.tmDescent - tm.tmInternalLeading));
+    GetTextMetricsW(hdc, &tm);
+    ppem = abs(X11DRV_YWStoDS(hdc, tm.tmAscent + tm.tmDescent - tm.tmInternalLeading));
 
     gasp++;
     num_recs = get_be_word(*gasp);
@@ -864,7 +864,7 @@ static BOOL get_gasp_flags(struct xrender_physdev *physDev, WORD *flags)
     return TRUE;
 }
 
-static AA_Type get_antialias_type( struct xrender_physdev *physDev, BOOL subpixel, BOOL hinter)
+static AA_Type get_antialias_type( HDC hdc, BOOL subpixel, BOOL hinter )
 {
     AA_Type ret;
     WORD flags;
@@ -887,7 +887,7 @@ static AA_Type get_antialias_type( struct xrender_physdev *physDev, BOOL subpixe
           But, Wine's subpixel rendering can support the portrait mode.
          */
     }
-    else if (!hinter || !get_gasp_flags(physDev, &flags) || flags & GASP_DOGRAY)
+    else if (!hinter || !get_gasp_flags(hdc, &flags) || flags & GASP_DOGRAY)
         ret = AA_Grey;
     else
         ret = AA_None;
@@ -895,7 +895,7 @@ static AA_Type get_antialias_type( struct xrender_physdev *physDev, BOOL subpixe
     return ret;
 }
 
-static int GetCacheEntry(struct xrender_physdev *physDev, LFANDSIZE *plfsz)
+static int GetCacheEntry( HDC hdc, LFANDSIZE *plfsz )
 {
     int ret;
     int format;
@@ -926,11 +926,11 @@ static int GetCacheEntry(struct xrender_physdev *physDev, LFANDSIZE *plfsz)
         switch (plfsz->lf.lfQuality)
         {
             case ANTIALIASED_QUALITY:
-                entry->aa_default = get_antialias_type( physDev, FALSE, hinter );
+                entry->aa_default = get_antialias_type( hdc, FALSE, hinter );
                 return ret;  /* ignore further configuration */
             case CLEARTYPE_QUALITY:
             case CLEARTYPE_NATURAL_QUALITY:
-                entry->aa_default = get_antialias_type( physDev, subpixel, hinter );
+                entry->aa_default = get_antialias_type( hdc, subpixel, hinter );
                 break;
             case DEFAULT_QUALITY:
             case DRAFT_QUALITY:
@@ -939,7 +939,7 @@ static int GetCacheEntry(struct xrender_physdev *physDev, LFANDSIZE *plfsz)
                 if ( SystemParametersInfoW( SPI_GETFONTSMOOTHING, 0, &font_smoothing, 0) &&
                      font_smoothing)
                 {
-                    entry->aa_default = get_antialias_type( physDev, subpixel, hinter );
+                    entry->aa_default = get_antialias_type( hdc, subpixel, hinter );
                 }
                 else
                     entry->aa_default = AA_None;
@@ -1111,8 +1111,8 @@ static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
 	  lfsz.lf.lfHeight, lfsz.lf.lfWidth, lfsz.lf.lfWeight,
 	  lfsz.lf.lfItalic, lfsz.lf.lfCharSet, debugstr_w(lfsz.lf.lfFaceName));
     lfsz.lf.lfWidth = abs( lfsz.lf.lfWidth );
-    lfsz.devsize.cx = X11DRV_XWStoDS( physdev->x11dev, lfsz.lf.lfWidth );
-    lfsz.devsize.cy = X11DRV_YWStoDS( physdev->x11dev, lfsz.lf.lfHeight );
+    lfsz.devsize.cx = X11DRV_XWStoDS( dev->hdc, lfsz.lf.lfWidth );
+    lfsz.devsize.cy = X11DRV_YWStoDS( dev->hdc, lfsz.lf.lfHeight );
 
     GetTransform( dev->hdc, 0x204, &lfsz.xform );
     TRACE("font transform %f %f %f %f\n", lfsz.xform.eM11, lfsz.xform.eM12,
@@ -1126,7 +1126,7 @@ static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
     EnterCriticalSection(&xrender_cs);
     if (physdev->info.cache_index != -1)
         dec_ref_cache( physdev->info.cache_index );
-    physdev->info.cache_index = GetCacheEntry( physdev, &lfsz );
+    physdev->info.cache_index = GetCacheEntry( dev->hdc, &lfsz );
     LeaveCriticalSection(&xrender_cs);
     physdev->x11dev->has_gdi_font = TRUE;
     return 0;

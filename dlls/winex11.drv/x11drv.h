@@ -286,8 +286,8 @@ extern void restore_clipping_region( X11DRV_PDEVICE *dev, HRGN rgn ) DECLSPEC_HI
 extern BOOL X11DRV_SetupGCForPatBlt( X11DRV_PDEVICE *physDev, GC gc, BOOL fMapColors ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_SetupGCForBrush( X11DRV_PDEVICE *physDev ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_SetupGCForText( X11DRV_PDEVICE *physDev ) DECLSPEC_HIDDEN;
-extern INT X11DRV_XWStoDS( X11DRV_PDEVICE *physDev, INT width ) DECLSPEC_HIDDEN;
-extern INT X11DRV_YWStoDS( X11DRV_PDEVICE *physDev, INT height ) DECLSPEC_HIDDEN;
+extern INT X11DRV_XWStoDS( HDC hdc, INT width ) DECLSPEC_HIDDEN;
+extern INT X11DRV_YWStoDS( HDC hdc, INT height ) DECLSPEC_HIDDEN;
 
 extern const int X11DRV_XROPfunction[];
 

@@ -473,7 +473,7 @@ BOOL X11DRV_SetupGCForText( X11DRV_PDEVICE *physDev )
  *
  * Performs a world-to-viewport transformation on the specified width.
  */
-INT X11DRV_XWStoDS( X11DRV_PDEVICE *physDev, INT width )
+INT X11DRV_XWStoDS( HDC hdc, INT width )
 {
     POINT pt[2];
 
@@ -481,7 +481,7 @@ INT X11DRV_XWStoDS( X11DRV_PDEVICE *physDev, INT width )
     pt[0].y = 0;
     pt[1].x = width;
     pt[1].y = 0;
-    LPtoDP( physDev->dev.hdc, pt, 2 );
+    LPtoDP( hdc, pt, 2 );
     return pt[1].x - pt[0].x;
 }
 
@@ -490,7 +490,7 @@ INT X11DRV_XWStoDS( X11DRV_PDEVICE *physDev, INT width )
  *
  * Performs a world-to-viewport transformation on the specified height.
  */
-INT X11DRV_YWStoDS( X11DRV_PDEVICE *physDev, INT height )
+INT X11DRV_YWStoDS( HDC hdc, INT height )
 {
     POINT pt[2];
 
@@ -498,7 +498,7 @@ INT X11DRV_YWStoDS( X11DRV_PDEVICE *physDev, INT height )
     pt[0].y = 0;
     pt[1].x = 0;
     pt[1].y = height;
-    LPtoDP( physDev->dev.hdc, pt, 2 );
+    LPtoDP( hdc, pt, 2 );
     return pt[1].y - pt[0].y;
 }
 

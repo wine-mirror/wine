@@ -74,7 +74,7 @@ HPEN X11DRV_SelectPen( PHYSDEV dev, HPEN hpen )
     physDev->pen.width = logpen.lopnWidth.x;
     if ((logpen.lopnStyle & PS_GEOMETRIC) || (physDev->pen.width >= 1))
     {
-        physDev->pen.width = X11DRV_XWStoDS( physDev, physDev->pen.width );
+        physDev->pen.width = X11DRV_XWStoDS( dev->hdc, physDev->pen.width );
         if (physDev->pen.width < 0) physDev->pen.width = -physDev->pen.width;
     }
 
