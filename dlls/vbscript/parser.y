@@ -46,6 +46,7 @@ static expression_t *new_binary_expression(parser_ctx_t*,expression_type_t,expre
 static member_expression_t *new_member_expression(parser_ctx_t*,expression_t*,const WCHAR*);
 
 static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
+ static statement_t *new_assign_statement(parser_ctx_t*,member_expression_t*,expression_t*);
 
 #define CHECK_ERROR if(((parser_ctx_t*)ctx)->hres != S_OK) YYABORT
 
@@ -108,6 +109,8 @@ StatementNl
 Statement
     : MemberExpression ArgumentList_opt     { $1->args = $2; $$ = new_call_statement(ctx, $1); CHECK_ERROR; }
     | tCALL MemberExpression Arguments_opt  { $2->args = $3; $$ = new_call_statement(ctx, $2); CHECK_ERROR; }
+    | MemberExpression Arguments_opt '=' Expression
+                                            { $1->args = $2; $$ = new_assign_statement(ctx, $1, $4); CHECK_ERROR; }
 
 MemberExpression
     : tIdentifier                   { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
@@ -322,6 +325,19 @@ static statement_t *new_call_statement(parser_ctx_t *ctx, member_expression_t *e
         return NULL;
 
     stat->expr = expr;
+    return &stat->stat;
+}
+
+static statement_t *new_assign_statement(parser_ctx_t *ctx, member_expression_t *left, expression_t *right)
+{
+    assign_statement_t *stat;
+
+    stat = new_statement(ctx, STAT_ASSIGN, sizeof(*stat));
+    if(!stat)
+        return NULL;
+
+    stat->member_expr = left;
+    stat->value_expr = right;
     return &stat->stat;
 }
 

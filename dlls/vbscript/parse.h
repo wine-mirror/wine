@@ -78,6 +78,7 @@ typedef struct {
 } member_expression_t;
 
 typedef enum {
+    STAT_ASSIGN,
     STAT_CALL
 } statement_type_t;
 
@@ -90,6 +91,12 @@ typedef struct {
     statement_t stat;
     member_expression_t *expr;
 } call_statement_t;
+
+typedef struct {
+    statement_t stat;
+    member_expression_t *member_expr;
+    expression_t *value_expr;
+} assign_statement_t;
 
 typedef struct {
     const WCHAR *code;
