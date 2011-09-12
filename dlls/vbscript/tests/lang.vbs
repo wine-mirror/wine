@@ -75,4 +75,9 @@ Call ok(false + 6 + true = 5, "false + 6 + true <> 5")
 Call ok(getVT(2+null) = "VT_NULL", "getVT(2+null) = " & getVT(2+null))
 Call ok(2+empty = 2, "2+empty = " & (2+empty))
 
+Call ok(5-1 = 4, "5-1 = " & (5-1))
+Call ok(3+5-true = 9, "3+5-true <> 9")
+Call ok(getVT(2-null) = "VT_NULL", "getVT(2-null) = " & getVT(2-null))
+Call ok(2-empty = 2, "2-empty = " & (2-empty))
+
 reportSuccess()
