@@ -102,6 +102,7 @@ static const WCHAR url11[] = {'f','i','l','e',':','/','/','c',':','/','I','n','d
 static const WCHAR url12[] = {'f','i','l','e',':','/','/','/','c',':','/','I','n','d','e','x','.','h','t','m',0};
 static const WCHAR url13[] = {'h','t','t','p',':','g','o','o','g','l','e','.','c','o','m',0};
 static const WCHAR url14[] = {'z','i','p',':','t','e','s','t','i','n','g','.','c','o','m','/','t','e','s','t','i','n','g',0};
+static const WCHAR url15[] = {'h','t','t','p',':','/','/','g','o','o','g','l','e','.','c','o','m','.','u','k',0};
 
 static const WCHAR url4e[] = {'f','i','l','e',':','s','o','m','e',' ','f','i','l','e',
         '.','j','p','g',0};
@@ -116,6 +117,7 @@ static const char *szZoneMapDomainsKey = "Software\\Microsoft\\Windows\\CurrentV
 static const char *szInternetSettingsKey = "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings";
 
 static const BYTE secid1[] = {'f','i','l','e',':',0,0,0,0};
+static const BYTE secid2[] = {'*',':','i','n','d','e','x','.','h','t','m',3,0,0,0};
 static const BYTE secid5[] = {'h','t','t','p',':','w','w','w','.','z','o','n','e','3',
         '.','w','i','n','e','t','e','s','t',3,0,0,0};
 static const BYTE secid6[] = {'a','b','o','u','t',':','b','l','a','n','k',3,0,0,0};
@@ -127,6 +129,8 @@ static const BYTE secid14[] =
     {'z','i','p',':','t','e','s','t','i','n','g','.','c','o','m','/','t','e','s','t','i','n','g',3,0,0,0};
 static const BYTE secid10_2[] =
     {'f','i','l','e',':','s','o','m','e',' ','f','i','l','e','.','j','p','g',3,0,0,0};
+static const BYTE secid13[] = {'h','t','t','p',':','c','o','m','.','u','k',3,0,0,0};
+static const BYTE secid13_2[] = {'h','t','t','p',':','g','o','o','g','l','e','.','c','o','m','.','u','k',3,0,0,0};
 
 static const GUID CLSID_TestActiveX =
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x06,0x46}};
@@ -1745,33 +1749,44 @@ static void test_InternetGetSecurityUrlEx_Pluggable(void)
     if(uri) IUri_Release(uri);
 }
 
+static const BYTE secidex2_1[] = {'z','i','p',':','/','/','t','e','s','t','i','n','g','.','c','o','m','/',3,0,0,0};
+static const BYTE secidex2_2[] = {'z','i','p',':','t','e','s','t','i','n','g','.','c','o','m',3,0,0,0};
+
 static const struct {
     const char  *uri;
     DWORD       create_flags;
     HRESULT     map_hres;
     DWORD       zone;
     BOOL        map_todo;
+    const BYTE  *secid;
+    DWORD       secid_size;
+    HRESULT     secid_hres;
+    BOOL        secid_todo;
 } sec_mgr_ex2_tests[] = {
-    {"res://mshtml.dll/blank.htm",0,S_OK,URLZONE_LOCAL_MACHINE},
-    {"index.htm",Uri_CREATE_ALLOW_RELATIVE,0,URLZONE_INTERNET},
-    {"file://c:\\Index.html",0,0,URLZONE_LOCAL_MACHINE},
-    {"http://www.zone3.winetest/",0,0,URLZONE_INTERNET},
-    {"about:blank",0,0,URLZONE_INTERNET},
-    {"ftp://zone3.winetest/file.test",0,0,URLZONE_INTERNET},
-    {"/file/testing/test.test",Uri_CREATE_ALLOW_RELATIVE,0,URLZONE_INTERNET},
-    {"zip://testing.com/",0,0,URLZONE_INTERNET},
-    {"zip:testing.com",0,0,URLZONE_INTERNET},
-    {"http:google.com",0,S_OK,URLZONE_INVALID},
-    {"http:/google.com",0,S_OK,URLZONE_INVALID}
+    {"res://mshtml.dll/blank.htm",0,S_OK,URLZONE_LOCAL_MACHINE,FALSE,secid1,sizeof(secid1),S_OK,TRUE},
+    {"index.htm",Uri_CREATE_ALLOW_RELATIVE,0,URLZONE_INTERNET,FALSE,secid2,sizeof(secid2),S_OK,TRUE},
+    {"file://c:\\Index.html",0,0,URLZONE_LOCAL_MACHINE,FALSE,secid1,sizeof(secid1),S_OK,TRUE},
+    {"http://www.zone3.winetest/",0,0,URLZONE_INTERNET,FALSE,secid5,sizeof(secid5),S_OK,TRUE},
+    {"about:blank",0,0,URLZONE_INTERNET,FALSE,secid6,sizeof(secid6),S_OK,TRUE},
+    {"ftp://zone3.winetest/file.test",0,0,URLZONE_INTERNET,FALSE,secid7,sizeof(secid7),S_OK,TRUE},
+    {"/file/testing/test.test",Uri_CREATE_ALLOW_RELATIVE,0,URLZONE_INTERNET,FALSE,NULL,0,E_INVALIDARG,TRUE},
+    {"zip://testing.com/",0,0,URLZONE_INTERNET,FALSE,secidex2_1,sizeof(secidex2_1),S_OK,TRUE},
+    {"zip:testing.com",0,0,URLZONE_INTERNET,FALSE,secidex2_2,sizeof(secidex2_2),S_OK,TRUE},
+    {"http:google.com",0,S_OK,URLZONE_INVALID,FALSE,NULL,0,E_INVALIDARG,TRUE},
+    {"http:/google.com",0,S_OK,URLZONE_INVALID,FALSE,NULL,0,E_INVALIDARG,TRUE}
 };
 
 static void test_SecurityManagerEx2(void)
 {
     HRESULT hres;
     DWORD i, zone;
+    BYTE buf[512];
+    DWORD buf_size = sizeof(buf);
     IInternetSecurityManager *sec_mgr;
     IInternetSecurityManagerEx2 *sec_mgr2;
     IUri *uri = NULL;
+
+    static const WCHAR domainW[] = {'c','o','m','.','u','k',0};
 
     if(!pCreateUri) {
         win_skip("Skipping SecurityManagerEx2, IE is too old\n");
@@ -1792,11 +1807,23 @@ static void test_SecurityManagerEx2(void)
     ok(hres == E_INVALIDARG, "MapUrlToZoneEx2 returned %08x, expected E_INVALIDARG\n", hres);
     ok(zone == URLZONE_INVALID, "zone was %d\n", zone);
 
+    hres = IInternetSecurityManagerEx2_GetSecurityIdEx2(sec_mgr2, NULL, buf, &buf_size, 0);
+    todo_wine ok(hres == E_INVALIDARG, "GetSecurityIdEx2 returned %08x, expected E_INVALIDARG\n", hres);
+    ok(buf_size == sizeof(buf), "buf_size was %d\n", buf_size);
+
     hres = pCreateUri(url5, 0, 0, &uri);
     ok(hres == S_OK, "CreateUri failed: %08x\n", hres);
 
     hres = IInternetSecurityManagerEx2_MapUrlToZoneEx2(sec_mgr2, uri, NULL, 0, NULL, NULL);
     ok(hres == E_INVALIDARG, "MapToUrlZoneEx2 returned %08x, expected E_INVALIDARG\n", hres);
+
+    buf_size = sizeof(buf);
+    hres = IInternetSecurityManagerEx2_GetSecurityIdEx2(sec_mgr2, uri, NULL, &buf_size, 0);
+    todo_wine ok(hres == E_INVALIDARG || broken(hres == S_OK), "GetSecurityIdEx2 failed: %08x\n", hres);
+    ok(buf_size == sizeof(buf), "bug_size was %d\n", buf_size);
+
+    hres = IInternetSecurityManagerEx2_GetSecurityIdEx2(sec_mgr2, uri, buf, NULL, 0);
+    todo_wine ok(hres == E_INVALIDARG, "GetSecurityIdEx2 returned %08x, expected E_INVALIDARG\n", hres);
 
     IUri_Release(uri);
 
@@ -1824,9 +1851,57 @@ static void test_SecurityManagerEx2(void)
                 zone, sec_mgr_ex2_tests[i].uri);
         }
 
+        buf_size = sizeof(buf);
+        memset(buf, 0xf0, buf_size);
+
+        hres = IInternetSecurityManagerEx2_GetSecurityIdEx2(sec_mgr2, uri, buf, &buf_size, 0);
+        if(sec_mgr_ex2_tests[i].secid_todo) {
+            todo_wine
+                ok(hres == sec_mgr_ex2_tests[i].secid_hres, "GetSecurityIdEx2 returned %08x, expected %08x on test '%s'\n",
+                    hres, sec_mgr_ex2_tests[i].secid_hres, sec_mgr_ex2_tests[i].uri);
+            if(sec_mgr_ex2_tests[i].secid) {
+                todo_wine {
+                    ok(buf_size == sec_mgr_ex2_tests[i].secid_size, "Got wrong security id size=%d, expected %d on test '%s'\n",
+                        buf_size, sec_mgr_ex2_tests[i].secid_size, sec_mgr_ex2_tests[i].uri);
+                    ok(!memcmp(buf, sec_mgr_ex2_tests[i].secid, sec_mgr_ex2_tests[i].secid_size), "Got wrong security id on test '%s'\n",
+                        sec_mgr_ex2_tests[i].uri);
+                }
+            }
+        } else {
+            ok(hres == sec_mgr_ex2_tests[i].secid_hres, "GetSecurityIdEx2 returned %08x, expected %08x on test '%s'\n",
+                hres, sec_mgr_ex2_tests[i].secid_hres, sec_mgr_ex2_tests[i].uri);
+            if(sec_mgr_ex2_tests[i].secid) {
+                ok(buf_size == sec_mgr_ex2_tests[i].secid_size, "Got wrong security id size=%d, expected %d on test '%s'\n",
+                    buf_size, sec_mgr_ex2_tests[i].secid_size, sec_mgr_ex2_tests[i].uri);
+                ok(!memcmp(buf, sec_mgr_ex2_tests[i].secid, sec_mgr_ex2_tests[i].secid_size), "Got wrong security id on test '%s'\n",
+                    sec_mgr_ex2_tests[i].uri);
+            }
+        }
+
         heap_free(uriW);
         IUri_Release(uri);
     }
+
+    hres = pCreateUri(url15, 0, 0, &uri);
+    ok(hres == S_OK, "CreateUri failed: %08x\n", hres);
+
+    buf_size = sizeof(buf);
+    memset(buf, 0xf0, buf_size);
+
+    hres = IInternetSecurityManagerEx2_GetSecurityIdEx2(sec_mgr2, uri, buf, &buf_size, (DWORD_PTR)domainW);
+    todo_wine ok(hres == S_OK, "GetSecurityIdEx2 failed: %08x\n", hres);
+    todo_wine ok(buf_size == sizeof(secid13), "buf_size was %d\n", buf_size);
+    todo_wine ok(!memcmp(buf, secid13, sizeof(secid13)), "Got wrong secid\n");
+
+    buf_size = sizeof(buf);
+    memset(buf, 0xf0, buf_size);
+
+    hres = IInternetSecurityManagerEx2_GetSecurityIdEx2(sec_mgr2, uri, buf, &buf_size, 0);
+    todo_wine ok(hres == S_OK, "GetSecurityIdEx2 failed: %08x\n", hres);
+    todo_wine ok(buf_size == sizeof(secid13_2), "buf_size was %d\n", buf_size);
+    todo_wine ok(!memcmp(buf, secid13_2, sizeof(secid13_2)), "Got wrong secid\n");
+
+    IUri_Release(uri);
 
     IInternetSecurityManagerEx2_Release(sec_mgr2);
     IInternetSecurityManager_Release(sec_mgr);
