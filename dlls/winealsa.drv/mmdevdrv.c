@@ -2097,8 +2097,9 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         written = alsa_write_best_effort(This->pcm_handle, buffer,
                 written_frames, This);
         if(written < 0){
+            This->buf_state = NOT_LOCKED;
             LeaveCriticalSection(&This->lock);
-            WARN("write failed: %ld (%s)\n", written, snd_strerror(written));
+            ERR("write failed: %ld (%s)\n", written, snd_strerror(written));
             return E_FAIL;
         }
 

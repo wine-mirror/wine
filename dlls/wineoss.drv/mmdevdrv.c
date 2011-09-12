@@ -1731,8 +1731,9 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
                 written_frames * This->fmt->nBlockAlign);
         if(w_bytes < 0){
             if(errno != EAGAIN){
+                This->buf_state = NOT_LOCKED;
                 LeaveCriticalSection(&This->lock);
-                WARN("write failed: %d (%s)\n", errno, strerror(errno));
+                ERR("write failed: %d (%s)\n", errno, strerror(errno));
                 return E_FAIL;
             }else /* OSS buffer full */
                 w_bytes = 0;
