@@ -2268,7 +2268,7 @@ struct wined3d_shader * __cdecl wined3d_device_get_vertex_shader(const struct wi
 HRESULT __cdecl wined3d_device_get_viewport(const struct wined3d_device *device, WINED3DVIEWPORT *viewport);
 HRESULT __cdecl wined3d_device_get_vs_consts_b(const struct wined3d_device *device,
         UINT start_register, BOOL *constants, UINT bool_count);
-HRESULT __cdecl wined3d_device_get_vs_consts_f(struct wined3d_device *device,
+HRESULT __cdecl wined3d_device_get_vs_consts_f(const struct wined3d_device *device,
         UINT start_register, float *constants, UINT vector4f_count);
 HRESULT __cdecl wined3d_device_get_vs_consts_i(const struct wined3d_device *device,
         UINT start_register, int *constants, UINT vector4i_count);

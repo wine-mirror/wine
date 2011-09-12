@@ -2817,7 +2817,7 @@ HRESULT CDECL wined3d_device_set_vs_consts_f(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_vs_consts_f(struct wined3d_device *device,
+HRESULT CDECL wined3d_device_get_vs_consts_f(const struct wined3d_device *device,
         UINT start_register, float *constants, UINT vector4f_count)
 {
     int count = min(vector4f_count, device->d3d_vshader_constantF - start_register);
