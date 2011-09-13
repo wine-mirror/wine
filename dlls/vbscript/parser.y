@@ -46,7 +46,10 @@ static expression_t *new_binary_expression(parser_ctx_t*,expression_type_t,expre
 static member_expression_t *new_member_expression(parser_ctx_t*,expression_t*,const WCHAR*);
 
 static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
- static statement_t *new_assign_statement(parser_ctx_t*,member_expression_t*,expression_t*);
+static statement_t *new_assign_statement(parser_ctx_t*,member_expression_t*,expression_t*);
+static statement_t *new_dim_statement(parser_ctx_t*,dim_decl_t*);
+
+static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,dim_decl_t*);
 
 #define CHECK_ERROR if(((parser_ctx_t*)ctx)->hres != S_OK) YYABORT
 
@@ -60,6 +63,7 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
     statement_t *statement;
     expression_t *expression;
     member_expression_t *member;
+    dim_decl_t *dim_decl;
     LONG lng;
     BOOL bool;
     double dbl;
@@ -89,6 +93,7 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 %type <member> MemberExpression
 %type <expression> Arguments_opt ArgumentList_opt ArgumentList
 %type <bool> OptionExplicit_opt
+%type <dim_decl> DimDeclList
 
 %%
 
@@ -111,10 +116,15 @@ Statement
     | tCALL MemberExpression Arguments_opt  { $2->args = $3; $$ = new_call_statement(ctx, $2); CHECK_ERROR; }
     | MemberExpression Arguments_opt '=' Expression
                                             { $1->args = $2; $$ = new_assign_statement(ctx, $1, $4); CHECK_ERROR; }
+    | tDIM DimDeclList                      { $$ = new_dim_statement(ctx, $2); CHECK_ERROR; }
 
 MemberExpression
     : tIdentifier                           { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
     | CallExpression '.' tIdentifier        { $$ = new_member_expression(ctx, $1, $3); CHECK_ERROR; }
+
+DimDeclList /* FIXME: Support arrays */
+    : tIdentifier                           { $$ = new_dim_decl(ctx, $1, NULL); CHECK_ERROR; }
+    | tIdentifier ',' DimDeclList           { $$ = new_dim_decl(ctx, $1, $3); CHECK_ERROR; }
 
 Arguments_opt
     : EmptyBrackets_opt             { $$ = NULL; }
@@ -338,6 +348,31 @@ static statement_t *new_assign_statement(parser_ctx_t *ctx, member_expression_t 
 
     stat->member_expr = left;
     stat->value_expr = right;
+    return &stat->stat;
+}
+
+static dim_decl_t *new_dim_decl(parser_ctx_t *ctx, const WCHAR *name, dim_decl_t *next)
+{
+    dim_decl_t *decl;
+
+    decl = parser_alloc(ctx, sizeof(*decl));
+    if(!decl)
+        return NULL;
+
+    decl->name = name;
+    decl->next = next;
+    return decl;
+}
+
+static statement_t *new_dim_statement(parser_ctx_t *ctx, dim_decl_t *decls)
+{
+    dim_statement_t *stat;
+
+    stat = new_statement(ctx, STAT_DIM, sizeof(*stat));
+    if(!stat)
+        return NULL;
+
+    stat->dim_decls = decls;
     return &stat->stat;
 }
 
