@@ -89,7 +89,6 @@ struct IDirectDrawImpl
     BOOL                    d3d_initialized;
 
     /* Misc ddraw fields */
-    DWORD                   cur_scanline;
     BOOL                    fake_vblank;
     BOOL                    initialized;
 

@@ -1880,29 +1880,30 @@ static HRESULT WINAPI ddraw1_WaitForVerticalBlank(IDirectDraw *iface, DWORD flag
 static HRESULT WINAPI ddraw7_GetScanLine(IDirectDraw7 *iface, DWORD *Scanline)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw7(iface);
+    static DWORD cur_scanline;
     static BOOL hide = FALSE;
     WINED3DDISPLAYMODE Mode;
 
     TRACE("iface %p, line %p.\n", iface, Scanline);
 
     /* This function is called often, so print the fixme only once */
-    EnterCriticalSection(&ddraw_cs);
     if(!hide)
     {
         FIXME("iface %p, line %p partial stub!\n", iface, Scanline);
         hide = TRUE;
     }
 
+    EnterCriticalSection(&ddraw_cs);
     wined3d_device_get_display_mode(This->wined3d_device, 0, &Mode);
+    LeaveCriticalSection(&ddraw_cs);
 
     /* Fake the line sweeping of the monitor */
     /* FIXME: We should synchronize with a source to keep the refresh rate */
-    *Scanline = This->cur_scanline++;
+    *Scanline = cur_scanline++;
     /* Assume 20 scan lines in the vertical blank */
-    if (This->cur_scanline >= Mode.Height + 20)
-        This->cur_scanline = 0;
+    if (cur_scanline >= Mode.Height + 20)
+        cur_scanline = 0;
 
-    LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
 
