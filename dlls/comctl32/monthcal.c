@@ -151,7 +151,7 @@ typedef struct
     WNDPROC EditWndProc;  /* original Edit window procedure */
 
     CALENDAR_INFO *calendars;
-    INT            cal_num;
+    SIZE dim;           /* [cx,cy] - dimensions of calendars matrix, row/column count */
 } MONTHCAL_INFO, *LPMONTHCAL_INFO;
 
 static const WCHAR themeClass[] = { 'S','c','r','o','l','l','b','a','r',0 };
@@ -170,6 +170,10 @@ enum nav_direction
 };
 
 /* helper functions  */
+static inline INT MONTHCAL_GetCalCount(const MONTHCAL_INFO *infoPtr)
+{
+   return infoPtr->dim.cx * infoPtr->dim.cy;
+}
 
 /* send a single MCN_SELCHANGE notification */
 static inline void MONTHCAL_NotifySelectionChange(const MONTHCAL_INFO *infoPtr)
@@ -517,7 +521,7 @@ static void MONTHCAL_GetMinDate(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *date)
 static void MONTHCAL_GetMaxDate(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *date)
 {
   /* the latest date is in latest calendar */
-  SYSTEMTIME st, lt_month = infoPtr->calendars[infoPtr->cal_num-1].month;
+  SYSTEMTIME st, lt_month = infoPtr->calendars[MONTHCAL_GetCalCount(infoPtr)-1].month;
 
   *date = lt_month;
   MONTHCAL_GetNextMonth(date);
@@ -571,7 +575,7 @@ static void MONTHCAL_GetDayPos(const MONTHCAL_INFO *infoPtr, const SYSTEMTIME *d
   st.wDay = 1;
   first = (MONTHCAL_CalculateDayOfWeek(&st, FALSE) + 6 - infoPtr->firstDay) % 7;
 
-  if (calIdx == 0 || calIdx == infoPtr->cal_num-1) {
+  if (calIdx == 0 || calIdx == MONTHCAL_GetCalCount(infoPtr)-1) {
       const SYSTEMTIME *cal = &infoPtr->calendars[calIdx].month;
       LONG cmp = MONTHCAL_CompareMonths(date, &st);
 
@@ -618,12 +622,12 @@ static inline void MONTHCAL_GetDayRect(const MONTHCAL_INFO *infoPtr, const SYSTE
           calIdx = 0;
       else
       {
-          cmp = MONTHCAL_CompareMonths(date, &infoPtr->calendars[infoPtr->cal_num-1].month);
+          cmp = MONTHCAL_CompareMonths(date, &infoPtr->calendars[MONTHCAL_GetCalCount(infoPtr)-1].month);
           if (cmp >= 0)
-              calIdx = infoPtr->cal_num-1;
+              calIdx = MONTHCAL_GetCalCount(infoPtr)-1;
           else
           {
-              for (calIdx = 1; calIdx < infoPtr->cal_num-1; calIdx++)
+              for (calIdx = 1; calIdx < MONTHCAL_GetCalCount(infoPtr)-1; calIdx++)
                   if (MONTHCAL_CompareMonths(date, &infoPtr->calendars[calIdx].month) == 0)
                       break;
           }
@@ -1006,7 +1010,7 @@ static void MONTHCAL_PaintLeadTrailMonths(const MONTHCAL_INFO *infoPtr, HDC hdc,
   }
 
   /* draw next month */
-  st = infoPtr->calendars[infoPtr->cal_num-1].month;
+  st = infoPtr->calendars[MONTHCAL_GetCalCount(infoPtr)-1].month;
   st.wDay = 1;
   MONTHCAL_GetNextMonth(&st);
   MONTHCAL_GetMaxDate(infoPtr, &st_max);
@@ -1088,7 +1092,7 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
   old_bk_clr   = GetBkColor(hdc);
   old_font     = GetCurrentObject(hdc, OBJ_FONT);
 
-  for (i = 0; i < infoPtr->cal_num; i++)
+  for (i = 0; i < MONTHCAL_GetCalCount(infoPtr); i++)
   {
     RECT *title = &infoPtr->calendars[i].title;
     RECT r;
@@ -1310,7 +1314,7 @@ MONTHCAL_GetMonthRange(const MONTHCAL_INFO *infoPtr, DWORD flag, SYSTEMTIME *st)
     case GMR_VISIBLE:
     {
         st[0] = infoPtr->calendars[0].month;
-        st[1] = infoPtr->calendars[infoPtr->cal_num-1].month;
+        st[1] = infoPtr->calendars[MONTHCAL_GetCalCount(infoPtr)-1].month;
 
         if (st[0].wMonth == min_allowed_date.wMonth &&
             st[0].wYear  == min_allowed_date.wYear)
@@ -1324,7 +1328,7 @@ MONTHCAL_GetMonthRange(const MONTHCAL_INFO *infoPtr, DWORD flag, SYSTEMTIME *st)
         st[1].wDay = MONTHCAL_MonthLength(st[1].wMonth, st[1].wYear);
         MONTHCAL_CalculateDayOfWeek(&st[1], TRUE);
 
-        return infoPtr->cal_num;
+        return MONTHCAL_GetCalCount(infoPtr);
     }
     case GMR_DAYSTATE:
     {
@@ -1634,7 +1638,7 @@ static INT MONTHCAL_GetCalendarFromPoint(const MONTHCAL_INFO *infoPtr, const POI
   RECT r;
   INT i;
 
-  for (i = 0; i < infoPtr->cal_num; i++)
+  for (i = 0; i < MONTHCAL_GetCalCount(infoPtr); i++)
   {
      /* whole bounding rectangle allows some optimization to compute */
      r.left   = infoPtr->calendars[i].title.left;
@@ -1836,7 +1840,7 @@ static void MONTHCAL_Scroll(MONTHCAL_INFO *infoPtr, INT delta)
 {
   INT i, selIdx = -1;
 
-  for(i = 0; i < infoPtr->cal_num; i++)
+  for(i = 0; i < MONTHCAL_GetCalCount(infoPtr); i++)
   {
     /* save selection position to shift it later */
     if (selIdx == -1 && MONTHCAL_CompareMonths(&infoPtr->minSel, &infoPtr->calendars[i].month) == 0)
@@ -1866,7 +1870,7 @@ static void MONTHCAL_Scroll(MONTHCAL_INFO *infoPtr, INT delta)
 
 static void MONTHCAL_GoToMonth(MONTHCAL_INFO *infoPtr, enum nav_direction direction)
 {
-  INT delta = infoPtr->delta ? infoPtr->delta : infoPtr->cal_num;
+  INT delta = infoPtr->delta ? infoPtr->delta : MONTHCAL_GetCalCount(infoPtr);
   SYSTEMTIME st;
 
   TRACE("%s\n", direction == DIRECTION_BACKWARD ? "back" : "fwd");
@@ -1879,7 +1883,7 @@ static void MONTHCAL_GoToMonth(MONTHCAL_INFO *infoPtr, enum nav_direction direct
   }
   else
   {
-    st = infoPtr->calendars[infoPtr->cal_num-1].month;
+    st = infoPtr->calendars[MONTHCAL_GetCalCount(infoPtr)-1].month;
     MONTHCAL_GetMonth(&st, delta);
   }
 
@@ -2067,7 +2071,7 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
         /* check if change allowed by range set */
         st = delta < 0 ? infoPtr->calendars[0].month :
-                         infoPtr->calendars[infoPtr->cal_num-1].month;
+                         infoPtr->calendars[MONTHCAL_GetCalCount(infoPtr)-1].month;
         MONTHCAL_GetMonth(&st, delta);
 
         if (MONTHCAL_IsDateInValidRange(infoPtr, &st, FALSE))
@@ -2349,10 +2353,10 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
   TEXTMETRICW tm;
   HFONT currentFont;
   INT xdiv, dx, dy, i;
-  RECT rcClient;
+  RECT client;
   WCHAR buff[80];
 
-  GetClientRect(infoPtr->hwndSelf, &rcClient);
+  GetClientRect(infoPtr->hwndSelf, &client);
 
   currentFont = SelectObject(hdc, infoPtr->hFont);
 
@@ -2433,8 +2437,8 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
   todayrect->bottom = days->bottom + infoPtr->height_increment;
 
   /* offset all rectangles to center in client area */
-  dx = (rcClient.right  - title->right) / 2;
-  dy = (rcClient.bottom - todayrect->bottom) / 2;
+  dx = (client.right  - title->right) / 2;
+  dy = (client.bottom - todayrect->bottom) / 2;
 
   /* if calendar doesn't fit client area show it at left/top bounds */
   if (title->left + dx < 0) dx = 0;
@@ -2453,9 +2457,12 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
     OffsetRect(todayrect, dx, dy);
   }
 
+  /* TODO: update calendars count */
+  infoPtr->dim.cx = infoPtr->dim.cy = 1;
+
   TRACE("dx=%d dy=%d client[%s] title[%s] wdays[%s] days[%s] today[%s]\n",
 	infoPtr->width_increment,infoPtr->height_increment,
-        wine_dbgstr_rect(&rcClient),
+        wine_dbgstr_rect(&client),
         wine_dbgstr_rect(title),
         wine_dbgstr_rect(wdays),
         wine_dbgstr_rect(days),
@@ -2569,8 +2576,6 @@ MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->calendars = Alloc(sizeof(CALENDAR_INFO));
   if (!infoPtr->calendars) goto fail;
 
-  infoPtr->cal_num = 1;
-
   MONTHCAL_SetFont(infoPtr, GetStockObject(DEFAULT_GUI_FONT), FALSE);
 
   /* initialize info structure */
@@ -2604,8 +2609,7 @@ MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->calendars[0].month = infoPtr->todaysDate;
   infoPtr->isUnicode = TRUE;
 
-  /* call MONTHCAL_UpdateSize to set all of the dimensions */
-  /* of the control */
+  /* set all control dimensions */
   MONTHCAL_UpdateSize(infoPtr);
 
   /* today auto update timer, to be freed only on control destruction */
