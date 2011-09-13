@@ -10777,7 +10777,7 @@ msgstr ""
 "wineconsole: Starten des Programms %s fehlgeschlagen.\n"
 "Der Befehl ist ungültig.\n"
 
-#: wineconsole.rc:48
+#: wineconsole.rc:47
 msgid ""
 "\n"
 "Usage:\n"
@@ -10803,12 +10803,12 @@ msgstr ""
 "Wine-\n"
 "                            Konsole einzurichten.\n"
 
-#: wineconsole.rc:51
+#: wineconsole.rc:50
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr ""
 "  <Befehl>                  Das in der Konsole zu startende Wine-Programm.\n"
 
-#: wineconsole.rc:52
+#: wineconsole.rc:51
 msgid ""
 "\n"
 "Example:\n"

@@ -10847,7 +10847,7 @@ msgstr ""
 "wineconsole : impossible de démarrer le programme %s.\n"
 "La commande est invalide.\n"
 
-#: wineconsole.rc:48
+#: wineconsole.rc:47
 msgid ""
 "\n"
 "Usage:\n"
@@ -10873,12 +10873,12 @@ msgstr ""
 "                                    « curses » pour tenter de convertir le "
 "terminal courant en console Wine.\n"
 
-#: wineconsole.rc:51
+#: wineconsole.rc:50
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr ""
 "  <commande>               Le programme Wine à exécuter dans la console.\n"
 
-#: wineconsole.rc:52
+#: wineconsole.rc:51
 msgid ""
 "\n"
 "Example:\n"

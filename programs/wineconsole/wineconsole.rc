@@ -42,12 +42,11 @@ IDS_CMD_INVALID_EVENT_ID   "wineconsole: Couldn't parse event id\n"
 IDS_CMD_INVALID_BACKEND    "wineconsole: Invalid backend\n"
 IDS_CMD_INVALID_OPTION     "wineconsole: Unrecognized command line option\n"
 IDS_CMD_ABOUT              "Starts a program in a Wine console\n"
-IDS_CMD_LAUNCH_FAILED      "wineconsole: Starting program %s failed.\n"\
-                           "The command is invalid.\n"
+IDS_CMD_LAUNCH_FAILED      "wineconsole: Starting program %s failed.\nThe command is invalid.\n"
 
 IDS_USAGE_HEADER           "\nUsage:\n  wineconsole [options] <command>\n\nOptions:\n"
-IDS_USAGE_BACKEND          "  --backend={user|curses}  Choosing user will spawn a new window, curses will\n"\
-                           "                           try to setup the current terminal as a Wine console.\n"
+IDS_USAGE_BACKEND          "  --backend={user|curses}  Choosing user will spawn a new window, curses will\n\
+\                           try to setup the current terminal as a Wine console.\n"
 IDS_USAGE_COMMAND          "  <command>                The Wine program to launch in the console.\n"
 IDS_USAGE_FOOTER           "\nExample:\n  wineconsole cmd\nStarts the Wine command prompt in a Wine console.\n\n"
 

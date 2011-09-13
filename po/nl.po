@@ -10875,7 +10875,7 @@ msgstr ""
 "wineconsole: Starten van programma %s mislukt.\n"
 "Het commando is onjuist.\n"
 
-#: wineconsole.rc:48
+#: wineconsole.rc:47
 msgid ""
 "\n"
 "Usage:\n"
@@ -10903,14 +10903,14 @@ msgstr ""
 "zetten\n"
 "                            in een Wine console\n"
 
-#: wineconsole.rc:51
+#: wineconsole.rc:50
 #, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr ""
 "  <commando>                Het Wine programma dat zal starten in de Wine "
 "console\n"
 
-#: wineconsole.rc:52
+#: wineconsole.rc:51
 #, fuzzy
 msgid ""
 "\n"

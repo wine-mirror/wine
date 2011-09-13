@@ -10717,7 +10717,7 @@ msgstr ""
 "wineconsole: Nie udało się uruchomić programu %s.\n"
 "Polecenie jest niewłaściwe.\n"
 
-#: wineconsole.rc:48
+#: wineconsole.rc:47
 msgid ""
 "\n"
 "Usage:\n"
@@ -10744,12 +10744,12 @@ msgstr ""
 "                            spróbuje przerobić aktualnie używany terminal na "
 "konsolę Wine\n"
 
-#: wineconsole.rc:51
+#: wineconsole.rc:50
 #, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr "  <polecenie>               Program Wine który należy uruchomić\n"
 
-#: wineconsole.rc:52
+#: wineconsole.rc:51
 #, fuzzy
 msgid ""
 "\n"

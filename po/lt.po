@@ -10736,7 +10736,7 @@ msgstr ""
 "wineconsole: nepavyko paleisti programos %s.\n"
 "Neteisinga komanda.\n"
 
-#: wineconsole.rc:48
+#: wineconsole.rc:47
 msgid ""
 "\n"
 "Usage:\n"
@@ -10761,11 +10761,11 @@ msgstr ""
 "                            sukonfigūruoti dabartinį terminalą kaip Wine "
 "pultą.\n"
 
-#: wineconsole.rc:51
+#: wineconsole.rc:50
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr "  <komanda>                Wine programa paleidimui pulte.\n"
 
-#: wineconsole.rc:52
+#: wineconsole.rc:51
 msgid ""
 "\n"
 "Example:\n"

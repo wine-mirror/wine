@@ -10686,7 +10686,7 @@ msgstr ""
 "wineconsole: Запуск програми %s не вдався.\n"
 "Команда невірна.\n"
 
-#: wineconsole.rc:48
+#: wineconsole.rc:47
 msgid ""
 "\n"
 "Usage:\n"
@@ -10711,13 +10711,13 @@ msgstr ""
 "  --backend={user|curses}  Вибір user відкриє нове вікно, curses спробує\n"
 "                            налаштувати поточний термінал як консоль Wine\n"
 
-#: wineconsole.rc:51
+#: wineconsole.rc:50
 #, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr ""
 "  <команда>                 Назва програми для запуску в консолі Wine\n"
 
-#: wineconsole.rc:52
+#: wineconsole.rc:51
 #, fuzzy
 msgid ""
 "\n"

@@ -10606,7 +10606,7 @@ msgstr ""
 "wineconsole: 无法启动程序 %s。\n"
 "命令无效。\n"
 
-#: wineconsole.rc:48
+#: wineconsole.rc:47
 msgid ""
 "\n"
 "Usage:\n"
@@ -10631,12 +10631,12 @@ msgstr ""
 "  --backend={user|curses}   选 user 会打开新窗口；选 curses 会试图在当前\n"
 "                            终端中运行 Wine 控制台\n"
 
-#: wineconsole.rc:51
+#: wineconsole.rc:50
 #, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr "  <command>                 要在控制台运行的 Wine 程序\n"
 
-#: wineconsole.rc:52
+#: wineconsole.rc:51
 #, fuzzy
 msgid ""
 "\n"

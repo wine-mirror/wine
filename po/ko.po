@@ -10668,7 +10668,7 @@ msgstr ""
 "wineconsole: 풀그림 %s 시작 실패.\n"
 "이 명령은 올바르지 않습니다.\n"
 
-#: wineconsole.rc:48
+#: wineconsole.rc:47
 msgid ""
 "\n"
 "Usage:\n"
@@ -10693,11 +10693,11 @@ msgstr ""
 "                            curses으로 Wine 콘솔처럼 현재 터미널에  나타낼 것"
 "인지 선택\n"
 
-#: wineconsole.rc:51
+#: wineconsole.rc:50
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr "  <명령>                 The Wine 프로그램은 콘솔을 통해서 시작됨\n"
 
-#: wineconsole.rc:52
+#: wineconsole.rc:51
 msgid ""
 "\n"
 "Example:\n"

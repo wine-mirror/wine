@@ -10857,7 +10857,7 @@ msgid ""
 "The command is invalid.\n"
 msgstr ""
 
-#: wineconsole.rc:48
+#: wineconsole.rc:47
 msgid ""
 "\n"
 "Usage:\n"
@@ -10874,11 +10874,11 @@ msgid ""
 "console.\n"
 msgstr ""
 
-#: wineconsole.rc:51
+#: wineconsole.rc:50
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr ""
 
-#: wineconsole.rc:52
+#: wineconsole.rc:51
 msgid ""
 "\n"
 "Example:\n"

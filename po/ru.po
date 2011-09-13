@@ -10702,7 +10702,7 @@ msgstr ""
 "wineconsole: Не удался запуск программы '%s'.\n"
 "Неверно указана команда.\n"
 
-#: wineconsole.rc:48
+#: wineconsole.rc:47
 msgid ""
 "\n"
 "Usage:\n"
@@ -10730,13 +10730,13 @@ msgstr ""
 "использует\n"
 "                            текущее окно с ограниченной функциональностью\n"
 
-#: wineconsole.rc:51
+#: wineconsole.rc:50
 #, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr ""
 "  <команда>                Название программы для запуска в консоли Wine\n"
 
-#: wineconsole.rc:52
+#: wineconsole.rc:51
 #, fuzzy
 msgid ""
 "\n"

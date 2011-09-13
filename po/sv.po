@@ -10699,7 +10699,7 @@ msgstr ""
 "wineconsole: Start av programmet %s misslyckades.\n"
 "Kommandot är ogiltigt.\n"
 
-#: wineconsole.rc:48
+#: wineconsole.rc:47
 msgid ""
 "\n"
 "Usage:\n"
@@ -10725,12 +10725,12 @@ msgstr ""
 "                            curses för att ange aktuell terminal som en Wine-"
 "konsoll\n"
 
-#: wineconsole.rc:51
+#: wineconsole.rc:50
 #, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr "  <kommando>                Wine-program att starta i konsollen\n"
 
-#: wineconsole.rc:52
+#: wineconsole.rc:51
 #, fuzzy
 msgid ""
 "\n"

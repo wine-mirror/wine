@@ -10754,7 +10754,7 @@ msgstr ""
 "wineconsole: zagon programa %s ni uspel.\n"
 "Ukaz je neveljaven.\n"
 
-#: wineconsole.rc:48
+#: wineconsole.rc:47
 msgid ""
 "\n"
 "Usage:\n"
@@ -10781,12 +10781,12 @@ msgstr ""
 "                            poskuša uporabiti trenuten terminal kot Wine\n"
 "                            konzolo\n"
 
-#: wineconsole.rc:51
+#: wineconsole.rc:50
 #, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr "  <ukaz>                    Program ali ukaz, ki ga želite izvesti\n"
 
-#: wineconsole.rc:52
+#: wineconsole.rc:51
 #, fuzzy
 msgid ""
 "\n"

@@ -11149,7 +11149,7 @@ msgstr ""
 "wineconsole: O arranque do programa %s falhou.\n"
 "O comando é inválido.\n"
 
-#: wineconsole.rc:48
+#: wineconsole.rc:47
 msgid ""
 "\n"
 "Usage:\n"
@@ -11176,12 +11176,12 @@ msgstr ""
 "                            tentar configurar o terminal actual como uma "
 "consola Wine\n"
 
-#: wineconsole.rc:51
+#: wineconsole.rc:50
 #, fuzzy
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr "  <comando>                 O programa Wine a lançar na consola\n"
 
-#: wineconsole.rc:52
+#: wineconsole.rc:51
 #, fuzzy
 msgid ""
 "\n"
