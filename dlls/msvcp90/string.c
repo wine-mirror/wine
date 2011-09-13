@@ -1505,6 +1505,20 @@ String_reverse_iterator_char __thiscall MSVCP_basic_string_char_rend(basic_strin
     return ret;
 }
 
+/* ?_Pdif@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@KAIV?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z */
+/* ?_Pdif@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@KA_KV?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z */
+MSVCP_size_t __cdecl MSVCP_basic_string_char_Pdif(String_iterator_char i1, String_iterator_char i2)
+{
+    TRACE("(%p %p) (%p %p)\n", i1.bstr, i1.pos, i2.bstr, i2.pos);
+
+    if((!i1.bstr && i1.pos) || i1.bstr!=i2.bstr) {
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
+        return 0;
+    }
+
+    return !i1.pos ? 0 : i1.pos-i2.pos;
+}
+
 /* basic_string<wchar_t, char_traits<wchar_t>, allocator<wchar_t>> */
 /* ?npos@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@2IB */
 /* ?npos@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@2_KB */
@@ -2491,4 +2505,18 @@ String_reverse_iterator_wchar __thiscall MSVCP_basic_string_wchar_rend(basic_str
     ret.bstr = this;
     ret.pos = basic_string_wchar_const_ptr(this);
     return ret;
+}
+
+/* ?_Pdif@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@KAIV?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0@Z */
+/* ?_Pdif@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@KA_KV?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0@Z */
+MSVCP_size_t __cdecl MSVCP_basic_string_wchar_Pdif(String_iterator_wchar i1, String_iterator_wchar i2)
+{
+    TRACE("(%p %p) (%p %p)\n", i1.bstr, i1.pos, i2.bstr, i2.pos);
+
+    if((!i1.bstr && i1.pos) || i1.bstr!=i2.bstr) {
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
+        return 0;
+    }
+
+    return !i1.pos ? 0 : i1.pos-i2.pos;
 }

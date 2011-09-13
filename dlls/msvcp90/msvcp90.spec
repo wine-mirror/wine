@@ -2676,12 +2676,12 @@
 @ stub -arch=win64 ?_Osfx@?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAXXZ
 @ stub -arch=win32 ?_Osfx@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEXXZ
 @ stub -arch=win64 ?_Osfx@?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAXXZ
-@ stub -arch=win32 ?_Pdif@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@KAIV?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z
-@ stub -arch=win64 ?_Pdif@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@KA_KV?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z
+@ cdecl -arch=win32 ?_Pdif@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@KAIV?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z(ptr ptr ptr ptr) MSVCP_basic_string_char_Pdif
+@ cdecl -arch=win64 ?_Pdif@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@KA_KV?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z(ptr ptr) MSVCP_basic_string_char_Pdif
 @ stub -arch=win32 ?_Pdif@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@KAIV?$_String_const_iterator@GU?$char_traits@G@std@@V?$allocator@G@2@@2@0@Z
 @ stub -arch=win64 ?_Pdif@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@KA_KV?$_String_const_iterator@GU?$char_traits@G@std@@V?$allocator@G@2@@2@0@Z
-@ stub -arch=win32 ?_Pdif@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@KAIV?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0@Z
-@ stub -arch=win64 ?_Pdif@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@KA_KV?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0@Z
+@ cdecl -arch=win32 ?_Pdif@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@KAIV?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0@Z(ptr ptr ptr ptr) MSVCP_basic_string_wchar_Pdif
+@ cdecl -arch=win64 ?_Pdif@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@KA_KV?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0@Z(ptr ptr ptr ptr) MSVCP_basic_string_wchar_Pdif
 @ thiscall -arch=win32 ?_Pnavail@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEHXZ(ptr) basic_streambuf_char__Pnavail
 @ cdecl -arch=win64 ?_Pnavail@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEBA_JXZ(ptr) basic_streambuf_char__Pnavail
 @ stub -arch=win32 ?_Pnavail@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IBEHXZ
