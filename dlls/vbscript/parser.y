@@ -91,7 +91,7 @@ static elseif_decl_t *new_elseif_decl(parser_ctx_t*,expression_t*,statement_t*);
 
 %type <statement> Statement StatementNl StatementsNl IfStatement Else_opt
 %type <expression> Expression LiteralExpression PrimaryExpression EqualityExpression CallExpression
-%type <expression> ConcatExpression AdditiveExpression ModExpression IntdivExpression
+%type <expression> ConcatExpression AdditiveExpression ModExpression IntdivExpression MultiplicativeExpression
 %type <expression> NotExpression UnaryExpression
 %type <member> MemberExpression
 %type <expression> Arguments_opt ArgumentList_opt ArgumentList
@@ -198,8 +198,12 @@ ModExpression
     | ModExpression tMOD IntdivExpression       { $$ = new_binary_expression(ctx, EXPR_MOD, $1, $3); CHECK_ERROR; }
 
 IntdivExpression
-    : UnaryExpression /* FIXME */   { $$ = $1; }
+    : MultiplicativeExpression                  { $$ = $1; }
+    | IntdivExpression '\\' MultiplicativeExpression
+                                                { $$ = new_binary_expression(ctx, EXPR_IDIV, $1, $3); CHECK_ERROR; }
 
+MultiplicativeExpression
+    : UnaryExpression /* FIXME */   { $$ = $1; }
 
 UnaryExpression
     : LiteralExpression             { $$ = $1; }
