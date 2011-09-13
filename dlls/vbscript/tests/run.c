@@ -60,6 +60,8 @@ DEFINE_EXPECT(global_success_d);
 DEFINE_EXPECT(global_success_i);
 DEFINE_EXPECT(global_vbvar_d);
 DEFINE_EXPECT(global_vbvar_i);
+DEFINE_EXPECT(testobj_propput_d);
+DEFINE_EXPECT(testobj_propput_i);
 
 #define DISPID_GLOBAL_REPORTSUCCESS 1000
 #define DISPID_GLOBAL_TRACE         1001
@@ -67,6 +69,9 @@ DEFINE_EXPECT(global_vbvar_i);
 #define DISPID_GLOBAL_GETVT         1003
 #define DISPID_GLOBAL_ISENGLOC      1004
 #define DISPID_GLOBAL_VBVAR         1005
+#define DISPID_GLOBAL_TESTOBJ       1006
+
+#define DISPID_TESTOBJ_PROPPUT      2001
 
 static const WCHAR testW[] = {'t','e','s','t',0};
 
@@ -226,6 +231,64 @@ static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI testObj_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
+{
+    if(!strcmp_wa(bstrName, "propput")) {
+        CHECK_EXPECT(testobj_propput_d);
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_TESTOBJ_PROPPUT;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call %s\n", wine_dbgstr_w(bstrName));
+    return DISP_E_UNKNOWNNAME;
+}
+
+static HRESULT WINAPI testObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    switch(id) {
+    case DISPID_TESTOBJ_PROPPUT:
+        CHECK_EXPECT(testobj_propput_i);
+
+        ok(wFlags == DISPATCH_PROPERTYPUT, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(pdp->rgdispidNamedArgs != NULL, "rgdispidNamedArgs == NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(pdp->cNamedArgs == 1, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pdp->rgdispidNamedArgs[0] == DISPID_PROPERTYPUT, "pdp->rgdispidNamedArgs[0] = %d\n", pdp->rgdispidNamedArgs[0]);
+        ok(!pvarRes, "pvarRes != NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        ok(V_VT(pdp->rgvarg) == VT_I2, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
+        ok(V_I2(pdp->rgvarg) == 1, "V_I2(psp->rgvargs) = %d\n", V_I2(pdp->rgvarg));
+        return S_OK;
+    }
+
+    ok(0, "unexpected call %d\n", id);
+    return E_FAIL;
+}
+
+static IDispatchExVtbl testObjVtbl = {
+    DispatchEx_QueryInterface,
+    DispatchEx_AddRef,
+    DispatchEx_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    testObj_GetDispID,
+    testObj_InvokeEx,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+
+static IDispatchEx testObj = { &testObjVtbl };
 
 static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
@@ -253,6 +316,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
     if(!strcmp_wa(bstrName, "isEnglishLocale")) {
         test_grfdex(grfdex, fdexNameCaseInsensitive);
         *pid = DISPID_GLOBAL_ISENGLOC;
+        return S_OK;
+    }
+    if(!strcmp_wa(bstrName, "testObj")) {
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_GLOBAL_TESTOBJ;
         return S_OK;
     }
     if(!strcmp_wa(bstrName, "vbvar")) {
@@ -328,18 +396,18 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         return S_OK;
 
     case DISPID_GLOBAL_GETVT:
-         ok(pdp != NULL, "pdp == NULL\n");
-         ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
-         ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
-         ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
-         ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
-         ok(pvarRes != NULL, "pvarRes == NULL\n");
-         ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
-         ok(pei != NULL, "pei == NULL\n");
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
 
-         V_VT(pvarRes) = VT_BSTR;
-         V_BSTR(pvarRes) = a2bstr(vt2a(pdp->rgvarg));
-         return S_OK;
+        V_VT(pvarRes) = VT_BSTR;
+        V_BSTR(pvarRes) = a2bstr(vt2a(pdp->rgvarg));
+        return S_OK;
 
     case DISPID_GLOBAL_ISENGLOC:
         ok(wFlags == (INVOKE_FUNC|INVOKE_PROPERTYGET), "wFlags = %x\n", wFlags);
@@ -375,6 +443,21 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         ok(V_VT(pdp->rgvarg) == VT_I2, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
         ok(V_I2(pdp->rgvarg) == 3, "V_I2(psp->rgvargs) = %d\n", V_I2(pdp->rgvarg));
 
+        return S_OK;
+
+    case DISPID_GLOBAL_TESTOBJ:
+        ok(wFlags == (DISPATCH_PROPERTYGET|DISPATCH_METHOD), "wFlags = %x\n", wFlags);
+
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgvarg, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        V_VT(pvarRes) = VT_DISPATCH;
+        V_DISPATCH(pvarRes) = (IDispatch*)&testObj;
         return S_OK;
     }
 
@@ -689,6 +772,12 @@ static void run_tests(void)
     parse_script_a("Option Explicit\nvbvar() = 3");
     CHECK_CALLED(global_vbvar_d);
     CHECK_CALLED(global_vbvar_i);
+
+    SET_EXPECT(testobj_propput_d);
+    SET_EXPECT(testobj_propput_i);
+    parse_script_a("testObj.propput = 1");
+    CHECK_CALLED(testobj_propput_d);
+    CHECK_CALLED(testobj_propput_i);
 
     run_from_res("lang.vbs");
 }
