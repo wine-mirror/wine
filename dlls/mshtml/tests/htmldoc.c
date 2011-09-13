@@ -1620,7 +1620,7 @@ static HRESULT WINAPI InPlaceUIWindow_SetActiveObject(IOleInPlaceFrame *iface,
     if(expect_InPlaceUIWindow_SetActiveObject_active) {
         ok(pActiveObject != NULL, "pActiveObject = NULL\n");
         if(pActiveObject && is_english())
-            ok(!lstrcmpW(wszHTML_Document, pszObjName), "pszObjName != \"HTML Document\"\n");
+            ok(!lstrcmpW(wszHTML_Document, pszObjName), "%s != \"HTML Document\"\n", wine_dbgstr_w(pszObjName));
     }
     else {
         ok(pActiveObject == NULL, "pActiveObject=%p, expected NULL\n", pActiveObject);
@@ -1640,7 +1640,7 @@ static HRESULT WINAPI InPlaceFrame_SetActiveObject(IOleInPlaceFrame *iface,
         CHECK_EXPECT2(SetActiveObject);
 
         if(pActiveObject && is_english())
-            ok(!lstrcmpW(wszHTML_Document, pszObjName), "pszObjName != \"HTML Document\"\n");
+            ok(!lstrcmpW(wszHTML_Document, pszObjName), "%s != \"HTML Document\"\n", wine_dbgstr_w(pszObjName));
     }else {
         CHECK_EXPECT(SetActiveObject_null);
 
