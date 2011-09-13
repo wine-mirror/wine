@@ -111,6 +111,7 @@ typedef enum {
     X(jmp,            0, ARG_ADDR,    0)          \
     X(jmp_false,      0, ARG_ADDR,    0)          \
     X(long,           1, ARG_INT,     0)          \
+    X(mod,            1, 0,           0)          \
     X(neg,            1, 0,           0)          \
     X(nequal,         1, 0,           0)          \
     X(not,            1, 0,           0)          \

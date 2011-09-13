@@ -642,6 +642,12 @@ static HRESULT interp_sub(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
+static HRESULT interp_mod(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT interp_neg(exec_ctx_t *ctx)
 {
     variant_val_t val;
