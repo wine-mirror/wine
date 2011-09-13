@@ -2939,7 +2939,7 @@ static void test_ioctlsocket(void)
 {
     SOCKET sock;
     struct tcp_keepalive kalive;
-    int ret;
+    int ret, optval;
     static const LONG cmds[] = {FIONBIO, FIONREAD, SIOCATMARK};
     UINT i;
     u_long arg = 0;
@@ -2965,8 +2965,25 @@ static void test_ioctlsocket(void)
      * that normal(not urgent) data returns a non-zero value for SIOCATMARK. */
 
     ret = ioctlsocket(sock, SIOCATMARK, &arg);
-    if(ret != SOCKET_ERROR)
-        todo_wine ok(arg, "expected a non-zero value\n");
+    ok(ret != SOCKET_ERROR, "ioctlsocket failed unexpectedly\n");
+    todo_wine ok(arg, "SIOCATMARK expected a non-zero value\n");
+
+    /* when SO_OOBINLINE is set SIOCATMARK must always return TRUE */
+    optval = 1;
+    ret = setsockopt(sock, SOL_SOCKET, SO_OOBINLINE, (void *)&optval, sizeof(optval));
+    ok(ret != SOCKET_ERROR, "setsockopt failed unexpectedly\n");
+    arg = 0;
+    ret = ioctlsocket(sock, SIOCATMARK, &arg);
+    ok(ret != SOCKET_ERROR, "ioctlsocket failed unexpectedly\n");
+    ok(arg, "SIOCATMARK expected a non-zero value\n");
+
+    /* disable SO_OOBINLINE and get the same old bahavior */
+    optval = 0;
+    ret = setsockopt(sock, SOL_SOCKET, SO_OOBINLINE, (void *)&optval, sizeof(optval));
+    ok(ret != SOCKET_ERROR, "setsockopt failed unexpectedly\n");
+    arg = 0;
+    ret = ioctlsocket(sock, SIOCATMARK, &arg);
+    todo_wine ok(arg, "SIOCATMARK expected a non-zero value\n");
 
     ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &arg, 0, NULL, 0, &arg, NULL, NULL);
     ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");

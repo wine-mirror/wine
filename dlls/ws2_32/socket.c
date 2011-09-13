@@ -3099,17 +3099,34 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         break;
 
     case WS_FIONREAD:
-    case WS_SIOCATMARK:
     {
-        int cmd = code == WS_FIONREAD ? FIONREAD : SIOCATMARK;
         if (out_size != sizeof(WS_u_long) || IS_INTRESOURCE(out_buff))
         {
             WSASetLastError(WSAEFAULT);
             return SOCKET_ERROR;
         }
         if ((fd = get_sock_fd( s, 0, NULL )) == -1) return SOCKET_ERROR;
-        if (ioctl(fd, cmd, out_buff ) == -1)
+        if (ioctl(fd, FIONREAD, out_buff ) == -1)
             status = (errno == EBADF) ? WSAENOTSOCK : wsaErrno();
+        release_sock_fd( s, fd );
+        break;
+    }
+
+    case WS_SIOCATMARK:
+    {
+        unsigned int oob = 0, oobsize = sizeof(int), atmark = 0;
+        if (out_size != sizeof(WS_u_long) || IS_INTRESOURCE(out_buff))
+        {
+            WSASetLastError(WSAEFAULT);
+            return SOCKET_ERROR;
+        }
+        if ((fd = get_sock_fd( s, 0, NULL )) == -1) return SOCKET_ERROR;
+        /* SO_OOBINLINE sockets must always return TRUE to SIOCATMARK */
+        if ((getsockopt(fd, SOL_SOCKET, SO_OOBINLINE, &oob, &oobsize ) == -1)
+           || (!oob && ioctl(fd, SIOCATMARK, &atmark ) == -1))
+            status = (errno == EBADF) ? WSAENOTSOCK : wsaErrno();
+        else
+            (*(WS_u_long *) out_buff) = oob | atmark;
         release_sock_fd( s, fd );
         break;
     }
