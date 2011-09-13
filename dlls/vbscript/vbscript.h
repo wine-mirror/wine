@@ -158,6 +158,8 @@ HRESULT exec_script(script_ctx_t*,function_t*) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
 
+const char *debugstr_variant(const VARIANT*) DECLSPEC_HIDDEN;
+
 static inline void *heap_alloc(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), 0, len);

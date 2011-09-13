@@ -144,6 +144,33 @@ static inline void release_val(variant_val_t *v)
         VariantClear(v->v);
 }
 
+static HRESULT stack_pop_disp(exec_ctx_t *ctx, IDispatch **ret)
+{
+    VARIANT *v = stack_pop(ctx);
+
+    if(V_VT(v) == VT_DISPATCH) {
+        *ret = V_DISPATCH(v);
+        return S_OK;
+    }
+
+    if(V_VT(v) != (VT_VARIANT|VT_BYREF)) {
+        FIXME("not supported type: %s\n", debugstr_variant(v));
+        VariantClear(v);
+        return E_FAIL;
+    }
+
+    v = V_BYREF(v);
+    if(V_VT(v) != VT_DISPATCH) {
+        FIXME("not disp %s\n", debugstr_variant(v));
+        return E_FAIL;
+    }
+
+    if(V_DISPATCH(v))
+        IDispatch_AddRef(V_DISPATCH(v));
+    *ret = V_DISPATCH(v);
+    return S_OK;
+}
+
 static void vbstack_to_dp(exec_ctx_t *ctx, unsigned arg_cnt, DISPPARAMS *dp)
 {
     dp->cArgs = arg_cnt;
@@ -259,8 +286,36 @@ static HRESULT interp_assign_ident(exec_ctx_t *ctx)
 
 static HRESULT interp_assign_member(exec_ctx_t *ctx)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR identifier = ctx->instr->arg1.bstr;
+    variant_val_t val;
+    IDispatch *obj;
+    DISPID id;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_w(identifier));
+
+    hres = stack_pop_disp(ctx, &obj);
+    if(FAILED(hres))
+        return hres;
+
+    if(!obj) {
+        FIXME("NULL obj\n");
+        return E_FAIL;
+    }
+
+    hres = stack_pop_val(ctx, &val);
+    if(FAILED(hres)) {
+        IDispatch_Release(obj);
+        return hres;
+    }
+
+    hres = disp_get_id(obj, identifier, &id);
+    if(SUCCEEDED(hres))
+        hres = disp_propput(ctx->script, obj, id, val.v);
+
+    release_val(&val);
+    IDispatch_Release(obj);
+    return hres;
 }
 
 static HRESULT interp_ret(exec_ctx_t *ctx)
