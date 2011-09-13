@@ -2396,22 +2396,13 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     double xscale, yscale;
     BOOL use_repeat;
 
-    if (src->x < 0 || src->y < 0 || src->width < 0 || src->height < 0 ||
-        src->width > physdev_src->x11dev->drawable_rect.right - physdev_src->x11dev->drawable_rect.left - src->x ||
-        src->height > physdev_src->x11dev->drawable_rect.bottom - physdev_src->x11dev->drawable_rect.top - src->y)
-    {
-        WARN( "Invalid src coords: (%d,%d), size %dx%d\n", src->x, src->y, src->width, src->height );
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-
     if (!X11DRV_XRender_Installed || src_dev->funcs != dst_dev->funcs)
     {
         dst_dev = GET_NEXT_PHYSDEV( dst_dev, pAlphaBlend );
         return dst_dev->funcs->pAlphaBlend( dst_dev, dst, src_dev, src, blendfn );
     }
 
-    if (physdev_src->x11dev != physdev_dst->x11dev) X11DRV_LockDIBSection( physdev_src->x11dev, DIB_Status_GdiMod );
+    if (physdev_src != physdev_dst) X11DRV_LockDIBSection( physdev_src->x11dev, DIB_Status_GdiMod );
     X11DRV_LockDIBSection( physdev_dst->x11dev, DIB_Status_GdiMod );
 
     dst_pict = get_xrender_picture( physdev_dst->x11dev );
@@ -2460,7 +2451,7 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     wine_tsx11_unlock();
 
     LeaveCriticalSection( &xrender_cs );
-    if (physdev_src->x11dev != physdev_dst->x11dev) X11DRV_UnlockDIBSection( physdev_src->x11dev, FALSE );
+    if (physdev_src != physdev_dst) X11DRV_UnlockDIBSection( physdev_src->x11dev, FALSE );
     X11DRV_UnlockDIBSection( physdev_dst->x11dev, TRUE );
     return TRUE;
 }

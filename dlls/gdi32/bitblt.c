@@ -669,7 +669,23 @@ BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heig
               blendFunction.BlendOp, blendFunction.BlendFlags,
               blendFunction.SourceConstantAlpha, blendFunction.AlphaFormat );
 
-        if (!ret) ret = dst_dev->funcs->pAlphaBlend( dst_dev, &dst, src_dev, &src, blendFunction );
+        if (src.x < 0 || src.y < 0 || src.width < 0 || src.height < 0 ||
+            (dcSrc->header.type == OBJ_MEMDC &&
+             (src.width > dcSrc->vis_rect.right - dcSrc->vis_rect.left - src.x ||
+              src.height > dcSrc->vis_rect.bottom - dcSrc->vis_rect.top - src.y)))
+        {
+            WARN( "Invalid src coords: (%d,%d), size %dx%d\n", src.x, src.y, src.width, src.height );
+            SetLastError( ERROR_INVALID_PARAMETER );
+            ret = FALSE;
+        }
+        else if (dst.width < 0 || dst.height < 0)
+        {
+            WARN( "Invalid dst coords: (%d,%d), size %dx%d\n", dst.x, dst.y, dst.width, dst.height );
+            SetLastError( ERROR_INVALID_PARAMETER );
+            ret = FALSE;
+        }
+        else if (!ret) ret = dst_dev->funcs->pAlphaBlend( dst_dev, &dst, src_dev, &src, blendFunction );
+
         release_dc_ptr( dcDst );
     }
     release_dc_ptr( dcSrc );
