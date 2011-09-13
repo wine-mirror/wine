@@ -280,6 +280,7 @@ extern X_PHYSBITMAP *X11DRV_init_phys_bitmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 extern Pixmap X11DRV_get_pixmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 
 extern RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp ) DECLSPEC_HIDDEN;
+extern void update_x11_clipping( X11DRV_PDEVICE *physDev, const RGNDATA *data ) DECLSPEC_HIDDEN;
 extern RGNDATA *add_extra_clipping_region( X11DRV_PDEVICE *dev, HRGN rgn ) DECLSPEC_HIDDEN;
 extern void restore_clipping_region( X11DRV_PDEVICE *dev, RGNDATA *data ) DECLSPEC_HIDDEN;
 
@@ -300,7 +301,6 @@ extern int client_side_antialias_with_render DECLSPEC_HIDDEN;
 extern int using_client_side_fonts DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs *X11DRV_XRender_Init(void) DECLSPEC_HIDDEN;
 extern void X11DRV_XRender_Finalize(void) DECLSPEC_HIDDEN;
-extern void X11DRV_XRender_SetDeviceClipping(X11DRV_PDEVICE *physDev, const RGNDATA *data) DECLSPEC_HIDDEN;
 extern void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap, int width, int height) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel, const DIBSECTION *dib) DECLSPEC_HIDDEN;
 BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,

@@ -1132,21 +1132,45 @@ static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
     return 0;
 }
 
-/***********************************************************************
-*   X11DRV_XRender_SetDeviceClipping
-*/
-void X11DRV_XRender_SetDeviceClipping(X11DRV_PDEVICE *physDev, const RGNDATA *data)
+static void update_xrender_clipping( struct xrender_physdev *dev, const RGNDATA *data )
 {
-    if (physDev->xrender->pict)
+    if (dev->info.pict)
     {
         wine_tsx11_lock();
-        pXRenderSetPictureClipRectangles( gdi_display, physDev->xrender->pict,
-                                          physDev->dc_rect.left, physDev->dc_rect.top,
+        pXRenderSetPictureClipRectangles( gdi_display, dev->info.pict,
+                                          dev->x11dev->dc_rect.left, dev->x11dev->dc_rect.top,
                                           (XRectangle *)data->Buffer, data->rdh.nCount );
         wine_tsx11_unlock();
     }
 }
 
+static RGNDATA *add_xrender_clipping_region( struct xrender_physdev *dev, HRGN rgn )
+{
+    RGNDATA *ret, *data;
+    HRGN clip;
+
+    if (!(ret = X11DRV_GetRegionData( dev->x11dev->region, 0 ))) return NULL;
+    if (!(clip = CreateRectRgn( 0, 0, 0, 0 )))
+    {
+        HeapFree( GetProcessHeap(), 0, ret );
+        return NULL;
+    }
+    CombineRgn( clip, dev->x11dev->region, rgn, RGN_AND );
+    if ((data = X11DRV_GetRegionData( clip, 0 )))
+    {
+        update_xrender_clipping( dev, data );
+        HeapFree( GetProcessHeap(), 0, data );
+    }
+    DeleteObject( clip );
+    return ret;
+}
+
+static void restore_xrender_clipping_region( struct xrender_physdev *dev, RGNDATA *data )
+{
+    if (!data) return;
+    update_xrender_clipping( dev, data );
+    HeapFree( GetProcessHeap(), 0, data );
+}
 
 static BOOL create_xrender_dc( PHYSDEV *pdev )
 {
@@ -1279,6 +1303,23 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
     dev = GET_NEXT_PHYSDEV( dev, pPutImage );
     return dev->funcs->pPutImage( dev, hbitmap, clip, info, bits, src, dst, rop );
 }
+
+/***********************************************************************
+ *           xrenderdrv_SetDeviceClipping
+ */
+static void xrenderdrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
+{
+    struct xrender_physdev *physdev = get_xrender_dev( dev );
+    RGNDATA *data;
+
+    CombineRgn( physdev->x11dev->region, vis_rgn, clip_rgn, clip_rgn ? RGN_AND : RGN_COPY );
+
+    if (!(data = X11DRV_GetRegionData( physdev->x11dev->region, 0 ))) return;
+    update_x11_clipping( physdev->x11dev, data );
+    update_xrender_clipping( physdev, data );
+    HeapFree( GetProcessHeap(), 0, data );
+}
+
 
 BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel, const DIBSECTION *dib)
 {
@@ -2004,13 +2045,6 @@ BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         goto done_unlock;
     }
 
-    if (flags & ETO_CLIPPED)
-    {
-        HRGN clip_region = CreateRectRgnIndirect( lprect );
-        saved_region = add_extra_clipping_region( physdev->x11dev, clip_region );
-        DeleteObject( clip_region );
-    }
-
     EnterCriticalSection(&xrender_cs);
 
     entry = glyphsetCache + physdev->info.cache_index;
@@ -2091,6 +2125,14 @@ BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                 desired.y = physdev->x11dev->dc_rect.top  + y + offset.y;
             }
         }
+
+        if (flags & ETO_CLIPPED)
+        {
+            HRGN clip_region = CreateRectRgnIndirect( lprect );
+            saved_region = add_xrender_clipping_region( physdev, clip_region );
+            DeleteObject( clip_region );
+        }
+
         wine_tsx11_lock();
         /* Make sure we don't have any transforms set from a previous call */
         set_xrender_transformation(pict, 1, 1, 0, 0);
@@ -2101,8 +2143,17 @@ BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                                 0, 0, 0, 0, elts, count);
         wine_tsx11_unlock();
         HeapFree(GetProcessHeap(), 0, elts);
+        restore_xrender_clipping_region( physdev, saved_region );
     } else {
         POINT offset = {0, 0};
+
+        if (flags & ETO_CLIPPED)
+        {
+            HRGN clip_region = CreateRectRgnIndirect( lprect );
+            saved_region = add_extra_clipping_region( physdev->x11dev, clip_region );
+            DeleteObject( clip_region );
+        }
+
         wine_tsx11_lock();
 	XSetForeground( gdi_display, physdev->x11dev->gc, textPixel );
 
@@ -2263,11 +2314,9 @@ BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 	}
     no_image:
 	wine_tsx11_unlock();
+        restore_clipping_region( physdev->x11dev, saved_region );
     }
     LeaveCriticalSection(&xrender_cs);
-
-    restore_clipping_region( physdev->x11dev, saved_region );
-
     retv = TRUE;
 
 done_unlock:
@@ -2640,7 +2689,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pSetDCPenColor */
     NULL,                               /* pSetDIBColorTable */
     NULL,                               /* pSetDIBitsToDevice */
-    NULL,                               /* pSetDeviceClipping */
+    xrenderdrv_SetDeviceClipping,       /* pSetDeviceClipping */
     NULL,                               /* pSetDeviceGammaRamp */
     NULL,                               /* pSetLayout */
     NULL,                               /* pSetMapMode */
@@ -2682,12 +2731,6 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
 
 void X11DRV_XRender_Finalize(void)
 {
-}
-
-void X11DRV_XRender_SetDeviceClipping(X11DRV_PDEVICE *physDev, const RGNDATA *data)
-{
-    assert(0);
-    return;
 }
 
 void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap, int width, int height)
