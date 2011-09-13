@@ -589,7 +589,7 @@ MSVCP_bool __thiscall basic_string_char_grow(
         basic_string_char *this, MSVCP_size_t new_size, MSVCP_bool trim)
 {
     if(this->res < new_size) {
-        MSVCP_size_t new_res = new_size;
+        MSVCP_size_t new_res = new_size, len = this->size;
         char *ptr;
 
         new_res |= 0xf;
@@ -613,7 +613,7 @@ MSVCP_bool __thiscall basic_string_char_grow(
         basic_string_char_tidy(this, TRUE, 0);
         this->data.ptr = ptr;
         this->res = new_size;
-        basic_string_char_eos(this, this->size);
+        basic_string_char_eos(this, len);
     } else if(trim && new_size < BUF_SIZE_CHAR)
         basic_string_char_tidy(this, TRUE,
                 new_size<this->size ? new_size : this->size);
@@ -1609,7 +1609,7 @@ MSVCP_bool __thiscall basic_string_wchar_grow(
         basic_string_wchar *this, MSVCP_size_t new_size, MSVCP_bool trim)
 {
     if(this->res < new_size) {
-        MSVCP_size_t new_res = new_size;
+        MSVCP_size_t new_res = new_size, len = this->size;
         wchar_t *ptr;
 
         new_res |= 0xf;
@@ -1633,7 +1633,7 @@ MSVCP_bool __thiscall basic_string_wchar_grow(
         basic_string_wchar_tidy(this, TRUE, 0);
         this->data.ptr = ptr;
         this->res = new_size;
-        basic_string_wchar_eos(this, this->size);
+        basic_string_wchar_eos(this, len);
     } else if(trim && new_size < BUF_SIZE_WCHAR)
         basic_string_wchar_tidy(this, TRUE,
                 new_size<this->size ? new_size : this->size);
