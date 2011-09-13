@@ -103,6 +103,7 @@ typedef enum {
     X(assign_member,  1, ARG_BSTR,    0)          \
     X(bool,           1, ARG_INT,     0)          \
     X(concat,         1, 0,           0)          \
+    X(div,            1, 0,           0)          \
     X(double,         1, ARG_DOUBLE,  0)          \
     X(empty,          1, 0,           0)          \
     X(equal,          1, 0,           0)          \
@@ -113,6 +114,7 @@ typedef enum {
     X(jmp_false,      0, ARG_ADDR,    0)          \
     X(long,           1, ARG_INT,     0)          \
     X(mod,            1, 0,           0)          \
+    X(mul,            1, 0,           0)          \
     X(neg,            1, 0,           0)          \
     X(nequal,         1, 0,           0)          \
     X(not,            1, 0,           0)          \

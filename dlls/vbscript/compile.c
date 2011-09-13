@@ -353,6 +353,8 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
         return push_instr_int(ctx, OP_bool, ((bool_expression_t*)expr)->value);
     case EXPR_CONCAT:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_concat);
+    case EXPR_DIV:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_div);
     case EXPR_DOUBLE:
         return push_instr_double(ctx, OP_double, ((double_expression_t*)expr)->value);
     case EXPR_EMPTY:
@@ -365,6 +367,8 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
         return compile_member_expression(ctx, (member_expression_t*)expr, TRUE);
     case EXPR_MOD:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_mod);
+    case EXPR_MUL:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_mul);
     case EXPR_NEG:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_neg);
     case EXPR_NEQUAL:
