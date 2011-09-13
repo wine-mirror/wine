@@ -2139,12 +2139,12 @@
 @ stub -arch=win64 ?_Copy@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@IEAAX_K0@Z
 @ stub -arch=win32 ?_Copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IAEXII@Z
 @ stub -arch=win64 ?_Copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IEAAX_K0@Z
-@ stub -arch=win32 ?_Copy_s@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPADIII@Z
-@ stub -arch=win64 ?_Copy_s@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEAD_K11@Z
+@ thiscall -arch=win32 ?_Copy_s@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPADIII@Z(ptr ptr long long long) MSVCP_basic_string_char_Copy_s
+@ cdecl -arch=win64 ?_Copy_s@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEAD_K11@Z(ptr ptr long long long) MSVCP_basic_string_char_Copy_s
 @ stub -arch=win32 ?_Copy_s@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIPAGIII@Z
 @ stub -arch=win64 ?_Copy_s@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KPEAG_K11@Z
-@ stub -arch=win32 ?_Copy_s@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPA_WIII@Z
-@ stub -arch=win64 ?_Copy_s@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEA_W_K11@Z
+@ thiscall -arch=win32 ?_Copy_s@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPA_WIII@Z(ptr ptr long long long) MSVCP_basic_string_wchar_Copy_s
+@ cdecl -arch=win64 ?_Copy_s@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEA_W_K11@Z(ptr ptr long long long) MSVCP_basic_string_wchar_Copy_s
 @ cdecl -arch=win32 ?_Copy_s@?$char_traits@D@std@@SAPADPADIPBDI@Z(ptr long ptr long) MSVCP_char_traits_char__Copy_s
 @ cdecl -arch=win64 ?_Copy_s@?$char_traits@D@std@@SAPEADPEAD_KPEBD1@Z(ptr long ptr long) MSVCP_char_traits_char__Copy_s
 @ cdecl -arch=win32 ?_Copy_s@?$char_traits@G@std@@SAPAGPAGIPBGI@Z(ptr long ptr long) MSVCP_char_traits_short__Copy_s

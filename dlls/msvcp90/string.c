@@ -741,6 +741,25 @@ void __thiscall MSVCP_basic_string_char_Chassign(basic_string_char *this,
     MSVCP_char_traits_char_assignn(basic_string_char_ptr(this)+off, count, ch);
 }
 
+/* ?_Copy_s@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPADIII@Z */
+/* ?_Copy_s@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEAD_K11@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_Copy_s, 20)
+MSVCP_size_t __thiscall MSVCP_basic_string_char_Copy_s(const basic_string_char *this,
+        char *dest, MSVCP_size_t size, MSVCP_size_t off, MSVCP_size_t count)
+{
+    TRACE("%p %p %lu %lu %lu\n", this, dest, size, off, count);
+
+    if(this->size < off)
+        MSVCP__String_base_Xran();
+
+    if(count > this->size-off)
+        count = this->size-off;
+
+    MSVCP_char_traits_char__Copy_s(dest, size,
+            basic_string_char_const_ptr(this)+off, count);
+    return count;
+}
+
 /* ?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ */
 /* ?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ */
 /* ?data@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ */
@@ -1708,6 +1727,25 @@ void __thiscall MSVCP_basic_string_wchar_Chassign(basic_string_wchar *this,
 {
     TRACE("%p %lu %lu %c\n", this, off, count, ch);
     MSVCP_char_traits_wchar_assignn(basic_string_wchar_ptr(this)+off, count, ch);
+}
+
+/* ?_Copy_s@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPA_WIII@Z */
+/* ?_Copy_s@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEA_W_K11@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_Copy_s, 20)
+MSVCP_size_t __thiscall MSVCP_basic_string_wchar_Copy_s(const basic_string_wchar *this,
+        wchar_t *dest, MSVCP_size_t size, MSVCP_size_t off, MSVCP_size_t count)
+{
+    TRACE("%p %p %lu %lu %lu\n", this, dest, size, off, count);
+
+    if(this->size < off)
+        MSVCP__String_base_Xran();
+
+    if(count > this->size-off)
+        count = this->size-off;
+
+    MSVCP_char_traits_wchar__Copy_s(dest, size,
+            basic_string_wchar_const_ptr(this)+off, count);
+    return count;
 }
 
 /* ?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPB_WXZ */
