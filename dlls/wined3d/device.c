@@ -2954,7 +2954,7 @@ static void device_map_psamplers(struct wined3d_device *device, const struct win
     }
 }
 
-static BOOL device_unit_free_for_vs(struct wined3d_device *device,
+static BOOL device_unit_free_for_vs(const struct wined3d_device *device,
         const WINED3DSAMPLER_TEXTURE_TYPE *pshader_sampler_tokens,
         const WINED3DSAMPLER_TEXTURE_TYPE *vshader_sampler_tokens, DWORD unit)
 {
